@@ -8,7 +8,7 @@
 // **口は `<a href>` で、画面の正典は `location.hash` のまま**（`navigateTo` は使わない）。
 //
 // **動き方の操作子（仕事/雑談・モデル・許可モード）が送るコマンドは、いままでサイドバーの
-// `<select>` が送っていたものと同じ**（`set-chat-mode` / `set-model` / `set-permission-mode`）。
+// `<select>` が送っていたものと同じ**（`session.setChatMode` / `session.setModel` / `session.setPermissionMode`）。
 // 表示はサーバから届いた値だけに従い、押した側へ先に倒さない（13.9「動き方の操作子」）。
 //
 // **2つの面（広い画面の帯・狭い画面の「≡」の面）へは、部品の値を1つの束で配る**
@@ -188,27 +188,27 @@ export function useScreenNav(): ScreenNavView {
           if (turnInProgress || chat === chatMode) {
             return
           }
-          dispatch({ type: "set-chat-mode", chat })
+          dispatch.session.setChatMode({ chat })
         },
       },
       modelPermission: {
         model: shownModel,
         onSetModel: (value) => {
           if (isModelAlias(value)) {
-            dispatch({ type: "set-model", model: value })
+            dispatch.session.setModel({ model: value })
           }
         },
         effort: resolveEffortSelect(shownModel, modelEffortSupport, effort),
         onSetEffort: (value) => {
           if (isEffortLevel(value)) {
-            dispatch({ type: "set-effort", effort: value })
+            dispatch.session.setEffort({ effort: value })
           }
         },
         permissionMode: shownPermissionMode,
         permissionModeDangerous: isDangerousPermissionMode(shownPermissionMode),
         onSetPermissionMode: (value) => {
           if (isPermissionMode(value)) {
-            dispatch({ type: "set-permission-mode", mode: value })
+            dispatch.session.setPermissionMode({ mode: value })
           }
         },
       },

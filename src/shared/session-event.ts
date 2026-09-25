@@ -281,7 +281,7 @@ export type SessionEvent =
    *    `local_command_run: { command: "model", args }`。実測。`src/server/session-driver/core/sdk-message.ts`）。
    *    `init` はターンの頭に届くので、`/model haiku` を送ったそのターンの `init` はまだ古い
    *    モデルを返す（正しい値が載るのは次の依頼の `init` から。docs/design.md 4.1）
-   * 2. サイドバーの `<select>` からの `set-model` を駆動が確定させたとき
+   * 2. サイドバーの `<select>` からの `session.setModel` を駆動が確定させたとき
    *    （`src/server/session-driver/adapter/sdk-driver.ts` の `setModel`）。**こちらは駆動が実際に切り替えたことを
    *    確認してから出すので、ブラウザ側のローカル echo ではない**（session-manager.ts が
    *    駆動を経ずにこのイベントを合成することはない。実測: 本物の駆動は元々これを
@@ -352,7 +352,7 @@ export type SessionEvent =
     }
   /**
    * 雑談モードに入っている／出ている（`docs/chat-mode.md` 4.9）。**駆動を起こしたときと、
-   * `set-chat-mode` で起こし直したときの1回ずつ**流れる（`character-changed` と同じ契機）。
+   * `session.setChatMode` で起こし直したときの1回ずつ**流れる（`character-changed` と同じ契機）。
    *
    * 起こし直すと状態が初期値へ戻るので、**このイベントが無いと画面は雑談中かどうかを
    * 見失う**（`INITIAL_SESSION_STATE.chatMode` は `false`）。
@@ -371,7 +371,7 @@ export type SessionEvent =
   /**
    * 雑談のサイドバーの「覚えていること」に出す一覧（`docs/design.md` 7.1・`docs/screen-design.md` 13.7）。
    * **雑談で起こしたときと、`remember` / `forget`（キャラクター自身）・画面の「編集」の
-   * `forget-remembered-line` のどれかで `persona.md` の `## 覚えたこと` が変わったとき**に流れる
+   * `chat.forgetRememberedLine` のどれかで `persona.md` の `## 覚えたこと` が変わったとき**に流れる
    * （`src/server/session/core/session-launch.ts` と `src/server/chat/adapter/persona-memory.ts`）。
    *
    * **運ぶのは節の行そのもの**（`- ` を外した文面、古い→新しいの順）。上限に当たった・
@@ -382,7 +382,7 @@ export type SessionEvent =
   /**
    * 新しいセッションの既定（モデル・許可モード）が分かった（`docs/screen-design.md` 13.6）。
    * **駆動を起こしたときと、起こし直したときの1回ずつ**（`character-changed` と同じ契機）と、
-   * **歯車から `set-session-default` で覚え直したとき**に流れる。
+   * **歯車から `session.setSessionDefault` で覚え直したとき**に流れる。
    *
    * 運ぶのは覚えた値（読めなければ同梱の既定へ畳んだあとの値）で、**いま動いている
    * セッションの値ではない**（そちらは `session-info` の `model` / `permissionMode`）。
@@ -392,7 +392,7 @@ export type SessionEvent =
    * 歯車の「訪問」のオン・オフが変わった（`docs/screen-design.md` 13.6・13.9「設定の歯車」）。
    * **`session-default-changed` と違い、いま動いているセッションに即座に効く**——オフのあいだは
    * 客が来ず、訪問中にオフにしたらその場で帰る（`src/server/visit/core/visit-timing.ts`）。
-   * **ディスクには覚えない**ので、起こし直すと初期値の「する」へ戻る（`set-visit-enabled` で
+   * **ディスクには覚えない**ので、起こし直すと初期値の「する」へ戻る（`visit.setEnabled` で
    * 書き換えるたびに流れる、この1つだけが源）。
    */
   | { readonly kind: "visit-enabled-changed"; readonly visitEnabled: boolean }
@@ -435,7 +435,7 @@ export type SessionEvent =
   /** 見直しの結果が届いた（`usage_review_result` ツールが受け付けた呼び出し。出し手は上と同じ）。 */
   | { readonly kind: "usage-review-result"; readonly findings: UsageReviewFindings }
   /**
-   * 提案を1件見送った（画面の `dismiss-usage-proposal` コマンド）。**出し手は
+   * 提案を1件見送った（画面の `usageReview.dismissProposal` コマンド）。**出し手は
    * `src/session-start.ts`**（書き込み先は `src/server/usage-review/adapter/usage-proposal-dismissal.ts`）。
    * `key` は {@link usageProposalKey} と同じ形（`kind:target`）。
    */
@@ -447,7 +447,7 @@ export type SessionEvent =
    */
   | { readonly kind: "diary-written"; readonly date: string }
   /**
-   * 成果の画面から振り返りを頼まれた（`reflect-achievement` コマンド）。**出し手は
+   * 成果の画面から振り返りを頼まれた（`session.reflectAchievement` コマンド）。**出し手は
    * session-manager**——その日の成果を数え直し、書き手（`src/server/diary/core/diary-writer.ts`）に
    * その日ぶんを渡した直後に流す。会話とは別の使い捨ての問い合わせなので、会話の `prompt` は
    * 通らない（`docs/design.md`「日記の受け取りと保存」）。`date` は振り返りの対象の日

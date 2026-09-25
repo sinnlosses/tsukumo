@@ -105,7 +105,7 @@ export async function run(config: Config): Promise<number> {
   })
   view.connect(session)
 
-  stopSessionOnExit(session.close)
+  stopSessionOnExit(session.manager.close)
   announce(view.url)
 
   if (config.openView) {

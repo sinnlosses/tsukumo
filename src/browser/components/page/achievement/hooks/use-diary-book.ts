@@ -408,7 +408,7 @@ function blankReviewOf(
       if (availability.kind !== "available") {
         return
       }
-      dispatch({ type: "reflect-achievement", date })
+      dispatch.session.reflectAchievement({ date })
       onDateSelected(date)
       onClose()
     },

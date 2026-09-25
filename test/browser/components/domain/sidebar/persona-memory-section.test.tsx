@@ -102,7 +102,7 @@ describe("PersonaMemorySection", () => {
     expect(calls).toEqual([])
   })
 
-  it("× → 確認の「消す」で forget-remembered-line をその行の文面で送る", () => {
+  it("× → 確認の「消す」で chat.forgetRememberedLine をその行の文面で送る", () => {
     const calls: unknown[] = []
     renderSection({ rememberedLines: [SHORT_LINE] }, (command) => calls.push(command))
 
@@ -110,7 +110,7 @@ describe("PersonaMemorySection", () => {
     fireEvent.click(screen.getByLabelText(`「${SHORT_LINE}」を消す`))
     fireEvent.click(screen.getByText("消す"))
 
-    expect(calls).toEqual([{ type: "forget-remembered-line", line: SHORT_LINE }])
+    expect(calls).toEqual([{ procedure: "chat.forgetRememberedLine", line: SHORT_LINE }])
     expect(confirmDialogIsOpen()).toBe(false)
   })
 })

@@ -109,7 +109,7 @@ describe("useCharacterCreate", () => {
     expect(hook.result.current.form.portrait.image.kind).toBe("picked")
   })
 
-  it("作ると create-character を送り、一覧に出たら閉じて一覧でそのパックを選ぶ", async () => {
+  it("作ると characterPack.create を送り、一覧に出たら閉じて一覧でそのパックを選ぶ", async () => {
     const calls: unknown[] = []
     const closed: string[] = []
     const { hook, store } = renderUseCharacterCreate(
@@ -130,7 +130,7 @@ describe("useCharacterCreate", () => {
     })
     expect(calls).toEqual([
       {
-        type: "create-character",
+        procedure: "characterPack.create",
         id: "fictional-2",
         name: "架空の2号",
         portraits: {

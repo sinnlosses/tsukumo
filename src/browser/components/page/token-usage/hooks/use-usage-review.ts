@@ -97,7 +97,7 @@ export type UsageReviewResultClose =
 
 /** 結果の札1枚ぶんの見た目（`docs/glossary.md`「提案」）。 */
 export type UsageReviewResultProposalView = {
-  /** `usageProposalKey`。React の `key` と `dismiss-usage-proposal` の的の両方に使う。 */
+  /** `usageProposalKey`。React の `key` と `usageReview.dismissProposal` の的の両方に使う。 */
   readonly key: string
   readonly impact: UsageProposalImpact
   readonly title: string
@@ -107,7 +107,7 @@ export type UsageReviewResultProposalView = {
   readonly followUp: UsageProposalFollowUp
   /** 主ボタンを押すと会話へ依頼を1回送る。 */
   readonly onPrimary: () => void
-  /** 「見送る」を押すと `dismiss-usage-proposal` を1回送る。 */
+  /** 「見送る」を押すと `usageReview.dismissProposal` を1回送る。 */
   readonly onDismiss: () => void
 }
 
@@ -172,10 +172,11 @@ export function useUsageReview(): UseUsageReviewResult {
   const face = characterFaceInfo(character)
   const start = () => {
     setViewingPrevious(false)
-    dispatch({ type: "prompt", text: USAGE_REVIEW_REQUEST_TEXT, images: [] })
+    dispatch.session.prompt({ text: USAGE_REVIEW_REQUEST_TEXT, images: [] })
   }
-  const dismiss = (proposal: UsageProposal): void =>
-    dispatch({ type: "dismiss-usage-proposal", kind: proposal.kind, target: proposal.target })
+  const dismiss = (proposal: UsageProposal): void => {
+    dispatch.usageReview.dismissProposal({ kind: proposal.kind, target: proposal.target })
+  }
 
   if (usageReview.kind === "running") {
     return {
@@ -183,7 +184,7 @@ export function useUsageReview(): UseUsageReviewResult {
       face,
       elapsedText: formatElapsed(Math.max(0, Math.floor((now - usageReview.startedAt) / 1000))),
       speech: latestSpeechView(speeches),
-      onInterrupt: () => dispatch({ type: "interrupt" }),
+      onInterrupt: () => dispatch.session.interrupt(),
       stages: stageViews(usageReview.stage, summary),
     }
   }
@@ -271,7 +272,7 @@ function resultView(
       action: proposal.action,
       followUp: proposal.followUp,
       onPrimary: () =>
-        dispatch({ type: "prompt", text: usageProposalRequestText(proposal), images: [] }),
+        dispatch.session.prompt({ text: usageProposalRequestText(proposal), images: [] }),
       onDismiss: () => dismiss(proposal),
     })),
   }

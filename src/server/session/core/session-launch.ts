@@ -1,7 +1,7 @@
 // セッションを起こす一続き。**パックを決めて
 // 続きのセッションを探し、駆動を起こし、復元した履歴と `character-changed` を流すまでの順序**を
 // 持つのがここで、起動時（`createSessionManager`）と起こし直し（`session-manager.restart`。
-// `switch-character` / `set-chat-mode` / `switch-session`）の4つともこの1つを通る。
+// `session.switchCharacter` / `session.setChatMode` / `session.switchSession`）の4つともこの1つを通る。
 //
 // **画面を初期状態に戻すかどうかは持たない** — それは起こし直しだけの判断で、
 // `src/server/session/core/session-manager.ts` の `restart` にある。ここは「どちらから来ても同じ順序」だけ。
@@ -46,9 +46,9 @@ export type SessionLaunchSeed<Pack extends NamedCharacterPack> = {
  * | 起こし方           | `selection`     | `resume` | 覚えるか |
  * | ------------------ | --------------- | -------- | -------- |
  * | 起動               | `initial`       | `latest` | 覚えない |
- * | `switch-character` | `name`          | `latest` | **覚える** |
- * | `set-chat-mode`    | `current`       | `latest` | 覚えない |
- * | `switch-session`   | `current`       | `id`     | 覚えない |
+ * | `session.switchCharacter` | `name`          | `latest` | **覚える** |
+ * | `session.setChatMode`    | `current`       | `latest` | 覚えない |
+ * | `session.switchSession`   | `current`       | `id`     | 覚えない |
  */
 export type SessionLaunchRequest = {
   /** これから起こすパックの決め方。 */
@@ -65,10 +65,10 @@ export type SessionLaunchRequest = {
  * 「探す」の意味に使うと、探した結果の「見つからなかった」と区別できない）。
  */
 export type SessionResume =
-  /** 印から最新の1つを探す（起動・`switch-character`・`set-chat-mode`）。 */
+  /** 印から最新の1つを探す（起動・`session.switchCharacter`・`session.setChatMode`）。 */
   | { readonly by: "latest" }
   /**
-   * 画面から選ばれたセッション（`switch-session`）。**探さない** — 一覧に出したIDをそのまま
+   * 画面から選ばれたセッション（`session.switchSession`）。**探さない** — 一覧に出したIDをそのまま
    * 続きにする。claude 側が知らないIDだったときは新規のセッションとして起き上がる。
    */
   | { readonly by: "id"; readonly sessionId: string }
@@ -91,7 +91,7 @@ export type SessionLaunchPorts<Pack extends NamedCharacterPack> = {
   /**
    * 覚えた「訪問」のオン・オフを読む（`docs/screen-design.md` 13.6）。**覚え方は
    * `readSessionDefault` と同じ**（`~/.tsukumo/state.json`）で、**読むのも起こすたびに1回**。
-   * ただし `set-visit-enabled` はいま動いているセッションにも即座に効くので、ここで読むのは
+   * ただし `visit.setEnabled` はいま動いているセッションにも即座に効くので、ここで読むのは
    * 「起こした直後の初期値」だけ（`readSessionDefault` と違い、駆動の種〔`SessionLaunchSeed`〕
    * には渡さない——訪問は SDK ではなくサーバの状態が読むだけの値のため）。
    */
@@ -186,7 +186,7 @@ export function createSessionLaunch<Pack extends NamedCharacterPack>(
     const sessionDefault = ports.readSessionDefault()
     onEvent({ kind: "session-default-changed", sessionDefault })
     // 訪問のオン・オフも同じ理由で流し直す（歯車が読む値。`docs/screen-design.md` 13.6）。
-    // **読むのはここ1回だけ**——`set-visit-enabled` で書き換えたあとは、この起動の駆動が
+    // **読むのはここ1回だけ**——`visit.setEnabled` で書き換えたあとは、この起動の駆動が
     // 続くかぎりその値のまま（次に起こすまで読み直さない）。
     onEvent({ kind: "visit-enabled-changed", visitEnabled: ports.readVisitEnabled() })
 

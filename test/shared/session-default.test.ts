@@ -1,6 +1,7 @@
 import { describe, expect, it } from "bun:test"
 
-import { parseClientCommand, PERMISSION_MODES } from "../../src/shared/command.ts"
+import { PERMISSION_MODES } from "../../src/shared/command.ts"
+import { sessionContract } from "../../src/shared/contract/session.ts"
 import {
   BUILTIN_SESSION_DEFAULT,
   isSessionDefaultPermissionMode,
@@ -30,19 +31,21 @@ describe("既定に選べる許可モード", () => {
   })
 })
 
-describe("set-session-default コマンド", () => {
+/** `session.setSessionDefault` の入力として検証する（通らなければ undefined）。 */
+function parseSessionDefault(value: unknown): unknown {
+  const parsed = sessionContract.setSessionDefault["~orpc"].inputSchema?.safeParse(value)
+  return parsed?.success === true ? parsed.data : undefined
+}
+
+describe("session.setSessionDefault コマンド", () => {
   it("モデル・effort・許可モードの組を受け付ける", () => {
     expect(
-      parseClientCommand({
-        type: "set-session-default",
-        commandId: "c-1",
+      parseSessionDefault({
         model: "sonnet",
         effort: "high",
         permissionMode: "plan",
       }),
     ).toEqual({
-      type: "set-session-default",
-      commandId: "c-1",
       model: "sonnet",
       effort: "high",
       permissionMode: "plan",
@@ -51,9 +54,7 @@ describe("set-session-default コマンド", () => {
 
   it("「全部許す」は境界で落とす（画面に選択肢が無いだけにしない）", () => {
     expect(
-      parseClientCommand({
-        type: "set-session-default",
-        commandId: "c-1",
+      parseSessionDefault({
         model: "sonnet",
         effort: "medium",
         permissionMode: "bypassPermissions",
@@ -63,9 +64,7 @@ describe("set-session-default コマンド", () => {
 
   it("知らないモデル名は落とす", () => {
     expect(
-      parseClientCommand({
-        type: "set-session-default",
-        commandId: "c-1",
+      parseSessionDefault({
         model: "no-such-model",
         effort: "medium",
         permissionMode: "auto",
@@ -75,9 +74,7 @@ describe("set-session-default コマンド", () => {
 
   it("知らない effort は落とす", () => {
     expect(
-      parseClientCommand({
-        type: "set-session-default",
-        commandId: "c-1",
+      parseSessionDefault({
         model: "sonnet",
         effort: "no-such-effort",
         permissionMode: "auto",
@@ -87,9 +84,7 @@ describe("set-session-default コマンド", () => {
 
   it("effort が無いときは落とす（3つで1組）", () => {
     expect(
-      parseClientCommand({
-        type: "set-session-default",
-        commandId: "c-1",
+      parseSessionDefault({
         model: "sonnet",
         permissionMode: "auto",
       }),

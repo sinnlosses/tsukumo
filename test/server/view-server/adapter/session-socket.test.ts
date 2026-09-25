@@ -1,21 +1,25 @@
 import { afterEach, describe, expect, it } from "bun:test"
 import { createServer, request as httpRequest, type Server } from "node:http"
 
+import { createORPCClient, ORPCError } from "@orpc/client"
+import { RPCLink } from "@orpc/client/websocket"
 import WebSocket from "ws"
 
-import { type DispatchResult } from "../../../../src/server/session/core/command-dispatch.ts"
+import { createCommandRouter } from "../../../../src/router.ts"
+import { createPromptImageShelf } from "../../../../src/server/session-driver/core/prompt-image-shelf.ts"
+import { type CommandSession } from "../../../../src/server/session/core/command-session.ts"
 import { createStartupToken } from "../../../../src/server/view-server/adapter/server.ts"
 import {
   attachSessionSocket,
   type SessionSocket,
 } from "../../../../src/server/view-server/adapter/session-socket.ts"
-import { type ClientCommand } from "../../../../src/shared/command.ts"
 import {
   FRAME_ERROR_REASON,
   parseServerFrame,
   PROTOCOL_VERSION,
   type ServerFrame,
 } from "../../../../src/shared/frame.ts"
+import { type CommandClient } from "../../../../src/shared/rpc.ts"
 import { SESSION_SOCKET_PATH } from "../../../../src/shared/session-socket.ts"
 import { INITIAL_SESSION_STATE } from "../../../../src/shared/session-state.ts"
 
@@ -26,11 +30,27 @@ let running: { readonly server: Server; readonly socket: SessionSocket } | undef
 
 type Started = {
   readonly origin: string
-  readonly dispatched: ClientCommand[]
+  /** 手続き `host.openFile` が受け取ったパス（ほかの手続きの受け手は呼ばれない前提の架空のもの）。 */
+  readonly openedFiles: readonly string[]
   readonly pushed: (frame: ServerFrame) => void
 }
 
-async function start(dispatchResult: DispatchResult = { ok: true }): Promise<Started> {
+/**
+ * 呼ばれてはいけない口（このテストが送る手続きは `host.openFile` と、断られる `session.nudge` だけ）。
+ */
+function unexpected(): never {
+  throw new Error("このテストでは呼ばれない口")
+}
+
+/** 仕事のとき・ターンの外にいるセッションの口（受け手へは渡らない前提の架空のもの）。 */
+const IDLE_WORK_SESSION: CommandSession = {
+  state: () => INITIAL_SESSION_STATE,
+  driver: unexpected,
+  restart: unexpected,
+  generation: () => ({ emit: () => {}, diarySignal: new AbortController().signal }),
+}
+
+async function start(openFileResult = true): Promise<Started> {
   const server = createServer((_request, response) => {
     response.writeHead(404)
     response.end()
@@ -40,7 +60,7 @@ async function start(dispatchResult: DispatchResult = { ok: true }): Promise<Sta
   const port = address !== null && typeof address !== "string" ? address.port : 0
   const origin = `http://127.0.0.1:${String(port)}`
 
-  const dispatched: ClientCommand[] = []
+  const openedFiles: string[] = []
   const subscribers = new Set<(frame: ServerFrame) => void>()
   const socket = attachSessionSocket({
     httpServer: server,
@@ -57,16 +77,35 @@ async function start(dispatchResult: DispatchResult = { ok: true }): Promise<Sta
         subscribers.delete(send)
       }
     },
-    dispatch: (command) => {
-      dispatched.push(command)
-      return Promise.resolve(dispatchResult)
-    },
+    commandRouter: createCommandRouter({
+      session: {
+        promptImageShelf: createPromptImageShelf(),
+        rememberSessionDefault: unexpected,
+        readAchievementDay: unexpected,
+        diary: { kind: "dont-write" },
+      },
+      characterPack: {
+        editCharacter: unexpected,
+        createCharacter: unexpected,
+        deleteCharacter: unexpected,
+      },
+      chat: { forgetRememberedLine: unexpected },
+      visit: { rememberVisitEnabled: unexpected },
+      usageReview: { dismissUsageProposal: unexpected },
+      host: {
+        openFile: (path) => {
+          openedFiles.push(path)
+          return Promise.resolve(openFileResult)
+        },
+      },
+    }),
+    commandSession: IDLE_WORK_SESSION,
   })
 
   running = { server, socket }
   return {
     origin,
-    dispatched,
+    openedFiles,
     pushed: (frame) => {
       for (const send of subscribers) {
         send(frame)
@@ -137,6 +176,49 @@ function upgradeStatus(origin: string, path: string, headers: Readonly<Record<st
   })
 }
 
+/**
+ * 接続の上にコマンドの client を作る。**届いたもののうち手続きの応答（`i` を持つもの）だけを
+ * `RPCLink` へ渡す**（フレームは渡さない。ブラウザの `src/browser/lib/socket.ts` と同じ振り分け）。
+ */
+function commandClientOver(client: WebSocket): CommandClient {
+  const channel = new EventTarget()
+  client.on("message", (data) => {
+    const text = data.toString()
+    if ("i" in JSON.parse(text)) {
+      channel.dispatchEvent(new MessageEvent("message", { data: text }))
+    }
+  })
+  const link = new RPCLink({
+    websocket: {
+      addEventListener: channel.addEventListener.bind(channel),
+      removeEventListener: channel.removeEventListener.bind(channel),
+      send: (message) => client.send(message),
+      readyState: 1,
+    },
+  })
+  return createORPCClient(link)
+}
+
+/**
+ * 手続きが断られたときのエラーの要点（断られなければ undefined）。**契約に書いたエラー
+ * （`defined: true`・409）として届くこと**まで見る。
+ */
+async function refusalOf(call: Promise<unknown>): Promise<unknown> {
+  try {
+    await call
+    return undefined
+  } catch (error) {
+    return error instanceof ORPCError
+      ? { code: error.code, status: error.status, defined: error.defined, data: error.data }
+      : error
+  }
+}
+
+/** 契約の `REFUSED` として届いたときの要点。 */
+function REFUSED(reason: string) {
+  return { code: "REFUSED", status: 409, defined: true, data: { reason } }
+}
+
 function nextFrame(client: WebSocket): Promise<ServerFrame | undefined> {
   return new Promise((resolve) => {
     client.once("message", (data) => resolve(parseServerFrame(JSON.parse(data.toString()))))
@@ -176,52 +258,49 @@ describe("attachSessionSocket", () => {
     client.close()
   })
 
-  it("コマンドを送ると dispatch へ渡る", async () => {
+  it("手続きを呼ぶと、ルータの受け手へ入力が渡る", async () => {
     const started = await start()
     const client = await connect(socketUrl(started.origin, TOKEN))
     await nextFrame(client)
 
-    client.send(
-      JSON.stringify({ type: "prompt", commandId: "c-1", text: "架空の依頼", images: [] }),
-    )
-    await new Promise((resolve) => setTimeout(resolve, 30))
+    await commandClientOver(client).host.openFile({ path: "src/架空.ts" })
 
-    expect(started.dispatched).toEqual([
-      { type: "prompt", commandId: "c-1", text: "架空の依頼", images: [] },
-    ])
+    expect(started.openedFiles).toEqual(["src/架空.ts"])
     client.close()
   })
 
-  it("形の読めないコマンドには定型文の error を返す", async () => {
+  it("受け付けられなかった手続きには、定型文の理由を添えたエラーを返す", async () => {
+    const started = await start(false)
+    const client = await connect(socketUrl(started.origin, TOKEN))
+    await nextFrame(client)
+
+    expect(
+      await refusalOf(commandClientOver(client).host.openFile({ path: "src/架空.ts" })),
+    ).toEqual(REFUSED(FRAME_ERROR_REASON.openFileFailed))
+    client.close()
+  })
+
+  it("契約の断る条件（雑談の外の nudge）は受け手を呼ばずに断る", async () => {
+    const started = await start()
+    const client = await connect(socketUrl(started.origin, TOKEN))
+    await nextFrame(client)
+
+    expect(await refusalOf(commandClientOver(client).session.nudge())).toEqual(
+      REFUSED(FRAME_ERROR_REASON.nudgeOutsideChat),
+    )
+    client.close()
+  })
+
+  it("読めないメッセージは捨て、接続はそのまま使える", async () => {
     const started = await start()
     const client = await connect(socketUrl(started.origin, TOKEN))
     await nextFrame(client)
 
     client.send("これは JSON ではない")
-    const frame = await nextFrame(client)
+    client.send(JSON.stringify({ type: "prompt", text: "古い形の依頼" }))
+    await commandClientOver(client).host.openFile({ path: "src/架空.ts" })
 
-    expect(frame).toEqual({
-      type: "error",
-      commandId: undefined,
-      reason: FRAME_ERROR_REASON.invalidCommand,
-    })
-    expect(started.dispatched).toEqual([])
-    client.close()
-  })
-
-  it("受け付けられなかったコマンドには、理由を添えた error を返す", async () => {
-    const started = await start({ ok: false, reason: FRAME_ERROR_REASON.driverFailed })
-    const client = await connect(socketUrl(started.origin, TOKEN))
-    await nextFrame(client)
-
-    client.send(JSON.stringify({ type: "interrupt", commandId: "c-9" }))
-    const frame = await nextFrame(client)
-
-    expect(frame).toEqual({
-      type: "error",
-      commandId: "c-9",
-      reason: FRAME_ERROR_REASON.driverFailed,
-    })
+    expect(started.openedFiles).toEqual(["src/架空.ts"])
     client.close()
   })
 

@@ -225,7 +225,7 @@ describe("useComposer の送信", () => {
 
     expect(press(result, key("Enter", { meta: true })).prevented()).toBe(true)
 
-    expect(calls).toEqual([{ type: "prompt", text: "架空の依頼", images: [] }])
+    expect(calls).toEqual([{ procedure: "session.prompt", text: "架空の依頼", images: [] }])
     expect(result.current.text).toBe("")
   })
 

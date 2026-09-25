@@ -19,7 +19,7 @@ import {
   type UsageReviewFindings,
 } from "../../../../../src/shared/usage-review.ts"
 import { rpcOutput, stubRpcFetch, type RpcFetchStub } from "../../../rpc-fetch-stub.ts"
-import { type CommandSpy, sessionStoreWith } from "../../../session-store.ts"
+import { type CommandSpy, type SentCommand, sessionStoreWith } from "../../../session-store.ts"
 
 /**
  * 画面（`token-usage-screen.tsx`）を丸ごと描かずに、区画のロジックだけを測る
@@ -170,7 +170,9 @@ describe("useUsageReview（ふだん）", () => {
       result.current.onStart()
     }
 
-    expect(sent).toEqual([{ type: "prompt", text: USAGE_REVIEW_REQUEST_TEXT, images: [] }])
+    expect(sent).toEqual([
+      { procedure: "session.prompt", text: USAGE_REVIEW_REQUEST_TEXT, images: [] },
+    ])
   })
 })
 
@@ -255,7 +257,7 @@ describe("useUsageReview（見直し中）", () => {
       result.current.onInterrupt()
     }
 
-    expect(sent).toEqual([{ type: "interrupt" }])
+    expect(sent).toEqual([{ procedure: "session.interrupt" }])
   })
 })
 
@@ -307,7 +309,7 @@ describe("useUsageReview（結果）", () => {
   })
 
   it("主ボタンは会話へ依頼を1回送る", () => {
-    const sent: unknown[] = []
+    const sent: SentCommand[] = []
     const state = stateWith({
       usageReview: { kind: "result", reviewedAt: 0, findings: FIXTURE_FINDINGS },
     })
@@ -318,12 +320,11 @@ describe("useUsageReview（結果）", () => {
     }
 
     expect(sent).toHaveLength(1)
-    const sentCommand = sent[0] as { readonly type: string; readonly text: string }
-    expect(sentCommand.type).toBe("prompt")
-    expect(sentCommand.text).toContain("架空の提案")
+    expect(sent[0]?.procedure).toBe("session.prompt")
+    expect(sent[0]?.["text"]).toEqual(expect.stringContaining("架空の提案"))
   })
 
-  it("見送るは種類と対象を添えて dismiss-usage-proposal を1回送る", () => {
+  it("見送るは種類と対象を添えて usageReview.dismissProposal を1回送る", () => {
     const sent: unknown[] = []
     const state = stateWith({
       usageReview: { kind: "result", reviewedAt: 0, findings: FIXTURE_FINDINGS },
@@ -335,7 +336,7 @@ describe("useUsageReview（結果）", () => {
     }
 
     expect(sent).toEqual([
-      { type: "dismiss-usage-proposal", kind: "tool-result", target: "架空ツール" },
+      { procedure: "usageReview.dismissProposal", kind: "tool-result", target: "架空ツール" },
     ])
   })
 
@@ -350,7 +351,9 @@ describe("useUsageReview（結果）", () => {
       result.current.onRetry()
     }
 
-    expect(sent).toEqual([{ type: "prompt", text: USAGE_REVIEW_REQUEST_TEXT, images: [] }])
+    expect(sent).toEqual([
+      { procedure: "session.prompt", text: USAGE_REVIEW_REQUEST_TEXT, images: [] },
+    ])
   })
 
   it("ターンが進行中は retry が blocked になる", () => {

@@ -106,7 +106,7 @@ describe("姿の store の購読", () => {
     expect(store.dispatch).toBe(dispatch)
   })
 
-  it("姿が変わらないフレーム（`error`）では、購読している部品に知らせない", () => {
+  it("姿が変わらないフレーム（空の `events`）では、購読している部品に知らせない", () => {
     let commits = 0
     const store = sessionStoreWith({ ...INITIAL_SESSION_STATE, pending: [FIXTURE_PERMISSION] })
     renderPendingAnswer(store, () => {
@@ -115,7 +115,7 @@ describe("姿の store の購読", () => {
     const afterFirstRender = commits
 
     act(() => {
-      store.receive({ type: "error", commandId: undefined, reason: "架空の理由" })
+      store.receive({ type: "events", events: [] })
     })
 
     expect(commits).toBe(afterFirstRender)

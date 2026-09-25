@@ -419,7 +419,7 @@ describe("useChatView の立ち絵をつつく", () => {
 
     result.current.onNudge()
 
-    expect(sent).toEqual([{ type: "nudge" }])
+    expect(sent).toEqual([{ procedure: "session.nudge" }])
   })
 
   it("ターン進行中の onNudge は何も送らない", () => {

@@ -18,7 +18,6 @@ import { todayLocalDateKey } from "./server/adapter/local-time.ts"
 import { listDiaryDates, readDiaryDay } from "./server/diary/adapter/diary.ts"
 import { listRepositoryFiles } from "./server/repository/adapter/repository-file.ts"
 import { type PromptImageShelf } from "./server/session-driver/core/prompt-image-shelf.ts"
-import { type SessionManager } from "./server/session/core/session-manager.ts"
 import {
   summarizeRecentTokenUsage,
   type TokenUsageLog,
@@ -31,6 +30,7 @@ import {
   type ResolvedViewPort,
   startOnResolvedPort,
 } from "./server/view-server/core/port-resolution.ts"
+import { type StartedSession } from "./session-start.ts"
 import { resolveAchievementDateKey } from "./shared/achievement.ts"
 import { type ContextUsageReport, UNAVAILABLE_CONTEXT_USAGE } from "./shared/context-usage.ts"
 import { type RefreshTarget, type ServerFrame } from "./shared/frame.ts"
@@ -73,8 +73,8 @@ export type ViewDeliveryResult =
        * （`src/server/session-driver/core/session-restore.ts` の `sessionTag`。docs/requirements.md 4.8「鍵」）。
        */
       readonly port: number
-      /** 開いたタブとセッションを繋ぐ（`/ws` の受け口を足す）。 */
-      readonly connect: (session: SessionManager) => void
+      /** 開いたタブとセッションを繋ぐ（`/ws` の受け口を足し、コマンドの手続きを載せる）。 */
+      readonly connect: (session: StartedSession) => void
     }
   | { readonly ok: false; readonly reason: string }
 
@@ -177,21 +177,22 @@ export async function startViewDelivery(options: ViewDeliveryOptions): Promise<V
     ok: true,
     url: `${server.layoutUrl}?t=${token}`,
     port: started.port,
-    connect: (session) => {
-      readContextUsage = session.readContextUsage
+    connect: ({ manager, commandRouter }) => {
+      readContextUsage = manager.readContextUsage
       attachSessionSocket({
         httpServer: server.httpServer,
         token,
         origin: new URL(server.layoutUrl).origin,
         subscribe: (send) => {
           viewers.add(send)
-          const unsubscribe = session.subscribe(send)
+          const unsubscribe = manager.subscribe(send)
           return () => {
             viewers.delete(send)
             unsubscribe()
           }
         },
-        dispatch: (command) => session.dispatch(command),
+        commandRouter,
+        commandSession: manager.commandSession,
       })
     },
   }

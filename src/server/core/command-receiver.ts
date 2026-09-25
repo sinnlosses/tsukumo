@@ -1,59 +1,85 @@
-// コマンドの受け手の行の型（`docs/design.md` 2章「コマンドの受け手と手続きの置き方」）。**機能ごとの
-// 表（`<機能>/core/<機能>-command.ts`）が書く行の形**と、断る条件の2列だけを持つ。
+// コマンドの受け手の行の型と、葉の機能の行を呼ぶところ（`docs/design.md` 2章「コマンドの受け手と
+// 手続きの置き方」）。**機能ごとの表（`<機能>/core/<機能>-command.ts`）が書く行の形**と、手続き
+// （`<機能>/adapter/<機能>-procedure.ts`）が行を呼ぶ {@link receiveFeatureCommand} を持つ。
 //
 // 行の種類のうち `session`（セッションの口を受け取るもの）はここに無い——型が
-// `session/core/command-dispatch.ts` にあるので、葉の機能の表からは書けない。断る条件を見るのも、
-// 行を呼ぶのもそちら1箇所で、ここは形だけ。
+// `session/core/command-session.ts` にあるので、葉の機能の表からは書けない。断る条件は行ではなく
+// 契約の `meta`（`src/shared/command.ts`）にあり、見るのは `rpc-guard.ts`。
 
-import { type ClientCommand } from "../../shared/command.ts"
-import { type FRAME_ERROR_REASON } from "../../shared/frame.ts"
+import {
+  type CommandContract,
+  type CommandInputs,
+  type CommandRefusalReason,
+} from "../../shared/command.ts"
 import { type SessionEvent } from "../../shared/session-event.ts"
 
-/** 断るときに返す定型文（`FRAME_ERROR_REASON` の値のどれか）。 */
-export type CommandRefusalReason = (typeof FRAME_ERROR_REASON)[keyof typeof FRAME_ERROR_REASON]
-
-/**
- * 断る条件の2列。値は `false`（断らない）か、断るときの理由。**条件と理由を同じ行に書く**。
- * 見る順は `chatOnly`（雑談の外なら断る）→ `idleTurn`（ターン中なら断る）。
- */
-export type CommandGuard = {
-  readonly chatOnly: false | CommandRefusalReason
-  readonly idleTurn: false | CommandRefusalReason
-}
-
-/** コマンドの種類。 */
-export type CommandType = ClientCommand["type"]
-
-/**
- * 種類 → コマンドの写像。**表の型をこの写像の添字で書く**ので、配る側は種類を型引数にしたまま
- * 行とコマンドを対で扱える（種類ごとの合併を開かずに済む）。
- */
-export type CommandByType = { readonly [T in CommandType]: Extract<ClientCommand, { type: T }> }
+/** コマンドを受け付けられたか。理由は定型文（`FRAME_ERROR_REASON`）だけを返す。 */
+export type DispatchResult = { readonly ok: true } | { readonly ok: false; readonly reason: string }
 
 /**
  * 書き込み口を呼び、返ったイベントを流す行。`undefined` が返ったとき・投げたときは `failure` で断る。
- * イベントを流すのは配る側で、行は流し方を知らない。
+ * イベントを流すのは {@link receiveFeatureCommand} で、行は流し方を知らない。
  */
-export type WriteReceiver<C> = CommandGuard & {
+export type WriteReceiver<C> = {
   readonly kind: "write"
-  readonly receive: (command: C) => SessionEvent | undefined | Promise<SessionEvent | undefined>
+  readonly receive: (input: C) => SessionEvent | undefined | Promise<SessionEvent | undefined>
   readonly failure: CommandRefusalReason
 }
 
 /** 外へ頼むだけの行（イベントを流さない）。`false` が返ったとき・投げたときは `failure` で断る。 */
-export type CallReceiver<C> = CommandGuard & {
+export type CallReceiver<C> = {
   readonly kind: "call"
-  readonly receive: (command: C) => Promise<boolean>
+  readonly receive: (input: C) => Promise<boolean>
   readonly failure: CommandRefusalReason
 }
 
 /** 葉の機能が書ける行（`write` か `call`）。 */
 export type FeatureReceiver<C> = WriteReceiver<C> | CallReceiver<C>
 
-/** 機能の表。その機能が受ける種類ごとに1行。 */
-export type FeatureCommandTable<T extends CommandType> = {
-  readonly [K in T]: FeatureReceiver<CommandByType[K]>
+/** 機能の表。その機能の契約の手続きごとに1行。 */
+export type FeatureCommandTable<T extends CommandContract> = {
+  readonly [K in keyof T]: FeatureReceiver<CommandInputs<T>[K]>
 }
 
-/** 断らない行の2列（ほとんどの行はこれ）。 */
-export const NO_COMMAND_GUARD = { chatOnly: false, idleTurn: false } satisfies CommandGuard
+/**
+ * 葉の機能の手続きが受ける口（手続きの context の `session`）。**セッションの口
+ * （`CommandSession`）のうちイベントを流す1つだけ**を型にしてあるので、葉の機能は `session` の
+ * 型を読まずに済む（機能どうしの辺を増やさない）。
+ */
+export type CommandEventSink = {
+  /** いまの代に固定した口（呼んだ時点の代の `emit`）。 */
+  readonly generation: () => { readonly emit: (event: SessionEvent) => void }
+}
+
+/**
+ * 葉の機能の行を1件呼ぶ。**受け手が投げても常駐プロセスは落とさず**、行の定型文の理由を返す。
+ * `write` の行が返したイベントは、**返った時点の代**へ流す。
+ */
+export async function receiveFeatureCommand<C>(
+  receiver: FeatureReceiver<C>,
+  input: C,
+  sink: CommandEventSink,
+): Promise<DispatchResult> {
+  switch (receiver.kind) {
+    case "write":
+      try {
+        const event = await receiver.receive(input)
+        if (event === undefined) {
+          return { ok: false, reason: receiver.failure }
+        }
+        // 書き込みで起こしたイベントは、駆動から届くのと同じ「新しい」もの（復元の再生ではない）。
+        sink.generation().emit(event)
+        return { ok: true }
+      } catch {
+        return { ok: false, reason: receiver.failure }
+      }
+    case "call":
+      try {
+        return (await receiver.receive(input))
+          ? { ok: true }
+          : { ok: false, reason: receiver.failure }
+      } catch {
+        return { ok: false, reason: receiver.failure }
+      }
+  }
+}

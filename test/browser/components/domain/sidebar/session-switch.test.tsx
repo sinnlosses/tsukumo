@@ -151,7 +151,7 @@ describe("SessionSwitch", () => {
     expect(options(select)[0]).toBe("いまのセッション")
   })
 
-  it("選ぶと switch-session が dispatch される", () => {
+  it("選ぶと session.switchSession が dispatch される", () => {
     const sent: unknown[] = []
     renderSessionSwitch(
       { sessions: SESSIONS, session: identifiedSession("s-current") },
@@ -162,7 +162,7 @@ describe("SessionSwitch", () => {
 
     fireEvent.change(screen.getByLabelText("セッション"), { target: { value: "s-other" } })
 
-    expect(sent).toEqual([{ type: "switch-session", sessionId: "s-other" }])
+    expect(sent).toEqual([{ procedure: "session.switchSession", sessionId: "s-other" }])
   })
 
   it("いま出しているものを選び直しても、起こし直さない", () => {

@@ -180,13 +180,13 @@ export type SessionRecord =
  *   `permissionMode` が分かっているかどうかは、無くなる理由が違う ——
  *   「片方だけが `undefined` になる状態が実在するか」の目安どおり分けてある）
  * - `running`: `sessionId` / `permissionMode` の両方が分かっている。**`permissionMode` を
- *   決める口は `init` だけ**（サイドバーの `set-permission-mode` には確定の合図が無い）で、
+ *   決める口は `init` だけ**（サイドバーの `session.setPermissionMode` には確定の合図が無い）で、
  *   その `init` は必ず `sessionId` も連れてくるので、`permissionMode` だけ分かっている状態は
  *   実在しない。だから3つ目の状態を足さずにこの2つを束ねられる
  *
  * **`model` はここに入れない**（`SessionState.model` に外へ出してある）。`sessionId` /
  * `permissionMode` は `init` の1つの口でしか決まらないが、**`model` はそれに加えて
- * `model-changed`（`/model` チャットコマンドやサイドバーの `set-model` の確定）でも決まり、
+ * `model-changed`（`/model` チャットコマンドやサイドバーの `session.setModel` の確定）でも決まり、
  * `sessionId` より先に分かることがある**（続きから始める前、`init` が来る前の
  * `identified`/`starting` の間にサイドバーでモデルを切り替える経路が実機にある）。
  * ここへ押し込めると `model-changed` が `running` 以外では効かなくなり、切り替えても
@@ -281,7 +281,7 @@ export type SessionState = {
   /**
    * いま動いているモデル。**`session` の外に置く**（{@link SessionInfo} の冒頭のコメント）
    * ——`init`（`session-info`）だけでなく `model-changed`（`/model` コマンドやサイドバーの
-   * `set-model` の確定）でも決まり、`sessionId` より先に分かることがあるため。まだどちらの
+   * `session.setModel` の確定）でも決まり、`sessionId` より先に分かることがあるため。まだどちらの
    * 口からも届いていなければ undefined（本物の「無い」——`init` 前に何を出すかは読む側が
    * 見た目上の既定へ畳む。`src/browser/components/domain/screen-nav/domain/model-label.ts` の `resolveModelAlias`）。
    */
@@ -428,7 +428,7 @@ export type SessionState = {
   /**
    * 歯車の「訪問」のオン・オフ（`docs/screen-design.md` 13.6・13.9「設定の歯車」）。**覚え方は
    * `sessionDefault` と同じ**（`~/.tsukumo/state.json`。`src/server/session/adapter/remembered-default.ts`）
-   * だが、**効き方は違う**——`set-visit-enabled` はいま動いているセッションにも即座に効く（次に
+   * だが、**効き方は違う**——`visit.setEnabled` はいま動いているセッションにも即座に効く（次に
    * 起こすまで待たない）。起こすたびに覚えた値へ流れ直す（届くまでは同梱の既定
    * `DEFAULT_VISIT_ENABLED`）。
    *
@@ -601,7 +601,7 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
       // **`MODEL_ALIASES` に完全一致するときだけ先回りで更新する**（`/model best` のような
       // tsukumo が知らない値では状態を変えない。次の依頼の `init` が正しい値で上書きするので、
       // ここで間違った値に倒す必要は無い）。**`session.kind` は見ない**——`model` は `init` の
-      // 前でも `set-model` の確定で決まることが実機で確認されている（`identified`/`starting`
+      // 前でも `session.setModel` の確定で決まることが実機で確認されている（`identified`/`starting`
       // の間に届いても更新できる）。ここで `running` に絞ると、切り替えても数秒で古い値に
       // 戻って見える不具合になる（`src/server/session-driver/adapter/sdk-driver.ts` の `setModel` 参照）。
       return isModelAlias(event.model) ? { ...state, model: event.model } : state

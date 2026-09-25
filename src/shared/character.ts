@@ -21,7 +21,7 @@ import { type Expression, EXPRESSIONS, type Outfit, OUTFITS } from "./expression
 export type CharacterInfo = {
   /**
    * いま出しているキャラクターパックの名前（`characters/<pack>` のディレクトリ名）。
-   * **`switch-character` の鍵**で、サイドバーの `<select>` の選択値でもある。素材の URL の
+   * **`session.switchCharacter` の鍵**で、サイドバーの `<select>` の選択値でもある。素材の URL の
    * `<pack>` の区間もこれ。
    */
   readonly pack: string
@@ -155,7 +155,7 @@ export const MAX_CHARACTER_PACK_NAME_LENGTH = 200
  * - `.` で始まらない（`.` `..` と隠しディレクトリが名前として通らないので、パストラバーサルの
  *   経路が生まれない）
  *
- * 表示名（`character.json` の `name`）は**別の関数**（`create-character` / `set-profile` が
+ * 表示名（`character.json` の `name`）は**別の関数**（`characterPack.create` / `characterPack.setProfile` が
  * 受け取る `name`。`src/shared/command.ts`）が見ていて、文字種を縛らないので日本語も使える。
  */
 export function isCharacterPackName(value: string): boolean {

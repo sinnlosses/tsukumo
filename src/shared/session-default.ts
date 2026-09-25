@@ -4,7 +4,7 @@
 //
 // 覚えるのはホームの `state.json`（`src/server/session/adapter/remembered-default.ts`）だが、
 // **形と畳み先はサーバとブラウザの両方が読む**ので shared に置く（歯車の操作子が
-// `SessionState.sessionDefault` を読み、`set-session-default` で書き換える）。
+// `SessionState.sessionDefault` を読み、`session.setSessionDefault` で書き換える）。
 //
 // **許可モードの値の一覧そのものは `command.ts` の `PERMISSION_MODES`**（`docs/design.md` 4.3）。
 // ここが持つのは「既定として選べるのはどれか」という別の問いへの答えだけ。**effort は

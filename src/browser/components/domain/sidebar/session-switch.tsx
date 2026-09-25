@@ -1,6 +1,6 @@
 // サイドバーの「セッション情報」の、セッションの行（`docs/requirements.md` 4.8）。
 // 同じディレクトリで起こした tsukumo のセッションを `<select>` に並べ、選ぶと
-// `switch-session` を `dispatch` する（駆動の起こし直し。会話はそのセッションの続きから
+// `session.switchSession` を `dispatch` する（駆動の起こし直し。会話はそのセッションの続きから
 // 始まり、画面もその記録で組み直される）。
 //
 // **置き場所がここなのは、セッションが「今回のこと」だから**（`docs/screen-design.md` 13.6
@@ -90,7 +90,7 @@ export function SessionSwitch(): ReactElement | null {
             // いま出しているものを選び直しても、起こし直さない（会話が消えるだけで何も
             // 変わらない）。
             if (value !== current) {
-              dispatch({ type: "switch-session", sessionId: value })
+              dispatch.session.switchSession({ sessionId: value })
             }
           }}
         />

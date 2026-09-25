@@ -5,8 +5,9 @@
 // 押す側（src/server/session/core/session-manager.ts）は型の付いた値を組み立てるだけなので、検証が要るのは
 // 受け取る側（ブラウザ）の1箇所。
 //
-// **会話の内容がフレームに乗る**（`state` と `events`）。`error` の `reason` は定型文だけで、
-// 依頼の文面を含めない（docs/coding-standards.md「会話内容の扱い」）。
+// **会話の内容がフレームに乗る**（`state` と `events`）。コマンドを断るときの理由
+// （{@link FRAME_ERROR_REASON}）は定型文だけで、依頼の文面を含めない（docs/coding-standards.md
+// 「会話内容の扱い」）。
 
 import { isPlainObject } from "remeda"
 import { z } from "zod"
@@ -19,11 +20,13 @@ import { type SessionState } from "./session-state.ts"
  * 既存のイベントの形・状態の形を変えたときだけ上げる（docs/design.md 4.5）。
  * 版が違うフレームを受け取ったブラウザは「ページを読み込み直してください」を出す。
  *
- * 直近は `diary-failed`（振り返りの使い捨ての問い合わせが `diary` を受け付けられずに終わった
- * 合図。`docs/design.md`「日記の受け取りと保存」）を足したことで 19 から 20 へ上げた（その前は
- * `sessionDefault` に `effort` を足して 18 から 19 へ。どちらも古いタブは持たず読めない）。
+ * **コマンドの形を変えたときも上げる**——同じ `/ws` に乗るので、形の違うタブとプロセスの組は
+ * コマンドが1件も通らなくなる（知らせで読み込み直してもらう）。
+ *
+ * 直近はコマンドを oRPC の手続きへ移した（`/ws` の上の要求と応答になり、`error` フレームが
+ * 無くなった）ことで 20 から 21 へ上げた（その前は `diary-failed` を足して 19 から 20 へ）。
  */
-export const PROTOCOL_VERSION = 20
+export const PROTOCOL_VERSION = 21
 
 /**
  * 配っているものを取り直す先。`style` は CSS だけを取り直す（**開いているターンの選択も入力欄の
@@ -36,7 +39,6 @@ export type RefreshTarget = "page" | "style"
  *
  * - `hello`: 接続ごとに1回。`state` は**サーバ側の畳み込みが持っている今の姿**
  * - `events`: 起きたイベントをまとめたもの（`src/server/session/core/session-manager.ts` が間引く）
- * - `error`: コマンドを受け付けられなかった。`reason` は定型文（{@link FRAME_ERROR_REASON}）
  * - `refresh`: 配っているものを組み立て直したので取り直せ。**セッションとは無関係**で、
  *   `src/browser/` を見張っている開発中だけ届く（docs/design.md 11章）。会話の内容は乗らない
  */
@@ -47,15 +49,15 @@ export type ServerFrame =
       readonly state: SessionState
     }
   | { readonly type: "events"; readonly events: readonly StampedEvent[] }
-  | { readonly type: "error"; readonly commandId: string | undefined; readonly reason: string }
   | { readonly type: "refresh"; readonly target: RefreshTarget }
 
 /**
  * コマンドを受け付けられなかったときの理由。**定型文だけ**を並べ、依頼の文面や届いた値を
  * 混ぜない（docs/coding-standards.md「会話内容の扱い」）。旧の POST が返していた文言と揃えてある。
+ * 返るのは手続きの応答のエラー（契約の `REFUSED`。`src/shared/command.ts`）で、画面は同じ文言を
+ * 操作子を塞ぐときの説明にも使う。
  */
 export const FRAME_ERROR_REASON = {
-  invalidCommand: "依頼の形式が正しくない",
   unresolvedAnswer: "解決済み、または知らない答え待ち",
   driverFailed: "セッション駆動が受け付けなかった",
   characterEditFailed: "キャラクターの見た目を変えられなかった",
@@ -89,11 +91,6 @@ export const serverFrameSchema = z.discriminatedUnion("type", [
     state: z.custom<SessionState>((value) => isPlainObject(value)),
   }),
   z.object({ type: z.literal("events"), events: z.array(stampedEventSchema) }),
-  z.object({
-    type: z.literal("error"),
-    commandId: z.string().optional(),
-    reason: z.string(),
-  }),
   z.object({ type: z.literal("refresh"), target: z.enum(["page", "style"]) }),
 ])
 
@@ -103,12 +100,5 @@ export const serverFrameSchema = z.discriminatedUnion("type", [
  */
 export function parseServerFrame(value: unknown): ServerFrame | undefined {
   const parsed = serverFrameSchema.safeParse(value)
-  if (!parsed.success) {
-    return undefined
-  }
-
-  const frame = parsed.data
-  return frame.type === "error"
-    ? { type: "error", commandId: frame.commandId, reason: frame.reason }
-    : frame
+  return parsed.success ? parsed.data : undefined
 }

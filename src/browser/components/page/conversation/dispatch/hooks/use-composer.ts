@@ -136,7 +136,7 @@ export function useComposer(): ComposerModel {
       // 質問に答えている間は依頼として送らない（打った字はいま見ている1問の答えになる）。
       question.onAnswerWithText(trimmed)
     } else {
-      dispatch({ type: "prompt", text: trimmed, images: promptImage.images })
+      dispatch.session.prompt({ text: trimmed, images: promptImage.images })
     }
     setDraft(EMPTY_DRAFT)
     resetPromptImage()

@@ -1,27 +1,29 @@
 // `session` 自身が受けるコマンドの表（`docs/design.md` 2章「コマンドの受け手と手続きの置き方」）。
 // 駆動へ渡す6種・`nudge`・起こし直し3種・成果の振り返り・新しいセッションの既定の12種。
-// ほかの機能の行は各機能の `<機能>-command.ts` にあり、束ねるのは配線の `src/command-route.ts`。
+// 手続き（`session/adapter/session-procedure.ts`）がここの行へ委ねる。断る条件は契約
+// `src/shared/contract/session.ts` の `meta`。
 
 import {
   achievementReflectionRequestText,
   type DailyAchievement,
   isEmptyAchievementDay,
 } from "../../../shared/achievement.ts"
-import { type DriverCommand } from "../../../shared/command.ts"
+import { type CommandInputs } from "../../../shared/command.ts"
+import { type sessionContract } from "../../../shared/contract/session.ts"
 import { FRAME_ERROR_REASON } from "../../../shared/frame.ts"
 import { BUILTIN_SESSION_DEFAULT, type SessionDefault } from "../../../shared/session-default.ts"
 import { type SessionEvent } from "../../../shared/session-event.ts"
-import { type CommandByType, NO_COMMAND_GUARD } from "../../core/command-receiver.ts"
+import { type DispatchResult } from "../../core/command-receiver.ts"
 import { type DiaryDayTask } from "../../diary/core/diary-tool.ts"
 import { type DiaryWriteRequest, type DiaryWriterSource } from "../../diary/core/diary-writer.ts"
 import { type PromptImageShelf } from "../../session-driver/core/prompt-image-shelf.ts"
+import { type SessionDriver } from "../../session-driver/core/session-driver.ts"
 import {
   type CommandReceiver,
   type CommandSession,
-  type DispatchResult,
   type SessionReceiver,
-} from "./command-dispatch.ts"
-import { declined, dispatchToDriver, nudge } from "./driver-command.ts"
+} from "./command-session.ts"
+import { ACCEPTED, askDriver, declined, nudge } from "./driver-command.ts"
 
 export type SessionCommandPorts = {
   /**
@@ -48,57 +50,59 @@ export type SessionCommandPorts = {
   readonly diary: DiaryWriterSource
 }
 
-type SessionCommandType =
-  | "prompt"
-  | "interrupt"
-  | "answer"
-  | "set-model"
-  | "set-effort"
-  | "set-permission-mode"
-  | "nudge"
-  | "switch-character"
-  | "set-chat-mode"
-  | "switch-session"
-  | "reflect-achievement"
-  | "set-session-default"
+/** `session` が受けるコマンドの表（契約 `src/shared/contract/session.ts` の手続きごとに1行）。 */
+export type SessionCommandTable = {
+  readonly [K in keyof typeof sessionContract]: CommandReceiver<SessionCommandInputs[K]>
+}
+
+type SessionCommandInputs = CommandInputs<typeof sessionContract>
 
 /** `session` が受けるコマンドの表。 */
-export function sessionCommands(ports: SessionCommandPorts): {
-  readonly [T in SessionCommandType]: CommandReceiver<CommandByType[T]>
-} {
-  // 駆動へそのまま渡す6種は同じ1行（渡し方は `driver-command.ts`）。
-  const toDriver = {
-    ...NO_COMMAND_GUARD,
-    kind: "session",
-    receive: (command, session) =>
-      dispatchToDriver(session.driver(), command, ports.promptImageShelf),
-  } satisfies SessionReceiver<DriverCommand>
+export function sessionCommands(ports: SessionCommandPorts): SessionCommandTable {
+  // 駆動へそのまま渡す6種は、駆動の口を1つ呼ぶだけ（待ち方と畳み方は `driver-command.ts`）。
   return {
-    prompt: toDriver,
-    interrupt: toDriver,
-    answer: toDriver,
-    "set-model": toDriver,
-    "set-effort": toDriver,
-    "set-permission-mode": toDriver,
-    // **雑談のときだけ**（`docs/screen-design.md` 13.7）——仕事のメインビューは記録を積んで
-    // レポートを出す面なので、キャラクターから始まるターンを混ぜない。**文面は core が持つ**ので
-    // 駆動へそのまま渡さない（`driver-command.ts` の `nudge`）。
+    // 原寸は**駆動へ渡す前に棚へ置く**（id は `request` のイベントに載って記録へ入る）。
+    // 駆動が投げて `request` が流れなかったときの原寸は記録に載らないまま残るが、
+    // 棚の枚数の上限で古いほうから押し出される。
+    prompt: toDriver((started, input) => {
+      started.prompt(input.text, ports.promptImageShelf.shelve(input.images))
+      return ACCEPTED
+    }),
+    interrupt: toDriver(async (started) => {
+      await started.interrupt()
+      return ACCEPTED
+    }),
+    answer: toDriver((started, input) =>
+      started.answer(input.id, input.answer)
+        ? ACCEPTED
+        : { ok: false, reason: FRAME_ERROR_REASON.unresolvedAnswer },
+    ),
+    setModel: toDriver(async (started, input) => {
+      await started.setModel(input.model)
+      return ACCEPTED
+    }),
+    setEffort: toDriver(async (started, input) => {
+      await started.setEffort(input.effort)
+      return ACCEPTED
+    }),
+    setPermissionMode: toDriver(async (started, input) => {
+      await started.setPermissionMode(input.mode)
+      return ACCEPTED
+    }),
+    // **雑談のときだけ**（`docs/screen-design.md` 13.7。断る条件は契約の `meta`）。**文面は core が
+    // 持つ**ので駆動へそのまま渡さない（`driver-command.ts` の `nudge`）。
     nudge: {
       kind: "session",
-      chatOnly: FRAME_ERROR_REASON.nudgeOutsideChat,
-      idleTurn: FRAME_ERROR_REASON.nudgeDuringTurn,
-      receive: (_command, session) => nudge(session.driver()),
+      receive: (_input, session) => nudge(session.driver()),
     },
     // **雑談かどうかは切り替えをまたいで保つ**（パックを変えただけで仕事へ戻らない）。
     // 画面から名前が届いた唯一の口なので、**ここで選んだパックだけが次の起動の初期値に
     // なる**（docs/screen-design.md 13.6）。
-    "switch-character": {
+    switchCharacter: {
       kind: "session",
-      chatOnly: false,
-      idleTurn: FRAME_ERROR_REASON.switchDuringTurn,
-      receive: (command, session) =>
+      receive: (input, session) =>
         session.restart({
-          selection: { by: "name", name: command.name },
+          selection: { by: "name", name: input.name },
           chat: session.state().chatMode,
           resume: { by: "latest" },
         }),
@@ -106,56 +110,60 @@ export function sessionCommands(ports: SessionCommandPorts): {
     // **いま出しているパックのまま**起こし直す（雑談に入るとキャラクターが変わる、
     // とは決めていない）。**名前では渡さない** — 渡すと「画面から選ばれた名前」と
     // 区別がつかず、モードを切り替えただけで覚えた値が書き換わる（docs/screen-design.md 13.6）。
-    "set-chat-mode": {
+    setChatMode: {
       kind: "session",
-      chatOnly: false,
-      idleTurn: FRAME_ERROR_REASON.chatModeSwitchDuringTurn,
-      receive: (command, session) =>
+      receive: (input, session) =>
         session.restart({
           selection: { by: "current" },
-          chat: command.chat,
+          chat: input.chat,
           resume: { by: "latest" },
         }),
     },
     // **キャラクターもモードもいま出しているまま**（変わるのは、どの transcript の続きから
     // 始めるかだけ）。一覧は同じパック・同じモードのものしか出していないので、選んだ先で
     // 相手が入れ替わることもない。
-    "switch-session": {
+    switchSession: {
       kind: "session",
-      chatOnly: false,
-      idleTurn: FRAME_ERROR_REASON.sessionSwitchDuringTurn,
-      receive: (command, session) =>
+      receive: (input, session) =>
         session.restart({
           selection: { by: "current" },
           chat: session.state().chatMode,
-          resume: { by: "id", sessionId: command.sessionId },
+          resume: { by: "id", sessionId: input.sessionId },
         }),
     },
-    // **会話のターン中・答え待ちでも受ける**ので列では断らない。断るかどうかは受け手の中で見る
-    // （`docs/design.md`「日記の受け取りと保存」「コマンドと依頼」）。
-    "reflect-achievement": {
-      ...NO_COMMAND_GUARD,
+    // **会話のターン中・答え待ちでも受ける**ので `meta` では断らない。断るかどうかは受け手の中で
+    // 見る（`docs/design.md`「日記の受け取りと保存」「コマンドと依頼」）。
+    reflectAchievement: {
       kind: "session",
-      receive: (command, session) => reflectAchievement(command.date, session, ports),
+      receive: (input, session) => reflectAchievement(input.date, session, ports),
     },
     // **起こし直さない**（次に起こすときから効く値なので、いまの会話には触らない）。
     // 書いて、覚えた値を画面へ流すだけ。
-    "set-session-default": {
-      ...NO_COMMAND_GUARD,
+    setSessionDefault: {
       kind: "write",
-      receive: (command) =>
+      receive: (input) =>
         ports.rememberSessionDefault({
-          model: command.model,
-          effort: command.effort,
-          permissionMode: command.permissionMode,
+          model: input.model,
+          effort: input.effort,
+          permissionMode: input.permissionMode,
         }),
       failure: FRAME_ERROR_REASON.sessionDefaultFailed,
     },
   }
 }
 
+/** 駆動へ1件頼む行（駆動が起き上がるのを待ってから `ask` を呼ぶ）。 */
+function toDriver<C>(
+  ask: (started: SessionDriver, input: C) => DispatchResult | Promise<DispatchResult>,
+): SessionReceiver<C> {
+  return {
+    kind: "session",
+    receive: (input, session) => askDriver(session.driver(), (started) => ask(started, input)),
+  }
+}
+
 /**
- * 成果の振り返り（`reflect-achievement`）。断るのは日記を書いている最中
+ * 成果の振り返り（`reflectAchievement`）。断るのは日記を書いている最中
  * （`state.diaryWriting.kind === "writing"`）と、その日の成果が読めない・空の日のときだけ。通れば
  * `diary-requested` を流し、**代の持ち物の書き手**に1回ぶんを渡す。会話の `SessionDriver` は
  * 通らない——書き手は会話とは別の使い捨ての問い合わせ。
@@ -209,7 +217,7 @@ async function reflectAchievement(
     requestText: text,
     model: session.state().model ?? BUILTIN_SESSION_DEFAULT.model,
   }
-  // **待たない**（書き手は自分でイベントを流し終える。`reflect-achievement` はここで返す）。
+  // **待たない**（書き手は自分でイベントを流し終える。`reflectAchievement` はここで返す）。
   void ports.diary.write(request, generation.emit, generation.diarySignal)
   return { ok: true }
 }

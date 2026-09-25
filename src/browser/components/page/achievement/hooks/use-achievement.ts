@@ -10,7 +10,7 @@
 //
 // **「<パックの名前>と振り返る」ボタン（`docs/screen-design.md` 13.10「並べるもの」4）のロジックも
 // ここに持つ**——押せない条件（ターンが進行中・空の日）は `use-usage-review.ts` の
-// `startAvailability` と同じ形。**押しても画面は移らない**: `reflect-achievement { date }` を
+// `startAvailability` と同じ形。**押しても画面は移らない**: `session.reflectAchievement { date }` を
 // 送るだけで、進みは `SessionState.diaryWriting` から同じ画面の中に出す（`writing`。同節
 // 「ボタンを押せないとき・押したあと」）。
 
@@ -233,7 +233,7 @@ export function useAchievement(): UseAchievementResult {
  * 日記を書いている最中（`diaryWriting.kind === "writing"`。書いているのがこの日なら
  * `Controls` が「振り返り中…」に出し分けるので、ここの理由文は他の日のときだけ見える）と、
  * 空の日のとき。**空の日の理由を先に見る**——両方成り立つときは空の日の理由だけを出す決まり
- * （同節）。押すと**日付だけを送る**（`reflect-achievement`。依頼文は session-manager が
+ * （同節）。押すと**日付だけを送る**（`session.reflectAchievement`。依頼文は session-manager が
  * その日の成果を数え直して組む。`docs/design.md`「日記の受け取りと保存」「コマンドと依頼」）。
  * **画面は移らない。**
  */
@@ -269,7 +269,7 @@ function reviewButtonOf(
       if (availability.kind !== "available") {
         return
       }
-      dispatch({ type: "reflect-achievement", date: daySwitch.date })
+      dispatch.session.reflectAchievement({ date: daySwitch.date })
     },
   }
 }

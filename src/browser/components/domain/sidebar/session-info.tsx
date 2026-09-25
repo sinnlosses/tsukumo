@@ -4,7 +4,7 @@
 // （`components/domain/screen-nav/`）へ移った。**置かれるのは区画ではなくサイドバーの下端の帯**
 // （`.sidebar-footer`。`sidebar.tsx`）なので、見出しは名乗らない。
 //
-// キャラクターの `<select>`（`character-switch.tsx`）は変更で `switch-character` を `dispatch`
+// キャラクターの `<select>`（`character-switch.tsx`）は変更で `session.switchCharacter` を `dispatch`
 // する。**雑談中はここに置かない** — キャラクターの切り替えはプロフィールの札の「変える」へ
 // 移り（`profile-card.tsx`。docs/screen-design.md 13.7「雑談のときのサイドバー」）、帯に残るのは
 // セッションの行だけになる。

@@ -94,7 +94,7 @@ describe("CharacterCreate", () => {
     expect(submitButton().getAttribute("aria-disabled")).toBe("false")
   })
 
-  it("押せないあいだ「作る」を押しても create-character を送らない", () => {
+  it("押せないあいだ「作る」を押しても characterPack.create を送らない", () => {
     const calls: unknown[] = []
     render(
       characterCreate(
@@ -130,7 +130,7 @@ describe("CharacterCreate", () => {
     )
   })
 
-  it("そろった状態で押すと、名前・id・立ち絵・画面の差し色2つを載せた create-character を dispatch する", async () => {
+  it("そろった状態で押すと、名前・id・立ち絵・画面の差し色2つを載せた characterPack.create を dispatch する", async () => {
     const calls: unknown[] = []
     render(
       characterCreate(
@@ -149,7 +149,7 @@ describe("CharacterCreate", () => {
 
     expect(calls).toEqual([
       {
-        type: "create-character",
+        procedure: "characterPack.create",
         id: "fictional-2",
         name: "架空の2号",
         portraits: {

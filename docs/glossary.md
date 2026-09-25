@@ -493,7 +493,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### 見送り
 
-- **英語識別子（予定）**: `dismiss`（画面のコマンドは `dismiss-usage-proposal`、届いたイベントは
+- **英語識別子（予定）**: `dismiss`（画面のコマンドは `usageReview.dismissProposal`、届いたイベントは
   `usage-proposal-dismissed`、記録の読み書きは `usage-proposal-dismissal.ts`）
 - **定義**: 結果の札の「見送る」を押し、その提案を次の見直しでも出さないようにすること。
   識別子（`usageProposalKey`）で指し、ホームのファイルに一覧として残る
@@ -817,7 +817,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 ### 成果の振り返り
 
 - **英語識別子（予定）**: `achievementReflection`（依頼文は `achievementReflectionRequestText`、
-  画面から送るコマンドは `reflect-achievement`）
+  画面から送るコマンドは `session.reflectAchievement`）
 - **定義**: 成果の画面のボタン（と見開きの「この日を振り返る」）から頼む、その日の日記書き。
   tsukumo がその日の数・終えたタスク・卒業と節目を数えて依頼文を組み、**会話とは別の使い捨ての
   問い合わせ**でキャラクターに `diary` ツールでその日の**日記**を書いてもらう（2026-09-25。
@@ -975,27 +975,30 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### フレーム
 
-- **英語識別子**: `ServerFrame`（`hello` / `events` / `error`）
-- **定義**: サーバがブラウザへ WebSocket で送る1件。`hello` は接続直後の snapshot、`events` は
-  まとめたイベント、`error` はコマンドの失敗
+- **英語識別子**: `ServerFrame`（`hello` / `events` / `refresh`）
+- **定義**: サーバがブラウザへ WebSocket で押す1件。`hello` は接続直後の snapshot、`events` は
+  まとめたイベント、`refresh` は開発中の取り直しの合図。**コマンドの応答はフレームではない**
+  （同じ `/ws` に乗る手続きの応答。下の「コマンド」）
 - **注記**: 経路名 `/ws` とトークンのクエリ名は `src/shared/session-socket.ts` が正典で、
   `adapter` と `browser` は値を再掲しない
 - **避ける言い方**: メッセージ（SDK の `SDKMessage` と紛れる）、パケット
 
 ### コマンド
 
-- **英語識別子**: `ClientCommand`（`prompt` / `interrupt` / `answer` / `switch-character` など28種。
-  一覧は `src/shared/command.ts` の `clientCommandSchema`）
-- **定義**: ブラウザがサーバへ WebSocket で送る1件。`commandId` を持ち、失敗は `error` フレームで返る
-- **注記**: **スラッシュコマンド（`/model` など）とは別物。** あちらは `prompt` の `text` に書く。
-  **どの機能が受け、どの条件で断るかは機能ごとの表**（`src/server/<機能>/core/<機能>-command.ts`。
-  `docs/design.md` 2章「コマンドの受け手と手続きの置き方」）。**oRPC へ移す段3のあとは「書き込みの
-  手続き」を指し**、`ClientCommand` の和と `parseClientCommand` は無くなる（形は下の「契約」へ移る）
+- **英語識別子**: 手続きの名前（`session.prompt` / `session.interrupt` / `session.switchCharacter` /
+  `characterPack.setPortrait` など28種。形は `src/shared/contract/<機能>.ts`、束は
+  `src/shared/rpc.ts` の `commandContract`）
+- **定義**: ブラウザがサーバへ送る**書き込みの手続き**。`/ws` の上で oRPC の要求として送り、
+  断られたら契約のエラー `REFUSED`（理由は定型文）が応答で返る
+- **注記**: **スラッシュコマンド（`/model` など）とは別物。** あちらは `session.prompt` の `text` に
+  書く。**どの機能が受け、どの条件で断るかは契約**（断る条件は `meta`）**と機能ごとの表**
+  （`src/server/<機能>/core/<機能>-command.ts`。`docs/design.md` 2章「コマンドの受け手と手続きの
+  置き方」）。2026-09-26 まではコマンドの和 `ClientCommand`（`src/shared/command.ts`）だった
 - **避ける言い方**: リクエスト、アクション
 
 ### 契約
 
-- **英語識別子（予定）**: `contract`（ディレクトリ `src/shared/contract/`）
+- **英語識別子**: `contract`（ディレクトリ `src/shared/contract/`）
 - **定義**: ブラウザとサーバが取り交わす**手続き1つぶんの形**（入力・出力・エラー・断る条件の `meta`）。
   機能ごとに `src/shared/contract/<機能>.ts` に置き、zod と `@orpc/contract` で書く
 - **注記**: 上の「プロトコル」（`shared` 全体。イベント・状態・reducer も含む）の一部で、そのうち
@@ -1005,7 +1008,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### 手続き
 
-- **英語識別子（予定）**: `procedure`（`src/server/<機能>/adapter/<機能>-procedure.ts`）
+- **英語識別子**: `procedure`（`src/server/<機能>/adapter/<機能>-procedure.ts`）
 - **定義**: 契約に受け手を付けたもの。**画面からのコマンドと読み取りのどちらもこれで受ける**
   （oRPC の手続き。全部を束ねるのは配線の `src/router.ts`）
 - **注記**: 中身は機能の `core` へ委ねる数行で、判断を書かない。断る条件（雑談の外・ターン中）は

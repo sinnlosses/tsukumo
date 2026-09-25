@@ -23,10 +23,10 @@ import {
 } from "../../../../src/server/character-pack/adapter/character-pack.ts"
 import { DEFAULT_BACKGROUND_VEIL } from "../../../../src/shared/character-background.ts"
 import {
-  type CharacterCreateCommand,
-  type CharacterDeleteCommand,
-  type CharacterEditCommand,
-} from "../../../../src/shared/command.ts"
+  type CharacterCreate,
+  type CharacterDelete,
+  type CharacterEdit,
+} from "../../../../src/shared/contract/character-pack.ts"
 import { EXPRESSIONS } from "../../../../src/shared/expression.ts"
 
 // フィクスチャは手で書いた架空のパック（実物の素材・人格は使わない）。
@@ -88,8 +88,8 @@ function setPortrait(
   expression: "default" | "proud",
   image: string,
   pack = "tsukumo",
-): CharacterEditCommand {
-  return { type: "set-portrait", commandId: "c-1", pack, expression, image }
+): CharacterEdit {
+  return { kind: "setPortrait", pack, expression, image }
 }
 
 /**
@@ -97,13 +97,8 @@ function setPortrait(
  * 必ず入る）。**名前は既定で空**（=「id をそのまま表示名に使う」を試すテストが多いため）で、
  * 表示名を試すテストだけ `overrides` で足す。
  */
-function createCharacter(
-  id: string,
-  overrides: Partial<CharacterCreateCommand> = {},
-): CharacterCreateCommand {
+function createCharacter(id: string, overrides: Partial<CharacterCreate> = {}): CharacterCreate {
   return {
-    type: "create-character",
-    commandId: "c-1",
     id,
     name: "",
     portraits: { default: SVG_DATA_URL },
@@ -220,7 +215,7 @@ describe("editCharacterPack（立ち絵）", () => {
     const edited = editCharacterPack(
       readCharacterPack(bundled),
       [],
-      { type: "clear-portrait", commandId: "c-1", pack: "tsukumo", expression: "proud" },
+      { kind: "clearPortrait", pack: "tsukumo", expression: "proud" },
       join(dir, "cwd"),
       home(),
     )
@@ -281,8 +276,7 @@ describe("editCharacterPack（差し色）", () => {
       readCharacterPack(bundled),
       [],
       {
-        type: "set-outfit-accent",
-        commandId: "c-1",
+        kind: "setOutfitAccent",
         pack: "tsukumo",
         outfit: "heavy",
         color: "#ffb3a7",
@@ -303,7 +297,7 @@ describe("editCharacterPack（画面の差し色）", () => {
     const edited = editCharacterPack(
       readCharacterPack(bundled),
       [],
-      { type: "set-accent", commandId: "c-1", pack: "tsukumo", target: "work", color: "#123456" },
+      { kind: "setAccent", pack: "tsukumo", target: "work", color: "#123456" },
       join(dir, "cwd"),
       home(),
     )
@@ -317,7 +311,7 @@ describe("editCharacterPack（画面の差し色）", () => {
     const edited = editCharacterPack(
       readCharacterPack(bundled),
       [],
-      { type: "set-accent", commandId: "c-1", pack: "tsukumo", target: "chat", color: "#f2984a" },
+      { kind: "setAccent", pack: "tsukumo", target: "chat", color: "#f2984a" },
       join(dir, "cwd"),
       home(),
     )
@@ -332,7 +326,7 @@ describe("editCharacterPack（画面の差し色）", () => {
     const withChatAccent = editCharacterPack(
       readCharacterPack(bundled),
       [],
-      { type: "set-accent", commandId: "c-1", pack: "tsukumo", target: "chat", color: "#f2984a" },
+      { kind: "setAccent", pack: "tsukumo", target: "chat", color: "#f2984a" },
       cwd,
       home(),
     )
@@ -343,7 +337,7 @@ describe("editCharacterPack（画面の差し色）", () => {
     const cleared = editCharacterPack(
       withChatAccent,
       [],
-      { type: "clear-chat-accent", commandId: "c-2", pack: "tsukumo" },
+      { kind: "clearChatAccent", pack: "tsukumo" },
       cwd,
       home(),
     )
@@ -353,15 +347,14 @@ describe("editCharacterPack（画面の差し色）", () => {
 })
 
 describe("editCharacterPack（名前とプロフィール）", () => {
-  it("名前とひとことプロフィールを差し替える（set-profile。ほかのキーは残る）", () => {
+  it("名前とひとことプロフィールを差し替える（characterPack.setProfile。ほかのキーは残る）", () => {
     const bundled = writeBundledPack("tsukumo")
 
     const edited = editCharacterPack(
       readCharacterPack(bundled),
       [],
       {
-        type: "set-profile",
-        commandId: "c-1",
+        kind: "setProfile",
         pack: "tsukumo",
         name: "新しい表示名",
         tagline: "ひとことプロフィール",
@@ -372,7 +365,7 @@ describe("editCharacterPack（名前とプロフィール）", () => {
 
     expect(edited?.definition?.name).toBe("新しい表示名")
     expect(edited?.definition?.tagline).toBe("ひとことプロフィール")
-    // set-portrait / set-accent と同じく、触っていないキーは残る。
+    // characterPack.setPortrait / characterPack.setAccent と同じく、触っていないキーは残る。
     expect(edited?.definition?.outfitAccents.default).toBe("#b8c7ff")
 
     // 一覧に読み直しても書き変わった定義が出る（サーバは書いたあと `event()` で一覧を読み直す。
@@ -393,7 +386,7 @@ describe("editCharacterPack（名前とプロフィール）", () => {
     const edited = editCharacterPack(
       readCharacterPack(bundled),
       [],
-      { type: "set-profile", commandId: "c-1", pack: "tsukumo", name: "", tagline: "残る一言" },
+      { kind: "setProfile", pack: "tsukumo", name: "", tagline: "残る一言" },
       join(dir, "cwd"),
       home(),
     )
@@ -408,7 +401,7 @@ describe("editCharacterPack（名前とプロフィール）", () => {
     const edited = editCharacterPack(
       readCharacterPack(bundled),
       [],
-      { type: "set-profile", commandId: "c-1", pack: "tsukumo", name: "残る名前", tagline: "  " },
+      { kind: "setProfile", pack: "tsukumo", name: "残る名前", tagline: "  " },
       join(dir, "cwd"),
       home(),
     )
@@ -425,7 +418,7 @@ describe("editCharacterPack（背景）", () => {
     const edited = editCharacterPack(
       readCharacterPack(bundled),
       [],
-      { type: "set-background", commandId: "c-1", pack: "tsukumo", image: PNG_DATA_URL },
+      { kind: "setBackground", pack: "tsukumo", image: PNG_DATA_URL },
       join(dir, "cwd"),
       home(),
     )
@@ -444,7 +437,7 @@ describe("editCharacterPack（背景）", () => {
     const edited = editCharacterPack(
       readCharacterPack(bundled),
       [],
-      { type: "set-background", commandId: "c-1", pack: "tsukumo", image: PNG_DATA_URL },
+      { kind: "setBackground", pack: "tsukumo", image: PNG_DATA_URL },
       join(dir, "cwd"),
       home(),
     )
@@ -459,7 +452,7 @@ describe("editCharacterPack（背景）", () => {
     const first = editCharacterPack(
       readCharacterPack(bundled),
       [],
-      { type: "set-background", commandId: "c-1", pack: "tsukumo", image: PNG_DATA_URL },
+      { kind: "setBackground", pack: "tsukumo", image: PNG_DATA_URL },
       cwd,
       home(),
     )
@@ -470,7 +463,7 @@ describe("editCharacterPack（背景）", () => {
     const second = editCharacterPack(
       first,
       [],
-      { type: "set-background", commandId: "c-2", pack: "tsukumo", image: WEBP_DATA_URL },
+      { kind: "setBackground", pack: "tsukumo", image: WEBP_DATA_URL },
       cwd,
       home(),
     )
@@ -486,7 +479,7 @@ describe("editCharacterPack（背景）", () => {
     const withBackground = editCharacterPack(
       readCharacterPack(bundled),
       [],
-      { type: "set-background", commandId: "c-1", pack: "tsukumo", image: PNG_DATA_URL },
+      { kind: "setBackground", pack: "tsukumo", image: PNG_DATA_URL },
       cwd,
       home(),
     )
@@ -497,7 +490,7 @@ describe("editCharacterPack（背景）", () => {
     const cleared = editCharacterPack(
       withBackground,
       [],
-      { type: "clear-background", commandId: "c-2", pack: "tsukumo" },
+      { kind: "clearBackground", pack: "tsukumo" },
       cwd,
       home(),
     )
@@ -515,7 +508,7 @@ describe("editCharacterPack（顔）", () => {
     const edited = editCharacterPack(
       readCharacterPack(bundled),
       [],
-      { type: "set-face", commandId: "c-1", pack: "tsukumo", image: PNG_DATA_URL },
+      { kind: "setFace", pack: "tsukumo", image: PNG_DATA_URL },
       join(dir, "cwd"),
       home(),
     )
@@ -533,7 +526,7 @@ describe("editCharacterPack（顔）", () => {
     const first = editCharacterPack(
       readCharacterPack(bundled),
       [],
-      { type: "set-face", commandId: "c-1", pack: "tsukumo", image: PNG_DATA_URL },
+      { kind: "setFace", pack: "tsukumo", image: PNG_DATA_URL },
       cwd,
       home(),
     )
@@ -544,7 +537,7 @@ describe("editCharacterPack（顔）", () => {
     const second = editCharacterPack(
       first,
       [],
-      { type: "set-face", commandId: "c-2", pack: "tsukumo", image: SVG_DATA_URL },
+      { kind: "setFace", pack: "tsukumo", image: SVG_DATA_URL },
       cwd,
       home(),
     )
@@ -560,7 +553,7 @@ describe("editCharacterPack（顔）", () => {
     const withFace = editCharacterPack(
       readCharacterPack(bundled),
       [],
-      { type: "set-face", commandId: "c-1", pack: "tsukumo", image: PNG_DATA_URL },
+      { kind: "setFace", pack: "tsukumo", image: PNG_DATA_URL },
       cwd,
       home(),
     )
@@ -571,7 +564,7 @@ describe("editCharacterPack（顔）", () => {
     const cleared = editCharacterPack(
       withFace,
       [],
-      { type: "clear-face", commandId: "c-2", pack: "tsukumo" },
+      { kind: "clearFace", pack: "tsukumo" },
       cwd,
       home(),
     )
@@ -601,8 +594,7 @@ describe("editCharacterPack（訪問の peek）", () => {
       readCharacterPack(packDir),
       [],
       {
-        type: "set-outfit-accent",
-        commandId: "c-1",
+        kind: "setOutfitAccent",
         pack: "tsukumo",
         outfit: "heavy",
         color: "#ffb3a7",
@@ -679,20 +671,18 @@ describe("editCharacterPack（使用中でないパック）", () => {
     const current = readCharacterPack(writeBundledPack("tsukumo"))
     writeBundledPack("fictional-other")
     // 画面が1回ごとに一覧を読み直すのと同じく、編集のたびに一覧を引き直して渡す。
-    const edit = (command: CharacterEditCommand) =>
+    const edit = (command: CharacterEdit) =>
       editCharacterPack(current, listCharacterPacks(cwd, roots), command, cwd, home())
 
     edit(setPortrait("proud", PNG_DATA_URL, "fictional-other"))
     edit({
-      type: "set-accent",
-      commandId: "c-2",
+      kind: "setAccent",
       pack: "fictional-other",
       target: "work",
       color: "#123456",
     })
     const edited = edit({
-      type: "set-background",
-      commandId: "c-3",
+      kind: "setBackground",
       pack: "fictional-other",
       image: PNG_DATA_URL,
     })
@@ -798,8 +788,8 @@ describe("deleteCharacterPack", () => {
     return packDir
   }
 
-  function deleteCommand(pack: string): CharacterDeleteCommand {
-    return { type: "delete-character", commandId: "c-1", pack }
+  function deleteCommand(pack: string): CharacterDelete {
+    return { pack }
   }
 
   /** 一覧を読み、`currentName` を使用中にして `pack` を消す（消したあとの一覧の名前も返す）。 */

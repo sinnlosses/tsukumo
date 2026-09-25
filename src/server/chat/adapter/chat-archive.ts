@@ -13,7 +13,7 @@
 //
 // **読む口は `readRecent` の1つだけ**（かつて決めた「読む口は持たない」を覆している。理由と
 // 量の正典は `docs/chat-mode.md` 4.9「直近の会話は逐語のまま読み戻す」）。
-// 読んだものの行き先は**雑談のセッションの `systemPrompt`** だけで、画面にも `error` フレームにも
+// 読んだものの行き先は**雑談のセッションの `systemPrompt`** だけで、画面にも手続きの応答にも
 // stderr にも出さない。**どこまで読むかは呼ぶ側が渡すバイト数**で、ここは遡って集めることと
 // 並べ替えだけをする（文面を読んで載せる・載せないを決めない）。
 //
@@ -192,7 +192,7 @@ export function discardChatArchive(packName: string, root: string = chatArchiveD
  * 汚さないためにある（`createChatSummary` の `root` と同じ手）。
  *
  * **1つの口を複数のパック・複数の日にまたいで使い回せる**——`append` のたびに `packName` と
- * `entry.at`（ローカル日付）から行き先のパスを組み立てる。パックの切り替え（`switch-character`）
+ * `entry.at`（ローカル日付）から行き先のパスを組み立てる。パックの切り替え（`session.switchCharacter`）
  * をまたいでも起こし直す必要が無い。
  *
  * **書くのは `session-manager` から1件ずつ、読むのはセッションを起こすとき1回だけ**と持ち場が

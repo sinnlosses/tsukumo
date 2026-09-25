@@ -286,7 +286,7 @@ describe("useDiaryBook（書かれた日）", () => {
 })
 
 describe("useDiaryBook（白紙の日）", () => {
-  it("白紙の日は bookmark が pending で、押すと reflect-achievement を送り見ている日も変わって閉じる", async () => {
+  it("白紙の日は bookmark が pending で、押すと session.reflectAchievement を送り見ている日も変わって閉じる", async () => {
     stubFetch((call) =>
       rpcOutput(
         JSON.stringify(call.input) === JSON.stringify({ kind: "chosen", date: "2026-09-23" })
@@ -327,7 +327,7 @@ describe("useDiaryBook（白紙の日）", () => {
       review.onReview()
     })
 
-    expect(sent).toEqual([{ type: "reflect-achievement", date: "2026-09-23" }])
+    expect(sent).toEqual([{ procedure: "session.reflectAchievement", date: "2026-09-23" }])
     expect(selected).toEqual(["2026-09-23", "2026-09-23"])
     expect(result.current.open).toBe(false)
   })

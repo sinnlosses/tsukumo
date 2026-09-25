@@ -1,6 +1,11 @@
-// フレーム（サーバ → ブラウザ）とコマンド（ブラウザ → サーバ）が通る WebSocket の境界
+// フレーム（サーバ → ブラウザ）とコマンドの手続き（ブラウザ → サーバ）が通る WebSocket の境界
 // （`GET /ws?t=<起動トークン>`）。**ページと素材を配る HTTP は別の境界**（`server.ts`。
 // ここは `listen` 済みのサーバに upgrade の受け口を足すだけで、自分では listen しない）。
+//
+// **1本の接続に2つが相乗りする**: 押し出し（`hello` / `events` / `refresh` のフレーム。
+// `subscribe`）と、コマンドの手続きの要求と応答（oRPC の `RPCHandler`。束ねたルータは配線の
+// `src/router.ts`）。届くメッセージはすべて手続きの要求で、振り分けるのはブラウザの側
+// （`src/browser/lib/socket.ts`）。
 //
 // **`Bun.serve` の WebSocket には寄せない**（`ws` パッケージ。docs/coding-standards.md
 // 「Bun固有APIに寄せない」）。
@@ -9,17 +14,21 @@
 //   - **起動トークン**（`server.ts` の `createStartupToken`。起動ごとの乱数で、ディスクに
 //     書かない）が合わないと upgrade をしない
 //   - `Origin` があれば自分のオリジンと一致すること（無ければ通す）
-//   - 送り返す `error` の理由は定型文だけ（会話の内容を混ぜない）
+//   - 断るときの理由は定型文だけ（会話の内容を混ぜない）。読めないメッセージは中身をどこにも
+//     出さずに捨てる
 
 import { type IncomingMessage, type Server } from "node:http"
 import { type Duplex } from "node:stream"
 
+import { type Router } from "@orpc/server"
+import { RPCHandler } from "@orpc/server/websocket"
 import { type RawData, WebSocketServer } from "ws"
 
-import { type ClientCommand, parseClientCommand } from "../../../shared/command.ts"
-import { FRAME_ERROR_REASON, type ServerFrame } from "../../../shared/frame.ts"
+import { type ServerFrame } from "../../../shared/frame.ts"
+import { type commandContract } from "../../../shared/rpc.ts"
 import { SESSION_SOCKET_PATH, SESSION_TOKEN_QUERY_NAME } from "../../../shared/session-socket.ts"
-import { type DispatchResult } from "../../session/core/command-dispatch.ts"
+import { type CommandSession } from "../../session/core/command-session.ts"
+import { type CommandRpcContext, rpcContextOf } from "./rpc-guard.ts"
 
 /**
  * 受け取るメッセージ1件の上限（バイト）。**1件の依頼に添えられる画像（原寸 5 MiB × 2 枚）を
@@ -27,7 +36,7 @@ import { type DispatchResult } from "../../session/core/command-dispatch.ts"
  * ≒ 0.34 MiB ＋ 文面 20,000 文字で約 13.7 MiB。`docs/requirements.md` 4.10 の表）。
  *
  * **依頼の文面の上限はこれとは別に効いている**（zod の `MAX_PROMPT_TEXT_LENGTH`。
- * `src/shared/command.ts`）ので、ここを上げても送れる文面は長くならない。
+ * `src/shared/contract/session.ts`）ので、ここを上げても送れる文面は長くならない。
  */
 const MAX_MESSAGE_BYTES = 16 * 1024 * 1024
 
@@ -39,9 +48,14 @@ export type SessionSocketOptions = {
   readonly origin: string
   /** 接続を購読に加える（`session-manager` の `subscribe`）。外すための関数を返す契約。 */
   readonly subscribe: (send: (frame: ServerFrame) => void) => () => void
-  /** コマンドを渡す（`session-manager` の `dispatch`）。 */
-  readonly dispatch: (command: ClientCommand) => Promise<DispatchResult>
+  /** コマンドの手続きを束ねたルータ（配線の `src/router.ts` の `createCommandRouter`）。 */
+  readonly commandRouter: CommandRouter
+  /** 手続きの context に載せるセッションの口（`session-manager` の `commandSession`）。 */
+  readonly commandSession: CommandSession
 }
+
+/** `/ws` に載せるコマンドのルータ。 */
+export type CommandRouter = Router<typeof commandContract, CommandRpcContext>
 
 export type SessionSocket = {
   /** upgrade の受け口を外し、開いている接続を閉じる。 */
@@ -56,6 +70,7 @@ export type SessionSocket = {
  */
 export function attachSessionSocket(options: SessionSocketOptions): SessionSocket {
   const sockets = new WebSocketServer({ noServer: true, maxPayload: MAX_MESSAGE_BYTES })
+  const commands = new RPCHandler(options.commandRouter)
 
   const onUpgrade = (request: IncomingMessage, socket: Duplex, head: Buffer): void => {
     if (!isAllowedUpgrade(request, options)) {
@@ -72,7 +87,12 @@ export function attachSessionSocket(options: SessionSocketOptions): SessionSocke
 
   options.httpServer.on("upgrade", onUpgrade)
 
-  sockets.on("connection", (connection) => {
+  sockets.on("connection", (connection, request: IncomingMessage) => {
+    // 照合の材料は upgrade の要求から写す（手続きの前のミドルウェア `rpc-guard.ts` がもう一度見る）。
+    const context: CommandRpcContext = {
+      ...rpcContextOf(request, { startupToken: options.token, serverOrigin: options.origin }),
+      session: options.commandSession,
+    }
     const send = (frame: ServerFrame): void => {
       if (connection.readyState === connection.OPEN) {
         connection.send(JSON.stringify(frame))
@@ -81,9 +101,15 @@ export function attachSessionSocket(options: SessionSocketOptions): SessionSocke
 
     const unsubscribe = options.subscribe(send)
     connection.on("message", (data: RawData) => {
-      receive(data, send, options.dispatch)
+      // **読めないメッセージ（手続きの要求の形でないもの）は黙って捨てる。** 受け口の既定
+      // （`upgrade`）は投げたものを `console.error` へ出し、JSON の読み違いの理由には届いた文面の
+      // 断片が入りうる（`docs/coding-standards.md`「会話内容の扱い」）。
+      commands.message(connection, messageText(data), { context }).catch(() => {})
     })
-    connection.on("close", unsubscribe)
+    connection.on("close", () => {
+      commands.close(connection)
+      unsubscribe()
+    })
   })
 
   return {
@@ -112,41 +138,6 @@ function isAllowedUpgrade(request: IncomingMessage, options: SessionSocketOption
 
   const origin = request.headers.origin
   return origin === undefined || origin === options.origin
-}
-
-/**
- * 届いたメッセージ1件をコマンドとして受け取る。**読めない・受け付けられないときは定型文の
- * `error` を返す**（届いた値を理由に混ぜない。docs/coding-standards.md「会話内容の扱い」）。
- */
-function receive(
-  data: RawData,
-  send: (frame: ServerFrame) => void,
-  dispatch: (command: ClientCommand) => Promise<DispatchResult>,
-): void {
-  const command = parseClientCommand(decodeJson(data))
-  if (command === undefined) {
-    send({ type: "error", commandId: undefined, reason: FRAME_ERROR_REASON.invalidCommand })
-    return
-  }
-
-  dispatch(command)
-    .then((result) => {
-      if (!result.ok) {
-        send({ type: "error", commandId: command.commandId, reason: result.reason })
-      }
-    })
-    .catch(() => {
-      send({ type: "error", commandId: command.commandId, reason: FRAME_ERROR_REASON.driverFailed })
-    })
-}
-
-/** WebSocket の1メッセージを JSON として読む。読めなければ undefined（呼び出し側が弾く）。 */
-function decodeJson(data: RawData): unknown {
-  try {
-    return JSON.parse(messageText(data))
-  } catch {
-    return undefined
-  }
 }
 
 /** `ws` が渡してくる3つの形（Buffer / Buffer の並び / ArrayBuffer）を文字列にする。 */

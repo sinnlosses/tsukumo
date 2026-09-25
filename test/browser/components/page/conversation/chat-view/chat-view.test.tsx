@@ -701,7 +701,7 @@ describe("ChatView の立ち絵をつつく", () => {
     fireEvent.click(portraitButton())
 
     // **送るのは押した事実だけ**（文面は `src/server/chat/core/chat-nudge.ts` が持つ）。
-    expect(sent).toEqual([{ type: "nudge" }])
+    expect(sent).toEqual([{ procedure: "session.nudge" }])
   })
 
   it("押してもログには何も積まない（送った文面が並ばない）", () => {
@@ -731,7 +731,7 @@ describe("ChatView の立ち絵をつつく", () => {
 
     // キーボードの Enter がブラウザから届いたところ（＝ click）で nudge が飛ぶ。
     fireEvent.click(button, { detail: 0 })
-    expect(sent).toEqual([{ type: "nudge" }])
+    expect(sent).toEqual([{ procedure: "session.nudge" }])
   })
 
   it("ターン進行中は押せない（返事を待つ）", () => {
@@ -758,6 +758,6 @@ describe("ChatView の立ち絵をつつく", () => {
 
     fireEvent.click(portraitButton())
 
-    expect(sent).toEqual([{ type: "nudge" }])
+    expect(sent).toEqual([{ procedure: "session.nudge" }])
   })
 })

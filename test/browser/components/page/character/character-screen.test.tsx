@@ -126,7 +126,7 @@ describe("CharacterScreen", () => {
   })
 
   // 完了条件: 「新しく作る」がダイアログを開き、作れたら閉じて一覧で新しいパックが選ばれる。
-  // id・名前・立ち絵・差し色を持つ create-character の組み立てそのものは
+  // id・名前・立ち絵・差し色を持つ characterPack.create の組み立てそのものは
   // `character-create.test.tsx` / `use-character-create.test.tsx` が持つので、ここでは
   // 送られた id（次の選択に効く）だけを見る。
   it("新しく作るはダイアログを開き、作れたら閉じて一覧でそのパックを選ぶ", async () => {
@@ -156,7 +156,7 @@ describe("CharacterScreen", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "作る" }))
     expect(calls).toHaveLength(1)
-    expect(calls[0]).toMatchObject({ type: "create-character", id: "fictional-3" })
+    expect(calls[0]).toMatchObject({ procedure: "characterPack.create", id: "fictional-3" })
     // まだ一覧に出ていないので、ダイアログは開いたまま。
     expect(screen.getByRole("heading", { name: "新しいキャラクター" })).toBeDefined()
 
@@ -197,7 +197,7 @@ describe("CharacterScreen", () => {
 
     expect(calls).toEqual([
       {
-        type: "set-portrait",
+        procedure: "characterPack.setPortrait",
         pack: "other",
         expression: "proud",
         image: `data:image/png;base64,${Buffer.from("png").toString("base64")}`,
@@ -219,14 +219,14 @@ describe("CharacterScreen", () => {
     expect(profileName()).toBe("架空の精霊")
   })
 
-  it("使用中以外のパックでは「このキャラクターに切り替える」が switch-character を送る", () => {
+  it("使用中以外のパックでは「このキャラクターに切り替える」が session.switchCharacter を送る", () => {
     const calls: unknown[] = []
     window.location.hash = "#character?pack=other"
     renderCharacterScreen({}, (command) => calls.push(command))
 
     fireEvent.click(screen.getByRole("button", { name: /このキャラクターに切り替える/ }))
 
-    expect(calls).toEqual([{ type: "switch-character", name: "other" }])
+    expect(calls).toEqual([{ procedure: "session.switchCharacter", name: "other" }])
   })
 
   // 切り替えは起こし直しなので、ターン進行中は押せない（サイドバーの `<select>` と同じ規則）。
@@ -244,7 +244,7 @@ describe("CharacterScreen", () => {
     expect(document.activeElement).toBe(button)
   })
 
-  it("ターン進行中は「このキャラクターに切り替える」を押しても switch-character を送らない", () => {
+  it("ターン進行中は「このキャラクターに切り替える」を押しても session.switchCharacter を送らない", () => {
     const calls: unknown[] = []
     window.location.hash = "#character?pack=other"
     renderCharacterScreen({ turn: { kind: "running", startedAt: 1 } }, (command) =>

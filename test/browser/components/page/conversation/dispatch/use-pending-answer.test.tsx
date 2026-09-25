@@ -73,8 +73,8 @@ describe("usePendingAnswer", () => {
     model.onDeny()
 
     expect(calls).toEqual([
-      { type: "answer", id: "ask-1", answer: { kind: "allow" } },
-      { type: "answer", id: "ask-1", answer: { kind: "deny" } },
+      { procedure: "session.answer", id: "ask-1", answer: { kind: "allow" } },
+      { procedure: "session.answer", id: "ask-1", answer: { kind: "deny" } },
     ])
   })
 

@@ -266,8 +266,8 @@ describe("ScreenNav", () => {
     })
 
     // 帯の操作子が送るコマンドは、いままでサイドバーの <select> が送っていたものと同じ
-    // （`set-chat-mode`。docs/screen-design.md 13.9）。
-    it("反対側を押すと set-chat-mode を送る", () => {
+    // （`session.setChatMode`。docs/screen-design.md 13.9）。
+    it("反対側を押すと session.setChatMode を送る", () => {
       const calls: unknown[] = []
       renderScreenNav({ chatMode: false }, (command) => {
         calls.push(command)
@@ -275,7 +275,7 @@ describe("ScreenNav", () => {
 
       fireEvent.click(screen.getByRole("button", { name: /雑談/ }))
 
-      expect(calls).toEqual([{ type: "set-chat-mode", chat: true }])
+      expect(calls).toEqual([{ procedure: "session.setChatMode", chat: true }])
     })
 
     it("いまの側を押しても何も送らない", () => {
@@ -362,7 +362,7 @@ describe("ScreenNav", () => {
     })
 
     // 帯の操作子が送るコマンドは、いままでサイドバーの <select> が送っていたものと同じ。
-    it("モデルを変更すると set-model を送る", () => {
+    it("モデルを変更すると session.setModel を送る", () => {
       const calls: unknown[] = []
       renderScreenNav({ model: "claude-sonnet-5" }, (command) => {
         calls.push(command)
@@ -370,10 +370,10 @@ describe("ScreenNav", () => {
 
       fireEvent.change(screen.getByLabelText("モデル"), { target: { value: "opus" } })
 
-      expect(calls).toEqual([{ type: "set-model", model: "opus" }])
+      expect(calls).toEqual([{ procedure: "session.setModel", model: "opus" }])
     })
 
-    it("許可モードを変更すると set-permission-mode を送る", () => {
+    it("許可モードを変更すると session.setPermissionMode を送る", () => {
       const calls: unknown[] = []
       renderScreenNav({ session: { ...RUNNING_SESSION, permissionMode: "auto" } }, (command) => {
         calls.push(command)
@@ -381,7 +381,7 @@ describe("ScreenNav", () => {
 
       fireEvent.change(screen.getByLabelText("許可モード"), { target: { value: "plan" } })
 
-      expect(calls).toEqual([{ type: "set-permission-mode", mode: "plan" }])
+      expect(calls).toEqual([{ procedure: "session.setPermissionMode", mode: "plan" }])
     })
 
     it("ターン進行中も無効にならない（起こし直さないため）", () => {
@@ -464,7 +464,7 @@ describe("ScreenNav", () => {
       expect(select.disabled).toBe(true)
     })
 
-    it("押した値へ先に倒さない：set-effort を送ってもすぐには表示が変わらない", () => {
+    it("押した値へ先に倒さない：session.setEffort を送ってもすぐには表示が変わらない", () => {
       const calls: unknown[] = []
       renderScreenNav(
         { model: "claude-opus-5", modelEffortSupport: [OPUS_SUPPORT], effort: "low" },
@@ -475,7 +475,7 @@ describe("ScreenNav", () => {
 
       fireEvent.change(screen.getByLabelText("effort"), { target: { value: "high" } })
 
-      expect(calls).toEqual([{ type: "set-effort", effort: "high" }])
+      expect(calls).toEqual([{ procedure: "session.setEffort", effort: "high" }])
       // 状態の effort をまだ変えていないので、表示は送る前の値のまま。
       expect((screen.getByLabelText("effort") as HTMLSelectElement).value).toBe("low")
     })

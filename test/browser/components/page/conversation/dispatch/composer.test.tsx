@@ -95,7 +95,7 @@ describe("Composer", () => {
     fireEvent.keyDown(textArea(), { key: "Enter", metaKey: true })
 
     // 画像を添えていない依頼は、空の `images` を伴って送られる。
-    expect(calls).toEqual([{ type: "prompt", text: "架空の依頼", images: [] }])
+    expect(calls).toEqual([{ procedure: "session.prompt", text: "架空の依頼", images: [] }])
     expect(textArea().value).toBe("")
   })
 
@@ -291,7 +291,7 @@ describe("Composer", () => {
 
     expect(calls).toEqual([
       {
-        type: "answer",
+        procedure: "session.answer",
         id: "ask-question",
         answer: { kind: "answers", labels: [["架空の自由な答え"]] },
       },

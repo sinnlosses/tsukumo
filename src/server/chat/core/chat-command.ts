@@ -1,5 +1,8 @@
 // `chat` が受けるコマンドの表（`docs/design.md` 2章「コマンドの受け手と手続きの置き方」）。
+// 手続き（`chat/adapter/chat-procedure.ts`）がここの行へ委ねる。断る条件は契約
+// `src/shared/contract/chat.ts` の `meta`。
 
+import { type chatContract } from "../../../shared/contract/chat.ts"
 import { FRAME_ERROR_REASON } from "../../../shared/frame.ts"
 import { type SessionEvent } from "../../../shared/session-event.ts"
 import { type FeatureCommandTable } from "../../core/command-receiver.ts"
@@ -15,16 +18,11 @@ export type ChatCommandPorts = {
 }
 
 /** `chat` が受けるコマンドの表。 */
-export function chatCommands(
-  ports: ChatCommandPorts,
-): FeatureCommandTable<"forget-remembered-line"> {
+export function chatCommands(ports: ChatCommandPorts): FeatureCommandTable<typeof chatContract> {
   return {
-    // サイドバーの「覚えていること」自体が雑談中にしか出ないので、雑談の外なら断る。
-    "forget-remembered-line": {
+    forgetRememberedLine: {
       kind: "write",
-      chatOnly: FRAME_ERROR_REASON.forgetRememberedLineOutsideChat,
-      idleTurn: false,
-      receive: (command) => ports.forgetRememberedLine(command.line),
+      receive: (input) => ports.forgetRememberedLine(input.line),
       failure: FRAME_ERROR_REASON.forgetRememberedLineFailed,
     },
   }

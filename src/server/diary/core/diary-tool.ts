@@ -36,7 +36,7 @@ export const DIARY_BOOKMARK_DESCRIPTION =
 export type DiaryDayTask = { readonly id: string; readonly summary: string }
 
 /**
- * 書く日（`reflect-achievement` を受けたときに session-manager が数え直した結果。窓口
+ * 書く日（`session.reflectAchievement` を受けたときに session-manager が数え直した結果。窓口
  * （{@link createDiaryIntake}）は問い合わせ1回ごとにこれを受け取って作る）。
  */
 export type DiaryDay = {

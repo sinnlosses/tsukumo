@@ -1,4 +1,4 @@
-// いま出しているキャラクターパックと、切り替えの選択肢の持ち主。**`switch-character` と
+// いま出しているキャラクターパックと、切り替えの選択肢の持ち主。**`session.switchCharacter` と
 // 画面からの編集で入れ替わる**ので、可変なのはこのファイルの中だけにする（呼ぶ側は
 // 「いま出しているもの」を関数越しに引くだけで、いつ入れ替わったかを知らなくてよい）。
 //
@@ -37,10 +37,10 @@ import {
 } from "./server/session/adapter/remembered-default.ts"
 import { type CharacterAssetLocation } from "./shared/character-asset.ts"
 import {
-  type CharacterCreateCommand,
-  type CharacterDeleteCommand,
-  type CharacterEditCommand,
-} from "./shared/command.ts"
+  type CharacterCreate,
+  type CharacterDelete,
+  type CharacterEdit,
+} from "./shared/contract/character-pack.ts"
 import { type SessionEvent } from "./shared/session-event.ts"
 
 /** いま出しているキャラクターパックへの窓口。**持っているパックそのものは外へ出さない。** */
@@ -65,13 +65,13 @@ export type CurrentCharacter = {
    * パックにそのまま持ち替える**ので、そのパックの素材もこのあと書いた先から配る。使用中以外は
    * 持ち替えない（一覧を読み直すだけで、使用中の姿は変わらない）。
    */
-  readonly applyEdit: (edit: CharacterEditCommand) => SessionEvent | undefined
+  readonly applyEdit: (edit: CharacterEdit) => SessionEvent | undefined
   /**
    * 画面から届いた新しいパックを作り、**選択肢の増えた `character-changed` を返す**
    * （作れなければ undefined）。**いま出しているパックは持ち替えない** — 作るだけでは
    * 切り替えず、`<select>` から選んだときに起こし直す（docs/design.md 7.1）。
    */
-  readonly applyCreate: (create: CharacterCreateCommand) => SessionEvent | undefined
+  readonly applyCreate: (create: CharacterCreate) => SessionEvent | undefined
   /**
    * 画面から指されたパックのホームの版を消し、**選択肢の減った（同梱に戻ったものは同梱の姿の）
    * `character-changed` を返す**（消せなければ undefined。使用中は消さないので、いま出している
@@ -79,7 +79,7 @@ export type CurrentCharacter = {
    * アーカイブも消す**（同じ名前で作り直したパックが古い記録を拾わないため。同梱に戻っただけなら
    * 同じキャラクターが続くので残す。`docs/design.md` 7.1「消すときの細部」）。
    */
-  readonly applyDelete: (remove: CharacterDeleteCommand) => SessionEvent | undefined
+  readonly applyDelete: (remove: CharacterDelete) => SessionEvent | undefined
   /**
    * 雑談のサイドバー「覚えていること」の「編集」から1行消し、**流し直す
    * `remembered-lines-changed` を返す**（一致する行が無い・書けない・そのパックが編集できない

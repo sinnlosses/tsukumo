@@ -50,7 +50,7 @@ describe("PendingAnswer", () => {
     expect(screen.getByText("Bash")).toBeDefined()
     fireEvent.click(screen.getByText("許可"))
 
-    expect(calls).toEqual([{ type: "answer", id: "ask-1", answer: { kind: "allow" } }])
+    expect(calls).toEqual([{ procedure: "session.answer", id: "ask-1", answer: { kind: "allow" } }])
   })
 
   it("拒否ボタンも同じ経路で answer を dispatch する", () => {
@@ -62,6 +62,6 @@ describe("PendingAnswer", () => {
 
     fireEvent.click(screen.getByText("拒否"))
 
-    expect(calls).toEqual([{ type: "answer", id: "ask-1", answer: { kind: "deny" } }])
+    expect(calls).toEqual([{ procedure: "session.answer", id: "ask-1", answer: { kind: "deny" } }])
   })
 })

@@ -1,14 +1,14 @@
 // セッションを1つ起こす配線。**どの駆動で起こすか（本物の SDK か疑似セッションの fake driver
 // か）と、続きから始めるセッションをどう探すか**をここで決め、起こす順序そのものは
-// `src/server/session/core/session-launch.ts` に任せる（起動時も起こし直し（`switch-character` /
-// `set-chat-mode`）も同じ関数を通る）。
+// `src/server/session/core/session-launch.ts` に任せる（起動時も起こし直し（`session.switchCharacter` /
+// `session.setChatMode`）も同じ関数を通る）。
 //
 // ここは配線層（`src/` 直下。docs/design.md 2章「層と依存の向き」）。
 
 import process from "node:process"
 
-import { commandRoute } from "./command-route.ts"
 import { type CurrentCharacter } from "./current-character.ts"
+import { createCommandRouter } from "./router.ts"
 import {
   type AchievementCommitCache,
   createAchievementCommitCache,
@@ -77,6 +77,7 @@ import {
   readDismissedUsageProposalKeys,
   writeDismissedUsageProposalKey,
 } from "./server/usage-review/adapter/usage-proposal-dismissal.ts"
+import { type CommandRouter } from "./server/view-server/adapter/session-socket.ts"
 import { queryVisitScript } from "./server/visit/adapter/sdk-visit-script.ts"
 import { createVisitClock } from "./server/visit/adapter/visit-clock.ts"
 import { visitGuests } from "./server/visit/core/visit-guest.ts"
@@ -89,7 +90,7 @@ import { QUICK_VISIT_TIMING, VISIT_TIMING } from "./server/visit/core/visit-timi
 import { UNKNOWN_ACHIEVEMENT } from "./shared/achievement.ts"
 import { CHAT_COMPACT_THRESHOLD_BYTES } from "./shared/chat-log.ts"
 import { CHAT_MEMORY_BUDGET } from "./shared/chat-memory-budget.ts"
-import { type DismissUsageProposalCommand } from "./shared/command.ts"
+import { type UsageProposalDismissal } from "./shared/contract/usage-review.ts"
 import { expressionChoices } from "./shared/expression-choice.ts"
 import { type SessionChoice } from "./shared/session-choice.ts"
 import { type SessionDefault } from "./shared/session-default.ts"
@@ -121,8 +122,15 @@ export type SessionStartOptions = {
   readonly viewPort: number
 }
 
+/** 起こしたセッションと、開いたタブがそれを触るコマンドの手続き。 */
+export type StartedSession = {
+  readonly manager: SessionManager
+  /** `/ws` に載せるコマンドのルータ（`src/router.ts`）。書き込み口の中身はここで選んで渡す。 */
+  readonly commandRouter: CommandRouter
+}
+
 /** セッションを1つ起こし、開いたタブから触れる窓口を返す。 */
-export function startSession(options: SessionStartOptions): SessionManager {
+export function startSession(options: SessionStartOptions): StartedSession {
   const { config, character, fakeSession, tokenUsageLog, promptImageShelf, viewPort } = options
   // claude の作業先は tsukumo を起こしたディレクトリ（作業ツリーを分けるのは orca の側）。
   const cwd = process.cwd()
@@ -137,7 +145,7 @@ export function startSession(options: SessionStartOptions): SessionManager {
   // レポートのパスを開く先（`main.ts` の `openLayoutView` とは別に、ここでも1つ作る。
   // `createOrcaHost()` は状態を持たないので、作り直しても構わない）。
   const host = createOrcaHost()
-  // 成果の振り返り（`reflect-achievement`）がその日の成果を数え直すための入れ物。**配線層
+  // 成果の振り返り（`session.reflectAchievement`）がその日の成果を数え直すための入れ物。**配線層
   // （`view-delivery.ts`）が手続き `achievement.day` で配るのと別に1つ持つ**——両者は別の層（`src/`
   // 直下）で、依存し合わせない。同じ日を両方から数えても、今日以外の日はどちらかが先に
   // 覚えた数を使うだけで結果は変わらない（`src/server/achievement/adapter/main-history.ts`）。
@@ -174,7 +182,7 @@ export function startSession(options: SessionStartOptions): SessionManager {
       rememberPack: (pack) => character.remember(pack),
       // 覚えた既定は**起こすたびに読む**（歯車で書き換えたあと、起こし直しで効く）。
       readSessionDefault: () => readRememberedSessionDefault(),
-      // 覚えた「訪問」のオン・オフも起こすたびに読む。`set-visit-enabled` はこれとは別に
+      // 覚えた「訪問」のオン・オフも起こすたびに読む。`visit.setEnabled` はこれとは別に
       // いま動いているセッションにも即座に効くので、ここで読むのは「起こした直後の初期値」だけ
       // （`docs/screen-design.md` 13.6）。
       readVisitEnabled: () => readRememberedVisitEnabled(),
@@ -236,61 +244,59 @@ export function startSession(options: SessionStartOptions): SessionManager {
           ? visitScriptSource(cwd, config.inheritedEnv, achievementCommitCache, now)
           : { kind: "pack-only" },
     },
-    // コマンドの受け手の表（`src/command-route.ts`）。書き込みの中身はここで選んで渡す。
-    commands: commandRoute({
-      session: {
-        // 置く契機（`prompt`）は表の行、捨てる契機（記録の窓）は `session-manager`。
-        promptImageShelf,
-        // 歯車から届いた既定は、覚えてから画面へ流し直すだけ（いまのセッションには効かない）。
-        rememberSessionDefault: (sessionDefault) => rememberSessionDefault(sessionDefault),
-        // **手続き `achievement.day`（`src/view-delivery.ts`）と同じ数え方**（`readAchievement`）。「今日」を
-        // 決めるのもそちらと同じくここ（配線層）の仕事。読めなかった・`main` が読めない日は
-        // `undefined` に畳み、断る理由は表の行（`session-command.ts`）が決める。
-        readAchievementDay: async (date) => {
-          const result = await readAchievement(
-            cwd,
-            date,
-            todayLocalDateKey(),
-            achievementCommitCache,
-          )
-          return result.kind === "ok" ? result.achievement : undefined
-        },
-        // 振り返りの書き手の出どころ。疑似セッションでは起こさない
-        // （`docs/design.md`「日記の受け取りと保存」「問い合わせの起こし方」）。
-        diary:
-          fakeSession === undefined
-            ? diaryWriterSource(cwd, () => diaryContext, now)
-            : { kind: "dont-write" },
+  })
+  // コマンドの手続き（`src/router.ts`）。書き込みの中身はここで選んで渡す。
+  const commandRouter = createCommandRouter({
+    session: {
+      // 置く契機（`prompt`）は表の行、捨てる契機（記録の窓）は `session-manager`。
+      promptImageShelf,
+      // 歯車から届いた既定は、覚えてから画面へ流し直すだけ（いまのセッションには効かない）。
+      rememberSessionDefault: (sessionDefault) => rememberSessionDefault(sessionDefault),
+      // **手続き `achievement.day`（`src/view-delivery.ts`）と同じ数え方**（`readAchievement`）。「今日」を
+      // 決めるのもそちらと同じくここ（配線層）の仕事。読めなかった・`main` が読めない日は
+      // `undefined` に畳み、断る理由は表の行（`session-command.ts`）が決める。
+      readAchievementDay: async (date) => {
+        const result = await readAchievement(cwd, date, todayLocalDateKey(), achievementCommitCache)
+        return result.kind === "ok" ? result.achievement : undefined
       },
-      characterPack: {
-        editCharacter: (edit) => Promise.resolve(character.applyEdit(edit)),
-        createCharacter: (create) => Promise.resolve(character.applyCreate(create)),
-        deleteCharacter: (remove) => Promise.resolve(character.applyDelete(remove)),
-      },
-      chat: {
-        forgetRememberedLine: (line) => Promise.resolve(character.forgetRememberedLine(line)),
-      },
-      // 歯車から届いた「訪問」のオン・オフは、覚えてから画面へ流し直す。**こちらは
-      // いま動いているセッションにも即座に効く**（`visit-command.ts`）。
-      visit: { rememberVisitEnabled: (visitEnabled) => rememberVisitEnabled(visitEnabled) },
-      usageReview: { dismissUsageProposal: (dismiss) => dismissUsageProposal(dismiss) },
-      host: {
-        openFile: (path) =>
-          openTrackedFile(
-            path,
-            () => listRepositoryFiles(cwd),
-            (tracked) => host.openFile(tracked),
-          ),
-      },
-    }),
+      // 振り返りの書き手の出どころ。疑似セッションでは起こさない
+      // （`docs/design.md`「日記の受け取りと保存」「問い合わせの起こし方」）。
+      diary:
+        fakeSession === undefined
+          ? diaryWriterSource(cwd, () => diaryContext, now)
+          : { kind: "dont-write" },
+    },
+    characterPack: {
+      editCharacter: (edit) => Promise.resolve(character.applyEdit(edit)),
+      createCharacter: (create) => Promise.resolve(character.applyCreate(create)),
+      deleteCharacter: (remove) => Promise.resolve(character.applyDelete(remove)),
+    },
+    chat: {
+      forgetRememberedLine: (line) => Promise.resolve(character.forgetRememberedLine(line)),
+    },
+    // 歯車から届いた「訪問」のオン・オフは、覚えてから画面へ流し直す。**こちらは
+    // いま動いているセッションにも即座に効く**（`visit-command.ts`）。
+    visit: { rememberVisitEnabled: (visitEnabled) => rememberVisitEnabled(visitEnabled) },
+    usageReview: { dismissUsageProposal: (dismiss) => dismissUsageProposal(dismiss) },
+    host: {
+      openFile: (path) =>
+        openTrackedFile(
+          path,
+          () => listRepositoryFiles(cwd),
+          (tracked) => host.openFile(tracked),
+        ),
+    },
   })
   return {
-    ...manager,
-    subscribe: (send) => {
-      const unsubscribe = manager.subscribe(send)
-      firstViewer.resolve()
-      return unsubscribe
+    manager: {
+      ...manager,
+      subscribe: (send) => {
+        const unsubscribe = manager.subscribe(send)
+        firstViewer.resolve()
+        return unsubscribe
+      },
     },
+    commandRouter,
   }
 }
 
@@ -346,7 +352,7 @@ function visitScriptSource(
  * 札を消す）。書き込みは失敗しても例外を投げないので、返すイベントは常に1つ
  * （`rememberSessionDefault` と同じ立場）。
  */
-function dismissUsageProposal(dismiss: DismissUsageProposalCommand): SessionEvent {
+function dismissUsageProposal(dismiss: UsageProposalDismissal): SessionEvent {
   const key = usageProposalKey(dismiss)
   writeDismissedUsageProposalKey(key)
   return { kind: "usage-proposal-dismissed", key }

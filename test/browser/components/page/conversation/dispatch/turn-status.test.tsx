@@ -39,7 +39,7 @@ describe("TurnStatus", () => {
 
     fireEvent.click(button)
 
-    expect(calls).toEqual([{ type: "interrupt" }])
+    expect(calls).toEqual([{ procedure: "session.interrupt" }])
   })
 
   it("ターンが進行中でないときボタンは「送信」（type=submit で dispatch は直接呼ばない）", () => {

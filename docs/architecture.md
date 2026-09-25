@@ -159,8 +159,9 @@ tsukumo の画面だけになる。
 
 データの流れは3本ある。
 
-1. **入力欄 → セッション駆動**: `<Composer>` が `ClientCommand`（`prompt` / `interrupt` など）を
-   WebSocket で送り、`session-manager` が駆動（SDK または fake driver）へ渡す
+1. **入力欄 → セッション駆動**: `<Composer>` がコマンドの手続き（`session.prompt` /
+   `session.interrupt` など）を WebSocket の上で呼び、`session` の行が駆動（SDK または fake driver）へ
+   渡す（`docs/design.md` 2章「コマンドの受け手と手続きの置き方」）
 2. **イベント → 各ビュー**: `assistant` のテキストはメインビューの**レポート**、`speak` の
    引数はキャラビューの**セリフと表情**、`tool_use` / `tool_result` はサイドバーの**進行**に
    なる。`applySessionEvent` で畳んだ `SessionState` を、サーバとブラウザが同じ形で持つ

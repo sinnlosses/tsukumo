@@ -1,6 +1,9 @@
 import { describe, expect, it } from "bun:test"
 
-import { commandRoute, type CommandRoutePorts } from "../../../../src/command-route.ts"
+import { createRouterClient, ORPCError } from "@orpc/server"
+import { isPlainObject } from "remeda"
+
+import { type CommandRouterPorts, createCommandRouter } from "../../../../src/router.ts"
 import { type CharacterSelection } from "../../../../src/server/character-pack/core/character-selection.ts"
 import { CHAT_NUDGE_PROMPT } from "../../../../src/server/chat/core/chat-nudge.ts"
 import {
@@ -24,8 +27,7 @@ import {
 } from "../../../../src/server/session-driver/core/session-driver.ts"
 import { type SessionLaunchRequest } from "../../../../src/server/session/core/session-launch.ts"
 import {
-  createSessionManager as createSessionManagerWithRoute,
-  type SessionManager,
+  createSessionManager as createSessionManagerWithoutCommands,
   type SessionManagerOptions,
 } from "../../../../src/server/session/core/session-manager.ts"
 import {
@@ -39,15 +41,15 @@ import { type DailyAchievement } from "../../../../src/shared/achievement.ts"
 import { type VisitScript } from "../../../../src/shared/character-visit.ts"
 import { CHAT_COMPACT_THRESHOLD_BYTES } from "../../../../src/shared/chat-log.ts"
 import {
-  type CharacterCreateCommand,
-  type CharacterDeleteCommand,
-  type CharacterEditCommand,
-  type DismissUsageProposalCommand,
-} from "../../../../src/shared/command.ts"
-import {
   type ContextUsageReport,
   UNAVAILABLE_CONTEXT_USAGE,
 } from "../../../../src/shared/context-usage.ts"
+import {
+  type CharacterCreate,
+  type CharacterDelete,
+  type CharacterEdit,
+} from "../../../../src/shared/contract/character-pack.ts"
+import { type UsageProposalDismissal } from "../../../../src/shared/contract/usage-review.ts"
 import {
   FRAME_ERROR_REASON,
   PROTOCOL_VERSION,
@@ -188,31 +190,25 @@ const REMEMBERED_LINES_EVENT: SessionEvent = {
 
 /** コマンドの受け手の口（機能ごとの `ports` を平らに並べたもの。棚は `SessionManagerOptions` と共有する）。 */
 type FlatCommandPorts = Omit<
-  CommandRoutePorts["session"] &
-    CommandRoutePorts["characterPack"] &
-    CommandRoutePorts["chat"] &
-    CommandRoutePorts["visit"] &
-    CommandRoutePorts["usageReview"] &
-    CommandRoutePorts["host"],
+  CommandRouterPorts["session"] &
+    CommandRouterPorts["characterPack"] &
+    CommandRouterPorts["chat"] &
+    CommandRouterPorts["visit"] &
+    CommandRouterPorts["usageReview"] &
+    CommandRouterPorts["host"],
   "promptImageShelf"
 >
 
-/**
- * 平らに並べた口から表を組んでセッションを起こす（テストはコマンドの受け手の口を平らに渡す）。
- */
-function createSessionManager(
-  options: Omit<SessionManagerOptions, "commands"> & FlatCommandPorts,
-): SessionManager {
-  return createSessionManagerWithRoute(withCommands(options))
-}
+/** 手続きの照合に使う架空の起動トークンとオリジン（照合そのものは `rpc-guard` のテストが見る）。 */
+const TEST_TOKEN = "架空のトークン"
+const TEST_ORIGIN = "http://127.0.0.1:0"
 
 /**
- * 平らに並べた口から表（`commandRoute`）を組んで `commands` に入れる。**表の束ね方は配線と同じ**
- * （`src/command-route.ts`）なので、ここで見るのは受け手の振る舞いまで含めた `dispatch` の結果。
+ * 平らに並べた口からセッションとコマンドのルータを組む。**ルータの束ね方と門は配線と同じ**
+ * （`src/router.ts` の `createCommandRouter`）なので、`commands` で見るのは断る条件と受け手の
+ * 振る舞いまで含めた手続きの結果。結果は `{ ok: true }` か、断った理由の `{ ok: false, reason }`。
  */
-function withCommands(
-  options: Omit<SessionManagerOptions, "commands"> & FlatCommandPorts,
-): SessionManagerOptions {
+function createSessionManager(options: SessionManagerOptions & FlatCommandPorts) {
   const {
     rememberSessionDefault,
     readAchievementDay,
@@ -226,22 +222,47 @@ function withCommands(
     openFile,
     ...rest
   } = options
-  return {
-    ...rest,
-    commands: commandRoute({
-      session: {
-        promptImageShelf: rest.promptImageShelf,
-        rememberSessionDefault,
-        readAchievementDay,
-        diary,
-      },
-      characterPack: { editCharacter, createCharacter, deleteCharacter },
-      chat: { forgetRememberedLine },
-      visit: { rememberVisitEnabled },
-      usageReview: { dismissUsageProposal },
-      host: { openFile },
-    }),
+  const manager = createSessionManagerWithoutCommands(rest)
+  const router = createCommandRouter({
+    session: {
+      promptImageShelf: rest.promptImageShelf,
+      rememberSessionDefault,
+      readAchievementDay,
+      diary,
+    },
+    characterPack: { editCharacter, createCharacter, deleteCharacter },
+    chat: { forgetRememberedLine },
+    visit: { rememberVisitEnabled },
+    usageReview: { dismissUsageProposal },
+    host: { openFile },
+  })
+  const commands = createRouterClient(router, {
+    context: {
+      presentedToken: TEST_TOKEN,
+      requestOrigin: undefined,
+      startupToken: TEST_TOKEN,
+      serverOrigin: TEST_ORIGIN,
+      session: manager.commandSession,
+    },
+    interceptors: [({ next }) => next().then(() => ({ ok: true }), refusalOf)],
+  })
+  return { ...manager, commands }
+}
+
+/**
+ * 断られた手続き（契約に書いた `REFUSED`）を `{ ok: false, reason }` に畳む（それ以外の失敗は
+ * テストの誤りなので投げ直す）。
+ */
+function refusalOf(error: unknown): { readonly ok: false; readonly reason: unknown } {
+  if (
+    error instanceof ORPCError &&
+    error.code === "REFUSED" &&
+    error.defined &&
+    isPlainObject(error.data)
+  ) {
+    return { ok: false, reason: error.data["reason"] }
   }
+  throw error
 }
 
 function startManagerWithStub(
@@ -251,9 +272,9 @@ function startManagerWithStub(
   diary: DiaryWriterSource = NO_DIARY_WRITER,
 ) {
   const stub = createStubDriver()
-  const edits: CharacterEditCommand[] = []
-  const creates: CharacterCreateCommand[] = []
-  const deletes: CharacterDeleteCommand[] = []
+  const edits: CharacterEdit[] = []
+  const creates: CharacterCreate[] = []
+  const deletes: CharacterDelete[] = []
   /** 覚えた「新しいセッションの既定」（覚え先は配線層なので、ここでは積むだけ）。 */
   const remembered: SessionDefault[] = []
   /** 覚えた「訪問」のオン・オフ（覚え先は配線層なので、ここでは積むだけ）。 */
@@ -263,7 +284,7 @@ function startManagerWithStub(
   /** ホームへ書いた「前回の見直しの結果」（書き先は配線層なので、ここでは積むだけ）。 */
   const writtenPreviousUsageReviews: readonly [number, unknown][] = []
   /** 見送った提案の識別子（書き先は配線層なので、ここでは積むだけ）。 */
-  const dismissedUsageProposals: DismissUsageProposalCommand[] = []
+  const dismissedUsageProposals: UsageProposalDismissal[] = []
   /** `orca file open` を呼ぼうとしたパス（呼び先は配線層なので、ここでは積むだけ）。 */
   const openedFiles: string[] = []
   const written = (): SessionEvent | undefined =>
@@ -411,30 +432,15 @@ describe("createSessionManager", () => {
   it("dispatch がコマンドを駆動へ渡す（分岐はここだけ）", async () => {
     const { manager, stub } = startManagerWithStub()
 
-    expect(
-      await manager.dispatch({
-        type: "prompt",
-        commandId: "c-1",
-        text: "架空の依頼",
-        images: [],
-      }),
-    ).toEqual({ ok: true })
-    expect(await manager.dispatch({ type: "interrupt", commandId: "c-2" })).toEqual({
+    expect(await manager.commands.session.prompt({ text: "架空の依頼", images: [] })).toEqual({
       ok: true,
     })
-    expect(
-      await manager.dispatch({ type: "set-model", commandId: "c-3", model: "sonnet" }),
-    ).toEqual({ ok: true })
-    expect(
-      await manager.dispatch({ type: "set-effort", commandId: "c-3b", effort: "high" }),
-    ).toEqual({ ok: true })
-    expect(
-      await manager.dispatch({
-        type: "set-permission-mode",
-        commandId: "c-4",
-        mode: "plan",
-      }),
-    ).toEqual({ ok: true })
+    expect(await manager.commands.session.interrupt()).toEqual({
+      ok: true,
+    })
+    expect(await manager.commands.session.setModel({ model: "sonnet" })).toEqual({ ok: true })
+    expect(await manager.commands.session.setEffort({ effort: "high" })).toEqual({ ok: true })
+    expect(await manager.commands.session.setPermissionMode({ mode: "plan" })).toEqual({ ok: true })
 
     expect(stub.calls).toEqual([
       "prompt:架空の依頼",
@@ -450,16 +456,11 @@ describe("createSessionManager", () => {
     stub.answerable = false
 
     expect(
-      await manager.dispatch({
-        type: "answer",
-        commandId: "c-2",
-        id: "toolu_gone",
-        answer: { kind: "allow" },
-      }),
+      await manager.commands.session.answer({ id: "toolu_gone", answer: { kind: "allow" } }),
     ).toEqual({ ok: false, reason: FRAME_ERROR_REASON.unresolvedAnswer })
   })
 
-  it("switch-character で駆動を閉じ、別のパックで起こし直して新しい hello を配る", async () => {
+  it("session.switchCharacter で駆動を閉じ、別のパックで起こし直して新しい hello を配る", async () => {
     // 起こされた駆動を順に覚える（`launchSession` に渡るパックの決め方もここで見る）。
     const started: { readonly selection: CharacterSelection; readonly stub: StubDriver }[] = []
     const manager = createSessionManager({
@@ -505,13 +506,9 @@ describe("createSessionManager", () => {
     started[0]?.stub.emit({ kind: "speech", text: "切り替える前のセリフ", expression: "default" })
     await waitForBatch()
 
-    expect(
-      await manager.dispatch({
-        type: "switch-character",
-        commandId: "c-1",
-        name: "fictional",
-      }),
-    ).toEqual({ ok: true })
+    expect(await manager.commands.session.switchCharacter({ name: "fictional" })).toEqual({
+      ok: true,
+    })
 
     // 前の駆動は閉じ、新しい駆動が**画面から選ばれた名前**で起きている（＝覚える側。
     // docs/screen-design.md 13.6）。
@@ -540,64 +537,45 @@ describe("createSessionManager", () => {
     }
   })
 
-  it("ターン進行中の switch-character は定型文の理由で受け付けず、駆動を閉じない", async () => {
+  it("ターン進行中の session.switchCharacter は定型文の理由で受け付けず、駆動を閉じない", async () => {
     const { manager, stub } = startManagerWithStub()
 
-    expect(
-      await manager.dispatch({
-        type: "prompt",
-        commandId: "c-1",
-        text: "架空の依頼",
-        images: [],
-      }),
-    ).toEqual({ ok: true })
+    expect(await manager.commands.session.prompt({ text: "架空の依頼", images: [] })).toEqual({
+      ok: true,
+    })
     stub.emit({ kind: "request", text: "架空の依頼", images: [] })
     await waitForBatch()
 
-    expect(
-      await manager.dispatch({
-        type: "switch-character",
-        commandId: "c-2",
-        name: "fictional",
-      }),
-    ).toEqual({ ok: false, reason: FRAME_ERROR_REASON.switchDuringTurn })
+    expect(await manager.commands.session.switchCharacter({ name: "fictional" })).toEqual({
+      ok: false,
+      reason: FRAME_ERROR_REASON.switchDuringTurn,
+    })
     expect(stub.calls).not.toContain("close")
 
     stub.emit({ kind: "turn-finished", outcome: { kind: "completed" } })
     await waitForBatch()
 
-    expect(
-      await manager.dispatch({
-        type: "switch-character",
-        commandId: "c-3",
-        name: "fictional",
-      }),
-    ).toEqual({ ok: true })
+    expect(await manager.commands.session.switchCharacter({ name: "fictional" })).toEqual({
+      ok: true,
+    })
     expect(stub.calls).toContain("close")
   })
 
-  it("ターン進行中の set-effort は set-model と同じく起こし直さず、駆動へそのまま渡す", async () => {
+  it("ターン進行中の session.setEffort は session.setModel と同じく起こし直さず、駆動へそのまま渡す", async () => {
     const { manager, stub } = startManagerWithStub()
 
-    expect(
-      await manager.dispatch({
-        type: "prompt",
-        commandId: "c-1",
-        text: "架空の依頼",
-        images: [],
-      }),
-    ).toEqual({ ok: true })
+    expect(await manager.commands.session.prompt({ text: "架空の依頼", images: [] })).toEqual({
+      ok: true,
+    })
     stub.emit({ kind: "request", text: "架空の依頼", images: [] })
     await waitForBatch()
 
-    expect(
-      await manager.dispatch({ type: "set-effort", commandId: "c-2", effort: "xhigh" }),
-    ).toEqual({ ok: true })
+    expect(await manager.commands.session.setEffort({ effort: "xhigh" })).toEqual({ ok: true })
     expect(stub.calls).not.toContain("close")
     expect(stub.calls).toContain("setEffort:xhigh")
   })
 
-  it("switch-session で、選ばれたIDの続きから起こし直す（パックもモードも変えない）", async () => {
+  it("session.switchSession で、選ばれたIDの続きから起こし直す（パックもモードも変えない）", async () => {
     const started: SessionLaunchRequest[] = []
     const manager = createSessionManager({
       now: () => 1_000,
@@ -639,11 +617,7 @@ describe("createSessionManager", () => {
     manager.subscribe(() => {})
 
     expect(
-      await manager.dispatch({
-        type: "switch-session",
-        commandId: "c-1",
-        sessionId: "架空の別セッション",
-      }),
+      await manager.commands.session.switchSession({ sessionId: "架空の別セッション" }),
     ).toEqual({ ok: true })
 
     expect(started).toHaveLength(2)
@@ -656,18 +630,14 @@ describe("createSessionManager", () => {
     expect(started[0]?.resume).toEqual({ by: "latest" })
   })
 
-  it("ターン進行中の switch-session は定型文の理由で受け付けず、駆動を閉じない", async () => {
+  it("ターン進行中の session.switchSession は定型文の理由で受け付けず、駆動を閉じない", async () => {
     const { manager, stub } = startManagerWithStub()
 
     stub.emit({ kind: "request", text: "架空の依頼", images: [] })
     await waitForBatch()
 
     expect(
-      await manager.dispatch({
-        type: "switch-session",
-        commandId: "c-1",
-        sessionId: "架空の別セッション",
-      }),
+      await manager.commands.session.switchSession({ sessionId: "架空の別セッション" }),
     ).toEqual({ ok: false, reason: FRAME_ERROR_REASON.sessionSwitchDuringTurn })
     expect(stub.calls).not.toContain("close")
 
@@ -675,17 +645,13 @@ describe("createSessionManager", () => {
     await waitForBatch()
 
     expect(
-      await manager.dispatch({
-        type: "switch-session",
-        commandId: "c-2",
-        sessionId: "架空の別セッション",
-      }),
+      await manager.commands.session.switchSession({ sessionId: "架空の別セッション" }),
     ).toEqual({ ok: true })
     expect(stub.calls).toContain("close")
   })
 
-  it("set-chat-mode で雑談を指定して起こし直し、いま出しているパックは保つ", async () => {
-    // 雑談の切り替えは `systemPrompt` の差し替えなので、`switch-character` と同じ起こし直しに
+  it("session.setChatMode で雑談を指定して起こし直し、いま出しているパックは保つ", async () => {
+    // 雑談の切り替えは `systemPrompt` の差し替えなので、`session.switchCharacter` と同じ起こし直しに
     // なる（docs/chat-mode.md 4.9）。**パックは変えない**ことをここで見る。
     const started: SessionLaunchRequest[] = []
     const manager = createSessionManager({
@@ -727,9 +693,7 @@ describe("createSessionManager", () => {
     })
     manager.subscribe(() => {})
 
-    expect(await manager.dispatch({ type: "set-chat-mode", commandId: "c-1", chat: true })).toEqual(
-      { ok: true },
-    )
+    expect(await manager.commands.session.setChatMode({ chat: true })).toEqual({ ok: true })
 
     expect(started).toHaveLength(2)
     expect(started[1]?.chat).toBe(true)
@@ -791,7 +755,7 @@ describe("createSessionManager", () => {
     await waitForBatch()
     const before = frames.length
 
-    const switched = manager.dispatch({ type: "set-chat-mode", commandId: "c-1", chat: true })
+    const switched = manager.commands.session.setChatMode({ chat: true })
     await waitForBatch()
     expect(frames.slice(before)).toEqual([])
 
@@ -844,29 +808,25 @@ describe("createSessionManager", () => {
     })
     manager.subscribe(() => {})
 
-    await manager.dispatch({ type: "set-chat-mode", commandId: "c-1", chat: true })
-    await manager.dispatch({ type: "set-chat-mode", commandId: "c-2", chat: false })
+    await manager.commands.session.setChatMode({ chat: true })
+    await manager.commands.session.setChatMode({ chat: false })
 
     expect(started.map((request) => request.chat)).toEqual([undefined, true, false])
   })
 
-  it("ターン進行中の set-chat-mode は定型文の理由で受け付けず、駆動を閉じない", async () => {
+  it("ターン進行中の session.setChatMode は定型文の理由で受け付けず、駆動を閉じない", async () => {
     const { manager, stub } = startManagerWithStub()
 
-    expect(
-      await manager.dispatch({
-        type: "prompt",
-        commandId: "c-1",
-        text: "架空の依頼",
-        images: [],
-      }),
-    ).toEqual({ ok: true })
+    expect(await manager.commands.session.prompt({ text: "架空の依頼", images: [] })).toEqual({
+      ok: true,
+    })
     stub.emit({ kind: "request", text: "架空の依頼", images: [] })
     await waitForBatch()
 
-    expect(await manager.dispatch({ type: "set-chat-mode", commandId: "c-2", chat: true })).toEqual(
-      { ok: false, reason: FRAME_ERROR_REASON.chatModeSwitchDuringTurn },
-    )
+    expect(await manager.commands.session.setChatMode({ chat: true })).toEqual({
+      ok: false,
+      reason: FRAME_ERROR_REASON.chatModeSwitchDuringTurn,
+    })
     expect(stub.calls).not.toContain("close")
   })
 
@@ -916,23 +876,14 @@ describe("createSessionManager", () => {
     manager.subscribe((frame) => frames.push(frame))
 
     // 起き上がる前に届いた依頼も、待ってから渡る（取りこぼさない）。
-    expect(
-      await manager.dispatch({
-        type: "prompt",
-        commandId: "c-1",
-        text: "架空の依頼",
-        images: [],
-      }),
-    ).toEqual({ ok: true })
+    expect(await manager.commands.session.prompt({ text: "架空の依頼", images: [] })).toEqual({
+      ok: true,
+    })
     expect(started[0]?.calls).toEqual(["prompt:架空の依頼"])
 
-    expect(
-      await manager.dispatch({
-        type: "switch-character",
-        commandId: "c-2",
-        name: "fictional",
-      }),
-    ).toEqual({ ok: true })
+    expect(await manager.commands.session.switchCharacter({ name: "fictional" })).toEqual({
+      ok: true,
+    })
 
     // 切り替え先の駆動が起き上がったあとで hello が配られている。
     expect(started).toHaveLength(2)
@@ -946,7 +897,7 @@ describe("createSessionManager", () => {
       await waitForBatch()
       stub.emit({ kind: "chat-mode-changed", chat: true })
 
-      expect(await manager.dispatch({ type: "nudge", commandId: "c-1" })).toEqual({
+      expect(await manager.commands.session.nudge()).toEqual({
         ok: true,
       })
 
@@ -959,7 +910,7 @@ describe("createSessionManager", () => {
       const { manager, stub } = startManagerWithStub()
       await waitForBatch()
 
-      expect(await manager.dispatch({ type: "nudge", commandId: "c-1" })).toEqual({
+      expect(await manager.commands.session.nudge()).toEqual({
         ok: false,
         reason: FRAME_ERROR_REASON.nudgeOutsideChat,
       })
@@ -972,7 +923,7 @@ describe("createSessionManager", () => {
       stub.emit({ kind: "chat-mode-changed", chat: true })
       stub.emit({ kind: "request", text: "架空の依頼", images: [] })
 
-      expect(await manager.dispatch({ type: "nudge", commandId: "c-1" })).toEqual({
+      expect(await manager.commands.session.nudge()).toEqual({
         ok: false,
         reason: FRAME_ERROR_REASON.nudgeDuringTurn,
       })
@@ -980,7 +931,7 @@ describe("createSessionManager", () => {
     })
   })
 
-  describe("成果の振り返り（reflect-achievement。docs/design.md「日記の受け取りと保存」）", () => {
+  describe("成果の振り返り（session.reflectAchievement。docs/design.md「日記の受け取りと保存」）", () => {
     const KNOWN_DAY: DailyAchievement = {
       kind: "known",
       date: "2026-09-23",
@@ -1033,13 +984,9 @@ describe("createSessionManager", () => {
       const frames: ServerFrame[] = []
       manager.subscribe((frame) => frames.push(frame))
 
-      expect(
-        await manager.dispatch({
-          type: "reflect-achievement",
-          commandId: "c-1",
-          date: "2026-09-23",
-        }),
-      ).toEqual({ ok: true })
+      expect(await manager.commands.session.reflectAchievement({ date: "2026-09-23" })).toEqual({
+        ok: true,
+      })
       await waitForBatch()
 
       expect(seenDates).toEqual(["2026-09-23"])
@@ -1065,13 +1012,9 @@ describe("createSessionManager", () => {
       )
       stub.emit({ kind: "request", text: "架空の依頼", images: [] })
 
-      expect(
-        await manager.dispatch({
-          type: "reflect-achievement",
-          commandId: "c-1",
-          date: "2026-09-23",
-        }),
-      ).toEqual({ ok: true })
+      expect(await manager.commands.session.reflectAchievement({ date: "2026-09-23" })).toEqual({
+        ok: true,
+      })
       expect(writer.calls).toHaveLength(1)
     })
 
@@ -1083,19 +1026,11 @@ describe("createSessionManager", () => {
         writer.source,
       )
 
-      expect(
-        await manager.dispatch({
-          type: "reflect-achievement",
-          commandId: "c-1",
-          date: "2026-09-23",
-        }),
-      ).toEqual({ ok: true })
-
-      const second = await manager.dispatch({
-        type: "reflect-achievement",
-        commandId: "c-2",
-        date: "2026-09-20",
+      expect(await manager.commands.session.reflectAchievement({ date: "2026-09-23" })).toEqual({
+        ok: true,
       })
+
+      const second = await manager.commands.session.reflectAchievement({ date: "2026-09-20" })
       expect(second).toEqual({ ok: false, reason: FRAME_ERROR_REASON.achievementReflectionWriting })
       expect(writer.calls).toHaveLength(1)
     })
@@ -1108,19 +1043,11 @@ describe("createSessionManager", () => {
         writer.source,
       )
 
-      await manager.dispatch({
-        type: "reflect-achievement",
-        commandId: "c-1",
-        date: "2026-09-23",
-      })
+      await manager.commands.session.reflectAchievement({ date: "2026-09-23" })
       expect(writer.signals).toHaveLength(1)
       expect(writer.signals[0]?.aborted).toBe(false)
 
-      await manager.dispatch({
-        type: "switch-character",
-        commandId: "c-2",
-        name: "fictional",
-      })
+      await manager.commands.session.switchCharacter({ name: "fictional" })
       expect(writer.signals[0]?.aborted).toBe(true)
     })
 
@@ -1129,13 +1056,9 @@ describe("createSessionManager", () => {
       const frames: ServerFrame[] = []
       manager.subscribe((frame) => frames.push(frame))
 
-      expect(
-        await manager.dispatch({
-          type: "reflect-achievement",
-          commandId: "c-1",
-          date: "2026-09-23",
-        }),
-      ).toEqual({ ok: true })
+      expect(await manager.commands.session.reflectAchievement({ date: "2026-09-23" })).toEqual({
+        ok: true,
+      })
       await waitForBatch()
 
       const eventKinds = frames
@@ -1150,13 +1073,10 @@ describe("createSessionManager", () => {
     it("空の日は断る", async () => {
       const { manager } = startManagerWithStub("written", () => Promise.resolve(EMPTY_DAY))
 
-      expect(
-        await manager.dispatch({
-          type: "reflect-achievement",
-          commandId: "c-1",
-          date: "2026-09-23",
-        }),
-      ).toEqual({ ok: false, reason: FRAME_ERROR_REASON.achievementReflectionUnavailable })
+      expect(await manager.commands.session.reflectAchievement({ date: "2026-09-23" })).toEqual({
+        ok: false,
+        reason: FRAME_ERROR_REASON.achievementReflectionUnavailable,
+      })
     })
 
     it("main が読めない日は断る", async () => {
@@ -1164,25 +1084,19 @@ describe("createSessionManager", () => {
         Promise.resolve({ kind: "unknown" }),
       )
 
-      expect(
-        await manager.dispatch({
-          type: "reflect-achievement",
-          commandId: "c-1",
-          date: "2026-09-23",
-        }),
-      ).toEqual({ ok: false, reason: FRAME_ERROR_REASON.achievementReflectionUnavailable })
+      expect(await manager.commands.session.reflectAchievement({ date: "2026-09-23" })).toEqual({
+        ok: false,
+        reason: FRAME_ERROR_REASON.achievementReflectionUnavailable,
+      })
     })
 
     it("成果が読めなかった（undefined）ときも断る", async () => {
       const { manager } = startManagerWithStub("written", () => Promise.resolve(undefined))
 
-      expect(
-        await manager.dispatch({
-          type: "reflect-achievement",
-          commandId: "c-1",
-          date: "2026-09-23",
-        }),
-      ).toEqual({ ok: false, reason: FRAME_ERROR_REASON.achievementReflectionUnavailable })
+      expect(await manager.commands.session.reflectAchievement({ date: "2026-09-23" })).toEqual({
+        ok: false,
+        reason: FRAME_ERROR_REASON.achievementReflectionUnavailable,
+      })
     })
   })
 
@@ -1397,9 +1311,7 @@ describe("createSessionManager", () => {
     manager.subscribe((frame) => frames.push(frame))
 
     expect(
-      await manager.dispatch({
-        type: "set-portrait",
-        commandId: "c-1",
+      await manager.commands.characterPack.setPortrait({
         pack: "fictional",
         expression: "proud",
         image: "data:image/png;base64,AAAA",
@@ -1409,7 +1321,7 @@ describe("createSessionManager", () => {
 
     // 駆動には何も渡らない（セッションは起こし直さない）。
     expect(stub.calls).toEqual([])
-    expect(edits.map((edit) => edit.type)).toEqual(["set-portrait"])
+    expect(edits.map((edit) => edit.kind)).toEqual(["setPortrait"])
     // サーバ側の状態にも畳まれ、購読者にはイベントとして届く。
     const events = frames.filter((frame) => frame.type === "events").at(-1)
     if (events?.type === "events") {
@@ -1424,9 +1336,7 @@ describe("createSessionManager", () => {
     manager.subscribe((frame) => frames.push(frame))
 
     expect(
-      await manager.dispatch({
-        type: "set-background",
-        commandId: "c-1",
+      await manager.commands.characterPack.setBackground({
         pack: "fictional-other",
         image: "data:image/png;base64,AAAA",
       }),
@@ -1439,34 +1349,34 @@ describe("createSessionManager", () => {
   })
 
   // どの種類が見た目の編集の行に当たるかは `character-pack-command.ts` の表と型が持ち主。
-  // ここで見るのは、そのコマンドが dispatch から editCharacter 経由の書き込みへ実際に
-  // 届くこと（set-portrait・set-background は前の2つのテストで、駆動へ渡らないことや
-  // hello の配り直しまで含めて確かめ済み）。
-  it.each([
-    {
-      command: {
-        type: "set-outfit-accent",
-        commandId: "c-1",
+  // ここで見るのは、その手続きが editCharacter 経由の書き込みへ実際に届くこと（setPortrait・
+  // setBackground は前の2つのテストで、駆動へ渡らないことや hello の配り直しまで含めて確かめ済み）。
+  it("setOutfitAccent も同じ経路を通る", async () => {
+    const { manager, edits } = startManagerWithStub()
+
+    expect(
+      await manager.commands.characterPack.setOutfitAccent({
         pack: "fictional",
         outfit: "heavy",
         color: "#ffb3a7",
-      },
-    },
-    {
-      command: {
-        type: "set-profile",
-        commandId: "c-1",
+      }),
+    ).toEqual({ ok: true })
+
+    expect(edits.map((edit) => edit.kind)).toEqual(["setOutfitAccent"])
+  })
+
+  it("setProfile も同じ経路を通る", async () => {
+    const { manager, edits } = startManagerWithStub()
+
+    expect(
+      await manager.commands.characterPack.setProfile({
         pack: "fictional",
         name: "新しい表示名",
         tagline: "ひとこと",
-      },
-    },
-  ] as const)("$command.type も同じ経路を通る", async ({ command }) => {
-    const { manager, edits } = startManagerWithStub()
+      }),
+    ).toEqual({ ok: true })
 
-    expect(await manager.dispatch(command)).toEqual({ ok: true })
-
-    expect(edits.map((edit) => edit.type)).toEqual([command.type])
+    expect(edits.map((edit) => edit.kind)).toEqual(["setProfile"])
   })
 
   it("新しいパックを作るコマンドも駆動へ渡さず、選択肢の増えた character-changed を配る", async () => {
@@ -1475,9 +1385,7 @@ describe("createSessionManager", () => {
     manager.subscribe((frame) => frames.push(frame))
 
     expect(
-      await manager.dispatch({
-        type: "create-character",
-        commandId: "c-1",
+      await manager.commands.characterPack.create({
         id: "fictional-2",
         name: "",
         portraits: {
@@ -1504,9 +1412,7 @@ describe("createSessionManager", () => {
     const { manager } = startManagerWithStub("rejected")
 
     expect(
-      await manager.dispatch({
-        type: "create-character",
-        commandId: "c-1",
+      await manager.commands.characterPack.create({
         id: "fictional",
         name: "",
         portraits: {
@@ -1525,9 +1431,9 @@ describe("createSessionManager", () => {
     const frames: ServerFrame[] = []
     manager.subscribe((frame) => frames.push(frame))
 
-    expect(
-      await manager.dispatch({ type: "delete-character", commandId: "c-1", pack: "fictional-2" }),
-    ).toEqual({ ok: true })
+    expect(await manager.commands.characterPack.delete({ pack: "fictional-2" })).toEqual({
+      ok: true,
+    })
     await waitForBatch()
 
     // 使用中のパックは消せないので、起こし直しも駆動への受け渡しも起きない。
@@ -1542,9 +1448,10 @@ describe("createSessionManager", () => {
   it("パックを消せなかったら、消す側の定型文の理由を返す", async () => {
     const { manager } = startManagerWithStub("rejected")
 
-    expect(
-      await manager.dispatch({ type: "delete-character", commandId: "c-1", pack: "fictional" }),
-    ).toEqual({ ok: false, reason: FRAME_ERROR_REASON.characterDeleteFailed })
+    expect(await manager.commands.characterPack.delete({ pack: "fictional" })).toEqual({
+      ok: false,
+      reason: FRAME_ERROR_REASON.characterDeleteFailed,
+    })
   })
 
   describe("画面の「編集」から覚えたことを1行消す", () => {
@@ -1556,11 +1463,7 @@ describe("createSessionManager", () => {
       manager.subscribe((frame) => frames.push(frame))
 
       expect(
-        await manager.dispatch({
-          type: "forget-remembered-line",
-          commandId: "c-1",
-          line: "架空の消したい1行",
-        }),
+        await manager.commands.chat.forgetRememberedLine({ line: "架空の消したい1行" }),
       ).toEqual({ ok: true })
       await waitForBatch()
 
@@ -1578,11 +1481,7 @@ describe("createSessionManager", () => {
       const { manager, forgottenLines } = startManagerWithStub()
 
       expect(
-        await manager.dispatch({
-          type: "forget-remembered-line",
-          commandId: "c-1",
-          line: "架空の消したい1行",
-        }),
+        await manager.commands.chat.forgetRememberedLine({ line: "架空の消したい1行" }),
       ).toEqual({ ok: false, reason: FRAME_ERROR_REASON.forgetRememberedLineOutsideChat })
       expect(forgottenLines).toEqual([])
     })
@@ -1592,11 +1491,7 @@ describe("createSessionManager", () => {
       stub.emit({ kind: "chat-mode-changed", chat: true })
 
       expect(
-        await manager.dispatch({
-          type: "forget-remembered-line",
-          commandId: "c-1",
-          line: "架空の消したい1行",
-        }),
+        await manager.commands.chat.forgetRememberedLine({ line: "架空の消したい1行" }),
       ).toEqual({ ok: false, reason: FRAME_ERROR_REASON.forgetRememberedLineFailed })
     })
   })
@@ -1605,9 +1500,7 @@ describe("createSessionManager", () => {
     it("開けたら ok を返し、渡したパスが options.openFile に届く", async () => {
       const { manager, stub, openedFiles } = startManagerWithStub()
 
-      expect(
-        await manager.dispatch({ type: "open-file", commandId: "c-1", path: "src/foo.ts" }),
-      ).toEqual({ ok: true })
+      expect(await manager.commands.host.openFile({ path: "src/foo.ts" })).toEqual({ ok: true })
       // 駆動へは渡らない・起こし直しも起きない。
       expect(stub.calls).toEqual([])
       expect(openedFiles).toEqual(["src/foo.ts"])
@@ -1616,9 +1509,10 @@ describe("createSessionManager", () => {
     it("開けなかったら（一覧に無い・orca が無い・失敗）定型文の理由を返す", async () => {
       const { manager, openedFiles } = startManagerWithStub("rejected")
 
-      expect(
-        await manager.dispatch({ type: "open-file", commandId: "c-1", path: "src/nope.ts" }),
-      ).toEqual({ ok: false, reason: FRAME_ERROR_REASON.openFileFailed })
+      expect(await manager.commands.host.openFile({ path: "src/nope.ts" })).toEqual({
+        ok: false,
+        reason: FRAME_ERROR_REASON.openFileFailed,
+      })
       expect(openedFiles).toEqual(["src/nope.ts"])
     })
 
@@ -1627,9 +1521,7 @@ describe("createSessionManager", () => {
       stub.emit({ kind: "request", text: "架空の依頼", images: [] })
       await waitForBatch()
 
-      expect(
-        await manager.dispatch({ type: "open-file", commandId: "c-1", path: "src/foo.ts" }),
-      ).toEqual({ ok: true })
+      expect(await manager.commands.host.openFile({ path: "src/foo.ts" })).toEqual({ ok: true })
       expect(openedFiles).toEqual(["src/foo.ts"])
     })
   })
@@ -1640,9 +1532,7 @@ describe("createSessionManager", () => {
     manager.subscribe((frame) => frames.push(frame))
 
     expect(
-      await manager.dispatch({
-        type: "clear-portrait",
-        commandId: "c-1",
+      await manager.commands.characterPack.clearPortrait({
         pack: "fictional",
         expression: "proud",
       }),
@@ -1693,13 +1583,10 @@ describe("createSessionManager", () => {
       }),
     })
 
-    expect(
-      await manager.dispatch({
-        type: "switch-character",
-        commandId: "c-1",
-        name: "fictional",
-      }),
-    ).toEqual({ ok: false, reason: FRAME_ERROR_REASON.driverFailed })
+    expect(await manager.commands.session.switchCharacter({ name: "fictional" })).toEqual({
+      ok: false,
+      reason: FRAME_ERROR_REASON.driverFailed,
+    })
 
     // 常駐プロセスは落ちない。subscribe はそのまま動く。
     const frames: ServerFrame[] = []
@@ -1746,9 +1633,7 @@ describe("createSessionManager", () => {
     })
 
     expect(
-      await manager.dispatch({
-        type: "clear-portrait",
-        commandId: "c-1",
+      await manager.commands.characterPack.clearPortrait({
         pack: "fictional",
         expression: "proud",
       }),
@@ -1801,20 +1686,15 @@ describe("createSessionManager", () => {
       }),
     })
 
-    expect(await manager.dispatch({ type: "interrupt", commandId: "c-1" })).toEqual({
+    expect(await manager.commands.session.interrupt()).toEqual({
       ok: false,
       reason: FRAME_ERROR_REASON.driverFailed,
     })
 
     // 落ちていないので、次のコマンドも受け付ける。
-    expect(
-      await manager.dispatch({
-        type: "prompt",
-        commandId: "c-2",
-        text: "架空の依頼",
-        images: [],
-      }),
-    ).toEqual({ ok: true })
+    expect(await manager.commands.session.prompt({ text: "架空の依頼", images: [] })).toEqual({
+      ok: true,
+    })
   })
 
   it("close で駆動を閉じ、購読も外れる", async () => {
@@ -2523,14 +2403,12 @@ describe("createSessionManager", () => {
 // 新しいセッションの既定（docs/screen-design.md 13.6）。**覚えるのは配線層**（`src/session-start.ts`）で、
 // ここが持つのは「受け取ったら覚えさせて、姿へ流し直す」「いまのセッションは起こし直さない」の2つ。
 describe("createSessionManager（新しいセッションの既定）", () => {
-  it("set-session-default を覚えさせ、姿に載せて配る", async () => {
+  it("session.setSessionDefault を覚えさせ、姿に載せて配る", async () => {
     const { manager, remembered } = startManagerWithStub()
     const frames: ServerFrame[] = []
     manager.subscribe((frame) => frames.push(frame))
 
-    const result = await manager.dispatch({
-      type: "set-session-default",
-      commandId: "c-1",
+    const result = await manager.commands.session.setSessionDefault({
       model: "sonnet",
       effort: "high",
       permissionMode: "plan",
@@ -2554,15 +2432,11 @@ describe("createSessionManager（新しいセッションの既定）", () => {
   })
 
   // 帯のドロップダウンはセッション限り（`docs/screen-design.md` 13.6）。**既定は書き換わらない。**
-  it("帯の set-model / set-permission-mode では既定を覚えない", async () => {
+  it("帯の session.setModel / session.setPermissionMode では既定を覚えない", async () => {
     const { manager, stub, remembered } = startManagerWithStub()
 
-    await manager.dispatch({ type: "set-model", commandId: "c-1", model: "haiku" })
-    await manager.dispatch({
-      type: "set-permission-mode",
-      commandId: "c-2",
-      mode: "bypassPermissions",
-    })
+    await manager.commands.session.setModel({ model: "haiku" })
+    await manager.commands.session.setPermissionMode({ mode: "bypassPermissions" })
 
     expect(remembered).toEqual([])
     expect(stub.calls).toEqual(["setModel:haiku", "setPermissionMode:bypassPermissions"])
@@ -2573,16 +2447,12 @@ describe("createSessionManager（新しいセッションの既定）", () => {
 // 同じ**（`~/.tsukumo/state.json`）だが、**訪問の見張りが即座に読む値でもある**（実地での
 // 「訪問中にオフにすると帰る」「オフのままだと来ない」は下の `describe("訪問")` で確かめる）。
 describe("createSessionManager（訪問のオン・オフ）", () => {
-  it("set-visit-enabled を覚えさせ、姿に載せて配る", async () => {
+  it("visit.setEnabled を覚えさせ、姿に載せて配る", async () => {
     const { manager, rememberedVisitEnabled } = startManagerWithStub()
     const frames: ServerFrame[] = []
     manager.subscribe((frame) => frames.push(frame))
 
-    const result = await manager.dispatch({
-      type: "set-visit-enabled",
-      commandId: "c-1",
-      enabled: false,
-    })
+    const result = await manager.commands.visit.setEnabled({ enabled: false })
     await waitForBatch()
 
     expect(result).toEqual({ ok: true })
@@ -2660,7 +2530,7 @@ describe("依頼に添えた画像の棚", () => {
       }),
     })
     const prompt = (images: readonly PromptImage[]) =>
-      manager.dispatch({ type: "prompt", commandId: "c", text: "架空の依頼", images })
+      manager.commands.session.prompt({ text: "架空の依頼", images })
     return { manager, shelf, prompted, prompt }
   }
 
@@ -2722,11 +2592,7 @@ describe("依頼に添えた画像の棚", () => {
     const id = prompted[0]?.[0]?.id ?? ""
     expect(shelf.find(id)).toBeDefined()
 
-    await manager.dispatch({
-      type: "switch-character",
-      commandId: "c-switch",
-      name: "fictional",
-    })
+    await manager.commands.session.switchCharacter({ name: "fictional" })
 
     expect(shelf.find(id)).toBeUndefined()
   })
@@ -2843,7 +2709,7 @@ describe("createSessionManager（見直し）", () => {
     stub.emit({ kind: "usage-review-result", findings })
     await waitForBatch()
 
-    await manager.dispatch({ type: "switch-character", commandId: "c-switch", name: "fictional" })
+    await manager.commands.session.switchCharacter({ name: "fictional" })
 
     const frames: ServerFrame[] = []
     manager.subscribe((frame) => frames.push(frame))
@@ -2877,9 +2743,7 @@ describe("createSessionManager（見直し）", () => {
     stub.emit({ kind: "usage-review-result", findings })
     await waitForBatch()
 
-    const result = await manager.dispatch({
-      type: "dismiss-usage-proposal",
-      commandId: "c-dismiss",
+    const result = await manager.commands.usageReview.dismissProposal({
       kind: dismissed.kind,
       target: dismissed.target,
     })
@@ -2887,8 +2751,6 @@ describe("createSessionManager（見直し）", () => {
     expect(result).toEqual({ ok: true })
     expect(dismissedUsageProposals).toEqual([
       {
-        type: "dismiss-usage-proposal",
-        commandId: "c-dismiss",
         kind: dismissed.kind,
         target: dismissed.target,
       },
@@ -3066,11 +2928,7 @@ describe("訪問", () => {
     run.advance(VISIT_TIMING.waitMs)
     expect(run.snapshot().visit.kind).toBe("visiting")
 
-    await run.manager.dispatch({
-      type: "switch-character",
-      commandId: "c-switch",
-      name: "fictional",
-    })
+    await run.manager.commands.session.switchCharacter({ name: "fictional" })
     run.advance(VISIT_TIMING.lineIntervalMs * 10)
 
     expect(run.snapshot().visit).toEqual({ kind: "none" })
@@ -3085,11 +2943,7 @@ describe("訪問", () => {
     run.advance(VISIT_TIMING.lineIntervalMs)
     expect(run.snapshot().visit.kind).toBe("visiting")
 
-    const result = await run.manager.dispatch({
-      type: "set-visit-enabled",
-      commandId: "c-visit-off",
-      enabled: false,
-    })
+    const result = await run.manager.commands.visit.setEnabled({ enabled: false })
 
     expect(result).toEqual({ ok: true })
     const after = run.snapshot()
@@ -3105,11 +2959,7 @@ describe("訪問", () => {
   it("歯車がオフのあいだは、しきい値に届いても来ない", async () => {
     const run = startManagerWithVisit(GUESTS)
     await Promise.resolve()
-    await run.manager.dispatch({
-      type: "set-visit-enabled",
-      commandId: "c-visit-off",
-      enabled: false,
-    })
+    await run.manager.commands.visit.setEnabled({ enabled: false })
 
     waitForVisit(run)
 

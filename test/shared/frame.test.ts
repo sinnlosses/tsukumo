@@ -21,7 +21,7 @@ describe("parseServerFrame（受け付ける形）", () => {
     })
   })
 
-  it("events と error を受け付ける（error の commandId は無くてよい）", () => {
+  it("events を受け付ける", () => {
     expect(
       parseServerFrame({
         type: "events",
@@ -34,12 +34,6 @@ describe("parseServerFrame（受け付ける形）", () => {
       events: [
         { at: 1000, event: { kind: "speech", text: "架空のセリフ", expression: "default" } },
       ],
-    })
-
-    expect(parseServerFrame({ type: "error", reason: "依頼の形式が正しくない" })).toEqual({
-      type: "error",
-      commandId: undefined,
-      reason: "依頼の形式が正しくない",
     })
   })
 

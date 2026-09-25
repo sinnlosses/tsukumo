@@ -8,7 +8,7 @@
 //
 // **`<Dialog>` は常にマウントし、`open` に開閉だけを追随させる**（`components/ui/dialog/dialog.tsx`。
 // `features/task-board/hooks/use-task-board.ts` と同じ形）。**作れたら一覧で作ったパックを選んだ
-// 状態にして、呼び出し元へ閉じたことを知らせる**（`switch-character` は送らない。切り替えは
+// 状態にして、呼び出し元へ閉じたことを知らせる**（`session.switchCharacter` は送らない。切り替えは
 // `<CharacterEdit>` の「このキャラクターに切り替える」の仕事。`docs/screen-design.md` 13.6）。
 //
 // **下書きの掃除はこのフックでは行わない。** 閉じるたびに呼び出し元（`character-screen.tsx`）が
@@ -18,8 +18,8 @@
 // と同じ形で、素通りする prop は呼び出し側〔`character-create.tsx`〕が直接つなぐ）。
 //
 // **id の形はサーバと同じ規則で先に見る**（`src/shared/character.ts` の `isCharacterPackName`）。
-// 送ってから黙って落ちるのではなく、押せない理由を id の欄の下に出す（`error` フレームは
-// 画面にまだ出していない）。
+// 送ってから黙って落ちるのではなく、押せない理由を id の欄の下に出す（断られたこと〔手続きの
+// `REFUSED`〕は画面にまだ出していない）。
 
 import { useEffect, useState } from "react"
 
@@ -80,7 +80,7 @@ export function useCharacterCreate(open: boolean, onClose: () => void): Characte
   // 差し色の初期値は `--accent`（JS 側に既定の16進を持たない。`readAccentColor`）。
   const [accent, setAccent] = useState(readAccentColor)
   const [chatAccent, setChatAccent] = useState(readAccentColor)
-  // 送った id。**作れたかどうかは一覧に出たかで見る**（`error` フレームは画面に出していないので、
+  // 送った id。**作れたかどうかは一覧に出たかで見る**（断られたことは画面に出していないので、
   // 成否の手がかりはこれだけ）。
   const [sentId, setSentId] = useState<string | undefined>(undefined)
 
@@ -112,8 +112,7 @@ export function useCharacterCreate(open: boolean, onClose: () => void): Characte
       return
     }
 
-    dispatch({
-      type: "create-character",
+    dispatch.characterPack.create({
       id,
       name,
       portraits: { default: portraitImage },

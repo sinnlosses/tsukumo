@@ -1,6 +1,7 @@
-// 手続きの口（`/rpc`）の照合。**起動トークンと `Origin` を、全部の手続きの前に1つのミドルウェアで
-// 見る**（`docs/design.md` 2章「コマンドの受け手と手続きの置き方」の表の「照合と断る条件の
-// ミドルウェア」）。束ねるのは配線の `src/router.ts` で、手続きの側は照合を知らない。
+// 手続きの照合と断る条件（`docs/design.md` 2章「コマンドの受け手と手続きの置き方」の表の「照合と
+// 断る条件のミドルウェア」）。**起動トークンと `Origin` を全部の手続きの前に1つのミドルウェアで
+// 見て**（`/rpc` と `/ws` の両方）、**コマンドはさらに契約の `meta` の断る条件を見る**。束ねるのは
+// 配線の `src/router.ts` で、手続きの側は照合も断る条件も知らない。
 //
 // 規則は `/ws` の upgrade（`session-socket.ts` の `isAllowedUpgrade`）と同じ: トークンが合うこと、
 // `Origin` があれば自分のオリジンと一致すること（無ければ通す。ブラウザ経由でない呼び出し）。
@@ -10,7 +11,10 @@ import { type IncomingMessage } from "node:http"
 
 import { ORPCError, os } from "@orpc/server"
 
+import { COMMAND_ERRORS, type CommandMeta, NO_COMMAND_REFUSAL } from "../../../shared/command.ts"
 import { SESSION_TOKEN_QUERY_NAME } from "../../../shared/session-socket.ts"
+import { type SessionState } from "../../../shared/session-state.ts"
+import { type CommandSession } from "../../session/core/command-session.ts"
 
 /**
  * 手続き1回ぶんの照合の材料。**要求から写した2つ（外の世界を写した直後なので `| undefined`）と、
@@ -27,7 +31,14 @@ export type RpcContext = {
   readonly serverOrigin: string
 }
 
-/** 要求1件から照合の材料を写す（`server.ts` が `/rpc` の要求ごとに呼ぶ）。 */
+/**
+ * コマンドの手続き1回ぶんの材料。照合の材料に、**いまのセッションの口**を足したもの（`/ws` の
+ * 接続ごとに `session-socket.ts` が作る）。`session` の手続きはこれを受け手へ渡し、葉の機能の
+ * 手続きはそのうち `emit` だけを見る。
+ */
+export type CommandRpcContext = RpcContext & { readonly session: CommandSession }
+
+/** 要求1件から照合の材料を写す（`server.ts` が `/rpc` の要求ごとに、`session-socket.ts` が接続ごとに呼ぶ）。 */
 export function rpcContextOf(
   request: IncomingMessage,
   expected: { readonly startupToken: string; readonly serverOrigin: string },
@@ -57,4 +68,35 @@ function isAllowedRpcRequest(context: RpcContext): boolean {
     return false
   }
   return context.requestOrigin === undefined || context.requestOrigin === context.serverOrigin
+}
+
+/**
+ * 断る条件のミドルウェア。契約の `meta`（`src/shared/command.ts` の `CommandMeta`）を見て、
+ * 当たれば**定型文の理由を添えた `REFUSED`** を返し、手続きの受け手は呼ばれない。**見る順は
+ * 「雑談の外か」→「ターン中か」**——仕事のときに押された `nudge` にターン中の理由を返さないため。
+ *
+ * 画面も同じ条件で操作子を塞ぐが、ここでも見る（画面を経ない依頼・無効化の描画が間に合わなかった
+ * ときの取りこぼし対策）。
+ */
+export const commandGuard = os
+  .$context<{ readonly session: { readonly state: () => SessionState } }>()
+  .$meta<CommandMeta>(NO_COMMAND_REFUSAL)
+  .errors(COMMAND_ERRORS)
+  .middleware(({ context, procedure, errors, next }) => {
+    const reason = refusalOf(procedure["~orpc"].meta, context.session.state())
+    if (reason !== undefined) {
+      throw errors.REFUSED({ data: { reason } })
+    }
+    return next()
+  })
+
+/** 断る理由（断らないなら undefined）。 */
+function refusalOf(meta: CommandMeta, state: SessionState): string | undefined {
+  if (!state.chatMode && meta.chatOnly !== false) {
+    return meta.chatOnly
+  }
+  if (state.turn.kind === "running" && meta.idleTurn !== false) {
+    return meta.idleTurn
+  }
+  return undefined
 }

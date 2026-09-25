@@ -83,8 +83,8 @@ sed -n '/^## 4\. shared/,/^## /p' docs/design.md
 │   <App> ─ <Layout> ─ Main / Character / Sidebar / Dispatch  │
 │   状態 = shared の SessionState（reducer は core と同じ物）   │
 └──────────────▲───────────────────────────┬─────────────────┘
-               │ ServerFrame                │ ClientCommand
-               │  hello（snapshot）/ events  │  prompt / answer / …
+               │ ServerFrame                │ コマンドの手続き（oRPC）
+               │  hello（snapshot）/ events  │  session.prompt / session.answer / …
                │        WebSocket 1本（127.0.0.1、起動トークン付き）
 ┌──────────────┴───────────────────────────▼─────────────────┐
 │ server/<機能>/core（サーバ側の純粋な判断。外の世界に触らない）│
@@ -154,7 +154,7 @@ sed -n '/^## 4\. shared/,/^## /p' docs/design.md
 
 | 機能              | 何の機能か                                                                                | `core/`                                                                                                                                                  | `adapter/`                                                                               |
 | ----------------- | ----------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| `session/`        | セッションを持つ・起こす・頼む。**各機能の判断を束ねる**（下の「束ねる機能」）            | `session-manager` `session-launch` `event-batch` `driver-command` `command-dispatch` `session-command`                                                   | `remembered-default`                                                                     |
+| `session/`        | セッションを持つ・起こす・頼む。**各機能の判断を束ねる**（下の「束ねる機能」）            | `session-manager` `session-launch` `event-batch` `driver-command` `command-session` `session-command`                                                    | `remembered-default`                                                                     |
 | `session-driver/` | セッション駆動。契約・SDK の実装・fake driver・メッセージの変換・答え待ち・続きから始める | `session-driver` `sdk-message` `pending-answer` `self-started-turn` `visible-output-nudge` `session-restore` `session-title` `prompt-image-shelf` `plan` | `sdk-driver` `sdk-tool` `sdk-session` `sdk-context-usage` `fake-driver` `claude-account` |
 | `report/`         | レポートの記法・`report` ツール・検査と差し戻し                                           | `report-notation` `report-tool` `report-review` `report-violation`                                                                                       | —                                                                                        |
 | `system-prompt/`  | `systemPrompt` の append の組み立てと、セリフの間合いの規約                               | `system-prompt` `speech-cadence`                                                                                                                         | —                                                                                        |
@@ -186,7 +186,7 @@ sed -n '/^## 4\. shared/,/^## /p' docs/design.md
   （`session-driver/core/session-driver.ts` が雑談の書き口の型（`ChatArchive` など）を持ち、
   SDK の境界の `session-driver/adapter/` が雑談のツールの判断の `chat/core/` を読む）と、
   `view-server` → `session` → `session-driver` → `view-server`（`session-socket.ts` が
-  `command-dispatch.ts` を、`session-restore.ts` が `port-resolution.ts` を読む）。どちらも1本が
+  `command-session.ts` を、`session-restore.ts` が `port-resolution.ts` を読む）。どちらも1本が
   `adapter → 別の機能の core` で、これは層の辺と同じ向きなので、ファイルの単位では輪にならない
 - **束ねる機能は `session/` の1つ。** `session-manager.ts` は外の世界に触らないので `core` だが、
   各機能の判断（訪問の見張り・日記・トークン消費・雑談のアーカイブ）を読んで1つのセッションに
@@ -203,7 +203,7 @@ sed -n '/^## 4\. shared/,/^## /p' docs/design.md
 | --------------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `session`             | `session-driver` `chat` `visit` `diary` `token-usage` `context-usage` `character-pack`      | core → core だけ                                                                                                                                        |
 | `system-prompt`       | `session-driver` `chat` `report`                                                            | core → core だけ                                                                                                                                        |
-| `view-server`         | `session` `achievement`                                                                     | adapter → core（`session-socket` → `command-dispatch`）・adapter → adapter（`server` → `main-history`）                                                 |
+| `view-server`         | `session` `achievement`                                                                     | adapter → core（`session-socket` / `rpc-guard` → `command-session`）・adapter → adapter（`server` → `main-history`）                                    |
 | `chat`                | `session-driver` `character-pack`                                                           | core → core と adapter → core（駆動の契約にある雑談の型）・adapter → adapter（`persona-memory` / `chat-summary` → `character-pack` / `character-edit`） |
 | `context-usage`       | `session-driver`                                                                            | core → core（駆動の契約）                                                                                                                               |
 | `session-driver`      | `chat` `report` `usage-review` `view-server`                                                | core → core（`report-review` `port-resolution`）・adapter → core（各ツールの判断）                                                                      |
@@ -213,92 +213,90 @@ sed -n '/^## 4\. shared/,/^## /p' docs/design.md
 
 #### コマンドの受け手と手続きの置き方
 
-**2026-09-26 に `docs/research/server-procedure-proposal.md` の段1〜3を採った**（道具の比較・
-手本・採らなかった案はそちら）。目的は「**どのコマンドをどの機能が受け、どの条件で断るか**」を、
-`session-manager.ts` の `switch` と `SessionManagerOptions` の口ではなく、機能の側の表から辿れるように
-すること。**段1は 2026-09-26 に移し終えた**（`dispatch` の `switch` 3つは消えた）。**段2（読み取り5本）も
-同日に移し終えた**。段3は移した先の形の正典で、作業は `develop/task/` にある。
+**2026-09-26 に `docs/research/server-procedure-proposal.md` の段1〜3を採り、同日中に3段とも移し
+終えた**（道具の比較・手本・採らなかった案はそちら）。目的は「**どのコマンドをどの機能が受け、どの
+条件で断るか**」を、`session-manager.ts` の `switch` と `SessionManagerOptions` の口ではなく、契約と
+機能の側の表から辿れるようにすること。**画面からのコマンドは `/ws` の上の oRPC の手続き**（`ClientCommand`
+の和と `parseClientCommand` は消えた）、読み取り5本は HTTP の `/rpc` の手続き。
 
-**段1（依存を足さない）: 機能ごとの受け手の表**
+**辿り方**: `src/router.ts` で名前を探す → `shared/contract/<機能>.ts`（形と断る条件の `meta`）→
+`<機能>/adapter/<機能>-procedure.ts`（委ね先）→ `<機能>/core/`（コマンドなら `<機能>-command.ts` の
+行）。**どのコマンドでも同じ4段**。
 
-| ファイル                                      | 層                  | 持つもの                                                                                                                                                                                                         |
-| --------------------------------------------- | ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `src/server/<機能>/core/<機能>-command.ts`    | 機能の `core`       | **その機能が受けるコマンドの表**。`<機能>Commands(ports)` がコマンドの種類 → 受け手の行を返す。`ports` はその機能の書き込み口（中身は配線が渡す）                                                                |
-| `src/server/core/command-receiver.ts`         | 共有の `core`       | 受け手の行の型（下の「受け手の3種」のうち `write` と `call`）と、断る条件の2列の型。`shared` だけを読む                                                                                                          |
-| `src/server/session/core/command-dispatch.ts` | `session` の `core` | 全種類を網羅した表の型 `CommandRoute`、受け手が使うセッションの口 `CommandSession`、`DispatchResult`。**断る条件を見るのはここ1箇所**（順は「雑談の外か」→「ターン中か」）で、通ったら行の種類ごとに受け手を呼ぶ |
-| `src/server/session/core/session-command.ts`  | `session` の `core` | `session` 自身が受ける行（下の割り振り）                                                                                                                                                                         |
-| `src/command-route.ts`                        | 配線（`src/` 直下） | **全機能の表を1枚に束ねる**（`satisfies CommandRoute` で28種の網羅を型で落とす）。「どこで受けるか」の答えはこのファイル。行の中身も断る条件の判定も書かない                                                     |
+**置くもの**
 
-- **行の書き方**: 1行 = 1種類。列は**受け手の種類**・**受け手**・**失敗の理由**・断る条件の
-  **`chatOnly`**（雑談の外なら断る）と **`idleTurn`**（ターン中なら断る）。断る条件の列の値は
-  `false`（断らない）か `FRAME_ERROR_REASON` の定型文（断るときの理由）で、**条件と理由を同じ行に書く**
-  （いまの `switch` 2つに分かれている対応を行へ寄せる）
+| 置くもの                     | 場所                                            | 持つもの                                                                                                                                                                                                                                            |
+| ---------------------------- | ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 契約                         | `src/shared/contract/<機能>.ts`                 | その機能の手続きの形（入力・出力・エラー）と、**断る条件の `meta`**。zod と `@orpc/contract` だけを読む（ブラウザも読む）。コマンドの契約はどれも `src/shared/command.ts` の `commandBase`（`meta` の既定と、断ったときのエラー `REFUSED`）から書く |
+| 契約の束                     | `src/shared/rpc.ts`                             | **載せる先ごとに2つ**: 読み取りの `rpcContract`（HTTP の `/rpc`）とコマンドの `commandContract`（`/ws`）。コマンドを `/rpc` に載せないのは、画像2枚つきの依頼（約 14 MiB）を運べる口が `/ws` の上限だけだから                                       |
+| 機能の表（コマンドだけ）     | `src/server/<機能>/core/<機能>-command.ts`      | **その機能が受けるコマンドの表**。`<機能>Commands(ports)` が手続きの名前 → 受け手の行を返す（型は `FeatureCommandTable<typeof 契約>` で、契約の手続きに行が足りなければ落ちる）。`ports` はその機能の書き込み口（中身は配線が渡す）                 |
+| 行の型と、葉の行を呼ぶ関数   | `src/server/core/command-receiver.ts`           | 受け手の行の型（下の「受け手の3種」のうち `write` と `call`）・`DispatchResult`・`receiveFeatureCommand`。`shared` だけを読む                                                                                                                       |
+| セッションの口               | `src/server/session/core/command-session.ts`    | 受け手が使うセッションの口 `CommandSession`、`session` の行の型、行の種類で呼び分ける `receiveSessionCommand`                                                                                                                                       |
+| 手続き                       | `src/server/<機能>/adapter/<機能>-procedure.ts` | `implement(contract.<機能>)` の受け手。**中身は行（コマンド）か機能の読み取りへ委ねる数行**。ドメインの失敗を契約のエラーに訳すのはここだけ（コマンドなら `DispatchResult` の `ok: false` を `REFUSED` に）                                         |
+| ルータ                       | `src/router.ts`（配線）                         | 全機能の手続きを束ねる（`createRpcRouter` と `createCommandRouter`）。「どこで受けるか」の答えはこのファイル。手続きの中身も照合・断る条件の判定も書かない                                                                                          |
+| 照合と断る条件のミドルウェア | `src/server/view-server/adapter/rpc-guard.ts`   | 起動トークン・`Origin` の照合（`rpcGuard`。`/rpc` と `/ws` の両方）と、契約の `meta` の `chatOnly` / `idleTurn` を見る門（`commandGuard`。コマンドだけ）。**断る条件を見るのはここ1箇所**（順は「雑談の外か」→「ターン中か」）                      |
+
+- **断る条件は契約の `meta` に書く**（行には持たない。二重に持たない）。形は
+  `{ chatOnly: false | 理由, idleTurn: false | 理由 }`（`src/shared/command.ts` の `CommandMeta`）で、
+  理由は `FRAME_ERROR_REASON`（`shared/frame.ts`）の値。**条件と理由を同じ所に書く**。断ったときは
+  理由を添えた `REFUSED` が応答で返り、受け手は呼ばれない
 - **受け手の3種**（判別可能な合併型。`kind` で分ける）:
-  - `write`: 書き込み口を呼び、返った `SessionEvent` を流す（`undefined` なら失敗の理由で断る）。
-    いまの `write(() => options.*)` にあたる
-  - `call`: 外へ頼むだけでイベントを流さない（`boolean` で成否を返す）。`open-file`
+  - `write`: 書き込み口を呼び、返った `SessionEvent` をいまの代へ流す（`undefined` なら失敗の理由で
+    断る）
+  - `call`: 外へ頼むだけでイベントを流さない（`boolean` で成否を返す）。`host.openFile`
   - `session`: `CommandSession` を受け取って `DispatchResult` を返す。**`session` の表にだけ書ける**
     （型が `session/core/` にあるので、葉の機能からは物理的に書けない）
 - **`CommandSession` の口は4つだけ**（受け手が `SessionGeneration`・束・購読者を知らずに済む深い形）:
   `state()`（いまの姿）・`driver()`（いまの代の駆動を待つ）・`restart(request)`（起こし直し）・
   `generation()`（いまの代に固定した `emit` と `diarySignal`。長く続く受け手が起こし直しをまたいで
-  混ざらないため）。`write` の受け手が返したイベントを流すのも `generation().emit` で、
-  `command-dispatch.ts` が行う
-- **口は `SessionManagerOptions` から抜ける**: 書き込み口（`editCharacter` `createCharacter`
-  `deleteCharacter` `forgetRememberedLine` `rememberSessionDefault` `rememberVisitEnabled`
-  `dismissUsageProposal` `openFile`）と、振り返りだけが使う `readAchievementDay` `diary` は、
-  各機能の `<機能>Commands(ports)` の `ports` へ移る。`SessionManagerOptions` に増えるのは束ねた表
-  `commands: CommandRoute` の1本
+  混ざらないため）。`session-manager.ts` が `commandSession` として出し、`/ws` の接続が手続きの
+  context（`CommandRpcContext` の `session`）に載せる。**葉の機能の手続きは同じものを
+  `CommandEventSink`（`generation().emit` だけの型。`command-receiver.ts`）で受ける**ので、`session` の
+  型を読まない
+- **書き込み口は各機能の `ports` にある**（`SessionManagerOptions` には無い）: `editCharacter`
+  `createCharacter` `deleteCharacter` `forgetRememberedLine` `rememberSessionDefault`
+  `rememberVisitEnabled` `dismissUsageProposal` `openFile`、振り返りだけが使う `readAchievementDay`
+  `diary`。中身を選ぶのは `src/session-start.ts` で、`createCommandRouter` へ渡す
 - **束ねるのを配線に置く理由**: 表を `session/core/` で束ねると、`session` が `usage-review` と
   `host` を読む辺（いまの表に無い）が要り、`session` がまた全部を知る場所に戻る。配線なら
-  **機能どうしの辺の表は増えない**（段3の `src/router.ts` と同じ立場）。葉の機能の表が読むのは
-  `shared` と共有の `core`（`command-receiver.ts`）だけ
+  **機能どうしの辺の表は増えない**。葉の機能の表と手続きが読むのは `shared` と共有の `core`
+  （`command-receiver.ts`）と自分の機能だけ
+- **押し出しは手続きにしていない**（`hello` / `events` / `refresh` のフレームと `subscribe`）。同じ `/ws`
+  の1本に手続きの要求・応答と相乗りし、**振り分けるのはブラウザ**（`src/browser/lib/socket.ts`。
+  手続きの応答〔`i` を持つ封筒〕だけを `RPCLink` へ渡す）。サーバに届くメッセージはすべて手続きの要求で、
+  読めないものは中身をどこにも出さずに捨てる
+- ブラウザは `src/browser/stores/session.tsx` の `dispatch`（`commandContract` から導いた型付きの
+  client）で `dispatch.session.prompt({ text, images })` のように呼ぶ。**送りっぱなしで、断られても
+  画面には出さない**（画面は同じ条件で先に操作子を塞いでいる）
 
-**28種の割り振り**（機能の `<機能>-command.ts` に住むもの）:
+**28種の割り振り**（機能の `<機能>-command.ts` に住むもの。断る条件の列は契約の `meta`）:
 
-| 機能             | 受けるコマンド                                                                                                                                                                                      | 受け手の種類                                                | 断る条件                                                                                                              |
-| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| `session`        | `prompt` `interrupt` `answer` `set-model` `set-effort` `set-permission-mode`（駆動へ渡す6種）・`nudge`・`switch-character` `set-chat-mode` `switch-session`（起こし直し3種）・`reflect-achievement` | `session`                                                   | `nudge` は `chatOnly` と `idleTurn`、起こし直し3種は `idleTurn`。`reflect-achievement` は列では断らず受け手の中で見る |
-| `session`        | `set-session-default`                                                                                                                                                                               | `write`（覚え先は `session/adapter/remembered-default.ts`） | なし                                                                                                                  |
-| `character-pack` | 見た目の編集10種（`CHARACTER_EDIT_COMMAND_TYPES`）・`create-character` `delete-character`                                                                                                           | `write`                                                     | なし                                                                                                                  |
-| `chat`           | `forget-remembered-line`                                                                                                                                                                            | `write`                                                     | `chatOnly`                                                                                                            |
-| `visit`          | `set-visit-enabled`                                                                                                                                                                                 | `write`                                                     | なし                                                                                                                  |
-| `usage-review`   | `dismiss-usage-proposal`                                                                                                                                                                            | `write`                                                     | なし                                                                                                                  |
-| `host`           | `open-file`                                                                                                                                                                                         | `call`（git 管理下かの門番は `tracked-file.ts`）            | なし                                                                                                                  |
+| 機能             | 受けるコマンド                                                                                                                                                                                                                                                                     | 受け手の種類                                                | 断る条件（`meta`）                                                                                                                         |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `session`        | `session.prompt` `session.interrupt` `session.answer` `session.setModel` `session.setEffort` `session.setPermissionMode`（駆動へ渡す6種）・`session.nudge`・`session.switchCharacter` `session.setChatMode` `session.switchSession`（起こし直し3種）・`session.reflectAchievement` | `session`                                                   | `session.nudge` は `chatOnly` と `idleTurn`、起こし直し3種は `idleTurn`。`session.reflectAchievement` は `meta` では断らず受け手の中で見る |
+| `session`        | `session.setSessionDefault`                                                                                                                                                                                                                                                        | `write`（覚え先は `session/adapter/remembered-default.ts`） | なし                                                                                                                                       |
+| `character-pack` | 見た目の編集10種（`characterPack.setPortrait` など。書き込む側へは `CharacterEdit` の `kind` で渡る）・`characterPack.create` `characterPack.delete`                                                                                                                               | `write`                                                     | なし                                                                                                                                       |
+| `chat`           | `chat.forgetRememberedLine`                                                                                                                                                                                                                                                        | `write`                                                     | `chatOnly`                                                                                                                                 |
+| `visit`          | `visit.setEnabled`                                                                                                                                                                                                                                                                 | `write`                                                     | なし                                                                                                                                       |
+| `usage-review`   | `usageReview.dismissProposal`                                                                                                                                                                                                                                                      | `write`                                                     | なし                                                                                                                                       |
+| `host`           | `host.openFile`                                                                                                                                                                                                                                                                    | `call`（git 管理下かの門番は `tracked-file.ts`）            | なし                                                                                                                                       |
 
-`reflect-achievement` を `diary` に置かないのは、代の持ち物（`emit` と `diarySignal`）を使うのに
+`session.reflectAchievement` を `diary` に置かないのは、代の持ち物（`emit` と `diarySignal`）を使うのに
 `diary` から `session` への辺を足すと core どうしで輪になるため。依頼文を組む判断を `diary/core/` の
 純関数へ下ろすのは妨げない。
 
-**段2〜3（oRPC）: 契約・手続き・ルータ・ミドルウェア**
+読み取りは `repository`・`token-usage`・`context-usage`・`achievement` の4機能の手続き（HTTP の `/rpc`）で、
+`/prompt-image/<id>`（`<img src>` で読む）と静的な配信は HTTP の経路のまま。
 
-| 置くもの                     | 場所                                            | 持つもの                                                                                                                                                                                   |
-| ---------------------------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 契約                         | `src/shared/contract/<機能>.ts`                 | その機能の手続きの形（入力・出力・エラー）と、**断る条件の `meta`**。zod と `@orpc/contract` だけを読む（ブラウザも読む）                                                                  |
-| 手続き                       | `src/server/<機能>/adapter/<機能>-procedure.ts` | `implement(contract.<機能>)` の受け手。**中身は段1の行（コマンド）か機能の読み取りへ委ねる数行**。ドメインの失敗を契約のエラーに訳すのはここだけ。口は `<機能>Procedure(ports)` で受け取る |
-| ルータ                       | `src/router.ts`（配線）                         | 全機能の手続きを1枚に束ねる。段3で `src/command-route.ts` はここへ吸われる                                                                                                                 |
-| 照合と断る条件のミドルウェア | `src/server/view-server/adapter/rpc-guard.ts`   | 起動トークン・`Origin` の照合（段2）と、契約の `meta` の `chatOnly` / `idleTurn` を見る門（段3。順は段1と同じ）                                                                            |
+**許す依存の辺**（`test/architecture.test.ts` が見る）:
 
-- **段3で断る条件の列は契約の `meta` へ移り、段1の行からは消える**（二重に持たない）。`meta` の形は
-  段1の列と**同じ語彙** — `{ chatOnly: false | 理由, idleTurn: false | 理由 }` で、理由は
-  `FRAME_ERROR_REASON`（`shared/frame.ts`）の値。どちらも `shared` の値なので、契約へそのまま写せる
-- 読み取り（段2）は `repository`・`token-usage`・`context-usage`・`achievement` の4機能の手続きになり、
-  `/prompt-image/<id>`（`<img src>` で読む）と静的な配信は HTTP に残る
-- 押し出し（`hello` / `events` のフレームと `subscribe`）は段3でも変えない
-
-**許す依存の辺**（段2以降。`test/architecture.test.ts` が見る）:
-
-| 辺                                               | 許す場所                                                                                                     |
-| ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
-| `shared` → 外部                                  | `zod` と `@orpc/contract`（`@orpc/server`・`node:` は読まない）。手続きより前から読んでいる `remeda` も可    |
-| `@orpc/server` を import してよい場所            | 機能の `adapter/`（`view-server/adapter/` を含む）と配線（`src/router.ts`）だけ。**`core` と共有の箱は禁止** |
-| `browser` → 外部                                 | 今の依存に `@orpc/client` と `@orpc/tanstack-query` を足す                                                   |
-| `src/router.ts` / `src/command-route.ts`（配線） | すべての機能の `<機能>-procedure.ts` / `<機能>-command.ts`。配線なので**機能どうしの辺の表は増えない**       |
-| 機能どうしの辺                                   | 上の表のまま（受け手が別の機能の判断を要るようになったら、今と同じく表に足す）                               |
-
-**辿り方**: 段1のあとは `src/command-route.ts` で種類を探す → `<機能>/core/<機能>-command.ts` の行で
-受け手と断る条件を見る。段3のあとは `src/router.ts` → `shared/contract/<機能>.ts`（形と断る条件）→
-`<機能>/adapter/<機能>-procedure.ts`（委ね先）→ `<機能>/core/`。**どのコマンドでも同じ段数**。
+| 辺                                    | 許す場所                                                                                                                |
+| ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `shared` → 外部                       | `zod` と `@orpc/contract`（`@orpc/server`・`node:` は読まない）。手続きより前から読んでいる `remeda` も可               |
+| `@orpc/server` を import してよい場所 | 機能の `adapter/`（`view-server/adapter/` を含む）と配線（`src/router.ts`）だけ。**`core` と共有の箱は禁止**            |
+| `browser` → 外部                      | `@orpc/client`（`/rpc` は `@orpc/client/fetch`、`/ws` は `@orpc/client/websocket`）と `@orpc/tanstack-query`            |
+| `src/router.ts`（配線）               | すべての機能の `<機能>-procedure.ts` と、口の型のための `<機能>-command.ts`。配線なので**機能どうしの辺の表は増えない** |
+| 機能どうしの辺                        | 上の表のまま（受け手が別の機能の判断を要るようになったら、今と同じく表に足す）                                          |
 
 ### ディレクトリ
 
@@ -309,13 +307,13 @@ src/
   current-character.ts        いま出しているパックと選択肢の持ち主（切り替えと画面からの編集で入れ替わる）
   view-delivery.ts            ビューの配信。組み立てたブラウザ側と開いているタブを持ち、/ws と見張りを束ねる
   session-start.ts            セッションを1つ起こす（どの駆動で起こすか・続きをどう探すか）
-  command-route.ts            全機能のコマンドの受け手の表を1枚に束ねる。段3で router.ts へ吸われる
-  router.ts                   全機能の手続き（いまは読み取り）を束ね、照合のミドルウェアを全部の前に掛ける
+  router.ts                   全機能の手続き（読み取りとコマンド）を束ね、照合と断る条件のミドルウェアを全部の前に掛ける
                               （上の「コマンドの受け手と手続きの置き方」）
   opentelemetry-api.d.ts      oRPC の型宣言が読む任意の peer の型の代役（入れていない。docs/research/external-dependency.md）
   shared/
-    rpc.ts                    手続きの口の経路名（/rpc）と、機能ごとの契約を束ねた rpcContract
-    contract/<機能>.ts        手続きの契約（repository / token-usage / context-usage / achievement）
+    rpc.ts                    手続きの口の経路名（/rpc）と、機能ごとの契約を束ねた rpcContract（読み取り）・commandContract（コマンド）
+    contract/<機能>.ts        手続きの契約（読み取りの repository / token-usage / context-usage / achievement と、
+                              コマンドの session / character-pack / chat / visit / usage-review / host。断る条件の meta）
     session-event.ts          SessionEvent（zod と z.infer）
     session-state.ts          SessionState と applySessionEvent（いまの session-view.ts）
     session-choice.ts         切り替え先として選べるセッション1件（サーバとブラウザの両方が読む契約）
@@ -327,8 +325,7 @@ src/
     turn-speech.ts            ターンごとのセリフと表情を確定した記録（SessionRecord）から引き直す純関数
     portrait-motion.ts        立ち絵をいま動かしてよいか・どれで動かすかを決める純関数
     command-suggestion.ts     入力欄の / 補完に出す候補（姿から導くだけ）
-    command.ts                ClientCommand（zod）。段3で contract/ へ移して消す
-    contract/<機能>.ts        （段2〜3で足す）その機能の手続きの契約（zod と @orpc/contract。断る条件の meta）
+    command.ts                コマンドの共通の語彙（断る条件の meta の形・断ったときのエラー・モデル／effort／許可モードの一覧）
     frame.ts                  ServerFrame（zod）・PROTOCOL_VERSION
     vendor-asset.ts           外部ライブラリ（npm の依存）を配る経路の名前
     expression.ts / question.ts / pending-ask.ts / task-summary.ts / character.ts
@@ -353,7 +350,7 @@ src/
                               （機能の一覧と辺は上の「サーバの機能と、機能どうしの辺」）
     core/                     共有の判断（どの機能にも属さないもの）。node: / SDK / ws を import しない
       config.ts               環境変数の解釈（読み取りは cli.ts。ここは渡された env を見るだけ）
-      command-receiver.ts     コマンドの受け手の行の型（write / call）と断る条件の2列
+      command-receiver.ts     コマンドの受け手の行の型（write / call）と、葉の機能の行を呼ぶ receiveFeatureCommand
     adapter/                  共有の境界（どの機能にも属さないもの）。1ファイル = 1つの境界
       tsukumo-home.ts         ~/.tsukumo/ の場所を組み立てる唯一の口
       bundled-path.ts         同梱物の位置（import.meta.url）
@@ -365,9 +362,9 @@ src/
         session-launch.ts     起こす一続きの順序（外に触る部分は session-start.ts が渡す。起動も切り替えも同じ）
         event-batch.ts        届いたイベントをまとめて配る束（間隔と、書きかけの本文の連結）
         driver-command.ts     起き上がっている駆動に1件頼む（渡し方と、駆動が投げたときの畳み方）
-        command-dispatch.ts   断る条件を1箇所で見て受け手を呼ぶ。CommandRoute・CommandSession・DispatchResult
+        command-session.ts    受け手に見せるセッションの口 CommandSession と、session の行の型・呼び分け
         session-command.ts    session が受けるコマンドの表（駆動へ渡す6種・nudge・起こし直し3種・
-                              reflect-achievement・set-session-default）
+                              session.reflectAchievement・session.setSessionDefault）
       adapter/
         remembered-default.ts 次に起こすときの初期値（~/.tsukumo/state.json。キャラクター名・モデル・effort・許可モード・訪問のオン・オフ）
     session-driver/           セッション駆動
@@ -419,7 +416,7 @@ src/
                               task-summary.ts（main のタスク一覧の読み直し）/ repository-procedure.ts（手続き）
     <機能>/core/<機能>-command.ts   その機能が受けるコマンドの表（character-pack / chat /
                               visit / usage-review / host）
-    <機能>/adapter/<機能>-procedure.ts その機能の手続き（oRPC の受け手。段2で読み取りの4機能、段3でコマンド）
+    <機能>/adapter/<機能>-procedure.ts その機能の手続き（oRPC の受け手。読み取りの4機能とコマンドの6機能）
   browser/
     main.tsx                  入口。部品の木を組み立てて mount する（副作用はここだけ）。出す画面を選ぶ
                               <Root> と、会話の画面の <Layout> に4領域を差し込むのもここ（6.1）
@@ -1149,7 +1146,7 @@ features/task-board/
    `view-delivery.ts` の `connect` で `/ws` に繋ぐ
 6. ホストのポートで `http://127.0.0.1:<port>/?t=<token>` を開く（失敗しても続行）
 
-**起こし直し**（`switch-character` / `set-chat-mode` / `switch-session`）も、駆動を起こす一続き
+**起こし直し**（`session.switchCharacter` / `session.setChatMode` / `session.switchSession`）も、駆動を起こす一続き
 （`core/session-launch.ts` の `createSessionLaunch`）は起動時とまったく同じものを通る。違うのは
 `session-manager.ts` が `generation` を1つ進めて古い駆動のイベントを捨ててから同じ一続きを
 もう一度呼ぶ、という外側だけ（8章）。
@@ -1164,7 +1161,7 @@ sequenceDiagram
 
     alt 起動（main.ts が呼ぶ）
         Manager->>Launch: launchSession(onEvent, onRestoredEvent, { selection: "initial", resume: "latest" })
-    else 起こし直し（switch-character / set-chat-mode / switch-session）
+    else 起こし直し（session.switchCharacter / session.setChatMode / session.switchSession）
         Client->>Manager: dispatch(command)
         Manager->>Manager: generation を1つ進める（古い駆動のイベントを捨てる）
         Manager->>Launch: launchSession(onEvent, onRestoredEvent, request)
@@ -1198,19 +1195,19 @@ sequenceDiagram
 
 ### 依頼
 
-1. Composer が `{ type: "prompt", commandId, text }` を送る
-2. サーバは zod で検証し、`SessionManager.dispatch(command)` → 駆動の `prompt(text)`。
+1. Composer が手続き `session.prompt({ text, images })` を `/ws` の上で呼ぶ
+2. サーバは契約の zod で検証し、断る条件（`meta`）を見てから `session` の行 → 駆動の `prompt(text)`。
    駆動が `request` イベントを起こし、それが `events` で戻ってくる（**ブラウザはローカルで
    echo しない**。ターンの開始はサーバのイベントで知る）
 3. 断片（`partial-utterance`）は1バッチ内で連結して1件にする（転送量の抑制。畳み込みの結果は同じ）
-4. 受け付けられないとき（検証に落ちた・駆動が失敗を返した）は
-   `{ type: "error", commandId, reason }` を返す。理由は定型文で、**依頼の文面を含めない**
+4. 受け付けられないとき（検証に落ちた・断る条件に当たった・駆動が失敗を返した）は手続きの応答が
+   エラーになる（断ったときは契約の `REFUSED` と定型文の理由）。**依頼の文面を含めない**
 
 ### 答え待ち
 
 1. `canUseTool` → `pending-answer.ts` の列 → `pending-changed` イベント → 状態の `pending`
-2. PendingAnswer 部品が `pending[0]` を描く。押されたら `{ type: "answer", commandId, id, answer }`
-3. 列が解決 → `pending-changed` → 箱が消える。解決済みの id への回答は `error`（いまの 409 と同じ）
+2. PendingAnswer 部品が `pending[0]` を描く。押されたら `session.answer({ id, answer })`
+3. 列が解決 → `pending-changed` → 箱が消える。解決済みの id への回答は `REFUSED`（いまの 409 と同じ）
 
 ### 再接続
 
@@ -1221,8 +1218,8 @@ Layout に出す。復帰したときにセッションを続きから起こし�
 ## 4. shared
 
 **zod を使うのは境界の書き込み側と封筒だけ**（2026-09-13 決定）。
-`ClientCommand` は**全部 zod が正典**で型は `z.infer`（ブラウザから届く書き込みの経路なので厳密に見る。
-`text` の上限もここ）。`ServerFrame` は**封筒（`type` / `protocolVersion`）だけ** zod で、中身
+コマンドの契約の入力（`src/shared/contract/<機能>.ts`）は**全部 zod が正典**（ブラウザから届く書き込みの
+経路なので厳密に見る。`text` の上限もここ）。`ServerFrame` は**封筒（`type` / `protocolVersion`）だけ** zod で、中身
 （`state` / `events`）は検証しない。**`SessionEvent` と `SessionState` は zod にしない**（TS の型のまま。
 状態にフィールドを1つ足すたびにスキーマを二重に直す手間のほうが効いてくるため）。
 境界（WebSocket の両端）で1回だけ検証し、中では検証済みの型を使う。`shared` の中に `node:` も
@@ -1240,7 +1237,7 @@ Layout に出す。復帰したときにセッションを続きから起こし�
 ときだけ `state.model` を更新する（一致しなければ何もせず、次の `init` を待つだけにする。
 知らない値でサイドバーを誤った値に倒さないため）。
 
-**サイドバーの `<select>` から `set-model` を送ったときも同じ `model-changed` を使う**
+**サイドバーの `<select>` から `session.setModel` を送ったときも同じ `model-changed` を使う**
 （2026-09-17）。`src/server/session-driver/adapter/sdk-driver.ts` の `setModel` が `session.setModel()` の確定を
 待ってから出す（駆動を経ているので、これは「ブラウザ側のローカル echo」の禁止（3章「依頼」）
 には当たらない）。
@@ -1343,10 +1340,12 @@ Layout に出す。復帰したときにセッションを続きから起こし�
 
 ### 4.3 ClientCommand
 
-`ClientCommand` の一覧とフィールドは `src/shared/command.ts` の `clientCommandSchema`（zod。
-4章冒頭の決定どおりここが正典）を見る。各コマンドの意図はコマンドごとの doc コメントを参照。
+**節の名前は移す前のまま**（コマンドの和 `ClientCommand` は 2026-09-26 に手続きへ移して消えた）。
+コマンドの一覧と入力は機能ごとの契約 `src/shared/contract/<機能>.ts`（zod。4章冒頭の決定どおりここが
+正典）、束は `src/shared/rpc.ts` の `commandContract` を見る。各コマンドの意図は手続きごとの doc コメントを
+参照。どの機能が受けるか・断る条件は2章「コマンドの受け手と手続きの置き方」。
 
-- `text` の上限は `MAX_PROMPT_TEXT_LENGTH`（`src/shared/command.ts`）
+- `text` の上限は `MAX_PROMPT_TEXT_LENGTH`（`src/shared/contract/session.ts`）
 - `images` は**原寸と控えの対**（`PromptImage`。`src/shared/prompt-image.ts` が正典）。上限・
   形式・枚数はそちらが持ち、値そのものは `docs/requirements.md` 4.10 が正典。**1枚も無いのが
   普通**なので、field ごと省いた形も受け取って空に畳む。`maxPayload`（session-socket.ts）は
@@ -1432,8 +1431,8 @@ Layout に出す。復帰したときにセッションを続きから起こし�
 - `createSessionManager(options)`: 駆動を起こし、`onEvent` で **(1) 時刻を打ち (2) 自分の `state` を畳み
   (3) その代の束に積む**。`EVENT_BATCH_INTERVAL_MS`（既定100ms。`event-batch.ts`）ごとに `events`
   フレームを購読者へ配る
-- `dispatch(command)`: 受け取ったコマンドを、束ねた表（`options.commands`）と `CommandSession` と
-  一緒に `command-dispatch.ts` へ渡すだけ（2章「コマンドの受け手と手続きの置き方」）
+- `commandSession`: コマンドの受け手に見せる口（`CommandSession`）を出すだけ。**コマンドの分岐は
+  持たない**（`/ws` の手続きの context に載る。2章「コマンドの受け手と手続きの置き方」）
 - `subscribe(send)`: 接続ごとに `hello` を送ってから購読に加える
 - **セッションは1つで、鍵を持たない**（8章）
 
@@ -1460,11 +1459,11 @@ Layout に出す。復帰したときにセッションを続きから起こし�
 ときに呼ぶか**（`origin` と `chatMode` の門）だけ。
 
 **「雑談の外なら断る」「ターン中なら断る」の判定は1か所**で、**順は「雑談の外か」→「ターン中か」**
-——仕事のときに押された `nudge` にターン中の理由を返さないため。条件と定型文は機能ごとの表の行
-（`chatOnly` / `idleTurn` の列）に書き、見るのは `command-dispatch.ts` だけ（段3で契約の `meta` と
-`rpc-guard.ts` へ移る。2章「コマンドの受け手と手続きの置き方」）。
-見た目の編集のコマンドの一覧（`CHARACTER_EDIT_COMMAND_TYPES`）は `src/shared/command.ts` の
-1つの並びから型を導き、受け手の表（`character-pack-command.ts`）に行が足りなければ型が落とす。
+——仕事のときに押された `session.nudge` にターン中の理由を返さないため。条件と定型文は契約の `meta`
+（`chatOnly` / `idleTurn`）に書き、見るのは `rpc-guard.ts` の `commandGuard` だけ（2章「コマンドの
+受け手と手続きの置き方」）。
+見た目の編集のコマンドは契約 `src/shared/contract/character-pack.ts` の手続きで、受け手の表
+（`character-pack-command.ts`）に行が足りなければ型が落とす（`FeatureCommandTable`）。
 
 ### character-pack.ts（adapter）
 
@@ -1551,9 +1550,12 @@ Layout に出す。復帰したときにセッションを続きから起こし�
 照合は `rpc-guard.ts` の1つのミドルウェア。`server.ts` は `/rpc` の要求を `@orpc/server/fetch` の
 `RPCHandler` へ渡すだけ（`node:http` との橋渡しを自分で書く。`@orpc/server/node` の型宣言が壊れて
 いるため。`docs/research/external-dependency.md` の表1の oRPC の行）。本文は 64 KiB で断る
-（`BodyLimitPlugin`。照合の前に大きな本文を読み込まされないため）。段3で `/ws` の `receive`
-（`parseClientCommand`）が `RPCHandler` に置き換わる（`MAX_MESSAGE_BYTES` を渡した `WebSocketServer` を
-自分で作るのは変えない）。押し出し（`hello` / `events`）は `session-socket.ts` と `subscribe` のまま。
+（`BodyLimitPlugin`。照合の前に大きな本文を読み込まされないため）。**段3（同日）でコマンドも手続きに
+なった**: `/ws` に届くメッセージは `@orpc/server/websocket` の `RPCHandler` が受ける（`message` と
+`close` を自分で呼ぶ。既定の `upgrade` は読めないメッセージの理由を `console.error` へ出し、そこに届いた
+文面の断片が入りうるため）。`MAX_MESSAGE_BYTES` を渡した `WebSocketServer` を自分で作り、upgrade の前に
+トークン・`Origin` を見るのは変えない。context は接続ごとに1つ（upgrade の要求から写した照合の材料と
+`CommandSession`）。押し出し（`hello` / `events`）は `session-socket.ts` と `subscribe` のまま。
 
 会話の内容が乗るのは `/ws`（`session-socket.ts`）と、依頼に添えた画像を配る `/prompt-image/<id>`
 だけ。ページ・同梱物・素材（`/`・`/assets/*`・`/vendor/*`・`/character/*`）は静的な物なので
@@ -1622,7 +1624,7 @@ Layout に出す。復帰したときにセッションを続きから起こし�
 | `src/shared/session-state.ts`                                 | `usageReview` / `previousUsageReview` の畳み込み（`usage-review-stage` / `usage-review-result` / `usage-proposal-dismissed` / ターンの終わり） |
 | `src/server/usage-review/adapter/previous-usage-review.ts`    | 前回の見直しの結果の読み書き（`~/.tsukumo/usage-review.json`。持つのは直前の1回だけ）                                                          |
 | `src/server/usage-review/adapter/usage-proposal-dismissal.ts` | 見送った提案の識別子の読み書き（`~/.tsukumo/usage-review-dismissed.json`）                                                                     |
-| `src/shared/command.ts`                                       | 画面から提案を見送るコマンド `dismiss-usage-proposal`                                                                                          |
+| `src/shared/command.ts`                                       | 画面から提案を見送るコマンド `usageReview.dismissProposal`                                                                                     |
 
 決めたこと（論点ごと）:
 
@@ -1670,8 +1672,8 @@ Layout に出す。復帰したときにセッションを続きから起こし�
 - **見送りの記録はホームのファイル**（`~/.tsukumo/usage-review-dismissed.json`。読み書きは
   `usage-proposal-dismissal.ts`）に**識別子の並びとして持つ**。取り消す口は画面に無い
   （見本にも無い）——取り消したくなったら、このファイルの `keys` から手で1件消す
-- **画面から見送るコマンドは `dismiss-usage-proposal`**（`src/shared/command.ts`）。書き込みは
-  `forget-remembered-line` と同じ立場——駆動には渡さず、書いてから `usage-proposal-dismissed`
+- **画面から見送るコマンドは `usageReview.dismissProposal`**（`src/shared/command.ts`）。書き込みは
+  `chat.forgetRememberedLine` と同じ立場——駆動には渡さず、書いてから `usage-proposal-dismissed`
   を流し直すだけで、セッションは起こし直さない。見送りは書けなかった回も含めて常に受け付けた
   ことにする（`rememberSessionDefault` と同じ。失敗を区別して画面へ返す手立てが無い）
 - **前回の見直しの結果はホームのファイル**（`~/.tsukumo/usage-review.json`。読み書きは
@@ -1680,7 +1682,7 @@ Layout に出す。復帰したときにセッションを続きから起こし�
   置き換える
 - **`SessionState` にこの前回の結果を別の状態として持つ**（`previousUsageReview`）。`usageReview`
   は起こし直すとふだんへ戻る決まりのままにし（蒸し返さない）、「前回の提案」はその別の状態が
-  出す。起こしたときに1回だけホームから読み、駆動の起こし直し（`switch-character` など）を
+  出す。起こしたときに1回だけホームから読み、駆動の起こし直し（`session.switchCharacter` など）を
   またいで残る（起こし直しは `usageReview` だけをふだんへ戻し、`previousUsageReview` は
   そのまま引き継ぐ）。プロセスを再起動したときは、次に起こした `session-manager` が改めて
   ホームから読む
@@ -1859,7 +1861,7 @@ type AchievementCalendar =
 飛び、成果の画面がタスク板の見張りの都合に縛られる。振り返りの画面なので、1分の遅れは問題に
 ならない。
 
-**振り返りの依頼**は次の節（`reflect-achievement` のコマンド）。
+**振り返りの依頼**は次の節（`session.reflectAchievement` のコマンド）。
 
 **会話内容と安全**: 応答に入るのはコミットの数・時刻とタスクの ID・`summary`・日付、それに日記
 （次の節）だけで、**コミットの件名も会話の文面も入らない**。数えた結果はどこにも書かず、ログにも
@@ -1878,11 +1880,11 @@ type AchievementCalendar =
 | 置き場                                       | 持つもの                                                                                                                                                                                 |
 | -------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `src/shared/diary.ts`                        | 日記の型 `Diary`・段落 `DiaryParagraph`・しおり `DiaryBookmark`、保存の形の読み手（zod）、状態 `DiaryWriting` と3段の並び `DIARY_STAGES`                                                 |
-| `src/shared/command.ts`                      | 振り返りのコマンド `reflect-achievement`（`date`）                                                                                                                                       |
+| `src/shared/command.ts`                      | 振り返りのコマンド `session.reflectAchievement`（`date`）                                                                                                                                |
 | `src/server/diary/core/diary-tool.ts`        | ツールの名前と説明文、形の外の条の検査、受け付けた呼び出しを保存してイベントにする窓口 `createDiaryIntake`（**書く日を1つ受け取って作る**）、引数の断片から3段目を見つける純関数         |
 | `src/server/diary/core/diary-writer.ts`      | 振り返り1回ぶん。依頼文と指示文を組み、`query()` の口を呼び、「書けた／書けなかった」に畳んで `diary-failed` を流す。時間切れ。作る口と出どころの型（`visit-script-writer.ts` と同じ形） |
 | `src/server/diary/adapter/sdk-diary.ts`      | 使い捨ての `query()`。`diary`（zod の形）だけを持つプロセス内の MCP サーバを載せ、断片を3段の合図へ変えて流す                                                                            |
-| `src/server/session/core/session-manager.ts` | `reflect-achievement` を受け、その日の成果を読む口で数え、書いている最中なら断り、代の持ち物の書き手に1回ぶんを渡して `diary-requested` を流す。代を閉じたら中断する                     |
+| `src/server/session/core/session-manager.ts` | `session.reflectAchievement` を受け、その日の成果を読む口で数え、書いている最中なら断り、代の持ち物の書き手に1回ぶんを渡して `diary-requested` を流す。代を閉じたら中断する              |
 | `src/shared/session-state.ts`                | `diaryWriting` の畳み込み（`diary-requested` / `diary-drafting` / `diary-stage` / `diary-written` / `diary-failed`）。**会話のターンの終わりとセッションの終わりでは動かさない**         |
 | `src/server/diary/adapter/diary.ts`          | 日記の読み書き（`~/.tsukumo/diary/<リポジトリ>/<日付>.json`）と、日記のある日の一覧。リポジトリの見分け（`git rev-parse --git-common-dir`）もここ                                        |
 
@@ -1941,12 +1943,12 @@ type AchievementCalendar =
 | `bookmark.reason` が空・長すぎる（仮に120文字まで） | 理由を1文で                                                        |
 | 保存に失敗した                                      | いまは書けない（呼び直さなくてよい）                               |
 
-**書く日**（日付・その日の終えたタスクの ID と `summary`）は、`reflect-achievement` を受けたときに
+**書く日**（日付・その日の終えたタスクの ID と `summary`）は、`session.reflectAchievement` を受けたときに
 session-manager が数え直した結果から書き手へ渡し、書き手が**問い合わせ1回ごとに窓口を1つ作る**
 （窓口が「いま書く日」を覚えたり忘れたりしない。会話のセッションに `diary` が無いので、入力欄から
 「日記を書いて」と打っても書けない）。
 
-**コマンドと依頼**（`reflect-achievement`。13.10 のボタンと見開きの「この日を振り返る」）:
+**コマンドと依頼**（`session.reflectAchievement`。13.10 のボタンと見開きの「この日を振り返る」）:
 
 - ブラウザは**日付だけ**を送る（依頼文を組まない）。session-manager がその日の成果を読む口で
   数え直し、書き手に渡す。依頼文は `achievementReflectionRequestText`（shared。文面の規則は
@@ -1965,7 +1967,7 @@ session-manager が数え直した結果から書き手へ渡し、書き手が*
 
 | 段                   | 入る合図                                                                                           |
 | -------------------- | -------------------------------------------------------------------------------------------------- |
-| この日のタスクを読む | `reflect-achievement` を受けて書き手に渡した（`diary-requested`）                                  |
+| この日のタスクを読む | `session.reflectAchievement` を受けて書き手に渡した（`diary-requested`）                           |
 | 日記を書く           | 問い合わせの `includePartialMessages` の断片で、`diary` の呼び出しの塊が開いた（`diary-drafting`） |
 | いちばんを選ぶ       | 同じ塊の引数の断片（`input_json_delta`）に、最上位の鍵 `bookmark` が現れた（`diary-stage`）        |
 
@@ -2055,7 +2057,7 @@ type Diary = {
   窓口が断り、読めなかったときは1日ぶんの応答の `diary` が `unreadable` になる
 
 **会話内容と安全**: 日記はキャラクターがツールで渡した成果物で、会話の写しではない（9章の表）。
-それでも**文面はログにも `error` フレームにも出さず、ホームの外へ出さない**。テストのフィクスチャは
+それでも**文面はログにも手続きの応答にも出さず、ホームの外へ出さない**。テストのフィクスチャは
 架空の文面だけ。
 
 ### 訪問の契機と状態（visit-timing.ts と visit.ts）
@@ -2092,7 +2094,7 @@ type Diary = {
   `QUICK_VISIT_TIMING`（5 秒・間を空けない・2 秒）に縮める。「1回の待ちに1度」は縮めない
 - **台本は会話の内容に当たる**。状態とフレームに乗るだけで、ログにもファイルにも書かない（9章）
 - **歯車の「訪問」のオン・オフ**（`SessionState.visitEnabled`。`docs/screen-design.md` 13.6・
-  13.9「設定の歯車」）は `set-visit-enabled` で書き換える。**覚え方は `sessionDefault` と同じ**
+  13.9「設定の歯車」）は `visit.setEnabled` で書き換える。**覚え方は `sessionDefault` と同じ**
   （`~/.tsukumo/state.json`。`remembered-default.ts` の3つ目の欄）で、起こすたびに
   `readVisitEnabled`（`session-launch.ts`）が読んで `visit-enabled-changed` を流す（起こし直すと
   一度この値へ戻る）。**効き方だけが違う**——`rememberSessionDefault` は書いて画面へ流すだけ
@@ -2411,7 +2413,7 @@ characters/<name>/
   重なる。`applyFlagSettings({ outputStyle: "default" })`（セッション限り。設定ファイルは
   書き換わらない）で中立に戻してから `persona.md` を足す。**実測と、`settingSources` から
   ユーザー設定を外す案を採らない理由は `docs/requirements.md` 4.4**
-- **切り替え**（`switch-character`）は**別のパックでセッションを起こし直す**。`speak` の enum も
+- **切り替え**（`session.switchCharacter`）は**別のパックでセッションを起こし直す**。`speak` の enum も
   人格も、起こし直せば確実に入れ替わる（`startSdkDriver` が `mcpServers` を毎回組み直しているので
   `setMcpServers` は要らない。2026-09-14 実測）。切り替え時に画面から消すのは吹き出し・立ち絵・
   メインビューの3つ
@@ -2473,8 +2475,8 @@ characters/<name>/
 - **「同名は起動先が勝つ」という既存の規則は変えない。** ホームはその手前に挟まる
 
 **画像は data URL を JSON に載せ、いまの WebSocket のコマンドで受け取る。**
-`src/shared/command.ts` に `ClientCommand` を1つ足すだけで、`src/server/view-server/adapter/server.ts` に新しい
-書き込み経路を作らない。起動トークンと `Origin` の照合・zod の検証・定型文の `error` が
+`src/shared/contract/character-pack.ts` に手続きを1つ足すだけで、`src/server/view-server/adapter/server.ts` に新しい
+書き込み経路を作らない。起動トークンと `Origin` の照合・zod の検証・定型文の `REFUSED` が
 そのまま効く。`multipart/form-data` の POST は node:http にパーサーが無く外部依存が要るので採らない。
 生バイトの POST は照合と上限をもう一組書くことになるので採らない。
 
@@ -2513,15 +2515,15 @@ characters/<name>/
 **差し替えるときの細部**:
 
 - **書き込む先のパックはコマンドが名前（`pack`）で指す**（2026-09-24。見た目の編集のコマンドの
-  10（`set-portrait` / `clear-portrait` / `set-outfit-accent` / `set-accent` /
-  `clear-chat-accent` / `set-profile` / `set-background` / `clear-background` / `set-face` /
-  `clear-face`）がどれも必須で持つ）。
+  10（`characterPack.setPortrait` / `characterPack.clearPortrait` / `characterPack.setOutfitAccent` / `characterPack.setAccent` /
+  `characterPack.clearChatAccent` / `characterPack.setProfile` / `characterPack.setBackground` / `characterPack.clearBackground` / `characterPack.setFace` /
+  `characterPack.clearFace`）がどれも必須で持つ）。
   **使用中を暗黙にしない**のは、キャラクター画面の一覧で選んだ使用中以外のパックも同じ口で
   変えるため（7.2・`docs/screen-design.md` 13.6）。形は作るときと同じ `isCharacterPackName` で
   境界が見て、**サーバは一覧（素材を配るのと同じ `findCharacterPack` の規則。使用中のパックで
   置き換えた一覧）と突き合わせて引くだけ**で、名前からディレクトリを組み立てない
 - **無いパック・起動先の `characters/local` と同じ名前のパックを指されたら書かない**。返すのは
-  ほかの受け付けない場合と同じ定型文の `error`（`FRAME_ERROR_REASON.characterEditFailed`）で、
+  ほかの受け付けない場合と同じ定型文の `REFUSED`（`FRAME_ERROR_REASON.characterEditFailed`）で、
   理由を分けない — どちらも画面は口を出さない（一覧に無いパックは選べず、`local` は
   `editable: false`）ので、届くのは画面を経ない送り手か、一覧が古いままの競合だけ
 - **ファイル名は受け取らず、表情と形式から組み立てる**（`<表情>.<svg|png|gif>`）。届いた文字列が
@@ -2544,14 +2546,14 @@ characters/<name>/
 
 **新しく作るときの細部**:
 
-- **`create-character` は `id`・`name`・`portraits.default`・`accent`・`chatAccent` の5つを
+- **`characterPack.create` は `id`・`name`・`portraits.default`・`accent`・`chatAccent` の5つを
   分けて受け取る**（2026-09-24 決定。見本 `docs/history/mockup/character-create-2026-09-23.html`
   が id と名前を別の欄に分けているのに合わせる）。**保存するフォルダの名前になるのは
   `id` だけ**——`name`（画面や吹き出しに出る表示名）はディレクトリ名と無関係な、単なる
   `character.json` の `name` の値
 - **既にある id は弾く。** 探索の順で後ろが勝つので、作れてしまうと**既存のパックが黙って隠れる**。
   既にあるものを変えたいなら、切り替えてから上の編集の口で変える。画面は一覧にある id を
-  そのまま押せない理由として出す（`error` フレームはまだ画面に出していないので、**判断を画面と
+  そのまま押せない理由として出す（断られたこと〔`REFUSED`〕はまだ画面に出していないので、**判断を画面と
   サーバの両方に置く** — 画面は押させない、サーバは書かない）
 - **id に使えるのは半角の英数字と `.` `_` `-` だけで、`.` では始められない**
   （`src/shared/character.ts` の `isCharacterPackName`）。ディレクトリ名になるのはこの1つだけ
@@ -2574,25 +2576,25 @@ characters/<name>/
   置かない**——選んだあとの `<CharacterEdit>` の「このキャラクターに切り替える」（ターン進行中は
   押せない）で行う。13.6「作るダイアログ」
 - **画面の差し色（`accent` / `chatAccent`）は両方 required で受け取る。** 見本の作るダイアログが
-  仕事・雑談の2色を最初から埋まった状態で出すのに合わせ、`set-accent` の `target` のように
+  仕事・雑談の2色を最初から埋まった状態で出すのに合わせ、`characterPack.setAccent` の `target` のように
   2つに割らずコマンド1つで両方運ぶ。**衣装ごとの出し分け（`outfitAccents`）はここでは書かない**
   （`proud` / `flustered` の立ち絵と同じく、作ったあと切り替えてキャラクター画面の編集の口で
   足す。**作る口は最低限にする**）。作ったあと雑談の差し色だけ消したくなったら
-  `clear-chat-accent` で外せる（**作る口に「同じにする」は無い** — 作る時点では両方の値を
+  `characterPack.clearChatAccent` で外せる（**作る口に「同じにする」は無い** — 作る時点では両方の値を
   画面が渡しているので、消す操作は変える側の口に任せる）。**作る口と変える口がどの画面にどう
   並ぶかは 13.6**
 - 書く順は**素材 → `character.json`**。途中で失敗したディレクトリは定義を持たないので一覧に
   出ず、そのうえで書きかけのディレクトリは消す
-- **名前とひとことプロフィールをあとから変える口は `set-profile`**（`pack`・`name`・`tagline`。
+- **名前とひとことプロフィールをあとから変える口は `characterPack.setProfile`**（`pack`・`name`・`tagline`。
   ほかの見た目の編集コマンドと同じく `pack` で書き込む先を指し、駆動へは渡らない。見本の
   「名前とプロフィールを変える」ボタンに対応し、画面側は `docs/screen-design.md` 13.6）。
-  **1つのボタンから2つの欄をまとめて送る**ので、`set-accent` のように2つのコマンドへ
+  **1つのボタンから2つの欄をまとめて送る**ので、`characterPack.setAccent` のように2つのコマンドへ
   割らない。**どちらも空文字を
   通し、空なら書き込む側が畳む**——名前は上と同じく「書かない＝id へ折り返す」、ひとことは
   `definitionWithTagline` が空白だけの値を「無い」に畳む（`toCharacterDefinition` の読み取りと
   同じ規則）
 
-**消すときの細部**（2026-09-24 決定。コマンドは `delete-character`。`pack` だけを持つ）:
+**消すときの細部**（2026-09-24 決定。コマンドは `characterPack.delete`。`pack` だけを持つ）:
 
 - **消すのはいつもホームの版（`~/.tsukumo/characters/<name>/`）だけ。** 同梱の `characters/*` と
   起動先の `characters/local` はどの経路でも消さない。**使用中のパックは断る**（画面は押せなく
@@ -2641,7 +2643,7 @@ characters/<name>/
   次に起こすと既定のパックへ落ちる。覚えたキャラクターが消えたパックを指していても同じく既定へ
   落ちる）
 - 反映は作るときと同じく**セッションを起こし直さず、選択肢の減った `character-changed` を流し
-  直すだけ**。使用中は消さないので、ターン中でも受け付ける。消せなかったときの `error` は定型文
+  直すだけ**。使用中は消さないので、ターン中でも受け付ける。消せなかったときの `REFUSED` は定型文
   （`FRAME_ERROR_REASON.characterDeleteFailed`）で、理由を分けない
 
 #### 覚えたことを人格に書き足す・1行だけ忘れる
@@ -2741,7 +2743,7 @@ characters/<name>/
   **雑談で起こしたとき**（`chat-topics-changed` の直後）、**キャラクター自身の `remember` /
   `forget` で節が変わったとき**（`createPersonaMemory` の `onChange`）、**画面の「編集」から
   消したとき**のどれかで流れ直す。起こし直すと `chatTopics` と同じく初期値の空へ戻る
-- **消すコマンド**: `src/shared/command.ts` の `forget-remembered-line`（`line: string`。
+- **消すコマンド**: `src/shared/command.ts` の `chat.forgetRememberedLine`（`line: string`。
   消したい1行の文面そのまま、チップに出した文面を送る）。`editCharacter` と同じく**駆動には
   渡らず**、書き込みと `remembered-lines-changed` の流し直しで済む（セッションは起こし直さない）。
   **雑談モードでなければサーバも断る**（サイドバーの「覚えていること」自体が雑談中にしか
@@ -3238,10 +3240,10 @@ export const CHAT_RECALL_SCORE = {
 - 画面の履歴の組み直しは「`getSessionMessages` → `SessionEvent[]`（時刻付き）→ `session-manager` の
   `state` に畳む」だけ。接続したブラウザは `hello` の snapshot でそのまま同じ姿になる
   （**ブラウザ側に復元の特別な経路は要らない**）
-- 逃げ道は `TSUKUMO_NEW_SESSION=1`（起動時）と、画面から新規に起こすコマンド（`ClientCommand` に
+- 逃げ道は `TSUKUMO_NEW_SESSION=1`（起動時）と、画面から新規に起こすコマンド（契約に
   はまだ足していない）
 - **どのセッションの続きから始めるかは画面から選べる**（2026-09-22。サイドバーの「セッション」の
-  `<select>` → `switch-session` → `session-launch` の起こし直し）。並ぶのは**同じパック・同じモードの、
+  `<select>` → `session.switchSession` → `session-launch` の起こし直し）。並ぶのは**同じパック・同じモードの、
   目印（`@7327` / `@7328`）違い**で、新しいほうから `MAX_SESSION_CHOICES` 件まで。**起動時は今までどおり
   自動で続きから始まる**（選ばせる画面は出さない）
 
@@ -3257,24 +3259,24 @@ export const CHAT_RECALL_SCORE = {
 
 `docs/coding-standards.md`「会話内容の扱い」は最優先のまま。新しい形で変わる点と変わらない点:
 
-| 項目                                               | 扱い                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
-| -------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| バインド先                                         | `127.0.0.1` だけ。変えない                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| Origin                                             | WebSocket の upgrade で確かめる（いまの POST と同じ規則。`Origin` が無ければ通す、あれば自分と一致）                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
-| 起動トークン                                       | 起動ごとに乱数を1つ作り、`/ws?t=` で要求する。ページの URL に付けて配る（`showView` に渡す URL に含む）。同じマシンの別プロセスが `127.0.0.1:7327` を読める、という既知の割り切りを塞ぐ                                                                                                                                                                                                                                                                                                                                                                                                                     |
-| ディスク                                           | 会話を**書く**のは**3つの例外だけ**（下の「あらすじ」「雑談の会話のアーカイブ」「エピソード索引」。「直近の雑談を逐語で読み戻す」と「定着」の行は書かずに**読む・渡す**ほう）。`bun build` の出力もメモリ。`localStorage` に置くのは領域の比率だけ（キャラクターパックへ書くのは**会話ではなくキャラクターの属性1行**だけ。下の行）                                                                                                                                                                                                                                                                         |
-| ブラウザ側のメモリ                                 | `SessionState` として会話の一部を持つ。**同じオリジンの `127.0.0.1` のタブの中に閉じる**（いまも DOM として持っている。持ち方が変わるだけ）                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
-| ログ                                               | `error` フレームの `reason` は定型文。サーバの stderr に会話を出さない（いまのまま）                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
-| 定着（雑談の記憶を畳む）                           | 窓から溢れた雑談の逐語を、背景の使い捨て `query()`（同じマシンの claude の子プロセス。`persistSession: false`・ツールなし）に渡してエピソードとあらすじを書かせる。**ユーザーが 2026-09-25 に認めた例外**（`docs/requirements.md` 2.2 の外部送信に当たらない。範囲は `docs/chat-mode.md` 4.9、形は7章「定着はどこで走るか」）。渡した文面も受け取った出力も**画面にも `error` フレームにも stderr にも出さない**（画面に出すのは話題の見出しだけ）。tsukumo は `/compact` を投げない                                                                                                                        |
-| あらすじ                                           | `~/.tsukumo/chat-summary/<pack>.md` に**最新の1つだけ**を上書きで持つ（8 KiB まで。書くのは定着）。**ユーザーが 2026-09-21 に認めた「別の場所に複製しない」の例外の1つ目**（2026-09-25 に書き手を `/compact` から定着へ替えた。範囲と理由は `docs/chat-mode.md` 4.9、形と上限は7章）。載せ直すのは**雑談のセッションの `systemPrompt`** で、条件は「新規に起こした」か「`/clear` を見たあと」の2つ（1行目の印が持つ）                                                                                                                                                                                       |
-| 雑談の会話のアーカイブ                             | `~/.tsukumo/chat-archive/<pack>/<日付>.jsonl` に、雑談の依頼とセリフを表情つきで1行ずつ追記する。**ユーザーが 2026-09-21 に認めた「別の場所に複製しない」の例外の2つ目**（範囲と理由は `docs/chat-mode.md` 4.9、形と上限は7章）。**画面の 100 ターンには影響されない。** 画面にも `error` フレームにも stderr にも出さない                                                                                                                                                                                                                                                                                  |
-| エピソード索引                                     | `~/.tsukumo/chat-archive/<pack>/episode.jsonl` に、定着が書いた見出し・要旨・手がかり語と、アーカイブの行の範囲を1件ずつ追記する（思い出した記録は `recalled.jsonl`。文面を持たない）。**例外の3つ目**（2026-09-25。キャラクターが書いていた `index.jsonl` の見出しを置き換えた）。**逐語は持たず、アーカイブを指す目次**。`recall` の一覧と `recall_episode` の1件（8 KiB・1ターンに2件）だけが雑談の文脈へ戻す（範囲は `docs/chat-mode.md` 4.9、形は7章）                                                                                                                                                 |
-| 直近の雑談を逐語で読み戻す                         | アーカイブの**新しいほうから 64 KiB まで**を読み、**雑談のセッションの `systemPrompt`** へ逐語のまま載せる。載せる条件はあらすじと同じ2つ。**渡す先はそこだけ**で、画面にも `error` フレームにも stderr にも出さず、**仕事の側の文脈にも載せない**。逐語が新しいセッションの transcript に書かれることは承認に含まれる（範囲と量は `docs/chat-mode.md` 4.9「直近の会話は逐語のまま読み戻す」、読み口は7章）                                                                                                                                                                                                 |
-| 人格への書き戻し（覚えたこと）                     | 雑談で覚えたことを `~/.tsukumo/characters/<pack>/persona.md` の末尾の節へ1行ずつ足す。**利用者については書かない**（範囲は `docs/chat-mode.md` 4.9、形と上限は 7.1）。会話の文面はディスクに届かない                                                                                                                                                                                                                                                                                                                                                                                                        |
-| コンテキストの内訳の記録                           | `~/.tsukumo/context-usage/<日付>.jsonl` に、**セッション1つにつき1行**だけ積む（最初のターンが終わったとき、`detail: "full"` で取った値）。**会話の複製ではない** — 入るのは数と、SDK が内訳として返す名前（分類の表示名・MCP ツール名・メモリファイルのパス・スキル名）だけで、文面の口が型に無い。**ターンごとのトークン消費の記録（`~/.tsukumo/token-usage/`）とは置き場も版も分ける** — 「書いてよいもの」の線が種類ごとに違い、同じファイルに混ぜると広いほうの線が狭いほうにもかかるため（線の正典は `src/shared/context-usage-record.ts`）                                                           |
-| 見直しの結果と見送りの記録                         | `~/.tsukumo/usage-review.json`（前回の見直しの結果。直前の1回だけ）と `~/.tsukumo/usage-review-dismissed.json`（見送った提案の識別子）。**会話の複製ではない** — 入るのはスキルが渡した見直しの結果（`UsageReviewFindings`。見出し・根拠・やることの文字列を含むが、これ自体が「見直しの結果」であって会話ではない）と、種類:対象の形の識別子の文字列だけ（線の正典は `src/shared/usage-review.ts`）                                                                                                                                                                                                        |
-| 日記                                               | `~/.tsukumo/diary/<リポジトリ>/<日付>.json` に、振り返りの使い捨ての問い合わせでキャラクターが `diary` ツールで渡した日記（本文・しおり・表情）を、書いた時刻と書いたパックの名前を添えて日ごとに書き足す（2026-09-25 のユーザーの決定。形は5章「日記の受け取りと保存」）。**会話の複製ではない** — 入るのはツールが渡した日記（キャラクターがその日の仕事について書いた成果物）と、タスクの ID・`summary`・理由だけで、依頼の文面・セリフ・ほかのツールの引数と結果は通らない（線の正典は `src/shared/diary.ts`）。**文面はログにも `error` フレームにも stderr にも出さず、画面（成果の画面）にだけ配る** |
-| テストのフィクスチャ・fake driver の疑似セッション | 手で書いた架空の会話だけ                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| 項目                                               | 扱い                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| バインド先                                         | `127.0.0.1` だけ。変えない                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| Origin                                             | WebSocket の upgrade で確かめる（いまの POST と同じ規則。`Origin` が無ければ通す、あれば自分と一致）                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| 起動トークン                                       | 起動ごとに乱数を1つ作り、`/ws?t=` で要求する。ページの URL に付けて配る（`showView` に渡す URL に含む）。同じマシンの別プロセスが `127.0.0.1:7327` を読める、という既知の割り切りを塞ぐ                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| ディスク                                           | 会話を**書く**のは**3つの例外だけ**（下の「あらすじ」「雑談の会話のアーカイブ」「エピソード索引」。「直近の雑談を逐語で読み戻す」と「定着」の行は書かずに**読む・渡す**ほう）。`bun build` の出力もメモリ。`localStorage` に置くのは領域の比率だけ（キャラクターパックへ書くのは**会話ではなくキャラクターの属性1行**だけ。下の行）                                                                                                                                                                                                                                                                     |
+| ブラウザ側のメモリ                                 | `SessionState` として会話の一部を持つ。**同じオリジンの `127.0.0.1` のタブの中に閉じる**（いまも DOM として持っている。持ち方が変わるだけ）                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| ログ                                               | 断ったときの理由（`REFUSED`）は定型文。サーバの stderr に会話を出さない（いまのまま）                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| 定着（雑談の記憶を畳む）                           | 窓から溢れた雑談の逐語を、背景の使い捨て `query()`（同じマシンの claude の子プロセス。`persistSession: false`・ツールなし）に渡してエピソードとあらすじを書かせる。**ユーザーが 2026-09-25 に認めた例外**（`docs/requirements.md` 2.2 の外部送信に当たらない。範囲は `docs/chat-mode.md` 4.9、形は7章「定着はどこで走るか」）。渡した文面も受け取った出力も**画面にも 手続きの応答にも stderr にも出さない**（画面に出すのは話題の見出しだけ）。tsukumo は `/compact` を投げない                                                                                                                        |
+| あらすじ                                           | `~/.tsukumo/chat-summary/<pack>.md` に**最新の1つだけ**を上書きで持つ（8 KiB まで。書くのは定着）。**ユーザーが 2026-09-21 に認めた「別の場所に複製しない」の例外の1つ目**（2026-09-25 に書き手を `/compact` から定着へ替えた。範囲と理由は `docs/chat-mode.md` 4.9、形と上限は7章）。載せ直すのは**雑談のセッションの `systemPrompt`** で、条件は「新規に起こした」か「`/clear` を見たあと」の2つ（1行目の印が持つ）                                                                                                                                                                                   |
+| 雑談の会話のアーカイブ                             | `~/.tsukumo/chat-archive/<pack>/<日付>.jsonl` に、雑談の依頼とセリフを表情つきで1行ずつ追記する。**ユーザーが 2026-09-21 に認めた「別の場所に複製しない」の例外の2つ目**（範囲と理由は `docs/chat-mode.md` 4.9、形と上限は7章）。**画面の 100 ターンには影響されない。** 画面にも 手続きの応答にも stderr にも出さない                                                                                                                                                                                                                                                                                  |
+| エピソード索引                                     | `~/.tsukumo/chat-archive/<pack>/episode.jsonl` に、定着が書いた見出し・要旨・手がかり語と、アーカイブの行の範囲を1件ずつ追記する（思い出した記録は `recalled.jsonl`。文面を持たない）。**例外の3つ目**（2026-09-25。キャラクターが書いていた `index.jsonl` の見出しを置き換えた）。**逐語は持たず、アーカイブを指す目次**。`recall` の一覧と `recall_episode` の1件（8 KiB・1ターンに2件）だけが雑談の文脈へ戻す（範囲は `docs/chat-mode.md` 4.9、形は7章）                                                                                                                                             |
+| 直近の雑談を逐語で読み戻す                         | アーカイブの**新しいほうから 64 KiB まで**を読み、**雑談のセッションの `systemPrompt`** へ逐語のまま載せる。載せる条件はあらすじと同じ2つ。**渡す先はそこだけ**で、画面にも手続きの応答にも stderr にも出さず、**仕事の側の文脈にも載せない**。逐語が新しいセッションの transcript に書かれることは承認に含まれる（範囲と量は `docs/chat-mode.md` 4.9「直近の会話は逐語のまま読み戻す」、読み口は7章）                                                                                                                                                                                                  |
+| 人格への書き戻し（覚えたこと）                     | 雑談で覚えたことを `~/.tsukumo/characters/<pack>/persona.md` の末尾の節へ1行ずつ足す。**利用者については書かない**（範囲は `docs/chat-mode.md` 4.9、形と上限は 7.1）。会話の文面はディスクに届かない                                                                                                                                                                                                                                                                                                                                                                                                    |
+| コンテキストの内訳の記録                           | `~/.tsukumo/context-usage/<日付>.jsonl` に、**セッション1つにつき1行**だけ積む（最初のターンが終わったとき、`detail: "full"` で取った値）。**会話の複製ではない** — 入るのは数と、SDK が内訳として返す名前（分類の表示名・MCP ツール名・メモリファイルのパス・スキル名）だけで、文面の口が型に無い。**ターンごとのトークン消費の記録（`~/.tsukumo/token-usage/`）とは置き場も版も分ける** — 「書いてよいもの」の線が種類ごとに違い、同じファイルに混ぜると広いほうの線が狭いほうにもかかるため（線の正典は `src/shared/context-usage-record.ts`）                                                       |
+| 見直しの結果と見送りの記録                         | `~/.tsukumo/usage-review.json`（前回の見直しの結果。直前の1回だけ）と `~/.tsukumo/usage-review-dismissed.json`（見送った提案の識別子）。**会話の複製ではない** — 入るのはスキルが渡した見直しの結果（`UsageReviewFindings`。見出し・根拠・やることの文字列を含むが、これ自体が「見直しの結果」であって会話ではない）と、種類:対象の形の識別子の文字列だけ（線の正典は `src/shared/usage-review.ts`）                                                                                                                                                                                                    |
+| 日記                                               | `~/.tsukumo/diary/<リポジトリ>/<日付>.json` に、振り返りの使い捨ての問い合わせでキャラクターが `diary` ツールで渡した日記（本文・しおり・表情）を、書いた時刻と書いたパックの名前を添えて日ごとに書き足す（2026-09-25 のユーザーの決定。形は5章「日記の受け取りと保存」）。**会話の複製ではない** — 入るのはツールが渡した日記（キャラクターがその日の仕事について書いた成果物）と、タスクの ID・`summary`・理由だけで、依頼の文面・セリフ・ほかのツールの引数と結果は通らない（線の正典は `src/shared/diary.ts`）。**文面はログにも 手続きの応答にも stderr にも出さず、画面（成果の画面）にだけ配る** |
+| テストのフィクスチャ・fake driver の疑似セッション | 手で書いた架空の会話だけ                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 
 ## 10. テスト
 
@@ -3362,7 +3364,7 @@ E2E が判定に使うのは DOM の構造と WebSocket のメッセージの列
   - `events` フレームは**束をほどいてイベント1件ずつ**にする（束の切れ目は
     `batchIntervalMs` と実時間で決まり、走らせるたびに変わる）
   - `hello` は `protocolVersion` だけを残す（状態の全体は DOM の構造の側で見る）。`refresh` は
-    落とす。コマンドの `commandId` は現れた順の番号に置き換える
+    落とす。コマンド（手続きの要求と応答）の番号 `i` は現れた順の番号に置き換える
   - `character-changed` はいまのパックの名前と表情だけを残す（同梱のパックの一覧はパックを
     直すたびに変わり、シナリオが確かめたいことではない）
 

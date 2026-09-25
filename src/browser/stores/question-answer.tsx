@@ -175,8 +175,7 @@ function askingModel(
       })
       return
     }
-    dispatch({
-      type: "answer",
+    dispatch.session.answer({
       id: pending.id,
       answer: {
         kind: "answers",

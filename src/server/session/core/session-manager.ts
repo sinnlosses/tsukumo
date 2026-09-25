@@ -2,10 +2,9 @@
 // まとめてフレームで配る**（docs/design.md 5章）。
 //
 // - 状態をサーバ側でも持つのは、接続してきたブラウザへ `hello` の snapshot を返すため
-// - **コマンドの分岐はここに無い**。どの種類をどの機能が受け、どの条件で断るかは機能ごとの表
-//   （束ねるのは配線の `src/command-route.ts`）が持ち、ここは受け手に見せる口
-//   （`CommandSession`）を作って `command-dispatch.ts` へ渡すだけ（docs/design.md 2章
-//   「コマンドの受け手と手続きの置き方」）
+// - **コマンドの分岐はここに無い**。どの手続きをどの機能が受け、どの条件で断るかは契約と
+//   機能ごとの表（束ねるのは配線の `src/router.ts`）が持ち、ここは受け手に見せる口
+//   （`CommandSession`）を作って出すだけ（docs/design.md 2章「コマンドの受け手と手続きの置き方」）
 // - **持つセッションは1つだけで、鍵を持たない**（docs/design.md 8章）。キャラクター・雑談モード・
 //   セッションの切り替えはこの持ち物の中で駆動を起こし直す（`restart`）ので、古い側と新しい側を
 //   並べて持つことが無い
@@ -16,7 +15,6 @@
 // 会話の内容がイベントとして通るが、**ログにもファイルにも書かない**
 // （docs/coding-standards.md「会話内容の扱い」）。配る先は購読しているブラウザだけ。
 
-import { type ClientCommand } from "../../../shared/command.ts"
 import {
   type ContextUsageReport,
   UNAVAILABLE_CONTEXT_USAGE,
@@ -35,6 +33,7 @@ import {
   type ContextUsageLog,
   createContextUsageRecorder,
 } from "../../context-usage/core/context-usage.ts"
+import { type DispatchResult } from "../../core/command-receiver.ts"
 import {
   type PromptImageShelf,
   releasedPromptImageIds,
@@ -46,12 +45,7 @@ import {
   type TokenUsageRecorder,
 } from "../../token-usage/core/token-usage.ts"
 import { createVisitWatch, type VisitPorts, type VisitWatch } from "../../visit/core/visit-watch.ts"
-import {
-  type CommandRoute,
-  type CommandSession,
-  dispatchCommand,
-  type DispatchResult,
-} from "./command-dispatch.ts"
+import { type CommandSession } from "./command-session.ts"
 import { createEventBatch, type EventBatch } from "./event-batch.ts"
 import { type SessionLaunchRequest } from "./session-launch.ts"
 
@@ -110,7 +104,7 @@ export type SessionManagerOptions = {
    * ためだけ。
    *
    * `request.selection` は**これから起こすパックの決め方**で、起動時は「初期パック」、
-   * `switch-character` は「画面から選ばれた名前」、`set-chat-mode` は「いま出しているパックの
+   * `session.switchCharacter` は「画面から選ばれた名前」、`session.setChatMode` は「いま出しているパックの
    * まま」の3つ（docs/design.md 7章・docs/screen-design.md 13.6）。知らない名前のときに何を起こすかも、名前を
    * 覚えるかどうかも呼び出し側が決める。
    * `request.chat` は雑談モードで起こすか（`docs/chat-mode.md` 4.9）。
@@ -143,12 +137,6 @@ export type SessionManagerOptions = {
    * 見張りは代ごとに1つ作る（{@link GenerationTally.visit}）。
    */
   readonly visit: VisitPorts
-  /**
-   * コマンドの受け手の表（`docs/design.md` 2章「コマンドの受け手と手続きの置き方」）。**どの種類を
-   * どの機能が受け、どの条件で断るかは表の側**が持ち、ここは {@link CommandSession} を作って
-   * `dispatchCommand` へ渡すだけ。束ねるのは配線（`src/command-route.ts`）。
-   */
-  readonly commands: CommandRoute
 }
 
 /**
@@ -156,8 +144,11 @@ export type SessionManagerOptions = {
  * （`create` の段は無い。1プロセスが持つセッションは1つで、切り替えは中で起こし直す）。
  */
 export type SessionManager = {
-  /** コマンドを駆動へ渡す。**分岐はここだけ**。 */
-  readonly dispatch: (command: ClientCommand) => Promise<DispatchResult>
+  /**
+   * コマンドの受け手に見せる口（`docs/design.md` 2章「コマンドの受け手と手続きの置き方」）。
+   * `/ws` の手続きの context に載る。**代は呼ばれたその時点のもの**を返す。
+   */
+  readonly commandSession: CommandSession
   /**
    * いまのコンテキストの内訳を駆動から取る（トークン消費の画面が引く。
    * `docs/glossary.md`「コンテキストの内訳」）。**押すのではなく引く**ので、状態にも
@@ -236,7 +227,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
   // 閉じたあとに駆動が投げてくるイベントは捨てる（配る先がもう無いのにタイマーを立てない）。
   let closed = false
   // 何代目まで起こしたか。**閉じた駆動があとから投げてくるイベントを捨てる**ための印
-  // （`switch-character` で起こし直したとき、前の駆動の最後のイベントが新しい状態に混ざらない）。
+  // （`session.switchCharacter` で起こし直したとき、前の駆動の最後のイベントが新しい状態に混ざらない）。
   let bornCount = 0
   // コンテキストの内訳の記録。**代をまたいで持つ** — 続きから起こして同じIDになったときは
   // 同じセッションなので、2行目を書かない（世代の持ち物には入れない）。
@@ -402,7 +393,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
         live = started
       },
       () => {
-        // 起こせなかったことは、待っている側（restart / dispatchToDriver）が拾う。
+        // 起こせなかったことは、待っている側（restart / askDriver）が拾う。
       },
     )
 
@@ -438,15 +429,15 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
   /**
    * 駆動を起こし直す（docs/design.md 7章。**そのパックのセッションの
    * 続きから始まる** — 会話が繋がるかどうかは、起こす側が `resume` に何を渡すかで決まる）。
-   * **契機は3つ**: 別のキャラクターパックに切り替えたとき（`switch-character`）、
-   * 雑談モードを切り替えたとき（`set-chat-mode`。`systemPrompt` を差し替えるため。
-   * `docs/chat-mode.md` 4.9）、画面から別のセッションを選んだとき（`switch-session`。
+   * **契機は3つ**: 別のキャラクターパックに切り替えたとき（`session.switchCharacter`）、
+   * 雑談モードを切り替えたとき（`session.setChatMode`。`systemPrompt` を差し替えるため。
+   * `docs/chat-mode.md` 4.9）、画面から別のセッションを選んだとき（`session.switchSession`。
    * `docs/requirements.md` 4.8）。
    * **画面は初期状態に戻す** — 吹き出し・立ち絵・メインビューの3つを消して、新しい `hello` を
    * 配り直す。起こし直しの間に届いたイベント（新しい `character-changed`・組み直した履歴など）は
    * その `hello` の状態に入っているので、二重に配らない。
    *
-   * 起こし直しに失敗しても**常駐プロセスは落とさない**（`dispatchToDriver` と同じ扱いで、
+   * 起こし直しに失敗しても**常駐プロセスは落とさない**（`askDriver` と同じ扱いで、
    * 定型文の理由を返すだけ。docs/coding-standards.md「エラーハンドリング」）。
    */
   const restart = async (request: SessionLaunchRequest): Promise<DispatchResult> => {
@@ -484,10 +475,10 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
   }
 
   return {
-    dispatch: (command) => dispatchCommand(options.commands, command, commandSession),
+    commandSession,
     readContextUsage: async () => {
       // 起こし直しの最中・起こせなかったときは駆動そのものが無い。**画面の札が1枚出ない
-      // だけ**で、常駐プロセスは落とさない（`dispatchToDriver` と同じ扱い）。
+      // だけ**で、常駐プロセスは落とさない（`askDriver` と同じ扱い）。
       try {
         const started = await generation.driver
         return await started.readContextUsage()

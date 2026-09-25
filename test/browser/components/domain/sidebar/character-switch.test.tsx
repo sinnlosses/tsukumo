@@ -77,7 +77,7 @@ describe("CharacterSwitch", () => {
     expect(select().value).toBe("fictional")
   })
 
-  it("選ぶと switch-character を dispatch する", () => {
+  it("選ぶと session.switchCharacter を dispatch する", () => {
     const calls: unknown[] = []
     renderSwitch({ characterPacks: TWO_PACKS, character: characterInfo() }, (command) => {
       calls.push(command)
@@ -85,7 +85,7 @@ describe("CharacterSwitch", () => {
 
     fireEvent.change(select(), { target: { value: "local" } })
 
-    expect(calls).toEqual([{ type: "switch-character", name: "local" }])
+    expect(calls).toEqual([{ procedure: "session.switchCharacter", name: "local" }])
   })
 
   it("ターン進行中は塞がり、理由をサーバと同じ定型文で見せる", () => {

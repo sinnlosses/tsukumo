@@ -5,20 +5,31 @@
 // フィクスチャの中身は各テストが持つ（ここは組み立てだけ。会話の実物は使わない。
 // docs/coding-standards.md「会話内容の扱い」）。
 
+import { isPlainObject } from "remeda"
+
 import { createSessionStore, type SessionStore } from "../../src/browser/stores/session.tsx"
-import { type ClientCommand } from "../../src/shared/command.ts"
 import { PROTOCOL_VERSION } from "../../src/shared/frame.ts"
 import { type SessionState } from "../../src/shared/session-state.ts"
 
-/** 部品が送ったコマンド（毎回変わる `commandId` を落としたもの）の受け取り口。 */
-export type CommandSpy = (command: unknown) => void
+/**
+ * 部品が送ったコマンドの受け取り口。**手続きの名前（`session.prompt` のように `.` で繋いだもの）を
+ * `procedure` に、入力のフィールドを同じ階層に平らに並べた記録**を受け取る（入力の無い手続きは
+ * `procedure` だけ）。
+ */
+export type CommandSpy = (command: SentCommand) => void
+
+/** 送られたコマンド1件の記録。 */
+export type SentCommand = { readonly procedure: string } & Readonly<Record<string, unknown>>
 
 /** 姿を差し込んだ store。送られたコマンドは `spy` へ渡る。 */
 export function sessionStoreWith(state: SessionState, spy: CommandSpy = () => {}): SessionStore {
   const store = createSessionStore()
   store.attachSocket({
-    send: (command) => {
-      spy(withoutCommandId(command))
+    commandLink: {
+      call: (path, input) => {
+        spy({ procedure: path.join("."), ...(isPlainObject(input) ? input : {}) })
+        return Promise.resolve(undefined)
+      },
     },
   })
   putState(store, state)
@@ -32,9 +43,4 @@ export function putState(store: SessionStore, state: SessionState): void {
     protocolVersion: PROTOCOL_VERSION,
     state,
   })
-}
-
-/** `commandId` は送るたびに新しく振られるので、テストが見るのは残りだけにする。 */
-function withoutCommandId(command: ClientCommand): Record<string, unknown> {
-  return Object.fromEntries(Object.entries(command).filter(([key]) => key !== "commandId"))
 }

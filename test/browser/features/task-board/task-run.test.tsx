@@ -108,7 +108,7 @@ describe("タスクIDから実行を頼む", () => {
     fireEvent.click(screen.getByRole("button", { name: "X-002" }))
     fireEvent.click(screen.getByRole("button", { name: "実行する" }))
 
-    expect(sent).toEqual([{ type: "prompt", text: "/next-task X-002", images: [] }])
+    expect(sent).toEqual([{ procedure: "session.prompt", text: "/next-task X-002", images: [] }])
     expect(confirmDialog()).toBeNull()
   })
 
@@ -158,7 +158,7 @@ describe("タスクIDから実行を頼む", () => {
     fireEvent.click(screen.getByRole("button", { name: "X-001" }))
     fireEvent.click(screen.getByRole("button", { name: "実行する" }))
 
-    expect(sent).toEqual([{ type: "prompt", text: "/next-task X-001", images: [] }])
+    expect(sent).toEqual([{ procedure: "session.prompt", text: "/next-task X-001", images: [] }])
   })
 
   it("表のIDからも同じ確認を開いて送れる", () => {
@@ -168,7 +168,7 @@ describe("タスクIDから実行を頼む", () => {
     fireEvent.click(screen.getByRole("button", { name: "X-002" }))
     fireEvent.click(screen.getByRole("button", { name: "実行する" }))
 
-    expect(sent).toEqual([{ type: "prompt", text: "/next-task X-002", images: [] }])
+    expect(sent).toEqual([{ procedure: "session.prompt", text: "/next-task X-002", images: [] }])
   })
 
   // 送ったあとに表が残っていると、メインビューに並んだ依頼が画面いっぱいの表に隠れる。

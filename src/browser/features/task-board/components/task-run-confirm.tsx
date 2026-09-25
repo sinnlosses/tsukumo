@@ -42,7 +42,7 @@ export function TaskRunConfirm(props: TaskRunConfirmProps): ReactElement {
 
   // **送ったときだけ表も閉じる。** 断ったときに閉じると一覧へ戻れない。
   const run = (): void => {
-    dispatch({ type: "prompt", text: prompt, images: [] })
+    dispatch.session.prompt({ text: prompt, images: [] })
     props.onClose()
     closeBoard()
   }

@@ -210,7 +210,7 @@ describe("useAchievement（振り返りのボタン）", () => {
       result.current.review.onReview()
     })
 
-    expect(sent).toEqual([{ type: "reflect-achievement", date: "2026-09-24" }])
+    expect(sent).toEqual([{ procedure: "session.reflectAchievement", date: "2026-09-24" }])
     expect(window.location.hash.startsWith("#achievement")).toBe(false)
   })
 
@@ -233,7 +233,7 @@ describe("useAchievement（振り返りのボタン）", () => {
       result.current.review.onReview()
     })
 
-    expect(sent).toEqual([{ type: "reflect-achievement", date: "2026-09-24" }])
+    expect(sent).toEqual([{ procedure: "session.reflectAchievement", date: "2026-09-24" }])
   })
 
   it("ほかの日の日記を書いている最中は押せず、押しても送らない", async () => {

@@ -2,12 +2,12 @@
 // **一覧で選んでいるパック**（`hooks/use-selected-pack.ts`。使用中とは限らない）の姿を、名乗り・
 // 表情のカード・差し色・背景へ畳み、選んだ画像を data URL にして送る呼び先と一緒に返す。
 //
-// 送るのは `set-portrait` / `clear-portrait` / `set-outfit-accent` / `set-accent` /
-// `clear-chat-accent` / `set-background` / `clear-background` / `set-face` / `clear-face` で、
+// 送るのは `characterPack.setPortrait` / `characterPack.clearPortrait` / `characterPack.setOutfitAccent` / `characterPack.setAccent` /
+// `characterPack.clearChatAccent` / `characterPack.setBackground` / `characterPack.clearBackground` / `characterPack.setFace` / `characterPack.clearFace` で、
 // **どれも書き込む先のパックの
 // 名前（`pack`）を持つ**（選んでいるパックの名前を入れる。使用中以外を直しても使用中の姿は
 // 変わらない。`docs/design.md` 7.1）。使用中以外のパックには「このキャラクターに切り替える」を
-// 出し、押すと `switch-character` を送る（ターン進行中は押せない。サイドバーの `<select>` と
+// 出し、押すと `session.switchCharacter` を送る（ターン進行中は押せない。サイドバーの `<select>` と
 // 同じ理由・同じ文言）。**書き込み先と反映はサーバ側**
 // （`src/server/character-pack/adapter/character-edit.ts` → `character-changed`）。ここは選んだ画像を data URL
 // にして渡すだけで、素材をブラウザ側に持ち続けない。
@@ -21,7 +21,7 @@
 // `accentFallback` に持つ**（描画のたびに `getComputedStyle` を呼ばない）。
 //
 // 差し色を引きずっている間は、**見た目（この立ち絵の `accent` と `<input>` の表示）だけ
-// その場で更新し、`set-outfit-accent` / `set-accent` の送信は `useDebouncedCallback` で
+// その場で更新し、`characterPack.setOutfitAccent` / `characterPack.setAccent` の送信は `useDebouncedCallback` で
 // 200ms まとめる**（`src/server/character-pack/adapter/character-edit.ts` が送信のたびに `character.json` を
 // 書き直すため）。**衣装の差し色（`outfitAccents`）と画面の差し色（`accent` / `chatAccent`）は
 // 同じ「ドラッグ中の色」という操作**なので、同じ定数（`ACCENT_DEBOUNCE_MS`）を使う
@@ -169,7 +169,7 @@ export type CharacterProfileModel = {
 
 /**
  * 名前とひとことプロフィールを変えるダイアログの下書きの種（`components/character-profile-edit.tsx`）。
- * 空文字も渡す——空なら書き込む側（`set-profile`）が畳む（名前は id へ、ひとことは「無い」へ）。
+ * 空文字も渡す——空なら書き込む側（`characterPack.setProfile`）が畳む（名前は id へ、ひとことは「無い」へ）。
  */
 export type CharacterProfileEditModel =
   | { readonly kind: "hidden" }
@@ -320,13 +320,13 @@ export function useCharacterEdit(): CharacterEditModel {
   // 鍵は「パックと欄」の組（別のパックの同じ欄を続けて動かしても、前の値を落とさない）。
   const sendOutfitAccent = useDebouncedCallback<string, PendingAccent<Outfit>>(
     (_key, { pack, target, color }) => {
-      dispatch({ type: "set-outfit-accent", pack, outfit: target, color })
+      dispatch.characterPack.setOutfitAccent({ pack, outfit: target, color })
     },
     ACCENT_DEBOUNCE_MS,
   )
   const sendAccent = useDebouncedCallback<string, PendingAccent<AccentTarget>>(
     (_key, { pack, target, color }) => {
-      dispatch({ type: "set-accent", pack, target, color })
+      dispatch.characterPack.setAccent({ pack, target, color })
     },
     ACCENT_DEBOUNCE_MS,
   )
@@ -363,10 +363,10 @@ export function useCharacterEdit(): CharacterEditModel {
   const disabled = !character.editable
   const cards = portraitCards(character, accentOf(GALLERY_OUTFIT), {
     pick: (expression, image) => {
-      dispatch({ type: "set-portrait", pack, expression, image })
+      dispatch.characterPack.setPortrait({ pack, expression, image })
     },
     clear: (expression) => {
-      dispatch({ type: "clear-portrait", pack, expression })
+      dispatch.characterPack.clearPortrait({ pack, expression })
     },
   })
 
@@ -416,7 +416,7 @@ export function useCharacterEdit(): CharacterEditModel {
         kind: "shown",
         onClick: () => {
           holdScreenAccent("chat", undefined)
-          dispatch({ type: "clear-chat-accent", pack })
+          dispatch.characterPack.clearChatAccent({ pack })
         },
       }
     : { kind: "hidden" }
@@ -428,11 +428,11 @@ export function useCharacterEdit(): CharacterEditModel {
     // 立ち絵・背景と同じ受け渡し（data URL）。
     onPick: (input) => {
       void readPicked(input, (image) => {
-        dispatch({ type: "set-face", pack, image })
+        dispatch.characterPack.setFace({ pack, image })
       })
     },
     onClear: () => {
-      dispatch({ type: "clear-face", pack })
+      dispatch.characterPack.clearFace({ pack })
     },
   }
 
@@ -445,11 +445,11 @@ export function useCharacterEdit(): CharacterEditModel {
     // 背景も立ち絵と同じ受け渡し（data URL）。
     onPick: (input) => {
       void readPicked(input, (image) => {
-        dispatch({ type: "set-background", pack, image })
+        dispatch.characterPack.setBackground({ pack, image })
       })
     },
     onClear: () => {
-      dispatch({ type: "clear-background", pack })
+      dispatch.characterPack.clearBackground({ pack })
     },
   }
 
@@ -476,7 +476,7 @@ export function useCharacterEdit(): CharacterEditModel {
           disabled: turnInProgress,
           title: turnInProgress ? SWITCH_BLOCKED_TITLE : undefined,
           onSwitch: () => {
-            dispatch({ type: "switch-character", name: pack })
+            dispatch.session.switchCharacter({ name: pack })
           },
         },
     editProfile: disabled
@@ -486,7 +486,7 @@ export function useCharacterEdit(): CharacterEditModel {
           name: character.name ?? "",
           tagline: character.tagline ?? "",
           onSubmit: (name, tagline) => {
-            dispatch({ type: "set-profile", pack, name, tagline })
+            dispatch.characterPack.setProfile({ pack, name, tagline })
           },
         },
   }
@@ -616,7 +616,7 @@ function deleteBandOf(
     disabled: inUse,
     title: inUse ? copy.blockedTitle : undefined,
     onSubmit: () => {
-      dispatch({ type: "delete-character", pack: character.pack })
+      dispatch.characterPack.delete({ pack: character.pack })
     },
   }
 }

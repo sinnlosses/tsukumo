@@ -7,7 +7,7 @@
 // **行番号へは飛ばない**（Orca に口が無い）ので、`:12` / `:12:5` の形は末尾を落として照合し、
 // 開くのは裸のパスだけ（表示の `:12` はそのまま残る）。
 //
-// **一覧と `open-file` の送り先は React Context で配る。** `Markdown` の `components`
+// **一覧と `host.openFile` の送り先は React Context で配る。** `Markdown` の `components`
 // （`REPORT_COMPONENTS`）は同じ参照を保つ必要があってモジュール定数なので、`Code` / `Pre` /
 // `Anchor` へ props で渡せない。既定値は「何も一致しない・押しても何もしない」にしてあるので、
 // Provider の無い場（`markdown.test.tsx` の既存テストの大半）でもこれまでの見た目のまま描ける。
@@ -42,7 +42,7 @@ export function repositoryFilePath(
 export type RepositoryFileLink = {
   /** git 管理下のファイルのパス（cwd 相対）の一覧。 */
   readonly files: ReadonlySet<string>
-  /** このパスを Orca のエディタで開いてもらう（`open-file` を1回送る）。 */
+  /** このパスを Orca のエディタで開いてもらう（`host.openFile` を1回送る）。 */
   readonly open: (path: string) => void
 }
 
@@ -66,7 +66,7 @@ export type RepositoryFileLinkProviderProps = {
 }
 
 /**
- * 一覧の取得と `open-file` の送信を配線する Provider。**main-view の入口
+ * 一覧の取得と `host.openFile` の送信を配線する Provider。**main-view の入口
  * （`main-view.tsx`）が1回だけ mount する**——レポートを描くのはこの機能の中だけなので、
  * `stores/`（2つ以上の機能が読む状態）へは上げない。
  */
@@ -78,7 +78,7 @@ export function RepositoryFileLinkProvider(props: RepositoryFileLinkProviderProp
   const link: RepositoryFileLink = {
     files,
     open: (path) => {
-      dispatch({ type: "open-file", path })
+      dispatch.host.openFile({ path })
     },
   }
 

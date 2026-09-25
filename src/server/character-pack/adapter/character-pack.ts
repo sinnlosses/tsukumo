@@ -69,7 +69,7 @@ export const DEFAULT_CHARACTER_DIR_RELATIVE_PATH: readonly string[] = [
 
 /** キャラクターパック1つ分。定義・人格が無い・壊れているときはそれぞれ undefined。 */
 export type CharacterPack = {
-  /** ディレクトリ名（`switch-character` の鍵。`docs/design.md` 7章）。 */
+  /** ディレクトリ名（`session.switchCharacter` の鍵。`docs/design.md` 7章）。 */
   readonly name: string
   readonly dir: string
   readonly definition: CharacterDefinition | undefined

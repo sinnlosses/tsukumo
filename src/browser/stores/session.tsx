@@ -9,6 +9,7 @@
 // **部品は `SessionState` と `dispatch` だけを見る。** DOM を直接いじる配線は持たない
 // （docs/design.md 6.1「部品の木」冒頭）。
 
+import { createORPCClient } from "@orpc/client"
 import {
   createContext,
   startTransition,
@@ -21,32 +22,30 @@ import {
 } from "react"
 
 import { effectiveAccent } from "../../shared/character.ts"
-import { type ClientCommand } from "../../shared/command.ts"
 import { PROTOCOL_VERSION, type ServerFrame } from "../../shared/frame.ts"
+import { type CommandClient } from "../../shared/rpc.ts"
 import {
   applySessionEvent,
   INITIAL_SESSION_STATE,
   type SessionState,
 } from "../../shared/session-state.ts"
 import { applyRefresh } from "../lib/refresh.ts"
-import { connectSessionSocket, type ConnectionStatus } from "../lib/socket.ts"
+import { type CommandLink, connectSessionSocket, type ConnectionStatus } from "../lib/socket.ts"
 
 /**
- * `dispatch` に渡すコマンド。`commandId` は `<SessionProvider>` が `crypto.randomUUID()` で
- * 作るので、呼び出し側は持たない（{@link ClientCommand} から `commandId` を引いた形。分配法則が効くよう
- * 条件型で書く — 単純な `Omit<ClientCommand, "commandId">` だと discriminated union が
- * 潰れて `type` で絞り込めなくなる）。
+ * コマンドを送る口。**契約（`src/shared/rpc.ts` の `commandContract`）から導いた型付きの client**
+ * で、`dispatch.session.prompt({ text, images })` のように手続きの名前を辿って呼ぶ。**参照が
+ * 変わらない**ので、これしか読まない部品は姿の変化で描き直されない。
+ *
+ * **送りっぱなしで、失敗しても投げない**（戻り値の Promise は待たなくてよい）。断られたこと
+ * （契約の `REFUSED`）は画面に出さない——画面は同じ条件で先に操作子を塞いでいて、結果はイベントで
+ * 戻ってくる。
  */
-type DispatchableCommand<T = ClientCommand> = T extends { readonly commandId: string }
-  ? Omit<T, "commandId">
-  : never
-
-/** コマンドを1件送る口。**参照が変わらない**ので、これしか読まない部品は姿の変化で描き直されない。 */
-export type SessionDispatch = (command: DispatchableCommand) => void
+export type SessionDispatch = CommandClient
 
 /** コマンドの送り先。`lib/socket.ts` の接続がそのまま満たす（閉じるのは store の関心ではない）。 */
 export type CommandSocket = {
-  readonly send: (command: ClientCommand) => void
+  readonly commandLink: CommandLink
 }
 
 /**
@@ -113,7 +112,7 @@ export function useSessionDispatch(): SessionDispatch {
 
 /**
  * 姿とコマンドの口を持つ store を作る。**接続はあとから持たせる**（繋ぎ直しで入れ替わるのに
- * `dispatch` の参照は変えたくない。`commandId` を振るのもここ）。
+ * `dispatch` の参照は変えたくない）。
  */
 export function createSessionStore(): SessionStore {
   const listeners = new Set<() => void>()
@@ -123,6 +122,13 @@ export function createSessionStore(): SessionStore {
     protocol: "compatible",
   }
   let socket: CommandSocket | undefined = undefined
+  // 送った手続きが断られた・接続が切れたときは黙って捨てる（{@link SessionDispatch}）。
+  const dispatch: SessionDispatch = createORPCClient({
+    call: (path, input, options) =>
+      (socket?.commandLink.call(path, input, options) ?? Promise.resolve(undefined)).catch(
+        () => undefined,
+      ),
+  })
 
   const publish = (next: SessionSnapshot): void => {
     snapshot = next
@@ -139,9 +145,7 @@ export function createSessionStore(): SessionStore {
       }
     },
     getSnapshot: () => snapshot,
-    dispatch: (command) => {
-      socket?.send({ ...command, commandId: crypto.randomUUID() })
-    },
+    dispatch,
     receive: (frame) => {
       if (frame.type === "hello" && frame.protocolVersion !== PROTOCOL_VERSION) {
         publish({ ...snapshot, state: INITIAL_SESSION_STATE, protocol: "mismatched" })
@@ -326,7 +330,6 @@ function applyFrame(state: SessionState, frame: ServerFrame): SessionState {
       state,
     )
   }
-  // "error" は commandId の突き合わせだけに使う（8章以降）。段3の時点では状態を変えない。
   // "refresh" はここまで来ない（状態を動かさないので、`<SessionProvider>` の `onFrame` が手前で捌く）。
   return state
 }

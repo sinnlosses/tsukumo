@@ -129,7 +129,7 @@ describe("useQuestionAnswer の答え方", () => {
     act(() => asking(result.current).onAnswer())
 
     expect(calls).toEqual([
-      { type: "answer", id: "ask-1", answer: { kind: "answers", labels: [["B案"]] } },
+      { procedure: "session.answer", id: "ask-1", answer: { kind: "answers", labels: [["B案"]] } },
     ])
   })
 
@@ -174,7 +174,7 @@ describe("useQuestionAnswer の答え方", () => {
 
     expect(calls).toEqual([
       {
-        type: "answer",
+        procedure: "session.answer",
         id: "ask-1",
         answer: { kind: "answers", labels: [["架空の自由な答え"]] },
       },
@@ -192,7 +192,7 @@ describe("useQuestionAnswer の答え方", () => {
 
     expect(calls).toEqual([
       {
-        type: "answer",
+        procedure: "session.answer",
         id: "ask-1",
         answer: { kind: "answers", labels: [["A案", "架空の補足"]] },
       },
@@ -242,7 +242,11 @@ describe("useQuestionAnswer の答え方", () => {
     act(() => asking(result.current).onAnswer())
 
     expect(calls).toEqual([
-      { type: "answer", id: "ask-1", answer: { kind: "answers", labels: [["B案"], ["D案"]] } },
+      {
+        procedure: "session.answer",
+        id: "ask-1",
+        answer: { kind: "answers", labels: [["B案"], ["D案"]] },
+      },
     ])
   })
 
@@ -270,7 +274,7 @@ describe("useQuestionAnswer の答え方", () => {
 
     expect(calls).toEqual([
       {
-        type: "answer",
+        procedure: "session.answer",
         id: "ask-1",
         answer: { kind: "answers", labels: [["架空の自由な答え"], ["C案"]] },
       },

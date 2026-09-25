@@ -4,12 +4,12 @@
 //
 // **4群は持ち先が違う。** 色と演出の速さは利用者の端末の設定（`localStorage`。演出の速さは
 // `browser/domain/reveal-speed.ts`）、既定はサーバが覚える値（`~/.tsukumo/state.json`。
-// `set-session-default` で送り、`SessionState.sessionDefault` を読む）。**既定は次に起こすときから
+// `session.setSessionDefault` で送り、`SessionState.sessionDefault` を読む）。**既定は次に起こすときから
 // 効く**ので、送ってもいまのセッションのモデル・許可モードは変わらない（帯のドロップダウンは
 // セッション限りの別物）。演出の速さは `domain/reveal/use-report-reveal.ts` がマウント時に読むだけなので、
 // 変えても書いている最中の演出には効かない（次に書き始めたときから）。**訪問のオン・オフは
 // 上のどちらでもない**——サーバの `SessionState.visitEnabled` だが、ディスクには覚えず
-// いま動いているセッションに即座に効く（`set-visit-enabled`。オフにすると訪問中でもその場で
+// いま動いているセッションに即座に効く（`visit.setEnabled`。オフにすると訪問中でもその場で
 // 帰る。`docs/design.md` 5章「訪問の契機と状態」）。
 //
 // **色の持ち方は `browser/domain/appearance-color.ts` のまま**（`localStorage` の鍵も検証も変えて
@@ -270,8 +270,7 @@ export function useSettings(navRef: RefObject<HTMLElement | null>): ScreenNavSet
       onChangeModel: (value) => {
         // **知らない値は送らない**（`<select>` の選択肢の外から来たときは何もしない）。
         if (isModelAlias(value)) {
-          dispatch({
-            type: "set-session-default",
+          dispatch.session.setSessionDefault({
             model: value,
             effort: sessionDefault.effort,
             permissionMode: sessionDefault.permissionMode,
@@ -281,8 +280,7 @@ export function useSettings(navRef: RefObject<HTMLElement | null>): ScreenNavSet
       effort: resolveEffortSelect(sessionDefault.model, modelEffortSupport, sessionDefault.effort),
       onChangeEffort: (value) => {
         if (isEffortLevel(value)) {
-          dispatch({
-            type: "set-session-default",
+          dispatch.session.setSessionDefault({
             model: sessionDefault.model,
             effort: value,
             permissionMode: sessionDefault.permissionMode,
@@ -293,8 +291,7 @@ export function useSettings(navRef: RefObject<HTMLElement | null>): ScreenNavSet
       onChangePermissionMode: (value) => {
         // 「全部許す」はここを通らない（選択肢にも無い。`docs/requirements.md` 4.1）。
         if (isSessionDefaultPermissionMode(value)) {
-          dispatch({
-            type: "set-session-default",
+          dispatch.session.setSessionDefault({
             model: sessionDefault.model,
             effort: sessionDefault.effort,
             permissionMode: value,
@@ -311,7 +308,7 @@ export function useSettings(navRef: RefObject<HTMLElement | null>): ScreenNavSet
       onChange: (value) => {
         // **知らない値は送らない**（`<select>` の選択肢の外から来たときは何もしない）。
         if (isVisitToggleValue(value)) {
-          dispatch({ type: "set-visit-enabled", enabled: value === "on" })
+          dispatch.visit.setEnabled({ enabled: value === "on" })
         }
       },
     },

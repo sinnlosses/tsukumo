@@ -1,4 +1,4 @@
-// キャラクターの切り替えの `<select>`（`switch-character`。docs/design.md 7章）。**置き場所は
+// キャラクターの切り替えの `<select>`（`session.switchCharacter`。docs/design.md 7章）。**置き場所は
 // モードで2つに分かれる** — 仕事のときは下端の帯（`session-info.tsx`。ラベル「キャラクター」の
 // 真下）、雑談のときはプロフィールの札の「変える」（`profile-card.tsx`。見た目のボタンの上に
 // 透明にして重ねる。docs/screen-design.md 13.7「雑談のときのサイドバー」）。**どちらでも振る舞いは同じ**
@@ -47,7 +47,7 @@ export function CharacterSwitch(props: CharacterSwitchProps): ReactElement | nul
       title={turnInProgress ? CHARACTER_SWITCH_BLOCKED_TITLE : undefined}
       options={characterPacks.map(({ name, label }) => ({ value: name, label }))}
       onChange={(value) => {
-        dispatch({ type: "switch-character", name: value })
+        dispatch.session.switchCharacter({ name: value })
       }}
     />
   )

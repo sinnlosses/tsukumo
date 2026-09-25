@@ -1,5 +1,5 @@
 // 帯の仕事 / 雑談のトグル（docs/screen-design.md 13.9「動き方の操作子」）。**2つの `<button>` を
-// 1つの枠に並べ、いまの側に `aria-pressed="true"`**。反対側を押すと `set-chat-mode` を1回送って
+// 1つの枠に並べ、いまの側に `aria-pressed="true"`**。反対側を押すと `session.setChatMode` を1回送って
 // 起こし直す（確かめの一言は挟まない。いまの側を押しても・ターン進行中は何も送らない —
 // その判定は `hooks/use-screen-nav.ts` の `onChange` が持っていて、ここは押した事実を渡すだけ）。
 //

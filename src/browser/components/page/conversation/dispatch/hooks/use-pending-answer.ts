@@ -34,10 +34,10 @@ export function usePendingAnswer(): PendingAnswerModel {
     toolName: pending.toolName,
     summaryText: summary === "" ? "" : `: ${summary}`,
     onAllow: () => {
-      dispatch({ type: "answer", id: pending.id, answer: { kind: "allow" } })
+      dispatch.session.answer({ id: pending.id, answer: { kind: "allow" } })
     },
     onDeny: () => {
-      dispatch({ type: "answer", id: pending.id, answer: { kind: "deny" } })
+      dispatch.session.answer({ id: pending.id, answer: { kind: "deny" } })
     },
   }
 }

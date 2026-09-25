@@ -376,7 +376,7 @@ describe("createSessionLaunch", () => {
   })
 
   it("いま出しているパックのまま起こし直す（モードの切り替え）ときは覚えない", async () => {
-    // `set-chat-mode` の起こし直しがここを通る。**同じパックを起こすのは「画面から選ばれた」
+    // `session.setChatMode` の起こし直しがここを通る。**同じパックを起こすのは「画面から選ばれた」
     // ことではない**ので、覚えた値（`~/.tsukumo/state.json`）は書き換わらない
     // （docs/screen-design.md 13.6）。
     const harness = createHarness()

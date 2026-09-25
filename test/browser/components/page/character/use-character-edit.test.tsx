@@ -154,7 +154,7 @@ describe("useCharacterEdit", () => {
     expect(ready(result.current).disabled).toBe(true)
   })
 
-  it("消す口は clear-portrait を送る", () => {
+  it("消す口は characterPack.clearPortrait を送る", () => {
     const calls: unknown[] = []
     const { result } = renderHook(() => useCharacterEdit(), {
       wrapper: wrapperFor(FIXTURE_CHARACTER, (command) => calls.push(command)),
@@ -166,10 +166,12 @@ describe("useCharacterEdit", () => {
 
     clear.onClear()
 
-    expect(calls).toEqual([{ type: "clear-portrait", pack: "fictional", expression: "proud" }])
+    expect(calls).toEqual([
+      { procedure: "characterPack.clearPortrait", pack: "fictional", expression: "proud" },
+    ])
   })
 
-  it("選んだ立ち絵を data URL にして set-portrait を送り、入力欄を空に戻す", async () => {
+  it("選んだ立ち絵を data URL にして characterPack.setPortrait を送り、入力欄を空に戻す", async () => {
     const calls: unknown[] = []
     const { result } = renderHook(() => useCharacterEdit(), {
       wrapper: wrapperFor(FIXTURE_CHARACTER, (command) => calls.push(command)),
@@ -181,7 +183,7 @@ describe("useCharacterEdit", () => {
 
     expect(calls).toEqual([
       {
-        type: "set-portrait",
+        procedure: "characterPack.setPortrait",
         pack: "fictional",
         expression: "proud",
         image: `data:image/svg+xml;base64,${Buffer.from("<svg/>").toString("base64")}`,
@@ -219,11 +221,16 @@ describe("useCharacterEdit", () => {
 
     await new Promise((resolve) => setTimeout(resolve, 250))
     expect(calls).toEqual([
-      { type: "set-outfit-accent", pack: "fictional", outfit: "heavy", color: "#123456" },
+      {
+        procedure: "characterPack.setOutfitAccent",
+        pack: "fictional",
+        outfit: "heavy",
+        color: "#123456",
+      },
     ])
   })
 
-  it("画面の差し色（仕事）は見た目だけ先に進め、送るのは少し待ってから set-accent", async () => {
+  it("画面の差し色（仕事）は見た目だけ先に進め、送るのは少し待ってから characterPack.setAccent", async () => {
     const calls: unknown[] = []
     const { result } = renderHook(() => useCharacterEdit(), {
       wrapper: wrapperFor({ ...FIXTURE_CHARACTER, accent: "#f2b0a0" }, (command) =>
@@ -243,7 +250,7 @@ describe("useCharacterEdit", () => {
 
     await new Promise((resolve) => setTimeout(resolve, 250))
     expect(calls).toEqual([
-      { type: "set-accent", pack: "fictional", target: "work", color: "#123456" },
+      { procedure: "characterPack.setAccent", pack: "fictional", target: "work", color: "#123456" },
     ])
   })
 
@@ -259,7 +266,7 @@ describe("useCharacterEdit", () => {
     expect(ready(result.current).resetChatAccent).toEqual({ kind: "hidden" })
   })
 
-  it("chatAccent があるパックでは、その値を出し、戻す口が clear-chat-accent を送る", () => {
+  it("chatAccent があるパックでは、その値を出し、戻す口が characterPack.clearChatAccent を送る", () => {
     const calls: unknown[] = []
     const { result } = renderHook(() => useCharacterEdit(), {
       wrapper: wrapperFor(
@@ -278,10 +285,10 @@ describe("useCharacterEdit", () => {
       reset.onClick()
     })
 
-    expect(calls).toEqual([{ type: "clear-chat-accent", pack: "fictional" }])
+    expect(calls).toEqual([{ procedure: "characterPack.clearChatAccent", pack: "fictional" }])
   })
 
-  it("雑談の差し色を変えると、少し待ってから set-accent（target: chat）を送る", async () => {
+  it("雑談の差し色を変えると、少し待ってから characterPack.setAccent（target: chat）を送る", async () => {
     const calls: unknown[] = []
     const { result } = renderHook(() => useCharacterEdit(), {
       wrapper: wrapperFor(FIXTURE_CHARACTER, (command) => calls.push(command)),
@@ -293,11 +300,11 @@ describe("useCharacterEdit", () => {
     await new Promise((resolve) => setTimeout(resolve, 250))
 
     expect(calls).toEqual([
-      { type: "set-accent", pack: "fictional", target: "chat", color: "#f2984a" },
+      { procedure: "characterPack.setAccent", pack: "fictional", target: "chat", color: "#f2984a" },
     ])
   })
 
-  it("背景の有無を字に畳み、消す口は clear-background を送る", () => {
+  it("背景の有無を字に畳み、消す口は characterPack.clearBackground を送る", () => {
     const calls: unknown[] = []
     const absent = renderHook(() => useCharacterEdit(), {
       wrapper: wrapperFor(FIXTURE_CHARACTER, () => {}),
@@ -322,10 +329,10 @@ describe("useCharacterEdit", () => {
       label: "いまの背景",
     })
     background.onClear()
-    expect(calls).toEqual([{ type: "clear-background", pack: "fictional" }])
+    expect(calls).toEqual([{ procedure: "characterPack.clearBackground", pack: "fictional" }])
   })
 
-  it("顔の有無を字に畳み、消す口は clear-face を送る", () => {
+  it("顔の有無を字に畳み、消す口は characterPack.clearFace を送る", () => {
     const calls: unknown[] = []
     const absent = renderHook(() => useCharacterEdit(), {
       wrapper: wrapperFor(FIXTURE_CHARACTER, () => {}),
@@ -347,7 +354,7 @@ describe("useCharacterEdit", () => {
       label: "いまの顔",
     })
     face.onClear()
-    expect(calls).toEqual([{ type: "clear-face", pack: "fictional" }])
+    expect(calls).toEqual([{ procedure: "characterPack.clearFace", pack: "fictional" }])
   })
 
   // このキャラクターを消す／同梱に戻す帯（docs/screen-design.md 13.6「このキャラクターを消す」）。
@@ -383,7 +390,7 @@ describe("useCharacterEdit", () => {
   // 使用中以外のパックを詳しい設定に出すには、一覧にもう1件（`other`）を足し、hash でそれを
   // 選ぶ（`character-screen.test.tsx` と同じ形。`docs/screen-design.md` 13.6
   // 「選んでいるパックは hash に持つ」）。
-  it("使用中以外のパックは帯のボタンが押せ、delete-character を1回送る", () => {
+  it("使用中以外のパックは帯のボタンが押せ、characterPack.delete を1回送る", () => {
     window.location.hash = "#character?pack=other"
     const calls: unknown[] = []
     const { result } = renderHook(() => useCharacterEdit(), {
@@ -412,11 +419,11 @@ describe("useCharacterEdit", () => {
 
     band.onSubmit()
 
-    expect(calls).toEqual([{ type: "delete-character", pack: "other" }])
+    expect(calls).toEqual([{ procedure: "characterPack.delete", pack: "other" }])
   })
 
   // 名前とプロフィールを変えるダイアログの種（`components/character-profile-edit.tsx`）。
-  it("名前とひとことプロフィールを、いまの値を種にした editProfile へ畳み、set-profile を送る", () => {
+  it("名前とひとことプロフィールを、いまの値を種にした editProfile へ畳み、characterPack.setProfile を送る", () => {
     const calls: unknown[] = []
     const { result } = renderHook(() => useCharacterEdit(), {
       wrapper: wrapperFor(
@@ -435,7 +442,12 @@ describe("useCharacterEdit", () => {
     edit.onSubmit("新しい名前", "新しいひとこと")
 
     expect(calls).toEqual([
-      { type: "set-profile", pack: "fictional", name: "新しい名前", tagline: "新しいひとこと" },
+      {
+        procedure: "characterPack.setProfile",
+        pack: "fictional",
+        name: "新しい名前",
+        tagline: "新しいひとこと",
+      },
     ])
   })
 

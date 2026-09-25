@@ -192,7 +192,7 @@ export function definitionWithoutChatAccent(content: string | undefined): string
 }
 
 /**
- * 表示名として受け付ける長さの上限（`docs/design.md` 7.1）。**作るとき・`set-profile` で
+ * 表示名として受け付ける長さの上限（`docs/design.md` 7.1）。**作るとき・`characterPack.setProfile` で
  * 変えるときの両方**が境界（`src/shared/command.ts`）でこれを見る。文字種は縛らない
  * （表示名は日本語も使える。長さだけがネットワーク越しに届く値としての素朴な歯止め）。
  */

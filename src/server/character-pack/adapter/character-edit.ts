@@ -50,10 +50,10 @@ import {
 import { type FaceImage, faceFileName, parseFaceImage } from "../../../shared/character-face.ts"
 import { type CharacterPackRemoval } from "../../../shared/character.ts"
 import {
-  type CharacterCreateCommand,
-  type CharacterDeleteCommand,
-  type CharacterEditCommand,
-} from "../../../shared/command.ts"
+  type CharacterCreate,
+  type CharacterDelete,
+  type CharacterEdit,
+} from "../../../shared/contract/character-pack.ts"
 import {
   type Expression,
   EXPRESSIONS,
@@ -109,7 +109,7 @@ export const MAX_IMAGE_FILES_PER_PACK = EXPRESSIONS.length + EXTRA_IMAGE_FILES_P
 export function editCharacterPack(
   current: CharacterPack,
   packs: readonly CharacterPack[],
-  edit: CharacterEditCommand,
+  edit: CharacterEdit,
   cwd: string,
   root: string = homeCharacterDir(),
 ): CharacterPack | undefined {
@@ -137,12 +137,12 @@ export function editCharacterPack(
  * - ディスクに書けない（**書きかけのディレクトリは消す**ので、欠けたパックは残らない）
  *
  * **`default` の1枚があることは境界で済んでいる**
- * （`src/shared/command.ts` の `portraits` が required）。ここは書く順だけを守る:
+ * （`src/shared/contract/character-pack.ts` の `portraits` が required）。ここは書く順だけを守る:
  * 素材 → 定義の順に書くので、途中で失敗したディレクトリは `character.json` を持たず、
  * パックとして一覧に出ない。
  */
 export function createCharacterPack(
-  create: CharacterCreateCommand,
+  create: CharacterCreate,
   taken: readonly string[],
   root: string = homeCharacterDir(),
 ): CharacterPack | undefined {
@@ -189,7 +189,7 @@ export function createCharacterPack(
 export function deleteCharacterPack(
   current: CharacterPack,
   packs: readonly CharacterPack[],
-  remove: CharacterDeleteCommand,
+  remove: CharacterDelete,
   roots: CharacterPackRoots = defaultCharacterPackRoots(),
 ): Exclude<CharacterPackRemoval, "none"> | undefined {
   const pack = findCharacterPack(current, packs, remove.pack)
@@ -233,30 +233,30 @@ export function copyPackOnce(pack: CharacterPack, dir: string): void {
 }
 
 /** 編集1件をディスクに書く。書けたら true、受け付けられなければ false。 */
-function applyEdit(dir: string, edit: CharacterEditCommand): boolean {
+function applyEdit(dir: string, edit: CharacterEdit): boolean {
   const definitionPath = join(dir, CHARACTER_DEFINITION_FILE_NAME)
   const content = readOptionalFile(definitionPath)
 
-  switch (edit.type) {
-    case "set-outfit-accent":
+  switch (edit.kind) {
+    case "setOutfitAccent":
       writeFileSync(definitionPath, definitionWithOutfitAccent(content, edit.outfit, edit.color))
       return true
-    case "set-accent":
+    case "setAccent":
       writeFileSync(definitionPath, definitionWithAccent(content, edit.target, edit.color))
       return true
-    case "clear-chat-accent":
+    case "clearChatAccent":
       writeFileSync(definitionPath, definitionWithoutChatAccent(content))
       return true
-    case "set-profile":
+    case "setProfile":
       writeFileSync(
         definitionPath,
         definitionWithTagline(definitionWithName(content, edit.name), edit.tagline),
       )
       return true
-    case "clear-portrait":
+    case "clearPortrait":
       return applyImageEdit(dir, definitionPath, content, portraitClearEdit(edit.expression))
-    case "set-portrait":
-      // 検証は境界（`src/shared/command.ts` の `portraitDataUrlSchema`）で済んでいるので、
+    case "setPortrait":
+      // 検証は境界（`src/shared/contract/character-pack.ts` の `portraitDataUrlSchema`）で済んでいるので、
       // `parseImage` が undefined を返すのは配線の誤りのときだけ。型を迂回せずほどくために、
       // もう一度同じ関数を通す。
       return applyImageEdit(
@@ -265,16 +265,16 @@ function applyEdit(dir: string, edit: CharacterEditCommand): boolean {
         content,
         portraitSetEdit(edit.expression, edit.image),
       )
-    case "clear-background":
+    case "clearBackground":
       return applyImageEdit(dir, definitionPath, content, backgroundClearEdit())
-    case "set-background":
-      // 立ち絵と同じく、検証は境界（`src/shared/command.ts`）で済んでいる。`parseImage` が
+    case "setBackground":
+      // 立ち絵と同じく、検証は境界（`src/shared/contract/character-pack.ts`）で済んでいる。`parseImage` が
       // undefined を返すのは配線の誤りのときだけ。
       return applyImageEdit(dir, definitionPath, content, backgroundSetEdit(edit.image))
-    case "clear-face":
+    case "clearFace":
       return applyImageEdit(dir, definitionPath, content, faceClearEdit())
-    case "set-face":
-      // 立ち絵・背景と同じく、検証は境界（`src/shared/command.ts`）で済んでいる。`parseImage` が
+    case "setFace":
+      // 立ち絵・背景と同じく、検証は境界（`src/shared/contract/character-pack.ts`）で済んでいる。`parseImage` が
       // undefined を返すのは配線の誤りのときだけ。
       return applyImageEdit(dir, definitionPath, content, faceSetEdit(edit.image))
   }
@@ -282,8 +282,8 @@ function applyEdit(dir: string, edit: CharacterEditCommand): boolean {
 
 /**
  * 立ち絵と背景で違う部分だけをまとめた操作。`set` と `clear` を1つの型に同居させないのは、
- * 立ち絵で受け取れる表情が違うから（`clear-portrait` は `default` を除いた
- * {@link RemovableExpression}、`set-portrait` は {@link Expression}）。
+ * 立ち絵で受け取れる表情が違うから（`clearPortrait` は `default` を除いた
+ * {@link RemovableExpression}、`setPortrait` は {@link Expression}）。
  */
 type ImageEdit<Image extends { readonly base64: string; readonly format: string }> =
   | {
@@ -482,7 +482,7 @@ function isCharacterImageFileName(name: string | undefined): name is string {
  */
 function writeRequiredPortraits(
   dir: string,
-  portraits: CharacterCreateCommand["portraits"],
+  portraits: CharacterCreate["portraits"],
 ): Readonly<Record<RequiredExpression, string>> | undefined {
   const defaultImage = parsePortraitImage(portraits.default)
   if (defaultImage === undefined) {
@@ -505,7 +505,7 @@ function writeRequiredPortraits(
  * （ここでは書かない。`docs/design.md` 7.1）。
  */
 function newDefinitionJson(
-  create: CharacterCreateCommand,
+  create: CharacterCreate,
   fileNames: Readonly<Record<RequiredExpression, string>>,
 ): string {
   const withName = definitionWithName(undefined, create.name)

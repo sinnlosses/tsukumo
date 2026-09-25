@@ -8,7 +8,7 @@
 // **「編集」は消せる行があるときだけ置く**（区画の見出しの `action`。空のときに押せても
 // 何もできない）。押すと各チップに × が付く「編集の状態」になり（一覧を別に開かない）、
 // × を押すと消す前の確認（`PersonaMemoryForgetConfirm`）を挟んでから
-// `forget-remembered-line` を送る。消し方はキャラクター自身の `forget` と同じ完全一致だが、
+// `chat.forgetRememberedLine` を送る。消し方はキャラクター自身の `forget` と同じ完全一致だが、
 // **1ターン1行の上限は掛からない**（その上限はモデルの暴走を防ぐためのもので、画面から
 // 名指しした削除には要らない）。
 
@@ -122,7 +122,7 @@ type PersonaMemoryForgetConfirmProps = {
  * 「この1行を消しますか」の確認（`× を押したときだけ開く。docs/design.md 7.1「消す前の
  * 確認」——消した行は戻せない）。**OK を押したら即座に閉じる**（楽観的。サーバの結果は
  * 待たない）。もし押している間にキャラクター自身の `forget` / `remember` で一覧がすでに
- * 変わっていても、`forget-remembered-line` は完全一致でしか消さない安全な操作なので、
+ * 変わっていても、`chat.forgetRememberedLine` は完全一致でしか消さない安全な操作なので、
  * 二重に消しても・行がもう無くても壊れない（一致しなければ何もしないだけ）。一覧はどのみち
  * 次に届く `remembered-lines-changed` で必ず最新になる。
  */
@@ -130,7 +130,7 @@ function PersonaMemoryForgetConfirm(props: PersonaMemoryForgetConfirmProps): Rea
   const dispatch = useSessionDispatch()
 
   const forget = (): void => {
-    dispatch({ type: "forget-remembered-line", line: props.line })
+    dispatch.chat.forgetRememberedLine({ line: props.line })
     props.onClose()
   }
 

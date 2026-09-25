@@ -135,7 +135,7 @@ describe("QuestionAsk（メインビューの質問の札）", () => {
     fireEvent.click(answer)
     expect(calls).toEqual([
       {
-        type: "answer",
+        procedure: "session.answer",
         id: "ask-1",
         answer: { kind: "answers", labels: [["A案 (Recommended)"]] },
       },

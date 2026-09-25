@@ -1,8 +1,10 @@
 // `visit` が受けるコマンドの表（`docs/design.md` 2章「コマンドの受け手と手続きの置き方」）。
+// 手続き（`visit/adapter/visit-procedure.ts`）がここの行へ委ねる。
 
+import { type visitContract } from "../../../shared/contract/visit.ts"
 import { FRAME_ERROR_REASON } from "../../../shared/frame.ts"
 import { type SessionEvent } from "../../../shared/session-event.ts"
-import { type FeatureCommandTable, NO_COMMAND_GUARD } from "../../core/command-receiver.ts"
+import { type FeatureCommandTable } from "../../core/command-receiver.ts"
 
 export type VisitCommandPorts = {
   /**
@@ -14,15 +16,14 @@ export type VisitCommandPorts = {
 }
 
 /** `visit` が受けるコマンドの表。 */
-export function visitCommands(ports: VisitCommandPorts): FeatureCommandTable<"set-visit-enabled"> {
+export function visitCommands(ports: VisitCommandPorts): FeatureCommandTable<typeof visitContract> {
   return {
-    // **起こし直さない**が、`set-session-default` と違って**いま動いているセッションにも即座に
+    // **起こし直さない**が、`session.setSessionDefault` と違って**いま動いているセッションにも即座に
     // 効く**——流した `visit-enabled-changed` は駆動由来のイベントと同じ道で畳まれ、訪問の見張りにも
     // 届く（オフなら来ない・訪問中なら帰る。`visit-timing.ts`）。
-    "set-visit-enabled": {
-      ...NO_COMMAND_GUARD,
+    setEnabled: {
       kind: "write",
-      receive: (command) => ports.rememberVisitEnabled(command.enabled),
+      receive: (input) => ports.rememberVisitEnabled(input.enabled),
       failure: FRAME_ERROR_REASON.visitEnabledFailed,
     },
   }

@@ -296,7 +296,7 @@ describe("設定の歯車（帯の右端）", () => {
 })
 
 // 新しいセッションの既定（docs/screen-design.md 13.6）。**覚えるのはサーバ**なので、ここが見るのは
-// 「届いた値をそのまま出す」「選ぶと `set-session-default` を送る」「全部許すは並べない」の3つ。
+// 「届いた値をそのまま出す」「選ぶと `session.setSessionDefault` を送る」「全部許すは並べない」の3つ。
 describe("設定の歯車（新しいセッションの既定）", () => {
   it("届いた既定をそのまま出す", () => {
     renderScreenNav({ sessionDefault: { model: "sonnet", effort: "high", permissionMode: "plan" } })
@@ -318,7 +318,7 @@ describe("設定の歯車（新しいセッションの既定）", () => {
     ])
   })
 
-  it("モデルを選ぶと、いまの effort・許可モードと一緒に set-session-default を送る", () => {
+  it("モデルを選ぶと、いまの effort・許可モードと一緒に session.setSessionDefault を送る", () => {
     const sent: unknown[] = []
     renderScreenNav(
       { sessionDefault: { model: "opus", effort: "high", permissionMode: "plan" } },
@@ -329,11 +329,16 @@ describe("設定の歯車（新しいセッションの既定）", () => {
     fireEvent.change(defaultSelect("モデル"), { target: { value: "sonnet" } })
 
     expect(sent).toEqual([
-      { type: "set-session-default", model: "sonnet", effort: "high", permissionMode: "plan" },
+      {
+        procedure: "session.setSessionDefault",
+        model: "sonnet",
+        effort: "high",
+        permissionMode: "plan",
+      },
     ])
   })
 
-  it("許可モードを選ぶと、いまのモデル・effort と一緒に set-session-default を送る", () => {
+  it("許可モードを選ぶと、いまのモデル・effort と一緒に session.setSessionDefault を送る", () => {
     const sent: unknown[] = []
     renderScreenNav(
       { sessionDefault: { model: "haiku", effort: "medium", permissionMode: "auto" } },
@@ -345,7 +350,7 @@ describe("設定の歯車（新しいセッションの既定）", () => {
 
     expect(sent).toEqual([
       {
-        type: "set-session-default",
+        procedure: "session.setSessionDefault",
         model: "haiku",
         effort: "medium",
         permissionMode: "acceptEdits",
@@ -354,7 +359,7 @@ describe("設定の歯車（新しいセッションの既定）", () => {
   })
 
   // 帯のドロップダウン（セッション限り）は既定を書き換えない（`docs/screen-design.md` 13.6）。
-  it("帯でモデルを変えても set-session-default は送らない", () => {
+  it("帯でモデルを変えても session.setSessionDefault は送らない", () => {
     const sent: unknown[] = []
     renderScreenNav(
       { sessionDefault: { model: "opus", effort: "medium", permissionMode: "auto" } },
@@ -368,7 +373,7 @@ describe("設定の歯車（新しいセッションの既定）", () => {
       { target: { value: "haiku" } },
     )
 
-    expect(sent).toEqual([{ type: "set-model", model: "haiku" }])
+    expect(sent).toEqual([{ procedure: "session.setModel", model: "haiku" }])
   })
 })
 
@@ -424,7 +429,7 @@ describe("設定の歯車（新しいセッションの既定の effort）", () 
     expect(defaultSelect("effort").disabled).toBe(true)
   })
 
-  it("effort を選ぶと、いまのモデル・許可モードと一緒に set-session-default を送る", () => {
+  it("effort を選ぶと、いまのモデル・許可モードと一緒に session.setSessionDefault を送る", () => {
     const sent: unknown[] = []
     renderScreenNav(
       {
@@ -438,7 +443,12 @@ describe("設定の歯車（新しいセッションの既定の effort）", () 
     fireEvent.change(defaultSelect("effort"), { target: { value: "xhigh" } })
 
     expect(sent).toEqual([
-      { type: "set-session-default", model: "opus", effort: "xhigh", permissionMode: "plan" },
+      {
+        procedure: "session.setSessionDefault",
+        model: "opus",
+        effort: "xhigh",
+        permissionMode: "plan",
+      },
     ])
   })
 })
@@ -501,7 +511,7 @@ describe("設定の歯車（書き上げる演出の速さ）", () => {
 
 // 訪問のオン・オフ（docs/screen-design.md 13.6・13.9）。**覚えるのはいま動いているセッションの
 // 値だけ**（ディスクには覚えない）ので、ここが見るのは「届いた値をそのまま出す」「選ぶと
-// `set-visit-enabled` を送る」の2つ。
+// `visit.setEnabled` を送る」の2つ。
 describe("設定の歯車（訪問）", () => {
   it("届いた値をそのまま出す（既定は「する」）", () => {
     renderScreenNav()
@@ -517,23 +527,23 @@ describe("設定の歯車（訪問）", () => {
     expect(defaultSelect("客の出入り").value).toBe("off")
   })
 
-  it("「しない」を選ぶと set-visit-enabled を送る", () => {
+  it("「しない」を選ぶと visit.setEnabled を送る", () => {
     const sent: unknown[] = []
     renderScreenNav({ visitEnabled: true }, (command) => sent.push(command))
     fireEvent.click(gear())
 
     fireEvent.change(defaultSelect("客の出入り"), { target: { value: "off" } })
 
-    expect(sent).toEqual([{ type: "set-visit-enabled", enabled: false }])
+    expect(sent).toEqual([{ procedure: "visit.setEnabled", enabled: false }])
   })
 
-  it("「する」を選ぶと set-visit-enabled を送る", () => {
+  it("「する」を選ぶと visit.setEnabled を送る", () => {
     const sent: unknown[] = []
     renderScreenNav({ visitEnabled: false }, (command) => sent.push(command))
     fireEvent.click(gear())
 
     fireEvent.change(defaultSelect("客の出入り"), { target: { value: "on" } })
 
-    expect(sent).toEqual([{ type: "set-visit-enabled", enabled: true }])
+    expect(sent).toEqual([{ procedure: "visit.setEnabled", enabled: true }])
   })
 })
