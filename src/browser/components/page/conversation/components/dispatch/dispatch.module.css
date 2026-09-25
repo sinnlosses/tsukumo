@@ -1,0 +1,318 @@
+/* 入力欄（`<Dispatch>` 一式。src/browser/components/page/conversation/components/dispatch/）。`.dispatch` は `.layout-dispatch` の中
+   いっぱいに広がり、フォーム・答え待ちの箱を縦に積む（docs/requirements.md 4.7）。 */
+/* 並べ・間隔（`gap="sm"`）は `VStack` が持つ。 */
+.dispatch {
+  height: 100%;
+}
+/* 気づける印(1)：答え待ちの間、入力欄の領域の枠を目立つ色にする。許可モードの警告色
+   （帯の screen-nav-permission-mode-select.is-danger の var(--state-ng)、破壊的操作向け）とは別の、注意を引くための
+   var(--state-warn) にしてある。`.layout-dispatch` の内側の縁に沿わせる
+   （`position: relative` は components/domain/layout/layout.module.css 側で用意してある）。 */
+.dispatch-pending-glow {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  /* 外向きの影だと領域の外へ 1px はみ出して .layout-dispatch がスクロールしてしまうので、
+     内向き（inset）の影で内側の縁に沿わせる。 */
+  box-shadow: inset 0 0 0 1px var(--state-warn);
+  pointer-events: none;
+}
+
+/* 答え待ちの箱（入力欄の上。docs/display.md 4.2「許可と質問」/ 4.7「画面レイアウト」）。
+   **中身は許可要求だけ**（質問の札はメインビューへ移った）。
+   **領域（.layout-dispatch）そのものを縦スクロールさせない**ため、箱は `.dispatch` の中で
+   伸び縮みさせる。高さの上限は枠・内側の余白も込みで数えたいので、ここだけ border-box にする。 */
+.pending-answer {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  margin: 0 0 0.5rem;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--rule);
+  border-radius: 0.75rem;
+  background: var(--surface);
+}
+/* 許可要求は「ツール名＋2つのボタン」だけで狭く、下のテキスト入力欄を出したままで困らないので
+   上限を据え置く（1400x900・既定の比率で箱 108px・テキスト入力欄 134px。答える前に依頼を
+   書き足せる）。割合そのものは、長いツール名や引数で箱が伸びてもテキスト入力欄が潰れない
+   ための歯止め。 */
+.pending-permission {
+  max-height: 64%;
+}
+.pending-summary {
+  margin: 0 0 0.5rem;
+}
+/* ツール名は機械が付けた名前なので等幅（docs/screen-design.md 13.1 原則3）。書体そのものの定義は
+   `src/browser/styles/theme.css` のトークンにあり、ここは宛てるだけ。 */
+/* 太さは `Text`（size="inherit" tone="inherit" weight="bold"）が持つ。書体だけここに残す（語彙に
+   無い見た目）。 */
+.pending-tool {
+  font-family: var(--font-mono);
+}
+/* 並べ・間隔（`gap="sm"`）は `HStack` が持つ。 */
+.pending-actions {
+  margin-top: 0.5rem;
+}
+.pending-action {
+  padding: 0.35rem 0.9rem;
+  border: 1px solid var(--rule);
+  border-radius: 0.5rem;
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+}
+.pending-action:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+.pending-action:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.pending-allow {
+  border-color: var(--state-ok);
+  color: var(--state-ok);
+}
+.pending-deny {
+  border-color: var(--state-ng);
+  color: var(--state-ng);
+}
+/* 右下の入力ペイン（docs/requirements.md 4.7）。キャラクターへの依頼を送るフォームを持つ。 */
+.dispatch-form {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+/* 答え待ちの質問があるあいだは、**答えを書く場所**になる（選択肢の札はメインビュー）。
+   枠は答え待ちの色（var(--state-warn)。.dispatch-pending-glow と同じ意味の色）で、
+   内側の余白は帯とテキスト入力欄の両方に効かせる。 */
+.dispatch-form.is-answering {
+  padding: 0.5rem;
+  border: 1px solid var(--state-warn);
+  border-radius: 0.75rem;
+}
+/* 「↑ <キャラクター名> が質問しています…」の帯。上の札を指す矢印から始まるので、
+   テキスト入力欄の**上**に置く。字は答え待ちの色で、地は持たない（枠の色と二重にしない）。 */
+/* 字の段・色は `Text`（size="secondary" tone="state-warn" weight="inherit"）が持つ。伸び縮み・
+   margin だけここに残す（語彙に無い見た目・既定の 0 と違うため）。 */
+.dispatch-band {
+  flex: 0 0 auto;
+  margin: 0 0 0.5rem;
+}
+/* textarea と / 補完の候補一覧の包み。候補一覧（position: absolute）の基準になる。 */
+/* 並べ（`gap="none"`）は `VStack` が持つ。 */
+.dispatch-text-wrap {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+/* / 補完の候補一覧。textarea の下端に底を合わせ、textarea の中に重ねて上へ伸びる
+   ポップアップ。textarea の上に出すと領域（.layout-region の overflow-y: auto）の外に
+   出て切られる。max-height の % は包み（＝textarea の高さ）基準なので、打っている文字が
+   ある上半分は隠れない。 */
+.dispatch-suggestions {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 5;
+  margin: 0;
+  padding: 0.3rem;
+  max-height: 50%;
+  overflow-y: auto;
+  list-style: none;
+  background: var(--ground);
+  border: 1px solid var(--rule);
+  border-radius: 0.4rem;
+}
+/* 1件は「名前＋説明」の1行。説明は薄い色で、幅が足りなければ省略記号で切る
+   （候補一覧そのものを横に広げない）。 */
+.dispatch-suggestion-item {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  padding: 0.35rem 0.5rem;
+  border-radius: 0.3rem;
+  cursor: pointer;
+}
+.dispatch-suggestion-item.is-selected {
+  background: var(--surface-accent);
+  color: var(--ink);
+}
+/* コマンドの名前は機械が付けた名前なので等幅（13.1 原則3）。 */
+.dispatch-suggestion-name {
+  flex: 0 0 auto;
+  font-family: var(--font-mono);
+}
+/* 字の段・色は `Text`（size="secondary" tone="ink-quiet" weight="inherit"）が持つ。伸び縮み・
+   1行で切る組みだけここに残す（語彙に無い見た目）。 */
+.dispatch-suggestion-description {
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* @ 補完のパス1件。機械が付けた名前なので等幅（13.1 原則3）。**説明が無いぶん横幅を全部使える**
+   ので、深いパスは折り返さず末尾を省略記号で切る（候補一覧そのものを横に広げない）。 */
+.dispatch-suggestion-path {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-family: var(--font-mono);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* textarea の下の道具の行。左に補完と画像の口、右端に経過時間と送信⇄中断
+   （<TurnStatus> の .dispatch-row）。 */
+.dispatch-toolbar {
+  display: flex;
+  flex: 0 0 auto;
+  /* 経過時間の行（.dispatch-row）に API の知らせが載って道具の口の横に収まらないときは、行ごと
+     次の段へ送る（狭い画面で「再試行中 2/10」の数が省略記号に食われないように。目視で確認）。
+     知らせが無いときは今までどおり1段に収まる。 */
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem;
+  min-width: 0;
+  /* textarea との間（上）は、以前は .dispatch-form の gap で空けていたが、この行だけの余白として
+     ここに持たせる（docs/history/mockup/bottom-2026-09-23.html 由来）。左右・下は
+     `.layout-region` の 0.75rem（12px）がすでに空けており、モックの 14px とは 2px の差だが、
+     textarea の外枠（.dispatch-text の border-box）もこの 12px に揃っているため、ここへ
+     左右・下の padding を足すと道具の口だけ textarea よりインデントされて揃わなくなる
+     （目視で確認済み）。**揃えることを優先し、上だけをここで持つ**。 */
+  padding-top: 0.625rem;
+}
+/* 画像・`/`・`@` の口。絵だけの四角いボタン（docs/history/mockup/bottom-2026-09-23.html）。
+   顔（枠も地も無い・字の色・hover で地を一段浮かせる）は `<Button variant="ghost">` が持つ。
+   箱だけここに残す。 */
+.dispatch-tool {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  border-radius: 0.5rem;
+}
+/* 経過時間と送信⇄中断（<TurnStatus>）。道具の口との間に伸び縮みする要素が無いので、
+   ここで右端へ寄せる。**縮めてよいのは API の知らせだけ**なので、行ごと縮められるように
+   しておき（`min-width: 0`）、縮む役は .dispatch-notice に持たせる。 */
+/* 並べ・間隔（`gap="md"`）・揃えは `HStack` が持つ。 */
+.dispatch-row {
+  flex: 0 1 auto;
+  min-width: 0;
+  margin-left: auto;
+}
+/* API の知らせ（再試行中・利用上限・失敗の理由。docs/display.md 4.2「入力欄」）。**色は枠と字
+   だけ**で地は塗らない（入力欄で塗ってよいのは送るボタンだけ）。色は意味を固定した state の
+   2色で、**字が意味を言う**（13.1 原則5）。狭い画面で行に収まらなければ末尾を省略し、全文は
+   `title` で読ませる。 */
+/* 字の段は `Text`（size="secondary"）が持つ。色は `Text` の `tone`（"warn" → state-warn、"ng" →
+   state-ng）が呼び出し側の分岐で持つ。箱（枠・角丸・余白）・1行で切る組みだけここに残す（語彙に
+   無い見た目）。 */
+.dispatch-notice {
+  flex: 0 1 auto;
+  min-width: 0;
+  padding: 0.125rem 0.5rem;
+  border: 1px solid currentcolor;
+  border-radius: 999px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* 「送信」は行の主目的なので、**accent で塗りつぶす**（入力欄で塗ってよいのはこれ1つだけ。
+   13.1 原則1「選ばれたタブ」と同じ扱い。docs/design.md）。字は地の色で抜く。
+   答え待ちの質問がある間は、答え待ちの色（--state-warn）で塗って札と揃える。 */
+.dispatch-send,
+.dispatch-interrupt {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 0 0 auto;
+  height: 2.5rem;
+  padding: 0 1.125rem;
+  border: 1px solid var(--accent);
+  border-radius: 0.5625rem;
+  /* モックの 14px（--font-subheading）は区画の見出しの段で、ボタンには使わない。ボタンの字は
+     機械のラベルではなく操作の名前そのものなので「補助・サイドバーの本文」寄りに見て
+     --font-secondary（13px）に寄せた（大きさ以外は `theme.css` の既定を継ぐ）。 */
+  font-size: var(--font-secondary);
+  font-weight: 700;
+  cursor: pointer;
+}
+.dispatch-send {
+  background: var(--accent);
+  color: var(--ground);
+}
+.dispatch-send:hover {
+  background: color-mix(in srgb, var(--accent) 85%, var(--ink));
+}
+.dispatch-form.is-answering .dispatch-send {
+  background: var(--state-warn);
+  border-color: var(--state-warn);
+}
+.dispatch-form.is-answering .dispatch-send:hover {
+  background: color-mix(in srgb, var(--state-warn) 85%, var(--ink));
+}
+/* 「中断」は塗らない。送信と同じ位置に出るので、塗りの有無で「いまは送れない」を示す。 */
+.dispatch-interrupt {
+  background: none;
+  color: var(--ink);
+  border-color: var(--rule);
+}
+.dispatch-interrupt:hover {
+  border-color: var(--state-ng);
+  color: var(--state-ng);
+}
+/* Command+Enter で送信できることを示す記号（<TurnStatus> が data-shortcut 属性に持たせる）。
+   ラベルの文字とは別の擬似要素にして、少し薄めて添える。中断のときは属性ごと出ないので、
+   この擬似要素も出ない。 */
+.dispatch-send[data-shortcut]::after {
+  content: " " attr(data-shortcut);
+  opacity: 0.7;
+  /* キーは機械の側の名前なので等幅（13.1 原則3）。ボタンの字（--font-secondary）より一段
+     控えめな印の大きさ（--font-label）にする。 */
+  font-family: var(--font-mono);
+  font-size: var(--font-label);
+  font-weight: 400;
+}
+/* 依頼を書く面。領域の地（surface）より一段沈めた ground に置き、枠は薄くして、フォーカスが
+   来たときだけ accent に寄せる。 */
+.dispatch-text {
+  flex: 1 1 auto;
+  min-height: 0;
+  resize: none;
+  /* モックの `margin: 14px 14px 0` は外の余白で、`.layout-region` の 0.75rem が担っている。
+     ここはモックの `padding: 12px 14px` 側なので、いまの値のままでよい。 */
+  padding: 0.75rem 0.9rem;
+  background: var(--ground);
+  color: inherit;
+  border: 1px solid color-mix(in srgb, var(--rule) 70%, transparent);
+  border-radius: 0.5rem;
+}
+.dispatch-text::placeholder {
+  color: var(--ink-quiet);
+}
+.dispatch-text:focus-visible {
+  outline: none;
+  border-color: color-mix(in srgb, var(--accent) 60%, var(--rule));
+}
+/* 答え待ちのあいだは、フォーカスの枠も答え待ちの色（--state-warn）の系統にする。混ぜ方は
+   上の accent のときと揃える（60%, var(--rule)）。 */
+.dispatch-form.is-answering .dispatch-text:focus-visible {
+  border-color: color-mix(in srgb, var(--state-warn) 60%, var(--rule));
+}
+/* 経過時間（送信ボタンと同じ行）。他の2つ（ボタン・候補）と同じく伸び縮みしない
+   固定幅にしておく。 */
+/* 字の段・色は `Text`（size="secondary" tone="ink-quiet" weight="inherit"）が持つ。伸び縮みだけ
+   ここに残す（語彙に無い見た目）。 */
+.dispatch-elapsed-row {
+  flex: 0 0 auto;
+}
+/* 経過時間は機械が数えた値なので等幅（13.1 原則3）。字の色は `Text`（size="inherit" tone="ink"
+   weight="inherit"）が持つ。書体だけここに残す（語彙に無い見た目）。 */
+.dispatch-elapsed {
+  font-family: var(--font-mono);
+}

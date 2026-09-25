@@ -7,7 +7,7 @@
 //
 // **Chart.js は使わない。** 軸も凡例も目盛りも無い棒で、描くのに要るのは高さの割合だけ。
 // 4枚を同時に出すこの画面では、canvas 4枚と読み込みが失敗した回の見せ方を抱えるより、
-// 必ず描ける CSS のほうが軽い（`src/browser/components/page/conversation/main-view/markdown/chart.ts` は読まない）。
+// 必ず描ける CSS のほうが軽い（`src/browser/components/page/conversation/components/main-view/markdown/chart.ts` は読まない）。
 
 import { type ReactElement } from "react"
 

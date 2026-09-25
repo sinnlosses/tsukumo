@@ -223,7 +223,7 @@ export function SessionProvider(props: SessionProviderProps): ReactElement {
 
   // パックが差す `accent`（docs/screen-design.md 13.2 / 13.5）を、`:root` の既定値の上から
   // `document.documentElement` に差し替える。`<Layout>` の外まで届く唯一の場所がここ
-  // （`document.title` を差し替える `src/browser/components/page/conversation/dispatch/dispatch.tsx` と同じ、ホスト側の値を
+  // （`document.title` を差し替える `src/browser/components/page/conversation/components/dispatch/dispatch.tsx` と同じ、ホスト側の値を
   // コンポーネントの外から書き換える形。使う人が変える `ground` / `surface` / `ink` は同じ
   // 手口で `src/browser/domain/appearance-color.ts` が持つ）。届いていない・パックに `accent`
   // が無いときは既定値（theme.css の `:root`）に戻す。**雑談中はパックが `chatAccent` を持てば

@@ -419,20 +419,24 @@ src/
     <機能>/adapter/<機能>-procedure.ts その機能の手続き（oRPC の受け手。読み取りの4機能とコマンドの6機能）
   browser/
     main.tsx                  入口。部品の木を組み立てて mount する（副作用はここだけ）。出す画面を選ぶ
-                              <Root> と、会話の画面の <Layout> に4領域を差し込むのもここ（6.1）
+                              <Root> もここ（6.1）
     css-variable.d.ts         browser 全体に効く型拡張（import されない ambient 宣言）
     css-module.d.ts           `*.module.css` を import したときの型（同上）
     css-global.d.ts           `styles/theme.css` を副作用だけで import したときの宣言（中身は空。同上）
     vendor-global.d.ts        外部ライブラリがブラウザのグローバルに置くものの型（`<script>` で読むので npm の型が引けない分。同上）
     components/               React の部品。**`page/` `domain/` `ui/` の3段**（2026-09-25 決定。下の箱の表）
       page/                   画面。**1つの画面 = 1つのディレクトリ（ページ）**で、名前は `stores/location-hash.ts` の
-                              `Screen` の値そのまま。中の形は下の「ページの形」（2026-09-26 決定。
-                              下の木はまだ移す前の形）
-        conversation/         会話の画面。**4つの領域をサブディレクトリに分ける**（組み立ては `main.tsx`）
-          main-view/          TurnHeader・Turn・Report・QuestionRecord と markdown/（unified 一式）
-          character-view/     BalloonTrack・Balloon・SpeechLog・動きの hooks（立ち絵は domain/portrait.tsx）
-          chat-view/          雑談モードでメインの領域に差し替わるビュー（13.7）
-          dispatch/           Composer・CommandSuggestions・FileSuggestions・PendingAnswer・TurnStatus
+                              `Screen` の値そのまま。中の形は下の「ページの形」（2026-09-26 決定）
+        conversation/         会話の画面。conversation.tsx（雑談モードかを読む）と presentational-conversation.tsx
+                              （<Layout> の差し込み口を4領域と <Sidebar> で埋める）
+          domain/             api-error-label.ts（入力欄とメインビューが読む、ターンの失敗の語）
+          components/         4つの領域と、2つ以上の領域が読む部品・フック
+            main-view/        TurnHeader・Turn・Report・QuestionRecord と markdown/（unified 一式）
+            character-view/   BalloonTrack・Balloon・SpeechLog・動きの hooks（立ち絵は domain/portrait.tsx）
+            chat-view/        雑談モードでメインの領域に差し替わるビュー（13.7）
+            dispatch/         Composer・CommandSuggestions・FileSuggestions・PendingAnswer・TurnStatus
+            prompt-image/     依頼に添えた画像の札と控え（6.1）と、原寸を拡大して見る ImageZoom
+            hooks/            use-repository-file-paths.ts（入力欄の `@` 補完とメインビューのリンク）
         character/            キャラクター画面と、その上に重なる新しく作るダイアログ（13.6）。
                               パックの一覧と、選んだパックの立ち絵・差し色・背景の差し替え
         token-usage/          トークン消費の画面（期間の消費の札・小さな棒・集計の表）
@@ -441,7 +445,6 @@ src/
                               サブディレクトリは全画面で共有する枠（領域）
         portrait.tsx          立ち絵（6.5）
         character-face.tsx    キャラクターの顔（13.9）
-        prompt-image.tsx      依頼に添えた画像の札と控え（6.1）
         protocol-mismatch.tsx サーバと版が合わないときの知らせ（4.4）
         layout/               Layout・領域の枠・リサイザ・比率の保存
         screen-nav/           全画面の最上部の帯。部屋の名前・仕事/雑談のトグル・3画面の口・
@@ -453,7 +456,7 @@ src/
                               分ける**（1部品1フォルダの例外の1つ。下の「1部品1フォルダは真似しない」）。
                               variant の作法と部品の一覧は下の「`components/ui/` の部品（variant の作法と一覧）」
         select/               select.tsx・select.module.css
-        image-zoom/           image-zoom.tsx・image-zoom.module.css
+        button/               button.tsx・button.module.css
     features/                 **置かれる機能**。自分の置き場所を持たず、領域の中に置いてもらう
       task-board/             タスク一覧。TaskList（区画の中身）・TaskBoard（表のモーダルの入口）・
                               PresentationalTaskBoard（器）。サイドバーに置いてもらう
@@ -563,7 +566,7 @@ components/page/<ページ>/
 
 | 箱                   | 置くもの                                                                                                  | import してよい先                                                                                               |
 | -------------------- | --------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| `main.tsx`           | 入口。Provider・出す画面の選択（`<Root>`）・`<Layout>` に領域を差し込む（composition root）               | すべて                                                                                                          |
+| `main.tsx`           | 入口。Provider・出す画面の選択（`<Root>`。composition root）                                              | すべて                                                                                                          |
 | `components/page/`   | **画面**。1つの画面（会話の画面は1つの領域）に閉じた部品・状態・保存                                      | `components/domain` / `components/ui` / `features` / `hooks` / `domain` / `lib` / `utils` / `stores` / `shared` |
 | `components/domain/` | **tsukumo の語彙を持つ部品**。直下は2つ以上の領域が読む部品、サブディレクトリは全画面で共有する枠（領域） | `components/ui` / `features` / `hooks` / `domain` / `lib` / `utils` / `stores` / `shared`                       |
 | `features/`          | **置かれる機能**（置き場所を持たず、領域に置いてもらう機能の部品・状態）                                  | `components/ui` / `hooks` / `domain` / `lib` / `utils` / `stores` / `shared`                                    |
@@ -580,8 +583,8 @@ components/page/<ページ>/
   逆向きは無い——`components/domain` は画面を知らず、`features/` は自分を置く枠も画面も知らず
   （下の「領域の機能と、置かれる機能」の「葉」）、`components/ui` は tsukumo の語彙を知らない
 - **`components/domain` と `components/ui` の線は、tsukumo の語彙を持つかで引く**（`browser/domain/`
-  と同じ意味の `domain`。改名しない）。`Portrait`（立ち絵）・`CharacterFace`（顔）・`PromptImage`
-  （依頼の画像）・`ProtocolMismatch`（サーバとの版）は語彙を持つので `domain`、`Select`・`ImageZoom`
+  と同じ意味の `domain`。改名しない）。`Portrait`（立ち絵）・`CharacterFace`（顔）・
+  `ProtocolMismatch`（サーバとの版）は語彙を持つので `domain`、`Select`・`Button`
   は持たないので `ui`。**`components/domain` の直下の部品は `stores/` を読んでよい**（箱の表で辺を
   許す。いまは読んでいるものは無く、値と呼び先を props で受け取っている）。`components/ui` は読めない
 - **`stores/` は「状態ライブラリの置き場」ではなく「画面全体で共有する状態の置き場」**
@@ -615,7 +618,7 @@ components/page/<ページ>/
   **`browser/lib/` と `browser/domain/`、`components/domain/` の直下と `components/ui/` に
   「1つの領域（機能）だけが読むファイル」が無いことは `test/architecture.test.ts` が見る**
   （領域・機能が1つも読まない——`stores/` や `main.tsx` や共有の部品だけが読む `socket.ts` /
-  `refresh.ts` / `image-zoom.tsx` のようなもの——は対象外）
+  `refresh.ts` のようなもの——は対象外）
 - **`domain/` と `lib/` の線は、包んでいる技術の有無では引かない。** 引くのは
   「**ファイル名が tsukumo の語彙を名乗るか**」（下の「`lib/` と `utils/` に置く基準」の手順1）。
   `domain/appearance-color.ts` は `localStorage` と `getComputedStyle` を包むが、名前が指すのは
@@ -662,8 +665,7 @@ bullet-proof-react の要素）」）。**`utils/` は 2026-09-21 に、`hooks/`
 - **variant 部品**（下の一覧の5つ）: 見た目を部品が持ち、違いを variant で選ぶ
 - **形だけの部品**（`Select`）: どこに置いても同じになる分だけを持ち、寸法・枠・地・字の段は
   呼び出し側が `frameClassName` / `className` で渡す。**variant を持たず、この形のまま変えない**
-  （プルダウンは置き場所ごとに寸法がまるで違い、語彙にすると段が置き場所の数だけ要る）。
-  `ImageZoom` は中で `Dialog` と `Button` を使う組み立てで、`className` を受けない
+  （プルダウンは置き場所ごとに寸法がまるで違い、語彙にすると段が置き場所の数だけ要る）
 
 **variant の表し方**
 
@@ -792,19 +794,20 @@ backdrop のクリックで `onClose` が呼ばれること・中のクリック
 
 ### 領域の機能と、置かれる機能
 
-画面を組み立てる部品のまとまりは2種類ある（2026-09-22 決定。2026-09-25 に領域を `features/` から
-`components/domain/` と `components/page/` へ移し、`features/` には置かれる機能だけを残した）。
-**まとまりどうしの辺は「領域 → 置かれる機能」の1方向だけ**を許し、それ以外は落とす。
+画面を組み立てる部品のまとまりは3種類ある（2026-09-22 決定。2026-09-25 に領域を `features/` から
+`components/domain/` と `components/page/` へ移し、`features/` には置かれる機能だけを残した。
+2026-09-26 に会話の画面を1ページにし、領域を「枠」と「画面」に分けた）。**まとまりどうしの辺は
+「枠・画面 → 置かれる機能」と「画面 → 枠」だけ**を許し、それ以外は落とす。
 
-| 種類                       | どういうものか                                                                      | 置き場                                                                                                                    | 辺                                                                                                 | いまの中身                                                                                                                                                        |
-| -------------------------- | ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **領域**（region）         | 画面の領域を持つか、領域に差し替わる画面を持つ。**置き場所を決めるのは `main.tsx`** | 枠は `components/domain/<枠>/`、画面は `components/page/<画面>/`（会話の画面だけ `components/page/conversation/<領域>/`） | `main.tsx` だけが import する。**互いに import しない**                                            | 枠: `layout` / `screen-nav` / `sidebar`。会話の画面: `main-view` / `character-view` / `chat-view` / `dispatch`。画面: `character` / `token-usage` / `achievement` |
-| **置かれる機能**（placed） | 自分の置き場所を持たず、領域の中に置いてもらう                                      | `features/<機能>/`                                                                                                        | 領域から import してよい。**自分はどの機能も、領域も、`components/domain` も import しない（葉）** | `task-board`                                                                                                                                                      |
+| 種類                       | どういうものか                                                       | 置き場                    | 辺                                                                                                         | いまの中身                                                   |
+| -------------------------- | -------------------------------------------------------------------- | ------------------------- | ---------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| **枠**（frame）            | 全画面で共有する枠。差し込み口は props で受け、画面を知らない        | `components/domain/<枠>/` | 画面と `main.tsx` から import してよい。**枠どうしは import しない**                                       | `layout` / `screen-nav` / `sidebar`                          |
+| **画面**（screen）         | 1つの画面 = 1つのページ。**どの画面を出すかを決めるのは `main.tsx`** | `components/page/<画面>/` | `main.tsx` だけが import する。**画面どうしは import しない**                                              | `conversation` / `character` / `token-usage` / `achievement` |
+| **置かれる機能**（placed） | 自分の置き場所を持たず、枠か画面の中に置いてもらう                   | `features/<機能>/`        | 枠・画面から import してよい。**自分はどの機能も、枠・画面も、`components/domain` も import しない（葉）** | `task-board`                                                 |
 
-- **領域の単位は表の置き場のディレクトリ1つ。** 会話の画面は4つの領域（メインビュー・キャラビュー・
-  雑談ビュー・入力欄）に分かれ、**その4つどうしも import しない**（`<Layout>` に差し込むのは
-  `main.tsx`。2つ以上が要るものは `components/domain/` の直下の部品か `stores/` へ上げる。
-  いまも4つのあいだに辺は無い）。ほかの3画面は画面まるごとが1つの領域
+- **枠・画面の単位は表の置き場のディレクトリ1つ。** 会話の画面は4つの領域（メインビュー・キャラビュー・
+  雑談ビュー・入力欄）を持つが、4つはまとまりではなくページの部品（`conversation/components/<領域>/`）で、
+  置き場所はページの中の決まり（上の「ページの形」の「読み手すべてを含む、いちばん近い箱」）に従う
 - **`components/domain/` の直下のファイルは領域ではなく共有の部品**（2つ以上の領域が読む）。
   サブディレクトリ（枠）と直下のファイルで種類が分かれるので、**直下にサブディレクトリを足すときは
   枠として一覧に載せる**（載せ忘れは検査が `throw` する）
@@ -829,46 +832,46 @@ backdrop のクリックで `onClose` が呼ばれること・中のクリック
   「区画」も名乗らず、タスクの語彙だけで書く（別の領域から同じものを置けるのはこのため）
 - **`components/ui/` とは別物。** `components/ui/` は**語彙を持たない**部品（値と呼び先を全部
   受け取る）で、「置かれる機能」は機能の語彙を名乗ったまま置き場所だけを借りる
-- **会話の画面を1ページにしたあとの形**（2026-09-26 決定。上の表と検査はまだ移す前の形）:
-  - 領域の一覧の会話の4つ（`components/page/conversation/<領域>`）は、画面
-    `components/page/conversation` の1つにまとめる。4つは領域ではなくページの部品
-    （`conversation/components/<領域>/`）になり、「4つどうしも import しない」は外れて、ページの中の
-    置き場所の決まり（上の「ページの形」の「読み手すべてを含む、いちばん近い箱」）に従う
+- **会話の画面を1ページにした形**（2026-09-26 決定）:
+  - もとは領域の一覧に会話の4つ（`components/page/conversation/<領域>`）が並んでいたのを、画面
+    `components/page/conversation` の1つにまとめた。4つは領域ではなくページの部品
+    （`conversation/components/<領域>/`）になり、「4つどうしも import しない」は外れた
   - **`<Layout>` の差し込み口を埋めるのは `presentational-conversation.tsx`。** `<Layout>` と
     `<Sidebar>` を import し、`main` には雑談モードなら `<ChatView>`、そうでなければ `<MainView>` を、
     `character` に `<CharacterView>`、`dispatch` に `<Dispatch>` を入れ、`collapseCharacter` と
     `mainAsGround` に雑談モードの旗を渡す。雑談モードの旗（`session.state.chatMode`）をストアから
     読むのは `conversation.tsx`（ストアを読むだけなので `hooks/use-conversation.ts` は作らない）。
-    `main.tsx` は `<Activity>` の中に `<Conversation />` を置くだけになり、`OVERLAY_SCREEN` と
+    `main.tsx` は `<Activity>` の中に `<Conversation />` を置くだけで、`OVERLAY_SCREEN` と
     `<Activity>` の切り替え・`<ScreenNav>`・`<DiaryNotice>`・`usePortraitPreload`（どちらの
-    画面を出していても表情を先に読む）はそのまま入口に残す
-  - そのため**辺を1本足す: 画面 → 枠**（`components/page/<画面>` → `components/domain/<枠>`）。
+    画面を出していても表情を先に読む）は入口に残る
+  - そのため**辺を1本足した: 画面 → 枠**（`components/page/<画面>` → `components/domain/<枠>`）。
     枠は画面を import しない（`<Layout>` は差し込み口を props で受けたまま）。画面どうし・枠どうしは
-    import しない。検査の一覧は「枠」（`layout` / `screen-nav` / `sidebar`）・「画面」
-    （`conversation` / `character` / `token-usage` / `achievement`）・「置かれる機能」の3種類に分け、
-    許す辺は「枠・画面 → 置かれる機能」と「画面 → 枠」の2つにする
-  - 読み手が会話の画面の1つに戻るものは、上げる引き金の逆で下ろす:
+    import しない。検査の一覧は「枠」・「画面」・「置かれる機能」の3種類に分かれ（上の表）、
+    許す辺は「枠・画面 → 置かれる機能」と「画面 → 枠」の2つ
+  - 読み手が会話の画面の1つに戻ったものは、上げる引き金の逆で下ろした:
     `components/domain/prompt-image.tsx`（と CSS）→ `conversation/components/prompt-image/`、
     `domain/api-error-label.ts` → `conversation/domain/`、`hooks/use-repository-file-paths.ts` →
-    `conversation/components/hooks/`（前の2つは下の検査「1つの機能だけが読むファイルは無い」が落とす）
+    `conversation/components/hooks/`。`components/ui/image-zoom/` も、読み手が `prompt-image.tsx`
+    だけになったので `prompt-image/components/image-zoom/` へ下ろした（前の2つと `image-zoom` は
+    下の検査「1つの機能だけが読むファイルは無い」が落とす）
   - 書き終わりの知らせは成果の画面の部品（`achievement/components/diary-notice/`）のまま、
     `main.tsx` がその `diary-notice.tsx` を直に置く（画面の外から部品を引けるのは入口だけ）
-- 検査は `test/architecture.test.ts` の領域と置かれる機能の一覧。**どちらにも無いディレクトリが
+- 検査は `test/architecture.test.ts` の枠・画面・置かれる機能の一覧。**どれにも無いディレクトリが
   `features/` と `components/domain/` の直下、`components/page/` の下にあれば落ちる**（`chat-view` と
   `token-usage` は 2026-09-22 まで領域の一覧に無く、import が
   黙って検査されていなかった。両方を領域として載せ、載せ忘れは `throw` にした）
 
 ### 機能の中を分ける（container / presenter と `hooks/`）
 
-**この節の「機能」は、領域（`components/domain/<枠>/`・`components/page/<画面>/`・
-`components/page/conversation/<領域>/`）と置かれる機能（`features/<機能>/`）の両方を指す**
+**この節の「機能」は、枠（`components/domain/<枠>/`）・画面（`components/page/<画面>/`）と
+置かれる機能（`features/<機能>/`）のすべてを指す**
 （2026-09-25 に領域を `components/` へ移したが、中の分け方は置き場所によらず同じ）。
 **ページ（`components/page/<ページ>/`）では、この節の割り方をページの中の部品
 （`components/<部品>/`）に1つずつ掛ける。** ページの入口だけは「2種類以上そろったら割る」に
 よらず、いつも container / presenter の対にする。フック・語彙・子部品をどのディレクトリに
 置くかは、この節の「機能の直下」を「読み手すべてを含む、いちばん近い箱」に読み替える
-（上の「ディレクトリ」の「ページの形」。2026-09-26 決定）。会話の画面を1ページにしたあとは、
-4つの領域はこの節の「機能」ではなくページの部品になる。1つの機能に container が複数ある形
+（上の「ディレクトリ」の「ページの形」。2026-09-26 決定）。会話の画面の
+4つの領域はこの節の「機能」ではなくページの部品。1つの機能に container が複数ある形
 （`dispatch` の `composer` / `pending-answer` / `turn-status`）は、それぞれが子部品のディレクトリに
 分かれて自分の対を持ち、`main-view/markdown/` は部品の中の概念のディレクトリのまま残る。
 
@@ -965,10 +968,11 @@ features/task-board/
   `<dialog>` の開閉を DOM へ写すだけでタスクを知らないので、最初から `browser/hooks/`）。
   **container と対になっていないフック**（`use-active-turn-scroll.ts` のように、外の世界に
   触るぶんだけを出したもの）も同じ `hooks/` に置き、名前は container ではなく**その概念**にする。
-  **読み手が2つになったらこちらも `browser/hooks/` へ上げる**——`use-repository-file-paths.ts`
+  **読み手が2つになったらこちらも上げる**——`use-repository-file-paths.ts`
   （`git ls-files` の一覧の取得）はもと `dispatch/hooks/` の1件目だったが、`main-view/markdown/`
   （レポートに書かれたパスを押すと Orca のエディタで開ける部品）も読むようになったので
-  `browser/hooks/` へ上げた（2026-09-24）
+  `browser/hooks/` へ上げた（2026-09-24）。会話の画面を1ページにしたとき（2026-09-26）、読み手が
+  どちらも同じページの部品なので、上げる先はページの `components/hooks/` に変わった（上の「ページの形」）
 - **フックでない純関数は `hooks/` に置かない。** 機能の直下に概念の名前で置く
   （`components/domain/layout/split.ts` がその形）
 - **描き直しを止める `memo` は presenter 側に残す**（`PresentationalTaskBoard` の `TaskTable`）。
@@ -1046,7 +1050,7 @@ features/task-board/
 - 領域（`src/browser/components/domain/<枠>/`・`components/page/`）と `src/browser/features/` の中のものは、
   **その領域（機能）しか読まないならその中に残す**
   （上げる引き金は「2つ目の読み手が出たとき」。`components/domain/layout/split.ts` と
-  `components/page/conversation/main-view/markdown/split-blocks.ts` がその例で、名前が形式（Markdown）を指していても
+  `components/page/conversation/components/main-view/markdown/split-blocks.ts` がその例で、名前が形式（Markdown）を指していても
   読み手が1つなので機能の中）
 
 **手順2 — `lib/` か `utils/` か**
@@ -1112,8 +1116,8 @@ features/task-board/
   どちらも `localStorage` を包むが、**名前が指すのが tsukumo の語彙**なので手順1で `lib/` から外れる
 - **機能の中へ下ろしたのは5つ**（読み手が1つの機能しか無かったもの）。
   `model-label.ts` / `permission-mode-label.ts` → `components/domain/screen-nav/domain/`、
-  `prompt-image.ts` → `components/page/conversation/dispatch/`、`chart.ts` / `vendor-script.ts` →
-  `components/page/conversation/main-view/markdown/`（6.3 が「Markdown 一式はメインビューの機能の中」と書いていたのに
+  `prompt-image.ts` → `components/page/conversation/components/dispatch/`、`chart.ts` / `vendor-script.ts` →
+  `components/page/conversation/components/main-view/markdown/`（6.3 が「Markdown 一式はメインビューの機能の中」と書いていたのに
   `lib/` に残っていた2つ）
 - `shared/image-data-url.ts` は **`shared/lib/` へ**。名前が指すのは data URL という**形式**で、
   tsukumo の語彙を名乗らず、import も持たない（読み手は `portrait-image.ts` /
@@ -2159,53 +2163,55 @@ type Diary = {
       │   └ 設定の歯車       押すとポップオーバー（13.9「設定の歯車」）。いまある群は
       │                      画面の色（ground / surface / ink。domain/appearance-color.ts。localStorage）
       ├ <DiaryNotice>        書き終わりの知らせ（13.10）。帯と同じく、どの画面でも出す
-      ├ <Layout>             会話の画面。grid。リサイザ。接続切れの印。答え待ちの印（タブのタイトル・枠色）。
-      │  │                   比率を動かして既定と違う値になったときだけ、上下の仕切りの右端に
-      │  │                   「比率を既定に戻す」ピルが出る（13.6）。**狭い画面では画面の高さに
-      │  │                   固定し、上段（メインビュー / サイドバー）をタブで切り替える**（4.7）
-      │  ├ <MainView>        札（<TurnHeader> + <Turn>）+ <QuestionAsk>。札の頭は ‹ › ・依頼の1行目の
-      │  │                    タイトル・n / N・最新 / 最新へで、直近20件（`MAX_MAIN_VIEW_TURNS`）を1件ずつ遡る。
-      │  │                    タイトル横の `⌄` を押すと窓の中のやり取りへ一度で飛べる一覧が開く
-      │  │                    （新しいものを上に並べ、番号は `‹` `›` の脇と同じ古いほうを1とする
-      │  │                    通し番号のまま。見ている行にだけ ● の印）
-      │  │   └ <QuestionAsk> 答え待ちの質問の**札**（レポートの下）。「質問」のチップ + header + n / N、
-      │  │                    選択肢を横に並べたカード（**選択肢ごとの `preview` は説明の下**。
-      │  │                    ラベル末尾の (Recommended) は「おすすめ」のバッジ）、
-      │  │                    下端に「これで答える」。**自由入力は入力欄が担う**（2026-09-23）
-      │  │   └ <Turn>        <RequestRest>（依頼の2行目以降 + <PromptImageThumbnails>）
-      │  │                    + [<Report> | <QuestionRecord>]*
-      │  │       └ <Report>  Markdown（6.3）。書きかけはブロック単位で memo
-      │  ├ <CharacterView>   <SpeechLog> + <Portrait> + <BalloonTrack>
-      │  │   ├ <SpeechLog>   右上の「ログ」と、舞台を帯の下まで上へ伸ばしてセリフを遡るモーダル（4.2）。
-      │  │   │               立ち絵はキャラビューから受け取り、吹き出しは <Balloon> を共有。位置は
-      │  │   │               CSS の anchor positioning でキャラビューの床と吹き出しの並びに重ねる
-      │  │   ├ <Portrait>    立ち絵。**components/domain/portrait.tsx**（キャラクター画面の並びも使う）。SVG は
-      │  │   │               インラインで差し色、ラスタは <img>。動きの hooks はキャラビュー側に残る（6.5）
-      │  │   └ <BalloonTrack> <Balloon>*。最新を一番下、下端の位置を固定（4.2 の決定どおり）。
-      │  │                   出るのは `speak` で来たセリフだけ。最新にだけ話し手の名前を添える（4.2）
-      │  ├ <Sidebar>         {taskSection} + <SessionInfo>。**雑談中は chatMode を見て自分で差し替え**、
-      │  │                   <ProfileCard> + <RecentTopicSection> + <PersonaMemorySection> +
-      │  │                   <SessionInfo>（キャラクターの対なし）になる（13.7「雑談のときのサイドバー」）
-      │  │   └ <TaskSection> **features/task-board/** を置く区画（置かれる機能。2章）。枠は props で受け取り、
-      │  │                   <TaskList>（区画の中身）と <TaskBoard> を描く。差し込むのは main.tsx
-      │  │   └ <TaskBoard>   タスク一覧の表。見出しの「一覧を見る」から <dialog> で開く（4.2）
-      │  │   └ <ProfileCard> 雑談中だけ。顔・名前・ひとことプロフィール・「変える ⌄」
-      │  │                   （<CharacterSwitch> を透明にして重ねる。13.7）
-      │  │   └ <SessionInfo> **区画ではなく下端の帯**（.sidebar-footer。見出しを名乗らず、
-      │  │                   SidebarSection も通らない）。キャラクター（左に顔。
-      │  │                   components/domain/character-face.tsx。帯と共有）とセッションの2つの
-      │  │                   <select> を、小さなラベルを上に置いて横に等分で並べる
-      │  │                   （**仕事/雑談・モデル・許可モードとキャラクター画面へ入る口は
-      │  │                   帯へ移った**。13.9）
-      │  └ <Dispatch>        <PendingAnswer> + <Composer> + <TurnStatus>
-      │      ├ <PendingAnswer> 許可（許可 / 拒否）だけ。**質問はここに出ない**（札はメインビュー）
-      │      ├ <Composer>    <textarea>。Enter 改行 / ⌘Enter 送信。**質問が出ている間は答えを書く場所**
-      │      │                （上に帯「↑ <キャラクター名> が質問しています…」、プレースホルダ
-      │      │                「選択肢以外の答えを書く…」、枠は `--state-warn`、送るボタンは「答える」）。貼り付け / ドロップ / 画像のボタンで
-      │      │                画像を添える（4.10）。<CommandSuggestions>（`/`）と
-      │      │                <FileSuggestions>（`@`。同時には出さない）・<PromptImageChips>（札）を内包。
-      │      │                下に道具の行（画像・`/`・`@` のボタン、操作の案内、<TurnStatus>）
-      │      └ <TurnStatus>  経過 / 所要、送信 ⇄ 中断（道具の行の右端）
+      ├ <Conversation>       会話の画面（conversation.tsx）。雑談モードかを読み、<Layout> の差し込み口を
+      │  │                   4領域と <Sidebar> で埋める（presentational-conversation.tsx）
+      │  └ <Layout>             grid。リサイザ。接続切れの印。答え待ちの印（タブのタイトル・枠色）。
+      │     │                   比率を動かして既定と違う値になったときだけ、上下の仕切りの右端に
+      │     │                   「比率を既定に戻す」ピルが出る（13.6）。**狭い画面では画面の高さに
+      │     │                   固定し、上段（メインビュー / サイドバー）をタブで切り替える**（4.7）
+      │     ├ <MainView>        札（<TurnHeader> + <Turn>）+ <QuestionAsk>。札の頭は ‹ › ・依頼の1行目の
+      │     │                    タイトル・n / N・最新 / 最新へで、直近20件（`MAX_MAIN_VIEW_TURNS`）を1件ずつ遡る。
+      │     │                    タイトル横の `⌄` を押すと窓の中のやり取りへ一度で飛べる一覧が開く
+      │     │                    （新しいものを上に並べ、番号は `‹` `›` の脇と同じ古いほうを1とする
+      │     │                    通し番号のまま。見ている行にだけ ● の印）
+      │     │   └ <QuestionAsk> 答え待ちの質問の**札**（レポートの下）。「質問」のチップ + header + n / N、
+      │     │                    選択肢を横に並べたカード（**選択肢ごとの `preview` は説明の下**。
+      │     │                    ラベル末尾の (Recommended) は「おすすめ」のバッジ）、
+      │     │                    下端に「これで答える」。**自由入力は入力欄が担う**（2026-09-23）
+      │     │   └ <Turn>        <RequestRest>（依頼の2行目以降 + <PromptImageThumbnails>）
+      │     │                    + [<Report> | <QuestionRecord>]*
+      │     │       └ <Report>  Markdown（6.3）。書きかけはブロック単位で memo
+      │     ├ <CharacterView>   <SpeechLog> + <Portrait> + <BalloonTrack>
+      │     │   ├ <SpeechLog>   右上の「ログ」と、舞台を帯の下まで上へ伸ばしてセリフを遡るモーダル（4.2）。
+      │     │   │               立ち絵はキャラビューから受け取り、吹き出しは <Balloon> を共有。位置は
+      │     │   │               CSS の anchor positioning でキャラビューの床と吹き出しの並びに重ねる
+      │     │   ├ <Portrait>    立ち絵。**components/domain/portrait.tsx**（キャラクター画面の並びも使う）。SVG は
+      │     │   │               インラインで差し色、ラスタは <img>。動きの hooks はキャラビュー側に残る（6.5）
+      │     │   └ <BalloonTrack> <Balloon>*。最新を一番下、下端の位置を固定（4.2 の決定どおり）。
+      │     │                   出るのは `speak` で来たセリフだけ。最新にだけ話し手の名前を添える（4.2）
+      │     ├ <Sidebar>         {taskSection} + <SessionInfo>。**雑談中は chatMode を見て自分で差し替え**、
+      │     │                   <ProfileCard> + <RecentTopicSection> + <PersonaMemorySection> +
+      │     │                   <SessionInfo>（キャラクターの対なし）になる（13.7「雑談のときのサイドバー」）
+      │     │   └ <TaskSection> **features/task-board/** を置く区画（置かれる機能。2章）。枠は props で受け取り、
+      │     │                   <TaskList>（区画の中身）と <TaskBoard> を描く。差し込むのは main.tsx
+      │     │   └ <TaskBoard>   タスク一覧の表。見出しの「一覧を見る」から <dialog> で開く（4.2）
+      │     │   └ <ProfileCard> 雑談中だけ。顔・名前・ひとことプロフィール・「変える ⌄」
+      │     │                   （<CharacterSwitch> を透明にして重ねる。13.7）
+      │     │   └ <SessionInfo> **区画ではなく下端の帯**（.sidebar-footer。見出しを名乗らず、
+      │     │                   SidebarSection も通らない）。キャラクター（左に顔。
+      │     │                   components/domain/character-face.tsx。帯と共有）とセッションの2つの
+      │     │                   <select> を、小さなラベルを上に置いて横に等分で並べる
+      │     │                   （**仕事/雑談・モデル・許可モードとキャラクター画面へ入る口は
+      │     │                   帯へ移った**。13.9）
+      │     └ <Dispatch>        <PendingAnswer> + <Composer> + <TurnStatus>
+      │         ├ <PendingAnswer> 許可（許可 / 拒否）だけ。**質問はここに出ない**（札はメインビュー）
+      │         ├ <Composer>    <textarea>。Enter 改行 / ⌘Enter 送信。**質問が出ている間は答えを書く場所**
+      │         │                （上に帯「↑ <キャラクター名> が質問しています…」、プレースホルダ
+      │         │                「選択肢以外の答えを書く…」、枠は `--state-warn`、送るボタンは「答える」）。貼り付け / ドロップ / 画像のボタンで
+      │         │                画像を添える（4.10）。<CommandSuggestions>（`/`）と
+      │         │                <FileSuggestions>（`@`。同時には出さない）・<PromptImageChips>（札）を内包。
+      │         │                下に道具の行（画像・`/`・`@` のボタン、操作の案内、<TurnStatus>）
+      │         └ <TurnStatus>  経過 / 所要、送信 ⇄ 中断（道具の行の右端）
       ├ <TokenUsage>         トークン消費の画面（#token-usage）
       ├ <Achievement>        成果の画面（#achievement。13.10）
       └ <Character>          キャラクター画面（#character。13.6）。**戻る口と答え待ちの印は帯が持つ**（13.9）。
@@ -2218,26 +2224,27 @@ type Diary = {
 ```
 
 **部品の置き場**（2章「`src/browser/` の箱と、置く基準」）: `<Root>` と Provider は入口の `main.tsx`。
-`<Root>` の直下に並ぶ部品のうち、**全画面で共有する枠**（`<ScreenNav>`・`<Layout>`・`<Sidebar>`）は
-`components/domain/<枠>/`、**会話の画面の領域**（`<MainView>`・`<CharacterView>`・`<ChatView>`・
-`<Dispatch>`）は `components/page/conversation/<領域>/`、**ほかの画面**（`<Character>`・
-`<TokenUsage>`・`<Achievement>`）と `<DiaryNotice>` は `components/page/<画面>/`。
-`<TaskList>` と `<TaskBoard>` は置かれる機能の `features/task-board/`。領域をまたいで使う
-`<Portrait>`・`<CharacterFace>`・`<PromptImageChips>`・`<PromptImageThumbnails>`・`<ProtocolMismatch>`
-は `components/domain/` の直下、語彙を持たない `<Select>`・`<ImageZoom>`・`<Stack>`・`<VStack>`・
+**全画面で共有する枠**（`<ScreenNav>`・`<Layout>`・`<Sidebar>`）は
+`components/domain/<枠>/`、**画面**（`<Conversation>`・`<Character>`・`<TokenUsage>`・`<Achievement>`）と
+`<DiaryNotice>` は `components/page/<画面>/`。会話の画面の4領域（`<MainView>`・`<CharacterView>`・
+`<ChatView>`・`<Dispatch>`）と、2つ以上の領域が使う `<PromptImageChips>`・`<PromptImageThumbnails>`
+（と、その中の `<ImageZoom>`）はページの部品で `components/page/conversation/components/<部品>/`。
+`<TaskList>` と `<TaskBoard>` は置かれる機能の `features/task-board/`。画面・枠をまたいで使う
+`<Portrait>`・`<CharacterFace>`・`<ProtocolMismatch>`
+は `components/domain/` の直下、語彙を持たない `<Select>`・`<Stack>`・`<VStack>`・
 `<HStack>`・`<Text>`・`<Heading>`・`<Button>`・`<Dialog>` は `components/ui/select/`・
-`components/ui/image-zoom/`・`components/ui/stack/`・`components/ui/v-stack/`・
+`components/ui/stack/`・`components/ui/v-stack/`・
 `components/ui/h-stack/`・`components/ui/text/`・`components/ui/heading/`・`components/ui/button/`・
 `components/ui/dialog/`（部品ごとのディレクトリ。2章「1部品1フォルダは真似しない」の例外）。
 
 **部品は `SessionState` と `dispatch` だけを見る。** DOM を直接いじる配線（`MutationObserver`・
 `data-` 属性で状態を渡す）は持たない。
 
-**依頼に添えた画像は `components/domain/prompt-image.tsx` の2つが出す**（`docs/requirements.md` 4.10）:
+**依頼に添えた画像は `components/page/conversation/components/prompt-image/prompt-image.tsx` の2つが出す**（`docs/requirements.md` 4.10）:
 送る前の札（`<PromptImageChips>`。縮めた絵と外す `×`）と、送ったあとの控え
 （`<PromptImageThumbnails>`。依頼の見出しの下と、雑談の利用者の吹き出しの中）。**どちらも1枚も
 無ければ何も描かない**ので常設の枠にならない。**どちらも押すと原寸を拡大して見られる**
-（`image-zoom.tsx`）——札は `<Composer>` のローカル状態にある原寸をそのまま出し、控えは押した
+（`prompt-image/components/image-zoom/image-zoom.tsx`）——札は `<Composer>` のローカル状態にある原寸をそのまま出し、控えは押した
 瞬間に id でサーバの「棚」（`src/server/session-driver/core/prompt-image-shelf.ts`。`docs/requirements.md`
 4.10「会話内容の扱い」）から原寸を取りに行き、棚から落ちていれば控えを代わりに拡大する。
 
@@ -2273,7 +2280,7 @@ zustand などの状態ライブラリは**入れない**。`useSyncExternalStor
 **`browser/stores/` はその「画面全体で共有する状態」の置き場であって、状態ライブラリの置き場ではない**
 （2章）。
 
-### 6.3 Markdown（`components/page/conversation/main-view/markdown/markdown.tsx`）
+### 6.3 Markdown（`components/page/conversation/components/main-view/markdown/markdown.tsx`）
 
 ```
 react-markdown
@@ -2341,7 +2348,7 @@ react-markdown
   この原則に触れない
 - **`<Portrait>` の4つの動きは領域の外へ出さない。** `.character-region` の中で閉じる。
   **レポートの上に出てよいのはミニ立ち絵だけ**（`docs/requirements.md` 4.3。2026-09-20 に
-  「レポートの上に被らせない」をこの1件だけ見直した）。ミニ立ち絵は `components/page/conversation/main-view/` 側の
+  「レポートの上に被らせない」をこの1件だけ見直した）。ミニ立ち絵は `components/page/conversation/components/main-view/` 側の
   別の部品にし、矩形を描く `components/domain/portrait.tsx` を共有する——**`<Portrait>` の中に閉じる
   形は崩れるが、「1枚の矩形しか動かさない」原則は崩れない**（動かすのは位置と大きさだけ）
 - `prefers-reduced-motion: reduce` を尊重する（`src/browser/styles/theme.css`）
@@ -2349,7 +2356,7 @@ react-markdown
   ライブラリも要らない**（矩形しか動かさないため）
 
 **既にあるもの**: `portrait-fade-in`（登場。`components/domain/portrait.module.css`）・`balloon-appear`・
-`balloon-push-up`（`components/page/conversation/character-view/character-view.module.css`）。登場はここで作り直さない。
+`balloon-push-up`（`components/page/conversation/components/character-view/character-view.module.css`）。登場はここで作り直さない。
 
 ### 6.6 CSS
 
@@ -2360,7 +2367,7 @@ react-markdown
 **16進の色を書いてよいのもそこだけ**（13.2）。
 
 **機能の中の部品でも、見た目が独立しているときはその部品の隣に `<部品>.module.css` を置いてよい**
-（`components/page/conversation/main-view/mini-portrait.module.css` / `components/domain/sidebar/session-switch.module.css`
+（`components/page/conversation/components/main-view/mini-portrait.module.css` / `components/domain/sidebar/session-switch.module.css`
 がその形）。分ける目安は「**その部品しか使わない class の塊になっているか**」——1つの
 `*.module.css` に複数の部品の class が混ざって育ち、どれがどの部品のものか読み取りにくく
 なったら、部品ごとに分ける側へ倒す（機能の1枚に戻すのが原則で、これは「その機能の中でも

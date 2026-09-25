@@ -1,0 +1,116 @@
+/* 筆先に添うミニ立ち絵の置き方（`src/browser/components/page/conversation/components/main-view/mini-portrait.tsx`）。
+   立ち絵そのものの中身は `src/browser/components/domain/portrait.module.css`。
+
+   **筆先の座標は本文の入れ物（`.main-turns`）の左上が原点**（`src/browser/domain/reveal/brush-tip.ts`）
+   なので、その入れ物の中に position: absolute で置く。**書き上げたあとも筆先はそこに残る**ので、
+   ビューポート基準（position: fixed）のままだと、本文を転がしたときに関係ない場所へ浮いたまま
+   居座る。
+   **基準を作っているのは `main-view.module.css` の `.main-turns { position: relative }`**——
+   あいだに position を持つ入れ物を挟むと、置く先だけがそちらへずれる（座標を測る側は
+   `data-brush-origin` の印で `.main-turns` を探し続ける）。**あいだに挟まる `.mini-portrait-floor`
+   に position を付けてはいけない**のはこのため。
+   **縁取りは入れ物ではなく中身（`.mini-portrait-body`）に掛ける**ので、この入れ物の祖先に
+   transform / filter は増えない（増えると position の基準を横取りされる）。 */
+/* 降りた立ち絵が立つ床（`mini-portrait.tsx` が本文の末尾に敷き、立ち絵をこの中に置く）。
+   **高さは立ち絵と同じ**で、これが無いと足元が器の下端をはみ出す——立ち絵は position: absolute
+   なので、場所を空けられるのは流れの中にいるこちらだけ。地も枠も持たない（見えるのは空いた
+   場所だけ）。**調整する値をここに置く**のは、床と立ち絵の両方が同じ高さを要るから（custom
+   property は中の立ち絵へ継がれる）。 */
+.mini-portrait-floor {
+  /* 大きさ・不透明度・追従の間合い。**ここと下の縁取りの2組が
+     唯一の調整箇所**。
+     --mini-portrait-height: 窓に追随する高さ（下限 60px / 目安 8vmin / 上限 96px）。
+       **キャラビューの立ち絵の半分以下に収める**のが目的（4.3「明確に小さく」）。本文の行の
+       高さに合わせる形（3倍＝79px）は窓で変わらず、**狭い窓でキャラビューの立ち絵の 61% まで
+       育っていた**（実測: 720x900 で 79px 対 128px）。
+       狭い窓ではキャラビューの領域が 9.5rem に固定される（`components/domain/layout/layout.module.css`
+       の @media）ので、**立ち絵は窓の高さによらず 128px**——半分＝64px が動かない上限になる。
+       8vmin なら切り替えの境目（幅 760px）でも 60.8px で、そこを割らない。
+       下限 60px: **2倍（53px）では姿が判別できなかった**（目視: 下の縁取りを
+       足しても、線画の細部が地に沈んで「光る塊」にしか見えない）ので、64px の手前でいちばん
+       大きく取れるところに置いた。
+       上限 96px: 広い窓では立ち絵が窓に追随するので上限が無くても比は保つが、**大きな画面で
+       ミニ立ち絵だけが育たない**ようにする。
+       実測（fake driver）: 720x900 で 60px 対 128px（47%）、1400x900 で 72px 対
+       244px（30%）。
+     --mini-portrait-opacity: 不透明（4.3）。**薄さで分身を示す形は採らない**ので、
+       見分けは大きさと下の縁取りだけで作る。
+     --mini-portrait-gap: 筆先と立ち絵のあいだの余白（書いたばかりの文字に被せない）。
+     --mini-portrait-follow-duration: 横画（文字を出しながら進む画）の遅れの目安。
+       **毎フレーム引き直される遷移**なので、この長さがそのままばねの時定数になる（長くすると
+       重く、短くすると張り付く）。**遅れの幅は「筆の速さ × この長さ」でそのまま決まる**
+       （実測: 筆が 0.78px/ms で進む場面で 0.12s のとき 90px、0.05s のとき 43px）。
+       **立ち絵の幅に収まる遅れ**にしてあり、筆先が姿の中に入る。
+     --mini-portrait-return-duration: 斜めの戻り（行末から次の帯の頭へ筆を上げて戻る画）の遅れ。
+       **戻りは横画の4〜7倍の速さで動く**ので、同じ長さを掛けるとそのぶん置いていかれる
+       （実測: 1400x900 で横画 0.19px/ms・戻り 0.73〜1.26px/ms、遅れは横画 7〜20px に
+       対し戻り 25〜44px）。**0 にして筆先に張り付かせる**——戻りのあいだ筆先そのものは
+       0.25〜0.75秒かけて滑るので、張り付いても瞬間移動にはならない（目視で確認）。
+       塊から次の塊へ飛ぶ1フレームは横画の扱いのまま残す（ここを 0 にすると本当に瞬間移動する）。 */
+  --mini-portrait-height: clamp(60px, 8vmin, 96px);
+  --mini-portrait-opacity: 1;
+  --mini-portrait-gap: 0.4rem;
+  --mini-portrait-follow-duration: 0.05s;
+  --mini-portrait-return-duration: 0s;
+  --mini-portrait-rest-duration: 0.3s;
+
+  flex: none;
+  height: var(--mini-portrait-height);
+}
+.mini-portrait {
+  position: absolute;
+  top: 0;
+  left: var(--mini-portrait-gap);
+  z-index: 2;
+  height: var(--mini-portrait-height);
+  opacity: var(--mini-portrait-opacity);
+  /* 本文の上に重なるので、選択もクリックも素通りさせる（読む邪魔をしない）。 */
+  pointer-events: none;
+  transition: transform var(--mini-portrait-follow-duration) linear;
+}
+/* 斜めの戻りをなぞっているあいだだけ差し替わる間合い（`mini-portrait.tsx` が筆先の
+   `stroke` で付け外しする）。**長さは上の1組だけで決まる**ので、ここには数値を置かない。 */
+.mini-portrait-returning {
+  transition-duration: var(--mini-portrait-return-duration);
+}
+/* 書き終わって本文の右下の隅へ寄るときの置き方と間合い（`mini-portrait.tsx` の `followStyle` が、
+   残っているあいだは `translateY(-100%)` を外し、横の座標も渡さなくなる）。
+
+   **横は筆先ではなく本文の右端に付ける**（`left` をやめて `right`）——筆が止まるのは最後の行が
+   終わったところなので、そこに立たせると**最後の行が短いときに本文の途中の行へ重なる**
+   （画面で出た）。縦は最後の行の下端で、そこには床（`.mini-portrait-floor`）が敷いてあるので、
+   右端と組にすると止まったあとはどの行にも重ならない。
+
+   **降りるのは立ち絵の高さぶんの縦移動**なので、横画の 0.05s のままだと落ちたように見える。
+   ease-out は着地で緩めるため。 */
+.mini-portrait-resting {
+  right: var(--mini-portrait-gap);
+  left: auto;
+  transition-duration: var(--mini-portrait-rest-duration);
+  transition-timing-function: ease-out;
+}
+/* 立ち絵は入れ物の高さいっぱい（幅は画の縦横比なり）。
+
+   **不透明でも小ささは変えず、姿を地・文字の両方から際立たせる**
+   （`--mini-portrait-opacity` を 1 にしたあとも縁取りは残す）。地の暗い面や衣装の暗い部分は
+   色が近く輪郭が沈むし、本文の文字に重なったときも境目が要るので、**地との境目を作る側**で
+   解く:
+
+   --mini-portrait-rim: 地の色の縁。**本文の文字の上に来たときに輪郭が埋もれない**。
+   --mini-portrait-glow: 差し色の暈。**地（暗い面）の上で姿が浮かぶ**。差し色は
+     キャラクター定義の `accent`（`--outfit-accent` は `<Portrait>` がこの要素に置く）で、
+     無いパックでは画面の差し色に落ちる。
+
+   `drop-shadow` は**素材の alpha をなぞる**ので、矩形ではなく姿の形に付く（素材の中身には
+   触らない、という 4.3 の割り切りを守ったまま輪郭だけを立てられる）。**同じ影を重ねる**のは、
+   `color-mix` で作った縁取り・暈自体が半透明で、1回では存在感が出ないため——重ねた回数だけ
+   濃くなる（drop-shadow は前の結果にさらに掛かる）。 */
+.mini-portrait-body {
+  --mini-portrait-rim: color-mix(in srgb, var(--surface) 85%, transparent);
+  --mini-portrait-glow: color-mix(in srgb, var(--outfit-accent, var(--accent)) 80%, transparent);
+
+  height: 100%;
+  filter: drop-shadow(0 0 4px var(--mini-portrait-glow))
+    drop-shadow(0 0 4px var(--mini-portrait-glow)) drop-shadow(0 0 1px var(--mini-portrait-rim))
+    drop-shadow(0 0 1px var(--mini-portrait-rim));
+}

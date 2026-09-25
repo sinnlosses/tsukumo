@@ -9,29 +9,21 @@
 //
 // **移行の段6で `<div id="app">` に1つの root をまとめた**（段3〜5は `.layout-sidebar` 等の
 // 複数の root だった。段の記録は `docs/history/decision.md`「design.md 12. 移行の段階」）。
-// 機能の組み立て（`<Layout>` に4領域を渡す）は
-// 領域をまたいで import してよい**この入口の役目**
-// （機能どうしは互いを import しない。`test/architecture.test.ts`「browser/ の機能どうしの import」）。
-//
-// **出す画面を選ぶのも入口の役目**（`<Root>`。docs/design.md 6.1 / docs/screen-design.md 13.6）。`<Layout>` は
-// 他の機能を知らないので、画面の入れ替えを機能の側に持たせると機能どうしの import になる。
+// **出す画面を選ぶのは入口の役目**（`<Root>`。docs/design.md 6.1 / docs/screen-design.md 13.6）。
+// 画面どうしは互いを import しないので、画面の入れ替えを画面の側に持たせると画面どうしの
+// import になる（`test/architecture.test.ts`「browser/ の機能どうしの import」）。
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { Activity, type ReactElement } from "react"
 import { createRoot } from "react-dom/client"
 
-import { Layout } from "./components/domain/layout/layout.tsx"
 import { usePortraitPreload } from "./components/domain/portrait.tsx"
 import { ProtocolMismatch } from "./components/domain/protocol-mismatch.tsx"
 import { ScreenNav } from "./components/domain/screen-nav/screen-nav.tsx"
-import { Sidebar } from "./components/domain/sidebar/sidebar.tsx"
 import { Achievement } from "./components/page/achievement/achievement.tsx"
 import { DiaryNotice } from "./components/page/achievement/components/diary-notice/diary-notice.tsx"
 import { Character } from "./components/page/character/character.tsx"
-import { CharacterView } from "./components/page/conversation/character-view/character-view.tsx"
-import { ChatView } from "./components/page/conversation/chat-view/chat-view.tsx"
-import { Dispatch } from "./components/page/conversation/dispatch/dispatch.tsx"
-import { MainView } from "./components/page/conversation/main-view/main-view.tsx"
+import { Conversation } from "./components/page/conversation/conversation.tsx"
 import { TokenUsage } from "./components/page/token-usage/token-usage.tsx"
 import {
   applyAppearanceColorOverride,
@@ -50,7 +42,7 @@ import "./styles/theme.css"
 /**
  * 会話の画面を除いた画面の部品を引く表（`stores/location-hash.ts` の画面の一覧が正典）。
  * **`satisfies` で `Screen` を尽くしているかを検査する**ので、画面を1つ足したのに部品の登録を
- * 忘れると `bun run typecheck` が落ちる。会話の画面は `<Layout>` を常時マウントしたまま
+ * 忘れると `bun run typecheck` が落ちる。会話の画面は `<Conversation>` を常時マウントしたまま
  * `<Activity>` の可視/不可視で切り替える別枠（下の {@link Root} 参照）なのでここには乗らない。
  */
 const OVERLAY_SCREEN = {
@@ -68,16 +60,10 @@ const OVERLAY_SCREEN = {
  */
 function Root(): ReactElement {
   const screen = useScreen()
-  // **雑談モードではメインビューを雑談ビューに差し替え、キャラビューを畳む**
-  // （立ち絵が上段へ移るため。docs/chat-mode.md 4.9 / docs/screen-design.md 13.7）。
-  // 差し替えを入口が持つのは、`<Layout>` が他の機能を知らないのと同じ理由。
-  // **同時にメインの領域を地そのものにする**（枠と角丸が外れ、背景がそこへ移る。13.8）。
-  // 「いま雑談か」を知っているのはここだけなので、`<Layout>` には2つの旗を別々に渡す
-  // （畳むことと枠を外すことは別の話で、片方だけが要る形もありうる）。
-  const chatMode = useSessionSelector((session) => session.state.chatMode)
   // 切り替えた先の領域で立ち絵が空かないよう、**どちらの画面を出していても**表情の数だけ
   // 先に読んでおく（docs/screen-design.md 13.7「切り替えのときの立ち絵」）。読み手が
-  // キャラビューと雑談ビューの2つにまたがるので、入れ替えを持つ入口で1回だけ呼ぶ。
+  // キャラビューと雑談ビューの2つにまたがり、会話の画面を出していないときも要るので、入口で
+  // 1回だけ呼ぶ。
   usePortraitPreload(useSessionSelector((session) => session.state.character?.portraits))
   // サーバと版が合わない間は、どの画面も描かず知らせだけを出す（docs/design.md 4.4）。
   const protocol = useSessionSelector((session) => session.protocol)
@@ -95,14 +81,7 @@ function Root(): ReactElement {
         <DiaryNotice />
       </Activity>
       <Activity mode={screen === "conversation" ? "visible" : "hidden"}>
-        <Layout
-          main={chatMode ? <ChatView /> : <MainView />}
-          sidebar={<Sidebar />}
-          character={<CharacterView />}
-          dispatch={<Dispatch />}
-          collapseCharacter={chatMode}
-          mainAsGround={chatMode}
-        />
+        <Conversation />
       </Activity>
       {screen === "conversation" ? null : OVERLAY_SCREEN[screen]}
     </>
@@ -115,7 +94,7 @@ function Root(): ReactElement {
 applyAppearanceColorOverride(loadAppearanceColorOverride())
 
 // 立ち絵の SVG 取得（`components/domain/portrait.tsx`）と入力欄の `@` 補完のファイル一覧
-// （`components/page/conversation/dispatch/file-suggestions.tsx`）が使う。**キャッシュの既定値は個々の
+// （`components/page/conversation/components/dispatch/file-suggestions.tsx`）が使う。**キャッシュの既定値は個々の
 // `useQuery` 側**（取り直す条件は呼び出し側にしか分からない）。
 const queryClient = new QueryClient()
 

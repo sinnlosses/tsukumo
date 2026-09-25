@@ -20,7 +20,7 @@
 import { useSyncExternalStore } from "react"
 
 /**
- * 筆先の座標の原点になる入れ物の印（`components/page/conversation/main-view/main-view.tsx` が
+ * 筆先の座標の原点になる入れ物の印（`components/page/conversation/components/main-view/main-view.tsx` が
  * `.main-turns` に付ける）。**座標系の定義と同じところに置く**——原点が動くと座標の意味が
  * 変わるので、印の名前と {@link BrushPlace} の説明を離さない。
  */
@@ -67,7 +67,7 @@ export type BrushTip = BrushPlace & {
   /**
    * この筆先を出したやり取り（`src/shared/main-view.ts` の `MainViewTurn.id`）。**筆先は
    * そのやり取りの本文の上にしか意味を持たない**——別のやり取りが出ているあいだ、座標の先には
-   * 違う本文があるので、追従する側はここを見て引っ込む（`components/page/conversation/main-view/mini-portrait.tsx`）。
+   * 違う本文があるので、追従する側はここを見て引っ込む（`components/page/conversation/components/main-view/mini-portrait.tsx`）。
    */
   readonly turnId: number
 } & ({ readonly phase: "writing"; readonly stroke: BrushStroke } | { readonly phase: "resting" })

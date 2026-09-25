@@ -393,7 +393,7 @@ function writeCharacterAsset(
  * 依頼に添えた画像の原寸を1枚配る。**起動トークンの照合は `respond` が済ませている**
  * （配るのは会話の内容）。id の形が違う・棚に無い（記録の窓から落ちた・枚数の上限で押し出された）
  * ときは 404 で、どちらかは区別しない（ブラウザは 404 を受けてから控えに倒す。
- * `src/browser/components/domain/prompt-image.tsx`）。
+ * `src/browser/components/page/conversation/components/prompt-image/prompt-image.tsx`）。
  *
  * **data URL はここでデコードする**（棚は受け取った data URL のまま持つ）。`Content-Type` は
  * 受け取ったときのメディアタイプ（`PROMPT_IMAGE_MEDIA_TYPES` の4つ）。ブラウザのディスクの

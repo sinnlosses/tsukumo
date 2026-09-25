@@ -416,15 +416,18 @@ describe("コメント中の日付", () => {
   })
 })
 
-// `browser/features/` の中の横断 import を制限する（`docs/design.md` 2章「領域の機能と、置かれる機能」）。
-// 機能は2種類あり、**辺は「領域 → 置かれる機能」の1方向だけ**を許す。
+// 画面を組み立てる部品のまとまりどうしの import を制限する（`docs/design.md` 2章「領域の機能と、置かれる機能」）。
+// まとまりは3種類あり、**辺は「枠・画面 → 置かれる機能」と「画面 → 枠」だけ**を許す。
 //
-// - **領域の機能**（`BROWSER_REGIONS`）: 画面の領域か、領域に差し替わる画面を持つ。
-//   `main.tsx` が置き場所を決める。**互いに import しない**
-// - **置かれる機能**（`BROWSER_PLACED_FEATURES`）: 自分の置き場所を持たず、領域の中に
-//   置いてもらう。**どの機能も import しない（葉）**ので、領域から引いても輪にならない
+// - **枠**（`BROWSER_FRAMES`）: 全画面で共有する枠（`components/domain/<枠>/`）。差し込み口は
+//   props で受け、画面を知らない。**枠どうしは import しない**
+// - **画面**（`BROWSER_SCREENS`）: 1つの画面 = 1つのページ（`components/page/<画面>/`）。`main.tsx` が
+//   出す画面を選ぶ。**画面どうしは import しない**。会話の画面は `<Layout>` と `<Sidebar>` を
+//   置くので、画面から枠へは引いてよい
+// - **置かれる機能**（`BROWSER_PLACED_FEATURES`）: 自分の置き場所を持たず、枠か画面の中に
+//   置いてもらう。**どのまとまりも import しない（葉）**ので、枠・画面から引いても輪にならない
 //
-// **一覧は `browser/` からの相対パスで引く**（領域は `components/domain/<枠>/` と
+// **一覧は `browser/` からの相対パスで引く**（枠と画面は `components/domain/<枠>/` と
 // `components/page/<画面>/` に分かれているので、名前だけでは引けない）。
 //
 // `browser/components/`（`page/` `domain/` `ui/` の3段。一覧のパスに無いディレクトリ）・
@@ -434,26 +437,36 @@ describe("コメント中の日付", () => {
 // あれば `throw` する**（足し忘れが「検査の対象外」として黙って通るのを防ぐ。`browserBoxOf` と
 // 同じ作り）。
 //
-// **`markdown/` は `main-view` の中**（`browser/components/page/conversation/main-view/markdown/`）なので、機能の
-// 一部として扱われる（state を持たない Markdown の描画プリミティブで、読むのは `main-view` だけ）。
-const BROWSER_REGIONS = [
+// **会話の画面の4つの領域（`main-view` など）は `conversation/components/` の下の部品**なので、
+// 画面 `components/page/conversation` の一部として扱われる。
+const BROWSER_FRAMES = [
   "components/domain/layout",
   "components/domain/screen-nav",
-  "components/page/conversation/main-view",
-  "components/page/conversation/character-view",
+  "components/domain/sidebar",
+] as const
+const BROWSER_SCREENS = [
+  "components/page/conversation",
   "components/page/character",
-  "components/page/conversation/chat-view",
   "components/page/token-usage",
   "components/page/achievement",
-  "components/domain/sidebar",
-  "components/page/conversation/dispatch",
 ] as const
 const BROWSER_PLACED_FEATURES = ["features/task-board"] as const
 
+type BrowserFeatureKind = "frame" | "screen" | "placed"
+
 type BrowserFeature = {
-  /** `browser/` からの相対パス（`BROWSER_REGIONS` / `BROWSER_PLACED_FEATURES` の1件）。 */
+  /** `browser/` からの相対パス（`BROWSER_FRAMES` / `BROWSER_SCREENS` / `BROWSER_PLACED_FEATURES` の1件）。 */
   readonly name: string
-  readonly kind: "region" | "placed"
+  readonly kind: BrowserFeatureKind
+}
+
+/** まとまりの種類ごとに、import してよい先の種類（2章「領域の機能と、置かれる機能」）。 */
+const ALLOWED_BROWSER_FEATURE_IMPORTS: Readonly<
+  Record<BrowserFeatureKind, ReadonlySet<BrowserFeatureKind>>
+> = {
+  frame: new Set(["placed"]),
+  screen: new Set(["frame", "placed"]),
+  placed: new Set(),
 }
 
 type BrowserFeatureViolation = {
@@ -464,7 +477,7 @@ type BrowserFeatureViolation = {
 }
 
 describe("browser/ の機能どうしの import", () => {
-  it("browser/features/<機能>/ どうしの import は「領域 → 置かれる機能」だけ", () => {
+  it("枠・画面・置かれる機能どうしの import は「枠・画面 → 置かれる機能」と「画面 → 枠」だけ", () => {
     const files = listSourceFiles(SRC_ROOT).filter((relPath) => relPath.startsWith("browser/"))
     expect(files.length).toBeGreaterThan(0)
 
@@ -475,7 +488,7 @@ describe("browser/ の機能どうしの import", () => {
 })
 
 // `src/browser/` の箱をまたぐ縦の辺（`docs/design.md` 2章「`src/browser/` の箱と、置く基準」の表そのもの）。
-// 上の `BROWSER_REGIONS` / `BROWSER_PLACED_FEATURES` の検査は `features/` の中の横の辺（機能どうし）を見るのに対し、こちらは
+// 上の `BROWSER_FRAMES` / `BROWSER_SCREENS` / `BROWSER_PLACED_FEATURES` の検査はまとまりどうしの横の辺を見るのに対し、こちらは
 // `main.tsx` / `features/` / `components/page/` / `components/domain/` / `components/ui/` /
 // `hooks/` / `domain/` / `lib/` / `utils/` / `stores/` という箱をまたぐ辺を見る
 // （`shared` への辺は層の検査 `ALLOWED_IMPORTS` がすでに見ているので、ここでは対象にしない）。
@@ -1096,7 +1109,7 @@ function browserBoxViolationsMessage(violations: readonly BrowserBoxViolation[])
     .join("\n")
 }
 
-/** ファイル1件の相対 import から、許した辺（領域 → 置かれる機能）に無いものを違反として返す。 */
+/** ファイル1件の相対 import から、許した辺（枠・画面 → 置かれる機能、画面 → 枠）に無いものを違反として返す。 */
 function findBrowserFeatureViolations(relPath: string): readonly BrowserFeatureViolation[] {
   const fromFeature = browserFeatureOf(relPath)
   if (fromFeature === undefined) {
@@ -1110,18 +1123,18 @@ function findBrowserFeatureViolations(relPath: string): readonly BrowserFeatureV
     if (toFeature === undefined || toFeature.name === fromFeature.name) {
       return []
     }
-    // 許すのは「領域 → 置かれる機能」だけ。領域どうしも、置かれる機能から出る辺も落とす。
-    const allowed = fromFeature.kind === "region" && toFeature.kind === "placed"
+    // 枠どうし・画面どうし・枠から画面・置かれる機能から出る辺は落とす。
+    const allowed = ALLOWED_BROWSER_FEATURE_IMPORTS[fromFeature.kind].has(toFeature.kind)
     return allowed ? [] : [{ fromPath: relPath, fromFeature, toPath, toFeature }]
   })
 }
 
 /**
- * `browser/` 相対パスから、領域か置かれる機能かを返す。`BROWSER_REGIONS` / `BROWSER_PLACED_FEATURES`
- * のどれかのパスの下にあれば一致した機能を返し、共有部分（`browser/lib/` など）は `undefined`。
- * **一覧に無いディレクトリが `features/` の直下・`components/domain/` の直下（サブディレクトリが
- * あるとき）・`components/page/` の下にあれば `throw`**（新しい機能・画面を足したら、
- * `BROWSER_REGIONS` か `BROWSER_PLACED_FEATURES` に足す）。
+ * `browser/` 相対パスから、枠・画面・置かれる機能のどれかを返す。`BROWSER_FRAMES` / `BROWSER_SCREENS` /
+ * `BROWSER_PLACED_FEATURES` のどれかのパスの下にあれば一致したものを返し、共有部分（`browser/lib/` など）は
+ * `undefined`。**一覧に無いディレクトリが `features/` の直下・`components/domain/` の直下（サブディレクトリが
+ * あるとき）・`components/page/` の下にあれば `throw`**（新しい枠・画面・機能を足したら、
+ * 3つの一覧のどれかに足す）。
  */
 function browserFeatureOf(relPath: string): BrowserFeature | undefined {
   if (!relPath.startsWith("browser/")) {
@@ -1129,9 +1142,13 @@ function browserFeatureOf(relPath: string): BrowserFeature | undefined {
   }
   const path = relPath.slice("browser/".length)
 
-  const region = BROWSER_REGIONS.find((p) => path === p || path.startsWith(`${p}/`))
-  if (region !== undefined) {
-    return { name: region, kind: "region" }
+  const frame = BROWSER_FRAMES.find((p) => path === p || path.startsWith(`${p}/`))
+  if (frame !== undefined) {
+    return { name: frame, kind: "frame" }
+  }
+  const screen = BROWSER_SCREENS.find((p) => path === p || path.startsWith(`${p}/`))
+  if (screen !== undefined) {
+    return { name: screen, kind: "screen" }
   }
   const placed = BROWSER_PLACED_FEATURES.find((p) => path === p || path.startsWith(`${p}/`))
   if (placed !== undefined) {
@@ -1146,7 +1163,7 @@ function browserFeatureOf(relPath: string): BrowserFeature | undefined {
     segments[0] === "components" && segments[1] === "page" && segments.length >= 3
   if (isUnlistedFeatureDir || isUnlistedComponentsDomainDir || isUnlistedComponentsPageDir) {
     throw new Error(
-      `src/${relPath} の機能の種類を判定できない（BROWSER_REGIONS か BROWSER_PLACED_FEATURES に足す）`,
+      `src/${relPath} の機能の種類を判定できない（BROWSER_FRAMES か BROWSER_SCREENS か BROWSER_PLACED_FEATURES に足す）`,
     )
   }
   return undefined

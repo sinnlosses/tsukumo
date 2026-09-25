@@ -207,7 +207,7 @@ export type SessionInfo =
  * - `idle`: まだ一度も依頼が無い
  * - `running`: 依頼を送って、まだ終わっていない
  * - `finished`: 終わった。**`startedAt` は次の `request` まで持ち続ける**
- *   （入力欄の経過時間表示 `src/browser/components/page/conversation/dispatch/turn-status.tsx` が「所要」として
+ *   （入力欄の経過時間表示 `src/browser/components/page/conversation/components/dispatch/turn-status.tsx` が「所要」として
  *   出し続ける。docs/design.md 4.2）。`ending` は失敗で終わったか（{@link TurnEnding}。
  *   入力欄の「失敗」の字と、立ち絵の「失敗でびくっ」の材料。`session-ended` で終わったときは
  *   `ended`）

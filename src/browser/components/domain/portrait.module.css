@@ -1,6 +1,6 @@
 /* 立ち絵1件の見た目（`<Portrait>`。src/browser/components/domain/portrait.tsx）。**どこに・どれだけの
    大きさで置くかは呼び出し側**が className で足す（キャラビューは
-   components/page/conversation/character-view/character-view.module.css、キャラクター画面の並びは
+   components/page/conversation/components/character-view/character-view.module.css、キャラクター画面の並びは
    components/page/character/character.module.css）。ここが持つのは「1枚の矩形」の
    中身の収め方と動きだけ。 */
 .portrait {

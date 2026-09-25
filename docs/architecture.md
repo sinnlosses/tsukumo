@@ -67,11 +67,11 @@ Claude Code を動かす）の核（セッション駆動・イベントの変�
 
 **拾うもの・捨てるもの・足すもの**（2026-09-11 の決定。「作り直し前提で始め、使えるものだけ拾う」）:
 
-| 扱い       | もの                                                                                                                                                                                                                                                            |
-| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **拾う**   | キャラクター定義（`src/shared/character.ts`）・表情と衣装の対応（`src/shared/expression.ts`）・レポートの Markdown 化（`src/browser/components/page/conversation/main-view/markdown/markdown.tsx`）・ページと配信（`src/server/view-server/adapter/server.ts`） |
-| **捨てる** | transcript の追従と乗り換え（`src/transcript.ts` / `src/transcript-target.ts`）・hook と状態ファイル（`hooks/state.sh` / `src/state.ts`）・Orca 経由の入力送信とキー送信（**2026-09-12 に撤去済み**）                                                           |
-| **足す**   | セッション駆動（SDK を起こし、イベントを内部の型に変える）・`speak` の MCP サーバ・入力と回答を受ける WebSocket                                                                                                                                                 |
+| 扱い       | もの                                                                                                                                                                                                                                                                       |
+| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **拾う**   | キャラクター定義（`src/shared/character.ts`）・表情と衣装の対応（`src/shared/expression.ts`）・レポートの Markdown 化（`src/browser/components/page/conversation/components/main-view/markdown/markdown.tsx`）・ページと配信（`src/server/view-server/adapter/server.ts`） |
+| **捨てる** | transcript の追従と乗り換え（`src/transcript.ts` / `src/transcript-target.ts`）・hook と状態ファイル（`hooks/state.sh` / `src/state.ts`）・Orca 経由の入力送信とキー送信（**2026-09-12 に撤去済み**）                                                                      |
+| **足す**   | セッション駆動（SDK を起こし、イベントを内部の型に変える）・`speak` の MCP サーバ・入力と回答を受ける WebSocket                                                                                                                                                            |
 
 ### 各ファイルの責務
 

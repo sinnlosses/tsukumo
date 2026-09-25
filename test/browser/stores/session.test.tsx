@@ -8,7 +8,7 @@ import { afterEach, describe, expect, it } from "bun:test"
 import { act, cleanup, render, screen } from "@testing-library/react"
 import { Profiler, type ReactElement } from "react"
 
-import { PendingAnswer } from "../../../src/browser/components/page/conversation/dispatch/pending-answer.tsx"
+import { PendingAnswer } from "../../../src/browser/components/page/conversation/components/dispatch/pending-answer.tsx"
 import {
   SessionStoreContext,
   useSessionSelector,

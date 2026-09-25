@@ -24,8 +24,8 @@ import { runSubprocess, type SubprocessResult } from "./fixture/subprocess.ts"
 //
 // 追従・状態ファイル・立ち絵のフォールバック・ビューの中身を端から端まで見ていたテストは、
 // この変更で対象そのものが無くなった。振る舞い自体は次のテストが守っている:
-//   - メインビュー・レポート・ツールの行・質問の記録（React の部品）: test/browser/components/page/conversation/main-view/**
-//   - Markdown の変換（unified）: test/browser/components/page/conversation/main-view/markdown/**
+//   - メインビュー・レポート・ツールの行・質問の記録（React の部品）: test/browser/components/page/conversation/components/main-view/**
+//   - Markdown の変換（unified）: test/browser/components/page/conversation/components/main-view/markdown/**
 //   - 配信（バインド先・経路・静的アセット・依頼の受け口）と WebSocket の経路
 //     （トークン・Origin・hello・コマンド）: test/server/view-server/adapter/server.test.ts
 //   - キャラクター定義の解釈と立ち絵の選び方: test/shared/character.test.ts

@@ -34,7 +34,7 @@ export type PortraitProps = {
   readonly expression: Expression
   readonly outfit: Outfit
   /**
-   * いまの動き。決めるのは呼び出し側（`components/page/conversation/character-view/hooks/use-character-view.ts` の
+   * いまの動き。決めるのは呼び出し側（`components/page/conversation/components/character-view/hooks/use-character-view.ts` の
    * `resolvePortraitMotion`）。**動かさない置き方もある**ので `undefined` を許す
    * （キャラクター画面の立ち絵の並び。13.6）。そのときは `data-motion` が付かず、
    * `character.css` の動きの規則はどれも当たらない。
