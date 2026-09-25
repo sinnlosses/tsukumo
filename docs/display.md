@@ -361,6 +361,13 @@ CSS の3つを揃える**（レンダラを直したのに規約が古いまま�
   だったので、**ファイルを指すときだけ `<a>` を離れてボタンにし、指さないときは押しても何も
   起きない素のテキストにする**）。押す部品・依頼・サーバ側の検証は `docs/design.md` 4.3
   「ブラウザ → サーバのコマンド」と `src/browser/components/page/conversation/main-view/markdown/repository-link.tsx`
+- **色を指す inline code は、その色を地にして出す。** 中身の文字全体が1つのカラーコード
+  （`#bca0ec` など。3・4・6・8桁）か、ページの色のトークン名（`ink-quiet` / `--ink-quiet` /
+  `var(--ink-quiet)`）のときだけで、文中に色が混ざったものとフェンスの中は変えない。字は地の
+  明るさで `ink` と `ground` を持ち替える。「`ink-quiet`（灰）」のように言葉で色を言い添えなくても、
+  読み手が色を見て分かるようにするため。トークンの判定は、ページで実際にその名前の色が解決できるか
+  で決める（色の一覧をコードに持たない）。実装は
+  `src/browser/components/page/conversation/main-view/markdown/color-swatch.ts`
 - **使う外部ライブラリ**: コードの色付け（highlight.js）・図（mermaid のコードブロック）・
   グラフ（Chart.js のコードブロック）に使う。**どれも残す**（2026-09-11）。
   **どれも `package.json` の依存**で（2026-09-20 決定）、**CDN からは読まず `node_modules` の

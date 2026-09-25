@@ -369,6 +369,18 @@
   padding: 0 0.25rem;
   border-radius: 0.25rem;
 }
+/* 色を指す inline code（カラーコード・色のトークン名）。地はその色そのもの（`markdown.tsx` の
+   `Code` が style で差す）で、字は地の明るさで ink と ground を持ち替える。枠を足すのは、
+   地と同じ色の塊（`surface` など）が書かれたときにも形が消えないようにするため。 */
+.detail-block :not(pre) > code.report-color {
+  outline: 1px solid var(--rule);
+}
+.detail-block .report-color-ink-light {
+  color: var(--ink);
+}
+.detail-block .report-color-ink-dark {
+  color: var(--ground);
+}
 /* mermaid の構文エラー（MermaidBlock）。元のコードは通常のコードブロックと同じ見た目
    （`.detail-block pre` に乗る）のまま残し、その下にエラー文を添える。**新しい色は作らない**
    （state-ng は表の report-badge-ng / report-note-ng と同じ「問題」の色。13.1 原則5）。 */

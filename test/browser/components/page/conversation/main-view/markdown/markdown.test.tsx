@@ -560,3 +560,26 @@ describe("Markdown（レポートのパスを押して Orca のエディタで�
     expect(container.querySelector("button")).toBeNull()
   })
 })
+
+describe("Markdown（色を指す inline code をその色の地で見せる）", () => {
+  it("カラーコードだけの inline code は、その色が地になり、明るい地には暗い字が載る", () => {
+    const { container } = render(<Markdown text="色は `#bca0ec`。" />)
+
+    const code = container.querySelector("code")
+    expect(code?.style.background).toBe("#bca0ec")
+    expect(code?.className).toContain("report-color-ink-dark")
+  })
+
+  it("暗いカラーコードには明るい字が載る", () => {
+    const { container } = render(<Markdown text="`#191720`" />)
+
+    expect(container.querySelector("code")?.className).toContain("report-color-ink-light")
+  })
+
+  it("文中に色が混ざった inline code と、フェンスの中のカラーコードは地にしない", () => {
+    const { container } = render(<Markdown text={"`color: #fff`\n\n```\n#bca0ec\n```"} />)
+
+    const styles = [...container.querySelectorAll("code")].map((code) => code.getAttribute("style"))
+    expect(styles).toEqual([null, null])
+  })
+})

@@ -48,6 +48,7 @@ import remarkGfm from "remark-gfm"
 import { optionalString } from "../../../../../../shared/utils/optional-string.ts"
 import { ChartBlock } from "./chart-block.tsx"
 import { CODE_FILE_NAME_PROPERTY, rehypeCodeFileName } from "./code-file-name.ts"
+import { colorSwatch, readColorToken } from "./color-swatch.ts"
 import { MermaidBlock } from "./mermaid-block.tsx"
 import { NotationBlock, NotationInline } from "./notation.tsx"
 import styles from "./report-notation.module.css"
@@ -244,16 +245,39 @@ type CodeProps = JSX.IntrinsicElements["code"] & ExtraProps
  * 一覧にあるパスなら、押せるボタンで包む**（人格の規約が `file_path:line_number` の形で書く
  * inline code）。フェンスの中の複数行のコードは1つのパスと一致しないので、そのまま
  * `<code>` になる（色付け・言語の `className` は変えない）。
+ *
+ * **中身の文字が1つの色（カラーコードか色のトークン名）なら、その色を地にする**
+ * （{@link colorSwatch}）。「`ink-quiet`（灰）」のように言葉で色を言い添えなくても見て分かる。
  */
 function Code(props: CodeProps): ReactElement {
-  const { node, children, ...rest } = props
+  const { node, children, className, ...rest } = props
   const link = useRepositoryFileLink()
-  const path = node === undefined ? undefined : repositoryFilePath(hastText(node), link.files)
+  const text = node === undefined ? "" : hastText(node)
+  const path = node === undefined ? undefined : repositoryFilePath(text, link.files)
 
-  const code = <code {...rest}>{children as ReactNode}</code>
   if (path === undefined) {
-    return code
+    const swatch = node === undefined ? undefined : colorSwatch(text, readColorToken)
+    return swatch === undefined ? (
+      <code className={className} {...rest}>
+        {children as ReactNode}
+      </code>
+    ) : (
+      <code
+        {...rest}
+        className={[className, styles["report-color"], styles[`report-color-ink-${swatch.ink}`]]
+          .filter((name) => name !== undefined)
+          .join(" ")}
+        style={{ background: swatch.background }}
+      >
+        {children as ReactNode}
+      </code>
+    )
   }
+  const code = (
+    <code className={className} {...rest}>
+      {children as ReactNode}
+    </code>
+  )
   return (
     <button
       type="button"

@@ -423,6 +423,46 @@
                           {
                             "tag": "p",
                             "children": [
+                              "色の見本:",
+                              {
+                                "tag": "code",
+                                "children": [
+                                  "#bca0ec"
+                                ]
+                              },
+                              "/",
+                              {
+                                "tag": "code",
+                                "children": [
+                                  "#191720"
+                                ]
+                              },
+                              "/",
+                              {
+                                "tag": "code",
+                                "children": [
+                                  "state-memo"
+                                ]
+                              },
+                              "/",
+                              {
+                                "tag": "code",
+                                "children": [
+                                  "--ink-quiet"
+                                ]
+                              },
+                              "/",
+                              {
+                                "tag": "code",
+                                "children": [
+                                  "accent"
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "tag": "p",
+                            "children": [
                               "OK",
                               "要注意",
                               "NG"
