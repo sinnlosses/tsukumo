@@ -8,6 +8,7 @@
 （会話での発言をそのまま書いたもの。T-616 になり、T-606 を T-616 のあとに並べた。`index.tsx` は barrel file の禁止に当たるので作らないことにした）
 
 - 「ちなみに、select.tsx、select.module.css、image-zoom.tsx、image-zoom.modules.css と並んでいると見づらいから、ディレクトリを切って(ui/select/のような)管理できると嬉しい。中にindex.tsxを作ってもいいよ。」
+- 「T-616をやってから、それに合うように他のタスクをやったほうがいいかもね。規約にするといいかも。」（T-616 の完了条件に、置き方の検査と `docs/coding-standards.md` の1条を足した）
 
 ## 2026-09-25 語彙を持たない部品を variant で共通化する
 
