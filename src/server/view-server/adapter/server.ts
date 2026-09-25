@@ -239,83 +239,154 @@ export function startViewServer(port: number, options: ViewServerOptions): Promi
   })
 }
 
+/** 経路の一致のさせ方。完全一致（`exact`）か、接頭辞での一致（`prefix`）。 */
+type RouteMatch =
+  | { readonly kind: "exact"; readonly path: string }
+  | { readonly kind: "prefix"; readonly prefix: string }
+
+/** 1経路ぶんの受け手。接頭辞を剥がす・クエリを読むといった経路固有の下ごしらえもここで行う。 */
+type ViewRouteHandler = (
+  request: IncomingMessage,
+  response: ServerResponse,
+  path: string,
+  options: ViewServerOptions,
+) => void
+
+/**
+ * 経路の表の1行。`respond` はこの表を上から探すだけで、経路名・メソッド・トークン照合の要否は
+ * ここに集める（docs/design.md「コマンドの受け手と手続きの置き方」と同じ狙いを HTTP 側に適用した
+ * もの。`docs/research/hono-server.md`「入れずに済ませる中間案」）。
+ */
+type ViewRoute = {
+  readonly match: RouteMatch
+  /** `"ANY"` は、いまの実装でメソッドを見ていない経路（`LAYOUT_PATH` だけ）のためだけにある。 */
+  readonly method: "GET" | "ANY"
+  readonly requiresToken: boolean
+  readonly handle: ViewRouteHandler
+}
+
+const ROUTES = [
+  {
+    match: { kind: "exact", path: LAYOUT_PATH },
+    method: "ANY",
+    requiresToken: false,
+    handle: (_request, response) => writeHtml(response, buildLayoutPage()),
+  },
+  {
+    match: { kind: "exact", path: uiScriptPath() },
+    method: "GET",
+    requiresToken: false,
+    handle: (_request, response, _path, options) => {
+      // 組み立てたブラウザ側スクリプト（`src/browser/`）。**ディスクには無い**ので、vendor と違って
+      // ファイルを読みに行かない。
+      response.writeHead(200, {
+        "content-type": "text/javascript; charset=utf-8",
+        "cache-control": "no-store",
+      })
+      response.end(options.assets.uiScript())
+    },
+  },
+  {
+    match: { kind: "exact", path: styleSheetPath() },
+    method: "GET",
+    requiresToken: false,
+    handle: (_request, response, _path, options) => {
+      response.writeHead(200, {
+        "content-type": "text/css; charset=utf-8",
+        "cache-control": "no-store",
+      })
+      response.end(options.assets.styleSheet())
+    },
+  },
+  {
+    match: { kind: "prefix", prefix: VENDOR_PATH_PREFIX },
+    method: "GET",
+    requiresToken: false,
+    handle: (_request, response, path) =>
+      writeVendorAsset(response, path.slice(VENDOR_PATH_PREFIX.length)),
+  },
+  {
+    match: { kind: "prefix", prefix: CHARACTER_ASSET_PATH_PREFIX },
+    method: "GET",
+    requiresToken: false,
+    handle: (_request, response, path, options) =>
+      writeCharacterAsset(
+        response,
+        path.slice(CHARACTER_ASSET_PATH_PREFIX.length),
+        options.serveCharacterAsset,
+      ),
+  },
+  {
+    match: { kind: "exact", path: REPOSITORY_FILE_PATH },
+    method: "GET",
+    requiresToken: true,
+    handle: (_request, response, _path, options) => writeRepositoryFileList(response, options),
+  },
+  {
+    match: { kind: "exact", path: TOKEN_USAGE_SUMMARY_PATH },
+    method: "GET",
+    requiresToken: true,
+    handle: (request, response, _path, options) =>
+      writeTokenUsageSummary(request, response, options),
+  },
+  {
+    match: { kind: "exact", path: CONTEXT_USAGE_PATH },
+    method: "GET",
+    requiresToken: true,
+    handle: (_request, response, _path, options) => writeContextUsage(response, options),
+  },
+  {
+    match: { kind: "prefix", prefix: PROMPT_IMAGE_PATH_PREFIX },
+    method: "GET",
+    requiresToken: true,
+    handle: (_request, response, path, options) =>
+      writePromptImage(response, path.slice(PROMPT_IMAGE_PATH_PREFIX.length), options),
+  },
+  {
+    match: { kind: "exact", path: ACHIEVEMENT_PATH },
+    method: "GET",
+    requiresToken: true,
+    handle: (request, response, _path, options) => writeAchievement(request, response, options),
+  },
+  {
+    match: { kind: "exact", path: ACHIEVEMENT_CALENDAR_PATH },
+    method: "GET",
+    requiresToken: true,
+    handle: (_request, response, _path, options) => writeAchievementCalendar(response, options),
+  },
+] as const satisfies readonly ViewRoute[]
+
+function matchesRoute(match: RouteMatch, path: string): boolean {
+  return match.kind === "exact" ? path === match.path : path.startsWith(match.prefix)
+}
+
+function findRoute(path: string, method: string | undefined): ViewRoute | undefined {
+  return ROUTES.find(
+    (route) =>
+      matchesRoute(route.match, path) && (route.method === "ANY" || route.method === method),
+  )
+}
+
 function respond(
   request: IncomingMessage,
   path: string,
   response: ServerResponse,
   options: ViewServerOptions,
 ): void {
-  if (path === LAYOUT_PATH) {
-    writeHtml(response, buildLayoutPage())
+  const route = findRoute(path, request.method)
+  if (route === undefined) {
+    response.writeHead(404, { "content-type": "text/plain; charset=utf-8" })
+    response.end("not found\n")
     return
   }
 
-  if (path === uiScriptPath() && request.method === "GET") {
-    // 組み立てたブラウザ側スクリプト（`src/browser/`）。**ディスクには無い**ので、vendor と違って
-    // ファイルを読みに行かない。
-    response.writeHead(200, {
-      "content-type": "text/javascript; charset=utf-8",
-      "cache-control": "no-store",
-    })
-    response.end(options.assets.uiScript())
+  if (route.requiresToken && !hasStartupToken(request, options.token)) {
+    response.writeHead(403, { "content-type": "text/plain; charset=utf-8" })
+    response.end("forbidden\n")
     return
   }
 
-  if (path === styleSheetPath() && request.method === "GET") {
-    response.writeHead(200, {
-      "content-type": "text/css; charset=utf-8",
-      "cache-control": "no-store",
-    })
-    response.end(options.assets.styleSheet())
-    return
-  }
-
-  if (path.startsWith(VENDOR_PATH_PREFIX) && request.method === "GET") {
-    writeVendorAsset(response, path.slice(VENDOR_PATH_PREFIX.length))
-    return
-  }
-
-  if (path.startsWith(CHARACTER_ASSET_PATH_PREFIX) && request.method === "GET") {
-    writeCharacterAsset(
-      response,
-      path.slice(CHARACTER_ASSET_PATH_PREFIX.length),
-      options.serveCharacterAsset,
-    )
-    return
-  }
-
-  if (path === REPOSITORY_FILE_PATH && request.method === "GET") {
-    writeRepositoryFileList(request, response, options)
-    return
-  }
-
-  if (path === TOKEN_USAGE_SUMMARY_PATH && request.method === "GET") {
-    writeTokenUsageSummary(request, response, options)
-    return
-  }
-
-  if (path === CONTEXT_USAGE_PATH && request.method === "GET") {
-    writeContextUsage(request, response, options)
-    return
-  }
-
-  if (path.startsWith(PROMPT_IMAGE_PATH_PREFIX) && request.method === "GET") {
-    writePromptImage(request, response, path.slice(PROMPT_IMAGE_PATH_PREFIX.length), options)
-    return
-  }
-
-  if (path === ACHIEVEMENT_PATH && request.method === "GET") {
-    writeAchievement(request, response, options)
-    return
-  }
-
-  if (path === ACHIEVEMENT_CALENDAR_PATH && request.method === "GET") {
-    writeAchievementCalendar(request, response, options)
-    return
-  }
-
-  response.writeHead(404, { "content-type": "text/plain; charset=utf-8" })
-  response.end("not found\n")
+  route.handle(request, response, path, options)
 }
 
 /**
@@ -383,21 +454,11 @@ function writeCharacterAsset(
 }
 
 /**
- * 入力欄の `@` 補完が引くファイルのパスを JSON の並びで配る。**起動トークンが合わなければ
- * 403**（理由は返さない。`/ws` と同じ）。一覧を作れなかった回は空の並びを配る
+ * 入力欄の `@` 補完が引くファイルのパスを JSON の並びで配る。**起動トークンの照合は
+ * `respond`（経路の表の `requiresToken`）が済ませている。** 一覧を作れなかった回は空の並びを配る
  * （候補が出ないだけで、配信は続く）。
  */
-function writeRepositoryFileList(
-  request: IncomingMessage,
-  response: ServerResponse,
-  options: ViewServerOptions,
-): void {
-  if (!hasStartupToken(request, options.token)) {
-    response.writeHead(403, { "content-type": "text/plain; charset=utf-8" })
-    response.end("forbidden\n")
-    return
-  }
-
+function writeRepositoryFileList(response: ServerResponse, options: ViewServerOptions): void {
   options.listRepositoryFiles().then(
     (files) => writeJson(response, files),
     () => writeJson(response, []),
@@ -405,9 +466,9 @@ function writeRepositoryFileList(
 }
 
 /**
- * トークン消費の集計を JSON で配る。**起動トークンが合わなければ 403**（`/repository-file` と
- * 同じ。配るのは利用者が何にいくら使ったかで、誰にでも配ってよい静的な物ではない）。
- * 期間は `?days=` で、**選べない値のときは既定に落とす**（読み取りは shared の
+ * トークン消費の集計を JSON で配る。**起動トークンの照合は `respond` が済ませている**
+ * （`/repository-file` と同じ。配るのは利用者が何にいくら使ったかで、誰にでも配ってよい静的な
+ * 物ではない）。期間は `?days=` で、**選べない値のときは既定に落とす**（読み取りは shared の
  * `readTokenUsageDays`）。**配る中身に文面は入らない**（記録の1行にそもそも口が無い）。
  */
 function writeTokenUsageSummary(
@@ -415,33 +476,17 @@ function writeTokenUsageSummary(
   response: ServerResponse,
   options: ViewServerOptions,
 ): void {
-  if (!hasStartupToken(request, options.token)) {
-    response.writeHead(403, { "content-type": "text/plain; charset=utf-8" })
-    response.end("forbidden\n")
-    return
-  }
-
   const days = readTokenUsageDays(queryValue(request, TOKEN_USAGE_DAYS_QUERY_NAME))
   writeJson(response, options.readTokenUsageSummary(days))
 }
 
 /**
- * いまのコンテキストの内訳を JSON で配る。**起動トークンが合わなければ 403**（`/token-usage` と
- * 同じ）。**駆動へ問い合わせる経路なので応答を待つ**が、取れなかった回は「取れない」をそのまま
- * 配る（画面は一言だけ出す）。**配る中身に会話の文面は入らない** — メッセージは分類1行の数
- * としてだけ出る（`src/shared/context-usage.ts`）。
+ * いまのコンテキストの内訳を JSON で配る。**起動トークンの照合は `respond` が済ませている**
+ * （`/token-usage` と同じ）。**駆動へ問い合わせる経路なので応答を待つ**が、取れなかった回は
+ * 「取れない」をそのまま配る（画面は一言だけ出す）。**配る中身に会話の文面は入らない** —
+ * メッセージは分類1行の数としてだけ出る（`src/shared/context-usage.ts`）。
  */
-function writeContextUsage(
-  request: IncomingMessage,
-  response: ServerResponse,
-  options: ViewServerOptions,
-): void {
-  if (!hasStartupToken(request, options.token)) {
-    response.writeHead(403, { "content-type": "text/plain; charset=utf-8" })
-    response.end("forbidden\n")
-    return
-  }
-
+function writeContextUsage(response: ServerResponse, options: ViewServerOptions): void {
   options.readContextUsage().then(
     (report) => writeJson(response, report),
     () => writeJson(response, UNAVAILABLE_CONTEXT_USAGE),
@@ -449,9 +494,9 @@ function writeContextUsage(
 }
 
 /**
- * 依頼に添えた画像の原寸を1枚配る。**起動トークンが合わなければ 403**（配るのは会話の内容）。
- * id の形が違う・棚に無い（記録の窓から落ちた・枚数の上限で押し出された）ときは 404 で、
- * どちらかは区別しない（ブラウザは 404 を受けてから控えに倒す。
+ * 依頼に添えた画像の原寸を1枚配る。**起動トークンの照合は `respond` が済ませている**
+ * （配るのは会話の内容）。id の形が違う・棚に無い（記録の窓から落ちた・枚数の上限で押し出された）
+ * ときは 404 で、どちらかは区別しない（ブラウザは 404 を受けてから控えに倒す。
  * `src/browser/components/domain/prompt-image.tsx`）。
  *
  * **data URL はここでデコードする**（棚は受け取った data URL のまま持つ）。`Content-Type` は
@@ -459,17 +504,10 @@ function writeContextUsage(
  * キャッシュにも残さない（`no-store`）。
  */
 function writePromptImage(
-  request: IncomingMessage,
   response: ServerResponse,
   rawId: string,
   options: ViewServerOptions,
 ): void {
-  if (!hasStartupToken(request, options.token)) {
-    response.writeHead(403, { "content-type": "text/plain; charset=utf-8" })
-    response.end("forbidden\n")
-    return
-  }
-
   const id = promptImageIdSchema.safeParse(rawId)
   const dataUrl = id.success ? options.findPromptImage(id.data) : undefined
   const image = dataUrl === undefined ? undefined : parsePromptImage(dataUrl)
@@ -484,8 +522,8 @@ function writePromptImage(
 }
 
 /**
- * 成果を1日ぶん JSON で配る。**起動トークンが合わなければ 403**（`/token-usage` と同じ。
- * 配るのは利用者のタスクの要約）。`date` は生の文字列のまま渡す（検証は配線層。
+ * 成果を1日ぶん JSON で配る。**起動トークンの照合は `respond` が済ませている**（`/token-usage` と
+ * 同じ。配るのは利用者のタスクの要約）。`date` は生の文字列のまま渡す（検証は配線層。
  * {@link ReadAchievement}）。**`git` のタイムアウト・失敗は 503**（部分的な数を出さない）——
  * `main` が読めないだけなら 200 で `{ kind: "unknown" }` を返す
  * （`src/server/achievement/adapter/main-history.ts` の `ReadAchievementResult`）。
@@ -495,12 +533,6 @@ function writeAchievement(
   response: ServerResponse,
   options: ViewServerOptions,
 ): void {
-  if (!hasStartupToken(request, options.token)) {
-    response.writeHead(403, { "content-type": "text/plain; charset=utf-8" })
-    response.end("forbidden\n")
-    return
-  }
-
   options.readAchievement(queryValue(request, ACHIEVEMENT_DATE_QUERY_NAME)).then(
     (result) => {
       if (result.kind === "unavailable") {
@@ -514,22 +546,12 @@ function writeAchievement(
 }
 
 /**
- * 灯りの暦（直近5週ぶん）を JSON で配る。**起動トークンが合わなければ 403**（`/achievement` と
- * 同じ）。**`git` のタイムアウト・失敗は 503**（部分的な数を出さない）——`main` が読めないだけ
- * なら 200 で `{ kind: "unknown" }` を返す（`src/server/achievement/adapter/main-history.ts` の
- * `ReadCommitCalendarResult`）。
+ * 灯りの暦（直近5週ぶん）を JSON で配る。**起動トークンの照合は `respond` が済ませている**
+ * （`/achievement` と同じ）。**`git` のタイムアウト・失敗は 503**（部分的な数を出さない）——
+ * `main` が読めないだけなら 200 で `{ kind: "unknown" }` を返す
+ * （`src/server/achievement/adapter/main-history.ts` の `ReadCommitCalendarResult`）。
  */
-function writeAchievementCalendar(
-  request: IncomingMessage,
-  response: ServerResponse,
-  options: ViewServerOptions,
-): void {
-  if (!hasStartupToken(request, options.token)) {
-    response.writeHead(403, { "content-type": "text/plain; charset=utf-8" })
-    response.end("forbidden\n")
-    return
-  }
-
+function writeAchievementCalendar(response: ServerResponse, options: ViewServerOptions): void {
   options.readAchievementCalendar().then(
     (result) => {
       if (result.kind === "unavailable") {
