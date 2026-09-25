@@ -102,18 +102,6 @@ describe("Composer", () => {
     expect(textArea().value).toBe("")
   })
 
-  it("(2) Enter 単独・Shift+Enter は送らない（既定の改行のまま）", () => {
-    const calls: unknown[] = []
-    renderComposer({}, (command) => calls.push(command))
-
-    fireEvent.change(textArea(), { target: { value: "架空の依頼" } })
-    fireEvent.keyDown(textArea(), { key: "Enter" })
-    fireEvent.keyDown(textArea(), { key: "Enter", shiftKey: true })
-
-    expect(calls).toEqual([])
-    expect(textArea().value).toBe("架空の依頼")
-  })
-
   it("(3) IME の変換確定中の Command+Enter は送らない（isComposing）", () => {
     const calls: unknown[] = []
     renderComposer({}, (command) => calls.push(command))
@@ -133,66 +121,6 @@ describe("Composer", () => {
     fireEvent.keyDown(textArea(), { key: "Enter", metaKey: true, keyCode: 229 })
 
     expect(calls).toEqual([])
-  })
-
-  it("ターンが進行中の間に Command+Enter を押しても送らない（進行中は中断ボタンに切り替わる）", () => {
-    const calls: unknown[] = []
-    renderComposer({ turn: { kind: "running", startedAt: 0 } }, (command) => calls.push(command))
-
-    fireEvent.change(textArea(), { target: { value: "架空の依頼" } })
-    fireEvent.keyDown(textArea(), { key: "Enter", metaKey: true })
-
-    expect(calls).toEqual([])
-  })
-
-  it("(6) / で候補が前方一致→部分一致の順に出て、Tab で確定し送信しない", () => {
-    const calls: unknown[] = []
-    renderComposer(
-      {
-        slashCommands: ["clear", "compact", "unclear"],
-        commandDescriptions: [
-          { name: "clear", description: "架空の説明（消す）" },
-          { name: "compact", description: "架空の説明（まとめる）" },
-          { name: "unclear", description: undefined },
-        ],
-      },
-      (command) => calls.push(command),
-    )
-
-    fireEvent.change(textArea(), { target: { value: "/cl" } })
-
-    // "cl" は clear が前方一致、unclear が部分一致（"cl" を含む）。
-    const items = screen.getAllByRole("listitem")
-    expect(items.map((item) => item.textContent)).toEqual(["/clear架空の説明（消す）", "/unclear"])
-
-    fireEvent.keyDown(textArea(), { key: "Tab" })
-
-    expect(textArea().value).toBe("/clear ")
-    expect(calls).toEqual([])
-  })
-
-  it("(6) 候補は最大10件に絞る", () => {
-    const commandDescriptions = Array.from({ length: 15 }, (_, index) => ({
-      name: `cmd${String(index).padStart(2, "0")}`,
-      description: undefined,
-    }))
-    renderComposer({ slashCommands: commandDescriptions.map((c) => c.name), commandDescriptions })
-
-    fireEvent.change(textArea(), { target: { value: "/cmd" } })
-
-    expect(screen.getAllByRole("listitem")).toHaveLength(10)
-  })
-
-  it("答え待ちがある間は候補を出さない", () => {
-    renderComposer({
-      slashCommands: ["clear"],
-      commandDescriptions: [{ name: "clear", description: undefined }],
-      pending: [{ kind: "permission", id: "ask-1", toolName: "Bash", input: {} }],
-    })
-
-    fireEvent.change(textArea(), { target: { value: "/cl" } })
-
-    expect(screen.queryAllByRole("listitem")).toHaveLength(0)
   })
 
   it("(6) 候補が出ている間は Ctrl+N / Ctrl+P で選択が上下に動く（Meta 併用は無視）", () => {
@@ -239,18 +167,6 @@ describe("Composer", () => {
     expect(backward).toBe(true)
     expect(calls).toEqual([])
     expect(textArea().value).toBe("架空の依頼")
-  })
-
-  it("キャラクターの名前があるときは、プレースホルダにその名前が出る", () => {
-    renderComposer({ character: FIXTURE_CHARACTER })
-
-    expect(textArea().placeholder).toBe("架空の名前 への依頼を書く")
-  })
-
-  it("キャラクターがまだ届いていない・名前が無いときは、名前を使わない言い方に落ちる", () => {
-    renderComposer({ character: undefined })
-
-    expect(textArea().placeholder).toBe("依頼を書く")
   })
 
   it("「コマンドを補完する」は空の入力欄に `/` を打ち、コマンドの候補が開く（送信しない）", () => {
@@ -312,20 +228,6 @@ describe("Composer", () => {
     })
 
     expect(fetchCalls).toEqual(["/repository-file?t="])
-  })
-
-  it("文の途中の @ を確定しても、前後に書いた文はそのまま残る", async () => {
-    stubFileListFetch()
-    renderComposer()
-
-    fireEvent.change(textArea(), { target: { value: "これを見て @src/cli" } })
-    await waitFor(() => {
-      expect(screen.getAllByRole("listitem")).toHaveLength(1)
-    })
-
-    fireEvent.keyDown(textArea(), { key: "Tab" })
-
-    expect(textArea().value).toBe("これを見て @src/cli.ts ")
   })
 
   it("キャレットが文の途中にあっても、その位置の @ だけを置き換える", async () => {

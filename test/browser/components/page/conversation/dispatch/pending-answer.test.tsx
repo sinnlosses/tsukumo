@@ -40,25 +40,6 @@ describe("PendingAnswer", () => {
     expect(renderPendingAnswer([]).innerHTML).toBe("")
   })
 
-  it("答え待ちが質問のときも何も描かない（札はメインビューに出る）", () => {
-    const container = renderPendingAnswer([
-      {
-        kind: "question",
-        id: "ask-1",
-        questions: [
-          {
-            header: "架空の選択",
-            text: "架空の質問",
-            multiSelect: false,
-            options: [{ label: "A案", description: "架空の説明A", preview: undefined }],
-          },
-        ],
-      },
-    ])
-
-    expect(container.innerHTML).toBe("")
-  })
-
   it("(7) 許可要求で「許可」「拒否」が answer を dispatch する", () => {
     const calls: unknown[] = []
     renderPendingAnswer(

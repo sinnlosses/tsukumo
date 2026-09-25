@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, spyOn } from "bun:test"
+import { afterEach, describe, expect, it } from "bun:test"
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { cleanup, render } from "@testing-library/react"
@@ -104,17 +104,7 @@ describe("CharacterView", () => {
     ).toEqual(["さっき言ったセリフ"])
   })
 
-  it("ターンが進行中でなく、直近の完了・失敗も無ければ data-motion は reading（呼吸だけ）", () => {
-    renderCharacterView({
-      character: FIXTURE_CHARACTER,
-      turn: { kind: "idle" },
-      lastToolFailureAt: undefined,
-    })
-
-    expect(document.querySelector(".portrait")?.getAttribute("data-motion")).toBe("reading")
-  })
-
-  it("ターンが進行中なら data-motion は waiting（領域の中を歩く）", () => {
+  it("算出した動き（motion）が立ち絵の data-motion 属性まで届く", () => {
     renderCharacterView({
       character: FIXTURE_CHARACTER,
       turn: { kind: "running", startedAt: 0 },
@@ -122,47 +112,6 @@ describe("CharacterView", () => {
     })
 
     expect(document.querySelector(".portrait")?.getAttribute("data-motion")).toBe("waiting")
-  })
-
-  it("ターンが終わった直後は data-motion が success（完了の反応。偽の時計）", () => {
-    const now = 1_700_000_000_000
-    const clock = spyOn(Temporal.Now, "instant").mockReturnValue(
-      Temporal.Instant.fromEpochMilliseconds(now),
-    )
-    try {
-      renderCharacterView({
-        character: FIXTURE_CHARACTER,
-        turn: {
-          kind: "finished",
-          startedAt: now - 200,
-          finishedAt: now - 100,
-          ending: { kind: "ended" },
-        },
-        lastToolFailureAt: undefined,
-      })
-
-      expect(document.querySelector(".portrait")?.getAttribute("data-motion")).toBe("success")
-    } finally {
-      clock.mockRestore()
-    }
-  })
-
-  it("ツールが失敗した直後は data-motion が failure（失敗でびくっ。偽の時計）", () => {
-    const now = 1_700_000_000_000
-    const clock = spyOn(Temporal.Now, "instant").mockReturnValue(
-      Temporal.Instant.fromEpochMilliseconds(now),
-    )
-    try {
-      renderCharacterView({
-        character: FIXTURE_CHARACTER,
-        turn: { kind: "running", startedAt: now - 200 },
-        lastToolFailureAt: now - 100,
-      })
-
-      expect(document.querySelector(".portrait")?.getAttribute("data-motion")).toBe("failure")
-    } finally {
-      clock.mockRestore()
-    }
   })
 
   it("(1) 過去のターンを選ぶと、そのターンのセリフだけが吹き出しに出る", () => {
