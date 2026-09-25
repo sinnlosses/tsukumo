@@ -4,24 +4,24 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { act, cleanup, renderHook, waitFor } from "@testing-library/react"
 import { type ReactElement, type ReactNode } from "react"
 
-import { useTokenUsage } from "../../../../../src/browser/components/page/token-usage/hooks/use-token-usage.ts"
+import { useTokenUsage } from "../../../../../../src/browser/components/page/token-usage/hooks/use-token-usage.ts"
 import {
   SessionStoreContext,
   type SessionStore,
-} from "../../../../../src/browser/stores/session.tsx"
-import { INITIAL_SESSION_STATE } from "../../../../../src/shared/session-state.ts"
-import { DEFAULT_TOKEN_USAGE_DAYS } from "../../../../../src/shared/token-usage-summary.ts"
+} from "../../../../../../src/browser/stores/session.tsx"
+import { INITIAL_SESSION_STATE } from "../../../../../../src/shared/session-state.ts"
+import { DEFAULT_TOKEN_USAGE_DAYS } from "../../../../../../src/shared/token-usage-summary.ts"
 import {
   rpcError,
   rpcOutput,
   stubRpcFetch,
   type RpcFetchStub,
   type RpcStubReply,
-} from "../../../rpc-fetch-stub.ts"
-import { sessionStoreWith } from "../../../session-store.ts"
+} from "../../../../rpc-fetch-stub.ts"
+import { sessionStoreWith } from "../../../../session-store.ts"
 
 /**
- * 画面（`token-usage-screen.tsx`）を丸ごと描かずに、期間の選択と取得の畳み方だけを測る
+ * 画面（`token-usage.tsx`）を丸ごと描かずに、期間の選択と取得の畳み方だけを測る
  * （docs/design.md 2章「機能の中を分ける」）。フィクスチャはすべて手で書いた架空の集計
  * （`docs/coding-standards.md`「会話内容の扱い」— 集計に文面は入らないが、実物は使わない）。
  */

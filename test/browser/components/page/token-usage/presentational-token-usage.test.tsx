@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it } from "bun:test"
 import { cleanup, fireEvent, render } from "@testing-library/react"
 
 import { type UseUsageReviewResult } from "../../../../../src/browser/components/page/token-usage/hooks/use-usage-review.ts"
-import { PresentationalTokenUsageScreen } from "../../../../../src/browser/components/page/token-usage/presentational-token-usage-screen.tsx"
+import { PresentationalTokenUsage } from "../../../../../src/browser/components/page/token-usage/presentational-token-usage.tsx"
 import {
   EMPTY_TOKEN_USAGE_SUMMARY,
   type ModelUsageTotal,
@@ -98,7 +98,7 @@ const FIXTURE_USAGE_REVIEW: UseUsageReviewResult = {
 function renderScreen(options: Partial<RenderOptions> = {}): ReturnType<typeof render> {
   const merged = { ...DEFAULT_OPTIONS, ...options }
   return render(
-    <PresentationalTokenUsageScreen
+    <PresentationalTokenUsage
       days={merged.days}
       onDaysChange={merged.onDaysChange}
       summary={merged.summary}
@@ -111,7 +111,7 @@ function renderScreen(options: Partial<RenderOptions> = {}): ReturnType<typeof r
   )
 }
 
-describe("PresentationalTokenUsageScreen", () => {
+describe("PresentationalTokenUsage", () => {
   it("期間の消費は札4枚（入力・出力・キャッシュ読み・キャッシュ作成）で、費用は出さない", () => {
     const { container, queryByText } = renderScreen()
 
@@ -202,7 +202,7 @@ describe("PresentationalTokenUsageScreen", () => {
   it("モデル別の表に費用の列を出さない。列名は略さない", () => {
     const { container } = renderScreen()
 
-    // 表は「モデル別」が先、「ツール別」が後（`presentational-token-usage-screen.tsx` の並び）。
+    // 表は「モデル別」が先、「ツール別」が後（`presentational-token-usage.tsx` の並び）。
     const modelTable = container.querySelectorAll(".token-usage-table")[0]
     const headers = [...(modelTable?.querySelectorAll("thead th") ?? [])].map(
       (cell) => cell.textContent,

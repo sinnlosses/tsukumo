@@ -19,14 +19,17 @@
 
 import { type ReactElement } from "react"
 
-import { type ContextUsageItem } from "../../../../shared/context-usage.ts"
-import { HStack } from "../../../components/ui/h-stack/h-stack.tsx"
-import { Text } from "../../../components/ui/text/text.tsx"
-import { type ContextUsageRow, type UseContextUsageResult } from "../../../domain/context-usage.ts"
-import { clockTime, localTimeZoneId, zonedDateTime } from "../../../utils/clock.ts"
-import { formatCount } from "../../../utils/format-count.ts"
-import { categoryLook, SKELETON_ROW_NAMES } from "./context-usage-category.ts"
-import styles from "./token-usage.module.css"
+import { type ContextUsageItem } from "../../../../../../shared/context-usage.ts"
+import {
+  type ContextUsageRow,
+  type UseContextUsageResult,
+} from "../../../../../domain/context-usage.ts"
+import { clockTime, localTimeZoneId, zonedDateTime } from "../../../../../utils/clock.ts"
+import { formatCount } from "../../../../../utils/format-count.ts"
+import { HStack } from "../../../../ui/h-stack/h-stack.tsx"
+import { Text } from "../../../../ui/text/text.tsx"
+import styles from "../../token-usage.module.css"
+import { categoryLook, SKELETON_ROW_NAMES } from "./domain/context-usage-category.ts"
 
 /** 札の見出しと、その横に小さく添える一言。 */
 const CARD_TITLE = "いまのコンテキスト"

@@ -1,4 +1,4 @@
-// 期間の消費の札1枚（トークン消費の画面。`presentational-token-usage-screen.tsx` が4枚並べる）。
+// 期間の消費の札1枚（トークン消費の画面。`presentational-token-usage.tsx` が4枚並べる）。
 // 見出し・期間の合計・その数だけの小さな棒グラフを1枚に閉じる。
 //
 // **札ごとに縦軸が独立する。** 棒の高さはその札の中の最大で割るので、桁の違う数（キャッシュ
@@ -15,10 +15,10 @@ import {
   type TokenUsageTotals,
   type TokenUsageTrend,
   type TokenUsageTrendUnit,
-} from "../../../../shared/token-usage-summary.ts"
-import { HStack } from "../../../components/ui/h-stack/h-stack.tsx"
-import { formatCount } from "../../../utils/format-count.ts"
-import styles from "./token-usage.module.css"
+} from "../../../../../../shared/token-usage-summary.ts"
+import { formatCount } from "../../../../../utils/format-count.ts"
+import { HStack } from "../../../../ui/h-stack/h-stack.tsx"
+import styles from "../../token-usage.module.css"
 
 export type PeriodUsageCardProps = {
   /** 何の数か（入力・出力・キャッシュ読み・キャッシュ作成）。 */

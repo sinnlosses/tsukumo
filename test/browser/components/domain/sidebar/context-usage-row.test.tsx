@@ -17,7 +17,7 @@ import { sessionStoreWith } from "../../../session-store.ts"
 
 /**
  * サイドバー「セッション情報」の使用量の行。**出す数は札
- * （`test/browser/components/page/token-usage/context-usage-card.test.tsx`）と同じ出どころ**
+ * （`test/browser/components/page/token-usage/components/context-usage-card/context-usage-card.test.tsx`）と同じ出どころ**
  * （`usage.totalTokens` / `usage.maxTokens` / `usage.percentage`）なので、ここでは行として
  * 描いたときの文字・押した先（右端の `›` だけ）・70%以上の警告・取れないときの高さだけを測る。
  *

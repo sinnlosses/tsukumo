@@ -2,12 +2,12 @@ import { afterEach, describe, expect, it } from "bun:test"
 
 import { cleanup, fireEvent, render } from "@testing-library/react"
 
+import { UsageReviewCard } from "../../../../../../../src/browser/components/page/token-usage/components/usage-review-card/usage-review-card.tsx"
 import {
   type UsageReviewResultProposalView,
   type UsageReviewStageView,
   type UseUsageReviewResult,
-} from "../../../../../src/browser/components/page/token-usage/hooks/use-usage-review.ts"
-import { UsageReviewCard } from "../../../../../src/browser/components/page/token-usage/usage-review-card.tsx"
+} from "../../../../../../../src/browser/components/page/token-usage/hooks/use-usage-review.ts"
 
 /**
  * 見た目だけを測る（`hooks/use-usage-review.ts` は素通しなので、フィクスチャは手で書いた

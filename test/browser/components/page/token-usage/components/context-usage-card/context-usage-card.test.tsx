@@ -2,9 +2,9 @@ import { afterEach, describe, expect, it } from "bun:test"
 
 import { cleanup, render } from "@testing-library/react"
 
-import { ContextUsageCard } from "../../../../../src/browser/components/page/token-usage/context-usage-card.tsx"
-import { type UseContextUsageResult } from "../../../../../src/browser/domain/context-usage.ts"
-import { contextUsage } from "../../../../fixture/context-usage.ts"
+import { ContextUsageCard } from "../../../../../../../src/browser/components/page/token-usage/components/context-usage-card/context-usage-card.tsx"
+import { type UseContextUsageResult } from "../../../../../../../src/browser/domain/context-usage.ts"
+import { contextUsage } from "../../../../../../fixture/context-usage.ts"
 
 // いまのコンテキストの内訳の札（`context-usage-card.tsx`）。**フックは素通し**なので、畳んだ
 // 形を手で書いて渡す（架空の内訳。docs/coding-standards.md「会話内容の扱い」）。

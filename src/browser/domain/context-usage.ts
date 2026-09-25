@@ -1,5 +1,5 @@
 // いまのコンテキストの内訳（`docs/glossary.md`「コンテキストの内訳」）を取りに行き、
-// 見た目（`components/page/token-usage/context-usage-card.tsx` / `components/domain/sidebar/context-usage-row.tsx`）が
+// 見た目（`components/page/token-usage/components/context-usage-card/context-usage-card.tsx` / `components/domain/sidebar/context-usage-row.tsx`）が
 // 算出せずにそのまま描ける形へ畳む。**2つの機能が読むので `browser/domain/`**（トークン消費の
 // 画面の札に加えて、サイドバーのセッション情報の行がこの内訳を読むようになったため。
 // docs/design.md 2章「上げる引き金は「2つ目の読み手が出たとき」」）。
@@ -9,7 +9,7 @@
 // 取り直す**（`useQuery` の `queryKey` に含めるだけで、`useEffect` は要らない）。「ターンが終わる
 // たびに取り直す」ための実際の値（`state.lastTurnFinishedAt` から作る）は
 // {@link contextUsageRefetchKey} が純関数として持ち、`state.lastTurnFinishedAt` を読む
-// `useSessionSelector` は `stores/` を読める機能の側（`token-usage-screen.tsx` /
+// `useSessionSelector` は `stores/` を読める機能の側（`token-usage.tsx` /
 // `context-usage-row.tsx`）が呼ぶ。**`state.turn` ではなく `state.lastTurnFinishedAt` を読む**
 // ——`turn` は `running` に移ると終わった時刻を失う（`shared/session-state.ts` の
 // `TurnProgress`）ので、`turn` から作ると新しいターンが始まった瞬間に合図が `0` へ戻り、
@@ -40,7 +40,8 @@ import { rpc } from "../lib/rpc-client.ts"
 
 /** 横棒の一区間と、凡例の1行（**同じ並びを両方が使う**ので、色と名前が必ず対になる）。 */
 export type ContextUsageRow = {
-  /** SDK が返した分類の名前（日本語への置き換えと色は `../components/page/token-usage/context-usage-category.ts`）。 */
+  /** SDK が返した分類の名前（日本語への置き換えと色は
+   * `../components/page/token-usage/components/context-usage-card/domain/context-usage-category.ts`）。 */
   readonly name: string
   readonly kind: ContextCategoryKind
   readonly tokens: number

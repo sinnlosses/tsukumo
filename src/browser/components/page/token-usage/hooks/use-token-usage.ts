@@ -1,5 +1,5 @@
 // トークン消費の画面のロジック（docs/design.md 2章「機能の中を分ける」）。期間の選択（`days`）と
-// 集計の取得（TanStack Query）を持ち、見た目（`presentational-token-usage-screen.tsx`）が
+// 集計の取得（TanStack Query）を持ち、見た目（`presentational-token-usage.tsx`）が
 // 算出せずにそのまま描ける形（合計込みの集計と、取れなかったかどうか）へ畳む。
 //
 // **「まだ届いていない」も「取れなかった」も、描く側から見れば空の集計**（`| undefined` を
@@ -17,7 +17,7 @@ import {
 } from "../../../../../shared/token-usage-summary.ts"
 import { rpc } from "../../../../lib/rpc-client.ts"
 import { useSessionSelector } from "../../../../stores/session.tsx"
-import { totalUsage } from "../usage-format.ts"
+import { totalUsage } from "../domain/usage-format.ts"
 
 export type UseTokenUsageResult = {
   readonly days: TokenUsageDays

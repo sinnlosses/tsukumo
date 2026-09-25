@@ -23,13 +23,13 @@ import { Text } from "../../../components/ui/text/text.tsx"
 import { VStack } from "../../../components/ui/v-stack/v-stack.tsx"
 import { type UseContextUsageResult } from "../../../domain/context-usage.ts"
 import { formatCount } from "../../../utils/format-count.ts"
-import { ContextUsageCard } from "./context-usage-card.tsx"
+import { ContextUsageCard } from "./components/context-usage-card/context-usage-card.tsx"
+import { PeriodUsageCard } from "./components/period-usage-card/period-usage-card.tsx"
+import { UsageReviewCard } from "./components/usage-review-card/usage-review-card.tsx"
+import { formatBytes } from "./domain/usage-format.ts"
 import { type UseTokenUsageResult } from "./hooks/use-token-usage.ts"
 import { type UseUsageReviewResult } from "./hooks/use-usage-review.ts"
-import { PeriodUsageCard } from "./period-usage-card.tsx"
 import styles from "./token-usage.module.css"
-import { formatBytes } from "./usage-format.ts"
-import { UsageReviewCard } from "./usage-review-card.tsx"
 
 /** 記録が1件も無い期間の一言（**空でも壊れない**。札も表も出さずこれだけ）。 */
 const EMPTY_NOTE = "この期間の記録はまだ無い"
@@ -44,16 +44,14 @@ const FAILED_NOTE = "集計を取れなかった"
  */
 const TOOL_ROWS = 6
 
-export type PresentationalTokenUsageScreenProps = UseTokenUsageResult & {
+export type PresentationalTokenUsageProps = UseTokenUsageResult & {
   /** いまのコンテキストの内訳（`browser/domain/context-usage.ts`）。 */
   readonly contextUsage: UseContextUsageResult
   /** 「減らし方を見てもらう」区画（`hooks/use-usage-review.ts`）。 */
   readonly usageReview: UseUsageReviewResult
 }
 
-export function PresentationalTokenUsageScreen(
-  props: PresentationalTokenUsageScreenProps,
-): ReactElement {
+export function PresentationalTokenUsage(props: PresentationalTokenUsageProps): ReactElement {
   // **記録が1件も無い期間かどうかはモデル別で見る** — 推移は期間のすべての刻みが0で並ぶので
   // 長さでは分からない。行はモデルの増分が1つでもあるときにだけ積まれる
   // （`src/server/session/core/session-manager.ts`）ので、モデル別が空なら行が無い。

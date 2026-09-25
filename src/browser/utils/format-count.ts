@@ -18,7 +18,7 @@ export function formatCount(value: number): string {
 
 /**
  * 有効数字3桁のつもりで小数第2位まで（`1.23` / `12.3` / `123`）。**`formatBytes`
- * （`components/page/token-usage/usage-format.ts`）と桁の詰め方を揃えるため export する。**
+ * （`components/page/token-usage/domain/usage-format.ts`）と桁の詰め方を揃えるため export する。**
  */
 export function round(value: number): string {
   if (value >= 100) {

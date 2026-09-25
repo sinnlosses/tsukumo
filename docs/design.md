@@ -2206,7 +2206,7 @@ type Diary = {
       │      │                <FileSuggestions>（`@`。同時には出さない）・<PromptImageChips>（札）を内包。
       │      │                下に道具の行（画像・`/`・`@` のボタン、操作の案内、<TurnStatus>）
       │      └ <TurnStatus>  経過 / 所要、送信 ⇄ 中断（道具の行の右端）
-      ├ <TokenUsageScreen>   トークン消費の画面（#token-usage）
+      ├ <TokenUsage>         トークン消費の画面（#token-usage）
       ├ <Achievement>        成果の画面（#achievement。13.10）
       └ <Character>          キャラクター画面（#character。13.6）。**戻る口と答え待ちの印は帯が持つ**（13.9）。
           │                  パックのラベルと名前・「新しく作る」（<CharacterCreate> を開く）。
@@ -2221,7 +2221,7 @@ type Diary = {
 `<Root>` の直下に並ぶ部品のうち、**全画面で共有する枠**（`<ScreenNav>`・`<Layout>`・`<Sidebar>`）は
 `components/domain/<枠>/`、**会話の画面の領域**（`<MainView>`・`<CharacterView>`・`<ChatView>`・
 `<Dispatch>`）は `components/page/conversation/<領域>/`、**ほかの画面**（`<Character>`・
-`<TokenUsageScreen>`・`<Achievement>`）と `<DiaryNotice>` は `components/page/<画面>/`。
+`<TokenUsage>`・`<Achievement>`）と `<DiaryNotice>` は `components/page/<画面>/`。
 `<TaskList>` と `<TaskBoard>` は置かれる機能の `features/task-board/`。領域をまたいで使う
 `<Portrait>`・`<CharacterFace>`・`<PromptImageChips>`・`<PromptImageThumbnails>`・`<ProtocolMismatch>`
 は `components/domain/` の直下、語彙を持たない `<Select>`・`<ImageZoom>`・`<Stack>`・`<VStack>`・

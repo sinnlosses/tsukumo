@@ -1,5 +1,5 @@
 // トークン消費の画面の「減らし方を見てもらう」区画（ふだん・見直し中・結果）のロジック
-// （docs/design.md 2章「機能の中を分ける」）。見た目は `../usage-review-card.tsx` へ渡す。
+// （docs/design.md 2章「機能の中を分ける」）。見た目は `../components/usage-review-card/usage-review-card.tsx` へ渡す。
 //
 // **見直し中かどうか・段の進み・結果・前回の提案はサーバの状態が持つ**
 // （`SessionState.usageReview` / `previousUsageReview`。docs/design.md「見直しのツールと状態」）。
@@ -53,7 +53,7 @@ import {
   zonedDateTime,
 } from "../../../../utils/clock.ts"
 import { formatCount } from "../../../../utils/format-count.ts"
-import { totalUsage } from "../usage-format.ts"
+import { totalUsage } from "../domain/usage-format.ts"
 
 const CHAT_MODE_BLOCKED_REASON = "雑談中は使えない。仕事に切り替えてから押す。"
 const TURN_RUNNING_BLOCKED_REASON = "いまターンが動いているので送れない。終わってからもう一度押す。"
@@ -350,7 +350,7 @@ function reviewedAtLabel(epochMilliseconds: number): string {
   return `${monthDayLabel(epochMilliseconds)} ${clockTime(zoned)}`
 }
 
-/** 見た期間の一言。**1日だけは「今日」**（`presentational-token-usage-screen.tsx` の期間の
+/** 見た期間の一言。**1日だけは「今日」**（`presentational-token-usage.tsx` の期間の
  * 切り替えと同じ言い換え）、それ以外は「直近 N 日」。 */
 function periodLabel(days: number): string {
   return days === 1 ? "今日" : `直近 ${String(days)} 日`

@@ -32,7 +32,7 @@ import { CharacterView } from "./components/page/conversation/character-view/cha
 import { ChatView } from "./components/page/conversation/chat-view/chat-view.tsx"
 import { Dispatch } from "./components/page/conversation/dispatch/dispatch.tsx"
 import { MainView } from "./components/page/conversation/main-view/main-view.tsx"
-import { TokenUsageScreen } from "./components/page/token-usage/token-usage-screen.tsx"
+import { TokenUsage } from "./components/page/token-usage/token-usage.tsx"
 import {
   applyAppearanceColorOverride,
   loadAppearanceColorOverride,
@@ -55,7 +55,7 @@ import "./styles/theme.css"
  */
 const OVERLAY_SCREEN = {
   character: <Character />,
-  "token-usage": <TokenUsageScreen />,
+  "token-usage": <TokenUsage />,
   achievement: <Achievement />,
 } satisfies Record<Exclude<Screen, "conversation">, ReactElement>
 

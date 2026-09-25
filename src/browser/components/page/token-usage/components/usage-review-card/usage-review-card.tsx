@@ -16,18 +16,18 @@ import { type ReactElement } from "react"
 import {
   type UsageProposalFollowUp,
   type UsageProposalImpact,
-} from "../../../../shared/usage-review.ts"
-import { CharacterFace } from "../../../components/domain/character-face.tsx"
-import { Button } from "../../../components/ui/button/button.tsx"
-import { Text } from "../../../components/ui/text/text.tsx"
-import { VStack } from "../../../components/ui/v-stack/v-stack.tsx"
+} from "../../../../../../shared/usage-review.ts"
+import { CharacterFace } from "../../../../domain/character-face.tsx"
+import { Button } from "../../../../ui/button/button.tsx"
+import { Text } from "../../../../ui/text/text.tsx"
+import { VStack } from "../../../../ui/v-stack/v-stack.tsx"
 import {
   type UsageReviewResultProposalView,
   type UsageReviewStageStatus,
   type UsageReviewStageView,
   type UseUsageReviewResult,
-} from "./hooks/use-usage-review.ts"
-import styles from "./token-usage.module.css"
+} from "../../hooks/use-usage-review.ts"
+import styles from "../../token-usage.module.css"
 
 const SECTION_LABEL = "減らし方を見てもらう"
 const IDLE_HEADING = "tsukumo に減らし方を見てもらう"

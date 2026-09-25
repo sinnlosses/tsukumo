@@ -1,6 +1,6 @@
 // トークン消費の画面に出す期間の合計と、バイト数の書き方。**表の桁を揃えて横幅を食わせない**
 // ための畳み方だけを持つ（合計は `hooks/use-token-usage.ts` が呼び、書き方は
-// `presentational-token-usage-screen.tsx` が呼ぶ）。**トークン数の書き方（`formatCount`）は
+// `presentational-token-usage.tsx` が呼ぶ）。**トークン数の書き方（`formatCount`）は
 // `browser/utils/format-count.ts` へ上げてある**（サイドバーの使用量の行と2つの機能が
 // 読むようになったため）。
 //
@@ -12,8 +12,8 @@
 import {
   type ModelUsageTotal,
   type TokenUsageTotals,
-} from "../../../../shared/token-usage-summary.ts"
-import { round } from "../../../utils/format-count.ts"
+} from "../../../../../shared/token-usage-summary.ts"
+import { round } from "../../../../utils/format-count.ts"
 
 /** 合計する対象が無いときの値（`src/server/token-usage/core/token-usage.ts` の `EMPTY_TOTALS` と同じ並び）。 */
 const EMPTY_TOTALS = {

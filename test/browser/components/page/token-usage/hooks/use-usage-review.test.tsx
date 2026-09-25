@@ -4,25 +4,25 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { act, cleanup, renderHook, waitFor } from "@testing-library/react"
 import { type ReactElement, type ReactNode } from "react"
 
-import { useUsageReview } from "../../../../../src/browser/components/page/token-usage/hooks/use-usage-review.ts"
+import { useUsageReview } from "../../../../../../src/browser/components/page/token-usage/hooks/use-usage-review.ts"
 import {
   SessionStoreContext,
   type SessionStore,
-} from "../../../../../src/browser/stores/session.tsx"
+} from "../../../../../../src/browser/stores/session.tsx"
 import {
   INITIAL_SESSION_STATE,
   type SessionState,
-} from "../../../../../src/shared/session-state.ts"
+} from "../../../../../../src/shared/session-state.ts"
 import {
   USAGE_REVIEW_REQUEST_TEXT,
   type UsageProposal,
   type UsageReviewFindings,
-} from "../../../../../src/shared/usage-review.ts"
-import { rpcOutput, stubRpcFetch, type RpcFetchStub } from "../../../rpc-fetch-stub.ts"
-import { type CommandSpy, type SentCommand, sessionStoreWith } from "../../../session-store.ts"
+} from "../../../../../../src/shared/usage-review.ts"
+import { rpcOutput, stubRpcFetch, type RpcFetchStub } from "../../../../rpc-fetch-stub.ts"
+import { type CommandSpy, type SentCommand, sessionStoreWith } from "../../../../session-store.ts"
 
 /**
- * 画面（`token-usage-screen.tsx`）を丸ごと描かずに、区画のロジックだけを測る
+ * 画面（`token-usage.tsx`）を丸ごと描かずに、区画のロジックだけを測る
  * （docs/design.md 2章「機能の中を分ける」）。フィクスチャはすべて手で書いた架空の値
  * （`docs/coding-standards.md`「会話内容の扱い」— 実物の会話・記録は使わない）。
  */

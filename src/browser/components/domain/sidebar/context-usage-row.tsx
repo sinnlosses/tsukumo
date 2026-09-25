@@ -4,7 +4,7 @@
 // （`#token-usage`）へ移る。
 //
 // **取得と畳み込みは `browser/domain/context-usage.ts`**（トークン消費の画面の札
-// `../token-usage/context-usage-card.tsx` と2つの機能で共有している。同じ `refetchKey` を
+// `../token-usage/components/context-usage-card/context-usage-card.tsx` と2つの機能で共有している。同じ `refetchKey` を
 // 渡すので `useQuery` の cache 1本に相乗りし、取り直しは1回で済む——冒頭コメント）。
 //
 // **出す数は札の「使っている量」と同じ**（`usage.totalTokens` / `usage.maxTokens` /
