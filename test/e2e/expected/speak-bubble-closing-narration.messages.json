@@ -1,0 +1,133 @@
+[
+  {
+    "received": "hello",
+    "protocolVersion": 20
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "session-info",
+      "sessionId": "fake-session",
+      "model": "opus",
+      "permissionMode": "auto",
+      "slashCommands": [
+        "clear",
+        "compact",
+        "doctor"
+      ],
+      "terminalSlashCommands": [
+        "doctor"
+      ]
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "command-descriptions",
+      "descriptions": [
+        {
+          "name": "clear",
+          "description": "会話を消して始め直す（架空の説明）"
+        },
+        {
+          "name": "compact",
+          "description": "会話を要約してまとめる（架空の説明）"
+        }
+      ]
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "speech",
+      "text": "疑似セッションの駆動で立ち上がったよ。ここはぜんぶ作り物の会話。",
+      "expression": "default"
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "request",
+      "text": "締めの一言が最終レポートを押しのける並びを見たい（架空の依頼）",
+      "images": []
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "speech",
+      "text": "見てくるぞ。",
+      "expression": "thinking"
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "tool-started",
+      "toolUseId": "fake-tool-closing-1",
+      "name": "Edit",
+      "input": {
+        "file_path": "/tmp/dummy/a.ts"
+      }
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "tool-finished",
+      "toolUseId": "fake-tool-closing-1",
+      "content": "ダミーの書き換え結果",
+      "isError": false
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "utterance",
+      "text": "## 背景の差し替えが弾かれていた\n\nこれは架空の本文で、実物の会話ではない。**この塊が最終レポートとして出る**こと（＝下の締めの一言に席を取られないこと）を見るための場面。\n\n| 何 | 結果 |\n| --- | --- |\n| 架空の検証1 | 通った |\n| 架空の検証2 | 通った |\n\n- 架空の変更1\n- 架空の変更2\n"
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "speech",
+      "text": "ほら、片付いたぞ。",
+      "expression": "proud"
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "utterance",
+      "text": "狐火を落とします。また何かあれば呼んでください。"
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "turn-finished",
+      "outcome": {
+        "kind": "completed"
+      }
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "effort-changed",
+      "effort": "medium"
+    }
+  }
+]

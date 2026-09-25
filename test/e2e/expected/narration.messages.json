@@ -1,0 +1,145 @@
+[
+  {
+    "received": "hello",
+    "protocolVersion": 20
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "session-info",
+      "sessionId": "fake-session",
+      "model": "opus",
+      "permissionMode": "auto",
+      "slashCommands": [
+        "clear",
+        "compact",
+        "doctor"
+      ],
+      "terminalSlashCommands": [
+        "doctor"
+      ]
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "command-descriptions",
+      "descriptions": [
+        {
+          "name": "clear",
+          "description": "会話を消して始め直す（架空の説明）"
+        },
+        {
+          "name": "compact",
+          "description": "会話を要約してまとめる（架空の説明）"
+        }
+      ]
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "speech",
+      "text": "疑似セッションの駆動で立ち上がったよ。ここはぜんぶ作り物の会話。",
+      "expression": "default"
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "utterance",
+      "text": "まず疑似セッションのファイルを読むね。"
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "tool-started",
+      "toolUseId": "fake-tool-narration-1",
+      "name": "Read",
+      "input": {
+        "file_path": "/tmp/dummy/notes.md"
+      }
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "tool-finished",
+      "toolUseId": "fake-tool-narration-1",
+      "content": "ダミーの読み取り結果（2行）",
+      "isError": false
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "utterance",
+      "text": "次は直すね。"
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "tool-started",
+      "toolUseId": "fake-tool-narration-2",
+      "name": "Edit",
+      "input": {
+        "file_path": "/tmp/dummy/notes.md"
+      }
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "tool-finished",
+      "toolUseId": "fake-tool-narration-2",
+      "content": "ダミーの書き換え結果",
+      "isError": false
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "speech",
+      "text": "実況は消えて、これだけ残るはずだぞ。",
+      "expression": "proud"
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "utterance",
+      "text": "## 実況が落ちたあとに残る本文\n\nこれは架空の本文で、実物の会話ではない。**上の「まず疑似セッションのファイルを読むね。」と「次は直すね。」は、あとにツールが続いたので落ちる**（`docs/display.md` 4.2）。\n"
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "turn-finished",
+      "outcome": {
+        "kind": "completed"
+      }
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "effort-changed",
+      "effort": "medium"
+    }
+  }
+]

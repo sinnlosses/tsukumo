@@ -1,0 +1,270 @@
+[
+  {
+    "received": "hello",
+    "protocolVersion": 20
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "session-info",
+      "sessionId": "fake-session",
+      "model": "opus",
+      "permissionMode": "auto",
+      "slashCommands": [
+        "clear",
+        "compact",
+        "doctor"
+      ],
+      "terminalSlashCommands": [
+        "doctor"
+      ]
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "command-descriptions",
+      "descriptions": [
+        {
+          "name": "clear",
+          "description": "会話を消して始め直す（架空の説明）"
+        },
+        {
+          "name": "compact",
+          "description": "会話を要約してまとめる（架空の説明）"
+        }
+      ]
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "speech",
+      "text": "疑似セッションの駆動で立ち上がったよ。ここはぜんぶ作り物の会話。",
+      "expression": "default"
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "request",
+      "text": "合図をまたいでも報告が消えないか確かめたい（架空の依頼）",
+      "images": []
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "speech",
+      "text": "分かった、区切りごとに知らせながら進めるね。",
+      "expression": "default"
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "tool-started",
+      "toolUseId": "fake-tool-resume-1",
+      "name": "Bash",
+      "input": {
+        "command": "dummy-scan --targets /tmp/dummy",
+        "run_in_background": false,
+        "description": "架空の下調べ"
+      }
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "tool-finished",
+      "toolUseId": "fake-tool-resume-1",
+      "content": "ダミーの下調べ結果（架空・3件）",
+      "isError": false
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "report-drafting",
+      "toolUseId": "fake-report-call-resume-1"
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "report",
+      "toolUseId": "fake-report-call-resume-1",
+      "conclusion": "中間の結論（架空）：ここまでで分かったことをいったんまとめた。",
+      "body": "- 下調べは終わった（架空の結果）\n- 続きは合図を待って進める",
+      "favor": ""
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "tool-finished",
+      "toolUseId": "fake-report-call-resume-1",
+      "content": "ok",
+      "isError": false
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "turn-finished",
+      "outcome": {
+        "kind": "completed"
+      }
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "effort-changed",
+      "effort": "medium"
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "turn-resumed"
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "speech",
+      "text": "1つ目の合図が届いた。まだ続けてるよ。",
+      "expression": "default"
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "turn-finished",
+      "outcome": {
+        "kind": "completed"
+      }
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "effort-changed",
+      "effort": "medium"
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "turn-resumed"
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "speech",
+      "text": "2つ目の合図。もう少しで終わりそう。",
+      "expression": "default"
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "turn-finished",
+      "outcome": {
+        "kind": "completed"
+      }
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "effort-changed",
+      "effort": "medium"
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "turn-resumed"
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "speech",
+      "text": "終わったよ。まとめを届けるね。",
+      "expression": "proud"
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "report-drafting",
+      "toolUseId": "fake-report-call-resume-2"
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "report",
+      "toolUseId": "fake-report-call-resume-2",
+      "conclusion": "最終の結論（架空）：合図をまたいでも報告は消えなかった。",
+      "body": "- 中間の報告は合図のあいだも出したまま\n- 吹き出しも前のセリフを保った\n- 最後にこの最終報告へ差し替わる",
+      "favor": ""
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "tool-finished",
+      "toolUseId": "fake-report-call-resume-2",
+      "content": "ok",
+      "isError": false
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "turn-finished",
+      "outcome": {
+        "kind": "completed"
+      }
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "effort-changed",
+      "effort": "medium"
+    }
+  }
+]

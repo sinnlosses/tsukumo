@@ -1,0 +1,100 @@
+[
+  {
+    "received": "hello",
+    "protocolVersion": 20
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "session-info",
+      "sessionId": "fake-session",
+      "model": "opus",
+      "permissionMode": "auto",
+      "slashCommands": [
+        "clear",
+        "compact",
+        "doctor"
+      ],
+      "terminalSlashCommands": [
+        "doctor"
+      ]
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "command-descriptions",
+      "descriptions": [
+        {
+          "name": "clear",
+          "description": "会話を消して始め直す（架空の説明）"
+        },
+        {
+          "name": "compact",
+          "description": "会話を要約してまとめる（架空の説明）"
+        }
+      ]
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "speech",
+      "text": "疑似セッションの駆動で立ち上がったよ。ここはぜんぶ作り物の会話。",
+      "expression": "default"
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "pending-changed",
+      "pending": [
+        {
+          "kind": "question",
+          "id": "fake-ask-preview",
+          "questions": [
+            {
+              "header": "架空の選択",
+              "text": "架空の質問：どの案で進める？",
+              "multiSelect": false,
+              "options": [
+                {
+                  "label": "表の案",
+                  "description": "架空の説明A",
+                  "preview": "| 段 | 触る場所 | 目で見える差 |\n| --- | --- | :---: |\n| 1 | `shared/question.ts` | 無し |\n| 2 | メインビュー | **比較の札が出る** |\n"
+                },
+                {
+                  "label": "図の案",
+                  "description": "架空の説明B",
+                  "preview": "```mermaid\nflowchart LR\n  Q[質問] --> H[入力欄の箱]\n  Q --> M[メインビューの比較]\n  H -->|触れた選択肢| M\n```\n"
+                },
+                {
+                  "label": "注意つきの案",
+                  "description": "架空の説明C",
+                  "preview": "<div class=\"note note-warn\">戻せない操作が1つ混ざる案（架空）。</div>\n\n- 架空の利点: 速い\n- 架空の欠点: 後から直せない\n"
+                },
+                {
+                  "label": "preview が無い案",
+                  "description": "架空の説明D"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "speech",
+      "text": "選択肢ごとの比較をメインビューに出したよ。触れると光る。",
+      "expression": "excited"
+    }
+  }
+]

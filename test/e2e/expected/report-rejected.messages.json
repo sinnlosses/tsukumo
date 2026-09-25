@@ -1,0 +1,143 @@
+[
+  {
+    "received": "hello",
+    "protocolVersion": 20
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "session-info",
+      "sessionId": "fake-session",
+      "model": "opus",
+      "permissionMode": "auto",
+      "slashCommands": [
+        "clear",
+        "compact",
+        "doctor"
+      ],
+      "terminalSlashCommands": [
+        "doctor"
+      ]
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "command-descriptions",
+      "descriptions": [
+        {
+          "name": "clear",
+          "description": "会話を消して始め直す（架空の説明）"
+        },
+        {
+          "name": "compact",
+          "description": "会話を要約してまとめる（架空の説明）"
+        }
+      ]
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "speech",
+      "text": "疑似セッションの駆動で立ち上がったよ。ここはぜんぶ作り物の会話。",
+      "expression": "default"
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "request",
+      "text": "差し戻しの見え方を確かめたい（架空の依頼）",
+      "images": []
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "speech",
+      "text": "まとめてみるね。",
+      "expression": "default"
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "tool-finished",
+      "toolUseId": "fake-report-rejected-1",
+      "content": "レポートの記法の規約に次の違反がある。直して `report` を呼び直すこと:\n- `conclusion` が3文ある。2文以内にし、残りは `body` へ移す\n- `#` の見出しがある。`##` / `###` にする\n- 見出しの無い表が1個ある。表の直前の行に太字1行で見出しを付ける",
+      "isError": true
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "speech",
+      "text": "差し戻されたから直すね。",
+      "expression": "default"
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "report",
+      "toolUseId": "fake-report-rejected-2",
+      "conclusion": "架空の結論: 差し戻しのあとに直したレポートだけが出る。",
+      "body": "## 直した見出し（架空）\n\n**直した表（作り物の値）**\n\n| 列 | 値 |\n| --- | --- |\n| a | 1 |",
+      "favor": ""
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "tool-finished",
+      "toolUseId": "fake-report-rejected-2",
+      "content": "ok",
+      "isError": false
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "speech",
+      "text": "書けたよ！",
+      "expression": "proud"
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "utterance",
+      "text": "完了"
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "turn-finished",
+      "outcome": {
+        "kind": "completed"
+      }
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "effort-changed",
+      "effort": "medium"
+    }
+  }
+]

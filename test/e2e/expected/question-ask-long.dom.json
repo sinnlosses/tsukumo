@@ -1,0 +1,665 @@
+[
+  {
+    "tag": "nav",
+    "attributes": {
+      "aria-label": "画面",
+      "data-screen": "conversation"
+    },
+    "children": [
+      {
+        "tag": "img",
+        "attributes": {
+          "alt": "つくもの精霊",
+          "src": "/character/tsukumo-spirit/face.svg"
+        }
+      },
+      "<port>",
+      {
+        "tag": "div",
+        "attributes": {
+          "role": "group",
+          "aria-label": "モード"
+        },
+        "children": [
+          {
+            "tag": "button",
+            "attributes": {
+              "aria-pressed": "true",
+              "aria-disabled": "false",
+              "type": "button"
+            },
+            "children": [
+              {
+                "tag": "svg"
+              },
+              "仕事"
+            ]
+          },
+          {
+            "tag": "button",
+            "attributes": {
+              "aria-pressed": "false",
+              "aria-disabled": "false",
+              "type": "button"
+            },
+            "children": [
+              {
+                "tag": "svg"
+              },
+              "雑談"
+            ]
+          }
+        ]
+      },
+      {
+        "tag": "span",
+        "attributes": {
+          "aria-hidden": "true"
+        }
+      },
+      {
+        "tag": "a",
+        "attributes": {
+          "aria-current": "page",
+          "href": "/?t=<token>"
+        },
+        "children": [
+          "会話"
+        ]
+      },
+      {
+        "tag": "a",
+        "attributes": {
+          "href": "/?t=<token>#character"
+        },
+        "children": [
+          "キャラクター"
+        ]
+      },
+      {
+        "tag": "a",
+        "attributes": {
+          "href": "/?t=<token>#token-usage"
+        },
+        "children": [
+          "トークン消費"
+        ]
+      },
+      {
+        "tag": "a",
+        "attributes": {
+          "href": "/?t=<token>#achievement"
+        },
+        "children": [
+          "成果"
+        ]
+      },
+      {
+        "tag": "div",
+        "attributes": {
+          "data-work-state": "pending",
+          "data-chat-idle": "false"
+        },
+        "children": [
+          {
+            "tag": "button",
+            "attributes": {
+              "aria-expanded": "false",
+              "type": "button"
+            },
+            "children": [
+              {
+                "tag": "span",
+                "attributes": {
+                  "aria-hidden": "true"
+                },
+                "children": [
+                  "●"
+                ]
+              },
+              "答え待ち",
+              {
+                "tag": "span",
+                "attributes": {
+                  "aria-hidden": "true"
+                }
+              },
+              "架空の選択（長いラベルと長い説明） ほか1問"
+            ]
+          }
+        ]
+      },
+      {
+        "tag": "select",
+        "attributes": {
+          "aria-label": "モデル",
+          "value": "opus"
+        }
+      },
+      {
+        "tag": "select",
+        "attributes": {
+          "aria-label": "effort",
+          "value": "medium"
+        }
+      },
+      {
+        "tag": "select",
+        "attributes": {
+          "aria-label": "許可モード",
+          "value": "auto"
+        }
+      },
+      {
+        "tag": "button",
+        "attributes": {
+          "aria-expanded": "false",
+          "aria-label": "設定",
+          "type": "button"
+        },
+        "children": [
+          {
+            "tag": "svg"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "tag": "div",
+    "attributes": {
+      "data-collapse-character": "false"
+    },
+    "children": [
+      {
+        "tag": "div",
+        "attributes": {
+          "data-narrow-pane": "main"
+        },
+        "children": [
+          {
+            "tag": "section",
+            "attributes": {
+              "data-region": "main"
+            },
+            "children": [
+              {
+                "tag": "div",
+                "attributes": {
+                  "data-brush-origin": ""
+                },
+                "children": [
+                  {
+                    "tag": "article",
+                    "children": [
+                      {
+                        "tag": "header",
+                        "children": [
+                          {
+                            "tag": "button",
+                            "attributes": {
+                              "aria-disabled": "true",
+                              "aria-label": "1つ古いターンへ",
+                              "type": "button"
+                            },
+                            "children": [
+                              {
+                                "tag": "span",
+                                "attributes": {
+                                  "aria-hidden": "true"
+                                },
+                                "children": [
+                                  "‹"
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "tag": "button",
+                            "attributes": {
+                              "aria-disabled": "true",
+                              "aria-label": "1つ新しいターンへ",
+                              "type": "button"
+                            },
+                            "children": [
+                              {
+                                "tag": "span",
+                                "attributes": {
+                                  "aria-hidden": "true"
+                                },
+                                "children": [
+                                  "›"
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "tag": "h2",
+                            "children": [
+                              {
+                                "tag": "button",
+                                "attributes": {
+                                  "aria-expanded": "false",
+                                  "type": "button"
+                                },
+                                "children": [
+                                  "長いラベルと長い説明の場面（架空）。選択肢の折り返しを見るために置いてある。",
+                                  {
+                                    "tag": "span",
+                                    "attributes": {
+                                      "aria-hidden": "true"
+                                    }
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          "1 / 1",
+                          "最新"
+                        ]
+                      },
+                      {
+                        "tag": "section",
+                        "children": [
+                          {
+                            "tag": "p",
+                            "children": [
+                              "長いラベルと長い説明の場面（架空）。選択肢の折り返しを見るために置いてある。"
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "tag": "section",
+                    "children": [
+                      {
+                        "tag": "header",
+                        "children": [
+                          "質問",
+                          "架空の選択（長いラベルと長い説明）",
+                          "1 / 2"
+                        ]
+                      },
+                      {
+                        "tag": "p",
+                        "children": [
+                          "架空の質問：どの見出しの付け方にする？"
+                        ]
+                      },
+                      {
+                        "tag": "ul",
+                        "children": [
+                          {
+                            "tag": "li",
+                            "children": [
+                              {
+                                "tag": "label",
+                                "children": [
+                                  {
+                                    "tag": "input",
+                                    "attributes": {
+                                      "type": "checkbox",
+                                      "checked": false,
+                                      "value": "on"
+                                    }
+                                  },
+                                  "とても長いラベルの選択肢（架空・折り返しの確認用）"
+                                ]
+                              },
+                              {
+                                "tag": "p",
+                                "children": [
+                                  "架空の説明：ラベル自体が長いときに、説明の置き場が潰れないかを見る。ここも折り返す長さにしてある。"
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "tag": "li",
+                            "children": [
+                              {
+                                "tag": "label",
+                                "children": [
+                                  {
+                                    "tag": "input",
+                                    "attributes": {
+                                      "type": "checkbox",
+                                      "checked": false,
+                                      "value": "on"
+                                    }
+                                  },
+                                  "見出しと質問文（架空）"
+                                ]
+                              },
+                              {
+                                "tag": "p",
+                                "children": [
+                                  "架空の説明：短い見出しを先に置き、そのあとに本文を続ける。ラベルの右に並ぶ説明が1行に収まらない長さのとき、ラベルと重ならずに折り返せるかを見るための文面。"
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "tag": "li",
+                            "children": [
+                              {
+                                "tag": "label",
+                                "children": [
+                                  {
+                                    "tag": "input",
+                                    "attributes": {
+                                      "type": "checkbox",
+                                      "checked": false,
+                                      "value": "on"
+                                    }
+                                  },
+                                  "本文だけ（架空）"
+                                ]
+                              },
+                              {
+                                "tag": "p",
+                                "children": [
+                                  "架空の説明：見出しを置かずに本文だけを出す。こちらも1行には収まらない長さにしてある。"
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "tag": "footer",
+                        "children": [
+                          "選択肢にない答えは、下の入力欄に書いて送れます",
+                          {
+                            "tag": "button",
+                            "attributes": {
+                              "aria-disabled": "true",
+                              "type": "button"
+                            },
+                            "children": [
+                              "次へ"
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "div",
+            "attributes": {
+              "role": "separator",
+              "aria-orientation": "vertical",
+              "aria-label": "メインビューとサイドバーの境界"
+            }
+          },
+          {
+            "tag": "section",
+            "attributes": {
+              "data-region": "sidebar"
+            },
+            "children": [
+              {
+                "tag": "section",
+                "children": [
+                  {
+                    "tag": "h2",
+                    "children": [
+                      "タスク",
+                      {
+                        "tag": "button",
+                        "attributes": {
+                          "aria-disabled": "false",
+                          "aria-haspopup": "dialog",
+                          "type": "button"
+                        },
+                        "children": [
+                          "一覧を見る"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "tag": "p",
+                    "children": [
+                      "不明"
+                    ]
+                  }
+                ]
+              },
+              {
+                "tag": "label",
+                "children": [
+                  "キャラクター"
+                ]
+              },
+              {
+                "tag": "img",
+                "attributes": {
+                  "alt": "つくもの精霊",
+                  "src": "/character/tsukumo-spirit/face.svg"
+                }
+              },
+              {
+                "tag": "select",
+                "attributes": {
+                  "aria-label": "キャラクター",
+                  "value": "tsukumo-spirit"
+                }
+              },
+              "コンテキスト",
+              "61%",
+              "122k / 200k",
+              {
+                "tag": "span",
+                "attributes": {
+                  "aria-hidden": "true"
+                }
+              },
+              {
+                "tag": "a",
+                "attributes": {
+                  "aria-label": "コンテキスト 61% 使用。トークン消費の画面で詳しく見る",
+                  "href": "/?t=<token>#token-usage"
+                },
+                "children": [
+                  {
+                    "tag": "span",
+                    "attributes": {
+                      "aria-hidden": "true"
+                    },
+                    "children": [
+                      "詳しく"
+                    ]
+                  },
+                  {
+                    "tag": "span",
+                    "attributes": {
+                      "aria-hidden": "true"
+                    },
+                    "children": [
+                      "›"
+                    ]
+                  }
+                ]
+              },
+              {
+                "tag": "span",
+                "attributes": {
+                  "aria-hidden": "true"
+                }
+              },
+              "自動圧縮まで あと 33.5k"
+            ]
+          }
+        ]
+      },
+      {
+        "tag": "div",
+        "attributes": {
+          "role": "separator",
+          "aria-orientation": "horizontal",
+          "aria-label": "上段と下段の境界"
+        }
+      },
+      {
+        "tag": "div",
+        "attributes": {
+          "data-collapse-character": "false"
+        },
+        "children": [
+          {
+            "tag": "section",
+            "attributes": {
+              "data-region": "character"
+            },
+            "children": [
+              {
+                "tag": "button",
+                "attributes": {
+                  "aria-expanded": "false",
+                  "type": "button"
+                },
+                "children": [
+                  {
+                    "tag": "svg"
+                  },
+                  "ログ"
+                ]
+              },
+              {
+                "tag": "div",
+                "attributes": {
+                  "role": "img",
+                  "aria-label": "つくもの精霊（通常）",
+                  "data-expression": "default",
+                  "data-outfit": "heavy",
+                  "data-motion": "reading"
+                },
+                "children": [
+                  {
+                    "tag": "svg"
+                  }
+                ]
+              },
+              {
+                "tag": "div",
+                "attributes": {
+                  "data-latest": "true"
+                },
+                "children": [
+                  "つくもの精霊",
+                  "ラベルも説明も長い質問を出したよ。重なって見えないかな。"
+                ]
+              },
+              {
+                "tag": "div",
+                "attributes": {
+                  "data-latest": "false"
+                },
+                "children": [
+                  "疑似セッションの駆動で立ち上がったよ。ここはぜんぶ作り物の会話。"
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "div",
+            "attributes": {
+              "role": "separator",
+              "aria-orientation": "vertical",
+              "aria-label": "キャラビューと入力欄の境界"
+            }
+          },
+          {
+            "tag": "section",
+            "attributes": {
+              "data-region": "dispatch"
+            },
+            "children": [
+              {
+                "tag": "div",
+                "attributes": {
+                  "aria-hidden": "true"
+                }
+              },
+              {
+                "tag": "form",
+                "children": [
+                  {
+                    "tag": "p",
+                    "children": [
+                      "↑ つくもの精霊 が質問しています。上の選択肢から選ぶか、ここに書いて答えてください"
+                    ]
+                  },
+                  {
+                    "tag": "textarea",
+                    "attributes": {
+                      "value": ""
+                    }
+                  },
+                  {
+                    "tag": "button",
+                    "attributes": {
+                      "aria-disabled": "false",
+                      "aria-label": "画像を添える",
+                      "type": "button"
+                    },
+                    "children": [
+                      {
+                        "tag": "svg"
+                      }
+                    ]
+                  },
+                  {
+                    "tag": "button",
+                    "attributes": {
+                      "aria-disabled": "false",
+                      "aria-label": "コマンドを補完する",
+                      "type": "button"
+                    },
+                    "children": [
+                      {
+                        "tag": "svg"
+                      }
+                    ]
+                  },
+                  {
+                    "tag": "button",
+                    "attributes": {
+                      "aria-disabled": "false",
+                      "aria-label": "ファイルを補完する",
+                      "type": "button"
+                    },
+                    "children": [
+                      {
+                        "tag": "svg"
+                      }
+                    ]
+                  },
+                  "経過",
+                  "-",
+                  {
+                    "tag": "button",
+                    "attributes": {
+                      "data-shortcut": "⌘⏎",
+                      "type": "submit"
+                    },
+                    "children": [
+                      "次へ"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]

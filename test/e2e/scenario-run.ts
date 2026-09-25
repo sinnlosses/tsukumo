@@ -78,8 +78,12 @@ export type ScenarioOptions = {
 /** 起こして開いた1件。シナリオはこれに対して待ち・操作・判定を行う。 */
 export type ScenarioRoom = {
   readonly page: Page
-  /** WebSocket で `kind` のイベントが届くまで待つ（場面が流れ終わるのを時間で待たない）。 */
-  readonly waitForEvent: (kind: string) => Promise<void>
+  /**
+   * WebSocket で `kind` のイベントが `occurrence` 回目（既定1回目）届くまで待つ（場面が流れ
+   * 終わるのを時間で待たない）。同じ `kind` が場面の中で複数回流れる場合（`turn-finished` が
+   * 続きのターンのたびに来るなど）に、狙った回目まで進める口。
+   */
+  readonly waitForEvent: (kind: string, occurrence?: number) => Promise<void>
   /**
    * ブラウザの時計を「凍らせた瞬間 + `elapsedMs`」で止め、DOM が落ち着くのを待ってから
    * 成果物を書き、期待値と比べる（期待値が無ければ落とす。`E2E_UPDATE=1` なら書き直す）。
@@ -183,7 +187,7 @@ async function openRoom(
 
   return {
     page,
-    waitForEvent: (kind) => messages.waitForEvent(kind),
+    waitForEvent: (kind, occurrence) => messages.waitForEvent(kind, occurrence),
     settleAndMatch: async (elapsedMs) => {
       await page.clock.pauseAt(Temporal.Instant.from(FIXED_INSTANT).epochMilliseconds + elapsedMs)
       const dom = await settledDom(page)
@@ -289,7 +293,7 @@ async function installFixedClock(page: Page): Promise<void> {
 
 type MessageRecord = {
   readonly list: () => readonly unknown[]
-  readonly waitForEvent: (kind: string) => Promise<void>
+  readonly waitForEvent: (kind: string, occurrence?: number) => Promise<void>
 }
 
 /**
@@ -299,8 +303,13 @@ type MessageRecord = {
 function recordMessages(page: Page): MessageRecord {
   const entries: unknown[] = []
   const commandIds = new Map<string, number>()
-  const seenKinds = new Set<string>()
-  const waiters: { readonly kind: string; readonly resolve: () => void }[] = []
+  // 種別ごとに届いた回数（同じ `kind` が場面の中で複数回流れるものを、狙った回目まで待つため）。
+  const counts = new Map<string, number>()
+  const waiters: {
+    readonly kind: string
+    readonly target: number
+    readonly resolve: () => void
+  }[] = []
 
   const receive = (payload: string): void => {
     const frame = parseRecord(payload)
@@ -315,8 +324,11 @@ function recordMessages(page: Page): MessageRecord {
           const event = asRecord(record["event"])
           entries.push({ received: "event", at: record["at"], event: trimEvent(event) })
           const kind = String(event["kind"])
-          seenKinds.add(kind)
-          for (const waiter of waiters.filter((candidate) => candidate.kind === kind)) {
+          const nextCount = (counts.get(kind) ?? 0) + 1
+          counts.set(kind, nextCount)
+          for (const waiter of waiters.filter(
+            (candidate) => candidate.kind === kind && nextCount >= candidate.target,
+          )) {
             waiter.resolve()
           }
         }
@@ -352,16 +364,21 @@ function recordMessages(page: Page): MessageRecord {
 
   return {
     list: () => [...entries],
-    waitForEvent: (kind) => {
-      if (seenKinds.has(kind)) {
+    waitForEvent: (kind, occurrence = 1) => {
+      if ((counts.get(kind) ?? 0) >= occurrence) {
         return Promise.resolve()
       }
       return new Promise((resolve, reject) => {
         const timer = setTimeout(() => {
-          reject(new Error(`イベント ${kind} が届かない（${String(EVENT_TIMEOUT_MS)}ms）`))
+          reject(
+            new Error(
+              `イベント ${kind} の${String(occurrence)}回目が届かない（${String(EVENT_TIMEOUT_MS)}ms）`,
+            ),
+          )
         }, EVENT_TIMEOUT_MS)
         waiters.push({
           kind,
+          target: occurrence,
           resolve: () => {
             clearTimeout(timer)
             resolve()
