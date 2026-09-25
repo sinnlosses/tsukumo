@@ -1,7 +1,7 @@
 [
   {
     "received": "hello",
-    "protocolVersion": 20
+    "protocolVersion": 21
   },
   {
     "received": "event",
@@ -65,14 +65,20 @@
     }
   },
   {
-    "sent": {
-      "type": "answer",
+    "sent": "session.answer",
+    "order": 1,
+    "input": {
       "id": "fake-ask-1",
       "answer": {
         "kind": "allow"
-      },
-      "commandId": 1
+      }
     }
+  },
+  {
+    "received": "response",
+    "order": 1,
+    "status": 200,
+    "body": {}
   },
   {
     "received": "event",

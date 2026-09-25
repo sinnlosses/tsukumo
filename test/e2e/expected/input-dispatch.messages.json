@@ -1,15 +1,21 @@
 [
   {
     "received": "hello",
-    "protocolVersion": 20
+    "protocolVersion": 21
   },
   {
-    "sent": {
-      "type": "prompt",
+    "sent": "session.prompt",
+    "order": 1,
+    "input": {
       "text": "入力欄から送る場面を見たい（架空の依頼）",
-      "images": [],
-      "commandId": 1
+      "images": []
     }
+  },
+  {
+    "received": "response",
+    "order": 1,
+    "status": 200,
+    "body": {}
   },
   {
     "received": "event",

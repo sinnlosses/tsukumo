@@ -302,7 +302,14 @@ type MessageRecord = {
  */
 function recordMessages(page: Page): MessageRecord {
   const entries: unknown[] = []
-  const commandIds = new Map<string, number>()
+  // 手続きの要求番号（oRPC の `i`）は送るたびに変わるので、送った順の番号に置き換える。
+  const requestOrders = new Map<string, number>()
+  const orderOf = (rawId: unknown): number => {
+    const key = String(rawId)
+    const order = requestOrders.get(key) ?? requestOrders.size + 1
+    requestOrders.set(key, order)
+    return order
+  }
   // 種別ごとに届いた回数（同じ `kind` が場面の中で複数回流れるものを、狙った回目まで待つため）。
   const counts = new Map<string, number>()
   const waiters: {
@@ -313,6 +320,18 @@ function recordMessages(page: Page): MessageRecord {
 
   const receive = (payload: string): void => {
     const frame = parseRecord(payload)
+    // 同じ接続に手続きの応答（oRPC の封筒。`i` を持ち、`type` を持たない）も相乗りする
+    // （`src/browser/lib/socket.ts`）。状態コードは 200 のとき省かれる。
+    if (!("type" in frame) && "i" in frame) {
+      const response = asRecord(frame["p"])
+      entries.push({
+        received: "response",
+        order: orderOf(frame["i"]),
+        status: response["s"] ?? 200,
+        body: response["b"],
+      })
+      return
+    }
     switch (frame["type"]) {
       case "hello":
         entries.push({ received: "hello", protocolVersion: frame["protocolVersion"] })
@@ -341,16 +360,16 @@ function recordMessages(page: Page): MessageRecord {
     }
   }
 
+  // 送るのはコマンドの手続きの要求だけ（`{ i, p: { u: "/<機能>/<手続き>", b: { json } } }`）。
   const send = (payload: string): void => {
-    const command = parseRecord(payload)
-    const rawId = command["commandId"]
-    if (typeof rawId !== "string") {
-      entries.push({ sent: command })
-      return
-    }
-    const order = commandIds.get(rawId) ?? commandIds.size + 1
-    commandIds.set(rawId, order)
-    entries.push({ sent: { ...command, commandId: order } })
+    const request = parseRecord(payload)
+    const body = asRecord(asRecord(request["p"])["b"])
+    const url = asRecord(request["p"])["u"]
+    entries.push({
+      sent: typeof url === "string" ? url.replace(/^\//, "").replaceAll("/", ".") : request,
+      order: orderOf(request["i"]),
+      input: body["json"],
+    })
   }
 
   page.on("websocket", (socket) => {
