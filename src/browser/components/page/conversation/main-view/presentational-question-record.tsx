@@ -7,6 +7,7 @@
 
 import { type ReactElement } from "react"
 
+import { Heading } from "../../../../components/ui/heading/heading.tsx"
 import {
   type QuestionRecordAnswerRow,
   type QuestionRecordModel,
@@ -39,9 +40,15 @@ function QuestionBlock(props: { readonly question: QuestionRecordQuestionModel }
 
   return (
     <div className={styles["question-record"]}>
-      <h4>
+      <Heading
+        level={4}
+        size="body"
+        tone="inherit"
+        weight="bold"
+        className={styles["question-record-heading"] ?? ""}
+      >
         {question.header}: {question.text}
-      </h4>
+      </Heading>
       <ul className={styles["question-options"]}>
         {question.answers.map((row) => (
           <AnswerRow row={row} multiSelect={question.multiSelect} key={row.key} />

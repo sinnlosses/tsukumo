@@ -158,10 +158,9 @@
   align-items: baseline;
   gap: 0.4rem 0.75rem;
 }
+/* 字の段・色・太さは `Heading`（size="heading" tone="inherit" weight="bold"）が持つ。字間だけ
+   ここに残す（語彙に無い見た目）。 */
 .character-profile-name {
-  margin: 0;
-  font-size: var(--font-heading);
-  font-weight: bold;
   letter-spacing: 0.06em;
 }
 /* パックの名前はディレクトリ名なので等幅（13.1 原則3）。 */
@@ -198,11 +197,6 @@
 /* 並べ・間隔（`gap="sm"`）・揃えは `HStack` が持つ。 */
 .character-section-bar > :last-child {
   margin-left: auto;
-}
-.character-section-heading {
-  margin: 0;
-  font-size: var(--font-body);
-  font-weight: bold;
 }
 .character-section-note {
   margin-left: 0.6rem;
@@ -701,11 +695,6 @@
   background: var(--ground);
   border: 1px dashed var(--rule);
 }
-.character-delete-question {
-  margin: 0;
-  font-size: var(--font-subheading);
-  font-weight: bold;
-}
 .character-delete-note {
   margin: 0;
   color: var(--ink-quiet);
@@ -774,10 +763,9 @@
   background: color-mix(in srgb, var(--ground) 70%, transparent);
 }
 /* 並べ・間隔（`gap="xl"`）は `VStack` が持つ。 */
+/* 字の段・色・太さは `Heading`（size="heading" tone="inherit" weight="bold"）が持つ。字間だけ
+   ここに残す（語彙に無い見た目）。 */
 .character-create-heading {
-  margin: 0;
-  font-size: var(--font-heading);
-  font-weight: bold;
   letter-spacing: 0.06em;
 }
 .character-create-grid {

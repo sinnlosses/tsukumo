@@ -9,6 +9,7 @@
 import { type ReactElement } from "react"
 
 import { HStack } from "../../../components/ui/h-stack/h-stack.tsx"
+import { Heading } from "../../../components/ui/heading/heading.tsx"
 import styles from "./character-screen.module.css"
 import { AccentSwatch } from "./components/accent-swatch.tsx"
 import { BackgroundField } from "./components/background-field.tsx"
@@ -31,15 +32,15 @@ export function PresentationalCharacterEdit(
     <div className={styles["character-detail"]}>
       <CharacterProfile profile={props.profile} />
       <section className={styles["character-section"]} aria-labelledby="character-face">
-        <h2 className={styles["character-section-heading"]} id="character-face">
-          顔
-        </h2>
+        <Heading level={2} size="body" tone="inherit" weight="bold" className="">
+          <span id="character-face">顔</span>
+        </Heading>
         <FaceField face={props.face} disabled={props.disabled} />
       </section>
       <section className={styles["character-section"]} aria-labelledby="character-expressions">
-        <h2 className={styles["character-section-heading"]} id="character-expressions">
-          表情
-        </h2>
+        <Heading level={2} size="body" tone="inherit" weight="bold" className="">
+          <span id="character-expressions">表情</span>
+        </Heading>
         <div className={styles["character-gallery"]}>
           {props.cards.map((card) => (
             <PortraitCard key={card.expression} card={card} disabled={props.disabled} />
@@ -49,9 +50,9 @@ export function PresentationalCharacterEdit(
       <div className={styles["character-accents"]}>
         <section className={styles["character-section"]} aria-labelledby="character-screen-accent">
           <HStack element="div" gap="sm" align="center" justify="start" wrap="nowrap" className="">
-            <h2 className={styles["character-section-heading"]} id="character-screen-accent">
-              画面の差し色
-            </h2>
+            <Heading level={2} size="body" tone="inherit" weight="bold" className="">
+              <span id="character-screen-accent">画面の差し色</span>
+            </Heading>
             {props.resetChatAccent.kind === "shown" ? (
               <button
                 type="button"
@@ -71,9 +72,9 @@ export function PresentationalCharacterEdit(
           </div>
         </section>
         <section className={styles["character-section"]} aria-labelledby="character-outfit-accent">
-          <h2 className={styles["character-section-heading"]} id="character-outfit-accent">
-            立ち絵の差し色
-          </h2>
+          <Heading level={2} size="body" tone="inherit" weight="bold" className="">
+            <span id="character-outfit-accent">立ち絵の差し色</span>
+          </Heading>
           <div className={styles["character-swatches-outfit"]}>
             {props.outfitAccents.map((field) => (
               <AccentSwatch key={field.outfit} swatch={field} disabled={props.disabled} />
@@ -82,9 +83,9 @@ export function PresentationalCharacterEdit(
         </section>
       </div>
       <section className={styles["character-section"]} aria-labelledby="character-background">
-        <h2 className={styles["character-section-heading"]} id="character-background">
-          背景
-        </h2>
+        <Heading level={2} size="body" tone="inherit" weight="bold" className="">
+          <span id="character-background">背景</span>
+        </Heading>
         <BackgroundField background={props.background} disabled={props.disabled} />
       </section>
       <CharacterDelete band={props.deleteBand} />

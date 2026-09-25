@@ -10,6 +10,7 @@ import { type ReactElement } from "react"
 
 import { Portrait } from "../../../components/domain/portrait.tsx"
 import { HStack } from "../../../components/ui/h-stack/h-stack.tsx"
+import { Heading } from "../../../components/ui/heading/heading.tsx"
 import { VStack } from "../../../components/ui/v-stack/v-stack.tsx"
 import styles from "./achievement.module.css"
 import { type AchievementReviewButton } from "./hooks/use-achievement.ts"
@@ -334,7 +335,15 @@ function Toc(props: {
       ) : (
         props.months.map((month) => (
           <section key={month.heading} className={styles["diary-book-toc-month"]}>
-            <h3 className={styles["diary-book-toc-heading"]}>{month.heading}</h3>
+            <Heading
+              level={3}
+              size="subheading"
+              tone="ink"
+              weight="bold"
+              className={styles["diary-book-toc-heading"] ?? ""}
+            >
+              {month.heading}
+            </Heading>
             <ul className={styles["diary-book-toc-list"]}>
               {month.days.map((day) => (
                 <li key={day.date}>

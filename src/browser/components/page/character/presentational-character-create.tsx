@@ -11,6 +11,7 @@
 
 import { type ReactElement } from "react"
 
+import { Heading } from "../../../components/ui/heading/heading.tsx"
 import { VStack } from "../../../components/ui/v-stack/v-stack.tsx"
 import styles from "./character-screen.module.css"
 import { AccentSwatch } from "./components/accent-swatch.tsx"
@@ -38,7 +39,15 @@ export function PresentationalCharacterCreate({
       onClick={onDialogClick}
     >
       <VStack element="div" gap="xl" align="stretch" justify="start" wrap="nowrap" className="">
-        <h2 className={styles["character-create-heading"]}>新しいキャラクター</h2>
+        <Heading
+          level={2}
+          size="heading"
+          tone="inherit"
+          weight="bold"
+          className={styles["character-create-heading"] ?? ""}
+        >
+          新しいキャラクター
+        </Heading>
         <div className={styles["character-create-grid"]}>
           <PortraitDrop drop={form.portrait} />
           <div className={styles["character-create-fields"]}>

@@ -10,6 +10,7 @@ import {
   type LampLevel,
 } from "../../../../shared/achievement-calendar.ts"
 import { HStack } from "../../../components/ui/h-stack/h-stack.tsx"
+import { Heading } from "../../../components/ui/heading/heading.tsx"
 import styles from "./achievement.module.css"
 import { type AchievementCalendarView } from "./hooks/use-achievement-calendar.ts"
 
@@ -46,12 +47,12 @@ export function LanternCalendar(props: LanternCalendarProps): ReactElement {
   return (
     <section aria-label="灯りの暦" className={styles["achievement-calendar"]}>
       <HStack element="div" gap="md" align="center" justify="start" wrap="wrap" className="">
-        <h2 className={styles["achievement-calendar-title"]}>
+        <Heading level={2} size="subheading" tone="ink" weight="bold" className="">
           灯りの暦
           <span className={styles["achievement-calendar-note"]}>
             成果のあった日に狐火がともります · 押すとその日へ
           </span>
-        </h2>
+        </Heading>
         <Legend />
       </HStack>
       {calendar.kind === "loading" ? (

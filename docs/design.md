@@ -1983,9 +1983,9 @@ type Diary = {
 `<TaskList>` と `<TaskBoard>` は置かれる機能の `features/task-board/`。領域をまたいで使う
 `<Portrait>`・`<CharacterFace>`・`<PromptImageChips>`・`<PromptImageThumbnails>`・`<ProtocolMismatch>`
 は `components/domain/` の直下、語彙を持たない `<Select>`・`<ImageZoom>`・`<Stack>`・`<VStack>`・
-`<HStack>`・`<Text>` は `components/ui/select/`・`components/ui/image-zoom/`・
-`components/ui/stack/`・`components/ui/v-stack/`・`components/ui/h-stack/`・`components/ui/text/`
-（部品ごとのディレクトリ。2章「1部品1フォルダは真似しない」の例外）。
+`<HStack>`・`<Text>`・`<Heading>` は `components/ui/select/`・`components/ui/image-zoom/`・
+`components/ui/stack/`・`components/ui/v-stack/`・`components/ui/h-stack/`・`components/ui/text/`・
+`components/ui/heading/`（部品ごとのディレクトリ。2章「1部品1フォルダは真似しない」の例外）。
 
 **部品は `SessionState` と `dispatch` だけを見る。** DOM を直接いじる配線（`MutationObserver`・
 `data-` 属性で状態を渡す）は持たない。

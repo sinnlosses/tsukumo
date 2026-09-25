@@ -3,10 +3,10 @@
    （docs/design.md 6.6）。`.detail-block`（preview の Markdown）は
    `markdown/report-notation.module.css` 側の class をそのまま使うだけで、打ち消しは無い。 */
 
-/* メインビューに残す質問の記録。 */
-.tool-block-question .question-record h4 {
+/* メインビューに残す質問の記録。字の段・太さは `Heading`（size="body" weight="bold"——UA 既定の
+   h4 の太字のまま）が持つ。margin だけここに残す（既定の 0 と違うため）。 */
+.question-record-heading {
   margin: 0 0 0.3rem;
-  font-size: var(--font-body);
 }
 /* 問と答えの塊（`.question-record`）どうしの区切り。塊の中（問と答えの間 0.3rem・答えと
    preview の間 0.5rem）より広い間隔と罫線を、2つ目以降の塊にだけ足す（最初の塊の上には

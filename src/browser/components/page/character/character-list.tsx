@@ -12,6 +12,7 @@
 import { type ReactElement } from "react"
 
 import { EXPRESSIONS } from "../../../../shared/expression.ts"
+import { Heading } from "../../../components/ui/heading/heading.tsx"
 import { VStack } from "../../../components/ui/v-stack/v-stack.tsx"
 import { usePackHref } from "../../../stores/screen.tsx"
 import { useSessionSelector } from "../../../stores/session.tsx"
@@ -28,7 +29,9 @@ export function CharacterList(props: { readonly onCreate: () => void }): ReactEl
   return (
     <nav className={styles["character-list"]} aria-label="キャラクター一覧">
       <div className={styles["character-list-heading"]}>
-        <h2 className={styles["character-section-heading"]}>キャラクター</h2>
+        <Heading level={2} size="body" tone="inherit" weight="bold" className="">
+          キャラクター
+        </Heading>
         <span className={styles["character-list-count"]}>{packs.length}</span>
       </div>
       {packs.map((entry) => {

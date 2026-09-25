@@ -17,6 +17,7 @@
 
 import { useState, type MouseEvent, type ReactElement } from "react"
 
+import { Heading } from "../../../../components/ui/heading/heading.tsx"
 import { VStack } from "../../../../components/ui/v-stack/v-stack.tsx"
 import { useModalDialog } from "../../../../hooks/use-modal-dialog.ts"
 import styles from "../character-screen.module.css"
@@ -58,7 +59,9 @@ export function CharacterDeleteConfirm(props: CharacterDeleteConfirmProps): Reac
           ) : (
             <span className={styles["character-delete-portrait-blank"]} />
           )}
-          <h2 className={styles["character-delete-question"]}>{band.dialogHeading}</h2>
+          <Heading level={2} size="subheading" tone="inherit" weight="bold" className="">
+            {band.dialogHeading}
+          </Heading>
         </div>
         <p className={styles["character-delete-note"]}>{band.dialogNote}</p>
         <div className={styles["character-delete-field"]}>

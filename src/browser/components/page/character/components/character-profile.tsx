@@ -7,6 +7,7 @@
 import { type ReactElement } from "react"
 
 import { HStack } from "../../../../components/ui/h-stack/h-stack.tsx"
+import { Heading } from "../../../../components/ui/heading/heading.tsx"
 import { VStack } from "../../../../components/ui/v-stack/v-stack.tsx"
 import styles from "../character-screen.module.css"
 import { type CharacterProfileModel } from "../hooks/use-character-edit.ts"
@@ -32,7 +33,15 @@ export function CharacterProfile(props: { readonly profile: CharacterProfileMode
         className={styles["character-profile-text"] ?? ""}
       >
         <div className={styles["character-profile-headline"]}>
-          <h1 className={styles["character-profile-name"]}>{profile.name}</h1>
+          <Heading
+            level={1}
+            size="heading"
+            tone="inherit"
+            weight="bold"
+            className={styles["character-profile-name"] ?? ""}
+          >
+            {profile.name}
+          </Heading>
           <span className={styles["character-profile-id"]}>id: {profile.id}</span>
           {profile.inUse ? <span className={styles["character-in-use"]}>使用中</span> : null}
         </div>

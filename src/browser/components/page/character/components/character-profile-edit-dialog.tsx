@@ -15,6 +15,7 @@ import {
   MAX_CHARACTER_NAME_LENGTH,
   MAX_CHARACTER_TAGLINE_LENGTH,
 } from "../../../../../shared/character-definition.ts"
+import { Heading } from "../../../../components/ui/heading/heading.tsx"
 import { useModalDialog } from "../../../../hooks/use-modal-dialog.ts"
 import styles from "../character-screen.module.css"
 
@@ -59,7 +60,15 @@ export function CharacterProfileEditDialog(props: CharacterProfileEditDialogProp
       onClick={onDialogClick}
     >
       <div className={styles["character-create-body"]}>
-        <h2 className={styles["character-create-heading"]}>名前とプロフィール</h2>
+        <Heading
+          level={2}
+          size="heading"
+          tone="inherit"
+          weight="bold"
+          className={styles["character-create-heading"] ?? ""}
+        >
+          名前とプロフィール
+        </Heading>
         <div className={styles["character-create-field"]}>
           <label className={styles["character-create-label"]} htmlFor="character-profile-edit-name">
             名前

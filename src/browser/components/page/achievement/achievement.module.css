@@ -14,13 +14,6 @@
   margin: 0 auto;
   padding: 0 0.25rem 2rem;
 }
-.achievement-title {
-  margin: 0;
-  color: var(--ink);
-  font-size: var(--font-heading);
-  font-weight: normal;
-}
-
 /* どれも読むだけの1行のお知らせ（空の日・main が読めない・取れなかった。13.10
    「空の日・数えられないとき」）。 */
 .achievement-note {
@@ -230,12 +223,6 @@
   background: var(--surface);
   min-width: 0;
 }
-.achievement-card-label {
-  margin: 0;
-  color: var(--ink-quiet);
-  font-size: var(--font-label);
-  font-weight: normal;
-}
 .achievement-card-value {
   margin: 0;
   color: var(--ink);
@@ -323,12 +310,6 @@
   flex-direction: column;
   gap: 0.75rem;
 }
-.achievement-surprise-heading {
-  margin: 0;
-  font-size: var(--font-subheading);
-  font-weight: 700;
-  color: var(--ink);
-}
 .achievement-surprise-note {
   margin-left: 0.6rem;
   font-size: var(--font-secondary);
@@ -398,13 +379,7 @@
   border-radius: 1rem;
   background: var(--surface);
 }
-/* 並べ・間隔（`gap="md"`）・揃え・折り返しは `HStack` が持つ。 */
-.achievement-calendar-title {
-  margin: 0;
-  font-size: var(--font-subheading);
-  font-weight: 700;
-  color: var(--ink);
-}
+/* 並べ・間隔（`gap="md"`）・揃え・折り返しは `HStack` が持つ。字の段・色・太さは `Heading` が持つ。 */
 .achievement-calendar-note {
   margin-left: 0.6rem;
   font-size: var(--font-secondary);
@@ -849,11 +824,10 @@
 .diary-book-toc-month {
   margin-bottom: 1rem;
 }
+/* 字の段・色・太さは `Heading`（size="subheading" tone="ink" weight="bold"）が持つ。margin だけ
+   ここに残す（既定の 0 と違うため）。 */
 .diary-book-toc-heading {
   margin: 0 0 0.4rem;
-  font-size: var(--font-subheading);
-  font-weight: 700;
-  color: var(--ink);
 }
 .diary-book-toc-list {
   list-style: none;

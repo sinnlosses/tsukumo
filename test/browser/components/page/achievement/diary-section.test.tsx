@@ -183,7 +183,7 @@ describe("DiarySection", () => {
   it("数の札は「終えたタスク」→「コミット」の順で並ぶ", () => {
     renderSection({ view: READY_WITH_DIARY })
 
-    const labels = [...document.querySelectorAll(".achievement-card-label")].map(
+    const labels = [...document.querySelectorAll(".achievement-card h3")].map(
       (node) => node.textContent,
     )
     expect(labels).toEqual(["終えたタスク", "コミット"])

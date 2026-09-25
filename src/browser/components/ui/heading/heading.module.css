@@ -1,0 +1,6 @@
+/* 見出しの既定 margin: 0。**呼び出し側の class（margin を持つもの）が常に勝つ**よう
+   :where() に書く（`ui/text/text.module.css` と同じ扱い）。字の段・色・太さの規則は
+   `text.module.css` 側にあり、ここには持たない（対応表を二重に持たない）。 */
+:where(.heading) {
+  margin: 0;
+}

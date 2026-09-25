@@ -7,6 +7,7 @@ import { type ReactElement } from "react"
 import { type AchievementDoneTasks } from "../../../../shared/achievement.ts"
 import { DIARY_STAGES, type DiaryStage } from "../../../../shared/diary.ts"
 import { Portrait } from "../../../components/domain/portrait.tsx"
+import { Heading } from "../../../components/ui/heading/heading.tsx"
 import { useReportReveal } from "../../../domain/reveal/use-report-reveal.ts"
 import styles from "./achievement.module.css"
 import { type DiaryWriterPortrait } from "./diary-writer.ts"
@@ -239,7 +240,9 @@ function Card(props: {
 }): ReactElement {
   return (
     <section className={styles["achievement-card"]}>
-      <h3 className={styles["achievement-card-label"]}>{props.label}</h3>
+      <Heading level={3} size="label" tone="ink-quiet" weight="normal" className="">
+        {props.label}
+      </Heading>
       <p className={styles["achievement-card-value"]}>{props.value}</p>
       {props.note === "" ? null : <p className={styles["achievement-card-note"]}>{props.note}</p>}
     </section>

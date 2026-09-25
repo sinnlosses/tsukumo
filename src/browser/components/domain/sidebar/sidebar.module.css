@@ -70,18 +70,15 @@
   padding: 0 1.125rem;
   font-size: var(--font-secondary);
 }
-/* 区画の見出し。太字＋ ink（13.1 原則1「見出しやツール名も文字の側」）で、本文（--font-body）と
-   カードの summary（--font-subheading）の間に埋もれない強さにする。font-size を書かないと
-   ブラウザ既定の h2（親の 1.5em）に落ちる。 */
-.sidebar-block h2 {
+/* 区画の見出し（`Heading`。size="subheading" tone="ink" weight="bold"——本文（--font-body）と
+   カードの summary（--font-subheading）の間に埋もれない強さにする。13.1 原則1「見出しやツール名も
+   文字の側」）。ここに残すのは置き方だけ（横並び・間隔・margin）。 */
+.sidebar-block-heading {
   display: flex;
   align-items: baseline;
   gap: 0.4rem;
   flex: 0 0 auto;
   margin: 0 0 0.75rem;
-  font-size: var(--font-subheading);
-  font-weight: 700;
-  color: var(--ink);
 }
 .sidebar-block p {
   margin: 0.2rem 0;

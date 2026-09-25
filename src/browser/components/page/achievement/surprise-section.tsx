@@ -7,6 +7,7 @@ import {
   type AchievementGraduation,
   type AchievementMilestone,
 } from "../../../../shared/achievement.ts"
+import { Heading } from "../../../components/ui/heading/heading.tsx"
 import styles from "./achievement.module.css"
 
 export type SurpriseSectionProps = {
@@ -21,10 +22,10 @@ export function SurpriseSection(props: SurpriseSectionProps): ReactElement | nul
 
   return (
     <section aria-label="小さな驚き" className={styles["achievement-surprise"]}>
-      <h2 className={styles["achievement-surprise-heading"]}>
+      <Heading level={2} size="subheading" tone="ink" weight="bold" className="">
         小さな驚き
         <span className={styles["achievement-surprise-note"]}>この日に起きた特別なこと</span>
-      </h2>
+      </Heading>
       <div className={styles["achievement-surprise-cards"]}>
         {props.graduations.map((graduation) => (
           <GraduationCard key={graduation.id} graduation={graduation} />
