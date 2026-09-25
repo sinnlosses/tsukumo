@@ -56,18 +56,6 @@ const CHAT_RECENT_PREFACE =
   "続きとして踏まえてよいが、読み上げたり引用したりしない。"
 
 /**
- * 旗の付いたやり取りの前置き。**直近と別の節に分けてある**ので、ここで断るのは
- * **時系列が続いていないこと**（直近より前で、間に抜けた会話がある）だけでよい
- * （`docs/chat-mode.md` 4.9「残すと決めた1往復は窓から落とさない」）。日付の見出しは
- * 直近と同じ形で挟むので、いつごろの話かはそれで読める。
- */
-const CHAT_KEPT_PREFACE =
-  "## 残すと決めた雑談（そのままの文面）\n\n" +
-  "以下はあなた自身が `keep` で「残す」と決めた、過去の雑談のやり取りそのもの（要約ではない）。" +
-  "**下の「直近の雑談」より前のもので、間には残っていない会話がある**（続きとして読まない）。" +
-  "話者の見分け方と日付の見出しは下と同じ。踏まえてよいが、読み上げたり引用したりしない。"
-
-/**
  * `recall` が当たったときの前置き（`docs/chat-mode.md` 4.9「古い雑談は索引を引いて思い出す」）。
  * **逐語は渡さない**——`id` / `title` / `gist` の一覧だけで、開くには `recall_episode` が要る
  * ことをここで断る。
@@ -127,15 +115,14 @@ export type ChatMemorySources = {
   /** これから起こすキャラクターパックの名前。 */
   readonly packName: string
   /**
-   * 逐語で読み戻す量（バイト。`CHAT_MEMORY_BUDGET.recentBytes` と `CHAT_KEPT_READBACK_BYTES`）。
+   * 逐語で読み戻す量（バイト。`CHAT_MEMORY_BUDGET.recentBytes`）。
    */
   readonly readbackLimits: ChatReadbackLimits
 }
 
 /**
  * `systemPrompt` に足す、雑談の記憶ぶんの文面（載せないときは空。**古い→新しいの順**で、
- * 要約・旗の付いたやり取り・直近の逐語の3つ）。**旗のぶんを間に置くのは、直近より前だから**
- * （要約とどちらが古いかは決まらないが、逐語どうしの前後は決まる）。
+ * 要約・直近の逐語の2つ）。
  *
  * **載せる条件は2つで、どちらかに当たれば載せる**（`docs/design.md` 7章。**要約と逐語に共通**）:
  *
@@ -162,12 +149,10 @@ export function takeChatMemoryPromptParts(sources: ChatMemorySources): readonly 
   }
 
   const summary = record === undefined || record.summary === "" ? undefined : record.summary
-  const readback = sources.chatArchive.readRecent(sources.packName, sources.readbackLimits)
-  const kept = verbatimPart(CHAT_KEPT_PREFACE, readback.kept)
-  const recent = verbatimPart(CHAT_RECENT_PREFACE, readback.recent)
+  const entries = sources.chatArchive.readRecent(sources.packName, sources.readbackLimits)
+  const recent = verbatimPart(CHAT_RECENT_PREFACE, entries)
   const parts = [
     ...(summary === undefined ? [] : [`${CHAT_SUMMARY_PREFACE}\n\n${summary}`]),
-    ...(kept === undefined ? [] : [kept]),
     ...(recent === undefined ? [] : [recent]),
   ]
   if (parts.length === 0) {
@@ -233,8 +218,8 @@ function candidateListPart(candidates: readonly ChatEpisodeCandidate[]): string 
  * **並べ替えない** — `entries` は `readRecent` が返した順のまま並べるだけで、中身を読んで
  * 落としたり並べ替えたりしない。
  *
- * **旗の付いたぶんと直近で同じ組み立てを使う**（違うのは前置きだけ。並べ方が節によって
- * 変わると、読む側が話者の印と見出しを2通り覚えることになる）。
+ * **直近の窓と `recall_episode` の開いた1件で同じ組み立てを使う**（違うのは前置きだけ。
+ * 並べ方が節によって変わると、読む側が話者の印と見出しを2通り覚えることになる）。
  */
 function verbatimPart(
   preface: string,

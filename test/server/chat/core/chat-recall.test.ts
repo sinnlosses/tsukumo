@@ -41,7 +41,7 @@ function fakeChatArchive(): ChatArchive & {
   const recallEpisodeCalls: unknown[] = []
   return {
     append: () => {},
-    readRecent: () => ({ kept: [], recent: [] }),
+    readRecent: () => [],
     unconsolidated: () => ({ entries: [], usedBytes: 0, previousEpisodeTitle: "" }),
     appendEpisodes: () => {},
     recallList: (packName, keyword, limitBytes, now) => {

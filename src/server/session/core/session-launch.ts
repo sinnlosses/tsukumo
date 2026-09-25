@@ -100,7 +100,7 @@ export type SessionLaunchPorts<Pack extends NamedCharacterPack> = {
   readonly characterEvent: (pack: Pack) => SessionEvent
   /**
    * そのパックの雑談の要約の写しから、最近の話題の見出しを読む（写しがまだ無い・取り出せない
-   * ときは空。取り出し方は `src/server/chat/core/chat-compact.ts` の `readChatTopics`）。
+   * ときは空。取り出し方は `src/server/chat/core/chat-consolidation.ts` の `readChatTopics`）。
    * **雑談で起こすときだけ呼ばれる。**
    */
   readonly readChatTopics: (pack: Pack) => readonly string[]

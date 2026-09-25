@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from "bun:test"
 import {
-  appendFileSync,
   existsSync,
   mkdirSync,
   mkdtempSync,
@@ -241,11 +240,10 @@ describe("createChatArchive の readRecent", () => {
   // フィクスチャは手で書いた架空の文面だけ。1行12バイト（全角4文字）に揃えてあるので、
   // 上限（バイト）と落ちる件数の対応が読める。
   const TWELVE_BYTES = "あいうえ"
-  const LIMIT_ALL: ChatReadbackLimits = { recentBytes: 1024, keptBytes: 1024 }
+  const LIMIT_ALL: ChatReadbackLimits = { recentBytes: 1024 }
 
-  /** 窓の広さだけを変える（旗のぶんは使い切れないほど広いまま）。 */
   function withRecentBytes(recentBytes: number): ChatReadbackLimits {
-    return { recentBytes, keptBytes: 1024 }
+    return { recentBytes }
   }
 
   /** 生の1行を書く（壊れた行を置くため。`append` を通さない）。 */
@@ -270,13 +268,10 @@ describe("createChatArchive の readRecent", () => {
       expression: "proud",
     })
 
-    expect(chatArchive.readRecent("fictional-pack", LIMIT_ALL)).toEqual({
-      kept: [],
-      recent: [
-        { speaker: "user", text: "20日の依頼", date: "2026-09-20" },
-        { speaker: "character", text: "21日のセリフ", date: "2026-09-21" },
-      ],
-    })
+    expect(chatArchive.readRecent("fictional-pack", LIMIT_ALL)).toEqual([
+      { speaker: "user", text: "20日の依頼", date: "2026-09-20" },
+      { speaker: "character", text: "21日のセリフ", date: "2026-09-21" },
+    ])
   })
 
   it("上限を超えたぶんは古い側から落ちる", () => {
@@ -293,7 +288,7 @@ describe("createChatArchive の readRecent", () => {
 
     // 新しい2件ぶん（"まんなか" 24 バイト + "いちばん新しい" 21 バイト）だけが収まる上限。
     const limit = Buffer.byteLength("まんなか") + Buffer.byteLength("いちばん新しい")
-    const { recent } = chatArchive.readRecent("fictional-pack", withRecentBytes(limit))
+    const recent = chatArchive.readRecent("fictional-pack", withRecentBytes(limit))
 
     expect(recent.map((entry) => entry.text)).toEqual(["まんなか", "いちばん新しい"])
   })
@@ -315,7 +310,7 @@ describe("createChatArchive の readRecent", () => {
     })
 
     // 1件（12バイト）は収まるが、2件目の途中までしか入らない上限。
-    const { recent } = chatArchive.readRecent("fictional-pack", withRecentBytes(13))
+    const recent = chatArchive.readRecent("fictional-pack", withRecentBytes(13))
 
     expect(recent.map((entry) => entry.text)).toEqual(["かきくけ"])
     // 途中で切られた断片が混ざらない。
@@ -331,10 +326,7 @@ describe("createChatArchive の readRecent", () => {
       images: undefined,
     })
 
-    expect(chatArchive.readRecent("fictional-pack", withRecentBytes(5))).toEqual({
-      kept: [],
-      recent: [],
-    })
+    expect(chatArchive.readRecent("fictional-pack", withRecentBytes(5))).toEqual([])
   })
 
   it("表情も画像の枚数も返さない（話者の別・文面・日付だけ）", () => {
@@ -348,7 +340,7 @@ describe("createChatArchive の readRecent", () => {
       expression: "proud",
     })
 
-    const { recent } = chatArchive.readRecent("fictional-pack", LIMIT_ALL)
+    const recent = chatArchive.readRecent("fictional-pack", LIMIT_ALL)
 
     expect(recent).toEqual([
       { speaker: "user", text: REQUEST_TEXT, date: "2026-09-21" },
@@ -372,10 +364,9 @@ describe("createChatArchive の readRecent", () => {
     ])
     const chatArchive = createChatArchive(root())
 
-    expect(chatArchive.readRecent("fictional-pack", LIMIT_ALL)).toEqual({
-      kept: [],
-      recent: [{ speaker: "user", text: "読める行", date: "2026-09-21" }],
-    })
+    expect(chatArchive.readRecent("fictional-pack", LIMIT_ALL)).toEqual([
+      { speaker: "user", text: "読める行", date: "2026-09-21" },
+    ])
   })
 
   it("日付のファイル名でないものは読まない", () => {
@@ -389,14 +380,14 @@ describe("createChatArchive の readRecent", () => {
     ])
     const chatArchive = createChatArchive(root())
 
-    expect(chatArchive.readRecent("fictional-pack", LIMIT_ALL)).toEqual({ kept: [], recent: [] })
+    expect(chatArchive.readRecent("fictional-pack", LIMIT_ALL)).toEqual([])
   })
 
   it("アーカイブがまだ無い・isCharacterPackName を通らない名前のときは空", () => {
     const chatArchive = createChatArchive(root())
 
-    expect(chatArchive.readRecent("fictional-pack", LIMIT_ALL)).toEqual({ kept: [], recent: [] })
-    expect(chatArchive.readRecent("../evil", LIMIT_ALL)).toEqual({ kept: [], recent: [] })
+    expect(chatArchive.readRecent("fictional-pack", LIMIT_ALL)).toEqual([])
+    expect(chatArchive.readRecent("../evil", LIMIT_ALL)).toEqual([])
   })
 
   it("別のパックの会話は混ざらない", () => {
@@ -405,179 +396,9 @@ describe("createChatArchive の readRecent", () => {
     chatArchive.append("pack-a", { speaker: "user", at, text: "pack-a の依頼", images: undefined })
     chatArchive.append("pack-b", { speaker: "user", at, text: "pack-b の依頼", images: undefined })
 
-    expect(chatArchive.readRecent("pack-a", LIMIT_ALL).recent.map((entry) => entry.text)).toEqual([
+    expect(chatArchive.readRecent("pack-a", LIMIT_ALL).map((entry) => entry.text)).toEqual([
       "pack-a の依頼",
     ])
-  })
-})
-
-describe("createChatArchive の readRecent（旗の読み戻し）", () => {
-  // **`keep` ツールは無くなった**（`docs/chat-mode.md` 4.9「窓から溢れた会話は定着で畳む」の
-  // 「「残す」旗はやめる」）ので、旗はツールの口ではなく `kept.jsonl` へ直接フィクスチャを
-  // 置いて用意する。`readRecent` が旗を読む側の挙動だけがここに残る（書く側は消えた）。
-  // フィクスチャは手で書いた架空の文面だけ（実物の会話は使わない）。
-  const KEEP_ALL: ChatReadbackLimits = { recentBytes: 1024, keptBytes: 1024 }
-
-  /** 索引の置き場（パックごとに1つ）。 */
-  function keptIndexPath(): string {
-    return join(root(), "fictional-pack", "kept.jsonl")
-  }
-
-  /** その日の正午から `seconds` 秒後（ターンごとに時刻をずらすため）。 */
-  function afterNoon(day: number, seconds: number): number {
-    return Temporal.ZonedDateTime.from({
-      year: 2026,
-      month: 9,
-      day,
-      hour: 12,
-      minute: 0,
-      second: seconds,
-      timeZone: Temporal.Now.timeZoneId(),
-    }).epochMilliseconds
-  }
-
-  /** その日のファイルに書いた最後の行の `at`（ISO）。 */
-  function lastWrittenAt(day: number): string {
-    const lines = readLines(
-      join(root(), "fictional-pack", `2026-09-${String(day).padStart(2, "0")}.jsonl`),
-    ) as { at: string }[]
-    const last = lines.at(-1)
-    if (last === undefined) {
-      throw new Error("行が書かれていない")
-    }
-    return last.at
-  }
-
-  /** 旗のフィクスチャを1行、`kept.jsonl` へ直接足す（`keep` ツールの代わり）。 */
-  function markKept(at: string): void {
-    appendFileSync(keptIndexPath(), `${JSON.stringify({ v: 1, at, pack: "fictional-pack" })}\n`)
-  }
-
-  it("窓を使い切っても、旗の付いた件は読み戻しに入る", () => {
-    const chatArchive = createChatArchive(root())
-    chatArchive.append("fictional-pack", {
-      speaker: "user",
-      at: afterNoon(19, 0),
-      text: "残したい古い話",
-      images: undefined,
-    })
-    markKept(lastWrittenAt(19))
-    chatArchive.append("fictional-pack", {
-      speaker: "user",
-      at: afterNoon(20, 0),
-      text: "その場で済む話",
-      images: undefined,
-    })
-    chatArchive.append("fictional-pack", {
-      speaker: "user",
-      at: afterNoon(21, 0),
-      text: "いちばん新しい話",
-      images: undefined,
-    })
-
-    // 窓にはいちばん新しい1件しか入らない広さ。
-    const limits: ChatReadbackLimits = {
-      recentBytes: Buffer.byteLength("いちばん新しい話"),
-      keptBytes: 1024,
-    }
-    const { kept, recent } = chatArchive.readRecent("fictional-pack", limits)
-
-    expect(recent.map((entry) => entry.text)).toEqual(["いちばん新しい話"])
-    expect(kept).toEqual([{ speaker: "user", text: "残したい古い話", date: "2026-09-19" }])
-  })
-
-  it("窓に入っている件は、旗のぶんに重ねない", () => {
-    const chatArchive = createChatArchive(root())
-    chatArchive.append("fictional-pack", {
-      speaker: "user",
-      at: afterNoon(20, 0),
-      text: "その場で済む話",
-      images: undefined,
-    })
-    chatArchive.append("fictional-pack", {
-      speaker: "user",
-      at: afterNoon(21, 0),
-      text: "残したい新しい話",
-      images: undefined,
-    })
-    markKept(lastWrittenAt(21))
-
-    const { kept, recent } = chatArchive.readRecent("fictional-pack", KEEP_ALL)
-
-    expect(recent.map((entry) => entry.text)).toEqual(["その場で済む話", "残したい新しい話"])
-    expect(kept).toEqual([])
-  })
-
-  it("旗が増え続けても、旗のぶんは決めた上限を超えない（古い旗から落ちる）", () => {
-    const chatArchive = createChatArchive(root())
-    // 同じ長さ（22バイト）の架空の文面を5ターンぶん、全部に旗を立てる。
-    const texts = [1, 2, 3, 4, 5].map((index) => `残したい話その${index}`)
-    for (const [index, text] of texts.entries()) {
-      const day = 17 + index
-      chatArchive.append("fictional-pack", {
-        speaker: "user",
-        at: afterNoon(day, 0),
-        text,
-        images: undefined,
-      })
-      markKept(lastWrittenAt(day))
-    }
-
-    // 窓は0バイト（5件とも窓の外）、旗のぶんは2件ぶんだけ。
-    const keptBytes = Buffer.byteLength("残したい話その4") + Buffer.byteLength("残したい話その5")
-    const { kept } = chatArchive.readRecent("fictional-pack", { recentBytes: 0, keptBytes })
-
-    expect(kept.map((entry) => entry.text)).toEqual(["残したい話その4", "残したい話その5"])
-    const usedBytes = kept.reduce((total, entry) => total + Buffer.byteLength(entry.text), 0)
-    expect(usedBytes).toBeLessThanOrEqual(keptBytes)
-  })
-
-  it("旗の無い既存の行（v: 1）はそのまま読め、索引が無くても落ちない", () => {
-    const packDir = join(root(), "fictional-pack")
-    mkdirSync(packDir, { recursive: true })
-    writeFileSync(
-      join(packDir, "2026-09-21.jsonl"),
-      `${JSON.stringify({
-        v: 1,
-        at: "2026-09-21T12:00:00+09:00",
-        pack: "fictional-pack",
-        speaker: "user",
-        text: "旗を知らないころの行",
-      })}\n`,
-    )
-    const chatArchive = createChatArchive(root())
-
-    expect(chatArchive.readRecent("fictional-pack", KEEP_ALL)).toEqual({
-      kept: [],
-      recent: [{ speaker: "user", text: "旗を知らないころの行", date: "2026-09-21" }],
-    })
-  })
-
-  it("索引が壊れている・指す行が見つからないときも、例外を投げず窓はそのまま読める", () => {
-    const chatArchive = createChatArchive(root())
-    chatArchive.append("fictional-pack", {
-      speaker: "user",
-      at: afterNoon(21, 0),
-      text: "読める行",
-      images: undefined,
-    })
-    writeFileSync(
-      keptIndexPath(),
-      [
-        "{壊れた JSON",
-        JSON.stringify({ v: 99, at: "2026-09-18T12:00:00+09:00" }),
-        // 形は正しいが、指す先の日付のファイルそのものが無い。
-        JSON.stringify({ v: 1, at: "2026-09-01T12:00:00+09:00", pack: "fictional-pack" }),
-      ]
-        .map((line) => `${line}\n`)
-        .join(""),
-    )
-
-    expect(() => chatArchive.readRecent("fictional-pack", KEEP_ALL)).not.toThrow()
-    expect(chatArchive.readRecent("fictional-pack", KEEP_ALL)).toEqual({
-      kept: [],
-      recent: [{ speaker: "user", text: "読める行", date: "2026-09-21" }],
-    })
   })
 })
 

@@ -22,10 +22,9 @@
 // 「エピソード索引はどこに置くか」）。索引を書くのは定着（`chat-consolidation-writer.ts`）で、
 // ここが持つのは置き場と形、`recallList` / `recallEpisode` での読み方だけ。
 //
-// **`kept.jsonl`（「残す」旗の索引）は書かなくなった**（`keep` ツールが無くなった。
-// `docs/chat-mode.md` 4.9「窓から溢れた会話は定着で畳む」の「「残す」旗はやめる」）。
-// **`readRecent` が読む側だけ残っている**——過去に書かれた `kept.jsonl` があれば直近の読み戻しに
-// 引き続き混ぜる。新しく増えることはもう無い（消すのは `/compact` をやめるタスク）。
+// **`kept.jsonl`（「残す」旗の索引）はもう書きも読みもしない**（`keep` ツールが無くなった。
+// `docs/chat-mode.md` 4.9「窓から溢れた会話は定着で畳む」の「「残す」旗はやめる」）。過去に
+// 書かれたファイルが残っていても消さず、単に読まない（`readRecent` は窓の逐語だけを返す）。
 
 import { rmSync } from "node:fs"
 import { join } from "node:path"
@@ -41,7 +40,6 @@ import { tsukumoHomeDir } from "../../adapter/tsukumo-home.ts"
 import {
   type ChatArchive,
   type ChatArchiveEntry,
-  type ChatArchiveReadback,
   type ChatArchiveRecentEntry,
   type ChatEpisodeCandidate,
   type ChatEpisodeDraft,
@@ -61,15 +59,8 @@ const CHAT_ARCHIVE_DIR_NAME = "chat-archive"
 const ARCHIVE_FORMAT_VERSION = 1 satisfies number
 
 /**
- * 「残す」旗の索引の名前（`docs/design.md` 7章）。**日付のファイルと同じディレクトリに置くが、
- * {@link dateFileNames} が拾う `YYYY-MM-DD.jsonl` の形を通らないので窓の側は読まない。**
- */
-const KEPT_INDEX_FILE_NAME = "kept.jsonl"
-
-/**
  * エピソード索引の名前（`docs/design.md` 7章「エピソード索引はどこに置くか」）。
- * `KEPT_INDEX_FILE_NAME` と同じく {@link dateFileNames} の形を通らないので、窓の走査には
- * 混ざらない。
+ * {@link dateFileNames} が拾う `YYYY-MM-DD.jsonl` の形を通らないので、窓の走査には混ざらない。
  */
 const EPISODE_INDEX_FILE_NAME = "episode.jsonl"
 
@@ -91,15 +82,6 @@ const archiveLineSchema = z.object({
   at: z.string().regex(/^\d{4}-\d{2}-\d{2}T/),
   speaker: z.enum(["user", "character"]),
   text: z.string(),
-})
-
-/**
- * 索引の1行。**照合に使うのは `at` だけ**（`pack` は行だけで意味が決まるように書いてあるが、
- * 置き場所で既に決まっているので読まない）。
- */
-const keptLineSchema = z.object({
-  v: z.literal(ARCHIVE_FORMAT_VERSION),
-  at: z.string().regex(/^\d{4}-\d{2}-\d{2}T/),
 })
 
 /** エピソード索引の1行（`docs/design.md` 7章の表）。読めない行・知らない版は飛ばす。 */
@@ -232,26 +214,19 @@ function toArchiveRecord(packName: string, entry: ChatArchiveEntry): ArchiveReco
 }
 
 /**
- * 直近の窓と、旗の付いたやり取りを1度に読む（{@link ChatArchive.readRecent} の実装）。
- *
- * **窓を先に決め、旗のほうは窓に入らなかった件だけを足す。** 順序が逆だと、旗の付いた件が
- * 窓の中にも外にも出て二重になる。
+ * 直近の窓を読む（{@link ChatArchive.readRecent} の実装）。
  */
 function readReadback(
   root: string,
   packName: string,
   limits: ChatReadbackLimits,
-): ChatArchiveReadback {
+): readonly ChatArchiveRecentEntry[] {
   if (!isCharacterPackName(packName)) {
-    return { kept: [], recent: [] }
+    return []
   }
 
   const dir = join(root, packName)
-  const recent = readRecentEntries(dir, limits.recentBytes)
-  return {
-    kept: readKeptEntries(dir, limits.keptBytes, new Set(recent.map(entryKey))),
-    recent: recent.map((timed) => timed.entry),
-  }
+  return readRecentEntries(dir, limits.recentBytes).map((timed) => timed.entry)
 }
 
 /**
@@ -305,74 +280,6 @@ function readEntriesBackward(
   }
 
   return [...collected].reverse()
-}
-
-/**
- * 旗の付いた行のうち、**窓に入らなかったもの**を新しいほうから集める（返すのは古い→新しいの
- * 順）。`taken` は窓に入った件の鍵で、ここに載っている件は飛ばす（**数にも入れない**）。
- *
- * **索引は時刻しか持たない**ので、指された日付のファイルを開いて文面を取りに行く。開くのは
- * **旗の立った日だけ**で、しかも `limitBytes` が埋まったところで止まるため、旗が何年ぶん
- * 増えても開くファイルの数は上限で頭打ちになる。
- *
- * **切り方は窓と同じ**（1件を単位にし、溢れる1件は載せない。そこで止める）。**同じ秒に
- * 書かれた行は区別しない** — 索引が指すのは「その秒に書いた行」で、隣の1件が一緒に載ることは
- * ありうる（足りないより多いほうへ倒す）。
- */
-function readKeptEntries(
-  dir: string,
-  limitBytes: number,
-  taken: ReadonlySet<string>,
-): readonly ChatArchiveRecentEntry[] {
-  const marks = readKeptMarks(join(dir, KEPT_INDEX_FILE_NAME))
-  if (marks.size === 0) {
-    return []
-  }
-
-  const seen = new Set(taken)
-  const collected: ChatArchiveRecentEntry[] = []
-  let usedBytes = 0
-  for (const date of newestFirstMarkedDates(marks)) {
-    let reachedLimit = false
-    for (const raw of [...readJsonLines(join(dir, `${date}.jsonl`))].reverse()) {
-      const timed = toTimedEntry(raw)
-      if (timed === undefined || !marks.has(timed.at) || seen.has(entryKey(timed))) {
-        continue
-      }
-      const bytes = byteLength(timed.entry.text)
-      if (usedBytes + bytes > limitBytes) {
-        reachedLimit = true
-        break
-      }
-      seen.add(entryKey(timed))
-      collected.push(timed.entry)
-      usedBytes += bytes
-    }
-    if (reachedLimit) {
-      break
-    }
-  }
-
-  return [...collected].reverse()
-}
-
-/** 索引が指している時刻（読めない行・知らない版は落とす。索引が無いときは空）。 */
-function readKeptMarks(path: string): ReadonlySet<string> {
-  const marks = readJsonLines(path).flatMap((raw) => {
-    const record = keptLineSchema.safeParse(raw)
-    return record.success ? [record.data.at] : []
-  })
-  return new Set(marks)
-}
-
-/** 旗の立った日付を新しい順に並べる（開くファイルをそこだけに絞る）。 */
-function newestFirstMarkedDates(marks: ReadonlySet<string>): readonly string[] {
-  return [...new Set([...marks].map((at) => at.slice(0, 10)))].sort().reverse()
-}
-
-/** 同じ1行を指す鍵（窓と旗で同じ件を二重に載せないため）。 */
-function entryKey(timed: TimedEntry): string {
-  return `${timed.at}\u0000${timed.entry.speaker}\u0000${timed.entry.text}`
 }
 
 /** 日付のファイル名だけを新しい順に並べる（読めないディレクトリは空）。 */

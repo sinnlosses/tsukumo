@@ -43,7 +43,6 @@ import { VISIT_TIMING } from "../../../../src/server/visit/core/visit-timing.ts"
 import { type VisitPorts } from "../../../../src/server/visit/core/visit-watch.ts"
 import { type DailyAchievement } from "../../../../src/shared/achievement.ts"
 import { type VisitScript } from "../../../../src/shared/character-visit.ts"
-import { CHAT_COMPACT_THRESHOLD_BYTES } from "../../../../src/shared/chat-log.ts"
 import {
   type ContextUsageReport,
   UNAVAILABLE_CONTEXT_USAGE,
@@ -87,7 +86,7 @@ const BATCH_MS = 5
 /** 雑談の会話のアーカイブを気にしないテストに渡す、何もしない書き込み口。 */
 const NOOP_CHAT_ARCHIVE: ChatArchive = {
   append: () => {},
-  readRecent: () => ({ kept: [], recent: [] }),
+  readRecent: () => [],
   unconsolidated: () => ({ entries: [], usedBytes: 0, previousEpisodeTitle: "" }),
   appendEpisodes: () => {},
   recallList: () => ({ kind: "not-found" }),
@@ -302,7 +301,6 @@ function startManagerWithStub(
     },
     readAchievementDay,
     batchIntervalMs: BATCH_MS,
-    chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
     chatConsolidation: NO_CHAT_CONSOLIDATION,
     visit: NO_VISIT_PORTS,
     diary,
@@ -472,7 +470,6 @@ describe("createSessionManager", () => {
       openFile: () => Promise.resolve(true),
       readAchievementDay: () => Promise.resolve(undefined),
       batchIntervalMs: BATCH_MS,
-      chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
       chatConsolidation: NO_CHAT_CONSOLIDATION,
       visit: NO_VISIT_PORTS,
       diary: NO_DIARY_WRITER,
@@ -587,7 +584,6 @@ describe("createSessionManager", () => {
       openFile: () => Promise.resolve(true),
       readAchievementDay: () => Promise.resolve(undefined),
       batchIntervalMs: BATCH_MS,
-      chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
       chatConsolidation: NO_CHAT_CONSOLIDATION,
       visit: NO_VISIT_PORTS,
       diary: NO_DIARY_WRITER,
@@ -665,7 +661,6 @@ describe("createSessionManager", () => {
       openFile: () => Promise.resolve(true),
       readAchievementDay: () => Promise.resolve(undefined),
       batchIntervalMs: BATCH_MS,
-      chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
       chatConsolidation: NO_CHAT_CONSOLIDATION,
       visit: NO_VISIT_PORTS,
       diary: NO_DIARY_WRITER,
@@ -722,7 +717,6 @@ describe("createSessionManager", () => {
       openFile: () => Promise.resolve(true),
       readAchievementDay: () => Promise.resolve(undefined),
       batchIntervalMs: BATCH_MS,
-      chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
       chatConsolidation: NO_CHAT_CONSOLIDATION,
       visit: NO_VISIT_PORTS,
       diary: NO_DIARY_WRITER,
@@ -782,7 +776,6 @@ describe("createSessionManager", () => {
       openFile: () => Promise.resolve(true),
       readAchievementDay: () => Promise.resolve(undefined),
       batchIntervalMs: BATCH_MS,
-      chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
       chatConsolidation: NO_CHAT_CONSOLIDATION,
       visit: NO_VISIT_PORTS,
       diary: NO_DIARY_WRITER,
@@ -847,7 +840,6 @@ describe("createSessionManager", () => {
       openFile: () => Promise.resolve(true),
       readAchievementDay: () => Promise.resolve(undefined),
       batchIntervalMs: BATCH_MS,
-      chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
       chatConsolidation: NO_CHAT_CONSOLIDATION,
       visit: NO_VISIT_PORTS,
       diary: NO_DIARY_WRITER,
@@ -1110,30 +1102,8 @@ describe("createSessionManager", () => {
     })
   })
 
-  describe("雑談の記憶の圧縮", () => {
-    // 本番の閾値（128 KiB）だと架空の短い文面では届かないので、**`SessionManagerOptions` の
-    // フィールドに小さい閾値を渡して**テストする（`batchIntervalMs` と同じ形。
-    // docs/chat-mode.md 4.9）。
-    const TINY_THRESHOLD_BYTES = 10
-
-    /** 追記された内容を覚える、テスト用の雑談の会話のアーカイブ。 */
-    function createCapturingChatArchive(): ChatArchive & { readonly entries: ChatArchiveEntry[] } {
-      const entries: ChatArchiveEntry[] = []
-      return {
-        entries,
-        append: (_packName, entry) => {
-          entries.push(entry)
-        },
-        readRecent: () => ({ kept: [], recent: [] }),
-        unconsolidated: () => ({ entries: [], usedBytes: 0, previousEpisodeTitle: "" }),
-        appendEpisodes: () => {},
-        recallList: () => ({ kind: "not-found" }),
-        recallEpisode: () => ({ kind: "not-found" }),
-      }
-    }
-
+  describe("定着", () => {
     function startChatManagerWithStub(
-      thresholdBytes: number,
       archive: ChatArchive = NOOP_CHAT_ARCHIVE,
       chatConsolidation: ChatConsolidationSource = NO_CHAT_CONSOLIDATION,
     ) {
@@ -1143,7 +1113,6 @@ describe("createSessionManager", () => {
         openFile: () => Promise.resolve(true),
         readAchievementDay: () => Promise.resolve(undefined),
         batchIntervalMs: BATCH_MS,
-        chatCompactThresholdBytes: thresholdBytes,
         chatConsolidation,
         visit: NO_VISIT_PORTS,
         diary: NO_DIARY_WRITER,
@@ -1177,255 +1146,108 @@ describe("createSessionManager", () => {
       return { manager, stub }
     }
 
-    it("閾値を超えたターンの終わりに /compact を1回だけ、記録に残さない口で送る", async () => {
-      const { stub } = startChatManagerWithStub(TINY_THRESHOLD_BYTES)
-      // 駆動が起き上がる（`live` が入る）のを待ってから、雑談へ入って往復する。
-      await waitForBatch()
+    /**
+     * 呼ばれたパック名と信号を覚え、結果は**テストが手で返す**書き手（本物の `query()` は
+     * 起こさない。数える・書くのは `chat-consolidation-writer.ts` のテストが見る）。
+     */
+    function createManualConsolidation() {
+      const calls: { readonly packName: string; readonly signal: AbortSignal }[] = []
+      const pending: ((outcome: ChatConsolidationOutcome) => void)[] = []
+      const source: ChatConsolidationSource = {
+        kind: "consolidate",
+        consolidate: (packName, signal) => {
+          calls.push({ packName, signal })
+          const { promise, resolve } = Promise.withResolvers<ChatConsolidationOutcome>()
+          pending.push(resolve)
+          return promise
+        },
+      }
+      const finish = (outcome: ChatConsolidationOutcome): void => {
+        pending.shift()?.(outcome)
+      }
+      return { source, calls, finish }
+    }
 
-      stub.emit({ kind: "chat-mode-changed", chat: true })
-      stub.emit({ kind: "request", text: "架空の依頼です", images: [] })
-      stub.emit({ kind: "speech", text: "架空のセリフです", expression: "default" })
-      stub.emit({ kind: "turn-finished", outcome: { kind: "completed" } })
-      await waitForBatch()
-
-      const compactCalls = stub.calls.filter((call) =>
-        call.startsWith("promptWithoutRecord:/compact "),
+    /** 届いた `events` のうち `chat-topics-changed` だけ。 */
+    function topicEvents(frames: readonly ServerFrame[]): readonly SessionEvent[] {
+      return frames.flatMap((frame) =>
+        frame.type === "events"
+          ? frame.events
+              .map(({ event }) => event)
+              .filter((event) => event.kind === "chat-topics-changed")
+          : [],
       )
-      expect(compactCalls).toHaveLength(1)
-      // `prompt`（`request` の記録を積む口）は一度も呼ばない —
-      // 利用者が打っていない `/compact` の文面が雑談のログにもアーカイブにも並ばない
-      // （docs/chat-mode.md 4.9「記憶の圧縮と忘却」）。
-      expect(stub.calls.some((call) => call.startsWith("prompt:"))).toBe(false)
+    }
 
-      // 送ったら走行合計が0に戻るので、続けて終わっただけの次のターンでは再送しない
-      // （「投げたら数え直す」）。
-      stub.emit({ kind: "request", text: "b", images: [] })
-      stub.emit({ kind: "turn-finished", outcome: { kind: "completed" } })
-      await waitForBatch()
+    const TURN_FINISHED: SessionEvent = { kind: "turn-finished", outcome: { kind: "completed" } }
 
-      expect(
-        stub.calls.filter((call) => call.startsWith("promptWithoutRecord:/compact ")),
-      ).toHaveLength(1)
-    })
-
-    it("圧縮を送っても、雑談の会話のアーカイブに /compact の文面は積まれない", async () => {
-      const archive = createCapturingChatArchive()
-      const { stub } = startChatManagerWithStub(TINY_THRESHOLD_BYTES, archive)
-      await waitForBatch()
-
-      stub.emit(CHARACTER_EVENT)
-      stub.emit({ kind: "chat-mode-changed", chat: true })
-      stub.emit({ kind: "request", text: "架空の依頼です", images: [] })
-      stub.emit({ kind: "speech", text: "架空のセリフです", expression: "default" })
-      stub.emit({ kind: "turn-finished", outcome: { kind: "completed" } })
-      await waitForBatch()
-
-      // 圧縮は `promptWithoutRecord` で送るので `request` イベントを一切生まない
-      // （`session-driver.ts` の契約）。アーカイブへ積まれるのは実際に届いた依頼とセリフの
-      // 2件だけで、`/compact` の文面は混ざらない。
-      expect(archive.entries).toHaveLength(2)
-      expect(archive.entries.map((entry) => entry.text)).toEqual([
-        "架空の依頼です",
-        "架空のセリフです",
-      ])
-    })
-
-    it("圧縮を送っても、圧縮の区切り（compact-boundary）はいままでどおり events に乗る", async () => {
-      const { manager, stub } = startChatManagerWithStub(TINY_THRESHOLD_BYTES)
+    async function startInChat() {
+      const consolidation = createManualConsolidation()
+      const started = startChatManagerWithStub(NOOP_CHAT_ARCHIVE, consolidation.source)
       const frames: ServerFrame[] = []
-      manager.subscribe((frame) => frames.push(frame))
+      started.manager.subscribe((frame) => frames.push(frame))
       await waitForBatch()
+      started.stub.emit(CHARACTER_EVENT)
+      started.stub.emit({ kind: "chat-mode-changed", chat: true })
+      return { ...started, consolidation, frames }
+    }
 
-      stub.emit({ kind: "chat-mode-changed", chat: true })
-      stub.emit({ kind: "request", text: "架空の依頼です", images: [] })
-      stub.emit({ kind: "speech", text: "架空のセリフです", expression: "default" })
-      stub.emit({ kind: "turn-finished", outcome: { kind: "completed" } })
+    it("雑談のターンの終わりに1本だけ起こし、走っているあいだの契機は捨て、走り終えても次のターンの終わりまで起こさない", async () => {
+      const { stub, consolidation, frames } = await startInChat()
+
+      stub.emit(TURN_FINISHED)
+      expect(consolidation.calls.map((call) => call.packName)).toEqual(["fictional"])
+
+      // 走っているあいだのターンの終わりは捨てる（待ち行列にも積まない）。
+      stub.emit(TURN_FINISHED)
+      expect(consolidation.calls).toHaveLength(1)
+
+      consolidation.finish({ kind: "written", topics: ["架空の話題"] })
       await waitForBatch()
+      // 書けたら、書いたファイルから取った見出しを流す。
+      expect(topicEvents(frames)).toEqual([{ kind: "chat-topics-changed", topics: ["架空の話題"] }])
+      // 走り終えただけでは次を起こさない。
+      expect(consolidation.calls).toHaveLength(1)
 
-      expect(
-        stub.calls.filter((call) => call.startsWith("promptWithoutRecord:/compact ")),
-      ).toHaveLength(1)
-
-      // 実際に本体が圧縮した合図（SDK の `compact_boundary`）は、`/compact` の依頼文面とは
-      // 別に `sdk-message.ts` が `compact-boundary` へ変換して流す。ここでは駆動から届いたその
-      // イベントが、記録に残さない口へ差し替えたあとも変わらず events に乗ることを見る。
-      stub.emit({ kind: "compact-boundary" })
-      await waitForBatch()
-
-      const events = frames
-        .filter(
-          (frame): frame is Extract<ServerFrame, { type: "events" }> => frame.type === "events",
-        )
-        .flatMap((frame) => frame.events.map((stamped) => stamped.event))
-      expect(events).toContainEqual({ kind: "compact-boundary" })
+      stub.emit(TURN_FINISHED)
+      expect(consolidation.calls).toHaveLength(2)
     })
 
-    it("閾値を超えていなければ送らない", async () => {
-      const { stub } = startChatManagerWithStub(1_000_000)
-      await waitForBatch()
+    it("失敗しても落ちずに見出しを流さず、次のターンの終わりに拾い直す。閉じたら走っている1本を中断する", async () => {
+      const { manager, stub, consolidation, frames } = await startInChat()
 
-      stub.emit({ kind: "chat-mode-changed", chat: true })
-      stub.emit({ kind: "request", text: "架空の依頼です", images: [] })
-      stub.emit({ kind: "speech", text: "架空のセリフです", expression: "default" })
-      stub.emit({ kind: "turn-finished", outcome: { kind: "completed" } })
+      stub.emit(TURN_FINISHED)
+      consolidation.finish({ kind: "failed" })
       await waitForBatch()
+      expect(topicEvents(frames)).toEqual([])
 
-      expect(stub.calls.some((call) => call.startsWith("promptWithoutRecord:/compact "))).toBe(
-        false,
-      )
+      stub.emit(TURN_FINISHED)
+      expect(consolidation.calls).toHaveLength(2)
+      expect(consolidation.calls[1]?.signal.aborted).toBe(false)
+
+      manager.close()
+      expect(consolidation.calls[1]?.signal.aborted).toBe(true)
     })
 
-    it("仕事のモード（雑談に入っていない）では、閾値を超えていても送らない", async () => {
-      const { stub } = startChatManagerWithStub(TINY_THRESHOLD_BYTES)
+    it("書けた時点で別のパックに替わっていれば、見出しを流さない", async () => {
+      const { stub, consolidation, frames } = await startInChat()
+
+      stub.emit(TURN_FINISHED)
+      stub.emit(characterChangedEvent({ pack: "another-fictional" }))
+      consolidation.finish({ kind: "written", topics: ["架空の話題"] })
       await waitForBatch()
 
-      // chat-mode-changed を流さないので chatMode は既定の false のまま。
-      stub.emit({ kind: "request", text: "架空の依頼です", images: [] })
-      stub.emit({ kind: "speech", text: "架空のセリフです", expression: "default" })
-      stub.emit({ kind: "turn-finished", outcome: { kind: "completed" } })
-      await waitForBatch()
-
-      expect(stub.calls.some((call) => call.startsWith("promptWithoutRecord:/compact "))).toBe(
-        false,
-      )
+      expect(topicEvents(frames)).toEqual([])
     })
 
-    it("画面の窓（雑談は直近100ターン）で state.records が切り詰められたあとでも、走行合計は届く", async () => {
-      // 1ターンあたり "xxxxx"（5バイト）+ "yyyyy"（5バイト）＝10バイト。
-      // 閾値 1,200 は「窓に残る直近100ターンぶん」（1,000バイト）より大きく、
-      // 「150ターン分の総量」（1,500バイト）より小さい —
-      // `state.records`（`trimToRecentTurns` で直近100ターンに切り詰められる）から数えていたら
-      // 一生届かない値を、あえて選んでいる（`docs/chat-mode.md` 4.9）。
-      const { stub } = startChatManagerWithStub(1_200)
+    it("仕事のターンの終わりでは起こさない", async () => {
+      const consolidation = createManualConsolidation()
+      const { stub } = startChatManagerWithStub(NOOP_CHAT_ARCHIVE, consolidation.source)
       await waitForBatch()
+      stub.emit(CHARACTER_EVENT)
+      stub.emit(TURN_FINISHED)
 
-      stub.emit({ kind: "chat-mode-changed", chat: true })
-      for (let turn = 0; turn < 150; turn += 1) {
-        stub.emit({ kind: "request", text: "xxxxx", images: [] })
-        stub.emit({ kind: "speech", text: "yyyyy", expression: "default" })
-        stub.emit({ kind: "turn-finished", outcome: { kind: "completed" } })
-      }
-      await waitForBatch()
-
-      expect(
-        stub.calls.filter((call) => call.startsWith("promptWithoutRecord:/compact ")),
-      ).toHaveLength(1)
-    })
-
-    describe("定着", () => {
-      /**
-       * 呼ばれたパック名と信号を覚え、結果は**テストが手で返す**書き手（本物の `query()` は
-       * 起こさない。数える・書くのは `chat-consolidation-writer.ts` のテストが見る）。
-       */
-      function createManualConsolidation() {
-        const calls: { readonly packName: string; readonly signal: AbortSignal }[] = []
-        const pending: ((outcome: ChatConsolidationOutcome) => void)[] = []
-        const source: ChatConsolidationSource = {
-          kind: "consolidate",
-          consolidate: (packName, signal) => {
-            calls.push({ packName, signal })
-            const { promise, resolve } = Promise.withResolvers<ChatConsolidationOutcome>()
-            pending.push(resolve)
-            return promise
-          },
-        }
-        const finish = (outcome: ChatConsolidationOutcome): void => {
-          pending.shift()?.(outcome)
-        }
-        return { source, calls, finish }
-      }
-
-      /** 届いた `events` のうち `chat-topics-changed` だけ。 */
-      function topicEvents(frames: readonly ServerFrame[]): readonly SessionEvent[] {
-        return frames.flatMap((frame) =>
-          frame.type === "events"
-            ? frame.events
-                .map(({ event }) => event)
-                .filter((event) => event.kind === "chat-topics-changed")
-            : [],
-        )
-      }
-
-      const TURN_FINISHED: SessionEvent = { kind: "turn-finished", outcome: { kind: "completed" } }
-
-      async function startInChat() {
-        const consolidation = createManualConsolidation()
-        const started = startChatManagerWithStub(
-          CHAT_COMPACT_THRESHOLD_BYTES,
-          NOOP_CHAT_ARCHIVE,
-          consolidation.source,
-        )
-        const frames: ServerFrame[] = []
-        started.manager.subscribe((frame) => frames.push(frame))
-        await waitForBatch()
-        started.stub.emit(CHARACTER_EVENT)
-        started.stub.emit({ kind: "chat-mode-changed", chat: true })
-        return { ...started, consolidation, frames }
-      }
-
-      it("雑談のターンの終わりに1本だけ起こし、走っているあいだの契機は捨て、走り終えても次のターンの終わりまで起こさない", async () => {
-        const { stub, consolidation, frames } = await startInChat()
-
-        stub.emit(TURN_FINISHED)
-        expect(consolidation.calls.map((call) => call.packName)).toEqual(["fictional"])
-
-        // 走っているあいだのターンの終わりは捨てる（待ち行列にも積まない）。
-        stub.emit(TURN_FINISHED)
-        expect(consolidation.calls).toHaveLength(1)
-
-        consolidation.finish({ kind: "written", topics: ["架空の話題"] })
-        await waitForBatch()
-        // 書けたら、書いたファイルから取った見出しを流す。
-        expect(topicEvents(frames)).toEqual([
-          { kind: "chat-topics-changed", topics: ["架空の話題"] },
-        ])
-        // 走り終えただけでは次を起こさない。
-        expect(consolidation.calls).toHaveLength(1)
-
-        stub.emit(TURN_FINISHED)
-        expect(consolidation.calls).toHaveLength(2)
-      })
-
-      it("失敗しても落ちずに見出しを流さず、次のターンの終わりに拾い直す。閉じたら走っている1本を中断する", async () => {
-        const { manager, stub, consolidation, frames } = await startInChat()
-
-        stub.emit(TURN_FINISHED)
-        consolidation.finish({ kind: "failed" })
-        await waitForBatch()
-        expect(topicEvents(frames)).toEqual([])
-
-        stub.emit(TURN_FINISHED)
-        expect(consolidation.calls).toHaveLength(2)
-        expect(consolidation.calls[1]?.signal.aborted).toBe(false)
-
-        manager.close()
-        expect(consolidation.calls[1]?.signal.aborted).toBe(true)
-      })
-
-      it("書けた時点で別のパックに替わっていれば、見出しを流さない", async () => {
-        const { stub, consolidation, frames } = await startInChat()
-
-        stub.emit(TURN_FINISHED)
-        stub.emit(characterChangedEvent({ pack: "another-fictional" }))
-        consolidation.finish({ kind: "written", topics: ["架空の話題"] })
-        await waitForBatch()
-
-        expect(topicEvents(frames)).toEqual([])
-      })
-
-      it("仕事のターンの終わりでは起こさない", async () => {
-        const consolidation = createManualConsolidation()
-        const { stub } = startChatManagerWithStub(
-          CHAT_COMPACT_THRESHOLD_BYTES,
-          NOOP_CHAT_ARCHIVE,
-          consolidation.source,
-        )
-        await waitForBatch()
-        stub.emit(CHARACTER_EVENT)
-        stub.emit(TURN_FINISHED)
-
-        expect(consolidation.calls).toEqual([])
-      })
+      expect(consolidation.calls).toEqual([])
     })
   })
 
@@ -1672,7 +1494,6 @@ describe("createSessionManager", () => {
       openFile: () => Promise.resolve(true),
       readAchievementDay: () => Promise.resolve(undefined),
       batchIntervalMs: BATCH_MS,
-      chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
       chatConsolidation: NO_CHAT_CONSOLIDATION,
       visit: NO_VISIT_PORTS,
       diary: NO_DIARY_WRITER,
@@ -1726,7 +1547,6 @@ describe("createSessionManager", () => {
       openFile: () => Promise.resolve(true),
       readAchievementDay: () => Promise.resolve(undefined),
       batchIntervalMs: BATCH_MS,
-      chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
       chatConsolidation: NO_CHAT_CONSOLIDATION,
       visit: NO_VISIT_PORTS,
       diary: NO_DIARY_WRITER,
@@ -1772,7 +1592,6 @@ describe("createSessionManager", () => {
       openFile: () => Promise.resolve(true),
       readAchievementDay: () => Promise.resolve(undefined),
       batchIntervalMs: BATCH_MS,
-      chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
       chatConsolidation: NO_CHAT_CONSOLIDATION,
       visit: NO_VISIT_PORTS,
       diary: NO_DIARY_WRITER,
@@ -1849,7 +1668,7 @@ describe("createSessionManager", () => {
           archiveCalls.push({ packName, entry })
         },
         // 読み戻しは起こすときの配線（`src/session-start.ts`）が使う口で、ここは通らない。
-        readRecent: () => ({ kept: [], recent: [] }),
+        readRecent: () => [],
         unconsolidated: () => ({ entries: [], usedBytes: 0, previousEpisodeTitle: "" }),
         appendEpisodes: () => {},
         recallList: () => ({ kind: "not-found" }),
@@ -1860,7 +1679,6 @@ describe("createSessionManager", () => {
         openFile: () => Promise.resolve(true),
         readAchievementDay: () => Promise.resolve(undefined),
         batchIntervalMs: BATCH_MS,
-        chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
         chatConsolidation: NO_CHAT_CONSOLIDATION,
         visit: NO_VISIT_PORTS,
         diary: NO_DIARY_WRITER,
@@ -2067,7 +1885,6 @@ describe("createSessionManager", () => {
         openFile: () => Promise.resolve(true),
         readAchievementDay: () => Promise.resolve(undefined),
         batchIntervalMs: BATCH_MS,
-        chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
         chatConsolidation: NO_CHAT_CONSOLIDATION,
         visit: NO_VISIT_PORTS,
         diary: NO_DIARY_WRITER,
@@ -2366,7 +2183,6 @@ describe("createSessionManager", () => {
         openFile: () => Promise.resolve(true),
         readAchievementDay: () => Promise.resolve(undefined),
         batchIntervalMs: BATCH_MS,
-        chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
         chatConsolidation: NO_CHAT_CONSOLIDATION,
         visit: NO_VISIT_PORTS,
         diary: NO_DIARY_WRITER,
@@ -2586,7 +2402,6 @@ describe("依頼に添えた画像の棚", () => {
       openFile: () => Promise.resolve(true),
       readAchievementDay: () => Promise.resolve(undefined),
       batchIntervalMs: BATCH_MS,
-      chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
       chatConsolidation: NO_CHAT_CONSOLIDATION,
       visit: NO_VISIT_PORTS,
       diary: NO_DIARY_WRITER,
@@ -2764,7 +2579,6 @@ describe("createSessionManager（見直し）", () => {
       openFile: () => Promise.resolve(true),
       readAchievementDay: () => Promise.resolve(undefined),
       batchIntervalMs: BATCH_MS,
-      chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
       chatConsolidation: NO_CHAT_CONSOLIDATION,
       visit: NO_VISIT_PORTS,
       diary: NO_DIARY_WRITER,
@@ -2893,7 +2707,6 @@ describe("訪問", () => {
       openFile: () => Promise.resolve(true),
       readAchievementDay: () => Promise.resolve(undefined),
       batchIntervalMs: BATCH_MS,
-      chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
       chatConsolidation: NO_CHAT_CONSOLIDATION,
       visit: {
         timing: VISIT_TIMING,

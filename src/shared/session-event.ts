@@ -348,11 +348,11 @@ export type SessionEvent =
   | { readonly kind: "chat-mode-changed"; readonly chat: boolean }
   /**
    * 雑談のサイドバーの「最近の話題」に出す見出し（新しい順。`docs/screen-design.md` 13.7）。
-   * **雑談で起こしたときと、圧縮で要約の写しが新しくなったとき**に流れる
-   * （`src/server/session/core/session-launch.ts` と `src/server/session-driver/adapter/sdk-driver.ts`）。
+   * **雑談で起こしたときと、定着があらすじを書き直したとき**に流れる
+   * （`src/server/session/core/session-launch.ts` と `src/server/session/core/session-manager.ts`）。
    *
    * **運ぶのは写しから取り出した見出しだけ**で、要約の本文は乗らない（`docs/requirements.md`
-   * 4.9。取り出すのは `src/server/chat/core/chat-compact.ts` の `chatTopics`）。取り出せなかった・
+   * 4.9。取り出すのは `src/server/chat/core/chat-consolidation.ts` の `chatTopics`）。取り出せなかった・
    * 写しがまだ無いときは空の並び。
    */
   | { readonly kind: "chat-topics-changed"; readonly topics: readonly string[] }

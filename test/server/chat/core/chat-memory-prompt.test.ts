@@ -12,7 +12,6 @@ import {
   type ChatSummary,
   type ChatSummaryRecord,
 } from "../../../../src/server/session-driver/core/session-driver.ts"
-import { CHAT_KEPT_READBACK_BYTES } from "../../../../src/shared/chat-log.ts"
 import { CHAT_MEMORY_BUDGET } from "../../../../src/shared/chat-memory-budget.ts"
 
 // フィクスチャは手で書いた架空の要約・会話だけ（実物の会話は使わない。
@@ -24,10 +23,7 @@ const RECENT: readonly ChatArchiveRecentEntry[] = [
 ]
 
 const PACK_NAME = "fictional-pack"
-const LIMITS: ChatReadbackLimits = {
-  recentBytes: CHAT_MEMORY_BUDGET.recentBytes,
-  keptBytes: CHAT_KEPT_READBACK_BYTES,
-}
+const LIMITS: ChatReadbackLimits = { recentBytes: CHAT_MEMORY_BUDGET.recentBytes }
 
 /** メモリ上の `ChatSummary`（テスト用）。呼ばれた回数も数える。 */
 function fakeChatSummary(initial: ChatSummaryRecord | undefined): ChatSummary & {
@@ -52,10 +48,7 @@ function fakeChatSummary(initial: ChatSummaryRecord | undefined): ChatSummary & 
 }
 
 /** メモリ上の `ChatArchive`（テスト用）。読み戻しに渡された引数も覚える。 */
-function fakeChatArchive(
-  entries: readonly ChatArchiveRecentEntry[],
-  kept: readonly ChatArchiveRecentEntry[] = [],
-): ChatArchive & {
+function fakeChatArchive(entries: readonly ChatArchiveRecentEntry[]): ChatArchive & {
   readonly readRecentArgs: () => readonly { packName: string; limits: ChatReadbackLimits }[]
 } {
   const calls: { packName: string; limits: ChatReadbackLimits }[] = []
@@ -63,7 +56,7 @@ function fakeChatArchive(
     append: () => {},
     readRecent: (packName, limits) => {
       calls.push({ packName, limits })
-      return { kept, recent: entries }
+      return entries
     },
     unconsolidated: () => ({ entries: [], usedBytes: 0, previousEpisodeTitle: "" }),
     appendEpisodes: () => {},
@@ -242,47 +235,6 @@ describe("takeChatMemoryPromptParts", () => {
 
     expect(parts[0]).toContain("利用者: ただいま")
     expect(parts[0]).toContain("あなた: おかえり")
-  })
-
-  it("旗の付いたやり取りは、要約と直近の間に別の節として載る", () => {
-    const kept: readonly ChatArchiveRecentEntry[] = [
-      { speaker: "user", text: "残したい古い話", date: "2026-08-01" },
-    ]
-
-    const parts = take(
-      undefined,
-      fakeChatSummary({ summary: SUMMARY, delivered: false }),
-      fakeChatArchive(RECENT, kept),
-    )
-
-    expect(parts).toHaveLength(3)
-    expect(parts[0]).toContain(SUMMARY)
-    expect(parts[1]).toContain("残したい古い話")
-    expect(parts[2]).toContain("ただいま")
-    // 節が分かれているので、旗のぶんに直近の文面は混ざらない。
-    expect(parts[1]).not.toContain("ただいま")
-  })
-
-  it("旗の付いたやり取りには、時系列が続いていないことを断る前置きが付く", () => {
-    const parts = take(
-      undefined,
-      fakeChatSummary(undefined),
-      fakeChatArchive(RECENT, [{ speaker: "user", text: "残したい古い話", date: "2026-08-01" }]),
-    )
-    const keptPart = parts[0] ?? ""
-
-    expect(keptPart).toContain("## 残すと決めた雑談")
-    expect(keptPart).toContain("残っていない会話がある")
-    // 話者の印と日付の見出しは直近と同じ形。
-    expect(keptPart).toContain("### 2026-08-01")
-    expect(keptPart).toContain("利用者: 残したい古い話")
-  })
-
-  it("旗の付いたやり取りが1件も無いときは、その節そのものが出ない", () => {
-    const parts = take(undefined, fakeChatSummary(undefined), fakeChatArchive(RECENT))
-
-    expect(parts).toHaveLength(1)
-    expect(parts.join("\n")).not.toContain("## 残すと決めた雑談")
   })
 
   it("印の行が systemPrompt に混ざらない", () => {

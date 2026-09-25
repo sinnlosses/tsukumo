@@ -7,9 +7,11 @@
 // あらすじ・話題の見出し）もすべて会話の内容に当たる。ここで組んだ文面も検査の結果も
 // ログにもファイルにも書かない（docs/coding-standards.md「会話内容の扱い」）。
 //
-// **`<topics>` の組の書き方と取り出し方はここでは持たない**（いまは `chat-compact.ts` の
-// `chatTopics`。`/compact` をやめるタスクでこちらへ移す。docs/design.md 7章の「注意」）。ここが
-// 持つのは、検査を通った `topics` の配列を返すところまで。
+// **`<topics>` の組の書き方と取り出し方もここが持つ**（組み替える前は `/compact` の文面と同じ
+// `chat-compact.ts` にあったが、`/compact` をやめたのでこちらへ移した。docs/design.md 7章
+// 「最近の話題の見出しも同じファイルから取る」）。定着の出力からあらすじの本文へ組む側
+// （{@link chatSummaryWithTopics}）と、写しの本文から読み出す側（{@link chatTopics}）を
+// 同じファイルに置くのは、印の形（`<topics>` の組）を両側で1つに保つため。
 //
 // 呼び出し順と書く先は `chat-consolidation-writer.ts`、書く契機（雑談のターンの終わり・同時に1本）は
 // `src/server/session/core/session-manager.ts` が持つ（ここでは決めない）。
@@ -18,8 +20,22 @@ import { isPlainObject } from "remeda"
 
 import {
   type ChatEpisodeDraft,
+  type ChatSummary,
   type ChatUnconsolidatedEntry,
 } from "../../session-driver/core/session-driver.ts"
+
+/** サイドバーの「最近の話題」に出す見出しの件数の上限（`docs/screen-design.md` 13.7）。 */
+export const CHAT_TOPIC_LIMIT = 3
+
+/** 話題の見出しを挟む印。あらすじの本文の中で1行を占める前提で、行の中の位置は問わない。 */
+const CHAT_TOPICS_OPEN = "<topics>"
+const CHAT_TOPICS_CLOSE = "</topics>"
+
+/** 話題の組1つ（{@link chatSynopsis} が除く範囲）。 */
+const TOPICS_BLOCK = new RegExp(`${CHAT_TOPICS_OPEN}[\\s\\S]*?${CHAT_TOPICS_CLOSE}`, "gu")
+
+/** 見出しの行の頭に付いた箇条の印（`- ` `* ` `・` `1. `）。 */
+const LIST_MARKER = /^(?:[-*・•]|\d+[.)])\s*/u
 
 /** 定着を起こすモデル（軽いもの。値の根拠は `docs/chat-mode.md` 4.9）。 */
 export const CHAT_CONSOLIDATION_MODEL = "haiku"
@@ -383,4 +399,64 @@ function coversLinesContiguously(
     previousEnd = episode.end
   }
   return previousEnd === lineCount
+}
+
+/**
+ * あらすじの本文から最近の話題の見出しを取り出す（書かれた順＝新しい順のまま、
+ * {@link CHAT_TOPIC_LIMIT} 件まで）。
+ *
+ * **最後の `<topics>` から、その後ろの最初の `</topics>` までを読む。** 閉じが無い・印が無い
+ * ときは何も出さない（途中で切れた節や、見出しを書かなかったあらすじから推し量って出さない）。
+ *
+ * 中身の良し悪しは判定しない。箇条の印を落とし、空行を飛ばすだけ。
+ */
+export function chatTopics(summary: string): readonly string[] {
+  const open = summary.lastIndexOf(CHAT_TOPICS_OPEN)
+  if (open === -1) {
+    return []
+  }
+
+  const start = open + CHAT_TOPICS_OPEN.length
+  const close = summary.indexOf(CHAT_TOPICS_CLOSE, start)
+  if (close === -1) {
+    return []
+  }
+
+  return summary
+    .slice(start, close)
+    .split("\n")
+    .map((line) => line.trim().replace(LIST_MARKER, "").trim())
+    .filter((topic) => topic !== "")
+    .slice(0, CHAT_TOPIC_LIMIT)
+}
+
+/**
+ * パック1つぶんの写しを読み、最近の話題の見出しにして返す（写しがまだ無い・読めないときは
+ * 空）。起こしたとき（`src/session-start.ts`）と、定着があらすじを書いたあと
+ * （{@link chatConsolidationQuery} を使う `chat-consolidation-writer.ts`）の2か所から呼ばれる。
+ * **書いたあとの写しを読み直す**ので、画面に出る見出しは次に起こしたときと同じものになる。
+ */
+export function readChatTopics(chatSummary: ChatSummary): readonly string[] {
+  return chatTopics(chatSummary.read()?.summary ?? "")
+}
+
+/**
+ * あらすじの本文の**いちばん最後**に、話題の見出しを {@link CHAT_TOPICS_OPEN} と
+ * {@link CHAT_TOPICS_CLOSE} の行で挟んで置く（1行1件、`- ` で始める。`docs/design.md` 7章
+ * 「雑談の記憶の要約はどこに置くか」）。末尾に置くのは、上限で古いほう（先頭側）の行から
+ * 落ちても組が先に落ちないため。見出しが0件でも組は置く（{@link chatTopics} が空を読む）。
+ */
+export function chatSummaryWithTopics(synopsis: string, topics: readonly string[]): string {
+  const block = [CHAT_TOPICS_OPEN, ...topics.map((topic) => `- ${topic}`), CHAT_TOPICS_CLOSE]
+  const body = synopsis.trimEnd()
+  return [...(body === "" ? [] : [body]), ...block].join("\n")
+}
+
+/**
+ * 写しの本文から話題の組（{@link CHAT_TOPICS_OPEN} から次の {@link CHAT_TOPICS_CLOSE} まで）を
+ * すべて除いた、あらすじの地の文を返す（定着へ「前のあらすじ」として渡す。閉じの無い組は
+ * 組と見なさず残す）。
+ */
+export function chatSynopsis(summary: string): string {
+  return summary.replaceAll(TOPICS_BLOCK, "").trim()
 }

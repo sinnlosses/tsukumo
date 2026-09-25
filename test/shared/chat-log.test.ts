@@ -1,11 +1,6 @@
 import { describe, expect, it } from "bun:test"
 
-import {
-  chatLogByteSize,
-  chatLogEntries,
-  chatLogRows,
-  type ChatLogEntry,
-} from "../../src/shared/chat-log.ts"
+import { chatLogEntries, chatLogRows, type ChatLogEntry } from "../../src/shared/chat-log.ts"
 import { type SessionRecord } from "../../src/shared/session-state.ts"
 import {
   compactBoundaryRecord,
@@ -82,49 +77,6 @@ describe("chatLogEntries", () => {
         time: { kind: "stamped", at: 0 },
       },
     ])
-  })
-})
-
-describe("chatLogByteSize", () => {
-  it("空なら0", () => {
-    expect(chatLogByteSize([])).toBe(0)
-  })
-
-  it("画像つきの依頼でも、添えた画像は数えない", () => {
-    const withImages = chatLogEntries([
-      requestRecord({
-        turnId: 0,
-        text: "あああ",
-        images: [
-          { id: "fictional-id", thumbnail: "data:image/png;base64,architecture-tallying-decoy" },
-        ],
-      }),
-    ])
-    const withoutImages = chatLogEntries([requestRecord({ turnId: 5, text: "あああ" })])
-
-    expect(chatLogByteSize(withImages)).toBe(chatLogByteSize(withoutImages))
-  })
-
-  it("圧縮の区切りは文面を持たないので数えない", () => {
-    const withBoundary = chatLogEntries([
-      requestRecord({ turnId: 6, text: "あああ" }),
-      compactBoundaryRecord(),
-    ])
-    const withoutBoundary = chatLogEntries([requestRecord({ turnId: 7, text: "あああ" })])
-
-    expect(chatLogByteSize(withBoundary)).toBe(chatLogByteSize(withoutBoundary))
-  })
-
-  it("複数件は合算する", () => {
-    const entries = chatLogEntries([
-      requestRecord({ turnId: 8, text: "1つめの依頼" }),
-      speechRecord({ text: "1つめのセリフ" }),
-    ])
-
-    expect(chatLogByteSize(entries)).toBe(
-      new TextEncoder().encode("1つめの依頼").length +
-        new TextEncoder().encode("1つめのセリフ").length,
-    )
   })
 })
 

@@ -1,8 +1,10 @@
 import { describe, expect, it } from "bun:test"
 
-import { chatTopics } from "../../../../src/server/chat/core/chat-compact.ts"
 import { createChatConsolidationWriter } from "../../../../src/server/chat/core/chat-consolidation-writer.ts"
-import { type ChatConsolidationQuery } from "../../../../src/server/chat/core/chat-consolidation.ts"
+import {
+  type ChatConsolidationQuery,
+  chatTopics,
+} from "../../../../src/server/chat/core/chat-consolidation.ts"
 import {
   type ChatEpisodeDraft,
   type ChatSummary,

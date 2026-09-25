@@ -77,8 +77,7 @@ export type ChatSummaryRecord = {
  *
  * **読む口は {@link readRecent} の1つだけ**（直近の雑談を逐語のまま
  * `systemPrompt` へ戻す唯一の出どころ。`docs/chat-mode.md` 4.9「直近の会話は逐語のまま
- * 読み戻す」）。**それ以外の読み戻しは作らない** — 旗の付いたやり取りも同じ1つの口が一緒に
- * 返す（窓と重なった件をここで落とせるのは、両方を1度に見ているときだけ）。
+ * 読み戻す」）。**それ以外の読み戻しは作らない。**
  */
 export type ChatArchive = {
   /**
@@ -88,15 +87,17 @@ export type ChatArchive = {
    */
   readonly append: (packName: string, entry: ChatArchiveEntry) => void
   /**
-   * そのパックの**直近の会話**と**旗の付いたやり取り**を、新しいほうから遡って
-   * {@link ChatReadbackLimits} のバイト数まで読む。**返すのはどちらも古い→新しいの順**で、
-   * 呼ぶ側に順序の都合を持たせない。
+   * そのパックの**直近の会話**を、新しいほうから遡って {@link ChatReadbackLimits} のバイト数まで
+   * 読む。**返すのは古い→新しいの順**で、呼ぶ側に順序の都合を持たせない。
    *
    * **1件を単位にし、途中では切らない**（溢れる1件は載せない）。読めない行（壊れた JSON・
    * 知らない版・鍵が足りない）は1行ずつ落とし、**例外は投げない**（読めなければ空を返し、
    * そのセッションは逐語なしで始まる）。
    */
-  readonly readRecent: (packName: string, limits: ChatReadbackLimits) => ChatArchiveReadback
+  readonly readRecent: (
+    packName: string,
+    limits: ChatReadbackLimits,
+  ) => readonly ChatArchiveRecentEntry[]
   /**
    * まだどのエピソードにも入っていない行を、古いほうから {@link ChatUnconsolidatedLimits.maxBytes}
    * まで返す（定着の入力。`docs/design.md` 7章「定着はどこで走るか」）。**最後のエピソードの
@@ -255,28 +256,12 @@ export type ChatRecallEpisodeResult =
   | { readonly kind: "exhausted" }
 
 /**
- * {@link ChatArchive.readRecent} に渡す2つの上限（どちらも文面の UTF-8 バイト数の合計）。
- * **旗のぶんは窓の外に足す**ので、読み戻し全体の上限は2つの和で決まる
- * （`src/shared/chat-memory-budget.ts` の `CHAT_MEMORY_BUDGET.recentBytes` と
- * `src/shared/chat-log.ts` の `CHAT_KEPT_READBACK_BYTES`）。
+ * {@link ChatArchive.readRecent} に渡す上限（文面の UTF-8 バイト数。
+ * `src/shared/chat-memory-budget.ts` の `CHAT_MEMORY_BUDGET.recentBytes`）。
  */
 export type ChatReadbackLimits = {
   /** 直近の窓（古い順に落ちる側）。 */
   readonly recentBytes: number
-  /** 旗の付いたやり取り（窓から溢れたぶんだけを、旗の新しい順に拾う）。 */
-  readonly keptBytes: number
-}
-
-/**
- * {@link ChatArchive.readRecent} が返すもの。**2つに分かれているのは、載せる場所が分かれて
- * いるから** — 旗のぶんは直近より前で、間に抜けた会話がある（時系列がつながらない）。
- * 混ぜて1つの並びにすると、読む側にその断絶が見えない（`docs/chat-mode.md` 4.9）。
- */
-export type ChatArchiveReadback = {
-  /** 旗が付いていて、かつ**窓に入らなかった**件（窓に入っている件はここに重ねない）。 */
-  readonly kept: readonly ChatArchiveRecentEntry[]
-  /** 直近の窓に入った件。 */
-  readonly recent: readonly ChatArchiveRecentEntry[]
 }
 
 /**

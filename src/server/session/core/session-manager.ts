@@ -28,7 +28,6 @@ import {
 } from "../../../shared/session-state.ts"
 import { type PreviousUsageReview, type UsageReviewFindings } from "../../../shared/usage-review.ts"
 import { appendChatArchiveEntry } from "../../chat/core/chat-archive-entry.ts"
-import { type ChatCompactWatch, createChatCompactWatch } from "../../chat/core/chat-compact.ts"
 import { type ChatConsolidationSource } from "../../chat/core/chat-consolidation-writer.ts"
 import {
   type ContextUsageLog,
@@ -55,12 +54,6 @@ export type SessionManagerOptions = {
   readonly now: () => number
   /** イベントをまとめる間隔（ミリ秒）。既定は `EVENT_BATCH_INTERVAL_MS`（`event-batch.ts`）。 */
   readonly batchIntervalMs: number
-  /**
-   * 雑談の記憶を畳む閾値（バイト）。**呼び出し側が明示的に渡す**（`batchIntervalMs` と同じ形。
-   * 本番は `CHAT_COMPACT_THRESHOLD_BYTES`、`src/shared/chat-log.ts`）。テストは架空の短い文面の
-   * まま閾値に届かせるため、小さい値を渡す。
-   */
-  readonly chatCompactThresholdBytes: number
   /**
    * 雑談の会話のアーカイブの書き込み口（`docs/design.md` 7章「雑談の会話のアーカイブはどこに
    * 置くか」）。本番は `createChatArchive()`（`src/server/chat/adapter/chat-archive.ts`）、テストは
@@ -181,8 +174,6 @@ type EventOrigin = "driver" | "restored"
 type GenerationTally = {
   /** まとめて配る束（代をまたいで積み残しを配らない）。 */
   readonly batch: EventBatch
-  /** 雑談のログの走行合計と `/compact` の見張り。 */
-  readonly chatCompact: ChatCompactWatch
   /** トークンの累計と、いま進んでいるターンの内訳。 */
   readonly tokenUsage: TokenUsageRecorder
   /**
@@ -282,11 +273,6 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
     const at = options.now()
     replaceState(applySessionEvent(state, event, at))
     tally.batch.add({ at, event })
-    // 雑談のログに乗る文面（依頼とセリフ）だけ、届いたその場で走行合計に足す
-    // （`state.records` の切り詰めに影響されない。docs/chat-mode.md 4.9）。
-    if (state.chatMode) {
-      tally.chatCompact.add(event, at)
-    }
     // 雑談の会話のアーカイブへ1行足す。**駆動由来（`"driver"`）・雑談モード・パックが
     // 分かっているときだけ**（docs/chat-mode.md 4.9「誰がいつ書くか」）。
     if (origin === "driver" && state.chatMode) {
@@ -318,13 +304,6 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
       const driver = tally.liveDriver()
       if (driver !== undefined) {
         void contextUsage.recordOnce(state, at, driver)
-      }
-    }
-    // **ターンの終わりに1回だけ見る**（docs/chat-mode.md 4.9）。仕事のときは何もしない。
-    if (event.kind === "turn-finished" && state.chatMode) {
-      const driver = tally.liveDriver()
-      if (driver !== undefined) {
-        tally.chatCompact.requestIfNeeded(driver)
       }
     }
     // 定着を起こす。**雑談の駆動由来のターンの終わりだけ**で、走っていれば契機を捨てる。
@@ -391,7 +370,6 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
           }
         },
       }),
-      chatCompact: createChatCompactWatch(options.chatCompactThresholdBytes),
       tokenUsage: createTokenUsageRecorder(options.tokenUsageLog),
       liveDriver: () => live,
       visit: createVisitWatch({

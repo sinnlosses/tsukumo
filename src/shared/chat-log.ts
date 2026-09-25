@@ -7,10 +7,7 @@
 //
 // `node:` にも `document` にも触らない（他の shared と同じ制約）。
 
-import { sumBy } from "remeda"
-
 import { type Expression } from "./expression.ts"
-import { byteLength } from "./lib/byte-length.ts"
 import { type RecordedPromptImage } from "./prompt-image.ts"
 import { type RecordTime, type SessionRecord } from "./session-state.ts"
 
@@ -115,41 +112,6 @@ export function chatLogRows(
     },
     { rows: [], previous: { kind: "none" } },
   ).rows
-}
-
-/**
- * 雑談の記憶を畳む閾値（バイト）。**逐語で読み戻す量（`CHAT_MEMORY_BUDGET.recentBytes`。
- * `src/shared/chat-memory-budget.ts`）の2倍**で、絶対値はその倍率から出ている——揃えると
- * 畳んだ範囲を次のセッションが丸ごと逐語で戻すことになり、忘却が起きない。値の根拠は
- * `docs/chat-mode.md` 4.9「記憶の圧縮と忘却」。
- *
- * **`/compact` と一緒に消える定数**（`docs/design.md` 7章「定着はどこで走るか」）。その口を
- * 消す後段のタスクがこの定数ごと消す。
- */
-export const CHAT_COMPACT_THRESHOLD_BYTES = 131_072 satisfies number
-
-/**
- * 「残す」旗の付いたやり取りを、直近の窓（`CHAT_MEMORY_BUDGET.recentBytes`）の**外側に足して**
- * 読み戻す量（バイト）。数えるものは同じ（各行の文面だけ）。値の根拠は
- * `docs/chat-mode.md` 4.9「残すと決めた1往復は窓から落とさない」。
- *
- * **窓とは別に持つ。** 窓の中で優先すると、旗の付いた件が増えるほど直近が押し出され、
- * 「いまの話が通じなくなる」ほうへ倒れる。外に足せば、読み戻し全体の上限は
- * **64 KiB + 8 KiB** で決まったままになる。
- *
- * **`keep` ツールと一緒に消える定数**（`docs/design.md` 7章「定着はどこで走るか」）。その口を
- * 消す後段のタスクがこの定数ごと消す。
- */
-export const CHAT_KEPT_READBACK_BYTES = 8_192 satisfies number
-
-/**
- * 雑談のログの文面（利用者の依頼とキャラクターのセリフ）の UTF-8 バイト数を数える。
- * **添えた画像とツールの入出力は数えない**（`docs/chat-mode.md` 4.9「数え落としは許す」）——
- * `entries` は {@link chatLogEntries} の出力なので、本文・ツール・質問は最初から入っていない。
- * **圧縮の区切り（`boundary`）は文面を持たないので数えない。**
- */
-export function chatLogByteSize(entries: readonly ChatLogEntry[]): number {
-  return sumBy(entries, (entry) => (entry.speaker === "boundary" ? 0 : byteLength(entry.text)))
 }
 
 /**

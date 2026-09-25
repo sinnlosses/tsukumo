@@ -152,23 +152,23 @@ sed -n '/^## 4\. shared/,/^## /p' docs/design.md
 決定）。機能の名前は `docs/glossary.md` の語（単数形）で、**1つの機能 = 1つのディレクトリ**。
 機能の中は `core/`（判断）と `adapter/`（境界）の2段だけで、中身の無い段は作らない。
 
-| 機能              | 何の機能か                                                                                | `core/`                                                                                                                                                                 | `adapter/`                                                                               |
-| ----------------- | ----------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| `session/`        | セッションを持つ・起こす・頼む。**各機能の判断を束ねる**（下の「束ねる機能」）            | `session-manager` `session-launch` `event-batch` `driver-command` `command-session` `session-command`                                                                   | `remembered-default`                                                                     |
-| `session-driver/` | セッション駆動。契約・SDK の実装・fake driver・メッセージの変換・答え待ち・続きから始める | `session-driver` `sdk-message` `pending-answer` `self-started-turn` `visible-output-nudge` `session-restore` `session-title` `prompt-image-shelf` `plan`                | `sdk-driver` `sdk-tool` `sdk-session` `sdk-context-usage` `fake-driver` `claude-account` |
-| `report/`         | レポートの記法・`report` ツール・検査と差し戻し                                           | `report-notation` `report-tool` `report-review` `report-violation`                                                                                                      | —                                                                                        |
-| `system-prompt/`  | `systemPrompt` の append の組み立てと、セリフの間合いの規約                               | `system-prompt` `speech-cadence`                                                                                                                                        | —                                                                                        |
-| `chat/`           | 雑談モード。作法・記憶・話しかけ・`/compact`・アーカイブ・要約・覚えたこと・定着          | `chat-manner` `chat-memory-prompt` `chat-nudge` `chat-compact` `chat-archive-entry` `chat-episode-score` `chat-consolidation` `chat-consolidation-writer` `chat-recall` | `chat-archive` `chat-summary` `persona-memory` `sdk-chat-consolidation`                  |
-| `character-pack/` | キャラクターパックの選択・読み込み・画面からの編集                                        | `character-selection`                                                                                                                                                   | `character-pack` `character-edit`                                                        |
-| `visit/`          | 訪問。契機・来客・台本・見張り                                                            | `visit-timing` `visit-guest` `visit-script` `visit-script-writer` `visit-watch`                                                                                         | `sdk-visit-script` `visit-clock`                                                         |
-| `diary/`          | 日記。`diary` ツールと保存                                                                | `diary-tool` `diary-writer`                                                                                                                                             | `diary` `sdk-diary`                                                                      |
-| `achievement/`    | 成果。`main` の履歴から数える                                                             | `achievement`                                                                                                                                                           | `main-history`                                                                           |
-| `usage-review/`   | 見直し。2つのツール・前回の結果・見送り                                                   | `usage-review-tool`                                                                                                                                                     | `previous-usage-review` `usage-proposal-dismissal`                                       |
-| `token-usage/`    | トークン消費の記録と集計                                                                  | `token-usage`                                                                                                                                                           | `token-usage-log`                                                                        |
-| `context-usage/`  | コンテキストの内訳の記録                                                                  | `context-usage`                                                                                                                                                         | `context-usage-log`                                                                      |
-| `host/`           | ホストのポートと Orca の実装、ホストへ渡す前の門番                                        | `host` `tracked-file`                                                                                                                                                   | `orca-host`                                                                              |
-| `view-server/`    | ビューサーバ。ポートの決定・http・ws・同梱の外部ライブラリ・ブラウザ側の組み立てと見張り  | `port-resolution`                                                                                                                                                       | `server` `session-socket` `vendor-asset` `bundle` `ui-rebuild` `source-fingerprint`      |
-| `repository/`     | 作業ディレクトリの git リポジトリを読む。`git` を起こす口・管理下のファイル・タスク一覧   | —                                                                                                                                                                       | `git` `repository-file` `task-summary`                                                   |
+| 機能              | 何の機能か                                                                                | `core/`                                                                                                                                                  | `adapter/`                                                                               |
+| ----------------- | ----------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `session/`        | セッションを持つ・起こす・頼む。**各機能の判断を束ねる**（下の「束ねる機能」）            | `session-manager` `session-launch` `event-batch` `driver-command` `command-session` `session-command`                                                    | `remembered-default`                                                                     |
+| `session-driver/` | セッション駆動。契約・SDK の実装・fake driver・メッセージの変換・答え待ち・続きから始める | `session-driver` `sdk-message` `pending-answer` `self-started-turn` `visible-output-nudge` `session-restore` `session-title` `prompt-image-shelf` `plan` | `sdk-driver` `sdk-tool` `sdk-session` `sdk-context-usage` `fake-driver` `claude-account` |
+| `report/`         | レポートの記法・`report` ツール・検査と差し戻し                                           | `report-notation` `report-tool` `report-review` `report-violation`                                                                                       | —                                                                                        |
+| `system-prompt/`  | `systemPrompt` の append の組み立てと、セリフの間合いの規約                               | `system-prompt` `speech-cadence`                                                                                                                         | —                                                                                        |
+| `chat/`           | 雑談モード。作法・記憶・話しかけ・アーカイブ・要約・覚えたこと・定着                      | `chat-manner` `chat-memory-prompt` `chat-nudge` `chat-archive-entry` `chat-episode-score` `chat-consolidation` `chat-consolidation-writer` `chat-recall` | `chat-archive` `chat-summary` `persona-memory` `sdk-chat-consolidation`                  |
+| `character-pack/` | キャラクターパックの選択・読み込み・画面からの編集                                        | `character-selection`                                                                                                                                    | `character-pack` `character-edit`                                                        |
+| `visit/`          | 訪問。契機・来客・台本・見張り                                                            | `visit-timing` `visit-guest` `visit-script` `visit-script-writer` `visit-watch`                                                                          | `sdk-visit-script` `visit-clock`                                                         |
+| `diary/`          | 日記。`diary` ツールと保存                                                                | `diary-tool` `diary-writer`                                                                                                                              | `diary` `sdk-diary`                                                                      |
+| `achievement/`    | 成果。`main` の履歴から数える                                                             | `achievement`                                                                                                                                            | `main-history`                                                                           |
+| `usage-review/`   | 見直し。2つのツール・前回の結果・見送り                                                   | `usage-review-tool`                                                                                                                                      | `previous-usage-review` `usage-proposal-dismissal`                                       |
+| `token-usage/`    | トークン消費の記録と集計                                                                  | `token-usage`                                                                                                                                            | `token-usage-log`                                                                        |
+| `context-usage/`  | コンテキストの内訳の記録                                                                  | `context-usage`                                                                                                                                          | `context-usage-log`                                                                      |
+| `host/`           | ホストのポートと Orca の実装、ホストへ渡す前の門番                                        | `host` `tracked-file`                                                                                                                                    | `orca-host`                                                                              |
+| `view-server/`    | ビューサーバ。ポートの決定・http・ws・同梱の外部ライブラリ・ブラウザ側の組み立てと見張り  | `port-resolution`                                                                                                                                        | `server` `session-socket` `vendor-asset` `bundle` `ui-rebuild` `source-fingerprint`      |
+| `repository/`     | 作業ディレクトリの git リポジトリを読む。`git` を起こす口・管理下のファイル・タスク一覧   | —                                                                                                                                                        | `git` `repository-file` `task-summary`                                                   |
 
 **どの機能にも属さない共有のもの**は、`server/core/` と `server/adapter/` の**直下**に置く
 （`core/config.ts`、`adapter/tsukumo-home.ts` `bundled-path.ts` `local-time.ts` と
@@ -390,9 +390,10 @@ src/
     system-prompt/core/       system-prompt.ts（systemPrompt の append の組み立て。人格 → 規約 → 雑談の記憶）と
                               speech-cadence.ts（セリフの間合いの規約）
     chat/                     雑談モード
-      core/                   chat-manner.ts / chat-memory-prompt.ts / chat-nudge.ts / chat-compact.ts / chat-archive-entry.ts /
+      core/                   chat-manner.ts / chat-memory-prompt.ts / chat-nudge.ts / chat-archive-entry.ts /
                               chat-episode-score.ts（エピソード索引の採点の純関数）/
-                              chat-consolidation.ts（定着の指示文・依頼の文面・出力の検査・純関数と定数）/
+                              chat-consolidation.ts（定着の指示文・依頼の文面・出力の検査・純関数と定数、
+                              `<topics>` の組み立てと取り出し）/
                               chat-consolidation-writer.ts（定着を1回走らせて索引とあらすじに書く）
       adapter/                chat-archive.ts（~/.tsukumo/chat-archive/）/ chat-summary.ts（~/.tsukumo/chat-summary/）/
                               persona-memory.ts（persona.md の末尾の節へ書く）/
@@ -1456,17 +1457,16 @@ Layout に出す。復帰したときにセッションを続きから起こし�
 （`generation = startGeneration(request)`）と画面の状態（`replaceState(INITIAL_SESSION_STATE)`）の
 2つだけ。
 
-| 持ち物                            | 置き場                                        | 代をまたぐか                                     |
-| --------------------------------- | --------------------------------------------- | ------------------------------------------------ |
-| 配る束（間隔と連結）              | `event-batch.ts`                              | またがない（積み残しを新しい画面へ配らない）     |
-| 雑談のログの走行合計と `/compact` | `chat-compact.ts`                             | またがない（復元されたログが新しい圧縮点から先） |
-| トークンの累計と1ターンの内訳     | `token-usage.ts`                              | またがない（`query()` が変われば累計も振り出し） |
-| 起き上がった駆動                  | `session-manager.ts`（代の入れ物）            | またがない                                       |
-| コンテキストの内訳を書いた印      | `context-usage.ts`                            | **またぐ**（同じIDなら2行目を書かない）          |
-| 依頼の原寸の棚                    | `prompt-image-shelf.ts`（持ち主は `main.ts`） | **またぐ**（捨てるのは記録から消えたときだけ）   |
+| 持ち物                        | 置き場                                        | 代をまたぐか                                     |
+| ----------------------------- | --------------------------------------------- | ------------------------------------------------ |
+| 配る束（間隔と連結）          | `event-batch.ts`                              | またがない（積み残しを新しい画面へ配らない）     |
+| トークンの累計と1ターンの内訳 | `token-usage.ts`                              | またがない（`query()` が変われば累計も振り出し） |
+| 起き上がった駆動              | `session-manager.ts`（代の入れ物）            | またがない                                       |
+| コンテキストの内訳を書いた印  | `context-usage.ts`                            | **またぐ**（同じIDなら2行目を書かない）          |
+| 依頼の原寸の棚                | `prompt-image-shelf.ts`（持ち主は `main.ts`） | **またぐ**（捨てるのは記録から消えたときだけ）   |
 
 **「イベントを受けて何かを記録するもの」は、その概念のファイルへ寄せる**（`session-manager.ts`
-が `if` の列で全部を持たない）。`chat-compact.ts` / `token-usage.ts` / `context-usage.ts` は
+が `if` の列で全部を持たない）。`token-usage.ts` / `context-usage.ts` は
 **書き口の契約と一緒に、走行中の勘定を持つ係**も出し、`chat-archive-entry.ts` は「どのイベントを
 アーカイブの1行にするか」だけを持つ。`session-manager.ts` に残るのは**どの順で・どちらの由来の
 ときに呼ぶか**（`origin` と `chatMode` の門）だけ。
@@ -2833,8 +2833,9 @@ tsukumo が1つの本文に組んで上書きする。**書いたときの印は
   組み替える前の写しと同じものを使う（組み替える前の写しをそのまま読めるように）
 - **取り出し方**: `chatTopics`（純関数）。**最後の `<topics>` から次の `</topics>` まで**を読み、
   箇条の印を落とし、空行を飛ばし、3件で切る。**印が無い・閉じが無いときは空**（推し量って
-  出さない）。**組を書く側と読む側を同じファイルに置く**（印の形を両側で1つに保つため。いまは
-  `/compact` の文面と同じ `chat/core/chat-compact.ts` にあり、`/compact` をやめるときに定着の core へ移す）
+  出さない）。**組を書く側と読む側を同じファイルに置く**（印の形を両側で1つに保つため。
+  `chat/core/chat-consolidation.ts` にある。組み替える前は `/compact` の文面と同じ
+  `chat-compact.ts` にあったが、`/compact` をやめたのでこちらへ移した）
 - **流す契機は2つ**で、どちらも `chat-topics-changed` イベント（`SessionState.chatTopics` に
   畳む）: (1) **雑談で起こしたとき**（`src/server/session/core/session-launch.ts` が
   `chat-mode-changed` の直後に、ポート `readChatTopics` 越しに読む） (2) **定着があらすじを

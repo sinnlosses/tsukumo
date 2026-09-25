@@ -14,13 +14,15 @@
 
 import { CHAT_MEMORY_BUDGET } from "../../../shared/chat-memory-budget.ts"
 import { type ChatArchive, type ChatSummary } from "../../session-driver/core/session-driver.ts"
-import { chatSummaryWithTopics, chatSynopsis, readChatTopics } from "./chat-compact.ts"
 import {
   CHAT_CONSOLIDATION_TIMEOUT_MS,
   chatConsolidationQuery,
   chatEpisodeDrafts,
   type ChatConsolidationQuery,
+  chatSummaryWithTopics,
+  chatSynopsis,
   parseChatConsolidationResult,
+  readChatTopics,
 } from "./chat-consolidation.ts"
 
 /**

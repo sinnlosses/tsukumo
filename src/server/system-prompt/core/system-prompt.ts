@@ -15,7 +15,6 @@
 // ようになったら、層を写した `core/character-pack.ts` ではなく概念で切る
 // （`docs/architecture.md`「新しいコードを置く場所」）。
 
-import { CHAT_KEPT_READBACK_BYTES } from "../../../shared/chat-log.ts"
 import { CHAT_MEMORY_BUDGET } from "../../../shared/chat-memory-budget.ts"
 import { CHAT_MANNER_PROMPT } from "../../chat/core/chat-manner.ts"
 import {
@@ -82,10 +81,7 @@ export function toSystemPromptMode(
       chatSummary: mode.chatSummary,
       chatArchive,
       packName,
-      readbackLimits: {
-        recentBytes: CHAT_MEMORY_BUDGET.recentBytes,
-        keptBytes: CHAT_KEPT_READBACK_BYTES,
-      },
+      readbackLimits: { recentBytes: CHAT_MEMORY_BUDGET.recentBytes },
     },
   }
 }
@@ -97,11 +93,11 @@ export function toSystemPromptMode(
  *
  * 並びはモードで入れ替わる:
  *
- * | 場面                     | 節の並び                                                                     |
- * | ------------------------ | ---------------------------------------------------------------------------- |
- * | 仕事                     | 人格 → セリフの間合い → レポートの記法                                       |
- * | 雑談（記憶が載るとき）   | 人格 → 雑談の作法 → 前回までの要約 → 残すと決めた雑談 → 直近の雑談           |
- * | 雑談（続きから・渡し済） | 人格 → 雑談の作法                                                            |
+ * | 場面                     | 節の並び                                          |
+ * | ------------------------ | -------------------------------------------------- |
+ * | 仕事                     | 人格 → セリフの間合い → レポートの記法             |
+ * | 雑談（記憶が載るとき）   | 人格 → 雑談の作法 → 前回までの要約 → 直近の雑談    |
+ * | 雑談（続きから・渡し済） | 人格 → 雑談の作法                                  |
  *
  * **雑談のときは仕事の2つと入れ替える**（並べない）。片方が「本文は中立・簡潔に」と言い、
  * もう片方が「本文を書くな」と言う形になり、どちらが効くかが揺れるため。セリフの間合いも

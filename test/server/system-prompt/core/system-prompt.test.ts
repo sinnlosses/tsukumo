@@ -17,7 +17,6 @@ import {
   takeSystemPromptAppend,
   toSystemPromptMode,
 } from "../../../../src/server/system-prompt/core/system-prompt.ts"
-import { CHAT_KEPT_READBACK_BYTES } from "../../../../src/shared/chat-log.ts"
 import { CHAT_MEMORY_BUDGET } from "../../../../src/shared/chat-memory-budget.ts"
 
 // **`systemPrompt` に何が・どの順で載るか**を、3通り（仕事・雑談・続きから始めるとき）で固定する
@@ -26,16 +25,13 @@ import { CHAT_MEMORY_BUDGET } from "../../../../src/shared/chat-memory-budget.ts
 //
 // **文面そのものは写さない。** 節の中身の正典は `report-notation.ts` / `speech-cadence.ts` /
 // `chat-manner.ts` / `chat-memory-prompt.ts` で、ここが見るのは**並びとつなぎ方**だけ。
-// 期待値の見出しは定数から取り出す（文面を直してもここは二重にならない）。**雑談の記憶の3節だけ
+// 期待値の見出しは定数から取り出す（文面を直してもここは二重にならない）。**雑談の記憶の2節だけ
 // 見出しを直に書く**——前置きは `chat-memory-prompt.ts` の外に出ておらず、ここで見たいのが
 // 「どのモードで、どの順に載るか」の表そのものだから。
 
 /** 人格・要約・会話は手で書いた架空のものだけ（docs/coding-standards.md「会話内容の扱い」）。 */
 const PERSONA = "# 架空の精霊\n\n語尾に「なのじゃ」と付ける。"
 const SUMMARY = "架空の精霊と読んだ本の話をした。"
-const KEPT: readonly ChatArchiveRecentEntry[] = [
-  { speaker: "user", text: "この話は覚えておいて", date: "2026-09-20" },
-]
 const RECENT: readonly ChatArchiveRecentEntry[] = [
   { speaker: "user", text: "ただいま", date: "2026-09-21" },
   { speaker: "character", text: "おかえりなのじゃ", date: "2026-09-21" },
@@ -56,10 +52,7 @@ describe("takeSystemPromptAppend", () => {
       chatSummary: fakeChatSummary({ summary: SUMMARY, delivered: false }),
       chatArchive: archive,
       packName: "架空",
-      readbackLimits: {
-        recentBytes: CHAT_MEMORY_BUDGET.recentBytes,
-        keptBytes: CHAT_KEPT_READBACK_BYTES,
-      },
+      readbackLimits: { recentBytes: CHAT_MEMORY_BUDGET.recentBytes },
     })
 
     const append = takeSystemPromptAppend({
@@ -111,7 +104,6 @@ describe("takeSystemPromptAppend", () => {
       ...headings(PERSONA),
       ...headings(CHAT_MANNER_PROMPT),
       "## 前回までの雑談の要約",
-      "## 残すと決めた雑談（そのままの文面）",
       "## 直近の雑談（そのままの文面）",
     ])
     expect(headings(resumed)).toEqual([...headings(PERSONA), ...headings(CHAT_MANNER_PROMPT)])
@@ -196,10 +188,7 @@ describe("toSystemPromptMode", () => {
         chatSummary,
         chatArchive,
         packName: "架空",
-        readbackLimits: {
-          recentBytes: CHAT_MEMORY_BUDGET.recentBytes,
-          keptBytes: CHAT_KEPT_READBACK_BYTES,
-        },
+        readbackLimits: { recentBytes: CHAT_MEMORY_BUDGET.recentBytes },
       },
     })
   })
@@ -218,10 +207,7 @@ function chatMode(
       chatSummary,
       chatArchive,
       packName: "架空",
-      readbackLimits: {
-        recentBytes: CHAT_MEMORY_BUDGET.recentBytes,
-        keptBytes: CHAT_KEPT_READBACK_BYTES,
-      },
+      readbackLimits: { recentBytes: CHAT_MEMORY_BUDGET.recentBytes },
     },
   }
 }
@@ -247,7 +233,7 @@ function fakeChatSummary(initial: ChatSummaryRecord): ChatSummary {
 function fakeChatArchive(): ChatArchive {
   return {
     append: () => {},
-    readRecent: () => ({ kept: KEPT, recent: RECENT }),
+    readRecent: () => RECENT,
     unconsolidated: () => ({ entries: [], usedBytes: 0, previousEpisodeTitle: "" }),
     appendEpisodes: () => {},
     recallList: () => ({ kind: "not-found" }),

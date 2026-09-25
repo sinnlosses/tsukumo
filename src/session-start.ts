@@ -23,11 +23,11 @@ import { createChatArchive } from "./server/chat/adapter/chat-archive.ts"
 import { createChatSummary } from "./server/chat/adapter/chat-summary.ts"
 import { createPersonaMemory, readRememberedLines } from "./server/chat/adapter/persona-memory.ts"
 import { queryChatConsolidation } from "./server/chat/adapter/sdk-chat-consolidation.ts"
-import { readChatTopics } from "./server/chat/core/chat-compact.ts"
 import {
   type ChatConsolidationSource,
   createChatConsolidationWriter,
 } from "./server/chat/core/chat-consolidation-writer.ts"
+import { readChatTopics } from "./server/chat/core/chat-consolidation.ts"
 import { createChatRecall } from "./server/chat/core/chat-recall.ts"
 import { createContextUsageLog } from "./server/context-usage/adapter/context-usage-log.ts"
 import { type Config } from "./server/core/config.ts"
@@ -93,7 +93,6 @@ import {
 import { visitCast } from "./server/visit/core/visit-script.ts"
 import { QUICK_VISIT_TIMING, VISIT_TIMING } from "./server/visit/core/visit-timing.ts"
 import { UNKNOWN_ACHIEVEMENT } from "./shared/achievement.ts"
-import { CHAT_COMPACT_THRESHOLD_BYTES } from "./shared/chat-log.ts"
 import { type UsageProposalDismissal } from "./shared/contract/usage-review.ts"
 import { expressionChoices } from "./shared/expression-choice.ts"
 import { type SessionChoice } from "./shared/session-choice.ts"
@@ -169,7 +168,6 @@ export function startSession(options: SessionStartOptions): StartedSession {
     // 畳み込み（`src/shared/`）が比較と引き算にしか使わず、数なら偽の時計も数で済む。
     now,
     batchIntervalMs: EVENT_BATCH_INTERVAL_MS,
-    chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
     // 書き先の判定（雑談かどうか）は `session-manager` の `receive` が持つので、ここは口を
     // 渡すだけ。
     chatArchive,
