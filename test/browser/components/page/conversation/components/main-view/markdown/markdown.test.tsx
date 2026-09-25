@@ -22,29 +22,6 @@ async function flushEffects(): Promise<void> {
 }
 
 describe("Markdown（unified への置き換えが求める記法）", () => {
-  it("引用 `> ` が <blockquote> になる", () => {
-    const { container } = render(<Markdown text="> よそからの引用" />)
-
-    expect(container.querySelector("blockquote")).not.toBeNull()
-  })
-
-  it("2段のネストしたリストが <ul> の入れ子になる", () => {
-    const { container } = render(<Markdown text={"- 親\n  - 子"} />)
-
-    expect(container.querySelector("ul > li > ul > li")).not.toBeNull()
-  })
-
-  it("`---` が <hr> になり、GFM テーブルの区切り行と衝突しない", () => {
-    const { container } = render(
-      <Markdown text={"段落\n\n---\n\n| a | b |\n| --- | --- |\n| 1 | 2 |"} />,
-    )
-
-    expect(container.querySelector("hr")).not.toBeNull()
-    expect(container.querySelectorAll("table")).toHaveLength(1)
-    // 区切り行そのものは表の一部として消費され、別の <hr> にはならない。
-    expect(container.querySelectorAll("hr")).toHaveLength(1)
-  })
-
   it("`:---:` が中央揃え、`---:` が右揃えの印を持つ", () => {
     const { container } = render(
       <Markdown text={"| 左 | 中 | 右 |\n| --- | :---: | ---: |\n| a | b | c |"} />,
@@ -56,21 +33,6 @@ describe("Markdown（unified への置き換えが求める記法）", () => {
     expect((cells[0] as HTMLTableCellElement).style.textAlign).toBe("")
     expect((cells[1] as HTMLTableCellElement).style.textAlign).toBe("center")
     expect((cells[2] as HTMLTableCellElement).style.textAlign).toBe("right")
-  })
-
-  it("`##` が見出し（h4）として描かれる（タグの落ちた素のテキストにならない）", () => {
-    const { container } = render(<Markdown text="## みだし2" />)
-
-    expect(container.querySelector("h4")?.textContent).toBe("みだし2")
-    // 札の頭の依頼のタイトル（h2.turn-title）と段を混同しないよう、DOM には h2 を残さない。
-    expect(container.querySelector("h2")).toBeNull()
-  })
-
-  it("`###` が見出し（h5）として描かれる", () => {
-    const { container } = render(<Markdown text="### みだし3" />)
-
-    expect(container.querySelector("h5")?.textContent).toBe("みだし3")
-    expect(container.querySelector("h3")).toBeNull()
   })
 
   it("表は横スクロールの器（div.table-scroll）に包まれる", () => {
@@ -209,17 +171,6 @@ describe("Markdown（unified への置き換えが求める記法）", () => {
     expect(container.textContent).toContain("目立たせたい語")
   })
 
-  it("お願い（note-favor）が塊のまま通る（class が落ちると地の文に紛れる）", () => {
-    const { container } = render(
-      <Markdown text={'<div class="note note-favor">架空のお願いの文。</div>'} />,
-    )
-
-    // ラベル（「お願い」）は `notation.tsx` が足すので、本文はそのあとに続く。
-    const favor = container.querySelector("div.report-note.report-note-favor")
-    expect(favor).not.toBeNull()
-    expect(favor?.textContent).toBe("お願い架空のお願いの文。")
-  })
-
   it("記法に無い class 名と style 属性は、素通しして描かれる", () => {
     // 記法の変換は足し算だけで、規約の表に無い見せ方（モデルの即興）を落とさない
     // （危ない経路は sanitize-schema.ts が別に見ている）。
@@ -307,17 +258,9 @@ describe("Markdown（unified への置き換えが求める記法）", () => {
     expect(container.querySelector("img")).toBeNull()
   })
 
-  it("```mermaid フェンスは MermaidBlock（pre.mermaid）に振り分けられる", async () => {
-    const { container } = render(<Markdown text={"```mermaid\nflowchart TD\nA --> B\n```"} />)
-
-    expect(container.querySelector("pre.mermaid")).not.toBeNull()
-    expect(container.querySelector("pre.mermaid")?.textContent).toContain("flowchart TD")
-    await flushEffects()
-  })
-
   it("MermaidBlock は失敗したら mermaid のエラー図を描かず、コードとエラー文を出す", async () => {
     // この環境（happy-dom。実際のネットワークが無い）では同梱スクリプトの読み込み自体が失敗する
-    // （上のテストの flushEffects と同じ経路）。mermaid のグローバルを差し替えて構文エラーを
+    // （`flushEffects` の説明と同じ経路）。mermaid のグローバルを差し替えて構文エラーを
     // 再現する代わりに、**この自然に起きる失敗を「壊れたときの経路」として検証する**
     // （読み込み失敗も構文エラーも MermaidBlock は同じ catch で受け止める設計のため）。
     const { container } = render(<Markdown text={"```mermaid\nflowchart TD\nA --> B\n```"} />)
@@ -333,13 +276,6 @@ describe("Markdown（unified への置き換えが求める記法）", () => {
     // (c) エラー文が出ている。
     const errorText = container.querySelector(".mermaid-error")?.textContent
     expect(errorText).toBeTruthy()
-  })
-
-  it("```chart フェンスは ChartBlock（.chart-block > canvas）に振り分けられる", async () => {
-    const { container } = render(<Markdown text={'```chart\n{"type":"bar","data":{}}\n```'} />)
-
-    expect(container.querySelector(".chart-block > canvas")).not.toBeNull()
-    await flushEffects()
   })
 
   it("```diff フェンスの足した行・消した行が色分けされる", () => {

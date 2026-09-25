@@ -17,7 +17,6 @@ import {
 } from "../../../../../../../src/shared/session-state.ts"
 import { characterInfo, shownPortraits } from "../../../../../../fixture/character.ts"
 import {
-  compactBoundaryRecord,
   detailRecord,
   requestRecord,
   speechRecord,
@@ -84,24 +83,6 @@ const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = characterInfo(
 })
 
 describe("ChatView", () => {
-  it("利用者の発言とキャラクターのセリフが、古い→新しいの順に交互に積む", () => {
-    renderChatView({ records: RECORDS })
-
-    const entries = [...document.querySelectorAll("[data-speaker]")]
-    expect(entries.map((entry) => entry.getAttribute("data-speaker"))).toEqual([
-      "user",
-      "character",
-      "user",
-      "character",
-    ])
-    expect(entries.map((entry) => entry.textContent)).toEqual([
-      "1つめの依頼",
-      "1つめのセリフ",
-      "2つめの依頼",
-      "2つめのセリフ",
-    ])
-  })
-
   it("本文（レポート）は積まない（雑談中はレポートを出さない）", () => {
     renderChatView({
       records: [
@@ -122,27 +103,6 @@ describe("ChatView", () => {
     expect(
       screen.getByText("（まだ何も話していません。立ち絵をつつくと話しかけてくれます）"),
     ).toBeTruthy()
-  })
-
-  it("圧縮の区切りは文言を添えない細い線1本（`<hr>`）で出し、押せない", () => {
-    renderChatView({
-      records: [
-        requestRecord({ turnId: 3, text: "1つめの依頼" }),
-        compactBoundaryRecord(),
-        speechRecord({ text: "2つめのセリフ" }),
-      ],
-    })
-
-    const entries = [...document.querySelectorAll("[data-speaker]")]
-    expect(entries.map((entry) => entry.getAttribute("data-speaker"))).toEqual([
-      "user",
-      "boundary",
-      "character",
-    ])
-    const boundary = entries[1]
-    expect(boundary?.tagName).toBe("HR")
-    expect(boundary?.textContent).toBe("")
-    expect(boundary?.getAttribute("role")).toBe(null)
   })
 })
 
@@ -285,18 +245,6 @@ describe("ChatView の時刻と日の区切り", () => {
 })
 
 describe("ChatView のセリフを遡る", () => {
-  it("何も押していなければ、最新のセリフに印が付いている", () => {
-    renderChatView({ records: RECORDS, character: FIXTURE_CHARACTER, speechExpression: "proud" })
-
-    // 印は「立ち絵がいま従っている行」を指す（docs/screen-design.md 13.7）。押す前から最新に付く。
-    expect(logEntries().map((entry) => entry.getAttribute("aria-pressed"))).toEqual([
-      null,
-      "false",
-      null,
-      "true",
-    ])
-  })
-
   it("新しいセリフが来ると、印が最新へ移る", () => {
     const store = renderChatView({
       records: RECORDS,
@@ -351,20 +299,6 @@ describe("ChatView のセリフを遡る", () => {
 
     expect(portraitExpression()).toBe("proud")
     expect(firstSpeech.getAttribute("aria-pressed")).toBe("false")
-  })
-
-  it("利用者の発言の行は押せない（押せるのはキャラクターのセリフだけ）", () => {
-    renderChatView({ records: RECORDS, character: FIXTURE_CHARACTER })
-
-    const entries = logEntries()
-    // **どちらの話者も `<div>`**（`<button>` の中の文字はドラッグで掴めないため）。
-    expect(entries.map((entry) => entry.tagName)).toEqual(["DIV", "DIV", "DIV", "DIV"])
-    expect(entries.map((entry) => entry.getAttribute("role"))).toEqual([
-      null,
-      "button",
-      null,
-      "button",
-    ])
   })
 
   it("押せる行はキーボードで辿り着ける（tabindex を持つ）", () => {

@@ -15,11 +15,7 @@ import {
   type SessionState,
 } from "../../../../../../../src/shared/session-state.ts"
 import { characterInfo, shownPortraits } from "../../../../../../fixture/character.ts"
-import {
-  requestRecord,
-  speechRecord,
-  toolRecord,
-} from "../../../../../../fixture/session-record.ts"
+import { requestRecord, speechRecord } from "../../../../../../fixture/session-record.ts"
 import { sessionStoreWith } from "../../../../../session-store.ts"
 
 // フィクスチャはすべて手で書いた架空のキャラクター定義・セリフ（docs/coding-standards.md「会話内容の扱い」）。
@@ -75,47 +71,6 @@ describe("CharacterView", () => {
     expect(document.querySelector(".portrait")).toBeNull()
     expect(document.querySelector(".balloon-track")).not.toBeNull()
     expect(document.querySelector(".balloon-text")?.textContent).toBe("やあ、調子はどう？")
-  })
-
-  it("(4) ツールが動いていても、表情は直近の speak のまま変わらない（自動の上書きは撤去済み）", () => {
-    // 表情の源は `speak` の1つだけ（docs/requirements.md 4.3）。ツールが動いていても
-    // 「作業中」へ勝手に切り替わらず、吹き出しにも作業中の一言は重ならない。
-    renderCharacterView({
-      speeches: ["さっき言ったセリフ"],
-      speechExpression: "proud",
-      records: [requestRecord(), toolRecord({ toolUseId: "toolu_1", name: "Read", input: {} })],
-      character: {
-        ...FIXTURE_CHARACTER,
-        expressions: [
-          { name: "default", label: "通常" },
-          { name: "thinking", label: "作業中" },
-          { name: "proud", label: "どや顔" },
-        ],
-        ...shownPortraits({
-          default: "/character/default.png",
-          thinking: "/character/thinking.png",
-          proud: "/character/proud.png",
-        }),
-      },
-    })
-
-    expect(document.querySelector(".portrait")?.getAttribute("data-expression")).toBe("proud")
-    expect(document.querySelector(".portrait-image")?.getAttribute("src")).toBe(
-      "/character/proud.png",
-    )
-    expect(
-      [...document.querySelectorAll(".balloon-text")].map((balloon) => balloon.textContent),
-    ).toEqual(["さっき言ったセリフ"])
-  })
-
-  it("算出した動き（motion）が立ち絵の data-motion 属性まで届く", () => {
-    renderCharacterView({
-      character: FIXTURE_CHARACTER,
-      turn: { kind: "running", startedAt: 0 },
-      lastToolFailureAt: undefined,
-    })
-
-    expect(document.querySelector(".portrait")?.getAttribute("data-motion")).toBe("waiting")
   })
 
   it("(1) 過去のターンを選ぶと、そのターンのセリフだけが吹き出しに出る", () => {

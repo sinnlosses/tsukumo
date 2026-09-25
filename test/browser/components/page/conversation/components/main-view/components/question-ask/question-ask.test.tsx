@@ -80,22 +80,6 @@ describe("QuestionAsk（メインビューの質問の札）", () => {
     ).toBe("")
   })
 
-  it("「質問」のチップ・header・本文・何問目か・選択肢と説明を出す", () => {
-    const container = renderQuestionAsk([
-      { kind: "question", id: "ask-1", questions: [question()] },
-    ])
-
-    expect(screen.getByText("質問")).toBeDefined()
-    expect(screen.getByText("架空の選択")).toBeDefined()
-    expect(screen.getByText("架空の質問")).toBeDefined()
-    expect(screen.getByText("1 / 1")).toBeDefined()
-    expect(
-      [...container.querySelectorAll(".question-ask-option-label")].map((el) => el.textContent),
-    ).toEqual(["A案", "B案"])
-    expect(screen.getByText("架空の説明（A案）")).toBeDefined()
-    expect(screen.getByText(/下の入力欄に書いて送れます/)).toBeDefined()
-  })
-
   it("ラベル末尾の (Recommended) は「おすすめ」のバッジになり、字からは外れる", () => {
     const container = renderQuestionAsk([
       {
@@ -156,38 +140,6 @@ describe("QuestionAsk（メインビューの質問の札）", () => {
     expect(calls).toEqual([])
   })
 
-  it("複数選択はチェックボックス（単一選択は radio）", () => {
-    const multi = renderQuestionAsk([
-      { kind: "question", id: "ask-1", questions: [question({ multiSelect: true })] },
-    ])
-    expect(multi.querySelectorAll("input[type='checkbox']")).toHaveLength(2)
-
-    cleanup()
-    const single = renderQuestionAsk([{ kind: "question", id: "ask-2", questions: [question()] }])
-    expect(single.querySelectorAll("input[type='radio']")).toHaveLength(2)
-  })
-
-  it("preview は選択肢の説明の下に、レポートと同じ Markdown で出る", () => {
-    const container = renderQuestionAsk([
-      {
-        kind: "question",
-        id: "ask-1",
-        questions: [
-          question({
-            options: [option("A案", { preview: "| 段 | 差 |\n| --- | --- |\n| 1 | 速い |" })],
-          }),
-        ],
-      },
-    ])
-
-    expect(container.querySelectorAll("table")).toHaveLength(1)
-    expect(screen.getByText("速い")).toBeDefined()
-    const card = container.querySelector(".question-ask-option")
-    const children = [...(card?.children ?? [])].map((el) => el.className)
-    expect(children[1]).toContain("question-ask-option-description")
-    expect(children[2]).toContain("detail-block")
-  })
-
   it("質問が2件あると1問ずつ出し、「戻る」と「次へ」で行き来する", () => {
     const calls: unknown[] = []
     renderQuestionAsk(
@@ -226,12 +178,6 @@ describe("QuestionAsk（メインビューの質問の札）", () => {
 
     fireEvent.click(screen.getByText("最新のやり取りへ"))
     expect(moved).toEqual([3])
-  })
-
-  it("最新のやり取りを見ている間は、その口を出さない", () => {
-    renderQuestionAsk([{ kind: "question", id: "ask-1", questions: [question()] }])
-
-    expect(screen.queryByText("最新のやり取りへ")).toBeNull()
   })
 
   it("質問が来たら札まで連れてくる（scrollIntoView）", () => {

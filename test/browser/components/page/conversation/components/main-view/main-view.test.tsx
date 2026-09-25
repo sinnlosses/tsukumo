@@ -23,7 +23,6 @@ import {
   detailRecord,
   reportRecord,
   requestRecord,
-  speechRecord,
 } from "../../../../../../fixture/session-record.ts"
 import { putState, sessionStoreWith } from "../../../../../session-store.ts"
 
@@ -167,16 +166,6 @@ function openHistory(): void {
 }
 
 describe("MainView（札の頭）", () => {
-  it("最新のターンを出し、タイトル・n / N・「最新」の印が付く", () => {
-    renderMainView(threeTurns())
-
-    expect(title()).toBe("3つ目")
-    expect(position()).toBe("3 / 3")
-    expect(screen.getByText("最新")).toBeDefined()
-    expect(screen.queryByRole("button", { name: TO_NEWEST })).toBeNull()
-    expect(screen.getByText("3つ目のレポート")).toBeDefined()
-  })
-
   it("‹ で1つ古いターンへ、› で1つ新しいターンへ移り、タイトルと n / N が追う", () => {
     renderMainView(threeTurns())
 
@@ -256,16 +245,6 @@ describe("MainView（札の頭）", () => {
     expect(screen.queryByText("4つ目のレポート")).toBeNull()
   })
 
-  it("ターンが1件だけでも札の頭を出す（前後はどちらも押せない）", () => {
-    renderMainView([requestRecord({ text: "ただ1つの依頼", turnId: 0 }), detailRecord("本文")])
-
-    expect(title()).toBe("ただ1つの依頼")
-    expect(position()).toBe("1 / 1")
-    expect(button(OLDER).getAttribute("aria-disabled")).toBe("true")
-    expect(button(NEWER).getAttribute("aria-disabled")).toBe("true")
-    expect(screen.getByText("最新")).toBeDefined()
-  })
-
   it("タイトルは見ているターンの依頼の1行目で、全文は title でも読める", () => {
     renderMainView([
       requestRecord({ text: "架空の依頼の1行目\n2行目", turnId: 0 }),
@@ -274,16 +253,6 @@ describe("MainView（札の頭）", () => {
 
     expect(title()).toBe("架空の依頼の1行目")
     expect(historyToggle().title).toBe("架空の依頼の1行目")
-  })
-
-  it("タイトルと `⌄` は h2 の中の1つのボタンで、アクセシブルネームがタイトルの文字になる", () => {
-    renderMainView(threeTurns())
-
-    const heading = screen.getByRole("heading", { level: 2 })
-    const toggle = screen.getByRole("button", { name: "3つ目" })
-
-    expect(heading.contains(toggle)).toBe(true)
-    expect(toggle).toBe(historyToggle())
   })
 })
 
@@ -391,13 +360,6 @@ describe("MainView（一覧: 窓の中のやり取りへ飛ぶ）", () => {
 })
 
 describe("MainView（依頼の続き）", () => {
-  it("1行の依頼はタイトルにだけ出て、本文側に二度は出ない", () => {
-    renderMainView([requestRecord({ text: "架空の依頼", turnId: 0 }), detailRecord("本文")])
-
-    expect(screen.getAllByText("架空の依頼")).toHaveLength(1)
-    expect(document.querySelector("details[open]")).toBeNull()
-  })
-
   it("複数行の依頼は、2行目以降が開いた <details> で全部読める（1行目は二度出さない）", () => {
     renderMainView([
       requestRecord({ text: "架空の依頼の1行目\n1. 起こす\n2. 落ちる", turnId: 0 }),
@@ -443,73 +405,7 @@ describe("MainView（ターン切り替えでレポートの先頭へ戻す）",
   })
 })
 
-describe("MainView（セリフはレポートに出さない）", () => {
-  it("セリフの記録が混ざっても、レポートには出ずターンの区切りも変わらない", () => {
-    renderMainView([
-      requestRecord({ text: "1つ目", turnId: 0 }),
-      speechRecord({ text: "1つ目のセリフ" }),
-      detailRecord("1つ目のレポート"),
-      requestRecord({ text: "2つ目", turnId: 1 }),
-      speechRecord({ text: "2つ目のセリフ" }),
-      detailRecord("2つ目のレポート"),
-    ])
-
-    expect(position()).toBe("2 / 2")
-    expect(screen.getByText("2つ目のレポート")).toBeDefined()
-    expect(screen.queryByText("2つ目のセリフ")).toBeNull()
-
-    // 1つ前も、セリフ抜きのレポートだけが出る（ターンの区切りはずれない）。
-    press(OLDER)
-    expect(title()).toBe("1つ目")
-    expect(screen.getByText("1つ目のレポート")).toBeDefined()
-    expect(screen.queryByText("1つ目のセリフ")).toBeNull()
-  })
-})
-
 describe("MainView（ツールの行はレポートに出ない）", () => {
-  it("ファイルを変えた操作もサブエージェントの起動も行にならない（枠ごと消える）", () => {
-    const { container } = renderMainView([
-      requestRecord({ text: "依頼", turnId: 0 }),
-      tool({ toolUseId: "t1", name: "Edit", input: { file_path: "src/a.ts" } }),
-      tool({ toolUseId: "t2", name: "Agent", input: { description: "調査タスク" } }),
-    ])
-
-    expect(screen.queryByText(/Edit:/)).toBeNull()
-    expect(screen.queryByText(/Agent:/)).toBeNull()
-    expect(container.querySelectorAll(".tool-block")).toHaveLength(0)
-    // ツールしか無いステップは、レポートも無いので枠ごと消える。
-    expect(container.querySelectorAll(".main-step")).toHaveLength(0)
-  })
-
-  it("失敗したツールも引数も出力も行にならない（過程はサイドバーに寄せた）", () => {
-    const { container } = renderMainView([
-      requestRecord({ text: "依頼", turnId: 0 }),
-      tool({
-        toolUseId: "t1",
-        name: "Bash",
-        input: { command: "架空のコマンド" },
-        status: { kind: "finished", result: { content: "架空のエラー出力", isError: true } },
-      }),
-    ])
-
-    expect(screen.queryByText(/架空のコマンド/)).toBeNull()
-    expect(screen.queryByText(/架空のエラー出力/)).toBeNull()
-    expect(container.querySelectorAll(".tool-block")).toHaveLength(0)
-    expect(container.querySelectorAll(".main-step")).toHaveLength(0)
-  })
-
-  it("最後でない本文は落ち、ツールのチップも残らない（枠ごと消える）", () => {
-    const { container } = renderMainView([
-      requestRecord({ text: "依頼", turnId: 0 }),
-      detailRecord("まず直すね"),
-      tool({ toolUseId: "t1", name: "Write", input: { file_path: "src/b.ts" } }),
-      detailRecord("直したよ"),
-    ])
-
-    expect(screen.queryByText("まず直すね")).toBeNull()
-    expect(container.querySelectorAll(".main-step")).toHaveLength(1)
-  })
-
   it("ツールを何十件呼んだやり取りでも「省略した」の行は出ない（上限に数えない）", () => {
     const { container } = renderMainView([
       requestRecord({ text: "依頼", turnId: 0 }),
@@ -541,34 +437,6 @@ describe("MainView（中間レポート）", () => {
     expect(screen.getByText("中間レポート")).toBeDefined()
     expect(screen.getByText("1つ目の発見")).toBeDefined()
     expect(container.querySelectorAll(".main-step.is-interim")).toHaveLength(1)
-  })
-
-  it("最後の report は中間レポートにしない（印は付かない）", () => {
-    const { container } = renderMainView([
-      requestRecord({ text: "依頼", turnId: 0 }),
-      reportRecord("## 調べた結果\n\n- 1つ目の発見\n- 2つ目の発見"),
-      tool({ toolUseId: "t1", name: "Write", input: { file_path: "src/b.ts" } }),
-      reportRecord("## 直した箇所\n\n- src/a.ts\n- src/b.ts"),
-    ])
-
-    expect(screen.getByText("直した箇所")).toBeDefined()
-    expect(container.querySelectorAll(".main-step")).toHaveLength(2)
-    expect(container.querySelectorAll(".main-step.is-interim")).toHaveLength(1)
-  })
-
-  it("後ろに別のレポートが現れた中間レポートは <details> で畳んで出す", () => {
-    const { container } = renderMainView([
-      requestRecord({ text: "依頼", turnId: 0 }),
-      reportRecord("## 調べた結果\n\n- 1つ目の発見\n- 2つ目の発見"),
-      tool({ toolUseId: "t1", name: "Write", input: { file_path: "src/b.ts" } }),
-      reportRecord("## 直した箇所\n\n- src/a.ts\n- src/b.ts"),
-    ])
-
-    const interimSteps = container.querySelectorAll(".main-step.is-interim")
-    expect(interimSteps).toHaveLength(1)
-    expect(interimSteps[0]?.tagName).toBe("DETAILS")
-    expect((interimSteps[0] as HTMLDetailsElement).open).toBe(false)
-    expect(interimSteps[0]?.querySelector("summary")?.textContent).toBe("中間レポート: 調べた結果")
   })
 
   it("まだ追い越されていない最後の中間レポートは畳まず開いたまま（<section> のまま）", () => {

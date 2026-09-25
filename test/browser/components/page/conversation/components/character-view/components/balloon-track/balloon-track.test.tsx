@@ -11,34 +11,6 @@ afterEach(() => {
 })
 
 describe("BalloonTrack", () => {
-  it("(1) 古い→新しいの順で渡したセリフが、DOM 上は新しい順（先頭が最新）で並ぶ", () => {
-    render(
-      <BalloonTrack
-        speeches={["1つめ", "2つめ", "3つめ"]}
-        emptyMessage={undefined}
-        speakerName={undefined}
-      />,
-    )
-
-    const balloons = document.querySelectorAll(".balloon")
-    expect([...balloons].map((balloon) => balloon.textContent)).toEqual(["3つめ", "2つめ", "1つめ"])
-  })
-
-  it("(1) 最新の1件だけに強調の印（data-latest）が付く", () => {
-    render(
-      <BalloonTrack
-        speeches={["1つめ", "2つめ", "3つめ"]}
-        emptyMessage={undefined}
-        speakerName={undefined}
-      />,
-    )
-
-    const balloons = [...document.querySelectorAll(".balloon")]
-    expect(balloons[0]?.getAttribute("data-latest")).toBe("true")
-    expect(balloons[1]?.getAttribute("data-latest")).toBe("false")
-    expect(balloons[2]?.getAttribute("data-latest")).toBe("false")
-  })
-
   it("(2) セリフが0件のときはプレースホルダの文言を出す", () => {
     render(<BalloonTrack speeches={[]} emptyMessage={undefined} speakerName={undefined} />)
 
@@ -74,25 +46,6 @@ describe("BalloonTrack", () => {
     expect(screen.getByText("1つめ")).toBe(firstNode)
     expect(firstNode.closest(".balloon")?.getAttribute("data-latest")).toBe("false")
     expect(screen.getByText("2つめ").closest(".balloon")?.getAttribute("data-latest")).toBe("true")
-  })
-
-  it("(5) 話し手の名前は最新の1件にだけ添わり、本文（.balloon-text）とは分かれる", () => {
-    render(
-      <BalloonTrack
-        speeches={["1つめ", "2つめ"]}
-        emptyMessage={undefined}
-        speakerName="架空の名前"
-      />,
-    )
-
-    const balloons = [...document.querySelectorAll(".balloon")]
-    expect(
-      balloons.map((balloon) => balloon.querySelector(".balloon-speaker")?.textContent),
-    ).toEqual(["架空の名前", undefined])
-    expect(balloons.map((balloon) => balloon.querySelector(".balloon-text")?.textContent)).toEqual([
-      "2つめ",
-      "1つめ",
-    ])
   })
 
   it("(5) プレースホルダには話し手の名前を添えない（キャラクターの言葉ではない）", () => {

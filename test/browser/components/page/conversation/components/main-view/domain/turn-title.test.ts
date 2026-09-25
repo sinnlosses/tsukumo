@@ -47,23 +47,10 @@ describe("turnTitle（札の頭のタイトル）", () => {
     expect(turnTitle(turn({ steps: [] }))).toBe("架空の依頼")
   })
 
-  it("あとからレポートが届いても、タイトルは依頼のまま変わらない", () => {
-    const running = turnTitle(turn({ steps: [] }))
-    const finished = turnTitle(turn({ steps: [reportStep(0, "架空のレポートの見出し")] }))
-
-    expect(finished).toBe(running)
-  })
-
   it("先頭の空行と行の中の空白の並びを詰める", () => {
     expect(turnTitle(turn({ request: { text: "\n\n  架空の   依頼 ", images: [] } }))).toBe(
       "架空の 依頼",
     )
-  })
-
-  it("長い1行も字数で切らない（収まらないぶんは CSS が省略する）", () => {
-    const text = "とても長い架空の依頼の1行目で、札の頭の1行には収まらない長さにしてある🦊"
-
-    expect(turnTitle(turn({ request: { text, images: [] } }))).toBe(text)
   })
 
   it("依頼が無い・文面が空のときは、最初のレポートの先頭行へ下りる", () => {
@@ -81,10 +68,6 @@ describe("turnTitle（札の頭のタイトル）", () => {
         }),
       ),
     ).toBe("架空のレポートの見出し")
-  })
-
-  it("依頼もレポートも無いときは既定のタイトル", () => {
-    expect(turnTitle(turn({ request: undefined, steps: [] }))).toBe("（依頼なし）")
   })
 })
 

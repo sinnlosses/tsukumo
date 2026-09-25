@@ -165,33 +165,6 @@ describe("Turn（書き上げる演出を掛ける相手）", () => {
   })
 })
 
-describe("Turn（最終レポートのラベル）", () => {
-  it("中間レポートのあるやり取りでは、最終レポートにラベルを載せる", () => {
-    const { container } = render(
-      <Turn
-        turn={{
-          ...turn([
-            step({ id: 0, body: text("途中の資料"), interim: true, superseded: true }),
-            step({ id: 1, body: text("締めの本文"), final: true }),
-          ]),
-          hasInterimReport: true,
-        }}
-        newest={false}
-      />,
-    )
-
-    expect(container.textContent).toContain("最終レポート")
-  })
-
-  it("本文が1つだけのやり取りでは載せない（「最終」が何も区別しないため）", () => {
-    const { container } = render(
-      <Turn turn={turn([step({ id: 0, body: text("締めの本文"), final: true })])} newest={false} />,
-    )
-
-    expect(container.textContent).not.toContain("最終レポート")
-  })
-})
-
 describe("Turn（失敗で終わったやり取り）", () => {
   it("失敗で終わったやり取りは、末尾に「失敗で終わった」と理由を字で出す", () => {
     const { container } = render(

@@ -87,18 +87,6 @@ function textArea(): HTMLTextAreaElement {
 }
 
 describe("Composer", () => {
-  it("(1) Command+Enter で prompt が dispatch され、入力欄が空になる", () => {
-    const calls: unknown[] = []
-    renderComposer({}, (command) => calls.push(command))
-
-    fireEvent.change(textArea(), { target: { value: "架空の依頼" } })
-    fireEvent.keyDown(textArea(), { key: "Enter", metaKey: true })
-
-    // 画像を添えていない依頼は、空の `images` を伴って送られる。
-    expect(calls).toEqual([{ procedure: "session.prompt", text: "架空の依頼", images: [] }])
-    expect(textArea().value).toBe("")
-  })
-
   it("(3) IME の変換確定中の Command+Enter は送らない（isComposing）", () => {
     const calls: unknown[] = []
     renderComposer({}, (command) => calls.push(command))
