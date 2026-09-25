@@ -9,7 +9,7 @@ import {
 import {
   type ChatSummary,
   type ChatSummaryRecord,
-} from "../../../../src/server/core/session-driver.ts"
+} from "../../../../src/server/session-driver/core/session-driver.ts"
 
 // フィクスチャは手で書いた架空の要約だけ（実物の要約・会話は使わない。
 // docs/coding-standards.md「会話内容の扱い」）。形は `/compact` が返す生の出力に寄せてある

@@ -11,24 +11,24 @@ import {
 } from "@anthropic-ai/claude-agent-sdk"
 
 import {
+  createReportGate,
+  REPORT_GATE_AFTER_REPORT_REASON,
+  REPORT_GATE_REASON,
+} from "../../../../src/server/report/core/report-tool.ts"
+import {
   buildQuerySeedOptions,
   chatSummaryHooks,
   stopHooks,
-} from "../../../src/server/adapter/sdk-driver.ts"
+} from "../../../../src/server/session-driver/adapter/sdk-driver.ts"
 import {
   type ChatSummary,
   type SessionDriverOptions,
   type SessionMode,
-} from "../../../src/server/core/session-driver.ts"
-import {
-  createReportGate,
-  REPORT_GATE_AFTER_REPORT_REASON,
-  REPORT_GATE_REASON,
-} from "../../../src/server/report/core/report-tool.ts"
-import { API_ERROR_KINDS } from "../../../src/shared/api-trouble.ts"
-import { EFFORT_LEVELS, MODEL_ALIASES, PERMISSION_MODES } from "../../../src/shared/command.ts"
-import { BUILTIN_SESSION_DEFAULT } from "../../../src/shared/session-default.ts"
-import { type SessionEvent } from "../../../src/shared/session-event.ts"
+} from "../../../../src/server/session-driver/core/session-driver.ts"
+import { API_ERROR_KINDS } from "../../../../src/shared/api-trouble.ts"
+import { EFFORT_LEVELS, MODEL_ALIASES, PERMISSION_MODES } from "../../../../src/shared/command.ts"
+import { BUILTIN_SESSION_DEFAULT } from "../../../../src/shared/session-default.ts"
+import { type SessionEvent } from "../../../../src/shared/session-event.ts"
 
 // `startSession` 自体は本物の claude を子プロセスとして起こすので、ここでは呼ばない
 // （docs/requirements.md 4.6 / CLAUDE.md「よく使うコマンド」）。`query()` に渡る `options` の
@@ -98,7 +98,7 @@ describe("buildQuerySeedOptions", () => {
 
   it("引き継いだ環境変数に CLAUDE_CODE_TERMINAL_MCP_TOOLS=mcp__tsukumo__speak を足して子プロセスへ渡す", () => {
     // SDK の `env` は `process.env` と混ぜずに丸ごと置き換えるので、引き継ぎが落ちていないことも見る
-    // （`src/server/core/visible-output-nudge.ts`）。
+    // （`src/server/session-driver/core/visible-output-nudge.ts`）。
     expect(buildQuerySeedOptions(BASE_OPTIONS).env).toEqual({
       PATH: "/usr/bin",
       HOME: "/tmp/tsukumo-home",

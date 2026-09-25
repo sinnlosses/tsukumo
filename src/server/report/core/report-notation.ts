@@ -8,7 +8,7 @@
 // 規約が古いまま、が起きない）。通す要素・class を増やしたら、この文面も同じコミットで直す。
 //
 // 「決める」内容の定数で、外の世界には触らない（原則2）。`query()` に渡すのは呼び出し側
-// （`src/session-start.ts`）で、`src/server/core/session-driver.ts` は中身を決めずそのまま受け取るだけ。
+// （`src/session-start.ts`）で、`src/server/session-driver/core/session-driver.ts` は中身を決めずそのまま受け取るだけ。
 
 /**
  * メインビューが HTML を描けることを前提に、出力スタイルのレポート規約を上書きする文面。

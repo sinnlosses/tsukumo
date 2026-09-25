@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test"
 
-import { readFakeSession } from "../../../../src/server/adapter/fake-driver.ts"
+import { readFakeSession } from "../../../../src/server/session-driver/adapter/fake-driver.ts"
 import { type VisitGuest } from "../../../../src/server/visit/core/visit-guest.ts"
 import {
   type VisitScriptDraft,

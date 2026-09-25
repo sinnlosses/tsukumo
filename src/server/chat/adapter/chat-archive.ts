@@ -48,7 +48,7 @@ import {
   type ChatArchiveRecentEntry,
   type ChatReadbackLimits,
   type ChatRecallResult,
-} from "../../core/session-driver.ts"
+} from "../../session-driver/core/session-driver.ts"
 
 /** 置き場のディレクトリ名（`~/.tsukumo/chat-archive/`）。 */
 const CHAT_ARCHIVE_DIR_NAME = "chat-archive"

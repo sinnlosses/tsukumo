@@ -1,10 +1,10 @@
 // `report` ツールまわりの決まりごと（docs/glossary.md「report ツール」）。仕事のセッションでは
 // レポートを常にこのツールで受け取る。**雑談のときは載せない**（雑談は本文を書かない決まり。
-// `docs/chat-mode.md`）。ツールを載せるのは `src/server/adapter/sdk-tool.ts`、呼び出しを
-// イベントに変えるのは `src/server/core/sdk-message.ts`、書き方の規約は `report-notation.ts`。
+// `docs/chat-mode.md`）。ツールを載せるのは `src/server/session-driver/adapter/sdk-tool.ts`、呼び出しを
+// イベントに変えるのは `src/server/session-driver/core/sdk-message.ts`、書き方の規約は `report-notation.ts`。
 //
 // ここに置くのは、ツールの説明文と `Stop` フックの関所（{@link createReportGate}。登録は
-// `src/server/adapter/sdk-driver.ts`）。関所は、SDK のターンの最後の `report` のあと（無ければ
+// `src/server/session-driver/adapter/sdk-driver.ts`）。関所は、SDK のターンの最後の `report` のあと（無ければ
 // ターンの頭から）に1行を超える本文を書いて止まろうとしたら差し戻す。**そのターンで `report` が
 // 済んでいるかで理由を分ける**: 済んでいなければ `report` で渡し直させ、済んでいれば「もう画面に
 // 出ている」と伝えて、言い直しなら何も足さずに終えさせる（一律に「画面に出ていない」と返すと、

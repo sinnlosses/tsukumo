@@ -12,7 +12,7 @@
 
 import { chatLogByteSize } from "../../../shared/chat-log.ts"
 import { type SessionEvent } from "../../../shared/session-event.ts"
-import { type ChatSummary, type SessionDriver } from "../../core/session-driver.ts"
+import { type ChatSummary, type SessionDriver } from "../../session-driver/core/session-driver.ts"
 
 /** サイドバーの「最近の話題」に出す見出しの件数の上限（`docs/screen-design.md` 13.7）。 */
 export const CHAT_TOPIC_LIMIT = 3
@@ -130,7 +130,7 @@ export function chatTopics(summary: string): readonly string[] {
 /**
  * パック1つぶんの写しを読み、最近の話題の見出しにして返す（写しがまだ無い・読めないときは
  * 空）。起こしたとき（`src/session-start.ts`）と、圧縮で写しが新しくなったとき
- * （`src/server/adapter/sdk-driver.ts` の `PostCompact` フック）の2か所から呼ばれる。
+ * （`src/server/session-driver/adapter/sdk-driver.ts` の `PostCompact` フック）の2か所から呼ばれる。
  * **書いたあとの写しを読み直す**ので、画面に出る見出しは次に起こしたときと同じものになる。
  */
 export function readChatTopics(chatSummary: ChatSummary): readonly string[] {

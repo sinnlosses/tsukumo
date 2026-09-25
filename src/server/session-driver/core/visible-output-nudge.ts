@@ -14,7 +14,7 @@
 // {@link isVisibleOutputNudge} を一緒に置く。
 //
 // 「決める」内容だけで、外の世界には触らない（原則2）。子プロセスへ渡すのは
-// `src/server/adapter/sdk-driver.ts`、環境変数を読むのは `src/cli.ts`。
+// `src/server/session-driver/adapter/sdk-driver.ts`、環境変数を読むのは `src/cli.ts`。
 
 import { isPlainObject } from "remeda"
 

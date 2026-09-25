@@ -1,7 +1,7 @@
 // `diary` ツールまわりの決まりごと（docs/glossary.md「diary ツール」）。書けるのは成果の画面から
 // 頼まれた振り返りのターンだけで、それ以外・形の外れた呼び出しは状態を変えずに断り、理由を
 // 添えて呼び直させる（`report` / 見直しの2つと同じ線）。ツールを載せるのは
-// `src/server/adapter/sdk-tool.ts`、保存は `src/server/diary/adapter/diary.ts`、決定の理由は
+// `src/server/session-driver/adapter/sdk-tool.ts`、保存は `src/server/diary/adapter/diary.ts`、決定の理由は
 // `docs/design.md`「日記の受け取りと保存」。
 //
 // **引数の形（文字列・列挙）は zod の形で SDK が先に検査する**（崩れていれば handler は
@@ -11,7 +11,7 @@
 // **3段目の合図（引数の断片から最上位の鍵 `bookmark` を見つける純関数と、駆動の世代ごとに1つ
 // 持つ状態機械）もここに持つ**（`docs/design.md`「日記の受け取りと保存」「3段の進みの決まり方」）。
 // **SDK の型は import しない**——`stream_event` の生の形は `isPlainObject` で構造だけを見る
-// （`src/server/core/sdk-message.ts` と同じやり方。呼び出し側は `src/server/adapter/sdk-driver.ts`
+// （`src/server/session-driver/core/sdk-message.ts` と同じやり方。呼び出し側は `src/server/session-driver/adapter/sdk-driver.ts`
 // で、ツールのフル名〔`mcp__tsukumo__diary`〕はそちらが `tsukumoToolFullName` で組んで渡す——
 // ここが MCP の命名規則を知らなくて済むようにするため）。
 
@@ -86,7 +86,7 @@ export type DiaryIntake = {
 
 /**
  * {@link DiaryIntake} を1つ作る。`now` は書いた時刻（エポックミリ秒。時計を読むのは呼び出し側
- * = `src/server/adapter/sdk-driver.ts`）、`save` は保存の口、`onEvent` は駆動のイベントの流れ
+ * = `src/server/session-driver/adapter/sdk-driver.ts`）、`save` は保存の口、`onEvent` は駆動のイベントの流れ
  * （ここで例外を投げない）。
  */
 export function createDiaryIntake(
@@ -273,7 +273,7 @@ export type DiaryStageTracker = {
 
 /**
  * {@link DiaryStageTracker} を1つ作る（**駆動の世代ごとに1つ**。呼び出し側は
- * `src/server/adapter/sdk-driver.ts`）。`diaryToolFullName` は追いかける塊の名前
+ * `src/server/session-driver/adapter/sdk-driver.ts`）。`diaryToolFullName` は追いかける塊の名前
  * （`mcp__tsukumo__diary` の形。組み立ては呼び出し側の `tsukumoToolFullName`）。
  */
 export function createDiaryStageTracker(diaryToolFullName: string): DiaryStageTracker {

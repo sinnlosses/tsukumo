@@ -1,5 +1,5 @@
 // 見直し（docs/glossary.md「見直し」）を受け取る2つのツールの決まりごと。ツールを載せるのは
-// `src/server/adapter/sdk-tool.ts` で、ここにあるのはツールの名前・説明文と、受け付けるかを
+// `src/server/session-driver/adapter/sdk-tool.ts` で、ここにあるのはツールの名前・説明文と、受け付けるかを
 // 決めて受け付けた呼び出しをイベントにする窓口（{@link createUsageReviewIntake}）。
 // 決定の理由は docs/design.md「見直しのツールと状態」。
 //

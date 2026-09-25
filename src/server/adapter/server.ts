@@ -133,7 +133,7 @@ export type ReadTokenUsageSummary = (days: TokenUsageDays) => TokenUsageSummary
 export type ReadContextUsage = () => Promise<ContextUsageReport>
 
 /**
- * 棚（`src/server/core/prompt-image-shelf.ts`）から、id が指す原寸の data URL を引く。
+ * 棚（`src/server/session-driver/core/prompt-image-shelf.ts`）から、id が指す原寸の data URL を引く。
  * **棚に無い（捨てた・知らない）ときは undefined**（配る側が 404 にする）。
  */
 export type FindPromptImage = (id: string) => string | undefined

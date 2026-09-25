@@ -1,7 +1,7 @@
 // Claude Code が手元に持つセッションの一覧・transcript・印（`listSessions` /
 // `getSessionMessages` / `tagSession`）。続きから始めるセッションを探す・切り替え先を並べる・
 // 履歴を読み直す・ターンの終わりに印を付け直す（docs/requirements.md 4.8「セッションの復元」）。
-// 選ぶ計算と履歴への変換は src/server/core/session-restore.ts が持ち、ここは SDK を呼ぶだけ。
+// 選ぶ計算と履歴への変換は src/server/session-driver/core/session-restore.ts が持ち、ここは SDK を呼ぶだけ。
 
 import {
   getSessionInfo,
@@ -14,9 +14,9 @@ import {
 import {
   type ExpressionChoice,
   expressionNames as toExpressionNames,
-} from "../../shared/expression-choice.ts"
-import { type SessionChoice } from "../../shared/session-choice.ts"
-import { type SessionEvent } from "../../shared/session-event.ts"
+} from "../../../shared/expression-choice.ts"
+import { type SessionChoice } from "../../../shared/session-choice.ts"
+import { type SessionEvent } from "../../../shared/session-event.ts"
 import { type SessionDriverOptions } from "../core/session-driver.ts"
 import {
   listMarkedSessions,
@@ -61,7 +61,7 @@ export async function findSessionToResume(cwd: string, tag: string): Promise<str
 
 /**
  * 切り替え先として選べるセッションを一覧にする（画面のセッションの `<select>`。
- * `docs/requirements.md` 4.8）。絞り込みと並びは `src/server/core/session-restore.ts` の
+ * `docs/requirements.md` 4.8）。絞り込みと並びは `src/server/session-driver/core/session-restore.ts` の
  * `listMarkedSessions` が決める。
  *
  * 絞り込みの鍵も `includeWorktrees` を入れる理由も {@link findSessionToResume} と同じで、違うのは

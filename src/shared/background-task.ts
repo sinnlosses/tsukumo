@@ -3,7 +3,7 @@
 // 「いまの作業」がターンの外でも「背景で動いている」と言うために持つ（docs/screen-design.md
 // 13.9「背景のタスク」）。
 //
-// SDK の `system` / `background_tasks_changed` からの変換は core（src/server/core/sdk-message.ts）に
+// SDK の `system` / `background_tasks_changed` からの変換は core（src/server/session-driver/core/sdk-message.ts）に
 // ある。ここは両側が読む形だけ。
 
 /**

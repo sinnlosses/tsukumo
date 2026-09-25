@@ -135,7 +135,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 - **注記**: **SDK の `accountInfo()` が返す `subscriptionType` は契約の段と合わないことがある**
   （Max の契約でも `"Claude Pro"` を返す実測がある）。控えは段（`claude_max`）と枠
   （`default_claude_max_20x`）を別々に持つので、そちらから組み立てられるならそれを使い、
-  **組み立てられないときだけ SDK の値へ落ちる**（決めるのは `src/server/core/plan.ts`）。
+  **組み立てられないときだけ SDK の値へ落ちる**（決めるのは `src/server/session-driver/core/plan.ts`）。
   **知らない綴りは訳さない**（勝手な名前を付けると、画面の値が実態と違っていても気づけない）。
   どちらからも決まらなければ画面に何も出さない。`email` / `organization` はここに含めない
   （駆動の外へ出さない。会話内容の扱いと同じ考え方）
@@ -908,7 +908,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 - **注記**: 衣装のモデル分岐は、この output style の「出撃時の掛け声」と対応させる。
   **`speak` を呼ぶタイミングの規約もここに書く**（`docs/display.md` 4.2）
 - **注記**: **人格は毎ターン `systemPrompt` の append として渡っている**
-  （`src/server/adapter/sdk-driver.ts` が `{ type: "preset", preset: "claude_code", append }` を組む）。
+  （`src/server/session-driver/adapter/sdk-driver.ts` が `{ type: "preset", preset: "claude_code", append }` を組む）。
   2026-09-11 のスパイクで確かめてあり、未決ではない
 
 ## 通信（移行後）
@@ -931,7 +931,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 - **定義**: 外の世界（Agent SDK・HTTP/WebSocket・ホスト・ファイル・子プロセス）に触るコードの
   置き場所。**1ファイル = 1つの境界**。判断は持たず、`core` から呼ばれるか `cli.ts` が結ぶ
 - **注記**: インターフェースは**実装が2つあるもの（駆動・ホスト）にだけ** `core` に置く
-  （`core/session-driver.ts` / `host/core/host.ts`）。`core → adapter` の import は
+  （`session-driver/core/session-driver.ts` / `host/core/host.ts`）。`core → adapter` の import は
   `test/architecture.test.ts` が落とす
 - **避ける言い方**: インフラ層、外界、helpers
 
@@ -963,8 +963,8 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 ### fake driver
 
 - **英語識別子**: `fakeDriver`（`TSUKUMO_DRIVER=fake`）
-- **定義**: `SessionDriver`（`src/server/core/session-driver.ts` の契約）と同じ形で、手で書いた
-  疑似セッションどおりにイベントを流す実装（`src/server/adapter/fake-driver.ts`）。claude を起こさずに
+- **定義**: `SessionDriver`（`src/server/session-driver/core/session-driver.ts` の契約）と同じ形で、手で書いた
+  疑似セッションどおりにイベントを流す実装（`src/server/session-driver/adapter/fake-driver.ts`）。claude を起こさずに
   画面全体を動かすための道具
 - **注記**: 疑似セッションは**架空の会話だけ**（`docs/coding-standards.md`「会話内容の扱い」）
 - **避ける言い方**: モック（テストの中の置き換え一般と紛れる）、スタブ
@@ -972,7 +972,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 ### 疑似セッション
 
 - **英語識別子**: `fakeSession`
-- **定義**: fake driver（`src/server/adapter/fake-driver.ts`）が流すために手で書いた架空のイベント列
+- **定義**: fake driver（`src/server/session-driver/adapter/fake-driver.ts`）が流すために手で書いた架空のイベント列
   （`test/fixture/fake-session.json`）。claude を起こさずに画面全体を動かすための材料
 - **注記**: 疑似セッションは**架空の会話だけ**（`docs/coding-standards.md`「会話内容の扱い」）
 - **避ける言い方**: シナリオ、スクリプト（脚本という含みが強すぎる）

@@ -4,9 +4,9 @@ import {
   createPromptImageShelf,
   MAX_SHELVED_PROMPT_IMAGE_BYTES,
   releasedPromptImageIds,
-} from "../../../src/server/core/prompt-image-shelf.ts"
-import { type PromptImage, promptImageIdSchema } from "../../../src/shared/prompt-image.ts"
-import { type SessionRecord } from "../../../src/shared/session-state.ts"
+} from "../../../../src/server/session-driver/core/prompt-image-shelf.ts"
+import { type PromptImage, promptImageIdSchema } from "../../../../src/shared/prompt-image.ts"
+import { type SessionRecord } from "../../../../src/shared/session-state.ts"
 
 // 画像はすべて手で書いた架空の data URL（実物の画像は使わない。
 // docs/coding-standards.md「会話内容の扱い」）。

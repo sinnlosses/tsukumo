@@ -7,14 +7,14 @@
 //
 // **原寸と控えは別の寿命を持つ。** 原寸（{@link PromptImage.full}）はブラウザのメモリ →
 // WebSocket の1フレーム → サーバのメモリ → SDK の子プロセス、と流れ、サーバのメモリでは
-// **直近の数枚だけ**が棚（`src/server/core/prompt-image-shelf.ts`）に残る（記録の窓から出た依頼の
+// **直近の数枚だけ**が棚（`src/server/session-driver/core/prompt-image-shelf.ts`）に残る（記録の窓から出た依頼の
 // ぶんと、枚数の上限を超えたぶんはそこで捨てる。ディスクには書かない）。記録（`SessionState`）に
 // 載るのは控え（{@link PromptImage.thumbnail}）と、棚の原寸を指す id だけ
 // （{@link RecordedPromptImage}）。上限が2つあるのはそのためで、控えのほうが桁違いに小さい
 // （`docs/requirements.md` 4.10「会話内容の扱い」）。
 //
 // ここは両側で共有する契約なので、**検証だけを持ちバイト列には触らない**（base64 を
-// 内容ブロックに載せるのは渡す側 = `src/server/adapter/sdk-driver.ts`）。
+// 内容ブロックに載せるのは渡す側 = `src/server/session-driver/adapter/sdk-driver.ts`）。
 
 import { z } from "zod"
 

@@ -89,7 +89,7 @@ export function contextUsageRefetchKey(lastTurnFinishedAt: number | undefined): 
 /**
  * `refetchKey` が変わるたびに取り直す。**マウント時にも1回引く**（`staleTime: 0` なので
  * 初回もキャッシュを信用しない）。「ターンの実行中に呼んでも待たされない」（実測は
- * `src/server/adapter/sdk-context-usage.ts` の `CONTEXT_USAGE_DETAIL`）ので、進行中でも
+ * `src/server/session-driver/adapter/sdk-context-usage.ts` の `CONTEXT_USAGE_DETAIL`）ので、進行中でも
  * 同じように取りに行く。
  */
 export function useContextUsage(refetchKey: number): UseContextUsageResult {

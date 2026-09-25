@@ -3,7 +3,7 @@
 //
 // **中身は印から読めるものと、SDK が付けた見出し（`heading`）だけ**（目印・セッションのID・
 // 最終更新時刻・見出し）。**`heading` は会話の内容そのものではなく、SDK 自身が作った表示用の
-// 題**（`customTitle` → 自動要約 → 最初の依頼、の順に決まる。`src/server/adapter/sdk-session.ts`）
+// 題**（`customTitle` → 自動要約 → 最初の依頼、の順に決まる。`src/server/session-driver/adapter/sdk-session.ts`）
 // で、`127.0.0.1` のページに出すだけ（ログ・ファイル・外部へは出さない。
 // `docs/coding-standards.md`「会話内容の扱い」。メインビューが会話を出すのと同じ扱いで、
 // 複製にはあたらない）。
@@ -21,21 +21,21 @@ export const MAX_SESSION_CHOICES = 10
 /**
  * 見出しに出す文字数の上限。**`<select>` の選択肢は折り返せない**ので、表示側
  * （`src/browser/components/domain/sidebar/session-switch.tsx` の `truncateHeading`）はこれで切って
- * `…` を足す。**tsukumo が題を付けるとき（`src/server/core/session-title.ts`）もこれに収まる
+ * `…` を足す。**tsukumo が題を付けるとき（`src/server/session-driver/core/session-title.ts`）もこれに収まる
  * 長さで切り詰める**——同じ値を指すことで、モデルに指示する長さと表示の切り詰めがずれない。
  */
 export const MAX_SESSION_HEADING_LENGTH = 24
 
 /**
- * 切り替え先のセッション1件。組み立てるのは `src/server/core/session-restore.ts` の
+ * 切り替え先のセッション1件。組み立てるのは `src/server/session-driver/core/session-restore.ts` の
  * `listMarkedSessions`（claude 自身の transcript の一覧から、印を読んで作る）。
  */
 export type SessionChoice = {
   /**
    * 目印（印を付けた tsukumo のビューのポート番号）。**一覧はいまの部屋のものだけ**なので、
-   * 並ぶ行はすべて同じ値になる（絞り込みと、行が複数ある理由は `src/server/core/session-restore.ts`
+   * 並ぶ行はすべて同じ値になる（絞り込みと、行が複数ある理由は `src/server/session-driver/core/session-restore.ts`
    * の `listMarkedSessions`）。昔の印（目印の無いもの・1文字の `A` / `B` …）はポートへ戻してある
-   * （`src/server/core/session-restore.ts` の `readSessionMark`）。見分けるのは
+   * （`src/server/session-driver/core/session-restore.ts` の `readSessionMark`）。見分けるのは
    * {@link SessionChoice.lastModified} の側。
    */
   readonly viewPort: number

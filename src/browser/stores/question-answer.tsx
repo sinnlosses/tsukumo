@@ -17,7 +17,7 @@
 // **`answer.labels[i]` は `questions[i]` に対して選んだ答えの並び**（`shared/pending-ask.ts` の
 // 契約）。複数選択で2つ以上選んだときはそのまま複数の要素として送り、入力欄に書いた文字列は
 // 同じ並びの末尾に足す。**1つの文字列に畳むのはここではない**（SDK が求める
-// 「質問1件に対して1つの文字列」へ畳むのは `src/server/core/pending-answer.ts` の役目。ここで畳むと、
+// 「質問1件に対して1つの文字列」へ畳むのは `src/server/session-driver/core/pending-answer.ts` の役目。ここで畳むと、
 // メインビューに残す記録の側で選択肢と突き合わせられなくなる）。
 
 import {

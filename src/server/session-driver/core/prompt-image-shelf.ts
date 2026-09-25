@@ -12,8 +12,8 @@
 //   - 持っている原寸の合計の大きさが {@link MAX_SHELVED_PROMPT_IMAGE_BYTES} を超えたとき
 //     （古いほうから）
 
-import { type PromptImage, type RecordedPromptImage } from "../../shared/prompt-image.ts"
-import { type SessionRecord } from "../../shared/session-state.ts"
+import { type PromptImage, type RecordedPromptImage } from "../../../shared/prompt-image.ts"
+import { type SessionRecord } from "../../../shared/session-state.ts"
 
 /**
  * 棚に置く原寸の合計の大きさ（data URL の文字列の長さの合計）の上限。**なぜ枚数ではなく

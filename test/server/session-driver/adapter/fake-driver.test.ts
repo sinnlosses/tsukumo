@@ -5,9 +5,9 @@ import {
   FAKE_MODEL_EFFORT_SUPPORT,
   readFakeSession,
   startFakeSession,
-} from "../../../src/server/adapter/fake-driver.ts"
-import { BUILTIN_SESSION_DEFAULT } from "../../../src/shared/session-default.ts"
-import { type SessionEvent } from "../../../src/shared/session-event.ts"
+} from "../../../../src/server/session-driver/adapter/fake-driver.ts"
+import { BUILTIN_SESSION_DEFAULT } from "../../../../src/shared/session-default.ts"
+import { type SessionEvent } from "../../../../src/shared/session-event.ts"
 
 // 疑似セッションは手で書いた架空の会話（test/fixture/fake-session.json）。実物の transcript は
 // 使わない（docs/coding-standards.md「会話内容の扱い」）。

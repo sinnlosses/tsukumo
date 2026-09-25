@@ -8,7 +8,7 @@
 // （`sidebar.module.css` の `.session-info`。`grid-auto-flow: column` で対ごとに列が等分され、
 // キャラクターと横に並ぶ）に、ラベルと値の対として並ぶ。
 //
-// **一覧はいまの部屋（このビューのポート）のものだけ**（`src/server/core/session-restore.ts`）
+// **一覧はいまの部屋（このビューのポート）のものだけ**（`src/server/session-driver/core/session-restore.ts`）
 // なので、行の部屋の名前はすべて同じで見分けの役に立たない。**見分けるのは SDK の見出し
 // （`SessionChoice.heading`）と最終更新時刻**（部屋の名前を出す場所は帯だけになった。
 // `docs/screen-design.md` 13.9「部屋の名前」）。

@@ -13,7 +13,6 @@ import {
   createAchievementCommitCache,
   readAchievement,
 } from "./server/achievement/adapter/main-history.ts"
-import { type FakeSession, startFakeSession } from "./server/adapter/fake-driver.ts"
 import { localTimeHHMM, todayLocalDateKey } from "./server/adapter/local-time.ts"
 import {
   readRememberedSessionDefault,
@@ -21,12 +20,6 @@ import {
   writeRememberedSessionDefault,
   writeRememberedVisitEnabled,
 } from "./server/adapter/remembered-default.ts"
-import { startSdkDriver } from "./server/adapter/sdk-driver.ts"
-import {
-  findSessionToResume,
-  listSwitchableSessions,
-  readRestoredEvents,
-} from "./server/adapter/sdk-session.ts"
 import {
   type CharacterPack,
   listCharacterPacks,
@@ -38,21 +31,28 @@ import { readChatTopics } from "./server/chat/core/chat-compact.ts"
 import { createContextUsageLog } from "./server/context-usage/adapter/context-usage-log.ts"
 import { type Config } from "./server/core/config.ts"
 import { EVENT_BATCH_INTERVAL_MS } from "./server/core/event-batch.ts"
-import { type PromptImageShelf } from "./server/core/prompt-image-shelf.ts"
+import { createSessionLaunch, type SessionLaunchSeed } from "./server/core/session-launch.ts"
+import { createSessionManager, type SessionManager } from "./server/core/session-manager.ts"
+import { createOrcaHost } from "./server/host/adapter/orca-host.ts"
+import { openTrackedFile } from "./server/host/core/tracked-file.ts"
+import { listRepositoryFiles } from "./server/repository/adapter/repository-file.ts"
+import { watchTaskSummary } from "./server/repository/adapter/task-summary.ts"
+import { type FakeSession, startFakeSession } from "./server/session-driver/adapter/fake-driver.ts"
+import { startSdkDriver } from "./server/session-driver/adapter/sdk-driver.ts"
+import {
+  findSessionToResume,
+  listSwitchableSessions,
+  readRestoredEvents,
+} from "./server/session-driver/adapter/sdk-session.ts"
+import { type PromptImageShelf } from "./server/session-driver/core/prompt-image-shelf.ts"
 import {
   type ChatArchive,
   type ChatRecall,
   type SessionDriver,
   type SessionMode,
   type SessionStart,
-} from "./server/core/session-driver.ts"
-import { createSessionLaunch, type SessionLaunchSeed } from "./server/core/session-launch.ts"
-import { createSessionManager, type SessionManager } from "./server/core/session-manager.ts"
-import { canResume, sessionTag } from "./server/core/session-restore.ts"
-import { createOrcaHost } from "./server/host/adapter/orca-host.ts"
-import { openTrackedFile } from "./server/host/core/tracked-file.ts"
-import { listRepositoryFiles } from "./server/repository/adapter/repository-file.ts"
-import { watchTaskSummary } from "./server/repository/adapter/task-summary.ts"
+} from "./server/session-driver/core/session-driver.ts"
+import { canResume, sessionTag } from "./server/session-driver/core/session-restore.ts"
 import {
   takeSystemPromptAppend,
   toSystemPromptMode,
@@ -392,7 +392,7 @@ function chatRecallFor(chatArchive: ChatArchive, packName: string): ChatRecall {
 /**
  * 画面の `<select>` に出す、切り替え先のセッションの一覧（`docs/requirements.md` 4.8）。
  * **いまの部屋の印を持つもの**だけが並ぶ（絞り込みの理由は
- * `src/server/core/session-restore.ts` の `listMarkedSessions`）。
+ * `src/server/session-driver/core/session-restore.ts` の `listMarkedSessions`）。
  *
  * **続きを探さない起こし方のときは一覧も出さない**（{@link canResume}。
  * 続きから始めない約束で起こしているのに、切り替え先だけ出ると辻褄が合わない）。

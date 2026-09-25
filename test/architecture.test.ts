@@ -82,6 +82,7 @@ const SERVER_FEATURES = [
   "diary",
   "chat",
   "visit",
+  "session-driver",
 ] as const
 type ServerFeature = (typeof SERVER_FEATURES)[number]
 
@@ -89,8 +90,8 @@ type ServerFeature = (typeof SERVER_FEATURES)[number]
 // どの機能からも読んでよいので、ここには出てこない。
 const SERVER_FEATURE_IMPORTS: Readonly<Record<ServerFeature, ReadonlySet<ServerFeature>>> = {
   report: new Set([]),
-  "system-prompt": new Set(["report", "chat"]),
-  "context-usage": new Set([]),
+  "system-prompt": new Set(["report", "chat", "session-driver"]),
+  "context-usage": new Set(["session-driver"]),
   "token-usage": new Set([]),
   "usage-review": new Set([]),
   host: new Set([]),
@@ -98,10 +99,11 @@ const SERVER_FEATURE_IMPORTS: Readonly<Record<ServerFeature, ReadonlySet<ServerF
   achievement: new Set(["repository"]),
   "character-pack": new Set([]),
   diary: new Set(["character-pack", "repository"]),
-  // 設計上は `session-driver` も読むが、`session-driver` はまだ機能になっていない
-  // （`server/core/` の共有の箱のまま。機能になったときに足す）
-  chat: new Set(["character-pack"]),
+  chat: new Set(["character-pack", "session-driver"]),
   visit: new Set([]),
+  // 設計上は `view-server` も読むが、`view-server` はまだ機能になっていない
+  // （`server/core/` の共有の箱のまま。機能になったときに足す）
+  "session-driver": new Set(["chat", "diary", "report", "usage-review"]),
 }
 
 type ServerLayer = "core" | "adapter"
@@ -188,13 +190,12 @@ describe("orca コマンドを起こす箇所", () => {
 // ここから、層の辺だけでは表せない限定の検査（`adapter` の中のどのファイルか、まで絞る）。
 
 // SDK（`@anthropic-ai/claude-agent-sdk`）を import するのは機能の `adapter/` 直下
-// （`server/<機能>/adapter/`）の `sdk-` で始まるファイルに閉じ込める（docs/architecture.md 原則3。
-// **移行の途中は、まだ移していない共有の箱 `server/adapter/` 直下の `sdk-` も許す**。
-// `sdk-` のファイルを移し終える段で `adapter|` の枝を外す）。SDK は1つの境界だが1ファイルには
-// 収まらないので、**許す先を一覧ではなく名前で決める** — 足すファイルは名前で SDK の境界を
-// 名乗ることになり、名乗らずに import すればここで落ちる。import 文のクォートされた specifier
-// だけを拾うので、バッククォートで囲んだ日本語の説明文は拾わない（orca の検査と同じやり方）。
-const SDK_BOUNDARY_FILE = /^server\/(?:adapter|[^/]+\/adapter)\/sdk-[^/]+\.ts$/
+// （`server/<機能>/adapter/`）の `sdk-` で始まるファイルに閉じ込める（docs/architecture.md 原則3）。
+// SDK は1つの境界だが1ファイルには収まらないので、**許す先を一覧ではなく名前で決める** —
+// 足すファイルは名前で SDK の境界を名乗ることになり、名乗らずに import すればここで落ちる。
+// import 文のクォートされた specifier だけを拾うので、バッククォートで囲んだ日本語の説明文は
+// 拾わない（orca の検査と同じやり方）。
+const SDK_BOUNDARY_FILE = /^server\/[^/]+\/adapter\/sdk-[^/]+\.ts$/
 
 describe("Agent SDK を import する箇所", () => {
   it("`@anthropic-ai/claude-agent-sdk` を import するのは機能の adapter/ 直下の sdk- で始まるファイルだけ", () => {

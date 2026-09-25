@@ -1,5 +1,5 @@
 // Claude Code 自身が持つアカウントの控え（`~/.claude.json` の `oauthAccount`）から、契約の段を
-// 読む口。**プランの名前をどう決めるかは `src/server/core/plan.ts`** で、ここは読むだけ。
+// 読む口。**プランの名前をどう決めるかは `src/server/session-driver/core/plan.ts`** で、ここは読むだけ。
 //
 // **読んで返すのは契約の段を表す2つの鍵だけ**（`organizationType` / `organizationRateLimitTier`）。
 // 同じファイルには利用者を特定する値（メールアドレス・組織の名前・UUID）も入っているが、
@@ -15,9 +15,9 @@ import { join } from "node:path"
 
 import { isPlainObject } from "remeda"
 
-import { optionalString } from "../../shared/utils/optional-string.ts"
+import { optionalString } from "../../../shared/utils/optional-string.ts"
+import { readJsonFile } from "../../adapter/lib/json-file.ts"
 import { type ClaudeAccountTier } from "../core/plan.ts"
-import { readJsonFile } from "./lib/json-file.ts"
 
 const ACCOUNT_FILE_NAME = ".claude.json"
 

@@ -92,7 +92,7 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/display.md
 
 **`~/.claude/output-styles/asuna.md`「セリフと詳細の書き分け」は TUI 向けの規約で、tsukumo の中では
 効かない。** tsukumo はセッションを起こすとき `applyFlagSettings({ outputStyle: "default" })` で
-出力スタイルを打ち消しており（`src/server/adapter/sdk-driver.ts` の `applyNeutralOutputStyle`）、
+出力スタイルを打ち消しており（`src/server/session-driver/adapter/sdk-driver.ts` の `applyNeutralOutputStyle`）、
 `asuna.md` を読むのは素の TUI を使うときだけ。
 
 **分離を文章の規約で表す案は採らない**（経緯は `docs/architecture.md`「セリフはテキストの規約
@@ -166,7 +166,7 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/display.md
 1ファイルのまま条件分岐で書く案。
 
 **文面は `src/server/report/core/report-notation.ts` の `REPORT_NOTATION_PROMPT` にあり、
-`startSdkDriver`（`src/server/adapter/sdk-driver.ts`）が `query()` の `systemPrompt` へ渡す。**
+`startSdkDriver`（`src/server/session-driver/adapter/sdk-driver.ts`）が `query()` の `systemPrompt` へ渡す。**
 
 #### 読む時間を減らすために足すのは、規約の側（2026-09-13 決定）
 
@@ -267,7 +267,7 @@ CSS の3つを揃える**（レンダラを直したのに規約が古いまま�
     フェンス・記法の class・同じサニタイズがそのまま効く。`preview` が無ければ何も足さない）
   - **複数選択はチェックボックス**（単一選択は radio）。選んだぶんすべてに印が付き、
     入力欄に書いた答えは選んだラベルの末尾に足す。SDK へ返すときに1つの文字列へ畳むのは
-    `src/server/core/pending-answer.ts` だけの仕事にした
+    `src/server/session-driver/core/pending-answer.ts` だけの仕事にした
   - **答えた質問は、そのやり取りのメインビューに「何を聞いて、どう答えたか」の記録として
     残す**（2026-09-16 決定。答えが確定した時点で1回だけ積み、あとから書き換えない。
     答えずに終わった質問は残さない）。**自由入力の答えは選択肢の下に別の行で出す**

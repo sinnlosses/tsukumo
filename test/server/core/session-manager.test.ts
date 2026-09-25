@@ -6,20 +6,20 @@ import {
   type ContextUsageEntry,
   type ContextUsageLog,
 } from "../../../src/server/context-usage/core/context-usage.ts"
+import { type SessionLaunchRequest } from "../../../src/server/core/session-launch.ts"
+import { createSessionManager } from "../../../src/server/core/session-manager.ts"
+import { type DiaryDay } from "../../../src/server/diary/core/diary-tool.ts"
 import {
   createPromptImageShelf,
   type PromptImageShelf,
   recordedPromptImages,
   type ShelvedPromptImage,
-} from "../../../src/server/core/prompt-image-shelf.ts"
+} from "../../../src/server/session-driver/core/prompt-image-shelf.ts"
 import {
   type ChatArchive,
   type ChatArchiveEntry,
   type SessionDriver,
-} from "../../../src/server/core/session-driver.ts"
-import { type SessionLaunchRequest } from "../../../src/server/core/session-launch.ts"
-import { createSessionManager } from "../../../src/server/core/session-manager.ts"
-import { type DiaryDay } from "../../../src/server/diary/core/diary-tool.ts"
+} from "../../../src/server/session-driver/core/session-driver.ts"
 import {
   type TokenUsageEntry,
   type TokenUsageLog,

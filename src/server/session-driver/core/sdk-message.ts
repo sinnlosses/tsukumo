@@ -11,21 +11,21 @@
 
 import { isPlainObject } from "remeda"
 
-import { API_ERROR_KINDS, type ApiErrorKind } from "../../shared/api-trouble.ts"
-import { type BackgroundTask, type BackgroundTaskKind } from "../../shared/background-task.ts"
-import { isBlankText } from "../../shared/blank-text.ts"
-import { type EffortLevel, isEffortLevel } from "../../shared/command.ts"
-import { type Expression } from "../../shared/expression.ts"
-import { type RateLimit, type RateLimitBucket } from "../../shared/rate-limit.ts"
+import { API_ERROR_KINDS, type ApiErrorKind } from "../../../shared/api-trouble.ts"
+import { type BackgroundTask, type BackgroundTaskKind } from "../../../shared/background-task.ts"
+import { isBlankText } from "../../../shared/blank-text.ts"
+import { type EffortLevel, isEffortLevel } from "../../../shared/command.ts"
+import { type Expression } from "../../../shared/expression.ts"
+import { type RateLimit, type RateLimitBucket } from "../../../shared/rate-limit.ts"
 import {
   type CommandDescription,
   type ModelEffortSupport,
   type SessionEvent,
-} from "../../shared/session-event.ts"
-import { type ModelTokenUsage } from "../../shared/token-usage.ts"
-import { type TurnOutcome } from "../../shared/turn-failure.ts"
-import { optionalString } from "../../shared/utils/optional-string.ts"
-import { DIARY_TOOL_NAME } from "../diary/core/diary-tool.ts"
+} from "../../../shared/session-event.ts"
+import { type ModelTokenUsage } from "../../../shared/token-usage.ts"
+import { type TurnOutcome } from "../../../shared/turn-failure.ts"
+import { optionalString } from "../../../shared/utils/optional-string.ts"
+import { DIARY_TOOL_NAME } from "../../diary/core/diary-tool.ts"
 
 /** プロセス内の MCP サーバの名前。モデルからは `mcp__<サーバ名>__<ツール名>` として見える。 */
 export const TSUKUMO_MCP_SERVER_NAME = "tsukumo"
@@ -33,7 +33,7 @@ export const TSUKUMO_MCP_SERVER_NAME = "tsukumo"
 export const SPEAK_TOOL_NAME = "speak"
 /**
  * レポートを受け取るツールの名前（docs/glossary.md「report ツール」）。載るのは仕事のときだけ
- * （`src/server/adapter/sdk-tool.ts`）。雑談では呼ばれないので、見分ける側はいつも見ている。
+ * （`src/server/session-driver/adapter/sdk-tool.ts`）。雑談では呼ばれないので、見分ける側はいつも見ている。
  */
 export const REPORT_TOOL_NAME = "report"
 
@@ -72,7 +72,7 @@ export const REPORT_TOOL_NAME = "report"
  *   背景のタスクが動いているかは `background_tasks_changed`（顔ぶれ全体を毎回運ぶ水準の知らせ）
  *   だけで分かり、始まり・終わりの対を数えると取りこぼしで「動いている」が居残る（SDK の型定義が
  *   そう勧めている）。**知らせのあとに claude が依頼なしで始める続きのターン**は、ここではなく
- *   `src/server/core/self-started-turn.ts` が `init` の届き方から起こす
+ *   `src/server/session-driver/core/self-started-turn.ts` が `init` の届き方から起こす
  * - **`assistant` に乗る `local_command_run` が `{ command: "model", args }` の形のときだけ
  *   `model-changed` を出す。** `command` が `model` 以外の局所コマンド
  *   （`/clear` など）や、形が崩れている・`args` が無いときは出さない。エイリアスとして
@@ -147,7 +147,7 @@ export function toSessionEvents(
 
 /**
  * SDK が返すコマンド一覧（`supportedCommands()` の戻り値と `commands_changed` の `commands`）を
- * 検証して内部の型に変える。**駆動側（src/server/adapter/sdk-driver.ts）が制御リクエストの結果に対しても
+ * 検証して内部の型に変える。**駆動側（src/server/session-driver/adapter/sdk-driver.ts）が制御リクエストの結果に対しても
  * これを使う**ので、`toSessionEvents` とは別に公開してある（検証の場所を1つにするため）。
  * 名前が文字列でない要素は捨て、説明が空文字のものは `undefined` にする。
  */
@@ -180,7 +180,7 @@ export function toPlan(value: unknown): string | undefined {
 
 /**
  * `supportedModels()` の戻り値から、effort に関わる部分だけを取り出す（`ModelEffortSupport`）。
- * **駆動側（src/server/adapter/sdk-driver.ts）が起動直後に1回だけ呼ぶ**——「いま効いている値」
+ * **駆動側（src/server/session-driver/adapter/sdk-driver.ts）が起動直後に1回だけ呼ぶ**——「いま効いている値」
  * ではなく「対応の有無・選べる段」だけを運ぶ（実測は `docs/history/decision.md`「effort の
  * 途中変更と読み取りが成り立った実測」）。
  *
@@ -213,7 +213,7 @@ export function toModelEffortSupport(value: unknown): readonly ModelEffortSuppor
 /**
  * サブエージェントの中から届いたメッセージか（`parent_tool_use_id` が文字列）。`report` の関所
  * （`src/server/report/core/report-tool.ts` の `createReportGate`）にメインの本文だけを渡すために、
- * 駆動（`src/server/adapter/sdk-driver.ts`）が {@link toSessionEvents} と並べて使う。
+ * 駆動（`src/server/session-driver/adapter/sdk-driver.ts`）が {@link toSessionEvents} と並べて使う。
  */
 export function isSubagentMessage(message: unknown): boolean {
   return isPlainObject(message) && optionalString(message.parent_tool_use_id) !== undefined

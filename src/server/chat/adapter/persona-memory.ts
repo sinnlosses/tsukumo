@@ -33,7 +33,7 @@ import {
   PERSONA_FILE_NAME,
   readOptionalFile,
 } from "../../character-pack/adapter/character-pack.ts"
-import { type PersonaMemory } from "../../core/session-driver.ts"
+import { type PersonaMemory } from "../../session-driver/core/session-driver.ts"
 
 /** 書き足す節の見出し。**`persona.md` のいちばん最後に置く**（7.1）。 */
 export const REMEMBERED_SECTION_HEADING = "## 覚えたこと"

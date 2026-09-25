@@ -1,7 +1,7 @@
 // セッションの中で起きた出来事（`SessionEvent`）の語彙。**サーバとブラウザの両方が読む契約**
 // なので shared に置く（docs/design.md 4.1）。
 //
-// **ここは型だけ**で、SDK のメッセージからの変換は core（src/server/core/sdk-message.ts）にある
+// **ここは型だけ**で、SDK のメッセージからの変換は core（src/server/session-driver/core/sdk-message.ts）にある
 // （変換は SDK の形に結び付いた「外部由来の値の検証」なので、両側が共有する契約には入れない）。
 //
 // **`SessionEvent` の union は zod にしない。** 状態にフィールドを足すたびに
@@ -59,7 +59,7 @@ export type ModelEffortSupport = {
 }
 
 /**
- * tsukumo 内部のイベント。SDK のメッセージ由来のものと、駆動側（src/server/adapter/sdk-driver.ts）が
+ * tsukumo 内部のイベント。SDK のメッセージ由来のものと、駆動側（src/server/session-driver/adapter/sdk-driver.ts）が
  * 自分で起こすもの（`request` / `pending-changed` / `session-ended`）が1本の流れに混ざる。
  * 受け取る側（src/shared/session-state.ts）はどちらから来たかを区別しない。
  *
@@ -99,7 +99,7 @@ export type SessionEvent =
   /**
    * 起動直後に分かった**プラン**（`docs/glossary.md`「プラン」。Agent SDK の `accountInfo()` の
    * `subscriptionType`）。`command-descriptions` と同じく駆動が起動直後に1回だけ取りに行く
-   * （`src/server/adapter/sdk-driver.ts`）。
+   * （`src/server/session-driver/adapter/sdk-driver.ts`）。
    *
    * **`email` / `organization` はここに乗らない** — 取り出すのは `subscriptionType` だけで、
    * 駆動の外へは出さない（`AccountInfo` にはアカウントを特定する値も入っている）。
@@ -116,7 +116,7 @@ export type SessionEvent =
    * 利用者が送った依頼。ターンの境目になる（駆動側が送信時に起こす）。
    *
    * `images` は添えた画像の**控えと、棚の原寸を指す id の組**（添えていなければ空）。
-   * **原寸はここに載らない** — 原寸はモデルへ渡り、あとは棚（`src/server/core/prompt-image-shelf.ts`）
+   * **原寸はここに載らない** — 原寸はモデルへ渡り、あとは棚（`src/server/session-driver/core/prompt-image-shelf.ts`）
    * が直近ぶんだけメモリで持つ（`docs/requirements.md` 4.10）。
    */
   | {
@@ -138,7 +138,7 @@ export type SessionEvent =
    * **claude が自分で始めた続きのターン**（背景のタスクが終わった知らせや、サブエージェントの
    * `SendMessage` を受けて、依頼なしで続きを報告するターン。実測: `task_notification` のあと、
    * 依頼を送らなくても `init` → `assistant` → `result` が届く）。起こすのは SDK の口
-   * （`src/server/core/self-started-turn.ts`）。
+   * （`src/server/session-driver/core/self-started-turn.ts`）。
    *
    * `turn-started` と同じく記録を持たないが、**新しいターンではなく同じやり取りの続き**なので、
    * 吹き出しのセリフと表情は持ち越す（空にすると、合図が届くたびに吹き出しが
@@ -278,11 +278,11 @@ export type SessionEvent =
    * モデルが変わったことを、`session-info`（`init`）を待たずに先回りで伝える。出どころは2つ:
    *
    * 1. `/model` のローカルコマンドが実行された合図（`assistant` に乗る
-   *    `local_command_run: { command: "model", args }`。実測。`src/server/core/sdk-message.ts`）。
+   *    `local_command_run: { command: "model", args }`。実測。`src/server/session-driver/core/sdk-message.ts`）。
    *    `init` はターンの頭に届くので、`/model haiku` を送ったそのターンの `init` はまだ古い
    *    モデルを返す（正しい値が載るのは次の依頼の `init` から。docs/design.md 4.1）
    * 2. サイドバーの `<select>` からの `set-model` を駆動が確定させたとき
-   *    （`src/server/adapter/sdk-driver.ts` の `setModel`）。**こちらは駆動が実際に切り替えたことを
+   *    （`src/server/session-driver/adapter/sdk-driver.ts` の `setModel`）。**こちらは駆動が実際に切り替えたことを
    *    確認してから出すので、ブラウザ側のローカル echo ではない**（session-manager.ts が
    *    駆動を経ずにこのイベントを合成することはない。実測: 本物の駆動は元々これを
    *    出しておらず、選んだ直後に次のイベントで古いモデルへ巻き戻って見えていた。fake
@@ -361,7 +361,7 @@ export type SessionEvent =
   /**
    * 雑談のサイドバーの「最近の話題」に出す見出し（新しい順。`docs/screen-design.md` 13.7）。
    * **雑談で起こしたときと、圧縮で要約の写しが新しくなったとき**に流れる
-   * （`src/server/core/session-launch.ts` と `src/server/adapter/sdk-driver.ts`）。
+   * （`src/server/core/session-launch.ts` と `src/server/session-driver/adapter/sdk-driver.ts`）。
    *
    * **運ぶのは写しから取り出した見出しだけ**で、要約の本文は乗らない（`docs/requirements.md`
    * 4.9。取り出すのは `src/server/chat/core/chat-compact.ts` の `chatTopics`）。取り出せなかった・
@@ -406,7 +406,7 @@ export type SessionEvent =
    */
   | { readonly kind: "compact-boundary" }
   /**
-   * 前のセッションの記録を組み直した再生が、ここで終わった（`src/server/core/session-restore.ts`
+   * 前のセッションの記録を組み直した再生が、ここで終わった（`src/server/session-driver/core/session-restore.ts`
    * の `toRestoredEvents` が末尾に1つ足す）。**ここまでに積んだ依頼とセリフの記録は、起きた
    * 時刻が分からない**（`docs/design.md` 4.2「記録の時刻」）。
    *
@@ -423,7 +423,7 @@ export type SessionEvent =
    * 取りこぼしても「動いている」が居残らない）。
    *
    * **活動でないもの（SDK の `ambient`。見張り役など）は変換で落としてある**
-   * （`src/server/core/sdk-message.ts`）。
+   * （`src/server/session-driver/core/sdk-message.ts`）。
    */
   | { readonly kind: "background-tasks-changed"; readonly tasks: readonly BackgroundTask[] }
   /**
@@ -481,7 +481,7 @@ export type StampedEvent = {
  * 外から届いた値を {@link SessionEvent} として受け取るための**封筒だけ**のスキーマ
  * （`kind` を持つオブジェクトであること）。**中身は検証しない**（union を
  * zod で二重に持たない）。使うのは境界の2箇所だけ — フレームの読み取り（src/shared/frame.ts）と
- * fake driver の疑似セッション（src/server/adapter/fake-driver.ts）。
+ * fake driver の疑似セッション（src/server/session-driver/adapter/fake-driver.ts）。
  */
 export const sessionEventSchema = z.custom<SessionEvent>(
   (value) => isPlainObject(value) && typeof value.kind === "string",

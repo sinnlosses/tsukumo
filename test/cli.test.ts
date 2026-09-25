@@ -26,8 +26,8 @@ import { MAX_PORT_NUMBER, VIEW_PORT_FALLBACK_ATTEMPTS } from "../src/server/core
 //   - 配信（バインド先・経路・静的アセット・依頼の受け口）と WebSocket の経路
 //     （トークン・Origin・hello・コマンド）: test/server/adapter/server.test.ts
 //   - キャラクター定義の解釈と立ち絵の選び方: test/shared/character.test.ts
-//   - SDK のイベントの変換・答え待ち・畳み込み: test/server/core/sdk-message.test.ts /
-//     test/server/core/pending-answer.test.ts / test/shared/session-state.test.ts
+//   - SDK のイベントの変換・答え待ち・畳み込み: test/server/session-driver/core/sdk-message.test.ts /
+//     test/server/session-driver/core/pending-answer.test.ts / test/shared/session-state.test.ts
 // 実際に画面に出ているかは目視で確かめる（docs/architecture.md「手で確かめること」）。
 
 const ENTRY = new URL("../src/cli.ts", import.meta.url).pathname

@@ -47,6 +47,11 @@ import {
 } from "../context-usage/core/context-usage.ts"
 import { type DiaryDayTask } from "../diary/core/diary-tool.ts"
 import {
+  type PromptImageShelf,
+  releasedPromptImageIds,
+} from "../session-driver/core/prompt-image-shelf.ts"
+import { type ChatArchive, type SessionDriver } from "../session-driver/core/session-driver.ts"
+import {
   createTokenUsageRecorder,
   type TokenUsageLog,
   type TokenUsageRecorder,
@@ -54,8 +59,6 @@ import {
 import { createVisitWatch, type VisitPorts, type VisitWatch } from "../visit/core/visit-watch.ts"
 import { declined, type DispatchResult, dispatchToDriver, nudge } from "./driver-command.ts"
 import { createEventBatch, type EventBatch } from "./event-batch.ts"
-import { type PromptImageShelf, releasedPromptImageIds } from "./prompt-image-shelf.ts"
-import { type ChatArchive, type SessionDriver } from "./session-driver.ts"
 import { type SessionLaunchRequest } from "./session-launch.ts"
 
 export type SessionManagerOptions = {
@@ -93,7 +96,7 @@ export type SessionManagerOptions = {
    */
   readonly contextUsageLog: ContextUsageLog
   /**
-   * 依頼に添えた画像の原寸の棚（`src/server/core/prompt-image-shelf.ts`）。**持ち主は
+   * 依頼に添えた画像の原寸の棚（`src/server/session-driver/core/prompt-image-shelf.ts`）。**持ち主は
    * `src/main.ts`** — `/prompt-image/<id>` で配る側（`view-delivery.ts`）も同じ棚を引く。
    * **置くのと捨てるのはここ**で、`prompt` を受けたときに置き、記録から依頼が消えたときに捨てる。
    */

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test"
 
-import { planName } from "../../../src/server/core/plan.ts"
+import { planName } from "../../../../src/server/session-driver/core/plan.ts"
 
 /** 控えが何も持っていないときの形（読めなかった回と同じ）。 */
 const NO_TIER = { organizationType: undefined, rateLimitTier: undefined }

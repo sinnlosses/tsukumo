@@ -1,5 +1,6 @@
 import { describe, expect, it } from "bun:test"
 
+import { DIARY_TOOL_NAME } from "../../../../src/server/diary/core/diary-tool.ts"
 import {
   isSubagentMessage,
   REPORT_TOOL_NAME,
@@ -9,10 +10,9 @@ import {
   toModelEffortSupport,
   toPlan,
   toSessionEvents,
-} from "../../../src/server/core/sdk-message.ts"
-import { DIARY_TOOL_NAME } from "../../../src/server/diary/core/diary-tool.ts"
-import { type Expression } from "../../../src/shared/expression.ts"
-import { type SessionEvent } from "../../../src/shared/session-event.ts"
+} from "../../../../src/server/session-driver/core/sdk-message.ts"
+import { type Expression } from "../../../../src/shared/expression.ts"
+import { type SessionEvent } from "../../../../src/shared/session-event.ts"
 
 // フィクスチャはすべて手で書いた架空のやり取り。**実物の会話は使わない**
 // （docs/coding-standards.md「会話内容の扱い」）。

@@ -95,14 +95,14 @@ Claude Code を動かす）の核（セッション駆動・イベントの変�
 | `src/shared/character-asset.ts`                                              | shared     | `/character/<pack>/<file>` の URL・取り直しの印・拡張子による立ち絵の仕分け                                                                                         |
 | `src/shared/expression-choice.ts`                                            | shared     | `speak` が選べる表情とラベル（ラベルの出どころはキャラクター定義）                                                                                                  |
 | `src/shared/task-summary.ts`                                                 | shared     | `develop/task/T-xxx.md` の front matter の型と読み取り（ファイルI/Oは持たない）                                                                                     |
-| `src/server/core/sdk-message.ts`                                             | core       | SDK のメッセージを内部イベントに変換する。知らない種別は無視する                                                                                                    |
-| `src/server/core/session-driver.ts`                                          | core       | 駆動の契約（`SessionDriver` / `SessionDriverOptions` と既定値）。実装は持たない                                                                                     |
-| `src/server/adapter/sdk-driver.ts`                                           | adapter    | SDK でセッションを起こし（`query()`）、入力・中断・許可の応答を渡す。**SDK を呼ぶのは `sdk-` で始まるファイルだけ**（原則3）                                        |
-| `src/server/adapter/sdk-tool.ts`                                             | adapter    | tsukumo の MCP サーバと6つのツール（`speak` / `remember` / `forget` / `keep` / `index` / `recall`）                                                                 |
-| `src/server/adapter/sdk-session.ts`                                          | adapter    | セッションの一覧・transcript の読み直し・印（続きから始めるものを探す・切り替え先を並べる）                                                                         |
-| `src/server/adapter/sdk-context-usage.ts`                                    | adapter    | コンテキストの内訳を問い合わせ、画面が要る形へ写す                                                                                                                  |
-| `src/server/adapter/fake-driver.ts`                                          | adapter    | 疑似セッション（`test/fixture/fake-session.json`）どおりにイベントを流す fake driver                                                                                |
-| `src/server/core/pending-answer.ts`                                          | core       | `canUseTool` に届いた許可要求・質問を積み、画面が答えるまで Promise を保留する                                                                                      |
+| `src/server/session-driver/core/sdk-message.ts`                              | core       | SDK のメッセージを内部イベントに変換する。知らない種別は無視する                                                                                                    |
+| `src/server/session-driver/core/session-driver.ts`                           | core       | 駆動の契約（`SessionDriver` / `SessionDriverOptions` と既定値）。実装は持たない                                                                                     |
+| `src/server/session-driver/adapter/sdk-driver.ts`                            | adapter    | SDK でセッションを起こし（`query()`）、入力・中断・許可の応答を渡す。**SDK を呼ぶのは `sdk-` で始まるファイルだけ**（原則3）                                        |
+| `src/server/session-driver/adapter/sdk-tool.ts`                              | adapter    | tsukumo の MCP サーバと6つのツール（`speak` / `remember` / `forget` / `keep` / `index` / `recall`）                                                                 |
+| `src/server/session-driver/adapter/sdk-session.ts`                           | adapter    | セッションの一覧・transcript の読み直し・印（続きから始めるものを探す・切り替え先を並べる）                                                                         |
+| `src/server/session-driver/adapter/sdk-context-usage.ts`                     | adapter    | コンテキストの内訳を問い合わせ、画面が要る形へ写す                                                                                                                  |
+| `src/server/session-driver/adapter/fake-driver.ts`                           | adapter    | 疑似セッション（`test/fixture/fake-session.json`）どおりにイベントを流す fake driver                                                                                |
+| `src/server/session-driver/core/pending-answer.ts`                           | core       | `canUseTool` に届いた許可要求・質問を積み、画面が答えるまで Promise を保留する                                                                                      |
 | `src/server/core/session-manager.ts`                                         | core       | 時刻を打ち、サーバ側でも畳み、100ms でまとめて配る。**コマンドの分岐はここだけ**                                                                                    |
 | `src/server/core/session-launch.ts`                                          | core       | パックを決め、続きを探し、駆動を起こし、履歴を組み直すまでの順序（外の世界は渡される）                                                                              |
 | `src/server/character-pack/core/character-selection.ts`                      | core       | 初期パックの順位（指定 > 覚えた値 > 既定）・決め方の3つ・知らない名前を既定へ落とす判断                                                                             |
@@ -482,7 +482,7 @@ tsukumo からモデルへの逆流路ができてしまう。逆流させない
 
 **ターンが `speak` で終わると本体が催促を差し込む**（`[Your previous response had no visible
 output. ...]` を利用者の発言として足し、1往復増える）。塞ぐのは子プロセスに
-`CLAUDE_CODE_TERMINAL_MCP_TOOLS=mcp__tsukumo__speak` を渡すこと（`src/server/core/visible-output-nudge.ts`。
+`CLAUDE_CODE_TERMINAL_MCP_TOOLS=mcp__tsukumo__speak` を渡すこと（`src/server/session-driver/core/visible-output-nudge.ts`。
 2026-09-25 実装。公式の文書に無い変数なので、催促が届いたら stderr に固定の1行を出す見張りを
 `sdk-driver.ts` に置く）。2026-09-23〜25 は最後の `speak` のあとに「完了」の1行を書かせる条で
 塞いでいたが、`report` を呼ばないターンでその1行が最終レポートとして画面に出たので外した

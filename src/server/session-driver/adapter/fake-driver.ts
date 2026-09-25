@@ -4,7 +4,7 @@
 // 用途は目視確認と Playwright（docs/design.md 10章）。**疑似セッションは手で書いた架空の会話だけ**で、
 // 実物の transcript は使わない（docs/coding-standards.md「会話内容の扱い」）。
 //
-// 契約は本物の駆動（src/server/core/session-driver.ts の `SessionDriver`）と同じ。違うのは中身が
+// 契約は本物の駆動（src/server/session-driver/core/session-driver.ts の `SessionDriver`）と同じ。違うのは中身が
 // 疑似セッションであることだけなので、`session-manager` はどちらが動いているかを知らない。
 
 import { readFileSync } from "node:fs"
@@ -12,21 +12,21 @@ import { fileURLToPath } from "node:url"
 
 import { z } from "zod"
 
-import { type EffortLevel } from "../../shared/command.ts"
-import { type ContextUsage } from "../../shared/context-usage.ts"
-import { type Answer, type PendingAsk } from "../../shared/pending-ask.ts"
-import { type SessionDefault } from "../../shared/session-default.ts"
+import { type EffortLevel } from "../../../shared/command.ts"
+import { type ContextUsage } from "../../../shared/context-usage.ts"
+import { type Answer, type PendingAsk } from "../../../shared/pending-ask.ts"
+import { type SessionDefault } from "../../../shared/session-default.ts"
 import {
   type ModelEffortSupport,
   type SessionEvent,
   sessionEventSchema,
-} from "../../shared/session-event.ts"
+} from "../../../shared/session-event.ts"
+import { createReportReview } from "../../report/core/report-review.ts"
 import { recordedPromptImages } from "../core/prompt-image-shelf.ts"
 import { type SessionDriver } from "../core/session-driver.ts"
-import { createReportReview } from "../report/core/report-review.ts"
 
 /** 既定の疑似セッション。tsukumo 自身の場所から解く（cwd に依存させない）。 */
-const DEFAULT_SESSION_URL = new URL("../../../test/fixture/fake-session.json", import.meta.url)
+const DEFAULT_SESSION_URL = new URL("../../../../test/fixture/fake-session.json", import.meta.url)
 
 /**
  * fake driver が流す固定のプラン（`docs/glossary.md`「プラン」）。**会話の内容ではない**ので、
@@ -59,7 +59,7 @@ export const FAKE_MODEL_EFFORT_SUPPORT: readonly ModelEffortSupport[] = [
 ]
 
 /**
- * fake driver が起こしたときに効いている既定の effort（`src/server/adapter/sdk-driver.ts` の
+ * fake driver が起こしたときに効いている既定の effort（`src/server/session-driver/adapter/sdk-driver.ts` の
  * `DEFAULT_EFFORT` と同じ値を、疑似セッションだけの値として独立に持つ）。
  */
 export const FAKE_DEFAULT_EFFORT: EffortLevel = "medium"
@@ -233,7 +233,7 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
     if (ask === undefined) {
       return false
     }
-    // 本物の駆動（src/server/core/pending-answer.ts）と同じで、質問に答えが付いたら記録を流す。
+    // 本物の駆動（src/server/session-driver/core/pending-answer.ts）と同じで、質問に答えが付いたら記録を流す。
     // これが無いと、疑似セッションで目視するときだけ質問の記録が残らない。
     if (ask.kind === "question" && answer.kind === "answers") {
       emit({ kind: "question-answered", questions: ask.questions, answers: answer.labels })
@@ -242,7 +242,7 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
     return true
   }
 
-  // 本物の駆動は `accountInfo()` を起動直後に1回だけ取りに行く（`src/server/adapter/sdk-driver.ts`
+  // 本物の駆動は `accountInfo()` を起動直後に1回だけ取りに行く（`src/server/session-driver/adapter/sdk-driver.ts`
   // の `relayPlan`）。fake driver は claude を起こさないので、疑似セッションで画面を確かめられる
   // ように固定値を1回流す。
   emit({ kind: "plan", plan: FAKE_PLAN })

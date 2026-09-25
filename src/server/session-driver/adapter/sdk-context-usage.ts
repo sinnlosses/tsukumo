@@ -1,6 +1,6 @@
 // いまのコンテキストの内訳（`docs/glossary.md`「コンテキストの内訳」）を SDK に問い合わせ、
 // 画面が要る形（src/shared/context-usage.ts）へ写す。問い合わせる相手は駆動
-// （src/server/adapter/sdk-driver.ts）が回している `query()` の戻り値。
+// （src/server/session-driver/adapter/sdk-driver.ts）が回している `query()` の戻り値。
 
 import { z } from "zod"
 
@@ -8,7 +8,7 @@ import {
   CONTEXT_CATEGORY_KINDS,
   type ContextUsageReport,
   UNAVAILABLE_CONTEXT_USAGE,
-} from "../../shared/context-usage.ts"
+} from "../../../shared/context-usage.ts"
 
 /**
  * コンテキストの内訳を取るときの細かさ。**`'full'` に固定する**（分類ごとに token-count API で

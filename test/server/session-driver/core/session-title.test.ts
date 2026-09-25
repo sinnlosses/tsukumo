@@ -5,8 +5,8 @@ import {
   decideSessionTitle,
   INITIAL_SESSION_TITLE_STATE,
   type SessionTitleState,
-} from "../../../src/server/core/session-title.ts"
-import { MAX_SESSION_HEADING_LENGTH } from "../../../src/shared/session-choice.ts"
+} from "../../../../src/server/session-driver/core/session-title.ts"
+import { MAX_SESSION_HEADING_LENGTH } from "../../../../src/shared/session-choice.ts"
 
 // 題はすべて手で書いた架空の文字列（docs/coding-standards.md「会話内容の扱い」）。
 

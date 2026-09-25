@@ -1,9 +1,9 @@
 // tsukumo がプロセス内の MCP サーバとして提供するツール（`speak` / `diary`、`remember` /
 // `forget` / `keep` / `index` / `recall`、仕事のときの `report` / `usage_review_stage` /
-// `usage_review_result`）。組み立てたサーバは駆動（src/server/adapter/sdk-driver.ts）が
+// `usage_review_result`）。組み立てたサーバは駆動（src/server/session-driver/adapter/sdk-driver.ts）が
 // `query()` の `mcpServers` へ渡す。
 //
-// サーバの名前と `speak` の名前は src/server/core/sdk-message.ts が持つ（届いた `assistant`
+// サーバの名前と `speak` の名前は src/server/session-driver/core/sdk-message.ts が持つ（届いた `assistant`
 // メッセージから `speak` の呼び出しを見分ける側が core にあるため）。
 
 import { createSdkMcpServer, tool } from "@anthropic-ai/claude-agent-sdk"
@@ -12,30 +12,23 @@ import { z } from "zod"
 import {
   type ExpressionChoice,
   expressionNames as toExpressionNames,
-} from "../../shared/expression-choice.ts"
-import { type Expression } from "../../shared/expression.ts"
+} from "../../../shared/expression-choice.ts"
+import { type Expression } from "../../../shared/expression.ts"
 import {
   USAGE_PROPOSAL_FOLLOW_UPS,
   USAGE_PROPOSAL_IMPACTS,
   USAGE_PROPOSAL_KINDS,
   USAGE_REVIEW_STAGES,
-} from "../../shared/usage-review.ts"
-import { chatRecallText } from "../chat/core/chat-memory-prompt.ts"
-import { REPORT_TOOL_NAME, SPEAK_TOOL_NAME, TSUKUMO_MCP_SERVER_NAME } from "../core/sdk-message.ts"
-import {
-  type ChatKeep,
-  type ChatRecall,
-  type PersonaMemory,
-  type SessionMode,
-} from "../core/session-driver.ts"
+} from "../../../shared/usage-review.ts"
+import { chatRecallText } from "../../chat/core/chat-memory-prompt.ts"
 import {
   DIARY_BOOKMARK_DESCRIPTION,
   DIARY_TOOL_DESCRIPTION,
   DIARY_TOOL_NAME,
   type DiaryIntake,
-} from "../diary/core/diary-tool.ts"
-import { type ReportReview } from "../report/core/report-review.ts"
-import { REPORT_TITLE_DESCRIPTION, REPORT_TOOL_DESCRIPTION } from "../report/core/report-tool.ts"
+} from "../../diary/core/diary-tool.ts"
+import { type ReportReview } from "../../report/core/report-review.ts"
+import { REPORT_TITLE_DESCRIPTION, REPORT_TOOL_DESCRIPTION } from "../../report/core/report-tool.ts"
 import {
   USAGE_REVIEW_RESULT_TOOL_DESCRIPTION,
   USAGE_REVIEW_RESULT_TOOL_NAME,
@@ -44,7 +37,14 @@ import {
   type UsageReviewIntake,
   usageProposalKindGuide,
   usageReviewStageGuide,
-} from "../usage-review/core/usage-review-tool.ts"
+} from "../../usage-review/core/usage-review-tool.ts"
+import { REPORT_TOOL_NAME, SPEAK_TOOL_NAME, TSUKUMO_MCP_SERVER_NAME } from "../core/sdk-message.ts"
+import {
+  type ChatKeep,
+  type ChatRecall,
+  type PersonaMemory,
+  type SessionMode,
+} from "../core/session-driver.ts"
 
 /** モデルに見せる `speak` ツールの説明。**セリフと本文の境目はここだけで説明する。** */
 const SPEAK_TOOL_DESCRIPTION =
@@ -130,7 +130,7 @@ const RECALL_TOOL_DESCRIPTION =
  * 載る**（振り返りは雑談中でも送れる）。
  *
  * セリフそのものは、この handler ではなく `assistant` メッセージの変換から取り出す
- * （src/server/core/sdk-message.ts）。受け取り口を1つにしておくと、イベントの流れが1本で済む。
+ * （src/server/session-driver/core/sdk-message.ts）。受け取り口を1つにしておくと、イベントの流れが1本で済む。
  * `report` の引数も同じで、handler が引数を読むのは差し戻すかを決めるためだけ。**見直しの2つだけは
  * 逆に handler がイベントを流す**（検査を通したものだけを状態に入れるため。
  * `src/server/usage-review/core/usage-review-tool.ts`）。
@@ -214,12 +214,12 @@ function diaryTool(intake: DiaryIntake, expressions: readonly ExpressionChoice[]
  * （src/server/report/core/report-review.ts）。通すときの戻り値は "ok" だけ、差し戻すときは規約違反と
  * 直し方だけを `isError` 付きで返す（画面の事情は載せない。docs/display.md 4.2）。描くか捨てるかは
  * この `isError` を見て決まる。レポートにする引数は、ここではなく `assistant` メッセージの変換が
- * 取り出す（src/server/core/sdk-message.ts）。
+ * 取り出す（src/server/session-driver/core/sdk-message.ts）。
  *
  * **`title` は差し戻されなかったときだけ {@link onReportTitle} へ渡す**——差し戻された呼び出しの
  * 題を渡すと、規約違反を書いたついでの題が残ってしまう。実際に書くかどうかの判断（利用者の
- * `/rename` を上書きしないなど）は `onReportTitle` の先（`src/server/core/session-title.ts` /
- * `src/server/adapter/sdk-session.ts`）が持つので、ここは渡すだけ。
+ * `/rename` を上書きしないなど）は `onReportTitle` の先（`src/server/session-driver/core/session-title.ts` /
+ * `src/server/session-driver/adapter/sdk-session.ts`）が持つので、ここは渡すだけ。
  */
 function reportTool(review: ReportReview, onReportTitle: (title: string) => void) {
   return tool(

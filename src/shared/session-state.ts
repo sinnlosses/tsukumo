@@ -191,7 +191,7 @@ export type SessionRecord =
  * `identified`/`starting` の間にサイドバーでモデルを切り替える経路が実機にある）。
  * ここへ押し込めると `model-changed` が `running` 以外では効かなくなり、切り替えても
  * 5秒ほどで古い値に戻って見える不具合になる（実機で確認済み。修正の経緯は
- * `src/server/adapter/sdk-driver.ts` の `setModel` のコメントを参照）。「無い」を型から
+ * `src/server/session-driver/adapter/sdk-driver.ts` の `setModel` のコメントを参照）。「無い」を型から
  * 消すことを目的にせず、消える理由が違う値は素直に分けて残す
  * （`docs/coding-standards.md`「「無いかもしれない」値」）。
  */
@@ -440,7 +440,7 @@ export type SessionState = {
   /**
    * 契約プラン（`docs/glossary.md`「プラン」）。トークン消費の画面の題の右の札に出す。
    *
-   * **源は `plan` だけ**（駆動が起動直後に1回だけ取りに行く。`src/server/adapter/sdk-driver.ts`）。
+   * **源は `plan` だけ**（駆動が起動直後に1回だけ取りに行く。`src/server/session-driver/adapter/sdk-driver.ts`）。
    * まだ届いていない・取れなかった（`accountInfo()` が落ちた・`subscriptionType` が無い）の
    * どちらも同じ undefined——どちらだったかを画面は区別しない（何も出さないだけ）ので、
    * 型でも分けない。
@@ -601,7 +601,7 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
       // ここで間違った値に倒す必要は無い）。**`session.kind` は見ない**——`model` は `init` の
       // 前でも `set-model` の確定で決まることが実機で確認されている（`identified`/`starting`
       // の間に届いても更新できる）。ここで `running` に絞ると、切り替えても数秒で古い値に
-      // 戻って見える不具合になる（`src/server/adapter/sdk-driver.ts` の `setModel` 参照）。
+      // 戻って見える不具合になる（`src/server/session-driver/adapter/sdk-driver.ts` の `setModel` 参照）。
       return isModelAlias(event.model) ? { ...state, model: event.model } : state
     case "model-effort-support":
       return { ...state, modelEffortSupport: event.models }

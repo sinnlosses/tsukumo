@@ -43,7 +43,7 @@ export type SessionDefault = {
  * 同梱の既定。**覚えた値が無い・読めない・知らない値のときはここへ畳む**ので、呼んだ側は
  * 「必ず値がある」型で受け取れる（`docs/requirements.md` 4.1「既定のモデルは Opus」
  * 「既定の許可モードは `auto`」）。**effort の同梱の既定は `medium`**（駆動が起こすときの
- * 既定と同じ値。`src/server/adapter/sdk-driver.ts` が持っていた `DEFAULT_EFFORT` はここへ
+ * 既定と同じ値。`src/server/session-driver/adapter/sdk-driver.ts` が持っていた `DEFAULT_EFFORT` はここへ
  * 一本化した）。
  */
 export const BUILTIN_SESSION_DEFAULT = {

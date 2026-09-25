@@ -92,7 +92,7 @@ describe("SessionSwitch", () => {
   })
 
   // SDK の `summary` が空・読めないときは `SessionChoice.heading` が undefined になる
-  // （`src/server/core/session-restore.ts`）。行から見出しが消えないよう代わりの字を出す。
+  // （`src/server/session-driver/core/session-restore.ts`）。行から見出しが消えないよう代わりの字を出す。
   it("見出しが無いときは「（題なし）」を代わりに出す", () => {
     renderSessionSwitch({
       sessions: [

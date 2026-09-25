@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test"
 
-import { toContextUsage } from "../../../src/server/adapter/sdk-context-usage.ts"
-import { UNAVAILABLE_CONTEXT_USAGE } from "../../../src/shared/context-usage.ts"
+import { toContextUsage } from "../../../../src/server/session-driver/adapter/sdk-context-usage.ts"
+import { UNAVAILABLE_CONTEXT_USAGE } from "../../../../src/shared/context-usage.ts"
 
 /**
  * SDK が `getContextUsage()` で返す形の抜粋（**手で書いた架空の値**。鍵の綴りは実測に合わせた

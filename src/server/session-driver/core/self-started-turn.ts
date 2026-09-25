@@ -15,7 +15,7 @@
 // 最初のターンより前の `init` では補わない（起こした直後に `init` が届く経路を実測では見ていないが、
 // 届いたら「作業中」のまま終わりが来ない）。
 
-import { type SessionEvent } from "../../shared/session-event.ts"
+import { type SessionEvent } from "../../../shared/session-event.ts"
 
 /**
  * `onEvent` を包み、claude が自分で始めたターンの頭に `turn-resumed` を1つ挟んでから流す

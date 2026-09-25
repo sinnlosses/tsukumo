@@ -280,7 +280,7 @@ Orca は「ページを表示する箱」として第一級であり、VS Code �
   合図にしない
 - **背景のタスクが終わると、claude は依頼なしで続きのターンを始める**（実測は
   `docs/history/decision.md`）。依頼に当たるメッセージは流れないので、**ターンの外で届いた
-  `init` を合図に、記録を持たない続きのターンの始まり（`turn-resumed`）を補う**（`src/server/core/self-started-turn.ts`。
+  `init` を合図に、記録を持たない続きのターンの始まり（`turn-resumed`）を補う**（`src/server/session-driver/core/self-started-turn.ts`。
   見え方は `docs/screen-design.md` 13.9「背景のタスク」）
 - **中断は SDK の `interrupt()` で効く。** 中断されたターンの `result` は `error_during_execution`
   で終わり、同じセッションに続けて入力を送れる（中断前の文脈を保っている）
@@ -775,7 +775,7 @@ API 側で決まっている**。
   （`src/server/adapter/` に新しい書き込み先が増え、「どこに置きいつ消すか」という問いが
   生まれる。`Base64ImageSource` で直接渡せるので、そもそも要らない）
 - **原寸はサーバのメモリの「棚」に直近ぶんだけ残る**（2026-09-23 決定。
-  `src/server/core/prompt-image-shelf.ts`）。記録（`SessionState`）と `hello` に載るのは
+  `src/server/session-driver/core/prompt-image-shelf.ts`）。記録（`SessionState`）と `hello` に載るのは
   控えと id の組だけで、原寸は棚にしか無い。**捨てる契機は2つ**——記録の窓（4.9のターン数。
   仕事20・雑談100）から依頼が落ちたときと、棚が持つ原寸の合計の大きさが
   `MAX_SHELVED_PROMPT_IMAGE_BYTES`（128 MiB。枚数の上限から変えた経緯は

@@ -14,13 +14,13 @@
 // `BUILTIN_SESSION_DEFAULT`）。覚えた値を歯車から書き換えられるようになって、
 // **ブラウザも同じ畳み先を読む**ようになったため（`docs/screen-design.md` 13.6）。
 
-import { type EffortLevel, type ModelAlias, type PermissionMode } from "../../shared/command.ts"
-import { type ContextUsageReport } from "../../shared/context-usage.ts"
-import { type ExpressionChoice } from "../../shared/expression-choice.ts"
-import { type Expression } from "../../shared/expression.ts"
-import { type Answer, type PendingAsk } from "../../shared/pending-ask.ts"
-import { type SessionEvent } from "../../shared/session-event.ts"
-import { type DiaryDay } from "../diary/core/diary-tool.ts"
+import { type EffortLevel, type ModelAlias, type PermissionMode } from "../../../shared/command.ts"
+import { type ContextUsageReport } from "../../../shared/context-usage.ts"
+import { type ExpressionChoice } from "../../../shared/expression-choice.ts"
+import { type Expression } from "../../../shared/expression.ts"
+import { type Answer, type PendingAsk } from "../../../shared/pending-ask.ts"
+import { type SessionEvent } from "../../../shared/session-event.ts"
+import { type DiaryDay } from "../../diary/core/diary-tool.ts"
 import { type ShelvedPromptImage } from "./prompt-image-shelf.ts"
 
 /**
@@ -254,7 +254,7 @@ export type SessionMode =
  * このセッションを新規に起こすか、続きから始めるか（`docs/requirements.md` 4.8「セッションの
  * 復元」）。**`resume: string | undefined` が「セッションIDが無い」ではなく「新規である」という
  * 意味を運んでいたのを判別可能な合併型にした**（`docs/coding-standards.md`「複数の「無い」が
- * 1つの状態」）。続きから始めるIDを選ぶのは `src/server/adapter/sdk-session.ts` の
+ * 1つの状態」）。続きから始めるIDを選ぶのは `src/server/session-driver/adapter/sdk-session.ts` の
  * `findSessionToResume`。
  */
 export type SessionStart =
@@ -294,9 +294,9 @@ export type SessionDriverOptions = {
   /** 新規に起こすか、続きから始めるか（`docs/requirements.md` 4.8）。 */
   readonly start: SessionStart
   /**
-   * このセッションに付ける印（組み立ては `src/server/core/session-restore.ts` の `sessionTag`。
+   * このセッションに付ける印（組み立ては `src/server/session-driver/core/session-restore.ts` の `sessionTag`。
    * キャラクターパックごと・雑談かどうかで違う）。**ターンが終わるたびに付け直す**（次に起こしたときに、これでそのパックの
-   * セッションだけを見分ける。付け直す理由は `src/server/adapter/sdk-session.ts` の
+   * セッションだけを見分ける。付け直す理由は `src/server/session-driver/adapter/sdk-session.ts` の
    * `SESSION_TAG_DELAY_MS`）。
    */
   readonly tag: string
@@ -304,7 +304,7 @@ export type SessionDriverOptions = {
   readonly mode: SessionMode
   /**
    * 子プロセス（claude）へ引き継ぐ環境変数（`Config.inheritedEnv`）。駆動はこれに
-   * `CLAUDE_CODE_TERMINAL_MCP_TOOLS` を足して渡す（`src/server/core/visible-output-nudge.ts`）。
+   * `CLAUDE_CODE_TERMINAL_MCP_TOOLS` を足して渡す（`src/server/session-driver/core/visible-output-nudge.ts`）。
    */
   readonly inheritedEnv: Readonly<Record<string, string | undefined>>
   /**

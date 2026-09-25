@@ -22,7 +22,10 @@ import { isCharacterPackName } from "../../../shared/character.ts"
 import { byteLength } from "../../../shared/lib/byte-length.ts"
 import { tsukumoHomeDir } from "../../adapter/tsukumo-home.ts"
 import { readOptionalFile } from "../../character-pack/adapter/character-pack.ts"
-import { type ChatSummary, type ChatSummaryRecord } from "../../core/session-driver.ts"
+import {
+  type ChatSummary,
+  type ChatSummaryRecord,
+} from "../../session-driver/core/session-driver.ts"
 
 /** 置き場のディレクトリ名（`~/.tsukumo/chat-summary/`）。 */
 const CHAT_SUMMARY_DIR_NAME = "chat-summary"

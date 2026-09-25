@@ -1,21 +1,21 @@
 // Agent SDK による本物のセッション駆動。Claude Code を子プロセスとして起こし、届いた
-// メッセージを内部イベントに変えて流す（`src/server/core/session-driver.ts` の `SessionDriver` を
-// 実装する2つのうちの本物。もう1つは `src/server/adapter/fake-driver.ts`）。
+// メッセージを内部イベントに変えて流す（`src/server/session-driver/core/session-driver.ts` の `SessionDriver` を
+// 実装する2つのうちの本物。もう1つは `src/server/session-driver/adapter/fake-driver.ts`）。
 //
 // **`@anthropic-ai/claude-agent-sdk` を import するのは `src/server/adapter/` 直下の `sdk-` で
 // 始まるファイルだけ**（原則3。`orca` を呼ぶのが src/server/host/adapter/orca-host.ts だけなのと同じ
 // 扱いで、SDK という1つの境界が数ファイルにまたがる）。ここは `query()` を回す本体で、ツールは
 // `sdk-tool.ts`、セッションの一覧と印は `sdk-session.ts`、コンテキストの内訳は
 // `sdk-context-usage.ts`。SDK の語彙を外へ漏らさないため、どれも外に出す型は
-// `src/server/core/session-driver.ts` か shared から取る（**境目の基準は「shared の語彙で
+// `src/server/session-driver/core/session-driver.ts` か shared から取る（**境目の基準は「shared の語彙で
 // 書けるか / SDK の語彙を名乗るか」**）。
 //
 // **セッションは1プロセスに1つ**。起こし直したときは前の続きから始める（`resume`。
-// docs/requirements.md 4.8「セッションの復元」。選ぶ計算は src/server/core/session-restore.ts）。
+// docs/requirements.md 4.8「セッションの復元」。選ぶ計算は src/server/session-driver/core/session-restore.ts）。
 //
 // 会話の内容（本文・ツールの入出力・セリフ）がここを通るが、**ログにもファイルにも書かない**
 // （docs/coding-standards.md「会話内容の扱い」）。stderr に出すのは SDK 自身のエラー文と、本体の
-// 催促が届いたという事実の1行（`src/server/core/visible-output-nudge.ts`。中身は写さない）だけ。
+// 催促が届いたという事実の1行（`src/server/session-driver/core/visible-output-nudge.ts`。中身は写さない）だけ。
 
 import { setImmediate } from "node:timers/promises"
 
@@ -27,11 +27,22 @@ import {
   type SDKUserMessage,
 } from "@anthropic-ai/claude-agent-sdk"
 
-import { type EffortLevel, isEffortLevel, type PermissionMode } from "../../shared/command.ts"
-import { expressionNames as toExpressionNames } from "../../shared/expression-choice.ts"
-import { parsePromptImage, type PromptImage } from "../../shared/prompt-image.ts"
-import { type SessionEvent } from "../../shared/session-event.ts"
-import { readChatTopics } from "../chat/core/chat-compact.ts"
+import { type EffortLevel, isEffortLevel, type PermissionMode } from "../../../shared/command.ts"
+import { expressionNames as toExpressionNames } from "../../../shared/expression-choice.ts"
+import { parsePromptImage, type PromptImage } from "../../../shared/prompt-image.ts"
+import { type SessionEvent } from "../../../shared/session-event.ts"
+import { readChatTopics } from "../../chat/core/chat-compact.ts"
+import { appendDiaryParagraph } from "../../diary/adapter/diary.ts"
+import {
+  createDiaryIntake,
+  createDiaryStageTracker,
+  DIARY_TOOL_NAME,
+  type DiaryIntake,
+  type DiaryStageTracker,
+} from "../../diary/core/diary-tool.ts"
+import { createReportReview, type ReportReview } from "../../report/core/report-review.ts"
+import { createReportGate, type ReportGate } from "../../report/core/report-tool.ts"
+import { createUsageReviewIntake } from "../../usage-review/core/usage-review-tool.ts"
 import { createPendingAnswerQueue, type PendingAnswerQueue } from "../core/pending-answer.ts"
 import { type ClaudeAccountTier, planName } from "../core/plan.ts"
 import { recordedPromptImages } from "../core/prompt-image-shelf.ts"
@@ -52,17 +63,6 @@ import {
 } from "../core/session-driver.ts"
 import { createSessionTitleIntake, type SessionTitleIntake } from "../core/session-title.ts"
 import { childProcessEnv, isVisibleOutputNudge } from "../core/visible-output-nudge.ts"
-import { appendDiaryParagraph } from "../diary/adapter/diary.ts"
-import {
-  createDiaryIntake,
-  createDiaryStageTracker,
-  DIARY_TOOL_NAME,
-  type DiaryIntake,
-  type DiaryStageTracker,
-} from "../diary/core/diary-tool.ts"
-import { createReportReview, type ReportReview } from "../report/core/report-review.ts"
-import { createReportGate, type ReportGate } from "../report/core/report-tool.ts"
-import { createUsageReviewIntake } from "../usage-review/core/usage-review-tool.ts"
 import { readClaudeAccountTier } from "./claude-account.ts"
 import { readContextUsage } from "./sdk-context-usage.ts"
 import {
@@ -75,7 +75,7 @@ import { tsukumoServer } from "./sdk-tool.ts"
 /**
  * 本体の催促が届いたときに stderr へ出す1行。**固定の文面だけ**（届いたメッセージの中身は
  * 写さない）。出たら `CLAUDE_CODE_TERMINAL_MCP_TOOLS` が本体の更新で効かなくなっている
- * （`src/server/core/visible-output-nudge.ts` の冒頭）。
+ * （`src/server/session-driver/core/visible-output-nudge.ts` の冒頭）。
  */
 export const VISIBLE_OUTPUT_NUDGE_NOTICE =
   "tsukumo: 本体が「本文の無い応答」の催促を差し込んだ（CLAUDE_CODE_TERMINAL_MCP_TOOLS が効いていない）\n"
@@ -96,7 +96,7 @@ export const VISIBLE_OUTPUT_NUDGE_NOTICE =
 export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
   // **駆動が送り出すイベントは全部ここを通す**（依頼も SDK 由来も）。claude が依頼なしで
   // 始めた続きのターンに `turn-started` を補うのに、依頼で開いたターンも見ている必要がある
-  // （`src/server/core/self-started-turn.ts`）。
+  // （`src/server/session-driver/core/self-started-turn.ts`）。
   const options: SessionDriverOptions = { ...given, onEvent: withSelfStartedTurns(given.onEvent) }
   const input = createPromptStream()
   const queue = createPendingAnswerQueue({
@@ -367,7 +367,7 @@ export function stopHooks(
  * 結果まで預かり、差し戻した呼び出しを描かない（`src/server/report/core/report-review.ts`）。`report`
  * ツールが載っていなければ `report` イベントは来ないので、切り替えないときはそのまま流れる。
  *
- * `titleIntake` が覚えている題（`report` の `title` 引数。`src/server/adapter/sdk-tool.ts`）も
+ * `titleIntake` が覚えている題（`report` の `title` 引数。`src/server/session-driver/adapter/sdk-tool.ts`）も
  * ターンの終わりに取り出し、`titleWriter` に書く予約をする。
  *
  * `diaryStageTracker`（`src/server/diary/core/diary-tool.ts`）には**メインのメッセージを生のまま**
@@ -467,7 +467,7 @@ async function applyNeutralOutputStyle(session: {
 /**
  * コマンドの説明を1回だけ取りに行く。`init` の `slash_commands` は名前だけなので、説明は
  * この制御リクエストから受け取る（組み込みコマンドの分も返る）。
- * 以降セッション中に増減したときは `commands_changed` が押してくる（src/server/core/sdk-message.ts）。
+ * 以降セッション中に増減したときは `commands_changed` が押してくる（src/server/session-driver/core/sdk-message.ts）。
  *
  * **取れなくてもセッションは続ける**（説明が無いまま名前だけの補完に戻るだけ。
  * docs/coding-standards.md「エラーハンドリング」の「動作中の一時的な失敗」）。
@@ -491,7 +491,7 @@ async function relayCommandDescriptions(
  * `organization` も返すが、**駆動の外へ出すのは `toPlan` が取り出した `subscriptionType` だけ**
  * （`toPlan` の戻り値しか触らないので、他のフィールドに触れる経路が無い）。
  *
- * **名前は Claude Code の控えを先に見て決める**（`src/server/core/plan.ts`。SDK の
+ * **名前は Claude Code の控えを先に見て決める**（`src/server/session-driver/core/plan.ts`。SDK の
  * `subscriptionType` は契約の段と合わないことがあり、控えのほうが段と枠を別々に持つ）。
  * 控えから決まらなければ SDK の値をそのまま出す。
  *
@@ -555,7 +555,7 @@ function askForAnswer(
 
 /**
  * 送る依頼1件。**駆動が持つ原寸の画像はここまでで、`stream()` が渡したあとは持たない**
- * （拡大表示のために残すのは棚 = `src/server/core/prompt-image-shelf.ts` の側）。
+ * （拡大表示のために残すのは棚 = `src/server/session-driver/core/prompt-image-shelf.ts` の側）。
  */
 type Prompt = {
   readonly text: string

@@ -66,7 +66,7 @@ const MAX_OPEN_FILE_PATH_LENGTH = 1_000
 /**
  * 許可モードの値の全体。**この一覧は shared に1つだけ置く**（docs/design.md 4.3）。
  * SDK の `PermissionMode` と同じ値であることは core 側のテスト
- * （test/server/adapter/sdk-driver.test.ts）が型で守る。画面に出す日本語ラベルは描く側が持つ。
+ * （test/server/session-driver/adapter/sdk-driver.test.ts）が型で守る。画面に出す日本語ラベルは描く側が持つ。
  */
 export const PERMISSION_MODES = [
   "default",
@@ -90,7 +90,7 @@ export type ModelAlias = (typeof MODEL_ALIASES)[number]
 /**
  * effort の段（`docs/requirements.md` 4.1）。SDK の `EffortLevel` と同じ5語（実測は
  * `docs/history/decision.md`「effort の途中変更と読み取りが成り立った実測」）。**送るときの
- * 一覧はここだけ**——読み取った値の検証も同じ一覧で行う（`src/server/adapter/sdk-driver.ts` の
+ * 一覧はここだけ**——読み取った値の検証も同じ一覧で行う（`src/server/session-driver/adapter/sdk-driver.ts` の
  * `stopHooks`）。
  */
 export const EFFORT_LEVELS = ["low", "medium", "high", "xhigh", "max"] as const
@@ -159,7 +159,7 @@ const faceDataUrlSchema = z
  *
  * **上限が2つあるのは、2つの寿命が違うから**（原寸は送った時点で手放し、記録に残るのは
  * 控えだけ）。立ち絵と同じく文字列のまま持ち、`{ mediaType, base64 }` へのほどきは渡す側
- * （`src/server/adapter/sdk-driver.ts`）が同じ関数で行う。
+ * （`src/server/session-driver/adapter/sdk-driver.ts`）が同じ関数で行う。
  */
 const promptImageSchema = z.object({
   full: z
@@ -255,7 +255,7 @@ export const clientCommandSchema = z.discriminatedUnion("type", [
   /**
    * effort を切り替える（`docs/screen-design.md` 13.9「動き方の操作子」）。**`set-model` と
    * 同じ形**——セッション限りで、サーバは `applyFlagSettings({ effortLevel })` で SDK へ渡す
-   * だけ（`src/server/adapter/sdk-driver.ts`）。**帯に表示する値はこのコマンドで送った値では
+   * だけ（`src/server/session-driver/adapter/sdk-driver.ts`）。**帯に表示する値はこのコマンドで送った値では
    * なく、hook 入力から読み取った値**（`effort-changed`。押した値へ先に倒さない。理由は
    * `docs/screen-design.md` 13.9「動き方の操作子」）。
    */

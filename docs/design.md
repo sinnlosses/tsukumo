@@ -1003,7 +1003,7 @@ Layout に出す。復帰したときにセッションを続きから起こし�
 知らない値でサイドバーを誤った値に倒さないため）。
 
 **サイドバーの `<select>` から `set-model` を送ったときも同じ `model-changed` を使う**
-（2026-09-17）。`src/server/adapter/sdk-driver.ts` の `setModel` が `session.setModel()` の確定を
+（2026-09-17）。`src/server/session-driver/adapter/sdk-driver.ts` の `setModel` が `session.setModel()` の確定を
 待ってから出す（駆動を経ているので、これは「ブラウザ側のローカル echo」の禁止（3章「依頼」）
 には当たらない）。
 
@@ -1015,7 +1015,7 @@ Layout に出す。復帰したときにセッションを続きから起こし�
 
 **`request` は文面だけでなく、添えた画像の控え（`images: string[]`）も運ぶ**（2026-09-21。
 `docs/requirements.md` 4.10）。**原寸は載らない** — 原寸は `prompt` コマンドからモデルへ渡ったあと
-サーバのメモリの「棚」（`src/server/core/prompt-image-shelf.ts`）に直近ぶんだけ残るだけで、
+サーバのメモリの「棚」（`src/server/session-driver/core/prompt-image-shelf.ts`）に直近ぶんだけ残るだけで、
 記録（`SessionState`）に残るのは縮めた控えだけになる。控えを作るのはブラウザ側で、
 **サーバは画像を加工しない**。
 
@@ -1365,7 +1365,7 @@ JSON を配る経路（`/repository-file`・`/token-usage`・`/context-usage`・
 | ------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
 | `src/shared/usage-review.ts`                                  | 段・提案の型と列挙、状態 `UsageReview` / `PreviousUsageReview`、提案の識別子 `usageProposalKey`、押す口の依頼文 `usageProposalRequestText`     |
 | `src/server/usage-review/core/usage-review-tool.ts`           | ツールの名前と説明文、形の外の条の検査、受け付けた呼び出しをイベントにする窓口 `createUsageReviewIntake`                                       |
-| `src/server/adapter/sdk-tool.ts`                              | 2つのツール（zod の形）を仕事のときだけ載せる                                                                                                  |
+| `src/server/session-driver/adapter/sdk-tool.ts`               | 2つのツール（zod の形）を仕事のときだけ載せる                                                                                                  |
 | `src/shared/session-state.ts`                                 | `usageReview` / `previousUsageReview` の畳み込み（`usage-review-stage` / `usage-review-result` / `usage-proposal-dismissed` / ターンの終わり） |
 | `src/server/usage-review/adapter/previous-usage-review.ts`    | 前回の見直しの結果の読み書き（`~/.tsukumo/usage-review.json`。持つのは直前の1回だけ）                                                          |
 | `src/server/usage-review/adapter/usage-proposal-dismissal.ts` | 見送った提案の識別子の読み書き（`~/.tsukumo/usage-review-dismissed.json`）                                                                     |
@@ -1618,16 +1618,16 @@ type AchievementCalendar =
 規則は `docs/requirements.md` 4.11「日記」「振り返りの依頼」、画面は 13.10、語は
 `docs/glossary.md`「日記」「しおり」「diary ツール」）。
 
-| 置き場                                | 持つもの                                                                                                                                                              |
-| ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `src/shared/diary.ts`                 | 日記の型 `Diary`・段落 `DiaryParagraph`・しおり `DiaryBookmark`、保存の形の読み手（zod）、状態 `DiaryWriting` と3段の並び `DIARY_STAGES`                              |
-| `src/shared/command.ts`               | 振り返りのコマンド `reflect-achievement`（`date`）                                                                                                                    |
-| `src/server/diary/core/diary-tool.ts` | ツールの名前と説明文、形の外の条の検査、受け付けた呼び出しを保存してイベントにする窓口 `createDiaryIntake`、引数の断片から3段目を見つける純関数                       |
-| `src/server/adapter/sdk-tool.ts`      | `diary`（zod の形）を**仕事にも雑談にも**載せる                                                                                                                       |
-| `src/server/core/sdk-message.ts`      | `diary` の塊が開いた合図（`content_block_start`）を `diary-drafting` にする（`report-drafting` と同じ形）                                                             |
-| `src/server/core/session-manager.ts`  | `reflect-achievement` を受け、その日の成果を読む口（`SessionManagerOptions` に足す）で数え、依頼文を組んで送り、窓口に「いま書く日」を渡して `diary-requested` を流す |
-| `src/shared/session-state.ts`         | `diaryWriting` の畳み込み（`diary-requested` / `diary-drafting` / `diary-stage` / `diary-written` / ターンの終わり）                                                  |
-| `src/server/diary/adapter/diary.ts`   | 日記の読み書き（`~/.tsukumo/diary/<リポジトリ>/<日付>.json`）と、日記のある日の一覧。リポジトリの見分け（`git rev-parse --git-common-dir`）もここ                     |
+| 置き場                                          | 持つもの                                                                                                                                                              |
+| ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/shared/diary.ts`                           | 日記の型 `Diary`・段落 `DiaryParagraph`・しおり `DiaryBookmark`、保存の形の読み手（zod）、状態 `DiaryWriting` と3段の並び `DIARY_STAGES`                              |
+| `src/shared/command.ts`                         | 振り返りのコマンド `reflect-achievement`（`date`）                                                                                                                    |
+| `src/server/diary/core/diary-tool.ts`           | ツールの名前と説明文、形の外の条の検査、受け付けた呼び出しを保存してイベントにする窓口 `createDiaryIntake`、引数の断片から3段目を見つける純関数                       |
+| `src/server/session-driver/adapter/sdk-tool.ts` | `diary`（zod の形）を**仕事にも雑談にも**載せる                                                                                                                       |
+| `src/server/session-driver/core/sdk-message.ts` | `diary` の塊が開いた合図（`content_block_start`）を `diary-drafting` にする（`report-drafting` と同じ形）                                                             |
+| `src/server/core/session-manager.ts`            | `reflect-achievement` を受け、その日の成果を読む口（`SessionManagerOptions` に足す）で数え、依頼文を組んで送り、窓口に「いま書く日」を渡して `diary-requested` を流す |
+| `src/shared/session-state.ts`                   | `diaryWriting` の畳み込み（`diary-requested` / `diary-drafting` / `diary-stage` / `diary-written` / ターンの終わり）                                                  |
+| `src/server/diary/adapter/diary.ts`             | 日記の読み書き（`~/.tsukumo/diary/<リポジトリ>/<日付>.json`）と、日記のある日の一覧。リポジトリの見分け（`git rev-parse --git-common-dir`）もここ                     |
 
 **`diary` ツールの欄**（zod の形。この順に並べる——3段目の合図が引数の並びに頼るため）:
 
@@ -1935,7 +1935,7 @@ type Diary = {
 （`<PromptImageThumbnails>`。依頼の見出しの下と、雑談の利用者の吹き出しの中）。**どちらも1枚も
 無ければ何も描かない**ので常設の枠にならない。**どちらも押すと原寸を拡大して見られる**
 （`image-zoom.tsx`）——札は `<Composer>` のローカル状態にある原寸をそのまま出し、控えは押した
-瞬間に id でサーバの「棚」（`src/server/core/prompt-image-shelf.ts`。`docs/requirements.md`
+瞬間に id でサーバの「棚」（`src/server/session-driver/core/prompt-image-shelf.ts`。`docs/requirements.md`
 4.10「会話内容の扱い」）から原寸を取りに行き、棚から落ちていれば控えを代わりに拡大する。
 
 **質問が出ている間も `<Composer>` は出したまま**（2026-09-23。札がメインビューへ移り、入力欄の
@@ -2114,7 +2114,7 @@ characters/<name>/
   **`tsukumo:<パック名>:chat@<目印>`**。13.7。**末尾の目印はビューのポート番号そのもの**
   （`@7327` / `@7328` …）。`docs/requirements.md` 4.8「鍵」）にし、**起動時も切り替え時も、これから起こす側の印を
   持つ最新のセッションを探して `resume` する**（無ければ新規）。印の組み立ても読み取りも
-  `core/session-restore.ts` の `sessionTag` / `readSessionMark` 1箇所で、
+  `session-driver/core/session-restore.ts` の `sessionTag` / `readSessionMark` 1箇所で、
   `session-start.ts` はそれを `findSessionToResume` と `startSdkDriver` の `tag` の両方に渡す。
   **戻ってくれば、そのパックの会話も口調も戻る**
   - 画面の履歴は `readRestoredEvents` の再生をそのまま使う（8章）
@@ -2486,7 +2486,7 @@ characters/<name>/
 - フックは `trigger: "manual" | "auto"` のどちらでも呼ばれるので、**claude 側の自動の圧縮
   （最後の受け皿。`docs/chat-mode.md` 4.9）でも写しが新しくなる**
 - 受け取った文字列は**ログにも画面にも出さない**（出してよいのは長さまで）
-- **`/clear` も同じ口で受ける。** `conversation-cleared`（`src/server/core/sdk-message.ts`）が
+- **`/clear` も同じ口で受ける。** `conversation-cleared`（`src/server/session-driver/core/sdk-message.ts`）が
   流れたら、写しの印を「未渡し」に戻す。見る場所は `relayMessages` の中で、`turn-finished` で
   `personaMemory.finishTurn()` を呼んでいるのと同じ1行の形
 
@@ -2557,7 +2557,7 @@ characters/<name>/
   `docs/chat-mode.md` 4.9）
 - 世代バックアップを採らないのは 7.1 と同じ理由（会話をきっかけに書いたものの残る場所を増やさない）
 
-**層の切り方は `persona.md` の書き戻しと同じ**: 口（型）は `core/session-driver.ts`、ファイルに
+**層の切り方は `persona.md` の書き戻しと同じ**: 口（型）は `session-driver/core/session-driver.ts`、ファイルに
 触るのは `adapter`、結ぶのは配線層（`src/session-start.ts`）。
 
 **`~/.tsukumo/` の中身は `state.json`・キャラクターパックのディレクトリ・雑談の要約の写し・
@@ -2625,13 +2625,13 @@ characters/<name>/
 - ターンの終わりにまとめない（溜めている間にプロセスが終わるとそのターンが丸ごと落ちる）
 - **書けなくても例外を投げない**（常駐プロセスは1回の失敗で落ちない。
   `docs/coding-standards.md`「エラーハンドリング」）。落ちるのはその1行だけ
-- **層の切り方は要約の写し・人格への書き戻しと同じ**: 口（型）は `core/session-driver.ts`、
+- **層の切り方は要約の写し・人格への書き戻しと同じ**: 口（型）は `session-driver/core/session-driver.ts`、
   ファイルに触るのは `chat/adapter/chat-archive.ts`（**1ファイル = 1つの境界**。原則3）、結ぶのは
   配線層（`src/session-start.ts`）。置き場を差し替えられる `root` 引数も同じ手で持つ
   （テストがホームを汚さないため）
 
 **誰がどう読み戻すか。** 口は `ChatArchive` に**もう1つ足す**（`readRecent(packName, limitBytes)`。
-型は `core/session-driver.ts`、実装はこのファイル）。呼ぶのは**セッションを起こすとき1回だけ**で、
+型は `session-driver/core/session-driver.ts`、実装はこのファイル）。呼ぶのは**セッションを起こすとき1回だけ**で、
 結ぶのは配線層（`src/session-start.ts`）——書き口が `session-manager` から呼ばれるのと持ち場が
 違うが、**触るファイルは同じ1つ**なので境界は増やさない（原則3）。
 
@@ -2705,12 +2705,12 @@ characters/<name>/
 - **同じ秒に書かれた行は区別しない。** 索引が指すのは「その秒に書いた行」で、隣の1件が一緒に
   載ることはありうる（**足りないより多いほうへ倒す**。秒より細かい印を足すほどの害ではない）
 
-**誰がいつ書くか。** 旗を立てるのは `keep` ツール（`src/server/adapter/sdk-tool.ts`）、書くのは
+**誰がいつ書くか。** 旗を立てるのは `keep` ツール（`src/server/session-driver/adapter/sdk-tool.ts`）、書くのは
 **ターンの終わり**。
 
 - **ツールは引数を取らない**（指せるのはそのターンだけ。`docs/chat-mode.md` 4.9）。戻り値は
   他のツールと同じ `"ok"` だけで、**旗が立ったかどうかもモデルへ戻さない**
-- **口は `ChatKeep`**（`core/session-driver.ts`）。`ChatArchive` をそのまま駆動へ渡さないために
+- **口は `ChatKeep`**（`session-driver/core/session-driver.ts`）。`ChatArchive` をそのまま駆動へ渡さないために
   分けてある — 駆動に要るのは旗を立てる1つの動きだけで、書き口も読み口も要らない。渡す実体は
   `session-start.ts` が作る**同じ1つのアーカイブ**
 - **アーカイブは「このターンで書いた行の時刻」をメモリに持つ**（文面は持たない）。旗が立っていれば
@@ -2783,10 +2783,10 @@ readRecent(packName, { recentBytes, keptBytes }) → { kept, recent }
   1行にでも当たればその日を拾う。追記だけなら途中で止まっても被害が1行で済む性質は崩れない）
 - **`v` を上げない。** 日付のファイルも `kept.jsonl` も1バイトも変わらない
 
-**誰がいつ書くか。** 書くのは `index` ツール（`src/server/adapter/sdk-tool.ts`）で、
+**誰がいつ書くか。** 書くのは `index` ツール（`src/server/session-driver/adapter/sdk-tool.ts`）で、
 **受け取った1行をそのまま**その日の行として積む。
 
-- **口は `ChatRecall`**（`core/session-driver.ts`。`index` と `recall` の2つ）。`ChatArchive` を
+- **口は `ChatRecall`**（`session-driver/core/session-driver.ts`。`index` と `recall` の2つ）。`ChatArchive` を
   そのまま駆動へ渡さないのは `ChatKeep` と同じで、**パックの名前と読む量は配線層
   （`src/session-start.ts`）が縛ってから渡す**
 - **1ターンに1行**（`remember` と同じ縛り。空・改行つき・120文字超は黙って捨て、その1行も使わない）。
@@ -2932,17 +2932,17 @@ recall(packName, keyword, limitBytes) → { kind: "found", entries } | { kind: "
 
 ## 10. テスト
 
-| 対象                           | 方法                                                                                                                           | 置き場所                                   |
-| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------ |
-| reducer（`applySessionEvent`） | いまの `session-view.test.ts` をそのまま持ち越す（純粋関数）                                                                   | `test/shared/session-state.test.ts`        |
-| zod スキーマ                   | 受け付ける形・落とす形を1件ずつ                                                                                                | `test/shared/command.test.ts` など         |
-| SDK の型との一致               | `PERMISSION_MODES` / `MODEL_ALIASES` が SDK の型と同じ値であること（型レベルの検査）                                           | `test/server/adapter/sdk-driver.test.ts`   |
-| `session-manager`              | fake driver を差し込み、`hello` → `events` の順序・バッチ・`dispatch` の分岐                                                   | `test/server/core/session-manager.test.ts` |
-| `server`（ws）                 | 接続 → `hello` が返る、トークン無しは 403、Origin 違いは 403、コマンド → 駆動が呼ばれる                                        | `test/server/adapter/server.test.ts`       |
-| browser の部品                 | `bun test` + `happy-dom` + `@testing-library/react`。**役割と文言で当てる**（HTML の文字列一致はしない）                       | `test/browser/**`                          |
-| 層の検査                       | `shared ← core` / `shared ← browser` / `core ⟂ browser` の3辺。外部ツールは増やさない                                          | `test/architecture.test.ts`                |
-| 画面全体                       | **fake driver で起こした tsukumo に Playwright**（`webapp-testing` スキル）。数値で読めるものは CDP で読む。色・間合いは人の目 | `scripts/`（本体から呼ばれない）           |
-| 状態のカタログ                 | 疑似セッションの場面を名指しして起こし直し、広い窓と狭い窓で撮って索引 HTML に並べる（`TSUKUMO_FAKE_SCENE`）                   | `scripts/capture-catalog.ts`               |
+| 対象                           | 方法                                                                                                                           | 置き場所                                                |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------- |
+| reducer（`applySessionEvent`） | いまの `session-view.test.ts` をそのまま持ち越す（純粋関数）                                                                   | `test/shared/session-state.test.ts`                     |
+| zod スキーマ                   | 受け付ける形・落とす形を1件ずつ                                                                                                | `test/shared/command.test.ts` など                      |
+| SDK の型との一致               | `PERMISSION_MODES` / `MODEL_ALIASES` が SDK の型と同じ値であること（型レベルの検査）                                           | `test/server/session-driver/adapter/sdk-driver.test.ts` |
+| `session-manager`              | fake driver を差し込み、`hello` → `events` の順序・バッチ・`dispatch` の分岐                                                   | `test/server/core/session-manager.test.ts`              |
+| `server`（ws）                 | 接続 → `hello` が返る、トークン無しは 403、Origin 違いは 403、コマンド → 駆動が呼ばれる                                        | `test/server/adapter/server.test.ts`                    |
+| browser の部品                 | `bun test` + `happy-dom` + `@testing-library/react`。**役割と文言で当てる**（HTML の文字列一致はしない）                       | `test/browser/**`                                       |
+| 層の検査                       | `shared ← core` / `shared ← browser` / `core ⟂ browser` の3辺。外部ツールは増やさない                                          | `test/architecture.test.ts`                             |
+| 画面全体                       | **fake driver で起こした tsukumo に Playwright**（`webapp-testing` スキル）。数値で読めるものは CDP で読む。色・間合いは人の目 | `scripts/`（本体から呼ばれない）                        |
+| 状態のカタログ                 | 疑似セッションの場面を名指しして起こし直し、広い窓と狭い窓で撮って索引 HTML に並べる（`TSUKUMO_FAKE_SCENE`）                   | `scripts/capture-catalog.ts`                            |
 
 **ブラウザに出た絵は自動テストで守らない**、という方針は変えない。変わるのは「claude を起こさずに
 絵を出せる」こと（fake driver）で、目視の手順が `docs/architecture.md`「手で確かめること」から

@@ -1,6 +1,6 @@
 // 前のセッションの続きから始めるための計算（docs/requirements.md 4.8）。**SDK を呼ばない
 // 純粋な部分だけ**をここに置き、`listSessions` / `getSessionMessages` を実際に呼ぶのは
-// src/server/adapter/sdk-session.ts。純粋なので、本物の claude を起こさずにテストできる。
+// src/server/session-driver/adapter/sdk-session.ts。純粋なので、本物の claude を起こさずにテストできる。
 //
 // 戻すのは (1) どのセッションの続きから始めるか（印と `lastModified` で選ぶ）と
 // (2) 画面の履歴（transcript のメッセージ列 → 内部イベント）の2つ。
@@ -15,12 +15,12 @@
 
 import { isPlainObject } from "remeda"
 
-import { type Expression } from "../../shared/expression.ts"
-import { MAX_SESSION_CHOICES, type SessionChoice } from "../../shared/session-choice.ts"
-import { type SessionEvent } from "../../shared/session-event.ts"
-import { createReportReview } from "../report/core/report-review.ts"
-import { type Config } from "./config.ts"
-import { DEFAULT_VIEW_PORT, MAX_PORT_NUMBER } from "./port-resolution.ts"
+import { type Expression } from "../../../shared/expression.ts"
+import { MAX_SESSION_CHOICES, type SessionChoice } from "../../../shared/session-choice.ts"
+import { type SessionEvent } from "../../../shared/session-event.ts"
+import { type Config } from "../../core/config.ts"
+import { DEFAULT_VIEW_PORT, MAX_PORT_NUMBER } from "../../core/port-resolution.ts"
+import { createReportReview } from "../../report/core/report-review.ts"
 import { toSessionEvents } from "./sdk-message.ts"
 
 /** セッションの印の前置き。**組み立ては {@link sessionTag} だけ**（文字列を他所で作らない）。 */

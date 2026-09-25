@@ -2,14 +2,14 @@ import { describe, expect, it } from "bun:test"
 
 import { CHAT_MANNER_PROMPT } from "../../../../src/server/chat/core/chat-manner.ts"
 import { takeChatMemoryPromptParts } from "../../../../src/server/chat/core/chat-memory-prompt.ts"
+import { REPORT_NOTATION_PROMPT } from "../../../../src/server/report/core/report-notation.ts"
 import {
   type ChatArchive,
   type ChatArchiveRecentEntry,
   type ChatSummary,
   type ChatSummaryRecord,
   type SessionStart,
-} from "../../../../src/server/core/session-driver.ts"
-import { REPORT_NOTATION_PROMPT } from "../../../../src/server/report/core/report-notation.ts"
+} from "../../../../src/server/session-driver/core/session-driver.ts"
 import { SPEECH_CADENCE_PROMPT } from "../../../../src/server/system-prompt/core/speech-cadence.ts"
 import {
   type SystemPromptMode,

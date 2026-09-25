@@ -8,8 +8,8 @@
 // 許可要求の入力と質問文は会話の内容そのものなので、ログにもファイルにも書かない
 // （docs/coding-standards.md「会話内容の扱い」）。
 
-import { type Answer, type PendingAsk } from "../../shared/pending-ask.ts"
-import { parseQuestions, type Question, type QuestionAnswer } from "../../shared/question.ts"
+import { type Answer, type PendingAsk } from "../../../shared/pending-ask.ts"
+import { parseQuestions, type Question, type QuestionAnswer } from "../../../shared/question.ts"
 
 /** キャラクターが質問するときのツール名。これだけを質問として扱う。 */
 const ASK_USER_QUESTION_TOOL_NAME = "AskUserQuestion"

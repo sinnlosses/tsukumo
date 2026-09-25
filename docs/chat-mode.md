@@ -69,13 +69,13 @@ sed -n '/^#### 記憶の圧縮と忘却/,/^#\{2,4\} /p' docs/chat-mode.md
 を利用者の発言として差し込み、1往復増える。
 
 - **仕組み**: 子プロセスに `CLAUDE_CODE_TERMINAL_MCP_TOOLS=mcp__tsukumo__speak` を渡す
-  （`src/server/core/visible-output-nudge.ts`。仕事・雑談の両方で渡す）。直前の
+  （`src/server/session-driver/core/visible-output-nudge.ts`。仕事・雑談の両方で渡す）。直前の
   ツールの往復にこの変数に載ったツールの成功した呼び出しがあれば、本体は催促を出さない
   （同梱の `claude` 2.1.280 と 2.1.281 のバイナリで確かめた判定。判定は `Stop` フックより前に
   走るので、フックからは止められない）。**公式の文書には載っていない**
   （2026-09-24 に `env-vars.md`・`settings.md`・`llms-full.txt` の全文を当たった。催促そのものは
   2.1.183 の変更履歴にだけある）ので、本体の更新で黙って効かなくなりうる。**催促が届いたら
-  気づける見張りを一緒に置く**（`src/server/adapter/sdk-driver.ts`。催促の固定文で始まる
+  気づける見張りを一緒に置く**（`src/server/session-driver/adapter/sdk-driver.ts`。催促の固定文で始まる
   利用者側のメッセージを見たら、届いた事実だけを stderr に1行出す。中身は写さない）
 - **条は置かない**: 最後の `speak` のあとに「完了」の1行を書かせる条を保険として重ねていたが、
   `report` を呼ばないターン（仕事のセッションで一言だけ返すとき）ではその1行が最終レポートとして

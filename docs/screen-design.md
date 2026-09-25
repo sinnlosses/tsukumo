@@ -1726,7 +1726,7 @@ scrollable overflow は end 方向にしか伸びない**ので、上へ出た�
   部屋の名前が紐づいているのだから、別の部屋に行けるのはおかしい」）。絞り込みの鍵は続きから
   始めるときと同じ、目印まで揃えた印（`sessionTag`）——一族（パック・モードだけを揃えた印）
   ではなく部屋（目印まで揃えた印）で絞るので、並ぶ行はすべて同じ部屋になる
-  （`src/server/core/session-restore.ts` の `listMarkedSessions`）。**並ぶ行の部屋の名前が
+  （`src/server/session-driver/core/session-restore.ts` の `listMarkedSessions`）。**並ぶ行の部屋の名前が
   全行で同じになり見分けの役に立たなくなった**ので、**サイドバーの行から部屋の名前を外し、
   見出し（SDK の `summary`）に置き換えた**（2026-09-23 決定。ユーザーの指摘「`/clear` すると
   セッションIDが変わり、行が増えていくので、どこで何をしていたかを辿れない」）。行の形は下
@@ -1738,7 +1738,7 @@ scrollable overflow は end 方向にしか伸びない**ので、上へ出た�
 
 - **見出しは SDK の `summary`**（`customTitle` → 自動要約 → 最初の依頼、の順に決まる表示用の題）。
   追加のモデル呼び出しで tsukumo が題を作ることはしない。`SessionChoice.heading` として運び
-  （`src/server/core/session-restore.ts` の `taggedSession`）、外来の値なので文字列でない・
+  （`src/server/session-driver/core/session-restore.ts` の `taggedSession`）、外来の値なので文字列でない・
   空・空白だけなら無いものとして畳む
 - **`heading` が無い行は「（題なし）」を代わりに出す**（時刻だけにすると行が薄く見え、
   何の記録か分からないまま並ぶため）

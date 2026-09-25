@@ -11,7 +11,7 @@
 // が出した（描いた）`report` だけなので、サブエージェントの `report`（変換で捨てる）とは比べない。
 //
 // **判定の窓口は `report` の handler だけ**（{@link ReportReview.judge}。handler は
-// `src/server/adapter/sdk-tool.ts`）。`assistant` メッセージの変換（`sdk-message.ts`）は `report`
+// `src/server/session-driver/adapter/sdk-tool.ts`）。`assistant` メッセージの変換（`sdk-message.ts`）は `report`
 // イベントを作るだけで判定せず、{@link ReportReview.pass} がそのイベントを**同じ呼び出しの
 // `tool-finished` まで預かり**、handler が返した `isError`（差し戻したら true）に従って描くか
 // 捨てるかを決める。handler と変換の両方で判定すると回数の数え方が食い違いうるうえ、SDK は

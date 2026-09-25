@@ -13,7 +13,7 @@ import { type UsageReviewFindings, usageProposalKey } from "../../../../src/shar
 
 // 見送った提案の一覧が、ホームのファイル（読み書きは
 // `src/server/usage-review/adapter/usage-proposal-dismissal.ts`）から `createUsageReviewIntake` へ実際に
-// 渡ることを確かめる（`test/server/adapter/sdk-tool.test.ts` は同じ口を偽の配列で確かめている）。
+// 渡ることを確かめる（`test/server/session-driver/adapter/sdk-tool.test.ts` は同じ口を偽の配列で確かめている）。
 
 let dir: string
 

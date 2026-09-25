@@ -7,8 +7,8 @@
 
 /**
  * API が返したエラーの種類。SDK の `SDKAssistantMessageError`（0.3.280）と同じ綴りを持つ
- * （一致はテストで守る。`test/server/adapter/sdk-driver.test.ts`）。**知らない綴りは `unknown` に
- * 畳む**（変換は `src/server/core/sdk-message.ts`）。
+ * （一致はテストで守る。`test/server/session-driver/adapter/sdk-driver.test.ts`）。**知らない綴りは `unknown` に
+ * 畳む**（変換は `src/server/session-driver/core/sdk-message.ts`）。
  */
 export const API_ERROR_KINDS = [
   "authentication_failed",

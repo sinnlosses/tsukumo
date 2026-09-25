@@ -19,10 +19,10 @@ import { createStartupToken, startViewServer } from "./server/adapter/server.ts"
 import { attachSessionSocket } from "./server/adapter/session-socket.ts"
 import { watchUiSource } from "./server/adapter/ui-rebuild.ts"
 import { type ResolvedViewPort, startOnResolvedPort } from "./server/core/port-resolution.ts"
-import { type PromptImageShelf } from "./server/core/prompt-image-shelf.ts"
 import { type SessionManager } from "./server/core/session-manager.ts"
 import { listDiaryDates, readDiaryDay } from "./server/diary/adapter/diary.ts"
 import { listRepositoryFiles } from "./server/repository/adapter/repository-file.ts"
+import { type PromptImageShelf } from "./server/session-driver/core/prompt-image-shelf.ts"
 import {
   summarizeRecentTokenUsage,
   type TokenUsageLog,
@@ -66,7 +66,7 @@ export type ViewDeliveryResult =
       readonly url: string
       /**
        * 実際に待ち受けているポート。**セッションの印の目印がここから決まる**ので返す
-       * （`src/server/core/session-restore.ts` の `sessionTag`。docs/requirements.md 4.8「鍵」）。
+       * （`src/server/session-driver/core/session-restore.ts` の `sessionTag`。docs/requirements.md 4.8「鍵」）。
        */
       readonly port: number
       /** 開いたタブとセッションを繋ぐ（`/ws` の受け口を足す）。 */

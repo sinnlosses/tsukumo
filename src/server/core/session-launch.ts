@@ -16,7 +16,7 @@ import {
   type CharacterSelection,
   type NamedCharacterPack,
 } from "../character-pack/core/character-selection.ts"
-import { type SessionDriver, type SessionStart } from "./session-driver.ts"
+import { type SessionDriver, type SessionStart } from "../session-driver/core/session-driver.ts"
 
 /** 駆動と同じ間だけ動く見張り（いまは `develop/tasks.json`）。駆動を閉じると一緒に閉じる。 */
 export type SessionWatcher = { readonly close: () => void }

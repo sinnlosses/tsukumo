@@ -5,7 +5,7 @@
 // 値の意味と既定は docs/design.md 5章「config.ts」の表が正典。
 //
 // セッションの印（`sessionTag` / `readSessionMark`）は環境変数ではないので、目印を読み書きする
-// 持ち主 `src/server/core/session-restore.ts` に置く（続きから始めるセッションを選ぶ計算と
+// 持ち主 `src/server/session-driver/core/session-restore.ts` に置く（続きから始めるセッションを選ぶ計算と
 // 同じ場所）。
 
 /** ビューを配るポート（既定は src/server/core/port-resolution.ts の `DEFAULT_VIEW_PORT`）。 */
@@ -47,7 +47,7 @@ export const HOME_ENV_NAME = "TSUKUMO_HOME"
 
 /**
  * セッションの駆動の種類。`fake` は**本物の claude を起こさず**、疑似セッションどおりにイベントを
- * 流す（src/server/adapter/fake-driver.ts）。目視確認・Playwright 用（docs/design.md 10章）。
+ * 流す（src/server/session-driver/adapter/fake-driver.ts）。目視確認・Playwright 用（docs/design.md 10章）。
  */
 export type DriverKind = "sdk" | "fake"
 
@@ -84,7 +84,7 @@ export type Config = {
   /**
    * 起こした環境変数の全部。**claude の子プロセスへそのまま引き継ぐためのもの**で、tsukumo 自身は
    * ここから読まない（読むのは上の各フィールド）。SDK の `env` は tsukumo 自身の環境と混ぜずに丸ごと
-   * 置き換えるので、足したい変数（`src/server/core/visible-output-nudge.ts`）と一緒に渡す必要が
+   * 置き換えるので、足したい変数（`src/server/session-driver/core/visible-output-nudge.ts`）と一緒に渡す必要が
    * あり、環境変数を読む場所（`src/cli.ts`）を増やさずに済ませるためにここで運ぶ。
    */
   readonly inheritedEnv: Readonly<Record<string, string | undefined>>

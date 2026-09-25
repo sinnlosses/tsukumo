@@ -1,12 +1,12 @@
 import { describe, expect, it } from "bun:test"
 
-import { type Config } from "../../../src/server/core/config.ts"
-import { DEFAULT_VIEW_PORT } from "../../../src/server/core/port-resolution.ts"
+import { type Config } from "../../../../src/server/core/config.ts"
+import { DEFAULT_VIEW_PORT } from "../../../../src/server/core/port-resolution.ts"
 import {
   REPORT_TOOL_NAME,
   SPEAK_TOOL_NAME,
   TSUKUMO_MCP_SERVER_NAME,
-} from "../../../src/server/core/sdk-message.ts"
+} from "../../../../src/server/session-driver/core/sdk-message.ts"
 import {
   canResume,
   listMarkedSessions,
@@ -14,16 +14,16 @@ import {
   selectSessionToResume,
   sessionTag,
   toRestoredEvents,
-} from "../../../src/server/core/session-restore.ts"
-import { type Expression } from "../../../src/shared/expression.ts"
-import { mainViewEntries } from "../../../src/shared/main-view.ts"
-import { MAX_SESSION_CHOICES } from "../../../src/shared/session-choice.ts"
-import { type SessionEvent } from "../../../src/shared/session-event.ts"
-import { applySessionEvent, INITIAL_SESSION_STATE } from "../../../src/shared/session-state.ts"
+} from "../../../../src/server/session-driver/core/session-restore.ts"
+import { type Expression } from "../../../../src/shared/expression.ts"
+import { mainViewEntries } from "../../../../src/shared/main-view.ts"
+import { MAX_SESSION_CHOICES } from "../../../../src/shared/session-choice.ts"
+import { type SessionEvent } from "../../../../src/shared/session-event.ts"
+import { applySessionEvent, INITIAL_SESSION_STATE } from "../../../../src/shared/session-state.ts"
 
 // フィクスチャはすべて手で書いた架空のやり取り。**実物の transcript は使わない**
 // （docs/coding-standards.md「会話内容の扱い」）。本物の claude も起こさない
-// （`listSessions` / `getSessionMessages` を呼ぶのは src/server/adapter/sdk-session.ts の側）。
+// （`listSessions` / `getSessionMessages` を呼ぶのは src/server/session-driver/adapter/sdk-session.ts の側）。
 const EXPRESSIONS: readonly Expression[] = ["default", "thinking", "proud"]
 
 // 印はキャラクターパックごと・雑談かどうか・ビューのポートごとに違う
@@ -723,7 +723,7 @@ describe("toRestoredEvents", () => {
   })
 
   // 圧縮（`/compact`）が起きると transcript の鎖が切れ、`includeSystemMessages: true` で読んだ
-  // 並びは区切りの行から始まる（`src/server/adapter/sdk-session.ts` の `readRestoredEvents`。
+  // 並びは区切りの行から始まる（`src/server/session-driver/adapter/sdk-session.ts` の `readRestoredEvents`。
   // 実測）。**起こし直したあとに区切りがログのいちばん上に来る**ことをここで示す。
   it("圧縮の区切り（system の compact_boundary）が並びの先頭に来る", () => {
     const messages = [
