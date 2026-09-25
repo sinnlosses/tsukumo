@@ -18,6 +18,7 @@ import {
 } from "../../../../src/server/chat/adapter/chat-archive.ts"
 import {
   type ChatArchive,
+  type ChatEpisodeDraft,
   type ChatReadbackLimits,
 } from "../../../../src/server/session-driver/core/session-driver.ts"
 
@@ -814,6 +815,352 @@ describe("createChatArchive の日ごとの索引", () => {
     expect(createChatArchive(root()).recall("../evil", "散歩", READ_ALL)).toEqual({
       kind: "not-found",
     })
+  })
+})
+
+describe("createChatArchive の unconsolidated", () => {
+  // フィクスチャは手で書いた架空の依頼だけ（実物の会話は使わない）。1行12バイト（全角4文字）に
+  // 揃えてあるので、上限（バイト）と落ちる件数の対応が読める。
+  const TWELVE_BYTES = "あいうえ"
+
+  function appendRequest(chatArchive: ChatArchive, day: number, text: string): void {
+    chatArchive.append("fictional-pack", {
+      speaker: "user",
+      at: noonOn(2026, 9, day),
+      text,
+      images: undefined,
+    })
+  }
+
+  /** その日のファイルに書いた行の `at`（ISO）。 */
+  function writtenAt(day: number): string {
+    const [record] = readLines(
+      join(root(), "fictional-pack", `2026-09-${String(day).padStart(2, "0")}.jsonl`),
+    ) as {
+      at: string
+    }[]
+    if (record === undefined) {
+      throw new Error("行が書かれていない")
+    }
+    return record.at
+  }
+
+  it("エピソードが無ければアーカイブの最初から、窓の外の行を古い→新しいで返す", () => {
+    const chatArchive = createChatArchive(root())
+    appendRequest(chatArchive, 19, "19日の依頼")
+    appendRequest(chatArchive, 20, "20日の依頼")
+    appendRequest(chatArchive, 21, "21日の依頼")
+
+    // 窓（recentBytes）には最新の1件だけが収まる大きさにする。
+    const recentBytes = Buffer.byteLength("21日の依頼")
+    const { entries, usedBytes } = chatArchive.unconsolidated("fictional-pack", {
+      recentBytes,
+      maxBytes: 1024,
+    })
+
+    expect(entries.map((entry) => entry.text)).toEqual(["19日の依頼", "20日の依頼"])
+    expect(entries.map((entry) => entry.speaker)).toEqual(["user", "user"])
+    expect(usedBytes).toBe(Buffer.byteLength("19日の依頼") + Buffer.byteLength("20日の依頼"))
+  })
+
+  it("最後のエピソードの to より後の行だけを返す", () => {
+    const chatArchive = createChatArchive(root())
+    appendRequest(chatArchive, 19, "19日の依頼")
+    appendRequest(chatArchive, 20, "20日の依頼")
+    appendRequest(chatArchive, 21, "21日の依頼")
+    chatArchive.appendEpisodes("fictional-pack", [
+      {
+        from: writtenAt(19),
+        to: writtenAt(19),
+        title: "架空の見出し",
+        gist: "架空の要旨。",
+        cues: [],
+        weight: 1,
+      },
+    ])
+
+    // 窓は使い切れないほど広く取り、to より後かどうかだけを見る。
+    const { entries } = chatArchive.unconsolidated("fictional-pack", {
+      recentBytes: 0,
+      maxBytes: 1024,
+    })
+
+    expect(entries.map((entry) => entry.text)).toEqual(["20日の依頼", "21日の依頼"])
+  })
+
+  it("maxBytes で古いほうから区切り、溢れる1件は載せない（usedBytes で溜まった量が分かる）", () => {
+    const chatArchive = createChatArchive(root())
+    appendRequest(chatArchive, 19, TWELVE_BYTES)
+    appendRequest(chatArchive, 20, "かきくけ")
+    appendRequest(chatArchive, 21, "さしすせ")
+
+    // 1件（12バイト）は収まるが、2件目の途中までしか入らない上限。
+    const { entries, usedBytes } = chatArchive.unconsolidated("fictional-pack", {
+      recentBytes: 0,
+      maxBytes: 13,
+    })
+
+    expect(entries.map((entry) => entry.text)).toEqual([TWELVE_BYTES])
+    expect(usedBytes).toBe(Buffer.byteLength(TWELVE_BYTES))
+  })
+
+  it("パック名が名前として通らないときは空", () => {
+    const chatArchive = createChatArchive(root())
+
+    expect(chatArchive.unconsolidated("../evil", { recentBytes: 0, maxBytes: 1024 })).toEqual({
+      entries: [],
+      usedBytes: 0,
+    })
+  })
+})
+
+describe("createChatArchive の appendEpisodes", () => {
+  function episodeIndexLines(): unknown[] {
+    return readLines(join(root(), "fictional-pack", "episode.jsonl"))
+  }
+
+  function draft(overrides: Partial<ChatEpisodeDraft> = {}): ChatEpisodeDraft {
+    return {
+      from: "2026-09-25T14:00:00+09:00",
+      to: "2026-09-25T14:30:00+09:00",
+      title: "架空の見出し",
+      gist: "架空の要旨。",
+      cues: ["架空"],
+      weight: 2,
+      ...overrides,
+    }
+  }
+
+  it("v / id / from / to / title / gist / cues / weight を持つ行を追記する。id は to のローカル日付＋通し番号", () => {
+    const chatArchive = createChatArchive(root())
+
+    chatArchive.appendEpisodes("fictional-pack", [draft(), draft({ title: "2件目の見出し" })])
+
+    expect(episodeIndexLines()).toEqual([
+      {
+        v: 2,
+        id: "2026-09-25-1",
+        from: "2026-09-25T14:00:00+09:00",
+        to: "2026-09-25T14:30:00+09:00",
+        title: "架空の見出し",
+        gist: "架空の要旨。",
+        cues: ["架空"],
+        weight: 2,
+      },
+      {
+        v: 2,
+        id: "2026-09-25-2",
+        from: "2026-09-25T14:00:00+09:00",
+        to: "2026-09-25T14:30:00+09:00",
+        title: "2件目の見出し",
+        gist: "架空の要旨。",
+        cues: ["架空"],
+        weight: 2,
+      },
+    ])
+  })
+
+  it("既にある行の続きから通し番号を振る（同じ日に何回書いても重ならない）", () => {
+    const chatArchive = createChatArchive(root())
+
+    chatArchive.appendEpisodes("fictional-pack", [draft()])
+    chatArchive.appendEpisodes("fictional-pack", [draft(), draft()])
+
+    const ids = episodeIndexLines().map((line) => (line as { id: string }).id)
+    expect(ids).toEqual(["2026-09-25-1", "2026-09-25-2", "2026-09-25-3"])
+  })
+
+  it("パック名が通らない・0件のときは書かない", () => {
+    const chatArchive = createChatArchive(root())
+
+    chatArchive.appendEpisodes("../evil", [draft()])
+    chatArchive.appendEpisodes("fictional-pack", [])
+
+    expect(existsSync(join(root(), "fictional-pack", "episode.jsonl"))).toBe(false)
+  })
+})
+
+describe("createChatArchive の recallList", () => {
+  const NOW = Temporal.Instant.from("2026-09-26T00:00:00+09:00")
+
+  function draft(overrides: Partial<ChatEpisodeDraft> = {}): ChatEpisodeDraft {
+    return {
+      from: "2026-09-25T14:00:00+09:00",
+      to: "2026-09-25T14:30:00+09:00",
+      title: "架空の見出し",
+      gist: "架空の要旨。",
+      cues: [],
+      weight: 2,
+      ...overrides,
+    }
+  }
+
+  it("採点の高い順に id・title・gist を返す（limitBytes に収まる分だけ）", () => {
+    const chatArchive = createChatArchive(root())
+    chatArchive.appendEpisodes("fictional-pack", [
+      draft({ title: "散歩の話", gist: "散歩に行った話。", weight: 1 }),
+      draft({ title: "散歩の話その2", gist: "また散歩に行った話。", weight: 3 }),
+    ])
+
+    const all = chatArchive.recallList("fictional-pack", "散歩", 1024, NOW)
+    expect(all.kind).toBe("found")
+    if (all.kind !== "found") {
+      throw new Error("unreachable")
+    }
+    // weight が大きいほうが先（一致・新しさは同じ条件なので weight の差がそのまま順序に出る）。
+    expect(all.candidates.map((candidate) => candidate.title)).toEqual([
+      "散歩の話その2",
+      "散歩の話",
+    ])
+
+    // 1件ぶんしか収まらない上限では、点の高い1件だけを返す。
+    const firstCandidateBytes =
+      Buffer.byteLength("散歩の話その2") + Buffer.byteLength("また散歩に行った話。")
+    const limited = chatArchive.recallList("fictional-pack", "散歩", firstCandidateBytes, NOW)
+    expect(limited).toEqual({
+      kind: "found",
+      candidates: [{ id: "2026-09-25-2", title: "散歩の話その2", gist: "また散歩に行った話。" }],
+    })
+  })
+
+  it("当たらなければ not-found", () => {
+    const chatArchive = createChatArchive(root())
+    chatArchive.appendEpisodes("fictional-pack", [draft()])
+
+    expect(chatArchive.recallList("fictional-pack", "宇宙船", 1024, NOW)).toEqual({
+      kind: "not-found",
+    })
+  })
+
+  it("パック名が通らない・エピソードがまだ無いときは not-found", () => {
+    const chatArchive = createChatArchive(root())
+
+    expect(chatArchive.recallList("../evil", "架空", 1024, NOW)).toEqual({ kind: "not-found" })
+    expect(chatArchive.recallList("fictional-pack", "架空", 1024, NOW)).toEqual({
+      kind: "not-found",
+    })
+  })
+})
+
+describe("createChatArchive の recallEpisode", () => {
+  const OPENED_AT = Temporal.Instant.from("2026-09-26T00:00:00+09:00")
+
+  function appendRequest(
+    chatArchive: ChatArchive,
+    day: number,
+    second: number,
+    text: string,
+  ): void {
+    chatArchive.append("fictional-pack", {
+      speaker: "user",
+      at: Temporal.ZonedDateTime.from({
+        year: 2026,
+        month: 9,
+        day,
+        hour: 12,
+        minute: 0,
+        second,
+        timeZone: Temporal.Now.timeZoneId(),
+      }).epochMilliseconds,
+      text,
+      images: undefined,
+    })
+  }
+
+  function writtenAt(day: number, index: number): string {
+    const lines = readLines(
+      join(root(), "fictional-pack", `2026-09-${String(day).padStart(2, "0")}.jsonl`),
+    ) as { at: string }[]
+    const record = lines[index]
+    if (record === undefined) {
+      throw new Error("行が書かれていない")
+    }
+    return record.at
+  }
+
+  function recalledLines(): unknown[] {
+    return readLines(join(root(), "fictional-pack", "recalled.jsonl"))
+  }
+
+  it("その範囲の逐語を古いほうから読み、開いたことを recalled.jsonl に記録する", () => {
+    const chatArchive = createChatArchive(root())
+    appendRequest(chatArchive, 25, 0, "1件目の依頼")
+    appendRequest(chatArchive, 25, 1, "2件目の依頼")
+    appendRequest(chatArchive, 25, 2, "3件目の依頼（範囲の外）")
+    chatArchive.appendEpisodes("fictional-pack", [
+      {
+        from: writtenAt(25, 0),
+        to: writtenAt(25, 1),
+        title: "架空の見出し",
+        gist: "架空の要旨。",
+        cues: [],
+        weight: 2,
+      },
+    ])
+
+    const result = chatArchive.recallEpisode("fictional-pack", "2026-09-25-1", 1024, OPENED_AT)
+
+    expect(result).toEqual({
+      kind: "found",
+      entries: [
+        { speaker: "user", text: "1件目の依頼", date: "2026-09-25" },
+        { speaker: "user", text: "2件目の依頼", date: "2026-09-25" },
+      ],
+      overflowed: false,
+    })
+    expect(recalledLines()).toEqual([{ v: 1, id: "2026-09-25-1", at: expect.any(String) }])
+  })
+
+  it("limitBytes を超えるぶんは載せず、overflowed: true を返す", () => {
+    const chatArchive = createChatArchive(root())
+    appendRequest(chatArchive, 25, 0, "1件目の依頼")
+    appendRequest(chatArchive, 25, 1, "2件目の依頼")
+    chatArchive.appendEpisodes("fictional-pack", [
+      {
+        from: writtenAt(25, 0),
+        to: writtenAt(25, 1),
+        title: "架空の見出し",
+        gist: "架空の要旨。",
+        cues: [],
+        weight: 2,
+      },
+    ])
+
+    const result = chatArchive.recallEpisode(
+      "fictional-pack",
+      "2026-09-25-1",
+      Buffer.byteLength("1件目の依頼"),
+      OPENED_AT,
+    )
+
+    expect(result).toEqual({
+      kind: "found",
+      entries: [{ speaker: "user", text: "1件目の依頼", date: "2026-09-25" }],
+      overflowed: true,
+    })
+  })
+
+  it("無い id・パック名が通らないときは not-found（recalled.jsonl も増えない）", () => {
+    const chatArchive = createChatArchive(root())
+    appendRequest(chatArchive, 25, 0, "1件目の依頼")
+    chatArchive.appendEpisodes("fictional-pack", [
+      {
+        from: writtenAt(25, 0),
+        to: writtenAt(25, 0),
+        title: "架空の見出し",
+        gist: "架空の要旨。",
+        cues: [],
+        weight: 2,
+      },
+    ])
+
+    expect(chatArchive.recallEpisode("fictional-pack", "no-such-id", 1024, OPENED_AT)).toEqual({
+      kind: "not-found",
+    })
+    expect(chatArchive.recallEpisode("../evil", "2026-09-25-1", 1024, OPENED_AT)).toEqual({
+      kind: "not-found",
+    })
+    expect(existsSync(join(root(), "fictional-pack", "recalled.jsonl"))).toBe(false)
   })
 })
 

@@ -86,6 +86,10 @@ const NOOP_CHAT_ARCHIVE: ChatArchive = {
   writeIndex: () => {},
   recall: () => ({ kind: "not-found" }),
   readRecent: () => ({ kept: [], recent: [] }),
+  unconsolidated: () => ({ entries: [], usedBytes: 0 }),
+  appendEpisodes: () => {},
+  recallList: () => ({ kind: "not-found" }),
+  recallEpisode: () => ({ kind: "not-found" }),
 }
 
 /** トークン消費の記録を気にしないテストに渡す、何もしない書き込み口。 */
@@ -1201,6 +1205,10 @@ describe("createSessionManager", () => {
         writeIndex: () => {},
         recall: () => ({ kind: "not-found" }),
         readRecent: () => ({ kept: [], recent: [] }),
+        unconsolidated: () => ({ entries: [], usedBytes: 0 }),
+        appendEpisodes: () => {},
+        recallList: () => ({ kind: "not-found" }),
+        recallEpisode: () => ({ kind: "not-found" }),
       }
     }
 
@@ -1842,6 +1850,10 @@ describe("createSessionManager", () => {
         recall: () => ({ kind: "not-found" }),
         // 読み戻しは起こすときの配線（`src/session-start.ts`）が使う口で、ここは通らない。
         readRecent: () => ({ kept: [], recent: [] }),
+        unconsolidated: () => ({ entries: [], usedBytes: 0 }),
+        appendEpisodes: () => {},
+        recallList: () => ({ kind: "not-found" }),
+        recallEpisode: () => ({ kind: "not-found" }),
       }
       const manager = createSessionManager({
         now: () => 1_000,

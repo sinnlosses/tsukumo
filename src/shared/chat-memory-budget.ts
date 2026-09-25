@@ -35,3 +35,35 @@ export const CHAT_MEMORY_BUDGET = {
   recallEpisodesPerTurn: 2,
   consolidateEveryBytes: 8_192,
 } satisfies ChatMemoryBudget
+
+/**
+ * {@link CHAT_RECALL_SCORE} の形。値そのものはここではなく `docs/design.md` 7章
+ * 「エピソード索引はどこに置くか」の採点の式・上限と消す手を見る。
+ */
+export type ChatRecallScore = {
+  /** 手がかり語への当たりに掛ける重み。 */
+  readonly cueWeight: number
+  /** 見出しへの当たりに掛ける重み。 */
+  readonly titleWeight: number
+  /** 要旨への当たりに掛ける重み。 */
+  readonly gistWeight: number
+  /** 一致がこれ未満のエピソードは候補にしない足切り。 */
+  readonly minMatch: number
+  /** 新しさが半分に減衰するまでの日数（思い出した回数が0のとき）。 */
+  readonly halfLifeDays: number
+  /** 思い出した回数1回につき、半減期を伸ばす倍率。 */
+  readonly halfLifeGainPerRecall: number
+  /** 新しさの下限（0にはならない）。 */
+  readonly recencyFloor: number
+}
+
+/** エピソード索引の採点の係数。値の根拠は `docs/design.md` 7章「エピソード索引はどこに置くか」。 */
+export const CHAT_RECALL_SCORE = {
+  cueWeight: 1,
+  titleWeight: 1,
+  gistWeight: 0.5,
+  minMatch: 0.5,
+  halfLifeDays: 30,
+  halfLifeGainPerRecall: 1,
+  recencyFloor: 0.1,
+} satisfies ChatRecallScore

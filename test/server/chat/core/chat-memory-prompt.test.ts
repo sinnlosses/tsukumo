@@ -68,6 +68,10 @@ function fakeChatArchive(
       calls.push({ packName, limits })
       return { kept, recent: entries }
     },
+    unconsolidated: () => ({ entries: [], usedBytes: 0 }),
+    appendEpisodes: () => {},
+    recallList: () => ({ kind: "not-found" }),
+    recallEpisode: () => ({ kind: "not-found" }),
     readRecentArgs: () => calls,
   }
 }

@@ -124,7 +124,113 @@ export type ChatArchive = {
    * 読めない行の扱い・例外を投げないことは {@link readRecent} と同じ。
    */
   readonly recall: (packName: string, keyword: string, limitBytes: number) => ChatRecallResult
+  /**
+   * まだどのエピソードにも入っていない行を、古いほうから {@link ChatUnconsolidatedLimits.maxBytes}
+   * まで返す（定着の入力。`docs/design.md` 7章「定着はどこで走るか」）。**最後のエピソードの
+   * `to` より後**で、**作業記憶の窓（`recentBytes`）の外**にある行だけを対象にする
+   * （エピソードが無ければアーカイブの最初の行から）。行番号はここでは振らない
+   * （振るのは渡す側。`docs/design.md` 7章）。
+   *
+   * **溜まっている量は {@link ChatUnconsolidatedBatch.usedBytes} で分かる**——契機
+   * （`consolidateEveryBytes`）に届いたかどうかを比べるのは呼び出し側の役目で、ここでは判定
+   * しない。
+   */
+  readonly unconsolidated: (
+    packName: string,
+    limits: ChatUnconsolidatedLimits,
+  ) => ChatUnconsolidatedBatch
+  /**
+   * 定着ができたエピソードを追記する（`id` はここで振る。`docs/design.md` 7章
+   * 「エピソード索引はどこに置くか」）。書けなくても例外は投げない。
+   */
+  readonly appendEpisodes: (packName: string, episodes: readonly ChatEpisodeDraft[]) => void
+  /**
+   * 索引を引く言葉で採点し、点の高い順に {@link ChatEpisodeCandidate} を返す
+   * （`recall` ツールの実体になる後段が使う）。**採点は `chat/core/chat-episode-score.ts` の
+   * 純関数**で、ここは `episode.jsonl` と `recalled.jsonl` を読んで渡すだけ。
+   */
+  readonly recallList: (
+    packName: string,
+    keyword: string,
+    limitBytes: number,
+    now: Temporal.Instant,
+  ) => ChatEpisodeRecallListResult
+  /**
+   * 1件のエピソードの範囲を、アーカイブから逐語のまま古いほうから読む
+   * （`recall_episode` ツールの実体になる後段が使う）。**開いたことは `recalled.jsonl` に
+   * 残る。**
+   */
+  readonly recallEpisode: (
+    packName: string,
+    id: string,
+    limitBytes: number,
+    now: Temporal.Instant,
+  ) => ChatEpisodeReadResult
 }
+
+/**
+ * {@link ChatArchive.unconsolidated} に渡す上限（どちらも文面の UTF-8 バイト数）。
+ */
+export type ChatUnconsolidatedLimits = {
+  /** 作業記憶の窓（この量より新しい行は「窓の中」として除く）。 */
+  readonly recentBytes: number
+  /** ここまで読む上限。 */
+  readonly maxBytes: number
+}
+
+/** {@link ChatArchive.unconsolidated} が返す1件。定着へ渡す行番号はここでは持たない。 */
+export type ChatUnconsolidatedEntry = {
+  readonly at: string
+  readonly speaker: "user" | "character"
+  readonly text: string
+}
+
+/** {@link ChatArchive.unconsolidated} が返すもの。 */
+export type ChatUnconsolidatedBatch = {
+  /** 古い→新しいの順。 */
+  readonly entries: readonly ChatUnconsolidatedEntry[]
+  /** 返した行の文面の UTF-8 バイト数の合計。 */
+  readonly usedBytes: number
+}
+
+/**
+ * {@link ChatArchive.appendEpisodes} に渡す1件（`id` はまだ無い。書くときに振る）。
+ * `from` / `to` は行番号から時刻へ直したあとの ISO（オフセット付き）。
+ */
+export type ChatEpisodeDraft = {
+  readonly from: string
+  readonly to: string
+  readonly title: string
+  readonly gist: string
+  readonly cues: readonly string[]
+  readonly weight: 1 | 2 | 3
+}
+
+/**
+ * {@link ChatArchive.recallList} / {@link ChatArchive.recallEpisode} が返す候補（`id`・`title`・
+ * `gist` だけ。逐語は {@link ChatArchive.recallEpisode} で別に開く）。
+ */
+export type ChatEpisodeCandidate = {
+  readonly id: string
+  readonly title: string
+  readonly gist: string
+}
+
+/** {@link ChatArchive.recallList} が返すもの。 */
+export type ChatEpisodeRecallListResult =
+  | { readonly kind: "found"; readonly candidates: readonly ChatEpisodeCandidate[] }
+  | { readonly kind: "not-found" }
+
+/** {@link ChatArchive.recallEpisode} が返すもの。 */
+export type ChatEpisodeReadResult =
+  | {
+      readonly kind: "found"
+      /** 古い→新しいの順（形は {@link ChatArchiveRecentEntry} と同じ）。 */
+      readonly entries: readonly ChatArchiveRecentEntry[]
+      /** `limitBytes` に収まらず、続きがあるとき `true`。 */
+      readonly overflowed: boolean
+    }
+  | { readonly kind: "not-found" }
 
 /**
  * 古い雑談を索引から思い出す口（`docs/design.md` 7章）。**`ChatArchive` を駆動へそのまま

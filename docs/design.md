@@ -393,7 +393,8 @@ src/
     system-prompt/core/       system-prompt.ts（systemPrompt の append の組み立て。人格 → 規約 → 雑談の記憶）と
                               speech-cadence.ts（セリフの間合いの規約）
     chat/                     雑談モード
-      core/                   chat-manner.ts / chat-memory-prompt.ts / chat-nudge.ts / chat-compact.ts / chat-archive-entry.ts
+      core/                   chat-manner.ts / chat-memory-prompt.ts / chat-nudge.ts / chat-compact.ts / chat-archive-entry.ts /
+                              chat-episode-score.ts（エピソード索引の採点の純関数）
       adapter/                chat-archive.ts（~/.tsukumo/chat-archive/）/ chat-summary.ts（~/.tsukumo/chat-summary/）/
                               persona-memory.ts（persona.md の末尾の節へ書く）
     character-pack/           core/character-selection.ts（どのパックを出すかの順位）、
