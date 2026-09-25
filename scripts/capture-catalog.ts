@@ -126,6 +126,10 @@ const CHART_SELECTOR = `${MAIN_REGION_SELECTOR} canvas`
  * （`docs/architecture.md`「手で確かめること」）。
  */
 const NOTE_KINDS_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="report-note_"]`
+/** お願いの塊（レポートの末尾）。 */
+/** メモの塊。狭い窓では種別の並びの1枚（`notation-note`）に入りきらない。 */
+const NOTE_MEMO_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="report-note-memo_"]`
+const NOTE_FAVOR_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="report-note-favor_"]`
 
 /** 入力欄。ページに `<textarea>` は1つしか無い。 */
 const COMPOSER_SELECTOR = "textarea"
@@ -252,6 +256,23 @@ const CATALOG: readonly CatalogEntry[] = [
     homeSetup: { kind: "default" },
     prepare: [{ kind: "scroll", selector: NOTE_KINDS_SELECTOR }],
     skipReveal: false,
+  },
+  {
+    name: "notation-memo",
+    scene: "notation",
+    label: "レポートの記法（メモ。領域を送った先）",
+    homeSetup: { kind: "default" },
+    prepare: [{ kind: "scroll", selector: NOTE_MEMO_SELECTOR }],
+    skipReveal: true,
+  },
+  {
+    name: "notation-favor",
+    scene: "notation",
+    label: "レポートの記法（お願い。領域を送った先）",
+    homeSetup: { kind: "default" },
+    prepare: [{ kind: "scroll", selector: NOTE_FAVOR_SELECTOR }],
+    // お願いはレポートの末尾なので、図と同じく演出が終わるまで送り位置を戻され続ける。
+    skipReveal: true,
   },
   {
     name: "notation-figure",

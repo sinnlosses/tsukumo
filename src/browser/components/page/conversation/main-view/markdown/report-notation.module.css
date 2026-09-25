@@ -111,24 +111,22 @@
   border-left-color: var(--state-ask);
   background: color-mix(in srgb, var(--surface), var(--state-ask) 10%);
 }
-/* メモ（本筋から外れる覚え書き）。6種の中で**いちばん弱い**印なので、色を足さず
-   **縦罫を ink-quiet に落とし、浮く地をやめる**（情報＝素の note は ink の縦罫＋浮く地で、
-   同じ灰でも段の差で見分けられる）。引用（blockquote）と近い見た目になるが、引用は縦罫が
-   rule でラベルの文字も出ない。 */
+/* メモ（本筋から外れる覚え書き）。染め方は注意・異常・疑問と同じ（縦罫は実色・地は1割）。
+   地の染めが無いと引用（blockquote）や素の note と灰どうしで見分けにくい。 */
 .detail-block .report-note-memo {
-  border-left-color: var(--ink-quiet);
-  background: transparent;
+  border-left-color: var(--state-memo);
+  background: color-mix(in srgb, var(--surface), var(--state-memo) 10%);
 }
 /* お願い（レポートのいちばん最後に置く、利用者にしか決められない・できないこと。
    `docs/glossary.md`「お願い」）。**縦罫の色・地・枠**で他の5種と見分ける。
    縦罫が accent なのは「依頼の縦罫」（.turn-request）と対になる場所だから
    — 依頼が利用者からキャラクターへ、お願いがキャラクターから利用者へ向く（13.1 原則1 が
-   accent を許すのは文字ではなく罫線の側）。地を ground に落として枠で囲むのは
-   .main-step.is-interim と同じ手口で、親の地が surface でも ground でも塊として立つ。 */
+   accent を許すのは文字ではなく罫線の側）。地は accent で1割染め（docs/screen-design.md 13.2
+   が染めてよい色に accent を挙げている）、枠で囲んで親の地が surface でも ground でも塊として立たせる。 */
 .detail-block .report-note-favor {
   border: 1px solid var(--rule);
   border-left: 3px solid var(--accent);
-  background: var(--ground);
+  background: color-mix(in srgb, var(--surface), var(--accent) 10%);
 }
 /* 種別のラベル（「情報」「注意」「異常」「疑問」「メモ」「お願い」）。**6種すべてに tsukumo 側で
    足す**のは、モデルが見出しの語を書き忘れても色だけで伝えないため（文字そのものは
