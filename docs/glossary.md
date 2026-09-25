@@ -949,7 +949,8 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 ### フレーム
 
 - **英語識別子**: `ServerFrame`（`hello` / `events` / `refresh`）
-- **定義**: サーバがブラウザへ WebSocket で押す1件。`hello` は接続直後の snapshot、`events` は
+- **定義**: サーバがブラウザへ WebSocket で押す1件。ブラウザが接続ごとに呼ぶ購読の手続き
+  `frame.subscribe` の Event Iterator の1件として届く。`hello` は購読の最初の snapshot、`events` は
   まとめたイベント、`refresh` は開発中の取り直しの合図。**コマンドの応答はフレームではない**
   （同じ `/ws` に乗る手続きの応答。下の「コマンド」）
 - **注記**: 経路名 `/ws` とトークンのクエリ名は `src/shared/session-socket.ts` が正典で、

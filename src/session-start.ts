@@ -8,7 +8,7 @@
 import process from "node:process"
 
 import { type CurrentCharacter } from "./current-character.ts"
-import { createCommandRouter } from "./router.ts"
+import { createSocketRouter } from "./router.ts"
 import {
   type AchievementCommitCache,
   createAchievementCommitCache,
@@ -82,7 +82,7 @@ import {
   readDismissedUsageProposalKeys,
   writeDismissedUsageProposalKey,
 } from "./server/usage-review/adapter/usage-proposal-dismissal.ts"
-import { type CommandRouter } from "./server/view-server/adapter/session-socket.ts"
+import { type SocketRouter } from "./server/view-server/adapter/session-socket.ts"
 import { queryVisitScript } from "./server/visit/adapter/sdk-visit-script.ts"
 import { createVisitClock } from "./server/visit/adapter/visit-clock.ts"
 import { visitGuests } from "./server/visit/core/visit-guest.ts"
@@ -128,8 +128,8 @@ export type SessionStartOptions = {
 /** 起こしたセッションと、開いたタブがそれを触るコマンドの手続き。 */
 export type StartedSession = {
   readonly manager: SessionManager
-  /** `/ws` に載せるコマンドのルータ（`src/router.ts`）。書き込み口の中身はここで選んで渡す。 */
-  readonly commandRouter: CommandRouter
+  /** `/ws` に載せるルータ（`src/router.ts`）。書き込み口の中身はここで選んで渡す。 */
+  readonly socketRouter: SocketRouter
 }
 
 /** セッションを1つ起こし、開いたタブから触れる窓口を返す。 */
@@ -255,7 +255,7 @@ export function startSession(options: SessionStartOptions): StartedSession {
     },
   })
   // コマンドの手続き（`src/router.ts`）。書き込みの中身はここで選んで渡す。
-  const commandRouter = createCommandRouter({
+  const socketRouter = createSocketRouter({
     session: {
       // 置く契機（`prompt`）は表の行、捨てる契機（記録の窓）は `session-manager`。
       promptImageShelf,
@@ -305,7 +305,7 @@ export function startSession(options: SessionStartOptions): StartedSession {
         return unsubscribe
       },
     },
-    commandRouter,
+    socketRouter,
   }
 }
 

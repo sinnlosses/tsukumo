@@ -177,7 +177,7 @@ export async function startViewDelivery(options: ViewDeliveryOptions): Promise<V
     ok: true,
     url: `${server.layoutUrl}?t=${token}`,
     port: started.port,
-    connect: ({ manager, commandRouter }) => {
+    connect: ({ manager, socketRouter }) => {
       readContextUsage = manager.readContextUsage
       attachSessionSocket({
         httpServer: server.httpServer,
@@ -191,7 +191,7 @@ export async function startViewDelivery(options: ViewDeliveryOptions): Promise<V
             unsubscribe()
           }
         },
-        commandRouter,
+        socketRouter,
         commandSession: manager.commandSession,
       })
     },

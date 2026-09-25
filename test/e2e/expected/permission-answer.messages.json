@@ -1,7 +1,7 @@
 [
   {
     "received": "hello",
-    "protocolVersion": 21
+    "protocolVersion": 22
   },
   {
     "received": "event",

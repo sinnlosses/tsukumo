@@ -966,7 +966,7 @@ tsukumo を1つ起こし、URL を出す（`--scene` で疑似セッションの
 
 **配信側が疑わしいときは、ブラウザを開く前に `curl` で切り分ける。** 起動時にビューの URL が
 表示されるので、`curl <URL>` で HTML が返るかを見る。WebSocket 側はブラウザの開発者ツールの
-Network タブで `/ws` の upgrade が101を返し、`hello` フレームが届くかを見る。ここまで出ていれば
+Network タブで `/ws` の upgrade が101を返し、`hello` フレーム（購読 `frame.subscribe` の封筒の中の `d.json`）が届くかを見る。ここまで出ていれば
 配信はシロで、原因はページの側かホストの側にある。
 
 **目視のために起こす tsukumo は `TSUKUMO_VIEW_PORT` を 39000 番台に固定し**、ふだん使いの既定

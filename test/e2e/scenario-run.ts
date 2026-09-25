@@ -291,6 +291,12 @@ async function installFixedClock(page: Page): Promise<void> {
   )
 }
 
+/** 購読の手続きの経路（oRPC の要求の `u`）。 */
+const FRAME_SUBSCRIBE_URL = "/frame/subscribe"
+
+/** oRPC の封筒で、Event Iterator の1件を表す種別（`@orpc/standard-server-peer` の `MessageType`）。 */
+const EVENT_ITERATOR_MESSAGE = 3
+
 type MessageRecord = {
   readonly list: () => readonly unknown[]
   readonly waitForEvent: (kind: string, occurrence?: number) => Promise<void>
@@ -318,20 +324,32 @@ function recordMessages(page: Page): MessageRecord {
     readonly resolve: () => void
   }[] = []
 
+  // 押し出しの購読（`frame.subscribe`）の要求番号。**購読はコマンドではない**ので列に載せず、
+  // その Event Iterator の中身（`t: 3` の `message`）をフレームとしてほどく。
+  const subscriptionIds = new Set<string>()
+
   const receive = (payload: string): void => {
-    const frame = parseRecord(payload)
-    // 同じ接続に手続きの応答（oRPC の封筒。`i` を持ち、`type` を持たない）も相乗りする
-    // （`src/browser/lib/socket.ts`）。状態コードは 200 のとき省かれる。
-    if (!("type" in frame) && "i" in frame) {
-      const response = asRecord(frame["p"])
+    const envelope = parseRecord(payload)
+    if (subscriptionIds.has(String(envelope["i"]))) {
+      const message = asRecord(envelope["p"])
+      if (envelope["t"] === EVENT_ITERATOR_MESSAGE && message["e"] === "message") {
+        receiveFrame(asRecord(asRecord(message["d"])["json"]))
+      }
+      return
+    }
+    // 購読のほかに届くのはコマンドの手続きの応答（oRPC の封筒）。状態コードは 200 のとき省かれる。
+    if ("i" in envelope) {
+      const response = asRecord(envelope["p"])
       entries.push({
         received: "response",
-        order: orderOf(frame["i"]),
+        order: orderOf(envelope["i"]),
         status: response["s"] ?? 200,
         body: response["b"],
       })
-      return
     }
+  }
+
+  const receiveFrame = (frame: Readonly<Record<string, unknown>>): void => {
     switch (frame["type"]) {
       case "hello":
         entries.push({ received: "hello", protocolVersion: frame["protocolVersion"] })
@@ -360,11 +378,16 @@ function recordMessages(page: Page): MessageRecord {
     }
   }
 
-  // 送るのはコマンドの手続きの要求だけ（`{ i, p: { u: "/<機能>/<手続き>", b: { json } } }`）。
+  // 送るのは手続きの要求（`{ i, p: { u: "/<機能>/<手続き>", b: { json } } }`）。購読の要求だけは
+  // 番号を覚えて列に載せない。
   const send = (payload: string): void => {
     const request = parseRecord(payload)
     const body = asRecord(asRecord(request["p"])["b"])
     const url = asRecord(request["p"])["u"]
+    if (url === FRAME_SUBSCRIBE_URL) {
+      subscriptionIds.add(String(request["i"]))
+      return
+    }
     entries.push({
       sent: typeof url === "string" ? url.replace(/^\//, "").replaceAll("/", ".") : request,
       order: orderOf(request["i"]),

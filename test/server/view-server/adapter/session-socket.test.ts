@@ -3,9 +3,10 @@ import { createServer, request as httpRequest, type Server } from "node:http"
 
 import { createORPCClient, ORPCError } from "@orpc/client"
 import { RPCLink } from "@orpc/client/websocket"
+import { type ContractRouterClient } from "@orpc/contract"
 import WebSocket from "ws"
 
-import { createCommandRouter } from "../../../../src/router.ts"
+import { createSocketRouter } from "../../../../src/router.ts"
 import { createPromptImageShelf } from "../../../../src/server/session-driver/core/prompt-image-shelf.ts"
 import { type CommandSession } from "../../../../src/server/session/core/command-session.ts"
 import { createStartupToken } from "../../../../src/server/view-server/adapter/server.ts"
@@ -15,11 +16,10 @@ import {
 } from "../../../../src/server/view-server/adapter/session-socket.ts"
 import {
   FRAME_ERROR_REASON,
-  parseServerFrame,
   PROTOCOL_VERSION,
   type ServerFrame,
 } from "../../../../src/shared/frame.ts"
-import { type CommandClient } from "../../../../src/shared/rpc.ts"
+import { type socketContract } from "../../../../src/shared/rpc.ts"
 import { SESSION_SOCKET_PATH } from "../../../../src/shared/session-socket.ts"
 import { INITIAL_SESSION_STATE } from "../../../../src/shared/session-state.ts"
 
@@ -33,6 +33,8 @@ type Started = {
   /** 手続き `host.openFile` が受け取ったパス（ほかの手続きの受け手は呼ばれない前提の架空のもの）。 */
   readonly openedFiles: readonly string[]
   readonly pushed: (frame: ServerFrame) => void
+  /** いま購読している接続の数。 */
+  readonly subscriberCount: () => number
 }
 
 /**
@@ -77,7 +79,7 @@ async function start(openFileResult = true): Promise<Started> {
         subscribers.delete(send)
       }
     },
-    commandRouter: createCommandRouter({
+    socketRouter: createSocketRouter({
       session: {
         promptImageShelf: createPromptImageShelf(),
         rememberSessionDefault: unexpected,
@@ -111,6 +113,7 @@ async function start(openFileResult = true): Promise<Started> {
         send(frame)
       }
     },
+    subscriberCount: () => subscribers.size,
   }
 }
 
@@ -176,27 +179,11 @@ function upgradeStatus(origin: string, path: string, headers: Readonly<Record<st
   })
 }
 
-/**
- * 接続の上にコマンドの client を作る。**届いたもののうち手続きの応答（`i` を持つもの）だけを
- * `RPCLink` へ渡す**（フレームは渡さない。ブラウザの `src/browser/lib/socket.ts` と同じ振り分け）。
- */
-function commandClientOver(client: WebSocket): CommandClient {
-  const channel = new EventTarget()
-  client.on("message", (data) => {
-    const text = data.toString()
-    if ("i" in JSON.parse(text)) {
-      channel.dispatchEvent(new MessageEvent("message", { data: text }))
-    }
-  })
-  const link = new RPCLink({
-    websocket: {
-      addEventListener: channel.addEventListener.bind(channel),
-      removeEventListener: channel.removeEventListener.bind(channel),
-      send: (message) => client.send(message),
-      readyState: 1,
-    },
-  })
-  return createORPCClient(link)
+type SocketClient = ContractRouterClient<typeof socketContract>
+
+/** 接続の上に `/ws` の手続きの client を作る（ブラウザの `src/browser/lib/socket.ts` と同じく、接続をそのまま `RPCLink` へ渡す）。 */
+function clientOver(client: WebSocket): SocketClient {
+  return createORPCClient(new RPCLink({ websocket: client }))
 }
 
 /**
@@ -219,10 +206,22 @@ function REFUSED(reason: string) {
   return { code: "REFUSED", status: 409, defined: true, data: { reason } }
 }
 
-function nextFrame(client: WebSocket): Promise<ServerFrame | undefined> {
-  return new Promise((resolve) => {
-    client.once("message", (data) => resolve(parseServerFrame(JSON.parse(data.toString()))))
-  })
+/** 購読して、フレームを1つずつ取り出す口を返す。 */
+async function subscribeOver(client: WebSocket): Promise<AsyncIterator<ServerFrame>> {
+  const frames = await clientOver(client).frame.subscribe()
+  return frames[Symbol.asyncIterator]()
+}
+
+async function nextFrame(frames: AsyncIterator<ServerFrame>): Promise<ServerFrame | undefined> {
+  const result = await frames.next()
+  return result.done === true ? undefined : result.value
+}
+
+/** 条件が成り立つまで待つ（接続が切れたあとの後始末はサーバの側で非同期に走る）。 */
+async function eventually(condition: () => boolean): Promise<void> {
+  for (let attempt = 0; attempt < 50 && !condition(); attempt += 1) {
+    await new Promise((resolve) => setTimeout(resolve, 10))
+  }
 }
 
 describe("attachSessionSocket", () => {
@@ -244,11 +243,11 @@ describe("attachSessionSocket", () => {
     expect(await upgradeStatus(started.origin, path, {})).toBe(101)
   })
 
-  it("正しいトークンで繋ぐと hello が読める", async () => {
+  it("正しいトークンで繋いで購読すると、最初に hello が届く", async () => {
     const started = await start()
     const client = await connect(socketUrl(started.origin, TOKEN))
 
-    const frame = await nextFrame(client)
+    const frame = await nextFrame(await subscribeOver(client))
 
     expect(frame?.type).toBe("hello")
     if (frame?.type === "hello") {
@@ -261,9 +260,8 @@ describe("attachSessionSocket", () => {
   it("手続きを呼ぶと、ルータの受け手へ入力が渡る", async () => {
     const started = await start()
     const client = await connect(socketUrl(started.origin, TOKEN))
-    await nextFrame(client)
 
-    await commandClientOver(client).host.openFile({ path: "src/架空.ts" })
+    await clientOver(client).host.openFile({ path: "src/架空.ts" })
 
     expect(started.openedFiles).toEqual(["src/架空.ts"])
     client.close()
@@ -272,20 +270,18 @@ describe("attachSessionSocket", () => {
   it("受け付けられなかった手続きには、定型文の理由を添えたエラーを返す", async () => {
     const started = await start(false)
     const client = await connect(socketUrl(started.origin, TOKEN))
-    await nextFrame(client)
 
-    expect(
-      await refusalOf(commandClientOver(client).host.openFile({ path: "src/架空.ts" })),
-    ).toEqual(REFUSED(FRAME_ERROR_REASON.openFileFailed))
+    expect(await refusalOf(clientOver(client).host.openFile({ path: "src/架空.ts" }))).toEqual(
+      REFUSED(FRAME_ERROR_REASON.openFileFailed),
+    )
     client.close()
   })
 
   it("契約の断る条件（雑談の外の nudge）は受け手を呼ばずに断る", async () => {
     const started = await start()
     const client = await connect(socketUrl(started.origin, TOKEN))
-    await nextFrame(client)
 
-    expect(await refusalOf(commandClientOver(client).session.nudge())).toEqual(
+    expect(await refusalOf(clientOver(client).session.nudge())).toEqual(
       REFUSED(FRAME_ERROR_REASON.nudgeOutsideChat),
     )
     client.close()
@@ -294,31 +290,48 @@ describe("attachSessionSocket", () => {
   it("読めないメッセージは捨て、接続はそのまま使える", async () => {
     const started = await start()
     const client = await connect(socketUrl(started.origin, TOKEN))
-    await nextFrame(client)
 
     client.send("これは JSON ではない")
     client.send(JSON.stringify({ type: "prompt", text: "古い形の依頼" }))
-    await commandClientOver(client).host.openFile({ path: "src/架空.ts" })
+    await clientOver(client).host.openFile({ path: "src/架空.ts" })
 
     expect(started.openedFiles).toEqual(["src/架空.ts"])
     client.close()
   })
 
-  it("購読に押されたフレームが接続へ流れる", async () => {
+  it("購読に押されたフレームが、hello のあとに押した順で取りこぼさず流れる", async () => {
     const started = await start()
     const client = await connect(socketUrl(started.origin, TOKEN))
-    await nextFrame(client)
+    const frames = await subscribeOver(client)
+    expect((await nextFrame(frames))?.type).toBe("hello")
 
-    const received = nextFrame(client)
-    started.pushed({
-      type: "events",
-      events: [{ at: 1, event: { kind: "speech", text: "架空のセリフ", expression: "default" } }],
-    })
+    // 読み手が取りに来る前に、oRPC の `EventPublisher` が捨て始める数（100件）より多く押す。
+    const pushedAts = Array.from({ length: 150 }, (_, index) => index + 1)
+    for (const at of pushedAts) {
+      started.pushed({
+        type: "events",
+        events: [{ at, event: { kind: "speech", text: "架空のセリフ", expression: "default" } }],
+      })
+    }
 
-    expect(await received).toEqual({
-      type: "events",
-      events: [{ at: 1, event: { kind: "speech", text: "架空のセリフ", expression: "default" } }],
-    })
+    const receivedAts: number[] = []
+    for (const _ of pushedAts) {
+      const frame = await nextFrame(frames)
+      receivedAts.push(frame?.type === "events" ? (frame.events[0]?.at ?? -1) : -1)
+    }
+    expect(receivedAts).toEqual(pushedAts)
     client.close()
+  })
+
+  it("接続が切れると、次のフレームを待たずに購読が外れる", async () => {
+    const started = await start()
+    const client = await connect(socketUrl(started.origin, TOKEN))
+    await nextFrame(await subscribeOver(client))
+    expect(started.subscriberCount()).toBe(1)
+
+    client.close()
+    await eventually(() => started.subscriberCount() === 0)
+
+    expect(started.subscriberCount()).toBe(0)
   })
 })

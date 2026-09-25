@@ -1,12 +1,13 @@
 // 全機能の手続きを束ねる（配線。`docs/design.md` 2章「コマンドの受け手と手続きの置き方」）。
 // **「どの手続きをどの機能が受けるか」の答えはこのファイル**で、手続きの中身も照合・断る条件の
 // 判定も書かない（名前と手続きの対応と、全部の前に掛けるミドルウェアだけ）。束は載せる先ごとに
-// 2つ——読み取り（HTTP の `/rpc`）とコマンド（`/ws`）。
+// 2つ——読み取り（HTTP の `/rpc`）と、コマンドに押し出しの購読を足したもの（`/ws`）。
 //
 // 束ねるのを配線に置くのは、機能どうしの辺の表を増やさないため（`session` の受け手の表が
 // `usage-review` や `host` を読むと、`session` がまた全部を知る場所に戻る。葉の機能の手続きが
 // 読むのは `shared` と共有の `core` と自分の機能だけ）。形（名前と入出力と断る条件）は
-// `src/shared/rpc.ts` の `rpcContract` / `commandContract` が正典で、ここはそれに受け手を付ける。
+// `src/shared/rpc.ts` の `rpcContract` / `commandContract` / `socketContract` が正典で、ここはそれに
+// 受け手を付ける。
 
 import { implement } from "@orpc/server"
 
@@ -36,14 +37,17 @@ import {
 } from "./server/token-usage/adapter/token-usage-procedure.ts"
 import { usageReviewProcedure } from "./server/usage-review/adapter/usage-review-procedure.ts"
 import { type UsageReviewCommandPorts } from "./server/usage-review/core/usage-review-command.ts"
+import { frameProcedure } from "./server/view-server/adapter/frame-procedure.ts"
 import {
   commandGuard,
   type CommandRpcContext,
   type RpcContext,
   rpcGuard,
+  type SocketRpcContext,
 } from "./server/view-server/adapter/rpc-guard.ts"
 import { visitProcedure } from "./server/visit/adapter/visit-procedure.ts"
 import { type VisitCommandPorts } from "./server/visit/core/visit-command.ts"
+import { frameContract } from "./shared/contract/frame.ts"
 import { commandContract, rpcContract } from "./shared/rpc.ts"
 
 /** 読み取りの手続きが使う口（機能ごとの口を並べただけ。中身は `src/view-delivery.ts` が渡す）。 */
@@ -92,4 +96,19 @@ export function createCommandRouter(ports: CommandRouterPorts) {
       usageReview: usageReviewProcedure(ports.usageReview),
       host: hostProcedure(ports.host),
     })
+}
+
+/**
+ * `/ws` に載せるルータ。コマンドの手続きに、押し出しの購読（`frame.subscribe`）を足したもの
+ * （形は `src/shared/rpc.ts` の `socketContract`）。**購読には照合だけを掛ける**——コマンドでは
+ * ないので、断る条件（`commandGuard`）は見ない。
+ */
+export function createSocketRouter(ports: CommandRouterPorts) {
+  return {
+    ...createCommandRouter(ports),
+    frame: implement(frameContract)
+      .$context<SocketRpcContext>()
+      .use(rpcGuard)
+      .router(frameProcedure()),
+  }
 }

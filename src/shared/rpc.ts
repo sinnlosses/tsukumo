@@ -1,5 +1,6 @@
 // 手続きの口の経路名と、全機能の契約を束ねたもの。**束は載せる先ごとに2つ**——読み取り
-// （`rpcContract`。HTTP の `/rpc`）とコマンド（`commandContract`。WebSocket の `/ws`）。**サーバ
+// （`rpcContract`。HTTP の `/rpc`）と、コマンドに押し出しの購読を足したもの（`socketContract`。
+// WebSocket の `/ws`）。**サーバ
 // （`src/router.ts` が受け手を付け、`server.ts` / `session-socket.ts` が載せる）とブラウザ
 // （`src/browser/lib/rpc-client.ts` と `src/browser/stores/session.tsx` が型付きの client を作る）の
 // 両方が同じ値を見る**ので shared に置く。
@@ -22,6 +23,7 @@ import { achievementContract } from "./contract/achievement.ts"
 import { characterPackContract } from "./contract/character-pack.ts"
 import { chatContract } from "./contract/chat.ts"
 import { contextUsageContract } from "./contract/context-usage.ts"
+import { frameContract } from "./contract/frame.ts"
 import { hostContract } from "./contract/host.ts"
 import { repositoryContract } from "./contract/repository.ts"
 import { sessionContract } from "./contract/session.ts"
@@ -57,3 +59,12 @@ export const commandContract = {
 
 /** ブラウザがコマンドを送る client の型（契約から導く）。 */
 export type CommandClient = ContractRouterClient<typeof commandContract>
+
+/**
+ * `/ws` に載せる束。コマンドに、押し出しの購読（`frame.subscribe`。コマンドではないので
+ * {@link commandContract} には入れない）を足したもの。
+ */
+export const socketContract = {
+  ...commandContract,
+  frame: frameContract,
+}

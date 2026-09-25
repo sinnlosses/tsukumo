@@ -15,6 +15,7 @@ import { COMMAND_ERRORS, type CommandMeta, NO_COMMAND_REFUSAL } from "../../../s
 import { SESSION_TOKEN_QUERY_NAME } from "../../../shared/session-socket.ts"
 import { type SessionState } from "../../../shared/session-state.ts"
 import { type CommandSession } from "../../session/core/command-session.ts"
+import { type SubscribeFrames } from "./frame-procedure.ts"
 
 /**
  * 手続き1回ぶんの照合の材料。**要求から写した2つ（外の世界を写した直後なので `| undefined`）と、
@@ -37,6 +38,12 @@ export type RpcContext = {
  * 手続きはそのうち `emit` だけを見る。
  */
 export type CommandRpcContext = RpcContext & { readonly session: CommandSession }
+
+/**
+ * `/ws` の手続き1回ぶんの材料。コマンドの材料に、**押し出しの購読の元**（`frame.subscribe` が
+ * 読む）を足したもの。
+ */
+export type SocketRpcContext = CommandRpcContext & { readonly subscribe: SubscribeFrames }
 
 /** 要求1件から照合の材料を写す（`server.ts` が `/rpc` の要求ごとに、`session-socket.ts` が接続ごとに呼ぶ）。 */
 export function rpcContextOf(

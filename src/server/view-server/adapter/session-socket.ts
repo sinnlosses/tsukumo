@@ -1,11 +1,10 @@
-// フレーム（サーバ → ブラウザ）とコマンドの手続き（ブラウザ → サーバ）が通る WebSocket の境界
-// （`GET /ws?t=<起動トークン>`）。**ページと素材を配る HTTP は別の境界**（`server.ts`。
-// ここは `listen` 済みのサーバに upgrade の受け口を足すだけで、自分では listen しない）。
+// 押し出し（フレーム）の購読とコマンドの手続きが通る WebSocket の境界（`GET /ws?t=<起動トークン>`）。
+// **ページと素材を配る HTTP は別の境界**（`server.ts`。ここは `listen` 済みのサーバに upgrade の
+// 受け口を足すだけで、自分では listen しない）。
 //
-// **1本の接続に2つが相乗りする**: 押し出し（`hello` / `events` / `refresh` のフレーム。
-// `subscribe`）と、コマンドの手続きの要求と応答（oRPC の `RPCHandler`。束ねたルータは配線の
-// `src/router.ts`）。届くメッセージはすべて手続きの要求で、振り分けるのはブラウザの側
-// （`src/browser/lib/socket.ts`）。
+// **1本の接続の上は、すべて oRPC の手続きの要求と応答**（`RPCHandler`。束ねたルータは配線の
+// `src/router.ts` の `createSocketRouter`）。押し出しもブラウザが呼ぶ購読の手続き（`frame.subscribe`）
+// の Event Iterator として流れ、購読の元（`subscribe`）は接続の context に載せる。
 //
 // **`Bun.serve` の WebSocket には寄せない**（`ws` パッケージ。docs/coding-standards.md
 // 「Bun固有APIに寄せない」）。
@@ -24,11 +23,11 @@ import { type Router } from "@orpc/server"
 import { RPCHandler } from "@orpc/server/websocket"
 import { type RawData, WebSocketServer } from "ws"
 
-import { type ServerFrame } from "../../../shared/frame.ts"
-import { type commandContract } from "../../../shared/rpc.ts"
+import { type socketContract } from "../../../shared/rpc.ts"
 import { SESSION_SOCKET_PATH, SESSION_TOKEN_QUERY_NAME } from "../../../shared/session-socket.ts"
 import { type CommandSession } from "../../session/core/command-session.ts"
-import { type CommandRpcContext, rpcContextOf } from "./rpc-guard.ts"
+import { type SubscribeFrames } from "./frame-procedure.ts"
+import { rpcContextOf, type SocketRpcContext } from "./rpc-guard.ts"
 
 /**
  * 受け取るメッセージ1件の上限（バイト）。**1件の依頼に添えられる画像（原寸 5 MiB × 2 枚）を
@@ -46,16 +45,16 @@ export type SessionSocketOptions = {
   readonly token: string
   /** 自分のオリジン（`http://127.0.0.1:<port>`）。`Origin` ヘッダの照合に使う。 */
   readonly origin: string
-  /** 接続を購読に加える（`session-manager` の `subscribe`）。外すための関数を返す契約。 */
-  readonly subscribe: (send: (frame: ServerFrame) => void) => () => void
-  /** コマンドの手続きを束ねたルータ（配線の `src/router.ts` の `createCommandRouter`）。 */
-  readonly commandRouter: CommandRouter
+  /** 押し出しの購読の元（`session-manager` の `subscribe`）。手続き `frame.subscribe` が読む。 */
+  readonly subscribe: SubscribeFrames
+  /** `/ws` の手続きを束ねたルータ（配線の `src/router.ts` の `createSocketRouter`）。 */
+  readonly socketRouter: SocketRouter
   /** 手続きの context に載せるセッションの口（`session-manager` の `commandSession`）。 */
   readonly commandSession: CommandSession
 }
 
-/** `/ws` に載せるコマンドのルータ。 */
-export type CommandRouter = Router<typeof commandContract, CommandRpcContext>
+/** `/ws` に載せるルータ（コマンドと押し出しの購読）。 */
+export type SocketRouter = Router<typeof socketContract, SocketRpcContext>
 
 export type SessionSocket = {
   /** upgrade の受け口を外し、開いている接続を閉じる。 */
@@ -65,12 +64,13 @@ export type SessionSocket = {
 /**
  * HTTP サーバに WebSocket の受け口を足す。**listen はしない**（呼び出し側が済ませている）。
  *
- * 接続が確立したら `subscribe` に加わり、`hello` が1つ届いてから `events` が流れ始める
- * （順序を決めているのは `session-manager` 側）。
+ * 接続しただけでは購読に加わらない。ブラウザが `frame.subscribe` を呼ぶと、`hello` が1つ届いてから
+ * `events` が流れ始める（順序を決めているのは `session-manager` 側）。接続が切れると oRPC が
+ * 手続きの `signal` を中断し、購読が外れる。
  */
 export function attachSessionSocket(options: SessionSocketOptions): SessionSocket {
   const sockets = new WebSocketServer({ noServer: true, maxPayload: MAX_MESSAGE_BYTES })
-  const commands = new RPCHandler(options.commandRouter)
+  const procedures = new RPCHandler(options.socketRouter)
 
   const onUpgrade = (request: IncomingMessage, socket: Duplex, head: Buffer): void => {
     if (!isAllowedUpgrade(request, options)) {
@@ -89,26 +89,20 @@ export function attachSessionSocket(options: SessionSocketOptions): SessionSocke
 
   sockets.on("connection", (connection, request: IncomingMessage) => {
     // 照合の材料は upgrade の要求から写す（手続きの前のミドルウェア `rpc-guard.ts` がもう一度見る）。
-    const context: CommandRpcContext = {
+    const context: SocketRpcContext = {
       ...rpcContextOf(request, { startupToken: options.token, serverOrigin: options.origin }),
       session: options.commandSession,
-    }
-    const send = (frame: ServerFrame): void => {
-      if (connection.readyState === connection.OPEN) {
-        connection.send(JSON.stringify(frame))
-      }
+      subscribe: options.subscribe,
     }
 
-    const unsubscribe = options.subscribe(send)
     connection.on("message", (data: RawData) => {
       // **読めないメッセージ（手続きの要求の形でないもの）は黙って捨てる。** 受け口の既定
       // （`upgrade`）は投げたものを `console.error` へ出し、JSON の読み違いの理由には届いた文面の
       // 断片が入りうる（`docs/coding-standards.md`「会話内容の扱い」）。
-      commands.message(connection, messageText(data), { context }).catch(() => {})
+      procedures.message(connection, messageText(data), { context }).catch(() => {})
     })
     connection.on("close", () => {
-      commands.close(connection)
-      unsubscribe()
+      procedures.close(connection)
     })
   })
 

@@ -225,16 +225,16 @@ sed -n '/^## 4\. shared/,/^## /p' docs/design.md
 
 **置くもの**
 
-| 置くもの                     | 場所                                            | 持つもの                                                                                                                                                                                                                                            |
-| ---------------------------- | ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 契約                         | `src/shared/contract/<機能>.ts`                 | その機能の手続きの形（入力・出力・エラー）と、**断る条件の `meta`**。zod と `@orpc/contract` だけを読む（ブラウザも読む）。コマンドの契約はどれも `src/shared/command.ts` の `commandBase`（`meta` の既定と、断ったときのエラー `REFUSED`）から書く |
-| 契約の束                     | `src/shared/rpc.ts`                             | **載せる先ごとに2つ**: 読み取りの `rpcContract`（HTTP の `/rpc`）とコマンドの `commandContract`（`/ws`）。コマンドを `/rpc` に載せないのは、画像2枚つきの依頼（約 14 MiB）を運べる口が `/ws` の上限だけだから                                       |
-| 機能の表（コマンドだけ）     | `src/server/<機能>/core/<機能>-command.ts`      | **その機能が受けるコマンドの表**。`<機能>Commands(ports)` が手続きの名前 → 受け手の行を返す（型は `FeatureCommandTable<typeof 契約>` で、契約の手続きに行が足りなければ落ちる）。`ports` はその機能の書き込み口（中身は配線が渡す）                 |
-| 行の型と、葉の行を呼ぶ関数   | `src/server/core/command-receiver.ts`           | 受け手の行の型（下の「受け手の3種」のうち `write` と `call`）・`DispatchResult`・`receiveFeatureCommand`。`shared` だけを読む                                                                                                                       |
-| セッションの口               | `src/server/session/core/command-session.ts`    | 受け手が使うセッションの口 `CommandSession`、`session` の行の型、行の種類で呼び分ける `receiveSessionCommand`                                                                                                                                       |
-| 手続き                       | `src/server/<機能>/adapter/<機能>-procedure.ts` | `implement(contract.<機能>)` の受け手。**中身は行（コマンド）か機能の読み取りへ委ねる数行**。ドメインの失敗を契約のエラーに訳すのはここだけ（コマンドなら `DispatchResult` の `ok: false` を `REFUSED` に）                                         |
-| ルータ                       | `src/router.ts`（配線）                         | 全機能の手続きを束ねる（`createRpcRouter` と `createCommandRouter`）。「どこで受けるか」の答えはこのファイル。手続きの中身も照合・断る条件の判定も書かない                                                                                          |
-| 照合と断る条件のミドルウェア | `src/server/view-server/adapter/rpc-guard.ts`   | 起動トークン・`Origin` の照合（`rpcGuard`。`/rpc` と `/ws` の両方）と、契約の `meta` の `chatOnly` / `idleTurn` を見る門（`commandGuard`。コマンドだけ）。**断る条件を見るのはここ1箇所**（順は「雑談の外か」→「ターン中か」）                      |
+| 置くもの                     | 場所                                            | 持つもの                                                                                                                                                                                                                                                                                                       |
+| ---------------------------- | ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 契約                         | `src/shared/contract/<機能>.ts`                 | その機能の手続きの形（入力・出力・エラー）と、**断る条件の `meta`**。zod と `@orpc/contract` だけを読む（ブラウザも読む）。コマンドの契約はどれも `src/shared/command.ts` の `commandBase`（`meta` の既定と、断ったときのエラー `REFUSED`）から書く                                                            |
+| 契約の束                     | `src/shared/rpc.ts`                             | **載せる先ごとに2つ**: 読み取りの `rpcContract`（HTTP の `/rpc`）と、コマンドの `commandContract` に押し出しの購読（`frame.subscribe`。`src/shared/contract/frame.ts`）を足した `socketContract`（`/ws`）。コマンドを `/rpc` に載せないのは、画像2枚つきの依頼（約 14 MiB）を運べる口が `/ws` の上限だけだから |
+| 機能の表（コマンドだけ）     | `src/server/<機能>/core/<機能>-command.ts`      | **その機能が受けるコマンドの表**。`<機能>Commands(ports)` が手続きの名前 → 受け手の行を返す（型は `FeatureCommandTable<typeof 契約>` で、契約の手続きに行が足りなければ落ちる）。`ports` はその機能の書き込み口（中身は配線が渡す）                                                                            |
+| 行の型と、葉の行を呼ぶ関数   | `src/server/core/command-receiver.ts`           | 受け手の行の型（下の「受け手の3種」のうち `write` と `call`）・`DispatchResult`・`receiveFeatureCommand`。`shared` だけを読む                                                                                                                                                                                  |
+| セッションの口               | `src/server/session/core/command-session.ts`    | 受け手が使うセッションの口 `CommandSession`、`session` の行の型、行の種類で呼び分ける `receiveSessionCommand`                                                                                                                                                                                                  |
+| 手続き                       | `src/server/<機能>/adapter/<機能>-procedure.ts` | `implement(contract.<機能>)` の受け手。**中身は行（コマンド）か機能の読み取りへ委ねる数行**。ドメインの失敗を契約のエラーに訳すのはここだけ（コマンドなら `DispatchResult` の `ok: false` を `REFUSED` に）                                                                                                    |
+| ルータ                       | `src/router.ts`（配線）                         | 全機能の手続きを束ねる（`createRpcRouter` と、`createCommandRouter` に購読の手続きを足した `createSocketRouter`）。「どこで受けるか」の答えはこのファイル。手続きの中身も照合・断る条件の判定も書かない                                                                                                        |
+| 照合と断る条件のミドルウェア | `src/server/view-server/adapter/rpc-guard.ts`   | 起動トークン・`Origin` の照合（`rpcGuard`。`/rpc` と `/ws` の両方）と、契約の `meta` の `chatOnly` / `idleTurn` を見る門（`commandGuard`。コマンドだけ）。**断る条件を見るのはここ1箇所**（順は「雑談の外か」→「ターン中か」）                                                                                 |
 
 - **断る条件は契約の `meta` に書く**（行には持たない。二重に持たない）。形は
   `{ chatOnly: false | 理由, idleTurn: false | 理由 }`（`src/shared/command.ts` の `CommandMeta`）で、
@@ -261,10 +261,14 @@ sed -n '/^## 4\. shared/,/^## /p' docs/design.md
   `host` を読む辺（いまの表に無い）が要り、`session` がまた全部を知る場所に戻る。配線なら
   **機能どうしの辺の表は増えない**。葉の機能の表と手続きが読むのは `shared` と共有の `core`
   （`command-receiver.ts`）と自分の機能だけ
-- **押し出しは手続きにしていない**（`hello` / `events` / `refresh` のフレームと `subscribe`）。同じ `/ws`
-  の1本に手続きの要求・応答と相乗りし、**振り分けるのはブラウザ**（`src/browser/lib/socket.ts`。
-  手続きの応答〔`i` を持つ封筒〕だけを `RPCLink` へ渡す）。サーバに届くメッセージはすべて手続きの要求で、
-  読めないものは中身をどこにも出さずに捨てる
+- **押し出しも手続き**（購読 `frame.subscribe`。受け手は `src/server/view-server/adapter/frame-procedure.ts`）。
+  ブラウザが接続ごとに1回呼び、`hello` / `events` / `refresh` のフレームが Event Iterator で届く。**`/ws` の上は
+  すべて oRPC の手続きの要求と応答**で、ブラウザは接続をそのまま `RPCLink` へ渡す（振り分けない）。購読の元は
+  コールバックの `subscribe`（`session-manager` の `subscribe` に `view-delivery.ts` の `refresh` を相乗りさせた
+  もの）のままで、接続の context（`SocketRpcContext` の `subscribe`）に載る。受け手はそれを**取りこぼさず・
+  捨てずに** async generator へ写し、手続きの `signal`（接続が切れると oRPC が中断する）で購読を外す。
+  購読には照合（`rpcGuard`）だけを掛け、断る条件（`commandGuard`）は見ない。サーバに届く読めない
+  メッセージは中身をどこにも出さずに捨てる
 - ブラウザは `src/browser/stores/session.tsx` の `dispatch`（`commandContract` から導いた型付きの
   client）で `dispatch.session.prompt({ text, images })` のように呼ぶ。**送りっぱなしで、断られても
   画面には出さない**（画面は同じ条件で先に操作子を塞いでいる）
@@ -311,9 +315,11 @@ src/
                               （上の「コマンドの受け手と手続きの置き方」）
   opentelemetry-api.d.ts      oRPC の型宣言が読む任意の peer の型の代役（入れていない。docs/research/external-dependency.md）
   shared/
-    rpc.ts                    手続きの口の経路名（/rpc）と、機能ごとの契約を束ねた rpcContract（読み取り）・commandContract（コマンド）
+    rpc.ts                    手続きの口の経路名（/rpc）と、機能ごとの契約を束ねた rpcContract（読み取り）・commandContract（コマンド）・
+                              socketContract（/ws。コマンドと押し出しの購読）
     contract/<機能>.ts        手続きの契約（読み取りの repository / token-usage / context-usage / achievement と、
-                              コマンドの session / character-pack / chat / visit / usage-review / host。断る条件の meta）
+                              コマンドの session / character-pack / chat / visit / usage-review / host。断る条件の meta。
+                              押し出しの購読の frame）
     session-event.ts          SessionEvent（zod と z.infer）
     session-state.ts          SessionState と applySessionEvent（いまの session-view.ts）
     session-choice.ts         切り替え先として選べるセッション1件（サーバとブラウザの両方が読む契約）
@@ -414,6 +420,7 @@ src/
                               adapter/orca-host.ts（`orca` コマンドを起こす唯一の場所）
     view-server/              core/port-resolution.ts（どのポートで試すか）、
                               adapter/server.ts（http）/ session-socket.ts（ws）/ rpc-guard.ts（/rpc の照合）/
+                              frame-procedure.ts（押し出しの購読の手続き）/
                               vendor-asset.ts（node_modules の実ファイル）/
                               bundle.ts / ui-rebuild.ts / source-fingerprint.ts（bun build と src/browser/ の見張り）
     repository/adapter/       git.ts（`git` を起こす唯一の口）/ repository-file.ts（git ls-files）/
@@ -1200,9 +1207,10 @@ sequenceDiagram
 
 ### 接続
 
-1. ページが `/assets/ui.js` を読み、`<App>` が `/ws?t=<token>` へ接続する
-2. サーバは Origin とトークンを確かめ、**`hello` フレーム**（`PROTOCOL_VERSION`・
-   `SessionState` の snapshot・キャラクターの見せ方）を1つ返す
+1. ページが `/assets/ui.js` を読み、`<App>` が `/ws?t=<token>` へ接続して、購読の手続き
+   `frame.subscribe` を呼ぶ
+2. サーバは upgrade の前に Origin とトークンを確かめ、購読の最初に **`hello` フレーム**
+   （`PROTOCOL_VERSION`・`SessionState` の snapshot・キャラクターの見せ方）を1つ流す
 3. 以降、セッションで起きたイベントを **50〜100ms ごとにまとめた `events` フレーム**で押す。
    ブラウザは同じ `applySessionEvent` で畳む。**サーバとブラウザの `SessionState` は構造的に同じ**
 
@@ -1224,8 +1232,9 @@ sequenceDiagram
 
 ### 再接続
 
-WebSocket が切れたらブラウザは指数バックオフで繋ぎ直し、**新しい `hello` の snapshot で状態を
-置き換える**（差分の取りこぼしを気にしない）。プロセスが落ちている間は「接続が切れている」印を
+WebSocket が切れたらブラウザは指数バックオフで繋ぎ直し、購読し直して、**新しい `hello` の snapshot で状態を
+置き換える**（差分の取りこぼしを気にしない。`lastEventId` での再開は使わない）。購読が終わった・投げた
+ときも接続を閉じて同じ道で繋ぎ直す。プロセスが落ちている間は「接続が切れている」印を
 Layout に出す。復帰したときにセッションを続きから起こし直す話は 8章。
 
 ## 4. shared
@@ -1447,7 +1456,8 @@ Layout に出す。復帰したときにセッションを続きから起こし�
   フレームを購読者へ配る
 - `commandSession`: コマンドの受け手に見せる口（`CommandSession`）を出すだけ。**コマンドの分岐は
   持たない**（`/ws` の手続きの context に載る。2章「コマンドの受け手と手続きの置き方」）
-- `subscribe(send)`: 接続ごとに `hello` を送ってから購読に加える
+- `subscribe(send)`: 購読1つごとに `hello` を同期で送ってから購読に加える（呼ぶのは購読の手続き
+  `frame.subscribe`。同期で送るので、`hello` の snapshot と最初の `events` の間に取りこぼしが無い）
 - **セッションは1つで、鍵を持たない**（8章）
 
 **代のあいだだけ意味のある勘定は、駆動1代ぶんの持ち物（`SessionGeneration`）に集める。**
@@ -1568,7 +1578,8 @@ Layout に出す。復帰したときにセッションを続きから起こし�
 `close` を自分で呼ぶ。既定の `upgrade` は読めないメッセージの理由を `console.error` へ出し、そこに届いた
 文面の断片が入りうるため）。`MAX_MESSAGE_BYTES` を渡した `WebSocketServer` を自分で作り、upgrade の前に
 トークン・`Origin` を見るのは変えない。context は接続ごとに1つ（upgrade の要求から写した照合の材料と
-`CommandSession`）。押し出し（`hello` / `events`）は `session-socket.ts` と `subscribe` のまま。
+`CommandSession`）。**押し出しも購読の手続き `frame.subscribe` になった**（Event Iterator。context に
+購読の元 `subscribe` を足した `SocketRpcContext`。2章「コマンドの受け手と手続きの置き方」）。
 
 会話の内容が乗るのは `/ws`（`session-socket.ts`）と、依頼に添えた画像を配る `/prompt-image/<id>`
 だけ。ページ・同梱物・素材（`/`・`/assets/*`・`/vendor/*`・`/character/*`）は静的な物なので
@@ -3301,18 +3312,18 @@ export const CHAT_RECALL_SCORE = {
 
 ## 10. テスト
 
-| 対象                           | 方法                                                                                                                           | 置き場所                                                |
-| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------- |
-| reducer（`applySessionEvent`） | いまの `session-view.test.ts` をそのまま持ち越す（純粋関数）                                                                   | `test/shared/session-state.test.ts`                     |
-| zod スキーマ                   | 受け付ける形・落とす形を1件ずつ                                                                                                | `test/shared/command.test.ts` など                      |
-| SDK の型との一致               | `PERMISSION_MODES` / `MODEL_ALIASES` が SDK の型と同じ値であること（型レベルの検査）                                           | `test/server/session-driver/adapter/sdk-driver.test.ts` |
-| `session-manager`              | fake driver を差し込み、`hello` → `events` の順序・バッチ・`dispatch` の分岐                                                   | `test/server/session/core/session-manager.test.ts`      |
-| `server`（ws）                 | 接続 → `hello` が返る、トークン無しは 403、Origin 違いは 403、コマンド → 駆動が呼ばれる                                        | `test/server/view-server/adapter/server.test.ts`        |
-| browser の部品                 | `bun test` + `happy-dom` + `@testing-library/react`。**役割と文言で当てる**（HTML の文字列一致はしない）                       | `test/browser/**`                                       |
-| 層の検査                       | `shared ← core` / `shared ← browser` / `core ⟂ browser` の3辺。外部ツールは増やさない                                          | `test/architecture.test.ts`                             |
-| 画面の見た目                   | **fake driver で起こした tsukumo に Playwright**（`webapp-testing` スキル）。数値で読めるものは CDP で読む。色・間合いは人の目 | `scripts/`（本体から呼ばれない）                        |
-| 状態のカタログ                 | 疑似セッションの場面を名指しして起こし直し、広い窓と狭い窓で撮って索引 HTML に並べる（`TSUKUMO_FAKE_SCENE`）                   | `scripts/capture-catalog.ts`                            |
-| E2E                            | **fake driver で起こした tsukumo を手元の Chrome で開き、DOM の構造と WebSocket の流れを期待値と比べる**（下の「E2E」）        | `test/e2e/`                                             |
+| 対象                           | 方法                                                                                                                                            | 置き場所                                                 |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| reducer（`applySessionEvent`） | いまの `session-view.test.ts` をそのまま持ち越す（純粋関数）                                                                                    | `test/shared/session-state.test.ts`                      |
+| zod スキーマ                   | 受け付ける形・落とす形を1件ずつ                                                                                                                 | `test/shared/command.test.ts` など                       |
+| SDK の型との一致               | `PERMISSION_MODES` / `MODEL_ALIASES` が SDK の型と同じ値であること（型レベルの検査）                                                            | `test/server/session-driver/adapter/sdk-driver.test.ts`  |
+| `session-manager`              | fake driver を差し込み、`hello` → `events` の順序・バッチ・`dispatch` の分岐                                                                    | `test/server/session/core/session-manager.test.ts`       |
+| `server`（ws）                 | 購読 → `hello` が先に届き、押した順に取りこぼさず流れる、切断で購読が外れる、トークン無しは 403、Origin 違いは 403、コマンド → 受け手が呼ばれる | `test/server/view-server/adapter/session-socket.test.ts` |
+| browser の部品                 | `bun test` + `happy-dom` + `@testing-library/react`。**役割と文言で当てる**（HTML の文字列一致はしない）                                        | `test/browser/**`                                        |
+| 層の検査                       | `shared ← core` / `shared ← browser` / `core ⟂ browser` の3辺。外部ツールは増やさない                                                           | `test/architecture.test.ts`                              |
+| 画面の見た目                   | **fake driver で起こした tsukumo に Playwright**（`webapp-testing` スキル）。数値で読めるものは CDP で読む。色・間合いは人の目                  | `scripts/`（本体から呼ばれない）                         |
+| 状態のカタログ                 | 疑似セッションの場面を名指しして起こし直し、広い窓と狭い窓で撮って索引 HTML に並べる（`TSUKUMO_FAKE_SCENE`）                                    | `scripts/capture-catalog.ts`                             |
+| E2E                            | **fake driver で起こした tsukumo を手元の Chrome で開き、DOM の構造と WebSocket の流れを期待値と比べる**（下の「E2E」）                         | `test/e2e/`                                              |
 
 **DOM の構造と画面の流れは E2E で守り、見た目（色・崩れ・間合い）は目視で確かめる**（2026-09-26
 決定。足場は `test/e2e/scenario-run.ts`、1本目のシナリオは `test/e2e/turn-flow.test.ts`）。
@@ -3381,7 +3392,8 @@ E2E が判定に使うのは DOM の構造と WebSocket のメッセージの列
     出す**（CSS Modules の class は `名前_ハッシュ` に焼かれ、名前も見た目の直しで変わる。
     意味の契約は `data-*`・`aria-*`・文字に置く）
 - **WebSocket のメッセージの列**（`<シナリオ>.messages.json`）: `page.on("websocket")` で送った
-  コマンドと受け取ったフレームを届いた順に並べる。
+  コマンドと受け取ったフレームを届いた順に並べる。フレームは購読（`frame.subscribe`）の Event Iterator の
+  封筒からほどき、購読の要求と応答そのものは列に載せない（コマンドではない）。
   - `events` フレームは**束をほどいてイベント1件ずつ**にする（束の切れ目は
     `batchIntervalMs` と実時間で決まり、走らせるたびに変わる）
   - `hello` は `protocolVersion` だけを残す（状態の全体は DOM の構造の側で見る）。`refresh` は
