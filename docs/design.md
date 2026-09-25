@@ -211,6 +211,95 @@ sed -n '/^## 4\. shared/,/^## /p' docs/design.md
 | `achievement`         | `repository`                                                                                | adapter → adapter（`main-history` → `git`）                                                                                                             |
 | そのほか              | —（葉。`report` `visit` `usage-review` `token-usage` `character-pack` `host` `repository`） | —                                                                                                                                                       |
 
+#### コマンドの受け手と手続きの置き方
+
+**2026-09-26 に `docs/research/server-procedure-proposal.md` の段1〜3を採った**（道具の比較・
+手本・採らなかった案はそちら）。目的は「**どのコマンドをどの機能が受け、どの条件で断るか**」を、
+`session-manager.ts` の `switch` と `SessionManagerOptions` の口ではなく、機能の側の表から辿れるように
+すること。**いまの実装はまだ段1の前**（`dispatch` の `switch` 3つ）で、この小見出しは移した先の形の
+正典。段ごとの作業は `develop/task/` にある。
+
+**段1（依存を足さない）: 機能ごとの受け手の表**
+
+| ファイル                                      | 層                  | 持つもの                                                                                                                                                                                                         |
+| --------------------------------------------- | ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/server/<機能>/core/<機能>-command.ts`    | 機能の `core`       | **その機能が受けるコマンドの表**。`<機能>Commands(ports)` がコマンドの種類 → 受け手の行を返す。`ports` はその機能の書き込み口（中身は配線が渡す）                                                                |
+| `src/server/core/command-receiver.ts`         | 共有の `core`       | 受け手の行の型（下の「受け手の3種」のうち `write` と `call`）と、断る条件の2列の型。`shared` だけを読む                                                                                                          |
+| `src/server/session/core/command-dispatch.ts` | `session` の `core` | 全種類を網羅した表の型 `CommandRoute`、受け手が使うセッションの口 `CommandSession`、`DispatchResult`。**断る条件を見るのはここ1箇所**（順は「雑談の外か」→「ターン中か」）で、通ったら行の種類ごとに受け手を呼ぶ |
+| `src/server/session/core/session-command.ts`  | `session` の `core` | `session` 自身が受ける行（下の割り振り）                                                                                                                                                                         |
+| `src/command-route.ts`                        | 配線（`src/` 直下） | **全機能の表を1枚に束ねる**（`satisfies CommandRoute` で28種の網羅を型で落とす）。「どこで受けるか」の答えはこのファイル。行の中身も断る条件の判定も書かない                                                     |
+
+- **行の書き方**: 1行 = 1種類。列は**受け手の種類**・**受け手**・**失敗の理由**・断る条件の
+  **`chatOnly`**（雑談の外なら断る）と **`idleTurn`**（ターン中なら断る）。断る条件の列の値は
+  `false`（断らない）か `FRAME_ERROR_REASON` の定型文（断るときの理由）で、**条件と理由を同じ行に書く**
+  （いまの `switch` 2つに分かれている対応を行へ寄せる）
+- **受け手の3種**（判別可能な合併型。`kind` で分ける）:
+  - `write`: 書き込み口を呼び、返った `SessionEvent` を流す（`undefined` なら失敗の理由で断る）。
+    いまの `write(() => options.*)` にあたる
+  - `call`: 外へ頼むだけでイベントを流さない（`boolean` で成否を返す）。`open-file`
+  - `session`: `CommandSession` を受け取って `DispatchResult` を返す。**`session` の表にだけ書ける**
+    （型が `session/core/` にあるので、葉の機能からは物理的に書けない）
+- **`CommandSession` の口は4つだけ**（受け手が `SessionGeneration`・束・購読者を知らずに済む深い形）:
+  `state()`（いまの姿）・`driver()`（いまの代の駆動を待つ）・`restart(request)`（起こし直し）・
+  `generation()`（いまの代に固定した `emit` と `diarySignal`。長く続く受け手が起こし直しをまたいで
+  混ざらないため）。`write` の受け手が返したイベントを流すのも `generation().emit` で、
+  `command-dispatch.ts` が行う
+- **口は `SessionManagerOptions` から抜ける**: 書き込み口（`editCharacter` `createCharacter`
+  `deleteCharacter` `forgetRememberedLine` `rememberSessionDefault` `rememberVisitEnabled`
+  `dismissUsageProposal` `openFile`）と、振り返りだけが使う `readAchievementDay` `diary` は、
+  各機能の `<機能>Commands(ports)` の `ports` へ移る。`SessionManagerOptions` に増えるのは束ねた表
+  `commands: CommandRoute` の1本
+- **束ねるのを配線に置く理由**: 表を `session/core/` で束ねると、`session` が `usage-review` と
+  `host` を読む辺（いまの表に無い）が要り、`session` がまた全部を知る場所に戻る。配線なら
+  **機能どうしの辺の表は増えない**（段3の `src/router.ts` と同じ立場）。葉の機能の表が読むのは
+  `shared` と共有の `core`（`command-receiver.ts`）だけ
+
+**28種の割り振り**（機能の `<機能>-command.ts` に住むもの）:
+
+| 機能             | 受けるコマンド                                                                                                                                                                                      | 受け手の種類                                                | 断る条件                                                                                                              |
+| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `session`        | `prompt` `interrupt` `answer` `set-model` `set-effort` `set-permission-mode`（駆動へ渡す6種）・`nudge`・`switch-character` `set-chat-mode` `switch-session`（起こし直し3種）・`reflect-achievement` | `session`                                                   | `nudge` は `chatOnly` と `idleTurn`、起こし直し3種は `idleTurn`。`reflect-achievement` は列では断らず受け手の中で見る |
+| `session`        | `set-session-default`                                                                                                                                                                               | `write`（覚え先は `session/adapter/remembered-default.ts`） | なし                                                                                                                  |
+| `character-pack` | 見た目の編集10種（`CHARACTER_EDIT_COMMAND_TYPES`）・`create-character` `delete-character`                                                                                                           | `write`                                                     | なし                                                                                                                  |
+| `chat`           | `forget-remembered-line`                                                                                                                                                                            | `write`                                                     | `chatOnly`                                                                                                            |
+| `visit`          | `set-visit-enabled`                                                                                                                                                                                 | `write`                                                     | なし                                                                                                                  |
+| `usage-review`   | `dismiss-usage-proposal`                                                                                                                                                                            | `write`                                                     | なし                                                                                                                  |
+| `host`           | `open-file`                                                                                                                                                                                         | `call`（git 管理下かの門番は `tracked-file.ts`）            | なし                                                                                                                  |
+
+`reflect-achievement` を `diary` に置かないのは、代の持ち物（`emit` と `diarySignal`）を使うのに
+`diary` から `session` への辺を足すと core どうしで輪になるため。依頼文を組む判断を `diary/core/` の
+純関数へ下ろすのは妨げない。
+
+**段2〜3（oRPC）: 契約・手続き・ルータ・ミドルウェア**
+
+| 置くもの                     | 場所                                            | 持つもの                                                                                                                                                                                   |
+| ---------------------------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 契約                         | `src/shared/contract/<機能>.ts`                 | その機能の手続きの形（入力・出力・エラー）と、**断る条件の `meta`**。zod と `@orpc/contract` だけを読む（ブラウザも読む）                                                                  |
+| 手続き                       | `src/server/<機能>/adapter/<機能>-procedure.ts` | `implement(contract.<機能>)` の受け手。**中身は段1の行（コマンド）か機能の読み取りへ委ねる数行**。ドメインの失敗を契約のエラーに訳すのはここだけ。口は `<機能>Procedure(ports)` で受け取る |
+| ルータ                       | `src/router.ts`（配線）                         | 全機能の手続きを1枚に束ねる。段3で `src/command-route.ts` はここへ吸われる                                                                                                                 |
+| 照合と断る条件のミドルウェア | `src/server/view-server/adapter/rpc-guard.ts`   | 起動トークン・`Origin` の照合（段2）と、契約の `meta` の `chatOnly` / `idleTurn` を見る門（段3。順は段1と同じ）                                                                            |
+
+- **段3で断る条件の列は契約の `meta` へ移り、段1の行からは消える**（二重に持たない）。`meta` の形は
+  段1の列と**同じ語彙** — `{ chatOnly: false | 理由, idleTurn: false | 理由 }` で、理由は
+  `FRAME_ERROR_REASON`（`shared/frame.ts`）の値。どちらも `shared` の値なので、契約へそのまま写せる
+- 読み取り（段2）は `repository`・`token-usage`・`context-usage`・`achievement` の4機能の手続きになり、
+  `/prompt-image/<id>`（`<img src>` で読む）と静的な配信は HTTP に残る
+- 押し出し（`hello` / `events` のフレームと `subscribe`）は段3でも変えない
+
+**許す依存の辺**（段2以降。`test/architecture.test.ts` が見る）:
+
+| 辺                                               | 許す場所                                                                                               |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
+| `shared` → 外部                                  | `zod` と `@orpc/contract`（`@orpc/server`・`node:` は読まない）                                        |
+| `@orpc/server` を import してよい場所            | 機能の `adapter/` と `view-server/adapter/` だけ。**`core` は禁止のまま**                              |
+| `browser` → 外部                                 | 今の依存に `@orpc/client` と `@orpc/tanstack-query` を足す                                             |
+| `src/router.ts` / `src/command-route.ts`（配線） | すべての機能の `<機能>-procedure.ts` / `<機能>-command.ts`。配線なので**機能どうしの辺の表は増えない** |
+| 機能どうしの辺                                   | 上の表のまま（受け手が別の機能の判断を要るようになったら、今と同じく表に足す）                         |
+
+**辿り方**: 段1のあとは `src/command-route.ts` で種類を探す → `<機能>/core/<機能>-command.ts` の行で
+受け手と断る条件を見る。段3のあとは `src/router.ts` → `shared/contract/<機能>.ts`（形と断る条件）→
+`<機能>/adapter/<機能>-procedure.ts`（委ね先）→ `<機能>/core/`。**どのコマンドでも同じ段数**。
+
 ### ディレクトリ
 
 ```
@@ -220,6 +309,8 @@ src/
   current-character.ts        いま出しているパックと選択肢の持ち主（切り替えと画面からの編集で入れ替わる）
   view-delivery.ts            ビューの配信。組み立てたブラウザ側と開いているタブを持ち、/ws と見張りを束ねる
   session-start.ts            セッションを1つ起こす（どの駆動で起こすか・続きをどう探すか）
+  command-route.ts            （段1で足す）全機能のコマンドの受け手の表を1枚に束ねる。段3で router.ts
+                              （全機能の手続きを束ねる）へ吸われる（上の「コマンドの受け手と手続きの置き方」）
   shared/
     session-event.ts          SessionEvent（zod と z.infer）
     session-state.ts          SessionState と applySessionEvent（いまの session-view.ts）
@@ -232,7 +323,8 @@ src/
     turn-speech.ts            ターンごとのセリフと表情を確定した記録（SessionRecord）から引き直す純関数
     portrait-motion.ts        立ち絵をいま動かしてよいか・どれで動かすかを決める純関数
     command-suggestion.ts     入力欄の / 補完に出す候補（姿から導くだけ）
-    command.ts                ClientCommand（zod）
+    command.ts                ClientCommand（zod）。段3で contract/ へ移して消す
+    contract/<機能>.ts        （段2〜3で足す）その機能の手続きの契約（zod と @orpc/contract。断る条件の meta）
     frame.ts                  ServerFrame（zod）・PROTOCOL_VERSION
     vendor-asset.ts           外部ライブラリ（npm の依存）を配る経路の名前
     expression.ts / question.ts / pending-ask.ts / task-summary.ts / character.ts
@@ -258,6 +350,7 @@ src/
                               （機能の一覧と辺は上の「サーバの機能と、機能どうしの辺」）
     core/                     共有の判断（どの機能にも属さないもの）。node: / SDK / ws を import しない
       config.ts               環境変数の解釈（読み取りは cli.ts。ここは渡された env を見るだけ）
+      command-receiver.ts     （段1で足す）コマンドの受け手の行の型（write / call）と断る条件の2列
     adapter/                  共有の境界（どの機能にも属さないもの）。1ファイル = 1つの境界
       tsukumo-home.ts         ~/.tsukumo/ の場所を組み立てる唯一の口
       bundled-path.ts         同梱物の位置（import.meta.url）
@@ -269,6 +362,10 @@ src/
         session-launch.ts     起こす一続きの順序（外に触る部分は session-start.ts が渡す。起動も切り替えも同じ）
         event-batch.ts        届いたイベントをまとめて配る束（間隔と、書きかけの本文の連結）
         driver-command.ts     起き上がっている駆動に1件頼む（受け付けたかどうかの返し方 DispatchResult も）
+        command-dispatch.ts   （段1で足す）断る条件を1箇所で見て受け手を呼ぶ。CommandRoute・CommandSession・
+                              DispatchResult（driver-command.ts から移す）
+        session-command.ts    （段1で足す）session が受けるコマンドの表（駆動へ渡す6種・nudge・起こし直し3種・
+                              reflect-achievement・set-session-default）
       adapter/
         remembered-default.ts 次に起こすときの初期値（~/.tsukumo/state.json。キャラクター名・モデル・effort・許可モード・訪問のオン・オフ）
     session-driver/           セッション駆動
@@ -313,6 +410,9 @@ src/
                               bundle.ts / ui-rebuild.ts / source-fingerprint.ts（bun build と src/browser/ の見張り）
     repository/adapter/       git.ts（`git` を起こす唯一の口）/ repository-file.ts（git ls-files）/
                               task-summary.ts（main のタスク一覧の読み直し）
+    <機能>/core/<機能>-command.ts   （段1で足す）その機能が受けるコマンドの表（character-pack / chat /
+                              visit / usage-review / host）
+    <機能>/adapter/<機能>-procedure.ts （段2〜3で足す）その機能の手続き（oRPC の受け手）
   browser/
     main.tsx                  入口。部品の木を組み立てて mount する（副作用はここだけ）。出す画面を選ぶ
                               <Root> と、会話の画面の <Layout> に4領域を差し込むのもここ（6.1）
@@ -1212,7 +1312,9 @@ Layout に出す。復帰したときにセッションを続きから起こし�
 - `createSessionManager(options)`: 駆動を起こし、`onEvent` で **(1) 時刻を打ち (2) 自分の `state` を畳み
   (3) その代の束に積む**。`EVENT_BATCH_INTERVAL_MS`（既定100ms。`event-batch.ts`）ごとに `events`
   フレームを購読者へ配る
-- `dispatch(command)`: `switch (command.type)` で駆動へ渡す。**ここが唯一の分岐**
+- `dispatch(command)`: 受け取ったコマンドを、束ねた表（`options.commands`）と `CommandSession` と
+  一緒に `command-dispatch.ts` へ渡すだけ（2章「コマンドの受け手と手続きの置き方」。**段1で移す**——
+  いまは `switch (command.type)` 3つがここにある）
 - `subscribe(send)`: 接続ごとに `hello` を送ってから購読に加える
 - **セッションは1つで、鍵を持たない**（8章）
 
@@ -1238,9 +1340,11 @@ Layout に出す。復帰したときにセッションを続きから起こし�
 アーカイブの1行にするか」だけを持つ。`session-manager.ts` に残るのは**どの順で・どちらの由来の
 ときに呼ぶか**（`origin` と `chatMode` の門）だけ。
 
-**「ターン中なら断る」の判定は `dispatch` に1か所**（`state.turn.kind === "running"` の中で
-コマンドの種類ごとに定型文を選ぶ）。その手前に「雑談の外なら断る」の門が1つあり、**順は
-「雑談の外か」→「ターン中か」**——仕事のときに押された `nudge` にターン中の理由を返さないため。
+**「雑談の外なら断る」「ターン中なら断る」の判定は1か所**で、**順は「雑談の外か」→「ターン中か」**
+——仕事のときに押された `nudge` にターン中の理由を返さないため。**段1のあとは**、条件と定型文は
+機能ごとの表の行（`chatOnly` / `idleTurn` の列）に書き、見るのは `command-dispatch.ts` だけになる
+（段3で契約の `meta` と `rpc-guard.ts` へ移る。2章「コマンドの受け手と手続きの置き方」）。段1の前の
+いまは、`dispatch` の中の `switch` 2つ（`state.chatMode` と `state.turn.kind === "running"`）にある。
 見た目の編集のコマンドの一覧（`CHARACTER_EDIT_COMMAND_TYPES`）は `src/shared/command.ts` の
 1つの並びから型も判定も導く（二重に列挙しない）。
 
@@ -1323,6 +1427,13 @@ JSON を配る経路（`/repository-file`・`/token-usage`・`/context-usage`・
 `CONTEXT_USAGE_PATH` / `PROMPT_IMAGE_PATH_PREFIX` / `ACHIEVEMENT_PATH`）が正典）、`/ws` の upgrade と
 コマンドの受け口は `session-socket.ts`（`SESSION_SOCKET_PATH`。listen 済みのサーバに受け口を
 足すだけ）。**起動トークンは1つ**で、`server.ts` の `createStartupToken` が作ったものを両方が見る。
+
+**段2〜3で受け口は oRPC の手続きへ移る**（2章「コマンドの受け手と手続きの置き方」）。段2で読み取りの
+4経路（`/repository-file`・`/token-usage`・`/context-usage`・`/achievement`（暦を含む））が `/rpc` の
+手続きになり、トークン・`Origin` の照合は `rpc-guard.ts` の1つに寄る。`server.ts` に残るのは静的な
+配信と `/prompt-image/<id>`。段3で `/ws` の `receive`（`parseClientCommand`）が `RPCHandler` に
+置き換わる（`MAX_MESSAGE_BYTES` を渡した `WebSocketServer` を自分で作るのは変えない）。押し出し
+（`hello` / `events`）は `session-socket.ts` と `subscribe` のまま。
 
 会話の内容が乗るのは `/ws`（`session-socket.ts`）と、依頼に添えた画像を配る `/prompt-image/<id>`
 だけ。ページ・同梱物・素材（`/`・`/assets/*`・`/vendor/*`・`/character/*`）は静的な物なので

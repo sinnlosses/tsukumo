@@ -1,5 +1,7 @@
 # アーキテクチャ提案: サーバの受け口を「機能ごとの手続き」にし、流れを1枚の表から辿れるようにする（2026-09-26）
 
+**2026-09-26 に段1〜3を採用した。正典は `docs/design.md` 2章「コマンドの受け手と手続きの置き方」（あわせて 5章「session-manager.ts（core）」「server.ts と session-socket.ts（adapter）」、`docs/glossary.md` の「契約」「手続き」「コマンド」）で、この文書は経緯として残す**（段4は「推測」のまま未採用。受け手の中身の設計（9章）は正典で決めた）。
+
 **この文書は提案であって正典ではない。** `docs/` の他ファイルにある「節の索引」はここには作らない。
 採用したら正典（`docs/design.md` 2章・5章「server.ts と session-socket.ts（adapter）」「session-manager.ts（core）」、
 `docs/architecture.md` 原則2、`docs/glossary.md`）へ反映し、この文書は経緯として `docs/research/` に残す。
