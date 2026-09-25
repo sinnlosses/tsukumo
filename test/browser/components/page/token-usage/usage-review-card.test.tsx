@@ -76,12 +76,32 @@ describe("UsageReviewCard（ふだん）", () => {
         reason: "いまターンが動いているので送れない。終わってからもう一度押す。",
       },
     }
-    const { getByText } = render(<UsageReviewCard review={review} />)
+    const { getByRole, getByText } = render(<UsageReviewCard review={review} />)
 
-    expect(getByText("減らし方を見てもらう").hasAttribute("disabled")).toBe(true)
+    const startButton = getByRole("button", { name: "減らし方を見てもらう" })
+    // **押せないは `aria-disabled` の1通り**（`Button`）。本物の `disabled` にはしないので、
+    // フォーカスは残る（`button.test.tsx` と同じ確かめ方）。
+    expect(startButton.getAttribute("aria-disabled")).toBe("true")
+    expect(startButton.hasAttribute("disabled")).toBe(false)
+    startButton.focus()
+    expect(document.activeElement).toBe(startButton)
     expect(
       getByText("いまターンが動いているので送れない。終わってからもう一度押す。"),
     ).not.toBeNull()
+  })
+
+  it("押せないあいだ「減らし方を見てもらう」を押しても依頼を送らない", () => {
+    let started = 0
+    const review: UseUsageReviewResult = {
+      ...IDLE_AVAILABLE,
+      start: { kind: "blocked", reason: "" },
+      onStart: () => (started += 1),
+    }
+    const { getByRole } = render(<UsageReviewCard review={review} />)
+
+    fireEvent.click(getByRole("button", { name: "減らし方を見てもらう" }))
+
+    expect(started).toBe(0)
   })
 
   it("前回の提案が無いときはリンクが出ない", () => {

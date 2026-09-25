@@ -300,18 +300,10 @@
   background: var(--usage-bar);
 }
 
-/* 「ほか n 件を見る」の開閉。文字だけのボタン（枠を増やさない）。 */
+/* 「ほか n 件を見る」の開閉。文字だけのボタン（枠を増やさない）。顔（地・字の色・hover の
+   下線）は `<Button variant="link">` が持つ。 */
 .usage-table-more {
   margin: 0.75rem 0 0;
-  padding: 0;
-  background: none;
-  border: none;
-  color: var(--accent);
-  font-size: var(--font-action);
-  cursor: pointer;
-}
-.usage-table-more:hover {
-  text-decoration: underline;
 }
 
 /* 記録が無い・取れなかった・描けなかった・続きがある、の一言。字の段・色は `Text`（size="label"
@@ -372,20 +364,12 @@
   gap: 0.4rem;
   flex-shrink: 0;
 }
+/* 顔（枠・地・字の色・押せないとき・太さ700）は `<Button variant="solid-accent">` が持つ（太さは
+   `Text`〔weight="bold"〕が持つ）。箱だけここに残す。 */
 .usage-review-start {
   padding: 0.6rem 1.125rem;
-  border: none;
   border-radius: 0.625rem;
-  background: var(--accent);
-  color: var(--ground);
-  font-size: var(--font-action);
-  font-weight: 700;
   white-space: nowrap;
-  cursor: pointer;
-}
-.usage-review-start:disabled {
-  opacity: 0.5;
-  cursor: default;
 }
 .usage-review-blocked {
   margin: 0;
@@ -394,17 +378,7 @@
   font-size: var(--font-label);
   text-align: right;
 }
-.usage-review-previous {
-  padding: 0;
-  border: none;
-  background: none;
-  color: var(--accent);
-  font-size: var(--font-label);
-  cursor: pointer;
-}
-.usage-review-previous:hover {
-  text-decoration: underline;
-}
+/* 顔（地・字の色・hover の下線）は `<Button variant="link">` が持つ。 */
 
 /* 見直し中の頭の行（顔・「見直し中…」＋直近のセリフ・経過・「止める」）。**狭い画面では
    `flex-wrap: wrap` に変わる**（下の @media）ので、折り返しが値によって変わる規則は
@@ -573,17 +547,7 @@
   font-size: var(--font-label);
   white-space: nowrap;
 }
-.usage-review-result-close {
-  padding: 0;
-  border: none;
-  background: none;
-  color: var(--accent);
-  font-size: var(--font-label);
-  cursor: pointer;
-}
-.usage-review-result-close:hover {
-  text-decoration: underline;
-}
+/* 顔（地・字の色・hover の下線）は `<Button variant="link">` が持つ。 */
 /* 「もう一度見てもらう」。**中立の枠**（`.usage-review-stop` と同じ地味さ）——押せる区画の
    染めはすでに区画全体が持っているので、ここまで `accent` を足すと強すぎる。 */
 .usage-review-retry {

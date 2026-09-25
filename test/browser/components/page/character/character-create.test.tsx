@@ -80,13 +80,33 @@ describe("CharacterCreate", () => {
 
   it("id・必須の立ち絵がそろうまで「作る」を押せない", async () => {
     render(characterCreate(true, () => {}))
-    expect(submitButton().disabled).toBe(true)
+    // **押せないは `aria-disabled` の1通り**（`Button`）。本物の `disabled` にはしないので、
+    // フォーカスは残る（`button.test.tsx` と同じ確かめ方）。
+    expect(submitButton().getAttribute("aria-disabled")).toBe("true")
+    expect(submitButton().hasAttribute("disabled")).toBe(false)
+    submitButton().focus()
+    expect(document.activeElement).toBe(submitButton())
 
     fireEvent.change(screen.getByLabelText("id"), { target: { value: "fictional-2" } })
-    expect(submitButton().disabled).toBe(true)
+    expect(submitButton().getAttribute("aria-disabled")).toBe("true")
 
     await pickPortrait()
-    expect(submitButton().disabled).toBe(false)
+    expect(submitButton().getAttribute("aria-disabled")).toBe("false")
+  })
+
+  it("押せないあいだ「作る」を押しても create-character を送らない", () => {
+    const calls: unknown[] = []
+    render(
+      characterCreate(
+        true,
+        () => {},
+        (command) => calls.push(command),
+      ),
+    )
+
+    fireEvent.click(submitButton())
+
+    expect(calls).toEqual([])
   })
 
   // **id はディレクトリ名になる**ので、送る前に画面で止める（docs/design.md 7.1）。
@@ -95,7 +115,7 @@ describe("CharacterCreate", () => {
     fireEvent.change(screen.getByLabelText("id"), { target: { value: "../escape" } })
     await pickPortrait()
 
-    expect(submitButton().disabled).toBe(true)
+    expect(submitButton().getAttribute("aria-disabled")).toBe("true")
     expect(document.querySelector(".character-screen-note")?.textContent).toContain("英数字")
   })
 
@@ -104,7 +124,7 @@ describe("CharacterCreate", () => {
     fireEvent.change(screen.getByLabelText("id"), { target: { value: "fictional" } })
     await pickPortrait()
 
-    expect(submitButton().disabled).toBe(true)
+    expect(submitButton().getAttribute("aria-disabled")).toBe("true")
     expect(document.querySelector(".character-screen-note")?.textContent).toContain(
       "もう使われている",
     )

@@ -145,22 +145,11 @@
   flex: 1 1 12rem;
   min-width: 0;
 }
-/* 札の主目的の口なので、答え待ちの色で塗りつぶす（入力欄の「答える」と対になる）。 */
+/* 札の主目的の口なので、答え待ちの色で塗りつぶす（入力欄の「答える」と対になる）。顔（枠・地・
+   字の色・hover・押せないとき・太さ700）は `<Button variant="solid-warn">` が持つ（太さは
+   `Text`〔weight="bold"〕が持つ）。箱だけここに残す。 */
 .question-ask-answer {
   flex: 0 0 auto;
   padding: 0.5rem 1.125rem;
-  border: 1px solid var(--state-warn);
   border-radius: 0.5625rem;
-  background: var(--state-warn);
-  color: var(--ground);
-  font-size: var(--font-secondary);
-  font-weight: 700;
-  cursor: pointer;
-}
-.question-ask-answer:disabled {
-  opacity: 0.5;
-  cursor: default;
-}
-.question-ask-answer:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--state-warn) 85%, var(--ink));
 }

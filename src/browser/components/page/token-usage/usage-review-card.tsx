@@ -18,6 +18,7 @@ import {
   type UsageProposalImpact,
 } from "../../../../shared/usage-review.ts"
 import { CharacterFace } from "../../../components/domain/character-face.tsx"
+import { Button } from "../../../components/ui/button/button.tsx"
 import { Text } from "../../../components/ui/text/text.tsx"
 import { VStack } from "../../../components/ui/v-stack/v-stack.tsx"
 import {
@@ -101,25 +102,40 @@ function IdleReviewCard(props: {
         <span className={styles["usage-review-note"]}>{IDLE_NOTE}</span>
       </VStack>
       <div className={styles["usage-review-actions"]}>
-        <button
+        <Button
           type="button"
-          className={styles["usage-review-start"]}
+          variant="solid-accent"
+          size="action"
+          pressed="none"
           disabled={review.start.kind === "blocked"}
+          ariaLabel={undefined}
+          ariaHasPopup={undefined}
+          title={undefined}
+          className={styles["usage-review-start"] ?? ""}
           onClick={review.onStart}
         >
-          {START_LABEL}
-        </button>
+          <Text element="span" size="inherit" tone="inherit" weight="bold" className="">
+            {START_LABEL}
+          </Text>
+        </Button>
         {review.start.kind === "blocked" ? (
           <p className={styles["usage-review-blocked"]}>{review.start.reason}</p>
         ) : null}
         {review.previousReview.kind === "found" ? (
-          <button
+          <Button
             type="button"
-            className={styles["usage-review-previous"]}
+            variant="link"
+            size="label"
+            pressed="none"
+            disabled={false}
+            ariaLabel={undefined}
+            ariaHasPopup={undefined}
+            title={undefined}
+            className=""
             onClick={review.previousReview.onOpen}
           >
             {`${PREVIOUS_LABEL_PREFIX}（${review.previousReview.dateLabel}）`}
-          </button>
+          </Button>
         ) : null}
       </div>
     </section>
@@ -246,13 +262,20 @@ function ResultReviewCard(props: {
             className={styles["usage-review-result-timestamp"]}
           >{`${review.reviewedAtLabel} · ${review.periodLabel}`}</span>
           {review.close.kind === "shown" ? (
-            <button
+            <Button
               type="button"
-              className={styles["usage-review-result-close"]}
+              variant="link"
+              size="label"
+              pressed="none"
+              disabled={false}
+              ariaLabel={undefined}
+              ariaHasPopup={undefined}
+              title={undefined}
+              className=""
               onClick={review.close.onClose}
             >
               {CLOSE_LABEL}
-            </button>
+            </Button>
           ) : null}
           <button
             type="button"

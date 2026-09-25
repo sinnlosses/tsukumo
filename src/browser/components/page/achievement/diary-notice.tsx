@@ -7,6 +7,7 @@
 
 import { type ReactElement } from "react"
 
+import { Button } from "../../../components/ui/button/button.tsx"
 import { HStack } from "../../../components/ui/h-stack/h-stack.tsx"
 import { Text } from "../../../components/ui/text/text.tsx"
 import styles from "./diary-notice.module.css"
@@ -38,17 +39,36 @@ export function DiaryNotice(): ReactElement | null {
       <Text element="span" size="subheading" tone="ink" weight="inherit" className="">
         {`${view.dateLabel}のページができました`}
       </Text>
-      <button type="button" className={styles["diary-notice-open"]} onClick={view.onOpen}>
-        {OPEN_LABEL}
-      </button>
-      <button
+      <Button
         type="button"
-        className={styles["diary-notice-dismiss"]}
+        variant="solid-accent"
+        size="secondary"
+        pressed="none"
+        disabled={false}
+        ariaLabel={undefined}
+        ariaHasPopup={undefined}
+        title={undefined}
+        className={styles["diary-notice-open"] ?? ""}
+        onClick={view.onOpen}
+      >
+        <Text element="span" size="inherit" tone="inherit" weight="bold" className="">
+          {OPEN_LABEL}
+        </Text>
+      </Button>
+      <Button
+        type="button"
+        variant="ghost"
+        size="body"
+        pressed="none"
+        disabled={false}
+        ariaLabel={DISMISS_SR_LABEL}
+        ariaHasPopup={undefined}
+        title={undefined}
+        className={styles["diary-notice-dismiss"] ?? ""}
         onClick={view.onDismiss}
-        aria-label={DISMISS_SR_LABEL}
       >
         {DISMISS_LABEL}
-      </button>
+      </Button>
     </div>
   )
 }

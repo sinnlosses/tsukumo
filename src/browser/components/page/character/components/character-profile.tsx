@@ -6,6 +6,7 @@
 
 import { type ReactElement } from "react"
 
+import { Button } from "../../../../components/ui/button/button.tsx"
 import { HStack } from "../../../../components/ui/h-stack/h-stack.tsx"
 import { Heading } from "../../../../components/ui/heading/heading.tsx"
 import { Text } from "../../../../components/ui/text/text.tsx"
@@ -82,16 +83,21 @@ export function CharacterProfile(props: { readonly profile: CharacterProfileMode
         >
           <CharacterProfileEdit edit={profile.editProfile} />
           {profile.switchTo.kind === "shown" ? (
-            <button
+            <Button
               type="button"
-              className={styles["character-button"]}
+              variant="outline"
+              size="secondary"
+              pressed="none"
               disabled={profile.switchTo.disabled}
+              ariaLabel={undefined}
+              ariaHasPopup={undefined}
               title={profile.switchTo.title}
+              className={styles["character-button-outline"] ?? ""}
               onClick={profile.switchTo.onSwitch}
             >
               <SwitchIcon />
               このキャラクターに切り替える
-            </button>
+            </Button>
           ) : null}
         </HStack>
       ) : null}

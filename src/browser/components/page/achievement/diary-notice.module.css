@@ -32,26 +32,19 @@
 /* 字の段・色は `Text`（size="subheading" tone="ink" weight="inherit"）が持つ（14px は
    --font-subheading と同じ値）。 */
 
+/* 顔（枠・地・字の色・押せないとき・太さ700）は `<Button variant="solid-accent">` が持つ
+   （太さは `Text`〔weight="bold"〕が持つ）。箱だけここに残す。 */
 .diary-notice-open {
   height: 36px;
   padding: 0 14px;
   border-radius: 9px;
-  border: none;
-  background: var(--accent);
-  color: var(--ground);
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
 }
 
+/* 顔（地も枠も無い・字の色）は `<Button variant="ghost">` が持つ。箱・行の高さだけここに残す。
+   **見本の16pxは Button の `size` の段に無いので `body`（15px）に寄せた**（1px小さくなる）。 */
 .diary-notice-dismiss {
   width: 32px;
   height: 32px;
   border-radius: 8px;
-  border: none;
-  background: transparent;
-  color: var(--ink-quiet);
-  font-size: 16px;
   line-height: 1;
-  cursor: pointer;
 }

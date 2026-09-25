@@ -409,10 +409,25 @@ describe("CharacterEdit", () => {
 
     expect((screen.getByLabelText("仕事") as HTMLInputElement).disabled).toBe(true)
     expect((screen.getByLabelText("雑談") as HTMLInputElement).disabled).toBe(true)
-    expect(screen.getByRole("button", { name: "雑談も仕事と同じにする" })).toHaveProperty(
-      "disabled",
-      true,
+    const resetButton = screen.getByRole("button", { name: "雑談も仕事と同じにする" })
+    // **押せないは `aria-disabled` の1通り**（`Button`。`docs/design.md` 2章）。本物の `disabled`
+    // にはしないので、フォーカスは残る（`button.test.tsx` と同じ確かめ方）。
+    expect(resetButton.getAttribute("aria-disabled")).toBe("true")
+    expect(resetButton.hasAttribute("disabled")).toBe(false)
+    resetButton.focus()
+    expect(document.activeElement).toBe(resetButton)
+  })
+
+  it("押せないあいだは「雑談も仕事と同じにする」を押しても clear-chat-accent を送らない", () => {
+    const calls: unknown[] = []
+    renderCharacterEdit(
+      { ...FIXTURE_CHARACTER, chatAccent: "#f2984a", editable: false },
+      (command) => calls.push(command),
     )
+
+    fireEvent.click(screen.getByRole("button", { name: "雑談も仕事と同じにする" }))
+
+    expect(calls).toEqual([])
   })
 
   it("差し色の初期値は、その衣装の値 → default → --accent の順で決まる", () => {
@@ -667,12 +682,28 @@ describe("CharacterEdit", () => {
       expect(dialog?.hasAttribute("open")).toBe(true)
       expect(screen.getByText("別の精霊 を消しますか？")).toBeDefined()
       const okButton = screen.getByRole("button", { name: "消す" })
-      expect(okButton).toHaveProperty("disabled", true)
+      // **押せないは `aria-disabled` の1通り**（`Button`）。本物の `disabled` にはしないので、
+      // フォーカスは残る（`button.test.tsx` と同じ確かめ方）。
+      expect(okButton.getAttribute("aria-disabled")).toBe("true")
+      expect(okButton.hasAttribute("disabled")).toBe(false)
+      okButton.focus()
+      expect(document.activeElement).toBe(okButton)
 
       fireEvent.change(screen.getByLabelText("確かめのため、id を入力してください"), {
         target: { value: "othe" },
       })
-      expect(okButton).toHaveProperty("disabled", true)
+      expect(okButton.getAttribute("aria-disabled")).toBe("true")
+    })
+
+    it("押せないあいだ「消す」を押しても delete-character を送らない", () => {
+      selectOther()
+      const calls: unknown[] = []
+      renderCharacterEdit(FIXTURE_CHARACTER, (command) => calls.push(command), OTHER_PACKS)
+
+      fireEvent.click(screen.getByRole("button", { name: /別の精霊 を消す/ }))
+      fireEvent.click(screen.getByRole("button", { name: "消す" }))
+
+      expect(calls).toEqual([])
     })
 
     it("id が完全に一致すると「消す」が押せ、delete-character を1回だけ送って閉じる", () => {
@@ -685,7 +716,7 @@ describe("CharacterEdit", () => {
         target: { value: "other" },
       })
       const okButton = screen.getByRole("button", { name: "消す" })
-      expect(okButton).toHaveProperty("disabled", false)
+      expect(okButton.getAttribute("aria-disabled")).toBe("false")
 
       fireEvent.click(okButton)
 

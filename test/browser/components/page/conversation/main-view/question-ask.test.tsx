@@ -121,8 +121,13 @@ describe("QuestionAsk（メインビューの質問の札）", () => {
       { dispatch: (command) => calls.push(command) },
     )
 
-    const answer = screen.getByText("これで答える")
-    expect(answer.hasAttribute("disabled")).toBe(true)
+    const answer = screen.getByRole("button", { name: "これで答える" })
+    // **押せないは `aria-disabled` の1通り**（`Button`）。本物の `disabled` にはしないので、
+    // フォーカスは残る（`button.test.tsx` と同じ確かめ方）。
+    expect(answer.getAttribute("aria-disabled")).toBe("true")
+    expect(answer.hasAttribute("disabled")).toBe(false)
+    answer.focus()
+    expect(document.activeElement).toBe(answer)
 
     fireEvent.click(screen.getByText("A案"))
     expect(container.querySelectorAll(".question-ask-option.is-selected")).toHaveLength(1)
@@ -135,6 +140,17 @@ describe("QuestionAsk（メインビューの質問の札）", () => {
         answer: { kind: "answers", labels: [["A案 (Recommended)"]] },
       },
     ])
+  })
+
+  it("押せないあいだ「これで答える」を押しても答えを送らない", () => {
+    const calls: unknown[] = []
+    renderQuestionAsk([{ kind: "question", id: "ask-1", questions: [question()] }], {
+      dispatch: (command) => calls.push(command),
+    })
+
+    fireEvent.click(screen.getByRole("button", { name: "これで答える" }))
+
+    expect(calls).toEqual([])
   })
 
   it("複数選択はチェックボックス（単一選択は radio）", () => {

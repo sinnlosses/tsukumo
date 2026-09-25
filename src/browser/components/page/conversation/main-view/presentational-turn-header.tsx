@@ -21,6 +21,7 @@
 
 import { type ReactElement } from "react"
 
+import { Button } from "../../../../components/ui/button/button.tsx"
 import { Text } from "../../../../components/ui/text/text.tsx"
 import { type TurnHeaderHistoryRow, type TurnHeaderModel } from "./hooks/use-turn-header.ts"
 import styles from "./turn-header.module.css"
@@ -54,26 +55,34 @@ export function PresentationalTurnHeader({
   return (
     <header className={styles["turn-header"]}>
       <div className={styles["turn-nav"]}>
-        <button
+        <Button
           type="button"
-          className={styles["turn-nav-button"]}
-          aria-label={OLDER_LABEL}
-          title={OLDER_LABEL}
+          variant="outline"
+          size="subheading"
+          pressed="none"
           disabled={olderDisabled}
+          ariaLabel={OLDER_LABEL}
+          ariaHasPopup={undefined}
+          title={OLDER_LABEL}
+          className={styles["turn-nav-button"] ?? ""}
           onClick={onOlder}
         >
           <span aria-hidden="true">‹</span>
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
-          className={styles["turn-nav-button"]}
-          aria-label={NEWER_LABEL}
-          title={NEWER_LABEL}
+          variant="outline"
+          size="subheading"
+          pressed="none"
           disabled={isNewest}
+          ariaLabel={NEWER_LABEL}
+          ariaHasPopup={undefined}
+          title={NEWER_LABEL}
+          className={styles["turn-nav-button"] ?? ""}
           onClick={onNewer}
         >
           <span aria-hidden="true">›</span>
-        </button>
+        </Button>
       </div>
       {/* ページの中の本物の `h2` はこれ1つ（レポートの `##` は `h4` に落とす。
           `markdown/markdown.tsx`）。**中身は1つの `<button>`**（タイトルの文字 + 下向きの矢印）——

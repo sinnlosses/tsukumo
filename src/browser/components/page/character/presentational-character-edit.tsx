@@ -8,6 +8,7 @@
 
 import { type ReactElement } from "react"
 
+import { Button } from "../../../components/ui/button/button.tsx"
 import { HStack } from "../../../components/ui/h-stack/h-stack.tsx"
 import { Heading } from "../../../components/ui/heading/heading.tsx"
 import { Text } from "../../../components/ui/text/text.tsx"
@@ -55,14 +56,20 @@ export function PresentationalCharacterEdit(
               <span id="character-screen-accent">画面の差し色</span>
             </Heading>
             {props.resetChatAccent.kind === "shown" ? (
-              <button
+              <Button
                 type="button"
-                className={styles["character-link-button"]}
+                variant="link"
+                size="action"
+                pressed="none"
                 disabled={props.disabled}
+                ariaLabel={undefined}
+                ariaHasPopup={undefined}
+                title={undefined}
+                className=""
                 onClick={props.resetChatAccent.onClick}
               >
                 雑談も仕事と同じにする
-              </button>
+              </Button>
             ) : (
               <Text
                 element="span"

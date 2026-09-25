@@ -9,6 +9,7 @@
 
 import { useState, type ReactElement } from "react"
 
+import { Button } from "../../../../components/ui/button/button.tsx"
 import styles from "../character-screen.module.css"
 import { type CharacterProfileEditModel } from "../hooks/use-character-edit.ts"
 import { PencilIcon } from "./action-icon.tsx"
@@ -26,16 +27,23 @@ export function CharacterProfileEdit(props: {
 
   return (
     <>
-      <button
+      <Button
         type="button"
-        className={styles["character-button"]}
+        variant="outline"
+        size="secondary"
+        pressed="none"
+        disabled={false}
+        ariaLabel={undefined}
+        ariaHasPopup={undefined}
+        title={undefined}
+        className={styles["character-button-outline"] ?? ""}
         onClick={() => {
           setOpen(true)
         }}
       >
         <PencilIcon />
         名前とプロフィールを変える
-      </button>
+      </Button>
       {open ? (
         <CharacterProfileEditDialog
           name={edit.name}

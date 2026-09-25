@@ -9,6 +9,7 @@
 import { type ReactElement } from "react"
 
 import { Portrait } from "../../../components/domain/portrait.tsx"
+import { Button } from "../../../components/ui/button/button.tsx"
 import { HStack } from "../../../components/ui/h-stack/h-stack.tsx"
 import { Heading } from "../../../components/ui/heading/heading.tsx"
 import { Text } from "../../../components/ui/text/text.tsx"
@@ -81,16 +82,34 @@ export function DiaryBook({
             <div className={styles["diary-book-topbar-spacer"]} />
             <NavButton label={previous?.label} fallback={PREVIOUS_LABEL} onClick={onPrevious} />
             <NavButton label={next?.label} fallback={NEXT_LABEL} onClick={onNext} reverse />
-            <button
+            <Button
               type="button"
-              className={styles["diary-book-topbar-button"]}
+              variant="outline"
+              size="secondary"
+              pressed="none"
+              disabled={false}
+              ariaLabel={undefined}
+              ariaHasPopup={undefined}
+              title={undefined}
+              className={styles["diary-book-topbar-button"] ?? ""}
               onClick={onToggleToc}
             >
               {TOC_LABEL}
-            </button>
-            <button type="button" className={styles["diary-book-topbar-button"]} onClick={onClose}>
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="secondary"
+              pressed="none"
+              disabled={false}
+              ariaLabel={undefined}
+              ariaHasPopup={undefined}
+              title={undefined}
+              className={styles["diary-book-topbar-button"] ?? ""}
+              onClick={onClose}
+            >
               {CLOSE_LABEL}
-            </button>
+            </Button>
           </HStack>
           <div className={styles["diary-book-spread"]}>
             <Spread page={page} />
@@ -111,10 +130,16 @@ function NavButton(props: {
   const disabled = props.label === undefined
   const text = props.label ?? props.fallback
   return (
-    <button
+    <Button
       type="button"
-      className={styles["diary-book-topbar-button"]}
-      aria-disabled={disabled}
+      variant="outline"
+      size="secondary"
+      pressed="none"
+      disabled={disabled}
+      ariaLabel={undefined}
+      ariaHasPopup={undefined}
+      title={undefined}
+      className={styles["diary-book-topbar-button"] ?? ""}
       onClick={props.onClick}
     >
       {props.reverse ? (
@@ -128,7 +153,7 @@ function NavButton(props: {
           {text}
         </>
       )}
-    </button>
+    </Button>
   )
 }
 
@@ -332,14 +357,22 @@ function BlankReview(props: {
   const { review } = props
   return (
     <div className={styles["diary-book-review"]}>
-      <button
+      <Button
         type="button"
-        className={styles["diary-book-review-button"]}
-        aria-disabled={review.availability.kind === "blocked"}
+        variant="solid-accent"
+        size="body"
+        pressed="none"
+        disabled={review.availability.kind === "blocked"}
+        ariaLabel={undefined}
+        ariaHasPopup={undefined}
+        title={undefined}
+        className={styles["diary-book-review-button"] ?? ""}
         onClick={review.onReview}
       >
-        {review.label}
-      </button>
+        <Text element="span" size="inherit" tone="inherit" weight="bold" className="">
+          {review.label}
+        </Text>
+      </Button>
       {review.availability.kind === "blocked" && review.availability.reason !== "" ? (
         <Text
           element="p"

@@ -29,28 +29,18 @@
   gap: 0.4rem;
 }
 /* 押せる大きさの床（`docs/screen-design.md` 13.9 の「帯の高さの床」と同じ 24px）。頭の中でいちばん
-   高いのがここなので、これより大きくすると頭全体が高くなる。字はタイトルの文字と同じ段。 */
+   高いのがここなので、これより大きくすると頭全体が高くなる。字はタイトルの文字と同じ段。
+   顔（枠・地・字の色・hover・押せないとき）は `<Button variant="outline">` が持つ。箱だけ
+   ここに残す。 */
 .turn-nav-button {
   display: inline-grid;
   place-items: center;
   width: 1.5rem;
   height: 1.5rem;
   padding: 0;
-  border: 1px solid var(--rule);
   border-radius: 0.4rem;
-  background: transparent;
-  color: var(--ink);
-  font-size: var(--font-subheading);
   line-height: 1;
-  cursor: pointer;
 }
-/* 端（移る先が無い側）は押せない見た目に落とす。枠を地に溶かし、字を quiet にする。 */
-.turn-nav-button:disabled {
-  border-color: color-mix(in srgb, var(--rule) 40%, transparent);
-  color: color-mix(in srgb, var(--ink-quiet) 50%, transparent);
-  cursor: default;
-}
-.turn-nav-button:not(:disabled):hover,
 .turn-to-newest:hover {
   border-color: var(--accent);
 }

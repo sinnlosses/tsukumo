@@ -185,7 +185,8 @@
   padding-top: 0.625rem;
 }
 /* 画像・`/`・`@` の口。絵だけの四角いボタン（docs/history/mockup/bottom-2026-09-23.html）。
-   枠も地も持たず、字の色（控えめ）だけで押せる場所だと示す。 */
+   顔（枠も地も無い・字の色・hover で地を一段浮かせる）は `<Button variant="ghost">` が持つ。
+   箱だけここに残す。 */
 .dispatch-tool {
   display: grid;
   flex: 0 0 auto;
@@ -193,17 +194,7 @@
   width: 2.25rem;
   height: 2.25rem;
   padding: 0;
-  border: none;
   border-radius: 0.5rem;
-  background: none;
-  color: var(--ink-quiet);
-  cursor: pointer;
-}
-.dispatch-tool:hover {
-  /* 枠が無いので、地を一段浮かせて（`--surface-raised` は「浮く塊」用の導出値の使い回し）
-     押せる場所だと示す。 */
-  background: var(--surface-raised);
-  color: var(--ink);
 }
 /* 経過時間と送信⇄中断（<TurnStatus>）。道具の口との間に伸び縮みする要素が無いので、
    ここで右端へ寄せる。**縮めてよいのは API の知らせだけ**なので、行ごと縮められるように

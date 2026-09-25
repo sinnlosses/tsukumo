@@ -11,6 +11,7 @@
 
 import { type CSSProperties, type MouseEvent, type ReactElement } from "react"
 
+import { Button } from "../../../../components/ui/button/button.tsx"
 import { HStack } from "../../../../components/ui/h-stack/h-stack.tsx"
 import { Text } from "../../../../components/ui/text/text.tsx"
 import { useModalDialog } from "../../../../hooks/use-modal-dialog.ts"
@@ -78,16 +79,36 @@ export function PortraitClearConfirm(props: PortraitClearConfirmProps): ReactEle
         この表情を使う場面では「{props.fallbackLabel}」が出ます。
       </Text>
       <HStack element="div" gap="sm" align="stretch" justify="end" wrap="nowrap" className="">
-        <button type="button" className={styles["character-button"]} onClick={props.onClose}>
-          やめる
-        </button>
-        <button
+        <Button
           type="button"
-          className={styles["character-clear-confirm-ok"]}
+          variant="outline"
+          size="secondary"
+          pressed="none"
+          disabled={false}
+          ariaLabel={undefined}
+          ariaHasPopup={undefined}
+          title={undefined}
+          className={styles["character-button-outline"] ?? ""}
+          onClick={props.onClose}
+        >
+          やめる
+        </Button>
+        <Button
+          type="button"
+          variant="solid-danger"
+          size="secondary"
+          pressed="none"
+          disabled={false}
+          ariaLabel={undefined}
+          ariaHasPopup={undefined}
+          title={undefined}
+          className={styles["character-clear-confirm-ok"] ?? ""}
           onClick={props.onConfirm}
         >
-          消す
-        </button>
+          <Text element="span" size="inherit" tone="inherit" weight="bold" className="">
+            消す
+          </Text>
+        </Button>
       </HStack>
     </dialog>
   )

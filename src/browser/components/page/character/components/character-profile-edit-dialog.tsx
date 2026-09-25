@@ -15,6 +15,7 @@ import {
   MAX_CHARACTER_NAME_LENGTH,
   MAX_CHARACTER_TAGLINE_LENGTH,
 } from "../../../../../shared/character-definition.ts"
+import { Button } from "../../../../components/ui/button/button.tsx"
 import { Heading } from "../../../../components/ui/heading/heading.tsx"
 import { Text } from "../../../../components/ui/text/text.tsx"
 import { useModalDialog } from "../../../../hooks/use-modal-dialog.ts"
@@ -111,12 +112,36 @@ export function CharacterProfileEditDialog(props: CharacterProfileEditDialogProp
         </div>
         <div className={styles["character-create-footer"]}>
           <div className={styles["character-create-footer-spacer"]} />
-          <button type="button" className={styles["character-button"]} onClick={props.onClose}>
+          <Button
+            type="button"
+            variant="outline"
+            size="secondary"
+            pressed="none"
+            disabled={false}
+            ariaLabel={undefined}
+            ariaHasPopup={undefined}
+            title={undefined}
+            className={styles["character-button-outline"] ?? ""}
+            onClick={props.onClose}
+          >
             やめる
-          </button>
-          <button type="button" className={styles["character-create-submit"]} onClick={submit}>
-            保存する
-          </button>
+          </Button>
+          <Button
+            type="button"
+            variant="solid-accent"
+            size="secondary"
+            pressed="none"
+            disabled={false}
+            ariaLabel={undefined}
+            ariaHasPopup={undefined}
+            title={undefined}
+            className={styles["character-create-submit"] ?? ""}
+            onClick={submit}
+          >
+            <Text element="span" size="inherit" tone="inherit" weight="bold" className="">
+              保存する
+            </Text>
+          </Button>
         </div>
       </div>
     </dialog>

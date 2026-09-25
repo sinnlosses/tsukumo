@@ -243,8 +243,25 @@ describe("CharacterScreen", () => {
     renderCharacterScreen({ turn: { kind: "running", startedAt: 1 } })
 
     const button = screen.getByRole("button", { name: /このキャラクターに切り替える/ })
-    expect(button).toHaveProperty("disabled", true)
+    // **押せないは `aria-disabled` の1通り**（`Button`）。本物の `disabled` にはしないので、
+    // フォーカスは残る（`button.test.tsx` と同じ確かめ方）。
+    expect(button.getAttribute("aria-disabled")).toBe("true")
+    expect(button.hasAttribute("disabled")).toBe(false)
     expect(button.getAttribute("title")).toContain("ターン進行中")
+    button.focus()
+    expect(document.activeElement).toBe(button)
+  })
+
+  it("ターン進行中は「このキャラクターに切り替える」を押しても switch-character を送らない", () => {
+    const calls: unknown[] = []
+    window.location.hash = "#character?pack=other"
+    renderCharacterScreen({ turn: { kind: "running", startedAt: 1 } }, (command) =>
+      calls.push(command),
+    )
+
+    fireEvent.click(screen.getByRole("button", { name: /このキャラクターに切り替える/ }))
+
+    expect(calls).toEqual([])
   })
 
   // 戻る口と答え待ちの印は帯（`components/domain/screen-nav/`）へ移った（docs/screen-design.md 13.9）。

@@ -300,7 +300,8 @@
 .character-card-action:has(.character-card-file:focus-visible),
 .character-card-action:focus-visible,
 .character-button:has(.character-card-file:focus-visible),
-.character-button:focus-visible {
+.character-button:focus-visible,
+.character-button-outline:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 1px;
 }
@@ -402,19 +403,12 @@
   line-height: 1.7;
 }
 /* 並べ・間隔（`gap="sm"`）・揃えは `HStack` が持つ。 */
+/* 顔（枠・地・字の色・hover・太さ700）は `<Button variant="solid-danger">` が持つ（太さは
+   `Text`〔weight="bold"〕が持つ）。箱だけここに残す。 */
 .character-clear-confirm-ok {
   height: 34px;
   padding: 0 0.875rem;
-  background: var(--state-ng);
-  color: var(--ground);
-  border: none;
   border-radius: 0.5rem;
-  font-size: var(--font-secondary);
-  font-weight: 700;
-  cursor: pointer;
-}
-.character-clear-confirm-ok:hover {
-  background: color-mix(in srgb, var(--state-ng) 85%, var(--ink));
 }
 
 /* 差し色。**画面の差し色（2つ）と立ち絵の差し色（4つ）を横に並べる**（見本の 2 : 4）。 */
@@ -500,23 +494,8 @@
   white-space: nowrap;
   font-family: var(--font-mono);
 }
-/* 「雑談も仕事と同じにする」。字だけの口（差し色の字。13.1 原則1 の「差し色は指さす1箇所」）。 */
-.character-link-button {
-  padding: 0;
-  background: none;
-  color: var(--accent);
-  border: none;
-  font-size: var(--font-action);
-  cursor: pointer;
-}
-.character-link-button:hover {
-  text-decoration: underline;
-}
-.character-link-button:disabled {
-  color: var(--ink-quiet);
-  text-decoration: none;
-  cursor: default;
-}
+/* 「雑談も仕事と同じにする」。字だけの口（差し色の字。13.1 原則1 の「差し色は指さす1箇所」）。
+   顔（枠・地・字の色・hover の下線・押せないとき）は `<Button variant="link">` が持つ。 */
 
 /* 顔（13.9「顔」）。帯・一覧・名乗りの丸と同じ丸い縮図と、字と2つの口。 */
 /* 並べ・間隔（`gap="lg"`）・揃え・折り返しは `HStack` が持つ。 */
@@ -585,6 +564,19 @@
 }
 .character-button-danger:hover {
   border-color: var(--state-ng);
+}
+/* `<Button variant="outline">` に置き換えた「やめる」「名前とプロフィールを変える」
+   「このキャラクターに切り替える」の箱だけ（顔は Button が持つ）。`.character-button` と
+   同じ寸法——**`.character-button` 自体はここでは変えない**（`<label>` の差し替える・
+   `.character-button-danger` と組む消すボタンなど、Button 化していない箇所がまだ使うため）。 */
+.character-button-outline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  height: 34px;
+  padding: 0 0.75rem;
+  border-radius: 0.5rem;
+  white-space: nowrap;
 }
 
 /* 変えられないパックのとき・名前が使えないときの一言。 */
@@ -689,24 +681,12 @@
   justify-content: flex-end;
   gap: 0.625rem;
 }
+/* 顔（枠・地・字の色・hover・押せないとき・太さ700）は `<Button variant="solid-danger">` が持つ
+   （太さは `Text`〔weight="bold"〕が持つ）。箱だけここに残す。 */
 .character-delete-ok {
   height: 2.5rem;
   padding: 0 1.125rem;
-  background: var(--state-ng);
-  color: var(--ground);
-  border: none;
   border-radius: 0.5625rem;
-  font-size: var(--font-secondary);
-  font-weight: 700;
-  cursor: pointer;
-}
-.character-delete-ok:hover {
-  background: color-mix(in srgb, var(--state-ng) 85%, var(--ink));
-}
-.character-delete-ok:disabled {
-  background: var(--surface-raised);
-  color: var(--ink-quiet);
-  cursor: default;
 }
 
 /* ---- 作るダイアログ（`character-create.tsx`。キャラクター画面の上に重なる。13.6） ---- */
@@ -788,26 +768,13 @@
 }
 /* 「作る」だけは埋めた差し色の口（`.dispatch-send` と同じ考え方。押せる操作の中心を強める）。
    「やめる」は縁だけの `.character-button` を流用する。 */
+/* 顔（枠・地・字の色・hover・押せないとき・太さ700）は `<Button variant="solid-accent">` が持つ
+   （太さは `Text`〔weight="bold"〕が持つ）。箱だけここに残す。id が形に合わない・もう使われて
+   いる・立ち絵がまだ無い間は押せない（理由は id の欄の下の `.character-screen-note`）。 */
 .character-create-submit {
   height: 2.5rem;
   padding: 0 1.25rem;
-  background: var(--accent);
-  color: var(--ground);
-  border: none;
   border-radius: 0.5625rem;
-  font-size: var(--font-secondary);
-  font-weight: 700;
-  cursor: pointer;
-}
-.character-create-submit:hover {
-  background: color-mix(in srgb, var(--accent) 85%, var(--ink));
-}
-/* id が形に合わない・もう使われている・立ち絵がまだ無い間は押せない（理由は id の欄の下の
-   `.character-screen-note`）。 */
-.character-create-submit:disabled {
-  background: var(--surface-raised);
-  color: var(--ink-quiet);
-  cursor: default;
 }
 @media (max-width: 640px) {
   .character-create-grid {

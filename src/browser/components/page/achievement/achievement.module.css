@@ -25,21 +25,12 @@
   align-items: center;
   gap: 0.6rem;
 }
+/* 顔（枠・地・字の色・押せないとき）は `<Button variant="outline">` が持つ。箱だけここに残す。 */
 .achievement-day-switch-button {
   height: 2.25rem;
   min-width: 2.25rem;
   padding: 0 0.6rem;
-  border: 1px solid var(--rule);
   border-radius: 0.5625rem;
-  background: transparent;
-  color: var(--ink);
-  font-size: var(--font-secondary);
-  font-family: var(--font-sans);
-  cursor: pointer;
-}
-.achievement-day-switch-button[aria-disabled="true"] {
-  color: var(--ink-quiet);
-  cursor: default;
 }
 /* 並べ・間隔（`gap="none"`）・揃えは `VStack` が持つ。 */
 .achievement-day-switch-label {
@@ -50,17 +41,11 @@
 .achievement-day-switch-relative {
   letter-spacing: 0.05em;
 }
-/* 字の段・色・太さは `Text`（size="subheading" tone="ink" weight="inherit"）が持つ。 */
+/* 顔（枠・地・字の色）は `<Button variant="outline">` が持つ。箱だけここに残す。 */
 .achievement-day-switch-today {
   height: 2.25rem;
   padding: 0 0.75rem;
-  border: 1px solid var(--rule);
   border-radius: 0.5625rem;
-  background: transparent;
-  color: var(--ink);
-  font-size: var(--font-secondary);
-  font-family: var(--font-sans);
-  cursor: pointer;
 }
 
 /* 日記の区画（13.10「並べるもの」2）。地・枠にキャラクターの色をわずかに載せる（--surface-accent
@@ -102,16 +87,12 @@
 }
 /* 字の段・色は `Text`（size="label" tone="ink-quiet" weight="inherit"）が持つ。 */
 /* 「日記帳で読む」（13.10「並べるもの」2）。頭の行の右端へ押しやる。 */
+/* 顔（枠・地・字の色・下線）は `<Button variant="link">` が持つ。**もとは常時下線だったが、
+   Button の link は hover のときだけ下線**（`character-link-button` などと同じ振る舞いに揃えた。
+   見た目が変わる——結果に書く）。置き方・下線の余白だけここに残す。 */
 .achievement-diary-open-book {
   margin-left: auto;
-  border: none;
-  background: transparent;
-  padding: 0;
-  color: var(--accent);
-  font-size: var(--font-label);
-  text-decoration: underline;
   text-underline-offset: 0.2em;
-  cursor: pointer;
 }
 
 /* 吹き出し（明朝体。13.3「例外は日記の本文だけ」。パックが書体を同梱すれば `--font-diary` が
@@ -229,25 +210,12 @@
   align-items: flex-start;
   gap: 0.4rem;
 }
+/* 顔（枠・地・字の色・hover・押せないとき）は `<Button variant="outline-accent">` が持つ。太さは
+   `Text`（weight="bold"）が持つ。箱だけここに残す。 */
 .achievement-review-button {
   height: 2.5rem;
   padding: 0 1.125rem;
-  border: 1px solid var(--accent);
   border-radius: 0.5625rem;
-  background: transparent;
-  color: var(--accent);
-  font-family: var(--font-sans);
-  font-size: var(--font-secondary);
-  font-weight: 700;
-  cursor: pointer;
-}
-.achievement-review-button:hover {
-  background: color-mix(in srgb, var(--accent) 12%, transparent);
-}
-.achievement-review-button[aria-disabled="true"] {
-  border-color: var(--rule);
-  color: var(--ink-quiet);
-  cursor: default;
 }
 /* 字の段・色は `Text`（size="secondary" tone="ink-quiet" weight="inherit"）が持つ。 */
 /* しおり（13.10「並べるもの」3）。 */
@@ -477,21 +445,12 @@
 .diary-book-topbar-spacer {
   flex-grow: 1;
 }
+/* 顔（枠・地・字の色・押せないとき）は `<Button variant="outline">` が持つ。箱だけここに残す。 */
 .diary-book-topbar-button {
   height: 2.25rem;
   padding: 0 0.75rem;
-  border: 1px solid var(--rule);
   border-radius: 0.5625rem;
-  background: transparent;
-  color: var(--ink);
-  font-family: var(--font-sans);
-  font-size: var(--font-secondary);
-  cursor: pointer;
   white-space: nowrap;
-}
-.diary-book-topbar-button[aria-disabled="true"] {
-  color: var(--ink-quiet);
-  cursor: default;
 }
 
 /* **高さを固定する**（`max-height` だけだと中の縦書き本文（`flex: 1`）が配る先の高さを
@@ -753,22 +712,12 @@
   flex-direction: column;
   gap: 0.4rem;
 }
+/* 顔（枠・地・字の色・押せないとき・太さ700）は `<Button variant="solid-accent">` が持つ（太さは
+   `Text`〔weight="bold"〕が持つ）。箱だけここに残す。 */
 .diary-book-review-button {
   height: 2.75rem;
   padding: 0 1.25rem;
-  border: none;
   border-radius: 0.875rem;
-  background: var(--accent);
-  color: var(--ground);
-  font-family: var(--font-sans);
-  font-size: var(--font-body);
-  font-weight: 700;
-  cursor: pointer;
-}
-.diary-book-review-button[aria-disabled="true"] {
-  background: var(--rule);
-  color: var(--ink-quiet);
-  cursor: default;
 }
 /* 字の段・色は `Text`（size="label" tone="ink-quiet" weight="inherit"）が持つ。幅だけここに
    残す（語彙に無い見た目）。 */

@@ -198,13 +198,22 @@ describe("MainView（札の頭）", () => {
   it("端ではその側を押せない（最新では ›、いちばん古いターンでは ‹）", () => {
     renderMainView(threeTurns())
 
-    expect(button(NEWER).disabled).toBe(true)
-    expect(button(OLDER).disabled).toBe(false)
+    // **押せないは `aria-disabled` の1通り**（`Button`）。本物の `disabled` にはしないので、
+    // フォーカスは残る（`button.test.tsx` と同じ確かめ方）。
+    expect(button(NEWER).getAttribute("aria-disabled")).toBe("true")
+    expect(button(NEWER).hasAttribute("disabled")).toBe(false)
+    expect(button(OLDER).getAttribute("aria-disabled")).toBe("false")
 
     press(OLDER)
     press(OLDER)
-    expect(button(OLDER).disabled).toBe(true)
-    expect(button(NEWER).disabled).toBe(false)
+    expect(button(OLDER).getAttribute("aria-disabled")).toBe("true")
+    expect(button(NEWER).getAttribute("aria-disabled")).toBe("false")
+
+    // 端に着いたあとは、フォーカスは残ったまま押しても動かない。
+    button(OLDER).focus()
+    expect(document.activeElement).toBe(button(OLDER))
+    press(OLDER)
+    expect(title()).toBe("1つ目")
   })
 
   it("過去を見ている間は「最新」の印の代わりに「最新へ」が出て、押すと追従に戻る", () => {
@@ -252,8 +261,8 @@ describe("MainView（札の頭）", () => {
 
     expect(title()).toBe("ただ1つの依頼")
     expect(position()).toBe("1 / 1")
-    expect(button(OLDER).disabled).toBe(true)
-    expect(button(NEWER).disabled).toBe(true)
+    expect(button(OLDER).getAttribute("aria-disabled")).toBe("true")
+    expect(button(NEWER).getAttribute("aria-disabled")).toBe("true")
     expect(screen.getByText("最新")).toBeDefined()
   })
 

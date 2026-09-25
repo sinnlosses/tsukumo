@@ -8,6 +8,7 @@ import { type ReactElement } from "react"
 
 import { PROMPT_IMAGE_MEDIA_TYPES } from "../../../../../shared/prompt-image.ts"
 import { PromptImageChips } from "../../../../components/domain/prompt-image.tsx"
+import { Button } from "../../../../components/ui/button/button.tsx"
 import { Text } from "../../../../components/ui/text/text.tsx"
 import { VStack } from "../../../../components/ui/v-stack/v-stack.tsx"
 import { CommandSuggestions } from "./command-suggestions.tsx"
@@ -99,33 +100,48 @@ export function PresentationalComposer({
         )}
       </VStack>
       <div className={styles["dispatch-toolbar"]}>
-        <button
+        <Button
           type="button"
-          className={styles["dispatch-tool"]}
-          aria-label="画像を添える"
+          variant="ghost"
+          size="action"
+          pressed="none"
+          disabled={false}
+          ariaLabel="画像を添える"
+          ariaHasPopup={undefined}
           title="画像を添える"
+          className={styles["dispatch-tool"] ?? ""}
           onClick={onPickImages}
         >
           <ImageIcon />
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
-          className={styles["dispatch-tool"]}
-          aria-label="コマンドを補完する"
+          variant="ghost"
+          size="action"
+          pressed="none"
+          disabled={false}
+          ariaLabel="コマンドを補完する"
+          ariaHasPopup={undefined}
           title="コマンドを補完する"
+          className={styles["dispatch-tool"] ?? ""}
           onClick={() => onInsertTrigger("/")}
         >
           <SlashIcon />
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
-          className={styles["dispatch-tool"]}
-          aria-label="ファイルを補完する"
+          variant="ghost"
+          size="action"
+          pressed="none"
+          disabled={false}
+          ariaLabel="ファイルを補完する"
+          ariaHasPopup={undefined}
           title="ファイルを補完する"
+          className={styles["dispatch-tool"] ?? ""}
           onClick={() => onInsertTrigger("@")}
         >
           <AtIcon />
-        </button>
+        </Button>
         <input
           ref={imageInputRef}
           type="file"

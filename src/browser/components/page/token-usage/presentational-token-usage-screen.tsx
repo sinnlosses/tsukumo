@@ -17,6 +17,7 @@ import {
   type TokenUsageTrend,
 } from "../../../../shared/token-usage-summary.ts"
 import { type ToolUsageCount } from "../../../../shared/token-usage.ts"
+import { Button } from "../../../components/ui/button/button.tsx"
 import { HStack } from "../../../components/ui/h-stack/h-stack.tsx"
 import { Text } from "../../../components/ui/text/text.tsx"
 import { VStack } from "../../../components/ui/v-stack/v-stack.tsx"
@@ -279,15 +280,22 @@ function ToolUsageCard(props: ToolUsageCardProps): ReactElement {
         </tbody>
       </table>
       {rest > 0 ? (
-        <button
+        <Button
           type="button"
-          className={styles["usage-table-more"]}
+          variant="link"
+          size="action"
+          pressed="none"
+          disabled={false}
+          ariaLabel={undefined}
+          ariaHasPopup={undefined}
+          title={undefined}
+          className={styles["usage-table-more"] ?? ""}
           onClick={() => {
             setExpanded((current) => !current)
           }}
         >
           {expanded ? "閉じる" : `ほか ${rest} 件を見る`}
-        </button>
+        </Button>
       ) : null}
     </section>
   )

@@ -6,6 +6,7 @@
 import { type ReactElement } from "react"
 
 import { previousDateKey } from "../../../../shared/achievement.ts"
+import { Button } from "../../../components/ui/button/button.tsx"
 import { HStack } from "../../../components/ui/h-stack/h-stack.tsx"
 import { Heading } from "../../../components/ui/heading/heading.tsx"
 import { Text } from "../../../components/ui/text/text.tsx"
@@ -34,15 +35,20 @@ export function DaySwitch(props: DaySwitchProps): ReactElement {
         成果
       </Heading>
       <div className={styles["achievement-day-switch-nav"]}>
-        <button
+        <Button
           type="button"
-          className={styles["achievement-day-switch-button"]}
-          aria-label="前の日"
-          aria-disabled={!known}
+          variant="outline"
+          size="secondary"
+          pressed="none"
+          disabled={!known}
+          ariaLabel="前の日"
+          ariaHasPopup={undefined}
+          title={undefined}
+          className={styles["achievement-day-switch-button"] ?? ""}
           onClick={props.onPreviousDay}
         >
           ‹
-        </button>
+        </Button>
         <VStack
           element="span"
           gap="none"
@@ -70,23 +76,35 @@ export function DaySwitch(props: DaySwitchProps): ReactElement {
             LOADING_VALUE
           )}
         </VStack>
-        <button
+        <Button
           type="button"
-          className={styles["achievement-day-switch-button"]}
-          aria-label="次の日"
-          aria-disabled={!known || isToday}
+          variant="outline"
+          size="secondary"
+          pressed="none"
+          disabled={!known || isToday}
+          ariaLabel="次の日"
+          ariaHasPopup={undefined}
+          title={undefined}
+          className={styles["achievement-day-switch-button"] ?? ""}
           onClick={props.onNextDay}
         >
           ›
-        </button>
+        </Button>
         {known && !isToday ? (
-          <button
+          <Button
             type="button"
-            className={styles["achievement-day-switch-today"]}
+            variant="outline"
+            size="secondary"
+            pressed="none"
+            disabled={false}
+            ariaLabel={undefined}
+            ariaHasPopup={undefined}
+            title={undefined}
+            className={styles["achievement-day-switch-today"] ?? ""}
             onClick={props.onToday}
           >
             今日へ
-          </button>
+          </Button>
         ) : null}
       </div>
     </HStack>

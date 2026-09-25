@@ -11,6 +11,7 @@
 
 import { type ReactElement } from "react"
 
+import { Button } from "../../../components/ui/button/button.tsx"
 import { Heading } from "../../../components/ui/heading/heading.tsx"
 import { Text } from "../../../components/ui/text/text.tsx"
 import { VStack } from "../../../components/ui/v-stack/v-stack.tsx"
@@ -108,17 +109,36 @@ export function PresentationalCharacterCreate({
             背景と立ち絵の差し色は、作ったあとに設定できます
           </Text>
           <div className={styles["character-create-footer-spacer"]} />
-          <button type="button" className={styles["character-button"]} onClick={onClose}>
-            やめる
-          </button>
-          <button
+          <Button
             type="button"
-            className={styles["character-create-submit"]}
+            variant="outline"
+            size="secondary"
+            pressed="none"
+            disabled={false}
+            ariaLabel={undefined}
+            ariaHasPopup={undefined}
+            title={undefined}
+            className={styles["character-button-outline"] ?? ""}
+            onClick={onClose}
+          >
+            やめる
+          </Button>
+          <Button
+            type="button"
+            variant="solid-accent"
+            size="secondary"
+            pressed="none"
             disabled={!form.canSubmit}
+            ariaLabel={undefined}
+            ariaHasPopup={undefined}
+            title={undefined}
+            className={styles["character-create-submit"] ?? ""}
             onClick={form.onSubmit}
           >
-            作る
-          </button>
+            <Text element="span" size="inherit" tone="inherit" weight="bold" className="">
+              作る
+            </Text>
+          </Button>
         </div>
       </VStack>
     </dialog>

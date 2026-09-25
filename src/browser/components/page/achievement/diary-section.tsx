@@ -7,6 +7,7 @@ import { type ReactElement } from "react"
 import { type AchievementDoneTasks } from "../../../../shared/achievement.ts"
 import { DIARY_STAGES, type DiaryStage } from "../../../../shared/diary.ts"
 import { Portrait } from "../../../components/domain/portrait.tsx"
+import { Button } from "../../../components/ui/button/button.tsx"
 import { Heading } from "../../../components/ui/heading/heading.tsx"
 import { Text } from "../../../components/ui/text/text.tsx"
 import { useReportReveal } from "../../../domain/reveal/use-report-reveal.ts"
@@ -120,13 +121,20 @@ function Header(props: {
         </Text>
       ) : null}
       {latest === undefined ? null : (
-        <button
+        <Button
           type="button"
-          className={styles["achievement-diary-open-book"]}
+          variant="link"
+          size="label"
+          pressed="none"
+          disabled={false}
+          ariaLabel={undefined}
+          ariaHasPopup={undefined}
+          title={undefined}
+          className={styles["achievement-diary-open-book"] ?? ""}
           onClick={props.onOpenDiaryBook}
         >
           日記帳で読む
-        </button>
+        </Button>
       )}
     </div>
   )
@@ -308,9 +316,22 @@ function Controls(props: {
   if (props.writing.kind === "writing") {
     return (
       <div className={styles["achievement-review"]}>
-        <button type="button" className={styles["achievement-review-button"]} aria-disabled="true">
-          振り返り中…
-        </button>
+        <Button
+          type="button"
+          variant="outline-accent"
+          size="secondary"
+          pressed="none"
+          disabled={true}
+          ariaLabel={undefined}
+          ariaHasPopup={undefined}
+          title={undefined}
+          className={styles["achievement-review-button"] ?? ""}
+          onClick={() => {}}
+        >
+          <Text element="span" size="inherit" tone="inherit" weight="bold" className="">
+            振り返り中…
+          </Text>
+        </Button>
       </div>
     )
   }
@@ -319,14 +340,22 @@ function Controls(props: {
 
   return (
     <div className={styles["achievement-review"]}>
-      <button
+      <Button
         type="button"
-        className={styles["achievement-review-button"]}
-        aria-disabled={review.availability.kind === "blocked"}
+        variant="outline-accent"
+        size="secondary"
+        pressed="none"
+        disabled={review.availability.kind === "blocked"}
+        ariaLabel={undefined}
+        ariaHasPopup={undefined}
+        title={undefined}
+        className={styles["achievement-review-button"] ?? ""}
         onClick={review.onReview}
       >
-        {review.label}
-      </button>
+        <Text element="span" size="inherit" tone="inherit" weight="bold" className="">
+          {review.label}
+        </Text>
+      </Button>
       {review.availability.kind === "blocked" && review.availability.reason !== "" ? (
         <Text element="p" size="secondary" tone="ink-quiet" weight="inherit" className="">
           {review.availability.reason}

@@ -19,6 +19,7 @@
 
 import { type ReactElement } from "react"
 
+import { Button } from "../../../../components/ui/button/button.tsx"
 import { Text } from "../../../../components/ui/text/text.tsx"
 import { useQuestionAnswer, type QuestionOptionRow } from "../../../../stores/question-answer.tsx"
 import { useQuestionScroll } from "../../../../stores/question-scroll.tsx"
@@ -134,14 +135,22 @@ export function QuestionAsk(): ReactElement | null {
         >
           {FREE_TEXT_HINT}
         </Text>
-        <button
+        <Button
           type="button"
-          className={styles["question-ask-answer"]}
+          variant="solid-warn"
+          size="secondary"
+          pressed="none"
           disabled={!question.canAnswer}
+          ariaLabel={undefined}
+          ariaHasPopup={undefined}
+          title={undefined}
+          className={styles["question-ask-answer"] ?? ""}
           onClick={question.onAnswer}
         >
-          {question.last ? ANSWER_LABEL : NEXT_LABEL}
-        </button>
+          <Text element="span" size="inherit" tone="inherit" weight="bold" className="">
+            {question.last ? ANSWER_LABEL : NEXT_LABEL}
+          </Text>
+        </Button>
       </footer>
     </section>
   )
