@@ -4,10 +4,6 @@
 // **ここは型だけ**で、SDK のメッセージからの変換は core（src/server/session-driver/core/sdk-message.ts）にある
 // （変換は SDK の形に結び付いた「外部由来の値の検証」なので、両側が共有する契約には入れない）。
 //
-// **`SessionEvent` の union は zod にしない。** 状態にフィールドを足すたびに
-// スキーマを二重に直す手間が移行の各段で効いてくるため、型は TS のまま持ち、境界では
-// {@link sessionEventSchema} の封筒（`kind` があること）だけを確かめる。
-//
 // **会話の内容がイベントに入る。** 外に出さない・複製しない・ログに出さない
 // （docs/coding-standards.md「会話内容の扱い」）。
 
@@ -87,9 +83,8 @@ export type SessionEvent =
       readonly terminalSlashCommands: readonly string[]
     }
   /**
-   * コマンドの説明が届いた。**名前の一覧（`session-info`）とは別の経路で来る**ので、別の
-   * イベントにしてある（駆動側の `supportedCommands()` の結果と、`system` の
-   * `commands_changed` の押し出しの両方がここに入る）。端末専用かどうかは分からないので、
+   * コマンドの説明が届いた（{@link CommandDescription}）。**名前の一覧（`session-info`）とは別の
+   * 経路で来る**ので、別のイベントにしてある。端末専用かどうかは分からないので、
    * 補完に出す/出さないの判断は名前の一覧の側が持つ（src/shared/command-suggestion.ts）。
    */
   | {
@@ -98,7 +93,7 @@ export type SessionEvent =
     }
   /**
    * 起動直後に分かった**プラン**（`docs/glossary.md`「プラン」。Agent SDK の `accountInfo()` の
-   * `subscriptionType`）。`command-descriptions` と同じく駆動が起動直後に1回だけ取りに行く
+   * `subscriptionType`）。駆動が起動直後に1回だけ取りに行く
    * （`src/server/session-driver/adapter/sdk-driver.ts`）。
    *
    * **`email` / `organization` はここに乗らない** — 取り出すのは `subscriptionType` だけで、
@@ -108,7 +103,7 @@ export type SessionEvent =
    * 文字列。tsukumo 側に表示名の対応表は持たない——知らない値が増えても直さずに出せる）。
    *
    * **取れなかったとき（`subscriptionType` が無い・呼び出しが落ちた）は流れない**
-   * （`command-descriptions` と同じ、動作中の一時的な失敗の扱い。API キーや Bedrock の
+   * （動作中の一時的な失敗の扱い。API キーや Bedrock の
    * ときは元々この値が無い。`sdk.d.ts` の `AccountInfo`）。
    */
   | { readonly kind: "plan"; readonly plan: string }
@@ -140,7 +135,7 @@ export type SessionEvent =
    * 依頼を送らなくても `init` → `assistant` → `result` が届く）。起こすのは SDK の口
    * （`src/server/session-driver/core/self-started-turn.ts`）。
    *
-   * `turn-started` と同じく記録を持たないが、**新しいターンではなく同じやり取りの続き**なので、
+   * 記録を持たない。**新しいターンではなく同じやり取りの続き**なので、
    * 吹き出しのセリフと表情は持ち越す（空にすると、合図が届くたびに吹き出しが
    * 「（まだ発話がありません）」に戻る）。
    */
@@ -257,7 +252,6 @@ export type SessionEvent =
    */
   | {
       readonly kind: "step-usage"
-      /** そのステップを載せたメッセージの id（`message.id`）。 */
       readonly messageId: string
       readonly scope: TurnUsageScope
       readonly usage: StepTokenUsage
@@ -279,14 +273,11 @@ export type SessionEvent =
    *
    * 1. `/model` のローカルコマンドが実行された合図（`assistant` に乗る
    *    `local_command_run: { command: "model", args }`。実測。`src/server/session-driver/core/sdk-message.ts`）。
-   *    `init` はターンの頭に届くので、`/model haiku` を送ったそのターンの `init` はまだ古い
-   *    モデルを返す（正しい値が載るのは次の依頼の `init` から。docs/design.md 4.1）
+   *    `init` は1ターン遅れる（docs/design.md 4.1）
    * 2. サイドバーの `<select>` からの `session.setModel` を駆動が確定させたとき
    *    （`src/server/session-driver/adapter/sdk-driver.ts` の `setModel`）。**こちらは駆動が実際に切り替えたことを
    *    確認してから出すので、ブラウザ側のローカル echo ではない**（session-manager.ts が
-   *    駆動を経ずにこのイベントを合成することはない。実測: 本物の駆動は元々これを
-   *    出しておらず、選んだ直後に次のイベントで古いモデルへ巻き戻って見えていた。fake
-   *    driver（fake-driver.ts）は最初から出していたので気づけなかった）
+   *    駆動を経ずにこのイベントを合成することはない）
    *
    * `model` はそのまま状態へ運ぶ値。1 のときは `/model` に渡した引数（前後の空白だけ除いてある）で
    * **エイリアスとして知っているかどうかの検証はしていない**。2 のときは `MODEL_ALIASES`
@@ -297,8 +288,7 @@ export type SessionEvent =
   | { readonly kind: "model-changed"; readonly model: string }
   /**
    * 起動直後に分かった、モデルごとの effort の対応（{@link ModelEffortSupport}）。
-   * **駆動が起動直後に1回だけ取りに行く**（`supportedModels()`。`plan` / `command-descriptions`
-   * と同じ契機）。**取れなかったとき（呼び出しが落ちた・空だった）は流れない**（動作中の
+   * **駆動が起動直後に1回だけ取りに行く**（`supportedModels()`）。**取れなかったとき（呼び出しが落ちた・空だった）は流れない**（動作中の
    * 一時的な失敗の扱い。`docs/coding-standards.md`「エラーハンドリング」）。
    */
   | { readonly kind: "model-effort-support"; readonly models: readonly ModelEffortSupport[] }
@@ -310,7 +300,7 @@ export type SessionEvent =
    */
   | { readonly kind: "effort-changed"; readonly effort: EffortLevel }
   /**
-   * `main` の develop/tasks.json が変わった（adapter の `task-summary.ts` が `main` の先端を見て起こす）。
+   * `main` の develop/task/ が変わった（adapter の `task-summary.ts` が `main` の先端を見て起こす）。
    * ファイルが読めない・消えたときは `tasks: { kind: "unknown" }`（サイドバーの「不明」表示に
    * 対応する。`src/shared/task-summary.ts` の {@link TaskSummaryResult}）。
    */
@@ -318,8 +308,7 @@ export type SessionEvent =
   /**
    * キャラクターパックが決まった・一覧が変わった（adapter の `character-pack.ts`。**起こしたとき・
    * 起こし直したときの1回ずつと、画面からパックを変えた・作ったとき**）。キャラビューが立ち絵を
-   * 取りに行く先（`docs/design.md` 4.1・7.2）。**中身は URL だけ**（素材そのものは乗らない。
-   * docs/coding-standards.md「会話内容の扱い」と同じ考え方）。
+   * 取りに行く先（`docs/design.md` 4.1・7.2）。**中身は URL だけ**（素材そのものは乗らない）。
    *
    * 全パックぶんの一覧（`packs`。使用中以外のパックの姿も含む）も一緒に運ぶ。**一覧が変わる契機は
    * いま出しているパックが変わる契機と同じ**で、使用中の印（`inUse`）も持ち替えで動くので、
@@ -330,8 +319,7 @@ export type SessionEvent =
       })
   /**
    * 切り替え先として選べるセッションの一覧が分かった（`docs/requirements.md` 4.8）。
-   * **駆動を起こしたときと、起こし直したときの1回ずつ**流れる（`character-changed` と同じ契機。
-   * 一覧の出どころが「セッションを探すために読む transcript の一覧」そのものなので、
+   * **駆動を起こしたときと、起こし直したときの1回ずつ**流れる（一覧の出どころが「セッションを探すために読む transcript の一覧」そのものなので、
    * 別の契機を作らない）。
    *
    * **ターンのたびには流れない。** 印が付くのはターンが終わって3秒後で、押し直すたびに
@@ -352,7 +340,7 @@ export type SessionEvent =
     }
   /**
    * 雑談モードに入っている／出ている（`docs/chat-mode.md` 4.9）。**駆動を起こしたときと、
-   * `session.setChatMode` で起こし直したときの1回ずつ**流れる（`character-changed` と同じ契機）。
+   * `session.setChatMode` で起こし直したときの1回ずつ**流れる。
    *
    * 起こし直すと状態が初期値へ戻るので、**このイベントが無いと画面は雑談中かどうかを
    * 見失う**（`INITIAL_SESSION_STATE.chatMode` は `false`）。
@@ -381,7 +369,7 @@ export type SessionEvent =
   | { readonly kind: "remembered-lines-changed"; readonly lines: readonly string[] }
   /**
    * 新しいセッションの既定（モデル・許可モード）が分かった（`docs/screen-design.md` 13.6）。
-   * **駆動を起こしたときと、起こし直したときの1回ずつ**（`character-changed` と同じ契機）と、
+   * **駆動を起こしたときと、起こし直したときの1回ずつ**と、
    * **歯車から `session.setSessionDefault` で覚え直したとき**に流れる。
    *
    * 運ぶのは覚えた値（読めなければ同梱の既定へ畳んだあとの値）で、**いま動いている
@@ -390,7 +378,7 @@ export type SessionEvent =
   | { readonly kind: "session-default-changed"; readonly sessionDefault: SessionDefault }
   /**
    * 歯車の「訪問」のオン・オフが変わった（`docs/screen-design.md` 13.6・13.9「設定の歯車」）。
-   * **`session-default-changed` と違い、いま動いているセッションに即座に効く**——オフのあいだは
+   * **いま動いているセッションに即座に効く**——オフのあいだは
    * 客が来ず、訪問中にオフにしたらその場で帰る（`src/server/visit/core/visit-timing.ts`）。
    * **ディスクには覚えない**ので、起こし直すと初期値の「する」へ戻る（`visit.setEnabled` で
    * 書き換えるたびに流れる、この1つだけが源）。
@@ -487,8 +475,8 @@ export type StampedEvent = {
 
 /**
  * 外から届いた値を {@link SessionEvent} として受け取るための**封筒だけ**のスキーマ
- * （`kind` を持つオブジェクトであること）。**中身は検証しない**（union を
- * zod で二重に持たない）。使うのは境界の2箇所だけ — フレームの読み取り（src/shared/frame.ts）と
+ * （`kind` を持つオブジェクトであること）。**中身は検証しない**（union を zod で二重に持つと、
+ * イベントにフィールドを足すたびに型とスキーマの2か所を直すことになる）。使うのは境界の2箇所だけ — フレームの読み取り（src/shared/frame.ts）と
  * fake driver の疑似セッション（src/server/session-driver/adapter/fake-driver.ts）。
  */
 export const sessionEventSchema = z.custom<SessionEvent>(

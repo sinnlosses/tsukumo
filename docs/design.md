@@ -1240,7 +1240,8 @@ Layout に出す。復帰したときにセッションを続きから起こし�
 **サイドバーの `<select>` から `session.setModel` を送ったときも同じ `model-changed` を使う**
 （2026-09-17）。`src/server/session-driver/adapter/sdk-driver.ts` の `setModel` が `session.setModel()` の確定を
 待ってから出す（駆動を経ているので、これは「ブラウザ側のローカル echo」の禁止（3章「依頼」）
-には当たらない）。
+には当たらない）。本物の駆動は当初これを出しておらず、選んだ直後に次のイベントで古いモデルへ
+巻き戻って見えていた。fake driver は最初から出していたので、テストでは気づけなかった。
 
 **`local_command_run` は SDK 0.3.274 で入った**（0.3.268 には無い。2026-09-17 に両方で実測）。
 古い SDK では `assistant` に `local_command_source`（英語の文面だけ）と `result` の
