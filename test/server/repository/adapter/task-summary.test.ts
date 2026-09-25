@@ -240,6 +240,19 @@ describe("watchTaskSummary", () => {
     ])
   })
 
+  it("INVALID なファイルはその1件だけ読み飛ばす", async () => {
+    const repository = initRepository("main")
+    writeNewFormatTask(repository, "T-001", "読める", "todo")
+    writeFileSync(join(repository, "develop", "task", "T-002.md"), "---\nid: T-002\n壊れている")
+    git(repository, "add", "develop/task")
+    git(repository, "commit", "-m", "tasks")
+    const changes: unknown[] = []
+    watch(repository, changes)
+    await waitForChanges(changes, 1)
+
+    expect(changes).toEqual([known(notified("T-001", "読める", "todo"))])
+  })
+
   it("台帳に着手の印があるタスクは doing として出る（ファイルの status は todo のまま）", async () => {
     const repository = initRepository("main")
     commitNewFormatTasks(repository, [

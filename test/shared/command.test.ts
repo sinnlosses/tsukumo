@@ -80,6 +80,11 @@ describe("parseClientCommand（受け付ける形）", () => {
       id: "toolu_1",
       answer: { kind: "answers", labels: [["こっち"]] },
     })
+    for (const answer of [{ kind: "allow" }, { kind: "deny" }] as const) {
+      expect(
+        parseClientCommand({ type: "answer", commandId: "c-3", id: "toolu_1", answer }),
+      ).toEqual({ type: "answer", commandId: "c-3", id: "toolu_1", answer })
+    }
     expect(parseClientCommand({ type: "set-model", commandId: "c-4", model: "opus" })).toEqual({
       type: "set-model",
       commandId: "c-4",
@@ -717,5 +722,18 @@ describe("parseClientCommand（落とす形）", () => {
         answer: { kind: "??" },
       }),
     ).toBeUndefined()
+  })
+
+  it("answers の labels が「文字列の配列」の配列でない答えは undefined", () => {
+    for (const answer of [
+      { kind: "answers", labels: [1, 2] },
+      { kind: "answers", labels: ["答え"] },
+      { kind: "answers", labels: "答え" },
+      { kind: "answers" },
+    ]) {
+      expect(
+        parseClientCommand({ type: "answer", commandId: "c-3", id: "toolu_1", answer }),
+      ).toBeUndefined()
+    }
   })
 })

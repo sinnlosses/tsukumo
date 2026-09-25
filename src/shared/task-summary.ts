@@ -162,23 +162,6 @@ export function parseNewTaskFile(fileName: string, content: string): NewTaskFile
 }
 
 /**
- * `develop/task/` の各ファイルと台帳の着手の印から、一覧に出す要約を作る。INVALID なファイルは
- * その1件だけ読み飛ばす（`parseNewTaskFile` の仕事）。中身の組み立ては
- * {@link taskSummaryItemsOfNewTaskFiles} を見る。
- */
-export function newFormatTaskSummaries(
-  files: readonly { readonly name: string; readonly content: string }[],
-  claimedIds: ReadonlySet<string>,
-): readonly TaskSummaryItem[] {
-  const parsed = files.flatMap((file) => {
-    const task = parseNewTaskFile(file.name, file.content)
-    return task === undefined ? [] : [task]
-  })
-
-  return taskSummaryItemsOfNewTaskFiles(parsed, claimedIds)
-}
-
-/**
  * 前段の `parseNewTaskFile` で読み終えた {@link NewTaskFile} の並びと、台帳の着手の印から
  * 一覧に出す要約を作る。**着手中（台帳に印がある `todo`）は表示用の `status` を `"doing"` に
  * 読み替える**（ファイルには書かれていないので、ここで初めて出てくる）。並びは ID の数字順

@@ -234,7 +234,7 @@ HTTP/WebSocket・ホスト・ファイル・子プロセス）に触るならそ
 - **原則5**: 1ファイルにまとめるか分けるかは、行数でも関数の数でもなく
   「**ファイル名が概念になっているか**」で決める。`helpers.ts` / `utils.ts` / `common.ts` のような
   **置き場所を名前にしたファイルは作らない**。**ファイルは単数形**にし、複数は「複数返す」
-  関数名の側で表す（`newFormatTaskSummaries`）。**ディレクトリも単数形。ただし置き場所を名前にした
+  関数名の側で表す（`unfinishedTaskIds`）。**ディレクトリも単数形。ただし置き場所を名前にした
   ディレクトリ（`src/browser/` の `features/` `components/` `hooks/` `stores/` `styles/`、
   機能の中の `hooks/` `components/` `domain/`、どの層にも作ってよい `lib/` `utils/`）だけは
   bullet-proof-react の名前をそのまま使う**（2026-09-16・2026-09-21・2026-09-22）。
@@ -885,7 +885,7 @@ DOM の状態（スクロール位置・`<details>` の開閉・フォーカス�
 （いまは機能の `adapter/` 直下の `sdk-` で始まるファイル）、という境界（原則3）はそのまま生きる。
 
 **ディレクトリもファイルも単数形にする。** 複数は「複数返す」関数名の側で表す
-（`newFormatTaskSummaries`）。**このうちディレクトリの側は 2026-09-16 に `src/browser/` だけ例外にした**
+（`unfinishedTaskIds`）。**このうちディレクトリの側は 2026-09-16 に `src/browser/` だけ例外にした**
 （上の原則5）。この規則に合っていなかった2つは改名する:
 `tasks.ts` → `task-summary.ts`、`bundled-files.ts` → `bundled-path.ts`（中身は同梱物の
 **置き場所を解く**関数2つで、ファイルそのものは扱っていない）。

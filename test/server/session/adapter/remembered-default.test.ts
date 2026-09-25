@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from "bun:test"
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs"
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
@@ -44,68 +44,16 @@ describe("readRememberedCharacter", () => {
   })
 })
 
-// `readRememberedCharacter` 自身はパックの一覧を知らない（一覧との突き合わせは呼び出し側
-// ＝ src/current-character.ts の仕事）。ここでは同じ組み立て方
-// （`packs.find(...) ?? defaultPack` / `config.character` があれば読みに行かない）を
-// 使って、覚えた値の使われ方を確かめる。
-describe("覚えた値の使いどころ（src/current-character.ts の組み立て方を模して確かめる）", () => {
-  type Pack = { readonly name: string }
-  const defaultPack: Pack = { name: "tsukumo-spirit" }
-
-  function selectInitialPack(configCharacter: string | undefined, packs: readonly Pack[]): Pack {
-    if (configCharacter !== undefined) {
-      return defaultPack
-    }
-    const remembered = readRememberedCharacter(statePath())
-    return packs.find((pack) => pack.name === remembered) ?? defaultPack
-  }
-
-  it("指すパックが一覧に無いときは既定に落ちる", () => {
-    writeFileSync(statePath(), JSON.stringify({ character: "no-such-pack" }))
-
-    const initialPack = selectInitialPack(undefined, [defaultPack, { name: "tsukumo" }])
-
-    expect(initialPack).toEqual(defaultPack)
-  })
-
-  it("指すパックが一覧にあるときはその名前が使われる", () => {
-    writeFileSync(statePath(), JSON.stringify({ character: "tsukumo" }))
-
-    const initialPack = selectInitialPack(undefined, [defaultPack, { name: "tsukumo" }])
-
-    expect(initialPack).toEqual({ name: "tsukumo" })
-  })
-
-  it("TSUKUMO_CHARACTER（環境変数）があるときは覚えた値より優先される", () => {
-    writeFileSync(statePath(), JSON.stringify({ character: "tsukumo" }))
-
-    const initialPack = selectInitialPack("characters/tsukumo-spirit", [
-      defaultPack,
-      { name: "tsukumo" },
-    ])
-
-    expect(initialPack).toEqual(defaultPack)
-  })
-})
+// **起動時の初期パックの決め方**（一覧に無い名前は既定へ落ちる／`TSUKUMO_CHARACTER` が
+// 覚えた値より優先される、など）は `selectInitialCharacterPack`
+// （`src/server/character-pack/core/character-selection.ts`）の契約で、
+// `test/server/character-pack/core/character-selection.test.ts` が持ち主として検査する。
+// ここで確かめるのは `readRememberedCharacter` 自身の読み取りまで（このファイル冒頭の describe）。
 
 describe("writeRememberedCharacter", () => {
-  it("ディレクトリが無ければ作って書く", () => {
-    const path = join(dir, "nested", "state.json")
-    writeRememberedCharacter("tsukumo-spirit", path)
-
-    expect(JSON.parse(readFileSync(path, "utf8"))).toEqual({ character: "tsukumo-spirit" })
-  })
-
   it("書いた値を readRememberedCharacter で読み返せる", () => {
     writeRememberedCharacter("tsukumo-spirit", statePath())
     expect(readRememberedCharacter(statePath())).toBe("tsukumo-spirit")
-  })
-
-  it("書き込み先がディレクトリで塞がっていても例外を投げない", () => {
-    const path = statePath()
-    mkdirSync(path)
-
-    expect(() => writeRememberedCharacter("tsukumo-spirit", path)).not.toThrow()
   })
 })
 
@@ -217,31 +165,9 @@ describe("writeRememberedSessionDefault", () => {
     })
   })
 
-  it("ディレクトリが無ければ作って書く", () => {
-    const path = join(dir, "nested", "state.json")
-    writeRememberedSessionDefault(
-      { model: "haiku", effort: "low", permissionMode: "default" },
-      path,
-    )
-
-    expect(readRememberedSessionDefault(path)).toEqual({
-      model: "haiku",
-      effort: "low",
-      permissionMode: "default",
-    })
-  })
-
-  it("書き込み先がディレクトリで塞がっていても例外を投げない", () => {
-    const path = statePath()
-    mkdirSync(path)
-
-    expect(() =>
-      writeRememberedSessionDefault(
-        { model: "sonnet", effort: "high", permissionMode: "plan" },
-        path,
-      ),
-    ).not.toThrow()
-  })
+  // ディレクトリが無ければ作って書く／書き込み先が塞がっていても例外を投げないのは
+  // `writeJsonFile`（`test/server/adapter/lib/json-file.test.ts`）の契約で、
+  // 3つの覚える口（character・sessionDefault・visitEnabled）はどれもその薄いラッパー。
 
   // **同じファイルを2つの口が書く**ので、片方の書き込みがもう片方を消さないことを見る
   // （書き込みはファイル丸ごとの置き換え。src/server/session/adapter/remembered-default.ts）。
@@ -338,20 +264,6 @@ describe("writeRememberedVisitEnabled", () => {
 
     writeRememberedVisitEnabled(true, statePath())
     expect(readRememberedVisitEnabled(statePath())).toBe(true)
-  })
-
-  it("ディレクトリが無ければ作って書く", () => {
-    const path = join(dir, "nested", "state.json")
-    writeRememberedVisitEnabled(false, path)
-
-    expect(readRememberedVisitEnabled(path)).toBe(false)
-  })
-
-  it("書き込み先がディレクトリで塞がっていても例外を投げない", () => {
-    const path = statePath()
-    mkdirSync(path)
-
-    expect(() => writeRememberedVisitEnabled(false, path)).not.toThrow()
   })
 
   // **3つの欄を同じファイルが持つ**ので、どれか1つを書いてもほかの2つを消さないことを見る

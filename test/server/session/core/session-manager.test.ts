@@ -1367,36 +1367,35 @@ describe("createSessionManager", () => {
     expect(frames.filter((frame) => frame.type === "hello")).toHaveLength(1)
   })
 
-  it("差し色を変えるコマンドも同じ経路を通る", async () => {
-    const { manager, edits } = startManagerWithStub()
-
-    expect(
-      await manager.dispatch({
+  // どの種類が isCharacterEditCommand に当たるかは test/shared/command.test.ts が持ち主。
+  // ここで見るのは、当たったコマンドが dispatch から editCharacter 経由の書き込みへ実際に
+  // 届くこと（set-portrait・set-background は前の2つのテストで、駆動へ渡らないことや
+  // hello の配り直しまで含めて確かめ済み）。
+  it.each([
+    {
+      command: {
         type: "set-outfit-accent",
         commandId: "c-1",
         pack: "fictional",
         outfit: "heavy",
         color: "#ffb3a7",
-      }),
-    ).toEqual({ ok: true })
-
-    expect(edits.map((edit) => edit.type)).toEqual(["set-outfit-accent"])
-  })
-
-  it("名前とプロフィールを変えるコマンド（set-profile）も同じ経路を通る", async () => {
-    const { manager, edits } = startManagerWithStub()
-
-    expect(
-      await manager.dispatch({
+      },
+    },
+    {
+      command: {
         type: "set-profile",
         commandId: "c-1",
         pack: "fictional",
         name: "新しい表示名",
         tagline: "ひとこと",
-      }),
-    ).toEqual({ ok: true })
+      },
+    },
+  ] as const)("$command.type も同じ経路を通る", async ({ command }) => {
+    const { manager, edits } = startManagerWithStub()
 
-    expect(edits.map((edit) => edit.type)).toEqual(["set-profile"])
+    expect(await manager.dispatch(command)).toEqual({ ok: true })
+
+    expect(edits.map((edit) => edit.type)).toEqual([command.type])
   })
 
   it("新しいパックを作るコマンドも駆動へ渡さず、選択肢の増えた character-changed を配る", async () => {
