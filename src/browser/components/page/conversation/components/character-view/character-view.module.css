@@ -85,7 +85,7 @@
   -webkit-mask-image: linear-gradient(90deg, #000 78%, transparent);
   mask-image: linear-gradient(90deg, #000 78%, transparent);
 }
-/* 吹き出しの並び。**DOM は新しい順**（`src/browser/components/page/conversation/components/character-view/balloon-track.tsx`）なので、
+/* 吹き出しの並び。**DOM は新しい順**（`src/browser/components/page/conversation/components/character-view/components/balloon-track/balloon-track.tsx`）なので、
    column-reverse で並べると最新が一番下に来て、過去のセリフほど上へ積み上がる。吹き出しは
    立ち絵の側（align-items: flex-start）へ寄せる。**column-reverse ではスクロールの既定位置（scrollTop = 0）が視覚上の
    下端＝最新**なので、並びが丸ごと差し替わっても最新が見える。
@@ -229,7 +229,7 @@
   color: color-mix(in srgb, var(--ink) 55%, var(--surface));
   animation: balloon-push-up 0.3s ease-out;
 }
-/* 差し替えは React の再描画（`src/browser/components/page/conversation/components/character-view/balloon-track.tsx`）。key は
+/* 差し替えは React の再描画（`src/browser/components/page/conversation/components/character-view/components/balloon-track/balloon-track.tsx`）。key は
    セリフの古い側から数えた通し番号（`props.speeches` に足された時点の位置。**speeches はターンの
    中で末尾へ積むだけなので、増えても既存のセリフの番号は変わらない**）。そのため既存の吹き出しは
    中身の差し替えで使い回されず、**最新から1つ落ちて `data-latest` が `false` に変わった瞬間に

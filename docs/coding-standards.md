@@ -488,12 +488,12 @@ React 19。関数コンポーネントと Hooks だけを使う（クラスコ�
 `useEffect` は **React の外にある世界と同期するためのもの**。書いてよいのは次の4つで、
 当てはまらないものは書かない。
 
-| 類型                             | 例                                                                                                       |
-| -------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| 外部システムの購読               | WebSocket の接続（`browser/stores/session.tsx`）                                                         |
-| React の外にある状態への書き込み | `document.title`・CSS カスタムプロパティ・`dialog.showModal()`・`scrollTop`                              |
-| タイマー                         | 経過時間の1秒刻み（`browser/components/page/conversation/components/dispatch/hooks/use-turn-status.ts`） |
-| 外部からの読み込み               | `fetch`・vendor script の読み込み                                                                        |
+| 類型                             | 例                                                                                                                              |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| 外部システムの購読               | WebSocket の接続（`browser/stores/session.tsx`）                                                                                |
+| React の外にある状態への書き込み | `document.title`・CSS カスタムプロパティ・`dialog.showModal()`・`scrollTop`                                                     |
+| タイマー                         | 経過時間の1秒刻み（`browser/components/page/conversation/components/dispatch/components/turn-status/hooks/use-turn-status.ts`） |
+| 外部からの読み込み               | `fetch`・vendor script の読み込み                                                                                               |
 
 4類型から外れるものをどうしても書くときは、**なぜ下の代替では書けないのか**をコメントに残す
 （「コメント」節の「今の挙動の制約・前提」にあたる）。

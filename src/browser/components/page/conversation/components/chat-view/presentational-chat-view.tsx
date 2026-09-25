@@ -8,8 +8,8 @@ import { type ReactElement } from "react"
 
 import { HStack } from "../../../../../components/ui/h-stack/h-stack.tsx"
 import styles from "./chat-view.module.css"
-import { ChatLog } from "./components/chat-log.tsx"
-import { NudgePortrait } from "./components/nudge-portrait.tsx"
+import { ChatLog } from "./components/chat-log/chat-log.tsx"
+import { NudgePortrait } from "./components/nudge-portrait/nudge-portrait.tsx"
 import { type ChatViewModel } from "./hooks/use-chat-view.ts"
 
 export type PresentationalChatViewProps = ChatViewModel

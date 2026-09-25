@@ -7,9 +7,9 @@ import { useEffect, useRef, type ReactElement } from "react"
 
 import { VStack } from "../../../../../components/ui/v-stack/v-stack.tsx"
 import { useSessionSelector } from "../../../../../stores/session.tsx"
-import { Composer } from "./composer.tsx"
+import { Composer } from "./components/composer/composer.tsx"
+import { PendingAnswer } from "./components/pending-answer/pending-answer.tsx"
 import styles from "./dispatch.module.css"
-import { PendingAnswer } from "./pending-answer.tsx"
 
 export function Dispatch(): ReactElement {
   const pendingActive = useSessionSelector((session) => session.state.pending.length > 0)

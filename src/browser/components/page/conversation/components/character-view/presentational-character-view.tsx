@@ -14,10 +14,10 @@ import { type ReactElement } from "react"
 import { Portrait } from "../../../../../components/domain/portrait.tsx"
 import { HStack } from "../../../../../components/ui/h-stack/h-stack.tsx"
 import { VStack } from "../../../../../components/ui/v-stack/v-stack.tsx"
-import { BalloonTrack } from "./balloon-track.tsx"
 import styles from "./character-view.module.css"
+import { BalloonTrack } from "./components/balloon-track/balloon-track.tsx"
+import { SpeechLog } from "./components/speech-log/speech-log.tsx"
 import { type CharacterViewModel } from "./hooks/use-character-view.ts"
-import { SpeechLog } from "./speech-log.tsx"
 
 export type PresentationalCharacterViewProps = CharacterViewModel
 

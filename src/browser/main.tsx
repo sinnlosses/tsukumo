@@ -94,7 +94,7 @@ function Root(): ReactElement {
 applyAppearanceColorOverride(loadAppearanceColorOverride())
 
 // 立ち絵の SVG 取得（`components/domain/portrait.tsx`）と入力欄の `@` 補完のファイル一覧
-// （`components/page/conversation/components/dispatch/file-suggestions.tsx`）が使う。**キャッシュの既定値は個々の
+// （`components/page/conversation/components/dispatch/components/file-suggestions/file-suggestions.tsx`）が使う。**キャッシュの既定値は個々の
 // `useQuery` 側**（取り直す条件は呼び出し側にしか分からない）。
 const queryClient = new QueryClient()
 

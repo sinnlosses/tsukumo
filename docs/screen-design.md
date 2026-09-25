@@ -1245,7 +1245,7 @@ scrollable overflow は end 方向にしか伸びない**ので、上へ出た�
    **雑談中のメインビューでも同じ論法がそのまま成り立つ**（地と字の色は領域で変わらないので、
    下限も 1つで足りる。2026-09-21 に確かめた）
 2. **文字が乗る要素の地は不透明を保つ。** キャラビューで文字が乗るのは吹き出しの中だけなので
-   （空のときの案内も吹き出し1件。`src/browser/components/page/conversation/components/character-view/balloon-track.tsx`）、
+   （空のときの案内も吹き出し1件。`src/browser/components/page/conversation/components/character-view/components/balloon-track/balloon-track.tsx`）、
    地が不透明であれば画像は文字の背後に回り込まない。**雑談のログでも吹き出しは同じ**
    （`.chat-entry` の地は `surface` / `surface-accent` / それに `ink` を混ぜた色で、どれも不透明）
    だが、**吹き出しの外に出る字が2つある** — 立ち絵に載せたときの案内（13.7）と空のときの案内。

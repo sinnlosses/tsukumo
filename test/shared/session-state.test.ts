@@ -121,7 +121,7 @@ describe("applySessionEvent", () => {
     )
 
     // 空にするとプレースホルダー「（まだ発話がありません）」に切り替わる
-    // （src/browser/components/page/conversation/components/character-view/balloon-track.tsx）。
+    // （src/browser/components/page/conversation/components/character-view/components/balloon-track/balloon-track.tsx）。
     expect(nextTurn.speeches).toEqual([])
     expect(nextTurn.speechExpression).toBe("default")
   })
