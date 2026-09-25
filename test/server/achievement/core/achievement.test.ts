@@ -17,7 +17,7 @@ import {
   type DeletedTaskFile,
   type TaskFileHistoryCommit,
   type TaskSnapshotSource,
-} from "../../../src/server/core/achievement.ts"
+} from "../../../../src/server/achievement/core/achievement.ts"
 
 // ここで使うコミット・タスクはすべて手で書いた架空のもの（実物のリポジトリの履歴は使わない。
 // docs/coding-standards.md「会話内容の扱い」）。

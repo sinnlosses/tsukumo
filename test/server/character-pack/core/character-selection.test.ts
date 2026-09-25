@@ -3,9 +3,9 @@ import { describe, expect, it } from "bun:test"
 import {
   selectCharacterPack,
   selectInitialCharacterPack,
-} from "../../../src/server/core/character-selection.ts"
+} from "../../../../src/server/character-pack/core/character-selection.ts"
 
-// パックは名前だけを見る（中身を読むのは src/server/adapter/character-pack.ts の仕事）。
+// パックは名前だけを見る（中身を読むのは src/server/character-pack/adapter/character-pack.ts の仕事）。
 // 名前は手で書いた架空のもの。
 const BUNDLED = { name: "tsukumo-spirit" }
 const HOME = { name: "kagami" }

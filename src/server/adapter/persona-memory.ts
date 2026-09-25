@@ -1,7 +1,7 @@
 // 雑談で覚えたことを人格へ書き足し、覚えた1行を忘れる
 // （`docs/design.md` 7.1「覚えたことを人格に書き足す・1行だけ忘れる」）。
 // 書き込んでよいのは他の編集と同じ `~/.tsukumo/characters/<pack>/persona.md` の1つだけで、
-// ホームへ写す道（`src/server/adapter/character-edit.ts` の `copyPackOnce`）を共有する。
+// ホームへ写す道（`src/server/character-pack/adapter/character-edit.ts` の `copyPackOnce`）を共有する。
 //
 // **何を書いてよいか・何を消してよいかはここが決めない。** 判断はモデル側の条
 // （`src/server/core/chat-manner.ts`）が持ち、ここが持つのは「受け取った1行をどこにどう書くか
@@ -25,15 +25,15 @@ import { writeFileSync } from "node:fs"
 import { join } from "node:path"
 
 import { MAX_REMEMBERED_LINE_LENGTH } from "../../shared/persona-memory.ts"
-import { type PersonaMemory } from "../core/session-driver.ts"
-import { copyPackOnce } from "./character-edit.ts"
+import { copyPackOnce } from "../character-pack/adapter/character-edit.ts"
 import {
   type CharacterPack,
   homeCharacterDir,
   isEditableCharacterPack,
   PERSONA_FILE_NAME,
   readOptionalFile,
-} from "./character-pack.ts"
+} from "../character-pack/adapter/character-pack.ts"
+import { type PersonaMemory } from "../core/session-driver.ts"
 
 /** 書き足す節の見出し。**`persona.md` のいちばん最後に置く**（7.1）。 */
 export const REMEMBERED_SECTION_HEADING = "## 覚えたこと"

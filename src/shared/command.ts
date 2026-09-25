@@ -122,7 +122,7 @@ const commandIdSchema = z.string().min(1).max(200)
  * 立ち絵1枚の data URL。**大きさと種類はここで見る**（`src/shared/portrait-image.ts`。
  * 受け取るのは `.svg` / `.png` / `.gif` の3つだけ）。
  *
- * 文字列のまま持ち、`{ format, base64 }` へのほどきは書き込む側（`src/server/adapter/character-edit.ts`）が
+ * 文字列のまま持ち、`{ format, base64 }` へのほどきは書き込む側（`src/server/character-pack/adapter/character-edit.ts`）が
  * 同じ `parsePortraitImage` で行う。**zod の `transform` で形を変えない**のは、ブラウザ側が
  * 送るときの型（`ClientCommand`）が受け取ったあとの形にすり替わってしまうため。
  */
@@ -188,7 +188,7 @@ const newCharacterPackNameSchema = z.string().refine(isCharacterPackName)
  * 編集のコマンドはどれもこれを必須で持つ。形は作るときと同じ {@link isCharacterPackName} で見る
  * （書き込み先 `~/.tsukumo/characters/<name>/` のディレクトリ名になる値なので、切り替えの
  * 「長さだけ」より厳しくする）。**一覧にある名前かどうかは書き込む側が突き合わせる**
- * （`src/server/adapter/character-edit.ts` の `editCharacterPack`）。
+ * （`src/server/character-pack/adapter/character-edit.ts` の `editCharacterPack`）。
  */
 const editedCharacterPackNameSchema = z.string().refine(isCharacterPackName)
 
@@ -440,7 +440,7 @@ export const clientCommandSchema = z.discriminatedUnion("type", [
    * 同梱のパックを画面で直したものなら同梱の版が一覧に戻る。名前は一覧と突き合わせて引くだけで、
    * 形は見た目の編集と同じ {@link isCharacterPackName} で見る。**id を打って確かめるのは画面の側**
    * で、サーバは名前を受けて消すだけ（使用中・ホームに無いパックは断る。
-   * `src/server/adapter/character-edit.ts` の `deleteCharacterPack`）。
+   * `src/server/character-pack/adapter/character-edit.ts` の `deleteCharacterPack`）。
    */
   z.object({
     type: z.literal("delete-character"),

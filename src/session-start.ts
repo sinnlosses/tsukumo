@@ -8,16 +8,15 @@
 import process from "node:process"
 
 import { type CurrentCharacter } from "./current-character.ts"
-import { type CharacterPack, listCharacterPacks } from "./server/adapter/character-pack.ts"
-import { createChatArchive } from "./server/adapter/chat-archive.ts"
-import { createChatSummary } from "./server/adapter/chat-summary.ts"
-import { type FakeSession, startFakeSession } from "./server/adapter/fake-driver.ts"
-import { localTimeHHMM, todayLocalDateKey } from "./server/adapter/local-time.ts"
 import {
   type AchievementCommitCache,
   createAchievementCommitCache,
   readAchievement,
-} from "./server/adapter/main-history.ts"
+} from "./server/achievement/adapter/main-history.ts"
+import { createChatArchive } from "./server/adapter/chat-archive.ts"
+import { createChatSummary } from "./server/adapter/chat-summary.ts"
+import { type FakeSession, startFakeSession } from "./server/adapter/fake-driver.ts"
+import { localTimeHHMM, todayLocalDateKey } from "./server/adapter/local-time.ts"
 import { createPersonaMemory, readRememberedLines } from "./server/adapter/persona-memory.ts"
 import {
   readRememberedSessionDefault,
@@ -33,6 +32,10 @@ import {
 } from "./server/adapter/sdk-session.ts"
 import { queryVisitScript } from "./server/adapter/sdk-visit-script.ts"
 import { createVisitClock } from "./server/adapter/visit-clock.ts"
+import {
+  type CharacterPack,
+  listCharacterPacks,
+} from "./server/character-pack/adapter/character-pack.ts"
 import { createContextUsageLog } from "./server/context-usage/adapter/context-usage-log.ts"
 import { readChatTopics } from "./server/core/chat-compact.ts"
 import { type Config } from "./server/core/config.ts"
@@ -125,7 +128,7 @@ export function startSession(options: SessionStartOptions): SessionManager {
   // 成果の振り返り（`reflect-achievement`）がその日の成果を数え直すための入れ物。**配線層
   // （`view-delivery.ts`）が `/achievement` に配るのと別に1つ持つ**——両者は別の層（`src/`
   // 直下）で、依存し合わせない。同じ日を両方から数えても、今日以外の日はどちらかが先に
-  // 覚えた数を使うだけで結果は変わらない（`src/server/adapter/main-history.ts`）。
+  // 覚えた数を使うだけで結果は変わらない（`src/server/achievement/adapter/main-history.ts`）。
   const achievementCommitCache = createAchievementCommitCache()
   return createSessionManager({
     // 時刻は**エポックミリ秒の数**のまま渡す（`Temporal.Instant` にしない）。両側で回す

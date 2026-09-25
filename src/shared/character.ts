@@ -3,7 +3,7 @@
 // 定義ファイルの生の形（`character-definition.ts`）から `toCharacterInfo` が1回だけ変換する。
 //
 // **立ち絵の中身は持たない**（`portraits` の値は `/character/<pack>/<file>` の URL。組み立ては
-// `character-asset.ts`）。ファイルI/Oは src/server/adapter/character-pack.ts に集約する。
+// `character-asset.ts`）。ファイルI/Oは src/server/character-pack/adapter/character-pack.ts に集約する。
 
 import { fromKeys } from "remeda"
 

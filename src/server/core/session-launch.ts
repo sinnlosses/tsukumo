@@ -12,7 +12,10 @@
 import { type SessionChoice } from "../../shared/session-choice.ts"
 import { type SessionDefault } from "../../shared/session-default.ts"
 import { type SessionEvent } from "../../shared/session-event.ts"
-import { type CharacterSelection, type NamedCharacterPack } from "./character-selection.ts"
+import {
+  type CharacterSelection,
+  type NamedCharacterPack,
+} from "../character-pack/core/character-selection.ts"
 import { type SessionDriver, type SessionStart } from "./session-driver.ts"
 
 /** 駆動と同じ間だけ動く見張り（いまは `develop/tasks.json`）。駆動を閉じると一緒に閉じる。 */

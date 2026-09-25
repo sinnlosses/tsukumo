@@ -19,21 +19,21 @@ import {
   type CharacterAssetLocation,
   classifyPortraitFile,
   rasterMimeType,
-} from "../../shared/character-asset.ts"
+} from "../../../shared/character-asset.ts"
 import {
   type CharacterDefinition,
   parseCharacterDefinition,
-} from "../../shared/character-definition.ts"
+} from "../../../shared/character-definition.ts"
 import {
   type CharacterPackEntry,
   type CharacterPackRemoval,
   toCharacterInfo,
-} from "../../shared/character.ts"
-import { type SessionEvent } from "../../shared/session-event.ts"
-import { bundledFilePath } from "./bundled-path.ts"
-import { tsukumoHomeDir } from "./tsukumo-home.ts"
+} from "../../../shared/character.ts"
+import { type SessionEvent } from "../../../shared/session-event.ts"
+import { bundledFilePath } from "../../adapter/bundled-path.ts"
+import { tsukumoHomeDir } from "../../adapter/tsukumo-home.ts"
 
-/** 定義ファイルの名前。**画面から書き込む側（`src/server/adapter/character-edit.ts`）も同じ名前を使う。** */
+/** 定義ファイルの名前。**画面から書き込む側（`src/server/character-pack/adapter/character-edit.ts`）も同じ名前を使う。** */
 export const CHARACTER_DEFINITION_FILE_NAME = "character.json"
 
 /** 人格のファイル名。パックの中に無くてもよい（append が空になるだけ）。 */
@@ -234,7 +234,7 @@ export function readCharacterAsset(
 
 /**
  * 一覧（`current` で置き換えたもの。{@link withCurrentPack}）から名前でパックを1つ引く（無ければ
- * undefined）。**素材を配る側と画面から変える側（`src/server/adapter/character-edit.ts`）が同じ
+ * undefined）。**素材を配る側と画面から変える側（`src/server/character-pack/adapter/character-edit.ts`）が同じ
  * 規則で引く**ので、一覧に載せた名前は配れるし変えられる。名前はパスに使わない。
  */
 export function findCharacterPack(

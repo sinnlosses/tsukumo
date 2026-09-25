@@ -25,7 +25,7 @@ import {
 import { type ModelTokenUsage } from "../../shared/token-usage.ts"
 import { type TurnOutcome } from "../../shared/turn-failure.ts"
 import { optionalString } from "../../shared/utils/optional-string.ts"
-import { DIARY_TOOL_NAME } from "./diary-tool.ts"
+import { DIARY_TOOL_NAME } from "../diary/core/diary-tool.ts"
 
 /** プロセス内の MCP サーバの名前。モデルからは `mcp__<サーバ名>__<ツール名>` として見える。 */
 export const TSUKUMO_MCP_SERVER_NAME = "tsukumo"

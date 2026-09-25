@@ -1450,17 +1450,17 @@ JSON を配る経路（`/repository-file`・`/token-usage`・`/context-usage`・
 「灯りの暦」「卒業」「節目」。**経路は2本**: 1日ぶん（`GET /achievement?date=`）と、暦
 （`GET /achievement-calendar`）。日記の受け取りと保存は次の節。
 
-| 置き場                                     | 持つもの                                                                                                                                                                                                                                                                                                                                             |
-| ------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `src/shared/achievement.ts`                | 1日ぶんの応答の型 `DailyAchievement`（卒業・節目・日記を含む）、経路の名前 `ACHIEVEMENT_PATH`（`/achievement`）とクエリ名（`date`）、応答の読み手（配られない形は「取れなかった」に倒す）、日付キーの前後（`Temporal.PlainDate` の足し引き。時計は読まない）、振り返りの依頼文 `achievementReflectionRequestText`                                    |
-| `src/shared/achievement-calendar.ts`       | 暦の応答の型 `AchievementCalendar`、経路の名前 `ACHIEVEMENT_CALENDAR_PATH`（`/achievement-calendar`）、応答の読み手、暦の範囲（今日から5週ぶんのマスの並び）、**灯りの段階の判定 `lampLevel`**（区切りは `docs/requirements.md` 4.11「灯りの段階」を `satisfies` で持つ表）                                                                          |
-| `src/server/core/achievement.ts`           | 判断だけ: 運用の帳面のパスの判定、`git log` の出力からその日のコミットを数える、切り口の中身（3つの読み元と、消えたファイルの消える直前の版）から `done` の ID と `summary` を集める、2つの切り口の差を取る、**卒業（登録日の表から）と節目（通算の数から）を選ぶ**、**`git log` 1回の出力を日ごとのコミットの数に畳む**（暦）。旧形式の読み手もここ |
-| `src/server/adapter/main-history.ts`       | `main` の履歴を読む境界。下の手順で `git` を起こし、core に渡す                                                                                                                                                                                                                                                                                      |
-| `src/server/repository/adapter/git.ts`     | `git` を起こす口（`runGit` と `git cat-file --batch`）。`task-summary.ts` と `main-history.ts` が使う                                                                                                                                                                                                                                                |
-| `src/server/adapter/local-time.ts`         | 日付キーからその日の始まりと終わり（エポックミリ秒）を出す口。今日の日付キーは `todayLocalDateKey`                                                                                                                                                                                                                                                   |
-| `src/server/adapter/server.ts`             | `GET /achievement?date=YYYY-MM-DD` と `GET /achievement-calendar`。**どちらも起動トークンが要る**（`/token-usage` と同じ）                                                                                                                                                                                                                           |
-| `src/view-delivery.ts`                     | 配線。1日ぶんは `main-history.ts` の数と `diary.ts` のその日の日記を合わせて1つの応答にし、暦は `main-history.ts` の日ごとの数（覚えの入れ物もここで作る）と `diary.ts` の日記のある日の一覧を合わせる                                                                                                                                               |
-| `src/browser/components/page/achievement/` | 領域（成果の画面）。取りに行く hook と画面の部品（(a)(b)(c)・暦・見開き）。`stores/location-hash.ts` の `SCREENS` の `achievement` と、hash の `date`                                                                                                                                                                                                |
+| 置き場                                           | 持つもの                                                                                                                                                                                                                                                                                                                                             |
+| ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/shared/achievement.ts`                      | 1日ぶんの応答の型 `DailyAchievement`（卒業・節目・日記を含む）、経路の名前 `ACHIEVEMENT_PATH`（`/achievement`）とクエリ名（`date`）、応答の読み手（配られない形は「取れなかった」に倒す）、日付キーの前後（`Temporal.PlainDate` の足し引き。時計は読まない）、振り返りの依頼文 `achievementReflectionRequestText`                                    |
+| `src/shared/achievement-calendar.ts`             | 暦の応答の型 `AchievementCalendar`、経路の名前 `ACHIEVEMENT_CALENDAR_PATH`（`/achievement-calendar`）、応答の読み手、暦の範囲（今日から5週ぶんのマスの並び）、**灯りの段階の判定 `lampLevel`**（区切りは `docs/requirements.md` 4.11「灯りの段階」を `satisfies` で持つ表）                                                                          |
+| `src/server/achievement/core/achievement.ts`     | 判断だけ: 運用の帳面のパスの判定、`git log` の出力からその日のコミットを数える、切り口の中身（3つの読み元と、消えたファイルの消える直前の版）から `done` の ID と `summary` を集める、2つの切り口の差を取る、**卒業（登録日の表から）と節目（通算の数から）を選ぶ**、**`git log` 1回の出力を日ごとのコミットの数に畳む**（暦）。旧形式の読み手もここ |
+| `src/server/achievement/adapter/main-history.ts` | `main` の履歴を読む境界。下の手順で `git` を起こし、core に渡す                                                                                                                                                                                                                                                                                      |
+| `src/server/repository/adapter/git.ts`           | `git` を起こす口（`runGit` と `git cat-file --batch`）。`task-summary.ts` と `main-history.ts` が使う                                                                                                                                                                                                                                                |
+| `src/server/adapter/local-time.ts`               | 日付キーからその日の始まりと終わり（エポックミリ秒）を出す口。今日の日付キーは `todayLocalDateKey`                                                                                                                                                                                                                                                   |
+| `src/server/adapter/server.ts`                   | `GET /achievement?date=YYYY-MM-DD` と `GET /achievement-calendar`。**どちらも起動トークンが要る**（`/token-usage` と同じ）                                                                                                                                                                                                                           |
+| `src/view-delivery.ts`                           | 配線。1日ぶんは `main-history.ts` の数と `diary.ts` のその日の日記を合わせて1つの応答にし、暦は `main-history.ts` の日ごとの数（覚えの入れ物もここで作る）と `diary.ts` の日記のある日の一覧を合わせる                                                                                                                                               |
+| `src/browser/components/page/achievement/`       | 領域（成果の画面）。取りに行く hook と画面の部品（(a)(b)(c)・暦・見開き）。`stores/location-hash.ts` の `SCREENS` の `achievement` と、hash の `date`                                                                                                                                                                                                |
 
 **1日ぶんの応答の形**（`DailyAchievement`。`graduations` 以下は 2026-09-25 に足す）:
 
@@ -1618,16 +1618,16 @@ type AchievementCalendar =
 規則は `docs/requirements.md` 4.11「日記」「振り返りの依頼」、画面は 13.10、語は
 `docs/glossary.md`「日記」「しおり」「diary ツール」）。
 
-| 置き場                               | 持つもの                                                                                                                                                              |
-| ------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `src/shared/diary.ts`                | 日記の型 `Diary`・段落 `DiaryParagraph`・しおり `DiaryBookmark`、保存の形の読み手（zod）、状態 `DiaryWriting` と3段の並び `DIARY_STAGES`                              |
-| `src/shared/command.ts`              | 振り返りのコマンド `reflect-achievement`（`date`）                                                                                                                    |
-| `src/server/core/diary-tool.ts`      | ツールの名前と説明文、形の外の条の検査、受け付けた呼び出しを保存してイベントにする窓口 `createDiaryIntake`、引数の断片から3段目を見つける純関数                       |
-| `src/server/adapter/sdk-tool.ts`     | `diary`（zod の形）を**仕事にも雑談にも**載せる                                                                                                                       |
-| `src/server/core/sdk-message.ts`     | `diary` の塊が開いた合図（`content_block_start`）を `diary-drafting` にする（`report-drafting` と同じ形）                                                             |
-| `src/server/core/session-manager.ts` | `reflect-achievement` を受け、その日の成果を読む口（`SessionManagerOptions` に足す）で数え、依頼文を組んで送り、窓口に「いま書く日」を渡して `diary-requested` を流す |
-| `src/shared/session-state.ts`        | `diaryWriting` の畳み込み（`diary-requested` / `diary-drafting` / `diary-stage` / `diary-written` / ターンの終わり）                                                  |
-| `src/server/adapter/diary.ts`        | 日記の読み書き（`~/.tsukumo/diary/<リポジトリ>/<日付>.json`）と、日記のある日の一覧。リポジトリの見分け（`git rev-parse --git-common-dir`）もここ                     |
+| 置き場                                | 持つもの                                                                                                                                                              |
+| ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/shared/diary.ts`                 | 日記の型 `Diary`・段落 `DiaryParagraph`・しおり `DiaryBookmark`、保存の形の読み手（zod）、状態 `DiaryWriting` と3段の並び `DIARY_STAGES`                              |
+| `src/shared/command.ts`               | 振り返りのコマンド `reflect-achievement`（`date`）                                                                                                                    |
+| `src/server/diary/core/diary-tool.ts` | ツールの名前と説明文、形の外の条の検査、受け付けた呼び出しを保存してイベントにする窓口 `createDiaryIntake`、引数の断片から3段目を見つける純関数                       |
+| `src/server/adapter/sdk-tool.ts`      | `diary`（zod の形）を**仕事にも雑談にも**載せる                                                                                                                       |
+| `src/server/core/sdk-message.ts`      | `diary` の塊が開いた合図（`content_block_start`）を `diary-drafting` にする（`report-drafting` と同じ形）                                                             |
+| `src/server/core/session-manager.ts`  | `reflect-achievement` を受け、その日の成果を読む口（`SessionManagerOptions` に足す）で数え、依頼文を組んで送り、窓口に「いま書く日」を渡して `diary-requested` を流す |
+| `src/shared/session-state.ts`         | `diaryWriting` の畳み込み（`diary-requested` / `diary-drafting` / `diary-stage` / `diary-written` / ターンの終わり）                                                  |
+| `src/server/diary/adapter/diary.ts`   | 日記の読み書き（`~/.tsukumo/diary/<リポジトリ>/<日付>.json`）と、日記のある日の一覧。リポジトリの見分け（`git rev-parse --git-common-dir`）もここ                     |
 
 **`diary` ツールの欄**（zod の形。この順に並べる——3段目の合図が引数の並びに頼るため）:
 
@@ -1716,7 +1716,7 @@ type DiaryWriting =
 - 状態に `diaryWriting` を足すので `PROTOCOL_VERSION` を上げる
 - 帯の「いまの作業」の「振り返り中」は `diaryWriting.kind === "writing"` から出す（13.9）
 
-**保存の形**（`src/server/adapter/diary.ts`）:
+**保存の形**（`src/server/diary/adapter/diary.ts`）:
 
 - **置き場は `~/.tsukumo/diary/<リポジトリ>/<YYYY-MM-DD>.json`**（1日1ファイル。`TSUKUMO_HOME` で
   ホームを分けていれば、その下）。日付は振り返りの対象の日
@@ -2308,7 +2308,7 @@ characters/<name>/
   見た目と、キャラクター自身が人格に書き足した「覚えたこと」も消える**（どちらもホームの版の
   中にある）ので、画面はそれを文言で伝える。コマンドは消すのと同じ1つ（サーバがすることは
   「ホームの版を消す」で変わらず、違うのは一覧に何が残るかだけ）
-- **判定は1つの関数（`characterPackRemoval`。`src/server/adapter/character-pack.ts`）が持ち、
+- **判定は1つの関数（`characterPackRemoval`。`src/server/character-pack/adapter/character-pack.ts`）が持ち、
   画面に配る値と消す側（`deleteCharacterPack`。`character-edit.ts`）が断る判断の両方がそこを
   通る。** 出した口と通る口がずれない
 - **消す範囲をホームの下に閉じ込める確かめ方**: 届いた名前はパスに使わず、一覧（素材を配る・

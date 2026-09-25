@@ -20,7 +20,7 @@ import { type ExpressionChoice } from "../../shared/expression-choice.ts"
 import { type Expression } from "../../shared/expression.ts"
 import { type Answer, type PendingAsk } from "../../shared/pending-ask.ts"
 import { type SessionEvent } from "../../shared/session-event.ts"
-import { type DiaryDay } from "./diary-tool.ts"
+import { type DiaryDay } from "../diary/core/diary-tool.ts"
 import { type ShelvedPromptImage } from "./prompt-image-shelf.ts"
 
 /**
@@ -336,7 +336,7 @@ export type SessionDriver = {
    */
   readonly promptWithoutRecord: (text: string) => void
   /**
-   * `diary` ツールの窓口（`src/server/core/diary-tool.ts` の `DiaryIntake`）へ、いま書く日を渡す
+   * `diary` ツールの窓口（`src/server/diary/core/diary-tool.ts` の `DiaryIntake`）へ、いま書く日を渡す
    * （成果の振り返り。`docs/design.md`「日記の受け取りと保存」「コマンドと依頼」）。呼ぶのは
    * `session-manager` が `reflect-achievement` を受けたとき、依頼を送る前後。
    */

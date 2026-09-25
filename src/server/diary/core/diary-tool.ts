@@ -1,7 +1,7 @@
 // `diary` ツールまわりの決まりごと（docs/glossary.md「diary ツール」）。書けるのは成果の画面から
 // 頼まれた振り返りのターンだけで、それ以外・形の外れた呼び出しは状態を変えずに断り、理由を
 // 添えて呼び直させる（`report` / 見直しの2つと同じ線）。ツールを載せるのは
-// `src/server/adapter/sdk-tool.ts`、保存は `src/server/adapter/diary.ts`、決定の理由は
+// `src/server/adapter/sdk-tool.ts`、保存は `src/server/diary/adapter/diary.ts`、決定の理由は
 // `docs/design.md`「日記の受け取りと保存」。
 //
 // **引数の形（文字列・列挙）は zod の形で SDK が先に検査する**（崩れていれば handler は
@@ -17,9 +17,9 @@
 
 import { isPlainObject } from "remeda"
 
-import { type DiaryBookmark, type DiaryStage } from "../../shared/diary.ts"
-import { type Expression } from "../../shared/expression.ts"
-import { type SessionEvent } from "../../shared/session-event.ts"
+import { type DiaryBookmark, type DiaryStage } from "../../../shared/diary.ts"
+import { type Expression } from "../../../shared/expression.ts"
+import { type SessionEvent } from "../../../shared/session-event.ts"
 
 /** ツールの名前（docs/glossary.md「diary ツール」）。 */
 export const DIARY_TOOL_NAME = "diary"
@@ -65,7 +65,7 @@ export type DiaryVerdict =
   | { readonly kind: "accepted" }
   | { readonly kind: "rejected"; readonly text: string }
 
-/** 1段落を保存する口（実体は `src/server/adapter/diary.ts` の `appendDiaryParagraph`）。 */
+/** 1段落を保存する口（実体は `src/server/diary/adapter/diary.ts` の `appendDiaryParagraph`）。 */
 export type SaveDiaryParagraph = (params: {
   readonly date: string
   readonly writtenAtEpochMilliseconds: number

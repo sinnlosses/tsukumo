@@ -20,8 +20,8 @@ import { dirname, join } from "node:path"
 
 import { isCharacterPackName } from "../../shared/character.ts"
 import { byteLength } from "../../shared/lib/byte-length.ts"
+import { readOptionalFile } from "../character-pack/adapter/character-pack.ts"
 import { type ChatSummary, type ChatSummaryRecord } from "../core/session-driver.ts"
-import { readOptionalFile } from "./character-pack.ts"
 import { tsukumoHomeDir } from "./tsukumo-home.ts"
 
 /** 置き場のディレクトリ名（`~/.tsukumo/chat-summary/`）。 */

@@ -5,8 +5,8 @@ import {
   createDiaryStageTracker,
   diaryArgumentHasBookmarkKey,
   type DiaryDay,
-} from "../../../src/server/core/diary-tool.ts"
-import { type SessionEvent } from "../../../src/shared/session-event.ts"
+} from "../../../../src/server/diary/core/diary-tool.ts"
+import { type SessionEvent } from "../../../../src/shared/session-event.ts"
 
 // 引数はすべて手で書いた架空の文面（docs/coding-standards.md「会話内容の扱い」）。保存の成否だけ
 // 差し替えられる偽の `save` を使い、実際のファイル I/O は `test/server/adapter/diary.test.ts` で

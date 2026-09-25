@@ -16,7 +16,7 @@
 //
 // **正典と実物・仮決めのすり合わせ**:
 // 1. 目次にしおりのタスク ID は載せない（`diaryDates` はファイル名の一覧だけで中身を読まない
-//    設計のため。`src/server/adapter/diary.ts` の `listDiaryDates`）
+//    設計のため。`src/server/diary/adapter/diary.ts` の `listDiaryDates`）
 // 2. 「日記帳で読む」から開いたときの添え書きは「この日の日記から開きました」と仮に決めた
 // 3. 書かれた日記でしおりが無い日は、しおりの区画ごと省く（成果の画面本体と同じ扱い）
 // 4. 縦書き本文のオーバーフローは `overflow: auto`（`achievement.module.css`）で両軸に任せる

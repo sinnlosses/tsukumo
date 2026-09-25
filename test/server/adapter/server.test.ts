@@ -5,11 +5,6 @@ import { tmpdir } from "node:os"
 import { join } from "node:path"
 
 import {
-  characterChangedEvent,
-  listCharacterPacks,
-  readCharacterAsset,
-} from "../../../src/server/adapter/character-pack.ts"
-import {
   createStartupToken,
   type ReadAchievement,
   type ReadAchievementCalendar,
@@ -17,6 +12,11 @@ import {
   startViewServer,
   type ViewServer,
 } from "../../../src/server/adapter/server.ts"
+import {
+  characterChangedEvent,
+  listCharacterPacks,
+  readCharacterAsset,
+} from "../../../src/server/character-pack/adapter/character-pack.ts"
 import {
   ACHIEVEMENT_CALENDAR_PATH,
   type AchievementCalendar,
@@ -51,7 +51,7 @@ const TEST_STYLE_SHEET = "/* テスト用の CSS */"
 
 /**
  * `/character/<pack>/<file>` を配る係の代役。既定では何も配らない（404）。個々のテストが必要な分だけ
- * 上書きする（`src/server/adapter/character-pack.ts` の `readCharacterAsset` の代役）。
+ * 上書きする（`src/server/character-pack/adapter/character-pack.ts` の `readCharacterAsset` の代役）。
  */
 function noCharacterAsset(): undefined {
   return undefined

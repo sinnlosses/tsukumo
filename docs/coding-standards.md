@@ -76,7 +76,7 @@ sed -n '/^### 消すかどうか/,/^#\{2,4\} /p' docs/coding-standards.md
 
 **状態を持つ入れ物（キャッシュなど）を配線から渡すときも同じ**——中の `Map` などを型に出して
 呼び出し先に `.set` させず、作る側の閉包に閉じ込めて、覚える・引く口だけを渡す。
-`src/server/adapter/main-history.ts` の `createAchievementCommitCache()` が例（型は
+`src/server/achievement/adapter/main-history.ts` の `createAchievementCommitCache()` が例（型は
 `dailyCountOf` / `rememberDailyCount` の関数2つだけを持ち、`Map` は閉包の中）。
 
 ## 型を迂回するキャストを使わない

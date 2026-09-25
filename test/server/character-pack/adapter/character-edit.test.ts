@@ -16,18 +16,18 @@ import {
   deleteCharacterPack,
   editCharacterPack,
   MAX_IMAGE_FILES_PER_PACK,
-} from "../../../src/server/adapter/character-edit.ts"
+} from "../../../../src/server/character-pack/adapter/character-edit.ts"
 import {
   listCharacterPacks,
   readCharacterPack,
-} from "../../../src/server/adapter/character-pack.ts"
-import { DEFAULT_BACKGROUND_VEIL } from "../../../src/shared/character-background.ts"
+} from "../../../../src/server/character-pack/adapter/character-pack.ts"
+import { DEFAULT_BACKGROUND_VEIL } from "../../../../src/shared/character-background.ts"
 import {
   type CharacterCreateCommand,
   type CharacterDeleteCommand,
   type CharacterEditCommand,
-} from "../../../src/shared/command.ts"
-import { EXPRESSIONS } from "../../../src/shared/expression.ts"
+} from "../../../../src/shared/command.ts"
+import { EXPRESSIONS } from "../../../../src/shared/expression.ts"
 
 // フィクスチャは手で書いた架空のパック（実物の素材・人格は使わない）。
 const DEFINITION_JSON = JSON.stringify({

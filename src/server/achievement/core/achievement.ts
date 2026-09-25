@@ -1,6 +1,6 @@
 // 成果（`docs/glossary.md`「成果」）を数える判断だけを持つ。**ファイルI/O も `git` も触らない
 // 純関数**（`docs/design.md` 5章「成果の集め方と配り方」）——`main` の上から実際に読むのは
-// `src/server/adapter/main-history.ts` で、ここはその結果を渡されて数える。
+// `src/server/achievement/adapter/main-history.ts` で、ここはその結果を渡されて数える。
 //
 // 数え方の規則は `docs/requirements.md` 4.11 が正典。ここが持つのは:
 // - **運用の帳面**のパスの判定（コミットの数から外すファイル）
@@ -17,8 +17,11 @@
 
 import { isPlainObject } from "remeda"
 
-import { type AchievementGraduation, type AchievementMilestone } from "../../shared/achievement.ts"
-import { parseNewTaskFile } from "../../shared/task-summary.ts"
+import {
+  type AchievementGraduation,
+  type AchievementMilestone,
+} from "../../../shared/achievement.ts"
+import { parseNewTaskFile } from "../../../shared/task-summary.ts"
 
 /** `git log` から読んだコミット1件（`main-history.ts` が `--name-only` の出力を割ったもの）。 */
 export type AchievementCommit = {

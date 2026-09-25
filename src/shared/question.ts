@@ -54,7 +54,7 @@ export const FREE_TEXT_OPTION_LABEL = "その他"
  * 4.2。サーバは SDK の並びをそのまま渡す。`/` コマンド補完の `command-suggestions.tsx` の
  * `byName` と同じ立場）。
  *
- * - ラベルは日本語が普通なので `localeCompare` で比べる（`src/server/adapter/character-pack.ts`
+ * - ラベルは日本語が普通なので `localeCompare` で比べる（`src/server/character-pack/adapter/character-pack.ts`
  *   の `listPackDirs` と同じ比べ方）。**ロケールは `"ja"` に固定する** — 省くと実行環境の既定
  *   ロケールに解決され、ブラウザ（`ja`）と Bun のテスト（`en-US`）で漢字の並びが食い違う
  *   （目視確認で判明。テストが通る並びと画面に出る並びが別物になる）

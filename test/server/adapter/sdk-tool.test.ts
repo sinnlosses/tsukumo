@@ -4,8 +4,8 @@ import { type McpSdkServerConfigWithInstance } from "@anthropic-ai/claude-agent-
 import { z } from "zod"
 
 import { tsukumoServer } from "../../../src/server/adapter/sdk-tool.ts"
-import { createDiaryIntake, type DiaryIntake } from "../../../src/server/core/diary-tool.ts"
 import { type SessionMode } from "../../../src/server/core/session-driver.ts"
+import { createDiaryIntake, type DiaryIntake } from "../../../src/server/diary/core/diary-tool.ts"
 import { createReportReview } from "../../../src/server/report/core/report-review.ts"
 import { createUsageReviewIntake } from "../../../src/server/usage-review/core/usage-review-tool.ts"
 import { type SessionEvent } from "../../../src/shared/session-event.ts"

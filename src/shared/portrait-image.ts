@@ -2,7 +2,7 @@
 // コマンドで渡す形**（`docs/design.md` 7.1。multipart の POST も生バイトの POST も採らない）。
 //
 // ここは両側で共有する契約なので、**検証だけを持ち、バイト列には触らない**（base64 を
-// `Buffer` にするのは書き込む側 = `src/server/adapter/character-edit.ts`）。data URL としての
+// `Buffer` にするのは書き込む側 = `src/server/character-pack/adapter/character-edit.ts`）。data URL としての
 // 読み取りと大きさの検査は `src/shared/image-data-url.ts` にあり、ここが足すのは
 // **立ち絵として受け付ける形式の表**とファイル名の組み立て。
 //

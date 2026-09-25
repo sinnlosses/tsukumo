@@ -21,12 +21,6 @@ import {
   USAGE_REVIEW_STAGES,
 } from "../../shared/usage-review.ts"
 import { chatRecallText } from "../core/chat-memory-prompt.ts"
-import {
-  DIARY_BOOKMARK_DESCRIPTION,
-  DIARY_TOOL_DESCRIPTION,
-  DIARY_TOOL_NAME,
-  type DiaryIntake,
-} from "../core/diary-tool.ts"
 import { REPORT_TOOL_NAME, SPEAK_TOOL_NAME, TSUKUMO_MCP_SERVER_NAME } from "../core/sdk-message.ts"
 import {
   type ChatKeep,
@@ -34,6 +28,12 @@ import {
   type PersonaMemory,
   type SessionMode,
 } from "../core/session-driver.ts"
+import {
+  DIARY_BOOKMARK_DESCRIPTION,
+  DIARY_TOOL_DESCRIPTION,
+  DIARY_TOOL_NAME,
+  type DiaryIntake,
+} from "../diary/core/diary-tool.ts"
 import { type ReportReview } from "../report/core/report-review.ts"
 import { REPORT_TITLE_DESCRIPTION, REPORT_TOOL_DESCRIPTION } from "../report/core/report-tool.ts"
 import {
@@ -180,7 +180,7 @@ export function tsukumoServer(
 /**
  * 日記を受け取るツール。**仕事にも雑談にも載る**（振り返りは雑談中でも送れる。docs/design.md
  * 「日記の受け取りと保存」）。形の外の条の検査と保存は {@link DiaryIntake.submit}
- * （src/server/core/diary-tool.ts）。通すときの戻り値は "ok" だけ、断るときは理由だけを
+ * （src/server/diary/core/diary-tool.ts）。通すときの戻り値は "ok" だけ、断るときは理由だけを
  * `isError` 付きで返す（モデルが書いた文面は写さない）。
  */
 function diaryTool(intake: DiaryIntake, expressions: readonly ExpressionChoice[]) {

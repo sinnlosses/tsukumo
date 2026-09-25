@@ -8,20 +8,6 @@
 import process from "node:process"
 
 import { resolveBundledDir } from "./server/adapter/bundled-path.ts"
-import {
-  createCharacterPack,
-  deleteCharacterPack,
-  editCharacterPack,
-} from "./server/adapter/character-edit.ts"
-import {
-  type CharacterAssetFile,
-  type CharacterPack,
-  characterChangedEvent,
-  DEFAULT_CHARACTER_DIR_RELATIVE_PATH,
-  listCharacterPacks,
-  readCharacterAsset,
-  readCharacterPack,
-} from "./server/adapter/character-pack.ts"
 import { discardChatArchive } from "./server/adapter/chat-archive.ts"
 import { discardChatSummary } from "./server/adapter/chat-summary.ts"
 import { forgetRememberedLineFromScreen } from "./server/adapter/persona-memory.ts"
@@ -30,10 +16,24 @@ import {
   writeRememberedCharacter,
 } from "./server/adapter/remembered-default.ts"
 import {
+  createCharacterPack,
+  deleteCharacterPack,
+  editCharacterPack,
+} from "./server/character-pack/adapter/character-edit.ts"
+import {
+  type CharacterAssetFile,
+  type CharacterPack,
+  characterChangedEvent,
+  DEFAULT_CHARACTER_DIR_RELATIVE_PATH,
+  listCharacterPacks,
+  readCharacterAsset,
+  readCharacterPack,
+} from "./server/character-pack/adapter/character-pack.ts"
+import {
   type CharacterSelection,
   selectCharacterPack,
   selectInitialCharacterPack,
-} from "./server/core/character-selection.ts"
+} from "./server/character-pack/core/character-selection.ts"
 import { type Config } from "./server/core/config.ts"
 import { type CharacterAssetLocation } from "./shared/character-asset.ts"
 import {
@@ -111,7 +111,8 @@ export function createCurrentCharacter(config: Config): CurrentCharacter {
   }
   let packs = findPacks()
 
-  // 起動時の初期パック（順位も知らない名前の落とし方も src/server/core/character-selection.ts）。
+  // 起動時の初期パック（順位も知らない名前の落とし方も
+  // src/server/character-pack/core/character-selection.ts）。
   // TSUKUMO_CHARACTER があるときはすでに defaultPack に反映されている。
   const initialPack = selectInitialCharacterPack({
     packs,

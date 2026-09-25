@@ -8,20 +8,20 @@
 import process from "node:process"
 
 import { type CurrentCharacter } from "./current-character.ts"
-import { type UiBundle } from "./server/adapter/bundle.ts"
-import { listDiaryDates, readDiaryDay } from "./server/adapter/diary.ts"
-import { todayLocalDateKey } from "./server/adapter/local-time.ts"
 import {
   createAchievementCommitCache,
   readAchievement,
   readCommitCalendar,
-} from "./server/adapter/main-history.ts"
+} from "./server/achievement/adapter/main-history.ts"
+import { type UiBundle } from "./server/adapter/bundle.ts"
+import { todayLocalDateKey } from "./server/adapter/local-time.ts"
 import { createStartupToken, startViewServer } from "./server/adapter/server.ts"
 import { attachSessionSocket } from "./server/adapter/session-socket.ts"
 import { watchUiSource } from "./server/adapter/ui-rebuild.ts"
 import { type ResolvedViewPort, startOnResolvedPort } from "./server/core/port-resolution.ts"
 import { type PromptImageShelf } from "./server/core/prompt-image-shelf.ts"
 import { type SessionManager } from "./server/core/session-manager.ts"
+import { listDiaryDates, readDiaryDay } from "./server/diary/adapter/diary.ts"
 import { listRepositoryFiles } from "./server/repository/adapter/repository-file.ts"
 import {
   summarizeRecentTokenUsage,

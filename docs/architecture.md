@@ -105,14 +105,14 @@ Claude Code を動かす）の核（セッション駆動・イベントの変�
 | `src/server/core/pending-answer.ts`                                          | core       | `canUseTool` に届いた許可要求・質問を積み、画面が答えるまで Promise を保留する                                                                                      |
 | `src/server/core/session-manager.ts`                                         | core       | 時刻を打ち、サーバ側でも畳み、100ms でまとめて配る。**コマンドの分岐はここだけ**                                                                                    |
 | `src/server/core/session-launch.ts`                                          | core       | パックを決め、続きを探し、駆動を起こし、履歴を組み直すまでの順序（外の世界は渡される）                                                                              |
-| `src/server/core/character-selection.ts`                                     | core       | 初期パックの順位（指定 > 覚えた値 > 既定）・決め方の3つ・知らない名前を既定へ落とす判断                                                                             |
+| `src/server/character-pack/core/character-selection.ts`                      | core       | 初期パックの順位（指定 > 覚えた値 > 既定）・決め方の3つ・知らない名前を既定へ落とす判断                                                                             |
 | `src/server/adapter/server.ts`                                               | adapter    | ページ・同梱物・立ち絵・ファイル一覧の配信（`127.0.0.1` に listen するのはここ）                                                                                    |
 | `src/server/adapter/session-socket.ts`                                       | adapter    | `/ws` の upgrade（起動トークンと Origin を確かめる）とコマンドの受け口                                                                                              |
 | `src/server/core/config.ts`                                                  | core       | 環境変数の読み取り。**`process.env` を読むのはここだけ**                                                                                                            |
 | `src/server/core/port-resolution.ts`                                         | core       | ビューを配るポートの決定。既定は EADDRINUSE でずらし、明示指定は一度だけ試す                                                                                        |
 | `src/server/adapter/bundle.ts`                                               | adapter    | `bun build` で作った1組を `dist/browser/` に置く／そこから読む（起動は読むだけ）                                                                                    |
 | `src/server/adapter/bundled-path.ts`                                         | adapter    | 自分で持ち歩くもの（`characters/`・`node_modules/`）の置き場所を、起動先のディレクトリに依存せず解く                                                                |
-| `src/server/adapter/character-pack.ts`                                       | adapter    | キャラクターパックの列挙・読み込みと `/character/<pack>/<file>` が配ってよい1件の判定                                                                               |
+| `src/server/character-pack/adapter/character-pack.ts`                        | adapter    | キャラクターパックの列挙・読み込みと `/character/<pack>/<file>` が配ってよい1件の判定                                                                               |
 | `src/server/repository/adapter/task-summary.ts`                              | adapter    | `main` の `develop/task/` の読み直し。`main` の先端が変わったときだけ `tasks-changed` を起こす（`git rev-parse` / `git ls-tree` / `git cat-file --batch` を起こす） |
 | `src/server/repository/adapter/git.ts`                                       | adapter    | **`git` を起こすのはここだけ**。`task-summary.ts`・`main-history.ts`・`repository-file.ts` が使う                                                                   |
 | `src/server/repository/adapter/repository-file.ts`                           | adapter    | 入力欄の `@` 補完に配るパスの列挙。`git.ts` の `runGit` で `git ls-files` を呼ぶ（失敗したら空）                                                                    |
@@ -993,7 +993,7 @@ Network タブで `/ws` の upgrade が101を返し、`hello` フレームが届
 （`#achievement?date=2026-09-20`）でも会話の画面でも画面の下中央に札が出ることと、「日記帳で開く」で
 その日の見開きが開くこと、× で消えて再読み込みするまで戻らないことを見る。日記の中身（本文・
 しおり）も見るときは、`~/.tsukumo/diary/<リポジトリ>/2026-09-20.json`（`TSUKUMO_HOME` を
-分けていればその下。置き場の形は `src/server/adapter/diary.ts`）に架空の日記を1件置いてから
+分けていればその下。置き場の形は `src/server/diary/adapter/diary.ts`）に架空の日記を1件置いてから
 起こす——fake driver は `diary` ツールの中身を持たないので、置かなければ `GET /achievement` の
 その日は「日記が無い」のまま。
 

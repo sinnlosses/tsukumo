@@ -43,6 +43,7 @@ import {
   type ContextUsageLog,
   createContextUsageRecorder,
 } from "../context-usage/core/context-usage.ts"
+import { type DiaryDayTask } from "../diary/core/diary-tool.ts"
 import {
   createTokenUsageRecorder,
   type TokenUsageLog,
@@ -50,7 +51,6 @@ import {
 } from "../token-usage/core/token-usage.ts"
 import { appendChatArchiveEntry } from "./chat-archive-entry.ts"
 import { type ChatCompactWatch, createChatCompactWatch } from "./chat-compact.ts"
-import { type DiaryDayTask } from "./diary-tool.ts"
 import { declined, type DispatchResult, dispatchToDriver, nudge } from "./driver-command.ts"
 import { createEventBatch, type EventBatch } from "./event-batch.ts"
 import { type PromptImageShelf, releasedPromptImageIds } from "./prompt-image-shelf.ts"
@@ -131,7 +131,7 @@ export type SessionManagerOptions = {
   /**
    * `edit.pack` で指されたキャラクターパック（使用中に限らない）の立ち絵・差し色・背景を変え、
    * **画面へ流す `character-changed` イベントを返す**（書き込み先と受け付けない条件は
-   * `src/server/adapter/character-edit.ts`。無いパック・起動先の `characters/local` も
+   * `src/server/character-pack/adapter/character-edit.ts`。無いパック・起動先の `characters/local` も
    * ここで undefined になる）。**受け付けられなかったときは undefined**
    * （呼び出し側は定型文の `error` を返す）。
    *
@@ -141,7 +141,7 @@ export type SessionManagerOptions = {
   readonly editCharacter: (edit: CharacterEditCommand) => Promise<SessionEvent | undefined>
   /**
    * 新しいキャラクターパックを作り、**選択肢の増えた `character-changed` イベントを返す**
-   * （書き込み先と受け付けない条件は `src/server/adapter/character-edit.ts`）。作れなかったときは
+   * （書き込み先と受け付けない条件は `src/server/character-pack/adapter/character-edit.ts`）。作れなかったときは
    * undefined（呼び出し側は定型文の `error` を返す）。
    *
    * **作ったパックへ切り替えはしない**（一覧に足すだけ。切り替えは駆動の起こし直しで画面が
@@ -150,7 +150,7 @@ export type SessionManagerOptions = {
   readonly createCharacter: (create: CharacterCreateCommand) => Promise<SessionEvent | undefined>
   /**
    * キャラクターパックを消し、**選択肢の減った `character-changed` イベントを返す**（消す範囲と
-   * 受け付けない条件は `src/server/adapter/character-edit.ts` の `deleteCharacterPack`。使用中・
+   * 受け付けない条件は `src/server/character-pack/adapter/character-edit.ts` の `deleteCharacterPack`。使用中・
    * ホームに版の無いパックは消さない）。消せなかったときは undefined（呼び出し側は定型文の
    * `error` を返す）。
    *
@@ -216,7 +216,7 @@ export type SessionManagerOptions = {
   /**
    * 成果の振り返り（`reflect-achievement`）を受けたときに、その日の成果を数え直す口
    * （`docs/design.md`「日記の受け取りと保存」「コマンドと依頼」）。**画面が出している
-   * `GET /achievement` と同じ数え方**（`src/server/adapter/main-history.ts` の
+   * `GET /achievement` と同じ数え方**（`src/server/achievement/adapter/main-history.ts` の
    * `readAchievement`）を使い、依頼文と関所（その日の終えたタスクの ID）を同じ読み取りから
    * 作る。`main` が読めない・`git` の呼び出しが失敗したときは undefined。
    */

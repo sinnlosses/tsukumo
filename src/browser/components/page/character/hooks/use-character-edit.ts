@@ -9,7 +9,7 @@
 // 変わらない。`docs/design.md` 7.1）。使用中以外のパックには「このキャラクターに切り替える」を
 // 出し、押すと `switch-character` を送る（ターン進行中は押せない。サイドバーの `<select>` と
 // 同じ理由・同じ文言）。**書き込み先と反映はサーバ側**
-// （`src/server/adapter/character-edit.ts` → `character-changed`）。ここは選んだ画像を data URL
+// （`src/server/character-pack/adapter/character-edit.ts` → `character-changed`）。ここは選んだ画像を data URL
 // にして渡すだけで、素材をブラウザ側に持ち続けない。
 //
 // **`default` には消す口を出さない**（立ち絵が必ず要る1つ。`src/shared/expression.ts` の
@@ -22,7 +22,7 @@
 //
 // 差し色を引きずっている間は、**見た目（この立ち絵の `accent` と `<input>` の表示）だけ
 // その場で更新し、`set-outfit-accent` / `set-accent` の送信は `useDebouncedCallback` で
-// 200ms まとめる**（`src/server/adapter/character-edit.ts` が送信のたびに `character.json` を
+// 200ms まとめる**（`src/server/character-pack/adapter/character-edit.ts` が送信のたびに `character.json` を
 // 書き直すため）。**衣装の差し色（`outfitAccents`）と画面の差し色（`accent` / `chatAccent`）は
 // 同じ「ドラッグ中の色」という操作**なので、同じ定数（`ACCENT_DEBOUNCE_MS`）を使う
 // （`docs/screen-design.md` 13.6）。

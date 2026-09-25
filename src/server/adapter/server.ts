@@ -51,7 +51,10 @@ import {
   type TokenUsageSummary,
 } from "../../shared/token-usage-summary.ts"
 import { VENDOR_PATH_PREFIX, vendorAssetPath } from "../../shared/vendor-asset.ts"
-import { type ReadAchievementResult, type ReadCommitCalendarResult } from "./main-history.ts"
+import {
+  type ReadAchievementResult,
+  type ReadCommitCalendarResult,
+} from "../achievement/adapter/main-history.ts"
 import { readVendorAsset } from "./vendor-asset.ts"
 
 /**
@@ -136,7 +139,7 @@ export type ReadContextUsage = () => Promise<ContextUsageReport>
 export type FindPromptImage = (id: string) => string | undefined
 
 /**
- * 成果の画面に配る1日ぶんの応答（`src/server/adapter/main-history.ts` の `readAchievement` を
+ * 成果の画面に配る1日ぶんの応答（`src/server/achievement/adapter/main-history.ts` の `readAchievement` を
  * 束ねたもの）。**クエリの `date`（生の文字列。無ければ undefined）をそのまま渡す**——
  * 「今日」を決めて検証するのは配線層（`src/view-delivery.ts`。`readTokenUsageSummary` の
  * `todayLocalDateKey()` と同じ置き場）で、ここでは検証しない。
@@ -144,7 +147,7 @@ export type FindPromptImage = (id: string) => string | undefined
 export type ReadAchievement = (rawDate: string | undefined) => Promise<ReadAchievementResult>
 
 /**
- * 灯りの暦（直近5週ぶん）に配る応答（`src/server/adapter/main-history.ts` の
+ * 灯りの暦（直近5週ぶん）に配る応答（`src/server/achievement/adapter/main-history.ts` の
  * `readCommitCalendar` を束ねたもの）。日は選べない（常に「今日を含む直近5週」）ので引数は無い。
  */
 export type ReadAchievementCalendar = () => Promise<ReadCommitCalendarResult>
@@ -161,7 +164,7 @@ export type ViewServerOptions = {
    */
   readonly assets: ViewAssets
   /**
-   * `/character/<pack>/<file>` の1件を配ってよい形にする（`src/server/adapter/character-pack.ts` の
+   * `/character/<pack>/<file>` の1件を配ってよい形にする（`src/server/character-pack/adapter/character-pack.ts` の
    * `readCharacterAsset` を束ねたもの）。
    */
   readonly serveCharacterAsset: ServeCharacterAsset
@@ -485,7 +488,7 @@ function writePromptImage(
  * 配るのは利用者のタスクの要約）。`date` は生の文字列のまま渡す（検証は配線層。
  * {@link ReadAchievement}）。**`git` のタイムアウト・失敗は 503**（部分的な数を出さない）——
  * `main` が読めないだけなら 200 で `{ kind: "unknown" }` を返す
- * （`src/server/adapter/main-history.ts` の `ReadAchievementResult`）。
+ * （`src/server/achievement/adapter/main-history.ts` の `ReadAchievementResult`）。
  */
 function writeAchievement(
   request: IncomingMessage,
@@ -513,7 +516,7 @@ function writeAchievement(
 /**
  * 灯りの暦（直近5週ぶん）を JSON で配る。**起動トークンが合わなければ 403**（`/achievement` と
  * 同じ）。**`git` のタイムアウト・失敗は 503**（部分的な数を出さない）——`main` が読めないだけ
- * なら 200 で `{ kind: "unknown" }` を返す（`src/server/adapter/main-history.ts` の
+ * なら 200 で `{ kind: "unknown" }` を返す（`src/server/achievement/adapter/main-history.ts` の
  * `ReadCommitCalendarResult`）。
  */
 function writeAchievementCalendar(

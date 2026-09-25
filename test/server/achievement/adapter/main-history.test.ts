@@ -9,9 +9,9 @@ import {
   readAchievement,
   readCommitCalendar,
   type ReadAchievementResult,
-} from "../../../src/server/adapter/main-history.ts"
-import { type AchievementCalendar } from "../../../src/shared/achievement-calendar.ts"
-import { type DailyAchievement } from "../../../src/shared/achievement.ts"
+} from "../../../../src/server/achievement/adapter/main-history.ts"
+import { type AchievementCalendar } from "../../../../src/shared/achievement-calendar.ts"
+import { type DailyAchievement } from "../../../../src/shared/achievement.ts"
 
 // 本物の `git` を起こす（`main` の上から実際に読むことそのものが検査の対象）。リポジトリは
 // 一時ディレクトリに毎回作り、中身は架空のコミット・タスクだけにする

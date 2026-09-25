@@ -32,13 +32,6 @@ import { expressionNames as toExpressionNames } from "../../shared/expression-ch
 import { parsePromptImage, type PromptImage } from "../../shared/prompt-image.ts"
 import { type SessionEvent } from "../../shared/session-event.ts"
 import { readChatTopics } from "../core/chat-compact.ts"
-import {
-  createDiaryIntake,
-  createDiaryStageTracker,
-  DIARY_TOOL_NAME,
-  type DiaryIntake,
-  type DiaryStageTracker,
-} from "../core/diary-tool.ts"
 import { createPendingAnswerQueue, type PendingAnswerQueue } from "../core/pending-answer.ts"
 import { type ClaudeAccountTier, planName } from "../core/plan.ts"
 import { recordedPromptImages } from "../core/prompt-image-shelf.ts"
@@ -59,11 +52,18 @@ import {
 } from "../core/session-driver.ts"
 import { createSessionTitleIntake, type SessionTitleIntake } from "../core/session-title.ts"
 import { childProcessEnv, isVisibleOutputNudge } from "../core/visible-output-nudge.ts"
+import { appendDiaryParagraph } from "../diary/adapter/diary.ts"
+import {
+  createDiaryIntake,
+  createDiaryStageTracker,
+  DIARY_TOOL_NAME,
+  type DiaryIntake,
+  type DiaryStageTracker,
+} from "../diary/core/diary-tool.ts"
 import { createReportReview, type ReportReview } from "../report/core/report-review.ts"
 import { createReportGate, type ReportGate } from "../report/core/report-tool.ts"
 import { createUsageReviewIntake } from "../usage-review/core/usage-review-tool.ts"
 import { readClaudeAccountTier } from "./claude-account.ts"
-import { appendDiaryParagraph } from "./diary.ts"
 import { readContextUsage } from "./sdk-context-usage.ts"
 import {
   createSessionTitleWriter,
@@ -370,7 +370,7 @@ export function stopHooks(
  * `titleIntake` が覚えている題（`report` の `title` 引数。`src/server/adapter/sdk-tool.ts`）も
  * ターンの終わりに取り出し、`titleWriter` に書く予約をする。
  *
- * `diaryStageTracker`（`src/server/core/diary-tool.ts`）には**メインのメッセージを生のまま**
+ * `diaryStageTracker`（`src/server/diary/core/diary-tool.ts`）には**メインのメッセージを生のまま**
  * 渡す——3段目の合図（`bookmark` の鍵）は変換前の `input_json_delta` にしか無い
  * （`docs/design.md`「日記の受け取りと保存」「3段の進みの決まり方」）。`diaryIntake` は
  * ターンが終わるたびに「いま書く日」を忘れる（{@link DiaryIntake.forgetDay}）。

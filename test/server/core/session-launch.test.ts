@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test"
 
-import { type CharacterSelection } from "../../../src/server/core/character-selection.ts"
+import { type CharacterSelection } from "../../../src/server/character-pack/core/character-selection.ts"
 import { type SessionDriver, type SessionStart } from "../../../src/server/core/session-driver.ts"
 import {
   createSessionLaunch,

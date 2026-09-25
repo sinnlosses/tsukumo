@@ -1,7 +1,7 @@
 // `/character/<pack>/<file>` で配るキャラクターの素材（立ち絵・顔・背景）。**URL の作り方と
 // 読み方・拡張子による仕分け**を持つ。
 //
-// 素材そのものは持たない。読むのは `src/server/adapter/character-pack.ts`、配るのは
+// 素材そのものは持たない。読むのは `src/server/character-pack/adapter/character-pack.ts`、配るのは
 // `src/server/adapter/server.ts`、`<img>` に載せるのは `src/browser/components/domain/portrait.tsx` で、
 // ここはその3者が同じ経路名と同じ仕分けを見るための契約（`node:` にも `document` にも触らない）。
 
@@ -10,7 +10,7 @@ export const CHARACTER_ASSET_PATH_PREFIX = "/character/"
 /**
  * `/character/<pack>/<file>` の URL の作り方。**使用中のパックもそれ以外も同じ形**
  * （`docs/design.md` 7.2）。`fileName` は **`character.json` に書かれたファイル名だけ**
- * を渡す前提（`src/server/adapter/character-pack.ts` の allowlist と同じ考え方。パスから
+ * を渡す前提（`src/server/character-pack/adapter/character-pack.ts` の allowlist と同じ考え方。パスから
  * 組み立てない）。パック名もファイル名も1つの区間としてエンコードするので、`/` や空白を含んでも
  * 区切りがずれない（読むのは {@link readCharacterAssetPath}）。
  *

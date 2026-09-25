@@ -113,7 +113,7 @@ export const dailyDiaryStatusSchema = z.discriminatedUnion("kind", [
 
 /**
  * 届いた値を {@link Diary} として読む。**版が違う・形が崩れていれば `undefined`**
- * （`src/server/adapter/diary.ts` はこれを「読めない」として扱い、置き場のファイルの読み込みにも
+ * （`src/server/diary/adapter/diary.ts` はこれを「読めない」として扱い、置き場のファイルの読み込みにも
  * `GET /achievement` の応答の検証にも同じ読み手を使う）。
  */
 export function readDiary(value: unknown): Diary | undefined {

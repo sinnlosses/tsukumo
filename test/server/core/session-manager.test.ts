@@ -1,12 +1,11 @@
 import { describe, expect, it } from "bun:test"
 
+import { type CharacterSelection } from "../../../src/server/character-pack/core/character-selection.ts"
 import {
   type ContextUsageEntry,
   type ContextUsageLog,
 } from "../../../src/server/context-usage/core/context-usage.ts"
-import { type CharacterSelection } from "../../../src/server/core/character-selection.ts"
 import { CHAT_NUDGE_PROMPT } from "../../../src/server/core/chat-nudge.ts"
-import { type DiaryDay } from "../../../src/server/core/diary-tool.ts"
 import {
   createPromptImageShelf,
   type PromptImageShelf,
@@ -23,6 +22,7 @@ import { createSessionManager } from "../../../src/server/core/session-manager.t
 import { type VisitGuest } from "../../../src/server/core/visit-guest.ts"
 import { VISIT_TIMING } from "../../../src/server/core/visit-timing.ts"
 import { type VisitPorts } from "../../../src/server/core/visit-watch.ts"
+import { type DiaryDay } from "../../../src/server/diary/core/diary-tool.ts"
 import {
   type TokenUsageEntry,
   type TokenUsageLog,

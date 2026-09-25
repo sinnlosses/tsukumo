@@ -1,6 +1,5 @@
 import { describe, expect, it } from "bun:test"
 
-import { DIARY_TOOL_NAME } from "../../../src/server/core/diary-tool.ts"
 import {
   isSubagentMessage,
   REPORT_TOOL_NAME,
@@ -11,6 +10,7 @@ import {
   toPlan,
   toSessionEvents,
 } from "../../../src/server/core/sdk-message.ts"
+import { DIARY_TOOL_NAME } from "../../../src/server/diary/core/diary-tool.ts"
 import { type Expression } from "../../../src/shared/expression.ts"
 import { type SessionEvent } from "../../../src/shared/session-event.ts"
 

@@ -26,9 +26,9 @@ const KNOWN_EXCEPTION_ID = "T-225"
 const ALLOWED_DATA_FILES = [
   "test/task-id.test.ts",
   "test/scripts/task-id.test.ts",
-  "test/server/core/achievement.test.ts",
+  "test/server/achievement/core/achievement.test.ts",
   "test/server/repository/adapter/task-summary.test.ts",
-  "test/server/adapter/main-history.test.ts",
+  "test/server/achievement/adapter/main-history.test.ts",
   "test/shared/task-summary.test.ts",
   "test/shared/achievement.test.ts",
 ] as const satisfies readonly string[]

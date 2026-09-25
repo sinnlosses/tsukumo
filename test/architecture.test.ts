@@ -77,6 +77,9 @@ const SERVER_FEATURES = [
   "usage-review",
   "host",
   "repository",
+  "achievement",
+  "character-pack",
+  "diary",
 ] as const
 type ServerFeature = (typeof SERVER_FEATURES)[number]
 
@@ -90,6 +93,9 @@ const SERVER_FEATURE_IMPORTS: Readonly<Record<ServerFeature, ReadonlySet<ServerF
   "usage-review": new Set([]),
   host: new Set([]),
   repository: new Set([]),
+  achievement: new Set(["repository"]),
+  "character-pack": new Set([]),
+  diary: new Set(["character-pack", "repository"]),
 }
 
 type ServerLayer = "core" | "adapter"

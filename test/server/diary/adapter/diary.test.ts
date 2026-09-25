@@ -4,12 +4,12 @@ import { mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from "node
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
+import { isoWithOffset } from "../../../../src/server/adapter/local-time.ts"
 import {
   appendDiaryParagraph,
   listDiaryDates,
   readDiaryDay,
-} from "../../../src/server/adapter/diary.ts"
-import { isoWithOffset } from "../../../src/server/adapter/local-time.ts"
+} from "../../../../src/server/diary/adapter/diary.ts"
 
 // 本物の `git` を起こす（リポジトリの見分けそのものが検査の対象）。リポジトリとホームは
 // 一時ディレクトリに毎回作り、中身は架空の文面だけにする（docs/coding-standards.md「会話内容の

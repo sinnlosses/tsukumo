@@ -1,7 +1,8 @@
 // `main` の履歴を読み、成果（`docs/glossary.md`「成果」）を数える境界（docs/design.md 5章
-// 「成果の集め方と配り方」）。`git` を起こすのは `../repository/adapter/git.ts`
+// 「成果の集め方と配り方」）。`git` を起こすのは `../../repository/adapter/git.ts`
 // （`task-summary.ts` と共有する口）、
-// 数える判断は `../core/achievement.ts`、日付キーから始まり・終わりを出すのは `./local-time.ts`。
+// 数える判断は `../core/achievement.ts`、日付キーから始まり・終わりを出すのは
+// `../../adapter/local-time.ts`。
 //
 // **読むのは作業ツリーのファイルではなく `main` の上のもの**（`task-summary.ts` と同じ理由。
 // 正典は `main` のもので、作業ツリーのものは `git merge main` するまで別の作業ツリーの分を
@@ -18,8 +19,10 @@ import { basename } from "node:path"
 import {
   achievementCalendarDateKeys,
   type AchievementCalendar,
-} from "../../shared/achievement-calendar.ts"
-import { type AchievementMilestone, type DailyAchievement } from "../../shared/achievement.ts"
+} from "../../../shared/achievement-calendar.ts"
+import { type AchievementMilestone, type DailyAchievement } from "../../../shared/achievement.ts"
+import { localDateEpochRange, localDateKey, localTimeHHMM } from "../../adapter/local-time.ts"
+import { runGit, runGitCatFileBatch } from "../../repository/adapter/git.ts"
 import {
   achievementCommitCountsByDate,
   achievementCommitsInRange,
@@ -41,8 +44,6 @@ import {
   type TaskFileHistoryCommit,
   type TaskSnapshotSource,
 } from "../core/achievement.ts"
-import { runGit, runGitCatFileBatch } from "../repository/adapter/git.ts"
-import { localDateEpochRange, localDateKey, localTimeHHMM } from "./local-time.ts"
 
 /**
  * 今日以外の日の数を覚える入れ物（`docs/design.md`「成果の集め方と配り方」「暦の数え方」）。

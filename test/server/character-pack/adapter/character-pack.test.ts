@@ -3,7 +3,7 @@ import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:
 import { tmpdir } from "node:os"
 import { basename, join } from "node:path"
 
-import { bundledFilePath } from "../../../src/server/adapter/bundled-path.ts"
+import { bundledFilePath } from "../../../../src/server/adapter/bundled-path.ts"
 import {
   characterChangedEvent,
   isEditableCharacterPack,
@@ -11,13 +11,13 @@ import {
   readCharacterAsset,
   readCharacterPack,
   readCharacterPackFile,
-} from "../../../src/server/adapter/character-pack.ts"
+} from "../../../../src/server/character-pack/adapter/character-pack.ts"
 import {
   characterInfo,
   characterPackEntry,
   shownOutfitAccents,
   shownPortraits,
-} from "../../fixture/character.ts"
+} from "../../../fixture/character.ts"
 
 // フィクスチャは characters/tsukumo-spirit/character.json と同じ形の、手で書いた架空の定義。
 const DEFINITION_JSON = JSON.stringify({

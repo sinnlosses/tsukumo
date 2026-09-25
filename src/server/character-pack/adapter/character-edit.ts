@@ -1,7 +1,7 @@
 // 画面から届いたキャラクターの変更（**新しいパックを作る**・立ち絵と差し色と背景を差し替える・
 // **パックを消す**）をキャラクターパックに書き込む。**書き込んでよい・消してよいのは
 // `~/.tsukumo/characters/<name>/` の下だけ**（`docs/design.md` 7.1。`state.json` と同じ親の下で、
-// リポジトリの作業ツリーが汚れない）。読む側は `src/server/adapter/character-pack.ts`。
+// リポジトリの作業ツリーが汚れない）。読む側は `src/server/character-pack/adapter/character-pack.ts`。
 //
 // **ディレクトリ名になる名前だけは外から受け取る**（新しいパックを作るときの `<name>`）ので、
 // 形は境界（`src/shared/character.ts` の `isCharacterPackName`）で見てある。ここは**既にある
@@ -26,12 +26,12 @@
 import { copyFileSync, existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs"
 import { basename, join } from "node:path"
 
-import { classifyPortraitFile } from "../../shared/character-asset.ts"
+import { classifyPortraitFile } from "../../../shared/character-asset.ts"
 import {
   type BackgroundImage,
   backgroundFileName,
   parseBackgroundImage,
-} from "../../shared/character-background.ts"
+} from "../../../shared/character-background.ts"
 import {
   type CharacterDefinition,
   definitionWithAccent,
@@ -46,25 +46,25 @@ import {
   definitionWithPortrait,
   definitionWithTagline,
   parseCharacterDefinition,
-} from "../../shared/character-definition.ts"
-import { type FaceImage, faceFileName, parseFaceImage } from "../../shared/character-face.ts"
-import { type CharacterPackRemoval } from "../../shared/character.ts"
+} from "../../../shared/character-definition.ts"
+import { type FaceImage, faceFileName, parseFaceImage } from "../../../shared/character-face.ts"
+import { type CharacterPackRemoval } from "../../../shared/character.ts"
 import {
   type CharacterCreateCommand,
   type CharacterDeleteCommand,
   type CharacterEditCommand,
-} from "../../shared/command.ts"
+} from "../../../shared/command.ts"
 import {
   type Expression,
   EXPRESSIONS,
   type RemovableExpression,
   type RequiredExpression,
-} from "../../shared/expression.ts"
+} from "../../../shared/expression.ts"
 import {
   type PortraitImage,
   parsePortraitImage,
   portraitFileName,
-} from "../../shared/portrait-image.ts"
+} from "../../../shared/portrait-image.ts"
 import {
   type CharacterPack,
   CHARACTER_DEFINITION_FILE_NAME,

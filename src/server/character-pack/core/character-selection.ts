@@ -1,12 +1,12 @@
 // どのキャラクターパックを出すかの判断だけ（docs/design.md 7章・docs/screen-design.md 13.6）。**パックの中身を
-// 読むのも一覧を作るのも外の世界に触る仕事**なので、それは `src/server/adapter/character-pack.ts` に
+// 読むのも一覧を作るのも外の世界に触る仕事**なので、それは `src/server/character-pack/adapter/character-pack.ts` に
 // あり、ここは渡された一覧を名前で引くだけの純粋関数を持つ。
 //
 // 名前で引くのは、**名前をパスとして組み立てないため**。一覧に無い名前は必ず既定へ落ちる。
 
 /**
  * 名前で選べるもの。**`core` はキャラクターパックの中身を知らない**（立ち絵も人格も
- * `src/server/adapter/character-pack.ts` の `CharacterPack` が持つ）ので、選ぶのに要る一片だけを見る。
+ * `src/server/character-pack/adapter/character-pack.ts` の `CharacterPack` が持つ）ので、選ぶのに要る一片だけを見る。
  */
 export type NamedCharacterPack = { readonly name: string }
 
