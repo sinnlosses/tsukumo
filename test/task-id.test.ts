@@ -21,9 +21,10 @@ describe("タスクIDの重複", () => {
 })
 
 // CLAUDE.md「コード・ドキュメントにタスク番号（`T-` + 3桁）を書かない」を、`src/` / `test/` /
-// `scripts/` のコメント・テスト名で保つ（拾う形・許す範囲は `scripts/task-mention.ts` の冒頭）。
+// `scripts/` / `docs/`（`docs/history/` を除く）のコメント・テスト名・本文で保つ
+// （拾う形・許す範囲は `scripts/task-mention.ts` の冒頭）。
 describe("タスク番号の書き込み", () => {
-  it("src/・test/・scripts/ のコメント・テスト名に、許した範囲を超えたタスク番号が無い", () => {
+  it("src/・test/・scripts/・docs/ のコメント・テスト名・本文に、許した範囲を超えたタスク番号が無い", () => {
     expect(collectStrayTaskMentions(REPOSITORY_ROOT).map(formatStrayTaskMention)).toEqual([])
   })
 })
