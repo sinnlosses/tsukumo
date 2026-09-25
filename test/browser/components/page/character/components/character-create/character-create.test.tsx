@@ -8,6 +8,7 @@ import { SessionStoreContext } from "../../../../../../../src/browser/stores/ses
 import { type CharacterPackEntry } from "../../../../../../../src/shared/character.ts"
 import { INITIAL_SESSION_STATE } from "../../../../../../../src/shared/session-state.ts"
 import { characterPackEntry } from "../../../../../../fixture/character.ts"
+import { typedElement } from "../../../../../../typed-element.ts"
 import { type CommandSpy, sessionStoreWith } from "../../../../../session-store.ts"
 
 // 手で書いた架空のキャラクターパック（docs/coding-standards.md「会話内容の扱い」）。
@@ -46,7 +47,7 @@ function dialog(): Element {
 }
 
 function submitButton(): HTMLButtonElement {
-  return screen.getByRole("button", { name: "作る" }) as HTMLButtonElement
+  return typedElement(screen.getByRole("button", { name: "作る" }), HTMLButtonElement, "作るボタン")
 }
 
 /** 必須の立ち絵を選ぶ。`FileReader` は非同期なので、読み終わって state が変わるまで待つ。 */

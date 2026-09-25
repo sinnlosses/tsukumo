@@ -13,6 +13,7 @@ import {
   type SessionState,
 } from "../../../../../../../../../src/shared/session-state.ts"
 import { characterInfo } from "../../../../../../../../fixture/character.ts"
+import { typedElement } from "../../../../../../../../typed-element.ts"
 import { rpcOutput, stubRpcFetch, type RpcFetchStub } from "../../../../../../../rpc-fetch-stub.ts"
 import { type CommandSpy, sessionStoreWith } from "../../../../../../../session-store.ts"
 
@@ -83,7 +84,11 @@ function renderComposer(
 }
 
 function textArea(): HTMLTextAreaElement {
-  return screen.getByPlaceholderText(/依頼を書く/) as HTMLTextAreaElement
+  return typedElement(
+    screen.getByPlaceholderText(/依頼を書く/),
+    HTMLTextAreaElement,
+    "依頼の入力欄",
+  )
 }
 
 describe("Composer", () => {
@@ -273,7 +278,11 @@ describe("Composer", () => {
       (command) => calls.push(command),
     )
 
-    const answerArea = screen.getByPlaceholderText("選択肢以外の答えを書く…")
+    const answerArea = typedElement(
+      screen.getByPlaceholderText("選択肢以外の答えを書く…"),
+      HTMLTextAreaElement,
+      "自由記述の答えの入力欄",
+    )
     fireEvent.change(answerArea, { target: { value: "架空の自由な答え" } })
     fireEvent.keyDown(answerArea, { key: "Enter", metaKey: true })
 
@@ -284,6 +293,6 @@ describe("Composer", () => {
         answer: { kind: "answers", labels: [["架空の自由な答え"]] },
       },
     ])
-    expect((answerArea as HTMLTextAreaElement).value).toBe("")
+    expect(answerArea.value).toBe("")
   })
 })

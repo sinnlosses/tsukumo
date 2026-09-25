@@ -9,6 +9,7 @@ import {
   INITIAL_SESSION_STATE,
   type SessionState,
 } from "../../../../../../../../../src/shared/session-state.ts"
+import { typedElement } from "../../../../../../../../typed-element.ts"
 import { type CommandSpy, sessionStoreWith } from "../../../../../../../session-store.ts"
 
 afterEach(() => {
@@ -46,7 +47,7 @@ describe("TurnStatus", () => {
     const calls: unknown[] = []
     renderTurnStatus({ turn: { kind: "idle" } }, (command) => calls.push(command))
 
-    const button = screen.getByRole("button") as HTMLButtonElement
+    const button = typedElement(screen.getByRole("button"), HTMLButtonElement, "ボタン")
     expect(button.textContent).toBe("送信")
     expect(button.type).toBe("submit")
 
@@ -116,7 +117,7 @@ describe("TurnStatus", () => {
       (command) => calls.push(command),
     )
 
-    const button = screen.getByRole("button") as HTMLButtonElement
+    const button = typedElement(screen.getByRole("button"), HTMLButtonElement, "ボタン")
     expect(button.textContent).toBe("答える")
     expect(button.type).toBe("submit")
 

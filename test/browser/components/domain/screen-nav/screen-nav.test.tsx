@@ -15,6 +15,7 @@ import {
 } from "../../../../../src/shared/session-state.ts"
 import { setPageUrl } from "../../../../dom-environment.ts"
 import { characterInfo } from "../../../../fixture/character.ts"
+import { typedElement } from "../../../../typed-element.ts"
 import { type CommandSpy, sessionStoreWith } from "../../../session-store.ts"
 
 // 手で書いた架空の答え待ち（許可の問い合わせ1件。docs/coding-standards.md「会話内容の扱い」）。
@@ -208,8 +209,12 @@ describe("ScreenNav", () => {
     renderScreenNav()
     fireEvent.click(screen.getByRole("button", { name: "メニュー" }))
 
-    const panelGate = document.querySelector(".screen-nav-panel a")
-    fireEvent.click(panelGate as Element)
+    const panelGate = typedElement(
+      document.querySelector(".screen-nav-panel a"),
+      HTMLElement,
+      "落ちてきた面の口",
+    )
+    fireEvent.click(panelGate)
 
     expect(document.querySelector(".screen-nav-panel")).toBeNull()
   })
@@ -319,22 +324,36 @@ describe("ScreenNav", () => {
         session: { ...RUNNING_SESSION, permissionMode: "plan" },
       })
 
-      expect((screen.getByLabelText("モデル") as HTMLSelectElement).value).toBe("sonnet")
-      expect((screen.getByLabelText("許可モード") as HTMLSelectElement).value).toBe("plan")
+      expect(
+        typedElement(screen.getByLabelText("モデル"), HTMLSelectElement, "モデルの<select>").value,
+      ).toBe("sonnet")
+      expect(
+        typedElement(screen.getByLabelText("許可モード"), HTMLSelectElement, "許可モードの<select>")
+          .value,
+      ).toBe("plan")
     })
 
     // 届く前でも見た目上の既定に倒す（サイドバーの <select> と同じ値）。
     it("model / permissionMode が届く前は既定を選択する", () => {
       renderScreenNav()
 
-      expect((screen.getByLabelText("モデル") as HTMLSelectElement).value).toBe("opus")
-      expect((screen.getByLabelText("許可モード") as HTMLSelectElement).value).toBe("auto")
+      expect(
+        typedElement(screen.getByLabelText("モデル"), HTMLSelectElement, "モデルの<select>").value,
+      ).toBe("opus")
+      expect(
+        typedElement(screen.getByLabelText("許可モード"), HTMLSelectElement, "許可モードの<select>")
+          .value,
+      ).toBe("auto")
     })
 
     it("モデルの選択肢は MODEL_ALIASES と過不足なく一致する（片方だけの追加漏れを防ぐ）", () => {
       renderScreenNav()
 
-      const select = screen.getByLabelText("モデル") as HTMLSelectElement
+      const select = typedElement(
+        screen.getByLabelText("モデル"),
+        HTMLSelectElement,
+        "モデルの<select>",
+      )
       const optionValues = Array.from(select.options).map((option) => option.value)
 
       expect([...optionValues].sort()).toEqual([...MODEL_ALIASES].sort())
@@ -343,22 +362,30 @@ describe("ScreenNav", () => {
     it("model が fable を含むとき、fable を選択する", () => {
       renderScreenNav({ model: "claude-fable-5-1" })
 
-      expect((screen.getByLabelText("モデル") as HTMLSelectElement).value).toBe("fable")
+      expect(
+        typedElement(screen.getByLabelText("モデル"), HTMLSelectElement, "モデルの<select>").value,
+      ).toBe("fable")
     })
 
     it("model が opus のみを含むとき、fable を誤って選択しない", () => {
       renderScreenNav({ model: "claude-opus-5" })
 
-      expect((screen.getByLabelText("モデル") as HTMLSelectElement).value).toBe("opus")
+      expect(
+        typedElement(screen.getByLabelText("モデル"), HTMLSelectElement, "モデルの<select>").value,
+      ).toBe("opus")
     })
 
     it("model が sonnet / haiku のとき、fable を誤って選択しない", () => {
       renderScreenNav({ model: "claude-sonnet-5" })
-      expect((screen.getByLabelText("モデル") as HTMLSelectElement).value).toBe("sonnet")
+      expect(
+        typedElement(screen.getByLabelText("モデル"), HTMLSelectElement, "モデルの<select>").value,
+      ).toBe("sonnet")
 
       cleanup()
       renderScreenNav({ model: "claude-haiku-5" })
-      expect((screen.getByLabelText("モデル") as HTMLSelectElement).value).toBe("haiku")
+      expect(
+        typedElement(screen.getByLabelText("モデル"), HTMLSelectElement, "モデルの<select>").value,
+      ).toBe("haiku")
     })
 
     // 帯の操作子が送るコマンドは、いままでサイドバーの <select> が送っていたものと同じ。
@@ -387,8 +414,14 @@ describe("ScreenNav", () => {
     it("ターン進行中も無効にならない（起こし直さないため）", () => {
       renderScreenNav({ turn: { kind: "running", startedAt: 0 } })
 
-      expect((screen.getByLabelText("モデル") as HTMLSelectElement).disabled).toBe(false)
-      expect((screen.getByLabelText("許可モード") as HTMLSelectElement).disabled).toBe(false)
+      expect(
+        typedElement(screen.getByLabelText("モデル"), HTMLSelectElement, "モデルの<select>")
+          .disabled,
+      ).toBe(false)
+      expect(
+        typedElement(screen.getByLabelText("許可モード"), HTMLSelectElement, "許可モードの<select>")
+          .disabled,
+      ).toBe(false)
     })
 
     // 「全部許す」だけ字に意味の色を載せる（ラベルの文字が必ず付くので色だけに頼らない。13.1 原則5）。
@@ -408,11 +441,12 @@ describe("ScreenNav", () => {
 
       fireEvent.click(screen.getByRole("button", { name: "メニュー" }))
 
-      const panelModelSelect = document
-        .querySelector(".screen-nav-panel")
-        ?.querySelector("[aria-label='モデル']") as HTMLSelectElement | undefined
-      expect(panelModelSelect).not.toBeUndefined()
-      expect(panelModelSelect?.value).toBe("haiku")
+      const panelModelSelect = typedElement(
+        document.querySelector(".screen-nav-panel")?.querySelector("[aria-label='モデル']"),
+        HTMLSelectElement,
+        "面の中のモデルの <select>",
+      )
+      expect(panelModelSelect.value).toBe("haiku")
     })
   })
 
@@ -428,7 +462,11 @@ describe("ScreenNav", () => {
     it("対応表も読み取った値もまだ届いていないうちは選べず、title に理由が出る", () => {
       renderScreenNav()
 
-      const select = screen.getByLabelText("effort") as HTMLSelectElement
+      const select = typedElement(
+        screen.getByLabelText("effort"),
+        HTMLSelectElement,
+        "effortの<select>",
+      )
       expect(select.disabled).toBe(true)
       expect(select.title.length).toBeGreaterThan(0)
     })
@@ -440,7 +478,11 @@ describe("ScreenNav", () => {
         effort: "high",
       })
 
-      const select = screen.getByLabelText("effort") as HTMLSelectElement
+      const select = typedElement(
+        screen.getByLabelText("effort"),
+        HTMLSelectElement,
+        "effortの<select>",
+      )
       expect(select.disabled).toBe(false)
       expect(select.value).toBe("high")
       expect(Array.from(select.options).map((option) => option.value)).toEqual([
@@ -460,7 +502,11 @@ describe("ScreenNav", () => {
         effort: "medium",
       })
 
-      const select = screen.getByLabelText("effort") as HTMLSelectElement
+      const select = typedElement(
+        screen.getByLabelText("effort"),
+        HTMLSelectElement,
+        "effortの<select>",
+      )
       expect(select.disabled).toBe(true)
     })
 
@@ -477,7 +523,9 @@ describe("ScreenNav", () => {
 
       expect(calls).toEqual([{ procedure: "session.setEffort", effort: "high" }])
       // 状態の effort をまだ変えていないので、表示は送る前の値のまま。
-      expect((screen.getByLabelText("effort") as HTMLSelectElement).value).toBe("low")
+      expect(
+        typedElement(screen.getByLabelText("effort"), HTMLSelectElement, "effortの<select>").value,
+      ).toBe("low")
     })
 
     // 実測: モデルによっては段が5つより少ない（`xhigh` の無い段など。docs/history/decision.md）。
@@ -494,7 +542,10 @@ describe("ScreenNav", () => {
         effort: "xhigh",
       })
 
-      expect((screen.getByLabelText("effort") as HTMLSelectElement).disabled).toBe(true)
+      expect(
+        typedElement(screen.getByLabelText("effort"), HTMLSelectElement, "effortの<select>")
+          .disabled,
+      ).toBe(true)
     })
   })
 })

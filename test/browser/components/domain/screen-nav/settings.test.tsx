@@ -10,6 +10,7 @@ import {
   INITIAL_SESSION_STATE,
   type SessionState,
 } from "../../../../../src/shared/session-state.ts"
+import { typedElement } from "../../../../typed-element.ts"
 import { sessionStoreWith, type CommandSpy } from "../../../session-store.ts"
 
 // 帯の右端の歯車で開く設定（docs/screen-design.md 13.6 / 13.9）。いまここにある群は「画面の色」・
@@ -66,9 +67,11 @@ function renderScreenNav(state: Partial<SessionState> = {}, spy: CommandSpy = ()
 
 /** 帯（広い画面）にある歯車。狭い画面の「≡」の面の中のものは数えない。 */
 function gear(): HTMLElement {
-  return document.querySelector(
-    ".screen-nav > .screen-nav-settings .screen-nav-settings-toggle",
-  ) as HTMLElement
+  return typedElement(
+    document.querySelector(".screen-nav > .screen-nav-settings .screen-nav-settings-toggle"),
+    HTMLElement,
+    "帯の歯車",
+  )
 }
 
 function panel(): HTMLElement | null {
@@ -77,14 +80,26 @@ function panel(): HTMLElement | null {
 
 /** ポップオーバーの中の色の操作子（ラベルは `<label for>` で結んである）。 */
 function colorInput(label: string): HTMLInputElement {
-  const labelNode = [...document.querySelectorAll(".screen-nav-settings-panel label")].find(
-    (node) => node.textContent === label,
-  ) as HTMLLabelElement
-  return document.getElementById(labelNode.htmlFor) as HTMLInputElement
+  const labelNode = typedElement(
+    [...document.querySelectorAll(".screen-nav-settings-panel label")].find(
+      (node) => node.textContent === label,
+    ),
+    HTMLLabelElement,
+    `ラベル「${label}」`,
+  )
+  return typedElement(
+    document.getElementById(labelNode.htmlFor),
+    HTMLInputElement,
+    `ラベル「${label}」が結ぶ入力欄`,
+  )
 }
 
 function resetButton(): HTMLButtonElement {
-  return document.querySelector(".screen-nav-settings-reset") as HTMLButtonElement
+  return typedElement(
+    document.querySelector(".screen-nav-settings-reset"),
+    HTMLButtonElement,
+    "既定に戻すボタン",
+  )
 }
 
 function readToken(name: string): string {
@@ -140,10 +155,16 @@ describe("設定の歯車（帯の右端）", () => {
   // **帯の側の歯車（狭い画面では `display: none`）へフォーカスを飛ばさない**ことを守る。
   it("「≡」の面の中の歯車でも Esc で閉じ、隠れている帯の側の歯車へは戻さない", () => {
     renderScreenNav()
-    fireEvent.click(document.querySelector(".screen-nav-toggle") as HTMLElement)
+    fireEvent.click(
+      typedElement(document.querySelector(".screen-nav-toggle"), HTMLElement, "「≡」"),
+    )
 
     fireEvent.click(
-      document.querySelector(".screen-nav-panel .screen-nav-settings-toggle") as HTMLElement,
+      typedElement(
+        document.querySelector(".screen-nav-panel .screen-nav-settings-toggle"),
+        HTMLElement,
+        "面の中の歯車",
+      ),
     )
     expect(panel()).not.toBeNull()
 
@@ -289,7 +310,9 @@ describe("設定の歯車（帯の右端）", () => {
   it("狭い画面の「≡」の面の中にも同じ歯車が入る", () => {
     renderScreenNav()
 
-    fireEvent.click(document.querySelector(".screen-nav-toggle") as HTMLElement)
+    fireEvent.click(
+      typedElement(document.querySelector(".screen-nav-toggle"), HTMLElement, "「≡」"),
+    )
 
     expect(document.querySelector(".screen-nav-panel .screen-nav-settings-toggle")).not.toBeNull()
   })
@@ -367,9 +390,11 @@ describe("設定の歯車（新しいセッションの既定）", () => {
     )
 
     fireEvent.change(
-      document.querySelector(
-        ".screen-nav > .screen-nav-model-permission select",
-      ) as HTMLSelectElement,
+      typedElement(
+        document.querySelector(".screen-nav > .screen-nav-model-permission select"),
+        HTMLSelectElement,
+        "帯のモデルの <select>",
+      ),
       { target: { value: "haiku" } },
     )
 
@@ -455,10 +480,18 @@ describe("設定の歯車（新しいセッションの既定の effort）", () 
 
 /** ポップオーバーの中の既定の `<select>`（ラベルは `<label for>` で結んである）。 */
 function defaultSelect(label: string): HTMLSelectElement {
-  const labelNode = [...document.querySelectorAll(".screen-nav-settings-panel label")].find(
-    (node) => node.textContent === label,
-  ) as HTMLLabelElement
-  return document.getElementById(labelNode.htmlFor) as HTMLSelectElement
+  const labelNode = typedElement(
+    [...document.querySelectorAll(".screen-nav-settings-panel label")].find(
+      (node) => node.textContent === label,
+    ),
+    HTMLLabelElement,
+    `ラベル「${label}」`,
+  )
+  return typedElement(
+    document.getElementById(labelNode.htmlFor),
+    HTMLSelectElement,
+    `ラベル「${label}」が結ぶ <select>`,
+  )
 }
 
 // 書き上げる演出の速さ（docs/screen-design.md 13.6。`browser/domain/reveal-speed.ts`）。**利用者の設定**

@@ -32,6 +32,7 @@ sed -n '/^### 消すかどうか/,/^#\{2,4\} /p' docs/coding-standards.md
 | ### テストのためだけに公開しない                | 公開関数の振る舞い経由で検証する理由                                                                               |
 | ## 変数は基本イミュータブル                     | 再代入・可変コレクションを避ける理由                                                                               |
 | ## 型を迂回するキャストを使わない               | 迂回が必要になったら型のほうを直す                                                                                 |
+| ### テストの DOM 要素のキャスト                 | `test/**` を落とす lint の範囲、`typedElement` への置き換え、`src` に掛けなかった理由、残った例外の基準            |
 | ## 可読性が良くなる場合は remeda を優先する     | 手書きの `reduce`・比較関数などを remeda に寄せる基準と、寄せないものの線引き                                      |
 | ## class 名は clsx で組む                       | `className` を配列の `join` やテンプレート文字列で組まず clsx に渡す理由と、使わなくてよい場面                     |
 | ## 型注釈より `satisfies`                       | リテラルの型を保ったまま形だけ検査する理由                                                                         |
@@ -104,6 +105,51 @@ sed -n '/^### 消すかどうか/,/^#\{2,4\} /p' docs/coding-standards.md
 transcript の1行のような**外から来た素のデータ**に使う。捕まえた例外（`Error` の実体）のように
 prototype を持つものを見るときだけ `isObjectType` で、`code` のようなフィールドは `in` で
 確かめてから読む。
+
+### テストの DOM 要素のキャスト
+
+`test/**` では `typescript/consistent-type-assertions`（`assertionStyle: "never"`）を
+`.oxlintrc.json` の `overrides` で有効にしてある。`as const` 以外の `as` キャスト（`any` 経由の
+二段のものも含む）を全部落とす。`screen.getByLabelText(...) as HTMLSelectElement` のような、
+クエリの戻り値を具体クラスとして扱うためのキャストが特に多かった（2026-09-26 時点で 15
+ファイル・74 か所）。
+
+**代わりに `test/typed-element.ts` の `typedElement(value, ctor, description)` を使う。**
+`instanceof` で `ctor` のインスタンスであることを確かめてから返し、合わなければ
+`description` を添えて投げる。前提（「この要素は `<select>` になっている」）が崩れたときに
+`undefined` のまま先へ進んで**黙って通る**のではなく、その場で落ちて教える。
+
+**`src/` にはこの規則を掛けていない。** `src/browser/components/page/conversation/main-view/
+markdown/` の `children as ReactNode`（react-markdown の型定義が要求する形）や
+`src/shared/character-background.ts` の `value as Record<string, unknown>`
+（境界での検証はこの節の上の「唯一の逃げ道」どおりに1関数へ封じ込めてある）は、DOM 要素の
+キャストとは性質が違う別の関心事なので、直す量に対して1つの規則で縛る効果が薄いと判断した。
+
+DOM 要素の instanceof に絞れない、性質の違う `as` が `test/` の中にもいくつか残っている。
+**扱いの基準**:
+
+- **`unknown` を経由せずに annotation で書けるなら、キャストではなく型注釈にする。**
+  `JSON.parse(line)` の戻り値を `unknown` として扱いたいだけなら
+  `(line): unknown => JSON.parse(line)`、`readonly` なタプルを `readonly string[]` として
+  扱いたいだけなら `const xs: readonly string[] = TUPLE` のように、代入先に注釈を置けば
+  キャストなしで済む（`test/server/chat/adapter/chat-archive.test.ts` の `readLines` を
+  ジェネリックにした例、`test/architecture.test.ts` の `flatMap` のコールバックに戻り値の
+  注釈を付けた例など）
+- **構造が合わないだけなら、実際に合う値を作る。** `test/browser/domain/reveal/
+brush-scroll.test.ts` は `getBoundingClientRect` の戻り値を `{ top, bottom } as unknown as
+DOMRect` と偽装していたが、`DOMRect` はテスト環境（`test/dom-environment.ts`）が借りている
+  実物のクラスなので `new DOMRect(0, top, 0, bottom - top)` で本物を作れば済む。`NodeJS.
+ErrnoException` も `new Error(...) as NodeJS.ErrnoException` ではなく
+  `Object.assign(new Error(...), { code })` で構造ごと満たせる
+- **`Reflect.get` / `Reflect.set` は動的なプロパティ名の読み書きに `as` が要らない。**
+  `test/dom-environment.ts` が `globalThis` と happy-dom の `Window` の間で名前づきの
+  グローバルをコピーするのに使っている（`any` を経由する `Record<string, unknown>` への
+  二段キャストの代わり）
+- **それでも構造的に合わないものだけ、`// oxlint-disable-next-line
+typescript/consistent-type-assertions` を理由のコメントと1組で残す。** `test/browser/
+components/domain/portrait.test.tsx` の `fetch` のスタブ（`fetch` の実装のうち使う分しか
+  持たない代役を差し込む。**構造的に合わない代役を許容するのが目的そのもの**なので、annotation
+  にも実物の構築にも逃げられない）が唯一の例外
 
 ## 可読性が良くなる場合は remeda を優先する
 

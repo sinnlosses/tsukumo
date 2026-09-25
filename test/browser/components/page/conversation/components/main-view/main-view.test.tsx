@@ -24,6 +24,7 @@ import {
   reportRecord,
   requestRecord,
 } from "../../../../../../fixture/session-record.ts"
+import { typedElement } from "../../../../../../typed-element.ts"
 import { putState, sessionStoreWith } from "../../../../../session-store.ts"
 
 afterEach(() => {
@@ -504,10 +505,7 @@ describe("MainView（中間レポート）", () => {
       const details = [...result.container.querySelectorAll(".main-step.is-interim")].find(
         (node) => node.querySelector("summary")?.textContent === text,
       )
-      if (details === undefined || details.tagName !== "DETAILS") {
-        throw new Error(`summary "${text}" を持つ <details> が見つからない`)
-      }
-      return details as HTMLDetailsElement
+      return typedElement(details, HTMLDetailsElement, `summary "${text}" を持つ <details>`)
     }
 
     // 真ん中あたり（i=15）を利用者が開いたことにする。<details> の open はReactが制御しない

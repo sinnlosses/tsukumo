@@ -89,7 +89,7 @@ function readLines(fileName: string): unknown[] {
     .trimEnd()
     .split("\n")
     .filter((line) => line.length > 0)
-    .map((line) => JSON.parse(line) as unknown)
+    .map((line): unknown => JSON.parse(line))
 }
 
 /** 行の鍵の並び（順序を見たいので `toMatchObject` とは別に取る）。 */

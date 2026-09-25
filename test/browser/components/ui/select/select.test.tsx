@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it } from "bun:test"
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 
 import { Select } from "../../../../../src/browser/components/ui/select/select.tsx"
+import { typedElement } from "../../../../typed-element.ts"
 
 afterEach(() => {
   cleanup()
@@ -27,7 +28,11 @@ describe("Select", () => {
       />,
     )
 
-    const select = screen.getByLabelText("ダミー") as HTMLSelectElement
+    const select = typedElement(
+      screen.getByLabelText("ダミー"),
+      HTMLSelectElement,
+      "ダミーの <select>",
+    )
     expect(select.value).toBe("b")
     expect(screen.getByText("A")).toBeDefined()
     expect(screen.getByText("B")).toBeDefined()
@@ -48,7 +53,11 @@ describe("Select", () => {
       />,
     )
 
-    const select = screen.getByLabelText("ダミー") as HTMLSelectElement
+    const select = typedElement(
+      screen.getByLabelText("ダミー"),
+      HTMLSelectElement,
+      "ダミーの <select>",
+    )
     expect(select.disabled).toBe(true)
     expect(select.title).toBe("架空の理由")
   })

@@ -5,6 +5,7 @@ import { act, type ReactNode } from "react"
 
 import { Markdown } from "../../../../../../../../src/browser/components/page/conversation/components/main-view/markdown/markdown.tsx"
 import { RepositoryFileLinkContext } from "../../../../../../../../src/browser/components/page/conversation/components/main-view/markdown/repository-link.tsx"
+import { typedElement } from "../../../../../../../typed-element.ts"
 
 afterEach(() => {
   cleanup()
@@ -30,9 +31,13 @@ describe("Markdown（unified への置き換えが求める記法）", () => {
     // react-markdown（hast-util-to-jsx-runtime）は列揃えを `align` 属性ではなく
     // `style="text-align: ..."` として描く（React が `align` を非推奨として警告するため）。
     const cells = container.querySelectorAll("td")
-    expect((cells[0] as HTMLTableCellElement).style.textAlign).toBe("")
-    expect((cells[1] as HTMLTableCellElement).style.textAlign).toBe("center")
-    expect((cells[2] as HTMLTableCellElement).style.textAlign).toBe("right")
+    expect(typedElement(cells[0], HTMLTableCellElement, "1列目のセル").style.textAlign).toBe("")
+    expect(typedElement(cells[1], HTMLTableCellElement, "2列目のセル").style.textAlign).toBe(
+      "center",
+    )
+    expect(typedElement(cells[2], HTMLTableCellElement, "3列目のセル").style.textAlign).toBe(
+      "right",
+    )
   })
 
   it("表は横スクロールの器（div.table-scroll）に包まれる", () => {
@@ -416,10 +421,10 @@ describe("Markdown（レポートのパスを押して Orca のエディタで�
     const button = container.querySelector("button")
     expect(button?.textContent).toBe("src/foo.ts:12")
     // 表示の `:12` は残る（行番号へは飛べないので運ばない）。
-    fireEvent.click(button as HTMLButtonElement)
+    fireEvent.click(typedElement(button, HTMLButtonElement, "ボタン"))
     expect(opened).toEqual(["src/foo.ts"])
 
-    fireEvent.click(button as HTMLButtonElement)
+    fireEvent.click(typedElement(button, HTMLButtonElement, "ボタン"))
     expect(opened).toEqual(["src/foo.ts", "src/foo.ts"])
   })
 
@@ -441,7 +446,7 @@ describe("Markdown（レポートのパスを押して Orca のエディタで�
     const label = container.querySelector(".code-file-name")
     const button = label?.querySelector("button")
     expect(button?.textContent).toBe("develop/tasks.json")
-    fireEvent.click(button as HTMLButtonElement)
+    fireEvent.click(typedElement(button, HTMLButtonElement, "ボタン"))
     expect(opened).toEqual(["develop/tasks.json"])
   })
 
@@ -462,7 +467,7 @@ describe("Markdown（レポートのパスを押して Orca のエディタで�
     expect(container.querySelector("a")).toBeNull()
     const button = container.querySelector("button")
     expect(button?.textContent).toBe("直した")
-    fireEvent.click(button as HTMLButtonElement)
+    fireEvent.click(typedElement(button, HTMLButtonElement, "ボタン"))
     expect(opened).toEqual(["src/foo.ts"])
   })
 

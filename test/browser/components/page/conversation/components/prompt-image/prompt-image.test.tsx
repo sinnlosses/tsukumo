@@ -12,6 +12,7 @@ import {
   type RecordedPromptImage,
 } from "../../../../../../../src/shared/prompt-image.ts"
 import { setPageUrl } from "../../../../../../dom-environment.ts"
+import { typedElement } from "../../../../../../typed-element.ts"
 
 // フィクスチャはすべて手で書いた架空の data URL（実物の画像は使わない。
 // docs/coding-standards.md「会話内容の扱い」）。
@@ -57,7 +58,13 @@ describe("PromptImageChips", () => {
   it("絵を押すと、その原寸で拡大の面が開く", () => {
     renderChips([IMAGE_A, IMAGE_B])
 
-    fireEvent.click(screen.getAllByRole("button", { name: "この画像を拡大" })[1] as Element)
+    fireEvent.click(
+      typedElement(
+        screen.getAllByRole("button", { name: "この画像を拡大" })[1],
+        HTMLElement,
+        "2件目の画像を拡大するボタン",
+      ),
+    )
 
     const dialog = zoomDialog()
     expect(dialog?.hasAttribute("open")).toBe(true)
@@ -158,7 +165,13 @@ describe("PromptImageThumbnails", () => {
     render(<PromptImageThumbnails images={[RECORDED_A, RECORDED_B]} />)
 
     expect(zoomDialog()).toBeNull()
-    fireEvent.click(screen.getAllByRole("button", { name: "この画像を拡大" })[1] as Element)
+    fireEvent.click(
+      typedElement(
+        screen.getAllByRole("button", { name: "この画像を拡大" })[1],
+        HTMLElement,
+        "2件目の画像を拡大するボタン",
+      ),
+    )
 
     expect(zoomDialog()?.hasAttribute("open")).toBe(true)
     expect(zoomedImage()?.getAttribute("src")).toBe(

@@ -8,6 +8,7 @@ import {
   matchingFilePaths,
   MAX_FILE_SUGGESTIONS,
 } from "../../../../../../../../../src/browser/components/page/conversation/components/dispatch/components/file-suggestions/file-suggestions.tsx"
+import { typedElement } from "../../../../../../../../typed-element.ts"
 
 // フィクスチャはすべて手で書いた架空のパス（docs/coding-standards.md「会話内容の扱い」）。
 const PATHS = [
@@ -109,7 +110,7 @@ describe("FileSuggestions", () => {
     expect(items.map((item) => item.textContent)).toEqual(["src/cli.ts", "README.md"])
     expect(items[1]?.className).toContain("is-selected")
 
-    fireEvent.mouseDown(items[0] as HTMLElement)
+    fireEvent.mouseDown(typedElement(items[0], HTMLElement, "1件目の候補"))
     expect(selected).toEqual([0])
   })
 })

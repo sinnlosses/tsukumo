@@ -856,7 +856,7 @@ function classNamesInExpression(expr: string): readonly string[] {
   return [
     ...new Set(
       [...expr.matchAll(STYLES_LITERAL_PATTERN)].flatMap(
-        ([, a, b]) => (a ?? b ?? []) as string | [],
+        ([, a, b]): string | string[] => a ?? b ?? [],
       ),
     ),
   ]

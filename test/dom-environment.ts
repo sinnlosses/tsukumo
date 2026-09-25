@@ -40,6 +40,11 @@ const BORROWED_DOM_GLOBAL_NAMES = [
   "HTMLInputElement",
   "HTMLTextAreaElement",
   "HTMLFormElement",
+  // `test/typed-element.ts` の `instanceof` でクエリの戻り値を絞り込むテストが要る
+  // （立ち絵・顔・背景の `<img>`、Markdown の表の `<td>`、折りたたみの `<details>`）。
+  "HTMLImageElement",
+  "HTMLTableCellElement",
+  "HTMLDetailsElement",
   "Event",
   "CustomEvent",
   "UIEvent",
@@ -72,17 +77,17 @@ const BORROWED_DOM_GLOBAL_NAMES = [
 ] as const
 
 const window = new Window({ url: "http://127.0.0.1/" })
-const target = globalThis as unknown as Record<string, unknown>
-const windowRecord = window as unknown as Record<string, unknown>
 
+// `globalThis` も happy-dom の `Window` も、動的な名前でのプロパティの読み書きに使える index
+// signature を持たない。`Reflect.get` / `Reflect.set` は型を迂回するキャストなしにそれができる。
 for (const name of BORROWED_DOM_GLOBAL_NAMES) {
-  target[name] = windowRecord[name]
+  Reflect.set(globalThis, name, Reflect.get(window, name))
 }
-target["window"] = window
-target["document"] = window.document
-target["navigator"] = window.navigator
+Reflect.set(globalThis, "window", window)
+Reflect.set(globalThis, "document", window.document)
+Reflect.set(globalThis, "navigator", window.navigator)
 // React の act() まわりの警告（テスト環境だと自動検出できない）を止める公式の合図。
-target["IS_REACT_ACT_ENVIRONMENT"] = true
+Reflect.set(globalThis, "IS_REACT_ACT_ENVIRONMENT", true)
 
 /**
  * テストの中でページの URL を差し替える（**ポートを見る部品のため**。`src/shared/room.ts` の

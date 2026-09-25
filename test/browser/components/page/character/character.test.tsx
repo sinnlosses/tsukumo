@@ -11,6 +11,7 @@ import {
   type SessionState,
 } from "../../../../../src/shared/session-state.ts"
 import { characterInfo, characterPackEntry, shownPortraits } from "../../../../fixture/character.ts"
+import { typedElement } from "../../../../typed-element.ts"
 import { type CommandSpy, putState, sessionStoreWith } from "../../../session-store.ts"
 
 // 手で書いた架空のキャラクターパック2つ（docs/coding-standards.md「会話内容の扱い」）。
@@ -185,7 +186,11 @@ describe("Character", () => {
     expect(document.querySelector(".character-in-use")).toBeNull()
     expect(screen.getByRole("link", { name: /別の精霊/ }).getAttribute("aria-current")).toBe("page")
     // 表情のラベルも選んだパックの言葉になる。
-    const input = screen.getByLabelText("得意を差し替える") as HTMLInputElement
+    const input = typedElement(
+      screen.getByLabelText("得意を差し替える"),
+      HTMLInputElement,
+      "得意を差し替えるの入力欄",
+    )
     fireEvent.change(input, {
       target: { files: [new File(["png"], "picked.png", { type: "image/png" })] },
     })

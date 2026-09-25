@@ -39,9 +39,7 @@ const emptyViewServerOptions: ViewServerOptions = {
 
 /** `node:http` の `listen` が投げるエラーに似せた、`code` 付きのエラーを作る。 */
 function errnoError(code: string): NodeJS.ErrnoException {
-  const error = new Error(`listen ${code}: ダミー`) as NodeJS.ErrnoException
-  error.code = code
-  return error
+  return Object.assign(new Error(`listen ${code}: ダミー`), { code })
 }
 
 /** ポート1つを塞ぐダミーの TCP サーバ。`node:http` を起こす必要はない（塞げれば十分）。 */

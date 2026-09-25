@@ -13,6 +13,7 @@ import {
   type SessionStore,
 } from "../../../../../../src/browser/stores/session.tsx"
 import { type DailyAchievement } from "../../../../../../src/shared/achievement.ts"
+import { type Diary } from "../../../../../../src/shared/diary.ts"
 import {
   INITIAL_SESSION_STATE,
   type SessionState,
@@ -77,6 +78,26 @@ const CALENDAR: AchievementCalendarView = {
 
 const EMPTY_CALENDAR: AchievementCalendarView = { kind: "loading" }
 
+const WRITTEN_DIARY: Diary = {
+  version: 1,
+  date: "2026-09-16",
+  paragraphs: [
+    {
+      writtenAt: "2026-09-16T21:40:00+09:00",
+      body: "架空の日記の本文1。",
+      expression: "proud",
+      writer: { pack: "fixture", name: "架空の名前" },
+    },
+    {
+      writtenAt: "2026-09-16T22:10:00+09:00",
+      body: "架空の日記の本文2（書き足し）。",
+      expression: "proud",
+      writer: { pack: "fixture", name: "架空の名前" },
+    },
+  ],
+  bookmark: { kind: "placed", taskId: "T-1", summary: "架空のタスク", reason: "架空の理由" },
+}
+
 const WRITTEN_DAY: DailyAchievement = {
   kind: "known",
   date: "2026-09-16",
@@ -85,28 +106,7 @@ const WRITTEN_DAY: DailyAchievement = {
   doneTasks: { kind: "known", items: [{ id: "T-1", summary: "架空のタスク" }] },
   graduations: [{ id: "T-2", summary: "架空の卒業", registeredOn: "2026-09-01", days: 15 }],
   milestones: [{ kind: "commit", count: 1000, time: "14:12" }],
-  diary: {
-    kind: "written",
-    diary: {
-      version: 1,
-      date: "2026-09-16",
-      paragraphs: [
-        {
-          writtenAt: "2026-09-16T21:40:00+09:00",
-          body: "架空の日記の本文1。",
-          expression: "proud",
-          writer: { pack: "fixture", name: "架空の名前" },
-        },
-        {
-          writtenAt: "2026-09-16T22:10:00+09:00",
-          body: "架空の日記の本文2（書き足し）。",
-          expression: "proud",
-          writer: { pack: "fixture", name: "架空の名前" },
-        },
-      ],
-      bookmark: { kind: "placed", taskId: "T-1", summary: "架空のタスク", reason: "架空の理由" },
-    },
-  },
+  diary: { kind: "written", diary: WRITTEN_DIARY },
 }
 
 const BLANK_DAY: DailyAchievement = {
@@ -261,10 +261,7 @@ describe("useDiaryBook（書かれた日）", () => {
       ...WRITTEN_DAY,
       diary: {
         kind: "written",
-        diary: {
-          ...(WRITTEN_DAY.diary.kind === "written" ? WRITTEN_DAY.diary.diary : ({} as never)),
-          bookmark: { kind: "none" },
-        },
+        diary: { ...WRITTEN_DIARY, bookmark: { kind: "none" } },
       },
     }
     stubFetch(() => rpcOutput(noBookmark))

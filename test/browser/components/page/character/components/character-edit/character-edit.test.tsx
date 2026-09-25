@@ -17,6 +17,7 @@ import {
   shownOutfitAccents,
   shownPortraits,
 } from "../../../../../../fixture/character.ts"
+import { typedElement } from "../../../../../../typed-element.ts"
 import { type CommandSpy, sessionStoreWith } from "../../../../../session-store.ts"
 
 // **立ち絵があるのはこの3つだけ**（残りの表情は空の枠として並ぶ。数を見るテストがある）。
@@ -142,10 +143,9 @@ describe("CharacterEdit", () => {
     // 立ち絵がある3つ以外の残り全部（EXPRESSIONS が伸びてもここは自動で追随する）。
     const blanks = [...document.querySelectorAll(".character-card-blank")]
     expect(blanks).toHaveLength(EXPRESSIONS.length - EXPRESSIONS_WITH_PORTRAIT.length)
+    const withPortrait: readonly string[] = EXPRESSIONS_WITH_PORTRAIT
     expect(blanks.map((blank) => blank.getAttribute("data-expression"))).toEqual(
-      EXPRESSIONS.filter(
-        (expression) => !(EXPRESSIONS_WITH_PORTRAIT as readonly string[]).includes(expression),
-      ),
+      EXPRESSIONS.filter((expression) => !withPortrait.includes(expression)),
     )
   })
 
@@ -286,7 +286,11 @@ describe("CharacterEdit", () => {
   it("立ち絵を選ぶと data URL を載せた characterPack.setPortrait を dispatch し、入力欄を空に戻す", async () => {
     const calls: unknown[] = []
     renderCharacterEdit(FIXTURE_CHARACTER, (command) => calls.push(command))
-    const input = screen.getByLabelText("どや顔を差し替える") as HTMLInputElement
+    const input = typedElement(
+      screen.getByLabelText("どや顔を差し替える"),
+      HTMLInputElement,
+      "どや顔を差し替えるの入力欄",
+    )
 
     fireEvent.change(input, {
       target: { files: [new File(["<svg/>"], "picked.svg", { type: "image/svg+xml" })] },
@@ -359,8 +363,12 @@ describe("CharacterEdit", () => {
   it("画面の差し色（仕事 / 雑談）の口を出す", () => {
     renderCharacterEdit({ ...FIXTURE_CHARACTER, accent: "#f2b0a0", chatAccent: "#f2984a" })
 
-    expect((screen.getByLabelText("仕事") as HTMLInputElement).value).toBe("#f2b0a0")
-    expect((screen.getByLabelText("雑談") as HTMLInputElement).value).toBe("#f2984a")
+    expect(
+      typedElement(screen.getByLabelText("仕事"), HTMLInputElement, "仕事の入力欄").value,
+    ).toBe("#f2b0a0")
+    expect(
+      typedElement(screen.getByLabelText("雑談"), HTMLInputElement, "雑談の入力欄").value,
+    ).toBe("#f2984a")
     expect(screen.getByRole("button", { name: "雑談も仕事と同じにする" })).toBeDefined()
     expect(screen.queryByText("雑談も仕事と同じ")).toBeNull()
     // 色だけにせず、今の値を16進の字でも添える。
@@ -370,7 +378,9 @@ describe("CharacterEdit", () => {
   it("chatAccent が無いパックでは、雑談の見本に仕事の差し色と「雑談も仕事と同じ」の字を出し、戻す口は出さない", () => {
     renderCharacterEdit({ ...FIXTURE_CHARACTER, accent: "#f2b0a0", chatAccent: undefined })
 
-    expect((screen.getByLabelText("雑談") as HTMLInputElement).value).toBe("#f2b0a0")
+    expect(
+      typedElement(screen.getByLabelText("雑談"), HTMLInputElement, "雑談の入力欄").value,
+    ).toBe("#f2b0a0")
     expect(screen.queryByRole("button", { name: "雑談も仕事と同じにする" })).toBeNull()
     // 色見本が仕事と同じ色なのを、色だけでなく字でも伝える（13.1 原則1）。
     expect(screen.getByText("雑談も仕事と同じ")).toBeDefined()
@@ -403,8 +413,12 @@ describe("CharacterEdit", () => {
   it("画面から変えられないパックでは、画面の差し色と戻す口も操作できない", () => {
     renderCharacterEdit({ ...FIXTURE_CHARACTER, chatAccent: "#f2984a", editable: false })
 
-    expect((screen.getByLabelText("仕事") as HTMLInputElement).disabled).toBe(true)
-    expect((screen.getByLabelText("雑談") as HTMLInputElement).disabled).toBe(true)
+    expect(
+      typedElement(screen.getByLabelText("仕事"), HTMLInputElement, "仕事の入力欄").disabled,
+    ).toBe(true)
+    expect(
+      typedElement(screen.getByLabelText("雑談"), HTMLInputElement, "雑談の入力欄").disabled,
+    ).toBe(true)
     const resetButton = screen.getByRole("button", { name: "雑談も仕事と同じにする" })
     // **押せないは `aria-disabled` の1通り**（`Button`。`docs/design.md` 2章）。本物の `disabled`
     // にはしないので、フォーカスは残る（`button.test.tsx` と同じ確かめ方）。
@@ -430,9 +444,21 @@ describe("CharacterEdit", () => {
     renderCharacterEdit(FIXTURE_CHARACTER)
 
     // 定義にある衣装はその値。
-    expect((screen.getByLabelText("戦闘配置（opus）") as HTMLInputElement).value).toBe("#ffb3a7")
+    expect(
+      typedElement(
+        screen.getByLabelText("戦闘配置（opus）"),
+        HTMLInputElement,
+        "戦闘配置（opus）の入力欄",
+      ).value,
+    ).toBe("#ffb3a7")
     // 定義に無い衣装は default に落ちる（立ち絵に効くのと同じ解き方）。
-    expect((screen.getByLabelText("軽装（haiku）") as HTMLInputElement).value).toBe("#b8c7ff")
+    expect(
+      typedElement(
+        screen.getByLabelText("軽装（haiku）"),
+        HTMLInputElement,
+        "軽装（haiku）の入力欄",
+      ).value,
+    ).toBe("#b8c7ff")
   })
 
   it("差し色がまったく無いパックでは、--accent の値を初期値にする（JS 側に既定の色を持たない）", () => {
@@ -441,14 +467,24 @@ describe("CharacterEdit", () => {
       outfitAccents: { default: undefined, light: undefined, normal: undefined, heavy: undefined },
     })
 
-    expect((screen.getByLabelText("既定") as HTMLInputElement).value).toBe("#f2b0a0")
+    expect(
+      typedElement(screen.getByLabelText("既定"), HTMLInputElement, "既定の入力欄").value,
+    ).toBe("#f2b0a0")
   })
 
   it("画面から変えられないパックでは、口を出すが操作できない（理由も出す）", () => {
     renderCharacterEdit({ ...FIXTURE_CHARACTER, editable: false })
 
-    expect((screen.getByLabelText("通常を差し替える") as HTMLInputElement).disabled).toBe(true)
-    expect((screen.getByLabelText("既定") as HTMLInputElement).disabled).toBe(true)
+    expect(
+      typedElement(
+        screen.getByLabelText("通常を差し替える"),
+        HTMLInputElement,
+        "通常を差し替えるの入力欄",
+      ).disabled,
+    ).toBe(true)
+    expect(
+      typedElement(screen.getByLabelText("既定"), HTMLInputElement, "既定の入力欄").disabled,
+    ).toBe(true)
     expect(document.querySelector(".character-screen-note")?.textContent).toContain(
       "characters/local",
     )
@@ -471,9 +507,13 @@ describe("CharacterEdit", () => {
       background: { image: "/character/background.png?v=fictional@1", veil: 0.75 },
     })
 
-    expect((screen.getByAltText("いまの背景") as HTMLImageElement).getAttribute("src")).toBe(
-      "/character/background.png?v=fictional@1",
-    )
+    expect(
+      typedElement(
+        screen.getByAltText("いまの背景"),
+        HTMLImageElement,
+        "いまの背景の画像",
+      ).getAttribute("src"),
+    ).toBe("/character/background.png?v=fictional@1")
     expect(screen.getByRole("button", { name: "背景を消す" })).toBeDefined()
   })
 
@@ -495,7 +535,11 @@ describe("CharacterEdit", () => {
   it("背景を選ぶと data URL を載せた characterPack.setBackground を dispatch し、入力欄を空に戻す", async () => {
     const calls: unknown[] = []
     renderCharacterEdit(FIXTURE_CHARACTER, (command) => calls.push(command))
-    const input = screen.getByLabelText("背景を差し替える") as HTMLInputElement
+    const input = typedElement(
+      screen.getByLabelText("背景を差し替える"),
+      HTMLInputElement,
+      "背景を差し替えるの入力欄",
+    )
 
     fireEvent.change(input, {
       target: { files: [new File(["png"], "forest.png", { type: "image/png" })] },
@@ -529,9 +573,13 @@ describe("CharacterEdit", () => {
       face: "/character/face.png?v=fictional@1",
     })
 
-    expect((screen.getByAltText("いまの顔") as HTMLImageElement).getAttribute("src")).toBe(
-      "/character/face.png?v=fictional@1",
-    )
+    expect(
+      typedElement(
+        screen.getByAltText("いまの顔"),
+        HTMLImageElement,
+        "いまの顔の画像",
+      ).getAttribute("src"),
+    ).toBe("/character/face.png?v=fictional@1")
     expect(screen.getByRole("button", { name: "顔を消す" })).toBeDefined()
   })
 
@@ -550,7 +598,11 @@ describe("CharacterEdit", () => {
   it("顔を選ぶと data URL を載せた characterPack.setFace を dispatch し、入力欄を空に戻す", async () => {
     const calls: unknown[] = []
     renderCharacterEdit(FIXTURE_CHARACTER, (command) => calls.push(command))
-    const input = screen.getByLabelText("顔を差し替える") as HTMLInputElement
+    const input = typedElement(
+      screen.getByLabelText("顔を差し替える"),
+      HTMLInputElement,
+      "顔を差し替えるの入力欄",
+    )
 
     fireEvent.change(input, {
       target: { files: [new File(["png"], "face.png", { type: "image/png" })] },
@@ -582,10 +634,16 @@ describe("CharacterEdit", () => {
       fireEvent.click(screen.getByRole("button", { name: "名前とプロフィールを変える" }))
 
       expect(profileEditDialog()?.hasAttribute("open")).toBe(true)
-      expect((screen.getByLabelText("名前") as HTMLInputElement).value).toBe("架空の精霊")
-      expect((screen.getByLabelText("ひとことプロフィール") as HTMLInputElement).value).toBe(
-        "気ままな相棒",
-      )
+      expect(
+        typedElement(screen.getByLabelText("名前"), HTMLInputElement, "名前の入力欄").value,
+      ).toBe("架空の精霊")
+      expect(
+        typedElement(
+          screen.getByLabelText("ひとことプロフィール"),
+          HTMLInputElement,
+          "ひとことプロフィールの入力欄",
+        ).value,
+      ).toBe("気ままな相棒")
     })
 
     it("名前とひとことを書き換えて保存すると、characterPack.setProfile を1回送って閉じる", () => {

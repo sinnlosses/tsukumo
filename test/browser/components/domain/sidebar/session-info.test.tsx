@@ -11,6 +11,7 @@ import {
   type SessionState,
 } from "../../../../../src/shared/session-state.ts"
 import { characterInfo, characterPackEntry } from "../../../../fixture/character.ts"
+import { typedElement } from "../../../../typed-element.ts"
 import { rpcError, stubRpcFetch, type RpcFetchStub } from "../../../rpc-fetch-stub.ts"
 import { type CommandSpy, sessionStoreWith } from "../../../session-store.ts"
 
@@ -68,7 +69,7 @@ function renderSessionInfo(
 const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = characterInfo()
 
 function selectValue(element: HTMLElement): string {
-  return (element as HTMLSelectElement).value
+  return typedElement(element, HTMLSelectElement, "<select>").value
 }
 
 describe("SessionInfo", () => {

@@ -54,12 +54,12 @@ function noonOn(year: number, month: number, day: number): number {
   }).epochMilliseconds
 }
 
-function readLines(path: string): unknown[] {
+function readLines<T = unknown>(path: string): T[] {
   return readFileSync(path, "utf8")
     .trimEnd()
     .split("\n")
     .filter((line) => line.length > 0)
-    .map((line) => JSON.parse(line) as unknown)
+    .map((line): T => JSON.parse(line))
 }
 
 describe("createChatArchive", () => {
@@ -118,9 +118,7 @@ describe("createChatArchive", () => {
       images: undefined,
     })
 
-    const [record] = readLines(join(root(), "fictional-pack", "2026-09-21.jsonl")) as {
-      at: string
-    }[]
+    const [record] = readLines<{ at: string }>(join(root(), "fictional-pack", "2026-09-21.jsonl"))
     expect(record?.at).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[+-]\d{2}:\d{2}$/)
     expect(record?.at.slice(0, 10)).toBe("2026-09-21")
   })
@@ -158,9 +156,7 @@ describe("createChatArchive", () => {
       images: undefined,
     })
 
-    const records = readLines(join(root(), "fictional-pack", "2026-09-21.jsonl")) as {
-      text: string
-    }[]
+    const records = readLines<{ text: string }>(join(root(), "fictional-pack", "2026-09-21.jsonl"))
     expect(records.map((record) => record.text)).toEqual([
       "1回目の依頼",
       "1回目のセリフ",
@@ -418,11 +414,9 @@ describe("createChatArchive の unconsolidated", () => {
 
   /** その日のファイルに書いた行の `at`（ISO）。 */
   function writtenAt(day: number): string {
-    const [record] = readLines(
+    const [record] = readLines<{ at: string }>(
       join(root(), "fictional-pack", `2026-09-${String(day).padStart(2, "0")}.jsonl`),
-    ) as {
-      at: string
-    }[]
+    )
     if (record === undefined) {
       throw new Error("行が書かれていない")
     }
@@ -556,7 +550,9 @@ describe("createChatArchive の appendEpisodes", () => {
     chatArchive.appendEpisodes("fictional-pack", [draft()])
     chatArchive.appendEpisodes("fictional-pack", [draft(), draft()])
 
-    const ids = episodeIndexLines().map((line) => (line as { id: string }).id)
+    const ids = readLines<{ id: string }>(join(root(), "fictional-pack", "episode.jsonl")).map(
+      (line) => line.id,
+    )
     expect(ids).toEqual(["2026-09-25-1", "2026-09-25-2", "2026-09-25-3"])
   })
 
@@ -658,9 +654,9 @@ describe("createChatArchive の recallEpisode", () => {
   }
 
   function writtenAt(day: number, index: number): string {
-    const lines = readLines(
+    const lines = readLines<{ at: string }>(
       join(root(), "fictional-pack", `2026-09-${String(day).padStart(2, "0")}.jsonl`),
-    ) as { at: string }[]
+    )
     const record = lines[index]
     if (record === undefined) {
       throw new Error("行が書かれていない")

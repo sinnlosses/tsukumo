@@ -284,7 +284,7 @@ function startManagerWithStub(
   /** 画面の「編集」から消そうとした行（書き先は配線層なので、ここでは積むだけ）。 */
   const forgottenLines: string[] = []
   /** ホームへ書いた「前回の見直しの結果」（書き先は配線層なので、ここでは積むだけ）。 */
-  const writtenPreviousUsageReviews: readonly [number, unknown][] = []
+  const writtenPreviousUsageReviews: [number, unknown][] = []
   /** 見送った提案の識別子（書き先は配線層なので、ここでは積むだけ）。 */
   const dismissedUsageProposals: UsageProposalDismissal[] = []
   /** `orca file open` を呼ぼうとしたパス（呼び先は配線層なので、ここでは積むだけ）。 */
@@ -338,7 +338,7 @@ function startManagerWithStub(
     },
     readPreviousUsageReview: (): PreviousUsageReview => ({ kind: "none" }),
     writePreviousUsageReview: (reviewedAt, findings) => {
-      ;(writtenPreviousUsageReviews as [number, unknown][]).push([reviewedAt, findings])
+      writtenPreviousUsageReviews.push([reviewedAt, findings])
     },
     dismissUsageProposal: (dismiss) => {
       dismissedUsageProposals.push(dismiss)

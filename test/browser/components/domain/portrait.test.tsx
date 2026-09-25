@@ -7,6 +7,7 @@ import {
   Portrait,
   usePortraitPreload,
 } from "../../../../src/browser/components/domain/portrait.tsx"
+import { typedElement } from "../../../typed-element.ts"
 
 // フィクスチャはすべて手で書いた架空の SVG・URL（docs/coding-standards.md「会話内容の扱い」）。
 
@@ -30,6 +31,11 @@ function stubFetch(body: string): void {
     fetchCalls.push(url)
     return Promise.resolve({ ok: true, text: () => Promise.resolve(body) })
   }
+  // `stub` は `fetch` の実装のうち使う分（`text()` だけ返す）しか持たないので、`typeof
+  // globalThis.fetch` とは構造的に合わない。`instanceof` で絞れる DOM 要素とは違い、これは
+  // 迂回が要る唯一の場所（docs/coding-standards.md「型を迂回するキャストを使わない」節の
+  // 「テストの DOM 要素のキャスト」）。
+  // oxlint-disable-next-line typescript/consistent-type-assertions
   globalThis.fetch = stub as unknown as typeof globalThis.fetch
 }
 
@@ -160,7 +166,7 @@ describe("Portrait", () => {
       </QueryClientProvider>,
     )
 
-    const wrapper = document.querySelector(".portrait") as HTMLElement
+    const wrapper = typedElement(document.querySelector(".portrait"), HTMLElement, "立ち絵の枠")
     expect(wrapper.style.getPropertyValue("--outfit-accent")).toBe("#b8c7ff")
   })
 
@@ -180,7 +186,7 @@ describe("Portrait", () => {
       </QueryClientProvider>,
     )
 
-    const wrapper = document.querySelector(".portrait") as HTMLElement
+    const wrapper = typedElement(document.querySelector(".portrait"), HTMLElement, "立ち絵の枠")
     expect(wrapper.getAttribute("style")).toBeNull()
   })
 
@@ -200,7 +206,7 @@ describe("Portrait", () => {
       </QueryClientProvider>,
     )
 
-    const wrapper = document.querySelector(".portrait") as HTMLElement
+    const wrapper = typedElement(document.querySelector(".portrait"), HTMLElement, "立ち絵の枠")
     expect(wrapper.getAttribute("data-motion")).toBe("waiting")
   })
 })

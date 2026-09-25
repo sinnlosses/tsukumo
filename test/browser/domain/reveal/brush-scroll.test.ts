@@ -11,8 +11,7 @@ function scrollerWith(bounds: { readonly top: number; readonly bottom: number })
   scroller.style.overflowY = "auto"
   Object.defineProperty(scroller, "scrollHeight", { value: 4000, configurable: true })
   Object.defineProperty(scroller, "clientHeight", { value: 500, configurable: true })
-  scroller.getBoundingClientRect = () =>
-    ({ top: bounds.top, bottom: bounds.bottom }) as unknown as DOMRect
+  scroller.getBoundingClientRect = () => new DOMRect(0, bounds.top, 0, bounds.bottom - bounds.top)
   document.body.append(scroller)
   return scroller
 }

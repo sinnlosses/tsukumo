@@ -25,6 +25,7 @@ import {
 } from "../../../../../src/shared/session-state.ts"
 import { characterInfo } from "../../../../fixture/character.ts"
 import { requestRecord, toolRecord } from "../../../../fixture/session-record.ts"
+import { typedElement } from "../../../../typed-element.ts"
 import { putState, sessionStoreWith } from "../../../session-store.ts"
 
 // フィクスチャはすべて手で書いた架空の依頼・ツール呼び出し・質問（docs/coding-standards.md
@@ -81,20 +82,30 @@ function renderScreenNav(
 
 /** 帯（広い画面）にある「いまの作業」の札。 */
 function workToggle(): HTMLElement {
-  return document.querySelector(
-    ".screen-nav > .screen-nav-work .screen-nav-work-toggle",
-  ) as HTMLElement
+  return typedElement(
+    document.querySelector(".screen-nav > .screen-nav-work .screen-nav-work-toggle"),
+    HTMLElement,
+    "帯のいまの作業の札",
+  )
 }
 
 /** 狭い画面の「≡」の面の中にある同じ札（開いていないと無い）。 */
 function panelWorkToggle(): HTMLElement {
-  return document.querySelector(".screen-nav-panel .screen-nav-work-toggle") as HTMLElement
+  return typedElement(
+    document.querySelector(".screen-nav-panel .screen-nav-work-toggle"),
+    HTMLElement,
+    "面の中のいまの作業の札",
+  )
 }
 
 /** 帯（広い画面）の依頼の手順の一覧。**広い画面・狭い画面の両方に同じ内容が2つ描かれる**ので、
  * 先頭（帯側）だけを見る。 */
 function workList(): HTMLElement {
-  return document.querySelectorAll(".screen-nav-work-list")[0] as HTMLElement
+  return typedElement(
+    document.querySelectorAll(".screen-nav-work-list")[0],
+    HTMLElement,
+    "依頼の手順の一覧",
+  )
 }
 
 describe("いまの作業（帯の札と、押すと開く依頼の手順の一覧）", () => {

@@ -11,6 +11,7 @@ import {
   type SessionInfo,
   type SessionState,
 } from "../../../../../src/shared/session-state.ts"
+import { typedElement } from "../../../../typed-element.ts"
 import { type CommandSpy, sessionStoreWith } from "../../../session-store.ts"
 
 afterEach(() => {
@@ -67,8 +68,8 @@ function localLabel(at: Temporal.ZonedDateTime): string {
   return `${String(local.month)}/${String(local.day)} ${time}`
 }
 
-function options(select: HTMLElement): readonly string[] {
-  return [...(select as HTMLSelectElement).options].map((option) => option.textContent ?? "")
+function options(select: HTMLSelectElement): readonly string[] {
+  return [...select.options].map((option) => option.textContent ?? "")
 }
 
 describe("SessionSwitch", () => {
@@ -83,8 +84,12 @@ describe("SessionSwitch", () => {
   it("見出しと最終更新時刻（ローカル時刻）を並べ、いま出しているものに印を付ける", () => {
     renderSessionSwitch({ sessions: SESSIONS, session: identifiedSession("s-current") })
 
-    const select = screen.getByLabelText("セッション")
-    expect((select as HTMLSelectElement).value).toBe("s-current")
+    const select = typedElement(
+      screen.getByLabelText("セッション"),
+      HTMLSelectElement,
+      "セッションの <select>",
+    )
+    expect(select.value).toBe("s-current")
     expect(options(select)).toEqual([
       `架空の作業その1・${localLabel(LATER)}`,
       `架空の作業その2・${localLabel(EARLIER)}（表示中）`,
@@ -138,16 +143,24 @@ describe("SessionSwitch", () => {
     // 入らないので、選択の受け皿だけを置く。
     renderSessionSwitch({ sessions: SESSIONS })
 
-    const select = screen.getByLabelText("セッション")
-    expect((select as HTMLSelectElement).value).toBe("")
+    const select = typedElement(
+      screen.getByLabelText("セッション"),
+      HTMLSelectElement,
+      "セッションの <select>",
+    )
+    expect(select.value).toBe("")
     expect(options(select)[0]).toBe("いまのセッション（記録前）")
   })
 
   it("一覧の上限から漏れたセッションに居るときは、先頭に「いまのセッション」を出す", () => {
     renderSessionSwitch({ sessions: SESSIONS, session: identifiedSession("s-old") })
 
-    const select = screen.getByLabelText("セッション")
-    expect((select as HTMLSelectElement).value).toBe("s-old")
+    const select = typedElement(
+      screen.getByLabelText("セッション"),
+      HTMLSelectElement,
+      "セッションの <select>",
+    )
+    expect(select.value).toBe("s-old")
     expect(options(select)[0]).toBe("いまのセッション")
   })
 
@@ -186,8 +199,12 @@ describe("SessionSwitch", () => {
       turn: { kind: "running", startedAt: 0 },
     })
 
-    const select = screen.getByLabelText("セッション")
-    expect((select as HTMLSelectElement).disabled).toBe(true)
+    const select = typedElement(
+      screen.getByLabelText("セッション"),
+      HTMLSelectElement,
+      "セッションの <select>",
+    )
+    expect(select.disabled).toBe(true)
     expect(select.getAttribute("title")).toBe(FRAME_ERROR_REASON.sessionSwitchDuringTurn)
   })
 })
