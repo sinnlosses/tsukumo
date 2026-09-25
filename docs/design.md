@@ -31,7 +31,7 @@ sed -n '/^## 4\. shared/,/^## /p' docs/design.md
 | 節                             | 中身                                                                                                                     |
 | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------ |
 | ## 1. 何を変え、何を残すか     | 決定の要約。**最初にここ**                                                                                               |
-| ## 2. 全体構成                 | 層（shared / server / browser）の図、依存の向き、ディレクトリ                                                            |
+| ## 2. 全体構成                 | 層（shared / server / browser）の図、依存の向き、ディレクトリ、`components/ui/` の variant 部品の作法と一覧              |
 | ## 3. 動きの流れ               | 起動・接続・依頼・答え待ち・再接続の順序                                                                                 |
 | ## 4. shared                   | **両側が共有する契約**。イベント・状態・reducer・コマンド・フレーム・版                                                  |
 | ## 5. core と adapter          | サーバ側のモジュールと責務。判断（core）と外の世界に触る境界（adapter）。成果の集め方と日記の保存・訪問の契機と状態      |
@@ -345,7 +345,8 @@ src/
         sidebar/              SessionInfo・TaskSection（まん中の区画ひとまとまり）と、
                               2区画の枠（SidebarSection）
       ui/                     **語彙を持たない部品**。値と呼び先を全部受け取る。**部品ごとのディレクトリに
-                              分ける**（1部品1フォルダの唯一の例外。下の「1部品1フォルダは真似しない」）
+                              分ける**（1部品1フォルダの唯一の例外。下の「1部品1フォルダは真似しない」）。
+                              variant の作法と部品の一覧は下の「`components/ui/` の部品（variant の作法と一覧）」
         select/               select.tsx・select.module.css
         image-zoom/           image-zoom.tsx・image-zoom.module.css
     features/                 **置かれる機能**。自分の置き場所を持たず、領域の中に置いてもらう
@@ -395,7 +396,7 @@ Next.js の雛形の名前。`shared` / `server` / `core` / `adapter` と、`ser
 | `components/page/`   | **画面**。1つの画面（会話の画面は1つの領域）に閉じた部品・状態・保存                                      | `components/domain` / `components/ui` / `features` / `hooks` / `domain` / `lib` / `utils` / `stores` / `shared` |
 | `components/domain/` | **tsukumo の語彙を持つ部品**。直下は2つ以上の領域が読む部品、サブディレクトリは全画面で共有する枠（領域） | `components/ui` / `features` / `hooks` / `domain` / `lib` / `utils` / `stores` / `shared`                       |
 | `features/`          | **置かれる機能**（置き場所を持たず、領域に置いてもらう機能の部品・状態）                                  | `components/ui` / `hooks` / `domain` / `lib` / `utils` / `stores` / `shared`                                    |
-| `components/ui/`     | **語彙を持たない** React の部品（値と呼び先を全部受け取る）                                               | `hooks` / `lib` / `utils` / `shared`                                                                            |
+| `components/ui/`     | **語彙を持たない** React の部品（値と呼び先を全部受け取る）                                               | `components/ui` / `hooks` / `lib` / `utils` / `shared`                                                          |
 | `hooks/`             | **語彙を持たない** React のフック（`use-modal-dialog.ts`）                                                | `lib` / `utils` / `shared`                                                                                      |
 | `domain/`            | **画面全体の語彙**（tsukumo の語彙を名乗り、複数の領域・機能が読むもの。部品ではないもの）                | `lib` / `utils` / `shared`                                                                                      |
 | `lib/`               | **ライブラリを包む**道具（React の部品ではないもの）                                                      | `utils` / `shared`                                                                                              |
@@ -474,6 +475,130 @@ bullet-proof-react の要素）」）。**`utils/` は 2026-09-21 に、`hooks/`
 3段に割ったのは 2026-09-25**（利用者の Next.js の雛形に合わせた。経緯と採らなかった案は
 `docs/history/decision.md`「design.md 2. 全体構成 / ディレクトリ（`components/` を3段に割った）」）。
 手本が空で置いている `states/` `types/` などは同じ理由で作らない。
+
+### `components/ui/` の部品（variant の作法と一覧）
+
+**語彙を持たない部品は、見た目の違いを variant（props の文字列リテラルの合併型）で表す**
+（2026-09-25 決定）。各機能の `*.module.css` に手書きで散っていた見出し・文字・並べ方・ボタン・
+ダイアログを、呼び出しを読めば見た目が分かる形に寄せるため。**部品が持つ見た目は `theme.css` の
+トークンと、この節で決めた段だけ**で、トークンに無い値は足さない。
+
+`components/ui/` の部品は2種類ある:
+
+- **variant 部品**（下の一覧の5つ）: 見た目を部品が持ち、違いを variant で選ぶ
+- **形だけの部品**（`Select`）: どこに置いても同じになる分だけを持ち、寸法・枠・地・字の段は
+  呼び出し側が `frameClassName` / `className` で渡す。**variant を持たず、この形のまま変えない**
+  （プルダウンは置き場所ごとに寸法がまるで違い、語彙にすると段が置き場所の数だけ要る）。
+  `ImageZoom` は中で `Dialog` と `Button` を使う組み立てで、`className` を受けない
+
+**variant の表し方**
+
+- **1つの prop が1つの軸**。軸が CSS の1つの property に写るもの（字の大きさ・色・太さ・間隔）は
+  **値の名前をトークン名そのままにする**（`size: "secondary"` → `--font-secondary`、
+  `tone: "ink-quiet"` → `--ink-quiet`）。読む人が `theme.css` と `docs/screen-design.md` 13.3 の
+  語で引ける。トークンの無い軸（太さ・Stack の間隔）は下の一覧で段を決める
+- **複数の property の束（ボタンの顔）は、使っている組み合わせごとに1つの値にする**
+  （`variant: "outline" | "solid-accent" | …`）。軸を掛け合わせると CSS の無い組み合わせが型の上で
+  選べてしまい、選ぶと**黙って素のボタンになる**
+- 合併型 → class の対応表は部品のファイルに `const` で置き、
+  **`satisfies Record<合併型, string | undefined>` で全域を検査する**（値を足して表の行を足し忘れると
+  `tsc` が落とす）。class 名は `<部品>-<軸>-<値>`（`text-size-secondary`）
+- **値 `"inherit"` は class を付けない**（親から継ぐ）
+- **props はすべて必須**（`?:` を使わない。`docs/coding-standards.md`「「無いかもしれない」値」）。
+  既定値を持たないので、呼び出しを読めば見た目が全部分かる。「無い」は合併型の値で表す
+  （`pressed: "none"` など）
+- **値を足すのは使う箇所が出たときだけ。** トークンに無い値が要るなら、先に
+  `docs/screen-design.md` の段を直す（13.3「段は**この6つだけ**」がそのまま効く）
+
+**呼び出し側からの上書き（`className`）**
+
+- variant 部品は `className: string` を1つ受ける（足すものが無ければ `""`）
+- **部品の CSS で `:where()` の外に書いた property は部品のもの**で、呼び出し側の class は同じ
+  property を書かない。部品が既定として持ち、呼び出し側に譲るもの（`<p>` / `<h2>` の `margin: 0`、
+  リンク風のボタンの `padding: 0`）は **`:where()` の中に書く**——詳細度が0なので、呼び出し側の
+  class が CSS の読み込み順に関係なく勝つ（`select.module.css` の冒頭の「同じ強さの class の
+  勝ち負けが読み込み順で決まる」を起こさない）。**`theme.css` が要素の選択子で書く property
+  （フォーム部品の `font`）は `:where()` に入れない**（要素の選択子に負ける）
+- 呼び出し側が渡すのは、部品が持たない property だけ: **置き方**（margin・flex・align-self・
+  grid-area・幅と高さ・position）と、**語彙に無い見た目**（文字の組み——1行で切る・字間・
+  行の高さ・桁揃え・書体——、ボタンとダイアログの箱）。一覧の右端の列が部品ごとの目安
+- **語彙と同じ property で画面固有の値を持つもの（トークン消費の画面の `--usage-*`、日記帳の
+  `--diary-gold-*`）は部品を使わず、機能の CSS のまま残す**。部品に `className` で色を上書きさせると、
+  部品の語彙と画面の語彙が1つの要素の上で競る
+- **`className` に渡すのは `styles["…"]` の字面だけ**（変数・props の転送をしない）。次の検査が
+  class の中身を引けるようにするため
+- **検査で守る**（`test/architecture.test.ts`「components/ui/ の部品の className」）。variant 部品
+  （`Select` 以外の `components/ui/` の部品）について、(1) 渡す `className` の式が `styles["…"]` の
+  字面（と `??`・三項・テンプレート文字列での組み合わせ）だけでできていること、(2) その class の規則
+  （呼び出し側の `*.module.css` で、選択子の最後の複合にその class を含むもの。`:hover` などの
+  疑似クラスも含め、`::backdrop` などの疑似要素は別の持ち物として数える）の property が、部品の
+  CSS で `:where()` の外に書いた property と重ならないこと（`border` → `border-color` のような
+  一括指定は個々の property に開いて比べる）を見る
+
+**描く要素を変える口**: **汎用の `as` は持たない**（要素ごとに props の型を変える多相の型は読みにくく、
+`href` のような要素固有の属性が型から外れる）。意味の上で要素を選ぶ必要がある部品だけ、閉じた
+合併型の prop を持つ（下の一覧の `level` / `element`）。要素を足すのは使う箇所が出たときで、
+テストの行も一緒に足す。
+
+**Text と Heading の境目**: **見出しの意味（`level`）と見た目（`size`）を別の props にする。**
+いまの画面は level と大きさが一致しない（`.character-section-heading` は `<h2>` で本文の段、
+`.achievement-card-label` は `<h3>` で印の段）ので、level から size を決めると見た目が変わる。
+`Heading` は `Text` と同じ語彙（size・tone・weight）を持ち、**対応表は `ui/text/` の1つを読む**
+（二重に持たない）。違いは要素が `<h1>`〜`<h4>` になることと、`margin: 0` を既定に持つことだけ。
+`<h*>` でない要素に付いた「見出しに見える字」（`<summary>` の `.step-heading` など）は `Heading` に
+しない。
+
+**段に丸めない（見た目を変えない）**: 部品に置き換えても**画面の見た目は変えない**のが既定。
+段に乗らない値を持つ規則は、部品にせず機能の CSS に残す——Stack の間隔が段に無いもの
+（0.4rem・0.6rem・0.625rem・1.1rem など 26規則）、ボタンとダイアログの箱（高さ・余白・角丸。
+`className` で渡す）。揃えて丸めるかは別の判断として持ち越す（丸めると決めたら、変わる画面を
+目視で確かめる項目を付けて置き換える）。
+
+**読み手の数**: 「browser/ の機能をまたぐ箱」の検査（上の「引き金は逆にも引く」）は
+`components/ui/` にもそのまま掛け、**例外を作らない**。部品は、**2つ以上の領域・機能（か
+`components/ui/` の部品）から読まれるコミットで作る**。1つからしか読まれないなら `ui/` に作らず
+その機能の中に置く。**variant の値ごとの読み手は数えない**（`Dialog` の `backdrop: "deep"` の
+読み手が日記帳だけでもよい）が、使う箇所の無い値は作らない。**`components/ui/` はストアを読めない**
+ままで、部品は値と呼び先を全部 props で受ける（開いているかは呼び出し側の state、押したときは
+`onClick` / `onClose`）。
+
+**テストの範囲**: `test/browser/components/ui/<部品>/<部品>.test.tsx`（`select.test.tsx` と同じ形。
+`@testing-library/react` で描いて DOM を見る）。守るのは **variant の値 → 付く class**（軸ごとに
+すべての値。値の一覧はテストに字面で書く）・**描く要素**（`level` / `element`）・`"inherit"` で
+class が付かないこと・`className` が足されること・**振る舞い**（押したときの呼び先・押せないときに
+呼ばないこと・`aria-disabled` / `aria-pressed` / `type`、ダイアログの `open` への追随と Esc・
+backdrop のクリックで `onClose` が呼ばれること・中のクリックでは呼ばれないこと）まで。
+**色や寸法が効いているか（絵）は守らない**——置き換えのたびに目視で確かめる
+（`docs/coding-standards.md`「描画は自動テストで守らない」）。
+
+**部品の一覧**（2026-09-25 時点。props はすべて必須で、「`className` で渡すもの」は置き方の
+ほかに渡してよい目安）:
+
+| 部品      | 置き場        | props（variant と要素）                                                                                                                                                                                                                                                                                                                        | `className` で渡すもの                                |
+| --------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| `Text`    | `ui/text/`    | `element: "p" \| "span"`、`size`: `label` / `action` / `secondary` / `subheading` / `body` / `heading` / `inherit`（→ `--font-*`）、`tone`: `ink` / `ink-quiet` / `accent` / `state-ok` / `state-warn` / `state-ng` / `state-ask` / `inherit`（→ 同名の色）、`weight`: `normal`（400）/ `semibold`（600）/ `bold`（700）/ `inherit`            | 文字の組み（1行で切る・字間・行の高さ・桁揃え・書体） |
+| `Heading` | `ui/heading/` | `level: 1 \| 2 \| 3 \| 4`（→ `<h1>`〜`<h4>`）、`size`・`tone`・`weight` は `Text` と同じ（`size` と `weight` に `inherit` は無い）                                                                                                                                                                                                             | `Text` と同じ                                         |
+| `Stack`   | `ui/stack/`   | `element: "div" \| "section" \| "span"`、`direction`: `row` / `column`、`gap`: `none` / `xs` / `sm` / `md` / `lg` / `xl`（0 / 0.25 / 0.5 / 0.75 / 1 / 1.25rem）、`align`: `start` / `center` / `end` / `baseline` / `stretch`、`justify`: `start` / `center` / `end` / `between`、`wrap`: `nowrap` / `wrap`                                    | 箱の見た目（余白・枠・地）                            |
+| `Button`  | `ui/button/`  | `type`: `button` / `submit`、`variant`: `outline`（`--rule` の枠）/ `outline-accent` / `outline-warn` / `solid-accent` / `solid-danger`（`--state-ng`）/ `solid-warn` / `ghost`（地も枠も無い静かな字）/ `link`（accent の字・余白0）、`size`: `Text` の `label`〜`body`、`pressed`: `none` / `on` / `off`、`disabled`、`onClick`              | 箱（高さ・余白・角丸）                                |
+| `Dialog`  | `ui/dialog/`  | `open`、名前（`aria-label` か `aria-labelledby` の合併型）、`backdrop`: `dim`（`ground` の 70%）/ `deep`（88%）/ `clear`（透明。外側のクリックの読み替えだけ使う）、`placement`: `{ kind: "auto" }`（部品は置き方を持たない。ブラウザ既定の中央か、`className` の CSS で置く）/ `{ kind: "at"; top; left }`（座標を inline で置く）、`onClose` | 顔と箱（幅・余白・地・枠・角丸・影）                  |
+
+- **`Button`**: 押せないは **`aria-disabled` の1通り**にし、押されても `onClick` を呼ばない
+  （フォーカスは残るので `title` の理由が読める。`screen-nav-chat-mode.tsx` が `disabled` を使わない
+  理由と同じ）。hover・focus-visible・押せないとき・押されたとき（`pressed: "on"`）の見た目は顔ごとに
+  部品が持つ。**押せる行・押せる文字**（タスクの ID・件数のチップ・暦の日・吹き出し・覚えたことの
+  チップのように、中身そのものを押すもの）は `Button` にしない
+- **`Dialog`**: `useModalDialog` の呼び出し・Esc の `close`・backdrop のクリックの読み替え
+  （`event.target` が `<dialog>` 自身のときだけ）を部品が持ち、どれも `onClose` を呼ぶ。開いている
+  あいだだけ描く使い方（確認）は `open` に `true` を渡す
+
+**採らなかった部品**:
+
+| 候補                      | 採らない理由                                                                                                                                                                                                                                                                   |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `HStack` / `VStack`       | `Stack` の `direction` と同じもの。2つにすると props もテストも同じものが2組になる                                                                                                                                                                                             |
+| Badge / Chip              | 札は6つで、面が重なるのは accent の塗りの3つだけ、箱（ピル・0.5rem・0.3rem・位置指定）は全部違う。部品にしても箱を全部 `className` で渡すことになり、読むときに開くファイルが減らない。レポートの印（`.report-badge-*`）は Markdown が生む HTML に当たる規則で、部品の外にある |
+| Disclosure（`<details>`） | 3領域6箇所。`<details>` が開閉を持っていて部品が持つ振る舞いが無く、`<summary>` の見た目は字の段と色だけ                                                                                                                                                                       |
+| Card / Surface            | 地の段（`--surface` / `--surface-raised`）を持つ箱は、余白・角丸・枠の値が箱ごとに違う。段に丸めない（上の「段に丸めない」）かぎり、部品にしても値を全部 `className` で渡すことになる                                                                                          |
 
 ### 領域の機能と、置かれる機能
 
