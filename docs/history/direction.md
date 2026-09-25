@@ -3,6 +3,27 @@
 `develop/direction.md` に書かれたユーザーからの指示を、タスク化した時点で**当時の記述のまま**
 ここへ移す（`docs/workflow.md`「指示メモ」参照）。新しいものを上に足す。**後から書き換えない。**
 
+## 2026-09-25 components/page/ の規約を書き、破っているものを直す
+
+（ユーザーから。問答で、部品は1部品1ディレクトリ・会話の画面は1ページ・直下の container / presenter はページに1対・`<ページ>.module.css` は直下に許す、と決まった。規約を書く設計は T-635、ページごとの移動は T-636〜T-639、検査に焼くのは T-640 になった）
+
+page/配下の規約を今から言うからドキュメントに記載して、破っているものを修正するタスクを作ってほしい。
+
+ディレクトリ構成は以下。
+
+- page/
+  - ${ページの名前(例: achievement)}
+    - domain/ ... ドメイン固有の機能。このページでのみ使用するもの。共通のものは components/domainに。
+    - hooks/ ... フック。このページでのみ使用するもの。共通のものは browser/hooksに。
+    - components/ ... そのページで使うコンポーネント群。
+      - hooks/ ... 配下のコンポーネントで使うのみ使うフック
+      - ${コンポーネント名(例: achievement-screen.tsx)}/ ... コンポーネント
+    - presentational-${ページの名前(例: achievement.tsx)} ... container/presenter における presenter
+    - ${ページの名前(例: achievement.tsx)} ... container/presenter における container
+
+注意として、page/の直下に配置するのは各種ディレクトリとcontainer/presenterのみ。例えば achivement-screen のような構成要素は page/${ページの名前}/components/に配置する
+container/presenter
+
 ## 2026-09-25 振り返りのドラフト15件をまとめて取り込む
 
 （エージェントのドラフト。一覧を見せて「全部でいいかな」と承認を得た。docs に書く6件（T-552・T-565・T-567・T-568・T-582・T-609 の振り返り）は T-628 にまとめ、T-555 は T-629、T-584 は T-630、T-597（serve-revision）は T-631、T-606 の受け入れは T-632、T-608 は T-633、T-607・T-608・T-610 は T-634 になった。スキルを直す3件（T-576・T-578、T-596、T-596・T-597）は claude-skills の `next-task` と `plan-tasks` を直接直した）
