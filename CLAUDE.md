@@ -205,6 +205,8 @@ Orca 内のブラウザタブに出て、**入力もそこで行う**（入力�
 - **可読性が良くなる場合は remeda を優先する。** 手書きの `reduce` での合計・グループ分け・
   比較関数などは、remeda に同じ関数があれば使う。寄せないものの線引きは
   `docs/coding-standards.md`「可読性が良くなる場合は remeda を優先する」を参照
+- **2つ以上の class 名をつなぐときは clsx を使う**（配列の `join` やテンプレート文字列で手で
+  組まない。`docs/coding-standards.md`「class 名は clsx で組む」）
 - **`Date` を使わない。** 時刻は `Temporal`（`Temporal.Now` / `Temporal.Instant` /
   `Temporal.ZonedDateTime` など）で扱う。`.oxlintrc.json` の `no-restricted-globals` で検査する
   （例外は無い）。理由は `docs/coding-standards.md`「`Date` を使わない」
