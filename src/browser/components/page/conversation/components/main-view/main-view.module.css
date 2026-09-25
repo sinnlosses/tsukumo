@@ -93,7 +93,7 @@
 .main-step.is-final {
   background: var(--ground);
 }
-/* 追い越された中間レポートは `<details>` で畳む（`src/browser/components/page/conversation/components/main-view/turn.tsx` の `Step`）。
+/* 追い越された中間レポートは `<details>` で畳む（`src/browser/components/page/conversation/components/main-view/components/turn/turn.tsx` の `Step`）。
    地・枠は `.main-step.is-interim` のままで、開閉できることだけ `summary` のカーソルで示す
    （`.turn-request > summary` と同じ手口。新しい色は作らない）。 */
 .main-step.is-interim > summary {

@@ -9,9 +9,9 @@ import { afterEach, describe, expect, it } from "bun:test"
 
 import { act, cleanup, render } from "@testing-library/react"
 
-import { QuestionRecord } from "../../../../../../../src/browser/components/page/conversation/components/main-view/question-record.tsx"
-import { TEXT_TONE_CLASS } from "../../../../../../../src/browser/components/ui/text/text.tsx"
-import { type MainViewQuestion } from "../../../../../../../src/shared/main-view.ts"
+import { QuestionRecord } from "../../../../../../../../../src/browser/components/page/conversation/components/main-view/components/question-record/question-record.tsx"
+import { TEXT_TONE_CLASS } from "../../../../../../../../../src/browser/components/ui/text/text.tsx"
+import { type MainViewQuestion } from "../../../../../../../../../src/shared/main-view.ts"
 
 /** 印（●/○/■/□）は `<QuestionMark>` が描く、`.question-option` / `.question-preview-label` の
  * 直下の唯一の `<span>`（`Text`）。選んだ側だけ `TEXT_TONE_CLASS.accent` を持つ。 */

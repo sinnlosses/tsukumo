@@ -21,8 +21,8 @@
 
 import { type ReactElement } from "react"
 
-import { Button } from "../../../../../components/ui/button/button.tsx"
-import { Text } from "../../../../../components/ui/text/text.tsx"
+import { Button } from "../../../../../../../components/ui/button/button.tsx"
+import { Text } from "../../../../../../../components/ui/text/text.tsx"
 import { type TurnHeaderHistoryRow, type TurnHeaderModel } from "./hooks/use-turn-header.ts"
 import styles from "./turn-header.module.css"
 

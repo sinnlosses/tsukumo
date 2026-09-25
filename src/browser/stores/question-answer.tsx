@@ -1,7 +1,7 @@
 // 答え待ちの質問に対する**答えの組み立て**を配る Context（`<QuestionAnswerProvider>`）と、
 // 両側が読む1つのモデル（{@link useQuestionAnswer}）。
 //
-// **質問の札はメインビュー（`components/page/conversation/components/main-view/question-ask.tsx`）に出て、自由入力は入力欄
+// **質問の札はメインビュー（`components/page/conversation/components/main-view/components/question-ask/question-ask.tsx`）に出て、自由入力は入力欄
 // （`components/page/conversation/components/dispatch/`）が担う**ので、1つの状態を2つの領域が読み書きする。`browser/` の機能
 // どうしは import できない（docs/design.md 2章、`test/architecture.test.ts`）ため、置き場所は
 // 「画面全体で共有する状態」の `browser/stores/`（docs/design.md 6.2）。

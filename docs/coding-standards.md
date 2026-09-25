@@ -543,7 +543,7 @@ effect の中と、イベントハンドラ・そこで登録した寿命の長�
 「使う側より下に置く」が書けるのであって、`const` は宣言より前で使えない。
 
 **例外は `memo` で包むときだけ。** `const <部品名> = memo(<部品名>View)` と書き、中身は
-`function <部品名>View(...)` の関数宣言のまま下に置く（`components/page/conversation/components/main-view/report.tsx` の
+`function <部品名>View(...)` の関数宣言のまま下に置く（`components/page/conversation/components/main-view/components/report/report.tsx` の
 `Report` と `features/task-board/components/task-table.tsx` の `TaskTable`）。
 **`memo(function X() { ... })` の形にしない** — 定義が `const` の右辺に入ると、その部品だけ
 本体が上に来て並び順が逆になる。

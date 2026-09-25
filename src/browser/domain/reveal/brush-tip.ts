@@ -67,7 +67,7 @@ export type BrushTip = BrushPlace & {
   /**
    * この筆先を出したやり取り（`src/shared/main-view.ts` の `MainViewTurn.id`）。**筆先は
    * そのやり取りの本文の上にしか意味を持たない**——別のやり取りが出ているあいだ、座標の先には
-   * 違う本文があるので、追従する側はここを見て引っ込む（`components/page/conversation/components/main-view/mini-portrait.tsx`）。
+   * 違う本文があるので、追従する側はここを見て引っ込む（`components/page/conversation/components/main-view/components/mini-portrait/mini-portrait.tsx`）。
    */
   readonly turnId: number
 } & ({ readonly phase: "writing"; readonly stroke: BrushStroke } | { readonly phase: "resting" })

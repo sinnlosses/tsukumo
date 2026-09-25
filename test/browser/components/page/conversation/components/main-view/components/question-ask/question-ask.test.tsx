@@ -2,21 +2,24 @@ import { afterEach, describe, expect, it, spyOn } from "bun:test"
 
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 
-import { QuestionAsk } from "../../../../../../../src/browser/components/page/conversation/components/main-view/question-ask.tsx"
-import { QuestionAnswerProvider } from "../../../../../../../src/browser/stores/question-answer.tsx"
+import { QuestionAsk } from "../../../../../../../../../src/browser/components/page/conversation/components/main-view/components/question-ask/question-ask.tsx"
+import { QuestionAnswerProvider } from "../../../../../../../../../src/browser/stores/question-answer.tsx"
 import {
   QuestionScrollContext,
   type QuestionScrollValue,
-} from "../../../../../../../src/browser/stores/question-scroll.tsx"
-import { SessionStoreContext } from "../../../../../../../src/browser/stores/session.tsx"
+} from "../../../../../../../../../src/browser/stores/question-scroll.tsx"
+import { SessionStoreContext } from "../../../../../../../../../src/browser/stores/session.tsx"
 import {
   TurnSelectionContext,
   type TurnSelectionValue,
-} from "../../../../../../../src/browser/stores/turn-selection.tsx"
-import { type PendingAsk } from "../../../../../../../src/shared/pending-ask.ts"
-import { type Question, type QuestionOption } from "../../../../../../../src/shared/question.ts"
-import { INITIAL_SESSION_STATE } from "../../../../../../../src/shared/session-state.ts"
-import { type CommandSpy, sessionStoreWith } from "../../../../../session-store.ts"
+} from "../../../../../../../../../src/browser/stores/turn-selection.tsx"
+import { type PendingAsk } from "../../../../../../../../../src/shared/pending-ask.ts"
+import {
+  type Question,
+  type QuestionOption,
+} from "../../../../../../../../../src/shared/question.ts"
+import { INITIAL_SESSION_STATE } from "../../../../../../../../../src/shared/session-state.ts"
+import { type CommandSpy, sessionStoreWith } from "../../../../../../../session-store.ts"
 
 // フィクスチャはすべて手で書いた架空の質問（docs/coding-standards.md「会話内容の扱い」）。
 

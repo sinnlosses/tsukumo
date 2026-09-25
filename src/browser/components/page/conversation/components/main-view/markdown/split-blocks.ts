@@ -1,5 +1,5 @@
 // 書きかけの本文を、**空行を境にした塊へ割る**（`docs/design.md` 6.3）。呼び出し側
-// （`src/browser/components/page/conversation/components/main-view/report.tsx`）が塊ごとに `Markdown` を独立して描き、変わらない塊は
+// （`src/browser/components/page/conversation/components/main-view/components/report/report.tsx`）が塊ごとに `Markdown` を独立して描き、変わらない塊は
 // `React.memo` で描き直さない。ここは純粋関数だけを置く（React を import しない）。
 //
 // **塊をまたぐ Markdown の参照は成立しない。** 脚注（`[^1]`）は参照と定義が別の塊に落ちると

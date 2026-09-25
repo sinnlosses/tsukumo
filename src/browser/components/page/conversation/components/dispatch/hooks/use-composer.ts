@@ -57,7 +57,8 @@ export type ComposerChange = {
 
 /**
  * `<textarea>` の上の帯。**答え待ちの質問のときだけ出す**（答えは選択肢の札から選ぶか、
- * ここに書いて送る。札は `components/page/conversation/components/main-view/question-ask.tsx`）。
+ * ここに書いて送る。札は
+ * `components/page/conversation/components/main-view/components/question-ask/question-ask.tsx`）。
  */
 export type ComposerBand =
   | { readonly kind: "none" }

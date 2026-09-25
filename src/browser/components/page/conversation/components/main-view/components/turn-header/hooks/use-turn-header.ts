@@ -12,7 +12,10 @@
 
 import { useCallback, useId, useRef, useState, type RefObject } from "react"
 
-import { useDismissSignal, type DismissCause } from "../../../../../../hooks/use-dismiss-signal.ts"
+import {
+  useDismissSignal,
+  type DismissCause,
+} from "../../../../../../../../hooks/use-dismiss-signal.ts"
 
 /**
  * 一覧の1行ぶんの見出しと全文（`main-view.tsx` が `domain/turn-title.ts` の `turnTitle` /

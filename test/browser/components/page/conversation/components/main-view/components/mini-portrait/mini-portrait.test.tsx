@@ -3,19 +3,19 @@ import { afterEach, describe, expect, it } from "bun:test"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { act, cleanup, render } from "@testing-library/react"
 
-import { MiniPortrait } from "../../../../../../../src/browser/components/page/conversation/components/main-view/mini-portrait.tsx"
+import { MiniPortrait } from "../../../../../../../../../src/browser/components/page/conversation/components/main-view/components/mini-portrait/mini-portrait.tsx"
 import {
   publishBrushTip,
   restBrushTip,
   type BrushTip,
-} from "../../../../../../../src/browser/domain/reveal/brush-tip.ts"
-import { SessionStoreContext } from "../../../../../../../src/browser/stores/session.tsx"
+} from "../../../../../../../../../src/browser/domain/reveal/brush-tip.ts"
+import { SessionStoreContext } from "../../../../../../../../../src/browser/stores/session.tsx"
 import {
   INITIAL_SESSION_STATE,
   type SessionState,
-} from "../../../../../../../src/shared/session-state.ts"
-import { characterInfo, shownPortraits } from "../../../../../../fixture/character.ts"
-import { sessionStoreWith } from "../../../../../session-store.ts"
+} from "../../../../../../../../../src/shared/session-state.ts"
+import { characterInfo, shownPortraits } from "../../../../../../../../fixture/character.ts"
+import { sessionStoreWith } from "../../../../../../../session-store.ts"
 
 // **どこに見えているか（重なり・大きさ）は目視で確かめる**（`docs/architecture.md`
 // 「手で確かめること」）。ここで守るのは、筆先に連れて出入りすることと、置く座標を筆先から

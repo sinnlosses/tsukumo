@@ -354,7 +354,7 @@ describe("applySessionEvent", () => {
       },
     ])
     // メインビューへ渡す tool の記録が持つのは名前・入力・結果だけ（描くかどうかは
-    // `src/browser/components/page/conversation/components/main-view/turn.tsx` の仕事で、いまはツールを描かない）。
+    // `src/browser/components/page/conversation/components/main-view/components/turn/turn.tsx` の仕事で、いまはツールを描かない）。
     expect(mainViewEntries(view)).toEqual([
       {
         kind: "tool",

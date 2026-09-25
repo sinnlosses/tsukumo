@@ -4,7 +4,7 @@
 // （docs/design.md 2章「機能の中を分ける」の container / presenter）。
 //
 // **質問はこの箱に出ない**。札はメインビュー
-// （`components/page/conversation/components/main-view/question-ask.tsx`）に出て、自由入力は `<Composer>` が担う。
+// （`components/page/conversation/components/main-view/components/question-ask/question-ask.tsx`）に出て、自由入力は `<Composer>` が担う。
 //
 // ここに残すのは「フックを呼んで、受け取ったものを渡す」だけ。**条件分岐も算出もここには
 // 置かない**（増えたらフックか見た目のどちらかに寄せる）。

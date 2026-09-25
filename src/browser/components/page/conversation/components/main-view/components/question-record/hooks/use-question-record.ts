@@ -19,12 +19,12 @@
 
 import { useState, type ToggleEvent } from "react"
 
-import { type MainViewQuestion } from "../../../../../../../shared/main-view.ts"
+import { type MainViewQuestion } from "../../../../../../../../../shared/main-view.ts"
 import {
   sortQuestionOptions,
   type Question,
   type QuestionAnswer,
-} from "../../../../../../../shared/question.ts"
+} from "../../../../../../../../../shared/question.ts"
 
 export type QuestionRecordProps = {
   readonly entry: MainViewQuestion

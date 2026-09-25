@@ -15,7 +15,7 @@ import { cleanup, render } from "@testing-library/react"
 let calls: string[] = []
 
 mock.module(
-  "../../../../../../../src/browser/components/page/conversation/components/main-view/markdown/markdown.tsx",
+  "../../../../../../../../../src/browser/components/page/conversation/components/main-view/markdown/markdown.tsx",
   () => ({
     Markdown: (props: { readonly text: string }) => {
       calls.push(props.text)
@@ -25,7 +25,7 @@ mock.module(
 )
 
 const { Report } =
-  await import("../../../../../../../src/browser/components/page/conversation/components/main-view/report.tsx")
+  await import("../../../../../../../../../src/browser/components/page/conversation/components/main-view/components/report/report.tsx")
 
 afterEach(() => {
   cleanup()

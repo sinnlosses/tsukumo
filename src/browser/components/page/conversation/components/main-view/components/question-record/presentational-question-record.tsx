@@ -7,16 +7,16 @@
 
 import { type ReactElement } from "react"
 
-import { Heading } from "../../../../../components/ui/heading/heading.tsx"
-import { Text } from "../../../../../components/ui/text/text.tsx"
+import { Heading } from "../../../../../../../components/ui/heading/heading.tsx"
+import { Text } from "../../../../../../../components/ui/text/text.tsx"
+import { Markdown } from "../../markdown/markdown.tsx"
+import notationStyles from "../../markdown/report-notation.module.css"
 import {
   type QuestionRecordAnswerRow,
   type QuestionRecordModel,
   type QuestionRecordPreviewRow,
   type QuestionRecordQuestionModel,
 } from "./hooks/use-question-record.ts"
-import { Markdown } from "./markdown/markdown.tsx"
-import notationStyles from "./markdown/report-notation.module.css"
 import styles from "./question-record.module.css"
 
 const FREE_TEXT_SUFFIX = "（自由入力）"

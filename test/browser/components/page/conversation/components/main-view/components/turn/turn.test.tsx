@@ -6,14 +6,14 @@ import {
   type MainViewStep,
   type MainViewStepBody,
   type MainViewTurn,
-} from "../../../../../../../src/shared/main-view.ts"
+} from "../../../../../../../../../src/shared/main-view.ts"
 
 // 本物の `Report`（react-markdown 一式と演出の配線を持つ）ではなく、**どの本文に演出を掛けると
 // 言われたか**だけを記録する代役に差し替える。演出そのもの（`reveal/use-report-reveal.ts`）は
 // レイアウトを測るので DOM だけのテストでは確かめられず、ここで見たいのは**対象の選び方**の規則だけ。
 //
 // `mock.module` はプロセス全体に効くので、テストは `bun test --isolate` で回す
-// （理由は `test/browser/components/page/conversation/components/main-view/report.test.tsx` の冒頭）。
+// （理由は `test/browser/components/page/conversation/components/main-view/components/report/report.test.tsx` の冒頭）。
 let revealed: {
   readonly markdown: string
   readonly reveal: boolean
@@ -21,7 +21,7 @@ let revealed: {
 }[] = []
 
 mock.module(
-  "../../../../../../../src/browser/components/page/conversation/components/main-view/report.tsx",
+  "../../../../../../../../../src/browser/components/page/conversation/components/main-view/components/report/report.tsx",
   () => ({
     Report: (props: { readonly markdown: string; readonly reveal: boolean; turnId: number }) => {
       revealed.push({ markdown: props.markdown, reveal: props.reveal, turnId: props.turnId })
@@ -31,7 +31,7 @@ mock.module(
 )
 
 const { Turn } =
-  await import("../../../../../../../src/browser/components/page/conversation/components/main-view/turn.tsx")
+  await import("../../../../../../../../../src/browser/components/page/conversation/components/main-view/components/turn/turn.tsx")
 
 afterEach(() => {
   cleanup()

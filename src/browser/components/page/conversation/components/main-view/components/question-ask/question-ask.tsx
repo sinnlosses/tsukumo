@@ -19,18 +19,18 @@
 
 import { type ReactElement } from "react"
 
-import { Button } from "../../../../../components/ui/button/button.tsx"
-import { HStack } from "../../../../../components/ui/h-stack/h-stack.tsx"
-import { Text } from "../../../../../components/ui/text/text.tsx"
+import { Button } from "../../../../../../../components/ui/button/button.tsx"
+import { HStack } from "../../../../../../../components/ui/h-stack/h-stack.tsx"
+import { Text } from "../../../../../../../components/ui/text/text.tsx"
 import {
   useQuestionAnswer,
   type QuestionOptionRow,
-} from "../../../../../stores/question-answer.tsx"
-import { useQuestionScroll } from "../../../../../stores/question-scroll.tsx"
-import { useTurnSelection } from "../../../../../stores/turn-selection.tsx"
+} from "../../../../../../../stores/question-answer.tsx"
+import { useQuestionScroll } from "../../../../../../../stores/question-scroll.tsx"
+import { useTurnSelection } from "../../../../../../../stores/turn-selection.tsx"
+import { Markdown } from "../../markdown/markdown.tsx"
+import notationStyles from "../../markdown/report-notation.module.css"
 import { useQuestionAskScroll } from "./hooks/use-question-ask-scroll.ts"
-import { Markdown } from "./markdown/markdown.tsx"
-import notationStyles from "./markdown/report-notation.module.css"
 import styles from "./question-ask.module.css"
 
 const QUESTION_CHIP = "質問"

@@ -2367,7 +2367,7 @@ react-markdown
 **16進の色を書いてよいのもそこだけ**（13.2）。
 
 **機能の中の部品でも、見た目が独立しているときはその部品の隣に `<部品>.module.css` を置いてよい**
-（`components/page/conversation/components/main-view/mini-portrait.module.css` / `components/domain/sidebar/session-switch.module.css`
+（`components/page/conversation/components/main-view/components/mini-portrait/mini-portrait.module.css` / `components/domain/sidebar/session-switch.module.css`
 がその形）。分ける目安は「**その部品しか使わない class の塊になっているか**」——1つの
 `*.module.css` に複数の部品の class が混ざって育ち、どれがどの部品のものか読み取りにくく
 なったら、部品ごとに分ける側へ倒す（機能の1枚に戻すのが原則で、これは「その機能の中でも

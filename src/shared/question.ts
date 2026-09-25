@@ -12,7 +12,7 @@ import { isPlainObject } from "remeda"
 /**
  * 1つの選択肢。`preview` は**その選択肢を選ぶと何が起きるかを比べるための本文**（Markdown。
  * 表・mermaid・レポートの記法がそのまま書ける）で、メインビューの質問の札
- * （`src/browser/components/page/conversation/components/main-view/question-ask.tsx`）が選択肢の説明の下に描く。
+ * （`src/browser/components/page/conversation/components/main-view/components/question-ask/question-ask.tsx`）が選択肢の説明の下に描く。
  *
  * **以前はここで捨てていた**（「数十行になるので持ち回らない」）。選択肢が
  * 文章だけになって比べられないという指摘で、読んで運ぶように変えた。数十行になるのは
@@ -34,7 +34,7 @@ export type Question = {
 /**
  * 質問1件に対して利用者が選んだ答え。**選択肢のラベルと、自由入力に打った文字列が同じ並びに
  * 混ざる**（自由入力は `options` のどれとも一致しないので、突き合わせる側はそれで見分ける。
- * `src/browser/components/page/conversation/components/main-view/question-record.tsx`）。複数選択のときは選んだぶんだけ要素が並ぶ。
+ * `src/browser/components/page/conversation/components/main-view/components/question-record/question-record.tsx`）。複数選択のときは選んだぶんだけ要素が並ぶ。
  *
  * **SDK へ返すときは1つの文字列に畳む**（質問1件に対して1つの文字列という `AskUserQuestion` の
  * 形。畳むのは `src/server/session-driver/core/pending-answer.ts` の役目で、画面側はこの形のまま送る）。

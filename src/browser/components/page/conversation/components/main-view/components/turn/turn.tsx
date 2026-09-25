@@ -13,16 +13,16 @@ import {
   type MainViewStep,
   type MainViewStepBody,
   type MainViewTurn,
-} from "../../../../../../shared/main-view.ts"
-import { type TurnFailure } from "../../../../../../shared/turn-failure.ts"
-import { Text } from "../../../../../components/ui/text/text.tsx"
-import { VStack } from "../../../../../components/ui/v-stack/v-stack.tsx"
-import { turnFailureLabel } from "../../domain/api-error-label.ts"
-import { PromptImageThumbnails } from "../prompt-image/prompt-image.tsx"
-import { requestLinesAfterTitle, truncateRequestText } from "./domain/turn-title.ts"
-import styles from "./main-view.module.css"
-import { QuestionRecord } from "./question-record.tsx"
-import { Report } from "./report.tsx"
+} from "../../../../../../../../shared/main-view.ts"
+import { type TurnFailure } from "../../../../../../../../shared/turn-failure.ts"
+import { Text } from "../../../../../../../components/ui/text/text.tsx"
+import { VStack } from "../../../../../../../components/ui/v-stack/v-stack.tsx"
+import { turnFailureLabel } from "../../../../domain/api-error-label.ts"
+import { PromptImageThumbnails } from "../../../prompt-image/prompt-image.tsx"
+import { requestLinesAfterTitle, truncateRequestText } from "../../domain/turn-title.ts"
+import styles from "../../main-view.module.css"
+import { QuestionRecord } from "../question-record/question-record.tsx"
+import { Report } from "../report/report.tsx"
 
 export type TurnProps = {
   readonly turn: MainViewTurn

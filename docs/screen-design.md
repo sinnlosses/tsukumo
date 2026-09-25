@@ -1531,7 +1531,7 @@ scrollable overflow は end 方向にしか伸びない**ので、上へ出た�
   優先した。14px の見本を 13px へ寄せた `dispatch-send` と同じ判断
 
 **答え待ちの質問**（2026-09-23 決定。質問の答え方がメインビューの札
-（`components/page/conversation/components/main-view/question-ask.tsx`）へ移ったのに合わせた）:
+（`components/page/conversation/components/main-view/components/question-ask/question-ask.tsx`）へ移ったのに合わせた）:
 
 - **答え待ちの先頭（`pending[0]`）が質問なら、札の要約は実行中の手順ではなく質問の要約になる**
   （許可要求はこれまでどおり実行中の手順の要約のまま）。要約は**1問目の `header` をそのまま
