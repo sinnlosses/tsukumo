@@ -45,7 +45,11 @@ Markdown、キャラクターパック）の正典は **`docs/design.md`**。**`
 ファイルを `src/server/adapter/` に出した**（2026-09-20 に `core` と `adapter` を `src/server/` の
 下へ入れ子にした。`core` は純粋な判断だけになり、`node:` / SDK / `ws` を
 import しない。辺は `adapter ──▶ core ──▶ shared ◀── browser` で **`core → adapter` は禁止**。
-経緯は `docs/research/architecture-proposal.md`）。以下「採用アーキテクチャ」はこの新しい経路（WebSocket 1本・
+経緯は `docs/research/architecture-proposal.md`）。**2026-09-25 に、`core` と `adapter` の割りを
+機能の中へ入れると決めた**（`src/server/<機能>/{core,adapter}/`。形は `docs/design.md` 2章
+「サーバの機能と、機能どうしの辺」、移す段は同「いまの `src/server/` から移す先」。移し終える
+までは、まだ移していないファイルが `src/server/core/` `src/server/adapter/` の直下に居る）。
+以下「採用アーキテクチャ」はこの新しい経路（WebSocket 1本・
 React の部品）を書いている。残るのは段8（キャラクターパック本体の移動・切り替え）と段9
 （セッションの復元）で、これは独立した機能追加として `develop/task/` に別タスクである。
 段階と完了条件は `docs/history/decision.md`「design.md 12. 移行の段階」
@@ -134,7 +138,7 @@ Claude Code を動かす）の核（セッション駆動・イベントの変�
   キー送信は 2026-09-12 に撤去した（入力も回答もページ側で完結するようになったため）。
   箱を替えるときに差し替えるのもこの1つ（候補の比較は `docs/research/app-shell.md`）
 
-- **`sdk-message.ts` は SDK の型を import しない。** 依存を `adapter/` 直下の `sdk-` で始まる
+- **`sdk-message.ts` は SDK の型を import しない。** 依存を機能の `adapter/` 直下の `sdk-` で始まる
   ファイルに閉じるため、届くメッセージは `unknown` で受けて検証する（外部由来の値なので、どのみち構造は
   信用しない）。おかげで変換のテストは SDK を起動しない
 - **`session-state.ts` は純粋な畳み込み。** 姿から導くだけのもの（メインビューに出す形・`/`
@@ -174,23 +178,26 @@ tsukumo の画面だけになる。
 
 ## 新しいコードを置く場所
 
-**新しいコードは `src/shared/` / `src/server/core/` / `src/server/adapter/` / `src/browser/` に置く**
-（`docs/design.md` 2章）。**層の名前は「どの実行環境で動くか」を表す**（2026-09-20。
-`docs/research/architecture-placement.md`）。**外の世界（SDK・HTTP/WebSocket・ホスト・ファイル・
-子プロセス）に触るなら `src/server/adapter/`、触らない判断なら `src/server/core/`。**
+**新しいコードは `src/shared/` / `src/server/<機能>/core/` / `src/server/<機能>/adapter/` /
+`src/browser/` に置く**（`docs/design.md` 2章）。**層の名前は「どの実行環境で動くか」を表す**
+（2026-09-20。`docs/research/architecture-placement.md`）。サーバ側は**まずどの機能かを決め**
+（機能の一覧は `docs/design.md` 2章「サーバの機能と、機能どうしの辺」）、**外の世界（SDK・
+HTTP/WebSocket・ホスト・ファイル・子プロセス）に触るならその機能の `adapter/`、触らない判断なら
+`core/`。** どの機能にも属さず2つ以上の読み手を持つものだけ、共有の `src/server/core/` /
+`src/server/adapter/` の直下に置く。
 
 ディレクトリの割り当ては次のとおり。
 
-| 置き場所              | 実行場所         | 何を置くか                                                                                                                                        |
-| --------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `src/`                | —                | tsukumo 本体。直下は配線（`cli.ts` が入口、`main.ts` が起動の段取り。サーバで動く）                                                               |
-| `src/shared/`         | サーバとブラウザ | 語彙・イベント・状態・畳み込み・コマンドとフレーム。**両側が読む契約**                                                                            |
-| `src/server/core/`    | サーバ（Bun）    | サーバ側の純粋な判断。`node:` / SDK / `ws` を import しない                                                                                       |
-| `src/server/adapter/` | サーバ（Bun）    | 外の世界に触る境界。1ファイル = 1つの境界（SDK・HTTP・fs・子プロセス）                                                                            |
-| `src/browser/`        | ブラウザ         | ブラウザ側の React の部品。中は `features/` `components/` `hooks/` `lib/` `utils/` `stores/` `styles/`（箱ごとの置くものは `docs/design.md` 2章） |
-| `test/`               | —                | テスト。`src/<相対パス>.ts` → `test/<相対パス>.test.ts` で対応させる                                                                              |
-| `characters/`         | —                | キャラクター定義とサンプル素材                                                                                                                    |
-| `scripts/`            | —                | 開発・調査用のスクリプト。本体から呼ばれない                                                                                                      |
+| 置き場所                     | 実行場所         | 何を置くか                                                                                                                                        |
+| ---------------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/`                       | —                | tsukumo 本体。直下は配線（`cli.ts` が入口、`main.ts` が起動の段取り。サーバで動く）                                                               |
+| `src/shared/`                | サーバとブラウザ | 語彙・イベント・状態・畳み込み・コマンドとフレーム。**両側が読む契約**                                                                            |
+| `src/server/<機能>/core/`    | サーバ（Bun）    | その機能の純粋な判断。`node:` / SDK / `ws` を import しない。共有のものは `src/server/core/` の直下                                               |
+| `src/server/<機能>/adapter/` | サーバ（Bun）    | その機能の外の世界に触る境界。1ファイル = 1つの境界（SDK・HTTP・fs・子プロセス）。共有のものは `src/server/adapter/` の直下                       |
+| `src/browser/`               | ブラウザ         | ブラウザ側の React の部品。中は `features/` `components/` `hooks/` `lib/` `utils/` `stores/` `styles/`（箱ごとの置くものは `docs/design.md` 2章） |
+| `test/`                      | —                | テスト。`src/<相対パス>.ts` → `test/<相対パス>.test.ts` で対応させる                                                                              |
+| `characters/`                | —                | キャラクター定義とサンプル素材                                                                                                                    |
+| `scripts/`                   | —                | 開発・調査用のスクリプト。本体から呼ばれない                                                                                                      |
 
 **`scripts/` は本体から呼ばれない調査用の道具置き場**（端末の実測幅を測るプローブなど）。
 `src/` に混ぜると「tsukumo が動くのに必要なもの」と区別がつかなくなる。
@@ -203,21 +210,25 @@ tsukumo の画面だけになる。
   `docs/requirements.md`「3. 技術制約」
 - **原則2**: **両側で共有する契約（`shared`）／サーバ（`core` と `adapter`）／
   クライアント（`browser`）に分け、層をディレクトリで表す**（詳細と理由の正典は
-  `docs/design.md` 2章）。`shared` に置くのは両側の契約と、`SessionState` から純粋に導ける
+  `docs/design.md` 2章）。サーバ側は機能ごとのディレクトリ（`src/server/<機能>/`）の中で
+  `core` と `adapter` に割り、機能どうしの辺は `docs/design.md` 2章の表にある組だけにする。`shared` に置くのは両側の契約と、`SessionState` から純粋に導ける
   ものだけで、「受け取る／決める／描く」という役割の分割ではない。**サーバ側は判断（`core`）と
   外の世界に触る境界（`adapter`）に割れていて、`core → adapter` は禁止**（結ぶのは `src/` 直下の
   配線だけ）。**許した依存の辺以外は `test/architecture.test.ts` が落とす**
 - **原則3**: ホスト（ターミナル環境）・外部コマンド・OSに依存するものは
-  **`src/server/adapter/` の1ファイルに閉じ込める**（1ファイル = 1つの境界）。ホストが Orca から
+  **`adapter/`（機能の中か共有の箱）の1ファイルに閉じ込める**（1ファイル = 1つの境界）。ホストが Orca から
   別のものに変わっても、差し替えがここだけで済むようにする
   （下の「ホスト依存の操作は1つのポートにまとめる」）。**Agent SDK
   （`@anthropic-ai/claude-agent-sdk`）だけは、1つの境界が1ファイルに収まらない**（駆動の本体・
   tsukumo のツール・セッションの一覧と印・コンテキストの内訳）ので、**import してよい先を
-  ファイル名で決める: `src/server/adapter/` 直下の `sdk-` で始まるファイルだけ**。一覧ではなく
+  ファイル名で決める: 機能の `adapter/` 直下の `sdk-` で始まるファイルだけ**（いまは
+  `session-driver/` と `visit/`）。一覧ではなく
   名前で決めるのは、ファイルを足しても検査を直さずに済み、名前で SDK の境界を名乗らずに import
   すれば `test/architecture.test.ts` が落とすから。`adapter/sdk/` のようなディレクトリに切らない
   のは、`adapter/` の直下が境界の並びで、その下の段は境界を名乗らない `lib/` だけと決めてある
-  から（`docs/design.md` 2章「`lib/` と `utils/` に置く基準」）
+  から（`docs/design.md` 2章「`lib/` と `utils/` に置く基準」）。**SDK の境界を1つの機能にまとめない**
+  のは、訪問の台本を書かせる使い捨ての `query()` が訪問の判断とだけ組になっていて、駆動の側に
+  置くと訪問を追うのに2つの機能を開くことになるから
 - **原則4**: **キャラクターの中身をコードに書かない。** 立ち絵のパス、表情と hook イベントの
   対応、モデルと衣装の対応は定義ファイル側に置く。コードは定義を解釈するだけにする
 - **原則5**: 1ファイルにまとめるか分けるかは、行数でも関数の数でもなく
@@ -864,7 +875,7 @@ DOM の状態（スクロール位置・`<details>` の開閉・フォーカス�
 
 **`session-event.ts` は `domain`。** SDK の型を1つも import しておらず、`unknown` で受けた
 メッセージを内部イベントへ検証する純粋関数だから。SDK の語彙に触るのは限られたファイルだけ
-（いまは `adapter/` 直下の `sdk-` で始まるファイル）、という境界（原則3）はそのまま生きる。
+（いまは機能の `adapter/` 直下の `sdk-` で始まるファイル）、という境界（原則3）はそのまま生きる。
 
 **ディレクトリもファイルも単数形にする。** 複数は「複数返す」関数名の側で表す
 （`newFormatTaskSummaries`）。**このうちディレクトリの側は 2026-09-16 に `src/browser/` だけ例外にした**
