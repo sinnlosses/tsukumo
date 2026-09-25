@@ -20,8 +20,11 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { Activity, type ReactElement } from "react"
 import { createRoot } from "react-dom/client"
 
+import { Layout } from "./components/domain/layout/layout.tsx"
 import { usePortraitPreload } from "./components/domain/portrait.tsx"
 import { ProtocolMismatch } from "./components/domain/protocol-mismatch.tsx"
+import { ScreenNav } from "./components/domain/screen-nav/screen-nav.tsx"
+import { Sidebar } from "./components/domain/sidebar/sidebar.tsx"
 import {
   applyAppearanceColorOverride,
   loadAppearanceColorOverride,
@@ -32,10 +35,7 @@ import { CharacterScreen } from "./features/character-screen/character-screen.ts
 import { CharacterView } from "./features/character-view/character-view.tsx"
 import { ChatView } from "./features/chat-view/chat-view.tsx"
 import { Dispatch } from "./features/dispatch/dispatch.tsx"
-import { Layout } from "./features/layout/layout.tsx"
 import { MainView } from "./features/main-view/main-view.tsx"
-import { ScreenNav } from "./features/screen-nav/screen-nav.tsx"
-import { Sidebar } from "./features/sidebar/sidebar.tsx"
 import { TokenUsageScreen } from "./features/token-usage/token-usage-screen.tsx"
 import { type Screen } from "./stores/location-hash.ts"
 import { QuestionAnswerProvider } from "./stores/question-answer.tsx"

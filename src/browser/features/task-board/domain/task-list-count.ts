@@ -1,5 +1,5 @@
 // サイドバーの「タスク一覧」区画の見出し下に出す件数のチップ。文言だけをここから渡す
-// （`features/sidebar/task-section.tsx`）。見出しの文言そのものは固定の「タスク」になった
+// （`components/domain/sidebar/task-section.tsx`）。見出しの文言そのものは固定の「タスク」になった
 // ので、この機能はもう持たない（以前は `taskListTitle` が「タスク一覧 todo N / doing N /
 // done N」を組み立てていた。経緯は docs/display.md 4.2）。
 
@@ -27,7 +27,7 @@ const CHIP_ORDER = [
  * 採らない。経緯は docs/display.md 4.2）。
  *
  * tasks が読めていない（`kind: "unknown"`）ときはチップを出さない。その判定は呼ぶ側
- * （`features/sidebar/task-section.tsx`）が持ち、ここは件数を数えられる並びだけを受ける。
+ * （`components/domain/sidebar/task-section.tsx`）が持ち、ここは件数を数えられる並びだけを受ける。
  */
 export function taskListCounts(items: readonly TaskSummaryItem[]): readonly TaskListCountItem[] {
   const counts = taskStatusCounts(items)

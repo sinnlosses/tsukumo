@@ -493,7 +493,7 @@ IBM Plex Mono）と字の大きさ、「ほか n 件を見る」の色（見本�
 - **`TSUKUMO_HOME` を分ければ既定も分かれる**（ホームごと差し替わるため。5章）
 
 **書き上げる演出の速さは `localStorage` に持つ**（色と同じ並び。保存と読み取りは
-`src/browser/domain/reveal-speed.ts` に集める——歯車（`features/screen-nav/`）とレポートの演出
+`src/browser/domain/reveal-speed.ts` に集める——歯車（`components/domain/screen-nav/`）とレポートの演出
 （`domain/reveal/use-report-reveal.ts`）の両方が読むので、機能どうしの import を増やさず
 `browser/domain/` へ置く。2章）。選択肢は3つ（既定は**標準**）:
 
@@ -924,7 +924,7 @@ IBM Plex Mono）と字の大きさ、「ほか n 件を見る」の色（見本�
 └────────────────────────────────┘
 ```
 
-1. **プロフィールの札**（`features/sidebar/profile-card.tsx`）: 顔（13.9「顔」と同じ素材・丸・
+1. **プロフィールの札**（`components/domain/sidebar/profile-card.tsx`）: 顔（13.9「顔」と同じ素材・丸・
    差し色の輪で、大きさだけ 64px）・名前（パックの `name`）・**ひとことプロフィール**
    （`character.json` の新しい欄 `tagline`。検証は `src/shared/character-definition.ts`。
    **無いパックは名前だけ**で、空の行を置かない）・右端の「変える ⌄」。領域の左右と上の縁まで
@@ -954,13 +954,13 @@ IBM Plex Mono）と字の大きさ、「ほか n 件を見る」の色（見本�
 **別の領域の機能**だからで、サイドバーは1つの領域の中で段の並びが変わるだけ。`<Layout>` に渡す
 旗も増えない。
 
-**どの機能に置くか: `features/sidebar/` の中**（`profile-card.tsx` / `recent-topic-section.tsx` /
+**どの機能に置くか: `components/domain/sidebar/` の中**（`profile-card.tsx` / `recent-topic-section.tsx` /
 `persona-memory-section.tsx`）。雑談の側（`features/chat-view/`）に置くと、下端の帯を読むために
 領域の機能どうしの import が要る（2章）。中身を入れたあと、話題や覚えたことがタスクの
 `task-board` のようにサイドバーの外でも使う語彙になったら、そのとき「置かれる機能」に切り出す。
 
 **「変える ⌄」は、見た目のボタンの上に本物の `<select>` を透明にして同じ大きさで重ねる**
-（`features/sidebar/character-switch.tsx`。**下端の帯のキャラクターの `<select>` と同じ部品**で、
+（`components/domain/sidebar/character-switch.tsx`。**下端の帯のキャラクターの `<select>` と同じ部品**で、
 選択肢・塞ぐ条件・送る `switch-character` を1箇所に持ち、見た目と名前だけを置く側が渡す）。押すと
 ブラウザの選択肢の一覧が開き、キーボードも読み上げもブラウザが持つ。名前（`aria-label`）は
 「キャラクターを変える」で、見える字「変える」を含む。**フォーカスの輪は透明な `<select>` では
@@ -1458,12 +1458,12 @@ scrollable overflow は end 方向にしか伸びない**ので、上へ出た�
 - **ターン進行中も変えられる**（起こし直さない。いまのサイドバーと同じ）
 - **モデル・許可モードは、まだ届いていない値を見た目上の既定に倒す**（モデルは `Opus`、
   許可モードは「自動判定」。字と畳み方は
-  `src/browser/features/screen-nav/domain/model-label.ts` / `permission-mode-label.ts` の1箇所）。
+  `src/browser/components/domain/screen-nav/domain/model-label.ts` / `permission-mode-label.ts` の1箇所）。
   **effort だけ既定へ倒さない**（下の「effort のドロップダウンだけ、表示の更新が遅れる」。
   「読めない値は出さない」という決定と、既定の `medium` へ倒すことは両立しない——起こした
   直後・対応表がまだ届いていない・対応する値をまだ1件も読めていないときは選べなくし、
   理由を `title` に出す。字と畳み方は
-  `src/browser/features/screen-nav/domain/effort-label.ts` の1箇所）
+  `src/browser/components/domain/screen-nav/domain/effort-label.ts` の1箇所）
 
 **effort のドロップダウンだけ、表示の更新が遅れる**（モデル・許可モードのドロップダウンは
 サーバの `session-info` で即座に更新されるのに対し、effort は hook 入力の `effort.level` からしか

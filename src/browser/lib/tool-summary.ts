@@ -1,5 +1,5 @@
 // ツール名＋入力を、画面に出してよい1行の要約にする。**帯の「いまの作業」
-// （`src/browser/features/screen-nav/`）と入力欄の答え待ちの箱
+// （`src/browser/components/domain/screen-nav/`）と入力欄の答え待ちの箱
 // （`src/browser/features/dispatch/pending-answer.tsx`）の両方が読む**ので、機能をまたぐ道具として
 // `browser/lib/` に置く（docs/design.md 2章「`src/browser/` の箱と、置く基準」）。
 //

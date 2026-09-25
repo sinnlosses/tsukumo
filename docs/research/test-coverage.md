@@ -33,12 +33,12 @@
 | `src/server/adapter/fake-driver.ts`                         |   78.95 |   79.00 |
 | `src/browser/lib/refresh.ts`                                |  100.00 |   81.82 |
 | `src/shared/repository-file.ts`                             |  100.00 |   83.33 |
-| `src/browser/features/layout/split.ts`                      |  100.00 |   86.49 |
+| `src/browser/components/domain/layout/split.ts`             |  100.00 |   86.49 |
 | `src/browser/lib/data-url.ts`                               |   75.00 |   88.89 |
 
 **報告に1行も出ないファイル**（テストから一度も読み込まれていない）は6つ:
 `src/cli.ts`（`test/cli.test.ts` が**子プロセスで**起こすので計上されない）・`src/browser/main.tsx`・
-`src/browser/features/sidebar/sidebar.tsx`・`src/server/adapter/orca-host.ts`・
+`src/browser/components/domain/sidebar/sidebar.tsx`・`src/server/adapter/orca-host.ts`・
 `src/server/adapter/ui-rebuild.ts`・`src/server/core/host.ts`（型だけで実行される行が無い）。
 
 ## 消す候補をどう見つけたか
@@ -49,7 +49,7 @@
 
 `test/architecture.test.ts`・`test/cli.test.ts`・`test/browser/components/ui/select.test.tsx`・
 `test/browser/features/character-view/balloon-track.test.tsx`・
-`test/browser/features/layout/layout-resizer.test.tsx`・
+`test/browser/components/domain/layout/layout-resizer.test.tsx`・
 `test/browser/features/main-view/markdown/notation.test.tsx`・
 `test/browser/features/main-view/report.test.tsx`・`test/browser/stores/main-view-turn.test.ts`・
 `test/server/adapter/vendor-asset.test.ts`・`test/server/core/report-notation.test.ts`・
@@ -82,11 +82,11 @@
 いずれも「型が既に保証している性質を実行時に確認している」に当たる assertion で、**同じテストの中の
 残りの行が本体**。テストごと消す理由は無い。
 
-| ファイル:行                                           | 消す行                                                                      | 代わりに守っているもの                                                                                                                                       |
-| ----------------------------------------------------- | --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `test/server/core/session-launch.test.ts:107`         | `expect(driver).toBeDefined()`                                              | `createSessionLaunch` の戻り値は `Promise<SessionDriver>` で `undefined` を取らない（型）。同テストの `harness.calls` の並びが本体                           |
-| `test/browser/features/sidebar/activity.test.tsx:100` | `expect(container.querySelector("details.activity-failure")).toBeDefined()` | `querySelector` は無いとき `null` を返し、`null` は `toBeDefined()` を**通る**ので常に真。直後の2行（`pre.activity-failure-input` / `-output` の中身）が本体 |
-| `test/server/adapter/sdk-driver.test.ts:70`           | `expect(MODEL_ALIASES).toContain(DEFAULT_MODEL)`                            | 直前の `toEqual(["opus", "sonnet", "haiku", "fable"])` と、同ファイルの `既定のモデル（opus）と既定の effort（medium）を渡す` が既に固定                     |
+| ファイル:行                                                    | 消す行                                                                      | 代わりに守っているもの                                                                                                                                       |
+| -------------------------------------------------------------- | --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `test/server/core/session-launch.test.ts:107`                  | `expect(driver).toBeDefined()`                                              | `createSessionLaunch` の戻り値は `Promise<SessionDriver>` で `undefined` を取らない（型）。同テストの `harness.calls` の並びが本体                           |
+| `test/browser/components/domain/sidebar/activity.test.tsx:100` | `expect(container.querySelector("details.activity-failure")).toBeDefined()` | `querySelector` は無いとき `null` を返し、`null` は `toBeDefined()` を**通る**ので常に真。直後の2行（`pre.activity-failure-input` / `-output` の中身）が本体 |
+| `test/server/adapter/sdk-driver.test.ts:70`                    | `expect(MODEL_ALIASES).toContain(DEFAULT_MODEL)`                            | 直前の `toEqual(["opus", "sonnet", "haiku", "fable"])` と、同ファイルの `既定のモデル（opus）と既定の effort（medium）を渡す` が既に固定                     |
 
 ### 候補から外したもの
 
@@ -96,7 +96,7 @@
   `characterAssetCacheKey` の混ぜ方と `toCharacterInfo` の `pack` の配線は別のテストが固定しているが、
   **`toCharacterInfo` が `revision` を `characterAssetCacheKey` に渡していること**を守るのはこれだけ。
   消すと引数を落としても誰も落ちない
-- `test/browser/features/sidebar/session-info.test.tsx` の `model が opus のみを含むとき、fable を誤って
+- `test/browser/components/domain/sidebar/session-info.test.tsx` の `model が opus のみを含むとき、fable を誤って
 選択しない` / `model が sonnet / haiku のとき、fable を誤って選択しない` — 同じ分岐を通るが、
   **`fable` の誤選択の回帰テスト**なので規約の表では「残す」側
 - `test/browser/features/main-view/markdown/markdown.test.tsx` の CJK の強調の一群（6件）— 同じ
@@ -119,10 +119,10 @@
 
 ### 類型2: `docs/requirements.md` が明示している振る舞い
 
-| ファイル:行                                     | 未到達の分岐                                                                                                                                          |
-| ----------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `src/shared/repository-file.ts:22`              | 届いた値が配列でないときは空を返す（4.2「表示できないものがあっても残りを表示して動作を続ける」）。**この 1ファイルには対応するテストファイルが無い** |
-| `src/browser/features/layout/split.ts:41,52-54` | 保存された比率が**まだ無い**（初回起動）・読めない・可動域の外のときは `DEFAULT_SPLIT` に落ちる（同 4.2）                                             |
+| ファイル:行                                              | 未到達の分岐                                                                                                                                          |
+| -------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/shared/repository-file.ts:22`                       | 届いた値が配列でないときは空を返す（4.2「表示できないものがあっても残りを表示して動作を続ける」）。**この 1ファイルには対応するテストファイルが無い** |
+| `src/browser/components/domain/layout/split.ts:41,52-54` | 保存された比率が**まだ無い**（初回起動）・読めない・可動域の外のときは `DEFAULT_SPLIT` に落ちる（同 4.2）                                             |
 
 ## 埋めないと決めた穴
 
@@ -155,7 +155,7 @@
 | `src/browser/features/main-view/markdown/mermaid-block.tsx` | 51-58                | `mermaid.initialize` のテーマ設定。図が出ているかは目視                                                                        |
 | `src/browser/features/main-view/markdown/mermaid-block.tsx` | 108-111              | 失敗の理由の文字列の取り出し。**エラーメッセージの文面だけが変わる分岐**                                                       |
 | `src/browser/lib/refresh.ts:17-18`                          | `page` の側          | `window.location.reload()`。**テストファイルの冒頭に既に理由が書いてある**（借りている DOM では確かめられない）                |
-| `src/browser/features/sidebar/sidebar.tsx`                  | 全体（報告に出ない） | 3つの区画を並べるだけの組み立て。中身は `activity` / `task-list` / `session-info` の各テストが守っている                       |
+| `src/browser/components/domain/sidebar/sidebar.tsx`         | 全体（報告に出ない） | 3つの区画を並べるだけの組み立て。中身は `activity` / `task-list` / `session-info` の各テストが守っている                       |
 
 ### 到達不能な防御的コード
 
@@ -166,14 +166,14 @@
 `src/server/adapter/vendor-asset.ts:63-64`（同梱物が読めない。`bun install` 済みが起動時の前提）・
 `src/server/adapter/server.ts:320`（`listen` 後のアドレスが想定の形でない）・
 `src/browser/features/character-screen/appearance-color.ts:43` と
-`src/browser/features/layout/split.ts:37`（`localStorage` が**投げる**。プライベートウィンドウ限定で、
+`src/browser/components/domain/layout/split.ts:37`（`localStorage` が**投げる**。プライベートウィンドウ限定で、
 「値が無い・読めない」側は上の「埋める穴」に入れてある）。
 
 ### 同じ方針を別の入口で既に守っている分岐
 
 - `src/browser/features/dispatch/composer.tsx:239-243` — フォームの送信でも進行中は送らない。同じ
   ガードを鍵盤の側（`turnInProgress の間に Command+Enter を押しても送らない`）が通している
-- `src/browser/features/layout/layout.tsx:120,123` — 3本ある仕切りのうち、テストで掴んでいない1本の
+- `src/browser/components/domain/layout/layout.tsx:120,123` — 3本ある仕切りのうち、テストで掴んでいない1本の
   コールバック。同じ経路を別の仕切りで通している
 - `src/browser/features/main-view/turn.tsx:73` — `Step` の中の質問の記録。**`main-view.test.tsx` に
   「`QuestionRecord` を直接見る」と理由が書いてある**

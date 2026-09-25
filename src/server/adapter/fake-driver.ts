@@ -40,7 +40,7 @@ const FAKE_PLAN = "Claude Max"
  * ここに直接書く。**本物の `supportedModels()` の実測値をそのまま写した**（`opus` / `sonnet` は
  * 5段すべてに対応し、`fable` はエイリアスと違う値〔`claude-fable-5-1`〕で返る。`haiku` は
  * `supportsEffort` 自体が無い）——effort に対応しないモデルで選べなくなることと、エイリアスと
- * 一致しない値の当て方（`src/browser/features/screen-nav/domain/effort-label.ts`）の両方を
+ * 一致しない値の当て方（`src/browser/components/domain/screen-nav/domain/effort-label.ts`）の両方を
  * 疑似セッションでも確かめられるようにしてある。
  */
 export const FAKE_MODEL_EFFORT_SUPPORT: readonly ModelEffortSupport[] = [

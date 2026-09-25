@@ -6,7 +6,7 @@
 //
 // **何を閉じるか・閉じたあとどこへフォーカスを戻すかは持たない**（呼び出し側が `onDismiss` で
 // 決める）。合図の種類を引数で渡すのは、Esc のときだけフォーカスを押した口へ戻す呼び出し側が
-// あるため（`features/screen-nav/hooks/use-current-work.ts`）。
+// あるため（`components/domain/screen-nav/hooks/use-current-work.ts`）。
 //
 // **どの機能の語彙も持たない**ので `browser/hooks/`（`docs/design.md` 2章の箱の表）。
 //

@@ -283,7 +283,7 @@ export type SessionState = {
    * ——`init`（`session-info`）だけでなく `model-changed`（`/model` コマンドやサイドバーの
    * `set-model` の確定）でも決まり、`sessionId` より先に分かることがあるため。まだどちらの
    * 口からも届いていなければ undefined（本物の「無い」——`init` 前に何を出すかは読む側が
-   * 見た目上の既定へ畳む。`src/browser/features/screen-nav/domain/model-label.ts` の `resolveModelAlias`）。
+   * 見た目上の既定へ畳む。`src/browser/components/domain/screen-nav/domain/model-label.ts` の `resolveModelAlias`）。
    */
   readonly model: string | undefined
   /**
@@ -292,7 +292,7 @@ export type SessionState = {
    *
    * **源は `model-effort-support` だけ**（駆動が起動直後に1回だけ取りに行く）。まだ届いて
    * いなければ空——空のときは「対応するかどうか分からない」に畳む（読む側は
-   * `src/browser/features/screen-nav/domain/effort-label.ts`）。
+   * `src/browser/components/domain/screen-nav/domain/effort-label.ts`）。
    */
   readonly modelEffortSupport: readonly ModelEffortSupport[]
   /**

@@ -1,0 +1,280 @@
+/* まとめたレイアウト（`<Layout>`。src/browser/components/domain/layout/layout.tsx）。上段（メイン・サイドバー）と
+   下段（キャラビュー・入力欄）で仕切りの位置を独立に動かせるようにするため、上下の行を
+   それぞれ別の grid（.layout-row-top / .layout-row-bottom）にし、行の高さ・各行の列幅は
+   CSS カスタムプロパティで持つ（<Layout> がドラッグに応じて style で書き換える）。
+   ここに書いた var() の第2引数（フォールバック値）は src/browser/components/domain/layout/split.ts の
+   DEFAULT_SPLIT と一致させること。
+
+   狭い画面での畳み方（画面の高さに固定し、上段はタブで1つずつ出す）は、このファイルの末尾の
+   @media にある（他の領域のぶんはそれぞれの *.module.css の末尾。docs/requirements.md 4.7）。 */
+.layout-grid {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: var(--layout-row-top, 65fr) auto var(--layout-row-bottom, 35fr);
+  gap: 0.5rem;
+  /* 最上部の帯（画面のナビ。docs/screen-design.md 13.9）の外寸（帯の地＋下の罫線）とその下の
+     隙間、body の下の padding を差し引いて、grid 自体は残りの高さぴったりにする。**上の padding は
+     引かない**——帯がその中へはみ出して画面の上端に付くため。**帯は別の機能
+     （components/domain/screen-nav/）が描く**ので、ここは奪われる高さ（theme.css の変数）だけを読む。 */
+  height: calc(
+    100vh - var(--page-padding) - var(--screen-nav-height) - var(--screen-nav-rule) -
+      var(--screen-nav-gap)
+  );
+}
+.layout-row {
+  display: grid;
+  gap: 0.5rem;
+  min-width: 0;
+  min-height: 0;
+}
+.layout-row-top {
+  grid-template-columns: var(--layout-top-left, 75fr) auto var(--layout-top-right, 25fr);
+}
+.layout-row-bottom {
+  grid-template-columns: var(--layout-bottom-left, 50fr) auto var(--layout-bottom-right, 50fr);
+}
+/* キャラビューを畳んだとき（雑談モード。立ち絵が上段へ移る。docs/screen-design.md 13.7）。
+   **領域と仕切りは <Layout> が描かない**ので、ここは残った入力欄に全幅を渡すだけ。 */
+.layout-row-bottom[data-collapse-character="true"] {
+  grid-template-columns: 1fr;
+}
+/* **領域そのものは横に転がらない**（横にスクロールできると使い勝手が悪い）。`overflow-y: auto` だけを書くと、
+   CSS では片方の軸が visible でなくなったときにもう片方の visible も auto に計算されるので、
+   書いていない overflow-x が auto になって4領域すべてが横に転がっていた。
+   **横に長いものは、中身の側が自前のスクロール容器を持つ**（レポートの表は .table-scroll、
+   コードは pre-wrap、svg は max-width: 100%、長い語は overflow-wrap: anywhere で折り返す）。 */
+.layout-region {
+  /* 中身の側が「領域の内側の余白」を知るための変数。メインビューの札の頭（`position: sticky`）は
+     これだけ上へずらして、転がっても余白の帯から本文が覗かないようにする（`main-view.module.css`）。 */
+  --region-padding: 0.75rem;
+  min-width: 0;
+  min-height: 0;
+  padding: var(--region-padding);
+  border: 1px solid var(--rule);
+  border-radius: 0.75rem;
+  background: var(--surface);
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+/* 枠も地の色も持たず、`ground` の上に直接置く領域。**キャラビューは常にこちら**（付喪神は
+   器物に宿るのであって、ウィジェットの中に座っているのではない。docs/screen-design.md 13.1 原則2 /
+   13.4）で、**雑談中のメインビューもこちらになる**（立ち絵と会話がそこへ移り、畳んだキャラビューと
+   同じ立場になるため。13.7 / 13.8）。**2つの領域が同じ class を共有する**のは、
+   下の覆いの式を1箇所にしか書かないため。
+
+   **背景（13.8）を敷くのはこの領域だけ**（キャラビューのセリフのログは、この領域の背景を上へ
+   伸ばした写しを `--character-veil` を継いで描く。`character-view.module.css` の
+   `.speech-log-stage::before`）。枠も角丸も付けないのは変えない — 背景はウィジェットの
+   地ではなく、`ground` がこの領域だけ絵に替わったものとして扱う（角丸のままだと絵の四隅が
+   欠けて「ウィジェットの中の絵」に見える）。
+   敷き方は**覆いを1枚重ねた形**で、覆いは `ground` 一色を `--character-background-veil` の
+   不透明度にしたもの。画像が見えるのは最大でも 30%（下限は
+   `src/shared/character-background.ts` の MIN_BACKGROUND_VEIL が定義の側で保証し、いまの地と
+   字の色で足りないぶんは `--character-background-veil-floor`
+   （src/browser/domain/appearance-color.ts）が押し上げる。**両方の大きいほう**を採る）。
+   下端で合わせる（background-position）のは、立ち絵が床に立つ見え方（--portrait-drop）と
+   地面の位置をそろえるため。**雑談のメインビューでも同じ値でよい**（そちらでも立ち絵は下端に
+   立つ。横長になるぶん cover が左右を削るだけで、地面の高さは合ったまま）。
+   **背景が無いときは変数が差さっていない**ので、覆いは不透明な `ground`（＝この領域の地は
+   いままでと同じ色）、画像は `none` に落ちる。 */
+.layout-ground {
+  --character-veil: color-mix(
+    in srgb,
+    var(--ground)
+      calc(
+        max(var(--character-background-veil, 1), var(--character-background-veil-floor, 0.7)) * 100%
+      ),
+    transparent
+  );
+  border: none;
+  border-radius: 0;
+  background-color: transparent;
+  background-image:
+    linear-gradient(var(--character-veil), var(--character-veil)),
+    var(--character-background-image, none);
+  background-position: center bottom;
+  background-size: cover;
+}
+/* サイドバーだけは領域自体をスクロールさせず（.layout-region の overflow-y: auto を打ち消す）、
+   3つの .sidebar-block を縦に並べて区画ごとに内側でスクロールさせる（「タスク一覧」
+   「セッション情報」の見出しが画面の外に流れないようにするため）。狭い画面でも
+   .layout-grid の高さが画面に固定されるので、区画の伸び縮みと内側のスクロールは同じように働く。 */
+.layout-sidebar {
+  display: flex;
+  flex-direction: column;
+  overflow-y: hidden;
+}
+/* 答え待ちの間の枠の強調（`.dispatch-pending-glow`。features/dispatch/dispatch.module.css）は、
+   `<Dispatch>` の兄弟としてではなく、この領域（`<Layout>` が描く `.layout-dispatch` の
+   `<section>`）自身の内側の縁に沿わせたい。そこに `position: absolute; inset: 0` を
+   置くための基準をここで用意する（部品は自分の subtree の外の DOM を直接いじらない。
+   基準を用意するのは CSS 側で、JS の配線ではない）。 */
+.layout-dispatch {
+  position: relative;
+}
+/* 3本の仕切り。auto トラックは仕切り自身の width/height ぶんだけに縮む。**掴める幅（0.6rem）と
+   見える線（1px）を分ける** — 線は領域の枠より薄くして画面を割らず、掴む場所は細くしない。 */
+.layout-resizer {
+  position: relative;
+  touch-action: none;
+}
+.layout-resizer-vertical {
+  width: 0.6rem;
+  cursor: col-resize;
+}
+.layout-resizer-horizontal {
+  height: 0.6rem;
+  cursor: row-resize;
+}
+.layout-resizer::after {
+  content: "";
+  position: absolute;
+  background: color-mix(in srgb, var(--rule) 45%, transparent);
+}
+.layout-resizer-vertical::after {
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 1px;
+  transform: translateX(-50%);
+}
+.layout-resizer-horizontal::after {
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1px;
+  transform: translateY(-50%);
+}
+/* 上下の仕切りだけは中央に掴み手を置く。線を薄くしたぶん、動かせる境目だと分かる印がここに要る
+   （左右の2本は領域の縦の縁に沿っていて、カーソルの形で足りる）。 */
+.layout-resizer-horizontal::before {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  left: 50%;
+  width: 2.5rem;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--rule);
+  transform: translate(-50%, -50%);
+}
+.layout-resizer:hover::after,
+.layout-resizer:hover::before {
+  background: var(--accent);
+}
+/* 上下の仕切りと、比率を戻す口を同じ行に置く入れ物。口は仕切りの右端に重ねる（口の中に
+   仕切りを入れると、押したつもりがドラッグの始まりになる）。 */
+.layout-divider {
+  position: relative;
+}
+/* 狭い画面でだけ出る、上段の2領域（メインビュー・サイドバー）を切り替えるタブ
+   （docs/requirements.md 4.7）。**広い画面では display: none** なので grid の item にもならず、
+   .layout-grid の行の数は変わらない（両方の領域が今までどおり並ぶ）。
+   どちらを隠すかは下の @media が .layout-row-top[data-narrow-pane] で決める。 */
+.layout-tabs {
+  display: none;
+  gap: 0.25rem;
+}
+/* 指で押す口なので、字の大きさではなく**押せる高さ**（上下の余白込みで 2.5rem 前後）で決める。 */
+.layout-tab {
+  flex: 1 1 0;
+  padding: 0.45rem 0.7rem;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink-quiet);
+  font-size: var(--font-secondary);
+  cursor: pointer;
+}
+/* 選ばれたタブは accent を出してよい場所（docs/screen-design.md 13.1 原則1）。**色だけに頼らない**
+   ので、地の濃さ（--surface-accent）と文字の濃さも一緒に変える。 */
+.layout-tab.is-active {
+  border-color: var(--accent);
+  background: var(--surface-accent);
+  color: var(--ink);
+}
+
+/* 領域の比率を既定に戻すピル（`<Layout>` が直接描く。docs/screen-design.md 13.6）。比率が既定と
+   違うときだけ出る。**上下の仕切りの右端**に絵＋字で置く。
+   仕切りの行は 0.6rem しかないので、口は上下の隙間（grid の gap）へはみ出して仕切りの線の高さに
+   縦の中央を合わせる。右端は下段の領域の右端（.layout-row-bottom）に揃える。 */
+.layout-reset-split {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.25rem 0.6rem;
+  background: var(--surface-accent);
+  color: var(--accent);
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  border-radius: 999px;
+  font-size: 0.75rem;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  transform: translateY(-50%);
+}
+.layout-reset-split:hover {
+  background: color-mix(in srgb, var(--surface), var(--accent) 24%);
+  border-color: var(--accent);
+}
+
+/* 狭い画面（スマホの幅で会話を回せるようにする形。docs/requirements.md 4.7）。
+   **画面の高さに固定して、スクロールするのは上段の中だけ**にする。上段はメインビューと
+   サイドバーをタブで1つずつ出し、下段（キャラビュー・入力欄）は常に見えたままにする
+   （入力欄にたどり着くまでにタスク一覧を全部スクロールしていた実測への対処）。
+   高さの単位は **dvh**（vh だとソフトウェアキーボードが出たときにページごと押し上がる）。
+   各行の中身は DOM の並び順どおりに積むだけで済むので、grid-template-areas は使わない。 */
+@media (max-width: 760px) {
+  .layout-grid {
+    grid-template-columns: 1fr;
+    /* タブ / 上段（残り全部） / 下段（中身なり）。body の padding ぶんを差し引く。 */
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    height: calc(100dvh - 2 * var(--page-padding));
+  }
+  /* **狭い画面では帯が段を増やさない**（画面のナビは右端の「≡」に畳まれてこのタブ帯に
+     重なる。docs/screen-design.md 13.9）ので、grid の高さは画面のぶんそのまま。 */
+  .layout-tabs {
+    display: flex;
+    /* 右端の 44px（+ タブどうしの隙間）は「≡」の席として空ける。重なっているのは
+       components/domain/screen-nav/ が position: fixed で置いた帯で、DOM 上はここの子ではない。 */
+    padding-right: 3rem;
+  }
+  .layout-row-top,
+  .layout-row-bottom {
+    grid-template-columns: 1fr;
+  }
+  /* 出していないほうの領域は隠す。**4領域はそのまま4つある**（data-region も残る）ので、
+     広い画面に戻せば両方が並ぶ。 */
+  .layout-row-top[data-narrow-pane="main"] .layout-sidebar,
+  .layout-row-top[data-narrow-pane="sidebar"] .layout-main {
+    display: none;
+  }
+  /* 下段はキャラビューを低く固定し、残りを入力欄に渡す。**固定するのは、立ち絵と吹き出しの
+     大きさが領域の高さの割合で決まっているから**（割合の詰め直しは
+     features/character-view/character-view.module.css の @media）。答え待ちの箱で下段が
+     伸びても上段が消えないように、下段全体の上限を切る。 */
+  .layout-row-bottom {
+    grid-template-rows: 9.5rem minmax(0, 1fr);
+    max-height: 58dvh;
+  }
+  /* 下段に残るのは入力欄だけなので、キャラビューの 9.5rem のトラックは要らない。 */
+  .layout-row-bottom[data-collapse-character="true"] {
+    grid-template-rows: minmax(0, 1fr);
+  }
+  /* 仕切りは1列表示では意味を持たないので隠す。比率を戻すボタンも同じ理由で隠す
+     （動かせる比率が無い1列表示では戻す先が無い。色と立ち絵の固定はキャラクター画面へ
+     移っているので、隠しても設定にたどり着けなくなることはない）。 */
+  .layout-resizer,
+  .layout-divider {
+    display: none;
+  }
+  .layout-dispatch {
+    min-height: 9rem;
+  }
+}

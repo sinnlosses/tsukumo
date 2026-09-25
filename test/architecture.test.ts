@@ -212,15 +212,15 @@ describe("コメント中の日付", () => {
 // **`markdown/` は `main-view` の中**（`browser/features/main-view/markdown/`）なので、機能の
 // 一部として扱われる（state を持たない Markdown の描画プリミティブで、読むのは `main-view` だけ）。
 const BROWSER_REGIONS = [
-  "features/layout",
-  "features/screen-nav",
+  "components/domain/layout",
+  "components/domain/screen-nav",
   "features/main-view",
   "features/character-view",
   "features/character-screen",
   "features/chat-view",
   "features/token-usage",
   "features/achievement",
-  "features/sidebar",
+  "components/domain/sidebar",
   "features/dispatch",
 ] as const
 const BROWSER_PLACED_FEATURES = ["features/task-board"] as const

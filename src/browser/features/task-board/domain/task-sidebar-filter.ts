@@ -12,7 +12,7 @@ import { type TaskListFilterStatus } from "./task-list-count.ts"
 
 /**
  * 選んだ状態のタスクだけを残す。**選んでいない（`undefined`）ときは全件をそのまま返す**
- * （チップを2回目に押すと全件へ戻る。`features/sidebar/task-section.tsx` の state）。
+ * （チップを2回目に押すと全件へ戻る。`components/domain/sidebar/task-section.tsx` の state）。
  */
 export function filterTasksForSidebar(
   items: readonly TaskSummaryItem[],

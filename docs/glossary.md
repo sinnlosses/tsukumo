@@ -748,7 +748,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### いまの作業
 
-- **英語識別子（予定）**: `current-work`（帯の部品。`src/browser/features/screen-nav/` の中）
+- **英語識別子（予定）**: `current-work`（帯の部品。`src/browser/components/domain/screen-nav/` の中）
 - **定義**: 帯のまん中に出す、tsukumo がいま何をしているかの札。状態の語（作業中 / 答え待ち /
   背景で作業中 / 依頼待ち / 止まっている）と、実行中の手順の1行の要約を並べる。押すと**依頼の手順**の一覧が
   帯の下に開く（`docs/screen-design.md` 13.9）

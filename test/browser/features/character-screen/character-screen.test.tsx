@@ -244,7 +244,7 @@ describe("CharacterScreen", () => {
     expect(button.getAttribute("title")).toContain("ターン進行中")
   })
 
-  // 戻る口と答え待ちの印は帯（`features/screen-nav/`）へ移った（docs/screen-design.md 13.9）。
+  // 戻る口と答え待ちの印は帯（`components/domain/screen-nav/`）へ移った（docs/screen-design.md 13.9）。
   // 同じ口を2つ置かないので、この画面には残っていない。
   it("会話へ戻る口と答え待ちの印は持たない", () => {
     renderCharacterScreen({ pending: [FIXTURE_PENDING] })

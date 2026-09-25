@@ -5,7 +5,7 @@
 // 既定（`standard`）へ畳む。
 //
 // **読み手は2つ**（2つ目の読み手が出たときに上げる、appearance-color.ts と同じ引き金）:
-// 歯車のポップオーバー（`features/screen-nav/`）が選択肢を出して保存し、レポートの演出
+// 歯車のポップオーバー（`components/domain/screen-nav/`）が選択肢を出して保存し、レポートの演出
 // （`domain/reveal/use-report-reveal.ts`）がマウント時に読んで速さに使う。**機能どうしの
 // import を増やさないため、保存と読み取りをここへ集める。**
 //

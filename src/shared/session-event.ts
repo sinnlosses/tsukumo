@@ -49,7 +49,7 @@ export type CommandDescription = {
  * 有無・選べる段」だけ**（実測は `docs/history/decision.md`「effort の途中変更と読み取りが
  * 成り立った実測」）。`model` は SDK の `ModelInfo.value`（実測: エイリアスと一致するとは
  * 限らない——`fable` は `claude-fable-5-1` のような値になる）で、エイリアスへの対応付けは
- * 読む側（`src/browser/features/screen-nav/domain/effort-label.ts`）が持つ（表示の整形は
+ * 読む側（`src/browser/components/domain/screen-nav/domain/effort-label.ts`）が持つ（表示の整形は
  * サーバとブラウザの契約ではない）。
  */
 export type ModelEffortSupport = {

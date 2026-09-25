@@ -7,7 +7,7 @@
 // そのまま直せる（書き込む先はコマンドの `pack`。`docs/design.md` 7.1）。
 //
 // **新しく作るダイアログ（`<CharacterCreate>`）を開いているかどうかは、ここが state で持つ。**
-// 表示上の状態なので URL には持たせない（`features/sidebar/task-section.tsx` の `boardOpen` と
+// 表示上の状態なので URL には持たせない（`components/domain/sidebar/task-section.tsx` の `boardOpen` と
 // 同じ扱い。`docs/screen-design.md` 13.6）。**閉じるたびに `key` を進めて作り直す**——下書きの
 // 掃除を `<CharacterCreate>` の内側で state を戻す形にすると、作れたと分かった瞬間に効果内で
 // state を戻す呼び出しになり `useEffect` の中で setState を呼ぶ形になる。閉じる側（ここ）が
@@ -15,7 +15,7 @@
 // （`docs/coding-standards.md`「useEffect の代わりに使うもの」の「props が変わったら state を
 // 捨てる」）。
 //
-// **会話へ戻る口と答え待ちの印は、全画面の最上部の帯**（`features/screen-nav/`。13.9）に
+// **会話へ戻る口と答え待ちの印は、全画面の最上部の帯**（`components/domain/screen-nav/`。13.9）に
 // あるので、この画面は持たない。
 //
 // **地・領域・字の色（利用者の設定）は帯の歯車にある**（13.6 の表。色を「利用者が決める部分」と

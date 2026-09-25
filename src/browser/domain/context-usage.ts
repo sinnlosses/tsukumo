@@ -1,5 +1,5 @@
 // いまのコンテキストの内訳（`docs/glossary.md`「コンテキストの内訳」）を取りに行き、
-// 見た目（`features/token-usage/context-usage-card.tsx` / `features/sidebar/context-usage-row.tsx`）が
+// 見た目（`features/token-usage/context-usage-card.tsx` / `components/domain/sidebar/context-usage-row.tsx`）が
 // 算出せずにそのまま描ける形へ畳む。**2つの機能が読むので `browser/domain/`**（トークン消費の
 // 画面の札に加えて、サイドバーのセッション情報の行がこの内訳を読むようになったため。
 // docs/design.md 2章「上げる引き金は「2つ目の読み手が出たとき」」）。

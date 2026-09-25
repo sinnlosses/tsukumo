@@ -1,5 +1,5 @@
 // パックのキャラクターの顔（`docs/screen-design.md` 13.9「顔」）を丸く切り抜いて出す部品。**帯
-// （`features/screen-nav/`）とサイドバーの「セッション情報」（`features/sidebar/`）の両方が
+// （`components/domain/screen-nav/`）とサイドバーの「セッション情報」（`components/domain/sidebar/`）の両方が
 // 読む**ので、機能どうしの import を増やさず `browser/components/domain/`（tsukumo の語彙を
 // 持つ部品）に置く（`docs/design.md` 2章「機能の中を分ける」——`<Portrait>` を
 // `components/domain/portrait.tsx` へ上げたのと同じ引き金）。

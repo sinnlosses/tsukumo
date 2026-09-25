@@ -232,7 +232,7 @@ export function SessionProvider(props: SessionProviderProps): ReactElement {
 
   // パックが差す背景（docs/screen-design.md 13.8）も同じ手口で流す。**敷くのは枠を持たない領域**
   // （キャラビューと、雑談中のメインビュー）で、どう敷くか（覆いを1枚重ねる・下端で合わせる）は
-  // CSS（`src/browser/features/layout/layout.module.css` の `.layout-ground`）が持つ。ここは
+  // CSS（`src/browser/components/domain/layout/layout.module.css` の `.layout-ground`）が持つ。ここは
   // 素材の URL と覆いの濃さを渡すだけ。**素材の名前は `character.json` 由来の外部の値**だが、
   // `url()` を抜け出せない形であることは境界（`src/shared/character-background.ts` の
   // `isBackgroundFileName`）で見てある。背景が無いパックでは変数ごと外すので、`var()` の

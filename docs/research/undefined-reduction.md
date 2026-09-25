@@ -116,7 +116,7 @@
 
 **#2 の注意（見積もりに効く）**: `turnInProgress` は
 `src/server/core/session-manager.ts:382,392,408` / `src/shared/main-view.ts:161` /
-`src/browser/features/sidebar/session-info.tsx:111` など**6箇所以上が `boolean` として読んでいる**。
+`src/browser/components/domain/sidebar/session-info.tsx:111` など**6箇所以上が `boolean` として読んでいる**。
 合併型にすると読み替えが要る（`state.turn.kind === "running"`）。**減る行数は2行、
 書き換わる行数は十数行**——この比は他の#でも同じで、**行数の得は小さい**。
 得はむしろ「`turnFinishedAt` があるのに `turnInProgress` が true」のような**書けるのに起きない

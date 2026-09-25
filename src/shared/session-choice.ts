@@ -20,7 +20,7 @@ export const MAX_SESSION_CHOICES = 10
 
 /**
  * 見出しに出す文字数の上限。**`<select>` の選択肢は折り返せない**ので、表示側
- * （`src/browser/features/sidebar/session-switch.tsx` の `truncateHeading`）はこれで切って
+ * （`src/browser/components/domain/sidebar/session-switch.tsx` の `truncateHeading`）はこれで切って
  * `…` を足す。**tsukumo が題を付けるとき（`src/server/core/session-title.ts`）もこれに収まる
  * 長さで切り詰める**——同じ値を指すことで、モデルに指示する長さと表示の切り詰めがずれない。
  */
@@ -46,7 +46,7 @@ export type SessionChoice = {
   /**
    * 行の見出し（SDK の `summary`）。**外来の値なので境界（`session-restore.ts` の
    * `taggedSession`）で検証し、文字列でない・空なら無いものとして畳む**。無いときの見え方は
-   * 呼び出し側（`src/browser/features/sidebar/session-switch.tsx`）が決める。
+   * 呼び出し側（`src/browser/components/domain/sidebar/session-switch.tsx`）が決める。
    */
   readonly heading: string | undefined
 }

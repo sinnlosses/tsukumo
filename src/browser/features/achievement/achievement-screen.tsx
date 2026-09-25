@@ -3,7 +3,7 @@
 // `hooks/use-achievement-calendar.ts`、見た目は `presentational-achievement-screen.tsx` が持つ
 // （docs/design.md 2章「機能の中を分ける」の container / presenter）。
 //
-// **入る口も会話へ戻る口も、全画面の最上部の帯**（`features/screen-nav/`。13.9）にある。
+// **入る口も会話へ戻る口も、全画面の最上部の帯**（`components/domain/screen-nav/`。13.9）にある。
 //
 // ここに残すのは「フックを呼んで、受け取ったものを渡す」だけ。**条件分岐も算出もここには
 // 置かない**（増えたらフックか見た目のどちらかに寄せる）。

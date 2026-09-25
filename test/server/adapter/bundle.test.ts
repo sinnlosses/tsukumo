@@ -32,7 +32,7 @@ describe("buildUiBundle", () => {
   it("CSS Modules の class 名が、CSS と JS の対応表の両方に入っている", async () => {
     const result = await buildUiBundle()
 
-    // `layout-grid` は `features/layout/layout.module.css` の class。組み立てると
+    // `layout-grid` は `components/domain/layout/layout.module.css` の class。組み立てると
     // ハッシュ付きの名前になり、**同じ名前が CSS 側の選択子と JS 側の対応表の両方に**出る。
     expect(result.ok ? result.bundle.styleSheet : "").toContain("layout-grid")
     expect(result.ok ? result.bundle.uiScript : "").toContain("layout-grid")
