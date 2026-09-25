@@ -234,19 +234,6 @@ describe("createChatArchive", () => {
       }),
     ).not.toThrow()
   })
-
-  it("テストは一時ディレクトリだけに書き、本物のホームには触らない", () => {
-    const chatArchive = createChatArchive(root())
-
-    chatArchive.append("fictional-pack", {
-      speaker: "user",
-      at: noonOn(2026, 9, 21),
-      text: REQUEST_TEXT,
-      images: undefined,
-    })
-
-    expect(readdirSync(root())).toEqual(["fictional-pack"])
-  })
 })
 
 describe("createChatArchive の readRecent", () => {

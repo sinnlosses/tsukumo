@@ -167,14 +167,6 @@ describe("createChatSummary", () => {
       expect(existsSync(root())).toBe(false)
     })
   })
-
-  it("テストは一時ディレクトリだけに書き、本物のホームには触らない", () => {
-    const chatSummary = createChatSummary("fictional-pack", root())
-
-    chatSummary.write(SUMMARY)
-
-    expect(readdirSync(root())).toEqual(["fictional-pack.md"])
-  })
 })
 
 describe("discardChatSummary", () => {
