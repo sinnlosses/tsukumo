@@ -116,6 +116,17 @@ export function ScreenNavSettingsGear(props: ScreenNavSettingsProps): ReactEleme
               />
             </HStack>
           ))}
+          {settings.colorNotice.kind === "shown" ? (
+            <Text
+              element="p"
+              size="label"
+              tone="state-warn"
+              weight="inherit"
+              className={styles["screen-nav-settings-notice"] ?? ""}
+            >
+              {settings.colorNotice.text}
+            </Text>
+          ) : null}
           <Text
             element="p"
             size="label"

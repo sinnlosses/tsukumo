@@ -19,6 +19,10 @@
 // 分けても最後の1回しか効かない。1つにしておくと「既定に戻す」が引きずり中の書き込みを
 // 必ず追い越す。
 //
+// **`ground` と `ink` の差が足りずに受け取らなかった色は、その理由を面の中に1行出す**
+// （{@link ScreenNavSettings.colorNotice}）。出さないと操作子が黙って元の色へ戻り、選んだ色が
+// 効かないように見える。次に受け取られたとき・既定に戻したとき・面を閉じたときに消す。
+//
 // `<input type="color">` に出す表示値は `displayColor` に持つ。マウント時に一度だけ
 // `readCurrentColor`（`getComputedStyle`）で読み、以降は**書いた値をそのまま state へ流す**
 // （書く → 描画中に読み直す、を避ける）。**反映済みの状態で読める**のは、保存済みの上書きを
@@ -44,6 +48,7 @@ import {
   loadAppearanceColorOverride,
   readCurrentColor,
   saveAppearanceColorOverride,
+  type AppearanceColorChange,
   type AppearanceColorKey,
   type AppearanceColorOverride,
 } from "../../../../domain/appearance-color.ts"
@@ -70,6 +75,11 @@ export type ScreenNavSettingsColor = {
   readonly value: string
   readonly onChange: (value: string) => void
 }
+
+/** 色を受け取らなかった理由の1行（`docs/screen-design.md` 13.9「設定の歯車」）。 */
+export type ScreenNavSettingsColorNotice =
+  | { readonly kind: "none" }
+  | { readonly kind: "shown"; readonly text: string }
 
 /**
  * 新しいセッションの既定の操作子（`docs/screen-design.md` 13.6）。**表示はサーバから届いた値だけに
@@ -113,6 +123,7 @@ export type ScreenNavSettings = {
   readonly open: boolean
   readonly onToggle: () => void
   readonly colors: readonly ScreenNavSettingsColor[]
+  readonly colorNotice: ScreenNavSettingsColorNotice
   readonly sessionDefault: ScreenNavSettingsSessionDefault
   readonly revealSpeed: ScreenNavSettingsRevealSpeed
   readonly visit: ScreenNavSettingsVisit
@@ -132,6 +143,17 @@ const COLOR_FIELDS = [
   { key: "surface", label: "領域の地" },
   { key: "ink", label: "字の色" },
 ] as const satisfies readonly { readonly key: AppearanceColorKey; readonly label: string }[]
+
+/**
+ * 差が足りずに受け取らなかったときの1行。**変えようとした側の色を主語にする**（相手の色を
+ * 先に動かせば通ることが読み取れるように、相手の名前も出す）。
+ */
+const LOW_CONTRAST_NOTICE = {
+  ground: "字の色との差が足りず本文が読めなくなるため、この地の色は使えません。",
+  ink: "画面の地との差が足りず本文が読めなくなるため、この字の色は使えません。",
+} as const satisfies Record<"ground" | "ink", string>
+
+const NO_COLOR_NOTICE = { kind: "none" } as const satisfies ScreenNavSettingsColorNotice
 
 /** 画面の色の書き込みをまとめる間隔。 */
 const APPEARANCE_COLOR_DEBOUNCE_MS = 200
@@ -156,6 +178,7 @@ export function useSettings(navRef: RefObject<HTMLElement | null>): ScreenNavSet
     surface: readCurrentColor("surface"),
     ink: readCurrentColor("ink"),
   }))
+  const [colorNotice, setColorNotice] = useState<ScreenNavSettingsColorNotice>(NO_COLOR_NOTICE)
   const saveOverride = useDebouncedCallback<string, AppearanceColorOverride>((_key, value) => {
     saveAppearanceColorOverride(value)
   }, APPEARANCE_COLOR_DEBOUNCE_MS)
@@ -164,6 +187,7 @@ export function useSettings(navRef: RefObject<HTMLElement | null>): ScreenNavSet
 
   const onToggle = useCallback((): void => {
     setOpen((wasOpen) => !wasOpen)
+    setColorNotice(NO_COLOR_NOTICE)
   }, [])
 
   const toggleRef = useCallback<RefCallback<HTMLButtonElement>>((node) => {
@@ -180,6 +204,7 @@ export function useSettings(navRef: RefObject<HTMLElement | null>): ScreenNavSet
 
   const onDismiss = useCallback((cause: DismissCause): void => {
     setOpen(false)
+    setColorNotice(NO_COLOR_NOTICE)
     if (cause === "escape") {
       // 押せる状態にある歯車は1つだけ（もう片方は `display: none` で `.focus()` が効かない）
       // なので、付いているものへ順に呼んで構わない。
@@ -192,21 +217,23 @@ export function useSettings(navRef: RefObject<HTMLElement | null>): ScreenNavSet
   useDismissSignal({ open, rootRef: navRef, onDismiss })
 
   function changeColor(key: AppearanceColorKey, value: string): void {
-    const next = changeAppearanceColor(override, key, value)
-    applyAppearanceColorOverride(next)
-    setOverride(next)
-    saveOverride(APPEARANCE_COLOR_SAVE_KEY, next)
-    // 受け取られたときだけ表示値を進める（`next` は受け取らなければ `override` と同じ参照の
-    // まま返る）。書いた値がそのまま documentElement に反映されるので、書き戻しを読み直さず
-    // その値をそのまま表示値にできる。
-    if (next !== override) {
-      setDisplayColor((current) => ({ ...current, [key]: value }))
+    const change = changeAppearanceColor(override, key, value)
+    setColorNotice(colorNoticeOf(change))
+    if (change.kind !== "accepted") {
+      return
     }
+    applyAppearanceColorOverride(change.override)
+    setOverride(change.override)
+    saveOverride(APPEARANCE_COLOR_SAVE_KEY, change.override)
+    // 書いた値がそのまま documentElement に反映されるので、書き戻しを読み直さず
+    // その値をそのまま表示値にできる。
+    setDisplayColor((current) => ({ ...current, [key]: value }))
   }
 
   function reset(): void {
     applyAppearanceColorOverride(DEFAULT_APPEARANCE_COLOR_OVERRIDE)
     setOverride(DEFAULT_APPEARANCE_COLOR_OVERRIDE)
+    setColorNotice(NO_COLOR_NOTICE)
     saveOverride(APPEARANCE_COLOR_SAVE_KEY, DEFAULT_APPEARANCE_COLOR_OVERRIDE)
     // 上書きを外した直後の `:root` の既定値を読み直す（既定に戻したあとの操作子は既定を指す）。
     setDisplayColor({
@@ -235,6 +262,7 @@ export function useSettings(navRef: RefObject<HTMLElement | null>): ScreenNavSet
         changeColor(field.key, value)
       },
     })),
+    colorNotice,
     resetDisabled: !hasOverride(override),
     onReset: reset,
     sessionDefault: {
@@ -289,6 +317,13 @@ export function useSettings(navRef: RefObject<HTMLElement | null>): ScreenNavSet
     },
     toggleRef,
   }
+}
+
+/** 16進として不正な値は `<input type="color">` からは来ないので、理由を出さずに黙って捨てる。 */
+function colorNoticeOf(change: AppearanceColorChange): ScreenNavSettingsColorNotice {
+  return change.kind === "low-contrast"
+    ? { kind: "shown", text: LOW_CONTRAST_NOTICE[change.key] }
+    : NO_COLOR_NOTICE
 }
 
 function hasOverride(override: AppearanceColorOverride): boolean {

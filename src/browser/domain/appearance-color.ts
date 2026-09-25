@@ -119,32 +119,42 @@ export function readAccentColor(): string {
 }
 
 /**
+ * 1色を変えようとした結果。**受け取らなかったときは理由を持つ**ので、画面は黙って元の色に
+ * 戻すのではなく、なぜ効かなかったかを出せる（docs/screen-design.md 13.9「設定の歯車」）。
+ * `low-contrast` の `key` は変えようとした側（`ground` か `ink`）。
+ */
+export type AppearanceColorChange =
+  | { readonly kind: "accepted"; readonly override: AppearanceColorOverride }
+  | { readonly kind: "invalid-color" }
+  | { readonly kind: "low-contrast"; readonly key: "ground" | "ink" }
+
+/**
  * 使う人が1色を変えようとしたときの境界。**`ground` / `ink` は組で検証し、下回ったら
  * その1色を受け取らない**（docs/screen-design.md 13.2 / 13.6）。`surface` はコントラストの対象外
  * （13.2 は `ground` と `ink` の組しか挙げていない）。
  *
  * **受け取らないだけで、それまでの上書きは消さない。** 消すと「地を決めたあとに字で
- * 読めない色を試したら、地の設定まで失われる」ことになる。返す `current` は設定時に
+ * 読めない色を試したら、地の設定まで失われる」ことになる。`current` は設定時に
  * 検証を通っているので、そのまま残しても読める組であることは保たれる。
  */
 export function changeAppearanceColor(
   current: AppearanceColorOverride,
   key: AppearanceColorKey,
   value: string,
-): AppearanceColorOverride {
+): AppearanceColorChange {
   if (!isValidHexColor(value)) {
-    return current
+    return { kind: "invalid-color" }
   }
   if (key === "surface") {
-    return { ...current, surface: value }
+    return { kind: "accepted", override: { ...current, surface: value } }
   }
 
   const ground = key === "ground" ? value : readCurrentColor("ground")
   const ink = key === "ink" ? value : readCurrentColor("ink")
   if (contrastRatio(ground, ink) < MIN_CONTRAST) {
-    return current
+    return { kind: "low-contrast", key }
   }
-  return { ...current, [key]: value }
+  return { kind: "accepted", override: { ...current, [key]: value } }
 }
 
 /**
