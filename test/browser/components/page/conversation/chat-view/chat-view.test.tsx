@@ -748,7 +748,7 @@ describe("ChatView の立ち絵をつつく", () => {
 
     fireEvent.click(portraitButton())
 
-    // **送るのは押した事実だけ**（文面は `src/server/core/chat-nudge.ts` が持つ）。
+    // **送るのは押した事実だけ**（文面は `src/server/chat/core/chat-nudge.ts` が持つ）。
     expect(sent).toEqual([{ type: "nudge" }])
   })
 

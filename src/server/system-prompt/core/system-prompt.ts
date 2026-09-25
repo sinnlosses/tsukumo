@@ -7,7 +7,7 @@
 // `docs/architecture.md`「新しいコードを置く場所」）。
 //
 // **文面そのものは持たない。** 規約は {@link ./speech-cadence.ts} / {@link ../../report/core/report-notation.ts} /
-// {@link ../../core/chat-manner.ts} が、雑談の記憶の読み戻しは {@link ../../core/chat-memory-prompt.ts} が持ち、
+// {@link ../../chat/core/chat-manner.ts} が、雑談の記憶の読み戻しは {@link ../../chat/core/chat-memory-prompt.ts} が持ち、
 // ここが決めるのは**どれを・どの順で並べるか**だけ。
 //
 // **人格（`persona.md` の全文）は文字列で受け取る。** ファイルを読むのは adapter
@@ -16,8 +16,11 @@
 // （`docs/architecture.md`「新しいコードを置く場所」）。
 
 import { CHAT_KEPT_READBACK_BYTES, CHAT_RECENT_READBACK_BYTES } from "../../../shared/chat-log.ts"
-import { CHAT_MANNER_PROMPT } from "../../core/chat-manner.ts"
-import { type ChatMemorySources, takeChatMemoryPromptParts } from "../../core/chat-memory-prompt.ts"
+import { CHAT_MANNER_PROMPT } from "../../chat/core/chat-manner.ts"
+import {
+  type ChatMemorySources,
+  takeChatMemoryPromptParts,
+} from "../../chat/core/chat-memory-prompt.ts"
 import { type ChatArchive, type SessionMode, type SessionStart } from "../../core/session-driver.ts"
 import { REPORT_NOTATION_PROMPT } from "../../report/core/report-notation.ts"
 import { SPEECH_CADENCE_PROMPT } from "./speech-cadence.ts"
@@ -98,7 +101,7 @@ export function toSystemPromptMode(
  * **雑談のときは仕事の2つと入れ替える**（並べない）。片方が「本文は中立・簡潔に」と言い、
  * もう片方が「本文を書くな」と言う形になり、どちらが効くかが揺れるため。セリフの間合いも
  * 仕事向け（ツールの前後に1回）で、往復そのものが会話になる雑談では意味をなさない
- * （理由の正典は {@link ../../core/chat-manner.ts} の冒頭）。
+ * （理由の正典は {@link ../../chat/core/chat-manner.ts} の冒頭）。
  *
  * **名前が `take` で始まるのは、返すだけでなく写しの印を書き換えるから**
  * （{@link takeChatMemoryPromptParts}。雑談で記憶を載せたとき、印が「渡し済み」に戻る）。

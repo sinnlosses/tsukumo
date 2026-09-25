@@ -7,7 +7,7 @@ import {
   CHAT_SUMMARY_LIMIT_BYTES,
   createChatSummary,
   discardChatSummary,
-} from "../../../src/server/adapter/chat-summary.ts"
+} from "../../../../src/server/chat/adapter/chat-summary.ts"
 
 const textEncoder = new TextEncoder()
 function byteLength(text: string): number {

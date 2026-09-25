@@ -39,6 +39,8 @@ import {
   type SessionState,
 } from "../../shared/session-state.ts"
 import { type PreviousUsageReview, type UsageReviewFindings } from "../../shared/usage-review.ts"
+import { appendChatArchiveEntry } from "../chat/core/chat-archive-entry.ts"
+import { type ChatCompactWatch, createChatCompactWatch } from "../chat/core/chat-compact.ts"
 import {
   type ContextUsageLog,
   createContextUsageRecorder,
@@ -49,8 +51,6 @@ import {
   type TokenUsageLog,
   type TokenUsageRecorder,
 } from "../token-usage/core/token-usage.ts"
-import { appendChatArchiveEntry } from "./chat-archive-entry.ts"
-import { type ChatCompactWatch, createChatCompactWatch } from "./chat-compact.ts"
 import { declined, type DispatchResult, dispatchToDriver, nudge } from "./driver-command.ts"
 import { createEventBatch, type EventBatch } from "./event-batch.ts"
 import { type PromptImageShelf, releasedPromptImageIds } from "./prompt-image-shelf.ts"
@@ -71,7 +71,7 @@ export type SessionManagerOptions = {
   readonly chatCompactThresholdBytes: number
   /**
    * 雑談の会話のアーカイブの書き込み口（`docs/design.md` 7章「雑談の会話のアーカイブはどこに
-   * 置くか」）。本番は `createChatArchive()`（`src/server/adapter/chat-archive.ts`）、テストは
+   * 置くか」）。本番は `createChatArchive()`（`src/server/chat/adapter/chat-archive.ts`）、テストは
    * 呼ばれた引数だけを覚えるスタブを渡す。
    */
   readonly chatArchive: ChatArchive
@@ -160,7 +160,7 @@ export type SessionManagerOptions = {
   /**
    * 雑談のサイドバー「覚えていること」の「編集」から1行消し、**流し直す
    * `remembered-lines-changed` を返す**（書き込み先と受け付けない条件は
-   * `src/server/adapter/persona-memory.ts` の `forgetRememberedLineFromScreen`）。**受け付けられ
+   * `src/server/chat/adapter/persona-memory.ts` の `forgetRememberedLineFromScreen`）。**受け付けられ
    * なかったときは undefined**（呼び出し側は定型文の `error` を返す）。
    *
    * セッションは起こし直さない（`editCharacter` と同じ立場。`docs/design.md` 7.1）。

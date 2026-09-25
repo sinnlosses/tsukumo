@@ -2,10 +2,10 @@
 // ここだけ（原則3。1ファイル = 1つの境界）。置き場は `~/.tsukumo/chat-summary/<パック名>.md`、
 // パックごとに1ファイルで `cwd` には依存させない。
 //
-// **何を載せるかの判断はここが決めない。** 判断は `src/server/core/chat-memory-prompt.ts` が
+// **何を載せるかの判断はここが決めない。** 判断は `src/server/chat/core/chat-memory-prompt.ts` が
 // 持ち、ここが持つのは「どこに・どう書き、どう渡すか」——写しと印の読み書きだけ
 // （`docs/coding-standards.md`「会話内容の扱い」とぶつからないための切り分け。
-// `src/server/adapter/persona-memory.ts` と同じ形）。
+// `src/server/chat/adapter/persona-memory.ts` と同じ形）。
 //
 // **中身は1行目が印、2行目から要約の本文。** 印は「次に起こすセッションへ渡す必要があるか」の
 // 1ビットで、`DELIVERED_MARK` の1行だけを「渡し済み」と読み、それ以外（別の文字列・無い・
@@ -18,11 +18,11 @@
 import { mkdirSync, rmSync, writeFileSync } from "node:fs"
 import { dirname, join } from "node:path"
 
-import { isCharacterPackName } from "../../shared/character.ts"
-import { byteLength } from "../../shared/lib/byte-length.ts"
-import { readOptionalFile } from "../character-pack/adapter/character-pack.ts"
-import { type ChatSummary, type ChatSummaryRecord } from "../core/session-driver.ts"
-import { tsukumoHomeDir } from "./tsukumo-home.ts"
+import { isCharacterPackName } from "../../../shared/character.ts"
+import { byteLength } from "../../../shared/lib/byte-length.ts"
+import { tsukumoHomeDir } from "../../adapter/tsukumo-home.ts"
+import { readOptionalFile } from "../../character-pack/adapter/character-pack.ts"
+import { type ChatSummary, type ChatSummaryRecord } from "../../core/session-driver.ts"
 
 /** 置き場のディレクトリ名（`~/.tsukumo/chat-summary/`）。 */
 const CHAT_SUMMARY_DIR_NAME = "chat-summary"

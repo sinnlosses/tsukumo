@@ -55,7 +55,7 @@ describe("parseClientCommand（受け付ける形）", () => {
 
   it("nudge を受け付ける（話しかけてもらう合図。文面は持たない）", () => {
     // **文面の欄が無い**のがこのコマンドの形そのもの（送る一言は
-    // `src/server/core/chat-nudge.ts` が持つ。docs/screen-design.md 13.7）。
+    // `src/server/chat/core/chat-nudge.ts` が持つ。docs/screen-design.md 13.7）。
     expect(parseClientCommand({ type: "nudge", commandId: "c-9" })).toEqual({
       type: "nudge",
       commandId: "c-9",

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test"
 
-import { CHAT_MANNER_PROMPT } from "../../../../src/server/core/chat-manner.ts"
-import { takeChatMemoryPromptParts } from "../../../../src/server/core/chat-memory-prompt.ts"
+import { CHAT_MANNER_PROMPT } from "../../../../src/server/chat/core/chat-manner.ts"
+import { takeChatMemoryPromptParts } from "../../../../src/server/chat/core/chat-memory-prompt.ts"
 import {
   type ChatArchive,
   type ChatArchiveRecentEntry,

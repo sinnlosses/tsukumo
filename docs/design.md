@@ -2140,7 +2140,7 @@ characters/<name>/
 - **人格が無いパックは先頭が落ちるだけ**（tsukumo 側の規約だけで起動する）
 - **雑談の記憶の3節は、中身が無ければそれぞれ落ちる**（載せるかどうかの条件は下の「雑談の記憶の
   要約はどこに置くか」）
-- **仕事と雑談は入れ替え**（並べない。理由は `core/chat-manner.ts` の冒頭）
+- **仕事と雑談は入れ替え**（並べない。理由は `chat/core/chat-manner.ts` の冒頭）
 
 ### 7.1 画面から作るときの置き場と受け取り方
 
@@ -2358,7 +2358,7 @@ characters/<name>/
 - **ツールは雑談モードのときだけ載せる**（`system-prompt/core/system-prompt.ts` が `CHAT_MANNER_PROMPT` を
   選ぶのと同じ単位）。仕事のときに出すと、作業の文脈（プロジェクトの事情・利用者の都合）が
   人格に入り込む経路になる
-- **何を書くかの判断は `core/chat-manner.ts` の条が持つ**（4.9 の3条件と書かないものの一覧を
+- **何を書くかの判断は `chat/core/chat-manner.ts` の条が持つ**（4.9 の3条件と書かないものの一覧を
   写す）。tsukumo 側は「受け取った1行をどこにどう書くか」だけを持ち、**会話を読んで判定しない**
 
 **tsukumo がターンの終わりに会話を見て判定する案は採らない。** 本文とセリフを溜めて解析する
@@ -2386,7 +2386,7 @@ characters/<name>/
 ことは編集できず、自身で書いたことのみ対象とする」）。**消すのもキャラクター自身**で、
 `remember` と同じプロセス内の MCP サーバに `forget` ツールをもう1つ出す。引数は**消したい1行の
 文字列1つ**だけ、戻り値は `"ok"` だけ、**雑談モードのときだけ載る** — どれも `remember` と同じ。
-**何を消してよいかの正典は `docs/chat-mode.md` 4.9**で、判断は `core/chat-manner.ts` の条が
+**何を消してよいかの正典は `docs/chat-mode.md` 4.9**で、判断は `chat/core/chat-manner.ts` の条が
 持つ（tsukumo 側は**会話を読んで判定しない**）。
 
 - **指し方は完全一致**（`- ` の印と前後の空白だけ吸収する）。**番号では指さない** —
@@ -2425,7 +2425,7 @@ characters/<name>/
 雑談のサイドバーの器ができたので、開かずに消せる手を画面側にも足した）。
 **消せるのはキャラクター自身が書き足した行だけで、消し方も `forget` と同じ**
 （完全一致・節より前は触らない・同じ文面が2行あればいちばん古いほうを消す。書き込みは
-`src/server/adapter/persona-memory.ts` の `forgetRememberedLineFromScreen` を通し、
+`src/server/chat/adapter/persona-memory.ts` の `forgetRememberedLineFromScreen` を通し、
 `forget` ツールの裏にある `PersonaMemory` とは別の呼び口だが、突き合わせと書き込みの関数は
 同じものを使う）。**1ターン1行の上限だけは掛からない**——その上限はモデルの暴走を防ぐ
 ためのもので、利用者が画面から名指しした削除には要らない。
@@ -2494,7 +2494,7 @@ characters/<name>/
 `docs/chat-mode.md` 4.9「記憶の圧縮と忘却」。画面は 13.7「雑談のときのサイドバー」）。
 別のファイルは持たない。
 
-- **書かせ方**: `/compact` の依頼の文面（`src/server/core/chat-compact.ts` の
+- **書かせ方**: `/compact` の依頼の文面（`src/server/chat/core/chat-compact.ts` の
   `CHAT_COMPACT_COMMAND`）に、要約のいちばん最後へ `<topics>` と `</topics>` の行で挟んだ見出しを
   新しい順に3件まで（1行1件、`- ` で始める）書くよう足す。**印を XML の組にするのは**、
   `/compact` がもともと `<analysis>` と `<summary>` の組で書かせる形で、`compact_summary` にも
@@ -2626,7 +2626,7 @@ characters/<name>/
 - **書けなくても例外を投げない**（常駐プロセスは1回の失敗で落ちない。
   `docs/coding-standards.md`「エラーハンドリング」）。落ちるのはその1行だけ
 - **層の切り方は要約の写し・人格への書き戻しと同じ**: 口（型）は `core/session-driver.ts`、
-  ファイルに触るのは `adapter/chat-archive.ts`（**1ファイル = 1つの境界**。原則3）、結ぶのは
+  ファイルに触るのは `chat/adapter/chat-archive.ts`（**1ファイル = 1つの境界**。原則3）、結ぶのは
   配線層（`src/session-start.ts`）。置き場を差し替えられる `root` 引数も同じ手で持つ
   （テストがホームを汚さないため）
 
@@ -2729,7 +2729,7 @@ readRecent(packName, { recentBytes, keptBytes }) → { kept, recent }
 - **窓を先に決め、旗のほうは窓に入らなかった件だけを足す。** 逆にすると同じ件が両方に出る
 - **返すのが2つに分かれているのは、載せる場所が分かれているから**（旗のぶんは直近より前で、
   間に残っていない会話がある）。**節を分けて `systemPrompt` に載せる**のは
-  `core/chat-memory-prompt.ts`（要約 → 旗 → 直近の順）
+  `chat/core/chat-memory-prompt.ts`（要約 → 旗 → 直近の順）
 - **索引が指す日付のファイルだけを開く。** 旗の立った日を新しい順に並べ、`keptBytes` が埋まった
   ところで止めるので、**アーカイブが何年ぶん増えても開くファイルの数は頭打ち**になる
 - **切り方は窓と同じ**（1件を単位にし、溢れる1件は載せない。そこで止める）。**溢れるのは古い旗**
@@ -2795,7 +2795,7 @@ readRecent(packName, { recentBytes, keptBytes }) → { kept, recent }
 - **雑談のときだけ載る**（`chatRecall` が渡るのは `seed.chat` のときだけ。`keep` と同じ単位）
 
 **どう引くか。** 口は `recall(packName, keyword, limitBytes)` の1つ（実装は
-`adapter/chat-archive.ts`。**ファイルに触るのは同じ1ファイルのまま**で、境界は増やさない）。
+`chat/adapter/chat-archive.ts`。**ファイルに触るのは同じ1ファイルのまま**で、境界は増やさない）。
 
 ```
 recall(packName, keyword, limitBytes) → { kind: "found", entries } | { kind: "not-found" } | { kind: "already-recalled" }
@@ -2815,7 +2815,7 @@ recall(packName, keyword, limitBytes) → { kind: "found", entries } | { kind: "
 - **引けるのは1ターンに1回**（2回目以降は索引も日のファイルも開かず `already-recalled`）。
   **1ターンで増える文脈がこの上限（8 KiB）で頭打ちになる**
 - **返す形は `readRecent` と同じ**（話者の別・文面・その行の日付だけ。`expression` も `images` も
-  返さない）。**モデルへ返す文面に組み立てるのは core**（`core/chat-memory-prompt.ts` の
+  返さない）。**モデルへ返す文面に組み立てるのは core**（`chat/core/chat-memory-prompt.ts` の
   `chatRecallText`）で、**逐語の並べ方は `systemPrompt` の節と同じ1つ**
 - **読めない索引の行は飛ばす**（壊れた JSON・知らない版）。指す先のファイルが無くても例外は
   投げない（**索引が無い・壊れていても `readRecent` はそのまま動く**）

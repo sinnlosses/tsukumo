@@ -364,7 +364,7 @@ export type SessionEvent =
    * （`src/server/core/session-launch.ts` と `src/server/adapter/sdk-driver.ts`）。
    *
    * **運ぶのは写しから取り出した見出しだけ**で、要約の本文は乗らない（`docs/requirements.md`
-   * 4.9。取り出すのは `src/server/core/chat-compact.ts` の `chatTopics`）。取り出せなかった・
+   * 4.9。取り出すのは `src/server/chat/core/chat-compact.ts` の `chatTopics`）。取り出せなかった・
    * 写しがまだ無いときは空の並び。
    */
   | { readonly kind: "chat-topics-changed"; readonly topics: readonly string[] }
@@ -372,7 +372,7 @@ export type SessionEvent =
    * 雑談のサイドバーの「覚えていること」に出す一覧（`docs/design.md` 7.1・`docs/screen-design.md` 13.7）。
    * **雑談で起こしたときと、`remember` / `forget`（キャラクター自身）・画面の「編集」の
    * `forget-remembered-line` のどれかで `persona.md` の `## 覚えたこと` が変わったとき**に流れる
-   * （`src/server/core/session-launch.ts` と `src/server/adapter/persona-memory.ts`）。
+   * （`src/server/core/session-launch.ts` と `src/server/chat/adapter/persona-memory.ts`）。
    *
    * **運ぶのは節の行そのもの**（`- ` を外した文面、古い→新しいの順）。上限に当たった・
    * 一致する行が無かった・書けなかったときは流れない（`PersonaMemory` の契約どおり、

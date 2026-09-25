@@ -25,7 +25,7 @@ import { type ShelvedPromptImage } from "./prompt-image-shelf.ts"
 
 /**
  * 覚えたことを人格に書き足す口と、覚えた1行を忘れる口（`docs/design.md` 7.1）。
- * **実装は `adapter` 側**（`src/server/adapter/persona-memory.ts`）で、ここにあるのは契約だけ。
+ * **実装は `adapter` 側**（`src/server/chat/adapter/persona-memory.ts`）で、ここにあるのは契約だけ。
  *
  * **上限に当たった回も、消す行が見つからなかった回も何も返さない** — 受け付けたかどうかを
  * モデルへ戻さないため（ツールの戻り値は `"ok"` だけ）。
@@ -44,10 +44,10 @@ export type PersonaMemory = {
 
 /**
  * 雑談の要約の写しの読み書き口（`docs/design.md` 7章「雑談の記憶の要約はどこに置くか」）。
- * **実装は `adapter` 側**（`src/server/adapter/chat-summary.ts`）で、ここにあるのは契約だけ。
+ * **実装は `adapter` 側**（`src/server/chat/adapter/chat-summary.ts`）で、ここにあるのは契約だけ。
  *
  * **中身を読んで判定する口は無い。** 載せるかどうかの判断は
- * `src/server/core/chat-memory-prompt.ts` が持ち、ここは「どこに・どう書き、どう渡すか」の
+ * `src/server/chat/core/chat-memory-prompt.ts` が持ち、ここは「どこに・どう書き、どう渡すか」の
  * 4つの動きだけを持つ。
  */
 export type ChatSummary = {
@@ -73,7 +73,7 @@ export type ChatSummaryRecord = {
 
 /**
  * 雑談の会話のアーカイブの読み書き口（`docs/design.md` 7章「雑談の会話のアーカイブはどこに
- * 置くか」）。**実装は `adapter` 側**（`src/server/adapter/chat-archive.ts`）で、ここにあるのは
+ * 置くか」）。**実装は `adapter` 側**（`src/server/chat/adapter/chat-archive.ts`）で、ここにあるのは
  * 契約だけ。
  *
  * **読む口は {@link readRecent} の1つだけ**（直近の雑談を逐語のまま
@@ -144,7 +144,7 @@ export type ChatRecall = {
  * {@link ChatRecall.recall} が返すもの。**判別可能な合併型**にしてあるのは、「当たらなかった」と
  * 「このターンではもう引けない」がモデルへ返す文面の違う別の状態だから
  * （`docs/coding-standards.md`「「無いかもしれない」値」）。文面に変えるのは
- * `src/server/core/chat-memory-prompt.ts`。
+ * `src/server/chat/core/chat-memory-prompt.ts`。
  */
 export type ChatRecallResult =
   /** 当たった日の逐語（**古い→新しいの順**。空の配列にはならない）。 */

@@ -17,7 +17,7 @@
 // 人格に書き足す」と同じ理由）。
 //
 // 口（`ChatSummary` / `ChatArchive`）の型は `src/server/core/session-driver.ts`、ファイルに触る
-// 実装は `src/server/adapter/chat-summary.ts` と `src/server/adapter/chat-archive.ts`。
+// 実装は `src/server/chat/adapter/chat-summary.ts` と `src/server/chat/adapter/chat-archive.ts`。
 // 呼び出すのは配線層（`src/session-start.ts`）で、**雑談のときしかこの関数を呼ばない**
 // （仕事のときは呼ばずに空の配列を使う）ので、この関数自体は雑談であることを前提にしてよい。
 
@@ -28,7 +28,7 @@ import {
   type ChatRecallResult,
   type ChatSummary,
   type SessionStart,
-} from "./session-driver.ts"
+} from "../../core/session-driver.ts"
 
 /**
  * 要約の前置き。**要約であって会話ではないこと**と**引用しないこと**を短く添える

@@ -6,7 +6,7 @@
 // **何を残すか・いつ書くかの判断はここが決めない。** 判断は
 // `src/server/core/session-manager.ts` の `receive` が持ち、ここが持つのは「どこに・どんな形で
 // 書くか」——1件を1行の JSONL へ変換して追記するだけ（`docs/coding-standards.md`
-// 「会話内容の扱い」とぶつからないための切り分け。`src/server/adapter/chat-summary.ts` と同じ形）。
+// 「会話内容の扱い」とぶつからないための切り分け。`src/server/chat/adapter/chat-summary.ts` と同じ形）。
 //
 // 書けなくても例外を投げない（常駐プロセスは1回の失敗で落ちない。
 // `docs/coding-standards.md`「エラーハンドリング」）。
@@ -35,9 +35,12 @@ import { join } from "node:path"
 
 import { z } from "zod"
 
-import { isCharacterPackName } from "../../shared/character.ts"
-import { type Expression } from "../../shared/expression.ts"
-import { byteLength } from "../../shared/lib/byte-length.ts"
+import { isCharacterPackName } from "../../../shared/character.ts"
+import { type Expression } from "../../../shared/expression.ts"
+import { byteLength } from "../../../shared/lib/byte-length.ts"
+import { appendJsonLine, dateFileNames, readJsonLines } from "../../adapter/lib/jsonl.ts"
+import { isoWithOffset, localDateKey, todayLocalDateKey } from "../../adapter/local-time.ts"
+import { tsukumoHomeDir } from "../../adapter/tsukumo-home.ts"
 import {
   type ChatArchive,
   type ChatArchiveEntry,
@@ -45,10 +48,7 @@ import {
   type ChatArchiveRecentEntry,
   type ChatReadbackLimits,
   type ChatRecallResult,
-} from "../core/session-driver.ts"
-import { appendJsonLine, dateFileNames, readJsonLines } from "./lib/jsonl.ts"
-import { isoWithOffset, localDateKey, todayLocalDateKey } from "./local-time.ts"
-import { tsukumoHomeDir } from "./tsukumo-home.ts"
+} from "../../core/session-driver.ts"
 
 /** 置き場のディレクトリ名（`~/.tsukumo/chat-archive/`）。 */
 const CHAT_ARCHIVE_DIR_NAME = "chat-archive"

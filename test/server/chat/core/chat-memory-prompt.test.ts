@@ -3,14 +3,14 @@ import { describe, expect, it } from "bun:test"
 import {
   chatRecallText,
   takeChatMemoryPromptParts,
-} from "../../../src/server/core/chat-memory-prompt.ts"
+} from "../../../../src/server/chat/core/chat-memory-prompt.ts"
 import {
   type ChatArchive,
   type ChatArchiveRecentEntry,
   type ChatReadbackLimits,
   type ChatSummary,
   type ChatSummaryRecord,
-} from "../../../src/server/core/session-driver.ts"
+} from "../../../../src/server/core/session-driver.ts"
 
 // フィクスチャは手で書いた架空の要約・会話だけ（実物の会話は使わない。
 // docs/coding-standards.md「会話内容の扱い」）。

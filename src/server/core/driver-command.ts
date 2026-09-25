@@ -10,7 +10,7 @@
 
 import { type DriverCommand } from "../../shared/command.ts"
 import { FRAME_ERROR_REASON } from "../../shared/frame.ts"
-import { CHAT_NUDGE_PROMPT } from "./chat-nudge.ts"
+import { CHAT_NUDGE_PROMPT } from "../chat/core/chat-nudge.ts"
 import { type PromptImageShelf } from "./prompt-image-shelf.ts"
 import { type SessionDriver } from "./session-driver.ts"
 

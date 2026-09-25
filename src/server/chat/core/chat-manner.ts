@@ -25,7 +25,7 @@
  * **何を覚えてよいか・何を忘れてよいか・どのやり取りを残すか・いつ索引を書いて引くか**
  * （`remember` / `forget` / `keep` / `index` / `recall` ツールを呼ぶ条件。
  * `docs/chat-mode.md` 4.9 の3条件と書かないものの一覧、消してよい3つの場合）だけ。**書く場所・消す行の突き合わせ・上限は tsukumo 側**が持つ
- * （`src/server/adapter/persona-memory.ts` と `src/server/adapter/chat-archive.ts`）。
+ * （`src/server/chat/adapter/persona-memory.ts` と `src/server/chat/adapter/chat-archive.ts`）。
  */
 export const CHAT_MANNER_PROMPT = `## 雑談モード（tsukumo）
 

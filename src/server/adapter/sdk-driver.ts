@@ -31,7 +31,7 @@ import { type EffortLevel, isEffortLevel, type PermissionMode } from "../../shar
 import { expressionNames as toExpressionNames } from "../../shared/expression-choice.ts"
 import { parsePromptImage, type PromptImage } from "../../shared/prompt-image.ts"
 import { type SessionEvent } from "../../shared/session-event.ts"
-import { readChatTopics } from "../core/chat-compact.ts"
+import { readChatTopics } from "../chat/core/chat-compact.ts"
 import { createPendingAnswerQueue, type PendingAnswerQueue } from "../core/pending-answer.ts"
 import { type ClaudeAccountTier, planName } from "../core/plan.ts"
 import { recordedPromptImages } from "../core/prompt-image-shelf.ts"

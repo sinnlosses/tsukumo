@@ -3,15 +3,15 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
+import { readCharacterPack } from "../../../../src/server/character-pack/adapter/character-pack.ts"
 import {
   createPersonaMemory,
   forgetRememberedLineFromScreen,
   MAX_REMEMBERED_LINES,
   readRememberedLines,
   REMEMBERED_SECTION_HEADING,
-} from "../../../src/server/adapter/persona-memory.ts"
-import { readCharacterPack } from "../../../src/server/character-pack/adapter/character-pack.ts"
-import { MAX_REMEMBERED_LINE_LENGTH } from "../../../src/shared/persona-memory.ts"
+} from "../../../../src/server/chat/adapter/persona-memory.ts"
+import { MAX_REMEMBERED_LINE_LENGTH } from "../../../../src/shared/persona-memory.ts"
 
 // フィクスチャは手で書いた架空のパックと架空の1行だけ（実物の会話・人格は使わない。
 // docs/coding-standards.md「会話内容の扱い」）。

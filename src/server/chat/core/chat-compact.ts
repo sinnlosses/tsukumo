@@ -7,12 +7,12 @@
 //
 // 閾値を超えたかどうかの判断（{@link ChatCompactWatch}）もここが持つ。**いつ見るか**
 // （ターンの終わりに1回）を決めるのは `src/server/core/session-manager.ts` で、
-// 写しのファイルに触るのは `src/server/adapter/chat-summary.ts`。ここは「決める」内容だけで、
+// 写しのファイルに触るのは `src/server/chat/adapter/chat-summary.ts`。ここは「決める」内容だけで、
 // 外の世界には触らない（原則2）。
 
-import { chatLogByteSize } from "../../shared/chat-log.ts"
-import { type SessionEvent } from "../../shared/session-event.ts"
-import { type ChatSummary, type SessionDriver } from "./session-driver.ts"
+import { chatLogByteSize } from "../../../shared/chat-log.ts"
+import { type SessionEvent } from "../../../shared/session-event.ts"
+import { type ChatSummary, type SessionDriver } from "../../core/session-driver.ts"
 
 /** サイドバーの「最近の話題」に出す見出しの件数の上限（`docs/screen-design.md` 13.7）。 */
 export const CHAT_TOPIC_LIMIT = 3
@@ -29,7 +29,7 @@ const LIST_MARKER = /^(?:[-*・•]|\d+[.)])\s*/u
  * 自分の言葉で書き直す・発言を引用しない・利用者について知ったことは書かない。
  *
  * **話題の見出しは要約のいちばん最後に置かせる。** 写しが 8 KiB を超えたときは古いほう
- * （先頭側）の行から落ちる（`src/server/adapter/chat-summary.ts`）ので、末尾に置けば見出しの
+ * （先頭側）の行から落ちる（`src/server/chat/adapter/chat-summary.ts`）ので、末尾に置けば見出しの
  * 節が先に落ちない。印を XML の組にするのは、`/compact` がもともと `<analysis>` と
  * `<summary>` の組で書かせる形なので、モデルがそのまま書ける形だから。
  */

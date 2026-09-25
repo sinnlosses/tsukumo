@@ -281,7 +281,7 @@ export const clientCommandSchema = z.discriminatedUnion("type", [
   }),
   /**
    * キャラクターから話しかけてもらう（`docs/screen-design.md` 13.7）。**文面はここを通らない** —
-   * 送る一言は `src/server/core/chat-nudge.ts` が持ち、押した事実だけが届く（原則4。話題は
+   * 送る一言は `src/server/chat/core/chat-nudge.ts` が持ち、押した事実だけが届く（原則4。話題は
    * tsukumo が列挙しない）。**送った文面はログにも記録にも残さない**ので、
    * `prompt` とは別のコマンドにしてある。
    */
@@ -451,7 +451,7 @@ export const clientCommandSchema = z.discriminatedUnion("type", [
    * 雑談のサイドバー「覚えていること」の「編集」から1行消す（`docs/design.md` 7.1「1行だけ
    * 忘れる」）。**指し方はキャラクター自身の `forget` ツールと同じ完全一致**——チップに出した
    * 文面（`- ` を外した1行）をそのまま送る。書き込みは
-   * `src/server/adapter/persona-memory.ts` の `forgetRememberedLineFromScreen` を通し、
+   * `src/server/chat/adapter/persona-memory.ts` の `forgetRememberedLineFromScreen` を通し、
    * 1ターン1行の上限（モデルの `forget` の上限）は掛からない。
    */
   z.object({

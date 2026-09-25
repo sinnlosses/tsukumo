@@ -20,7 +20,7 @@ import {
   USAGE_PROPOSAL_KINDS,
   USAGE_REVIEW_STAGES,
 } from "../../shared/usage-review.ts"
-import { chatRecallText } from "../core/chat-memory-prompt.ts"
+import { chatRecallText } from "../chat/core/chat-memory-prompt.ts"
 import { REPORT_TOOL_NAME, SPEAK_TOOL_NAME, TSUKUMO_MCP_SERVER_NAME } from "../core/sdk-message.ts"
 import {
   type ChatKeep,
@@ -56,7 +56,7 @@ const REMEMBER_TOOL_NAME = "remember"
 
 /**
  * モデルに見せる `remember` ツールの説明。**何を書いてよいかの条は
- * `src/server/core/chat-manner.ts` が持つ**ので、ここには置き場所と形だけを書く
+ * `src/server/chat/core/chat-manner.ts` が持つ**ので、ここには置き場所と形だけを書く
  * （二重に書かない）。
  */
 const REMEMBER_TOOL_DESCRIPTION =
@@ -68,7 +68,7 @@ const FORGET_TOOL_NAME = "forget"
 
 /**
  * モデルに見せる `forget` ツールの説明。**何を消してよいかの条は
- * `src/server/core/chat-manner.ts` が持つ**ので、ここには指し方と範囲だけを書く
+ * `src/server/chat/core/chat-manner.ts` が持つ**ので、ここには指し方と範囲だけを書く
  * （二重に書かない）。
  */
 const FORGET_TOOL_DESCRIPTION =
@@ -80,7 +80,7 @@ const KEEP_TOOL_NAME = "keep"
 
 /**
  * モデルに見せる `keep` ツールの説明。**いつ立てるかの条は
- * `src/server/core/chat-manner.ts` が持つ**ので、ここには何が起きるかと指せる範囲だけを書く
+ * `src/server/chat/core/chat-manner.ts` が持つ**ので、ここには何が起きるかと指せる範囲だけを書く
  * （二重に書かない）。
  */
 const KEEP_TOOL_DESCRIPTION =
@@ -92,7 +92,7 @@ const INDEX_TOOL_NAME = "index"
 
 /**
  * モデルに見せる `index` ツールの説明。**いつ書くかの条は
- * `src/server/core/chat-manner.ts` が持つ**ので、ここには何が起きるかと指せる範囲だけを書く
+ * `src/server/chat/core/chat-manner.ts` が持つ**ので、ここには何が起きるかと指せる範囲だけを書く
  * （二重に書かない）。
  */
 const INDEX_TOOL_DESCRIPTION =
@@ -104,7 +104,7 @@ const RECALL_TOOL_NAME = "recall"
 
 /**
  * モデルに見せる `recall` ツールの説明。**いつ引くかの条は
- * `src/server/core/chat-manner.ts` が持つ**ので、ここには何が返るかと引ける回数だけを書く
+ * `src/server/chat/core/chat-manner.ts` が持つ**ので、ここには何が返るかと引ける回数だけを書く
  * （二重に書かない）。
  */
 const RECALL_TOOL_DESCRIPTION =
@@ -305,7 +305,7 @@ function usageReviewTools(intake: UsageReviewIntake) {
 /**
  * 覚えたことを書き足すツール。**上限に当たった回も "ok" を返す**（受け付けたかどうかを
  * モデルへ戻さない。docs/design.md 7.1）。どこにどう書くかは
- * src/server/adapter/persona-memory.ts の仕事。
+ * src/server/chat/adapter/persona-memory.ts の仕事。
  */
 function rememberTool(memory: PersonaMemory) {
   return tool(
@@ -322,7 +322,7 @@ function rememberTool(memory: PersonaMemory) {
 /**
  * 覚えた1行を忘れるツール。**一致する行が無かった回も "ok" を返す**（消せたかどうかを
  * モデルへ戻さない。docs/design.md 7.1）。どの行と突き合わせるかは
- * src/server/adapter/persona-memory.ts の仕事。
+ * src/server/chat/adapter/persona-memory.ts の仕事。
  */
 function forgetTool(memory: PersonaMemory) {
   return tool(
@@ -341,7 +341,7 @@ function forgetTool(memory: PersonaMemory) {
  * 1往復だけで、**会話の文面がツールの引数を通って戻ってくる経路を作らない**
  * （docs/coding-standards.md「会話内容の扱い」）。**旗が立ったかどうかもモデルへ戻さない**
  * （返すのは "ok" だけ。docs/design.md 7章）。どこにどう書くかは
- * src/server/adapter/chat-archive.ts の仕事。
+ * src/server/chat/adapter/chat-archive.ts の仕事。
  */
 function keepTool(chatKeep: ChatKeep) {
   return tool(KEEP_TOOL_NAME, KEEP_TOOL_DESCRIPTION, {}, async () => {
@@ -353,7 +353,7 @@ function keepTool(chatKeep: ChatKeep) {
 /**
  * その日の見出しを索引に1行残すツール。**上限に当たった回も "ok" を返す**（受け付けたかどうかを
  * モデルへ戻さない。`remember` と同じ）。どこにどう書くかは
- * src/server/adapter/chat-archive.ts の仕事。
+ * src/server/chat/adapter/chat-archive.ts の仕事。
  */
 function indexTool(chatRecall: ChatRecall) {
   return tool(
@@ -371,8 +371,8 @@ function indexTool(chatRecall: ChatRecall) {
  * 索引を引いて古い雑談を思い出すツール。**戻り値が "ok" でない唯一のツール**で、返すのは
  * **その会話自身の過去**だけ（tsukumo の状態も画面の事情も載せない。
  * docs/chat-mode.md 4.9「古い雑談は索引を引いて思い出す」）。**文面に組み立てるのは core**
- * （src/server/core/chat-memory-prompt.ts）で、**どの日を開くかを決めるのは
- * src/server/adapter/chat-archive.ts**。
+ * （src/server/chat/core/chat-memory-prompt.ts）で、**どの日を開くかを決めるのは
+ * src/server/chat/adapter/chat-archive.ts**。
  */
 function recallTool(chatRecall: ChatRecall) {
   return tool(

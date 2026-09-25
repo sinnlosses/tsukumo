@@ -12,11 +12,14 @@ import {
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
-import { createChatArchive, discardChatArchive } from "../../../src/server/adapter/chat-archive.ts"
+import {
+  createChatArchive,
+  discardChatArchive,
+} from "../../../../src/server/chat/adapter/chat-archive.ts"
 import {
   type ChatArchive,
   type ChatReadbackLimits,
-} from "../../../src/server/core/session-driver.ts"
+} from "../../../../src/server/core/session-driver.ts"
 
 // フィクスチャは手で書いた架空の依頼・セリフだけ（実物の会話は使わない。
 // docs/coding-standards.md「会話内容の扱い」）。

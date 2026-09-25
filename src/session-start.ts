@@ -13,11 +13,8 @@ import {
   createAchievementCommitCache,
   readAchievement,
 } from "./server/achievement/adapter/main-history.ts"
-import { createChatArchive } from "./server/adapter/chat-archive.ts"
-import { createChatSummary } from "./server/adapter/chat-summary.ts"
 import { type FakeSession, startFakeSession } from "./server/adapter/fake-driver.ts"
 import { localTimeHHMM, todayLocalDateKey } from "./server/adapter/local-time.ts"
-import { createPersonaMemory, readRememberedLines } from "./server/adapter/persona-memory.ts"
 import {
   readRememberedSessionDefault,
   readRememberedVisitEnabled,
@@ -36,8 +33,11 @@ import {
   type CharacterPack,
   listCharacterPacks,
 } from "./server/character-pack/adapter/character-pack.ts"
+import { createChatArchive } from "./server/chat/adapter/chat-archive.ts"
+import { createChatSummary } from "./server/chat/adapter/chat-summary.ts"
+import { createPersonaMemory, readRememberedLines } from "./server/chat/adapter/persona-memory.ts"
+import { readChatTopics } from "./server/chat/core/chat-compact.ts"
 import { createContextUsageLog } from "./server/context-usage/adapter/context-usage-log.ts"
-import { readChatTopics } from "./server/core/chat-compact.ts"
 import { type Config } from "./server/core/config.ts"
 import { EVENT_BATCH_INTERVAL_MS } from "./server/core/event-batch.ts"
 import { type PromptImageShelf } from "./server/core/prompt-image-shelf.ts"

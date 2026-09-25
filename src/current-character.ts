@@ -8,9 +8,6 @@
 import process from "node:process"
 
 import { resolveBundledDir } from "./server/adapter/bundled-path.ts"
-import { discardChatArchive } from "./server/adapter/chat-archive.ts"
-import { discardChatSummary } from "./server/adapter/chat-summary.ts"
-import { forgetRememberedLineFromScreen } from "./server/adapter/persona-memory.ts"
 import {
   readRememberedCharacter,
   writeRememberedCharacter,
@@ -34,6 +31,9 @@ import {
   selectCharacterPack,
   selectInitialCharacterPack,
 } from "./server/character-pack/core/character-selection.ts"
+import { discardChatArchive } from "./server/chat/adapter/chat-archive.ts"
+import { discardChatSummary } from "./server/chat/adapter/chat-summary.ts"
+import { forgetRememberedLineFromScreen } from "./server/chat/adapter/persona-memory.ts"
 import { type Config } from "./server/core/config.ts"
 import { type CharacterAssetLocation } from "./shared/character-asset.ts"
 import {

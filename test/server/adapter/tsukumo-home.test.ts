@@ -4,11 +4,11 @@ import { homedir, tmpdir } from "node:os"
 import { join } from "node:path"
 import process from "node:process"
 
-import { chatArchiveDir } from "../../../src/server/adapter/chat-archive.ts"
-import { chatSummaryDir } from "../../../src/server/adapter/chat-summary.ts"
 import { readRememberedCharacter } from "../../../src/server/adapter/remembered-default.ts"
 import { tsukumoHomeDir } from "../../../src/server/adapter/tsukumo-home.ts"
 import { homeCharacterDir } from "../../../src/server/character-pack/adapter/character-pack.ts"
+import { chatArchiveDir } from "../../../src/server/chat/adapter/chat-archive.ts"
+import { chatSummaryDir } from "../../../src/server/chat/adapter/chat-summary.ts"
 import { tokenUsageDir } from "../../../src/server/token-usage/adapter/token-usage-log.ts"
 
 // ホームの差し替え口（`TSUKUMO_HOME`）は `process.env` から読むので、ここだけは環境変数を

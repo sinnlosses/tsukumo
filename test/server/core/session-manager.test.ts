@@ -1,11 +1,11 @@
 import { describe, expect, it } from "bun:test"
 
 import { type CharacterSelection } from "../../../src/server/character-pack/core/character-selection.ts"
+import { CHAT_NUDGE_PROMPT } from "../../../src/server/chat/core/chat-nudge.ts"
 import {
   type ContextUsageEntry,
   type ContextUsageLog,
 } from "../../../src/server/context-usage/core/context-usage.ts"
-import { CHAT_NUDGE_PROMPT } from "../../../src/server/core/chat-nudge.ts"
 import {
   createPromptImageShelf,
   type PromptImageShelf,

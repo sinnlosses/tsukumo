@@ -80,6 +80,7 @@ const SERVER_FEATURES = [
   "achievement",
   "character-pack",
   "diary",
+  "chat",
 ] as const
 type ServerFeature = (typeof SERVER_FEATURES)[number]
 
@@ -87,7 +88,7 @@ type ServerFeature = (typeof SERVER_FEATURES)[number]
 // どの機能からも読んでよいので、ここには出てこない。
 const SERVER_FEATURE_IMPORTS: Readonly<Record<ServerFeature, ReadonlySet<ServerFeature>>> = {
   report: new Set([]),
-  "system-prompt": new Set(["report"]),
+  "system-prompt": new Set(["report", "chat"]),
   "context-usage": new Set([]),
   "token-usage": new Set([]),
   "usage-review": new Set([]),
@@ -96,6 +97,9 @@ const SERVER_FEATURE_IMPORTS: Readonly<Record<ServerFeature, ReadonlySet<ServerF
   achievement: new Set(["repository"]),
   "character-pack": new Set([]),
   diary: new Set(["character-pack", "repository"]),
+  // 設計上は `session-driver` も読むが、`session-driver` はまだ機能になっていない
+  // （`server/core/` の共有の箱のまま。機能になったときに足す）
+  chat: new Set(["character-pack"]),
 }
 
 type ServerLayer = "core" | "adapter"
