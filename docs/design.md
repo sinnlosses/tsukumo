@@ -1361,15 +1361,15 @@ JSON を配る経路（`/repository-file`・`/token-usage`・`/context-usage`・
 `token-usage-diet` を流し、結果を tsukumo の MCP ツールで構造のまま受け取る**（2026-09-24。
 語は `docs/glossary.md`「見直し」「見直しの段」「提案」）。tsukumo 本体は分析しない。
 
-| 置き場                                           | 持つもの                                                                                                                                       |
-| ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| `src/shared/usage-review.ts`                     | 段・提案の型と列挙、状態 `UsageReview` / `PreviousUsageReview`、提案の識別子 `usageProposalKey`、押す口の依頼文 `usageProposalRequestText`     |
-| `src/server/core/usage-review-tool.ts`           | ツールの名前と説明文、形の外の条の検査、受け付けた呼び出しをイベントにする窓口 `createUsageReviewIntake`                                       |
-| `src/server/adapter/sdk-tool.ts`                 | 2つのツール（zod の形）を仕事のときだけ載せる                                                                                                  |
-| `src/shared/session-state.ts`                    | `usageReview` / `previousUsageReview` の畳み込み（`usage-review-stage` / `usage-review-result` / `usage-proposal-dismissed` / ターンの終わり） |
-| `src/server/adapter/previous-usage-review.ts`    | 前回の見直しの結果の読み書き（`~/.tsukumo/usage-review.json`。持つのは直前の1回だけ）                                                          |
-| `src/server/adapter/usage-proposal-dismissal.ts` | 見送った提案の識別子の読み書き（`~/.tsukumo/usage-review-dismissed.json`）                                                                     |
-| `src/shared/command.ts`                          | 画面から提案を見送るコマンド `dismiss-usage-proposal`                                                                                          |
+| 置き場                                                        | 持つもの                                                                                                                                       |
+| ------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/shared/usage-review.ts`                                  | 段・提案の型と列挙、状態 `UsageReview` / `PreviousUsageReview`、提案の識別子 `usageProposalKey`、押す口の依頼文 `usageProposalRequestText`     |
+| `src/server/usage-review/core/usage-review-tool.ts`           | ツールの名前と説明文、形の外の条の検査、受け付けた呼び出しをイベントにする窓口 `createUsageReviewIntake`                                       |
+| `src/server/adapter/sdk-tool.ts`                              | 2つのツール（zod の形）を仕事のときだけ載せる                                                                                                  |
+| `src/shared/session-state.ts`                                 | `usageReview` / `previousUsageReview` の畳み込み（`usage-review-stage` / `usage-review-result` / `usage-proposal-dismissed` / ターンの終わり） |
+| `src/server/usage-review/adapter/previous-usage-review.ts`    | 前回の見直しの結果の読み書き（`~/.tsukumo/usage-review.json`。持つのは直前の1回だけ）                                                          |
+| `src/server/usage-review/adapter/usage-proposal-dismissal.ts` | 見送った提案の識別子の読み書き（`~/.tsukumo/usage-review-dismissed.json`）                                                                     |
+| `src/shared/command.ts`                                       | 画面から提案を見送るコマンド `dismiss-usage-proposal`                                                                                          |
 
 決めたこと（論点ごと）:
 

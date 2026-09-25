@@ -34,6 +34,8 @@ import {
   type PersonaMemory,
   type SessionMode,
 } from "../core/session-driver.ts"
+import { type ReportReview } from "../report/core/report-review.ts"
+import { REPORT_TITLE_DESCRIPTION, REPORT_TOOL_DESCRIPTION } from "../report/core/report-tool.ts"
 import {
   USAGE_REVIEW_RESULT_TOOL_DESCRIPTION,
   USAGE_REVIEW_RESULT_TOOL_NAME,
@@ -42,9 +44,7 @@ import {
   type UsageReviewIntake,
   usageProposalKindGuide,
   usageReviewStageGuide,
-} from "../core/usage-review-tool.ts"
-import { type ReportReview } from "../report/core/report-review.ts"
-import { REPORT_TITLE_DESCRIPTION, REPORT_TOOL_DESCRIPTION } from "../report/core/report-tool.ts"
+} from "../usage-review/core/usage-review-tool.ts"
 
 /** モデルに見せる `speak` ツールの説明。**セリフと本文の境目はここだけで説明する。** */
 const SPEAK_TOOL_DESCRIPTION =
@@ -133,7 +133,7 @@ const RECALL_TOOL_DESCRIPTION =
  * （src/server/core/sdk-message.ts）。受け取り口を1つにしておくと、イベントの流れが1本で済む。
  * `report` の引数も同じで、handler が引数を読むのは差し戻すかを決めるためだけ。**見直しの2つだけは
  * 逆に handler がイベントを流す**（検査を通したものだけを状態に入れるため。
- * `src/server/core/usage-review-tool.ts`）。
+ * `src/server/usage-review/core/usage-review-tool.ts`）。
  */
 export function tsukumoServer(
   expressions: readonly ExpressionChoice[],

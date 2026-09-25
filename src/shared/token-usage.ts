@@ -1,6 +1,6 @@
 // トークン消費の記録の形（**何にどれだけ使ったかを残す**ため。それまで
 // SDK が渡してくる使用量は届いた時点で捨てていた）。
-// **ここにあるのは型だけ**で、書くのは `src/server/adapter/token-usage-log.ts`、何をいつ書くかを
+// **ここにあるのは型だけ**で、書くのは `src/server/token-usage/adapter/token-usage-log.ts`、何をいつ書くかを
 // 決めるのは `src/server/core/session-manager.ts`。
 //
 // **書いてよいのは数・モデルの名前・ツールの名前・時刻・セッションID・モードだけ。** 依頼の文面・
@@ -23,7 +23,7 @@ export type TokenUsageMode = "work" | "chat"
  * （`inputTokens` などの名前も SDK に合わせてある。`sdk.d.ts` のとおり）。
  *
  * **記録に書くときは「前の `result` からの増分」**で、SDK から届く累計そのものではない
- * （差分を取るのは `src/server/core/token-usage.ts`）。同じ型を累計にも増分にも使うのは、
+ * （差分を取るのは `src/server/token-usage/core/token-usage.ts`）。同じ型を累計にも増分にも使うのは、
  * 持っている数の並びが同じだから。
  */
 export type ModelTokenUsage = {

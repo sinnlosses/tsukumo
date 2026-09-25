@@ -462,7 +462,7 @@ export const clientCommandSchema = z.discriminatedUnion("type", [
   /**
    * トークン消費の画面の結果の札から、提案を1件見送る。**識別子は種類と対象の組**
    * （`usageProposalKey`）——見出しや根拠の言い回しが変わっても同じ提案を指す。次の見直しでも
-   * 出さない（`src/server/core/usage-review-tool.ts` の `dismissedKeys`）。**取り消す口は無い**
+   * 出さない（`src/server/usage-review/core/usage-review-tool.ts` の `dismissedKeys`）。**取り消す口は無い**
    * （`docs/design.md`「見直しのツールと状態」）。
    */
   z.object({

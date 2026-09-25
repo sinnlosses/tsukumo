@@ -115,7 +115,7 @@ export type ServeCharacterAsset = (
 export type ListRepositoryFiles = () => Promise<readonly string[]>
 
 /**
- * 分析の画面に配るトークン消費の集計（`src/server/core/token-usage.ts` の
+ * 分析の画面に配るトークン消費の集計（`src/server/token-usage/core/token-usage.ts` の
  * `summarizeRecentTokenUsage` を束ねたもの）。**読めない・記録が無いときは空の集計**を返す契約で、
  * サーバは失敗を区別しない（`ListRepositoryFiles` と同じ割り切り）。
  */

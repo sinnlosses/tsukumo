@@ -233,7 +233,7 @@ export type SessionEvent =
    * （`src/server/core/session-manager.ts` が前回の累計を覚えて差を取る）。
    *
    * **画面には出ない。** 畳み込み（session-state.ts）は何もせず、行き先は
-   * `~/.tsukumo/token-usage/` の記録だけ（`src/server/adapter/token-usage-log.ts`）。`turn-finished` に
+   * `~/.tsukumo/token-usage/` の記録だけ（`src/server/token-usage/adapter/token-usage-log.ts`）。`turn-finished` に
    * 相乗りさせずに別のイベントにしてあるのは、**使用量を持たない終わり方があるから**
    * （復元の再生・fake driver・`modelUsage` の無い `result`）——「無い」を型に持ち込まずに済む。
    *
@@ -250,7 +250,7 @@ export type SessionEvent =
    * いる間は完成したブロックごとに `assistant` が出て、`message.usage` は**まだ確定値ではない**
    * （`sdk.d.ts`: 「several consecutive assistant messages can share message.id ...
    * message.usage is not final」）。**同じ `message.id` の最後を取る**のは受け取った側
-   * （`src/server/core/token-usage.ts`）。
+   * （`src/server/token-usage/core/token-usage.ts`）。
    *
    * **画面には出ない**（畳み込みは何もしない）。行き先は `~/.tsukumo/token-usage/` の記録だけ。
    * **数だけ**で、本文も思考も入らない（`docs/coding-standards.md`「会話内容の扱い」）。
@@ -428,7 +428,7 @@ export type SessionEvent =
   | { readonly kind: "background-tasks-changed"; readonly tasks: readonly BackgroundTask[] }
   /**
    * 見直し（docs/glossary.md「見直し」）が段に入った（`usage_review_stage` ツールが受け付けた
-   * 呼び出し）。**出すのはツールの handler**（`src/server/core/usage-review-tool.ts`）で、
+   * 呼び出し）。**出すのはツールの handler**（`src/server/usage-review/core/usage-review-tool.ts`）で、
    * `assistant` メッセージの変換からは出ない——引数を検査して通したものだけを流すため。
    */
   | { readonly kind: "usage-review-stage"; readonly stage: UsageReviewStage; readonly days: number }
@@ -436,7 +436,7 @@ export type SessionEvent =
   | { readonly kind: "usage-review-result"; readonly findings: UsageReviewFindings }
   /**
    * 提案を1件見送った（画面の `dismiss-usage-proposal` コマンド）。**出し手は
-   * `src/session-start.ts`**（書き込み先は `src/server/adapter/usage-proposal-dismissal.ts`）。
+   * `src/session-start.ts`**（書き込み先は `src/server/usage-review/adapter/usage-proposal-dismissal.ts`）。
    * `key` は {@link usageProposalKey} と同じ形（`kind:target`）。
    */
   | { readonly kind: "usage-proposal-dismissed"; readonly key: string }

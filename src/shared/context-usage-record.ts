@@ -2,7 +2,7 @@
 // **1行 = 1セッション**で、内訳のうちメッセージ以外（システムプロンプト・ツール定義・
 // メモリファイル・スキル・MCP）はセッションの中でほぼ変わらず、変わるのはセッションを
 // またいだときだから、ターンごとには積まない。
-// **ここにあるのは型だけ**で、書くのは `src/server/adapter/context-usage-log.ts`、いつ書くかを
+// **ここにあるのは型だけ**で、書くのは `src/server/context-usage/adapter/context-usage-log.ts`、いつ書くかを
 // 決めるのは `src/server/core/session-manager.ts`。
 //
 // **ターンごとの記録（`src/shared/token-usage.ts`）とは置き場もファイルも版も分けてある**

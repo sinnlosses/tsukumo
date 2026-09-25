@@ -3,10 +3,10 @@ import { mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "n
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
-import { createContextUsageLog } from "../../../src/server/adapter/context-usage-log.ts"
-import { type ContextUsageEntry } from "../../../src/server/core/context-usage.ts"
-import { CONTEXT_USAGE_FORMAT_VERSION } from "../../../src/shared/context-usage-record.ts"
-import { contextUsage } from "../../fixture/context-usage.ts"
+import { createContextUsageLog } from "../../../../src/server/context-usage/adapter/context-usage-log.ts"
+import { type ContextUsageEntry } from "../../../../src/server/context-usage/core/context-usage.ts"
+import { CONTEXT_USAGE_FORMAT_VERSION } from "../../../../src/shared/context-usage-record.ts"
+import { contextUsage } from "../../../fixture/context-usage.ts"
 
 // 数も名前もすべて手で書いた架空のもの（実物のセッションの内訳は使わない。
 // docs/coding-standards.md「会話内容の扱い」）。

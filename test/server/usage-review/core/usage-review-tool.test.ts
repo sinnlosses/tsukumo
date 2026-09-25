@@ -6,13 +6,13 @@ import { join } from "node:path"
 import {
   readDismissedUsageProposalKeys,
   writeDismissedUsageProposalKey,
-} from "../../../src/server/adapter/usage-proposal-dismissal.ts"
-import { createUsageReviewIntake } from "../../../src/server/core/usage-review-tool.ts"
-import { type SessionEvent } from "../../../src/shared/session-event.ts"
-import { type UsageReviewFindings, usageProposalKey } from "../../../src/shared/usage-review.ts"
+} from "../../../../src/server/usage-review/adapter/usage-proposal-dismissal.ts"
+import { createUsageReviewIntake } from "../../../../src/server/usage-review/core/usage-review-tool.ts"
+import { type SessionEvent } from "../../../../src/shared/session-event.ts"
+import { type UsageReviewFindings, usageProposalKey } from "../../../../src/shared/usage-review.ts"
 
 // 見送った提案の一覧が、ホームのファイル（読み書きは
-// `src/server/adapter/usage-proposal-dismissal.ts`）から `createUsageReviewIntake` へ実際に
+// `src/server/usage-review/adapter/usage-proposal-dismissal.ts`）から `createUsageReviewIntake` へ実際に
 // 渡ることを確かめる（`test/server/adapter/sdk-tool.test.ts` は同じ口を偽の配列で確かめている）。
 
 let dir: string

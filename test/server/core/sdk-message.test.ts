@@ -791,7 +791,7 @@ describe("toSessionEvents", () => {
   })
 
   // トークン消費の記録（`docs/requirements.md` 4.1）。**運ぶのは累計そのまま**で、増分に直すのは
-  // `src/server/core/token-usage.ts`。
+  // `src/server/token-usage/core/token-usage.ts`。
   it("result の modelUsage は累計のイベントにして、ターンの終わりの前に並べる", () => {
     const message = {
       type: "result",

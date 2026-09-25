@@ -1,6 +1,6 @@
 // 見送った提案の識別子（{@link usageProposalKey}。`docs/glossary.md`「提案」）の一覧。見直しが
 // 次の段に入るたびにここを読み直し（`usage_review_stage` の戻り値に混ぜる）、結果の検査も
-// 同じ一覧を見る（`src/server/core/usage-review-tool.ts` の `dismissedKeys`）。
+// 同じ一覧を見る（`src/server/usage-review/core/usage-review-tool.ts` の `dismissedKeys`）。
 //
 // **取り消す口は作らない**（見本に無い）。取り消したくなったら、このファイルの `keys` から
 // 手で1件消す。
@@ -11,8 +11,8 @@ import { join } from "node:path"
 
 import { z } from "zod"
 
-import { readJsonFile, writeJsonFile } from "./lib/json-file.ts"
-import { tsukumoHomeDir } from "./tsukumo-home.ts"
+import { readJsonFile, writeJsonFile } from "../../adapter/lib/json-file.ts"
+import { tsukumoHomeDir } from "../../adapter/tsukumo-home.ts"
 
 const DISMISSED_USAGE_PROPOSAL_FILE_NAME = "usage-review-dismissed.json"
 

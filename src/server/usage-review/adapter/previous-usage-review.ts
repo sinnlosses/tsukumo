@@ -20,9 +20,9 @@ import {
   USAGE_PROPOSAL_IMPACTS,
   USAGE_PROPOSAL_KINDS,
   type UsageReviewFindings,
-} from "../../shared/usage-review.ts"
-import { readJsonFile, writeJsonFile } from "./lib/json-file.ts"
-import { tsukumoHomeDir } from "./tsukumo-home.ts"
+} from "../../../shared/usage-review.ts"
+import { readJsonFile, writeJsonFile } from "../../adapter/lib/json-file.ts"
+import { tsukumoHomeDir } from "../../adapter/tsukumo-home.ts"
 
 const PREVIOUS_USAGE_REVIEW_FILE_NAME = "usage-review.json"
 

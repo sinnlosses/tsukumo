@@ -15,7 +15,7 @@ import {
 } from "../../../../shared/token-usage-summary.ts"
 import { round } from "../../../utils/format-count.ts"
 
-/** 合計する対象が無いときの値（`src/server/core/token-usage.ts` の `EMPTY_TOTALS` と同じ並び）。 */
+/** 合計する対象が無いときの値（`src/server/token-usage/core/token-usage.ts` の `EMPTY_TOTALS` と同じ並び）。 */
 const EMPTY_TOTALS = {
   inputTokens: 0,
   outputTokens: 0,

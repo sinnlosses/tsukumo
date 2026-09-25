@@ -11,13 +11,13 @@ import {
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
-import { createTokenUsageLog } from "../../../src/server/adapter/token-usage-log.ts"
-import { type TokenUsageEntry } from "../../../src/server/core/token-usage.ts"
+import { createTokenUsageLog } from "../../../../src/server/token-usage/adapter/token-usage-log.ts"
+import { type TokenUsageEntry } from "../../../../src/server/token-usage/core/token-usage.ts"
 import {
   TOKEN_USAGE_FORMAT_VERSION,
   type ModelTokenUsage,
   type TurnUsageBreakdown,
-} from "../../../src/shared/token-usage.ts"
+} from "../../../../src/shared/token-usage.ts"
 
 // 数はすべて手で書いた架空のもの（実物の使用量も会話も使わない。
 // docs/coding-standards.md「会話内容の扱い」）。

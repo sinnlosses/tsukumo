@@ -309,7 +309,7 @@ export type SessionDriverOptions = {
   readonly inheritedEnv: Readonly<Record<string, string | undefined>>
   /**
    * 利用者が見送った提案の識別子（`usageProposalKey`）を読む口。見直しのツールが呼ばれる
-   * たびに読み直す（`src/server/core/usage-review-tool.ts`）。**読めないときは空を返し、
+   * たびに読み直す（`src/server/usage-review/core/usage-review-tool.ts`）。**読めないときは空を返し、
    * 例外を投げない**。
    */
   readonly dismissedUsageProposalKeys: () => readonly string[]

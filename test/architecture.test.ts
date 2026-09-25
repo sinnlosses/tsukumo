@@ -69,7 +69,13 @@ describe("層と依存の向き", () => {
 // ときは、ここと `SERVER_FEATURE_IMPORTS` に足す**（一覧に無いディレクトリを `server/` の下に
 // 作ると `layerOf` が throw する）。まだ移していないファイルは共有の箱（`server/core/`
 // `server/adapter/` の直下）に居るまま動く。
-const SERVER_FEATURES = ["report", "system-prompt"] as const
+const SERVER_FEATURES = [
+  "report",
+  "system-prompt",
+  "context-usage",
+  "token-usage",
+  "usage-review",
+] as const
 type ServerFeature = (typeof SERVER_FEATURES)[number]
 
 // 機能 A が import してよい機能 B（同じ節の2つめの表そのもの。表に無い組は落とす）。共有の箱は
@@ -77,6 +83,9 @@ type ServerFeature = (typeof SERVER_FEATURES)[number]
 const SERVER_FEATURE_IMPORTS: Readonly<Record<ServerFeature, ReadonlySet<ServerFeature>>> = {
   report: new Set([]),
   "system-prompt": new Set(["report"]),
+  "context-usage": new Set([]),
+  "token-usage": new Set([]),
+  "usage-review": new Set([]),
 }
 
 type ServerLayer = "core" | "adapter"

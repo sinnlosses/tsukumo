@@ -58,10 +58,10 @@ import {
   type SessionMode,
 } from "../core/session-driver.ts"
 import { createSessionTitleIntake, type SessionTitleIntake } from "../core/session-title.ts"
-import { createUsageReviewIntake } from "../core/usage-review-tool.ts"
 import { childProcessEnv, isVisibleOutputNudge } from "../core/visible-output-nudge.ts"
 import { createReportReview, type ReportReview } from "../report/core/report-review.ts"
 import { createReportGate, type ReportGate } from "../report/core/report-tool.ts"
+import { createUsageReviewIntake } from "../usage-review/core/usage-review-tool.ts"
 import { readClaudeAccountTier } from "./claude-account.ts"
 import { appendDiaryParagraph } from "./diary.ts"
 import { readContextUsage } from "./sdk-context-usage.ts"

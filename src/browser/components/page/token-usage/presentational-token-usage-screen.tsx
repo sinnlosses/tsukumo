@@ -175,7 +175,7 @@ type ModelUsageCardProps = {
 
 /**
  * モデル別の札（期間の合計の札 `.usage-card` と同じ枠・同じ地）。**届く順がそのまま並び順**
- * （出力の多い順。同じなら名前順——`src/server/core/token-usage.ts` の `summarizeByModel`）。
+ * （出力の多い順。同じなら名前順——`src/server/token-usage/core/token-usage.ts` の `summarizeByModel`）。
  * **出力の列だけ**に、その列の最大に対する横棒を添える。
  */
 function ModelUsageCard(props: ModelUsageCardProps): ReactElement {

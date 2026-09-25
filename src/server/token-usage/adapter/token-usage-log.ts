@@ -6,7 +6,7 @@
 //
 // **何をいつ書くかの判断はここが決めない。** 判断（累計から増分を取る・増分が無い回は書かない・
 // 期間で切って軸ごとに畳む）は `src/server/core/session-manager.ts` と
-// `src/server/core/token-usage.ts` が持ち、ここが持つのは「どこに・どんな形で書くか」と
+// `src/server/token-usage/core/token-usage.ts` が持ち、ここが持つのは「どこに・どんな形で書くか」と
 // 「日付の範囲からどのファイルを開くか」だけ（`chat-archive.ts` と同じ切り分け）。
 //
 // **1行に文字列で入るのは時刻・セッションID・モード・モデルの名前・ツールの名前だけ。** 依頼の
@@ -22,15 +22,15 @@ import { join } from "node:path"
 
 import { z } from "zod"
 
-import { TOKEN_USAGE_FORMAT_VERSION, type TokenUsageRecord } from "../../shared/token-usage.ts"
+import { TOKEN_USAGE_FORMAT_VERSION, type TokenUsageRecord } from "../../../shared/token-usage.ts"
+import { appendJsonLine, dateFileNames, readJsonLines } from "../../adapter/lib/jsonl.ts"
+import { isoWithOffset, localDateKey } from "../../adapter/local-time.ts"
+import { tsukumoHomeDir } from "../../adapter/tsukumo-home.ts"
 import {
   type TokenUsageEntry,
   type TokenUsageLog,
   type TokenUsagePeriod,
 } from "../core/token-usage.ts"
-import { appendJsonLine, dateFileNames, readJsonLines } from "./lib/jsonl.ts"
-import { isoWithOffset, localDateKey } from "./local-time.ts"
-import { tsukumoHomeDir } from "./tsukumo-home.ts"
 
 /** 置き場のディレクトリ名（`~/.tsukumo/token-usage/`）。 */
 const TOKEN_USAGE_DIR_NAME = "token-usage"

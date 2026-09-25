@@ -3,8 +3,8 @@
 // 見る**ので shared に置く（`repository-file.ts` と同じ考え方。ここは値と型だけで `node:` にも
 // `document` にも触らない）。
 //
-// **畳むのは `src/server/core/token-usage.ts`**（純関数）、**行を読むのは
-// `src/server/adapter/token-usage-log.ts`** で、ここが持つのは受け渡しの形だけ。
+// **畳むのは `src/server/token-usage/core/token-usage.ts`**（純関数）、**行を読むのは
+// `src/server/token-usage/adapter/token-usage-log.ts`** で、ここが持つのは受け渡しの形だけ。
 //
 // **運ぶのは数・モデルの名前・ツールの名前だけ**（`src/shared/token-usage.ts` と同じ線。
 // 記録の1行にそもそも文面が入らないので、畳んだ結果にも入りようがない。

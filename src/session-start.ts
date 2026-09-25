@@ -11,7 +11,6 @@ import { type CurrentCharacter } from "./current-character.ts"
 import { type CharacterPack, listCharacterPacks } from "./server/adapter/character-pack.ts"
 import { createChatArchive } from "./server/adapter/chat-archive.ts"
 import { createChatSummary } from "./server/adapter/chat-summary.ts"
-import { createContextUsageLog } from "./server/adapter/context-usage-log.ts"
 import { type FakeSession, startFakeSession } from "./server/adapter/fake-driver.ts"
 import { localTimeHHMM, todayLocalDateKey } from "./server/adapter/local-time.ts"
 import {
@@ -21,10 +20,6 @@ import {
 } from "./server/adapter/main-history.ts"
 import { createOrcaHost } from "./server/adapter/orca-host.ts"
 import { createPersonaMemory, readRememberedLines } from "./server/adapter/persona-memory.ts"
-import {
-  readPreviousUsageReview,
-  writePreviousUsageReview,
-} from "./server/adapter/previous-usage-review.ts"
 import {
   readRememberedSessionDefault,
   readRememberedVisitEnabled,
@@ -40,11 +35,8 @@ import {
 } from "./server/adapter/sdk-session.ts"
 import { queryVisitScript } from "./server/adapter/sdk-visit-script.ts"
 import { watchTaskSummary } from "./server/adapter/task-summary.ts"
-import {
-  readDismissedUsageProposalKeys,
-  writeDismissedUsageProposalKey,
-} from "./server/adapter/usage-proposal-dismissal.ts"
 import { createVisitClock } from "./server/adapter/visit-clock.ts"
+import { createContextUsageLog } from "./server/context-usage/adapter/context-usage-log.ts"
 import { readChatTopics } from "./server/core/chat-compact.ts"
 import { type Config } from "./server/core/config.ts"
 import { EVENT_BATCH_INTERVAL_MS } from "./server/core/event-batch.ts"
@@ -59,7 +51,6 @@ import {
 import { createSessionLaunch, type SessionLaunchSeed } from "./server/core/session-launch.ts"
 import { createSessionManager, type SessionManager } from "./server/core/session-manager.ts"
 import { canResume, sessionTag } from "./server/core/session-restore.ts"
-import { type TokenUsageLog } from "./server/core/token-usage.ts"
 import { openTrackedFile } from "./server/core/tracked-file.ts"
 import { visitGuests } from "./server/core/visit-guest.ts"
 import {
@@ -72,6 +63,15 @@ import {
   takeSystemPromptAppend,
   toSystemPromptMode,
 } from "./server/system-prompt/core/system-prompt.ts"
+import { type TokenUsageLog } from "./server/token-usage/core/token-usage.ts"
+import {
+  readPreviousUsageReview,
+  writePreviousUsageReview,
+} from "./server/usage-review/adapter/previous-usage-review.ts"
+import {
+  readDismissedUsageProposalKeys,
+  writeDismissedUsageProposalKey,
+} from "./server/usage-review/adapter/usage-proposal-dismissal.ts"
 import { UNKNOWN_ACHIEVEMENT } from "./shared/achievement.ts"
 import { CHAT_COMPACT_THRESHOLD_BYTES, CHAT_RECALL_READBACK_BYTES } from "./shared/chat-log.ts"
 import { type DismissUsageProposalCommand } from "./shared/command.ts"

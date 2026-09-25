@@ -6,7 +6,7 @@ import { join } from "node:path"
 import {
   readDismissedUsageProposalKeys,
   writeDismissedUsageProposalKey,
-} from "../../../src/server/adapter/usage-proposal-dismissal.ts"
+} from "../../../../src/server/usage-review/adapter/usage-proposal-dismissal.ts"
 
 let dir: string
 

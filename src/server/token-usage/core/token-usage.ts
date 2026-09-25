@@ -1,10 +1,10 @@
 // トークン消費を記録するときの判断（何を1行にするか）と、書き口の契約。**実際に書くのは
-// `src/server/adapter/token-usage-log.ts`** で、ここは「累計から増分を作る」「ターンの中の内訳を
-// 積んで畳む」「期間で切って軸ごとに畳む（集計）」ところまでを持つ。
+// `src/server/token-usage/adapter/token-usage-log.ts`** で、ここは「累計から増分を作る」
+// 「ターンの中の内訳を積んで畳む」「期間で切って軸ごとに畳む（集計）」ところまでを持つ。
 //
 // **集計は純関数**（{@link summarizeTokenUsage}）で、ファイルに触らない。期間で切ったあとの
 // 行を渡されて畳むだけなので、どの行を読むか（日付の範囲からファイルを選ぶ）は
-// `src/server/adapter/token-usage-log.ts` の仕事のまま（`core → adapter` は禁止。
+// `src/server/token-usage/adapter/token-usage-log.ts` の仕事のまま（`core → adapter` は禁止。
 // `test/architecture.test.ts`）。**分析の画面が引く口は
 // {@link summarizeRecentTokenUsage}** で、こちらは読み口（{@link TokenUsageLog}）を受け取って
 // 「今日を含む直近 n 日」に切る——**今日が何日かは呼ぶ側が渡す。**
@@ -22,9 +22,9 @@
 // 本文は捨てる。依頼の文面もセリフもツールの引数もここには残らない
 // （`docs/coding-standards.md`「会話内容の扱い」）。
 
-import { byteLength } from "../../shared/lib/byte-length.ts"
-import { type SessionEvent } from "../../shared/session-event.ts"
-import { type SessionState } from "../../shared/session-state.ts"
+import { byteLength } from "../../../shared/lib/byte-length.ts"
+import { type SessionEvent } from "../../../shared/session-event.ts"
+import { type SessionState } from "../../../shared/session-state.ts"
 import {
   type ModelUsageTotal,
   type TokenUsageDays,
@@ -32,7 +32,7 @@ import {
   type TokenUsageTotals,
   type TokenUsageTrend,
   type TokenUsageTrendUnit,
-} from "../../shared/token-usage-summary.ts"
+} from "../../../shared/token-usage-summary.ts"
 import {
   type ModelTokenUsage,
   type ScopeUsage,
@@ -42,11 +42,11 @@ import {
   type TokenUsageRecord,
   type TurnUsageBreakdown,
   type TurnUsageScope,
-} from "../../shared/token-usage.ts"
+} from "../../../shared/token-usage.ts"
 
 /**
  * トークン消費の読み書き口（`chat-archive` と同じ形の契約）。**実装は `adapter` 側**
- * （`src/server/adapter/token-usage-log.ts`）で、ここにあるのは契約だけ。
+ * （`src/server/token-usage/adapter/token-usage-log.ts`）で、ここにあるのは契約だけ。
  *
  * 書けなくても例外を投げない（常駐プロセスは1回の失敗で落ちない。
  * `docs/coding-standards.md`「エラーハンドリング」）ので、受け付けたかどうかは返さない。

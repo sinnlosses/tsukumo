@@ -8,8 +8,8 @@ import { homeCharacterDir } from "../../../src/server/adapter/character-pack.ts"
 import { chatArchiveDir } from "../../../src/server/adapter/chat-archive.ts"
 import { chatSummaryDir } from "../../../src/server/adapter/chat-summary.ts"
 import { readRememberedCharacter } from "../../../src/server/adapter/remembered-default.ts"
-import { tokenUsageDir } from "../../../src/server/adapter/token-usage-log.ts"
 import { tsukumoHomeDir } from "../../../src/server/adapter/tsukumo-home.ts"
+import { tokenUsageDir } from "../../../src/server/token-usage/adapter/token-usage-log.ts"
 
 // ホームの差し替え口（`TSUKUMO_HOME`）は `process.env` から読むので、ここだけは環境変数を
 // 書き換えて確かめる（`bun test --isolate` はファイルごとに別プロセスなので、他のテストには

@@ -39,20 +39,23 @@ import {
   type SessionState,
 } from "../../shared/session-state.ts"
 import { type PreviousUsageReview, type UsageReviewFindings } from "../../shared/usage-review.ts"
+import {
+  type ContextUsageLog,
+  createContextUsageRecorder,
+} from "../context-usage/core/context-usage.ts"
+import {
+  createTokenUsageRecorder,
+  type TokenUsageLog,
+  type TokenUsageRecorder,
+} from "../token-usage/core/token-usage.ts"
 import { appendChatArchiveEntry } from "./chat-archive-entry.ts"
 import { type ChatCompactWatch, createChatCompactWatch } from "./chat-compact.ts"
-import { type ContextUsageLog, createContextUsageRecorder } from "./context-usage.ts"
 import { type DiaryDayTask } from "./diary-tool.ts"
 import { declined, type DispatchResult, dispatchToDriver, nudge } from "./driver-command.ts"
 import { createEventBatch, type EventBatch } from "./event-batch.ts"
 import { type PromptImageShelf, releasedPromptImageIds } from "./prompt-image-shelf.ts"
 import { type ChatArchive, type SessionDriver } from "./session-driver.ts"
 import { type SessionLaunchRequest } from "./session-launch.ts"
-import {
-  createTokenUsageRecorder,
-  type TokenUsageLog,
-  type TokenUsageRecorder,
-} from "./token-usage.ts"
 import { createVisitWatch, type VisitPorts, type VisitWatch } from "./visit-watch.ts"
 
 export type SessionManagerOptions = {
@@ -73,7 +76,7 @@ export type SessionManagerOptions = {
    */
   readonly chatArchive: ChatArchive
   /**
-   * トークン消費の書き込み口（`src/server/core/token-usage.ts` の契約。本番は
+   * トークン消費の書き込み口（`src/server/token-usage/core/token-usage.ts` の契約。本番は
    * `createTokenUsageLog()`、テストは呼ばれた引数だけを覚えるスタブを渡す）。
    *
    * **前の `result` からの増分を出すのは {@link TokenUsageRecorder}**（駆動1代ぶんの持ち物と
@@ -81,7 +84,7 @@ export type SessionManagerOptions = {
    */
   readonly tokenUsageLog: TokenUsageLog
   /**
-   * コンテキストの内訳の書き込み口（`src/server/core/context-usage.ts` の契約。本番は
+   * コンテキストの内訳の書き込み口（`src/server/context-usage/core/context-usage.ts` の契約。本番は
    * `createContextUsageLog()`、テストは呼ばれた引数だけを覚えるスタブを渡す）。
    *
    * **セッション1つにつき1行**で、いつ書くか（＝そのセッションでまだ書いていない最初の
@@ -192,14 +195,14 @@ export type SessionManagerOptions = {
   readonly readPreviousUsageReview: () => PreviousUsageReview
   /**
    * 見直しの結果を、次の起動でも「前回の提案」として配れるようにホームへ書く
-   * （`src/server/adapter/previous-usage-review.ts`）。**駆動由来（`"driver"`）の
+   * （`src/server/usage-review/adapter/previous-usage-review.ts`）。**駆動由来（`"driver"`）の
    * `usage-review-result` を畳んだときだけ呼ぶ**（復元の再生には出てこない種類のイベントだが、
    * ほかの書き込みと条件を揃えてある）。
    */
   readonly writePreviousUsageReview: (reviewedAt: number, findings: UsageReviewFindings) => void
   /**
    * トークン消費の画面の札から提案を1件見送り、**流し直す `usage-proposal-dismissed` を返す**
-   * （書き込み先は `src/server/adapter/usage-proposal-dismissal.ts`）。**書けたかどうかに関わらず
+   * （書き込み先は `src/server/usage-review/adapter/usage-proposal-dismissal.ts`）。**書けたかどうかに関わらず
    * 常に1つ返す**（`rememberSessionDefault` と同じ立場）。セッションは起こし直さない。
    */
   readonly dismissUsageProposal: (dismiss: DismissUsageProposalCommand) => SessionEvent
