@@ -24,6 +24,7 @@ import {
   type DiaryBookTaskList,
   type DiaryBookTocMonth,
 } from "./hooks/use-diary-book.ts"
+import { Lamp } from "./lantern-calendar.tsx"
 
 const TITLE = "つくもの日記帳"
 const CLOSE_LABEL = "閉じる"
@@ -291,15 +292,10 @@ function RightPage(props: {
       <div className={styles["diary-book-date-head"]}>
         <span className={styles["diary-book-kanji-date"]}>{page.kanjiDate}</span>
         <span className={styles["diary-book-weekday"]}>{page.weekday}</span>
-        <Text
-          element="span"
-          size="label"
-          tone="ink-quiet"
-          weight="inherit"
-          className={styles["diary-book-lamp"] ?? ""}
-        >
+        <span className={styles["diary-book-lamp"]}>
+          <Lamp level={page.lampLevel} />
           {page.lampLabel}
-        </Text>
+        </span>
       </div>
       {page.right.kind === "written" ? (
         <div className={styles["diary-book-body"]}>
@@ -319,7 +315,7 @@ function RightPage(props: {
         element="div"
         gap="lg"
         align="end"
-        justify="between"
+        justify="start"
         wrap="nowrap"
         className={styles["diary-book-signature"] ?? ""}
       >

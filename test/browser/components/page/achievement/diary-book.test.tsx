@@ -27,6 +27,7 @@ const WRITTEN_PAGE: DiaryBookPage = {
   date: "2026-09-16",
   kanjiDate: "九月十六日",
   weekday: "水曜日",
+  lampLevel: "bright",
   lampLabel: "灯り　明るい",
   bookmark: { kind: "placed", taskId: "T-1", summary: "架空のタスク", reason: "架空の理由" },
   tasks: {
@@ -55,6 +56,7 @@ const BLANK_PAGE: DiaryBookPage = {
   date: "2026-09-23",
   kanjiDate: "九月二十三日",
   weekday: "水曜日",
+  lampLevel: "bright",
   lampLabel: "灯り　明るい",
   bookmark: { kind: "pending" },
   tasks: { items: [], moreCount: 0, commitCount: 4, tasksKnown: true },

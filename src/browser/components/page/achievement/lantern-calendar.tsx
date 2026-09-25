@@ -237,7 +237,8 @@ function DayCell(props: DayCellProps): ReactElement {
   )
 }
 
-function Lamp(props: { readonly level: LampLevel }): ReactElement {
+/** 灯りの段階の狐火（13.10「灯りの暦」）。日記帳の見開き（`diary-book.tsx`）の日付の横も同じ火を使う。 */
+export function Lamp(props: { readonly level: LampLevel }): ReactElement {
   const size = LAMP_SIZE_PX[props.level]
   if (props.level === "none") {
     return (

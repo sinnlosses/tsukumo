@@ -140,6 +140,7 @@ export type DiaryBookPage =
       readonly date: string
       readonly kanjiDate: string
       readonly weekday: string
+      readonly lampLevel: LampLevel
       readonly lampLabel: string
       readonly bookmark: DiaryBookBookmark
       readonly tasks: DiaryBookTaskList
@@ -351,6 +352,7 @@ function pageOf(
     date,
     kanjiDate: kanjiDateLabel(parsed),
     weekday: kanjiWeekdayLabel(parsed),
+    lampLevel: lampLevel(data.commitCount),
     lampLabel: `灯り　${LAMP_LABEL[lampLevel(data.commitCount)]}`,
     bookmark,
     tasks: taskListOf(data.commitCount, data.doneTasks),
