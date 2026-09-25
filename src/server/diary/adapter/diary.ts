@@ -16,6 +16,8 @@ import { createHash, randomBytes } from "node:crypto"
 import { mkdirSync, readdirSync, renameSync, writeFileSync } from "node:fs"
 import { basename, dirname, join } from "node:path"
 
+import { identity, sortBy } from "remeda"
+
 import {
   DIARY_VERSION,
   readDiary,
@@ -137,7 +139,7 @@ export async function listDiaryDates(
     const match = DIARY_FILE_NAME_PATTERN.exec(name)
     return match?.[1] === undefined ? [] : [match[1]]
   })
-  return [...dates].sort((left, right) => (left < right ? 1 : left > right ? -1 : 0))
+  return sortBy(dates, [identity(), "desc"])
 }
 
 function diaryFilePath(root: string, repositoryId: string, date: string): string {

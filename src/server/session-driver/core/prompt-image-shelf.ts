@@ -12,6 +12,8 @@
 //   - 持っている原寸の合計の大きさが {@link MAX_SHELVED_PROMPT_IMAGE_BYTES} を超えたとき
 //     （古いほうから）
 
+import { sumBy } from "remeda"
+
 import { type PromptImage, type RecordedPromptImage } from "../../../shared/prompt-image.ts"
 import { type SessionRecord } from "../../../shared/session-state.ts"
 
@@ -50,7 +52,7 @@ export function createPromptImageShelf(): PromptImageShelf {
       for (const entry of entries) {
         shelved.set(entry.id, entry.full)
       }
-      let total = [...shelved.values()].reduce((sum, full) => sum + full.length, 0)
+      let total = sumBy([...shelved.values()], (full) => full.length)
       for (const id of previousIds) {
         if (total <= MAX_SHELVED_PROMPT_IMAGE_BYTES) {
           break

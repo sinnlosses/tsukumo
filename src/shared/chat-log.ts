@@ -7,6 +7,8 @@
 //
 // `node:` にも `document` にも触らない（他の shared と同じ制約）。
 
+import { sumBy } from "remeda"
+
 import { type Expression } from "./expression.ts"
 import { byteLength } from "./lib/byte-length.ts"
 import { type RecordedPromptImage } from "./prompt-image.ts"
@@ -164,10 +166,7 @@ export const CHAT_RECALL_READBACK_BYTES = 8_192 satisfies number
  * **圧縮の区切り（`boundary`）は文面を持たないので数えない。**
  */
 export function chatLogByteSize(entries: readonly ChatLogEntry[]): number {
-  return entries.reduce(
-    (total, entry) => total + (entry.speaker === "boundary" ? 0 : byteLength(entry.text)),
-    0,
-  )
+  return sumBy(entries, (entry) => (entry.speaker === "boundary" ? 0 : byteLength(entry.text)))
 }
 
 /**

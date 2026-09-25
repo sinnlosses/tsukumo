@@ -21,6 +21,8 @@
 //   （`mermaid` / `chart-block`。`markdown/mermaid-block.tsx` / `markdown/chart-block.tsx` が付ける）
 //   で見分ける——描き終わる前でも後でも同じ判定になる
 
+import { sumBy } from "remeda"
+
 import { type RevealTiming } from "../reveal-speed.ts"
 
 /** 見せる範囲を進められる要素。`clip-path` と `opacity` を持つもの（レポートの塊は全部これ）。 */
@@ -116,7 +118,7 @@ function startsTopic(element: RevealElement): boolean {
 }
 
 function topicDurationMs(members: readonly RevealMember[], timing: RevealTiming): number {
-  const weight = members.reduce((sum, member) => sum + memberWeight(member), 0)
+  const weight = sumBy(members, memberWeight)
   return Math.min(Math.max(weight * timing.msPerCharacter, timing.minBlockMs), timing.maxBlockMs)
 }
 

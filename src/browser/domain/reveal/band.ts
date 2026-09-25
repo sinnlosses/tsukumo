@@ -19,6 +19,8 @@
 // 筆の速さが数倍ちがうので、筆先に付いて歩くミニ立ち絵が追従の間合いを画ごとに変えられるように
 // する（`mini-portrait.tsx`）。
 
+import { sumBy } from "remeda"
+
 import { type BrushStroke } from "./brush-tip.ts"
 import { clamp } from "./paint.ts"
 
@@ -203,7 +205,7 @@ type SweepTiming = {
  * 等分に落とす。
  */
 function sweepTimingsOf(bands: RevealBands): readonly SweepTiming[] {
-  const total = bands.reduce((sum, band) => sum + widthOf(band), 0)
+  const total = sumBy(bands, widthOf)
   const budget = bands.length * SWEEP_SHARE
   return bands.reduce<readonly SweepTiming[]>((timings, band) => {
     const last = timings.at(-1)

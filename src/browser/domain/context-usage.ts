@@ -27,6 +27,7 @@
 // 導くので `useEffect` は要らない）。
 
 import { useQuery } from "@tanstack/react-query"
+import { sumBy } from "remeda"
 
 import {
   type ContextCategoryKind,
@@ -123,7 +124,7 @@ function toCard(report: ContextUsageReport, takenAt: number): UseContextUsageRes
     totalTokens: usage.totalTokens,
     maxTokens: usage.maxTokens,
     percentage: usage.percentage,
-    untilCompactTokens: freeRows.reduce((total, row) => total + row.tokens, 0),
+    untilCompactTokens: sumBy(freeRows, (row) => row.tokens),
     rows: [...toRows(usage, "used"), ...freeRows, ...toRows(usage, "buffer")],
     deferredRows: toRows(usage, "deferred"),
     mcpTools: usage.mcpTools,

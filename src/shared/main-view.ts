@@ -8,6 +8,8 @@
 //
 // `node:` にも `document` にも触らない（他の shared と同じ制約）。
 
+import { sum } from "remeda"
+
 import { isBlankText } from "./blank-text.ts"
 import { type RecordedPromptImage } from "./prompt-image.ts"
 import { type Question, type QuestionAnswer } from "./question.ts"
@@ -506,7 +508,7 @@ function markFinalReport(turn: MainViewTurn): MainViewTurn {
  */
 function limitTurnEntries(turn: MainViewTurn): MainViewTurn {
   const counts = turn.steps.map(shownEntryCount)
-  const total = counts.reduce((sum, count) => sum + count, 0)
+  const total = sum(counts)
   if (total <= MAX_MAIN_VIEW_ENTRIES) {
     return turn
   }

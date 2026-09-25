@@ -10,6 +10,7 @@
 // だけの部品。
 
 import { type ReactElement } from "react"
+import { prop, sortBy } from "remeda"
 
 import { type CommandDescription } from "../../../../../shared/session-event.ts"
 import styles from "./dispatch.module.css"
@@ -24,10 +25,6 @@ export function shouldShowCommandSuggestions(value: string, pendingActive: boole
   return value.startsWith("/") && !WHITESPACE_PATTERN.test(value) && !pendingActive
 }
 
-function byName(left: CommandDescription, right: CommandDescription): number {
-  return left.name < right.name ? -1 : left.name > right.name ? 1 : 0
-}
-
 /**
  * 入力の値（先頭の `/` を含む）に前方一致→部分一致で絞り込んだ候補。合計最大
  * {@link MAX_COMMAND_SUGGESTIONS} 件。
@@ -37,12 +34,14 @@ export function matchingCommands(
   value: string,
 ): readonly CommandDescription[] {
   const prefix = value.slice(1)
-  const prefixMatches = commands
-    .filter((command) => command.name.startsWith(prefix))
-    .toSorted(byName)
-  const partialMatches = commands
-    .filter((command) => !command.name.startsWith(prefix) && command.name.includes(prefix))
-    .toSorted(byName)
+  const prefixMatches = sortBy(
+    commands.filter((command) => command.name.startsWith(prefix)),
+    prop("name"),
+  )
+  const partialMatches = sortBy(
+    commands.filter((command) => !command.name.startsWith(prefix) && command.name.includes(prefix)),
+    prop("name"),
+  )
   return [...prefixMatches, ...partialMatches].slice(0, MAX_COMMAND_SUGGESTIONS)
 }
 

@@ -10,6 +10,7 @@
 // **並びを組み立てるのは開いている間だけ**（閉じているときに記録が伸びるたびに作り直さない）。
 
 import { useEffect, useRef, useState, type MouseEvent, type RefObject } from "react"
+import { sumBy } from "remeda"
 
 import { type RecordTime, type SessionRecord } from "../../../../../../shared/session-state.ts"
 import { turnSpeeches, type TurnSpeech } from "../../../../../../shared/turn-speech.ts"
@@ -113,14 +114,12 @@ function logEntries(
 ): readonly SpeechLogEntry[] {
   const turns = turnSpeeches(records).filter((turn) => turn.speeches.length > 0)
   const requestTimes = requestTimesByTurn(records)
-  const speechCount = turns.reduce((count, turn) => count + turn.speeches.length, 0)
+  const speechCount = sumBy(turns, (turn) => turn.speeches.length)
   const lastTurnId = turns.at(-1)?.id
 
   return turns.flatMap((turn, turnIndex) => {
     // このターンの先頭のセリフが、全体の古い側から数えて何件目か。
-    const offset = turns
-      .slice(0, turnIndex)
-      .reduce((count, earlier) => count + earlier.speeches.length, 0)
+    const offset = sumBy(turns.slice(0, turnIndex), (earlier) => earlier.speeches.length)
     const requestTime = requestTimes.get(turn.id)
     const time: SpeechLogTime =
       requestTime === undefined ? { kind: "unknown" } : logTime(requestTime, timeZone)

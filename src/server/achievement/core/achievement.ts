@@ -15,7 +15,7 @@
 // **会話の文面は扱わない**——運ぶのはコミットの数とタスクの ID・summary だけ
 // （`docs/coding-standards.md`「会話内容の扱い」）。
 
-import { isPlainObject } from "remeda"
+import { isPlainObject, prop, sortBy } from "remeda"
 
 import {
   type AchievementGraduation,
@@ -277,22 +277,19 @@ export function graduationsOf(
   endedOn: string,
 ): readonly AchievementGraduation[] {
   const endedOnDate = Temporal.PlainDate.from(endedOn)
-  return items
-    .flatMap((item) => {
-      const registeredOn = registeredOnById.get(item.id)
-      if (registeredOn === undefined) {
-        return []
-      }
-      const days = endedOnDate.since(Temporal.PlainDate.from(registeredOn), {
-        largestUnit: "day",
-      }).days
-      return days >= GRADUATION_MIN_DAYS
-        ? [{ id: item.id, summary: item.summary, registeredOn, days }]
-        : []
-    })
-    .sort((a, b) =>
-      a.registeredOn < b.registeredOn ? -1 : a.registeredOn > b.registeredOn ? 1 : 0,
-    )
+  const graduations = items.flatMap((item) => {
+    const registeredOn = registeredOnById.get(item.id)
+    if (registeredOn === undefined) {
+      return []
+    }
+    const days = endedOnDate.since(Temporal.PlainDate.from(registeredOn), {
+      largestUnit: "day",
+    }).days
+    return days >= GRADUATION_MIN_DAYS
+      ? [{ id: item.id, summary: item.summary, registeredOn, days }]
+      : []
+  })
+  return sortBy(graduations, prop("registeredOn"))
 }
 
 /** `T-NNN` の数の部分（`NNN`）。並び替えだけに使う。桁が読めなければ `Number.POSITIVE_INFINITY`

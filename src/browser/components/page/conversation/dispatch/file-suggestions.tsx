@@ -12,6 +12,7 @@
 // キー操作（上下・Tab・Enter・Esc）と確定は呼び出し側（`hooks/use-composer.ts`）が持つ（`/` 補完と同じ）。
 
 import { type ReactElement } from "react"
+import { identity, sortBy } from "remeda"
 
 import styles from "./dispatch.module.css"
 
@@ -59,16 +60,12 @@ export function filePathQuery(text: string, caret: number): FilePathQuery | unde
  */
 export function matchingFilePaths(paths: readonly string[], term: string): readonly string[] {
   const needle = term.toLowerCase()
-  const sorted = paths.toSorted(byPath)
+  const sorted = sortBy(paths, identity())
   const prefixMatches = sorted.filter((path) => path.toLowerCase().startsWith(needle))
   const partialMatches = sorted.filter(
     (path) => !path.toLowerCase().startsWith(needle) && path.toLowerCase().includes(needle),
   )
   return [...prefixMatches, ...partialMatches].slice(0, MAX_FILE_SUGGESTIONS)
-}
-
-function byPath(left: string, right: string): number {
-  return left < right ? -1 : left > right ? 1 : 0
 }
 
 export type FileSuggestionsProps = {
