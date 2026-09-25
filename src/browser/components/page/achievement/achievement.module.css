@@ -7,7 +7,10 @@
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
-  max-width: 40rem;
+  /* 日記の吹き出しが縦に伸びないよう広く取る。しおり・小さな驚き・灯りの暦も同じ列幅で並ぶので、
+     区画だけでなく画面全体の幅で決める。60rem はトークン消費の画面（token-usage.module.css の
+     `.token-usage`）と同じ値（docs/screen-design.md 13.10）。 */
+  max-width: 60rem;
   margin: 0 auto;
   padding: 0 0.25rem 2rem;
 }
