@@ -672,6 +672,155 @@ describe("components/ui/ の置き方", () => {
   })
 })
 
+// ページの形（`docs/design.md` 2章「ページの形」）。`components/page/<ページ>/` の直下は
+// container / presenter の対（`<ページ>.tsx` / `presentational-<ページ>.tsx`）・`<ページ>.module.css`・
+// `domain/` `hooks/` `components/` だけ。部品（`components/<部品>/`）も同じ作り（`<部品>.tsx` /
+// `presentational-<部品>.tsx` / `<部品>.module.css` / `hooks/` `domain/` `components/`）で、ほかに
+// 概念のディレクトリを名前の一覧（`PAGE_CONCEPT_DIRECTORIES`。いまは `markdown` だけ）で許す。
+// **部品の `components/`（＝子部品）はさらに `components/` を持てない**（ネストは1段だけ）。
+// `components/` の直下はディレクトリだけで、`hooks/` は部品の形（`<名前>.tsx` など）を求めない
+// 固定の置き場として例外にする。
+const PAGE_CONCEPT_DIRECTORIES: ReadonlySet<string> = new Set(["markdown"])
+
+type PageNodeRule = {
+  /** このディレクトリ自身が `components/` を持ってよいか。 */
+  readonly allowsComponents: boolean
+  /** `components/` を持つとき、その子（部品）がさらに自分の `components/`（＝子部品）を
+   * 持ってよいか（ページ直下の `components/` の子＝部品だけ持てる）。 */
+  readonly allowsGrandchildComponents: boolean
+  /** 概念のディレクトリ（`markdown/` など）を許すか（ページの直下では許さない）。 */
+  readonly allowsConcept: boolean
+}
+
+const PAGE_ROOT_RULE: PageNodeRule = {
+  allowsComponents: true,
+  allowsGrandchildComponents: true,
+  allowsConcept: false,
+}
+
+describe("components/page/ の形", () => {
+  it("ページ・部品の直下は、名前から作る対・CSS・domain/・hooks/・components/（と部品の概念のディレクトリ）だけ", () => {
+    const offenders = BROWSER_SCREENS.flatMap((screen) =>
+      pageNodeViolations(`browser/${screen}`, screen.split("/").pop() ?? "", PAGE_ROOT_RULE),
+    )
+
+    expect(offenders.join("\n")).toBe("")
+  })
+
+  it("部品のディレクトリの外から import してよいのは <部品>.tsx だけ（main.tsx とテストは除く）", () => {
+    const offenders = componentBoundaryViolations()
+
+    expect(offenders.join("\n")).toBe("")
+  })
+})
+
+/** ページ・部品1件の直下を検査する（`docs/design.md` 2章「ページの形」）。 */
+function pageNodeViolations(
+  relPath: string,
+  dirName: string,
+  rule: PageNodeRule,
+): readonly string[] {
+  const allowedFiles = new Set([
+    `${dirName}.tsx`,
+    `presentational-${dirName}.tsx`,
+    `${dirName}.module.css`,
+  ])
+
+  return readdirSync(`${SRC_ROOT}/${relPath}`, { withFileTypes: true }).flatMap((entry) => {
+    if (!entry.isDirectory()) {
+      return allowedFiles.has(entry.name)
+        ? []
+        : [`src/${relPath}/${entry.name}（規約の外のファイル）`]
+    }
+    if (entry.name === "domain" || entry.name === "hooks") {
+      return []
+    }
+    if (rule.allowsConcept && PAGE_CONCEPT_DIRECTORIES.has(entry.name)) {
+      return []
+    }
+    if (entry.name === "components") {
+      if (!rule.allowsComponents) {
+        return [`src/${relPath}/components（子部品は components/ を持てない）`]
+      }
+      return componentsDirViolations(`${relPath}/components`, rule.allowsGrandchildComponents)
+    }
+    return [`src/${relPath}/${entry.name}（規約の外のディレクトリ）`]
+  })
+}
+
+/** `components/` の直下（ページ・部品どちらの下でも同じ形）を検査する。直下はディレクトリだけで、
+ * `hooks/` は固定の置き場、それ以外は部品として `pageNodeViolations` へ再帰する。 */
+function componentsDirViolations(
+  relPath: string,
+  allowsChildComponents: boolean,
+): readonly string[] {
+  return readdirSync(`${SRC_ROOT}/${relPath}`, { withFileTypes: true }).flatMap((entry) => {
+    if (!entry.isDirectory()) {
+      return [`src/${relPath}/${entry.name}（components/ の直下はディレクトリだけ）`]
+    }
+    if (entry.name === "hooks") {
+      return []
+    }
+    return pageNodeViolations(`${relPath}/${entry.name}`, entry.name, {
+      allowsComponents: allowsChildComponents,
+      allowsGrandchildComponents: false,
+      allowsConcept: true,
+    })
+  })
+}
+
+/** ページの下の部品ディレクトリ（`components/` の直下で `hooks/` を除いたもの）の一覧。
+ * ネストした子部品も含めて再帰的に集める。 */
+function pageComponentDirectories(): readonly string[] {
+  return BROWSER_SCREENS.flatMap((screen) => componentDirectoriesUnder(`browser/${screen}`))
+}
+
+function componentDirectoriesUnder(relPath: string): readonly string[] {
+  return readdirSync(`${SRC_ROOT}/${relPath}`, { withFileTypes: true }).flatMap((entry) => {
+    if (!entry.isDirectory()) {
+      return []
+    }
+    const childRelPath = `${relPath}/${entry.name}`
+    if (entry.name !== "components") {
+      return componentDirectoriesUnder(childRelPath)
+    }
+    return readdirSync(`${SRC_ROOT}/${childRelPath}`, { withFileTypes: true }).flatMap(
+      (componentEntry) => {
+        if (!componentEntry.isDirectory() || componentEntry.name === "hooks") {
+          return []
+        }
+        const componentRelPath = `${childRelPath}/${componentEntry.name}`
+        return [componentRelPath, ...componentDirectoriesUnder(componentRelPath)]
+      },
+    )
+  })
+}
+
+/** 部品のディレクトリの外から、中の `<部品>.tsx` 以外を import している箇所（`main.tsx` は除く）。 */
+function componentBoundaryViolations(): readonly string[] {
+  const files = listSourceFiles(SRC_ROOT).filter((relPath) => relPath.startsWith("browser/"))
+  const edges = files.flatMap((relPath) =>
+    relativeImportSpecifiers(readFileSync(`${SRC_ROOT}/${relPath}`, "utf8")).map((specifier) => ({
+      fromPath: relPath,
+      toPath: resolveRelativeImport(relPath, specifier),
+    })),
+  )
+
+  return pageComponentDirectories().flatMap((componentRelPath) => {
+    const dirName = componentRelPath.split("/").pop() ?? ""
+    const entryFile = `${componentRelPath}/${dirName}.tsx`
+    return edges
+      .filter(
+        (edge) =>
+          edge.toPath.startsWith(`${componentRelPath}/`) &&
+          edge.toPath !== entryFile &&
+          edge.fromPath !== "browser/main.tsx" &&
+          !edge.fromPath.startsWith(`${componentRelPath}/`),
+      )
+      .map((edge) => `src/${edge.fromPath} → src/${edge.toPath}（${componentRelPath} の外から）`)
+  })
+}
+
 // `components/ui/` の variant 部品（`Select` 以外）に渡す `className` の作法を検査で守る
 // （`docs/design.md` 2章「`components/ui/` の部品（variant の作法と一覧）」の「呼び出し側からの
 // 上書き（className）」節「検査で守る」）。(1) 呼び出し側が渡す `className` の式が

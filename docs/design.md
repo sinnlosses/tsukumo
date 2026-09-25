@@ -560,6 +560,9 @@ components/page/<ページ>/
   領域（`main-view` / `character-view` / `chat-view` / `dispatch`）は `conversation/components/` の
   下の部品になる。`<Layout>` の差し込み口を埋めるのはページの presenter で、分担は下の
   「領域の機能と、置かれる機能」
+- 検査は `test/architecture.test.ts`（`describe("components/page/ の形", …)`）。ページ・部品の
+  直下が名前から作る対・CSS・`domain/`・`hooks/`・`components/`（と部品の概念のディレクトリ）だけか、
+  部品のディレクトリの外から中の `<部品>.tsx` 以外を import していないかを落とす
 
 **`src/browser/` の箱と、置く基準**（bullet-proof-react の語をそのまま使う。判断に迷ったら
 「その機能しか読まないなら機能の中」が既定（領域も同じで、その領域しか読まないなら領域の中））:
