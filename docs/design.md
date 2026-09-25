@@ -428,8 +428,9 @@ src/
     css-global.d.ts           `styles/theme.css` を副作用だけで import したときの宣言（中身は空。同上）
     vendor-global.d.ts        外部ライブラリがブラウザのグローバルに置くものの型（`<script>` で読むので npm の型が引けない分。同上）
     components/               React の部品。**`page/` `domain/` `ui/` の3段**（2026-09-25 決定。下の箱の表）
-      page/                   画面。**1つの画面 = 1つのディレクトリ**で、名前は `stores/location-hash.ts` の
-                              `Screen` の値そのまま
+      page/                   画面。**1つの画面 = 1つのディレクトリ（ページ）**で、名前は `stores/location-hash.ts` の
+                              `Screen` の値そのまま。中の形は下の「ページの形」（2026-09-26 決定。
+                              下の木はまだ移す前の形）
         conversation/         会話の画面。**4つの領域をサブディレクトリに分ける**（組み立ては `main.tsx`）
           main-view/          TurnHeader・Turn・Report・QuestionRecord と markdown/（unified 一式）
           character-view/     BalloonTrack・Balloon・SpeechLog・動きの hooks（立ち絵は domain/portrait.tsx）
@@ -452,7 +453,7 @@ src/
         sidebar/              SessionInfo・TaskSection（まん中の区画ひとまとまり）と、
                               2区画の枠（SidebarSection）
       ui/                     **語彙を持たない部品**。値と呼び先を全部受け取る。**部品ごとのディレクトリに
-                              分ける**（1部品1フォルダの唯一の例外。下の「1部品1フォルダは真似しない」）。
+                              分ける**（1部品1フォルダの例外の1つ。下の「1部品1フォルダは真似しない」）。
                               variant の作法と部品の一覧は下の「`components/ui/` の部品（variant の作法と一覧）」
         select/               select.tsx・select.module.css
         image-zoom/           image-zoom.tsx・image-zoom.module.css
@@ -488,11 +489,77 @@ Next.js の雛形の名前。`shared` / `server` / `core` / `adapter` と、`ser
 `components/page/` の下の画面の名前は `stores/location-hash.ts` の `Screen` の値に合わせる）。
 **手本から採るのはディレクトリの形だけ**で、kebab-case のファイル名・barrel file（`index.ts`）を
 作らない・`@/` を使わない相対 import はそのまま（PascalCase・1部品1フォルダは真似しない）。
-**例外は `components/ui/` だけ**: 語彙を持たない部品は数が増えていくので、部品ごとに
+**例外は `components/ui/` と、ページの `components/`（下の「ページの形」）の2つだけ**:
+語彙を持たない部品は数が増えていくので、部品ごとに
 `ui/<部品>/<部品>.tsx`・`<部品>.module.css` の1フォルダへ分ける（2026-09-25 のユーザーの希望。
-理由は部品と CSS の対が平たく並ぶと見づらいこと）。**barrel file は作らない例外の中でも作らない**
-——`index.tsx` は置かず、import は `../ui/select/select.tsx` のように実ファイルを直接指す
-（`docs/coding-standards.md`「barrel file を作らない」）。
+理由は部品と CSS の対が平たく並ぶと見づらいこと）。ページの部品も同じ理由で
+`components/page/<ページ>/components/<部品>/<部品>.tsx` の1フォルダへ分ける（2026-09-26 の
+ユーザーの指示）。`components/domain/` と `features/` の中は平たいまま。**barrel file は作らない
+例外の中でも作らない**——`index.tsx` は置かず、import は `../ui/select/select.tsx` のように
+実ファイルを直接指す（`docs/coding-standards.md`「barrel file を作らない」）。
+
+**ページの形**（`components/page/<ページ>/`。2026-09-26 のユーザーの指示と、そのときの問答で
+決めた。ページの中の分け方は下の「機能の中を分ける」と同じ語彙で、ここはその置き場所の決まり）:
+
+```
+components/page/<ページ>/
+  <ページ>.tsx                   container（入口。main.tsx が置く）。名前は Screen の値
+  presentational-<ページ>.tsx    presenter（器）
+  <ページ>.module.css            container / presenter と、2つ以上の部品が読む CSS（あれば）
+  domain/                        そのページだけの語彙（部品でも React でもないもの）
+  hooks/                         そのページだけのフック（container / presenter も読むもの）
+  components/                    そのページの部品。直下はディレクトリだけ
+    hooks/                       components/ の下の部品だけが読むフック（2つ以上の部品が読む）
+    <部品>/                      1部品1ディレクトリ
+      <部品>.tsx                 部品（割るなら container）。外から引くのはこのファイルだけ
+      presentational-<部品>.tsx  割るときの presenter
+      <部品>.module.css          この部品だけが読む CSS（中の子部品が読むものも含む）
+      hooks/ domain/             この部品（と中の子部品）だけのフック・語彙
+      components/<子部品>/       この部品だけが使う子部品。ページの components/ の直下の部品だけが持てる
+      <概念>/                    下の「機能の中を分ける」の概念のディレクトリ（markdown/ など）
+```
+
+- **ページの直下に置くのは、container / presenter の対と `<ページ>.module.css`、`domain/` `hooks/`
+  `components/` だけ。** 対は**ページに1対だけで、どのページも必ず対にする**（「機能の中を分ける」の
+  「2種類以上そろったら割る」はページの中の部品に掛ける基準で、ページの入口には掛けない。
+  ページの入口の形が決まっていれば、開く前に中の見当が付き、検査で名前を決め打ちできる）。
+  container の中身がストアを読むだけなら `hooks/use-<ページ>.ts` は作らない。state か副作用を
+  持つなら `hooks/use-<ページ>.ts` へ出す。**2つ目の画面**（キャラクター画面の一覧・作成・編集の
+  ような、ページの中で並ぶか重なるもの）は直下に置かず、`components/<部品>/` の部品にする
+  （部品が自分の container / presenter の対を持つのはよい）。ファイル名の `-screen` は付けない
+  （`achievement.tsx`。部品の名前は `<ページ>.tsx` から PascalCase で `Achievement`）
+- **置き場所は「読み手すべてを含む、いちばん近い箱」で機械的に決める**（部品・フック・語彙・
+  CSS のどれも同じ）。数えるのは `import`（`import type` も含む）で、テストは数えない:
+
+  | 読み手                                               | 置き場                                                                                               |
+  | ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+  | ページの直下（対・`hooks/`・`domain/`）を1つでも含む | ページの `hooks/` / `domain/` / `components/<部品>/`（部品の置き場は下）                             |
+  | `components/` の下の2つ以上の部品（直下は含まない）  | フックは `components/hooks/`、語彙はページの `domain/`、部品は `components/<部品>/`                  |
+  | `components/<部品>/` の中だけ（その部品と子部品）    | その部品の中の `hooks/` / `domain/` / `components/<子部品>/`                                         |
+  | 2つ以上のページ・枠                                  | ページの外（部品なら `components/domain/`、フックは `browser/hooks/`、それ以外は `browser/domain/`） |
+
+  部品は、ページの直下か2つ以上の部品が読むならページの `components/<部品>/`、1つの部品だけが
+  読むならその部品の `components/<子部品>/`。**入れ子はページの `components/` から2段まで**
+  （子部品は `components/` を持たない。子部品だけが使う孫は、親の部品の `components/` に子部品と
+  並べる）。CSS はファイル単位で読み手を数え、クラスごとには割らない（読み手が2つ以上の CSS は、
+  読み手を含むいちばん近い部品の `<部品>.module.css` かページの `<ページ>.module.css`。概念の
+  ディレクトリの CSS（`markdown/report-notation.module.css`）はその中に置いたまま外の部品も読む）
+
+- **部品のディレクトリの外から引いてよいのは `<部品>.tsx` だけ**（中の `hooks/` `domain/`
+  子部品・presenter・CSS は中からだけ読む。例外は `main.tsx` とテスト）。ページの部品を画面の
+  外に置くとき（書き終わりの知らせ `DiaryNotice`）は、`main.tsx` がその `<部品>.tsx` を直に
+  import する（下の「領域の機能と、置かれる機能」）
+- **`components/` の直下の `hooks/` と、ページの `hooks/` の違いは読み手だけ。** container /
+  presenter が読むならページの `hooks/`、部品しか読まないなら `components/hooks/`
+- **中身の割り方（container / presenter / `hooks/` / `domain/` / 概念のディレクトリ）は下の
+  「機能の中を分ける」のまま。** 概念のディレクトリ（`markdown/`）は部品の中にだけ置き、ページの
+  直下には置かない
+- テストは `test/browser/components/page/` の下にソースと同じ形で置く（`src/<相対パス>.ts` →
+  `test/<相対パス>.test.ts`）
+- 会話の画面は**1ページ**にする（`conversation.tsx` / `presentational-conversation.tsx`）。4つの
+  領域（`main-view` / `character-view` / `chat-view` / `dispatch`）は `conversation/components/` の
+  下の部品になる。`<Layout>` の差し込み口を埋めるのはページの presenter で、分担は下の
+  「領域の機能と、置かれる機能」
 
 **`src/browser/` の箱と、置く基準**（bullet-proof-react の語をそのまま使う。判断に迷ったら
 「その機能しか読まないなら機能の中」が既定（領域も同じで、その領域しか読まないなら領域の中））:
@@ -764,6 +831,30 @@ backdrop のクリックで `onClose` が呼ばれること・中のクリック
   「区画」も名乗らず、タスクの語彙だけで書く（別の領域から同じものを置けるのはこのため）
 - **`components/ui/` とは別物。** `components/ui/` は**語彙を持たない**部品（値と呼び先を全部
   受け取る）で、「置かれる機能」は機能の語彙を名乗ったまま置き場所だけを借りる
+- **会話の画面を1ページにしたあとの形**（2026-09-26 決定。上の表と検査はまだ移す前の形）:
+  - 領域の一覧の会話の4つ（`components/page/conversation/<領域>`）は、画面
+    `components/page/conversation` の1つにまとめる。4つは領域ではなくページの部品
+    （`conversation/components/<領域>/`）になり、「4つどうしも import しない」は外れて、ページの中の
+    置き場所の決まり（上の「ページの形」の「読み手すべてを含む、いちばん近い箱」）に従う
+  - **`<Layout>` の差し込み口を埋めるのは `presentational-conversation.tsx`。** `<Layout>` と
+    `<Sidebar>` を import し、`main` には雑談モードなら `<ChatView>`、そうでなければ `<MainView>` を、
+    `character` に `<CharacterView>`、`dispatch` に `<Dispatch>` を入れ、`collapseCharacter` と
+    `mainAsGround` に雑談モードの旗を渡す。雑談モードの旗（`session.state.chatMode`）をストアから
+    読むのは `conversation.tsx`（ストアを読むだけなので `hooks/use-conversation.ts` は作らない）。
+    `main.tsx` は `<Activity>` の中に `<Conversation />` を置くだけになり、`OVERLAY_SCREEN` と
+    `<Activity>` の切り替え・`<ScreenNav>`・`<DiaryNotice>`・`usePortraitPreload`（どちらの
+    画面を出していても表情を先に読む）はそのまま入口に残す
+  - そのため**辺を1本足す: 画面 → 枠**（`components/page/<画面>` → `components/domain/<枠>`）。
+    枠は画面を import しない（`<Layout>` は差し込み口を props で受けたまま）。画面どうし・枠どうしは
+    import しない。検査の一覧は「枠」（`layout` / `screen-nav` / `sidebar`）・「画面」
+    （`conversation` / `character` / `token-usage` / `achievement`）・「置かれる機能」の3種類に分け、
+    許す辺は「枠・画面 → 置かれる機能」と「画面 → 枠」の2つにする
+  - 読み手が会話の画面の1つに戻るものは、上げる引き金の逆で下ろす:
+    `components/domain/prompt-image.tsx`（と CSS）→ `conversation/components/prompt-image/`、
+    `domain/api-error-label.ts` → `conversation/domain/`、`hooks/use-repository-file-paths.ts` →
+    `conversation/components/hooks/`（前の2つは下の検査「1つの機能だけが読むファイルは無い」が落とす）
+  - 書き終わりの知らせは成果の画面の部品（`achievement/components/diary-notice/`）のまま、
+    `main.tsx` がその `diary-notice.tsx` を直に置く（画面の外から部品を引けるのは入口だけ）
 - 検査は `test/architecture.test.ts` の領域と置かれる機能の一覧。**どちらにも無いディレクトリが
   `features/` と `components/domain/` の直下、`components/page/` の下にあれば落ちる**（`chat-view` と
   `token-usage` は 2026-09-22 まで領域の一覧に無く、import が
@@ -774,6 +865,14 @@ backdrop のクリックで `onClose` が呼ばれること・中のクリック
 **この節の「機能」は、領域（`components/domain/<枠>/`・`components/page/<画面>/`・
 `components/page/conversation/<領域>/`）と置かれる機能（`features/<機能>/`）の両方を指す**
 （2026-09-25 に領域を `components/` へ移したが、中の分け方は置き場所によらず同じ）。
+**ページ（`components/page/<ページ>/`）では、この節の割り方をページの中の部品
+（`components/<部品>/`）に1つずつ掛ける。** ページの入口だけは「2種類以上そろったら割る」に
+よらず、いつも container / presenter の対にする。フック・語彙・子部品をどのディレクトリに
+置くかは、この節の「機能の直下」を「読み手すべてを含む、いちばん近い箱」に読み替える
+（上の「ディレクトリ」の「ページの形」。2026-09-26 決定）。会話の画面を1ページにしたあとは、
+4つの領域はこの節の「機能」ではなくページの部品になる。1つの機能に container が複数ある形
+（`dispatch` の `composer` / `pending-answer` / `turn-status`）は、それぞれが子部品のディレクトリに
+分かれて自分の対を持ち、`main-view/markdown/` は部品の中の概念のディレクトリのまま残る。
 
 **割るかどうかは、部品が抱えている「振る舞いの種類」の数で決める**（2026-09-23 決定。それまでは
 「フックが0本のときだけ割らない」と書いていて、ストアのセレクタを1本読むだけの部品まで3つに
