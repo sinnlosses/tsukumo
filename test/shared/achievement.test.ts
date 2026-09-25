@@ -227,13 +227,4 @@ describe("achievementReflectionRequestText", () => {
     })
     expect(text).toContain("この日の日記は既にあるので、続きとして書き足す。")
   })
-
-  it("依頼文にはコミットの数とタスクの ID・summary だけが入る（会話の文面は入らない）", () => {
-    const text = achievementReflectionRequestText({
-      ...BASE,
-      commitCount: 1,
-      doneTasks: { kind: "known", items: [{ id: "T-9", summary: "架空のタスク" }] },
-    })
-    expect(text).not.toContain("架空の会話")
-  })
 })

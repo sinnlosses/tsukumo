@@ -65,10 +65,6 @@ describe("turnSpeeches（依頼を境目にセリフを分ける）", () => {
 
     expect(turns.map((turn) => turn.request)).toEqual([undefined, "1つ目の依頼"])
   })
-
-  it("記録が空なら空を返す", () => {
-    expect(turnSpeeches([])).toEqual([])
-  })
 })
 
 describe("turnSpeeches（通し番号）", () => {

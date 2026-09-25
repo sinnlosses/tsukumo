@@ -48,7 +48,7 @@ describe("parsePromptImage", () => {
     expect(parsePromptImage("data:image/png,AAAA")).toBeUndefined()
   })
 
-  it("上限（2 MiB）を超える大きさは undefined", () => {
+  it("上限を超える大きさは undefined", () => {
     expect(parsePromptImage(dataUrlOfLength(MAX_PROMPT_IMAGE_DATA_URL_LENGTH))).toBeUndefined()
     expect(parsePromptImage(dataUrlOfLength(MAX_PROMPT_IMAGE_DATA_URL_LENGTH * 2))).toBeUndefined()
   })

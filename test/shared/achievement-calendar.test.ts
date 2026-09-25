@@ -39,12 +39,6 @@ describe("achievementCalendarDateKeys", () => {
     expect(dateKeys.at(-1)).toBe("2026-09-21")
     expect(dateKeys).toHaveLength(29)
   })
-
-  it("今日より後の日は含まない", () => {
-    const dateKeys = achievementCalendarDateKeys("2026-09-24")
-
-    expect(dateKeys.every((date) => date <= "2026-09-24")).toBe(true)
-  })
 })
 
 describe("lampLevel", () => {

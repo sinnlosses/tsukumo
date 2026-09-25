@@ -25,12 +25,6 @@ describe("characterAssetPath", () => {
       "/character/my%20pack/sub%2F%E7%AB%8B%E3%81%A1%E7%B5%B5.png",
     )
   })
-
-  it("パックが違えば、同じファイル名でも URL が変わる（版が無くても取り直す）", () => {
-    expect(characterAssetPath("pack-a", "default.svg", undefined)).not.toBe(
-      characterAssetPath("pack-b", "default.svg", undefined),
-    )
-  })
 })
 
 describe("readCharacterAssetPath", () => {

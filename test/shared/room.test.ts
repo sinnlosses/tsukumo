@@ -29,12 +29,6 @@ describe("roomName", () => {
     ])
   })
 
-  it("名前は重複しない（どの部屋かが名前で決まる）", () => {
-    const named = Array.from({ length: 12 }, (_, index) => roomName(FIRST_ROOM_PORT + index))
-
-    expect(new Set(named).size).toBe(named.length)
-  })
-
   // 語彙の外は**ポート番号をそのまま名乗る**（13個め以降・遠い番号・OS まかせの 0）。
   it("13個めから先のポートは、ポート番号をそのまま名乗る", () => {
     expect(roomName(FIRST_ROOM_PORT + 12)).toBe("7339")

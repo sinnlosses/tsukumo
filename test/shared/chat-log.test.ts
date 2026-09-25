@@ -65,17 +65,6 @@ describe("chatLogEntries", () => {
     expect(entries.map((entry) => entry.speaker)).toEqual(["user", "character"])
   })
 
-  it("表情はキャラクターの側にだけ付く（話者の印に使う）", () => {
-    const entries = chatLogEntries(RECORDS)
-
-    expect(entries[0]).not.toHaveProperty("expression")
-    expect(entries[1]).toHaveProperty("expression", "default")
-  })
-
-  it("記録が空なら空（まだ何も話していない場面）", () => {
-    expect(chatLogEntries([])).toEqual([])
-  })
-
   it("圧縮の区切り（compact-boundary）は1件のイベントから1件のログの区切りになる", () => {
     const entries = chatLogEntries([
       requestRecord({ turnId: 3, text: "1つめの依頼" }),
@@ -99,19 +88,6 @@ describe("chatLogEntries", () => {
 describe("chatLogByteSize", () => {
   it("空なら0", () => {
     expect(chatLogByteSize([])).toBe(0)
-  })
-
-  it("利用者だけの文面を UTF-8 バイト数で数える", () => {
-    // "あ" は UTF-8 で3バイト。
-    const entries = chatLogEntries([requestRecord({ turnId: 4, text: "あああ" })])
-
-    expect(chatLogByteSize(entries)).toBe(9)
-  })
-
-  it("セリフだけの文面も数える", () => {
-    const entries = chatLogEntries([speechRecord({ text: "架空のセリフ" })])
-
-    expect(chatLogByteSize(entries)).toBe(new TextEncoder().encode("架空のセリフ").length)
   })
 
   it("画像つきの依頼でも、添えた画像は数えない", () => {

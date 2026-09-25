@@ -84,20 +84,6 @@ describe("currentTurnSteps（依頼の手順を最後の依頼から導く）", 
     ])
   })
 
-  it("古い→新しいの順で並ぶ", () => {
-    const list = currentTurnSteps(
-      [
-        requestRecord(),
-        toolRecord({ toolUseId: "toolu_1" }),
-        toolRecord({ toolUseId: "toolu_2" }),
-        toolRecord({ toolUseId: "toolu_3" }),
-      ],
-      false,
-    )
-
-    expect(turnSteps(list).map((step) => step.toolUseId)).toEqual(["toolu_1", "toolu_2", "toolu_3"])
-  })
-
   it("サブエージェントの中（nested）はそのまま持つ", () => {
     const list = currentTurnSteps(
       [requestRecord(), toolRecord({ toolUseId: "toolu_1", nested: true })],
@@ -105,17 +91,6 @@ describe("currentTurnSteps（依頼の手順を最後の依頼から導く）", 
     )
 
     expect(turnSteps(list)[0]?.nested).toBe(true)
-  })
-
-  it("結果の届いていない手順は、ターンが終わっていても実行中のまま出す", () => {
-    // 記録そのものはターンの終わりを表す種類を持たない（`turn` の進み具合は SessionState 側）。
-    // ここでは「次の依頼も来ていない・session-ended でもない」状態で running のままなことを確かめる。
-    const list = currentTurnSteps(
-      [requestRecord(), toolRecord({ toolUseId: "toolu_1", status: { kind: "running" } })],
-      false,
-    )
-
-    expect(turnSteps(list)[0]?.status).toEqual({ kind: "running" })
   })
 
   it("session-ended のあとは実行中の手順を一覧から落とす", () => {

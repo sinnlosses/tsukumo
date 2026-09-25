@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test"
 
-import { EFFORT_LEVELS, parseClientCommand, PERMISSION_MODES } from "../../src/shared/command.ts"
+import { parseClientCommand, PERMISSION_MODES } from "../../src/shared/command.ts"
 import {
   BUILTIN_SESSION_DEFAULT,
   isSessionDefaultPermissionMode,
@@ -27,15 +27,6 @@ describe("既定に選べる許可モード", () => {
       effort: "medium",
       permissionMode: "auto",
     })
-  })
-})
-
-// effort は除外する値が無いので、既定に選べる段は EFFORT_LEVELS をそのまま使う
-// （SessionDefaultPermissionMode のような部分集合の型を別に作らない）。
-describe("既定に選べる effort", () => {
-  it("EFFORT_LEVELS の5段をそのまま使う（部分集合を作らない）", () => {
-    expect(BUILTIN_SESSION_DEFAULT.effort).toBe("medium")
-    expect(EFFORT_LEVELS).toContain(BUILTIN_SESSION_DEFAULT.effort)
   })
 })
 

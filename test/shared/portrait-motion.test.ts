@@ -92,7 +92,7 @@ describe("resolvePortraitMotion", () => {
     expect(resolvePortraitMotion(input, 2000 + FAILURE_MOTION_WINDOW_MS)).toBe("waiting")
   })
 
-  it("失敗はターンが進行中でも完了の反応より優先する", () => {
+  it("失敗は完了の反応より優先する", () => {
     const input: PortraitMotionInput = {
       turn: { kind: "finished", startedAt: 0, finishedAt: 1000, ending: { kind: "ended" } },
       lastToolFailureAt: 1000,

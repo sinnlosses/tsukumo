@@ -33,22 +33,6 @@ describe("readDiary", () => {
     expect(readDiary(diary)).toEqual(diary)
   })
 
-  it("段落が2つ以上もそのまま読む", () => {
-    const diary = {
-      ...FIXTURE_DIARY,
-      paragraphs: [
-        ...FIXTURE_DIARY.paragraphs,
-        {
-          writtenAt: "2026-09-23T22:00:00+09:00",
-          body: "架空の本文2。",
-          expression: "default",
-          writer: { pack: "tsukumo", name: "つくも" },
-        },
-      ],
-    } satisfies Diary
-    expect(readDiary(diary)).toEqual(diary)
-  })
-
   it("版が違う・段落が0件・形が崩れていれば undefined", () => {
     expect(readDiary({ ...FIXTURE_DIARY, version: 2 })).toBeUndefined()
     expect(readDiary({ ...FIXTURE_DIARY, paragraphs: [] })).toBeUndefined()

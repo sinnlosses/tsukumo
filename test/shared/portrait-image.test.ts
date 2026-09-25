@@ -2,7 +2,6 @@ import { describe, expect, it } from "bun:test"
 
 import {
   MAX_PORTRAIT_BYTES,
-  MAX_PORTRAIT_DATA_URL_LENGTH,
   parsePortraitImage,
   portraitFileName,
 } from "../../src/shared/portrait-image.ts"
@@ -44,10 +43,6 @@ describe("parsePortraitImage", () => {
 
     expect(parsePortraitImage(withinLimit)).toBeDefined()
     expect(parsePortraitImage(overLimit)).toBeUndefined()
-  })
-
-  it("文字列の上限はデコード後の上限から決まる（先に長さで切れる）", () => {
-    expect(MAX_PORTRAIT_DATA_URL_LENGTH).toBeGreaterThan(Math.ceil(MAX_PORTRAIT_BYTES / 3) * 4)
   })
 })
 

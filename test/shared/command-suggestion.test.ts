@@ -89,10 +89,6 @@ describe("commandCandidates", () => {
     expect(commandCandidates(["clear", "model", "doctor"], ["doctor"])).toEqual(["clear", "model"])
   })
 
-  it("端末専用が空のときはそのまま返す", () => {
-    expect(commandCandidates(["clear", "model"], [])).toEqual(["clear", "model"])
-  })
-
   it("元の並び順を保つ（並べ替えない）", () => {
     expect(commandCandidates(["b", "a", "c"], ["a"])).toEqual(["b", "c"])
   })

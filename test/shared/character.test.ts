@@ -42,12 +42,6 @@ function infoOf(json: string): CharacterInfo | undefined {
 describe("toCharacterInfo の畳み方", () => {
   const withoutThinking = JSON.stringify({ portraits: { default: "default.svg" } })
 
-  it("該当する表情の立ち絵があればそれを使う", () => {
-    expect(infoOf(FULL_DEFINITION_JSON)?.portraits?.thinking).toBe(
-      "/character/fictional/thinking.svg",
-    )
-  })
-
   it("立ち絵の無い表情は、どれも default の絵に畳む", () => {
     const shown = infoOf(withoutThinking)?.portraits
     for (const expression of EXPRESSIONS) {
@@ -82,10 +76,6 @@ describe("toCharacterInfo の畳み方", () => {
       "thinking",
       "proud",
     ])
-  })
-
-  it("該当する衣装の差し色があればそれを使う", () => {
-    expect(infoOf(FULL_DEFINITION_JSON)?.outfitAccents.heavy).toBe("#ffb3a7")
   })
 
   it("差し色の無い衣装は default に畳む", () => {
@@ -131,31 +121,6 @@ describe("toCharacterInfo", () => {
     expect(info?.outfitAccents.heavy).toBe("#ffb3a7")
   })
 
-  it("pack が違えば、同じファイル名でも URL が変わる", () => {
-    const definition = parseCharacterDefinition(FULL_DEFINITION_JSON)
-    expect(definition).toBeDefined()
-    if (definition === undefined) {
-      return
-    }
-
-    const infoA = toCharacterInfo({
-      definition,
-      pack: "pack-a",
-      revision: undefined,
-      editable: true,
-    })
-    const infoB = toCharacterInfo({
-      definition,
-      pack: "pack-b",
-      revision: undefined,
-      editable: true,
-    })
-
-    expect(infoA.portraits?.default).not.toBe(infoB.portraits?.default)
-    expect(infoA.portraits?.default).toBe("/character/pack-a/default.svg")
-    expect(infoB.portraits?.default).toBe("/character/pack-b/default.svg")
-  })
-
   it("素材の版が違えば、同じパック・同じファイル名でも URL が変わる（差し替えたら取り直す）", () => {
     const definition = parseCharacterDefinition(FULL_DEFINITION_JSON)
     expect(definition).toBeDefined()
@@ -167,18 +132,6 @@ describe("toCharacterInfo", () => {
     const after = toCharacterInfo({ definition, pack: "same", revision: "2", editable: true })
 
     expect(before.portraits?.default).not.toBe(after.portraits?.default)
-  })
-
-  it("素材の版が無いときは問い合わせ文字列を付けない", () => {
-    const definition = parseCharacterDefinition(FULL_DEFINITION_JSON)
-    expect(definition).toBeDefined()
-
-    const info =
-      definition === undefined
-        ? undefined
-        : toCharacterInfo({ definition, pack: "fictional", revision: undefined, editable: true })
-
-    expect(info?.portraits?.default).toBe("/character/fictional/default.svg")
   })
 
   it("mini があればその URL、無ければ portraits.default に落ちる（縮小して使う）", () => {

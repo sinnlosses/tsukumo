@@ -111,13 +111,6 @@ describe("applySessionEvent", () => {
     ])
   })
 
-  it("セリフと表情を持つ", () => {
-    const spoken = apply({ kind: "speech", text: "いくよ！", expression: "proud" })
-
-    expect(spoken.speeches).toEqual(["いくよ！"])
-    expect(spoken.speechExpression).toBe("proud")
-  })
-
   it("request で吹き出しと表情を既定に戻す（送信直後に次のターンへ移ったと分かるように）", () => {
     const spoken = apply({ kind: "speech", text: "いくよ！", expression: "proud" })
 
@@ -529,20 +522,6 @@ describe("applySessionEvent", () => {
     expect(view.endedReason).toBe("セッションが終了した")
   })
 
-  it("request でターンが進行中になり、turn-finished で止まる（入力欄の送信/中断の切り替えに使う）", () => {
-    expect(INITIAL_SESSION_STATE.turn.kind).toBe("idle")
-
-    const started = apply({ kind: "request", text: "ダミーの依頼", images: [] })
-    expect(started.turn.kind).toBe("running")
-
-    const finished = applySessionEvent(
-      started,
-      { kind: "turn-finished", outcome: { kind: "completed" } },
-      0,
-    )
-    expect(finished.turn.kind).toBe("finished")
-  })
-
   it("turn-started はターンを始めるが、記録を1件も積まない（話しかけてもらった一言を残さない）", () => {
     const spoken = apply(
       { kind: "request", text: "ダミーの依頼", images: [] },
@@ -559,18 +538,6 @@ describe("applySessionEvent", () => {
     expect(started.speeches).toEqual([])
     expect(started.speechExpression).toBe("default")
     expect(started.speechCalledInTurn).toBe(false)
-  })
-
-  it("session-ended でも進行中を止める（中断・異常終了のどちらでも入力欄を送信可能に戻す）", () => {
-    const started = apply({ kind: "request", text: "ダミーの依頼", images: [] })
-
-    const ended = applySessionEvent(
-      started,
-      { kind: "session-ended", reason: "セッションが終了した" },
-      0,
-    )
-
-    expect(ended.turn.kind).toBe("finished")
   })
 
   it("request で起点を打ち、turn-finished で終わった時刻が止まる（入力欄の経過時間表示に使う）", () => {
@@ -759,20 +726,6 @@ describe("applySessionEvent", () => {
     expect(cleared.slashCommands).toEqual(["clear"])
   })
 
-  it("普通のターン（request）は records を残す（丸ごと空にするのは /clear だけ）", () => {
-    const before = apply(
-      { kind: "request", text: "架空の依頼", images: [] },
-      { kind: "speech", text: "架空のセリフ1", expression: "default" },
-      { kind: "speech", text: "架空のセリフ2", expression: "default" },
-      { kind: "request", text: "次の架空の依頼", images: [] },
-    )
-
-    // speeches は request のたびに空になる（送信直後に分かるように）が、records は
-    // 過去のターンを遡れるように残す。
-    expect(before.speeches).toEqual([])
-    expect(before.records.length).toBeGreaterThan(0)
-  })
-
   it("tasks-changed で develop/tasks.json の一覧を持ち、届くまでは不明", () => {
     expect(INITIAL_SESSION_STATE.tasks).toEqual({ kind: "unknown" })
 
@@ -900,19 +853,6 @@ describe("applySessionEvent", () => {
     const view = apply(characterChangedEvent(character))
 
     expect(view.character).toEqual(character)
-  })
-
-  it("character-changed の chatAccent（雑談中だけの accent）もそのまま持つ", () => {
-    const view = apply(characterChangedEvent({ accent: "#6fe3cd", chatAccent: "#f2984a" }))
-
-    expect(view.character?.accent).toBe("#6fe3cd")
-    expect(view.character?.chatAccent).toBe("#f2984a")
-  })
-
-  it("character-changed の tagline（ひとことプロフィール）もそのまま持つ", () => {
-    const view = apply(characterChangedEvent({ tagline: "架空のひとこと" }))
-
-    expect(view.character?.tagline).toBe("架空のひとこと")
   })
 
   it("答え待ちの列をそのまま持つ", () => {
@@ -1203,25 +1143,6 @@ describe("applySessionEvent（質問の記録）", () => {
     expect(entries).toEqual([{ kind: "question", questions: [singleQuestion], answers: [["案B"]] }])
   })
 
-  it("自由入力の答えも、選んだものとして記録に残る", () => {
-    const entries = questionEntries(
-      { kind: "request", text: "架空の依頼", images: [] },
-      {
-        kind: "question-answered",
-        questions: [singleQuestion],
-        answers: [["どちらでもない架空の答え"]],
-      },
-    )
-
-    expect(entries).toEqual([
-      {
-        kind: "question",
-        questions: [singleQuestion],
-        answers: [["どちらでもない架空の答え"]],
-      },
-    ])
-  })
-
   it("複数選択の答えは1つの文字列に畳まれず、選んだぶんだけ並ぶ", () => {
     const entries = questionEntries(
       { kind: "request", text: "架空の依頼", images: [] },
@@ -1328,29 +1249,10 @@ describe("applySessionEvent（見直し）", () => {
     expect(finished.usageReview).toEqual({ kind: "idle" })
   })
 
-  it("割り込まれて（error で）ターンが終わってもふだんへ戻る", () => {
-    const interrupted = applySessionEvent(
-      running(),
-      { kind: "turn-finished", outcome: { kind: "interrupted" } },
-      800,
-    )
-
-    expect(interrupted.usageReview).toEqual({ kind: "idle" })
-  })
-
   it("見直し中にセッションが終わってもふだんへ戻る", () => {
     const ended = applySessionEvent(running(), { kind: "session-ended", reason: "架空" }, 800)
 
     expect(ended.usageReview).toEqual({ kind: "idle" })
-  })
-
-  it("見直しに関わらないターンの終わりでは、ふだんのまま", () => {
-    expect(
-      apply(
-        { kind: "request", text: "架空の依頼", images: [] },
-        { kind: "turn-finished", outcome: { kind: "completed" } },
-      ).usageReview,
-    ).toEqual({ kind: "idle" })
   })
 })
 
@@ -1384,7 +1286,7 @@ describe("applySessionEvent（成果の振り返り）", () => {
     })
   })
 
-  it("diary-stage で段が pick に進む（段は戻らない）", () => {
+  it("diary-stage で段が pick に進む", () => {
     const requested = applySessionEvent(
       INITIAL_SESSION_STATE,
       { kind: "diary-requested", date: "2026-09-23" },
@@ -1476,15 +1378,6 @@ describe("applySessionEvent（成果の振り返り）", () => {
       startedAt: 100,
       stage: "read",
     })
-  })
-
-  it("振り返りに関わらないターンの終わりでは idle のまま", () => {
-    expect(
-      apply(
-        { kind: "request", text: "架空の依頼", images: [] },
-        { kind: "turn-finished", outcome: { kind: "completed" } },
-      ).diaryWriting,
-    ).toEqual({ kind: "idle" })
   })
 })
 

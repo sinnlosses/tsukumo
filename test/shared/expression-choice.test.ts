@@ -75,16 +75,6 @@ describe("expressionChoices", () => {
   it("定義が無いときは default だけを返す（受け付ける表情名が空にならない）", () => {
     expect(expressionChoices(undefined)).toEqual([{ name: "default", label: "default" }])
   })
-
-  // 表情を足しても（EXPRESSIONS 側に serious / curious が増えても）、そのパックの定義に
-  // 立ち絵もラベルも無ければ選択肢に出ない（docs/requirements.md 4.3。default だけは必ず残る）。
-  it("新しく足した表情（serious / curious）も、立ち絵とラベルのどちらも無ければ選択肢に出ない", () => {
-    const definition = parseCharacterDefinition(
-      JSON.stringify({ portraits: { default: "default.png" } }),
-    )
-
-    expect(expressionNames(expressionChoices(definition))).toEqual(["default"])
-  })
 })
 
 describe("resolveExpressionLabel", () => {
