@@ -1,5 +1,6 @@
 import { describe, expect, it } from "bun:test"
 
+import { commandRoute, type CommandRoutePorts } from "../../../../src/command-route.ts"
 import { type CharacterSelection } from "../../../../src/server/character-pack/core/character-selection.ts"
 import { CHAT_NUDGE_PROMPT } from "../../../../src/server/chat/core/chat-nudge.ts"
 import {
@@ -22,7 +23,11 @@ import {
   type SessionDriver,
 } from "../../../../src/server/session-driver/core/session-driver.ts"
 import { type SessionLaunchRequest } from "../../../../src/server/session/core/session-launch.ts"
-import { createSessionManager } from "../../../../src/server/session/core/session-manager.ts"
+import {
+  createSessionManager as createSessionManagerWithRoute,
+  type SessionManager,
+  type SessionManagerOptions,
+} from "../../../../src/server/session/core/session-manager.ts"
 import {
   type TokenUsageEntry,
   type TokenUsageLog,
@@ -175,6 +180,64 @@ const CHARACTER_EVENT: SessionEvent = characterChangedEvent({
 const REMEMBERED_LINES_EVENT: SessionEvent = {
   kind: "remembered-lines-changed",
   lines: ["架空の残った1行"],
+}
+
+/** コマンドの受け手の口（機能ごとの `ports` を平らに並べたもの。棚は `SessionManagerOptions` と共有する）。 */
+type FlatCommandPorts = Omit<
+  CommandRoutePorts["session"] &
+    CommandRoutePorts["characterPack"] &
+    CommandRoutePorts["chat"] &
+    CommandRoutePorts["visit"] &
+    CommandRoutePorts["usageReview"] &
+    CommandRoutePorts["host"],
+  "promptImageShelf"
+>
+
+/**
+ * 平らに並べた口から表を組んでセッションを起こす（テストはコマンドの受け手の口を平らに渡す）。
+ */
+function createSessionManager(
+  options: Omit<SessionManagerOptions, "commands"> & FlatCommandPorts,
+): SessionManager {
+  return createSessionManagerWithRoute(withCommands(options))
+}
+
+/**
+ * 平らに並べた口から表（`commandRoute`）を組んで `commands` に入れる。**表の束ね方は配線と同じ**
+ * （`src/command-route.ts`）なので、ここで見るのは受け手の振る舞いまで含めた `dispatch` の結果。
+ */
+function withCommands(
+  options: Omit<SessionManagerOptions, "commands"> & FlatCommandPorts,
+): SessionManagerOptions {
+  const {
+    rememberSessionDefault,
+    readAchievementDay,
+    diary,
+    editCharacter,
+    createCharacter,
+    deleteCharacter,
+    forgetRememberedLine,
+    rememberVisitEnabled,
+    dismissUsageProposal,
+    openFile,
+    ...rest
+  } = options
+  return {
+    ...rest,
+    commands: commandRoute({
+      session: {
+        promptImageShelf: rest.promptImageShelf,
+        rememberSessionDefault,
+        readAchievementDay,
+        diary,
+      },
+      characterPack: { editCharacter, createCharacter, deleteCharacter },
+      chat: { forgetRememberedLine },
+      visit: { rememberVisitEnabled },
+      usageReview: { dismissUsageProposal },
+      host: { openFile },
+    }),
+  }
 }
 
 function startManagerWithStub(
@@ -1367,8 +1430,8 @@ describe("createSessionManager", () => {
     expect(frames.filter((frame) => frame.type === "hello")).toHaveLength(1)
   })
 
-  // どの種類が isCharacterEditCommand に当たるかは test/shared/command.test.ts が持ち主。
-  // ここで見るのは、当たったコマンドが dispatch から editCharacter 経由の書き込みへ実際に
+  // どの種類が見た目の編集の行に当たるかは `character-pack-command.ts` の表と型が持ち主。
+  // ここで見るのは、そのコマンドが dispatch から editCharacter 経由の書き込みへ実際に
   // 届くこと（set-portrait・set-background は前の2つのテストで、駆動へ渡らないことや
   // hello の配り直しまで含めて確かめ済み）。
   it.each([

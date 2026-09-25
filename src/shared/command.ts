@@ -410,7 +410,7 @@ export const clientCommandSchema = z.discriminatedUnion("type", [
   /**
    * 歯車の「訪問」のオン・オフ（`docs/screen-design.md` 13.6・13.9「設定の歯車」）。
    * **`set-session-default` と違い、いま動いているセッションに即座に効く**——ディスクには
-   * 覚えないので、起こし直すと既定の「する」へ戻る（`src/server/session/core/session-manager.ts`）。
+   * 覚えないので、起こし直すと既定の「する」へ戻る（`src/server/visit/core/visit-command.ts`）。
    */
   z.object({
     type: z.literal("set-visit-enabled"),
@@ -487,7 +487,7 @@ export const clientCommandSchema = z.discriminatedUnion("type", [
   /**
    * 成果の画面のボタン（と見開きの「この日を振り返る」）から送る、成果の振り返り
    * （`docs/glossary.md`「成果の振り返り」）。**画面は日付だけを送る**——依頼文は
-   * session-manager がその日の成果を数え直して組む（`docs/design.md`「日記の受け取りと
+   * サーバ（`src/server/session/core/session-command.ts`）がその日の成果を数え直して組む（`docs/design.md`「日記の受け取りと
    * 保存」「コマンドと依頼」）。`date` は `YYYY-MM-DD`。
    */
   z.object({
@@ -500,9 +500,9 @@ export const clientCommandSchema = z.discriminatedUnion("type", [
 export type ClientCommand = z.infer<typeof clientCommandSchema>
 
 /**
- * 見た目の編集のコマンドの種類。**型（{@link CharacterEditCommand}）も判定
- * （{@link isCharacterEditCommand}）もこの1つの並びから導く** — 二重に列挙すると、足した種類が
- * 型には入って判定には入らない（＝駆動へ流れてしまう）ずれが黙って起きる。
+ * 見た目の編集のコマンドの種類。**型（{@link CharacterEditCommand}）はこの並びから導く**——
+ * 種類を足すと、受け手の表（`character-pack/core/character-pack-command.ts`）に行が無いことを
+ * 型が落とす。
  */
 const CHARACTER_EDIT_COMMAND_TYPES = [
   "set-portrait",
@@ -558,8 +558,8 @@ export type DismissUsageProposalCommand = Extract<
  * 起こし直さない（`docs/design.md` 7.1）。**`open-file` も外れる** — git 管理下の一覧との
  * 照合と `orca file open` の呼び出しだけで、駆動には触らない。**`reflect-achievement` も外れる** —
  * `nudge` と同じく文面（依頼文）をサーバ側が組んでから駆動へ送る（`docs/design.md`「日記の受け取りと
- * 保存」「コマンドと依頼」）。**`set-visit-enabled` も外れる** — `session-manager.ts` が
- * `visit-enabled-changed` を組み立てて流すだけで、駆動には触らない。
+ * 保存」「コマンドと依頼」）。**`set-visit-enabled` も外れる** — 覚えて
+ * `visit-enabled-changed` を流すだけで、駆動には触らない。
  */
 export type DriverCommand = Exclude<
   ClientCommand,
@@ -577,11 +577,6 @@ export type DriverCommand = Exclude<
   | { readonly type: "open-file" }
   | { readonly type: "reflect-achievement" }
 >
-
-/** 見た目の編集のコマンドかどうか（`src/server/session/core/session-manager.ts` の分岐で使う）。 */
-export function isCharacterEditCommand(command: ClientCommand): command is CharacterEditCommand {
-  return CHARACTER_EDIT_COMMAND_TYPES.some((type) => type === command.type)
-}
 
 /**
  * 届いた値をコマンドとして検証する。形が合わないときは undefined を返す

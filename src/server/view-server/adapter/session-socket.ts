@@ -19,7 +19,7 @@ import { type RawData, WebSocketServer } from "ws"
 import { type ClientCommand, parseClientCommand } from "../../../shared/command.ts"
 import { FRAME_ERROR_REASON, type ServerFrame } from "../../../shared/frame.ts"
 import { SESSION_SOCKET_PATH, SESSION_TOKEN_QUERY_NAME } from "../../../shared/session-socket.ts"
-import { type DispatchResult } from "../../session/core/driver-command.ts"
+import { type DispatchResult } from "../../session/core/command-dispatch.ts"
 
 /**
  * 受け取るメッセージ1件の上限（バイト）。**1件の依頼に添えられる画像（原寸 5 MiB × 2 枚）を

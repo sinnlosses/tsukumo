@@ -7,6 +7,7 @@
 
 import process from "node:process"
 
+import { commandRoute } from "./command-route.ts"
 import { type CurrentCharacter } from "./current-character.ts"
 import {
   type AchievementCommitCache,
@@ -208,15 +209,6 @@ export function startSession(options: SessionStartOptions): SessionManager {
       restoreEvents: (resumed, pack) =>
         readRestoredEvents(resumed, expressionChoices(pack.definition)),
     }),
-    // 歯車から届いた既定は、覚えてから画面へ流し直すだけ（いまのセッションには効かない）。
-    rememberSessionDefault: (sessionDefault) => rememberSessionDefault(sessionDefault),
-    // 歯車から届いた「訪問」のオン・オフは、覚えてから画面へ流し直す。**こちらは
-    // いま動いているセッションにも即座に効く**（`rememberVisitEnabled` の doc コメント）。
-    rememberVisitEnabled: (visitEnabled) => rememberVisitEnabled(visitEnabled),
-    editCharacter: (edit) => Promise.resolve(character.applyEdit(edit)),
-    createCharacter: (create) => Promise.resolve(character.applyCreate(create)),
-    deleteCharacter: (remove) => Promise.resolve(character.applyDelete(remove)),
-    forgetRememberedLine: (line) => Promise.resolve(character.forgetRememberedLine(line)),
     // 前回の見直しの結果は、起こしたときにホームから読んで初期の姿へ差し込む
     // （`docs/design.md`「見直しのツールと状態」）。書くのは結果が届くたびで、
     // どちらも既定の置き場（`~/.tsukumo/usage-review.json`）をそのまま使う。読むときに
@@ -224,20 +216,6 @@ export function startSession(options: SessionStartOptions): SessionManager {
     readPreviousUsageReview: () =>
       withoutDismissedProposals(readPreviousUsageReview(), readDismissedUsageProposalKeys()),
     writePreviousUsageReview,
-    dismissUsageProposal: (dismiss) => dismissUsageProposal(dismiss),
-    openFile: (path) =>
-      openTrackedFile(
-        path,
-        () => listRepositoryFiles(cwd),
-        (tracked) => host.openFile(tracked),
-      ),
-    // **`GET /achievement`（`src/view-delivery.ts`）と同じ数え方**（`readAchievement`）。「今日」を
-    // 決めるのもそちらと同じくここ（配線層）の仕事。読めなかった・`main` が読めない日は
-    // `undefined` に畳み、断る理由は session-manager が決める。
-    readAchievementDay: async (date) => {
-      const result = await readAchievement(cwd, date, todayLocalDateKey(), achievementCommitCache)
-      return result.kind === "ok" ? result.achievement : undefined
-    },
     // 訪問の見張りの口。客の候補は**来るときに**パックの一覧を読み直して拾う（画面から作った・
     // 直したパックもその場で効く）。しきい値を縮めるのは `TSUKUMO_VISIT_QUICK=1` のときだけ。
     visit: {
@@ -251,18 +229,59 @@ export function startSession(options: SessionStartOptions): SessionManager {
           ? visitScriptSource(cwd, config.inheritedEnv, achievementCommitCache)
           : { kind: "pack-only" },
     },
-    // 振り返りの書き手の出どころ。疑似セッションでは起こさない
-    // （`docs/design.md`「日記の受け取りと保存」「問い合わせの起こし方」）。
-    diary:
-      fakeSession === undefined
-        ? diaryWriterSource(cwd, () => diaryContext)
-        : { kind: "dont-write" },
+    // コマンドの受け手の表（`src/command-route.ts`）。書き込みの中身はここで選んで渡す。
+    commands: commandRoute({
+      session: {
+        // 置く契機（`prompt`）は表の行、捨てる契機（記録の窓）は `session-manager`。
+        promptImageShelf,
+        // 歯車から届いた既定は、覚えてから画面へ流し直すだけ（いまのセッションには効かない）。
+        rememberSessionDefault: (sessionDefault) => rememberSessionDefault(sessionDefault),
+        // **`GET /achievement`（`src/view-delivery.ts`）と同じ数え方**（`readAchievement`）。「今日」を
+        // 決めるのもそちらと同じくここ（配線層）の仕事。読めなかった・`main` が読めない日は
+        // `undefined` に畳み、断る理由は表の行（`session-command.ts`）が決める。
+        readAchievementDay: async (date) => {
+          const result = await readAchievement(
+            cwd,
+            date,
+            todayLocalDateKey(),
+            achievementCommitCache,
+          )
+          return result.kind === "ok" ? result.achievement : undefined
+        },
+        // 振り返りの書き手の出どころ。疑似セッションでは起こさない
+        // （`docs/design.md`「日記の受け取りと保存」「問い合わせの起こし方」）。
+        diary:
+          fakeSession === undefined
+            ? diaryWriterSource(cwd, () => diaryContext)
+            : { kind: "dont-write" },
+      },
+      characterPack: {
+        editCharacter: (edit) => Promise.resolve(character.applyEdit(edit)),
+        createCharacter: (create) => Promise.resolve(character.applyCreate(create)),
+        deleteCharacter: (remove) => Promise.resolve(character.applyDelete(remove)),
+      },
+      chat: {
+        forgetRememberedLine: (line) => Promise.resolve(character.forgetRememberedLine(line)),
+      },
+      // 歯車から届いた「訪問」のオン・オフは、覚えてから画面へ流し直す。**こちらは
+      // いま動いているセッションにも即座に効く**（`visit-command.ts`）。
+      visit: { rememberVisitEnabled: (visitEnabled) => rememberVisitEnabled(visitEnabled) },
+      usageReview: { dismissUsageProposal: (dismiss) => dismissUsageProposal(dismiss) },
+      host: {
+        openFile: (path) =>
+          openTrackedFile(
+            path,
+            () => listRepositoryFiles(cwd),
+            (tracked) => host.openFile(tracked),
+          ),
+      },
+    }),
   })
 }
 
 /**
  * 振り返りの書き手の出どころ（`docs/design.md`「日記の受け取りと保存」）。書く時点のパックは
- * `readContext` で毎回読み直す——`session-manager` が数え直した材料と組み合わせて
+ * `readContext` で毎回読み直す——`session-command.ts` が数え直した材料と組み合わせて
  * {@link createDiaryWriter} へ渡す。`cwd` はリポジトリの見分けに使う（`appendDiaryParagraph`）。
  */
 function diaryWriterSource(

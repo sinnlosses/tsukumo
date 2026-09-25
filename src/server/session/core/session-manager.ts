@@ -2,10 +2,10 @@
 // まとめてフレームで配る**（docs/design.md 5章）。
 //
 // - 状態をサーバ側でも持つのは、接続してきたブラウザへ `hello` の snapshot を返すため
-// - コマンドの分岐（`switch (command.type)`）は**ここが唯一**。旧の POST 6本ぶんの判断が1つになる
-//   （`switch-character` は駆動へ渡すのではなく起こし直しとして、キャラクターへの書き込み
-//   （`set-portrait` / `clear-portrait` / `set-outfit-accent` / `create-character` /
-//   `delete-character`）は**書き込みと `character-changed` の流し直し**として、どちらも手前で捌く）
+// - **コマンドの分岐はここに無い**。どの種類をどの機能が受け、どの条件で断るかは機能ごとの表
+//   （束ねるのは配線の `src/command-route.ts`）が持ち、ここは受け手に見せる口
+//   （`CommandSession`）を作って `command-dispatch.ts` へ渡すだけ（docs/design.md 2章
+//   「コマンドの受け手と手続きの置き方」）
 // - **持つセッションは1つだけで、鍵を持たない**（docs/design.md 8章）。キャラクター・雑談モード・
 //   セッションの切り替えはこの持ち物の中で駆動を起こし直す（`restart`）ので、古い側と新しい側を
 //   並べて持つことが無い
@@ -16,25 +16,12 @@
 // 会話の内容がイベントとして通るが、**ログにもファイルにも書かない**
 // （docs/coding-standards.md「会話内容の扱い」）。配る先は購読しているブラウザだけ。
 
-import {
-  achievementReflectionRequestText,
-  isEmptyAchievementDay,
-  type DailyAchievement,
-} from "../../../shared/achievement.ts"
-import {
-  type CharacterCreateCommand,
-  type CharacterDeleteCommand,
-  type CharacterEditCommand,
-  type ClientCommand,
-  type DismissUsageProposalCommand,
-  isCharacterEditCommand,
-} from "../../../shared/command.ts"
+import { type ClientCommand } from "../../../shared/command.ts"
 import {
   type ContextUsageReport,
   UNAVAILABLE_CONTEXT_USAGE,
 } from "../../../shared/context-usage.ts"
 import { FRAME_ERROR_REASON, PROTOCOL_VERSION, type ServerFrame } from "../../../shared/frame.ts"
-import { BUILTIN_SESSION_DEFAULT, type SessionDefault } from "../../../shared/session-default.ts"
 import { type SessionEvent } from "../../../shared/session-event.ts"
 import {
   applySessionEvent,
@@ -48,8 +35,6 @@ import {
   type ContextUsageLog,
   createContextUsageRecorder,
 } from "../../context-usage/core/context-usage.ts"
-import { type DiaryDayTask } from "../../diary/core/diary-tool.ts"
-import { type DiaryWriteRequest, type DiaryWriterSource } from "../../diary/core/diary-writer.ts"
 import {
   type PromptImageShelf,
   releasedPromptImageIds,
@@ -61,7 +46,12 @@ import {
   type TokenUsageRecorder,
 } from "../../token-usage/core/token-usage.ts"
 import { createVisitWatch, type VisitPorts, type VisitWatch } from "../../visit/core/visit-watch.ts"
-import { declined, type DispatchResult, dispatchToDriver, nudge } from "./driver-command.ts"
+import {
+  type CommandRoute,
+  type CommandSession,
+  dispatchCommand,
+  type DispatchResult,
+} from "./command-dispatch.ts"
 import { createEventBatch, type EventBatch } from "./event-batch.ts"
 import { type SessionLaunchRequest } from "./session-launch.ts"
 
@@ -136,65 +126,6 @@ export type SessionManagerOptions = {
     request: SessionLaunchRequest,
   ) => Promise<SessionDriver>
   /**
-   * `edit.pack` で指されたキャラクターパック（使用中に限らない）の立ち絵・差し色・背景を変え、
-   * **画面へ流す `character-changed` イベントを返す**（書き込み先と受け付けない条件は
-   * `src/server/character-pack/adapter/character-edit.ts`。無いパック・起動先の `characters/local` も
-   * ここで undefined になる）。**受け付けられなかったときは undefined**
-   * （呼び出し側は定型文の `error` を返す）。
-   *
-   * どのパックを変えてもセッションは起こし直さない（会話も履歴も消えない）。**`speak` が受け付ける表情の一覧は
-   * 起こしたときのままなので、立ち絵を足した表情をキャラクター自身が選べるのは次の起動から。**
-   */
-  readonly editCharacter: (edit: CharacterEditCommand) => Promise<SessionEvent | undefined>
-  /**
-   * 新しいキャラクターパックを作り、**選択肢の増えた `character-changed` イベントを返す**
-   * （書き込み先と受け付けない条件は `src/server/character-pack/adapter/character-edit.ts`）。作れなかったときは
-   * undefined（呼び出し側は定型文の `error` を返す）。
-   *
-   * **作ったパックへ切り替えはしない**（一覧に足すだけ。切り替えは駆動の起こし直しで画面が
-   * 初期化されるので、作る操作の副作用にしない。`docs/design.md` 7.1）。
-   */
-  readonly createCharacter: (create: CharacterCreateCommand) => Promise<SessionEvent | undefined>
-  /**
-   * キャラクターパックを消し、**選択肢の減った `character-changed` イベントを返す**（消す範囲と
-   * 受け付けない条件は `src/server/character-pack/adapter/character-edit.ts` の `deleteCharacterPack`。使用中・
-   * ホームに版の無いパックは消さない）。消せなかったときは undefined（呼び出し側は定型文の
-   * `error` を返す）。
-   *
-   * **ターン中も受け付ける**（使用中のパックは消せないので、いまの会話には触らない）。
-   */
-  readonly deleteCharacter: (remove: CharacterDeleteCommand) => Promise<SessionEvent | undefined>
-  /**
-   * 雑談のサイドバー「覚えていること」の「編集」から1行消し、**流し直す
-   * `remembered-lines-changed` を返す**（書き込み先と受け付けない条件は
-   * `src/server/chat/adapter/persona-memory.ts` の `forgetRememberedLineFromScreen`）。**受け付けられ
-   * なかったときは undefined**（呼び出し側は定型文の `error` を返す）。
-   *
-   * セッションは起こし直さない（`editCharacter` と同じ立場。`docs/design.md` 7.1）。
-   */
-  readonly forgetRememberedLine: (line: string) => Promise<SessionEvent | undefined>
-  /**
-   * 新しいセッションの既定（モデル・許可モード）を覚え、**画面へ流す
-   * `session-default-changed` イベントを返す**（覚え先は `~/.tsukumo/state.json`。
-   * `docs/screen-design.md` 13.6）。
-   *
-   * **いま動いているセッションには効かない**（効くのは次に起こすときから）。だから駆動には
-   * 渡らず、セッションを起こし直しもしない。**書けたかどうかに関わらず、返すイベントは常に1つ**
-   * — 書き込みは失敗しても例外を投げない口なので、失敗を区別して返す手立てがここには無い。
-   */
-  readonly rememberSessionDefault: (sessionDefault: SessionDefault) => SessionEvent
-  /**
-   * 歯車の「訪問」のオン・オフを覚え、**画面へ流す `visit-enabled-changed` イベントを返す**
-   * （覚え先は `rememberSessionDefault` と同じ `~/.tsukumo/state.json`。
-   * `docs/screen-design.md` 13.6）。
-   *
-   * **`rememberSessionDefault` と違い、いま動いているセッションにも即座に効く**——このイベントは
-   * ほかの駆動由来のイベントと同じ道（`receive`）で畳まれるので、訪問の見張り
-   * （`GenerationTally.visit`）にも同じタイミングで届く（`src/server/visit/core/visit-timing.ts` の
-   * `visitArrival` / `departureReason` がゲートと帰る合図にする）。セッションは起こし直さない。
-   */
-  readonly rememberVisitEnabled: (visitEnabled: boolean) => SessionEvent
-  /**
    * ホームに残っている前回の見直しの結果（`docs/design.md`「見直しのツールと状態」）。**起こした
    * ときに1回だけ**読み、初期の姿（{@link SessionState.previousUsageReview}）に載せる——
    * `INITIAL_SESSION_STATE` は静的な定数なので、ここでしか差し込めない。
@@ -208,36 +139,16 @@ export type SessionManagerOptions = {
    */
   readonly writePreviousUsageReview: (reviewedAt: number, findings: UsageReviewFindings) => void
   /**
-   * トークン消費の画面の札から提案を1件見送り、**流し直す `usage-proposal-dismissed` を返す**
-   * （書き込み先は `src/server/usage-review/adapter/usage-proposal-dismissal.ts`）。**書けたかどうかに関わらず
-   * 常に1つ返す**（`rememberSessionDefault` と同じ立場）。セッションは起こし直さない。
-   */
-  readonly dismissUsageProposal: (dismiss: DismissUsageProposalCommand) => SessionEvent
-  /**
-   * レポートに書かれたパスを Orca のエディタで開く。**`path` が git 管理下の一覧にあるかどうかの
-   * 確かめと `Host.openFile` の呼び出しは呼び出し側（`src/session-start.ts`）が持つ**——ここは
-   * 「開けたかどうか」だけを受け取る。セッションは起こし直さず、画面へ流すイベントも無い
-   * （開けた・開けなかったの結果は `error` フレーム越しにだけ伝わる）。
-   */
-  readonly openFile: (path: string) => Promise<boolean>
-  /**
-   * 成果の振り返り（`reflect-achievement`）を受けたときに、その日の成果を数え直す口
-   * （`docs/design.md`「日記の受け取りと保存」「コマンドと依頼」）。**画面が出している
-   * `GET /achievement` と同じ数え方**（`src/server/achievement/adapter/main-history.ts` の
-   * `readAchievement`）を使い、依頼文と関所（その日の終えたタスクの ID）を同じ読み取りから
-   * 作る。`main` が読めない・`git` の呼び出しが失敗したときは undefined。
-   */
-  readonly readAchievementDay: (date: string) => Promise<DailyAchievement | undefined>
-  /**
    * 訪問の見張りに渡す口（しきい値・時計・客の候補・乱数。`src/server/visit/core/visit-watch.ts`）。
    * 見張りは代ごとに1つ作る（{@link GenerationTally.visit}）。
    */
   readonly visit: VisitPorts
   /**
-   * 成果の振り返りの書き手の出どころ（`src/server/diary/core/diary-writer.ts`。訪問の台本と同じ
-   * 使い捨ての形。`docs/design.md`「日記の受け取りと保存」）。疑似セッションでは `dont-write`。
+   * コマンドの受け手の表（`docs/design.md` 2章「コマンドの受け手と手続きの置き方」）。**どの種類を
+   * どの機能が受け、どの条件で断るかは表の側**が持ち、ここは {@link CommandSession} を作って
+   * `dispatchCommand` へ渡すだけ。束ねるのは配線（`src/command-route.ts`）。
    */
-  readonly diary: DiaryWriterSource
+  readonly commands: CommandRoute
 }
 
 /**
@@ -564,238 +475,16 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
     generation.announce()
   }
 
-  /**
-   * キャラクターへの書き込み1件（立ち絵・差し色を変える、新しいパックを作る）。**書き込みは
-   * 呼び出し側（配線層）に任せ**、戻ってきたイベントをここで畳んで配る（`hello` は配り直さない
-   * — 状態はイベント1つで足りる）。受け付けられなかったときは定型文の理由を返すだけで、
-   * 常駐プロセスは落とさない。
-   */
-  const write = async (
-    apply: () => Promise<SessionEvent | undefined>,
-    reason: string,
-  ): Promise<DispatchResult> => {
-    try {
-      const event = await apply()
-      if (event === undefined) {
-        return { ok: false, reason }
-      }
-      // 見た目の編集で起こした `character-changed` は、駆動から届くのと同じ「新しい」もの
-      // （復元の再生ではない）。
-      receive(generation, event, "driver")
-      return { ok: true }
-    } catch {
-      return { ok: false, reason }
-    }
-  }
-
-  /**
-   * ファイルを1つ開く。**流すイベントが無い**（画面の状態は動かないので `write` は使わない）。
-   * `options.openFile` が例外を投げても常駐プロセスは落とさず、定型文の理由を返す
-   * （`dispatchToDriver` と同じ扱い）。
-   */
-  const openFile = async (path: string): Promise<DispatchResult> => {
-    try {
-      const opened = await options.openFile(path)
-      return opened ? { ok: true } : { ok: false, reason: FRAME_ERROR_REASON.openFileFailed }
-    } catch {
-      return { ok: false, reason: FRAME_ERROR_REASON.openFileFailed }
-    }
-  }
-
-  /**
-   * 成果の振り返り（`reflect-achievement`）。**会話のターン中・答え待ちでも受ける**——断るのは
-   * 日記を書いている最中（`state.diaryWriting.kind === "writing"`）と、その日の成果が読めない・
-   * 空の日のときだけ（`docs/design.md`「日記の受け取りと保存」「コマンドと依頼」）。通れば
-   * `diary-requested` を流し、**代の持ち物の書き手**（`options.diary`）に1回ぶんを渡す。会話の
-   * `SessionDriver` は通らない——書き手は会話とは別の使い捨ての問い合わせ。
-   */
-  const reflectAchievement = async (date: string): Promise<DispatchResult> => {
-    if (state.diaryWriting.kind === "writing") {
-      return declined(FRAME_ERROR_REASON.achievementReflectionWriting)
-    }
-
-    // **いまの代を1つに固定する**——数え直しを待つ間に起こし直しても、この振り返りは始めたときの
-    // 代のまま進める（起こし直した代のイベントに混ざらない。`emit` は代が閉じたら黙って捨てる）。
-    const currentGeneration = generation
-
-    const achievement = await readAchievementDaySafely(date)
-    if (
-      achievement === undefined ||
-      achievement.kind !== "known" ||
-      isEmptyAchievementDay(achievement.commitCount, achievement.doneTasks)
-    ) {
-      return declined(FRAME_ERROR_REASON.achievementReflectionUnavailable)
-    }
-
-    const doneTasks: readonly DiaryDayTask[] =
-      achievement.doneTasks.kind === "known" ? achievement.doneTasks.items : []
-    const text = achievementReflectionRequestText({
-      date,
-      today: achievement.today,
-      commitCount: achievement.commitCount,
-      doneTasks: achievement.doneTasks,
-      graduations: achievement.graduations,
-      milestones: achievement.milestones,
-      alreadyWritten: achievement.diary.kind === "written",
-    })
-
-    currentGeneration.emit({ kind: "diary-requested", date })
-
-    if (options.diary.kind === "dont-write") {
-      // 疑似セッション: claude を起こさず、`diary-requested` のすぐ後に `diary-failed` を流す
-      // （`docs/design.md`「日記の受け取りと保存」「問い合わせの起こし方」）。
-      currentGeneration.emit({ kind: "diary-failed", date })
-      return { ok: true }
-    }
-
-    const request: DiaryWriteRequest = {
-      date,
-      doneTasks,
-      requestText: text,
-      model: state.model ?? BUILTIN_SESSION_DEFAULT.model,
-    }
-    // **待たない**（書き手は自分でイベントを流し終える。`reflect-achievement` はここで返す）。
-    void options.diary.write(request, currentGeneration.emit, currentGeneration.diarySignal)
-    return { ok: true }
-  }
-
-  /** `options.readAchievementDay` が例外を投げても、常駐プロセスは落とさず undefined に畳む。 */
-  const readAchievementDaySafely = async (date: string): Promise<DailyAchievement | undefined> => {
-    try {
-      return await options.readAchievementDay(date)
-    } catch {
-      return undefined
-    }
+  // 受け手へ見せる口。**代は呼ばれたその時点のもの**を返す（起こし直しをまたいで持ち回らない）。
+  const commandSession: CommandSession = {
+    state: () => state,
+    driver: () => generation.driver,
+    restart,
+    generation: () => ({ emit: generation.emit, diarySignal: generation.diarySignal }),
   }
 
   return {
-    dispatch: (command) => {
-      // 画面は同じ条件で操作子を塞ぐが、ここでも見る（画面を経ない依頼・無効化の描画が
-      // 間に合わなかったときの取りこぼし対策）。**見る順は「雑談の外か」→「ターン中か」**で、
-      // 仕事のときに押された `nudge` にはターン中の理由を返さない。
-      if (!state.chatMode) {
-        switch (command.type) {
-          // **雑談のときだけ**（`docs/screen-design.md` 13.7）——仕事のメインビューは記録を積んで
-          // レポートを出す面なので、キャラクターから始まるターンを混ぜない。
-          case "nudge":
-            return declined(FRAME_ERROR_REASON.nudgeOutsideChat)
-          // サイドバーの「覚えていること」自体が雑談中にしか出ない。
-          case "forget-remembered-line":
-            return declined(FRAME_ERROR_REASON.forgetRememberedLineOutsideChat)
-          default:
-            break
-        }
-      }
-      // **ターン中なら断る判定はここ1か所**（起こし直しの3つと `nudge`）。理由の文面だけは、
-      // 何ができなかったかで分ける（docs/screen-design.md 13.9「動き方の操作子」）。
-      // **`reflect-achievement` はここに無い**——会話のターン中・答え待ちでも受ける
-      // （`docs/design.md`「日記の受け取りと保存」「コマンドと依頼」）。断るかどうかは
-      // `reflectAchievement` の中で見る。
-      if (state.turn.kind === "running") {
-        switch (command.type) {
-          case "switch-character":
-            return declined(FRAME_ERROR_REASON.switchDuringTurn)
-          case "set-chat-mode":
-            return declined(FRAME_ERROR_REASON.chatModeSwitchDuringTurn)
-          case "switch-session":
-            return declined(FRAME_ERROR_REASON.sessionSwitchDuringTurn)
-          case "nudge":
-            return declined(FRAME_ERROR_REASON.nudgeDuringTurn)
-          default:
-            break
-        }
-      }
-
-      switch (command.type) {
-        // **雑談かどうかは切り替えをまたいで保つ**（パックを変えただけで仕事へ戻らない）。
-        // 画面から名前が届いた唯一の口なので、**ここで選んだパックだけが次の起動の初期値に
-        // なる**（docs/screen-design.md 13.6）。
-        case "switch-character":
-          return restart({
-            selection: { by: "name", name: command.name },
-            chat: state.chatMode,
-            resume: { by: "latest" },
-          })
-        // **いま出しているパックのまま**起こし直す（雑談に入るとキャラクターが変わる、
-        // とは決めていない）。**名前では渡さない** — 渡すと「画面から選ばれた名前」と
-        // 区別がつかず、モードを切り替えただけで覚えた値が書き換わる（docs/screen-design.md 13.6）。
-        case "set-chat-mode":
-          return restart({
-            selection: { by: "current" },
-            chat: command.chat,
-            resume: { by: "latest" },
-          })
-        // **キャラクターもモードもいま出しているまま**（変わるのは、どの transcript の続きから
-        // 始めるかだけ）。一覧は同じパック・同じモードのものしか出していないので、選んだ先で
-        // 相手が入れ替わることもない。
-        case "switch-session":
-          return restart({
-            selection: { by: "current" },
-            chat: state.chatMode,
-            resume: { by: "id", sessionId: command.sessionId },
-          })
-        case "nudge":
-          return nudge(generation.driver)
-        case "create-character":
-          return write(
-            () => options.createCharacter(command),
-            FRAME_ERROR_REASON.characterCreateFailed,
-          )
-        case "delete-character":
-          return write(
-            () => options.deleteCharacter(command),
-            FRAME_ERROR_REASON.characterDeleteFailed,
-          )
-        case "forget-remembered-line":
-          return write(
-            () => options.forgetRememberedLine(command.line),
-            FRAME_ERROR_REASON.forgetRememberedLineFailed,
-          )
-        // **起こし直さない**（`forget-remembered-line` と同じ立場。書いて、
-        // `usage-proposal-dismissed` を流すだけ）。
-        case "dismiss-usage-proposal":
-          return write(
-            () => Promise.resolve(options.dismissUsageProposal(command)),
-            FRAME_ERROR_REASON.usageProposalDismissFailed,
-          )
-        // **起こし直さない**（次に起こすときから効く値なので、いまの会話には触らない）。
-        // 書いて、覚えた値を画面へ流すだけ。
-        case "set-session-default":
-          return write(
-            () =>
-              Promise.resolve(
-                options.rememberSessionDefault({
-                  model: command.model,
-                  effort: command.effort,
-                  permissionMode: command.permissionMode,
-                }),
-              ),
-            FRAME_ERROR_REASON.sessionDefaultFailed,
-          )
-        // **起こし直さない。覚え方は `set-session-default` と同じ**（`~/.tsukumo/state.json`。
-        // 歯車の「訪問」。`docs/screen-design.md` 13.6）が、**効き方は違う**——書いて返した
-        // `visit-enabled-changed` は訪問の見張りにも同じ道（`receive`）で即座に届き、オフなら
-        // 来ない・訪問中なら帰る（`src/server/visit/core/visit-timing.ts`）。
-        case "set-visit-enabled":
-          return write(
-            () => Promise.resolve(options.rememberVisitEnabled(command.enabled)),
-            FRAME_ERROR_REASON.visitEnabledFailed,
-          )
-        // **起こし直さない。画面の状態も動かさない**（レポートに書かれたパスを Orca の
-        // エディタで開くだけ。`docs/display.md` 4.2「各表示物」）。
-        case "open-file":
-          return openFile(command.path)
-        // **駆動へそのまま渡さない**（`nudge` と同じく依頼文をここで組んでから送る）。
-        case "reflect-achievement":
-          return reflectAchievement(command.date)
-        default:
-          break
-      }
-      if (isCharacterEditCommand(command)) {
-        return write(() => options.editCharacter(command), FRAME_ERROR_REASON.characterEditFailed)
-      }
-      return dispatchToDriver(generation.driver, command, options.promptImageShelf)
-    },
+    dispatch: (command) => dispatchCommand(options.commands, command, commandSession),
     readContextUsage: async () => {
       // 起こし直しの最中・起こせなかったときは駆動そのものが無い。**画面の札が1枚出ない
       // だけ**で、常駐プロセスは落とさない（`dispatchToDriver` と同じ扱い）。

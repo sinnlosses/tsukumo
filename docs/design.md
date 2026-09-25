@@ -154,7 +154,7 @@ sed -n '/^## 4\. shared/,/^## /p' docs/design.md
 
 | 機能              | 何の機能か                                                                                | `core/`                                                                                                                                                  | `adapter/`                                                                               |
 | ----------------- | ----------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| `session/`        | セッションを持つ・起こす・頼む。**各機能の判断を束ねる**（下の「束ねる機能」）            | `session-manager` `session-launch` `event-batch` `driver-command`                                                                                        | `remembered-default`                                                                     |
+| `session/`        | セッションを持つ・起こす・頼む。**各機能の判断を束ねる**（下の「束ねる機能」）            | `session-manager` `session-launch` `event-batch` `driver-command` `command-dispatch` `session-command`                                                   | `remembered-default`                                                                     |
 | `session-driver/` | セッション駆動。契約・SDK の実装・fake driver・メッセージの変換・答え待ち・続きから始める | `session-driver` `sdk-message` `pending-answer` `self-started-turn` `visible-output-nudge` `session-restore` `session-title` `prompt-image-shelf` `plan` | `sdk-driver` `sdk-tool` `sdk-session` `sdk-context-usage` `fake-driver` `claude-account` |
 | `report/`         | レポートの記法・`report` ツール・検査と差し戻し                                           | `report-notation` `report-tool` `report-review` `report-violation`                                                                                       | —                                                                                        |
 | `system-prompt/`  | `systemPrompt` の append の組み立てと、セリフの間合いの規約                               | `system-prompt` `speech-cadence`                                                                                                                         | —                                                                                        |
@@ -186,7 +186,7 @@ sed -n '/^## 4\. shared/,/^## /p' docs/design.md
   （`session-driver/core/session-driver.ts` が雑談の書き口の型（`ChatArchive` など）を持ち、
   SDK の境界の `session-driver/adapter/` が雑談のツールの判断の `chat/core/` を読む）と、
   `view-server` → `session` → `session-driver` → `view-server`（`session-socket.ts` が
-  `driver-command.ts` を、`session-restore.ts` が `port-resolution.ts` を読む）。どちらも1本が
+  `command-dispatch.ts` を、`session-restore.ts` が `port-resolution.ts` を読む）。どちらも1本が
   `adapter → 別の機能の core` で、これは層の辺と同じ向きなので、ファイルの単位では輪にならない
 - **束ねる機能は `session/` の1つ。** `session-manager.ts` は外の世界に触らないので `core` だが、
   各機能の判断（訪問の見張り・日記・トークン消費・雑談のアーカイブ）を読んで1つのセッションに
@@ -203,7 +203,7 @@ sed -n '/^## 4\. shared/,/^## /p' docs/design.md
 | --------------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `session`             | `session-driver` `chat` `visit` `diary` `token-usage` `context-usage` `character-pack`      | core → core だけ                                                                                                                                        |
 | `system-prompt`       | `session-driver` `chat` `report`                                                            | core → core だけ                                                                                                                                        |
-| `view-server`         | `session` `achievement`                                                                     | adapter → core（`session-socket` → `driver-command`）・adapter → adapter（`server` → `main-history`）                                                   |
+| `view-server`         | `session` `achievement`                                                                     | adapter → core（`session-socket` → `command-dispatch`）・adapter → adapter（`server` → `main-history`）                                                 |
 | `chat`                | `session-driver` `character-pack`                                                           | core → core と adapter → core（駆動の契約にある雑談の型）・adapter → adapter（`persona-memory` / `chat-summary` → `character-pack` / `character-edit`） |
 | `context-usage`       | `session-driver`                                                                            | core → core（駆動の契約）                                                                                                                               |
 | `session-driver`      | `chat` `report` `usage-review` `view-server`                                                | core → core（`report-review` `port-resolution`）・adapter → core（各ツールの判断）                                                                      |
@@ -216,8 +216,8 @@ sed -n '/^## 4\. shared/,/^## /p' docs/design.md
 **2026-09-26 に `docs/research/server-procedure-proposal.md` の段1〜3を採った**（道具の比較・
 手本・採らなかった案はそちら）。目的は「**どのコマンドをどの機能が受け、どの条件で断るか**」を、
 `session-manager.ts` の `switch` と `SessionManagerOptions` の口ではなく、機能の側の表から辿れるように
-すること。**いまの実装はまだ段1の前**（`dispatch` の `switch` 3つ）で、この小見出しは移した先の形の
-正典。段ごとの作業は `develop/task/` にある。
+すること。**段1は 2026-09-26 に移し終えた**（`dispatch` の `switch` 3つは消えた）。段2〜3は移した先の
+形の正典で、段ごとの作業は `develop/task/` にある。
 
 **段1（依存を足さない）: 機能ごとの受け手の表**
 
@@ -309,7 +309,7 @@ src/
   current-character.ts        いま出しているパックと選択肢の持ち主（切り替えと画面からの編集で入れ替わる）
   view-delivery.ts            ビューの配信。組み立てたブラウザ側と開いているタブを持ち、/ws と見張りを束ねる
   session-start.ts            セッションを1つ起こす（どの駆動で起こすか・続きをどう探すか）
-  command-route.ts            （段1で足す）全機能のコマンドの受け手の表を1枚に束ねる。段3で router.ts
+  command-route.ts            全機能のコマンドの受け手の表を1枚に束ねる。段3で router.ts
                               （全機能の手続きを束ねる）へ吸われる（上の「コマンドの受け手と手続きの置き方」）
   shared/
     session-event.ts          SessionEvent（zod と z.infer）
@@ -350,7 +350,7 @@ src/
                               （機能の一覧と辺は上の「サーバの機能と、機能どうしの辺」）
     core/                     共有の判断（どの機能にも属さないもの）。node: / SDK / ws を import しない
       config.ts               環境変数の解釈（読み取りは cli.ts。ここは渡された env を見るだけ）
-      command-receiver.ts     （段1で足す）コマンドの受け手の行の型（write / call）と断る条件の2列
+      command-receiver.ts     コマンドの受け手の行の型（write / call）と断る条件の2列
     adapter/                  共有の境界（どの機能にも属さないもの）。1ファイル = 1つの境界
       tsukumo-home.ts         ~/.tsukumo/ の場所を組み立てる唯一の口
       bundled-path.ts         同梱物の位置（import.meta.url）
@@ -361,10 +361,9 @@ src/
         session-manager.ts    セッション1つの { generation, state, subscribers }。reducer をサーバ側でも回す
         session-launch.ts     起こす一続きの順序（外に触る部分は session-start.ts が渡す。起動も切り替えも同じ）
         event-batch.ts        届いたイベントをまとめて配る束（間隔と、書きかけの本文の連結）
-        driver-command.ts     起き上がっている駆動に1件頼む（受け付けたかどうかの返し方 DispatchResult も）
-        command-dispatch.ts   （段1で足す）断る条件を1箇所で見て受け手を呼ぶ。CommandRoute・CommandSession・
-                              DispatchResult（driver-command.ts から移す）
-        session-command.ts    （段1で足す）session が受けるコマンドの表（駆動へ渡す6種・nudge・起こし直し3種・
+        driver-command.ts     起き上がっている駆動に1件頼む（渡し方と、駆動が投げたときの畳み方）
+        command-dispatch.ts   断る条件を1箇所で見て受け手を呼ぶ。CommandRoute・CommandSession・DispatchResult
+        session-command.ts    session が受けるコマンドの表（駆動へ渡す6種・nudge・起こし直し3種・
                               reflect-achievement・set-session-default）
       adapter/
         remembered-default.ts 次に起こすときの初期値（~/.tsukumo/state.json。キャラクター名・モデル・effort・許可モード・訪問のオン・オフ）
@@ -410,7 +409,7 @@ src/
                               bundle.ts / ui-rebuild.ts / source-fingerprint.ts（bun build と src/browser/ の見張り）
     repository/adapter/       git.ts（`git` を起こす唯一の口）/ repository-file.ts（git ls-files）/
                               task-summary.ts（main のタスク一覧の読み直し）
-    <機能>/core/<機能>-command.ts   （段1で足す）その機能が受けるコマンドの表（character-pack / chat /
+    <機能>/core/<機能>-command.ts   その機能が受けるコマンドの表（character-pack / chat /
                               visit / usage-review / host）
     <機能>/adapter/<機能>-procedure.ts （段2〜3で足す）その機能の手続き（oRPC の受け手）
   browser/
@@ -1313,8 +1312,7 @@ Layout に出す。復帰したときにセッションを続きから起こし�
   (3) その代の束に積む**。`EVENT_BATCH_INTERVAL_MS`（既定100ms。`event-batch.ts`）ごとに `events`
   フレームを購読者へ配る
 - `dispatch(command)`: 受け取ったコマンドを、束ねた表（`options.commands`）と `CommandSession` と
-  一緒に `command-dispatch.ts` へ渡すだけ（2章「コマンドの受け手と手続きの置き方」。**段1で移す**——
-  いまは `switch (command.type)` 3つがここにある）
+  一緒に `command-dispatch.ts` へ渡すだけ（2章「コマンドの受け手と手続きの置き方」）
 - `subscribe(send)`: 接続ごとに `hello` を送ってから購読に加える
 - **セッションは1つで、鍵を持たない**（8章）
 
@@ -1341,12 +1339,11 @@ Layout に出す。復帰したときにセッションを続きから起こし�
 ときに呼ぶか**（`origin` と `chatMode` の門）だけ。
 
 **「雑談の外なら断る」「ターン中なら断る」の判定は1か所**で、**順は「雑談の外か」→「ターン中か」**
-——仕事のときに押された `nudge` にターン中の理由を返さないため。**段1のあとは**、条件と定型文は
-機能ごとの表の行（`chatOnly` / `idleTurn` の列）に書き、見るのは `command-dispatch.ts` だけになる
-（段3で契約の `meta` と `rpc-guard.ts` へ移る。2章「コマンドの受け手と手続きの置き方」）。段1の前の
-いまは、`dispatch` の中の `switch` 2つ（`state.chatMode` と `state.turn.kind === "running"`）にある。
+——仕事のときに押された `nudge` にターン中の理由を返さないため。条件と定型文は機能ごとの表の行
+（`chatOnly` / `idleTurn` の列）に書き、見るのは `command-dispatch.ts` だけ（段3で契約の `meta` と
+`rpc-guard.ts` へ移る。2章「コマンドの受け手と手続きの置き方」）。
 見た目の編集のコマンドの一覧（`CHARACTER_EDIT_COMMAND_TYPES`）は `src/shared/command.ts` の
-1つの並びから型も判定も導く（二重に列挙しない）。
+1つの並びから型を導き、受け手の表（`character-pack-command.ts`）に行が足りなければ型が落とす。
 
 ### character-pack.ts（adapter）
 

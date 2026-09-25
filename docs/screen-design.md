@@ -710,7 +710,7 @@ IBM Plex Mono）と字の大きさ、「ほか n 件を見る」の色（見本�
 - **コマンドは `set-accent`（`target: "work" | "chat"` で1つの色を差す）と、雑談の差し色を消す
   `clear-chat-accent` の2つ**。`target` を引数で分けたのは、`set-outfit-accent` が衣装を
   引数（型を4つに割らない）で受けているのに揃えたため（採らなかった案: `set-work-accent` /
-  `set-chat-accent` の2コマンドに分ける——`isCharacterEditCommand` の一覧が1つ増えるだけの違いで、
+  `set-chat-accent` の2コマンドに分ける——見た目の編集の一覧（`CHARACTER_EDIT_COMMAND_TYPES`）が1つ増えるだけの違いで、
   書き込み側の分岐は結局2つに割れ、コマンドの形だけ増える）
 - **`accent`（仕事）を消す口は無い。** `outfitAccents` は無ければ既定値（`--accent`）に
   落ちるので消しても壊れないが、`accent` は画面全体の色の元なので、消すと戻り先が無い。

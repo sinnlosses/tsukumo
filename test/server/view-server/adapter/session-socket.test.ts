@@ -3,7 +3,7 @@ import { createServer, request as httpRequest, type Server } from "node:http"
 
 import WebSocket from "ws"
 
-import { type DispatchResult } from "../../../../src/server/session/core/driver-command.ts"
+import { type DispatchResult } from "../../../../src/server/session/core/command-dispatch.ts"
 import { createStartupToken } from "../../../../src/server/view-server/adapter/server.ts"
 import {
   attachSessionSocket,

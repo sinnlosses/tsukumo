@@ -5,11 +5,7 @@ import {
   MAX_CHARACTER_TAGLINE_LENGTH,
 } from "../../src/shared/character-definition.ts"
 import { MAX_CHARACTER_PACK_NAME_LENGTH } from "../../src/shared/character.ts"
-import {
-  isCharacterEditCommand,
-  MAX_PROMPT_TEXT_LENGTH,
-  parseClientCommand,
-} from "../../src/shared/command.ts"
+import { MAX_PROMPT_TEXT_LENGTH, parseClientCommand } from "../../src/shared/command.ts"
 import { MAX_REMEMBERED_LINE_LENGTH } from "../../src/shared/persona-memory.ts"
 import { MAX_PORTRAIT_BYTES } from "../../src/shared/portrait-image.ts"
 import {
@@ -494,56 +490,6 @@ describe("parseClientCommand（キャラクターの見た目）", () => {
       parseClientCommand({ type: "switch-session", commandId: "c-2", sessionId: "" }),
     ).toBeUndefined()
     expect(parseClientCommand({ type: "switch-session", commandId: "c-3" })).toBeUndefined()
-  })
-
-  it("isCharacterEditCommand が見た目の編集とプロフィールの編集だけを true にする", () => {
-    const edits = [
-      {
-        type: "set-portrait",
-        commandId: "c-1",
-        pack: "fictional",
-        expression: "proud",
-        image: TINY_PNG_DATA_URL,
-      },
-      { type: "clear-portrait", commandId: "c-2", pack: "fictional", expression: "proud" },
-      {
-        type: "set-outfit-accent",
-        commandId: "c-3",
-        pack: "fictional",
-        outfit: "light",
-        color: "#a8e6c0",
-      },
-      { type: "set-accent", commandId: "c-7", pack: "fictional", target: "work", color: "#f2b0a0" },
-      { type: "clear-chat-accent", commandId: "c-8", pack: "fictional" },
-      {
-        type: "set-profile",
-        commandId: "c-9",
-        pack: "fictional",
-        name: "架空",
-        tagline: "ひとこと",
-      },
-      {
-        type: "set-face",
-        commandId: "c-10",
-        pack: "fictional",
-        image: TINY_PNG_DATA_URL,
-      },
-      { type: "clear-face", commandId: "c-11", pack: "fictional" },
-    ]
-    const others = [
-      { type: "interrupt", commandId: "c-4" },
-      { type: "switch-character", commandId: "c-5", name: "tsukumo" },
-      { type: "switch-session", commandId: "c-6", sessionId: "s-架空" },
-    ]
-
-    for (const value of edits) {
-      const command = parseClientCommand(value)
-      expect(command !== undefined && isCharacterEditCommand(command)).toBe(true)
-    }
-    for (const value of others) {
-      const command = parseClientCommand(value)
-      expect(command !== undefined && isCharacterEditCommand(command)).toBe(false)
-    }
   })
 })
 
