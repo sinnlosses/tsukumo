@@ -36,7 +36,6 @@ export type DiarySectionProps = {
   readonly portrait: DiaryWriterPortrait
   readonly reveal: boolean
   readonly review: AchievementReviewButton
-  readonly onWatchConversation: () => void
   /** 頭の行の「日記帳で読む」（13.10「並べるもの」2）。押すとこの日の見開きが開く。 */
   readonly onOpenDiaryBook: () => void
 }
@@ -76,11 +75,7 @@ export function DiarySection(props: DiarySectionProps): ReactElement {
           <Cards doneTasks={undefined} commitCount={undefined} />
         )}
         {props.view.kind === "ready" ? (
-          <Controls
-            writing={props.writing}
-            review={props.review}
-            onWatchConversation={props.onWatchConversation}
-          />
+          <Controls writing={props.writing} review={props.review} />
         ) : null}
       </div>
     </section>
@@ -252,24 +247,17 @@ function Card(props: {
 }
 
 /** 振り返りのボタン、または進行中の「振り返り中…」（呼ぶのは `view.kind === "ready"` のときだけ。
- * `DiarySection` 参照）。 */
+ * `DiarySection` 参照）。**会話の画面へ移る口は置かない**（振り返りは会話の画面に何も出さない。
+ * 13.10「ボタンを押せないとき・押したあと」）。 */
 function Controls(props: {
   readonly writing: AchievementWriting
   readonly review: AchievementReviewButton
-  readonly onWatchConversation: () => void
 }): ReactElement {
   if (props.writing.kind === "writing") {
     return (
       <div className={styles["achievement-review"]}>
         <button type="button" className={styles["achievement-review-button"]} aria-disabled="true">
           振り返り中…
-        </button>
-        <button
-          type="button"
-          className={styles["achievement-diary-watch"]}
-          onClick={props.onWatchConversation}
-        >
-          会話の画面で様子を見る ›
         </button>
       </div>
     )

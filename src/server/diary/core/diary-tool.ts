@@ -1,23 +1,16 @@
-// `diary` ツールまわりの決まりごと（docs/glossary.md「diary ツール」）。書けるのは成果の画面から
-// 頼まれた振り返りのターンだけで、それ以外・形の外れた呼び出しは状態を変えずに断り、理由を
-// 添えて呼び直させる（`report` / 見直しの2つと同じ線）。ツールを載せるのは
-// `src/server/session-driver/adapter/sdk-tool.ts`、保存は `src/server/diary/adapter/diary.ts`、決定の理由は
-// `docs/design.md`「日記の受け取りと保存」。
+// `diary` ツールまわりの決まりごと（docs/glossary.md「diary ツール」）。書けるのは会話とは別の
+// 使い捨ての問い合わせ（`src/server/diary/adapter/sdk-diary.ts`）だけで、形の外れた呼び出しは
+// 状態を変えずに断り、理由を添えて呼び直させる（`report` / 見直しの2つと同じ線）。保存は
+// `src/server/diary/adapter/diary.ts`、決定の理由は `docs/design.md`「日記の受け取りと保存」。
 //
 // **引数の形（文字列・列挙）は zod の形で SDK が先に検査する**（崩れていれば handler は
-// 呼ばれない）。ここで見るのは形の外の条（いま書く日・1ターンに1回・本文やしおりの中身・
-// 保存の失敗）だけ。
+// 呼ばれない）。ここで見るのは形の外の条（1問い合わせに1回・本文やしおりの中身・保存の失敗）だけ。
 //
-// **3段目の合図（引数の断片から最上位の鍵 `bookmark` を見つける純関数と、駆動の世代ごとに1つ
-// 持つ状態機械）もここに持つ**（`docs/design.md`「日記の受け取りと保存」「3段の進みの決まり方」）。
-// **SDK の型は import しない**——`stream_event` の生の形は `isPlainObject` で構造だけを見る
-// （`src/server/session-driver/core/sdk-message.ts` と同じやり方。呼び出し側は `src/server/session-driver/adapter/sdk-driver.ts`
-// で、ツールのフル名〔`mcp__tsukumo__diary`〕はそちらが `tsukumoToolFullName` で組んで渡す——
-// ここが MCP の命名規則を知らなくて済むようにするため）。
+// **3段目の合図（引数の断片から最上位の鍵 `bookmark` を見つける純関数）もここに持つ**
+// （`docs/design.md`「日記の受け取りと保存」「3段の進みの決まり方」）。断片をつないで観測する
+// 状態機械は `sdk-diary.ts`（問い合わせ1回ぶんの持ち物なのでそちらに置く）。
 
-import { isPlainObject } from "remeda"
-
-import { type DiaryBookmark, type DiaryStage } from "../../../shared/diary.ts"
+import { type DiaryBookmark } from "../../../shared/diary.ts"
 import { type Expression } from "../../../shared/expression.ts"
 import { type SessionEvent } from "../../../shared/session-event.ts"
 
@@ -30,10 +23,9 @@ export const DIARY_BODY_MAX_CHARS = 600
 /** `bookmark.reason` の上限（仮）。 */
 export const DIARY_BOOKMARK_REASON_MAX_CHARS = 120
 
-/** モデルに見せる `diary` の説明。**いつ呼ぶか・1ターンに1回・断られたら呼び直す**をここに書く。 */
+/** モデルに見せる `diary` の説明。**いつ呼ぶか・1回だけ・断られたら呼び直す**をここに書く。 */
 export const DIARY_TOOL_DESCRIPTION =
-  "その日の日記を書く。成果の画面から頼まれた振り返りのときだけ呼ぶ。1ターンに1回だけ。" +
-  "受け付けられないときは理由が返るので、直して呼び直すこと。"
+  "その日の日記を書く。1回だけ呼ぶ。受け付けられないときは理由が返るので、直して呼び直すこと。"
 
 /** `bookmark` 引数の説明。 */
 export const DIARY_BOOKMARK_DESCRIPTION =
@@ -44,8 +36,8 @@ export const DIARY_BOOKMARK_DESCRIPTION =
 export type DiaryDayTask = { readonly id: string; readonly summary: string }
 
 /**
- * いま書く日（`reflect-achievement` を受けたときに session-manager が窓口へ渡す。渡さなければ
- * `diary` は書けない）。ターンが終わると窓口は忘れる（{@link DiaryIntake.forgetDay}）。
+ * 書く日（`reflect-achievement` を受けたときに session-manager が数え直した結果。窓口
+ * （{@link createDiaryIntake}）は問い合わせ1回ごとにこれを受け取って作る）。
  */
 export type DiaryDay = {
   readonly date: string
@@ -71,48 +63,36 @@ export type SaveDiaryParagraph = (params: {
   readonly writtenAtEpochMilliseconds: number
   readonly body: string
   readonly expression: Expression
+  /** 書いたときのパック（ディレクトリ名と表示名）。窓口を作るときに1回だけ受け取る。 */
+  readonly writer: { readonly pack: string; readonly name: string }
   readonly bookmark: DiaryBookmark
 }) => Promise<boolean>
 
 /** `diary` の handler が呼ぶ窓口。 */
 export type DiaryIntake = {
-  /** いま書く日を渡す（渡すのは session-manager）。渡すたびに「1ターンに1回」の印をリセットする。 */
-  readonly beginDay: (day: DiaryDay) => void
-  /** 書く日を忘れる（ターンが終わったとき）。次は新しい依頼を待つ。 */
-  readonly forgetDay: () => void
   /** 受け付けるか決め、受け付けたら保存して `diary-written` を流す。 */
   readonly submit: (submission: DiarySubmission) => Promise<DiaryVerdict>
 }
 
 /**
- * {@link DiaryIntake} を1つ作る。`now` は書いた時刻（エポックミリ秒。時計を読むのは呼び出し側
- * = `src/server/session-driver/adapter/sdk-driver.ts`）、`save` は保存の口、`onEvent` は駆動のイベントの流れ
- * （ここで例外を投げない）。
+ * {@link DiaryIntake} を1つ作る。**問い合わせ1回ごとに呼び出し側（`src/server/diary/core/diary-writer.ts`）が
+ * 新しく作る**——窓口が「いま書く日」を覚えたり忘れたりしない。`day` は書く日、`writer` は
+ * 書いた時点のパック、`now` は書いた時刻（エポックミリ秒）、`save` は保存の口、`onEvent` は
+ * イベントの流れ（ここで例外を投げない）。
  */
 export function createDiaryIntake(
+  day: DiaryDay,
+  writer: { readonly pack: string; readonly name: string },
   now: () => number,
   save: SaveDiaryParagraph,
   onEvent: (event: SessionEvent) => void,
 ): DiaryIntake {
-  let day: DiaryDay | undefined
-  // このターンで受け付けた日。`beginDay` を呼ぶたびにリセットする。
-  let acceptedDate: string | undefined
+  // この問い合わせで既に受け付けたか（1回だけ）。
+  let accepted = false
 
   return {
-    beginDay: (nextDay) => {
-      day = nextDay
-      acceptedDate = undefined
-    },
-    forgetDay: () => {
-      day = undefined
-      acceptedDate = undefined
-    },
     submit: async (submission) => {
-      const activeDay = day
-      if (activeDay === undefined) {
-        return { kind: "rejected", text: DIARY_NO_DAY_REASON }
-      }
-      if (acceptedDate === activeDay.date) {
+      if (accepted) {
         return { kind: "rejected", text: DIARY_ALREADY_WRITTEN_REASON }
       }
 
@@ -121,34 +101,31 @@ export function createDiaryIntake(
         return { kind: "rejected", text: bodyViolation }
       }
 
-      const bookmark = diaryBookmarkOf(submission.bookmark, activeDay.doneTasks)
+      const bookmark = diaryBookmarkOf(submission.bookmark, day.doneTasks)
       if (bookmark.kind === "rejected") {
         return { kind: "rejected", text: bookmark.text }
       }
 
       const saved = await save({
-        date: activeDay.date,
+        date: day.date,
         writtenAtEpochMilliseconds: now(),
         body: submission.body,
         expression: submission.expression,
+        writer,
         bookmark: bookmark.bookmark,
       })
       if (!saved) {
         return { kind: "rejected", text: DIARY_SAVE_FAILED_REASON }
       }
 
-      acceptedDate = activeDay.date
-      onEvent({ kind: "diary-written", date: activeDay.date })
+      accepted = true
+      onEvent({ kind: "diary-written", date: day.date })
       return { kind: "accepted" }
     },
   }
 }
 
-const DIARY_NO_DAY_REASON =
-  "日記は成果の画面から頼まれた振り返りのときだけ書ける。いまはそのターンではない。"
-
-const DIARY_ALREADY_WRITTEN_REASON =
-  "このターンではもう `diary` を受け付けている。1ターンに1回だけ。"
+const DIARY_ALREADY_WRITTEN_REASON = "この問い合わせではもう `diary` を受け付けている。1回だけ。"
 
 const DIARY_SAVE_FAILED_REASON = "いまは書けない。呼び直さなくてよい。"
 
@@ -259,76 +236,4 @@ export function diaryArgumentHasBookmarkKey(accumulatedPartialJson: string): boo
     }
   }
   return false
-}
-
-/** {@link createDiaryStageTracker} が返す窓口。 */
-export type DiaryStageTracker = {
-  /**
-   * 生のメッセージ1件を渡す。`diary` ツールの塊が開いたら追いかけ始め、引数の断片をつないで
-   * `bookmark` を探し、見つけた回だけ `"pick"` を返す（同じ塊では二度と返さない）。塊が閉じたら
-   * 追いかけるのをやめる。それ以外は常に `undefined`。
-   */
-  readonly observe: (message: unknown) => DiaryStage | undefined
-}
-
-/**
- * {@link DiaryStageTracker} を1つ作る（**駆動の世代ごとに1つ**。呼び出し側は
- * `src/server/session-driver/adapter/sdk-driver.ts`）。`diaryToolFullName` は追いかける塊の名前
- * （`mcp__tsukumo__diary` の形。組み立ては呼び出し側の `tsukumoToolFullName`）。
- */
-export function createDiaryStageTracker(diaryToolFullName: string): DiaryStageTracker {
-  let tracking: { readonly index: number; readonly buffer: string } | undefined
-
-  return {
-    observe: (message) => {
-      if (
-        !isPlainObject(message) ||
-        message.type !== "stream_event" ||
-        typeof message.parent_tool_use_id === "string" ||
-        !isPlainObject(message.event)
-      ) {
-        return undefined
-      }
-      const event = message.event
-      const index = event.index
-      if (typeof index !== "number") {
-        return undefined
-      }
-
-      if (event.type === "content_block_start" && isPlainObject(event.content_block)) {
-        const block = event.content_block
-        tracking =
-          block.type === "tool_use" && block.name === diaryToolFullName
-            ? { index, buffer: "" }
-            : undefined
-        return undefined
-      }
-
-      if (tracking === undefined || tracking.index !== index) {
-        return undefined
-      }
-
-      if (event.type === "content_block_delta" && isPlainObject(event.delta)) {
-        if (
-          event.delta.type !== "input_json_delta" ||
-          typeof event.delta.partial_json !== "string"
-        ) {
-          return undefined
-        }
-        const buffer = tracking.buffer + event.delta.partial_json
-        tracking = { index, buffer }
-        if (diaryArgumentHasBookmarkKey(buffer)) {
-          // 拾ったら、この塊が閉じるまで待たずに追いかけるのをやめる（二重に出さない）。
-          tracking = undefined
-          return "pick"
-        }
-        return undefined
-      }
-
-      if (event.type === "content_block_stop") {
-        tracking = undefined
-      }
-      return undefined
-    },
-  }
 }

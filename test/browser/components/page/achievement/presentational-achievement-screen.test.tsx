@@ -74,7 +74,6 @@ const DEFAULT_PROPS: PresentationalAchievementScreenProps = {
     portrait: { portraitUrl: undefined, accent: undefined, altText: "" },
   },
   diaryReveal: false,
-  onWatchConversation: NOOP,
   calendar: { kind: "loading" },
   onOpenDiaryBook: NOOP,
   diaryBook: CLOSED_DIARY_BOOK,

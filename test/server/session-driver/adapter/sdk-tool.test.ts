@@ -3,10 +3,6 @@ import { describe, expect, it } from "bun:test"
 import { type McpSdkServerConfigWithInstance } from "@anthropic-ai/claude-agent-sdk"
 import { z } from "zod"
 
-import {
-  createDiaryIntake,
-  type DiaryIntake,
-} from "../../../../src/server/diary/core/diary-tool.ts"
 import { createReportReview } from "../../../../src/server/report/core/report-review.ts"
 import { tsukumoServer } from "../../../../src/server/session-driver/adapter/sdk-tool.ts"
 import { type SessionMode } from "../../../../src/server/session-driver/core/session-driver.ts"
@@ -36,66 +32,22 @@ const CHAT_MODE: SessionMode = {
 }
 
 describe("tsukumoServer", () => {
-  it("仕事のときは report と見直しの2つが常に載る（speak・diary と並ぶ）", async () => {
+  it("仕事のときは report と見直しの2つが常に載る（speak と並ぶ）", async () => {
     const names = await listedToolNames(workServer())
 
-    expect(names).toEqual(["speak", "diary", "report", "usage_review_stage", "usage_review_result"])
+    expect(names).toEqual(["speak", "report", "usage_review_stage", "usage_review_result"])
   })
 
-  it("雑談のときは report も見直しの2つも載らないが diary は載る", async () => {
+  it("雑談のときは report も見直しの2つも載らない。diary も載らない（会話とは別の使い捨ての問い合わせ）", async () => {
     const names = await listedToolNames(
-      tsukumoServer(
-        EXPRESSIONS,
-        CHAT_MODE,
-        createReportReview(),
-        noopIntake(),
-        noopDiaryIntake(),
-        () => {},
-      ),
+      tsukumoServer(EXPRESSIONS, CHAT_MODE, createReportReview(), noopIntake(), () => {}),
     )
 
     expect(names).not.toContain("report")
     expect(names).not.toContain("usage_review_result")
+    expect(names).not.toContain("diary")
     expect(names).toContain("speak")
-    expect(names).toContain("diary")
     expect(names).toContain("remember")
-  })
-})
-
-describe("diary ツール", () => {
-  it("受け付けられれば ok が返り、diary-written が流れる", async () => {
-    const events: SessionEvent[] = []
-    const intake = createDiaryIntake(
-      () => 1_000,
-      async () => true,
-      (event) => events.push(event),
-    )
-    intake.beginDay({ date: "2026-09-23", doneTasks: [] })
-
-    const reply = await callTool(workServer([], [], [], intake), "diary", {
-      body: "架空の本文。",
-      expression: "default",
-    })
-
-    expect(reply).toEqual({ text: "ok", isError: false })
-    expect(events).toEqual([{ kind: "diary-written", date: "2026-09-23" }])
-  })
-
-  it("いま書く日が無ければ断られ、diary-written は流れない", async () => {
-    const events: SessionEvent[] = []
-    const intake = createDiaryIntake(
-      () => 1_000,
-      async () => true,
-      (event) => events.push(event),
-    )
-
-    const reply = await callTool(workServer([], [], [], intake), "diary", {
-      body: "架空の本文。",
-      expression: "default",
-    })
-
-    expect(reply.isError).toBe(true)
-    expect(events).toEqual([])
   })
 })
 
@@ -243,7 +195,6 @@ function workServer(
   events: SessionEvent[] = [],
   dismissed: readonly string[] = [],
   titles: string[] = [],
-  diaryIntake: DiaryIntake = noopDiaryIntake(),
 ): McpSdkServerConfigWithInstance {
   return tsukumoServer(
     EXPRESSIONS,
@@ -255,7 +206,6 @@ function workServer(
         events.push(event)
       },
     ),
-    diaryIntake,
     (title) => {
       titles.push(title)
     },
@@ -265,14 +215,6 @@ function workServer(
 function noopIntake() {
   return createUsageReviewIntake(
     () => [],
-    () => {},
-  )
-}
-
-function noopDiaryIntake(): DiaryIntake {
-  return createDiaryIntake(
-    () => 0,
-    async () => true,
     () => {},
   )
 }

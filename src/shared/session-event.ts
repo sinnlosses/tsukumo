@@ -448,23 +448,31 @@ export type SessionEvent =
   | { readonly kind: "diary-written"; readonly date: string }
   /**
    * 成果の画面から振り返りを頼まれた（`reflect-achievement` コマンド）。**出し手は
-   * session-manager**——その日の成果を数え直し、依頼文を組んで送り、窓口
-   * （`src/server/diary/core/diary-tool.ts` の `DiaryIntake.beginDay`）に「いま書く日」を渡した直後に
-   * 流す。`date` は振り返りの対象の日（`YYYY-MM-DD`）。段は「この日のタスクを読む」（`read`）。
+   * session-manager**——その日の成果を数え直し、書き手（`src/server/diary/core/diary-writer.ts`）に
+   * その日ぶんを渡した直後に流す。会話とは別の使い捨ての問い合わせなので、会話の `prompt` は
+   * 通らない（`docs/design.md`「日記の受け取りと保存」）。`date` は振り返りの対象の日
+   * （`YYYY-MM-DD`）。段は「この日のタスクを読む」（`read`）。
    */
   | { readonly kind: "diary-requested"; readonly date: string }
   /**
-   * `includePartialMessages` の断片で、メインの `diary` の呼び出しの塊が開いた（立ち絵の
-   * 「書いている」の材料。`report-drafting` と同じ形）。段は「日記を書く」（`write`）。
+   * 会話とは別の使い捨ての問い合わせの `includePartialMessages` の断片で、`diary` の呼び出しの
+   * 塊が開いた（成果の画面の進みの材料。**出し手は `src/server/diary/adapter/sdk-diary.ts`**）。
+   * 段は「日記を書く」（`write`）。
    */
   | { readonly kind: "diary-drafting"; readonly toolUseId: string }
   /**
    * 振り返りの段が進んだ（`docs/design.md`「日記の受け取りと保存」「3段の進みの決まり方」）。
-   * **出し手は駆動**——同じ塊の引数の断片（`input_json_delta`）に、最上位の鍵 `bookmark` が
-   * 現れた回だけ流す（`src/server/diary/core/diary-tool.ts` の純関数が拾う）。運ぶのは段だけで、
-   * 引数の中身はイベントに載せない。
+   * **出し手は `src/server/diary/adapter/sdk-diary.ts`**——同じ塊の引数の断片
+   * （`input_json_delta`）に、最上位の鍵 `bookmark` が現れた回だけ流す（`src/server/diary/core/diary-tool.ts`
+   * の純関数が拾う）。運ぶのは段だけで、引数の中身はイベントに載せない。
    */
   | { readonly kind: "diary-stage"; readonly stage: DiaryStage }
+  /**
+   * 振り返りの使い捨ての問い合わせが `diary` を受け付けられずに終わった（時間切れ・失敗・中断の
+   * どれでも）。**出し手は書き手**（`src/server/diary/core/diary-writer.ts`）。`date` は振り返りの
+   * 対象の日。`docs/design.md`「日記の受け取りと保存」「状態とイベント」。
+   */
+  | { readonly kind: "diary-failed"; readonly date: string }
   /** 訪問の出入りと台本の進み（出し手はサーバの訪問の見張り。形は `src/shared/visit.ts`）。 */
   | VisitEvent
 

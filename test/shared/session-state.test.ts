@@ -1419,7 +1419,17 @@ describe("applySessionEvent（成果の振り返り）", () => {
     expect(written.diaryWriting).toEqual({ kind: "written", date: "2026-09-23", writtenAt: 400 })
   })
 
-  it("writing のままターンが終わると failed になる（成功・中断・失敗のどれでも）", () => {
+  it("diary-failed で failed になる", () => {
+    const requested = applySessionEvent(
+      INITIAL_SESSION_STATE,
+      { kind: "diary-requested", date: "2026-09-23" },
+      100,
+    )
+    const failed = applySessionEvent(requested, { kind: "diary-failed", date: "2026-09-23" }, 500)
+    expect(failed.diaryWriting).toEqual({ kind: "failed", date: "2026-09-23" })
+  })
+
+  it("writing のまま会話のターンが終わっても姿は変わらない（会話と並んで書いているため）", () => {
     const requested = applySessionEvent(
       INITIAL_SESSION_STATE,
       { kind: "diary-requested", date: "2026-09-23" },
@@ -1430,7 +1440,12 @@ describe("applySessionEvent（成果の振り返り）", () => {
       { kind: "turn-finished", outcome: { kind: "interrupted" } },
       500,
     )
-    expect(finished.diaryWriting).toEqual({ kind: "failed", date: "2026-09-23" })
+    expect(finished.diaryWriting).toEqual({
+      kind: "writing",
+      date: "2026-09-23",
+      startedAt: 100,
+      stage: "read",
+    })
   })
 
   it("written / failed のままターンが終わっても姿は変わらない", () => {
@@ -1448,14 +1463,19 @@ describe("applySessionEvent（成果の振り返り）", () => {
     expect(finished.diaryWriting).toEqual({ kind: "written", date: "2026-09-23", writtenAt: 400 })
   })
 
-  it("セッションが終わると idle へ戻る", () => {
+  it("セッションが終わっても writing のまま変わらない（会話と並んで書いているため）", () => {
     const requested = applySessionEvent(
       INITIAL_SESSION_STATE,
       { kind: "diary-requested", date: "2026-09-23" },
       100,
     )
     const ended = applySessionEvent(requested, { kind: "session-ended", reason: "架空" }, 500)
-    expect(ended.diaryWriting).toEqual({ kind: "idle" })
+    expect(ended.diaryWriting).toEqual({
+      kind: "writing",
+      date: "2026-09-23",
+      startedAt: 100,
+      stage: "read",
+    })
   })
 
   it("振り返りに関わらないターンの終わりでは idle のまま", () => {

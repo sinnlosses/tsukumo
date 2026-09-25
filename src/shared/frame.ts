@@ -19,11 +19,11 @@ import { type SessionState } from "./session-state.ts"
  * 既存のイベントの形・状態の形を変えたときだけ上げる（docs/design.md 4.5）。
  * 版が違うフレームを受け取ったブラウザは「ページを読み込み直してください」を出す。
  *
- * 直近は状態の `sessionDefault`（`SessionState.sessionDefault`。`src/shared/session-default.ts`の
- * `SessionDefault`）に `effort` を足したことで 18 から 19 へ上げた（その前は `modelEffortSupport` /
- * `effort` を足して 17 から 18 へ。どちらも古いタブは持たず読めない）。
+ * 直近は `diary-failed`（振り返りの使い捨ての問い合わせが `diary` を受け付けられずに終わった
+ * 合図。`docs/design.md`「日記の受け取りと保存」）を足したことで 19 から 20 へ上げた（その前は
+ * `sessionDefault` に `effort` を足して 18 から 19 へ。どちらも古いタブは持たず読めない）。
  */
-export const PROTOCOL_VERSION = 19
+export const PROTOCOL_VERSION = 20
 
 /**
  * 配っているものを取り直す先。`style` は CSS だけを取り直す（**開いているターンの選択も入力欄の
@@ -73,7 +73,8 @@ export const FRAME_ERROR_REASON = {
   forgetRememberedLineOutsideChat: "覚えたことを消せるのは雑談モードのときだけ",
   usageProposalDismissFailed: "提案を見送れなかった",
   openFileFailed: "ファイルを開けなかった",
-  achievementReflectionDuringTurn: "ターン進行中は振り返りを頼めない（中断すると頼める）",
+  achievementReflectionWriting:
+    "いま日記を書いている最中は、ほかの日を振り返れない（書き終わると頼める）",
   achievementReflectionUnavailable: "その日の成果が読めない、または振り返る成果が無い",
 } as const
 

@@ -479,10 +479,12 @@ export type SessionState = {
    * 成果の振り返り（docs/glossary.md「成果の振り返り」）の進み。帯の「いまの作業」の
    * 「振り返り中」が読む（`docs/screen-design.md` 13.9「いまの作業」）。
    *
-   * **源は `diary-requested` / `diary-drafting` / `diary-stage` / `diary-written` の4つ**で、
-   * **`writing` のままターンが終わったら（止めた・失敗したも同じ）`failed` にする**。`written` と
-   * `failed` は次の `diary-requested` まで持ち続ける。起こし直すと初期値の `idle` から始まる
-   * （`docs/design.md`「日記の受け取りと保存」「状態とイベント」）。
+   * **源は `diary-requested` / `diary-drafting` / `diary-stage` / `diary-written` / `diary-failed`
+   * の5つ**——振り返りは会話とは別の使い捨ての問い合わせで進むので、**会話の `turn-finished` /
+   * `session-ended` では動かさない**（会話のターンと並んで書いているため）。受け付けずに終わった
+   * （時間切れ・失敗・中断のどれでも）ときは書き手が `diary-failed` を流して `failed` にする。
+   * `written` と `failed` は次の `diary-requested` まで持ち続ける。起こし直すと初期値の `idle` から
+   * 始まる（`docs/design.md`「日記の受け取りと保存」「状態とイベント」）。
    */
   readonly diaryWriting: DiaryWriting
   /**
@@ -718,17 +720,19 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
     // 書きかけのまま終わったターン（中断など）の本文を捨てず、確定した記録に移す。
     case "turn-finished": {
       const ending = turnEnding(event.outcome, state.apiTrouble)
+      // **`diaryWriting` はここでは動かさない**（振り返りは会話とは別の使い捨ての問い合わせで
+      // 並んで進むため。`docs/design.md`「日記の受け取りと保存」「状態とイベント」）。
       return {
         ...recordTurnFailure(settleUtterance(state), ending),
         turn: finishTurn(state.turn, at, ending),
         lastTurnFinishedAt: lastTurnFinishedAtOf(state, at),
         reportDrafting: { kind: "idle" },
         usageReview: settleUsageReview(state.usageReview),
-        diaryWriting: settleDiaryWriting(state.diaryWriting),
         apiTrouble: { kind: "none" },
       }
     }
     case "session-ended":
+      // **`diaryWriting` はここでは動かさない**（`turn-finished` と同じ理由）。
       return {
         ...settleUtterance(state),
         reportDrafting: { kind: "idle" },
@@ -737,7 +741,6 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
         lastTurnFinishedAt: lastTurnFinishedAtOf(state, at),
         backgroundTasks: [],
         usageReview: settleUsageReview(state.usageReview),
-        diaryWriting: { kind: "idle" },
         apiTrouble: { kind: "none" },
       }
     case "api-retry":
@@ -851,6 +854,8 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
         ...state,
         diaryWriting: { kind: "written", date: event.date, writtenAt: at },
       }
+    case "diary-failed":
+      return { ...state, diaryWriting: { kind: "failed", date: event.date } }
     case "visit-started":
     case "visit-line-advanced":
     case "visit-ended":
@@ -914,14 +919,6 @@ function settleUsageReview(review: UsageReview): UsageReview {
 /** `diary-drafting` / `diary-stage` で段を進める。`writing` でなければ何もしない（段は戻らない）。 */
 function withDiaryStage(writing: DiaryWriting, stage: DiaryStage): DiaryWriting {
   return writing.kind === "writing" ? { ...writing, stage } : writing
-}
-
-/**
- * ターンの終わりで、書き上がらなかった振り返りを `failed` にする（`written` / `idle` /
- * `failed` はそのまま。`docs/design.md`「日記の受け取りと保存」「状態とイベント」）。
- */
-function settleDiaryWriting(writing: DiaryWriting): DiaryWriting {
-  return writing.kind === "writing" ? { kind: "failed", date: writing.date } : writing
 }
 
 /**

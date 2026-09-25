@@ -119,7 +119,6 @@ describe("achievementReflectionRequestText", () => {
   const BASE = {
     date: "2026-09-24",
     today: "2026-09-24",
-    chatMode: false,
     graduations: [],
     milestones: [],
     alreadyWritten: false,
@@ -140,7 +139,6 @@ describe("achievementReflectionRequestText", () => {
     expect(text).toContain("- T-100 架空のタスク1")
     expect(text).toContain("日記は diary ツールで1回書いて。")
     expect(text).toContain("しおりには終えたタスクから1件を選び、選んだ理由を添える。")
-    expect(text).toContain("report は、何日の分を振り返ったかの1行でよい。")
   })
 
   it("昨日・それより前の言い方", () => {
@@ -228,16 +226,6 @@ describe("achievementReflectionRequestText", () => {
       alreadyWritten: true,
     })
     expect(text).toContain("この日の日記は既にあるので、続きとして書き足す。")
-  })
-
-  it("雑談中は report の1行を足さない", () => {
-    const text = achievementReflectionRequestText({
-      ...BASE,
-      chatMode: true,
-      commitCount: 2,
-      doneTasks: { kind: "known", items: [] },
-    })
-    expect(text).not.toContain("report は")
   })
 
   it("依頼文にはコミットの数とタスクの ID・summary だけが入る（会話の文面は入らない）", () => {

@@ -57,7 +57,6 @@ export function PresentationalAchievementScreen(
           portrait={props.diaryPortrait}
           reveal={props.diaryReveal}
           review={props.review}
-          onWatchConversation={props.onWatchConversation}
           onOpenDiaryBook={props.onOpenDiaryBook}
         />
         {props.view.kind === "ready" ? (

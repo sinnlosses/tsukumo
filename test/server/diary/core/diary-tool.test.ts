@@ -2,14 +2,13 @@ import { describe, expect, it } from "bun:test"
 
 import {
   createDiaryIntake,
-  createDiaryStageTracker,
   diaryArgumentHasBookmarkKey,
   type DiaryDay,
 } from "../../../../src/server/diary/core/diary-tool.ts"
 import { type SessionEvent } from "../../../../src/shared/session-event.ts"
 
 // 引数はすべて手で書いた架空の文面（docs/coding-standards.md「会話内容の扱い」）。保存の成否だけ
-// 差し替えられる偽の `save` を使い、実際のファイル I/O は `test/server/adapter/diary.test.ts` で
+// 差し替えられる偽の `save` を使い、実際のファイル I/O は `test/server/diary/adapter/diary.test.ts` で
 // 確かめる。
 
 const DAY: DiaryDay = {
@@ -22,10 +21,14 @@ const DAY: DiaryDay = {
 
 const NO_TASK_DAY: DiaryDay = { date: "2026-09-24", doneTasks: [] }
 
-function intakeOf(saveResult = true) {
+const WRITER = { pack: "tsukumo", name: "つくも" }
+
+function intakeOf(day: DiaryDay = DAY, saveResult = true) {
   const events: SessionEvent[] = []
   const saved: unknown[] = []
   const intake = createDiaryIntake(
+    day,
+    WRITER,
     () => 1_700_000_000_000,
     async (params) => {
       saved.push(params)
@@ -37,22 +40,8 @@ function intakeOf(saveResult = true) {
 }
 
 describe("createDiaryIntake", () => {
-  it("いま書く日が無ければ断り、状態を変えない", async () => {
-    const { intake, events } = intakeOf()
-
-    const verdict = await intake.submit({
-      body: "架空の本文。",
-      expression: "default",
-      bookmark: undefined,
-    })
-
-    expect(verdict.kind).toBe("rejected")
-    expect(events).toEqual([])
-  })
-
   it("正しい呼び出しは受け付けられ、diary-written が流れる", async () => {
     const { intake, events, saved } = intakeOf()
-    intake.beginDay(DAY)
 
     const verdict = await intake.submit({
       body: "架空の本文。",
@@ -68,14 +57,14 @@ describe("createDiaryIntake", () => {
         writtenAtEpochMilliseconds: 1_700_000_000_000,
         body: "架空の本文。",
         expression: "proud",
+        writer: WRITER,
         bookmark: { kind: "placed", taskId: "T-1", summary: "架空のタスク1", reason: "架空の理由" },
       },
     ])
   })
 
-  it("同じターンで2回目は断られる（1回目は変わらず受け付けたまま）", async () => {
+  it("同じ問い合わせで2回目は断られる（1回目は変わらず受け付けたまま）", async () => {
     const { intake, events } = intakeOf()
-    intake.beginDay(DAY)
 
     const first = await intake.submit({
       body: "架空の本文1。",
@@ -93,44 +82,26 @@ describe("createDiaryIntake", () => {
     expect(events).toEqual([{ kind: "diary-written", date: "2026-09-23" }])
   })
 
-  it("beginDay を呼び直すと、新しいターンとして再び受け付けられる", async () => {
-    const { intake, events } = intakeOf()
-    intake.beginDay(DAY)
-    await intake.submit({
+  it("問い合わせごとに窓口を作り直せば、別の窓口として受け付けられる", async () => {
+    const first = intakeOf()
+    await first.intake.submit({
       body: "架空の本文1。",
       expression: "default",
       bookmark: { taskId: "T-1", reason: "架空の理由" },
     })
 
-    intake.beginDay(DAY)
-    const second = await intake.submit({
+    const second = intakeOf()
+    const verdict = await second.intake.submit({
       body: "架空の本文2。",
       expression: "default",
       bookmark: { taskId: "T-1", reason: "架空の理由" },
     })
 
-    expect(second.kind).toBe("accepted")
-    expect(events).toHaveLength(2)
-  })
-
-  it("forgetDay を呼ぶと、いま書く日が無い扱いに戻る", async () => {
-    const { intake, events } = intakeOf()
-    intake.beginDay(DAY)
-    intake.forgetDay()
-
-    const verdict = await intake.submit({
-      body: "架空の本文。",
-      expression: "default",
-      bookmark: { taskId: "T-1", reason: "架空の理由" },
-    })
-
-    expect(verdict.kind).toBe("rejected")
-    expect(events).toEqual([])
+    expect(verdict.kind).toBe("accepted")
   })
 
   it("body が空なら断る", async () => {
     const { intake } = intakeOf()
-    intake.beginDay(DAY)
 
     const verdict = await intake.submit({
       body: "   ",
@@ -143,7 +114,6 @@ describe("createDiaryIntake", () => {
 
   it("body が長すぎれば断る", async () => {
     const { intake } = intakeOf()
-    intake.beginDay(DAY)
 
     const verdict = await intake.submit({
       body: "あ".repeat(601),
@@ -156,7 +126,6 @@ describe("createDiaryIntake", () => {
 
   it("終えたタスクがある日に bookmark が無ければ断る", async () => {
     const { intake } = intakeOf()
-    intake.beginDay(DAY)
 
     const verdict = await intake.submit({
       body: "架空の本文。",
@@ -168,8 +137,7 @@ describe("createDiaryIntake", () => {
   })
 
   it("終えたタスクが無い日は bookmark を省いてよい", async () => {
-    const { intake, events } = intakeOf()
-    intake.beginDay(NO_TASK_DAY)
+    const { intake, events } = intakeOf(NO_TASK_DAY)
 
     const verdict = await intake.submit({
       body: "架空の本文。",
@@ -183,7 +151,6 @@ describe("createDiaryIntake", () => {
 
   it("bookmark.taskId がその日の終えたタスクに無ければ断る", async () => {
     const { intake } = intakeOf()
-    intake.beginDay(DAY)
 
     const verdict = await intake.submit({
       body: "架空の本文。",
@@ -196,7 +163,6 @@ describe("createDiaryIntake", () => {
 
   it("bookmark.reason が空なら断る", async () => {
     const { intake } = intakeOf()
-    intake.beginDay(DAY)
 
     const verdict = await intake.submit({
       body: "架空の本文。",
@@ -209,7 +175,6 @@ describe("createDiaryIntake", () => {
 
   it("bookmark.reason が長すぎれば断る", async () => {
     const { intake } = intakeOf()
-    intake.beginDay(DAY)
 
     const verdict = await intake.submit({
       body: "架空の本文。",
@@ -224,11 +189,12 @@ describe("createDiaryIntake", () => {
     const events: SessionEvent[] = []
     let succeed = false
     const intake = createDiaryIntake(
+      DAY,
+      WRITER,
       () => 1_700_000_000_000,
       async () => succeed,
       (event) => events.push(event),
     )
-    intake.beginDay(DAY)
 
     const failed = await intake.submit({
       body: "架空の本文。",
@@ -282,82 +248,5 @@ describe("diaryArgumentHasBookmarkKey", () => {
       found = diaryArgumentHasBookmarkKey(buffer)
     }
     expect(found).toBe(true)
-  })
-})
-
-describe("createDiaryStageTracker", () => {
-  const DIARY_TOOL_FULL_NAME = "mcp__tsukumo__diary"
-
-  function blockStart(name: string, index: number, parentToolUseId: string | null = null) {
-    return {
-      type: "stream_event",
-      parent_tool_use_id: parentToolUseId,
-      event: {
-        type: "content_block_start",
-        index,
-        content_block: { type: "tool_use", id: "toolu_d1", name, input: {} },
-      },
-    }
-  }
-
-  function delta(index: number, partialJson: string, parentToolUseId: string | null = null) {
-    return {
-      type: "stream_event",
-      parent_tool_use_id: parentToolUseId,
-      event: {
-        type: "content_block_delta",
-        index,
-        delta: { type: "input_json_delta", partial_json: partialJson },
-      },
-    }
-  }
-
-  function stop(index: number, parentToolUseId: string | null = null) {
-    return {
-      type: "stream_event",
-      parent_tool_use_id: parentToolUseId,
-      event: { type: "content_block_stop", index },
-    }
-  }
-
-  it("関係ないメッセージは undefined", () => {
-    const tracker = createDiaryStageTracker(DIARY_TOOL_FULL_NAME)
-    expect(tracker.observe({ type: "assistant" })).toBeUndefined()
-    expect(tracker.observe("壊れた形")).toBeUndefined()
-  })
-
-  it("diary の塊が開いて bookmark が現れたら pick を1回だけ返す", () => {
-    const tracker = createDiaryStageTracker(DIARY_TOOL_FULL_NAME)
-    expect(tracker.observe(blockStart(DIARY_TOOL_FULL_NAME, 2))).toBeUndefined()
-    expect(tracker.observe(delta(2, '{"body":"架空","expression":"proud"'))).toBeUndefined()
-    expect(tracker.observe(delta(2, ',"bookmark":{"taskId":"T-1"'))).toBe("pick")
-    // 同じ塊で二度とは返さない。
-    expect(tracker.observe(delta(2, '"}}'))).toBeUndefined()
-    expect(tracker.observe(stop(2))).toBeUndefined()
-  })
-
-  it("しおりの無い日は塊が閉じるまで pick を返さない", () => {
-    const tracker = createDiaryStageTracker(DIARY_TOOL_FULL_NAME)
-    tracker.observe(blockStart(DIARY_TOOL_FULL_NAME, 1))
-    expect(tracker.observe(delta(1, '{"body":"架空","expression":"proud"}'))).toBeUndefined()
-    expect(tracker.observe(stop(1))).toBeUndefined()
-  })
-
-  it("ほかのツールの塊は追いかけない", () => {
-    const tracker = createDiaryStageTracker(DIARY_TOOL_FULL_NAME)
-    tracker.observe(blockStart("Bash", 1))
-    expect(tracker.observe(delta(1, '{"bookmark":{'))).toBeUndefined()
-  })
-
-  it("サブエージェントの中の diary の塊は追いかけない", () => {
-    const tracker = createDiaryStageTracker(DIARY_TOOL_FULL_NAME)
-    tracker.observe(blockStart(DIARY_TOOL_FULL_NAME, 1, "toolu_agent"))
-    expect(tracker.observe(delta(1, '{"bookmark":{', "toolu_agent"))).toBeUndefined()
-  })
-
-  it("index が合わない断片は追いかけない", () => {
-    const tracker = createDiaryStageTracker(DIARY_TOOL_FULL_NAME)
-    tracker.observe(blockStart(DIARY_TOOL_FULL_NAME, 1))
-    expect(tracker.observe(delta(2, '{"bookmark":{'))).toBeUndefined()
   })
 })

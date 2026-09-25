@@ -24,6 +24,13 @@ import { createPersonaMemory, readRememberedLines } from "./server/chat/adapter/
 import { readChatTopics } from "./server/chat/core/chat-compact.ts"
 import { createContextUsageLog } from "./server/context-usage/adapter/context-usage-log.ts"
 import { type Config } from "./server/core/config.ts"
+import { appendDiaryParagraph } from "./server/diary/adapter/diary.ts"
+import { queryDiary } from "./server/diary/adapter/sdk-diary.ts"
+import {
+  createDiaryWriter,
+  type DiaryWriterContext,
+  type DiaryWriterSource,
+} from "./server/diary/core/diary-writer.ts"
 import { createOrcaHost } from "./server/host/adapter/orca-host.ts"
 import { openTrackedFile } from "./server/host/core/tracked-file.ts"
 import { listRepositoryFiles } from "./server/repository/adapter/repository-file.ts"
@@ -133,6 +140,11 @@ export function startSession(options: SessionStartOptions): SessionManager {
   // 直下）で、依存し合わせない。同じ日を両方から数えても、今日以外の日はどちらかが先に
   // 覚えた数を使うだけで結果は変わらない（`src/server/achievement/adapter/main-history.ts`）。
   const achievementCommitCache = createAchievementCommitCache()
+  // 振り返りの書き手が読む、直近に起こした代のパック情報（`docs/design.md`「日記の受け取りと
+  // 保存」「問い合わせの起こし方」）。**`startDriver` を呼ぶたびに更新する**——書いた時点の
+  // パックで書かせるため（キャラクターを切り替えたあとの振り返りは、切り替えたあとのパックで
+  // 書く）。
+  let diaryContext: DiaryWriterContext | undefined = undefined
   return createSessionManager({
     // 時刻は**エポックミリ秒の数**のまま渡す（`Temporal.Instant` にしない）。両側で回す
     // 畳み込み（`src/shared/`）が比較と引き算にしか使わず、数なら偽の時計も数で済む。
@@ -173,8 +185,16 @@ export function startSession(options: SessionStartOptions): SessionManager {
       findResumeSession: (pack, chat) =>
         findPackSessionToResume(config, cwd, pack.name, chat, viewPort),
       listSessions: (pack, chat) => listPackSessions(config, cwd, pack.name, chat, viewPort),
-      startDriver: (seed, onEvent) =>
-        startDriver({
+      startDriver: (seed, onEvent) => {
+        // 書いた時点のパックとして、振り返りの書き手が読む直近の姿を更新する。
+        diaryContext = {
+          persona: seed.pack.persona ?? "",
+          expressions: expressionChoices(seed.pack.definition),
+          writer: { pack: seed.pack.name, name: seed.pack.definition?.name ?? seed.pack.name },
+          cwd,
+          env: config.inheritedEnv,
+        }
+        return startDriver({
           seed,
           chatArchive,
           fakeSession,
@@ -183,7 +203,8 @@ export function startSession(options: SessionStartOptions): SessionManager {
           cwd,
           inheritedEnv: config.inheritedEnv,
           onEvent,
-        }),
+        })
+      },
       restoreEvents: (resumed, pack) =>
         readRestoredEvents(resumed, expressionChoices(pack.definition)),
     }),
@@ -230,7 +251,33 @@ export function startSession(options: SessionStartOptions): SessionManager {
           ? visitScriptSource(cwd, config.inheritedEnv, achievementCommitCache)
           : { kind: "pack-only" },
     },
+    // 振り返りの書き手の出どころ。疑似セッションでは起こさない
+    // （`docs/design.md`「日記の受け取りと保存」「問い合わせの起こし方」）。
+    diary:
+      fakeSession === undefined
+        ? diaryWriterSource(cwd, () => diaryContext)
+        : { kind: "dont-write" },
   })
+}
+
+/**
+ * 振り返りの書き手の出どころ（`docs/design.md`「日記の受け取りと保存」）。書く時点のパックは
+ * `readContext` で毎回読み直す——`session-manager` が数え直した材料と組み合わせて
+ * {@link createDiaryWriter} へ渡す。`cwd` はリポジトリの見分けに使う（`appendDiaryParagraph`）。
+ */
+function diaryWriterSource(
+  cwd: string,
+  readContext: () => DiaryWriterContext | undefined,
+): DiaryWriterSource {
+  return {
+    kind: "write",
+    write: createDiaryWriter({
+      now: () => Temporal.Now.instant().epochMilliseconds,
+      save: (paragraph) => appendDiaryParagraph(cwd, paragraph),
+      readContext,
+      query: queryDiary,
+    }),
+  }
 }
 
 /**
@@ -303,8 +350,6 @@ function startDriver(options: {
   return startSdkDriver({
     cwd,
     expressions: expressionChoices(seed.pack.definition),
-    // **表示名の「無い」はここで畳む**（ディレクトリ名へ落とす。core へ `| undefined` を運ばない）。
-    diaryWriter: { pack: seed.pack.name, name: seed.pack.definition?.name ?? seed.pack.name },
     // **覚えた既定で起こす**（`docs/screen-design.md` 13.6）。起こしたあと帯から変えた値は
     // そのセッション限りで、ここには戻らない。
     permissionMode: seed.sessionDefault.permissionMode,

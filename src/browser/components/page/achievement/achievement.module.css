@@ -285,17 +285,6 @@
   color: var(--ink-quiet);
   font-size: var(--font-secondary);
 }
-.achievement-diary-watch {
-  border: none;
-  background: transparent;
-  padding: 0;
-  color: var(--accent);
-  font-size: var(--font-secondary);
-  text-decoration: underline;
-  text-underline-offset: 0.2em;
-  cursor: pointer;
-}
-
 /* しおり（13.10「並べるもの」3）。 */
 .achievement-bookmark {
   display: flex;

@@ -223,7 +223,7 @@ describe("useAchievement（振り返りのボタン）", () => {
     expect(window.location.hash.startsWith("#achievement")).toBe(false)
   })
 
-  it("ターンが進行中は押せず、押しても送らない", async () => {
+  it("会話のターンが進行中でも押せる（振り返りは会話とは別の使い捨ての問い合わせ）", async () => {
     stubAchievementFetch(() => okResponse(KNOWN_TODAY))
     const spy: CommandSpy = (command) => sent.push(command)
     const sent: unknown[] = []
@@ -236,7 +236,38 @@ describe("useAchievement（振り返りのボタン）", () => {
     await waitFor(() => {
       expect(result.current.view.kind).toBe("ready")
     })
-    expect(result.current.review.availability.kind).toBe("blocked")
+    expect(result.current.review.availability).toEqual({ kind: "available" })
+
+    act(() => {
+      result.current.review.onReview()
+    })
+
+    expect(sent).toEqual([{ type: "reflect-achievement", date: "2026-09-24" }])
+  })
+
+  it("ほかの日の日記を書いている最中は押せず、押しても送らない", async () => {
+    stubAchievementFetch(() => okResponse(KNOWN_TODAY))
+    const spy: CommandSpy = (command) => sent.push(command)
+    const sent: unknown[] = []
+    const { result } = renderHook(() => useAchievement(), {
+      wrapper: achievementWrapper(
+        newClient(),
+        sessionStoreWith(
+          stateWith({
+            diaryWriting: { kind: "writing", date: "2026-09-20", startedAt: 0, stage: "read" },
+          }),
+          spy,
+        ),
+      ),
+    })
+    await waitFor(() => {
+      expect(result.current.view.kind).toBe("ready")
+    })
+    expect(
+      result.current.review.availability.kind === "blocked"
+        ? result.current.review.availability.reason
+        : "",
+    ).toBe("いま9月20日の日記を書いているので送れない")
 
     act(() => {
       result.current.review.onReview()
@@ -245,7 +276,7 @@ describe("useAchievement（振り返りのボタン）", () => {
     expect(sent).toHaveLength(0)
   })
 
-  it("空の日は押せず、送らない（ターンが進行中でも空の日の理由になる）", async () => {
+  it("空の日は押せず、送らない（ほかの日を書いている最中でも空の日の理由になる）", async () => {
     const emptyDay: DailyAchievement = {
       ...KNOWN_TODAY,
       commitCount: 0,
@@ -257,7 +288,12 @@ describe("useAchievement（振り返りのボタン）", () => {
     const { result } = renderHook(() => useAchievement(), {
       wrapper: achievementWrapper(
         newClient(),
-        sessionStoreWith(stateWith({ turn: { kind: "running", startedAt: 0 } }), spy),
+        sessionStoreWith(
+          stateWith({
+            diaryWriting: { kind: "writing", date: "2026-09-20", startedAt: 0, stage: "read" },
+          }),
+          spy,
+        ),
       ),
     })
     await waitFor(() => {

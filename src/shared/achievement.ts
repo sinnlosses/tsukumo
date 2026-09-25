@@ -139,9 +139,11 @@ export function isEmptyAchievementDay(
 }
 
 /**
- * 振り返りのボタンを押したときに会話へ送る依頼文（`docs/requirements.md` 4.11「振り返りの依頼」、
- * 語は `docs/glossary.md`「成果の振り返り」）。**画面に出している数だけから組み立てる**——
- * コミットの件名や会話の文面は入れない（`docs/coding-standards.md`「会話内容の扱い」）。
+ * 振り返りのボタンを押したときに、会話とは別の使い捨ての問い合わせへ送る依頼文
+ * （`docs/requirements.md` 4.11「振り返りの依頼」、語は `docs/glossary.md`「成果の振り返り」）。
+ * **画面に出している数だけから組み立てる**——コミットの件名や会話の文面は入れない
+ * （`docs/coding-standards.md`「会話内容の扱い」）。**モードでは文面を変えない**（会話のモードに
+ * 関わらず同じ問い合わせに渡すため）。
  */
 export function achievementReflectionRequestText(params: {
   readonly date: string
@@ -154,8 +156,6 @@ export function achievementReflectionRequestText(params: {
   readonly milestones: readonly AchievementMilestone[]
   /** その日に既に日記があるか（続きとして書き足す1行を足す）。 */
   readonly alreadyWritten: boolean
-  /** 雑談中は `report` ツールが無いので、その1行を足さない。 */
-  readonly chatMode: boolean
 }): string {
   const dayPhrase = achievementRequestDayPhrase(params.date, params.today)
   const taskCountClause = achievementTaskCountClause(params.doneTasks)
@@ -184,9 +184,6 @@ export function achievementReflectionRequestText(params: {
   lines.push(
     `日記は diary ツールで1回書いて。本文はこの日の仕事の感想とねぎらいを短く。${bookmarkClause}ファイルやログは読みに行かず、この一覧だけで書いてほしい。次にやることの提案はいらない。`,
   )
-  if (!params.chatMode) {
-    lines.push("report は、何日の分を振り返ったかの1行でよい。")
-  }
   return lines.join("\n")
 }
 

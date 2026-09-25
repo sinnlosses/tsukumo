@@ -100,7 +100,6 @@ function renderSection(overrides: {
   readonly review?: AchievementReviewButton
   readonly reveal?: boolean
   readonly isFetching?: boolean
-  readonly onWatchConversation?: () => void
   readonly onOpenDiaryBook?: () => void
 }): ReturnType<typeof render> {
   return render(
@@ -111,7 +110,6 @@ function renderSection(overrides: {
       portrait={NO_PORTRAIT}
       reveal={overrides.reveal ?? false}
       review={overrides.review ?? AVAILABLE_REVIEW}
-      onWatchConversation={overrides.onWatchConversation ?? NOOP}
       onOpenDiaryBook={overrides.onOpenDiaryBook ?? NOOP}
     />,
   )
@@ -203,19 +201,15 @@ describe("DiarySection", () => {
     expect(screen.getByText("いちばんを選ぶ")).toBeDefined()
     const button = screen.getByRole("button", { name: "振り返り中…" })
     expect(button.getAttribute("aria-disabled")).toBe("true")
-    expect(screen.getByRole("button", { name: "会話の画面で様子を見る ›" })).toBeDefined()
   })
 
-  it("会話の画面で様子を見るを押すと onWatchConversation が呼ばれる", () => {
-    let calls = 0
+  it("会話の画面へ移る口は無い（振り返りは会話の画面に何も出さないため）", () => {
     renderSection({
       view: READY_NO_DIARY,
       writing: { kind: "writing", stage: "read" },
-      onWatchConversation: () => (calls += 1),
     })
 
-    screen.getByRole("button", { name: "会話の画面で様子を見る ›" }).click()
-    expect(calls).toBe(1)
+    expect(screen.queryByRole("button", { name: "会話の画面で様子を見る ›" })).toBeNull()
   })
 
   it("書いている間、既に日記があれば前の段落を点線の枠に残す", () => {

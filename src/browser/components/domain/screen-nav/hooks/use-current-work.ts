@@ -45,24 +45,25 @@ import { monthDayLabel } from "../../../../utils/month-day-label.ts"
 const MAX_COLLAPSED_STEPS = 5
 
 /**
- * 5つの状態の語（上ほど強い。表の並びは docs/screen-design.md 13.9「いまの作業」）。
+ * 6つの状態の語（上ほど強い。表の並びは docs/screen-design.md 13.9「いまの作業」）。
  * `background` は**ターンは終わっているが背景のタスクが動いている**とき（同「背景のタスク」）。
  * `diary` は**成果の振り返りで日記を書いている**とき（`docs/screen-design.md` 13.9「いまの作業」の
- * 表。`state.diaryWriting.kind === "writing"`）で、答え待ちの次・作業中の前に見る。
+ * 表。`state.diaryWriting.kind === "writing"`）で、**会話のターンと並んで書いているので作業中より
+ * 弱い**（作業中が動いていれば作業中を出す）。
  */
 export type ScreenNavCurrentWorkState =
   | "stopped"
   | "pending"
-  | "diary"
   | "running"
+  | "diary"
   | "background"
   | "idle"
 
 const WORK_WORD_LABEL = {
   stopped: "止まっている",
   pending: "答え待ち",
-  diary: "振り返り中",
   running: "作業中",
+  diary: "振り返り中",
   background: "背景で作業中",
   idle: "依頼待ち",
 } satisfies Record<ScreenNavCurrentWorkState, string>
@@ -285,10 +286,10 @@ export function useCurrentWork(navRef: RefObject<HTMLElement | null>): ScreenNav
     ? "stopped"
     : firstPending !== undefined
       ? "pending"
-      : diaryWriting.kind === "writing"
-        ? "diary"
-        : turnInProgress
-          ? "running"
+      : turnInProgress
+        ? "running"
+        : diaryWriting.kind === "writing"
+          ? "diary"
           : backgroundTasks.length > 0
             ? "background"
             : "idle"

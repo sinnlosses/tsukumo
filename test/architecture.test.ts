@@ -100,10 +100,10 @@ const SERVER_FEATURE_IMPORTS: Readonly<Record<ServerFeature, ReadonlySet<ServerF
   repository: new Set([]),
   achievement: new Set(["repository"]),
   "character-pack": new Set([]),
-  diary: new Set(["character-pack", "repository"]),
+  diary: new Set(["character-pack", "repository", "session-driver"]),
   chat: new Set(["character-pack", "session-driver"]),
   visit: new Set([]),
-  "session-driver": new Set(["chat", "diary", "report", "usage-review", "view-server"]),
+  "session-driver": new Set(["chat", "report", "usage-review", "view-server"]),
   session: new Set([
     "session-driver",
     "chat",

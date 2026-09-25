@@ -38,7 +38,6 @@ const WORK_MODE: SessionMode = { kind: "work" }
 const BASE_OPTIONS: SessionDriverOptions = {
   cwd: "/tmp/tsukumo-test",
   expressions: [{ name: "default", label: "通常" }],
-  diaryWriter: { pack: "tsukumo", name: "つくも" },
   permissionMode: BUILTIN_SESSION_DEFAULT.permissionMode,
   model: BUILTIN_SESSION_DEFAULT.model,
   effort: BUILTIN_SESSION_DEFAULT.effort,

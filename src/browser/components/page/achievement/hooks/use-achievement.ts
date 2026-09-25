@@ -42,7 +42,6 @@ import {
 import { sessionTokenUrl } from "../../../../lib/session-token-url.ts"
 import { type AchievementDateSelection } from "../../../../stores/location-hash.ts"
 import {
-  navigateTo,
   selectAchievementDate,
   selectAchievementToday,
   useAchievementDateSelection,
@@ -50,9 +49,9 @@ import {
 import {
   useSessionDispatch,
   useSessionSelector,
-  useTurnRunning,
   type SessionDispatch,
 } from "../../../../stores/session.tsx"
+import { monthDayLabel } from "../../../../utils/month-day-label.ts"
 import { diaryWriterPortraitOf, type DiaryWriterPortrait } from "../diary-writer.ts"
 
 /** 今日を見ているあいだだけ取り直す間隔（13.10「並べるもの」のさらに上、5章「取り直す契機」）。 */
@@ -127,11 +126,12 @@ export type UseAchievementResult = {
    * `true` になる**——同じ段落を日を開き直して見たときは `false`（下の `takeDiaryReveal`）。
    */
   readonly diaryReveal: boolean
-  /** 「会話の画面で様子を見る ›」（13.10「ボタンを押せないとき・押したあと」）。 */
-  readonly onWatchConversation: () => void
 }
 
-const TURN_RUNNING_BLOCKED_REASON = "いまターンが動いているので送れない"
+/** ほかの日の日記を書いている最中に出す理由（13.10「ボタンを押せないとき・押したあと」）。 */
+function busyOnAnotherDayReason(date: string): string {
+  return `いま${monthDayLabel(Temporal.PlainDate.from(date))}の日記を書いているので送れない`
+}
 const EMPTY_DAY_BLOCKED_REASON = "振り返る成果が無い"
 
 /**
@@ -147,7 +147,6 @@ export function useAchievement(): UseAchievementResult {
   const selection = useAchievementDateSelection()
   const dispatch = useSessionDispatch()
   const queryClient = useQueryClient()
-  const turnRunning = useTurnRunning()
   const character = useSessionSelector((session) => session.state.character)
   const characterPacks = useSessionSelector((session) => session.state.characterPacks)
   const diaryWriting = useSessionSelector((session) => session.state.diaryWriting)
@@ -223,27 +222,27 @@ export function useAchievement(): UseAchievementResult {
     onSelectDate: (date: string) => {
       selectAchievementDate(date)
     },
-    review: reviewButtonOf(view, daySwitch, turnRunning, character, dispatch),
+    review: reviewButtonOf(view, daySwitch, diaryWriting, character, dispatch),
     writing,
     diaryPortrait: diaryPortraitOf(view, character, characterPacks),
     diaryReveal,
-    onWatchConversation: () => {
-      navigateTo("conversation")
-    },
   }
 }
 
 /**
- * 振り返りのボタン（13.10「並べるもの」4・「ボタンを押せないとき・押したあと」）。
- * **空の日の理由をターンが動いている理由より先に見る**——両方成り立つときは空の日の理由だけを
- * 出す決まり（同節）。押すと**日付だけを送る**（`reflect-achievement`。依頼文は session-manager が
+ * 振り返りのボタン（13.10「並べるもの」4・「ボタンを押せないとき・押したあと」）。**会話のターン
+ * 中・答え待ちでも押せる**（振り返りは会話とは別の使い捨ての問い合わせ）。押せないのは、
+ * 日記を書いている最中（`diaryWriting.kind === "writing"`。書いているのがこの日なら
+ * `Controls` が「振り返り中…」に出し分けるので、ここの理由文は他の日のときだけ見える）と、
+ * 空の日のとき。**空の日の理由を先に見る**——両方成り立つときは空の日の理由だけを出す決まり
+ * （同節）。押すと**日付だけを送る**（`reflect-achievement`。依頼文は session-manager が
  * その日の成果を数え直して組む。`docs/design.md`「日記の受け取りと保存」「コマンドと依頼」）。
  * **画面は移らない。**
  */
 function reviewButtonOf(
   view: AchievementView,
   daySwitch: AchievementDaySwitch,
-  turnRunning: boolean,
+  diaryWriting: DiaryWriting,
   character: CharacterInfo | undefined,
   dispatch: SessionDispatch,
 ): AchievementReviewButton {
@@ -258,8 +257,8 @@ function reviewButtonOf(
     view.doneTasks,
   )
     ? { kind: "blocked", reason: EMPTY_DAY_BLOCKED_REASON }
-    : turnRunning
-      ? { kind: "blocked", reason: TURN_RUNNING_BLOCKED_REASON }
+    : diaryWriting.kind === "writing"
+      ? { kind: "blocked", reason: busyOnAnotherDayReason(diaryWriting.date) }
       : { kind: "available" }
 
   return {

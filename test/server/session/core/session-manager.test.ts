@@ -6,7 +6,10 @@ import {
   type ContextUsageEntry,
   type ContextUsageLog,
 } from "../../../../src/server/context-usage/core/context-usage.ts"
-import { type DiaryDay } from "../../../../src/server/diary/core/diary-tool.ts"
+import {
+  type DiaryWriteRequest,
+  type DiaryWriterSource,
+} from "../../../../src/server/diary/core/diary-writer.ts"
 import {
   createPromptImageShelf,
   type PromptImageShelf,
@@ -95,6 +98,9 @@ const NO_VISIT_PORTS: VisitPorts = {
   scriptSource: { kind: "pack-only" },
 }
 
+/** 振り返りの書き手を気にしないテストに渡す出どころ（起こさない）。 */
+const NO_DIARY_WRITER: DiaryWriterSource = { kind: "dont-write" }
+
 /** 呼ばれた回数と引数だけを覚える、テスト用の駆動。**本物の claude は起こさない。** */
 type StubDriver = {
   readonly driver: SessionDriver
@@ -115,7 +121,6 @@ function createStubDriver(): StubDriver {
     driver: {
       prompt: (text: string) => calls.push(`prompt:${text}`),
       promptWithoutRecord: (text: string) => calls.push(`promptWithoutRecord:${text}`),
-      beginDiaryDay: (day: DiaryDay) => calls.push(`beginDiaryDay:${day.date}`),
       interrupt: () => {
         calls.push("interrupt")
         return Promise.resolve()
@@ -176,6 +181,7 @@ function startManagerWithStub(
   writeResult: "written" | "rejected" = "written",
   readAchievementDay: (date: string) => Promise<DailyAchievement | undefined> = () =>
     Promise.resolve(undefined),
+  diary: DiaryWriterSource = NO_DIARY_WRITER,
 ) {
   const stub = createStubDriver()
   const edits: CharacterEditCommand[] = []
@@ -207,6 +213,7 @@ function startManagerWithStub(
     batchIntervalMs: BATCH_MS,
     chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
     visit: NO_VISIT_PORTS,
+    diary,
     chatArchive: NOOP_CHAT_ARCHIVE,
     tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
     contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
@@ -395,6 +402,7 @@ describe("createSessionManager", () => {
       batchIntervalMs: BATCH_MS,
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
       visit: NO_VISIT_PORTS,
+      diary: NO_DIARY_WRITER,
       chatArchive: NOOP_CHAT_ARCHIVE,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
@@ -531,6 +539,7 @@ describe("createSessionManager", () => {
       batchIntervalMs: BATCH_MS,
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
       visit: NO_VISIT_PORTS,
+      diary: NO_DIARY_WRITER,
       chatArchive: NOOP_CHAT_ARCHIVE,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
@@ -619,6 +628,7 @@ describe("createSessionManager", () => {
       batchIntervalMs: BATCH_MS,
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
       visit: NO_VISIT_PORTS,
+      diary: NO_DIARY_WRITER,
       chatArchive: NOOP_CHAT_ARCHIVE,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
@@ -676,6 +686,7 @@ describe("createSessionManager", () => {
       batchIntervalMs: BATCH_MS,
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
       visit: NO_VISIT_PORTS,
+      diary: NO_DIARY_WRITER,
       chatArchive: NOOP_CHAT_ARCHIVE,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
@@ -734,6 +745,7 @@ describe("createSessionManager", () => {
       batchIntervalMs: BATCH_MS,
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
       visit: NO_VISIT_PORTS,
+      diary: NO_DIARY_WRITER,
       chatArchive: NOOP_CHAT_ARCHIVE,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
@@ -801,6 +813,7 @@ describe("createSessionManager", () => {
       batchIntervalMs: BATCH_MS,
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
       visit: NO_VISIT_PORTS,
+      diary: NO_DIARY_WRITER,
       chatArchive: NOOP_CHAT_ARCHIVE,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
@@ -900,7 +913,7 @@ describe("createSessionManager", () => {
     })
   })
 
-  describe("成果の振り返り（reflect-achievement）", () => {
+  describe("成果の振り返り（reflect-achievement。docs/design.md「日記の受け取りと保存」）", () => {
     const KNOWN_DAY: DailyAchievement = {
       kind: "known",
       date: "2026-09-23",
@@ -918,12 +931,38 @@ describe("createSessionManager", () => {
       doneTasks: { kind: "known", items: [] },
     }
 
-    it("その日の成果を数え直して依頼を送り、窓口へいま書く日を渡して diary-requested を流す", async () => {
+    /**
+     * 手で進める書き手のスタブ。**待たない**（`write` は呼ばれたことだけ記録し、解決しない
+     * Promise を返す）——中断や「書いている最中」を確かめるテストが、書き終わるのを待たずに
+     * 状態を見られるようにする。`emit` で手動にイベントを流せる。
+     */
+    function createStubDiaryWriter() {
+      const calls: DiaryWriteRequest[] = []
+      const signals: AbortSignal[] = []
+      let currentEmit: (event: SessionEvent) => void = () => {}
+      const source: DiaryWriterSource = {
+        kind: "write",
+        write: (request, onEvent, signal) => {
+          calls.push(request)
+          signals.push(signal)
+          currentEmit = onEvent
+          return new Promise(() => {})
+        },
+      }
+      return { source, calls, signals, emit: (event: SessionEvent) => currentEmit(event) }
+    }
+
+    it("その日の成果を数え直して diary-requested を流し、代の持ち物の書き手へ渡す", async () => {
       const seenDates: string[] = []
-      const { manager, stub } = startManagerWithStub("written", async (date) => {
-        seenDates.push(date)
-        return KNOWN_DAY
-      })
+      const writer = createStubDiaryWriter()
+      const { manager } = startManagerWithStub(
+        "written",
+        async (date) => {
+          seenDates.push(date)
+          return KNOWN_DAY
+        },
+        writer.source,
+      )
       const frames: ServerFrame[] = []
       manager.subscribe((frame) => frames.push(frame))
 
@@ -937,10 +976,9 @@ describe("createSessionManager", () => {
       await waitForBatch()
 
       expect(seenDates).toEqual(["2026-09-23"])
-      // 書く日を先に渡してから依頼を送る。
-      expect(stub.calls[0]).toBe("beginDiaryDay:2026-09-23")
-      expect(stub.calls[1]?.startsWith("prompt:")).toBe(true)
-      expect(stub.calls[1]).toContain("この日の日記を書いてほしい")
+      expect(writer.calls).toHaveLength(1)
+      expect(writer.calls[0]?.date).toBe("2026-09-23")
+      expect(writer.calls[0]?.requestText).toContain("この日の日記を書いてほしい")
 
       const eventKinds = frames
         .filter(
@@ -951,8 +989,13 @@ describe("createSessionManager", () => {
       expect(eventKinds).toContain("diary-requested")
     })
 
-    it("ターン進行中は受け付けない（画面のボタンと同じ条件をサーバでも見る）", async () => {
-      const { manager, stub } = startManagerWithStub("written", () => Promise.resolve(KNOWN_DAY))
+    it("会話のターン中・答え待ちでも受け付ける（会話とは別の使い捨ての問い合わせなので）", async () => {
+      const writer = createStubDiaryWriter()
+      const { manager, stub } = startManagerWithStub(
+        "written",
+        () => Promise.resolve(KNOWN_DAY),
+        writer.source,
+      )
       stub.emit({ kind: "request", text: "架空の依頼", images: [] })
 
       expect(
@@ -961,12 +1004,84 @@ describe("createSessionManager", () => {
           commandId: "c-1",
           date: "2026-09-23",
         }),
-      ).toEqual({ ok: false, reason: FRAME_ERROR_REASON.achievementReflectionDuringTurn })
-      expect(stub.calls).toEqual([])
+      ).toEqual({ ok: true })
+      expect(writer.calls).toHaveLength(1)
+    })
+
+    it("日記を書いている最中は断る（同じ日でもほかの日でも）", async () => {
+      const writer = createStubDiaryWriter()
+      const { manager } = startManagerWithStub(
+        "written",
+        () => Promise.resolve(KNOWN_DAY),
+        writer.source,
+      )
+
+      expect(
+        await manager.dispatch({
+          type: "reflect-achievement",
+          commandId: "c-1",
+          date: "2026-09-23",
+        }),
+      ).toEqual({ ok: true })
+
+      const second = await manager.dispatch({
+        type: "reflect-achievement",
+        commandId: "c-2",
+        date: "2026-09-20",
+      })
+      expect(second).toEqual({ ok: false, reason: FRAME_ERROR_REASON.achievementReflectionWriting })
+      expect(writer.calls).toHaveLength(1)
+    })
+
+    it("代を閉じると、渡した信号が中断される", async () => {
+      const writer = createStubDiaryWriter()
+      const { manager } = startManagerWithStub(
+        "written",
+        () => Promise.resolve(KNOWN_DAY),
+        writer.source,
+      )
+
+      await manager.dispatch({
+        type: "reflect-achievement",
+        commandId: "c-1",
+        date: "2026-09-23",
+      })
+      expect(writer.signals).toHaveLength(1)
+      expect(writer.signals[0]?.aborted).toBe(false)
+
+      await manager.dispatch({
+        type: "switch-character",
+        commandId: "c-2",
+        name: "fictional",
+      })
+      expect(writer.signals[0]?.aborted).toBe(true)
+    })
+
+    it("疑似セッション（dont-write）では diary-requested のすぐ後に diary-failed を流す", async () => {
+      const { manager } = startManagerWithStub("written", () => Promise.resolve(KNOWN_DAY))
+      const frames: ServerFrame[] = []
+      manager.subscribe((frame) => frames.push(frame))
+
+      expect(
+        await manager.dispatch({
+          type: "reflect-achievement",
+          commandId: "c-1",
+          date: "2026-09-23",
+        }),
+      ).toEqual({ ok: true })
+      await waitForBatch()
+
+      const eventKinds = frames
+        .filter(
+          (frame): frame is Extract<ServerFrame, { readonly type: "events" }> =>
+            frame.type === "events",
+        )
+        .flatMap((frame) => frame.events.map((stamped) => stamped.event.kind))
+      expect(eventKinds).toEqual(["diary-requested", "diary-failed"])
     })
 
     it("空の日は断る", async () => {
-      const { manager, stub } = startManagerWithStub("written", () => Promise.resolve(EMPTY_DAY))
+      const { manager } = startManagerWithStub("written", () => Promise.resolve(EMPTY_DAY))
 
       expect(
         await manager.dispatch({
@@ -975,11 +1090,10 @@ describe("createSessionManager", () => {
           date: "2026-09-23",
         }),
       ).toEqual({ ok: false, reason: FRAME_ERROR_REASON.achievementReflectionUnavailable })
-      expect(stub.calls).toEqual([])
     })
 
     it("main が読めない日は断る", async () => {
-      const { manager, stub } = startManagerWithStub("written", () =>
+      const { manager } = startManagerWithStub("written", () =>
         Promise.resolve({ kind: "unknown" }),
       )
 
@@ -990,11 +1104,10 @@ describe("createSessionManager", () => {
           date: "2026-09-23",
         }),
       ).toEqual({ ok: false, reason: FRAME_ERROR_REASON.achievementReflectionUnavailable })
-      expect(stub.calls).toEqual([])
     })
 
     it("成果が読めなかった（undefined）ときも断る", async () => {
-      const { manager, stub } = startManagerWithStub("written", () => Promise.resolve(undefined))
+      const { manager } = startManagerWithStub("written", () => Promise.resolve(undefined))
 
       expect(
         await manager.dispatch({
@@ -1003,7 +1116,6 @@ describe("createSessionManager", () => {
           date: "2026-09-23",
         }),
       ).toEqual({ ok: false, reason: FRAME_ERROR_REASON.achievementReflectionUnavailable })
-      expect(stub.calls).toEqual([])
     })
   })
 
@@ -1041,6 +1153,7 @@ describe("createSessionManager", () => {
         batchIntervalMs: BATCH_MS,
         chatCompactThresholdBytes: thresholdBytes,
         visit: NO_VISIT_PORTS,
+        diary: NO_DIARY_WRITER,
         chatArchive: archive,
         tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
         contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
@@ -1477,6 +1590,7 @@ describe("createSessionManager", () => {
       batchIntervalMs: BATCH_MS,
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
       visit: NO_VISIT_PORTS,
+      diary: NO_DIARY_WRITER,
       chatArchive: NOOP_CHAT_ARCHIVE,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
@@ -1532,6 +1646,7 @@ describe("createSessionManager", () => {
       batchIntervalMs: BATCH_MS,
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
       visit: NO_VISIT_PORTS,
+      diary: NO_DIARY_WRITER,
       chatArchive: NOOP_CHAT_ARCHIVE,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
@@ -1578,6 +1693,7 @@ describe("createSessionManager", () => {
       batchIntervalMs: BATCH_MS,
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
       visit: NO_VISIT_PORTS,
+      diary: NO_DIARY_WRITER,
       chatArchive: NOOP_CHAT_ARCHIVE,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
@@ -1594,7 +1710,6 @@ describe("createSessionManager", () => {
         Promise.resolve({
           prompt: () => {},
           promptWithoutRecord: () => {},
-          beginDiaryDay: () => {},
           interrupt: () => Promise.reject(new Error("架空の駆動エラー")),
           answer: () => true,
           pending: () => [],
@@ -1673,6 +1788,7 @@ describe("createSessionManager", () => {
         batchIntervalMs: BATCH_MS,
         chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
         visit: NO_VISIT_PORTS,
+        diary: NO_DIARY_WRITER,
         chatArchive,
         tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
         contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
@@ -1906,6 +2022,7 @@ describe("createSessionManager", () => {
         batchIntervalMs: BATCH_MS,
         chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
         visit: NO_VISIT_PORTS,
+        diary: NO_DIARY_WRITER,
         chatArchive: NOOP_CHAT_ARCHIVE,
         tokenUsageLog: {
           append: (entry) => {
@@ -2203,6 +2320,7 @@ describe("createSessionManager", () => {
         batchIntervalMs: BATCH_MS,
         chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
         visit: NO_VISIT_PORTS,
+        diary: NO_DIARY_WRITER,
         chatArchive: NOOP_CHAT_ARCHIVE,
         tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
         contextUsageLog: {
@@ -2431,6 +2549,7 @@ describe("依頼に添えた画像の棚", () => {
       batchIntervalMs: BATCH_MS,
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
       visit: NO_VISIT_PORTS,
+      diary: NO_DIARY_WRITER,
       chatArchive: NOOP_CHAT_ARCHIVE,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
@@ -2611,6 +2730,7 @@ describe("createSessionManager（見直し）", () => {
       batchIntervalMs: BATCH_MS,
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
       visit: NO_VISIT_PORTS,
+      diary: NO_DIARY_WRITER,
       chatArchive: NOOP_CHAT_ARCHIVE,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
@@ -2748,6 +2868,7 @@ describe("訪問", () => {
         random: () => 0,
         scriptSource: { kind: "pack-only" },
       },
+      diary: NO_DIARY_WRITER,
       chatArchive: NOOP_CHAT_ARCHIVE,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,

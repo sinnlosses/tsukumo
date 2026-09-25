@@ -255,9 +255,17 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
       expect(document.querySelector(".screen-nav-work-word")?.textContent).toBe("答え待ち")
     })
 
-    it("振り返り中はターンが動いていても「作業中」にならない", () => {
+    it("会話のターンが動いていれば「作業中」が勝つ（振り返りは会話と並んで進むため）", () => {
       renderScreenNav({
         turn: { kind: "running", startedAt: 0 },
+        diaryWriting: { kind: "writing", date: "2026-09-23", startedAt: 0, stage: "write" },
+      })
+
+      expect(document.querySelector(".screen-nav-work-word")?.textContent).toBe("作業中")
+    })
+
+    it("会話のターンが動いていなければ「振り返り中」になる", () => {
+      renderScreenNav({
         diaryWriting: { kind: "writing", date: "2026-09-23", startedAt: 0, stage: "write" },
       })
 

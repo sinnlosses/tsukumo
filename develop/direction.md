@@ -35,3 +35,7 @@
 - **`scripts/capture-catalog.ts` の `notation-figure` / `notation-chart` の件が、レポートの演出が着地するのを待ってから送って撮るようにする**（振り返り: T-584）
   - 根拠: T-584 のサブエージェントが mermaid と chart の目視で `--only notation-figure / notation-chart` を撮ったが、`notation` 場面は演出の着地まで約15秒かかり、`PREPARE_TIMEOUT_MS`（2000ms）の送りの操作が図に届く前に切れて取りこぼした。手製の Playwright スクリプトで着地を待って撮り直している（ツールのエラー6件の一部）。`docs/architecture.md`「手で確かめること」はこの2件を「記法の見本の下側」を出す件として案内している
   - 出し先: `scripts/capture-catalog.ts` の件の定義（演出の着地を待つ操作か待ち時間）を直すタスク1件
+
+- **設計のタスクが後続の実装タスクの本文を揃えるとき、実装の広がり（消す口・プロトコルの変更・触る機能の数）を見て `difficulty` も見直す**（振り返り: T-596）
+  - 根拠: T-596 は登録時の `sonnet` のまま委譲し、会話の駆動から `diary` を外して別の `query()` に移す実装（33ファイル、+560/-663、`PROTOCOL_VERSION` の更新、browser の3か所）に 348 回のツール呼び出し・40分かかった（`session-manager.ts`×10・`sdk-driver.ts`×8・`session-start.ts`×7）。結果は通ったが、T-595 が本文の `## 完了条件` を大きく書き足した時点で重さが変わっていた。`plan-tasks` の手順3は前段が後段の本文を揃えることを言うが、`difficulty` には触れていない
+  - 出し先: claude-skills の `plan-tasks/SKILL.md` 手順3（T-580 で足した一文）の続きに「揃えるときは `difficulty` も見直す」を1句

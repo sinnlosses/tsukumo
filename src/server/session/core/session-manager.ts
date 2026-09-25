@@ -34,7 +34,7 @@ import {
   UNAVAILABLE_CONTEXT_USAGE,
 } from "../../../shared/context-usage.ts"
 import { FRAME_ERROR_REASON, PROTOCOL_VERSION, type ServerFrame } from "../../../shared/frame.ts"
-import { type SessionDefault } from "../../../shared/session-default.ts"
+import { BUILTIN_SESSION_DEFAULT, type SessionDefault } from "../../../shared/session-default.ts"
 import { type SessionEvent } from "../../../shared/session-event.ts"
 import {
   applySessionEvent,
@@ -49,6 +49,7 @@ import {
   createContextUsageRecorder,
 } from "../../context-usage/core/context-usage.ts"
 import { type DiaryDayTask } from "../../diary/core/diary-tool.ts"
+import { type DiaryWriteRequest, type DiaryWriterSource } from "../../diary/core/diary-writer.ts"
 import {
   type PromptImageShelf,
   releasedPromptImageIds,
@@ -232,6 +233,11 @@ export type SessionManagerOptions = {
    * 見張りは代ごとに1つ作る（{@link GenerationTally.visit}）。
    */
   readonly visit: VisitPorts
+  /**
+   * 成果の振り返りの書き手の出どころ（`src/server/diary/core/diary-writer.ts`。訪問の台本と同じ
+   * 使い捨ての形。`docs/design.md`「日記の受け取りと保存」）。疑似セッションでは `dont-write`。
+   */
+  readonly diary: DiaryWriterSource
 }
 
 /**
@@ -278,6 +284,11 @@ type GenerationTally = {
   readonly liveDriver: () => SessionDriver | undefined
   /** 訪問の見張り（待ちの勘定と掛けた時計。起こし直すと一緒に捨てる）。 */
   readonly visit: VisitWatch
+  /**
+   * 振り返りの書き手を中断する信号（**代の持ち物**。`docs/design.md`「日記の受け取りと保存」
+   * 「コマンドと依頼」）。起こし直しで代を閉じたら、書いている最中の問い合わせも中断する。
+   */
+  readonly diarySignal: AbortSignal
 }
 
 /**
@@ -294,6 +305,12 @@ type SessionGeneration = GenerationTally & {
   readonly close: () => void
   /** 新しい `hello` を配り終えたと知らせ、束を配り始める（起こし直しの代だけが待っている）。 */
   readonly announce: () => void
+  /**
+   * この代が生きているあいだだけイベントを畳む（駆動由来と同じ扱い）。代を閉じたあとに呼んでも
+   * 黙って捨てる——`reflectAchievement` のような長く続く非同期の処理が、あとから届いた
+   * イベントをこの代に固定して流すために使う。
+   */
+  readonly emit: (event: SessionEvent) => void
 }
 
 export function createSessionManager(options: SessionManagerOptions): SessionManager {
@@ -424,6 +441,8 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
     // まま雑談 / 仕事へ切り替わり、前の立ち絵が一瞬出てから `hello` で入れ替わる。その間の
     // 姿は `hello` に入るので、配らずに捨ててよい。
     let held = delivery === "after-hello"
+    // 振り返りの書き手を中断する信号（代の持ち物）。
+    const diaryAbort = new AbortController()
     const tally: GenerationTally = {
       batch: createEventBatch({
         intervalMs: options.batchIntervalMs,
@@ -444,6 +463,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
           receiveIfCurrent(event, "driver")
         },
       }),
+      diarySignal: diaryAbort.signal,
     }
     const receiveIfCurrent = (event: SessionEvent, origin: EventOrigin): void => {
       if (born !== bornCount) {
@@ -482,9 +502,13 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
         live?.close()
         tally.batch.discard()
         tally.visit.close()
+        diaryAbort.abort()
       },
       announce: () => {
         held = false
+      },
+      emit: (event) => {
+        receiveIfCurrent(event, "driver")
       },
     }
   }
@@ -579,12 +603,21 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
   }
 
   /**
-   * 成果の振り返り（`reflect-achievement`）。**その日の成果を数え直し**（`options.readAchievementDay`。
-   * 画面が読んでいるのと同じ数え方）、空の日・読めなかったときは断る。通れば依頼文を組んで送り、
-   * 窓口（`SessionDriver.beginDiaryDay`）に「いま書く日」を渡してから `diary-requested` を流す
-   * （`docs/design.md`「日記の受け取りと保存」「コマンドと依頼」）。
+   * 成果の振り返り（`reflect-achievement`）。**会話のターン中・答え待ちでも受ける**——断るのは
+   * 日記を書いている最中（`state.diaryWriting.kind === "writing"`）と、その日の成果が読めない・
+   * 空の日のときだけ（`docs/design.md`「日記の受け取りと保存」「コマンドと依頼」）。通れば
+   * `diary-requested` を流し、**代の持ち物の書き手**（`options.diary`）に1回ぶんを渡す。会話の
+   * `SessionDriver` は通らない——書き手は会話とは別の使い捨ての問い合わせ。
    */
   const reflectAchievement = async (date: string): Promise<DispatchResult> => {
+    if (state.diaryWriting.kind === "writing") {
+      return declined(FRAME_ERROR_REASON.achievementReflectionWriting)
+    }
+
+    // **いまの代を1つに固定する**——数え直しを待つ間に起こし直しても、この振り返りは始めたときの
+    // 代のまま進める（起こし直した代のイベントに混ざらない。`emit` は代が閉じたら黙って捨てる）。
+    const currentGeneration = generation
+
     const achievement = await readAchievementDaySafely(date)
     if (
       achievement === undefined ||
@@ -592,11 +625,6 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
       isEmptyAchievementDay(achievement.commitCount, achievement.doneTasks)
     ) {
       return declined(FRAME_ERROR_REASON.achievementReflectionUnavailable)
-    }
-    // 数え直しを待つあいだに入力欄の依頼でターンが始まっていれば、ここで断る（入口の判定は
-    // 待つ前のもの）。
-    if (state.turn.kind === "running") {
-      return declined(FRAME_ERROR_REASON.achievementReflectionDuringTurn)
     }
 
     const doneTasks: readonly DiaryDayTask[] =
@@ -609,19 +637,26 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
       graduations: achievement.graduations,
       milestones: achievement.milestones,
       alreadyWritten: achievement.diary.kind === "written",
-      chatMode: state.chatMode,
     })
 
-    try {
-      const started = await generation.driver
-      // 書く日を先に渡す（依頼が先に届くと、渡す前に `diary` が呼ばれうる）。
-      started.beginDiaryDay({ date, doneTasks })
-      started.prompt(text, [])
-      receive(generation, { kind: "diary-requested", date }, "driver")
+    currentGeneration.emit({ kind: "diary-requested", date })
+
+    if (options.diary.kind === "dont-write") {
+      // 疑似セッション: claude を起こさず、`diary-requested` のすぐ後に `diary-failed` を流す
+      // （`docs/design.md`「日記の受け取りと保存」「問い合わせの起こし方」）。
+      currentGeneration.emit({ kind: "diary-failed", date })
       return { ok: true }
-    } catch {
-      return { ok: false, reason: FRAME_ERROR_REASON.driverFailed }
     }
+
+    const request: DiaryWriteRequest = {
+      date,
+      doneTasks,
+      requestText: text,
+      model: state.model ?? BUILTIN_SESSION_DEFAULT.model,
+    }
+    // **待たない**（書き手は自分でイベントを流し終える。`reflect-achievement` はここで返す）。
+    void options.diary.write(request, currentGeneration.emit, currentGeneration.diarySignal)
+    return { ok: true }
   }
 
   /** `options.readAchievementDay` が例外を投げても、常駐プロセスは落とさず undefined に畳む。 */
@@ -653,6 +688,9 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
       }
       // **ターン中なら断る判定はここ1か所**（起こし直しの3つと `nudge`）。理由の文面だけは、
       // 何ができなかったかで分ける（docs/screen-design.md 13.9「動き方の操作子」）。
+      // **`reflect-achievement` はここに無い**——会話のターン中・答え待ちでも受ける
+      // （`docs/design.md`「日記の受け取りと保存」「コマンドと依頼」）。断るかどうかは
+      // `reflectAchievement` の中で見る。
       if (state.turn.kind === "running") {
         switch (command.type) {
           case "switch-character":
@@ -663,8 +701,6 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
             return declined(FRAME_ERROR_REASON.sessionSwitchDuringTurn)
           case "nudge":
             return declined(FRAME_ERROR_REASON.nudgeDuringTurn)
-          case "reflect-achievement":
-            return declined(FRAME_ERROR_REASON.achievementReflectionDuringTurn)
           default:
             break
         }

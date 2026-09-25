@@ -20,7 +20,6 @@ import { type ExpressionChoice } from "../../../shared/expression-choice.ts"
 import { type Expression } from "../../../shared/expression.ts"
 import { type Answer, type PendingAsk } from "../../../shared/pending-ask.ts"
 import { type SessionEvent } from "../../../shared/session-event.ts"
-import { type DiaryDay } from "../../diary/core/diary-tool.ts"
 import { type ShelvedPromptImage } from "./prompt-image-shelf.ts"
 
 /**
@@ -269,11 +268,6 @@ export type SessionDriverOptions = {
   /** `speak` の `expression` で受け付ける表情と、そのラベル（キャラクターパックから作る）。 */
   readonly expressions: readonly ExpressionChoice[]
   /**
-   * `diary` ツールが書いた日記に添える、書いた時点のパック（ディレクトリ名と表示名。
-   * `docs/design.md`「日記の受け取りと保存」）。あとでキャラクターを替えても誰が書いたかが残る。
-   */
-  readonly diaryWriter: { readonly pack: string; readonly name: string }
-  /**
    * このセッションを起こす許可モード（**覚えた既定**。`src/shared/session-default.ts`）。
    * 起こしたあと帯から変えた値はここに戻らない（セッション限り）。
    */
@@ -335,12 +329,6 @@ export type SessionDriver = {
    * 画像は添えられない（tsukumo が自分で足す一言のための口で、利用者の持ち物を運ばない）。
    */
   readonly promptWithoutRecord: (text: string) => void
-  /**
-   * `diary` ツールの窓口（`src/server/diary/core/diary-tool.ts` の `DiaryIntake`）へ、いま書く日を渡す
-   * （成果の振り返り。`docs/design.md`「日記の受け取りと保存」「コマンドと依頼」）。呼ぶのは
-   * `session-manager` が `reflect-achievement` を受けたとき、依頼を送る前後。
-   */
-  readonly beginDiaryDay: (day: DiaryDay) => void
   /** 実行中のターンを中断する。中断されたターンは `turn-finished` の `interrupted` で終わる（失敗にはしない）。 */
   readonly interrupt: () => Promise<void>
   /** 答え待ちに答える。解決済み・知らない id のときは `false`。 */
