@@ -6,7 +6,7 @@ import {
   type ViewAssets,
   type ViewServer,
   type ViewServerOptions,
-} from "../../../src/server/adapter/server.ts"
+} from "../../../../src/server/view-server/adapter/server.ts"
 import {
   DEFAULT_VIEW_PORT,
   resolveViewPort,
@@ -14,9 +14,9 @@ import {
   type ResolvedViewPort,
   startOnResolvedPort,
   VIEW_PORT_FALLBACK_ATTEMPTS,
-} from "../../../src/server/core/port-resolution.ts"
-import { UNAVAILABLE_CONTEXT_USAGE } from "../../../src/shared/context-usage.ts"
-import { EMPTY_TOKEN_USAGE_SUMMARY } from "../../../src/shared/token-usage-summary.ts"
+} from "../../../../src/server/view-server/core/port-resolution.ts"
+import { UNAVAILABLE_CONTEXT_USAGE } from "../../../../src/shared/context-usage.ts"
+import { EMPTY_TOKEN_USAGE_SUMMARY } from "../../../../src/shared/token-usage-summary.ts"
 
 /** 配るものの中身はここでは見ない（確かめるのはどのポートで listen したかだけ）。 */
 const emptyViewAssets: ViewAssets = { uiScript: () => "", styleSheet: () => "" }

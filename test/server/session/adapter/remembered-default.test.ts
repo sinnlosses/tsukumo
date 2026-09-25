@@ -10,9 +10,9 @@ import {
   writeRememberedCharacter,
   writeRememberedSessionDefault,
   writeRememberedVisitEnabled,
-} from "../../../src/server/adapter/remembered-default.ts"
-import { BUILTIN_SESSION_DEFAULT } from "../../../src/shared/session-default.ts"
-import { DEFAULT_VISIT_ENABLED } from "../../../src/shared/visit.ts"
+} from "../../../../src/server/session/adapter/remembered-default.ts"
+import { BUILTIN_SESSION_DEFAULT } from "../../../../src/shared/session-default.ts"
+import { DEFAULT_VISIT_ENABLED } from "../../../../src/shared/visit.ts"
 
 let dir: string
 
@@ -163,7 +163,7 @@ describe("readRememberedSessionDefault", () => {
 
   // **effort だけ、無い古い state.json でも他の2つを読める**（欄が無い＝ effort を足す前に
   // 覚えたファイル）。model / permissionMode は今までどおり1組のまま——effort だけ optional
-  // にしてある（src/server/adapter/remembered-default.ts の sessionDefaultStateSchema）。
+  // にしてある（src/server/session/adapter/remembered-default.ts の sessionDefaultStateSchema）。
   it("effort の無い古い state.json でも、モデル・許可モードは読めて effort だけ同梱の既定に落ちる", () => {
     writeFileSync(
       statePath(),
@@ -244,7 +244,7 @@ describe("writeRememberedSessionDefault", () => {
   })
 
   // **同じファイルを2つの口が書く**ので、片方の書き込みがもう片方を消さないことを見る
-  // （書き込みはファイル丸ごとの置き換え。src/server/adapter/remembered-default.ts）。
+  // （書き込みはファイル丸ごとの置き換え。src/server/session/adapter/remembered-default.ts）。
   it("既定を書いても覚えたキャラクターは残る", () => {
     writeRememberedCharacter("tsukumo", statePath())
     writeRememberedSessionDefault(
@@ -355,7 +355,7 @@ describe("writeRememberedVisitEnabled", () => {
   })
 
   // **3つの欄を同じファイルが持つ**ので、どれか1つを書いてもほかの2つを消さないことを見る
-  // （書き込みはファイル丸ごとの置き換え。src/server/adapter/remembered-default.ts）。
+  // （書き込みはファイル丸ごとの置き換え。src/server/session/adapter/remembered-default.ts）。
   it("訪問のオン・オフを書いても、覚えたキャラクターと既定は残る", () => {
     writeRememberedCharacter("tsukumo", statePath())
     writeRememberedSessionDefault(

@@ -1,13 +1,13 @@
 // 届いたイベントをまとめて配るための束（docs/design.md 5章）。**1件ずつ押さない**のは、
 // 書きかけの本文がトークン単位で届くので、1件ずつ配ると転送量が跳ねるため。
 //
-// **駆動1代ぶんの持ち物**として `src/server/core/session-manager.ts` が持ち、起こし直すと
+// **駆動1代ぶんの持ち物**として `src/server/session/core/session-manager.ts` が持ち、起こし直すと
 // 作り直す（前の代の積み残しを新しい画面へ配らない）。
 //
 // 会話の内容がイベントとして通るが、**ログにもファイルにも書かない**
 // （docs/coding-standards.md「会話内容の扱い」）。配る先は渡された {@link EventBatchOptions.deliver} だけ。
 
-import { type StampedEvent } from "../../shared/session-event.ts"
+import { type StampedEvent } from "../../../shared/session-event.ts"
 
 /**
  * イベントをまとめて配る間隔。**旧の `PUBLISH_INTERVAL_MS` と同じ 100ms**。

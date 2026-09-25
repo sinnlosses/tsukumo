@@ -15,7 +15,7 @@ import process from "node:process"
 import {
   DEFAULT_VIEW_PORT,
   VIEW_PORT_FALLBACK_ATTEMPTS,
-} from "../src/server/core/port-resolution.ts"
+} from "../src/server/view-server/core/port-resolution.ts"
 import { candidatePorts, findListener } from "./lib/port-listener.ts"
 
 const USAGE = `使い方:

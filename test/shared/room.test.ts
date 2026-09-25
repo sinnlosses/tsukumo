@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test"
 
-import { DEFAULT_VIEW_PORT } from "../../src/server/core/port-resolution.ts"
+import { DEFAULT_VIEW_PORT } from "../../src/server/view-server/core/port-resolution.ts"
 import { FIRST_ROOM_PORT, roomName } from "../../src/shared/room.ts"
 
 describe("roomName", () => {

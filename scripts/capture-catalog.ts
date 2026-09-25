@@ -14,7 +14,7 @@
 // 「起こす → 撮る → 落とす」を繰り返す側で、測りはしない。
 //
 // **先に `bun run build` が要る。** 起こす tsukumo は `dist/browser/` に置いた成果物を読むだけで、
-// 自分では組み立てない（`src/server/adapter/bundle.ts` 冒頭）。無いと1件ずつ
+// 自分では組み立てない（`src/server/view-server/adapter/bundle.ts` 冒頭）。無いと1件ずつ
 // 起動に失敗する。
 //
 // 使い方:

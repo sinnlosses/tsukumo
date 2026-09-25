@@ -17,8 +17,8 @@ import { createServer, type IncomingMessage, type ServerResponse, type Server } 
 import { basename } from "node:path"
 import process from "node:process"
 
-import { createStartupToken } from "../src/server/adapter/server.ts"
 import { closeTab, listTabs, openTab, type OrcaTab } from "../src/server/host/adapter/orca-host.ts"
+import { createStartupToken } from "../src/server/view-server/adapter/server.ts"
 import { roomName } from "../src/shared/room.ts"
 import { candidatePorts, findListener, run, type Listener } from "./lib/port-listener.ts"
 import {

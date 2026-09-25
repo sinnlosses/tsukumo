@@ -1,18 +1,18 @@
 // 起き上がっている駆動に1件頼むところ（`docs/design.md` 5章）。**受け付けられたかどうかだけを
 // 返し、結果はイベントで戻ってくる**（ブラウザはローカルで echo しない。3章「依頼」）。
 //
-// **どのコマンドをここへ流すかを決めるのは `src/server/core/session-manager.ts` の `dispatch`**
+// **どのコマンドをここへ流すかを決めるのは `src/server/session/core/session-manager.ts` の `dispatch`**
 // （起こし直し・見た目の編集・覚えるだけの操作はそちらで捌かれ、ここには来ない）。ここが持つ
 // のは「渡し方」と「駆動が投げたときの畳み方」だけ。
 //
 // 依頼の文面が引数として通るが、**ログにもファイルにも書かない**
 // （`docs/coding-standards.md`「会話内容の扱い」）。
 
-import { type DriverCommand } from "../../shared/command.ts"
-import { FRAME_ERROR_REASON } from "../../shared/frame.ts"
-import { CHAT_NUDGE_PROMPT } from "../chat/core/chat-nudge.ts"
-import { type PromptImageShelf } from "../session-driver/core/prompt-image-shelf.ts"
-import { type SessionDriver } from "../session-driver/core/session-driver.ts"
+import { type DriverCommand } from "../../../shared/command.ts"
+import { FRAME_ERROR_REASON } from "../../../shared/frame.ts"
+import { CHAT_NUDGE_PROMPT } from "../../chat/core/chat-nudge.ts"
+import { type PromptImageShelf } from "../../session-driver/core/prompt-image-shelf.ts"
+import { type SessionDriver } from "../../session-driver/core/session-driver.ts"
 
 /** コマンドを受け付けられたか。理由は定型文（`FRAME_ERROR_REASON`）だけを返す。 */
 export type DispatchResult = { readonly ok: true } | { readonly ok: false; readonly reason: string }

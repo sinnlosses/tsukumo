@@ -13,26 +13,29 @@ import {
   readAchievement,
   readCommitCalendar,
 } from "./server/achievement/adapter/main-history.ts"
-import { type UiBundle } from "./server/adapter/bundle.ts"
 import { todayLocalDateKey } from "./server/adapter/local-time.ts"
-import { createStartupToken, startViewServer } from "./server/adapter/server.ts"
-import { attachSessionSocket } from "./server/adapter/session-socket.ts"
-import { watchUiSource } from "./server/adapter/ui-rebuild.ts"
-import { type ResolvedViewPort, startOnResolvedPort } from "./server/core/port-resolution.ts"
-import { type SessionManager } from "./server/core/session-manager.ts"
 import { listDiaryDates, readDiaryDay } from "./server/diary/adapter/diary.ts"
 import { listRepositoryFiles } from "./server/repository/adapter/repository-file.ts"
 import { type PromptImageShelf } from "./server/session-driver/core/prompt-image-shelf.ts"
+import { type SessionManager } from "./server/session/core/session-manager.ts"
 import {
   summarizeRecentTokenUsage,
   type TokenUsageLog,
 } from "./server/token-usage/core/token-usage.ts"
+import { type UiBundle } from "./server/view-server/adapter/bundle.ts"
+import { createStartupToken, startViewServer } from "./server/view-server/adapter/server.ts"
+import { attachSessionSocket } from "./server/view-server/adapter/session-socket.ts"
+import { watchUiSource } from "./server/view-server/adapter/ui-rebuild.ts"
+import {
+  type ResolvedViewPort,
+  startOnResolvedPort,
+} from "./server/view-server/core/port-resolution.ts"
 import { resolveAchievementDateKey } from "./shared/achievement.ts"
 import { type ContextUsageReport, UNAVAILABLE_CONTEXT_USAGE } from "./shared/context-usage.ts"
 import { type RefreshTarget, type ServerFrame } from "./shared/frame.ts"
 
 export type ViewDeliveryOptions = {
-  /** どのポートで試すか（決めるのは `src/server/core/port-resolution.ts`）。 */
+  /** どのポートで試すか（決めるのは `src/server/view-server/core/port-resolution.ts`）。 */
   readonly portResolution: ResolvedViewPort
   /**
    * 起動のときに読んだブラウザ側の1組（`dist/browser/` に置いてあるもの）。**見張りが組み立て
@@ -98,7 +101,7 @@ export async function startViewDelivery(options: ViewDeliveryOptions): Promise<V
   const achievementCommitCache = createAchievementCommitCache()
 
   // ポートが塞がっているのは、既定を使っているときに限り「起動時の前提不足」として即時終了せず
-  // ずらして再挑戦する（src/server/core/port-resolution.ts）。明示的に渡されたときは一度だけ
+  // ずらして再挑戦する（src/server/view-server/core/port-resolution.ts）。明示的に渡されたときは一度だけ
   // 試してそのまま失敗する。
   const started = await startOnResolvedPort(options.portResolution, (port) =>
     startViewServer(port, {

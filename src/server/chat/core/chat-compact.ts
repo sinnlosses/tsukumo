@@ -6,7 +6,7 @@
 // 1つに保つため。文面だけ変えて読み出しが黙って空になる、を起こさない。
 //
 // 閾値を超えたかどうかの判断（{@link ChatCompactWatch}）もここが持つ。**いつ見るか**
-// （ターンの終わりに1回）を決めるのは `src/server/core/session-manager.ts` で、
+// （ターンの終わりに1回）を決めるのは `src/server/session/core/session-manager.ts` で、
 // 写しのファイルに触るのは `src/server/chat/adapter/chat-summary.ts`。ここは「決める」内容だけで、
 // 外の世界には触らない（原則2）。
 

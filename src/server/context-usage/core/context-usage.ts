@@ -1,7 +1,7 @@
 // コンテキストの内訳を記録に残すときの書き口の契約（`token-usage/core/token-usage.ts` と
 // 同じ切り分け）と、**セッション1つにつき1行だけ書く係**（{@link ContextUsageRecorder}）。
 // **実際に書くのは `src/server/context-usage/adapter/context-usage-log.ts`**、
-// **いつ呼ぶか**（ターンが終わるたび）を決めるのは `src/server/core/session-manager.ts`。
+// **いつ呼ぶか**（ターンが終わるたび）を決めるのは `src/server/session/core/session-manager.ts`。
 //
 // **この係は駆動の世代をまたいで持つ** — 続きから起こして同じセッションIDになったときは同じ
 // セッションなので、2行目を書かない（`session-manager.ts` の世代の持ち物には入れない）。

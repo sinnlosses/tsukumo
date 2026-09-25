@@ -34,7 +34,7 @@ const ROOM_COLORS = [
 ] satisfies readonly string[]
 
 /**
- * 語彙の1つめが載るポート。**`src/server/core/port-resolution.ts` の `DEFAULT_VIEW_PORT` と
+ * 語彙の1つめが載るポート。**`src/server/view-server/core/port-resolution.ts` の `DEFAULT_VIEW_PORT` と
  * 同じ値**（`shared` からサーバ側を import できないので写してある。ずれたら
  * `test/shared/room.test.ts` が落ちる）。
  */

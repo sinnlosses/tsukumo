@@ -1,6 +1,6 @@
 // セッションを1つ起こす配線。**どの駆動で起こすか（本物の SDK か疑似セッションの fake driver
 // か）と、続きから始めるセッションをどう探すか**をここで決め、起こす順序そのものは
-// `src/server/core/session-launch.ts` に任せる（起動時も起こし直し（`switch-character` /
+// `src/server/session/core/session-launch.ts` に任せる（起動時も起こし直し（`switch-character` /
 // `set-chat-mode`）も同じ関数を通る）。
 //
 // ここは配線層（`src/` 直下。docs/design.md 2章「層と依存の向き」）。
@@ -15,12 +15,6 @@ import {
 } from "./server/achievement/adapter/main-history.ts"
 import { localTimeHHMM, todayLocalDateKey } from "./server/adapter/local-time.ts"
 import {
-  readRememberedSessionDefault,
-  readRememberedVisitEnabled,
-  writeRememberedSessionDefault,
-  writeRememberedVisitEnabled,
-} from "./server/adapter/remembered-default.ts"
-import {
   type CharacterPack,
   listCharacterPacks,
 } from "./server/character-pack/adapter/character-pack.ts"
@@ -30,9 +24,6 @@ import { createPersonaMemory, readRememberedLines } from "./server/chat/adapter/
 import { readChatTopics } from "./server/chat/core/chat-compact.ts"
 import { createContextUsageLog } from "./server/context-usage/adapter/context-usage-log.ts"
 import { type Config } from "./server/core/config.ts"
-import { EVENT_BATCH_INTERVAL_MS } from "./server/core/event-batch.ts"
-import { createSessionLaunch, type SessionLaunchSeed } from "./server/core/session-launch.ts"
-import { createSessionManager, type SessionManager } from "./server/core/session-manager.ts"
 import { createOrcaHost } from "./server/host/adapter/orca-host.ts"
 import { openTrackedFile } from "./server/host/core/tracked-file.ts"
 import { listRepositoryFiles } from "./server/repository/adapter/repository-file.ts"
@@ -53,6 +44,18 @@ import {
   type SessionStart,
 } from "./server/session-driver/core/session-driver.ts"
 import { canResume, sessionTag } from "./server/session-driver/core/session-restore.ts"
+import {
+  readRememberedSessionDefault,
+  readRememberedVisitEnabled,
+  writeRememberedSessionDefault,
+  writeRememberedVisitEnabled,
+} from "./server/session/adapter/remembered-default.ts"
+import { EVENT_BATCH_INTERVAL_MS } from "./server/session/core/event-batch.ts"
+import {
+  createSessionLaunch,
+  type SessionLaunchSeed,
+} from "./server/session/core/session-launch.ts"
+import { createSessionManager, type SessionManager } from "./server/session/core/session-manager.ts"
 import {
   takeSystemPromptAppend,
   toSystemPromptMode,

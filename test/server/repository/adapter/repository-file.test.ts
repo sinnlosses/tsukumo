@@ -16,7 +16,7 @@ describe("listRepositoryFiles", () => {
     const files = await listRepositoryFiles(REPOSITORY_ROOT)
 
     expect(files).toContain("package.json")
-    expect(files).toContain("src/server/adapter/server.ts")
+    expect(files).toContain("src/server/view-server/adapter/server.ts")
     // 管理外（`bun install` が作るもの）は入らない。
     expect(files.some((path) => path.startsWith("node_modules/"))).toBe(false)
   })

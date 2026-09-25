@@ -19,7 +19,7 @@
 //   **サニタイズはここ1箇所に集約**（docs/display.md 4.2）
 // - `rehype-highlight` でコードの色付け（`pre > code` に `hljs` の class と `<span>` を足す。
 //   テーマ CSS は `/vendor/highlight-theme.min.css` としてサーバが配る。
-//   `src/server/adapter/vendor-asset.ts`）
+//   `src/server/view-server/adapter/vendor-asset.ts`）
 //
 // **```mermaid / ```chart のフェンスは「コード」ではなく図・グラフの入れ物にする**
 // （{@link MermaidBlock} / {@link ChartBlock}）。`pre` を上書きし、中の `code` 要素の

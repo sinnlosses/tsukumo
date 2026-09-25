@@ -1,5 +1,5 @@
 // `src/browser/` を見張り、変更のたびにブラウザ側スクリプトと CSS を組み立て直す。**開発中だけ**
-// 呼ばれる（`TSUKUMO_WATCH_UI`。docs/design.md 11章）。組み立てそのものは `src/server/adapter/bundle.ts`
+// 呼ばれる（`TSUKUMO_WATCH_UI`。docs/design.md 11章）。組み立てそのものは `src/server/view-server/adapter/bundle.ts`
 // が持ち、ここは「いつ組み立て直すか」だけを決める（組み上がったものを誰に押すかは
 // `src/view-delivery.ts`）。
 //
@@ -10,7 +10,7 @@
 // 外で `src/shared/` が変わったあと（`git merge` で両方が一度に変わったときなど）に組み直すと、
 // 新しい契約の画面が古いサーバへ配られる（版が合わない知らせが出て、読み込み直しても同じ画面が
 // 配られるので戻れない）。**そこで、起動時にサーバ側のソース（`src/` の `browser/` 以外）の指紋を
-// 取っておき、変わっていたら組み直さず前の版を配り続ける**（`src/server/adapter/source-fingerprint.ts`）。
+// 取っておき、変わっていたら組み直さず前の版を配り続ける**（`src/server/view-server/adapter/source-fingerprint.ts`）。
 //
 // **`fs.watch` を使う**。**ファイル1つ**を見張ると、保存で inode ごと差し替わったときに監視が
 // 古い実体に残って鳴らなくなるが、ここは**ディレクトリを再帰で**見張るので、中のファイルが
@@ -21,8 +21,8 @@
 
 import { watch } from "node:fs"
 
+import { bundledFilePath } from "../../adapter/bundled-path.ts"
 import { buildUiBundle, UI_SOURCE_DIR_RELATIVE_PATH, type UiBundle } from "./bundle.ts"
-import { bundledFilePath } from "./bundled-path.ts"
 import { sourceFingerprint } from "./source-fingerprint.ts"
 
 /**

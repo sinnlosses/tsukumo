@@ -4,7 +4,7 @@
 // `/context-usage`・`/prompt-image/<id>` の各口）ので、ここへ寄せた。
 //
 // トークンが無いとき（未起動のページを直接開いたときなど）は空文字を送る。サーバ側
-// （`src/server/adapter/server.ts` の `hasStartupToken`）が拒む側を持っているので、ここでは
+// （`src/server/view-server/adapter/server.ts` の `hasStartupToken`）が拒む側を持っているので、ここでは
 // 「無い」を握りつぶさずそのまま伝える。
 //
 // **`/ws` の `ws:` / `wss:` への差し替えはこの関数の外。** `lib/socket.ts` がプロトコルと

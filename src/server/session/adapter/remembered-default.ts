@@ -10,7 +10,7 @@
 // **選択そのものはセッション限り**（起こし直すと初期値に戻る／帯で変えた値はそのセッション
 // 限り）だが、**次に起こすときの初期値としてはここに残る**。**訪問のオン・オフだけは、次の
 // 起動だけでなくいま動いているセッションにも即座に効く**（`set-visit-enabled`。
-// `src/server/core/session-manager.ts`）——覚え方（この1ファイル）は他の2つと同じで、
+// `src/server/session/core/session-manager.ts`）——覚え方（この1ファイル）は他の2つと同じで、
 // 効き方だけが違う。
 //
 // 保存するのは**パックの名前・既定・訪問のオン・オフの3語だけ**。会話に関わる値をここに
@@ -20,15 +20,15 @@ import { join } from "node:path"
 
 import { z } from "zod"
 
-import { EFFORT_LEVELS, MODEL_ALIASES } from "../../shared/command.ts"
+import { EFFORT_LEVELS, MODEL_ALIASES } from "../../../shared/command.ts"
 import {
   BUILTIN_SESSION_DEFAULT,
   SESSION_DEFAULT_PERMISSION_MODES,
   type SessionDefault,
-} from "../../shared/session-default.ts"
-import { DEFAULT_VISIT_ENABLED } from "../../shared/visit.ts"
-import { readJsonFile, writeJsonFile } from "./lib/json-file.ts"
-import { tsukumoHomeDir } from "./tsukumo-home.ts"
+} from "../../../shared/session-default.ts"
+import { DEFAULT_VISIT_ENABLED } from "../../../shared/visit.ts"
+import { readJsonFile, writeJsonFile } from "../../adapter/lib/json-file.ts"
+import { tsukumoHomeDir } from "../../adapter/tsukumo-home.ts"
 
 const STATE_FILE_NAME = "state.json"
 

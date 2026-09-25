@@ -4,7 +4,7 @@
 // 依存させない。
 //
 // **何を残すか・いつ書くかの判断はここが決めない。** 判断は
-// `src/server/core/session-manager.ts` の `receive` が持ち、ここが持つのは「どこに・どんな形で
+// `src/server/session/core/session-manager.ts` の `receive` が持ち、ここが持つのは「どこに・どんな形で
 // 書くか」——1件を1行の JSONL へ変換して追記するだけ（`docs/coding-standards.md`
 // 「会話内容の扱い」とぶつからないための切り分け。`src/server/chat/adapter/chat-summary.ts` と同じ形）。
 //

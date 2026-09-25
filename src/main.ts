@@ -14,14 +14,17 @@
 import process from "node:process"
 
 import { createCurrentCharacter } from "./current-character.ts"
-import { readUiBundle } from "./server/adapter/bundle.ts"
 import { type Config, VIEW_PORT_ENV_NAME } from "./server/core/config.ts"
-import { resolveViewPort, resolveViewPortFallbackBase } from "./server/core/port-resolution.ts"
 import { createOrcaHost } from "./server/host/adapter/orca-host.ts"
 import { type Host } from "./server/host/core/host.ts"
 import { readFakeSession } from "./server/session-driver/adapter/fake-driver.ts"
 import { createPromptImageShelf } from "./server/session-driver/core/prompt-image-shelf.ts"
 import { createTokenUsageLog } from "./server/token-usage/adapter/token-usage-log.ts"
+import { readUiBundle } from "./server/view-server/adapter/bundle.ts"
+import {
+  resolveViewPort,
+  resolveViewPortFallbackBase,
+} from "./server/view-server/core/port-resolution.ts"
 import { startSession } from "./session-start.ts"
 import { startViewDelivery } from "./view-delivery.ts"
 
@@ -41,7 +44,7 @@ export async function run(config: Config): Promise<number> {
   }
 
   // ブラウザ側スクリプトと CSS は**事前に組み立てて置いてあるものを読むだけ**
-  // （`src/server/adapter/bundle.ts` 冒頭）。**起動の経路から `bun build` は消えていて**、作るのは
+  // （`src/server/view-server/adapter/bundle.ts` 冒頭）。**起動の経路から `bun build` は消えていて**、作るのは
   // `bun run build` と `bun run dev` の見張りだけ。無ければページが動かないので、**ここは
   // 起動時の前提不足として即時終了する**（理由に `bun run build` を添える。理由が無いと、
   // 起動できない側は何を打てばよいか分からない）。

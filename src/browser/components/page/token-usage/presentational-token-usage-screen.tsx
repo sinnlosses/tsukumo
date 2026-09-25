@@ -52,7 +52,7 @@ export function PresentationalTokenUsageScreen(
 ): ReactElement {
   // **記録が1件も無い期間かどうかはモデル別で見る** — 推移は期間のすべての刻みが0で並ぶので
   // 長さでは分からない。行はモデルの増分が1つでもあるときにだけ積まれる
-  // （`src/server/core/session-manager.ts`）ので、モデル別が空なら行が無い。
+  // （`src/server/session/core/session-manager.ts`）ので、モデル別が空なら行が無い。
   const isEmpty = props.summary.byModel.length === 0
 
   return (

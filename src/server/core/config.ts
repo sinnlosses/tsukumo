@@ -8,7 +8,7 @@
 // 持ち主 `src/server/session-driver/core/session-restore.ts` に置く（続きから始めるセッションを選ぶ計算と
 // 同じ場所）。
 
-/** ビューを配るポート（既定は src/server/core/port-resolution.ts の `DEFAULT_VIEW_PORT`）。 */
+/** ビューを配るポート（既定は src/server/view-server/core/port-resolution.ts の `DEFAULT_VIEW_PORT`）。 */
 export const VIEW_PORT_ENV_NAME = "TSUKUMO_VIEW_PORT"
 /**
  * `TSUKUMO_VIEW_PORT` が未設定のときに使う既定ポートの起点を差し替える（既定は
@@ -54,7 +54,7 @@ export type DriverKind = "sdk" | "fake"
 export type Config = {
   /**
    * `TSUKUMO_VIEW_PORT` の生の値。**ここでは数として解釈しない**（既定か明示かの区別と
-   * ずらす判断は src/server/core/port-resolution.ts が持つ）。
+   * ずらす判断は src/server/view-server/core/port-resolution.ts が持つ）。
    */
   readonly rawViewPort: string | undefined
   /**

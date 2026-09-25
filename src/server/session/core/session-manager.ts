@@ -20,7 +20,7 @@ import {
   achievementReflectionRequestText,
   isEmptyAchievementDay,
   type DailyAchievement,
-} from "../../shared/achievement.ts"
+} from "../../../shared/achievement.ts"
 import {
   type CharacterCreateCommand,
   type CharacterDeleteCommand,
@@ -28,35 +28,38 @@ import {
   type ClientCommand,
   type DismissUsageProposalCommand,
   isCharacterEditCommand,
-} from "../../shared/command.ts"
-import { type ContextUsageReport, UNAVAILABLE_CONTEXT_USAGE } from "../../shared/context-usage.ts"
-import { FRAME_ERROR_REASON, PROTOCOL_VERSION, type ServerFrame } from "../../shared/frame.ts"
-import { type SessionDefault } from "../../shared/session-default.ts"
-import { type SessionEvent } from "../../shared/session-event.ts"
+} from "../../../shared/command.ts"
+import {
+  type ContextUsageReport,
+  UNAVAILABLE_CONTEXT_USAGE,
+} from "../../../shared/context-usage.ts"
+import { FRAME_ERROR_REASON, PROTOCOL_VERSION, type ServerFrame } from "../../../shared/frame.ts"
+import { type SessionDefault } from "../../../shared/session-default.ts"
+import { type SessionEvent } from "../../../shared/session-event.ts"
 import {
   applySessionEvent,
   INITIAL_SESSION_STATE,
   type SessionState,
-} from "../../shared/session-state.ts"
-import { type PreviousUsageReview, type UsageReviewFindings } from "../../shared/usage-review.ts"
-import { appendChatArchiveEntry } from "../chat/core/chat-archive-entry.ts"
-import { type ChatCompactWatch, createChatCompactWatch } from "../chat/core/chat-compact.ts"
+} from "../../../shared/session-state.ts"
+import { type PreviousUsageReview, type UsageReviewFindings } from "../../../shared/usage-review.ts"
+import { appendChatArchiveEntry } from "../../chat/core/chat-archive-entry.ts"
+import { type ChatCompactWatch, createChatCompactWatch } from "../../chat/core/chat-compact.ts"
 import {
   type ContextUsageLog,
   createContextUsageRecorder,
-} from "../context-usage/core/context-usage.ts"
-import { type DiaryDayTask } from "../diary/core/diary-tool.ts"
+} from "../../context-usage/core/context-usage.ts"
+import { type DiaryDayTask } from "../../diary/core/diary-tool.ts"
 import {
   type PromptImageShelf,
   releasedPromptImageIds,
-} from "../session-driver/core/prompt-image-shelf.ts"
-import { type ChatArchive, type SessionDriver } from "../session-driver/core/session-driver.ts"
+} from "../../session-driver/core/prompt-image-shelf.ts"
+import { type ChatArchive, type SessionDriver } from "../../session-driver/core/session-driver.ts"
 import {
   createTokenUsageRecorder,
   type TokenUsageLog,
   type TokenUsageRecorder,
-} from "../token-usage/core/token-usage.ts"
-import { createVisitWatch, type VisitPorts, type VisitWatch } from "../visit/core/visit-watch.ts"
+} from "../../token-usage/core/token-usage.ts"
+import { createVisitWatch, type VisitPorts, type VisitWatch } from "../../visit/core/visit-watch.ts"
 import { declined, type DispatchResult, dispatchToDriver, nudge } from "./driver-command.ts"
 import { createEventBatch, type EventBatch } from "./event-batch.ts"
 import { type SessionLaunchRequest } from "./session-launch.ts"
@@ -782,7 +785,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
   }
 }
 
-/** 購読者全員に配る。閉じかけている接続を無視するのは送る側（src/server/adapter/session-socket.ts）の仕事。 */
+/** 購読者全員に配る。閉じかけている接続を無視するのは送る側（src/server/view-server/adapter/session-socket.ts）の仕事。 */
 function publish(frame: ServerFrame, subscribers: ReadonlySet<(frame: ServerFrame) => void>): void {
   for (const send of subscribers) {
     send(frame)

@@ -1,71 +1,71 @@
 import { describe, expect, it } from "bun:test"
 
-import { type CharacterSelection } from "../../../src/server/character-pack/core/character-selection.ts"
-import { CHAT_NUDGE_PROMPT } from "../../../src/server/chat/core/chat-nudge.ts"
+import { type CharacterSelection } from "../../../../src/server/character-pack/core/character-selection.ts"
+import { CHAT_NUDGE_PROMPT } from "../../../../src/server/chat/core/chat-nudge.ts"
 import {
   type ContextUsageEntry,
   type ContextUsageLog,
-} from "../../../src/server/context-usage/core/context-usage.ts"
-import { type SessionLaunchRequest } from "../../../src/server/core/session-launch.ts"
-import { createSessionManager } from "../../../src/server/core/session-manager.ts"
-import { type DiaryDay } from "../../../src/server/diary/core/diary-tool.ts"
+} from "../../../../src/server/context-usage/core/context-usage.ts"
+import { type DiaryDay } from "../../../../src/server/diary/core/diary-tool.ts"
 import {
   createPromptImageShelf,
   type PromptImageShelf,
   recordedPromptImages,
   type ShelvedPromptImage,
-} from "../../../src/server/session-driver/core/prompt-image-shelf.ts"
+} from "../../../../src/server/session-driver/core/prompt-image-shelf.ts"
 import {
   type ChatArchive,
   type ChatArchiveEntry,
   type SessionDriver,
-} from "../../../src/server/session-driver/core/session-driver.ts"
+} from "../../../../src/server/session-driver/core/session-driver.ts"
+import { type SessionLaunchRequest } from "../../../../src/server/session/core/session-launch.ts"
+import { createSessionManager } from "../../../../src/server/session/core/session-manager.ts"
 import {
   type TokenUsageEntry,
   type TokenUsageLog,
-} from "../../../src/server/token-usage/core/token-usage.ts"
-import { type VisitGuest } from "../../../src/server/visit/core/visit-guest.ts"
-import { VISIT_TIMING } from "../../../src/server/visit/core/visit-timing.ts"
-import { type VisitPorts } from "../../../src/server/visit/core/visit-watch.ts"
-import { type DailyAchievement } from "../../../src/shared/achievement.ts"
-import { type VisitScript } from "../../../src/shared/character-visit.ts"
-import { CHAT_COMPACT_THRESHOLD_BYTES } from "../../../src/shared/chat-log.ts"
+} from "../../../../src/server/token-usage/core/token-usage.ts"
+import { type VisitGuest } from "../../../../src/server/visit/core/visit-guest.ts"
+import { VISIT_TIMING } from "../../../../src/server/visit/core/visit-timing.ts"
+import { type VisitPorts } from "../../../../src/server/visit/core/visit-watch.ts"
+import { type DailyAchievement } from "../../../../src/shared/achievement.ts"
+import { type VisitScript } from "../../../../src/shared/character-visit.ts"
+import { CHAT_COMPACT_THRESHOLD_BYTES } from "../../../../src/shared/chat-log.ts"
 import {
   type CharacterCreateCommand,
   type CharacterDeleteCommand,
   type CharacterEditCommand,
   type DismissUsageProposalCommand,
-} from "../../../src/shared/command.ts"
+} from "../../../../src/shared/command.ts"
 import {
   type ContextUsageReport,
   UNAVAILABLE_CONTEXT_USAGE,
-} from "../../../src/shared/context-usage.ts"
+} from "../../../../src/shared/context-usage.ts"
 import {
   FRAME_ERROR_REASON,
   PROTOCOL_VERSION,
   type ServerFrame,
-} from "../../../src/shared/frame.ts"
-import { type PromptImage } from "../../../src/shared/prompt-image.ts"
-import { type SessionDefault } from "../../../src/shared/session-default.ts"
-import { type SessionEvent } from "../../../src/shared/session-event.ts"
+} from "../../../../src/shared/frame.ts"
+import { type PromptImage } from "../../../../src/shared/prompt-image.ts"
+import { type SessionDefault } from "../../../../src/shared/session-default.ts"
+import { type SessionEvent } from "../../../../src/shared/session-event.ts"
 import {
   INITIAL_SESSION_STATE,
   MAX_SESSION_STATE_TURNS,
   type SessionState,
-} from "../../../src/shared/session-state.ts"
+} from "../../../../src/shared/session-state.ts"
 import {
   type ModelTokenUsage,
   type ScopeUsage,
   type TurnUsageBreakdown,
-} from "../../../src/shared/token-usage.ts"
-import { type PreviousUsageReview, usageProposalKey } from "../../../src/shared/usage-review.ts"
+} from "../../../../src/shared/token-usage.ts"
+import { type PreviousUsageReview, usageProposalKey } from "../../../../src/shared/usage-review.ts"
 import {
   characterChangedEvent,
   shownOutfitAccents,
   shownPortraits,
-} from "../../fixture/character.ts"
-import { contextUsage, readyContextUsage } from "../../fixture/context-usage.ts"
-import { createManualClock } from "../../fixture/manual-clock.ts"
+} from "../../../fixture/character.ts"
+import { contextUsage, readyContextUsage } from "../../../fixture/context-usage.ts"
+import { createManualClock } from "../../../fixture/manual-clock.ts"
 
 // 疑似セッションもセリフも手で書いた架空のもの（docs/coding-standards.md「会話内容の扱い」）。
 const BATCH_MS = 5

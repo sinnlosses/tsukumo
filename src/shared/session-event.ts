@@ -230,7 +230,7 @@ export type SessionEvent =
   /**
    * そのターンの終わりに SDK が渡してきたトークンの使用量（`result` の `modelUsage`）。
    * **運ぶのは `query()` の中の累計そのまま**で、ターンごとの増分に直すのは受け取った側
-   * （`src/server/core/session-manager.ts` が前回の累計を覚えて差を取る）。
+   * （`src/server/session/core/session-manager.ts` が前回の累計を覚えて差を取る）。
    *
    * **画面には出ない。** 畳み込み（session-state.ts）は何もせず、行き先は
    * `~/.tsukumo/token-usage/` の記録だけ（`src/server/token-usage/adapter/token-usage-log.ts`）。`turn-finished` に
@@ -361,7 +361,7 @@ export type SessionEvent =
   /**
    * 雑談のサイドバーの「最近の話題」に出す見出し（新しい順。`docs/screen-design.md` 13.7）。
    * **雑談で起こしたときと、圧縮で要約の写しが新しくなったとき**に流れる
-   * （`src/server/core/session-launch.ts` と `src/server/session-driver/adapter/sdk-driver.ts`）。
+   * （`src/server/session/core/session-launch.ts` と `src/server/session-driver/adapter/sdk-driver.ts`）。
    *
    * **運ぶのは写しから取り出した見出しだけ**で、要約の本文は乗らない（`docs/requirements.md`
    * 4.9。取り出すのは `src/server/chat/core/chat-compact.ts` の `chatTopics`）。取り出せなかった・
@@ -372,7 +372,7 @@ export type SessionEvent =
    * 雑談のサイドバーの「覚えていること」に出す一覧（`docs/design.md` 7.1・`docs/screen-design.md` 13.7）。
    * **雑談で起こしたときと、`remember` / `forget`（キャラクター自身）・画面の「編集」の
    * `forget-remembered-line` のどれかで `persona.md` の `## 覚えたこと` が変わったとき**に流れる
-   * （`src/server/core/session-launch.ts` と `src/server/chat/adapter/persona-memory.ts`）。
+   * （`src/server/session/core/session-launch.ts` と `src/server/chat/adapter/persona-memory.ts`）。
    *
    * **運ぶのは節の行そのもの**（`- ` を外した文面、古い→新しいの順）。上限に当たった・
    * 一致する行が無かった・書けなかったときは流れない（`PersonaMemory` の契約どおり、

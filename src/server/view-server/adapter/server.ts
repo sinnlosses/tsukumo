@@ -24,37 +24,37 @@ import process from "node:process"
 
 import { isPlainObject } from "remeda"
 
-import { ACHIEVEMENT_CALENDAR_PATH } from "../../shared/achievement-calendar.ts"
-import { ACHIEVEMENT_DATE_QUERY_NAME, ACHIEVEMENT_PATH } from "../../shared/achievement.ts"
+import { ACHIEVEMENT_CALENDAR_PATH } from "../../../shared/achievement-calendar.ts"
+import { ACHIEVEMENT_DATE_QUERY_NAME, ACHIEVEMENT_PATH } from "../../../shared/achievement.ts"
 import {
   CHARACTER_ASSET_PATH_PREFIX,
   type CharacterAssetLocation,
   readCharacterAssetPath,
-} from "../../shared/character-asset.ts"
+} from "../../../shared/character-asset.ts"
 import {
   CONTEXT_USAGE_PATH,
   type ContextUsageReport,
   UNAVAILABLE_CONTEXT_USAGE,
-} from "../../shared/context-usage.ts"
+} from "../../../shared/context-usage.ts"
 import {
   parsePromptImage,
   PROMPT_IMAGE_PATH_PREFIX,
   promptImageIdSchema,
-} from "../../shared/prompt-image.ts"
-import { REPOSITORY_FILE_PATH } from "../../shared/repository-file.ts"
-import { SESSION_TOKEN_QUERY_NAME } from "../../shared/session-socket.ts"
+} from "../../../shared/prompt-image.ts"
+import { REPOSITORY_FILE_PATH } from "../../../shared/repository-file.ts"
+import { SESSION_TOKEN_QUERY_NAME } from "../../../shared/session-socket.ts"
 import {
   readTokenUsageDays,
   TOKEN_USAGE_DAYS_QUERY_NAME,
   TOKEN_USAGE_SUMMARY_PATH,
   type TokenUsageDays,
   type TokenUsageSummary,
-} from "../../shared/token-usage-summary.ts"
-import { VENDOR_PATH_PREFIX, vendorAssetPath } from "../../shared/vendor-asset.ts"
+} from "../../../shared/token-usage-summary.ts"
+import { VENDOR_PATH_PREFIX, vendorAssetPath } from "../../../shared/vendor-asset.ts"
 import {
   type ReadAchievementResult,
   type ReadCommitCalendarResult,
-} from "../achievement/adapter/main-history.ts"
+} from "../../achievement/adapter/main-history.ts"
 import { readVendorAsset } from "./vendor-asset.ts"
 
 /**
@@ -72,7 +72,7 @@ export const LAYOUT_PATH = "/"
 /**
  * **自前のブラウザ側スクリプト**（`src/browser/` を `bun build` でまとめたもの）と CSS を配る経路。
  * 成果物は `dist/browser/` にあり、**起動のときに読んでメモリに持つ**
- * （`src/server/adapter/bundle.ts`）。
+ * （`src/server/view-server/adapter/bundle.ts`）。
  */
 const ASSET_PATH_PREFIX = "/assets/"
 const UI_SCRIPT_NAME = "ui.js"
@@ -87,7 +87,7 @@ function styleSheetPath(): string {
 
 /**
  * ブラウザに配る2つの成果物の取り出し口。**値ではなく関数**なのは、開発中に組み立て直したものへ
- * 差し替わるため（`src/server/adapter/ui-rebuild.ts`）。呼ぶたびに今の版を返す契約で、サーバはどちらが
+ * 差し替わるため（`src/server/view-server/adapter/ui-rebuild.ts`）。呼ぶたびに今の版を返す契約で、サーバはどちらが
  * 今の版かを自分では持たない。
  */
 export type ViewAssets = {
@@ -158,7 +158,7 @@ const BIND_HOST = "127.0.0.1"
 /** {@link startViewServer} が配るために要るもの一式（渡すのは `src/view-delivery.ts`）。 */
 export type ViewServerOptions = {
   /**
-   * ブラウザ側スクリプトと CSS の取り出し口（`src/server/adapter/bundle.ts` が読んだもの）。
+   * ブラウザ側スクリプトと CSS の取り出し口（`src/server/view-server/adapter/bundle.ts` が読んだもの）。
    * 見張りが組み立て直すと差し替わるので、**持ち主は呼び出し側 = `src/view-delivery.ts`** で、
    * ここは要求のたびに引きに行く。
    */
@@ -344,7 +344,7 @@ function buildLayoutPage(): string {
 }
 
 /**
- * 外部ライブラリ（`src/server/adapter/vendor-asset.ts` が `node_modules` から読む）を配る。名前が指す
+ * 外部ライブラリ（`src/server/view-server/adapter/vendor-asset.ts` が `node_modules` から読む）を配る。名前が指す
  * 中身の判断はそちらに任せ、ここは結果をそのまま配るか404にするだけ。**依存が入っていなくても
  * 配信は続ける**（表示物が1つ欠けても起動失敗にしない）。
  */

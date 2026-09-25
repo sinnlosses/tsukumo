@@ -3,7 +3,7 @@
 // メモリファイル・スキル・MCP）はセッションの中でほぼ変わらず、変わるのはセッションを
 // またいだときだから、ターンごとには積まない。
 // **ここにあるのは型だけ**で、書くのは `src/server/context-usage/adapter/context-usage-log.ts`、いつ書くかを
-// 決めるのは `src/server/core/session-manager.ts`。
+// 決めるのは `src/server/session/core/session-manager.ts`。
 //
 // **ターンごとの記録（`src/shared/token-usage.ts`）とは置き場もファイルも版も分けてある**
 // （`~/.tsukumo/context-usage/<YYYY-MM-DD>.jsonl`）。分けたのは、**「書いてよいもの」の線が

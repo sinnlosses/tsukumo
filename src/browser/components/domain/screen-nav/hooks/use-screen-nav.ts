@@ -226,7 +226,7 @@ const DEFAULT_HTTP_PORT = 80
 
 /**
  * この tsukumo の部屋の名前。**どの部屋かの正典は、このページを配っている URL のポート**
- * （サーバがそのポートで待っている。`src/server/core/port-resolution.ts`）——サーバから
+ * （サーバがそのポートで待っている。`src/server/view-server/core/port-resolution.ts`）——サーバから
  * 送り直してもらう値ではないので、状態には乗せない。
  *
  * **購読はしない**（ポートはページの一生の間変わらない）。

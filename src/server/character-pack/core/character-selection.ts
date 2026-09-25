@@ -18,7 +18,7 @@ export type NamedCharacterPack = { readonly name: string }
 export type CharacterSelection =
   /** 起動時の初期パック（順位は {@link selectInitialCharacterPack}）。 */
   | { readonly by: "initial" }
-  /** 画面から選ばれた名前。**覚えるのはこれだけ**（`src/server/core/session-launch.ts`）。 */
+  /** 画面から選ばれた名前。**覚えるのはこれだけ**（`src/server/session/core/session-launch.ts`）。 */
   | { readonly by: "name"; readonly name: string }
   /** いま出しているパックのまま起こし直す（モードの切り替え）。**名前は運ばない。** */
   | { readonly by: "current" }
@@ -45,7 +45,7 @@ export type InitialCharacterPackOptions<Pack extends NamedCharacterPack> = {
  * 指定があるときは覚えた値を**読みに行かない**（環境変数は「その回の上書き」なので、前回の値に
  * 勝つ）。**覚えた値への書き込みはここの持ち分ではない** — 書くのは画面から選んだときだけで、
  * `TSUKUMO_CHARACTER` を指定していても画面から選べばそのとき覚える
- * （`src/server/core/session-launch.ts`。docs/screen-design.md 13.6）。
+ * （`src/server/session/core/session-launch.ts`。docs/screen-design.md 13.6）。
  */
 export function selectInitialCharacterPack<Pack extends NamedCharacterPack>(
   options: InitialCharacterPackOptions<Pack>,

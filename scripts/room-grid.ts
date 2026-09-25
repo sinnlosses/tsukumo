@@ -6,8 +6,8 @@
 // 並べるのは「ポートで待ち受けていて、かつ Orca のタブがある」部屋だけ。タブだけの部屋
 // （プロセスが止まった）・待ち受けだけの部屋（起動トークンが取り戻せない）は落とす。
 
-import { LAYOUT_PATH } from "../src/server/adapter/server.ts"
 import type { OrcaTab } from "../src/server/host/adapter/orca-host.ts"
+import { LAYOUT_PATH } from "../src/server/view-server/adapter/server.ts"
 import { SESSION_TOKEN_QUERY_NAME } from "../src/shared/session-socket.ts"
 import type { Listener } from "./lib/port-listener.ts"
 

@@ -1,5 +1,5 @@
 // ソースの置き場の中身から、1つの指紋（ハッシュ）を作る。**見張りつきの起動で、画面だけ組み
-// 直してよいかを決める**ために使う（`src/server/adapter/ui-rebuild.ts`。docs/design.md 11章）。
+// 直してよいかを決める**ために使う（`src/server/view-server/adapter/ui-rebuild.ts`。docs/design.md 11章）。
 //
 // **時刻ではなく中身で見る。** `git merge` で書き戻されただけのファイルや `touch` で、
 // 組み直しを止めてしまわないため。

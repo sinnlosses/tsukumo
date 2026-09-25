@@ -29,20 +29,20 @@ import { execFile } from "node:child_process"
 import { readdir, readFile, stat } from "node:fs/promises"
 import { join } from "node:path"
 
-import { bundledFilePath } from "./bundled-path.ts"
+import { bundledFilePath } from "../../adapter/bundled-path.ts"
 
 /** ブラウザ側の入口。ここから辿れる `.tsx` と `.css` が1本ずつにまとまる。 */
 const UI_ENTRY = "main.tsx"
 
 /**
  * ブラウザ側のソースの置き場。組み立ての入口であり、**新しさを比べる相手**でもあるので
- * ここが持つ（`src/server/adapter/ui-rebuild.ts` の見張り先も同じ1つ）。
+ * ここが持つ（`src/server/view-server/adapter/ui-rebuild.ts` の見張り先も同じ1つ）。
  */
 export const UI_SOURCE_DIR_RELATIVE_PATH: readonly string[] = ["src", "browser"]
 
 /**
  * 成果物の新しさを比べる相手。**束ねに入るソースの置き場**で、`src/browser/` は `src/shared/` を
- * import している。見張り（`src/server/adapter/ui-rebuild.ts`）が `src/browser/` しか見ないのとは
+ * import している。見張り（`src/server/view-server/adapter/ui-rebuild.ts`）が `src/browser/` しか見ないのとは
  * 別の話で、あちらは**動作中に**サーバ側とブラウザ側が食い違うのを避けるため。起動時は
  * プロセスごと入れ替わるので、`src/shared/` も見てよい。
  */
@@ -123,7 +123,7 @@ export async function readUiBundle(): Promise<StoredBundleResult> {
  * ハッシュ化して JS 側の対応表に入れる（docs/design.md 11章）。
  *
  * 呼ぶのは `bun run build`（`scripts/build-ui.ts`）と `bun run dev` の見張り
- * （`src/server/adapter/ui-rebuild.ts`）の2つだけ。**見張りも同じ場所へ出す**ので、
+ * （`src/server/view-server/adapter/ui-rebuild.ts`）の2つだけ。**見張りも同じ場所へ出す**ので、
  * 開発中に直したぶんはそのまま次の起動に乗る。
  */
 export function buildUiBundle(): Promise<BundleResult> {

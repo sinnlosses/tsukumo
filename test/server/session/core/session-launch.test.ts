@@ -1,23 +1,23 @@
 import { describe, expect, it } from "bun:test"
 
-import { type CharacterSelection } from "../../../src/server/character-pack/core/character-selection.ts"
-import {
-  createSessionLaunch,
-  type SessionLaunchPorts,
-} from "../../../src/server/core/session-launch.ts"
+import { type CharacterSelection } from "../../../../src/server/character-pack/core/character-selection.ts"
 import {
   type SessionDriver,
   type SessionStart,
-} from "../../../src/server/session-driver/core/session-driver.ts"
-import { UNAVAILABLE_CONTEXT_USAGE } from "../../../src/shared/context-usage.ts"
-import { BUILTIN_SESSION_DEFAULT } from "../../../src/shared/session-default.ts"
-import { type SessionEvent } from "../../../src/shared/session-event.ts"
-import { DEFAULT_VISIT_ENABLED } from "../../../src/shared/visit.ts"
+} from "../../../../src/server/session-driver/core/session-driver.ts"
+import {
+  createSessionLaunch,
+  type SessionLaunchPorts,
+} from "../../../../src/server/session/core/session-launch.ts"
+import { UNAVAILABLE_CONTEXT_USAGE } from "../../../../src/shared/context-usage.ts"
+import { BUILTIN_SESSION_DEFAULT } from "../../../../src/shared/session-default.ts"
+import { type SessionEvent } from "../../../../src/shared/session-event.ts"
+import { DEFAULT_VISIT_ENABLED } from "../../../../src/shared/visit.ts"
 import {
   characterChangedEvent,
   characterPackEntry,
   shownPortraits,
-} from "../../fixture/character.ts"
+} from "../../../fixture/character.ts"
 
 // 疑似セッションもセリフも手で書いた架空のもの（docs/coding-standards.md「会話内容の扱い」）。
 // 本物の claude は起こさない（駆動も見張りも下の偽物）。

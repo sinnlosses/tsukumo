@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test"
 
-import { readVendorAsset } from "../../../src/server/adapter/vendor-asset.ts"
-import { VENDOR_ASSET_CONTENT_TYPES } from "../../../src/shared/vendor-asset.ts"
+import { readVendorAsset } from "../../../../src/server/view-server/adapter/vendor-asset.ts"
+import { VENDOR_ASSET_CONTENT_TYPES } from "../../../../src/shared/vendor-asset.ts"
 
 // 配る名前（shared）と `node_modules` の中のファイル（adapter）は別のファイルに分かれている
 // ので、**allowlist の側から全件を辿って**片方だけ足した・パッケージが版を上げてファイルの

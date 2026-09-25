@@ -254,7 +254,7 @@ TSUKUMO_CHARACTER=characters/local tsukumo
   （戻り値は `"ok"` だけ）、ビューは `127.0.0.1` にだけバインドする
 - **ビューはファイルに書き出さない。** 本文はメモリに持ち、HTTP で配るだけ
 - **外部ライブラリは CDN から読まず、自分のサーバ（`node_modules` の実ファイル）から配る**
-  （`src/server/adapter/vendor-asset.ts`）。CDN から読むと、レポート本文が載ったページで外部スクリプトが
+  （`src/server/view-server/adapter/vendor-asset.ts`）。CDN から読むと、レポート本文が載ったページで外部スクリプトが
   動き、表示のたびに外部へリクエストが飛ぶため。自分で配れば**表示時の外部通信はゼロ**になる
 
 詳細は [`docs/coding-standards.md`](./docs/coding-standards.md)「会話内容の扱い」が正典です。

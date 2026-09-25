@@ -67,11 +67,11 @@ Claude Code を動かす）の核（セッション駆動・イベントの変�
 
 **拾うもの・捨てるもの・足すもの**（2026-09-11 の決定。「作り直し前提で始め、使えるものだけ拾う」）:
 
-| 扱い       | もの                                                                                                                                                                                                                                                |
-| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **拾う**   | キャラクター定義（`src/shared/character.ts`）・表情と衣装の対応（`src/shared/expression.ts`）・レポートの Markdown 化（`src/browser/components/page/conversation/main-view/markdown/markdown.tsx`）・ページと配信（`src/server/adapter/server.ts`） |
-| **捨てる** | transcript の追従と乗り換え（`src/transcript.ts` / `src/transcript-target.ts`）・hook と状態ファイル（`hooks/state.sh` / `src/state.ts`）・Orca 経由の入力送信とキー送信（**2026-09-12 に撤去済み**）                                               |
-| **足す**   | セッション駆動（SDK を起こし、イベントを内部の型に変える）・`speak` の MCP サーバ・入力と回答を受ける WebSocket                                                                                                                                     |
+| 扱い       | もの                                                                                                                                                                                                                                                            |
+| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **拾う**   | キャラクター定義（`src/shared/character.ts`）・表情と衣装の対応（`src/shared/expression.ts`）・レポートの Markdown 化（`src/browser/components/page/conversation/main-view/markdown/markdown.tsx`）・ページと配信（`src/server/view-server/adapter/server.ts`） |
+| **捨てる** | transcript の追従と乗り換え（`src/transcript.ts` / `src/transcript-target.ts`）・hook と状態ファイル（`hooks/state.sh` / `src/state.ts`）・Orca 経由の入力送信とキー送信（**2026-09-12 に撤去済み**）                                                           |
+| **足す**   | セッション駆動（SDK を起こし、イベントを内部の型に変える）・`speak` の MCP サーバ・入力と回答を受ける WebSocket                                                                                                                                                 |
 
 ### 各ファイルの責務
 
@@ -103,14 +103,14 @@ Claude Code を動かす）の核（セッション駆動・イベントの変�
 | `src/server/session-driver/adapter/sdk-context-usage.ts`                     | adapter    | コンテキストの内訳を問い合わせ、画面が要る形へ写す                                                                                                                  |
 | `src/server/session-driver/adapter/fake-driver.ts`                           | adapter    | 疑似セッション（`test/fixture/fake-session.json`）どおりにイベントを流す fake driver                                                                                |
 | `src/server/session-driver/core/pending-answer.ts`                           | core       | `canUseTool` に届いた許可要求・質問を積み、画面が答えるまで Promise を保留する                                                                                      |
-| `src/server/core/session-manager.ts`                                         | core       | 時刻を打ち、サーバ側でも畳み、100ms でまとめて配る。**コマンドの分岐はここだけ**                                                                                    |
-| `src/server/core/session-launch.ts`                                          | core       | パックを決め、続きを探し、駆動を起こし、履歴を組み直すまでの順序（外の世界は渡される）                                                                              |
+| `src/server/session/core/session-manager.ts`                                 | core       | 時刻を打ち、サーバ側でも畳み、100ms でまとめて配る。**コマンドの分岐はここだけ**                                                                                    |
+| `src/server/session/core/session-launch.ts`                                  | core       | パックを決め、続きを探し、駆動を起こし、履歴を組み直すまでの順序（外の世界は渡される）                                                                              |
 | `src/server/character-pack/core/character-selection.ts`                      | core       | 初期パックの順位（指定 > 覚えた値 > 既定）・決め方の3つ・知らない名前を既定へ落とす判断                                                                             |
-| `src/server/adapter/server.ts`                                               | adapter    | ページ・同梱物・立ち絵・ファイル一覧の配信（`127.0.0.1` に listen するのはここ）                                                                                    |
-| `src/server/adapter/session-socket.ts`                                       | adapter    | `/ws` の upgrade（起動トークンと Origin を確かめる）とコマンドの受け口                                                                                              |
+| `src/server/view-server/adapter/server.ts`                                   | adapter    | ページ・同梱物・立ち絵・ファイル一覧の配信（`127.0.0.1` に listen するのはここ）                                                                                    |
+| `src/server/view-server/adapter/session-socket.ts`                           | adapter    | `/ws` の upgrade（起動トークンと Origin を確かめる）とコマンドの受け口                                                                                              |
 | `src/server/core/config.ts`                                                  | core       | 環境変数の読み取り。**`process.env` を読むのはここだけ**                                                                                                            |
-| `src/server/core/port-resolution.ts`                                         | core       | ビューを配るポートの決定。既定は EADDRINUSE でずらし、明示指定は一度だけ試す                                                                                        |
-| `src/server/adapter/bundle.ts`                                               | adapter    | `bun build` で作った1組を `dist/browser/` に置く／そこから読む（起動は読むだけ）                                                                                    |
+| `src/server/view-server/core/port-resolution.ts`                             | core       | ビューを配るポートの決定。既定は EADDRINUSE でずらし、明示指定は一度だけ試す                                                                                        |
+| `src/server/view-server/adapter/bundle.ts`                                   | adapter    | `bun build` で作った1組を `dist/browser/` に置く／そこから読む（起動は読むだけ）                                                                                    |
 | `src/server/adapter/bundled-path.ts`                                         | adapter    | 自分で持ち歩くもの（`characters/`・`node_modules/`）の置き場所を、起動先のディレクトリに依存せず解く                                                                |
 | `src/server/character-pack/adapter/character-pack.ts`                        | adapter    | キャラクターパックの列挙・読み込みと `/character/<pack>/<file>` が配ってよい1件の判定                                                                               |
 | `src/server/repository/adapter/task-summary.ts`                              | adapter    | `main` の `develop/task/` の読み直し。`main` の先端が変わったときだけ `tasks-changed` を起こす（`git rev-parse` / `git ls-tree` / `git cat-file --batch` を起こす） |
@@ -341,7 +341,7 @@ without an output directory`。2026-09-18 の実測）。標準出力で受け�
 
 **決定の意図（古いものを配る事故を防ぐ・`.gitignore` に足す必要を出さない）は保てている。**
 出し先は OS の一時ディレクトリの下に毎回新しく作り、読んだ直後に `rm` する。リポジトリの中には
-何も置かず、サーバが配るのは**メモリ上の文字列だけ**（`src/server/adapter/server.ts` は `bundle.ts` が
+何も置かず、サーバが配るのは**メモリ上の文字列だけ**（`src/server/view-server/adapter/server.ts` は `bundle.ts` が
 返した文字列を持つ関数を受け取る）。次の起動が前の成果物を拾う経路は無い。
 
 **残る差は「一瞬ディスクに出る」こと**だけで、消し損ねても次の組み立ては別のディレクトリを
@@ -515,11 +515,11 @@ Chart.js）を使うことにした（2026-09-10 のユーザーの決定。2026
 外部スクリプトはそのページの中身を読めるうえ、表示のたびに外部へリクエストが飛ぶ。
 ローカルの HTTP サーバ（`127.0.0.1`）から配れば、**機能はそのまま・表示時の外部通信はゼロ**に
 できる。配る名前は allowlist の対応表で、リクエストのパスからファイル名を組み立てない
-（`..` で外へ出る経路を作らない。`src/shared/vendor-asset.ts` と `src/server/adapter/server.ts`）。
+（`..` で外へ出る経路を作らない。`src/shared/vendor-asset.ts` と `src/server/view-server/adapter/server.ts`）。
 
 **実ファイルは `node_modules` から読む**（2026-09-20。ユーザーの指示「外部ライブラリは
 package.json に定義したり」で、cdnjs から落としたものを `vendor/` に置く形をやめた）。
-名前が `node_modules` のどのファイルを指すかは `src/server/adapter/vendor-asset.ts` の対応表1つが持ち、
+名前が `node_modules` のどのファイルを指すかは `src/server/view-server/adapter/vendor-asset.ts` の対応表1つが持ち、
 `src/shared/` には名前と Content-Type しか置かない（パス解決は外の世界に触る仕事なので
 adapter 側）。**mermaid と chart.js は `package.json` で版を固定する**（`^` を付けない）。素の
 JavaScript をそのままブラウザへ配っていて描けるかどうかは目で見るまで分からず、mermaid の版は
@@ -1044,7 +1044,7 @@ Network タブで `/ws` のフレームを見るか、接続し直して `hello`
   **シェルの設定ファイルは書き換えていない。** 消すときはリポジトリの直下で `bun unlink`
 - **`~/.tsukumo/` は旧方針の hook が使っていた置き場を再利用している**（2026-09-15 に整理）。
   `state.json` は当時「イベント種別とモデル名」を書く場所で、いまは**次に起こすときの初期値**
-  （覚えたキャラクターの名前と、新しいセッションの既定。`src/server/adapter/remembered-default.ts`）。**形の違う古いファイルが残っていると読めずに既定のパックへ
+  （覚えたキャラクターの名前と、新しいセッションの既定。`src/server/session/adapter/remembered-default.ts`）。**形の違う古いファイルが残っていると読めずに既定のパックへ
   落ちる**（旧形式の `state.json` が残っていたせいで、前回選んだキャラクターを覚える仕組みを
   入れた直後の1回だけ意図しないキャラクターで立ち上がった）。旧方針の残骸（`targets/`・`transcript-path`・書きかけの
   `state.json.tmp.*`）は消してある。**同じ置き場に別の用途を足すときは、先に何が残っているかを見る**

@@ -2,7 +2,7 @@
 // 読み方・拡張子による仕分け**を持つ。
 //
 // 素材そのものは持たない。読むのは `src/server/character-pack/adapter/character-pack.ts`、配るのは
-// `src/server/adapter/server.ts`、`<img>` に載せるのは `src/browser/components/domain/portrait.tsx` で、
+// `src/server/view-server/adapter/server.ts`、`<img>` に載せるのは `src/browser/components/domain/portrait.tsx` で、
 // ここはその3者が同じ経路名と同じ仕分けを見るための契約（`node:` にも `document` にも触らない）。
 
 export const CHARACTER_ASSET_PATH_PREFIX = "/character/"

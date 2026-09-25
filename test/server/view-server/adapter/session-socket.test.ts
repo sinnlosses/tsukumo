@@ -3,21 +3,21 @@ import { createServer, request as httpRequest, type Server } from "node:http"
 
 import WebSocket from "ws"
 
-import { createStartupToken } from "../../../src/server/adapter/server.ts"
+import { type DispatchResult } from "../../../../src/server/session/core/driver-command.ts"
+import { createStartupToken } from "../../../../src/server/view-server/adapter/server.ts"
 import {
   attachSessionSocket,
   type SessionSocket,
-} from "../../../src/server/adapter/session-socket.ts"
-import { type DispatchResult } from "../../../src/server/core/driver-command.ts"
-import { type ClientCommand } from "../../../src/shared/command.ts"
+} from "../../../../src/server/view-server/adapter/session-socket.ts"
+import { type ClientCommand } from "../../../../src/shared/command.ts"
 import {
   FRAME_ERROR_REASON,
   parseServerFrame,
   PROTOCOL_VERSION,
   type ServerFrame,
-} from "../../../src/shared/frame.ts"
-import { SESSION_SOCKET_PATH } from "../../../src/shared/session-socket.ts"
-import { INITIAL_SESSION_STATE } from "../../../src/shared/session-state.ts"
+} from "../../../../src/shared/frame.ts"
+import { SESSION_SOCKET_PATH } from "../../../../src/shared/session-socket.ts"
+import { INITIAL_SESSION_STATE } from "../../../../src/shared/session-state.ts"
 
 // 会話は流さない（フレームの中身は初期状態と架空のセリフだけ）。
 const TOKEN = createStartupToken()

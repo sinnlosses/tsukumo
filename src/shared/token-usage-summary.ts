@@ -1,5 +1,5 @@
 // トークン消費の集計（期間で切って軸ごとに畳んだ形）と、それを配る経路の名前。**サーバ
-// （`src/server/adapter/server.ts` が配る）とブラウザ（分析の画面が取りに行く）の両方が同じ値を
+// （`src/server/view-server/adapter/server.ts` が配る）とブラウザ（分析の画面が取りに行く）の両方が同じ値を
 // 見る**ので shared に置く（`repository-file.ts` と同じ考え方。ここは値と型だけで `node:` にも
 // `document` にも触らない）。
 //

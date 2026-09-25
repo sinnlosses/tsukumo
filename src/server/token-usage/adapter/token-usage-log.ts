@@ -5,7 +5,7 @@
 // 依存させない（どのプロジェクトから起こしても同じ場所に積む）。
 //
 // **何をいつ書くかの判断はここが決めない。** 判断（累計から増分を取る・増分が無い回は書かない・
-// 期間で切って軸ごとに畳む）は `src/server/core/session-manager.ts` と
+// 期間で切って軸ごとに畳む）は `src/server/session/core/session-manager.ts` と
 // `src/server/token-usage/core/token-usage.ts` が持ち、ここが持つのは「どこに・どんな形で書くか」と
 // 「日付の範囲からどのファイルを開くか」だけ（`chat-archive.ts` と同じ切り分け）。
 //

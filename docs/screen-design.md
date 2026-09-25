@@ -489,7 +489,7 @@ IBM Plex Mono）と字の大きさ、「ほか n 件を見る」の色（見本�
   `state.json` で起動が止まらない（キャラクターの覚え方と同じ扱い）。**effort だけ、欄が
   無い古い `state.json` でも他の2つ（モデル・許可モード）は読んだ値のまま**——effort を足す前に
   覚えたファイルを持ち込んでも、それまで覚えていたモデル・許可モードを捨てない
-  （`src/server/adapter/remembered-default.ts`）
+  （`src/server/session/adapter/remembered-default.ts`）
 - **`TSUKUMO_HOME` を分ければ既定も分かれる**（ホームごと差し替わるため。5章）
 
 **書き上げる演出の速さは `localStorage` に持つ**（色と同じ並び。保存と読み取りは
@@ -900,8 +900,8 @@ IBM Plex Mono）と字の大きさ、「ほか n 件を見る」の色（見本�
 動き（位置と大きさを移す）は付けない — ユーザーが望んだのは「すぐに正しい姿」で、動きではない。
 前の姿が出ていたのは、駆動が起き上がるまでの数秒に新しい代のイベント（`chat-mode-changed` など）が
 `events` で先に配られ、ブラウザが**前のセッションの姿のままモードだけ**を切り替えていたため。そこで
-**起こし直しの代は新しい `hello` を配るまで束を配らず**（`server/core/session-manager.ts`。その間の
-姿は `hello` に入る）、**`hello` は続きの履歴を流し終えてから配る**（`server/core/session-launch.ts`。
+**起こし直しの代は新しい `hello` を配るまで束を配らず**（`server/session/core/session-manager.ts`。その間の
+姿は `hello` に入る）、**`hello` は続きの履歴を流し終えてから配る**（`server/session/core/session-launch.ts`。
 表情が既定から続きの表情へもう一度飛ばない）。移った先の立ち絵が読み込み待ちで空かないよう、
 **表情の数だけ先に読んでおく**（`components/domain/portrait.tsx` の `usePortraitPreload`）。新しくマウント
 された立ち絵の入り（`portrait-fade-in`）はほかの場面と同じに残す。

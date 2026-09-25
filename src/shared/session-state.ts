@@ -427,7 +427,7 @@ export type SessionState = {
   readonly sessionDefault: SessionDefault
   /**
    * 歯車の「訪問」のオン・オフ（`docs/screen-design.md` 13.6・13.9「設定の歯車」）。**覚え方は
-   * `sessionDefault` と同じ**（`~/.tsukumo/state.json`。`src/server/adapter/remembered-default.ts`）
+   * `sessionDefault` と同じ**（`~/.tsukumo/state.json`。`src/server/session/adapter/remembered-default.ts`）
    * だが、**効き方は違う**——`set-visit-enabled` はいま動いているセッションにも即座に効く（次に
    * 起こすまで待たない）。起こすたびに覚えた値へ流れ直す（届くまでは同梱の既定
    * `DEFAULT_VISIT_ENABLED`）。
@@ -793,7 +793,7 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
     case "token-usage":
     case "step-usage":
       // **画面に出すものが何も無い**（数の記録は `~/.tsukumo/token-usage/` へ書くだけで、
-      // 書くかどうかを決めるのは `src/server/core/session-manager.ts`）。ここで畳むと
+      // 書くかどうかを決めるのは `src/server/session/core/session-manager.ts`）。ここで畳むと
       // ブラウザ側にも同じ数を持たせることになるので、姿は変えない。
       return state
     case "chat-mode-changed":

@@ -2,7 +2,7 @@
 // `docs/screen-design.md` 13.6）。セッションを起こすたびに効く値で、**帯で変えたその場の値とは別物**
 // （帯はセッション限り、ここは次に起こすときの初期値）。
 //
-// 覚えるのはホームの `state.json`（`src/server/adapter/remembered-default.ts`）だが、
+// 覚えるのはホームの `state.json`（`src/server/session/adapter/remembered-default.ts`）だが、
 // **形と畳み先はサーバとブラウザの両方が読む**ので shared に置く（歯車の操作子が
 // `SessionState.sessionDefault` を読み、`set-session-default` で書き換える）。
 //

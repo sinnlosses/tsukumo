@@ -2,7 +2,7 @@
 // **既定を使ったときだけ** EADDRINUSE で次の番号へずらすリトライを1つの概念としてここに閉じる
 // （docs/coding-standards.md「外部の入力を読む場所を1つにする」）。
 //
-// listen そのもの（node:http）は src/server/adapter/server.ts の責務のまま。ここは「どのポートで
+// listen そのもの（node:http）は src/server/view-server/adapter/server.ts の責務のまま。ここは「どのポートで
 // 試すか」の決定と、その決定に沿って `start` を呼び直すことだけを持つ。
 
 // ビューを配るポートを上書きするための環境変数。実際の `process.env` の読み取りは

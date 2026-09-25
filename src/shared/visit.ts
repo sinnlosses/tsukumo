@@ -18,7 +18,7 @@ import { type VisitScript } from "./character-visit.ts"
  * 歯車の「訪問」のオン・オフの同梱の既定（`docs/screen-design.md` 13.6・13.9「設定の歯車」）。
  * **覚えた値が無い・読めないときはここへ畳む**ので、`SessionState.visitEnabled` の初期値
  * （`src/shared/session-state.ts`）と、読めなかったときの `readRememberedVisitEnabled`
- * （`src/server/adapter/remembered-default.ts`）はどちらもこの1つを指す。
+ * （`src/server/session/adapter/remembered-default.ts`）はどちらもこの1つを指す。
  */
 export const DEFAULT_VISIT_ENABLED = true
 

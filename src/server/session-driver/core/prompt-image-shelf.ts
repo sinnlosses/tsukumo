@@ -1,7 +1,7 @@
 // 依頼に添えた画像の**原寸の棚**（`docs/requirements.md` 4.10）。送った原寸を**直近の数枚だけ**
 // プロセスのメモリに持ち、控えを押したブラウザへ `/prompt-image/<id>` で配れるようにする
-// （配るのは `src/server/adapter/server.ts`、置くのと捨てる契機を決めるのは
-// `src/server/core/session-manager.ts`）。
+// （配るのは `src/server/view-server/adapter/server.ts`、置くのと捨てる契機を決めるのは
+// `src/server/session/core/session-manager.ts`）。
 //
 // **記録（`SessionState`）と `hello` には原寸を載せない。** 載るのは控えと id の組
 // （`RecordedPromptImage`）だけで、原寸はここにしか無い。**ディスクには書かない**

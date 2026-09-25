@@ -7,6 +7,132 @@
 節は `## <出典のファイル> <節番号> <節の見出し>` の形で並べ、各節の先頭に**移した日付と
 出典の節**を1行で書く。探すときは出典の節名で `grep` する。
 
+## design.md 2. 全体構成 / いまの `src/server/` から移す先（移行の対応表）
+
+2026-09-25 に移した（`docs/design.md` 2章「いまの `src/server/` から移す先（移行の対応表）」と、
+同じ章の「移行中」の段落から server を指す文。段8（`session/` と `view-server/`）が終わり、
+`src/server/` を機能で割る移動が完了したため）。
+
+`src/server/` を機能で割る移行（2026-09-25 決定。上の「サーバの機能と、機能どうしの辺」）で、
+**いまの `src/server/` の全74ファイルがどこへ行くか**の表。移行の段が全部終わったら、この節は
+`docs/history/decision.md` へ移す。
+
+**移し方の決まり**:
+
+- **ファイル名は変えない。** ディレクトリだけが変わる（`core/visit-timing.ts` →
+  `visit/core/visit-timing.ts`）。1つのファイルを割って別々の機能へ送るものは無い
+  （`session-driver.ts` が雑談の型を持つのもそのまま。割るなら移し終えてからの別の変更）
+- **テストも同じ置き換えで移す。** `test/server/<いまのパス>.test.ts` →
+  `test/server/<移す先>.test.ts`（表の「テスト」が「あり」の60本。`test/fixture/` は動かさない）
+- **その段で移したパスを指す記述は、その段で直す**（`src/` `test/` `scripts/` の import と
+  コメント、`docs/` の `history/` と `research/` 以外、`CLAUDE.md`）。`scripts/` は
+  `orca-host.ts` `server.ts` `bundle.ts` `port-resolution.ts` を import している
+- **まだ移していないファイルは、いまの場所（共有の箱と同じ `server/core/` `server/adapter/` の
+  直下）に居るまま動く。** 移行の途中だけ「共有の箱は機能を読まない」と「共有の箱に置くのは
+  読み手が2つ以上のもの」の検査を止めておき、段8で掛ける
+
+| いまのパス（`src/server/` から）      | 移す先（`src/server/` から） | テスト | 段  |
+| ------------------------------------- | ---------------------------- | ------ | --- |
+| `core/report-notation.ts`             | `report/core/`               | あり   | 1   |
+| `core/report-review.ts`               | `report/core/`               | あり   | 1   |
+| `core/report-tool.ts`                 | `report/core/`               | あり   | 1   |
+| `core/report-violation.ts`            | `report/core/`               | あり   | 1   |
+| `core/speech-cadence.ts`              | `system-prompt/core/`        | あり   | 1   |
+| `core/system-prompt.ts`               | `system-prompt/core/`        | あり   | 1   |
+| `adapter/context-usage-log.ts`        | `context-usage/adapter/`     | あり   | 2   |
+| `core/context-usage.ts`               | `context-usage/core/`        | —      | 2   |
+| `adapter/token-usage-log.ts`          | `token-usage/adapter/`       | あり   | 2   |
+| `core/token-usage.ts`                 | `token-usage/core/`          | あり   | 2   |
+| `adapter/previous-usage-review.ts`    | `usage-review/adapter/`      | あり   | 2   |
+| `adapter/usage-proposal-dismissal.ts` | `usage-review/adapter/`      | あり   | 2   |
+| `core/usage-review-tool.ts`           | `usage-review/core/`         | あり   | 2   |
+| `adapter/orca-host.ts`                | `host/adapter/`              | —      | 3   |
+| `core/host.ts`                        | `host/core/`                 | —      | 3   |
+| `core/tracked-file.ts`                | `host/core/`                 | あり   | 3   |
+| `adapter/git.ts`                      | `repository/adapter/`        | —      | 3   |
+| `adapter/repository-file.ts`          | `repository/adapter/`        | あり   | 3   |
+| `adapter/task-summary.ts`             | `repository/adapter/`        | あり   | 3   |
+| `adapter/main-history.ts`             | `achievement/adapter/`       | あり   | 4   |
+| `core/achievement.ts`                 | `achievement/core/`          | あり   | 4   |
+| `adapter/character-edit.ts`           | `character-pack/adapter/`    | あり   | 4   |
+| `adapter/character-pack.ts`           | `character-pack/adapter/`    | あり   | 4   |
+| `core/character-selection.ts`         | `character-pack/core/`       | あり   | 4   |
+| `adapter/diary.ts`                    | `diary/adapter/`             | あり   | 4   |
+| `core/diary-tool.ts`                  | `diary/core/`                | あり   | 4   |
+| `adapter/chat-archive.ts`             | `chat/adapter/`              | あり   | 5   |
+| `adapter/chat-summary.ts`             | `chat/adapter/`              | あり   | 5   |
+| `adapter/persona-memory.ts`           | `chat/adapter/`              | あり   | 5   |
+| `core/chat-archive-entry.ts`          | `chat/core/`                 | —      | 5   |
+| `core/chat-compact.ts`                | `chat/core/`                 | あり   | 5   |
+| `core/chat-manner.ts`                 | `chat/core/`                 | —      | 5   |
+| `core/chat-memory-prompt.ts`          | `chat/core/`                 | あり   | 5   |
+| `core/chat-nudge.ts`                  | `chat/core/`                 | —      | 5   |
+| `adapter/sdk-visit-script.ts`         | `visit/adapter/`             | —      | 6   |
+| `adapter/visit-clock.ts`              | `visit/adapter/`             | あり   | 6   |
+| `core/visit-guest.ts`                 | `visit/core/`                | あり   | 6   |
+| `core/visit-script-writer.ts`         | `visit/core/`                | あり   | 6   |
+| `core/visit-script.ts`                | `visit/core/`                | あり   | 6   |
+| `core/visit-timing.ts`                | `visit/core/`                | あり   | 6   |
+| `core/visit-watch.ts`                 | `visit/core/`                | あり   | 6   |
+| `adapter/claude-account.ts`           | `session-driver/adapter/`    | —      | 7   |
+| `adapter/fake-driver.ts`              | `session-driver/adapter/`    | あり   | 7   |
+| `adapter/sdk-context-usage.ts`        | `session-driver/adapter/`    | あり   | 7   |
+| `adapter/sdk-driver.ts`               | `session-driver/adapter/`    | あり   | 7   |
+| `adapter/sdk-session.ts`              | `session-driver/adapter/`    | —      | 7   |
+| `adapter/sdk-tool.ts`                 | `session-driver/adapter/`    | あり   | 7   |
+| `core/pending-answer.ts`              | `session-driver/core/`       | あり   | 7   |
+| `core/plan.ts`                        | `session-driver/core/`       | あり   | 7   |
+| `core/prompt-image-shelf.ts`          | `session-driver/core/`       | あり   | 7   |
+| `core/sdk-message.ts`                 | `session-driver/core/`       | あり   | 7   |
+| `core/self-started-turn.ts`           | `session-driver/core/`       | あり   | 7   |
+| `core/session-driver.ts`              | `session-driver/core/`       | —      | 7   |
+| `core/session-restore.ts`             | `session-driver/core/`       | あり   | 7   |
+| `core/session-title.ts`               | `session-driver/core/`       | あり   | 7   |
+| `core/visible-output-nudge.ts`        | `session-driver/core/`       | あり   | 7   |
+| `adapter/remembered-default.ts`       | `session/adapter/`           | あり   | 8   |
+| `core/driver-command.ts`              | `session/core/`              | —      | 8   |
+| `core/event-batch.ts`                 | `session/core/`              | —      | 8   |
+| `core/session-launch.ts`              | `session/core/`              | あり   | 8   |
+| `core/session-manager.ts`             | `session/core/`              | あり   | 8   |
+| `adapter/bundle.ts`                   | `view-server/adapter/`       | あり   | 8   |
+| `adapter/server.ts`                   | `view-server/adapter/`       | あり   | 8   |
+| `adapter/session-socket.ts`           | `view-server/adapter/`       | あり   | 8   |
+| `adapter/source-fingerprint.ts`       | `view-server/adapter/`       | あり   | 8   |
+| `adapter/ui-rebuild.ts`               | `view-server/adapter/`       | —      | 8   |
+| `adapter/vendor-asset.ts`             | `view-server/adapter/`       | あり   | 8   |
+| `core/port-resolution.ts`             | `view-server/core/`          | あり   | 8   |
+| `adapter/bundled-path.ts`             | 動かさない（共有の箱）       | あり   | —   |
+| `adapter/lib/json-file.ts`            | 動かさない（共有の箱）       | あり   | —   |
+| `adapter/lib/jsonl.ts`                | 動かさない（共有の箱）       | あり   | —   |
+| `adapter/local-time.ts`               | 動かさない（共有の箱）       | あり   | —   |
+| `adapter/tsukumo-home.ts`             | 動かさない（共有の箱）       | あり   | —   |
+| `core/config.ts`                      | 動かさない（共有の箱）       | あり   | —   |
+
+**段と、`test/architecture.test.ts` の直し方**（段1で検査を入れ子の形に載せ、段2〜7は機能の一覧と
+辺の表と許可リストを直すだけにする）:
+
+| 検査                                               | いま                                                                                                                       | 移し終えた形                                                                                                                                                                                                 | 直す段                |
+| -------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------- |
+| 層の判定（`layerOf`）                              | `server/core/` と `server/adapter/` の2つだけ。`server/` の直下は `throw`                                                  | `server/{core,adapter}/...` は共有の箱、`server/<機能>/{core,adapter}/...` は機能の層。**機能の一覧（`SERVER_FEATURES`）に無いディレクトリと、機能の中で `core/` `adapter/` の外に置いたファイルは `throw`** | 1（一覧は各段で足す） |
+| 層の辺（`ALLOWED_IMPORTS`・`core → adapter` 禁止） | `core` / `adapter` の2つ                                                                                                   | そのまま（層は機能をまたいでも同じに効く。判定が深さを問わず層を返すので、表は変えない）                                                                                                                     | 1                     |
+| 機能どうしの辺（新）                               | —                                                                                                                          | `SERVER_FEATURE_IMPORTS`（2章「サーバの機能と、機能どうしの辺」の表）に無い機能どうしの import を落とす                                                                                                      | 1（行は各段で足す）   |
+| 層ごとの循環（新）                                 | —                                                                                                                          | 実際の import から「機能の `core/` どうし」「機能の `adapter/` どうし」の辺を作り、それぞれに循環が無いことを見る                                                                                            | 1                     |
+| 共有の箱は機能を読まない（新）                     | —                                                                                                                          | `server/core/` `server/adapter/` の直下（`lib/` を含む）のファイルが機能のディレクトリを import したら落とす                                                                                                 | 8                     |
+| 共有の箱に1つの機能だけが読むファイルが無い（新）  | —                                                                                                                          | 共有の箱のファイルのうち、読み手が1つの機能だけで、ほかに（共有の箱・配線から）読み手が無いものを落とす（`browser/domain/` の検査と同じ形）                                                                  | 8                     |
+| `node:` / SDK / `ws` を import しない              | 層が `core` のファイル                                                                                                     | そのまま（判定が機能の `core/` も `core` と返す）                                                                                                                                                            | 1                     |
+| `orca` の文字列リテラル                            | `server/host/adapter/orca-host.ts` だけ                                                                                    | `server/host/adapter/orca-host.ts` だけ                                                                                                                                                                      | 3                     |
+| Agent SDK の import（`SDK_BOUNDARY_FILE`）         | `^server/adapter/sdk-[^/]+\.ts$`                                                                                           | `^server/[^/]+/adapter/sdk-[^/]+\.ts$`（機能の `adapter/` の直下の `sdk-`。段1〜7は両方を許し、段7で古いほうを外す。段7の時点で `sdk-visit-script.ts` は段6で移し済み）                                      | 1・7                  |
+| `node:child_process` の許可リスト                  | `server/host/adapter/orca-host.ts`・`server/repository/adapter/git.ts`・`server/adapter/bundle.ts`（`bundle.ts` は未移動） | `server/host/adapter/orca-host.ts`・`server/repository/adapter/git.ts`・`server/view-server/adapter/bundle.ts`                                                                                               | 3・8                  |
+| `process.env` の許可リスト                         | `cli.ts`・`server/adapter/tsukumo-home.ts`                                                                                 | そのまま（`tsukumo-home.ts` は共有の箱に残る）                                                                                                                                                               | —                     |
+| 冒頭のコメント                                     | 「サーバ側は2段」                                                                                                          | 「サーバ側は機能ごとに2段、共有の箱は `server/core/` `server/adapter/` の直下」                                                                                                                              | 1                     |
+
+段8で、移し終えたのでこの節を `docs/history/decision.md` へ移す。
+
+当時の「移行中」の段落（2章。段8の完了で外した server を指す文）:
+
+> **`src/server/` を機能で割る移動は別の段で進んでいる**（下の「いまの `src/server/` から移す先」。
+> まだ移していないものの扱いはその節が持つ）。
+
 ## design.md 2. 全体構成 / いまの `src/browser/` から移す先（移行の対応表）
 
 2026-09-25 に移した（`docs/design.md` 2章「いまの `src/browser/` から移す先（移行の対応表）」と、

@@ -2,7 +2,7 @@
 // なので `src/browser/` の直下（`css-module.d.ts` などと同じ場所）に置く。
 //
 // **パッケージは npm にあるが、束ねずに素の JavaScript を `<script>` で読む**ので、そこから型は
-// 付いてこない（`src/server/adapter/vendor-asset.ts`）。ここに**使っている分だけ**を手で書く。
+// 付いてこない（`src/server/view-server/adapter/vendor-asset.ts`）。ここに**使っている分だけ**を手で書く。
 // 使っていない API を足さない（書いた分が「使ってよい」の線になる）。
 //
 // **DOM を morph するライブラリと hljs は無い**（移行の段6。領域の差し替えごと DOM を書き換える経路は消え、

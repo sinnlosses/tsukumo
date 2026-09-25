@@ -1,7 +1,7 @@
 // トークン消費の記録の形（**何にどれだけ使ったかを残す**ため。それまで
 // SDK が渡してくる使用量は届いた時点で捨てていた）。
 // **ここにあるのは型だけ**で、書くのは `src/server/token-usage/adapter/token-usage-log.ts`、何をいつ書くかを
-// 決めるのは `src/server/core/session-manager.ts`。
+// 決めるのは `src/server/session/core/session-manager.ts`。
 //
 // **書いてよいのは数・モデルの名前・ツールの名前・時刻・セッションID・モードだけ。** 依頼の文面・
 // セリフ・ツールの引数と結果は1文字も持たせない（`docs/coding-standards.md`「会話内容の扱い」。

@@ -83,6 +83,8 @@ const SERVER_FEATURES = [
   "chat",
   "visit",
   "session-driver",
+  "session",
+  "view-server",
 ] as const
 type ServerFeature = (typeof SERVER_FEATURES)[number]
 
@@ -101,9 +103,17 @@ const SERVER_FEATURE_IMPORTS: Readonly<Record<ServerFeature, ReadonlySet<ServerF
   diary: new Set(["character-pack", "repository"]),
   chat: new Set(["character-pack", "session-driver"]),
   visit: new Set([]),
-  // 設計上は `view-server` も読むが、`view-server` はまだ機能になっていない
-  // （`server/core/` の共有の箱のまま。機能になったときに足す）
-  "session-driver": new Set(["chat", "diary", "report", "usage-review"]),
+  "session-driver": new Set(["chat", "diary", "report", "usage-review", "view-server"]),
+  session: new Set([
+    "session-driver",
+    "chat",
+    "visit",
+    "diary",
+    "token-usage",
+    "context-usage",
+    "character-pack",
+  ]),
+  "view-server": new Set(["session", "achievement"]),
 }
 
 type ServerLayer = "core" | "adapter"
@@ -172,6 +182,51 @@ describe("server/ の機能どうしの import", () => {
   })
 })
 
+// 移行が終わり、`server/core/` `server/adapter/` の直下（`lib/` を含む）に残るのは、どの機能にも
+// 属さない共有の箱の6ファイルだけになった（docs/design.md 2章「サーバの機能と、機能どうしの辺」）。
+// 共有の箱は「どの機能の語彙も名乗らず、読み手が2つ以上ある」ものだけを置く場所なので、
+// 機能を読んではいけない（読むなら、その機能の中か機能どうしの辺の表で表す）し、読み手が
+// 1つの機能だけに絞られたら、その機能の中へ下ろすのが正しい（`browser/domain/` の検査と同じ形）。
+describe("server/ の共有の箱", () => {
+  it("共有の箱（server/core/・server/adapter/ の直下）は機能のディレクトリを import しない", () => {
+    const offenders = listSourceFiles(SRC_ROOT)
+      .filter(
+        (relPath) => relPath.startsWith("server/") && serverPlaceOf(relPath).kind === "shared",
+      )
+      .flatMap((relPath) =>
+        relativeImportSpecifiers(readFileSync(`${SRC_ROOT}/${relPath}`, "utf8")).flatMap(
+          (specifier) => {
+            const toPath = resolveRelativeImport(relPath, specifier)
+            if (!toPath.startsWith("server/")) {
+              return []
+            }
+            return serverPlaceOf(toPath).kind === "feature"
+              ? [`src/${relPath} → src/${toPath}`]
+              : []
+          },
+        ),
+      )
+
+    expect(offenders.join("\n")).toBe("")
+  })
+
+  it("共有の箱に、1つの機能だけが読むファイルは無い", () => {
+    const files = listSourceFiles(SRC_ROOT).filter(
+      (relPath) => relPath.startsWith("server/") && serverPlaceOf(relPath).kind === "shared",
+    )
+    expect(files.length).toBeGreaterThan(0)
+
+    const offenders = files.flatMap((relPath) => {
+      const readers = serverSharedBoxReadersOf(relPath)
+      return readers.features.length === 1 && readers.outsideFeatureCount === 0
+        ? [`src/${relPath}（読むのは ${readers.features.join("")} だけ）`]
+        : []
+    })
+
+    expect(offenders.join("\n")).toBe("")
+  })
+})
+
 // `orca` コマンドを起こすのはアダプタ1つに閉じ込める（docs/architecture.md 原則3、
 // src/server/host/adapter/orca-host.ts 冒頭コメント）。`execFile("orca", …)` のような呼び出しは必ず
 // コマンド名の文字列リテラル "orca" を伴うので、それを orca-host.ts の外から探す。
@@ -218,7 +273,7 @@ describe("子プロセスを起こす箇所", () => {
   it("`node:child_process` を import するのは orca-host.ts・bundle.ts・git.ts だけ", () => {
     const allowed = new Set([
       "server/host/adapter/orca-host.ts",
-      "server/adapter/bundle.ts",
+      "server/view-server/adapter/bundle.ts",
       "server/repository/adapter/git.ts",
     ])
     const offenders = listSourceFiles(SRC_ROOT)
@@ -792,6 +847,36 @@ function serverPlaceOf(relPath: string): ServerPlace {
     return { kind: "feature", feature, layer: third }
   }
   throw new Error(`src/${relPath} は機能 ${feature} の core/ か adapter/ の下に置く`)
+}
+
+/**
+ * `server/` の共有の箱のファイル1件を import している機能の名前（重複を畳んだもの）と、機能の外
+ * （配線層・別の共有の箱のファイルなど）からの読み手の数。`browserReadersOf` と同じ作り
+ * （検索する範囲は `src/` 全体——配線層（`src/` 直下）も共有の箱を読むため）。
+ */
+function serverSharedBoxReadersOf(targetRelPath: string): {
+  readonly features: readonly string[]
+  readonly outsideFeatureCount: number
+} {
+  const readers = listSourceFiles(SRC_ROOT)
+    .filter((relPath) => relPath !== targetRelPath)
+    .filter((relPath) =>
+      relativeImportSpecifiers(readFileSync(`${SRC_ROOT}/${relPath}`, "utf8")).some(
+        (specifier) => resolveRelativeImport(relPath, specifier) === targetRelPath,
+      ),
+    )
+  const featureOf = (relPath: string): ServerFeature | undefined => {
+    if (!relPath.startsWith("server/")) {
+      return undefined
+    }
+    const place = serverPlaceOf(relPath)
+    return place.kind === "feature" ? place.feature : undefined
+  }
+
+  return {
+    features: [...new Set(readers.flatMap((relPath) => featureOf(relPath) ?? []))],
+    outsideFeatureCount: readers.filter((relPath) => featureOf(relPath) === undefined).length,
+  }
 }
 
 /** `server/` の機能のファイルから、別の機能のファイルへの相対 import をすべて返す。 */

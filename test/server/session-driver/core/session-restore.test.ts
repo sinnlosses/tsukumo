@@ -1,7 +1,6 @@
 import { describe, expect, it } from "bun:test"
 
 import { type Config } from "../../../../src/server/core/config.ts"
-import { DEFAULT_VIEW_PORT } from "../../../../src/server/core/port-resolution.ts"
 import {
   REPORT_TOOL_NAME,
   SPEAK_TOOL_NAME,
@@ -15,6 +14,7 @@ import {
   sessionTag,
   toRestoredEvents,
 } from "../../../../src/server/session-driver/core/session-restore.ts"
+import { DEFAULT_VIEW_PORT } from "../../../../src/server/view-server/core/port-resolution.ts"
 import { type Expression } from "../../../../src/shared/expression.ts"
 import { mainViewEntries } from "../../../../src/shared/main-view.ts"
 import { MAX_SESSION_CHOICES } from "../../../../src/shared/session-choice.ts"

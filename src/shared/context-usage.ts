@@ -1,5 +1,5 @@
 // いまのセッションのコンテキストの内訳（`docs/glossary.md`「コンテキストの内訳」）と、それを
-// 配る経路の名前。**サーバ（`src/server/adapter/server.ts` が配る）とブラウザ（トークン消費の
+// 配る経路の名前。**サーバ（`src/server/view-server/adapter/server.ts` が配る）とブラウザ（トークン消費の
 // 画面が取りに行く）の両方が同じ値を見る**ので shared に置く（`token-usage-summary.ts` と同じ
 // 考え方。ここは値と型だけで `node:` にも `document` にも触らない）。
 //

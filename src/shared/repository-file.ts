@@ -1,5 +1,5 @@
 // 作業ディレクトリの git 管理下のファイル一覧を配る経路の名前と、届いた一覧の読み取り。
-// **サーバ（`src/server/adapter/server.ts` が配る）とブラウザ（入力欄の `@` 補完が取りに行く）の両方が
+// **サーバ（`src/server/view-server/adapter/server.ts` が配る）とブラウザ（入力欄の `@` 補完が取りに行く）の両方が
 // 同じ値を見る**ので、shared に置く（`session-socket.ts` と同じ考え方。ここは値だけで
 // `node:` にも `document` にも触らない）。
 //

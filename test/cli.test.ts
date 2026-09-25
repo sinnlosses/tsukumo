@@ -12,7 +12,10 @@ import {
   VIEW_PORT_FALLBACK_BASE_ENV_NAME,
   WATCH_UI_ENV_NAME,
 } from "../src/server/core/config.ts"
-import { MAX_PORT_NUMBER, VIEW_PORT_FALLBACK_ATTEMPTS } from "../src/server/core/port-resolution.ts"
+import {
+  MAX_PORT_NUMBER,
+  VIEW_PORT_FALLBACK_ATTEMPTS,
+} from "../src/server/view-server/core/port-resolution.ts"
 
 // **このファイルは CLI を起動しきらないものだけを扱う。**
 // 起動経路が transcript の追従から SDK のセッション駆動へ変わり、CLI を最後まで
@@ -24,7 +27,7 @@ import { MAX_PORT_NUMBER, VIEW_PORT_FALLBACK_ATTEMPTS } from "../src/server/core
 //   - メインビュー・レポート・ツールの行・質問の記録（React の部品）: test/browser/components/page/conversation/main-view/**
 //   - Markdown の変換（unified）: test/browser/components/page/conversation/main-view/markdown/**
 //   - 配信（バインド先・経路・静的アセット・依頼の受け口）と WebSocket の経路
-//     （トークン・Origin・hello・コマンド）: test/server/adapter/server.test.ts
+//     （トークン・Origin・hello・コマンド）: test/server/view-server/adapter/server.test.ts
 //   - キャラクター定義の解釈と立ち絵の選び方: test/shared/character.test.ts
 //   - SDK のイベントの変換・答え待ち・畳み込み: test/server/session-driver/core/sdk-message.test.ts /
 //     test/server/session-driver/core/pending-answer.test.ts / test/shared/session-state.test.ts

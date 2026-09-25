@@ -8,7 +8,7 @@ import { execFileSync } from "node:child_process"
 import {
   DEFAULT_VIEW_PORT,
   VIEW_PORT_FALLBACK_ATTEMPTS,
-} from "../../src/server/core/port-resolution.ts"
+} from "../../src/server/view-server/core/port-resolution.ts"
 
 /** ポートで待っている1つのプロセス。 */
 export type Listener = {

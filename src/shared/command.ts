@@ -1,7 +1,7 @@
 // ブラウザからサーバへ送るコマンド。**書き込みの経路なので zod のスキーマが正典**で、
 // 型は `z.infer` で得る（docs/design.md 4.3）。
 //
-// 検証するのは境界（WebSocket の受け口。src/server/adapter/session-socket.ts）で1回だけ。中では検証済みの型を使う。
+// 検証するのは境界（WebSocket の受け口。src/server/view-server/adapter/session-socket.ts）で1回だけ。中では検証済みの型を使う。
 //
 // **依頼の文面（`text`）は会話の内容そのもの。** 検証に落ちたときの理由に文面を含めない
 // （docs/coding-standards.md「会話内容の扱い」。理由の定型文は src/shared/frame.ts）。
@@ -410,7 +410,7 @@ export const clientCommandSchema = z.discriminatedUnion("type", [
   /**
    * 歯車の「訪問」のオン・オフ（`docs/screen-design.md` 13.6・13.9「設定の歯車」）。
    * **`set-session-default` と違い、いま動いているセッションに即座に効く**——ディスクには
-   * 覚えないので、起こし直すと既定の「する」へ戻る（`src/server/core/session-manager.ts`）。
+   * 覚えないので、起こし直すと既定の「する」へ戻る（`src/server/session/core/session-manager.ts`）。
    */
   z.object({
     type: z.literal("set-visit-enabled"),
@@ -578,7 +578,7 @@ export type DriverCommand = Exclude<
   | { readonly type: "reflect-achievement" }
 >
 
-/** 見た目の編集のコマンドかどうか（`src/server/core/session-manager.ts` の分岐で使う）。 */
+/** 見た目の編集のコマンドかどうか（`src/server/session/core/session-manager.ts` の分岐で使う）。 */
 export function isCharacterEditCommand(command: ClientCommand): command is CharacterEditCommand {
   return CHARACTER_EDIT_COMMAND_TYPES.some((type) => type === command.type)
 }

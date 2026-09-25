@@ -5,38 +5,38 @@ import { tmpdir } from "node:os"
 import { join } from "node:path"
 
 import {
+  characterChangedEvent,
+  listCharacterPacks,
+  readCharacterAsset,
+} from "../../../../src/server/character-pack/adapter/character-pack.ts"
+import {
   createStartupToken,
   type ReadAchievement,
   type ReadAchievementCalendar,
   type ServeCharacterAsset,
   startViewServer,
   type ViewServer,
-} from "../../../src/server/adapter/server.ts"
-import {
-  characterChangedEvent,
-  listCharacterPacks,
-  readCharacterAsset,
-} from "../../../src/server/character-pack/adapter/character-pack.ts"
+} from "../../../../src/server/view-server/adapter/server.ts"
 import {
   ACHIEVEMENT_CALENDAR_PATH,
   type AchievementCalendar,
-} from "../../../src/shared/achievement-calendar.ts"
-import { ACHIEVEMENT_PATH, type DailyAchievement } from "../../../src/shared/achievement.ts"
-import { type CharacterAssetLocation } from "../../../src/shared/character-asset.ts"
+} from "../../../../src/shared/achievement-calendar.ts"
+import { ACHIEVEMENT_PATH, type DailyAchievement } from "../../../../src/shared/achievement.ts"
+import { type CharacterAssetLocation } from "../../../../src/shared/character-asset.ts"
 import {
   CONTEXT_USAGE_PATH,
   type ContextUsageReport,
   UNAVAILABLE_CONTEXT_USAGE,
-} from "../../../src/shared/context-usage.ts"
-import { promptImagePath } from "../../../src/shared/prompt-image.ts"
-import { REPOSITORY_FILE_PATH } from "../../../src/shared/repository-file.ts"
+} from "../../../../src/shared/context-usage.ts"
+import { promptImagePath } from "../../../../src/shared/prompt-image.ts"
+import { REPOSITORY_FILE_PATH } from "../../../../src/shared/repository-file.ts"
 import {
   EMPTY_TOKEN_USAGE_SUMMARY,
   TOKEN_USAGE_SUMMARY_PATH,
   type TokenUsageDays,
   type TokenUsageSummary,
-} from "../../../src/shared/token-usage-summary.ts"
-import { readyContextUsage } from "../../fixture/context-usage.ts"
+} from "../../../../src/shared/token-usage-summary.ts"
+import { readyContextUsage } from "../../../fixture/context-usage.ts"
 
 // 会話は流さない（配るのはページ・同梱物・立ち絵と、架空のファイル一覧だけ）。
 const TOKEN = createStartupToken()

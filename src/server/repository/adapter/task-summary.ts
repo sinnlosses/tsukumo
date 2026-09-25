@@ -73,7 +73,7 @@ export type TaskSummaryWatcher = {
  * 呼ばなくても見た目は変わらない）。
  *
  * `pollIntervalMs` は既定 {@link TASK_SUMMARY_POLL_INTERVAL_MS}。テストが実際の間隔を待たずに
- * 済むよう、`src/server/core/session-manager.ts` の `batchIntervalMs` と同じ形で差し替えられるようにしてある。
+ * 済むよう、`src/server/session/core/session-manager.ts` の `batchIntervalMs` と同じ形で差し替えられるようにしてある。
  */
 export function watchTaskSummary(
   cwd: string,
