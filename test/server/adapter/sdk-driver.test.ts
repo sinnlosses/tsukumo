@@ -15,7 +15,11 @@ import {
   chatSummaryHooks,
   stopHooks,
 } from "../../../src/server/adapter/sdk-driver.ts"
-import { createReportGate, REPORT_GATE_REASON } from "../../../src/server/core/report-tool.ts"
+import {
+  createReportGate,
+  REPORT_GATE_AFTER_REPORT_REASON,
+  REPORT_GATE_REASON,
+} from "../../../src/server/core/report-tool.ts"
 import {
   type ChatSummary,
   type SessionDriverOptions,
@@ -238,6 +242,28 @@ describe("stopHooks（report の関所と effort の読み取り）", () => {
         false,
       ),
     ).toEqual({})
+  })
+
+  it("report の済んだターンなら、もう画面に出ていると伝える理由で block を返す", async () => {
+    const gate = createReportGate()
+    gate.observe({
+      kind: "report",
+      toolUseId: "toolu_r1",
+      conclusion: "架空の結論",
+      body: "",
+      favor: "",
+    })
+    gate.observe(LONG_BODY)
+
+    expect(
+      await runStop(
+        stopHooks(WORK_MODE, gate, () => {}),
+        false,
+      ),
+    ).toEqual({
+      decision: "block",
+      reason: REPORT_GATE_AFTER_REPORT_REASON,
+    })
   })
 
   it("stop_hook_active のときは長い本文でも block しない", async () => {

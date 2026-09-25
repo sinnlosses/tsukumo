@@ -43,7 +43,7 @@ import { createPendingAnswerQueue, type PendingAnswerQueue } from "../core/pendi
 import { type ClaudeAccountTier, planName } from "../core/plan.ts"
 import { recordedPromptImages } from "../core/prompt-image-shelf.ts"
 import { createReportReview, type ReportReview } from "../core/report-review.ts"
-import { createReportGate, REPORT_GATE_REASON, type ReportGate } from "../core/report-tool.ts"
+import { createReportGate, type ReportGate } from "../core/report-tool.ts"
 import {
   isSubagentMessage,
   toCommandDescriptions,
@@ -347,9 +347,8 @@ export function stopHooks(
               return {}
             }
             await setImmediate()
-            return gate.shouldBlock(input.stop_hook_active)
-              ? { decision: "block", reason: REPORT_GATE_REASON }
-              : {}
+            const verdict = gate.verdict(input.stop_hook_active)
+            return verdict.kind === "block" ? { decision: "block", reason: verdict.reason } : {}
           },
         ],
       },

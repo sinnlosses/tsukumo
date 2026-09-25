@@ -2,6 +2,7 @@ import { describe, expect, it } from "bun:test"
 
 import {
   createReportGate,
+  REPORT_GATE_AFTER_REPORT_REASON,
   REPORT_GATE_REASON,
   REPORT_TOOL_DESCRIPTION,
 } from "../../../src/server/core/report-tool.ts"
@@ -36,13 +37,18 @@ const utterance = (text: string): SessionEvent => ({ kind: "utterance", text })
 const LONG_BODY = utterance("架空の本文の1行目\n架空の本文の2行目\n架空の本文の3行目")
 const ONE_LINE = utterance("完了")
 
-/** 関所に `events` を順に見せて、止まろうとしたときに差し戻すかを返す。 */
-function blocks(events: readonly SessionEvent[], stopHookActive = false): boolean {
+/** 関所に `events` を順に見せて、止まろうとしたときの判定を返す。 */
+function verdictOf(events: readonly SessionEvent[], stopHookActive = false) {
   const gate = createReportGate()
   for (const event of events) {
     gate.observe(event)
   }
-  return gate.shouldBlock(stopHookActive)
+  return gate.verdict(stopHookActive)
+}
+
+/** 関所に `events` を順に見せて、止まろうとしたときに差し戻すかを返す。 */
+function blocks(events: readonly SessionEvent[], stopHookActive = false): boolean {
+  return verdictOf(events, stopHookActive).kind === "block"
 }
 
 describe("createReportGate（Stop の関所）", () => {
@@ -84,6 +90,24 @@ describe("createReportGate（Stop の関所）", () => {
     expect(blocks([INIT, LONG_BODY], true)).toBe(false)
   })
 
+  it("report の済んでいないターンは、report で渡し直させる理由で差し戻す", () => {
+    expect(verdictOf([INIT, LONG_BODY])).toEqual({ kind: "block", reason: REPORT_GATE_REASON })
+  })
+
+  it("report の済んだターンは、もう画面に出ていると伝える理由で差し戻す（渡し直させない）", () => {
+    expect(verdictOf([INIT, REPORT, SPEECH, LONG_BODY])).toEqual({
+      kind: "block",
+      reason: REPORT_GATE_AFTER_REPORT_REASON,
+    })
+  })
+
+  it("前のターンの report を次のターンに持ち越さない", () => {
+    expect(verdictOf([INIT, REPORT, FINISHED, INIT, LONG_BODY])).toEqual({
+      kind: "block",
+      reason: REPORT_GATE_REASON,
+    })
+  })
+
   it("ターンの頭（init）と終わり（turn-finished）で前のターンの本文を持ち越さない", () => {
     expect(blocks([INIT, LONG_BODY, INIT, ONE_LINE])).toBe(false)
     expect(blocks([INIT, LONG_BODY, FINISHED])).toBe(false)
@@ -100,5 +124,21 @@ describe("REPORT_GATE_REASON", () => {
 
   it("前の report を同じ引数で送り直さないことを言う", () => {
     expect(REPORT_GATE_REASON).toContain("同じ引数で送り直さない")
+  })
+})
+
+describe("REPORT_GATE_AFTER_REPORT_REASON", () => {
+  it("レポートはもう画面に出ていて、言い直しなら何も呼ばずに終えることを言う", () => {
+    expect(REPORT_GATE_AFTER_REPORT_REASON).toContain("もう画面に出ている")
+    expect(REPORT_GATE_AFTER_REPORT_REASON).toContain("`report` も `speak` も呼ばず")
+    expect(REPORT_GATE_AFTER_REPORT_REASON).not.toContain("渡し直す")
+  })
+})
+
+describe("差し戻しの理由文（両方）", () => {
+  it("差し戻しに触れないことを言う（利用者の画面には出ない）", () => {
+    for (const reason of [REPORT_GATE_REASON, REPORT_GATE_AFTER_REPORT_REASON]) {
+      expect(reason).toContain("セリフでもレポートでも触れない")
+    }
   })
 })

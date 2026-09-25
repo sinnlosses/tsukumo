@@ -5,7 +5,10 @@
 //
 // ここに置くのは、ツールの説明文と `Stop` フックの関所（{@link createReportGate}。登録は
 // `src/server/adapter/sdk-driver.ts`）。関所は、SDK のターンの最後の `report` のあと（無ければ
-// ターンの頭から）に1行を超える本文を書いて止まろうとしたら差し戻し、`report` で渡し直させる。
+// ターンの頭から）に1行を超える本文を書いて止まろうとしたら差し戻す。**そのターンで `report` が
+// 済んでいるかで理由を分ける**: 済んでいなければ `report` で渡し直させ、済んでいれば「もう画面に
+// 出ている」と伝えて、言い直しなら何も足さずに終えさせる（一律に「画面に出ていない」と返すと、
+// モデルが同じ中身の `report` を出し直して中身の似た2枚が並び、締めのセリフで差し戻しに触れる）。
 // `report` の呼び出しそのものの検査と差し戻しは `report-review.ts`（こちらは描く前の検査の段）。
 
 import { MAX_SESSION_HEADING_LENGTH } from "../../shared/session-choice.ts"
@@ -29,18 +32,32 @@ export const REPORT_TITLE_DESCRIPTION =
   "話の中心がはっきりした最初と、大きく変わったときだけ渡す。変える必要が無ければ省く。"
 
 /**
- * `Stop` の関所が差し戻すときにモデルへ返す理由。**固定の文面だけ**で、モデルが書いた本文は
- * 写さない（会話の中身をモデルの文脈へ戻す経路を作らない）。
+ * `Stop` の関所が差し戻すときにモデルへ返す理由（そのターンで `report` が済んでいないとき）。
+ * **固定の文面だけ**で、モデルが書いた本文は写さない（会話の中身をモデルの文脈へ戻す経路を作らない）。
+ * 差し戻しは利用者の画面に出ないので、セリフで触れさせない（触れると利用者には意味の通らない
+ * 言い訳になる）。
  */
 export const REPORT_GATE_REASON =
   "いま書いた本文は画面に出ていない。その内容を `report` ツール（`mcp__tsukumo__report`）で" +
   "渡し直すこと。前に渡した `report` を同じ引数で送り直さない（送り直しは差し戻す）。" +
-  "`report` のあとに書いてよいのは締めの `speak` だけ。"
+  "`report` のあとに書いてよいのは締めの `speak` だけ。" +
+  "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。"
+
+/**
+ * `Stop` の関所が差し戻すときにモデルへ返す理由（そのターンで `report` が済んでいるとき）。
+ * **レポートはもう画面に出ている**ので、渡し直させない。あとに書いた本文がレポートの言い直しなら
+ * 何も呼ばずに終えさせ、レポートに無い事実があるときだけ新しい `report` を呼ばせる。
+ */
+export const REPORT_GATE_AFTER_REPORT_REASON =
+  "レポートはもう画面に出ている。そのあとに書いた本文は画面に出ない。" +
+  "本文がレポートの言い直し・まとめなら、`report` も `speak` も呼ばず、何も書かずに終えること。" +
+  "レポートに無い事実を足す必要があるときだけ、それを含めた `report` を1回呼んでから締めの `speak` で終える。" +
+  "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。"
 
 /**
  * `Stop` の関所。届いたイベントを {@link ReportGate.observe} で見て、SDK のターンの中で**最後の
  * `report` のあと（無ければターンの頭から）に書いた本文**を覚えておき、止まろうとしたときに
- * {@link ReportGate.shouldBlock} が差し戻すかを決める。
+ * {@link ReportGate.verdict} が差し戻すか（と、その理由）を決める。
  *
  * - **ターンの頭は `session-info`**（`init` は SDK のターンの頭に毎回届く。依頼で始まるターンも、
  *   背景のタスクやサブエージェントの合図で claude が自分で始めるターンも同じ）。`turn-finished`
@@ -53,20 +70,34 @@ export type ReportGate = {
   readonly observe: (event: SessionEvent) => void
   /**
    * 差し戻すか。`stopHookActive`（すでに一度差し戻して続けているところ）なら差し戻さない
-   * （ループさせない）。それ以外は、覚えた本文が1行を超えていれば差し戻す。
+   * （ループさせない）。それ以外は、覚えた本文が1行を超えていれば、そのターンで `report` が
+   * 済んでいるかに応じた理由で差し戻す。
    */
-  readonly shouldBlock: (stopHookActive: boolean) => boolean
+  readonly verdict: (stopHookActive: boolean) => ReportGateVerdict
 }
+
+/** 関所の判定。差し戻すときはモデルへ返す理由を持つ。 */
+export type ReportGateVerdict =
+  | { readonly kind: "pass" }
+  | { readonly kind: "block"; readonly reason: string }
 
 /** {@link ReportGate} を1つ作る。**セッション1つに1つ**（ターンの区切りを自分で見ている）。 */
 export function createReportGate(): ReportGate {
-  let unreported: readonly string[] = []
+  let turn: GateTurn = EMPTY_TURN
 
   return {
     observe: (event) => {
-      unreported = nextUnreported(unreported, event)
+      turn = nextTurn(turn, event)
     },
-    shouldBlock: (stopHookActive) => !stopHookActive && exceedsOneLine(unreported),
+    verdict: (stopHookActive) => {
+      if (stopHookActive || !exceedsOneLine(turn.unreported)) {
+        return { kind: "pass" }
+      }
+      return {
+        kind: "block",
+        reason: turn.reported ? REPORT_GATE_AFTER_REPORT_REASON : REPORT_GATE_REASON,
+      }
+    },
   }
 }
 
@@ -78,16 +109,27 @@ export function createReportGate(): ReportGate {
  */
 const ONE_LINE_MAX_CHARS = 100
 
-function nextUnreported(unreported: readonly string[], event: SessionEvent): readonly string[] {
+/** 関所が1つの SDK のターンについて覚えていること。 */
+type GateTurn = {
+  /** このターンで `report` を受け取ったか */
+  readonly reported: boolean
+  /** 最後の `report` のあと（無ければターンの頭から）に書いた本文 */
+  readonly unreported: readonly string[]
+}
+
+const EMPTY_TURN = { reported: false, unreported: [] } satisfies GateTurn
+
+function nextTurn(turn: GateTurn, event: SessionEvent): GateTurn {
   switch (event.kind) {
     case "session-info":
     case "turn-finished":
+      return EMPTY_TURN
     case "report":
-      return []
+      return { reported: true, unreported: [] }
     case "utterance":
-      return [...unreported, event.text]
+      return { ...turn, unreported: [...turn.unreported, event.text] }
     default:
-      return unreported
+      return turn
   }
 }
 
