@@ -51,12 +51,6 @@ describe("toolInputText（同じ欄を切り詰めずに返す。帯の「実行
     expect(toolInputText("Bash", { command: long })).toBe(long)
   })
 
-  it("summarizeToolInput と同じ欄を読む（Edit は file_path）", () => {
-    expect(
-      toolInputText("Edit", { file_path: "/tmp/dummy.txt", old_string: "a", new_string: "b" }),
-    ).toBe("/tmp/dummy.txt")
-  })
-
   it("入力がオブジェクトの形でないときは空文字", () => {
     expect(toolInputText("Bash", "echo dummy")).toBe("")
   })

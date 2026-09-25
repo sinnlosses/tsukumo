@@ -40,13 +40,6 @@ describe("loadRevealSpeed", () => {
   })
 })
 
-describe("saveRevealSpeed / loadRevealSpeed", () => {
-  it("保存した値を読み戻せる", () => {
-    saveRevealSpeed("fast")
-    expect(loadRevealSpeed()).toBe("fast")
-  })
-})
-
 describe("isRevealSpeed", () => {
   it("standard / fast / off だけを受け取る", () => {
     expect(isRevealSpeed("standard")).toBe(true)

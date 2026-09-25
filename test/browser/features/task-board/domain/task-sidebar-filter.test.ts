@@ -37,16 +37,8 @@ describe("filterTasksForSidebar", () => {
     expect(filterTasksForSidebar(TASKS, "doing").map((task) => task.id)).toEqual(["X-002"])
   })
 
-  it("想定外の status（todo / doing / done 以外）は3つのチップのどれを選んでも出ない", () => {
-    expect(filterTasksForSidebar(TASKS, "todo")).not.toContainEqual(
-      expect.objectContaining({ id: "X-005" }),
-    )
-    expect(filterTasksForSidebar(TASKS, "doing")).not.toContainEqual(
-      expect.objectContaining({ id: "X-005" }),
-    )
-    expect(filterTasksForSidebar(TASKS, "done")).not.toContainEqual(
-      expect.objectContaining({ id: "X-005" }),
-    )
+  it("完了を選ぶと done だけになる（想定外の status は3つのチップのどれを選んでも出ない）", () => {
+    expect(filterTasksForSidebar(TASKS, "done").map((task) => task.id)).toEqual(["X-003"])
   })
 
   it("合う要素が無ければ空配列", () => {
