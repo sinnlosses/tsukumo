@@ -3,6 +3,15 @@
 `develop/direction.md` に書かれたユーザーからの指示を、タスク化した時点で**当時の記述のまま**
 ここへ移す（`docs/workflow.md`「指示メモ」参照）。新しいものを上に足す。**後から書き換えない。**
 
+## 2026-09-25 remeda で書き直せる箇所と、remeda を優先する規約
+
+（`develop/direction.md` の `## ユーザーから` を当時の記述のまま移したもの。会話で react-use の導入を見送ったあと、remeda で書き直せる箇所を調べ、「置き換えを勧めるAとBをタスク化してほしい。それから、coding-standards に可読性が良くなる場合は remeda を優先するよう記載をするタスク化もお願い!」と頼まれ、エージェントが書いた。T-601〜T-604 になった）
+
+- **remeda の型付き関数でキャストを消す**（2026-09-25 の調査の優先度A）。`src/browser/components/page/achievement/lantern-calendar.tsx:69` の `Object.keys(LAMP_LABEL) as readonly LampLevel[]` を `keys` に、`src/shared/task-summary.ts:212` の `isOneOf`（キャストを持つ）を呼び出し3箇所ごと `isIncludedIn` に替えて関数を消す
+- **`src/server/token-usage/core/token-usage.ts` の名前ごとの集計を remeda で書き直す**（同 優先度A）。`foldToolCalls`・`summarizeByModel`・`summarizeByTool` の「`new Set` で名前を集め → 名前ごとに `filter` → `reduce` で足す → 2段の比較関数で並べる」を `groupBy` + `sumBy` + `sortBy` にし、`compareName`・`compareModelName` を消す。並び（降順、同じなら名前順）は変えない
+- **合計の `reduce` と手書きの文字列比較を remeda に寄せる**（同 優先度B）。`(sum, x) => sum + x.y, 0` の形を `sumBy`（数の配列なら `sum`）に: `prompt-image-shelf.ts:53`・`shared/main-view.ts:509`・`shared/chat-log.ts:167`・`use-speech-log.ts:116,123`・`browser/domain/context-usage.ts:126`・`reveal/plan.ts:119`・`reveal/band.ts:206`。`a < b ? -1 : a > b ? 1 : 0` の並べ替えを `sortBy` に: `achievement.ts:294`・`command-suggestions.tsx:28`・`file-suggestions.tsx:71`・`diary.ts:140`（降順）。`clamp`・`times`・`unique` への置き換えと、戻り値が `ReadonlyMap` の集計（`achievement.ts:368`・`chat-archive.ts:468`）はやらない
+- **`docs/coding-standards.md` に「可読性が良くなる場合は remeda を優先する」を書く**。手書きの `reduce` での合計・グループ分け・比較関数などは remeda に同じ関数があれば使う。ただし標準の慣用句で差が無いもの（`[...new Set()]`・`Array.from({ length })`・名前付きの関数に包んだ clamp）や、戻り値の型が変わって呼び出し側まで直すことになるものは寄せない、という線引きも添える。`docs/design.md` の「`utils/` を作る前に remeda にあるかを見る」との二重化に注意する
+
 ## 2026-09-25 解決策は機械的な仕組みを優先する
 
 （会話での発言をそのまま書いたもの。T-600 になった）
