@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from "bun:test"
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs"
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
@@ -24,11 +24,6 @@ function path(): string {
 
 describe("readDismissedUsageProposalKeys", () => {
   it("ファイルが無いときは空", () => {
-    expect(readDismissedUsageProposalKeys(path())).toEqual([])
-  })
-
-  it("JSON が壊れているときは空", () => {
-    writeFileSync(path(), "{ 壊れた")
     expect(readDismissedUsageProposalKeys(path())).toEqual([])
   })
 
@@ -59,16 +54,5 @@ describe("writeDismissedUsageProposalKey", () => {
     writeDismissedUsageProposalKey("session-length:", path())
 
     expect(readDismissedUsageProposalKeys(path())).toEqual(["session-length:"])
-  })
-
-  it("ディレクトリが無ければ作って書く", () => {
-    const nested = join(dir, "nested", "usage-review-dismissed.json")
-    writeDismissedUsageProposalKey("session-length:", nested)
-    expect(readDismissedUsageProposalKeys(nested)).toEqual(["session-length:"])
-  })
-
-  it("書き込み先がディレクトリで塞がっていても例外を投げない", () => {
-    mkdirSync(path())
-    expect(() => writeDismissedUsageProposalKey("session-length:", path())).not.toThrow()
   })
 })

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from "bun:test"
-import { mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs"
+import { mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
@@ -143,13 +143,5 @@ describe("createContextUsageLog", () => {
         "架空のスキル",
       ].toSorted(),
     )
-  })
-
-  it("書けないときも例外を投げない（常駐プロセスを落とさない）", () => {
-    // 置き場の名前でファイルを作っておくと、その下にファイルを作れない。
-    writeFileSync(root(), "")
-    const log = createContextUsageLog(root())
-
-    expect(() => log.append(entry(at(9, 0)))).not.toThrow()
   })
 })

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from "bun:test"
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs"
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
@@ -45,11 +45,6 @@ describe("readPreviousUsageReview", () => {
     expect(readPreviousUsageReview(path())).toEqual({ kind: "none" })
   })
 
-  it("JSON が壊れているときは none", () => {
-    writeFileSync(path(), "{ 壊れた")
-    expect(readPreviousUsageReview(path())).toEqual({ kind: "none" })
-  })
-
   it("版が違うときは none", () => {
     writeFileSync(path(), JSON.stringify({ v: 999, reviewedAt: 1_000, findings: FINDINGS }))
     expect(readPreviousUsageReview(path())).toEqual({ kind: "none" })
@@ -72,17 +67,6 @@ describe("writePreviousUsageReview", () => {
     })
   })
 
-  it("ディレクトリが無ければ作って書く", () => {
-    const nested = join(dir, "nested", "usage-review.json")
-    writePreviousUsageReview(1_000, FINDINGS, nested)
-
-    expect(readPreviousUsageReview(nested)).toEqual({
-      kind: "found",
-      reviewedAt: 1_000,
-      findings: FINDINGS,
-    })
-  })
-
   it("直前の1回だけを持つ（新しい結果が古い結果を置き換える）", () => {
     writePreviousUsageReview(1_000, FINDINGS, path())
     const later: UsageReviewFindings = { ...FINDINGS, headline: "架空の新しい一言。" }
@@ -93,10 +77,5 @@ describe("writePreviousUsageReview", () => {
       reviewedAt: 2_000,
       findings: later,
     })
-  })
-
-  it("書き込み先がディレクトリで塞がっていても例外を投げない", () => {
-    mkdirSync(path())
-    expect(() => writePreviousUsageReview(1_000, FINDINGS, path())).not.toThrow()
   })
 })

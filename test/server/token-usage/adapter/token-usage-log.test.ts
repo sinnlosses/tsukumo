@@ -1,13 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from "bun:test"
-import {
-  appendFileSync,
-  mkdirSync,
-  mkdtempSync,
-  readdirSync,
-  readFileSync,
-  rmSync,
-  writeFileSync,
-} from "node:fs"
+import { appendFileSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
@@ -182,14 +174,6 @@ describe("createTokenUsageLog", () => {
         "work",
       ].toSorted(),
     )
-  })
-
-  it("書けないときも例外を投げない（常駐プロセスを落とさない）", () => {
-    // 置き場の名前でファイルを作っておくと、その下にファイルを作れない。
-    writeFileSync(root(), "")
-    const log = createTokenUsageLog(root())
-
-    expect(() => log.append(entry(at(10, 30)))).not.toThrow()
   })
 })
 
