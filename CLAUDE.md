@@ -63,9 +63,12 @@ Orca 経由の入力送信はコードごと消えた**ので、ホストに依�
 ## よく使うコマンド
 
 ```bash
-bun run check                 # typecheck + lint + format:check + test（変更後は必ずこれを通す）
-bun run test                  # 単体テスト全体（`bun test --isolate`。**素の `bun test` は使わない**
-                              #   — `mock.module` がファイルをまたいで漏れ、19件が落ちる）
+bun run check                 # typecheck + lint + format:check + test + test:e2e（変更後は必ずこれを通す）
+bun run test                  # 単体テスト全体（`bun test --isolate`。`test/e2e/` は外す。**素の `bun test` は
+                              #   使わない** — `mock.module` がファイルをまたいで漏れ、19件が落ちる）
+bun run test:e2e              # E2E（組み立ててから test/e2e/ を走らせる。手元の Chrome が要る。成果物と
+                              #   スクリーンショットは /tmp/tsukumo-e2e/）
+bun run test:e2e:update       # E2E の期待値（test/e2e/expected/）を書き直す。git diff で読んでから入れる
 bun test --isolate test/cli.test.ts  # 単体テストファイルのみ実行
 bun run typecheck             # tsc --noEmit
 bun run lint                  # oxlint（--fix は lint:fix）
@@ -149,7 +152,7 @@ Orca 内のブラウザタブに出て、**入力もそこで行う**（入力�
 
 **DOM の構造と画面の流れは E2E で守り、見た目（色・崩れ）は目視で確かめる。** E2E は fake driver で
 起こした tsukumo を手元の Chrome で開き、DOM の構造と WebSocket の流れを期待値と比べる
-（`bun run check` の最後の段に入れる。足場はまだ無く、形は `docs/design.md` 10章「E2E の走らせ方」）。目視の手順は
+（`bun run check` の最後の段の `bun run test:e2e`。足場は `test/e2e/scenario-run.ts`、形は `docs/design.md` 10章「E2E の走らせ方」）。目視の手順は
 `docs/architecture.md`「手で確かめること」。
 
 **IMPORTANT**: 変更後は必ず `bun run check` を通してから完了を報告する。テスト件数・エラーなどの

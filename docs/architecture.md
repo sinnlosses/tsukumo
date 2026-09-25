@@ -917,7 +917,7 @@ DOM の状態（スクロール位置・`<details>` の開閉・フォーカス�
 
 **見た目（色・崩れ・間合い）は自動チェックで捉えられない。** 単体テストで守るのは「受け取る」
 「決める」と配信そのもの（バインド先・経路・push）、**E2E で守るのは DOM の構造と画面の流れ**
-（`docs/design.md` 10章「E2E の走らせ方」。`bun run check` の最後の段に入れる。足場はまだ無い）
+（`docs/design.md` 10章「E2E の走らせ方」。`bun run check` の最後の段の `bun run test:e2e`）
 まで。E2E のスクリーンショットは `/tmp/tsukumo-e2e/` に出るが判定には使わないので、表示に関わる変更をしたら、
 次を確認してその結果を `evidence` に書く（`~/.claude/skills/task-workflow/WORKFLOW.md`
 「良いevidenceの書き方」と `docs/workflow.md`「タスクを書くとき・受け入れるとき」）。

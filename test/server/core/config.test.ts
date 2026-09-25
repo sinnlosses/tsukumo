@@ -14,6 +14,7 @@ describe("readConfig", () => {
       newSession: false,
       watchUi: false,
       quickVisit: false,
+      fixedClock: undefined,
       inheritedEnv: {},
     })
   })
@@ -41,9 +42,17 @@ describe("readConfig", () => {
       newSession: true,
       watchUi: true,
       quickVisit: true,
+      fixedClock: undefined,
       // 子プロセスへ引き継ぐ分は、読んだ環境をそのまま持つ
       inheritedEnv: env,
     })
+  })
+
+  it("凍らせる瞬間は ISO 8601 の瞬間として読み、読めない値は本物の時計に倒す", () => {
+    expect(
+      readConfig({ TSUKUMO_FIXED_CLOCK: " 2026-01-02T03:04:05Z " }).fixedClock?.epochMilliseconds,
+    ).toBe(Temporal.Instant.from("2026-01-02T03:04:05Z").epochMilliseconds)
+    expect(readConfig({ TSUKUMO_FIXED_CLOCK: "あした" }).fixedClock).toBeUndefined()
   })
 
   it("知らない駆動の名前は sdk に倒す", () => {

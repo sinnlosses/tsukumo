@@ -719,7 +719,8 @@ E2E が見るのは `data-*`・`aria-*`・文字と要素の入れ子までで�
 
 ## 整形の対象外
 
-`oxfmt` は `.prettierignore` に従い、**`.claude/` と `docs/history/` を整形しない**。
+`oxfmt` は `.prettierignore` に従い、**`.claude/` と `docs/history/` と `test/e2e/expected/` を
+整形しない**。
 
 `.claude/skills/` の大半は [mattpocock/skills](https://github.com/mattpocock/skills) 由来で、
 上流から取り直すことがある。こちらの整形（セミコロン除去・強調記法の統一）をかけてしまうと、
@@ -728,6 +729,10 @@ E2E が見るのは `data-*`・`aria-*`・文字と要素の入れ子までで�
 `docs/history/` は**過去の記録**で、書いた時点の文言がそのまま残っていることに意味がある。
 加えて oxfmt の折り返しは、強調（`**`）の範囲をずらしたりコード中の `*` を `_` に変えたりして
 **中身を壊す**（2026-09-20、`docs/history/direction.md` で19行が壊れた）。
+
+`test/e2e/expected/` は E2E の足場が書く期待値で、`bun run test:e2e:update` のたびに書き直す。
+整形をかけると書き直すたびに `format:check` が落ち、走らせた結果（`/tmp/tsukumo-e2e/`）とも
+そのまま diff できなくなる。
 
 `docs/history/` 以外の `docs/` は整形の対象に含める。表の桁揃えが全角文字幅を考慮して揃うので、
 手で書くより正確になる。

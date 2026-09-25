@@ -39,6 +39,12 @@ export const WATCH_UI_ENV_NAME = "TSUKUMO_WATCH_UI"
  */
 export const VISIT_QUICK_ENV_NAME = "TSUKUMO_VISIT_QUICK"
 /**
+ * サーバの時計を凍らせる瞬間（ISO 8601 の瞬間。末尾に `Z` かオフセットが要る）。E2E が走らせる
+ * たびに同じ成果物を得るための口（`docs/design.md` 10章「E2E の成果物と再現」）。**進まない
+ * 時計**になる。読むのは {@link readConfig} で、時計を作るのは src/server/adapter/local-time.ts。
+ */
+export const FIXED_CLOCK_ENV_NAME = "TSUKUMO_FIXED_CLOCK"
+/**
  * tsukumo が自分の持ち物を置くホームのパス（相対は cwd 相対、絶対はそのまま）。**名前はここに
  * 置くが、読むのは {@link readConfig} ではなく src/server/adapter/tsukumo-home.ts**（理由は
  * そのファイルの冒頭。配線層から配る道が無い）。
@@ -82,6 +88,10 @@ export type Config = {
   /** 訪問のしきい値を縮めるか（{@link VISIT_QUICK_ENV_NAME}。既定は縮めない）。 */
   readonly quickVisit: boolean
   /**
+   * 凍らせる瞬間（{@link FIXED_CLOCK_ENV_NAME}）。未設定・読めない値なら undefined ＝ 本物の時計。
+   */
+  readonly fixedClock: Temporal.Instant | undefined
+  /**
    * 起こした環境変数の全部。**claude の子プロセスへそのまま引き継ぐためのもの**で、tsukumo 自身は
    * ここから読まない（読むのは上の各フィールド）。SDK の `env` は tsukumo 自身の環境と混ぜずに丸ごと
    * 置き換えるので、足したい変数（`src/server/session-driver/core/visible-output-nudge.ts`）と一緒に渡す必要が
@@ -105,6 +115,7 @@ export function readConfig(env: Readonly<Record<string, string | undefined>>): C
     newSession: env[NEW_SESSION_ENV_NAME]?.trim() === "1",
     watchUi: env[WATCH_UI_ENV_NAME]?.trim() === "1",
     quickVisit: env[VISIT_QUICK_ENV_NAME]?.trim() === "1",
+    fixedClock: parseInstant(env[FIXED_CLOCK_ENV_NAME]),
     inheritedEnv: env,
   }
 }
@@ -112,4 +123,16 @@ export function readConfig(env: Readonly<Record<string, string | undefined>>): C
 function nonEmpty(value: string | undefined): string | undefined {
   const trimmed = value?.trim()
   return trimmed === undefined || trimmed === "" ? undefined : trimmed
+}
+
+function parseInstant(value: string | undefined): Temporal.Instant | undefined {
+  const trimmed = nonEmpty(value)
+  if (trimmed === undefined) {
+    return undefined
+  }
+  try {
+    return Temporal.Instant.from(trimmed)
+  } catch {
+    return undefined
+  }
 }

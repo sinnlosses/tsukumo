@@ -354,6 +354,22 @@ describe("process.env を読む箇所", () => {
   })
 })
 
+// 「いま」を読む場所を2つに保つ。E2E は時計をこの2箇所で凍らせる（サーバは
+// `TSUKUMO_FIXED_CLOCK`、ブラウザは E2E の側で `clock.ts` が呼ぶ関数を差し替える）ので、ほかで
+// 読まれると固定が黙って効かなくなる（docs/design.md 10章「E2E の成果物と再現」）。
+describe("Temporal.Now を読む箇所", () => {
+  it("`Temporal.Now` を読むのは src/server/adapter/local-time.ts と src/browser/utils/clock.ts だけ", () => {
+    const allowed = new Set(["server/adapter/local-time.ts", "browser/utils/clock.ts"])
+    const offenders = listSourceFiles(SRC_ROOT)
+      .filter((relPath) => !allowed.has(relPath))
+      .filter((relPath) =>
+        /\bTemporal\.Now\b/.test(nonCommentContent(readFileSync(`${SRC_ROOT}/${relPath}`, "utf8"))),
+      )
+
+    expect(offenders).toEqual([])
+  })
+})
+
 // 経路名のリテラルは shared にだけ書く。両側（core と browser）が見る値は import で共有し、
 // 文字列リテラルとして再掲しない（`src/shared/session-socket.ts` が代表例）。
 describe("経路名のリテラル", () => {

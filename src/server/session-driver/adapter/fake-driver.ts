@@ -147,6 +147,14 @@ export type FakeDriverOptions = {
    * 実際に起こした値を返す）。
    */
   readonly sessionDefault: SessionDefault
+  /**
+   * 最初のビュー（ブラウザのタブ）が繋がったら解ける約束。**`opening` と名指しの場面はこれが
+   * 解けてから流し始める**——起こした直後から流すと、ページが繋がる前に届いたぶんは `hello` の
+   * 状態に畳まれ、どこからが `events` として届くかが開くまでの時間で変わる（E2E のメッセージの
+   * 列が走らせるたびに揃わない。`docs/design.md` 10章「E2E の走らせ方」）。起こし直した代は
+   * もう繋がっているので、解けた約束を渡す。
+   */
+  readonly firstViewer: Promise<void>
   /** 内部イベントの受け取り口（本物の駆動と同じ契約）。 */
   readonly onEvent: (event: SessionEvent) => void
 }
@@ -177,7 +185,8 @@ export function readFakeSession(
 }
 
 /**
- * fake driver を起こす。`opening` の場面をすぐに流し始め、`prompt()` のたびに次の場面を流す。
+ * fake driver を起こす。最初のビューが繋がったら `opening` の場面を流し始め、`prompt()` のたびに
+ * 次の場面を流す。
  * 答え待ち（`pending-changed`）も疑似セッションから積まれ、`answer()` で解けて次の
  * `pending-changed` が流れる（本物の `canUseTool` と同じ見え方になる）。
  *
@@ -186,6 +195,8 @@ export function readFakeSession(
  */
 export function startFakeSession(options: FakeDriverOptions): SessionDriver {
   const timers = new Set<ReturnType<typeof setTimeout>>()
+  // 最初のビューを待つあいだに閉じられたら、あとから流し始めない。
+  let closed = false
   let pending: readonly PendingAsk[] = []
   // いま動いているモデルと許可モード。起こした既定から始まり、`setModel` /
   // `setPermissionMode` で変わる（本物は SDK が持つ値で、ここはその代わり）。
@@ -249,15 +260,19 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
   // 同じく `supportedModels()` の代わり（`relaySupportedModels`）。
   emit({ kind: "model-effort-support", models: FAKE_MODEL_EFFORT_SUPPORT })
 
-  play(options.session.opening, 0)
-
   // 名指しされた場面（無ければ findIndex が -1 を返すだけ）。`opening` と重ならないように、
   // その終わりから続けて流す。
   const namedIndex = options.session.turns.findIndex((scene) => scene.name === options.scene)
   const namedScene = namedIndex < 0 ? undefined : options.session.turns[namedIndex]
-  if (namedScene !== undefined) {
-    play(namedScene.steps, openingSpanMs(options.session.opening))
-  }
+  void options.firstViewer.then(() => {
+    if (closed) {
+      return
+    }
+    play(options.session.opening, 0)
+    if (namedScene !== undefined) {
+      play(namedScene.steps, openingSpanMs(options.session.opening))
+    }
+  })
   let playedTurns = namedScene === undefined ? 0 : namedIndex + 1
 
   /** 次の場面を流す（依頼でも、記録に残さない依頼でも同じ）。 */
@@ -313,6 +328,7 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
       return Promise.resolve()
     },
     close: () => {
+      closed = true
       for (const timer of timers) {
         clearTimeout(timer)
       }

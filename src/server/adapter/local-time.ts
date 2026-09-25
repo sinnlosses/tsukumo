@@ -13,6 +13,20 @@
 // 受け取るのは**エポックミリ秒の数**。畳み込みが持つ時刻がその形（`StampedEvent.at`）で、
 // ここで `Temporal.Instant` に変えても境界をまたぐ型が増えるだけになる。
 
+/**
+ * サーバの時計（いまのエポックミリ秒を返す関数）。**サーバで「いま」を読むのはここだけ**
+ * （`test/architecture.test.ts` が縛る）。`fixed` があれば、その瞬間で止まった進まない時計を
+ * 返す（`TSUKUMO_FIXED_CLOCK`。E2E が走らせるたびに同じ `at` を得るため。`docs/design.md`
+ * 10章「E2E の成果物と再現」）。日付キー（{@link todayLocalDateKey}）は凍らせない。
+ */
+export function createServerClock(fixed: Temporal.Instant | undefined): () => number {
+  if (fixed !== undefined) {
+    const frozen = fixed.epochMilliseconds
+    return () => frozen
+  }
+  return () => Temporal.Now.instant().epochMilliseconds
+}
+
 /** ローカル時刻での `YYYY-MM-DD`（日付ごとのファイルの名前）。 */
 export function localDateKey(epochMilliseconds: number): string {
   return localTimeAt(epochMilliseconds).toPlainDate().toString()

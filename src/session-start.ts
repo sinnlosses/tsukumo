@@ -14,7 +14,7 @@ import {
   createAchievementCommitCache,
   readAchievement,
 } from "./server/achievement/adapter/main-history.ts"
-import { localTimeHHMM, todayLocalDateKey } from "./server/adapter/local-time.ts"
+import { createServerClock, localTimeHHMM, todayLocalDateKey } from "./server/adapter/local-time.ts"
 import {
   type CharacterPack,
   listCharacterPacks,
@@ -147,10 +147,15 @@ export function startSession(options: SessionStartOptions): SessionManager {
   // パックで書かせるため（キャラクターを切り替えたあとの振り返りは、切り替えたあとのパックで
   // 書く）。
   let diaryContext: DiaryWriterContext | undefined = undefined
-  return createSessionManager({
+  // サーバの時計は1つ（`TSUKUMO_FIXED_CLOCK` なら止まった時計）。
+  const now = createServerClock(config.fixedClock)
+  // 最初のタブが繋がったら解ける約束。fake driver は疑似セッションをここから流し始める
+  // （`FakeDriverOptions.firstViewer`）。本物の駆動は待たない。
+  const firstViewer = Promise.withResolvers<void>()
+  const manager = createSessionManager({
     // 時刻は**エポックミリ秒の数**のまま渡す（`Temporal.Instant` にしない）。両側で回す
     // 畳み込み（`src/shared/`）が比較と引き算にしか使わず、数なら偽の時計も数で済む。
-    now: () => Temporal.Now.instant().epochMilliseconds,
+    now,
     batchIntervalMs: EVENT_BATCH_INTERVAL_MS,
     chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
     // 書き先の判定（雑談かどうか）は `session-manager` の `receive` が持つので、ここは口を
@@ -201,6 +206,7 @@ export function startSession(options: SessionStartOptions): SessionManager {
           chatArchive,
           fakeSession,
           scene: config.fakeScene,
+          firstViewer: firstViewer.promise,
           viewPort,
           cwd,
           inheritedEnv: config.inheritedEnv,
@@ -227,7 +233,7 @@ export function startSession(options: SessionStartOptions): SessionManager {
       // 台本はその場で作る。疑似セッションでは claude を起こさないので、パックの台本だけ。
       scriptSource:
         fakeSession === undefined
-          ? visitScriptSource(cwd, config.inheritedEnv, achievementCommitCache)
+          ? visitScriptSource(cwd, config.inheritedEnv, achievementCommitCache, now)
           : { kind: "pack-only" },
     },
     // コマンドの受け手の表（`src/command-route.ts`）。書き込みの中身はここで選んで渡す。
@@ -253,7 +259,7 @@ export function startSession(options: SessionStartOptions): SessionManager {
         // （`docs/design.md`「日記の受け取りと保存」「問い合わせの起こし方」）。
         diary:
           fakeSession === undefined
-            ? diaryWriterSource(cwd, () => diaryContext)
+            ? diaryWriterSource(cwd, () => diaryContext, now)
             : { kind: "dont-write" },
       },
       characterPack: {
@@ -278,6 +284,14 @@ export function startSession(options: SessionStartOptions): SessionManager {
       },
     }),
   })
+  return {
+    ...manager,
+    subscribe: (send) => {
+      const unsubscribe = manager.subscribe(send)
+      firstViewer.resolve()
+      return unsubscribe
+    },
+  }
 }
 
 /**
@@ -288,11 +302,12 @@ export function startSession(options: SessionStartOptions): SessionManager {
 function diaryWriterSource(
   cwd: string,
   readContext: () => DiaryWriterContext | undefined,
+  now: () => number,
 ): DiaryWriterSource {
   return {
     kind: "write",
     write: createDiaryWriter({
-      now: () => Temporal.Now.instant().epochMilliseconds,
+      now,
       save: (paragraph) => appendDiaryParagraph(cwd, paragraph),
       readContext,
       query: queryDiary,
@@ -309,6 +324,7 @@ function visitScriptSource(
   cwd: string,
   inheritedEnv: Readonly<Record<string, string | undefined>>,
   achievementCommitCache: AchievementCommitCache,
+  now: () => number,
 ): VisitScriptSource {
   return {
     kind: "write",
@@ -319,7 +335,7 @@ function visitScriptSource(
         const result = await readAchievement(cwd, today, today, achievementCommitCache)
         return result.kind === "ok" ? result.achievement : UNKNOWN_ACHIEVEMENT
       },
-      localTime: () => localTimeHHMM(Temporal.Now.instant().epochMilliseconds),
+      localTime: () => localTimeHHMM(now()),
       query: (request, signal) => queryVisitScript(request, { cwd, env: inheritedEnv }, signal),
     }),
   }
@@ -339,13 +355,14 @@ function dismissUsageProposal(dismiss: DismissUsageProposalCommand): SessionEven
 /**
  * セッション駆動を1つ起こす。**疑似セッションがあれば fake driver**（claude を起こさない。
  * `TSUKUMO_DRIVER=fake`）、無ければ Agent SDK の駆動。`scene` は fake driver のときだけ効く
- * （名指しした場面を起こした直後に流す。`TSUKUMO_FAKE_SCENE`）。
+ * （名指しした場面を最初のタブが繋がったら流す。`TSUKUMO_FAKE_SCENE`）。
  */
 function startDriver(options: {
   readonly seed: SessionLaunchSeed<CharacterPack>
   readonly chatArchive: ChatArchive
   readonly fakeSession: FakeSession | undefined
   readonly scene: string | undefined
+  readonly firstViewer: Promise<void>
   readonly viewPort: number
   /** claude の作業先（tsukumo を起こしたディレクトリ）。 */
   readonly cwd: string
@@ -359,6 +376,7 @@ function startDriver(options: {
       session: fakeSession,
       scene: options.scene,
       sessionDefault: seed.sessionDefault,
+      firstViewer: options.firstViewer,
       onEvent,
     })
   }

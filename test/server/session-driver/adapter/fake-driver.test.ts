@@ -47,6 +47,7 @@ describe("startFakeSession", () => {
       session: FAKE_SESSION,
       scene: undefined,
       sessionDefault: BUILTIN_SESSION_DEFAULT,
+      firstViewer: Promise.resolve(),
       onEvent: sink.onEvent,
     })
     await tick()
@@ -65,6 +66,7 @@ describe("startFakeSession", () => {
       session: FAKE_SESSION,
       scene: undefined,
       sessionDefault: BUILTIN_SESSION_DEFAULT,
+      firstViewer: Promise.resolve(),
       onEvent: sink.onEvent,
     })
     await tick()
@@ -88,6 +90,7 @@ describe("startFakeSession", () => {
       session: FAKE_SESSION,
       scene: undefined,
       sessionDefault: BUILTIN_SESSION_DEFAULT,
+      firstViewer: Promise.resolve(),
       onEvent: sink.onEvent,
     })
     await tick()
@@ -111,6 +114,7 @@ describe("startFakeSession", () => {
       session: FAKE_SESSION,
       scene: undefined,
       sessionDefault: BUILTIN_SESSION_DEFAULT,
+      firstViewer: Promise.resolve(),
       onEvent: sink.onEvent,
     })
     await tick()
@@ -127,12 +131,36 @@ describe("startFakeSession", () => {
     expect(sink.events.at(-1)).toEqual({ kind: "effort-changed", effort: "xhigh" })
   })
 
+  it("opening と名指しの場面は、最初のビューが繋がるまで流さない（プランと effort の対応は先に流す）", async () => {
+    const sink = collect()
+    const viewer = Promise.withResolvers<void>()
+    const driver = startFakeSession({
+      session: FAKE_SESSION,
+      scene: "架空の場面2",
+      sessionDefault: BUILTIN_SESSION_DEFAULT,
+      firstViewer: viewer.promise,
+      onEvent: sink.onEvent,
+    })
+    await tick()
+    const beforeViewer = sink.events.length
+    viewer.resolve()
+    await tick()
+    driver.close()
+
+    expect(beforeViewer).toBe(2)
+    expect(sink.events.slice(2)).toEqual([
+      { kind: "speech", text: "架空の挨拶", expression: "default" },
+      { kind: "utterance", text: "架空の本文2" },
+    ])
+  })
+
   it("scene で名指しした場面は、依頼を待たずに opening の続きとして流れる", async () => {
     const sink = collect()
     const driver = startFakeSession({
       session: FAKE_SESSION,
       scene: "架空の場面2",
       sessionDefault: BUILTIN_SESSION_DEFAULT,
+      firstViewer: Promise.resolve(),
       onEvent: sink.onEvent,
     })
     await tick()
@@ -148,6 +176,7 @@ describe("startFakeSession", () => {
       session: FAKE_SESSION,
       scene: "架空の場面1",
       sessionDefault: BUILTIN_SESSION_DEFAULT,
+      firstViewer: Promise.resolve(),
       onEvent: sink.onEvent,
     })
     await tick()
@@ -164,6 +193,7 @@ describe("startFakeSession", () => {
       session: FAKE_SESSION,
       scene: "無い場面",
       sessionDefault: BUILTIN_SESSION_DEFAULT,
+      firstViewer: Promise.resolve(),
       onEvent: sink.onEvent,
     })
     await tick()
@@ -193,6 +223,7 @@ describe("startFakeSession", () => {
       },
       scene: undefined,
       sessionDefault: BUILTIN_SESSION_DEFAULT,
+      firstViewer: Promise.resolve(),
       onEvent: sink.onEvent,
     })
     await tick()
@@ -213,6 +244,7 @@ describe("startFakeSession", () => {
       },
       scene: undefined,
       sessionDefault: BUILTIN_SESSION_DEFAULT,
+      firstViewer: Promise.resolve(),
       onEvent: sink.onEvent,
     })
     driver.close()
@@ -249,6 +281,7 @@ describe("startFakeSession", () => {
       },
       scene: "架空の差し戻し",
       sessionDefault: BUILTIN_SESSION_DEFAULT,
+      firstViewer: Promise.resolve(),
       onEvent: sink.onEvent,
     })
     await tick()
