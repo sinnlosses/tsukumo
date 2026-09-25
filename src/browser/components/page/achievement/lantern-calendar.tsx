@@ -2,6 +2,7 @@
 // 並べる。マスを押すと見ている日が変わる（見開きを開く口はまだ無い。別タスクで足す）。
 
 import { type ReactElement } from "react"
+import { keys } from "remeda"
 
 import {
   lampLevel,
@@ -66,7 +67,7 @@ export function LanternCalendar(props: LanternCalendarProps): ReactElement {
 function Legend(): ReactElement {
   return (
     <div className={styles["achievement-calendar-legend"]}>
-      {(Object.keys(LAMP_LABEL) as readonly LampLevel[]).map((level) => (
+      {keys(LAMP_LABEL).map((level) => (
         <span key={level} className={styles["achievement-calendar-legend-item"]}>
           <Lamp level={level} />
           {LAMP_LABEL[level]}

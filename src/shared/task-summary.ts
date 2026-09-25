@@ -7,6 +7,8 @@
 // ここはファイルI/Oを持たない。`main` の上のファイルを読み、`main` の先端が変わったら読み直すのは
 // src/server/repository/adapter/task-summary.ts。
 
+import { isIncludedIn } from "remeda"
+
 /**
  * サイドバーのタスク一覧1件分。ファイルに出てくる順のまま持つ（status ごとにまとめない）。
  *
@@ -129,17 +131,17 @@ export function parseNewTaskFile(fileName: string, content: string): NewTaskFile
   }
 
   const status = field(3, "status: ")
-  if (status === undefined || !isOneOf(status, NEW_TASK_STATUS_VALUES)) {
+  if (status === undefined || !isIncludedIn(status, NEW_TASK_STATUS_VALUES)) {
     return undefined
   }
 
   const difficulty = field(4, "difficulty: ")
-  if (difficulty === undefined || !isOneOf(difficulty, NEW_TASK_DIFFICULTY_VALUES)) {
+  if (difficulty === undefined || !isIncludedIn(difficulty, NEW_TASK_DIFFICULTY_VALUES)) {
     return undefined
   }
 
   const loopable = field(5, "loopable: ")
-  if (loopable === undefined || !isOneOf(loopable, NEW_TASK_LOOPABLE_VALUES)) {
+  if (loopable === undefined || !isIncludedIn(loopable, NEW_TASK_LOOPABLE_VALUES)) {
     return undefined
   }
 
@@ -207,10 +209,6 @@ function taskSummaryItemOfNewTaskFile(
     loopable: task.loopable,
     dependencies: task.dependencies,
   }
-}
-
-function isOneOf<const T extends readonly string[]>(value: string, values: T): value is T[number] {
-  return (values as readonly string[]).includes(value)
 }
 
 /** `dependencies: [...]` の `[` の次から渡す。区切りは `", "` 固定で、閉じの `]` が無ければ
