@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it } from "bun:test"
-import { execFileSync } from "node:child_process"
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
@@ -12,6 +11,7 @@ import {
 } from "../../../../src/server/achievement/adapter/main-history.ts"
 import { type AchievementCalendar } from "../../../../src/shared/achievement-calendar.ts"
 import { type DailyAchievement } from "../../../../src/shared/achievement.ts"
+import { runSubprocessOrThrow } from "../../../fixture/subprocess.ts"
 
 // 本物の `git` を起こす（`main` の上から実際に読むことそのものが検査の対象）。リポジトリは
 // 一時ディレクトリに毎回作り、中身は架空のコミット・タスクだけにする
@@ -21,23 +21,23 @@ import { type DailyAchievement } from "../../../../src/shared/achievement.ts"
 let root: string
 let repository: string
 
-beforeEach(() => {
+beforeEach(async () => {
   root = mkdtempSync(join(tmpdir(), "tsukumo-main-history-"))
   repository = join(root, "repository")
   mkdirSync(repository)
-  git(repository, "init", "-q", "-b", "main")
-  git(repository, "config", "user.name", "tsukumo-test")
-  git(repository, "config", "user.email", "tsukumo-test@example.invalid")
-  git(repository, "config", "commit.gpgsign", "false")
-  git(repository, "config", "core.hooksPath", "/dev/null")
+  await git(repository, "init", "-q", "-b", "main")
+  await git(repository, "config", "user.name", "tsukumo-test")
+  await git(repository, "config", "user.email", "tsukumo-test@example.invalid")
+  await git(repository, "config", "commit.gpgsign", "false")
+  await git(repository, "config", "core.hooksPath", "/dev/null")
 })
 
 afterEach(() => {
   rmSync(root, { recursive: true, force: true })
 })
 
-function git(cwd: string, ...args: readonly string[]): void {
-  execFileSync("git", args, { cwd, stdio: "ignore" })
+async function git(cwd: string, ...args: readonly string[]): Promise<void> {
+  await runSubprocessOrThrow("git", args, { cwd })
 }
 
 /** `date`（`YYYY-MM-DD`）の `hhmm` を、**`readAchievement` が読む `Temporal.Now.timeZoneId()` と
@@ -55,34 +55,33 @@ function isoDateAt(date: string, hhmm: string): string {
 /** ローカル時刻の `date`（`YYYY-MM-DD`）の `hhmm` に、架空のファイルを1件コミットする。
  * committer date と author date を両方固定する（成果はコミットの日付=committer date で
  * 決まるので、これを固定しないとテストの実行日に結果が変わる）。 */
-function commitAt(
+async function commitAt(
   cwd: string,
   date: string,
   hhmm: string,
   fileName: string,
   content = "架空の内容",
-): void {
+): Promise<void> {
   const path = join(cwd, fileName)
   mkdirSync(join(cwd, ...fileName.split("/").slice(0, -1)), { recursive: true })
   writeFileSync(path, content)
-  git(cwd, "add", fileName)
+  await git(cwd, "add", fileName)
   const isoDate = isoDateAt(date, hhmm)
-  execFileSync("git", ["commit", "-q", "-m", `commit ${fileName}`], {
+  await runSubprocessOrThrow("git", ["commit", "-q", "-m", `commit ${fileName}`], {
     cwd,
-    stdio: "ignore",
     env: { ...process.env, GIT_AUTHOR_DATE: isoDate, GIT_COMMITTER_DATE: isoDate },
   })
 }
 
 /** 新形式（`develop/task/T-xxx.md`）の1件を front matter で書いてコミットする。 */
-function commitNewFormatTask(
+async function commitNewFormatTask(
   cwd: string,
   date: string,
   hhmm: string,
   id: string,
   summary: string,
   status: string,
-): void {
+): Promise<void> {
   const content = [
     "---",
     `id: ${id}`,
@@ -94,7 +93,7 @@ function commitNewFormatTask(
     "---",
     "",
   ].join("\n")
-  commitAt(cwd, date, hhmm, `develop/task/${id}.md`, content)
+  await commitAt(cwd, date, hhmm, `develop/task/${id}.md`, content)
 }
 
 /** 新形式（`develop/task/T-xxx.md`）の内容そのもの（front matter）。 */
@@ -115,12 +114,12 @@ function newFormatTaskContent(id: string, summary: string, status: string): stri
 /** 複数の新形式タスクファイルを**1回のコミット**で書く（節目（通算のタスクの数）のテストで
  * 大量のタスクを安く用意するための道具。1件ごとに `git commit` すると `git` の起動回数が
  * 増えてテストが重くなるため）。 */
-function commitManyNewFormatTasks(
+async function commitManyNewFormatTasks(
   cwd: string,
   date: string,
   hhmm: string,
   tasks: readonly { readonly id: string; readonly summary: string; readonly status: string }[],
-): void {
+): Promise<void> {
   const dir = join(cwd, "develop", "task")
   mkdirSync(dir, { recursive: true })
   for (const task of tasks) {
@@ -129,35 +128,33 @@ function commitManyNewFormatTasks(
       newFormatTaskContent(task.id, task.summary, task.status),
     )
   }
-  git(cwd, "add", "develop/task")
+  await git(cwd, "add", "develop/task")
   const isoDate = isoDateAt(date, hhmm)
-  execFileSync("git", ["commit", "-q", "-m", "commit many task files"], {
+  await runSubprocessOrThrow("git", ["commit", "-q", "-m", "commit many task files"], {
     cwd,
-    stdio: "ignore",
     env: { ...process.env, GIT_AUTHOR_DATE: isoDate, GIT_COMMITTER_DATE: isoDate },
   })
 }
 
 /** タスクファイルを1件消す（`task prune` が消すのと同じ操作。`docs/requirements.md` 4.11
  * 「`done` になった日」の「消えたファイル」の検査に使う）。 */
-function deleteTaskFile(cwd: string, date: string, hhmm: string, id: string): void {
-  git(cwd, "rm", "--quiet", `develop/task/${id}.md`)
+async function deleteTaskFile(cwd: string, date: string, hhmm: string, id: string): Promise<void> {
+  await git(cwd, "rm", "--quiet", `develop/task/${id}.md`)
   const isoDate = isoDateAt(date, hhmm)
-  execFileSync("git", ["commit", "-q", "-m", `prune ${id}`], {
+  await runSubprocessOrThrow("git", ["commit", "-q", "-m", `prune ${id}`], {
     cwd,
-    stdio: "ignore",
     env: { ...process.env, GIT_AUTHOR_DATE: isoDate, GIT_COMMITTER_DATE: isoDate },
   })
 }
 
 /** 旧形式（`develop/tasks.json`）を書いてコミットする。 */
-function commitOldFormatTasks(
+async function commitOldFormatTasks(
   cwd: string,
   date: string,
   hhmm: string,
   tasks: readonly Record<string, unknown>[],
-): void {
-  commitAt(cwd, date, hhmm, "develop/tasks.json", JSON.stringify(tasks))
+): Promise<void> {
+  await commitAt(cwd, date, hhmm, "develop/tasks.json", JSON.stringify(tasks))
 }
 
 /** 「読めた」かつ `doneTasks` が数えられている前提のテストで使う。前提が崩れたら例外を投げて
@@ -194,11 +191,11 @@ describe("readAchievement", () => {
   })
 
   it("その日の [0時, 24時) の範囲のコミットだけを数える（範囲外は数えない）", async () => {
-    commitAt(repository, "2026-09-22", "23:59", "before.txt") // 前日の終わり際
-    commitAt(repository, "2026-09-23", "00:00", "start.txt") // その日の始まり（含む）
-    commitAt(repository, "2026-09-23", "12:00", "noon.txt")
-    commitAt(repository, "2026-09-23", "23:59", "end.txt")
-    commitAt(repository, "2026-09-24", "00:00", "after.txt") // 次の日の始まり（含まない）
+    await commitAt(repository, "2026-09-22", "23:59", "before.txt") // 前日の終わり際
+    await commitAt(repository, "2026-09-23", "00:00", "start.txt") // その日の始まり（含む）
+    await commitAt(repository, "2026-09-23", "12:00", "noon.txt")
+    await commitAt(repository, "2026-09-23", "23:59", "end.txt")
+    await commitAt(repository, "2026-09-24", "00:00", "after.txt") // 次の日の始まり（含まない）
 
     const achievement = known(
       await readAchievement(repository, "2026-09-23", "2026-09-24", createAchievementCommitCache()),
@@ -208,9 +205,9 @@ describe("readAchievement", () => {
   })
 
   it("運用の帳面だけを触ったコミットは数えない", async () => {
-    commitAt(repository, "2026-09-23", "10:00", "src/work.ts")
-    commitOldFormatTasks(repository, "2026-09-23", "11:00", [])
-    commitAt(repository, "2026-09-23", "12:00", "develop/progress.md")
+    await commitAt(repository, "2026-09-23", "10:00", "src/work.ts")
+    await commitOldFormatTasks(repository, "2026-09-23", "11:00", [])
+    await commitAt(repository, "2026-09-23", "12:00", "develop/progress.md")
 
     const achievement = known(
       await readAchievement(repository, "2026-09-23", "2026-09-24", createAchievementCommitCache()),
@@ -222,14 +219,13 @@ describe("readAchievement", () => {
   it("merge commit は数えない", async () => {
     // 空のリポジトリでは `main` がまだ ref として存在しない（unborn）ので、分岐する前に
     // 1件コミットして `main` を実在させる。
-    commitAt(repository, "2026-09-22", "09:00", "base.txt")
-    git(repository, "checkout", "-q", "-b", "feature")
-    commitAt(repository, "2026-09-23", "09:00", "feature.txt")
-    git(repository, "checkout", "-q", "main")
-    commitAt(repository, "2026-09-23", "10:00", "main.txt")
-    execFileSync("git", ["merge", "--no-ff", "-q", "-m", "merge", "feature"], {
+    await commitAt(repository, "2026-09-22", "09:00", "base.txt")
+    await git(repository, "checkout", "-q", "-b", "feature")
+    await commitAt(repository, "2026-09-23", "09:00", "feature.txt")
+    await git(repository, "checkout", "-q", "main")
+    await commitAt(repository, "2026-09-23", "10:00", "main.txt")
+    await runSubprocessOrThrow("git", ["merge", "--no-ff", "-q", "-m", "merge", "feature"], {
       cwd: repository,
-      stdio: "ignore",
       env: {
         ...process.env,
         GIT_AUTHOR_DATE: isoDateAt("2026-09-23", "11:00"),
@@ -246,7 +242,7 @@ describe("readAchievement", () => {
   })
 
   it("タスクの記録がどちらの形式も無いリポジトリでは、doneTasks が「数えられない」でコミットは数える", async () => {
-    commitAt(repository, "2026-09-23", "10:00", "README.md")
+    await commitAt(repository, "2026-09-23", "10:00", "README.md")
 
     const achievement = known(
       await readAchievement(repository, "2026-09-23", "2026-09-24", createAchievementCommitCache()),
@@ -265,9 +261,16 @@ describe("readAchievement", () => {
   })
 
   it("新形式: その日の終わりまでに done になったタスクを、前の日には無かった分だけ返す", async () => {
-    commitNewFormatTask(repository, "2026-09-22", "10:00", "T-001", "前の日に終わった", "done")
-    commitNewFormatTask(repository, "2026-09-23", "09:00", "T-002", "今日終わった", "todo")
-    commitAt(
+    await commitNewFormatTask(
+      repository,
+      "2026-09-22",
+      "10:00",
+      "T-001",
+      "前の日に終わった",
+      "done",
+    )
+    await commitNewFormatTask(repository, "2026-09-23", "09:00", "T-002", "今日終わった", "todo")
+    await commitAt(
       repository,
       "2026-09-23",
       "18:00",
@@ -284,7 +287,7 @@ describe("readAchievement", () => {
         "",
       ].join("\n"),
     )
-    commitNewFormatTask(repository, "2026-09-23", "19:00", "T-003", "今日はまだ", "todo")
+    await commitNewFormatTask(repository, "2026-09-23", "19:00", "T-003", "今日はまだ", "todo")
 
     const achievement = known(
       await readAchievement(repository, "2026-09-23", "2026-09-24", createAchievementCommitCache()),
@@ -297,10 +300,10 @@ describe("readAchievement", () => {
   })
 
   it("旧形式: passes: true の done だけを数え、dropped（done + passes:false）は数えない", async () => {
-    commitOldFormatTasks(repository, "2026-09-23", "09:00", [
+    await commitOldFormatTasks(repository, "2026-09-23", "09:00", [
       { id: "T-001", summary: "todo", status: "todo" },
     ])
-    commitOldFormatTasks(repository, "2026-09-23", "18:00", [
+    await commitOldFormatTasks(repository, "2026-09-23", "18:00", [
       { id: "T-001", summary: "合格", status: "done", passes: true },
       { id: "T-002", summary: "却下", status: "done", passes: false },
     ])
@@ -316,7 +319,7 @@ describe("readAchievement", () => {
   })
 
   it("アーカイブ（docs/history/tasks.md）の done も拾う", async () => {
-    commitOldFormatTasks(repository, "2026-09-22", "10:00", [
+    await commitOldFormatTasks(repository, "2026-09-22", "10:00", [
       { id: "T-001", summary: "todo", status: "todo" },
     ])
     const archive = [
@@ -326,9 +329,9 @@ describe("readAchievement", () => {
       "",
       "- **difficulty**: `sonnet` / **passes**: `true` / **dependencies**: なし",
     ].join("\n")
-    commitAt(repository, "2026-09-23", "18:00", "docs/history/tasks.md", archive)
+    await commitAt(repository, "2026-09-23", "18:00", "docs/history/tasks.md", archive)
     // アーカイブしたので旧形式からは消える想定（tasks.json を空にする）。
-    commitOldFormatTasks(repository, "2026-09-23", "18:01", [])
+    await commitOldFormatTasks(repository, "2026-09-23", "18:01", [])
 
     const achievement = known(
       await readAchievement(repository, "2026-09-23", "2026-09-24", createAchievementCommitCache()),
@@ -341,21 +344,20 @@ describe("readAchievement", () => {
   })
 
   it("形式の切り替え（新形式への移行）の日は done の集合が変わらないので、その日は0件", async () => {
-    commitOldFormatTasks(repository, "2026-09-22", "10:00", [
+    await commitOldFormatTasks(repository, "2026-09-22", "10:00", [
       { id: "T-001", summary: "旧形式で完了", status: "done", passes: true },
     ])
     // 移行: 旧形式を消し、同じ ID を新形式で done のまま書く。
-    git(repository, "rm", "--quiet", "develop/tasks.json")
-    execFileSync("git", ["commit", "-q", "-m", "migrate"], {
+    await git(repository, "rm", "--quiet", "develop/tasks.json")
+    await runSubprocessOrThrow("git", ["commit", "-q", "-m", "migrate"], {
       cwd: repository,
-      stdio: "ignore",
       env: {
         ...process.env,
         GIT_AUTHOR_DATE: isoDateAt("2026-09-23", "10:00"),
         GIT_COMMITTER_DATE: isoDateAt("2026-09-23", "10:00"),
       },
     })
-    commitNewFormatTask(repository, "2026-09-23", "11:00", "T-001", "旧形式で完了", "done")
+    await commitNewFormatTask(repository, "2026-09-23", "11:00", "T-001", "旧形式で完了", "done")
 
     const achievement = known(
       await readAchievement(repository, "2026-09-23", "2026-09-24", createAchievementCommitCache()),
@@ -365,7 +367,7 @@ describe("readAchievement", () => {
   })
 
   it("リポジトリの最初の日（前の日の切り口が無い）は、その日の done を全件返す", async () => {
-    commitNewFormatTask(repository, "2026-09-23", "10:00", "T-001", "最初の完了", "done")
+    await commitNewFormatTask(repository, "2026-09-23", "10:00", "T-001", "最初の完了", "done")
 
     const achievement = known(
       await readAchievement(repository, "2026-09-23", "2026-09-24", createAchievementCommitCache()),
@@ -378,7 +380,7 @@ describe("readAchievement", () => {
   })
 
   it("date が無ければ今日、指定した日はそのまま見た日として返す", async () => {
-    commitAt(repository, "2026-09-20", "10:00", "old.txt")
+    await commitAt(repository, "2026-09-20", "10:00", "old.txt")
 
     const achievement = known(
       await readAchievement(repository, "2026-09-20", "2026-09-24", createAchievementCommitCache()),
@@ -398,8 +400,15 @@ describe("readAchievement", () => {
 
   describe("卒業と節目", () => {
     it("登録から7日以上経って終えたタスクは卒業に載る", async () => {
-      commitNewFormatTask(repository, "2026-09-01", "10:00", "T-050", "長く待った作業", "todo")
-      commitAt(
+      await commitNewFormatTask(
+        repository,
+        "2026-09-01",
+        "10:00",
+        "T-050",
+        "長く待った作業",
+        "todo",
+      )
+      await commitAt(
         repository,
         "2026-09-23",
         "09:00",
@@ -422,8 +431,15 @@ describe("readAchievement", () => {
     })
 
     it("登録から7日未満で終えたタスクは卒業に載らない", async () => {
-      commitNewFormatTask(repository, "2026-09-20", "10:00", "T-051", "すぐ終わった作業", "todo")
-      commitAt(
+      await commitNewFormatTask(
+        repository,
+        "2026-09-20",
+        "10:00",
+        "T-051",
+        "すぐ終わった作業",
+        "todo",
+      )
+      await commitAt(
         repository,
         "2026-09-23",
         "09:00",
@@ -444,26 +460,25 @@ describe("readAchievement", () => {
     })
 
     it("形式の切り替えコミットで入ったファイルは、7日以上経っていても卒業に載らない", async () => {
-      commitOldFormatTasks(repository, "2026-09-01", "10:00", [
+      await commitOldFormatTasks(repository, "2026-09-01", "10:00", [
         { id: "T-052", summary: "旧形式のまま長く待った", status: "todo" },
       ])
-      git(repository, "rm", "--quiet", "develop/tasks.json")
+      await git(repository, "rm", "--quiet", "develop/tasks.json")
       mkdirSync(join(repository, "develop", "task"), { recursive: true })
       writeFileSync(
         join(repository, "develop", "task", "T-052.md"),
         newFormatTaskContent("T-052", "旧形式のまま長く待った", "todo"),
       )
-      git(repository, "add", "develop/task/T-052.md")
-      execFileSync("git", ["commit", "-q", "-m", "migrate"], {
+      await git(repository, "add", "develop/task/T-052.md")
+      await runSubprocessOrThrow("git", ["commit", "-q", "-m", "migrate"], {
         cwd: repository,
-        stdio: "ignore",
         env: {
           ...process.env,
           GIT_AUTHOR_DATE: isoDateAt("2026-09-10", "10:00"),
           GIT_COMMITTER_DATE: isoDateAt("2026-09-10", "10:00"),
         },
       })
-      commitAt(
+      await commitAt(
         repository,
         "2026-09-23",
         "09:00",
@@ -486,7 +501,7 @@ describe("readAchievement", () => {
     it("同じ日のうちに終えて消えた（剪定された）タスクは、終えたタスク・卒業のどちらからも漏れない", async () => {
       // 剪定は task prune が行う操作そのもの（develop/task/T-xxx.md を git rm する）を、
       // ここでは直接 git 操作で再現する（task prune コマンド自体は T-560 が持つ）。
-      commitNewFormatTask(
+      await commitNewFormatTask(
         repository,
         "2026-09-01",
         "10:00",
@@ -494,16 +509,23 @@ describe("readAchievement", () => {
         "長く待って剪定された",
         "todo",
       )
-      commitAt(
+      await commitAt(
         repository,
         "2026-09-23",
         "09:00",
         "develop/task/T-060.md",
         newFormatTaskContent("T-060", "長く待って剪定された", "done"),
       )
-      deleteTaskFile(repository, "2026-09-23", "18:00", "T-060")
+      await deleteTaskFile(repository, "2026-09-23", "18:00", "T-060")
       // hasTaskTracking が true であり続けるよう、消えないタスクを1件残す。
-      commitNewFormatTask(repository, "2026-09-23", "19:00", "T-999", "残っているタスク", "todo")
+      await commitNewFormatTask(
+        repository,
+        "2026-09-23",
+        "19:00",
+        "T-999",
+        "残っているタスク",
+        "todo",
+      )
 
       const achievement = known(
         await readAchievement(
@@ -527,7 +549,7 @@ describe("readAchievement", () => {
       // T-070 は前の日のうちに done → 剪定されている。今日、新たに1件 done にしたとき、
       // 「前の日には無かった」差分に T-070 が誤って再登場しないことを確かめる
       // （消えたファイルは前の日の切り口にも同じ規則で混ぜる）。
-      commitNewFormatTask(
+      await commitNewFormatTask(
         repository,
         "2026-09-01",
         "10:00",
@@ -535,15 +557,15 @@ describe("readAchievement", () => {
         "前の日に終わって剪定された",
         "todo",
       )
-      commitAt(
+      await commitAt(
         repository,
         "2026-09-22",
         "09:00",
         "develop/task/T-070.md",
         newFormatTaskContent("T-070", "前の日に終わって剪定された", "done"),
       )
-      deleteTaskFile(repository, "2026-09-22", "18:00", "T-070")
-      commitNewFormatTask(repository, "2026-09-23", "10:00", "T-071", "今日終わった", "done")
+      await deleteTaskFile(repository, "2026-09-22", "18:00", "T-070")
+      await commitNewFormatTask(repository, "2026-09-23", "10:00", "T-071", "今日終わった", "done")
 
       const achievement = known(
         await readAchievement(
@@ -566,8 +588,8 @@ describe("readAchievement", () => {
         summary: `済み${String(index + 1)}`,
         status: "done",
       }))
-      commitManyNewFormatTasks(repository, "2026-09-22", "10:00", before)
-      commitManyNewFormatTasks(repository, "2026-09-23", "10:00", [
+      await commitManyNewFormatTasks(repository, "2026-09-22", "10:00", before)
+      await commitManyNewFormatTasks(repository, "2026-09-23", "10:00", [
         { id: "T-249", summary: "今日1件目", status: "done" },
         { id: "T-250", summary: "今日2件目（250件目）", status: "done" },
       ])
@@ -585,7 +607,7 @@ describe("readAchievement", () => {
     })
 
     it("タスクの記録が無いリポジトリでは、卒業もタスクの節目も出ない", async () => {
-      commitAt(repository, "2026-09-23", "10:00", "README.md")
+      await commitAt(repository, "2026-09-23", "10:00", "README.md")
 
       const achievement = known(
         await readAchievement(
@@ -630,12 +652,12 @@ describe("readCommitCalendar", () => {
   })
 
   it("範囲（今日を含む週の月曜から4週前の月曜〜今日）の日ごとのコミット数を返す", async () => {
-    commitAt(repository, "2026-08-23", "23:00", "before-range.txt") // 範囲の1日前（除く）
-    commitAt(repository, "2026-08-24", "10:00", "range-start.txt") // 範囲の始まり（含む）
-    commitAt(repository, "2026-09-10", "09:00", "middle-a.txt")
-    commitAt(repository, "2026-09-10", "10:00", "middle-b.txt") // 同じ日に2件
-    commitAt(repository, "2026-09-24", "09:00", "today.txt") // 今日
-    commitOldFormatTasks(repository, "2026-09-10", "11:00", []) // 運用の帳面（数えない）
+    await commitAt(repository, "2026-08-23", "23:00", "before-range.txt") // 範囲の1日前（除く）
+    await commitAt(repository, "2026-08-24", "10:00", "range-start.txt") // 範囲の始まり（含む）
+    await commitAt(repository, "2026-09-10", "09:00", "middle-a.txt")
+    await commitAt(repository, "2026-09-10", "10:00", "middle-b.txt") // 同じ日に2件
+    await commitAt(repository, "2026-09-24", "09:00", "today.txt") // 今日
+    await commitOldFormatTasks(repository, "2026-09-10", "11:00", []) // 運用の帳面（数えない）
 
     const calendar = knownCalendar(
       await readCommitCalendar(repository, TODAY, createAchievementCommitCache()),
@@ -653,7 +675,7 @@ describe("readCommitCalendar", () => {
   })
 
   it("コミットの無い日は0件", async () => {
-    commitAt(repository, "2026-09-24", "09:00", "today.txt")
+    await commitAt(repository, "2026-09-24", "09:00", "today.txt")
 
     const calendar = knownCalendar(
       await readCommitCalendar(repository, TODAY, createAchievementCommitCache()),
@@ -666,8 +688,8 @@ describe("readCommitCalendar", () => {
   })
 
   it("今日以外の日の数は覚え、2回目は取り直さない（今日の分だけ取り直す）", async () => {
-    commitAt(repository, "2026-09-01", "10:00", "past.txt")
-    commitAt(repository, "2026-09-24", "09:00", "today-1.txt")
+    await commitAt(repository, "2026-09-01", "10:00", "past.txt")
+    await commitAt(repository, "2026-09-24", "09:00", "today-1.txt")
     const cache = createAchievementCommitCache()
 
     const first = knownCalendar(await readCommitCalendar(repository, TODAY, cache))
@@ -685,7 +707,7 @@ describe("readCommitCalendar", () => {
     // 実際に取り直したなら本物の数（1）に戻ってしまう）。今日はいつも取り直すので新しいコミットを
     // 増やし、その分が反映されることも確かめる。
     cache.rememberDailyCount("2026-09-01", 999)
-    commitAt(repository, "2026-09-24", "10:00", "today-2.txt")
+    await commitAt(repository, "2026-09-24", "10:00", "today-2.txt")
 
     const second = knownCalendar(await readCommitCalendar(repository, TODAY, cache))
     expect(second.days.find((day) => day.date === "2026-09-01")).toEqual({
@@ -699,8 +721,8 @@ describe("readCommitCalendar", () => {
   })
 
   it("節目（readAchievement の通算のコミットの数）も、同じ入れ物で今日以外の日を覚える", async () => {
-    commitAt(repository, "2026-09-01", "10:00", "past.txt")
-    commitAt(repository, "2026-09-23", "10:00", "yesterday.txt")
+    await commitAt(repository, "2026-09-01", "10:00", "past.txt")
+    await commitAt(repository, "2026-09-23", "10:00", "yesterday.txt")
     const cache = createAchievementCommitCache()
 
     await readAchievement(repository, "2026-09-23", TODAY, cache)

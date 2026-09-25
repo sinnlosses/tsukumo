@@ -567,6 +567,30 @@ effect の中と、イベントハンドラ・そこで登録した寿命の長�
 - **CLI やサーバを起こすテストは、マシンの負荷が高いと時間切れで落ちることがある**（1件に
   457秒かかったことがある）。`bun run check` は他の重い処理と同時に走らせず、時間切れで落ちたら
   まず打ち直して、同じテストが続けて落ちるかを見る
+- **テストの中で子プロセスを同期で待たない**（`execFileSync` / `execSync` / `spawnSync`。
+  `.oxlintrc.json` が `test/` で止める）。`test/fixture/subprocess.ts` の `runSubprocess` /
+  `runSubprocessOrThrow` を使う。bun の `spawnSync` には、macOS arm64 で子の終了を取りこぼし、
+  待ちが 100% CPU で空回りする不具合が報告されている（oven-sh/bun #34069、修正 PR #40078。
+  2026-09-26 時点でどちらも open）。空回り中は `spawnSync` の `timeout` も効かないので、1回の
+  固まりが `bun run check` 全体を止めうる。非同期で待てば、取りこぼしてもその1件がテストの
+  時間切れで落ちて次へ進む。**`bun test --isolate` が 100% CPU のまま返らなかったのはこれだと
+  断定できていない**（手元の数百回の繰り返しでは再現しなかった）
+- **`bun test --isolate` が返らなくなったら、止める前にどのファイルかを取る。** `--isolate` は
+  子プロセスを起こさず1つのプロセスの中でファイルを順に流し、非 TTY の出力は最後の要約しか
+  出さないので、ログからもプロセスの引数からも分からない。次の preload を一時ディレクトリに置いて
+  `--preload <パス>` で渡して流し直すと、いま走っているファイル（`Bun.main`）とテストの前後が
+  時刻つきで残る（preload はファイルごとに評価し直される）。止まったら、最後の行のファイルと、
+  `B`（テストの中）で終わっているか `E`（テストの外）で終わっているかを見る。あわせて
+  `ps -o pid,ppid,stat,command -ax` で、そのプロセスの子に終わったまま（`Z`）のものが無いかを
+  見る（上の不具合なら残っている）
+
+  ```ts
+  import { appendFileSync } from "node:fs"
+  import { afterEach, beforeEach } from "bun:test"
+  const log = "<書き出す先>"
+  beforeEach(() => appendFileSync(log, `${performance.now().toFixed(0)} B ${Bun.main}\n`))
+  afterEach(() => appendFileSync(log, `${performance.now().toFixed(0)} E ${Bun.main}\n`))
+  ```
 
 ### カバレッジに閾値を設けない
 

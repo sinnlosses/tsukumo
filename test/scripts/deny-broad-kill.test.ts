@@ -3,8 +3,9 @@
 // 「終了コードで伝える」という約束のほうが抜けるため。
 
 import { describe, expect, test } from "bun:test"
-import { execFileSync } from "node:child_process"
 import process from "node:process"
+
+import { runSubprocess } from "../fixture/subprocess.ts"
 
 const HOOK_PATH = "scripts/deny-broad-kill.ts"
 
@@ -15,8 +16,8 @@ describe("広い kill を拒否する hook", () => {
     ["名前で薙ぐ killall", "killall bun"],
     ["pgrep から kill へ流す形", "pgrep -f bun | xargs kill"],
     ["前段のコマンドに続けて書いた pkill", "echo stopping && pkill -f tsukumo"],
-  ])("%s は止める", (_name, command) => {
-    expect(runHook(command)).toBe(2)
+  ])("%s は止める", async (_name, command) => {
+    expect(await runHook(command)).toBe(2)
   })
 
   test.each([
@@ -24,30 +25,25 @@ describe("広い kill を拒否する hook", () => {
     ["ポートから引いた pid を渡す kill", "kill $(lsof -ti tcp:7398 -sTCP:LISTEN)"],
     ["語として書いただけの grep", 'grep -rn "pkill" docs/workflow.md'],
     ["取り合わない相手を狙う pkill", "pkill -f my-python-worker"],
-  ])("%s は通す", (_name, command) => {
-    expect(runHook(command)).toBe(0)
+  ])("%s は通す", async (_name, command) => {
+    expect(await runHook(command)).toBe(0)
   })
 
-  test("Bash 以外のツールには関わらない", () => {
-    expect(runHook("pkill -f bun", "Read")).toBe(0)
+  test("Bash 以外のツールには関わらない", async () => {
+    expect(await runHook("pkill -f bun", "Read")).toBe(0)
   })
 
-  test("形が違う入力では実行を止めない", () => {
-    expect(runRaw("これは JSON ではない")).toBe(0)
+  test("形が違う入力では実行を止めない", async () => {
+    expect(await runRaw("これは JSON ではない")).toBe(0)
   })
 })
 
-function runHook(command: string, toolName = "Bash"): number {
+function runHook(command: string, toolName = "Bash"): Promise<number | undefined> {
   return runRaw(JSON.stringify({ tool_name: toolName, tool_input: { command } }))
 }
 
-/** hook を起こして終了コードを返す。stderr は拒否の理由が入るので捨てる。 */
-function runRaw(input: string): number {
-  try {
-    execFileSync(process.execPath, [HOOK_PATH], { input, stdio: ["pipe", "pipe", "pipe"] })
-    return 0
-  } catch (error) {
-    const status = (error as { readonly status?: unknown }).status
-    return typeof status === "number" ? status : -1
-  }
+/** hook を起こして終了コードを返す（シグナルで終わったときは `undefined`）。stderr は拒否の理由が入るので見ない。 */
+async function runRaw(input: string): Promise<number | undefined> {
+  const result = await runSubprocess(process.execPath, [HOOK_PATH], { input })
+  return result.exitCode
 }

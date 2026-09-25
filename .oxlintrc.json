@@ -23,5 +23,29 @@
       { "prefer": "type-imports", "fixStyle": "inline-type-imports" }
     ],
     "typescript/no-explicit-any": "error"
-  }
+  },
+  "overrides": [
+    {
+      "files": ["test/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "paths": [
+              {
+                "name": "node:child_process",
+                "importNames": ["execFileSync", "execSync", "spawnSync"],
+                "message": "テストでは子プロセスを同期で待たない。test/fixture/subprocess.ts を使う（docs/coding-standards.md「テスト」節）"
+              },
+              {
+                "name": "child_process",
+                "importNames": ["execFileSync", "execSync", "spawnSync"],
+                "message": "テストでは子プロセスを同期で待たない。test/fixture/subprocess.ts を使う（docs/coding-standards.md「テスト」節）"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
 }

@@ -1,5 +1,4 @@
 import { describe, expect, it } from "bun:test"
-import { spawnSync } from "node:child_process"
 import { createServer as createNetServer, type Server as NetServer } from "node:net"
 
 import {
@@ -16,6 +15,7 @@ import {
   MAX_PORT_NUMBER,
   VIEW_PORT_FALLBACK_ATTEMPTS,
 } from "../src/server/view-server/core/port-resolution.ts"
+import { runSubprocess, type SubprocessResult } from "./fixture/subprocess.ts"
 
 // **このファイルは CLI を起動しきらないものだけを扱う。**
 // 起動経路が transcript の追従から SDK のセッション駆動へ変わり、CLI を最後まで
@@ -52,13 +52,15 @@ const CLI_ENV_NAMES: ReadonlySet<string> = new Set([
   WATCH_UI_ENV_NAME,
 ])
 
-function runCliToExit(args: readonly string[], env: Readonly<Record<string, string>>) {
+function runCliToExit(
+  args: readonly string[],
+  env: Readonly<Record<string, string>>,
+): Promise<SubprocessResult> {
   const inherited = Object.entries(process.env).flatMap(([key, value]) =>
     value === undefined || CLI_ENV_NAMES.has(key) ? [] : [[key, value] as const],
   )
 
-  return spawnSync("bun", ["run", ENTRY, ...args], {
-    encoding: "utf8",
+  return runSubprocess("bun", ["run", ENTRY, ...args], {
     env: { ...Object.fromEntries(inherited), ...env },
   })
 }
@@ -126,17 +128,17 @@ async function holdFallbackBand(): Promise<{
 }
 
 describe("tsukumo CLI", () => {
-  it("ポート番号として読めない設定のとき、理由を伝えて終了コード1で終わる", () => {
-    const result = runCliToExit([], { TSUKUMO_VIEW_PORT: "ぜんぶ" })
+  it("ポート番号として読めない設定のとき、理由を伝えて終了コード1で終わる", async () => {
+    const result = await runCliToExit([], { TSUKUMO_VIEW_PORT: "ぜんぶ" })
 
-    expect(result.status).toBe(1)
+    expect(result.exitCode).toBe(1)
     expect(result.stderr).toContain("TSUKUMO_VIEW_PORT")
   })
 
-  it("--help で使い方を表示して終了コード0で終わる（セッションは起こさない）", () => {
-    const result = runCliToExit(["--help"], { TSUKUMO_VIEW_PORT: "0" })
+  it("--help で使い方を表示して終了コード0で終わる（セッションは起こさない）", async () => {
+    const result = await runCliToExit(["--help"], { TSUKUMO_VIEW_PORT: "0" })
 
-    expect(result.status).toBe(0)
+    expect(result.exitCode).toBe(0)
     expect(result.stdout).toContain("使い方:")
   })
 
@@ -151,9 +153,9 @@ describe("tsukumo CLI", () => {
     const blocker = await listenOnEphemeralPort()
     try {
       const blockedPort = portOf(blocker)
-      const result = runCliToExit([], { TSUKUMO_VIEW_PORT: String(blockedPort) })
+      const result = await runCliToExit([], { TSUKUMO_VIEW_PORT: String(blockedPort) })
 
-      expect(result.status).toBe(1)
+      expect(result.exitCode).toBe(1)
       expect(result.stderr).toContain("ビューを配れない")
     } finally {
       await closeNetServer(blocker)
@@ -165,9 +167,9 @@ describe("tsukumo CLI", () => {
     // 作業ツリーで分かれない）。TSUKUMO_VIEW_PORT_FALLBACK_BASE で起点を私的な帯へずらす。
     const { anchor, blockers } = await holdFallbackBand()
     try {
-      const result = runCliToExit([], { TSUKUMO_VIEW_PORT_FALLBACK_BASE: String(anchor) })
+      const result = await runCliToExit([], { TSUKUMO_VIEW_PORT_FALLBACK_BASE: String(anchor) })
 
-      expect(result.status).toBe(1)
+      expect(result.exitCode).toBe(1)
       expect(result.stderr).toContain(String(anchor))
       expect(result.stderr).toContain(String(anchor + VIEW_PORT_FALLBACK_ATTEMPTS - 1))
     } finally {
