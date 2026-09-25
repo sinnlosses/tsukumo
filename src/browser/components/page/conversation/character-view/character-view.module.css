@@ -398,7 +398,7 @@
 }
 /* 吹き出しの列。左右と下端はキャラビューの `.balloon-track` に重ね（最新の吹き出しの下端が
    キャラビューと同じ高さに来る）、上端だけ枠の上端まで伸ばす。並びは古い→新しいを上→下で、
-   開いた直後に下端へ転がしてある（`use-speech-log.ts`）。 */
+   開いた直後に下端へ転がしてある（`use-speech-log.ts`）。縦の並べは `VStack` が持つ。 */
 .speech-log-scroller {
   position: fixed;
   position-anchor: --speech-log-track;
@@ -407,8 +407,6 @@
   bottom: anchor(bottom);
   left: anchor(left);
   z-index: 1;
-  display: flex;
-  flex-direction: column;
   overflow-y: auto;
 }
 /* 立ち絵があるときは、キャラビューの列（`.portrait + .balloon-track`）と同じく尻尾ぶんを左に空ける。 */

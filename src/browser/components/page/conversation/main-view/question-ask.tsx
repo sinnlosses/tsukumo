@@ -20,6 +20,7 @@
 import { type ReactElement } from "react"
 
 import { Button } from "../../../../components/ui/button/button.tsx"
+import { HStack } from "../../../../components/ui/h-stack/h-stack.tsx"
 import { Text } from "../../../../components/ui/text/text.tsx"
 import { useQuestionAnswer, type QuestionOptionRow } from "../../../../stores/question-answer.tsx"
 import { useQuestionScroll } from "../../../../stores/question-scroll.tsx"
@@ -59,7 +60,16 @@ export function QuestionAsk(): ReactElement | null {
 
   return (
     <section className={styles["question-ask"]} ref={cardRef}>
-      <header className={styles["question-ask-head"]}>
+      <HStack
+        element="header"
+        name={{ kind: "none" }}
+        ref={undefined}
+        gap="sm"
+        align="center"
+        justify="start"
+        wrap="wrap"
+        className={styles["question-ask-head"] ?? ""}
+      >
         <span className={styles["question-ask-chip"]}>{QUESTION_CHIP}</span>
         <Text
           element="span"
@@ -93,7 +103,7 @@ export function QuestionAsk(): ReactElement | null {
         >
           {question.progressLabel}
         </Text>
-      </header>
+      </HStack>
       <Text
         element="p"
         size="inherit"
@@ -125,7 +135,16 @@ export function QuestionAsk(): ReactElement | null {
           {question.writtenAnswer}
         </Text>
       )}
-      <footer className={styles["question-ask-foot"]}>
+      <HStack
+        element="footer"
+        name={{ kind: "none" }}
+        ref={undefined}
+        gap="sm"
+        align="center"
+        justify="between"
+        wrap="wrap"
+        className={styles["question-ask-foot"] ?? ""}
+      >
         <Text
           element="span"
           size="label"
@@ -151,7 +170,7 @@ export function QuestionAsk(): ReactElement | null {
             {question.last ? ANSWER_LABEL : NEXT_LABEL}
           </Text>
         </Button>
-      </footer>
+      </HStack>
     </section>
   )
 }
@@ -175,7 +194,16 @@ function QuestionOption(props: {
         option.selected ? ` ${styles["is-selected"]}` : ""
       }`}
     >
-      <label className={styles["question-ask-option-choose"]}>
+      <HStack
+        element="label"
+        name={{ kind: "none" }}
+        ref={undefined}
+        gap="sm"
+        align="baseline"
+        justify="start"
+        wrap="nowrap"
+        className={styles["question-ask-option-choose"] ?? ""}
+      >
         <input
           type={props.multiSelect ? "checkbox" : "radio"}
           name={props.multiSelect ? undefined : OPTION_GROUP_NAME}
@@ -203,7 +231,7 @@ function QuestionOption(props: {
             {RECOMMENDED_BADGE}
           </Text>
         )}
-      </label>
+      </HStack>
       {option.description !== "" && (
         <Text
           element="p"

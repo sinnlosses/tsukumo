@@ -254,12 +254,7 @@
   line-height: 1.7;
 }
 
-/* 小さな驚き（13.10「並べるもの」4）。 */
-.achievement-surprise {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
+/* 小さな驚き（13.10「並べるもの」4）。並べ・間隔（`gap="md"`）は `VStack` が持つ。 */
 /* 字の段・色・太さは `Text`（size="secondary" tone="ink-quiet" weight="normal"）が持つ。margin だけ
    ここに残す（既定の 0 と違うため）。 */
 .achievement-surprise-note {

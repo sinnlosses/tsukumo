@@ -35,6 +35,8 @@ export function PresentationalChatView({
   return (
     <HStack
       element="div"
+      name={{ kind: "none" }}
+      ref={undefined}
       gap="lg"
       align="end"
       justify="start"

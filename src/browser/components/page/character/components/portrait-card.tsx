@@ -121,6 +121,8 @@ export function PortraitCard(props: {
         ) : null}
         <HStack
           element="div"
+          name={{ kind: "none" }}
+          ref={undefined}
           gap="xs"
           align="stretch"
           justify="start"

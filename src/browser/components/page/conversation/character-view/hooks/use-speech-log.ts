@@ -55,7 +55,7 @@ export type SpeechLogEntry =
 /** `<SpeechLog>` が画面に出す形。 */
 export type SpeechLogModel = {
   /** 並びを転がす箱に付ける ref。開いた直後に下端（最新）へ転がす。 */
-  readonly scrollerRef: RefObject<HTMLDivElement | null>
+  readonly scrollerRef: RefObject<HTMLElement | null>
   readonly open: boolean
   /** 古い→新しい。セリフが1件も無いターンは区切りごと落としてある。 */
   readonly entries: readonly SpeechLogEntry[]
@@ -72,7 +72,7 @@ export function useSpeechLog(): SpeechLogModel {
   const records = useSessionSelector((session) => session.state.records)
   const userCall = useSessionSelector((session) => session.state.character?.userCall)
   const [open, setOpen] = useState(false)
-  const scrollerRef = useRef<HTMLDivElement>(null)
+  const scrollerRef = useRef<HTMLElement>(null)
 
   // 開いた直後に下端（最新）を見せる（`scrollTop` は React の外にある状態への書き込み）。
   // **`<Dialog>`（`components/ui/dialog/dialog.tsx`）の中の `useModalDialog` の effect より後に

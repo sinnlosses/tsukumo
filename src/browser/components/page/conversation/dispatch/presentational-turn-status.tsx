@@ -21,6 +21,8 @@ export function PresentationalTurnStatus(props: PresentationalTurnStatusProps): 
   return (
     <HStack
       element="div"
+      name={{ kind: "none" }}
+      ref={undefined}
       gap="md"
       align="center"
       justify="start"

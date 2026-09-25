@@ -17,12 +17,9 @@
   background: color-mix(in srgb, var(--surface), var(--state-warn) 6%);
 }
 /* 頭の行：「質問」のチップ・header・（過去のターンを見ているときの戻る口と）「戻る」・「n / N」。
-   狭い画面では折り返す（横スクロールを出さない）。 */
+   狭い画面では折り返す（横スクロールを出さない）。並べ・間隔（`gap="sm"`）・揃え・折り返しは
+   `HStack` が持つ。 */
 .question-ask-head {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.5rem;
   margin-bottom: 0.5rem;
 }
 .question-ask-chip {
@@ -88,11 +85,8 @@
   box-shadow: 0 0 0 1px var(--state-warn) inset;
 }
 /* 押す口（印とラベルとバッジ）。ラベルが折り返すので、印は行の中央ではなく1行目の文字に
-   揃える（baseline）。 */
+   揃える（baseline）。並べ・間隔（`gap="sm"`）・揃えは `HStack` が持つ。 */
 .question-ask-option-choose {
-  display: flex;
-  align-items: baseline;
-  gap: 0.5rem;
   min-width: 0;
   cursor: pointer;
 }
@@ -130,13 +124,9 @@
 .question-ask-written {
   margin: 0.6rem 0 0;
 }
-/* 下端の行：左に案内、右に「これで答える」。狭い画面では折り返す。 */
+/* 下端の行：左に案内、右に「これで答える」。狭い画面では折り返す。並べ・間隔（`gap="sm"`）・
+   揃え・折り返しは `HStack` が持つ。 */
 .question-ask-foot {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  gap: 0.5rem;
   margin-top: 0.75rem;
 }
 /* 字の段・色は `Text`（size="label" tone="ink-quiet" weight="inherit"）が持つ。伸び縮みだけここに

@@ -66,13 +66,24 @@ export function DiaryBook({
       {open ? (
         <VStack
           element="div"
+          name={{ kind: "none" }}
+          ref={undefined}
           gap="lg"
           align="stretch"
           justify="start"
           wrap="nowrap"
           className={styles["diary-book-stage"] ?? ""}
         >
-          <HStack element="div" gap="md" align="center" justify="start" wrap="wrap" className="">
+          <HStack
+            element="div"
+            name={{ kind: "none" }}
+            ref={undefined}
+            gap="md"
+            align="center"
+            justify="start"
+            wrap="wrap"
+            className=""
+          >
             <span className={styles["diary-book-title"]}>{TITLE}</span>
             <Text element="span" size="label" tone="ink-quiet" weight="inherit" className="">
               {openNote}
@@ -260,6 +271,8 @@ function Badges(props: { readonly badges: readonly DiaryBookBadge[] }): ReactEle
   return (
     <HStack
       element="div"
+      name={{ kind: "none" }}
+      ref={undefined}
       gap="md"
       align="stretch"
       justify="start"
@@ -320,6 +333,8 @@ function RightPage(props: {
       )}
       <HStack
         element="div"
+        name={{ kind: "none" }}
+        ref={undefined}
         gap="lg"
         align="end"
         justify="start"

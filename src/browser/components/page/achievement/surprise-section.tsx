@@ -9,6 +9,7 @@ import {
 } from "../../../../shared/achievement.ts"
 import { Heading } from "../../../components/ui/heading/heading.tsx"
 import { Text } from "../../../components/ui/text/text.tsx"
+import { VStack } from "../../../components/ui/v-stack/v-stack.tsx"
 import styles from "./achievement.module.css"
 
 export type SurpriseSectionProps = {
@@ -22,7 +23,16 @@ export function SurpriseSection(props: SurpriseSectionProps): ReactElement | nul
   }
 
   return (
-    <section aria-label="小さな驚き" className={styles["achievement-surprise"]}>
+    <VStack
+      element="section"
+      name={{ kind: "label", label: "小さな驚き" }}
+      ref={undefined}
+      gap="md"
+      align="stretch"
+      justify="start"
+      wrap="nowrap"
+      className=""
+    >
       <Heading level={2} size="subheading" tone="ink" weight="bold" className="">
         小さな驚き
         <Text
@@ -43,7 +53,7 @@ export function SurpriseSection(props: SurpriseSectionProps): ReactElement | nul
           <MilestoneCard key={milestoneKey(milestone)} milestone={milestone} />
         ))}
       </div>
-    </section>
+    </VStack>
   )
 }
 

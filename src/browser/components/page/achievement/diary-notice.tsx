@@ -29,6 +29,8 @@ export function DiaryNotice(): ReactElement | null {
     <div role="status" className={styles["diary-notice"]}>
       <HStack
         element="span"
+        name={{ kind: "none" }}
+        ref={undefined}
         gap="none"
         align="stretch"
         justify="start"

@@ -65,6 +65,8 @@ export function PresentationalComposer({
       )}
       <VStack
         element="div"
+        name={{ kind: "none" }}
+        ref={undefined}
         gap="none"
         align="stretch"
         justify="start"

@@ -30,7 +30,16 @@ export function DaySwitch(props: DaySwitchProps): ReactElement {
   const isToday = known && daySwitch.date === daySwitch.today
 
   return (
-    <HStack element="div" gap="lg" align="center" justify="between" wrap="wrap" className="">
+    <HStack
+      element="div"
+      name={{ kind: "none" }}
+      ref={undefined}
+      gap="lg"
+      align="center"
+      justify="between"
+      wrap="wrap"
+      className=""
+    >
       <Heading level={1} size="heading" tone="ink" weight="normal" className="">
         成果
       </Heading>
@@ -51,6 +60,8 @@ export function DaySwitch(props: DaySwitchProps): ReactElement {
         </Button>
         <VStack
           element="span"
+          name={{ kind: "none" }}
+          ref={undefined}
           gap="none"
           align="center"
           justify="start"

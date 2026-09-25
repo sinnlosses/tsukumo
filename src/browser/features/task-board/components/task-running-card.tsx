@@ -16,7 +16,16 @@ import { TaskRunButton } from "./task-run-button.tsx"
 export function TaskRunningCard(props: { readonly task: TaskSummaryItem }): ReactElement {
   return (
     <li className={styles["task-running-card"]}>
-      <HStack element="span" gap="sm" align="center" justify="start" wrap="nowrap" className="">
+      <HStack
+        element="span"
+        name={{ kind: "none" }}
+        ref={undefined}
+        gap="sm"
+        align="center"
+        justify="start"
+        wrap="nowrap"
+        className=""
+      >
         <span className={styles["task-running-badge"]}>進行中</span>
         <TaskRunButton taskId={props.task.id} />
       </HStack>

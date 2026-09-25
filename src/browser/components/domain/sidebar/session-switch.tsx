@@ -69,6 +69,8 @@ export function SessionSwitch(): ReactElement | null {
       </label>
       <HStack
         element="span"
+        name={{ kind: "none" }}
+        ref={undefined}
         gap="sm"
         align="center"
         justify="start"

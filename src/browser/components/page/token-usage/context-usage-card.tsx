@@ -58,11 +58,22 @@ export function ContextUsageCard(props: ContextUsageCardProps): ReactElement {
 
   return (
     <section className={styles["context-card"]}>
-      <HStack element="div" gap="sm" align="baseline" justify="start" wrap="wrap" className="">
+      <HStack
+        element="div"
+        name={{ kind: "none" }}
+        ref={undefined}
+        gap="sm"
+        align="baseline"
+        justify="start"
+        wrap="wrap"
+        className=""
+      >
         <h2 className={styles["context-title"]}>{CARD_TITLE}</h2>
         <span className={styles["context-note"]}>{CARD_NOTE}</span>
         <HStack
           element="div"
+          name={{ kind: "none" }}
+          ref={undefined}
           gap="sm"
           align="baseline"
           justify="start"
@@ -130,11 +141,22 @@ export function ContextUsageCard(props: ContextUsageCardProps): ReactElement {
 function ContextUsageCardSkeleton(): ReactElement {
   return (
     <section className={styles["context-card"]} aria-busy="true">
-      <HStack element="div" gap="sm" align="baseline" justify="start" wrap="wrap" className="">
+      <HStack
+        element="div"
+        name={{ kind: "none" }}
+        ref={undefined}
+        gap="sm"
+        align="baseline"
+        justify="start"
+        wrap="wrap"
+        className=""
+      >
         <h2 className={styles["context-title"]}>{CARD_TITLE}</h2>
         <span className={styles["context-note"]}>{CARD_NOTE}</span>
         <HStack
           element="div"
+          name={{ kind: "none" }}
+          ref={undefined}
           gap="sm"
           align="baseline"
           justify="start"

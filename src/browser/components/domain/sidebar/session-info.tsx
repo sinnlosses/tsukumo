@@ -52,6 +52,8 @@ export function SessionInfo(props: SessionInfoProps): ReactElement {
             </label>
             <HStack
               element="span"
+              name={{ kind: "none" }}
+              ref={undefined}
               gap="sm"
               align="center"
               justify="start"

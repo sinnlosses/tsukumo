@@ -28,6 +28,8 @@ export function CharacterProfile(props: { readonly profile: CharacterProfileMode
       )}
       <VStack
         element="div"
+        name={{ kind: "none" }}
+        ref={undefined}
         gap="xs"
         align="stretch"
         justify="start"
@@ -75,6 +77,8 @@ export function CharacterProfile(props: { readonly profile: CharacterProfileMode
       {profile.editProfile.kind === "shown" || profile.switchTo.kind === "shown" ? (
         <HStack
           element="div"
+          name={{ kind: "none" }}
+          ref={undefined}
           gap="sm"
           align="center"
           justify="start"

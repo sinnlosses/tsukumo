@@ -16,6 +16,7 @@ import {
   type TokenUsageTrend,
   type TokenUsageTrendUnit,
 } from "../../../../shared/token-usage-summary.ts"
+import { HStack } from "../../../components/ui/h-stack/h-stack.tsx"
 import { formatCount } from "../../../utils/format-count.ts"
 import styles from "./token-usage.module.css"
 
@@ -49,10 +50,19 @@ export function PeriodUsageCard(props: PeriodUsageCardProps): ReactElement {
           />
         ))}
       </div>
-      <p className={styles["usage-card-scale"]}>
+      <HStack
+        element="p"
+        name={{ kind: "none" }}
+        ref={undefined}
+        gap="sm"
+        align="stretch"
+        justify="between"
+        wrap="nowrap"
+        className={styles["usage-card-scale"] ?? ""}
+      >
         <span>{edgeLabel(props.trend, "first")}</span>
         <span>{edgeLabel(props.trend, "last")}</span>
-      </p>
+      </HStack>
     </section>
   )
 }

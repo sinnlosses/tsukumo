@@ -17,6 +17,8 @@ afterEach(() => {
 
 const BASE_PROPS = {
   element: "div",
+  name: { kind: "none" },
+  ref: undefined,
   gap: "none",
   align: "stretch",
   justify: "start",

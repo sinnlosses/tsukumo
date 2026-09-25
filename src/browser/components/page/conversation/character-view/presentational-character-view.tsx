@@ -46,6 +46,8 @@ export function PresentationalCharacterView({
   return (
     <VStack
       element="div"
+      name={{ kind: "none" }}
+      ref={undefined}
       gap="sm"
       align="stretch"
       justify="start"
@@ -55,6 +57,8 @@ export function PresentationalCharacterView({
       <SpeechLog portrait={portrait} speakerName={speakerName} />
       <HStack
         element="div"
+        name={{ kind: "none" }}
+        ref={undefined}
         gap="none"
         align="end"
         justify="start"

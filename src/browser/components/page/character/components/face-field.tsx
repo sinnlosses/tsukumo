@@ -25,7 +25,16 @@ export function FaceField(props: {
   const { face, disabled } = props
 
   return (
-    <HStack element="div" gap="lg" align="center" justify="start" wrap="wrap" className="">
+    <HStack
+      element="div"
+      name={{ kind: "none" }}
+      ref={undefined}
+      gap="lg"
+      align="center"
+      justify="start"
+      wrap="wrap"
+      className=""
+    >
       {face.image.kind === "absent" ? (
         <span className={styles["character-face-field-blank"]} />
       ) : (
@@ -35,11 +44,29 @@ export function FaceField(props: {
           alt={face.label}
         />
       )}
-      <VStack element="div" gap="sm" align="stretch" justify="start" wrap="nowrap" className="">
+      <VStack
+        element="div"
+        name={{ kind: "none" }}
+        ref={undefined}
+        gap="sm"
+        align="stretch"
+        justify="start"
+        wrap="nowrap"
+        className=""
+      >
         <Text element="span" size="secondary" tone="inherit" weight="inherit" className="">
           {face.label}
         </Text>
-        <HStack element="div" gap="sm" align="stretch" justify="start" wrap="wrap" className="">
+        <HStack
+          element="div"
+          name={{ kind: "none" }}
+          ref={undefined}
+          gap="sm"
+          align="stretch"
+          justify="start"
+          wrap="wrap"
+          className=""
+        >
           <label className={styles["character-button"]}>
             <UploadIcon />
             差し替える

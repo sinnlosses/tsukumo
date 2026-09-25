@@ -39,7 +39,16 @@ export function PresentationalCharacterCreate({
       onClose={onClose}
       className={styles["character-create-dialog"] ?? ""}
     >
-      <VStack element="div" gap="xl" align="stretch" justify="start" wrap="nowrap" className="">
+      <VStack
+        element="div"
+        name={{ kind: "none" }}
+        ref={undefined}
+        gap="xl"
+        align="stretch"
+        justify="start"
+        wrap="nowrap"
+        className=""
+      >
         <Heading
           level={2}
           size="heading"

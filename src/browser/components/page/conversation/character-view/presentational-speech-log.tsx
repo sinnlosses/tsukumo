@@ -15,6 +15,7 @@ import { type ReactElement, type ReactNode } from "react"
 import { Dialog } from "../../../../components/ui/dialog/dialog.tsx"
 import { HStack } from "../../../../components/ui/h-stack/h-stack.tsx"
 import { Text } from "../../../../components/ui/text/text.tsx"
+import { VStack } from "../../../../components/ui/v-stack/v-stack.tsx"
 import { Balloon } from "./balloon.tsx"
 import styles from "./character-view.module.css"
 import { type SpeechLogEntry, type SpeechLogModel } from "./hooks/use-speech-log.ts"
@@ -72,6 +73,8 @@ export function PresentationalSpeechLog({
           </button>
           <HStack
             element="div"
+            name={{ kind: "none" }}
+            ref={undefined}
             gap="none"
             align="end"
             justify="start"
@@ -80,7 +83,16 @@ export function PresentationalSpeechLog({
           >
             {portrait}
           </HStack>
-          <div ref={scrollerRef} className={styles["speech-log-scroller"]}>
+          <VStack
+            element="div"
+            name={{ kind: "none" }}
+            ref={scrollerRef}
+            gap="none"
+            align="stretch"
+            justify="start"
+            wrap="nowrap"
+            className={styles["speech-log-scroller"] ?? ""}
+          >
             <p className={styles["speech-log-more"]} aria-hidden="true">
               {MORE_LABEL}
             </p>
@@ -106,7 +118,7 @@ export function PresentationalSpeechLog({
                 ))}
               </ol>
             )}
-          </div>
+          </VStack>
         </div>
       </Dialog>
     </>

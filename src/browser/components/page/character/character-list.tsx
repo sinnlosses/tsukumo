@@ -58,6 +58,8 @@ export function CharacterList(props: { readonly onCreate: () => void }): ReactEl
             )}
             <VStack
               element="span"
+              name={{ kind: "none" }}
+              ref={undefined}
               gap="none"
               align="stretch"
               justify="start"

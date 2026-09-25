@@ -47,7 +47,16 @@ export function CharacterDeleteConfirm(props: CharacterDeleteConfirmProps): Reac
       onClose={props.onClose}
       className={styles["character-delete-dialog"] ?? ""}
     >
-      <VStack element="div" gap="lg" align="stretch" justify="start" wrap="nowrap" className="">
+      <VStack
+        element="div"
+        name={{ kind: "none" }}
+        ref={undefined}
+        gap="lg"
+        align="stretch"
+        justify="start"
+        wrap="nowrap"
+        className=""
+      >
         <div className={styles["character-delete-head"]}>
           {band.face.kind === "shown" ? (
             <img className={styles["character-delete-portrait"]} src={band.face.url} alt="" />

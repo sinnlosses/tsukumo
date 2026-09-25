@@ -12,6 +12,7 @@ import { Button } from "../../../components/ui/button/button.tsx"
 import { HStack } from "../../../components/ui/h-stack/h-stack.tsx"
 import { Heading } from "../../../components/ui/heading/heading.tsx"
 import { Text } from "../../../components/ui/text/text.tsx"
+import { VStack } from "../../../components/ui/v-stack/v-stack.tsx"
 import styles from "./character-screen.module.css"
 import { AccentSwatch } from "./components/accent-swatch.tsx"
 import { BackgroundField } from "./components/background-field.tsx"
@@ -33,13 +34,31 @@ export function PresentationalCharacterEdit(
   return (
     <div className={styles["character-detail"]}>
       <CharacterProfile profile={props.profile} />
-      <section className={styles["character-section"]} aria-labelledby="character-face">
+      <VStack
+        element="section"
+        name={{ kind: "labelledby", id: "character-face" }}
+        ref={undefined}
+        gap="md"
+        align="stretch"
+        justify="start"
+        wrap="nowrap"
+        className={styles["character-section"] ?? ""}
+      >
         <Heading level={2} size="body" tone="inherit" weight="bold" className="">
           <span id="character-face">顔</span>
         </Heading>
         <FaceField face={props.face} disabled={props.disabled} />
-      </section>
-      <section className={styles["character-section"]} aria-labelledby="character-expressions">
+      </VStack>
+      <VStack
+        element="section"
+        name={{ kind: "labelledby", id: "character-expressions" }}
+        ref={undefined}
+        gap="md"
+        align="stretch"
+        justify="start"
+        wrap="nowrap"
+        className={styles["character-section"] ?? ""}
+      >
         <Heading level={2} size="body" tone="inherit" weight="bold" className="">
           <span id="character-expressions">表情</span>
         </Heading>
@@ -48,10 +67,28 @@ export function PresentationalCharacterEdit(
             <PortraitCard key={card.expression} card={card} disabled={props.disabled} />
           ))}
         </div>
-      </section>
+      </VStack>
       <div className={styles["character-accents"]}>
-        <section className={styles["character-section"]} aria-labelledby="character-screen-accent">
-          <HStack element="div" gap="sm" align="center" justify="start" wrap="nowrap" className="">
+        <VStack
+          element="section"
+          name={{ kind: "labelledby", id: "character-screen-accent" }}
+          ref={undefined}
+          gap="md"
+          align="stretch"
+          justify="start"
+          wrap="nowrap"
+          className={styles["character-section"] ?? ""}
+        >
+          <HStack
+            element="div"
+            name={{ kind: "none" }}
+            ref={undefined}
+            gap="sm"
+            align="center"
+            justify="start"
+            wrap="nowrap"
+            className=""
+          >
             <Heading level={2} size="body" tone="inherit" weight="bold" className="">
               <span id="character-screen-accent">画面の差し色</span>
             </Heading>
@@ -86,8 +123,17 @@ export function PresentationalCharacterEdit(
             <AccentSwatch swatch={props.workAccent} disabled={props.disabled} />
             <AccentSwatch swatch={props.chatAccent} disabled={props.disabled} />
           </div>
-        </section>
-        <section className={styles["character-section"]} aria-labelledby="character-outfit-accent">
+        </VStack>
+        <VStack
+          element="section"
+          name={{ kind: "labelledby", id: "character-outfit-accent" }}
+          ref={undefined}
+          gap="md"
+          align="stretch"
+          justify="start"
+          wrap="nowrap"
+          className={styles["character-section"] ?? ""}
+        >
           <Heading level={2} size="body" tone="inherit" weight="bold" className="">
             <span id="character-outfit-accent">立ち絵の差し色</span>
           </Heading>
@@ -96,14 +142,23 @@ export function PresentationalCharacterEdit(
               <AccentSwatch key={field.outfit} swatch={field} disabled={props.disabled} />
             ))}
           </div>
-        </section>
+        </VStack>
       </div>
-      <section className={styles["character-section"]} aria-labelledby="character-background">
+      <VStack
+        element="section"
+        name={{ kind: "labelledby", id: "character-background" }}
+        ref={undefined}
+        gap="md"
+        align="stretch"
+        justify="start"
+        wrap="nowrap"
+        className={styles["character-section"] ?? ""}
+      >
         <Heading level={2} size="body" tone="inherit" weight="bold" className="">
           <span id="character-background">背景</span>
         </Heading>
         <BackgroundField background={props.background} disabled={props.disabled} />
-      </section>
+      </VStack>
       <CharacterDelete band={props.deleteBand} />
     </div>
   )

@@ -27,6 +27,8 @@ export function Dispatch(): ReactElement {
   return (
     <VStack
       element="div"
+      name={{ kind: "none" }}
+      ref={undefined}
       gap="sm"
       align="stretch"
       justify="start"

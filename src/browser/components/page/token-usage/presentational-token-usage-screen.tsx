@@ -61,7 +61,16 @@ export function PresentationalTokenUsageScreen(
 
   return (
     <div className={styles["token-usage"]}>
-      <HStack element="div" gap="md" align="baseline" justify="start" wrap="wrap" className="">
+      <HStack
+        element="div"
+        name={{ kind: "none" }}
+        ref={undefined}
+        gap="md"
+        align="baseline"
+        justify="start"
+        wrap="wrap"
+        className=""
+      >
         <h1 className={styles["token-usage-title"]}>トークン消費</h1>
         {props.plan === undefined ? null : (
           <Text
@@ -86,8 +95,26 @@ export function PresentationalTokenUsageScreen(
 
       <ContextUsageCard card={props.contextUsage} />
 
-      <VStack element="section" gap="sm" align="stretch" justify="start" wrap="nowrap" className="">
-        <HStack element="div" gap="sm" align="baseline" justify="start" wrap="wrap" className="">
+      <VStack
+        element="section"
+        name={{ kind: "none" }}
+        ref={undefined}
+        gap="sm"
+        align="stretch"
+        justify="start"
+        wrap="nowrap"
+        className=""
+      >
+        <HStack
+          element="div"
+          name={{ kind: "none" }}
+          ref={undefined}
+          gap="sm"
+          align="baseline"
+          justify="start"
+          wrap="wrap"
+          className=""
+        >
           <h2 className={styles["token-usage-section-label"]}>期間の消費</h2>
           <PeriodChoices days={props.days} onDaysChange={props.onDaysChange} />
         </HStack>
@@ -311,6 +338,8 @@ function TableCardHead(props: TableCardHeadProps): ReactElement {
   return (
     <HStack
       element="div"
+      name={{ kind: "none" }}
+      ref={undefined}
       gap="sm"
       align="baseline"
       justify="start"

@@ -92,6 +92,8 @@ function IdleReviewCard(props: {
       />
       <VStack
         element="div"
+        name={{ kind: "none" }}
+        ref={undefined}
         gap="xs"
         align="stretch"
         justify="start"
@@ -163,6 +165,8 @@ function RunningReviewCard(props: {
         />
         <VStack
           element="div"
+          name={{ kind: "none" }}
+          ref={undefined}
           gap="xs"
           align="stretch"
           justify="start"

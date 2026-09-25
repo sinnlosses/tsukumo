@@ -58,7 +58,16 @@ export function Turn(props: TurnProps): ReactElement {
         </Text>
       )}
       {(turn.steps.length > 0 || turn.failure.kind === "failed") && (
-        <VStack element="div" gap="md" align="stretch" justify="start" wrap="nowrap" className="">
+        <VStack
+          element="div"
+          name={{ kind: "none" }}
+          ref={undefined}
+          gap="md"
+          align="stretch"
+          justify="start"
+          wrap="nowrap"
+          className=""
+        >
           {/* `key` は配列の添字ではなく `step.id`（`limitTurnEntries` が古いステップを落とす前に
               振った通し番号）を使う。添字だと、古いステップが落ちて残りの添字が1つずつ前へ
               ずれた瞬間に React が別のステップの DOM を使い回してしまい、`<details>` の `open`

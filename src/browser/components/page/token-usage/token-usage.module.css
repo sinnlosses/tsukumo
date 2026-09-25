@@ -160,11 +160,8 @@
   background: var(--usage-bar-zero);
   border-radius: 1px;
 }
-/* 期間の両端の刻み（最初と最後だけ）。 */
+/* 期間の両端の刻み（最初と最後だけ）。並べ・間隔（`gap="sm"`）・両端寄せは `HStack` が持つ。 */
 .usage-card-scale {
-  display: flex;
-  justify-content: space-between;
-  gap: 0.5rem;
   margin: 0.25rem 0 0;
   color: var(--usage-ink-faint);
   font-family: var(--font-mono);

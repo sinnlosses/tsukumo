@@ -30,6 +30,8 @@ export function AccentSwatch(props: {
       />
       <VStack
         element="span"
+        name={{ kind: "none" }}
+        ref={undefined}
         gap="none"
         align="stretch"
         justify="start"

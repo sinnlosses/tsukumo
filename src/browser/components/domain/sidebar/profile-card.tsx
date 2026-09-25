@@ -33,6 +33,8 @@ export function ProfileCard(): ReactElement {
       <CharacterFace url={faceUrl} alt={name ?? ""} className={styles["profile-card-face"] ?? ""} />
       <VStack
         element="div"
+        name={{ kind: "none" }}
+        ref={undefined}
         gap="xs"
         align="stretch"
         justify="start"

@@ -53,7 +53,16 @@ export function ContextUsageRow(): ReactElement {
     <div
       className={`${styles["context-usage-row"]}${warn ? ` ${styles["context-usage-row-warn"]}` : ""}`}
     >
-      <HStack element="div" gap="sm" align="baseline" justify="start" wrap="nowrap" className="">
+      <HStack
+        element="div"
+        name={{ kind: "none" }}
+        ref={undefined}
+        gap="sm"
+        align="baseline"
+        justify="start"
+        wrap="nowrap"
+        className=""
+      >
         <span className={styles["context-usage-row-label"]}>{ROW_LABEL}</span>
         <span className={styles["context-usage-row-percentage"]}>{percentageText(usage)}</span>
         <span className={styles["context-usage-row-value"]}>{valueText(usage)}</span>

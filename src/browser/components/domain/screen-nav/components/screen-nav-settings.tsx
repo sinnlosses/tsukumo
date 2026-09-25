@@ -98,6 +98,8 @@ export function ScreenNavSettingsGear(props: ScreenNavSettingsProps): ReactEleme
           {settings.colors.map((color) => (
             <HStack
               element="div"
+              name={{ kind: "none" }}
+              ref={undefined}
               gap="lg"
               align="center"
               justify="between"
@@ -138,6 +140,8 @@ export function ScreenNavSettingsGear(props: ScreenNavSettingsProps): ReactEleme
           </Text>
           <HStack
             element="div"
+            name={{ kind: "none" }}
+            ref={undefined}
             gap="lg"
             align="center"
             justify="between"
@@ -159,6 +163,8 @@ export function ScreenNavSettingsGear(props: ScreenNavSettingsProps): ReactEleme
           </HStack>
           <HStack
             element="div"
+            name={{ kind: "none" }}
+            ref={undefined}
             gap="lg"
             align="center"
             justify="between"
@@ -197,6 +203,8 @@ export function ScreenNavSettingsGear(props: ScreenNavSettingsProps): ReactEleme
           </HStack>
           <HStack
             element="div"
+            name={{ kind: "none" }}
+            ref={undefined}
             gap="lg"
             align="center"
             justify="between"
@@ -227,6 +235,8 @@ export function ScreenNavSettingsGear(props: ScreenNavSettingsProps): ReactEleme
           </Text>
           <HStack
             element="div"
+            name={{ kind: "none" }}
+            ref={undefined}
             gap="lg"
             align="center"
             justify="between"
@@ -257,6 +267,8 @@ export function ScreenNavSettingsGear(props: ScreenNavSettingsProps): ReactEleme
           </Text>
           <HStack
             element="div"
+            name={{ kind: "none" }}
+            ref={undefined}
             gap="lg"
             align="center"
             justify="between"
@@ -278,6 +290,8 @@ export function ScreenNavSettingsGear(props: ScreenNavSettingsProps): ReactEleme
           </HStack>
           <HStack
             element="div"
+            name={{ kind: "none" }}
+            ref={undefined}
             gap="lg"
             align="center"
             justify="between"

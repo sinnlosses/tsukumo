@@ -47,7 +47,16 @@ export function LanternCalendar(props: LanternCalendarProps): ReactElement {
 
   return (
     <section aria-label="灯りの暦" className={styles["achievement-calendar"]}>
-      <HStack element="div" gap="md" align="center" justify="start" wrap="wrap" className="">
+      <HStack
+        element="div"
+        name={{ kind: "none" }}
+        ref={undefined}
+        gap="md"
+        align="center"
+        justify="start"
+        wrap="wrap"
+        className=""
+      >
         <Heading level={2} size="subheading" tone="ink" weight="bold" className="">
           灯りの暦
           <Text
@@ -81,6 +90,8 @@ function Legend(): ReactElement {
   return (
     <HStack
       element="div"
+      name={{ kind: "none" }}
+      ref={undefined}
       gap="md"
       align="stretch"
       justify="start"
@@ -212,6 +223,8 @@ function DayCell(props: DayCellProps): ReactElement {
       {props.hasDiary ? (
         <HStack
           element="span"
+          name={{ kind: "none" }}
+          ref={undefined}
           gap="none"
           align="stretch"
           justify="start"

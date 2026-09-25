@@ -6,11 +6,16 @@
 // 向きの決まった並べは `VStack`（縦）・`HStack`（横）で書く（`ui/v-stack/` `ui/h-stack/`）。
 // `Stack` を直に使うのは、向きを値で切り替える箇所だけ。
 
-import { type ReactElement, type ReactNode } from "react"
+import { createElement, type ReactElement, type ReactNode, type Ref } from "react"
 
 import styles from "./stack.module.css"
 
-export type StackElement = "div" | "section" | "span"
+export type StackElement = "div" | "section" | "span" | "header" | "footer" | "label" | "p"
+/** アクセシブルネームの付け方。付けないか、見える文字列を渡すか、見出しなど別の要素の id を指すか。 */
+export type StackName =
+  | { readonly kind: "none" }
+  | { readonly kind: "label"; readonly label: string }
+  | { readonly kind: "labelledby"; readonly id: string }
 export type StackDirection = "row" | "column"
 export type StackGap = "none" | "xs" | "sm" | "md" | "lg" | "xl"
 export type StackAlign = "start" | "center" | "end" | "baseline" | "stretch"
@@ -19,6 +24,9 @@ export type StackWrap = "nowrap" | "wrap"
 
 export type StackProps = {
   readonly element: StackElement
+  readonly name: StackName
+  /** 描いた要素を外から読む（転がし位置など）。読まないなら `undefined`。 */
+  readonly ref: Ref<HTMLElement> | undefined
   readonly direction: StackDirection
   readonly gap: StackGap
   readonly align: StackAlign
@@ -76,6 +84,17 @@ export function Stack(props: StackProps): ReactElement {
     .filter((value): value is string => value !== undefined && value !== "")
     .join(" ")
 
-  const Element = props.element
-  return <Element className={className}>{props.children}</Element>
+  // JSX（`<Element ref={…}>`）で書くと、要素の合併型のぶん ref の型が交差になり
+  // （`HTMLDivElement` と `HTMLLabelElement` と…の ref を同時に満たす）、`HTMLElement` の ref を
+  // 渡せない。`createElement` は要素を `HTMLElement` として受ける。
+  return createElement(
+    props.element,
+    {
+      ref: props.ref,
+      className,
+      "aria-label": props.name.kind === "label" ? props.name.label : undefined,
+      "aria-labelledby": props.name.kind === "labelledby" ? props.name.id : undefined,
+    },
+    props.children,
+  )
 }

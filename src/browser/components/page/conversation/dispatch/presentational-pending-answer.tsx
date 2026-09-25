@@ -35,6 +35,8 @@ export function PresentationalPendingAnswer(
           </p>
           <HStack
             element="div"
+            name={{ kind: "none" }}
+            ref={undefined}
             gap="sm"
             align="stretch"
             justify="start"

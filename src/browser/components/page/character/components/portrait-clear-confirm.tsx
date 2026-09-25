@@ -50,7 +50,16 @@ export function PortraitClearConfirm(props: PortraitClearConfirmProps): ReactEle
       onClose={props.onClose}
       className={styles["character-clear-confirm"] ?? ""}
     >
-      <HStack element="div" gap="md" align="center" justify="start" wrap="nowrap" className="">
+      <HStack
+        element="div"
+        name={{ kind: "none" }}
+        ref={undefined}
+        gap="md"
+        align="center"
+        justify="start"
+        wrap="nowrap"
+        className=""
+      >
         <img
           className={styles["character-clear-confirm-portrait"]}
           src={props.portraitUrl}
@@ -69,7 +78,16 @@ export function PortraitClearConfirm(props: PortraitClearConfirmProps): ReactEle
       >
         この表情を使う場面では「{props.fallbackLabel}」が出ます。
       </Text>
-      <HStack element="div" gap="sm" align="stretch" justify="end" wrap="nowrap" className="">
+      <HStack
+        element="div"
+        name={{ kind: "none" }}
+        ref={undefined}
+        gap="sm"
+        align="stretch"
+        justify="end"
+        wrap="nowrap"
+        className=""
+      >
         <Button
           type="button"
           variant="outline"

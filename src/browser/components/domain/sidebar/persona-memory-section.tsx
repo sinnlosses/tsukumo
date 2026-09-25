@@ -149,6 +149,8 @@ function PersonaMemoryForgetConfirm(props: PersonaMemoryForgetConfirmProps): Rea
       <p className={styles["sidebar-persona-memory-confirm-note"]}>消すと元に戻せない。</p>
       <HStack
         element="div"
+        name={{ kind: "none" }}
+        ref={undefined}
         gap="sm"
         align="stretch"
         justify="end"
