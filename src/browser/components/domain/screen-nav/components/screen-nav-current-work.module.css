@@ -144,16 +144,11 @@
   margin: 0 0 0.4rem;
 }
 /* 答え待ちが質問のときだけ出す「質問へ」（13.9「いまの作業」）。`.screen-nav-work-toggle-all` と
-   同じ見た目（枠の無い、差し色の文字だけの押せる字）。 */
+   同じ見た目（枠の無い、差し色の文字だけの押せる字）——どちらも `<Button variant="link">` が
+   顔を持つ。箱だけ（置き方・margin）。 */
 .screen-nav-work-go-to-question {
   display: block;
   margin: 0 0 0.5rem;
-  padding: 0;
-  border: none;
-  background: none;
-  color: var(--accent);
-  font-size: var(--font-label);
-  cursor: pointer;
 }
 .screen-nav-work-full {
   margin: 0 0 0.5rem;
@@ -233,15 +228,10 @@
     transform: rotate(360deg);
   }
 }
-/* 空のとき（`Text`。tone="ink-quiet"。margin: 0 は既定と同じなのでここには残さない）。 */
+/* 空のとき（`Text`。tone="ink-quiet"。margin: 0 は既定と同じなのでここには残さない）。
+   顔は `<Button variant="link">` が持つ。箱だけ（margin）。 */
 .screen-nav-work-toggle-all {
   margin-top: 0.4rem;
-  padding: 0;
-  border: none;
-  background: none;
-  color: var(--accent);
-  font-size: var(--font-label);
-  cursor: pointer;
 }
 /* 失敗した手順の中身（もと `sidebar/activity.tsx` の `.activity-failure*`）。印は文字
    （「失敗」）で、色はその補助（13.1 原則5）。 */

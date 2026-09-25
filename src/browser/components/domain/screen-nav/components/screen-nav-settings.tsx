@@ -14,6 +14,7 @@
 import { useId, type ReactElement } from "react"
 
 import { isSessionDefaultPermissionMode } from "../../../../../shared/session-default.ts"
+import { Button } from "../../../../components/ui/button/button.tsx"
 import { HStack } from "../../../../components/ui/h-stack/h-stack.tsx"
 import { Select } from "../../../../components/ui/select/select.tsx"
 import { Text } from "../../../../components/ui/text/text.tsx"
@@ -272,14 +273,20 @@ export function ScreenNavSettingsGear(props: ScreenNavSettingsProps): ReactEleme
             wrap="nowrap"
             className={styles["screen-nav-settings-row"] ?? ""}
           >
-            <button
+            <Button
               type="button"
-              className={styles["screen-nav-settings-reset"]}
+              variant="link"
+              size="label"
+              pressed="none"
               disabled={settings.resetDisabled}
+              ariaLabel={undefined}
+              ariaHasPopup={undefined}
+              title={undefined}
+              className={styles["screen-nav-settings-reset"] ?? ""}
               onClick={settings.onReset}
             >
               既定に戻す
-            </button>
+            </Button>
           </HStack>
         </div>
       ) : null}

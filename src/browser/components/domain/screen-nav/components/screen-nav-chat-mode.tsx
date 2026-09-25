@@ -12,6 +12,7 @@
 
 import { type ReactElement } from "react"
 
+import { Button } from "../../../../components/ui/button/button.tsx"
 import { type ScreenNavChatMode } from "../hooks/use-screen-nav.ts"
 import shellStyles from "../screen-nav.module.css"
 import styles from "./screen-nav-chat-mode.module.css"
@@ -79,28 +80,36 @@ export function ScreenNavChatModeToggle(props: ScreenNavChatModeProps): ReactEle
       role="group"
       aria-label="モード"
     >
-      <button
+      <Button
         type="button"
-        className={styles["screen-nav-chat-mode-button"]}
-        aria-pressed={!chat}
-        aria-disabled={disabled}
+        variant="ghost"
+        size="subheading"
+        pressed={chat ? "off" : "on"}
+        disabled={disabled}
+        ariaLabel={undefined}
+        ariaHasPopup={undefined}
         title={disabled ? title : undefined}
+        className={styles["screen-nav-chat-mode-button"] ?? ""}
         onClick={() => onChange(false)}
       >
         <WorkIcon />
         仕事
-      </button>
-      <button
+      </Button>
+      <Button
         type="button"
-        className={styles["screen-nav-chat-mode-button"]}
-        aria-pressed={chat}
-        aria-disabled={disabled}
+        variant="ghost"
+        size="subheading"
+        pressed={chat ? "on" : "off"}
+        disabled={disabled}
+        ariaLabel={undefined}
+        ariaHasPopup={undefined}
         title={disabled ? title : undefined}
+        className={styles["screen-nav-chat-mode-button"] ?? ""}
         onClick={() => onChange(true)}
       >
         <ChatIcon />
         雑談
-      </button>
+      </Button>
     </div>
   )
 }

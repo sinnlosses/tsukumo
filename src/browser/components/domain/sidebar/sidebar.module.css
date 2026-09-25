@@ -117,19 +117,11 @@
   flex: 1 1 auto;
   min-width: 0;
 }
+/* 箱だけ（置き方）。顔は `<Button variant="link">` が持つ（既定の余白0・hover の色と下線も
+   含む。もとの hover の配合——`dispatch.module.css` の `.dispatch-send:hover` と同じ——は
+   `button.module.css` の `.button-variant-link:hover` に写した）。 */
 .sidebar-block-action {
   flex: 0 0 auto;
-  padding: 0;
-  border: none;
-  background: none;
-  color: var(--accent);
-  font-size: var(--font-action);
-  cursor: pointer;
-}
-.sidebar-block-action:hover {
-  /* 素の accent より明るく（`dispatch.module.css` の `.dispatch-send:hover` と同じ配合）。 */
-  color: color-mix(in srgb, var(--accent) 85%, var(--ink));
-  text-decoration: underline;
 }
 /* サイドバーの下端に敷く帯（セッション情報）。**区画ではない**ので `.sidebar-block` の枠も
    内側スクロールも借りず、`sidebar.tsx` が直に置く。見本
@@ -474,19 +466,13 @@
   text-decoration: underline;
 }
 /* 「編集」の状態でだけ出る × ボタン。押しやすさより場所を取らないことを優先する
-   （行の右端に小さく置く）。 */
+   （行の右端に小さく置く）。箱だけ（置き方・余白・行の高さ）。顔は `<Button variant="ghost">` が
+   持つ。**hover は `--state-warn` から ghost の既定（`--ink`）に変わる**（ghost の顔は
+   `button.module.css` が持ち、呼び出し側から色を上書きできないため）。 */
 .sidebar-persona-memory-remove {
   flex: none;
   padding: 0 0.25rem;
-  border: none;
-  background: none;
-  color: var(--ink-quiet);
-  font-size: var(--font-action);
   line-height: 1.5;
-  cursor: pointer;
-}
-.sidebar-persona-memory-remove:hover {
-  color: var(--state-warn);
 }
 
 /* 消す前の確認（`PersonaMemoryForgetConfirm`）。**サイドバーの上に重ねて開く**——`showModal()` は
@@ -520,25 +506,12 @@
 .sidebar-persona-memory-confirm-actions {
   margin-top: 0.9rem;
 }
+/* 箱だけ（高さ・余白・角丸）。顔は `<Button>` が持つ（キャンセルは `variant="outline"`。
+   消すほうは差し色ではなく警告色にして既定の行き先ではないと分かるよう
+   `variant="outline-warn"`——`task-run-ok` は既定の実行なので `outline-accent` だが、こちらは
+   戻せない操作なので分ける）。 */
 .sidebar-persona-memory-confirm-cancel,
 .sidebar-persona-memory-confirm-ok {
   padding: 0.2rem 0.8rem;
-  border: 1px solid var(--rule);
   border-radius: 0.4rem;
-  background: none;
-  color: inherit;
-  font-size: var(--font-secondary);
-  cursor: pointer;
-}
-.sidebar-persona-memory-confirm-cancel:hover {
-  border-color: var(--accent);
-}
-/* 消すほうは差し色ではなく警告色にする（削除は既定の行き先ではない。task-run-ok は既定の実行なので
-   差し色だが、こちらは戻せない操作なので `--state-warn` で分ける）。 */
-.sidebar-persona-memory-confirm-ok {
-  border-color: var(--state-warn);
-  color: var(--state-warn);
-}
-.sidebar-persona-memory-confirm-ok:hover {
-  background: color-mix(in srgb, var(--state-warn) 12%, transparent);
 }

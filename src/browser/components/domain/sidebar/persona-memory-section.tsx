@@ -14,6 +14,7 @@
 
 import { useState, type MouseEvent, type ReactElement } from "react"
 
+import { Button } from "../../../components/ui/button/button.tsx"
 import { HStack } from "../../../components/ui/h-stack/h-stack.tsx"
 import { Text } from "../../../components/ui/text/text.tsx"
 import { useModalDialog } from "../../../hooks/use-modal-dialog.ts"
@@ -70,16 +71,22 @@ export function PersonaMemorySection(): ReactElement {
                 {openLine === line ? line : truncatedRememberedLine(line)}
               </button>
               {editing && (
-                <button
+                <Button
                   type="button"
-                  className={styles["sidebar-persona-memory-remove"]}
-                  aria-label={`「${line}」を消す`}
+                  variant="ghost"
+                  size="action"
+                  pressed="none"
+                  disabled={false}
+                  ariaLabel={`「${line}」を消す`}
+                  ariaHasPopup={undefined}
+                  title={undefined}
+                  className={styles["sidebar-persona-memory-remove"] ?? ""}
                   onClick={() => {
                     setConfirmLine(line)
                   }}
                 >
                   ×
-                </button>
+                </Button>
               )}
             </li>
           ))}
@@ -155,20 +162,34 @@ function PersonaMemoryForgetConfirm(props: PersonaMemoryForgetConfirmProps): Rea
         wrap="nowrap"
         className={styles["sidebar-persona-memory-confirm-actions"] ?? ""}
       >
-        <button
+        <Button
           type="button"
-          className={styles["sidebar-persona-memory-confirm-cancel"]}
+          variant="outline"
+          size="secondary"
+          pressed="none"
+          disabled={false}
+          ariaLabel={undefined}
+          ariaHasPopup={undefined}
+          title={undefined}
+          className={styles["sidebar-persona-memory-confirm-cancel"] ?? ""}
           onClick={props.onClose}
         >
           キャンセル
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
-          className={styles["sidebar-persona-memory-confirm-ok"]}
+          variant="outline-warn"
+          size="secondary"
+          pressed="none"
+          disabled={false}
+          ariaLabel={undefined}
+          ariaHasPopup={undefined}
+          title={undefined}
+          className={styles["sidebar-persona-memory-confirm-ok"] ?? ""}
           onClick={forget}
         >
           消す
-        </button>
+        </Button>
       </HStack>
     </dialog>
   )

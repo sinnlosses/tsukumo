@@ -38,16 +38,9 @@
   font-size: var(--font-secondary);
   overflow-wrap: anywhere;
 }
+/* 箱だけ（置き方・高さ・余白・角丸）。顔は `<Button variant="outline">` が持つ。 */
 .image-zoom-close {
   align-self: flex-end;
   padding: 0.2rem 0.6rem;
-  border: 1px solid var(--rule);
   border-radius: 0.4rem;
-  background: none;
-  color: inherit;
-  font-size: var(--font-secondary);
-  cursor: pointer;
-}
-.image-zoom-close:hover {
-  border-color: var(--accent);
 }

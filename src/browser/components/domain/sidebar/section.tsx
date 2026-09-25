@@ -11,6 +11,7 @@
 
 import { type ReactElement, type ReactNode } from "react"
 
+import { Button } from "../../../components/ui/button/button.tsx"
 import { Heading } from "../../../components/ui/heading/heading.tsx"
 import styles from "./sidebar.module.css"
 
@@ -39,14 +40,20 @@ export function SidebarSection(props: SidebarSectionProps): ReactElement {
       >
         <span className={styles["sidebar-block-title"]}>{props.title}</span>
         {props.action === undefined ? null : (
-          <button
+          <Button
             type="button"
-            className={styles["sidebar-block-action"]}
-            aria-haspopup="dialog"
+            variant="link"
+            size="action"
+            pressed="none"
+            disabled={false}
+            ariaLabel={undefined}
+            ariaHasPopup="dialog"
+            title={undefined}
+            className={styles["sidebar-block-action"] ?? ""}
             onClick={props.action.onAction}
           >
             {props.action.label}
-          </button>
+          </Button>
         )}
       </Heading>
       <div className={styles["sidebar-block-scroll"]}>{props.children}</div>

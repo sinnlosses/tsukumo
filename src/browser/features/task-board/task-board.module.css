@@ -276,17 +276,10 @@
   justify-content: space-between;
   gap: 0.6rem;
 }
+/* 箱だけ（高さ・余白・角丸）。顔（枠・地・字の色と hover）は `<Button variant="outline">` が持つ。 */
 .task-board-close {
   padding: 0.2rem 0.6rem;
-  border: 1px solid var(--rule);
   border-radius: 0.4rem;
-  background: none;
-  color: inherit;
-  font-size: var(--font-secondary);
-  cursor: pointer;
-}
-.task-board-close:hover {
-  border-color: var(--accent);
 }
 .task-board-scroll {
   min-height: 0;
@@ -384,26 +377,13 @@
   gap: 0.5rem;
   margin-top: 0.9rem;
 }
+/* 箱だけ（高さ・余白・角丸）。顔は `<Button>` が持つ（`task-run-cancel` は
+   `variant="outline"`、実行するほうの `task-run-ok` は既定の行き先だと分かるよう
+   `variant="outline-accent"`）。 */
 .task-run-cancel,
 .task-run-ok {
   padding: 0.2rem 0.8rem;
-  border: 1px solid var(--rule);
   border-radius: 0.4rem;
-  background: none;
-  color: inherit;
-  font-size: var(--font-secondary);
-  cursor: pointer;
-}
-.task-run-cancel:hover {
-  border-color: var(--accent);
-}
-/* 実行するほうだけ枠を差し色にして、既定の行き先だと分かるようにする。 */
-.task-run-ok {
-  border-color: var(--accent);
-  color: var(--accent);
-}
-.task-run-ok:hover {
-  background: var(--surface-accent);
 }
 
 /* 狭い画面では、タスク一覧の表を**1タスク＝1枚のカード**に組み替える

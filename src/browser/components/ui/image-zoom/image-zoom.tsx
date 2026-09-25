@@ -14,6 +14,7 @@
 import { type MouseEvent, type ReactElement, useState } from "react"
 
 import { useModalDialog } from "../../../hooks/use-modal-dialog.ts"
+import { Button } from "../button/button.tsx"
 import styles from "./image-zoom.module.css"
 
 const HEADING = "画像の拡大"
@@ -68,9 +69,20 @@ export function ImageZoom(props: ImageZoomProps): ReactElement {
         onError={() => setFailed(true)}
       />
       {substitute !== undefined && <p className={styles["image-zoom-note"]}>{substitute.note}</p>}
-      <button type="button" className={styles["image-zoom-close"]} onClick={props.onClose}>
+      <Button
+        type="button"
+        variant="outline"
+        size="secondary"
+        pressed="none"
+        disabled={false}
+        ariaLabel={undefined}
+        ariaHasPopup={undefined}
+        title={undefined}
+        className={styles["image-zoom-close"] ?? ""}
+        onClick={props.onClose}
+      >
         {CLOSE_LABEL}
-      </button>
+      </Button>
     </dialog>
   )
 }

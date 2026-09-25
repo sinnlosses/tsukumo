@@ -13,6 +13,7 @@
 
 import { useId, type ReactElement } from "react"
 
+import { Button } from "../../../../components/ui/button/button.tsx"
 import { Text } from "../../../../components/ui/text/text.tsx"
 import {
   type ScreenNavCurrentWork,
@@ -99,13 +100,20 @@ function CurrentWorkList(props: {
         {work.pendingHint.kind === "input" ? "。入力欄の上で答えられる" : ""}
       </Text>
       {work.pendingHint.kind === "question" ? (
-        <button
+        <Button
           type="button"
-          className={styles["screen-nav-work-go-to-question"]}
+          variant="link"
+          size="label"
+          pressed="none"
+          disabled={false}
+          ariaLabel={undefined}
+          ariaHasPopup={undefined}
+          title={undefined}
+          className={styles["screen-nav-work-go-to-question"] ?? ""}
           onClick={work.pendingHint.onGoToQuestion}
         >
           {GO_TO_QUESTION_LABEL}
-        </button>
+        </Button>
       ) : null}
       {work.runningStep.kind === "none" ? null : (
         <div className={styles["screen-nav-work-full"]}>
@@ -158,13 +166,20 @@ function CurrentWorkList(props: {
             ))}
           </ul>
           {work.stepList.toggleAll.kind === "expandable" ? (
-            <button
+            <Button
               type="button"
-              className={styles["screen-nav-work-toggle-all"]}
+              variant="link"
+              size="label"
+              pressed="none"
+              disabled={false}
+              ariaLabel={undefined}
+              ariaHasPopup={undefined}
+              title={undefined}
+              className={styles["screen-nav-work-toggle-all"] ?? ""}
               onClick={work.stepList.onToggleExpanded}
             >
               {work.stepList.toggleAll.label}
-            </button>
+            </Button>
           ) : null}
         </>
       ) : (

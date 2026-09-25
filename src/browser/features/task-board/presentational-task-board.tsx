@@ -10,6 +10,7 @@
 
 import { type MouseEvent, type ReactElement, type RefObject } from "react"
 
+import { Button } from "../../components/ui/button/button.tsx"
 import { Heading } from "../../components/ui/heading/heading.tsx"
 import { TaskTable } from "./components/task-table.tsx"
 import { type BoardRow } from "./hooks/use-task-board.ts"
@@ -46,9 +47,20 @@ export function PresentationalTaskBoard({
           <Heading level={2} size="heading" tone="inherit" weight="semibold" className="">
             タスク一覧
           </Heading>
-          <button type="button" className={styles["task-board-close"]} onClick={onClose}>
+          <Button
+            type="button"
+            variant="outline"
+            size="secondary"
+            pressed="none"
+            disabled={false}
+            ariaLabel={undefined}
+            ariaHasPopup={undefined}
+            title={undefined}
+            className={styles["task-board-close"] ?? ""}
+            onClick={onClose}
+          >
             閉じる
-          </button>
+          </Button>
         </div>
         <TaskTable rows={rows} />
       </div>

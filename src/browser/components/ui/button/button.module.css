@@ -1,0 +1,111 @@
+/* ボタンの顔（枠・地・字の色と hover・focus-visible・押せないとき・押されたとき）の対応表
+   （`button.tsx`。`docs/design.md` 2章「`components/ui/` の部品（variant の作法と一覧）」）。
+   **箱（高さ・余白・角丸）はここに持たない**——呼び出し側が `className` で渡す。
+   focus-visible は `theme.css` の `:focus-visible { outline: 2px solid var(--accent); … }` に
+   任せる（部品固有の輪は持たない）。 */
+
+.button {
+  cursor: pointer;
+}
+/* 押せないときの既定（押されても `onClick` を呼ばない側の見た目。`button.tsx`）。
+   `link` はここを打ち消して字の色だけで伝える（下の `.button-variant-link[aria-disabled="true"]`）。 */
+.button[aria-disabled="true"] {
+  cursor: default;
+  opacity: 0.6;
+}
+
+/* 枠だけ（`--rule`）。 */
+.button-variant-outline {
+  border: 1px solid var(--rule);
+  background: none;
+  color: inherit;
+}
+.button-variant-outline:hover {
+  border-color: var(--accent);
+}
+
+/* accent の枠。 */
+.button-variant-outline-accent {
+  border: 1px solid var(--accent);
+  background: none;
+  color: var(--accent);
+}
+.button-variant-outline-accent:hover {
+  background: var(--surface-accent);
+}
+
+/* warn の枠。 */
+.button-variant-outline-warn {
+  border: 1px solid var(--state-warn);
+  background: none;
+  color: var(--state-warn);
+}
+.button-variant-outline-warn:hover {
+  background: color-mix(in srgb, var(--state-warn) 12%, transparent);
+}
+
+/* accent の塗り。 */
+.button-variant-solid-accent {
+  border: none;
+  background: var(--accent);
+  color: var(--ground);
+}
+.button-variant-solid-accent:hover {
+  background: color-mix(in srgb, var(--accent) 85%, var(--ink));
+}
+
+/* `--state-ng` の塗り。 */
+.button-variant-solid-danger {
+  border: none;
+  background: var(--state-ng);
+  color: var(--ground);
+}
+.button-variant-solid-danger:hover {
+  background: color-mix(in srgb, var(--state-ng) 85%, var(--ink));
+}
+
+/* `--state-warn` の塗り。 */
+.button-variant-solid-warn {
+  border: none;
+  background: var(--state-warn);
+  color: var(--ground);
+}
+.button-variant-solid-warn:hover {
+  background: color-mix(in srgb, var(--state-warn) 85%, var(--ink));
+}
+
+/* 地も枠も無い静かな字。押されている（`pressed: "on"`）ときは地を差し色にする
+   （`screen-nav-chat-mode-button` の元の規則をそのまま持ってきた）。 */
+.button-variant-ghost {
+  border: none;
+  background: none;
+  color: var(--ink-quiet);
+}
+.button-variant-ghost:hover {
+  color: var(--ink);
+}
+.button-variant-ghost[aria-pressed="true"] {
+  background: var(--accent);
+  color: var(--ground);
+  font-weight: 700;
+}
+
+/* accent の字・余白0（既定の余白0だけ `:where()` に置き、呼び出し側の余白指定に譲る）。 */
+.button-variant-link {
+  border: none;
+  background: none;
+  color: var(--accent);
+}
+.button-variant-link:hover {
+  color: color-mix(in srgb, var(--accent) 85%, var(--ink));
+  text-decoration: underline;
+}
+/* 地の透け（`.button[aria-disabled="true"]` の `opacity`）を打ち消し、字の色だけで伝える
+   （もと `.screen-nav-settings-reset:disabled` と同じ見た目）。 */
+.button-variant-link[aria-disabled="true"] {
+  opacity: 1;
+  color: var(--ink-quiet);
+}
+:where(.button-variant-link) {
+  padding: 0;
+}

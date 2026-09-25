@@ -16,6 +16,7 @@
 
 import { type MouseEvent, type ReactElement } from "react"
 
+import { Button } from "../../../components/ui/button/button.tsx"
 import { Text } from "../../../components/ui/text/text.tsx"
 import { useModalDialog } from "../../../hooks/use-modal-dialog.ts"
 import { useSessionDispatch, useTurnRunning } from "../../../stores/session.tsx"
@@ -75,13 +76,35 @@ export function TaskRunConfirm(props: TaskRunConfirmProps): ReactElement {
         </p>
       )}
       <div className={styles["task-run-actions"]}>
-        <button type="button" className={styles["task-run-cancel"]} onClick={props.onClose}>
+        <Button
+          type="button"
+          variant="outline"
+          size="secondary"
+          pressed="none"
+          disabled={false}
+          ariaLabel={undefined}
+          ariaHasPopup={undefined}
+          title={undefined}
+          className={styles["task-run-cancel"] ?? ""}
+          onClick={props.onClose}
+        >
           キャンセル
-        </button>
+        </Button>
         {!turnInProgress && (
-          <button type="button" className={styles["task-run-ok"]} onClick={run}>
+          <Button
+            type="button"
+            variant="outline-accent"
+            size="secondary"
+            pressed="none"
+            disabled={false}
+            ariaLabel={undefined}
+            ariaHasPopup={undefined}
+            title={undefined}
+            className={styles["task-run-ok"] ?? ""}
+            onClick={run}
+          >
             実行する
-          </button>
+          </Button>
         )}
       </div>
     </dialog>

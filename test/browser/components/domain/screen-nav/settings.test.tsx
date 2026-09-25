@@ -252,7 +252,17 @@ describe("設定の歯車（帯の右端）", () => {
     renderScreenNav()
     fireEvent.click(gear())
 
-    expect(resetButton().disabled).toBe(true)
+    // **`disabled` ではなく `aria-disabled`**（`Button` の顔。docs/design.md 2章「`Button`」）——
+    // native の `disabled` と違いフォーカスは残る。
+    expect(resetButton().getAttribute("aria-disabled")).toBe("true")
+    expect(resetButton().hasAttribute("disabled")).toBe(false)
+    resetButton().focus()
+    expect(document.activeElement).toBe(resetButton())
+
+    // 押せないときは押しても何も起きない（`Button` が `onClick` を呼ばない）。
+    const groundBefore = readToken("--ground")
+    fireEvent.click(resetButton())
+    expect(readToken("--ground")).toBe(groundBefore)
   })
 
   it("「既定に戻す」で3色とも上書きが外れ、操作子も既定を指す", async () => {
@@ -260,7 +270,7 @@ describe("設定の歯車（帯の右端）", () => {
     fireEvent.click(gear())
 
     fireEvent.change(colorInput("画面の地"), { target: { value: "#101010" } })
-    expect(resetButton().disabled).toBe(false)
+    expect(resetButton().getAttribute("aria-disabled")).toBe("false")
 
     fireEvent.click(resetButton())
 
