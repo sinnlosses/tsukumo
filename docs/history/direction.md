@@ -3,6 +3,12 @@
 `develop/direction.md` に書かれたユーザーからの指示を、タスク化した時点で**当時の記述のまま**
 ここへ移す（`docs/workflow.md`「指示メモ」参照）。新しいものを上に足す。**後から書き換えない。**
 
+## 2026-09-25 部品の中で部品を定義しない
+
+（`develop/direction.md` の `## ユーザーから` を当時の記述のまま移したもの。会話で vercel-labs/agent-skills の react-best-practices を読み比べ、足す価値が高いと出した1条について「足す価値が高いものだけにしよう。タスク化してくれる?」と頼まれ、エージェントが書いた。確かめる段で oxlint の `react/no-unstable-nested-components` が既定では警告止まりだと分かり、それをエラーにする形で T-605 になった）
+
+- `docs/coding-standards.md`「React」節に「部品の中で部品を定義しない」を1条足す（vercel-labs/agent-skills の react-best-practices の `rerender-no-inline-components` から取り込む。レンダーのたびに部品の型が変わり、DOM と state が作り直されて入力欄のフォーカスが飛ぶ類いの不具合になる）。あわせて oxlint で止められるか（`react` プラグインに該当する規則があるか）を調べ、あれば `.oxlintrc.json` で有効にする。`src/browser/` に既に違反している箇所があれば直す
+
 ## 2026-09-25 remeda で書き直せる箇所と、remeda を優先する規約
 
 （`develop/direction.md` の `## ユーザーから` を当時の記述のまま移したもの。会話で react-use の導入を見送ったあと、remeda で書き直せる箇所を調べ、「置き換えを勧めるAとBをタスク化してほしい。それから、coding-standards に可読性が良くなる場合は remeda を優先するよう記載をするタスク化もお願い!」と頼まれ、エージェントが書いた。T-601〜T-604 になった）
