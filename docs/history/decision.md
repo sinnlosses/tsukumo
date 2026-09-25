@@ -7,6 +7,69 @@
 節は `## <出典のファイル> <節番号> <節の見出し>` の形で並べ、各節の先頭に**移した日付と
 出典の節**を1行で書く。探すときは出典の節名で `grep` する。
 
+## design.md 2. 全体構成 / いまの `src/browser/` から移す先（移行の対応表）
+
+2026-09-25 に移した（`docs/design.md` 2章「いまの `src/browser/` から移す先（移行の対応表）」と、
+同じ章の「移行中」の段落。段4（残りの3画面）が終わり、browser 側の移動が完了したため）。
+
+`components/` を `page/` `domain/` `ui/` の3段に割る移行（2026-09-25 決定）で、**いまの
+`src/browser/` の全ファイルがどこへ行くか**の表。移行の段が全部終わったら、この節は
+`docs/history/decision.md` へ移す。
+
+**移し方の決まり**:
+
+- **ディレクトリ単位で、中の形ごと移す。** 領域の中の `hooks/` `components/` `domain/` `markdown/`
+  と `*.module.css` はそのまま付いていく（ロジックを `features/` に残して見た目だけ移す、という割り方は
+  しない。2章「領域の機能と、置かれる機能」）。**1つの機能を割って別々の場所へ送るものは無い**
+  （書き終わりの知らせも成果の画面と一緒に移る）
+- **ファイル名は変えない**（`character-screen.tsx` は `components/page/character/` の下でも
+  `character-screen.tsx` のまま。ディレクトリの名前だけが画面の名前になる）
+- **テストも同じ置き換えで移す。** `test/browser/<いまのパス>` → `test/browser/<移す先>`
+  （`test/browser/` の直下の `session-store.ts` はテストの道具なので動かさない）
+- **その段で移したパスを指す記述は、その段で直す**（`docs/` の `history/` 以外・`CLAUDE.md`・
+  `src/` と `test/` のコメント。`src/server/` のコメントにも `src/browser/features/...` と
+  `components/prompt-image.tsx` を指すものがある）
+
+| いまのパス（`src/browser/` から）                                                             | 移す先（`src/browser/` から）                  | 段  |
+| --------------------------------------------------------------------------------------------- | ---------------------------------------------- | --- |
+| `components/select.tsx`・`select.module.css`                                                  | `components/ui/`                               | 1   |
+| `components/image-zoom.tsx`・`image-zoom.module.css`                                          | `components/ui/`                               | 1   |
+| `components/portrait.tsx`・`portrait.module.css`                                              | `components/domain/`                           | 1   |
+| `components/character-face.tsx`                                                               | `components/domain/`                           | 1   |
+| `components/prompt-image.tsx`・`prompt-image.module.css`                                      | `components/domain/`                           | 1   |
+| `components/protocol-mismatch.tsx`・`protocol-mismatch.module.css`                            | `components/domain/`                           | 1   |
+| `features/layout/`（中身ごと）                                                                | `components/domain/layout/`                    | 2   |
+| `features/screen-nav/`（中身ごと）                                                            | `components/domain/screen-nav/`                | 2   |
+| `features/sidebar/`（中身ごと）                                                               | `components/domain/sidebar/`                   | 2   |
+| `features/main-view/`（中身ごと。`markdown/` を含む）                                         | `components/page/conversation/main-view/`      | 3   |
+| `features/character-view/`（中身ごと）                                                        | `components/page/conversation/character-view/` | 3   |
+| `features/chat-view/`（中身ごと）                                                             | `components/page/conversation/chat-view/`      | 3   |
+| `features/dispatch/`（中身ごと）                                                              | `components/page/conversation/dispatch/`       | 3   |
+| `features/character-screen/`（中身ごと）                                                      | `components/page/character/`                   | 4   |
+| `features/token-usage/`（中身ごと）                                                           | `components/page/token-usage/`                 | 4   |
+| `features/achievement/`（中身ごと。`diary-notice.tsx` と `hooks/use-diary-notice.ts` を含む） | `components/page/achievement/`                 | 4   |
+| `features/task-board/`                                                                        | 動かさない（置かれる機能）                     | —   |
+| `main.tsx`（`<Root>` と `OVERLAY_SCREEN` を含む）                                             | 動かさない（import のパスだけ各段で直す）      | —   |
+| `hooks/`（`use-dismiss-signal.ts`・`use-modal-dialog.ts`・`use-repository-file-paths.ts`）    | 動かさない                                     | —   |
+| `domain/`（`reveal/` を含む）・`lib/`・`utils/`・`stores/`・`styles/`・直下の `*.d.ts`        | 動かさない                                     | —   |
+
+**段と、`test/architecture.test.ts` の直し方**（段1で検査を新しい箱に載せ、段2〜4は一覧を直すだけに
+する）:
+
+| 段  | 移すもの                                | 検査で直すもの                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| --- | --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | 共有の部品（`components/` の6つ）       | 箱の一覧を `components/page` `components/domain` `components/ui` に替え、辺を2章の箱の表どおりにする。領域と置かれる機能の一覧を**パスで引く形**にし（まだ `features/` にある領域もそのパスで載せる）、「1つの領域だけが読むファイル」の検査を `components/domain/` の直下と `components/ui/` にも掛ける。**移行の途中だけ `features` → `components/domain` の辺を許す**（まだ `features/` にある領域が `Portrait` などを読むため） |
+| 2   | 枠（`layout`・`screen-nav`・`sidebar`） | 領域の一覧の3つのパスを `components/domain/<枠>/` に替える                                                                                                                                                                                                                                                                                                                                                                          |
+| 3   | 会話の画面の4領域                       | 領域の一覧の4つのパスを `components/page/conversation/<領域>/` に替える                                                                                                                                                                                                                                                                                                                                                             |
+| 4   | 残りの3画面                             | 領域の一覧の3つのパスを `components/page/<画面>/` に替え、**移行の途中の辺（`features` → `components/domain`）を外す**。`features/` の直下は置かれる機能だけになる。移し終えたので、この節を `docs/history/decision.md` へ移す                                                                                                                                                                                                      |
+
+当時の「移行中」の段落（2章。段4の完了で外した）:
+
+> **移行中**: `components/page/` `components/domain/` `components/ui/` への移動は段に分けて進めている
+> （下の「いまの `src/browser/` から移す先」）。**この章と 6 章が書くのは移し終えた形**で、段が
+> 終わるまでは、まだ移していないものは表の「いまのパス」にある。**`src/server/` を機能で割る移動も
+> 同じ扱い**（下の「いまの `src/server/` から移す先」。木の `server/` が書くのは移し終えた形）。
+
 ## design.md 2. 全体構成 / ディレクトリ（`src/server/` を機能で割った）
 
 2026-09-25 に決めた（`docs/design.md` 2章の「層と依存の向き」「サーバの機能と、機能どうしの辺」

@@ -80,7 +80,7 @@
 - タスク一覧のモーダル（サイドバーの「一覧を見る」）— `sidebar/task-board.tsx`
 - `/` のコマンド補完 — `dispatch/command-suggestions.tsx`
 - `@` のファイル補完 — `dispatch/file-suggestions.tsx`
-- キャラクター画面（`#character`）と作る画面（`#character/new`）— `features/character-screen/` の5ファイル
+- キャラクター画面（`#character`）と作る画面（`#character/new`）— `components/page/character/` の5ファイル
 
 **(3) 部品の状態の網羅。** レポートの記法は `markdown/notation.tsx` の `NOTATION_CLASS_NAMES` が
 **12の class**（`note` / `note-warn` / `note-ng` / `note-favor` / `badge` / `badge-ok` /

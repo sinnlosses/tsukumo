@@ -125,7 +125,7 @@
 **合併にできないもの（S の残り約77行）**:
 
 - `src/server/core/config.ts:38,40,48` — 環境変数の未設定。3つは**独立**（片方だけ設定する運用が実在する）
-- `src/browser/features/character-screen/appearance-color.ts:17,18,19` — `ground`/`surface`/`ink` は
+- `src/browser/domain/appearance-color.ts:17,18,19` — `ground`/`surface`/`ink` は
   1色だけ変える操作が実在するので独立
 - `src/shared/character-definition.ts:21,33,40,47` / `src/shared/task-summary.ts:18,19,20` —
   定義ファイル・`tasks.json` の**任意の項目**。外の世界の形そのもの（3節の例外1）

@@ -165,7 +165,7 @@
 `立ち絵を書けなかったら、定義の無いディレクトリを残さない` が別の経路で通している）・
 `src/server/adapter/vendor-asset.ts:63-64`（同梱物が読めない。`bun install` 済みが起動時の前提）・
 `src/server/adapter/server.ts:320`（`listen` 後のアドレスが想定の形でない）・
-`src/browser/features/character-screen/appearance-color.ts:43` と
+`src/browser/domain/appearance-color.ts:43` と
 `src/browser/components/domain/layout/split.ts:37`（`localStorage` が**投げる**。プライベートウィンドウ限定で、
 「値が無い・読めない」側は上の「埋める穴」に入れてある）。
 

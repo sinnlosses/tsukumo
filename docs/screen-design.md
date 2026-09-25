@@ -1772,7 +1772,7 @@ scrollable overflow は end 方向にしか伸びない**ので、上へ出た�
   （`deferred`）は含めない。桁の書き方（`formatCount`。`1234567` → `1.23M`）も札と同じ道具を
   使うので、行の数字と札を開いたときの数字が食い違わない
 - **取得と畳み込みは `browser/domain/context-usage.ts`**——トークン消費の画面の札とサイドバーの
-  この行の2つの機能が読むので、`features/token-usage/` から `browser/domain/` へ上げてある
+  この行の2つの機能が読むので、`components/page/token-usage/` から `browser/domain/` へ上げてある
   （docs/design.md 2章「上げる引き金は「2つ目の読み手が出たとき」」）
 - **取り直すのはターンが終わるたび**（開いたときの1回に加えて）。合図（`contextUsageRefetchKey`）は
   `state.lastTurnFinishedAt`（直近でターンが終わった時刻。次のターンが始まっても戻らない）から

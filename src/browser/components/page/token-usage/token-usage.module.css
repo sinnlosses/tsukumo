@@ -1,0 +1,1042 @@
+/* トークン消費の画面（`src/browser/components/page/token-usage/`）。**会話の画面と入れ替わる**ので、
+   キャラクター画面と同じく1枚のページとして縦に流す — 4領域の grid も仕切りも持たない。
+   **横スクロールを出さない**のがこの画面の要点で、表は必ず幅いっぱいに収め、はみ出しうる
+   ものは数の単位（k / M）と行数の上限で先に減らしてある。 */
+.token-usage {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  max-width: 60rem;
+  margin: 0 auto;
+  padding: 0 0.25rem 2rem;
+}
+.token-usage-bar {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+.token-usage-title {
+  margin: 0;
+  color: var(--usage-ink);
+  font-size: var(--font-heading);
+  font-weight: normal;
+}
+/* プランの札。題の右に添えるだけの静かな印（13.1 原則1。状態の警告ではないので accent は使わない）。 */
+.token-usage-plan {
+  padding: 0.1rem 0.5rem;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  color: var(--ink-quiet);
+  font-size: var(--font-label);
+  line-height: 1.4;
+}
+/* 題の帯の残りを埋め、見直し中の札を右端へ押しやる（`.token-usage-bar` の `flex-wrap` と
+   合わせ、狭い画面では下へ折り返す）。 */
+.token-usage-bar-spacer {
+  flex: 1 1 auto;
+}
+/* 「見直し中」（題の帯の右）。**押せない**——見直し中かどうかは区画（`usage-review-card.tsx`）
+   の枠の色と中身がすでに言っているので、ここは題の帯からも分かるようにするだけの印
+   （`role="status"` で読み上げにも状態として伝える）。 */
+.token-usage-review-badge {
+  padding: 0.35rem 0.9rem;
+  border-radius: 0.625rem;
+  background: var(--accent);
+  color: var(--ground);
+  font-size: var(--font-action);
+  font-weight: 700;
+  opacity: 0.6;
+}
+/* 期間の切り替え。**3つで1つの入れ物**（枠は群の外側だけで、中のボタンは枠を持たない）。
+   地は札より沈める（「自動圧縮まで」の箱と同じ `--usage-well`）。 */
+.token-usage-period {
+  display: flex;
+  margin-left: auto;
+  gap: 2px;
+  padding: 3px;
+  background: var(--usage-well);
+  border: 1px solid var(--usage-rule);
+  border-radius: 0.625rem;
+}
+/* **選ばれている側は地を1段上げる**（`aria-pressed`。色だけに頼らない）。 */
+.token-usage-choice {
+  padding: 0.25rem 0.7rem;
+  background: none;
+  color: var(--usage-ink-label);
+  border: none;
+  border-radius: 0.4375rem;
+  font-size: var(--font-label);
+  cursor: pointer;
+}
+.token-usage-choice:hover {
+  color: var(--usage-ink);
+}
+.token-usage-choice[aria-pressed="true"] {
+  background: var(--usage-chosen);
+  color: var(--usage-ink);
+}
+
+.token-usage-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+/* 区画の見出しの行。**右端に添え物（期間の切り替え）を押しやる**（狭い画面では下へ折り返す）。 */
+.token-usage-section-head {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.token-usage-section-label {
+  margin: 0;
+  color: var(--usage-ink);
+  font-size: var(--font-subheading);
+  font-weight: normal;
+}
+
+/* 期間の合計の札4枚。**広い画面では4列**、狭い画面では2列・1列に折る（このファイルの末尾の
+   @media。境目は他の領域と同じ 760px）。 */
+.usage-card-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+/* 札1枚（`period-usage-card.tsx`）。**枠を持つ**（13.1 原則2。枠を持たないのはキャラクターだけ）。 */
+.usage-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 1rem 1.125rem;
+  border: 1px solid var(--usage-rule);
+  border-radius: 0.875rem;
+  background: var(--usage-card);
+  /* 中の棒は grid の列幅に合わせて縮む。`min-width: 0` が無いと、棒の本数ぶんの最小幅が
+     そのまま列の下限になり、狭い画面で横に溢れる。 */
+  min-width: 0;
+}
+.usage-card-label {
+  margin: 0;
+  color: var(--usage-ink-label);
+  font-size: var(--font-label);
+  font-weight: normal;
+}
+/* 数が主（13.3 のタイプスケールの中で最大の段）。桁が動いても揃うよう等幅の数字にする。 */
+.usage-card-value {
+  margin: 0;
+  color: var(--usage-ink);
+  font-family: var(--font-mono);
+  font-size: var(--font-heading);
+  font-variant-numeric: tabular-nums;
+}
+/* いちばん高い棒の値（この札の中の縦軸の代わり）。**目盛りも軸も描かない**ので、これが唯一の
+   高さの手がかりになる。寄せる側は棒の位置で決まる（`period-usage-card.tsx`）。 */
+.usage-card-peak {
+  margin: 0.4rem 0 0.15rem;
+  color: var(--usage-ink-note);
+  font-family: var(--font-mono);
+  font-size: var(--font-label);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.usage-card-peak-left {
+  align-self: flex-start;
+}
+.usage-card-peak-right {
+  align-self: flex-end;
+}
+
+/* 棒の並び。**高さはここで決める**（棒1本ずつは親に対する割合で伸びる）。本数は期間の刻みの
+   数そのもの（7 / 24 / 30）で、`1fr` ずつに割って幅を取り合う。 */
+.usage-card-bars {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  align-items: end;
+  gap: 1px;
+  height: 3.5rem;
+  /* 基線。**寸法を変えない**よう枠ではなく外側の影で引く（棒の足元のすぐ下に1本出る）。 */
+  box-shadow: 0 1px 0 var(--usage-bar-baseline);
+}
+/* 棒1本。**塗りはキャラクターの色を使わない**（13.1 原則1。読む面は誰が来ても同じ濃さ）。 */
+.usage-card-bar {
+  align-self: end;
+  height: var(--usage-bar-height);
+  min-height: 2px;
+  border-radius: 2px 2px 0 0;
+  background: var(--usage-bar);
+}
+/* 記録の無い刻み。**高さ 0 のままでは消えてしまう**ので、`min-height` の印だけが残る。
+   塗りを落とすのは、空だったことと「少しだけ使った」ことを取り違えさせないため。 */
+.usage-card-bar-zero {
+  background: var(--usage-bar-zero);
+  border-radius: 1px;
+}
+/* 期間の両端の刻み（最初と最後だけ）。 */
+.usage-card-scale {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin: 0.25rem 0 0;
+  color: var(--usage-ink-faint);
+  font-family: var(--font-mono);
+  font-size: var(--font-label);
+}
+
+/* 表は**必ず幅いっぱいに収める**（`table-layout: fixed`。列の中身で幅が決まる auto だと、
+   モデル名が長い回に横へ溢れる）。長い名前は折り返す（body の `overflow-wrap: anywhere`）。 */
+.token-usage-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: var(--font-secondary);
+}
+.token-usage-table th,
+.token-usage-table td {
+  padding: 0.5rem 0.4rem;
+  text-align: right;
+}
+/* 見出しの行は**下の罫線だけ**で区切る（地を上げない。行の罫線より1段はっきりさせて、
+   ここが表の頭だと分かるようにする）。 */
+.token-usage-table thead th {
+  border-bottom: 1px solid var(--usage-rule);
+  color: var(--usage-ink-note);
+  font-size: var(--font-label);
+  font-weight: normal;
+}
+.token-usage-table thead th:first-child {
+  text-align: left;
+}
+/* 行の区切りは**行の頭（`th scope="row"` の名前）にも引く**（数の列だけだと罫が名前の手前で
+   途切れる）。 */
+.token-usage-table tbody th,
+.token-usage-table tbody td {
+  border-bottom: 1px solid var(--usage-rule-quiet);
+  color: var(--usage-ink-cell);
+}
+/* 数は等幅・桁揃え（大小を縦に読むため）。 */
+.token-usage-table td {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+/* 機械の名前（モデル・ツール）は等幅（13.1 原則3）。**左に寄せる** — 右寄せだと長い名前が
+   折り返したときに行の頭が揃わず、縦に読めない。`.token-usage-table th, td` の右寄せに
+   詳細度で負けるので、表の中であることまで綴る。 */
+.token-usage-table .token-usage-name {
+  font-family: var(--font-mono);
+  font-weight: normal;
+  text-align: left;
+}
+
+/* モデル別・ツール別の札を横に並べる行。**左（モデル別）を広く**（列が2つ多い）。狭い画面
+   （760px以下）では縦に積む（このファイル末尾の @media）。 */
+.usage-table-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+  gap: 1rem;
+  align-items: start;
+  min-width: 0;
+}
+
+/* 表を持つ札の見出し行。**期間の合計の札（`.usage-card-label` 以下）よりひとまわり大きく**
+   — こちらは「いまのコンテキスト」と同格の区画の見出しなので、`.context-title` /
+   `.context-note` と同じ大きさ・色の組にする。 */
+.usage-table-head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
+}
+.usage-table-title {
+  margin: 0;
+  color: var(--usage-ink);
+  font-size: var(--font-subheading);
+  font-weight: normal;
+}
+.usage-table-order {
+  color: var(--usage-ink-note);
+  font-size: var(--font-label);
+}
+
+/* モデル別・ツール別で列の幅を変える（`table-layout: fixed` は列幅を自分で決めないと
+   均等割りになる）。**横棒を添える列だけ広く取る。** */
+.model-usage-table th:nth-child(1),
+.model-usage-table td:nth-child(1) {
+  width: 32%;
+}
+.model-usage-table th:nth-child(2),
+.model-usage-table td:nth-child(2),
+.model-usage-table th:nth-child(4),
+.model-usage-table td:nth-child(4),
+.model-usage-table th:nth-child(5),
+.model-usage-table td:nth-child(5) {
+  width: 14%;
+}
+.model-usage-table th:nth-child(3),
+.model-usage-table td:nth-child(3) {
+  width: 26%;
+}
+.tool-usage-table th:nth-child(1),
+.tool-usage-table td:nth-child(1) {
+  width: 34%;
+}
+.tool-usage-table th:nth-child(2),
+.tool-usage-table td:nth-child(2) {
+  width: 22%;
+}
+.tool-usage-table th:nth-child(3),
+.tool-usage-table td:nth-child(3) {
+  width: 44%;
+}
+
+/* 数の右に添える横棒（並べ順を決めている列だけ。`usage-table-bar-cell` が1つのセルの中身）。 */
+.usage-table-bar-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+}
+.usage-table-bar {
+  flex: 1 1 auto;
+  overflow: hidden;
+  min-width: 1.5rem;
+  height: 0.5rem;
+  border-radius: 0.25rem;
+  background: var(--usage-bar-track);
+}
+/* 塗りは期間の合計の棒（`.usage-card-bar`）と同じ `--usage-bar`（どちらも「その列の最大に
+   対する長さ」を言う棒で、分類の色ではない）。 */
+.usage-table-bar-fill {
+  display: block;
+  width: var(--usage-bar-share);
+  height: 100%;
+  border-radius: 0.25rem;
+  background: var(--usage-bar);
+}
+
+/* 「ほか n 件を見る」の開閉。文字だけのボタン（枠を増やさない）。 */
+.usage-table-more {
+  margin: 0.75rem 0 0;
+  padding: 0;
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-size: var(--font-action);
+  cursor: pointer;
+}
+.usage-table-more:hover {
+  text-decoration: underline;
+}
+
+/* 記録が無い・取れなかった・描けなかった・続きがある、の一言。 */
+.token-usage-note {
+  margin: 0;
+  color: var(--ink-quiet);
+  font-size: var(--font-label);
+}
+
+/* 「減らし方を見てもらう」区画（`usage-review-card.tsx`）。**枠と地は他の区画と同じ**
+   （`.usage-card` / `.context-card` と同じ `--usage-rule` / `--usage-card`）に、`--accent` を
+   ごく薄く重ねて「押せる区画」だと分かるようにする（13.2「染める」— 塊に文字のラベル
+   （見出し・ボタン）が出るので色を足してよい場面）。 */
+.usage-review {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.125rem 1.375rem;
+  border-radius: 0.875rem;
+  border: 1px solid var(--usage-rule);
+  background: var(--usage-card);
+}
+.usage-review-invite {
+  background: color-mix(in srgb, var(--usage-card), var(--accent) 6%);
+  border-color: color-mix(in srgb, var(--usage-rule), var(--accent) 30%);
+}
+/* 見直し中は縦に積む（頭の行・進みの棒・段の一覧・注記）。**枠は accent そのもの**——見直し中は
+   はっきり分かってよい状態で、染めるだけでは弱い。 */
+.usage-review-running {
+  align-items: stretch;
+  flex-direction: column;
+  gap: 1rem;
+  background: color-mix(in srgb, var(--usage-card), var(--accent) 6%);
+  border-color: var(--accent);
+}
+.usage-review-face {
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 0 0 2px var(--accent);
+  flex-shrink: 0;
+}
+.usage-review-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.usage-review-heading {
+  color: var(--usage-ink);
+  font-size: var(--font-body);
+  font-weight: 700;
+}
+.usage-review-note {
+  color: var(--usage-ink-label);
+  font-size: var(--font-label);
+}
+.usage-review-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+.usage-review-start {
+  padding: 0.6rem 1.125rem;
+  border: none;
+  border-radius: 0.625rem;
+  background: var(--accent);
+  color: var(--ground);
+  font-size: var(--font-action);
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.usage-review-start:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.usage-review-blocked {
+  margin: 0;
+  max-width: 16rem;
+  color: var(--usage-ink-note);
+  font-size: var(--font-label);
+  text-align: right;
+}
+.usage-review-previous {
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--accent);
+  font-size: var(--font-label);
+  cursor: pointer;
+}
+.usage-review-previous:hover {
+  text-decoration: underline;
+}
+
+/* 見直し中の頭の行（顔・「見直し中…」＋直近のセリフ・経過・「止める」）。 */
+.usage-review-running-head {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.usage-review-speech {
+  color: var(--usage-ink-cell);
+  font-size: var(--font-label);
+}
+.usage-review-elapsed {
+  color: var(--usage-ink-note);
+  font-family: var(--font-mono);
+  font-size: var(--font-label);
+  flex-shrink: 0;
+}
+.usage-review-stop {
+  padding: 0.45rem 0.8rem;
+  border: 1px solid var(--usage-rule);
+  border-radius: 0.5rem;
+  background: none;
+  color: var(--usage-ink-cell);
+  font-size: var(--font-label);
+  white-space: nowrap;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.usage-review-stop:hover {
+  border-color: var(--accent);
+  color: var(--usage-ink);
+}
+
+/* 進みの棒。**塗りは量の棒と同じ `--usage-bar` ではなく `--accent`**——この棒は「量」ではなく
+   「見直し自身の進み」を言うので、キャラクターの色（原則1）に寄せる。 */
+.usage-review-progress {
+  height: 0.375rem;
+  border-radius: 0.1875rem;
+  background: var(--usage-bar-track);
+  overflow: hidden;
+}
+.usage-review-progress-fill {
+  width: var(--usage-review-progress);
+  height: 100%;
+  border-radius: 0.1875rem;
+  background: var(--accent);
+}
+
+/* 段の一覧。**広い画面では2列**、狭い画面（このファイル末尾の @media）では1列に折る
+   （「解くべき論点」の回答）。 */
+.usage-review-stages {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 2rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.usage-review-stage {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0;
+  border-top: 1px solid var(--usage-rule-quiet);
+  color: var(--usage-ink-faint);
+  font-size: var(--font-label);
+}
+.usage-review-stage-done {
+  color: var(--usage-ink-label);
+}
+.usage-review-stage-running {
+  color: var(--usage-ink);
+}
+.usage-review-stage-mark {
+  display: inline-block;
+  width: 0.875rem;
+  text-align: center;
+  color: var(--accent);
+}
+.usage-review-stage:not(.usage-review-stage-done):not(.usage-review-stage-running)
+  .usage-review-stage-mark {
+  color: var(--usage-ink-faint);
+}
+/* 進行中の段の印だけ回す（`prefers-reduced-motion: reduce` では `theme.css` の全体規則が止める。
+   「解くべき論点」の回答——`screen-nav-current-work.module.css` と同じ仕組みを使い回すので、
+   新しい分岐は要らない）。 */
+.usage-review-stage-running .usage-review-stage-mark {
+  animation: usage-review-stage-spin 1s linear infinite;
+}
+@keyframes usage-review-stage-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+.usage-review-stage-label {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.usage-review-stage-count {
+  flex-shrink: 0;
+  color: var(--usage-ink-faint);
+  font-family: var(--font-mono);
+  font-size: var(--font-label);
+}
+.usage-review-continues {
+  color: var(--usage-ink-faint);
+  font-size: var(--font-label);
+}
+
+/* 結果の場面（`kind === "result"`）。**「ふだん」と同じ染め**（`.usage-review-invite`と同じ
+   `color-mix`）で、縦に積む中身は見直し中と同じ組み方にする（頭の行 + 提案の並び）。今回の
+   結果でも「前回の提案」を開いたときでも同じクラスを使う（`usage-review-card.tsx`
+   `ResultReviewCard`）。 */
+.usage-review-result {
+  align-items: stretch;
+  flex-direction: column;
+  gap: 1.125rem;
+  background: color-mix(in srgb, var(--usage-card), var(--accent) 6%);
+  border-color: color-mix(in srgb, var(--usage-rule), var(--accent) 30%);
+}
+.usage-review-result-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+/* 吹き出し。三角は描かず、左上の角だけ立てて（`border-radius`）向きを示す
+   （見本 `token-advice-result-2026-09-23.html` と同じ手）。 */
+.usage-review-result-bubble {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0.6rem 0.875rem;
+  border-radius: 0.25rem 0.875rem 0.875rem 0.875rem;
+  border: 1px solid color-mix(in srgb, var(--usage-rule), var(--accent) 30%);
+  background: color-mix(in srgb, var(--usage-well), var(--accent) 10%);
+}
+.usage-review-result-bubble-label {
+  display: block;
+  margin-bottom: 0.15rem;
+  color: var(--accent);
+  font-size: var(--font-label);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+.usage-review-result-bubble-text {
+  margin: 0;
+  color: var(--usage-ink);
+  font-size: var(--font-body);
+  line-height: 1.7;
+}
+.usage-review-result-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+.usage-review-result-timestamp {
+  color: var(--usage-ink-faint);
+  font-family: var(--font-mono);
+  font-size: var(--font-label);
+  white-space: nowrap;
+}
+.usage-review-result-close {
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--accent);
+  font-size: var(--font-label);
+  cursor: pointer;
+}
+.usage-review-result-close:hover {
+  text-decoration: underline;
+}
+/* 「もう一度見てもらう」。**中立の枠**（`.usage-review-stop` と同じ地味さ）——押せる区画の
+   染めはすでに区画全体が持っているので、ここまで `accent` を足すと強すぎる。 */
+.usage-review-retry {
+  padding: 0.45rem 0.85rem;
+  border: 1px solid var(--usage-rule);
+  border-radius: 0.5rem;
+  background: none;
+  color: var(--usage-ink-cell);
+  font-size: var(--font-label);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.usage-review-retry:hover {
+  border-color: var(--accent);
+  color: var(--usage-ink);
+}
+.usage-review-retry:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.usage-review-proposals {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+/* 提案の札1枚。**地は `--usage-well`**（区画全体の染めより1段沈め、区画の地とは別の面だと
+   分かるようにする）。 */
+.usage-review-proposal {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1rem 1.125rem;
+  border: 1px solid var(--usage-rule);
+  border-radius: 0.875rem;
+  background: var(--usage-well);
+}
+/* 効きめの札。**大は `--accent`（キャラクターの色。押せる区画そのものの強調と同じ）、中は
+   `--state-warn`（意味を固定した色。13.1 原則5の「状態を運ぶ色」に相乗り——大小関係を運ぶのも
+   状態の一種）、小は色を足さず `--usage-rule` の無地**（新しい固定色を増やさずに3段を分ける。
+   docs/screen-design.md 13.2「結果の場面」）。 */
+.usage-review-impact {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 0.75rem;
+}
+.usage-review-impact-label {
+  font-size: 0.625rem;
+  font-weight: 700;
+}
+.usage-review-impact-value {
+  font-size: var(--font-subheading);
+  font-weight: 700;
+}
+.usage-review-impact-large {
+  background: var(--accent);
+  color: var(--ground);
+}
+.usage-review-impact-medium {
+  background: var(--state-warn);
+  color: var(--ground);
+}
+.usage-review-impact-small {
+  background: var(--usage-rule);
+  color: var(--usage-ink-label);
+}
+.usage-review-proposal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.usage-review-proposal-title {
+  margin: 0;
+  color: var(--usage-ink);
+  font-size: var(--font-body);
+  font-weight: 700;
+}
+.usage-review-proposal-basis,
+.usage-review-proposal-action {
+  margin: 0;
+  font-size: var(--font-label);
+  line-height: 1.7;
+}
+.usage-review-proposal-basis {
+  color: var(--usage-ink-label);
+}
+.usage-review-proposal-action {
+  color: var(--usage-ink-cell);
+}
+.usage-review-proposal-note-label {
+  color: var(--usage-ink-note);
+}
+.usage-review-proposal-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+/* 主ボタン。**`--usage-rule` に `--accent` を重ねるだけ**（13.2「染める」— 素の16進は増やさない）。 */
+.usage-review-proposal-primary {
+  padding: 0.45rem 0.85rem;
+  border: 1px solid color-mix(in srgb, var(--usage-rule), var(--accent) 45%);
+  border-radius: 0.5rem;
+  background: none;
+  color: color-mix(in srgb, var(--usage-ink), var(--accent) 55%);
+  font-size: var(--font-label);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.usage-review-proposal-primary:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.usage-review-proposal-dismiss {
+  padding: 0.45rem 0.4rem;
+  border: none;
+  background: none;
+  color: var(--usage-ink-faint);
+  font-size: var(--font-label);
+  cursor: pointer;
+}
+.usage-review-proposal-dismiss:hover {
+  color: var(--usage-ink-cell);
+}
+
+/* いまのコンテキストの内訳の札（`context-usage-card.tsx`）。期間の消費の札（`.usage-card`）と
+   同じ枠・同じ地で、出どころが違うことは見出しの言葉のほうが持つ。 */
+.context-card {
+  display: flex;
+  flex-direction: column;
+  gap: 1.125rem;
+  padding: 1.5rem 1.75rem;
+  border: 1px solid var(--usage-rule);
+  border-radius: 0.875rem;
+  background: var(--usage-card);
+}
+/* 見出しの行。**右の2つは `margin-left: auto` で押しやる**（狭い画面では下へ折り返す）。 */
+.context-head {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.context-title {
+  margin: 0;
+  color: var(--usage-ink);
+  font-size: var(--font-subheading);
+  font-weight: normal;
+}
+.context-note {
+  color: var(--usage-ink-note);
+  font-size: var(--font-label);
+}
+.context-aside {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-left: auto;
+}
+/* 自動圧縮までの残り。**札より沈んだ枠のある小さな箱**（期間の切り替えの外枠と同じ地）。
+   数のほうを明るく、「自動圧縮まで」を一段落とす。 */
+.context-until {
+  padding: 0.1rem 0.5rem;
+  border: 1px solid var(--usage-rule);
+  border-radius: 0.625rem;
+  background: var(--usage-well);
+  color: var(--usage-ink);
+  font-size: var(--font-label);
+  line-height: 1.4;
+}
+.context-until-label {
+  color: var(--usage-ink-label);
+}
+/* 内訳のモデルと取った時刻（機械の側の名前なので等幅。13.1 原則3）。 */
+.context-taken {
+  color: var(--usage-ink-faint);
+  font-family: var(--font-mono);
+  font-size: var(--font-label);
+}
+/* 使っている量・窓の大きさ・割合。**数が主**で、右の2つは小さく静かに。 */
+.context-total {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  margin: 0;
+}
+.context-total-value {
+  color: var(--usage-ink);
+  font-family: var(--font-mono);
+  font-size: var(--font-heading);
+  font-variant-numeric: tabular-nums;
+}
+/* 窓の大きさ（`/ 200k`）より割合を1段明るく（割合のほうが読みたい数）。 */
+.context-total-max,
+.context-total-share {
+  color: var(--usage-ink-note);
+  font-family: var(--font-mono);
+  font-size: var(--font-secondary);
+  font-variant-numeric: tabular-nums;
+}
+.context-total-share {
+  color: var(--usage-ink-soft);
+}
+
+/* 横棒1本。**区間の幅は行ごとの `--context-share`**（割合をそのまま幅にする）。窓を超えた回は
+   合計が100%を超えるので、はみ出しはここで切る。 */
+/* **区間どうしは隙間で切る**（見本。塗りが隣り合うと、色の違いが境目の見分けを1つだけで
+   担うことになる）。両端だけ丸める。 */
+.context-bar {
+  display: flex;
+  overflow: hidden;
+  gap: 2px;
+  width: 100%;
+  height: 1.75rem;
+}
+.context-span {
+  width: var(--context-share);
+}
+.context-span:first-child {
+  border-radius: 0.375rem 0 0 0.375rem;
+}
+.context-span:last-child {
+  border-radius: 0 0.375rem 0.375rem 0;
+}
+
+/* 凡例。**3列の格子**（狭い画面では列が減る。1列の下限は、いちばん長い分類名と数が1行に
+   収まる幅）。 */
+.context-legend {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  column-gap: 2rem;
+  margin: 0;
+}
+/* 1行が1分類。**上の罫線で区切る**（3列のどの列でも行の高さが揃うので、横にも読める）。 */
+.context-legend-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  padding: 0.5rem 0;
+  border-top: 1px solid var(--usage-rule-quiet);
+  font-size: var(--font-secondary);
+  white-space: nowrap;
+}
+.context-legend-name {
+  display: flex;
+  color: var(--usage-ink-soft);
+  align-items: baseline;
+  gap: 0.35rem;
+}
+/* 数（トークン数）を明るく、割合を静かに。 */
+.context-legend-value {
+  margin-left: auto;
+  color: var(--usage-ink-note);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+.context-legend-tokens {
+  color: var(--usage-ink);
+}
+/* 凡例の四角。**横棒と同じ塗り**（同じ `.context-tone-*` を重ねる）。 */
+.context-swatch {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 0.1875rem;
+}
+/* 空き・自動圧縮バッファの四角だけは縁を足す（地に近い塗りなので、縁が無いと四角が消える）。 */
+.context-swatch.context-tone-free,
+.context-swatch.context-tone-buffer {
+  border: 1px solid var(--context-outline);
+}
+
+/* 畳んだ内訳（`details`）。開くと表が縦に並ぶ。凡例の行と同じ罫で上を区切る。 */
+.context-detail {
+  padding-top: 0.625rem;
+  border-top: 1px solid var(--usage-rule-quiet);
+  font-size: var(--font-label);
+}
+.context-detail-summary {
+  color: var(--usage-ink-label);
+  cursor: pointer;
+}
+.context-detail[open] .context-detail-summary {
+  margin-bottom: 0.4rem;
+}
+
+/* 読み込み中の骨組み（`ContextUsageCardSkeleton`）が出す塊。**中身の値だけを灰色にする**
+   （見出し・添え書き・分類名は実物と同じ文字を出す。`context-usage-card.tsx` 冒頭のコメント）。
+   うっすら明滅させる。`prefers-reduced-motion: reduce` では `theme.css` の全体規則
+   （`*, *::before, *::after { animation-duration: 0.01ms !important; }`）がこの
+   `animation` も止めるので、ここに専用の対応は要らない。
+   **`height` を自分では持たない**（`SkeletonBlock` の中身の `&nbsp;` が、届いた実物の文字と
+   同じ `font-size` で本文の行間（`--line-height-body`）ぶんの行の高さを自然に作る。固定の
+   `1em` などを指定すると、行間を含む実物の文字の高さより低くなり、届いた札とずれる。実測は
+   `context-usage-card.tsx` の `SkeletonBlock` のコメント）。文字は `color: transparent` で
+   見えなくする（読み上げは `aria-hidden` で別に止める）。 */
+.context-skeleton-block {
+  display: inline-block;
+  border-radius: 0.25rem;
+  background-color: var(--usage-well);
+  color: transparent;
+  animation: context-skeleton-pulse 1.6s ease-in-out infinite;
+}
+@keyframes context-skeleton-pulse {
+  0%,
+  100% {
+    background-color: var(--usage-well);
+  }
+  50% {
+    background-color: var(--usage-chosen);
+  }
+}
+/* 塊ごとの幅。 */
+.context-skeleton-until {
+  width: 3.5rem;
+}
+.context-skeleton-taken {
+  width: 9rem;
+}
+.context-skeleton-total-value {
+  width: 5rem;
+}
+.context-skeleton-total-max {
+  width: 3rem;
+}
+.context-skeleton-total-share {
+  width: 2.5rem;
+}
+.context-skeleton-legend-value {
+  width: 4.5rem;
+}
+/* 横棒だけは幅・高さを親（`.context-bar`）に合わせる（`flex: 1 1 auto` + 高さの指定なしで
+   `align-items: stretch` の既定に乗る）。届いた札の1本ずつの区間と違い、骨組みは分類ごとの
+   割合が分からないので1本の塊にする。**中身が無い**ので `&nbsp;` は要らない（高さは
+   `stretch` が決める）。 */
+.context-skeleton-bar {
+  flex: 1 1 auto;
+  border-radius: 0.375rem;
+}
+
+/* 分類ごとの塗り（`context-usage-category.ts` の `tone` と対。16進は theme.css だけが持つ）。 */
+.context-tone-system-prompt {
+  background: var(--context-system-prompt);
+}
+.context-tone-system-tools {
+  background: var(--context-system-tools);
+}
+.context-tone-mcp-tools {
+  background: var(--context-mcp-tools);
+}
+.context-tone-memory-files {
+  background: var(--context-memory-files);
+}
+.context-tone-skills {
+  background: var(--context-skills);
+}
+.context-tone-messages {
+  background: var(--context-messages);
+}
+.context-tone-other {
+  background: var(--context-other);
+}
+/* 空きは**地より一段明るい無地**、自動圧縮バッファは**斜線**（色ではなく柄で分ける。
+   どちらも凡例の四角に同じものが出る）。 */
+.context-tone-free {
+  background: var(--context-free);
+}
+.context-tone-buffer {
+  background: repeating-linear-gradient(
+    135deg,
+    var(--context-buffer-stripe) 0 3px,
+    transparent 3px 7px
+  );
+  background-color: var(--context-buffer);
+}
+
+/* 狭い画面（760px 以下）。**札は2列に折り、さらに狭ければ1列**（4列のままだと1枚が5rem ほどに
+   なり、数も棒も読めない）。境目は他の領域と同じ（docs/requirements.md 4.7）。
+   **モデル別・ツール別の2枚は縦に積む**（横のままだと表の列がさらに窮屈になる）。 */
+@media (max-width: 760px) {
+  .usage-card-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .usage-table-row {
+    grid-template-columns: 1fr;
+  }
+  .context-legend {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  /* 段の一覧は2列だと1件が狭すぎて右の数が詰まるので1列にする（「解くべき論点」の回答）。 */
+  .usage-review-stages {
+    grid-template-columns: 1fr;
+  }
+  .usage-review,
+  .usage-review-running-head {
+    flex-wrap: wrap;
+  }
+  .usage-review-actions {
+    align-items: flex-start;
+  }
+  .usage-review-blocked {
+    text-align: left;
+  }
+  /* 結果の頭の行・提案の札も同じ境目で折り返す（`usage-review-blocked` と同じ理由）。 */
+  .usage-review-result-head {
+    flex-wrap: wrap;
+  }
+  .usage-review-result-meta {
+    align-items: flex-start;
+  }
+  .usage-review-proposal {
+    flex-wrap: wrap;
+  }
+  .usage-review-proposal-actions {
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+}
+@media (max-width: 420px) {
+  .usage-card-row {
+    grid-template-columns: 1fr;
+  }
+  .context-legend {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,936 @@
+/* 成果の画面（`src/browser/components/page/achievement/`。docs/screen-design.md 13.10）。**会話の画面と
+   入れ替わる**ので、トークン消費・キャラクターの画面と同じく1枚のページとして縦に流す
+   （4領域の grid も仕切りも持たない）。**キャラクターの色（--accent）は日記の区画の枠と
+   吹き出し・ボタン・灯りにだけ載せる**（13.1 原則1）。しおり・小さな驚き・灯りの暦の
+   「日記あり」の鈴は `--diary-gold-*`（`theme.css`）。 */
+.achievement {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: 0 0.25rem 2rem;
+}
+.achievement-title {
+  margin: 0;
+  color: var(--ink);
+  font-size: var(--font-heading);
+  font-weight: normal;
+}
+
+/* どれも読むだけの1行のお知らせ（空の日・main が読めない・取れなかった。13.10
+   「空の日・数えられないとき」）。 */
+.achievement-note {
+  margin: 0;
+  color: var(--ink-quiet);
+  font-size: var(--font-body);
+}
+
+/* 日の切り替え（13.10「並べるもの」1）。題「成果」と同じ行に置く。 */
+.achievement-day-switch {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.achievement-day-switch-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+.achievement-day-switch-button {
+  height: 2.25rem;
+  min-width: 2.25rem;
+  padding: 0 0.6rem;
+  border: 1px solid var(--rule);
+  border-radius: 0.5625rem;
+  background: transparent;
+  color: var(--ink);
+  font-size: var(--font-secondary);
+  font-family: var(--font-sans);
+  cursor: pointer;
+}
+.achievement-day-switch-button[aria-disabled="true"] {
+  color: var(--ink-quiet);
+  cursor: default;
+}
+.achievement-day-switch-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 9rem;
+}
+.achievement-day-switch-relative {
+  font-size: var(--font-label);
+  color: var(--accent);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+.achievement-day-switch-date {
+  font-size: var(--font-subheading);
+  color: var(--ink);
+}
+.achievement-day-switch-today {
+  height: 2.25rem;
+  padding: 0 0.75rem;
+  border: 1px solid var(--rule);
+  border-radius: 0.5625rem;
+  background: transparent;
+  color: var(--ink);
+  font-size: var(--font-secondary);
+  font-family: var(--font-sans);
+  cursor: pointer;
+}
+
+/* 日記の区画（13.10「並べるもの」2）。地・枠にキャラクターの色をわずかに載せる（--surface-accent
+   と、accent を混ぜた枠）。 */
+.achievement-diary {
+  display: grid;
+  grid-template-columns: minmax(7rem, 9.5rem) minmax(0, 1fr);
+  gap: 1.25rem;
+  align-items: end;
+  padding: 1.25rem 1.5rem;
+  border: 1px solid color-mix(in srgb, var(--rule), var(--accent) 45%);
+  border-radius: 1rem;
+  background: var(--surface-accent);
+}
+.achievement-diary.is-fetching {
+  opacity: 0.5;
+}
+.achievement-diary-portrait {
+  width: 100%;
+  align-self: end;
+}
+.achievement-diary-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  min-width: 0;
+  padding-bottom: 0.25rem;
+}
+.achievement-diary-header {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+.achievement-diary-name {
+  font-size: var(--font-label);
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 0.05em;
+}
+.achievement-diary-status {
+  font-size: var(--font-label);
+  color: var(--ink-quiet);
+}
+/* 「日記帳で読む」（13.10「並べるもの」2）。頭の行の右端へ押しやる。 */
+.achievement-diary-open-book {
+  margin-left: auto;
+  border: none;
+  background: transparent;
+  padding: 0;
+  color: var(--accent);
+  font-size: var(--font-label);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  cursor: pointer;
+}
+
+/* 吹き出し（明朝体。13.3「例外は日記の本文だけ」）。 */
+.achievement-diary-bubble {
+  position: relative;
+  padding: 0.9rem 1.25rem;
+  border-radius: 1rem;
+  border: 1.5px solid var(--accent);
+  background: var(--surface-accent);
+}
+.achievement-diary-bubble p {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: var(--font-body);
+  line-height: 2;
+  color: var(--ink);
+}
+/* 日記がまだ無い・書いている・書けなかった、どれも点線の枠（13.10「並べるもの」2「日記がまだ
+   無い日」・「ボタンを押せないとき・押したあと」）。 */
+.achievement-diary-bubble-empty {
+  padding: 0.9rem 1.25rem;
+  border-radius: 1rem;
+  border: 1.5px dashed var(--rule);
+  min-height: 1.5rem;
+}
+.achievement-diary-bubble-empty p {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: var(--font-body);
+  line-height: 1.8;
+  color: var(--ink-quiet);
+}
+.achievement-diary-bubble-empty p + p {
+  margin-top: 0.5rem;
+  color: var(--ink);
+}
+
+/* 3段の進み（13.10「ボタンを押せないとき・押したあと」）。 */
+.achievement-diary-progress {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.achievement-diary-progress-item {
+  font-size: var(--font-secondary);
+  color: var(--ink-quiet);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.achievement-diary-progress-item::before {
+  content: "";
+  display: inline-block;
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
+  border: 1.5px solid var(--ink-quiet);
+}
+.achievement-diary-progress-item[data-state="done"] {
+  color: var(--ink);
+}
+.achievement-diary-progress-item[data-state="done"]::before {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+.achievement-diary-progress-item[data-state="current"] {
+  color: var(--ink);
+}
+.achievement-diary-progress-item[data-state="current"]::before {
+  border-color: var(--accent);
+  animation: achievement-progress-spin 1s linear infinite;
+  border-top-color: transparent;
+}
+@keyframes achievement-progress-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 数の札2枚（13.10「並べるもの」2。終えたタスク → コミットの順）。 */
+.achievement-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+.achievement-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--rule);
+  border-radius: 0.75rem;
+  background: var(--surface);
+  min-width: 0;
+}
+.achievement-card-label {
+  margin: 0;
+  color: var(--ink-quiet);
+  font-size: var(--font-label);
+  font-weight: normal;
+}
+.achievement-card-value {
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: var(--font-heading);
+  font-variant-numeric: tabular-nums;
+}
+.achievement-card-note {
+  margin: 0.2rem 0 0;
+  color: var(--ink-quiet);
+  font-size: var(--font-secondary);
+}
+
+/* 振り返りのボタン（13.10「並べるもの」4）。 */
+.achievement-review {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.4rem;
+}
+.achievement-review-button {
+  height: 2.5rem;
+  padding: 0 1.125rem;
+  border: 1px solid var(--accent);
+  border-radius: 0.5625rem;
+  background: transparent;
+  color: var(--accent);
+  font-family: var(--font-sans);
+  font-size: var(--font-secondary);
+  font-weight: 700;
+  cursor: pointer;
+}
+.achievement-review-button:hover {
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+.achievement-review-button[aria-disabled="true"] {
+  border-color: var(--rule);
+  color: var(--ink-quiet);
+  cursor: default;
+}
+.achievement-review-note {
+  margin: 0;
+  color: var(--ink-quiet);
+  font-size: var(--font-secondary);
+}
+.achievement-diary-watch {
+  border: none;
+  background: transparent;
+  padding: 0;
+  color: var(--accent);
+  font-size: var(--font-secondary);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  cursor: pointer;
+}
+
+/* しおり（13.10「並べるもの」3）。 */
+.achievement-bookmark {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--diary-gold-border);
+  border-radius: 1rem;
+  background: var(--diary-gold-surface);
+}
+.achievement-bookmark-heading {
+  margin: 0;
+  font-size: var(--font-label);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--diary-gold-ink);
+}
+.achievement-bookmark-task {
+  margin: 0;
+  font-size: var(--font-subheading);
+  color: var(--diary-gold-strong);
+  line-height: 1.6;
+}
+.achievement-bookmark-task-id {
+  margin-right: 0.6rem;
+  font-family: var(--font-mono);
+  font-size: var(--font-secondary);
+  color: var(--diary-gold-ink-quiet);
+}
+.achievement-bookmark-reason {
+  margin: 0;
+  font-size: var(--font-secondary);
+  color: var(--diary-gold-ink);
+  line-height: 1.7;
+}
+
+/* 小さな驚き（13.10「並べるもの」4）。 */
+.achievement-surprise {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.achievement-surprise-heading {
+  margin: 0;
+  font-size: var(--font-subheading);
+  font-weight: 700;
+  color: var(--ink);
+}
+.achievement-surprise-note {
+  margin-left: 0.6rem;
+  font-size: var(--font-secondary);
+  font-weight: normal;
+  color: var(--ink-quiet);
+}
+.achievement-surprise-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+  gap: 0.875rem;
+}
+.achievement-surprise-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 1rem 1.125rem;
+  border: 1px solid var(--diary-gold-border);
+  border-radius: 1rem;
+  background: var(--diary-gold-surface);
+}
+.achievement-surprise-card-title {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: var(--font-subheading);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--diary-gold-strong);
+}
+.achievement-surprise-card-body {
+  margin: 0;
+  font-size: var(--font-secondary);
+  line-height: 1.6;
+  color: var(--diary-gold-ink);
+}
+.achievement-surprise-card-id {
+  margin-right: 0.5rem;
+  font-family: var(--font-mono);
+  font-size: var(--font-secondary);
+  color: var(--diary-gold-ink-quiet);
+}
+.achievement-surprise-card-number {
+  font-family: var(--font-mono);
+  font-size: var(--font-heading);
+  color: var(--diary-gold-strong);
+}
+.achievement-surprise-card-footer {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin: 0;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--diary-gold-border);
+  font-size: var(--font-label);
+  color: var(--diary-gold-ink-quiet);
+}
+.achievement-surprise-card-spacer {
+  flex-grow: 1;
+}
+
+/* 灯りの暦（13.10「灯りの暦」）。 */
+.achievement-calendar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem 1.125rem;
+  border: 1px solid var(--rule);
+  border-radius: 1rem;
+  background: var(--surface);
+}
+.achievement-calendar-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+.achievement-calendar-title {
+  margin: 0;
+  font-size: var(--font-subheading);
+  font-weight: 700;
+  color: var(--ink);
+}
+.achievement-calendar-note {
+  margin-left: 0.6rem;
+  font-size: var(--font-secondary);
+  font-weight: normal;
+  color: var(--ink-quiet);
+}
+.achievement-calendar-legend {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+.achievement-calendar-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: var(--font-label);
+  color: var(--ink-quiet);
+}
+.achievement-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0.375rem;
+}
+.achievement-calendar-head {
+  text-align: center;
+  font-size: var(--font-label);
+  color: var(--ink-quiet);
+}
+.achievement-calendar-day {
+  position: relative;
+  height: 3.5rem;
+  border-radius: 0.625rem;
+  border: 1px solid transparent;
+  background: transparent;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.achievement-calendar-day:hover {
+  background: var(--rule-quiet);
+}
+.achievement-calendar-day[data-viewed="yes"] {
+  border-color: var(--accent);
+  background: var(--surface-accent);
+}
+.achievement-calendar-day-date {
+  position: absolute;
+  top: 0.3rem;
+  left: 0.45rem;
+  font-size: var(--font-label);
+  font-family: var(--font-mono);
+  color: var(--ink-quiet);
+}
+.achievement-calendar-day-bell {
+  position: absolute;
+  top: 0.3rem;
+  right: 0.4rem;
+  display: flex;
+}
+.achievement-calendar-day-today {
+  position: absolute;
+  bottom: 0.25rem;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: var(--font-label);
+  color: var(--accent);
+  font-weight: 700;
+}
+.achievement-calendar-future {
+  height: 3.5rem;
+  border-radius: 0.625rem;
+  box-sizing: border-box;
+  padding: 0.3rem 0.45rem;
+  font-size: var(--font-label);
+  font-family: var(--font-mono);
+  color: var(--ink-quiet);
+  opacity: 0.4;
+}
+.achievement-calendar-range {
+  margin: 0;
+  font-size: var(--font-label);
+  color: var(--ink-quiet);
+}
+.achievement-calendar-lamp-lit {
+  filter: drop-shadow(0 0 3px color-mix(in srgb, var(--accent) 30%, transparent));
+}
+.achievement-calendar-lamp-bright {
+  filter: drop-shadow(0 0 7px color-mix(in srgb, var(--accent) 60%, transparent));
+}
+
+/* つくもの日記帳の見開き（13.10「日記帳の見開き」）。`<dialog>` は既定の中央寄せに任せ、
+   `speech-log.tsx` のようなアンカー位置決めは使わない（キャラビューの舞台の上に重ねる
+   speech-log と違い、日記帳は成果の画面のどこからでも開くため）。 */
+.diary-book {
+  border: none;
+  padding: 0;
+  background: transparent;
+  color: var(--ink);
+  max-width: none;
+  max-height: none;
+}
+.diary-book::backdrop {
+  background: color-mix(in srgb, var(--ground) 88%, transparent);
+}
+.diary-book-stage {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: min(92vw, 72rem);
+}
+.diary-book-topbar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+.diary-book-title {
+  font-family: var(--font-serif);
+  font-size: var(--font-heading);
+  letter-spacing: 0.08em;
+  color: var(--ink);
+}
+.diary-book-open-note {
+  font-size: var(--font-label);
+  color: var(--ink-quiet);
+}
+.diary-book-topbar-spacer {
+  flex-grow: 1;
+}
+.diary-book-topbar-button {
+  height: 2.25rem;
+  padding: 0 0.75rem;
+  border: 1px solid var(--rule);
+  border-radius: 0.5625rem;
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: var(--font-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.diary-book-topbar-button[aria-disabled="true"] {
+  color: var(--ink-quiet);
+  cursor: default;
+}
+
+/* **高さを固定する**（`max-height` だけだと中の縦書き本文（`flex: 1`）が配る先の高さを
+   持てず、実測でつぶれて見えなくなった）。 */
+.diary-book-spread {
+  display: flex;
+  min-width: 0;
+  height: min(78vh, 42rem);
+  border: 1px solid var(--diary-gold-border);
+  border-radius: 0.875rem;
+  overflow: hidden;
+  box-shadow: 0 20px 50px color-mix(in srgb, var(--ground) 80%, transparent);
+}
+.diary-book-gutter {
+  width: 1rem;
+  flex-shrink: 0;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--ground) 40%, transparent),
+    transparent
+  );
+}
+.diary-book-left,
+.diary-book-right {
+  flex: 1 1 50%;
+  min-width: 0;
+  min-height: 0;
+  padding: 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  background: var(--diary-gold-surface);
+  overflow-y: auto;
+}
+.diary-book-right {
+  position: relative;
+  background-image: repeating-linear-gradient(
+    90deg,
+    transparent 0 2.5rem,
+    color-mix(in srgb, var(--ink) 8%, transparent) 2.5rem calc(2.5rem + 1px)
+  );
+}
+
+/* 左ページ — しおり（成果の画面本体の `.achievement-bookmark` と同じ色。金色のしおりの帯だけ
+   ここに足す）。 */
+.diary-book-bookmark {
+  position: relative;
+}
+.diary-book-ribbon {
+  position: absolute;
+  top: -0.5rem;
+  right: 3.5rem;
+  width: 1.375rem;
+  height: 7rem;
+  background: var(--diary-gold);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 86%, 0 100%);
+}
+.diary-book-ribbon[data-state="pending"] {
+  background: transparent;
+  border: 1.5px dashed var(--diary-gold-border);
+  border-bottom: none;
+  clip-path: none;
+  height: 5.5rem;
+}
+.diary-book-bookmark-heading {
+  margin: 0;
+  padding-right: 4.5rem;
+  font-family: var(--font-serif);
+  font-size: var(--font-secondary);
+  letter-spacing: 0.12em;
+  color: var(--diary-gold-ink);
+}
+.diary-book-bookmark-pending {
+  margin: 0.4rem 0 0;
+  font-family: var(--font-serif);
+  font-size: var(--font-secondary);
+  color: var(--diary-gold-ink-quiet);
+}
+.diary-book-bookmark-task {
+  margin: 0.4rem 0 0;
+  font-family: var(--font-serif);
+  font-size: var(--font-subheading);
+  color: var(--diary-gold-strong);
+  line-height: 1.7;
+}
+.diary-book-bookmark-task-id {
+  margin-right: 0.5rem;
+  font-family: var(--font-mono);
+  font-size: var(--font-secondary);
+  color: var(--diary-gold-ink-quiet);
+}
+.diary-book-bookmark-reason {
+  margin: 0.3rem 0 0;
+  font-family: var(--font-serif);
+  font-size: var(--font-secondary);
+  color: var(--diary-gold-ink);
+  line-height: 1.7;
+}
+
+/* 左ページ — この日に終えたこと。 */
+.diary-book-tasks-heading {
+  margin: 0 0 0.25rem;
+  font-family: var(--font-serif);
+  font-size: var(--font-secondary);
+  letter-spacing: 0.1em;
+  color: var(--ink-quiet);
+}
+.diary-book-task-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.diary-book-task-row {
+  display: flex;
+  gap: 0.6rem;
+  align-items: baseline;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--ink) 8%, transparent);
+}
+.diary-book-task-id {
+  width: 3rem;
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: var(--font-label);
+  color: var(--ink-quiet);
+}
+.diary-book-task-summary {
+  font-family: var(--font-serif);
+  font-size: var(--font-secondary);
+  color: var(--ink);
+  line-height: 1.6;
+}
+.diary-book-tasks-footer {
+  margin: 0;
+  padding-top: 0.4rem;
+  font-size: var(--font-label);
+  color: var(--ink-quiet);
+}
+
+/* 左ページ — 卒業・節目の丸い印。 */
+.diary-book-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: auto;
+}
+.diary-book-badge {
+  width: 5.5rem;
+  height: 5.5rem;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 2px solid var(--diary-gold);
+  color: var(--diary-gold);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transform: rotate(-8deg);
+  font-family: var(--font-serif);
+}
+.diary-book-badge-title {
+  font-size: var(--font-secondary);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+.diary-book-badge-sub {
+  margin-top: 0.15rem;
+  font-family: var(--font-mono);
+  font-size: var(--font-label);
+}
+
+/* 右ページ — 縦書き。 */
+/* **`flex-direction: column`**（横に並べる側）。縦書き（`writing-mode: vertical-rl`）では
+   flex の main axis が書字方向（インライン軸＝縦）に付くので、既定の `row` のままだと3つが
+   縦に積み上がってしまう（実測）。3つを右から左へ横に並べたいので、ここでは block 軸
+   （横）を main axis にする `column` を使う。 */
+.diary-book-date-head {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.875rem;
+  flex-shrink: 0;
+}
+.diary-book-kanji-date {
+  font-family: var(--font-serif);
+  font-size: var(--font-heading);
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: 0.15em;
+}
+.diary-book-weekday {
+  font-family: var(--font-serif);
+  font-size: var(--font-secondary);
+  color: var(--ink-quiet);
+  letter-spacing: 0.2em;
+}
+.diary-book-lamp {
+  writing-mode: vertical-rl;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: var(--font-label);
+  color: var(--ink-quiet);
+}
+/* 本文。**縦書きの自然な伸び先は列（横方向）**なので、`overflow: auto` で両軸に任せる
+   （`docs/screen-design.md` 13.10「ページの中を縦にスクロール」は仮の決め）。 */
+.diary-book-body {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  flex: 1;
+  min-height: 0;
+  margin: 0;
+  overflow: auto;
+}
+.diary-book-paragraph {
+  margin: 0;
+  margin-block-end: 1.5em;
+  font-family: var(--font-serif);
+  font-size: var(--font-body);
+  line-height: 2.4;
+  color: var(--ink);
+}
+.diary-book-paragraph-time {
+  display: block;
+  margin-block-end: 0.4em;
+  font-size: var(--font-label);
+  color: var(--ink-quiet);
+}
+.diary-book-blank-body {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  flex: 1;
+  min-height: 0;
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: var(--font-body);
+  line-height: 2.4;
+  color: var(--ink-quiet);
+}
+
+/* 右ページ — 署名と、白紙の日の「この日を振り返る」。 */
+.diary-book-signature {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-shrink: 0;
+}
+.diary-book-signature-portrait {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.6rem;
+}
+.diary-book-signature-image {
+  width: 4.5rem;
+}
+.diary-book-signature-name {
+  font-family: var(--font-serif);
+  font-size: var(--font-secondary);
+  color: var(--ink-quiet);
+}
+.diary-book-review {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.diary-book-review-button {
+  height: 2.75rem;
+  padding: 0 1.25rem;
+  border: none;
+  border-radius: 0.875rem;
+  background: var(--accent);
+  color: var(--ground);
+  font-family: var(--font-sans);
+  font-size: var(--font-body);
+  font-weight: 700;
+  cursor: pointer;
+}
+.diary-book-review-button[aria-disabled="true"] {
+  background: var(--rule);
+  color: var(--ink-quiet);
+  cursor: default;
+}
+.diary-book-review-note {
+  margin: 0;
+  max-width: 14rem;
+  font-size: var(--font-label);
+  color: var(--ink-quiet);
+}
+
+/* 目次（13.10「日記帳の見開き」目次）。見開きの上に重ねる。 */
+.diary-book-toc {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: min(90vw, 26rem);
+  max-height: 80%;
+  padding: 1.25rem;
+  border: 1px solid var(--rule);
+  border-radius: 0.875rem;
+  background: var(--surface);
+  box-shadow: 0 20px 50px color-mix(in srgb, var(--ground) 80%, transparent);
+  overflow-y: auto;
+  z-index: 1;
+}
+.diary-book-toc-month {
+  margin-bottom: 1rem;
+}
+.diary-book-toc-heading {
+  margin: 0 0 0.4rem;
+  font-size: var(--font-subheading);
+  font-weight: 700;
+  color: var(--ink);
+}
+.diary-book-toc-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+.diary-book-toc-day {
+  width: 100%;
+  text-align: left;
+  padding: 0.4rem 0.5rem;
+  border: none;
+  border-radius: 0.5rem;
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: var(--font-secondary);
+  cursor: pointer;
+}
+.diary-book-toc-day:hover {
+  background: var(--rule-quiet);
+}
+
+/* 狭い画面では左右のページを縦に積む（右ページが上。13.10「日記帳の見開き」）。 */
+@media (max-width: 760px) {
+  .diary-book-stage {
+    width: min(96vw, 40rem);
+  }
+  .diary-book-spread {
+    flex-direction: column;
+    height: min(80vh, 54rem);
+  }
+  .diary-book-gutter {
+    display: none;
+  }
+  .diary-book-right {
+    order: -1;
+  }
+  .diary-book-left,
+  .diary-book-right {
+    padding: 1.25rem;
+  }
+}

@@ -39,8 +39,8 @@ const QUESTION_PENDING = {
 
 // 架空のファイル一覧（`@` 補完が引く `GET /repository-file` の代役）。
 const FIXTURE_FILE_PATHS = [
-  "src/browser/features/dispatch/composer.tsx",
-  "src/browser/features/dispatch/file-suggestions.tsx",
+  "src/browser/features/festival/composer.tsx",
+  "src/browser/features/festival/file-suggestions.tsx",
   "src/cli.ts",
 ]
 
@@ -288,13 +288,13 @@ describe("Composer", () => {
       expect(screen.getAllByRole("listitem")).toHaveLength(2)
     })
     expect(screen.getAllByRole("listitem").map((item) => item.textContent)).toEqual([
-      "src/browser/features/dispatch/composer.tsx",
-      "src/browser/features/dispatch/file-suggestions.tsx",
+      "src/browser/features/festival/composer.tsx",
+      "src/browser/features/festival/file-suggestions.tsx",
     ])
 
     fireEvent.keyDown(textArea(), { key: "Tab" })
 
-    expect(textArea().value).toBe("@src/browser/features/dispatch/composer.tsx ")
+    expect(textArea().value).toBe("@src/browser/features/festival/composer.tsx ")
     expect(calls).toEqual([])
   })
 

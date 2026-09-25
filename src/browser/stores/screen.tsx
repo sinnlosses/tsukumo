@@ -20,7 +20,7 @@
 //
 // **成果の画面で見ている日も hash に持つ**（`#achievement?date=<日付>`。13.10）。読むのは
 // `useAchievementDateSelection`、日を切り替える呼び先は `selectAchievementDate` /
-// `selectAchievementToday`（前後の日の計算は呼ぶ側 —— `features/achievement/` が持つ。
+// `selectAchievementToday`（前後の日の計算は呼ぶ側 —— `components/page/achievement/` が持つ。
 // ここは hash の読み書きだけ）。
 
 import {

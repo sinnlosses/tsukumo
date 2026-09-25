@@ -61,7 +61,7 @@ const BORROWED_DOM_GLOBAL_NAMES = [
   // 要る。DOM を組み立てる部品ではないが、他のテスト（`fetch` / `WebSocket` を使うもの）には
   // 影響しない値の保管場所なので、ここに含めてよい。
   "localStorage",
-  // `src/browser/features/character-screen/character-edit.tsx`（選んだ立ち絵を data URL にする）のテストが要る。
+  // `src/browser/components/page/character/character-edit.tsx`（選んだ立ち絵を data URL にする）のテストが要る。
   // **2つセットで借りる** — 片方だけ差し替えると `FileReader` が相手の `Blob` を受け取れない。
   "File",
   "FileReader",

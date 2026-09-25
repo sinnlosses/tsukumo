@@ -180,7 +180,7 @@ tsukumo の画面だけになる。
 
 **新しいコードは `src/shared/` / `src/server/<機能>/core/` / `src/server/<機能>/adapter/` /
 `src/browser/` に置く**（`docs/design.md` 2章）。**層の名前は「どの実行環境で動くか」を表す**
-（2026-09-20。`docs/research/architecture-placement.md`）。サーバ側は**まずどの機能かを決め**
+（2026-09-20。`docs/history/architecture-placement.md`）。サーバ側は**まずどの機能かを決め**
 （機能の一覧は `docs/design.md` 2章「サーバの機能と、機能どうしの辺」）、**外の世界（SDK・
 HTTP/WebSocket・ホスト・ファイル・子プロセス）に触るならその機能の `adapter/`、触らない判断なら
 `core/`。** どの機能にも属さず2つ以上の読み手を持つものだけ、共有の `src/server/core/` /

@@ -196,11 +196,8 @@ describe("コメント中の日付", () => {
 // - **置かれる機能**（`BROWSER_PLACED_FEATURES`）: 自分の置き場所を持たず、領域の中に
 //   置いてもらう。**どの機能も import しない（葉）**ので、領域から引いても輪にならない
 //
-// **一覧は `browser/` からの相対パスで引く**（`components/` を `page/` `domain/` `ui/` の3段に
-// 割る移行の途中、領域は段2〜4が終わるまで `features/` に残ったまま少しずつ
-// `components/domain/<枠>/` や `components/page/<画面>/` へ移るので、名前だけでは引けない。
-// `docs/design.md` 2章「段と、test/architecture.test.ts の直し方」。段が進むごとにここのパスを
-// 直すだけで、下の判定ロジック（`browserFeatureOf`）は変えずに済む）。
+// **一覧は `browser/` からの相対パスで引く**（領域は `components/domain/<枠>/` と
+// `components/page/<画面>/` に分かれているので、名前だけでは引けない）。
 //
 // `browser/components/`（`page/` `domain/` `ui/` の3段。一覧のパスに無いディレクトリ）・
 // `browser/lib/` `browser/stores/` `browser/styles/` と `browser/main.tsx` は誰から引いてもよい
@@ -216,10 +213,10 @@ const BROWSER_REGIONS = [
   "components/domain/screen-nav",
   "components/page/conversation/main-view",
   "components/page/conversation/character-view",
-  "features/character-screen",
+  "components/page/character",
   "components/page/conversation/chat-view",
-  "features/token-usage",
-  "features/achievement",
+  "components/page/token-usage",
+  "components/page/achievement",
   "components/domain/sidebar",
   "components/page/conversation/dispatch",
 ] as const
@@ -254,10 +251,6 @@ describe("browser/ の機能どうしの import", () => {
 // `main.tsx` / `features/` / `components/page/` / `components/domain/` / `components/ui/` /
 // `hooks/` / `domain/` / `lib/` / `utils/` / `stores/` という箱をまたぐ辺を見る
 // （`shared` への辺は層の検査 `ALLOWED_IMPORTS` がすでに見ているので、ここでは対象にしない）。
-//
-// `components/` は `page/` `domain/` `ui/` の3段に割る移行の途中（`docs/design.md` 2章「いまの
-// `src/browser/` から移す先」）。**移行の途中だけ `features` → `components/domain` の辺を許す**
-// （まだ `features/` にある領域が `Portrait` などの共有部品を読むため。移行の最後の段でこの辺を外す）。
 //
 // `browser/hooks/` は**機能の語彙を持たない React のフック**の箱で、`components/ui/` と同じ扱い
 // （誰から引いてもよく、自分は `lib/` までしか引かない）。機能に固有のフックは機能の中の
@@ -321,18 +314,7 @@ const ALLOWED_BROWSER_BOX_IMPORTS: Readonly<Record<BrowserBox, ReadonlySet<Brows
     "utils",
     "stores",
   ]),
-  features: new Set([
-    "features",
-    // 移行の途中だけの例外（上のコメント）。まだ features/ にある領域が components/domain/ の
-    // 共有部品（Portrait など）を読むため
-    "components/domain",
-    "components/ui",
-    "hooks",
-    "domain",
-    "lib",
-    "utils",
-    "stores",
-  ]),
+  features: new Set(["features", "components/ui", "hooks", "domain", "lib", "utils", "stores"]),
   "components/ui": new Set(["components/ui", "hooks", "lib", "utils"]),
   hooks: new Set(["hooks", "lib", "utils"]),
   domain: new Set(["domain", "lib", "utils"]),

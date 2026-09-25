@@ -1,5 +1,5 @@
 // いまのコンテキストの内訳（`docs/glossary.md`「コンテキストの内訳」）を取りに行き、
-// 見た目（`features/token-usage/context-usage-card.tsx` / `components/domain/sidebar/context-usage-row.tsx`）が
+// 見た目（`components/page/token-usage/context-usage-card.tsx` / `components/domain/sidebar/context-usage-row.tsx`）が
 // 算出せずにそのまま描ける形へ畳む。**2つの機能が読むので `browser/domain/`**（トークン消費の
 // 画面の札に加えて、サイドバーのセッション情報の行がこの内訳を読むようになったため。
 // docs/design.md 2章「上げる引き金は「2つ目の読み手が出たとき」」）。
@@ -41,7 +41,7 @@ import { sessionTokenUrl } from "../lib/session-token-url.ts"
 
 /** 横棒の一区間と、凡例の1行（**同じ並びを両方が使う**ので、色と名前が必ず対になる）。 */
 export type ContextUsageRow = {
-  /** SDK が返した分類の名前（日本語への置き換えと色は `../features/token-usage/context-usage-category.ts`）。 */
+  /** SDK が返した分類の名前（日本語への置き換えと色は `../components/page/token-usage/context-usage-category.ts`）。 */
   readonly name: string
   readonly kind: ContextCategoryKind
   readonly tokens: number

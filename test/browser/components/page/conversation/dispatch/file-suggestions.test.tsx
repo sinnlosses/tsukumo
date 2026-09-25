@@ -11,8 +11,8 @@ import {
 
 // フィクスチャはすべて手で書いた架空のパス（docs/coding-standards.md「会話内容の扱い」）。
 const PATHS = [
-  "src/browser/features/dispatch/composer.tsx",
-  "src/browser/features/dispatch/file-suggestions.tsx",
+  "src/browser/features/festival/composer.tsx",
+  "src/browser/features/festival/file-suggestions.tsx",
   "src/cli.ts",
   "README.md",
 ] as const
@@ -54,14 +54,14 @@ describe("filePathQuery", () => {
 describe("matchingFilePaths", () => {
   it("前方一致を先に、続けて部分一致を出す", () => {
     expect(matchingFilePaths(PATHS, "src/browser/fe")).toEqual([
-      "src/browser/features/dispatch/composer.tsx",
-      "src/browser/features/dispatch/file-suggestions.tsx",
+      "src/browser/features/festival/composer.tsx",
+      "src/browser/features/festival/file-suggestions.tsx",
     ])
   })
 
   it("パスの途中に含むだけでも候補になる（部分一致）", () => {
     expect(matchingFilePaths(PATHS, "composer")).toEqual([
-      "src/browser/features/dispatch/composer.tsx",
+      "src/browser/features/festival/composer.tsx",
     ])
   })
 

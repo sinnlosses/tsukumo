@@ -1,0 +1,152 @@
+import { afterEach, describe, expect, it } from "bun:test"
+
+import { cleanup, render, screen } from "@testing-library/react"
+
+import {
+  type AchievementDaySwitch,
+  type AchievementReviewButton,
+} from "../../../../../src/browser/components/page/achievement/hooks/use-achievement.ts"
+import { type DiaryBookModel } from "../../../../../src/browser/components/page/achievement/hooks/use-diary-book.ts"
+import {
+  PresentationalAchievementScreen,
+  type PresentationalAchievementScreenProps,
+} from "../../../../../src/browser/components/page/achievement/presentational-achievement-screen.tsx"
+
+/**
+ * 各区画（`day-switch.tsx` / `diary-section.tsx` / `bookmark-section.tsx` /
+ * `surprise-section.tsx` / `lantern-calendar.tsx`）の中身は個別のテストが持つ。ここは
+ * **並ぶ順と、main が読めないときに他をすべて隠すこと**だけを測る（フィクスチャは架空の値。
+ * docs/coding-standards.md「会話内容の扱い」）。
+ */
+
+afterEach(() => {
+  cleanup()
+})
+
+const NOOP = (): void => {}
+const NOOP_DATE = (_date: string): void => {}
+
+const KNOWN_TODAY: AchievementDaySwitch = { kind: "known", date: "2026-09-24", today: "2026-09-24" }
+
+const AVAILABLE_REVIEW: AchievementReviewButton = {
+  label: "架空の名前と振り返る",
+  availability: { kind: "available" },
+  onReview: NOOP,
+}
+
+const CLOSED_DIARY_BOOK: DiaryBookModel = {
+  ref: { current: null },
+  open: false,
+  openNote: "",
+  page: { kind: "loading" },
+  previous: undefined,
+  next: undefined,
+  toc: { open: false, months: [] },
+  onOpenFromCalendar: NOOP_DATE,
+  onOpenFromDiarySection: NOOP,
+  onPrevious: NOOP,
+  onNext: NOOP,
+  onToggleToc: NOOP,
+  onSelectTocDate: NOOP_DATE,
+  onClose: NOOP,
+  onDialogClick: NOOP,
+}
+
+const DEFAULT_PROPS: PresentationalAchievementScreenProps = {
+  view: {
+    kind: "ready",
+    commitCount: 3,
+    doneTasks: { kind: "known", items: [] },
+    graduations: [],
+    milestones: [],
+    diary: { kind: "none" },
+  },
+  daySwitch: KNOWN_TODAY,
+  isFetching: false,
+  onPreviousDay: NOOP,
+  onNextDay: NOOP,
+  onToday: NOOP,
+  onSelectDate: NOOP_DATE,
+  review: AVAILABLE_REVIEW,
+  writing: { kind: "none" },
+  diaryPortrait: {
+    name: "架空の名前",
+    portrait: { portraitUrl: undefined, accent: undefined, altText: "" },
+  },
+  diaryReveal: false,
+  onWatchConversation: NOOP,
+  calendar: { kind: "loading" },
+  onOpenDiaryBook: NOOP,
+  diaryBook: CLOSED_DIARY_BOOK,
+}
+
+function renderScreen(
+  overrides: Partial<PresentationalAchievementScreenProps> = {},
+): ReturnType<typeof render> {
+  return render(<PresentationalAchievementScreen {...DEFAULT_PROPS} {...overrides} />)
+}
+
+describe("PresentationalAchievementScreen", () => {
+  it("main が読めなければ、日の切り替え・日記の区画・暦を出さず1行だけ", () => {
+    renderScreen({ view: { kind: "unavailable" }, daySwitch: { kind: "unknown" } })
+
+    expect(
+      screen.getByText("このディレクトリでは成果を数えられない（main が読めない）"),
+    ).toBeDefined()
+    expect(document.querySelector(".achievement-day-switch")).toBeNull()
+    expect(document.querySelector(".achievement-diary")).toBeNull()
+    expect(document.querySelector(".achievement-calendar")).toBeNull()
+  })
+
+  it("日の切り替え → 日記の区画 → 灯りの暦の順で並ぶ（しおり・小さな驚きは無ければ挟まらない）", () => {
+    renderScreen()
+
+    const root = document.querySelector(".achievement")
+    const children = [...(root?.children ?? [])].map((node) => node.className)
+    // 灯りの暦は achievement-calendar のクラスを持つ区画として最後に来る。
+    expect(children.at(-1)).toBe("achievement-calendar")
+    expect(children[0]).toBe("achievement-day-switch")
+  })
+
+  it("しおりがあれば日記の区画のあとに出る", () => {
+    renderScreen({
+      view: {
+        kind: "ready",
+        commitCount: 3,
+        doneTasks: { kind: "known", items: [{ id: "T-1", summary: "架空のタスク" }] },
+        graduations: [],
+        milestones: [],
+        diary: {
+          kind: "written",
+          diary: {
+            version: 1,
+            date: "2026-09-24",
+            paragraphs: [
+              {
+                writtenAt: "2026-09-24T21:40:00+09:00",
+                body: "架空の本文。",
+                expression: "proud",
+                writer: { pack: "fixture", name: "架空の名前" },
+              },
+            ],
+            bookmark: {
+              kind: "placed",
+              taskId: "T-1",
+              summary: "架空のタスク",
+              reason: "架空の理由",
+            },
+          },
+        },
+      },
+    })
+
+    expect(screen.getByText("架空の名前が選んだ この日のいちばん")).toBeDefined()
+  })
+
+  it("灯りの暦は main が読める限り、1日ぶんが取れていなくても出る", () => {
+    renderScreen({ view: { kind: "failed" }, calendar: { kind: "loading" } })
+
+    expect(document.querySelector(".achievement-calendar")).not.toBeNull()
+    expect(screen.getByText("成果を取れなかった。")).toBeDefined()
+  })
+})

@@ -510,7 +510,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### キャラクター画面
 
-- **英語識別子（予定）**: `character-screen`（`src/browser/features/character-screen/`。hash は
+- **英語識別子（予定）**: `character-screen`（`src/browser/components/page/character/`。hash は
   `#character`、一覧で選んだパックは `#character?pack=<名前>`。作る画面は同じ機能の中の
   `character-create`、hash は `#character/new`）
 - **定義**: 左にパックの一覧、右に選んでいるパックの立ち絵・差し色・背景を並べ、画面から直す画面。
@@ -922,7 +922,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
   コマンドとフレームの zod スキーマ・`PROTOCOL_VERSION`
 - **注記**: `node:` にも `document` にも触らない。zod のスキーマが正典で、型は `z.infer`。
   **ディレクトリ名は 2026-09-20 に `protocol` から `shared` へ改めた**（層の名前を「どの実行環境で
-  動くか」に合わせたため。`docs/research/architecture-placement.md`）
+  動くか」に合わせたため。`docs/history/architecture-placement.md`）
 - **避ける言い方**: 共通、API、コントラクト
 
 ### アダプタ
