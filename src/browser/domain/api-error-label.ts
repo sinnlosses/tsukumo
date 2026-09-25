@@ -1,6 +1,6 @@
 // API のエラーの種類と、ターンの失敗の理由を、画面に出す日本語にする（docs/glossary.md
-// 「ターンの失敗」）。読むのは入力欄の経過時間の行（`features/dispatch/`）と、メインビューの
-// やり取りの末尾（`features/main-view/`）の2つ。
+// 「ターンの失敗」）。読むのは入力欄の経過時間の行（`components/page/conversation/dispatch/`）と、メインビューの
+// やり取りの末尾（`components/page/conversation/main-view/`）の2つ。
 //
 // **綴り（`rate_limit` など）も一緒に出す**のは描く側の仕事で、ここは語だけを持つ。語は
 // 「何が起きたか」を言い、直し方までは言わない（直し方は種類ごとに違い、tsukumo からは確かめられない）。

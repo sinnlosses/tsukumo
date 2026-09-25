@@ -10,7 +10,7 @@
 // **移行の段6で `<div id="app">` に1つの root をまとめた**（段3〜5は `.layout-sidebar` 等の
 // 複数の root だった。段の記録は `docs/history/decision.md`「design.md 12. 移行の段階」）。
 // 機能の組み立て（`<Layout>` に4領域を渡す）は
-// `browser/features/` をまたいで import してよい**この入口の役目**
+// 領域をまたいで import してよい**この入口の役目**
 // （機能どうしは互いを import しない。`test/architecture.test.ts`「browser/ の機能どうしの import」）。
 //
 // **出す画面を選ぶのも入口の役目**（`<Root>`。docs/design.md 6.1 / docs/screen-design.md 13.6）。`<Layout>` は
@@ -25,6 +25,10 @@ import { usePortraitPreload } from "./components/domain/portrait.tsx"
 import { ProtocolMismatch } from "./components/domain/protocol-mismatch.tsx"
 import { ScreenNav } from "./components/domain/screen-nav/screen-nav.tsx"
 import { Sidebar } from "./components/domain/sidebar/sidebar.tsx"
+import { CharacterView } from "./components/page/conversation/character-view/character-view.tsx"
+import { ChatView } from "./components/page/conversation/chat-view/chat-view.tsx"
+import { Dispatch } from "./components/page/conversation/dispatch/dispatch.tsx"
+import { MainView } from "./components/page/conversation/main-view/main-view.tsx"
 import {
   applyAppearanceColorOverride,
   loadAppearanceColorOverride,
@@ -32,10 +36,6 @@ import {
 import { AchievementScreen } from "./features/achievement/achievement-screen.tsx"
 import { DiaryNotice } from "./features/achievement/diary-notice.tsx"
 import { CharacterScreen } from "./features/character-screen/character-screen.tsx"
-import { CharacterView } from "./features/character-view/character-view.tsx"
-import { ChatView } from "./features/chat-view/chat-view.tsx"
-import { Dispatch } from "./features/dispatch/dispatch.tsx"
-import { MainView } from "./features/main-view/main-view.tsx"
 import { TokenUsageScreen } from "./features/token-usage/token-usage-screen.tsx"
 import { type Screen } from "./stores/location-hash.ts"
 import { QuestionAnswerProvider } from "./stores/question-answer.tsx"
@@ -113,7 +113,7 @@ function Root(): ReactElement {
 applyAppearanceColorOverride(loadAppearanceColorOverride())
 
 // 立ち絵の SVG 取得（`components/domain/portrait.tsx`）と入力欄の `@` 補完のファイル一覧
-// （`features/dispatch/file-suggestions.tsx`）が使う。**キャッシュの既定値は個々の
+// （`components/page/conversation/dispatch/file-suggestions.tsx`）が使う。**キャッシュの既定値は個々の
 // `useQuery` 側**（取り直す条件は呼び出し側にしか分からない）。
 const queryClient = new QueryClient()
 

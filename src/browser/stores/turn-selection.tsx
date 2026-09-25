@@ -14,7 +14,7 @@
 // 描くたびに外の状態を書くことになるため）。
 //
 // **姿からはターンの通し番号しか読まない**（畳んだ結果そのものは `stores/main-view-turn.ts` が
-// 姿ごとに覚えていて、中身を出す `features/main-view/` と同じものを使う）。
+// 姿ごとに覚えていて、中身を出す `components/page/conversation/main-view/` と同じものを使う）。
 
 import { createContext, useContext, useMemo, type ReactElement, type ReactNode } from "react"
 

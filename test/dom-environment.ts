@@ -6,7 +6,7 @@
 // 他のテスト（`test/server/adapter/server.test.ts` など）が巻き添えになる。**DOM を組み立てる部品だけを
 // 借りる。**（`bun test --isolate` でテストファイルごとにプロセスが分かれるようになった今も、
 // 1ファイルの中では同じ `globalThis` を共有するので、借りる範囲は絞ったままにする。
-// `--isolate` を付けている理由は `package.json` と `test/browser/features/main-view/report.test.tsx`）
+// `--isolate` を付けている理由は `package.json` と `test/browser/components/page/conversation/main-view/report.test.tsx`）
 //
 // `@happy-dom/global-registrator`（this 一式を1関数でやってくれる別パッケージ）は使わない
 // （`docs/design.md` 11章の依存一覧に無い。ここは持ってきた `happy-dom` だけで済ませる）。

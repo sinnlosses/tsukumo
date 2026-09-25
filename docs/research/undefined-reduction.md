@@ -160,7 +160,7 @@
 
 **`ReadonlyMap<Expression, string>` にする案は採らない。** `Map.get` の戻り値が
 `string | undefined` なので、**型注釈から消えるだけで使う側の `undefined` は1つも減らない**
-（`src/browser/features/main-view/markdown/notation.tsx:20` が既にこの形で、値の型に
+（`src/browser/components/page/conversation/main-view/markdown/notation.tsx:20` が既にこの形で、値の型に
 `| undefined` が残っている）。
 
 ### 2.3 P — 検証の戻り値を結果型にする案は採らない（0行）

@@ -1,5 +1,5 @@
 // レポートの記法（モデルが書く class 名）の語彙。**印の名前の集合の出どころはここだけ**で、
-// 画面の対応表（`src/browser/features/main-view/markdown/notation.tsx`）はここから引く。
+// 画面の対応表（`src/browser/components/page/conversation/main-view/markdown/notation.tsx`）はここから引く。
 //
 // **claude に教える文面（`src/server/core/report-notation.ts` の `REPORT_NOTATION_PROMPT`）は
 // ここから組み立てず、手で書く。** 印を足すときは文面にも書き足す必要があり、書き忘れは

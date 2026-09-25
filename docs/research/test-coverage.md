@@ -21,20 +21,20 @@
 
 行が9割を切るのは次の12ファイル（タスク本文の表は 701 pass 時点・旧パスのものなので、こちらが新しい）:
 
-| ファイル                                                    | % Funcs | % Lines |
-| ----------------------------------------------------------- | ------: | ------: |
-| `src/browser/lib/socket.ts`                                 |    0.00 |    6.56 |
-| `src/server/adapter/sdk-driver.ts`                          |    6.25 |   12.02 |
-| `src/browser/stores/session.tsx`                            |   84.21 |   57.27 |
-| `src/browser/features/main-view/markdown/chart-block.tsx`   |   80.00 |   62.16 |
-| `src/server/adapter/tsukumo-home.ts`                        |    0.00 |   75.00 |
-| `src/browser/features/main-view/markdown/mermaid-block.tsx` |  100.00 |   78.95 |
-| `src/browser/features/main-view/turn.tsx`                   |   77.78 |   78.38 |
-| `src/server/adapter/fake-driver.ts`                         |   78.95 |   79.00 |
-| `src/browser/lib/refresh.ts`                                |  100.00 |   81.82 |
-| `src/shared/repository-file.ts`                             |  100.00 |   83.33 |
-| `src/browser/components/domain/layout/split.ts`             |  100.00 |   86.49 |
-| `src/browser/lib/data-url.ts`                               |   75.00 |   88.89 |
+| ファイル                                                                        | % Funcs | % Lines |
+| ------------------------------------------------------------------------------- | ------: | ------: |
+| `src/browser/lib/socket.ts`                                                     |    0.00 |    6.56 |
+| `src/server/adapter/sdk-driver.ts`                                              |    6.25 |   12.02 |
+| `src/browser/stores/session.tsx`                                                |   84.21 |   57.27 |
+| `src/browser/components/page/conversation/main-view/markdown/chart-block.tsx`   |   80.00 |   62.16 |
+| `src/server/adapter/tsukumo-home.ts`                                            |    0.00 |   75.00 |
+| `src/browser/components/page/conversation/main-view/markdown/mermaid-block.tsx` |  100.00 |   78.95 |
+| `src/browser/components/page/conversation/main-view/turn.tsx`                   |   77.78 |   78.38 |
+| `src/server/adapter/fake-driver.ts`                                             |   78.95 |   79.00 |
+| `src/browser/lib/refresh.ts`                                                    |  100.00 |   81.82 |
+| `src/shared/repository-file.ts`                                                 |  100.00 |   83.33 |
+| `src/browser/components/domain/layout/split.ts`                                 |  100.00 |   86.49 |
+| `src/browser/lib/data-url.ts`                                                   |   75.00 |   88.89 |
 
 **報告に1行も出ないファイル**（テストから一度も読み込まれていない）は6つ:
 `src/cli.ts`（`test/cli.test.ts` が**子プロセスで**起こすので計上されない）・`src/browser/main.tsx`・
@@ -48,10 +48,10 @@
 1行も増えないファイルは15個ある:
 
 `test/architecture.test.ts`・`test/cli.test.ts`・`test/browser/components/ui/select.test.tsx`・
-`test/browser/features/character-view/balloon-track.test.tsx`・
+`test/browser/components/page/conversation/character-view/balloon-track.test.tsx`・
 `test/browser/components/domain/layout/layout-resizer.test.tsx`・
-`test/browser/features/main-view/markdown/notation.test.tsx`・
-`test/browser/features/main-view/report.test.tsx`・`test/browser/stores/main-view-turn.test.ts`・
+`test/browser/components/page/conversation/main-view/markdown/notation.test.tsx`・
+`test/browser/components/page/conversation/main-view/report.test.tsx`・`test/browser/stores/main-view-turn.test.ts`・
 `test/server/adapter/vendor-asset.test.ts`・`test/server/core/report-notation.test.ts`・
 `test/shared/character.test.ts`・`test/shared/portrait-image.test.ts`・
 `test/shared/portrait-motion.test.ts`・`test/shared/turn-speech.test.ts`・`test/shared/utterance.test.ts`
@@ -99,7 +99,7 @@
 - `test/browser/components/domain/sidebar/session-info.test.tsx` の `model が opus のみを含むとき、fable を誤って
 選択しない` / `model が sonnet / haiku のとき、fable を誤って選択しない` — 同じ分岐を通るが、
   **`fable` の誤選択の回帰テスト**なので規約の表では「残す」側
-- `test/browser/features/main-view/markdown/markdown.test.tsx` の CJK の強調の一群（6件）— 同じ
+- `test/browser/components/page/conversation/main-view/markdown/markdown.test.tsx` の CJK の強調の一群（6件）— 同じ
   プラグインの同じ分岐だが、これも回帰テスト（記法のまま出た事故）
 - 上の leave-one-out で挙がった15ファイル — 到達行が減らないだけで、積極的な理由が無い
 
@@ -149,13 +149,13 @@
 
 ### 描画（目視で確かめる）
 
-| ファイル                                                    | 未到達               | 理由                                                                                                                           |
-| ----------------------------------------------------------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| `src/browser/features/main-view/markdown/chart-block.tsx`   | 28-41                | Chart.js を読み込んで `<canvas>` に描く本体。振り分け（`.chart-block > canvas` に来ること）は `markdown.test.tsx` が守っている |
-| `src/browser/features/main-view/markdown/mermaid-block.tsx` | 51-58                | `mermaid.initialize` のテーマ設定。図が出ているかは目視                                                                        |
-| `src/browser/features/main-view/markdown/mermaid-block.tsx` | 108-111              | 失敗の理由の文字列の取り出し。**エラーメッセージの文面だけが変わる分岐**                                                       |
-| `src/browser/lib/refresh.ts:17-18`                          | `page` の側          | `window.location.reload()`。**テストファイルの冒頭に既に理由が書いてある**（借りている DOM では確かめられない）                |
-| `src/browser/components/domain/sidebar/sidebar.tsx`         | 全体（報告に出ない） | 3つの区画を並べるだけの組み立て。中身は `activity` / `task-list` / `session-info` の各テストが守っている                       |
+| ファイル                                                                        | 未到達               | 理由                                                                                                                           |
+| ------------------------------------------------------------------------------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `src/browser/components/page/conversation/main-view/markdown/chart-block.tsx`   | 28-41                | Chart.js を読み込んで `<canvas>` に描く本体。振り分け（`.chart-block > canvas` に来ること）は `markdown.test.tsx` が守っている |
+| `src/browser/components/page/conversation/main-view/markdown/mermaid-block.tsx` | 51-58                | `mermaid.initialize` のテーマ設定。図が出ているかは目視                                                                        |
+| `src/browser/components/page/conversation/main-view/markdown/mermaid-block.tsx` | 108-111              | 失敗の理由の文字列の取り出し。**エラーメッセージの文面だけが変わる分岐**                                                       |
+| `src/browser/lib/refresh.ts:17-18`                                              | `page` の側          | `window.location.reload()`。**テストファイルの冒頭に既に理由が書いてある**（借りている DOM では確かめられない）                |
+| `src/browser/components/domain/sidebar/sidebar.tsx`                             | 全体（報告に出ない） | 3つの区画を並べるだけの組み立て。中身は `activity` / `task-list` / `session-info` の各テストが守っている                       |
 
 ### 到達不能な防御的コード
 
@@ -171,11 +171,11 @@
 
 ### 同じ方針を別の入口で既に守っている分岐
 
-- `src/browser/features/dispatch/composer.tsx:239-243` — フォームの送信でも進行中は送らない。同じ
+- `src/browser/components/page/conversation/dispatch/composer.tsx:239-243` — フォームの送信でも進行中は送らない。同じ
   ガードを鍵盤の側（`turnInProgress の間に Command+Enter を押しても送らない`）が通している
 - `src/browser/components/domain/layout/layout.tsx:120,123` — 3本ある仕切りのうち、テストで掴んでいない1本の
   コールバック。同じ経路を別の仕切りで通している
-- `src/browser/features/main-view/turn.tsx:73` — `Step` の中の質問の記録。**`main-view.test.tsx` に
+- `src/browser/components/page/conversation/main-view/turn.tsx:73` — `Step` の中の質問の記録。**`main-view.test.tsx` に
   「`QuestionRecord` を直接見る」と理由が書いてある**
 - `src/server/adapter/task-summary.ts:77-78`・`src/server/adapter/character-edit.ts:81` — 読み書きの
   catch。同じ結果（`undefined` を返して諦める）を「ファイルが無い」「形が違う」側が既に通している
@@ -187,7 +187,7 @@
   （`docs/coding-standards.md`「モックするのはシステム境界だけ」）。畳み込み自体は
   `createSessionStore` を直に使う `test/browser/stores/session.test.tsx` が守っている
 - 同 `143-145`（接続状態の伝播）・`206-208`（Provider の外で呼んだときの例外）
-- `src/browser/features/main-view/turn.tsx:117`（2000文字を超えた依頼の切り詰め）・`135-151`
+- `src/browser/components/page/conversation/main-view/turn.tsx:117`（2000文字を超えた依頼の切り詰め）・`135-151`
   （複数行の依頼を `<details>` にする）— どちらも `docs/requirements.md` には無く、`docs/design.md` と
   コードのコメントにある取り決め。**足すなら先に要件側へ書く**のが順序
 - `src/server/adapter/fake-driver.ts:155-199`（`interrupt` / `setModel` / `setPermissionMode`）— 目視確認と
@@ -199,6 +199,6 @@
 ## 付記（この作業の範囲外）
 
 テスト名に**タスク番号が残っている**ものが `test/shared/main-view.test.ts` の回帰テストと
-`test/browser/features/main-view/main-view.test.tsx` の対応する回帰テストにある。
+`test/browser/components/page/conversation/main-view/main-view.test.tsx` の対応する回帰テストにある。
 `CLAUDE.md`「コーディング規約」の「コード・ドキュメントにタスク番号を書かない」に反するが、
 ここではテストに手を入れないので直していない。

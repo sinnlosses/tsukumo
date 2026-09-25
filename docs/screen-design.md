@@ -331,7 +331,7 @@ IBM Plex Mono）と字の大きさ、「ほか n 件を見る」の色（見本�
 - **「もう一度見てもらう」は中立の枠**（`.usage-review-stop` と同じ地味さ）。区画全体の染めが
   すでに「押せる区画」だと言っているので、ボタンにまで `accent` を足すと強すぎる
 - **頭の吹き出しは三角を描かず、左上の角だけ立てる**（`border-radius: 0.25rem 0.875rem …`。
-  見本と同じ手）。新しい部品（`<Balloon>`）は増やさない——`features/character-view/` に
+  見本と同じ手）。新しい部品（`<Balloon>`）は増やさない——`components/page/conversation/character-view/` に
   閉じた部品で、2機能目のこの区画から読むには `browser/domain/` へ上げる手間が要り、この
   区画だけの単純な吹き出しにその手間は見合わない
 - **日時は見本の `[MM-DD HH:MM]` の角括弧を付けない**（他の画面に角括弧で時刻を囲む言い回しが
@@ -360,7 +360,7 @@ IBM Plex Mono）と字の大きさ、「ほか n 件を見る」の色（見本�
   本文と同じ重さになって押せる字が埋もれ、11px だと小さすぎて読みにくい）。これ以外の寸法を
   足さない。**同じ mock で 14px が出ても、機械のラベルに近い字（`dispatch` の送信ボタン）は
   新しい段を使わず既存の 13px に寄せた**（採らなかった理由は
-  `src/browser/features/dispatch/dispatch.module.css` の該当コメント）——段を増やすのは
+  `src/browser/components/page/conversation/dispatch/dispatch.module.css` の該当コメント）——段を増やすのは
   「差をはっきり見せたい」という要求があるときだけで、寄せられるところは寄せる
 - **札の頭のタイトル（`turn-header.tsx` の `.turn-title-text`）は「区画の見出し・強調した要約」
   の段（14px）**（2026-09-23）。18px の段は札の頭を高くする主因だったので使わない——タイトルは
@@ -955,7 +955,7 @@ IBM Plex Mono）と字の大きさ、「ほか n 件を見る」の色（見本�
 旗も増えない。
 
 **どの機能に置くか: `components/domain/sidebar/` の中**（`profile-card.tsx` / `recent-topic-section.tsx` /
-`persona-memory-section.tsx`）。雑談の側（`features/chat-view/`）に置くと、下端の帯を読むために
+`persona-memory-section.tsx`）。雑談の側（`components/page/conversation/chat-view/`）に置くと、下端の帯を読むために
 領域の機能どうしの import が要る（2章）。中身を入れたあと、話題や覚えたことがタスクの
 `task-board` のようにサイドバーの外でも使う語彙になったら、そのとき「置かれる機能」に切り出す。
 
@@ -977,7 +977,7 @@ IBM Plex Mono）と字の大きさ、「ほか n 件を見る」の色（見本�
 
 - **`<Root>` が `chatMode ? <ChatSidebar /> : <Sidebar />` を渡す。** 下端の帯が2つの組み立てに
   またがる
-- **雑談のサイドバーを `features/chat-view/` に置く。** 1つの機能が2つの領域を持ち、`chat-view`
+- **雑談のサイドバーを `components/page/conversation/chat-view/` に置く。** 1つの機能が2つの領域を持ち、`chat-view`
   から `sidebar` の帯を読む機能どうしの import が要る
 - **「変える」を今の `<select>` のまま札に置く。** `<select>` は選んでいる選択肢の名前を見せるので、
   札の名前と同じ字が2度並び、「変える」という操作の名前が見えない
@@ -1001,7 +1001,7 @@ IBM Plex Mono）と字の大きさ、「ほか n 件を見る」の色（見本�
 
 - **サーバの契約は変えない**（`SessionEvent` も `SessionState` もそのまま）。セリフは `speech`
   で1件まるごと届く（`speak` の戻りが `"ok"` になる時点で全文がある）ので、**出すタイミングを
-  ブラウザ側で持たせるだけ**で足りる（`features/chat-view/hooks/use-speech-reveal.ts`）
+  ブラウザ側で持たせるだけ**で足りる（`components/page/conversation/chat-view/hooks/use-speech-reveal.ts`）
 - **現れる瞬間、0.2秒ほど小さく拡大して落ち着く**（`chat-view.module.css` の
   `.chat-entry-pop`。CSS のアニメーションなので、`prefers-reduced-motion` は
   `styles/theme.css` の全体規則がそのまま止める——`.chat-typing-dot` と同じ扱いで、ここに
@@ -1025,7 +1025,7 @@ IBM Plex Mono）と字の大きさ、「ほか n 件を見る」の色（見本�
 - **キャラビューの `<Balloon>` は再利用せず、`components/` へも上げない。** 雑談の行はすでに
   吹き出しの見た目を持っており（`chat-view.module.css` の `.chat-entry`）、`<Balloon>` のほうは
   `.balloon-track` の並び（`column-reverse`・押し上げ・薄める）と一体になっている。上げると
-  **両方の事情を知る部品**になり、どちらを直しても相手が動く。`features/chat-view/` に閉じた
+  **両方の事情を知る部品**になり、どちらを直しても相手が動く。`components/page/conversation/chat-view/` に閉じた
   ままなので、機能どうしの import も増えない（`test/architecture.test.ts`）
 
 **採らなかった案**:
@@ -1072,7 +1072,7 @@ LINE / Discord と同じ形で、日の区切りだけの案・ホバーした�
 （2026-09-23 決定。Discord と同じ、「まだ喋ってくれる」合図）。**セリフの吹き出しの
 初期状態ではなく、別の行**——控えている吹き出しの文字は `hooks/use-speech-reveal.ts` が持って
 いて、ここには渡さない。控えていた吹き出しが出ると「...」の行は消え、入れ替わりにその行が
-現れる（`features/chat-view/` の `components/chat-typing.tsx` と `components/chat-speech.tsx`）。
+現れる（`components/page/conversation/chat-view/` の `components/chat-typing.tsx` と `components/chat-speech.tsx`）。
 
 - **出す条件は2つ**: 今のターンでまだ `speak` が呼ばれていない（`turnInProgress &&
 !speechCalledInTurn`。`SessionState.speechCalledInTurn` に既にある値で判定できる）、
@@ -1240,7 +1240,7 @@ scrollable overflow は end 方向にしか伸びない**ので、上へ出た�
    **雑談中のメインビューでも同じ論法がそのまま成り立つ**（地と字の色は領域で変わらないので、
    下限も 1つで足りる。2026-09-21 に確かめた）
 2. **文字が乗る要素の地は不透明を保つ。** キャラビューで文字が乗るのは吹き出しの中だけなので
-   （空のときの案内も吹き出し1件。`src/browser/features/character-view/balloon-track.tsx`）、
+   （空のときの案内も吹き出し1件。`src/browser/components/page/conversation/character-view/balloon-track.tsx`）、
    地が不透明であれば画像は文字の背後に回り込まない。**雑談のログでも吹き出しは同じ**
    （`.chat-entry` の地は `surface` / `surface-accent` / それに `ink` を混ぜた色で、どれも不透明）
    だが、**吹き出しの外に出る字が2つある** — 立ち絵に載せたときの案内（13.7）と空のときの案内。
@@ -1525,7 +1525,7 @@ scrollable overflow は end 方向にしか伸びない**ので、上へ出た�
   優先した。14px の見本を 13px へ寄せた `dispatch-send` と同じ判断
 
 **答え待ちの質問**（2026-09-23 決定。質問の答え方がメインビューの札
-（`features/main-view/question-ask.tsx`）へ移ったのに合わせた）:
+（`components/page/conversation/main-view/question-ask.tsx`）へ移ったのに合わせた）:
 
 - **答え待ちの先頭（`pending[0]`）が質問なら、札の要約は実行中の手順ではなく質問の要約になる**
   （許可要求はこれまでどおり実行中の手順の要約のまま）。要約は**1問目の `header` をそのまま

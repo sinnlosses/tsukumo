@@ -4,7 +4,7 @@
 //
 // **なぜリポジトリ内に置くのか**: 出力スタイルは全プロジェクトに同じものが当たるため、そこに
 // HTML の記法を書くと素の TUI でタグが文字のまま見える。ここに置けば **描ける記法の一覧が
-// {@link ../../browser/features/main-view/markdown/sanitize-schema.ts} と同じコミットで動く**（レンダラを直したのに
+// {@link ../../browser/components/page/conversation/main-view/markdown/sanitize-schema.ts} と同じコミットで動く**（レンダラを直したのに
 // 規約が古いまま、が起きない）。通す要素・class を増やしたら、この文面も同じコミットで直す。
 //
 // 「決める」内容の定数で、外の世界には触らない（原則2）。`query()` に渡すのは呼び出し側
@@ -14,7 +14,7 @@
  * メインビューが HTML を描けることを前提に、出力スタイルのレポート規約を上書きする文面。
  * `query()` の `systemPrompt: { type: "preset", preset: "claude_code", append }` に渡す。
  *
- * **ここに並ぶ記法は `src/browser/features/main-view/markdown/sanitize-schema.ts` が通すものと揃っている必要がある**
+ * **ここに並ぶ記法は `src/browser/components/page/conversation/main-view/markdown/sanitize-schema.ts` が通すものと揃っている必要がある**
  * （片方だけ直すと、勧めた記法が画面で落ちる。docs/display.md 4.2）。
  *
  * **レポートの文体もここが決める**（キャラクターパックの `persona.md` ではない）。どのパックに
@@ -98,7 +98,7 @@
  * `rehype-highlight` が色を付けてしまうので、描く側は色付け後の `<span>` を数えて捨てることに
  * なる。`<div>` で包む案は記法が1つ増え、中に入れるフェンスの前後の空行という既知の事故を呼ぶ。
  * info 文字列を描く側まで運ぶ仕掛けは
- * `src/browser/features/main-view/markdown/code-file-name.ts`。
+ * `src/browser/components/page/conversation/main-view/markdown/code-file-name.ts`。
  *
  * **`note` は6種（情報・注意・異常・疑問・メモ・お願い）**で、**種別のラベルは tsukumo が
  * 文字として描く**（`markdown/notation.tsx` の `NOTE_LABELS`）。素の `note` は何の塊なのか

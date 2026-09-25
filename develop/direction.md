@@ -31,3 +31,7 @@
 - **`docs/design.md` 2章「段と、test/architecture.test.ts の直し方」か、残りの移動のタスク（T-583〜T-585）の `## 注意` に、「移したパスを指す記述は `.ts`/`.tsx` だけでなく `.module.css` のコメントにもある。`grep -rn` の対象から外さない」を書く**（振り返り: T-582）
   - 根拠: T-582 のサブエージェントが import とコメントを直したあとで、`.module.css` の中の相互参照のコメント（13か所）を取りこぼしていたのに気づき、追って直した（`screen-design.md`×5・`architecture.test.ts`×5 と同じファイルを何度も直した）。段2〜4は `features/` の中身ごと移すので、同じ取りこぼしが起きうる
   - 出し先: 後続の移動タスク（T-583〜T-585）の `## 注意` に1行
+
+- **`scripts/capture-catalog.ts` の `notation-figure` / `notation-chart` の件が、レポートの演出が着地するのを待ってから送って撮るようにする**（振り返り: T-584）
+  - 根拠: T-584 のサブエージェントが mermaid と chart の目視で `--only notation-figure / notation-chart` を撮ったが、`notation` 場面は演出の着地まで約15秒かかり、`PREPARE_TIMEOUT_MS`（2000ms）の送りの操作が図に届く前に切れて取りこぼした。手製の Playwright スクリプトで着地を待って撮り直している（ツールのエラー6件の一部）。`docs/architecture.md`「手で確かめること」はこの2件を「記法の見本の下側」を出す件として案内している
+  - 出し先: `scripts/capture-catalog.ts` の件の定義（演出の着地を待つ操作か待ち時間）を直すタスク1件

@@ -209,19 +209,19 @@ describe("コメント中の日付", () => {
 // あれば `throw` する**（足し忘れが「検査の対象外」として黙って通るのを防ぐ。`browserBoxOf` と
 // 同じ作り）。
 //
-// **`markdown/` は `main-view` の中**（`browser/features/main-view/markdown/`）なので、機能の
+// **`markdown/` は `main-view` の中**（`browser/components/page/conversation/main-view/markdown/`）なので、機能の
 // 一部として扱われる（state を持たない Markdown の描画プリミティブで、読むのは `main-view` だけ）。
 const BROWSER_REGIONS = [
   "components/domain/layout",
   "components/domain/screen-nav",
-  "features/main-view",
-  "features/character-view",
+  "components/page/conversation/main-view",
+  "components/page/conversation/character-view",
   "features/character-screen",
-  "features/chat-view",
+  "components/page/conversation/chat-view",
   "features/token-usage",
   "features/achievement",
   "components/domain/sidebar",
-  "features/dispatch",
+  "components/page/conversation/dispatch",
 ] as const
 const BROWSER_PLACED_FEATURES = ["features/task-board"] as const
 

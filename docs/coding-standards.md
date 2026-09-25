@@ -404,7 +404,7 @@ import してよい先が決まっている**（表は二重に書かず `docs/d
 `features/` `components/` `lib/` `stores/` `styles/` は bullet-proof-react の名前をそのまま使う
 （名前が広く知られていることのほうが、単数形で揃うことより読み手の助けになる、というユーザーの
 選択）。**例外はこの5つだけ**で、`src/shared/` `src/server/core/` `src/server/adapter/` と、機能の中の
-ディレクトリ・ファイル名は単数形のまま（`features/main-view/markdown/` のように**概念の名前**を
+ディレクトリ・ファイル名は単数形のまま（`components/page/conversation/main-view/markdown/` のように**概念の名前**を
 付ける）。**置き場所を名前にしたディレクトリのうち、`lib/` と `utils/` はどの層の中にも作ってよく、
 `helpers/` と `common/` は作らない**（2026-09-21 決定。どちらの箱に置くかの判定手順・`utils/` を
 受け皿にしないための歯止め・層ごとの読み方は二重に書かず `docs/design.md` 2章
@@ -429,12 +429,12 @@ React 19。関数コンポーネントと Hooks だけを使う（クラスコ�
 `useEffect` は **React の外にある世界と同期するためのもの**。書いてよいのは次の4つで、
 当てはまらないものは書かない。
 
-| 類型                             | 例                                                                          |
-| -------------------------------- | --------------------------------------------------------------------------- |
-| 外部システムの購読               | WebSocket の接続（`browser/stores/session.tsx`）                            |
-| React の外にある状態への書き込み | `document.title`・CSS カスタムプロパティ・`dialog.showModal()`・`scrollTop` |
-| タイマー                         | 経過時間の1秒刻み（`browser/features/dispatch/hooks/use-turn-status.ts`）   |
-| 外部からの読み込み               | `fetch`・vendor script の読み込み                                           |
+| 類型                             | 例                                                                                            |
+| -------------------------------- | --------------------------------------------------------------------------------------------- |
+| 外部システムの購読               | WebSocket の接続（`browser/stores/session.tsx`）                                              |
+| React の外にある状態への書き込み | `document.title`・CSS カスタムプロパティ・`dialog.showModal()`・`scrollTop`                   |
+| タイマー                         | 経過時間の1秒刻み（`browser/components/page/conversation/dispatch/hooks/use-turn-status.ts`） |
+| 外部からの読み込み               | `fetch`・vendor script の読み込み                                                             |
 
 4類型から外れるものをどうしても書くときは、**なぜ下の代替では書けないのか**をコメントに残す
 （「コメント」節の「今の挙動の制約・前提」にあたる）。
@@ -480,7 +480,7 @@ effect の中と、イベントハンドラ・そこで登録した寿命の長�
 「使う側より下に置く」が書けるのであって、`const` は宣言より前で使えない。
 
 **例外は `memo` で包むときだけ。** `const <部品名> = memo(<部品名>View)` と書き、中身は
-`function <部品名>View(...)` の関数宣言のまま下に置く（`features/main-view/report.tsx` の
+`function <部品名>View(...)` の関数宣言のまま下に置く（`components/page/conversation/main-view/report.tsx` の
 `Report` と `features/task-board/components/task-table.tsx` の `TaskTable`）。
 **`memo(function X() { ... })` の形にしない** — 定義が `const` の右辺に入ると、その部品だけ
 本体が上に来て並び順が逆になる。
@@ -618,8 +618,8 @@ effect の中と、イベントハンドラ・そこで登録した寿命の長�
 
 **例外は無い。** テストで固定の時刻を作るときも `Temporal.ZonedDateTime.from({ ..., timeZone })`
 や `Temporal.PlainDate` を使い、偽の時計は `spyOn(Temporal.Now, "instant")` で差し替える
-（`test/browser/features/character-view/character-view.test.tsx` /
-`test/browser/features/dispatch/turn-status.test.tsx`）。ファイルの mtime のように「エポック秒の
+（`test/browser/components/page/conversation/character-view/character-view.test.tsx` /
+`test/browser/components/page/conversation/dispatch/turn-status.test.tsx`）。ファイルの mtime のように「エポック秒の
 数をそのまま受け取れる」API（`node:fs` の `utimesSync` など）は `Date` を経由せず数を直接渡す。
 
 ## 整形の対象外

@@ -128,7 +128,7 @@ describe("applySessionEvent", () => {
     )
 
     // 空にするとプレースホルダー「（まだ発話がありません）」に切り替わる
-    // （src/browser/features/character-view/balloon-track.tsx）。
+    // （src/browser/components/page/conversation/character-view/balloon-track.tsx）。
     expect(nextTurn.speeches).toEqual([])
     expect(nextTurn.speechExpression).toBe("default")
   })
@@ -361,7 +361,7 @@ describe("applySessionEvent", () => {
       },
     ])
     // メインビューへ渡す tool の記録が持つのは名前・入力・結果だけ（描くかどうかは
-    // `src/browser/features/main-view/turn.tsx` の仕事で、いまはツールを描かない）。
+    // `src/browser/components/page/conversation/main-view/turn.tsx` の仕事で、いまはツールを描かない）。
     expect(mainViewEntries(view)).toEqual([
       {
         kind: "tool",

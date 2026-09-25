@@ -2,7 +2,7 @@
 // 「決める」ロジック。**セッションの姿（`session-state.ts`）から導くだけ**で、状態は持たない。
 //
 // `groupIntoTurns` / `limitTurnEntries` はもとは1つのファイルにまとまっていた（移行の段6で
-// HTML の組み立てが `src/browser/features/main-view/` へ移るのに合わせ、判断そのものはサーバ・ブラウザ
+// HTML の組み立てが `src/browser/components/page/conversation/main-view/` へ移るのに合わせ、判断そのものはサーバ・ブラウザ
 // どちらでも同じ結果になる `shared` へ残した。段の記録は
 // `docs/history/decision.md`「design.md 12. 移行の段階」）。
 //
@@ -41,7 +41,7 @@ export const MAX_MAIN_VIEW_TURNS = MAX_SESSION_STATE_TURNS.work
  * **画面から何も消えていないのに**「これ以前の n 件は省略した」（最大62件）を出し、残り6件は
  * レポート1件を出してから消していた（実測）。画面に出るものだけを数えると1つの
  * やり取りの最大は6件（中位数1・p99で4件）で、この値には当たらない——**落とすための値ではなく、1つのやり取りが際限なく
- * 伸びたときの止め**（`src/browser/features/main-view/turn.tsx` の `MAX_REQUEST_HEADING_TEXT_LENGTH`
+ * 伸びたときの止め**（`src/browser/components/page/conversation/main-view/turn.tsx` の `MAX_REQUEST_HEADING_TEXT_LENGTH`
  * と同じ立場。常駐プロセスの持ち物の上限は `MAX_SESSION_STATE_TURNS` /
  * {@link MAX_MAIN_VIEW_TURNS} が別に持つ）。
  */
@@ -49,7 +49,7 @@ const MAX_MAIN_VIEW_ENTRIES = 40
 
 /**
  * メインビューに時系列で流す1件分の記録。**利用者の依頼**（やり取りの境界）・ツールの実行・
- * 発話の詳細の3種類。**描く側（`src/browser/features/main-view/`）が読むだけの形**で、ここが決めた結果を渡す
+ * 発話の詳細の3種類。**描く側（`src/browser/components/page/conversation/main-view/`）が読むだけの形**で、ここが決めた結果を渡す
  * （{@link mainViewEntries}）。
  */
 export type MainViewEntry =
@@ -97,7 +97,7 @@ export type MainViewAction = MainViewToolRun | MainViewQuestion
 
 /**
  * やり取りが失敗で終わったか（`MainViewTurn.failure`）。`failed` のときだけ、描く側が
- * やり取りの末尾に「失敗で終わった」と理由を出す（`src/browser/features/main-view/turn.tsx`）。
+ * やり取りの末尾に「失敗で終わった」と理由を出す（`src/browser/components/page/conversation/main-view/turn.tsx`）。
  * 1つのやり取りに失敗が2つ以上あれば（背景のタスクのあとの続きのターンも失敗したときなど）、
  * いちばん新しいものを出す。
  */
@@ -112,7 +112,7 @@ export type MainViewTurnFailure =
  *
  * `interim` は、その本文が**中間レポート**（`report` ツールの最後でない呼び出し。
  * `selectToolReports`）かどうか。`body` が `none` のときは常に false。
- * 見分けを付けて描くのは `src/browser/features/main-view/turn.tsx` の仕事で、判定はここに置く。
+ * 見分けを付けて描くのは `src/browser/components/page/conversation/main-view/turn.tsx` の仕事で、判定はここに置く。
  *
  * `superseded` は、**自分より後ろに本文を持つステップがあるか**（`markSupersededSteps`）。
  * 中間レポートが何件も積むと見通しが悪い問題に対する材料で、
@@ -121,13 +121,13 @@ export type MainViewTurnFailure =
  *
  * `final` は、その本文が**最終レポート**（そのやり取りで最後の、中間でない本文）かどうか
  * （`markFinalReport`）。ラベルを載せる印（`.main-step.is-final`）で、書き上げる演出を掛ける
- * 相手を選ぶのにも使う（`src/browser/features/main-view/turn.tsx`）。**ラベルを出すかどうかは
+ * 相手を選ぶのにも使う（`src/browser/components/page/conversation/main-view/turn.tsx`）。**ラベルを出すかどうかは
  * これだけでは決まらない**（`MainViewTurn.hasInterimReport` と組み合わせる）。
  *
  * `id` は**追加されても番号がずれない**ように、そのやり取りの中で作られた順に先頭から数えた
  * 通し番号（`MainViewTurn.id` と同じ考え方）。`limitTurnEntries` が上限を超えた分を古いほうから
  * 落としても、残ったステップの `id` は変わらない（`groupIntoSteps` で、`limitTurnEntries` より
- * 前に振る）。`src/browser/features/main-view/turn.tsx` の `<Step>` の `key` に使う。**配列の添字を `key` に
+ * 前に振る）。`src/browser/components/page/conversation/main-view/turn.tsx` の `<Step>` の `key` に使う。**配列の添字を `key` に
  * すると**、古いステップが落ちて残りの添字が1つずつ前へずれた瞬間に、React が別のステップの
  * DOM を使い回して描き直してしまう（`<details>` の `open` のような制御されていない DOM の状態が
  * 別のステップへ乗り移って見える）。
@@ -164,7 +164,7 @@ export type MainViewRequest = {
 /**
  * 利用者の依頼1件と、それ以降のステップ。`request` が undefined なのは、最初の依頼より前の記録
  * （セッションの途中から追い始めたときに起こる）。`id` は**追加されても番号がずれない**ように
- * 先頭から数えた通し番号で、タブの選択を保つのに使う（`src/browser/features/main-view/main-view.tsx`）。
+ * 先頭から数えた通し番号で、タブの選択を保つのに使う（`src/browser/components/page/conversation/main-view/main-view.tsx`）。
  */
 export type MainViewTurn = {
   readonly id: number
@@ -173,7 +173,7 @@ export type MainViewTurn = {
   /**
    * このやり取りに中間レポートが1つ以上あるか（`markFinalReport`）。**最終レポートのラベルを
    * 出す条件**で、本文が1つしか無いやり取りでは「最終」が何も区別しないので出さない
-   * （`src/browser/features/main-view/turn.tsx`）。
+   * （`src/browser/components/page/conversation/main-view/turn.tsx`）。
    */
   readonly hasInterimReport: boolean
   /** 上限を超えて落とした**画面に出す**記録の件数。0 のときは何も落としていない。 */
@@ -186,7 +186,7 @@ export type MainViewTurn = {
  * メインビューに渡す記録。**書きかけの本文を末尾に足す**ので、`browser/main-view/` の部品はそのまま
  * リアルタイムの表示になる（完成した本文が来た時点で確定した記録の側へ移る）。
  *
- * **`tool` の記録も渡す**（ステップの `actions` に入る）が、`src/browser/features/main-view/turn.tsx` は
+ * **`tool` の記録も渡す**（ステップの `actions` に入る）が、`src/browser/components/page/conversation/main-view/turn.tsx` は
  * そこから描かない（`docs/display.md` 4.2）。帯の「いまの作業」は別に `src/shared/turn-step.ts` の
  * `currentTurnSteps` が同じ記録から直接導くので、ここで両方に配っても重複にはならない。
  */
@@ -199,7 +199,7 @@ export function mainViewEntries(state: SessionState): readonly MainViewEntry[] {
 
 /**
  * 時系列の記録を、やり取り（ターン）ごとにまとめ、直近 {@link MAX_MAIN_VIEW_TURNS} 件へ絞る。
- * **昇順（古い→新しい）で返す**（並べ替え・タブのラベル付けは呼び出し側 `src/browser/features/main-view/` の仕事）。
+ * **昇順（古い→新しい）で返す**（並べ替え・タブのラベル付けは呼び出し側 `src/browser/components/page/conversation/main-view/` の仕事）。
  *
  * `unsettled` は**いちばん新しいやり取りで、まだ伸びうる本文の種類**で、確定していない
  * 本文を出さないために要る（`report` を {@link selectToolReports} が、ツールの外の本文を
@@ -436,7 +436,7 @@ function selectToolReports(
  * は変えない**——ここで足すのは「畳むかどうか」の材料だけ。
  * `interim` かどうかを問わず全ステップに立てるのは、位置関係だけで決まる値なので
  * 中間レポート限定にする理由が無いため（畳むかどうかの判定側で `interim` と組み合わせる。
- * `src/browser/features/main-view/turn.tsx`）。
+ * `src/browser/components/page/conversation/main-view/turn.tsx`）。
  */
 function markSupersededSteps(turn: MainViewTurn): MainViewTurn {
   const { steps } = turn.steps.reduceRight<{
@@ -480,7 +480,7 @@ function extractFirstLine(markdown: string): string {
 
 /**
  * **最終レポート**（そのやり取りで最後の、中間でない本文）に印を立て、同じやり取りに中間レポートが
- * あるかどうかを畳む。**引くのは1箇所だけ**にして、描く側（`src/browser/features/main-view/turn.tsx`）が
+ * あるかどうかを畳む。**引くのは1箇所だけ**にして、描く側（`src/browser/components/page/conversation/main-view/turn.tsx`）が
  * 「最後の、中間でない本文」の条件を持たずに済むようにする。
  *
  * 2つに分かれているのは、**地の段とラベルで条件が違う**ため（`docs/screen-design.md` 13.2）:
@@ -526,7 +526,7 @@ function limitTurnEntries(turn: MainViewTurn): MainViewTurn {
 }
 
 /**
- * そのステップが画面に出す記録の件数。**`src/browser/features/main-view/turn.tsx` が描くもの**
+ * そのステップが画面に出す記録の件数。**`src/browser/components/page/conversation/main-view/turn.tsx` が描くもの**
  * （レポートと質問の記録）だけを数え、**ツールの実行は数えない**
  * （メインビューに出ないため。`docs/display.md` 4.2）。
  */

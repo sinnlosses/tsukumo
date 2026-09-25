@@ -105,7 +105,7 @@
   flex-direction: column;
   overflow-y: hidden;
 }
-/* 答え待ちの間の枠の強調（`.dispatch-pending-glow`。features/dispatch/dispatch.module.css）は、
+/* 答え待ちの間の枠の強調（`.dispatch-pending-glow`。components/page/conversation/dispatch/dispatch.module.css）は、
    `<Dispatch>` の兄弟としてではなく、この領域（`<Layout>` が描く `.layout-dispatch` の
    `<section>`）自身の内側の縁に沿わせたい。そこに `position: absolute; inset: 0` を
    置くための基準をここで用意する（部品は自分の subtree の外の DOM を直接いじらない。
@@ -257,7 +257,7 @@
   }
   /* 下段はキャラビューを低く固定し、残りを入力欄に渡す。**固定するのは、立ち絵と吹き出しの
      大きさが領域の高さの割合で決まっているから**（割合の詰め直しは
-     features/character-view/character-view.module.css の @media）。答え待ちの箱で下段が
+     components/page/conversation/character-view/character-view.module.css の @media）。答え待ちの箱で下段が
      伸びても上段が消えないように、下段全体の上限を切る。 */
   .layout-row-bottom {
     grid-template-rows: 9.5rem minmax(0, 1fr);
