@@ -74,6 +74,11 @@ sed -n '/^### 消すかどうか/,/^#\{2,4\} /p' docs/coding-standards.md
 ループなので、途中の入れ物が書き変わると「今フレームの入力」がどこにも残らなくなる
 （`docs/architecture.md` 原則2）。
 
+**状態を持つ入れ物（キャッシュなど）を配線から渡すときも同じ**——中の `Map` などを型に出して
+呼び出し先に `.set` させず、作る側の閉包に閉じ込めて、覚える・引く口だけを渡す。
+`src/server/adapter/main-history.ts` の `createAchievementCommitCache()` が例（型は
+`dailyCountOf` / `rememberDailyCount` の関数2つだけを持ち、`Map` は閉包の中）。
+
 ## 型を迂回するキャストを使わない
 
 次を書かない: `as` キャスト、`any`、非nullアサーション `!`、`@ts-expect-error` /
@@ -494,6 +499,12 @@ effect の中と、イベントハンドラ・そこで登録した寿命の長�
 - **モックするのはシステム境界だけ**: ファイルシステム、時刻、端末の能力判定（画像プロトコルが
   使えるか）。`bun:test` の `mock` / `spyOn` を使う。自分たちのモジュール同士はモックしない
   （`/tdd` の `mocking.md` が正典）
+- **`bun test` はプロセスのタイムゾーンを UTC にして走る**（`process.env.TZ` は未設定のまま、
+  `Temporal.Now.timeZoneId()` が `"UTC"` を返す。ホストが JST でも変わらない。2026-09-25 に
+  実測）。日付の境目を見るテストは、オフセットを `+09:00` のように固定せず、
+  `Temporal.Now.timeZoneId()` を基準に時刻を組む。固定すると `bun test` が見る日の境界と
+  ずれ、境界に近い時刻のコミット・イベントが意図と違う日に数えられる
+  （`test/server/adapter/main-history.test.ts` の `isoDateAt`）
 - 非公開関数は、`export` された関数の振る舞いを通して検証する。テストのためだけに `export`
   しない（上の「関数の並び順」節と同じ規約）
 - **語彙（表情・衣装など全域を列挙する定数）の長さに依存する期待値は、その定数から導く**
