@@ -112,8 +112,11 @@ function chatMode(chatSummary: ChatSummary): SessionMode {
     kind: "chat",
     personaMemory: { remember: () => {}, forget: () => {}, finishTurn: () => {} },
     chatSummary,
-    chatKeep: { keep: () => {} },
-    chatRecall: { index: () => {}, recall: () => ({ kind: "not-found" }) },
+    chatRecall: {
+      recallList: () => ({ kind: "not-found" }),
+      recallEpisode: () => ({ kind: "not-found" }),
+      finishTurn: () => {},
+    },
   }
 }
 

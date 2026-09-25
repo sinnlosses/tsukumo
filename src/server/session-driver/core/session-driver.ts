@@ -88,17 +88,6 @@ export type ChatArchive = {
    */
   readonly append: (packName: string, entry: ChatArchiveEntry) => void
   /**
-   * いま進行中のやり取りに「残す」旗を立てる（{@link ChatKeep.keep} の実体。
-   * `docs/chat-mode.md` 4.9「残すと決めた1往復は窓から落とさない」）。**書くのは
-   * {@link finishTurn} のとき**なので、ターンの途中のどこで呼んでも同じ1往復に付く。
-   */
-  readonly keep: () => void
-  /**
-   * ターンが終わった合図。旗が立っていれば、**このターンで書いた行を指す印**をここで書く
-   * （文面は複製しない）。旗が立っていなければ、覚えていた行を忘れるだけ。
-   */
-  readonly finishTurn: () => void
-  /**
    * そのパックの**直近の会話**と**旗の付いたやり取り**を、新しいほうから遡って
    * {@link ChatReadbackLimits} のバイト数まで読む。**返すのはどちらも古い→新しいの順**で、
    * 呼ぶ側に順序の都合を持たせない。
@@ -108,22 +97,6 @@ export type ChatArchive = {
    * そのセッションは逐語なしで始まる）。
    */
   readonly readRecent: (packName: string, limits: ChatReadbackLimits) => ChatArchiveReadback
-  /**
-   * その日の**見出しを1行**、索引に残す（{@link ChatRecall.index} の実体。
-   * `docs/chat-mode.md` 4.9「古い雑談は索引を引いて思い出す」）。**付くのは書いた日**で、
-   * 前の日を指し直せない。書けない行（空・改行つき・長すぎる）と、そのターンで2行目に当たる
-   * 呼び出しは黙って捨てる。
-   */
-  readonly writeIndex: (packName: string, line: string) => void
-  /**
-   * 索引を `keyword` で引き、**当たった日の逐語だけ**を新しいほうから `limitBytes` まで読む
-   * （{@link ChatRecall.recall} の実体）。**当たらない日のファイルは開かない**のがこの口の要点で、
-   * アーカイブが何年ぶん増えても開くファイルの数は上限で頭打ちになる。
-   *
-   * **引けるのは1ターンに1回**（2回目以降は読まずに `already-recalled` を返す）。切り方・
-   * 読めない行の扱い・例外を投げないことは {@link readRecent} と同じ。
-   */
-  readonly recall: (packName: string, keyword: string, limitBytes: number) => ChatRecallResult
   /**
    * まだどのエピソードにも入っていない行を、古いほうから {@link ChatUnconsolidatedLimits.maxBytes}
    * まで返す（定着の入力。`docs/design.md` 7章「定着はどこで走るか」）。**最後のエピソードの
@@ -236,40 +209,50 @@ export type ChatEpisodeReadResult =
 
 /**
  * 古い雑談を索引から思い出す口（`docs/design.md` 7章）。**`ChatArchive` を駆動へそのまま
- * 渡さないために分けてある**のは {@link ChatKeep} と同じで、パックの名前と読む量は配線層
- * （`src/session-start.ts`）が縛ってから渡す。**雑談モードのときだけ渡り**、渡ったときだけ
- * `index` と `recall` のツールが `mcpServers` に載る。
+ * 渡さないために分けてある**——パックの名前と読む量は配線層（`src/session-start.ts` の
+ * `createChatRecall` の呼び出し）が縛ってから渡す。**雑談モードのときだけ渡り**、渡ったときだけ
+ * `recall` と `recall_episode` のツールが `mcpServers` に載る。
+ *
+ * **1ターンの回数の上限（`recallListsPerTurn` / `recallEpisodesPerTurn`）を数えるのは実装
+ * の側**（`src/server/chat/core/chat-recall.ts`）。{@link finishTurn} は駆動
+ * （`src/server/session-driver/adapter/sdk-driver.ts`）が {@link PersonaMemory.finishTurn} と同じ
+ * `turn-finished` の分岐から呼ぶ。
  */
 export type ChatRecall = {
-  /** その日の見出しを索引に1行残す（**1ターンに1行**。書けたかどうかは返さない）。 */
-  readonly index: (line: string) => void
-  /** 索引を引き、当たった日の逐語を返す（**1ターンに1回**）。 */
-  readonly recall: (keyword: string) => ChatRecallResult
+  /** 索引を `keyword` で引き、候補の一覧を返す（**1ターンに `recallListsPerTurn` 回まで**）。 */
+  readonly recallList: (keyword: string) => ChatRecallListResult
+  /** 候補の1件を `id` で開き、その範囲の逐語を返す（**1ターンに `recallEpisodesPerTurn` 件まで**）。 */
+  readonly recallEpisode: (id: string) => ChatRecallEpisodeResult
+  /** ターンが終わった合図（両方の回数をまた0から数え直す）。 */
+  readonly finishTurn: () => void
 }
 
 /**
- * {@link ChatRecall.recall} が返すもの。**判別可能な合併型**にしてあるのは、「当たらなかった」と
+ * {@link ChatRecall.recallList} が返すもの。**判別可能な合併型**にしてあるのは、「当たらなかった」と
  * 「このターンではもう引けない」がモデルへ返す文面の違う別の状態だから
  * （`docs/coding-standards.md`「「無いかもしれない」値」）。文面に変えるのは
  * `src/server/chat/core/chat-memory-prompt.ts`。
  */
-export type ChatRecallResult =
-  /** 当たった日の逐語（**古い→新しいの順**。空の配列にはならない）。 */
-  | { readonly kind: "found"; readonly entries: readonly ChatArchiveRecentEntry[] }
-  /** 索引に当たる日が無かった（**どの日のファイルも開いていない**）。 */
+export type ChatRecallListResult =
+  /** 採点の高い順の候補（{@link ChatEpisodeCandidate}。空の配列にはならない）。 */
+  | { readonly kind: "found"; readonly candidates: readonly ChatEpisodeCandidate[] }
+  /** 索引に当たる候補が無かった。 */
   | { readonly kind: "not-found" }
-  /** そのターンで既に1回引いている（**索引も日のファイルも開いていない**）。 */
-  | { readonly kind: "already-recalled" }
+  /** そのターンではもう一覧を引けない（`recallListsPerTurn` を超えた）。 */
+  | { readonly kind: "exhausted" }
 
-/**
- * 「残す」旗を立てる口（`docs/design.md` 7章）。**`ChatArchive` を駆動へそのまま渡さないため
- * だけに分けてある** — 駆動に要るのは旗を立てる1つの動きで、書き口も読み口も要らない。
- * **雑談モードのときだけ渡り**、渡ったときだけ `keep` ツールが `mcpServers` に載る。
- */
-export type ChatKeep = {
-  /** いま進行中のやり取りに旗を立てる（**引数は無い**。指せるのはそのターンだけ）。 */
-  readonly keep: () => void
-}
+/** {@link ChatRecall.recallEpisode} が返すもの。形の理由は {@link ChatRecallListResult} と同じ。 */
+export type ChatRecallEpisodeResult =
+  /** 開いた1件の範囲の逐語（形は {@link ChatEpisodeReadResult} の `found` と同じ）。 */
+  | {
+      readonly kind: "found"
+      readonly entries: readonly ChatArchiveRecentEntry[]
+      readonly overflowed: boolean
+    }
+  /** 知らない `id`（一覧に無い・アーカイブの行が残っていない）。 */
+  | { readonly kind: "not-found" }
+  /** そのターンではもう開けない（`recallEpisodesPerTurn` を超えた）。 */
+  | { readonly kind: "exhausted" }
 
 /**
  * {@link ChatArchive.readRecent} に渡す2つの上限（どちらも文面の UTF-8 バイト数の合計）。
@@ -329,8 +312,8 @@ export type ChatArchiveEntry =
     }
 
 /**
- * このセッションが仕事か雑談か（`docs/design.md` 7章）。**雑談のときだけ渡る4つの口を
- * `chat` の側にまとめてある**のは、4つが同時に渡るか同時に渡らないかの2択で、
+ * このセッションが仕事か雑談か（`docs/design.md` 7章）。**雑談のときだけ渡る3つの口を
+ * `chat` の側にまとめてある**のは、3つが同時に渡るか同時に渡らないかの2択で、
  * 「片方だけ無い」状態が実在しないから（`docs/coding-standards.md`
  * 「複数の「無い」が1つの状態」）。読む側の分岐も `mode.kind` の1つで済む。
  */
@@ -349,11 +332,9 @@ export type SessionMode =
        * （`sdk-driver.ts`）。書くのは定着（`chat-consolidation-writer.ts`）。
        */
       readonly chatSummary: ChatSummary
-      /** 「残す」旗を立てる口（`docs/design.md` 7章）。`keep` ツールが載る。 */
-      readonly chatKeep: ChatKeep
       /**
-       * 古い雑談を索引から思い出す口（`docs/design.md` 7章）。`index` と `recall` のツールが
-       * 載る（仕事の会話はそもそもアーカイブに残さないので、引く先が無い）。
+       * 古い雑談を索引から思い出す口（`docs/design.md` 7章）。`recall` と `recall_episode` の
+       * ツールが載る（仕事の会話はそもそもアーカイブに残さないので、引く先が無い）。
        */
       readonly chatRecall: ChatRecall
     }

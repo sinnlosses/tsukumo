@@ -1,7 +1,8 @@
 import { describe, expect, it } from "bun:test"
 
 import {
-  chatRecallText,
+  chatRecallEpisodeText,
+  chatRecallListText,
   takeChatMemoryPromptParts,
 } from "../../../../src/server/chat/core/chat-memory-prompt.ts"
 import {
@@ -60,10 +61,6 @@ function fakeChatArchive(
   const calls: { packName: string; limits: ChatReadbackLimits }[] = []
   return {
     append: () => {},
-    keep: () => {},
-    finishTurn: () => {},
-    writeIndex: () => {},
-    recall: () => ({ kind: "not-found" }),
     readRecent: (packName, limits) => {
       calls.push({ packName, limits })
       return { kept, recent: entries }
@@ -298,28 +295,67 @@ describe("takeChatMemoryPromptParts", () => {
   })
 })
 
-describe("chatRecallText", () => {
-  it("当たった日の逐語を、話者の印と日付の見出しを付けて返す", () => {
-    const text = chatRecallText({ kind: "found", entries: RECENT })
+describe("chatRecallListText", () => {
+  it("当たった候補を、点の高い順のまま id・見出し・要旨で返す（逐語は入らない）", () => {
+    const text = chatRecallListText({
+      kind: "found",
+      candidates: [
+        { id: "2026-09-25-2", title: "散歩の話その2", gist: "また散歩に行った話。" },
+        { id: "2026-09-25-1", title: "散歩の話", gist: "散歩に行った話。" },
+      ],
+    })
+
+    expect(text.indexOf("2026-09-25-2")).toBeLessThan(text.indexOf("2026-09-25-1"))
+    expect(text).toContain("散歩の話その2")
+    expect(text).toContain("また散歩に行った話。")
+    expect(text).not.toContain("利用者:")
+    expect(text).not.toContain("###")
+  })
+
+  it("当たらなかったときは、会話の文面を1バイトも返さない", () => {
+    const text = chatRecallListText({ kind: "not-found" })
+
+    expect(text).not.toContain("利用者:")
+    expect(text).toContain("索引に当たる候補が無かった")
+  })
+
+  it("そのターンで上限まで引いているときは、当たらなかったときと別の一言を返す", () => {
+    const text = chatRecallListText({ kind: "exhausted" })
+
+    expect(text).not.toBe(chatRecallListText({ kind: "not-found" }))
+    expect(text).toContain("1ターンに2回")
+  })
+})
+
+describe("chatRecallEpisodeText", () => {
+  it("開いた1件の逐語を、話者の印と日付の見出しを付けて返す", () => {
+    const text = chatRecallEpisodeText({ kind: "found", entries: RECENT, overflowed: false })
 
     expect(text).toContain("### 2026-09-20\n利用者: ただいま")
     expect(text).toContain("### 2026-09-21\nあなた: おかえり")
     // いまの話の続きではないことを前置きで断る。
     expect(text).toContain("続きではなく")
+    expect(text).not.toContain("続きがあるが")
   })
 
-  it("当たらなかったときは、会話の文面を1バイトも返さない", () => {
-    const text = chatRecallText({ kind: "not-found" })
+  it("overflowed のときは、逐語のあとに続きがあることだけを一言添える", () => {
+    const text = chatRecallEpisodeText({ kind: "found", entries: RECENT, overflowed: true })
+
+    expect(text).toContain("利用者: ただいま")
+    expect(text).toContain("続きがあるが")
+  })
+
+  it("知らない id のときは、会話の文面を1バイトも返さない", () => {
+    const text = chatRecallEpisodeText({ kind: "not-found" })
 
     expect(text).not.toContain("利用者:")
-    expect(text).not.toContain("###")
-    expect(text).toContain("索引に当たる日が無かった")
+    expect(text).toContain("エピソードは無かった")
   })
 
-  it("そのターンで既に引いているときは、当たらなかったときと別の一言を返す", () => {
-    const text = chatRecallText({ kind: "already-recalled" })
+  it("そのターンで上限まで開いているときは、知らない id のときと別の一言を返す", () => {
+    const text = chatRecallEpisodeText({ kind: "exhausted" })
 
-    expect(text).not.toBe(chatRecallText({ kind: "not-found" }))
-    expect(text).toContain("1ターンに1回")
+    expect(text).not.toBe(chatRecallEpisodeText({ kind: "not-found" }))
+    expect(text).toContain("1ターンに2件")
   })
 })

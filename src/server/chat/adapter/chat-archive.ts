@@ -17,18 +17,15 @@
 // stderr にも出さない。**どこまで読むかは呼ぶ側が渡すバイト数**で、ここは遡って集めることと
 // 並べ替えだけをする（文面を読んで載せる・載せないを決めない）。
 //
-// **古い雑談は、同じディレクトリの `index.jsonl`（日ごとの見出し。1日に何行でもある）を
-// 引いてから、当たった日のファイルだけを開く**（`docs/chat-mode.md` 4.9
-// 「古い雑談は索引を引いて思い出す」）。**同じ日の行はどれか1行にでも当たればその日を拾う。**
-// **当たらない日のファイルは開かない**のがこの口の要点で、**引くのに外部コマンド（`grep`）を
-// 起こさない** — 索引は日ごとに数行なので `node:fs` で読んで絞るだけで足りる。**見出しの文面を
-// 決めるのはモデル**で、ここが持つのは置き場と形と上限だけ。
+// **古い雑談は、エピソード索引（`episode.jsonl`）を引いてから、当たった範囲のファイルだけを
+// 開く**（`docs/chat-mode.md` 4.9「古い雑談は索引を引いて思い出す」、`docs/design.md` 7章
+// 「エピソード索引はどこに置くか」）。索引を書くのは定着（`chat-consolidation-writer.ts`）で、
+// ここが持つのは置き場と形、`recallList` / `recallEpisode` での読み方だけ。
 //
-// **「残す」旗は、同じディレクトリの `kept.jsonl` に「時刻だけ」の索引として積む**
-// （`docs/chat-mode.md` 4.9「残すと決めた1往復は窓から落とさない」）。**日付のファイルは
-// 書き換えない**（追記のまま）し、**文面も複製しない** — ディスクの上に会話は1つだけで、
-// `docs/coding-standards.md`「会話内容の扱い」の書き出しの例外表に数えずに済む。**どのやり取りに
-// 立てるかの判断はここが決めない**（モデルが `keep` ツールを呼ぶかどうかだけ）。
+// **`kept.jsonl`（「残す」旗の索引）は書かなくなった**（`keep` ツールが無くなった。
+// `docs/chat-mode.md` 4.9「窓から溢れた会話は定着で畳む」の「「残す」旗はやめる」）。
+// **`readRecent` が読む側だけ残っている**——過去に書かれた `kept.jsonl` があれば直近の読み戻しに
+// 引き続き混ぜる。新しく増えることはもう無い（消すのは `/compact` をやめるタスク）。
 
 import { rmSync } from "node:fs"
 import { join } from "node:path"
@@ -39,7 +36,7 @@ import { isCharacterPackName } from "../../../shared/character.ts"
 import { type Expression } from "../../../shared/expression.ts"
 import { byteLength } from "../../../shared/lib/byte-length.ts"
 import { appendJsonLine, dateFileNames, readJsonLines } from "../../adapter/lib/jsonl.ts"
-import { isoWithOffset, localDateKey, todayLocalDateKey } from "../../adapter/local-time.ts"
+import { isoWithOffset, localDateKey } from "../../adapter/local-time.ts"
 import { tsukumoHomeDir } from "../../adapter/tsukumo-home.ts"
 import {
   type ChatArchive,
@@ -51,7 +48,6 @@ import {
   type ChatEpisodeReadResult,
   type ChatEpisodeRecallListResult,
   type ChatReadbackLimits,
-  type ChatRecallResult,
   type ChatUnconsolidatedBatch,
   type ChatUnconsolidatedEntry,
   type ChatUnconsolidatedLimits,
@@ -71,18 +67,9 @@ const ARCHIVE_FORMAT_VERSION = 1 satisfies number
 const KEPT_INDEX_FILE_NAME = "kept.jsonl"
 
 /**
- * 日ごとの見出しの索引の名前（`docs/design.md` 7章）。**`kept.jsonl` と同じく
- * {@link dateFileNames} の形を通らない**ので、窓の走査には混ざらない。
- */
-const DAY_INDEX_FILE_NAME = "index.jsonl"
-
-/** 見出しの1行の長さの上限（超えた行は書かない。`remember` の1行と同じ値）。 */
-const MAX_INDEX_LINE_LENGTH = 120
-
-/**
  * エピソード索引の名前（`docs/design.md` 7章「エピソード索引はどこに置くか」）。
- * `KEPT_INDEX_FILE_NAME` / `DAY_INDEX_FILE_NAME` と同じく {@link dateFileNames} の形を
- * 通らないので、窓の走査には混ざらない。
+ * `KEPT_INDEX_FILE_NAME` と同じく {@link dateFileNames} の形を通らないので、窓の走査には
+ * 混ざらない。
  */
 const EPISODE_INDEX_FILE_NAME = "episode.jsonl"
 
@@ -113,16 +100,6 @@ const archiveLineSchema = z.object({
 const keptLineSchema = z.object({
   v: z.literal(ARCHIVE_FORMAT_VERSION),
   at: z.string().regex(/^\d{4}-\d{2}-\d{2}T/),
-})
-
-/**
- * 日ごとの見出しの1行。**照合に使うのは `date` と `line` の2つ**（`pack` は置き場所で既に
- * 決まっているので読まない）。
- */
-const dayIndexLineSchema = z.object({
-  v: z.literal(ARCHIVE_FORMAT_VERSION),
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  line: z.string(),
 })
 
 /** エピソード索引の1行（`docs/design.md` 7章の表）。読めない行・知らない版は飛ばす。 */
@@ -199,82 +176,23 @@ export function discardChatArchive(packName: string, root: string = chatArchiveD
  * 違うが、触るファイルは同じ1つなので境界は増やさない（原則3。`docs/design.md` 7章）。
  */
 export function createChatArchive(root: string = chatArchiveDir()): ChatArchive {
-  // このターンで書いた行の宛先（旗が立ったときに索引へ写す。**文面は持たない**）。
-  // ターンが終わるたびに空に戻すので、覚えている量は1ターンぶんで頭打ちになる。
-  let turnMarks: readonly KeptMark[] = []
-  // 旗が立ったか。**立てるのはターンの途中、書くのはターンの終わり**なので、ここで待たせる。
-  let keeping = false
-  // そのターンで既に見出しを書いたか・既に索引を引いたか（**どちらも1ターンに1回**。
-  // `remember` の1ターン1行と同じ縛りで、別々に数える）。
-  let indexed = false
-  let recalled = false
-
   return {
     append: (packName, entry) => {
       if (!isCharacterPackName(packName)) {
         return
       }
-      const record = toArchiveRecord(packName, entry)
-      appendJsonLine(join(root, packName, `${localDateKey(entry.at)}.jsonl`), record)
-      turnMarks = [...turnMarks, { pack: packName, at: record.at }]
-    },
-    keep: () => {
-      keeping = true
-    },
-    finishTurn: () => {
-      if (keeping) {
-        appendKeptMarks(root, turnMarks)
-      }
-      keeping = false
-      turnMarks = []
-      indexed = false
-      recalled = false
+      appendJsonLine(
+        join(root, packName, `${localDateKey(entry.at)}.jsonl`),
+        toArchiveRecord(packName, entry),
+      )
     },
     readRecent: (packName, limits) => readReadback(root, packName, limits),
-    writeIndex: (packName, line) => {
-      const trimmed = line.trim()
-      if (indexed || !isCharacterPackName(packName) || !isWritableIndexLine(trimmed)) {
-        return
-      }
-      indexed = true
-      appendJsonLine(join(root, packName, DAY_INDEX_FILE_NAME), {
-        v: ARCHIVE_FORMAT_VERSION,
-        date: todayLocalDateKey(),
-        pack: packName,
-        line: trimmed,
-      } satisfies DayIndexRecord)
-    },
-    recall: (packName, keyword, limitBytes) => {
-      if (recalled) {
-        return { kind: "already-recalled" }
-      }
-      if (!isCharacterPackName(packName)) {
-        return { kind: "not-found" }
-      }
-      recalled = true
-      return readRecalled(join(root, packName), keyword, limitBytes)
-    },
     unconsolidated: (packName, limits) => readUnconsolidated(root, packName, limits),
     appendEpisodes: (packName, episodes) => writeEpisodes(root, packName, episodes),
     recallList: (packName, keyword, limitBytes, now) =>
       readEpisodeCandidates(root, packName, keyword, limitBytes, now),
     recallEpisode: (packName, id, limitBytes, now) =>
       readEpisode(root, packName, id, limitBytes, now),
-  }
-}
-
-/**
- * 旗の立ったターンの行を、パックごとの索引へ1行ずつ書く。**書くのは版・時刻・パック名だけ**で、
- * **文面は複製しない**（`docs/coding-standards.md`「会話内容の扱い」の例外表を増やさないため。
- * 文面はアーカイブの日付のファイルに1つだけある）。
- */
-function appendKeptMarks(root: string, marks: readonly KeptMark[]): void {
-  for (const mark of marks) {
-    appendJsonLine(join(root, mark.pack, KEPT_INDEX_FILE_NAME), {
-      v: ARCHIVE_FORMAT_VERSION,
-      at: mark.at,
-      pack: mark.pack,
-    } satisfies KeptRecord)
   }
 }
 
@@ -292,33 +210,6 @@ type ArchiveRecord = {
   readonly text: string
   readonly expression: Expression | undefined
   readonly images: number | undefined
-}
-
-/**
- * 索引の1行の形（`docs/design.md` 7章）。**文面を持たない** — 指すだけで、会話はアーカイブの
- * 日付のファイルに1つだけある。
- */
-type KeptRecord = {
-  readonly v: typeof ARCHIVE_FORMAT_VERSION
-  readonly at: string
-  readonly pack: string
-}
-
-/**
- * 日ごとの見出しの1行の形（`docs/design.md` 7章）。**`line` を書くのはモデル**で、tsukumo が
- * 足すのは版・日付・パック名だけ。
- */
-type DayIndexRecord = {
-  readonly v: typeof ARCHIVE_FORMAT_VERSION
-  readonly date: string
-  readonly pack: string
-  readonly line: string
-}
-
-/** このターンで書いた1行の宛先（索引へ写すときの材料。**文面は持たない**）。 */
-type KeptMark = {
-  readonly pack: string
-  readonly at: string
 }
 
 /**
@@ -472,77 +363,6 @@ function readKeptMarks(path: string): ReadonlySet<string> {
     return record.success ? [record.data.at] : []
   })
   return new Set(marks)
-}
-
-/**
- * 索引を引き、当たった日のファイルだけを新しい順に開く（{@link ChatArchive.recall} の実装）。
- *
- * **索引に当たる日が1つも無ければ、日のファイルは1つも開かない**（`not-found` を返す。
- * `docs/chat-mode.md` 4.9「古い雑談は索引を引いて思い出す」）。当たった日を全部読んでも
- * 1件も残らなかったとき（指す先が消えている・全部壊れている）も `not-found` にする——
- * 呼ぶ側に「空の found」を持たせない。
- */
-function readRecalled(dir: string, keyword: string, limitBytes: number): ChatRecallResult {
-  const dates = matchedIndexDates(dir, keyword)
-  if (dates.length === 0) {
-    return { kind: "not-found" }
-  }
-
-  const entries = readEntriesBackward(
-    dir,
-    dates.map((date) => `${date}.jsonl`),
-    limitBytes,
-  ).map((timed) => timed.entry)
-  return entries.length === 0 ? { kind: "not-found" } : { kind: "found", entries }
-}
-
-/**
- * `keyword` に当たった日を新しい順に並べる（索引が無い・当たらないときは空。返る日付に
- * 重複は無い）。
- *
- * **照合は小文字にしての部分一致**で、空白で分けた語は**どれか1つでも当たれば**その日を拾う
- * （言葉のずれを吸収するのが索引の役。足りないより多いほうへ倒す）。**同じ日の行は全部照合の
- * 対象にする**——1日に何行書かれていても、**どれか1行にでも当たればその日**を拾う。**日付
- * そのものも照合の対象**なので、日付の文字列をそのまま鍵にしても引ける。
- */
-function matchedIndexDates(dir: string, keyword: string): readonly string[] {
-  const terms = keyword
-    .toLowerCase()
-    .split(/\s+/)
-    .filter((term) => term !== "")
-  if (terms.length === 0) {
-    return []
-  }
-
-  const headings = readDayIndexHeadings(join(dir, DAY_INDEX_FILE_NAME))
-  const matched = [...headings]
-    .filter(([date, lines]) =>
-      lines.some((line) => terms.some((term) => `${date} ${line}`.toLowerCase().includes(term))),
-    )
-    .map(([date]) => date)
-  return matched.sort().reverse()
-}
-
-/**
- * 索引の日付と、その日に積まれた見出しの全部（読めない行・知らない版は落とす。索引が無いときは
- * 空）。**1日に何行あっても全部持つ**——`chat-manner.ts` の指示どおり区切りごとに書かれるので、
- * 古い行の語だけに当たった検索が抜け落ちないようにする（`docs/design.md` 7章）。
- */
-function readDayIndexHeadings(path: string): ReadonlyMap<string, readonly string[]> {
-  const headings = new Map<string, readonly string[]>()
-  for (const raw of readJsonLines(path)) {
-    const record = dayIndexLineSchema.safeParse(raw)
-    if (record.success) {
-      const lines = headings.get(record.data.date) ?? []
-      headings.set(record.data.date, [...lines, record.data.line])
-    }
-  }
-  return headings
-}
-
-/** 索引に書いてよい見出しか（空・改行つき・長すぎる行は書かない）。 */
-function isWritableIndexLine(line: string): boolean {
-  return line !== "" && !line.includes("\n") && line.length <= MAX_INDEX_LINE_LENGTH
 }
 
 /** 旗の立った日付を新しい順に並べる（開くファイルをそこだけに絞る）。 */

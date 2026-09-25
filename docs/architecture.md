@@ -98,7 +98,7 @@ Claude Code を動かす）の核（セッション駆動・イベントの変�
 | `src/server/session-driver/core/sdk-message.ts`                              | core       | SDK のメッセージを内部イベントに変換する。知らない種別は無視する                                                                                                    |
 | `src/server/session-driver/core/session-driver.ts`                           | core       | 駆動の契約（`SessionDriver` / `SessionDriverOptions` と既定値）。実装は持たない                                                                                     |
 | `src/server/session-driver/adapter/sdk-driver.ts`                            | adapter    | SDK でセッションを起こし（`query()`）、入力・中断・許可の応答を渡す。**SDK を呼ぶのは `sdk-` で始まるファイルだけ**（原則3）                                        |
-| `src/server/session-driver/adapter/sdk-tool.ts`                              | adapter    | tsukumo の MCP サーバと6つのツール（`speak` / `remember` / `forget` / `keep` / `index` / `recall`）                                                                 |
+| `src/server/session-driver/adapter/sdk-tool.ts`                              | adapter    | tsukumo の MCP サーバと5つのツール（`speak` / `remember` / `forget` / `recall` / `recall_episode`）                                                                 |
 | `src/server/session-driver/adapter/sdk-session.ts`                           | adapter    | セッションの一覧・transcript の読み直し・印（続きから始めるものを探す・切り替え先を並べる）                                                                         |
 | `src/server/session-driver/adapter/sdk-context-usage.ts`                     | adapter    | コンテキストの内訳を問い合わせ、画面が要る形へ写す                                                                                                                  |
 | `src/server/session-driver/adapter/fake-driver.ts`                           | adapter    | 疑似セッション（`test/fixture/fake-session.json`）どおりにイベントを流す fake driver                                                                                |
@@ -422,11 +422,12 @@ without an output directory`。2026-09-18 の実測）。標準出力で受け�
 **戻り値は `"ok"` だけにする。** ツールの結果はモデルの文脈に戻るので、ここに情報を載せると
 tsukumo からモデルへの逆流路ができてしまう。逆流させないことを戻り値の形で示す。
 
-**2026-09-21 に、雑談の `recall` だけをこの線の外に置いた。** 返すのは tsukumo の状態でも画面の
-事情でもなく、**アーカイブに残っているその会話自身の過去**なので、ここで塞いでいる逆流路には
-当たらない（`docs/chat-mode.md` 4.9「古い雑談は索引を引いて思い出す」に理由が3つ）。
+**2026-09-21 に、雑談の `recall` をこの線の外に置き、2026-09-25 に2段階（`recall` /
+`recall_episode`）へ組み替えた。** 返すのは tsukumo の状態でも画面の事情でもなく、**アーカイブに
+残っているその会話自身の過去**なので、ここで塞いでいる逆流路には当たらない
+（`docs/chat-mode.md` 4.9「古い雑談は索引を引いて思い出す」に理由が3つ）。
 **2026-09-23 に、`report`（当時は試行中、2026-09-24 に採用）もこの線の外に置いた**（ユーザー決定）。返すのは差し戻すときの
-規約違反とその直し方だけで、画面の状態は載せない（`docs/display.md` 4.2）。広げたのはこの2つだけ
+規約違反とその直し方だけで、画面の状態は載せない（`docs/display.md` 4.2）。広げたのはこの3つだけ
 （2026-09-22 に `claim` / `finish` も外に置いたが、翌日 worktree の運用ごと撤去した）。
 
 **行頭マーカーは補助として残す**（環境変数で差し替え可能）。`speak` が呼ばれなかったターンで

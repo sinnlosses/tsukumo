@@ -302,13 +302,9 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
     if (origin === "driver" && event.kind === "token-usage") {
       tally.tokenUsage.append(event.cumulative, at, state)
     }
-    // 「残す」旗が立っていれば、**このターンで書いた行を指す印**をここで書く
-    // （旗を立てるのはターンの途中、書くのは終わり。docs/chat-mode.md 4.9
-    // 「残すと決めた1往復は窓から落とさない」）。立っていなければ覚えていた行を忘れるだけ
-    // なので、雑談かどうかで呼び分けない。
-    // 内訳を捨てるのも同じ合図で行う（1ターンぶんだけ持つ）。**`token-usage` は
-    // `turn-finished` より先に届く**（`sdk-message.ts` が `result` 1つをこの順に変換する）ので、
-    // 書き終えたあとに捨てることになる。
+    // トークン消費の内訳を、1ターンぶんだけ持つところから捨てる（次のターンでまた0から
+    // 数える）。**`token-usage` は `turn-finished` より先に届く**（`sdk-message.ts` が `result`
+    // 1つをこの順に変換する）ので、書き終えたあとに捨てることになる。
     // 見直しの結果を、次の起動でも「前回の提案」として配れるようにホームへ書く。**駆動由来
     // （`"driver"`）だけ**——復元の再生にはこの種類のイベントは出てこない
     // （`docs/design.md`「見直しのツールと状態」）が、ほかの書き込みと条件を揃えてある。
@@ -316,7 +312,6 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
       options.writePreviousUsageReview(at, event.findings)
     }
     if (origin === "driver" && event.kind === "turn-finished") {
-      options.chatArchive.finishTurn()
       tally.tokenUsage.finishTurn()
       // コンテキストの内訳は**セッションに1行**なので、まだ書いていなければ問い合わせる。
       // 待たずに次へ進む（ターンの終わりを遅らせない）。駆動がまだ無い回は次のターンで揃う。

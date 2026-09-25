@@ -322,10 +322,12 @@ async function relayMessages(
           sessionId = event.sessionId
         }
         if (event.kind === "turn-finished") {
-          // **1ターンに書けるのは1行**（docs/design.md 7.1）。ターンの区切りを知っているのは
-          // ここだけなので、終わるたびに次の1行を受け付けさせる。
+          // **1ターンに書けるのは1行、引けるのは recall / recall_episode それぞれ決めた回数まで**
+          // （docs/design.md 7.1・7章）。ターンの区切りを知っているのはここだけなので、
+          // 終わるたびに次の1行・次の回数を受け付けさせる。
           if (options.mode.kind === "chat") {
             options.mode.personaMemory.finishTurn()
+            options.mode.chatRecall.finishTurn()
           }
           if (sessionId !== undefined) {
             scheduleMarkSession(sessionId, options)

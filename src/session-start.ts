@@ -28,6 +28,7 @@ import {
   type ChatConsolidationSource,
   createChatConsolidationWriter,
 } from "./server/chat/core/chat-consolidation-writer.ts"
+import { createChatRecall } from "./server/chat/core/chat-recall.ts"
 import { createContextUsageLog } from "./server/context-usage/adapter/context-usage-log.ts"
 import { type Config } from "./server/core/config.ts"
 import { appendDiaryParagraph } from "./server/diary/adapter/diary.ts"
@@ -51,7 +52,6 @@ import {
 import { type PromptImageShelf } from "./server/session-driver/core/prompt-image-shelf.ts"
 import {
   type ChatArchive,
-  type ChatRecall,
   type SessionDriver,
   type SessionMode,
   type SessionStart,
@@ -94,7 +94,6 @@ import { visitCast } from "./server/visit/core/visit-script.ts"
 import { QUICK_VISIT_TIMING, VISIT_TIMING } from "./server/visit/core/visit-timing.ts"
 import { UNKNOWN_ACHIEVEMENT } from "./shared/achievement.ts"
 import { CHAT_COMPACT_THRESHOLD_BYTES } from "./shared/chat-log.ts"
-import { CHAT_MEMORY_BUDGET } from "./shared/chat-memory-budget.ts"
 import { type UsageProposalDismissal } from "./shared/contract/usage-review.ts"
 import { expressionChoices } from "./shared/expression-choice.ts"
 import { type SessionChoice } from "./shared/session-choice.ts"
@@ -230,6 +229,7 @@ export function startSession(options: SessionStartOptions): StartedSession {
           cwd,
           inheritedEnv: config.inheritedEnv,
           onEvent,
+          now,
         })
       },
       restoreEvents: (resumed, pack) =>
@@ -407,6 +407,8 @@ function startDriver(options: {
   /** claude の子プロセスへ引き継ぐ環境変数（`Config.inheritedEnv`）。 */
   readonly inheritedEnv: Readonly<Record<string, string | undefined>>
   readonly onEvent: (event: SessionEvent) => void
+  /** サーバの時計（エポックミリ秒）。`recall` / `recall_episode` の採点が読む「いま」に使う。 */
+  readonly now: () => number
 }): SessionDriver {
   const { seed, chatArchive, fakeSession, cwd, inheritedEnv, onEvent } = options
   if (fakeSession !== undefined) {
@@ -419,9 +421,9 @@ function startDriver(options: {
     })
   }
 
-  // **雑談のときだけ渡る4つの口は、1回の分岐でまとめて作る**（`SessionMode`。4つは同時に
+  // **雑談のときだけ渡る3つの口は、1回の分岐でまとめて作る**（`SessionMode`。3つは同時に
   // 渡るか同時に渡らないかの2択で、片方だけ無い状態は実在しない）。
-  const mode = sessionMode(seed, chatArchive, cwd, onEvent)
+  const mode = sessionMode(seed, chatArchive, cwd, onEvent, options.now)
 
   return startSdkDriver({
     cwd,
@@ -471,18 +473,19 @@ function rememberVisitEnabled(visitEnabled: boolean): SessionEvent {
 }
 
 /**
- * そのモードのときだけ渡る口を1回の分岐でまとめる（`docs/design.md` 7章・7.1）。**雑談の4つは
- * 仕事のときに1つも渡らない**ので、`remember` / `forget` / `keep` / `index` / `recall` のツールが
+ * そのモードのときだけ渡る口を1回の分岐でまとめる（`docs/design.md` 7章・7.1）。**雑談の3つは
+ * 仕事のときに1つも渡らない**ので、`remember` / `forget` / `recall` / `recall_episode` のツールが
  * 載らず、作業の文脈が人格にもアーカイブにも入らない。
  *
- * 渡すのは書き口と同じ1つのアーカイブだが、**駆動から見えるのは旗を立てる動きと索引の2つだけ**
- * （`ChatKeep` / `ChatRecall`）。**パックの名前と読む量をここで縛ってから渡す**。
+ * **`chatRecall` はパックの名前と読む量（`docs/chat-mode.md` 4.9 の容量の表）をここで縛ってから
+ * 渡す**（`createChatRecall`。`src/server/chat/core/chat-recall.ts`）。
  */
 function sessionMode(
   seed: SessionLaunchSeed<CharacterPack>,
   chatArchive: ChatArchive,
   cwd: string,
   onEvent: (event: SessionEvent) => void,
+  now: () => number,
 ): SessionMode {
   if (!seed.chat) {
     return { kind: "work" }
@@ -496,21 +499,7 @@ function sessionMode(
       onEvent({ kind: "remembered-lines-changed", lines }),
     ),
     chatSummary: createChatSummary(seed.pack.name),
-    chatKeep: chatArchive,
-    chatRecall: chatRecallFor(chatArchive, seed.pack.name),
-  }
-}
-
-/**
- * 索引の書き口・引く口を、1つのパックに縛って駆動へ渡す形にする（`docs/design.md` 7章）。
- * **読む量を決めるのも配線層**で、アーカイブ側は渡されたバイト数までしか読まない
- * （`readRecent` に窓と旗の上限を渡すのと同じ手）。
- */
-function chatRecallFor(chatArchive: ChatArchive, packName: string): ChatRecall {
-  return {
-    index: (line) => chatArchive.writeIndex(packName, line),
-    recall: (keyword) =>
-      chatArchive.recall(packName, keyword, CHAT_MEMORY_BUDGET.recallEpisodeBytes),
+    chatRecall: createChatRecall(chatArchive, seed.pack.name, now),
   }
 }
 

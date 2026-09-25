@@ -148,16 +148,17 @@ describe("takeSystemPromptAppend", () => {
     expect(summary.read()?.delivered).toBe(true)
   })
 
-  it("雑談のときだけ載る条（覚える・忘れる・残す）は、仕事の append に入らない", () => {
-    // 2つのツールは雑談のときだけ載るので、呼ぶ条件もこの文面だけが持つ
+  it("雑談のときだけ載る条（覚える・忘れる・思い出す）は、仕事の append に入らない", () => {
+    // 4つのツールは雑談のときだけ載るので、呼ぶ条件もこの文面だけが持つ
     // （docs/design.md 7.1・docs/chat-mode.md 4.9）。
     const work = takeSystemPromptAppend({ persona: PERSONA, mode: { kind: "work" } })
 
     expect(CHAT_MANNER_PROMPT).toContain("remember")
     expect(CHAT_MANNER_PROMPT).toContain("forget")
-    expect(CHAT_MANNER_PROMPT).toContain("keep")
+    expect(CHAT_MANNER_PROMPT).toContain("recall")
+    expect(CHAT_MANNER_PROMPT).toContain("recall_episode")
     expect(work).not.toContain("forget")
-    expect(work).not.toContain("keep")
+    expect(work).not.toContain("recall")
   })
 
   it("雑談の作法に「完了」の1行の条は無い（催促は環境変数で塞ぐ。docs/chat-mode.md 4.9）", () => {
@@ -179,8 +180,11 @@ describe("toSystemPromptMode", () => {
       kind: "chat",
       personaMemory: { remember: () => {}, forget: () => {}, finishTurn: () => {} },
       chatSummary,
-      chatKeep: { keep: () => {} },
-      chatRecall: { index: () => {}, recall: () => ({ kind: "not-found" }) },
+      chatRecall: {
+        recallList: () => ({ kind: "not-found" }),
+        recallEpisode: () => ({ kind: "not-found" }),
+        finishTurn: () => {},
+      },
     }
 
     const mode = toSystemPromptMode(sessionMode, chatArchive, { kind: "new" }, "架空")
@@ -243,10 +247,6 @@ function fakeChatSummary(initial: ChatSummaryRecord): ChatSummary {
 function fakeChatArchive(): ChatArchive {
   return {
     append: () => {},
-    keep: () => {},
-    finishTurn: () => {},
-    writeIndex: () => {},
-    recall: () => ({ kind: "not-found" }),
     readRecent: () => ({ kept: KEPT, recent: RECENT }),
     unconsolidated: () => ({ entries: [], usedBytes: 0, previousEpisodeTitle: "" }),
     appendEpisodes: () => {},

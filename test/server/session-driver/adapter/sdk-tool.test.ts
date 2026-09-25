@@ -27,8 +27,11 @@ const CHAT_MODE: SessionMode = {
     markUndelivered: () => {},
     markDelivered: () => {},
   },
-  chatKeep: { keep: () => {} },
-  chatRecall: { index: () => {}, recall: () => ({ kind: "not-found" }) },
+  chatRecall: {
+    recallList: () => ({ kind: "not-found" }),
+    recallEpisode: () => ({ kind: "not-found" }),
+    finishTurn: () => {},
+  },
 }
 
 describe("tsukumoServer", () => {
@@ -48,6 +51,64 @@ describe("tsukumoServer", () => {
     expect(names).not.toContain("diary")
     expect(names).toContain("speak")
     expect(names).toContain("remember")
+  })
+
+  it("雑談のときは recall と recall_episode の2段階が載り、keep と index はもう載らない", async () => {
+    const names = await listedToolNames(
+      tsukumoServer(EXPRESSIONS, CHAT_MODE, createReportReview(), noopIntake(), () => {}),
+    )
+
+    expect(names).toEqual(["speak", "remember", "forget", "recall", "recall_episode"])
+  })
+})
+
+describe("recall / recall_episode ツール", () => {
+  it("recall は一覧の文面を、recall_episode は開いた1件の文面を返す（口が返したものをそのまま渡す）", async () => {
+    const chatMode: SessionMode = {
+      ...CHAT_MODE,
+      chatRecall: {
+        recallList: (keyword) => ({
+          kind: "found",
+          candidates: [{ id: `id-for-${keyword}`, title: "架空の見出し", gist: "架空の要旨" }],
+        }),
+        recallEpisode: (id) => ({
+          kind: "found",
+          entries: [{ speaker: "user", text: `${id} の架空のやり取り`, date: "2026-09-25" }],
+          overflowed: false,
+        }),
+        finishTurn: () => {},
+      },
+    }
+    // `McpSdkServerConfigWithInstance` は同時に1本の transport しか繋げないので、
+    // 呼び出しごとにサーバを作り直す（`callTool` が繋いで閉じる。他のテストと同じ手）。
+    const server = (): McpSdkServerConfigWithInstance =>
+      tsukumoServer(EXPRESSIONS, chatMode, createReportReview(), noopIntake(), () => {})
+
+    const listReply = await callTool(server(), "recall", { keyword: "散歩" })
+    const episodeReply = await callTool(server(), "recall_episode", { id: "2026-09-25-1" })
+
+    expect(listReply.text).toContain("id-for-散歩")
+    expect(listReply.text).toContain("架空の見出し")
+    expect(episodeReply.text).toContain("2026-09-25-1 の架空のやり取り")
+  })
+
+  it("当たらない・知らない id のときは短い一言だけで、会話の文面は入らない", async () => {
+    const chatMode: SessionMode = {
+      ...CHAT_MODE,
+      chatRecall: {
+        recallList: () => ({ kind: "not-found" }),
+        recallEpisode: () => ({ kind: "not-found" }),
+        finishTurn: () => {},
+      },
+    }
+    const server = (): McpSdkServerConfigWithInstance =>
+      tsukumoServer(EXPRESSIONS, chatMode, createReportReview(), noopIntake(), () => {})
+
+    const listReply = await callTool(server(), "recall", { keyword: "架空" })
+    const episodeReply = await callTool(server(), "recall_episode", { id: "no-such-id" })
+
+    expect(listReply.text).not.toContain("利用者:")
+    expect(episodeReply.text).not.toContain("利用者:")
   })
 })
 
