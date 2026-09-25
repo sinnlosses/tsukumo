@@ -1005,7 +1005,20 @@ Network タブで `/ws` の upgrade が101を返し、`hello` フレームが届
 しおり）も見るときは、`~/.tsukumo/diary/<リポジトリ>/2026-09-20.json`（`TSUKUMO_HOME` を
 分けていればその下。置き場の形は `src/server/diary/adapter/diary.ts`）に架空の日記を1件置いてから
 起こす——fake driver は `diary` ツールの中身を持たないので、置かなければ手続き `achievement.day` の
-その日は「日記が無い」のまま。
+その日は「日記が無い」のまま。**この置く手間ごと `capture-catalog.ts` の `diary-book` 件がやる**
+（次の段落）ので、見開きを撮るだけなら手で置かなくてよい。
+
+**帯の「いまの作業」の実行中・失敗・背景のタスク、表情やキャラクターを消す確認のモーダル、
+日記帳の見開きは、`capture-catalog.ts` に専用の件があるのでそれぞれ手で操作を当てなくてよい**
+（`--only <名前>` で1件だけ撮れる）。`current-work-running` / `current-work-failed` は、
+名指しで直接起こしても状態が出るよう**自分の `request` を持つ場面**
+（`test/fixture/fake-session.json` の同名の場面）を使う——`request` の無い場面は
+`src/shared/turn-step.ts` の `currentTurnSteps` が「依頼が一度も無い」に畳んで、途中の
+`tool-started` があっても帯の一覧に出ない。`current-work-background` は既存の `background-task`
+場面をそのまま使う。`portrait-clear-confirm` / `character-delete-confirm` /
+`diary-book` は**件専用の隔離ホーム**（`--out` の下の `home/`）を使う——`HomeSetup`
+（`scripts/capture-catalog.ts`）が、消せるキャラクターパック（同梱の `chou` を別名でコピー）や
+架空の日記を、撮る前にそこへ書く。**既定のホーム（利用者の `~/.tsukumo/`）には触らない。**
 
 **訪問（`docs/design.md` 5章「訪問の契機と状態」）の出入りを確かめるときは、`TSUKUMO_VISIT_QUICK=1`
 を添えて疑似セッションの場面 `visit-long-tool` か `visit-background` を使う**（しきい値が 5 秒に

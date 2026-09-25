@@ -37,12 +37,18 @@
 // 上書きしてしまうため。
 
 import { type ChildProcess, spawn } from "node:child_process"
-import { mkdirSync, writeFileSync } from "node:fs"
+import { cpSync, mkdirSync, writeFileSync } from "node:fs"
 import path from "node:path"
 import process from "node:process"
 import { fileURLToPath } from "node:url"
 
 import { type Browser, chromium, type Page } from "playwright-core"
+
+import { appendDiaryParagraph } from "../src/server/diary/adapter/diary.ts"
+
+/** tsukumo 自身の場所（このスクリプトの1つ上）。spawn の cwd にも、架空の日記・パックを
+ * 置く先を組み立てるのにも使う。 */
+const REPO_DIR = fileURLToPath(new URL("..", import.meta.url))
 
 /**
  * 撮る前に当てる操作。**この5種だけ**にする（もとは4種で、`docs/research/ui-catalog.md` 1.4 が
@@ -64,6 +70,23 @@ type Preparation =
   | { readonly kind: "hash"; readonly hash: string }
 
 /**
+ * 撮る前に、その件専用の `TSUKUMO_HOME` へ置いておくもの。**既定のホーム（利用者の
+ * `~/.tsukumo/`）には触らない**——日記帳の見開きや、画面から消せるキャラクターパックは
+ * 中身が無いと出せないので、`--out` の下に立てた件専用のホームへだけ書く
+ * （{@link applyHomeSetup}）。
+ *
+ * - `default`: 何もしない（既定のホームのまま起こす。ほとんどの件はこれ）
+ * - `diary`: 架空の日記を1件書いてから起こす（`appendDiaryParagraph`。日記帳の見開きを見る件）
+ * - `character`: 同梱の `chou` を別名でコピーしたパックを置いてから起こす（画面から消せる
+ *   パックが要る件——ホームにしか無いパックだけが `removal: "delete"` になる。
+ *   `src/server/character-pack/adapter/character-pack.ts` の `characterPackRemoval`）
+ */
+type HomeSetup =
+  | { readonly kind: "default" }
+  | { readonly kind: "diary"; readonly date: string; readonly body: string }
+  | { readonly kind: "character"; readonly pack: string }
+
+/**
  * カタログの1件。`scene` は疑似セッション（test/fixture/fake-session.json）の場面の名前で、`name` は
  * **画像のファイル名と `--only` の名指しに使う一意の名前**（同じ場面を別の操作で何枚も撮るので、
  * 場面の名前では足りない）。
@@ -81,6 +104,7 @@ type CatalogEntry = {
   readonly name: string
   readonly scene: string
   readonly label: string
+  readonly homeSetup: HomeSetup
   readonly prepare: readonly Preparation[]
   readonly skipReveal: boolean
 }
@@ -114,6 +138,42 @@ const SIDEBAR_TAB_SELECTOR = '[role="tab"]:has-text("サイドバー")'
 const TASK_BOARD_SELECTOR = 'button:has-text("一覧を見る")'
 
 /**
+ * 帯の「いまの作業」の外枠（`data-work-state` を持つ div）の中の押す口。**広い画面の帯と
+ * 狭い画面の「≡」の面の両方に同じ部品が置かれる**（`screen-nav-current-work.tsx`）ので、
+ * 見えているほうだけを `:visible` で絞る。狭い画面では先に {@link MENU_TOGGLE_SELECTOR} を
+ * 押さないとこちらは見えない（{@link applyPreparation} が当たらなかった手を飛ばすので、
+ * 広い画面ではこの前の「≡」を押す手が黙って空振りする）。
+ */
+const WORK_TOGGLE_SELECTOR = "[data-work-state] button[aria-controls]:visible"
+
+/** 狭い画面だけの「≡」（`screen-nav-menu.tsx`）。押すと面の中にもう1つ「いまの作業」の札が
+ * 現れる。広い画面では常に `display: none` なので、押す手は空振りしてよい。 */
+const MENU_TOGGLE_SELECTOR = 'button[aria-label="メニュー"]'
+
+/** 書き終わりの知らせ（`diary-notice.tsx`）の「日記帳で開く」。成果の画面（`#achievement`）
+ * だけに出る（`main.tsx` の `<Activity>`）。 */
+const DIARY_NOTICE_OPEN_SELECTOR = 'button:has-text("日記帳で開く")'
+
+/** キャラクター画面、表情のカードの「消す」（`portrait-card.tsx`）。見える字は無くアイコン
+ * だけなので `title` で当てる。 */
+const PORTRAIT_CLEAR_BUTTON_SELECTOR = 'button[title="消す"]'
+
+/** キャラクター画面、最下部の「このキャラクターを消す」帯のボタン（`character-delete.tsx`）。 */
+const CHARACTER_DELETE_BAND_BUTTON_SELECTOR = 'button:has-text("を消す")'
+
+/** {@link HomeSetup} の `character` が置くパックのディレクトリ名。同梱の `chou` とは別名にして、
+ * 「ホームにしか無いパック」（`removal: "delete"`）にする。 */
+const SAMPLE_CHARACTER_PACK_NAME = "chou-sample"
+
+/** {@link HomeSetup} の `diary` が書く日（`diary-written` 場面が書く日付と揃える）。 */
+const DIARY_FIXTURE_DATE = "2026-09-20"
+
+/** {@link HomeSetup} の `diary` が書く本文。架空の日記で、実物の記録ではない。 */
+const DIARY_FIXTURE_BODY =
+  "今日は日記帳の見開きを撮るための架空の日記。実物の作業内容は含まない。" +
+  "ダミーの振り返りとして、架空のタスクを1件終えたことにしてある。"
+
+/**
  * 並べて見たい状態。**網羅はしない** — 直したときに崩れやすい場所（答え待ちの箱・ツールの進行・
  * レポートの記法・補完の候補・キャラクター画面）だけを選ぶ。足すときは疑似セッションに場面を足して、
  * その名前と、撮る前に当てる操作をここに書く。
@@ -123,6 +183,7 @@ const CATALOG: readonly CatalogEntry[] = [
     name: "question-multi",
     scene: "question-multi",
     label: "質問（複数選択）",
+    homeSetup: { kind: "default" },
     prepare: [],
     skipReveal: false,
   },
@@ -130,6 +191,7 @@ const CATALOG: readonly CatalogEntry[] = [
     name: "question-pair",
     scene: "question-pair",
     label: "質問（2問・長い説明）",
+    homeSetup: { kind: "default" },
     prepare: [],
     skipReveal: false,
   },
@@ -137,6 +199,7 @@ const CATALOG: readonly CatalogEntry[] = [
     name: "question-long",
     scene: "question-long",
     label: "質問（長いラベルと長い説明・複数選択と単一選択）",
+    homeSetup: { kind: "default" },
     prepare: [],
     skipReveal: false,
   },
@@ -144,6 +207,7 @@ const CATALOG: readonly CatalogEntry[] = [
     name: "question-preview",
     scene: "question-preview",
     label: "質問（選択肢ごとの preview を札の中、説明の下に出す）",
+    homeSetup: { kind: "default" },
     prepare: [],
     skipReveal: false,
   },
@@ -151,6 +215,7 @@ const CATALOG: readonly CatalogEntry[] = [
     name: "permission",
     scene: "permission",
     label: "許可プロンプト",
+    homeSetup: { kind: "default" },
     prepare: [],
     skipReveal: false,
   },
@@ -158,6 +223,7 @@ const CATALOG: readonly CatalogEntry[] = [
     name: "report",
     scene: "report",
     label: "レポートとツールの進行",
+    homeSetup: { kind: "default" },
     prepare: [],
     skipReveal: false,
   },
@@ -165,6 +231,7 @@ const CATALOG: readonly CatalogEntry[] = [
     name: "turn-history",
     scene: "turn-history",
     label: "ターンの札（4件）",
+    homeSetup: { kind: "default" },
     prepare: [],
     skipReveal: false,
   },
@@ -172,6 +239,7 @@ const CATALOG: readonly CatalogEntry[] = [
     name: "notation",
     scene: "notation",
     label: "レポートの記法（引用・表・注意）",
+    homeSetup: { kind: "default" },
     prepare: [],
     skipReveal: false,
   },
@@ -181,6 +249,7 @@ const CATALOG: readonly CatalogEntry[] = [
     name: "notation-note",
     scene: "notation",
     label: "レポートの記法（note の種別。領域を送った先）",
+    homeSetup: { kind: "default" },
     prepare: [{ kind: "scroll", selector: NOTE_KINDS_SELECTOR }],
     skipReveal: false,
   },
@@ -188,6 +257,7 @@ const CATALOG: readonly CatalogEntry[] = [
     name: "notation-figure",
     scene: "notation",
     label: "レポートの記法（図。領域を送った先）",
+    homeSetup: { kind: "default" },
     prepare: [{ kind: "scroll", selector: MERMAID_SELECTOR }],
     // **図はレポートの末尾に近く、演出が終わるまで自動送りに送り位置を戻され続ける**（冒頭の
     // `skipReveal` の説明）。
@@ -197,6 +267,7 @@ const CATALOG: readonly CatalogEntry[] = [
     name: "notation-chart",
     scene: "notation",
     label: "レポートの記法（グラフ。領域を送った先）",
+    homeSetup: { kind: "default" },
     prepare: [{ kind: "scroll", selector: CHART_SELECTOR }],
     skipReveal: true,
   },
@@ -204,6 +275,7 @@ const CATALOG: readonly CatalogEntry[] = [
     name: "task-board",
     scene: "report",
     label: "タスク一覧のモーダル",
+    homeSetup: { kind: "default" },
     prepare: [
       { kind: "click", selector: SIDEBAR_TAB_SELECTOR },
       { kind: "click", selector: TASK_BOARD_SELECTOR },
@@ -214,6 +286,7 @@ const CATALOG: readonly CatalogEntry[] = [
     name: "command-suggestions",
     scene: "report",
     label: "「/」のコマンド補完",
+    homeSetup: { kind: "default" },
     prepare: [{ kind: "type", selector: COMPOSER_SELECTOR, text: "/c" }],
     skipReveal: false,
   },
@@ -221,6 +294,7 @@ const CATALOG: readonly CatalogEntry[] = [
     name: "file-suggestions",
     scene: "report",
     label: "「@」のファイル補完",
+    homeSetup: { kind: "default" },
     prepare: [{ kind: "type", selector: COMPOSER_SELECTOR, text: "@src/browser/" }],
     skipReveal: false,
   },
@@ -228,6 +302,7 @@ const CATALOG: readonly CatalogEntry[] = [
     name: "character-screen",
     scene: "report",
     label: "キャラクター画面",
+    homeSetup: { kind: "default" },
     prepare: [{ kind: "hash", hash: "#character" }],
     skipReveal: false,
   },
@@ -235,7 +310,87 @@ const CATALOG: readonly CatalogEntry[] = [
     name: "character-create",
     scene: "report",
     label: "キャラクターを作る画面",
+    homeSetup: { kind: "default" },
     prepare: [{ kind: "hash", hash: "#character/new" }],
+    skipReveal: false,
+  },
+  // **帯の「いまの作業」の3状態**（`docs/architecture.md`「手で確かめること」）。どれも
+  // {@link MENU_TOGGLE_SELECTOR} → {@link WORK_TOGGLE_SELECTOR} の順で押して一覧を開く
+  // （広い画面では「≡」が無いので前者は空振りしてよい）。
+  {
+    name: "current-work-running",
+    // **自分の `request` を持つ場面**（`test/fixture/fake-session.json`）なので、名指しで
+    // 直接起こしてもターンが進行中のまま20秒続く——その間に撮れば「作業中」と実行中の手順が出る。
+    scene: "current-work-running",
+    label: "帯の「いまの作業」（実行中）",
+    homeSetup: { kind: "default" },
+    prepare: [
+      { kind: "click", selector: MENU_TOGGLE_SELECTOR },
+      { kind: "click", selector: WORK_TOGGLE_SELECTOR },
+    ],
+    skipReveal: false,
+  },
+  {
+    name: "current-work-failed",
+    // **自分の `request` を持つ場面**（`current-work-running` と同じ理由）。`report` 場面には
+    // 失敗した手順があっても `request` が無いので「依頼の手順」に一度も現れない
+    // （`src/shared/turn-step.ts` の `currentTurnSteps` は最後の `request` より前の手順を
+    // 落とす）。ターンが終わったあとでも「前の依頼での手順」に失敗した1件（`isError: true` の
+    // Bash）が残る。
+    scene: "current-work-failed",
+    label: "帯の「いまの作業」（失敗した手順）",
+    homeSetup: { kind: "default" },
+    prepare: [
+      { kind: "click", selector: MENU_TOGGLE_SELECTOR },
+      { kind: "click", selector: WORK_TOGGLE_SELECTOR },
+    ],
+    skipReveal: false,
+  },
+  {
+    name: "current-work-background",
+    scene: "background-task",
+    label: "帯の「いまの作業」（背景のタスク）",
+    homeSetup: { kind: "default" },
+    prepare: [
+      { kind: "click", selector: MENU_TOGGLE_SELECTOR },
+      { kind: "click", selector: WORK_TOGGLE_SELECTOR },
+    ],
+    skipReveal: false,
+  },
+  {
+    name: "diary-book",
+    // `diary-written` 場面の「日記帳で開く」で見開きを開く。中身（本文・しおり）は
+    // `homeSetup` が件専用のホームへ書く架空の日記から来る。
+    scene: "diary-written",
+    label: "日記帳の見開き",
+    homeSetup: { kind: "diary", date: DIARY_FIXTURE_DATE, body: DIARY_FIXTURE_BODY },
+    prepare: [
+      { kind: "hash", hash: "#achievement" },
+      { kind: "click", selector: DIARY_NOTICE_OPEN_SELECTOR },
+    ],
+    skipReveal: false,
+  },
+  {
+    name: "portrait-clear-confirm",
+    // 消せるパックが要るので `homeSetup` が件専用のホームへ同梱の `chou` のコピーを置く。
+    scene: "report",
+    label: "表情を消す前の確かめ",
+    homeSetup: { kind: "character", pack: SAMPLE_CHARACTER_PACK_NAME },
+    prepare: [
+      { kind: "hash", hash: `#character?pack=${SAMPLE_CHARACTER_PACK_NAME}` },
+      { kind: "click", selector: PORTRAIT_CLEAR_BUTTON_SELECTOR },
+    ],
+    skipReveal: false,
+  },
+  {
+    name: "character-delete-confirm",
+    scene: "report",
+    label: "キャラクターを消す前の確かめ",
+    homeSetup: { kind: "character", pack: SAMPLE_CHARACTER_PACK_NAME },
+    prepare: [
+      { kind: "hash", hash: `#character?pack=${SAMPLE_CHARACTER_PACK_NAME}` },
+      { kind: "click", selector: CHARACTER_DELETE_BAND_BUTTON_SELECTOR },
+    ],
     skipReveal: false,
   },
 ]
@@ -339,7 +494,13 @@ async function captureEntry(
   entry: CatalogEntry,
   outDir: string,
 ): Promise<readonly Shot[]> {
-  const session = spawnTsukumo(entry.scene)
+  // `homeSetup.kind === "default"` の件は既定のホームのまま起こす（`home` は無い）。それ以外の
+  // 件だけ、`--out` の下に立てた件専用のホームへ先に架空の中身を書いてから起こす。
+  const home = entry.homeSetup.kind === "default" ? undefined : path.join(outDir, "home")
+  if (home !== undefined) {
+    await applyHomeSetup(entry.homeSetup, home)
+  }
+  const session = spawnTsukumo(entry.scene, home)
   try {
     const url = await waitForViewUrl(session)
     const shots: Shot[] = []
@@ -444,15 +605,66 @@ function describePreparation(step: Preparation): string {
 }
 
 /**
- * tsukumo を1つ起こす。**空きポート（`TSUKUMO_VIEW_PORT=0`）**なので、常駐している tsukumo と
- * ぶつからない。タブは開かず（`TSUKUMO_OPEN_VIEW=0`）、駆動は fake driver だけ。
+ * `entry.homeSetup` を件専用のホームへ反映する。**`default` はここまで来ない**
+ * （呼び出し元の {@link captureEntry} が `home` の要らない件では呼ばない）。
  */
-function spawnTsukumo(scene: string): ChildProcess {
-  const root = fileURLToPath(new URL("..", import.meta.url))
-  return spawn("bun", ["run", path.join(root, "src", "cli.ts")], {
-    cwd: root,
+async function applyHomeSetup(setup: HomeSetup, homeDir: string): Promise<void> {
+  if (setup.kind === "default") {
+    return
+  }
+  if (setup.kind === "character") {
+    const source = path.join(REPO_DIR, "characters", "chou")
+    const dest = path.join(homeDir, "characters", setup.pack)
+    mkdirSync(path.dirname(dest), { recursive: true })
+    cpSync(source, dest, { recursive: true })
+    return
+  }
+
+  const written = await appendDiaryParagraph(
+    REPO_DIR,
+    {
+      date: setup.date,
+      writtenAtEpochMilliseconds: diaryEpochMilliseconds(setup.date),
+      body: setup.body,
+      expression: "proud",
+      writer: { pack: "tsukumo", name: "tsukumo" },
+      bookmark: {
+        kind: "placed",
+        // **`T-` + 数字にしない**（`docs/coding-standards.md`
+        // 「コード・ドキュメントにタスク番号を書かない」。しおりの id は自由な文字列なので、
+        // その形に見えない架空の名で足りる）。
+        taskId: "架空-1",
+        summary: "架空の要約（capture-catalog.ts が撮るためのダミー）",
+        reason: "架空の理由",
+      },
+    },
+    homeDir,
+  )
+  if (!written) {
+    process.stdout.write("架空の日記を書けなかった（git の共有 .git が見えないなど）\n")
+  }
+}
+
+/** 架空の日記の書いた時刻（`date` のその日の昼どき。エポックミリ秒）。 */
+function diaryEpochMilliseconds(date: string): number {
+  return Temporal.PlainDate.from(date).toZonedDateTime({
+    timeZone: Temporal.Now.timeZoneId(),
+    plainTime: "14:32",
+  }).epochMilliseconds
+}
+
+/**
+ * tsukumo を1つ起こす。**空きポート（`TSUKUMO_VIEW_PORT=0`）**なので、常駐している tsukumo と
+ * ぶつからない。タブは開かず（`TSUKUMO_OPEN_VIEW=0`）、駆動は fake driver だけ。`home` は
+ * {@link HomeSetup} が件専用のホームを立てたときだけ渡り、既定のホームを `TSUKUMO_HOME` で
+ * 上書きする（無ければ既定のまま）。
+ */
+function spawnTsukumo(scene: string, home: string | undefined): ChildProcess {
+  return spawn("bun", ["run", path.join(REPO_DIR, "src", "cli.ts")], {
+    cwd: REPO_DIR,
     env: {
       ...process.env,
+      ...(home === undefined ? {} : { TSUKUMO_HOME: home }),
       TSUKUMO_DRIVER: "fake",
       TSUKUMO_FAKE_SCENE: scene,
       TSUKUMO_VIEW_PORT: "0",
