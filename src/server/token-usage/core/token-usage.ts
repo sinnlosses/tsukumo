@@ -22,6 +22,8 @@
 // 本文は捨てる。依頼の文面もセリフもツールの引数もここには残らない
 // （`docs/coding-standards.md`「会話内容の扱い」）。
 
+import { groupBy, prop, sortBy, sumBy } from "remeda"
+
 import { byteLength } from "../../../shared/lib/byte-length.ts"
 import { type SessionEvent } from "../../../shared/session-event.ts"
 import { type SessionState } from "../../../shared/session-state.ts"
@@ -392,21 +394,16 @@ function addStepUsage(total: StepTokenUsage, usage: StepTokenUsage): StepTokenUs
  * 「何が文脈を膨らませたか」を上から見て取れるようにする。
  */
 function foldToolCalls(calls: readonly ToolCallTally[]): readonly ToolUsageCount[] {
-  const names = [...new Set(calls.map((call) => call.name))]
-  return names
-    .map((name) => {
-      const sameName = calls.filter((call) => call.name === name)
-      return {
-        name,
-        calls: sameName.length,
-        resultBytes: sameName.reduce((total, call) => total + call.resultBytes, 0),
-      }
-    })
-    .sort((left, right) => right.resultBytes - left.resultBytes || compareName(left, right))
-}
-
-function compareName(left: ToolUsageCount, right: ToolUsageCount): number {
-  return left.name < right.name ? -1 : left.name > right.name ? 1 : 0
+  const byName = groupBy(calls, prop("name"))
+  return sortBy(
+    Object.entries(byName).map(([name, sameName]) => ({
+      name,
+      calls: sameName.length,
+      resultBytes: sumBy(sameName, prop("resultBytes")),
+    })),
+    [prop("resultBytes"), "desc"],
+    prop("name"),
+  )
 }
 
 /** 行のローカル日付が期間（両端含む）に入っているか。 */
@@ -472,20 +469,12 @@ function datesInPeriod(period: TokenUsagePeriod): readonly string[] {
  */
 function summarizeByModel(records: readonly TokenUsageRecord[]): readonly ModelUsageTotal[] {
   const allUsages = records.flatMap((record) => record.models)
-  const models = [...new Set(allUsages.map((usage) => usage.model))]
-  return models
-    .map((model) => ({
-      model,
-      totals: sumTotals(allUsages.filter((usage) => usage.model === model)),
-    }))
-    .toSorted(
-      (left, right) =>
-        right.totals.outputTokens - left.totals.outputTokens || compareModelName(left, right),
-    )
-}
-
-function compareModelName(left: ModelUsageTotal, right: ModelUsageTotal): number {
-  return left.model < right.model ? -1 : left.model > right.model ? 1 : 0
+  const byModel = groupBy(allUsages, prop("model"))
+  return sortBy(
+    Object.entries(byModel).map(([model, usages]) => ({ model, totals: sumTotals(usages) })),
+    [(entry) => entry.totals.outputTokens, "desc"],
+    prop("model"),
+  )
 }
 
 /**
@@ -498,17 +487,16 @@ function summarizeByTool(records: readonly TokenUsageRecord[]): readonly ToolUsa
     ...record.breakdown.main.tools,
     ...record.breakdown.subagent.tools,
   ])
-  const names = [...new Set(calls.map((call) => call.name))]
-  return names
-    .map((name) => {
-      const sameName = calls.filter((call) => call.name === name)
-      return {
-        name,
-        calls: sameName.reduce((total, call) => total + call.calls, 0),
-        resultBytes: sameName.reduce((total, call) => total + call.resultBytes, 0),
-      }
-    })
-    .sort((left, right) => right.resultBytes - left.resultBytes || compareName(left, right))
+  const byName = groupBy(calls, prop("name"))
+  return sortBy(
+    Object.entries(byName).map(([name, sameName]) => ({
+      name,
+      calls: sumBy(sameName, prop("calls")),
+      resultBytes: sumBy(sameName, prop("resultBytes")),
+    })),
+    [prop("resultBytes"), "desc"],
+    prop("name"),
+  )
 }
 
 /** モデル別の数の並びを足し合わせる（費用は浮動小数の誤差が出るので {@link roundCost} で丸める）。 */
