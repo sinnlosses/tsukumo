@@ -4,8 +4,8 @@ import {
   createReportReview,
   REPORT_RESEND_REJECTION_TEXT,
   type ReportReview,
-} from "../../../src/server/core/report-review.ts"
-import { type SessionEvent } from "../../../src/shared/session-event.ts"
+} from "../../../../src/server/report/core/report-review.ts"
+import { type SessionEvent } from "../../../../src/shared/session-event.ts"
 
 // レポートの文面はどれも作り物（docs/coding-standards.md「会話内容の扱い」）。
 

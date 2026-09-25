@@ -99,7 +99,7 @@ export function Markdown(props: MarkdownProps): ReactElement {
       // **効くのは `**` と `*` だけで、GFM の取り消し線 `~~` には効かない**（あちらは
       // micromark-extension-gfm-strikethrough の別の判定を通るため。直すには
       // remark-cjk-friendly-gfm-strikethrough が要る）。取り消し線はレポートの規約
-      // （src/server/core/report-notation.ts）が勧めていないので、穴のまま置いてある。
+      // （src/server/report/core/report-notation.ts）が勧めていないので、穴のまま置いてある。
       remarkPlugins={[remarkGfm, remarkCjkFriendly]}
       rehypePlugins={[
         // rehype-raw より前（フェンスのファイル名は `data.meta` に入っていて、raw が木を

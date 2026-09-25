@@ -160,7 +160,7 @@ export type SessionEvent =
   /**
    * `report` ツールの呼び出し（docs/glossary.md「report ツール」）。メインが呼んだ
    * ものだけが届く（サブエージェントの呼び出しは変換で捨てる）。`body` と `favor` は無ければ空の
-   * 文字列。`toolUseId` は呼び出しの id で、差し戻し（`src/server/core/report-review.ts`）が同じ
+   * 文字列。`toolUseId` は呼び出しの id で、差し戻し（`src/server/report/core/report-review.ts`）が同じ
    * 呼び出しの `tool-finished` と突き合わせるのに使う。
    */
   | {

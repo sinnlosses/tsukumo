@@ -18,9 +18,9 @@ import { isPlainObject } from "remeda"
 import { type Expression } from "../../shared/expression.ts"
 import { MAX_SESSION_CHOICES, type SessionChoice } from "../../shared/session-choice.ts"
 import { type SessionEvent } from "../../shared/session-event.ts"
+import { createReportReview } from "../report/core/report-review.ts"
 import { type Config } from "./config.ts"
 import { DEFAULT_VIEW_PORT, MAX_PORT_NUMBER } from "./port-resolution.ts"
-import { createReportReview } from "./report-review.ts"
 import { toSessionEvents } from "./sdk-message.ts"
 
 /** セッションの印の前置き。**組み立ては {@link sessionTag} だけ**（文字列を他所で作らない）。 */

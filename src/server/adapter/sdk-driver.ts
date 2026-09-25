@@ -42,8 +42,6 @@ import {
 import { createPendingAnswerQueue, type PendingAnswerQueue } from "../core/pending-answer.ts"
 import { type ClaudeAccountTier, planName } from "../core/plan.ts"
 import { recordedPromptImages } from "../core/prompt-image-shelf.ts"
-import { createReportReview, type ReportReview } from "../core/report-review.ts"
-import { createReportGate, type ReportGate } from "../core/report-tool.ts"
 import {
   isSubagentMessage,
   toCommandDescriptions,
@@ -62,6 +60,8 @@ import {
 import { createSessionTitleIntake, type SessionTitleIntake } from "../core/session-title.ts"
 import { createUsageReviewIntake } from "../core/usage-review-tool.ts"
 import { childProcessEnv, isVisibleOutputNudge } from "../core/visible-output-nudge.ts"
+import { createReportReview, type ReportReview } from "../report/core/report-review.ts"
+import { createReportGate, type ReportGate } from "../report/core/report-tool.ts"
 import { readClaudeAccountTier } from "./claude-account.ts"
 import { appendDiaryParagraph } from "./diary.ts"
 import { readContextUsage } from "./sdk-context-usage.ts"
@@ -310,7 +310,7 @@ export function chatSummaryHooks(
  * `Stop` フックを1つ登録する。**モードによらず常に登録する**（`chatSummaryHooks` と違い
  * `undefined` を返さない）——effort を読む口（{@link EffortLevel}。`docs/screen-design.md` 13.9
  * 「動き方の操作子」）は仕事でも雑談でも要るが、`report` の関所
- * （`src/server/core/report-tool.ts` の {@link createReportGate}）で止めるのは仕事のときだけ。
+ * （`src/server/report/core/report-tool.ts` の {@link createReportGate}）で止めるのは仕事のときだけ。
  * `SubagentStop` には載せない（サブエージェントの `report` は捨てるので、渡し直させても画面に
  * 出ない。effort もメインの手元の値だけを読めばよい）。
  *
@@ -364,7 +364,7 @@ export function stopHooks(
  * （サブエージェントの本文を数えない。関所を登録していないときも見せるが、判定されないだけ）。
  *
  * メインのイベントは先に `report` の差し戻し（`reportReview`）を通す——`report` を同じ呼び出しの
- * 結果まで預かり、差し戻した呼び出しを描かない（`src/server/core/report-review.ts`）。`report`
+ * 結果まで預かり、差し戻した呼び出しを描かない（`src/server/report/core/report-review.ts`）。`report`
  * ツールが載っていなければ `report` イベントは来ないので、切り替えないときはそのまま流れる。
  *
  * `titleIntake` が覚えている題（`report` の `title` 引数。`src/server/adapter/sdk-tool.ts`）も

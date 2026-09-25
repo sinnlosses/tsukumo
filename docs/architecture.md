@@ -254,7 +254,7 @@ HTTP/WebSocket・ホスト・ファイル・子プロセス）に触るならそ
 （同 3章の `core/character-selection.ts`）。
 
 **同じ段落で、`systemPrompt` の append の組み立ては 2026-09-23 に
-`core/system-prompt.ts`（`takeSystemPromptAppend`）へ移した。** 当時 `character-pack.ts` に
+`system-prompt/core/system-prompt.ts`（`takeSystemPromptAppend`）へ移した。** 当時 `character-pack.ts` に
 置いたままでよかったのは、並べるものが人格と規約の2つだけで、呼ぶ側が配線層1つだったから。
 その後 `core` 側に規約の選び方（雑談か仕事か）と雑談の記憶の読み戻しが増え、**並びの持ち主が
 配線層・`core`・`adapter` の3つに割れて、何がどの順で載るかを1ファイルで読めなくなった**。
@@ -452,9 +452,9 @@ tsukumo からモデルへの逆流路ができてしまう。逆流させない
 のあと（または `report` 無し）に、1行を超える本文を書いてターンを終えた」という同じ形だった。
 利用者は**推測へ戻さず、この形を仕組みで塞いでから同じ条件で試し直す**と決めた:
 
-1. **`Stop` の関所**（`src/server/core/report-tool.ts`）: SDK のターンの終わりに、最後の
+1. **`Stop` の関所**（`src/server/report/core/report-tool.ts`）: SDK のターンの終わりに、最後の
    `report` のあとの本文が1行を超えていたら `block` にして渡し直させる
-2. **検査**（`src/server/core/report-review.ts`）: `report` の引数を機械で判定できる規約違反で
+2. **検査**（`src/server/report/core/report-review.ts`）: `report` の引数を機械で判定できる規約違反で
    検査し、違反と直し方を戻り値で返して書き直させる
 3. **整形**（`src/shared/report-tidy.ts`）: 意味を変えずに落とせるもの（定型の前置き・締めの行・
    余分な空行）を落として描く
@@ -523,7 +523,7 @@ package.json に定義したり」で、cdnjs から落としたものを `vendo
 `src/shared/` には名前と Content-Type しか置かない（パス解決は外の世界に触る仕事なので
 adapter 側）。**mermaid と chart.js は `package.json` で版を固定する**（`^` を付けない）。素の
 JavaScript をそのままブラウザへ配っていて描けるかどうかは目で見るまで分からず、mermaid の版は
-`src/server/core/report-notation.ts` が挙げる図の10種の根拠でもあるため。highlight.js のテーマだけは
+`src/server/report/core/report-notation.ts` が挙げる図の10種の根拠でもあるため。highlight.js のテーマだけは
 `^` で上げてよい（色を当てる class を出すのは `rehype-highlight`（`lowlight`）が抱えるほうなので、
 **テーマの中身が食い違っていないか**だけを見る。2026-09-22 時点では配る 11.12.0 と `lowlight` の
 11.11.2 でバイト一致）。

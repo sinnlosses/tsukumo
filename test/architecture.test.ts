@@ -5,11 +5,12 @@ import { fileURLToPath } from "node:url"
 // 層をディレクトリで表す（docs/design.md 2章「層と依存の向き」）。ここは正規表現と node:fs だけで、
 // 許した辺以外の import を落とす。外部ツールは増やさない。
 //
-// **3層（shared / server / browser）で、サーバ側は判断（`server/core/`）と境界
-// （`server/adapter/`）の2段**。配線は `src/` 直下のファイル（`cli.ts` / `main.ts` と、
-// そこから呼ばれる起動の段取り）。
-// `adapter ──▶ core ──▶ shared ◀── browser` で、**`core → adapter` は禁止**
-// （docs/research/architecture-proposal.md 3章「許す依存の辺」。段2で切った）。
+// **3層（shared / server / browser）で、サーバ側は機能ごとに判断（`server/<機能>/core/`）と
+// 境界（`server/<機能>/adapter/`）の2段、どの機能にも属さない共有の箱は `server/core/`
+// `server/adapter/` の直下**（docs/design.md 2章「サーバの機能と、機能どうしの辺」）。配線は
+// `src/` 直下のファイル（`cli.ts` / `main.ts` と、そこから呼ばれる起動の段取り）。
+// `adapter ──▶ core ──▶ shared ◀── browser` で、**`core → adapter` は禁止**（機能をまたいでも
+// 同じに効く）。機能どうしの辺は `SERVER_FEATURE_IMPORTS` にある組だけで、層ごとに循環させない。
 
 type Layer = "shared" | "core" | "adapter" | "browser" | "cli"
 
@@ -64,6 +65,86 @@ describe("層と依存の向き", () => {
   })
 })
 
+// サーバの機能（docs/design.md 2章「サーバの機能と、機能どうしの辺」の1つめの表）。**機能を足す
+// ときは、ここと `SERVER_FEATURE_IMPORTS` に足す**（一覧に無いディレクトリを `server/` の下に
+// 作ると `layerOf` が throw する）。まだ移していないファイルは共有の箱（`server/core/`
+// `server/adapter/` の直下）に居るまま動く。
+const SERVER_FEATURES = ["report", "system-prompt"] as const
+type ServerFeature = (typeof SERVER_FEATURES)[number]
+
+// 機能 A が import してよい機能 B（同じ節の2つめの表そのもの。表に無い組は落とす）。共有の箱は
+// どの機能からも読んでよいので、ここには出てこない。
+const SERVER_FEATURE_IMPORTS: Readonly<Record<ServerFeature, ReadonlySet<ServerFeature>>> = {
+  report: new Set([]),
+  "system-prompt": new Set(["report"]),
+}
+
+type ServerLayer = "core" | "adapter"
+
+/** `server/` の下のファイルの置き場。共有の箱か、機能の層か。 */
+type ServerPlace =
+  | { readonly kind: "shared"; readonly layer: ServerLayer }
+  | { readonly kind: "feature"; readonly feature: ServerFeature; readonly layer: ServerLayer }
+
+/** 機能 A から別の機能 B への import 1本（同じ機能の中の辺は含めない）。 */
+type ServerFeatureEdge = {
+  readonly fromPath: string
+  readonly fromFeature: ServerFeature
+  readonly fromLayer: ServerLayer
+  readonly toPath: string
+  readonly toFeature: ServerFeature
+  readonly toLayer: ServerLayer
+}
+
+describe("server/ の機能どうしの import", () => {
+  it("機能どうしの import は SERVER_FEATURE_IMPORTS にある組だけ", () => {
+    const offenders = serverFeatureEdges()
+      .filter((edge) => !SERVER_FEATURE_IMPORTS[edge.fromFeature].has(edge.toFeature))
+      .map(
+        (edge) =>
+          `src/${edge.fromPath}（${edge.fromFeature}） → src/${edge.toPath}（${edge.toFeature}）`,
+      )
+
+    expect(offenders.join("\n")).toBe("")
+  })
+
+  it("機能の core/ どうし・adapter/ どうしの辺は、それぞれ循環しない", () => {
+    const cycles = (["core", "adapter"] as const).flatMap((layer) => {
+      const cycle = findFeatureCycle(featureGraphOf(serverFeatureEdges(), layer))
+      return cycle.length === 0 ? [] : [`${layer}: ${cycle.join(" → ")}`]
+    })
+
+    expect(cycles.join("\n")).toBe("")
+  })
+
+  // 上の2つが黙って空振りしないことの確かめ（検査の道具そのものの振る舞い）。
+  it("層の判定は、知らない機能・機能の中で core/ adapter/ の外・server/ の直下で throw する", () => {
+    expect(layerOf("server/report/core/report-tool.ts")).toBe("core")
+    expect(layerOf("server/core/config.ts")).toBe("core")
+    expect(layerOf("server/adapter/lib/json-file.ts")).toBe("adapter")
+    expect(() => layerOf("server/unknown-feature/core/x.ts")).toThrow()
+    expect(() => layerOf("server/report/x.ts")).toThrow()
+    expect(() => layerOf("server/report/lib/x.ts")).toThrow()
+    expect(() => layerOf("server/x.ts")).toThrow()
+  })
+
+  it("循環の検出は、機能どうしの輪を見つける", () => {
+    const graph = new Map<ServerFeature, ReadonlySet<ServerFeature>>([
+      ["report", new Set(["system-prompt"])],
+      ["system-prompt", new Set(["report"])],
+    ])
+
+    expect(findFeatureCycle(graph)).toEqual(["report", "system-prompt", "report"])
+    expect(
+      findFeatureCycle(
+        new Map<ServerFeature, ReadonlySet<ServerFeature>>([
+          ["system-prompt", new Set(["report"])],
+        ]),
+      ),
+    ).toEqual([])
+  })
+})
+
 // `orca` コマンドを起こすのはアダプタ1つに閉じ込める（docs/architecture.md 原則3、
 // src/server/adapter/orca-host.ts 冒頭コメント）。`execFile("orca", …)` のような呼び出しは必ず
 // コマンド名の文字列リテラル "orca" を伴うので、それを orca-host.ts の外から探す。
@@ -81,15 +162,17 @@ describe("orca コマンドを起こす箇所", () => {
 
 // ここから、層の辺だけでは表せない限定の検査（`adapter` の中のどのファイルか、まで絞る）。
 
-// SDK（`@anthropic-ai/claude-agent-sdk`）を import するのは `server/adapter/` 直下の `sdk-` で
-// 始まるファイルに閉じ込める（docs/architecture.md 原則3）。SDK は1つの境界だが1ファイルには
+// SDK（`@anthropic-ai/claude-agent-sdk`）を import するのは機能の `adapter/` 直下
+// （`server/<機能>/adapter/`）の `sdk-` で始まるファイルに閉じ込める（docs/architecture.md 原則3。
+// **移行の途中は、まだ移していない共有の箱 `server/adapter/` 直下の `sdk-` も許す**。
+// `sdk-` のファイルを移し終える段で `adapter|` の枝を外す）。SDK は1つの境界だが1ファイルには
 // 収まらないので、**許す先を一覧ではなく名前で決める** — 足すファイルは名前で SDK の境界を
 // 名乗ることになり、名乗らずに import すればここで落ちる。import 文のクォートされた specifier
 // だけを拾うので、バッククォートで囲んだ日本語の説明文は拾わない（orca の検査と同じやり方）。
-const SDK_BOUNDARY_FILE = /^server\/adapter\/sdk-[^/]+\.ts$/
+const SDK_BOUNDARY_FILE = /^server\/(?:adapter|[^/]+\/adapter)\/sdk-[^/]+\.ts$/
 
 describe("Agent SDK を import する箇所", () => {
-  it("`@anthropic-ai/claude-agent-sdk` を import するのは src/server/adapter/ 直下の sdk- で始まるファイルだけ", () => {
+  it("`@anthropic-ai/claude-agent-sdk` を import するのは機能の adapter/ 直下の sdk- で始まるファイルだけ", () => {
     const offenders = listSourceFiles(SRC_ROOT)
       .filter((relPath) => !SDK_BOUNDARY_FILE.test(relPath))
       .filter((relPath) =>
@@ -646,21 +729,112 @@ function resolveRelativeImport(fromRelPath: string, specifier: string): string {
 /**
  * `src/` 相対パスから層を決める。**`src/` 直下のファイルは配線層**（`cli.ts` と `main.ts`、
  * そこから呼ばれる起動の段取り。`core` と `adapter` を結べるのはここだけ）、`shared/` と
- * `browser/` は先頭ディレクトリ、サーバ側は2段（`server/core/` と `server/adapter/`）で決まる。
- * `server/` の直下に置いたファイルは判断か境界かを名乗っていないので `throw` する。
+ * `browser/` は先頭ディレクトリ、サーバ側は置き場（`serverPlaceOf`）の層で決まる。
  */
 function layerOf(relPath: string): Layer {
   if (!relPath.includes("/")) {
     return "cli"
   }
-  const [top, second] = relPath.split("/")
+  const [top] = relPath.split("/")
   if (top === "shared" || top === "browser") {
     return top
   }
-  if (top === "server" && (second === "core" || second === "adapter")) {
-    return second
+  if (top === "server") {
+    return serverPlaceOf(relPath).layer
   }
   throw new Error(`src/${relPath} の層を判定できない（層のディレクトリの外にある）`)
+}
+
+/**
+ * `server/` の下のファイルの置き場を決める。`server/core/` `server/adapter/` の下（`lib/` を含む）は
+ * 共有の箱、`server/<機能>/core/` `server/<機能>/adapter/` の下は機能の層。**`SERVER_FEATURES` に
+ * 無いディレクトリ、機能の中で `core/` `adapter/` の外に置いたファイル、`server/` の直下の
+ * ファイルは `throw`**（判断か境界かを名乗っていないものと、足し忘れた機能を素通りさせない）。
+ */
+function serverPlaceOf(relPath: string): ServerPlace {
+  const [, second, third, ...rest] = relPath.split("/")
+  if ((second === "core" || second === "adapter") && third !== undefined) {
+    return { kind: "shared", layer: second }
+  }
+  const feature = SERVER_FEATURES.find((name) => name === second)
+  if (feature === undefined) {
+    throw new Error(
+      `src/${relPath} の置き場を判定できない（新しい機能なら SERVER_FEATURES と SERVER_FEATURE_IMPORTS に足す）`,
+    )
+  }
+  if ((third === "core" || third === "adapter") && rest.length > 0) {
+    return { kind: "feature", feature, layer: third }
+  }
+  throw new Error(`src/${relPath} は機能 ${feature} の core/ か adapter/ の下に置く`)
+}
+
+/** `server/` の機能のファイルから、別の機能のファイルへの相対 import をすべて返す。 */
+function serverFeatureEdges(): readonly ServerFeatureEdge[] {
+  return listSourceFiles(SRC_ROOT)
+    .filter((relPath) => relPath.startsWith("server/"))
+    .flatMap((fromPath) => {
+      const from = serverPlaceOf(fromPath)
+      if (from.kind !== "feature") {
+        return []
+      }
+      return relativeImportSpecifiers(readFileSync(`${SRC_ROOT}/${fromPath}`, "utf8")).flatMap(
+        (specifier) => {
+          const toPath = resolveRelativeImport(fromPath, specifier)
+          if (!toPath.startsWith("server/")) {
+            return []
+          }
+          const to = serverPlaceOf(toPath)
+          return to.kind === "feature" && to.feature !== from.feature
+            ? [
+                {
+                  fromPath,
+                  fromFeature: from.feature,
+                  fromLayer: from.layer,
+                  toPath,
+                  toFeature: to.feature,
+                  toLayer: to.layer,
+                },
+              ]
+            : []
+        },
+      )
+    })
+}
+
+/** 機能どうしの辺のうち、両端が同じ層（`core/` どうし・`adapter/` どうし）のものを機能のグラフにする。 */
+function featureGraphOf(
+  edges: readonly ServerFeatureEdge[],
+  layer: ServerLayer,
+): ReadonlyMap<ServerFeature, ReadonlySet<ServerFeature>> {
+  const sameLayer = edges.filter((edge) => edge.fromLayer === layer && edge.toLayer === layer)
+  return new Map(
+    SERVER_FEATURES.map((feature) => [
+      feature,
+      new Set(
+        sameLayer.filter((edge) => edge.fromFeature === feature).map((edge) => edge.toFeature),
+      ),
+    ]),
+  )
+}
+
+/** 機能のグラフに輪があれば、最初に見つけた1つを始点に戻るまでの並びで返す。無ければ空。 */
+function findFeatureCycle(
+  graph: ReadonlyMap<ServerFeature, ReadonlySet<ServerFeature>>,
+): readonly ServerFeature[] {
+  const walk = (node: ServerFeature, path: readonly ServerFeature[]): readonly ServerFeature[] => {
+    const seenAt = path.indexOf(node)
+    if (seenAt >= 0) {
+      return [...path.slice(seenAt), node]
+    }
+    return [...(graph.get(node) ?? [])].reduce<readonly ServerFeature[]>(
+      (found, next) => (found.length > 0 ? found : walk(next, [...path, node])),
+      [],
+    )
+  }
+  return SERVER_FEATURES.reduce<readonly ServerFeature[]>(
+    (found, start) => (found.length > 0 ? found : walk(start, [])),
+    [],
+  )
 }
 
 function violationsMessage(violations: readonly Violation[]): string {

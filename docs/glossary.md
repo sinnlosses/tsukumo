@@ -219,15 +219,15 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
   （お願いの塊）の順に描く
 - **注記**: **仕事のセッションには常に載り、雑談には載らない**（2026-09-24 に試行から採用へ）。
   ターンは `report` → 締めの `speak` の順で終え、そのあとに本文を書かない（条は
-  `src/server/core/report-notation.ts`）。レポートにするのはメインの呼び出しだけで、
+  `src/server/report/core/report-notation.ts`）。レポートにするのはメインの呼び出しだけで、
   サブエージェントの呼び出しは捨てる。1つでも呼ばれたターンではツールの外に書いた本文を出さず、
   最後の呼び出しが最終レポート、それより前が中間レポートになる。`Stop` フックの関所は
-  `src/server/core/report-tool.ts` にあり、SDK のターンの最後の
+  `src/server/report/core/report-tool.ts` にあり、SDK のターンの最後の
   `report` のあと（無ければターンの頭から）に1行を超える本文を書いて止まろうとしたら差し戻す
   （`report` が済んでいないターンは渡し直させ、済んだターンは「もう画面に出ている」と伝えて
   言い直しなら何も足さずに終えさせる）。
   **呼び出しそのものも検査する**: 機械で判定できる記法の条に違反した呼び出しは描かずに、違反と
-  直し方を戻り値で返して呼び直させる（1ターンに1回まで。`src/server/core/report-review.ts`）。
+  直し方を戻り値で返して呼び直させる（1ターンに1回まで。`src/server/report/core/report-review.ts`）。
   通った `body` は描く前に整形し、意味の変わらない行（`conclusion` の繰り返し・定型だけの行・
   中身の無い見出し）を落とす（`src/shared/report-tidy.ts`）
 - **避ける言い方**: レポートツール、reply
@@ -686,7 +686,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 - **注記**: **向きが「依頼」と逆。** 依頼は利用者からキャラクターへ（`turn-request`）、お願いは
   キャラクターから利用者へ。画面でも、依頼の見出しの縦罫とお願いの縦罫が同じ `accent` で対になる
 - **注記**: **レポートが正典**で、`speak` の側では「お願いがある」ことだけを言う（中身を二重に
-  書かない）。**無いターンでは置かない**。規約は `src/server/core/report-notation.ts` と
+  書かない）。**無いターンでは置かない**。規約は `src/server/report/core/report-notation.ts` と
   各パックの `persona.md`
 - **避ける言い方**: 依頼（逆向き。`turn-request` が使っている）、質問（選択肢を出して答えを待つ
   `AskUserQuestion` は別物で、そちらは `PendingAsk`）、宿題・TODO（やり残しと読める）

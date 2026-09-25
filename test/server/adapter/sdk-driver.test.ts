@@ -16,15 +16,15 @@ import {
   stopHooks,
 } from "../../../src/server/adapter/sdk-driver.ts"
 import {
-  createReportGate,
-  REPORT_GATE_AFTER_REPORT_REASON,
-  REPORT_GATE_REASON,
-} from "../../../src/server/core/report-tool.ts"
-import {
   type ChatSummary,
   type SessionDriverOptions,
   type SessionMode,
 } from "../../../src/server/core/session-driver.ts"
+import {
+  createReportGate,
+  REPORT_GATE_AFTER_REPORT_REASON,
+  REPORT_GATE_REASON,
+} from "../../../src/server/report/core/report-tool.ts"
 import { API_ERROR_KINDS } from "../../../src/shared/api-trouble.ts"
 import { EFFORT_LEVELS, MODEL_ALIASES, PERMISSION_MODES } from "../../../src/shared/command.ts"
 import { BUILTIN_SESSION_DEFAULT } from "../../../src/shared/session-default.ts"

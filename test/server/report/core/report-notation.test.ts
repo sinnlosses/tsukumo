@@ -5,10 +5,10 @@ import { fileURLToPath } from "node:url"
 import { cleanup, render } from "@testing-library/react"
 import { createElement } from "react"
 
-import { NotationBlock } from "../../../src/browser/components/page/conversation/main-view/markdown/notation.tsx"
-import { REPORT_SANITIZE_SCHEMA } from "../../../src/browser/components/page/conversation/main-view/markdown/sanitize-schema.ts"
-import { REPORT_NOTATION_PROMPT } from "../../../src/server/core/report-notation.ts"
-import { REPORT_NOTATION_NAMES, REPORT_NOTE_KINDS } from "../../../src/shared/report-notation.ts"
+import { NotationBlock } from "../../../../src/browser/components/page/conversation/main-view/markdown/notation.tsx"
+import { REPORT_SANITIZE_SCHEMA } from "../../../../src/browser/components/page/conversation/main-view/markdown/sanitize-schema.ts"
+import { REPORT_NOTATION_PROMPT } from "../../../../src/server/report/core/report-notation.ts"
+import { REPORT_NOTATION_NAMES, REPORT_NOTE_KINDS } from "../../../../src/shared/report-notation.ts"
 
 afterEach(() => {
   cleanup()
@@ -54,7 +54,7 @@ const namedClasses = [...REPORT_NOTATION_PROMPT.matchAll(/class="([^"]+)"/g)].fl
 const STYLE_SHEET_SOURCE = readFileSync(
   fileURLToPath(
     new URL(
-      "../../../src/browser/components/page/conversation/main-view/markdown/report-notation.module.css",
+      "../../../../src/browser/components/page/conversation/main-view/markdown/report-notation.module.css",
       import.meta.url,
     ),
   ),

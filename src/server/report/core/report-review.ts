@@ -23,7 +23,7 @@
 // ターンの差し戻しの1回を使う**。サブエージェントの `report` はどのみち描かないので、失うのは
 // メインの差し戻しの機会だけ。
 
-import { type SessionEvent } from "../../shared/session-event.ts"
+import { type SessionEvent } from "../../../shared/session-event.ts"
 import { type ReportDraft, reportRejectionText, reportViolations } from "./report-violation.ts"
 
 /** handler の判定。`rejected` の `text` はそのまま `report` の戻り値になる。 */

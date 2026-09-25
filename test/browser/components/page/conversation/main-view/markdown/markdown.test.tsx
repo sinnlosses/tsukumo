@@ -124,7 +124,7 @@ describe("Markdown（unified への置き換えが求める記法）", () => {
   })
 
   it("数のバー（meter / progress）は許可リストに無いので落ちる", () => {
-    // 数の見せ方を stats/stat の1通りに保つための線引き（src/server/core/report-notation.ts）。
+    // 数の見せ方を stats/stat の1通りに保つための線引き（src/server/report/core/report-notation.ts）。
     // タグは落ちるが中身の文字は残るので、書いても数そのものは読める。
     const { container } = render(
       <Markdown
@@ -202,7 +202,7 @@ describe("Markdown（unified への置き換えが求める記法）", () => {
 
   it("mark は許可リストに無いので落ちる（強調の道具を増やさない）", () => {
     // 既定の黄地に黒文字はこの配色から浮き、当て直すと strong / badge と並んで3通りになる
-    // （meter / progress を載せない理由と同じ。src/server/core/report-notation.ts）。
+    // （meter / progress を載せない理由と同じ。src/server/report/core/report-notation.ts）。
     const { container } = render(<Markdown text="<mark>目立たせたい語</mark>" />)
 
     expect(container.querySelector("mark")).toBeNull()
@@ -343,7 +343,7 @@ describe("Markdown（unified への置き換えが求める記法）", () => {
   })
 
   it("```diff フェンスの足した行・消した行が色分けされる", () => {
-    // 規約が \`\`\`diff を勧めている根拠（src/server/core/report-notation.ts のコードの行）。
+    // 規約が \`\`\`diff を勧めている根拠（src/server/report/core/report-notation.ts のコードの行）。
     // rehype-highlight（lowlight の common に diff が入っている）が付ける class と、
     // テーマ（highlight.js の github-dark）の .hljs-addition / .hljs-deletion が対。
     const { container } = render(<Markdown text={"```diff\n-const a = 1\n+const a = 2\n```"} />)

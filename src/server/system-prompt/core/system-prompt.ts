@@ -6,8 +6,8 @@
 // 持っていて、全体の並びを知るのに3つのファイルを渡り歩く必要があった（経緯は
 // `docs/architecture.md`「新しいコードを置く場所」）。
 //
-// **文面そのものは持たない。** 規約は {@link ./speech-cadence.ts} / {@link ./report-notation.ts} /
-// {@link ./chat-manner.ts} が、雑談の記憶の読み戻しは {@link ./chat-memory-prompt.ts} が持ち、
+// **文面そのものは持たない。** 規約は {@link ./speech-cadence.ts} / {@link ../../report/core/report-notation.ts} /
+// {@link ../../core/chat-manner.ts} が、雑談の記憶の読み戻しは {@link ../../core/chat-memory-prompt.ts} が持ち、
 // ここが決めるのは**どれを・どの順で並べるか**だけ。
 //
 // **人格（`persona.md` の全文）は文字列で受け取る。** ファイルを読むのは adapter
@@ -15,11 +15,11 @@
 // ようになったら、層を写した `core/character-pack.ts` ではなく概念で切る
 // （`docs/architecture.md`「新しいコードを置く場所」）。
 
-import { CHAT_KEPT_READBACK_BYTES, CHAT_RECENT_READBACK_BYTES } from "../../shared/chat-log.ts"
-import { CHAT_MANNER_PROMPT } from "./chat-manner.ts"
-import { type ChatMemorySources, takeChatMemoryPromptParts } from "./chat-memory-prompt.ts"
-import { REPORT_NOTATION_PROMPT } from "./report-notation.ts"
-import { type ChatArchive, type SessionMode, type SessionStart } from "./session-driver.ts"
+import { CHAT_KEPT_READBACK_BYTES, CHAT_RECENT_READBACK_BYTES } from "../../../shared/chat-log.ts"
+import { CHAT_MANNER_PROMPT } from "../../core/chat-manner.ts"
+import { type ChatMemorySources, takeChatMemoryPromptParts } from "../../core/chat-memory-prompt.ts"
+import { type ChatArchive, type SessionMode, type SessionStart } from "../../core/session-driver.ts"
+import { REPORT_NOTATION_PROMPT } from "../../report/core/report-notation.ts"
 import { SPEECH_CADENCE_PROMPT } from "./speech-cadence.ts"
 
 /** {@link takeSystemPromptAppend} に渡すもの。 */
@@ -35,7 +35,7 @@ export type SystemPromptSeed = {
 }
 
 /**
- * どのモードで起こすか。`kind` は `SessionMode`（`./session-driver.ts`）と同じ語で、こちらは
+ * どのモードで起こすか。`kind` は `SessionMode`（`../../core/session-driver.ts`）と同じ語で、こちらは
  * **`systemPrompt` を組むのに要るものだけ**を持つ（ツールの口は持たない）。
  */
 export type SystemPromptMode =
@@ -47,7 +47,7 @@ export type SystemPromptMode =
     }
 
 /**
- * 駆動の `SessionMode`（`./session-driver.ts`）を、`systemPrompt` を組むのに要る形
+ * 駆動の `SessionMode`（`../../core/session-driver.ts`）を、`systemPrompt` を組むのに要る形
  * （{@link SystemPromptMode}）へ変える。**この関数は純粋**——渡された口（`chatArchive`）を
  * 束ねるだけで、雑談かどうかで4つの口を作るかどうかを決める判断（`src/session-start.ts` の
  * `sessionMode`）とは別（そちらは `personaMemory` の adapter 実装を組み立てる必要があり、
@@ -98,7 +98,7 @@ export function toSystemPromptMode(
  * **雑談のときは仕事の2つと入れ替える**（並べない）。片方が「本文は中立・簡潔に」と言い、
  * もう片方が「本文を書くな」と言う形になり、どちらが効くかが揺れるため。セリフの間合いも
  * 仕事向け（ツールの前後に1回）で、往復そのものが会話になる雑談では意味をなさない
- * （理由の正典は {@link ./chat-manner.ts} の冒頭）。
+ * （理由の正典は {@link ../../core/chat-manner.ts} の冒頭）。
  *
  * **名前が `take` で始まるのは、返すだけでなく写しの印を書き換えるから**
  * （{@link takeChatMemoryPromptParts}。雑談で記憶を載せたとき、印が「渡し済み」に戻る）。

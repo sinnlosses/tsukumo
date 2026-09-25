@@ -1,20 +1,20 @@
 import { describe, expect, it } from "bun:test"
 
-import { CHAT_MANNER_PROMPT } from "../../../src/server/core/chat-manner.ts"
-import { takeChatMemoryPromptParts } from "../../../src/server/core/chat-memory-prompt.ts"
-import { REPORT_NOTATION_PROMPT } from "../../../src/server/core/report-notation.ts"
+import { CHAT_MANNER_PROMPT } from "../../../../src/server/core/chat-manner.ts"
+import { takeChatMemoryPromptParts } from "../../../../src/server/core/chat-memory-prompt.ts"
 import {
   type ChatArchive,
   type ChatArchiveRecentEntry,
   type ChatSummary,
   type ChatSummaryRecord,
   type SessionStart,
-} from "../../../src/server/core/session-driver.ts"
-import { SPEECH_CADENCE_PROMPT } from "../../../src/server/core/speech-cadence.ts"
+} from "../../../../src/server/core/session-driver.ts"
+import { REPORT_NOTATION_PROMPT } from "../../../../src/server/report/core/report-notation.ts"
+import { SPEECH_CADENCE_PROMPT } from "../../../../src/server/system-prompt/core/speech-cadence.ts"
 import {
   type SystemPromptMode,
   takeSystemPromptAppend,
-} from "../../../src/server/core/system-prompt.ts"
+} from "../../../../src/server/system-prompt/core/system-prompt.ts"
 
 // **`systemPrompt` に何が・どの順で載るか**を、3通り（仕事・雑談・続きから始めるとき）で固定する
 // （docs/design.md 7章）。**本物の駆動を起こして確かめることはできない**（`systemPrompt` は

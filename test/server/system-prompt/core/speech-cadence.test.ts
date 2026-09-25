@@ -1,19 +1,19 @@
 import { describe, expect, it } from "bun:test"
 
-import { REPORT_NOTATION_PROMPT } from "../../../src/server/core/report-notation.ts"
-import { SPEECH_CADENCE_PROMPT } from "../../../src/server/core/speech-cadence.ts"
-import { takeSystemPromptAppend } from "../../../src/server/core/system-prompt.ts"
+import { REPORT_NOTATION_PROMPT } from "../../../../src/server/report/core/report-notation.ts"
+import { SPEECH_CADENCE_PROMPT } from "../../../../src/server/system-prompt/core/speech-cadence.ts"
+import { takeSystemPromptAppend } from "../../../../src/server/system-prompt/core/system-prompt.ts"
 
 // この規約は**パックによらず同じもの**（docs/display.md 4.2）。文面そのものではなく、
 // **どのパックの append にも載ること**を見る（人格が無いパックで落ちると、そのパックだけ
-// 吹き出しが止まる）。**並びそのものの正典は `test/server/core/system-prompt.test.ts`**
+// 吹き出しが止まる）。**並びそのものの正典は `test/server/system-prompt/core/system-prompt.test.ts`**
 // （人格との前後関係と、人格が無いパックで規約だけになることは、そちらが append 全体の文字列
 // として固定している。組み立てをそこへ寄せたときに、同じ分岐の重複としてここから外した）。
 
 /** 人格は手で書いた架空の一文だけ（docs/coding-standards.md「会話内容の扱い」）。 */
 const PERSONA = "# 架空の精霊\n\n語尾に「なのじゃ」と付ける。"
 
-/** 仕事モードの append（人格は文字列で渡す。`src/server/core/system-prompt.ts`）。 */
+/** 仕事モードの append（人格は文字列で渡す。`src/server/system-prompt/core/system-prompt.ts`）。 */
 function workAppend(persona: string): string {
   return takeSystemPromptAppend({ persona, mode: { kind: "work" } })
 }

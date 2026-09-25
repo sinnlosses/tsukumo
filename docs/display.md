@@ -54,7 +54,7 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/display.md
   描けたか・どこに出たかといった画面の状態は載せない（2026-09-23 ユーザー決定。レポートの出力を
   「検査 → 整形 → 描画」に分けた検査の段。検査するのは「レポートの記法」の条のうち機械で判定
   できるものだけで、差し戻すのは1ターンに1回まで。同じターンで受け取った `report` と同じ引数の
-  送り直しも、固定の一文で別に1ターンに1回まで差し戻す。`src/server/core/report-review.ts`）。
+  送り直しも、固定の一文で別に1ターンに1回まで差し戻す。`src/server/report/core/report-review.ts`）。
   **3つ目を足すにはユーザーの決定が要る**
 - **検査を通った `report` の本文は、描く前に整形する**（同じ決定の整形の段。
   `src/shared/report-tidy.ts`）。落とすのは**落としても意味が変わらない行だけ**で、言い換え・
@@ -67,7 +67,7 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/display.md
   詰めない**（CommonMark でも本文を塊に割る側でも1つの切れ目と同じに描かれ、フェンスと HTML の
   塊の中では中身なので、落としても見え方が変わらない）。`report` の無いやり取りの本文には掛けない
 - **呼ぶ頻度・契機・セリフに入れる中身は tsukumo 側が持つ**（2026-09-16 決定。書く場所は
-  `src/server/core/speech-cadence.ts` の `SPEECH_CADENCE_PROMPT`）。回数は数で縛らず契機で言い、
+  `src/server/system-prompt/core/speech-cadence.ts` の `SPEECH_CADENCE_PROMPT`）。回数は数で縛らず契機で言い、
   ツールを走らせる前に1回、その結果で分かったことがあればもう1回。セリフの中身は
   **「いま何をしていて、そこでどう感じているか」**が分かるものにする（ユーザーへの問いかけを
   増やすのではない）。**どのパックでも吹き出しが長く止まらない**ことは tsukumo 全体の体験なので、
@@ -85,8 +85,8 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/display.md
 いる（撤去の根拠は `docs/history/decision.md`）。
 
 **tsukumo の中でのセリフの規約は3か所に分かれる**（2026-09-23 改訂）: **呼ぶ回数・契機**は
-`src/server/core/speech-cadence.ts`、**ターンの締め方**（`report` → 締めの `speak` の順で終え、
-そのあとに本文を書かない、など。2026-09-25 改訂）は `src/server/core/report-notation.ts`、**口調・
+`src/server/system-prompt/core/speech-cadence.ts`、**ターンの締め方**（`report` → 締めの `speak` の順で終え、
+そのあとに本文を書かない、など。2026-09-25 改訂）は `src/server/report/core/report-notation.ts`、**口調・
 言い回し**はキャラクターパックの `persona.md` が持つ。3つとも `systemPrompt` の append として
 毎ターン渡る（下の「レポートの記法は、TUI と tsukumo で出し分ける」と同じ切り分け）。
 
@@ -103,7 +103,7 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/display.md
 - **セリフに入れるのは役割で決める**（掛け声・呼びかけ・リアクション・感想・完了報告）。
   レポートに入るのは事実・根拠・手順・コード・表・判断とその理由
 - **文体は役割で分ける。** セリフはキャラクターの口調、**レポートの本文は中立の技術文**
-  （2026-09-14 決定）。規約を書く場所は `src/server/core/report-notation.ts` で、`persona.md` には
+  （2026-09-14 決定）。規約を書く場所は `src/server/report/core/report-notation.ts` で、`persona.md` には
   書かない（下の「読む時間を減らすために足すのは、規約の側」）
 - **tsukumo 側のヒューリスティック分類（コードブロックは詳細、地の文はセリフ等）は採らない。**
   判定が壊れやすい。**小さいモデルに分離・整形させる案も採らない**（コスト・遅延に加えて、
@@ -121,7 +121,7 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/display.md
   答え待ちの列で、**消すのは吹き出しとメインビューが読む値だけ**。
   **合図は SDK の `conversation_reset` メッセージ**（実測は `docs/history/decision.md`）。
   tsukumo は依頼の文面が `/clear` かどうかを見ない。**`/compact` では届かない**ので、要約では何もリセットされない
-- **レポートの構造は tsukumo 側の規約（`src/server/core/report-notation.ts`）で決める**（正典は
+- **レポートの構造は tsukumo 側の規約（`src/server/report/core/report-notation.ts`）で決める**（正典は
   下の「レポートの記法は、TUI と tsukumo で出し分ける」。グローバルの `asuna.md` は TUI 向けに
   保ち、HTML の記法と mermaid / chart のフェンスは外してある）。内容の種類ごとに使う構造
   （表・番号付き・箇条書き1段・mermaid・chart・コードブロック・`note` / `badge` / `cols` / `card` の
@@ -149,7 +149,7 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/display.md
 - **レポートの文体は tsukumo が決める**（2026-09-14 決定）。**本文は中立の技術文**にし、
   キャラクターの口調を担うのは `speak` のセリフのほうにする。どのパックに切り替えても
   本文の読みやすさが変わらないようにするため（**長く読み続ける面**なので、読みやすさを
-  キャラクター性より優先する）。書く場所は `src/server/core/report-notation.ts` で、
+  キャラクター性より優先する）。書く場所は `src/server/report/core/report-notation.ts` で、
   **`persona.md` の側には書かない**
 - **レポートは必ず日本語で書かせる**（2026-09-23 決定）。`CLAUDE.md` の「対話言語」だけでは
   本文が英語で出たことがあるため、同じ `report-notation.ts` の文面で縛り、送る前の検算にも入れる。
@@ -165,14 +165,14 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/display.md
 レポートの記法は、TUI と tsukumo で出し分ける」）: 出力スタイルを2ファイルに分けて選ぶ案と、
 1ファイルのまま条件分岐で書く案。
 
-**文面は `src/server/core/report-notation.ts` の `REPORT_NOTATION_PROMPT` にあり、
+**文面は `src/server/report/core/report-notation.ts` の `REPORT_NOTATION_PROMPT` にあり、
 `startSdkDriver`（`src/server/adapter/sdk-driver.ts`）が `query()` の `systemPrompt` へ渡す。**
 
 #### 読む時間を減らすために足すのは、規約の側（2026-09-13 決定）
 
 **読む時間を減らすために直すのは、3層（レンダラ / 通す HTML と CSS / 組み立ての規約）のうち
 規約の側。** 表現の語彙はすでに足りていて、足りないのは「どの内容をどう描くか」の指示のほう。
-**書く場所は `src/server/core/report-notation.ts`** で、グローバルの
+**書く場所は `src/server/report/core/report-notation.ts`** で、グローバルの
 `~/.claude/output-styles/asuna.md` は TUI 向けのまま触らない。
 
 - **見せ方と再構成の線引き**: **本文の文字列を変えないものが見せ方**（CSS・要素の付け替え・

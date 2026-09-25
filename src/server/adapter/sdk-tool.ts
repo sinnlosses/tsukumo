@@ -27,8 +27,6 @@ import {
   DIARY_TOOL_NAME,
   type DiaryIntake,
 } from "../core/diary-tool.ts"
-import { type ReportReview } from "../core/report-review.ts"
-import { REPORT_TITLE_DESCRIPTION, REPORT_TOOL_DESCRIPTION } from "../core/report-tool.ts"
 import { REPORT_TOOL_NAME, SPEAK_TOOL_NAME, TSUKUMO_MCP_SERVER_NAME } from "../core/sdk-message.ts"
 import {
   type ChatKeep,
@@ -45,6 +43,8 @@ import {
   usageProposalKindGuide,
   usageReviewStageGuide,
 } from "../core/usage-review-tool.ts"
+import { type ReportReview } from "../report/core/report-review.ts"
+import { REPORT_TITLE_DESCRIPTION, REPORT_TOOL_DESCRIPTION } from "../report/core/report-tool.ts"
 
 /** モデルに見せる `speak` ツールの説明。**セリフと本文の境目はここだけで説明する。** */
 const SPEAK_TOOL_DESCRIPTION =
@@ -125,7 +125,7 @@ const RECALL_TOOL_DESCRIPTION =
  * 人格に入り込む経路（7.1）や、仕事の会話をアーカイブに残す経路になる。
  *
  * **`report` は仕事のときだけ**載る（仕事ではレポートを常にこれで受け取る。雑談は本文を
- * 書かない決まりなので載せない。`src/server/core/report-tool.ts`）。**見直しの2つも仕事の
+ * 書かない決まりなので載せない。`src/server/report/core/report-tool.ts`）。**見直しの2つも仕事の
  * ときだけ**（トークン消費の画面から頼むのは仕事の会話への依頼）。**`diary` は仕事にも雑談にも
  * 載る**（振り返りは雑談中でも送れる）。
  *
@@ -211,7 +211,7 @@ function diaryTool(intake: DiaryIntake, expressions: readonly ExpressionChoice[]
 
 /**
  * レポートを受け取るツール。**差し戻しの判定の窓口はここだけ**
- * （src/server/core/report-review.ts）。通すときの戻り値は "ok" だけ、差し戻すときは規約違反と
+ * （src/server/report/core/report-review.ts）。通すときの戻り値は "ok" だけ、差し戻すときは規約違反と
  * 直し方だけを `isError` 付きで返す（画面の事情は載せない。docs/display.md 4.2）。描くか捨てるかは
  * この `isError` を見て決まる。レポートにする引数は、ここではなく `assistant` メッセージの変換が
  * 取り出す（src/server/core/sdk-message.ts）。

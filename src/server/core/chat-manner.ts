@@ -1,7 +1,7 @@
 // tsukumo がセッションに足す「雑談の作法」の規約。**雑談モードのときだけ**
 // `systemPrompt` の append で渡す（`docs/chat-mode.md` 4.9）。
 //
-// **仕事のときの2つ（{@link ./report-notation.ts} と {@link ./speech-cadence.ts}）と入れ替わる。**
+// **仕事のときの2つ（{@link ../report/core/report-notation.ts} と {@link ../system-prompt/core/speech-cadence.ts}）と入れ替わる。**
 // 並べて渡さないのは、片方が「本文は中立・簡潔に」と言い、もう片方が「本文を書くな」と言う形に
 // なり、どちらが効くかが揺れるため。セリフの間合いも仕事向け（ツールの前後に1回）なので、
 // 往復そのものが会話になる雑談では意味をなさない。

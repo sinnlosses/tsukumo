@@ -110,7 +110,7 @@ function violationLine(violation: ReportViolation): string {
 
 /**
  * 規約が挙げる mermaid の種類（`report-notation.ts` の表の2行）。**文面と揃っていること**は
- * `test/server/core/report-violation.test.ts` が見る。
+ * `test/server/report/core/report-violation.test.ts` が見る。
  */
 const MERMAID_KINDS: ReadonlySet<string> = new Set([
   "flowchart",

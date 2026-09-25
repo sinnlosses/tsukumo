@@ -1,11 +1,11 @@
 import { describe, expect, it } from "bun:test"
 
-import { REPORT_NOTATION_PROMPT } from "../../../src/server/core/report-notation.ts"
+import { REPORT_NOTATION_PROMPT } from "../../../../src/server/report/core/report-notation.ts"
 import {
   type ReportDraft,
   reportRejectionText,
   reportViolations,
-} from "../../../src/server/core/report-violation.ts"
+} from "../../../../src/server/report/core/report-violation.ts"
 
 // レポートの文面はどれも作り物（docs/coding-standards.md「会話内容の扱い」）。
 

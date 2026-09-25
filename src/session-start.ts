@@ -59,7 +59,6 @@ import {
 import { createSessionLaunch, type SessionLaunchSeed } from "./server/core/session-launch.ts"
 import { createSessionManager, type SessionManager } from "./server/core/session-manager.ts"
 import { canResume, sessionTag } from "./server/core/session-restore.ts"
-import { takeSystemPromptAppend, toSystemPromptMode } from "./server/core/system-prompt.ts"
 import { type TokenUsageLog } from "./server/core/token-usage.ts"
 import { openTrackedFile } from "./server/core/tracked-file.ts"
 import { visitGuests } from "./server/core/visit-guest.ts"
@@ -69,6 +68,10 @@ import {
 } from "./server/core/visit-script-writer.ts"
 import { visitCast } from "./server/core/visit-script.ts"
 import { QUICK_VISIT_TIMING, VISIT_TIMING } from "./server/core/visit-timing.ts"
+import {
+  takeSystemPromptAppend,
+  toSystemPromptMode,
+} from "./server/system-prompt/core/system-prompt.ts"
 import { UNKNOWN_ACHIEVEMENT } from "./shared/achievement.ts"
 import { CHAT_COMPACT_THRESHOLD_BYTES, CHAT_RECALL_READBACK_BYTES } from "./shared/chat-log.ts"
 import { type DismissUsageProposalCommand } from "./shared/command.ts"

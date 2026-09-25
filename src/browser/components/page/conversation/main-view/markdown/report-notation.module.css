@@ -1,4 +1,4 @@
-/* レポートの記法（`src/server/core/report-notation.ts`）と Markdown の見た目の語彙。
+/* レポートの記法（`src/server/report/core/report-notation.ts`）と Markdown の見た目の語彙。
    `markdown/notation.tsx` / `markdown/markdown.tsx` / `markdown/task-check.ts` /
    `markdown/mermaid-block.tsx` が使う class をここにまとめる。
    もとは main-view.module.css の一部だったが、markdown/ の部品しか使わない class の塊
@@ -14,7 +14,7 @@
    （`components/domain/portrait.module.css` の `.portrait` と `character-view.module.css` の
    `.portrait` を className で重ねる手口と同じ。docs/design.md 6.6）。 */
 
-/* レポートの記法（`src/server/core/report-notation.ts` がモデルに指示する `note` / `badge` / `cols` /
+/* レポートの記法（`src/server/report/core/report-notation.ts` がモデルに指示する `note` / `badge` / `cols` /
    `card` / `stats` / `stat`）に当てる見た目の語彙。**ここが受けるのはモデルが書いた class 名
    そのものではなく、`src/browser/components/page/conversation/main-view/markdown/notation.tsx` が付け直した `report-` の
    class**（モデルの文字列と CSS のセレクタを直接つながないため）。**クラス名は意味で付ける**。
@@ -175,7 +175,7 @@
   color: var(--ink-quiet);
 }
 /* レポートの中の <details>（規約が「長い根拠・ログ・脇道」に勧める畳み方。
-   `src/server/core/report-notation.ts`）。**畳まれた塊だと分かること**が要るので、地と枠で塊にし、
+   `src/server/report/core/report-notation.ts`）。**畳まれた塊だと分かること**が要るので、地と枠で塊にし、
    開閉できることは summary のカーソルで示す（.main-step.is-interim と同じ手口。新しい色は
    作らない）。地を ground に落とすのは、親の地が surface でも塊として立つため。 */
 .detail-block details {

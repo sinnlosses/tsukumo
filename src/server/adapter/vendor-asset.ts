@@ -26,7 +26,7 @@ const NODE_MODULES = "node_modules"
  *
  * **mermaid と chart.js は package.json で版を固定している**（`^` を付けない）。素の JavaScript を
  * そのままブラウザへ配っていて、描けるかどうかは目で見るまで分からないため——mermaid の版は
- * `src/server/core/report-notation.ts` が挙げる図の10種の根拠でもある。highlight.js のテーマだけは
+ * `src/server/report/core/report-notation.ts` が挙げる図の10種の根拠でもある。highlight.js のテーマだけは
  * `^` で上げてよい——**色を当てる class を出すのは `rehype-highlight`（`lowlight`）が抱える
  * highlight.js のほう**なので、版がずれると当たらない class が出る。いまは `lowlight` が
  * `~11.11.0` で別の複製を持つが、**配っている 11.12.0 のテーマとバイト一致**なので当たる

@@ -11,8 +11,8 @@
 // モデルが同じ中身の `report` を出し直して中身の似た2枚が並び、締めのセリフで差し戻しに触れる）。
 // `report` の呼び出しそのものの検査と差し戻しは `report-review.ts`（こちらは描く前の検査の段）。
 
-import { MAX_SESSION_HEADING_LENGTH } from "../../shared/session-choice.ts"
-import { type SessionEvent } from "../../shared/session-event.ts"
+import { MAX_SESSION_HEADING_LENGTH } from "../../../shared/session-choice.ts"
+import { type SessionEvent } from "../../../shared/session-event.ts"
 
 /**
  * モデルに見せる `report` ツールの説明。**記法の条はここに書かず、規約の節を1行で指す**

@@ -4,7 +4,7 @@
 //
 // **なぜリポジトリ内に置くのか**: 出力スタイルは全プロジェクトに同じものが当たるため、そこに
 // HTML の記法を書くと素の TUI でタグが文字のまま見える。ここに置けば **描ける記法の一覧が
-// {@link ../../browser/components/page/conversation/main-view/markdown/sanitize-schema.ts} と同じコミットで動く**（レンダラを直したのに
+// {@link ../../../browser/components/page/conversation/main-view/markdown/sanitize-schema.ts} と同じコミットで動く**（レンダラを直したのに
 // 規約が古いまま、が起きない）。通す要素・class を増やしたら、この文面も同じコミットで直す。
 //
 // 「決める」内容の定数で、外の世界には触らない（原則2）。`query()` に渡すのは呼び出し側
@@ -30,18 +30,18 @@
  * **ターンを「`report` → 締めの `speak`」で終えさせる条もここに置く**:
  * `report` は呼び出しの時点で中身が確定するので、締めのセリフをそのあとに置けば、読めるレポートへの
  * 反応として言える。ツール呼び出し（`speak`）で終えると Claude Code 本体が英語の固定文の催促を
- * 利用者の発言として差し込む件は、子プロセスに渡す環境変数で塞ぐ（`./visible-output-nudge.ts`）。
+ * 利用者の発言として差し込む件は、子プロセスに渡す環境変数で塞ぐ（`../../core/visible-output-nudge.ts`）。
  * 以前は締めのあとに「完了」の1行を書かせて塞いでいたが、`report` を呼ばないターンでは
  * その1行が最終レポートとして画面に出たので、条のほうを外した（経緯は `docs/chat-mode.md` 4.9）。
  *
  * **条1 は `report` の欄の分け方を言う**（「結論から書く」「お願いはいちばん最後に1つ」は、
  * `conclusion` → `body` → `favor` の欄の並びが型で持つので文面では言わない）。条の中身を
  * 入れ替えても番号をずらさないのは、条2・条3・条9 を番号で引いているところ（人格の
- * `persona.md`・`./speech-cadence.ts`・`./report-violation.ts`）があり、ホームのパックの
+ * `persona.md`・`../../system-prompt/core/speech-cadence.ts`・`./report-violation.ts`）があり、ホームのパックの
  * 人格は tsukumo からは直せないため。
  *
  * **「本文にセリフを書かない」の正典は条2**（4.2）。同じ趣旨が
- * {@link ./speech-cadence.ts} と `persona.md` にも実体で書かれていて、どれも正典を名乗って
+ * {@link ../../system-prompt/core/speech-cadence.ts} と `persona.md` にも実体で書かれていて、どれも正典を名乗って
  * いなかった。条2 に**記法で包んだ場合（引用・箇条書き・表）も含めて**寄せ、他の2つは参照の
  * 1行に落とす。
  *

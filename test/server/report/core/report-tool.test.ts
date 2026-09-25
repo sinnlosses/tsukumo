@@ -5,8 +5,8 @@ import {
   REPORT_GATE_AFTER_REPORT_REASON,
   REPORT_GATE_REASON,
   REPORT_TOOL_DESCRIPTION,
-} from "../../../src/server/core/report-tool.ts"
-import { type SessionEvent } from "../../../src/shared/session-event.ts"
+} from "../../../../src/server/report/core/report-tool.ts"
+import { type SessionEvent } from "../../../../src/shared/session-event.ts"
 
 describe("REPORT_TOOL_DESCRIPTION", () => {
   it("MCP ツールの説明文の既定の上限（2048字）に収まり、記法は規約の節を指すだけ", () => {

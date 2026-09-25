@@ -309,7 +309,7 @@ describe("characterChangedEvent の一覧（packs）", () => {
 
 // **人格は手で書いた架空の一文だけ**（実物の人格ファイルも会話も使わない。
 // docs/coding-standards.md「会話内容の扱い」）。**この文面を `systemPrompt` のどこへ並べるかは
-// ここの担当ではない**（`test/server/core/system-prompt.test.ts`）。ここが見るのは読めたかどうか。
+// ここの担当ではない**（`test/server/system-prompt/core/system-prompt.test.ts`）。ここが見るのは読めたかどうか。
 const PERSONA = "# 架空の精霊\n\n語尾に「なのじゃ」と付ける。"
 
 describe("persona.md", () => {

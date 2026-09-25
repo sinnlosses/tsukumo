@@ -1153,7 +1153,7 @@ Layout に出す。復帰したときにセッションを続きから起こし�
 違うから**（駆動を1つ起こすだけで、覚えた既定を読む・履歴を復元するといった段取りは持たない）。
 
 - `systemPromptAppend: string` を受け取ってそのまま `systemPrompt.append` にする。**何が
-  どの順で載るかは決めない**（組み立ては `core/system-prompt.ts` の `takeSystemPromptAppend`。7章）
+  どの順で載るかは決めない**（組み立ては `system-prompt/core/system-prompt.ts` の `takeSystemPromptAppend`。7章）
 - `resume: string | undefined`（8章）
 
 **SDK 側は、SDK のどの口に触るかで4つに分かれる**（import してよい先の規則は
@@ -2125,7 +2125,7 @@ characters/<name>/
 - パックの探し先は**同梱の `characters/`・`~/.tsukumo/characters/`・起動先の
   `characters/local/`** の3箇所。同名は後ろが勝つ（7.1）
 
-**`systemPrompt` の append を組むのは `core/system-prompt.ts` の `takeSystemPromptAppend` 1つだけ**
+**`systemPrompt` の append を組むのは `system-prompt/core/system-prompt.ts` の `takeSystemPromptAppend` 1つだけ**
 （2026-09-23。それまでは並べる順を配線層が、モードごとの選び方を `core/session-rule.ts` が、人格との
 連結を `adapter/character-pack.ts` が持っていた。寄せた理由は `docs/architecture.md`「新しいコードを
 置く場所」）。**`persona.md` の全文を fs から読むのは adapter（`character-pack.ts`）のままで、
@@ -2355,7 +2355,7 @@ characters/<name>/
 モデルが呼んだときだけ書く。引数は**1行の文字列1つ**だけ、戻り値は `"ok"` だけ（tsukumo から
 モデルへ情報が戻る経路を作らない。`speak` と同じ）。
 
-- **ツールは雑談モードのときだけ載せる**（`core/system-prompt.ts` が `CHAT_MANNER_PROMPT` を
+- **ツールは雑談モードのときだけ載せる**（`system-prompt/core/system-prompt.ts` が `CHAT_MANNER_PROMPT` を
   選ぶのと同じ単位）。仕事のときに出すと、作業の文脈（プロジェクトの事情・利用者の都合）が
   人格に入り込む経路になる
 - **何を書くかの判断は `core/chat-manner.ts` の条が持つ**（4.9 の3条件と書かないものの一覧を

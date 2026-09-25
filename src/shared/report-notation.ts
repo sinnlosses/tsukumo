@@ -1,9 +1,9 @@
 // レポートの記法（モデルが書く class 名）の語彙。**印の名前の集合の出どころはここだけ**で、
 // 画面の対応表（`src/browser/components/page/conversation/main-view/markdown/notation.tsx`）はここから引く。
 //
-// **claude に教える文面（`src/server/core/report-notation.ts` の `REPORT_NOTATION_PROMPT`）は
+// **claude に教える文面（`src/server/report/core/report-notation.ts` の `REPORT_NOTATION_PROMPT`）は
 // ここから組み立てず、手で書く。** 印を足すときは文面にも書き足す必要があり、書き忘れは
-// `test/server/core/report-notation.test.ts` が落とす。見た目は `report-notation.module.css` の
+// `test/server/report/core/report-notation.test.ts` が落とす。見た目は `report-notation.module.css` の
 // `report-<名前>` で、これも同じテストが見張る。
 
 /**

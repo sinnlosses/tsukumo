@@ -212,7 +212,7 @@ export function toModelEffortSupport(value: unknown): readonly ModelEffortSuppor
 
 /**
  * サブエージェントの中から届いたメッセージか（`parent_tool_use_id` が文字列）。`report` の関所
- * （`src/server/core/report-tool.ts` の `createReportGate`）にメインの本文だけを渡すために、
+ * （`src/server/report/core/report-tool.ts` の `createReportGate`）にメインの本文だけを渡すために、
  * 駆動（`src/server/adapter/sdk-driver.ts`）が {@link toSessionEvents} と並べて使う。
  */
 export function isSubagentMessage(message: unknown): boolean {
@@ -509,7 +509,7 @@ function assistantBlockEvents(
   if (block.type === "text") {
     // サブエージェントの本文は委譲先の独り言で、メインの手元に届くだけにする（`report` と同じ）。
     // 進み具合は委譲先が `SendMessage` で送り、メインが `speak` で言い直す
-    // （`src/server/core/speech-cadence.ts`）。
+    // （`src/server/system-prompt/core/speech-cadence.ts`）。
     return parentToolUseId === undefined &&
       typeof block.text === "string" &&
       !isBlankText(block.text)

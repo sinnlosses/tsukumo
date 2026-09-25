@@ -5,7 +5,7 @@
 // **fs にほとんど触らない関数（`characterChangedEvent`）もここに置く。**
 // 層は「外の世界に触るか」で決め、ファイルの中身の純度では割らない（理由は
 // docs/architecture.md「新しいコードを置く場所」）。**`systemPrompt` の append の組み立ては
-// `src/server/core/system-prompt.ts` へ移してある**——`core` 側の規約と雑談の記憶を並べる判断が
+// `src/server/system-prompt/core/system-prompt.ts` へ移してある**——`core` 側の規約と雑談の記憶を並べる判断が
 // 要るようになり、概念で切るほうに当たったため（同じ段落）。ここが持つのは `persona` の文字列を
 // 読むところまで。
 //

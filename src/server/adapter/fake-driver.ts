@@ -22,8 +22,8 @@ import {
   sessionEventSchema,
 } from "../../shared/session-event.ts"
 import { recordedPromptImages } from "../core/prompt-image-shelf.ts"
-import { createReportReview } from "../core/report-review.ts"
 import { type SessionDriver } from "../core/session-driver.ts"
+import { createReportReview } from "../report/core/report-review.ts"
 
 /** 既定の疑似セッション。tsukumo 自身の場所から解く（cwd に依存させない）。 */
 const DEFAULT_SESSION_URL = new URL("../../../test/fixture/fake-session.json", import.meta.url)
@@ -195,7 +195,7 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
   // （本物の `Stop` フック入力と同じ遅れを疑似セッションでも再現する。`docs/screen-design.md`
   // 13.9「動き方の操作子」の「effort のドロップダウンだけ、表示の更新が遅れる」）。
   let effort: EffortLevel = FAKE_DEFAULT_EFFORT
-  // `report` の差し戻しの預かり（本物の駆動と同じ。`src/server/core/report-review.ts`）。判定は
+  // `report` の差し戻しの預かり（本物の駆動と同じ。`src/server/report/core/report-review.ts`）。判定は
   // しない（handler が無いので）——疑似セッションが書いた `tool-finished` の `isError` に従って
   // 描くか捨てるかだけが決まる。
   const reportReview = createReportReview()

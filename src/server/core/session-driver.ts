@@ -287,7 +287,7 @@ export type SessionDriverOptions = {
   readonly effort: EffortLevel
   /**
    * `systemPrompt` に足す文字列（人格と tsukumo 側の規約と雑談の記憶。組み立ては
-   * `src/server/core/system-prompt.ts` の `takeSystemPromptAppend`）。**中身をこのファイルが
+   * `src/server/system-prompt/core/system-prompt.ts` の `takeSystemPromptAppend`）。**中身をこのファイルが
    * 決めない**（docs/design.md 5章）。
    */
   readonly systemPromptAppend: string

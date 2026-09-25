@@ -8,7 +8,7 @@
 // `data` ごと消える）。属性にしておけば書き出し・読み直しを越え、サニタイザ
 // （`sanitize-schema.ts` の `code` の許可）を通って `markdown.tsx` の `Pre` まで届く。
 //
-// **中身は解釈せず、前後の空白を落としてそのまま運ぶ**（`src/server/core/report-notation.ts` の
+// **中身は解釈せず、前後の空白を落としてそのまま運ぶ**（`src/server/report/core/report-notation.ts` の
 // 規約が「パスを1つ」と決めていて、それ以外が来たときも読み手に見せたほうが手掛かりになる）。
 
 import { type Element, type ElementContent, type Properties, type Root } from "hast"
