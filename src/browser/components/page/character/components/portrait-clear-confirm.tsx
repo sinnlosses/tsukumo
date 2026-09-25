@@ -11,6 +11,7 @@
 
 import { type CSSProperties, type MouseEvent, type ReactElement } from "react"
 
+import { HStack } from "../../../../components/ui/h-stack/h-stack.tsx"
 import { useModalDialog } from "../../../../hooks/use-modal-dialog.ts"
 import styles from "../character-screen.module.css"
 
@@ -56,7 +57,7 @@ export function PortraitClearConfirm(props: PortraitClearConfirmProps): ReactEle
       onClose={props.onClose}
       onClick={onDialogClick}
     >
-      <div className={styles["character-clear-confirm-head"]}>
+      <HStack element="div" gap="md" align="center" justify="start" wrap="nowrap" className="">
         <img
           className={styles["character-clear-confirm-portrait"]}
           src={props.portraitUrl}
@@ -65,11 +66,11 @@ export function PortraitClearConfirm(props: PortraitClearConfirmProps): ReactEle
         <span className={styles["character-clear-confirm-question"]}>
           「{props.label}」を消しますか？
         </span>
-      </div>
+      </HStack>
       <p className={styles["character-clear-confirm-note"]}>
         この表情を使う場面では「{props.fallbackLabel}」が出ます。
       </p>
-      <div className={styles["character-clear-confirm-actions"]}>
+      <HStack element="div" gap="sm" align="stretch" justify="end" wrap="nowrap" className="">
         <button type="button" className={styles["character-button"]} onClick={props.onClose}>
           やめる
         </button>
@@ -80,7 +81,7 @@ export function PortraitClearConfirm(props: PortraitClearConfirmProps): ReactEle
         >
           消す
         </button>
-      </div>
+      </HStack>
     </dialog>
   )
 }

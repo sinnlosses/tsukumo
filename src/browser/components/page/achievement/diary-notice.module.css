@@ -24,8 +24,8 @@
   max-width: calc(100vw - 32px);
 }
 
+/* 並べ（`gap="none"`）は `HStack` が持つ。 */
 .diary-notice-icon {
-  display: flex;
   flex-shrink: 0;
 }
 

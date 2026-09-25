@@ -9,6 +9,7 @@ import {
   type AchievementCalendarDay,
   type LampLevel,
 } from "../../../../shared/achievement-calendar.ts"
+import { HStack } from "../../../components/ui/h-stack/h-stack.tsx"
 import styles from "./achievement.module.css"
 import { type AchievementCalendarView } from "./hooks/use-achievement-calendar.ts"
 
@@ -44,7 +45,7 @@ export function LanternCalendar(props: LanternCalendarProps): ReactElement {
 
   return (
     <section aria-label="灯りの暦" className={styles["achievement-calendar"]}>
-      <div className={styles["achievement-calendar-heading"]}>
+      <HStack element="div" gap="md" align="center" justify="start" wrap="wrap" className="">
         <h2 className={styles["achievement-calendar-title"]}>
           灯りの暦
           <span className={styles["achievement-calendar-note"]}>
@@ -52,7 +53,7 @@ export function LanternCalendar(props: LanternCalendarProps): ReactElement {
           </span>
         </h2>
         <Legend />
-      </div>
+      </HStack>
       {calendar.kind === "loading" ? (
         <p className={styles["achievement-note"]}>…</p>
       ) : calendar.kind === "unknown" ? (
@@ -66,7 +67,14 @@ export function LanternCalendar(props: LanternCalendarProps): ReactElement {
 
 function Legend(): ReactElement {
   return (
-    <div className={styles["achievement-calendar-legend"]}>
+    <HStack
+      element="div"
+      gap="md"
+      align="stretch"
+      justify="start"
+      wrap="wrap"
+      className={styles["achievement-calendar-legend"] ?? ""}
+    >
       {keys(LAMP_LABEL).map((level) => (
         <span key={level} className={styles["achievement-calendar-legend-item"]}>
           <Lamp level={level} />
@@ -77,7 +85,7 @@ function Legend(): ReactElement {
         <Bell />
         日記あり
       </span>
-    </div>
+    </HStack>
   )
 }
 
@@ -164,9 +172,16 @@ function DayCell(props: DayCellProps): ReactElement {
         {cellDateLabel(props.date, props.index)}
       </span>
       {props.hasDiary ? (
-        <span className={styles["achievement-calendar-day-bell"]}>
+        <HStack
+          element="span"
+          gap="none"
+          align="stretch"
+          justify="start"
+          wrap="nowrap"
+          className={styles["achievement-calendar-day-bell"] ?? ""}
+        >
           <Bell />
-        </span>
+        </HStack>
       ) : null}
       <Lamp level={level} />
       {props.isToday ? (

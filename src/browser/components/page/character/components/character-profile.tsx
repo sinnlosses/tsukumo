@@ -6,6 +6,8 @@
 
 import { type ReactElement } from "react"
 
+import { HStack } from "../../../../components/ui/h-stack/h-stack.tsx"
+import { VStack } from "../../../../components/ui/v-stack/v-stack.tsx"
 import styles from "../character-screen.module.css"
 import { type CharacterProfileModel } from "../hooks/use-character-edit.ts"
 import { SwitchIcon } from "./action-icon.tsx"
@@ -21,7 +23,14 @@ export function CharacterProfile(props: { readonly profile: CharacterProfileMode
       ) : (
         <span className={styles["character-profile-face-blank"]} />
       )}
-      <div className={styles["character-profile-text"]}>
+      <VStack
+        element="div"
+        gap="xs"
+        align="stretch"
+        justify="start"
+        wrap="nowrap"
+        className={styles["character-profile-text"] ?? ""}
+      >
         <div className={styles["character-profile-headline"]}>
           <h1 className={styles["character-profile-name"]}>{profile.name}</h1>
           <span className={styles["character-profile-id"]}>id: {profile.id}</span>
@@ -33,9 +42,16 @@ export function CharacterProfile(props: { readonly profile: CharacterProfileMode
         {profile.note.kind === "shown" ? (
           <span className={styles["character-screen-note"]}>{profile.note.text}</span>
         ) : null}
-      </div>
+      </VStack>
       {profile.editProfile.kind === "shown" || profile.switchTo.kind === "shown" ? (
-        <div className={styles["character-profile-actions"]}>
+        <HStack
+          element="div"
+          gap="sm"
+          align="center"
+          justify="start"
+          wrap="wrap"
+          className={styles["character-profile-actions"] ?? ""}
+        >
           <CharacterProfileEdit edit={profile.editProfile} />
           {profile.switchTo.kind === "shown" ? (
             <button
@@ -49,7 +65,7 @@ export function CharacterProfile(props: { readonly profile: CharacterProfileMode
               このキャラクターに切り替える
             </button>
           ) : null}
-        </div>
+        </HStack>
       ) : null}
     </div>
   )

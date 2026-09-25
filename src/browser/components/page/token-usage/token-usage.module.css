@@ -10,12 +10,7 @@
   margin: 0 auto;
   padding: 0 0.25rem 2rem;
 }
-.token-usage-bar {
-  display: flex;
-  align-items: baseline;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-}
+/* 並べ・間隔（`gap="md"`）・揃え・折り返しは `HStack` が持つ。 */
 .token-usage-title {
   margin: 0;
   color: var(--usage-ink);
@@ -77,18 +72,9 @@
   color: var(--usage-ink);
 }
 
-.token-usage-section {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-/* 区画の見出しの行。**右端に添え物（期間の切り替え）を押しやる**（狭い画面では下へ折り返す）。 */
-.token-usage-section-head {
-  display: flex;
-  align-items: baseline;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
+/* 並べ・間隔（`gap="sm"`）は `VStack` が持つ。 */
+/* 区画の見出しの行。**右端に添え物（期間の切り替え）を押しやる**（狭い画面では下へ折り返す）。
+   並べ・間隔（`gap="sm"`）・揃え・折り返しは `HStack` が持つ。 */
 .token-usage-section-label {
   margin: 0;
   color: var(--usage-ink);
@@ -243,10 +229,8 @@
 /* 表を持つ札の見出し行。**期間の合計の札（`.usage-card-label` 以下）よりひとまわり大きく**
    — こちらは「いまのコンテキスト」と同格の区画の見出しなので、`.context-title` /
    `.context-note` と同じ大きさ・色の組にする。 */
+/* 並べ・間隔（`gap="sm"`）・揃えは `HStack` が持つ。 */
 .usage-table-head {
-  display: flex;
-  align-items: baseline;
-  gap: 0.5rem;
   margin-bottom: 0.4rem;
 }
 .usage-table-title {
@@ -371,10 +355,8 @@
   box-shadow: 0 0 0 2px var(--accent);
   flex-shrink: 0;
 }
+/* 並べ・間隔（`gap="xs"`）は `VStack` が持つ。 */
 .usage-review-body {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
   flex: 1 1 auto;
   min-width: 0;
 }
@@ -428,7 +410,9 @@
   text-decoration: underline;
 }
 
-/* 見直し中の頭の行（顔・「見直し中…」＋直近のセリフ・経過・「止める」）。 */
+/* 見直し中の頭の行（顔・「見直し中…」＋直近のセリフ・経過・「止める」）。**狭い画面では
+   `flex-wrap: wrap` に変わる**（下の @media）ので、折り返しが値によって変わる規則は
+   `Stack` に置き換えない（`Stack` の `wrap` は1つの値に固定される）。 */
 .usage-review-running-head {
   display: flex;
   align-items: center;
@@ -550,6 +534,8 @@
   background: color-mix(in srgb, var(--usage-card), var(--accent) 6%);
   border-color: color-mix(in srgb, var(--usage-rule), var(--accent) 30%);
 }
+/* 結果の頭の行。**狭い画面では `flex-wrap: wrap` に変わる**（下の @media）ので、
+   `Stack` に置き換えない（`.usage-review-running-head` と同じ理由）。 */
 .usage-review-result-head {
   display: flex;
   align-items: flex-start;
@@ -748,12 +734,7 @@
   background: var(--usage-card);
 }
 /* 見出しの行。**右の2つは `margin-left: auto` で押しやる**（狭い画面では下へ折り返す）。 */
-.context-head {
-  display: flex;
-  align-items: baseline;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
+/* 並べ・間隔（`gap="sm"`）・揃え・折り返しは `HStack` が持つ。 */
 .context-title {
   margin: 0;
   color: var(--usage-ink);
@@ -764,11 +745,8 @@
   color: var(--usage-ink-note);
   font-size: var(--font-label);
 }
+/* 並べ・間隔（`gap="sm"`）・揃え・折り返しは `HStack` が持つ。 */
 .context-aside {
-  display: flex;
-  align-items: baseline;
-  flex-wrap: wrap;
-  gap: 0.5rem;
   margin-left: auto;
 }
 /* 自動圧縮までの残り。**札より沈んだ枠のある小さな箱**（期間の切り替えの外枠と同じ地）。

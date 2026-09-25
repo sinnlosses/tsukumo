@@ -5,6 +5,7 @@
 
 import { type ReactElement } from "react"
 
+import { HStack } from "../../../../components/ui/h-stack/h-stack.tsx"
 import styles from "./dispatch.module.css"
 import { type PendingAnswerModel } from "./hooks/use-pending-answer.ts"
 
@@ -23,7 +24,14 @@ export function PresentationalPendingAnswer(
             <span className={styles["pending-tool"]}>{props.toolName}</span>
             {props.summaryText}
           </p>
-          <div className={styles["pending-actions"]}>
+          <HStack
+            element="div"
+            gap="sm"
+            align="stretch"
+            justify="start"
+            wrap="nowrap"
+            className={styles["pending-actions"] ?? ""}
+          >
             <button
               type="button"
               className={`${styles["pending-action"]} ${styles["pending-allow"]}`}
@@ -38,7 +46,7 @@ export function PresentationalPendingAnswer(
             >
               拒否
             </button>
-          </div>
+          </HStack>
         </div>
       )
   }

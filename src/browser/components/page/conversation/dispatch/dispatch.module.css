@@ -1,10 +1,8 @@
 /* 入力欄（`<Dispatch>` 一式。src/browser/components/page/conversation/dispatch/）。`.dispatch` は `.layout-dispatch` の中
    いっぱいに広がり、フォーム・答え待ちの箱を縦に積む（docs/requirements.md 4.7）。 */
+/* 並べ・間隔（`gap="sm"`）は `VStack` が持つ。 */
 .dispatch {
-  display: flex;
-  flex-direction: column;
   height: 100%;
-  gap: 0.5rem;
 }
 /* 気づける印(1)：答え待ちの間、入力欄の領域の枠を目立つ色にする。許可モードの警告色
    （帯の screen-nav-permission-mode-select.is-danger の var(--state-ng)、破壊的操作向け）とは別の、注意を引くための
@@ -51,9 +49,8 @@
   font-family: var(--font-mono);
   font-weight: bold;
 }
+/* 並べ・間隔（`gap="sm"`）は `HStack` が持つ。 */
 .pending-actions {
-  display: flex;
-  gap: 0.5rem;
   margin-top: 0.5rem;
 }
 .pending-action {
@@ -103,10 +100,9 @@
   color: var(--state-warn);
 }
 /* textarea と / 補完の候補一覧の包み。候補一覧（position: absolute）の基準になる。 */
+/* 並べ（`gap="none"`）は `VStack` が持つ。 */
 .dispatch-text-wrap {
   position: relative;
-  display: flex;
-  flex-direction: column;
   flex: 1 1 auto;
   min-height: 0;
 }
@@ -211,11 +207,9 @@
 /* 経過時間と送信⇄中断（<TurnStatus>）。道具の口との間に伸び縮みする要素が無いので、
    ここで右端へ寄せる。**縮めてよいのは API の知らせだけ**なので、行ごと縮められるように
    しておき（`min-width: 0`）、縮む役は .dispatch-notice に持たせる。 */
+/* 並べ・間隔（`gap="md"`）・揃えは `HStack` が持つ。 */
 .dispatch-row {
-  display: flex;
   flex: 0 1 auto;
-  align-items: center;
-  gap: 0.75rem;
   min-width: 0;
   margin-left: auto;
 }

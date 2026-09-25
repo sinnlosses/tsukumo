@@ -11,6 +11,7 @@
 
 import { type ReactElement, type ReactNode } from "react"
 
+import { HStack } from "../../../../components/ui/h-stack/h-stack.tsx"
 import { Balloon } from "./balloon.tsx"
 import styles from "./character-view.module.css"
 import { type SpeechLogEntry, type SpeechLogModel } from "./hooks/use-speech-log.ts"
@@ -71,7 +72,16 @@ export function PresentationalSpeechLog({
             <CloseIcon />
             {CLOSE_LABEL}
           </button>
-          <div className={styles["speech-log-floor"]}>{portrait}</div>
+          <HStack
+            element="div"
+            gap="none"
+            align="end"
+            justify="start"
+            wrap="nowrap"
+            className={styles["speech-log-floor"] ?? ""}
+          >
+            {portrait}
+          </HStack>
           <div ref={scrollerRef} className={styles["speech-log-scroller"]}>
             <p className={styles["speech-log-more"]} aria-hidden="true">
               {MORE_LABEL}

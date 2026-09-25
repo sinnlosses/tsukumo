@@ -6,6 +6,8 @@
 import { type ReactElement } from "react"
 
 import { previousDateKey } from "../../../../shared/achievement.ts"
+import { HStack } from "../../../components/ui/h-stack/h-stack.tsx"
+import { VStack } from "../../../components/ui/v-stack/v-stack.tsx"
 import { dayLabel } from "../../../utils/day-label.ts"
 import styles from "./achievement.module.css"
 import { type AchievementDaySwitch } from "./hooks/use-achievement.ts"
@@ -25,7 +27,7 @@ export function DaySwitch(props: DaySwitchProps): ReactElement {
   const isToday = known && daySwitch.date === daySwitch.today
 
   return (
-    <div className={styles["achievement-day-switch"]}>
+    <HStack element="div" gap="lg" align="center" justify="between" wrap="wrap" className="">
       <h1 className={styles["achievement-title"]}>成果</h1>
       <div className={styles["achievement-day-switch-nav"]}>
         <button
@@ -37,7 +39,14 @@ export function DaySwitch(props: DaySwitchProps): ReactElement {
         >
           ‹
         </button>
-        <span className={styles["achievement-day-switch-label"]}>
+        <VStack
+          element="span"
+          gap="none"
+          align="center"
+          justify="start"
+          wrap="nowrap"
+          className={styles["achievement-day-switch-label"] ?? ""}
+        >
           {known ? (
             <>
               <span className={styles["achievement-day-switch-relative"]}>
@@ -48,7 +57,7 @@ export function DaySwitch(props: DaySwitchProps): ReactElement {
           ) : (
             LOADING_VALUE
           )}
-        </span>
+        </VStack>
         <button
           type="button"
           className={styles["achievement-day-switch-button"]}
@@ -68,7 +77,7 @@ export function DaySwitch(props: DaySwitchProps): ReactElement {
           </button>
         ) : null}
       </div>
-    </div>
+    </HStack>
   )
 }
 

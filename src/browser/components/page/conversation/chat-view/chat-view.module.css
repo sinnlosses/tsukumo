@@ -3,10 +3,8 @@
 
    **これはプロトタイプ**。立ち絵とログの比率は目視で仮に決めたもので、
    手触りを見てから詰める前提。 */
+/* 並べ・間隔（`gap="lg"`）・揃えは `HStack` が持つ。 */
 .chat-region {
-  display: flex;
-  align-items: flex-end;
-  gap: 1rem;
   height: 100%;
   overflow: hidden;
   /* 立ち絵の大きさ（領域の高さに対する割合）。メインビューはキャラビューより背が高いので、

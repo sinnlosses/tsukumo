@@ -5,6 +5,8 @@
 
 import { type ReactElement } from "react"
 
+import { HStack } from "../../../../components/ui/h-stack/h-stack.tsx"
+import { VStack } from "../../../../components/ui/v-stack/v-stack.tsx"
 import styles from "../character-screen.module.css"
 import { type FaceFieldModel } from "../hooks/use-character-edit.ts"
 import { TrashIcon, UploadIcon } from "./action-icon.tsx"
@@ -22,7 +24,7 @@ export function FaceField(props: {
   const { face, disabled } = props
 
   return (
-    <div className={styles["character-face-field"]}>
+    <HStack element="div" gap="lg" align="center" justify="start" wrap="wrap" className="">
       {face.image.kind === "absent" ? (
         <span className={styles["character-face-field-blank"]} />
       ) : (
@@ -32,9 +34,16 @@ export function FaceField(props: {
           alt={face.label}
         />
       )}
-      <div className={styles["character-face-field-side"]}>
+      <VStack
+        element="div"
+        gap="sm"
+        align="stretch"
+        justify="start"
+        wrap="nowrap"
+        className={styles["character-face-field-side"] ?? ""}
+      >
         <span>{face.label}</span>
-        <div className={styles["character-face-field-actions"]}>
+        <HStack element="div" gap="sm" align="stretch" justify="start" wrap="wrap" className="">
           <label className={styles["character-button"]}>
             <UploadIcon />
             差し替える
@@ -61,8 +70,8 @@ export function FaceField(props: {
               消す
             </button>
           )}
-        </div>
-      </div>
-    </div>
+        </HStack>
+      </VStack>
+    </HStack>
   )
 }

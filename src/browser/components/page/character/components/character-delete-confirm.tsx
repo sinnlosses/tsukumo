@@ -17,6 +17,7 @@
 
 import { useState, type MouseEvent, type ReactElement } from "react"
 
+import { VStack } from "../../../../components/ui/v-stack/v-stack.tsx"
 import { useModalDialog } from "../../../../hooks/use-modal-dialog.ts"
 import styles from "../character-screen.module.css"
 import { type CharacterDeleteBandModel } from "../hooks/use-character-edit.ts"
@@ -50,7 +51,7 @@ export function CharacterDeleteConfirm(props: CharacterDeleteConfirmProps): Reac
       onClose={props.onClose}
       onClick={onDialogClick}
     >
-      <div className={styles["character-delete-body"]}>
+      <VStack element="div" gap="lg" align="stretch" justify="start" wrap="nowrap" className="">
         <div className={styles["character-delete-head"]}>
           {band.face.kind === "shown" ? (
             <img className={styles["character-delete-portrait"]} src={band.face.url} alt="" />
@@ -88,7 +89,7 @@ export function CharacterDeleteConfirm(props: CharacterDeleteConfirmProps): Reac
             {band.okLabel}
           </button>
         </div>
-      </div>
+      </VStack>
     </dialog>
   )
 }

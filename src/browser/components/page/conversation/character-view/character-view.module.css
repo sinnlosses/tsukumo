@@ -5,6 +5,7 @@
    領域の高さを .character-layout まで継がせ、立ち絵の割合指定（下の --portrait-height）が
    領域の中で解決されるようにする（vh 基準にすると、下段の行の高さ（既定 40%）より大きく
    なって領域ごとスクロールし、最新の吹き出しが隠れる）。 */
+/* 並べ・間隔（`gap="sm"`）は `VStack` が持つ。 */
 .character-region {
   position: relative;
   /* セリフのログ（`<dialog>`）が領域の大きさを `cqw` / `cqh` で読むためのもの（下の
@@ -12,9 +13,6 @@
      大きさは外（`.layout-region` の高さ 100% と幅）から決まるので、中身を大きさの計算から外す
      封じ込めを掛けても寸法は変わらない。 */
   container-type: size;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
   height: 100%;
   /* 立ち絵の大きさ（領域の高さに対する割合）と、吹き出しの列の寸法。値はモック
      （docs/history/mockup/bottom-2026-09-23.html の section[aria-label="キャラクター"]）に
@@ -65,10 +63,8 @@
    .balloon-track 側の負の margin-left で作る。下の `.portrait + .balloon-track` 参照）。
    overflow: hidden は --portrait-drop で下へはみ出した立ち絵の足元をここで切るためのもの。
    領域そのもの（.layout-region の overflow-y: auto）にスクロールバーを出さない。 */
+/* 並べ・揃え・折り返しは `HStack` が持つ。 */
 .character-layout {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
   height: 100%;
   overflow: hidden;
 }
@@ -392,6 +388,7 @@
 /* 立ち絵の床。キャラビューの `.character-layout` に重ね、中の `.portrait` はキャラビューと同じ
    規則（`--portrait-height` / `--portrait-drop` / max-width）で立つ。足元を切るのも同じ
    overflow: hidden。 */
+/* 並べ・揃えは `HStack` が持つ。 */
 .speech-log-floor {
   position: fixed;
   position-anchor: --speech-log-floor;
@@ -399,8 +396,6 @@
   right: anchor(right);
   bottom: anchor(bottom);
   left: anchor(left);
-  display: flex;
-  align-items: flex-end;
   overflow: hidden;
   pointer-events: none;
 }

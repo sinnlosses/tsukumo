@@ -17,6 +17,8 @@ import {
   type TokenUsageTrend,
 } from "../../../../shared/token-usage-summary.ts"
 import { type ToolUsageCount } from "../../../../shared/token-usage.ts"
+import { HStack } from "../../../components/ui/h-stack/h-stack.tsx"
+import { VStack } from "../../../components/ui/v-stack/v-stack.tsx"
 import { type UseContextUsageResult } from "../../../domain/context-usage.ts"
 import { formatCount } from "../../../utils/format-count.ts"
 import { ContextUsageCard } from "./context-usage-card.tsx"
@@ -57,7 +59,7 @@ export function PresentationalTokenUsageScreen(
 
   return (
     <div className={styles["token-usage"]}>
-      <div className={styles["token-usage-bar"]}>
+      <HStack element="div" gap="md" align="baseline" justify="start" wrap="wrap" className="">
         <h1 className={styles["token-usage-title"]}>トークン消費</h1>
         {props.plan === undefined ? null : (
           <span className={styles["token-usage-plan"]}>{props.plan}</span>
@@ -68,17 +70,17 @@ export function PresentationalTokenUsageScreen(
             見直し中
           </span>
         ) : null}
-      </div>
+      </HStack>
 
       <UsageReviewCard review={props.usageReview} />
 
       <ContextUsageCard card={props.contextUsage} />
 
-      <section className={styles["token-usage-section"]}>
-        <div className={styles["token-usage-section-head"]}>
+      <VStack element="section" gap="sm" align="stretch" justify="start" wrap="nowrap" className="">
+        <HStack element="div" gap="sm" align="baseline" justify="start" wrap="wrap" className="">
           <h2 className={styles["token-usage-section-label"]}>期間の消費</h2>
           <PeriodChoices days={props.days} onDaysChange={props.onDaysChange} />
-        </div>
+        </HStack>
         {props.isError ? (
           <p className={styles["token-usage-note"]}>{FAILED_NOTE}</p>
         ) : isEmpty ? (
@@ -86,7 +88,7 @@ export function PresentationalTokenUsageScreen(
         ) : (
           <PeriodUsageCards total={props.total} trend={props.summary.trend} />
         )}
-      </section>
+      </VStack>
 
       {props.isError || isEmpty ? null : (
         <div className={styles["usage-table-row"]}>
@@ -286,10 +288,17 @@ type TableCardHeadProps = {
 /** 表を持つ札の見出し（見出しの横に並べ順を小さく添える）。 */
 function TableCardHead(props: TableCardHeadProps): ReactElement {
   return (
-    <div className={styles["usage-table-head"]}>
+    <HStack
+      element="div"
+      gap="sm"
+      align="baseline"
+      justify="start"
+      wrap="nowrap"
+      className={styles["usage-table-head"] ?? ""}
+    >
       <h3 className={styles["usage-table-title"]}>{props.title}</h3>
       <span className={styles["usage-table-order"]}>{props.order}</span>
-    </div>
+    </HStack>
   )
 }
 

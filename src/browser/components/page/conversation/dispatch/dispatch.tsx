@@ -5,6 +5,7 @@
 
 import { useEffect, useRef, type ReactElement } from "react"
 
+import { VStack } from "../../../../components/ui/v-stack/v-stack.tsx"
 import { useSessionSelector } from "../../../../stores/session.tsx"
 import { Composer } from "./composer.tsx"
 import styles from "./dispatch.module.css"
@@ -24,12 +25,19 @@ export function Dispatch(): ReactElement {
   }, [pendingActive])
 
   return (
-    <div className={styles["dispatch"]}>
+    <VStack
+      element="div"
+      gap="sm"
+      align="stretch"
+      justify="start"
+      wrap="nowrap"
+      className={styles["dispatch"] ?? ""}
+    >
       {pendingActive ? (
         <div className={styles["dispatch-pending-glow"]} aria-hidden="true" />
       ) : null}
       <PendingAnswer />
       <Composer />
-    </div>
+    </VStack>
   )
 }

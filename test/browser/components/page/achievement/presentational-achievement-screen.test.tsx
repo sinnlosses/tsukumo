@@ -92,7 +92,10 @@ describe("PresentationalAchievementScreen", () => {
     expect(
       screen.getByText("このディレクトリでは成果を数えられない（main が読めない）"),
     ).toBeDefined()
-    expect(document.querySelector(".achievement-day-switch")).toBeNull()
+    // `.achievement-day-switch` は並べるだけの規則だったので `HStack` に置き換わり、
+    // 消えている（`docs/design.md` 2章）。日の切り替えの中身（`.achievement-day-switch-nav`。
+    // 置き方だけを持つので残っている）が無いことで、区画そのものが出ていないと分かる。
+    expect(document.querySelector(".achievement-day-switch-nav")).toBeNull()
     expect(document.querySelector(".achievement-diary")).toBeNull()
     expect(document.querySelector(".achievement-calendar")).toBeNull()
   })
@@ -101,10 +104,12 @@ describe("PresentationalAchievementScreen", () => {
     renderScreen()
 
     const root = document.querySelector(".achievement")
-    const children = [...(root?.children ?? [])].map((node) => node.className)
+    const children = [...(root?.children ?? [])]
     // 灯りの暦は achievement-calendar のクラスを持つ区画として最後に来る。
-    expect(children.at(-1)).toBe("achievement-calendar")
-    expect(children[0]).toBe("achievement-day-switch")
+    expect(children.at(-1)?.className).toBe("achievement-calendar")
+    // 日の切り替えの外枠は `HStack` に置き換わって固有の class を持たないので、中身
+    // （`.achievement-day-switch-nav`）で見分ける。
+    expect(children[0]?.querySelector(".achievement-day-switch-nav")).not.toBeNull()
   })
 
   it("しおりがあれば日記の区画のあとに出る", () => {

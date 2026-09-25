@@ -4,6 +4,7 @@
 
 import { type ReactElement } from "react"
 
+import { VStack } from "../../../../components/ui/v-stack/v-stack.tsx"
 import styles from "../character-screen.module.css"
 import { type AccentSwatchModel } from "../hooks/use-character-edit.ts"
 
@@ -26,12 +27,19 @@ export function AccentSwatch(props: {
           swatch.onChange(event.target.value)
         }}
       />
-      <span className={styles["character-swatch-name"]}>
+      <VStack
+        element="span"
+        gap="none"
+        align="stretch"
+        justify="start"
+        wrap="nowrap"
+        className={styles["character-swatch-name"] ?? ""}
+      >
         <span>{swatch.label}</span>
         {swatch.sublabel.kind === "shown" ? (
           <span className={styles["character-swatch-sublabel"]}>{swatch.sublabel.text}</span>
         ) : null}
-      </span>
+      </VStack>
       <span className={styles["character-swatch-hex"]}>{swatch.value}</span>
     </label>
   )

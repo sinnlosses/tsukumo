@@ -8,6 +8,7 @@
 
 import { type ReactElement } from "react"
 
+import { HStack } from "../../../components/ui/h-stack/h-stack.tsx"
 import styles from "./character-screen.module.css"
 import { AccentSwatch } from "./components/accent-swatch.tsx"
 import { BackgroundField } from "./components/background-field.tsx"
@@ -47,7 +48,7 @@ export function PresentationalCharacterEdit(
       </section>
       <div className={styles["character-accents"]}>
         <section className={styles["character-section"]} aria-labelledby="character-screen-accent">
-          <div className={styles["character-section-bar"]}>
+          <HStack element="div" gap="sm" align="center" justify="start" wrap="nowrap" className="">
             <h2 className={styles["character-section-heading"]} id="character-screen-accent">
               画面の差し色
             </h2>
@@ -63,7 +64,7 @@ export function PresentationalCharacterEdit(
             ) : (
               <span className={styles["character-section-note"]}>雑談も仕事と同じ</span>
             )}
-          </div>
+          </HStack>
           <div className={styles["character-swatches-screen"]}>
             <AccentSwatch swatch={props.workAccent} disabled={props.disabled} />
             <AccentSwatch swatch={props.chatAccent} disabled={props.disabled} />

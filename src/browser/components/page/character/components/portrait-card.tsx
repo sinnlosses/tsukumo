@@ -16,6 +16,7 @@
 import { type DragEvent, type ReactElement, useRef, useState } from "react"
 
 import { Portrait } from "../../../../components/domain/portrait.tsx"
+import { HStack } from "../../../../components/ui/h-stack/h-stack.tsx"
 import styles from "../character-screen.module.css"
 import { type PortraitCardModel } from "../hooks/use-character-edit.ts"
 import { PlusIcon, TrashIcon, UploadIcon } from "./action-icon.tsx"
@@ -113,7 +114,14 @@ export function PortraitCard(props: {
         {card.badge.kind === "shown" ? (
           <span className={styles["character-card-badge"]}>{card.badge.text}</span>
         ) : null}
-        <div className={styles["character-card-actions"]}>
+        <HStack
+          element="div"
+          gap="xs"
+          align="stretch"
+          justify="start"
+          wrap="nowrap"
+          className={styles["character-card-actions"] ?? ""}
+        >
           {/* 見える字は無い（アイコンだけ）。**どの表情のことかは読み上げに残す**ので、
               `<input>` 側に aria-label を置き、`title` で乗せたときの名前を出す。 */}
           <label className={styles["character-card-action"]} title="差し替える">
@@ -137,7 +145,7 @@ export function PortraitCard(props: {
               <TrashIcon />
             </button>
           ) : null}
-        </div>
+        </HStack>
       </figure>
       {confirmClear !== undefined && clear.kind === "shown" ? (
         <PortraitClearConfirm

@@ -8,6 +8,7 @@ import { type ReactElement } from "react"
 
 import { PROMPT_IMAGE_MEDIA_TYPES } from "../../../../../shared/prompt-image.ts"
 import { PromptImageChips } from "../../../../components/domain/prompt-image.tsx"
+import { VStack } from "../../../../components/ui/v-stack/v-stack.tsx"
 import { CommandSuggestions } from "./command-suggestions.tsx"
 import styles from "./dispatch.module.css"
 import { FileSuggestions } from "./file-suggestions.tsx"
@@ -50,7 +51,14 @@ export function PresentationalComposer({
     >
       {/* 質問に答えている間だけ出る帯（誰が聞いているか。`hooks/use-composer.ts`）。 */}
       {band.kind === "question" && <p className={styles["dispatch-band"]}>{band.text}</p>}
-      <div className={styles["dispatch-text-wrap"]}>
+      <VStack
+        element="div"
+        gap="none"
+        align="stretch"
+        justify="start"
+        wrap="nowrap"
+        className={styles["dispatch-text-wrap"] ?? ""}
+      >
         <PromptImageChips images={images} onRemove={onRemoveImage} />
         <textarea
           ref={textAreaRef}
@@ -78,7 +86,7 @@ export function PresentationalComposer({
             onSelect={onSelectSuggestion}
           />
         )}
-      </div>
+      </VStack>
       <div className={styles["dispatch-toolbar"]}>
         <button
           type="button"

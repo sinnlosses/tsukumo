@@ -15,6 +15,7 @@
 import { type ReactElement } from "react"
 
 import { CharacterFace } from "../../../components/domain/character-face.tsx"
+import { VStack } from "../../../components/ui/v-stack/v-stack.tsx"
 import { useSessionSelector } from "../../../stores/session.tsx"
 import { CharacterSwitch } from "./character-switch.tsx"
 import styles from "./sidebar.module.css"
@@ -30,10 +31,17 @@ export function ProfileCard(): ReactElement {
   return (
     <section className={styles["profile-card"]} aria-label="プロフィール">
       <CharacterFace url={faceUrl} alt={name ?? ""} className={styles["profile-card-face"] ?? ""} />
-      <div className={styles["profile-card-text"]}>
+      <VStack
+        element="div"
+        gap="xs"
+        align="stretch"
+        justify="start"
+        wrap="nowrap"
+        className={styles["profile-card-text"] ?? ""}
+      >
         {name === undefined ? null : <p className={styles["profile-card-name"]}>{name}</p>}
         {tagline === undefined ? null : <p className={styles["profile-card-tagline"]}>{tagline}</p>}
-      </div>
+      </VStack>
       {hasCharacterPacks ? (
         <span className={styles["profile-card-change"]}>
           <span aria-hidden="true" className={styles["profile-card-change-face"]}>

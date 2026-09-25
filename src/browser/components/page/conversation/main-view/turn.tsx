@@ -16,6 +16,7 @@ import {
 } from "../../../../../shared/main-view.ts"
 import { type TurnFailure } from "../../../../../shared/turn-failure.ts"
 import { PromptImageThumbnails } from "../../../../components/domain/prompt-image.tsx"
+import { VStack } from "../../../../components/ui/v-stack/v-stack.tsx"
 import { turnFailureLabel } from "../../../../domain/api-error-label.ts"
 import { requestLinesAfterTitle, truncateRequestText } from "./domain/turn-title.ts"
 import styles from "./main-view.module.css"
@@ -48,7 +49,7 @@ export function Turn(props: TurnProps): ReactElement {
         <p className={styles["turn-dropped"]}>これ以前の {turn.droppedCount} 件は省略した</p>
       )}
       {(turn.steps.length > 0 || turn.failure.kind === "failed") && (
-        <div className={styles["main-steps"]}>
+        <VStack element="div" gap="md" align="stretch" justify="start" wrap="nowrap" className="">
           {/* `key` は配列の添字ではなく `step.id`（`limitTurnEntries` が古いステップを落とす前に
               振った通し番号）を使う。添字だと、古いステップが落ちて残りの添字が1つずつ前へ
               ずれた瞬間に React が別のステップの DOM を使い回してしまい、`<details>` の `open`
@@ -64,7 +65,7 @@ export function Turn(props: TurnProps): ReactElement {
             />
           ))}
           {turn.failure.kind === "failed" && <TurnFailureNotice failure={turn.failure.failure} />}
-        </div>
+        </VStack>
       )}
     </div>
   )

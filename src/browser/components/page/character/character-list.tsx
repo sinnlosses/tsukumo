@@ -12,6 +12,7 @@
 import { type ReactElement } from "react"
 
 import { EXPRESSIONS } from "../../../../shared/expression.ts"
+import { VStack } from "../../../components/ui/v-stack/v-stack.tsx"
 import { usePackHref } from "../../../stores/screen.tsx"
 import { useSessionSelector } from "../../../stores/session.tsx"
 import styles from "./character-screen.module.css"
@@ -48,12 +49,19 @@ export function CharacterList(props: { readonly onCreate: () => void }): ReactEl
             ) : (
               <img className={styles["character-list-face"]} src={entry.character.face} alt="" />
             )}
-            <span className={styles["character-list-text"]}>
+            <VStack
+              element="span"
+              gap="none"
+              align="stretch"
+              justify="start"
+              wrap="nowrap"
+              className={styles["character-list-text"] ?? ""}
+            >
               <span className={styles["character-list-name"]}>{entry.label}</span>
               <span className={styles["character-list-meta"]}>
                 {entry.inUse ? `${countText} · 使用中` : countText}
               </span>
-            </span>
+            </VStack>
           </a>
         )
       })}

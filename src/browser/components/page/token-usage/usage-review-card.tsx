@@ -18,6 +18,7 @@ import {
   type UsageProposalImpact,
 } from "../../../../shared/usage-review.ts"
 import { CharacterFace } from "../../../components/domain/character-face.tsx"
+import { VStack } from "../../../components/ui/v-stack/v-stack.tsx"
 import {
   type UsageReviewResultProposalView,
   type UsageReviewStageStatus,
@@ -87,10 +88,17 @@ function IdleReviewCard(props: {
         alt={review.face.alt}
         className={styles["usage-review-face"] ?? ""}
       />
-      <div className={styles["usage-review-body"]}>
+      <VStack
+        element="div"
+        gap="xs"
+        align="stretch"
+        justify="start"
+        wrap="nowrap"
+        className={styles["usage-review-body"] ?? ""}
+      >
         <span className={styles["usage-review-heading"]}>{IDLE_HEADING}</span>
         <span className={styles["usage-review-note"]}>{IDLE_NOTE}</span>
-      </div>
+      </VStack>
       <div className={styles["usage-review-actions"]}>
         <button
           type="button"
@@ -136,12 +144,19 @@ function RunningReviewCard(props: {
           alt={review.face.alt}
           className={styles["usage-review-face"] ?? ""}
         />
-        <div className={styles["usage-review-body"]}>
+        <VStack
+          element="div"
+          gap="xs"
+          align="stretch"
+          justify="start"
+          wrap="nowrap"
+          className={styles["usage-review-body"] ?? ""}
+        >
           <span className={styles["usage-review-heading"]}>{RUNNING_HEADING}</span>
           {review.speech.kind === "said" ? (
             <span className={styles["usage-review-speech"]}>{`「${review.speech.text}」`}</span>
           ) : null}
-        </div>
+        </VStack>
         <span className={styles["usage-review-elapsed"]}>{review.elapsedText}</span>
         <button type="button" className={styles["usage-review-stop"]} onClick={review.onInterrupt}>
           {STOP_LABEL}

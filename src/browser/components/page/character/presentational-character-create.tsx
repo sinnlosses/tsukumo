@@ -11,6 +11,7 @@
 
 import { type ReactElement } from "react"
 
+import { VStack } from "../../../components/ui/v-stack/v-stack.tsx"
 import styles from "./character-screen.module.css"
 import { AccentSwatch } from "./components/accent-swatch.tsx"
 import { PortraitDrop } from "./components/portrait-drop.tsx"
@@ -36,7 +37,7 @@ export function PresentationalCharacterCreate({
       onClose={onClose}
       onClick={onDialogClick}
     >
-      <div className={styles["character-create-body"]}>
+      <VStack element="div" gap="xl" align="stretch" justify="start" wrap="nowrap" className="">
         <h2 className={styles["character-create-heading"]}>新しいキャラクター</h2>
         <div className={styles["character-create-grid"]}>
           <PortraitDrop drop={form.portrait} />
@@ -97,7 +98,7 @@ export function PresentationalCharacterCreate({
             作る
           </button>
         </div>
-      </div>
+      </VStack>
     </dialog>
   )
 }

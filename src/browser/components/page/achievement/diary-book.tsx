@@ -9,6 +9,8 @@
 import { type ReactElement } from "react"
 
 import { Portrait } from "../../../components/domain/portrait.tsx"
+import { HStack } from "../../../components/ui/h-stack/h-stack.tsx"
+import { VStack } from "../../../components/ui/v-stack/v-stack.tsx"
 import styles from "./achievement.module.css"
 import { type AchievementReviewButton } from "./hooks/use-achievement.ts"
 import {
@@ -61,8 +63,15 @@ export function DiaryBook({
       onClick={onDialogClick}
     >
       {open ? (
-        <div className={styles["diary-book-stage"]}>
-          <div className={styles["diary-book-topbar"]}>
+        <VStack
+          element="div"
+          gap="lg"
+          align="stretch"
+          justify="start"
+          wrap="nowrap"
+          className={styles["diary-book-stage"] ?? ""}
+        >
+          <HStack element="div" gap="md" align="center" justify="start" wrap="wrap" className="">
             <span className={styles["diary-book-title"]}>{TITLE}</span>
             <span className={styles["diary-book-open-note"]}>{openNote}</span>
             <div className={styles["diary-book-topbar-spacer"]} />
@@ -78,12 +87,12 @@ export function DiaryBook({
             <button type="button" className={styles["diary-book-topbar-button"]} onClick={onClose}>
               {CLOSE_LABEL}
             </button>
-          </div>
+          </HStack>
           <div className={styles["diary-book-spread"]}>
             <Spread page={page} />
           </div>
           {toc.open ? <Toc months={toc.months} onSelect={onSelectTocDate} /> : null}
-        </div>
+        </VStack>
       ) : null}
     </dialog>
   )
@@ -206,7 +215,14 @@ function TaskListing(props: { readonly tasks: DiaryBookTaskList }): ReactElement
 
 function Badges(props: { readonly badges: readonly DiaryBookBadge[] }): ReactElement {
   return (
-    <div className={styles["diary-book-badges"]}>
+    <HStack
+      element="div"
+      gap="md"
+      align="stretch"
+      justify="start"
+      wrap="wrap"
+      className={styles["diary-book-badges"] ?? ""}
+    >
       {props.badges.map((badge) => (
         <div key={badge.key} className={styles["diary-book-badge"]}>
           {badge.kind === "graduation" ? (
@@ -222,7 +238,7 @@ function Badges(props: { readonly badges: readonly DiaryBookBadge[] }): ReactEle
           )}
         </div>
       ))}
-    </div>
+    </HStack>
   )
 }
 
@@ -251,7 +267,14 @@ function RightPage(props: {
       ) : (
         <p className={styles["diary-book-blank-body"]}>{BLANK_BODY}</p>
       )}
-      <div className={styles["diary-book-signature"]}>
+      <HStack
+        element="div"
+        gap="lg"
+        align="end"
+        justify="between"
+        wrap="nowrap"
+        className={styles["diary-book-signature"] ?? ""}
+      >
         {page.right.kind === "blank" ? (
           <BlankReview review={page.right.review} writerName={page.portraitName} />
         ) : null}
@@ -269,7 +292,7 @@ function RightPage(props: {
           )}
           <span className={styles["diary-book-signature-name"]}>{page.portraitName}</span>
         </div>
-      </div>
+      </HStack>
     </div>
   )
 }

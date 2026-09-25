@@ -6,6 +6,7 @@
 
 import { type ReactElement } from "react"
 
+import { HStack } from "../../../../components/ui/h-stack/h-stack.tsx"
 import styles from "./chat-view.module.css"
 import { ChatLog } from "./components/chat-log.tsx"
 import { NudgePortrait } from "./components/nudge-portrait.tsx"
@@ -32,7 +33,14 @@ export function PresentationalChatView({
   showEmptyMessage,
 }: PresentationalChatViewProps): ReactElement {
   return (
-    <div className={styles["chat-region"]}>
+    <HStack
+      element="div"
+      gap="lg"
+      align="end"
+      justify="start"
+      wrap="nowrap"
+      className={styles["chat-region"] ?? ""}
+    >
       {portraitUrl !== undefined && (
         <NudgePortrait
           url={portraitUrl}
@@ -50,6 +58,6 @@ export function PresentationalChatView({
         showTyping={showTyping}
         showEmptyMessage={showEmptyMessage}
       />
-    </div>
+    </HStack>
   )
 }

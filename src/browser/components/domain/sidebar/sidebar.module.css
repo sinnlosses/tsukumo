@@ -335,11 +335,9 @@
   box-shadow: 0 0 0 2px var(--accent);
   object-fit: cover;
 }
+/* 並べ・間隔（`gap="xs"`）は `VStack` が持つ。 */
 .profile-card-text {
-  display: flex;
   flex: 1 1 auto;
-  flex-direction: column;
-  gap: 0.25rem;
   min-width: 0;
 }
 /* 名前とひとことは**読む面の文字**なので差し色を受け取らない（13.1 原則1。見本の淡い橙の

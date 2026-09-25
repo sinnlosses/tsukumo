@@ -7,6 +7,7 @@
 
 import { type ReactElement } from "react"
 
+import { HStack } from "../../../../components/ui/h-stack/h-stack.tsx"
 import styles from "./dispatch.module.css"
 import { type TurnStatusModel } from "./hooks/use-turn-status.ts"
 
@@ -17,7 +18,14 @@ export type PresentationalTurnStatusProps = TurnStatusModel
 
 export function PresentationalTurnStatus(props: PresentationalTurnStatusProps): ReactElement {
   return (
-    <div className={styles["dispatch-row"]}>
+    <HStack
+      element="div"
+      gap="md"
+      align="center"
+      justify="start"
+      wrap="nowrap"
+      className={styles["dispatch-row"] ?? ""}
+    >
       {/* API の知らせ（再試行中・利用上限・失敗の理由）。行に出すのは短い字だけで、全文は
           `title` で読ませる。`role="status"` で、変わったことを支援技術にも伝える。 */}
       {props.notice.kind === "shown" && (
@@ -51,6 +59,6 @@ export function PresentationalTurnStatus(props: PresentationalTurnStatusProps): 
           {props.action.label}
         </button>
       )}
-    </div>
+    </HStack>
   )
 }

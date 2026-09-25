@@ -77,9 +77,8 @@
   background: var(--surface);
   border: 1px dashed var(--rule);
 }
+/* 並べ（`gap="none"`）は `VStack` が持つ。 */
 .character-list-text {
-  display: flex;
-  flex-direction: column;
   min-width: 0;
 }
 .character-list-name {
@@ -148,11 +147,9 @@
   background: var(--ground);
   border: 1px dashed var(--rule);
 }
+/* 並べ・間隔（`gap="xs"`）は `VStack` が持つ。 */
 .character-profile-text {
-  display: flex;
   flex: 1 1 14rem;
-  flex-direction: column;
-  gap: 0.25rem;
   min-width: 0;
 }
 .character-profile-headline {
@@ -186,11 +183,8 @@
   font-size: var(--font-secondary);
 }
 /* 「名前とプロフィールを変える」と「このキャラクターに切り替える」の並び（右端に寄せる）。 */
+/* 並べ・間隔（`gap="sm"`）・揃え・折り返しは `HStack` が持つ。 */
 .character-profile-actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5rem;
   margin-left: auto;
 }
 
@@ -201,11 +195,7 @@
   gap: 0.75rem;
   min-width: 0;
 }
-.character-section-bar {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
+/* 並べ・間隔（`gap="sm"`）・揃えは `HStack` が持つ。 */
 .character-section-bar > :last-child {
   margin-left: auto;
 }
@@ -284,12 +274,11 @@
 }
 /* 乗せたとき・カードの中にフォーカスがあるときだけ出る2つの口（13.6）。**消さずに透明にする**
    （`display: none` だと Tab で口に入れず、キーボードから出せなくなる）。 */
+/* 並べ・間隔（`gap="xs"`）は `HStack` が持つ。 */
 .character-card-actions {
   position: absolute;
   top: 0.5rem;
   right: 0.5rem;
-  display: flex;
-  gap: 0.25rem;
   opacity: 0;
   transition: opacity 0.12s ease-out;
 }
@@ -420,11 +409,7 @@
 .character-clear-confirm::backdrop {
   background: transparent;
 }
-.character-clear-confirm-head {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
+/* 並べ・間隔（`gap="md"`）・揃えは `HStack` が持つ。 */
 .character-clear-confirm-portrait {
   flex-shrink: 0;
   width: 48px;
@@ -443,11 +428,7 @@
   font-size: var(--font-action);
   line-height: 1.7;
 }
-.character-clear-confirm-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.5rem;
-}
+/* 並べ・間隔（`gap="sm"`）・揃えは `HStack` が持つ。 */
 .character-clear-confirm-ok {
   height: 34px;
   padding: 0 0.875rem;
@@ -532,9 +513,8 @@
   border: none;
   border-radius: 7px;
 }
+/* 並べ（`gap="none"`）は `VStack` が持つ。 */
 .character-swatch-name {
-  display: flex;
-  flex-direction: column;
   min-width: 0;
   font-size: var(--font-secondary);
 }
@@ -568,12 +548,7 @@
 }
 
 /* 顔（13.9「顔」）。帯・一覧・名乗りの丸と同じ丸い縮図と、字と2つの口。 */
-.character-face-field {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 1rem;
-}
+/* 並べ・間隔（`gap="lg"`）・揃え・折り返しは `HStack` が持つ。 */
 .character-face-field-preview,
 .character-face-field-blank {
   box-sizing: border-box;
@@ -590,25 +565,14 @@
 .character-face-field-blank {
   border: 1.5px dashed var(--rule);
 }
+/* 並べ・間隔（`gap="sm"`）は `VStack` が持つ。 */
 .character-face-field-side {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
   font-size: var(--font-secondary);
 }
-.character-face-field-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
+/* 並べ・間隔（`gap="sm"`）・折り返しは `HStack` が持つ。 */
 
 /* 背景（13.8）。**敷いたときと同じ切り取り方**（cover・下端合わせ）の縮図と、字と2つの口。 */
-.character-background {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 1rem;
-}
+/* 並べ・間隔（`gap="lg"`）・揃え・折り返しは `HStack` が持つ。 */
 .character-background-preview,
 .character-background-blank {
   box-sizing: border-box;
@@ -626,17 +590,11 @@
 .character-background-blank {
   border: 1.5px dashed var(--rule);
 }
+/* 並べ・間隔（`gap="sm"`）は `VStack` が持つ。 */
 .character-background-side {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
   font-size: var(--font-secondary);
 }
-.character-background-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
+/* 並べ・間隔（`gap="sm"`）・折り返しは `HStack` が持つ。 */
 
 /* 字つきの口（背景の差し替える・消す、このキャラクターに切り替える、名前とプロフィールを変える）。 */
 .character-button {
@@ -721,11 +679,7 @@
 .character-delete-dialog::backdrop {
   background: color-mix(in srgb, var(--ground) 70%, transparent);
 }
-.character-delete-body {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
+/* 並べ・間隔（`gap="lg"`）は `VStack` が持つ。 */
 .character-delete-head {
   display: flex;
   align-items: center;
@@ -819,11 +773,7 @@
 .character-create-dialog::backdrop {
   background: color-mix(in srgb, var(--ground) 70%, transparent);
 }
-.character-create-body {
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-}
+/* 並べ・間隔（`gap="xl"`）は `VStack` が持つ。 */
 .character-create-heading {
   margin: 0;
   font-size: var(--font-heading);

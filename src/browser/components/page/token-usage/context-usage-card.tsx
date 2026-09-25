@@ -20,6 +20,7 @@
 import { type ReactElement } from "react"
 
 import { type ContextUsageItem } from "../../../../shared/context-usage.ts"
+import { HStack } from "../../../components/ui/h-stack/h-stack.tsx"
 import { type ContextUsageRow, type UseContextUsageResult } from "../../../domain/context-usage.ts"
 import { clockTime, localTimeZoneId, zonedDateTime } from "../../../utils/clock.ts"
 import { formatCount } from "../../../utils/format-count.ts"
@@ -52,10 +53,17 @@ export function ContextUsageCard(props: ContextUsageCardProps): ReactElement {
 
   return (
     <section className={styles["context-card"]}>
-      <div className={styles["context-head"]}>
+      <HStack element="div" gap="sm" align="baseline" justify="start" wrap="wrap" className="">
         <h2 className={styles["context-title"]}>{CARD_TITLE}</h2>
         <span className={styles["context-note"]}>{CARD_NOTE}</span>
-        <div className={styles["context-aside"]}>
+        <HStack
+          element="div"
+          gap="sm"
+          align="baseline"
+          justify="start"
+          wrap="wrap"
+          className={styles["context-aside"] ?? ""}
+        >
           <span className={styles["context-until"]}>
             <span className={styles["context-until-label"]}>自動圧縮まで</span>
             {` あと ${formatCount(card.untilCompactTokens)}`}
@@ -63,8 +71,8 @@ export function ContextUsageCard(props: ContextUsageCardProps): ReactElement {
           <span className={styles["context-taken"]}>
             {`${card.model} · 更新 ${clockLabel(card.takenAt)}`}
           </span>
-        </div>
-      </div>
+        </HStack>
+      </HStack>
 
       <p className={styles["context-total"]}>
         <span className={styles["context-total-value"]}>{formatCount(card.totalTokens)}</span>
@@ -117,10 +125,17 @@ export function ContextUsageCard(props: ContextUsageCardProps): ReactElement {
 function ContextUsageCardSkeleton(): ReactElement {
   return (
     <section className={styles["context-card"]} aria-busy="true">
-      <div className={styles["context-head"]}>
+      <HStack element="div" gap="sm" align="baseline" justify="start" wrap="wrap" className="">
         <h2 className={styles["context-title"]}>{CARD_TITLE}</h2>
         <span className={styles["context-note"]}>{CARD_NOTE}</span>
-        <div className={styles["context-aside"]}>
+        <HStack
+          element="div"
+          gap="sm"
+          align="baseline"
+          justify="start"
+          wrap="wrap"
+          className={styles["context-aside"] ?? ""}
+        >
           <span className={styles["context-until"]}>
             <span className={styles["context-until-label"]}>自動圧縮まで</span>{" "}
             <SkeletonBlock className={`${styles["context-skeleton-until"]}`} />
@@ -128,8 +143,8 @@ function ContextUsageCardSkeleton(): ReactElement {
           <span className={styles["context-taken"]}>
             <SkeletonBlock className={`${styles["context-skeleton-taken"]}`} />
           </span>
-        </div>
-      </div>
+        </HStack>
+      </HStack>
 
       <p className={styles["context-total"]}>
         <SkeletonBlock

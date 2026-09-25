@@ -12,6 +12,8 @@
 import { type ReactElement } from "react"
 
 import { Portrait } from "../../../../components/domain/portrait.tsx"
+import { HStack } from "../../../../components/ui/h-stack/h-stack.tsx"
+import { VStack } from "../../../../components/ui/v-stack/v-stack.tsx"
 import { BalloonTrack } from "./balloon-track.tsx"
 import styles from "./character-view.module.css"
 import { type CharacterViewModel } from "./hooks/use-character-view.ts"
@@ -42,12 +44,26 @@ export function PresentationalCharacterView({
     />
   )
   return (
-    <div className={styles["character-region"]}>
+    <VStack
+      element="div"
+      gap="sm"
+      align="stretch"
+      justify="start"
+      wrap="nowrap"
+      className={styles["character-region"] ?? ""}
+    >
       <SpeechLog portrait={portrait} speakerName={speakerName} />
-      <div className={styles["character-layout"]}>
+      <HStack
+        element="div"
+        gap="none"
+        align="end"
+        justify="start"
+        wrap="wrap"
+        className={styles["character-layout"] ?? ""}
+      >
         {portrait}
         <BalloonTrack speeches={speeches} emptyMessage={emptyMessage} speakerName={speakerName} />
-      </div>
-    </div>
+      </HStack>
+    </VStack>
   )
 }
