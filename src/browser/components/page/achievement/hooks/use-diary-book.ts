@@ -4,10 +4,10 @@
 // フックを切る（docs/design.md 2章「機能の中を分ける」）。
 //
 // **container / presentational の3分割は採らない。** 開く口が暦のマス（`lantern-calendar.tsx`）と
-// 日記の区画（`diary-section.tsx`）の2箇所にまたがり、どちらも `achievement-screen.tsx`
-// （成果の画面の container）から配る値が要るので、`useDiaryBook` は `achievement-screen.tsx` から
-// 直接呼び、戻り値をそのまま渡す部品を `../diary-book.tsx`（`DiarySection` / `LanternCalendar` と
-// 同じ、フックを持たない受け取るだけの部品）に置く。
+// 日記の区画（`diary-section.tsx`）の2箇所にまたがり、どちらも `achievement.tsx`
+// （成果の画面の container）から配る値が要るので、`useDiaryBook` は `achievement.tsx` から
+// 直接呼び、戻り値をそのまま渡す部品を `../components/diary-book/diary-book.tsx`
+// （`DiarySection` / `LanternCalendar` と同じ、フックを持たない受け取るだけの部品）に置く。
 //
 // **1日ぶんの取得は `use-achievement.ts` と同じ手続き・同じ応答形**（`achievement.day`）を、
 // 開いている日だけ別に引く（同じ日ならキャッシュを分け合う）。前後の日・目次に並べる日は `use-achievement-calendar.ts` が既に
@@ -49,8 +49,7 @@ import {
 } from "../../../../stores/session.tsx"
 import { dayLabel } from "../../../../utils/day-label.ts"
 import { monthDayLabel } from "../../../../utils/month-day-label.ts"
-import { takeDiaryBookOpenRequest, useDiaryBookOpenRequest } from "../diary-book-request.ts"
-import { diaryWriterPortraitOf } from "../diary-writer.ts"
+import { diaryWriterPortraitOf } from "../domain/diary-writer.ts"
 import { kanjiDateLabel, kanjiNumeral, kanjiWeekdayLabel } from "../domain/kanji-date.ts"
 import { type AchievementCalendarView } from "./use-achievement-calendar.ts"
 import {
@@ -58,6 +57,7 @@ import {
   type AchievementReviewAvailability,
   type AchievementReviewButton,
 } from "./use-achievement.ts"
+import { takeDiaryBookOpenRequest, useDiaryBookOpenRequest } from "./use-diary-book-open-request.ts"
 
 const EMPTY_DAY_REASON = "振り返る成果が無い"
 const TURN_RUNNING_REASON = "いまターンが動いているので送れない"

@@ -809,8 +809,9 @@ backdrop のクリックで `onClose` が呼ばれること・中のクリック
   サブディレクトリ（枠）と直下のファイルで種類が分かれるので、**直下にサブディレクトリを足すときは
   枠として一覧に載せる**（載せ忘れは検査が `throw` する）
 - **どの画面にも出るが、1つの画面と語彙を共有するものは、その画面の中に置く。** 書き終わりの知らせ
-  （`components/page/achievement/diary-notice.tsx`）は成果の画面の見開きを開く合図
-  （`diary-book-request.ts`）と鈴の絵（`lantern-calendar.tsx` の `Bell`）を画面と共有するので、
+  （`components/page/achievement/components/diary-notice/diary-notice.tsx`）は成果の画面の見開きを
+  開く合図（`hooks/use-diary-book-open-request.ts`）と鈴の絵
+  （`components/lantern-calendar/lantern-calendar.tsx` の `Bell`）を画面と共有するので、
   切り離すと領域どうしの辺ができる。どこに出すかは `main.tsx` が決める（`<ScreenNav>` と同じ位置）
 - **「置かれる機能」にするのは、中身が領域の持ち物でなくなったとき。** `task-board` は
   サイドバーの区画に置く一覧（`task-list.tsx`）と、サイドバーの領域には収まらない画面いっぱいの
@@ -1001,7 +1002,8 @@ features/task-board/
   `main-view` だけが読む前提で機能の中に置いていたが、2026-09-25 に成果の画面
   （`components/page/achievement/`）の日記の吹き出しも同じ演出を再利用することになり、
   `browser/domain/reveal/` へディレクトリごと引き上げた（`useReportReveal`（`report.tsx`と
-  `components/page/achievement/diary-section.tsx`）と `useBrushTip`（`mini-portrait.tsx`。成果の画面は
+  `components/page/achievement/components/diary-section/diary-section.tsx`）と
+  `useBrushTip`（`mini-portrait.tsx`。成果の画面は
   `data-brush-origin` を付けないので、ミニ立ち絵の追従だけは main-view 側にとどまる）。**中の
   ファイル名は接頭辞を落としたまま**（`reveal/band.ts` など）で、`browser/domain/` に初めて
   概念のサブディレクトリを持ち込む形になるが、条件（3ファイル以上・概念だけで閉じている・
@@ -2205,7 +2207,7 @@ type Diary = {
       │      │                下に道具の行（画像・`/`・`@` のボタン、操作の案内、<TurnStatus>）
       │      └ <TurnStatus>  経過 / 所要、送信 ⇄ 中断（道具の行の右端）
       ├ <TokenUsageScreen>   トークン消費の画面（#token-usage）
-      ├ <AchievementScreen>  成果の画面（#achievement。13.10）
+      ├ <Achievement>        成果の画面（#achievement。13.10）
       └ <CharacterScreen>    キャラクター画面（#character。13.6）。**戻る口と答え待ちの印は帯が持つ**（13.9）。
           │                  パックのラベルと名前・「新しく作る」（<CharacterCreate> を開く）。
           │                  **画面の色は帯の歯車へ移した**ので、この画面にはパックの持ち物だけが残る
@@ -2219,7 +2221,7 @@ type Diary = {
 `<Root>` の直下に並ぶ部品のうち、**全画面で共有する枠**（`<ScreenNav>`・`<Layout>`・`<Sidebar>`）は
 `components/domain/<枠>/`、**会話の画面の領域**（`<MainView>`・`<CharacterView>`・`<ChatView>`・
 `<Dispatch>`）は `components/page/conversation/<領域>/`、**ほかの画面**（`<CharacterScreen>`・
-`<TokenUsageScreen>`・`<AchievementScreen>`）と `<DiaryNotice>` は `components/page/<画面>/`。
+`<TokenUsageScreen>`・`<Achievement>`）と `<DiaryNotice>` は `components/page/<画面>/`。
 `<TaskList>` と `<TaskBoard>` は置かれる機能の `features/task-board/`。領域をまたいで使う
 `<Portrait>`・`<CharacterFace>`・`<PromptImageChips>`・`<PromptImageThumbnails>`・`<ProtocolMismatch>`
 は `components/domain/` の直下、語彙を持たない `<Select>`・`<ImageZoom>`・`<Stack>`・`<VStack>`・

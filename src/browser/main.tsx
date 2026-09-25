@@ -25,8 +25,8 @@ import { usePortraitPreload } from "./components/domain/portrait.tsx"
 import { ProtocolMismatch } from "./components/domain/protocol-mismatch.tsx"
 import { ScreenNav } from "./components/domain/screen-nav/screen-nav.tsx"
 import { Sidebar } from "./components/domain/sidebar/sidebar.tsx"
-import { AchievementScreen } from "./components/page/achievement/achievement-screen.tsx"
-import { DiaryNotice } from "./components/page/achievement/diary-notice.tsx"
+import { Achievement } from "./components/page/achievement/achievement.tsx"
+import { DiaryNotice } from "./components/page/achievement/components/diary-notice/diary-notice.tsx"
 import { CharacterScreen } from "./components/page/character/character-screen.tsx"
 import { CharacterView } from "./components/page/conversation/character-view/character-view.tsx"
 import { ChatView } from "./components/page/conversation/chat-view/chat-view.tsx"
@@ -56,7 +56,7 @@ import "./styles/theme.css"
 const OVERLAY_SCREEN = {
   character: <CharacterScreen />,
   "token-usage": <TokenUsageScreen />,
-  achievement: <AchievementScreen />,
+  achievement: <Achievement />,
 } satisfies Record<Exclude<Screen, "conversation">, ReactElement>
 
 /**

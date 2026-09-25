@@ -1,6 +1,6 @@
 // 成果の画面のロジック（docs/design.md 2章「機能の中を分ける」の container / presenter）。
 // 見ている日（hash の `date`。`stores/location-hash.ts`）から手続き `achievement.day` を取りに行き、
-// 見た目（`presentational-achievement-screen.tsx` と各区画の部品）がそのまま置ける形へ畳んで返す。
+// 見た目（`presentational-achievement.tsx` と各区画の部品）がそのまま置ける形へ畳んで返す。
 // 暦（`achievement.calendar`）は別のフック `use-achievement-calendar.ts`。
 //
 // **日の切り替えは、取れた応答の `date`/`today` から計算する**（ブラウザは時計を読まないので、
@@ -48,7 +48,7 @@ import {
   type SessionDispatch,
 } from "../../../../stores/session.tsx"
 import { monthDayLabel } from "../../../../utils/month-day-label.ts"
-import { diaryWriterPortraitOf, type DiaryWriterPortrait } from "../diary-writer.ts"
+import { diaryWriterPortraitOf, type DiaryWriterPortrait } from "../domain/diary-writer.ts"
 
 /** 今日を見ているあいだだけ取り直す間隔（13.10「並べるもの」のさらに上、5章「取り直す契機」）。 */
 const TODAY_REFETCH_INTERVAL_MS = 60_000
