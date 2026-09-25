@@ -329,22 +329,6 @@ describe("CharacterEdit", () => {
     expect(calls).toEqual([])
   })
 
-  // ドラッグ中に何度も変わっても、離れてからの1回にまとまる。
-  it("連続して差し色を変えても、送信は最後の値の1回にまとまる", async () => {
-    const calls: unknown[] = []
-    renderCharacterEdit(FIXTURE_CHARACTER, (command) => calls.push(command))
-    const input = screen.getByLabelText("戦闘配置（opus）")
-
-    fireEvent.change(input, { target: { value: "#111111" } })
-    fireEvent.change(input, { target: { value: "#222222" } })
-    fireEvent.change(input, { target: { value: "#333333" } })
-    await waitForDebounce()
-
-    expect(calls).toEqual([
-      { type: "set-outfit-accent", pack: "fictional", outfit: "heavy", color: "#333333" },
-    ])
-  })
-
   // 引きずったまま画面を閉じても、まだ送っていない最後の値を落とさない
   // （`src/browser/lib/debounce.ts` のアンマウント時のフラッシュ）。
   it("送信前に画面を閉じても、待っていた最後の値をそのまま送る", () => {

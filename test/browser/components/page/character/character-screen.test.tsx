@@ -125,8 +125,10 @@ describe("CharacterScreen", () => {
     expect(screen.queryByRole("button", { name: /このキャラクターに切り替える/ })).toBeNull()
   })
 
-  // 完了条件: ダイアログから作ると id・名前・立ち絵・差し色を持つ create-character コマンドが
-  // 送られ、閉じて一覧で新しいパックが選ばれる。
+  // 完了条件: 「新しく作る」がダイアログを開き、作れたら閉じて一覧で新しいパックが選ばれる。
+  // id・名前・立ち絵・差し色を持つ create-character の組み立てそのものは
+  // `character-create.test.tsx` / `use-character-create.test.tsx` が持つので、ここでは
+  // 送られた id（次の選択に効く）だけを見る。
   it("新しく作るはダイアログを開き、作れたら閉じて一覧でそのパックを選ぶ", async () => {
     const calls: unknown[] = []
     const store = sessionStoreWith(
@@ -153,18 +155,8 @@ describe("CharacterScreen", () => {
     })
 
     fireEvent.click(screen.getByRole("button", { name: "作る" }))
-    expect(calls).toEqual([
-      {
-        type: "create-character",
-        id: "fictional-3",
-        name: "",
-        portraits: {
-          default: `data:image/svg+xml;base64,${Buffer.from("<svg/>").toString("base64")}`,
-        },
-        accent: "#f2b0a0",
-        chatAccent: "#f2b0a0",
-      },
-    ])
+    expect(calls).toHaveLength(1)
+    expect(calls[0]).toMatchObject({ type: "create-character", id: "fictional-3" })
     // まだ一覧に出ていないので、ダイアログは開いたまま。
     expect(screen.getByRole("heading", { name: "新しいキャラクター" })).toBeDefined()
 
