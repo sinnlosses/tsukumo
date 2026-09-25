@@ -20,7 +20,7 @@ import {
   MAX_SESSION_HEADING_LENGTH,
   type SessionChoice,
 } from "../../../../shared/session-choice.ts"
-import { Select } from "../../../components/ui/select.tsx"
+import { Select } from "../../../components/ui/select/select.tsx"
 import { useSessionDispatch, useSessionSelector, useTurnRunning } from "../../../stores/session.tsx"
 import { clockTime, localTimeZoneId, zonedDateTime } from "../../../utils/clock.ts"
 import switchStyles from "./session-switch.module.css"

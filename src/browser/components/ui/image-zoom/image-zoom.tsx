@@ -13,7 +13,7 @@
 
 import { type MouseEvent, type ReactElement, useState } from "react"
 
-import { useModalDialog } from "../../hooks/use-modal-dialog.ts"
+import { useModalDialog } from "../../../hooks/use-modal-dialog.ts"
 import styles from "./image-zoom.module.css"
 
 const HEADING = "画像の拡大"

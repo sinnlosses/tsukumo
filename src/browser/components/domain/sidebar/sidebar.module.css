@@ -22,7 +22,7 @@
   min-width: 0;
 }
 /* 帯の <select> を包む枠（キャラクター／セッションで共有。枠と矢印そのものは
-   `components/ui/select.module.css`）。**この行の残り幅をすべて取る** — 顔のぶんを除いた右端までが
+   `components/ui/select/select.module.css`）。**この行の残り幅をすべて取る** — 顔のぶんを除いた右端までが
    <select> の幅になり、矢印はその右端に付く。 */
 .session-info-select-frame {
   flex: 1 1 auto;

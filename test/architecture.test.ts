@@ -535,8 +535,8 @@ describe("browser/utils/ の import", () => {
 //
 // `components/domain/` は**直下のファイルだけ**を対象にする（サブディレクトリは全画面で共有する
 // 枠（領域）で、1つの領域だけが読むのが正しい形。2章「`components/domain` の直下のファイルは
-// 領域ではなく共有の部品」）。`components/ui/` はいまサブディレクトリを持たないので、そのまま
-// 全体を対象にする。
+// 領域ではなく共有の部品」）。`components/ui/` は部品ごとのディレクトリ（`ui/select/` など）に
+// 分かれているが、その中は「共有の部品1つぶん」なので、そのまま全体を対象にする。
 const SHARED_BROWSER_BOXES = ["lib", "domain"] as const
 
 describe("browser/ の機能をまたぐ箱", () => {
@@ -555,6 +555,41 @@ describe("browser/ の機能をまたぐ箱", () => {
         ? [`src/${relPath}（読むのは ${readers.features.join("")} だけ）`]
         : []
     })
+
+    expect(offenders.join("\n")).toBe("")
+  })
+})
+
+// `components/ui/` の置き方（2章「1部品1フォルダは真似しない」の例外）を検査で守る。
+// **直下にファイルを置かない**（部品ごとのディレクトリの中に置く）、**`ui/<部品>/` には必ず
+// `<部品>.tsx` がある**（ディレクトリ名がそのまま部品のファイル名になる）の2つ。barrel file
+// （`index.tsx`）で束ねていないかは、ここが `<部品>.tsx` の存在を見ることで同時に落ちる
+// （`index.tsx` しか無いディレクトリは `<部品>.tsx` が無いので違反になる）。
+describe("components/ui/ の置き方", () => {
+  it("components/ui/ 直下にファイルは無く、ui/<部品>/ には <部品>.tsx がある", () => {
+    const files = listSourceFiles(SRC_ROOT).filter((relPath) =>
+      relPath.startsWith("browser/components/ui/"),
+    )
+    expect(files.length).toBeGreaterThan(0)
+
+    const directFiles = files.filter((relPath) => relPath.split("/").length === 4)
+    const directories = [
+      ...new Set(
+        files
+          .filter((relPath) => relPath.split("/").length >= 5)
+          .map((relPath) => relPath.split("/")[3]),
+      ),
+    ]
+    const directoriesMissingComponent = directories.filter(
+      (name) => !files.includes(`browser/components/ui/${name}/${name}.tsx`),
+    )
+
+    const offenders = [
+      ...directFiles.map((relPath) => `src/${relPath}（components/ui/ の直下に置かれている）`),
+      ...directoriesMissingComponent.map(
+        (name) => `browser/components/ui/${name}/ に ${name}.tsx が無い`,
+      ),
+    ]
 
     expect(offenders.join("\n")).toBe("")
   })

@@ -1444,7 +1444,7 @@ scrollable overflow は end 方向にしか伸びない**ので、上へ出た�
 
 **モデル・effort・許可モードのドロップダウン**（右端、並びはモデル → effort → 許可モード）:
 
-- **部品は `components/ui/select.tsx` の素の `<select>` のまま**にし、見た目だけ帯に合わせる
+- **部品は `components/ui/select/select.tsx` の素の `<select>` のまま**にし、見た目だけ帯に合わせる
   （`appearance: none`・枠は `--rule`・下向きの矢印は CSS で描く）。キーボードの操作・読み上げ・
   選択肢の開き方はブラウザに任せる
 - **見本の値に揃える**（2026-09-23 決定）: 高さ 32px・左右 10px・角丸 8px・地は透明・字は

@@ -140,7 +140,7 @@
   /* 下向きの矢印の形（プルダウンの右端と、開閉するタイトルの右）。**mask で使う**ので、塗りは
      読み手の `currentColor` が決める（この中の `stroke='black'` は形を出すためだけのもの）。
      16進の色と同じく、形もここに1つだけ置いて各機能はこれを参照する
-     （`components/ui/select.module.css` と `main-view.module.css`）。 */
+     （`components/ui/select/select.module.css` と `main-view.module.css`）。 */
   --icon-chevron-down: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
 }
 

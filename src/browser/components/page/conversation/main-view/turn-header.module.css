@@ -108,7 +108,7 @@
   font-weight: 700;
 }
 /* 下向きの矢印。**字（`⌄`）ではなく線画**にする — 字は書体ごとに太さも高さも変わり、
-   プルダウンの矢印（`components/ui/select.module.css`）と揃わない。形はそれと同じものを
+   プルダウンの矢印（`components/ui/select/select.module.css`）と揃わない。形はそれと同じものを
    `theme.css` のトークンから引き、`currentColor` で塗る。タイトルの縮みを邪魔しないよう
    固定の大きさにし、色はタイトルより一段薄い「n / N」と同じ扱い。 */
 .turn-title-chevron {

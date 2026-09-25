@@ -441,6 +441,10 @@ import してよい先が決まっている**（表は二重に書かず `docs/d
 概念のまま**）。2026-09-13、`src/browser/` を切った段（`docs/history/decision.md`
 「design.md 12. 移行の段階」の段3）で bulletproof-react の実例と突き合わせて決めた。
 
+**`components/ui/` の部品は `ui/<部品>/<部品>.tsx` に置き、`index.tsx` は作らない。検査が
+落とす。** 部品ごとのディレクトリに分けるのは `docs/design.md` 2章の「1部品1フォルダは
+真似しない」の例外で、barrel file を作らない理由はここと二重に書かない。
+
 ## React
 
 React 19。関数コンポーネントと Hooks だけを使う（クラスコンポーネントは書かない。`forwardRef` も

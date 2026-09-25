@@ -344,7 +344,10 @@ src/
                               操作子（13.9）
         sidebar/              SessionInfo・TaskSection（まん中の区画ひとまとまり）と、
                               2区画の枠（SidebarSection）
-      ui/                     **語彙を持たない部品**（Select・ImageZoom）。値と呼び先を全部受け取る
+      ui/                     **語彙を持たない部品**。値と呼び先を全部受け取る。**部品ごとのディレクトリに
+                              分ける**（1部品1フォルダの唯一の例外。下の「1部品1フォルダは真似しない」）
+        select/               select.tsx・select.module.css
+        image-zoom/           image-zoom.tsx・image-zoom.module.css
     features/                 **置かれる機能**。自分の置き場所を持たず、領域の中に置いてもらう
       task-board/             タスク一覧。TaskList（区画の中身）・TaskBoard（表のモーダルの入口）・
                               PresentationalTaskBoard（器）。サイドバーに置いてもらう
@@ -377,6 +380,11 @@ Next.js の雛形の名前。`shared` / `server` / `core` / `adapter` と、`ser
 `components/page/` の下の画面の名前は `stores/location-hash.ts` の `Screen` の値に合わせる）。
 **手本から採るのはディレクトリの形だけ**で、kebab-case のファイル名・barrel file（`index.ts`）を
 作らない・`@/` を使わない相対 import はそのまま（PascalCase・1部品1フォルダは真似しない）。
+**例外は `components/ui/` だけ**: 語彙を持たない部品は数が増えていくので、部品ごとに
+`ui/<部品>/<部品>.tsx`・`<部品>.module.css` の1フォルダへ分ける（2026-09-25 のユーザーの希望。
+理由は部品と CSS の対が平たく並ぶと見づらいこと）。**barrel file は作らない例外の中でも作らない**
+——`index.tsx` は置かず、import は `../ui/select/select.tsx` のように実ファイルを直接指す
+（`docs/coding-standards.md`「barrel file を作らない」）。
 
 **`src/browser/` の箱と、置く基準**（bullet-proof-react の語をそのまま使う。判断に迷ったら
 「その機能しか読まないなら機能の中」が既定（領域も同じで、その領域しか読まないなら領域の中））:
@@ -1844,7 +1852,9 @@ type Diary = {
 `<TokenUsageScreen>`・`<AchievementScreen>`）と `<DiaryNotice>` は `components/page/<画面>/`。
 `<TaskList>` と `<TaskBoard>` は置かれる機能の `features/task-board/`。領域をまたいで使う
 `<Portrait>`・`<CharacterFace>`・`<PromptImageChips>`・`<PromptImageThumbnails>`・`<ProtocolMismatch>`
-は `components/domain/` の直下、語彙を持たない `<Select>`・`<ImageZoom>` は `components/ui/`。
+は `components/domain/` の直下、語彙を持たない `<Select>`・`<ImageZoom>` は
+`components/ui/select/`・`components/ui/image-zoom/`（部品ごとのディレクトリ。2章「1部品1フォルダは
+真似しない」の例外）。
 
 **部品は `SessionState` と `dispatch` だけを見る。** DOM を直接いじる配線（`MutationObserver`・
 `data-` 属性で状態を渡す）は持たない。
