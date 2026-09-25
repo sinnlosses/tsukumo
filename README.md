@@ -262,16 +262,28 @@ TSUKUMO_CHARACTER=characters/local tsukumo
 ## 開発
 
 ```bash
-# 型チェック・リント・フォーマット・テストをまとめて実行（変更後は必ずこれを通す）
-bun run check
-
-# 個別実行
-bun run typecheck                     # tsc --noEmit
-bun run lint                          # oxlint（--fix は lint:fix）
-bun run format                        # oxfmt で自動整形（--check は format:check）
-bun test --isolate                    # テスト全体（`mock.module` がファイルをまたいで漏れるため
-                                       #   素の `bun test` は使わない）
-bun test --isolate test/cli.test.ts   # 単体テストファイルのみ実行
+bun run check                 # typecheck + lint + format:check + test + test:e2e（変更後は必ずこれを通す）
+bun run test                  # 単体テスト全体（`bun test --isolate`。`test/e2e/` は外す。素の `bun test` は
+                              #   使わない — `mock.module` がファイルをまたいで漏れる）
+bun test --isolate test/cli.test.ts  # 単体テストファイルのみ実行
+bun run test:e2e              # E2E（組み立ててから test/e2e/ を走らせる。手元の Chrome が要る。成果物と
+                              #   スクリーンショットは /tmp/tsukumo-e2e/）
+bun run test:e2e:update       # E2E の期待値（test/e2e/expected/）を書き直す。git diff で読んでから入れる
+bun run typecheck             # tsc --noEmit
+bun run lint                  # oxlint（--fix は lint:fix）
+bun run format                # oxfmt で自動整形（--check は format:check）
+bun run build                 # ブラウザ側（src/browser/）を dist/browser/ に組み立てる。起動時には組み立てない
+                              #   ので、bun install のあとと src/browser/ を直したあとに打つ
+bun run start                 # セッションを起こし、ページのタブを Orca 内に開く（`tsukumo` コマンドと同じ。
+                              #   TSUKUMO_OPEN_VIEW=0 で自動オープンを止める。本物の claude を子プロセスで起こす。
+                              #   成果物が無ければ前提不足で止まり、ソースのほうが新しければ1行知らせて古いまま配る）
+bun run dev                   # bun run build のあと、start と同じ経路を src/browser/ の見張りつきで起こす
+                              #   （src/server/core/ と src/shared/ を直したときは上げ直しが要る。docs/design.md 11章）
+bun run scripts/open-views.ts <URL>  # プロセスは動いたままタブだけ閉じたときに開き直す
+bun run grid                  # 待ち受けていてタブもある部屋を iframe の格子に並べて Orca に開く。格子のタブが
+                              #   あるあいだ常駐し、再読み込みのたびに並べ直す。タブを閉じると終わる
+bun run scripts/stop.ts       # 動いている tsukumo を一覧する（--port <n> でそれ1つだけ止める。pkill / killall は
+                              #   hook が拒否する。並べて動かすとどれも `bun run src/cli.ts` に見えて区別できないため）
 ```
 
 **ブラウザに出た絵は自動テストで守りません。** 配信（バインド先・経路・push）まではテストし、
