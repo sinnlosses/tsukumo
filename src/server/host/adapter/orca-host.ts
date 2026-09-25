@@ -1,4 +1,4 @@
-// ホスト依存の操作（src/server/core/host.ts）を Orca の CLI で実装するアダプタ。
+// ホスト依存の操作（src/server/host/core/host.ts）を Orca の CLI で実装するアダプタ。
 //
 // **`orca` コマンドを呼ぶのはこのファイルだけ**（docs/architecture.md 原則3）。
 // この境界は test/architecture.test.ts が落とす。

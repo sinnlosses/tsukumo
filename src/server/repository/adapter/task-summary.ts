@@ -5,7 +5,7 @@
 //
 // **読むのは作業ツリーのファイルではなく `main` の上のもの**。タスクの正典は `main` のもので、
 // 作業ツリーのものは `git merge main` するまで別の作業ツリーで足したタスクを知らない。**境界は
-// 「`main` の上のタスク一覧」の1つ**。`git` を起こすのは `src/server/adapter/git.ts`
+// 「`main` の上のタスク一覧」の1つ**。`git` を起こすのは `src/server/repository/adapter/git.ts`
 // （`node:child_process` を import してよいファイルは `test/architecture.test.ts` が絞っている。
 // 成果の集計（`main-history.ts`）と同じ口を使う）。`main` の上のファイルを読む汎用の adapter を
 // 別に切らないのは、読み手がこの一覧しかなく、切っても開くファイルが増えるだけで概念が増えない
@@ -41,7 +41,7 @@ import {
   taskSummaryItemsOfNewTaskFiles,
   type NewTaskFile,
   type TaskSummaryResult,
-} from "../../shared/task-summary.ts"
+} from "../../../shared/task-summary.ts"
 import { runGit, runGitCatFileBatch } from "./git.ts"
 
 /** 見回りの間隔。`git rev-parse` 1回は手元で約10msなので、この間隔なら毎回起こしても

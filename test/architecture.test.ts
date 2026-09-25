@@ -75,6 +75,8 @@ const SERVER_FEATURES = [
   "context-usage",
   "token-usage",
   "usage-review",
+  "host",
+  "repository",
 ] as const
 type ServerFeature = (typeof SERVER_FEATURES)[number]
 
@@ -86,6 +88,8 @@ const SERVER_FEATURE_IMPORTS: Readonly<Record<ServerFeature, ReadonlySet<ServerF
   "context-usage": new Set([]),
   "token-usage": new Set([]),
   "usage-review": new Set([]),
+  host: new Set([]),
+  repository: new Set([]),
 }
 
 type ServerLayer = "core" | "adapter"
@@ -155,14 +159,14 @@ describe("server/ の機能どうしの import", () => {
 })
 
 // `orca` コマンドを起こすのはアダプタ1つに閉じ込める（docs/architecture.md 原則3、
-// src/server/adapter/orca-host.ts 冒頭コメント）。`execFile("orca", …)` のような呼び出しは必ず
+// src/server/host/adapter/orca-host.ts 冒頭コメント）。`execFile("orca", …)` のような呼び出しは必ず
 // コマンド名の文字列リテラル "orca" を伴うので、それを orca-host.ts の外から探す。
 // ファイル名（`orca-host.ts`）やバッククォートで囲んだ日本語の説明文はクォートされた文字列
 // リテラルではないので拾わない。
 describe("orca コマンドを起こす箇所", () => {
-  it("`orca` コマンドを呼ぶのは src/server/adapter/orca-host.ts だけ", () => {
+  it("`orca` コマンドを呼ぶのは src/server/host/adapter/orca-host.ts だけ", () => {
     const offenders = listSourceFiles(SRC_ROOT)
-      .filter((relPath) => relPath !== "server/adapter/orca-host.ts")
+      .filter((relPath) => relPath !== "server/host/adapter/orca-host.ts")
       .filter((relPath) => /["']orca["']/.test(readFileSync(`${SRC_ROOT}/${relPath}`, "utf8")))
 
     expect(offenders).toEqual([])
@@ -198,11 +202,11 @@ describe("Agent SDK を import する箇所", () => {
 // （`main` の上のタスク一覧・成果の集計・git 管理下のファイルの列挙のどれもがここを使う）の
 // 3つの境界に閉じ込める（docs/architecture.md 原則3）。
 describe("子プロセスを起こす箇所", () => {
-  it("`node:child_process` を import するのは src/server/adapter/ の orca-host.ts・bundle.ts・git.ts だけ", () => {
+  it("`node:child_process` を import するのは orca-host.ts・bundle.ts・git.ts だけ", () => {
     const allowed = new Set([
-      "server/adapter/orca-host.ts",
+      "server/host/adapter/orca-host.ts",
       "server/adapter/bundle.ts",
-      "server/adapter/git.ts",
+      "server/repository/adapter/git.ts",
     ])
     const offenders = listSourceFiles(SRC_ROOT)
       .filter((relPath) => !allowed.has(relPath))

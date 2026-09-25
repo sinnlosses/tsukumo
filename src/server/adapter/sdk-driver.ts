@@ -3,7 +3,7 @@
 // 実装する2つのうちの本物。もう1つは `src/server/adapter/fake-driver.ts`）。
 //
 // **`@anthropic-ai/claude-agent-sdk` を import するのは `src/server/adapter/` 直下の `sdk-` で
-// 始まるファイルだけ**（原則3。`orca` を呼ぶのが src/server/adapter/orca-host.ts だけなのと同じ
+// 始まるファイルだけ**（原則3。`orca` を呼ぶのが src/server/host/adapter/orca-host.ts だけなのと同じ
 // 扱いで、SDK という1つの境界が数ファイルにまたがる）。ここは `query()` を回す本体で、ツールは
 // `sdk-tool.ts`、セッションの一覧と印は `sdk-session.ts`、コンテキストの内訳は
 // `sdk-context-usage.ts`。SDK の語彙を外へ漏らさないため、どれも外に出す型は

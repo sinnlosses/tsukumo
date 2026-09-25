@@ -14,8 +14,8 @@
 
 import process from "node:process"
 
-import { createOrcaHost } from "../src/server/adapter/orca-host.ts"
 import { LAYOUT_PATH } from "../src/server/adapter/server.ts"
+import { createOrcaHost } from "../src/server/host/adapter/orca-host.ts"
 
 const baseUrl = process.argv[2]
 if (baseUrl === undefined) {

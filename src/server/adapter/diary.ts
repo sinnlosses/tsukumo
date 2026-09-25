@@ -5,8 +5,8 @@
 // **`<リポジトリ>` は共有の `.git`（`git rev-parse --path-format=absolute --git-common-dir`）の
 // 親ディレクトリの名前と、`.git` の絶対パスの SHA-256 の先頭12桁を `-` でつないだもの**
 // （作業ツリーではなく共有の `.git` で見分けるので、同じリポジトリのどの作業ツリーから書いても
-// 同じ日記帳に入る）。`git` を起こすのは `./git.ts`（`main-history.ts` / `task-summary.ts` と
-// 同じ口）。
+// 同じ日記帳に入る）。`git` を起こすのは `../repository/adapter/git.ts`
+// （`main-history.ts` / `task-summary.ts` と同じ口）。
 //
 // 書けなくても・読めなくても例外を投げない（常駐プロセスは1回の失敗で落ちない。
 // `docs/coding-standards.md`「エラーハンドリング」）。**日記の文面はログに出さない**
@@ -24,8 +24,8 @@ import {
   type DiaryBookmark,
   type DiaryParagraph,
 } from "../../shared/diary.ts"
+import { runGit } from "../repository/adapter/git.ts"
 import { readOptionalFile } from "./character-pack.ts"
-import { runGit } from "./git.ts"
 import { isoWithOffset } from "./local-time.ts"
 import { tsukumoHomeDir } from "./tsukumo-home.ts"
 

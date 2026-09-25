@@ -5,7 +5,7 @@
 // ここは会話の内容を一切扱わない。
 //
 // ここはファイルI/Oを持たない。`main` の上のファイルを読み、`main` の先端が変わったら読み直すのは
-// src/server/adapter/task-summary.ts。
+// src/server/repository/adapter/task-summary.ts。
 
 /**
  * サイドバーのタスク一覧1件分。ファイルに出てくる順のまま持つ（status ごとにまとめない）。
@@ -26,7 +26,7 @@ export type TaskSummaryItem = {
 /**
  * `develop/task/` の一覧が読めているかどうか。**「まだ届いていない」（session-state.ts の
  * 初期値）と「読めない」（`develop/task/` が無い・front matter が INVALID）を
- * ここでは区別しない**——`watchTaskSummary`（`src/server/adapter/task-summary.ts`）は
+ * ここでは区別しない**——`watchTaskSummary`（`src/server/repository/adapter/task-summary.ts`）は
  * `main` が最初から読めないときは初回の通知そのものを送らないので、その口だけでは
  * 「まだ確認していない」と「確認して無かった」を型で分けられない。画面側もどちらも同じ
  * 「不明」表示にしていて対処が変わらないため、分けても情報が増えない
@@ -184,7 +184,7 @@ export function newFormatTaskSummaries(
  *
  * **ファイルを読み直さずに済む形で分けてある**——`main` の先端が動いていなくても、共有の
  * `.git` の台帳（着手の印）だけは動く（`task claim` / `task release` は `main` を動かさない）ので、
- * `src/server/adapter/task-summary.ts` は先端が同じ見回りでも `claimedIds` だけ読み直して
+ * `src/server/repository/adapter/task-summary.ts` は先端が同じ見回りでも `claimedIds` だけ読み直して
  * ここへ通す（`git cat-file --batch` はしない）。
  */
 export function taskSummaryItemsOfNewTaskFiles(

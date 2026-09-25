@@ -113,11 +113,11 @@ Claude Code を動かす）の核（セッション駆動・イベントの変�
 | `src/server/adapter/bundle.ts`                                               | adapter    | `bun build` で作った1組を `dist/browser/` に置く／そこから読む（起動は読むだけ）                                                                                    |
 | `src/server/adapter/bundled-path.ts`                                         | adapter    | 自分で持ち歩くもの（`characters/`・`node_modules/`）の置き場所を、起動先のディレクトリに依存せず解く                                                                |
 | `src/server/adapter/character-pack.ts`                                       | adapter    | キャラクターパックの列挙・読み込みと `/character/<pack>/<file>` が配ってよい1件の判定                                                                               |
-| `src/server/adapter/task-summary.ts`                                         | adapter    | `main` の `develop/task/` の読み直し。`main` の先端が変わったときだけ `tasks-changed` を起こす（`git rev-parse` / `git ls-tree` / `git cat-file --batch` を起こす） |
-| `src/server/adapter/git.ts`                                                  | adapter    | **`git` を起こすのはここだけ**。`task-summary.ts`・`main-history.ts`・`repository-file.ts` が使う                                                                   |
-| `src/server/adapter/repository-file.ts`                                      | adapter    | 入力欄の `@` 補完に配るパスの列挙。`git.ts` の `runGit` で `git ls-files` を呼ぶ（失敗したら空）                                                                    |
-| `src/server/core/host.ts`                                                    | （ポート） | ホストに頼む操作の型。**ビューを見せる1つだけ**。特定のホストの語彙を入れない                                                                                       |
-| `src/server/adapter/orca-host.ts`                                            | adapter    | `src/server/core/host.ts` を Orca の CLI で実装する。**`orca` を呼ぶのはここだけ**                                                                                  |
+| `src/server/repository/adapter/task-summary.ts`                              | adapter    | `main` の `develop/task/` の読み直し。`main` の先端が変わったときだけ `tasks-changed` を起こす（`git rev-parse` / `git ls-tree` / `git cat-file --batch` を起こす） |
+| `src/server/repository/adapter/git.ts`                                       | adapter    | **`git` を起こすのはここだけ**。`task-summary.ts`・`main-history.ts`・`repository-file.ts` が使う                                                                   |
+| `src/server/repository/adapter/repository-file.ts`                           | adapter    | 入力欄の `@` 補完に配るパスの列挙。`git.ts` の `runGit` で `git ls-files` を呼ぶ（失敗したら空）                                                                    |
+| `src/server/host/core/host.ts`                                               | （ポート） | ホストに頼む操作の型。**ビューを見せる1つだけ**。特定のホストの語彙を入れない                                                                                       |
+| `src/server/host/adapter/orca-host.ts`                                       | adapter    | `src/server/host/core/host.ts` を Orca の CLI で実装する。**`orca` を呼ぶのはここだけ**                                                                             |
 | `src/browser/main.tsx`                                                       | browser    | ブラウザ側の入口。`<App>` を mount する（副作用はここだけ）                                                                                                         |
 | `src/cli.ts`                                                                 | （配線）   | 入口。引数の受け取り・環境変数の読み出し・終了コードの返し方だけ                                                                                                    |
 | `src/main.ts`                                                                | （配線）   | 起動の段取り。**即時終了する前提不足（ポート・組み立て・疑似セッション）はここに集めてある**                                                                        |
@@ -493,7 +493,7 @@ output. ...]` を利用者の発言として足し、1往復増える）。塞�
 
 画面を出す入れ物を「箱」と呼ぶ。**いまの箱は Orca のブラウザタブ**で、開くのに
 `orca tab create --url` を使う。ページそのものは**どの箱でも動く Web アプリ**として作り、
-箱に依存する操作はホストのポート（`src/server/core/host.ts`）の裏に置く（下の「ホスト依存の操作は
+箱に依存する操作はホストのポート（`src/server/host/core/host.ts`）の裏に置く（下の「ホスト依存の操作は
 1つのポートにまとめる」）。
 
 TUI を捨てたことで、**Orca に頼む仕事は `showView`（ページを箱の中に開く）1つだけ**になった。
@@ -635,7 +635,7 @@ hook の stdout からは何も描画できない（技術制約）。したが�
 #### ホスト依存の操作は1つのポートにまとめる
 
 Orca に全面的に依存してよいが、**ホスト（ターミナル環境）に依存する操作は1つのポートの裏に
-置く**。ポートは `src/server/core/host.ts`、アダプタは `src/server/adapter/orca-host.ts`。今あるのは次の2つ:
+置く**。ポートは `src/server/host/core/host.ts`、アダプタは `src/server/host/adapter/orca-host.ts`。今あるのは次の2つ:
 
 - **ビューを見せる**（`showView`）— URL のビューが無ければ開き、あればその内容を最新にする
 - **ファイルを開く**（`openFile`）— レポートに書かれた git 管理下のパスを Orca のエディタで開く

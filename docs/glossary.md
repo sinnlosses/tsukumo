@@ -77,8 +77,8 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 - **英語識別子（予定）**: `host`
 - **定義**: tsukumo のページを出す相手。実測環境では Orca。**頼む仕事はビューを見せること
   （`showView`）だけ**で、それ以外の依存は持たない
-- **注記**: ホストに依存する操作は1つのポート（`src/server/core/host.ts`）の裏に置き、実装は
-  アダプタ（`src/server/adapter/orca-host.ts`）に閉じ込める（`docs/architecture.md`
+- **注記**: ホストに依存する操作は1つのポート（`src/server/host/core/host.ts`）の裏に置き、実装は
+  アダプタ（`src/server/host/adapter/orca-host.ts`）に閉じ込める（`docs/architecture.md`
   「ホスト依存の操作は1つのポートにまとめる」。「アダプタ」の項は「通信（移行後）」にある）
 - **注記**: **「本体」とは別のもの**。本体は Claude Code の CLI を指す
 - **避ける言い方**: 端末環境、プラットフォーム、シェル
@@ -931,7 +931,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 - **定義**: 外の世界（Agent SDK・HTTP/WebSocket・ホスト・ファイル・子プロセス）に触るコードの
   置き場所。**1ファイル = 1つの境界**。判断は持たず、`core` から呼ばれるか `cli.ts` が結ぶ
 - **注記**: インターフェースは**実装が2つあるもの（駆動・ホスト）にだけ** `core` に置く
-  （`core/session-driver.ts` / `core/host.ts`）。`core → adapter` の import は
+  （`core/session-driver.ts` / `host/core/host.ts`）。`core → adapter` の import は
   `test/architecture.test.ts` が落とす
 - **避ける言い方**: インフラ層、外界、helpers
 

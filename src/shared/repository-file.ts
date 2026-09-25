@@ -4,7 +4,7 @@
 // `node:` にも `document` にも触らない）。
 //
 // **運ぶのはリポジトリ相対のパスだけで、ファイルの中身は運ばない。**
-// どのファイルが git 管理下かを知るのは外の世界に触る仕事なので `src/server/adapter/repository-file.ts`
+// どのファイルが git 管理下かを知るのは外の世界に触る仕事なので `src/server/repository/adapter/repository-file.ts`
 // が持つ（原則2・原則3）。
 //
 // **起動トークンが要る経路**（`SESSION_TOKEN_QUERY_NAME` を `/ws` と同じ形で付ける）。配るのは

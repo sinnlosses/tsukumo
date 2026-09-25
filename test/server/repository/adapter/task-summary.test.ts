@@ -7,7 +7,7 @@ import { join } from "node:path"
 import {
   watchTaskSummary,
   type TaskSummaryWatcher,
-} from "../../../src/server/adapter/task-summary.ts"
+} from "../../../../src/server/repository/adapter/task-summary.ts"
 
 // 本物の `git` を起こす（`main` の先端を見て読み直すことそのものが検査の対象）。リポジトリは
 // 一時ディレクトリに毎回作り、中身は架空のタスクだけにする。

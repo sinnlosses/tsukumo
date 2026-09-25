@@ -18,7 +18,6 @@ import {
   createAchievementCommitCache,
   readAchievement,
 } from "./server/adapter/main-history.ts"
-import { createOrcaHost } from "./server/adapter/orca-host.ts"
 import { createPersonaMemory, readRememberedLines } from "./server/adapter/persona-memory.ts"
 import {
   readRememberedSessionDefault,
@@ -26,7 +25,6 @@ import {
   writeRememberedSessionDefault,
   writeRememberedVisitEnabled,
 } from "./server/adapter/remembered-default.ts"
-import { listRepositoryFiles } from "./server/adapter/repository-file.ts"
 import { startSdkDriver } from "./server/adapter/sdk-driver.ts"
 import {
   findSessionToResume,
@@ -34,7 +32,6 @@ import {
   readRestoredEvents,
 } from "./server/adapter/sdk-session.ts"
 import { queryVisitScript } from "./server/adapter/sdk-visit-script.ts"
-import { watchTaskSummary } from "./server/adapter/task-summary.ts"
 import { createVisitClock } from "./server/adapter/visit-clock.ts"
 import { createContextUsageLog } from "./server/context-usage/adapter/context-usage-log.ts"
 import { readChatTopics } from "./server/core/chat-compact.ts"
@@ -51,7 +48,6 @@ import {
 import { createSessionLaunch, type SessionLaunchSeed } from "./server/core/session-launch.ts"
 import { createSessionManager, type SessionManager } from "./server/core/session-manager.ts"
 import { canResume, sessionTag } from "./server/core/session-restore.ts"
-import { openTrackedFile } from "./server/core/tracked-file.ts"
 import { visitGuests } from "./server/core/visit-guest.ts"
 import {
   createVisitScriptWriter,
@@ -59,6 +55,10 @@ import {
 } from "./server/core/visit-script-writer.ts"
 import { visitCast } from "./server/core/visit-script.ts"
 import { QUICK_VISIT_TIMING, VISIT_TIMING } from "./server/core/visit-timing.ts"
+import { createOrcaHost } from "./server/host/adapter/orca-host.ts"
+import { openTrackedFile } from "./server/host/core/tracked-file.ts"
+import { listRepositoryFiles } from "./server/repository/adapter/repository-file.ts"
+import { watchTaskSummary } from "./server/repository/adapter/task-summary.ts"
 import {
   takeSystemPromptAppend,
   toSystemPromptMode,

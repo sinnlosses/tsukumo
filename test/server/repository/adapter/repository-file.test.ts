@@ -4,12 +4,12 @@ import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { fileURLToPath } from "node:url"
 
-import { listRepositoryFiles } from "../../../src/server/adapter/repository-file.ts"
+import { listRepositoryFiles } from "../../../../src/server/repository/adapter/repository-file.ts"
 
 // ここだけは本物の `git` を起こす（列挙そのものが検査の対象）。読むのはこのリポジトリ自身の
 // ファイル名だけで、中身は開かない。
 
-const REPOSITORY_ROOT = fileURLToPath(new URL("../../..", import.meta.url)).replace(/\/$/, "")
+const REPOSITORY_ROOT = fileURLToPath(new URL("../../../..", import.meta.url)).replace(/\/$/, "")
 
 describe("listRepositoryFiles", () => {
   it("git 管理下のファイルをリポジトリ相対のパスで返す", async () => {

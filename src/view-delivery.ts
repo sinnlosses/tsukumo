@@ -16,13 +16,13 @@ import {
   readAchievement,
   readCommitCalendar,
 } from "./server/adapter/main-history.ts"
-import { listRepositoryFiles } from "./server/adapter/repository-file.ts"
 import { createStartupToken, startViewServer } from "./server/adapter/server.ts"
 import { attachSessionSocket } from "./server/adapter/session-socket.ts"
 import { watchUiSource } from "./server/adapter/ui-rebuild.ts"
 import { type ResolvedViewPort, startOnResolvedPort } from "./server/core/port-resolution.ts"
 import { type PromptImageShelf } from "./server/core/prompt-image-shelf.ts"
 import { type SessionManager } from "./server/core/session-manager.ts"
+import { listRepositoryFiles } from "./server/repository/adapter/repository-file.ts"
 import {
   summarizeRecentTokenUsage,
   type TokenUsageLog,

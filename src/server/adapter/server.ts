@@ -108,7 +108,7 @@ export type ServeCharacterAsset = (
 ) => CharacterAssetFile | undefined
 
 /**
- * 入力欄の `@` 補完に配るファイルのパス（`src/server/adapter/repository-file.ts` の
+ * 入力欄の `@` 補完に配るファイルのパス（`src/server/repository/adapter/repository-file.ts` の
  * `listRepositoryFiles` を束ねたもの）。**git 管理下でない・`git` が無いときは空**を返す契約で、
  * サーバは失敗を区別しない。
  */

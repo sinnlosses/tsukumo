@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test"
 
-import { type HostResult } from "../../../src/server/core/host.ts"
-import { openTrackedFile } from "../../../src/server/core/tracked-file.ts"
+import { type HostResult } from "../../../../src/server/host/core/host.ts"
+import { openTrackedFile } from "../../../../src/server/host/core/tracked-file.ts"
 
 const TRACKED = ["docs/display.md", "src/cli.ts"]
 

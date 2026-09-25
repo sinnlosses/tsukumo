@@ -7,7 +7,7 @@
 // `git ls-files` を起こすたびに子プロセスが立つ）。取得は TanStack Query に任せるので、
 // 呼び出し側に取得の配線は無い。
 //
-// サーバ側は `GET /repository-file`（`src/server/adapter/repository-file.ts` の `git ls-files`）で、
+// サーバ側は `GET /repository-file`（`src/server/repository/adapter/repository-file.ts` の `git ls-files`）で、
 // **中身は読まない**。
 
 import { useQuery } from "@tanstack/react-query"
