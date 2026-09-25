@@ -243,8 +243,8 @@ SDK の境界（`sdk-*`）、静的な配信、`MAX_MESSAGE_BYTES`（`WebSocketS
 
 ## 9. 未決事項
 
-- **依存を約12パッケージ増やしてよいか**（段2の前に決める）。`CLAUDE.md` が承認を求めているのは外部コマンドだが、
-  `docs/research/external-dependency.md` の棚卸しに載るので、入れるなら表1に足す
+- ~~依存を約12パッケージ増やしてよいか~~ → **2026-09-26 にユーザーが承認した**（段2で入れてよい）。
+  入れたら `docs/research/external-dependency.md` の表1に足す
 - **段4の前提は確かめていない**: oRPC の Event Iterator が WebSocket 上で `hello` → `events` の順序と再接続の
   取り直しを保てるか。保てなければ押し出しは今の `subscribe` のまま残す（段3までの価値は変わらない）
 - **受け手の中身の設計**（段1の表の受け手が `restart` / `write` / 駆動をどう受け取るか）は `codebase-design` の
