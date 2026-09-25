@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from "bun:test"
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import { cleanup, fireEvent, render, screen } from "@testing-library/react"
+import { cleanup, render, screen } from "@testing-library/react"
 
 import { SessionInfo } from "../../../../../src/browser/components/domain/sidebar/session-info.tsx"
 import { SessionStoreContext } from "../../../../../src/browser/stores/session.tsx"
@@ -90,7 +90,10 @@ describe("SessionInfo", () => {
     expect(screen.queryByLabelText("許可モード")).toBeNull()
   })
 
-  it("キャラクターの <select> は選択肢が1つでも出す", () => {
+  // 選択肢・値・塞ぐ条件・送るコマンドは共有の `CharacterSwitch` の契約
+  // （`character-switch.test.tsx` が測る）なので、ここで見るのは「その部品を『キャラクター』の
+  // ラベルで置いている」ことだけ。
+  it("キャラクターの <select> を『キャラクター』のラベルで出す", () => {
     renderSessionInfo({
       characterPacks: [characterPackEntry("tsukumo-spirit", "つくもの精霊")],
       character: { ...FIXTURE_CHARACTER, pack: "tsukumo-spirit" },
@@ -98,7 +101,6 @@ describe("SessionInfo", () => {
 
     const select = screen.getByLabelText("キャラクター")
     expect(selectValue(select)).toBe("tsukumo-spirit")
-    expect((select as HTMLSelectElement).options).toHaveLength(1)
   })
 
   // キャラクター画面への入る口は**帯**（`components/domain/screen-nav/`）へ移った（docs/screen-design.md 13.9）。
@@ -110,56 +112,6 @@ describe("SessionInfo", () => {
     })
 
     expect(document.querySelector('a[href="#character"]')).toBeNull()
-  })
-
-  it("キャラクターを変更すると switch-character が dispatch される", () => {
-    const calls: unknown[] = []
-    renderSessionInfo(
-      {
-        characterPacks: [
-          characterPackEntry("tsukumo-spirit", "つくもの精霊"),
-          characterPackEntry("local", "架空の同居人"),
-        ],
-        character: { ...FIXTURE_CHARACTER, pack: "tsukumo-spirit" },
-      },
-      (command) => {
-        calls.push(command)
-      },
-    )
-
-    fireEvent.change(screen.getByLabelText("キャラクター"), { target: { value: "local" } })
-
-    expect(calls).toEqual([{ type: "switch-character", name: "local" }])
-  })
-
-  it("ターン進行中はキャラクターの <select> が無効になり、理由が title に出る", () => {
-    renderSessionInfo({
-      turn: { kind: "running", startedAt: 0 },
-      characterPacks: [characterPackEntry("tsukumo-spirit", "つくもの精霊")],
-      character: { ...FIXTURE_CHARACTER, pack: "tsukumo-spirit" },
-    })
-
-    const select = screen.getByLabelText("キャラクター") as HTMLSelectElement
-    expect(select.disabled).toBe(true)
-    expect(select.title.length).toBeGreaterThan(0)
-  })
-
-  it("ターンが終わるとキャラクターの <select> は有効に戻る", () => {
-    renderSessionInfo({
-      turn: { kind: "idle" },
-      characterPacks: [characterPackEntry("tsukumo-spirit", "つくもの精霊")],
-      character: { ...FIXTURE_CHARACTER, pack: "tsukumo-spirit" },
-    })
-
-    const select = screen.getByLabelText("キャラクター") as HTMLSelectElement
-    expect(select.disabled).toBe(false)
-    expect(select.title).toBe("")
-  })
-
-  it("パックの一覧が届いていなければ、キャラクターの <select> は出さない", () => {
-    renderSessionInfo({})
-
-    expect(screen.queryByLabelText("キャラクター")).toBeNull()
   })
 })
 

@@ -1,10 +1,12 @@
 // 雑談中のサイドバーの最上段、プロフィールの札（docs/screen-design.md 13.7「雑談のときのサイドバー」）。
-// 顔・名前・ひとことプロフィールと、右端の「変える」（キャラクターの切り替え）。**「変える」の
-// 振る舞いは下端の帯のキャラクターの `<select>` と同じ**（選ぶと `switch-character`・ターン中は塞ぐ）。
+// 顔・名前・ひとことプロフィールと、右端の「変える」（キャラクターの切り替え）。**「変える」の中身は
+// 共有の `CharacterSwitch`**（選択肢・値・塞ぐ条件・送るコマンドは `character-switch.test.tsx` が
+// 測る）ので、ここで見るのは顔・名前・ひとことプロフィールと、`CharacterSwitch` を札の見た目に
+// 正しく重ねているかだけ。
 
 import { afterEach, describe, expect, it } from "bun:test"
 
-import { cleanup, fireEvent, render, screen } from "@testing-library/react"
+import { cleanup, render, screen } from "@testing-library/react"
 
 import { ProfileCard } from "../../../../../src/browser/components/domain/sidebar/profile-card.tsx"
 import { SessionStoreContext } from "../../../../../src/browser/stores/session.tsx"
@@ -74,17 +76,6 @@ describe("ProfileCard", () => {
     expect(document.querySelector(".profile-card-tagline")).toBeNull()
   })
 
-  it("「変える」で選ぶと switch-character が dispatch される", () => {
-    const calls: unknown[] = []
-    renderProfileCard({ characterPacks: TWO_PACKS, character: characterInfo() }, (command) => {
-      calls.push(command)
-    })
-
-    fireEvent.change(changeSelect(), { target: { value: "local" } })
-
-    expect(calls).toEqual([{ type: "switch-character", name: "local" }])
-  })
-
   it("「変える」の選択はいまのパックを指し、見える字は「変える」", () => {
     renderProfileCard({
       characterPacks: TWO_PACKS,
@@ -93,22 +84,5 @@ describe("ProfileCard", () => {
 
     expect(changeSelect().value).toBe("local")
     expect(document.querySelector(".profile-card-change")?.textContent).toContain("変える")
-  })
-
-  it("ターン進行中は「変える」が塞がり、理由が title に出る", () => {
-    renderProfileCard({
-      turn: { kind: "running", startedAt: 0 },
-      characterPacks: TWO_PACKS,
-      character: characterInfo(),
-    })
-
-    expect(changeSelect().disabled).toBe(true)
-    expect(changeSelect().title.length).toBeGreaterThan(0)
-  })
-
-  it("パックの一覧が届いていなければ「変える」は出さない", () => {
-    renderProfileCard({ character: characterInfo() })
-
-    expect(screen.queryByLabelText("キャラクターを変える")).toBeNull()
   })
 })

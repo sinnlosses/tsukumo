@@ -11,6 +11,10 @@ afterEach(() => {
   cleanup()
 })
 
+// `VStack` は `direction: "column"` を固定して `Stack` へそのまま渡す薄い部品（`v-stack.tsx`）。
+// gap・align・justify・className の class 対応表は `Stack` 自身の `stack.test.tsx` が測るので、
+// ここで測るのは direction を固定していることだけ。
+
 const BASE_PROPS = {
   element: "div",
   gap: "none",
@@ -35,22 +39,5 @@ describe("VStack", () => {
     }
     expect(parent.className.split(" ")).toContain("stack-direction-column")
     expect(parent.className.split(" ")).not.toContain("stack-direction-row")
-  })
-
-  it("direction 以外の props（gap・align・className など）をそのまま Stack へ渡す", () => {
-    render(
-      <VStack {...BASE_PROPS} gap="lg" align="center" className="dummy-extra">
-        <span data-testid="v-stack-child">child</span>
-      </VStack>,
-    )
-
-    const child = screen.getByTestId("v-stack-child")
-    const parent = child.parentElement
-    if (parent === null) {
-      throw new Error("VStack が親要素を描いていない")
-    }
-    expect(parent.className.split(" ")).toEqual(
-      expect.arrayContaining(["stack-gap-lg", "stack-align-center", "dummy-extra"]),
-    )
   })
 })
