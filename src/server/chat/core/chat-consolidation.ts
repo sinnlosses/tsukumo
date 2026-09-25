@@ -11,9 +11,8 @@
 // `chatTopics`。`/compact` をやめるタスクでこちらへ移す。docs/design.md 7章の「注意」）。ここが
 // 持つのは、検査を通った `topics` の配列を返すところまで。
 //
-// 呼び出し順・書く契機（雑談のターンの終わり・同時に1本）・書いた結果をどこに保存するかは
-// `src/server/session/core/session-manager.ts` と `src/server/chat/adapter/chat-archive.ts` /
-// `chat-summary.ts` が持つ（別の変更でここへ足す。ここでは決めない）。
+// 呼び出し順と書く先は `chat-consolidation-writer.ts`、書く契機（雑談のターンの終わり・同時に1本）は
+// `src/server/session/core/session-manager.ts` が持つ（ここでは決めない）。
 
 import { isPlainObject } from "remeda"
 

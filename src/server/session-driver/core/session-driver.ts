@@ -53,9 +53,9 @@ export type ChatSummary = {
   /** 写しと印を読む（ファイルが無い・読めないときは undefined）。 */
   readonly read: () => ChatSummaryRecord | undefined
   /**
-   * 圧縮でできた要約を写す（上書き）。**呼ぶと印は「渡し済み」になる**——同じ機会にできた
-   * 要約は、いま動いているこのセッション自身がすでに持っている（`docs/design.md` 7章の表の
-   * 「起こし直し（resume）」の行）。
+   * 定着が書き直したあらすじ（話題の組を含む本文）を上書きする。**呼ぶと印は「渡し済み」に
+   * なる**——畳んだ会話は、いま動いているこのセッション自身がすでに持っている
+   * （`docs/design.md` 7章「雑談の記憶の要約はどこに置くか」）。
    */
   readonly write: (summary: string) => void
   /** 印を「未渡し」に戻す（`/clear` を見たとき）。 */
@@ -191,6 +191,8 @@ export type ChatUnconsolidatedBatch = {
   readonly entries: readonly ChatUnconsolidatedEntry[]
   /** 返した行の文面の UTF-8 バイト数の合計。 */
   readonly usedBytes: number
+  /** 最後のエピソードの見出し（無ければ空文字。話題が続いているかを定着に見分けさせるため）。 */
+  readonly previousEpisodeTitle: string
 }
 
 /**
@@ -343,8 +345,8 @@ export type SessionMode =
        */
       readonly personaMemory: PersonaMemory
       /**
-       * 雑談の要約の写しの読み書き口（`docs/design.md` 7章）。雑談のときだけ `PostCompact`
-       * フックが登録され、`/clear` を見て印を戻す（`sdk-driver.ts`）。
+       * 雑談の要約の写しの読み書き口（`docs/design.md` 7章）。駆動は `/clear` を見て印を戻すだけ
+       * （`sdk-driver.ts`）。書くのは定着（`chat-consolidation-writer.ts`）。
        */
       readonly chatSummary: ChatSummary
       /** 「残す」旗を立てる口（`docs/design.md` 7章）。`keep` ツールが載る。 */

@@ -5,6 +5,10 @@ import { isPlainObject } from "remeda"
 
 import { type CommandRouterPorts, createCommandRouter } from "../../../../src/router.ts"
 import { type CharacterSelection } from "../../../../src/server/character-pack/core/character-selection.ts"
+import {
+  type ChatConsolidationOutcome,
+  type ChatConsolidationSource,
+} from "../../../../src/server/chat/core/chat-consolidation-writer.ts"
 import { CHAT_NUDGE_PROMPT } from "../../../../src/server/chat/core/chat-nudge.ts"
 import {
   type ContextUsageEntry,
@@ -88,7 +92,7 @@ const NOOP_CHAT_ARCHIVE: ChatArchive = {
   writeIndex: () => {},
   recall: () => ({ kind: "not-found" }),
   readRecent: () => ({ kept: [], recent: [] }),
-  unconsolidated: () => ({ entries: [], usedBytes: 0 }),
+  unconsolidated: () => ({ entries: [], usedBytes: 0, previousEpisodeTitle: "" }),
   appendEpisodes: () => {},
   recallList: () => ({ kind: "not-found" }),
   recallEpisode: () => ({ kind: "not-found" }),
@@ -108,6 +112,9 @@ const NO_VISIT_PORTS: VisitPorts = {
   random: () => 0,
   scriptSource: { kind: "pack-only" },
 }
+
+/** 定着を気にしないテストに渡す出どころ（起こさない）。 */
+const NO_CHAT_CONSOLIDATION: ChatConsolidationSource = { kind: "dont-consolidate" }
 
 /** 振り返りの書き手を気にしないテストに渡す出どころ（起こさない）。 */
 const NO_DIARY_WRITER: DiaryWriterSource = { kind: "dont-write" }
@@ -300,6 +307,7 @@ function startManagerWithStub(
     readAchievementDay,
     batchIntervalMs: BATCH_MS,
     chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
+    chatConsolidation: NO_CHAT_CONSOLIDATION,
     visit: NO_VISIT_PORTS,
     diary,
     chatArchive: NOOP_CHAT_ARCHIVE,
@@ -469,6 +477,7 @@ describe("createSessionManager", () => {
       readAchievementDay: () => Promise.resolve(undefined),
       batchIntervalMs: BATCH_MS,
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
+      chatConsolidation: NO_CHAT_CONSOLIDATION,
       visit: NO_VISIT_PORTS,
       diary: NO_DIARY_WRITER,
       chatArchive: NOOP_CHAT_ARCHIVE,
@@ -583,6 +592,7 @@ describe("createSessionManager", () => {
       readAchievementDay: () => Promise.resolve(undefined),
       batchIntervalMs: BATCH_MS,
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
+      chatConsolidation: NO_CHAT_CONSOLIDATION,
       visit: NO_VISIT_PORTS,
       diary: NO_DIARY_WRITER,
       chatArchive: NOOP_CHAT_ARCHIVE,
@@ -660,6 +670,7 @@ describe("createSessionManager", () => {
       readAchievementDay: () => Promise.resolve(undefined),
       batchIntervalMs: BATCH_MS,
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
+      chatConsolidation: NO_CHAT_CONSOLIDATION,
       visit: NO_VISIT_PORTS,
       diary: NO_DIARY_WRITER,
       chatArchive: NOOP_CHAT_ARCHIVE,
@@ -716,6 +727,7 @@ describe("createSessionManager", () => {
       readAchievementDay: () => Promise.resolve(undefined),
       batchIntervalMs: BATCH_MS,
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
+      chatConsolidation: NO_CHAT_CONSOLIDATION,
       visit: NO_VISIT_PORTS,
       diary: NO_DIARY_WRITER,
       chatArchive: NOOP_CHAT_ARCHIVE,
@@ -775,6 +787,7 @@ describe("createSessionManager", () => {
       readAchievementDay: () => Promise.resolve(undefined),
       batchIntervalMs: BATCH_MS,
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
+      chatConsolidation: NO_CHAT_CONSOLIDATION,
       visit: NO_VISIT_PORTS,
       diary: NO_DIARY_WRITER,
       chatArchive: NOOP_CHAT_ARCHIVE,
@@ -839,6 +852,7 @@ describe("createSessionManager", () => {
       readAchievementDay: () => Promise.resolve(undefined),
       batchIntervalMs: BATCH_MS,
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
+      chatConsolidation: NO_CHAT_CONSOLIDATION,
       visit: NO_VISIT_PORTS,
       diary: NO_DIARY_WRITER,
       chatArchive: NOOP_CHAT_ARCHIVE,
@@ -1119,7 +1133,7 @@ describe("createSessionManager", () => {
         writeIndex: () => {},
         recall: () => ({ kind: "not-found" }),
         readRecent: () => ({ kept: [], recent: [] }),
-        unconsolidated: () => ({ entries: [], usedBytes: 0 }),
+        unconsolidated: () => ({ entries: [], usedBytes: 0, previousEpisodeTitle: "" }),
         appendEpisodes: () => {},
         recallList: () => ({ kind: "not-found" }),
         recallEpisode: () => ({ kind: "not-found" }),
@@ -1129,6 +1143,7 @@ describe("createSessionManager", () => {
     function startChatManagerWithStub(
       thresholdBytes: number,
       archive: ChatArchive = NOOP_CHAT_ARCHIVE,
+      chatConsolidation: ChatConsolidationSource = NO_CHAT_CONSOLIDATION,
     ) {
       const stub = createStubDriver()
       const manager = createSessionManager({
@@ -1137,6 +1152,7 @@ describe("createSessionManager", () => {
         readAchievementDay: () => Promise.resolve(undefined),
         batchIntervalMs: BATCH_MS,
         chatCompactThresholdBytes: thresholdBytes,
+        chatConsolidation,
         visit: NO_VISIT_PORTS,
         diary: NO_DIARY_WRITER,
         chatArchive: archive,
@@ -1302,6 +1318,122 @@ describe("createSessionManager", () => {
       expect(
         stub.calls.filter((call) => call.startsWith("promptWithoutRecord:/compact ")),
       ).toHaveLength(1)
+    })
+
+    describe("定着", () => {
+      /**
+       * 呼ばれたパック名と信号を覚え、結果は**テストが手で返す**書き手（本物の `query()` は
+       * 起こさない。数える・書くのは `chat-consolidation-writer.ts` のテストが見る）。
+       */
+      function createManualConsolidation() {
+        const calls: { readonly packName: string; readonly signal: AbortSignal }[] = []
+        const pending: ((outcome: ChatConsolidationOutcome) => void)[] = []
+        const source: ChatConsolidationSource = {
+          kind: "consolidate",
+          consolidate: (packName, signal) => {
+            calls.push({ packName, signal })
+            const { promise, resolve } = Promise.withResolvers<ChatConsolidationOutcome>()
+            pending.push(resolve)
+            return promise
+          },
+        }
+        const finish = (outcome: ChatConsolidationOutcome): void => {
+          pending.shift()?.(outcome)
+        }
+        return { source, calls, finish }
+      }
+
+      /** 届いた `events` のうち `chat-topics-changed` だけ。 */
+      function topicEvents(frames: readonly ServerFrame[]): readonly SessionEvent[] {
+        return frames.flatMap((frame) =>
+          frame.type === "events"
+            ? frame.events
+                .map(({ event }) => event)
+                .filter((event) => event.kind === "chat-topics-changed")
+            : [],
+        )
+      }
+
+      const TURN_FINISHED: SessionEvent = { kind: "turn-finished", outcome: { kind: "completed" } }
+
+      async function startInChat() {
+        const consolidation = createManualConsolidation()
+        const started = startChatManagerWithStub(
+          CHAT_COMPACT_THRESHOLD_BYTES,
+          NOOP_CHAT_ARCHIVE,
+          consolidation.source,
+        )
+        const frames: ServerFrame[] = []
+        started.manager.subscribe((frame) => frames.push(frame))
+        await waitForBatch()
+        started.stub.emit(CHARACTER_EVENT)
+        started.stub.emit({ kind: "chat-mode-changed", chat: true })
+        return { ...started, consolidation, frames }
+      }
+
+      it("雑談のターンの終わりに1本だけ起こし、走っているあいだの契機は捨て、走り終えても次のターンの終わりまで起こさない", async () => {
+        const { stub, consolidation, frames } = await startInChat()
+
+        stub.emit(TURN_FINISHED)
+        expect(consolidation.calls.map((call) => call.packName)).toEqual(["fictional"])
+
+        // 走っているあいだのターンの終わりは捨てる（待ち行列にも積まない）。
+        stub.emit(TURN_FINISHED)
+        expect(consolidation.calls).toHaveLength(1)
+
+        consolidation.finish({ kind: "written", topics: ["架空の話題"] })
+        await waitForBatch()
+        // 書けたら、書いたファイルから取った見出しを流す。
+        expect(topicEvents(frames)).toEqual([
+          { kind: "chat-topics-changed", topics: ["架空の話題"] },
+        ])
+        // 走り終えただけでは次を起こさない。
+        expect(consolidation.calls).toHaveLength(1)
+
+        stub.emit(TURN_FINISHED)
+        expect(consolidation.calls).toHaveLength(2)
+      })
+
+      it("失敗しても落ちずに見出しを流さず、次のターンの終わりに拾い直す。閉じたら走っている1本を中断する", async () => {
+        const { manager, stub, consolidation, frames } = await startInChat()
+
+        stub.emit(TURN_FINISHED)
+        consolidation.finish({ kind: "failed" })
+        await waitForBatch()
+        expect(topicEvents(frames)).toEqual([])
+
+        stub.emit(TURN_FINISHED)
+        expect(consolidation.calls).toHaveLength(2)
+        expect(consolidation.calls[1]?.signal.aborted).toBe(false)
+
+        manager.close()
+        expect(consolidation.calls[1]?.signal.aborted).toBe(true)
+      })
+
+      it("書けた時点で別のパックに替わっていれば、見出しを流さない", async () => {
+        const { stub, consolidation, frames } = await startInChat()
+
+        stub.emit(TURN_FINISHED)
+        stub.emit(characterChangedEvent({ pack: "another-fictional" }))
+        consolidation.finish({ kind: "written", topics: ["架空の話題"] })
+        await waitForBatch()
+
+        expect(topicEvents(frames)).toEqual([])
+      })
+
+      it("仕事のターンの終わりでは起こさない", async () => {
+        const consolidation = createManualConsolidation()
+        const { stub } = startChatManagerWithStub(
+          CHAT_COMPACT_THRESHOLD_BYTES,
+          NOOP_CHAT_ARCHIVE,
+          consolidation.source,
+        )
+        await waitForBatch()
+        stub.emit(CHARACTER_EVENT)
+        stub.emit(TURN_FINISHED)
+
+        expect(consolidation.calls).toEqual([])
+      })
     })
   })
 
@@ -1549,6 +1681,7 @@ describe("createSessionManager", () => {
       readAchievementDay: () => Promise.resolve(undefined),
       batchIntervalMs: BATCH_MS,
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
+      chatConsolidation: NO_CHAT_CONSOLIDATION,
       visit: NO_VISIT_PORTS,
       diary: NO_DIARY_WRITER,
       chatArchive: NOOP_CHAT_ARCHIVE,
@@ -1602,6 +1735,7 @@ describe("createSessionManager", () => {
       readAchievementDay: () => Promise.resolve(undefined),
       batchIntervalMs: BATCH_MS,
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
+      chatConsolidation: NO_CHAT_CONSOLIDATION,
       visit: NO_VISIT_PORTS,
       diary: NO_DIARY_WRITER,
       chatArchive: NOOP_CHAT_ARCHIVE,
@@ -1647,6 +1781,7 @@ describe("createSessionManager", () => {
       readAchievementDay: () => Promise.resolve(undefined),
       batchIntervalMs: BATCH_MS,
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
+      chatConsolidation: NO_CHAT_CONSOLIDATION,
       visit: NO_VISIT_PORTS,
       diary: NO_DIARY_WRITER,
       chatArchive: NOOP_CHAT_ARCHIVE,
@@ -1730,7 +1865,7 @@ describe("createSessionManager", () => {
         recall: () => ({ kind: "not-found" }),
         // 読み戻しは起こすときの配線（`src/session-start.ts`）が使う口で、ここは通らない。
         readRecent: () => ({ kept: [], recent: [] }),
-        unconsolidated: () => ({ entries: [], usedBytes: 0 }),
+        unconsolidated: () => ({ entries: [], usedBytes: 0, previousEpisodeTitle: "" }),
         appendEpisodes: () => {},
         recallList: () => ({ kind: "not-found" }),
         recallEpisode: () => ({ kind: "not-found" }),
@@ -1741,6 +1876,7 @@ describe("createSessionManager", () => {
         readAchievementDay: () => Promise.resolve(undefined),
         batchIntervalMs: BATCH_MS,
         chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
+        chatConsolidation: NO_CHAT_CONSOLIDATION,
         visit: NO_VISIT_PORTS,
         diary: NO_DIARY_WRITER,
         chatArchive,
@@ -1975,6 +2111,7 @@ describe("createSessionManager", () => {
         readAchievementDay: () => Promise.resolve(undefined),
         batchIntervalMs: BATCH_MS,
         chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
+        chatConsolidation: NO_CHAT_CONSOLIDATION,
         visit: NO_VISIT_PORTS,
         diary: NO_DIARY_WRITER,
         chatArchive: NOOP_CHAT_ARCHIVE,
@@ -2273,6 +2410,7 @@ describe("createSessionManager", () => {
         readAchievementDay: () => Promise.resolve(undefined),
         batchIntervalMs: BATCH_MS,
         chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
+        chatConsolidation: NO_CHAT_CONSOLIDATION,
         visit: NO_VISIT_PORTS,
         diary: NO_DIARY_WRITER,
         chatArchive: NOOP_CHAT_ARCHIVE,
@@ -2492,6 +2630,7 @@ describe("依頼に添えた画像の棚", () => {
       readAchievementDay: () => Promise.resolve(undefined),
       batchIntervalMs: BATCH_MS,
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
+      chatConsolidation: NO_CHAT_CONSOLIDATION,
       visit: NO_VISIT_PORTS,
       diary: NO_DIARY_WRITER,
       chatArchive: NOOP_CHAT_ARCHIVE,
@@ -2669,6 +2808,7 @@ describe("createSessionManager（見直し）", () => {
       readAchievementDay: () => Promise.resolve(undefined),
       batchIntervalMs: BATCH_MS,
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
+      chatConsolidation: NO_CHAT_CONSOLIDATION,
       visit: NO_VISIT_PORTS,
       diary: NO_DIARY_WRITER,
       chatArchive: NOOP_CHAT_ARCHIVE,
@@ -2797,6 +2937,7 @@ describe("訪問", () => {
       readAchievementDay: () => Promise.resolve(undefined),
       batchIntervalMs: BATCH_MS,
       chatCompactThresholdBytes: CHAT_COMPACT_THRESHOLD_BYTES,
+      chatConsolidation: NO_CHAT_CONSOLIDATION,
       visit: {
         timing: VISIT_TIMING,
         clock: manual.clock,

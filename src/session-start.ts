@@ -22,7 +22,12 @@ import {
 import { createChatArchive } from "./server/chat/adapter/chat-archive.ts"
 import { createChatSummary } from "./server/chat/adapter/chat-summary.ts"
 import { createPersonaMemory, readRememberedLines } from "./server/chat/adapter/persona-memory.ts"
+import { queryChatConsolidation } from "./server/chat/adapter/sdk-chat-consolidation.ts"
 import { readChatTopics } from "./server/chat/core/chat-compact.ts"
+import {
+  type ChatConsolidationSource,
+  createChatConsolidationWriter,
+} from "./server/chat/core/chat-consolidation-writer.ts"
 import { createContextUsageLog } from "./server/context-usage/adapter/context-usage-log.ts"
 import { type Config } from "./server/core/config.ts"
 import { appendDiaryParagraph } from "./server/diary/adapter/diary.ts"
@@ -169,6 +174,12 @@ export function startSession(options: SessionStartOptions): StartedSession {
     // 書き先の判定（雑談かどうか）は `session-manager` の `receive` が持つので、ここは口を
     // 渡すだけ。
     chatArchive,
+    // 定着の出どころ。いつ起こすかは `session-manager` が決める。疑似セッションでは claude を
+    // 起こさないので走らせない（`docs/chat-mode.md` 4.9）。
+    chatConsolidation:
+      fakeSession === undefined
+        ? chatConsolidationSource(chatArchive, cwd, config.inheritedEnv)
+        : { kind: "dont-consolidate" },
     // トークン消費の記録の口。書くかどうか・何を書くかを決めるのは `session-manager` なので、
     // ここも受け取った口を渡すだけ。
     tokenUsageLog,
@@ -322,6 +333,27 @@ function diaryWriterSource(
 }
 
 /**
+ * 定着の出どころ（`docs/design.md` 7章「定着はどこで走るか」）。書く先は会話のアーカイブと
+ * 同じ口と、パックごとのあらすじのファイル。`query()` は雑談のセッションと同じ作業先・
+ * 引き継いだ環境で起こす。
+ */
+function chatConsolidationSource(
+  chatArchive: ChatArchive,
+  cwd: string,
+  inheritedEnv: Readonly<Record<string, string | undefined>>,
+): ChatConsolidationSource {
+  return {
+    kind: "consolidate",
+    consolidate: createChatConsolidationWriter({
+      archive: chatArchive,
+      chatSummary: (packName) => createChatSummary(packName),
+      query: (request, signal) =>
+        queryChatConsolidation(request, { cwd, env: inheritedEnv }, signal),
+    }),
+  }
+}
+
+/**
  * 訪問の台本をその場で作る口（`docs/design.md` 5章「訪問の台本」）。人格と表情は**作るときに**
  * パックの一覧を読み直し、今日の成果は `readAchievementDay` と同じ数え方で読む（読めなければ
  * 「分からない」）。`query()` は仕事のセッションと同じ作業先・引き継いだ環境で起こす。
@@ -440,8 +472,8 @@ function rememberVisitEnabled(visitEnabled: boolean): SessionEvent {
 
 /**
  * そのモードのときだけ渡る口を1回の分岐でまとめる（`docs/design.md` 7章・7.1）。**雑談の4つは
- * 仕事のときに1つも渡らない**ので、`remember` / `forget` / `keep` / `index` / `recall` のツールも
- * `PostCompact` フックも載らず、作業の文脈が人格にもアーカイブにも入らない。
+ * 仕事のときに1つも渡らない**ので、`remember` / `forget` / `keep` / `index` / `recall` のツールが
+ * 載らず、作業の文脈が人格にもアーカイブにも入らない。
  *
  * 渡すのは書き口と同じ1つのアーカイブだが、**駆動から見えるのは旗を立てる動きと索引の2つだけ**
  * （`ChatKeep` / `ChatRecall`）。**パックの名前と読む量をここで縛ってから渡す**。

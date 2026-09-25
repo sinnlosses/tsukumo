@@ -598,11 +598,12 @@ function readUnconsolidated(
   limits: ChatUnconsolidatedLimits,
 ): ChatUnconsolidatedBatch {
   if (!isCharacterPackName(packName)) {
-    return { entries: [], usedBytes: 0 }
+    return { entries: [], usedBytes: 0, previousEpisodeTitle: "" }
   }
 
   const dir = join(root, packName)
-  const afterAt = readEpisodes(root, packName).at(-1)?.to
+  const previousEpisode = readEpisodes(root, packName).at(-1)
+  const afterAt = previousEpisode?.to
   const windowStartAt = readRecentEntries(dir, limits.recentBytes).at(0)?.at
 
   const all = dateFileNames(dir).flatMap((fileName) => {
@@ -629,7 +630,7 @@ function readUnconsolidated(
     entries.push({ at: timed.at, speaker: timed.entry.speaker, text: timed.entry.text })
     usedBytes += bytes
   }
-  return { entries, usedBytes }
+  return { entries, usedBytes, previousEpisodeTitle: previousEpisode?.title ?? "" }
 }
 
 /**

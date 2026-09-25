@@ -21,6 +21,9 @@ export const CHAT_TOPIC_LIMIT = 3
 const CHAT_TOPICS_OPEN = "<topics>"
 const CHAT_TOPICS_CLOSE = "</topics>"
 
+/** 話題の組1つ（{@link chatSynopsis} が除く範囲）。 */
+const TOPICS_BLOCK = new RegExp(`${CHAT_TOPICS_OPEN}[\\s\\S]*?${CHAT_TOPICS_CLOSE}`, "gu")
+
 /** 見出しの行の頭に付いた箇条の印（`- ` `* ` `・` `1. `）。 */
 const LIST_MARKER = /^(?:[-*・•]|\d+[.)])\s*/u
 
@@ -129,12 +132,33 @@ export function chatTopics(summary: string): readonly string[] {
 
 /**
  * パック1つぶんの写しを読み、最近の話題の見出しにして返す（写しがまだ無い・読めないときは
- * 空）。起こしたとき（`src/session-start.ts`）と、圧縮で写しが新しくなったとき
- * （`src/server/session-driver/adapter/sdk-driver.ts` の `PostCompact` フック）の2か所から呼ばれる。
- * **書いたあとの写しを読み直す**ので、画面に出る見出しは次に起こしたときと同じものになる。
+ * 空）。起こしたとき（`src/session-start.ts`）と、定着があらすじを書いたあと
+ * （`chat-consolidation-writer.ts`）の2か所から呼ばれる。**書いたあとの写しを読み直す**ので、
+ * 画面に出る見出しは次に起こしたときと同じものになる。
  */
 export function readChatTopics(chatSummary: ChatSummary): readonly string[] {
   return chatTopics(chatSummary.read()?.summary ?? "")
+}
+
+/**
+ * あらすじの本文の**いちばん最後**に、話題の見出しを {@link CHAT_TOPICS_OPEN} と
+ * {@link CHAT_TOPICS_CLOSE} の行で挟んで置く（1行1件、`- ` で始める。`docs/design.md` 7章
+ * 「雑談の記憶の要約はどこに置くか」）。末尾に置くのは、上限で古いほう（先頭側）の行から
+ * 落ちても組が先に落ちないため。見出しが0件でも組は置く（{@link chatTopics} が空を読む）。
+ */
+export function chatSummaryWithTopics(synopsis: string, topics: readonly string[]): string {
+  const block = [CHAT_TOPICS_OPEN, ...topics.map((topic) => `- ${topic}`), CHAT_TOPICS_CLOSE]
+  const body = synopsis.trimEnd()
+  return [...(body === "" ? [] : [body]), ...block].join("\n")
+}
+
+/**
+ * 写しの本文から話題の組（{@link CHAT_TOPICS_OPEN} から次の {@link CHAT_TOPICS_CLOSE} まで）を
+ * すべて除いた、あらすじの地の文を返す（定着へ「前のあらすじ」として渡す。閉じの無い組は
+ * 組と見なさず残す）。
+ */
+export function chatSynopsis(summary: string): string {
+  return summary.replaceAll(TOPICS_BLOCK, "").trim()
 }
 
 /**

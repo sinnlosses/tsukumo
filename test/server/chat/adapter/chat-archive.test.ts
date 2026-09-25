@@ -853,13 +853,17 @@ describe("createChatArchive の unconsolidated", () => {
 
     // 窓（recentBytes）には最新の1件だけが収まる大きさにする。
     const recentBytes = Buffer.byteLength("21日の依頼")
-    const { entries, usedBytes } = chatArchive.unconsolidated("fictional-pack", {
-      recentBytes,
-      maxBytes: 1024,
-    })
+    const { entries, usedBytes, previousEpisodeTitle } = chatArchive.unconsolidated(
+      "fictional-pack",
+      {
+        recentBytes,
+        maxBytes: 1024,
+      },
+    )
 
     expect(entries.map((entry) => entry.text)).toEqual(["19日の依頼", "20日の依頼"])
     expect(entries.map((entry) => entry.speaker)).toEqual(["user", "user"])
+    expect(previousEpisodeTitle).toBe("")
     expect(usedBytes).toBe(Buffer.byteLength("19日の依頼") + Buffer.byteLength("20日の依頼"))
   })
 
@@ -880,12 +884,13 @@ describe("createChatArchive の unconsolidated", () => {
     ])
 
     // 窓は使い切れないほど広く取り、to より後かどうかだけを見る。
-    const { entries } = chatArchive.unconsolidated("fictional-pack", {
+    const { entries, previousEpisodeTitle } = chatArchive.unconsolidated("fictional-pack", {
       recentBytes: 0,
       maxBytes: 1024,
     })
 
     expect(entries.map((entry) => entry.text)).toEqual(["20日の依頼", "21日の依頼"])
+    expect(previousEpisodeTitle).toBe("架空の見出し")
   })
 
   it("maxBytes で古いほうから区切り、溢れる1件は載せない（usedBytes で溜まった量が分かる）", () => {
@@ -910,6 +915,7 @@ describe("createChatArchive の unconsolidated", () => {
     expect(chatArchive.unconsolidated("../evil", { recentBytes: 0, maxBytes: 1024 })).toEqual({
       entries: [],
       usedBytes: 0,
+      previousEpisodeTitle: "",
     })
   })
 })

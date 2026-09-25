@@ -29,6 +29,7 @@ import {
 import { type PreviousUsageReview, type UsageReviewFindings } from "../../../shared/usage-review.ts"
 import { appendChatArchiveEntry } from "../../chat/core/chat-archive-entry.ts"
 import { type ChatCompactWatch, createChatCompactWatch } from "../../chat/core/chat-compact.ts"
+import { type ChatConsolidationSource } from "../../chat/core/chat-consolidation-writer.ts"
 import {
   type ContextUsageLog,
   createContextUsageRecorder,
@@ -66,6 +67,12 @@ export type SessionManagerOptions = {
    * 呼ばれた引数だけを覚えるスタブを渡す。
    */
   readonly chatArchive: ChatArchive
+  /**
+   * 定着の出どころ（`src/server/chat/core/chat-consolidation-writer.ts`）。**いつ起こすか
+   * （雑談の駆動由来のターンの終わり）と、同時に1本に絞るのはここ**（`docs/design.md` 7章
+   * 「定着はどこで走るか」）。疑似セッションでは `dont-consolidate`。
+   */
+  readonly chatConsolidation: ChatConsolidationSource
   /**
    * トークン消費の書き込み口（`src/server/token-usage/core/token-usage.ts` の契約。本番は
    * `createTokenUsageLog()`、テストは呼ばれた引数だけを覚えるスタブを渡す）。
@@ -232,6 +239,12 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
   // コンテキストの内訳の記録。**代をまたいで持つ** — 続きから起こして同じIDになったときは
   // 同じセッションなので、2行目を書かない（世代の持ち物には入れない）。
   const contextUsage = createContextUsageRecorder(options.contextUsageLog)
+  // 定着が走っているか。**代ではなくここに持つ**——起こし直しをまたいでも同時に1本のまま
+  // （同じパックへ起こし直した直後に、同じ未定着の行を2本で畳まない）。走っているあいだの
+  // 契機は捨てる（`docs/chat-mode.md` 4.9）。
+  let consolidating = false
+  // プロセスを終えるときに走っている1本を中断する（待たない。書きかけで止まれば追記済みまでが定着）。
+  const consolidationAbort = new AbortController()
 
   const helloFrame = (): ServerFrame => ({
     type: "hello",
@@ -319,11 +332,40 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
         tally.chatCompact.requestIfNeeded(driver)
       }
     }
+    // 定着を起こす。**雑談の駆動由来のターンの終わりだけ**で、走っていれば契機を捨てる。
+    // 待たずに次へ進む（docs/design.md 7章「定着はどこで走るか」）。
+    if (origin === "driver" && event.kind === "turn-finished" && state.chatMode) {
+      startConsolidation(state.character?.pack)
+    }
     // 訪問の出入りを決める。**駆動由来だけ**（復元の再生は前のセッションの待ち）。見張りが
     // 出した訪問のイベントもこの受け口へ戻ってくる（`visit-watch.ts`）。
     if (origin === "driver") {
       tally.visit.observe(event, at)
     }
+  }
+
+  /**
+   * そのパックの定着を1本起こす（走っていれば何もしない）。**書くのは起こした時点のパックの
+   * ファイル**で、書けたときの話題の見出しは、**そのときの状態が雑談で同じパックのときだけ**
+   * 今の代へ流す（起こし直しのあとに遅れて届いた結果が、別のパックの画面に混ざらない）。
+   */
+  const startConsolidation = (packName: string | undefined): void => {
+    const source = options.chatConsolidation
+    if (source.kind === "dont-consolidate" || packName === undefined || consolidating) {
+      return
+    }
+    consolidating = true
+    void source.consolidate(packName, consolidationAbort.signal).then((outcome) => {
+      consolidating = false
+      if (
+        outcome.kind === "written" &&
+        !closed &&
+        state.chatMode &&
+        state.character?.pack === packName
+      ) {
+        generation.emit({ kind: "chat-topics-changed", topics: outcome.topics })
+      }
+    })
   }
 
   /**
@@ -497,6 +539,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
       closed = true
       subscribers.clear()
       generation.close()
+      consolidationAbort.abort()
     },
   }
 }

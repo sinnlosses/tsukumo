@@ -248,7 +248,7 @@ function fakeChatArchive(): ChatArchive {
     writeIndex: () => {},
     recall: () => ({ kind: "not-found" }),
     readRecent: () => ({ kept: KEPT, recent: RECENT }),
-    unconsolidated: () => ({ entries: [], usedBytes: 0 }),
+    unconsolidated: () => ({ entries: [], usedBytes: 0, previousEpisodeTitle: "" }),
     appendEpisodes: () => {},
     recallList: () => ({ kind: "not-found" }),
     recallEpisode: () => ({ kind: "not-found" }),

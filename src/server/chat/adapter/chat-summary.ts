@@ -19,6 +19,7 @@ import { mkdirSync, rmSync, writeFileSync } from "node:fs"
 import { dirname, join } from "node:path"
 
 import { isCharacterPackName } from "../../../shared/character.ts"
+import { CHAT_MEMORY_BUDGET } from "../../../shared/chat-memory-budget.ts"
 import { byteLength } from "../../../shared/lib/byte-length.ts"
 import { tsukumoHomeDir } from "../../adapter/tsukumo-home.ts"
 import { readOptionalFile } from "../../character-pack/adapter/character-pack.ts"
@@ -35,10 +36,10 @@ const DELIVERED_MARK = "delivered"
 const UNDELIVERED_MARK = "undelivered"
 
 /**
- * 1ファイルの上限（`docs/design.md` 7章の表）。**印の行を含めて** 8 KiB——写しと印は同じ
- * 書き込みで揃う1つのファイルなので、上限も分けずに数える。
+ * 1ファイルの上限（`docs/design.md` 7章の表。容量の表の `synopsisBytes`）。**印の行を含めて**
+ * 数える——写しと印は同じ書き込みで揃う1つのファイルなので、上限も分けない。
  */
-export const CHAT_SUMMARY_LIMIT_BYTES = 8 * 1024
+export const CHAT_SUMMARY_LIMIT_BYTES = CHAT_MEMORY_BUDGET.synopsisBytes
 
 /**
  * 画面から作ったキャラクターパックと同じ親（`~/.tsukumo/chat-summary`）。書き込んでよいのは

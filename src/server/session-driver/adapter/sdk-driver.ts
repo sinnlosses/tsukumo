@@ -31,7 +31,6 @@ import { type EffortLevel, isEffortLevel, type PermissionMode } from "../../../s
 import { expressionNames as toExpressionNames } from "../../../shared/expression-choice.ts"
 import { parsePromptImage, type PromptImage } from "../../../shared/prompt-image.ts"
 import { type SessionEvent } from "../../../shared/session-event.ts"
-import { readChatTopics } from "../../chat/core/chat-compact.ts"
 import { createReportReview, type ReportReview } from "../../report/core/report-review.ts"
 import { createReportGate, type ReportGate } from "../../report/core/report-tool.ts"
 import { createUsageReviewIntake } from "../../usage-review/core/usage-review-tool.ts"
@@ -109,12 +108,9 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
     prompt: input.stream(),
     options: {
       ...buildQuerySeedOptions(options),
-      // `PostCompact` は雑談のときだけ、`Stop` はモードによらず常に登録する
-      // （{@link stopHooks}。effort を読む口は仕事でも雑談でも要るため）。
-      hooks: {
-        ...chatSummaryHooks(options.mode, options.onEvent),
-        ...stopHooks(options.mode, reportGate, options.onEvent),
-      },
+      // `Stop` はモードによらず常に登録する（{@link stopHooks}。effort を読む口は仕事でも
+      // 雑談でも要るため）。
+      hooks: stopHooks(options.mode, reportGate, options.onEvent),
       mcpServers: {
         [TSUKUMO_MCP_SERVER_NAME]: tsukumoServer(
           options.expressions,
@@ -236,50 +232,7 @@ export function buildQuerySeedOptions(options: SessionDriverOptions): QuerySeedO
 }
 
 /**
- * 雑談の要約の写しへ書き込む `PostCompact` フック（`docs/design.md` 7章）。**雑談のとき
- * （`options.mode` が `chat`）だけ登録する**——仕事のときは `hooks`
- * そのものを渡さない（undefined。`query()` 側は省略と同じ扱い）。
- *
- * `compact_summary` は**ログに出さず**、中身を読まずに {@link ChatSummary.write} へそのまま
- * 渡す（`docs/coding-standards.md`「会話内容の扱い」）。フックは `trigger` が `"manual"` でも
- * `"auto"` でも同じ扱いにする（`docs/design.md` 7章）。
- *
- * 写したあとは、**書いた写しから取り出した最近の話題の見出しだけ**を `chat-topics-changed` で
- * 流す（`docs/screen-design.md` 13.7）。取り出し方は core（`readChatTopics`）が持ち、ここは中身を
- * 見ない。
- *
- * `startSdkDriver` から切り出してあるのは、本物の `query()` を呼ばずにフックの中身を検査できる
- * ようにするため（{@link buildQuerySeedOptions} と同じ理由）。
- */
-export function chatSummaryHooks(
-  mode: SessionMode,
-  onEvent: (event: SessionEvent) => void,
-): Partial<Record<HookEvent, HookCallbackMatcher[]>> | undefined {
-  if (mode.kind !== "chat") {
-    return undefined
-  }
-
-  const { chatSummary } = mode
-  return {
-    PostCompact: [
-      {
-        hooks: [
-          async (input) => {
-            if (input.hook_event_name === "PostCompact") {
-              chatSummary.write(input.compact_summary)
-              onEvent({ kind: "chat-topics-changed", topics: readChatTopics(chatSummary) })
-            }
-            return {}
-          },
-        ],
-      },
-    ],
-  }
-}
-
-/**
- * `Stop` フックを1つ登録する。**モードによらず常に登録する**（`chatSummaryHooks` と違い
- * `undefined` を返さない）——effort を読む口（{@link EffortLevel}。`docs/screen-design.md` 13.9
+ * `Stop` フックを1つ登録する。**モードによらず常に登録する**——effort を読む口（{@link EffortLevel}。`docs/screen-design.md` 13.9
  * 「動き方の操作子」）は仕事でも雑談でも要るが、`report` の関所
  * （`src/server/report/core/report-tool.ts` の {@link createReportGate}）で止めるのは仕事のときだけ。
  * `SubagentStop` には載せない（サブエージェントの `report` は捨てるので、渡し直させても画面に
@@ -295,7 +248,7 @@ export function chatSummaryHooks(
  * だけなので、macrotask を1回待てば足りる（**雑談のときはこの待ちも関所の判定も行わない**）。
  *
  * `startSdkDriver` から切り出してあるのは、本物の `query()` を呼ばずにフックの中身を検査できる
- * ようにするため（{@link chatSummaryHooks} と同じ理由）。
+ * ようにするため（{@link buildQuerySeedOptions} と同じ理由）。
  */
 export function stopHooks(
   mode: SessionMode,

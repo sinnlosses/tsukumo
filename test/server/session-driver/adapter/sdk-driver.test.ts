@@ -5,7 +5,6 @@ import {
   type HookCallbackMatcher,
   type HookEvent,
   type PermissionMode as SdkPermissionMode,
-  type PostCompactHookInput,
   type SDKAssistantMessageError,
   type StopHookInput,
 } from "@anthropic-ai/claude-agent-sdk"
@@ -17,7 +16,6 @@ import {
 } from "../../../../src/server/report/core/report-tool.ts"
 import {
   buildQuerySeedOptions,
-  chatSummaryHooks,
   stopHooks,
 } from "../../../../src/server/session-driver/adapter/sdk-driver.ts"
 import {
@@ -107,8 +105,7 @@ describe("buildQuerySeedOptions", () => {
 })
 
 /**
- * 雑談モードの `SessionMode`（テスト用）。**検査するのは要約の写しの口だけ**なので、残りの3つは
- * 何もしない口を置く。
+ * 雑談モードの `SessionMode`（テスト用）。どの口も何もしない。
  */
 function chatMode(chatSummary: ChatSummary): SessionMode {
   return {
@@ -120,65 +117,15 @@ function chatMode(chatSummary: ChatSummary): SessionMode {
   }
 }
 
-/**
- * メモリ上の `ChatSummary`（テスト用）。`write` に渡った引数を控え、**書いたものを `read` が返す**
- * （フックは書いたあとの写しから最近の話題を読み直す）。
- */
-function fakeChatSummary(): ChatSummary & { readonly writtenSummaries: () => readonly string[] } {
-  const written: string[] = []
+/** 何もしない `ChatSummary`（`Stop` フックは写しに触らない）。 */
+function fakeChatSummary(): ChatSummary {
   return {
-    read: () => {
-      const summary = written.at(-1)
-      return summary === undefined ? undefined : { summary, delivered: true }
-    },
-    write: (summary) => {
-      written.push(summary)
-    },
+    read: () => undefined,
+    write: () => {},
     markUndelivered: () => {},
     markDelivered: () => {},
-    writtenSummaries: () => written,
   }
 }
-
-// フィクスチャは手で書いた架空の要約だけ（実物の会話は使わない。
-// docs/coding-standards.md「会話内容の扱い」）。
-const POST_COMPACT_INPUT: PostCompactHookInput = {
-  session_id: "s-1",
-  transcript_path: "/tmp/tsukumo-test/fake.jsonl",
-  cwd: "/tmp/tsukumo-test",
-  hook_event_name: "PostCompact",
-  trigger: "manual",
-  compact_summary:
-    "（テスト用の架空の要約）最近読んだ本の話をした。\n<topics>\n- 架空の本の話\n</topics>",
-}
-
-describe("chatSummaryHooks", () => {
-  it("仕事のとき（mode が work）は hooks を登録しない", () => {
-    expect(chatSummaryHooks(WORK_MODE, () => {})).toBeUndefined()
-  })
-
-  it("雑談のとき（mode が chat）だけ PostCompact を登録し、compact_summary をそのまま write へ渡す", async () => {
-    const chatSummary = fakeChatSummary()
-    const hooks = chatSummaryHooks(chatMode(chatSummary), () => {})
-
-    const callback = hooks?.PostCompact?.[0]?.hooks[0]
-    expect(callback).toBeDefined()
-    await callback?.(POST_COMPACT_INPUT, undefined, { signal: new AbortController().signal })
-
-    expect(chatSummary.writtenSummaries()).toEqual([POST_COMPACT_INPUT.compact_summary])
-  })
-
-  it("写したあと、書いた写しから取り出した最近の話題を流す", async () => {
-    const events: SessionEvent[] = []
-    const hooks = chatSummaryHooks(chatMode(fakeChatSummary()), (event) => events.push(event))
-
-    await hooks?.PostCompact?.[0]?.hooks[0]?.(POST_COMPACT_INPUT, undefined, {
-      signal: new AbortController().signal,
-    })
-
-    expect(events).toEqual([{ kind: "chat-topics-changed", topics: ["架空の本の話"] }])
-  })
-})
 
 /** `Stop` フックの入力（テスト用）。`last_assistant_message` は関所が見ないので載せない。 */
 function stopInput(stopHookActive: boolean, effortLevel?: string): StopHookInput {
