@@ -962,6 +962,11 @@ tsukumo を1つ起こし、URL を出す（`--scene` で疑似セッションの
 Network タブで `/ws` の upgrade が101を返し、`hello` フレームが届くかを見る。ここまで出ていれば
 配信はシロで、原因はページの側かホストの側にある。
 
+**目視のために起こす tsukumo は `TSUKUMO_VIEW_PORT` を 39000 番台に固定し**、ふだん使いの既定
+（7327 から始まる帯）と重ねない。`bun run scripts/stop.ts --port` は自分で起こしたポートにだけ打つ。
+**起こしたままの tsukumo は `bun run build` を打ち直しても古い組み立てを配り続ける。** 直しながら
+目視するなら `TSUKUMO_WATCH_UI=1` で起こすか、組み立てのたびに上げ直す。
+
 1. **`bun run build` を打ってから** Orca のターミナルで `bun run start` を1つ起動する
    （Claude Code の TUI は開かない）。成果物が無いと起動は前提不足で止まり、`src/browser/` の
    ほうが新しいと「古い画面が出る」1行が出る

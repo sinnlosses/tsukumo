@@ -476,6 +476,9 @@ bullet-proof-react の要素）」）。**`utils/` は 2026-09-21 に、`hooks/`
 `docs/history/decision.md`「design.md 2. 全体構成 / ディレクトリ（`components/` を3段に割った）」）。
 手本が空で置いている `states/` `types/` などは同じ理由で作らない。
 
+**ファイルを移すときは、パスを指す記述が `.ts` / `.tsx` だけでなく `.module.css` のコメントにも
+ある。** 洗い出す `grep -rn` の対象から `.module.css` を外さない。
+
 ### `components/ui/` の部品（variant の作法と一覧）
 
 **語彙を持たない部品は、見た目の違いを variant（props の文字列リテラルの合併型）で表す**
