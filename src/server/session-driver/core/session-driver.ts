@@ -166,7 +166,8 @@ export type ChatKeep = {
 /**
  * {@link ChatArchive.readRecent} に渡す2つの上限（どちらも文面の UTF-8 バイト数の合計）。
  * **旗のぶんは窓の外に足す**ので、読み戻し全体の上限は2つの和で決まる
- * （`src/shared/chat-log.ts` の `CHAT_RECENT_READBACK_BYTES` と `CHAT_KEPT_READBACK_BYTES`）。
+ * （`src/shared/chat-memory-budget.ts` の `CHAT_MEMORY_BUDGET.recentBytes` と
+ * `src/shared/chat-log.ts` の `CHAT_KEPT_READBACK_BYTES`）。
  */
 export type ChatReadbackLimits = {
   /** 直近の窓（古い順に落ちる側）。 */

@@ -11,6 +11,8 @@ import {
   type ChatSummary,
   type ChatSummaryRecord,
 } from "../../../../src/server/session-driver/core/session-driver.ts"
+import { CHAT_KEPT_READBACK_BYTES } from "../../../../src/shared/chat-log.ts"
+import { CHAT_MEMORY_BUDGET } from "../../../../src/shared/chat-memory-budget.ts"
 
 // フィクスチャは手で書いた架空の要約・会話だけ（実物の会話は使わない。
 // docs/coding-standards.md「会話内容の扱い」）。
@@ -21,7 +23,10 @@ const RECENT: readonly ChatArchiveRecentEntry[] = [
 ]
 
 const PACK_NAME = "fictional-pack"
-const LIMITS: ChatReadbackLimits = { recentBytes: 65_536, keptBytes: 8_192 }
+const LIMITS: ChatReadbackLimits = {
+  recentBytes: CHAT_MEMORY_BUDGET.recentBytes,
+  keptBytes: CHAT_KEPT_READBACK_BYTES,
+}
 
 /** メモリ上の `ChatSummary`（テスト用）。呼ばれた回数も数える。 */
 function fakeChatSummary(initial: ChatSummaryRecord | undefined): ChatSummary & {

@@ -8,13 +8,17 @@ import {
   type ChatArchiveRecentEntry,
   type ChatSummary,
   type ChatSummaryRecord,
+  type SessionMode,
   type SessionStart,
 } from "../../../../src/server/session-driver/core/session-driver.ts"
 import { SPEECH_CADENCE_PROMPT } from "../../../../src/server/system-prompt/core/speech-cadence.ts"
 import {
   type SystemPromptMode,
   takeSystemPromptAppend,
+  toSystemPromptMode,
 } from "../../../../src/server/system-prompt/core/system-prompt.ts"
+import { CHAT_KEPT_READBACK_BYTES } from "../../../../src/shared/chat-log.ts"
+import { CHAT_MEMORY_BUDGET } from "../../../../src/shared/chat-memory-budget.ts"
 
 // **`systemPrompt` に何が・どの順で載るか**を、3通り（仕事・雑談・続きから始めるとき）で固定する
 // （docs/design.md 7章）。**本物の駆動を起こして確かめることはできない**（`systemPrompt` は
@@ -52,7 +56,10 @@ describe("takeSystemPromptAppend", () => {
       chatSummary: fakeChatSummary({ summary: SUMMARY, delivered: false }),
       chatArchive: archive,
       packName: "架空",
-      readbackLimits: { recentBytes: 65_536, keptBytes: 8_192 },
+      readbackLimits: {
+        recentBytes: CHAT_MEMORY_BUDGET.recentBytes,
+        keptBytes: CHAT_KEPT_READBACK_BYTES,
+      },
     })
 
     const append = takeSystemPromptAppend({
@@ -164,6 +171,36 @@ describe("takeSystemPromptAppend", () => {
   })
 })
 
+describe("toSystemPromptMode", () => {
+  it("読み戻す量は表（CHAT_MEMORY_BUDGET）から読む", () => {
+    const chatSummary = fakeChatSummary({ summary: SUMMARY, delivered: false })
+    const chatArchive = fakeChatArchive()
+    const sessionMode: SessionMode = {
+      kind: "chat",
+      personaMemory: { remember: () => {}, forget: () => {}, finishTurn: () => {} },
+      chatSummary,
+      chatKeep: { keep: () => {} },
+      chatRecall: { index: () => {}, recall: () => ({ kind: "not-found" }) },
+    }
+
+    const mode = toSystemPromptMode(sessionMode, chatArchive, { kind: "new" }, "架空")
+
+    expect(mode).toEqual({
+      kind: "chat",
+      memory: {
+        start: { kind: "new" },
+        chatSummary,
+        chatArchive,
+        packName: "架空",
+        readbackLimits: {
+          recentBytes: CHAT_MEMORY_BUDGET.recentBytes,
+          keptBytes: CHAT_KEPT_READBACK_BYTES,
+        },
+      },
+    })
+  })
+})
+
 /** 雑談のモード（記憶の口は呼ぶたびに作る。読む量は本物の配線と同じ値）。 */
 function chatMode(
   start: SessionStart,
@@ -177,7 +214,10 @@ function chatMode(
       chatSummary,
       chatArchive,
       packName: "架空",
-      readbackLimits: { recentBytes: 65_536, keptBytes: 8_192 },
+      readbackLimits: {
+        recentBytes: CHAT_MEMORY_BUDGET.recentBytes,
+        keptBytes: CHAT_KEPT_READBACK_BYTES,
+      },
     },
   }
 }

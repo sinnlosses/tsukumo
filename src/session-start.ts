@@ -87,7 +87,8 @@ import {
 import { visitCast } from "./server/visit/core/visit-script.ts"
 import { QUICK_VISIT_TIMING, VISIT_TIMING } from "./server/visit/core/visit-timing.ts"
 import { UNKNOWN_ACHIEVEMENT } from "./shared/achievement.ts"
-import { CHAT_COMPACT_THRESHOLD_BYTES, CHAT_RECALL_READBACK_BYTES } from "./shared/chat-log.ts"
+import { CHAT_COMPACT_THRESHOLD_BYTES } from "./shared/chat-log.ts"
+import { CHAT_MEMORY_BUDGET } from "./shared/chat-memory-budget.ts"
 import { type DismissUsageProposalCommand } from "./shared/command.ts"
 import { expressionChoices } from "./shared/expression-choice.ts"
 import { type SessionChoice } from "./shared/session-choice.ts"
@@ -452,7 +453,8 @@ function sessionMode(
 function chatRecallFor(chatArchive: ChatArchive, packName: string): ChatRecall {
   return {
     index: (line) => chatArchive.writeIndex(packName, line),
-    recall: (keyword) => chatArchive.recall(packName, keyword, CHAT_RECALL_READBACK_BYTES),
+    recall: (keyword) =>
+      chatArchive.recall(packName, keyword, CHAT_MEMORY_BUDGET.recallEpisodeBytes),
   }
 }
 

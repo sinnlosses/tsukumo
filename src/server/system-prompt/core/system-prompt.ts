@@ -15,7 +15,8 @@
 // ようになったら、層を写した `core/character-pack.ts` ではなく概念で切る
 // （`docs/architecture.md`「新しいコードを置く場所」）。
 
-import { CHAT_KEPT_READBACK_BYTES, CHAT_RECENT_READBACK_BYTES } from "../../../shared/chat-log.ts"
+import { CHAT_KEPT_READBACK_BYTES } from "../../../shared/chat-log.ts"
+import { CHAT_MEMORY_BUDGET } from "../../../shared/chat-memory-budget.ts"
 import { CHAT_MANNER_PROMPT } from "../../chat/core/chat-manner.ts"
 import {
   type ChatMemorySources,
@@ -82,7 +83,7 @@ export function toSystemPromptMode(
       chatArchive,
       packName,
       readbackLimits: {
-        recentBytes: CHAT_RECENT_READBACK_BYTES,
+        recentBytes: CHAT_MEMORY_BUDGET.recentBytes,
         keptBytes: CHAT_KEPT_READBACK_BYTES,
       },
     },

@@ -104,7 +104,7 @@ export type ChatMemorySources = {
   /** これから起こすキャラクターパックの名前。 */
   readonly packName: string
   /**
-   * 逐語で読み戻す量（バイト。`CHAT_RECENT_READBACK_BYTES` と `CHAT_KEPT_READBACK_BYTES`）。
+   * 逐語で読み戻す量（バイト。`CHAT_MEMORY_BUDGET.recentBytes` と `CHAT_KEPT_READBACK_BYTES`）。
    */
   readonly readbackLimits: ChatReadbackLimits
 }

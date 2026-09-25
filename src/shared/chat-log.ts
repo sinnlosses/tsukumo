@@ -118,46 +118,29 @@ export function chatLogRows(
 }
 
 /**
- * 雑談の記憶を畳む閾値（バイト）。**逐語で読み戻す量（{@link CHAT_RECENT_READBACK_BYTES}）の
- * 2倍**で、絶対値はその倍率から出ている——揃えると畳んだ範囲を次のセッションが丸ごと逐語で
- * 戻すことになり、忘却が起きない。値の根拠は `docs/chat-mode.md` 4.9「記憶の圧縮と忘却」。
+ * 雑談の記憶を畳む閾値（バイト）。**逐語で読み戻す量（`CHAT_MEMORY_BUDGET.recentBytes`。
+ * `src/shared/chat-memory-budget.ts`）の2倍**で、絶対値はその倍率から出ている——揃えると
+ * 畳んだ範囲を次のセッションが丸ごと逐語で戻すことになり、忘却が起きない。値の根拠は
+ * `docs/chat-mode.md` 4.9「記憶の圧縮と忘却」。
+ *
+ * **`/compact` と一緒に消える定数**（`docs/design.md` 7章「定着はどこで走るか」）。その口を
+ * 消す後段のタスクがこの定数ごと消す。
  */
 export const CHAT_COMPACT_THRESHOLD_BYTES = 131_072 satisfies number
 
 /**
- * 雑談を起こし直すときに、アーカイブから**逐語のまま**読み戻す量（バイト）。数えるのは各行の
- * 文面だけで、時刻・話者・表情は数えない。値の根拠は `docs/chat-mode.md` 4.9「直近の会話は
- * 逐語のまま読み戻す」。
- *
- * **畳む閾値（{@link CHAT_COMPACT_THRESHOLD_BYTES}）とは別の値で、閾値のほうが大きい。**
- * 前者は「いつ畳むか」、こちらは「新しいセッションへ逐語で何を渡すか」。**こちらが「覚えている
- * 距離」そのもの**で、閾値はその2倍に置く（隣に置いてあるのは、同じ物差し＝文面のバイト数で
- * 測るものだから）。
- */
-export const CHAT_RECENT_READBACK_BYTES = 65_536 satisfies number
-
-/**
- * 「残す」旗の付いたやり取りを、上の窓（{@link CHAT_RECENT_READBACK_BYTES}）の**外側に足して**
+ * 「残す」旗の付いたやり取りを、直近の窓（`CHAT_MEMORY_BUDGET.recentBytes`）の**外側に足して**
  * 読み戻す量（バイト）。数えるものは同じ（各行の文面だけ）。値の根拠は
  * `docs/chat-mode.md` 4.9「残すと決めた1往復は窓から落とさない」。
  *
  * **窓とは別に持つ。** 窓の中で優先すると、旗の付いた件が増えるほど直近が押し出され、
  * 「いまの話が通じなくなる」ほうへ倒れる。外に足せば、読み戻し全体の上限は
  * **64 KiB + 8 KiB** で決まったままになる。
+ *
+ * **`keep` ツールと一緒に消える定数**（`docs/design.md` 7章「定着はどこで走るか」）。その口を
+ * 消す後段のタスクがこの定数ごと消す。
  */
 export const CHAT_KEPT_READBACK_BYTES = 8_192 satisfies number
-
-/**
- * `recall` で索引を引いたとき、**当たった日から一度に読み戻す量**（バイト）。数えるものは
- * 上の2つと同じ（各行の文面だけ）。値の根拠は `docs/chat-mode.md` 4.9「古い雑談は索引を
- * 引いて思い出す」。
- *
- * **窓（{@link CHAT_RECENT_READBACK_BYTES}）とも旗（{@link CHAT_KEPT_READBACK_BYTES}）とも
- * 別に持つ。** あの2つは起こすときの `systemPrompt` に1回載るもので、こちらは**ターンの途中で
- * モデルが引いたときに戻り値として入るもの**。**1ターンに1回だけ**引けるので、1ターンで増える
- * 文脈はこの値で頭打ちになる。
- */
-export const CHAT_RECALL_READBACK_BYTES = 8_192 satisfies number
 
 /**
  * 雑談のログの文面（利用者の依頼とキャラクターのセリフ）の UTF-8 バイト数を数える。
