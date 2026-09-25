@@ -4,7 +4,7 @@
   "userCall": "きみ",
   "miniCall": "式神",
   "description": "このターミナルに棲みついた狐の付喪神。窓の向こうからいつも身を乗り出している。立ち絵は 4.3 の表情8つぶんをそろえてある（docs/requirements.md 4.4）。",
-  "license": "このリポジトリのために自作したもの。リポジトリのライセンスに従って自由に使ってよい。",
+  "license": "立ち絵・背景: このリポジトリのために自作したもの。リポジトリのライセンスに従って自由に使ってよい。日記の書体（yuji-syuku.ttf）: 「佑字【肅】(Yuji Syuku)」（書家・片岡佑之の揮毫を書体化。砧書体制作所 / Kinutafontfactory、https://github.com/Kinutafontfactory/Yuji）。SIL Open Font License, Version 1.1 で配布され、同梱・再配布・組み込みを明示的に許可している（OFL.txt: \"The fonts, including any derivative works, can be bundled, embedded, redistributed and/or sold with any software\"）。ライセンス全文は同ディレクトリの yuji-syuku-OFL.txt。",
   "accent": "#6fe3cd",
   "chatAccent": "#f2984a",
   "expressions": {
@@ -33,5 +33,6 @@
   },
   "background": {
     "image": "background.png"
-  }
+  },
+  "diaryFont": "yuji-syuku.ttf"
 }
