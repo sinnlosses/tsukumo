@@ -67,12 +67,22 @@ type Preparation =
  * カタログの1件。`scene` は疑似セッション（test/fixture/fake-session.json）の場面の名前で、`name` は
  * **画像のファイル名と `--only` の名指しに使う一意の名前**（同じ場面を別の操作で何枚も撮るので、
  * 場面の名前では足りない）。
+ *
+ * `skipReveal` は、撮る前に「書き上げていくように見せる演出」
+ * （`src/browser/domain/reveal/use-report-reveal.ts`）を着地させておくか。**レポートが長い場面
+ * （`notation`）は演出が終わるまで約15秒かかり、そのあいだ演出自身の自動送りが筆先を追い続けて
+ * 器を送る**ので、こちらが `scroll` で送った位置をフレームごとに引き戻される（図・グラフは
+ * 演出のいちばん最後に出る塊で、演出中はまだ見えていない）。演出はクリックと**キー入力**で
+ * 打ち切れる（`use-report-reveal.ts` の `SKIP_EVENT_NAMES`）ので、`prepare` を当てる前に
+ * キーを1つ打って演出を終わらせてから送る。**当てない件は待ち時間が変わらない**ので既定は
+ * `false`。
  */
 type CatalogEntry = {
   readonly name: string
   readonly scene: string
   readonly label: string
   readonly prepare: readonly Preparation[]
+  readonly skipReveal: boolean
 }
 
 /**
@@ -109,24 +119,62 @@ const TASK_BOARD_SELECTOR = 'button:has-text("一覧を見る")'
  * その名前と、撮る前に当てる操作をここに書く。
  */
 const CATALOG: readonly CatalogEntry[] = [
-  { name: "question-multi", scene: "question-multi", label: "質問（複数選択）", prepare: [] },
-  { name: "question-pair", scene: "question-pair", label: "質問（2問・長い説明）", prepare: [] },
+  {
+    name: "question-multi",
+    scene: "question-multi",
+    label: "質問（複数選択）",
+    prepare: [],
+    skipReveal: false,
+  },
+  {
+    name: "question-pair",
+    scene: "question-pair",
+    label: "質問（2問・長い説明）",
+    prepare: [],
+    skipReveal: false,
+  },
   {
     name: "question-long",
     scene: "question-long",
     label: "質問（長いラベルと長い説明・複数選択と単一選択）",
     prepare: [],
+    skipReveal: false,
   },
   {
     name: "question-preview",
     scene: "question-preview",
     label: "質問（選択肢ごとの preview を札の中、説明の下に出す）",
     prepare: [],
+    skipReveal: false,
   },
-  { name: "permission", scene: "permission", label: "許可プロンプト", prepare: [] },
-  { name: "report", scene: "report", label: "レポートとツールの進行", prepare: [] },
-  { name: "turn-history", scene: "turn-history", label: "ターンの札（4件）", prepare: [] },
-  { name: "notation", scene: "notation", label: "レポートの記法（引用・表・注意）", prepare: [] },
+  {
+    name: "permission",
+    scene: "permission",
+    label: "許可プロンプト",
+    prepare: [],
+    skipReveal: false,
+  },
+  {
+    name: "report",
+    scene: "report",
+    label: "レポートとツールの進行",
+    prepare: [],
+    skipReveal: false,
+  },
+  {
+    name: "turn-history",
+    scene: "turn-history",
+    label: "ターンの札（4件）",
+    prepare: [],
+    skipReveal: false,
+  },
+  {
+    name: "notation",
+    scene: "notation",
+    label: "レポートの記法（引用・表・注意）",
+    prepare: [],
+    skipReveal: false,
+  },
   // **記法の見本は領域に1枚ぶんが入らない**（1400x900 で 1358px のうち 855px が領域の外）。
   // 領域を伸ばして1枚にすると他の領域が重なって本番と別の姿になるので、**送って複数枚に分ける**。
   {
@@ -134,18 +182,23 @@ const CATALOG: readonly CatalogEntry[] = [
     scene: "notation",
     label: "レポートの記法（note の種別。領域を送った先）",
     prepare: [{ kind: "scroll", selector: NOTE_KINDS_SELECTOR }],
+    skipReveal: false,
   },
   {
     name: "notation-figure",
     scene: "notation",
     label: "レポートの記法（図。領域を送った先）",
     prepare: [{ kind: "scroll", selector: MERMAID_SELECTOR }],
+    // **図はレポートの末尾に近く、演出が終わるまで自動送りに送り位置を戻され続ける**（冒頭の
+    // `skipReveal` の説明）。
+    skipReveal: true,
   },
   {
     name: "notation-chart",
     scene: "notation",
     label: "レポートの記法（グラフ。領域を送った先）",
     prepare: [{ kind: "scroll", selector: CHART_SELECTOR }],
+    skipReveal: true,
   },
   {
     name: "task-board",
@@ -155,30 +208,35 @@ const CATALOG: readonly CatalogEntry[] = [
       { kind: "click", selector: SIDEBAR_TAB_SELECTOR },
       { kind: "click", selector: TASK_BOARD_SELECTOR },
     ],
+    skipReveal: false,
   },
   {
     name: "command-suggestions",
     scene: "report",
     label: "「/」のコマンド補完",
     prepare: [{ kind: "type", selector: COMPOSER_SELECTOR, text: "/c" }],
+    skipReveal: false,
   },
   {
     name: "file-suggestions",
     scene: "report",
     label: "「@」のファイル補完",
     prepare: [{ kind: "type", selector: COMPOSER_SELECTOR, text: "@src/browser/" }],
+    skipReveal: false,
   },
   {
     name: "character-screen",
     scene: "report",
     label: "キャラクター画面",
     prepare: [{ kind: "hash", hash: "#character" }],
+    skipReveal: false,
   },
   {
     name: "character-create",
     scene: "report",
     label: "キャラクターを作る画面",
     prepare: [{ kind: "hash", hash: "#character/new" }],
+    skipReveal: false,
   },
 ]
 
@@ -212,6 +270,13 @@ const SCENE_TAIL_MS = 1500
  */
 const PREPARE_TIMEOUT_MS = 2000
 const PREPARE_SETTLE_MS = 800
+
+/**
+ * 演出を打ち切るキー（`entry.skipReveal`。`use-report-reveal.ts` の `SKIP_EVENT_NAMES` は
+ * `keydown` ならどのキーでも拾うので、押すキーの意味は問わない）。フォーカスがどこにあっても
+ * `window` の listener が capture 段階で拾うので、打つ前にどこかへフォーカスを当てる必要も無い。
+ */
+const SKIP_REVEAL_KEY = "Escape"
 
 const USAGE = `使い方: bun run scripts/capture-catalog.ts [オプション]
 
@@ -303,6 +368,12 @@ async function captureShot(
     // **疑似セッションが流れ終わってから操作を当てる。** 流れている途中で押すと、狙った状態の手前で
     // 画面が組み直されて操作が空振りする。
     await page.waitForTimeout(SCENE_TAIL_MS)
+    if (entry.skipReveal) {
+      // **`prepare` の前に演出を終わらせる。** 演出中は自動送りがフレームごとに器を送り直す
+      // ので、あとに続く `scroll` の送り先をそのたびに引き戻される（{@link CatalogEntry}
+      // の `skipReveal` の説明）。
+      await page.keyboard.press(SKIP_REVEAL_KEY)
+    }
     for (const step of entry.prepare) {
       await applyPreparation(page, step)
     }
