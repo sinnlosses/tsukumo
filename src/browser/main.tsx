@@ -89,9 +89,11 @@ function Root(): ReactElement {
       {/* 画面のナビの帯（13.9）。**どの画面でも最上部に出る**ので、画面を選ぶ分岐の外に置く。
           会話の画面の `<Layout>` は、帯が奪う高さを CSS の変数（theme.css）から読んで縮む。 */}
       <ScreenNav />
-      {/* 書き終わりの知らせ（13.10「書き終わりの知らせ」）。**どの画面でも出す**ので、帯と同じく
-          画面を選ぶ分岐の外に置く。 */}
-      <DiaryNotice />
+      {/* 書き終わりの知らせ（13.10「書き終わりの知らせ」）。**成果の画面でだけ出す**。ほかの画面へ
+          移っても「×」で消したかどうかを忘れないよう、外さずに `<Activity>` で隠す。 */}
+      <Activity mode={screen === "achievement" ? "visible" : "hidden"}>
+        <DiaryNotice />
+      </Activity>
       <Activity mode={screen === "conversation" ? "visible" : "hidden"}>
         <Layout
           main={chatMode ? <ChatView /> : <MainView />}

@@ -1,11 +1,12 @@
 // つくもの日記帳の見開き（`<DiaryBook>`。`docs/screen-design.md` 13.10「日記帳の見開き」）。
-// `hooks/use-diary-book.ts` が畳んだ値をそのまま並べるだけの部品——`DiarySection` /
-// `LanternCalendar` と同じく、フックは持たない（`docs/design.md` 2章「機能の中を分ける」）。
+// `hooks/use-diary-book.ts` が畳んだ値をそのまま並べるだけの部品。呼ぶフックは、右ページの本文を
+// 測って縮める `hooks/use-fit-diary-page.ts` だけ（外の世界に触るフックだけを外へ出す形。
+// `docs/design.md` 2章「機能の中を分ける」）。
 //
 // **`<Dialog>` は開閉に関わらず常に描画し、中身だけ `open` で出し分ける**（`speech-log.tsx` と
 // 同じ形）。開閉・Esc・backdrop のクリックは `components/ui/dialog/dialog.tsx` が持つ。
 
-import { type ReactElement } from "react"
+import { useRef, type ReactElement } from "react"
 
 import { Portrait } from "../../../components/domain/portrait.tsx"
 import { Button } from "../../../components/ui/button/button.tsx"
@@ -24,6 +25,7 @@ import {
   type DiaryBookTaskList,
   type DiaryBookTocMonth,
 } from "./hooks/use-diary-book.ts"
+import { useFitDiaryPage } from "./hooks/use-fit-diary-page.ts"
 import { Lamp } from "./lantern-calendar.tsx"
 
 const TITLE = "つくもの日記帳"
@@ -287,8 +289,11 @@ function RightPage(props: {
   readonly page: Extract<DiaryBookPage, { readonly kind: "ready" }>
 }): ReactElement {
   const { page } = props
+  const pageRef = useRef<HTMLDivElement>(null)
+  const bodyRef = useRef<HTMLDivElement>(null)
+  useFitDiaryPage(pageRef, bodyRef)
   return (
-    <div className={styles["diary-book-right"]}>
+    <div ref={pageRef} className={styles["diary-book-right"]}>
       <div className={styles["diary-book-date-head"]}>
         <span className={styles["diary-book-kanji-date"]}>{page.kanjiDate}</span>
         <span className={styles["diary-book-weekday"]}>{page.weekday}</span>
@@ -298,7 +303,7 @@ function RightPage(props: {
         </span>
       </div>
       {page.right.kind === "written" ? (
-        <div className={styles["diary-book-body"]}>
+        <div ref={bodyRef} className={styles["diary-book-body"]}>
           {page.right.paragraphs.map((paragraph) => (
             <p key={paragraph.key} className={styles["diary-book-paragraph"]}>
               {paragraph.timeLabel === undefined ? null : (
@@ -309,7 +314,9 @@ function RightPage(props: {
           ))}
         </div>
       ) : (
-        <p className={styles["diary-book-blank-body"]}>{BLANK_BODY}</p>
+        <div ref={bodyRef} className={styles["diary-book-blank-body"]}>
+          {BLANK_BODY}
+        </div>
       )}
       <HStack
         element="div"

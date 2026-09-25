@@ -488,8 +488,11 @@
   overflow-y: auto;
 }
 .diary-book-right {
-  /* 罫の間隔。本文の `line-height` と同じ値にして、1列が罫と罫のあいだに収まるようにする。 */
-  --diary-line: 2.625rem;
+  /* 罫の間隔。本文の `line-height` と同じ値にして、1列が罫と罫のあいだに収まるようにする。
+     `--diary-scale` は本文がページに収まるまで縮める倍率で、`hooks/use-fit-diary-page.ts` が
+     測って書く。字の大きさも罫もこの倍率を掛けるので、縮めても列は罫に揃ったまま。 */
+  --diary-line: calc(2.625rem * var(--diary-scale, 1));
+  --diary-text: calc(1.1875rem * var(--diary-scale, 1));
   position: relative;
   /* 日付の列と本文を右から左へ横に並べる。罫は右端から数えるので（`270deg`）、右の余白・
      日付の列・あいだを罫の間隔の倍数にしておけば、本文の列が罫に揃う。**本文が溢れて横に
@@ -646,7 +649,7 @@
 }
 .diary-book-kanji-date {
   font-family: var(--font-serif);
-  font-size: 1.375rem;
+  font-size: calc(1.375rem * var(--diary-scale, 1));
   font-weight: 700;
   color: var(--ink);
   letter-spacing: 0.15em;
@@ -666,9 +669,9 @@
   font-size: var(--font-action);
   color: color-mix(in srgb, var(--accent) 45%, var(--ink-quiet));
 }
-/* 本文。**縦書きの自然な伸び先は列（横方向）**なので、`overflow: auto` で両軸に任せる
-   （`docs/screen-design.md` 13.10「ページの中を縦にスクロール」は仮の決め）。 */
-/* 下は署名（`.diary-book-signature`）のぶん空ける。段落のあいだは1列ぶん（罫に揃えるため）。 */
+/* 本文。ふだんは `hooks/use-fit-diary-page.ts` が収まるまで縮めるので、`overflow: auto` が
+   効くのは縮めきっても収まらないときだけ（縦書きなので左へ送る）。
+   下は署名（`.diary-book-signature`）のぶん空ける。段落のあいだは1列ぶん（罫に揃えるため）。 */
 .diary-book-body {
   writing-mode: vertical-rl;
   text-orientation: mixed;
@@ -681,7 +684,7 @@
   margin: 0;
   margin-block-end: var(--diary-line);
   font-family: var(--font-diary);
-  font-size: 1.1875rem;
+  font-size: var(--diary-text);
   line-height: var(--diary-line);
   letter-spacing: 0.08em;
   color: var(--ink);
@@ -698,7 +701,7 @@
   min-width: 0;
   margin: 0 0 6.5rem;
   font-family: var(--font-diary);
-  font-size: 1.1875rem;
+  font-size: var(--diary-text);
   line-height: var(--diary-line);
   letter-spacing: 0.08em;
   color: var(--ink-quiet);

@@ -48,6 +48,9 @@ const BORROWED_DOM_GLOBAL_NAMES = [
   "InputEvent",
   "FocusEvent",
   "MutationObserver",
+  // `src/browser/components/page/achievement/hooks/use-fit-diary-page.ts`（日記帳の右ページの
+  // 本文を測って縮める）が、ページの大きさの変化を購読するのに要る。
+  "ResizeObserver",
   // `src/browser/domain/reveal/measure.ts`（筆先の居場所を行から測る）のテストが
   // **2つセットで**要る。`DOMRect` は**happy-dom がレイアウトを持たない**ので測った値を
   // 名乗らせるのに、`NodeFilter` は文字の節点をたどる `createTreeWalker` に渡すのに使う
