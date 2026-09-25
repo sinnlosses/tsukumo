@@ -955,6 +955,9 @@ tsukumo を1つ起こし、URL を出す（`--scene` で疑似セッションの
 **一時 index**（`GIT_INDEX_FILE`）を使うので、**作業ツリーも index も `dist/browser/` も読むだけ**で
 済む。`node_modules` はいま居る作業ツリーのものを symlink で借りるので `bun install` も要らない
 （**`package.json` をまたいで比べるときだけ**この前提が崩れる。そのときは取り出し先で手で打つ）。
+**`.git` も同じく symlink で借りる**ので、取り出し先で起こした tsukumo でも成果の画面が `main`
+の履歴を表示する（`.git` を書き換える呼び出しはここを通らない——読むだけの `git` しか打たない。
+`scripts/serve-revision.ts` の `lendGitDirectory`）。
 手順の前後で `git status --short` が変わっていないことを確かめてから `evidence` を書く。
 
 **配信側が疑わしいときは、ブラウザを開く前に `curl` で切り分ける。** 起動時にビューの URL が

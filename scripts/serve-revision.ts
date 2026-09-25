@@ -24,6 +24,10 @@
 // `bun install` はしない）。撮り比べる2点は普通ひと続きのコミットで、依存は同じ。
 // **`package.json` をまたいで比べるときだけ**この前提が崩れるので、そのときは取り出し先で
 // `bun install` を手で打つ。
+//
+// **`.git` も同じく symlink で貸す**。無いと成果の画面が「main が読めない」になる
+// （`src/server/achievement/adapter/main-history.ts`）。取り出し先で打つ `git` は読み取り専用
+// だけ（`lendGitDirectory` のコメント）なので、貸した `.git` を書き換える心配はない。
 
 import { type ChildProcess, execFileSync, spawn } from "node:child_process"
 import { existsSync, mkdirSync, symlinkSync } from "node:fs"
@@ -126,6 +130,7 @@ function extractRevision(commit: string): Revision | undefined {
   }
 
   lendNodeModules(treeDir)
+  lendGitDirectory(treeDir)
   return { sha, treeDir, homeDir }
 }
 
@@ -139,6 +144,26 @@ function lendNodeModules(treeDir: string): void {
     return
   }
   symlinkSync(path.join(repositoryRoot(), "node_modules"), link, "dir")
+}
+
+/**
+ * いま居る作業ツリーの `.git` を symlink で貸す。**成果の画面（`main` の履歴。
+ * `src/server/achievement/adapter/main-history.ts`）が `main` を読むのにこれが要る**
+ * （無いと「main が読めない」＝`{ kind: "unknown" }` になる）。
+ *
+ * `.git` は本体の作業ツリーそのままの形（ディレクトリでも、linked worktree の gitdir
+ * ポインタのファイルでも）を symlink で指すだけ——**書き換えない**。取り出し先で打つ `git` は
+ * `src/server/repository/adapter/git.ts` 経由のものだけで、そこはすべて読み取り専用
+ * （`rev-parse` / `log` / `ls-tree` / `rev-list` / `cat-file` / `ls-files`）なので、本物の
+ * index・ref・working tree の状態を書き換える呼び出しはここを通らない。
+ * **すでに貸してあれば何もしない**（`lendNodeModules` と同じ）。
+ */
+function lendGitDirectory(treeDir: string): void {
+  const link = path.join(treeDir, ".git")
+  if (existsSync(link)) {
+    return
+  }
+  symlinkSync(path.join(repositoryRoot(), ".git"), link)
 }
 
 /**
