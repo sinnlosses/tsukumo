@@ -39,7 +39,7 @@ sed -n '/^## 4\. shared/,/^## /p' docs/design.md
 | ## 7. キャラクターパック       | `character.json` + `persona.md` + 素材。人格の注入と切り替え、書き戻し、雑談のあらすじ・アーカイブ・定着・エピソード索引、パックの一覧と素材の URL |
 | ## 8. セッションの復元と複数化 | 復元（4.8）を新しい形に載せる。複数セッションへ広げる余地                                                                                          |
 | ## 9. 会話内容と安全           | `127.0.0.1`・Origin・起動トークン・ディスクに書く3つの例外と読み戻す口・定着・ブラウザ側のメモリ                                                   |
-| ## 10. テスト                  | reducer・スキーマ・部品・fake driver + Playwright・層の検査                                                                                        |
+| ## 10. テスト                  | reducer・スキーマ・部品・**E2E（走らせ方・成果物・シナリオ）**・層の検査                                                                           |
 | ## 11. ビルドと依存            | `bun build` の入口、tsconfig、**足す依存の一覧（承認済み）**                                                                                       |
 
 ## 1. 何を変え、何を残すか
@@ -682,7 +682,7 @@ class が付かないこと・`className` が足されること・**振る舞い
 呼ばないこと・`aria-disabled` / `aria-pressed` / `type`、ダイアログの `open` への追随と Esc・
 backdrop のクリックで `onClose` が呼ばれること・中のクリックでは呼ばれないこと）まで。
 **色や寸法が効いているか（絵）は守らない**——置き換えのたびに目視で確かめる
-（`docs/coding-standards.md`「描画は自動テストで守らない」）。
+（`docs/coding-standards.md`「DOM の構造と画面の流れは E2E、見た目は目視」）。
 
 **部品の一覧**（2026-09-25 時点。props はすべて必須で、「`className` で渡すもの」は置き方の
 ほかに渡してよい目安）:
@@ -3172,12 +3172,167 @@ export const CHAT_RECALL_SCORE = {
 | `server`（ws）                 | 接続 → `hello` が返る、トークン無しは 403、Origin 違いは 403、コマンド → 駆動が呼ばれる                                        | `test/server/view-server/adapter/server.test.ts`        |
 | browser の部品                 | `bun test` + `happy-dom` + `@testing-library/react`。**役割と文言で当てる**（HTML の文字列一致はしない）                       | `test/browser/**`                                       |
 | 層の検査                       | `shared ← core` / `shared ← browser` / `core ⟂ browser` の3辺。外部ツールは増やさない                                          | `test/architecture.test.ts`                             |
-| 画面全体                       | **fake driver で起こした tsukumo に Playwright**（`webapp-testing` スキル）。数値で読めるものは CDP で読む。色・間合いは人の目 | `scripts/`（本体から呼ばれない）                        |
+| 画面の見た目                   | **fake driver で起こした tsukumo に Playwright**（`webapp-testing` スキル）。数値で読めるものは CDP で読む。色・間合いは人の目 | `scripts/`（本体から呼ばれない）                        |
 | 状態のカタログ                 | 疑似セッションの場面を名指しして起こし直し、広い窓と狭い窓で撮って索引 HTML に並べる（`TSUKUMO_FAKE_SCENE`）                   | `scripts/capture-catalog.ts`                            |
+| E2E                            | **fake driver で起こした tsukumo を手元の Chrome で開き、DOM の構造と WebSocket の流れを期待値と比べる**（下の「E2E」）        | `test/e2e/`                                             |
 
-**ブラウザに出た絵は自動テストで守らない**、という方針は変えない。変わるのは「claude を起こさずに
-絵を出せる」こと（fake driver）で、目視の手順が `docs/architecture.md`「手で確かめること」から
-API を使わない形になる。
+**DOM の構造と画面の流れは E2E で守り、見た目（色・崩れ・間合い）は目視で確かめる**（2026-09-26
+決定。**E2E の足場ができるまでは下の3節が「作る形」で、`test/e2e/` はまだ無い**）。
+E2E が判定に使うのは DOM の構造と WebSocket のメッセージの列だけで、スクリーンショットは目視の
+添え物（判定しない）。目視の手順は `docs/architecture.md`「手で確かめること」。
+
+### E2E の走らせ方
+
+- **ランナーは `bun:test`**（`describe` / `it` / `expect`。ランナーを足さない）。ブラウザは
+  `playwright-core` の `chromium`（`channel: "chrome"`、headless）で、既に `scripts/capture-*.ts`
+  が使っている依存の範囲に収まる。**新しい外部コマンドは足さない**（`git` はタスクの一覧の
+  場面で一時の作業先を作るのに使うが、tsukumo 自身が既に使っている）
+- **置き場所は `test/e2e/<シナリオ>.test.ts`**（1ファイル = 1つの機能のまとまり。`src/` の写しの
+  構成には従わない——E2E は1つのファイルの振る舞いではないため）。起こす・開く・成果物を
+  書く・比べるの足場は `test/e2e/` の中の1ファイルに置き、シナリオはそれを呼ぶだけにする
+- **`bun run check` の中の別の段にする。** `bun run test`（単体）は
+  `--path-ignore-patterns` で `test/e2e/` を外し、E2E は `bun run test:e2e`（`bun run build` を
+  打ってから `bun test --isolate --timeout=<長め> test/e2e/`）で走らせる。`check` は
+  `typecheck && lint && format:check && test && test:e2e` の順（安い段で先に落とす）。理由:
+  - `bun test --isolate` がときどき終わらない症状（未解決）と混ぜない。止まったときに、どちらの
+    段で止まったかが外から分かる
+  - 1件の時間切れの既定（5 秒）が単体と E2E で合わない。段を分ければ E2E の段だけ延ばせる
+  - 前提（`dist/browser/` と Chrome）が単体テストと違う。単体テストを1ファイル走らせるときに
+    Chrome を要らないままにする
+- **`dist/browser/` は E2E の段が自分で組み立てる**（`test:e2e` の頭の `bun run build`）。起動は
+  古い成果物でも止まらずに配る（11章）ので、組み立てを前提にすると `src/browser/` を直したあと
+  の E2E が古い画面を確かめて通ってしまう
+- **Chrome が無ければ E2E の段は前提不足で落ちる**（飛ばさない。飛ばすと黙って守らなく
+  なる）。落ちるときの文言に「手元の Chrome が要る」と書く
+- **ブラウザは1ファイルに1つ、tsukumo は1件ごとに1つ起こす**（`beforeAll` でブラウザ、1件ごとに
+  tsukumo とブラウザのコンテキスト）。起こした tsukumo は `afterEach` で自分の pid だけに
+  `SIGTERM` を送り、終わるのを待ってから一時のディレクトリを消す（後始末を E2E の側で閉じる。
+  広いパターンで止めない）
+- **起こし方**: `TSUKUMO_DRIVER=fake`・`TSUKUMO_VIEW_PORT=0`（空きポート。並べた作業ツリーと
+  ぶつからない）・`TSUKUMO_OPEN_VIEW=0`・`TSUKUMO_WATCH_UI=0`・`TSUKUMO_HOME` は1件ごとの
+  一時ディレクトリ・**cwd も1件ごとの一時ディレクトリ**（リポジトリで起こすと `develop/task/`
+  の実データと git の履歴が画面に入り、日ごとに変わる）・`TZ=Asia/Tokyo`・下の固定の時計。
+  **親の環境から `TSUKUMO_` で始まる変数は外してから渡す**（手元で `TSUKUMO_VISIT_QUICK` などを
+  立てていると結果が変わるため）。キャラクターは指定せず、空のホームで同梱の既定を使う
+- 場面は `TSUKUMO_FAKE_SCENE` で名指しするか、入力欄から依頼を送って次の場面を流す。
+  **場面が流れ終わるのを時間で待たない**——WebSocket で届いたイベント（たとえば `turn-finished`）
+  を待ってから次へ進む。長い場面（20 秒を超えるもの）は途中のイベントで止めて撮り、流れ切るのを
+  待たない。**場面を速く流す口は足さない**（ブラウザ側の間合い〔吹き出しを 2 秒空ける〕との
+  比が変わり、目視用の場面と別の姿になる）。必要な瞬間が遅い場面は、短い場面を疑似セッションに足す
+- 所要時間の目安は E2E の段で 60 秒まで。超えたら件を削らずに `--parallel` を足す（ポートも
+  ホームも1件ごとに分かれているので並べてよい）
+- `bunfig.toml` の preload（`test/dom-environment.ts` の DOM のグローバル）は E2E の段にも
+  かかる。`playwright-core` と干渉したら、E2E の段だけ preload を外す形を足場の側で作る
+
+### E2E の成果物と再現
+
+**判定に使うのは2つだけ**で、どちらも JSON にする。
+
+- **DOM の構造**（`<シナリオ>.dom.json`）: `page.evaluate` で `document.body` から木を組む。
+  - **残す**: 要素の名前・`role`・`aria-*`（id を指すもの〔`aria-controls` など〕は除く）・
+    `data-*`・入力の状態（`type`・`disabled`・`checked`・`value`・`open`）・`href`（下の置き換えを
+    通したもの）・`img` の `alt` と `src` のパス部分・`time` の `dateTime`・文字（空白を1つに
+    畳む）
+  - **落とす**: `class`・`style`・`id`・描かれていない要素（`checkVisibility()` が偽）・
+    `svg` と `canvas` の中身（要素と `data-*` だけ残す。図とグラフの中身はライブラリの出力）・
+    **属性を1つも持たない `div` / `span`**（子を親へ繰り上げる。レイアウトの入れ物で、
+    見た目の直しのたびに増減する）
+  - **状態が `class` にしか出ていないものは、E2E で見たくなったときに `data-*` か `aria-*` に
+    出す**（CSS Modules の class は `名前_ハッシュ` に焼かれ、名前も見た目の直しで変わる。
+    意味の契約は `data-*`・`aria-*`・文字に置く）
+- **WebSocket のメッセージの列**（`<シナリオ>.messages.json`）: `page.on("websocket")` で送った
+  コマンドと受け取ったフレームを届いた順に並べる。
+  - `events` フレームは**束をほどいてイベント1件ずつ**にする（束の切れ目は
+    `batchIntervalMs` と実時間で決まり、走らせるたびに変わる）
+  - `hello` は `protocolVersion` だけを残す（状態の全体は DOM の構造の側で見る）。`refresh` は
+    落とす。コマンドの `commandId` は現れた順の番号に置き換える
+  - `character-changed` はいまのパックの名前と表情だけを残す（同梱のパックの一覧はパックを
+    直すたびに変わり、シナリオが確かめたいことではない）
+
+**両方に共通の置き換え**: リポジトリの絶対パス → `<root>`、一時のホーム → `<home>`、一時の
+cwd → `<cwd>`、ポート → `<port>`。**起動トークン（`t=`）は成果物に書かない**。
+
+**時計の固定**:
+
+- **サーバの時計は `TSUKUMO_FIXED_CLOCK`（ISO 8601 の瞬間）で凍らせる**。進まない時計にする——
+  場面の手は本物の `setTimeout` で届くので、進む時計だと `at` とそこから出る「N 秒」が走らせる
+  たびにずれる。凍らせると `at` は全部同じ値になり、経過は 0 になる（経過の計算は `shared` の
+  単体テストが守る）。名前は `src/server/core/config.ts` に置いて `readConfig` が読み、配線が
+  時計を読む1箇所へ渡す
+- **サーバで `Temporal.Now` を読むのは `src/server/adapter/local-time.ts` だけにする**（いまは
+  `src/session-start.ts` にも3箇所ある。原則3の「外の世界の値を読む1箇所」に寄せ、固定の値は
+  そこへ注入する）。ブラウザで読むのは `src/browser/utils/clock.ts` だけ（いまもそう）。**この
+  2つ以外に `Temporal.Now` が無いことを `test/architecture.test.ts` で縛る**（固定が黙って
+  効かなくならないように）
+- **タイムゾーンはサーバは子プロセスの `TZ`、ブラウザはコンテキストの `timezoneId`**（どちらも
+  `Asia/Tokyo`。コードは足さない）
+- **ブラウザの時計は E2E の側だけで差し替える。** `page.clock.install({ time })` は `Date.now()` を
+  差し替えるが `Temporal.Now` は差し替えない（実測）ので、`page.addInitScript` で
+  `Temporal.Now.instant()` を `Date.now()` に従わせる（本番のコードに試験用の口を作らない。読む
+  場所が `clock.ts` の1つなので、そこが呼ぶ関数だけ差し替えれば足りる）。撮る前に
+  `page.clock.pauseAt(<固定の瞬間> + <シナリオごとの固定の経過>)` で止め、「何秒前」の類いを
+  揃える
+- **ビューポートは 1400x900**（`capture-catalog.ts` の広い窓と同じ）、`deviceScaleFactor` 1、
+  `locale` は `ja-JP`、**`reducedMotion: "reduce"`**（レポートの演出を切る）。狭い窓の
+  積み替えを見るシナリオだけ 720x900
+- **書体は固定しない。** 判定は画素を見ないので書体に依らない（スクリーンショットは添え物）
+
+**置き場所と比べ方**:
+
+- **期待値は `test/e2e/expected/<シナリオ>.dom.json` と `<シナリオ>.messages.json`** に置いて
+  リポジトリに入れる（入るのは疑似セッションの手書きの会話と、上の置き換えを通した値だけ）
+- **走らせた結果とスクリーンショットは `/tmp/tsukumo-e2e/<シナリオ>/`** に毎回書き直す
+  （リポジトリには置かない。落ちたときに期待値と見比べる場所）
+- 比べ方は JSON を読んで `toEqual`。**期待値が無ければ落とす**（黙って書かない）
+- **期待値を更新する手順**: `bun run test:e2e:update`（`E2E_UPDATE=1` を立てて E2E の段を
+  走らせ、期待値を書き直す）→ `git diff test/e2e/expected/` で変わった構造とメッセージを読み、
+  意図した変化だけであることを確かめる → 直した変更と同じコミットに入れる。**同じ入力で2回
+  走らせて成果物が一致する**ことを足場を作ったときに確かめる
+
+### E2E のシナリオの一覧
+
+「担当」は後段のタスクの割り振り。「載せない」は終わりの構造では捕まえられないもの。
+
+| シナリオ（機能）                                         | 場面（`fake-session.json`）                                                          | 担当             |
+| -------------------------------------------------------- | ------------------------------------------------------------------------------------ | ---------------- |
+| ターンの流れ（依頼 → ツール → report → 締めの speak）    | `report-tool`                                                                        | 1本目            |
+| 入力欄から送る（`prompt` が流れ、`request` が戻る）      | 名指し無し（`opening` → 送ると `report`）                                            | 会話             |
+| speak → キャラビューの吹き出し                           | `closing-narration`・`question-multi`（セリフ3つ）                                   | 会話             |
+| report → メインビュー（記法・差し戻し・整え）            | `notation`・`report-rejected`・`report-tidied`                                       | 会話             |
+| 途中の発話と流れる本文                                   | `narration`・`long-report`                                                           | 会話             |
+| 許可のモーダル（押すと `answer` が流れ、箱が消える）     | `permission`                                                                         | 会話             |
+| 質問（単数・複数・プレビュー）                           | `question-pair`・`question-multi`・`question-long`・`question-preview`               | 会話             |
+| 続きのターン（`turn-resumed`）                           | `resumed-report`                                                                     | 会話             |
+| ツールの実行といまの作業                                 | `long-tool`（`tool-started` の直後で撮る）                                           | サイドバー       |
+| 背景のタスク                                             | `background-task`（再開まで 12 秒超。**短い版が足りない**）                          | サイドバー       |
+| ターンの履歴                                             | `turn-history`                                                                       | サイドバー       |
+| タスクの一覧                                             | **足りない**（一時の cwd に `git init` と手書きの `develop/task/` を置く足場が要る） | サイドバー       |
+| 雑談の切り替えと忘却の区切り                             | `chat-compact-boundary`                                                              | 雑談             |
+| 復元した雑談の履歴                                       | `chat-restored-history`                                                              | 雑談             |
+| `/` の補完                                               | 名指し無し（`opening` のコマンド一覧に打つ）                                         | 未割り当て       |
+| `@` の補完                                               | **足りない**（一時の cwd に手書きのファイルを置く）                                  | 未割り当て       |
+| API の不調（再試行・失敗・上限）                         | `api-retry`・`api-failure`・`rate-limit`                                             | 未割り当て       |
+| 書き終わりの知らせ                                       | `diary-written`                                                                      | 未割り当て       |
+| 訪問の出入り（画面にはまだ描かない。メッセージの列だけ） | `visit-long-tool`・`visit-background`（`TSUKUMO_VISIT_QUICK=1`）                     | 未割り当て       |
+| 確認のモーダル・日記帳の見開き・いまの作業の失敗         | **足りない**（疑似セッションに場面を足す別のタスクがある）                           | 未割り当て       |
+| 途中のちらつき・止まって見える発話                       | `interim-flicker`・`narration-stuck`・`narration-flash`                              | 載せない（目視） |
+
+成果の画面・キャラクター画面・使用量の画面は、git の履歴とホームの中身から組むので、一時の
+cwd とホームに手書きの材料を置く足場ができてから一覧に足す。
+
+### E2E に任せず単体テストに残すもの
+
+E2E が通るのは**疑似セッションに書いた並びだけ**で、fake driver は `SessionEvent` を直に流すので
+**SDK のメッセージから `SessionEvent` への写しは1行も通らない**。次は E2E があっても単体テストに
+残す:
+
+- `sdk-` で始まるファイルの写し（SDK のメッセージ → `SessionEvent`）の全部
+- 畳み込み（`applySessionEvent` など `test/shared`）のうち、**疑似セッションに同じ並びが無い
+  もの**・**未知の `type` / `kind` を無視するもの**・境界の検証（zod スキーマの受け付ける形と
+  落とす形）。消してよいのは、同じ並びをシナリオが流して DOM の構造で結果を固定しているものだけ
+- 時刻に依る計算（経過・日の境目）。E2E は時計を凍らせるので見えない
+- 再接続・版の食い違い・バッチの束ね方・エラー方針の分岐（起動時の即時終了・その回だけ諦める）
+- `docs/coding-standards.md`「消すかどうか」表で「残す」としたもの（書式の固定・回帰テスト）
 
 ## 11. ビルドと依存
 

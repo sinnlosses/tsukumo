@@ -64,7 +64,7 @@ Orca 経由の入力送信はコードごと消えた**ので、ホストに依�
 
 ```bash
 bun run check                 # typecheck + lint + format:check + test（変更後は必ずこれを通す）
-bun run test                  # テスト全体（`bun test --isolate`。**素の `bun test` は使わない**
+bun run test                  # 単体テスト全体（`bun test --isolate`。**素の `bun test` は使わない**
                               #   — `mock.module` がファイルをまたいで漏れ、19件が落ちる）
 bun test --isolate test/cli.test.ts  # 単体テストファイルのみ実行
 bun run typecheck             # tsc --noEmit
@@ -147,8 +147,10 @@ Orca 内のブラウザタブに出て、**入力もそこで行う**（入力�
 [`docs/coding-standards.md`](./docs/coding-standards.md)「テスト」節が正典（ここには二重に
 書かない）。TDD推奨（`/tdd` スキル参照）。
 
-**ブラウザに出た絵は自動テストで守らない。** 配信（バインド先・経路・push）まではテストし、
-実際に見えているかは目視で確認する。手順は `docs/architecture.md`「手で確かめること」。
+**DOM の構造と画面の流れは E2E で守り、見た目（色・崩れ）は目視で確かめる。** E2E は fake driver で
+起こした tsukumo を手元の Chrome で開き、DOM の構造と WebSocket の流れを期待値と比べる
+（`bun run check` の最後の段に入れる。足場はまだ無く、形は `docs/design.md` 10章「E2E の走らせ方」）。目視の手順は
+`docs/architecture.md`「手で確かめること」。
 
 **IMPORTANT**: 変更後は必ず `bun run check` を通してから完了を報告する。テスト件数・エラーなどの
 根拠なしに「完了しました」と言わない。**描画に関わる変更は、加えて何をどう確かめたか**

@@ -2,7 +2,7 @@
 // preview の折りたたみなど）は main-view.test.tsx の `describe("MainView（質問の記録）")` が
 // 持っているので、ここでは触らない。
 //
-// **色そのものはテストしない**（`CLAUDE.md`「ブラウザに出た絵は自動テストで守らない」）。
+// **色そのものはテストしない**（`CLAUDE.md`「見た目（色・崩れ）は目視で確かめる」）。
 // 差し色が当たる側の class を持つこと、区切りが成り立つ DOM 構造になっていることまでを測る。
 
 import { afterEach, describe, expect, it } from "bun:test"

@@ -9,8 +9,8 @@ import { contextUsage } from "../../../../fixture/context-usage.ts"
 // いまのコンテキストの内訳の札（`context-usage-card.tsx`）。**フックは素通し**なので、畳んだ
 // 形を手で書いて渡す（架空の内訳。docs/coding-standards.md「会話内容の扱い」）。
 //
-// **見えているかどうかは目視で確かめる**（docs/coding-standards.md「描画は自動テストで
-// 守らない」）。ここで測るのは、どの行がどの順で出て、数がどう書かれるかまで。
+// **見えているかどうかは目視で確かめる**（docs/coding-standards.md「DOM の構造と画面の流れは
+// E2E、見た目は目視」）。ここで測るのは、どの行がどの順で出て、数がどう書かれるかまで。
 
 afterEach(() => {
   cleanup()
