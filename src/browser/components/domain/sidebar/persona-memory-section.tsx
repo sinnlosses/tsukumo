@@ -14,6 +14,7 @@
 
 import { useState, type MouseEvent, type ReactElement } from "react"
 
+import { HStack } from "../../../components/ui/h-stack/h-stack.tsx"
 import { useModalDialog } from "../../../hooks/use-modal-dialog.ts"
 import { useSessionDispatch, useSessionSelector } from "../../../stores/session.tsx"
 import { SidebarSection } from "./section.tsx"
@@ -143,7 +144,14 @@ function PersonaMemoryForgetConfirm(props: PersonaMemoryForgetConfirmProps): Rea
         「{props.line}」を消しますか
       </p>
       <p className={styles["sidebar-persona-memory-confirm-note"]}>消すと元に戻せない。</p>
-      <div className={styles["sidebar-persona-memory-confirm-actions"]}>
+      <HStack
+        element="div"
+        gap="sm"
+        align="stretch"
+        justify="end"
+        wrap="nowrap"
+        className={styles["sidebar-persona-memory-confirm-actions"] ?? ""}
+      >
         <button
           type="button"
           className={styles["sidebar-persona-memory-confirm-cancel"]}
@@ -158,7 +166,7 @@ function PersonaMemoryForgetConfirm(props: PersonaMemoryForgetConfirmProps): Rea
         >
           消す
         </button>
-      </div>
+      </HStack>
     </dialog>
   )
 }

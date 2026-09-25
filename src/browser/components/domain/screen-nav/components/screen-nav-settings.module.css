@@ -64,12 +64,8 @@
 .screen-nav-settings-heading ~ .screen-nav-settings-heading {
   margin-top: 0.8rem;
 }
-/* ラベルと操作子の2列（モックの形）。 */
+/* ラベルと操作子の2列（モックの形）。並べ・間隔（`gap="lg"`）・揃えは `HStack` が持つ。 */
 .screen-nav-settings-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
   min-height: 1.9rem;
 }
 /* 設定パネルの `<select>`（新しいセッションの既定・演出の速さ）。**帯のドロップダウンと同じ

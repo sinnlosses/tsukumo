@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test"
-import { readdirSync, readFileSync, statSync } from "node:fs"
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs"
 import { fileURLToPath } from "node:url"
 
 // 層をディレクトリで表す（docs/design.md 2章「層と依存の向き」）。ここは正規表現と node:fs だけで、
@@ -590,6 +590,332 @@ describe("components/ui/ の置き方", () => {
         (name) => `browser/components/ui/${name}/ に ${name}.tsx が無い`,
       ),
     ]
+
+    expect(offenders.join("\n")).toBe("")
+  })
+})
+
+// `components/ui/` の variant 部品（`Select` 以外）に渡す `className` の作法を検査で守る
+// （`docs/design.md` 2章「`components/ui/` の部品（variant の作法と一覧）」の「呼び出し側からの
+// 上書き（className）」節「検査で守る」）。(1) 呼び出し側が渡す `className` の式が
+// `styles["…"]` の字面（と `??`・テンプレート文字列での組み合わせ）だけでできていること、
+// (2) その class の CSS 規則（呼び出し側の `*.module.css` で、選択子の最後の複合にその class を
+// 含むもの。`::` の疑似要素は別の持ち物として数え、対象にしない）の property が、部品の CSS で
+// `:where()` の外に書いた property と重ならないことを見る。
+//
+// **対象は動的に決める**（`readonly className: string` を持つ `components/ui/` の部品。`Select` は
+// 作法の例外として名指しで外す）。自分の CSS を持たない薄い部品（`VStack` / `HStack`）は、
+// レンダーする先の部品（`Stack`）の CSS を辿って「持ち物」を決める——渡した class がそのまま
+// 同じ DOM ノードに乗るため。
+
+const CLASSNAME_PROP_PATTERN = /readonly className: string/
+const UI_COMPONENT_FILE_PATTERN = /^browser\/components\/ui\/([^/]+)\/\1\.tsx$/
+
+/** `styles["…"]` / `styles['…']` の字面だけを拾う。 */
+const STYLES_LITERAL_PATTERN = /styles\[(?:"([\w-]+)"|'([\w-]+)')\]/g
+
+/**
+ * `className` の式が「`styles["…"]` の字面と、`??`・テンプレート文字列での組み合わせ」だけで
+ * できているか。値を足すのは使う箇所が出たときだけにし、ここもいまの用途（字面1つ・`??` での
+ * 既定値・テンプレート文字列での連結）だけを許す。三項演算子の条件のように任意の式が混じる形は、
+ * 使う箇所が出たら合わせて広げる。
+ */
+function isAllowedClassNameExpression(expr: string): boolean {
+  const withoutLiterals = expr.replace(STYLES_LITERAL_PATTERN, "")
+  return /^[\s`$(){}?:."']*$/.test(withoutLiterals.replace(/\?\?/g, ""))
+}
+
+/** 式の中の `styles["…"]` が引く class 名をすべて拾う（重複を畳む）。 */
+function classNamesInExpression(expr: string): readonly string[] {
+  return [
+    ...new Set(
+      [...expr.matchAll(STYLES_LITERAL_PATTERN)].flatMap(
+        ([, a, b]) => (a ?? b ?? []) as string | [],
+      ),
+    ),
+  ]
+}
+
+/** `import styles from "…"` の specifier を、この `.tsx` からの `src/` 相対パスに解く。
+ * `styles` という名前で import していない（別名や無い）ファイルは `undefined`。 */
+function stylesImportPath(content: string, fromRelPath: string): string | undefined {
+  const match = /import\s+styles\s+from\s+["'](\.[^"']+)["']/.exec(content)
+  return match?.[1] === undefined ? undefined : resolveRelativeImport(fromRelPath, match[1])
+}
+
+/** ディレクトリ名（kebab-case）から、そこに置く部品の PascalCase の名前を作る。 */
+function pascalCaseOf(dirName: string): string {
+  return dirName
+    .split("-")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join("")
+}
+
+/**
+ * `readonly className: string` を持つ `components/ui/` の部品（`Select` を除く）の一覧。
+ * **自分の CSS を持たない薄い部品（`VStack` / `HStack`）は、`Omit<StackProps, "direction">` の
+ * ように型を経由するので、本文に `readonly className: string` の字面が無い。** レンダーする先
+ * （`.tsx` の `return <部品名`）を辿り、その先が対象ならこちらも対象に加える（固定点まで
+ * 繰り返し、転送が連なっても拾う）。
+ */
+function classNameCheckedUiComponents(): readonly {
+  readonly dirName: string
+  readonly name: string
+}[] {
+  const entries = listSourceFiles(SRC_ROOT)
+    .flatMap((relPath) => {
+      const match = UI_COMPONENT_FILE_PATTERN.exec(relPath)
+      return match?.[1] !== undefined ? [{ relPath, dirName: match[1] }] : []
+    })
+    .filter(({ dirName }) => dirName !== "select")
+    .map(({ relPath, dirName }) => ({
+      dirName,
+      name: pascalCaseOf(dirName),
+      content: readFileSync(`${SRC_ROOT}/${relPath}`, "utf8"),
+    }))
+
+  const checked = new Set(
+    entries.filter(({ content }) => CLASSNAME_PROP_PATTERN.test(content)).map((e) => e.dirName),
+  )
+  for (let grown = true; grown;) {
+    grown = false
+    for (const entry of entries) {
+      if (checked.has(entry.dirName)) {
+        continue
+      }
+      const renderedName = /return\s*<([A-Z]\w*)\b/.exec(entry.content)?.[1]
+      const renderedDirName = entries.find((e) => e.name === renderedName)?.dirName
+      if (renderedDirName !== undefined && checked.has(renderedDirName)) {
+        checked.add(entry.dirName)
+        grown = true
+      }
+    }
+  }
+
+  return entries
+    .filter((e) => checked.has(e.dirName))
+    .map(({ dirName, name }) => ({ dirName, name }))
+}
+
+type CssRule = {
+  readonly selectors: readonly string[]
+  readonly properties: readonly string[]
+}
+
+/** CSS の宣言ブロックを（ネストも含めて）1件ずつ切り出す。`@media` など宣言以外の入れ物は、
+ * 中に `{` を持つので除く。 */
+function cssRules(content: string): readonly CssRule[] {
+  const withoutComments = content.replace(/\/\*[\s\S]*?\*\//g, "")
+  const rules: CssRule[] = []
+  const stack: { readonly selectorStart: number; readonly bodyStart: number }[] = []
+  let cursor = 0
+  for (let i = 0; i < withoutComments.length; i++) {
+    const ch = withoutComments[i]
+    if (ch === "{") {
+      stack.push({ selectorStart: cursor, bodyStart: i + 1 })
+      cursor = i + 1
+    } else if (ch === "}") {
+      const frame = stack.pop()
+      if (frame !== undefined) {
+        const selectorText = withoutComments.slice(frame.selectorStart, frame.bodyStart - 1)
+        const bodyText = withoutComments.slice(frame.bodyStart, i)
+        if (!bodyText.includes("{") && !selectorText.trim().startsWith("@")) {
+          rules.push({
+            selectors: selectorText
+              .split(",")
+              .map((s) => s.trim())
+              .filter((s) => s.length > 0),
+            properties: declaredProperties(bodyText),
+          })
+        }
+      }
+      cursor = i + 1
+    }
+  }
+  return rules
+}
+
+/** 一括指定を、比べる先で使う個々の property に開く（開かないものは字面のまま返す）。 */
+const SHORTHAND_LONGHAND: Readonly<Record<string, readonly string[]>> = {
+  margin: ["margin-top", "margin-right", "margin-bottom", "margin-left"],
+  padding: ["padding-top", "padding-right", "padding-bottom", "padding-left"],
+  border: ["border-color", "border-width", "border-style"],
+  "border-top": ["border-top-color", "border-top-width", "border-top-style"],
+  "border-right": ["border-right-color", "border-right-width", "border-right-style"],
+  "border-bottom": ["border-bottom-color", "border-bottom-width", "border-bottom-style"],
+  "border-left": ["border-left-color", "border-left-width", "border-left-style"],
+  background: [
+    "background-color",
+    "background-image",
+    "background-position",
+    "background-size",
+    "background-repeat",
+  ],
+  flex: ["flex-grow", "flex-shrink", "flex-basis"],
+  gap: ["row-gap", "column-gap"],
+  inset: ["top", "right", "bottom", "left"],
+  font: ["font-style", "font-weight", "font-size", "line-height", "font-family"],
+}
+
+function declaredProperties(bodyText: string): readonly string[] {
+  const names = bodyText
+    .split(";")
+    .map((decl) => decl.split(":")[0]?.trim() ?? "")
+    .filter((name) => name.length > 0 && !name.startsWith("--"))
+  return names.flatMap((name) => SHORTHAND_LONGHAND[name] ?? [name])
+}
+
+/** 選択子の最後の複合（最後の結合子より後ろ）が、その class を持つか。`::` の疑似要素は
+ * 別の持ち物として数えるので対象にしない。 */
+function lastCompoundHasClass(selector: string, className: string): boolean {
+  const trimmed = selector.trim()
+  if (trimmed.includes("::")) {
+    return false
+  }
+  const compounds = trimmed
+    .split(/\s+|(?=[>+~])|(?<=[>+~])/)
+    .filter((part) => part.trim().length > 0)
+  const last = compounds[compounds.length - 1]
+  return last !== undefined && new RegExp(`\\.${className}(?=[.:#[]|$)`).test(last)
+}
+
+/** その class を最後の複合に持つ規則ぜんぶの property（重複を畳む）。 */
+function propertiesOfClass(cssContent: string, className: string): readonly string[] {
+  return [
+    ...new Set(
+      cssRules(cssContent).flatMap((rule) =>
+        rule.selectors.some((selector) => lastCompoundHasClass(selector, className))
+          ? rule.properties
+          : [],
+      ),
+    ),
+  ]
+}
+
+/**
+ * 部品が `:where()` の外に持つ property（呼び出し側の class と競ってはいけないもの）。
+ * 自分の CSS を持たない部品（`VStack` / `HStack`）は、レンダーする先の部品名を `.tsx` から辿って
+ * その CSS を見る（同じ DOM ノードに乗るため。`visited` は辿りが循環しないための歯止め）。
+ */
+function ownExternalProperties(
+  dirName: string,
+  visited: ReadonlySet<string> = new Set(),
+): readonly string[] {
+  if (visited.has(dirName)) {
+    return []
+  }
+  const cssRelPath = `browser/components/ui/${dirName}/${dirName}.module.css`
+  const tsxRelPath = `browser/components/ui/${dirName}/${dirName}.tsx`
+  if (existsSync(`${SRC_ROOT}/${cssRelPath}`)) {
+    const cssContent = readFileSync(`${SRC_ROOT}/${cssRelPath}`, "utf8")
+    return [
+      ...new Set(
+        cssRules(cssContent)
+          .filter((rule) =>
+            rule.selectors.every((selector) => !selector.trim().startsWith(":where(")),
+          )
+          .flatMap((rule) => rule.properties),
+      ),
+    ]
+  }
+  if (!existsSync(`${SRC_ROOT}/${tsxRelPath}`)) {
+    return []
+  }
+  const tsxContent = readFileSync(`${SRC_ROOT}/${tsxRelPath}`, "utf8")
+  const renderedTagMatch = /return\s*<([A-Z]\w*)\b/.exec(tsxContent)
+  const renderedDirName = classNameCheckedUiComponents().find(
+    (c) => c.name === renderedTagMatch?.[1],
+  )?.dirName
+  return renderedDirName === undefined
+    ? []
+    : ownExternalProperties(renderedDirName, new Set([...visited, dirName]))
+}
+
+/** `.tsx` のソースから、`<部品名 ... className={式} ...>` の使用箇所をすべて拾う。 */
+function jsxUsagesWithClassName(
+  content: string,
+  componentName: string,
+): readonly { readonly tagText: string; readonly classNameExpr: string }[] {
+  const tagPattern = new RegExp(`<${componentName}(?=[\\s/>])`, "g")
+  const usages: { tagText: string; classNameExpr: string }[] = []
+  for (const match of content.matchAll(tagPattern)) {
+    const start = match.index
+    let depth = 0
+    let end = start
+    for (let i = start; i < content.length; i++) {
+      const ch = content[i]
+      if (ch === "{") {
+        depth++
+      } else if (ch === "}") {
+        depth--
+      } else if (ch === ">" && depth === 0) {
+        end = i + 1
+        break
+      }
+    }
+    const tagText = content.slice(start, end)
+    const classNameStart = tagText.indexOf("className={")
+    if (classNameStart === -1) {
+      continue
+    }
+    let exprDepth = 1
+    let exprEnd = classNameStart + "className={".length
+    for (; exprEnd < tagText.length; exprEnd++) {
+      const ch = tagText[exprEnd]
+      if (ch === "{") {
+        exprDepth++
+      } else if (ch === "}") {
+        exprDepth--
+        if (exprDepth === 0) {
+          break
+        }
+      }
+    }
+    usages.push({
+      tagText,
+      classNameExpr: tagText.slice(classNameStart + "className={".length, exprEnd),
+    })
+  }
+  return usages
+}
+
+describe("components/ui/ の部品の className", () => {
+  it('渡す className は styles["…"] の組み合わせだけで、その class は部品の property と重ならない', () => {
+    const targets = classNameCheckedUiComponents()
+    expect(targets.length).toBeGreaterThan(0)
+
+    const files = listSourceFiles(SRC_ROOT).filter(
+      (relPath) => relPath.startsWith("browser/") && relPath.endsWith(".tsx"),
+    )
+
+    const offenders = files.flatMap((relPath) => {
+      const content = readFileSync(`${SRC_ROOT}/${relPath}`, "utf8")
+      return targets.flatMap(({ dirName, name }) => {
+        const ownProperties = new Set(ownExternalProperties(dirName))
+        return jsxUsagesWithClassName(content, name).flatMap(({ classNameExpr }) => {
+          if (!isAllowedClassNameExpression(classNameExpr)) {
+            return [
+              `src/${relPath}: <${name}> の className が styles["…"] の組み合わせだけでできていない（${classNameExpr}）`,
+            ]
+          }
+          const cssRelPath = stylesImportPath(content, relPath)
+          if (cssRelPath === undefined) {
+            return [`src/${relPath}: <${name}> に渡す className の "styles" が import されていない`]
+          }
+          const cssContent = readFileSync(`${SRC_ROOT}/${cssRelPath}`, "utf8")
+          return classNamesInExpression(classNameExpr).flatMap((className) => {
+            const overlap = propertiesOfClass(cssContent, className).filter((property) =>
+              ownProperties.has(property),
+            )
+            return overlap.length > 0
+              ? [
+                  `src/${relPath}: <${name}> に渡す ${className} が部品の property と重なる（${overlap.join(", ")}）`,
+                ]
+              : []
+          })
+        })
+      })
+    })
 
     expect(offenders.join("\n")).toBe("")
   })

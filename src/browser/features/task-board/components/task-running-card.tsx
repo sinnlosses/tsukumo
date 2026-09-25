@@ -9,16 +9,17 @@
 import { type ReactElement } from "react"
 
 import { type TaskSummaryItem } from "../../../../shared/task-summary.ts"
+import { HStack } from "../../../components/ui/h-stack/h-stack.tsx"
 import styles from "../task-board.module.css"
 import { TaskRunButton } from "./task-run-button.tsx"
 
 export function TaskRunningCard(props: { readonly task: TaskSummaryItem }): ReactElement {
   return (
     <li className={styles["task-running-card"]}>
-      <span className={styles["task-running-head"]}>
+      <HStack element="span" gap="sm" align="center" justify="start" wrap="nowrap" className="">
         <span className={styles["task-running-badge"]}>進行中</span>
         <TaskRunButton taskId={props.task.id} />
-      </span>
+      </HStack>
       <span className={styles["task-running-body"]}>{props.task.summary}</span>
     </li>
   )

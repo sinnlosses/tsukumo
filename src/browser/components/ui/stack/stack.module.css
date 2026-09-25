@@ -1,0 +1,66 @@
+/* `Stack`（`stack.tsx`）の見た目。**持つのは並べることだけ**（`display: flex` と、向き・間隔・
+   揃え・折り返しの各軸）。寸法・枠・地・置き方は呼び出し側の `className` が持つので、ここには
+   書かない（`docs/design.md` 2章「`components/ui/` の部品（variant の作法と一覧）」）。
+
+   間隔の段はトークンを持たない（同節「トークンの無い軸（太さ・Stack の間隔）は下の一覧で段を
+   決める」）ので、rem をここに直書きする。 */
+.stack {
+  display: flex;
+}
+.stack-direction-row {
+  flex-direction: row;
+}
+.stack-direction-column {
+  flex-direction: column;
+}
+.stack-gap-none {
+  gap: 0;
+}
+.stack-gap-xs {
+  gap: 0.25rem;
+}
+.stack-gap-sm {
+  gap: 0.5rem;
+}
+.stack-gap-md {
+  gap: 0.75rem;
+}
+.stack-gap-lg {
+  gap: 1rem;
+}
+.stack-gap-xl {
+  gap: 1.25rem;
+}
+.stack-align-start {
+  align-items: flex-start;
+}
+.stack-align-center {
+  align-items: center;
+}
+.stack-align-end {
+  align-items: flex-end;
+}
+.stack-align-baseline {
+  align-items: baseline;
+}
+.stack-align-stretch {
+  align-items: stretch;
+}
+.stack-justify-start {
+  justify-content: flex-start;
+}
+.stack-justify-center {
+  justify-content: center;
+}
+.stack-justify-end {
+  justify-content: flex-end;
+}
+.stack-justify-between {
+  justify-content: space-between;
+}
+.stack-wrap-nowrap {
+  flex-wrap: nowrap;
+}
+.stack-wrap-wrap {
+  flex-wrap: wrap;
+}

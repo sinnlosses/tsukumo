@@ -1982,8 +1982,9 @@ type Diary = {
 `<TokenUsageScreen>`・`<AchievementScreen>`）と `<DiaryNotice>` は `components/page/<画面>/`。
 `<TaskList>` と `<TaskBoard>` は置かれる機能の `features/task-board/`。領域をまたいで使う
 `<Portrait>`・`<CharacterFace>`・`<PromptImageChips>`・`<PromptImageThumbnails>`・`<ProtocolMismatch>`
-は `components/domain/` の直下、語彙を持たない `<Select>`・`<ImageZoom>` は
-`components/ui/select/`・`components/ui/image-zoom/`（部品ごとのディレクトリ。2章「1部品1フォルダは
+は `components/domain/` の直下、語彙を持たない `<Select>`・`<ImageZoom>`・`<Stack>`・`<VStack>`・
+`<HStack>` は `components/ui/select/`・`components/ui/image-zoom/`・`components/ui/stack/`・
+`components/ui/v-stack/`・`components/ui/h-stack/`（部品ごとのディレクトリ。2章「1部品1フォルダは
 真似しない」の例外）。
 
 **部品は `SessionState` と `dispatch` だけを見る。** DOM を直接いじる配線（`MutationObserver`・

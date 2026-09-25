@@ -14,6 +14,7 @@
 import { useId, type ReactElement } from "react"
 
 import { isSessionDefaultPermissionMode } from "../../../../../shared/session-default.ts"
+import { HStack } from "../../../../components/ui/h-stack/h-stack.tsx"
 import { Select } from "../../../../components/ui/select/select.tsx"
 import { REVEAL_SPEED_LABELS } from "../../../../domain/reveal-speed.ts"
 import { EFFORT_PLACEHOLDER_VALUE, effortLabel } from "../domain/effort-label.ts"
@@ -85,7 +86,15 @@ export function ScreenNavSettingsGear(props: ScreenNavSettingsProps): ReactEleme
         >
           <p className={styles["screen-nav-settings-heading"]}>画面の色</p>
           {settings.colors.map((color) => (
-            <div className={styles["screen-nav-settings-row"]} key={color.key}>
+            <HStack
+              element="div"
+              gap="lg"
+              align="center"
+              justify="between"
+              wrap="nowrap"
+              className={styles["screen-nav-settings-row"] ?? ""}
+              key={color.key}
+            >
               <label htmlFor={`${fieldId}-${color.key}`}>{color.label}</label>
               <input
                 id={`${fieldId}-${color.key}`}
@@ -95,10 +104,17 @@ export function ScreenNavSettingsGear(props: ScreenNavSettingsProps): ReactEleme
                   color.onChange(event.target.value)
                 }}
               />
-            </div>
+            </HStack>
           ))}
           <p className={styles["screen-nav-settings-heading"]}>新しいセッションの既定</p>
-          <div className={styles["screen-nav-settings-row"]}>
+          <HStack
+            element="div"
+            gap="lg"
+            align="center"
+            justify="between"
+            wrap="nowrap"
+            className={styles["screen-nav-settings-row"] ?? ""}
+          >
             <label htmlFor={`${fieldId}-default-model`}>モデル</label>
             <Select
               id={`${fieldId}-default-model`}
@@ -111,8 +127,15 @@ export function ScreenNavSettingsGear(props: ScreenNavSettingsProps): ReactEleme
               options={MODEL_OPTIONS}
               onChange={settings.sessionDefault.onChangeModel}
             />
-          </div>
-          <div className={styles["screen-nav-settings-row"]}>
+          </HStack>
+          <HStack
+            element="div"
+            gap="lg"
+            align="center"
+            justify="between"
+            wrap="nowrap"
+            className={styles["screen-nav-settings-row"] ?? ""}
+          >
             <label htmlFor={`${fieldId}-default-effort`}>effort</label>
             {settings.sessionDefault.effort.kind === "known" ? (
               <Select
@@ -142,8 +165,15 @@ export function ScreenNavSettingsGear(props: ScreenNavSettingsProps): ReactEleme
                 onChange={() => {}}
               />
             )}
-          </div>
-          <div className={styles["screen-nav-settings-row"]}>
+          </HStack>
+          <HStack
+            element="div"
+            gap="lg"
+            align="center"
+            justify="between"
+            wrap="nowrap"
+            className={styles["screen-nav-settings-row"] ?? ""}
+          >
             <label htmlFor={`${fieldId}-default-permission-mode`}>許可モード</label>
             <Select
               id={`${fieldId}-default-permission-mode`}
@@ -156,9 +186,16 @@ export function ScreenNavSettingsGear(props: ScreenNavSettingsProps): ReactEleme
               options={PERMISSION_MODE_OPTIONS}
               onChange={settings.sessionDefault.onChangePermissionMode}
             />
-          </div>
+          </HStack>
           <p className={styles["screen-nav-settings-heading"]}>書き上げる演出の速さ</p>
-          <div className={styles["screen-nav-settings-row"]}>
+          <HStack
+            element="div"
+            gap="lg"
+            align="center"
+            justify="between"
+            wrap="nowrap"
+            className={styles["screen-nav-settings-row"] ?? ""}
+          >
             <label htmlFor={`${fieldId}-reveal-speed`}>速さ</label>
             <Select
               id={`${fieldId}-reveal-speed`}
@@ -171,9 +208,16 @@ export function ScreenNavSettingsGear(props: ScreenNavSettingsProps): ReactEleme
               options={REVEAL_SPEED_OPTIONS}
               onChange={settings.revealSpeed.onChange}
             />
-          </div>
+          </HStack>
           <p className={styles["screen-nav-settings-heading"]}>訪問</p>
-          <div className={styles["screen-nav-settings-row"]}>
+          <HStack
+            element="div"
+            gap="lg"
+            align="center"
+            justify="between"
+            wrap="nowrap"
+            className={styles["screen-nav-settings-row"] ?? ""}
+          >
             <label htmlFor={`${fieldId}-visit-enabled`}>客の出入り</label>
             <Select
               id={`${fieldId}-visit-enabled`}
@@ -186,8 +230,15 @@ export function ScreenNavSettingsGear(props: ScreenNavSettingsProps): ReactEleme
               options={VISIT_TOGGLE_OPTIONS}
               onChange={settings.visit.onChange}
             />
-          </div>
-          <div className={styles["screen-nav-settings-row"]}>
+          </HStack>
+          <HStack
+            element="div"
+            gap="lg"
+            align="center"
+            justify="between"
+            wrap="nowrap"
+            className={styles["screen-nav-settings-row"] ?? ""}
+          >
             <button
               type="button"
               className={styles["screen-nav-settings-reset"]}
@@ -196,7 +247,7 @@ export function ScreenNavSettingsGear(props: ScreenNavSettingsProps): ReactEleme
             >
               既定に戻す
             </button>
-          </div>
+          </HStack>
         </div>
       ) : null}
     </div>

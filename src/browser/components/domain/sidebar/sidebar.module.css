@@ -12,13 +12,10 @@
   white-space: nowrap;
   font-size: var(--font-label);
 }
-/* ラベルの真下の1行（顔 + <select>）。見本の gap は 8px。**折り返さない** — 顔が下へ
+/* ラベルの真下の1行（顔 + <select>）。並べ・間隔・折り返さないことは `HStack`
+   （`gap="sm"` `wrap="nowrap"`。見本の gap は 8px）が持つ。**折り返さない** — 顔が下へ
    回ると行の高さが倍になり、帯が伸びてタスクの区画を押し上げる。 */
 .session-info-value {
-  display: flex;
-  align-items: center;
-  flex-wrap: nowrap;
-  gap: 0.5rem;
   min-width: 0;
 }
 /* 帯の <select> を包む枠（キャラクター／セッションで共有。枠と矢印そのものは
@@ -206,12 +203,8 @@
   border-color: color-mix(in srgb, var(--surface), var(--state-warn) 35%);
 }
 
-/* 1段目：ラベル・割合・量・右端の `›`。 */
-.context-usage-row-top {
-  display: flex;
-  align-items: baseline;
-  gap: 0.5rem;
-}
+/* 1段目：ラベル・割合・量・右端の `›`。並べ・間隔・揃え（baseline）は `HStack`
+   （`gap="sm"` `align="baseline"`）が持つ。 */
 .context-usage-row-label {
   flex: none;
   font-size: var(--font-label);
@@ -530,10 +523,8 @@
   margin: 0.5rem 0 0;
   color: var(--ink-quiet);
 }
+/* 並べ・間隔（`gap="sm"`）・右寄せ（`justify="end"`）は `HStack` が持つ。 */
 .sidebar-persona-memory-confirm-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.5rem;
   margin-top: 0.9rem;
 }
 .sidebar-persona-memory-confirm-cancel,

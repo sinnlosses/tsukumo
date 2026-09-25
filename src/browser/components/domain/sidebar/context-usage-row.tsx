@@ -22,6 +22,7 @@
 
 import { type ReactElement } from "react"
 
+import { HStack } from "../../../components/ui/h-stack/h-stack.tsx"
 import {
   contextUsageRefetchKey,
   type UseContextUsageResult,
@@ -52,7 +53,7 @@ export function ContextUsageRow(): ReactElement {
     <div
       className={`${styles["context-usage-row"]}${warn ? ` ${styles["context-usage-row-warn"]}` : ""}`}
     >
-      <div className={styles["context-usage-row-top"]}>
+      <HStack element="div" gap="sm" align="baseline" justify="start" wrap="nowrap" className="">
         <span className={styles["context-usage-row-label"]}>{ROW_LABEL}</span>
         <span className={styles["context-usage-row-percentage"]}>{percentageText(usage)}</span>
         <span className={styles["context-usage-row-value"]}>{valueText(usage)}</span>
@@ -67,7 +68,7 @@ export function ContextUsageRow(): ReactElement {
           </span>
           <span aria-hidden="true">{"›"}</span>
         </a>
-      </div>
+      </HStack>
       <span className={styles["context-usage-row-bar"]} aria-hidden="true">
         <span
           className={styles["context-usage-row-bar-fill"]}

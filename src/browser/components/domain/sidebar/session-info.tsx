@@ -16,6 +16,7 @@
 import { type ReactElement } from "react"
 
 import { CharacterFace } from "../../../components/domain/character-face.tsx"
+import { HStack } from "../../../components/ui/h-stack/h-stack.tsx"
 import { useSessionSelector } from "../../../stores/session.tsx"
 import { CharacterSwitch } from "./character-switch.tsx"
 import { ContextUsageRow } from "./context-usage-row.tsx"
@@ -49,7 +50,14 @@ export function SessionInfo(props: SessionInfoProps): ReactElement {
             <label htmlFor={CHARACTER_SELECT_ID} className={styles["session-info-label"]}>
               キャラクター
             </label>
-            <span className={styles["session-info-value"]}>
+            <HStack
+              element="span"
+              gap="sm"
+              align="center"
+              justify="start"
+              wrap="nowrap"
+              className={styles["session-info-value"] ?? ""}
+            >
               <CharacterFace
                 url={faceUrl}
                 alt={characterName ?? ""}
@@ -61,7 +69,7 @@ export function SessionInfo(props: SessionInfoProps): ReactElement {
                 frameClassName={styles["session-info-select-frame"] ?? ""}
                 className={styles["character-select"] ?? ""}
               />
-            </span>
+            </HStack>
           </>
         ) : null}
         {/* セッションの行（`session-switch.tsx`）。**同じ grid の直の子**として並ぶよう、

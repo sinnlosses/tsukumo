@@ -88,12 +88,8 @@
 .task-running-card:last-child {
   margin-bottom: 0;
 }
-/* 1行目（札＋ID）。 */
-.task-running-head {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
+/* 1行目（札＋ID）。並べ・間隔（`gap="sm"`）・揃えは `HStack` が持つ（置き方は無いので
+   `className` は渡さない）。 */
 /* 「進行中」の札。色だけでなく字でも状態を伝える（docs/screen-design.md 13.1 原則1）。高さ・角丸は
    件数のチップと揃える（角丸 11px = 高さ 22px の半分でカプセル型になる）。 */
 .task-running-badge {

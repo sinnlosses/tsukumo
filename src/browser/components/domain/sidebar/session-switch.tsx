@@ -20,6 +20,7 @@ import {
   MAX_SESSION_HEADING_LENGTH,
   type SessionChoice,
 } from "../../../../shared/session-choice.ts"
+import { HStack } from "../../../components/ui/h-stack/h-stack.tsx"
 import { Select } from "../../../components/ui/select/select.tsx"
 import { useSessionDispatch, useSessionSelector, useTurnRunning } from "../../../stores/session.tsx"
 import { clockTime, localTimeZoneId, zonedDateTime } from "../../../utils/clock.ts"
@@ -66,7 +67,14 @@ export function SessionSwitch(): ReactElement | null {
       <label htmlFor={SESSION_SELECT_ID} className={styles["session-info-label"]}>
         セッション
       </label>
-      <span className={styles["session-info-value"]}>
+      <HStack
+        element="span"
+        gap="sm"
+        align="center"
+        justify="start"
+        wrap="nowrap"
+        className={styles["session-info-value"] ?? ""}
+      >
         <Select
           id={SESSION_SELECT_ID}
           ariaLabel="セッション"
@@ -84,7 +92,7 @@ export function SessionSwitch(): ReactElement | null {
             }
           }}
         />
-      </span>
+      </HStack>
     </>
   )
 }
