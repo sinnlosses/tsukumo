@@ -32,7 +32,7 @@
 import { type CSSProperties, type ReactElement } from "react"
 
 import { resolveOutfit } from "../../../shared/expression.ts"
-import { Portrait } from "../../components/portrait.tsx"
+import { Portrait } from "../../components/domain/portrait.tsx"
 import { useBrushTip, type BrushTip } from "../../domain/reveal/brush-tip.ts"
 import { useSessionSelector } from "../../stores/session.tsx"
 import styles from "./mini-portrait.module.css"

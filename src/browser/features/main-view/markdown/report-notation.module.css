@@ -11,7 +11,7 @@
    ハッシュ化するため、この class 名だけをこのファイルの外から選択子で指すことができない。
    打ち消す側（`main-view.module.css` / `question-ask.module.css`）が同じ綴りの class を
    もう1つ持ち、呼び出し側がその class をこの `.detail-block` と一緒に付ける
-   （`components/portrait.module.css` の `.portrait` と `character-view.module.css` の
+   （`components/domain/portrait.module.css` の `.portrait` と `character-view.module.css` の
    `.portrait` を className で重ねる手口と同じ。docs/design.md 6.6）。 */
 
 /* レポートの記法（`src/server/core/report-notation.ts` がモデルに指示する `note` / `badge` / `cols` /

@@ -148,7 +148,7 @@ function QuestionOption(props: {
         // `markdown/report-notation.module.css`）に乗せる。**`.question-ask-option .detail-block`
         // の余白の打ち消し（`question-ask.module.css`）は CSS Modules が class 名をファイルごとに
         // ハッシュ化するため、そちらの `.detail-block`（この選択子のためだけの空の再定義）も
-        // 一緒に付ける**（`components/portrait.module.css` の `.portrait` と同じ手口。
+        // 一緒に付ける**（`components/domain/portrait.module.css` の `.portrait` と同じ手口。
         // docs/design.md 6.6）。
         <div className={`${notationStyles["detail-block"]} ${styles["detail-block"]}`}>
           <Markdown text={option.preview} />

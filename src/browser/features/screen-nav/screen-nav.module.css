@@ -25,7 +25,7 @@
    class 名をファイルごとにハッシュ化するので、ここで参照する class 名は**このファイル自身の
    ハッシュ**になり、実物の class を持つ部品側のファイルとは一致しない。そのため**各部品の tsx が
    このファイルも追加で import し、このファイルのハッシュを自分の要素にも重ねて渡す**
-   （`components/portrait.module.css` の `.portrait` と同じ手口。docs/design.md 6.6）。
+   （`components/domain/portrait.module.css` の `.portrait` と同じ手口。docs/design.md 6.6）。
 
    狭い画面（760px 以下）は段を増やさず「≡」に畳む。その規則はこのファイルの末尾の @media で、
    帯の地・罫線・はみ出しもそこで外す。 */

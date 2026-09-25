@@ -43,7 +43,7 @@ function ReportView(props: ReportProps): ReactElement {
     // **`.detail-block` を2つ重ねる。** 見た目の本体は `markdown/report-notation.module.css`
     // にあり、ステップの末尾の余白の打ち消し（`.main-step > .detail-block:last-child`）は
     // `main-view.module.css` にある。CSS Modules は class 名をファイルごとにハッシュ化するので、
-    // 片方だけでは打ち消しが当たらない（`components/portrait.module.css` の `.portrait` と
+    // 片方だけでは打ち消しが当たらない（`components/domain/portrait.module.css` の `.portrait` と
     // 同じ手口。docs/design.md 6.6）。
     <div className={`${notationStyles["detail-block"]} ${styles["detail-block"]}`} ref={rootRef}>
       {blocks.map((block) => (

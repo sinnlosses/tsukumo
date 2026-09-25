@@ -2,7 +2,7 @@
    main-view.module.css から隣へ分けた（docs/design.md 6.6）。
    `.question-ask-option .detail-block` の打ち消しは、`.detail-block` 自体の見た目
    （`markdown/report-notation.module.css`）とは別ファイルなので、`question-ask.tsx` が
-   その両方の class を同じ要素に重ねて付ける（`components/portrait.module.css` の
+   その両方の class を同じ要素に重ねて付ける（`components/domain/portrait.module.css` の
    `.character-layout .portrait` と同じ手口。docs/design.md 6.6）。
 
    **いまのやり取りのレポートの下に出る一時的な塊**

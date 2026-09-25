@@ -47,7 +47,7 @@
 抜いた 72 回のカバレッジ**（leave-one-out）を取り、全体の未到達行と見比べた。抜いても未到達行が
 1行も増えないファイルは15個ある:
 
-`test/architecture.test.ts`・`test/cli.test.ts`・`test/browser/components/select.test.tsx`・
+`test/architecture.test.ts`・`test/cli.test.ts`・`test/browser/components/ui/select.test.tsx`・
 `test/browser/features/character-view/balloon-track.test.tsx`・
 `test/browser/features/layout/layout-resizer.test.tsx`・
 `test/browser/features/main-view/markdown/notation.test.tsx`・

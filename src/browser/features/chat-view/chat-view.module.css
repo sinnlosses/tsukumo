@@ -14,7 +14,7 @@
   --chat-portrait-height: 80%;
   --chat-portrait-drop: 1.5rem;
   /* つついたときのひと揺らし（`.chat-poke`）。**この2つが唯一の調整箇所**。立ち絵自身の動き
-     （`components/portrait.module.css`）と同じく、控えめの初期値にしてある。 */
+     （`components/domain/portrait.module.css`）と同じく、控えめの初期値にしてある。 */
   --chat-poke-sway-rotate: 1.6deg;
   --chat-poke-sway-duration: 0.5s;
 }

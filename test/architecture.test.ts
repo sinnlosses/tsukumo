@@ -196,28 +196,37 @@ describe("コメント中の日付", () => {
 // - **置かれる機能**（`BROWSER_PLACED_FEATURES`）: 自分の置き場所を持たず、領域の中に
 //   置いてもらう。**どの機能も import しない（葉）**ので、領域から引いても輪にならない
 //
-// `browser/components/` `browser/lib/` `browser/stores/` `browser/styles/` と `browser/main.tsx`
-// （`browser/features/` の直下に無いもの）は誰から引いてもよい共有部分なので、ここでは見ない。
-// **`browser/features/` の直下にどちらの一覧にも無いディレクトリがあれば `throw` する**
-// （足し忘れが「検査の対象外」として黙って通るのを防ぐ。`browserBoxOf` と同じ作り）。
+// **一覧は `browser/` からの相対パスで引く**（`components/` を `page/` `domain/` `ui/` の3段に
+// 割る移行の途中、領域は段2〜4が終わるまで `features/` に残ったまま少しずつ
+// `components/domain/<枠>/` や `components/page/<画面>/` へ移るので、名前だけでは引けない。
+// `docs/design.md` 2章「段と、test/architecture.test.ts の直し方」。段が進むごとにここのパスを
+// 直すだけで、下の判定ロジック（`browserFeatureOf`）は変えずに済む）。
+//
+// `browser/components/`（`page/` `domain/` `ui/` の3段。一覧のパスに無いディレクトリ）・
+// `browser/lib/` `browser/stores/` `browser/styles/` と `browser/main.tsx` は誰から引いてもよい
+// 共有部分なので、ここでは見ない。**一覧に無いディレクトリが `features/` の直下・
+// `components/domain/` の直下（サブディレクトリがあるとき）・`components/page/` の下に
+// あれば `throw` する**（足し忘れが「検査の対象外」として黙って通るのを防ぐ。`browserBoxOf` と
+// 同じ作り）。
 //
 // **`markdown/` は `main-view` の中**（`browser/features/main-view/markdown/`）なので、機能の
 // 一部として扱われる（state を持たない Markdown の描画プリミティブで、読むのは `main-view` だけ）。
 const BROWSER_REGIONS = [
-  "layout",
-  "screen-nav",
-  "main-view",
-  "character-view",
-  "character-screen",
-  "chat-view",
-  "token-usage",
-  "achievement",
-  "sidebar",
-  "dispatch",
+  "features/layout",
+  "features/screen-nav",
+  "features/main-view",
+  "features/character-view",
+  "features/character-screen",
+  "features/chat-view",
+  "features/token-usage",
+  "features/achievement",
+  "features/sidebar",
+  "features/dispatch",
 ] as const
-const BROWSER_PLACED_FEATURES = ["task-board"] as const
+const BROWSER_PLACED_FEATURES = ["features/task-board"] as const
 
 type BrowserFeature = {
+  /** `browser/` からの相対パス（`BROWSER_REGIONS` / `BROWSER_PLACED_FEATURES` の1件）。 */
   readonly name: string
   readonly kind: "region" | "placed"
 }
@@ -242,25 +251,31 @@ describe("browser/ の機能どうしの import", () => {
 
 // `src/browser/` の箱をまたぐ縦の辺（`docs/design.md` 2章「`src/browser/` の箱と、置く基準」の表そのもの）。
 // 上の `BROWSER_REGIONS` / `BROWSER_PLACED_FEATURES` の検査は `features/` の中の横の辺（機能どうし）を見るのに対し、こちらは
-// `main.tsx` / `features/` / `components/` / `hooks/` / `domain/` / `lib/` / `utils/` / `stores/` という
-// 箱をまたぐ辺を見る
+// `main.tsx` / `features/` / `components/page/` / `components/domain/` / `components/ui/` /
+// `hooks/` / `domain/` / `lib/` / `utils/` / `stores/` という箱をまたぐ辺を見る
 // （`shared` への辺は層の検査 `ALLOWED_IMPORTS` がすでに見ているので、ここでは対象にしない）。
 //
-// `browser/hooks/` は**機能の語彙を持たない React のフック**の箱で、`components/` と同じ扱い
+// `components/` は `page/` `domain/` `ui/` の3段に割る移行の途中（`docs/design.md` 2章「いまの
+// `src/browser/` から移す先」）。**移行の途中だけ `features` → `components/domain` の辺を許す**
+// （まだ `features/` にある領域が `Portrait` などの共有部品を読むため。移行の最後の段でこの辺を外す）。
+//
+// `browser/hooks/` は**機能の語彙を持たない React のフック**の箱で、`components/ui/` と同じ扱い
 // （誰から引いてもよく、自分は `lib/` までしか引かない）。機能に固有のフックは機能の中の
 // `features/<機能>/hooks/` に置くので、こちらの箱には入らない。
 //
 // `browser/` 直下の `*.d.ts`（箱に属さない ambient 宣言。`css-variable.d.ts` / `css-module.d.ts`）と
 // `browser/styles/`（グローバルな CSS だけで `.ts`/`.tsx` を持たない）はどの箱にも属さないので、
-// import 元・import 先のどちらでも無視する。未知のディレクトリが `browser/` 直下に増えたときに
-// テストの直し忘れで素通りしないよう、`main.tsx` でも `*.d.ts`/`styles` でもない未知の区画は
-// `layerOf` と同じく `throw` する。
+// import 元・import 先のどちらでも無視する。未知のディレクトリが `browser/` 直下や
+// `browser/components/` 直下に増えたときにテストの直し忘れで素通りしないよう、`main.tsx` でも
+// `*.d.ts`/`styles` でもない未知の区画は `layerOf` と同じく `throw` する。
 // `browser/domain/` は**画面全体の語彙**（tsukumo の語彙を名乗り、2つ以上の機能が読むもの）の箱で、
 // `lib/`（ライブラリを包む道具）とは「ファイル名が tsukumo の語彙を名乗るか」で分かれる。
 const BROWSER_BOXES = [
   "main",
   "features",
-  "components",
+  "components/page",
+  "components/domain",
+  "components/ui",
   "hooks",
   "domain",
   "lib",
@@ -273,9 +288,52 @@ type BrowserBox = (typeof BROWSER_BOXES)[number]
 // `utils/` は誰からも引けて、自分は `utils/` の中しか引かない（外部パッケージ・`shared` も
 // 引かないことは、この表では見えないので下の「browser/utils/ の import」が見る）。
 const ALLOWED_BROWSER_BOX_IMPORTS: Readonly<Record<BrowserBox, ReadonlySet<BrowserBox>>> = {
-  main: new Set(["main", "features", "components", "hooks", "domain", "lib", "utils", "stores"]),
-  features: new Set(["features", "components", "hooks", "domain", "lib", "utils", "stores"]),
-  components: new Set(["components", "hooks", "lib", "utils"]),
+  main: new Set([
+    "main",
+    "features",
+    "components/page",
+    "components/domain",
+    "components/ui",
+    "hooks",
+    "domain",
+    "lib",
+    "utils",
+    "stores",
+  ]),
+  "components/page": new Set([
+    "components/page",
+    "components/domain",
+    "components/ui",
+    "features",
+    "hooks",
+    "domain",
+    "lib",
+    "utils",
+    "stores",
+  ]),
+  "components/domain": new Set([
+    "components/domain",
+    "components/ui",
+    "features",
+    "hooks",
+    "domain",
+    "lib",
+    "utils",
+    "stores",
+  ]),
+  features: new Set([
+    "features",
+    // 移行の途中だけの例外（上のコメント）。まだ features/ にある領域が components/domain/ の
+    // 共有部品（Portrait など）を読むため
+    "components/domain",
+    "components/ui",
+    "hooks",
+    "domain",
+    "lib",
+    "utils",
+    "stores",
+  ]),
+  "components/ui": new Set(["components/ui", "hooks", "lib", "utils"]),
   hooks: new Set(["hooks", "lib", "utils"]),
   domain: new Set(["domain", "lib", "utils"]),
   lib: new Set(["lib", "utils"]),
@@ -320,19 +378,28 @@ describe("browser/utils/ の import", () => {
 
 // 機能をまたぐ箱に、**1つの機能しか読まないファイル**が残っていないことを見る
 // （`docs/design.md` 2章「上げる引き金は「2つ目の読み手が出たとき」」。引き金は逆にも引き、
-// 読み手が1つに戻ったものはその機能の中へ下ろす）。
+// 読み手が1つに戻ったものはその機能の中へ下ろす）。**`components/domain/` の直下と
+// `components/ui/` にも同じ基準を掛ける**（2章「引き金は逆にも引く」）。
 //
 // **読み手が機能の外だけのものは対象外**（`lib/socket.ts` と `lib/refresh.ts` は `stores/` が
 // 読む。下ろす先の機能が無いので、ここに残るのが正しい）。**`stores/` はまだ対象にしていない**
 // ——`stores/location-hash.ts`（`screen-nav` だけ）と `stores/main-view-turn.ts`
 // （`main-view` だけ）の読み手が1機能で、状態を機能の中へ下ろしてよいかは置き場の基準とは
 // 別の判断が要るため。
+//
+// `components/domain/` は**直下のファイルだけ**を対象にする（サブディレクトリは全画面で共有する
+// 枠（領域）で、1つの領域だけが読むのが正しい形。2章「`components/domain` の直下のファイルは
+// 領域ではなく共有の部品」）。`components/ui/` はいまサブディレクトリを持たないので、そのまま
+// 全体を対象にする。
 const SHARED_BROWSER_BOXES = ["lib", "domain"] as const
 
 describe("browser/ の機能をまたぐ箱", () => {
-  it("browser/lib/ と browser/domain/ に、1つの機能だけが読むファイルは無い", () => {
-    const files = listSourceFiles(SRC_ROOT).filter((relPath) =>
-      SHARED_BROWSER_BOXES.some((box) => relPath.startsWith(`browser/${box}/`)),
+  it("browser/lib/・browser/domain/・components/domain/ 直下・components/ui/ に、1つの機能だけが読むファイルは無い", () => {
+    const files = listSourceFiles(SRC_ROOT).filter(
+      (relPath) =>
+        SHARED_BROWSER_BOXES.some((box) => relPath.startsWith(`browser/${box}/`)) ||
+        isDirectBrowserComponentsDomainFile(relPath) ||
+        relPath.startsWith("browser/components/ui/"),
     )
     expect(files.length).toBeGreaterThan(0)
 
@@ -346,6 +413,17 @@ describe("browser/ の機能をまたぐ箱", () => {
     expect(offenders.join("\n")).toBe("")
   })
 })
+
+/** `browser/components/domain/` の直下（サブディレクトリの中ではない）ファイルか。 */
+function isDirectBrowserComponentsDomainFile(relPath: string): boolean {
+  const segments = relPath.split("/")
+  return (
+    segments.length === 4 &&
+    segments[0] === "browser" &&
+    segments[1] === "components" &&
+    segments[2] === "domain"
+  )
+}
 
 /**
  * `browser/` のファイル1件を import している機能の名前（重複を畳んだもの）と、機能の外
@@ -391,6 +469,7 @@ function findBrowserBoxViolations(relPath: string): readonly BrowserBoxViolation
 /**
  * `browser/` 相対パスから箱を決める。箱に属さない `browser/css-variable.d.ts` と `browser/styles/`（CSS のみ）は
  * `undefined`（import 元・import 先のどちらでも無視する）。`browser/` の外は対象外なので `undefined`。
+ * `components/` は `page/` `domain/` `ui/` の3段（直下に残ったファイルは新しい箱として `throw`）。
  */
 function browserBoxOf(relPath: string): BrowserBox | undefined {
   if (!relPath.startsWith("browser/")) {
@@ -402,10 +481,23 @@ function browserBoxOf(relPath: string): BrowserBox | undefined {
   if (relPath.endsWith(".d.ts") && relPath.split("/").length === 2) {
     return undefined
   }
-  const [, second] = relPath.split("/")
+  const [, second, third] = relPath.split("/")
+  if (second === "components") {
+    if (third === "page") {
+      return "components/page"
+    }
+    if (third === "domain") {
+      return "components/domain"
+    }
+    if (third === "ui") {
+      return "components/ui"
+    }
+    throw new Error(
+      `src/${relPath} の browser 箱を判定できない（components/ 直下は page/domain/ui の3段のはず）`,
+    )
+  }
   if (
     second === "features" ||
-    second === "components" ||
     second === "hooks" ||
     second === "domain" ||
     second === "lib" ||
@@ -449,23 +541,39 @@ function findBrowserFeatureViolations(relPath: string): readonly BrowserFeatureV
 }
 
 /**
- * `browser/features/<機能>/...` の形なら機能を返す。共有部分（`browser/lib/` など）は undefined。
- * どちらの一覧にも無いディレクトリは `throw`（新しい機能を足したら、どちらの種類かを決める）。
+ * `browser/` 相対パスから、領域か置かれる機能かを返す。`BROWSER_REGIONS` / `BROWSER_PLACED_FEATURES`
+ * のどれかのパスの下にあれば一致した機能を返し、共有部分（`browser/lib/` など）は `undefined`。
+ * **一覧に無いディレクトリが `features/` の直下・`components/domain/` の直下（サブディレクトリが
+ * あるとき）・`components/page/` の下にあれば `throw`**（新しい機能・画面を足したら、
+ * `BROWSER_REGIONS` か `BROWSER_PLACED_FEATURES` に足す）。
  */
 function browserFeatureOf(relPath: string): BrowserFeature | undefined {
-  const [top, second, third] = relPath.split("/")
-  if (top !== "browser" || second !== "features" || third === undefined) {
+  if (!relPath.startsWith("browser/")) {
     return undefined
   }
-  if (BROWSER_REGIONS.some((region) => region === third)) {
-    return { name: third, kind: "region" }
+  const path = relPath.slice("browser/".length)
+
+  const region = BROWSER_REGIONS.find((p) => path === p || path.startsWith(`${p}/`))
+  if (region !== undefined) {
+    return { name: region, kind: "region" }
   }
-  if (BROWSER_PLACED_FEATURES.some((feature) => feature === third)) {
-    return { name: third, kind: "placed" }
+  const placed = BROWSER_PLACED_FEATURES.find((p) => path === p || path.startsWith(`${p}/`))
+  if (placed !== undefined) {
+    return { name: placed, kind: "placed" }
   }
-  throw new Error(
-    `src/${relPath} の機能の種類を判定できない（BROWSER_REGIONS か BROWSER_PLACED_FEATURES に足す）`,
-  )
+
+  const segments = path.split("/")
+  const isUnlistedFeatureDir = segments[0] === "features" && segments.length >= 2
+  const isUnlistedComponentsDomainDir =
+    segments[0] === "components" && segments[1] === "domain" && segments.length >= 4
+  const isUnlistedComponentsPageDir =
+    segments[0] === "components" && segments[1] === "page" && segments.length >= 3
+  if (isUnlistedFeatureDir || isUnlistedComponentsDomainDir || isUnlistedComponentsPageDir) {
+    throw new Error(
+      `src/${relPath} の機能の種類を判定できない（BROWSER_REGIONS か BROWSER_PLACED_FEATURES に足す）`,
+    )
+  }
+  return undefined
 }
 
 function browserFeatureViolationsMessage(violations: readonly BrowserFeatureViolation[]): string {

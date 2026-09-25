@@ -8,7 +8,7 @@
 
 import { type ReactElement } from "react"
 
-import { Portrait } from "../../components/portrait.tsx"
+import { Portrait } from "../../components/domain/portrait.tsx"
 import styles from "./achievement.module.css"
 import { type AchievementReviewButton } from "./hooks/use-achievement.ts"
 import {

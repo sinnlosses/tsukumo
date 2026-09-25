@@ -1,6 +1,6 @@
 /* キャラビュー（`<CharacterView>`。src/browser/features/character-view/）。立ち絵と吹き出しの並びを
    同じ領域に同居させ、**立ち絵をどこにどれだけの大きさで置くか**もここが決める
-   （立ち絵そのものの中身と動きは src/browser/components/portrait.module.css）。
+   （立ち絵そのものの中身と動きは src/browser/components/domain/portrait.module.css）。
 
    領域の高さを .character-layout まで継がせ、立ち絵の割合指定（下の --portrait-height）が
    領域の中で解決されるようにする（vh 基準にすると、下段の行の高さ（既定 40%）より大きく

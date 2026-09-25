@@ -4,7 +4,7 @@
 
 import { type ReactElement, type RefObject } from "react"
 
-import { PromptImageThumbnails } from "../../../components/prompt-image.tsx"
+import { PromptImageThumbnails } from "../../../components/domain/prompt-image.tsx"
 import styles from "../chat-view.module.css"
 import { type ChatRow } from "../hooks/use-chat-view.ts"
 import { ChatDay } from "./chat-day.tsx"

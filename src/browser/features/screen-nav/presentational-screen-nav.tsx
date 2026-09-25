@@ -11,7 +11,7 @@
 
 import { type ReactElement } from "react"
 
-import { CharacterFace } from "../../components/character-face.tsx"
+import { CharacterFace } from "../../components/domain/character-face.tsx"
 import { ScreenNavChatModeToggle } from "./components/screen-nav-chat-mode.tsx"
 import { ScreenNavCurrentWorkPill } from "./components/screen-nav-current-work.tsx"
 import { ScreenNavGate } from "./components/screen-nav-gate.tsx"

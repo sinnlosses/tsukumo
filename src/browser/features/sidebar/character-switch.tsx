@@ -12,7 +12,7 @@ import { type ReactElement } from "react"
 
 import { type CharacterPackChoice } from "../../../shared/character.ts"
 import { FRAME_ERROR_REASON } from "../../../shared/frame.ts"
-import { Select } from "../../components/select.tsx"
+import { Select } from "../../components/ui/select.tsx"
 import { useSessionDispatch, useSessionSelector, useTurnRunning } from "../../stores/session.tsx"
 
 // 切り替えは起こし直し（会話が消える）なので、ターン進行中だけ塞ぐ。理由の文面は**サーバが

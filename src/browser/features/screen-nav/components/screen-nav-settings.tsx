@@ -14,7 +14,7 @@
 import { useId, type ReactElement } from "react"
 
 import { isSessionDefaultPermissionMode } from "../../../../shared/session-default.ts"
-import { Select } from "../../../components/select.tsx"
+import { Select } from "../../../components/ui/select.tsx"
 import { REVEAL_SPEED_LABELS } from "../../../domain/reveal-speed.ts"
 import { EFFORT_PLACEHOLDER_VALUE, effortLabel } from "../domain/effort-label.ts"
 import { MODEL_LABELS } from "../domain/model-label.ts"

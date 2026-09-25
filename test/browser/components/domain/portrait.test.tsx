@@ -3,7 +3,10 @@ import { afterEach, describe, expect, it } from "bun:test"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { cleanup, render, waitFor } from "@testing-library/react"
 
-import { Portrait, usePortraitPreload } from "../../../src/browser/components/portrait.tsx"
+import {
+  Portrait,
+  usePortraitPreload,
+} from "../../../../src/browser/components/domain/portrait.tsx"
 
 // フィクスチャはすべて手で書いた架空の SVG・URL（docs/coding-standards.md「会話内容の扱い」）。
 
@@ -30,7 +33,7 @@ function stubFetch(body: string): void {
   globalThis.fetch = stub as unknown as typeof globalThis.fetch
 }
 
-// `<Portrait>` は `useQuery`（`components/portrait.tsx`）を使うので `QueryClientProvider` が要る
+// `<Portrait>` は `useQuery`（`components/domain/portrait.tsx`）を使うので `QueryClientProvider` が要る
 // （`test/browser/` の他の部品テストが Context の Provider で包むのと同じ形）。**キャッシュはテストを
 // またがせない**ので、テストごとに新しい `QueryClient` を作る。
 

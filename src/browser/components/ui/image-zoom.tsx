@@ -1,5 +1,5 @@
 // 画像を原寸で拡大して見る面（`docs/requirements.md` 4.10「画面での見え方」）。開ける場所が
-// 複数にまたがる（入力欄の札・メインビューの依頼の見出し・雑談の控え）ので `components/` に置く。
+// 複数にまたがる（入力欄の札・メインビューの依頼の見出し・雑談の控え）ので `components/ui/` に置く。
 // **領域固有の見た目・意味は持たない**（`select.tsx` と同じ位置づけ）。
 //
 // **呼び出し側が開いている状態を持ち、開いている間だけこの部品を描く**
@@ -13,7 +13,7 @@
 
 import { type MouseEvent, type ReactElement, useState } from "react"
 
-import { useModalDialog } from "../hooks/use-modal-dialog.ts"
+import { useModalDialog } from "../../hooks/use-modal-dialog.ts"
 import styles from "./image-zoom.module.css"
 
 const HEADING = "画像の拡大"

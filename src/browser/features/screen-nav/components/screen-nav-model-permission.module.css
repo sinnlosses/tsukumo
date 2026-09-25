@@ -17,7 +17,7 @@
   margin-left: auto;
   min-width: 0;
 }
-/* 見た目だけ帯に合わせる（13.9）。**枠と矢印は部品が持つ**（`components/select.module.css`）ので、
+/* 見た目だけ帯に合わせる（13.9）。**枠と矢印は部品が持つ**（`components/ui/select.module.css`）ので、
    ここは置き方と字の色だけ。字と矢印は同じ色で、「全部許す」のときは矢印も `--state-ng` になる
    （矢印は `currentColor` で描かれる）。 */
 .screen-nav-select {

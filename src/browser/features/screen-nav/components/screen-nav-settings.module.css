@@ -74,7 +74,7 @@
 }
 /* 設定パネルの `<select>`（新しいセッションの既定・演出の速さ）。**帯のドロップダウンと同じ
    見た目**にして、同じ値を選ぶ操作だと分かるようにする（違いは見出しと寿命だけ）。字が一段
-   小さいぶん、矢印も小さくして内側へ寄せる（枠と矢印は `components/select.module.css`）。 */
+   小さいぶん、矢印も小さくして内側へ寄せる（枠と矢印は `components/ui/select.module.css`）。 */
 .screen-nav-settings-select-frame {
   --select-chevron-inset: 0.3rem;
   --select-chevron-size: 10px;

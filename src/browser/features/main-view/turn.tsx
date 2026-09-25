@@ -15,7 +15,7 @@ import {
   type MainViewTurn,
 } from "../../../shared/main-view.ts"
 import { type TurnFailure } from "../../../shared/turn-failure.ts"
-import { PromptImageThumbnails } from "../../components/prompt-image.tsx"
+import { PromptImageThumbnails } from "../../components/domain/prompt-image.tsx"
 import { turnFailureLabel } from "../../domain/api-error-label.ts"
 import { requestLinesAfterTitle, truncateRequestText } from "./domain/turn-title.ts"
 import styles from "./main-view.module.css"

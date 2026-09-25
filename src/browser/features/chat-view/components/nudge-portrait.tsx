@@ -2,7 +2,7 @@
 // 文面は `src/server/core/chat-nudge.ts` が持ち、ブラウザは話題も一言も持たない（原則4）。
 // 送った文面はログにも記録にも残らない。
 //
-// **押せることを持たせるのはここで、`components/portrait.tsx` ではない**。立ち絵は
+// **押せることを持たせるのはここで、`components/domain/portrait.tsx` ではない**。立ち絵は
 // キャラビューとキャラクター画面も使う共有部品で、そちら（仕事のとき・整える面）の立ち絵は
 // 押せないままにする。**包むのは `<button>`** — セリフの行と違って立ち絵には選ぶ文字が無いので、
 // `role="button"` ＋ 自前のキーの受けが要らず、キーボードで押せる道はブラウザが最初から持っている。
@@ -20,7 +20,7 @@
 import { useId, type ReactElement } from "react"
 
 import { type Expression, type Outfit } from "../../../../shared/expression.ts"
-import { Portrait } from "../../../components/portrait.tsx"
+import { Portrait } from "../../../components/domain/portrait.tsx"
 import styles from "../chat-view.module.css"
 
 /**

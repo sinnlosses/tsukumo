@@ -676,7 +676,7 @@ IBM Plex Mono）と字の大きさ、「ほか n 件を見る」の色（見本�
   **覆いの濃さは画面から変えない**（定義ファイルを手で直す。13.8）
 - **760px 以下では一覧を詳しい設定の上に積む**（格子と差し色の列数は詳しい設定の幅を見る
   `@container` が決めるので、狭い画面用に別の規則は足していない）
-- **`<Portrait>` は `components/portrait.tsx`**（2つ目の読み手。2章）。並びでの大きさは
+- **`<Portrait>` は `components/domain/portrait.tsx`**（2つ目の読み手。2章）。並びでの大きさは
   `character-screen.module.css` が決め、`className` で渡す（キャラビュー側の割合指定は
   `.character-region` の変数が無いので効かない。6.6）
 - **「このキャラクターを消す」帯は、詳しい設定の最下部・背景の節の下**（見本
@@ -861,7 +861,7 @@ IBM Plex Mono）と字の大きさ、「ほか n 件を見る」の色（見本�
     **操作子は増えるどころか1つ減る** — 字の操作子が消え、**この画面で唯一ずっと同じ場所に
     居るもの**が受けるようになる。妖をつつくという動作自体が説明を要らなくするので、常設の字も
     要らない（13.1 原則2）
-  - **押せることを持たせるのは雑談の側で、`components/portrait.tsx` ではない。** 立ち絵は
+  - **押せることを持たせるのは雑談の側で、`components/domain/portrait.tsx` ではない。** 立ち絵は
     キャラビューとキャラクター画面も使う共有部品なので、**仕事のときの立ち絵は押せないまま**に
     する。**包むのは `<button>`** — セリフの行と違って立ち絵には選ぶ文字が無いので、
     `role="button"` ＋ 自前のキーの受けが要らず、**キーボードで押せる道はブラウザが最初から
@@ -903,7 +903,7 @@ IBM Plex Mono）と字の大きさ、「ほか n 件を見る」の色（見本�
 **起こし直しの代は新しい `hello` を配るまで束を配らず**（`server/core/session-manager.ts`。その間の
 姿は `hello` に入る）、**`hello` は続きの履歴を流し終えてから配る**（`server/core/session-launch.ts`。
 表情が既定から続きの表情へもう一度飛ばない）。移った先の立ち絵が読み込み待ちで空かないよう、
-**表情の数だけ先に読んでおく**（`components/portrait.tsx` の `usePortraitPreload`）。新しくマウント
+**表情の数だけ先に読んでおく**（`components/domain/portrait.tsx` の `usePortraitPreload`）。新しくマウント
 された立ち絵の入り（`portrait-fade-in`）はほかの場面と同じに残す。
 
 #### 雑談のときのサイドバー
@@ -1441,7 +1441,7 @@ scrollable overflow は end 方向にしか伸びない**ので、上へ出た�
 
 **モデル・effort・許可モードのドロップダウン**（右端、並びはモデル → effort → 許可モード）:
 
-- **部品は `components/select.tsx` の素の `<select>` のまま**にし、見た目だけ帯に合わせる
+- **部品は `components/ui/select.tsx` の素の `<select>` のまま**にし、見た目だけ帯に合わせる
   （`appearance: none`・枠は `--rule`・下向きの矢印は CSS で描く）。キーボードの操作・読み上げ・
   選択肢の開き方はブラウザに任せる
 - **見本の値に揃える**（2026-09-23 決定）: 高さ 32px・左右 10px・角丸 8px・地は透明・字は
@@ -1698,7 +1698,7 @@ scrollable overflow は end 方向にしか伸びない**ので、上へ出た�
   `.gif`）——写真が主な素材の背景よりも、立ち絵と同じ「キャラクターの絵」という素材の性質に
   近いため
 - **サイドバーの下端の帯も同じ顔を出す**（キャラクターの `<select>` の左。
-  `docs/display.md` 4.2）。**部品は `browser/components/character-face.tsx` へ上げて共有する**
+  `docs/display.md` 4.2）。**部品は `browser/components/domain/character-face.tsx` へ上げて共有する**
   （帯とサイドバーは互いに import しない領域どうしなので、機能をまたいで読む部品は
   `components/` に置く。2章「機能の中を分ける」）。大きさと丸の地は帯・サイドバーそれぞれの
   `className` が決め、部品自体は領域の見た目を持たない。**サイドバー側は 28px**（`<select>` の

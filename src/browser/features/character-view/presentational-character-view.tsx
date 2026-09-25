@@ -11,7 +11,7 @@
 
 import { type ReactElement } from "react"
 
-import { Portrait } from "../../components/portrait.tsx"
+import { Portrait } from "../../components/domain/portrait.tsx"
 import { BalloonTrack } from "./balloon-track.tsx"
 import styles from "./character-view.module.css"
 import { type CharacterViewModel } from "./hooks/use-character-view.ts"

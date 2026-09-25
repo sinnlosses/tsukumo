@@ -74,7 +74,7 @@
    そちらの `.detail-block` を指せない。**`report.tsx` が両方のファイルの `.detail-block` を
    同じ要素に重ねて付ける**（このファイルの側はこの選択子のためだけに出てくる綴りで、
    見た目は持たない）
-   （`components/portrait.module.css` の `.portrait` と `character-view.module.css` の
+   （`components/domain/portrait.module.css` の `.portrait` と `character-view.module.css` の
    `.portrait` を className で重ねる手口と同じ。docs/design.md 6.6）。 */
 .main-step > .detail-block:last-child {
   margin-bottom: 0;

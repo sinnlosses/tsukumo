@@ -1,4 +1,4 @@
-// いまのパックの顔（`CharacterInfo.face`）を `<CharacterFace>`（`components/character-face.tsx`）
+// いまのパックの顔（`CharacterInfo.face`）を `<CharacterFace>`（`components/domain/character-face.tsx`）
 // が受け取れる形へ畳む。**画面のナビの帯とトークン消費の画面の両方が読む**ので
 // `browser/domain/`（CLAUDE.md 原則5）。
 

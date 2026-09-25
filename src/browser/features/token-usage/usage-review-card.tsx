@@ -17,7 +17,7 @@ import {
   type UsageProposalFollowUp,
   type UsageProposalImpact,
 } from "../../../shared/usage-review.ts"
-import { CharacterFace } from "../../components/character-face.tsx"
+import { CharacterFace } from "../../components/domain/character-face.tsx"
 import {
   type UsageReviewResultProposalView,
   type UsageReviewStageStatus,

@@ -7,7 +7,7 @@
 import { type ReactElement } from "react"
 
 import { PROMPT_IMAGE_MEDIA_TYPES } from "../../../shared/prompt-image.ts"
-import { PromptImageChips } from "../../components/prompt-image.tsx"
+import { PromptImageChips } from "../../components/domain/prompt-image.tsx"
 import { CommandSuggestions } from "./command-suggestions.tsx"
 import styles from "./dispatch.module.css"
 import { FileSuggestions } from "./file-suggestions.tsx"

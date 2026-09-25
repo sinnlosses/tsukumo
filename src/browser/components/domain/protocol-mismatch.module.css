@@ -1,4 +1,4 @@
-/* 版が合わないときの知らせ（src/browser/components/protocol-mismatch.tsx）。会話の画面の代わりに
+/* 版が合わないときの知らせ（src/browser/components/domain/protocol-mismatch.tsx）。会話の画面の代わりに
    ページの真ん中へ1つだけ置く。 */
 .protocol-mismatch {
   box-sizing: border-box;

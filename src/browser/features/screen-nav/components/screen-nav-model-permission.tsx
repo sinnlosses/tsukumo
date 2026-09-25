@@ -1,5 +1,5 @@
 // 帯の右端、モデル・effort・許可モードのドロップダウン（docs/screen-design.md 13.9「動き方の
-// 操作子」）。**枠と下向きの矢印は部品（`components/select.tsx`）が持つ**ので、ここは置き方と
+// 操作子」）。**枠と下向きの矢印は部品（`components/ui/select.tsx`）が持つ**ので、ここは置き方と
 // 字の色だけを `.screen-nav-select` で渡す（screen-nav.module.css）。キーボードの操作・読み上げ・
 // 選択肢の開き方はブラウザに任せる。
 //
@@ -16,7 +16,7 @@
 
 import { useId, type ReactElement } from "react"
 
-import { Select } from "../../../components/select.tsx"
+import { Select } from "../../../components/ui/select.tsx"
 import { EFFORT_PLACEHOLDER_VALUE, effortLabel } from "../domain/effort-label.ts"
 import { MODEL_LABELS } from "../domain/model-label.ts"
 import { PERMISSION_MODE_LABELS } from "../domain/permission-mode-label.ts"

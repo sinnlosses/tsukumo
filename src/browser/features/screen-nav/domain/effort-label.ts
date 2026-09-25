@@ -1,7 +1,7 @@
 // effort の段（`src/shared/command.ts` の `EFFORT_LEVELS`）を、effort のドロップダウンが
 // 受け取れる形にする。置き場の理由は `model-label.ts` の冒頭と同じ（読むのは
 // `features/screen-nav/` だけ——帯（`hooks/use-screen-nav.ts`）と歯車の「新しいセッションの既定」
-// （`hooks/use-settings.ts`）の両方、フックを呼ばない部品〔`components/select.tsx`〕が読む対応表、
+// （`hooks/use-settings.ts`）の両方、フックを呼ばない部品〔`components/ui/select.tsx`〕が読む対応表、
 // 表示の整形はサーバとブラウザの契約ではない）。**選択肢と表示名は歯車も帯と同じものを使う**
 // （`EFFORT_LABELS`/`effortLabel` を二重に持たない）。
 //

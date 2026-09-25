@@ -5,13 +5,13 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import {
   PromptImageChips,
   PromptImageThumbnails,
-} from "../../../src/browser/components/prompt-image.tsx"
+} from "../../../../src/browser/components/domain/prompt-image.tsx"
 import {
   type PromptImage,
   promptImagePath,
   type RecordedPromptImage,
-} from "../../../src/shared/prompt-image.ts"
-import { setPageUrl } from "../../dom-environment.ts"
+} from "../../../../src/shared/prompt-image.ts"
+import { setPageUrl } from "../../../dom-environment.ts"
 
 // フィクスチャはすべて手で書いた架空の data URL（実物の画像は使わない。
 // docs/coding-standards.md「会話内容の扱い」）。

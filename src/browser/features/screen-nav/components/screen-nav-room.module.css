@@ -5,7 +5,7 @@
    **狭い画面の「≡」の面の中の見た目**（`.screen-nav-panel .screen-nav-room`）は
    `screen-nav.module.css` の @media が持つ。CSS Modules は class 名をファイルごとに
    ハッシュ化するので、`screen-nav-room.tsx` がそちら側のハッシュを自分の要素に重ねて渡す
-   （`components/portrait.module.css` の `.portrait` と同じ手口。docs/design.md 6.6）。 */
+   （`components/domain/portrait.module.css` の `.portrait` と同じ手口。docs/design.md 6.6）。 */
 .screen-nav-room {
   color: var(--ink);
   font-size: var(--font-heading);

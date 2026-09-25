@@ -6,7 +6,7 @@ import { type ReactElement } from "react"
 
 import { type AchievementDoneTasks } from "../../../shared/achievement.ts"
 import { DIARY_STAGES, type DiaryStage } from "../../../shared/diary.ts"
-import { Portrait } from "../../components/portrait.tsx"
+import { Portrait } from "../../components/domain/portrait.tsx"
 import { useReportReveal } from "../../domain/reveal/use-report-reveal.ts"
 import styles from "./achievement.module.css"
 import { type DiaryWriterPortrait } from "./diary-writer.ts"

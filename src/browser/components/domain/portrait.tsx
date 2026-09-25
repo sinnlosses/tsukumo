@@ -1,5 +1,5 @@
 // 立ち絵1件（<Portrait>。docs/design.md 6.1・6.5 / docs/screen-design.md 13.6）。**キャラビューとキャラクター画面の
-// 立ち絵の並びの2つが読む**ので `components/`（機能の語彙を持たない部品）に置く（2章
+// 立ち絵の並びの2つが読む**ので `components/domain/`（tsukumo の語彙を持つ部品）に置く（2章
 // 「上げる引き金」）。**動きを決めるのは呼び出し側**で、ここは受け取った値を属性に渡すだけ。**SVG は `fetch` して中身をそのまま
 // インライン**にし（差し色の CSS 変数 `--outfit-accent` を効かせるため。`<img>` で読み込むと
 // 独立した文書扱いになり届かない。`characters/README.md` の実測）、ラスタは `<img>` で出す
@@ -20,9 +20,9 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { useEffect, type CSSProperties, type ReactElement } from "react"
 
-import { classifyPortraitFile } from "../../shared/character-asset.ts"
-import { type Expression, type Outfit } from "../../shared/expression.ts"
-import { type PortraitMotion } from "../../shared/portrait-motion.ts"
+import { classifyPortraitFile } from "../../../shared/character-asset.ts"
+import { type Expression, type Outfit } from "../../../shared/expression.ts"
+import { type PortraitMotion } from "../../../shared/portrait-motion.ts"
 import styles from "./portrait.module.css"
 
 export type PortraitProps = {

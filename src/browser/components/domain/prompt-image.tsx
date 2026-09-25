@@ -1,8 +1,8 @@
 // 依頼に添えた画像の見せ方（`docs/requirements.md` 4.10「画面での見え方」）。**送る前は入力欄の
 // 中の小さな札、送ったあとは依頼に付く控え**で、出す場所が3つ（入力欄・メインビューの依頼の
-// 見出しの下・雑談の利用者の吹き出しの中）にまたがるので `components/` に置く。
+// 見出しの下・雑談の利用者の吹き出しの中）にまたがるので `components/domain/` に置く。
 //
-// **札も控えも、押すと原寸を拡大して見られる**（`components/image-zoom.tsx`）。押せる場所は絵
+// **札も控えも、押すと原寸を拡大して見られる**（`components/ui/image-zoom.tsx`）。押せる場所は絵
 // （ホバー・フォーカスで虫眼鏡が重なる。タッチ端末で虫眼鏡が見えていなくても、押せば同じに開く）
 // で、札にはもう1つ `×`（外す）がある。原寸の出どころは2つで、
 //
@@ -20,9 +20,9 @@ import {
   type PromptImage,
   promptImagePath,
   type RecordedPromptImage,
-} from "../../shared/prompt-image.ts"
-import { sessionTokenUrl } from "../lib/session-token-url.ts"
-import { ImageZoom, type ImageZoomFallback } from "./image-zoom.tsx"
+} from "../../../shared/prompt-image.ts"
+import { sessionTokenUrl } from "../../lib/session-token-url.ts"
+import { ImageZoom, type ImageZoomFallback } from "../ui/image-zoom.tsx"
 import styles from "./prompt-image.module.css"
 
 /** 札にも控えにも同じ alt を付ける（中身は読めないので、そこに何があるかだけを伝える）。 */

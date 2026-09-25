@@ -14,7 +14,7 @@
 
 import { type ReactElement } from "react"
 
-import { CharacterFace } from "../../components/character-face.tsx"
+import { CharacterFace } from "../../components/domain/character-face.tsx"
 import { useSessionSelector } from "../../stores/session.tsx"
 import { CharacterSwitch } from "./character-switch.tsx"
 import styles from "./sidebar.module.css"

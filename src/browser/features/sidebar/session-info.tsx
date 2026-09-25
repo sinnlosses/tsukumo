@@ -10,12 +10,12 @@
 // セッションの行だけになる。
 //
 // **キャラクターの左には顔を添える**（`CharacterInfo.face`。帯と共有する
-// `components/character-face.tsx`。`docs/screen-design.md` 13.9「顔」）。
+// `components/domain/character-face.tsx`。`docs/screen-design.md` 13.9「顔」）。
 // `face` が無いパックでは `<CharacterFace>` が何も描かない。
 
 import { type ReactElement } from "react"
 
-import { CharacterFace } from "../../components/character-face.tsx"
+import { CharacterFace } from "../../components/domain/character-face.tsx"
 import { useSessionSelector } from "../../stores/session.tsx"
 import { CharacterSwitch } from "./character-switch.tsx"
 import { ContextUsageRow } from "./context-usage-row.tsx"

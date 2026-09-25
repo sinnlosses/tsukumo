@@ -1,4 +1,4 @@
-/* 依頼に添えた画像の札と控え（src/browser/components/prompt-image.tsx）。
+/* 依頼に添えた画像の札と控え（src/browser/components/domain/prompt-image.tsx）。
    **横に転がらないことが要件**（狭い画面 390x844 でも並ぶ）なので、並びは必ず折り返し、
    1枚の幅は器を超えない。 */
 .prompt-images {

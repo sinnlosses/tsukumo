@@ -20,8 +20,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { Activity, type ReactElement } from "react"
 import { createRoot } from "react-dom/client"
 
-import { usePortraitPreload } from "./components/portrait.tsx"
-import { ProtocolMismatch } from "./components/protocol-mismatch.tsx"
+import { usePortraitPreload } from "./components/domain/portrait.tsx"
+import { ProtocolMismatch } from "./components/domain/protocol-mismatch.tsx"
 import {
   applyAppearanceColorOverride,
   loadAppearanceColorOverride,
@@ -112,7 +112,7 @@ function Root(): ReactElement {
 // 一瞬だけ既定で描かれてから入れ替わる。
 applyAppearanceColorOverride(loadAppearanceColorOverride())
 
-// 立ち絵の SVG 取得（`components/portrait.tsx`）と入力欄の `@` 補完のファイル一覧
+// 立ち絵の SVG 取得（`components/domain/portrait.tsx`）と入力欄の `@` 補完のファイル一覧
 // （`features/dispatch/file-suggestions.tsx`）が使う。**キャッシュの既定値は個々の
 // `useQuery` 側**（取り直す条件は呼び出し側にしか分からない）。
 const queryClient = new QueryClient()

@@ -28,7 +28,7 @@ const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = characterInfo(
   ],
   // **ラスタにしてある**（`<Portrait>` は SVG のときだけ中身を `fetch` しに行くので、この
   // テストの関心ではない非同期がまぎれる）。SVG の読み込みは
-  // `test/browser/components/portrait.test.tsx` が見る。
+  // `test/browser/components/domain/portrait.test.tsx` が見る。
   ...shownPortraits({
     default: "/character/default.png?v=fictional@1",
     thinking: "/character/thinking.png?v=fictional@1",

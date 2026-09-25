@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from "bun:test"
 
 import { cleanup, render, screen } from "@testing-library/react"
 
-import { ProtocolMismatch } from "../../../src/browser/components/protocol-mismatch.tsx"
+import { ProtocolMismatch } from "../../../../src/browser/components/domain/protocol-mismatch.tsx"
 
 afterEach(() => {
   cleanup()

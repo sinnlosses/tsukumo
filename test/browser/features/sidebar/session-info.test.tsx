@@ -163,7 +163,7 @@ describe("SessionInfo", () => {
   })
 })
 
-// 顔はキャラクターの <select> の左に添える（帯と共有する components/character-face.tsx。
+// 顔はキャラクターの <select> の左に添える（帯と共有する components/domain/character-face.tsx。
 // docs/screen-design.md 13.9「顔」）。
 describe("SessionInfo の顔", () => {
   it("定義に face があれば、alt にキャラクターの名前を付けて出す", () => {

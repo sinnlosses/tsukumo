@@ -15,7 +15,7 @@
 
 import { type DragEvent, type ReactElement, useRef, useState } from "react"
 
-import { Portrait } from "../../../components/portrait.tsx"
+import { Portrait } from "../../../components/domain/portrait.tsx"
 import styles from "../character-screen.module.css"
 import { type PortraitCardModel } from "../hooks/use-character-edit.ts"
 import { PlusIcon, TrashIcon, UploadIcon } from "./action-icon.tsx"

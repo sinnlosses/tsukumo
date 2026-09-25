@@ -16,7 +16,7 @@
 
 import { type ReactElement } from "react"
 
-import { CharacterFace } from "../../../components/character-face.tsx"
+import { CharacterFace } from "../../../components/domain/character-face.tsx"
 import { type ScreenNavMenu as Menu, type ScreenNavParts } from "../hooks/use-screen-nav.ts"
 import shellStyles from "../screen-nav.module.css"
 import { ScreenNavChatModeToggle } from "./screen-nav-chat-mode.tsx"
