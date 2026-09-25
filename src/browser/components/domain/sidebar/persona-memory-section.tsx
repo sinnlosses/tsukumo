@@ -15,6 +15,7 @@
 import { useState, type MouseEvent, type ReactElement } from "react"
 
 import { HStack } from "../../../components/ui/h-stack/h-stack.tsx"
+import { Text } from "../../../components/ui/text/text.tsx"
 import { useModalDialog } from "../../../hooks/use-modal-dialog.ts"
 import { useSessionDispatch, useSessionSelector } from "../../../stores/session.tsx"
 import { SidebarSection } from "./section.tsx"
@@ -49,7 +50,9 @@ export function PersonaMemorySection(): ReactElement {
       }
     >
       {lines.length === 0 ? (
-        <p className={styles["sidebar-empty"]}>まだ覚えていることが無い</p>
+        <Text element="p" size="inherit" tone="ink-quiet" weight="inherit" className="">
+          まだ覚えていることが無い
+        </Text>
       ) : (
         <ul className={styles["sidebar-persona-memory-list"]} aria-label="覚えていること">
           {lines.map((line, index) => (

@@ -55,11 +55,10 @@
   font-size: var(--font-secondary);
 }
 /* 群の区切りの見出し（モックの小さな字）。**後続の群（新しいセッションの既定・書き上げる
-   演出の速さ）も同じ見出しで足す**ので、2つ目からは上に余白を置く。 */
+   演出の速さ）も同じ見出しで足す**ので、2つ目からは上に余白を置く。字の大きさ・色
+   （`Text`。size="label" tone="ink-quiet"）は `Text` が持つ。margin だけ残す。 */
 .screen-nav-settings-heading {
   margin: 0 0 0.4rem;
-  color: var(--ink-quiet);
-  font-size: var(--font-label);
 }
 .screen-nav-settings-heading ~ .screen-nav-settings-heading {
   margin-top: 0.8rem;

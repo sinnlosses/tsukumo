@@ -13,6 +13,7 @@
 
 import { useId, type ReactElement } from "react"
 
+import { Text } from "../../../../components/ui/text/text.tsx"
 import {
   type ScreenNavCurrentWork,
   type ScreenNavCurrentWorkBackgroundTask,
@@ -87,10 +88,16 @@ function CurrentWorkList(props: {
       className={`${styles["screen-nav-work-list"]} ${shellStyles["screen-nav-work-list"]}`}
       role="region"
     >
-      <p className={styles["screen-nav-work-heading"]}>
+      <Text
+        element="p"
+        size="inherit"
+        tone="inherit"
+        weight="semibold"
+        className={styles["screen-nav-work-heading"] ?? ""}
+      >
         {work.wordLabel}
         {work.pendingHint.kind === "input" ? "。入力欄の上で答えられる" : ""}
-      </p>
+      </Text>
       {work.pendingHint.kind === "question" ? (
         <button
           type="button"
@@ -102,9 +109,15 @@ function CurrentWorkList(props: {
       ) : null}
       {work.runningStep.kind === "none" ? null : (
         <div className={styles["screen-nav-work-full"]}>
-          <p className={styles["screen-nav-work-full-heading"]}>
+          <Text
+            element="p"
+            size="inherit"
+            tone="ink-quiet"
+            weight="inherit"
+            className={styles["screen-nav-work-full-heading"] ?? ""}
+          >
             実行中の {work.runningStep.toolName}
-          </p>
+          </Text>
           <pre className={styles["screen-nav-work-full-text"]}>
             <code>{truncateForDisplay(work.runningStep.fullText)}</code>
           </pre>
@@ -112,9 +125,15 @@ function CurrentWorkList(props: {
       )}
       {work.backgroundList.kind === "tasks" ? (
         <>
-          <p className={styles["screen-nav-work-background-heading"]}>
+          <Text
+            element="p"
+            size="inherit"
+            tone="ink-quiet"
+            weight="inherit"
+            className={styles["screen-nav-work-background-heading"] ?? ""}
+          >
             {work.backgroundList.headingLabel}
-          </p>
+          </Text>
           <ul className={styles["screen-nav-work-background"]}>
             {work.backgroundList.tasks.map((task) => (
               <CurrentWorkBackgroundRow key={task.key} task={task} />
@@ -124,7 +143,15 @@ function CurrentWorkList(props: {
       ) : null}
       {work.stepList.kind === "steps" ? (
         <>
-          <p className={styles["screen-nav-work-steps-heading"]}>{work.stepList.headingLabel}</p>
+          <Text
+            element="p"
+            size="inherit"
+            tone="ink-quiet"
+            weight="inherit"
+            className={styles["screen-nav-work-steps-heading"] ?? ""}
+          >
+            {work.stepList.headingLabel}
+          </Text>
           <ul className={styles["screen-nav-work-steps"]}>
             {work.stepList.steps.map((step) => (
               <CurrentWorkStepRow key={step.key} step={step} />
@@ -141,11 +168,11 @@ function CurrentWorkList(props: {
           ) : null}
         </>
       ) : (
-        <p className={styles["screen-nav-work-empty"]}>
+        <Text element="p" size="inherit" tone="ink-quiet" weight="inherit" className="">
           {work.stepList.kind === "no-request"
             ? "まだ依頼が無い"
             : "この依頼ではまだツールを使っていない"}
-        </p>
+        </Text>
       )}
     </div>
   )
@@ -211,7 +238,10 @@ function FailureDetail(props: {
   return (
     <details className={styles["screen-nav-work-failure"]}>
       <summary>
-        <span className={styles["screen-nav-work-failure-mark"]}>失敗</span> {props.label}
+        <Text element="span" size="inherit" tone="state-ng" weight="semibold" className="">
+          失敗
+        </Text>{" "}
+        {props.label}
       </summary>
       {/* 出力が先。開いてまず読みたいのは「何が起きたか」で、引数はその裏取りに使う。 */}
       <pre className={styles["screen-nav-work-failure-output"]}>

@@ -8,6 +8,7 @@
 
 import { type ReactElement } from "react"
 
+import { Text } from "../../../components/ui/text/text.tsx"
 import { useSessionSelector } from "../../../stores/session.tsx"
 import { SidebarSection } from "./section.tsx"
 import styles from "./sidebar.module.css"
@@ -21,7 +22,9 @@ export function RecentTopicSection(): ReactElement {
       action={undefined}
     >
       {topics.length === 0 ? (
-        <p className={styles["sidebar-empty"]}>まだ話題が無い（話が積もると、ここに並ぶ）</p>
+        <Text element="p" size="inherit" tone="ink-quiet" weight="inherit" className="">
+          まだ話題が無い（話が積もると、ここに並ぶ）
+        </Text>
       ) : (
         <ul className={styles["sidebar-topic-list"]} aria-label="最近の話題">
           {topics.map((topic, index) => (

@@ -138,9 +138,10 @@
   background: var(--surface);
   font-size: var(--font-secondary);
 }
+/* 字の太さ・色（`Text`。weight="semibold" tone="inherit"）は `Text` が持つ。margin だけ残す
+   （ここを肩代わりする親からの要素選択子が無いため）。 */
 .screen-nav-work-heading {
   margin: 0 0 0.4rem;
-  font-weight: 600;
 }
 /* 答え待ちが質問のときだけ出す「質問へ」（13.9「いまの作業」）。`.screen-nav-work-toggle-all` と
    同じ見た目（枠の無い、差し色の文字だけの押せる字）。 */
@@ -157,9 +158,9 @@
 .screen-nav-work-full {
   margin: 0 0 0.5rem;
 }
+/* 色（`Text`。tone="ink-quiet"）は `Text` が持つ。margin だけ残す。 */
 .screen-nav-work-full-heading {
   margin: 0 0 0.2rem;
-  color: var(--ink-quiet);
 }
 .screen-nav-work-full-text,
 .screen-nav-work-failure pre {
@@ -173,10 +174,10 @@
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
-/* 背景で動いているもの（13.9「背景のタスク」）。見出しと行の形は依頼の手順に揃える。 */
+/* 背景で動いているもの（13.9「背景のタスク」）。見出しと行の形は依頼の手順に揃える。
+   色（`Text`。tone="ink-quiet"）は `Text` が持つ。margin だけ残す。 */
 .screen-nav-work-background-heading {
   margin: 0.4rem 0 0.2rem;
-  color: var(--ink-quiet);
 }
 .screen-nav-work-background {
   display: flex;
@@ -193,9 +194,9 @@
 .screen-nav-work-background-task .screen-nav-work-step-mark {
   animation: screen-nav-work-spin 1s linear infinite;
 }
+/* 色（`Text`。tone="ink-quiet"）は `Text` が持つ。margin だけ残す。 */
 .screen-nav-work-steps-heading {
   margin: 0.4rem 0 0.2rem;
-  color: var(--ink-quiet);
 }
 .screen-nav-work-steps {
   display: flex;
@@ -232,10 +233,7 @@
     transform: rotate(360deg);
   }
 }
-.screen-nav-work-empty {
-  margin: 0;
-  color: var(--ink-quiet);
-}
+/* 空のとき（`Text`。tone="ink-quiet"。margin: 0 は既定と同じなのでここには残さない）。 */
 .screen-nav-work-toggle-all {
   margin-top: 0.4rem;
   padding: 0;
@@ -250,10 +248,7 @@
 .screen-nav-work-failure > summary {
   cursor: pointer;
 }
-.screen-nav-work-failure-mark {
-  color: var(--state-ng);
-  font-weight: 600;
-}
+/* 「失敗」の印（`Text`。tone="state-ng" weight="semibold"）。 */
 .screen-nav-work-failure-output {
   border: 1px solid var(--state-ng);
 }

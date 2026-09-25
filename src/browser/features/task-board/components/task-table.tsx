@@ -8,6 +8,7 @@
 
 import { memo, type ReactElement } from "react"
 
+import { Text } from "../../../components/ui/text/text.tsx"
 import { type BoardRow } from "../hooks/use-task-board.ts"
 import styles from "../task-board.module.css"
 import { TaskRow } from "./task-row.tsx"
@@ -26,10 +27,30 @@ export const TaskTable = memo(TaskTableView)
 function TaskTableView(props: { readonly rows: readonly BoardRow[] | undefined }): ReactElement {
   const rows = props.rows
   if (rows === undefined) {
-    return <p className={styles["task-empty"]}>develop/tasks.json が読めない</p>
+    return (
+      <Text
+        element="p"
+        size="inherit"
+        tone="ink-quiet"
+        weight="inherit"
+        className={styles["task-empty"] ?? ""}
+      >
+        develop/tasks.json が読めない
+      </Text>
+    )
   }
   if (rows.length === 0) {
-    return <p className={styles["task-empty"]}>タスクが無い</p>
+    return (
+      <Text
+        element="p"
+        size="inherit"
+        tone="ink-quiet"
+        weight="inherit"
+        className={styles["task-empty"] ?? ""}
+      >
+        タスクが無い
+      </Text>
+    )
   }
 
   return (

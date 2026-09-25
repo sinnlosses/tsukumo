@@ -6,10 +6,12 @@
    2026-09-23 決定）。**枠（区画そのもの）の見た目はサイドバーの側**（`sidebar.module.css` の
    .sidebar-block）にあり、ここには持ち込まない。 */
 
-/* 中身が無いときの一言。区画の中に置いたときは .sidebar-block p の余白も重なる
-   （表の中に置いたときは重ならない＝ブラウザ既定の余白のまま）。 */
+/* 中身が無いときの一言。字の段・色は `Text`（tone="ink-quiet"）が持つ。**margin だけ残す**——
+   区画の中に置いたときは .sidebar-block p の 0.2rem 0 が勝つが、表の中に置いたときはそれが
+   無く、ブラウザ既定の <p> の margin（1em 0。実測: font-size 13px の <p> で上下とも 13px）に
+   頼っていた。`Text` の既定 margin は 0 なので、ここへ明示しないと表の中の見た目が変わる。 */
 .task-empty {
-  color: var(--ink-quiet);
+  margin: 1em 0;
 }
 /* 件数のチップ（サイドバーの見出し「タスク」の下に1行。`components/task-count-chip-list.tsx`）。
    **押すとその状態だけに絞る**（1つだけ選べ、もう一度押すと全件に戻る。2026-09-23 決定。
@@ -351,13 +353,7 @@
   color: var(--ink-quiet);
 }
 /* 着手可否。**意味を固定した色**（docs/screen-design.md 13.1 原則5）を使うが、色だけで伝えないよう
-   文字（READY / 待ち: …）も出す。 */
-.task-ready {
-  color: var(--state-ok);
-}
-.task-blocked {
-  color: var(--state-warn);
-}
+   文字（READY / 待ち: …）も出す。色は `Text`（tone="state-ok" / "state-warn"）が持つ。 */
 
 /* タスクを実行する確認（`components/task-run-confirm.tsx`）。**表の上に重ねて開く**——
    `showModal()` は top layer に積むので、下の表より必ず上に出る。常設の枠ではないので
@@ -376,11 +372,8 @@
 .task-run-confirm::backdrop {
   background: color-mix(in srgb, var(--ground) 70%, transparent);
 }
-.task-run-question {
-  margin: 0;
-  font-size: var(--font-heading);
-  font-weight: 600;
-}
+/* 問い（`Text`。size="heading" tone="inherit" weight="semibold"。margin: 0 は既定と同じなので
+   ここには残さない）。 */
 /* 送る文面（または送れない理由）。問いより弱い濃さで、問いの下に1行だけ置く。 */
 .task-run-note {
   margin: 0.5rem 0 0;

@@ -5,7 +5,7 @@
 import { type ReactElement } from "react"
 
 import { type TaskReadiness } from "../../../../shared/task-summary.ts"
-import styles from "../task-board.module.css"
+import { Text } from "../../../components/ui/text/text.tsx"
 import { TaskIdList } from "./task-id-list.tsx"
 
 export function ReadinessCell(props: {
@@ -16,13 +16,17 @@ export function ReadinessCell(props: {
     return props.dependencies.length === 0 ? <>—</> : <TaskIdList ids={props.dependencies} />
   }
   if (props.readiness.kind === "ready") {
-    return <span className={styles["task-ready"]}>READY</span>
+    return (
+      <Text element="span" size="inherit" tone="state-ok" weight="inherit" className="">
+        READY
+      </Text>
+    )
   }
 
   return (
-    <span className={styles["task-blocked"]}>
+    <Text element="span" size="inherit" tone="state-warn" weight="inherit" className="">
       {"待ち: "}
       <TaskIdList ids={props.readiness.blockedBy} />
-    </span>
+    </Text>
   )
 }

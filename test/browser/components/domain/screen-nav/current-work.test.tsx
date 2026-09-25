@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "bun:test"
 
-import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react"
 
 import { ScreenNav } from "../../../../../src/browser/components/domain/screen-nav/screen-nav.tsx"
 import { parseHash } from "../../../../../src/browser/stores/location-hash.ts"
@@ -91,6 +91,12 @@ function panelWorkToggle(): HTMLElement {
   return document.querySelector(".screen-nav-panel .screen-nav-work-toggle") as HTMLElement
 }
 
+/** 帯（広い画面）の依頼の手順の一覧。**広い画面・狭い画面の両方に同じ内容が2つ描かれる**ので、
+ * 先頭（帯側）だけを見る。 */
+function workList(): HTMLElement {
+  return document.querySelectorAll(".screen-nav-work-list")[0] as HTMLElement
+}
+
 describe("いまの作業（帯の札と、押すと開く依頼の手順の一覧）", () => {
   it("依頼が一度も無ければ「依頼待ち」で、開くと「まだ依頼が無い」と出る", () => {
     renderScreenNav()
@@ -99,7 +105,7 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
 
     fireEvent.click(workToggle())
 
-    expect(document.querySelector(".screen-nav-work-empty")?.textContent).toBe("まだ依頼が無い")
+    expect(within(workList()).getByText("まだ依頼が無い")).not.toBeNull()
   })
 
   it("雑談中の依頼待ちは「<名前> とおしゃべり中」になり、印が埋まる（docs/screen-design.md 13.9）", () => {
@@ -532,9 +538,7 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
 
     fireEvent.click(workToggle())
 
-    expect(document.querySelector(".screen-nav-work-empty")?.textContent).toBe(
-      "この依頼ではまだツールを使っていない",
-    )
+    expect(within(workList()).getByText("この依頼ではまだツールを使っていない")).not.toBeNull()
   })
 
   it("もう一度押す・外側を押す・Esc で閉じる（Esc はフォーカスを札へ戻す）", () => {

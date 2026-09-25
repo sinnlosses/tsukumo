@@ -18,6 +18,7 @@
 import { type ReactElement } from "react"
 
 import { type TaskSummaryResult } from "../../../shared/task-summary.ts"
+import { Text } from "../../components/ui/text/text.tsx"
 import { TaskItem } from "./components/task-item.tsx"
 import { TaskRunningCard } from "./components/task-running-card.tsx"
 import { taskListFilterLabel, type TaskListFilterStatus } from "./domain/task-list-count.ts"
@@ -32,18 +33,44 @@ export type TaskListProps = {
 
 export function TaskList(props: TaskListProps): ReactElement {
   if (props.tasks.kind === "unknown") {
-    return <p className={styles["task-empty"]}>不明</p>
+    return (
+      <Text
+        element="p"
+        size="inherit"
+        tone="ink-quiet"
+        weight="inherit"
+        className={styles["task-empty"] ?? ""}
+      >
+        不明
+      </Text>
+    )
   }
   if (props.tasks.items.length === 0) {
-    return <p className={styles["task-empty"]}>タスクが無い</p>
+    return (
+      <Text
+        element="p"
+        size="inherit"
+        tone="ink-quiet"
+        weight="inherit"
+        className={styles["task-empty"] ?? ""}
+      >
+        タスクが無い
+      </Text>
+    )
   }
 
   const filtered = filterTasksForSidebar(props.tasks.items, props.selectedStatus)
   if (filtered.length === 0 && props.selectedStatus !== undefined) {
     return (
-      <p className={styles["task-empty"]}>
+      <Text
+        element="p"
+        size="inherit"
+        tone="ink-quiet"
+        weight="inherit"
+        className={styles["task-empty"] ?? ""}
+      >
         {taskListFilterLabel(props.selectedStatus)}のタスクが無い
-      </p>
+      </Text>
     )
   }
 

@@ -17,7 +17,4 @@
 .protocol-mismatch p {
   margin: 0;
 }
-.protocol-mismatch-title {
-  font-size: var(--font-subheading);
-  font-weight: bold;
-}
+/* 題（`Text`。size="subheading" tone="inherit" weight="bold"）。 */

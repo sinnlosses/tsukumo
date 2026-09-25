@@ -7,12 +7,15 @@
 
 import { type ReactElement } from "react"
 
+import { Text } from "../ui/text/text.tsx"
 import styles from "./protocol-mismatch.module.css"
 
 export function ProtocolMismatch(): ReactElement {
   return (
     <div className={styles["protocol-mismatch"]} role="alert">
-      <p className={styles["protocol-mismatch-title"]}>tsukumo とこのページの版が合いません</p>
+      <Text element="p" size="subheading" tone="inherit" weight="bold" className="">
+        tsukumo とこのページの版が合いません
+      </Text>
       <p>ページを読み込み直してください。</p>
       <p>読み込み直しても出るときは、tsukumo を上げ直してください。</p>
     </div>

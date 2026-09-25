@@ -1,0 +1,58 @@
+/* 字の段・色・太さの対応表（`text.tsx`）。値の名前はトークン名そのまま
+   （`docs/design.md` 2章「`components/ui/` の部品（variant の作法と一覧）」「variant の表し方」）。 */
+
+/* 既定の margin: 0。**呼び出し側の class（margin を持つもの）が常に勝つ**よう :where() に書く。 */
+:where(.text) {
+  margin: 0;
+}
+
+.text-size-label {
+  font-size: var(--font-label);
+}
+.text-size-action {
+  font-size: var(--font-action);
+}
+.text-size-secondary {
+  font-size: var(--font-secondary);
+}
+.text-size-subheading {
+  font-size: var(--font-subheading);
+}
+.text-size-body {
+  font-size: var(--font-body);
+}
+.text-size-heading {
+  font-size: var(--font-heading);
+}
+
+.text-tone-ink {
+  color: var(--ink);
+}
+.text-tone-ink-quiet {
+  color: var(--ink-quiet);
+}
+.text-tone-accent {
+  color: var(--accent);
+}
+.text-tone-state-ok {
+  color: var(--state-ok);
+}
+.text-tone-state-warn {
+  color: var(--state-warn);
+}
+.text-tone-state-ng {
+  color: var(--state-ng);
+}
+.text-tone-state-ask {
+  color: var(--state-ask);
+}
+
+.text-weight-normal {
+  font-weight: 400;
+}
+.text-weight-semibold {
+  font-weight: 600;
+}
+.text-weight-bold {
+  font-weight: 700;
+}

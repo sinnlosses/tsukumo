@@ -16,6 +16,7 @@
 
 import { type MouseEvent, type ReactElement } from "react"
 
+import { Text } from "../../../components/ui/text/text.tsx"
 import { useModalDialog } from "../../../hooks/use-modal-dialog.ts"
 import { useSessionDispatch, useTurnRunning } from "../../../stores/session.tsx"
 import { useBoardClose } from "../board-close.tsx"
@@ -61,7 +62,9 @@ export function TaskRunConfirm(props: TaskRunConfirmProps): ReactElement {
       onClose={props.onClose}
       onClick={onDialogClick}
     >
-      <p className={styles["task-run-question"]}>{props.taskId} を実行しますか</p>
+      <Text element="p" size="heading" tone="inherit" weight="semibold" className="">
+        {props.taskId} を実行しますか
+      </Text>
       {turnInProgress ? (
         <p className={styles["task-run-note"]}>
           いまターンが動いているので送れない。終わってからもう一度押す。

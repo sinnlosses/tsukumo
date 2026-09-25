@@ -124,9 +124,11 @@ describe("TaskBoard", () => {
     render(<TaskBoard tasks={known(TASKS)} open={true} onClose={() => {}} />)
 
     const rows = document.querySelectorAll(".task-board-row")
-    expect(rows[0]?.querySelector(".task-ready")).toBeNull()
-    expect(rows[1]?.querySelector(".task-ready")?.textContent).toBe("READY")
-    expect(rows[2]?.querySelector(".task-blocked")?.textContent).toBe("待ち: X-002")
+    const readinessOf = (row: Element | undefined): string | null | undefined =>
+      row?.querySelector('[data-label="着手"]')?.textContent
+    expect(readinessOf(rows[0])).toBe("—")
+    expect(readinessOf(rows[1])).toBe("READY")
+    expect(readinessOf(rows[2])).toBe("待ち: X-002")
   })
 
   // 着手の列は todo 以外では依存をそのまま並べる（済んだ依存も記録として残す）。この行が

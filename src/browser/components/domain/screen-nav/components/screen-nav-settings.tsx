@@ -16,6 +16,7 @@ import { useId, type ReactElement } from "react"
 import { isSessionDefaultPermissionMode } from "../../../../../shared/session-default.ts"
 import { HStack } from "../../../../components/ui/h-stack/h-stack.tsx"
 import { Select } from "../../../../components/ui/select/select.tsx"
+import { Text } from "../../../../components/ui/text/text.tsx"
 import { REVEAL_SPEED_LABELS } from "../../../../domain/reveal-speed.ts"
 import { EFFORT_PLACEHOLDER_VALUE, effortLabel } from "../domain/effort-label.ts"
 import { MODEL_LABELS } from "../domain/model-label.ts"
@@ -84,7 +85,15 @@ export function ScreenNavSettingsGear(props: ScreenNavSettingsProps): ReactEleme
           role="region"
           aria-label={SETTINGS_LABEL}
         >
-          <p className={styles["screen-nav-settings-heading"]}>画面の色</p>
+          <Text
+            element="p"
+            size="label"
+            tone="ink-quiet"
+            weight="inherit"
+            className={styles["screen-nav-settings-heading"] ?? ""}
+          >
+            画面の色
+          </Text>
           {settings.colors.map((color) => (
             <HStack
               element="div"
@@ -106,7 +115,15 @@ export function ScreenNavSettingsGear(props: ScreenNavSettingsProps): ReactEleme
               />
             </HStack>
           ))}
-          <p className={styles["screen-nav-settings-heading"]}>新しいセッションの既定</p>
+          <Text
+            element="p"
+            size="label"
+            tone="ink-quiet"
+            weight="inherit"
+            className={styles["screen-nav-settings-heading"] ?? ""}
+          >
+            新しいセッションの既定
+          </Text>
           <HStack
             element="div"
             gap="lg"
@@ -187,7 +204,15 @@ export function ScreenNavSettingsGear(props: ScreenNavSettingsProps): ReactEleme
               onChange={settings.sessionDefault.onChangePermissionMode}
             />
           </HStack>
-          <p className={styles["screen-nav-settings-heading"]}>書き上げる演出の速さ</p>
+          <Text
+            element="p"
+            size="label"
+            tone="ink-quiet"
+            weight="inherit"
+            className={styles["screen-nav-settings-heading"] ?? ""}
+          >
+            書き上げる演出の速さ
+          </Text>
           <HStack
             element="div"
             gap="lg"
@@ -209,7 +234,15 @@ export function ScreenNavSettingsGear(props: ScreenNavSettingsProps): ReactEleme
               onChange={settings.revealSpeed.onChange}
             />
           </HStack>
-          <p className={styles["screen-nav-settings-heading"]}>訪問</p>
+          <Text
+            element="p"
+            size="label"
+            tone="ink-quiet"
+            weight="inherit"
+            className={styles["screen-nav-settings-heading"] ?? ""}
+          >
+            訪問
+          </Text>
           <HStack
             element="div"
             gap="lg"

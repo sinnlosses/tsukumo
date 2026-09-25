@@ -425,10 +425,8 @@
   flex: none;
   margin: 0;
 }
-/* 区画が空のときの一言。 */
-.sidebar-empty {
-  color: var(--ink-quiet);
-}
+/* 区画が空のときの一言（`Text`。tone="ink-quiet"。区画の中〔`.sidebar-block p`〕なので
+   margin はそちらが持つ）。 */
 /* 最近の話題の見出しの並び（docs/history/mockup/chat-sidebar-2026-09-23.png）。各行の上に
    `rule` の細い線を引き（見本では見出しの直下にも1本ある）、印は付けない。**見出しは読む面の
    文字**なので `ink`（13.1 原則1）。長い見出しは折り返す（区切りの無い長い語でも横に
