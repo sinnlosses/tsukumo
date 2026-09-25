@@ -4,10 +4,13 @@ import {
   createVisitScriptWriter,
   type VisitScriptDraft,
   type VisitScriptWriterPorts,
-} from "../../../src/server/core/visit-script-writer.ts"
-import { type VisitCast, type VisitScriptQuery } from "../../../src/server/core/visit-script.ts"
-import { UNKNOWN_ACHIEVEMENT } from "../../../src/shared/achievement.ts"
-import { type VisitScript } from "../../../src/shared/character-visit.ts"
+} from "../../../../src/server/visit/core/visit-script-writer.ts"
+import {
+  type VisitCast,
+  type VisitScriptQuery,
+} from "../../../../src/server/visit/core/visit-script.ts"
+import { UNKNOWN_ACHIEVEMENT } from "../../../../src/shared/achievement.ts"
+import { type VisitScript } from "../../../../src/shared/character-visit.ts"
 
 // 人格・依頼・台本はすべて手で書いた架空のもの（docs/coding-standards.md「会話内容の扱い」）。
 

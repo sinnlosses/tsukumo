@@ -1771,13 +1771,13 @@ type Diary = {
 訪問のコードは訪問専用のファイルに寄せてあり、既存のファイルへの差し込みは型・呼び出し・分岐だけ
 （あとから丸ごと戻せるようにするため）。
 
-| ファイル                            | 持ち物                                                                                           |
-| ----------------------------------- | ------------------------------------------------------------------------------------------------ |
-| `src/shared/visit.ts`               | 訪問の状態（`none` / `visiting` / `left`）・3つのイベント・帰る理由・畳み込み                    |
-| `src/server/core/visit-timing.ts`   | 待ちの信号・来る／まだ／来ない・帰る合図・次の行（純関数）と、しきい値の表                       |
-| `src/server/core/visit-guest.ts`    | パックの一覧から客の候補を拾い、客・台本・帰りの一言を選ぶ（純関数）                             |
-| `src/server/core/visit-watch.ts`    | 代ごとの見張り。待ちの勘定と掛けた時計を持ち、訪問のイベントを出す。時計の口（`VisitClock`）の型 |
-| `src/server/adapter/visit-clock.ts` | 時計の口の実装（`setTimeout` + `unref()`）                                                       |
+| ファイル                                  | 持ち物                                                                                           |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `src/shared/visit.ts`                     | 訪問の状態（`none` / `visiting` / `left`）・3つのイベント・帰る理由・畳み込み                    |
+| `src/server/visit/core/visit-timing.ts`   | 待ちの信号・来る／まだ／来ない・帰る合図・次の行（純関数）と、しきい値の表                       |
+| `src/server/visit/core/visit-guest.ts`    | パックの一覧から客の候補を拾い、客・台本・帰りの一言を選ぶ（純関数）                             |
+| `src/server/visit/core/visit-watch.ts`    | 代ごとの見張り。待ちの勘定と掛けた時計を持ち、訪問のイベントを出す。時計の口（`VisitClock`）の型 |
+| `src/server/visit/adapter/visit-clock.ts` | 時計の口の実装（`setTimeout` + `unref()`）                                                       |
 
 - **見張りは駆動1代ぶんの持ち物**（`session-manager.ts` の `GenerationTally.visit`）。`receive` が
   駆動由来のイベントを畳んだあとに渡し、見張りが出したイベントも同じ `receive` へ戻して畳む。
@@ -1817,11 +1817,11 @@ type Diary = {
 訪問1回ぶんの台本を、来ると決めた時点で使い捨ての `query()` に書かせる（提案は
 `docs/research/character-visit.md` 論点2。仕事の会話を渡してよいことは `docs/requirements.md` 2.2）。
 
-| ファイル                                 | 持ち物                                                                                    |
-| ---------------------------------------- | ----------------------------------------------------------------------------------------- |
-| `src/server/core/visit-script.ts`        | 仕事の抜き書き・指示文・出力の形（JSON Schema）・台本の検査・作るのをやめる合図（純関数） |
-| `src/server/core/visit-script-writer.ts` | 材料を集めて `query()` の口を呼び、「作れた／作れなかった」に畳む。作る口と出どころの型   |
-| `src/server/adapter/sdk-visit-script.ts` | 使い捨ての `query()`（`structured_output` を返すだけ）                                    |
+| ファイル                                       | 持ち物                                                                                    |
+| ---------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| `src/server/visit/core/visit-script.ts`        | 仕事の抜き書き・指示文・出力の形（JSON Schema）・台本の検査・作るのをやめる合図（純関数） |
+| `src/server/visit/core/visit-script-writer.ts` | 材料を集めて `query()` の口を呼び、「作れた／作れなかった」に畳む。作る口と出どころの型   |
+| `src/server/visit/adapter/sdk-visit-script.ts` | 使い捨ての `query()`（`structured_output` を返すだけ）                                    |
 
 - **来てから作る**: しきい値に届いたら客を選んで作り始め、できたら `visit-started` を出す（客が
   来るのは作る時間ぶん遅れる）。先に作り始めないのは、待ちが途切れたら捨てる・話題が古くなる、の

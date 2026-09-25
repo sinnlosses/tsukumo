@@ -6,7 +6,7 @@
 // 来ない（`docs/research/character-visit.md` 論点2）。あるじと同じパックは来ない。候補が複数なら
 // 来るたびに等しい確率で1つ選ぶ。
 
-import { type CharacterVisit, type VisitScript } from "../../shared/character-visit.ts"
+import { type CharacterVisit, type VisitScript } from "../../../shared/character-visit.ts"
 
 /** 客になれるパック（名前と `visit` の節）。 */
 export type VisitGuest = { readonly pack: string; readonly visit: CharacterVisit }

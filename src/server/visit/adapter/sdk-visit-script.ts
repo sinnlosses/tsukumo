@@ -1,6 +1,6 @@
 // 訪問の台本を書かせる使い捨ての `query()`（`docs/design.md` 5章「訪問の台本」）。SDK に触るので
 // `sdk-` で始まる（原則3）。何を渡し、受け取ったものをどう検査するかは core
-// （`src/server/core/visit-script.ts` と `visit-script-writer.ts`）が持ち、ここは起こして
+// （`src/server/visit/core/visit-script.ts` と `visit-script-writer.ts`）が持ち、ここは起こして
 // `structured_output` を返すだけ。
 //
 // 仕事のセッション（`sdk-driver.ts`）とは別の子プロセスで、**訪問1回ぶんの台本を返したら終わる**。

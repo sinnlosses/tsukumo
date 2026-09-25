@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test"
 
-import { chooseVisit, visitGuests } from "../../../src/server/core/visit-guest.ts"
-import { type CharacterVisit, type VisitScript } from "../../../src/shared/character-visit.ts"
+import { chooseVisit, visitGuests } from "../../../../src/server/visit/core/visit-guest.ts"
+import { type CharacterVisit, type VisitScript } from "../../../../src/shared/character-visit.ts"
 
 // 台本と帰りの一言は手で書いた架空のもの（docs/coding-standards.md「会話内容の扱い」）。
 const FIRST_SCRIPT: VisitScript = [

@@ -432,7 +432,7 @@ export type SessionState = {
    * 起こすまで待たない）。起こすたびに覚えた値へ流れ直す（届くまでは同梱の既定
    * `DEFAULT_VISIT_ENABLED`）。
    *
-   * **源は `visit-enabled-changed` だけ。** `src/server/core/visit-timing.ts` の `visitArrival` /
+   * **源は `visit-enabled-changed` だけ。** `src/server/visit/core/visit-timing.ts` の `visitArrival` /
    * `departureReason` がこの値を読み、オフなら来ない・訪問中にオフにしたらその場で帰る
    * （理由は `"disabled"`）。
    */

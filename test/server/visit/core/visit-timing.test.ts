@@ -9,15 +9,15 @@ import {
   type VisitTally,
   visitArrival,
   visitDeparture,
-} from "../../../src/server/core/visit-timing.ts"
-import { type VisitScript } from "../../../src/shared/character-visit.ts"
-import { type SessionEvent } from "../../../src/shared/session-event.ts"
+} from "../../../../src/server/visit/core/visit-timing.ts"
+import { type VisitScript } from "../../../../src/shared/character-visit.ts"
+import { type SessionEvent } from "../../../../src/shared/session-event.ts"
 import {
   applySessionEvent,
   INITIAL_SESSION_STATE,
   type SessionState,
-} from "../../../src/shared/session-state.ts"
-import { type VisitEndReason } from "../../../src/shared/visit.ts"
+} from "../../../../src/shared/session-state.ts"
+import { type VisitEndReason } from "../../../../src/shared/visit.ts"
 
 // 依頼・セリフ・台本はすべて手で書いた架空のもの（docs/coding-standards.md「会話内容の扱い」）。
 const SCRIPT: VisitScript = [

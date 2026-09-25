@@ -1,6 +1,6 @@
 // 訪問の出入りと台本の進みの判断（`docs/design.md` 5章「訪問の契機と状態」）。**純関数だけ**で、
 // 時計は持たない。時刻は呼び出し側（`visit-watch.ts`）が渡し、時計を回すのは adapter
-// （`src/server/adapter/visit-clock.ts`）。
+// （`src/server/visit/adapter/visit-clock.ts`）。
 //
 // 待っている、と言える信号は2つ（`docs/requirements.md` 2.2・4.3、提案は
 // `docs/research/character-visit.md` 論点1）:
@@ -10,9 +10,9 @@
 //
 // 答え待ち（待たせているのが利用者）と雑談モード（往復そのものが会話）は待ちに数えない。
 
-import { type SessionEvent } from "../../shared/session-event.ts"
-import { type SessionRecord, type SessionState } from "../../shared/session-state.ts"
-import { type VisitEndReason, type VisitState } from "../../shared/visit.ts"
+import { type SessionEvent } from "../../../shared/session-event.ts"
+import { type SessionRecord, type SessionState } from "../../../shared/session-state.ts"
+import { type VisitEndReason, type VisitState } from "../../../shared/visit.ts"
 
 /** しきい値の組。値は実物で遊んでから詰める出発点。 */
 export type VisitTiming = {

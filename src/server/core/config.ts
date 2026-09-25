@@ -34,7 +34,7 @@ export const NEW_SESSION_ENV_NAME = "TSUKUMO_NEW_SESSION"
 /** `1` で `src/browser/` を見張り、変更のたびに組み立て直す（開発中だけ。docs/design.md 11章）。 */
 export const WATCH_UI_ENV_NAME = "TSUKUMO_WATCH_UI"
 /**
- * `1` で訪問のしきい値を縮める（`src/server/core/visit-timing.ts` の `QUICK_VISIT_TIMING`）。
+ * `1` で訪問のしきい値を縮める（`src/server/visit/core/visit-timing.ts` の `QUICK_VISIT_TIMING`）。
  * 疑似セッションや手元で、90 秒待たずに訪問の出入りを確かめるための口。
  */
 export const VISIT_QUICK_ENV_NAME = "TSUKUMO_VISIT_QUICK"

@@ -81,6 +81,7 @@ const SERVER_FEATURES = [
   "character-pack",
   "diary",
   "chat",
+  "visit",
 ] as const
 type ServerFeature = (typeof SERVER_FEATURES)[number]
 
@@ -100,6 +101,7 @@ const SERVER_FEATURE_IMPORTS: Readonly<Record<ServerFeature, ReadonlySet<ServerF
   // 設計上は `session-driver` も読むが、`session-driver` はまだ機能になっていない
   // （`server/core/` の共有の箱のまま。機能になったときに足す）
   chat: new Set(["character-pack"]),
+  visit: new Set([]),
 }
 
 type ServerLayer = "core" | "adapter"

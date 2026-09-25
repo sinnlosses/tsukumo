@@ -51,12 +51,12 @@ import {
   type TokenUsageLog,
   type TokenUsageRecorder,
 } from "../token-usage/core/token-usage.ts"
+import { createVisitWatch, type VisitPorts, type VisitWatch } from "../visit/core/visit-watch.ts"
 import { declined, type DispatchResult, dispatchToDriver, nudge } from "./driver-command.ts"
 import { createEventBatch, type EventBatch } from "./event-batch.ts"
 import { type PromptImageShelf, releasedPromptImageIds } from "./prompt-image-shelf.ts"
 import { type ChatArchive, type SessionDriver } from "./session-driver.ts"
 import { type SessionLaunchRequest } from "./session-launch.ts"
-import { createVisitWatch, type VisitPorts, type VisitWatch } from "./visit-watch.ts"
 
 export type SessionManagerOptions = {
   /** 現在時刻（エポックミリ秒）を返す関数（呼び出し側が時計を渡す。テストは偽の時計を渡す）。 */
@@ -183,7 +183,7 @@ export type SessionManagerOptions = {
    *
    * **`rememberSessionDefault` と違い、いま動いているセッションにも即座に効く**——このイベントは
    * ほかの駆動由来のイベントと同じ道（`receive`）で畳まれるので、訪問の見張り
-   * （`GenerationTally.visit`）にも同じタイミングで届く（`src/server/core/visit-timing.ts` の
+   * （`GenerationTally.visit`）にも同じタイミングで届く（`src/server/visit/core/visit-timing.ts` の
    * `visitArrival` / `departureReason` がゲートと帰る合図にする）。セッションは起こし直さない。
    */
   readonly rememberVisitEnabled: (visitEnabled: boolean) => SessionEvent
@@ -222,7 +222,7 @@ export type SessionManagerOptions = {
    */
   readonly readAchievementDay: (date: string) => Promise<DailyAchievement | undefined>
   /**
-   * 訪問の見張りに渡す口（しきい値・時計・客の候補・乱数。`src/server/core/visit-watch.ts`）。
+   * 訪問の見張りに渡す口（しきい値・時計・客の候補・乱数。`src/server/visit/core/visit-watch.ts`）。
    * 見張りは代ごとに1つ作る（{@link GenerationTally.visit}）。
    */
   readonly visit: VisitPorts
@@ -733,7 +733,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
         // **起こし直さない。覚え方は `set-session-default` と同じ**（`~/.tsukumo/state.json`。
         // 歯車の「訪問」。`docs/screen-design.md` 13.6）が、**効き方は違う**——書いて返した
         // `visit-enabled-changed` は訪問の見張りにも同じ道（`receive`）で即座に届き、オフなら
-        // 来ない・訪問中なら帰る（`src/server/core/visit-timing.ts`）。
+        // 来ない・訪問中なら帰る（`src/server/visit/core/visit-timing.ts`）。
         case "set-visit-enabled":
           return write(
             () => Promise.resolve(options.rememberVisitEnabled(command.enabled)),

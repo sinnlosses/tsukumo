@@ -27,8 +27,6 @@ import {
   listSwitchableSessions,
   readRestoredEvents,
 } from "./server/adapter/sdk-session.ts"
-import { queryVisitScript } from "./server/adapter/sdk-visit-script.ts"
-import { createVisitClock } from "./server/adapter/visit-clock.ts"
 import {
   type CharacterPack,
   listCharacterPacks,
@@ -51,13 +49,6 @@ import {
 import { createSessionLaunch, type SessionLaunchSeed } from "./server/core/session-launch.ts"
 import { createSessionManager, type SessionManager } from "./server/core/session-manager.ts"
 import { canResume, sessionTag } from "./server/core/session-restore.ts"
-import { visitGuests } from "./server/core/visit-guest.ts"
-import {
-  createVisitScriptWriter,
-  type VisitScriptSource,
-} from "./server/core/visit-script-writer.ts"
-import { visitCast } from "./server/core/visit-script.ts"
-import { QUICK_VISIT_TIMING, VISIT_TIMING } from "./server/core/visit-timing.ts"
 import { createOrcaHost } from "./server/host/adapter/orca-host.ts"
 import { openTrackedFile } from "./server/host/core/tracked-file.ts"
 import { listRepositoryFiles } from "./server/repository/adapter/repository-file.ts"
@@ -75,6 +66,15 @@ import {
   readDismissedUsageProposalKeys,
   writeDismissedUsageProposalKey,
 } from "./server/usage-review/adapter/usage-proposal-dismissal.ts"
+import { queryVisitScript } from "./server/visit/adapter/sdk-visit-script.ts"
+import { createVisitClock } from "./server/visit/adapter/visit-clock.ts"
+import { visitGuests } from "./server/visit/core/visit-guest.ts"
+import {
+  createVisitScriptWriter,
+  type VisitScriptSource,
+} from "./server/visit/core/visit-script-writer.ts"
+import { visitCast } from "./server/visit/core/visit-script.ts"
+import { QUICK_VISIT_TIMING, VISIT_TIMING } from "./server/visit/core/visit-timing.ts"
 import { UNKNOWN_ACHIEVEMENT } from "./shared/achievement.ts"
 import { CHAT_COMPACT_THRESHOLD_BYTES, CHAT_RECALL_READBACK_BYTES } from "./shared/chat-log.ts"
 import { type DismissUsageProposalCommand } from "./shared/command.ts"

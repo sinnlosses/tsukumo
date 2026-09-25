@@ -1,5 +1,5 @@
 // 訪問の台本を作る口（`docs/design.md` 5章「訪問の台本」）。材料（2人の人格と表情・今日の成果・
-// 時刻）を集め、使い捨ての `query()`（`src/server/adapter/sdk-visit-script.ts`）に書かせ、受け取った
+// 時刻）を集め、使い捨ての `query()`（`src/server/visit/adapter/sdk-visit-script.ts`）に書かせ、受け取った
 // ものを検査して**「作れた」か「作れなかった」の2つに畳む**。作れなかったときにどの台本へ
 // 落とすかは見張り（`visit-watch.ts`）が決める。
 //
@@ -9,8 +9,8 @@
 // 材料も台本も会話の内容に当たる。メモリにだけ持ち、ログにもファイルにも書かない
 // （docs/coding-standards.md「会話内容の扱い」）。
 
-import { type DailyAchievement } from "../../shared/achievement.ts"
-import { type VisitScript } from "../../shared/character-visit.ts"
+import { type DailyAchievement } from "../../../shared/achievement.ts"
+import { type VisitScript } from "../../../shared/character-visit.ts"
 import {
   parseVisitScript,
   type VisitCastLookup,

@@ -10,14 +10,14 @@ import {
   visitScriptQuery,
   visitWaitedMs,
   visitWorkExcerpt,
-} from "../../../src/server/core/visit-script.ts"
-import { type SessionEvent } from "../../../src/shared/session-event.ts"
+} from "../../../../src/server/visit/core/visit-script.ts"
+import { type SessionEvent } from "../../../../src/shared/session-event.ts"
 import {
   applySessionEvent,
   INITIAL_SESSION_STATE,
   type SessionState,
-} from "../../../src/shared/session-state.ts"
-import { characterDefinition, portraits } from "../../fixture/character.ts"
+} from "../../../../src/shared/session-state.ts"
+import { characterDefinition, portraits } from "../../../fixture/character.ts"
 
 // 人格・依頼・セリフ・台本はすべて手で書いた架空のもの（docs/coding-standards.md「会話内容の扱い」）。
 

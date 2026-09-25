@@ -1,6 +1,6 @@
 // 訪問の台本を使い捨ての `query()` に書かせるための材料・指示文・形の検査（`docs/design.md` 5章
 // 「訪問の台本」、提案は `docs/research/character-visit.md` 論点2）。**純関数と定数だけ**で、
-// `query()` を呼ぶのは `src/server/adapter/sdk-visit-script.ts`、材料を集めて呼ぶ順序は
+// `query()` を呼ぶのは `src/server/visit/adapter/sdk-visit-script.ts`、材料を集めて呼ぶ順序は
 // `visit-script-writer.ts`。
 //
 // 渡すのは2つの人格・いまの仕事の抜き書き（依頼・直近のセリフ・待っているもの）・経過時間・
@@ -12,17 +12,17 @@
 
 import { isPlainObject } from "remeda"
 
-import { type DailyAchievement } from "../../shared/achievement.ts"
-import { type CharacterDefinition } from "../../shared/character-definition.ts"
+import { type DailyAchievement } from "../../../shared/achievement.ts"
+import { type CharacterDefinition } from "../../../shared/character-definition.ts"
 import {
   VISIT_SPEAKERS,
   type VisitScript,
   type VisitScriptLine,
   type VisitSpeaker,
-} from "../../shared/character-visit.ts"
-import { type ExpressionChoice, expressionChoices } from "../../shared/expression-choice.ts"
-import { type SessionEvent } from "../../shared/session-event.ts"
-import { type SessionRecord, type SessionState } from "../../shared/session-state.ts"
+} from "../../../shared/character-visit.ts"
+import { type ExpressionChoice, expressionChoices } from "../../../shared/expression-choice.ts"
+import { type SessionEvent } from "../../../shared/session-event.ts"
+import { type SessionRecord, type SessionState } from "../../../shared/session-state.ts"
 import { isWaiting, type VisitWait } from "./visit-timing.ts"
 
 /** 台本を書かせるモデル（軽いもの。仕事のセッションのモデルとは別に決める）。 */

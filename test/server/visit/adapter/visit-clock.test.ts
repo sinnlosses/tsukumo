@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test"
 
-import { createVisitClock } from "../../../src/server/adapter/visit-clock.ts"
+import { createVisitClock } from "../../../../src/server/visit/adapter/visit-clock.ts"
 
 describe("createVisitClock", () => {
   it("間を置いて1回起こし、取り消したものは起こさない", async () => {

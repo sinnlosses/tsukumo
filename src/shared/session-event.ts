@@ -391,7 +391,7 @@ export type SessionEvent =
   /**
    * 歯車の「訪問」のオン・オフが変わった（`docs/screen-design.md` 13.6・13.9「設定の歯車」）。
    * **`session-default-changed` と違い、いま動いているセッションに即座に効く**——オフのあいだは
-   * 客が来ず、訪問中にオフにしたらその場で帰る（`src/server/core/visit-timing.ts`）。
+   * 客が来ず、訪問中にオフにしたらその場で帰る（`src/server/visit/core/visit-timing.ts`）。
    * **ディスクには覚えない**ので、起こし直すと初期値の「する」へ戻る（`set-visit-enabled` で
    * 書き換えるたびに流れる、この1つだけが源）。
    */

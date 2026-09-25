@@ -19,14 +19,14 @@ import {
 } from "../../../src/server/core/session-driver.ts"
 import { type SessionLaunchRequest } from "../../../src/server/core/session-launch.ts"
 import { createSessionManager } from "../../../src/server/core/session-manager.ts"
-import { type VisitGuest } from "../../../src/server/core/visit-guest.ts"
-import { VISIT_TIMING } from "../../../src/server/core/visit-timing.ts"
-import { type VisitPorts } from "../../../src/server/core/visit-watch.ts"
 import { type DiaryDay } from "../../../src/server/diary/core/diary-tool.ts"
 import {
   type TokenUsageEntry,
   type TokenUsageLog,
 } from "../../../src/server/token-usage/core/token-usage.ts"
+import { type VisitGuest } from "../../../src/server/visit/core/visit-guest.ts"
+import { VISIT_TIMING } from "../../../src/server/visit/core/visit-timing.ts"
+import { type VisitPorts } from "../../../src/server/visit/core/visit-watch.ts"
 import { type DailyAchievement } from "../../../src/shared/achievement.ts"
 import { type VisitScript } from "../../../src/shared/character-visit.ts"
 import { CHAT_COMPACT_THRESHOLD_BYTES } from "../../../src/shared/chat-log.ts"

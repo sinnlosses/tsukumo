@@ -24,7 +24,7 @@ export const DEFAULT_VISIT_ENABLED = true
 
 /**
  * 帰った理由。**帰る合図はサーバで1つの `visit-ended` にまとめる**（ブラウザ側で別々に判定
- * しない。判定は `src/server/core/visit-timing.ts` の `visitDeparture`）。
+ * しない。判定は `src/server/visit/core/visit-timing.ts` の `visitDeparture`）。
  *
  * - `request`: 利用者が依頼を送った
  * - `pending`: 答え待ち（許可・質問）が積まれた

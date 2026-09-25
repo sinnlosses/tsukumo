@@ -1,7 +1,7 @@
-// 訪問の見張り（`src/server/core/visit-watch.ts`）に渡す、手で進める時計。**実際の時間を待たずに**
-// 90 秒のしきい値や行の間を越えるために、見張りのテストと session-manager のテストが使う。
+// 訪問の見張り（`src/server/visit/core/visit-watch.ts`）に渡す、手で進める時計。**実際の時間を
+// 待たずに** 90 秒のしきい値や行の間を越えるために、見張りのテストと session-manager のテストが使う。
 
-import { type VisitClock } from "../../src/server/core/visit-watch.ts"
+import { type VisitClock } from "../../src/server/visit/core/visit-watch.ts"
 
 export type ManualClock = {
   readonly clock: VisitClock

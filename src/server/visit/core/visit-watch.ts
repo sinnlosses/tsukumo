@@ -7,7 +7,7 @@
 // 台本は来ると決めた時点で作り始め（`visit-script-writer.ts`）、できたら `visit-started` を出す。
 // 作れなかった（時間切れも）らパックの台本へ落とし、それも無ければ来ない。作っている最中に
 // 帰る合図が来たら中断して来ない（`visit-script.ts` の `interruptsVisitScript`）。時計そのものは渡される
-// （{@link VisitClock}。本番は `src/server/adapter/visit-clock.ts`）。
+// （{@link VisitClock}。本番は `src/server/visit/adapter/visit-clock.ts`）。
 //
 // 出したイベント（`visit-started` / `visit-line-advanced` / `visit-ended`）は `emit` で
 // session-manager の受け口へ戻し、ほかのイベントと同じく畳んで配る。**そのイベントも見張りの
@@ -15,9 +15,9 @@
 //
 // 台本は会話の内容に当たる。ログにもファイルにも書かない（docs/coding-standards.md「会話内容の扱い」）。
 
-import { type SessionEvent } from "../../shared/session-event.ts"
-import { type SessionState } from "../../shared/session-state.ts"
-import { type VisitEvent } from "../../shared/visit.ts"
+import { type SessionEvent } from "../../../shared/session-event.ts"
+import { type SessionState } from "../../../shared/session-state.ts"
+import { type VisitEvent } from "../../../shared/visit.ts"
 import {
   chooseVisit,
   type VisitChoice,
