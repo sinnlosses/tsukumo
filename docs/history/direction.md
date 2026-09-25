@@ -3,6 +3,20 @@
 `develop/direction.md` に書かれたユーザーからの指示を、タスク化した時点で**当時の記述のまま**
 ここへ移す（`docs/workflow.md`「指示メモ」参照）。新しいものを上に足す。**後から書き換えない。**
 
+## 2026-09-25 browser のディレクトリを nextjs の components の3段に合わせる
+
+（`develop/direction.md` の `## ユーザーから` を当時の記述のまま移したもの。会話で「browser 側のリファクタをしたいからタスク化してほしい。/Users/sinnlos/Downloads/program/nextjs のディレクトリ構成を確認してほしい。components/domain/配下にHeaderやLayout、components/pages/配下に各ページ、components/ui/配下にUIコンポーネントの構成に合わせたい。懸念点があれば聞きたいな。」と頼まれ、エージェントが4つの論点を聞いてから書いた。T-581〜T-585 になった）
+
+- **browser 側のディレクトリ構成を、`/Users/sinnlos/Downloads/program/nextjs` の `src/components/` の3段に合わせる**（2026-09-25）
+  - 手本の形: `components/domain/`（AppHeader・AppLayout・AppLoading のような、画面を構成する部品のうちこのリポジトリ固有のもの）・`components/page/<画面>/`（各画面）・`components/ui/`（語彙を持たない UI 部品）。手本の `features/` `hooks/` `states/` `lib/` `utils/` `types/` は空のディレクトリ
+  - **合わせるのはディレクトリだけ。** ファイル名の kebab-case・barrel file（`index.ts`）を作らない・`@/` を使わず相対 import、の規約は残す（手本の PascalCase・1部品1フォルダ・`index.ts`・`@/` は真似しない）
+  - **`features/` は残す。** bullet-proof-react と同じ役割のディレクトリ。`features/` から `components/` に丸ごと引っ越すものも出てくる（どれがそうかの線引きは設計で決める）
+  - **会話の画面の領域は「枠は domain、中身は page」。** `layout`・`screen-nav`・`sidebar` は全画面で共有する枠なので `components/domain/`、`main-view`・`character-view`・`chat-view`・`dispatch` は `components/page/conversation/`。キャラクター・使用量・成果の画面は `components/page/<画面>/` に並べる
+  - **`domain` の意味は1つ: このリポジトリ固有（ドメイン）のものを置くところ。** `browser/domain/` は全体で使う語彙、`components/domain/` は画面を構成する部品のうちドメインのもの。名前の衝突ではなく同じ語を置き場所ごとに使う（改名しない）
+  - いまの `browser/components/`（Select・ImageZoom など語彙を持たない部品）は `components/ui/` へ。Portrait・CharacterFace のように tsukumo の語彙を持つものは `components/domain/` へ
+  - 設計書（`docs/design.md` 2章・6.1）・`CLAUDE.md` 原則5・`test/architecture.test.ts`（`BROWSER_REGIONS` / `BROWSER_PLACED_FEATURES` / `BROWSER_BOXES` と箱をまたぐ辺の表）を新しい形に合わせて書き直す。**先に設計（置き場の基準と依存の向き）を決めてから移す**
+  - 移動は一度にやらず段に分ける（並行する作業ツリーの枝と衝突しにくくするため）
+
 ## 2026-09-25 振り返りのドラフト3件
 
 （`develop/direction.md` の `## エージェントのドラフト` から、承認を得た3件を移したもの。出典: T-561・T-562・T-563 の振り返り。ユーザーの承認は「全部承認するよ。」。1件目が T-580、2件目と3件目をまとめて T-579 になった）
