@@ -7,6 +7,36 @@
 節は `## <出典のファイル> <節番号> <節の見出し>` の形で並べ、各節の先頭に**移した日付と
 出典の節**を1行で書く。探すときは出典の節名で `grep` する。
 
+## design.md 2. 全体構成 / ディレクトリ（`components/` を3段に割った）
+
+2026-09-25 に決めた（`docs/design.md` 2章の「ディレクトリ」「`src/browser/` の箱と、置く基準」
+「領域の機能と、置かれる機能」と、移行の対応表の経緯）。
+
+**きっかけ**: 利用者の Next.js の雛形（`src/components/` の `domain/`（AppHeader・AppLayout・
+AppLoading と、それらを包む Application）・`page/<画面>/`（TopPage と PresentationalTopPage）・
+`ui/`）に browser 側のディレクトリを合わせたい、という指示。それまでは bullet-proof-react の写しで、
+11機能がすべて `features/` に並び、`components/` は語彙を持たない部品の箱だった。
+
+**利用者との会話で先に決まったこと**: 合わせるのはディレクトリだけ（kebab-case・barrel file を
+作らない・相対 import は残す）。`features/` は残す。会話の画面は「枠は domain、中身は page」。
+`domain` の意味は1つ（このリポジトリ固有のもの）で改名しない。語彙を持たない部品は `ui`。
+移動は段に分ける。
+
+**そのうえで決めた論点と、採らなかった案**:
+
+| 論点                                       | 採った形                                                                                                                                                                   | 採らなかった案と理由                                                                                                                                                                                                                                                                                                                                                                                                       |
+| ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `features/` に何が残るか                   | **置かれる機能（`task-board`）だけ。** 領域は `hooks/` `components/` `domain/` `markdown/` と `*.module.css` ごと `components/` へ移す                                       | **ロジック（`hooks/` `domain/`）を `features/<機能>/` に残し、部品だけ `components/` へ移す**（bullet-proof-react の「features はロジックの置き場」に寄せる読み方）。1つの領域を追うのに開くディレクトリが2つになり、部品とそのフックのあいだに箱をまたぐ辺が全部の領域で生まれる。container / presenter の対（`<名前>.tsx` と `hooks/use-<名前>.ts`）が別々の木に割れると、対になっていることがパスで分からなくなる。bullet-proof-react の features も部品とフックを同じ機能の中に持つ |
+| 箱の向き                                   | `main.tsx` → `components/page` → `components/domain` → `features` → `components/ui`。`components/domain` の直下の部品は `stores/` を読んでよい                            | **`features` から `components/domain` を引けるようにする**（置かれる機能が `Portrait` などを使える）。`components/domain/sidebar/` が `features/task-board/` を引くので、箱の単位で輪ができる。いまは要る読み手が無い。**`components/domain` の部品に `stores/` を禁じたまま**（いまの `components/` と同じ）にする案は、手本の `domain` の部品がフックで状態を読む形と食い違い、枠（`screen-nav/` など）と直下の部品で辺を変える検査が要る。いまストアを読む直下の部品は無いので、許しても形は変わらない                  |
+| 会話の画面の4領域どうし                    | **import しない**（いまの「領域どうしは import しない」をそのまま引き継ぐ）                                                                                                 | **同じ画面の中なら引いてよいとする案**。いまも辺は0本で、許すと1本目が黙って入る。組み立ては `main.tsx` が持っているので、同じ画面でも互いを知る必要が無い                                                                                                                                                                                                                                                                  |
+| 語彙を持つ共有部品と `browser/hooks/`      | `Portrait`・`CharacterFace`・`PromptImage`・`ProtocolMismatch` は `components/domain/` の直下。`Select`・`ImageZoom` は `components/ui/`。`browser/hooks/` の3本は動かさない | **`Portrait` などを `ui` に置く案**（「値と呼び先を全部受け取る」いまの `components/` の定義を当てる）。`domain` の意味を「このリポジトリ固有のもの」1つに決めたので、立ち絵・顔・依頼の画像・サーバとの版という語彙を持つものは `domain`。**`hooks/` を `components/` の下へ入れる案**は、手本も `src/hooks/` を上に置いており、読み手に `features/` と `components/ui/` がいるので上の段に置くほうが向きに合う                                  |
+| 画面の組み立て（`<Root>`・`OVERLAY_SCREEN`） | **入口の `main.tsx` に残す**                                                                                                                                              | **手本の `Application.tsx` のように `components/domain/` へ移す案**。枠の箱が画面（`components/page/`）を import する逆向きの辺になる。**`components/page/conversation/` に会話の画面を組む部品を置く案**も、画面が枠（`components/domain/layout/`）を引く「領域 → 領域」の辺になる。手本では組み立ては Next.js の `app/` が持ち、tsukumo ではそれが `main.tsx`（`bun build` の入口でもある）                                                        |
+| 画面の名前                                 | `stores/location-hash.ts` の `Screen` の値（`conversation` `character` `token-usage` `achievement`）                                                                        | **いまの機能名（`character-screen`）を残す案**。`OVERLAY_SCREEN` の鍵・URL の hash・ディレクトリの名前が1つの語彙で揃うほうが追いやすい。ファイル名（`character-screen.tsx`）は変えない（移動を機械的に保つ）                                                                                                                                                                                                             |
+| 書き終わりの知らせ（`DiaryNotice`）        | 成果の画面と一緒に `components/page/achievement/` へ。どこに出すかは `main.tsx`                                                                                          | **全画面の枠として `components/domain/` へ切り出す案**。見開きを開く合図（`diary-book-request.ts`）と鈴の絵（`Bell`）を成果の画面と共有していて、切り出すと領域どうしの辺ができる                                                                                                                                                                                                                                      |
+
+**段の割り方**は登録時のまま（共有の部品と検査 → 枠 → 会話の画面 → 残りの画面）。1つの機能を割って
+別々の場所へ送るものが無かったので、段を足す必要は無かった。
+
 ## screen-design.md 13.10 成果の画面（押したら会話へ移る・吹き出しの写しを置かない・見本を置かない）
 
 2026-09-25 に `docs/screen-design.md` 13.10 から移す（成果の画面を「つくもの日記帳」に

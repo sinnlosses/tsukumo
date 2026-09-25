@@ -229,37 +229,49 @@ src/
       vendor-asset.ts         ブラウザへそのまま配る外部ライブラリの実ファイルを読む（node_modules のどのファイルを指すか知っているのはここだけ）
       orca-host.ts            `orca` コマンドを起こす唯一の場所
   browser/
-    main.tsx                  入口。部品の木を組み立てて mount する（副作用はここだけ）
+    main.tsx                  入口。部品の木を組み立てて mount する（副作用はここだけ）。出す画面を選ぶ
+                              <Root> と、会話の画面の <Layout> に4領域を差し込むのもここ（6.1）
     css-variable.d.ts         browser 全体に効く型拡張（import されない ambient 宣言）
     css-module.d.ts           `*.module.css` を import したときの型（同上）
     css-global.d.ts           `styles/theme.css` を副作用だけで import したときの宣言（中身は空。同上）
     vendor-global.d.ts        外部ライブラリがブラウザのグローバルに置くものの型（`<script>` で読むので npm の型が引けない分。同上）
-    features/                 機能。**機能どうしは import しない**
-      layout/                 Layout・領域の枠・リサイザ・比率の保存
-      screen-nav/             全画面の最上部の帯。部屋の名前・仕事/雑談のトグル・3画面の口・
+    components/               React の部品。**`page/` `domain/` `ui/` の3段**（2026-09-25 決定。下の箱の表）
+      page/                   画面。**1つの画面 = 1つのディレクトリ**で、名前は `stores/location-hash.ts` の
+                              `Screen` の値そのまま
+        conversation/         会話の画面。**4つの領域をサブディレクトリに分ける**（組み立ては `main.tsx`）
+          main-view/          TurnHeader・Turn・Report・QuestionRecord と markdown/（unified 一式）
+          character-view/     BalloonTrack・Balloon・SpeechLog・動きの hooks（立ち絵は domain/portrait.tsx）
+          chat-view/          雑談モードでメインの領域に差し替わるビュー（13.7）
+          dispatch/           Composer・CommandSuggestions・FileSuggestions・PendingAnswer・TurnStatus
+        character/            キャラクター画面と、その上に重なる新しく作るダイアログ（13.6）。
+                              パックの一覧と、選んだパックの立ち絵・差し色・背景の差し替え
+        token-usage/          トークン消費の画面（期間の消費の札・小さな棒・集計の表）
+        achievement/          成果の画面（13.10）と、どの画面にも出る書き終わりの知らせ（DiaryNotice）
+      domain/                 **tsukumo の語彙を持つ部品**。直下のファイルは2つ以上の領域が読む部品、
+                              サブディレクトリは全画面で共有する枠（領域）
+        portrait.tsx          立ち絵（6.5）
+        character-face.tsx    キャラクターの顔（13.9）
+        prompt-image.tsx      依頼に添えた画像の札と控え（6.1）
+        protocol-mismatch.tsx サーバと版が合わないときの知らせ（4.4）
+        layout/               Layout・領域の枠・リサイザ・比率の保存
+        screen-nav/           全画面の最上部の帯。部屋の名前・仕事/雑談のトグル・3画面の口・
                               いまの作業の札（押すと依頼の手順の一覧）・モデル/許可モードの
                               操作子（13.9）
-      main-view/              TurnHeader・Turn・Report・QuestionRecord と markdown/（unified 一式）・
-                              reveal/（レポートを筆で書き上げる演出ひとまとまり）
-      character-view/         Portrait・BalloonTrack・Balloon・動きの hooks
-      sidebar/                SessionInfo・TaskSection（まん中の区画ひとまとまり）と、
+        sidebar/              SessionInfo・TaskSection（まん中の区画ひとまとまり）と、
                               2区画の枠（SidebarSection）
-      dispatch/               Composer・CommandSuggestions・FileSuggestions・PendingAnswer・TurnStatus
-      chat-view/              雑談モードでメインの領域に差し替わるビュー（13.7）
-      token-usage/            トークン消費の画面（期間の消費の札・小さな棒・集計の表）
-      character-screen/       キャラクター画面と、その上に重なる新しく作るダイアログ（13.6）。
-                              パックの一覧と、選んだパックの立ち絵・差し色・背景の差し替え
+      ui/                     **語彙を持たない部品**（Select・ImageZoom）。値と呼び先を全部受け取る
+    features/                 **置かれる機能**。自分の置き場所を持たず、領域の中に置いてもらう
       task-board/             タスク一覧。TaskList（区画の中身）・TaskBoard（表のモーダルの入口）・
-                              PresentationalTaskBoard（器）。**領域を持たず、サイドバーに
-                              置いてもらう機能**（下の「領域の機能と、置かれる機能」）
+                              PresentationalTaskBoard（器）。サイドバーに置いてもらう
+                              （下の「領域の機能と、置かれる機能」）
         hooks/                その機能だけが読むフック（`use-task-board.ts`）
         components/           その機能だけが使う部品（TaskTable・TaskRow・TaskItem ほか）
         domain/               その機能の語彙の純関数（`task-status.ts`・`task-list-count.ts`・
                               `task-sidebar-order.ts`）
-                              （機能の見た目は、それぞれの中の `<機能>.module.css`。6.6）
-    components/               機能の語彙を持たない React の部品（Select・Portrait と portrait.module.css）
-    hooks/                    機能の語彙を持たない React のフック（`use-modal-dialog.ts`）
-    domain/                   画面全体の語彙（複数の機能が読む、状態でも部品でもないもの。
+                              （領域と機能の中も同じ `hooks/` `components/` `domain/` に分け、見た目は
+                              それぞれの中の `<名前>.module.css`。6.6）
+    hooks/                    語彙を持たない React のフック（`use-modal-dialog.ts` ほか）
+    domain/                   画面全体の語彙（複数の領域・機能が読む、状態でも部品でもないもの。
                               `appearance-color.ts`＝画面の色・`reveal-speed.ts`＝演出の速さ）
     lib/                      ライブラリを包む道具（WebSocket・`FileReader`・React の hook）
     utils/                    ライブラリに依存しない汎用の道具（`clock.ts`）
@@ -271,29 +283,48 @@ characters/<name>/            character.json・persona.md・素材
 
 **ファイル名は概念**（原則5）。`helpers/` と `common/` は作らない（`lib/` と `utils/` を
 置く基準は下の「`lib/` と `utils/` に置く基準」）。**単数形の規約は
-`src/browser/` の置き場所のディレクトリ（`features/` `components/` `hooks/` `domain/` `lib/` `utils/`
-`stores/` `styles/` と、機能の中の `hooks/` `components/` `domain/`）だけ外れる**（bullet-proof-react の名前をそのまま採る。`shared` / `server` / `core` /
-`adapter` と、
-機能の中のファイル名は単数形のまま。`main-view/` のように機能の名前は用語集の語に合わせる）。
+`src/browser/` の置き場所のディレクトリ（`components/`（とその下の `page/` `domain/` `ui/`）`features/`
+`hooks/` `domain/` `lib/` `utils/` `stores/` `styles/` と、領域・機能の中の `hooks/` `components/`
+`domain/`）だけ外れる**（bullet-proof-react の名前をそのまま採る。`components/` の下の3段は利用者の
+Next.js の雛形の名前。`shared` / `server` / `core` / `adapter` と、
+領域・機能の中のファイル名は単数形のまま。`main-view/` のように領域・機能の名前は用語集の語に、
+`components/page/` の下の画面の名前は `stores/location-hash.ts` の `Screen` の値に合わせる）。
+**手本から採るのはディレクトリの形だけ**で、kebab-case のファイル名・barrel file（`index.ts`）を
+作らない・`@/` を使わない相対 import はそのまま（PascalCase・1部品1フォルダは真似しない）。
+
+**移行中**: `components/page/` `components/domain/` `components/ui/` への移動は段に分けて進めている
+（下の「いまの `src/browser/` から移す先」）。**この章と 6 章が書くのは移し終えた形**で、段が
+終わるまでは、まだ移していないものは表の「いまのパス」にある。
 
 **`src/browser/` の箱と、置く基準**（bullet-proof-react の語をそのまま使う。判断に迷ったら
-「その機能しか読まないなら機能の中」が既定）:
+「その機能しか読まないなら機能の中」が既定（領域も同じで、その領域しか読まないなら領域の中））:
 
-| 箱            | 置くもの                                                                      | import してよい先                                                         |
-| ------------- | ----------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| `main.tsx`    | 入口。Provider と `<Layout>` に機能を差し込む（composition root）             | すべて                                                                    |
-| `features/`   | 1つの機能に閉じた部品・状態・保存                                             | `components` / `hooks` / `domain` / `lib` / `utils` / `stores` / `shared` |
-| `components/` | **機能の語彙を持たない** React の部品（値と呼び先を全部受け取る）             | `hooks` / `lib` / `utils` / `shared`                                      |
-| `hooks/`      | **機能の語彙を持たない** React のフック（`use-modal-dialog.ts`）              | `lib` / `utils` / `shared`                                                |
-| `domain/`     | **画面全体の語彙**（tsukumo の語彙を名乗り、複数の機能が読むもの）            | `lib` / `utils` / `shared`                                                |
-| `lib/`        | **ライブラリを包む**道具（React の部品ではないもの）                          | `utils` / `shared`                                                        |
-| `utils/`      | **ライブラリに依存しない**汎用の道具（下の「`lib/` と `utils/` に置く基準」） | —（`utils` の中だけ）                                                     |
-| `stores/`     | **画面全体で共有する状態**の store・Context と、それを読む hook               | `lib` / `utils` / `shared`                                                |
-| `styles/`     | **グローバルな CSS だけ**（`theme.css`。機能の見た目は機能の中）              | —                                                                         |
+| 箱                   | 置くもの                                                                                                  | import してよい先                                                                                               |
+| -------------------- | --------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `main.tsx`           | 入口。Provider・出す画面の選択（`<Root>`）・`<Layout>` に領域を差し込む（composition root）               | すべて                                                                                                          |
+| `components/page/`   | **画面**。1つの画面（会話の画面は1つの領域）に閉じた部品・状態・保存                                      | `components/domain` / `components/ui` / `features` / `hooks` / `domain` / `lib` / `utils` / `stores` / `shared` |
+| `components/domain/` | **tsukumo の語彙を持つ部品**。直下は2つ以上の領域が読む部品、サブディレクトリは全画面で共有する枠（領域） | `components/ui` / `features` / `hooks` / `domain` / `lib` / `utils` / `stores` / `shared`                       |
+| `features/`          | **置かれる機能**（置き場所を持たず、領域に置いてもらう機能の部品・状態）                                  | `components/ui` / `hooks` / `domain` / `lib` / `utils` / `stores` / `shared`                                    |
+| `components/ui/`     | **語彙を持たない** React の部品（値と呼び先を全部受け取る）                                               | `hooks` / `lib` / `utils` / `shared`                                                                            |
+| `hooks/`             | **語彙を持たない** React のフック（`use-modal-dialog.ts`）                                                | `lib` / `utils` / `shared`                                                                                      |
+| `domain/`            | **画面全体の語彙**（tsukumo の語彙を名乗り、複数の領域・機能が読むもの。部品ではないもの）                | `lib` / `utils` / `shared`                                                                                      |
+| `lib/`               | **ライブラリを包む**道具（React の部品ではないもの）                                                      | `utils` / `shared`                                                                                              |
+| `utils/`             | **ライブラリに依存しない**汎用の道具（下の「`lib/` と `utils/` に置く基準」）                             | —（`utils` の中だけ）                                                                                           |
+| `stores/`            | **画面全体で共有する状態**の store・Context と、それを読む hook                                           | `lib` / `utils` / `shared`                                                                                      |
+| `styles/`            | **グローバルな CSS だけ**（`theme.css`。領域・機能の見た目はその中）                                      | —                                                                                                               |
 
+- **部品の箱の向きは `main.tsx` → `components/page` → `components/domain` → `features` →
+  `components/ui` の一方通行**（手本の `page` → `domain` → `ui` の間に、置かれる機能を挟んだ形）。
+  逆向きは無い——`components/domain` は画面を知らず、`features/` は自分を置く枠も画面も知らず
+  （下の「領域の機能と、置かれる機能」の「葉」）、`components/ui` は tsukumo の語彙を知らない
+- **`components/domain` と `components/ui` の線は、tsukumo の語彙を持つかで引く**（`browser/domain/`
+  と同じ意味の `domain`。改名しない）。`Portrait`（立ち絵）・`CharacterFace`（顔）・`PromptImage`
+  （依頼の画像）・`ProtocolMismatch`（サーバとの版）は語彙を持つので `domain`、`Select`・`ImageZoom`
+  は持たないので `ui`。**`components/domain` の直下の部品は `stores/` を読んでよい**（箱の表で辺を
+  許す。いまは読んでいるものは無く、値と呼び先を props で受け取っている）。`components/ui` は読めない
 - **`stores/` は「状態ライブラリの置き場」ではなく「画面全体で共有する状態の置き場」**
   （zustand を入れない決定は 6.2 のまま）。実体は7つあり、
-  `stores/session.tsx` は `SessionState` を畳んで全機能に配り（`useSyncExternalStore` + セレクタ。
+  `stores/session.tsx` は `SessionState` を畳んで全領域に配り（`useSyncExternalStore` + セレクタ。
   Context で配るのは store そのもの）、`stores/main-view-turn.ts` はそこから**ターンの畳み**を
   姿ごとに1回だけ導き、`stores/turn-selection.tsx` は `location.hash` の `turn` から
   メインビューとキャラビューに同じターンの選択を配り、`stores/screen.tsx` は `location.hash` から
@@ -301,42 +332,45 @@ characters/<name>/            character.json・persona.md・素材
   ファイル。13.6）。**1本の hash の書き方は `stores/location-hash.ts` だけが知る**（`screen.tsx` と
   `turn-selection.tsx` の2つがここを通して読み書きする）。`stores/question-answer.tsx` は答え待ちの質問に対する
   **答えの組み立て**を配る Context（質問の札はメインビュー、自由入力は入力欄と、読み手が
-  2機能にまたがる）。`stores/question-scroll.tsx` は帯の「いまの作業」の一覧の「質問へ」から
+  2領域にまたがる）。`stores/question-scroll.tsx` は帯の「いまの作業」の一覧の「質問へ」から
   メインビューの質問の札へスクロールしてほしいという**一回限りの合図**を配る Context。**どれも
-  複数の機能が読む**ので機能の中に置けず、`main.tsx` に残すと機能が
+  複数の領域が読む**ので領域の中に置けず、`main.tsx` に残すと領域が
   入口を import することになる（だから箱が要る）
 - **接続（`lib/socket.ts`）と再読み込み（`lib/refresh.ts`）は状態ではなく道具**なので `lib/`。
   入口の `main.tsx` は直下のまま（`app/` を作らない理由は下の表）
-- **機能どうしは import しない**（唯一の例外が「領域 → 置かれる機能」の1方向。次の節）。
-  機能をまたいで要るものは、**部品なら `components/`、フックなら `hooks/`、状態なら `stores/`、
+- **領域どうし・機能どうしは import しない**（唯一の例外が「領域 → 置かれる機能」の1方向。次の節）。
+  またいで要るものは、**部品なら `components/domain/`（語彙を持つ）か `components/ui/`（持たない）、
+  フックなら `hooks/`、状態なら `stores/`、
   それ以外は tsukumo の語彙を名乗るなら `domain/`、ライブラリを包む道具なら `lib/` へ上げる**。
   上げる引き金は「2つ目の読み手が出たとき」で、
-  1つの機能しか読まないものは機能の中に残す（`features/layout/split.ts` がその例。
+  1つの領域しか読まないものは領域の中に残す（`components/domain/layout/split.ts` がその例。
   `appearance-color.ts` は**引き金が引かれたほう**の例——3色の操作子が帯の歯車へ移って
-  `screen-nav` と `character-screen` の2つが読むようになったので、`browser/domain/` へ上げた）
-- **引き金は逆にも引く。** 読み手が1つの機能だけに戻ったら、その機能の中へ**下ろす**
+  帯とキャラクター画面の2つが読むようになったので、`browser/domain/` へ上げた）
+- **引き金は逆にも引く。** 読み手が1つの領域だけに戻ったら、その中へ**下ろす**
   （2026-09-23 決定。`browser/lib/` に溜まっていた `model-label.ts` /
-  `permission-mode-label.ts` → `features/screen-nav/domain/`、`prompt-image.ts` →
-  `features/dispatch/`、`chart.ts` / `vendor-script.ts` → `features/main-view/markdown/`）。
-  **`browser/lib/` と `browser/domain/` に「1つの機能だけが読むファイル」が無いことは
-  `test/architecture.test.ts` が見る**（機能が1つも読まない——`stores/` や `main.tsx` だけが
-  読む `socket.ts` / `refresh.ts` のようなもの——は対象外）
+  `permission-mode-label.ts` → 帯の `domain/`、`prompt-image.ts` →
+  入力欄、`chart.ts` / `vendor-script.ts` → メインビューの `markdown/`）。
+  **`browser/lib/` と `browser/domain/`、`components/domain/` の直下と `components/ui/` に
+  「1つの領域（機能）だけが読むファイル」が無いことは `test/architecture.test.ts` が見る**
+  （領域・機能が1つも読まない——`stores/` や `main.tsx` や共有の部品だけが読む `socket.ts` /
+  `refresh.ts` / `image-zoom.tsx` のようなもの——は対象外）
 - **`domain/` と `lib/` の線は、包んでいる技術の有無では引かない。** 引くのは
   「**ファイル名が tsukumo の語彙を名乗るか**」（下の「`lib/` と `utils/` に置く基準」の手順1）。
   `domain/appearance-color.ts` は `localStorage` と `getComputedStyle` を包むが、名前が指すのは
   **画面の色**という tsukumo の語彙なので `domain/`。逆に `lib/tool-summary.ts` は純関数だが、
   名前が指すのは Claude Code のツールという**外部システムの語彙**なので `lib/`。
-  **機能の中の `domain/`（その機能の語彙）を画面全体へ1段上げたもの**が
-  `browser/domain/` で、`components/` と `hooks/` が機能の中と画面全体の2段に分かれているのと
+  **領域・機能の中の `domain/`（その語彙）を画面全体へ1段上げたもの**が
+  `browser/domain/` で、`components/` と `hooks/` が中と画面全体の2段に分かれているのと
   同じ形（2026-09-23 決定）
-- **機能は `main.tsx` と `stores/` の中身を「組み立てる側」として import しない。** 機能が触れるのは
+- **領域と機能は `main.tsx` と `stores/` の中身を「組み立てる側」として import しない。** 触れるのは
   `stores/` が公開する hook（`useSessionSelector` / `useSessionDispatch` / `useMainViewTurns` /
   `useTurnSelection`）まで
-- **親が子を組む形も機能どうしの import に数える。** `<Layout>` は領域の中身を props で
-  受け取るだけで他の機能を知らず、**どの画面を出すかは `main.tsx` の中の `<Root>` が選ぶ**
-  （6.1・13.6）
-- 検査は `test/architecture.test.ts`（`BROWSER_REGIONS` と `BROWSER_PLACED_FEATURES` が
-  機能どうしの横の辺を、`BROWSER_BOXES` が箱をまたぐ縦の辺を落とす）
+- **親が子を組む形も領域どうしの import に数える。** `<Layout>` は領域の中身を props で
+  受け取るだけで他の領域を知らず、**どの画面を出すかは `main.tsx` の中の `<Root>` が選ぶ**
+  （6.1・13.6）。**画面の組み立てを部品へ移さない**（手本の `Application.tsx` にあたるものを
+  `components/domain/` に作ると、枠が画面を import する逆向きの辺になる）
+- 検査は `test/architecture.test.ts`（領域と置かれる機能の一覧が横の辺を、箱の一覧が箱を
+  またぐ縦の辺を落とす）
 
 **採らなかった bullet-proof-react の要素**（`app/` `api/` `types/` `config/`
 `assets/` `testing/`・barrel file・`@/` の絶対 import・ESLint の
@@ -346,25 +380,40 @@ bullet-proof-react の要素）」）。**`utils/` は 2026-09-21 に、`hooks/`
 採ることにした**（`browser/hooks/` の箱と、機能の中の `features/<機能>/hooks/` の両方。
 下の2つの節）。**`browser/domain/` は 2026-09-23 に足した**——bullet-proof-react には無い名前だが、
 機能の中で既に使っている `domain/`（その機能の語彙）と同じ語を1段上げただけで、
-**実体が2つ（画面の色・演出の速さ）出てから作った**。
+**実体が2つ（画面の色・演出の速さ）出てから作った**。**`components/` を `page/` `domain/` `ui/` の
+3段に割ったのは 2026-09-25**（利用者の Next.js の雛形に合わせた。経緯と採らなかった案は
+`docs/history/decision.md`「design.md 2. 全体構成 / ディレクトリ（`components/` を3段に割った）」）。
+手本が空で置いている `states/` `types/` などは同じ理由で作らない。
 
 ### 領域の機能と、置かれる機能
 
-`features/` の中には2種類ある（2026-09-22 決定）。**機能どうしの辺は「領域 → 置かれる機能」の
-1方向だけ**を許し、それ以外は落とす。
+画面を組み立てる部品のまとまりは2種類ある（2026-09-22 決定。2026-09-25 に領域を `features/` から
+`components/domain/` と `components/page/` へ移し、`features/` には置かれる機能だけを残した）。
+**まとまりどうしの辺は「領域 → 置かれる機能」の1方向だけ**を許し、それ以外は落とす。
 
-| 種類                       | どういうものか                                                                      | 辺                                                                 | いまの中身                                                                                                                           |
-| -------------------------- | ----------------------------------------------------------------------------------- | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
-| **領域の機能**（region）   | 画面の領域を持つか、領域に差し替わる画面を持つ。**置き場所を決めるのは `main.tsx`** | 機能からは import されない。互いにも import しない                 | `layout` / `screen-nav` / `main-view` / `character-view` / `chat-view` / `character-screen` / `token-usage` / `sidebar` / `dispatch` |
-| **置かれる機能**（placed） | 自分の置き場所を持たず、領域の中に置いてもらう                                      | 領域から import してよい。**自分はどの機能も import しない（葉）** | `task-board`                                                                                                                         |
+| 種類                       | どういうものか                                                                      | 置き場                                                                                                                    | 辺                                                                                                 | いまの中身                                                                                                                                                        |
+| -------------------------- | ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **領域**（region）         | 画面の領域を持つか、領域に差し替わる画面を持つ。**置き場所を決めるのは `main.tsx`** | 枠は `components/domain/<枠>/`、画面は `components/page/<画面>/`（会話の画面だけ `components/page/conversation/<領域>/`） | `main.tsx` だけが import する。**互いに import しない**                                            | 枠: `layout` / `screen-nav` / `sidebar`。会話の画面: `main-view` / `character-view` / `chat-view` / `dispatch`。画面: `character` / `token-usage` / `achievement` |
+| **置かれる機能**（placed） | 自分の置き場所を持たず、領域の中に置いてもらう                                      | `features/<機能>/`                                                                                                        | 領域から import してよい。**自分はどの機能も、領域も、`components/domain` も import しない（葉）** | `task-board`                                                                                                                                                      |
 
+- **領域の単位は表の置き場のディレクトリ1つ。** 会話の画面は4つの領域（メインビュー・キャラビュー・
+  雑談ビュー・入力欄）に分かれ、**その4つどうしも import しない**（`<Layout>` に差し込むのは
+  `main.tsx`。2つ以上が要るものは `components/domain/` の直下の部品か `stores/` へ上げる。
+  いまも4つのあいだに辺は無い）。ほかの3画面は画面まるごとが1つの領域
+- **`components/domain/` の直下のファイルは領域ではなく共有の部品**（2つ以上の領域が読む）。
+  サブディレクトリ（枠）と直下のファイルで種類が分かれるので、**直下にサブディレクトリを足すときは
+  枠として一覧に載せる**（載せ忘れは検査が `throw` する）
+- **どの画面にも出るが、1つの画面と語彙を共有するものは、その画面の中に置く。** 書き終わりの知らせ
+  （`components/page/achievement/diary-notice.tsx`）は成果の画面の見開きを開く合図
+  （`diary-book-request.ts`）と鈴の絵（`lantern-calendar.tsx` の `Bell`）を画面と共有するので、
+  切り離すと領域どうしの辺ができる。どこに出すかは `main.tsx` が決める（`<ScreenNav>` と同じ位置）
 - **「置かれる機能」にするのは、中身が領域の持ち物でなくなったとき。** `task-board` は
   サイドバーの区画に置く一覧（`task-list.tsx`）と、サイドバーの領域には収まらない画面いっぱいの
   `<dialog>`（`task-board.tsx`）の対で、どちらもサイドバーの語彙ではなく**タスクの語彙**で
   書かれている。CSS も同じ語彙を共有する1枚（`task-board.module.css`）にまとまる
 - **区画ひとまとまりは領域の側に置く。** 「そこに何を置くか」は領域が知るべきことなので、
   枠・見出しの文言・押せる口・購読・state を1ファイルにまとめて領域の中に置き
-  （`features/sidebar/task-section.tsx`）、**置かれる機能からは「何を描くか」だけを import する**
+  （`components/domain/sidebar/task-section.tsx`）、**置かれる機能からは「何を描くか」だけを import する**
   （`TaskList` と `TaskBoard`）。辺の向きが「領域 → 置かれる機能」なので、`main.tsx` で
   組み合わせる必要はない（`<Sidebar />` のまま）
 - **購読と state は、置いた側の区画が持つ**（`task-section.tsx` の `tasks` と `boardOpen`）。
@@ -372,14 +421,18 @@ bullet-proof-react の要素）」）。**`utils/` は 2026-09-21 に、`hooks/`
   区画の中に置けば、描き直しはその区画で止まる
 - **置かれる機能の側は、置き場所を知らないまま書く。** `task-board/` は「サイドバー」も
   「区画」も名乗らず、タスクの語彙だけで書く（別の領域から同じものを置けるのはこのため）
-- **`components/` とは別物。** `components/` は**機能の語彙を持たない**部品（値と呼び先を全部
+- **`components/ui/` とは別物。** `components/ui/` は**語彙を持たない**部品（値と呼び先を全部
   受け取る）で、「置かれる機能」は機能の語彙を名乗ったまま置き場所だけを借りる
-- 検査は `test/architecture.test.ts` の `BROWSER_REGIONS` / `BROWSER_PLACED_FEATURES`。
-  **どちらにも無いディレクトリが `features/` の直下にあれば落ちる**（`chat-view` と
-  `token-usage` は 2026-09-22 まで `BROWSER_REGIONS` に無く、機能どうしの import が
+- 検査は `test/architecture.test.ts` の領域と置かれる機能の一覧。**どちらにも無いディレクトリが
+  `features/` と `components/domain/` の直下、`components/page/` の下にあれば落ちる**（`chat-view` と
+  `token-usage` は 2026-09-22 まで領域の一覧に無く、import が
   黙って検査されていなかった。両方を領域として載せ、載せ忘れは `throw` にした）
 
 ### 機能の中を分ける（container / presenter と `hooks/`）
+
+**この節の「機能」は、領域（`components/domain/<枠>/`・`components/page/<画面>/`・
+`components/page/conversation/<領域>/`）と置かれる機能（`features/<機能>/`）の両方を指す**
+（2026-09-25 に領域を `components/` へ移したが、中の分け方は置き場所によらず同じ）。
 
 **割るかどうかは、部品が抱えている「振る舞いの種類」の数で決める**（2026-09-23 決定。それまでは
 「フックが0本のときだけ割らない」と書いていて、ストアのセレクタを1本読むだけの部品まで3つに
@@ -455,8 +508,9 @@ features/task-board/
   `domain/task-list-count.ts`・`domain/task-sidebar-order.ts`・`domain/task-sidebar-filter.ts`
   はサイドバーの区画（`task-section.tsx` / `task-list.tsx`）が読む。フックに置くと、
   フックを使わない側が `use-*.ts` を import することになる
-- **`components/` は機能の中の部品**で、`browser/components/`（機能の語彙を持たない部品）とは
-  別物。**読み手が2つの機能にまたがったら `browser/components/` へ上げる**
+- **`components/` は機能の中の部品**で、`browser/components/` の3段とは
+  別物。**読み手が2つの機能にまたがったら、語彙を持つなら `components/domain/` の直下、持たないなら
+  `components/ui/` へ上げる**
 
 - **`presentational-` の接頭辞は、この形のときだけ付けてよい**（`CLAUDE.md` 原則5 の
   「置き場所を名前にしたファイルは作らない」の例外）。**container と1対1で対になっている**
@@ -478,7 +532,7 @@ features/task-board/
   （レポートに書かれたパスを押すと Orca のエディタで開ける部品）も読むようになったので
   `browser/hooks/` へ上げた（2026-09-24）
 - **フックでない純関数は `hooks/` に置かない。** 機能の直下に概念の名前で置く
-  （`features/layout/split.ts` がその形）
+  （`components/domain/layout/split.ts` がその形）
 - **描き直しを止める `memo` は presenter 側に残す**（`PresentationalTaskBoard` の `TaskTable`）。
   container はフックのぶん毎回描き直されるので、そこに `memo` を置いても効かない
 
@@ -504,20 +558,20 @@ features/task-board/
   だが、概念のディレクトリを切ったなら、そのフックはそちらへ入れる
   （`markdown/` の中のフック）。`hooks/` に残すと、演出を追うのに2つのディレクトリを開く
 - **読み手が1つの機能に閉じているかどうかは、いつもどおり数える。** 逆に2つ目の読み手が
-  出たら、部品は `browser/components/`、道具は `browser/lib/`、状態は `stores/` へ上げる。
+  出たら、部品は `components/domain/` か `components/ui/`、道具は `browser/lib/`、状態は `stores/` へ上げる。
   **概念ディレクトリそのものが2つ目の読み手を得たときも同じ**——`main-view/reveal/`
   （レポートを筆で書き上げる演出。段取り・測る・塗る・帯・ぶら下がり・筆先）は
   `main-view` だけが読む前提で機能の中に置いていたが、2026-09-25 に成果の画面
-  （`features/achievement/`）の日記の吹き出しも同じ演出を再利用することになり、
+  （`components/page/achievement/`）の日記の吹き出しも同じ演出を再利用することになり、
   `browser/domain/reveal/` へディレクトリごと引き上げた（`useReportReveal`（`report.tsx`と
-  `features/achievement/diary-section.tsx`）と `useBrushTip`（`mini-portrait.tsx`。成果の画面は
+  `components/page/achievement/diary-section.tsx`）と `useBrushTip`（`mini-portrait.tsx`。成果の画面は
   `data-brush-origin` を付けないので、ミニ立ち絵の追従だけは main-view 側にとどまる）。**中の
   ファイル名は接頭辞を落としたまま**（`reveal/band.ts` など）で、`browser/domain/` に初めて
   概念のサブディレクトリを持ち込む形になるが、条件（3ファイル以上・概念だけで閉じている・
   `hooks/`/`components/`/`domain/` のどれか1つに収まらない）は機能の中で切るときと同じ
 
 **`components/` とストア**: **機能の中の `components/` はストアを読んでよい**（2026-09-23 決定。
-`browser/components/` のほうは読めない——箱の表で `stores/` を引く辺が無い）。**条件は2つ**で、
+`components/ui/` は読めない——箱の表で `stores/` を引く辺が無い）。**条件は2つ**で、
 両方そろったときだけ:
 
 1. **props で降ろす道に `memo` か、その事情を知らない部品が挟まっている**こと。
@@ -548,9 +602,10 @@ features/task-board/
   置き場は層で分かれる: `shared` / `server/core` / `server/adapter` は**層の直下に平置き**、
   `browser` は **`browser/domain/`**（直下に置くと入口の `main.tsx` と並ぶうえ、機能は入口を
   import できないため。上の箱の表）
-- `src/browser/features/` の中のものは、**その機能しか読まないなら機能の中に残す**
-  （上げる引き金は「2つ目の読み手が出たとき」。`features/layout/split.ts` と
-  `features/main-view/markdown/split-blocks.ts` がその例で、名前が形式（Markdown）を指していても
+- 領域（`src/browser/components/domain/<枠>/`・`components/page/`）と `src/browser/features/` の中のものは、
+  **その領域（機能）しか読まないならその中に残す**
+  （上げる引き金は「2つ目の読み手が出たとき」。`components/domain/layout/split.ts` と
+  `components/page/conversation/main-view/markdown/split-blocks.ts` がその例で、名前が形式（Markdown）を指していても
   読み手が1つなので機能の中）
 
 **手順2 — `lib/` か `utils/` か**
@@ -612,9 +667,9 @@ features/task-board/
 - **`browser/domain/` は2つ**。`appearance-color.ts`（画面の色）と `reveal-speed.ts`（演出の速さ）は
   どちらも `localStorage` を包むが、**名前が指すのが tsukumo の語彙**なので手順1で `lib/` から外れる
 - **機能の中へ下ろしたのは5つ**（読み手が1つの機能しか無かったもの）。
-  `model-label.ts` / `permission-mode-label.ts` → `features/screen-nav/domain/`、
-  `prompt-image.ts` → `features/dispatch/`、`chart.ts` / `vendor-script.ts` →
-  `features/main-view/markdown/`（6.3 が「Markdown 一式はメインビューの機能の中」と書いていたのに
+  `model-label.ts` / `permission-mode-label.ts` → `components/domain/screen-nav/domain/`、
+  `prompt-image.ts` → `components/page/conversation/dispatch/`、`chart.ts` / `vendor-script.ts` →
+  `components/page/conversation/main-view/markdown/`（6.3 が「Markdown 一式はメインビューの機能の中」と書いていたのに
   `lib/` に残っていた2つ）
 - `shared/image-data-url.ts` は **`shared/lib/` へ**。名前が指すのは data URL という**形式**で、
   tsukumo の語彙を名乗らず、import も持たない（読み手は `portrait-image.ts` /
@@ -626,6 +681,59 @@ features/task-board/
   読む。import は無く、歯止めの3つを満たす）。`shared/` `server/core/` `server/adapter/` の平置きは
   すべて tsukumo の語彙を名乗っている（手順1）ので動かさない。**実体が無い箱は先に作らない**ので、
   ほかの層の `utils/` は最初の1件が出たときに作る
+
+### いまの `src/browser/` から移す先（移行の対応表）
+
+`components/` を `page/` `domain/` `ui/` の3段に割る移行（2026-09-25 決定）で、**いまの
+`src/browser/` の全ファイルがどこへ行くか**の表。移行の段が全部終わったら、この節は
+`docs/history/decision.md` へ移す。
+
+**移し方の決まり**:
+
+- **ディレクトリ単位で、中の形ごと移す。** 領域の中の `hooks/` `components/` `domain/` `markdown/`
+  と `*.module.css` はそのまま付いていく（ロジックを `features/` に残して見た目だけ移す、という割り方は
+  しない。2章「領域の機能と、置かれる機能」）。**1つの機能を割って別々の場所へ送るものは無い**
+  （書き終わりの知らせも成果の画面と一緒に移る）
+- **ファイル名は変えない**（`character-screen.tsx` は `components/page/character/` の下でも
+  `character-screen.tsx` のまま。ディレクトリの名前だけが画面の名前になる）
+- **テストも同じ置き換えで移す。** `test/browser/<いまのパス>` → `test/browser/<移す先>`
+  （`test/browser/` の直下の `session-store.ts` はテストの道具なので動かさない）
+- **その段で移したパスを指す記述は、その段で直す**（`docs/` の `history/` 以外・`CLAUDE.md`・
+  `src/` と `test/` のコメント。`src/server/` のコメントにも `src/browser/features/...` と
+  `components/prompt-image.tsx` を指すものがある）
+
+| いまのパス（`src/browser/` から）                                                             | 移す先（`src/browser/` から）                  | 段  |
+| --------------------------------------------------------------------------------------------- | ---------------------------------------------- | --- |
+| `components/select.tsx`・`select.module.css`                                                  | `components/ui/`                               | 1   |
+| `components/image-zoom.tsx`・`image-zoom.module.css`                                          | `components/ui/`                               | 1   |
+| `components/portrait.tsx`・`portrait.module.css`                                              | `components/domain/`                           | 1   |
+| `components/character-face.tsx`                                                               | `components/domain/`                           | 1   |
+| `components/prompt-image.tsx`・`prompt-image.module.css`                                      | `components/domain/`                           | 1   |
+| `components/protocol-mismatch.tsx`・`protocol-mismatch.module.css`                            | `components/domain/`                           | 1   |
+| `features/layout/`（中身ごと）                                                                | `components/domain/layout/`                    | 2   |
+| `features/screen-nav/`（中身ごと）                                                            | `components/domain/screen-nav/`                | 2   |
+| `features/sidebar/`（中身ごと）                                                               | `components/domain/sidebar/`                   | 2   |
+| `features/main-view/`（中身ごと。`markdown/` を含む）                                         | `components/page/conversation/main-view/`      | 3   |
+| `features/character-view/`（中身ごと）                                                        | `components/page/conversation/character-view/` | 3   |
+| `features/chat-view/`（中身ごと）                                                             | `components/page/conversation/chat-view/`      | 3   |
+| `features/dispatch/`（中身ごと）                                                              | `components/page/conversation/dispatch/`       | 3   |
+| `features/character-screen/`（中身ごと）                                                      | `components/page/character/`                   | 4   |
+| `features/token-usage/`（中身ごと）                                                           | `components/page/token-usage/`                 | 4   |
+| `features/achievement/`（中身ごと。`diary-notice.tsx` と `hooks/use-diary-notice.ts` を含む） | `components/page/achievement/`                 | 4   |
+| `features/task-board/`                                                                        | 動かさない（置かれる機能）                     | —   |
+| `main.tsx`（`<Root>` と `OVERLAY_SCREEN` を含む）                                             | 動かさない（import のパスだけ各段で直す）      | —   |
+| `hooks/`（`use-dismiss-signal.ts`・`use-modal-dialog.ts`・`use-repository-file-paths.ts`）    | 動かさない                                     | —   |
+| `domain/`（`reveal/` を含む）・`lib/`・`utils/`・`stores/`・`styles/`・直下の `*.d.ts`        | 動かさない                                     | —   |
+
+**段と、`test/architecture.test.ts` の直し方**（段1で検査を新しい箱に載せ、段2〜4は一覧を直すだけに
+する）:
+
+| 段  | 移すもの                                | 検査で直すもの                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| --- | --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | 共有の部品（`components/` の6つ）       | 箱の一覧を `components/page` `components/domain` `components/ui` に替え、辺を2章の箱の表どおりにする。領域と置かれる機能の一覧を**パスで引く形**にし（まだ `features/` にある領域もそのパスで載せる）、「1つの領域だけが読むファイル」の検査を `components/domain/` の直下と `components/ui/` にも掛ける。**移行の途中だけ `features` → `components/domain` の辺を許す**（まだ `features/` にある領域が `Portrait` などを読むため） |
+| 2   | 枠（`layout`・`screen-nav`・`sidebar`） | 領域の一覧の3つのパスを `components/domain/<枠>/` に替える                                                                                                                                                                                                                                                                                                                                                                          |
+| 3   | 会話の画面の4領域                       | 領域の一覧の4つのパスを `components/page/conversation/<領域>/` に替える                                                                                                                                                                                                                                                                                                                                                             |
+| 4   | 残りの3画面                             | 領域の一覧の3つのパスを `components/page/<画面>/` に替え、**移行の途中の辺（`features` → `components/domain`）を外す**。`features/` の直下は置かれる機能だけになる。移し終えたので、この節を `docs/history/decision.md` へ移す                                                                                                                                                                                                      |
 
 ## 3. 動きの流れ
 
@@ -1184,17 +1292,17 @@ JSON を配る経路（`/repository-file`・`/token-usage`・`/context-usage`・
 「灯りの暦」「卒業」「節目」。**経路は2本**: 1日ぶん（`GET /achievement?date=`）と、暦
 （`GET /achievement-calendar`）。日記の受け取りと保存は次の節。
 
-| 置き場                               | 持つもの                                                                                                                                                                                                                                                                                                                                             |
-| ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `src/shared/achievement.ts`          | 1日ぶんの応答の型 `DailyAchievement`（卒業・節目・日記を含む）、経路の名前 `ACHIEVEMENT_PATH`（`/achievement`）とクエリ名（`date`）、応答の読み手（配られない形は「取れなかった」に倒す）、日付キーの前後（`Temporal.PlainDate` の足し引き。時計は読まない）、振り返りの依頼文 `achievementReflectionRequestText`                                    |
-| `src/shared/achievement-calendar.ts` | 暦の応答の型 `AchievementCalendar`、経路の名前 `ACHIEVEMENT_CALENDAR_PATH`（`/achievement-calendar`）、応答の読み手、暦の範囲（今日から5週ぶんのマスの並び）、**灯りの段階の判定 `lampLevel`**（区切りは `docs/requirements.md` 4.11「灯りの段階」を `satisfies` で持つ表）                                                                          |
-| `src/server/core/achievement.ts`     | 判断だけ: 運用の帳面のパスの判定、`git log` の出力からその日のコミットを数える、切り口の中身（3つの読み元と、消えたファイルの消える直前の版）から `done` の ID と `summary` を集める、2つの切り口の差を取る、**卒業（登録日の表から）と節目（通算の数から）を選ぶ**、**`git log` 1回の出力を日ごとのコミットの数に畳む**（暦）。旧形式の読み手もここ |
-| `src/server/adapter/main-history.ts` | `main` の履歴を読む境界。下の手順で `git` を起こし、core に渡す                                                                                                                                                                                                                                                                                      |
-| `src/server/adapter/git.ts`          | `git` を起こす口（`runGit` と `git cat-file --batch`）。`task-summary.ts` と `main-history.ts` が使う                                                                                                                                                                                                                                                |
-| `src/server/adapter/local-time.ts`   | 日付キーからその日の始まりと終わり（エポックミリ秒）を出す口。今日の日付キーは `todayLocalDateKey`                                                                                                                                                                                                                                                   |
-| `src/server/adapter/server.ts`       | `GET /achievement?date=YYYY-MM-DD` と `GET /achievement-calendar`。**どちらも起動トークンが要る**（`/token-usage` と同じ）                                                                                                                                                                                                                           |
-| `src/view-delivery.ts`               | 配線。1日ぶんは `main-history.ts` の数と `diary.ts` のその日の日記を合わせて1つの応答にし、暦は `main-history.ts` の日ごとの数（覚えの入れ物もここで作る）と `diary.ts` の日記のある日の一覧を合わせる                                                                                                                                               |
-| `src/browser/features/achievement/`  | 領域の機能。取りに行く hook と画面の部品（(a)(b)(c)・暦・見開き）。`stores/location-hash.ts` の `SCREENS` の `achievement` と、hash の `date`                                                                                                                                                                                                        |
+| 置き場                                     | 持つもの                                                                                                                                                                                                                                                                                                                                             |
+| ------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/shared/achievement.ts`                | 1日ぶんの応答の型 `DailyAchievement`（卒業・節目・日記を含む）、経路の名前 `ACHIEVEMENT_PATH`（`/achievement`）とクエリ名（`date`）、応答の読み手（配られない形は「取れなかった」に倒す）、日付キーの前後（`Temporal.PlainDate` の足し引き。時計は読まない）、振り返りの依頼文 `achievementReflectionRequestText`                                    |
+| `src/shared/achievement-calendar.ts`       | 暦の応答の型 `AchievementCalendar`、経路の名前 `ACHIEVEMENT_CALENDAR_PATH`（`/achievement-calendar`）、応答の読み手、暦の範囲（今日から5週ぶんのマスの並び）、**灯りの段階の判定 `lampLevel`**（区切りは `docs/requirements.md` 4.11「灯りの段階」を `satisfies` で持つ表）                                                                          |
+| `src/server/core/achievement.ts`           | 判断だけ: 運用の帳面のパスの判定、`git log` の出力からその日のコミットを数える、切り口の中身（3つの読み元と、消えたファイルの消える直前の版）から `done` の ID と `summary` を集める、2つの切り口の差を取る、**卒業（登録日の表から）と節目（通算の数から）を選ぶ**、**`git log` 1回の出力を日ごとのコミットの数に畳む**（暦）。旧形式の読み手もここ |
+| `src/server/adapter/main-history.ts`       | `main` の履歴を読む境界。下の手順で `git` を起こし、core に渡す                                                                                                                                                                                                                                                                                      |
+| `src/server/adapter/git.ts`                | `git` を起こす口（`runGit` と `git cat-file --batch`）。`task-summary.ts` と `main-history.ts` が使う                                                                                                                                                                                                                                                |
+| `src/server/adapter/local-time.ts`         | 日付キーからその日の始まりと終わり（エポックミリ秒）を出す口。今日の日付キーは `todayLocalDateKey`                                                                                                                                                                                                                                                   |
+| `src/server/adapter/server.ts`             | `GET /achievement?date=YYYY-MM-DD` と `GET /achievement-calendar`。**どちらも起動トークンが要る**（`/token-usage` と同じ）                                                                                                                                                                                                                           |
+| `src/view-delivery.ts`                     | 配線。1日ぶんは `main-history.ts` の数と `diary.ts` のその日の日記を合わせて1つの応答にし、暦は `main-history.ts` の日ごとの数（覚えの入れ物もここで作る）と `diary.ts` の日記のある日の一覧を合わせる                                                                                                                                               |
+| `src/browser/components/page/achievement/` | 領域（成果の画面）。取りに行く hook と画面の部品（(a)(b)(c)・暦・見開き）。`stores/location-hash.ts` の `SCREENS` の `achievement` と、hash の `date`                                                                                                                                                                                                |
 
 **1日ぶんの応答の形**（`DailyAchievement`。`graduations` 以下は 2026-09-25 に足す）:
 
@@ -1593,6 +1701,7 @@ type Diary = {
       │                      右端の設定の歯車。狭い画面ではタブ帯の右端の「≡」に畳む
       │   └ 設定の歯車       押すとポップオーバー（13.9「設定の歯車」）。いまある群は
       │                      画面の色（ground / surface / ink。domain/appearance-color.ts。localStorage）
+      ├ <DiaryNotice>        書き終わりの知らせ（13.10）。帯と同じく、どの画面でも出す
       ├ <Layout>             会話の画面。grid。リサイザ。接続切れの印。答え待ちの印（タブのタイトル・枠色）。
       │  │                   比率を動かして既定と違う値になったときだけ、上下の仕切りの右端に
       │  │                   「比率を既定に戻す」ピルが出る（13.6）。**狭い画面では画面の高さに
@@ -1613,21 +1722,21 @@ type Diary = {
       │  │   ├ <SpeechLog>   右上の「ログ」と、舞台を帯の下まで上へ伸ばしてセリフを遡るモーダル（4.2）。
       │  │   │               立ち絵はキャラビューから受け取り、吹き出しは <Balloon> を共有。位置は
       │  │   │               CSS の anchor positioning でキャラビューの床と吹き出しの並びに重ねる
-      │  │   ├ <Portrait>    立ち絵。**components/portrait.tsx**（キャラクター画面の並びも使う）。SVG は
+      │  │   ├ <Portrait>    立ち絵。**components/domain/portrait.tsx**（キャラクター画面の並びも使う）。SVG は
       │  │   │               インラインで差し色、ラスタは <img>。動きの hooks はキャラビュー側に残る（6.5）
       │  │   └ <BalloonTrack> <Balloon>*。最新を一番下、下端の位置を固定（4.2 の決定どおり）。
       │  │                   出るのは `speak` で来たセリフだけ。最新にだけ話し手の名前を添える（4.2）
       │  ├ <Sidebar>         {taskSection} + <SessionInfo>。**雑談中は chatMode を見て自分で差し替え**、
       │  │                   <ProfileCard> + <RecentTopicSection> + <PersonaMemorySection> +
       │  │                   <SessionInfo>（キャラクターの対なし）になる（13.7「雑談のときのサイドバー」）
-      │  │   └ <TaskSection> **features/task-board/**（置かれる機能。2章）。枠は props で受け取り、
+      │  │   └ <TaskSection> **features/task-board/** を置く区画（置かれる機能。2章）。枠は props で受け取り、
       │  │                   <TaskList>（区画の中身）と <TaskBoard> を描く。差し込むのは main.tsx
       │  │   └ <TaskBoard>   タスク一覧の表。見出しの「一覧を見る」から <dialog> で開く（4.2）
       │  │   └ <ProfileCard> 雑談中だけ。顔・名前・ひとことプロフィール・「変える ⌄」
       │  │                   （<CharacterSwitch> を透明にして重ねる。13.7）
       │  │   └ <SessionInfo> **区画ではなく下端の帯**（.sidebar-footer。見出しを名乗らず、
       │  │                   SidebarSection も通らない）。キャラクター（左に顔。
-      │  │                   components/character-face.tsx。帯と共有）とセッションの2つの
+      │  │                   components/domain/character-face.tsx。帯と共有）とセッションの2つの
       │  │                   <select> を、小さなラベルを上に置いて横に等分で並べる
       │  │                   （**仕事/雑談・モデル・許可モードとキャラクター画面へ入る口は
       │  │                   帯へ移った**。13.9）
@@ -1640,6 +1749,8 @@ type Diary = {
       │      │                <FileSuggestions>（`@`。同時には出さない）・<PromptImageChips>（札）を内包。
       │      │                下に道具の行（画像・`/`・`@` のボタン、操作の案内、<TurnStatus>）
       │      └ <TurnStatus>  経過 / 所要、送信 ⇄ 中断（道具の行の右端）
+      ├ <TokenUsageScreen>   トークン消費の画面（#token-usage）
+      ├ <AchievementScreen>  成果の画面（#achievement。13.10）
       └ <CharacterScreen>    キャラクター画面（#character。13.6）。**戻る口と答え待ちの印は帯が持つ**（13.9）。
           │                  パックのラベルと名前・「新しく作る」（<CharacterCreate> を開く）。
           │                  **画面の色は帯の歯車へ移した**ので、この画面にはパックの持ち物だけが残る
@@ -1649,10 +1760,19 @@ type Diary = {
                               一覧で作ったパックを選ぶ（切り替えない）
 ```
 
+**部品の置き場**（2章「`src/browser/` の箱と、置く基準」）: `<Root>` と Provider は入口の `main.tsx`。
+`<Root>` の直下に並ぶ部品のうち、**全画面で共有する枠**（`<ScreenNav>`・`<Layout>`・`<Sidebar>`）は
+`components/domain/<枠>/`、**会話の画面の領域**（`<MainView>`・`<CharacterView>`・`<ChatView>`・
+`<Dispatch>`）は `components/page/conversation/<領域>/`、**ほかの画面**（`<CharacterScreen>`・
+`<TokenUsageScreen>`・`<AchievementScreen>`）と `<DiaryNotice>` は `components/page/<画面>/`。
+`<TaskList>` と `<TaskBoard>` は置かれる機能の `features/task-board/`。領域をまたいで使う
+`<Portrait>`・`<CharacterFace>`・`<PromptImageChips>`・`<PromptImageThumbnails>`・`<ProtocolMismatch>`
+は `components/domain/` の直下、語彙を持たない `<Select>`・`<ImageZoom>` は `components/ui/`。
+
 **部品は `SessionState` と `dispatch` だけを見る。** DOM を直接いじる配線（`MutationObserver`・
 `data-` 属性で状態を渡す）は持たない。
 
-**依頼に添えた画像は `components/prompt-image.tsx` の2つが出す**（`docs/requirements.md` 4.10）:
+**依頼に添えた画像は `components/domain/prompt-image.tsx` の2つが出す**（`docs/requirements.md` 4.10）:
 送る前の札（`<PromptImageChips>`。縮めた絵と外す `×`）と、送ったあとの控え
 （`<PromptImageThumbnails>`。依頼の見出しの下と、雑談の利用者の吹き出しの中）。**どちらも1枚も
 無ければ何も描かない**ので常設の枠にならない。**どちらも押すと原寸を拡大して見られる**
@@ -1692,7 +1812,7 @@ zustand などの状態ライブラリは**入れない**。`useSyncExternalStor
 **`browser/stores/` はその「画面全体で共有する状態」の置き場であって、状態ライブラリの置き場ではない**
 （2章）。
 
-### 6.3 Markdown（`features/main-view/markdown/markdown.tsx`）
+### 6.3 Markdown（`components/page/conversation/main-view/markdown/markdown.tsx`）
 
 ```
 react-markdown
@@ -1760,26 +1880,26 @@ react-markdown
   この原則に触れない
 - **`<Portrait>` の4つの動きは領域の外へ出さない。** `.character-region` の中で閉じる。
   **レポートの上に出てよいのはミニ立ち絵だけ**（`docs/requirements.md` 4.3。2026-09-20 に
-  「レポートの上に被らせない」をこの1件だけ見直した）。ミニ立ち絵は `features/main-view/` 側の
-  別の部品にし、矩形を描く `components/portrait.tsx` を共有する——**`<Portrait>` の中に閉じる
+  「レポートの上に被らせない」をこの1件だけ見直した）。ミニ立ち絵は `components/page/conversation/main-view/` 側の
+  別の部品にし、矩形を描く `components/domain/portrait.tsx` を共有する——**`<Portrait>` の中に閉じる
   形は崩れるが、「1枚の矩形しか動かさない」原則は崩れない**（動かすのは位置と大きさだけ）
 - `prefers-reduced-motion: reduce` を尊重する（`src/browser/styles/theme.css`）
 - 動きは CSS の `@keyframes` と `transform` で足りる。**`<canvas>` もアニメーションの
   ライブラリも要らない**（矩形しか動かさないため）
 
-**既にあるもの**: `portrait-fade-in`（登場。`components/portrait.module.css`）・`balloon-appear`・
-`balloon-push-up`（`features/character-view/character-view.module.css`）。登場はここで作り直さない。
+**既にあるもの**: `portrait-fade-in`（登場。`components/domain/portrait.module.css`）・`balloon-appear`・
+`balloon-push-up`（`components/page/conversation/character-view/character-view.module.css`）。登場はここで作り直さない。
 
 ### 6.6 CSS
 
-**CSS Modules（`*.module.css`）を機能と同居させる。** 置き場は**機能ごとに1枚**
-（`features/<機能>/<機能>.module.css`）と、**自分の見た目を持つ共有部品の隣**
-（`components/portrait.module.css`）。**グローバルなのは `styles/theme.css` だけ**で、
+**CSS Modules（`*.module.css`）を領域・機能と同居させる。** 置き場は**領域・機能ごとに1枚**
+（`<領域>/<領域>.module.css`・`features/<機能>/<機能>.module.css`）と、**自分の見た目を持つ共有部品の隣**
+（`components/domain/portrait.module.css`）。**グローバルなのは `styles/theme.css` だけ**で、
 トークン（`:root`）・`body`・フォーカスの輪・`prefers-reduced-motion`・リンクを持つ。
 **16進の色を書いてよいのもそこだけ**（13.2）。
 
 **機能の中の部品でも、見た目が独立しているときはその部品の隣に `<部品>.module.css` を置いてよい**
-（`features/main-view/mini-portrait.module.css` / `features/sidebar/session-switch.module.css`
+（`components/page/conversation/main-view/mini-portrait.module.css` / `components/domain/sidebar/session-switch.module.css`
 がその形）。分ける目安は「**その部品しか使わない class の塊になっているか**」——1つの
 `*.module.css` に複数の部品の class が混ざって育ち、どれがどの部品のものか読み取りにくく
 なったら、部品ごとに分ける側へ倒す（機能の1枚に戻すのが原則で、これは「その機能の中でも
@@ -1800,7 +1920,7 @@ class 名は用語集の語（`balloon` / `portrait` / `turn-header` など）�
 困りごとから出たものではなかった。
 
 **機能をまたいで見た目が要るときは className を渡す**（CSS の選択子で他の機能の class を
-指さない）。`<Portrait>` が例で、立ち絵そのものの中身と動きは `components/portrait.module.css`、
+指さない）。`<Portrait>` が例で、立ち絵そのものの中身と動きは `components/domain/portrait.module.css`、
 **どこにどれだけの大きさで置くか**は呼び出し側（キャラビュー／キャラクター画面）が
 `className` で足す。打ち消しは**親の class から**書いて（`.character-layout .portrait`）、
 読み込み順ではなく詳細度で勝たせる。
