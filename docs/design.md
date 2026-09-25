@@ -957,7 +957,7 @@ features/task-board/
 - **フックと presenter の名前は、機能名ではなく container の名前に合わせる**
   （`use-<container>.ts` / `presentational-<container>.tsx`。2026-09-23 決定）。**1つの機能に
   container はいくつあってもよく**（`dispatch` の `composer` / `pending-answer` / `turn-status`、
-  `character-screen` の `character-create` / `character-edit`、`sidebar` の区画ごと）、機能名で
+  `character` の `character-create` / `character-edit`、`sidebar` の区画ごと）、機能名で
   名乗ると対が分からなくなる。機能名と一致するのは container が1つの機能だけ
   （`task-board` の `use-task-board.ts`）。**1ファイル1フック**
 - **機能の中の `hooks/` に置くのは、その機能だけが読むフック。** 読み手が2つになったら
@@ -2208,19 +2208,19 @@ type Diary = {
       │      └ <TurnStatus>  経過 / 所要、送信 ⇄ 中断（道具の行の右端）
       ├ <TokenUsageScreen>   トークン消費の画面（#token-usage）
       ├ <Achievement>        成果の画面（#achievement。13.10）
-      └ <CharacterScreen>    キャラクター画面（#character。13.6）。**戻る口と答え待ちの印は帯が持つ**（13.9）。
+      └ <Character>          キャラクター画面（#character。13.6）。**戻る口と答え待ちの印は帯が持つ**（13.9）。
           │                  パックのラベルと名前・「新しく作る」（<CharacterCreate> を開く）。
           │                  **画面の色は帯の歯車へ移した**ので、この画面にはパックの持ち物だけが残る
           ├ <CharacterEdit>   立ち絵の並び（表情ごと。<Portrait> を使う）と差し色（衣装ごと）・背景の差し替え（7.1）
           └ <CharacterCreate> 新しく作るダイアログ（キャラクター画面に重なる。開閉は
-                              <CharacterScreen> の state。7.1）。作れたら自動で閉じ、
-                              一覧で作ったパックを選ぶ（切り替えない）
+                              <Character> の state（`hooks/use-character.ts`）。7.1）。作れたら
+                              自動で閉じ、一覧で作ったパックを選ぶ（切り替えない）
 ```
 
 **部品の置き場**（2章「`src/browser/` の箱と、置く基準」）: `<Root>` と Provider は入口の `main.tsx`。
 `<Root>` の直下に並ぶ部品のうち、**全画面で共有する枠**（`<ScreenNav>`・`<Layout>`・`<Sidebar>`）は
 `components/domain/<枠>/`、**会話の画面の領域**（`<MainView>`・`<CharacterView>`・`<ChatView>`・
-`<Dispatch>`）は `components/page/conversation/<領域>/`、**ほかの画面**（`<CharacterScreen>`・
+`<Dispatch>`）は `components/page/conversation/<領域>/`、**ほかの画面**（`<Character>`・
 `<TokenUsageScreen>`・`<Achievement>`）と `<DiaryNotice>` は `components/page/<画面>/`。
 `<TaskList>` と `<TaskBoard>` は置かれる機能の `features/task-board/`。領域をまたいで使う
 `<Portrait>`・`<CharacterFace>`・`<PromptImageChips>`・`<PromptImageThumbnails>`・`<ProtocolMismatch>`
@@ -2564,7 +2564,8 @@ characters/<name>/
 - **`name`（表示名）は空文字を許し、文字種も縛らない**（日本語も使える。長さの上限だけ
   `MAX_CHARACTER_NAME_LENGTH` で見る。`src/shared/character-definition.ts`）。**空なら
   `character.json` に `name` を書かない**——名前の無い定義は、読む側
-  （`character-screen.tsx` の `character.name ?? character.pack`・`CharacterPackChoice.label` の
+  （`components/hooks/use-character-edit.ts` の `character.name ?? character.pack`・
+  `CharacterPackChoice.label` の
   `pack.definition?.name ?? pack.name`）がもともと id へ折り返す既存の仕組みに乗るので、
   書き込む側でわざわざ id を代入し直さない（`definitionWithName`）。**必須にしない理由**は、
   見本の「名前」欄のプレースホルダが id と同じ「例：tsukumo」であることと、多くの利用者は

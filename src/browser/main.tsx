@@ -27,7 +27,7 @@ import { ScreenNav } from "./components/domain/screen-nav/screen-nav.tsx"
 import { Sidebar } from "./components/domain/sidebar/sidebar.tsx"
 import { Achievement } from "./components/page/achievement/achievement.tsx"
 import { DiaryNotice } from "./components/page/achievement/components/diary-notice/diary-notice.tsx"
-import { CharacterScreen } from "./components/page/character/character-screen.tsx"
+import { Character } from "./components/page/character/character.tsx"
 import { CharacterView } from "./components/page/conversation/character-view/character-view.tsx"
 import { ChatView } from "./components/page/conversation/chat-view/chat-view.tsx"
 import { Dispatch } from "./components/page/conversation/dispatch/dispatch.tsx"
@@ -54,7 +54,7 @@ import "./styles/theme.css"
  * `<Activity>` の可視/不可視で切り替える別枠（下の {@link Root} 参照）なのでここには乗らない。
  */
 const OVERLAY_SCREEN = {
-  character: <CharacterScreen />,
+  character: <Character />,
   "token-usage": <TokenUsageScreen />,
   achievement: <Achievement />,
 } satisfies Record<Exclude<Screen, "conversation">, ReactElement>

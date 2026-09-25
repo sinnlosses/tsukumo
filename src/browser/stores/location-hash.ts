@@ -16,7 +16,7 @@
 // `date` を読むのは成果の画面のときだけで、ほかの画面へ移ると落ちる（戻ると使用中のパック・
 // 今日から。`docs/screen-design.md` 13.10）。**新しく作るダイアログは URL を持たない**（表示上の
 // 状態なので保存しない。開いているかどうかはキャラクター画面の state が持つ。
-// `character-screen.tsx`。`docs/screen-design.md` 13.6）。
+// `hooks/use-character.ts`。`docs/screen-design.md` 13.6）。
 //
 // **今回に追従しているときは `turn` を書かない。** 留めたターンだけが URL に乗るので、何も
 // 選んでいない人のリロードは今までどおり今回を出す。**`date` も今日を見ているときは書かない**
@@ -57,7 +57,7 @@ export type ViewedTurn = "newest" | number
 
 /**
  * キャラクター画面で選んでいるパック（`docs/screen-design.md` 13.6）。`in-use` は使用中のパックを
- * 出す（`pack` が無いとき）。名前が一覧に無いときにどうするかは読む側（`character-screen`）が決める。
+ * 出す（`pack` が無いとき）。名前が一覧に無いときにどうするかは読む側（`character`）が決める。
  */
 export type PackSelection =
   | { readonly kind: "in-use" }

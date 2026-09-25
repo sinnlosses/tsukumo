@@ -498,7 +498,8 @@ function writeRequiredPortraits(
 
 /**
  * 新しいパックの `character.json`。**表示名（`name`）は空なら書かない**——読む側
- * （`character-screen.tsx` の `character.name ?? character.pack` / `CharacterPackChoice.label` の
+ * （`components/hooks/use-character-edit.ts` の `character.name ?? character.pack` /
+ * `CharacterPackChoice.label` の
  * `pack.definition?.name ?? pack.name`）が id へ落とすので、ここで id を代入し直さない
  * （`definitionWithName`）。画面の差し色（仕事・雑談）は境界で両方 required なので、必ず
  * 2つとも書く。衣装ごとの出し分け（`outfitAccents`）は作ったあと「見た目」の引き出しで足す

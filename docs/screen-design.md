@@ -682,7 +682,7 @@ IBM Plex Mono）と字の大きさ、「ほか n 件を見る」の色（見本�
 - **760px 以下では一覧を詳しい設定の上に積む**（格子と差し色の列数は詳しい設定の幅を見る
   `@container` が決めるので、狭い画面用に別の規則は足していない）
 - **`<Portrait>` は `components/domain/portrait.tsx`**（2つ目の読み手。2章）。並びでの大きさは
-  `character-screen.module.css` が決め、`className` で渡す（キャラビュー側の割合指定は
+  `character.module.css` が決め、`className` で渡す（キャラビュー側の割合指定は
   `.character-region` の変数が無いので効かない。6.6）
 - **「このキャラクターを消す」帯は、詳しい設定の最下部・背景の節の下**（見本
   `character-screen-2026-09-23.png` の最下部）。`removal`（7.1「消すときの細部」の
@@ -753,7 +753,7 @@ IBM Plex Mono）と字の大きさ、「ほか n 件を見る」の色（見本�
  背景と立ち絵の差し色は、作ったあとに設定できます          [やめる] [作る]
 ```
 
-- **開閉は呼び出し側（`character-screen.tsx`）の state**（`<dialog>` は常にマウントし、`open` に
+- **開閉は呼び出し側（`hooks/use-character.ts`）の state**（`<dialog>` は常にマウントし、`open` に
   開閉だけを追随させる。既存の `<dialog>` と同じ形〔`task-board/hooks/use-task-board.ts`〕）。
   **表示上の状態なので URL には持たせない**——`#character/new` という独立の hash は無くなった
   （`stores/location-hash.ts`）

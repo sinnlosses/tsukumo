@@ -207,7 +207,8 @@ export const MAX_CHARACTER_TAGLINE_LENGTH = 120
 /**
  * 表示名（`character.json` の `name`）を差し替えた JSON を返す。**空文字（前後の空白だけも
  * 含む）は書かない**（`toCharacterDefinition` が空白だけの `tagline` を無いものへ畳むのと
- * 同じ考え方）。名前が無い定義は、読む側（`src/browser/components/page/character/character-screen.tsx`
+ * 同じ考え方）。名前が無い定義は、読む側
+ * （`src/browser/components/page/character/components/hooks/use-character-edit.ts`
  * の `character.name ?? character.pack`・`src/server/character-pack/adapter/character-pack.ts` が
  * `CharacterPackChoice.label` を組むときの `pack.definition?.name ?? pack.name`）が id へ
  * 落とすので、ここでわざわざ id を書き込まない（`docs/design.md` 7.1「新しく作るときの細部」）。
