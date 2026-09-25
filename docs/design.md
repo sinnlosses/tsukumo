@@ -158,7 +158,7 @@ sed -n '/^## 4\. shared/,/^## /p' docs/design.md
 | `session-driver/` | セッション駆動。契約・SDK の実装・fake driver・メッセージの変換・答え待ち・続きから始める | `session-driver` `sdk-message` `pending-answer` `self-started-turn` `visible-output-nudge` `session-restore` `session-title` `prompt-image-shelf` `plan` | `sdk-driver` `sdk-tool` `sdk-session` `sdk-context-usage` `fake-driver` `claude-account` |
 | `report/`         | レポートの記法・`report` ツール・検査と差し戻し                                           | `report-notation` `report-tool` `report-review` `report-violation`                                                                                       | —                                                                                        |
 | `system-prompt/`  | `systemPrompt` の append の組み立てと、セリフの間合いの規約                               | `system-prompt` `speech-cadence`                                                                                                                         | —                                                                                        |
-| `chat/`           | 雑談モード。作法・記憶・話しかけ・`/compact`・アーカイブ・要約・覚えたこと                | `chat-manner` `chat-memory-prompt` `chat-nudge` `chat-compact` `chat-archive-entry`                                                                      | `chat-archive` `chat-summary` `persona-memory`                                           |
+| `chat/`           | 雑談モード。作法・記憶・話しかけ・`/compact`・アーカイブ・要約・覚えたこと・定着          | `chat-manner` `chat-memory-prompt` `chat-nudge` `chat-compact` `chat-archive-entry` `chat-episode-score` `chat-consolidation`                            | `chat-archive` `chat-summary` `persona-memory` `sdk-chat-consolidation`                  |
 | `character-pack/` | キャラクターパックの選択・読み込み・画面からの編集                                        | `character-selection`                                                                                                                                    | `character-pack` `character-edit`                                                        |
 | `visit/`          | 訪問。契機・来客・台本・見張り                                                            | `visit-timing` `visit-guest` `visit-script` `visit-script-writer` `visit-watch`                                                                          | `sdk-visit-script` `visit-clock`                                                         |
 | `diary/`          | 日記。`diary` ツールと保存                                                                | `diary-tool` `diary-writer`                                                                                                                              | `diary` `sdk-diary`                                                                      |
@@ -391,9 +391,11 @@ src/
                               speech-cadence.ts（セリフの間合いの規約）
     chat/                     雑談モード
       core/                   chat-manner.ts / chat-memory-prompt.ts / chat-nudge.ts / chat-compact.ts / chat-archive-entry.ts /
-                              chat-episode-score.ts（エピソード索引の採点の純関数）
+                              chat-episode-score.ts（エピソード索引の採点の純関数）/
+                              chat-consolidation.ts（定着の指示文・依頼の文面・出力の検査・純関数と定数）
       adapter/                chat-archive.ts（~/.tsukumo/chat-archive/）/ chat-summary.ts（~/.tsukumo/chat-summary/）/
-                              persona-memory.ts（persona.md の末尾の節へ書く）
+                              persona-memory.ts（persona.md の末尾の節へ書く）/
+                              sdk-chat-consolidation.ts（定着を1回走らせる使い捨ての query()）
     character-pack/           core/character-selection.ts（どのパックを出すかの順位）、
                               adapter/character-pack.ts（列挙・読み込み）/ character-edit.ts（~/.tsukumo/characters/ へ書く）
     visit/                    core/visit-timing.ts / visit-guest.ts / visit-script.ts / visit-script-writer.ts / visit-watch.ts、
