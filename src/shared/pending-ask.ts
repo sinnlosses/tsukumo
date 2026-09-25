@@ -47,12 +47,3 @@ export const answerSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("deny") }),
   z.object({ kind: z.literal("answers"), labels: z.array(z.array(z.string())) }),
 ])
-
-/**
- * 画面から届いた JSON（外部由来の `unknown`）を {@link Answer} として検証する。
- * 形が違うときは undefined を返す。
- */
-export function parseAnswer(value: unknown): Answer | undefined {
-  const parsed = answerSchema.safeParse(value)
-  return parsed.success ? parsed.data : undefined
-}

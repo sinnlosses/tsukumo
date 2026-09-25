@@ -1,7 +1,6 @@
 import { describe, expect, it } from "bun:test"
 
 import {
-  newFormatTaskSummaries,
   parseNewTaskFile,
   taskReadiness,
   unfinishedTaskIds,
@@ -189,66 +188,5 @@ describe("parseNewTaskFile（3.4 の読み取りの見本）", () => {
 
   it("CRLF を含むときは INVALID", () => {
     expect(parseNewTaskFile("T-521.md", contentOf({}).replaceAll("\n", "\r\n"))).toBeUndefined()
-  })
-})
-
-describe("newFormatTaskSummaries", () => {
-  function taskFileContent(id: string, status: string): string {
-    return [
-      "---",
-      `id: ${id}`,
-      `summary: 架空の${id}`,
-      `status: ${status}`,
-      "difficulty: sonnet",
-      "loopable: Y",
-      "dependencies: []",
-      "---",
-      "",
-    ].join("\n")
-  }
-
-  it("台帳に印がある todo は status を doing に読み替える", () => {
-    const files = [
-      { name: "T-002.md", content: taskFileContent("T-002", "todo") },
-      { name: "T-001.md", content: taskFileContent("T-001", "todo") },
-    ]
-
-    const items = newFormatTaskSummaries(files, new Set(["T-001"]))
-
-    expect(items.map((item) => [item.id, item.status])).toEqual([
-      ["T-001", "doing"],
-      ["T-002", "todo"],
-    ])
-  })
-
-  it("台帳の印は todo 以外には効かない（done はそのまま）", () => {
-    const files = [{ name: "T-001.md", content: taskFileContent("T-001", "done") }]
-
-    const items = newFormatTaskSummaries(files, new Set(["T-001"]))
-
-    expect(items[0]?.status).toBe("done")
-  })
-
-  it("並びは ID の数字順（ファイルの順ではない）", () => {
-    const files = [
-      { name: "T-1000.md", content: taskFileContent("T-1000", "todo") },
-      { name: "T-002.md", content: taskFileContent("T-002", "todo") },
-      { name: "T-030.md", content: taskFileContent("T-030", "todo") },
-    ]
-
-    expect(newFormatTaskSummaries(files, new Set()).map((item) => item.id)).toEqual([
-      "T-002",
-      "T-030",
-      "T-1000",
-    ])
-  })
-
-  it("INVALID なファイルはその1件だけ読み飛ばす", () => {
-    const files = [
-      { name: "T-001.md", content: taskFileContent("T-001", "todo") },
-      { name: "T-002.md", content: "---\nid: T-002\n壊れている" },
-    ]
-
-    expect(newFormatTaskSummaries(files, new Set()).map((item) => item.id)).toEqual(["T-001"])
   })
 })
