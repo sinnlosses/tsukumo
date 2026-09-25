@@ -8,6 +8,7 @@
 import process from "node:process"
 
 import { type CurrentCharacter } from "./current-character.ts"
+import { createRpcRouter } from "./router.ts"
 import {
   createAchievementCommitCache,
   readAchievement,
@@ -45,7 +46,7 @@ export type ViewDeliveryOptions = {
   /** `/character/<pack>/<file>` に配る1件の出どころ。 */
   readonly character: CurrentCharacter
   /**
-   * トークン消費の記録の読み口（`/token-usage` に配る集計の出どころ。持ち主は `src/main.ts`）。
+   * トークン消費の記録の読み口（手続き `tokenUsage.summary` が配る集計の出どころ。持ち主は `src/main.ts`）。
    * **ここで読むのは要求が来たときだけ**で、配信を始める時点ではファイルに触らない。
    */
   readonly tokenUsageLog: TokenUsageLog
@@ -83,8 +84,7 @@ export type ViewDeliveryResult =
  */
 export async function startViewDelivery(options: ViewDeliveryOptions): Promise<ViewDeliveryResult> {
   // 起動トークンは**このプロセスのメモリにだけ**置く（ディスクに書かない。docs/design.md 9章）。
-  // ビューサーバ（`/repository-file`・`/token-usage`・`/context-usage`・`/prompt-image`）と
-  // WebSocket が同じ1つを見る。
+  // ビューサーバ（`/prompt-image`・`/rpc`）と WebSocket が同じ1つを見る。
   const token = createStartupToken()
   // **`TSUKUMO_WATCH_UI` のときだけ組み立て直したものへ丸ごと差し替わる**ので、サーバには
   // 取り出し口だけを渡す。
@@ -100,6 +100,42 @@ export async function startViewDelivery(options: ViewDeliveryOptions): Promise<V
   // （`docs/design.md`「成果の集め方と配り方」「暦の数え方」）。
   const achievementCommitCache = createAchievementCommitCache()
 
+  // 読み取りの手続き（`/rpc`）。**口の中身を選んで渡すのはここ**（配線）で、束ねるのは `src/router.ts`。
+  const rpcRouter = createRpcRouter({
+    listRepositoryFiles: () => listRepositoryFiles(process.cwd()),
+    // **「今日」を決めるのは配線層**（core は今日が何日かを知らない。OS のタイムゾーンに
+    // 依るので、ローカル日付を作るのは `adapter/local-time.ts` の仕事）。
+    readTokenUsageSummary: (days) =>
+      summarizeRecentTokenUsage(options.tokenUsageLog, todayLocalDateKey(), days),
+    readContextUsage: () => readContextUsage(),
+    // **「今日」を決めるのは配線層**（`readTokenUsageSummary` と同じ理由）。見る日の検証・今日への
+    // 丸め込みも呼ぶたびにここで済ませ、`main-history.ts` には検証済みの日付キーだけを渡す。
+    // **日記（`diary.ts`）はここで合わせる**（`main-history.ts` は数だけを持ち、日記の置き場を
+    // 知らない。`docs/design.md`「成果の集め方と配り方」）。
+    readAchievementDay: async (selection) => {
+      const today = todayLocalDateKey()
+      const dateKey = resolveAchievementDateKey(selection, today)
+      const [result, diary] = await Promise.all([
+        readAchievement(process.cwd(), dateKey, today, achievementCommitCache),
+        readDiaryDay(process.cwd(), dateKey),
+      ])
+      return result.kind === "ok" && result.achievement.kind === "known"
+        ? { kind: "ok", achievement: { ...result.achievement, diary } }
+        : result
+    },
+    // 灯りの暦（直近5週ぶん）。「今日」を決めるのは配線層（`readAchievementDay` と同じ理由）。
+    // **日記のある日の一覧もここで合わせる**（`readAchievementDay` と同じ理由）。
+    readAchievementCalendar: async () => {
+      const [result, diaryDates] = await Promise.all([
+        readCommitCalendar(process.cwd(), todayLocalDateKey(), achievementCommitCache),
+        listDiaryDates(process.cwd()),
+      ])
+      return result.kind === "ok" && result.calendar.kind === "known"
+        ? { kind: "ok", calendar: { ...result.calendar, diaryDates } }
+        : result
+    },
+  })
+
   // ポートが塞がっているのは、既定を使っているときに限り「起動時の前提不足」として即時終了せず
   // ずらして再挑戦する（src/server/view-server/core/port-resolution.ts）。明示的に渡されたときは一度だけ
   // 試してそのまま失敗する。
@@ -107,39 +143,8 @@ export async function startViewDelivery(options: ViewDeliveryOptions): Promise<V
     startViewServer(port, {
       assets: { uiScript: () => assets.uiScript, styleSheet: () => assets.styleSheet },
       serveCharacterAsset: (location) => options.character.serveAsset(location),
-      listRepositoryFiles: () => listRepositoryFiles(process.cwd()),
-      // **「今日」を決めるのは配線層**（core は今日が何日かを知らない。OS のタイムゾーンに
-      // 依るので、ローカル日付を作るのは `adapter/local-time.ts` の仕事）。
-      readTokenUsageSummary: (days) =>
-        summarizeRecentTokenUsage(options.tokenUsageLog, todayLocalDateKey(), days),
-      readContextUsage: () => readContextUsage(),
       findPromptImage: (id) => options.promptImageShelf.find(id),
-      // **「今日」を決めるのは配線層**（`readTokenUsageSummary` と同じ理由）。クエリの `date` を
-      // 検証・今日への丸め込みをするのも呼ぶたびにここで済ませ、`main-history.ts` には
-      // 検証済みの日付キーだけを渡す。**日記（`diary.ts`）はここで合わせる**（`main-history.ts` は
-      // 数だけを持ち、日記の置き場を知らない。`docs/design.md`「成果の集め方と配り方」）。
-      readAchievement: async (rawDate) => {
-        const today = todayLocalDateKey()
-        const dateKey = resolveAchievementDateKey(rawDate, today)
-        const [result, diary] = await Promise.all([
-          readAchievement(process.cwd(), dateKey, today, achievementCommitCache),
-          readDiaryDay(process.cwd(), dateKey),
-        ])
-        return result.kind === "ok" && result.achievement.kind === "known"
-          ? { kind: "ok", achievement: { ...result.achievement, diary } }
-          : result
-      },
-      // 灯りの暦（直近5週ぶん）。「今日」を決めるのは配線層（`readAchievement` と同じ理由）。
-      // **日記のある日の一覧もここで合わせる**（`readAchievement` と同じ理由）。
-      readAchievementCalendar: async () => {
-        const [result, diaryDates] = await Promise.all([
-          readCommitCalendar(process.cwd(), todayLocalDateKey(), achievementCommitCache),
-          listDiaryDates(process.cwd()),
-        ])
-        return result.kind === "ok" && result.calendar.kind === "known"
-          ? { kind: "ok", calendar: { ...result.calendar, diaryDates } }
-          : result
-      },
+      rpcRouter,
       token,
     }),
   )

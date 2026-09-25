@@ -11,6 +11,7 @@ import {
   type SessionState,
 } from "../../../../../src/shared/session-state.ts"
 import { characterInfo, characterPackEntry } from "../../../../fixture/character.ts"
+import { rpcError, stubRpcFetch, type RpcFetchStub } from "../../../rpc-fetch-stub.ts"
 import { type CommandSpy, sessionStoreWith } from "../../../session-store.ts"
 
 // `<SessionInfo>` は `<ContextUsageRow>`（`useContextUsage`。`useQuery`）を持つので、
@@ -18,21 +19,16 @@ import { type CommandSpy, sessionStoreWith } from "../../../session-store.ts"
 // （それは `test/browser/components/domain/sidebar/context-usage-row.test.tsx`）ので、取りに行った先は
 // 常に「取れない」に落とす軽いスタブで足りる。
 
-let originalFetch: typeof globalThis.fetch | undefined = undefined
+let fetchStub: RpcFetchStub | undefined = undefined
 
 afterEach(() => {
   cleanup()
-  if (originalFetch !== undefined) {
-    globalThis.fetch = originalFetch
-    originalFetch = undefined
-  }
+  fetchStub?.restore()
+  fetchStub = undefined
 })
 
 function stubContextUsageUnavailable(): void {
-  originalFetch = globalThis.fetch
-  const stub = (): Promise<{ ok: false; status: 500; json: () => Promise<unknown> }> =>
-    Promise.resolve({ ok: false, status: 500, json: () => Promise.resolve(null) })
-  globalThis.fetch = stub as unknown as typeof globalThis.fetch
+  fetchStub = stubRpcFetch(() => rpcError(500))
 }
 
 function newQueryClient(): QueryClient {

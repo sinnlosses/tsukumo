@@ -1,5 +1,5 @@
 // つくもの日記帳の見開き（`docs/screen-design.md` 13.10「日記帳の見開き」）。開閉・見ている日・
-// 目次の開閉という「保つ」、`<dialog>` の DOM 同期と `GET /achievement?date=` の取得という
+// 目次の開閉という「保つ」、`<dialog>` の DOM 同期と手続き `achievement.day` の取得という
 // 「外と同期」、漢数字・しおり・終えたこと・卒業と節目の畳み込みという「畳む」の3種がそろうので
 // フックを切る（docs/design.md 2章「機能の中を分ける」）。
 //
@@ -9,8 +9,8 @@
 // 直接呼び、戻り値をそのまま渡す部品を `../diary-book.tsx`（`DiarySection` / `LanternCalendar` と
 // 同じ、フックを持たない受け取るだけの部品）に置く。
 //
-// **1日ぶんの取得は `use-achievement.ts` と同じ経路・同じ応答形**（`GET /achievement?date=`）を、
-// 開いている日だけ別に引く。前後の日・目次に並べる日は `use-achievement-calendar.ts` が既に
+// **1日ぶんの取得は `use-achievement.ts` と同じ手続き・同じ応答形**（`achievement.day`）を、
+// 開いている日だけ別に引く（同じ日ならキャッシュを分け合う）。前後の日・目次に並べる日は `use-achievement-calendar.ts` が既に
 // 持っている `diaryDates`（すべての日記のある日、新しい順）をそのまま受け取る（新しい経路は
 // 増やさない）。
 //
@@ -21,15 +21,12 @@
 // 3. 書かれた日記でしおりが無い日は、しおりの区画ごと省く（成果の画面本体と同じ扱い）
 // 4. 縦書き本文のオーバーフローは `overflow: auto`（`achievement.module.css`）で両軸に任せる
 
-import { useQuery } from "@tanstack/react-query"
+import { skipToken, useQuery } from "@tanstack/react-query"
 import { useState } from "react"
 
 import { lampLevel, type LampLevel } from "../../../../../shared/achievement-calendar.ts"
 import {
-  ACHIEVEMENT_DATE_QUERY_NAME,
-  ACHIEVEMENT_PATH,
   isEmptyAchievementDay,
-  readDailyAchievement,
   type AchievementDoneTasks,
   type AchievementGraduation,
   type AchievementMilestone,
@@ -43,7 +40,7 @@ import {
   portraitAppearance,
   type PortraitAppearance,
 } from "../../../../domain/portrait-appearance.ts"
-import { sessionTokenUrl } from "../../../../lib/session-token-url.ts"
+import { rpc } from "../../../../lib/rpc-client.ts"
 import {
   useSessionDispatch,
   useSessionSelector,
@@ -200,13 +197,13 @@ export function useDiaryBook(params: {
     setState({ kind: "open", source: "notice", date: pendingRequest.date, tocOpen: false })
   }
 
-  const queryDate = state.kind === "open" ? state.date : undefined
-  const query = useQuery({
-    queryKey: ["achievement", queryDate ?? ""],
-    queryFn: () => fetchBookDay(queryDate ?? ""),
-    enabled: queryDate !== undefined,
-    staleTime: 0,
-  })
+  // 閉じている間は取りに行かない（`skipToken`）。
+  const query = useQuery(
+    rpc.achievement.day.queryOptions({
+      input: state.kind === "open" ? { kind: "chosen", date: state.date } : skipToken,
+      staleTime: 0,
+    }),
+  )
 
   const onClose = (): void => {
     setState({ kind: "closed" })
@@ -288,17 +285,6 @@ export function useDiaryBook(params: {
     },
     onClose,
   }
-}
-
-/** 取りに行く。`use-achievement.ts` の `fetchAchievement` と同じ形（別の経路は増やさない）。 */
-async function fetchBookDay(date: string): Promise<DailyAchievement> {
-  const response = await fetch(
-    sessionTokenUrl(ACHIEVEMENT_PATH, { [ACHIEVEMENT_DATE_QUERY_NAME]: date }),
-  )
-  if (!response.ok) {
-    throw new Error(String(response.status))
-  }
-  return readDailyAchievement(await response.json())
 }
 
 function pageOf(

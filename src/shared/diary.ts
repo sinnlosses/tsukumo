@@ -1,5 +1,5 @@
 // 日記（`docs/glossary.md`「日記」）の型と、保存の形の読み手。**サーバ（`src/server/adapter/
-// diary.ts` が読み書きする JSON）とブラウザ（成果の画面・日記帳が読む `GET /achievement` の
+// diary.ts` が読み書きする JSON）とブラウザ（成果の画面・日記帳が読む手続き `achievement.day` の
 // `diary` 区画）の両方が同じ型を見る**ので shared に置く。保存の形・置き場・書き足しの規則は
 // `docs/design.md`「日記の受け取りと保存」が正典で、ここは型と読み取りだけを持つ。
 //
@@ -101,7 +101,7 @@ const diaryParagraphSchema = z.object({
 const diarySchema = z.object({
   version: z.literal(DIARY_VERSION),
   date: z.string(),
-  paragraphs: z.array(diaryParagraphSchema).min(1),
+  paragraphs: z.array(diaryParagraphSchema).min(1).readonly(),
   bookmark: diaryBookmarkSchema,
 })
 
@@ -113,8 +113,8 @@ export const dailyDiaryStatusSchema = z.discriminatedUnion("kind", [
 
 /**
  * 届いた値を {@link Diary} として読む。**版が違う・形が崩れていれば `undefined`**
- * （`src/server/diary/adapter/diary.ts` はこれを「読めない」として扱い、置き場のファイルの読み込みにも
- * `GET /achievement` の応答の検証にも同じ読み手を使う）。
+ * （`src/server/diary/adapter/diary.ts` はこれを「読めない」として扱う。手続き `achievement.day` の
+ * 応答は同じ zod（`dailyDiaryStatusSchema`）で検証する）。
  */
 export function readDiary(value: unknown): Diary | undefined {
   const parsed = diarySchema.safeParse(value)

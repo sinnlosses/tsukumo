@@ -7,16 +7,16 @@
 // - 経過時間の刻み（`dispatch/hooks/use-turn-status.ts` と同じ、ローカルなタイマー。
 //   `../../../../domain/elapsed-time.ts` を共有する）
 // - 段の右に添える数（モデルの数・キャッシュ読み・ツールの種類）。**スキルからは受け取らず**、
-//   既存の集計（`GET /token-usage?days=<見直しの期間>`）から引く（design.md 決定）。
-//   **見直しの期間が選べる日数（1/7/30）でなければ数を出さない**——それ以外の値で集計を引くと
-//   `readTokenUsageDays` が既定の7日に落ちて、見た目の期間と違う数を出してしまう
+//   既存の集計（手続き `tokenUsage.summary` に見直しの期間を渡す）から引く（design.md 決定）。
+//   **見直しの期間が選べる日数（1/7/30）でなければ数を出さない**——手続きの入力は選べる日数
+//   だけなので、それ以外の値では引けない
 // - ボタンを押せない理由（ターンが進行中・雑談中。「解くべき論点」への回答。結果の場面の
 //   主ボタン・「もう一度見てもらう」にも同じ理由を使う——どちらも会話へ依頼を送る点は同じ）
 // - 「前回の提案」を開いた・閉じたの1つの真偽値（`viewingPrevious`）。**サーバの状態には無い**
 //   ——`usageReview` は起こし直すとふだんへ戻る決まりのままにし、「前回の結果を見ている」は
 //   この区画だけのローカルな見た目の話にする（docs/screen-design.md 13.2「前回の提案」）
 
-import { useQuery } from "@tanstack/react-query"
+import { skipToken, useQuery } from "@tanstack/react-query"
 import { useEffect, useState } from "react"
 
 import {
@@ -39,6 +39,7 @@ import {
 } from "../../../../../shared/usage-review.ts"
 import { characterFaceInfo, type CharacterFaceInfo } from "../../../../domain/character-face.ts"
 import { formatElapsed } from "../../../../domain/elapsed-time.ts"
+import { rpc } from "../../../../lib/rpc-client.ts"
 import {
   useSessionDispatch,
   useSessionSelector,
@@ -53,7 +54,6 @@ import {
 } from "../../../../utils/clock.ts"
 import { formatCount } from "../../../../utils/format-count.ts"
 import { totalUsage } from "../usage-format.ts"
-import { fetchTokenUsageSummary } from "./use-token-usage.ts"
 
 const CHAT_MODE_BLOCKED_REASON = "雑談中は使えない。仕事に切り替えてから押す。"
 const TURN_RUNNING_BLOCKED_REASON = "いまターンが動いているので送れない。終わってからもう一度押す。"
@@ -324,17 +324,16 @@ function asTokenUsageDays(days: number): TokenUsageDays | undefined {
 }
 
 /**
- * 見直し中の段の右の数を引く集計。**見直しの画面が使う集計と同じ経路**
- * （`GET /token-usage?days=`）を、いまの期間の選択とは別に引く。
+ * 見直し中の段の右の数を引く集計。**見直しの画面が使う集計と同じ手続き**
+ * （`tokenUsage.summary`）を、いまの期間の選択とは別に引く（同じ日数ならキャッシュを分け合う）。
  */
 function useReviewStageSummary(days: TokenUsageDays | undefined): TokenUsageSummary | undefined {
-  const query = useQuery({
-    queryKey: ["usage-review-stage-summary", days] as const,
-    queryFn: async ({ queryKey: [, target] }) =>
-      target === undefined ? undefined : await fetchTokenUsageSummary(target),
-    enabled: days !== undefined,
-    staleTime: 0,
-  })
+  const query = useQuery(
+    rpc.tokenUsage.summary.queryOptions({
+      input: days === undefined ? skipToken : { days },
+      staleTime: 0,
+    }),
+  )
   return query.data
 }
 

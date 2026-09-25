@@ -13,6 +13,7 @@ import {
   type SessionState,
 } from "../../../../../../src/shared/session-state.ts"
 import { characterInfo } from "../../../../../fixture/character.ts"
+import { rpcOutput, stubRpcFetch, type RpcFetchStub } from "../../../../rpc-fetch-stub.ts"
 import { type CommandSpy, sessionStoreWith } from "../../../../session-store.ts"
 
 // フィクスチャはすべて手で書いた架空のもの（docs/coding-standards.md「会話内容の扱い」）。
@@ -37,33 +38,29 @@ const QUESTION_PENDING = {
   ],
 } satisfies PendingAsk
 
-// 架空のファイル一覧（`@` 補完が引く `GET /repository-file` の代役）。
+// 架空のファイル一覧（`@` 補完が引く手続き `repository.listFiles` の代役）。
 const FIXTURE_FILE_PATHS = [
   "src/browser/features/festival/composer.tsx",
   "src/browser/features/festival/file-suggestions.tsx",
   "src/cli.ts",
 ]
 
-let originalFetch: typeof globalThis.fetch | undefined = undefined
-let fetchCalls: string[] = []
+let fetchStub: RpcFetchStub | undefined = undefined
 
 afterEach(() => {
   cleanup()
-  if (originalFetch !== undefined) {
-    globalThis.fetch = originalFetch
-    originalFetch = undefined
-  }
-  fetchCalls = []
+  fetchStub?.restore()
+  fetchStub = undefined
 })
 
-/** ファイル一覧の経路を、架空の一覧を返す代役に差し替え、呼ばれた URL を記録する。 */
+/** ファイル一覧の手続きを、架空の一覧を返す代役に差し替える（呼ばれた手続きは代役が記録する）。 */
 function stubFileListFetch(paths: readonly string[] = FIXTURE_FILE_PATHS): void {
-  originalFetch = globalThis.fetch
-  const stub = (url: string): Promise<{ ok: true; json: () => Promise<unknown> }> => {
-    fetchCalls.push(url)
-    return Promise.resolve({ ok: true, json: () => Promise.resolve(paths) })
-  }
-  globalThis.fetch = stub as unknown as typeof globalThis.fetch
+  fetchStub = stubRpcFetch(() => rpcOutput(paths))
+}
+
+/** 呼ばれた手続きの名前（古い順）。 */
+function fetchedProcedures(): readonly string[] {
+  return (fetchStub?.calls() ?? []).map((call) => call.procedure)
 }
 
 // `@` 補完は `useQuery`（`file-suggestions.tsx`）で一覧を取るので `QueryClientProvider` が要る。
@@ -227,7 +224,7 @@ describe("Composer", () => {
       expect(screen.getAllByRole("listitem")).toHaveLength(1)
     })
 
-    expect(fetchCalls).toEqual(["/repository-file?t="])
+    expect(fetchedProcedures()).toEqual(["repository/listFiles"])
   })
 
   it("キャレットが文の途中にあっても、その位置の @ だけを置き換える", async () => {
@@ -257,7 +254,7 @@ describe("Composer", () => {
     fireEvent.change(textArea(), { target: { value: "/cl" } })
 
     expect(screen.getAllByRole("listitem").map((item) => item.textContent)).toEqual(["/clear"])
-    expect(fetchCalls).toEqual([])
+    expect(fetchedProcedures()).toEqual([])
   })
 
   it("答え待ちがある間は @ の候補も出さない", () => {
@@ -269,7 +266,7 @@ describe("Composer", () => {
     fireEvent.change(textArea(), { target: { value: "@src" } })
 
     expect(screen.queryAllByRole("listitem")).toHaveLength(0)
-    expect(fetchCalls).toEqual([])
+    expect(fetchedProcedures()).toEqual([])
   })
 
   it("質問が出ている間は、帯とプレースホルダが「答えを書く場所」に変わる", () => {

@@ -31,14 +31,12 @@ import { sumBy } from "remeda"
 
 import {
   type ContextCategoryKind,
-  CONTEXT_USAGE_PATH,
   type ContextUsage,
   type ContextUsageItem,
   type ContextUsageReport,
-  readContextUsageReport,
   UNAVAILABLE_CONTEXT_USAGE,
 } from "../../shared/context-usage.ts"
-import { sessionTokenUrl } from "../lib/session-token-url.ts"
+import { rpc } from "../lib/rpc-client.ts"
 
 /** 横棒の一区間と、凡例の1行（**同じ並びを両方が使う**ので、色と名前が必ず対になる）。 */
 export type ContextUsageRow = {
@@ -94,16 +92,26 @@ export function contextUsageRefetchKey(lastTurnFinishedAt: number | undefined): 
  * 同じように取りに行く。
  */
 export function useContextUsage(refetchKey: number): UseContextUsageResult {
-  const query = useQuery({
-    queryKey: ["context-usage", refetchKey],
-    queryFn: fetchContextUsage,
-    staleTime: 0,
-  })
+  const query = useQuery(
+    rpc.contextUsage.report.queryOptions({
+      // 合図を鍵に足す（値が変われば別のクエリとして引き直す）。
+      queryKey: contextUsageQueryKey(refetchKey),
+      staleTime: 0,
+      // 落ちた応答は再試行せず、すぐ「取れない」に倒す（骨組みのまま待たせない。手続きにする前と同じ）。
+      retry: false,
+    }),
+  )
   // 初回の応答がまだ無い間は骨組み（`query.isPending` から導くだけで `useEffect` は要らない）。
   if (query.isPending) {
     return { kind: "pending" }
   }
+  // 取れなかった回（403・落ちた応答・配られない形）は理由を問わず「取れない」に畳む。
   return toCard(query.data ?? UNAVAILABLE_CONTEXT_USAGE, query.dataUpdatedAt)
+}
+
+/** 内訳のクエリの鍵（手続きの鍵に、取り直しの合図を足したもの）。 */
+function contextUsageQueryKey(refetchKey: number): readonly unknown[] {
+  return [...rpc.contextUsage.report.queryKey(), refetchKey]
 }
 
 /**
@@ -147,25 +155,4 @@ function toRows(usage: ContextUsage, kind: ContextCategoryKind): readonly Contex
       tokens: category.tokens,
       share: usage.maxTokens > 0 ? (category.tokens / usage.maxTokens) * 100 : 0,
     }))
-}
-
-/**
- * 内訳を取りに行く。**配られない形だったときは「取れない」**（`readContextUsageReport`）。
- * 403 や落ちた応答は例外にせず `response.ok` で分け、取れなかったことは同じ「取れない」に
- * 倒す（画面ですることが同じなので分けない）。
- */
-async function fetchContextUsage(): Promise<ContextUsageReport> {
-  const response = await fetch(contextUsageUrl())
-  if (!response.ok) {
-    return UNAVAILABLE_CONTEXT_USAGE
-  }
-  return readContextUsageReport(await response.json())
-}
-
-/**
- * 内訳の URL。**起動トークンを付ける**（`/token-usage` と同じ守り方。
- * `lib/session-token-url.ts` に寄せた）。
- */
-function contextUsageUrl(): string {
-  return sessionTokenUrl(CONTEXT_USAGE_PATH)
 }

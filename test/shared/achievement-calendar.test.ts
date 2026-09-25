@@ -1,24 +1,8 @@
 import { describe, expect, it } from "bun:test"
 
-import {
-  achievementCalendarDateKeys,
-  lampLevel,
-  readAchievementCalendar,
-  UNKNOWN_ACHIEVEMENT_CALENDAR,
-  type AchievementCalendar,
-} from "../../src/shared/achievement-calendar.ts"
+import { achievementCalendarDateKeys, lampLevel } from "../../src/shared/achievement-calendar.ts"
 
 // ここで使う日付・数はすべて手で書いた架空のもの（実物の履歴の記録は使わない）。
-
-const FIXTURE_CALENDAR = {
-  kind: "known",
-  today: "2026-09-24",
-  days: [
-    { date: "2026-08-24", commitCount: 0 },
-    { date: "2026-09-24", commitCount: 3 },
-  ],
-  diaryDates: ["2026-09-20"],
-} satisfies AchievementCalendar
 
 describe("achievementCalendarDateKeys", () => {
   it("今日を含む週の月曜から4週前の月曜〜今日を、古い順で返す", () => {
@@ -59,25 +43,5 @@ describe("lampLevel", () => {
   it("40件以上は明るい", () => {
     expect(lampLevel(40)).toBe("bright")
     expect(lampLevel(1000)).toBe("bright")
-  })
-})
-
-describe("readAchievementCalendar", () => {
-  it("known の形はそのまま読む", () => {
-    expect(readAchievementCalendar(FIXTURE_CALENDAR)).toEqual(FIXTURE_CALENDAR)
-  })
-
-  it("unknown はそのまま読む", () => {
-    expect(readAchievementCalendar({ kind: "unknown" })).toEqual({ kind: "unknown" })
-  })
-
-  it("読めない形（欄が欠けている・kind が知らない値・JSON でない）は「取れなかった」に倒す", () => {
-    expect(readAchievementCalendar({ kind: "known" })).toEqual(UNKNOWN_ACHIEVEMENT_CALENDAR)
-    expect(readAchievementCalendar({ kind: "びっくり" })).toEqual(UNKNOWN_ACHIEVEMENT_CALENDAR)
-    expect(readAchievementCalendar("暦ではない")).toEqual(UNKNOWN_ACHIEVEMENT_CALENDAR)
-    expect(readAchievementCalendar(undefined)).toEqual(UNKNOWN_ACHIEVEMENT_CALENDAR)
-    expect(
-      readAchievementCalendar({ ...FIXTURE_CALENDAR, days: [{ date: "2026-09-24" }] }),
-    ).toEqual(UNKNOWN_ACHIEVEMENT_CALENDAR)
   })
 })

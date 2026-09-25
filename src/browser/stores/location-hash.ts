@@ -25,8 +25,6 @@
 
 import { useSyncExternalStore } from "react"
 
-import { ACHIEVEMENT_DATE_QUERY_NAME } from "../../shared/achievement.ts"
-
 /**
  * 画面の名前とラベルの一覧（唯一の正典。`docs/screen-design.md` 13.9）。**画面を1つ足すときは
  * ここへ1行足すだけでよい形にする**——`Screen` 型・帯のメニューの並び（`SCREEN_NAV_ITEMS` を
@@ -91,7 +89,7 @@ function pathOf(screen: Screen): string {
 
 const TURN_PARAM = "turn"
 const PACK_PARAM = "pack"
-const DATE_PARAM = ACHIEVEMENT_DATE_QUERY_NAME
+const DATE_PARAM = "date"
 const IN_USE: PackSelection = { kind: "in-use" }
 const TODAY: AchievementDateSelection = { kind: "today" }
 const TURN_ID_PATTERN = /^-?\d+$/

@@ -5,62 +5,11 @@ import {
   isEmptyAchievementDay,
   nextDateKey,
   previousDateKey,
-  readDailyAchievement,
   resolveAchievementDateKey,
-  UNKNOWN_ACHIEVEMENT,
   type AchievementDoneTasks,
-  type DailyAchievement,
 } from "../../src/shared/achievement.ts"
 
 // ここで使う日付・タスクはすべて手で書いた架空のもの（実物の履歴・リポジトリの記録は使わない）。
-
-const FIXTURE_ACHIEVEMENT = {
-  kind: "known",
-  date: "2026-09-23",
-  today: "2026-09-24",
-  commitCount: 5,
-  doneTasks: { kind: "known", items: [{ id: "T-1", summary: "架空のタスク" }] },
-  graduations: [],
-  milestones: [],
-  diary: { kind: "none" },
-} satisfies DailyAchievement
-
-describe("readDailyAchievement", () => {
-  it("known の形はそのまま読む", () => {
-    expect(readDailyAchievement(FIXTURE_ACHIEVEMENT)).toEqual(FIXTURE_ACHIEVEMENT)
-  })
-
-  it("doneTasks が unknown の形もそのまま読む", () => {
-    const achievement = {
-      ...FIXTURE_ACHIEVEMENT,
-      doneTasks: { kind: "unknown" },
-    } satisfies DailyAchievement
-    expect(readDailyAchievement(achievement)).toEqual(achievement)
-  })
-
-  it("卒業と節目もそのまま読む", () => {
-    const achievement = {
-      ...FIXTURE_ACHIEVEMENT,
-      graduations: [{ id: "T-1", summary: "架空のタスク", registeredOn: "2026-09-10", days: 13 }],
-      milestones: [
-        { kind: "task", count: 250, taskId: "T-1" },
-        { kind: "commit", count: 1000, time: "09:30" },
-      ],
-    } satisfies DailyAchievement
-    expect(readDailyAchievement(achievement)).toEqual(achievement)
-  })
-
-  it("unknown はそのまま読む", () => {
-    expect(readDailyAchievement({ kind: "unknown" })).toEqual({ kind: "unknown" })
-  })
-
-  it("読めない形（欄が欠けている・kind が知らない値・JSON でない）は「取れなかった」に倒す", () => {
-    expect(readDailyAchievement({ kind: "known" })).toEqual(UNKNOWN_ACHIEVEMENT)
-    expect(readDailyAchievement({ kind: "びっくり" })).toEqual(UNKNOWN_ACHIEVEMENT)
-    expect(readDailyAchievement("成果ではない")).toEqual(UNKNOWN_ACHIEVEMENT)
-    expect(readDailyAchievement(undefined)).toEqual(UNKNOWN_ACHIEVEMENT)
-  })
-})
 
 describe("previousDateKey / nextDateKey", () => {
   it("前後の日を1日ぶんだけ動かす", () => {
@@ -77,19 +26,21 @@ describe("previousDateKey / nextDateKey", () => {
 describe("resolveAchievementDateKey", () => {
   const TODAY = "2026-09-24"
 
-  it("正しい日付キーはそのまま", () => {
-    expect(resolveAchievementDateKey("2026-09-20", TODAY)).toBe("2026-09-20")
+  const chosen = (date: string) => ({ kind: "chosen", date }) as const
+
+  it("選んだ正しい日付キーはそのまま", () => {
+    expect(resolveAchievementDateKey(chosen("2026-09-20"), TODAY)).toBe("2026-09-20")
   })
 
-  it("今日そのものもそのまま", () => {
-    expect(resolveAchievementDateKey(TODAY, TODAY)).toBe(TODAY)
+  it("今日そのものを選んでもそのまま", () => {
+    expect(resolveAchievementDateKey(chosen(TODAY), TODAY)).toBe(TODAY)
   })
 
-  it("無い・読めない・今日より先のときは今日に倒す", () => {
-    expect(resolveAchievementDateKey(undefined, TODAY)).toBe(TODAY)
-    expect(resolveAchievementDateKey("あした", TODAY)).toBe(TODAY)
-    expect(resolveAchievementDateKey("2026/09/20", TODAY)).toBe(TODAY)
-    expect(resolveAchievementDateKey("2026-09-25", TODAY)).toBe(TODAY)
+  it("今日を選んだ・読めない・今日より先のときは今日に倒す", () => {
+    expect(resolveAchievementDateKey({ kind: "today" }, TODAY)).toBe(TODAY)
+    expect(resolveAchievementDateKey(chosen("あした"), TODAY)).toBe(TODAY)
+    expect(resolveAchievementDateKey(chosen("2026/09/20"), TODAY)).toBe(TODAY)
+    expect(resolveAchievementDateKey(chosen("2026-09-25"), TODAY)).toBe(TODAY)
   })
 })
 

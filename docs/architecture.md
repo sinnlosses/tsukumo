@@ -1004,7 +1004,7 @@ Network タブで `/ws` の upgrade が101を返し、`hello` フレームが届
 その日の見開きが開くこと、× で消えて再読み込みするまで戻らないことを見る。日記の中身（本文・
 しおり）も見るときは、`~/.tsukumo/diary/<リポジトリ>/2026-09-20.json`（`TSUKUMO_HOME` を
 分けていればその下。置き場の形は `src/server/diary/adapter/diary.ts`）に架空の日記を1件置いてから
-起こす——fake driver は `diary` ツールの中身を持たないので、置かなければ `GET /achievement` の
+起こす——fake driver は `diary` ツールの中身を持たないので、置かなければ手続き `achievement.day` の
 その日は「日記が無い」のまま。
 
 **訪問（`docs/design.md` 5章「訪問の契機と状態」）の出入りを確かめるときは、`TSUKUMO_VISIT_QUICK=1`

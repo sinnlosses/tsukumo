@@ -1,7 +1,8 @@
-// いまのセッションのコンテキストの内訳（`docs/glossary.md`「コンテキストの内訳」）と、それを
-// 配る経路の名前。**サーバ（`src/server/view-server/adapter/server.ts` が配る）とブラウザ（トークン消費の
+// いまのセッションのコンテキストの内訳（`docs/glossary.md`「コンテキストの内訳」）。**サーバ（手続き
+// `src/server/context-usage/adapter/context-usage-procedure.ts` が配る）とブラウザ（トークン消費の
 // 画面が取りに行く）の両方が同じ値を見る**ので shared に置く（`token-usage-summary.ts` と同じ
-// 考え方。ここは値と型だけで `node:` にも `document` にも触らない）。
+// 考え方。ここは値と型だけで `node:` にも `document` にも触らない）。手続きの形は
+// `src/shared/contract/context-usage.ts`。
 //
 // **SDK の形をそのまま運ばない。** 画面が要る数と名前だけに写したのがここの型で、SDK の戻り値
 // （`getContextUsage()`）からの写しと検証は `src/server/session-driver/adapter/sdk-context-usage.ts` が1箇所で行う。
@@ -9,14 +10,8 @@
 // **運ぶのは数と名前だけ** — メモリファイルのパス・スキル名・MCP ツール名・分類の表示名で、
 // 会話の文面は入らない（メッセージは分類1行の数として出るだけ。
 // `docs/coding-standards.md`「会話内容の扱い」）。
-//
-// **起動トークンが要る経路**（`/token-usage` と同じ形で `?t=` を付ける）。配るのは利用者の
-// セッションが何を積んでいるかで、同梱物や素材と違って誰にでも配ってよい静的な物ではない。
 
 import { z } from "zod"
-
-/** 内訳の経路（`GET /context-usage?t=<起動トークン>`）。 */
-export const CONTEXT_USAGE_PATH = "/context-usage"
 
 /**
  * 分類1行の種別。**分類の判定はこれで行い、`name`（英語の表示名）では判定しない**
@@ -86,7 +81,7 @@ const contextUsageItemSchema = z.object({
 })
 
 /** 配る形そのもの（{@link ContextUsageReport} と同じ鍵）。 */
-const contextUsageReportSchema = z.discriminatedUnion("kind", [
+export const contextUsageReportSchema = z.discriminatedUnion("kind", [
   z.object({
     kind: z.literal("ready"),
     usage: z.object({
@@ -94,26 +89,19 @@ const contextUsageReportSchema = z.discriminatedUnion("kind", [
       totalTokens: z.number(),
       maxTokens: z.number(),
       percentage: z.number(),
-      categories: z.array(
-        z.object({
-          name: z.string(),
-          tokens: z.number(),
-          kind: z.enum(CONTEXT_CATEGORY_KINDS),
-        }),
-      ),
-      mcpTools: z.array(contextUsageItemSchema),
-      memoryFiles: z.array(contextUsageItemSchema),
-      skills: z.array(contextUsageItemSchema),
+      categories: z
+        .array(
+          z.object({
+            name: z.string(),
+            tokens: z.number(),
+            kind: z.enum(CONTEXT_CATEGORY_KINDS),
+          }),
+        )
+        .readonly(),
+      mcpTools: z.array(contextUsageItemSchema).readonly(),
+      memoryFiles: z.array(contextUsageItemSchema).readonly(),
+      skills: z.array(contextUsageItemSchema).readonly(),
     }),
   }),
   z.object({ kind: z.literal("unavailable") }),
 ])
-
-/**
- * 届いた JSON を内訳として読む。**読めない形のときは「取れない」**（`readTokenUsageSummary` と
- * 同じ割り切り。画面は取れなかったときと同じ見た目になるだけで落ちない）。
- */
-export function readContextUsageReport(value: unknown): ContextUsageReport {
-  const parsed = contextUsageReportSchema.safeParse(value)
-  return parsed.success ? parsed.data : UNAVAILABLE_CONTEXT_USAGE
-}

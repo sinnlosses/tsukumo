@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { cleanup, render, screen } from "@testing-library/react"
 
 import { ContextUsageRow } from "../../../../../src/browser/components/domain/sidebar/context-usage-row.tsx"
+import { rpc } from "../../../../../src/browser/lib/rpc-client.ts"
 import { SessionStoreContext } from "../../../../../src/browser/stores/session.tsx"
 import {
   type ContextUsageReport,
@@ -11,6 +12,7 @@ import {
 } from "../../../../../src/shared/context-usage.ts"
 import { INITIAL_SESSION_STATE } from "../../../../../src/shared/session-state.ts"
 import { readyContextUsage } from "../../../../fixture/context-usage.ts"
+import { stubRpcFetch } from "../../../rpc-fetch-stub.ts"
 import { sessionStoreWith } from "../../../session-store.ts"
 
 /**
@@ -37,7 +39,8 @@ function renderRow(report: ContextUsageReport | undefined): void {
   const store = sessionStoreWith(INITIAL_SESSION_STATE)
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   if (report !== undefined) {
-    client.setQueryData(["context-usage", REFETCH_KEY], report)
+    // 鍵は手続きの鍵に取り直しの合図を足したもの（`browser/domain/context-usage.ts`）。
+    client.setQueryData([...rpc.contextUsage.report.queryKey(), REFETCH_KEY], report)
   }
   render(
     <SessionStoreContext.Provider value={store}>
@@ -98,8 +101,7 @@ describe("ContextUsageRow", () => {
     // 「まだ届いていない」を測るための1回だけ、`fetch` を差し替える。**戻ってこない
     // Promise**にする——中途半端に解決する Promise を残すと、後片付けのタイミング次第で
     // 次のテストの act 外の更新として警告が出るため（`setQueryData` を使わない唯一の理由）。
-    const originalFetch = globalThis.fetch
-    globalThis.fetch = (() => new Promise(() => {})) as unknown as typeof globalThis.fetch
+    const fetchStub = stubRpcFetch(() => ({ kind: "pending" }))
     try {
       renderRow(undefined)
 
@@ -110,7 +112,7 @@ describe("ContextUsageRow", () => {
         "コンテキスト 取得中。トークン消費の画面で詳しく見る",
       )
     } finally {
-      globalThis.fetch = originalFetch
+      fetchStub.restore()
     }
   })
 

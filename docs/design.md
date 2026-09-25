@@ -123,13 +123,13 @@ sed -n '/^## 4\. shared/,/^## /p' docs/design.md
 機能どうしの辺」。比べた案は `docs/history/decision.md`「design.md 2. 全体構成 / ディレクトリ
 （`src/server/` を機能で割った）」）。**`core` と `adapter` という名前はどの深さでも層だけを表す。**
 
-| 層               | 置くもの                                                                                                                                                                                                                                                                          | import してよい先                 | 実行場所         |
-| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------- | ---------------- |
-| `shared`         | 概念の語彙・`SessionEvent`・`SessionState`・`applySessionEvent`・コマンドとフレームの zod。**`SessionState` から純粋に導けるもの**も含む（ブラウザしか読まないものを含む。`main-view.ts` `turn-step.ts` `turn-speech.ts` `portrait-motion.ts` `room.ts` `command-suggestion.ts`） | `shared` のみ（`zod` は可）       | サーバとブラウザ |
-| `server/core`    | サーバ側の純粋な判断。セッション管理・駆動の契約・イベントの検証・ポートの決定・設定の解釈。**`server/<機能>/core/` と、共有の `server/core/`**                                                                                                                                   | `shared` / `core`                 | サーバ（Bun）    |
-| `server/adapter` | 外の世界に触る場所。SDK・WebSocket・HTTP・ホスト・ファイル・子プロセス・fake driver。**`server/<機能>/adapter/` と、共有の `server/adapter/`**                                                                                                                                    | `shared` / `core` / `adapter`     | サーバ（Bun）    |
-| `browser`        | React の部品・hooks・CSS・Markdown の変換                                                                                                                                                                                                                                         | `shared`（React などの npm は可） | ブラウザ         |
-| `src/` 直下      | 配線（composition root。`cli.ts` / `main.ts` と起動の段取り）                                                                                                                                                                                                                     | すべて                            | サーバ           |
+| 層               | 置くもの                                                                                                                                                                                                                                                                                        | import してよい先                                       | 実行場所         |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- | ---------------- |
+| `shared`         | 概念の語彙・`SessionEvent`・`SessionState`・`applySessionEvent`・コマンドとフレームの zod・手続きの契約。**`SessionState` から純粋に導けるもの**も含む（ブラウザしか読まないものを含む。`main-view.ts` `turn-step.ts` `turn-speech.ts` `portrait-motion.ts` `room.ts` `command-suggestion.ts`） | `shared` のみ（`zod`・`@orpc/contract`・`remeda` は可） | サーバとブラウザ |
+| `server/core`    | サーバ側の純粋な判断。セッション管理・駆動の契約・イベントの検証・ポートの決定・設定の解釈。**`server/<機能>/core/` と、共有の `server/core/`**                                                                                                                                                 | `shared` / `core`                                       | サーバ（Bun）    |
+| `server/adapter` | 外の世界に触る場所。SDK・WebSocket・HTTP・ホスト・ファイル・子プロセス・fake driver。**`server/<機能>/adapter/` と、共有の `server/adapter/`**                                                                                                                                                  | `shared` / `core` / `adapter`                           | サーバ（Bun）    |
+| `browser`        | React の部品・hooks・CSS・Markdown の変換                                                                                                                                                                                                                                                       | `shared`（React などの npm は可）                       | ブラウザ         |
+| `src/` 直下      | 配線（composition root。`cli.ts` / `main.ts` と起動の段取り）                                                                                                                                                                                                                                   | すべて                                                  | サーバ           |
 
 - **`core` と `browser` は互いを import しない。** 両者が知っているのは `shared` だけ
 - **`core → adapter` は禁止。** 辺は `adapter ──▶ core ──▶ shared ◀── browser` の一方通行で、
@@ -216,8 +216,8 @@ sed -n '/^## 4\. shared/,/^## /p' docs/design.md
 **2026-09-26 に `docs/research/server-procedure-proposal.md` の段1〜3を採った**（道具の比較・
 手本・採らなかった案はそちら）。目的は「**どのコマンドをどの機能が受け、どの条件で断るか**」を、
 `session-manager.ts` の `switch` と `SessionManagerOptions` の口ではなく、機能の側の表から辿れるように
-すること。**段1は 2026-09-26 に移し終えた**（`dispatch` の `switch` 3つは消えた）。段2〜3は移した先の
-形の正典で、段ごとの作業は `develop/task/` にある。
+すること。**段1は 2026-09-26 に移し終えた**（`dispatch` の `switch` 3つは消えた）。**段2（読み取り5本）も
+同日に移し終えた**。段3は移した先の形の正典で、作業は `develop/task/` にある。
 
 **段1（依存を足さない）: 機能ごとの受け手の表**
 
@@ -288,13 +288,13 @@ sed -n '/^## 4\. shared/,/^## /p' docs/design.md
 
 **許す依存の辺**（段2以降。`test/architecture.test.ts` が見る）:
 
-| 辺                                               | 許す場所                                                                                               |
-| ------------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
-| `shared` → 外部                                  | `zod` と `@orpc/contract`（`@orpc/server`・`node:` は読まない）                                        |
-| `@orpc/server` を import してよい場所            | 機能の `adapter/` と `view-server/adapter/` だけ。**`core` は禁止のまま**                              |
-| `browser` → 外部                                 | 今の依存に `@orpc/client` と `@orpc/tanstack-query` を足す                                             |
-| `src/router.ts` / `src/command-route.ts`（配線） | すべての機能の `<機能>-procedure.ts` / `<機能>-command.ts`。配線なので**機能どうしの辺の表は増えない** |
-| 機能どうしの辺                                   | 上の表のまま（受け手が別の機能の判断を要るようになったら、今と同じく表に足す）                         |
+| 辺                                               | 許す場所                                                                                                     |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
+| `shared` → 外部                                  | `zod` と `@orpc/contract`（`@orpc/server`・`node:` は読まない）。手続きより前から読んでいる `remeda` も可    |
+| `@orpc/server` を import してよい場所            | 機能の `adapter/`（`view-server/adapter/` を含む）と配線（`src/router.ts`）だけ。**`core` と共有の箱は禁止** |
+| `browser` → 外部                                 | 今の依存に `@orpc/client` と `@orpc/tanstack-query` を足す                                                   |
+| `src/router.ts` / `src/command-route.ts`（配線） | すべての機能の `<機能>-procedure.ts` / `<機能>-command.ts`。配線なので**機能どうしの辺の表は増えない**       |
+| 機能どうしの辺                                   | 上の表のまま（受け手が別の機能の判断を要るようになったら、今と同じく表に足す）                               |
 
 **辿り方**: 段1のあとは `src/command-route.ts` で種類を探す → `<機能>/core/<機能>-command.ts` の行で
 受け手と断る条件を見る。段3のあとは `src/router.ts` → `shared/contract/<機能>.ts`（形と断る条件）→
@@ -309,9 +309,13 @@ src/
   current-character.ts        いま出しているパックと選択肢の持ち主（切り替えと画面からの編集で入れ替わる）
   view-delivery.ts            ビューの配信。組み立てたブラウザ側と開いているタブを持ち、/ws と見張りを束ねる
   session-start.ts            セッションを1つ起こす（どの駆動で起こすか・続きをどう探すか）
-  command-route.ts            全機能のコマンドの受け手の表を1枚に束ねる。段3で router.ts
-                              （全機能の手続きを束ねる）へ吸われる（上の「コマンドの受け手と手続きの置き方」）
+  command-route.ts            全機能のコマンドの受け手の表を1枚に束ねる。段3で router.ts へ吸われる
+  router.ts                   全機能の手続き（いまは読み取り）を束ね、照合のミドルウェアを全部の前に掛ける
+                              （上の「コマンドの受け手と手続きの置き方」）
+  opentelemetry-api.d.ts      oRPC の型宣言が読む任意の peer の型の代役（入れていない。docs/research/external-dependency.md）
   shared/
+    rpc.ts                    手続きの口の経路名（/rpc）と、機能ごとの契約を束ねた rpcContract
+    contract/<機能>.ts        手続きの契約（repository / token-usage / context-usage / achievement）
     session-event.ts          SessionEvent（zod と z.infer）
     session-state.ts          SessionState と applySessionEvent（いまの session-view.ts）
     session-choice.ts         切り替え先として選べるセッション1件（サーバとブラウザの両方が読む契約）
@@ -338,11 +342,10 @@ src/
     prompt-image.ts           依頼に添える画像（貼り付け・ドロップで届く data URL）
     persona-memory.ts         覚えたこと（persona.md の節）に関わる、両側が見る値（1行の長さの上限）
     chat-log.ts               雑談モードの会話のログ（セッションの姿から導くだけ）
-    context-usage.ts          いまのセッションのコンテキストの内訳と、配る経路の名前
+    context-usage.ts          いまのセッションのコンテキストの内訳（型と zod）
     context-usage-record.ts   コンテキストの内訳を記録に残すときの形（1行 = 1セッション）
     token-usage.ts            トークン消費の記録の形（型だけ）
-    token-usage-summary.ts    トークン消費の集計（期間で切って軸ごとに畳んだ形）と、配る経路の名前
-    repository-file.ts        ファイル一覧の経路名と読み取り（入力欄の @ 補完。両側が見る）
+    token-usage-summary.ts    トークン消費の集計（期間で切って軸ごとに畳んだ形。型と zod）と、選べる期間
     room.ts                   部屋の名前（ビューのポート1つ＝部屋1つ。語彙と、語彙の外の名乗り方。13.9）
     blank-text.ts             本文が読める文字を1字も持たないかを判定する純関数（ゼロ幅スペース等も空扱い）
     background-task.ts        背景のタスク（ターンのあとも claude が動かし続けているもの）の語彙（型だけ）
@@ -398,20 +401,24 @@ src/
     visit/                    core/visit-timing.ts / visit-guest.ts / visit-script.ts / visit-script-writer.ts / visit-watch.ts、
                               adapter/sdk-visit-script.ts（台本を書かせる使い捨ての query()）/ visit-clock.ts（時計）
     diary/                    core/diary-tool.ts、adapter/diary.ts（~/.tsukumo/diary/）
-    achievement/              core/achievement.ts（数える判断）、adapter/main-history.ts（main の履歴を読む）
+    achievement/              core/achievement.ts（数える判断）、adapter/main-history.ts（main の履歴を読む）/
+                              achievement-procedure.ts（手続き）
     usage-review/             core/usage-review-tool.ts、adapter/previous-usage-review.ts / usage-proposal-dismissal.ts
-    token-usage/              core/token-usage.ts、adapter/token-usage-log.ts（~/.tsukumo/token-usage/）
-    context-usage/            core/context-usage.ts、adapter/context-usage-log.ts（~/.tsukumo/context-usage/）
+    token-usage/              core/token-usage.ts、adapter/token-usage-log.ts（~/.tsukumo/token-usage/）/
+                              token-usage-procedure.ts（手続き）
+    context-usage/            core/context-usage.ts、adapter/context-usage-log.ts（~/.tsukumo/context-usage/）/
+                              context-usage-procedure.ts（手続き）
     host/                     core/host.ts（ホストのポート。showView）/ tracked-file.ts（git 管理下のときだけホストへ渡す門番）、
                               adapter/orca-host.ts（`orca` コマンドを起こす唯一の場所）
     view-server/              core/port-resolution.ts（どのポートで試すか）、
-                              adapter/server.ts（http）/ session-socket.ts（ws）/ vendor-asset.ts（node_modules の実ファイル）/
+                              adapter/server.ts（http）/ session-socket.ts（ws）/ rpc-guard.ts（/rpc の照合）/
+                              vendor-asset.ts（node_modules の実ファイル）/
                               bundle.ts / ui-rebuild.ts / source-fingerprint.ts（bun build と src/browser/ の見張り）
     repository/adapter/       git.ts（`git` を起こす唯一の口）/ repository-file.ts（git ls-files）/
-                              task-summary.ts（main のタスク一覧の読み直し）
+                              task-summary.ts（main のタスク一覧の読み直し）/ repository-procedure.ts（手続き）
     <機能>/core/<機能>-command.ts   その機能が受けるコマンドの表（character-pack / chat /
                               visit / usage-review / host）
-    <機能>/adapter/<機能>-procedure.ts （段2〜3で足す）その機能の手続き（oRPC の受け手）
+    <機能>/adapter/<機能>-procedure.ts その機能の手続き（oRPC の受け手。段2で読み取りの4機能、段3でコマンド）
   browser/
     main.tsx                  入口。部品の木を組み立てて mount する（副作用はここだけ）。出す画面を選ぶ
                               <Root> と、会話の画面の <Layout> に4領域を差し込むのもここ（6.1）
@@ -1427,28 +1434,30 @@ Layout に出す。復帰したときにセッションを続きから起こし�
 
 ### server.ts と session-socket.ts（adapter）
 
-**HTTP と WebSocket は別の境界**なので、ファイルも2つに分かれている。静的配信と、会話を含まない
-JSON を配る経路（`/repository-file`・`/token-usage`・`/context-usage`・`/achievement`）と会話の
-内容を運ぶ `/prompt-image/<id>` は `server.ts`（listen するのもここ。経路の一覧は `respond` 関数と、
-経路ごとの定数（`LAYOUT_PATH` / `uiScriptPath()` ・ `styleSheetPath()` / `VENDOR_PATH_PREFIX` /
-`CHARACTER_ASSET_PATH_PREFIX` / `REPOSITORY_FILE_PATH` / `TOKEN_USAGE_SUMMARY_PATH` /
-`CONTEXT_USAGE_PATH` / `PROMPT_IMAGE_PATH_PREFIX` / `ACHIEVEMENT_PATH`）が正典）、`/ws` の upgrade と
-コマンドの受け口は `session-socket.ts`（`SESSION_SOCKET_PATH`。listen 済みのサーバに受け口を
-足すだけ）。**起動トークンは1つ**で、`server.ts` の `createStartupToken` が作ったものを両方が見る。
+**HTTP と WebSocket は別の境界**なので、ファイルも2つに分かれている。静的配信と、会話の内容を
+運ぶ `/prompt-image/<id>` と、読み取りの手続きを載せる `/rpc` は `server.ts`（listen するのもここ。
+経路の一覧は経路の表 `ROUTES` と、経路ごとの定数（`LAYOUT_PATH` / `uiScriptPath()` ・
+`styleSheetPath()` / `VENDOR_PATH_PREFIX` / `CHARACTER_ASSET_PATH_PREFIX` /
+`PROMPT_IMAGE_PATH_PREFIX` / `RPC_PATH`）が正典）、`/ws` の upgrade とコマンドの受け口は
+`session-socket.ts`（`SESSION_SOCKET_PATH`。listen 済みのサーバに受け口を足すだけ）。**起動トークンは
+1つ**で、`server.ts` の `createStartupToken` が作ったものを全部が見る。
 
-**段2〜3で受け口は oRPC の手続きへ移る**（2章「コマンドの受け手と手続きの置き方」）。段2で読み取りの
-4経路（`/repository-file`・`/token-usage`・`/context-usage`・`/achievement`（暦を含む））が `/rpc` の
-手続きになり、トークン・`Origin` の照合は `rpc-guard.ts` の1つに寄る。`server.ts` に残るのは静的な
-配信と `/prompt-image/<id>`。段3で `/ws` の `receive`（`parseClientCommand`）が `RPCHandler` に
-置き換わる（`MAX_MESSAGE_BYTES` を渡した `WebSocketServer` を自分で作るのは変えない）。押し出し
-（`hello` / `events`）は `session-socket.ts` と `subscribe` のまま。
+**段2（2026-09-26）で読み取りは oRPC の手続きになった**（2章「コマンドの受け手と手続きの置き方」）。
+`/rpc/<機能>/<手続き>`（`repository.listFiles`・`tokenUsage.summary`・`contextUsage.report`・
+`achievement.day`・`achievement.calendar`）で、束ねるのは配線の `src/router.ts`、トークン・`Origin` の
+照合は `rpc-guard.ts` の1つのミドルウェア。`server.ts` は `/rpc` の要求を `@orpc/server/fetch` の
+`RPCHandler` へ渡すだけ（`node:http` との橋渡しを自分で書く。`@orpc/server/node` の型宣言が壊れて
+いるため。`docs/research/external-dependency.md` の表1の oRPC の行）。本文は 64 KiB で断る
+（`BodyLimitPlugin`。照合の前に大きな本文を読み込まされないため）。段3で `/ws` の `receive`
+（`parseClientCommand`）が `RPCHandler` に置き換わる（`MAX_MESSAGE_BYTES` を渡した `WebSocketServer` を
+自分で作るのは変えない）。押し出し（`hello` / `events`）は `session-socket.ts` と `subscribe` のまま。
 
 会話の内容が乗るのは `/ws`（`session-socket.ts`）と、依頼に添えた画像を配る `/prompt-image/<id>`
 だけ。ページ・同梱物・素材（`/`・`/assets/*`・`/vendor/*`・`/character/*`）は静的な物なので
-トークン無しでよい。**`/repository-file`・`/token-usage`・`/context-usage`・`/achievement` は
-会話を含まないがトークンが要る** — 配るのは利用者の作業ディレクトリの中身・使った量・いまの
-セッションが積んでいるものの内訳・タスクの要約で、誰にでも配ってよい静的な物ではない
-（各経路の判断の理由は `server.ts` の関数ごとの doc コメントを参照）。
+トークン無しでよい。**`/rpc` の手続きは会話を含まないがトークンが要る** — 配るのは利用者の作業
+ディレクトリの中身・使った量・いまのセッションが積んでいるものの内訳・タスクの要約で、誰にでも
+配ってよい静的な物ではない（各手続きの判断の理由は `<機能>-procedure.ts` と契約
+`src/shared/contract/<機能>.ts` の doc コメントを参照）。
 
 ### config.ts（core）
 
@@ -1523,7 +1532,7 @@ JSON を配る経路（`/repository-file`・`/token-usage`・`/context-usage`・
   変換（`sdk-message.ts`）は2つのツールを知らない（呼び出しはふつうのツールとして記録に残る）。
   復元の再生には出てこないので、**起こし直すと状態はふだんから始まる**
 - **段の右の数（モデルの数・キャッシュ読み・ツールの種類）はスキルから受け取らない。** 画面が
-  既存の集計（`GET /token-usage?days=<見直しの期間>`。`src/shared/token-usage-summary.ts`）から
+  既存の集計（手続き `tokenUsage.summary` に見直しの期間を渡す。`src/shared/token-usage-summary.ts`）から
   出す。tsukumo が持っている数を tsukumo が出せば、スキルの書き間違いが画面に出ない。そのために
   段にも `days` を持たせる
 - **提案の識別子は種類 + 対象**（`usageProposalKey`。`kind:target`）。種類は `shared` に固定した
@@ -1587,20 +1596,22 @@ JSON を配る経路（`/repository-file`・`/token-usage`・`/context-usage`・
 成果の画面（13.10）の中身は、**画面が開いているときにブラウザが HTTP で取りに行く**（2026-09-24
 決定。2026-09-25 に卒業・節目・日記と暦を足した。数え方の規則は `docs/requirements.md` 4.11 が
 正典で、ここは置き場と渡し方だけ）。語は `docs/glossary.md`「成果」「成果の振り返り」「日記」
-「灯りの暦」「卒業」「節目」。**経路は2本**: 1日ぶん（`GET /achievement?date=`）と、暦
-（`GET /achievement-calendar`）。日記の受け取りと保存は次の節。
+「灯りの暦」「卒業」「節目」。**手続きは2本**: 1日ぶん（`achievement.day`。入力は見る日の選び方
+`{ kind: "today" } | { kind: "chosen", date }`）と、暦（`achievement.calendar`）。日記の受け取りと
+保存は次の節。
 
-| 置き場                                           | 持つもの                                                                                                                                                                                                                                                                                                                                             |
-| ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `src/shared/achievement.ts`                      | 1日ぶんの応答の型 `DailyAchievement`（卒業・節目・日記を含む）、経路の名前 `ACHIEVEMENT_PATH`（`/achievement`）とクエリ名（`date`）、応答の読み手（配られない形は「取れなかった」に倒す）、日付キーの前後（`Temporal.PlainDate` の足し引き。時計は読まない）、振り返りの依頼文 `achievementReflectionRequestText`                                    |
-| `src/shared/achievement-calendar.ts`             | 暦の応答の型 `AchievementCalendar`、経路の名前 `ACHIEVEMENT_CALENDAR_PATH`（`/achievement-calendar`）、応答の読み手、暦の範囲（今日から5週ぶんのマスの並び）、**灯りの段階の判定 `lampLevel`**（区切りは `docs/requirements.md` 4.11「灯りの段階」を `satisfies` で持つ表）                                                                          |
-| `src/server/achievement/core/achievement.ts`     | 判断だけ: 運用の帳面のパスの判定、`git log` の出力からその日のコミットを数える、切り口の中身（3つの読み元と、消えたファイルの消える直前の版）から `done` の ID と `summary` を集める、2つの切り口の差を取る、**卒業（登録日の表から）と節目（通算の数から）を選ぶ**、**`git log` 1回の出力を日ごとのコミットの数に畳む**（暦）。旧形式の読み手もここ |
-| `src/server/achievement/adapter/main-history.ts` | `main` の履歴を読む境界。下の手順で `git` を起こし、core に渡す                                                                                                                                                                                                                                                                                      |
-| `src/server/repository/adapter/git.ts`           | `git` を起こす口（`runGit` と `git cat-file --batch`）。`task-summary.ts` と `main-history.ts` が使う                                                                                                                                                                                                                                                |
-| `src/server/adapter/local-time.ts`               | 日付キーからその日の始まりと終わり（エポックミリ秒）を出す口。今日の日付キーは `todayLocalDateKey`                                                                                                                                                                                                                                                   |
-| `src/server/view-server/adapter/server.ts`       | `GET /achievement?date=YYYY-MM-DD` と `GET /achievement-calendar`。**どちらも起動トークンが要る**（`/token-usage` と同じ）                                                                                                                                                                                                                           |
-| `src/view-delivery.ts`                           | 配線。1日ぶんは `main-history.ts` の数と `diary.ts` のその日の日記を合わせて1つの応答にし、暦は `main-history.ts` の日ごとの数（覚えの入れ物もここで作る）と `diary.ts` の日記のある日の一覧を合わせる                                                                                                                                               |
-| `src/browser/components/page/achievement/`       | 領域（成果の画面）。取りに行く hook と画面の部品（(a)(b)(c)・暦・見開き）。`stores/location-hash.ts` の `SCREENS` の `achievement` と、hash の `date`                                                                                                                                                                                                |
+| 置き場                                                    | 持つもの                                                                                                                                                                                                                                                                                                                                             |
+| --------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/shared/achievement.ts`                               | 1日ぶんの応答の型 `DailyAchievement`（卒業・節目・日記を含む）とその zod、見る日の選び方 `AchievementDaySelection` と日付キーへの決め方 `resolveAchievementDateKey`、日付キーの前後（`Temporal.PlainDate` の足し引き。時計は読まない）、振り返りの依頼文 `achievementReflectionRequestText`                                                          |
+| `src/shared/achievement-calendar.ts`                      | 暦の応答の型 `AchievementCalendar` とその zod、暦の範囲（今日から5週ぶんのマスの並び）、**灯りの段階の判定 `lampLevel`**（区切りは `docs/requirements.md` 4.11「灯りの段階」を `satisfies` で持つ表）                                                                                                                                                |
+| `src/shared/contract/achievement.ts`                      | 手続きの契約（`day` と `calendar`。`git` の失敗は `UNAVAILABLE`（503））                                                                                                                                                                                                                                                                             |
+| `src/server/achievement/core/achievement.ts`              | 判断だけ: 運用の帳面のパスの判定、`git log` の出力からその日のコミットを数える、切り口の中身（3つの読み元と、消えたファイルの消える直前の版）から `done` の ID と `summary` を集める、2つの切り口の差を取る、**卒業（登録日の表から）と節目（通算の数から）を選ぶ**、**`git log` 1回の出力を日ごとのコミットの数に畳む**（暦）。旧形式の読み手もここ |
+| `src/server/achievement/adapter/main-history.ts`          | `main` の履歴を読む境界。下の手順で `git` を起こし、core に渡す                                                                                                                                                                                                                                                                                      |
+| `src/server/repository/adapter/git.ts`                    | `git` を起こす口（`runGit` と `git cat-file --batch`）。`task-summary.ts` と `main-history.ts` が使う                                                                                                                                                                                                                                                |
+| `src/server/adapter/local-time.ts`                        | 日付キーからその日の始まりと終わり（エポックミリ秒）を出す口。今日の日付キーは `todayLocalDateKey`                                                                                                                                                                                                                                                   |
+| `src/server/achievement/adapter/achievement-procedure.ts` | 手続きの受け手。`main-history.ts` の結果の「読めない（`unavailable`）」を契約のエラーに訳す。**起動トークンが要る**（`/rpc` の照合。ほかの手続きと同じ）                                                                                                                                                                                             |
+| `src/view-delivery.ts`                                    | 配線。1日ぶんは `main-history.ts` の数と `diary.ts` のその日の日記を合わせて1つの応答にし、暦は `main-history.ts` の日ごとの数（覚えの入れ物もここで作る）と `diary.ts` の日記のある日の一覧を合わせる                                                                                                                                               |
+| `src/browser/components/page/achievement/`                | 領域（成果の画面）。取りに行く hook と画面の部品（(a)(b)(c)・暦・見開き）。`stores/location-hash.ts` の `SCREENS` の `achievement` と、hash の `date`                                                                                                                                                                                                |
 
 **1日ぶんの応答の形**（`DailyAchievement`。`graduations` 以下は 2026-09-25 に足す）:
 
@@ -1635,8 +1646,8 @@ type DailyAchievement =
     }
 ```
 
-- `date` が無い・`YYYY-MM-DD` に読めない・今日より先のときは**今日に倒す**（`readTokenUsageDays` と
-  同じく、読めない値で断らない）。応答の `date` が実際に見た日で、ブラウザはそれを出す
+- 今日を選んだ・`YYYY-MM-DD` に読めない・今日より先のときは**今日に倒す**
+  （`resolveAchievementDateKey`。読めない値で断らない）。応答の `date` が実際に見た日で、ブラウザはそれを出す
 - **`today` を応答に入れる**のは、日の境目を決める場所をサーバの `local-time.ts` の1つに保つため
   （ブラウザは「今日」「昨日」の言い方と「次の日」を押せるかを `today` との比較で決める）
 - 卒業・節目は該当が無ければ空の並び。タスクの記録が無いリポジトリでは卒業とタスクの節目は
@@ -1733,7 +1744,7 @@ type AchievementCalendar =
 - **日を選べる。** push で運べるのは「今日」の1つで、遡る日は結局取りに行く口が要る
 - **数えるのに `git` を何度も起こし、大きいファイルも読む。** 先端が動くたびにサーバが数え直す
   形にすると、画面を開いていなくても重い仕事が走る
-- 先例がある: トークン消費の画面（`GET /token-usage`）と同じ取り方・守り方で、ブラウザは
+- 先例がある: トークン消費の画面（`tokenUsage.summary`）と同じ取り方・守り方で、ブラウザは
   TanStack Query で持つ
 
 **取り直す契機**: 画面を開いたとき・日を切り替えたとき・窓にフォーカスが戻ったとき
@@ -1749,7 +1760,7 @@ type AchievementCalendar =
 **会話内容と安全**: 応答に入るのはコミットの数・時刻とタスクの ID・`summary`・日付、それに日記
 （次の節）だけで、**コミットの件名も会話の文面も入らない**。数えた結果はどこにも書かず、ログにも
 出さない。起動トークンを要るのは、利用者のリポジトリの中身（タスクの要約）と日記を配るため
-（9章。`/repository-file` と同じ判断）。
+（9章。`repository.listFiles` と同じ判断）。
 
 ### 日記の受け取りと保存（diary-tool.ts と diary.ts）
 

@@ -1,7 +1,8 @@
-// 成果の画面（`docs/screen-design.md` 13.10）が取りに行く応答の型と、経路の名前。**両側
-// （サーバとブラウザ）が同じ値を見る**ので shared に置く（`token-usage-summary.ts` と同じ考え方）。
-// 数え方の規則そのものは `docs/requirements.md` 4.11 が正典で、ここは受け渡しの形と、届いた値の
-// 読み取りだけを持つ（`docs/design.md` 5章「成果の集め方と配り方」）。語は
+// 成果の画面（`docs/screen-design.md` 13.10）が取りに行く応答の型。**両側（サーバとブラウザ）が
+// 同じ値を見る**ので shared に置く（`token-usage-summary.ts` と同じ考え方）。手続きの形は
+// `src/shared/contract/achievement.ts`。
+// 数え方の規則そのものは `docs/requirements.md` 4.11 が正典で、ここは受け渡しの形と、見る日の
+// 決め方・振り返りの依頼文だけを持つ（`docs/design.md` 5章「成果の集め方と配り方」）。語は
 // `docs/glossary.md`「成果」。
 //
 // **運ぶのはコミットの数とタスクの ID・summary だけ**（コミットの件名も会話の文面も入らない。
@@ -11,11 +12,17 @@ import { z } from "zod"
 
 import { dailyDiaryStatusSchema, type DailyDiaryStatus } from "./diary.ts"
 
-/** 成果の経路（`GET /achievement?t=<起動トークン>&date=<日付キー>`）。 */
-export const ACHIEVEMENT_PATH = "/achievement"
+/**
+ * 見る日の選び方（成果の手続きの入力）。`today` はサーバのローカル時刻の今日で、ブラウザは
+ * 時計を読まないので「今日」を日付では送らない。`chosen` の `date` は `YYYY-MM-DD` のつもりの
+ * 生の文字列で、読めない・今日より先なら今日に倒す（{@link resolveAchievementDateKey}）。
+ */
+export const achievementDaySelectionSchema = z.discriminatedUnion("kind", [
+  z.object({ kind: z.literal("today") }),
+  z.object({ kind: z.literal("chosen"), date: z.string() }),
+])
 
-/** 見る日を載せるクエリの名前（`YYYY-MM-DD`）。 */
-export const ACHIEVEMENT_DATE_QUERY_NAME = "date"
+export type AchievementDaySelection = z.infer<typeof achievementDaySelectionSchema>
 
 /**
  * 終えたタスク1件（ID と、画面・依頼に出す要約）。
@@ -56,7 +63,7 @@ export type AchievementMilestone =
   | { readonly kind: "commit"; readonly count: number; readonly time: string }
 
 /**
- * `GET /achievement` の応答。`main` が読めない（git リポジトリでない・`main` ブランチが無い・
+ * 成果の手続き（1日ぶん）の応答。`main` が読めない（git リポジトリでない・`main` ブランチが無い・
  * `git` が無い）ときは画面ごと `unknown`。
  */
 export type DailyAchievement =
@@ -84,7 +91,7 @@ const achievementTaskSchema = z.object({ id: z.string(), summary: z.string() })
 
 const achievementDoneTasksSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("unknown") }),
-  z.object({ kind: z.literal("known"), items: z.array(achievementTaskSchema) }),
+  z.object({ kind: z.literal("known"), items: z.array(achievementTaskSchema).readonly() }),
 ])
 
 const achievementGraduationSchema = z.object({
@@ -99,7 +106,8 @@ const achievementMilestoneSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("commit"), count: z.number(), time: z.string() }),
 ])
 
-const dailyAchievementSchema = z.discriminatedUnion("kind", [
+/** 配る形そのもの（{@link DailyAchievement} と同じ鍵）。 */
+export const dailyAchievementSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("unknown") }),
   z.object({
     kind: z.literal("known"),
@@ -107,20 +115,11 @@ const dailyAchievementSchema = z.discriminatedUnion("kind", [
     today: z.string(),
     commitCount: z.number(),
     doneTasks: achievementDoneTasksSchema,
-    graduations: z.array(achievementGraduationSchema),
-    milestones: z.array(achievementMilestoneSchema),
+    graduations: z.array(achievementGraduationSchema).readonly(),
+    milestones: z.array(achievementMilestoneSchema).readonly(),
     diary: dailyDiaryStatusSchema,
   }),
 ])
-
-/**
- * 届いた JSON を {@link DailyAchievement} として読む。**読めない形のときは「取れなかった」**
- * （`readTokenUsageSummary` と同じ割り切り。画面は「不明」と同じ見た目になるだけで落ちない）。
- */
-export function readDailyAchievement(value: unknown): DailyAchievement {
-  const parsed = dailyAchievementSchema.safeParse(value)
-  return parsed.success ? parsed.data : UNKNOWN_ACHIEVEMENT
-}
 
 /** 一覧に並べるタスクの上限（`docs/requirements.md` 4.11「振り返りの依頼」）。 */
 const MAX_LISTED_REQUEST_TASKS = 20
@@ -249,16 +248,18 @@ export function nextDateKey(dateKey: string): string {
 }
 
 /**
- * クエリの `date` を見る日として読む。**無い・`YYYY-MM-DD` に読めない・`today` より先のときは
- * `today` に倒す**（`readTokenUsageDays` と同じく、呼ぶ側が書き間違えても画面は出る。
- * `docs/requirements.md` 4.11）。「今日」を決めるのは呼ぶ側（サーバのローカル時刻）で、ここは
- * 比べるだけ。
+ * 見る日を日付キーに決める。**今日を選んだ・`YYYY-MM-DD` に読めない・`today` より先のときは
+ * `today` に倒す**（呼ぶ側が書き間違えても画面は出る。`docs/requirements.md` 4.11）。「今日」を
+ * 決めるのは呼ぶ側（サーバのローカル時刻）で、ここは比べるだけ。
  */
-export function resolveAchievementDateKey(raw: string | undefined, today: string): string {
-  if (raw === undefined) {
+export function resolveAchievementDateKey(
+  selection: AchievementDaySelection,
+  today: string,
+): string {
+  if (selection.kind === "today") {
     return today
   }
-  const date = dateKeyOf(raw)
+  const date = dateKeyOf(selection.date)
   if (date === undefined) {
     return today
   }

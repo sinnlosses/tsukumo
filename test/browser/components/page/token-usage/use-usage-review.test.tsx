@@ -18,6 +18,7 @@ import {
   type UsageProposal,
   type UsageReviewFindings,
 } from "../../../../../src/shared/usage-review.ts"
+import { rpcOutput, stubRpcFetch, type RpcFetchStub } from "../../../rpc-fetch-stub.ts"
 import { type CommandSpy, sessionStoreWith } from "../../../session-store.ts"
 
 /**
@@ -26,14 +27,12 @@ import { type CommandSpy, sessionStoreWith } from "../../../session-store.ts"
  * （`docs/coding-standards.md`「会話内容の扱い」— 実物の会話・記録は使わない）。
  */
 
-let originalFetch: typeof globalThis.fetch | undefined = undefined
+let fetchStub: RpcFetchStub | undefined = undefined
 
 afterEach(() => {
   cleanup()
-  if (originalFetch !== undefined) {
-    globalThis.fetch = originalFetch
-    originalFetch = undefined
-  }
+  fetchStub?.restore()
+  fetchStub = undefined
 })
 
 const FIXTURE_SUMMARY = {
@@ -60,10 +59,7 @@ function usageTotals(inputTokens: number, outputTokens: number, cacheReadInputTo
 }
 
 function stubSummaryFetch(): void {
-  originalFetch = globalThis.fetch
-  const stub = (): Promise<{ ok: true; status: 200; json: () => Promise<unknown> }> =>
-    Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve(FIXTURE_SUMMARY) })
-  globalThis.fetch = stub as unknown as typeof globalThis.fetch
+  fetchStub = stubRpcFetch(() => rpcOutput(FIXTURE_SUMMARY))
 }
 
 function newClient(): QueryClient {

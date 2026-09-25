@@ -1,4 +1,4 @@
-// 灯りの暦（`docs/screen-design.md` 13.10「灯りの暦」）の取得。`GET /achievement-calendar` は
+// 灯りの暦（`docs/screen-design.md` 13.10「灯りの暦」）の取得。手続き `achievement.calendar` は
 // 常に「今日を含む直近5週」を配るので、見ている日（`use-achievement.ts`）とは独立に1回だけ
 // 取りに行く。
 //
@@ -9,12 +9,8 @@
 
 import { useQuery } from "@tanstack/react-query"
 
-import {
-  ACHIEVEMENT_CALENDAR_PATH,
-  readAchievementCalendar,
-  type AchievementCalendar,
-} from "../../../../../shared/achievement-calendar.ts"
-import { sessionTokenUrl } from "../../../../lib/session-token-url.ts"
+import { type AchievementCalendar } from "../../../../../shared/achievement-calendar.ts"
+import { rpc } from "../../../../lib/rpc-client.ts"
 
 const REFETCH_INTERVAL_MS = 60_000
 
@@ -25,25 +21,19 @@ const REFETCH_INTERVAL_MS = 60_000
 export type AchievementCalendarView = { readonly kind: "loading" } | AchievementCalendar
 
 export function useAchievementCalendar(): AchievementCalendarView {
-  const query = useQuery({
-    queryKey: ["achievement-calendar"],
-    queryFn: fetchAchievementCalendar,
-    staleTime: 0,
-    refetchInterval: REFETCH_INTERVAL_MS,
-  })
+  const query = useQuery(
+    rpc.achievement.calendar.queryOptions({
+      staleTime: 0,
+      refetchInterval: REFETCH_INTERVAL_MS,
+      // 落ちた応答は再試行せず、すぐ「取れなかった」に倒す（手続きにする前と同じ）。
+      retry: false,
+    }),
+  )
 
   if (query.isPending) {
     return { kind: "loading" }
   }
+  // 落ちた応答（503・403）も「取れなかった」に倒す（呼び出し側は同じ扱いで足りるので、
+  // `use-achievement.ts` のように `isError` を別に持ち出さない）。
   return query.data ?? { kind: "unknown" }
-}
-
-/** 取りに行く。配られない形・落ちた応答はどちらも「取れなかった」に倒す（呼び出し側は同じ扱い
- * で足りるので、`use-achievement.ts` のように `isError` を別に持ち出さない）。 */
-async function fetchAchievementCalendar(): Promise<AchievementCalendar> {
-  const response = await fetch(sessionTokenUrl(ACHIEVEMENT_CALENDAR_PATH))
-  if (!response.ok) {
-    return { kind: "unknown" }
-  }
-  return readAchievementCalendar(await response.json())
 }

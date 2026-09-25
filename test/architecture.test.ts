@@ -266,6 +266,54 @@ describe("Agent SDK を import する箇所", () => {
   })
 })
 
+// 手続き（oRPC）の依存の辺（docs/design.md 2章「コマンドの受け手と手続きの置き方」の「許す依存の
+// 辺」）。受け手を付ける `@orpc/server` は外の世界に触る側（機能の `adapter/` と配線）だけが読み、
+// `core` と共有の箱からは読まない。契約だけを書く `@orpc/contract` は `shared` が読んでよい
+// （ブラウザも読むので、`@orpc/server` と `node:` は読まない）。
+const ORPC_SERVER_FILE = /^(?:server\/[^/]+\/adapter\/.+|[^/]+)\.ts$/
+
+// `shared` が読んでよい外部パッケージ（相対でない specifier）。`remeda` は手続きより前から読んでいる。
+const SHARED_EXTERNAL_PACKAGES: ReadonlySet<string> = new Set(["zod", "@orpc/contract", "remeda"])
+
+// `shared` の下に置いてよいディレクトリ（直下のファイルのほかに）。`contract/` は機能ごとの契約の
+// 置き場、`lib/` と `utils/` は docs/design.md 2章「`lib/` と `utils/` に置く基準」。
+const SHARED_DIRECTORIES: ReadonlySet<string> = new Set(["contract", "lib", "utils"])
+
+describe("手続き（oRPC）を import する箇所", () => {
+  it("`@orpc/server` を import するのは機能の adapter/ と配線（src/ 直下）だけ", () => {
+    const offenders = listSourceFiles(SRC_ROOT)
+      .filter((relPath) => !ORPC_SERVER_FILE.test(relPath))
+      .filter((relPath) =>
+        importSpecifiers(readFileSync(`${SRC_ROOT}/${relPath}`, "utf8")).some(
+          (specifier) => specifier === "@orpc/server" || specifier.startsWith("@orpc/server/"),
+        ),
+      )
+
+    expect(offenders).toEqual([])
+  })
+
+  it("shared が読む外部パッケージは zod・@orpc/contract・remeda だけ", () => {
+    const offenders = listSourceFiles(SRC_ROOT)
+      .filter((relPath) => layerOf(relPath) === "shared")
+      .flatMap((relPath) =>
+        importSpecifiers(readFileSync(`${SRC_ROOT}/${relPath}`, "utf8"))
+          .filter((specifier) => !specifier.startsWith("."))
+          .filter((specifier) => !SHARED_EXTERNAL_PACKAGES.has(specifier))
+          .map((specifier) => `src/${relPath} → ${specifier}`),
+      )
+
+    expect(offenders).toEqual([])
+  })
+
+  it("shared の下のディレクトリは contract/・lib/・utils/ だけ", () => {
+    const directories = listSourceFiles(SRC_ROOT)
+      .filter((relPath) => relPath.startsWith("shared/") && relPath.split("/").length > 2)
+      .map((relPath) => relPath.split("/")[1] ?? "")
+
+    expect([...new Set(directories)].filter((name) => !SHARED_DIRECTORIES.has(name))).toEqual([])
+  })
+})
+
 // `node:child_process` を起こすのはホスト（orca）・ビルド（bun build）・`git` を起こす1つの口
 // （`main` の上のタスク一覧・成果の集計・git 管理下のファイルの列挙のどれもがここを使う）の
 // 3つの境界に閉じ込める（docs/architecture.md 原則3）。

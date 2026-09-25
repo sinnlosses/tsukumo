@@ -8,8 +8,14 @@ import {
   contextUsageRefetchKey,
   useContextUsage,
 } from "../../../src/browser/domain/context-usage.ts"
-import { CONTEXT_USAGE_PATH } from "../../../src/shared/context-usage.ts"
 import { readyContextUsage } from "../../fixture/context-usage.ts"
+import {
+  rpcError,
+  rpcOutput,
+  stubRpcFetch,
+  type RpcFetchStub,
+  type RpcStubReply,
+} from "../rpc-fetch-stub.ts"
 
 /**
  * 画面を丸ごと描かずに、内訳の取得と畳み方だけを測る（docs/design.md 2章「機能の中を分ける」）。
@@ -19,31 +25,21 @@ import { readyContextUsage } from "../../fixture/context-usage.ts"
  * 「いつ取り直すか」は呼び出し側の責務）。ここではテストが直接キーを渡す。
  */
 
-let originalFetch: typeof globalThis.fetch | undefined = undefined
-let fetchCalls: string[] = []
+let fetchStub: RpcFetchStub | undefined = undefined
 
 afterEach(() => {
   cleanup()
-  if (originalFetch !== undefined) {
-    globalThis.fetch = originalFetch
-    originalFetch = undefined
-  }
-  fetchCalls = []
+  fetchStub?.restore()
+  fetchStub = undefined
 })
 
-type StubResponse = {
-  readonly ok: boolean
-  readonly status: number
-  readonly json: () => Promise<unknown>
+function stubContextUsageFetch(reply: () => RpcStubReply): void {
+  fetchStub = stubRpcFetch(reply)
 }
 
-function stubContextUsageFetch(respond: () => StubResponse): void {
-  originalFetch = globalThis.fetch
-  const stub = (url: string): Promise<StubResponse> => {
-    fetchCalls.push(url)
-    return Promise.resolve(respond())
-  }
-  globalThis.fetch = stub as unknown as typeof globalThis.fetch
+/** 取りに行った回数。 */
+function fetchCount(): number {
+  return fetchStub?.calls().length ?? 0
 }
 
 function contextUsageWrapper(
@@ -59,26 +55,18 @@ function newClient(): QueryClient {
 }
 
 describe("useContextUsage", () => {
-  it("起動トークン付きの経路へ取りに行く", async () => {
-    stubContextUsageFetch(() => ({
-      ok: true,
-      status: 200,
-      json: () => Promise.resolve(readyContextUsage()),
-    }))
+  it("内訳の手続きを呼ぶ", async () => {
+    stubContextUsageFetch(() => rpcOutput(readyContextUsage()))
 
     renderHook(() => useContextUsage(0), { wrapper: contextUsageWrapper(newClient()) })
 
     await waitFor(() => {
-      expect(fetchCalls[0]?.startsWith(`${CONTEXT_USAGE_PATH}?t=`)).toBe(true)
+      expect(fetchStub?.calls()[0]?.procedure).toBe("contextUsage/report")
     })
   })
 
   it("中身・空き・自動圧縮バッファをこの順の1本の並びに畳み、窓の外は別に持つ", async () => {
-    stubContextUsageFetch(() => ({
-      ok: true,
-      status: 200,
-      json: () => Promise.resolve(readyContextUsage()),
-    }))
+    stubContextUsageFetch(() => rpcOutput(readyContextUsage()))
 
     const { result } = renderHook(() => useContextUsage(0), {
       wrapper: contextUsageWrapper(newClient()),
@@ -105,26 +93,8 @@ describe("useContextUsage", () => {
     expect(card.rows[0]?.share).toBeCloseTo(4)
   })
 
-  it("応答が落ちたときも読めない形のときも「取れない」に倒す", async () => {
-    stubContextUsageFetch(() => ({ ok: false, status: 403, json: () => Promise.resolve(null) }))
-    const client = newClient()
-
-    const { result } = renderHook(() => useContextUsage(0), {
-      wrapper: contextUsageWrapper(client),
-    })
-
-    await waitFor(() => {
-      expect(client.getQueryState(["context-usage", 0])?.status).toBe("success")
-    })
-    expect(result.current.kind).toBe("unavailable")
-  })
-
   it("届くまでは「読み込み中」で、取れなかったときとは別の種類になる", async () => {
-    stubContextUsageFetch(() => ({
-      ok: true,
-      status: 200,
-      json: () => Promise.resolve(readyContextUsage()),
-    }))
+    stubContextUsageFetch(() => rpcOutput(readyContextUsage()))
 
     const { result } = renderHook(() => useContextUsage(0), {
       wrapper: contextUsageWrapper(newClient()),
@@ -139,7 +109,7 @@ describe("useContextUsage", () => {
   })
 
   it("応答が落ちたときは「読み込み中」を経てから「取れない」になる", async () => {
-    stubContextUsageFetch(() => ({ ok: false, status: 403, json: () => Promise.resolve(null) }))
+    stubContextUsageFetch(() => rpcError(403, "FORBIDDEN"))
 
     const { result } = renderHook(() => useContextUsage(0), {
       wrapper: contextUsageWrapper(newClient()),
@@ -153,11 +123,7 @@ describe("useContextUsage", () => {
   })
 
   it("refetchKey が変わると取り直す（ターンが終わるたびに1回。完了条件）", async () => {
-    stubContextUsageFetch(() => ({
-      ok: true,
-      status: 200,
-      json: () => Promise.resolve(readyContextUsage()),
-    }))
+    stubContextUsageFetch(() => rpcOutput(readyContextUsage()))
 
     const { result, rerender } = renderHook(({ key }: { key: number }) => useContextUsage(key), {
       wrapper: contextUsageWrapper(newClient()),
@@ -167,26 +133,22 @@ describe("useContextUsage", () => {
     await waitFor(() => {
       expect(result.current.kind).toBe("ready")
     })
-    expect(fetchCalls).toHaveLength(1)
+    expect(fetchCount()).toBe(1)
 
     // 同じ key での再描画は取り直さない（二重取得にならない。「解くべき論点」）。
     // `queryKey` が変わらない限り react-query は取り直しを起こさないので、待たずに測れる。
     rerender({ key: 0 })
-    expect(fetchCalls).toHaveLength(1)
+    expect(fetchCount()).toBe(1)
 
     // ターンが終わって key が変わると、もう1回取り直す。
     rerender({ key: 12_345 })
     await waitFor(() => {
-      expect(fetchCalls).toHaveLength(2)
+      expect(fetchCount()).toBe(2)
     })
   })
 
   it("finished → running に移っても取り直さず前の値のまま、次の finished で1回取り直す", async () => {
-    stubContextUsageFetch(() => ({
-      ok: true,
-      status: 200,
-      json: () => Promise.resolve(readyContextUsage()),
-    }))
+    stubContextUsageFetch(() => rpcOutput(readyContextUsage()))
 
     // `state.lastTurnFinishedAt` から作った key の並び（`contextUsageRefetchKey` を経由）。
     // `running` に移っても `lastTurnFinishedAt` 自体は戻らない（`shared/session-state.ts`）ので、
@@ -204,17 +166,17 @@ describe("useContextUsage", () => {
     await waitFor(() => {
       expect(result.current.kind).toBe("ready")
     })
-    expect(fetchCalls).toHaveLength(1)
+    expect(fetchCount()).toBe(1)
 
     // 次のターンが running に移っても、直前に終わった時刻（300）のまま——取り直さない。
     rerender({ lastTurnFinishedAt: 300 })
-    expect(fetchCalls).toHaveLength(1)
+    expect(fetchCount()).toBe(1)
     expect(result.current.kind).toBe("ready")
 
     // そのターンが終わって lastTurnFinishedAt が進むと、もう1回だけ取り直す。
     rerender({ lastTurnFinishedAt: 700 })
     await waitFor(() => {
-      expect(fetchCalls).toHaveLength(2)
+      expect(fetchCount()).toBe(2)
     })
   })
 })

@@ -17,27 +17,23 @@ import {
   type SessionState,
 } from "../../../../../src/shared/session-state.ts"
 import { characterInfo, characterPackEntry } from "../../../../fixture/character.ts"
+import { rpcError, stubRpcFetch, type RpcFetchStub } from "../../../rpc-fetch-stub.ts"
 import { sessionStoreWith } from "../../../session-store.ts"
 
 // セッション情報の帯は `<ContextUsageRow>`（`useContextUsage`。`useQuery`）を持つので、
 // ここのテストにも `QueryClientProvider` が要る。内訳の中身は測らないので、
 // 取りに行った先は常に「取れない」に落とす軽いスタブで足りる。
 
-let originalFetch: typeof globalThis.fetch | undefined = undefined
+let fetchStub: RpcFetchStub | undefined = undefined
 
 afterEach(() => {
   cleanup()
-  if (originalFetch !== undefined) {
-    globalThis.fetch = originalFetch
-    originalFetch = undefined
-  }
+  fetchStub?.restore()
+  fetchStub = undefined
 })
 
 function stubContextUsageUnavailable(): void {
-  originalFetch = globalThis.fetch
-  const stub = (): Promise<{ ok: false; status: 500; json: () => Promise<unknown> }> =>
-    Promise.resolve({ ok: false, status: 500, json: () => Promise.resolve(null) })
-  globalThis.fetch = stub as unknown as typeof globalThis.fetch
+  fetchStub = stubRpcFetch(() => rpcError(500))
 }
 
 function renderSidebar(stateOverrides: Partial<SessionState>): void {

@@ -37,7 +37,7 @@ export type SessionCommandPorts = {
   readonly rememberSessionDefault: (sessionDefault: SessionDefault) => SessionEvent
   /**
    * 成果の振り返りを受けたときに、その日の成果を数え直す口（`docs/design.md`「日記の受け取りと
-   * 保存」「コマンドと依頼」）。**画面が出している `GET /achievement` と同じ数え方**を使う。
+   * 保存」「コマンドと依頼」）。**画面が出している手続き `achievement.day` と同じ数え方**を使う。
    * `main` が読めない・`git` の呼び出しが失敗したときは undefined。
    */
   readonly readAchievementDay: (date: string) => Promise<DailyAchievement | undefined>

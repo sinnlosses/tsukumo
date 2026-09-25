@@ -138,7 +138,7 @@ export function startSession(options: SessionStartOptions): SessionManager {
   // `createOrcaHost()` は状態を持たないので、作り直しても構わない）。
   const host = createOrcaHost()
   // 成果の振り返り（`reflect-achievement`）がその日の成果を数え直すための入れ物。**配線層
-  // （`view-delivery.ts`）が `/achievement` に配るのと別に1つ持つ**——両者は別の層（`src/`
+  // （`view-delivery.ts`）が手続き `achievement.day` で配るのと別に1つ持つ**——両者は別の層（`src/`
   // 直下）で、依存し合わせない。同じ日を両方から数えても、今日以外の日はどちらかが先に
   // 覚えた数を使うだけで結果は変わらない（`src/server/achievement/adapter/main-history.ts`）。
   const achievementCommitCache = createAchievementCommitCache()
@@ -237,7 +237,7 @@ export function startSession(options: SessionStartOptions): SessionManager {
         promptImageShelf,
         // 歯車から届いた既定は、覚えてから画面へ流し直すだけ（いまのセッションには効かない）。
         rememberSessionDefault: (sessionDefault) => rememberSessionDefault(sessionDefault),
-        // **`GET /achievement`（`src/view-delivery.ts`）と同じ数え方**（`readAchievement`）。「今日」を
+        // **手続き `achievement.day`（`src/view-delivery.ts`）と同じ数え方**（`readAchievement`）。「今日」を
         // 決めるのもそちらと同じくここ（配線層）の仕事。読めなかった・`main` が読めない日は
         // `undefined` に畳み、断る理由は表の行（`session-command.ts`）が決める。
         readAchievementDay: async (date) => {

@@ -15,6 +15,7 @@ import {
   type SessionState,
 } from "../../../../../../src/shared/session-state.ts"
 import { characterInfo } from "../../../../../fixture/character.ts"
+import { rpcOutput, stubRpcFetch, type RpcFetchStub } from "../../../../rpc-fetch-stub.ts"
 import { type CommandSpy, sessionStoreWith } from "../../../../session-store.ts"
 
 /**
@@ -24,14 +25,12 @@ import { type CommandSpy, sessionStoreWith } from "../../../../session-store.ts"
  * （docs/coding-standards.md「会話内容の扱い」）。
  */
 
-let originalFetch: typeof globalThis.fetch | undefined = undefined
+let fetchStub: RpcFetchStub | undefined = undefined
 
 afterEach(() => {
   cleanup()
-  if (originalFetch !== undefined) {
-    globalThis.fetch = originalFetch
-    originalFetch = undefined
-  }
+  fetchStub?.restore()
+  fetchStub = undefined
 })
 
 const FIXTURE_COMMANDS = {
@@ -43,12 +42,9 @@ const FIXTURE_COMMANDS = {
   ],
 } satisfies Partial<SessionState>
 
-/** ファイル一覧の経路を、架空の一覧を返す代役に差し替える。 */
+/** ファイル一覧の手続きを、架空の一覧を返す代役に差し替える。 */
 function stubFileListFetch(paths: readonly string[]): void {
-  originalFetch = globalThis.fetch
-  const stub = (): Promise<{ ok: true; json: () => Promise<unknown> }> =>
-    Promise.resolve({ ok: true, json: () => Promise.resolve(paths) })
-  globalThis.fetch = stub as unknown as typeof globalThis.fetch
+  fetchStub = stubRpcFetch(() => rpcOutput(paths))
 }
 
 function renderUseComposer(

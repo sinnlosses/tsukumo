@@ -19,14 +19,6 @@ describe("sessionTokenUrl", () => {
     expect(sessionTokenUrl("/repository-file")).toBe("/repository-file?t=")
   })
 
-  it("追加のクエリがあれば、トークンのあとに続ける", () => {
-    setPageUrl("http://127.0.0.1:7517/?t=fictional-token")
-
-    expect(sessionTokenUrl("/token-usage", { days: "30" })).toBe(
-      "/token-usage?t=fictional-token&days=30",
-    )
-  })
-
   it("トークンを含め、値は URL エンコードされる", () => {
     setPageUrl(`http://127.0.0.1:7517/?t=${encodeURIComponent("space value/slash")}`)
 

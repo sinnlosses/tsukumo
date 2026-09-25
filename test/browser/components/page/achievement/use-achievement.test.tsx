@@ -15,6 +15,13 @@ import {
   INITIAL_SESSION_STATE,
   type SessionState,
 } from "../../../../../src/shared/session-state.ts"
+import {
+  rpcError,
+  rpcOutput,
+  stubRpcFetch,
+  type RpcFetchStub,
+  type RpcStubReply,
+} from "../../../rpc-fetch-stub.ts"
 import { type CommandSpy, sessionStoreWith } from "../../../session-store.ts"
 
 /**
@@ -23,36 +30,17 @@ import { type CommandSpy, sessionStoreWith } from "../../../session-store.ts"
  * フィクスチャはすべて手で書いた架空の成果・日記（`docs/coding-standards.md`「会話内容の扱い」）。
  */
 
-let originalFetch: typeof globalThis.fetch | undefined = undefined
-let fetchCalls: string[] = []
+let fetchStub: RpcFetchStub | undefined = undefined
 
 afterEach(() => {
   cleanup()
   window.location.hash = ""
-  if (originalFetch !== undefined) {
-    globalThis.fetch = originalFetch
-    originalFetch = undefined
-  }
-  fetchCalls = []
+  fetchStub?.restore()
+  fetchStub = undefined
 })
 
-type StubResponse = {
-  readonly ok: boolean
-  readonly status: number
-  readonly json: () => Promise<unknown>
-}
-
-function stubAchievementFetch(respond: (url: string) => StubResponse): void {
-  originalFetch = globalThis.fetch
-  const stub = (url: string): Promise<StubResponse> => {
-    fetchCalls.push(url)
-    return Promise.resolve(respond(url))
-  }
-  globalThis.fetch = stub as unknown as typeof globalThis.fetch
-}
-
-function okResponse(body: unknown): StubResponse {
-  return { ok: true, status: 200, json: () => Promise.resolve(body) }
+function stubAchievementFetch(reply: () => RpcStubReply): void {
+  fetchStub = stubRpcFetch(reply)
 }
 
 function achievementWrapper(
@@ -127,8 +115,8 @@ const FIXTURE_CHARACTER: CharacterInfo = {
 }
 
 describe("useAchievement", () => {
-  it("date が無ければ今日を取りに行く（date クエリを付けない）", async () => {
-    stubAchievementFetch(() => okResponse(KNOWN_TODAY))
+  it("date が無ければ今日を取りに行く（日付を送らない）", async () => {
+    stubAchievementFetch(() => rpcOutput(KNOWN_TODAY))
 
     const { result } = renderHook(() => useAchievement(), {
       wrapper: achievementWrapper(newClient()),
@@ -137,8 +125,10 @@ describe("useAchievement", () => {
     await waitFor(() => {
       expect(result.current.view.kind).toBe("ready")
     })
-    expect(fetchCalls.some((url) => url.includes("/achievement"))).toBe(true)
-    expect(fetchCalls.some((url) => url.includes("date="))).toBe(false)
+    expect(fetchStub?.calls()).toContainEqual({
+      procedure: "achievement/day",
+      input: { kind: "today" },
+    })
     expect(result.current.daySwitch).toEqual({
       kind: "known",
       date: "2026-09-24",
@@ -147,7 +137,7 @@ describe("useAchievement", () => {
   })
 
   it("main が読めなければ unavailable", async () => {
-    stubAchievementFetch(() => okResponse({ kind: "unknown" }))
+    stubAchievementFetch(() => rpcOutput({ kind: "unknown" }))
 
     const { result } = renderHook(() => useAchievement(), {
       wrapper: achievementWrapper(newClient()),
@@ -159,7 +149,7 @@ describe("useAchievement", () => {
   })
 
   it("応答が落ち、一度も届いていなければ failed", async () => {
-    stubAchievementFetch(() => ({ ok: false, status: 503, json: () => Promise.resolve(null) }))
+    stubAchievementFetch(() => rpcError(503, "UNAVAILABLE"))
 
     const { result } = renderHook(() => useAchievement(), {
       wrapper: achievementWrapper(newClient()),
@@ -171,7 +161,7 @@ describe("useAchievement", () => {
   })
 
   it("前の日へ切り替えると hash の date が1日前になる", async () => {
-    stubAchievementFetch(() => okResponse(KNOWN_TODAY))
+    stubAchievementFetch(() => rpcOutput(KNOWN_TODAY))
     const { result } = renderHook(() => useAchievement(), {
       wrapper: achievementWrapper(newClient()),
     })
@@ -187,7 +177,7 @@ describe("useAchievement", () => {
   })
 
   it("灯りの暦のマスと同じ口（onSelectDate）で日を選べる", async () => {
-    stubAchievementFetch(() => okResponse(KNOWN_TODAY))
+    stubAchievementFetch(() => rpcOutput(KNOWN_TODAY))
     const { result } = renderHook(() => useAchievement(), {
       wrapper: achievementWrapper(newClient()),
     })
@@ -205,7 +195,7 @@ describe("useAchievement", () => {
 
 describe("useAchievement（振り返りのボタン）", () => {
   it("押すと日付だけを送り、画面は移らない（hash はそのまま）", async () => {
-    stubAchievementFetch(() => okResponse(KNOWN_TODAY))
+    stubAchievementFetch(() => rpcOutput(KNOWN_TODAY))
     const spy: CommandSpy = (command) => sent.push(command)
     const sent: unknown[] = []
     const { result } = renderHook(() => useAchievement(), {
@@ -225,7 +215,7 @@ describe("useAchievement（振り返りのボタン）", () => {
   })
 
   it("会話のターンが進行中でも押せる（振り返りは会話とは別の使い捨ての問い合わせ）", async () => {
-    stubAchievementFetch(() => okResponse(KNOWN_TODAY))
+    stubAchievementFetch(() => rpcOutput(KNOWN_TODAY))
     const spy: CommandSpy = (command) => sent.push(command)
     const sent: unknown[] = []
     const { result } = renderHook(() => useAchievement(), {
@@ -247,7 +237,7 @@ describe("useAchievement（振り返りのボタン）", () => {
   })
 
   it("ほかの日の日記を書いている最中は押せず、押しても送らない", async () => {
-    stubAchievementFetch(() => okResponse(KNOWN_TODAY))
+    stubAchievementFetch(() => rpcOutput(KNOWN_TODAY))
     const spy: CommandSpy = (command) => sent.push(command)
     const sent: unknown[] = []
     const { result } = renderHook(() => useAchievement(), {
@@ -283,7 +273,7 @@ describe("useAchievement（振り返りのボタン）", () => {
       commitCount: 0,
       doneTasks: { kind: "known", items: [] },
     }
-    stubAchievementFetch(() => okResponse(emptyDay))
+    stubAchievementFetch(() => rpcOutput(emptyDay))
     const spy: CommandSpy = (command) => sent.push(command)
     const sent: unknown[] = []
     const { result } = renderHook(() => useAchievement(), {
@@ -314,7 +304,7 @@ describe("useAchievement（振り返りのボタン）", () => {
   })
 
   it("雑談中でも押せる", async () => {
-    stubAchievementFetch(() => okResponse(KNOWN_TODAY))
+    stubAchievementFetch(() => rpcOutput(KNOWN_TODAY))
     const { result } = renderHook(() => useAchievement(), {
       wrapper: achievementWrapper(newClient(), sessionStoreWith(stateWith({ chatMode: true }))),
     })
@@ -326,7 +316,7 @@ describe("useAchievement（振り返りのボタン）", () => {
   })
 
   it("キャラクターの名前を持たないときは既定の名前でボタンの文言を組む", async () => {
-    stubAchievementFetch(() => okResponse(KNOWN_TODAY))
+    stubAchievementFetch(() => rpcOutput(KNOWN_TODAY))
     const { result } = renderHook(() => useAchievement(), {
       wrapper: achievementWrapper(newClient(), sessionStoreWith(stateWith({}))),
     })
@@ -340,7 +330,7 @@ describe("useAchievement（振り返りのボタン）", () => {
 
 describe("useAchievement（書いている進み）", () => {
   it("見ている日を書いているときだけ writing になる", async () => {
-    stubAchievementFetch(() => okResponse(KNOWN_TODAY))
+    stubAchievementFetch(() => rpcOutput(KNOWN_TODAY))
     const { result } = renderHook(() => useAchievement(), {
       wrapper: achievementWrapper(
         newClient(),
@@ -359,7 +349,7 @@ describe("useAchievement（書いている進み）", () => {
   })
 
   it("別の日を書いていれば、見ている日は none のまま", async () => {
-    stubAchievementFetch(() => okResponse(KNOWN_TODAY))
+    stubAchievementFetch(() => rpcOutput(KNOWN_TODAY))
     const { result } = renderHook(() => useAchievement(), {
       wrapper: achievementWrapper(
         newClient(),
@@ -378,7 +368,7 @@ describe("useAchievement（書いている進み）", () => {
   })
 
   it("見ている日で書けなかったときは failed になる", async () => {
-    stubAchievementFetch(() => okResponse(KNOWN_TODAY))
+    stubAchievementFetch(() => rpcOutput(KNOWN_TODAY))
     const { result } = renderHook(() => useAchievement(), {
       wrapper: achievementWrapper(
         newClient(),
@@ -395,7 +385,7 @@ describe("useAchievement（書いている進み）", () => {
 
 describe("useAchievement（日記の立ち絵）", () => {
   it("日記が無い日は、いまのパックの名前を default の表情で出す", async () => {
-    stubAchievementFetch(() => okResponse(KNOWN_TODAY))
+    stubAchievementFetch(() => rpcOutput(KNOWN_TODAY))
     const { result } = renderHook(() => useAchievement(), {
       wrapper: achievementWrapper(
         newClient(),
@@ -410,7 +400,7 @@ describe("useAchievement（日記の立ち絵）", () => {
   })
 
   it("日記が書き上がっていれば、書いたパックの名前を出す（いまのパックと違ってもよい）", async () => {
-    stubAchievementFetch(() => okResponse(WRITTEN_TODAY))
+    stubAchievementFetch(() => rpcOutput(WRITTEN_TODAY))
     const { result } = renderHook(() => useAchievement(), {
       wrapper: achievementWrapper(
         newClient(),
@@ -425,7 +415,7 @@ describe("useAchievement（日記の立ち絵）", () => {
   })
 
   it("書いたパックが一覧に無ければ、立ち絵は出ず名前だけ残る", async () => {
-    stubAchievementFetch(() => okResponse(WRITTEN_TODAY))
+    stubAchievementFetch(() => rpcOutput(WRITTEN_TODAY))
     const packs: readonly CharacterPackEntry[] = []
     const { result } = renderHook(() => useAchievement(), {
       wrapper: achievementWrapper(

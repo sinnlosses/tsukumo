@@ -4,6 +4,10 @@ import { get } from "node:http"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
+import { createORPCClient, ORPCError } from "@orpc/client"
+import { RPCLink } from "@orpc/client/fetch"
+
+import { createRpcRouter, type RpcRouterPorts } from "../../../../src/router.ts"
 import {
   characterChangedEvent,
   listCharacterPacks,
@@ -11,28 +15,21 @@ import {
 } from "../../../../src/server/character-pack/adapter/character-pack.ts"
 import {
   createStartupToken,
-  type ReadAchievement,
-  type ReadAchievementCalendar,
   type ServeCharacterAsset,
   startViewServer,
   type ViewServer,
 } from "../../../../src/server/view-server/adapter/server.ts"
+import { type AchievementCalendar } from "../../../../src/shared/achievement-calendar.ts"
 import {
-  ACHIEVEMENT_CALENDAR_PATH,
-  type AchievementCalendar,
-} from "../../../../src/shared/achievement-calendar.ts"
-import { ACHIEVEMENT_PATH, type DailyAchievement } from "../../../../src/shared/achievement.ts"
+  type AchievementDaySelection,
+  type DailyAchievement,
+} from "../../../../src/shared/achievement.ts"
 import { type CharacterAssetLocation } from "../../../../src/shared/character-asset.ts"
-import {
-  CONTEXT_USAGE_PATH,
-  type ContextUsageReport,
-  UNAVAILABLE_CONTEXT_USAGE,
-} from "../../../../src/shared/context-usage.ts"
+import { UNAVAILABLE_CONTEXT_USAGE } from "../../../../src/shared/context-usage.ts"
 import { promptImagePath } from "../../../../src/shared/prompt-image.ts"
-import { REPOSITORY_FILE_PATH } from "../../../../src/shared/repository-file.ts"
+import { RPC_PATH, type RpcClient } from "../../../../src/shared/rpc.ts"
 import {
   EMPTY_TOKEN_USAGE_SUMMARY,
-  TOKEN_USAGE_SUMMARY_PATH,
   type TokenUsageDays,
   type TokenUsageSummary,
 } from "../../../../src/shared/token-usage-summary.ts"
@@ -57,111 +54,81 @@ function noCharacterAsset(): undefined {
   return undefined
 }
 
-/** ファイル一覧の代役。既定では一覧そのものが空（git リポジトリでないときと同じ）。 */
-function noRepositoryFile(): Promise<readonly string[]> {
-  return Promise.resolve([])
-}
-
-/** 集計の代役。既定では記録が1件も無い期間と同じ（3つの軸がどれも空）。 */
-function noTokenUsage(): TokenUsageSummary {
-  return EMPTY_TOKEN_USAGE_SUMMARY
-}
-
-/** 内訳の代役。既定では取れなかったとき（セッションがまだ繋がっていないときと同じ）。 */
-function noContextUsage(): Promise<ContextUsageReport> {
-  return Promise.resolve(UNAVAILABLE_CONTEXT_USAGE)
-}
-
 /** 棚の代役。既定では何も置いていない（どの id を引いても無い）。 */
 function noPromptImage(): undefined {
   return undefined
 }
 
-/** 成果の代役。既定では「main が読めない」（`main` ブランチが無いリポジトリと同じ）。 */
-function noAchievement(): Promise<{ readonly kind: "ok"; readonly achievement: DailyAchievement }> {
-  return Promise.resolve({ kind: "ok", achievement: { kind: "unknown" } })
-}
-
-/** 灯りの暦の代役。既定では「main が読めない」（`noAchievement` と同じ理由）。 */
-function noAchievementCalendar(): Promise<{
-  readonly kind: "ok"
-  readonly calendar: AchievementCalendar
-}> {
-  return Promise.resolve({ kind: "ok", calendar: { kind: "unknown" } })
-}
+/**
+ * 手続きの口の代役。既定では、ファイル一覧は空（git リポジトリでないとき）、集計は記録が1件も
+ * 無い期間、内訳は取れない（セッションがまだ繋がっていない）、成果と暦は「main が読めない」。
+ * 個々のテストが必要な分だけ上書きする。
+ */
+const EMPTY_RPC_PORTS = {
+  listRepositoryFiles: () => Promise.resolve([]),
+  readTokenUsageSummary: () => EMPTY_TOKEN_USAGE_SUMMARY,
+  readContextUsage: () => Promise.resolve(UNAVAILABLE_CONTEXT_USAGE),
+  readAchievementDay: () => Promise.resolve({ kind: "ok", achievement: { kind: "unknown" } }),
+  readAchievementCalendar: () => Promise.resolve({ kind: "ok", calendar: { kind: "unknown" } }),
+} satisfies RpcRouterPorts
 
 async function startView(
   serveCharacterAsset: ServeCharacterAsset = noCharacterAsset,
-  listRepositoryFiles: () => Promise<readonly string[]> = noRepositoryFile,
-  readTokenUsageSummary: (days: TokenUsageDays) => TokenUsageSummary = noTokenUsage,
-  readContextUsage: () => Promise<ContextUsageReport> = noContextUsage,
   findPromptImage: (id: string) => string | undefined = noPromptImage,
-  readAchievement: ReadAchievement = noAchievement,
-  readAchievementCalendar: ReadAchievementCalendar = noAchievementCalendar,
+  rpcPorts: Partial<RpcRouterPorts> = {},
 ): Promise<ViewServer> {
   const server = await startViewServer(0, {
     assets: { uiScript: () => TEST_UI_SCRIPT, styleSheet: () => TEST_STYLE_SHEET },
     serveCharacterAsset,
-    listRepositoryFiles,
-    readTokenUsageSummary,
-    readContextUsage,
     findPromptImage,
-    readAchievement,
-    readAchievementCalendar,
+    rpcRouter: createRpcRouter({ ...EMPTY_RPC_PORTS, ...rpcPorts }),
     token: TOKEN,
   })
   runningView = server
   return server
 }
 
-/** ファイル一覧の URL（起動トークン付き）。 */
-function repositoryFileUrl(server: ViewServer, token: string | undefined): string {
-  const origin = viewOrigin(server)
-  return token === undefined
-    ? `${origin}${REPOSITORY_FILE_PATH}`
-    : `${origin}${REPOSITORY_FILE_PATH}?t=${token}`
+/** 手続きの口だけを差し替えて起こす。 */
+function startViewWithRpc(rpcPorts: Partial<RpcRouterPorts>): Promise<ViewServer> {
+  return startView(noCharacterAsset, noPromptImage, rpcPorts)
 }
 
-/** 集計の URL（起動トークンと、指定があれば期間の長さ付き）。 */
-function tokenUsageUrl(server: ViewServer, token: string | undefined, days?: number): string {
-  const url = new URL(`${viewOrigin(server)}${TOKEN_USAGE_SUMMARY_PATH}`)
+/** ブラウザと同じ型付きの client（起動トークンを `?t=` に載せる。無ければ付けない）。 */
+function rpcClientOf(server: ViewServer, token: string | undefined): RpcClient {
+  const url = new URL(`${viewOrigin(server)}${RPC_PATH}`)
   if (token !== undefined) {
     url.searchParams.set("t", token)
   }
-  if (days !== undefined) {
-    url.searchParams.set("days", String(days))
-  }
-  return url.toString()
+  return createORPCClient(new RPCLink({ url: url.toString() }))
 }
 
-/** 内訳の URL（起動トークン付き）。 */
-function contextUsageUrl(server: ViewServer, token: string | undefined): string {
-  const url = new URL(`${viewOrigin(server)}${CONTEXT_USAGE_PATH}`)
-  if (token !== undefined) {
-    url.searchParams.set("t", token)
+/** 手続きを生の `POST` で呼ぶ（client が送らない形・ヘッダを確かめるため）。 */
+function postRpc(
+  server: ViewServer,
+  procedurePath: string,
+  init: { readonly body?: string; readonly origin?: string } = {},
+): Promise<Response> {
+  const headers: Record<string, string> = { "content-type": "application/json" }
+  if (init.origin !== undefined) {
+    headers["origin"] = init.origin
   }
-  return url.toString()
+  return fetch(`${viewOrigin(server)}${RPC_PATH}/${procedurePath}?t=${TOKEN}`, {
+    method: "POST",
+    headers,
+    body: init.body ?? "{}",
+  })
 }
 
-/** 成果の URL（起動トークンと、指定があれば見る日付付き）。 */
-function achievementUrl(server: ViewServer, token: string | undefined, date?: string): string {
-  const url = new URL(`${viewOrigin(server)}${ACHIEVEMENT_PATH}`)
-  if (token !== undefined) {
-    url.searchParams.set("t", token)
+/** 手続きの呼び出しが投げた契約のエラーの `code` と `status`（投げなければ `undefined`）。 */
+async function rpcErrorOf(
+  call: Promise<unknown>,
+): Promise<{ readonly code: string; readonly status: number } | undefined> {
+  try {
+    await call
+    return undefined
+  } catch (error) {
+    return error instanceof ORPCError ? { code: error.code, status: error.status } : undefined
   }
-  if (date !== undefined) {
-    url.searchParams.set("date", date)
-  }
-  return url.toString()
-}
-
-/** 暦の URL（起動トークン付き）。 */
-function achievementCalendarUrl(server: ViewServer, token: string | undefined): string {
-  const url = new URL(`${viewOrigin(server)}${ACHIEVEMENT_CALENDAR_PATH}`)
-  if (token !== undefined) {
-    url.searchParams.set("t", token)
-  }
-  return url.toString()
 }
 
 afterEach(async () => {
@@ -298,293 +265,224 @@ describe("startViewServer", () => {
     expect(asked).toEqual([])
   })
 
-  it("/repository-file は、正しいトークンなら候補のパスを JSON の並びで返す", async () => {
-    const server = await startView(noCharacterAsset, () =>
-      Promise.resolve(["src/cli.ts", "docs/design.md"]),
-    )
+  describe("/rpc（読み取りの手続き）", () => {
+    it("repository.listFiles は、候補のパスを並びで返す。一覧を作れなかった回は空", async () => {
+      const found = await startViewWithRpc({
+        listRepositoryFiles: () => Promise.resolve(["src/cli.ts", "docs/design.md"]),
+      })
+      expect(await rpcClientOf(found, TOKEN).repository.listFiles()).toEqual([
+        "src/cli.ts",
+        "docs/design.md",
+      ])
+      await found.close()
 
-    const response = await fetch(repositoryFileUrl(server, TOKEN))
-
-    expect(response.status).toBe(200)
-    expect(response.headers.get("content-type")).toContain("application/json")
-    expect(await response.json()).toEqual(["src/cli.ts", "docs/design.md"])
-  })
-
-  it("/repository-file は、git リポジトリでない（一覧が空の）ときも空の並びを返す", async () => {
-    const server = await startView()
-
-    const response = await fetch(repositoryFileUrl(server, TOKEN))
-
-    expect(response.status).toBe(200)
-    expect(await response.json()).toEqual([])
-  })
-
-  it("/repository-file は、トークンが無い・違うときは 403（一覧を作りにも行かない）", async () => {
-    let asked = 0
-    const server = await startView(noCharacterAsset, () => {
-      asked += 1
-      return Promise.resolve(["src/cli.ts"])
+      const failed = await startViewWithRpc({
+        listRepositoryFiles: () => Promise.reject(new Error("架空の失敗")),
+      })
+      expect(await rpcClientOf(failed, TOKEN).repository.listFiles()).toEqual([])
     })
 
-    expect((await fetch(repositoryFileUrl(server, undefined))).status).toBe(403)
-    expect((await fetch(repositoryFileUrl(server, "ちがう"))).status).toBe(403)
-    expect(asked).toBe(0)
-  })
-
-  it("/token-usage は、正しいトークンなら集計を JSON で返す", async () => {
-    const summary = {
-      trend: {
-        unit: "day",
-        points: [
-          {
-            key: "2026-09-21",
-            totals: {
-              inputTokens: 12,
-              outputTokens: 34,
-              thinkingTokens: 5,
-              cacheReadInputTokens: 6,
-              cacheCreationInputTokens: 7,
-              costUsd: 0.5,
+    it("tokenUsage.summary は、日数をそのまま畳む側へ渡し、集計を返す", async () => {
+      const summary = {
+        trend: {
+          unit: "day",
+          points: [
+            {
+              key: "2026-09-21",
+              totals: {
+                inputTokens: 12,
+                outputTokens: 34,
+                thinkingTokens: 5,
+                cacheReadInputTokens: 6,
+                cacheCreationInputTokens: 7,
+                costUsd: 0.5,
+              },
             },
-          },
-        ],
-      },
-      byModel: [],
-      byTool: [{ name: "Bash", calls: 3, resultBytes: 800 }],
-    } satisfies TokenUsageSummary
-    const server = await startView(noCharacterAsset, noRepositoryFile, () => summary)
+          ],
+        },
+        byModel: [],
+        byTool: [{ name: "Bash", calls: 3, resultBytes: 800 }],
+      } satisfies TokenUsageSummary
+      const asked: TokenUsageDays[] = []
+      const server = await startViewWithRpc({
+        readTokenUsageSummary: (days) => {
+          asked.push(days)
+          return summary
+        },
+      })
 
-    const response = await fetch(tokenUsageUrl(server, TOKEN))
-
-    expect(response.status).toBe(200)
-    expect(response.headers.get("content-type")).toContain("application/json")
-    expect(await response.json()).toEqual(summary)
-  })
-
-  it("/token-usage は、days をそのまま畳む側へ渡す（選べない値は既定の7日に落ちる）", async () => {
-    const asked: number[] = []
-    const server = await startView(noCharacterAsset, noRepositoryFile, (days) => {
-      asked.push(days)
-      return EMPTY_TOKEN_USAGE_SUMMARY
+      expect(await rpcClientOf(server, TOKEN).tokenUsage.summary({ days: 30 })).toEqual(summary)
+      expect(asked).toEqual([30])
     })
 
-    await fetch(tokenUsageUrl(server, TOKEN, 30))
-    await fetch(tokenUsageUrl(server, TOKEN, 999))
+    it("tokenUsage.summary は、選べない日数を 400 で断る（畳む側へ渡さない）", async () => {
+      let asked = 0
+      const server = await startViewWithRpc({
+        readTokenUsageSummary: () => {
+          asked += 1
+          return EMPTY_TOKEN_USAGE_SUMMARY
+        },
+      })
 
-    expect(asked).toEqual([30, 7])
-  })
+      const response = await postRpc(server, "tokenUsage/summary", {
+        body: JSON.stringify({ json: { days: 999 } }),
+      })
 
-  it("/token-usage は、記録が1件も無くても空の集計を 200 で返す", async () => {
-    const server = await startView()
-
-    const response = await fetch(tokenUsageUrl(server, TOKEN))
-
-    expect(response.status).toBe(200)
-    expect(await response.json()).toEqual(EMPTY_TOKEN_USAGE_SUMMARY)
-  })
-
-  it("/token-usage は、トークンが無い・違うときは 403（集計を作りにも行かない）", async () => {
-    let asked = 0
-    const server = await startView(noCharacterAsset, noRepositoryFile, () => {
-      asked += 1
-      return EMPTY_TOKEN_USAGE_SUMMARY
+      expect(response.status).toBe(400)
+      expect(asked).toBe(0)
     })
 
-    expect((await fetch(tokenUsageUrl(server, undefined))).status).toBe(403)
-    expect((await fetch(tokenUsageUrl(server, "ちがう"))).status).toBe(403)
-    expect(asked).toBe(0)
-  })
+    it("contextUsage.report は、内訳を返す。問い合わせが失敗した回は「取れない」", async () => {
+      const report = readyContextUsage()
+      const ready = await startViewWithRpc({ readContextUsage: () => Promise.resolve(report) })
+      expect(await rpcClientOf(ready, TOKEN).contextUsage.report()).toEqual(report)
+      await ready.close()
 
-  it("/context-usage は、正しいトークンなら内訳を JSON で返す", async () => {
-    const report = readyContextUsage()
-    const server = await startView(noCharacterAsset, noRepositoryFile, noTokenUsage, () =>
-      Promise.resolve(report),
-    )
-
-    const response = await fetch(contextUsageUrl(server, TOKEN))
-
-    expect(response.status).toBe(200)
-    expect(await response.json()).toEqual(report)
-  })
-
-  it("/context-usage は、セッションがまだ繋がっていない回も 200 で「取れない」を返す", async () => {
-    const server = await startView()
-
-    const response = await fetch(contextUsageUrl(server, TOKEN))
-
-    expect(response.status).toBe(200)
-    expect(await response.json()).toEqual(UNAVAILABLE_CONTEXT_USAGE)
-  })
-
-  it("/context-usage は、トークンが無い・違うときは 403（駆動に問い合わせにも行かない）", async () => {
-    let asked = 0
-    const server = await startView(noCharacterAsset, noRepositoryFile, noTokenUsage, () => {
-      asked += 1
-      return Promise.resolve(UNAVAILABLE_CONTEXT_USAGE)
+      const failed = await startViewWithRpc({
+        readContextUsage: () => Promise.reject(new Error("架空の失敗")),
+      })
+      expect(await rpcClientOf(failed, TOKEN).contextUsage.report()).toEqual(
+        UNAVAILABLE_CONTEXT_USAGE,
+      )
     })
 
-    expect((await fetch(contextUsageUrl(server, undefined))).status).toBe(403)
-    expect((await fetch(contextUsageUrl(server, "ちがう"))).status).toBe(403)
-    expect(asked).toBe(0)
-  })
+    it("achievement.day は、見る日の選び方をそのまま読み取り側へ渡し、成果を返す", async () => {
+      const achievement: DailyAchievement = {
+        kind: "known",
+        date: "2026-09-23",
+        today: "2026-09-24",
+        commitCount: 3,
+        doneTasks: { kind: "known", items: [{ id: "T-1", summary: "架空のタスク" }] },
+        graduations: [],
+        milestones: [],
+        diary: { kind: "none" },
+      }
+      const asked: AchievementDaySelection[] = []
+      const server = await startViewWithRpc({
+        readAchievementDay: (selection) => {
+          asked.push(selection)
+          return Promise.resolve({ kind: "ok", achievement })
+        },
+      })
+      const client = rpcClientOf(server, TOKEN)
 
-  it("/achievement は、正しいトークンなら成果を JSON で返す", async () => {
-    const achievement: DailyAchievement = {
-      kind: "known",
-      date: "2026-09-23",
-      today: "2026-09-24",
-      commitCount: 3,
-      doneTasks: { kind: "known", items: [{ id: "T-1", summary: "架空のタスク" }] },
-      graduations: [],
-      milestones: [],
-      diary: { kind: "none" },
-    }
-    const server = await startView(
-      noCharacterAsset,
-      noRepositoryFile,
-      noTokenUsage,
-      noContextUsage,
-      noPromptImage,
-      () => Promise.resolve({ kind: "ok", achievement }),
-    )
+      expect(await client.achievement.day({ kind: "chosen", date: "2026-09-20" })).toEqual(
+        achievement,
+      )
+      await client.achievement.day({ kind: "today" })
 
-    const response = await fetch(achievementUrl(server, TOKEN))
+      expect(asked).toEqual([{ kind: "chosen", date: "2026-09-20" }, { kind: "today" }])
+    })
 
-    expect(response.status).toBe(200)
-    expect(response.headers.get("content-type")).toContain("application/json")
-    expect(await response.json()).toEqual(achievement)
-  })
+    it("achievement は、main が読めなくても「不明」を返す", async () => {
+      const client = rpcClientOf(await startView(), TOKEN)
 
-  it("/achievement は、date をそのまま読み取り側へ渡す（検証は配線層の仕事）", async () => {
-    const asked: (string | undefined)[] = []
-    const server = await startView(
-      noCharacterAsset,
-      noRepositoryFile,
-      noTokenUsage,
-      noContextUsage,
-      noPromptImage,
-      (rawDate) => {
-        asked.push(rawDate)
-        return noAchievement()
-      },
-    )
+      expect(await client.achievement.day({ kind: "today" })).toEqual({ kind: "unknown" })
+      expect(await client.achievement.calendar()).toEqual({ kind: "unknown" })
+    })
 
-    await fetch(achievementUrl(server, TOKEN, "2026-09-20"))
-    await fetch(achievementUrl(server, TOKEN))
+    it("achievement.calendar は、暦を返す", async () => {
+      const calendar: AchievementCalendar = {
+        kind: "known",
+        today: "2026-09-25",
+        days: [{ date: "2026-09-25", commitCount: 3 }],
+        diaryDates: [],
+      }
+      const server = await startViewWithRpc({
+        readAchievementCalendar: () => Promise.resolve({ kind: "ok", calendar }),
+      })
 
-    expect(asked).toEqual(["2026-09-20", undefined])
-  })
+      expect(await rpcClientOf(server, TOKEN).achievement.calendar()).toEqual(calendar)
+    })
 
-  it("/achievement は、main が読めなくても 200 で「不明」を返す", async () => {
-    const server = await startView()
+    it("achievement は、git の呼び出しが一時的に失敗したときは 503 の UNAVAILABLE（部分的な数を出さない）", async () => {
+      const server = await startViewWithRpc({
+        readAchievementDay: () => Promise.resolve({ kind: "unavailable" }),
+        readAchievementCalendar: () => Promise.reject(new Error("架空の失敗")),
+      })
+      const client = rpcClientOf(server, TOKEN)
 
-    const response = await fetch(achievementUrl(server, TOKEN))
+      expect(await rpcErrorOf(client.achievement.day({ kind: "today" }))).toEqual({
+        code: "UNAVAILABLE",
+        status: 503,
+      })
+      expect(await rpcErrorOf(client.achievement.calendar())).toEqual({
+        code: "UNAVAILABLE",
+        status: 503,
+      })
+    })
 
-    expect(response.status).toBe(200)
-    expect(await response.json()).toEqual({ kind: "unknown" })
-  })
-
-  it("/achievement は、git の呼び出しが一時的に失敗したときは 503（部分的な数を出さない）", async () => {
-    const server = await startView(
-      noCharacterAsset,
-      noRepositoryFile,
-      noTokenUsage,
-      noContextUsage,
-      noPromptImage,
-      () => Promise.resolve({ kind: "unavailable" }),
-    )
-
-    const response = await fetch(achievementUrl(server, TOKEN))
-
-    expect(response.status).toBe(503)
-  })
-
-  it("/achievement は、トークンが無い・違うときは 403（読み取りにも行かない）", async () => {
-    let asked = 0
-    const server = await startView(
-      noCharacterAsset,
-      noRepositoryFile,
-      noTokenUsage,
-      noContextUsage,
-      noPromptImage,
-      () => {
+    it("トークンが無い・違うときは 403 で、どの手続きの口も呼ばない", async () => {
+      let asked = 0
+      const count = <T>(value: T): T => {
         asked += 1
-        return noAchievement()
-      },
-    )
+        return value
+      }
+      const server = await startViewWithRpc({
+        listRepositoryFiles: () => count(Promise.resolve([])),
+        readTokenUsageSummary: () => count(EMPTY_TOKEN_USAGE_SUMMARY),
+        readContextUsage: () => count(Promise.resolve(UNAVAILABLE_CONTEXT_USAGE)),
+        readAchievementDay: () =>
+          count(Promise.resolve({ kind: "ok", achievement: { kind: "unknown" } })),
+        readAchievementCalendar: () =>
+          count(Promise.resolve({ kind: "ok", calendar: { kind: "unknown" } })),
+      })
 
-    expect((await fetch(achievementUrl(server, undefined))).status).toBe(403)
-    expect((await fetch(achievementUrl(server, "ちがう"))).status).toBe(403)
-    expect(asked).toBe(0)
-  })
+      for (const token of [undefined, "ちがう"]) {
+        const client = rpcClientOf(server, token)
+        const forbidden = { code: "FORBIDDEN", status: 403 }
+        expect(await rpcErrorOf(client.repository.listFiles())).toEqual(forbidden)
+        expect(await rpcErrorOf(client.tokenUsage.summary({ days: 7 }))).toEqual(forbidden)
+        expect(await rpcErrorOf(client.contextUsage.report())).toEqual(forbidden)
+        expect(await rpcErrorOf(client.achievement.day({ kind: "today" }))).toEqual(forbidden)
+        expect(await rpcErrorOf(client.achievement.calendar())).toEqual(forbidden)
+      }
+      expect(asked).toBe(0)
+    })
 
-  it("/achievement-calendar は、正しいトークンなら暦を JSON で返す", async () => {
-    const calendar: AchievementCalendar = {
-      kind: "known",
-      today: "2026-09-25",
-      days: [{ date: "2026-09-25", commitCount: 3 }],
-      diaryDates: [],
-    }
-    const server = await startView(
-      noCharacterAsset,
-      noRepositoryFile,
-      noTokenUsage,
-      noContextUsage,
-      noPromptImage,
-      noAchievement,
-      () => Promise.resolve({ kind: "ok", calendar }),
-    )
+    it("Origin があるときは自分のオリジンと一致しなければ 403（無ければ通す）", async () => {
+      let asked = 0
+      const server = await startViewWithRpc({
+        listRepositoryFiles: () => {
+          asked += 1
+          return Promise.resolve([])
+        },
+      })
 
-    const response = await fetch(achievementCalendarUrl(server, TOKEN))
+      const foreign = await postRpc(server, "repository/listFiles", {
+        origin: "http://example.invalid",
+      })
+      const own = await postRpc(server, "repository/listFiles", { origin: viewOrigin(server) })
+      const none = await postRpc(server, "repository/listFiles")
 
-    expect(response.status).toBe(200)
-    expect(response.headers.get("content-type")).toContain("application/json")
-    expect(await response.json()).toEqual(calendar)
-  })
+      expect(foreign.status).toBe(403)
+      expect(own.status).toBe(200)
+      expect(none.status).toBe(200)
+      expect(asked).toBe(2)
+    })
 
-  it("/achievement-calendar は、main が読めなくても 200 で「不明」を返す", async () => {
-    const server = await startView()
+    it("知らない手続きは 404", async () => {
+      const server = await startView()
 
-    const response = await fetch(achievementCalendarUrl(server, TOKEN))
+      expect((await postRpc(server, "repository/unknown")).status).toBe(404)
+    })
 
-    expect(response.status).toBe(200)
-    expect(await response.json()).toEqual({ kind: "unknown" })
-  })
+    it("本文が上限を超えた要求は手続きへ渡さずに断る", async () => {
+      let asked = 0
+      const server = await startViewWithRpc({
+        readTokenUsageSummary: () => {
+          asked += 1
+          return EMPTY_TOKEN_USAGE_SUMMARY
+        },
+      })
 
-  it("/achievement-calendar は、git の呼び出しが一時的に失敗したときは 503（部分的な数を出さない）", async () => {
-    const server = await startView(
-      noCharacterAsset,
-      noRepositoryFile,
-      noTokenUsage,
-      noContextUsage,
-      noPromptImage,
-      noAchievement,
-      () => Promise.resolve({ kind: "unavailable" }),
-    )
+      const response = await postRpc(server, "tokenUsage/summary", {
+        body: JSON.stringify({ json: { days: 7, padding: "x".repeat(128 * 1024) } }),
+      })
 
-    const response = await fetch(achievementCalendarUrl(server, TOKEN))
-
-    expect(response.status).toBe(503)
-  })
-
-  it("/achievement-calendar は、トークンが無い・違うときは 403（読み取りにも行かない）", async () => {
-    let asked = 0
-    const server = await startView(
-      noCharacterAsset,
-      noRepositoryFile,
-      noTokenUsage,
-      noContextUsage,
-      noPromptImage,
-      noAchievement,
-      () => {
-        asked += 1
-        return noAchievementCalendar()
-      },
-    )
-
-    expect((await fetch(achievementCalendarUrl(server, undefined))).status).toBe(403)
-    expect((await fetch(achievementCalendarUrl(server, "ちがう"))).status).toBe(403)
-    expect(asked).toBe(0)
+      expect(response.status).toBe(413)
+      expect(asked).toBe(0)
+    })
   })
 
   describe("/prompt-image/<id>", () => {
@@ -599,7 +497,7 @@ describe("startViewServer", () => {
     }
 
     function startWithShelf(requested: string[] = []): Promise<ViewServer> {
-      return startView(noCharacterAsset, noRepositoryFile, noTokenUsage, noContextUsage, (id) => {
+      return startView(noCharacterAsset, (id) => {
         requested.push(id)
         return id === SHELVED_ID ? SHELVED_DATA_URL : undefined
       })

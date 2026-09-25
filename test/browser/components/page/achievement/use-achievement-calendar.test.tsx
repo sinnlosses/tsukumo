@@ -6,32 +6,26 @@ import { type ReactElement, type ReactNode } from "react"
 
 import { useAchievementCalendar } from "../../../../../src/browser/components/page/achievement/hooks/use-achievement-calendar.ts"
 import { type AchievementCalendar } from "../../../../../src/shared/achievement-calendar.ts"
+import {
+  rpcError,
+  rpcOutput,
+  stubRpcFetch,
+  type RpcFetchStub,
+  type RpcStubReply,
+} from "../../../rpc-fetch-stub.ts"
 
 /** 灯りの暦の取得だけを測る（架空の値。docs/coding-standards.md「会話内容の扱い」）。 */
 
-let originalFetch: typeof globalThis.fetch | undefined = undefined
+let fetchStub: RpcFetchStub | undefined = undefined
 
 afterEach(() => {
   cleanup()
-  if (originalFetch !== undefined) {
-    globalThis.fetch = originalFetch
-    originalFetch = undefined
-  }
+  fetchStub?.restore()
+  fetchStub = undefined
 })
 
-type StubResponse = {
-  readonly ok: boolean
-  readonly status: number
-  readonly json: () => Promise<unknown>
-}
-
-function stubFetch(respond: () => StubResponse): void {
-  originalFetch = globalThis.fetch
-  globalThis.fetch = (() => Promise.resolve(respond())) as unknown as typeof globalThis.fetch
-}
-
-function okResponse(body: unknown): StubResponse {
-  return { ok: true, status: 200, json: () => Promise.resolve(body) }
+function stubFetch(reply: () => RpcStubReply): void {
+  fetchStub = stubRpcFetch(reply)
 }
 
 function wrapper(client: QueryClient): (props: { children: ReactNode }) => ReactElement {
@@ -53,14 +47,14 @@ const KNOWN: AchievementCalendar = {
 
 describe("useAchievementCalendar", () => {
   it("届く前は loading", () => {
-    stubFetch(() => okResponse(KNOWN))
+    stubFetch(() => rpcOutput(KNOWN))
     const { result } = renderHook(() => useAchievementCalendar(), { wrapper: wrapper(newClient()) })
 
     expect(result.current.kind).toBe("loading")
   })
 
   it("届けばそのまま渡す", async () => {
-    stubFetch(() => okResponse(KNOWN))
+    stubFetch(() => rpcOutput(KNOWN))
     const { result } = renderHook(() => useAchievementCalendar(), { wrapper: wrapper(newClient()) })
 
     await waitFor(() => {
@@ -70,7 +64,7 @@ describe("useAchievementCalendar", () => {
   })
 
   it("main が読めなければ unknown", async () => {
-    stubFetch(() => okResponse({ kind: "unknown" }))
+    stubFetch(() => rpcOutput({ kind: "unknown" }))
     const { result } = renderHook(() => useAchievementCalendar(), { wrapper: wrapper(newClient()) })
 
     await waitFor(() => {
@@ -79,7 +73,7 @@ describe("useAchievementCalendar", () => {
   })
 
   it("取りに行って失敗したときも unknown（main が読めないときと同じ1行になる）", async () => {
-    stubFetch(() => ({ ok: false, status: 503, json: () => Promise.resolve(null) }))
+    stubFetch(() => rpcError(503, "UNAVAILABLE"))
     const { result } = renderHook(() => useAchievementCalendar(), { wrapper: wrapper(newClient()) })
 
     await waitFor(() => {

@@ -1,66 +1,47 @@
-// ビューサーバ。**ページ・アセット（`/assets` `/vendor` `/character`）の静的配信**を持つ
-// （docs/design.md 5章「server.ts」）。入力欄の `@` 補完が引くファイル一覧
-// （`GET /repository-file?t=<起動トークン>`）と、分析の画面が引くトークン消費の集計
-// （`GET /token-usage?t=<起動トークン>&days=<日数>`）・いまのコンテキストの内訳
-// （`GET /context-usage?t=<起動トークン>`）・控えを押したときに引く依頼の画像の原寸
-// （`GET /prompt-image/<id>?t=<起動トークン>`）・成果の画面が引く1日ぶんの数
-// （`GET /achievement?t=<起動トークン>&date=<日付キー>`）もここから配る。**フレームとコマンドが
-// 通る WebSocket は別の境界**（`session-socket.ts`。listen 済みのこのサーバに受け口を足す）。
+// ビューサーバ。**ページ・アセット（`/assets` `/vendor` `/character`）の静的配信**と、控えを押した
+// ときに引く依頼の画像の原寸（`GET /prompt-image/<id>?t=<起動トークン>`。`<img src>` で読むので
+// HTTP のまま）を持つ（docs/design.md 5章「server.ts」）。**読み取りの手続きは `/rpc` に載せるだけ**
+// で、中身は配線の `src/router.ts` が束ねたルータ、照合は `rpc-guard.ts` のミドルウェア。
+// **フレームとコマンドが通る WebSocket は別の境界**（`session-socket.ts`。listen 済みのこのサーバに
+// 受け口を足す）。
 //
 // **`Bun.serve` は使わない**（`node:http`。docs/coding-standards.md「Bun固有APIに寄せない」）。
 //
 // 安全のための決まり（docs/design.md 9章）:
 //   - バインド先は `127.0.0.1` だけ（listen するのはここ）
-//   - **起動トークン**（起動ごとの乱数。ディスクに書かない）は `/repository-file` と
-//     `/token-usage`・`/context-usage`・`/prompt-image`・`/achievement` を守る（ページ・同梱物・
-//     素材そのものは会話を含まないので、トークンは求めない。いまのまま）。配るのは利用者の
-//     作業ディレクトリの中身・使った量・いまのセッションが積んでいるものの内訳・依頼に添えた
-//     画像（会話の内容）・タスクの要約で、誰にでも配ってよい静的な物ではない。
+//   - **起動トークン**（起動ごとの乱数。ディスクに書かない）は `/prompt-image` と `/rpc` を守る
+//     （ページ・同梱物・素材そのものは会話を含まないので、トークンは求めない。いまのまま）。
+//     `/prompt-image` はここの経路の表（`requiresToken`）が、`/rpc` は `rpc-guard.ts` が見る。
 //     **同じ1つを WebSocket の upgrade も見る**（`session-socket.ts`）
 
 import { randomBytes } from "node:crypto"
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http"
 import process from "node:process"
 
+import { type Router } from "@orpc/server"
+import { BodyLimitPlugin, RPCHandler } from "@orpc/server/fetch"
 import { isPlainObject } from "remeda"
 
-import { ACHIEVEMENT_CALENDAR_PATH } from "../../../shared/achievement-calendar.ts"
-import { ACHIEVEMENT_DATE_QUERY_NAME, ACHIEVEMENT_PATH } from "../../../shared/achievement.ts"
 import {
   CHARACTER_ASSET_PATH_PREFIX,
   type CharacterAssetLocation,
   readCharacterAssetPath,
 } from "../../../shared/character-asset.ts"
 import {
-  CONTEXT_USAGE_PATH,
-  type ContextUsageReport,
-  UNAVAILABLE_CONTEXT_USAGE,
-} from "../../../shared/context-usage.ts"
-import {
   parsePromptImage,
   PROMPT_IMAGE_PATH_PREFIX,
   promptImageIdSchema,
 } from "../../../shared/prompt-image.ts"
-import { REPOSITORY_FILE_PATH } from "../../../shared/repository-file.ts"
+import { RPC_PATH, type rpcContract } from "../../../shared/rpc.ts"
 import { SESSION_TOKEN_QUERY_NAME } from "../../../shared/session-socket.ts"
-import {
-  readTokenUsageDays,
-  TOKEN_USAGE_DAYS_QUERY_NAME,
-  TOKEN_USAGE_SUMMARY_PATH,
-  type TokenUsageDays,
-  type TokenUsageSummary,
-} from "../../../shared/token-usage-summary.ts"
 import { VENDOR_PATH_PREFIX, vendorAssetPath } from "../../../shared/vendor-asset.ts"
-import {
-  type ReadAchievementResult,
-  type ReadCommitCalendarResult,
-} from "../../achievement/adapter/main-history.ts"
+import { type RpcContext, rpcContextOf } from "./rpc-guard.ts"
 import { readVendorAsset } from "./vendor-asset.ts"
 
 /**
  * 起動トークンを1つ作る。**起動ごとに変わり、メモリにしか置かない**（ディスクに書かない。
  * docs/design.md 9章）。同じマシンの別プロセスが `127.0.0.1` を読めるという割り切りを塞ぐ。
- * **配信（`/repository-file`）と WebSocket の upgrade（`session-socket.ts`）が同じ1つを見る。**
+ * **配信（`/prompt-image`・`/rpc`）と WebSocket の upgrade（`session-socket.ts`）が同じ1つを見る。**
  */
 export function createStartupToken(): string {
   return randomBytes(24).toString("hex")
@@ -111,46 +92,22 @@ export type ServeCharacterAsset = (
 ) => CharacterAssetFile | undefined
 
 /**
- * 入力欄の `@` 補完に配るファイルのパス（`src/server/repository/adapter/repository-file.ts` の
- * `listRepositoryFiles` を束ねたもの）。**git 管理下でない・`git` が無いときは空**を返す契約で、
- * サーバは失敗を区別しない。
- */
-export type ListRepositoryFiles = () => Promise<readonly string[]>
-
-/**
- * 分析の画面に配るトークン消費の集計（`src/server/token-usage/core/token-usage.ts` の
- * `summarizeRecentTokenUsage` を束ねたもの）。**読めない・記録が無いときは空の集計**を返す契約で、
- * サーバは失敗を区別しない（`ListRepositoryFiles` と同じ割り切り）。
- */
-export type ReadTokenUsageSummary = (days: TokenUsageDays) => TokenUsageSummary
-
-/**
- * トークン消費の画面に配るコンテキストの内訳（セッションの駆動へ問い合わせたもの。
- * `docs/glossary.md`「コンテキストの内訳」）。**セッションがまだ繋がっていない・取れなかった
- * ときは「取れない」を返す契約**で、サーバは理由を区別しない（{@link ListRepositoryFiles} と
- * 同じ割り切り）。
- */
-export type ReadContextUsage = () => Promise<ContextUsageReport>
-
-/**
  * 棚（`src/server/session-driver/core/prompt-image-shelf.ts`）から、id が指す原寸の data URL を引く。
  * **棚に無い（捨てた・知らない）ときは undefined**（配る側が 404 にする）。
  */
 export type FindPromptImage = (id: string) => string | undefined
 
 /**
- * 成果の画面に配る1日ぶんの応答（`src/server/achievement/adapter/main-history.ts` の `readAchievement` を
- * 束ねたもの）。**クエリの `date`（生の文字列。無ければ undefined）をそのまま渡す**——
- * 「今日」を決めて検証するのは配線層（`src/view-delivery.ts`。`readTokenUsageSummary` の
- * `todayLocalDateKey()` と同じ置き場）で、ここでは検証しない。
+ * `/rpc` に載せるルータ（配線の `src/router.ts` が全機能の手続きを束ね、照合のミドルウェアを
+ * 掛けたもの）。ここはどの手続きがあるかを知らない。
  */
-export type ReadAchievement = (rawDate: string | undefined) => Promise<ReadAchievementResult>
+export type RpcRouter = Router<typeof rpcContract, RpcContext>
 
 /**
- * 灯りの暦（直近5週ぶん）に配る応答（`src/server/achievement/adapter/main-history.ts` の
- * `readCommitCalendar` を束ねたもの）。日は選べない（常に「今日を含む直近5週」）ので引数は無い。
+ * `/rpc` の要求の本文の上限。手続きの入力は小さい JSON だけ（画像は `/ws` で運ぶ）なので、
+ * 照合の前に大きな本文を読み込まされないように低く抑える。
  */
-export type ReadAchievementCalendar = () => Promise<ReadCommitCalendarResult>
+const RPC_MAX_BODY_BYTES = 64 * 1024
 
 // 外から届かないようにループバックにだけバインドする。ここを 0.0.0.0 に変えない。
 const BIND_HOST = "127.0.0.1"
@@ -168,23 +125,13 @@ export type ViewServerOptions = {
    * `readCharacterAsset` を束ねたもの）。
    */
   readonly serveCharacterAsset: ServeCharacterAsset
-  /** `/repository-file` に配るファイルのパス。 */
-  readonly listRepositoryFiles: ListRepositoryFiles
-  /** `/token-usage` に配るトークン消費の集計。 */
-  readonly readTokenUsageSummary: ReadTokenUsageSummary
-  /** `/context-usage` に配るコンテキストの内訳。 */
-  readonly readContextUsage: ReadContextUsage
   /** `/prompt-image/<id>` に配る原寸の引き口（棚の `find`）。 */
   readonly findPromptImage: FindPromptImage
-  /** `/achievement` に配る1日ぶんの成果。 */
-  readonly readAchievement: ReadAchievement
-  /** `/achievement-calendar` に配る灯りの暦（直近5週ぶん）。 */
-  readonly readAchievementCalendar: ReadAchievementCalendar
+  /** `/rpc` に載せるルータ（{@link RpcRouter}）。 */
+  readonly rpcRouter: RpcRouter
   /**
-   * 起動トークン（{@link createStartupToken}）。**`/repository-file`・`/token-usage`・
-   * `/context-usage`・`/prompt-image`・`/achievement`・`/achievement-calendar` はこれが合わないと
-   * 配らない**
-   * （`/ws` と同じ守り方。冒頭の「安全のための決まり」）。
+   * 起動トークン（{@link createStartupToken}）。**`/prompt-image` と `/rpc` はこれが合わないと
+   * 配らない**（`/ws` と同じ守り方。冒頭の「安全のための決まり」）。
    */
   readonly token: string
 }
@@ -205,9 +152,14 @@ export type ViewServer = {
  * ポートが塞がっているときは reject する（起動時の前提不足なので、呼び出し側は即時終了する）。
  */
 export function startViewServer(port: number, options: ViewServerOptions): Promise<ViewServer> {
+  const rpcHandler = new RPCHandler(options.rpcRouter, {
+    plugins: [new BodyLimitPlugin({ maxBodySize: RPC_MAX_BODY_BYTES })],
+  })
   const server = createServer((request, response) => {
     const path = (request.url ?? "/").split("?")[0] ?? "/"
-    respond(request, path, response, options)
+    // 要求が届くのは listen のあとなので、割り当てられたポートはもう決まっている。
+    const serverOrigin = originOf(boundPort(server.address(), port))
+    respond(request, path, response, { options, rpcHandler, serverOrigin })
   })
 
   return new Promise((resolve, reject) => {
@@ -224,7 +176,7 @@ export function startViewServer(port: number, options: ViewServerOptions): Promi
 
     server.listen(port, BIND_HOST, () => {
       listening = true
-      const origin = `http://${BIND_HOST}:${boundPort(server.address(), port)}`
+      const origin = originOf(boundPort(server.address(), port))
 
       resolve({
         httpServer: server,
@@ -244,12 +196,20 @@ type RouteMatch =
   | { readonly kind: "exact"; readonly path: string }
   | { readonly kind: "prefix"; readonly prefix: string }
 
+/** 受け手が使うもの一式（渡された口と、起動のときに1つだけ作る `/rpc` の受け口）。 */
+type ViewServerRuntime = {
+  readonly options: ViewServerOptions
+  readonly rpcHandler: RPCHandler<RpcContext>
+  /** 自分のオリジン（`http://127.0.0.1:<port>`）。`/rpc` の `Origin` の照合に使う。 */
+  readonly serverOrigin: string
+}
+
 /** 1経路ぶんの受け手。接頭辞を剥がす・クエリを読むといった経路固有の下ごしらえもここで行う。 */
 type ViewRouteHandler = (
   request: IncomingMessage,
   response: ServerResponse,
   path: string,
-  options: ViewServerOptions,
+  runtime: ViewServerRuntime,
 ) => void
 
 /**
@@ -260,7 +220,8 @@ type ViewRouteHandler = (
 type ViewRoute = {
   readonly match: RouteMatch
   /** `"ANY"` は、いまの実装でメソッドを見ていない経路（`LAYOUT_PATH` だけ）のためだけにある。 */
-  readonly method: "GET" | "ANY"
+  readonly method: "GET" | "POST" | "ANY"
+  /** `/rpc` は `false`（照合は手続きの前のミドルウェア `rpc-guard.ts` が1つで見る）。 */
   readonly requiresToken: boolean
   readonly handle: ViewRouteHandler
 }
@@ -276,7 +237,7 @@ const ROUTES = [
     match: { kind: "exact", path: uiScriptPath() },
     method: "GET",
     requiresToken: false,
-    handle: (_request, response, _path, options) => {
+    handle: (_request, response, _path, { options }) => {
       // 組み立てたブラウザ側スクリプト（`src/browser/`）。**ディスクには無い**ので、vendor と違って
       // ファイルを読みに行かない。
       response.writeHead(200, {
@@ -290,7 +251,7 @@ const ROUTES = [
     match: { kind: "exact", path: styleSheetPath() },
     method: "GET",
     requiresToken: false,
-    handle: (_request, response, _path, options) => {
+    handle: (_request, response, _path, { options }) => {
       response.writeHead(200, {
         "content-type": "text/css; charset=utf-8",
         "cache-control": "no-store",
@@ -309,7 +270,7 @@ const ROUTES = [
     match: { kind: "prefix", prefix: CHARACTER_ASSET_PATH_PREFIX },
     method: "GET",
     requiresToken: false,
-    handle: (_request, response, path, options) =>
+    handle: (_request, response, path, { options }) =>
       writeCharacterAsset(
         response,
         path.slice(CHARACTER_ASSET_PATH_PREFIX.length),
@@ -317,42 +278,17 @@ const ROUTES = [
       ),
   },
   {
-    match: { kind: "exact", path: REPOSITORY_FILE_PATH },
-    method: "GET",
-    requiresToken: true,
-    handle: (_request, response, _path, options) => writeRepositoryFileList(response, options),
-  },
-  {
-    match: { kind: "exact", path: TOKEN_USAGE_SUMMARY_PATH },
-    method: "GET",
-    requiresToken: true,
-    handle: (request, response, _path, options) =>
-      writeTokenUsageSummary(request, response, options),
-  },
-  {
-    match: { kind: "exact", path: CONTEXT_USAGE_PATH },
-    method: "GET",
-    requiresToken: true,
-    handle: (_request, response, _path, options) => writeContextUsage(response, options),
-  },
-  {
     match: { kind: "prefix", prefix: PROMPT_IMAGE_PATH_PREFIX },
     method: "GET",
     requiresToken: true,
-    handle: (_request, response, path, options) =>
+    handle: (_request, response, path, { options }) =>
       writePromptImage(response, path.slice(PROMPT_IMAGE_PATH_PREFIX.length), options),
   },
   {
-    match: { kind: "exact", path: ACHIEVEMENT_PATH },
-    method: "GET",
-    requiresToken: true,
-    handle: (request, response, _path, options) => writeAchievement(request, response, options),
-  },
-  {
-    match: { kind: "exact", path: ACHIEVEMENT_CALENDAR_PATH },
-    method: "GET",
-    requiresToken: true,
-    handle: (_request, response, _path, options) => writeAchievementCalendar(response, options),
+    match: { kind: "prefix", prefix: `${RPC_PATH}/` },
+    method: "POST",
+    requiresToken: false,
+    handle: (request, response, _path, runtime) => serveRpc(request, response, runtime),
   },
 ] as const satisfies readonly ViewRoute[]
 
@@ -371,7 +307,7 @@ function respond(
   request: IncomingMessage,
   path: string,
   response: ServerResponse,
-  options: ViewServerOptions,
+  runtime: ViewServerRuntime,
 ): void {
   const route = findRoute(path, request.method)
   if (route === undefined) {
@@ -380,13 +316,13 @@ function respond(
     return
   }
 
-  if (route.requiresToken && !hasStartupToken(request, options.token)) {
+  if (route.requiresToken && !hasStartupToken(request, runtime.options.token)) {
     response.writeHead(403, { "content-type": "text/plain; charset=utf-8" })
     response.end("forbidden\n")
     return
   }
 
-  route.handle(request, response, path, options)
+  route.handle(request, response, path, runtime)
 }
 
 /**
@@ -454,46 +390,6 @@ function writeCharacterAsset(
 }
 
 /**
- * 入力欄の `@` 補完が引くファイルのパスを JSON の並びで配る。**起動トークンの照合は
- * `respond`（経路の表の `requiresToken`）が済ませている。** 一覧を作れなかった回は空の並びを配る
- * （候補が出ないだけで、配信は続く）。
- */
-function writeRepositoryFileList(response: ServerResponse, options: ViewServerOptions): void {
-  options.listRepositoryFiles().then(
-    (files) => writeJson(response, files),
-    () => writeJson(response, []),
-  )
-}
-
-/**
- * トークン消費の集計を JSON で配る。**起動トークンの照合は `respond` が済ませている**
- * （`/repository-file` と同じ。配るのは利用者が何にいくら使ったかで、誰にでも配ってよい静的な
- * 物ではない）。期間は `?days=` で、**選べない値のときは既定に落とす**（読み取りは shared の
- * `readTokenUsageDays`）。**配る中身に文面は入らない**（記録の1行にそもそも口が無い）。
- */
-function writeTokenUsageSummary(
-  request: IncomingMessage,
-  response: ServerResponse,
-  options: ViewServerOptions,
-): void {
-  const days = readTokenUsageDays(queryValue(request, TOKEN_USAGE_DAYS_QUERY_NAME))
-  writeJson(response, options.readTokenUsageSummary(days))
-}
-
-/**
- * いまのコンテキストの内訳を JSON で配る。**起動トークンの照合は `respond` が済ませている**
- * （`/token-usage` と同じ）。**駆動へ問い合わせる経路なので応答を待つ**が、取れなかった回は
- * 「取れない」をそのまま配る（画面は一言だけ出す）。**配る中身に会話の文面は入らない** —
- * メッセージは分類1行の数としてだけ出る（`src/shared/context-usage.ts`）。
- */
-function writeContextUsage(response: ServerResponse, options: ViewServerOptions): void {
-  options.readContextUsage().then(
-    (report) => writeJson(response, report),
-    () => writeJson(response, UNAVAILABLE_CONTEXT_USAGE),
-  )
-}
-
-/**
  * 依頼に添えた画像の原寸を1枚配る。**起動トークンの照合は `respond` が済ませている**
  * （配るのは会話の内容）。id の形が違う・棚に無い（記録の窓から落ちた・枚数の上限で押し出された）
  * ときは 404 で、どちらかは区別しない（ブラウザは 404 を受けてから控えに倒す。
@@ -522,51 +418,81 @@ function writePromptImage(
 }
 
 /**
- * 成果を1日ぶん JSON で配る。**起動トークンの照合は `respond` が済ませている**（`/token-usage` と
- * 同じ。配るのは利用者のタスクの要約）。`date` は生の文字列のまま渡す（検証は配線層。
- * {@link ReadAchievement}）。**`git` のタイムアウト・失敗は 503**（部分的な数を出さない）——
- * `main` が読めないだけなら 200 で `{ kind: "unknown" }` を返す
- * （`src/server/achievement/adapter/main-history.ts` の `ReadAchievementResult`）。
+ * `/rpc` の要求を手続きへ渡す。**照合（起動トークン・`Origin`）は手続きの前のミドルウェア
+ * （`rpc-guard.ts`）が見る**ので、ここは要求を写して渡し、応答を書き戻すだけ。どの手続きにも
+ * 当たらなければ 404。
+ *
+ * **`@orpc/server/node` ではなく `@orpc/server/fetch` の受け口を使い、`node:http` との橋渡しを
+ * ここで書く。** node の受け口の型宣言が壊れた型宣言（`@orpc/interop` の compression が公開物の
+ * 中から CI の絶対パスを指す）を辿り、`tsc` が型宣言の中で落ちるため
+ * （`docs/research/external-dependency.md` の表1の oRPC の行）。
  */
-function writeAchievement(
+function serveRpc(
   request: IncomingMessage,
   response: ServerResponse,
-  options: ViewServerOptions,
+  runtime: ViewServerRuntime,
 ): void {
-  options.readAchievement(queryValue(request, ACHIEVEMENT_DATE_QUERY_NAME)).then(
-    (result) => {
-      if (result.kind === "unavailable") {
-        writeUnavailable(response)
+  const context = rpcContextOf(request, {
+    startupToken: runtime.options.token,
+    serverOrigin: runtime.serverOrigin,
+  })
+  runtime.rpcHandler
+    .handle(toFetchRequest(request, runtime.serverOrigin), { prefix: RPC_PATH, context })
+    .then(async (result) => {
+      if (!result.matched) {
+        response.writeHead(404, { "content-type": "text/plain; charset=utf-8" })
+        response.end("not found\n")
         return
       }
-      writeJson(response, result.achievement)
-    },
-    () => writeUnavailable(response),
-  )
+      const body = Buffer.from(await result.response.arrayBuffer())
+      response.writeHead(result.response.status, {
+        ...Object.fromEntries(result.response.headers),
+        "cache-control": "no-store",
+      })
+      response.end(body)
+    })
+    .catch(() => {
+      // 動作中の失敗で常駐プロセスを落とさない（その回だけ 500 で諦める）。
+      if (!response.headersSent) {
+        response.writeHead(500, { "content-type": "text/plain; charset=utf-8" })
+      }
+      response.end()
+    })
+}
+
+/** `node:http` の要求を fetch の `Request` に写す（本文は読み込まずに流れのまま渡す）。 */
+function toFetchRequest(request: IncomingMessage, serverOrigin: string): Request {
+  const headers = new Headers()
+  for (const [name, value] of Object.entries(request.headers)) {
+    for (const each of typeof value === "string" ? [value] : (value ?? [])) {
+      headers.append(name, each)
+    }
+  }
+  const hasBody = request.method !== "GET" && request.method !== "HEAD"
+  // 流れの本文には `duplex: "half"` が要る（Node の fetch）が、Bun の `RequestInit` の型には無いので、
+  // 型を広げた入れ物に入れてから渡す。
+  const init: RequestInit & { readonly duplex: "half" } = {
+    method: request.method,
+    headers,
+    body: hasBody ? bodyStreamOf(request) : undefined,
+    duplex: "half",
+  }
+  return new Request(new URL(request.url ?? "/", serverOrigin), init)
 }
 
 /**
- * 灯りの暦（直近5週ぶん）を JSON で配る。**起動トークンの照合は `respond` が済ませている**
- * （`/achievement` と同じ）。**`git` のタイムアウト・失敗は 503**（部分的な数を出さない）——
- * `main` が読めないだけなら 200 で `{ kind: "unknown" }` を返す
- * （`src/server/achievement/adapter/main-history.ts` の `ReadCommitCalendarResult`）。
+ * 要求の本文を fetch の流れにする。**溜めずに流す**ので、上限（{@link RPC_MAX_BODY_BYTES}）を
+ * 超えた本文は `BodyLimitPlugin` が読みながら断る。`Readable.toWeb` を使わないのは、戻り値の型が
+ * `node:stream/web` の `ReadableStream` で、fetch の `BodyInit` に型の上で渡せないため。
  */
-function writeAchievementCalendar(response: ServerResponse, options: ViewServerOptions): void {
-  options.readAchievementCalendar().then(
-    (result) => {
-      if (result.kind === "unavailable") {
-        writeUnavailable(response)
-        return
-      }
-      writeJson(response, result.calendar)
+function bodyStreamOf(request: IncomingMessage): ReadableStream<Uint8Array> {
+  return new ReadableStream<Uint8Array>({
+    start: (controller) => {
+      request.on("data", (chunk: Buffer) => controller.enqueue(new Uint8Array(chunk)))
+      request.on("end", () => controller.close())
+      request.on("error", (error) => controller.error(error))
     },
-    () => writeUnavailable(response),
-  )
-}
-
-function writeUnavailable(response: ServerResponse): void {
-  response.writeHead(503, { "content-type": "text/plain; charset=utf-8" })
-  response.end("unavailable\n")
+  })
 }
 
 /** 起動トークン（`?t=<token>`）が合うか。経路の照合は呼び出し側が済ませている。 */
@@ -583,20 +509,16 @@ function queryValue(request: IncomingMessage, name: string): string | undefined 
   return url.searchParams.get(name) ?? undefined
 }
 
-function writeJson(response: ServerResponse, value: unknown): void {
-  response.writeHead(200, {
-    "content-type": "application/json; charset=utf-8",
-    "cache-control": "no-store",
-  })
-  response.end(JSON.stringify(value))
-}
-
 function writeHtml(response: ServerResponse, html: string): void {
   response.writeHead(200, {
     "content-type": "text/html; charset=utf-8",
     "cache-control": "no-store",
   })
   response.end(html)
+}
+
+function originOf(port: number): string {
+  return `http://${BIND_HOST}:${String(port)}`
 }
 
 // listen 後のアドレスは、ポート 0 を渡したときに実際に割り当てられた番号を持つ。

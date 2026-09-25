@@ -1,7 +1,7 @@
 // 成果の画面のロジック（docs/design.md 2章「機能の中を分ける」の container / presenter）。
-// 見ている日（hash の `date`。`stores/location-hash.ts`）から `GET /achievement` を取りに行き、
+// 見ている日（hash の `date`。`stores/location-hash.ts`）から手続き `achievement.day` を取りに行き、
 // 見た目（`presentational-achievement-screen.tsx` と各区画の部品）がそのまま置ける形へ畳んで返す。
-// 暦（`GET /achievement-calendar`）は別のフック `use-achievement-calendar.ts`。
+// 暦（`achievement.calendar`）は別のフック `use-achievement-calendar.ts`。
 //
 // **日の切り替えは、取れた応答の `date`/`today` から計算する**（ブラウザは時計を読まないので、
 // hash の raw な値だけでは「前の日」「今日」を計算できない。`docs/design.md`「成果の集め方と
@@ -18,12 +18,9 @@ import { useQuery, useQueryClient, type Query } from "@tanstack/react-query"
 import { useEffect } from "react"
 
 import {
-  ACHIEVEMENT_DATE_QUERY_NAME,
-  ACHIEVEMENT_PATH,
   isEmptyAchievementDay,
   nextDateKey,
   previousDateKey,
-  readDailyAchievement,
   type AchievementDoneTasks,
   type AchievementGraduation,
   type AchievementMilestone,
@@ -39,8 +36,7 @@ import {
   DEFAULT_CHARACTER_NAME,
   portraitAppearance,
 } from "../../../../domain/portrait-appearance.ts"
-import { sessionTokenUrl } from "../../../../lib/session-token-url.ts"
-import { type AchievementDateSelection } from "../../../../stores/location-hash.ts"
+import { rpc } from "../../../../lib/rpc-client.ts"
 import {
   selectAchievementDate,
   selectAchievementToday,
@@ -151,8 +147,10 @@ export function useAchievement(): UseAchievementResult {
   const characterPacks = useSessionSelector((session) => session.state.characterPacks)
   const diaryWriting = useSessionSelector((session) => session.state.diaryWriting)
   const query = useQuery({
-    queryKey: ["achievement", queryDateKey(selection)],
-    queryFn: () => fetchAchievement(selection),
+    // 見ている日の選び方をそのまま入力にする（今日を見ているときは日付を送らない——サーバの
+    // 既定も今日なので、hash に何も無いことと揃う）。403・503 は例外になり、取れなかったことは
+    // `isError` で伝わる。
+    ...rpc.achievement.day.queryOptions({ input: selection }),
     // 開くたびに・日を切り替えるたびに取り直す（前の日の分もあとから main に入った分で変わりうる。
     // `docs/design.md` 5章）。
     staleTime: 0,
@@ -197,8 +195,8 @@ export function useAchievement(): UseAchievementResult {
   // 鈴が変わりうる。
   useEffect(() => {
     if (diaryWriting.kind === "written") {
-      void queryClient.invalidateQueries({ queryKey: ["achievement"] })
-      void queryClient.invalidateQueries({ queryKey: ["achievement-calendar"] })
+      // 1日ぶんと暦の両方（手続き `achievement` の下のすべて）。
+      void queryClient.invalidateQueries({ queryKey: rpc.achievement.key() })
     }
   }, [queryClient, diaryWriting])
 
@@ -314,32 +312,6 @@ function diaryPortraitOf(
     name: character?.name ?? DEFAULT_CHARACTER_NAME,
     portrait: portraitAppearance(character, "default", "default"),
   }
-}
-
-/** `useQuery` の `queryKey` に使う、見ている日の生の値（`"today"` か日付キー）。 */
-function queryDateKey(selection: AchievementDateSelection): string {
-  return selection.kind === "chosen" ? selection.date : "today"
-}
-
-/**
- * 取りに行く。**配られない形だったときは「main が読めない」と同じ扱い**（`readDailyAchievement`。
- * `useTokenUsage` と同じ割り切り）。403 や落ちた応答は例外にして、取れなかったことは呼び出し側の
- * `isError` で伝える。
- */
-async function fetchAchievement(selection: AchievementDateSelection): Promise<DailyAchievement> {
-  const response = await fetch(achievementUrl(selection))
-  if (!response.ok) {
-    throw new Error(String(response.status))
-  }
-  return readDailyAchievement(await response.json())
-}
-
-/** 取りに行く URL。**起動トークンを付ける**（`/token-usage` と同じ守り方）。今日を見ている
- * ときはクエリを付けない——サーバの既定も今日なので、hash に何も無いことと揃う。 */
-function achievementUrl(selection: AchievementDateSelection): string {
-  return selection.kind === "chosen"
-    ? sessionTokenUrl(ACHIEVEMENT_PATH, { [ACHIEVEMENT_DATE_QUERY_NAME]: selection.date })
-    : sessionTokenUrl(ACHIEVEMENT_PATH)
 }
 
 /** 今日を見ているかどうか（`refetchInterval` の判定。まだ分からなければ今日でないとみなす）。 */

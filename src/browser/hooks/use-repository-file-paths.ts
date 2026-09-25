@@ -7,13 +7,12 @@
 // `git ls-files` を起こすたびに子プロセスが立つ）。取得は TanStack Query に任せるので、
 // 呼び出し側に取得の配線は無い。
 //
-// サーバ側は `GET /repository-file`（`src/server/repository/adapter/repository-file.ts` の `git ls-files`）で、
-// **中身は読まない**。
+// サーバ側は手続き `repository.listFiles`（`src/server/repository/adapter/repository-file.ts` の
+// `git ls-files`）で、**中身は読まない**。
 
 import { useQuery } from "@tanstack/react-query"
 
-import { readRepositoryFileList, REPOSITORY_FILE_PATH } from "../../shared/repository-file.ts"
-import { sessionTokenUrl } from "../lib/session-token-url.ts"
+import { rpc } from "../lib/rpc-client.ts"
 
 /**
  * 一覧を取り直す間隔。**0 でも `Infinity` でもない**のは、セッションの間にファイルが増える
@@ -33,23 +32,16 @@ const FILE_LIST_GC_TIME_MS = 5 * 60_000
  * パスが押せないだけで、他は動く。
  */
 export function useRepositoryFilePaths(enabled: boolean): readonly string[] {
-  const { data } = useQuery({
-    queryKey: [REPOSITORY_FILE_PATH] as const,
-    queryFn: async () => {
-      const response = await fetch(repositoryFileUrl())
-      return response.ok ? readRepositoryFileList(await response.json()) : []
-    },
-    enabled,
-    staleTime: FILE_LIST_STALE_TIME_MS,
-    gcTime: FILE_LIST_GC_TIME_MS,
-  })
+  const { data } = useQuery(
+    rpc.repository.listFiles.queryOptions({
+      enabled,
+      // 落ちた応答は再試行せず、すぐ空に倒す（手続きにする前と同じ）。
+      retry: false,
+      staleTime: FILE_LIST_STALE_TIME_MS,
+      gcTime: FILE_LIST_GC_TIME_MS,
+    }),
+  )
 
+  // 取れなかった回（403・落ちた応答）も、まだ届いていない間と同じく空（候補が出ないだけ）。
   return data ?? []
-}
-
-/**
- * 一覧の URL。**起動トークンを付ける**（`/ws` と同じ守り方。`lib/session-token-url.ts` に寄せた）。
- */
-function repositoryFileUrl(): string {
-  return sessionTokenUrl(REPOSITORY_FILE_PATH)
 }

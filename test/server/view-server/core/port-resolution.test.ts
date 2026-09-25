@@ -1,6 +1,7 @@
 import { describe, expect, it } from "bun:test"
 import { createServer as createNetServer, type Server as NetServer } from "node:net"
 
+import { createRpcRouter } from "../../../../src/router.ts"
 import {
   startViewServer,
   type ViewAssets,
@@ -25,12 +26,14 @@ const emptyViewAssets: ViewAssets = { uiScript: () => "", styleSheet: () => "" }
 const emptyViewServerOptions: ViewServerOptions = {
   assets: emptyViewAssets,
   serveCharacterAsset: () => undefined,
-  listRepositoryFiles: () => Promise.resolve([]),
-  readTokenUsageSummary: () => EMPTY_TOKEN_USAGE_SUMMARY,
-  readContextUsage: () => Promise.resolve(UNAVAILABLE_CONTEXT_USAGE),
   findPromptImage: () => undefined,
-  readAchievement: () => Promise.resolve({ kind: "ok", achievement: { kind: "unknown" } }),
-  readAchievementCalendar: () => Promise.resolve({ kind: "ok", calendar: { kind: "unknown" } }),
+  rpcRouter: createRpcRouter({
+    listRepositoryFiles: () => Promise.resolve([]),
+    readTokenUsageSummary: () => EMPTY_TOKEN_USAGE_SUMMARY,
+    readContextUsage: () => Promise.resolve(UNAVAILABLE_CONTEXT_USAGE),
+    readAchievementDay: () => Promise.resolve({ kind: "ok", achievement: { kind: "unknown" } }),
+    readAchievementCalendar: () => Promise.resolve({ kind: "ok", calendar: { kind: "unknown" } }),
+  }),
   token: "架空の起動トークン",
 }
 

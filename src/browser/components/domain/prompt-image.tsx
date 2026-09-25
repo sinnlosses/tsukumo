@@ -146,7 +146,7 @@ export function PromptImageThumbnails(props: PromptImageThumbnailsProps): ReactE
 
 /**
  * 棚の原寸を取りに行く URL。起動トークンは**このページの URL から**引き継ぐ
- * （`/repository-file` を引く入力欄の `@` 補完と同じ形。`lib/session-token-url.ts` に寄せた）。
+ * （`/ws`・`/rpc` と同じ形。`lib/session-token-url.ts` に寄せた）。
  */
 function shelvedImageUrl(id: string): string {
   return sessionTokenUrl(promptImagePath(id))

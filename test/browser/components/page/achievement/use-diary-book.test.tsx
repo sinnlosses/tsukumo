@@ -17,6 +17,13 @@ import {
   INITIAL_SESSION_STATE,
   type SessionState,
 } from "../../../../../src/shared/session-state.ts"
+import {
+  rpcOutput,
+  stubRpcFetch,
+  type RpcCall,
+  type RpcFetchStub,
+  type RpcStubReply,
+} from "../../../rpc-fetch-stub.ts"
 import { type CommandSpy, sessionStoreWith } from "../../../session-store.ts"
 
 /**
@@ -25,35 +32,16 @@ import { type CommandSpy, sessionStoreWith } from "../../../session-store.ts"
  * （`docs/coding-standards.md`「会話内容の扱い」）。
  */
 
-let originalFetch: typeof globalThis.fetch | undefined = undefined
-let fetchCalls: string[] = []
+let fetchStub: RpcFetchStub | undefined = undefined
 
 afterEach(() => {
   cleanup()
-  if (originalFetch !== undefined) {
-    globalThis.fetch = originalFetch
-    originalFetch = undefined
-  }
-  fetchCalls = []
+  fetchStub?.restore()
+  fetchStub = undefined
 })
 
-type StubResponse = {
-  readonly ok: boolean
-  readonly status: number
-  readonly json: () => Promise<unknown>
-}
-
-function stubFetch(respond: (url: string) => StubResponse): void {
-  originalFetch = globalThis.fetch
-  const stub = (url: string): Promise<StubResponse> => {
-    fetchCalls.push(url)
-    return Promise.resolve(respond(url))
-  }
-  globalThis.fetch = stub as unknown as typeof globalThis.fetch
-}
-
-function okResponse(body: unknown): StubResponse {
-  return { ok: true, status: 200, json: () => Promise.resolve(body) }
+function stubFetch(reply: (call: RpcCall) => RpcStubReply): void {
+  fetchStub = stubRpcFetch(reply)
 }
 
 function wrapper(
@@ -136,7 +124,7 @@ const EMPTY_BLANK_DAY: DailyAchievement = { ...BLANK_DAY, commitCount: 0 }
 
 describe("useDiaryBook（開閉）", () => {
   it("既定は閉じていて、灯りの暦から開くと見ている日も切り替わる", async () => {
-    stubFetch(() => okResponse(WRITTEN_DAY))
+    stubFetch(() => rpcOutput(WRITTEN_DAY))
     const selected: string[] = []
     const { result } = renderHook(
       () =>
@@ -163,7 +151,7 @@ describe("useDiaryBook（開閉）", () => {
   })
 
   it("「日記帳で読む」からは、いま見ている日で開く（見ている日を切り替えない）", async () => {
-    stubFetch(() => okResponse(WRITTEN_DAY))
+    stubFetch(() => rpcOutput(WRITTEN_DAY))
     const selected: string[] = []
     const { result } = renderHook(
       () =>
@@ -185,7 +173,7 @@ describe("useDiaryBook（開閉）", () => {
   })
 
   it("見ている日が分からないときは「日記帳で読む」を押しても開かない", () => {
-    stubFetch(() => okResponse(WRITTEN_DAY))
+    stubFetch(() => rpcOutput(WRITTEN_DAY))
     const { result } = renderHook(
       () =>
         useDiaryBook({
@@ -204,7 +192,7 @@ describe("useDiaryBook（開閉）", () => {
   })
 
   it("閉じると取得も止まり、次に開くと取り直す", async () => {
-    stubFetch(() => okResponse(WRITTEN_DAY))
+    stubFetch(() => rpcOutput(WRITTEN_DAY))
     const { result } = renderHook(
       () => useDiaryBook({ calendar: CALENDAR, daySwitch: KNOWN_TODAY, onDateSelected: () => {} }),
       { wrapper: wrapper(newClient()) },
@@ -226,7 +214,7 @@ describe("useDiaryBook（開閉）", () => {
 
 describe("useDiaryBook（書かれた日）", () => {
   it("段落は書いた順に並び、2つ目以降だけ時刻を持つ", async () => {
-    stubFetch(() => okResponse(WRITTEN_DAY))
+    stubFetch(() => rpcOutput(WRITTEN_DAY))
     const { result } = renderHook(
       () => useDiaryBook({ calendar: CALENDAR, daySwitch: KNOWN_TODAY, onDateSelected: () => {} }),
       { wrapper: wrapper(newClient()) },
@@ -279,7 +267,7 @@ describe("useDiaryBook（書かれた日）", () => {
         },
       },
     }
-    stubFetch(() => okResponse(noBookmark))
+    stubFetch(() => rpcOutput(noBookmark))
     const { result } = renderHook(
       () => useDiaryBook({ calendar: CALENDAR, daySwitch: KNOWN_TODAY, onDateSelected: () => {} }),
       { wrapper: wrapper(newClient()) },
@@ -299,7 +287,13 @@ describe("useDiaryBook（書かれた日）", () => {
 
 describe("useDiaryBook（白紙の日）", () => {
   it("白紙の日は bookmark が pending で、押すと reflect-achievement を送り見ている日も変わって閉じる", async () => {
-    stubFetch((url) => okResponse(url.includes("date=2026-09-23") ? BLANK_DAY : WRITTEN_DAY))
+    stubFetch((call) =>
+      rpcOutput(
+        JSON.stringify(call.input) === JSON.stringify({ kind: "chosen", date: "2026-09-23" })
+          ? BLANK_DAY
+          : WRITTEN_DAY,
+      ),
+    )
     const spy: CommandSpy = (command) => sent.push(command)
     const sent: unknown[] = []
     const selected: string[] = []
@@ -339,7 +333,7 @@ describe("useDiaryBook（白紙の日）", () => {
   })
 
   it("空の日は押せず、押しても送らない", async () => {
-    stubFetch(() => okResponse(EMPTY_BLANK_DAY))
+    stubFetch(() => rpcOutput(EMPTY_BLANK_DAY))
     const spy: CommandSpy = (command) => sent.push(command)
     const sent: unknown[] = []
     const { result } = renderHook(
@@ -376,7 +370,7 @@ describe("useDiaryBook（白紙の日）", () => {
   })
 
   it("ターンが進行中は押せない", async () => {
-    stubFetch(() => okResponse(BLANK_DAY))
+    stubFetch(() => rpcOutput(BLANK_DAY))
     const { result } = renderHook(
       () => useDiaryBook({ calendar: CALENDAR, daySwitch: KNOWN_TODAY, onDateSelected: () => {} }),
       {
@@ -407,7 +401,7 @@ describe("useDiaryBook（白紙の日）", () => {
 
 describe("useDiaryBook（前後の送りと目次）", () => {
   it("前後は日記のある日だけへ飛び、無ければ undefined", () => {
-    stubFetch(() => okResponse(WRITTEN_DAY))
+    stubFetch(() => rpcOutput(WRITTEN_DAY))
     const { result } = renderHook(
       () => useDiaryBook({ calendar: CALENDAR, daySwitch: KNOWN_TODAY, onDateSelected: () => {} }),
       { wrapper: wrapper(newClient()) },
@@ -427,7 +421,7 @@ describe("useDiaryBook（前後の送りと目次）", () => {
   })
 
   it("目次は月ごとに畳み、選ぶとその日へ移って閉じる", () => {
-    stubFetch(() => okResponse(WRITTEN_DAY))
+    stubFetch(() => rpcOutput(WRITTEN_DAY))
     const { result } = renderHook(
       () => useDiaryBook({ calendar: CALENDAR, daySwitch: KNOWN_TODAY, onDateSelected: () => {} }),
       { wrapper: wrapper(newClient()) },
@@ -457,7 +451,7 @@ describe("useDiaryBook（前後の送りと目次）", () => {
   })
 
   it("暦が取れていないときは前後も目次も空", () => {
-    stubFetch(() => okResponse(WRITTEN_DAY))
+    stubFetch(() => rpcOutput(WRITTEN_DAY))
     const { result } = renderHook(
       () =>
         useDiaryBook({
@@ -484,7 +478,7 @@ describe("useDiaryBook（書き終わりの知らせから開く）", () => {
   // （`requestDiaryBookOpen` を呼ぶのはこの2件だけ。呼んだ後の状態が他のテストの初回描画に
   // 混ざらないようにする）。
   it("マウント中に来た新しい合図も拾って開き直す", async () => {
-    stubFetch(() => okResponse(WRITTEN_DAY))
+    stubFetch(() => rpcOutput(WRITTEN_DAY))
     const { result } = renderHook(
       () => useDiaryBook({ calendar: CALENDAR, daySwitch: KNOWN_TODAY, onDateSelected: () => {} }),
       { wrapper: wrapper(newClient()) },
@@ -500,7 +494,7 @@ describe("useDiaryBook（書き終わりの知らせから開く）", () => {
   })
 
   it("知らせの合図をマウント時に拾って開く", async () => {
-    stubFetch(() => okResponse(WRITTEN_DAY))
+    stubFetch(() => rpcOutput(WRITTEN_DAY))
     act(() => {
       requestDiaryBookOpen("2026-09-16")
     })
@@ -518,7 +512,7 @@ describe("useDiaryBook（書き終わりの知らせから開く）", () => {
   })
 
   it("拾った合図は、画面を開き直しても（マウントし直しても）もう一度は開かない", () => {
-    stubFetch(() => okResponse(WRITTEN_DAY))
+    stubFetch(() => rpcOutput(WRITTEN_DAY))
     act(() => {
       requestDiaryBookOpen("2026-09-16")
     })

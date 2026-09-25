@@ -11,6 +11,13 @@ import {
 } from "../../../../../src/browser/stores/session.tsx"
 import { INITIAL_SESSION_STATE } from "../../../../../src/shared/session-state.ts"
 import { DEFAULT_TOKEN_USAGE_DAYS } from "../../../../../src/shared/token-usage-summary.ts"
+import {
+  rpcError,
+  rpcOutput,
+  stubRpcFetch,
+  type RpcFetchStub,
+  type RpcStubReply,
+} from "../../../rpc-fetch-stub.ts"
 import { sessionStoreWith } from "../../../session-store.ts"
 
 /**
@@ -19,31 +26,25 @@ import { sessionStoreWith } from "../../../session-store.ts"
  * （`docs/coding-standards.md`「会話内容の扱い」— 集計に文面は入らないが、実物は使わない）。
  */
 
-let originalFetch: typeof globalThis.fetch | undefined = undefined
-let fetchCalls: string[] = []
+let fetchStub: RpcFetchStub | undefined = undefined
 
 afterEach(() => {
   cleanup()
-  if (originalFetch !== undefined) {
-    globalThis.fetch = originalFetch
-    originalFetch = undefined
-  }
-  fetchCalls = []
+  fetchStub?.restore()
+  fetchStub = undefined
 })
 
-type StubResponse = {
-  readonly ok: boolean
-  readonly status: number
-  readonly json: () => Promise<unknown>
+function stubTokenUsageFetch(reply: () => RpcStubReply): void {
+  fetchStub = stubRpcFetch(reply)
 }
 
-function stubTokenUsageFetch(respond: () => StubResponse): void {
-  originalFetch = globalThis.fetch
-  const stub = (url: string): Promise<StubResponse> => {
-    fetchCalls.push(url)
-    return Promise.resolve(respond())
-  }
-  globalThis.fetch = stub as unknown as typeof globalThis.fetch
+/** `tokenUsage.summary` を、この日数で呼んだか。 */
+function askedDays(days: number): boolean {
+  return (fetchStub?.calls() ?? []).some(
+    (call) =>
+      call.procedure === "tokenUsage/summary" &&
+      JSON.stringify(call.input) === JSON.stringify({ days }),
+  )
 }
 
 /** `useQuery` が要る `QueryClientProvider`。**client は呼び出し側で1回だけ作る**（再レンダーの
@@ -84,11 +85,7 @@ function newClient(): QueryClient {
 
 describe("useTokenUsage", () => {
   it("初期の期間は既定の日数", async () => {
-    stubTokenUsageFetch(() => ({
-      ok: true,
-      status: 200,
-      json: () => Promise.resolve(FIXTURE_SUMMARY),
-    }))
+    stubTokenUsageFetch(() => rpcOutput(FIXTURE_SUMMARY))
 
     const { result } = renderHook(() => useTokenUsage(), {
       wrapper: tokenUsageWrapper(newClient()),
@@ -103,18 +100,12 @@ describe("useTokenUsage", () => {
   })
 
   it("onDaysChange で選ぶと日数が変わり、その日数で取り直す", async () => {
-    stubTokenUsageFetch(() => ({
-      ok: true,
-      status: 200,
-      json: () => Promise.resolve(FIXTURE_SUMMARY),
-    }))
+    stubTokenUsageFetch(() => rpcOutput(FIXTURE_SUMMARY))
     const { result } = renderHook(() => useTokenUsage(), {
       wrapper: tokenUsageWrapper(newClient()),
     })
     await waitFor(() => {
-      expect(
-        fetchCalls.some((url) => url.includes(`days=${String(DEFAULT_TOKEN_USAGE_DAYS)}`)),
-      ).toBe(true)
+      expect(askedDays(DEFAULT_TOKEN_USAGE_DAYS)).toBe(true)
     })
 
     act(() => {
@@ -123,16 +114,12 @@ describe("useTokenUsage", () => {
 
     expect(result.current.days).toBe(30)
     await waitFor(() => {
-      expect(fetchCalls.some((url) => url.includes("days=30"))).toBe(true)
+      expect(askedDays(30)).toBe(true)
     })
   })
 
   it("取れたら合計込みの集計を返し、isError は立たない", async () => {
-    stubTokenUsageFetch(() => ({
-      ok: true,
-      status: 200,
-      json: () => Promise.resolve(FIXTURE_SUMMARY),
-    }))
+    stubTokenUsageFetch(() => rpcOutput(FIXTURE_SUMMARY))
 
     const { result } = renderHook(() => useTokenUsage(), {
       wrapper: tokenUsageWrapper(newClient()),
@@ -146,7 +133,7 @@ describe("useTokenUsage", () => {
   })
 
   it("応答が落ちたら isError が立ち、集計は空のまま", async () => {
-    stubTokenUsageFetch(() => ({ ok: false, status: 500, json: () => Promise.resolve(null) }))
+    stubTokenUsageFetch(() => rpcError(500))
 
     const { result } = renderHook(() => useTokenUsage(), {
       wrapper: tokenUsageWrapper(newClient()),
@@ -159,33 +146,8 @@ describe("useTokenUsage", () => {
     expect(result.current.total.costUsd).toBe(0)
   })
 
-  it("読めない形で届いたら、落ちずに空の集計になる", async () => {
-    stubTokenUsageFetch(() => ({
-      ok: true,
-      status: 200,
-      json: () => Promise.resolve({ not: "valid" }),
-    }))
-    const client = newClient()
-
-    const { result } = renderHook(() => useTokenUsage(), { wrapper: tokenUsageWrapper(client) })
-
-    // 空の集計は「まだ届いていない」ときと見た目が同じ（`EMPTY_TOKEN_USAGE_SUMMARY` を共有する）
-    // ので、確定を待つには集計そのものではなく queryClient の状態を見る。
-    await waitFor(() => {
-      expect(client.getQueryState(["token-usage", DEFAULT_TOKEN_USAGE_DAYS])?.status).toBe(
-        "success",
-      )
-    })
-    expect(result.current.isError).toBe(false)
-    expect(result.current.summary.trend.points).toEqual([])
-  })
-
   it("plan は state.plan をそのまま返す", async () => {
-    stubTokenUsageFetch(() => ({
-      ok: true,
-      status: 200,
-      json: () => Promise.resolve(FIXTURE_SUMMARY),
-    }))
+    stubTokenUsageFetch(() => rpcOutput(FIXTURE_SUMMARY))
     const store = sessionStoreWith({ ...INITIAL_SESSION_STATE, plan: "max" })
 
     const { result } = renderHook(() => useTokenUsage(), {
@@ -196,11 +158,7 @@ describe("useTokenUsage", () => {
   })
 
   it("state.plan がまだ届いていなければ undefined", async () => {
-    stubTokenUsageFetch(() => ({
-      ok: true,
-      status: 200,
-      json: () => Promise.resolve(FIXTURE_SUMMARY),
-    }))
+    stubTokenUsageFetch(() => rpcOutput(FIXTURE_SUMMARY))
 
     const { result } = renderHook(() => useTokenUsage(), {
       wrapper: tokenUsageWrapper(newClient()),
