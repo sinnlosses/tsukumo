@@ -79,6 +79,14 @@ export type ScenarioOptions = {
 export type ScenarioRoom = {
   readonly page: Page
   /**
+   * 起こした tsukumo の cwd（`realpath` を通した絶対パス）。**`main` の develop/task/ を読む
+   * タスクの一覧のように、疑似セッションの場面ではなく cwd の中身そのものが元になるシナリオ**
+   * だけがここへ書き足す（`git init` など）。書き足すのはブラウザが繋がったのを確かめたあと
+   * にする——起こす前や繋がる前に用意すると、最初の見回りが `hello` に畳まれてしまい、
+   * 変化を捕まえる `waitForEvent` の的が無くなる（docs/design.md 10章「E2E の走らせ方」）。
+   */
+  readonly cwd: string
+  /**
    * WebSocket で `kind` のイベントが `occurrence` 回目（既定1回目）届くまで待つ（場面が流れ
    * 終わるのを時間で待たない）。同じ `kind` が場面の中で複数回流れる場合（`turn-finished` が
    * 続きのターンのたびに来るなど）に、狙った回目まで進める口。
@@ -187,6 +195,7 @@ async function openRoom(
 
   return {
     page,
+    cwd: cwd.real,
     waitForEvent: (kind, occurrence) => messages.waitForEvent(kind, occurrence),
     settleAndMatch: async (elapsedMs) => {
       await page.clock.pauseAt(Temporal.Instant.from(FIXED_INSTANT).epochMilliseconds + elapsedMs)

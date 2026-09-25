@@ -3448,29 +3448,29 @@ cwd → `<cwd>`、ポート → `<port>`（`ホスト:ポート` と、ポート
 
 「担当」は後段のタスクの割り振り。「載せない」は終わりの構造では捕まえられないもの。
 
-| シナリオ（機能）                                         | 場面（`fake-session.json`）                                                          | 担当             |
-| -------------------------------------------------------- | ------------------------------------------------------------------------------------ | ---------------- |
-| ターンの流れ（依頼 → ツール → report → 締めの speak）    | `report-tool`                                                                        | 1本目            |
-| 入力欄から送る（`prompt` が流れ、`request` が戻る）      | 名指し無し（`opening` → 送ると `report`）                                            | 会話             |
-| speak → キャラビューの吹き出し                           | `closing-narration`・`question-multi`（セリフ3つ）                                   | 会話             |
-| report → メインビュー（記法・差し戻し・整え）            | `notation`・`report-rejected`・`report-tidied`                                       | 会話             |
-| 途中の発話と流れる本文                                   | `narration`・`long-report`                                                           | 会話             |
-| 許可のモーダル（押すと `answer` が流れ、箱が消える）     | `permission`                                                                         | 会話             |
-| 質問（単数・複数・プレビュー）                           | `question-pair`・`question-multi`・`question-long`・`question-preview`               | 会話             |
-| 続きのターン（`turn-resumed`）                           | `resumed-report`                                                                     | 会話             |
-| ツールの実行といまの作業                                 | `long-tool`（`tool-started` の直後で撮る）                                           | サイドバー       |
-| 背景のタスク                                             | `background-task`（再開まで 12 秒超。**短い版が足りない**）                          | サイドバー       |
-| ターンの履歴                                             | `turn-history`                                                                       | サイドバー       |
-| タスクの一覧                                             | **足りない**（一時の cwd に `git init` と手書きの `develop/task/` を置く足場が要る） | サイドバー       |
-| 雑談の切り替えと忘却の区切り                             | `chat-compact-boundary`                                                              | 雑談             |
-| 復元した雑談の履歴                                       | `chat-restored-history`                                                              | 雑談             |
-| `/` の補完                                               | 名指し無し（`opening` のコマンド一覧に打つ）                                         | 未割り当て       |
-| `@` の補完                                               | **足りない**（一時の cwd に手書きのファイルを置く）                                  | 未割り当て       |
-| API の不調（再試行・失敗・上限）                         | `api-retry`・`api-failure`・`rate-limit`                                             | 未割り当て       |
-| 書き終わりの知らせ                                       | `diary-written`                                                                      | 未割り当て       |
-| 訪問の出入り（画面にはまだ描かない。メッセージの列だけ） | `visit-long-tool`・`visit-background`（`TSUKUMO_VISIT_QUICK=1`）                     | 未割り当て       |
-| 確認のモーダル・日記帳の見開き・いまの作業の失敗         | **足りない**（疑似セッションに場面を足す別のタスクがある）                           | 未割り当て       |
-| 途中のちらつき・止まって見える発話                       | `interim-flicker`・`narration-stuck`・`narration-flash`                              | 載せない（目視） |
+| シナリオ（機能）                                         | 場面（`fake-session.json`）                                                                                                                                       | 担当             |
+| -------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
+| ターンの流れ（依頼 → ツール → report → 締めの speak）    | `report-tool`                                                                                                                                                     | 1本目            |
+| 入力欄から送る（`prompt` が流れ、`request` が戻る）      | 名指し無し（`opening` → 送ると `report`）                                                                                                                         | 会話             |
+| speak → キャラビューの吹き出し                           | `closing-narration`・`question-multi`（セリフ3つ）                                                                                                                | 会話             |
+| report → メインビュー（記法・差し戻し・整え）            | `notation`・`report-rejected`・`report-tidied`                                                                                                                    | 会話             |
+| 途中の発話と流れる本文                                   | `narration`・`long-report`                                                                                                                                        | 会話             |
+| 許可のモーダル（押すと `answer` が流れ、箱が消える）     | `permission`                                                                                                                                                      | 会話             |
+| 質問（単数・複数・プレビュー）                           | `question-pair`・`question-multi`・`question-long`・`question-preview`                                                                                            | 会話             |
+| 続きのターン（`turn-resumed`）                           | `resumed-report`                                                                                                                                                  | 会話             |
+| ツールの実行といまの作業                                 | `long-tool`（`tool-started` の直後で撮る）                                                                                                                        | サイドバー       |
+| 背景のタスク                                             | `background-task-short`（再開まで数秒。長い版 `background-task` は再開まで 12 秒超）                                                                              | サイドバー       |
+| ターンの履歴                                             | `turn-history`                                                                                                                                                    | サイドバー       |
+| タスクの一覧                                             | 名指し無し（`opening` のみ）。ブラウザが繋がったあと cwd に `git init` して `develop/task/` を手書きし、`main` へコミットする足場（`test/e2e/task-list.test.ts`） | サイドバー       |
+| 雑談の切り替えと忘却の区切り                             | `chat-compact-boundary`                                                                                                                                           | 雑談             |
+| 復元した雑談の履歴                                       | `chat-restored-history`                                                                                                                                           | 雑談             |
+| `/` の補完                                               | 名指し無し（`opening` のコマンド一覧に打つ）                                                                                                                      | 未割り当て       |
+| `@` の補完                                               | **足りない**（一時の cwd に手書きのファイルを置く）                                                                                                               | 未割り当て       |
+| API の不調（再試行・失敗・上限）                         | `api-retry`・`api-failure`・`rate-limit`                                                                                                                          | 未割り当て       |
+| 書き終わりの知らせ                                       | `diary-written`                                                                                                                                                   | 未割り当て       |
+| 訪問の出入り（画面にはまだ描かない。メッセージの列だけ） | `visit-long-tool`・`visit-background`（`TSUKUMO_VISIT_QUICK=1`）                                                                                                  | 未割り当て       |
+| 確認のモーダル・日記帳の見開き・いまの作業の失敗         | **足りない**（疑似セッションに場面を足す別のタスクがある）                                                                                                        | 未割り当て       |
+| 途中のちらつき・止まって見える発話                       | `interim-flicker`・`narration-stuck`・`narration-flash`                                                                                                           | 載せない（目視） |
 
 成果の画面・キャラクター画面・使用量の画面は、git の履歴とホームの中身から組むので、一時の
 cwd とホームに手書きの材料を置く足場ができてから一覧に足す。

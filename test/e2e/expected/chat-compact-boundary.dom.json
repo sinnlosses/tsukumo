@@ -1,0 +1,491 @@
+[
+  {
+    "tag": "nav",
+    "attributes": {
+      "aria-label": "画面",
+      "data-screen": "conversation"
+    },
+    "children": [
+      {
+        "tag": "img",
+        "attributes": {
+          "alt": "つくもの精霊",
+          "src": "/character/tsukumo-spirit/face.svg"
+        }
+      },
+      "<port>",
+      {
+        "tag": "div",
+        "attributes": {
+          "role": "group",
+          "aria-label": "モード"
+        },
+        "children": [
+          {
+            "tag": "button",
+            "attributes": {
+              "aria-pressed": "false",
+              "aria-disabled": "false",
+              "type": "button"
+            },
+            "children": [
+              {
+                "tag": "svg"
+              },
+              "仕事"
+            ]
+          },
+          {
+            "tag": "button",
+            "attributes": {
+              "aria-pressed": "true",
+              "aria-disabled": "false",
+              "type": "button"
+            },
+            "children": [
+              {
+                "tag": "svg"
+              },
+              "雑談"
+            ]
+          }
+        ]
+      },
+      {
+        "tag": "span",
+        "attributes": {
+          "aria-hidden": "true"
+        }
+      },
+      {
+        "tag": "a",
+        "attributes": {
+          "aria-current": "page",
+          "href": "/?t=<token>"
+        },
+        "children": [
+          "会話"
+        ]
+      },
+      {
+        "tag": "a",
+        "attributes": {
+          "href": "/?t=<token>#character"
+        },
+        "children": [
+          "キャラクター"
+        ]
+      },
+      {
+        "tag": "a",
+        "attributes": {
+          "href": "/?t=<token>#token-usage"
+        },
+        "children": [
+          "トークン消費"
+        ]
+      },
+      {
+        "tag": "a",
+        "attributes": {
+          "href": "/?t=<token>#achievement"
+        },
+        "children": [
+          "成果"
+        ]
+      },
+      {
+        "tag": "div",
+        "attributes": {
+          "data-work-state": "idle",
+          "data-chat-idle": "true"
+        },
+        "children": [
+          {
+            "tag": "button",
+            "attributes": {
+              "aria-expanded": "false",
+              "type": "button"
+            },
+            "children": [
+              {
+                "tag": "span",
+                "attributes": {
+                  "aria-hidden": "true"
+                },
+                "children": [
+                  "●"
+                ]
+              },
+              "つくもの精霊 とおしゃべり中"
+            ]
+          }
+        ]
+      },
+      {
+        "tag": "select",
+        "attributes": {
+          "aria-label": "モデル",
+          "value": "opus"
+        }
+      },
+      {
+        "tag": "select",
+        "attributes": {
+          "aria-label": "effort",
+          "value": "medium"
+        }
+      },
+      {
+        "tag": "select",
+        "attributes": {
+          "aria-label": "許可モード",
+          "value": "auto"
+        }
+      },
+      {
+        "tag": "button",
+        "attributes": {
+          "aria-expanded": "false",
+          "aria-label": "設定",
+          "type": "button"
+        },
+        "children": [
+          {
+            "tag": "svg"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "tag": "div",
+    "attributes": {
+      "data-collapse-character": "true"
+    },
+    "children": [
+      {
+        "tag": "div",
+        "attributes": {
+          "data-narrow-pane": "main"
+        },
+        "children": [
+          {
+            "tag": "section",
+            "attributes": {
+              "data-region": "main"
+            },
+            "children": [
+              {
+                "tag": "button",
+                "attributes": {
+                  "aria-disabled": "false",
+                  "type": "button"
+                },
+                "children": [
+                  {
+                    "tag": "div",
+                    "attributes": {
+                      "role": "img",
+                      "aria-label": "つくもの精霊（どや顔）",
+                      "data-expression": "proud",
+                      "data-outfit": "heavy",
+                      "data-motion": "reading"
+                    },
+                    "children": [
+                      {
+                        "tag": "svg"
+                      }
+                    ]
+                  },
+                  "話しかけてもらう"
+                ]
+              },
+              {
+                "tag": "div",
+                "attributes": {
+                  "data-speaker": "character",
+                  "role": "button",
+                  "aria-pressed": "false"
+                },
+                "children": [
+                  "疑似セッションの駆動で立ち上がったよ。ここはぜんぶ作り物の会話。"
+                ]
+              },
+              {
+                "tag": "time",
+                "attributes": {
+                  "dateTime": "2026-01-15T10:00+09:00"
+                },
+                "children": [
+                  "10:00"
+                ]
+              },
+              {
+                "tag": "div",
+                "attributes": {
+                  "data-speaker": "user"
+                },
+                "children": [
+                  "架空の雑談その1（区切りより前）"
+                ]
+              },
+              {
+                "tag": "time",
+                "attributes": {
+                  "dateTime": "2026-01-15T10:00+09:00"
+                },
+                "children": [
+                  "10:00"
+                ]
+              },
+              {
+                "tag": "div",
+                "attributes": {
+                  "data-speaker": "character",
+                  "role": "button",
+                  "aria-pressed": "false"
+                },
+                "children": [
+                  "区切りより前のセリフだよ。"
+                ]
+              },
+              {
+                "tag": "time",
+                "attributes": {
+                  "dateTime": "2026-01-15T10:00+09:00"
+                },
+                "children": [
+                  "10:00"
+                ]
+              },
+              {
+                "tag": "hr",
+                "attributes": {
+                  "data-speaker": "boundary"
+                }
+              },
+              {
+                "tag": "div",
+                "attributes": {
+                  "data-speaker": "user"
+                },
+                "children": [
+                  "架空の雑談その2（区切りより後）"
+                ]
+              },
+              {
+                "tag": "time",
+                "attributes": {
+                  "dateTime": "2026-01-15T10:00+09:00"
+                },
+                "children": [
+                  "10:00"
+                ]
+              },
+              {
+                "tag": "div",
+                "attributes": {
+                  "data-speaker": "character",
+                  "role": "button",
+                  "aria-pressed": "true"
+                },
+                "children": [
+                  "区切りより後のセリフだよ。"
+                ]
+              },
+              {
+                "tag": "time",
+                "attributes": {
+                  "dateTime": "2026-01-15T10:00+09:00"
+                },
+                "children": [
+                  "10:00"
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "div",
+            "attributes": {
+              "role": "separator",
+              "aria-orientation": "vertical",
+              "aria-label": "メインビューとサイドバーの境界"
+            }
+          },
+          {
+            "tag": "section",
+            "attributes": {
+              "data-region": "sidebar"
+            },
+            "children": [
+              {
+                "tag": "section",
+                "attributes": {
+                  "aria-label": "プロフィール"
+                },
+                "children": [
+                  {
+                    "tag": "img",
+                    "attributes": {
+                      "alt": "つくもの精霊",
+                      "src": "/character/tsukumo-spirit/face.svg"
+                    }
+                  },
+                  {
+                    "tag": "p",
+                    "children": [
+                      "つくもの精霊"
+                    ]
+                  },
+                  {
+                    "tag": "p",
+                    "children": [
+                      "ターミナルという道具に宿った小さな精霊"
+                    ]
+                  },
+                  {
+                    "tag": "span",
+                    "attributes": {
+                      "aria-hidden": "true"
+                    },
+                    "children": [
+                      "変える"
+                    ]
+                  },
+                  {
+                    "tag": "select",
+                    "attributes": {
+                      "aria-label": "キャラクターを変える",
+                      "value": "tsukumo-spirit"
+                    }
+                  }
+                ]
+              },
+              {
+                "tag": "section",
+                "children": [
+                  {
+                    "tag": "h2",
+                    "children": [
+                      "最近の話題"
+                    ]
+                  },
+                  {
+                    "tag": "p",
+                    "children": [
+                      "まだ話題が無い（話が積もると、ここに並ぶ）"
+                    ]
+                  }
+                ]
+              },
+              {
+                "tag": "section",
+                "children": [
+                  {
+                    "tag": "h2",
+                    "children": [
+                      "覚えていること"
+                    ]
+                  },
+                  {
+                    "tag": "p",
+                    "children": [
+                      "まだ覚えていることが無い"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "tag": "div",
+        "attributes": {
+          "role": "separator",
+          "aria-orientation": "horizontal",
+          "aria-label": "上段と下段の境界"
+        }
+      },
+      {
+        "tag": "div",
+        "attributes": {
+          "data-collapse-character": "true"
+        },
+        "children": [
+          {
+            "tag": "section",
+            "attributes": {
+              "data-region": "dispatch"
+            },
+            "children": [
+              {
+                "tag": "form",
+                "children": [
+                  {
+                    "tag": "textarea",
+                    "attributes": {
+                      "value": ""
+                    }
+                  },
+                  {
+                    "tag": "button",
+                    "attributes": {
+                      "aria-disabled": "false",
+                      "aria-label": "画像を添える",
+                      "type": "button"
+                    },
+                    "children": [
+                      {
+                        "tag": "svg"
+                      }
+                    ]
+                  },
+                  {
+                    "tag": "button",
+                    "attributes": {
+                      "aria-disabled": "false",
+                      "aria-label": "コマンドを補完する",
+                      "type": "button"
+                    },
+                    "children": [
+                      {
+                        "tag": "svg"
+                      }
+                    ]
+                  },
+                  {
+                    "tag": "button",
+                    "attributes": {
+                      "aria-disabled": "false",
+                      "aria-label": "ファイルを補完する",
+                      "type": "button"
+                    },
+                    "children": [
+                      {
+                        "tag": "svg"
+                      }
+                    ]
+                  },
+                  "所要",
+                  "0秒",
+                  {
+                    "tag": "button",
+                    "attributes": {
+                      "data-shortcut": "⌘⏎",
+                      "type": "submit"
+                    },
+                    "children": [
+                      "送信"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]

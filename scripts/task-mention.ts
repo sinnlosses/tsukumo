@@ -42,6 +42,7 @@ const ALLOWED_DATA_FILES = [
   "test/server/achievement/adapter/main-history.test.ts",
   "test/shared/task-summary.test.ts",
   "test/shared/achievement.test.ts",
+  "test/e2e/task-list.test.ts",
 ] as const satisfies readonly string[]
 
 /**

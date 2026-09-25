@@ -1668,6 +1668,111 @@
       ]
     },
     {
+      "name": "background-task-short",
+      "steps": [
+        {
+          "afterMs": 0,
+          "event": {
+            "kind": "request",
+            "text": "背景で待つあいだの帯を、再開まで数秒の短い版で見たい（架空の依頼）",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 300,
+          "event": {
+            "kind": "speech",
+            "text": "背景で少しだけ走らせておくね。",
+            "expression": "default"
+          }
+        },
+        {
+          "afterMs": 600,
+          "event": {
+            "kind": "tool-started",
+            "toolUseId": "fake-tool-background-short-1",
+            "name": "Bash",
+            "input": {
+              "command": "sleep 2",
+              "run_in_background": true,
+              "description": "架空の短い待ち（2秒）"
+            }
+          }
+        },
+        {
+          "afterMs": 700,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-tool-background-short-1",
+            "content": "架空の背景実行の受付（ID: fake-bg-short-1）",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 700,
+          "event": {
+            "kind": "background-tasks-changed",
+            "tasks": [
+              {
+                "taskId": "fake-bg-short-1",
+                "kind": "shell",
+                "description": "架空の短い待ち（2秒）"
+              }
+            ]
+          }
+        },
+        {
+          "afterMs": 1200,
+          "event": {
+            "kind": "utterance",
+            "text": "## 背景で1件、短く走らせた\n\nこれは架空の本文で、実物の会話ではない。**`background-task` の長い版（再開まで12秒超）とは別に、E2E で繰り返し撮れるように再開まで数秒に縮めた版**。帯の「いまの作業」が「背景で作業中」になり、終わると「依頼待ち」に戻る。"
+          }
+        },
+        {
+          "afterMs": 1500,
+          "event": {
+            "kind": "turn-finished",
+            "outcome": { "kind": "completed" }
+          }
+        },
+        {
+          "afterMs": 2500,
+          "event": {
+            "kind": "background-tasks-changed",
+            "tasks": []
+          }
+        },
+        {
+          "afterMs": 2600,
+          "event": {
+            "kind": "turn-resumed"
+          }
+        },
+        {
+          "afterMs": 2900,
+          "event": {
+            "kind": "speech",
+            "text": "短い背景の待ちが終わったよ。",
+            "expression": "proud"
+          }
+        },
+        {
+          "afterMs": 3200,
+          "event": {
+            "kind": "utterance",
+            "text": "## 短い背景の待ちが終わった\n\nこれは架空の本文で、実物の会話ではない。**依頼なしで始めた続きのターン**の報告で、前の本文は中間レポートに回る。"
+          }
+        },
+        {
+          "afterMs": 3500,
+          "event": {
+            "kind": "turn-finished",
+            "outcome": { "kind": "completed" }
+          }
+        }
+      ]
+    },
+    {
       "name": "current-work-running",
       "steps": [
         {

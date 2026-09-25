@@ -1,0 +1,78 @@
+[
+  {
+    "received": "hello",
+    "protocolVersion": 22
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "session-info",
+      "sessionId": "fake-session",
+      "model": "opus",
+      "permissionMode": "auto",
+      "slashCommands": [
+        "clear",
+        "compact",
+        "doctor"
+      ],
+      "terminalSlashCommands": [
+        "doctor"
+      ]
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "command-descriptions",
+      "descriptions": [
+        {
+          "name": "clear",
+          "description": "会話を消して始め直す（架空の説明）"
+        },
+        {
+          "name": "compact",
+          "description": "会話を要約してまとめる（架空の説明）"
+        }
+      ]
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "speech",
+      "text": "疑似セッションの駆動で立ち上がったよ。ここはぜんぶ作り物の会話。",
+      "expression": "default"
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "tasks-changed",
+      "tasks": {
+        "kind": "known",
+        "items": [
+          {
+            "id": "T-001",
+            "summary": "架空のタスク（未着手）",
+            "status": "todo",
+            "difficulty": "sonnet",
+            "loopable": "Y",
+            "dependencies": []
+          },
+          {
+            "id": "T-002",
+            "summary": "架空のタスク（完了）",
+            "status": "done",
+            "difficulty": "sonnet",
+            "loopable": "Y",
+            "dependencies": []
+          }
+        ]
+      }
+    }
+  }
+]
