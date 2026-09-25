@@ -80,6 +80,12 @@ export type CharacterInfo = {
    */
   readonly background: CharacterBackground | undefined
   /**
+   * 日記の本文に効かせる書体の URL（`/character/<pack>/<file>`。`docs/screen-design.md` 13.3
+   * 「例外は日記の本文だけ」）。**定義に `diaryFont` が無いパックでは undefined**——`face` と同じく
+   * 既定へのフォールバックは無い（無いパックは `--font-serif` のまま）。
+   */
+  readonly diaryFont: string | undefined
+  /**
    * 立ち絵と差し色を**画面から変えられるか**。変えた結果の書き込み先は
    * `~/.tsukumo/characters/<name>/` の1箇所だけで（`docs/design.md` 7.1）、そこに書いた版が
    * 探索の順で**起動先の `characters/local` に負けるパックだけが false** になる
@@ -196,6 +202,7 @@ export function toCharacterInfo(source: CharacterInfoSource): CharacterInfo {
     miniCall: definition?.miniCall,
     outfitAccents: foldedOutfitAccents(definition),
     background: backgroundWithUrl(definition?.background, assetUrl),
+    diaryFont: definition?.diaryFont === undefined ? undefined : assetUrl(definition.diaryFont),
     editable: source.editable,
   }
 }

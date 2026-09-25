@@ -12,6 +12,7 @@
 import { fromKeys, isPlainObject } from "remeda"
 
 import { type CharacterBackground, toCharacterBackground } from "./character-background.ts"
+import { isDiaryFontFileName } from "./character-diary-font.ts"
 import { type CharacterVisit, toCharacterVisit } from "./character-visit.ts"
 import {
   EXPRESSIONS,
@@ -92,6 +93,15 @@ export type CharacterDefinition = {
    * 持たないパックは客にならない。
    */
   readonly visit: CharacterVisit | undefined
+  /**
+   * 日記の本文に効かせる書体のファイル名（`docs/screen-design.md` 13.3「例外は日記の本文だけ」。
+   * `docs/design.md` 7章）。**任意**で、無いパックは今までどおり `--font-serif`（端末の明朝体）の
+   * まま。パックに同梱した書体ファイル（`woff2` / `woff` / `ttf` / `otf`）だけを指せる——外部
+   * フォントは足さない。読めない・パックの外を指す値は {@link isDiaryFontFileName} が undefined に
+   * 畳む。効くのは成果の画面の日記の吹き出しと日記帳の見開きの本文だけ（レポートやセリフの
+   * 吹き出しの書体は変えない）。
+   */
+  readonly diaryFont: string | undefined
 }
 
 /**
@@ -266,7 +276,13 @@ function toCharacterDefinition(value: unknown): CharacterDefinition | undefined 
     outfitAccents: toOutfitAccents(value.outfitAccents),
     background: toCharacterBackground(value.background),
     visit: toCharacterVisit(value.visit),
+    diaryFont: toDiaryFont(value.diaryFont),
   }
+}
+
+/** `diaryFont` を読む。文字列でない・パックの外を指す形は undefined（既定の明朝体に落ちる）。 */
+function toDiaryFont(value: unknown): string | undefined {
+  return typeof value === "string" && isDiaryFontFileName(value) ? value : undefined
 }
 
 function toExpressionLabels(source: unknown): Readonly<Record<Expression, string | undefined>> {

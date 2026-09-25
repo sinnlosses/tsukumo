@@ -2011,11 +2011,19 @@ class 名は用語集の語（`balloon` / `portrait` / `turn-header` など）�
 
 ```
 characters/<name>/
-  character.json     name / portraits（表情 → ファイル名）/ outfitAccents / expressions（名前 → 日本語ラベル）
+  character.json     name / portraits（表情 → ファイル名）/ outfitAccents / expressions（名前 → 日本語ラベル）/ diaryFont（日記の書体のファイル名）
   persona.md         人格。tsukumo が systemPrompt.append で足す（口調・セリフと詳細の書き分け。セリフの間合いとレポートの記法は core 側）
   *.svg / *.png      素材
+  *.woff2 / *.woff / *.ttf / *.otf   日記の書体（任意。`diaryFont` が指す）
 ```
 
+- **`diaryFont` は日記の本文の書体**（`docs/screen-design.md` 13.3「例外は日記の本文だけ」。効くのは
+  成果の画面の吹き出しと日記帳の見開きの本文だけ）。パックに同梱した書体ファイル
+  （`woff2` / `woff` / `ttf` / `otf`）だけを指せる——外部フォントは足さない、という決定は変わらない
+  （`src/shared/character-diary-font.ts` の `isDiaryFontFileName` がパックの外を指すパスを拒む）。
+  配る経路・allowlist の仕組みは立ち絵・顔・背景と同じ（`/character/<pack>/<file>`）。無いパックは
+  いままでどおり `--font-serif`（端末の明朝体）のまま。**キャラクター編集の画面から差し替える口は
+  無い**（手で `character.json` と書体ファイルをパックに置く）
 - **`expressions` のラベルを定義に移す**（いまは `expression.ts` の `expressionLabel` にコードで
   持っている。原則4）。`speak` の enum と説明はここから作る
 - `persona.md` は**tsukumo 向けの人格**。グローバルの `~/.claude/output-styles/asuna.md` は

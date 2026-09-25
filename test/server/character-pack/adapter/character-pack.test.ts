@@ -131,6 +131,28 @@ describe("characterChangedEvent", () => {
 
     expect(event).toMatchObject({ face: undefined })
   })
+
+  it("diaryFont があれば素材の URL にする（日記の書体。docs/design.md 7章）", () => {
+    writeFileSync(
+      join(dir, "character.json"),
+      JSON.stringify({ portraits: { default: "default.svg" }, diaryFont: "shodo.woff2" }),
+    )
+
+    const pack = readCharacterPack(dir)
+    const event = characterChangedEvent(pack, [], dir)
+
+    expect(event).toMatchObject({
+      diaryFont: `/character/${encodeURIComponent(basename(dir))}/shodo.woff2?v=${String(pack.revision)}`,
+    })
+  })
+
+  it("diaryFont が無いパックでは undefined のまま（--font-serif のまま描く）", () => {
+    writeFileSync(join(dir, "character.json"), DEFINITION_JSON)
+
+    const event = characterChangedEvent(readCharacterPack(dir), [], dir)
+
+    expect(event).toMatchObject({ diaryFont: undefined })
+  })
 })
 
 // 一覧の1件（`CharacterPackEntry`）。**使用中以外のパックも姿ごと載る**（docs/design.md 7.2）。
@@ -474,6 +496,20 @@ describe("readCharacterPackFile", () => {
     const file = readCharacterPackFile(readCharacterPack(dir), "face.svg")
 
     expect(file?.content.toString("utf8")).toBe(PLAUSIBLE_SVG)
+  })
+
+  it("character.json の diaryFont（日記の書体）も同じ経路で配れ、拡張子に合う Content-Type になる", () => {
+    writeFileSync(
+      join(dir, "character.json"),
+      JSON.stringify({ portraits: { default: "default.svg" }, diaryFont: "shodo.woff2" }),
+    )
+    // 中身は見ないので、書体ファイルの実物は使わない（架空のバイト列で足りる）。
+    writeFileSync(join(dir, "shodo.woff2"), "not a real font, just bytes")
+
+    const file = readCharacterPackFile(readCharacterPack(dir), "shodo.woff2")
+
+    expect(file?.contentType).toBe("font/woff2")
+    expect(file?.content.toString("utf8")).toBe("not a real font, just bytes")
   })
 
   it("定義に無いファイル名は undefined（呼び出し側が404にする）", () => {

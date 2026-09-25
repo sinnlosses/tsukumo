@@ -240,6 +240,36 @@ describe("toCharacterInfo", () => {
     ).toBeUndefined()
   })
 
+  it("diaryFont があればその URL（無いパックでは undefined。face と同じくフォールバックしない）", () => {
+    const withFont = parseCharacterDefinition(
+      JSON.stringify({ diaryFont: "shodo.woff2", portraits: { default: "default.svg" } }),
+    )
+    const withoutFont = parseCharacterDefinition(
+      JSON.stringify({ portraits: { default: "default.svg" } }),
+    )
+
+    expect(
+      withFont === undefined
+        ? undefined
+        : toCharacterInfo({
+            definition: withFont,
+            pack: "fictional",
+            revision: "2",
+            editable: true,
+          }).diaryFont,
+    ).toBe("/character/fictional/shodo.woff2?v=2")
+    expect(
+      withoutFont === undefined
+        ? undefined
+        : toCharacterInfo({
+            definition: withoutFont,
+            pack: "fictional",
+            revision: "2",
+            editable: true,
+          }).diaryFont,
+    ).toBeUndefined()
+  })
+
   it("背景も /character/<pack>/<file> の URL にする（覆いの濃さはそのまま）", () => {
     const definition = parseCharacterDefinition(
       JSON.stringify({ background: { image: "background.png", veil: 0.8 } }),
@@ -307,6 +337,7 @@ describe("toCharacterInfo", () => {
     expect(info.tagline).toBeUndefined()
     expect(info.outfitAccents.default).toBeUndefined()
     expect(info.background).toBeUndefined()
+    expect(info.diaryFont).toBeUndefined()
     expect(info.editable).toBe(false)
   })
 })

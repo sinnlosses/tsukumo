@@ -186,6 +186,13 @@ export type SessionProviderProps = {
   readonly children: ReactNode
 }
 
+/**
+ * パックが差す日記の書体を FontFace API に登録する名前。**固定の1つ**でよい
+ * （常に「いまのパック」の1件しか同時に登録しないので、パックごとに名前を分ける必要が無い。
+ * 切り替えたときは古い方を `document.fonts.delete` してから差し替える）。
+ */
+const DIARY_FONT_FAMILY_NAME = "tsukumo-diary"
+
 export function SessionProvider(props: SessionProviderProps): ReactElement {
   // store は1つのままにする（作り直すと購読も姿も切れる）。
   const [store] = useState(createSessionStore)
@@ -250,6 +257,41 @@ export function SessionProvider(props: SessionProviderProps): ReactElement {
     style.setProperty("--character-background-image", `url("${backgroundImage}")`)
     style.setProperty("--character-background-veil", String(backgroundVeil))
   }, [backgroundImage, backgroundVeil])
+
+  // パックが差す日記の書体（`docs/screen-design.md` 13.3「例外は日記の本文だけ」）。
+  // `background-image` と違い `font-family` は `url()` を直接差せないので、**FontFace API で
+  // ブラウザに書体として登録してから**、登録した名前を `--font-diary` に流す（useEffect の4類型の
+  // 「外部からの読み込み」。docs/coding-standards.md「React」節）。読み込めない・無いパックでは
+  // 変数ごと外し、`var()` のフォールバックで `--font-serif`（端末の明朝体）に戻る
+  // （`src/browser/styles/theme.css`）。
+  const diaryFont = useStoreSelector(store, (session) => session.state.character?.diaryFont)
+  useEffect(() => {
+    const style = document.documentElement.style
+    if (diaryFont === undefined) {
+      style.removeProperty("--font-diary")
+      return
+    }
+
+    const face = new FontFace(DIARY_FONT_FAMILY_NAME, `url("${diaryFont}")`)
+    let cancelled = false
+    document.fonts.add(face)
+    face
+      .load()
+      .then(() => {
+        if (!cancelled) {
+          style.setProperty("--font-diary", `"${DIARY_FONT_FAMILY_NAME}", var(--font-serif)`)
+        }
+      })
+      .catch(() => {
+        // 壊れている・見つからない書体ファイルは既定の明朝体のまま（常駐プロセスは描画1回の
+        // 失敗で落ちない。docs/coding-standards.md）。
+      })
+    return () => {
+      cancelled = true
+      document.fonts.delete(face)
+      style.removeProperty("--font-diary")
+    }
+  }, [diaryFont])
 
   return <SessionStoreContext.Provider value={store}>{props.children}</SessionStoreContext.Provider>
 }

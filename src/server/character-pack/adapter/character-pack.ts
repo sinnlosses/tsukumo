@@ -24,6 +24,7 @@ import {
   type CharacterDefinition,
   parseCharacterDefinition,
 } from "../../../shared/character-definition.ts"
+import { diaryFontMimeType } from "../../../shared/character-diary-font.ts"
 import {
   type CharacterPackEntry,
   type CharacterPackRemoval,
@@ -269,9 +270,9 @@ export function readCharacterPackFile(
 }
 
 /**
- * character.json の `portraits` `mini` `face` `background` に載っているファイル名の一覧
- * （重複なし）。**顔もミニ立ち絵も背景も同じ経路（`/character/<pack>/<file>`）で配る**ので、
- * ここに入れないと 404 になる。
+ * character.json の `portraits` `mini` `face` `background` `diaryFont` に載っているファイル名の
+ * 一覧（重複なし）。**顔もミニ立ち絵も背景も日記の書体も同じ経路（`/character/<pack>/<file>`）で
+ * 配る**ので、ここに入れないと 404 になる。
  */
 function characterPackFileNames(pack: CharacterPack): readonly string[] {
   if (pack.definition === undefined) {
@@ -283,6 +284,7 @@ function characterPackFileNames(pack: CharacterPack): readonly string[] {
     pack.definition.mini,
     pack.definition.face,
     pack.definition.background?.image,
+    pack.definition.diaryFont,
   ].filter(isDefined)
   return [...new Set(fileNames)]
 }
@@ -330,7 +332,12 @@ function characterAssetContentType(fileName: string): string | undefined {
   if (kind === "svg") {
     return "image/svg+xml; charset=utf-8"
   }
-  return kind === "raster" ? rasterMimeType(fileName) : undefined
+  if (kind === "raster") {
+    return rasterMimeType(fileName)
+  }
+  // 立ち絵・背景の拡張子でなければ、日記の書体（woff2 / woff / ttf / otf）かどうかを見る
+  // （`characterPackFileNames` の allowlist を通ったファイル名だけがここに来る）。
+  return diaryFontMimeType(fileName)
 }
 
 function isDefined<T>(value: T | undefined): value is T {

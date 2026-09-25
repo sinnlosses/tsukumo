@@ -141,7 +141,8 @@
   cursor: pointer;
 }
 
-/* 吹き出し（明朝体。13.3「例外は日記の本文だけ」）。 */
+/* 吹き出し（明朝体。13.3「例外は日記の本文だけ」。パックが書体を同梱すれば `--font-diary` が
+   それに差し替わる）。 */
 .achievement-diary-bubble {
   position: relative;
   padding: 0.9rem 1.25rem;
@@ -151,7 +152,7 @@
 }
 .achievement-diary-bubble p {
   margin: 0;
-  font-family: var(--font-serif);
+  font-family: var(--font-diary);
   font-size: var(--font-body);
   line-height: 2;
   color: var(--ink);
@@ -166,7 +167,7 @@
 }
 .achievement-diary-bubble-empty p {
   margin: 0;
-  font-family: var(--font-serif);
+  font-family: var(--font-diary);
   font-size: var(--font-body);
   line-height: 1.8;
   color: var(--ink-quiet);
@@ -785,7 +786,7 @@
 .diary-book-paragraph {
   margin: 0;
   margin-block-end: 1.5em;
-  font-family: var(--font-serif);
+  font-family: var(--font-diary);
   font-size: var(--font-body);
   line-height: 2.4;
   color: var(--ink);
@@ -802,7 +803,7 @@
   flex: 1;
   min-height: 0;
   margin: 0;
-  font-family: var(--font-serif);
+  font-family: var(--font-diary);
   font-size: var(--font-body);
   line-height: 2.4;
   color: var(--ink-quiet);

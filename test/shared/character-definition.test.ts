@@ -161,6 +161,20 @@ describe("parseCharacterDefinition", () => {
     ).toBeUndefined()
   })
 
+  it("diaryFont（日記の書体のファイル名）を読む。無い・壊れた値・パックの外を指す値は undefined", () => {
+    expect(parseCharacterDefinition(JSON.stringify({ diaryFont: "shodo.woff2" }))?.diaryFont).toBe(
+      "shodo.woff2",
+    )
+    expect(parseCharacterDefinition(FULL_DEFINITION_JSON)?.diaryFont).toBeUndefined()
+    expect(parseCharacterDefinition(JSON.stringify({ diaryFont: 3 }))?.diaryFont).toBeUndefined()
+    expect(
+      parseCharacterDefinition(JSON.stringify({ diaryFont: "../evil.woff2" }))?.diaryFont,
+    ).toBeUndefined()
+    expect(
+      parseCharacterDefinition(JSON.stringify({ diaryFont: "shodo.png" }))?.diaryFont,
+    ).toBeUndefined()
+  })
+
   it("portraits / outfitAccents が無い・型が違っても、キーはすべて undefined として持つ", () => {
     const definition = parseCharacterDefinition(JSON.stringify({ portraits: "not an object" }))
 

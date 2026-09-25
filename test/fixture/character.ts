@@ -43,6 +43,7 @@ export function characterInfo(overrides: Partial<CharacterInfo> = {}): Character
     miniCall: undefined,
     outfitAccents: shownOutfitAccents(),
     background: undefined,
+    diaryFont: undefined,
     editable: true,
     ...overrides,
   }
@@ -99,6 +100,7 @@ export function characterDefinition(
     outfitAccents: outfitAccents(),
     background: undefined,
     visit: undefined,
+    diaryFont: undefined,
     ...overrides,
   }
 }

@@ -118,6 +118,11 @@
   /* 唯一の例外（13.3）: 成果の画面（13.10）の日記の本文だけ、端末に入っている明朝体の名前を
      並べ、最後を `serif` に落とす。外部フォントは足さない。 */
   --font-serif: "Hiragino Mincho ProN", "Yu Mincho", "YuMincho", "Noto Serif JP", serif;
+  /* 日記の本文が実際に使う書体（13.3）。**既定は `--font-serif` そのもの**で、キャラクターパックが
+     書体を同梱していれば `src/browser/stores/session.tsx` がここだけを上書きする
+     （FontFace で読み込めた登録名 → `--font-serif` の順に並べたフォールバック）。書体を持たない
+     パックはこの変数を触らないので、既定のまま端末の明朝体になる。 */
+  --font-diary: var(--font-serif);
 
   /* 画面の縁の余白（body の padding）。**帯（13.9）はこの余白の外へはみ出して画面の端から端まで
      出る**ので、帯（screen-nav.module.css）と会話の画面の grid（layout.module.css）も読む。 */

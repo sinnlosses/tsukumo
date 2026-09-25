@@ -122,6 +122,7 @@ const FIXTURE_CHARACTER: CharacterInfo = {
   miniCall: undefined,
   outfitAccents: { default: undefined, light: undefined, normal: undefined, heavy: undefined },
   background: undefined,
+  diaryFont: undefined,
   editable: false,
 }
 
