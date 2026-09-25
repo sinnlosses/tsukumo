@@ -13,6 +13,7 @@ import { type ReactElement } from "react"
 
 import { EXPRESSIONS } from "../../../../shared/expression.ts"
 import { Heading } from "../../../components/ui/heading/heading.tsx"
+import { Text } from "../../../components/ui/text/text.tsx"
 import { VStack } from "../../../components/ui/v-stack/v-stack.tsx"
 import { usePackHref } from "../../../stores/screen.tsx"
 import { useSessionSelector } from "../../../stores/session.tsx"
@@ -32,7 +33,9 @@ export function CharacterList(props: { readonly onCreate: () => void }): ReactEl
         <Heading level={2} size="body" tone="inherit" weight="bold" className="">
           キャラクター
         </Heading>
-        <span className={styles["character-list-count"]}>{packs.length}</span>
+        <Text element="span" size="action" tone="ink-quiet" weight="inherit" className="">
+          {packs.length}
+        </Text>
       </div>
       {packs.map((entry) => {
         const count = entry.character.expressionsWithPortrait.length
@@ -40,12 +43,13 @@ export function CharacterList(props: { readonly onCreate: () => void }): ReactEl
           count === EXPRESSIONS.length
             ? `表情 ${String(count)}`
             : `表情 ${String(count)} / ${String(EXPRESSIONS.length)}`
+        const isSelected = entry.name === selectedName
         return (
           <a
             key={entry.name}
             className={styles["character-list-row"]}
             href={packHref(entry.name)}
-            aria-current={entry.name === selectedName ? "page" : undefined}
+            aria-current={isSelected ? "page" : undefined}
           >
             {entry.character.face === undefined ? (
               <span className={styles["character-list-face-blank"]} />
@@ -60,10 +64,18 @@ export function CharacterList(props: { readonly onCreate: () => void }): ReactEl
               wrap="nowrap"
               className={styles["character-list-text"] ?? ""}
             >
-              <span className={styles["character-list-name"]}>{entry.label}</span>
-              <span className={styles["character-list-meta"]}>
+              <Text
+                element="span"
+                size="subheading"
+                tone="inherit"
+                weight={isSelected ? "bold" : "normal"}
+                className={styles["character-list-name"] ?? ""}
+              >
+                {entry.label}
+              </Text>
+              <Text element="span" size="label" tone="ink-quiet" weight="inherit" className="">
                 {entry.inUse ? `${countText} · 使用中` : countText}
-              </span>
+              </Text>
             </VStack>
           </a>
         )

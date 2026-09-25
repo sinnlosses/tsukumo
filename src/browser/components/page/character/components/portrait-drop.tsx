@@ -8,6 +8,7 @@
 
 import { type DragEvent, type ReactElement } from "react"
 
+import { Text } from "../../../../components/ui/text/text.tsx"
 import styles from "../character-screen.module.css"
 import { type PortraitDropModel } from "../hooks/use-character-create.ts"
 import { UploadIcon } from "./action-icon.tsx"
@@ -48,7 +49,9 @@ export function PortraitDrop(props: { readonly drop: PortraitDropModel }): React
         onDrop={onDrop}
       >
         <img className={styles["character-create-portrait-image"]} src={drop.image.url} alt="" />
-        <span className={styles["character-card-blank-hint"]}>差し替えるにはもう一度選ぶ</span>
+        <Text element="span" size="label" tone="inherit" weight="inherit" className="">
+          差し替えるにはもう一度選ぶ
+        </Text>
         {fileInput}
       </label>
     )
@@ -63,12 +66,14 @@ export function PortraitDrop(props: { readonly drop: PortraitDropModel }): React
       <span className={styles["character-card-plus"]}>
         <UploadIcon />
       </span>
-      <span className={styles["character-card-blank-label"]}>いつもの顔の立ち絵</span>
-      <span className={styles["character-card-blank-hint"]}>
+      <Text element="span" size="secondary" tone="ink" weight="inherit" className="">
+        いつもの顔の立ち絵
+      </Text>
+      <Text element="span" size="label" tone="inherit" weight="inherit" className="">
         画像をドロップ、または押して選ぶ
         <br />
         ほかの表情はあとから足せます
-      </span>
+      </Text>
       {fileInput}
     </label>
   )

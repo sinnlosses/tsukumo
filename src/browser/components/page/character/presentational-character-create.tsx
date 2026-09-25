@@ -12,6 +12,7 @@
 import { type ReactElement } from "react"
 
 import { Heading } from "../../../components/ui/heading/heading.tsx"
+import { Text } from "../../../components/ui/text/text.tsx"
 import { VStack } from "../../../components/ui/v-stack/v-stack.tsx"
 import styles from "./character-screen.module.css"
 import { AccentSwatch } from "./components/accent-swatch.tsx"
@@ -62,7 +63,9 @@ export function PresentationalCharacterCreate({
                 value={form.name}
                 onChange={(event) => form.onNameChange(event.target.value)}
               />
-              <span className={styles["character-create-hint"]}>{form.nameHint}</span>
+              <Text element="span" size="label" tone="ink-quiet" weight="inherit" className="">
+                {form.nameHint}
+              </Text>
             </div>
             <div className={styles["character-create-field"]}>
               <label className={styles["character-create-label"]} htmlFor="character-create-id">
@@ -76,9 +79,19 @@ export function PresentationalCharacterCreate({
                 onChange={(event) => form.onIdChange(event.target.value)}
               />
               {form.idNote.kind === "hint" ? (
-                <span className={styles["character-create-hint"]}>{form.idNote.text}</span>
+                <Text element="span" size="label" tone="ink-quiet" weight="inherit" className="">
+                  {form.idNote.text}
+                </Text>
               ) : (
-                <p className={styles["character-screen-note"]}>{form.idNote.text}</p>
+                <Text
+                  element="p"
+                  size="label"
+                  tone="ink-quiet"
+                  weight="inherit"
+                  className={styles["character-screen-note"] ?? ""}
+                >
+                  {form.idNote.text}
+                </Text>
               )}
             </div>
             <div className={styles["character-create-field"]}>
@@ -91,9 +104,9 @@ export function PresentationalCharacterCreate({
           </div>
         </div>
         <div className={styles["character-create-footer"]}>
-          <span className={styles["character-create-footer-hint"]}>
+          <Text element="span" size="label" tone="ink-quiet" weight="inherit" className="">
             背景と立ち絵の差し色は、作ったあとに設定できます
-          </span>
+          </Text>
           <div className={styles["character-create-footer-spacer"]} />
           <button type="button" className={styles["character-button"]} onClick={onClose}>
             やめる

@@ -29,10 +29,7 @@
   justify-content: space-between;
   padding: 0 0.25rem 0.25rem;
 }
-.character-list-count {
-  color: var(--ink-quiet);
-  font-size: var(--font-action);
-}
+/* 字の段・色は `Text`（size="action" tone="ink-quiet" weight="inherit"）が持つ。 */
 .character-list-row {
   display: flex;
   align-items: center;
@@ -50,9 +47,6 @@
 .character-list-row[aria-current="page"] {
   background: var(--surface-accent);
   border-color: color-mix(in srgb, var(--surface), var(--accent) 35%);
-}
-.character-list-row[aria-current="page"] .character-list-name {
-  font-weight: bold;
 }
 .character-list-row:focus-visible {
   outline: 2px solid var(--accent);
@@ -81,16 +75,14 @@
 .character-list-text {
   min-width: 0;
 }
+/* 字の段・太さは `Text`（size="subheading" tone="inherit"。太さは選んでいる行だけ "bold"、ほかは
+   "normal"）が持つ。1行で切る組みだけここに残す（語彙に無い見た目）。 */
 .character-list-name {
   overflow: hidden;
-  font-size: var(--font-subheading);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.character-list-meta {
-  color: var(--ink-quiet);
-  font-size: var(--font-label);
-}
+/* 字の段・色は `Text`（size="label" tone="ink-quiet" weight="inherit"）が持つ。 */
 .character-list-new {
   display: flex;
   align-items: center;
@@ -164,10 +156,10 @@
   letter-spacing: 0.06em;
 }
 /* パックの名前はディレクトリ名なので等幅（13.1 原則3）。 */
+/* 字の段・色は `Text`（size="action" tone="ink-quiet" weight="inherit"）が持つ。書体だけここに
+   残す（語彙に無い見た目）。 */
 .character-profile-id {
-  color: var(--ink-quiet);
   font-family: var(--font-mono);
-  font-size: var(--font-action);
 }
 .character-in-use {
   padding: 0.1rem 0.55rem;
@@ -177,10 +169,7 @@
   font-size: var(--font-label);
   font-weight: bold;
 }
-.character-profile-tagline {
-  color: var(--ink-quiet);
-  font-size: var(--font-secondary);
-}
+/* 字の段・色は `Text`（size="secondary" tone="ink-quiet" weight="inherit"）が持つ。 */
 /* 「名前とプロフィールを変える」と「このキャラクターに切り替える」の並び（右端に寄せる）。 */
 /* 並べ・間隔（`gap="sm"`）・揃え・折り返しは `HStack` が持つ。 */
 .character-profile-actions {
@@ -198,11 +187,10 @@
 .character-section-bar > :last-child {
   margin-left: auto;
 }
+/* 字の段・色・太さは `Text`（size="action" tone="ink-quiet" weight="normal"）が持つ。margin だけ
+   ここに残す（既定の 0 と違うため）。 */
 .character-section-note {
   margin-left: 0.6rem;
-  color: var(--ink-quiet);
-  font-size: var(--font-action);
-  font-weight: normal;
 }
 .character-section-bar > .character-section-note {
   margin-left: auto;
@@ -357,13 +345,8 @@
   color: var(--accent);
   border-radius: 50%;
 }
-.character-card-blank-label {
-  color: var(--ink);
-  font-size: var(--font-secondary);
-}
-.character-card-blank-hint {
-  font-size: var(--font-label);
-}
+/* 字の段・色は `Text`（size="secondary" tone="ink" weight="inherit"）が持つ。 */
+/* 字の段は `Text`（size="label" tone="inherit" weight="inherit"）が持つ。 */
 /* 見えないが読み上げとクリック・フォーカスの対象には残す（`display: none` にすると `<label>` から
    たどれなくなる）。 */
 .character-card-file {
@@ -412,14 +395,10 @@
   background: var(--ground);
   border-radius: 0.5rem;
 }
-.character-clear-confirm-question {
-  font-size: var(--font-secondary);
-  font-weight: bold;
-}
+/* 字の段・太さは `Text`（size="secondary" tone="inherit" weight="bold"）が持つ。 */
+/* 字の段・色は `Text`（size="action" tone="ink-quiet" weight="inherit"）が持つ。行の高さだけここに
+   残す（語彙に無い見た目）。 */
 .character-clear-confirm-note {
-  margin: 0;
-  color: var(--ink-quiet);
-  font-size: var(--font-action);
   line-height: 1.7;
 }
 /* 並べ・間隔（`gap="sm"`）・揃えは `HStack` が持つ。 */
@@ -508,20 +487,18 @@
   border-radius: 7px;
 }
 /* 並べ（`gap="none"`）は `VStack` が持つ。 */
+/* 字の段は `Text`（size="secondary" tone="inherit" weight="inherit"）が持つ。幅だけここに残す
+   （語彙に無い見た目）。 */
 .character-swatch-name {
   min-width: 0;
-  font-size: var(--font-secondary);
 }
-.character-swatch-sublabel {
-  color: var(--ink-quiet);
-  font-size: var(--font-label);
-}
+/* 字の段・色は `Text`（size="label" tone="ink-quiet" weight="inherit"）が持つ。 */
+/* 字の段・色は `Text`（size="label" tone="ink-quiet" weight="inherit"）が持つ。margin・1行で
+   切る組み・書体だけここに残す（語彙に無い見た目）。 */
 .character-swatch-hex {
   margin-left: auto;
   white-space: nowrap;
-  color: var(--ink-quiet);
   font-family: var(--font-mono);
-  font-size: var(--font-label);
 }
 /* 「雑談も仕事と同じにする」。字だけの口（差し色の字。13.1 原則1 の「差し色は指さす1箇所」）。 */
 .character-link-button {
@@ -559,10 +536,7 @@
 .character-face-field-blank {
   border: 1.5px dashed var(--rule);
 }
-/* 並べ・間隔（`gap="sm"`）は `VStack` が持つ。 */
-.character-face-field-side {
-  font-size: var(--font-secondary);
-}
+/* 並べ・間隔（`gap="sm"`）は `VStack` が持つ。字の段は中の `Text`（size="secondary"）が持つ。 */
 /* 並べ・間隔（`gap="sm"`）・折り返しは `HStack` が持つ。 */
 
 /* 背景（13.8）。**敷いたときと同じ切り取り方**（cover・下端合わせ）の縮図と、字と2つの口。 */
@@ -584,10 +558,7 @@
 .character-background-blank {
   border: 1.5px dashed var(--rule);
 }
-/* 並べ・間隔（`gap="sm"`）は `VStack` が持つ。 */
-.character-background-side {
-  font-size: var(--font-secondary);
-}
+/* 並べ・間隔（`gap="sm"`）は `VStack` が持つ。字の段は中の `Text`（size="secondary"）が持つ。 */
 /* 並べ・間隔（`gap="sm"`）・折り返しは `HStack` が持つ。 */
 
 /* 字つきの口（背景の差し替える・消す、このキャラクターに切り替える、名前とプロフィールを変える）。 */
@@ -617,13 +588,13 @@
 }
 
 /* 変えられないパックのとき・名前が使えないときの一言。 */
+/* 字の段・色は `Text`（size="label" tone="ink-quiet" weight="inherit"）が持つ。並べ・間隔・margin
+   だけここに残す（語彙に無い見た目）。 */
 .character-screen-note {
   display: flex;
   align-items: center;
   gap: 0.5rem;
   margin: 0;
-  color: var(--ink-quiet);
-  font-size: var(--font-label);
 }
 
 /* このキャラクターを消す／同梱に戻す帯（`components/character-delete.tsx`。13.6「このキャラクターを
@@ -646,15 +617,8 @@
   gap: 0.15rem;
   min-width: 0;
 }
-.character-delete-band-heading {
-  font-size: var(--font-secondary);
-  font-weight: bold;
-  color: var(--state-ng);
-}
-.character-delete-band-note {
-  color: var(--ink-quiet);
-  font-size: var(--font-action);
-}
+/* 字の段・色・太さは `Text`（size="secondary" tone="state-ng" weight="bold"）が持つ。 */
+/* 字の段・色は `Text`（size="action" tone="ink-quiet" weight="inherit"）が持つ。 */
 
 /* 消す／同梱に戻す前の確かめ（`components/character-delete-confirm.tsx`）。作るダイアログと同じ
    UA 既定の中央寄せで、画面全体を覆う。 */
@@ -695,10 +659,9 @@
   background: var(--ground);
   border: 1px dashed var(--rule);
 }
+/* 字の段・色は `Text`（size="secondary" tone="ink-quiet" weight="inherit"）が持つ。行の高さ・
+   改行の扱いだけここに残す（語彙に無い見た目）。 */
 .character-delete-note {
-  margin: 0;
-  color: var(--ink-quiet);
-  font-size: var(--font-secondary);
   line-height: 1.8;
   white-space: pre-line;
 }
@@ -810,10 +773,7 @@
 .character-create-input-mono {
   font-family: var(--font-mono);
 }
-.character-create-hint {
-  color: var(--ink-quiet);
-  font-size: var(--font-label);
-}
+/* 字の段・色は `Text`（size="label" tone="ink-quiet" weight="inherit"）が持つ。 */
 .character-create-footer {
   display: flex;
   flex-wrap: wrap;
@@ -822,10 +782,7 @@
   padding-top: 1rem;
   border-top: 1px solid var(--rule-quiet);
 }
-.character-create-footer-hint {
-  color: var(--ink-quiet);
-  font-size: var(--font-label);
-}
+/* 字の段・色は `Text`（size="label" tone="ink-quiet" weight="inherit"）が持つ。 */
 .character-create-footer-spacer {
   flex: 1 1 auto;
 }

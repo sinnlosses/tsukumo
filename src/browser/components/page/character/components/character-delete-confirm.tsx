@@ -18,6 +18,7 @@
 import { useState, type MouseEvent, type ReactElement } from "react"
 
 import { Heading } from "../../../../components/ui/heading/heading.tsx"
+import { Text } from "../../../../components/ui/text/text.tsx"
 import { VStack } from "../../../../components/ui/v-stack/v-stack.tsx"
 import { useModalDialog } from "../../../../hooks/use-modal-dialog.ts"
 import styles from "../character-screen.module.css"
@@ -63,7 +64,15 @@ export function CharacterDeleteConfirm(props: CharacterDeleteConfirmProps): Reac
             {band.dialogHeading}
           </Heading>
         </div>
-        <p className={styles["character-delete-note"]}>{band.dialogNote}</p>
+        <Text
+          element="p"
+          size="secondary"
+          tone="ink-quiet"
+          weight="inherit"
+          className={styles["character-delete-note"] ?? ""}
+        >
+          {band.dialogNote}
+        </Text>
         <div className={styles["character-delete-field"]}>
           <label className={styles["character-delete-label"]} htmlFor="character-delete-id">
             確かめのため、id を入力してください

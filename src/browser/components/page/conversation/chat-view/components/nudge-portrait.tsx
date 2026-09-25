@@ -21,6 +21,7 @@ import { useId, type ReactElement } from "react"
 
 import { type Expression, type Outfit } from "../../../../../../shared/expression.ts"
 import { Portrait } from "../../../../../components/domain/portrait.tsx"
+import { Text } from "../../../../../components/ui/text/text.tsx"
 import styles from "../chat-view.module.css"
 
 /**
@@ -67,8 +68,10 @@ export function NudgePortrait(props: {
           見た目ではなく木の中に在るかで決まるので、`display: none` ではなく透明にして隠す）。
           **ターン進行中は木からも消す** — 押せないうえに、代わりに出す字を持たない。 */}
       {!props.turnInProgress && (
-        <span className={styles["chat-poke-hint"]} id={hintId}>
-          {NUDGE_HINT}
+        <span className={styles["chat-poke-hint"]}>
+          <Text element="span" size="secondary" tone="ink-quiet" weight="inherit" className="">
+            <span id={hintId}>{NUDGE_HINT}</span>
+          </Text>
         </span>
       )}
     </button>

@@ -11,6 +11,7 @@
 
 import { useState, type ReactElement } from "react"
 
+import { Text } from "../../../../components/ui/text/text.tsx"
 import styles from "../character-screen.module.css"
 import { type CharacterDeleteBandModel } from "../hooks/use-character-edit.ts"
 import { TrashIcon } from "./action-icon.tsx"
@@ -33,10 +34,12 @@ export function CharacterDelete(props: {
         aria-labelledby="character-delete-heading"
       >
         <div className={styles["character-delete-band-text"]}>
-          <span className={styles["character-delete-band-heading"]} id="character-delete-heading">
-            {band.heading}
-          </span>
-          <span className={styles["character-delete-band-note"]}>{band.note}</span>
+          <Text element="span" size="secondary" tone="state-ng" weight="bold" className="">
+            <span id="character-delete-heading">{band.heading}</span>
+          </Text>
+          <Text element="span" size="action" tone="ink-quiet" weight="inherit" className="">
+            {band.note}
+          </Text>
         </div>
         <button
           type="button"

@@ -109,7 +109,7 @@ describe("CharacterScreen", () => {
     renderCharacterScreen()
 
     const list = screen.getByRole("navigation", { name: "キャラクター一覧" })
-    expect(list.querySelector(".character-list-count")?.textContent).toBe("2")
+    expect(list.querySelector(".character-list-heading")?.textContent).toBe("キャラクター2")
     expect(screen.getByRole("button", { name: "新しく作る" })).toBeDefined()
     // 使用中の行は表情の枚数と「使用中」を添え、選ばれている（aria-current）。
     const inUseRow = screen.getByRole("link", { name: /架空の精霊/ })

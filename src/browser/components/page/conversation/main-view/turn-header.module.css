@@ -99,13 +99,13 @@
 /* 1行に収まらないぶんは省略し、全文はボタンの `title` で読ませる（`domain/turn-title.ts` は
    切らない）。字の段は「区画の見出し・強調した要約」（`docs/screen-design.md` 13.3。理由はそちらに
    書く）で、太字で本文と区別する。 */
+/* 字の段・太さは `Text`（size="subheading" tone="inherit" weight="bold"）が持つ。1行で切る組み・
+   幅だけここに残す（語彙に無い見た目）。 */
 .turn-title-text {
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
   min-width: 0;
-  font-size: var(--font-subheading);
-  font-weight: 700;
 }
 /* 下向きの矢印。**字（`⌄`）ではなく線画**にする — 字は書体ごとに太さも高さも変わり、
    プルダウンの矢印（`components/ui/select/select.module.css`）と揃わない。形はそれと同じものを
@@ -140,10 +140,10 @@
   background: var(--surface);
   font-size: var(--font-secondary);
 }
+/* 字の色・太さは `Text`（size="inherit" tone="ink-quiet" weight="semibold"）が持つ。margin だけ
+   ここに残す（既定の 0 と違うため）。 */
 .turn-history-heading {
   margin: 0 0 0.4rem;
-  color: var(--ink-quiet);
-  font-weight: 600;
 }
 .turn-history-rows {
   display: flex;
@@ -188,16 +188,17 @@
   border-color: var(--accent);
   background: var(--surface-accent);
 }
+/* 色は `Text`（size="inherit" tone="accent" weight="inherit"）が持つ。伸び縮みだけここに残す
+   （語彙に無い見た目）。 */
 .turn-history-mark {
   flex: none;
-  color: var(--accent);
 }
+/* 字の段・色は `Text`（size="secondary" tone="ink-quiet" weight="inherit"）が持つ。伸び縮み・幅・
+   書体だけここに残す（語彙に無い見た目）。 */
 .turn-history-position {
   flex: none;
   min-width: 3.2em;
-  color: var(--ink-quiet);
   font-family: var(--font-mono);
-  font-size: var(--font-secondary);
 }
 /* 依頼の全文。選択してコピーするための、ただの文字（ボタンではない）。改行を保ったまま見せ、
    長い行は折り返す（横スクロールを出さない）。 */
@@ -218,10 +219,10 @@
 }
 /* 「n / N」は機械が振った番号なので等幅（13.1 原則3）。本文の 1.75 を継ぐと前後の口（24px）
    より高くなり、頭の高さを右端が押し上げるので 1 に詰める。 */
+/* 字の段・色は `Text`（size="secondary" tone="ink-quiet" weight="inherit"）が持つ。書体・行の
+   高さ・折り返さない組みだけここに残す（語彙に無い見た目）。 */
 .turn-position {
-  color: var(--ink-quiet);
   font-family: var(--font-mono);
-  font-size: var(--font-secondary);
   line-height: 1;
   white-space: nowrap;
 }

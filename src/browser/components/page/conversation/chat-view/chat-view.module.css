@@ -84,6 +84,8 @@
    （立ち絵に重なるうえ、背景のあるパックでは絵の上に字が乗るため。13.8「文字が乗る要素の地は
    不透明を保つ」）。出し入れの間だけ地も一緒に薄まるが、**留まる状態は 0 か 1 のどちらか**
    なので、読める状態の地は常に不透明のまま。 */
+/* 字の段・色は `Text`（size="secondary" tone="ink-quiet" weight="inherit"）が持つ。箱（置き方・
+   余白・角丸・地・出し入れ）・行の高さ・字揃えだけここに残す（語彙に無い見た目）。 */
 .chat-poke-hint {
   position: absolute;
   bottom: calc(var(--chat-portrait-drop) + 0.6rem);
@@ -94,8 +96,6 @@
   transform: translateX(-50%);
   border-radius: 1rem;
   background: var(--ground);
-  color: var(--ink-quiet);
-  font-size: var(--font-secondary);
   line-height: var(--line-height-body);
   text-align: center;
   opacity: 0;
@@ -310,14 +310,14 @@
    末尾から立ち絵へ移った。docs/screen-design.md 13.7）。**地は `.chat-poke-hint` と同じ理由で
    `ground` 一色を1枚**（背景の絵を字の背後に回り込ませない。13.8）。余白と角丸はその1枚の
    ためのもので、背景の無いパックでは地と同じ色なので見えない。 */
+/* 字の段・色は `Text`（size="secondary" tone="ink-quiet" weight="inherit"）が持つ。箱（置き方・
+   余白・角丸・地）だけここに残す（語彙に無い見た目）。 */
 .chat-empty {
   align-self: center;
   margin: auto 0;
   padding: 0.2rem 0.7rem;
   border-radius: 0.8rem;
   background: var(--ground);
-  color: var(--ink-quiet);
-  font-size: var(--font-secondary);
 }
 
 /* 狭い画面（docs/requirements.md 4.7）。立ち絵を小さくしてログの幅を残す。 */

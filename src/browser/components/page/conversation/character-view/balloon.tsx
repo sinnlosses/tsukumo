@@ -11,6 +11,7 @@
 
 import { type ReactElement } from "react"
 
+import { Text } from "../../../../components/ui/text/text.tsx"
 import styles from "./character-view.module.css"
 
 export type BalloonProps = {
@@ -25,7 +26,15 @@ export function Balloon(props: BalloonProps): ReactElement {
   return (
     <div className={styles["balloon"]} data-latest={props.latest}>
       {props.speaker !== undefined && (
-        <span className={styles["balloon-speaker"]}>{props.speaker}</span>
+        <Text
+          element="span"
+          size="label"
+          tone="accent"
+          weight="bold"
+          className={styles["balloon-speaker"] ?? ""}
+        >
+          {props.speaker}
+        </Text>
       )}
       <span className={styles["balloon-text"]}>{props.text}</span>
     </div>

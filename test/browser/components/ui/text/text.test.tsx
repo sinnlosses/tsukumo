@@ -76,6 +76,7 @@ describe("Text", () => {
   it.each([
     ["p", "P"],
     ["span", "SPAN"],
+    ["summary", "SUMMARY"],
   ] as const)("element: %s は %s を描く", (elementProp, tagName) => {
     const element = renderedElement({ ...BASE_PROPS, element: elementProp })
     expect(element.tagName).toBe(tagName)

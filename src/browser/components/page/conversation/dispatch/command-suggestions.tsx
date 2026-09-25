@@ -13,6 +13,7 @@ import { type ReactElement } from "react"
 import { prop, sortBy } from "remeda"
 
 import { type CommandDescription } from "../../../../../shared/session-event.ts"
+import { Text } from "../../../../components/ui/text/text.tsx"
 import styles from "./dispatch.module.css"
 
 export const MAX_COMMAND_SUGGESTIONS = 10
@@ -78,7 +79,15 @@ export function CommandSuggestions(props: CommandSuggestionsProps): ReactElement
         >
           <span className={styles["dispatch-suggestion-name"]}>/{command.name}</span>
           {command.description === undefined || command.description === "" ? null : (
-            <span className={styles["dispatch-suggestion-description"]}>{command.description}</span>
+            <Text
+              element="span"
+              size="secondary"
+              tone="ink-quiet"
+              weight="inherit"
+              className={styles["dispatch-suggestion-description"] ?? ""}
+            >
+              {command.description}
+            </Text>
           )}
         </li>
       ))}

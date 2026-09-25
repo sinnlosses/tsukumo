@@ -21,6 +21,7 @@ import { type ReactElement } from "react"
 
 import { type ContextUsageItem } from "../../../../shared/context-usage.ts"
 import { HStack } from "../../../components/ui/h-stack/h-stack.tsx"
+import { Text } from "../../../components/ui/text/text.tsx"
 import { type ContextUsageRow, type UseContextUsageResult } from "../../../domain/context-usage.ts"
 import { clockTime, localTimeZoneId, zonedDateTime } from "../../../utils/clock.ts"
 import { formatCount } from "../../../utils/format-count.ts"
@@ -48,7 +49,11 @@ export function ContextUsageCard(props: ContextUsageCardProps): ReactElement {
     return <ContextUsageCardSkeleton />
   }
   if (card.kind === "unavailable") {
-    return <p className={styles["token-usage-note"]}>{UNAVAILABLE_NOTE}</p>
+    return (
+      <Text element="p" size="label" tone="ink-quiet" weight="inherit" className="">
+        {UNAVAILABLE_NOTE}
+      </Text>
+    )
   }
 
   return (

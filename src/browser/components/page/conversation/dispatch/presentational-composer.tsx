@@ -8,6 +8,7 @@ import { type ReactElement } from "react"
 
 import { PROMPT_IMAGE_MEDIA_TYPES } from "../../../../../shared/prompt-image.ts"
 import { PromptImageChips } from "../../../../components/domain/prompt-image.tsx"
+import { Text } from "../../../../components/ui/text/text.tsx"
 import { VStack } from "../../../../components/ui/v-stack/v-stack.tsx"
 import { CommandSuggestions } from "./command-suggestions.tsx"
 import styles from "./dispatch.module.css"
@@ -50,7 +51,17 @@ export function PresentationalComposer({
       onSubmit={onSubmit}
     >
       {/* 質問に答えている間だけ出る帯（誰が聞いているか。`hooks/use-composer.ts`）。 */}
-      {band.kind === "question" && <p className={styles["dispatch-band"]}>{band.text}</p>}
+      {band.kind === "question" && (
+        <Text
+          element="p"
+          size="secondary"
+          tone="state-warn"
+          weight="inherit"
+          className={styles["dispatch-band"] ?? ""}
+        >
+          {band.text}
+        </Text>
+      )}
       <VStack
         element="div"
         gap="none"

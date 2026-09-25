@@ -12,6 +12,7 @@
 import { type ReactElement, type ReactNode } from "react"
 
 import { HStack } from "../../../../components/ui/h-stack/h-stack.tsx"
+import { Text } from "../../../../components/ui/text/text.tsx"
 import { Balloon } from "./balloon.tsx"
 import styles from "./character-view.module.css"
 import { type SpeechLogEntry, type SpeechLogModel } from "./hooks/use-speech-log.ts"
@@ -87,7 +88,15 @@ export function PresentationalSpeechLog({
               {MORE_LABEL}
             </p>
             {entries.length === 0 ? (
-              <p className={styles["speech-log-empty"]}>{EMPTY_MESSAGE}</p>
+              <Text
+                element="p"
+                size="secondary"
+                tone="ink-quiet"
+                weight="inherit"
+                className={styles["speech-log-empty"] ?? ""}
+              >
+                {EMPTY_MESSAGE}
+              </Text>
             ) : (
               <ol className={styles["speech-log-entries"]}>
                 {entries.map((entry) => (

@@ -34,17 +34,16 @@
   font-size: var(--font-label);
   font-weight: 700;
 }
+/* 字の段・色は `Text`（size="secondary" tone="ink-quiet" weight="inherit"）が持つ。伸び縮みだけ
+   ここに残す（語彙に無い見た目）。 */
 .question-ask-header {
   flex: 1 1 auto;
   min-width: 0;
-  font-size: var(--font-secondary);
-  color: var(--ink-quiet);
 }
-/* 「n / N」は行の右端へ寄せる（チップと header のあとに残った幅の端）。 */
+/* 「n / N」は行の右端へ寄せる（チップと header のあとに残った幅の端）。字の段・色は
+   `Text`（size="label" tone="ink-quiet" weight="inherit"）が持つ。伸び縮みだけここに残す。 */
 .question-ask-progress {
   flex: 0 0 auto;
-  font-size: var(--font-label);
-  color: var(--ink-quiet);
 }
 .question-ask-back,
 .question-ask-to-newest {
@@ -61,9 +60,10 @@
 .question-ask-to-newest:hover {
   border-color: var(--state-warn);
 }
+/* 太さは `Text`（size="inherit" tone="inherit" weight="bold"）が持つ。margin だけここに残す
+   （既定の 0 と違うため）。 */
 .question-ask-text {
   margin: 0 0 0.75rem;
-  font-weight: 700;
 }
 /* 選択肢は横に並べ、**入り切らなければ折り返す**（狭い画面・選択肢が4つのときは1〜2列に
    落ちる。列の幅を先に決めるので、ラベルは自分の列の中で折り返すだけになり横へ溢れない）。 */
@@ -100,34 +100,35 @@
   flex: 0 0 auto;
   accent-color: var(--state-warn);
 }
+/* 太さは `Text`（size="inherit" tone="inherit" weight="bold"）が持つ。伸び縮みだけここに残す
+   （語彙に無い見た目）。 */
 .question-ask-option-label {
   flex: 0 1 auto;
   min-width: 0;
-  font-weight: 700;
 }
 /* ラベル末尾の `(Recommended)` を字から外して載せるバッジ（`stores/question-answer.tsx`）。 */
+/* 字の段・色は `Text`（size="label" tone="state-warn" weight="inherit"）が持つ。箱（枠・角丸・
+   余白）だけここに残す（語彙に無い見た目）。 */
 .question-ask-option-badge {
   flex: 0 0 auto;
   padding: 0.05rem 0.4rem;
   border: 1px solid var(--state-warn);
   border-radius: 0.3rem;
-  color: var(--state-warn);
-  font-size: var(--font-label);
 }
+/* 字の段・色は `Text`（size="secondary" tone="ink-quiet" weight="inherit"）が持つ。margin だけ
+   ここに残す（既定の 0 と違うため）。 */
 .question-ask-option-description {
   margin: 0.35rem 0 0 1.4rem;
-  font-size: var(--font-secondary);
-  color: var(--ink-quiet);
 }
 /* 選択肢ごとの preview（Markdown）は説明の下。レポートと同じ語彙（`.detail-block`）に乗せる。 */
 .question-ask-option .detail-block {
   margin-top: 0.5rem;
 }
 /* 入力欄に書いて記録した答え（まだ送っていない問のぶん）。 */
+/* 字の段・色は `Text`（size="secondary" tone="state-warn" weight="inherit"）が持つ。margin だけ
+   ここに残す（既定の 0 と違うため）。 */
 .question-ask-written {
   margin: 0.6rem 0 0;
-  font-size: var(--font-secondary);
-  color: var(--state-warn);
 }
 /* 下端の行：左に案内、右に「これで答える」。狭い画面では折り返す。 */
 .question-ask-foot {
@@ -138,11 +139,11 @@
   gap: 0.5rem;
   margin-top: 0.75rem;
 }
+/* 字の段・色は `Text`（size="label" tone="ink-quiet" weight="inherit"）が持つ。伸び縮みだけここに
+   残す（語彙に無い見た目）。 */
 .question-ask-hint {
   flex: 1 1 12rem;
   min-width: 0;
-  font-size: var(--font-label);
-  color: var(--ink-quiet);
 }
 /* 札の主目的の口なので、答え待ちの色で塗りつぶす（入力欄の「答える」と対になる）。 */
 .question-ask-answer {

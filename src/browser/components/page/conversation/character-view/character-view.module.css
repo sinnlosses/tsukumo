@@ -144,12 +144,11 @@
    accent を出してよい場所に数える（docs/screen-design.md 13.1 原則1）。本文とは gap ではなく
    margin-bottom で離す（吹き出し内の唯一の要素間隔なので、`.balloon` 側に汎用の gap を
    持たせない）。 */
+/* 字の段・色・太さは `Text`（size="label" tone="accent" weight="bold"）が持つ。margin・字間だけ
+   ここに残す（既定の 0 と違う・語彙に無い見た目）。 */
 .balloon-speaker {
   margin-bottom: 4px;
-  font-size: var(--font-label);
-  font-weight: 700;
   letter-spacing: 0.08em;
-  color: var(--accent);
 }
 /* **最新の1件**（`balloon.tsx` の `data-latest`。キャラビューでは DOM の先頭で、column-reverse で
    視覚上は下端に出る。セリフのログでは並びの末尾）。いま読んでほしい1件だけを
@@ -449,10 +448,10 @@
     opacity: 1;
   }
 }
+/* 字の段・色は `Text`（size="secondary" tone="ink-quiet" weight="inherit"）が持つ。margin だけ
+   ここに残す（既定の 0 と違うため）。 */
 .speech-log-empty {
   margin: auto 0 0;
-  color: var(--ink-quiet);
-  font-size: var(--font-secondary);
 }
 /* 並び本体。転がせないほど短いときは下端に寄せる（`margin-top: auto`。`justify-content: flex-end`
    だと、溢れたときに上端が転がしても届かない側へはみ出す）。 */

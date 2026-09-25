@@ -10,6 +10,7 @@ import { type ReactElement } from "react"
 
 import { HStack } from "../../../components/ui/h-stack/h-stack.tsx"
 import { Heading } from "../../../components/ui/heading/heading.tsx"
+import { Text } from "../../../components/ui/text/text.tsx"
 import styles from "./character-screen.module.css"
 import { AccentSwatch } from "./components/accent-swatch.tsx"
 import { BackgroundField } from "./components/background-field.tsx"
@@ -63,7 +64,15 @@ export function PresentationalCharacterEdit(
                 雑談も仕事と同じにする
               </button>
             ) : (
-              <span className={styles["character-section-note"]}>雑談も仕事と同じ</span>
+              <Text
+                element="span"
+                size="action"
+                tone="ink-quiet"
+                weight="normal"
+                className={styles["character-section-note"] ?? ""}
+              >
+                雑談も仕事と同じ
+              </Text>
             )}
           </HStack>
           <div className={styles["character-swatches-screen"]}>

@@ -11,6 +11,7 @@ import {
 } from "../../../../shared/achievement-calendar.ts"
 import { HStack } from "../../../components/ui/h-stack/h-stack.tsx"
 import { Heading } from "../../../components/ui/heading/heading.tsx"
+import { Text } from "../../../components/ui/text/text.tsx"
 import styles from "./achievement.module.css"
 import { type AchievementCalendarView } from "./hooks/use-achievement-calendar.ts"
 
@@ -49,16 +50,26 @@ export function LanternCalendar(props: LanternCalendarProps): ReactElement {
       <HStack element="div" gap="md" align="center" justify="start" wrap="wrap" className="">
         <Heading level={2} size="subheading" tone="ink" weight="bold" className="">
           灯りの暦
-          <span className={styles["achievement-calendar-note"]}>
+          <Text
+            element="span"
+            size="secondary"
+            tone="ink-quiet"
+            weight="normal"
+            className={styles["achievement-calendar-note"] ?? ""}
+          >
             成果のあった日に狐火がともります · 押すとその日へ
-          </span>
+          </Text>
         </Heading>
         <Legend />
       </HStack>
       {calendar.kind === "loading" ? (
-        <p className={styles["achievement-note"]}>…</p>
+        <Text element="p" size="body" tone="ink-quiet" weight="inherit" className="">
+          …
+        </Text>
       ) : calendar.kind === "unknown" ? (
-        <p className={styles["achievement-note"]}>灯りの暦を取れなかった。</p>
+        <Text element="p" size="body" tone="ink-quiet" weight="inherit" className="">
+          灯りの暦を取れなかった。
+        </Text>
       ) : (
         <Grid calendar={calendar} viewedDate={props.viewedDate} onSelectDate={props.onSelectDate} />
       )}
@@ -77,15 +88,28 @@ function Legend(): ReactElement {
       className={styles["achievement-calendar-legend"] ?? ""}
     >
       {keys(LAMP_LABEL).map((level) => (
-        <span key={level} className={styles["achievement-calendar-legend-item"]}>
+        <Text
+          key={level}
+          element="span"
+          size="label"
+          tone="ink-quiet"
+          weight="inherit"
+          className={styles["achievement-calendar-legend-item"] ?? ""}
+        >
           <Lamp level={level} />
           {LAMP_LABEL[level]}
-        </span>
+        </Text>
       ))}
-      <span className={styles["achievement-calendar-legend-item"]}>
+      <Text
+        element="span"
+        size="label"
+        tone="ink-quiet"
+        weight="inherit"
+        className={styles["achievement-calendar-legend-item"] ?? ""}
+      >
         <Bell />
         日記あり
-      </span>
+      </Text>
     </HStack>
   )
 }
@@ -112,9 +136,16 @@ function Grid(props: GridProps): ReactElement {
     <>
       <div className={styles["achievement-calendar-grid"]}>
         {WEEKDAY_HEADS.map((head) => (
-          <span key={head} className={styles["achievement-calendar-head"]}>
+          <Text
+            key={head}
+            element="span"
+            size="label"
+            tone="ink-quiet"
+            weight="inherit"
+            className={styles["achievement-calendar-head"] ?? ""}
+          >
             {head}
-          </span>
+          </Text>
         ))}
         {dateKeys.map((date, index) =>
           date > calendar.today ? (
@@ -136,9 +167,9 @@ function Grid(props: GridProps): ReactElement {
         )}
       </div>
       {first !== undefined && last !== undefined ? (
-        <p className={styles["achievement-calendar-range"]}>
+        <Text element="p" size="label" tone="ink-quiet" weight="inherit" className="">
           {monthDayLabel(first)}〜{monthDayLabel(last)}
-        </p>
+        </Text>
       ) : null}
     </>
   )
@@ -169,9 +200,15 @@ function DayCell(props: DayCellProps): ReactElement {
         props.onSelectDate(props.date)
       }}
     >
-      <span className={styles["achievement-calendar-day-date"]}>
+      <Text
+        element="span"
+        size="label"
+        tone="ink-quiet"
+        weight="inherit"
+        className={styles["achievement-calendar-day-date"] ?? ""}
+      >
         {cellDateLabel(props.date, props.index)}
-      </span>
+      </Text>
       {props.hasDiary ? (
         <HStack
           element="span"
@@ -186,7 +223,15 @@ function DayCell(props: DayCellProps): ReactElement {
       ) : null}
       <Lamp level={level} />
       {props.isToday ? (
-        <span className={styles["achievement-calendar-day-today"]}>今日</span>
+        <Text
+          element="span"
+          size="label"
+          tone="accent"
+          weight="bold"
+          className={styles["achievement-calendar-day-today"] ?? ""}
+        >
+          今日
+        </Text>
       ) : null}
     </button>
   )

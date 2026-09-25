@@ -16,6 +16,7 @@ import {
 } from "../../../../../shared/main-view.ts"
 import { type TurnFailure } from "../../../../../shared/turn-failure.ts"
 import { PromptImageThumbnails } from "../../../../components/domain/prompt-image.tsx"
+import { Text } from "../../../../components/ui/text/text.tsx"
 import { VStack } from "../../../../components/ui/v-stack/v-stack.tsx"
 import { turnFailureLabel } from "../../../../domain/api-error-label.ts"
 import { requestLinesAfterTitle, truncateRequestText } from "./domain/turn-title.ts"
@@ -46,7 +47,15 @@ export function Turn(props: TurnProps): ReactElement {
     <div>
       {turn.request !== undefined && <RequestRest request={turn.request} />}
       {turn.droppedCount > 0 && (
-        <p className={styles["turn-dropped"]}>これ以前の {turn.droppedCount} 件は省略した</p>
+        <Text
+          element="p"
+          size="secondary"
+          tone="ink-quiet"
+          weight="inherit"
+          className={styles["turn-dropped"] ?? ""}
+        >
+          これ以前の {turn.droppedCount} 件は省略した
+        </Text>
       )}
       {(turn.steps.length > 0 || turn.failure.kind === "failed") && (
         <VStack element="div" gap="md" align="stretch" justify="start" wrap="nowrap" className="">
@@ -78,7 +87,15 @@ export function Turn(props: TurnProps): ReactElement {
 function TurnFailureNotice(props: { readonly failure: TurnFailure }): ReactElement {
   return (
     <section className={`${styles["main-step"]} ${styles["is-failed"]}`} role="note">
-      <p className={styles["step-heading"]}>失敗で終わった</p>
+      <Text
+        element="p"
+        size="label"
+        tone="state-ng"
+        weight="inherit"
+        className={styles["step-heading"] ?? ""}
+      >
+        失敗で終わった
+      </Text>
       <p className={styles["turn-failure-reason"]}>{turnFailureLabel(props.failure)}</p>
     </section>
   )
@@ -136,7 +153,15 @@ function Step(props: {
   if (step.interim && step.superseded) {
     return (
       <details className={`${styles["main-step"]} ${styles["is-interim"]}`}>
-        <summary className={styles["step-heading"]}>{interimSummary(step.body)}</summary>
+        <Text
+          element="summary"
+          size="label"
+          tone="ink-quiet"
+          weight="inherit"
+          className={styles["step-heading"] ?? ""}
+        >
+          {interimSummary(step.body)}
+        </Text>
         {content}
       </details>
     )
@@ -144,8 +169,28 @@ function Step(props: {
 
   return (
     <section className={stepClassName(step)}>
-      {step.interim && <p className={styles["step-heading"]}>中間レポート</p>}
-      {props.finalLabel && <p className={styles["step-heading"]}>最終レポート</p>}
+      {step.interim && (
+        <Text
+          element="p"
+          size="label"
+          tone="ink-quiet"
+          weight="inherit"
+          className={styles["step-heading"] ?? ""}
+        >
+          中間レポート
+        </Text>
+      )}
+      {props.finalLabel && (
+        <Text
+          element="p"
+          size="label"
+          tone="ink-quiet"
+          weight="inherit"
+          className={styles["step-heading"] ?? ""}
+        >
+          最終レポート
+        </Text>
+      )}
       {content}
     </section>
   )
@@ -201,7 +246,9 @@ function RequestRest(props: { readonly request: MainViewRequest }): ReactElement
     <>
       {rest.length > 0 && (
         <details className={styles["turn-request"]} open>
-          <summary>依頼の続き（{String(rest.length)} 行）</summary>
+          <Text element="summary" size="secondary" tone="ink-quiet" weight="inherit" className="">
+            依頼の続き（{String(rest.length)} 行）
+          </Text>
           <div className={styles["turn-request-full"]}>
             {rest.map((line, index) => (
               <Fragment key={index}>

@@ -17,6 +17,7 @@ import { type DragEvent, type ReactElement, useRef, useState } from "react"
 
 import { Portrait } from "../../../../components/domain/portrait.tsx"
 import { HStack } from "../../../../components/ui/h-stack/h-stack.tsx"
+import { Text } from "../../../../components/ui/text/text.tsx"
 import styles from "../character-screen.module.css"
 import { type PortraitCardModel } from "../hooks/use-character-edit.ts"
 import { PlusIcon, TrashIcon, UploadIcon } from "./action-icon.tsx"
@@ -81,8 +82,12 @@ export function PortraitCard(props: {
         <span className={styles["character-card-plus"]}>
           <PlusIcon />
         </span>
-        <span className={styles["character-card-blank-label"]}>{card.label}</span>
-        <span className={styles["character-card-blank-hint"]}>{BLANK_HINT}</span>
+        <Text element="span" size="secondary" tone="ink" weight="inherit" className="">
+          {card.label}
+        </Text>
+        <Text element="span" size="label" tone="inherit" weight="inherit" className="">
+          {BLANK_HINT}
+        </Text>
         {fileInput}
       </label>
     )

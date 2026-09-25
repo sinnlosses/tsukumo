@@ -11,6 +11,7 @@ import { type ReactElement } from "react"
 import { Portrait } from "../../../components/domain/portrait.tsx"
 import { HStack } from "../../../components/ui/h-stack/h-stack.tsx"
 import { Heading } from "../../../components/ui/heading/heading.tsx"
+import { Text } from "../../../components/ui/text/text.tsx"
 import { VStack } from "../../../components/ui/v-stack/v-stack.tsx"
 import styles from "./achievement.module.css"
 import { type AchievementReviewButton } from "./hooks/use-achievement.ts"
@@ -74,7 +75,9 @@ export function DiaryBook({
         >
           <HStack element="div" gap="md" align="center" justify="start" wrap="wrap" className="">
             <span className={styles["diary-book-title"]}>{TITLE}</span>
-            <span className={styles["diary-book-open-note"]}>{openNote}</span>
+            <Text element="span" size="label" tone="ink-quiet" weight="inherit" className="">
+              {openNote}
+            </Text>
             <div className={styles["diary-book-topbar-spacer"]} />
             <NavButton label={previous?.label} fallback={PREVIOUS_LABEL} onClick={onPrevious} />
             <NavButton label={next?.label} fallback={NEXT_LABEL} onClick={onNext} reverse />
@@ -132,10 +135,18 @@ function NavButton(props: {
 function Spread(props: { readonly page: DiaryBookPage }): ReactElement {
   const { page } = props
   if (page.kind === "loading") {
-    return <p className={styles["achievement-note"]}>{LOADING_NOTE}</p>
+    return (
+      <Text element="p" size="body" tone="ink-quiet" weight="inherit" className="">
+        {LOADING_NOTE}
+      </Text>
+    )
   }
   if (page.kind === "failed") {
-    return <p className={styles["achievement-note"]}>{FAILED_NOTE}</p>
+    return (
+      <Text element="p" size="body" tone="ink-quiet" weight="inherit" className="">
+        {FAILED_NOTE}
+      </Text>
+    )
   }
   return (
     <>
@@ -203,13 +214,21 @@ function TaskListing(props: { readonly tasks: DiaryBookTaskList }): ReactElement
           ))}
         </ul>
       ) : (
-        <p className={styles["achievement-note"]}>{UNKNOWN_TASKS_NOTE}</p>
+        <Text element="p" size="body" tone="ink-quiet" weight="inherit" className="">
+          {UNKNOWN_TASKS_NOTE}
+        </Text>
       )}
-      <p className={styles["diary-book-tasks-footer"]}>
+      <Text
+        element="p"
+        size="label"
+        tone="ink-quiet"
+        weight="inherit"
+        className={styles["diary-book-tasks-footer"] ?? ""}
+      >
         {tasks.moreCount > 0
           ? `ほか ${String(tasks.moreCount)} 件 · コミット ${String(tasks.commitCount)}`
           : `コミット ${String(tasks.commitCount)}`}
-      </p>
+      </Text>
     </div>
   )
 }
@@ -252,7 +271,15 @@ function RightPage(props: {
       <div className={styles["diary-book-date-head"]}>
         <span className={styles["diary-book-kanji-date"]}>{page.kanjiDate}</span>
         <span className={styles["diary-book-weekday"]}>{page.weekday}</span>
-        <span className={styles["diary-book-lamp"]}>{page.lampLabel}</span>
+        <Text
+          element="span"
+          size="label"
+          tone="ink-quiet"
+          weight="inherit"
+          className={styles["diary-book-lamp"] ?? ""}
+        >
+          {page.lampLabel}
+        </Text>
       </div>
       {page.right.kind === "written" ? (
         <div className={styles["diary-book-body"]}>
@@ -314,11 +341,25 @@ function BlankReview(props: {
         {review.label}
       </button>
       {review.availability.kind === "blocked" && review.availability.reason !== "" ? (
-        <p className={styles["diary-book-review-note"]}>{review.availability.reason}</p>
+        <Text
+          element="p"
+          size="label"
+          tone="ink-quiet"
+          weight="inherit"
+          className={styles["diary-book-review-note"] ?? ""}
+        >
+          {review.availability.reason}
+        </Text>
       ) : (
-        <p className={styles["diary-book-review-note"]}>
+        <Text
+          element="p"
+          size="label"
+          tone="ink-quiet"
+          weight="inherit"
+          className={styles["diary-book-review-note"] ?? ""}
+        >
           {props.writerName}がこのページに日記を書きます
-        </p>
+        </Text>
       )}
     </div>
   )
@@ -331,7 +372,9 @@ function Toc(props: {
   return (
     <div className={styles["diary-book-toc"]} role="dialog" aria-label={TOC_LABEL}>
       {props.months.length === 0 ? (
-        <p className={styles["achievement-note"]}>まだ日記が無い。</p>
+        <Text element="p" size="body" tone="ink-quiet" weight="inherit" className="">
+          まだ日記が無い。
+        </Text>
       ) : (
         props.months.map((month) => (
           <section key={month.heading} className={styles["diary-book-toc-month"]}>

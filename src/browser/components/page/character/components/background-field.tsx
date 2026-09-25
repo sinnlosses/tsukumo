@@ -6,6 +6,7 @@
 import { type ReactElement } from "react"
 
 import { HStack } from "../../../../components/ui/h-stack/h-stack.tsx"
+import { Text } from "../../../../components/ui/text/text.tsx"
 import { VStack } from "../../../../components/ui/v-stack/v-stack.tsx"
 import styles from "../character-screen.module.css"
 import { type BackgroundFieldModel } from "../hooks/use-character-edit.ts"
@@ -34,15 +35,10 @@ export function BackgroundField(props: {
           alt={background.label}
         />
       )}
-      <VStack
-        element="div"
-        gap="sm"
-        align="stretch"
-        justify="start"
-        wrap="nowrap"
-        className={styles["character-background-side"] ?? ""}
-      >
-        <span>{background.label}</span>
+      <VStack element="div" gap="sm" align="stretch" justify="start" wrap="nowrap" className="">
+        <Text element="span" size="secondary" tone="inherit" weight="inherit" className="">
+          {background.label}
+        </Text>
         <HStack element="div" gap="sm" align="stretch" justify="start" wrap="wrap" className="">
           <label className={styles["character-button"]}>
             <UploadIcon />

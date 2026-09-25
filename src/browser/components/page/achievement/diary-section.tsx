@@ -8,6 +8,7 @@ import { type AchievementDoneTasks } from "../../../../shared/achievement.ts"
 import { DIARY_STAGES, type DiaryStage } from "../../../../shared/diary.ts"
 import { Portrait } from "../../../components/domain/portrait.tsx"
 import { Heading } from "../../../components/ui/heading/heading.tsx"
+import { Text } from "../../../components/ui/text/text.tsx"
 import { useReportReveal } from "../../../domain/reveal/use-report-reveal.ts"
 import styles from "./achievement.module.css"
 import { type DiaryWriterPortrait } from "./diary-writer.ts"
@@ -43,7 +44,11 @@ export type DiarySectionProps = {
 
 export function DiarySection(props: DiarySectionProps): ReactElement {
   if (props.view.kind === "failed") {
-    return <p className={styles["achievement-note"]}>成果を取れなかった。</p>
+    return (
+      <Text element="p" size="body" tone="ink-quiet" weight="inherit" className="">
+        成果を取れなかった。
+      </Text>
+    )
   }
 
   const dimmed = props.isFetching ? ` ${styles["is-fetching"] ?? ""}` : ""
@@ -96,13 +101,23 @@ function Header(props: {
 
   return (
     <div className={styles["achievement-diary-header"]}>
-      <span className={styles["achievement-diary-name"]}>{props.portrait.name}の日記</span>
+      <Text
+        element="span"
+        size="label"
+        tone="accent"
+        weight="bold"
+        className={styles["achievement-diary-name"] ?? ""}
+      >
+        {props.portrait.name}の日記
+      </Text>
       {writing.kind === "writing" ? (
-        <span className={styles["achievement-diary-status"]}>いま書いています…</span>
+        <Text element="span" size="label" tone="ink-quiet" weight="inherit" className="">
+          いま書いています…
+        </Text>
       ) : latest !== undefined ? (
-        <span className={styles["achievement-diary-status"]}>
+        <Text element="span" size="label" tone="ink-quiet" weight="inherit" className="">
           振り返り [{timeLabel(latest.writtenAt)}]
-        </span>
+        </Text>
       ) : null}
       {latest === undefined ? null : (
         <button
@@ -134,7 +149,11 @@ function Bubble(props: {
   if (writing.kind === "writing") {
     return (
       <div className={styles["achievement-diary-bubble-empty"]}>
-        {latest === undefined ? null : <p>{latest.body}</p>}
+        {latest === undefined ? null : (
+          <Text element="p" size="body" tone="ink-quiet" weight="inherit" className="">
+            {latest.body}
+          </Text>
+        )}
       </div>
     )
   }
@@ -142,8 +161,14 @@ function Bubble(props: {
   if (writing.kind === "failed") {
     return (
       <div className={styles["achievement-diary-bubble-empty"]}>
-        <p className={styles["achievement-note"]}>{WRITE_FAILED_NOTE}</p>
-        {latest === undefined ? null : <p>{latest.body}</p>}
+        <Text element="p" size="body" tone="ink-quiet" weight="inherit" className="">
+          {WRITE_FAILED_NOTE}
+        </Text>
+        {latest === undefined ? null : (
+          <Text element="p" size="body" tone="ink-quiet" weight="inherit" className="">
+            {latest.body}
+          </Text>
+        )}
       </div>
     )
   }
@@ -151,7 +176,9 @@ function Bubble(props: {
   if (isEmptyDay(view.commitCount, view.doneTasks)) {
     return (
       <div className={styles["achievement-diary-bubble-empty"]}>
-        <p className={styles["achievement-note"]}>{EMPTY_DAY_NOTE}</p>
+        <Text element="p" size="body" tone="ink-quiet" weight="inherit" className="">
+          {EMPTY_DAY_NOTE}
+        </Text>
       </div>
     )
   }
@@ -159,7 +186,9 @@ function Bubble(props: {
   if (latest === undefined) {
     return (
       <div className={styles["achievement-diary-bubble-empty"]}>
-        <p className={styles["achievement-note"]}>{NO_DIARY_NOTE}</p>
+        <Text element="p" size="body" tone="ink-quiet" weight="inherit" className="">
+          {NO_DIARY_NOTE}
+        </Text>
       </div>
     )
   }
@@ -182,7 +211,9 @@ function WrittenBubble(props: {
   const rootRef = useReportReveal(props.reveal, props.revisionId)
   return (
     <div ref={rootRef} className={styles["achievement-diary-bubble"]}>
-      <p>{props.body}</p>
+      <Text element="p" size="body" tone="ink" weight="inherit" className="">
+        {props.body}
+      </Text>
     </div>
   )
 }
@@ -243,8 +274,26 @@ function Card(props: {
       <Heading level={3} size="label" tone="ink-quiet" weight="normal" className="">
         {props.label}
       </Heading>
-      <p className={styles["achievement-card-value"]}>{props.value}</p>
-      {props.note === "" ? null : <p className={styles["achievement-card-note"]}>{props.note}</p>}
+      <Text
+        element="p"
+        size="heading"
+        tone="ink"
+        weight="inherit"
+        className={styles["achievement-card-value"] ?? ""}
+      >
+        {props.value}
+      </Text>
+      {props.note === "" ? null : (
+        <Text
+          element="p"
+          size="secondary"
+          tone="ink-quiet"
+          weight="inherit"
+          className={styles["achievement-card-note"] ?? ""}
+        >
+          {props.note}
+        </Text>
+      )}
     </section>
   )
 }
@@ -279,7 +328,9 @@ function Controls(props: {
         {review.label}
       </button>
       {review.availability.kind === "blocked" && review.availability.reason !== "" ? (
-        <p className={styles["achievement-review-note"]}>{review.availability.reason}</p>
+        <Text element="p" size="secondary" tone="ink-quiet" weight="inherit" className="">
+          {review.availability.reason}
+        </Text>
       ) : null}
     </div>
   )

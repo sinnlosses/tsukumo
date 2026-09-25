@@ -10,7 +10,15 @@ import { afterEach, describe, expect, it } from "bun:test"
 import { act, cleanup, render } from "@testing-library/react"
 
 import { QuestionRecord } from "../../../../../../src/browser/components/page/conversation/main-view/question-record.tsx"
+import { TEXT_TONE_CLASS } from "../../../../../../src/browser/components/ui/text/text.tsx"
 import { type MainViewQuestion } from "../../../../../../src/shared/main-view.ts"
+
+/** 印（●/○/■/□）は `<QuestionMark>` が描く、`.question-option` / `.question-preview-label` の
+ * 直下の唯一の `<span>`（`Text`）。選んだ側だけ `TEXT_TONE_CLASS.accent` を持つ。 */
+const ACCENT_CLASS = TEXT_TONE_CLASS.accent
+if (ACCENT_CLASS === undefined) {
+  throw new Error("TEXT_TONE_CLASS.accent が無い")
+}
 
 afterEach(() => {
   cleanup()
@@ -42,15 +50,15 @@ describe("QuestionRecord（選んだ印の色）", () => {
 
     const { container } = render(<QuestionRecord entry={entry} />)
 
-    const marks = [...container.querySelectorAll(".question-mark")]
+    const marks = [...container.querySelectorAll(".question-option > span")]
     const chosenMark = marks.find((mark) => mark.textContent === "●")
     const unchosenMark = marks.find((mark) => mark.textContent === "○")
 
-    expect(chosenMark?.className).toContain("is-chosen")
-    expect(unchosenMark?.className).not.toContain("is-chosen")
+    expect(chosenMark?.className.split(" ")).toContain(ACCENT_CLASS)
+    expect(unchosenMark?.className.split(" ")).not.toContain(ACCENT_CLASS)
   })
 
-  it("選ばなかった ○ には is-chosen を付けない（差し色は選んだ側だけ）", () => {
+  it("選ばなかった ○ には差し色の class を付けない（差し色は選んだ側だけ）", () => {
     const entry: MainViewQuestion = {
       kind: "question",
       questions: [question("確認", "どちらにする？")],
@@ -59,7 +67,8 @@ describe("QuestionRecord（選んだ印の色）", () => {
 
     const { container } = render(<QuestionRecord entry={entry} />)
 
-    expect(container.querySelectorAll(".question-mark.is-chosen")).toHaveLength(0)
+    const marks = [...container.querySelectorAll(".question-option > span")]
+    expect(marks.some((mark) => mark.className.split(" ").includes(ACCENT_CLASS))).toBe(false)
   })
 
   it("開いた preview の札にも同じ印の class が付く", () => {
@@ -92,7 +101,8 @@ describe("QuestionRecord（選んだ印の色）", () => {
     const label = [...container.querySelectorAll(".question-preview-label")].find((element) =>
       element.textContent?.includes("案B"),
     )
-    expect(label?.querySelector(".question-mark.is-chosen")).not.toBeNull()
+    const mark = label?.querySelector("span")
+    expect(mark?.className.split(" ")).toContain(ACCENT_CLASS)
   })
 })
 
@@ -106,7 +116,7 @@ describe("QuestionRecord（単一選択と複数選択で印が変わる）", ()
 
     const { container } = render(<QuestionRecord entry={entry} />)
 
-    const marks = [...container.querySelectorAll(".question-option .question-mark")].map(
+    const marks = [...container.querySelectorAll(".question-option > span")].map(
       (mark) => mark.textContent,
     )
     expect(marks).toEqual(["□", "■"])
@@ -139,7 +149,7 @@ describe("QuestionRecord（単一選択と複数選択で印が変わる）", ()
       details.dispatchEvent(new Event("toggle"))
     })
 
-    const marks = [...container.querySelectorAll(".question-preview-label .question-mark")].map(
+    const marks = [...container.querySelectorAll(".question-preview-label > span")].map(
       (mark) => mark.textContent,
     )
     expect(marks).toEqual(["□", "■"])
@@ -154,7 +164,7 @@ describe("QuestionRecord（単一選択と複数選択で印が変わる）", ()
 
     const { container } = render(<QuestionRecord entry={entry} />)
 
-    const marks = [...container.querySelectorAll(".question-option .question-mark")].map(
+    const marks = [...container.querySelectorAll(".question-option > span")].map(
       (mark) => mark.textContent,
     )
     expect(marks).toEqual(["○", "●"])

@@ -5,6 +5,7 @@
 import { type ReactElement, type RefObject } from "react"
 
 import { PromptImageThumbnails } from "../../../../../components/domain/prompt-image.tsx"
+import { Text } from "../../../../../components/ui/text/text.tsx"
 import styles from "../chat-view.module.css"
 import { type ChatRow } from "../hooks/use-chat-view.ts"
 import { ChatDay } from "./chat-day.tsx"
@@ -38,7 +39,15 @@ export function ChatLog({
   return (
     <div className={styles["chat-log"]} ref={logRef}>
       {showEmptyMessage ? (
-        <p className={styles["chat-empty"]}>{EMPTY_LOG_MESSAGE}</p>
+        <Text
+          element="p"
+          size="secondary"
+          tone="ink-quiet"
+          weight="inherit"
+          className={styles["chat-empty"] ?? ""}
+        >
+          {EMPTY_LOG_MESSAGE}
+        </Text>
       ) : (
         <>
           {rows.map((row) => {

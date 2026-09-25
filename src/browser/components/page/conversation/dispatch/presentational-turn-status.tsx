@@ -8,6 +8,7 @@
 import { type ReactElement } from "react"
 
 import { HStack } from "../../../../components/ui/h-stack/h-stack.tsx"
+import { Text } from "../../../../components/ui/text/text.tsx"
 import styles from "./dispatch.module.css"
 import { type TurnStatusModel } from "./hooks/use-turn-status.ts"
 
@@ -29,19 +30,36 @@ export function PresentationalTurnStatus(props: PresentationalTurnStatusProps): 
       {/* API の知らせ（再試行中・利用上限・失敗の理由）。行に出すのは短い字だけで、全文は
           `title` で読ませる。`role="status"` で、変わったことを支援技術にも伝える。 */}
       {props.notice.kind === "shown" && (
-        <span
-          role="status"
-          className={styles["dispatch-notice"]}
-          data-tone={props.notice.tone}
-          title={props.notice.detail}
+        <Text
+          element="span"
+          size="secondary"
+          tone={props.notice.tone === "warn" ? "state-warn" : "state-ng"}
+          weight="inherit"
+          className={styles["dispatch-notice"] ?? ""}
         >
-          {props.notice.label}
-        </span>
+          <span role="status" title={props.notice.detail}>
+            {props.notice.label}
+          </span>
+        </Text>
       )}
-      <span className={styles["dispatch-elapsed-row"]}>
+      <Text
+        element="span"
+        size="secondary"
+        tone="ink-quiet"
+        weight="inherit"
+        className={styles["dispatch-elapsed-row"] ?? ""}
+      >
         <span>{props.elapsedLabel}</span>{" "}
-        <span className={styles["dispatch-elapsed"]}>{props.elapsedText}</span>
-      </span>
+        <Text
+          element="span"
+          size="inherit"
+          tone="ink"
+          weight="inherit"
+          className={styles["dispatch-elapsed"] ?? ""}
+        >
+          {props.elapsedText}
+        </Text>
+      </Text>
       {props.action.kind === "interrupt" ? (
         <button
           type="button"

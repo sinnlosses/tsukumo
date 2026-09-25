@@ -12,7 +12,7 @@ import { type ReactElement, type ReactNode } from "react"
 
 import styles from "./text.module.css"
 
-export type TextElement = "p" | "span"
+export type TextElement = "p" | "span" | "summary"
 export type TextSize =
   | "label"
   | "action"

@@ -8,6 +8,7 @@ import { type ReactElement } from "react"
 
 import { HStack } from "../../../../components/ui/h-stack/h-stack.tsx"
 import { Heading } from "../../../../components/ui/heading/heading.tsx"
+import { Text } from "../../../../components/ui/text/text.tsx"
 import { VStack } from "../../../../components/ui/v-stack/v-stack.tsx"
 import styles from "../character-screen.module.css"
 import { type CharacterProfileModel } from "../hooks/use-character-edit.ts"
@@ -42,14 +43,32 @@ export function CharacterProfile(props: { readonly profile: CharacterProfileMode
           >
             {profile.name}
           </Heading>
-          <span className={styles["character-profile-id"]}>id: {profile.id}</span>
+          <Text
+            element="span"
+            size="action"
+            tone="ink-quiet"
+            weight="inherit"
+            className={styles["character-profile-id"] ?? ""}
+          >
+            id: {profile.id}
+          </Text>
           {profile.inUse ? <span className={styles["character-in-use"]}>使用中</span> : null}
         </div>
         {profile.tagline.kind === "shown" ? (
-          <span className={styles["character-profile-tagline"]}>{profile.tagline.text}</span>
+          <Text element="span" size="secondary" tone="ink-quiet" weight="inherit" className="">
+            {profile.tagline.text}
+          </Text>
         ) : null}
         {profile.note.kind === "shown" ? (
-          <span className={styles["character-screen-note"]}>{profile.note.text}</span>
+          <Text
+            element="span"
+            size="label"
+            tone="ink-quiet"
+            weight="inherit"
+            className={styles["character-screen-note"] ?? ""}
+          >
+            {profile.note.text}
+          </Text>
         ) : null}
       </VStack>
       {profile.editProfile.kind === "shown" || profile.switchTo.kind === "shown" ? (

@@ -29,10 +29,8 @@
   flex-shrink: 0;
 }
 
-.diary-notice-text {
-  font-size: 14px;
-  color: var(--ink);
-}
+/* 字の段・色は `Text`（size="subheading" tone="ink" weight="inherit"）が持つ（14px は
+   --font-subheading と同じ値）。 */
 
 .diary-notice-open {
   height: 36px;

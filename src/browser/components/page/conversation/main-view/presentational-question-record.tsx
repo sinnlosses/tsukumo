@@ -8,6 +8,7 @@
 import { type ReactElement } from "react"
 
 import { Heading } from "../../../../components/ui/heading/heading.tsx"
+import { Text } from "../../../../components/ui/text/text.tsx"
 import {
   type QuestionRecordAnswerRow,
   type QuestionRecordModel,
@@ -58,7 +59,9 @@ function QuestionBlock(props: { readonly question: QuestionRecordQuestionModel }
         // 開くまで中身を描かない。一度開いたあとは閉じても外さない
         // （`hooks/use-question-record.ts`）。
         <details className={styles["question-previews"]} onToggle={question.onTogglePreviews}>
-          <summary>{PREVIEWS_SUMMARY}</summary>
+          <Text element="summary" size="secondary" tone="ink-quiet" weight="inherit" className="">
+            {PREVIEWS_SUMMARY}
+          </Text>
           {question.previewsOpened
             ? question.previews.map((preview) => (
                 <PreviewBlock
@@ -102,9 +105,15 @@ function PreviewBlock(props: {
     // レポートと同じ見た目の語彙（`.detail-block` の子のセレクタ。
     // `markdown/report-notation.module.css`）に乗せる。
     <div className={notationStyles["detail-block"]}>
-      <p className={styles["question-preview-label"]}>
+      <Text
+        element="p"
+        size="inherit"
+        tone="inherit"
+        weight="semibold"
+        className={styles["question-preview-label"] ?? ""}
+      >
         <QuestionMark chosen={preview.chosen} multiSelect={multiSelect} /> {preview.label}
-      </p>
+      </Text>
       <Markdown text={preview.preview} />
     </div>
   )
@@ -128,8 +137,14 @@ function QuestionMark(props: {
 }): ReactElement {
   const mark = props.multiSelect ? (props.chosen ? "■" : "□") : props.chosen ? "●" : "○"
   return (
-    <span className={`${styles["question-mark"]}${props.chosen ? ` ${styles["is-chosen"]}` : ""}`}>
+    <Text
+      element="span"
+      size="inherit"
+      tone={props.chosen ? "accent" : "inherit"}
+      weight="inherit"
+      className=""
+    >
       {mark}
-    </span>
+    </Text>
   )
 }

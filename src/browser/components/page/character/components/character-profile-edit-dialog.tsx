@@ -16,6 +16,7 @@ import {
   MAX_CHARACTER_TAGLINE_LENGTH,
 } from "../../../../../shared/character-definition.ts"
 import { Heading } from "../../../../components/ui/heading/heading.tsx"
+import { Text } from "../../../../components/ui/text/text.tsx"
 import { useModalDialog } from "../../../../hooks/use-modal-dialog.ts"
 import styles from "../character-screen.module.css"
 
@@ -83,7 +84,9 @@ export function CharacterProfileEditDialog(props: CharacterProfileEditDialogProp
               setName(event.target.value)
             }}
           />
-          <span className={styles["character-create-hint"]}>{NAME_HINT}</span>
+          <Text element="span" size="label" tone="ink-quiet" weight="inherit" className="">
+            {NAME_HINT}
+          </Text>
         </div>
         <div className={styles["character-create-field"]}>
           <label
@@ -102,7 +105,9 @@ export function CharacterProfileEditDialog(props: CharacterProfileEditDialogProp
               setTagline(event.target.value)
             }}
           />
-          <span className={styles["character-create-hint"]}>{TAGLINE_HINT}</span>
+          <Text element="span" size="label" tone="ink-quiet" weight="inherit" className="">
+            {TAGLINE_HINT}
+          </Text>
         </div>
         <div className={styles["character-create-footer"]}>
           <div className={styles["character-create-footer-spacer"]} />

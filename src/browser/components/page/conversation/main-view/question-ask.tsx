@@ -19,6 +19,7 @@
 
 import { type ReactElement } from "react"
 
+import { Text } from "../../../../components/ui/text/text.tsx"
 import { useQuestionAnswer, type QuestionOptionRow } from "../../../../stores/question-answer.tsx"
 import { useQuestionScroll } from "../../../../stores/question-scroll.tsx"
 import { useTurnSelection } from "../../../../stores/turn-selection.tsx"
@@ -59,7 +60,15 @@ export function QuestionAsk(): ReactElement | null {
     <section className={styles["question-ask"]} ref={cardRef}>
       <header className={styles["question-ask-head"]}>
         <span className={styles["question-ask-chip"]}>{QUESTION_CHIP}</span>
-        <span className={styles["question-ask-header"]}>{question.header}</span>
+        <Text
+          element="span"
+          size="secondary"
+          tone="ink-quiet"
+          weight="inherit"
+          className={styles["question-ask-header"] ?? ""}
+        >
+          {question.header}
+        </Text>
         {showToNewest && (
           <button
             type="button"
@@ -74,9 +83,25 @@ export function QuestionAsk(): ReactElement | null {
             {BACK_LABEL}
           </button>
         )}
-        <span className={styles["question-ask-progress"]}>{question.progressLabel}</span>
+        <Text
+          element="span"
+          size="label"
+          tone="ink-quiet"
+          weight="inherit"
+          className={styles["question-ask-progress"] ?? ""}
+        >
+          {question.progressLabel}
+        </Text>
       </header>
-      <p className={styles["question-ask-text"]}>{question.text}</p>
+      <Text
+        element="p"
+        size="inherit"
+        tone="inherit"
+        weight="bold"
+        className={styles["question-ask-text"] ?? ""}
+      >
+        {question.text}
+      </Text>
       <ul className={styles["question-ask-options"]}>
         {question.options.map((option) => (
           <QuestionOption
@@ -88,13 +113,27 @@ export function QuestionAsk(): ReactElement | null {
         ))}
       </ul>
       {question.writtenAnswer !== "" && (
-        <p className={styles["question-ask-written"]}>
+        <Text
+          element="p"
+          size="secondary"
+          tone="state-warn"
+          weight="inherit"
+          className={styles["question-ask-written"] ?? ""}
+        >
           {WRITTEN_ANSWER_PREFIX}
           {question.writtenAnswer}
-        </p>
+        </Text>
       )}
       <footer className={styles["question-ask-foot"]}>
-        <span className={styles["question-ask-hint"]}>{FREE_TEXT_HINT}</span>
+        <Text
+          element="span"
+          size="label"
+          tone="ink-quiet"
+          weight="inherit"
+          className={styles["question-ask-hint"] ?? ""}
+        >
+          {FREE_TEXT_HINT}
+        </Text>
         <button
           type="button"
           className={styles["question-ask-answer"]}
@@ -135,13 +174,37 @@ function QuestionOption(props: {
           checked={option.selected}
           onChange={() => props.onToggle(option.label)}
         />
-        <span className={styles["question-ask-option-label"]}>{option.text}</span>
+        <Text
+          element="span"
+          size="inherit"
+          tone="inherit"
+          weight="bold"
+          className={styles["question-ask-option-label"] ?? ""}
+        >
+          {option.text}
+        </Text>
         {option.recommended && (
-          <span className={styles["question-ask-option-badge"]}>{RECOMMENDED_BADGE}</span>
+          <Text
+            element="span"
+            size="label"
+            tone="state-warn"
+            weight="inherit"
+            className={styles["question-ask-option-badge"] ?? ""}
+          >
+            {RECOMMENDED_BADGE}
+          </Text>
         )}
       </label>
       {option.description !== "" && (
-        <p className={styles["question-ask-option-description"]}>{option.description}</p>
+        <Text
+          element="p"
+          size="secondary"
+          tone="ink-quiet"
+          weight="inherit"
+          className={styles["question-ask-option-description"] ?? ""}
+        >
+          {option.description}
+        </Text>
       )}
       {option.preview !== undefined && (
         // レポートと同じ見た目の語彙（`.detail-block` の子のセレクタ。

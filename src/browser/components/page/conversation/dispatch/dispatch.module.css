@@ -45,9 +45,10 @@
 }
 /* ツール名は機械が付けた名前なので等幅（docs/screen-design.md 13.1 原則3）。書体そのものの定義は
    `src/browser/styles/theme.css` のトークンにあり、ここは宛てるだけ。 */
+/* 太さは `Text`（size="inherit" tone="inherit" weight="bold"）が持つ。書体だけここに残す（語彙に
+   無い見た目）。 */
 .pending-tool {
   font-family: var(--font-mono);
-  font-weight: bold;
 }
 /* 並べ・間隔（`gap="sm"`）は `HStack` が持つ。 */
 .pending-actions {
@@ -93,11 +94,11 @@
 }
 /* 「↑ <キャラクター名> が質問しています…」の帯。上の札を指す矢印から始まるので、
    テキスト入力欄の**上**に置く。字は答え待ちの色で、地は持たない（枠の色と二重にしない）。 */
+/* 字の段・色は `Text`（size="secondary" tone="state-warn" weight="inherit"）が持つ。伸び縮み・
+   margin だけここに残す（語彙に無い見た目・既定の 0 と違うため）。 */
 .dispatch-band {
   flex: 0 0 auto;
   margin: 0 0 0.5rem;
-  font-size: var(--font-secondary);
-  color: var(--state-warn);
 }
 /* textarea と / 補完の候補一覧の包み。候補一覧（position: absolute）の基準になる。 */
 /* 並べ（`gap="none"`）は `VStack` が持つ。 */
@@ -144,11 +145,11 @@
   flex: 0 0 auto;
   font-family: var(--font-mono);
 }
+/* 字の段・色は `Text`（size="secondary" tone="ink-quiet" weight="inherit"）が持つ。伸び縮み・
+   1行で切る組みだけここに残す（語彙に無い見た目）。 */
 .dispatch-suggestion-description {
   flex: 1 1 auto;
   min-width: 0;
-  color: var(--ink-quiet);
-  font-size: var(--font-secondary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -217,22 +218,18 @@
    だけ**で地は塗らない（入力欄で塗ってよいのは送るボタンだけ）。色は意味を固定した state の
    2色で、**字が意味を言う**（13.1 原則5）。狭い画面で行に収まらなければ末尾を省略し、全文は
    `title` で読ませる。 */
+/* 字の段は `Text`（size="secondary"）が持つ。色は `Text` の `tone`（"warn" → state-warn、"ng" →
+   state-ng）が呼び出し側の分岐で持つ。箱（枠・角丸・余白）・1行で切る組みだけここに残す（語彙に
+   無い見た目）。 */
 .dispatch-notice {
   flex: 0 1 auto;
   min-width: 0;
   padding: 0.125rem 0.5rem;
   border: 1px solid currentcolor;
   border-radius: 999px;
-  font-size: var(--font-secondary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-.dispatch-notice[data-tone="warn"] {
-  color: var(--state-warn);
-}
-.dispatch-notice[data-tone="ng"] {
-  color: var(--state-ng);
 }
 /* 「送信」は行の主目的なので、**accent で塗りつぶす**（入力欄で塗ってよいのはこれ1つだけ。
    13.1 原則1「選ばれたタブ」と同じ扱い。docs/design.md）。字は地の色で抜く。
@@ -318,13 +315,13 @@
 }
 /* 経過時間（送信ボタンと同じ行）。他の2つ（ボタン・候補）と同じく伸び縮みしない
    固定幅にしておく。 */
+/* 字の段・色は `Text`（size="secondary" tone="ink-quiet" weight="inherit"）が持つ。伸び縮みだけ
+   ここに残す（語彙に無い見た目）。 */
 .dispatch-elapsed-row {
   flex: 0 0 auto;
-  font-size: var(--font-secondary);
-  color: var(--ink-quiet);
 }
-/* 経過時間は機械が数えた値なので等幅（13.1 原則3）。 */
+/* 経過時間は機械が数えた値なので等幅（13.1 原則3）。字の色は `Text`（size="inherit" tone="ink"
+   weight="inherit"）が持つ。書体だけここに残す（語彙に無い見た目）。 */
 .dispatch-elapsed {
-  color: var(--ink);
   font-family: var(--font-mono);
 }

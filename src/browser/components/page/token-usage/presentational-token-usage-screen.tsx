@@ -18,6 +18,7 @@ import {
 } from "../../../../shared/token-usage-summary.ts"
 import { type ToolUsageCount } from "../../../../shared/token-usage.ts"
 import { HStack } from "../../../components/ui/h-stack/h-stack.tsx"
+import { Text } from "../../../components/ui/text/text.tsx"
 import { VStack } from "../../../components/ui/v-stack/v-stack.tsx"
 import { type UseContextUsageResult } from "../../../domain/context-usage.ts"
 import { formatCount } from "../../../utils/format-count.ts"
@@ -62,7 +63,15 @@ export function PresentationalTokenUsageScreen(
       <HStack element="div" gap="md" align="baseline" justify="start" wrap="wrap" className="">
         <h1 className={styles["token-usage-title"]}>トークン消費</h1>
         {props.plan === undefined ? null : (
-          <span className={styles["token-usage-plan"]}>{props.plan}</span>
+          <Text
+            element="span"
+            size="label"
+            tone="ink-quiet"
+            weight="inherit"
+            className={styles["token-usage-plan"] ?? ""}
+          >
+            {props.plan}
+          </Text>
         )}
         <div className={styles["token-usage-bar-spacer"]} />
         {props.usageReview.kind === "running" ? (
@@ -82,9 +91,13 @@ export function PresentationalTokenUsageScreen(
           <PeriodChoices days={props.days} onDaysChange={props.onDaysChange} />
         </HStack>
         {props.isError ? (
-          <p className={styles["token-usage-note"]}>{FAILED_NOTE}</p>
+          <Text element="p" size="label" tone="ink-quiet" weight="inherit" className="">
+            {FAILED_NOTE}
+          </Text>
         ) : isEmpty ? (
-          <p className={styles["token-usage-note"]}>{EMPTY_NOTE}</p>
+          <Text element="p" size="label" tone="ink-quiet" weight="inherit" className="">
+            {EMPTY_NOTE}
+          </Text>
         ) : (
           <PeriodUsageCards total={props.total} trend={props.summary.trend} />
         )}

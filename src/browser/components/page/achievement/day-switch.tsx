@@ -8,6 +8,7 @@ import { type ReactElement } from "react"
 import { previousDateKey } from "../../../../shared/achievement.ts"
 import { HStack } from "../../../components/ui/h-stack/h-stack.tsx"
 import { Heading } from "../../../components/ui/heading/heading.tsx"
+import { Text } from "../../../components/ui/text/text.tsx"
 import { VStack } from "../../../components/ui/v-stack/v-stack.tsx"
 import { dayLabel } from "../../../utils/day-label.ts"
 import styles from "./achievement.module.css"
@@ -52,10 +53,18 @@ export function DaySwitch(props: DaySwitchProps): ReactElement {
         >
           {known ? (
             <>
-              <span className={styles["achievement-day-switch-relative"]}>
+              <Text
+                element="span"
+                size="label"
+                tone="accent"
+                weight="bold"
+                className={styles["achievement-day-switch-relative"] ?? ""}
+              >
                 {relativeLabel(daySwitch.date, daySwitch.today)}
-              </span>
-              <span className={styles["achievement-day-switch-date"]}>{dateLabel(daySwitch)}</span>
+              </Text>
+              <Text element="span" size="subheading" tone="ink" weight="inherit" className="">
+                {dateLabel(daySwitch)}
+              </Text>
             </>
           ) : (
             LOADING_VALUE

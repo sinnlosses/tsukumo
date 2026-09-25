@@ -5,6 +5,7 @@
 import { type ReactElement } from "react"
 
 import { Heading } from "../../../components/ui/heading/heading.tsx"
+import { Text } from "../../../components/ui/text/text.tsx"
 import styles from "./achievement.module.css"
 import { BookmarkSection } from "./bookmark-section.tsx"
 import { DaySwitch } from "./day-switch.tsx"
@@ -35,7 +36,9 @@ export function PresentationalAchievementScreen(
           <Heading level={1} size="heading" tone="ink" weight="normal" className="">
             成果
           </Heading>
-          <p className={styles["achievement-note"]}>{UNAVAILABLE_NOTE}</p>
+          <Text element="p" size="body" tone="ink-quiet" weight="inherit" className="">
+            {UNAVAILABLE_NOTE}
+          </Text>
         </div>
         <DiaryBook {...props.diaryBook} />
       </>

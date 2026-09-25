@@ -17,6 +17,7 @@
 
 import { type ReactElement } from "react"
 
+import { Text } from "../../../../components/ui/text/text.tsx"
 import { useMainViewTurns } from "../../../../stores/main-view-turn.ts"
 import { useTurnSelection } from "../../../../stores/turn-selection.tsx"
 import { turnHistoryText, turnTitle } from "./domain/turn-title.ts"
@@ -40,7 +41,15 @@ export function MainView(): ReactElement {
   if (turns.length === 0) {
     return (
       <RepositoryFileLinkProvider>
-        <p className={styles["placeholder"]}>{EMPTY_MESSAGE}</p>
+        <Text
+          element="p"
+          size="inherit"
+          tone="ink-quiet"
+          weight="inherit"
+          className={styles["placeholder"] ?? ""}
+        >
+          {EMPTY_MESSAGE}
+        </Text>
         <QuestionAsk />
       </RepositoryFileLinkProvider>
     )

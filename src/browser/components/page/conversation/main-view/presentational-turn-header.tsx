@@ -21,6 +21,7 @@
 
 import { type ReactElement } from "react"
 
+import { Text } from "../../../../components/ui/text/text.tsx"
 import { type TurnHeaderHistoryRow, type TurnHeaderModel } from "./hooks/use-turn-header.ts"
 import styles from "./turn-header.module.css"
 
@@ -90,7 +91,15 @@ export function PresentationalTurnHeader({
             aria-controls={historyListId}
             onClick={onToggleHistory}
           >
-            <span className={styles["turn-title-text"]}>{activeTitle}</span>
+            <Text
+              element="span"
+              size="subheading"
+              tone="inherit"
+              weight="bold"
+              className={styles["turn-title-text"] ?? ""}
+            >
+              {activeTitle}
+            </Text>
             <span className={styles["turn-title-chevron"]} aria-hidden="true" />
           </button>
         </h2>
@@ -99,7 +108,15 @@ export function PresentationalTurnHeader({
         ) : null}
       </div>
       <div className={styles["turn-meta"]}>
-        <span className={styles["turn-position"]}>{positionLabel}</span>
+        <Text
+          element="span"
+          size="secondary"
+          tone="ink-quiet"
+          weight="inherit"
+          className={styles["turn-position"] ?? ""}
+        >
+          {positionLabel}
+        </Text>
         {isNewest ? (
           <span className={styles["turn-newest-badge"]}>{NEWEST_BADGE}</span>
         ) : (
@@ -130,7 +147,15 @@ function TurnHistoryList(props: {
       role="region"
       aria-label={HISTORY_HEADING}
     >
-      <p className={styles["turn-history-heading"]}>{HISTORY_HEADING}</p>
+      <Text
+        element="p"
+        size="inherit"
+        tone="ink-quiet"
+        weight="semibold"
+        className={styles["turn-history-heading"] ?? ""}
+      >
+        {HISTORY_HEADING}
+      </Text>
       <ul className={styles["turn-history-rows"]}>
         {props.rows.map((row) => (
           <li key={row.id}>
@@ -147,10 +172,20 @@ function TurnHistoryList(props: {
                 }}
               >
                 <span className={styles["turn-history-mark"]} aria-hidden="true">
-                  {row.isActive ? HISTORY_CURRENT_MARK : HISTORY_OTHER_MARK}
+                  <Text element="span" size="inherit" tone="accent" weight="inherit" className="">
+                    {row.isActive ? HISTORY_CURRENT_MARK : HISTORY_OTHER_MARK}
+                  </Text>
                 </span>
                 <span className={styles["turn-history-position"]} aria-hidden="true">
-                  {row.positionLabel}
+                  <Text
+                    element="span"
+                    size="secondary"
+                    tone="ink-quiet"
+                    weight="inherit"
+                    className=""
+                  >
+                    {row.positionLabel}
+                  </Text>
                 </span>
               </button>
               {/* 選択してコピーするための、ただの文字（ボタンではない）。改行はそのまま

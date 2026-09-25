@@ -18,6 +18,7 @@ import {
   type UsageProposalImpact,
 } from "../../../../shared/usage-review.ts"
 import { CharacterFace } from "../../../components/domain/character-face.tsx"
+import { Text } from "../../../components/ui/text/text.tsx"
 import { VStack } from "../../../components/ui/v-stack/v-stack.tsx"
 import {
   type UsageReviewResultProposalView,
@@ -229,7 +230,15 @@ function ResultReviewCard(props: {
           className={styles["usage-review-face"] ?? ""}
         />
         <div className={styles["usage-review-result-bubble"]}>
-          <span className={styles["usage-review-result-bubble-label"]}>tsukumo</span>
+          <Text
+            element="span"
+            size="label"
+            tone="accent"
+            weight="bold"
+            className={styles["usage-review-result-bubble-label"] ?? ""}
+          >
+            tsukumo
+          </Text>
           <p className={styles["usage-review-result-bubble-text"]}>{review.headline}</p>
         </div>
         <div className={styles["usage-review-result-meta"]}>

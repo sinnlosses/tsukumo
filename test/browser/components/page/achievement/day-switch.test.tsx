@@ -52,20 +52,21 @@ describe("DaySwitch", () => {
   })
 
   it("見出しは今日・昨日を上に添える", () => {
-    renderSwitch(KNOWN_TODAY)
-    expect(document.querySelector(".achievement-day-switch-relative")?.textContent).toBe("今日")
-    expect(document.querySelector(".achievement-day-switch-date")?.textContent).toBe(
-      "9月24日（木）",
+    const { container } = renderSwitch(KNOWN_TODAY)
+    expect(container.querySelector(".achievement-day-switch-label")?.textContent).toBe(
+      "今日9月24日（木）",
     )
 
     cleanup()
     renderSwitch(KNOWN_YESTERDAY)
-    expect(document.querySelector(".achievement-day-switch-relative")?.textContent).toBe("昨日")
+    expect(document.querySelector(".achievement-day-switch-label")?.textContent).toBe(
+      "昨日9月23日（水）",
+    )
   })
 
   it("今年でなければ年を添える", () => {
     renderSwitch(KNOWN_OTHER_YEAR)
-    expect(document.querySelector(".achievement-day-switch-date")?.textContent).toBe(
+    expect(document.querySelector(".achievement-day-switch-label")?.textContent).toBe(
       "2025年1月5日（日）",
     )
   })

@@ -8,6 +8,7 @@
 import { type ReactElement } from "react"
 
 import { HStack } from "../../../components/ui/h-stack/h-stack.tsx"
+import { Text } from "../../../components/ui/text/text.tsx"
 import styles from "./diary-notice.module.css"
 import { useDiaryNotice } from "./hooks/use-diary-notice.ts"
 import { Bell } from "./lantern-calendar.tsx"
@@ -34,7 +35,9 @@ export function DiaryNotice(): ReactElement | null {
       >
         <Bell size={18} />
       </HStack>
-      <span className={styles["diary-notice-text"]}>{`${view.dateLabel}のページができました`}</span>
+      <Text element="span" size="subheading" tone="ink" weight="inherit" className="">
+        {`${view.dateLabel}のページができました`}
+      </Text>
       <button type="button" className={styles["diary-notice-open"]} onClick={view.onOpen}>
         {OPEN_LABEL}
       </button>

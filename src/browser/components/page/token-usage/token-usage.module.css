@@ -18,12 +18,12 @@
   font-weight: normal;
 }
 /* プランの札。題の右に添えるだけの静かな印（13.1 原則1。状態の警告ではないので accent は使わない）。 */
+/* 字の段・色は `Text`（size="label" tone="ink-quiet" weight="inherit"）が持つ。箱（枠・角丸・
+   余白）・行の高さだけここに残す（語彙に無い見た目）。 */
 .token-usage-plan {
   padding: 0.1rem 0.5rem;
   border: 1px solid var(--rule);
   border-radius: 999px;
-  color: var(--ink-quiet);
-  font-size: var(--font-label);
   line-height: 1.4;
 }
 /* 題の帯の残りを埋め、見直し中の札を右端へ押しやる（`.token-usage-bar` の `flex-wrap` と
@@ -314,12 +314,8 @@
   text-decoration: underline;
 }
 
-/* 記録が無い・取れなかった・描けなかった・続きがある、の一言。 */
-.token-usage-note {
-  margin: 0;
-  color: var(--ink-quiet);
-  font-size: var(--font-label);
-}
+/* 記録が無い・取れなかった・描けなかった・続きがある、の一言。字の段・色は `Text`（size="label"
+   tone="ink-quiet" weight="inherit"）が持つ。 */
 
 /* 「減らし方を見てもらう」区画（`usage-review-card.tsx`）。**枠と地は他の区画と同じ**
    （`.usage-card` / `.context-card` と同じ `--usage-rule` / `--usage-card`）に、`--accent` を
@@ -551,12 +547,11 @@
   border: 1px solid color-mix(in srgb, var(--usage-rule), var(--accent) 30%);
   background: color-mix(in srgb, var(--usage-well), var(--accent) 10%);
 }
+/* 字の段・色・太さは `Text`（size="label" tone="accent" weight="bold"）が持つ。並び（`display:
+   block`）・margin・字間だけここに残す（語彙に無い見た目）。 */
 .usage-review-result-bubble-label {
   display: block;
   margin-bottom: 0.15rem;
-  color: var(--accent);
-  font-size: var(--font-label);
-  font-weight: 700;
   letter-spacing: 0.04em;
 }
 .usage-review-result-bubble-text {

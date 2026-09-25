@@ -6,6 +6,7 @@
 import { type ReactElement } from "react"
 
 import { HStack } from "../../../../components/ui/h-stack/h-stack.tsx"
+import { Text } from "../../../../components/ui/text/text.tsx"
 import styles from "./dispatch.module.css"
 import { type PendingAnswerModel } from "./hooks/use-pending-answer.ts"
 
@@ -21,7 +22,15 @@ export function PresentationalPendingAnswer(
       return (
         <div className={`${styles["pending-answer"]} ${styles["pending-permission"]}`}>
           <p className={styles["pending-summary"]}>
-            <span className={styles["pending-tool"]}>{props.toolName}</span>
+            <Text
+              element="span"
+              size="inherit"
+              tone="inherit"
+              weight="bold"
+              className={styles["pending-tool"] ?? ""}
+            >
+              {props.toolName}
+            </Text>
             {props.summaryText}
           </p>
           <HStack
