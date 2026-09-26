@@ -91,6 +91,7 @@ bun run scripts/stop.ts       # 動いている tsukumo の一覧（--port <n> �
   判別可能な合併型。「無い」は入口で畳む（`docs/coding-standards.md`「「無いかもしれない」値」）
 - **`null` を自前の型・戻り値・`shared` に出さない**（外来の `null` は境界で `undefined` に畳む）
 - **`ReactElement` を返す関数は `function` で書く**（`const` は `memo` で包むときだけ）
+- **条件付きの描画は `{条件 && <部品 />}` で書き、`? … : null` にしない。** 左辺は `boolean` に限る
 - **`useEffect` は「React の外と同期する」4類型だけ。** 依存配列を手で間引かない
   （代替は `docs/coding-standards.md`「React」節）
 - **`Bun.*` の固有APIに寄せない**（`node:` の標準API。例外は `bun:test`）

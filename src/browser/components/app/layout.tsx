@@ -38,7 +38,7 @@ export function Layout(): ReactElement {
       <Activity mode={screen === "conversation" ? "visible" : "hidden"}>
         <Conversation />
       </Activity>
-      {screen === "conversation" ? null : OVERLAY_SCREEN[screen]}
+      {screen !== "conversation" && OVERLAY_SCREEN[screen]}
     </>
   )
 }

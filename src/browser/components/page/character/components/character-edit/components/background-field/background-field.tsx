@@ -82,7 +82,7 @@ export function BackgroundField(props: {
               }}
             />
           </label>
-          {background.image.kind === "absent" ? null : (
+          {background.image.kind !== "absent" && (
             <button
               type="button"
               className={clsx(styles["character-button"], styles["character-button-danger"])}

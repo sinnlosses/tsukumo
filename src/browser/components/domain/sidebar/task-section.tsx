@@ -42,7 +42,7 @@ export function TaskSection(): ReactElement {
           },
         }}
       >
-        {tasks.kind === "unknown" ? null : (
+        {tasks.kind !== "unknown" && (
           <TaskCountChipList
             counts={taskListCounts(tasks.items)}
             selected={selectedStatus}

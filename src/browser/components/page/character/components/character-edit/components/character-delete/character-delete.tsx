@@ -55,7 +55,7 @@ export function CharacterDelete(props: {
           {band.buttonLabel}
         </button>
       </section>
-      {open ? (
+      {open && (
         <CharacterDeleteConfirm
           band={band}
           onConfirm={() => {
@@ -66,7 +66,7 @@ export function CharacterDelete(props: {
             setOpen(false)
           }}
         />
-      ) : null}
+      )}
     </>
   )
 }

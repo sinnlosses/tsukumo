@@ -178,11 +178,11 @@ function Grid(props: GridProps): ReactElement {
           ),
         )}
       </div>
-      {first !== undefined && last !== undefined ? (
+      {first !== undefined && last !== undefined && (
         <Text element="p" size="label" tone="ink-quiet" weight="inherit" className="">
           {monthDayLabel(first)}〜{monthDayLabel(last)}
         </Text>
-      ) : null}
+      )}
     </>
   )
 }
@@ -221,7 +221,7 @@ function DayCell(props: DayCellProps): ReactElement {
       >
         {cellDateLabel(props.date, props.index)}
       </Text>
-      {props.hasDiary ? (
+      {props.hasDiary && (
         <HStack
           element="span"
           name={{ kind: "none" }}
@@ -234,9 +234,9 @@ function DayCell(props: DayCellProps): ReactElement {
         >
           <Bell />
         </HStack>
-      ) : null}
+      )}
       <Lamp level={level} />
-      {props.isToday ? (
+      {props.isToday && (
         <Text
           element="span"
           size="label"
@@ -246,7 +246,7 @@ function DayCell(props: DayCellProps): ReactElement {
         >
           今日
         </Text>
-      ) : null}
+      )}
     </button>
   )
 }
@@ -274,13 +274,13 @@ export function Lamp(props: { readonly level: LampLevel }): ReactElement {
       )}
     >
       <path d={FLAME_PATH} fill="var(--accent)" fillOpacity={opacity} />
-      {props.level === "bright" ? (
+      {props.level === "bright" && (
         <path
           d="M12 11c.9 1.6 2.3 2.4 2.3 4.2a2.3 2.3 0 0 1-4.6 0c0-1.3.9-2.4 2.3-4.2z"
           fill="var(--ground)"
           opacity="0.85"
         />
-      ) : null}
+      )}
     </svg>
   )
 }

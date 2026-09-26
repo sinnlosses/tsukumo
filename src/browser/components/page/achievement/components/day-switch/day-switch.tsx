@@ -101,7 +101,7 @@ export function DaySwitch(props: DaySwitchProps): ReactElement {
         >
           ›
         </Button>
-        {known && !isToday ? (
+        {known && !isToday && (
           <Button
             type="button"
             variant="outline"
@@ -116,7 +116,7 @@ export function DaySwitch(props: DaySwitchProps): ReactElement {
           >
             今日へ
           </Button>
-        ) : null}
+        )}
       </div>
     </HStack>
   )

@@ -40,7 +40,7 @@ export function SidebarSection(props: SidebarSectionProps): ReactElement {
         className={styles["sidebar-block-heading"]}
       >
         <span className={styles["sidebar-block-title"]}>{props.title}</span>
-        {props.action === undefined ? null : (
+        {props.action !== undefined && (
           <Button
             type="button"
             variant="link"

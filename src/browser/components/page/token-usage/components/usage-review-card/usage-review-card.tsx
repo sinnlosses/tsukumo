@@ -121,10 +121,10 @@ function IdleReviewCard(props: {
             {START_LABEL}
           </Text>
         </Button>
-        {review.start.kind === "blocked" ? (
+        {review.start.kind === "blocked" && (
           <p className={styles["usage-review-blocked"]}>{review.start.reason}</p>
-        ) : null}
-        {review.previousReview.kind === "found" ? (
+        )}
+        {review.previousReview.kind === "found" && (
           <Button
             type="button"
             variant="link"
@@ -139,7 +139,7 @@ function IdleReviewCard(props: {
           >
             {`${PREVIOUS_LABEL_PREFIX}（${review.previousReview.dateLabel}）`}
           </Button>
-        ) : null}
+        )}
       </div>
     </section>
   )
@@ -175,9 +175,9 @@ function RunningReviewCard(props: {
           className={styles["usage-review-body"]}
         >
           <span className={styles["usage-review-heading"]}>{RUNNING_HEADING}</span>
-          {review.speech.kind === "said" ? (
+          {review.speech.kind === "said" && (
             <span className={styles["usage-review-speech"]}>{`「${review.speech.text}」`}</span>
-          ) : null}
+          )}
         </VStack>
         <span className={styles["usage-review-elapsed"]}>{review.elapsedText}</span>
         <button type="button" className={styles["usage-review-stop"]} onClick={review.onInterrupt}>
@@ -217,9 +217,9 @@ function StageRow(props: { readonly stage: UsageReviewStageView }): ReactElement
         {stageMark(stage.status)}
       </span>
       <span className={styles["usage-review-stage-label"]}>{stage.label}</span>
-      {stage.count.kind === "shown" ? (
+      {stage.count.kind === "shown" && (
         <span className={styles["usage-review-stage-count"]}>{stage.count.label}</span>
-      ) : null}
+      )}
     </li>
   )
 }
@@ -264,7 +264,7 @@ function ResultReviewCard(props: {
           <span
             className={styles["usage-review-result-timestamp"]}
           >{`${review.reviewedAtLabel} · ${review.periodLabel}`}</span>
-          {review.close.kind === "shown" ? (
+          {review.close.kind === "shown" && (
             <Button
               type="button"
               variant="link"
@@ -279,7 +279,7 @@ function ResultReviewCard(props: {
             >
               {CLOSE_LABEL}
             </Button>
-          ) : null}
+          )}
           <button
             type="button"
             className={styles["usage-review-retry"]}
@@ -288,7 +288,7 @@ function ResultReviewCard(props: {
           >
             {RETRY_LABEL}
           </button>
-          {blockedReason === undefined ? null : (
+          {blockedReason !== undefined && (
             <p className={styles["usage-review-blocked"]}>{blockedReason}</p>
           )}
         </div>

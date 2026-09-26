@@ -71,7 +71,7 @@ export function PresentationalTokenUsage(props: PresentationalTokenUsageProps): 
         className=""
       >
         <h1 className={styles["token-usage-title"]}>トークン消費</h1>
-        {props.plan === undefined ? null : (
+        {props.plan !== undefined && (
           <Text
             element="span"
             size="label"
@@ -83,11 +83,11 @@ export function PresentationalTokenUsage(props: PresentationalTokenUsageProps): 
           </Text>
         )}
         <div className={styles["token-usage-bar-spacer"]} />
-        {props.usageReview.kind === "running" ? (
+        {props.usageReview.kind === "running" && (
           <span className={styles["token-usage-review-badge"]} role="status">
             見直し中
           </span>
-        ) : null}
+        )}
       </HStack>
 
       <UsageReviewCard review={props.usageReview} />
@@ -130,7 +130,7 @@ export function PresentationalTokenUsage(props: PresentationalTokenUsageProps): 
         )}
       </VStack>
 
-      {props.isError || isEmpty ? null : (
+      {!props.isError && !isEmpty && (
         <div className={styles["usage-table-row"]}>
           <ModelUsageCard byModel={props.summary.byModel} />
           <ToolUsageCard byTool={props.summary.byTool} />
@@ -305,7 +305,7 @@ function ToolUsageCard(props: ToolUsageCardProps): ReactElement {
           ))}
         </tbody>
       </table>
-      {rest > 0 ? (
+      {rest > 0 && (
         <Button
           type="button"
           variant="link"
@@ -322,7 +322,7 @@ function ToolUsageCard(props: ToolUsageCardProps): ReactElement {
         >
           {expanded ? "閉じる" : `ほか ${rest} 件を見る`}
         </Button>
-      ) : null}
+      )}
     </section>
   )
 }

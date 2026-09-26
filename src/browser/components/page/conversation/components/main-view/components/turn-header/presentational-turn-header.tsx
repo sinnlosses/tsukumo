@@ -112,9 +112,9 @@ export function PresentationalTurnHeader({
             <span className={styles["turn-title-chevron"]} aria-hidden="true" />
           </button>
         </h2>
-        {historyOpen ? (
+        {historyOpen && (
           <TurnHistoryList id={historyListId} rows={historyRows} onSelect={onSelectHistoryRow} />
-        ) : null}
+        )}
       </div>
       <div className={styles["turn-meta"]}>
         <Text

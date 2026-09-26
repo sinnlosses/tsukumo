@@ -82,7 +82,7 @@ export function FaceField(props: {
               }}
             />
           </label>
-          {face.image.kind === "absent" ? null : (
+          {face.image.kind !== "absent" && (
             <button
               type="button"
               className={clsx(styles["character-button"], styles["character-button-danger"])}

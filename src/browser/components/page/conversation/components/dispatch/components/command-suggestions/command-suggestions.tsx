@@ -80,7 +80,7 @@ export function CommandSuggestions(props: CommandSuggestionsProps): ReactElement
           }}
         >
           <span className={styles["dispatch-suggestion-name"]}>/{command.name}</span>
-          {command.description === undefined || command.description === "" ? null : (
+          {command.description !== undefined && command.description !== "" && (
             <Text
               element="span"
               size="secondary"
