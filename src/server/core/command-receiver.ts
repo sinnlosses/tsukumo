@@ -1,10 +1,10 @@
-// コマンドの受け手の行の型と、葉の機能の行を呼ぶところ（`docs/design.md` 2章「コマンドの受け手と
-// 手続きの置き方」）。機能ごとの表（`<機能>/core/<機能>-command.ts`）が書く行の形と、手続き
-// （`<機能>/adapter/<機能>-procedure.ts`）が行を呼ぶ {@link receiveFeatureCommand} を持つ。
+// コマンドの受け手の行の型と、葉の機能の行を呼ぶところ（`docs/design.md`「コマンドの受け手と
+// 手続きの置き方」）。機能ごとの表（各機能の core に置く `<機能>-command` の形）が書く行の形と、
+// 手続き（各機能の adapter に置く `<機能>-procedure` の形）が行を呼ぶ `receiveFeatureCommand` を持つ。
 //
 // 行の種類のうち `session`（セッションの口を受け取るもの）はここに無い——型が
-// `session/core/command-session.ts` にあるので、葉の機能の表からは書けない。断る条件は行ではなく
-// 契約の `meta`（`src/shared/command.ts`）にあり、見るのは `rpc-guard.ts`。
+// `CommandSession` にあるので、葉の機能の表からは書けない。断る条件は行ではなく
+// 契約の `meta`（`CommandContract` にある）にあり、見るのは `rpcGuard`。
 
 import {
   type CommandContract,

@@ -1,15 +1,15 @@
 // 画面から届いたキャラクターの変更（新しいパックを作る・立ち絵と差し色と背景を差し替える・
 // パックを消す）をキャラクターパックに書き込む。書き込んでよい・消してよいのは
-// `~/.tsukumo/characters/<name>/` の下だけ（`docs/design.md` 7.1。`state.json` と同じ親の下で、
-// リポジトリの作業ツリーが汚れない）。読む側は `src/server/character-pack/adapter/character-pack.ts`。
+// `~/.tsukumo/characters/<name>/` の下だけ（`docs/design.md`「画面から作るときの置き場と受け取り方」。
+// `state.json` と同じ親の下で、リポジトリの作業ツリーが汚れない）。読む側は `readCharacterPack`。
 //
 // ディレクトリ名になる名前だけは外から受け取る（新しいパックを作るときの `<name>`）ので、
-// 形は境界（`src/shared/character.ts` の `isCharacterPackName`）で見てある。ここは既にある
+// 形は境界（`isCharacterPackName`）で見てある。ここは既にある
 // 名前とぶつかったら書かないことだけを見る（後勝ちで既存のパックが黙って隠れないため）。
 //
 // ファイル名を外から受け取らない。 立ち絵の名前は表情と形式から組み立て
-// （`src/shared/portrait-image.ts` の `portraitFileName`）、背景の名前は形式だけから組み立てる
-// （`src/shared/character-background.ts` の `backgroundFileName`）ので、届いた文字列がパスの一部に
+// （`portraitFileName`）、背景の名前は形式だけから組み立てる
+// （`backgroundFileName`）ので、届いた文字列がパスの一部に
 // なる経路がそもそも無い。
 //
 // 書き込む先のパックはコマンドの `pack` で指す（使用中のパックに限らない）。名前は一覧と
@@ -83,13 +83,13 @@ import {
 const EXTRA_IMAGE_FILES_PER_PACK = 4
 
 /**
- * 1つのパックが持てる画像の数（`docs/design.md` 7.1 の表）。立ち絵・ミニ立ち絵・背景・顔・
+ * 1つのパックが持てる画像の数（`docs/design.md`「画面から作るときの置き場と受け取り方」の表）。立ち絵・ミニ立ち絵・背景・顔・
  * 訪問の peek を全部入れた数で、表情の全体（{@link EXPRESSIONS}）＋ ミニ立ち絵1 ＋ 背景1 ＋
  * 顔1 ＋ peek1。
  *
  * 数を直に書かないのは、表情を足したときに黙って足りなくなるから。 表情が 6つから8つに
  * 増えたあとも 8 のまま据え置かれていて、立ち絵を全部そろえたパックでは背景の差し替えだけが
- * 弾かれていた（13.8）。
+ * 弾かれていた。
  */
 export const MAX_IMAGE_FILES_PER_PACK = EXPRESSIONS.length + EXTRA_IMAGE_FILES_PER_PACK
 
@@ -99,7 +99,7 @@ export const MAX_IMAGE_FILES_PER_PACK = EXPRESSIONS.length + EXTRA_IMAGE_FILES_P
  * `characterChangedEvent` で一覧ごと画面へ流し直す）。受け付けられなかったときは undefined:
  *
  * - 一覧（`current` と `packs`。素材を配るのと同じ `findCharacterPack` の規則）に無い名前
- * - 起動先の `characters/local` と同じ名前のパック（書いても次の起動で読まれない。7.1）
+ * - 起動先の `characters/local` と同じ名前のパック（書いても次の起動で読まれない。`docs/design.md`「画面から作るときの置き場と受け取り方」）
  * - 画像（立ち絵・背景）の数が {@link MAX_IMAGE_FILES_PER_PACK} を超える
  * - ディスクに書けない
  *
@@ -137,7 +137,7 @@ export function editCharacterPack(
  * - ディスクに書けない（書きかけのディレクトリは消すので、欠けたパックは残らない）
  *
  * `default` の1枚があることは境界で済んでいる
- * （`src/shared/contract/character-pack.ts` の `portraits` が required）。ここは書く順だけを守る:
+ * （`CharacterCreate` の `portraits` が required）。ここは書く順だけを守る:
  * 素材 → 定義の順に書くので、途中で失敗したディレクトリは `character.json` を持たず、
  * パックとして一覧に出ない。
  */
@@ -171,7 +171,7 @@ export function createCharacterPack(
  * `remove.pack` で指されたパックのホームの版（`<roots.home>/<name>`）を消し、消して起きた
  * ことを返す（`"delete"` なら一覧から消え、`"revert-to-bundled"` なら同梱の版が一覧に戻る。
  * 呼び出し側は一覧を読み直して `character-changed` を流し直し、`"delete"` のときだけ雑談の
- * 記録も消す。`docs/design.md` 7.1「消すときの細部」）。消さないときは undefined:
+ * 記録も消す。`docs/design.md`「消すときの細部」）。消さないときは undefined:
  *
  * - 一覧（素材を配る・見た目を変えるのと同じ `findCharacterPack` の規則）に無い名前
  * - 使用中のパック（`current`）
@@ -215,7 +215,7 @@ export function deleteCharacterPack(
  * （`persona.md`）も写す（写し忘れると、次の起動でそのパックの人格が消える）。
  *
  * ホームへ書く前に必ず通る道なので、立ち絵の差し替え以外の書き込み
- * （`src/server/chat/adapter/persona-memory.ts`）もここを共有する（写す規則を二重に書かない）。
+ * （雑談の記憶の書き戻し）もここを共有する（写す規則を二重に書かない）。
  */
 export function copyPackOnce(pack: CharacterPack, dir: string): void {
   mkdirSync(dir, { recursive: true })
@@ -256,7 +256,7 @@ function applyEdit(dir: string, edit: CharacterEdit): boolean {
     case "clearPortrait":
       return applyImageEdit(dir, definitionPath, content, portraitClearEdit(edit.expression))
     case "setPortrait":
-      // 検証は境界（`src/shared/contract/character-pack.ts` の `portraitDataUrlSchema`）で済んでいるので、
+      // 検証は境界（`portraitDataUrlSchema`）で済んでいるので、
       // `parseImage` が undefined を返すのは配線の誤りのときだけ。型を迂回せずほどくために、
       // もう一度同じ関数を通す。
       return applyImageEdit(
@@ -268,13 +268,13 @@ function applyEdit(dir: string, edit: CharacterEdit): boolean {
     case "clearBackground":
       return applyImageEdit(dir, definitionPath, content, backgroundClearEdit())
     case "setBackground":
-      // 立ち絵と同じく、検証は境界（`src/shared/contract/character-pack.ts`）で済んでいる。`parseImage` が
+      // 立ち絵と同じく、検証は境界（契約のスキーマ）で済んでいる。`parseImage` が
       // undefined を返すのは配線の誤りのときだけ。
       return applyImageEdit(dir, definitionPath, content, backgroundSetEdit(edit.image))
     case "clearFace":
       return applyImageEdit(dir, definitionPath, content, faceClearEdit())
     case "setFace":
-      // 立ち絵・背景と同じく、検証は境界（`src/shared/contract/character-pack.ts`）で済んでいる。`parseImage` が
+      // 立ち絵・背景と同じく、検証は境界（契約のスキーマ）で済んでいる。`parseImage` が
       // undefined を返すのは配線の誤りのときだけ。
       return applyImageEdit(dir, definitionPath, content, faceSetEdit(edit.image))
   }
@@ -444,7 +444,7 @@ function removeUnreferencedImage(dir: string, fileName: string | undefined): voi
 }
 
 /**
- * 画像の数の上限を超えないか（背景も同じ数に入る。7.1 / 13.8）。同じ名前を上書きする
+ * 画像の数の上限を超えないか（背景も同じ数に入る。`docs/design.md`「画面から作るときの置き場と受け取り方」）。同じ名前を上書きする
  * だけなら増えないので、既にある名前はそのまま通す。
  */
 function withinImageFileLimit(dir: string, fileName: string): boolean {
@@ -498,12 +498,11 @@ function writeRequiredPortraits(
 
 /**
  * 新しいパックの `character.json`。表示名（`name`）は空なら書かない——読む側
- * （`components/hooks/use-character-edit.ts` の `character.name ?? character.pack` /
- * `CharacterPackChoice.label` の
- * `pack.definition?.name ?? pack.name`）が id へ落とすので、ここで id を代入し直さない
+ * （画面側が `character.name ?? character.pack` / `pack.definition?.name ?? pack.name` の形で
+ * id へ落とすので、ここで id を代入し直さない
  * （`definitionWithName`）。画面の差し色（仕事・雑談）は境界で両方 required なので、必ず
  * 2つとも書く。衣装ごとの出し分け（`outfitAccents`）は作ったあと「見た目」の引き出しで足す
- * （ここでは書かない。`docs/design.md` 7.1）。
+ * （ここでは書かない。`docs/design.md`「画面から作るときの置き場と受け取り方」）。
  */
 function newDefinitionJson(
   create: CharacterCreate,

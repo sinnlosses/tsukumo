@@ -1,6 +1,6 @@
 // 見直し（docs/glossary.md「見直し」）を受け取る2つのツールの決まりごと。ツールを載せるのは
-// `src/server/session-driver/adapter/sdk-tool.ts` で、ここにあるのはツールの名前・説明文と、受け付けるかを
-// 決めて受け付けた呼び出しをイベントにする窓口（{@link createUsageReviewIntake}）。
+// MCP ツールを組み立てるアダプタで、ここにあるのはツールの名前・説明文と、受け付けるかを
+// 決めて受け付けた呼び出しをイベントにする窓口（`createUsageReviewIntake`）。
 // 決定の理由は docs/design.md「見直しのツールと状態」。
 //
 // 引数の形（型・列挙・整数）は zod の形で SDK が先に検査する（崩れていれば handler は
@@ -100,7 +100,7 @@ export function createUsageReviewIntake(
 
 /**
  * 形の外の条の違反1つ。`count` は違反の数で、モデルが書いた文面は持たない（差し戻しの
- * 文面に写さない。`report-violation.ts` と同じ線）。
+ * 文面に写さない。`reportViolations` と同じ線）。
  */
 type UsageReviewViolation =
   | { readonly kind: "blank-headline" }

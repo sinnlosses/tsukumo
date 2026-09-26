@@ -1,6 +1,6 @@
-// 前のセッションの続きから始めるための計算（docs/requirements.md 4.8）。SDK を呼ばない
+// 前のセッションの続きから始めるための計算（`docs/requirements.md`「セッションの復元」）。SDK を呼ばない
 // 純粋な部分だけをここに置き、`listSessions` / `getSessionMessages` を実際に呼ぶのは
-// src/server/session-driver/adapter/sdk-session.ts。純粋なので、本物の claude を起こさずにテストできる。
+// SDK を起こすアダプタ。純粋なので、本物の claude を起こさずにテストできる。
 //
 // 戻すのは (1) どのセッションの続きから始めるか（印と `lastModified` で選ぶ）と
 // (2) 画面の履歴（transcript のメッセージ列 → 内部イベント）の2つ。
@@ -11,7 +11,7 @@
 //
 // セッションの印（`sessionTag` / `readSessionMark`）の組み立てと読み取りもここに置く
 // （目印を扱う持ち主。環境変数ではないが、外の世界（claude の transcript）に書かれる値
-// なので、組み立てと読み取りを1箇所に集める。以前は `core/config.ts` にあった）。
+// なので、組み立てと読み取りを1箇所に集める。以前は設定を読む側にあった）。
 
 import { isPlainObject } from "remeda"
 
@@ -44,24 +44,24 @@ const SESSION_MARK_PORT = /^[0-9]{1,5}$/
 /**
  * キャラクターパック1つぶんの、そのモードのセッションの印（SDK の `tagSession`）。続きから
  * 始めるセッションを選ぶ鍵の片方で、もう片方は起動した作業ディレクトリ
- * （docs/requirements.md 4.8「鍵」）。
+ * （`docs/requirements.md`「鍵」）。
  *
  * 印にパックの名前を混ぜるのは、キャラクターごとに別のセッションを持つため
- * （docs/design.md 7章）。印の無いセッション（同じディレクトリで使った素の `claude`）も、
+ * （`docs/design.md`「キャラクターパック」）。印の無いセッション（同じディレクトリで使った素の `claude`）も、
  * 別のパックのセッションも、これで外れる。
  *
  * 雑談のときだけ `:chat` を足すのは、雑談と仕事で claude 側の文脈ごと分けるため
- * （docs/chat-mode.md 4.9）。
+ * （`docs/chat-mode.md`「雑談モード」）。
  *
  * 末尾の目印（`@7327` / `@7328` …）は、同じディレクトリで tsukumo を何個も起こしたときに
- * 別々のセッションを持たせるためのもの（docs/requirements.md 4.8「鍵」）。目印はビューが
+ * 別々のセッションを持たせるためのもの（`docs/requirements.md`「鍵」）。目印はビューが
  * 実際に待ち受けているポートの番号そのもので、畳まない——セッションを指す ID が
  * 「キャラクターパック × ポート番号」だから。
  *
  * ポートを使うのは、「その目印がいま使われているか」を知っているものが他に無いため。印は
  * transcript に残るだけなので、落ちた tsukumo の印と動いている tsukumo の印は見分けられない
- * （実測。docs/requirements.md 4.8「鍵」）。ポートは OS が握っていて、既定の
- * ときは塞がっていれば +1 へずれ（`port-resolution.ts`）、プロセスが落ちれば空くので、
+ * （実測。`docs/requirements.md`「鍵」）。ポートは OS が握っていて、既定の
+ * ときは塞がっていれば +1 へずれ（`resolveViewPort`）、プロセスが落ちれば空くので、
  * 起こし直せば同じ番号＝同じセッションへ戻る。
  *
  * 昔の印（目印の無いもの・1文字の `@A`）も同じセッションを指す（{@link readSessionMark} が
@@ -139,11 +139,11 @@ function markedViewPort(mark: string): number | undefined {
 }
 
 /**
- * 続きを探す起こし方かどうか（`docs/requirements.md` 4.8「逃げ道」）。`TSUKUMO_NEW_SESSION=1`
+ * 続きを探す起こし方かどうか（`docs/requirements.md`「逃げ道」）。`TSUKUMO_NEW_SESSION=1`
  * と fake driver は探さない——新規に起こすと決めているときに続きを探しても無駄で、
  * fake driver は claude を起こさないのでそもそも探す先が無い。
  *
- * `src/session-start.ts` の `listPackSessions` / `findPackSessionToResume` の両方が使う共通の
+ * 配線の `listPackSessions` / `findPackSessionToResume` の両方が使う共通の
  * 判断（探さないときは一覧も空、続きも `{ kind: "new" }`）。
  */
 export function canResume(config: Pick<Config, "newSession" | "driver">): boolean {
@@ -165,7 +165,7 @@ const HISTORY_RESTORED: SessionEvent = { kind: "history-restored" }
 
 /**
  * 続きから始めるセッションを選ぶ。印（`tagSession` で付けたもの）のあるもののうち、
- * `lastModified` が最新の1つ（docs/requirements.md 4.8「鍵」）。
+ * `lastModified` が最新の1つ（`docs/requirements.md`「鍵」）。
  *
  * `cwd` での絞り込みは呼び出し側（`listSessions({ dir })`）が済ませている前提で、ここは印だけを見る。
  * 目印まで揃えてから比べるので（{@link readSessionMark}）、昔の印（目印の無いもの・
@@ -183,7 +183,7 @@ export function selectSessionToResume(sessions: unknown, tag: string): string | 
 
 /**
  * 切り替え先として選べるセッションを一覧にする（印そのものがセッションの一覧。別の保存先は
- * 作らない。docs/requirements.md 4.8「鍵」）。新しい順に並べ、tsukumo の印を持たないものと、
+ * 作らない。`docs/requirements.md`「鍵」）。新しい順に並べ、tsukumo の印を持たないものと、
  * いまの部屋（渡した `tag`）と違う印のものは落とす。
  *
  * `cwd` での絞り込みは呼び出し側（`listSessions({ dir })`）が済ませている前提。渡す `tag` は
@@ -222,7 +222,7 @@ export function listMarkedSessions(sessions: unknown, tag: string): readonly Ses
  *   （`getSessionMessages`）が落とすので、ここまでの記録は時刻が分からないと畳み込みに伝える
  *
  * 差し戻された `report` の呼び出しも transcript には残るので、動いているときと同じく
- * `report` の差し戻し（`report-review.ts` の `pass`）に通して落とす。
+ * `report` の差し戻し（`ReportReview.pass`）に通して落とす。
  *
  * 壊れた要素は {@link toSessionEvents} が空の並びに倒すので、読めたものだけが残る。
  */
@@ -242,7 +242,7 @@ export function toRestoredEvents(
   const review = createReportReview()
   const events = closed.flatMap((event) => review.pass(event))
   // 再生の終わりに印を1つ足す（`history-restored`）。transcript を読む口が時刻を落とすので、
-  // ここまでの記録は起きた時刻が分からない（`docs/design.md` 4.2「記録の時刻」）。組み直せた
+  // ここまでの記録は起きた時刻が分からない（`docs/design.md`「記録の時刻」）。組み直せた
   // ものが無ければ、書き換える記録も無いので足さない。
   return events.length === 0 ? events : [...events, HISTORY_RESTORED]
 }
@@ -325,7 +325,7 @@ function restoredMessageEvents(
   const text = requestText(message)
   // 組み直した依頼に画像は付かない（tsukumo は控えをディスクに残さず、原寸の棚もメモリだけで
   // 起こし直すと空になるので、読み直せるのは文面だけ。控えも出ないので、押せる控えも無い。
-  // `docs/requirements.md` 4.10）。
+  // `docs/requirements.md`「画像の添付」）。
   return text === undefined
     ? toSessionEvents(message, expressions)
     : [{ kind: "request", text, images: [] }]
@@ -400,9 +400,9 @@ function foldSlashCommand(text: string): string {
 /**
  * 仕掛け（Claude Code と tsukumo の外側）が `user` の役で差し込む塊を落とす。
  * 利用者が入力欄に打った文面ではないので、組み直した依頼には出さない
- * （docs/requirements.md 4.8）。
+ * （`docs/requirements.md`「セッションの復元」）。
  *
- * 生きているセッションでは `request` は入力欄からの送信でだけ起き（`session-manager.ts`）、
+ * 生きているセッションでは `request` は入力欄からの送信でだけ起き（セッションの管理側）、
  * これらは一度も画面に出ない。transcript から組み直すときだけ `user` の役として同じ場所に
  * 並んでしまうので、ここで揃える。実測で出たのは背景のタスクの知らせ
  * （`<task-notification>`）・ローカルコマンドの断り書き（`<local-command-caveat>`）・

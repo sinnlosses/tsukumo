@@ -1,5 +1,5 @@
-// ホストへ頼むコマンドの手続き（`docs/glossary.md`「手続き」）。形は `src/shared/contract/host.ts`、
-// 束ねるのは配線の `src/router.ts`。ここは表の行（`host/core/host-command.ts`）へ委ね、
+// ホストへ頼むコマンドの手続き（`docs/glossary.md`「手続き」）。形は `hostContract`、
+// 束ねるのは配線。ここは表の行（`hostCommands`）へ委ね、
 // 受け付けなかったことを契約のエラーに訳すだけ。
 
 import { implement, type ORPCErrorConstructorMap } from "@orpc/server"

@@ -2,11 +2,11 @@
 // 既定を使ったときだけ EADDRINUSE で次の番号へずらすリトライを1つの概念としてここに閉じる
 // （docs/coding-standards.md「外部の入力を読む場所を1つにする」）。
 //
-// listen そのもの（node:http）は src/server/view-server/adapter/server.ts の責務のまま。ここは「どのポートで
+// listen そのもの（node:http）は adapter 側の責務のまま。ここは「どのポートで
 // 試すか」の決定と、その決定に沿って `start` を呼び直すことだけを持つ。
 
 // ビューを配るポートを上書きするための環境変数。実際の `process.env` の読み取りは
-// 呼び出し側の src/cli.ts に残る（docs/coding-standards.md「外部の入力を読む場所を1つにする」）。
+// 呼び出し側の配線に残る（docs/coding-standards.md「外部の入力を読む場所を1つにする」）。
 export const VIEW_PORT_ENV_NAME = "TSUKUMO_VIEW_PORT"
 
 // ビューを配る既定のポート。固定にしてあるのは、開き直したブラウザタブが同じ URL のまま
@@ -14,7 +14,7 @@ export const VIEW_PORT_ENV_NAME = "TSUKUMO_VIEW_PORT"
 export const DEFAULT_VIEW_PORT = 7327
 
 // ポート番号として読める上限（下限は `0` ＝ OS が空きを選ぶ）。セッションの印の目印も
-// ポート番号なので、読み取りの範囲は src/server/core/config.ts と共通にする。
+// ポート番号なので、読み取りの範囲は `Config` と共通にする。
 export const MAX_PORT_NUMBER = 65535
 
 // 既定ポートから数えて何個先まで試すか（7327〜7346 の20個）。複数の tsukumo を手元で並べて

@@ -1,18 +1,18 @@
-// claude に渡す `systemPrompt` の append を組み立てる（`docs/design.md` 7章）。人格・tsukumo 側の
+// claude に渡す `systemPrompt` の append を組み立てる（`docs/design.md`「キャラクターパック」）。人格・tsukumo 側の
 // 規約・雑談の記憶が、どのモードのときに、どの順で入るかは、このファイルだけを読めば分かる。
 //
-// 組み立てはこの1ファイルに寄せてある。 以前は並べる順を配線層（`src/session-start.ts`）が、
-// モードごとの選び方を `core/session-rule.ts` が、人格との連結を `adapter/character-pack.ts` が
+// 組み立てはこの1ファイルに寄せてある。 以前は並べる順を配線層が、
+// モードごとの選び方を別の core が、人格との連結を adapter が
 // 持っていて、全体の並びを知るのに3つのファイルを渡り歩く必要があった（経緯は
 // `docs/architecture.md`「新しいコードを置く場所」）。
 //
-// 文面そのものは持たない。 規約は {@link ./speech-cadence.ts} / {@link ../../report/core/report-notation.ts} /
-// {@link ../../chat/core/chat-manner.ts} が、雑談の記憶の読み戻しは {@link ../../chat/core/chat-memory-prompt.ts} が持ち、
+// 文面そのものは持たない。 規約は `SPEECH_CADENCE_PROMPT` / `REPORT_NOTATION_PROMPT` /
+// `CHAT_MANNER_PROMPT` が、雑談の記憶の読み戻しは `takeChatMemoryPromptParts` が持ち、
 // ここが決めるのはどれを・どの順で並べるかだけ。
 //
 // 人格（`persona.md` の全文）は文字列で受け取る。 ファイルを読むのは adapter
-// （`character-pack.ts`）で、ここはパックの型も fs も知らない——`core` からパックの判断が要る
-// ようになったら、層を写した `core/character-pack.ts` ではなく概念で切る
+// （キャラクターパックを読む側）で、ここはパックの型も fs も知らない——`core` からパックの判断が要る
+// ようになったら、層を写した core ファイルではなく概念で切る
 // （`docs/architecture.md`「新しいコードを置く場所」）。
 
 import { CHAT_MEMORY_BUDGET } from "../../../shared/chat-memory-budget.ts"
@@ -34,7 +34,7 @@ export type SystemPromptSeed = {
   /**
    * 人格（`persona.md` の全文）。無いパックは空文字列で渡す（「無い」は入口で畳む）。
    * 空の節は並びから落ちるだけなので、そのパックは tsukumo 側の規約だけで起動する
-   * （`docs/design.md` 7章）。
+   * （`docs/design.md`「キャラクターパック」）。
    */
   readonly persona: string
   /** 仕事か雑談か。雑談のときだけ記憶の口が要るので、2つで1つの合併型にしてある。 */
@@ -42,7 +42,7 @@ export type SystemPromptSeed = {
 }
 
 /**
- * どのモードで起こすか。`kind` は `SessionMode`（`../../core/session-driver.ts`）と同じ語で、こちらは
+ * どのモードで起こすか。`kind` は `SessionMode` と同じ語で、こちらは
  * `systemPrompt` を組むのに要るものだけを持つ（ツールの口は持たない）。
  */
 export type SystemPromptMode =
@@ -54,9 +54,9 @@ export type SystemPromptMode =
     }
 
 /**
- * 駆動の `SessionMode`（`../../core/session-driver.ts`）を、`systemPrompt` を組むのに要る形
+ * 駆動の `SessionMode` を、`systemPrompt` を組むのに要る形
  * （{@link SystemPromptMode}）へ変える。この関数は純粋——渡された口（`chatArchive`）を
- * 束ねるだけで、雑談かどうかで4つの口を作るかどうかを決める判断（`src/session-start.ts` の
+ * 束ねるだけで、雑談かどうかで4つの口を作るかどうかを決める判断（配線の
  * `sessionMode`）とは別（そちらは `personaMemory` の adapter 実装を組み立てる必要があり、
  * 配線層に残る）。
  *
@@ -89,7 +89,7 @@ export function toSystemPromptMode(
 /**
  * `systemPrompt` の append を組み立てる。人格 → tsukumo 側の規約 → 雑談の記憶の順で、
  * 空の節は落として `\n\n` でつなぐ。規約（機械的な決まりごと）を人格の後ろに置くのは、
- * 人格の文章に埋もれさせないため（`docs/design.md` 7章）。
+ * 人格の文章に埋もれさせないため（`docs/design.md`「キャラクターパック」）。
  *
  * 並びはモードで入れ替わる:
  *
@@ -102,7 +102,7 @@ export function toSystemPromptMode(
  * 雑談のときは仕事の2つと入れ替える（並べない）。片方が「本文は中立・簡潔に」と言い、
  * もう片方が「本文を書くな」と言う形になり、どちらが効くかが揺れるため。セリフの間合いも
  * 仕事向け（ツールの前後に1回）で、往復そのものが会話になる雑談では意味をなさない
- * （理由の正典は {@link ../../chat/core/chat-manner.ts} の冒頭）。
+ * （理由の正典は {@link CHAT_MANNER_PROMPT} の冒頭）。
  *
  * 名前が `take` で始まるのは、返すだけでなく写しの印を書き換えるから
  * （{@link takeChatMemoryPromptParts}。雑談で記憶を載せたとき、印が「渡し済み」に戻る）。

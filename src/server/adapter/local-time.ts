@@ -1,10 +1,10 @@
 // `~/.tsukumo/` に積む JSONL の「いつ」の書き方。日の境目も時差もそのマシンのローカル時刻
-// で決める（`docs/design.md` 7章）。
+// で決める（`docs/design.md`「キャラクターパック」）。
 //
 // ここが `adapter` にあるのは、読んでいるのが引数のエポックミリ秒だけに見えて、実際にはOS の
 // タイムゾーンという外の世界の設定に依っているから（`Temporal.Now.timeZoneId()`）。
-// 置き場を日付で分けるファイルが2つ（`chat-archive.ts` / `token-usage-log.ts`）あり、同じ
-// 日の境目で切れていないと後から突き合わせられないので、書き方は1箇所に置く。
+// 置き場を日付で分けるファイルが複数あり、同じ日の境目で切れていないと後から突き合わせられない
+// ので、書き方は1箇所に置く。
 //
 // 素通しに見えても畳まない。 `Temporal` なら日付キーもオフセット付きの ISO も1行で出るが、
 // OS のタイムゾーンを読む場所を1つに保つほうを採る（呼び出し側に `Temporal.Now` が散ると、
@@ -15,9 +15,9 @@
 
 /**
  * サーバの時計（いまのエポックミリ秒を返す関数）。サーバで「いま」を読むのはここだけ
- * （`test/architecture.test.ts` が縛る）。`fixed` があれば、その瞬間で止まった進まない時計を
+ * （検査が縛る）。`fixed` があれば、その瞬間で止まった進まない時計を
  * 返す（`TSUKUMO_FIXED_CLOCK`。E2E が走らせるたびに同じ `at` を得るため。`docs/design.md`
- * 10章「E2E の成果物と再現」）。日付キー（{@link todayLocalDateKey}）は凍らせない。
+ * 「E2E の成果物と再現」）。日付キー（{@link todayLocalDateKey}）は凍らせない。
  */
 export function createServerClock(fixed: Temporal.Instant | undefined): () => number {
   if (fixed !== undefined) {
@@ -55,7 +55,7 @@ export function localDateEpochRange(dateKey: string): {
   }
 }
 
-/** ローカル時刻の `HH:MM`（節目のコミットの時刻。`docs/requirements.md` 4.11「節目」。
+/** ローカル時刻の `HH:MM`（節目のコミットの時刻。`docs/requirements.md`「成果の振り返り」「節目」。
  * 件名は出さず時刻だけ出す決まりなので、日付は含めない）。 */
 export function localTimeHHMM(epochMilliseconds: number): string {
   return localTimeAt(epochMilliseconds).toPlainTime().toString({ smallestUnit: "minute" })

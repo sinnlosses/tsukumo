@@ -1,7 +1,7 @@
-// SDK から届いたメッセージを、tsukumo 内部のイベント（src/shared/session-event.ts）に変換する。
+// SDK から届いたメッセージを、tsukumo 内部のイベント（`SessionEvent`）に変換する。
 //
 // SDK の型を import しない。 SDK への依存は src/server/adapter/ 直下の `sdk-` で始まるファイルに
-// 閉じる（docs/design.md 5章）。届くメッセージは外部由来の値なので、どのみち構造を信用せず
+// 閉じる（`docs/design.md`「core と adapter」）。届くメッセージは外部由来の値なので、どのみち構造を信用せず
 // unknown で受けて検証する（docs/coding-standards.md「型を迂回するキャストを使わない」）。
 // 知らない種別・壊れた形は空の並びにして無視する。種別は本体の更新で増える
 // （docs/architecture.md「既知の制約・注意点」）。
@@ -33,7 +33,7 @@ export const TSUKUMO_MCP_SERVER_NAME = "tsukumo"
 export const SPEAK_TOOL_NAME = "speak"
 /**
  * レポートを受け取るツールの名前（docs/glossary.md「report ツール」）。載るのは仕事のときだけ
- * （`src/server/session-driver/adapter/sdk-tool.ts`）。雑談では呼ばれないので、見分ける側はいつも見ている。
+ * （MCP ツールを組み立てるアダプタ）。雑談では呼ばれないので、見分ける側はいつも見ている。
  */
 export const REPORT_TOOL_NAME = "report"
 
@@ -42,7 +42,7 @@ export const REPORT_TOOL_NAME = "report"
  * 出ることがある（`assistant` の `content[]` にテキストとツール呼び出しが並ぶため）。
  *
  * - `thinking` は変換しない。 モデルの内部の思考なので内部の型にも入れない
- *   （docs/requirements.md 4.1）
+ *   （`docs/requirements.md`「Claude Code の駆動」）
  * - サブエージェントの中の本文（`text` と `text_delta`）は変換しない。 メインビューの本文は
  *   メインのものだけ
  * - `speak` の呼び出しは `tool-started` にしない。 `speech` として別に出す（吹き出し行き）
@@ -53,7 +53,7 @@ export const REPORT_TOOL_NAME = "report"
  *   出す（立ち絵の「書いている」の材料。メインのものだけ）。引数の断片（`input_json_delta`）は
  *   運ばない——描くのは確定した `report` だけで、書きかけの引数は JSON としても読めない
  * - `expression` は `expressions`（キャラクター定義にある表情名）に無ければ `default` に落とす
- *   （docs/architecture.md 原則4 — 表情名をコードに書かない）
+ *   （`docs/architecture.md`「キャラクターの中身をコードに書かない」）
  * - `tool-started` の `parentToolUseId` は、メッセージ本体（`message.message` の外）にある
  *   `parent_tool_use_id` から取る（サブエージェントの中で動いたツールだけ非 null。実測）。
  *   同じ assistant メッセージに含まれる `tool_use` はすべて同じ値を持つ
@@ -72,13 +72,13 @@ export const REPORT_TOOL_NAME = "report"
  *   背景のタスクが動いているかは `background_tasks_changed`（顔ぶれ全体を毎回運ぶ水準の知らせ）
  *   だけで分かり、始まり・終わりの対を数えると取りこぼしで「動いている」が居残る（SDK の型定義が
  *   そう勧めている）。知らせのあとに claude が依頼なしで始める続きのターンは、ここではなく
- *   `src/server/session-driver/core/self-started-turn.ts` が `init` の届き方から起こす
+ *   `withSelfStartedTurns` が `init` の届き方から起こす
  * - `assistant` に乗る `local_command_run` が `{ command: "model", args }` の形のときだけ
  *   `model-changed` を出す。 `command` が `model` 以外の局所コマンド
  *   （`/clear` など）や、形が崩れている・`args` が無いときは出さない。エイリアスとして
- *   知っているかどうかの検証はここでしない（docs/design.md 4.1、session-state.ts の仕事）
+ *   知っているかどうかの検証はここでしない（`docs/design.md`「SessionEvent」、`SessionState` の仕事）
  * - `system` / `api_retry` は `api-retry`、`rate_limit_event` は `rate-limit-changed`、
- *   メインの `assistant` の `error` は `api-error` にする（docs/requirements.md 4.1）。運ぶのは
+ *   メインの `assistant` の `error` は `api-error` にする（`docs/requirements.md`「Claude Code の駆動」）。運ぶのは
  *   型の決まった値（エラーの列挙値・HTTP の状態コード・回数・待ち時間・枠・戻る時刻）だけで、
  *   `result` の `errors` は運ばない（自由文で、会話の断片が混ざりうる）。`error` の付いた
  *   `assistant` の本文は今までどおり本文として流す（出力の上限で切れた本物の本文のこともあり、
@@ -112,7 +112,7 @@ export function toSessionEvents(
       }
       // `compact_boundary` は claude 自身の圧縮が起きた合図（`compact_metadata` に
       // `trigger` / `pre_tokens` / `post_tokens` / `duration_ms` が乗るが、画面には
-      // 出さないので運ばない。docs/chat-mode.md 4.9「記憶の圧縮と忘却」）。
+      // 出さないので運ばない。`docs/chat-mode.md`「記憶の圧縮と忘却」）。
       return message.subtype === "compact_boundary" ? [{ kind: "compact-boundary" }] : []
     case "stream_event":
       return [
@@ -146,7 +146,7 @@ export function toSessionEvents(
 
 /**
  * SDK が返すコマンド一覧（`supportedCommands()` の戻り値と `commands_changed` の `commands`）を
- * 検証して内部の型に変える。駆動側（src/server/session-driver/adapter/sdk-driver.ts）が制御リクエストの結果に対しても
+ * 検証して内部の型に変える。駆動側（SDK を起こすアダプタ）が制御リクエストの結果に対しても
  * これを使うので、`toSessionEvents` とは別に公開してある（検証の場所を1つにするため）。
  * 名前が文字列でない要素は捨て、説明が空文字のものは `undefined` にする。
  */
@@ -179,7 +179,7 @@ export function toPlan(value: unknown): string | undefined {
 
 /**
  * `supportedModels()` の戻り値から、effort に関わる部分だけを取り出す（`ModelEffortSupport`）。
- * 駆動側（src/server/session-driver/adapter/sdk-driver.ts）が起動直後に1回だけ呼ぶ——「いま効いている値」
+ * 駆動側（SDK を起こすアダプタ）が起動直後に1回だけ呼ぶ——「いま効いている値」
  * ではなく「対応の有無・選べる段」だけを運ぶ（実測は `docs/history/decision.md`「effort の
  * 途中変更と読み取りが成り立った実測」）。
  *
@@ -211,8 +211,8 @@ export function toModelEffortSupport(value: unknown): readonly ModelEffortSuppor
 
 /**
  * サブエージェントの中から届いたメッセージか（`parent_tool_use_id` が文字列）。`report` の関所
- * （`src/server/report/core/report-tool.ts` の `createReportGate`）にメインの本文だけを渡すために、
- * 駆動（`src/server/session-driver/adapter/sdk-driver.ts`）が {@link toSessionEvents} と並べて使う。
+ * （`createReportGate`）にメインの本文だけを渡すために、
+ * 駆動（SDK を起こすアダプタ）が {@link toSessionEvents} と並べて使う。
  */
 export function isSubagentMessage(message: unknown): boolean {
   return isPlainObject(message) && optionalString(message.parent_tool_use_id) !== undefined
@@ -396,7 +396,7 @@ function toApiErrorKind(value: unknown): ApiErrorKind {
  * `rate_limit_event` の `rate_limit_info` を `rate-limit-changed` にする。`status` が3つの
  * どれでもなければ出さない。`resetsAt` は秒で届くのでミリ秒に直す（Claude Code 本体が
  * `resetsAt*1000` で扱っているのを 0.3.280 の同梱の本体で確かめた）。超過利用（`overage*`）と
- * 使用率は運ばない（`src/shared/rate-limit.ts`）。
+ * 使用率は運ばない（`RateLimit`）。
  */
 function rateLimitEvents(info: unknown): readonly SessionEvent[] {
   if (!isPlainObject(info)) {
@@ -445,7 +445,7 @@ function rateLimitBucket(value: unknown): RateLimitBucket {
  * `assistant` に乗る `local_command_run` から `/model` の合図を取り出す。`command` が
  * `model` 以外の局所コマンド（`/clear` など）では何も出さない。 `args` が文字列でない・
  * 無い・空（引数なしの `/model` はモデルの選択を出すだけで切り替えない）ときも同様
- * （docs/design.md 4.1）。
+ * （`docs/design.md`「SessionEvent」）。
  */
 function modelChangeEvents(localCommandRun: unknown): readonly SessionEvent[] {
   if (!isPlainObject(localCommandRun) || localCommandRun.command !== "model") {
@@ -482,7 +482,7 @@ function assistantBlockEvents(
   if (block.type === "text") {
     // サブエージェントの本文は委譲先の独り言で、メインの手元に届くだけにする（`report` と同じ）。
     // 進み具合は委譲先が `SendMessage` で送り、メインが `speak` で言い直す
-    // （`src/server/system-prompt/core/speech-cadence.ts`）。
+    // （`SPEECH_CADENCE_PROMPT`）。
     return parentToolUseId === undefined &&
       typeof block.text === "string" &&
       !isBlankText(block.text)
@@ -624,7 +624,7 @@ function toolResultContentItemText(item: unknown): string {
  * `assistant` の `message.usage`（そのステップぶんの使用量）を1つのイベントにする。
  * `message.id` を一緒に運ぶ——返答が流れている間は同じ id の `assistant` が何度も届き、
  * 途中の `usage` は確定値ではない（`sdk.d.ts`。最初の1つは `output_tokens` が 1〜3 になる）ので、
- * 同じ id の最後を取るのは受け取った側（`src/server/token-usage/core/token-usage.ts`）の仕事。
+ * 同じ id の最後を取るのは受け取った側（`createTokenUsageRecorder`）の仕事。
  *
  * 持ち場は `parent_tool_use_id` で決まる（非 null ならサブエージェントの中。`sdk.d.ts`）。
  * 鍵は API の形（snake_case）で、`result` の `modelUsage`（camelCase）とは違う。数でない値・
@@ -663,7 +663,7 @@ function stepUsageEvents(
  * 運ぶのは累計そのまま。 `modelUsage` は `query()` の中の走行合計で、サブエージェントと
  * 内部の呼び出しも含む（同じ `result` の `usage` はメインループぶんだけなので集計に使わない。
  * `sdk.d.ts` の型定義で確認）。ターンごとの増分に直すのは
- * `src/server/token-usage/core/token-usage.ts` で、前回の累計を覚えるのは `session-manager.ts`。
+ * `tokenUsageDelta` で、前回の累計を覚えるのはセッションの管理側。
  *
  * 数でない値・欠けている鍵は 0 に倒す（外部由来の値なので形を信用しない）。表が無い・空・
  * 中身が全部壊れているときはイベントを出さない。
@@ -700,7 +700,7 @@ function finiteNumber(value: unknown): number {
 }
 
 /**
- * `result` を終わり方に畳む（`src/shared/turn-failure.ts` の {@link TurnOutcome}）。
+ * `result` を終わり方に畳む（`TurnOutcome`）。
  *
  * - `success` は完了。ただし `is_error` が true なら API のエラーで止まった失敗（SDK の型定義:
  *   「with is_error true, the error text when the turn ended on an API error」）

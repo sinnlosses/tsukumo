@@ -1,8 +1,8 @@
 // 押し出し（フレーム）の購読の手続き（`docs/glossary.md`「手続き」「フレーム」）。形は
-// `src/shared/contract/frame.ts`、束ねるのは配線の `src/router.ts`。
+// `frameContract`、束ねるのは配線。
 //
 // 購読の元はコールバックのまま（接続の context の `subscribe`。中身は `session-manager` の
-// `subscribe` に `view-delivery.ts` の `refresh` を相乗りさせたもの）で、ここはそれを Event Iterator
+// `subscribe` に配線の `refresh` を相乗りさせたもの）で、ここはそれを Event Iterator
 // へ写すだけ。`hello` を先に送る順序を決めているのは `session-manager` 側で、ここは届いた順に流す。
 
 import { implement } from "@orpc/server"

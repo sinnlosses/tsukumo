@@ -1,5 +1,5 @@
 // レポートに書かれたパスを開く前の門番。git 管理下の一覧にあるときだけホストへ渡す
-// （任意の文字列を外部コマンドへ渡さない。docs/display.md 4.2「各表示物」）。
+// （任意の文字列を外部コマンドへ渡さない。`docs/display.md`「各表示物」）。
 
 import { type HostResult } from "./host.ts"
 

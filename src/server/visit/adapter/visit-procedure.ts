@@ -1,5 +1,5 @@
-// 訪問のコマンドの手続き（`docs/glossary.md`「手続き」）。形は `src/shared/contract/visit.ts`、
-// 束ねるのは配線の `src/router.ts`。ここは表の行（`visit/core/visit-command.ts`）へ委ね、
+// 訪問のコマンドの手続き（`docs/glossary.md`「手続き」）。形は `visitContract`、
+// 束ねるのは配線。ここは表の行（`visitCommands`）へ委ね、
 // 受け付けなかったことを契約のエラーに訳すだけ。
 
 import { implement, type ORPCErrorConstructorMap } from "@orpc/server"

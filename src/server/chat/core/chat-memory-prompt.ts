@@ -1,25 +1,25 @@
 // 雑談の記憶（それより前の要約と直近の逐語）を `systemPrompt` に載せるかどうかを決め、
-// 載せるときに添える前置きを組み立てる（`docs/design.md` 7章「雑談の記憶の要約はどこに置くか」、
-// `docs/chat-mode.md` 4.9「直近の会話は逐語のまま読み戻す」）。`chat-manner.ts` の隣に置く
+// 載せるときに添える前置きを組み立てる（`docs/design.md`「雑談の記憶の要約はどこに置くか」、
+// `docs/chat-mode.md`「直近の会話は逐語のまま読み戻す」）。雑談の作法の隣に置く
 // （モデルに見せる文面は core 側）。
 //
 // ターンの途中で `recall` / `recall_episode` が返す文面もここが組み立てる
-// （`docs/chat-mode.md` 4.9「古い雑談は索引を引いて思い出す」）。載る場所は違う（`systemPrompt` か、
+// （`docs/chat-mode.md`「古い雑談は索引を引いて思い出す」）。載る場所は違う（`systemPrompt` か、
 // ツールの戻り値か）が、`recall_episode` が開いた1件の逐語の並べ方（話者の印・日付の見出し）は
 // `systemPrompt` の節と同じ1つで、読む側が2通りを覚えずに済む。
 //
 // 判断は1箇所にまとめる。 載せる条件は2つの記憶に共通で、載せたら写しの印を「渡し済み」に
 // 戻す——2つの口に分けると、先に呼ばれたほうが印を戻してあとの1つが黙って載らない
-// （`docs/design.md` 7章）。
+// （`docs/design.md`「キャラクターパック」）。
 //
 // 中身を読んで判定しない。 決めるのは「続きから始めないか」「写しの印が未渡しか」という
 // 構造だけの条件で、要約の文面も逐語の文面も素通りする（読んで判定する経路を作ると
-// `docs/coding-standards.md`「会話内容の扱い」とぶつかる。`docs/design.md` 7.1「覚えたことを
+// `docs/coding-standards.md`「会話内容の扱い」とぶつかる。`docs/design.md`「覚えたことを
 // 人格に書き足す」と同じ理由）。
 //
-// 口（`ChatSummary` / `ChatArchive`）の型は `src/server/session-driver/core/session-driver.ts`、ファイルに触る
-// 実装は `src/server/chat/adapter/chat-summary.ts` と `src/server/chat/adapter/chat-archive.ts`。
-// 呼び出すのは配線層（`src/session-start.ts`）で、雑談のときしかこの関数を呼ばない
+// 口（`ChatSummary` / `ChatArchive`）の型はセッションの駆動側、ファイルに触る
+// 実装はそれぞれの adapter。
+// 呼び出すのは配線層で、雑談のときしかこの関数を呼ばない
 // （仕事のときは呼ばずに空の配列を使う）ので、この関数自体は雑談であることを前提にしてよい。
 
 import {
@@ -35,7 +35,7 @@ import {
 
 /**
  * 要約の前置き。要約であって会話ではないことと引用しないことを短く添える
- * （`docs/chat-mode.md` 4.9「渡し方」）。印の行はここに含めない——{@link ChatSummary.read}
+ * （`docs/chat-mode.md`「渡し方」）。印の行はここに含めない——{@link ChatSummary.read}
  * が返す `summary` はすでに印の行を含まない。
  */
 const CHAT_SUMMARY_PREFACE =
@@ -46,7 +46,7 @@ const CHAT_SUMMARY_PREFACE =
 /**
  * 逐語の前置き。要約と違って会話の文面そのものであることと、話者の見分け方を添える。
  * いつごろの話かは日付が変わるところに `### <日付>` の見出しを挟むことで足りる
- * （`docs/chat-mode.md` 4.9。表情も画像の枚数も載せない）。見出しは会話の発言ではない
+ * （`docs/chat-mode.md`「雑談モード」。表情も画像の枚数も載せない）。見出しは会話の発言ではない
  * ことをここで断る。
  */
 const CHAT_RECENT_PREFACE =
@@ -56,7 +56,7 @@ const CHAT_RECENT_PREFACE =
   "続きとして踏まえてよいが、読み上げたり引用したりしない。"
 
 /**
- * `recall` が当たったときの前置き（`docs/chat-mode.md` 4.9「古い雑談は索引を引いて思い出す」）。
+ * `recall` が当たったときの前置き（`docs/chat-mode.md`「古い雑談は索引を引いて思い出す」）。
  * 逐語は渡さない——`id` / `title` / `gist` の一覧だけで、開くには `recall_episode` が要る
  * ことをここで断る。
  */
@@ -68,7 +68,7 @@ const CHAT_RECALL_LIST_PREFACE =
 const CHAT_RECALL_LIST_NOT_FOUND =
   "索引に当たる候補が無かった。別の言葉で引き直すか、覚えていないことを正直に言う。"
 
-/** そのターンで一覧の上限まで引いたときの戻り値（`docs/chat-mode.md` 4.9 の `recallListsPerTurn`）。 */
+/** そのターンで一覧の上限まで引いたときの戻り値（`docs/chat-mode.md`「雑談モード」の `recallListsPerTurn`）。 */
 const CHAT_RECALL_LIST_EXHAUSTED =
   "このターンではもう一覧を引けない（引けるのは1ターンに2回）。次のターンで引き直す。"
 
@@ -91,7 +91,7 @@ const CHAT_RECALL_EPISODE_OVERFLOW_NOTE = "（続きがあるが、ここまで�
 const CHAT_RECALL_EPISODE_NOT_FOUND =
   "その `id` のエピソードは無かった。`recall` で一覧をもう一度引き直すか、覚えていないことを正直に言う。"
 
-/** そのターンで開ける上限まで開いたときの戻り値（`docs/chat-mode.md` 4.9 の `recallEpisodesPerTurn`）。 */
+/** そのターンで開ける上限まで開いたときの戻り値（`docs/chat-mode.md`「雑談モード」の `recallEpisodesPerTurn`）。 */
 const CHAT_RECALL_EPISODE_EXHAUSTED =
   "このターンではもうエピソードを開けない（開けるのは1ターンに2件）。次のターンで開き直す。"
 
@@ -124,7 +124,7 @@ export type ChatMemorySources = {
  * `systemPrompt` に足す、雑談の記憶ぶんの文面（載せないときは空。古い→新しいの順で、
  * 要約・直近の逐語の2つ）。
  *
- * 載せる条件は2つで、どちらかに当たれば載せる（`docs/design.md` 7章。要約と逐語に共通）:
+ * 載せる条件は2つで、どちらかに当たれば載せる（`docs/design.md`「キャラクターパック」。要約と逐語に共通）:
  *
  * 1. 新規に起こす（`start.kind` が `"new"`）
  * 2. 続きから始めるが、写しの印が「未渡し」
@@ -135,7 +135,7 @@ export type ChatMemorySources = {
  * 重ねないため）。
  *
  * 写しがまだ無くても逐語は載る。 条件を決めるのは `start` と印だけで、要約があるかどうか
- * ではない（`docs/chat-mode.md` 4.9）。
+ * ではない（`docs/chat-mode.md`「雑談モード」）。
  *
  * 名前が `take` で始まるのは、返すだけでなく写しの印を書き換えるから（2度目の呼び出しは
  * 同じ文面を返さない）。取得に見える名前にすると、呼ぶ側が副作用に気づけない。
@@ -164,13 +164,13 @@ export function takeChatMemoryPromptParts(sources: ChatMemorySources): readonly 
 }
 
 /**
- * `recall` の結果をモデルへ返す文面に変える（`src/server/session-driver/adapter/sdk-tool.ts` の
- * `recall` ツールの戻り値）。当たったときだけ候補の一覧が入る——当たらなかったときと、
+ * `recall` の結果をモデルへ返す文面に変える（`recall`
+ * ツールの戻り値）。当たったときだけ候補の一覧が入る——当たらなかったときと、
  * そのターンで上限まで引いたときは短い一言だけで、会話の文面は1バイトも入らない
  * （`id` / `title` / `gist` は目次で、逐語ではない）。
  *
  * ここと {@link chatRecallEpisodeText} が「戻り値は `"ok"` だけ」の例外
- * （`docs/chat-mode.md` 4.9）。返しているのは tsukumo の状態ではなくその会話自身の過去
+ * （`docs/chat-mode.md`「雑談モード」）。返しているのは tsukumo の状態ではなくその会話自身の過去
  * なので、`docs/architecture.md`「戻り値は `"ok"` だけにする」が塞いでいる逆流路
  * （tsukumo → モデル）は開かない。
  */
@@ -185,10 +185,10 @@ export function chatRecallListText(result: ChatRecallListResult): string {
 }
 
 /**
- * `recall_episode` の結果をモデルへ返す文面に変える（`sdk-tool.ts` の `recall_episode`
+ * `recall_episode` の結果をモデルへ返す文面に変える（`recall_episode`
  * ツールの戻り値）。当たったときだけ逐語が入る——知らない `id`・そのターンで上限まで
  * 開いたときは短い一言だけ。`overflowed` のときは、逐語のあとに続きがあることだけを添える
- * （逐語そのものは増やさない。`docs/chat-mode.md` 4.9「溢れたら続きがあることだけを一言添える」）。
+ * （逐語そのものは増やさない。`docs/chat-mode.md`「溢れたら続きがあることだけを一言添える」）。
  */
 export function chatRecallEpisodeText(result: ChatRecallEpisodeResult): string {
   if (result.kind === "exhausted") {

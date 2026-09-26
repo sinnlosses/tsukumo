@@ -1,14 +1,14 @@
 // `diary` ツールまわりの決まりごと（docs/glossary.md「diary ツール」）。書けるのは会話とは別の
-// 使い捨ての問い合わせ（`src/server/diary/adapter/sdk-diary.ts`）だけで、形の外れた呼び出しは
+// 使い捨ての問い合わせ（`queryDiary`）だけで、形の外れた呼び出しは
 // 状態を変えずに断り、理由を添えて呼び直させる（`report` / 見直しの2つと同じ線）。保存は
-// `src/server/diary/adapter/diary.ts`、決定の理由は `docs/design.md`「日記の受け取りと保存」。
+// `appendDiaryParagraph`、決定の理由は `docs/design.md`「日記の受け取りと保存」。
 //
 // 引数の形（文字列・列挙）は zod の形で SDK が先に検査する（崩れていれば handler は
 // 呼ばれない）。ここで見るのは形の外の条（1問い合わせに1回・本文やしおりの中身・保存の失敗）だけ。
 //
 // 3段目の合図（引数の断片から最上位の鍵 `bookmark` を見つける純関数）もここに持つ
 // （`docs/design.md`「日記の受け取りと保存」「3段の進みの決まり方」）。断片をつないで観測する
-// 状態機械は `sdk-diary.ts`（問い合わせ1回ぶんの持ち物なのでそちらに置く）。
+// 状態機械は `createDiaryStreamObserver`（問い合わせ1回ぶんの持ち物なのでそちらに置く）。
 
 import { type DiaryBookmark } from "../../../shared/diary.ts"
 import { type Expression } from "../../../shared/expression.ts"
@@ -57,7 +57,7 @@ export type DiaryVerdict =
   | { readonly kind: "accepted" }
   | { readonly kind: "rejected"; readonly text: string }
 
-/** 1段落を保存する口（実体は `src/server/diary/adapter/diary.ts` の `appendDiaryParagraph`）。 */
+/** 1段落を保存する口（実体は `appendDiaryParagraph`）。 */
 export type SaveDiaryParagraph = (params: {
   readonly date: string
   readonly writtenAtEpochMilliseconds: number
@@ -75,7 +75,7 @@ export type DiaryIntake = {
 }
 
 /**
- * {@link DiaryIntake} を1つ作る。問い合わせ1回ごとに呼び出し側（`src/server/diary/core/diary-writer.ts`）が
+ * {@link DiaryIntake} を1つ作る。問い合わせ1回ごとに呼び出し側（`createDiaryWriter`）が
  * 新しく作る——窓口が「いま書く日」を覚えたり忘れたりしない。`day` は書く日、`writer` は
  * 書いた時点のパック、`now` は書いた時刻（エポックミリ秒）、`save` は保存の口、`onEvent` は
  * イベントの流れ（ここで例外を投げない）。

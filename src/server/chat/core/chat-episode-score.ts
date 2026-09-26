@@ -1,8 +1,8 @@
-// エピソード索引の採点（純粋関数。`docs/design.md` 7章「エピソード索引はどこに置くか」の
+// エピソード索引の採点（純粋関数。`docs/design.md`「エピソード索引はどこに置くか」の
 // 採点の式）。ファイルには一切触らない——`episode.jsonl` と `recalled.jsonl` を読むのは
-// `src/server/chat/adapter/chat-archive.ts` で、ここは渡された行を並べ替えるだけ（原則3）。
+// 雑談の会話のアーカイブを扱うアダプタで、ここは渡された行を並べ替えるだけ（`docs/architecture.md`「1ファイル = 1つの境界」）。
 //
-// 採点は4段（`docs/design.md` 7章の表）: 一致（手がかり語・見出し・要旨への当たり、日本語は
+// 採点は4段（`docs/design.md`「エピソード索引はどこに置くか」の表）: 一致（手がかり語・見出し・要旨への当たり、日本語は
 // 2文字ずつの重なりでも拾う）→ 足切り（一致が `minMatch` 未満は候補にしない）→ 新しさ
 // （`to` から経った日数で減衰し、思い出した回数が多いほど緩む）→ 点（一致 × `weight` × 新しさ）。
 
@@ -11,7 +11,7 @@ import { type ChatEpisodeCandidate } from "../../session-driver/core/session-dri
 
 /**
  * `episode.jsonl` の1行のうち、採点に要る部分だけ（版・`from` は読まない。読んで検証するのは
- * `chat-archive.ts`）。
+ * 雑談の会話のアーカイブを扱うアダプタ）。
  */
 export type ChatEpisodeRecord = {
   readonly id: string
@@ -96,7 +96,7 @@ function fieldMatch(term: string, texts: readonly string[]): number {
 /**
  * 1語と1つの文面の当たり（含まれれば1、でなければ語の2文字ずつの組のうち文面に含まれる割合）。
  * 1文字の語は2文字の組が作れないので、含まれるかどうかだけで見る（`docs/chat-mode.md`
- * 4.9「古い雑談は索引を引いて思い出す」）。
+ * 「古い雑談は索引を引いて思い出す」）。
  */
 function matchValue(term: string, text: string): number {
   const field = text.toLowerCase()

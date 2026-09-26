@@ -1,10 +1,10 @@
 // セッションのコマンドの手続き（`docs/glossary.md`「手続き」）。形と断る条件は
-// `src/shared/contract/session.ts`、束ねるのは配線の `src/router.ts`。照合と断る条件は束ねる側の
-// ミドルウェア（`rpc-guard.ts`）が済ませているので、ここは表の行（`session/core/session-command.ts`）へ
+// `sessionContract`、束ねるのは配線。照合と断る条件は束ねる側の
+// ミドルウェア（`rpcGuard`）が済ませているので、ここは表の行（`sessionCommands`）へ
 // 委ね、受け付けなかったことを契約のエラーに訳すだけ。
 //
 // セッションの口（`CommandSession`）は手続きの context で受ける（`/ws` の接続が持つ。
-// `session-socket.ts`）。
+// 接続を扱うアダプタ）。
 
 import { implement, type ORPCErrorConstructorMap } from "@orpc/server"
 

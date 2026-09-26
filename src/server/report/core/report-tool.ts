@@ -1,15 +1,15 @@
 // `report` ツールまわりの決まりごと（docs/glossary.md「report ツール」）。仕事のセッションでは
 // レポートを常にこのツールで受け取る。雑談のときは載せない（雑談は本文を書かない決まり。
-// `docs/chat-mode.md`）。ツールを載せるのは `src/server/session-driver/adapter/sdk-tool.ts`、呼び出しを
-// イベントに変えるのは `src/server/session-driver/core/sdk-message.ts`、書き方の規約は `report-notation.ts`。
+// `docs/chat-mode.md`）。ツールを載せるのは MCP ツールを組み立てるアダプタ、呼び出しを
+// イベントに変えるのは `toSessionEvents`、書き方の規約は `REPORT_NOTATION_PROMPT`。
 //
-// ここに置くのは、ツールの説明文と `Stop` フックの関所（{@link createReportGate}。登録は
-// `src/server/session-driver/adapter/sdk-driver.ts`）。関所は、SDK のターンの最後の `report` のあと（無ければ
+// ここに置くのは、ツールの説明文と `Stop` フックの関所（`createReportGate`。登録は
+// SDK を起こすアダプタ）。関所は、SDK のターンの最後の `report` のあと（無ければ
 // ターンの頭から）に1行を超える本文を書いて止まろうとしたら差し戻す。そのターンで `report` が
 // 済んでいるかで理由を分ける: 済んでいなければ `report` で渡し直させ、済んでいれば「もう画面に
 // 出ている」と伝えて、言い直しなら何も足さずに終えさせる（一律に「画面に出ていない」と返すと、
 // モデルが同じ中身の `report` を出し直して中身の似た2枚が並び、締めのセリフで差し戻しに触れる）。
-// `report` の呼び出しそのものの検査と差し戻しは `report-review.ts`（こちらは描く前の検査の段）。
+// `report` の呼び出しそのものの検査と差し戻しは `ReportReview`（こちらは描く前の検査の段）。
 
 import { MAX_SESSION_HEADING_LENGTH } from "../../../shared/session-choice.ts"
 import { type SessionEvent } from "../../../shared/session-event.ts"
@@ -23,7 +23,7 @@ export const REPORT_TOOL_DESCRIPTION =
   "書き方は「レポートの記法（tsukumo）」の節に従う。"
 
 /**
- * `report` の任意の `checks` 引数の説明。記法の条（`report-notation.ts` の条1）と同じことを
+ * `report` の任意の `checks` 引数の説明。記法の条（`REPORT_NOTATION_PROMPT` の条1）と同じことを
  * 引数の側でも言う（どちらを先に読んでも欄を取り違えないように）。
  */
 export const REPORT_CHECKS_DESCRIPTION =
@@ -34,7 +34,7 @@ export const REPORT_CHECKS_DESCRIPTION =
 /**
  * `report` の任意の `title` 引数の説明。セッション一覧の見出しにする題を付けさせる条はここだけ
  * （人格ではなく tsukumo 側の条に書く）。利用者の `/rename` を上書きしない判断はモデルに任せず、
- * `session-title.ts` が持つ。
+ * `decideSessionTitle` が持つ。
  */
 export const REPORT_TITLE_DESCRIPTION =
   `セッション一覧の見出しにする短い題（${String(MAX_SESSION_HEADING_LENGTH)}字以内）。` +

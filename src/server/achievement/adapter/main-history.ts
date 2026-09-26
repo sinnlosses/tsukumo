@@ -1,18 +1,16 @@
-// `main` の履歴を読み、成果（`docs/glossary.md`「成果」）を数える境界（docs/design.md 5章
-// 「成果の集め方と配り方」）。`git` を起こすのは `../../repository/adapter/git.ts`
-// （`task-summary.ts` と共有する口）、
-// 数える判断は `../core/achievement.ts`、日付キーから始まり・終わりを出すのは
-// `../../adapter/local-time.ts`。
+// `main` の履歴を読み、成果（`docs/glossary.md`「成果」）を数える境界
+// （`docs/design.md`「成果の集め方と配り方」）。`git` を起こすのは `runGit` / `runGitCatFileBatch`、
+// 数える判断は `countAchievementCommits` などの純関数、日付キーから始まり・終わりを出すのは
+// `localDateEpochRange`。
 //
-// 読むのは作業ツリーのファイルではなく `main` の上のもの（`task-summary.ts` と同じ理由。
-// 正典は `main` のもので、作業ツリーのものは `git merge main` するまで別の作業ツリーの分を
-// 知らない）。
+// 読むのは作業ツリーのファイルではなく `main` の上のもの（正典は `main` のもので、
+// 作業ツリーのものは `git merge main` するまで別の作業ツリーの分を知らない）。
 //
 // `main` が読めない（git リポジトリでない・`main` ブランチが無い・`git` が無い）ときは
-// {@link DailyAchievement} の `{ kind: "unknown" }`（呼び出し側は 200 のまま配ってよい）。
+// `DailyAchievement` の `{ kind: "unknown" }`（呼び出し側は 200 のまま配ってよい）。
 // それ以外の `git` の呼び出し（コミットの列挙・切り口・タスクの記録の読み取り）がタイムアウト・
-// 失敗したときは {@link ReadAchievementResult} の `{ kind: "unavailable" }`——こちらは
-// 呼び出し側（`server.ts`）が 503 にする（部分的な数を出さない。docs/design.md 5章）。
+// 失敗したときは `ReadAchievementResult` の `{ kind: "unavailable" }`——こちらは
+// 呼び出し側が 503 にする（部分的な数を出さない。`docs/design.md`「成果の集め方と配り方」）。
 
 import { basename } from "node:path"
 
@@ -47,7 +45,7 @@ import {
 
 /**
  * 今日以外の日の数を覚える入れ物（`docs/design.md`「成果の集め方と配り方」「暦の数え方」）。
- * 持ち主は `src/view-delivery.ts`（配線で1つ作り、{@link readAchievement} と
+ * 持ち主は配線（1つ作り、{@link readAchievement} と
  * {@link readCommitCalendar} の両方に渡す。モジュールのトップレベルに可変の入れ物を置かない）。
  * 中身の `Map` は外へ出さず、覚える・引く口だけを持たせる（渡した入れ物を呼び出し先が直接
  * 書き換える形にしない。`docs/coding-standards.md`「変数は基本イミュータブル」）。
@@ -66,7 +64,7 @@ export type AchievementCommitCache = {
   readonly rememberTotalBeforeDay: (dateKey: string, total: number) => void
 }
 
-/** {@link AchievementCommitCache} を1つ作る（呼び出しは `src/view-delivery.ts`）。 */
+/** {@link AchievementCommitCache} を1つ作る（呼び出しは配線）。 */
 export function createAchievementCommitCache(): AchievementCommitCache {
   const dailyCounts = new Map<string, number>()
   const totalsBeforeDay = new Map<string, number>()
@@ -82,7 +80,7 @@ export function createAchievementCommitCache(): AchievementCommitCache {
   }
 }
 
-/** 完全な参照名で指す（`task-summary.ts` と同じ理由）。 */
+/** 完全な参照名で指す（`main` だけだと同名のタグやファイルと曖昧になりうる）。 */
 const MAIN_BRANCH_REF = "refs/heads/main"
 
 const TASKS_FILE_PATH = "develop/tasks.json"
@@ -91,7 +89,7 @@ const ARCHIVE_FILE_PATH = "docs/history/tasks.md"
 /** 末尾の `/` を付けて `git ls-tree` に渡すと、そのディレクトリ自身の1行ではなく直下の一覧になる。 */
 const TASK_DIR_PATH = "develop/task/"
 
-/** `git log --since` に持たせる余裕（`docs/design.md` 5章「--since に7日の余裕を持たせる」）。 */
+/** `git log --since` に持たせる余裕（`docs/design.md`「--since に7日の余裕を持たせる」）。 */
 const SINCE_MARGIN_DAYS = 7
 const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000
 
@@ -115,7 +113,7 @@ export type ReadCommitCalendarResult =
 /**
  * 成果を1日ぶん読む。`dateKey` は見る日、`today` はサーバのローカル時刻の今日
  * （どちらも呼び出し側が検証済みの `YYYY-MM-DD`。`resolveAchievementDateKey` の戻り値）。
- * `cache` は今日以外の日の数を覚える入れ物（持ち主は `src/view-delivery.ts`）。
+ * `cache` は今日以外の日の数を覚える入れ物（持ち主は配線）。
  */
 export async function readAchievement(
   cwd: string,
@@ -143,7 +141,7 @@ export async function readAchievement(
   const commitCount = countAchievementCommits(commits, startEpochSeconds, endEpochSeconds)
 
   // 節目（コミットの節目）は、タスクの記録の有無に関わらず出す（`docs/requirements.md`
-  // 4.11「タスクの記録が無いリポジトリでは、卒業とタスクの節目は出さない（コミットの節目は
+  // `docs/requirements.md`「成果の振り返り」「タスクの記録が無いリポジトリでは、卒業とタスクの節目は出さない（コミットの節目は
   // 出す）」）。通算の数（その日の始まりまでの数）は、今日以外なら `cache` に覚えて取り直さない。
   const totalCommitsBeforeToday = await totalAchievementCommitsBeforeDay(
     cwd,
@@ -178,8 +176,8 @@ export async function readAchievement(
         doneTasks: { kind: "unknown" },
         graduations: [],
         milestones: commitMilestone === undefined ? [] : [commitMilestone],
-        // 日記は `diary.ts` が持つ一覧なので、ここでは常に「まだ振り返っていない」を返し、
-        // 実際の値は配線層（`src/view-delivery.ts`）が差し替える（`diaryDates` と同じ形）。
+        // 日記は日記が持つ一覧なので、ここでは常に「まだ振り返っていない」を返し、
+        // 実際の値は配線層が差し替える（`diaryDates` と同じ形）。
         diary: { kind: "none" },
       },
     }
@@ -243,7 +241,7 @@ export async function readAchievement(
 }
 
 /** {@link commitMilestoneOf} の結果を {@link AchievementMilestone} の形にする（時刻は
- * `local-time.ts` で組み立てる）。 */
+ * `localTimeHHMM` で組み立てる）。 */
 function commitMilestoneOfDay(
   todaysCommitEpochSeconds: readonly number[],
   totalCommitsBeforeToday: number,
@@ -317,11 +315,11 @@ async function readAllCommitsUntil(
 /**
  * 灯りの暦（直近5週ぶん）の日ごとのコミット数を読む（`docs/design.md`「成果の集め方と配り方」
  * 「暦の数え方」）。`today` はサーバのローカル時刻の今日。`cache` は今日以外の日の数を覚える
- * 入れ物（持ち主は `src/view-delivery.ts`）。
+ * 入れ物（持ち主は配線）。
  *
  * 範囲の日が1日でも覚えていなければ、`git log` を1回だけ起こして範囲全体を数え直し、今日以外を
- * 覚える。すべて覚えていれば、今日の分だけを取り直す。`diaryDates` は `diary.ts` が持つ
- * 一覧なので、ここでは常に空を返し、実際の値は配線層（`src/view-delivery.ts`）が差し替える。
+ * 覚える。すべて覚えていれば、今日の分だけを取り直す。`diaryDates` は日記が持つ
+ * 一覧なので、ここでは常に空を返し、実際の値は配線層が差し替える。
  */
 export async function readCommitCalendar(
   cwd: string,
@@ -460,7 +458,7 @@ type CutoffOutcome =
   | { readonly kind: "unavailable" }
 
 /**
- * `epochMs` より前の最新のコミット（`--first-parent`。docs/design.md 5章「切り口」）。
+ * `epochMs` より前の最新のコミット（`--first-parent`。`docs/design.md`「切り口」）。
  * 空の出力（そのリポジトリの最初の日）は `empty`——`git` の失敗とは区別する
  * （前者は「空の集合として比べる」、後者は 503）。
  */
@@ -492,7 +490,7 @@ function cutoffCommitOf(outcome: CutoffOutcome): string | undefined {
  * 1つの切り口ぶんのタスクの記録を読む。`cutoff` が `undefined`（切り口が無い＝リポジトリの
  * 最初の日）なら `git` を起こさずに空の読み元を返す。新形式の列挙は1回の `git ls-tree`、
  * 中身（新形式のファイル・旧形式・アーカイブ）は1回の `git cat-file --batch` にまとめる
- * （`task-summary.ts` の `readTasksAtHead` と同じやり方）。
+ * （`readTasksAtHead` と同じやり方）。
  */
 async function readTaskSnapshotSource(
   cwd: string,
@@ -529,7 +527,7 @@ async function readTaskSnapshotSource(
   }
 }
 
-/** `git ls-tree --name-only` の出力を、`.md` のパスだけに絞る（`task-summary.ts` と同じ）。 */
+/** `git ls-tree --name-only` の出力を、`.md` のパスだけに絞る。 */
 function taskFilePathsOf(output: string): readonly string[] {
   return output.split("\n").filter((line) => line.endsWith(".md"))
 }

@@ -1,7 +1,7 @@
 // Claude Code が手元に持つセッションの一覧・transcript・印（`listSessions` /
 // `getSessionMessages` / `tagSession`）。続きから始めるセッションを探す・切り替え先を並べる・
-// 履歴を読み直す・ターンの終わりに印を付け直す（docs/requirements.md 4.8「セッションの復元」）。
-// 選ぶ計算と履歴への変換は src/server/session-driver/core/session-restore.ts が持ち、ここは SDK を呼ぶだけ。
+// 履歴を読み直す・ターンの終わりに印を付け直す（`docs/requirements.md`「セッションの復元」）。
+// 選ぶ計算と履歴への変換は core 側が持ち、ここは SDK を呼ぶだけ。
 
 import {
   getSessionInfo,
@@ -40,7 +40,7 @@ const SESSION_TAG_DELAY_MS = 3_000
 
 /**
  * 続きから始めるセッションを探す（起動時と、キャラクターを切り替えるたび。
- * docs/requirements.md 4.8）。同じ作業ディレクトリで、渡された印を持つもののうち最新の1つを
+ * `docs/requirements.md`「セッションの復元」）。同じ作業ディレクトリで、渡された印を持つもののうち最新の1つを
  * 返し、無ければ undefined（新規に起こす）。
  *
  * `includeWorktrees` を入れてあるのは、セッションごとに別の worktree で起こされうるため
@@ -61,8 +61,7 @@ export async function findSessionToResume(cwd: string, tag: string): Promise<str
 
 /**
  * 切り替え先として選べるセッションを一覧にする（画面のセッションの `<select>`。
- * `docs/requirements.md` 4.8）。絞り込みと並びは `src/server/session-driver/core/session-restore.ts` の
- * `listMarkedSessions` が決める。
+ * `docs/requirements.md`「セッションの復元」）。絞り込みと並びは `listMarkedSessions` が決める。
  *
  * 絞り込みの鍵も `includeWorktrees` を入れる理由も {@link findSessionToResume} と同じで、違うのは
  * 「最新の1つ」ではなく「同じ印を持つものを全部」返すところだけ。
@@ -83,7 +82,7 @@ export async function listSwitchableSessions(
 
 /**
  * 前のセッションの transcript を読み直して、画面の履歴を組み直すためのイベントにする
- * （docs/requirements.md 4.8）。読めなければ空（会話（`resume`）だけ生きていれば続行する）。
+ * （`docs/requirements.md`「セッションの復元」）。読めなければ空（会話（`resume`）だけ生きていれば続行する）。
  *
  * `includeSystemMessages: true` を渡す。既定では `system` のメッセージ
  * （`compact_boundary` を含む）が返らず、`getSessionMessages` は親子の鎖をたどるので、圧縮が
@@ -114,7 +113,7 @@ export async function readRestoredEvents(
 
 /**
  * ターンの終わりに tsukumo の印を付け直す予約をする（次に起こしたときに自分のセッションを
- * 見分けるため。docs/requirements.md 4.8「鍵」）。本体側の書き込みと重ならないように
+ * 見分けるため。`docs/requirements.md`「鍵」）。本体側の書き込みと重ならないように
  * {@link SESSION_TAG_DELAY_MS} だけ待つ。
  *
  * 待っている間に tsukumo が終わるなら印はどのみち要らないので、タイマーでプロセスを
@@ -141,7 +140,7 @@ async function markSession(sessionId: string, options: SessionDriverOptions): Pr
 
 /**
  * Claude が `report` で付けた題を書く役。`renameSession` を呼ぶのは
- * ここだけ（原則3）。書くかどうかの判断は {@link decideSessionTitle}（core）が持ち、ここは
+ * ここだけ（`docs/architecture.md`「1ファイル = 1つの境界」）。書くかどうかの判断は {@link decideSessionTitle}（core）が持ち、ここは
  * SDK を呼ぶだけ。
  */
 export type SessionTitleWriter = {

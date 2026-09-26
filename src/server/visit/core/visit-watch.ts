@@ -1,13 +1,13 @@
-// 訪問の見張り（`docs/design.md` 5章「訪問の契機と状態」）。駆動1代ぶんの持ち物として
-// `session-manager.ts` が代ごとに1つ作り、駆動由来のイベントを畳むたびに {@link VisitWatch.observe}
+// 訪問の見張り（`docs/design.md`「訪問の契機と状態」）。駆動1代ぶんの持ち物として
+// セッションの管理側が代ごとに1つ作り、駆動由来のイベントを畳むたびに `VisitWatch.observe`
 // へ渡す。起こし直すと代ごと捨てられるので、掛けていた時計も待ちの勘定も一緒に消える。
 //
-// 判断は `visit-timing.ts`（来る・帰る・次の行）と `visit-guest.ts`（誰がどの台本で）の純関数で、
+// 判断は `visitArrival` / `visitDeparture`（来る・帰る・次の行）と `chooseVisit`（誰がどの台本で）の純関数で、
 // ここが持つのはイベントをまたぐ勘定と、掛けた時計と、作っている最中の台本の中断だけ。
-// 台本は来ると決めた時点で作り始め（`visit-script-writer.ts`）、できたら `visit-started` を出す。
+// 台本は来ると決めた時点で作り始め（`createVisitScriptWriter`）、できたら `visit-started` を出す。
 // 作れなかった（時間切れも）らパックの台本へ落とし、それも無ければ来ない。作っている最中に
-// 帰る合図が来たら中断して来ない（`visit-script.ts` の `interruptsVisitScript`）。時計そのものは渡される
-// （{@link VisitClock}。本番は `src/server/visit/adapter/visit-clock.ts`）。
+// 帰る合図が来たら中断して来ない（`interruptsVisitScript`）。時計そのものは渡される
+// （`VisitClock`。本番は時計を読むアダプタ）。
 //
 // 出したイベント（`visit-started` / `visit-line-advanced` / `visit-ended`）は `emit` で
 // session-manager の受け口へ戻し、ほかのイベントと同じく畳んで配る。そのイベントも見張りの
@@ -51,7 +51,7 @@ export type VisitClock = {
   readonly after: (delayMs: number, wake: () => void) => () => void
 }
 
-/** 訪問のために外の世界から渡すもの（配線は `src/session-start.ts`）。 */
+/** 訪問のために外の世界から渡すもの（配線が渡す）。 */
 export type VisitPorts = {
   /** しきい値（本番は `VISIT_TIMING`、確かめるときは `QUICK_VISIT_TIMING`）。 */
   readonly timing: VisitTiming

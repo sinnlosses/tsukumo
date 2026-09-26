@@ -1,20 +1,20 @@
 // Claude Code 本体が「本文の無い応答」に差し込む催促（`[Your previous response had no visible
 // output. ...]`）への対処。ターンが `speak` のツール呼び出しで終わると、本体はこの固定文を利用者の
-// 発言として差し込み、モデルの呼び出しが1往復増える（`docs/chat-mode.md` 4.9「雑談モードで
+// 発言として差し込み、モデルの呼び出しが1往復増える（`docs/chat-mode.md`「雑談モードで
 // 変わるもの」）。
 //
 // 塞ぐのはここ（環境変数と見張り）だけ。以前は文面の条（最後の `speak` のあとに「完了」の1行だけ
 // 書かせる）も重ねていたが、`report` を呼ばないターンでその1行が最終レポートとして画面に出たので
-// 外した（経緯は `docs/chat-mode.md` 4.9）。
+// 外した（経緯は `docs/chat-mode.md`「雑談モード」）。
 //
 // 環境変数 `CLAUDE_CODE_TERMINAL_MCP_TOOLS` は公式の文書に無い（同梱の `claude` 2.1.281 を
 // 読んだ判定: `stop_reason` が `end_turn` で応答に空でないテキストが無くても、直前の利用者側の
 // メッセージが `tool_result` だけで、その中に成功した呼び出しがありツール名がこの変数に載って
 // いれば催促しない）。本体の更新で黙って効かなくなりうるので、催促が届いたことに気づく
-// {@link isVisibleOutputNudge} を一緒に置く。
+// `isVisibleOutputNudge` を一緒に置く。
 //
-// 「決める」内容だけで、外の世界には触らない（原則2）。子プロセスへ渡すのは
-// `src/server/session-driver/adapter/sdk-driver.ts`、環境変数を読むのは `src/cli.ts`。
+// 「決める」内容だけで、外の世界には触らない（`docs/architecture.md`「core → adapter は禁止」）。子プロセスへ渡すのは
+// SDK を起こすアダプタ、環境変数を読むのは配線。
 
 import { isPlainObject } from "remeda"
 

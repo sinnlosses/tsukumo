@@ -1,13 +1,13 @@
-// コンテキストの内訳を記録に残すときの書き口の契約（`token-usage/core/token-usage.ts` と
-// 同じ切り分け）と、セッション1つにつき1行だけ書く係（{@link ContextUsageRecorder}）。
-// 実際に書くのは `src/server/context-usage/adapter/context-usage-log.ts`、
-// いつ呼ぶか（ターンが終わるたび）を決めるのは `src/server/session/core/session-manager.ts`。
+// コンテキストの内訳を記録に残すときの書き口の契約（トークン使用量の記録と
+// 同じ切り分け）と、セッション1つにつき1行だけ書く係（`ContextUsageRecorder`）。
+// 実際に書くのは `createContextUsageLog`、
+// いつ呼ぶか（ターンが終わるたび）を決めるのは `receive`。
 //
 // この係は駆動の世代をまたいで持つ — 続きから起こして同じセッションIDになったときは同じ
-// セッションなので、2行目を書かない（`session-manager.ts` の世代の持ち物には入れない）。
+// セッションなので、2行目を書かない（世代ごとの持ち物には入れない）。
 //
-// 数と名前しか通らない。 会話の文面・ツールの引数と結果は {@link ContextUsageEntry} に口が
-// 無く、書いてよいものの線は `src/shared/context-usage-record.ts` が引いている
+// 数と名前しか通らない。 会話の文面・ツールの引数と結果は `ContextUsageEntry` に口が
+// 無く、書いてよいものの線は `ContextUsageRecord` が引いている
 // （`docs/coding-standards.md`「会話内容の扱い」）。
 
 import {
@@ -46,7 +46,7 @@ export type ContextUsageLog = {
 /**
  * そのセッションのコンテキストの内訳を記録に残す係（セッション1つにつき1回だけ）。
  * ターンごとに残さないのは、内訳のうちメッセージ以外がセッションの中でほぼ変わらないから
- * （`src/shared/context-usage-record.ts`）。
+ * （書いてよいものの線を引く側と同じ切り分け）。
  */
 export type ContextUsageRecorder = {
   /**

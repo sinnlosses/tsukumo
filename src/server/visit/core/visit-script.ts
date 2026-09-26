@@ -1,14 +1,14 @@
-// 訪問の台本を使い捨ての `query()` に書かせるための材料・指示文・形の検査（`docs/design.md` 5章
+// 訪問の台本を使い捨ての `query()` に書かせるための材料・指示文・形の検査（`docs/design.md`
 // 「訪問の台本」、提案は `docs/research/character-visit.md` 論点2）。純関数と定数だけで、
-// `query()` を呼ぶのは `src/server/visit/adapter/sdk-visit-script.ts`、材料を集めて呼ぶ順序は
-// `visit-script-writer.ts`。
+// `query()` を呼ぶのは `queryVisitScript`、材料を集めて呼ぶ順序は
+// `createVisitScriptWriter`。
 //
 // 渡すのは2つの人格・いまの仕事の抜き書き（依頼・直近のセリフ・待っているもの）・経過時間・
 // 時刻・今日の成果。どれも会話の内容に当たるので、ここで組んだ文面も受け取った台本も
 // メモリにだけ持ち、ログにもファイルにも書かない（docs/coding-standards.md「会話内容の扱い」）。
 //
 // 指示文は「どういう場面の・どれくらいの掛け合いか」だけを書く。誰がどう話すかは人格
-// （`persona.md`）の側で、キャラクターの名前もセリフもここには書かない（原則4）。
+// （`persona.md`）の側で、キャラクターの名前もセリフもここには書かない（`docs/architecture.md`「キャラクターの中身をコードに書かない」）。
 
 import { isPlainObject } from "remeda"
 
@@ -145,7 +145,7 @@ export function visitWaitedMs(wait: VisitWait, now: number): number {
 }
 
 /**
- * 台本を作っている最中に、そのイベントで作るのをやめるか。帰る合図（`visit-timing.ts` の
+ * 台本を作っている最中に、そのイベントで作るのをやめるか。帰る合図（
  * `visitDeparture`）と同じ顔ぶれ——依頼・本物の `speak`・セッションの終わり・待ちの終わり
  * （答え待ちが積まれたときも待ちでなくなる）。歯車の「訪問」をオフにしたときも中断する
  * （`visit-started` がまだ流れていないので `visitDeparture` は関与しない——ここで止めないと、

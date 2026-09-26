@@ -1,15 +1,15 @@
-// 依頼に添えた画像の原寸の棚（`docs/requirements.md` 4.10）。送った原寸を直近の数枚だけ
+// 依頼に添えた画像の原寸の棚（`docs/requirements.md`「画像の添付」）。送った原寸を直近の数枚だけ
 // プロセスのメモリに持ち、控えを押したブラウザへ `/prompt-image/<id>` で配れるようにする
-// （配るのは `src/server/view-server/adapter/server.ts`、置くのと捨てる契機を決めるのは
-// `src/server/session/core/session-manager.ts`）。
+// （配るのは HTTP を起こすアダプタ、置くのと捨てる契機を決めるのは
+// セッションの管理側）。
 //
 // 記録（`SessionState`）と `hello` には原寸を載せない。 載るのは控えと id の組
 // （`RecordedPromptImage`）だけで、原寸はここにしか無い。ディスクには書かない
 // （会話の内容。docs/coding-standards.md「会話内容の扱い」）。
 //
 // 捨てる契機は2つ:
-//   - 記録の窓（`MAX_SESSION_STATE_TURNS`）から依頼が落ちたとき（{@link releasedPromptImageIds}）
-//   - 持っている原寸の合計の大きさが {@link MAX_SHELVED_PROMPT_IMAGE_BYTES} を超えたとき
+//   - 記録の窓（`MAX_SESSION_STATE_TURNS`）から依頼が落ちたとき（`releasedPromptImageIds`）
+//   - 持っている原寸の合計の大きさが `MAX_SHELVED_PROMPT_IMAGE_BYTES` を超えたとき
 //     （古いほうから）
 
 import { sumBy } from "remeda"

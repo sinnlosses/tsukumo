@@ -1,11 +1,11 @@
-// 届いたイベントをまとめて配るための束（docs/design.md 5章）。1件ずつ押さないのは、
+// 届いたイベントをまとめて配るための束（`docs/design.md`「core と adapter」）。1件ずつ押さないのは、
 // 書きかけの本文がトークン単位で届くので、1件ずつ配ると転送量が跳ねるため。
 //
-// 駆動1代ぶんの持ち物として `src/server/session/core/session-manager.ts` が持ち、起こし直すと
+// 駆動1代ぶんの持ち物としてセッションの管理側が持ち、起こし直すと
 // 作り直す（前の代の積み残しを新しい画面へ配らない）。
 //
 // 会話の内容がイベントとして通るが、ログにもファイルにも書かない
-// （docs/coding-standards.md「会話内容の扱い」）。配る先は渡された {@link EventBatchOptions.deliver} だけ。
+// （docs/coding-standards.md「会話内容の扱い」）。配る先は渡された `EventBatchOptions.deliver` だけ。
 
 import { type StampedEvent } from "../../../shared/session-event.ts"
 
@@ -68,7 +68,7 @@ export function createEventBatch(options: EventBatchOptions): EventBatch {
 
 /**
  * 1バッチの中で連続する書きかけの本文（`partial-utterance`）を1件に連結する
- * （docs/design.md 3章「依頼」。畳み込みの結果は同じで、転送量だけが減る）。
+ * （`docs/design.md`「依頼」。畳み込みの結果は同じで、転送量だけが減る）。
  * 時刻は連なりの最後の1件のもの（届いた時点に合わせる）。
  */
 function joinPartialUtterances(events: readonly StampedEvent[]): readonly StampedEvent[] {

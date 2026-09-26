@@ -1,15 +1,16 @@
 // ブラウザへそのまま配る外部ライブラリ（npm の依存）の実ファイルを読む。`node_modules` の
-// どのファイルを指すかを知っているのはここだけで、`src/shared/vendor-asset.ts` は配る名前と
-// Content-Type しか持たない（原則2・原則3。パス解決は外の世界に触る仕事）。
+// どのファイルを指すかを知っているのはここだけで、`VENDOR_ASSET_CONTENT_TYPES` は配る名前と
+// Content-Type しか持たない（`docs/architecture.md`「core → adapter は禁止」・「1ファイル = 1つの境界」。パス解決は外の世界に触る仕事）。
 //
-// 束ね（`src/server/view-server/adapter/bundle.ts`）には入れない。 mermaid だけで 5.3MB あり、入れると
+// 束ね（フロントの資産をまとめるアダプタ）には入れない。 mermaid だけで 5.3MB あり、入れると
 // レポートに図が1つも無いときでも最初の読み込みで運ぶことになる。ここから配れば、その記法が
-// 実際に出てきたときだけブラウザが `<script src>` で取りに来る（`docs/display.md` 4.2）。
+// 実際に出てきたときだけブラウザが `<script src>` で取りに来る（`docs/display.md`「レポートの記法は、
+// TUI と tsukumo で出し分ける」）。
 // CDN から読まないのも同じ節の決まり（表示時の外部通信はゼロ）。
 //
 // パッケージ名で `require.resolve` しない。 chart.js の `exports` が `dist/` を公開して
 // いないので、パッケージの中のファイルは名前では解けない。tsukumo 自身の場所から
-// `node_modules/` を辿る（`bundled-path.ts` と同じで cwd に依存しない）。
+// `node_modules/` を辿る（`bundledFilePath` と同じで cwd に依存しない）。
 
 import { readFileSync } from "node:fs"
 
@@ -22,11 +23,11 @@ const NODE_MODULES = "node_modules"
 /**
  * 配る名前と、`node_modules` の中のファイルの対応。キーは
  * {@link VENDOR_ASSET_CONTENT_TYPES} と揃っている必要がある（揃っているかは
- * `test/server/view-server/adapter/vendor-asset.test.ts` が allowlist 側から辿って確かめる）。
+ * 検査が allowlist 側から辿って確かめる）。
  *
  * mermaid と chart.js は package.json で版を固定している（`^` を付けない）。素の JavaScript を
  * そのままブラウザへ配っていて、描けるかどうかは目で見るまで分からないため——mermaid の版は
- * `src/server/report/core/report-notation.ts` が挙げる図の10種の根拠でもある。highlight.js のテーマだけは
+ * `REPORT_NOTATION_PROMPT` が挙げる図の10種の根拠でもある。highlight.js のテーマだけは
  * `^` で上げてよい——色を当てる class を出すのは `rehype-highlight`（`lowlight`）が抱える
  * highlight.js のほうなので、版がずれると当たらない class が出る。いまは `lowlight` が
  * `~11.11.0` で別の複製を持つが、配っている 11.12.0 のテーマとバイト一致なので当たる
@@ -45,7 +46,7 @@ export type VendorAssetFile = {
 
 /**
  * 配ってよい名前1つを読む。allowlist に無い名前・`node_modules` に無いファイルのときは
- * undefined（呼び出し側 = `src/server/view-server/adapter/server.ts` が404にする）。名前は対応表を引くだけで、
+ * undefined（呼び出し側 = HTTP を起こすアダプタが404にする）。名前は対応表を引くだけで、
  * 要求されたパスからファイル名を組み立てないので `..` で外へ出る経路が無い。
  */
 export function readVendorAsset(name: string): VendorAssetFile | undefined {

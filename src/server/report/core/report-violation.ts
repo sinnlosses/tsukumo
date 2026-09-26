@@ -1,7 +1,7 @@
 // `report` ツールで受け取ったレポートの検査（「検査 → 整形 → 描画」の検査の段。
-// docs/display.md 4.2「出力の分離（セリフと詳細）」）。
+// `docs/display.md`「出力の分離（セリフと詳細）」）。
 //
-// 検査するのは「レポートの記法」（`report-notation.ts`）の条のうち、機械で判定できるものだけ。
+// 検査するのは「レポートの記法」（`REPORT_NOTATION_PROMPT`）の条のうち、機械で判定できるものだけ。
 // 読み手によって結論が変わる条（効能書き・根拠の量・前置きと締めの行など）は入れない
 // ——誤って差し戻すと、直しようのない指摘でモデルを1往復させることになる。
 //
@@ -72,7 +72,7 @@ export function reportViolations(report: ReportDraft): readonly ReportViolation[
 
 /**
  * 差し戻すときの `report` の戻り値。違反した条と直し方だけを1行ずつ並べ、画面の状態
- * （描けたか・どこに出たか）は載せない（docs/display.md 4.2）。モデルの文脈に戻るので短くする。
+ * （描けたか・どこに出たか）は載せない（`docs/display.md`「出力の分離（セリフと詳細）」）。モデルの文脈に戻るので短くする。
  */
 export function reportRejectionText(violations: readonly ReportViolation[]): string {
   return [
@@ -112,8 +112,8 @@ function violationLine(violation: ReportViolation): string {
 }
 
 /**
- * 規約が挙げる mermaid の種類（`report-notation.ts` の表の2行）。文面と揃っていることは
- * `test/server/report/core/report-violation.test.ts` が見る。
+ * 規約が挙げる mermaid の種類（`REPORT_NOTATION_PROMPT` の表の2行）。文面と揃っていることは
+ * 検査が見る。
  */
 const MERMAID_KINDS: ReadonlySet<string> = new Set([
   "flowchart",

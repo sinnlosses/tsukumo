@@ -1,6 +1,6 @@
 // プラン（`docs/glossary.md`「プラン」）の名前を決める。出どころが2つあるので、どちらを
-// 採るかの判断をここに置く（読むのは `src/server/session-driver/adapter/claude-account.ts`、流すのは
-// `src/server/session-driver/adapter/sdk-driver.ts`）。
+// 採るかの判断をここに置く（読むのは `readClaudeAccountTier`、流すのは
+// SDK を起こすアダプタ）。
 //
 // 契約の段は Claude Code 自身の控えのほうが正しい。 SDK の `accountInfo()` が返す
 // `subscriptionType` は、Max の契約でも `"Claude Pro"` を返すことがある（実測）。控えには

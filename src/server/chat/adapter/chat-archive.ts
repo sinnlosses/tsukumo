@@ -1,29 +1,29 @@
-// 雑談の会話のアーカイブ（`docs/design.md` 7章「雑談の会話のアーカイブはどこに置くか」）。
-// ファイルに触るのはここだけ（原則3。1ファイル = 1つの境界）。置き場は
+// 雑談の会話のアーカイブ（`docs/design.md`「雑談の会話のアーカイブはどこに置くか」）。
+// ファイルに触るのはここだけ（`docs/architecture.md`「1ファイル = 1つの境界」）。置き場は
 // `~/.tsukumo/chat-archive/<パック名>/<YYYY-MM-DD>.jsonl`、パックごと・日ごとで `cwd` には
 // 依存させない。
 //
 // 何を残すか・いつ書くかの判断はここが決めない。 判断は
-// `src/server/session/core/session-manager.ts` の `receive` が持ち、ここが持つのは「どこに・どんな形で
+// `receive` が持ち、ここが持つのは「どこに・どんな形で
 // 書くか」——1件を1行の JSONL へ変換して追記するだけ（`docs/coding-standards.md`
-// 「会話内容の扱い」とぶつからないための切り分け。`src/server/chat/adapter/chat-summary.ts` と同じ形）。
+// 「会話内容の扱い」とぶつからないための切り分け。あらすじを扱うアダプタと同じ形）。
 //
 // 書けなくても例外を投げない（常駐プロセスは1回の失敗で落ちない。
 // `docs/coding-standards.md`「エラーハンドリング」）。
 //
 // 読む口は `readRecent` の1つだけ（かつて決めた「読む口は持たない」を覆している。理由と
-// 量の正典は `docs/chat-mode.md` 4.9「直近の会話は逐語のまま読み戻す」）。
+// 量の正典は `docs/chat-mode.md`「直近の会話は逐語のまま読み戻す」）。
 // 読んだものの行き先は雑談のセッションの `systemPrompt` だけで、画面にも手続きの応答にも
 // stderr にも出さない。どこまで読むかは呼ぶ側が渡すバイト数で、ここは遡って集めることと
 // 並べ替えだけをする（文面を読んで載せる・載せないを決めない）。
 //
 // 古い雑談は、エピソード索引（`episode.jsonl`）を引いてから、当たった範囲のファイルだけを
-// 開く（`docs/chat-mode.md` 4.9「古い雑談は索引を引いて思い出す」、`docs/design.md` 7章
-// 「エピソード索引はどこに置くか」）。索引を書くのは定着（`chat-consolidation-writer.ts`）で、
+// 開く（`docs/chat-mode.md`「古い雑談は索引を引いて思い出す」、`docs/design.md`
+// 「エピソード索引はどこに置くか」）。索引を書くのは定着（`ChatConsolidationWriter`）で、
 // ここが持つのは置き場と形、`recallList` / `recallEpisode` での読み方だけ。
 //
 // `kept.jsonl`（「残す」旗の索引）はもう書きも読みもしない（`keep` ツールが無くなった。
-// `docs/chat-mode.md` 4.9「窓から溢れた会話は定着で畳む」の「「残す」旗はやめる」）。過去に
+// `docs/chat-mode.md`「窓から溢れた会話は定着で畳む」の「「残す」旗はやめる」）。過去に
 // 書かれたファイルが残っていても消さず、単に読まない（`readRecent` は窓の逐語だけを返す）。
 
 import { rmSync } from "node:fs"
@@ -55,22 +55,22 @@ import { scoreChatEpisodes, type ChatEpisodeRecord } from "../core/chat-episode-
 /** 置き場のディレクトリ名（`~/.tsukumo/chat-archive/`）。 */
 const CHAT_ARCHIVE_DIR_NAME = "chat-archive"
 
-/** 行の形の版（`docs/design.md` 7章）。形を変えたら上げ、古い行と見分ける。 */
+/** 行の形の版（`docs/design.md`「キャラクターパック」）。形を変えたら上げ、古い行と見分ける。 */
 const ARCHIVE_FORMAT_VERSION = 1 satisfies number
 
 /**
- * エピソード索引の名前（`docs/design.md` 7章「エピソード索引はどこに置くか」）。
+ * エピソード索引の名前（`docs/design.md`「エピソード索引はどこに置くか」）。
  * {@link dateFileNames} が拾う `YYYY-MM-DD.jsonl` の形を通らないので、窓の走査には混ざらない。
  */
 const EPISODE_INDEX_FILE_NAME = "episode.jsonl"
 
-/** 思い出した記録の名前（`docs/design.md` 7章）。 */
+/** 思い出した記録の名前（`docs/design.md`「キャラクターパック」）。 */
 const RECALLED_FILE_NAME = "recalled.jsonl"
 
-/** エピソード索引の行の形の版（`docs/design.md` 7章。アーカイブの `1` とも `index.jsonl` の `1` とも見分ける）。 */
+/** エピソード索引の行の形の版（`docs/design.md`「キャラクターパック」。アーカイブの `1` とも `index.jsonl` の `1` とも見分ける）。 */
 const EPISODE_FORMAT_VERSION = 2 satisfies number
 
-/** 思い出した記録の行の形の版（`docs/design.md` 7章）。 */
+/** 思い出した記録の行の形の版（`docs/design.md`「キャラクターパック」）。 */
 const RECALLED_FORMAT_VERSION = 1 satisfies number
 
 /**
@@ -84,7 +84,7 @@ const archiveLineSchema = z.object({
   text: z.string(),
 })
 
-/** エピソード索引の1行（`docs/design.md` 7章の表）。読めない行・知らない版は飛ばす。 */
+/** エピソード索引の1行（`docs/design.md`「エピソード索引はどこに置くか」の表）。読めない行・知らない版は飛ばす。 */
 const episodeLineSchema = z.object({
   v: z.literal(EPISODE_FORMAT_VERSION),
   id: z.string(),
@@ -111,7 +111,7 @@ type EpisodeLine = {
   readonly weight: 1 | 2 | 3
 }
 
-/** 思い出した記録の1行（`docs/design.md` 7章）。文面は持たない。 */
+/** 思い出した記録の1行（`docs/design.md`「キャラクターパック」）。文面は持たない。 */
 const recalledLineSchema = z.object({
   v: z.literal(RECALLED_FORMAT_VERSION),
   id: z.string(),
@@ -128,7 +128,7 @@ export function chatArchiveDir(): string {
 
 /**
  * パック1つぶんのアーカイブ（日ごとの会話・「残す」旗・日ごとの索引）をディレクトリごと消す
- * （キャラクターパックを消したときだけ呼ばれる。`docs/design.md` 7.1「消すときの細部」）。
+ * （キャラクターパックを消したときだけ呼ばれる。`docs/design.md`「消すときの細部」）。
  * 同じ名前で作り直したパックが、消したパックとの会話を読み戻したり思い出したりしないため。
  * 無い・消せないときも何もせず続ける。名前が {@link isCharacterPackName} を通らなければパスを
  * 組み立てない（書く口と同じ規則）。
@@ -146,7 +146,7 @@ export function discardChatArchive(packName: string, root: string = chatArchiveD
 }
 
 /**
- * アーカイブの読み書き口を作る（雑談モードのときだけ呼ばれる。`src/session-start.ts`）。
+ * アーカイブの読み書き口を作る（雑談モードのときだけ呼ばれる。配線が呼ぶ）。
  * `root` は置き場の親（既定は {@link chatArchiveDir}）。差し替えられるのはテストがホームを
  * 汚さないためにある（`createChatSummary` の `root` と同じ手）。
  *
@@ -155,7 +155,8 @@ export function discardChatArchive(packName: string, root: string = chatArchiveD
  * をまたいでも起こし直す必要が無い。
  *
  * 書くのは `session-manager` から1件ずつ、読むのはセッションを起こすとき1回だけと持ち場が
- * 違うが、触るファイルは同じ1つなので境界は増やさない（原則3。`docs/design.md` 7章）。
+ * 違うが、触るファイルは同じ1つなので境界は増やさない
+ * （`docs/architecture.md`「1ファイル = 1つの境界」。`docs/design.md`「キャラクターパック」）。
  */
 export function createChatArchive(root: string = chatArchiveDir()): ChatArchive {
   return {
@@ -179,7 +180,7 @@ export function createChatArchive(root: string = chatArchiveDir()): ChatArchive 
 }
 
 /**
- * JSONL の1行の形（`docs/design.md` 7章の表）。tsukumo の内部の型をそのまま書き出さない。
+ * JSONL の1行の形（`docs/design.md`「雑談の会話のアーカイブはどこに置くか」の表）。tsukumo の内部の型をそのまま書き出さない。
  * `expression` / `images` は「無いかもしれない」プロパティなので `T | undefined` で持つ（`?:`
  * は使わない。`docs/coding-standards.md`「「無いかもしれない」値」）——どちらを持つかは `speaker`
  * が決めるので、値を渡すたびにもう片方へ明示的に `undefined` を渡す。
@@ -236,7 +237,7 @@ function readReadback(
  * バイト数の合計が `limitBytes` に届いたところでそれ以上は読まないので、アーカイブが
  * 何年ぶん増えても読む量は変わらない。
  *
- * 溢れる1件は載せない（`docs/chat-mode.md` 4.9「切り方」）。1件だけで `limitBytes` を
+ * 溢れる1件は載せない（`docs/chat-mode.md`「切り方」）。1件だけで `limitBytes` を
  * 超える行が先頭に来たときは空を返す——行の途中で切るくらいなら逐語なしで始める。
  */
 function readRecentEntries(dir: string, limitBytes: number): readonly TimedEntry[] {
@@ -292,7 +293,7 @@ function newestFirstFileNames(dir: string): readonly string[] {
  * 足りない行は undefined（1行ずつ落とす。JSONL は壊れても被害が1行）。
  *
  * `expression` と `images` はここで読まない（口が最初から渡さない。
- * `docs/chat-mode.md` 4.9）。日付は `at` の頭10文字で、行だけで意味が決まる
+ * `docs/chat-mode.md`「雑談モード」）。日付は `at` の頭10文字で、行だけで意味が決まる
  * （ファイル名には頼らない）。
  */
 function toTimedEntry(raw: unknown): TimedEntry | undefined {
@@ -394,7 +395,7 @@ function writeEpisodes(
 
 /**
  * 索引を引く言葉で採点し、点の高い順の候補を返す（{@link ChatArchive.recallList} の実装）。
- * 採点は `chat/core/chat-episode-score.ts` の純関数で、ここは行を読んで渡し、
+ * 採点は `scoreChatEpisodes` の純関数で、ここは行を読んで渡し、
  * `recallListBytes` に収まるところで切るだけ。
  */
 function readEpisodeCandidates(

@@ -1,14 +1,14 @@
 // セッションを持つ係。駆動から届いたイベントに時刻を打ち、サーバ側でも同じ畳み込みを回し、
-// まとめてフレームで配る（docs/design.md 5章）。
+// まとめてフレームで配る（`docs/design.md`「core と adapter」）。
 //
 // - 状態をサーバ側でも持つのは、接続してきたブラウザへ `hello` の snapshot を返すため
 // - コマンドの分岐はここに無い。どの手続きをどの機能が受け、どの条件で断るかは契約と
-//   機能ごとの表（束ねるのは配線の `src/router.ts`）が持ち、ここは受け手に見せる口
-//   （`CommandSession`）を作って出すだけ（docs/design.md 2章「コマンドの受け手と手続きの置き方」）
-// - 持つセッションは1つだけで、鍵を持たない（docs/design.md 8章）。キャラクター・雑談モード・
+//   機能ごとの表（束ねるのは配線の `createRouter`）が持ち、ここは受け手に見せる口
+//   （`CommandSession`）を作って出すだけ（`docs/design.md`「コマンドの受け手と手続きの置き方」）
+// - 持つセッションは1つだけで、鍵を持たない（`docs/design.md`「セッションの復元と複数化」）。キャラクター・雑談モード・
 //   セッションの切り替えはこの持ち物の中で駆動を起こし直す（`restart`）ので、古い側と新しい側を
 //   並べて持つことが無い
-// - 代のあいだだけ意味のある勘定は {@link SessionGeneration} に集めてある（配る束・雑談の
+// - 代のあいだだけ意味のある勘定は `SessionGeneration` に集めてある（配る束・雑談の
 //   圧縮の見張り・トークンの勘定）。起こし直しはそれを丸ごと作り直すことなので、勘定を1つ
 //   足しても `restart` に戻し忘れる場所が生まれない
 //
@@ -52,22 +52,22 @@ import { type SessionLaunchRequest } from "./session-launch.ts"
 export type SessionManagerOptions = {
   /** 現在時刻（エポックミリ秒）を返す関数（呼び出し側が時計を渡す。テストは偽の時計を渡す）。 */
   readonly now: () => number
-  /** イベントをまとめる間隔（ミリ秒）。既定は `EVENT_BATCH_INTERVAL_MS`（`event-batch.ts`）。 */
+  /** イベントをまとめる間隔（ミリ秒）。既定は `EVENT_BATCH_INTERVAL_MS`。 */
   readonly batchIntervalMs: number
   /**
-   * 雑談の会話のアーカイブの書き込み口（`docs/design.md` 7章「雑談の会話のアーカイブはどこに
-   * 置くか」）。本番は `createChatArchive()`（`src/server/chat/adapter/chat-archive.ts`）、テストは
+   * 雑談の会話のアーカイブの書き込み口（`docs/design.md`「雑談の会話のアーカイブはどこに
+   * 置くか」）。本番は `createChatArchive()`、テストは
    * 呼ばれた引数だけを覚えるスタブを渡す。
    */
   readonly chatArchive: ChatArchive
   /**
-   * 定着の出どころ（`src/server/chat/core/chat-consolidation-writer.ts`）。いつ起こすか
-   * （雑談の駆動由来のターンの終わり）と、同時に1本に絞るのはここ（`docs/design.md` 7章
+   * 定着の出どころ（`ChatConsolidationSource`）。いつ起こすか
+   * （雑談の駆動由来のターンの終わり）と、同時に1本に絞るのはここ（`docs/design.md`「キャラクターパック」
    * 「定着はどこで走るか」）。疑似セッションでは `dont-consolidate`。
    */
   readonly chatConsolidation: ChatConsolidationSource
   /**
-   * トークン消費の書き込み口（`src/server/token-usage/core/token-usage.ts` の契約。本番は
+   * トークン消費の書き込み口（`TokenUsageLog` の契約。本番は
    * `createTokenUsageLog()`、テストは呼ばれた引数だけを覚えるスタブを渡す）。
    *
    * 前の `result` からの増分を出すのは {@link TokenUsageRecorder}（駆動1代ぶんの持ち物と
@@ -75,7 +75,7 @@ export type SessionManagerOptions = {
    */
   readonly tokenUsageLog: TokenUsageLog
   /**
-   * コンテキストの内訳の書き込み口（`src/server/context-usage/core/context-usage.ts` の契約。本番は
+   * コンテキストの内訳の書き込み口（`ContextUsageLog` の契約。本番は
    * `createContextUsageLog()`、テストは呼ばれた引数だけを覚えるスタブを渡す）。
    *
    * セッション1つにつき1行で、いつ書くか（＝そのセッションでまだ書いていない最初の
@@ -84,35 +84,35 @@ export type SessionManagerOptions = {
    */
   readonly contextUsageLog: ContextUsageLog
   /**
-   * 依頼に添えた画像の原寸の棚（`src/server/session-driver/core/prompt-image-shelf.ts`）。持ち主は
-   * `src/main.ts` — `/prompt-image/<id>` で配る側（`view-delivery.ts`）も同じ棚を引く。
+   * 依頼に添えた画像の原寸の棚（`PromptImageShelf`）。持ち主は
+   * 配線 — `/prompt-image/<id>` で配る側も同じ棚を引く。
    * 置くのと捨てるのはここで、`prompt` を受けたときに置き、記録から依頼が消えたときに捨てる。
    */
   readonly promptImageShelf: PromptImageShelf
   /**
    * セッションを1つ起こす（起こし直しも含む）一続き。駆動を起こすだけでなく、パックを決めて
-   * 続きを探し、復元した履歴を流すところまでを1つでやる（`core/session-launch.ts` の
-   * `createSessionLaunch` が実体。名前が `startDriver` ではなく `launchSession` なのは、
+   * 続きを探し、復元した履歴を流すところまでを1つでやる（`createSessionLaunch` が実体。
+   * 名前が `startDriver` ではなく `launchSession` なのは、
    * 駆動そのものを起こす低レベルの口（`SessionLaunchPorts.startDriver`）と役割が違うから）。
    * 渡された `onEvent` / `onRestoredEvent` を駆動に配線するのは呼び出し側の仕事で、ここは
    * 種類（SDK か fake driver か）を知らない。
    *
    * 受け口は2つ。 `onEvent` は駆動（と見張り）から新しく届くイベント、`onRestoredEvent` は
-   * 前のセッションの記録を組み直した再生だけが通る（`docs/design.md` 7章「雑談の会話の
+   * 前のセッションの記録を組み直した再生だけが通る（`docs/design.md`「雑談の会話の
    * アーカイブはどこに置くか」）。畳み方と配り方はどちらも同じ（`receive` が両方を
    * 同じように畳む）——分かれているのは「どちらから来たか」を呼び出し側が知れるようにする
    * ためだけ。
    *
    * `request.selection` はこれから起こすパックの決め方で、起動時は「初期パック」、
    * `session.switchCharacter` は「画面から選ばれた名前」、`session.setChatMode` は「いま出しているパックの
-   * まま」の3つ（docs/design.md 7章・docs/screen-design.md 13.6）。知らない名前のときに何を起こすかも、名前を
+   * まま」の3つ（`docs/design.md`「キャラクターパック」・`docs/screen-design.md`「設定の置き場所」）。知らない名前のときに何を起こすかも、名前を
    * 覚えるかどうかも呼び出し側が決める。
-   * `request.chat` は雑談モードで起こすか（`docs/chat-mode.md` 4.9）。
+   * `request.chat` は雑談モードで起こすか（`docs/chat-mode.md`「雑談モード」）。
    * `request.resume` はこれから起こすセッションの決め方で、印から探すか、画面から選ばれた
-   * IDをそのまま続きにするかの2つ（`docs/requirements.md` 4.8）。
+   * IDをそのまま続きにするかの2つ（`docs/requirements.md`「セッションの復元」）。
    *
    * 待てる形（Promise）で返すのは、そのパックの続きから始めるセッションを探すのに
-   * 外の世界（claude 自身の transcript の一覧）を読むから（docs/requirements.md 4.8）。
+   * 外の世界（claude 自身の transcript の一覧）を読むから（`docs/requirements.md`「セッションの復元」）。
    */
   readonly launchSession: (
     onEvent: (event: SessionEvent) => void,
@@ -127,25 +127,25 @@ export type SessionManagerOptions = {
   readonly readPreviousUsageReview: () => PreviousUsageReview
   /**
    * 見直しの結果を、次の起動でも「前回の提案」として配れるようにホームへ書く
-   * （`src/server/usage-review/adapter/previous-usage-review.ts`）。駆動由来（`"driver"`）の
+   * （`writePreviousUsageReview`）。駆動由来（`"driver"`）の
    * `usage-review-result` を畳んだときだけ呼ぶ（復元の再生には出てこない種類のイベントだが、
    * ほかの書き込みと条件を揃えてある）。
    */
   readonly writePreviousUsageReview: (reviewedAt: number, findings: UsageReviewFindings) => void
   /**
-   * 訪問の見張りに渡す口（しきい値・時計・客の候補・乱数。`src/server/visit/core/visit-watch.ts`）。
+   * 訪問の見張りに渡す口（しきい値・時計・客の候補・乱数。`VisitPorts`）。
    * 見張りは代ごとに1つ作る（{@link GenerationTally.visit}）。
    */
   readonly visit: VisitPorts
 }
 
 /**
- * セッション1つぶんの持ち物（docs/design.md 5章）。起こした時点で駆動も起こし始める
+ * セッション1つぶんの持ち物（`docs/design.md`「core と adapter」）。起こした時点で駆動も起こし始める
  * （`create` の段は無い。1プロセスが持つセッションは1つで、切り替えは中で起こし直す）。
  */
 export type SessionManager = {
   /**
-   * コマンドの受け手に見せる口（`docs/design.md` 2章「コマンドの受け手と手続きの置き方」）。
+   * コマンドの受け手に見せる口（`docs/design.md`「コマンドの受け手と手続きの置き方」）。
    * `/ws` の手続きの context に載る。代は呼ばれたその時点のものを返す。
    */
   readonly commandSession: CommandSession
@@ -163,7 +163,7 @@ export type SessionManager = {
 
 /**
  * `receive` に渡るイベントが「駆動から新しく届いたか（`"driver"`）、復元の再生か
- * （`"restored"`）」の印（docs/design.md 7章「雑談の会話のアーカイブはどこに置くか」）。
+ * （`"restored"`）」の印（`docs/design.md`「雑談の会話のアーカイブはどこに置くか」）。
  */
 type EventOrigin = "driver" | "restored"
 
@@ -232,7 +232,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
   const contextUsage = createContextUsageRecorder(options.contextUsageLog)
   // 定着が走っているか。代ではなくここに持つ——起こし直しをまたいでも同時に1本のまま
   // （同じパックへ起こし直した直後に、同じ未定着の行を2本で畳まない）。走っているあいだの
-  // 契機は捨てる（`docs/chat-mode.md` 4.9）。
+  // 契機は捨てる（`docs/chat-mode.md`「雑談モード」）。
   let consolidating = false
   // プロセスを終えるときに走っている1本を中断する（待たない。書きかけで止まれば追記済みまでが定着）。
   const consolidationAbort = new AbortController()
@@ -261,7 +261,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
    * 1本にする）。
    *
    * `origin` は「駆動から新しく届いたか（`"driver"`）、復元の再生か（`"restored"`）」の印
-   * （`docs/design.md` 7章「雑談の会話のアーカイブはどこに置くか」）。畳み方と配り方は
+   * （`docs/design.md`「雑談の会話のアーカイブはどこに置くか」）。畳み方と配り方は
    * どちらも同じ——分かれているのは、雑談の会話のアーカイブへ書くのを駆動由来の依頼と
    * セリフだけに絞るため（復元で流し直されたぶんまで書くと、起こし直すたびに同じ行が
    * 二重に積まれる）。
@@ -274,7 +274,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
     replaceState(applySessionEvent(state, event, at))
     tally.batch.add({ at, event })
     // 雑談の会話のアーカイブへ1行足す。駆動由来（`"driver"`）・雑談モード・パックが
-    // 分かっているときだけ（docs/chat-mode.md 4.9「誰がいつ書くか」）。
+    // 分かっているときだけ（`docs/chat-mode.md`「誰がいつ書くか」）。
     if (origin === "driver" && state.chatMode) {
       appendChatArchiveEntry(options.chatArchive, state.character?.pack, at, event)
     }
@@ -289,7 +289,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
       tally.tokenUsage.append(event.cumulative, at, state)
     }
     // トークン消費の内訳を、1ターンぶんだけ持つところから捨てる（次のターンでまた0から
-    // 数える）。`token-usage` は `turn-finished` より先に届く（`sdk-message.ts` が `result`
+    // 数える）。`token-usage` は `turn-finished` より先に届く（変換する側が `result`
     // 1つをこの順に変換する）ので、書き終えたあとに捨てることになる。
     // 見直しの結果を、次の起動でも「前回の提案」として配れるようにホームへ書く。駆動由来
     // （`"driver"`）だけ——復元の再生にはこの種類のイベントは出てこない
@@ -307,12 +307,12 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
       }
     }
     // 定着を起こす。雑談の駆動由来のターンの終わりだけで、走っていれば契機を捨てる。
-    // 待たずに次へ進む（docs/design.md 7章「定着はどこで走るか」）。
+    // 待たずに次へ進む（`docs/design.md`「定着はどこで走るか」）。
     if (origin === "driver" && event.kind === "turn-finished" && state.chatMode) {
       startConsolidation(state.character?.pack)
     }
     // 訪問の出入りを決める。駆動由来だけ（復元の再生は前のセッションの待ち）。見張りが
-    // 出した訪問のイベントもこの受け口へ戻ってくる（`visit-watch.ts`）。
+    // 出した訪問のイベントもこの受け口へ戻ってくる（`createVisitWatch`）。
     if (origin === "driver") {
       tally.visit.observe(event, at)
     }
@@ -431,7 +431,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
   }
 
   // 起動時は覚えない — その回だけの指定（`TSUKUMO_CHARACTER`）や同梱の既定が次の起動の
-  // 初期値として残らないように（docs/screen-design.md 13.6）。
+  // 初期値として残らないように（`docs/screen-design.md`「設定の置き場所」）。
   let generation = startGeneration(
     {
       selection: { by: "initial" },
@@ -442,12 +442,12 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
   )
 
   /**
-   * 駆動を起こし直す（docs/design.md 7章。そのパックのセッションの
+   * 駆動を起こし直す（`docs/design.md`「キャラクターパック」。そのパックのセッションの
    * 続きから始まる — 会話が繋がるかどうかは、起こす側が `resume` に何を渡すかで決まる）。
    * 契機は3つ: 別のキャラクターパックに切り替えたとき（`session.switchCharacter`）、
    * 雑談モードを切り替えたとき（`session.setChatMode`。`systemPrompt` を差し替えるため。
-   * `docs/chat-mode.md` 4.9）、画面から別のセッションを選んだとき（`session.switchSession`。
-   * `docs/requirements.md` 4.8）。
+   * `docs/chat-mode.md`「雑談モード」）、画面から別のセッションを選んだとき（`session.switchSession`。
+   * `docs/requirements.md`「セッションの復元」）。
    * 画面は初期状態に戻す — 吹き出し・立ち絵・メインビューの3つを消して、新しい `hello` を
    * 配り直す。起こし直しの間に届いたイベント（新しい `character-changed`・組み直した履歴など）は
    * その `hello` の状態に入っているので、二重に配らない。
@@ -517,7 +517,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
   }
 }
 
-/** 購読者全員に配る。閉じかけている接続を無視するのは送る側（src/server/view-server/adapter/session-socket.ts）の仕事。 */
+/** 購読者全員に配る。閉じかけている接続を無視するのは送る側（接続を扱うアダプタ）の仕事。 */
 function publish(frame: ServerFrame, subscribers: ReadonlySet<(frame: ServerFrame) => void>): void {
   for (const send of subscribers) {
     send(frame)

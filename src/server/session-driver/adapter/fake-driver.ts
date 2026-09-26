@@ -1,10 +1,10 @@
 // fake driver。claude を起こさずに、疑似セッションどおりのイベントを時間の順に流す
-// （docs/design.md 5章「fake-driver.ts」）。`TSUKUMO_DRIVER=fake` で選ぶ。
+// （`docs/design.md`「fake-driver.ts」）。`TSUKUMO_DRIVER=fake` で選ぶ。
 //
-// 用途は目視確認と Playwright（docs/design.md 10章）。疑似セッションは手で書いた架空の会話だけで、
+// 用途は目視確認と Playwright（`docs/design.md`「テスト」）。疑似セッションは手で書いた架空の会話だけで、
 // 実物の transcript は使わない（docs/coding-standards.md「会話内容の扱い」）。
 //
-// 契約は本物の駆動（src/server/session-driver/core/session-driver.ts の `SessionDriver`）と同じ。違うのは中身が
+// 契約は本物の駆動（`SessionDriver`）と同じ。違うのは中身が
 // 疑似セッションであることだけなので、`session-manager` はどちらが動いているかを知らない。
 
 import { readFileSync } from "node:fs"
@@ -36,11 +36,11 @@ const FAKE_PLAN = "Claude Max"
 
 /**
  * fake driver が起こした直後に1回だけ流す、モデルごとの effort の対応（`docs/screen-design.md`
- * 13.9「動き方の操作子」）。会話の内容ではないので疑似セッションの JSON には持たせず、
+ * `docs/screen-design.md`「動き方の操作子」）。会話の内容ではないので疑似セッションの JSON には持たせず、
  * ここに直接書く。本物の `supportedModels()` の実測値をそのまま写した（`opus` / `sonnet` は
  * 5段すべてに対応し、`fable` はエイリアスと違う値〔`claude-fable-5-1`〕で返る。`haiku` は
  * `supportsEffort` 自体が無い）——effort に対応しないモデルで選べなくなることと、エイリアスと
- * 一致しない値の当て方（`src/browser/components/domain/screen-nav/domain/effort-label.ts`）の両方を
+ * 一致しない値の当て方（画面側の表示ラベルの決め方）の両方を
  * 疑似セッションでも確かめられるようにしてある。
  */
 export const FAKE_MODEL_EFFORT_SUPPORT: readonly ModelEffortSupport[] = [
@@ -59,7 +59,7 @@ export const FAKE_MODEL_EFFORT_SUPPORT: readonly ModelEffortSupport[] = [
 ]
 
 /**
- * fake driver が起こしたときに効いている既定の effort（`src/server/session-driver/adapter/sdk-driver.ts` の
+ * fake driver が起こしたときに効いている既定の effort（SDK を起こすアダプタの
  * `DEFAULT_EFFORT` と同じ値を、疑似セッションだけの値として独立に持つ）。
  */
 export const FAKE_DEFAULT_EFFORT: EffortLevel = "medium"
@@ -141,7 +141,7 @@ export type FakeDriverOptions = {
    */
   readonly scene: string | undefined
   /**
-   * このセッションを起こした既定（モデル・許可モード。`docs/screen-design.md` 13.6）。疑似
+   * このセッションを起こした既定（モデル・許可モード。`docs/screen-design.md`「設定の置き場所」）。疑似
    * セッションが流す `session-info` にもこの値を載せる — 固定値のままだと、歯車で既定を
    * 変えて起こし直しても帯が疑似セッションに書いた値を出してしまう（本物は SDK の `init` が
    * 実際に起こした値を返す）。
@@ -151,7 +151,7 @@ export type FakeDriverOptions = {
    * 最初のビュー（ブラウザのタブ）が繋がったら解ける約束。`opening` と名指しの場面はこれが
    * 解けてから流し始める——起こした直後から流すと、ページが繋がる前に届いたぶんは `hello` の
    * 状態に畳まれ、どこからが `events` として届くかが開くまでの時間で変わる（E2E のメッセージの
-   * 列が走らせるたびに揃わない。`docs/design.md` 10章「E2E の走らせ方」）。起こし直した代は
+   * 列が走らせるたびに揃わない。`docs/design.md`「E2E の走らせ方」）。起こし直した代は
    * もう繋がっているので、解けた約束を渡す。
    */
   readonly firstViewer: Promise<void>
@@ -204,9 +204,9 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
   let permissionMode: string = options.sessionDefault.permissionMode
   // いま効いている effort。`setEffort` で変わるが、画面に届くのはターンが終わったとき
   // （本物の `Stop` フック入力と同じ遅れを疑似セッションでも再現する。`docs/screen-design.md`
-  // 13.9「動き方の操作子」の「effort のドロップダウンだけ、表示の更新が遅れる」）。
+  // `docs/screen-design.md`「動き方の操作子」の「effort のドロップダウンだけ、表示の更新が遅れる」）。
   let effort: EffortLevel = FAKE_DEFAULT_EFFORT
-  // `report` の差し戻しの預かり（本物の駆動と同じ。`src/server/report/core/report-review.ts`）。判定は
+  // `report` の差し戻しの預かり（本物の駆動と同じ。`ReportReview`）。判定は
   // しない（handler が無いので）——疑似セッションが書いた `tool-finished` の `isError` に従って
   // 描くか捨てるかだけが決まる。
   const reportReview = createReportReview()
@@ -244,7 +244,7 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
     if (ask === undefined) {
       return false
     }
-    // 本物の駆動（src/server/session-driver/core/pending-answer.ts）と同じで、質問に答えが付いたら記録を流す。
+    // 本物の駆動（`PendingAnswerQueue`）と同じで、質問に答えが付いたら記録を流す。
     // これが無いと、疑似セッションで目視するときだけ質問の記録が残らない。
     if (ask.kind === "question" && answer.kind === "answers") {
       emit({ kind: "question-answered", questions: ask.questions, answers: answer.labels })
@@ -253,7 +253,7 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
     return true
   }
 
-  // 本物の駆動は `accountInfo()` を起動直後に1回だけ取りに行く（`src/server/session-driver/adapter/sdk-driver.ts`
+  // 本物の駆動は `accountInfo()` を起動直後に1回だけ取りに行く（SDK を起こすアダプタ
   // の `relayPlan`）。fake driver は claude を起こさないので、疑似セッションで画面を確かめられる
   // ように固定値を1回流す。
   emit({ kind: "plan", plan: FAKE_PLAN })
@@ -288,12 +288,12 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
   return {
     prompt: (text, images) => {
       // 疑似セッションを流すだけの駆動でも、控えと id だけを記録へ渡すのは本物と同じ
-      // （`docs/requirements.md` 4.10）。
+      // （`docs/requirements.md`「画像の添付」）。
       emit({ kind: "request", text, images: recordedPromptImages(images) })
       playNextTurn()
     },
     promptWithoutRecord: () => {
-      // 記録に残さない依頼（`docs/screen-design.md` 13.7）。本物と同じく `request` の代わりに
+      // 記録に残さない依頼（`docs/screen-design.md`「雑談モードの画面」）。本物と同じく `request` の代わりに
       // ターンの始まりだけを流し、文面はどこにも残さない（疑似セッションは次の場面へ進む）。
       emit({ kind: "turn-started" })
       playNextTurn()
@@ -316,7 +316,7 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
       emit({ kind: "session-info", ...sessionInfo() })
       return Promise.resolve()
     },
-    // 確認の合図をここで流さない（本物の `sdk-driver.ts` の `setEffort` と同じ）。画面に
+    // 確認の合図をここで流さない（本物の SDK を起こすアダプタの `setEffort` と同じ）。画面に
     // 届くのは、次にターンが終わって `emit` が `effort-changed` を流したとき。
     setEffort: (next) => {
       effort = next
@@ -350,7 +350,7 @@ function openingSpanMs(opening: readonly FakeSessionStep[]): number {
  * 書き直さない）。`model` / `permissionMode` がここで `| undefined` なのは、SDK の `init`
  * をそのまま写す境界だから（`docs/coding-standards.md`「「無いかもしれない」値」の例外1）。
  * 値そのものは `emit` が載せ替えるので、この土台が持つのは「無い」のまま。
- * 状態側（`src/shared/session-state.ts`）では `model` は `SessionState.model` へ独立に写る。
+ * 状態側では `model` は `SessionState.model` へ独立に写る。
  */
 function sessionInfo(): Omit<Extract<SessionEvent, { kind: "session-info" }>, "kind"> {
   return {

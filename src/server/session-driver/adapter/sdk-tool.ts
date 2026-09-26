@@ -1,10 +1,10 @@
 // tsukumo がプロセス内の MCP サーバとして提供するツール（`speak`、`remember` /
 // `forget` / `recall` / `recall_episode`、仕事のときの `report` / `usage_review_stage` /
-// `usage_review_result`）。組み立てたサーバは駆動（src/server/session-driver/adapter/sdk-driver.ts）が
+// `usage_review_result`）。組み立てたサーバは駆動（SDK を起こすアダプタ）が
 // `query()` の `mcpServers` へ渡す。`diary` はここには載らない（会話とは別の使い捨ての問い合わせ。
-// `src/server/diary/adapter/sdk-diary.ts`）。
+// `queryDiary`）。
 //
-// サーバの名前と `speak` の名前は src/server/session-driver/core/sdk-message.ts が持つ（届いた `assistant`
+// サーバの名前と `speak` の名前は `TSUKUMO_MCP_SERVER_NAME` / `SPEAK_TOOL_NAME` が持つ（届いた `assistant`
 // メッセージから `speak` の呼び出しを見分ける側が core にあるため）。
 
 import { createSdkMcpServer, tool } from "@anthropic-ai/claude-agent-sdk"
@@ -51,7 +51,7 @@ const REMEMBER_TOOL_NAME = "remember"
 
 /**
  * モデルに見せる `remember` ツールの説明。何を書いてよいかの条は
- * `src/server/chat/core/chat-manner.ts` が持つので、ここには置き場所と形だけを書く
+ * `CHAT_MANNER_PROMPT` が持つので、ここには置き場所と形だけを書く
  * （二重に書かない）。
  */
 const REMEMBER_TOOL_DESCRIPTION =
@@ -63,7 +63,7 @@ const FORGET_TOOL_NAME = "forget"
 
 /**
  * モデルに見せる `forget` ツールの説明。何を消してよいかの条は
- * `src/server/chat/core/chat-manner.ts` が持つので、ここには指し方と範囲だけを書く
+ * `CHAT_MANNER_PROMPT` が持つので、ここには指し方と範囲だけを書く
  * （二重に書かない）。
  */
 const FORGET_TOOL_DESCRIPTION =
@@ -75,7 +75,7 @@ const RECALL_TOOL_NAME = "recall"
 
 /**
  * モデルに見せる `recall` ツールの説明。いつ引くかの条は
- * `src/server/chat/core/chat-manner.ts` が持つので、ここには何が返るかと引ける回数だけを書く
+ * `CHAT_MANNER_PROMPT` が持つので、ここには何が返るかと引ける回数だけを書く
  * （二重に書かない）。
  */
 const RECALL_TOOL_DESCRIPTION =
@@ -88,7 +88,7 @@ const RECALL_EPISODE_TOOL_NAME = "recall_episode"
 
 /**
  * モデルに見せる `recall_episode` ツールの説明。いつ開くかの条は
- * `src/server/chat/core/chat-manner.ts` が持つので、ここには何が返るかと開ける回数だけを書く
+ * `CHAT_MANNER_PROMPT` が持つので、ここには何が返るかと開ける回数だけを書く
  * （二重に書かない）。
  */
 const RECALL_EPISODE_TOOL_DESCRIPTION =
@@ -98,26 +98,26 @@ const RECALL_EPISODE_TOOL_DESCRIPTION =
 /**
  * プロセス内の MCP サーバ。戻り値は既定が "ok" だけで、tsukumo の内部の状態や画面の事情が
  * モデルへ戻る経路を作らない（docs/architecture.md「セリフはテキストの規約ではなく、ツール
- * 呼び出しで受け取る」・docs/design.md 7.1）。例外は `recall` / `recall_episode` と `report` と
+ * 呼び出しで受け取る」・`docs/design.md`「画面から作るときの置き場と受け取り方」）。例外は `recall` / `recall_episode` と `report` と
  * 見直しの2つで、`recall` / `recall_episode` が返すのはそのセッションが自分で読める外の事実
  * （自分の過去の雑談の目次と1件の逐語）だけ、`report` が返すのは差し戻すときの規約違反だけ
- * （docs/display.md 4.2）、見直しの2つが返すのは利用者が見送った提案の識別子と差し戻しの
+ * （`docs/display.md`「出力の分離（セリフと詳細）」）、見直しの2つが返すのは利用者が見送った提案の識別子と差し戻しの
  * 理由だけ。`diary` は会話のこのサーバには載らない（振り返りは会話とは別の使い捨ての
- * 問い合わせ。`src/server/diary/adapter/sdk-diary.ts`。docs/design.md「日記の受け取りと保存」）。
+ * 問い合わせ。`queryDiary`。docs/design.md「日記の受け取りと保存」）。
  *
  * 常に載るのは `speak` だけで、`remember` / `forget` / `recall` / `recall_episode`
  * は雑談モードのときだけ（`mode` が `chat` のときだけ）載る。仕事のときに出すと、作業の文脈が
- * 人格に入り込む経路（7.1）や、仕事の会話をアーカイブに残す経路になる。
+ * 人格に入り込む経路（`docs/design.md`「画面から作るときの置き場と受け取り方」）や、仕事の会話をアーカイブに残す経路になる。
  *
  * `report` は仕事のときだけ載る（仕事ではレポートを常にこれで受け取る。雑談は本文を
- * 書かない決まりなので載せない。`src/server/report/core/report-tool.ts`）。見直しの2つも仕事の
+ * 書かない決まりなので載せない。`REPORT_TOOL_DESCRIPTION`）。見直しの2つも仕事の
  * ときだけ（トークン消費の画面から頼むのは仕事の会話への依頼）。
  *
  * セリフそのものは、この handler ではなく `assistant` メッセージの変換から取り出す
- * （src/server/session-driver/core/sdk-message.ts）。受け取り口を1つにしておくと、イベントの流れが1本で済む。
+ * （`toSessionEvents`）。受け取り口を1つにしておくと、イベントの流れが1本で済む。
  * `report` の引数も同じで、handler が引数を読むのは差し戻すかを決めるためだけ。見直しの2つだけは
  * 逆に handler がイベントを流す（検査を通したものだけを状態に入れるため。
- * `src/server/usage-review/core/usage-review-tool.ts`）。
+ * `createUsageReviewIntake`）。
  */
 export function tsukumoServer(
   expressions: readonly ExpressionChoice[],
@@ -158,15 +158,15 @@ export function tsukumoServer(
 
 /**
  * レポートを受け取るツール。差し戻しの判定の窓口はここだけ
- * （src/server/report/core/report-review.ts）。通すときの戻り値は "ok" だけ、差し戻すときは規約違反と
- * 直し方だけを `isError` 付きで返す（画面の事情は載せない。docs/display.md 4.2）。描くか捨てるかは
+ * （`ReportReview`）。通すときの戻り値は "ok" だけ、差し戻すときは規約違反と
+ * 直し方だけを `isError` 付きで返す（画面の事情は載せない。`docs/display.md`「出力の分離（セリフと詳細）」）。描くか捨てるかは
  * この `isError` を見て決まる。レポートにする引数は、ここではなく `assistant` メッセージの変換が
- * 取り出す（src/server/session-driver/core/sdk-message.ts）。
+ * 取り出す（`toSessionEvents`）。
  *
  * `title` は差し戻されなかったときだけ {@link onReportTitle} へ渡す——差し戻された呼び出しの
  * 題を渡すと、規約違反を書いたついでの題が残ってしまう。実際に書くかどうかの判断（利用者の
- * `/rename` を上書きしないなど）は `onReportTitle` の先（`src/server/session-driver/core/session-title.ts` /
- * `src/server/session-driver/adapter/sdk-session.ts`）が持つので、ここは渡すだけ。
+ * `/rename` を上書きしないなど）は `onReportTitle` の先（`decideSessionTitle` /
+ * `createSessionTitleWriter`）が持つので、ここは渡すだけ。
  */
 function reportTool(review: ReportReview, onReportTitle: (title: string) => void) {
   return tool(
@@ -257,8 +257,8 @@ function usageReviewTools(intake: UsageReviewIntake) {
 
 /**
  * 覚えたことを書き足すツール。上限に当たった回も "ok" を返す（受け付けたかどうかを
- * モデルへ戻さない。docs/design.md 7.1）。どこにどう書くかは
- * src/server/chat/adapter/persona-memory.ts の仕事。
+ * モデルへ戻さない。`docs/design.md`「画面から作るときの置き場と受け取り方」）。どこにどう書くかは
+ * 人格に書き足すアダプタの仕事。
  */
 function rememberTool(memory: PersonaMemory) {
   return tool(
@@ -274,8 +274,8 @@ function rememberTool(memory: PersonaMemory) {
 
 /**
  * 覚えた1行を忘れるツール。一致する行が無かった回も "ok" を返す（消せたかどうかを
- * モデルへ戻さない。docs/design.md 7.1）。どの行と突き合わせるかは
- * src/server/chat/adapter/persona-memory.ts の仕事。
+ * モデルへ戻さない。`docs/design.md`「画面から作るときの置き場と受け取り方」）。どの行と突き合わせるかは
+ * 人格に書き足すアダプタの仕事。
  */
 function forgetTool(memory: PersonaMemory) {
   return tool(
@@ -292,9 +292,9 @@ function forgetTool(memory: PersonaMemory) {
 /**
  * 索引を引いて古い雑談の候補を見るツール。戻り値が "ok" でないツールの1つで、返すのは
  * その会話自身の過去の目次（`id`・見出し・要旨）だけ（tsukumo の状態も画面の事情も載せない。
- * docs/chat-mode.md 4.9「古い雑談は索引を引いて思い出す」）。文面に組み立てるのは core
- * （src/server/chat/core/chat-memory-prompt.ts）で、採点・1ターンの回数の縛りは
- * src/server/chat/core/chat-recall.ts。
+ * `docs/chat-mode.md`「古い雑談は索引を引いて思い出す」）。文面に組み立てるのは core
+ * （`chatRecallListText`）で、採点・1ターンの回数の縛りは
+ * `createChatRecall`。
  */
 function recallTool(chatRecall: ChatRecall) {
   return tool(
@@ -311,8 +311,8 @@ function recallTool(chatRecall: ChatRecall) {
 
 /**
  * `recall` で見た候補を1件開くツール。戻り値が "ok" でないツールの1つで、返すのは
- * 開いた1件の範囲の逐語だけ。文面に組み立てるのは core（chat-memory-prompt.ts）で、
- * 1ターンの回数の縛りは chat-recall.ts。
+ * 開いた1件の範囲の逐語だけ。文面に組み立てるのは core（`chatRecallEpisodeText`）で、
+ * 1ターンの回数の縛りは `createChatRecall`。
  */
 function recallEpisodeTool(chatRecall: ChatRecall) {
   return tool(
@@ -339,7 +339,7 @@ function speakExpressionEnum(
 
 /**
  * 表情名とラベルの対応。モデルが名前だけで意味を取れるように説明へ入れる。
- * ラベルはキャラクターパックの定義から来る（コードに持たない。docs/design.md 7章）。
+ * ラベルはキャラクターパックの定義から来る（コードに持たない。`docs/design.md`「キャラクターパック」）。
  */
 function expressionGuide(expressions: readonly ExpressionChoice[]): string {
   const guide = speakExpressionEnum(expressions)

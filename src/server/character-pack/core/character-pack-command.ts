@@ -1,7 +1,7 @@
-// `character-pack` が受けるコマンドの表（`docs/design.md` 2章「コマンドの受け手と手続きの置き方」）。
-// 見た目の編集10種と、作る・消すの2種。手続き（`character-pack/adapter/character-pack-procedure.ts`）が
+// `character-pack` が受けるコマンドの表（`docs/design.md`「コマンドの受け手と手続きの置き方」）。
+// 見た目の編集10種と、作る・消すの2種。手続き（`characterPackProcedure`）が
 // ここの行へ委ねる。どれも駆動には渡らず、セッションも起こし直さない
-// （書いて、`character-changed` を流し直すだけ。`docs/design.md` 7.1）。
+// （書いて、`character-changed` を流し直すだけ。`docs/design.md`「画面から作るときの置き場と受け取り方」）。
 
 import {
   type CharacterCreate,
@@ -17,7 +17,7 @@ export type CharacterPackCommandPorts = {
   /**
    * `edit.pack` で指されたパック（使用中に限らない）の立ち絵・差し色・背景・顔・プロフィールを変え、
    * 画面へ流す `character-changed` を返す（書き込み先と受け付けない条件は
-   * `src/server/character-pack/adapter/character-edit.ts`）。受け付けられなかったときは undefined。
+   * `editCharacterPack`）。受け付けられなかったときは undefined。
    *
    * `speak` が受け付ける表情の一覧は起こしたときのままなので、立ち絵を足した表情を
    * キャラクター自身が選べるのは次の起動から。

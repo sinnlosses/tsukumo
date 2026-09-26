@@ -1,16 +1,17 @@
 // キャラクターパックを読む。character.json とその立ち絵ファイルの実際の I/O はここに閉じる
-// （「外に触るのはここだけ」の側。定義の解釈は src/shared/character-definition.ts の仕事。
-// docs/design.md 5章「character-pack.ts」）。
+// （「外に触るのはここだけ」の側。定義の解釈は `parseCharacterDefinition` の仕事。
+// `docs/design.md`「character-pack.ts」）。
 //
 // fs にほとんど触らない関数（`characterChangedEvent`）もここに置く。
 // 層は「外の世界に触るか」で決め、ファイルの中身の純度では割らない（理由は
 // docs/architecture.md「新しいコードを置く場所」）。`systemPrompt` の append の組み立ては
-// `src/server/system-prompt/core/system-prompt.ts` へ移してある——`core` 側の規約と雑談の記憶を並べる判断が
+// `takeSystemPromptAppend` へ移してある——`core` 側の規約と雑談の記憶を並べる判断が
 // 要るようになり、概念で切るほうに当たったため（同じ段落）。ここが持つのは `persona` の文字列を
 // 読むところまで。
 //
 // 素材の中身（SVG・画像のバイト列）は SessionState にも character-changed イベントにも乗せない。
-// ブラウザは `/character/<pack>/<file>` から取りに行く（docs/design.md 4.1・5章・7章）。
+// ブラウザは `/character/<pack>/<file>` から取りに行く（`docs/design.md`「SessionEvent」・
+// 「character-pack.ts」・「キャラクターパック」）。
 
 import { readdirSync, readFileSync, statSync } from "node:fs"
 import { basename, join } from "node:path"
@@ -34,7 +35,7 @@ import { type SessionEvent } from "../../../shared/session-event.ts"
 import { bundledFilePath } from "../../adapter/bundled-path.ts"
 import { tsukumoHomeDir } from "../../adapter/tsukumo-home.ts"
 
-/** 定義ファイルの名前。画面から書き込む側（`src/server/character-pack/adapter/character-edit.ts`）も同じ名前を使う。 */
+/** 定義ファイルの名前。画面から書き込む側（`editCharacterPack`）も同じ名前を使う。 */
 export const CHARACTER_DEFINITION_FILE_NAME = "character.json"
 
 /** 人格のファイル名。パックの中に無くてもよい（append が空になるだけ）。 */
@@ -45,7 +46,7 @@ const CHARACTER_DIR_NAME = "characters"
 
 /**
  * 起動先（cwd）で見るパックの置き場。利用者が自分で用意した素材の置き場で、
- * `.gitignore` 済み（docs/requirements.md 4.4）。同梱側と違い、ここは
+ * `.gitignore` 済み（`docs/requirements.md`「キャラクター定義」）。同梱側と違い、ここは
  * `characters/local` そのものが1つのパック。
  */
 const LOCAL_PACK_NAME = "local"
@@ -59,7 +60,7 @@ const LEADING_PACK_NAME = "tsukumo"
 
 /**
  * キャラクター定義ディレクトリの既定値。自作で権利がクリーンな tsukumo-spirit を使う
- * （docs/requirements.md 4.4）。tsukumo 自身の場所からの相対で読む（bundledFilePath）。
+ * （`docs/requirements.md`「キャラクター定義」）。tsukumo 自身の場所からの相対で読む（bundledFilePath）。
  * develop/tasks.json とは違い、こちらは同梱物なので cwd には依存させない。
  */
 export const DEFAULT_CHARACTER_DIR_RELATIVE_PATH: readonly string[] = [
@@ -69,19 +70,19 @@ export const DEFAULT_CHARACTER_DIR_RELATIVE_PATH: readonly string[] = [
 
 /** キャラクターパック1つ分。定義・人格が無い・壊れているときはそれぞれ undefined。 */
 export type CharacterPack = {
-  /** ディレクトリ名（`session.switchCharacter` の鍵。`docs/design.md` 7章）。 */
+  /** ディレクトリ名（`session.switchCharacter` の鍵。`docs/design.md`「キャラクターパック」）。 */
   readonly name: string
   readonly dir: string
   readonly definition: CharacterDefinition | undefined
   /**
    * 人格（`persona.md` の全文）。無いパックでも起動する（`systemPrompt` の append が
-   * tsukumo 側の規約（セリフの間合い・レポートの記法）だけになる。docs/design.md 7章）。
+   * tsukumo 側の規約（セリフの間合い・レポートの記法）だけになる。`docs/design.md`「キャラクターパック」）。
    */
   readonly persona: string | undefined
   /**
    * 素材の版（定義と素材のファイルの更新時刻のうち、いちばん新しいもの）。
    * 素材の URL の `?v=` に混ぜて、差し替えた素材をブラウザに取り直させるためだけに
-   * ある（`src/shared/character-asset.ts` の `characterAssetPath`）。読めなければ undefined。
+   * ある（`characterAssetPath`）。読めなければ undefined。
    */
   readonly revision: string | undefined
 }
@@ -103,7 +104,7 @@ export function readCharacterPack(dir: string): CharacterPack {
   }
 }
 
-/** パックの探し先3箇所（`docs/design.md` 7.1）。`local` の1つ固定は起動先の側だけ。 */
+/** パックの探し先3箇所（`docs/design.md`「画面から作るときの置き場と受け取り方」）。`local` の1つ固定は起動先の側だけ。 */
 export type CharacterPackRoots = {
   /** 同梱の `characters/`（tsukumo 自身の場所からの相対）。 */
   readonly bundled: string
@@ -117,14 +118,14 @@ export function defaultCharacterPackRoots(): CharacterPackRoots {
 
 /**
  * 画面から変えたパックの書き込み先の親（`~/.tsukumo/characters`）。書き込んでよいのは
- * この下だけ（`docs/design.md` 7.1）。
+ * この下だけ（`docs/design.md`「画面から作るときの置き場と受け取り方」）。
  */
 export function homeCharacterDir(): string {
   return join(tsukumoHomeDir(), CHARACTER_DIR_NAME)
 }
 
 /**
- * このパックを画面から変えてよいか（`docs/design.md` 7.1）。書き込み先はホームの1箇所だけな
+ * このパックを画面から変えてよいか（`docs/design.md`「画面から作るときの置き場と受け取り方」）。書き込み先はホームの1箇所だけな
  * ので、探索の順でホームに勝つもの — つまり起動先の `characters/local` と同じ名前のパック
  * だけは false にする（書いても次の起動では起動先のほうが読まれて、変更が消えたように見える）。
  */
@@ -133,7 +134,7 @@ export function isEditableCharacterPack(pack: CharacterPack, cwd: string): boole
 }
 
 /**
- * このパックを画面から消すと何が起きるか（`docs/design.md` 7.1「消すときの細部」）。消せるのは
+ * このパックを画面から消すと何が起きるか（`docs/design.md`「消すときの細部」）。消せるのは
  * 一覧に勝ち残ったパックがホームの版そのもの（`<roots.home>/<name>`）のときだけで、同梱にも
  * 同じ名前があれば、消したあとは同梱の版が一覧に戻る（`"revert-to-bundled"`）。
  *
@@ -154,13 +155,13 @@ export function characterPackRemoval(
 }
 
 /**
- * 切り替えられるパックを列挙する（docs/design.md 7章・7.1）。探し先は3箇所:
+ * 切り替えられるパックを列挙する（`docs/design.md`「キャラクターパック」「画面から作るときの置き場と受け取り方」）。探し先は3箇所:
  *
  * 1. tsukumo 同梱の `characters/` の各ディレクトリ（`character.json` があるものだけ）
  * 2. `~/.tsukumo/characters/` の各ディレクトリ（画面から作った・変えたパック）
  * 3. 起動先の `characters/local/`（利用者が自分で用意した素材。ここは1つ固定）
  *
- * 同名は後ろが勝つ（ホームは同梱を上書きし、起動先はそのホームにも勝つ。7.1）。
+ * 同名は後ろが勝つ（ホームは同梱を上書きし、起動先はそのホームにも勝つ。`docs/design.md`「画面から作るときの置き場と受け取り方」）。
  * 並びはこの3箇所の順（各置き場の中は名前順）で、`tsukumo` だけは先頭に出す。
  * 読めないディレクトリは黙って飛ばす（一覧が短くなるだけで、起動は止めない。
  * docs/coding-standards.md「エラーハンドリング」）。
@@ -179,7 +180,7 @@ export function listCharacterPacks(
     ...(hasDefinition(local) ? [local] : []),
   ]
 
-  // 同名は後勝ち。同梱 → ホーム → 起動先の順に並べてあるので、これがそのまま 7.1 の優先順になる。
+  // 同名は後勝ち。同梱 → ホーム → 起動先の順に並べてあるので、これがそのまま`docs/design.md`「画面から作るときの置き場と受け取り方」の優先順になる。
   const packs = dirs.map(readCharacterPack)
   const unique = [...new Map(packs.map((pack) => [pack.name, pack] as const)).values()]
   return [
@@ -190,7 +191,7 @@ export function listCharacterPacks(
 
 /**
  * 起こしたとき・起こし直したとき・画面からパックを変えたり作ったりしたときに流す
- * `character-changed` イベント（docs/design.md 4.1・7章）。いま出しているパックの姿と、
+ * `character-changed` イベント（`docs/design.md`「SessionEvent」「キャラクターパック」）。いま出しているパックの姿と、
  * 全パックぶんの一覧（{@link CharacterPackEntry}）を一緒に組む。中身は URL と選択肢だけで、
  * 素材そのものは含まない。
  *
@@ -235,7 +236,7 @@ export function readCharacterAsset(
 
 /**
  * 一覧（`current` で置き換えたもの。{@link withCurrentPack}）から名前でパックを1つ引く（無ければ
- * undefined）。素材を配る側と画面から変える側（`src/server/character-pack/adapter/character-edit.ts`）が同じ
+ * undefined）。素材を配る側と画面から変える側（`editCharacterPack`）が同じ
  * 規則で引くので、一覧に載せた名前は配れるし変えられる。名前はパスに使わない。
  */
 export function findCharacterPack(
@@ -250,7 +251,7 @@ export function findCharacterPack(
  * パック1つの中で、配ってよい1件を読む。character.json の `portraits` `mini` `face`
  * `background` に載っているファイル名だけを許す（vendor の allowlist と同じ考え方。パスから組み立てないので、
  * `..` を含む要求や定義に無い名前は自然に undefined になる）。呼び出し側
- * （src/server/view-server/adapter/server.ts）はこの結果をそのまま配るか、undefined なら404にする。
+ * （呼び出し側）はこの結果をそのまま配るか、undefined なら404にする。
  */
 export function readCharacterPackFile(
   pack: CharacterPack,
@@ -363,7 +364,7 @@ function listPackDirs(root: string): readonly string[] {
     .filter(hasDefinition)
 }
 
-/** 起動先のパックの置き場（`<cwd>/characters/local`）。ここだけは1つ固定（7.1）。 */
+/** 起動先のパックの置き場（`<cwd>/characters/local`）。ここだけは1つ固定（`docs/design.md`「画面から作るときの置き場と受け取り方」）。 */
 function localPackDir(cwd: string): string {
   return join(cwd, CHARACTER_DIR_NAME, LOCAL_PACK_NAME)
 }

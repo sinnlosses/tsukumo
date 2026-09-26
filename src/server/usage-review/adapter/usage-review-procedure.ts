@@ -1,6 +1,6 @@
 // 使い方の見直しのコマンドの手続き（`docs/glossary.md`「手続き」）。形は
-// `src/shared/contract/usage-review.ts`、束ねるのは配線の `src/router.ts`。ここは表の行
-// （`usage-review/core/usage-review-command.ts`）へ委ね、受け付けなかったことを契約のエラーに訳すだけ。
+// `usageReviewContract`、束ねるのは配線。ここは表の行
+// （`usageReviewCommands`）へ委ね、受け付けなかったことを契約のエラーに訳すだけ。
 
 import { implement, type ORPCErrorConstructorMap } from "@orpc/server"
 

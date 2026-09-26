@@ -1,9 +1,9 @@
-// 手続きの照合と断る条件（`docs/design.md` 2章「コマンドの受け手と手続きの置き方」の表の「照合と
+// 手続きの照合と断る条件（`docs/design.md`「コマンドの受け手と手続きの置き方」の表の「照合と
 // 断る条件のミドルウェア」）。起動トークンと `Origin` を全部の手続きの前に1つのミドルウェアで
 // 見て（`/rpc` と `/ws` の両方）、コマンドはさらに契約の `meta` の断る条件を見る。束ねるのは
-// 配線の `src/router.ts` で、手続きの側は照合も断る条件も知らない。
+// 配線で、手続きの側は照合も断る条件も知らない。
 //
-// 規則は `/ws` の upgrade（`session-socket.ts` の `isAllowedUpgrade`）と同じ: トークンが合うこと、
+// 規則は `/ws` の upgrade（`isAllowedUpgrade`）と同じ: トークンが合うこと、
 // `Origin` があれば自分のオリジンと一致すること（無ければ通す。ブラウザ経由でない呼び出し）。
 // 経路名は RPCHandler が照らし合わせるので、ここでは見ない。
 
@@ -26,7 +26,7 @@ export type RpcContext = {
   readonly presentedToken: string | undefined
   /** 要求の `Origin` ヘッダ。無ければ undefined。 */
   readonly requestOrigin: string | undefined
-  /** 起動トークン（`server.ts` の `createStartupToken`）。 */
+  /** 起動トークン（`createStartupToken`）。 */
   readonly startupToken: string
   /** 自分のオリジン（`http://127.0.0.1:<port>`）。 */
   readonly serverOrigin: string
@@ -34,7 +34,7 @@ export type RpcContext = {
 
 /**
  * コマンドの手続き1回ぶんの材料。照合の材料に、いまのセッションの口を足したもの（`/ws` の
- * 接続ごとに `session-socket.ts` が作る）。`session` の手続きはこれを受け手へ渡し、葉の機能の
+ * 接続ごとに、接続を扱うアダプタが作る）。`session` の手続きはこれを受け手へ渡し、葉の機能の
  * 手続きはそのうち `emit` だけを見る。
  */
 export type CommandRpcContext = RpcContext & { readonly session: CommandSession }
@@ -45,7 +45,7 @@ export type CommandRpcContext = RpcContext & { readonly session: CommandSession 
  */
 export type SocketRpcContext = CommandRpcContext & { readonly subscribe: SubscribeFrames }
 
-/** 要求1件から照合の材料を写す（`server.ts` が `/rpc` の要求ごとに、`session-socket.ts` が接続ごとに呼ぶ）。 */
+/** 要求1件から照合の材料を写す（HTTP を起こすアダプタが `/rpc` の要求ごとに、接続を扱うアダプタが接続ごとに呼ぶ）。 */
 export function rpcContextOf(
   request: IncomingMessage,
   expected: { readonly startupToken: string; readonly serverOrigin: string },
@@ -78,7 +78,7 @@ function isAllowedRpcRequest(context: RpcContext): boolean {
 }
 
 /**
- * 断る条件のミドルウェア。契約の `meta`（`src/shared/command.ts` の `CommandMeta`）を見て、
+ * 断る条件のミドルウェア。契約の `meta`（`CommandMeta`）を見て、
  * 当たれば定型文の理由を添えた `REFUSED` を返し、手続きの受け手は呼ばれない。見る順は
  * 「雑談の外か」→「ターン中か」——仕事のときに押された `nudge` にターン中の理由を返さないため。
  *

@@ -1,7 +1,7 @@
 // コンテキストの内訳の手続き（`docs/glossary.md`「手続き」）。形は
-// `src/shared/contract/context-usage.ts`、束ねるのは配線の `src/router.ts`。照合は束ねる側の
+// `contextUsageContract`、束ねるのは配線。照合は束ねる側の
 // ミドルウェアが済ませている。配る中身に会話の文面は入らない — メッセージは分類1行の数として
-// だけ出る（`src/shared/context-usage.ts`）。
+// だけ出る（`ContextUsageReport`）。
 
 import { implement } from "@orpc/server"
 

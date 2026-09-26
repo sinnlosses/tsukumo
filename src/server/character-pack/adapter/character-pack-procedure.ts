@@ -1,6 +1,6 @@
 // キャラクターパックのコマンドの手続き（`docs/glossary.md`「手続き」）。形は
-// `src/shared/contract/character-pack.ts`、束ねるのは配線の `src/router.ts`。ここは表の行
-// （`character-pack/core/character-pack-command.ts`）へ委ね、受け付けなかったことを契約のエラーに
+// `characterPackContract`、束ねるのは配線。ここは表の行
+// （`characterPackCommands`）へ委ね、受け付けなかったことを契約のエラーに
 // 訳すだけ。
 
 import { implement, type ORPCErrorConstructorMap } from "@orpc/server"

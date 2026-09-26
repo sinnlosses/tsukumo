@@ -1,12 +1,12 @@
 // コンテキストの内訳の記録（何が文脈を占めていたかを残す）。ファイルに触るのはここだけ
-// （原則3。1ファイル = 1つの境界）。置き場は `~/.tsukumo/context-usage/<YYYY-MM-DD>.jsonl` で、
-// 日付だけで分けるのも `cwd` に依存させないのも `token-usage-log.ts` と同じ。
+// （`docs/architecture.md`「1ファイル = 1つの境界」）。置き場は `~/.tsukumo/context-usage/<YYYY-MM-DD>.jsonl` で、
+// 日付だけで分けるのも `cwd` に依存させないのもトークン使用量の記録と同じ。
 //
 // ターンごとの記録（`token-usage/`）とは別のディレクトリに積む。 1行 = 1セッションで
 // 数がまるで違うのと、「書いてよいもの」の線が種類ごとに違う（こちらはメモリファイルの
 // パス・スキル名・MCP ツール名まで持つ）のが理由。線の引き方は
-// `src/shared/context-usage-record.ts` が正典。会話の文面・ツールの引数と結果は、渡される
-// {@link ContextUsageEntry} にそもそも口が無いので通らない（`docs/coding-standards.md`
+// `ContextUsageRecord` が正典。会話の文面・ツールの引数と結果は、渡される
+// `ContextUsageEntry` にそもそも口が無いので通らない（`docs/coding-standards.md`
 // 「会話内容の扱い」）。
 //
 // 読み口を持たない。 積んだ行を読むのは tsukumo の外（過去にさかのぼる分析）なので、
@@ -48,7 +48,7 @@ export function createContextUsageLog(root: string = contextUsageDir()): Context
   }
 }
 
-/** 1セッションぶんの記録を、書き出す行（`src/shared/context-usage-record.ts`）へ変換する。 */
+/** 1セッションぶんの記録を、書き出す行（`ContextUsageRecord`）へ変換する。 */
 function toRecord(entry: ContextUsageEntry): ContextUsageRecord {
   return {
     v: CONTEXT_USAGE_FORMAT_VERSION,

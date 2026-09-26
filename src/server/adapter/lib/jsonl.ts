@@ -1,8 +1,7 @@
-// `~/.tsukumo/` に積む日付ごとの JSONL（token-usage-log.ts・chat-archive.ts・context-usage-log.ts）
-// が同じ手で書き写していた読み書きをここに1つにする。境界（どこに・何のために書くか）は
-// 名乗らず、JSONL という形式の扱い方だけを知っている（`docs/design.md` 2章
-// 「`lib/` と `utils/` に置く基準」——「adapter/lib/ はその下の段で、境界を名乗らず、技術の
-// 扱い方だけを知っている道具（『JSONL を1行ずつ読む』）が入る」の例そのもの）。
+// `~/.tsukumo/` に積む日付ごとの JSONL を各所が同じ手で書き写していた読み書きをここに1つにする。
+// 境界（どこに・何のために書くか）は名乗らず、JSONL という形式の扱い方だけを知っている
+// （`docs/design.md`「`lib/` と `utils/` に置く基準」——「adapter/lib/ はその下の段で、境界を
+// 名乗らず、技術の扱い方だけを知っている道具（『JSONL を1行ずつ読む』）が入る」の例そのもの）。
 //
 // スキーマの検証・索引ファイルの扱い・後ろから読む読み戻しは呼び出し元が持つ。 ここが持つのは
 // 「1行を追記する」「日付のファイル名を並べる」「行を JSON として読む」だけで、行の形が正しいかは
@@ -41,8 +40,8 @@ export function readJsonLines(path: string): readonly unknown[] {
 
 /**
  * 日付のファイル名（`YYYY-MM-DD.jsonl`）だけを古い→新しい順に並べる（読めないディレクトリは空）。
- * 範囲で絞る・新しい順にする判断は呼び出し元が行う（`token-usage-log.ts` は期間で絞り、
- * `chat-archive.ts` は絞らずに新しい順へ並べ替える。並べ方の元は同じ1つ）。
+ * 範囲で絞る・新しい順にする判断は呼び出し元が行う（期間で絞る側と絞らずに新しい順へ
+ * 並べ替える側がいるが、並べ方の元は同じ1つ）。
  */
 export function dateFileNames(dir: string): readonly string[] {
   try {

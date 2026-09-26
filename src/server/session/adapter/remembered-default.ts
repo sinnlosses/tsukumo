@@ -1,16 +1,16 @@
 // 次に起こすときの初期値をホームの状態ファイル（`~/.tsukumo/state.json`）に覚える。
 // 覚えるのは3つ — 直前まで出していたキャラクターパックの名前、新しいセッションの既定
-// （モデル・effort・許可モード）、歯車の「訪問」のオン・オフ（`docs/screen-design.md` 13.6 の表）。
+// （モデル・effort・許可モード）、歯車の「訪問」のオン・オフ（`docs/screen-design.md`「設定の置き場所」の表）。
 //
-// 状態ファイルに触るのはここだけ（`docs/design.md` 5章）。3つを1ファイルに置いてある
+// 状態ファイルに触るのはここだけ（`docs/design.md`「core と adapter」）。3つを1ファイルに置いてある
 // のは、書き込みがファイル丸ごとの置き換えだから — 別々のモジュールから書くと、
 // 後から書いたほうが相手の欄を消す。だから読むのも書くのもこの1つの境界に閉じ、
-// 書くときは残りの欄を読み直してから載せ替える（原則3「1ファイル = 1つの境界」）。
+// 書くときは残りの欄を読み直してから載せ替える（`docs/architecture.md`「1ファイル = 1つの境界」）。
 //
 // 選択そのものはセッション限り（起こし直すと初期値に戻る／帯で変えた値はそのセッション
 // 限り）だが、次に起こすときの初期値としてはここに残る。訪問のオン・オフだけは、次の
 // 起動だけでなくいま動いているセッションにも即座に効く（`visit.setEnabled`。
-// `src/server/session/core/session-manager.ts`）——覚え方（この1ファイル）は他の2つと同じで、
+// セッションの管理側）——覚え方（この1ファイル）は他の2つと同じで、
 // 効き方だけが違う。
 //
 // 保存するのはパックの名前・既定・訪問のオン・オフの3語だけ。会話に関わる値をここに
@@ -44,7 +44,7 @@ const sessionDefaultStateSchema = z.object({
     model: z.enum(MODEL_ALIASES),
     // effort だけ optional（`model` / `permissionMode` と違う扱い）。effort を足す前に
     // 覚えた古い `state.json` にはこの欄が無いので、無くても `sessionDefault` 全体を読めた
-    // ことにし、欄の値だけ {@link readState} の出口で同梱の既定へ畳む（他の2つは今までどおり
+    // ことにし、欄の値だけ `readState` の出口で同梱の既定へ畳む（他の2つは今までどおり
     // 1組——壊れている・知らない値なら3つとも同梱の既定へ倒れる）。
     effort: z.enum(EFFORT_LEVELS).optional(),
     permissionMode: z.enum(SESSION_DEFAULT_PERMISSION_MODES),
@@ -79,7 +79,7 @@ export function readRememberedCharacter(path: string = defaultStatePath()): stri
 /**
  * 覚えた「新しいセッションの既定」を読む。ファイルが無い・壊れている・知らない値のときは
  * 同梱の既定（`BUILTIN_SESSION_DEFAULT`）——起動が前提不足で止まらないように、ここで
- * 「必ず値がある」型へ畳む（`docs/requirements.md` 4.1）。
+ * 「必ず値がある」型へ畳む（`docs/requirements.md`「Claude Code の駆動」）。
  */
 export function readRememberedSessionDefault(path: string = defaultStatePath()): SessionDefault {
   return readState(path).sessionDefault ?? BUILTIN_SESSION_DEFAULT
@@ -143,7 +143,7 @@ function readState(path: string): RememberedState {
       ? {
           model: sessionDefault.data.sessionDefault.model,
           // effort の無い古い `state.json` は同梱の既定へ畳む（model / permissionMode は
-          // 読めた値をそのまま使う。冒頭の {@link sessionDefaultStateSchema} の注記）。
+          // 読めた値をそのまま使う。冒頭の `sessionDefaultStateSchema` の注記）。
           effort: sessionDefault.data.sessionDefault.effort ?? BUILTIN_SESSION_DEFAULT.effort,
           permissionMode: sessionDefault.data.sessionDefault.permissionMode,
         }
@@ -160,7 +160,7 @@ function writeState(state: RememberedState, path: string): void {
   writeJsonFile(path, state)
 }
 
-/** 既定の保存先。ホームの場所は `src/server/adapter/tsukumo-home.ts` が持つ（呼んだときだけ読む）。 */
+/** 既定の保存先。ホームの場所は `tsukumoHomeDir` が持つ（呼んだときだけ読む）。 */
 function defaultStatePath(): string {
   return join(tsukumoHomeDir(), STATE_FILE_NAME)
 }

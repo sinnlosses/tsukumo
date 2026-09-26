@@ -1,7 +1,7 @@
-// ホスト依存の操作（src/server/host/core/host.ts）を Orca の CLI で実装するアダプタ。
+// ホスト依存の操作（`Host`）を Orca の CLI で実装するアダプタ。
 //
-// `orca` コマンドを呼ぶのはこのファイルだけ（docs/architecture.md 原則3）。
-// この境界は test/architecture.test.ts が落とす。
+// `orca` コマンドを呼ぶのはこのファイルだけ（`docs/architecture.md`「1ファイル = 1つの境界」）。
+// この境界は検査が落とす。
 // 実際に Orca が動いていないと showView などの挙動そのものは確かめられないので、
 // ここは（境界のテストを除き）自動テストの対象にしない。
 //
@@ -15,7 +15,7 @@
 //              合う。`orca agent-context --json` で実測）
 //
 // URL のクエリを見比べないのは、起動ごとにトークンが変わるため（`?t=<起動トークン>`。
-// docs/design.md 9章）。同じ場所を指すタブは貼り直して1つに保つ。
+// `docs/design.md`「会話内容と安全」）。同じ場所を指すタブは貼り直して1つに保つ。
 // `goto` が `ok: false` を返しても `tab create` に倒さない（読み込みに失敗しても遷移自体は
 // 起きており、倒すとタブが増える）。開き直すのは一覧にそのタブが無かったときだけ。
 
@@ -32,7 +32,7 @@ export function createOrcaHost(): Host {
   return { showView: (url) => showView(url), openFile: (path) => openFile(path) }
 }
 
-/** `orca tab list` に出てくるタブ1つ分。`Host` の外の輸出（`scripts/open-room-grid.ts` が使う）。 */
+/** `orca tab list` に出てくるタブ1つ分。`Host` の外の輸出。 */
 export type OrcaTab = {
   readonly pageId: string
   readonly url: string

@@ -1,7 +1,7 @@
-// コマンドの受け手に見せるセッションの口（`docs/design.md` 2章「コマンドの受け手と手続きの置き方」）。
-// `session-manager.ts` が作り、`/ws` の手続きの context に載って `session` の行
-// （`session-command.ts`）へ渡る。断る条件は契約の `meta` にあり、見るのは `rpc-guard.ts`で、
-// ここは口の形と `session` の行の型、行を呼ぶ {@link receiveSessionCommand} だけを持つ。
+// コマンドの受け手に見せるセッションの口（`docs/design.md`「コマンドの受け手と手続きの置き方」）。
+// セッションの管理側が作り、`/ws` の手続きの context に載って `session` の行
+// （`sessionCommands`）へ渡る。断る条件は契約の `meta` にあり、見るのは `rpcGuard`で、
+// ここは口の形と `session` の行の型、行を呼ぶ `receiveSessionCommand` だけを持つ。
 
 import { type SessionEvent } from "../../../shared/session-event.ts"
 import { type SessionState } from "../../../shared/session-state.ts"
@@ -25,7 +25,7 @@ export type CommandGeneration = {
 
 /**
  * 受け手が使うセッションの口。この4つだけで、代・束・購読者は見せない。葉の機能の手続きは
- * このうち `generation` の `emit` だけを型にした `CommandEventSink`（`core/command-receiver.ts`）で
+ * このうち `generation` の `emit` だけを型にした `CommandEventSink`で
  * 同じものを受ける。
  */
 export type CommandSession = {

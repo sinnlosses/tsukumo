@@ -1,6 +1,6 @@
 // tsukumo が自分で持ち歩くもの（既定の立ち絵、`node_modules` の外部ライブラリなど）の置き場所を
 // 解く。cwd には依存しない。 どのプロジェクトのディレクトリで起こしても、同梱物は
-// tsukumo 自身が置かれている場所から読む（docs/requirements.md 4.6）。
+// tsukumo 自身が置かれている場所から読む（`docs/requirements.md`「起動と設定」）。
 
 import { join, resolve } from "node:path"
 import { fileURLToPath } from "node:url"

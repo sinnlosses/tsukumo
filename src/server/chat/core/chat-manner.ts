@@ -1,7 +1,7 @@
 // tsukumo がセッションに足す「雑談の作法」の規約。雑談モードのときだけ
-// `systemPrompt` の append で渡す（`docs/chat-mode.md` 4.9）。
+// `systemPrompt` の append で渡す（`docs/chat-mode.md`「雑談モード」）。
 //
-// 仕事のときの2つ（{@link ../report/core/report-notation.ts} と {@link ../system-prompt/core/speech-cadence.ts}）と入れ替わる。
+// 仕事のときの2つ（`REPORT_NOTATION_PROMPT` と `SPEECH_CADENCE_PROMPT`）と入れ替わる。
 // 並べて渡さないのは、片方が「本文は中立・簡潔に」と言い、もう片方が「本文を書くな」と言う形に
 // なり、どちらが効くかが揺れるため。セリフの間合いも仕事向け（ツールの前後に1回）なので、
 // 往復そのものが会話になる雑談では意味をなさない。
@@ -10,22 +10,21 @@
 // 仕事のときの2つのような細かい条は置いていない。
 //
 // 雑談のターンは `speak` で終わる。ツール呼び出しで終えると本体が催促を差し込む件は、子プロセスに
-// 渡す環境変数で塞ぐ（`visible-output-nudge.ts`。`docs/chat-mode.md` 4.9）。文面で「完了」の1行を
-// 書かせる条は置かない（外した経緯は `docs/chat-mode.md` 4.9）。
+// 渡す環境変数で塞ぐ（`childProcessEnv`。`docs/chat-mode.md`「雑談モード」）。文面で「完了」の1行を
+// 書かせる条は置かない（外した経緯は `docs/chat-mode.md`「雑談モード」）。
 //
-// 「決める」内容の定数で、外の世界には触らない（原則2）。`query()` に渡すのは呼び出し側
-// （`src/session-start.ts`）。
+// 「決める」内容の定数で、外の世界には触らない（`docs/architecture.md`「core → adapter は禁止」）。`query()` に渡すのは配線。
 
 /**
  * 雑談モードの `systemPrompt` に足す文面。
  * `query()` の `systemPrompt: { type: "preset", preset: "claude_code", append }` に渡す。
  *
  * 口調・一人称はキャラクターパックの `persona.md` が持つ（ここには書かない。
- * `report-notation.ts` と同じ切り分け）。ここが決めるのはどこに何を出すかと、
+ * `REPORT_NOTATION_PROMPT` と同じ切り分け）。ここが決めるのはどこに何を出すかと、
  * 何を覚えてよいか・何を忘れてよいか・いつ古い雑談を引くか
  * （`remember` / `forget` / `recall` / `recall_episode` ツールを呼ぶ条件。
- * `docs/chat-mode.md` 4.9 の3条件と書かないものの一覧、消してよい3つの場合）だけ。書く場所・消す行の突き合わせ・上限は tsukumo 側が持つ
- * （`src/server/chat/adapter/persona-memory.ts` と `src/server/chat/adapter/chat-archive.ts`）。
+ * `docs/chat-mode.md`「雑談モード」の3条件と書かないものの一覧、消してよい3つの場合）だけ。書く場所・消す行の突き合わせ・上限は tsukumo 側が持つ
+ * （雑談の記憶の書き戻しと雑談の会話のアーカイブを扱うアダプタ）。
  */
 export const CHAT_MANNER_PROMPT = `## 雑談モード（tsukumo）
 

@@ -1,16 +1,16 @@
 // 押し出し（フレーム）の購読とコマンドの手続きが通る WebSocket の境界（`GET /ws?t=<起動トークン>`）。
-// ページと素材を配る HTTP は別の境界（`server.ts`。ここは `listen` 済みのサーバに upgrade の
+// ページと素材を配る HTTP は別の境界（HTTP を起こすアダプタ。ここは `listen` 済みのサーバに upgrade の
 // 受け口を足すだけで、自分では listen しない）。
 //
 // 1本の接続の上は、すべて oRPC の手続きの要求と応答（`RPCHandler`。束ねたルータは配線の
-// `src/router.ts` の `createSocketRouter`）。押し出しもブラウザが呼ぶ購読の手続き（`frame.subscribe`）
+// `createSocketRouter`）。押し出しもブラウザが呼ぶ購読の手続き（`frame.subscribe`）
 // の Event Iterator として流れ、購読の元（`subscribe`）は接続の context に載せる。
 //
 // `Bun.serve` の WebSocket には寄せない（`ws` パッケージ。docs/coding-standards.md
 // 「Bun固有APIに寄せない」）。
 //
-// 安全のための決まり（docs/design.md 9章）:
-//   - 起動トークン（`server.ts` の `createStartupToken`。起動ごとの乱数で、ディスクに
+// 安全のための決まり（`docs/design.md`「会話内容と安全」）:
+//   - 起動トークン（`createStartupToken`。起動ごとの乱数で、ディスクに
 //     書かない）が合わないと upgrade をしない
 //   - `Origin` があれば自分のオリジンと一致すること（無ければ通す）
 //   - 断るときの理由は定型文だけ（会話の内容を混ぜない）。読めないメッセージは中身をどこにも
@@ -32,22 +32,22 @@ import { rpcContextOf, type SocketRpcContext } from "./rpc-guard.ts"
 /**
  * 受け取るメッセージ1件の上限（バイト）。1件の依頼に添えられる画像（原寸 5 MiB × 2 枚）を
  * data URL で運べる大きさにしてある（内訳: 原寸2枚の base64 ≒ 13.33 MiB ＋ 控え2枚
- * ≒ 0.34 MiB ＋ 文面 20,000 文字で約 13.7 MiB。`docs/requirements.md` 4.10 の表）。
+ * ≒ 0.34 MiB ＋ 文面 20,000 文字で約 13.7 MiB。`docs/requirements.md`「画像の添付」の表）。
  *
  * 依頼の文面の上限はこれとは別に効いている（zod の `MAX_PROMPT_TEXT_LENGTH`。
- * `src/shared/contract/session.ts`）ので、ここを上げても送れる文面は長くならない。
+ * `MAX_PROMPT_TEXT_LENGTH`）ので、ここを上げても送れる文面は長くならない。
  */
 const MAX_MESSAGE_BYTES = 16 * 1024 * 1024
 
 export type SessionSocketOptions = {
-  /** listen 済みの HTTP サーバ（`server.ts` の `startViewServer` が立てたもの）。 */
+  /** listen 済みの HTTP サーバ（`startViewServer` が立てたもの）。 */
   readonly httpServer: Server
   readonly token: string
   /** 自分のオリジン（`http://127.0.0.1:<port>`）。`Origin` ヘッダの照合に使う。 */
   readonly origin: string
   /** 押し出しの購読の元（`session-manager` の `subscribe`）。手続き `frame.subscribe` が読む。 */
   readonly subscribe: SubscribeFrames
-  /** `/ws` の手続きを束ねたルータ（配線の `src/router.ts` の `createSocketRouter`）。 */
+  /** `/ws` の手続きを束ねたルータ（配線の `createSocketRouter`）。 */
   readonly socketRouter: SocketRouter
   /** 手続きの context に載せるセッションの口（`session-manager` の `commandSession`）。 */
   readonly commandSession: CommandSession
@@ -88,7 +88,7 @@ export function attachSessionSocket(options: SessionSocketOptions): SessionSocke
   options.httpServer.on("upgrade", onUpgrade)
 
   sockets.on("connection", (connection, request: IncomingMessage) => {
-    // 照合の材料は upgrade の要求から写す（手続きの前のミドルウェア `rpc-guard.ts` がもう一度見る）。
+    // 照合の材料は upgrade の要求から写す（手続きの前のミドルウェア `rpcGuard` がもう一度見る）。
     const context: SocketRpcContext = {
       ...rpcContextOf(request, { startupToken: options.token, serverOrigin: options.origin }),
       session: options.commandSession,
@@ -118,7 +118,7 @@ export function attachSessionSocket(options: SessionSocketOptions): SessionSocke
 }
 
 /**
- * upgrade を通してよいか。経路・起動トークン・`Origin` の3つを見る（docs/design.md 9章）。
+ * upgrade を通してよいか。経路・起動トークン・`Origin` の3つを見る（`docs/design.md`「会話内容と安全」）。
  * `Origin` が無いとき（ブラウザ経由でない呼び出し）を通すのは、旧の POST と同じ規則。
  */
 function isAllowedUpgrade(request: IncomingMessage, options: SessionSocketOptions): boolean {

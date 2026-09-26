@@ -1,10 +1,10 @@
-// 定着を1回走らせて書く口（`docs/design.md` 7章「定着はどこで走るか」、`docs/chat-mode.md` 4.9
+// 定着を1回走らせて書く口（`docs/design.md`「定着はどこで走るか」、`docs/chat-mode.md`
 // 「窓から溢れた会話は定着で畳む」）。未定着の行を数え、契機に届いていれば使い捨ての `query()`
-// （`src/server/chat/adapter/sdk-chat-consolidation.ts`）に畳ませ、検査を通ったものを
-// エピソード → あらすじの順で書く。形は `visit/core/visit-script-writer.ts` に揃える。
+// （`queryChatConsolidation`）に畳ませ、検査を通ったものを
+// エピソード → あらすじの順で書く。形は `createVisitScriptWriter` に揃える。
 //
 // いつ呼ぶか（雑談のターンの終わり）と、同時に1本に絞るのは呼び出し側
-// （`src/server/session/core/session-manager.ts`）。ここは1回ぶんだけを持つ。
+// （`startConsolidation`）。ここは1回ぶんだけを持つ。
 //
 // 書く口は決して reject しない（起こせない・中断・時間切れ・形の崩れはどれも `failed`）。
 // 行は未定着のまま残り、次の契機で拾い直される。常駐プロセスは定着1回の失敗で落ちない。
@@ -53,7 +53,7 @@ export type ChatConsolidationSource =
   | { readonly kind: "dont-consolidate" }
   | { readonly kind: "consolidate"; readonly consolidate: ChatConsolidationWriter }
 
-/** 書く口に外の世界から渡すもの（配線は `src/session-start.ts`）。 */
+/** 書く口に外の世界から渡すもの（配線が渡す）。 */
 export type ChatConsolidationWriterPorts = {
   /** 未定着の行の取り出しとエピソードの追記。 */
   readonly archive: Pick<ChatArchive, "unconsolidated" | "appendEpisodes">
@@ -81,7 +81,7 @@ async function consolidate(
   signal: AbortSignal,
 ): Promise<ChatConsolidationOutcome> {
   try {
-    // 1回に畳むのは契機の2倍まで（`docs/chat-mode.md` 4.9）。溜まった量もこの読みで分かる。
+    // 1回に畳むのは契機の2倍まで（`docs/chat-mode.md`「雑談モード」）。溜まった量もこの読みで分かる。
     const batch = ports.archive.unconsolidated(packName, {
       recentBytes: CHAT_MEMORY_BUDGET.recentBytes,
       maxBytes: CHAT_MEMORY_BUDGET.consolidateEveryBytes * 2,

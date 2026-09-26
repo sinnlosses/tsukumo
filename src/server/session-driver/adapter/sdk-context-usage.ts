@@ -1,6 +1,6 @@
 // いまのコンテキストの内訳（`docs/glossary.md`「コンテキストの内訳」）を SDK に問い合わせ、
-// 画面が要る形（src/shared/context-usage.ts）へ写す。問い合わせる相手は駆動
-// （src/server/session-driver/adapter/sdk-driver.ts）が回している `query()` の戻り値。
+// 画面が要る形（`ContextUsageReport`）へ写す。問い合わせる相手は駆動
+// （SDK を起こすアダプタ）が回している `query()` の戻り値。
 
 import { z } from "zod"
 
@@ -75,7 +75,7 @@ export async function readContextUsage(session: ContextUsageSource): Promise<Con
  * 使用量を測る相手がそれだと SDK の型の説明にあるため。
  *
  * 本物の `query()` を呼ばずに写しを検査できるように、`startSdkDriver` の外に出して公開して
- * ある（`sdk-driver.ts` の `buildQuerySeedOptions` と同じ理由）。
+ * ある（`buildQuerySeedOptions` と同じ理由）。
  */
 export function toContextUsage(value: unknown): ContextUsageReport {
   const parsed = sdkContextUsageSchema.safeParse(value)

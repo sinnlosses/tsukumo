@@ -1,11 +1,11 @@
 // 雑談で覚えたことを人格へ書き足し、覚えた1行を忘れる
-// （`docs/design.md` 7.1「覚えたことを人格に書き足す・1行だけ忘れる」）。
+// （`docs/design.md`「覚えたことを人格に書き足す・1行だけ忘れる」）。
 // 書き込んでよいのは他の編集と同じ `~/.tsukumo/characters/<pack>/persona.md` の1つだけで、
-// ホームへ写す道（`src/server/character-pack/adapter/character-edit.ts` の `copyPackOnce`）を共有する。
+// ホームへ写す道（`copyPackOnce`）を共有する。
 //
 // 何を書いてよいか・何を消してよいかはここが決めない。 判断はモデル側の条
-// （`src/server/chat/core/chat-manner.ts`）が持ち、ここが持つのは「受け取った1行をどこにどう書くか
-// /どの行と突き合わせるか」と上限だけ（`docs/chat-mode.md` 4.9。会話を読んで判定しない
+// （`CHAT_MANNER_PROMPT`）が持ち、ここが持つのは「受け取った1行をどこにどう書くか
+// /どの行と突き合わせるか」と上限だけ（`docs/chat-mode.md`「雑談モード」。会話を読んで判定しない
 // ので、`docs/coding-standards.md`「会話内容の扱い」とぶつからない）。
 //
 // 触るのは末尾の `## 覚えたこと` の節だけで、節より前は1バイトも触らない。 人が書いた
@@ -16,8 +16,8 @@
 // `"ok"` だけ）。失敗しても例外を投げない（常駐プロセスは1回の失敗で落ちない。
 // `docs/coding-standards.md`「エラーハンドリング」）。
 //
-// 画面の「編集」から1行消す口（{@link forgetRememberedLineFromScreen}）もここに置く
-// （`docs/design.md` 7.1「1行だけ忘れる」）。キャラクター自身の `forget`（{@link PersonaMemory.forget}）
+// 画面の「編集」から1行消す口（`forgetRememberedLineFromScreen`）もここに置く
+// （`docs/design.md`「1行だけ忘れる」）。キャラクター自身の `forget`（`PersonaMemory.forget`）
 // と同じ消し方（完全一致・節より前は触らない）を通すが、1ターン1行の上限は掛からない——
 // その上限はモデルの暴走を防ぐためのもので、利用者が画面から名指しした削除には要らない。
 
@@ -35,17 +35,17 @@ import {
 } from "../../character-pack/adapter/character-pack.ts"
 import { type PersonaMemory } from "../../session-driver/core/session-driver.ts"
 
-/** 書き足す節の見出し。`persona.md` のいちばん最後に置く（7.1）。 */
+/** 書き足す節の見出し。`persona.md` のいちばん最後に置く（`docs/design.md`「画面から作るときの置き場と受け取り方」）。 */
 export const REMEMBERED_SECTION_HEADING = "## 覚えたこと"
 
-/** 節が持てる行数（超えたらいちばん古い行を落とす。7.1 の表）。 */
+/** 節が持てる行数（超えたらいちばん古い行を落とす。`docs/design.md`「画面から作るときの置き場と受け取り方」の表）。 */
 export const MAX_REMEMBERED_LINES = 20
 
 /**
  * 覚えたことの書き足し・忘れる口を1つ作る（雑談モードのときだけ呼ばれ、`remember` と
- * `forget` のツールの裏に立つ。`src/session-start.ts`）。
+ * `forget` のツールの裏に立つ。配線が呼ぶ）。
  *
- * 書かずに黙って捨てるのは次の4つ（どれも呼び出し側には伝えない。7.1）:
+ * 書かずに黙って捨てるのは次の4つ（どれも呼び出し側には伝えない。`docs/design.md`「画面から作るときの置き場と受け取り方」）:
  *
  * - そのターンで既に1行書いている（{@link PersonaMemory.finishTurn} まで受け付けない）
  * - 空の行・改行を含む行・{@link MAX_REMEMBERED_LINE_LENGTH} を超える行
@@ -54,14 +54,14 @@ export const MAX_REMEMBERED_LINES = 20
  * - ディスクに書けない
  *
  * 消さずに黙って何もしないのは、そのターンで既に1行消しているとき・節に一致する行が無いとき・
- * 上の3つ目と4つ目。書いた数と消した数は別に数えるので、同じターンで覚え直せる（7.1）。
+ * 上の3つ目と4つ目。書いた数と消した数は別に数えるので、同じターンで覚え直せる（`docs/design.md`「画面から作るときの置き場と受け取り方」）。
  *
  * `root` は書き込み先の親（既定は `~/.tsukumo/characters`。差し替えられるのは置き場所だけで、
  * テストがホームを汚さないためにある）。
  *
  * `onChange` は書けた・消せたときだけ、更新後の一覧（{@link readRememberedLines}）を渡して
  * 呼ぶ（画面のサイドバーへ流し直す `remembered-lines-changed` の出どころ。配線は
- * `src/session-start.ts`）。モデルへは戻さない（ツールの戻り値は `"ok"` のまま）ので、
+ * 配線）。モデルへは戻さない（ツールの戻り値は `"ok"` のまま）ので、
  * ここは規約とぶつからない。既定は何もしない関数（テストが気にしなくてよいように）。
  */
 export function createPersonaMemory(
@@ -124,7 +124,7 @@ export function readRememberedLines(
 }
 
 /**
- * 画面の「編集」から1行消す（`docs/design.md` 7.1「1行だけ忘れる」）。消し方は
+ * 画面の「編集」から1行消す（`docs/design.md`「1行だけ忘れる」）。消し方は
  * {@link PersonaMemory.forget} と同じ（完全一致・同じ文面が2行あればいちばん古いほうを消す・
  * 節より前は触らない）だが、1ターン1行の上限は掛からない——その上限はモデルの暴走を防ぐ
  * ためのもので、利用者が画面から名指しした削除には要らない。
@@ -220,7 +220,7 @@ function eraseRememberedLine(pack: CharacterPack, dir: string, target: string): 
 /**
  * 節から1行消した `persona.md` の全文（節が無い・一致する行が無いときは undefined）。
  * 同じ文面が2行あるときに消すのはいちばん古い1つだけ（{@link MAX_REMEMBERED_LINES} で
- * 落ちるのと同じ向き。7.1）。
+ * 落ちるのと同じ向き。`docs/design.md`「画面から作るときの置き場と受け取り方」）。
  *
  * 節より前の文字は足しも引きもしない。 最後の1行を消したときは見出しごと落とすので、
  * 残るのは節を作るときに入れた見出しの前の改行だけになる（空の節を `systemPrompt` に載せない）。

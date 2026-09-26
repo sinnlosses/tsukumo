@@ -1,22 +1,22 @@
 // トークン消費を記録するときの判断（何を1行にするか）と、書き口の契約。実際に書くのは
-// `src/server/token-usage/adapter/token-usage-log.ts` で、ここは「累計から増分を作る」
+// `createTokenUsageLog` で、ここは「累計から増分を作る」
 // 「ターンの中の内訳を積んで畳む」「期間で切って軸ごとに畳む（集計）」ところまでを持つ。
 //
-// 集計は純関数（{@link summarizeTokenUsage}）で、ファイルに触らない。期間で切ったあとの
+// 集計は純関数（`summarizeTokenUsage`）で、ファイルに触らない。期間で切ったあとの
 // 行を渡されて畳むだけなので、どの行を読むか（日付の範囲からファイルを選ぶ）は
-// `src/server/token-usage/adapter/token-usage-log.ts` の仕事のまま（`core → adapter` は禁止。
-// `test/architecture.test.ts`）。分析の画面が引く口は
-// {@link summarizeRecentTokenUsage} で、こちらは読み口（{@link TokenUsageLog}）を受け取って
+// adapter の仕事のまま（`core → adapter` は禁止。
+// 検査が見張る）。分析の画面が引く口は
+// `summarizeRecentTokenUsage` で、こちらは読み口（`TokenUsageLog`）を受け取って
 // 「今日を含む直近 n 日」に切る——今日が何日かは呼ぶ側が渡す。
 //
-// 集計の形（{@link TokenUsageSummary}）は `src/shared/token-usage-summary.ts`（ブラウザも
+// 集計の形（`TokenUsageSummary`）は shared 側（ブラウザも
 // 同じ形を読むので shared に置いてある。配る経路の名前もそちら）。
 //
 // SDK の `result` に乗る `modelUsage` は `query()` の中の累計（サブエージェントと内部の
 // 呼び出しも含む。`usage` のほうはメインループだけなので集計に使わない）。ターンごとの消費を
 // 出すには前の `result` との差を取る必要があり、前回の累計を覚えているのは
-// {@link TokenUsageRecorder}（駆動1代ぶんの持ち物として `session-manager.ts` が持つ。
-// 変換だけの `sdk-message.ts` に前回値を置くとあのファイルの性格が変わる）。
+// `TokenUsageRecorder`（駆動1代ぶんの持ち物としてセッションの管理側が持つ。
+// 変換だけのイベント変換側に前回値を置くとあのファイルの性格が変わる）。
 //
 // 数以外は通らない。 ツールの結果はここで長さ（UTF-8 のバイト数）に畳んでから積み、
 // 本文は捨てる。依頼の文面もセリフもツールの引数もここには残らない
@@ -48,7 +48,7 @@ import {
 
 /**
  * トークン消費の読み書き口（`chat-archive` と同じ形の契約）。実装は `adapter` 側
- * （`src/server/token-usage/adapter/token-usage-log.ts`）で、ここにあるのは契約だけ。
+ * （`createTokenUsageLog`）で、ここにあるのは契約だけ。
  *
  * 書けなくても例外を投げない（常駐プロセスは1回の失敗で落ちない。
  * `docs/coding-standards.md`「エラーハンドリング」）ので、受け付けたかどうかは返さない。
@@ -156,7 +156,7 @@ export type TokenUsageRecorder = {
    * 必ず覚え直す（次のターンの差が合わなくなるため）。
    *
    * 内訳はそのターンのあいだ積んできたものを畳んで、合計の `models` と同じ1行に入れる
-   * （割り方の理由は `src/shared/token-usage.ts`）。
+   * （割り方の理由は `TurnUsageBreakdown`）。
    *
    * claude 側のセッションIDが分からないうちは書かない（`system/init` より前に `result` は
    * 来ないので実際には起きない）。行だけで「どのセッションのターンか」が決まらない記録を
@@ -275,7 +275,7 @@ export function tallyTurnUsage(tally: TurnUsageTally, event: SessionEvent): Turn
 
 /**
  * 積み上げた内訳を、記録に書く形に畳む。メインループとサブエージェントを別立てにする
- * （割り方の理由は `src/shared/token-usage.ts` の {@link TurnUsageBreakdown}）。
+ * （割り方の理由は {@link TurnUsageBreakdown}）。
  *
  * ツールを1つも使わなかったターンでも両方の持ち場が 0 で並ぶ — 「無い」を型に持ち込まずに
  * 済み、あとから数える側が欄の有無を気にしなくてよい。
@@ -312,7 +312,7 @@ export function summarizeTokenUsage(
  * 「今日を含む直近 `days` 日」を期間にして、記録を読んで畳む（分析の画面が引く口）。
  *
  * 今日が何日かはここが決めない（`endDate` を受け取る。OS のタイムゾーンに依るので、
- * 今日のローカル日付を作るのは `adapter/local-time.ts` の仕事）。期間の両端を含むので、
+ * 今日のローカル日付を作るのは `todayLocalDateKey` の仕事）。期間の両端を含むので、
  * 7日なら `endDate` の6日前から。
  */
 export function summarizeRecentTokenUsage(

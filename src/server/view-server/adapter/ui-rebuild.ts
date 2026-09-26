@@ -1,22 +1,22 @@
 // `src/browser/` を見張り、変更のたびにブラウザ側スクリプトと CSS を組み立て直す。開発中だけ
-// 呼ばれる（`TSUKUMO_WATCH_UI`。docs/design.md 11章）。組み立てそのものは `src/server/view-server/adapter/bundle.ts`
+// 呼ばれる（`TSUKUMO_WATCH_UI`。`docs/design.md`「ビルドと依存」）。組み立てそのものは `buildUiBundle`
 // が持ち、ここは「いつ組み立て直すか」だけを決める（組み上がったものを誰に押すかは
-// `src/view-delivery.ts`）。
+// 配線）。
 //
 // 見張るのは `src/browser/` だけ。 `src/shared/` はサーバ側でも畳み込みに使われていて、
-// ブラウザ側だけ新しくすると両側の食い違った状態が動いてしまう（docs/design.md 11章）。
+// ブラウザ側だけ新しくすると両側の食い違った状態が動いてしまう（`docs/design.md`「ビルドと依存」）。
 //
 // ただし組み立ては `src/browser/` から import で辿れる `src/shared/` も束ねるので、見張りの
 // 外で `src/shared/` が変わったあと（`git merge` で両方が一度に変わったときなど）に組み直すと、
 // 新しい契約の画面が古いサーバへ配られる（版が合わない知らせが出て、読み込み直しても同じ画面が
 // 配られるので戻れない）。そこで、起動時にサーバ側のソース（`src/` の `browser/` 以外）の指紋を
-// 取っておき、変わっていたら組み直さず前の版を配り続ける（`src/server/view-server/adapter/source-fingerprint.ts`）。
+// 取っておき、変わっていたら組み直さず前の版を配り続ける（`sourceFingerprint`）。
 //
 // `fs.watch` を使う。ファイル1つを見張ると、保存で inode ごと差し替わったときに監視が
 // 古い実体に残って鳴らなくなるが、ここはディレクトリを再帰で見張るので、中のファイルが
 // 差し替わっても鳴る。
 //
-// 組み立て直したものは `dist/browser/` に置き直す（bundle.ts 冒頭）。開発中に直したぶんが
+// 組み立て直したものは `dist/browser/` に置き直す（束ねるアダプタの冒頭）。開発中に直したぶんが
 // そのまま次の起動に乗るので、`bun run dev` を閉じたあとに `bun run build` を打ち直さなくてよい。
 
 import { watch } from "node:fs"
@@ -49,7 +49,7 @@ export type UiRebuildFailure = {
   readonly reason: string
   /**
    * `bun build` が書いた理由（複数行。見張りが止まったときのように無いこともある）。
-   * 中身は `BundleResult` の `reason` と同じで、会話は通らない（bundle.ts の型の注記）。
+   * 中身は `BundleResult` の `reason` と同じで、会話は通らない（`BundleResult` の型の注記）。
    */
   readonly detail: string | undefined
 }
@@ -120,7 +120,7 @@ export function watchUiSource(options: UiSourceWatchOptions): UiSourceWatcher {
 }
 
 /**
- * スクリプトと CSS を組み立て直す（1回の `bun build` から出る1組。bundle.ts）。サーバ側の
+ * スクリプトと CSS を組み立て直す（1回の `bun build` から出る1組。`buildUiBundle`）。サーバ側の
  * ソースが起動時から変わっていたら組み立てない（前の版を配り続ける）。どちらかの指紋が
  * 取れなかったときは、止める根拠が無いので組み立てる。
  */

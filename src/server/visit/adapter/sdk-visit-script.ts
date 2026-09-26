@@ -1,9 +1,9 @@
-// 訪問の台本を書かせる使い捨ての `query()`（`docs/design.md` 5章「訪問の台本」）。SDK に触るので
-// `sdk-` で始まる（原則3）。何を渡し、受け取ったものをどう検査するかは core
-// （`src/server/visit/core/visit-script.ts` と `visit-script-writer.ts`）が持ち、ここは起こして
+// 訪問の台本を書かせる使い捨ての `query()`（`docs/design.md`「訪問の台本」）。SDK に触るので
+// `sdk-` で始まる（`docs/architecture.md`「1ファイル = 1つの境界」）。何を渡し、受け取ったものをどう検査するかは core
+// （`parseVisitScript` と `createVisitScriptWriter`）が持ち、ここは起こして
 // `structured_output` を返すだけ。
 //
-// 仕事のセッション（`sdk-driver.ts`）とは別の子プロセスで、訪問1回ぶんの台本を返したら終わる。
+// 仕事のセッションとは別の子プロセスで、訪問1回ぶんの台本を返したら終わる。
 // 考える段（extended thinking）は切る。組み込みのツールも MCP も持たせず（`tools: []`・`mcpServers: {}`）、設定ファイルも読まず
 // （`settingSources: []`。フックも CLAUDE.md も載らない）、transcript も書かない
 // （`persistSession: false`）。渡す文面と受け取る台本は会話の内容に当たるので、ログにも

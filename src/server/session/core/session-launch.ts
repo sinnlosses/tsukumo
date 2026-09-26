@@ -4,10 +4,10 @@
 // `session.switchCharacter` / `session.setChatMode` / `session.switchSession`）の4つともこの1つを通る。
 //
 // 画面を初期状態に戻すかどうかは持たない — それは起こし直しだけの判断で、
-// `src/server/session/core/session-manager.ts` の `restart` にある。ここは「どちらから来ても同じ順序」だけ。
+// セッションの管理側の `restart` にある。ここは「どちらから来ても同じ順序」だけ。
 //
 // 外の世界（パックの読み込み・覚えた値・claude の transcript・見張り）には触らず、すべて
-// 渡された関数（{@link SessionLaunchPorts}）越しに頼む。結ぶのは配線層（`src/session-start.ts`）。
+// 渡された関数（`SessionLaunchPorts`）越しに頼む。結ぶのは配線層。
 
 import { type SessionChoice } from "../../../shared/session-choice.ts"
 import { type SessionDefault } from "../../../shared/session-default.ts"
@@ -27,12 +27,12 @@ export type SessionLaunchSeed<Pack extends NamedCharacterPack> = {
   /** 新規に起こすか、続きから始めるか（`SessionStart`）。 */
   readonly start: SessionStart
   /**
-   * 雑談モードで起こすか（`docs/chat-mode.md` 4.9）。`systemPrompt` はセッションを
+   * 雑談モードで起こすか（`docs/chat-mode.md`「雑談モード」）。`systemPrompt` はセッションを
    * 起こすときに固定されるので、レポートの記法を外すにはここで決まっている必要がある。
    */
   readonly chat: boolean
   /**
-   * このセッションを起こす既定（モデル・許可モード。`docs/screen-design.md` 13.6）。読むのは
+   * このセッションを起こす既定（モデル・許可モード。`docs/screen-design.md`「設定の置き場所」）。読むのは
    * 起こすたびに1回（{@link SessionLaunchPorts.readSessionDefault}）で、同じ値が画面へ流す
    * `session-default-changed` にも渡る（画面に出る既定と、実際に起こした既定がずれない）。
    */
@@ -73,7 +73,7 @@ export type SessionResume =
    */
   | { readonly by: "id"; readonly sessionId: string }
 
-/** 一続きの中で外の世界に頼むこと。実装はすべて配線層（`src/session-start.ts`）が `adapter` から渡す。 */
+/** 一続きの中で外の世界に頼むこと。実装はすべて配線層が `adapter` から渡す。 */
 export type SessionLaunchPorts<Pack extends NamedCharacterPack> = {
   /**
    * これから起こすパックを決める。決め方の3つ（起動時の初期パック・画面から選ばれた名前・
@@ -84,12 +84,12 @@ export type SessionLaunchPorts<Pack extends NamedCharacterPack> = {
   /** 画面から選んだパックを覚える（次の起動の初期値になる）。 */
   readonly rememberPack: (pack: Pack) => void
   /**
-   * 覚えた「新しいセッションの既定」を読む（`docs/screen-design.md` 13.6）。覚えた値が無い・
+   * 覚えた「新しいセッションの既定」を読む（`docs/screen-design.md`「設定の置き場所」）。覚えた値が無い・
    * 読めないときは同梱の既定へ畳んだあとの値が返るので、ここから先に「無い」は出ない。
    */
   readonly readSessionDefault: () => SessionDefault
   /**
-   * 覚えた「訪問」のオン・オフを読む（`docs/screen-design.md` 13.6）。覚え方は
+   * 覚えた「訪問」のオン・オフを読む（`docs/screen-design.md`「設定の置き場所」）。覚え方は
    * `readSessionDefault` と同じ（`~/.tsukumo/state.json`）で、読むのも起こすたびに1回。
    * ただし `visit.setEnabled` はいま動いているセッションにも即座に効くので、ここで読むのは
    * 「起こした直後の初期値」だけ（`readSessionDefault` と違い、駆動の種〔`SessionLaunchSeed`〕
@@ -100,13 +100,13 @@ export type SessionLaunchPorts<Pack extends NamedCharacterPack> = {
   readonly characterEvent: (pack: Pack) => SessionEvent
   /**
    * そのパックの雑談の要約の写しから、最近の話題の見出しを読む（写しがまだ無い・取り出せない
-   * ときは空。取り出し方は `src/server/chat/core/chat-consolidation.ts` の `readChatTopics`）。
+   * ときは空。取り出し方は `readChatTopics`）。
    * 雑談で起こすときだけ呼ばれる。
    */
   readonly readChatTopics: (pack: Pack) => readonly string[]
   /**
    * そのパックの「覚えたこと」（`persona.md` の `## 覚えたこと`）の一覧を読む（節が無い・
-   * 読めないときは空。取り出し方は `src/server/chat/adapter/persona-memory.ts` の
+   * 読めないときは空。取り出し方は 人格に書き足すアダプタの
    * `readRememberedLines`）。雑談で起こすときだけ呼ばれる。
    */
   readonly readRememberedLines: (pack: Pack) => readonly string[]
@@ -115,7 +115,7 @@ export type SessionLaunchPorts<Pack extends NamedCharacterPack> = {
   /**
    * そのパックの、そのモードの続きから始めるセッションを探す（見つからなければ
    * `{ kind: "new" }`）。雑談と仕事は別のセッションなので、引く印も分かれる
-   * （`docs/chat-mode.md` 4.9）。
+   * （`docs/chat-mode.md`「雑談モード」）。
    */
   readonly findResumeSession: (pack: Pack, chat: boolean) => Promise<SessionStart>
   /** 駆動を1つ起こす（本物か偽物かはここが選ぶ）。 */
@@ -125,7 +125,7 @@ export type SessionLaunchPorts<Pack extends NamedCharacterPack> = {
   ) => SessionDriver
   /**
    * いま切り替え先として選べるセッションを一覧にする（同じパックの、同じモードのもの
-   * だけ。`docs/requirements.md` 4.8）。読めなかったときは空。
+   * だけ。`docs/requirements.md`「セッションの復元」）。読めなかったときは空。
    *
    * {@link SessionLaunchPorts.findResumeSession} とは別の口にしてあるのは、問いが違うから
    * （「続きはどれか」と「他にどれへ行けるか」）。どちらも同じ transcript の一覧を読むが、
@@ -147,7 +147,7 @@ export type SessionLaunchPorts<Pack extends NamedCharacterPack> = {
  * 続きから始まったなら履歴を組み直して流し終える → 駆動を返す。
  *
  * 受け口は2つ。 `onEvent` は駆動（と見張り）から新しく届くイベント、`onRestoredEvent` は
- * 前のセッションの記録を組み直した再生だけを流す（`docs/design.md` 7章「雑談の会話のアーカイブは
+ * 前のセッションの記録を組み直した再生だけを流す（`docs/design.md`「雑談の会話のアーカイブは
  * どこに置くか」の「誰がいつ書くか」）。畳み方と配り方はどちらも同じ（呼び出し側
  * — `session-manager` — が両方を同じように畳む）。分けるのは「どちらの口から来たか」を
  * 呼び出し側が知れるようにするためだけ。
@@ -165,34 +165,34 @@ export function createSessionLaunch<Pack extends NamedCharacterPack>(
     const pack = ports.choosePack(selection)
     // 覚えるのは画面から名前が届いたときだけ。 起動時やモードの切り替えでも覚えると、
     // その回だけの指定（`TSUKUMO_CHARACTER`）や同梱の既定が次の起動の初期値として残ってしまう
-    // （docs/screen-design.md 13.6）。
+    // （`docs/screen-design.md`「設定の置き場所」）。
     if (selection.by === "name") {
       ports.rememberPack(pack)
     }
     onEvent(ports.characterEvent(pack))
     // 起こし直すと状態が初期値へ戻るので、雑談かどうかもここで流し直す（画面は
-    // `chat-mode-changed` でしか知れない。`docs/chat-mode.md` 4.9）。
+    // `chat-mode-changed` でしか知れない。`docs/chat-mode.md`「雑談モード」）。
     onEvent({ kind: "chat-mode-changed", chat })
-    // 最近の話題も同じ理由で流し直す（`docs/screen-design.md` 13.7）。仕事のときは写しを読まない
+    // 最近の話題も同じ理由で流し直す（`docs/screen-design.md`「雑談モードの画面」）。仕事のときは写しを読まない
     // （起こし直しで状態が初期値の空へ戻っているので、流さなくても空のまま）。
     if (chat) {
       onEvent({ kind: "chat-topics-changed", topics: ports.readChatTopics(pack) })
-      // 「覚えていること」も同じ理由で流し直す（7.1・13.7）。仕事のときは読まない
+      // 「覚えていること」も同じ理由で流し直す（`docs/design.md`「画面から作るときの置き場と受け取り方」・`docs/screen-design.md`「雑談モードの画面」）。仕事のときは読まない
       // （仕事の side では雑談のサイドバーごと出ないので、状態が初期値の空のままでよい）。
       onEvent({ kind: "remembered-lines-changed", lines: ports.readRememberedLines(pack) })
     }
-    // 新しいセッションの既定も同じ理由で流し直す（歯車が読む値。`docs/screen-design.md` 13.6）。
+    // 新しいセッションの既定も同じ理由で流し直す（歯車が読む値。`docs/screen-design.md`「設定の置き場所」）。
     // 読むのはここ1回だけで、同じ値をこれから起こす駆動にも渡す。
     const sessionDefault = ports.readSessionDefault()
     onEvent({ kind: "session-default-changed", sessionDefault })
-    // 訪問のオン・オフも同じ理由で流し直す（歯車が読む値。`docs/screen-design.md` 13.6）。
+    // 訪問のオン・オフも同じ理由で流し直す（歯車が読む値。`docs/screen-design.md`「設定の置き場所」）。
     // 読むのはここ1回だけ——`visit.setEnabled` で書き換えたあとは、この起動の駆動が
     // 続くかぎりその値のまま（次に起こすまで読み直さない）。
     onEvent({ kind: "visit-enabled-changed", visitEnabled: ports.readVisitEnabled() })
 
     const watcher = ports.watchTasks(onEvent)
-    // キャラクターごと・モードごとに別のセッションを持つ（docs/design.md 7章、
-    // docs/chat-mode.md 4.9）。起動時も切り替え時も、これから起こす側の続きを探す。
+    // キャラクターごと・モードごとに別のセッションを持つ（`docs/design.md`「キャラクターパック」、
+    // `docs/chat-mode.md`「雑談モード」）。起動時も切り替え時も、これから起こす側の続きを探す。
     // 画面から選ばれたときだけは探さない（選ばれたIDがそのまま続きになる）。
     const start: SessionStart =
       request.resume.by === "id"
@@ -212,7 +212,7 @@ export function createSessionLaunch<Pack extends NamedCharacterPack>(
 
     // 流し終えてから駆動を返す。 起こし直しの `hello`（`session-manager` の `restart`）は
     // 駆動が返るのを待って配るので、ここで待たないと履歴の無い `hello` が先に出て、立ち絵の表情が
-    // 既定から続きの表情へもう一度飛ぶ（docs/screen-design.md 13.7「切り替えのときの立ち絵」）。
+    // 既定から続きの表情へもう一度飛ぶ（`docs/screen-design.md`「切り替えのときの立ち絵」）。
     if (start.kind === "resume") {
       await replayRestoredSession(ports, start.sessionId, pack, onRestoredEvent)
     }
@@ -230,7 +230,7 @@ export function createSessionLaunch<Pack extends NamedCharacterPack>(
 /**
  * 前のセッションの記録を組み直して流す。claude 側の会話は続きから始めること自体が繋いでいる
  * ので、ここが失敗しても駆動は動き続ける（読めなかったぶんの履歴が画面に出ないだけ。
- * docs/requirements.md 4.8「復元できなかったときどうするか」）。
+ * `docs/requirements.md`「復元できなかったときどうするか」）。
  *
  * 組み上がるのはこのプロセスのメモリの中だけで、どこにも書き出さない
  * （docs/coding-standards.md「会話内容の扱い」）。駆動から新しく届くイベントとは別の口

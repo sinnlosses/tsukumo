@@ -1,7 +1,7 @@
-// 起き上がっている駆動に1件頼むところ（`docs/design.md` 5章）。受け付けられたかどうかだけを
-// 返し、結果はイベントで戻ってくる（ブラウザはローカルで echo しない。3章「依頼」）。
+// 起き上がっている駆動に1件頼むところ（`docs/design.md`「core と adapter」）。受け付けられたかどうかだけを
+// 返し、結果はイベントで戻ってくる（ブラウザはローカルで echo しない。`docs/design.md`「依頼」）。
 //
-// どのコマンドをどう頼むかを決めるのは `session-command.ts` の表の行（起こし直し・見た目の
+// どのコマンドをどう頼むかを決めるのは `sessionCommands` の表の行（起こし直し・見た目の
 // 編集・覚えるだけの操作はほかの行で捌かれ、ここには来ない）。ここが持つのは「駆動が起き上がるのを
 // 待つこと」と「駆動が投げたときの畳み方」だけ。
 //
@@ -39,7 +39,7 @@ export async function askDriver(
 export const ACCEPTED = { ok: true } satisfies DispatchResult
 
 /**
- * キャラクターから話しかけてもらう（`docs/screen-design.md` 13.7）。文面は core が持ち
+ * キャラクターから話しかけてもらう（`docs/screen-design.md`「雑談モードの画面」）。文面は core が持ち
  * （{@link CHAT_NUDGE_PROMPT}）、記録に残さない口（`promptWithoutRecord`）で渡すので、
  * 利用者が打っていない一言はログにも記録にも雑談の会話のアーカイブにも並ばない。
  *

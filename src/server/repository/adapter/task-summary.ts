@@ -1,13 +1,13 @@
 // `main` のタスク一覧を見張る。`main` の先端のコミットが変わったとき、または台帳の
-// 着手の印が変わったときに読み直し、`onChange` を呼ぶ（docs/design.md 5章「task-summary.ts」）。
-// 呼び出し側（src/session-start.ts）がこれを `tasks-changed` イベントに変えて、他のセッションの
+// 着手の印が変わったときに読み直し、`onChange` を呼ぶ（`docs/design.md`「task-summary.ts」）。
+// 呼び出し側（配線）がこれを `tasks-changed` イベントに変えて、他のセッションの
 // イベントと同じ経路へ流す。
 //
 // 読むのは作業ツリーのファイルではなく `main` の上のもの。タスクの正典は `main` のもので、
 // 作業ツリーのものは `git merge main` するまで別の作業ツリーで足したタスクを知らない。境界は
-// 「`main` の上のタスク一覧」の1つ。`git` を起こすのは `src/server/repository/adapter/git.ts`
-// （`node:child_process` を import してよいファイルは `test/architecture.test.ts` が絞っている。
-// 成果の集計（`main-history.ts`）と同じ口を使う）。`main` の上のファイルを読む汎用の adapter を
+// 「`main` の上のタスク一覧」の1つ。`git` を起こすのは `runGit`
+// （`node:child_process` を import してよいファイルは検査が絞っている。
+// 成果の集計と同じ口を使う）。`main` の上のファイルを読む汎用の adapter を
 // 別に切らないのは、読み手がこの一覧しかなく、切っても開くファイルが増えるだけで概念が増えない
 // ため。
 //
@@ -17,11 +17,11 @@
 // 読む（`git ls-tree` で列挙し、`git cat-file --batch` で1回の子プロセスでまとめて読む）。
 // 着手中（旧 `doing`）はファイルに書かれない。台帳の着手の印（`task claim` / `task release`）は
 // 共有の `.git` の下だけで完結し、`main` を動かさない（claude-skills の
-// `docs/task-workflow-redesign.md` 4.2）ので、`main` の先端が同じ見回りでも
+// `docs/task-workflow-redesign.md`）ので、`main` の先端が同じ見回りでも
 // `task-workflow/claim/` の一覧だけは毎回読み直し、前回と変わっていれば
 // `onChange` する。このときファイルは読み直さない——`git cat-file --batch` は先端が
 // 動いたときだけで足りるので、前回読んだ front matter（`NewTaskFile[]`）に新しい印の集合を
-// 当て直すだけにする（`src/shared/task-summary.ts` の `taskSummaryItemsOfNewTaskFiles`）
+// 当て直すだけにする（`taskSummaryItemsOfNewTaskFiles`）
 //
 // `main` が読めないとき（git リポジトリでない・`main` ブランチが無い・`git` が無い）、
 // `develop/task/` が無いときは「不明」にする。 作業ツリーのファイルへは落とさない。落とすと
@@ -30,7 +30,7 @@
 // `git` がタイムアウトしたときだけはその回を諦め、覚えている状態も変えない（一時的な失敗なので
 // 次の回で読み直す。「不明」にすると一覧が一瞬消えて戻る）。
 //
-// 中身の解釈（front matter の文法・台帳の印から `doing` を作る）は src/shared/task-summary.ts の
+// 中身の解釈（front matter の文法・台帳の印から `doing` を作る）は契約側の
 // 仕事で、ここは読み直すかどうかの判断と `git`・台帳の読み出しだけを持つ。
 
 import { readdir } from "node:fs/promises"
@@ -56,7 +56,7 @@ const MAIN_BRANCH_REF = "refs/heads/main"
 const TASK_DIR_PATH = "develop/task/"
 
 /** 台帳の置き場（`$(git rev-parse --path-format=absolute --git-common-dir)` の下）の中の、
- * 着手の印（claude-skills の `docs/task-workflow-redesign.md` 4.2）。 */
+ * 着手の印（claude-skills の `docs/task-workflow-redesign.md`）。 */
 const LEDGER_CLAIM_DIR_SEGMENTS = ["task-workflow", "claim"]
 
 export type TaskSummaryWatcher = {
@@ -73,7 +73,7 @@ export type TaskSummaryWatcher = {
  * 呼ばなくても見た目は変わらない）。
  *
  * `pollIntervalMs` は既定 {@link TASK_SUMMARY_POLL_INTERVAL_MS}。テストが実際の間隔を待たずに
- * 済むよう、`src/server/session/core/session-manager.ts` の `batchIntervalMs` と同じ形で差し替えられるようにしてある。
+ * 済むよう、`batchIntervalMs` と同じ形で差し替えられるようにしてある。
  */
 export function watchTaskSummary(
   cwd: string,

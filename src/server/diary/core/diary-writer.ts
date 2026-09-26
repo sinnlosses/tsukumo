@@ -1,10 +1,10 @@
-// 振り返り1回ぶんの書き手（`docs/design.md`「日記の受け取りと保存」）。`visit-script-writer.ts` と
-// 同じ形: 材料を集め、会話とは別の使い捨ての `query()`（`src/server/diary/adapter/sdk-diary.ts`）に
+// 振り返り1回ぶんの書き手（`docs/design.md`「日記の受け取りと保存」）。`createVisitScriptWriter` と
+// 同じ形: 材料を集め、会話とは別の使い捨ての `query()`（`queryDiary`）に
 // 書かせ、受け取ったものを「書けた／書けなかった」に畳む。
 //
 // 決して reject しない（起こせない・中断・時間切れはどれも「書けなかった」に落ちる。常駐
 // プロセスは振り返り1回の失敗で落ちない）。書けたときの `diary-written` は窓口
-// （{@link createDiaryIntake}）が流す——ここは、それが流れなかったときだけ `diary-failed` を
+// （`createDiaryIntake`）が流す——ここは、それが流れなかったときだけ `diary-failed` を
 // 流す（二重に流さない）。
 //
 // 材料も日記も会話の内容に当たる。メモリにだけ持ち、ログにもファイルにも書かない
@@ -30,7 +30,7 @@ const DIARY_WRITER_INSTRUCTION =
 export type DiaryWriteRequest = {
   readonly date: string
   readonly doneTasks: readonly DiaryDayTask[]
-  /** 依頼文（`src/shared/achievement.ts` の `achievementReflectionRequestText`）。 */
+  /** 依頼文（`achievementReflectionRequestText`）。 */
   readonly requestText: string
   /** 会話のいまのモデル（`SessionState.model`。分からなければ呼び出し側が既定へ畳む）。 */
   readonly model: string
@@ -70,18 +70,18 @@ export type DiaryWriterSource =
   | { readonly kind: "dont-write" }
   | { readonly kind: "write"; readonly write: DiaryWriter }
 
-/** {@link DiaryWriter} に外の世界から渡すもの（配線は `src/session-start.ts`）。 */
+/** {@link DiaryWriter} に外の世界から渡すもの（配線が渡す）。 */
 export type DiaryWriterPorts = {
   /** 書いた時刻（エポックミリ秒）。 */
   readonly now: () => number
-  /** 1段落を保存する口（`src/server/diary/adapter/diary.ts` の `appendDiaryParagraph`）。 */
+  /** 1段落を保存する口（`appendDiaryParagraph`）。 */
   readonly save: SaveDiaryParagraph
   /**
    * 書く時点のパックと環境。まだ1回もパックが決まっていなければ undefined（起こったことが
    * 無い想定だが、念のため「書けなかった」に畳む）。
    */
   readonly readContext: () => DiaryWriterContext | undefined
-  /** 使い捨ての `query()`（`src/server/diary/adapter/sdk-diary.ts` の `queryDiary`）。 */
+  /** 使い捨ての `query()`（`queryDiary`）。 */
   readonly query: (
     request: {
       readonly systemPrompt: string

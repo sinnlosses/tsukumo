@@ -1,10 +1,10 @@
 // ブラウザ側スクリプト（`src/browser/`）と CSS を `bun build` で1本ずつにまとめる。作る口と
 // 読む口を分けてある: 作るのは `bun run build`（と `bun run dev` の見張り）だけで、
-// 起動は置いてある成果物を読むだけ（{@link readUiBundle}）。
+// 起動は置いてある成果物を読むだけ（`readUiBundle`）。
 //
 // スクリプトと CSS は1回の `bun build` から出る対。CSS Modules（`*.module.css`）は
 // ハッシュ化した class 名を JS と CSS の両方へ焼き込むので、別々に組み立てると綴りの違う対が
-// できてしまう。入口は `main.tsx` の1つだけで、CSS はそこから import で辿れるもの
+// できてしまう。入口はブラウザ側の入口ファイル1つだけで、CSS はそこから import で辿れるもの
 // （`styles/theme.css` と各機能の `*.module.css`）が1本にまとまる。
 //
 // 成果物は `dist/browser/` に置く。かつては「成果物をディスクに残さない」と決めていた
@@ -12,7 +12,7 @@
 // 起こすのをやめるために置く側へ変えた。当時挙げていた理由はこう引き継ぐ:
 //
 // - 古い成果物を配る事故 — 起動時に `src/browser/` と成果物の新しさを比べ、古ければ1行で
-//   知らせる（{@link readUiBundle} の `outdated`）。黙って配らないのが答えで、画面は動くので
+//   知らせる（`readUiBundle` の `outdated`）。黙って配らないのが答えで、画面は動くので
 //   止めはしない
 // - `.gitignore` への追加が出ない — 出た。`dist/` を無視する（2.6MB の生成物を、
 //   `src/browser/` を直すたびに履歴へ入れない）。代わりに `bun install` のあと `bun run build` を
@@ -36,13 +36,13 @@ const UI_ENTRY = "main.tsx"
 
 /**
  * ブラウザ側のソースの置き場。組み立ての入口であり、新しさを比べる相手でもあるので
- * ここが持つ（`src/server/view-server/adapter/ui-rebuild.ts` の見張り先も同じ1つ）。
+ * ここが持つ（見張るアダプタの見張り先も同じ1つ）。
  */
 export const UI_SOURCE_DIR_RELATIVE_PATH: readonly string[] = ["src", "browser"]
 
 /**
  * 成果物の新しさを比べる相手。束ねに入るソースの置き場で、`src/browser/` は `src/shared/` を
- * import している。見張り（`src/server/view-server/adapter/ui-rebuild.ts`）が `src/browser/` しか見ないのとは
+ * import している。見張り（見張るアダプタ）が `src/browser/` しか見ないのとは
  * 別の話で、あちらは動作中にサーバ側とブラウザ側が食い違うのを避けるため。起動時は
  * プロセスごと入れ替わるので、`src/shared/` も見てよい。
  */
@@ -101,7 +101,7 @@ export function builtUiDir(): string {
 
 /**
  * 置いてある成果物を読む。`bun build` は起こさない（起動の経路はここだけを通る。
- * docs/design.md 11章）。無ければ起動時の前提不足として扱えるよう、`bun run build` を促す理由を
+ * `docs/design.md`「ビルドと依存」）。無ければ起動時の前提不足として扱えるよう、`bun run build` を促す理由を
  * 添えて失敗を返す。
  */
 export async function readUiBundle(): Promise<StoredBundleResult> {
@@ -120,10 +120,10 @@ export async function readUiBundle(): Promise<StoredBundleResult> {
 /**
  * ブラウザ側（`src/browser/`）を組み立てて `dist/browser/` に置き、置いたものを読んで返す。
  * JSX は tsconfig の `"jsx": "react-jsx"` で自動変換され、CSS Modules は `bun build` が class 名を
- * ハッシュ化して JS 側の対応表に入れる（docs/design.md 11章）。
+ * ハッシュ化して JS 側の対応表に入れる（`docs/design.md`「ビルドと依存」）。
  *
- * 呼ぶのは `bun run build`（`scripts/build-ui.ts`）と `bun run dev` の見張り
- * （`src/server/view-server/adapter/ui-rebuild.ts`）の2つだけ。見張りも同じ場所へ出すので、
+ * 呼ぶのは `bun run build` と `bun run dev` の見張り
+ * （見張るアダプタ）の2つだけ。見張りも同じ場所へ出すので、
  * 開発中に直したぶんはそのまま次の起動に乗る。
  */
 export function buildUiBundle(): Promise<BundleResult> {

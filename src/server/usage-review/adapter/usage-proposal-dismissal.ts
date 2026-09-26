@@ -1,11 +1,11 @@
-// 見送った提案の識別子（{@link usageProposalKey}。`docs/glossary.md`「提案」）の一覧。見直しが
+// 見送った提案の識別子（`usageProposalKey`。`docs/glossary.md`「提案」）の一覧。見直しが
 // 次の段に入るたびにここを読み直し（`usage_review_stage` の戻り値に混ぜる）、結果の検査も
-// 同じ一覧を見る（`src/server/usage-review/core/usage-review-tool.ts` の `dismissedKeys`）。
+// 同じ一覧を見る（`dismissedKeys`）。
 //
 // 取り消す口は作らない（見本に無い）。取り消したくなったら、このファイルの `keys` から
 // 手で1件消す。
 //
-// ファイルに触るのはここだけ（原則3）。置き場は `~/.tsukumo/usage-review-dismissed.json`。
+// ファイルに触るのはここだけ（`docs/architecture.md`「1ファイル = 1つの境界」）。置き場は `~/.tsukumo/usage-review-dismissed.json`。
 
 import { join } from "node:path"
 
@@ -31,7 +31,7 @@ export function dismissedUsageProposalPath(): string {
 
 /**
  * 見送った識別子を読む。ファイルが無い・壊れている・版や形が違うときは空——一度も
- * 見送っていないのと同じ扱いになる（`usage-review-tool.ts` はこれをそのまま
+ * 見送っていないのと同じ扱いになる（呼び出し側はこれをそのまま
  * `dismissedKeys()` として使う）。
  *
  * `path` は差し替えられる（既定は {@link dismissedUsageProposalPath}）。

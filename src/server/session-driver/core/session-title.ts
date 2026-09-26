@@ -1,10 +1,10 @@
-// Claude 自身にセッションの見出しを付けさせるための判断（docs/requirements.md 4.8）。SDK を
+// Claude 自身にセッションの見出しを付けさせるための判断（`docs/requirements.md`「セッションの復元」）。SDK を
 // 呼ばない純粋な部分だけをここに置き、実際に `renameSession` を呼ぶのは
-// src/server/session-driver/adapter/sdk-session.ts。
+// SDK を起こすアダプタ。
 //
-// 題の出どころは `report` ツールの任意の `title` 引数（`src/server/session-driver/adapter/sdk-tool.ts`）。
-// {@link createSessionTitleIntake} が1ターンぶんの候補を覚え、ターンの終わりに1回だけ取り出す。
-// 取り出した候補を実際に書くかどうかは {@link decideSessionTitle} が決める——
+// 題の出どころは `report` ツールの任意の `title` 引数（MCP ツールを組み立てるアダプタ）。
+// `createSessionTitleIntake` が1ターンぶんの候補を覚え、ターンの終わりに1回だけ取り出す。
+// 取り出した候補を実際に書くかどうかは `decideSessionTitle` が決める——
 // 利用者が `/rename` などで書き換えた題は上書きしないため、SDK 側の現在値
 // （`customTitle`）が「tsukumo が最後に自分で書いたもの」と一致するときだけ書く。
 
@@ -57,7 +57,7 @@ function truncateTitle(text: string): string {
 
 /**
  * `report` の handler が受け取った題の候補を、ターンの終わりまで1件だけ覚えておく入れ物
- * （`src/server/session-driver/adapter/sdk-driver.ts` の `relayMessages` が `turn-finished` で {@link take} する）。
+ * （`relayMessages` が `turn-finished` で {@link take} する）。
  *
  * 空白だけの題は無いものとして扱う。 同じターンで2回渡されたら後のほうで上書きする
  * （最後に言ったことを題にする）。

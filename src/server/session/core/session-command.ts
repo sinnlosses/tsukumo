@@ -1,7 +1,7 @@
-// `session` 自身が受けるコマンドの表（`docs/design.md` 2章「コマンドの受け手と手続きの置き方」）。
+// `session` 自身が受けるコマンドの表（`docs/design.md`「コマンドの受け手と手続きの置き方」）。
 // 駆動へ渡す6種・`nudge`・起こし直し3種・成果の振り返り・新しいセッションの既定の12種。
-// 手続き（`session/adapter/session-procedure.ts`）がここの行へ委ねる。断る条件は契約
-// `src/shared/contract/session.ts` の `meta`。
+// 手続き（`sessionProcedure`）がここの行へ委ねる。断る条件は契約
+// `sessionContract` の `meta`。
 
 import {
   achievementReflectionRequestText,
@@ -27,13 +27,13 @@ import { ACCEPTED, askDriver, declined, nudge } from "./driver-command.ts"
 
 export type SessionCommandPorts = {
   /**
-   * 依頼に添えた画像の原寸の棚（`prompt` を受けたときに置く。捨てるのは `session-manager.ts`）。
+   * 依頼に添えた画像の原寸の棚（`prompt` を受けたときに置く。捨てるのはセッションの管理側）。
    */
   readonly promptImageShelf: PromptImageShelf
   /**
    * 新しいセッションの既定（モデル・effort・許可モード）を覚え、画面へ流す
-   * `session-default-changed` イベントを返す（覚え先は `session/adapter/remembered-default.ts`。
-   * `docs/screen-design.md` 13.6）。いま動いているセッションには効かない（効くのは次に
+   * `session-default-changed` イベントを返す（覚え先は `writeRememberedSessionDefault`。
+   * `docs/screen-design.md`「設定の置き場所」）。いま動いているセッションには効かない（効くのは次に
    * 起こすときから）。書き込みは失敗しても投げない口なので、返すイベントは常に1つ。
    */
   readonly rememberSessionDefault: (sessionDefault: SessionDefault) => SessionEvent
@@ -44,13 +44,13 @@ export type SessionCommandPorts = {
    */
   readonly readAchievementDay: (date: string) => Promise<DailyAchievement | undefined>
   /**
-   * 成果の振り返りの書き手の出どころ（`src/server/diary/core/diary-writer.ts`）。疑似セッションでは
+   * 成果の振り返りの書き手の出どころ（`DiaryWriterSource`）。疑似セッションでは
    * `dont-write`。
    */
   readonly diary: DiaryWriterSource
 }
 
-/** `session` が受けるコマンドの表（契約 `src/shared/contract/session.ts` の手続きごとに1行）。 */
+/** `session` が受けるコマンドの表（契約 `sessionContract` の手続きごとに1行）。 */
 export type SessionCommandTable = {
   readonly [K in keyof typeof sessionContract]: CommandReceiver<SessionCommandInputs[K]>
 }
@@ -59,7 +59,7 @@ type SessionCommandInputs = CommandInputs<typeof sessionContract>
 
 /** `session` が受けるコマンドの表。 */
 export function sessionCommands(ports: SessionCommandPorts): SessionCommandTable {
-  // 駆動へそのまま渡す6種は、駆動の口を1つ呼ぶだけ（待ち方と畳み方は `driver-command.ts`）。
+  // 駆動へそのまま渡す6種は、駆動の口を1つ呼ぶだけ（待ち方と畳み方は `askDriver`）。
   return {
     // 原寸は駆動へ渡す前に棚へ置く（id は `request` のイベントに載って記録へ入る）。
     // 駆動が投げて `request` が流れなかったときの原寸は記録に載らないまま残るが、
@@ -89,15 +89,15 @@ export function sessionCommands(ports: SessionCommandPorts): SessionCommandTable
       await started.setPermissionMode(input.mode)
       return ACCEPTED
     }),
-    // 雑談のときだけ（`docs/screen-design.md` 13.7。断る条件は契約の `meta`）。文面は core が
-    // 持つので駆動へそのまま渡さない（`driver-command.ts` の `nudge`）。
+    // 雑談のときだけ（`docs/screen-design.md`「雑談モードの画面」。断る条件は契約の `meta`）。文面は core が
+    // 持つので駆動へそのまま渡さない（`nudge`）。
     nudge: {
       kind: "session",
       receive: (_input, session) => nudge(session.driver()),
     },
     // 雑談かどうかは切り替えをまたいで保つ（パックを変えただけで仕事へ戻らない）。
     // 画面から名前が届いた唯一の口なので、ここで選んだパックだけが次の起動の初期値に
-    // なる（docs/screen-design.md 13.6）。
+    // なる（`docs/screen-design.md`「設定の置き場所」）。
     switchCharacter: {
       kind: "session",
       receive: (input, session) =>
@@ -109,7 +109,7 @@ export function sessionCommands(ports: SessionCommandPorts): SessionCommandTable
     },
     // いま出しているパックのまま起こし直す（雑談に入るとキャラクターが変わる、
     // とは決めていない）。名前では渡さない — 渡すと「画面から選ばれた名前」と
-    // 区別がつかず、モードを切り替えただけで覚えた値が書き換わる（docs/screen-design.md 13.6）。
+    // 区別がつかず、モードを切り替えただけで覚えた値が書き換わる（`docs/screen-design.md`「設定の置き場所」）。
     setChatMode: {
       kind: "session",
       receive: (input, session) =>

@@ -1,5 +1,6 @@
 // 答え待ちの列。SDK の `canUseTool` に届いた許可要求とキャラクターからの質問を積み、
-// 画面から答えが来るまで Promise を保留する（docs/requirements.md 4.1 / 4.2）。
+// 画面から答えが来るまで Promise を保留する（`docs/requirements.md`「Claude Code の駆動」、
+// `docs/display.md`「許可と質問」）。
 //
 // SDK の型を import しない（依存は src/server/adapter/ 直下の `sdk-` で始まるファイルに閉じる）。
 // `AnswerResult` は SDK の `PermissionResult` と構造が一致するので、駆動側はそのまま返せる。
@@ -20,7 +21,7 @@ const DENY_MESSAGE = "利用者が実行を許可しなかった"
 /**
  * SDK へ返す `answers` は質問1件に対して1つの文字列なので、複数選んだ答えはこれでつなぐ
  * （画面側から移した。画面は質問ごとの並びのまま送る。
- * `src/shared/pending-ask.ts` の `Answer`）。
+ * `Answer`）。
  */
 const ANSWER_SEPARATOR = "、"
 
@@ -103,7 +104,7 @@ export function createPendingAnswerQueue(handlers: PendingAnswerHandlers): Pendi
       }
 
       // 質問の記録は答えが確定したここ1回だけ知らせる（未回答のまま終わった質問は残さない。
-      // docs/display.md 4.2「許可と質問」）。解決より先に知らせるので、答えを受けて動き
+      // `docs/display.md`「許可と質問」）。解決より先に知らせるので、答えを受けて動き
       // 出したツールのイベントより前に記録が積まれる。
       if (entry.ask.kind === "question" && answer.kind === "answers") {
         handlers.onAnswered(entry.ask.questions, answer.labels)

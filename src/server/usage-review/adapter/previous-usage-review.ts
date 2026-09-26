@@ -5,9 +5,9 @@
 // 持つのは直前の1回だけ。見本の「前回の提案（日付）」も直前の1回しか指さないので、古い
 // 結果を並べて選ぶ画面は無い。新しい結果が届くたびに丸ごと置き換え、履歴は残さない。
 //
-// ファイルに触るのはここだけ（原則3。1ファイル = 1つの境界）。置き場は `~/.tsukumo/usage-review.json`。
+// ファイルに触るのはここだけ（`docs/architecture.md`「1ファイル = 1つの境界」）。置き場は `~/.tsukumo/usage-review.json`。
 //
-// 会話の文面は書かない——入るのは見直しの結果（{@link UsageReviewFindings}）だけで、その型に
+// 会話の文面は書かない——入るのは見直しの結果（`UsageReviewFindings`）だけで、その型に
 // そもそも文面の口が無い（docs/coding-standards.md「会話内容の扱い」）。
 
 import { join } from "node:path"
@@ -26,7 +26,7 @@ import { tsukumoHomeDir } from "../../adapter/tsukumo-home.ts"
 
 const PREVIOUS_USAGE_REVIEW_FILE_NAME = "usage-review.json"
 
-/** ファイルの形の版。形を変えたら上げ、古いファイルと見分ける（`token-usage-log.ts` と同じ考え方）。 */
+/** ファイルの形の版。形を変えたら上げ、古いファイルと見分ける（トークン消費の記録と同じ考え方）。 */
 const PREVIOUS_USAGE_REVIEW_FORMAT_VERSION = 1 satisfies number
 
 const usageProposalSchema = z.object({
@@ -62,7 +62,7 @@ export function previousUsageReviewPath(): string {
  * `{ kind: "none" }`（一度も見直していないのと同じ扱い。呼び出し側はリンクを出さない）。
  *
  * `path` は差し替えられる（既定は {@link previousUsageReviewPath}）——テストがホームを
- * 汚さないため（`remembered-default.ts` の `path` 引数と同じ手）。
+ * 汚さないため（覚えた既定値を扱うアダプタの `path` 引数と同じ手）。
  */
 export function readPreviousUsageReview(
   path: string = previousUsageReviewPath(),

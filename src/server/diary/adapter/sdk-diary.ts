@@ -1,8 +1,8 @@
 // 日記を書かせる使い捨ての `query()`（`docs/design.md`「日記の受け取りと保存」）。SDK に触るので
-// `sdk-` で始まる（原則3）。持たせるのは `diary` ツール1つだけの、プロセス内の MCP サーバ。
+// `sdk-` で始まる（`docs/architecture.md`「1ファイル = 1つの境界」）。持たせるのは `diary` ツール1つだけの、プロセス内の MCP サーバ。
 // `includePartialMessages` の断片を3段の合図（`diary-drafting` / `diary-stage`）へ変えて流す。
 //
-// 会話のセッション（`sdk-driver.ts`）とは別の子プロセスで、日記を1つ書き終えたら終わる。
+// 会話のセッションとは別の子プロセスで、日記を1つ書き終えたら終わる。
 // 考える段（extended thinking）は切る。組み込みのツールは持たせず（`tools: []`）、MCP は
 // `diary` だけ（`strictMcpConfig: true` / `allowedTools` に `mcp__tsukumo__diary` だけ）、
 // `permissionMode: "dontAsk"`（ほかは聞かずに断る。許可を尋ねる先が無い）。設定ファイルも読まず
@@ -10,7 +10,7 @@
 //
 // 渡す文面と受け取る日記は会話の内容に当たるので、ログにもファイルにも書かない
 // （docs/coding-standards.md「会話内容の扱い」）。検査・保存・「書けた／書けなかった」の判定は
-// core（`diary-writer.ts` / `diary-tool.ts`）。
+// core（`createDiaryWriter` / `createDiaryIntake`）。
 
 import { createSdkMcpServer, query, tool } from "@anthropic-ai/claude-agent-sdk"
 import { isPlainObject } from "remeda"
@@ -52,7 +52,7 @@ export type DiaryQueryRequest = {
 
 /**
  * `diary` を1回書かせる。reject しない——起こせない・API の失敗は for-await の反復が
- * 例外で終わるだけで、呼び出し側（`diary-writer.ts`）が拾って「書けなかった」に畳む。
+ * 例外で終わるだけで、呼び出し側（`createDiaryWriter`）が拾って「書けなかった」に畳む。
  * `intake.submit` が受け付けたかどうかは `onEvent` に流れる `diary-written` で呼び出し側が見る
  * （ここでは判定しない）。
  */
@@ -119,8 +119,8 @@ export type DiaryStreamObserver = {
 /**
  * {@link DiaryStreamObserver} を1つ作る（問い合わせ1回に1つ）。`index` で塊を見分け、
  * サブエージェントの中（`parent_tool_use_id` あり）は見ない。SDK の型は import しない——
- * `stream_event` の生の形は `isPlainObject` で構造だけを見る（`session-driver/core/sdk-message.ts`
- * と同じやり方）。
+ * `stream_event` の生の形は `isPlainObject` で構造だけを見る（SDK の型を import しない
+ * のと同じやり方）。
  */
 export function createDiaryStreamObserver(): DiaryStreamObserver {
   let tracking: { readonly index: number; readonly buffer: string } | undefined
@@ -219,7 +219,7 @@ function diaryServer(intake: DiaryIntake, expressions: readonly ExpressionChoice
 
 /**
  * zod の `enum` に渡す表情名。空にならないことが型の要求なので、`default` を必ず先頭に置く
- * （`src/server/session-driver/adapter/sdk-tool.ts` の同名の考え方と同じ）。
+ * （他のツールの enum の組み方と同じ考え方）。
  */
 function diaryExpressionEnum(
   expressions: readonly ExpressionChoice[],
