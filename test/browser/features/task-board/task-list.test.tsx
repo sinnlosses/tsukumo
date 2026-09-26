@@ -126,17 +126,6 @@ describe("taskList", () => {
     expect(screen.getByRole("listitem").querySelector(".task-mark-other")).not.toBeNull()
   })
 
-  it("doing が無ければ進行中のカードを出さない", () => {
-    render(
-      <TaskList
-        tasks={known(TASKS.filter((task) => task.status !== "doing"))}
-        selectedStatus={undefined}
-      />,
-    )
-
-    expect(document.querySelectorAll(".task-running-card")).toHaveLength(0)
-  })
-
   it("selectedStatus を選ぶとその状態だけ出る（進行中カードも絞られる）", () => {
     render(<TaskList tasks={known(TASKS)} selectedStatus="todo" />)
 

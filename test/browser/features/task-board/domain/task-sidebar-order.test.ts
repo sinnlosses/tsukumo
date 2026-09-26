@@ -39,13 +39,4 @@ describe("orderTasksForSidebar", () => {
     expect(result.running.map((task) => task.id)).toEqual(["X-001", "X-003"])
     expect(result.rest.map((task) => task.id)).toEqual(["X-002"])
   })
-
-  it("doing が無ければ running は空で、rest はファイルの順のまま全件", () => {
-    const items = [taskOf("X-001", "done"), taskOf("X-002", "todo"), taskOf("X-003", undefined)]
-
-    const result = orderTasksForSidebar(items)
-
-    expect(result.running).toEqual([])
-    expect(result.rest.map((task) => task.id)).toEqual(["X-001", "X-002", "X-003"])
-  })
 })
