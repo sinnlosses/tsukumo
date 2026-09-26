@@ -25,7 +25,7 @@ export function mainViewTurnsOf(state: SessionState): readonly MainViewTurn[] {
   if (remembered !== undefined) {
     return remembered
   }
-  const turns = mainViewTurns(mainViewEntries(state), unsettledBodies(state))
+  const turns = mainViewTurns(mainViewEntries(state), unsettledBodies(state), isClosed(state))
   TURNS_BY_STATE.set(state, turns)
   return turns
 }
@@ -58,4 +58,19 @@ function unsettledBodies(state: SessionState): TurnBodies {
     report: running && state.bodiesInTurn.report,
     utterance: running || state.backgroundTasks.length > 0 || state.partialUtterance !== "",
   }
+}
+
+/**
+ * セッション全体が閉じているか（`mainViewTurns` の `closed` 引数）。ターンが `running` でなく、
+ * 背景のタスクも残っていないときだけ true——このどちらかが残っているあいだは、いちばん新しい
+ * やり取りの本文がまだ最終レポートに確定していない（次の合図で続きのターンが始まり、いま最後の
+ * `report` が中間レポートへ回るかもしれない）。
+ *
+ * `unsettledBodies` と役目が違う。背景のタスクを待って `turn-finished` が届くと `running` は
+ * false に戻るので、`unsettledBodies` の `report` はそこで確定扱いに変わり本文は出るが、
+ * 背景のタスクが残っているあいだはこの関数は false のままで、最終レポートの札（ラベル・地の段上げ）
+ * だけを `markFinalReport` に立てさせない。
+ */
+function isClosed(state: SessionState): boolean {
+  return state.turn.kind !== "running" && state.backgroundTasks.length === 0
 }

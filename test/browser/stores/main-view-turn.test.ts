@@ -157,6 +157,84 @@ describe("mainViewTurnsOf（claude が自分で始めた続きのターン）", 
   })
 })
 
+// 背景のタスクを待つあいだに `turn-finished` が届くと、前の SDK ターンの `report` は本文として
+// 出したまま——それは変えない（決まっていること）。変えたのは、その本文に最終レポートの札
+// （`final`）を立ててよいタイミングだけ。背景のタスクが残っている・続きのターンが動いている
+// あいだは、次の `report` でいま最後の本文が中間レポートへ回るかもしれないので札を立てない。
+describe("mainViewTurnsOf（最終レポートの札は、やり取りが閉じてから）", () => {
+  const fold = (events: readonly SessionEvent[]) =>
+    events.reduce((current, event) => applySessionEvent(current, event, 0), INITIAL_SESSION_STATE)
+  const ask: SessionEvent = { kind: "request", text: "架空の依頼", images: [] }
+  const report = (toolUseId: string, conclusion: string): SessionEvent => ({
+    kind: "report",
+    toolUseId,
+    conclusion,
+    body: "",
+    favor: "",
+    checks: [],
+  })
+  const finished: SessionEvent = { kind: "turn-finished", outcome: { kind: "completed" } }
+  const backgroundStarted: SessionEvent = {
+    kind: "background-tasks-changed",
+    tasks: [{ taskId: "task-1", kind: "shell", description: "架空の背景の待ち" }],
+  }
+  const backgroundEnded: SessionEvent = { kind: "background-tasks-changed", tasks: [] }
+  const resumed: SessionEvent = { kind: "turn-resumed" }
+  const finalStep = (state: SessionState) =>
+    mainViewTurnsOf(state)
+      .at(-1)
+      ?.steps.find((step) => step.body.kind === "text" && step.final)
+
+  it("背景のタスクが残っているあいだは、あとから来た report にも final を立てない", () => {
+    const waiting = fold([
+      ask,
+      report("toolu_r1", "架空の途中の結論。"),
+      report("toolu_r2", "架空のいまの結論。"),
+      backgroundStarted,
+      finished,
+    ])
+
+    expect(waiting.turn.kind).toBe("finished")
+    expect(waiting.backgroundTasks.length).toBeGreaterThan(0)
+    expect(finalStep(waiting)).toBeUndefined()
+  })
+
+  it("背景のタスクが片付き、続きのターンも終われば final が立つ", () => {
+    const waiting = fold([
+      ask,
+      report("toolu_r1", "架空の途中の結論。"),
+      report("toolu_r2", "架空のいまの結論。"),
+      backgroundStarted,
+      finished,
+    ])
+    const settled = [backgroundEnded, resumed, finished].reduce(
+      (current, event) => applySessionEvent(current, event, 0),
+      waiting,
+    )
+
+    expect(settled.backgroundTasks.length).toBe(0)
+    expect(settled.turn.kind).not.toBe("running")
+    expect(finalStep(settled)?.body).toEqual({
+      kind: "text",
+      report: "架空のいまの結論。",
+      firstLine: "架空のいまの結論。",
+    })
+  })
+
+  it("続きのターンが動いているあいだも final を立てない", () => {
+    const running = fold([
+      ask,
+      report("toolu_r1", "架空の途中の結論。"),
+      report("toolu_r2", "架空のいまの結論。"),
+      finished,
+      resumed,
+    ])
+
+    expect(running.turn.kind).toBe("running")
+    expect(finalStep(running)).toBeUndefined()
+  })
+})
+
 // docs/display.md 4.2「一度出した本文は二度と消えない」を、続きのターンを2回以上含む現実の並びで
 // 1件ずつ畳みながら確かめる。合図（turn-resumed）が届くたびに出ていたレポートが伏せられないことと、
 // 続きのターンが吹き出しを空に戻さないことの両方を、途中の姿で見る。

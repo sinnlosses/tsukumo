@@ -125,7 +125,9 @@ export type MainViewTurnFailure =
  * `final` は、その本文が**最終レポート**（そのやり取りで最後の、中間でない本文）かどうか
  * （`markFinalReport`）。ラベルを載せる印（`.main-step.is-final`）で、書き上げる演出を掛ける
  * 相手を選ぶのにも使う（`src/browser/components/page/conversation/components/main-view/components/turn/turn.tsx`）。**ラベルを出すかどうかは
- * これだけでは決まらない**（`MainViewTurn.hasInterimReport` と組み合わせる）。
+ * これだけでは決まらない（`MainViewTurn.hasInterimReport` と組み合わせる）。いちばん新しい
+ * やり取りでは、やり取りが閉じている（ターンが `running` でなく、背景のタスクも残っていない）
+ * ときだけ立つ（`mainViewTurns` の `closed` 引数）。
  *
  * `id` は**追加されても番号がずれない**ように、そのやり取りの中で作られた順に先頭から数えた
  * 通し番号（`MainViewTurn.id` と同じ考え方）。`limitTurnEntries` が上限を超えた分を古いほうから
@@ -210,22 +212,32 @@ export function mainViewEntries(state: SessionState): readonly MainViewEntry[] {
  * ——いま走っている SDK ターンで届いた本文だけが伸びうるもので、前の SDK ターンで届いた本文は、
  * 背景のタスクの通知などで claude が同じやり取りの続きを始めても確定したまま（`report` の外の
  * 本文は例外で、続きが来うるあいだは伸びうる側に数える。作るのは `browser/stores/main-view-turn.ts`）。
+ *
+ * `closed` はセッション全体が閉じているか（ターンが `running` でなく、背景のタスクも残って
+ * いない。作るのは `browser/stores/main-view-turn.ts`）。いちばん新しいやり取りにだけ渡す
+ * ——それより前のやり取りは、次の依頼が始まった時点で既に閉じているので常に閉じている扱いのまま
+ * （{@link markFinalReport}）。`unsettled` と役目が違うので分けて渡す: `unsettled` は「まだ伸びる
+ * 本文をそもそも出すか」、`closed` は「出した本文に最終レポートの札を立ててよいか」で、
+ * 独立に false になりうる（背景の仕事を待って `turn-finished` が届くと `unsettled.report` は
+ * 確定扱いに変わるが、背景のタスクが残っているあいだは `closed` は false のまま）。
  */
 export function mainViewTurns(
   entries: readonly MainViewEntry[],
   unsettled: TurnBodies,
+  closed: boolean,
 ): readonly MainViewTurn[] {
   const turns = groupIntoTurns(entries).slice(-MAX_MAIN_VIEW_TURNS)
   return turns
     .map(({ turn, toolReportIds }, index) => {
       // 動いているのはいちばん新しいやり取りだけで、それ以外の本文はもう確定している。
       const latest = index === turns.length - 1
-      return toolReportIds.length === 0
-        ? selectLastText(turn, !latest || !unsettled.utterance)
-        : selectToolReports(turn, toolReportIds, !latest || !unsettled.report)
+      const selected =
+        toolReportIds.length === 0
+          ? selectLastText(turn, !latest || !unsettled.utterance)
+          : selectToolReports(turn, toolReportIds, !latest || !unsettled.report)
+      return { turn: markSupersededSteps(selected), closed: !latest || closed }
     })
-    .map((turn) => markSupersededSteps(turn))
-    .map((turn) => markFinalReport(turn))
+    .map(({ turn, closed: turnClosed }) => markFinalReport(turn, turnClosed))
     .map((turn) => limitTurnEntries(turn))
 }
 
@@ -492,11 +504,21 @@ function extractFirstLine(markdown: string): string {
  * 地は最終レポートなら常に1段上げ、ラベル（「最終レポート」）は中間レポートのあるやり取りだけに
  * 出す——本文が1つしか無いやり取りでは「最終」が何も区別せず、内容を持たない行になる。
  *
+ * `closed` が false のとき（{@link mainViewTurns} の同名の引数）は `final` を1つも立てない。
+ * 「最後の、中間でない本文」であっても、やり取りがまだ閉じていない（ターンが動いている・背景の
+ * タスクが残っている）あいだは、次の `report` が来てこの本文が中間レポートへ回るかもしれない
+ * ——確定していないものに最終レポートの札（ラベルも地の段上げも）を立てない。畳んだり中間
+ * レポートの枠にしたりもしない（`interim` はここでは変えない。決まっていること）。
+ * `hasInterimReport` は `closed` に関係なく `interim` の集計のまま
+ * ——後ろの `report` が中間レポートを増やしたかどうかは、この本文が閉じているかどうかとは別の話。
+ *
  * `interim` の判定（{@link selectToolReports}）も `superseded`（{@link markSupersededSteps}）も
  * 変えない。
  */
-function markFinalReport(turn: MainViewTurn): MainViewTurn {
-  const finalId = turn.steps.findLast((step) => step.body.kind === "text" && !step.interim)?.id
+function markFinalReport(turn: MainViewTurn, closed: boolean): MainViewTurn {
+  const finalId = closed
+    ? turn.steps.findLast((step) => step.body.kind === "text" && !step.interim)?.id
+    : undefined
   return {
     ...turn,
     steps: turn.steps.map((step) => ({ ...step, final: step.id === finalId })),

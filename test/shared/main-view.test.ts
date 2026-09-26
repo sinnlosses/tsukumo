@@ -60,6 +60,7 @@ describe("mainViewTurns（依頼で区切り、直近5件に絞る）", () => {
         detail("今回のレポート"),
       ],
       SETTLED,
+      true,
     )
 
     expect(turns.map((turn) => turn.request?.text)).toEqual(["前の依頼", "今回の依頼"])
@@ -74,7 +75,7 @@ describe("mainViewTurns（依頼で区切り、直近5件に絞る）", () => {
       detail(`レポート${String(index)}`),
     ]).flat()
 
-    const turns = mainViewTurns(entries, SETTLED)
+    const turns = mainViewTurns(entries, SETTLED, true)
 
     expect(turns).toHaveLength(MAX_MAIN_VIEW_TURNS)
     expect(turns.map((turn) => turn.request?.text)).toEqual(
@@ -95,6 +96,7 @@ describe("mainViewTurns（依頼で区切り、直近5件に絞る）", () => {
         edit("src/b.ts"),
       ],
       SETTLED,
+      true,
     )
 
     const steps = turns[0]?.steps ?? []
@@ -107,6 +109,7 @@ describe("mainViewTurns（依頼で区切り、直近5件に絞る）", () => {
     const turns = mainViewTurns(
       [request("依頼"), edit("src/first.ts"), detail("あとから説明")],
       SETTLED,
+      true,
     )
 
     const steps = turns[0]?.steps ?? []
@@ -123,7 +126,7 @@ describe("mainViewTurns（依頼で区切り、直近5件に絞る）", () => {
       ),
     ]
 
-    const turns = mainViewTurns(entries, SETTLED)
+    const turns = mainViewTurns(entries, SETTLED, true)
 
     expect(turns[0]?.droppedCount).toBeGreaterThan(0)
     expect(reportOf(turns[0]?.steps.at(-1))).toBe(materialReport("レポート44"))
@@ -138,7 +141,7 @@ describe("mainViewTurns（依頼で区切り、直近5件に絞る）", () => {
       toolReport(materialReport("直した")),
     ]
 
-    const turns = mainViewTurns(entries, SETTLED)
+    const turns = mainViewTurns(entries, SETTLED, true)
 
     expect(turns[0]?.droppedCount).toBe(0)
     expect(reportOf(turns[0]?.steps[0])).toBe("## 調べた結果\n\n- 1つめ\n- 2つめ\n")
@@ -153,11 +156,15 @@ describe("mainViewTurns（依頼で区切り、直近5件に絞る）", () => {
       ),
     ]
 
-    const before = mainViewTurns(entries, SETTLED)
+    const before = mainViewTurns(entries, SETTLED, true)
     const idsBefore = (before[0]?.steps ?? []).map((step) => step.id)
 
     // さらに記録が積まれ、前の呼び出しでは残っていたステップも古いほうから落ちる。
-    const after = mainViewTurns([...entries, toolReport(materialReport("レポート45"))], SETTLED)
+    const after = mainViewTurns(
+      [...entries, toolReport(materialReport("レポート45"))],
+      SETTLED,
+      true,
+    )
     const idsAfter = (after[0]?.steps ?? []).map((step) => step.id)
 
     // 両方に残っているステップ（id の交わり）は、本文の中身も id も変わらない。
@@ -183,6 +190,7 @@ describe("mainViewTurns（依頼で区切り、直近5件に絞る）", () => {
         detail("架空の答え。直しておいた。"),
       ],
       SETTLED,
+      true,
     )
 
     const steps = turns[0]?.steps ?? []
@@ -200,6 +208,7 @@ describe("mainViewTurns（依頼で区切り、直近5件に絞る）", () => {
     const turns = mainViewTurns(
       [request("依頼"), detail("架空の日本語の答え。"), detail("A made-up English line.")],
       SETTLED,
+      true,
     )
 
     const steps = turns[0]?.steps ?? []
@@ -211,6 +220,7 @@ describe("mainViewTurns（依頼で区切り、直近5件に絞る）", () => {
     const turns = mainViewTurns(
       [request("依頼"), detail("架空の答え。"), detail("\u200B \n")],
       SETTLED,
+      true,
     )
 
     const steps = turns[0]?.steps ?? []
@@ -219,7 +229,7 @@ describe("mainViewTurns（依頼で区切り、直近5件に絞る）", () => {
   })
 
   it("短い返事だけのターン（ツールを1度も呼ばない）でも、締めの本文は残る", () => {
-    const turns = mainViewTurns([request("依頼"), detail("文章だけで答える")], SETTLED)
+    const turns = mainViewTurns([request("依頼"), detail("文章だけで答える")], SETTLED, true)
 
     expect(reportOf(turns[0]?.steps[0])).toBe("文章だけで答える")
     expect(turns[0]?.steps[0]?.final).toBe(true)
@@ -229,6 +239,7 @@ describe("mainViewTurns（依頼で区切り、直近5件に絞る）", () => {
     const turns = mainViewTurns(
       [request("依頼"), detail("比べた結果はこう"), question("どれにする？")],
       SETTLED,
+      true,
     )
 
     const steps = turns[0]?.steps ?? []
@@ -241,6 +252,7 @@ describe("mainViewTurns（依頼で区切り、直近5件に絞る）", () => {
     const turns = mainViewTurns(
       [detail("依頼より前のレポート"), request("依頼"), detail("今回")],
       SETTLED,
+      true,
     )
 
     expect(turns).toHaveLength(2)
@@ -260,6 +272,7 @@ describe("mainViewTurns（追い越された中間レポートを畳む印）", 
         toolReport(materialReport("片付いた")),
       ],
       SETTLED,
+      true,
     )
 
     const steps = turns[0]?.steps ?? []
@@ -277,6 +290,7 @@ describe("mainViewTurns（追い越された中間レポートを畳む印）", 
         toolReport("書きかけの結論"),
       ],
       WRITING,
+      false,
     )
 
     expect(turns[0]?.steps[0]?.interim).toBe(true)
@@ -292,6 +306,7 @@ describe("mainViewTurns（追い越された中間レポートを畳む印）", 
         toolReport("できたよ"),
       ],
       SETTLED,
+      true,
     )
 
     expect(firstLineOf(turns[0]?.steps[0])).toBe("調べた結果")
@@ -306,6 +321,7 @@ describe("mainViewTurns（追い越された中間レポートを畳む印）", 
         toolReport("できたよ"),
       ],
       SETTLED,
+      true,
     )
 
     expect(firstLineOf(turns[0]?.steps[0])).toBe("| 場所 | 状態 |")
@@ -321,6 +337,7 @@ describe("mainViewTurns（追い越された中間レポートを畳む印）", 
         toolReport("できたよ"),
       ],
       SETTLED,
+      true,
     )
 
     const firstLine = firstLineOf(turns[0]?.steps[0]) ?? ""
@@ -332,6 +349,7 @@ describe("mainViewTurns（追い越された中間レポートを畳む印）", 
     const turns = mainViewTurns(
       [request("依頼"), edit("src/first.ts"), detail("あとから説明")],
       SETTLED,
+      true,
     )
 
     expect(turns[0]?.steps[0]?.body).toEqual({ kind: "none" })
@@ -345,11 +363,50 @@ describe("mainViewTurns（最終レポートの印）", () => {
     const turns = mainViewTurns(
       [request("依頼"), toolReport(interim), edit("src/a.ts"), toolReport("書きかけの結論")],
       WRITING,
+      false,
     )
 
     const steps = turns[0]?.steps ?? []
     expect(steps.map((step) => step.interim)).toEqual([true, false])
     expect(steps.map((step) => step.final)).toEqual([false, false])
+  })
+
+  // ターンは `turn-finished` で終わっていて本文は確定扱い（`unsettled.report` は false）だが、
+  // 背景のタスクが残っている・続きのターンが動いているなど、やり取りそのものはまだ閉じていない
+  // 場面（`closed: false`）。次の `report` が来ればこの本文は中間レポートへ回るかもしれないので、
+  // 確定した本文であっても `final` を立てない（本文を出す判定と、札を立てる判定は別）。
+  it("本文は確定していても、やり取りが閉じていなければ final を立てない", () => {
+    const turns = mainViewTurns(
+      [request("依頼"), toolReport(interim), edit("src/a.ts"), toolReport("いまの結論")],
+      SETTLED,
+      false,
+    )
+
+    const steps = turns[0]?.steps ?? []
+    expect(steps.map((step) => step.interim)).toEqual([true, false])
+    expect(steps.map((step) => step.final)).toEqual([false, false])
+    expect(turns[0]?.hasInterimReport).toBe(true)
+  })
+
+  it("同じ並びでも、やり取りが閉じていれば final が立つ", () => {
+    const turns = mainViewTurns(
+      [request("依頼"), toolReport(interim), edit("src/a.ts"), toolReport("いまの結論")],
+      SETTLED,
+      true,
+    )
+
+    const steps = turns[0]?.steps ?? []
+    expect(steps.map((step) => step.final)).toEqual([false, true])
+  })
+
+  it("前のやり取りは、いちばん新しいやり取りが閉じていなくても final が立ったまま", () => {
+    const turns = mainViewTurns(
+      [request("前の依頼"), detail("前のレポート"), request("今回の依頼"), detail("いまの本文")],
+      SETTLED,
+      false,
+    )
+
+    expect(turns[0]?.steps[0]?.final).toBe(true)
   })
 })
 
@@ -376,7 +433,7 @@ describe("mainViewTurns（締めの speak → レポートで終える並び）"
       ...events,
       { kind: "turn-finished", outcome: { kind: "completed" } } satisfies SessionEvent,
     ].reduce((current, event) => applySessionEvent(current, event, 0), INITIAL_SESSION_STATE)
-    return mainViewTurns(mainViewEntries(state), SETTLED)[0]?.steps ?? []
+    return mainViewTurns(mainViewEntries(state), SETTLED, true)[0]?.steps ?? []
   }
 
   it("作業のあとに締めの speak を挟んで書いたレポートが最終レポートになる", () => {
@@ -430,14 +487,15 @@ describe("mainViewTurns（report の無いターンが進行中のあいだは�
     const turns = mainViewTurns(
       [request("依頼"), detail(material), edit("src/a.ts"), detail("まず `src/a.ts` を読むね")],
       WRITING,
+      false,
     )
 
     expect((turns[0]?.steps ?? []).map((step) => reportOf(step))).toEqual([undefined, undefined])
   })
 
   it("書きかけのあいだは final が立たない（書き上げる演出が途中の本文を相手にしない）", () => {
-    const streaming = mainViewTurns([request("依頼"), detail(material)], WRITING)
-    const settled = mainViewTurns([request("依頼"), detail(material)], SETTLED)
+    const streaming = mainViewTurns([request("依頼"), detail(material)], WRITING, false)
+    const settled = mainViewTurns([request("依頼"), detail(material)], SETTLED, true)
 
     expect(streaming[0]?.steps.map((step) => step.final)).toEqual([false])
     expect(settled[0]?.steps.map((step) => step.final)).toEqual([true])
@@ -447,6 +505,7 @@ describe("mainViewTurns（report の無いターンが進行中のあいだは�
     const turns = mainViewTurns(
       [request("前の依頼"), detail("直したよ"), request("今回の依頼"), detail("まず読むね")],
       WRITING,
+      false,
     )
 
     expect(reportOf(turns[0]?.steps[0])).toBe("直したよ")
@@ -458,8 +517,8 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
   // フィクスチャはすべて手で書いた架空の本文（docs/coding-standards.md「会話内容の扱い」）。
   const fold = (events: readonly SessionEvent[]) =>
     events.reduce((current, event) => applySessionEvent(current, event, 0), INITIAL_SESSION_STATE)
-  const turnOf = (events: readonly SessionEvent[], unsettled: TurnBodies) =>
-    mainViewTurns(mainViewEntries(fold(events)), unsettled).at(-1)
+  const turnOf = (events: readonly SessionEvent[], unsettled: TurnBodies, closed: boolean) =>
+    mainViewTurns(mainViewEntries(fold(events)), unsettled, closed).at(-1)
   const ask: SessionEvent = { kind: "request", text: "架空の依頼", images: [] }
   const text = (markdown: string): SessionEvent => ({ kind: "utterance", text: markdown })
   const report = (
@@ -496,6 +555,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     const turn = turnOf(
       [ask, report("架空の結論。", "| 列 |\n| --- |\n| 値 |", "架空のお願い"), finished],
       SETTLED,
+      true,
     )
 
     expect(shownReports(turn)).toEqual([
@@ -517,6 +577,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
         finished,
       ],
       SETTLED,
+      true,
     )
 
     expect(shownReports(turn)).toEqual([
@@ -525,7 +586,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
   })
 
   it("report が呼ばれなかったターンの本文には整形を掛けない", () => {
-    const turn = turnOf([ask, text("架空の答え。\n\n以上です。"), finished], SETTLED)
+    const turn = turnOf([ask, text("架空の答え。\n\n以上です。"), finished], SETTLED, true)
 
     expect(shownReports(turn)).toEqual(["架空の答え。\n\n以上です。"])
   })
@@ -541,6 +602,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
         finished,
       ],
       SETTLED,
+      true,
     )
 
     expect(shownReports(turn)).toEqual([
@@ -555,7 +617,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
   })
 
   it("checks・body・favor が空ならその塊を置かない（帯も出ない）", () => {
-    const turn = turnOf([ask, report("架空の結論だけ。"), finished], SETTLED)
+    const turn = turnOf([ask, report("架空の結論だけ。"), finished], SETTLED, true)
 
     expect(shownReports(turn)).toEqual(["架空の結論だけ。"])
   })
@@ -572,6 +634,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
         finished,
       ],
       SETTLED,
+      true,
     )
 
     expect(shownReports(turn)).toEqual(["架空の結論。"])
@@ -586,6 +649,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     const turn = turnOf(
       [ask, report("途中の結論。"), ...toolRun("toolu_1"), report("最後の結論。"), finished],
       SETTLED,
+      true,
     )
 
     expect(shownReports(turn)).toEqual(["途中の結論。", "最後の結論。"])
@@ -596,7 +660,11 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
   })
 
   it("最後の report のあとに作業が続いて終わっても、それが最終レポートになる", () => {
-    const turn = turnOf([ask, report("唯一の結論。"), ...toolRun("toolu_1"), finished], SETTLED)
+    const turn = turnOf(
+      [ask, report("唯一の結論。"), ...toolRun("toolu_1"), finished],
+      SETTLED,
+      true,
+    )
 
     expect(turn?.steps.find((step) => step.final)?.body).toEqual({
       kind: "text",
@@ -609,6 +677,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     const running = turnOf(
       [ask, report("途中の結論。"), ...toolRun("toolu_1"), report("最後の結論。")],
       WRITING,
+      false,
     )
 
     expect(shownReports(running)).toEqual(["途中の結論。"])
@@ -628,6 +697,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
         ]),
       ),
       SETTLED,
+      true,
     )
 
     expect(turns.map((turn) => shownReports(turn))).toEqual([

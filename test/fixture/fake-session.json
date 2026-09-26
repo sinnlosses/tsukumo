@@ -1786,6 +1786,208 @@
       ]
     },
     {
+      "name": "background-task-interim-report",
+      "steps": [
+        {
+          "afterMs": 0,
+          "event": {
+            "kind": "request",
+            "text": "report を2回呼んだあと背景で待っても、最終レポートの札を早く立てないか確かめたい（架空の依頼）",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 200,
+          "event": {
+            "kind": "speech",
+            "text": "まず少し調べるね。",
+            "expression": "default"
+          }
+        },
+        {
+          "afterMs": 300,
+          "event": {
+            "kind": "tool-started",
+            "toolUseId": "fake-tool-bg-interim-1",
+            "name": "Bash",
+            "input": {
+              "command": "echo ready",
+              "run_in_background": false,
+              "description": "架空の下調べ"
+            }
+          }
+        },
+        {
+          "afterMs": 350,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-tool-bg-interim-1",
+            "content": "ready",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 450,
+          "event": {
+            "kind": "report-drafting",
+            "toolUseId": "fake-report-bg-interim-1"
+          }
+        },
+        {
+          "afterMs": 700,
+          "event": {
+            "kind": "report",
+            "toolUseId": "fake-report-bg-interim-1",
+            "conclusion": "中間の結論（架空）：ここまでで分かったことをいったんまとめた。",
+            "body": "",
+            "favor": "",
+            "checks": []
+          }
+        },
+        {
+          "afterMs": 750,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-report-bg-interim-1",
+            "content": "ok",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 850,
+          "event": {
+            "kind": "speech",
+            "text": "続けて背景で少しだけ走らせておくね。",
+            "expression": "default"
+          }
+        },
+        {
+          "afterMs": 950,
+          "event": {
+            "kind": "tool-started",
+            "toolUseId": "fake-tool-bg-interim-2",
+            "name": "Bash",
+            "input": {
+              "command": "sleep 2",
+              "run_in_background": true,
+              "description": "架空の短い待ち（2秒）"
+            }
+          }
+        },
+        {
+          "afterMs": 1000,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-tool-bg-interim-2",
+            "content": "架空の背景実行の受付（ID: fake-bg-interim-1）",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 1000,
+          "event": {
+            "kind": "background-tasks-changed",
+            "tasks": [
+              {
+                "taskId": "fake-bg-interim-1",
+                "kind": "shell",
+                "description": "架空の短い待ち（2秒）"
+              }
+            ]
+          }
+        },
+        {
+          "afterMs": 1100,
+          "event": {
+            "kind": "report-drafting",
+            "toolUseId": "fake-report-bg-interim-2"
+          }
+        },
+        {
+          "afterMs": 1300,
+          "event": {
+            "kind": "report",
+            "toolUseId": "fake-report-bg-interim-2",
+            "conclusion": "いまの結論（架空）：ここまでで分かったことをまとめた。",
+            "body": "",
+            "favor": "",
+            "checks": []
+          }
+        },
+        {
+          "afterMs": 1350,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-report-bg-interim-2",
+            "content": "ok",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 1500,
+          "event": {
+            "kind": "turn-finished",
+            "outcome": { "kind": "completed" }
+          }
+        },
+        {
+          "afterMs": 2600,
+          "event": {
+            "kind": "background-tasks-changed",
+            "tasks": []
+          }
+        },
+        {
+          "afterMs": 2700,
+          "event": {
+            "kind": "turn-resumed"
+          }
+        },
+        {
+          "afterMs": 2900,
+          "event": {
+            "kind": "speech",
+            "text": "終わったよ。まとめを届けるね。",
+            "expression": "proud"
+          }
+        },
+        {
+          "afterMs": 3000,
+          "event": {
+            "kind": "report-drafting",
+            "toolUseId": "fake-report-bg-interim-3"
+          }
+        },
+        {
+          "afterMs": 3200,
+          "event": {
+            "kind": "report",
+            "toolUseId": "fake-report-bg-interim-3",
+            "conclusion": "最終の結論（架空）：合図をまたいでも最終レポートの札は早まらなかった。",
+            "body": "",
+            "favor": "",
+            "checks": []
+          }
+        },
+        {
+          "afterMs": 3250,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-report-bg-interim-3",
+            "content": "ok",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 3500,
+          "event": {
+            "kind": "turn-finished",
+            "outcome": { "kind": "completed" }
+          }
+        }
+      ]
+    },
+    {
       "name": "current-work-running",
       "steps": [
         {
