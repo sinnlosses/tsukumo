@@ -26,6 +26,7 @@ import { chatRecallEpisodeText, chatRecallListText } from "../../chat/core/chat-
 import { type ReportReview } from "../../report/core/report-review.ts"
 import {
   REPORT_CHECKS_DESCRIPTION,
+  REPORT_CLOSING_DESCRIPTION,
   REPORT_TITLE_DESCRIPTION,
   REPORT_TOOL_DESCRIPTION,
 } from "../../report/core/report-tool.ts"
@@ -43,7 +44,8 @@ import { type ChatRecall, type PersonaMemory, type SessionMode } from "../core/s
 
 /** モデルに見せる `speak` ツールの説明。セリフと本文の境目はここだけで説明する。 */
 const SPEAK_TOOL_DESCRIPTION =
-  "キャラクターがユーザーに向けて話す。掛け声・呼びかけ・リアクション・感想・完了報告はこのツールで言う。" +
+  "キャラクターがユーザーに向けて話す。掛け声・呼びかけ・リアクション・感想はこのツールで言う。" +
+  "`report` を呼ぶターンの締めの一言はここではなく `report` の closing に入れる。" +
   "手順・コード・表・判断とその理由は本文に書き、ここには入れない。"
 
 /** 覚えたことを書き足すツールの名前（docs/glossary.md「remember ツール」）。 */
@@ -130,19 +132,11 @@ export function tsukumoServer(
     name: TSUKUMO_MCP_SERVER_NAME,
     version: "0.0.0",
     tools: [
-      tool(
-        SPEAK_TOOL_NAME,
-        SPEAK_TOOL_DESCRIPTION,
-        {
-          text: z.string().describe("セリフ。1〜2文の短い一言"),
-          expression: z
-            .enum(speakExpressionEnum(expressions))
-            .describe(expressionGuide(expressions)),
-        },
-        async () => ({ content: [{ type: "text" as const, text: "ok" }] }),
-      ),
+      tool(SPEAK_TOOL_NAME, SPEAK_TOOL_DESCRIPTION, speechShape(expressions), async () => ({
+        content: [{ type: "text" as const, text: "ok" }],
+      })),
       ...(mode.kind === "work"
-        ? [reportTool(reportReview, onReportTitle), ...usageReviewTools(usageReview)]
+        ? [reportTool(expressions, reportReview, onReportTitle), ...usageReviewTools(usageReview)]
         : []),
       ...(mode.kind === "chat"
         ? [
@@ -160,15 +154,23 @@ export function tsukumoServer(
  * レポートを受け取るツール。差し戻しの判定の窓口はここだけ
  * （`ReportReview`）。通すときの戻り値は "ok" だけ、差し戻すときは規約違反と
  * 直し方だけを `isError` 付きで返す（画面の事情は載せない。`docs/display.md`「出力の分離（セリフと詳細）」）。描くか捨てるかは
- * この `isError` を見て決まる。レポートにする引数は、ここではなく `assistant` メッセージの変換が
- * 取り出す（`toSessionEvents`）。
+ * この `isError` を見て決まる。レポートにする引数（締めのセリフの `closing` も）は、ここではなく
+ * `assistant` メッセージの変換が取り出す（`toSessionEvents`）。
+ *
+ * 通したときだけ結果に `_meta["claude/endTurn"]` を付け、そこでターンを閉じる（本体はこの
+ * 結果のあとに assistant を挟まず `result` を返す。この印は transcript には残らない）。
+ * 差し戻し（`isError`）では閉じず、モデルが直して呼び直す。
  *
  * `title` は差し戻されなかったときだけ {@link onReportTitle} へ渡す——差し戻された呼び出しの
  * 題を渡すと、規約違反を書いたついでの題が残ってしまう。実際に書くかどうかの判断（利用者の
  * `/rename` を上書きしないなど）は `onReportTitle` の先（`decideSessionTitle` /
  * `createSessionTitleWriter`）が持つので、ここは渡すだけ。
  */
-function reportTool(review: ReportReview, onReportTitle: (title: string) => void) {
+function reportTool(
+  expressions: readonly ExpressionChoice[],
+  review: ReportReview,
+  onReportTitle: (title: string) => void,
+) {
   return tool(
     REPORT_TOOL_NAME,
     REPORT_TOOL_DESCRIPTION,
@@ -178,6 +180,7 @@ function reportTool(review: ReportReview, onReportTitle: (title: string) => void
       favor: z.string().optional().describe("利用者へのお願い（判断・作業・情報）。無ければ省く"),
       checks: z.array(reportCheckSchema).optional().describe(REPORT_CHECKS_DESCRIPTION),
       title: z.string().optional().describe(REPORT_TITLE_DESCRIPTION),
+      closing: z.object(speechShape(expressions)).describe(REPORT_CLOSING_DESCRIPTION),
     },
     async ({ conclusion, body, favor, checks, title }) => {
       const verdict = review.judge({
@@ -192,10 +195,16 @@ function reportTool(review: ReportReview, onReportTitle: (title: string) => void
       if (title !== undefined) {
         onReportTitle(title)
       }
-      return { content: [{ type: "text" as const, text: "ok" }] }
+      return {
+        content: [{ type: "text" as const, text: "ok" }],
+        _meta: { [END_TURN_META_KEY]: true },
+      }
     },
   )
 }
+
+/** ツールの結果の `_meta` に true で載せると、本体がそこでターンを閉じるキー。 */
+const END_TURN_META_KEY = "claude/endTurn"
 
 /** 見直しの期間の引数（2つのツールで同じ）。 */
 const USAGE_REVIEW_DAYS = z.number().int().positive().describe("見た期間。今日を含む直近何日か")
@@ -325,6 +334,14 @@ function recallEpisodeTool(chatRecall: ChatRecall) {
       ],
     }),
   )
+}
+
+/** セリフの引数の形（`speak` と `report` の `closing` で同じ）。 */
+function speechShape(expressions: readonly ExpressionChoice[]) {
+  return {
+    text: z.string().describe("セリフ。1〜2文の短い一言"),
+    expression: z.enum(speakExpressionEnum(expressions)).describe(expressionGuide(expressions)),
+  }
 }
 
 /**

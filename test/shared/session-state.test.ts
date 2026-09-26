@@ -900,6 +900,7 @@ describe("applySessionEvent（report を書いている間）", () => {
         body: "",
         favor: "",
         checks: [],
+        closing: { kind: "none" },
       }).reportDrafting,
     ).toEqual({ kind: "idle" })
   })

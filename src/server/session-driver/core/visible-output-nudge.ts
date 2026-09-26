@@ -33,8 +33,8 @@ const VISIBLE_OUTPUT_NUDGE_PREFIX = "[Your previous response had no visible outp
  * 子プロセス（claude）に渡す環境変数。引き継いだ環境に足す（SDK の `env` は tsukumo 自身の環境と
  * 混ぜずに丸ごと置き換えるので、`PATH` や `HOME` を落とさないように引き継ぎを先に広げる）。
  *
- * 載せるのは `speak` だけ。`report` は締めの `speak` より前に呼ぶので、`report` で終わるターンは
- * 無い。仕事・雑談の両方で同じ値を渡す（どちらも `speak` で終わる）。
+ * 載せるのは `speak` だけ。通った `report` は結果の `claude/endTurn` でそこでターンを閉じ、
+ * そのあとにモデルの応答が無いので、催促の判定に掛からない。仕事・雑談の両方で同じ値を渡す。
  */
 export function childProcessEnv(
   inherited: Readonly<Record<string, string | undefined>>,

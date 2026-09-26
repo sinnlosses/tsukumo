@@ -102,6 +102,11 @@
     "at": 1768438800000,
     "event": {
       "kind": "report",
+      "closing": {
+        "kind": "speech",
+        "text": "いったんまとめたよ。",
+        "expression": "default"
+      },
       "toolUseId": "fake-report-bg-interim-1",
       "conclusion": "中間の結論（架空）：ここまでで分かったことをいったんまとめた。",
       "body": "",
@@ -117,6 +122,15 @@
       "toolUseId": "fake-report-bg-interim-1",
       "content": "ok",
       "isError": false
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "speech",
+      "text": "いったんまとめたよ。",
+      "expression": "default"
     }
   },
   {
@@ -179,6 +193,11 @@
     "at": 1768438800000,
     "event": {
       "kind": "report",
+      "closing": {
+        "kind": "speech",
+        "text": "ここまでまとめたよ。",
+        "expression": "default"
+      },
       "toolUseId": "fake-report-bg-interim-2",
       "conclusion": "いまの結論（架空）：ここまでで分かったことをまとめた。",
       "body": "",
@@ -194,6 +213,15 @@
       "toolUseId": "fake-report-bg-interim-2",
       "content": "ok",
       "isError": false
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "speech",
+      "text": "ここまでまとめたよ。",
+      "expression": "default"
     }
   },
   {

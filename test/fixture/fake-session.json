@@ -1319,6 +1319,7 @@
           "afterMs": 3000,
           "event": {
             "kind": "report",
+            "closing": { "kind": "speech", "text": "途中まで書いたよ。", "expression": "default" },
             "toolUseId": "fake-report-call-1",
             "conclusion": "途中の結論: 目盛りを決めているのは `a.ts` だけだった。",
             "body": "- 読んだのは `/tmp/dummy/a.ts` と `/tmp/dummy/b.ts` の2つ\n- 目盛りを決めているのは `a.ts` のほう\n- `b.ts` は目盛りを読むだけ",
@@ -1373,6 +1374,7 @@
           "afterMs": 7000,
           "event": {
             "kind": "report",
+            "closing": { "kind": "speech", "text": "書けたよ！", "expression": "proud" },
             "toolUseId": "fake-report-call-2",
             "conclusion": "架空の結論: 目盛りを 24 に直し、`a.ts` だけで済んだ。",
             "body": "**直したファイルと結果（架空の数）**\n\n| ファイル | 変えたこと | 状態 |\n| --- | --- | :---: |\n| `a.ts` | 目盛りを 12 から 24 へ | <span class=\"badge badge-ok\">OK</span> |\n| `b.ts` | 読むだけなので変えない | <span class=\"badge badge-warn\">要注意</span> |\n\n```diff src/a.ts\n-const TICKS = 12\n+const TICKS = 24\n```\n\n<div class=\"note note-warn\">\n\n`b.ts` のキャッシュは古い目盛りを持ったまま残る。\n\n</div>",
@@ -1395,21 +1397,6 @@
             "toolUseId": "fake-report-call-2",
             "content": "ok",
             "isError": false
-          }
-        },
-        {
-          "afterMs": 7600,
-          "event": {
-            "kind": "speech",
-            "text": "書けたよ！",
-            "expression": "proud"
-          }
-        },
-        {
-          "afterMs": 8000,
-          "event": {
-            "kind": "utterance",
-            "text": "完了"
           }
         },
         {
@@ -1444,6 +1431,11 @@
           "afterMs": 1000,
           "event": {
             "kind": "report",
+            "closing": {
+              "kind": "speech",
+              "text": "出ないはずの締め（架空）",
+              "expression": "default"
+            },
             "toolUseId": "fake-report-rejected-1",
             "conclusion": "架空の結論その1（差し戻されるはず）。架空の結論その2。架空の結論その3。",
             "body": "# 架空の大見出し（出ないはず）\n\n| 列 | 値 |\n| --- | --- |\n| a | 1 |",
@@ -1472,6 +1464,7 @@
           "afterMs": 2500,
           "event": {
             "kind": "report",
+            "closing": { "kind": "speech", "text": "書けたよ！", "expression": "proud" },
             "toolUseId": "fake-report-rejected-2",
             "conclusion": "架空の結論: 差し戻しのあとに直したレポートだけが出る。",
             "body": "## 直した見出し（架空）\n\n**直した表（作り物の値）**\n\n| 列 | 値 |\n| --- | --- |\n| a | 1 |",
@@ -1486,21 +1479,6 @@
             "toolUseId": "fake-report-rejected-2",
             "content": "ok",
             "isError": false
-          }
-        },
-        {
-          "afterMs": 3000,
-          "event": {
-            "kind": "speech",
-            "text": "書けたよ！",
-            "expression": "proud"
-          }
-        },
-        {
-          "afterMs": 3400,
-          "event": {
-            "kind": "utterance",
-            "text": "完了"
           }
         },
         {
@@ -1535,6 +1513,7 @@
           "afterMs": 1000,
           "event": {
             "kind": "report",
+            "closing": { "kind": "speech", "text": "書けたよ！", "expression": "proud" },
             "toolUseId": "fake-report-tidied-1",
             "conclusion": "架空の結論: 整形で落ちる行は描かれず、残りはそのまま出る。",
             "body": "架空の結論: 整形で落ちる行は描かれず、残りはそのまま出る。\n\n以下にまとめます。\n\n## 残る見出し（架空）\n\n**残る表（作り物の値）**\n\n| 列 | 値 |\n| --- | --- |\n| 以上です | 1 |\n\n> 以上です。（引用の中なので残る）\n\n```text\n以上です。（フェンスの中なので残る）\n## フェンスの中の見出し（残る）\n```\n\n## 落ちる空の見出し（架空）\n\n### 落ちる空の小見出し（架空）\n\n## 残る2つめの見出し（架空）\n\n架空の本文の最後の段落。\n\n以上です。",
@@ -1549,21 +1528,6 @@
             "toolUseId": "fake-report-tidied-1",
             "content": "ok",
             "isError": false
-          }
-        },
-        {
-          "afterMs": 1500,
-          "event": {
-            "kind": "speech",
-            "text": "書けたよ！",
-            "expression": "proud"
-          }
-        },
-        {
-          "afterMs": 1900,
-          "event": {
-            "kind": "utterance",
-            "text": "完了"
           }
         },
         {
@@ -1837,6 +1801,11 @@
           "afterMs": 700,
           "event": {
             "kind": "report",
+            "closing": {
+              "kind": "speech",
+              "text": "いったんまとめたよ。",
+              "expression": "default"
+            },
             "toolUseId": "fake-report-bg-interim-1",
             "conclusion": "中間の結論（架空）：ここまでで分かったことをいったんまとめた。",
             "body": "",
@@ -1907,6 +1876,11 @@
           "afterMs": 1300,
           "event": {
             "kind": "report",
+            "closing": {
+              "kind": "speech",
+              "text": "ここまでまとめたよ。",
+              "expression": "default"
+            },
             "toolUseId": "fake-report-bg-interim-2",
             "conclusion": "いまの結論（架空）：ここまでで分かったことをまとめた。",
             "body": "",
@@ -1962,6 +1936,7 @@
           "afterMs": 3200,
           "event": {
             "kind": "report",
+            "closing": { "kind": "speech", "text": "まとめたよ。", "expression": "default" },
             "toolUseId": "fake-report-bg-interim-3",
             "conclusion": "最終の結論（架空）：合図をまたいでも最終レポートの札は早まらなかった。",
             "body": "",
@@ -2158,6 +2133,11 @@
           "afterMs": 1800,
           "event": {
             "kind": "report",
+            "closing": {
+              "kind": "speech",
+              "text": "いったんまとめたよ。",
+              "expression": "default"
+            },
             "toolUseId": "fake-report-call-resume-1",
             "conclusion": "中間の結論（架空）：ここまでで分かったことをいったんまとめた。",
             "body": "- 下調べは終わった（架空の結果）\n- 続きは合図を待って進める",
@@ -2248,6 +2228,7 @@
           "afterMs": 8200,
           "event": {
             "kind": "report",
+            "closing": { "kind": "speech", "text": "まとめたよ。", "expression": "default" },
             "toolUseId": "fake-report-call-resume-2",
             "conclusion": "最終の結論（架空）：合図をまたいでも報告は消えなかった。",
             "body": "- 中間の報告は合図のあいだも出したまま\n- 吹き出しも前のセリフを保った\n- 最後にこの最終報告へ差し替わる",

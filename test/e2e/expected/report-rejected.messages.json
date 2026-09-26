@@ -89,6 +89,11 @@
     "at": 1768438800000,
     "event": {
       "kind": "report",
+      "closing": {
+        "kind": "speech",
+        "text": "書けたよ！",
+        "expression": "proud"
+      },
       "toolUseId": "fake-report-rejected-2",
       "conclusion": "架空の結論: 差し戻しのあとに直したレポートだけが出る。",
       "body": "## 直した見出し（架空）\n\n**直した表（作り物の値）**\n\n| 列 | 値 |\n| --- | --- |\n| a | 1 |",
@@ -113,14 +118,6 @@
       "kind": "speech",
       "text": "書けたよ！",
       "expression": "proud"
-    }
-  },
-  {
-    "received": "event",
-    "at": 1768438800000,
-    "event": {
-      "kind": "utterance",
-      "text": "完了"
     }
   },
   {

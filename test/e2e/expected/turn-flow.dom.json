@@ -636,6 +636,15 @@
                   "data-latest": "false"
                 },
                 "children": [
+                  "途中まで書いたよ。"
+                ]
+              },
+              {
+                "tag": "div",
+                "attributes": {
+                  "data-latest": "false"
+                },
+                "children": [
                   "見てくるね。"
                 ]
               }

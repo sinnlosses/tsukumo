@@ -500,7 +500,7 @@ function assistantBlockEvents(
 
   if (block.name === tsukumoToolFullName(REPORT_TOOL_NAME)) {
     return parentToolUseId === undefined && typeof block.id === "string"
-      ? reportEvents(block.id, block.input)
+      ? reportEvents(block.id, block.input, expressions)
       : []
   }
 
@@ -517,7 +517,10 @@ function assistantBlockEvents(
     : []
 }
 
-function speechEvents(input: unknown, expressions: readonly Expression[]): readonly SessionEvent[] {
+function speechEvents(
+  input: unknown,
+  expressions: readonly Expression[],
+): readonly Extract<SessionEvent, { readonly kind: "speech" }>[] {
   if (!isPlainObject(input) || typeof input.text !== "string") {
     return []
   }
@@ -529,10 +532,15 @@ function speechEvents(input: unknown, expressions: readonly Expression[]): reado
 
 /**
  * `report` の引数を取り出す。`body` と `favor` の「無い」は空の文字列に、`checks` の「無い」は
- * 空の配列に畳む（描く側は空の塊を置かないだけで済む）。`conclusion` が文字列でなければ捨てる（引数の検査に落ちた呼び出しで、
+ * 空の配列に畳む（描く側は空の塊を置かないだけで済む）。`closing` の「無い」（引数に
+ * `closing` が無かったころの transcript）は `none` に畳む。`conclusion` が文字列でなければ捨てる（引数の検査に落ちた呼び出しで、
  * モデルには本体がエラーを返す）。
  */
-function reportEvents(toolUseId: string, input: unknown): readonly SessionEvent[] {
+function reportEvents(
+  toolUseId: string,
+  input: unknown,
+  expressions: readonly Expression[],
+): readonly SessionEvent[] {
   if (!isPlainObject(input) || typeof input.conclusion !== "string") {
     return []
   }
@@ -545,6 +553,7 @@ function reportEvents(toolUseId: string, input: unknown): readonly SessionEvent[
       body: optionalString(input.body) ?? "",
       favor: optionalString(input.favor) ?? "",
       checks: parseReportChecks(input.checks),
+      closing: speechEvents(input.closing, expressions)[0] ?? { kind: "none" },
     },
   ]
 }

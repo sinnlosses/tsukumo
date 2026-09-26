@@ -121,6 +121,7 @@ describe("currentTurnSteps（report ツール）", () => {
         body: "",
         favor: "",
         checks: [],
+        closing: { kind: "none" },
       },
     ]
     const state = events.reduce(

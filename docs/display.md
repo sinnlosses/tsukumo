@@ -82,9 +82,16 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/display.md
   ツール呼び出しの中でメインを止め、吹き出しが数分単位で止まるため。**合図（進み具合の1行か、
   委譲の完了の知らせ）の届いていないターンでは `speak` も `report` も呼ばない**（2026-09-27 決定。
   Claude Code 本体の催促 "The user hasn't heard from you in a while" で始まるターンも含む）。新しい事実の無いセリフの言い直しを防ぐため
-- **レポートは MCP ツール `report(conclusion, checks, body, favor)` で受け取る**（2026-09-24 決定。
-  `checks` は 2026-09-26 に足した。
-  仕事のセッションでは常に載り、雑談では載らない）。`report` の外に書いたターンの本文
+- **レポートは MCP ツール `report(conclusion, checks, body, favor, closing)` で受け取る**（2026-09-24 決定。
+  `checks` は 2026-09-26 に、`closing` は 2026-09-27 に足した。
+  仕事のセッションでは常に載り、雑談では載らない）。**検査を通った `report` はそこでターンを閉じる**
+  （2026-09-27 決定。handler が結果に `_meta["claude/endTurn"]` を付け、本体は assistant を挟まずに
+  ターンを終える。差し戻した呼び出しには付けないので、モデルは直して呼び直せる。
+  `docs/research/report-block.md` 13章）。`report` のあとに本文を書き足す形が起きないので、
+  **締めのセリフは必須の引数 `closing`（`speak` と同じ `text` と `expression`）で受け取り**、
+  レポートを描いたすぐ後ろに吹き出しへ出す（差し戻した呼び出しの `closing` は出さない）。
+  ターンの途中の経過は `speak` で言う。雑談には使わない（`report` が無く、1ターンに `speak` を
+  何度か呼ぶのが普通の形なので、閉じるツールを置くと切れる）。`report` の外に書いたターンの本文
   （`assistant` のテキスト）は、`report` が1つでも呼ばれたターンでは画面に出さない。呼ばれなかった
   ターンだけ、本文を詳細として扱い、下の「メインビュー」の選び方でレポートにする
 
@@ -92,8 +99,8 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/display.md
 いる（撤去の根拠は `docs/history/decision.md`）。
 
 **tsukumo の中でのセリフの規約は3か所に分かれる**（2026-09-23 改訂）: **呼ぶ回数・契機**は
-`src/server/system-prompt/core/speech-cadence.ts`、**ターンの締め方**（`report` を呼ぶターンは `report` → 締めの `speak` の順で終え、新しい事実の無いターンはどちらも呼ばない、
-そのあとに本文を書かない、など。2026-09-25 改訂）は `src/server/report/core/report-notation.ts`、**口調・
+`src/server/system-prompt/core/speech-cadence.ts`、**ターンの締め方**（`report` は作業を終えてから最後に1回呼び、締めのセリフは `closing` に入れる。新しい事実の無いターンは
+`report` を呼ばない、など。2026-09-27 改訂）は `src/server/report/core/report-notation.ts`、**口調・
 言い回し**はキャラクターパックの `persona.md` が持つ。3つとも `systemPrompt` の append として
 毎ターン渡る（下の「レポートの記法は、TUI と tsukumo で出し分ける」と同じ切り分け）。
 
@@ -323,7 +330,8 @@ CSS の3つを揃える**（レンダラを直したのに規約が古いまま�
   「`report` → 締めの `speak` → 「完了」の1行」の順で終えさせ、最後の1行で催促の入口を塞いだ。
   **2026-09-25 に「完了」の1行の条を外した**（ユーザー決定）——`report` を呼ばないターンでは
   その1行が最終レポートとして画面に出たため。催促は子プロセスへ渡す環境変数で塞ぐ
-  （`docs/chat-mode.md` 4.9）。締めの言い方の条は `persona.md`「締めのセリフの言い方」）
+  （`docs/chat-mode.md` 4.9）。2026-09-27 に、通った `report` でターンを閉じ、締めのセリフを
+  `report` の `closing` へ移した。締めの言い方の条は `persona.md`「締めのセリフの言い方」）
   **規約の条項は残す**（`report-notation.ts` の「前置きと締めを書かない」「レポートは必ず日本語で
   書く」など。素の TUI では tsukumo 側の判定が効かないため）。
   **中間レポートは1ターンに何件でも積む**。**1ターンの上限（`MAX_MAIN_VIEW_ENTRIES`＝40）は、画面に出るもの

@@ -579,8 +579,51 @@ describe("toRestoredEvents", () => {
     )
 
     expect(reports).toEqual([
-      { kind: "report", toolUseId: "r-2", conclusion: "架空の二", body: "", favor: "", checks: [] },
+      {
+        kind: "report",
+        toolUseId: "r-2",
+        conclusion: "架空の二",
+        body: "",
+        favor: "",
+        checks: [],
+        closing: { kind: "none" },
+      },
     ])
+  })
+
+  it("通った report の closing だけを、report の後ろのセリフとして組み直す", () => {
+    const messages = [
+      userMessage("架空の依頼"),
+      assistantMessage([
+        {
+          type: "tool_use",
+          id: "r-1",
+          name: REPORT_TOOL_FULL_NAME,
+          input: {
+            conclusion: "架空の一",
+            closing: { text: "架空の出ない締め", expression: "default" },
+          },
+        },
+      ]),
+      userMessage([
+        { type: "tool_result", tool_use_id: "r-1", content: "架空の差し戻し", is_error: true },
+      ]),
+      assistantMessage([
+        {
+          type: "tool_use",
+          id: "r-2",
+          name: REPORT_TOOL_FULL_NAME,
+          input: { conclusion: "架空の二", closing: { text: "架空の締め", expression: "proud" } },
+        },
+      ]),
+      userMessage([{ type: "tool_result", tool_use_id: "r-2", content: "ok" }]),
+    ]
+
+    const shown = toRestoredEvents(messages, EXPRESSIONS)
+      .filter((event) => event.kind === "report" || event.kind === "speech")
+      .map((event) => (event.kind === "report" ? event.conclusion : event.text))
+
+    expect(shown).toEqual(["架空の二", "架空の締め"])
   })
 
   it("組み直した report も、動いているときと同じく整形してから描く", () => {

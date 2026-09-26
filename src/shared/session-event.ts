@@ -56,6 +56,14 @@ export type ModelEffortSupport = {
 }
 
 /**
+ * `report` の締めのセリフ（`report` ツールの `closing` 引数）。`none` は `closing` を持たなかった
+ * ころの呼び出しで、transcript から組み直したときにだけ現れる。
+ */
+export type ReportClosing =
+  | Extract<SessionEvent, { readonly kind: "speech" }>
+  | { readonly kind: "none" }
+
+/**
  * tsukumo 内部のイベント。SDK のメッセージ由来のものと、駆動側（src/server/session-driver/adapter/sdk-driver.ts）が
  * 自分で起こすもの（`request` / `pending-changed` / `session-ended`）が1本の流れに混ざる。
  * 受け取る側（src/shared/session-state.ts）はどちらから来たかを区別しない。
@@ -157,7 +165,8 @@ export type SessionEvent =
    * `report` ツールの呼び出し（docs/glossary.md「report ツール」）。メインが呼んだ
    * ものだけが届く（サブエージェントの呼び出しは変換で捨てる）。`body` と `favor` は無ければ空の
    * 文字列、`checks`（検証結果）は無ければ空の配列。`toolUseId` は呼び出しの id で、差し戻し（`src/server/report/core/report-review.ts`）が同じ
-   * 呼び出しの `tool-finished` と突き合わせるのに使う。
+   * 呼び出しの `tool-finished` と突き合わせるのに使う。`closing`（締めのセリフ）は描いたあとに
+   * 差し戻しが `speech` として出すもので、画面の状態はこの欄を読まない。
    */
   | {
       readonly kind: "report"
@@ -166,6 +175,7 @@ export type SessionEvent =
       readonly body: string
       readonly favor: string
       readonly checks: readonly ReportCheck[]
+      readonly closing: ReportClosing
     }
   | {
       readonly kind: "tool-started"

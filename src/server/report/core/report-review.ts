@@ -50,7 +50,9 @@ export type ReportReview = {
    * 届いたイベントを流してよい並びに変える（メインのイベントだけを渡す）。`report` は同じ
    * `toolUseId` の `tool-finished` まで預かり、`isError` でなければその直前に出す。預かったまま
    * ターンが終わった `report`（結果の届かなかった呼び出し）は、`turn-finished` の直前に出す
-   * （判定の出なかった呼び出しは、差し戻しの無かったころと同じく描く）。
+   * （判定の出なかった呼び出しは、差し戻しの無かったころと同じく描く）。描いた `report` の
+   * 締めのセリフ（`closing`）は、そのすぐ後ろに `speech` として出す（差し戻した呼び出しの締めは
+   * 出さない）。
    */
   readonly pass: (event: SessionEvent) => readonly SessionEvent[]
 }
@@ -125,7 +127,7 @@ export function createReportReview(): ReportReview {
           }
           drawn = [...drawn, report]
           hasNews = false
-          return [report, event]
+          return [report, event, ...closingSpeech(report)]
         }
         case "request":
         case "turn-started":
@@ -143,7 +145,7 @@ export function createReportReview(): ReportReview {
           startTurn()
           return [event]
         case "turn-finished": {
-          const unsettled = held
+          const unsettled = held.flatMap((report) => [report, ...closingSpeech(report)])
           held = []
           startTurn()
           return [...unsettled, event]
@@ -169,9 +171,14 @@ export const REPORT_RESEND_REJECTION_TEXT =
  */
 export const REPORT_NOTHING_NEW_REJECTION_TEXT =
   "直前の `report` のあと、新しい依頼もツールの結果も背景のタスクの終わりも届いていないので、" +
-  "この `report` は画面に出していない。伝える新しい事実が無いターンは、`report` も締めの `speak` も" +
+  "この `report` は画面に出していない。伝える新しい事実が無いターンは、`report` を" +
   "呼ばず、何も書かずに終えてよい。言い回しを変えて同じ中身の `report` を送り直さないこと。" +
   "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。"
+
+/** 描いた `report` の締めのセリフ。`closing` を持たなかったころの呼び出しには無い。 */
+function closingSpeech(report: ReportEvent): readonly SessionEvent[] {
+  return report.closing.kind === "speech" ? [report.closing] : []
+}
 
 /** 2つのレポートが同じ引数か。文字列の3つの欄は前後の空白を除いて、`checks` は中身で比べる。 */
 function isSameReport(left: ReportDraft, right: ReportDraft): boolean {

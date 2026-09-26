@@ -1044,6 +1044,7 @@ describe("toSessionEvents（report ツール）", () => {
           body: "## 架空の見出し",
           favor: "架空のお願い",
           checks: [{ status: "ok", label: "架空の検査", detail: "架空の件数" }],
+          closing: { text: "架空の締め", expression: "proud" },
         },
       },
     ])
@@ -1056,11 +1057,12 @@ describe("toSessionEvents（report ツール）", () => {
         body: "## 架空の見出し",
         favor: "架空のお願い",
         checks: [{ status: "ok", label: "架空の検査", detail: "架空の件数" }],
+        closing: { kind: "speech", text: "架空の締め", expression: "proud" },
       },
     ])
   })
 
-  it("body と favor が無いときは空の文字列に、checks が無いときは空の配列に畳む", () => {
+  it("body と favor が無いときは空の文字列に、checks が無いときは空の配列に、closing が無いときは none に畳む", () => {
     const message = assistantMessage([
       {
         type: "tool_use",
@@ -1078,6 +1080,7 @@ describe("toSessionEvents（report ツール）", () => {
         body: "",
         favor: "",
         checks: [],
+        closing: { kind: "none" },
       },
     ])
   })

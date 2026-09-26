@@ -450,7 +450,25 @@
                 },
                 "children": [
                   "つくもの精霊",
+                  "ここまでまとめたよ。"
+                ]
+              },
+              {
+                "tag": "div",
+                "attributes": {
+                  "data-latest": "false"
+                },
+                "children": [
                   "続けて背景で少しだけ走らせておくね。"
+                ]
+              },
+              {
+                "tag": "div",
+                "attributes": {
+                  "data-latest": "false"
+                },
+                "children": [
+                  "いったんまとめたよ。"
                 ]
               },
               {

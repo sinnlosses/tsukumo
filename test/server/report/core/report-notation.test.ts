@@ -177,27 +177,23 @@ describe("REPORT_NOTATION_PROMPT", () => {
     expect(REPORT_NOTATION_PROMPT).toContain("`report` の外に書いたテキストは")
   })
 
-  it("report を呼ぶターンは report → 締めの speak で終えさせ、そのあとに本文を書かせない（「完了」の1行の条は無い）", () => {
-    expect(REPORT_NOTATION_PROMPT).toContain(
-      "`report` を呼ぶターンは、`report` → 締めの `speak` の順で終える",
-    )
-    expect(REPORT_NOTATION_PROMPT).toContain("締めの `speak` のあとには何も\n書かない")
+  it("report が通るとターンが終わり、締めのセリフは closing に入れさせる（「完了」の1行の条は無い）", () => {
+    expect(REPORT_NOTATION_PROMPT).toContain("`report` が受け付けられると、そこでターンが終わる")
+    expect(REPORT_NOTATION_PROMPT).toContain("締めのセリフは `report` の `closing` に入れる")
+    expect(REPORT_NOTATION_PROMPT).toContain("途中の経過は `speak` で言う")
+    expect(REPORT_NOTATION_PROMPT).not.toContain("`report` → 締めの `speak` の順で終える")
     expect(REPORT_NOTATION_PROMPT).not.toContain("「完了」")
-    expect(REPORT_NOTATION_PROMPT).not.toContain("ターンは締めの `speak` → レポートの順で終える")
-    expect(REPORT_NOTATION_PROMPT).not.toContain("レポートの前に言う")
-    expect(REPORT_NOTATION_PROMPT).not.toContain("レポートの前の `speak`")
-    const beforeSend = REPORT_NOTATION_PROMPT.split("### 送る前に消すもの").at(1) ?? ""
-    expect(beforeSend).toContain("`report` のあとに続けようとしているもの")
+    expect(REPORT_NOTATION_PROMPT).not.toContain("中間レポートになる")
   })
 
-  it("伝える新しい事実が無いターンは、report も締めの speak も呼ばずに終えてよいと言う", () => {
+  it("伝える新しい事実が無いターンは、report を呼ばずに終えてよいと言う", () => {
     expect(REPORT_NOTATION_PROMPT).toContain("伝える新しい事実が無いターン")
-    expect(REPORT_NOTATION_PROMPT).toContain("締めの `speak` も呼ばず、本文も書かずに終えてよい")
+    expect(REPORT_NOTATION_PROMPT).toContain("呼ばず、本文も書かずに終えてよい")
   })
 
   it("人格の締めの例（予告の形）を、書き終えたことの一言に言い換えさせる", () => {
     // ホームのパックや画面から作ったパックの persona.md は tsukumo から直せないため。
-    expect(REPORT_NOTATION_PROMPT).toContain("締めの `speak` は書き終えた")
+    expect(REPORT_NOTATION_PROMPT).toContain("書き終えたことを言う一言にする")
     expect(REPORT_NOTATION_PROMPT).toContain("キャラクターの人格に締めの例があれば")
   })
 

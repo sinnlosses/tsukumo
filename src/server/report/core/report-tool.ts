@@ -4,11 +4,9 @@
 // イベントに変えるのは `toSessionEvents`、書き方の規約は `REPORT_NOTATION_PROMPT`。
 //
 // ここに置くのは、ツールの説明文と `Stop` フックの関所（`createReportGate`。登録は
-// SDK を起こすアダプタ）。関所は、SDK のターンの最後の `report` のあと（無ければ
-// ターンの頭から）に1行を超える本文を書いて止まろうとしたら差し戻す。そのターンで `report` が
-// 済んでいるかで理由を分ける: 済んでいなければ `report` で渡し直させ、済んでいれば「もう画面に
-// 出ている」と伝えて、言い直しなら何も足さずに終えさせる（一律に「画面に出ていない」と返すと、
-// モデルが同じ中身の `report` を出し直して中身の似た2枚が並び、締めのセリフで差し戻しに触れる）。
+// SDK を起こすアダプタ）。通った `report` はそこでターンを閉じる（handler が結果に
+// `claude/endTurn` を付ける）ので、`report` のあとに本文が書かれることは無い。関所が止めるのは
+// `report` を呼ばずに1行を超える本文を書いて止まろうとしたターンだけで、`report` で渡し直させる。
 // `report` の呼び出しそのものの検査と差し戻しは `ReportReview`（こちらは描く前の検査の段）。
 
 import { MAX_SESSION_HEADING_LENGTH } from "../../../shared/session-choice.ts"
@@ -19,7 +17,8 @@ import { type SessionEvent } from "../../../shared/session-event.ts"
  * （MCP ツールの説明文は既定で 2048 字までしか渡らず、規約の全文は入らない）。
  */
 export const REPORT_TOOL_DESCRIPTION =
-  "ターンのレポートをメインビューに出す。conclusion → checks（検証結果の帯）→ body → favor の順に描かれる。" +
+  "ターンのレポートをメインビューに出す。conclusion → checks（検証結果の帯）→ body → favor の順に描かれ、" +
+  "そのあと closing のセリフが吹き出しに出る。受け付けられるとそこでターンが終わる（あとに何も書けない）。" +
   "書き方は「レポートの記法（tsukumo）」の節に従う。"
 
 /**
@@ -32,6 +31,14 @@ export const REPORT_CHECKS_DESCRIPTION =
   "label と detail は素の文字で描かれるので、バッククォートなどの記法を使わない。"
 
 /**
+ * `report` の `closing` 引数（締めのセリフ）の説明。`report` はターンを閉じるので、締めの一言は
+ * あとから `speak` で言えず、ここで受け取る。
+ */
+export const REPORT_CLOSING_DESCRIPTION =
+  "締めのセリフ（speak と同じ text と expression）。レポートを描いたあとに吹き出しに出る。" +
+  "書き終えたことを言う一言にし、レポートの中身を言い直さない。"
+
+/**
  * `report` の任意の `title` 引数の説明。セッション一覧の見出しにする題を付けさせる条はここだけ
  * （人格ではなく tsukumo 側の条に書く）。利用者の `/rename` を上書きしない判断はモデルに任せず、
  * `decideSessionTitle` が持つ。
@@ -41,33 +48,21 @@ export const REPORT_TITLE_DESCRIPTION =
   "話の中心がはっきりした最初と、大きく変わったときだけ渡す。変える必要が無ければ省く。"
 
 /**
- * `Stop` の関所が差し戻すときにモデルへ返す理由（そのターンで `report` が済んでいないとき）。
+ * `Stop` の関所が差し戻すときにモデルへ返す理由。
  * 固定の文面だけで、モデルが書いた本文は写さない（会話の中身をモデルの文脈へ戻す経路を作らない）。
  * 差し戻しは利用者の画面に出ないので、セリフで触れさせない（触れると利用者には意味の通らない
  * 言い訳になる）。
  */
 export const REPORT_GATE_REASON =
   "いま書いた本文は画面に出ていない。その内容を `report` ツール（`mcp__tsukumo__report`）で" +
-  "渡し直すこと。前に渡した `report` を同じ引数で送り直さない（送り直しは差し戻す）。" +
-  "`report` のあとに書いてよいのは締めの `speak` だけ。" +
+  "渡し直すこと。締めの一言は `report` の closing に入れる（`report` が通るとそこでターンが終わる）。" +
   "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。"
 
 /**
- * `Stop` の関所が差し戻すときにモデルへ返す理由（そのターンで `report` が済んでいるとき）。
- * レポートはもう画面に出ているので、渡し直させない。あとに書いた本文がレポートの言い直しなら
- * 何も呼ばずに終えさせ、レポートのあとにツールの結果で分かった事実があるときだけ新しい `report` を
- * 呼ばせる（それより前に分かっていたことの言い足しは `ReportReview` が新しい事実の無い `report` として差し戻す）。
- */
-export const REPORT_GATE_AFTER_REPORT_REASON =
-  "レポートはもう画面に出ている。そのあとに書いた本文は画面に出ない。" +
-  "本文がレポートの言い直し・まとめなら、`report` も `speak` も呼ばず、何も書かずに終えること。" +
-  "レポートのあとに届いたツールの結果で分かった事実を足す必要があるときだけ、それを含めた `report` を1回呼んでから締めの `speak` で終える。" +
-  "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。"
-
-/**
- * `Stop` の関所。届いたイベントを {@link ReportGate.observe} で見て、SDK のターンの中で最後の
- * `report` のあと（無ければターンの頭から）に書いた本文を覚えておき、止まろうとしたときに
- * {@link ReportGate.verdict} が差し戻すか（と、その理由）を決める。
+ * `Stop` の関所。届いたイベントを {@link ReportGate.observe} で見て、SDK のターンの頭から書いた
+ * 本文を覚えておき、止まろうとしたときに {@link ReportGate.verdict} が差し戻すか（と、その理由）を
+ * 決める。`report` が届いたら覚えた本文を捨てる（通った `report` はターンを閉じるので、そのターンの
+ * 本文は `report` の前に書いたものだけ）。
  *
  * - ターンの頭は `session-info`（`init` は SDK のターンの頭に毎回届く。依頼で始まるターンも、
  *   背景のタスクやサブエージェントの合図で claude が自分で始めるターンも同じ）。`turn-finished`
@@ -80,8 +75,7 @@ export type ReportGate = {
   readonly observe: (event: SessionEvent) => void
   /**
    * 差し戻すか。`stopHookActive`（すでに一度差し戻して続けているところ）なら差し戻さない
-   * （ループさせない）。それ以外は、覚えた本文が1行を超えていれば、そのターンで `report` が
-   * 済んでいるかに応じた理由で差し戻す。
+   * （ループさせない）。それ以外は、覚えた本文が1行を超えていれば差し戻す。
    */
   readonly verdict: (stopHookActive: boolean) => ReportGateVerdict
 }
@@ -93,53 +87,38 @@ export type ReportGateVerdict =
 
 /** {@link ReportGate} を1つ作る。セッション1つに1つ（ターンの区切りを自分で見ている）。 */
 export function createReportGate(): ReportGate {
-  let turn: GateTurn = EMPTY_TURN
+  let unreported: readonly string[] = []
 
   return {
     observe: (event) => {
-      turn = nextTurn(turn, event)
+      unreported = nextUnreported(unreported, event)
     },
-    verdict: (stopHookActive) => {
-      if (stopHookActive || !exceedsOneLine(turn.unreported)) {
-        return { kind: "pass" }
-      }
-      return {
-        kind: "block",
-        reason: turn.reported ? REPORT_GATE_AFTER_REPORT_REASON : REPORT_GATE_REASON,
-      }
-    },
+    verdict: (stopHookActive) =>
+      stopHookActive || !exceedsOneLine(unreported)
+        ? { kind: "pass" }
+        : { kind: "block", reason: REPORT_GATE_REASON },
   }
 }
 
 /**
  * 「1行」の字数の上限（コードポイントで数える）。改行を含まなくても、これを超えたら1行と
  * 見なさない（改行の無い段落1つでレポートを書き切ることがあるため）。試行で通ってよかった
- * 1行（背景の委譲を待つ一言、`report` → 締めの `speak` のあとの1行）は64字以下、差し戻すべき
+ * 1行（背景の委譲を待つ一言など）は64字以下、差し戻すべき
  * だった本文は131字以上だった（`docs/research/report-tool-trial.md`）。その間に余裕を取って置く。
  */
 const ONE_LINE_MAX_CHARS = 100
 
-/** 関所が1つの SDK のターンについて覚えていること。 */
-type GateTurn = {
-  /** このターンで `report` を受け取ったか */
-  readonly reported: boolean
-  /** 最後の `report` のあと（無ければターンの頭から）に書いた本文 */
-  readonly unreported: readonly string[]
-}
-
-const EMPTY_TURN = { reported: false, unreported: [] } satisfies GateTurn
-
-function nextTurn(turn: GateTurn, event: SessionEvent): GateTurn {
+/** SDK のターンの頭（か最後の `report`）からいままでに書いた本文の並び。 */
+function nextUnreported(unreported: readonly string[], event: SessionEvent): readonly string[] {
   switch (event.kind) {
     case "session-info":
     case "turn-finished":
-      return EMPTY_TURN
     case "report":
-      return { reported: true, unreported: [] }
+      return []
     case "utterance":
-      return { ...turn, unreported: [...turn.unreported, event.text] }
+      return [...unreported, event.text]
     default:
-      return turn
+      return unreported
   }
 }
 

@@ -267,6 +267,7 @@ describe("startFakeSession", () => {
         body: "",
         favor: "",
         checks: [],
+        closing: { kind: "none" },
       }) as const
     const finished = (toolUseId: string, isError: boolean) =>
       ({ kind: "tool-finished", toolUseId, content: "架空の結果", isError }) as const

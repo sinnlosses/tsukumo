@@ -25,11 +25,13 @@ describe("SPEECH_CADENCE_PROMPT", () => {
     expect(REPORT_NOTATION_PROMPT).not.toContain("間を空けない")
   })
 
-  it("締めの speak は report を呼んだ直後に置き、書き終えたことを言う", () => {
-    // `report` は呼び出しの時点で中身が確定するので、締めのセリフはそのあとに言える
+  it("締めの1回は speak ではなく report の closing で言う", () => {
+    // 通った `report` はそこでターンを閉じるので、あとから `speak` は呼べない
     // （`report-notation.ts` の終わり方の条と揃える）。
-    expect(SPEECH_CADENCE_PROMPT).toContain("`report` を呼んだ直後に締めの1回")
-    expect(SPEECH_CADENCE_PROMPT).toContain("書き終えたことの一言")
+    expect(SPEECH_CADENCE_PROMPT).toContain(
+      "締めの1回は `speak` ではなく `report` の `closing` で言う",
+    )
+    expect(SPEECH_CADENCE_PROMPT).not.toContain("`report` を呼んだ直後に締めの1回")
     expect(SPEECH_CADENCE_PROMPT).not.toContain("書く直前")
     expect(SPEECH_CADENCE_PROMPT).not.toContain("これから何を書くかの予告")
   })

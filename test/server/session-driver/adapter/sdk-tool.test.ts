@@ -112,16 +112,55 @@ describe("recall / recall_episode ツール", () => {
   })
 })
 
+/** `report` に渡す締めのセリフ（架空）。 */
+const CLOSING = { text: "架空の締めの一言", expression: "default" }
+
+describe("report でターンを閉じる", () => {
+  it("通った report の結果にだけ claude/endTurn を付ける", async () => {
+    const reply = await callTool(workServer(), "report", {
+      conclusion: "架空の結論",
+      closing: CLOSING,
+    })
+
+    expect(reply).toEqual({ text: "ok", isError: false, endsTurn: true })
+  })
+
+  it("差し戻した report（isError）には付けない（直して呼び直せる）", async () => {
+    // conclusion が3文以上（規約違反「冒頭の1〜2文で結論」）だと差し戻される。
+    const reply = await callTool(workServer(), "report", {
+      conclusion: "架空の一文目。架空の二文目。架空の三文目。",
+      closing: CLOSING,
+    })
+
+    expect(reply.isError).toBe(true)
+    expect(reply.endsTurn).toBe(false)
+  })
+
+  it("closing の無い report は形の検査で落ち、ターンを閉じない", async () => {
+    const reply = await callTool(workServer(), "report", { conclusion: "架空の結論" })
+
+    expect(reply.isError).toBe(true)
+    expect(reply.endsTurn).toBe(false)
+  })
+
+  it("speak はターンを閉じない", async () => {
+    const reply = await callTool(workServer(), "speak", CLOSING)
+
+    expect(reply).toEqual({ text: "ok", isError: false, endsTurn: false })
+  })
+})
+
 describe("report の title", () => {
   it("通った report の title を渡す", async () => {
     const titles: string[] = []
 
     const reply = await callTool(workServer([], [], titles), "report", {
       conclusion: "架空の結論",
+      closing: CLOSING,
       title: "架空の題",
     })
 
-    expect(reply).toEqual({ text: "ok", isError: false })
+    expect(reply.isError).toBe(false)
     expect(titles).toEqual(["架空の題"])
   })
 
@@ -130,18 +169,19 @@ describe("report の title", () => {
 
     const reply = await callTool(workServer([], [], titles), "report", {
       conclusion: "架空の結論",
+      closing: CLOSING,
     })
 
-    expect(reply).toEqual({ text: "ok", isError: false })
+    expect(reply.isError).toBe(false)
     expect(titles).toEqual([])
   })
 
   it("規約違反で差し戻された report の title は渡さない", async () => {
     const titles: string[] = []
 
-    // conclusion が3文以上（規約違反「冒頭の1〜2文で結論」）だと差し戻される。
     const reply = await callTool(workServer([], [], titles), "report", {
       conclusion: "架空の一文目。架空の二文目。架空の三文目。",
+      closing: CLOSING,
       title: "架空の題",
     })
 
@@ -156,7 +196,7 @@ describe("見直しのツール", () => {
 
     const reply = await callTool(workServer(events), "usage_review_result", VALID_FINDINGS)
 
-    expect(reply).toEqual({ text: "ok", isError: false })
+    expect(reply).toEqual({ text: "ok", isError: false, endsTurn: false })
     expect(events).toEqual([{ kind: "usage-review-result", findings: VALID_FINDINGS }])
     const state = events.reduce(
       (current, event) => applySessionEvent(current, event, 2_000),
@@ -286,12 +326,13 @@ const TOOLS_LIST_REPLY = z.object({
   result: z.object({ tools: z.array(z.object({ name: z.string() })) }),
 })
 
-/** `tools/call` の応答のうち、ここで読む形（最初の文面と `isError`）。 */
+/** `tools/call` の応答のうち、ここで読む形（文面と `isError` と、ターンを閉じる印）。 */
 const TOOLS_CALL_REPLY = z.object({
   id: z.literal(1),
   result: z.object({
     content: z.array(z.object({ type: z.literal("text"), text: z.string() })),
     isError: z.boolean().optional(),
+    _meta: z.record(z.string(), z.unknown()).optional(),
   }),
 })
 
@@ -304,11 +345,13 @@ async function callTool(
   server: McpSdkServerConfigWithInstance,
   name: string,
   args: unknown,
-): Promise<{ readonly text: string; readonly isError: boolean }> {
+): Promise<{ readonly text: string; readonly isError: boolean; readonly endsTurn: boolean }> {
   const reply = await request(server, "tools/call", { name, arguments: args }, TOOLS_CALL_REPLY)
+  const { _meta: meta } = reply.result
   return {
     text: reply.result.content.map((block) => block.text).join("\n"),
     isError: reply.result.isError ?? false,
+    endsTurn: meta?.["claude/endTurn"] === true,
   }
 }
 
