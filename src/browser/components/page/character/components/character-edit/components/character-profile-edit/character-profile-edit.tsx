@@ -44,7 +44,7 @@ export function CharacterProfileEdit(props: {
         <PencilIcon />
         名前とプロフィールを変える
       </Button>
-      {open ? (
+      {open && (
         <CharacterProfileEditDialog
           name={edit.name}
           tagline={edit.tagline}
@@ -53,7 +53,7 @@ export function CharacterProfileEdit(props: {
             setOpen(false)
           }}
         />
-      ) : null}
+      )}
     </>
   )
 }

@@ -66,14 +66,14 @@ export function ScreenNavCurrentWorkPill(props: ScreenNavCurrentWorkProps): Reac
           {work.mark}
         </span>
         <span className={styles["screen-nav-work-word"]}>{work.wordLabel}</span>
-        {work.summary.kind === "text" ? (
+        {work.summary.kind === "text" && (
           <>
             <span className={styles["screen-nav-work-sep"]} aria-hidden="true" />
             <span className={styles["screen-nav-work-summary"]}>{work.summary.label}</span>
           </>
-        ) : null}
+        )}
       </button>
-      {work.open ? <CurrentWorkList id={listId} work={work} /> : null}
+      {work.open && <CurrentWorkList id={listId} work={work} />}
     </div>
   )
 }
@@ -100,7 +100,7 @@ function CurrentWorkList(props: {
         {work.wordLabel}
         {work.pendingHint.kind === "input" ? "。入力欄の上で答えられる" : ""}
       </Text>
-      {work.pendingHint.kind === "question" ? (
+      {work.pendingHint.kind === "question" && (
         <Button
           type="button"
           variant="link"
@@ -115,8 +115,8 @@ function CurrentWorkList(props: {
         >
           {GO_TO_QUESTION_LABEL}
         </Button>
-      ) : null}
-      {work.runningStep.kind === "none" ? null : (
+      )}
+      {work.runningStep.kind !== "none" && (
         <div className={styles["screen-nav-work-full"]}>
           <Text
             element="p"
@@ -132,7 +132,7 @@ function CurrentWorkList(props: {
           </pre>
         </div>
       )}
-      {work.backgroundList.kind === "tasks" ? (
+      {work.backgroundList.kind === "tasks" && (
         <>
           <Text
             element="p"
@@ -149,7 +149,7 @@ function CurrentWorkList(props: {
             ))}
           </ul>
         </>
-      ) : null}
+      )}
       {work.stepList.kind === "steps" ? (
         <>
           <Text
@@ -166,7 +166,7 @@ function CurrentWorkList(props: {
               <CurrentWorkStepRow key={step.key} step={step} />
             ))}
           </ul>
-          {work.stepList.toggleAll.kind === "expandable" ? (
+          {work.stepList.toggleAll.kind === "expandable" && (
             <Button
               type="button"
               variant="link"
@@ -181,7 +181,7 @@ function CurrentWorkList(props: {
             >
               {work.stepList.toggleAll.label}
             </Button>
-          ) : null}
+          )}
         </>
       ) : (
         <Text element="p" size="inherit" tone="ink-quiet" weight="inherit" className="">
@@ -208,7 +208,7 @@ function CurrentWorkBackgroundRow(props: {
         …
       </span>{" "}
       <span className={styles["screen-nav-work-background-kind"]}>{task.kindLabel}</span>
-      {task.description === "" ? null : ` ${task.description}`}
+      {task.description !== "" && ` ${task.description}`}
     </li>
   )
 }

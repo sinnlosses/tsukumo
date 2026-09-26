@@ -84,7 +84,7 @@ export function ScreenNavSettingsGear(props: ScreenNavSettingsProps): ReactEleme
       >
         <Settings size={18} strokeWidth={1.8} />
       </button>
-      {settings.open ? (
+      {settings.open && (
         <div
           id={panelId}
           className={clsx(
@@ -126,7 +126,7 @@ export function ScreenNavSettingsGear(props: ScreenNavSettingsProps): ReactEleme
               />
             </HStack>
           ))}
-          {settings.colorNotice.kind === "shown" ? (
+          {settings.colorNotice.kind === "shown" && (
             <Text
               element="p"
               size="label"
@@ -136,7 +136,7 @@ export function ScreenNavSettingsGear(props: ScreenNavSettingsProps): ReactEleme
             >
               {settings.colorNotice.text}
             </Text>
-          ) : null}
+          )}
           <Text
             element="p"
             size="label"
@@ -322,7 +322,7 @@ export function ScreenNavSettingsGear(props: ScreenNavSettingsProps): ReactEleme
             </Button>
           </HStack>
         </div>
-      ) : null}
+      )}
     </div>
   )
 }

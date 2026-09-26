@@ -55,14 +55,14 @@ export function CharacterProfile(props: { readonly profile: CharacterProfileMode
           >
             id: {profile.id}
           </Text>
-          {profile.inUse ? <span className={styles["character-in-use"]}>使用中</span> : null}
+          {profile.inUse && <span className={styles["character-in-use"]}>使用中</span>}
         </div>
-        {profile.tagline.kind === "shown" ? (
+        {profile.tagline.kind === "shown" && (
           <Text element="span" size="secondary" tone="ink-quiet" weight="inherit" className="">
             {profile.tagline.text}
           </Text>
-        ) : null}
-        {profile.note.kind === "shown" ? (
+        )}
+        {profile.note.kind === "shown" && (
           <Text
             element="span"
             size="label"
@@ -72,9 +72,9 @@ export function CharacterProfile(props: { readonly profile: CharacterProfileMode
           >
             {profile.note.text}
           </Text>
-        ) : null}
+        )}
       </VStack>
-      {profile.editProfile.kind === "shown" || profile.switchTo.kind === "shown" ? (
+      {(profile.editProfile.kind === "shown" || profile.switchTo.kind === "shown") && (
         <HStack
           element="div"
           name={{ kind: "none" }}
@@ -86,7 +86,7 @@ export function CharacterProfile(props: { readonly profile: CharacterProfileMode
           className={styles["character-profile-actions"]}
         >
           <CharacterProfileEdit edit={profile.editProfile} />
-          {profile.switchTo.kind === "shown" ? (
+          {profile.switchTo.kind === "shown" && (
             <Button
               type="button"
               variant="outline"
@@ -102,9 +102,9 @@ export function CharacterProfile(props: { readonly profile: CharacterProfileMode
               <SwitchIcon />
               このキャラクターに切り替える
             </Button>
-          ) : null}
+          )}
         </HStack>
-      ) : null}
+      )}
     </div>
   )
 }

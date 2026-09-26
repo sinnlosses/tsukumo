@@ -41,11 +41,11 @@ export function AccentSwatch(props: {
         <Text element="span" size="secondary" tone="inherit" weight="inherit" className="">
           {swatch.label}
         </Text>
-        {swatch.sublabel.kind === "shown" ? (
+        {swatch.sublabel.kind === "shown" && (
           <Text element="span" size="label" tone="ink-quiet" weight="inherit" className="">
             {swatch.sublabel.text}
           </Text>
-        ) : null}
+        )}
       </VStack>
       <Text
         element="span"

@@ -117,9 +117,9 @@ export function PortraitCard(props: {
           />
         </div>
         <figcaption className={styles["character-card-label"]}>{card.label}</figcaption>
-        {card.badge.kind === "shown" ? (
+        {card.badge.kind === "shown" && (
           <span className={styles["character-card-badge"]}>{card.badge.text}</span>
-        ) : null}
+        )}
         <HStack
           element="div"
           name={{ kind: "none" }}
@@ -136,7 +136,7 @@ export function PortraitCard(props: {
             <UploadIcon />
             {fileInput}
           </label>
-          {clear.kind === "shown" ? (
+          {clear.kind === "shown" && (
             <button
               type="button"
               className={clsx(
@@ -155,10 +155,10 @@ export function PortraitCard(props: {
             >
               <TrashIcon />
             </button>
-          ) : null}
+          )}
         </HStack>
       </figure>
-      {confirmClear !== undefined && clear.kind === "shown" ? (
+      {confirmClear !== undefined && clear.kind === "shown" && (
         <PortraitClearConfirm
           anchor={confirmClear.anchor}
           label={card.label}
@@ -172,7 +172,7 @@ export function PortraitCard(props: {
             setConfirmClear(undefined)
           }}
         />
-      ) : null}
+      )}
     </>
   )
 }

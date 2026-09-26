@@ -63,15 +63,14 @@ function QuestionBlock(props: { readonly question: QuestionRecordQuestionModel }
           <Text element="summary" size="secondary" tone="ink-quiet" weight="inherit" className="">
             {PREVIEWS_SUMMARY}
           </Text>
-          {question.previewsOpened
-            ? question.previews.map((preview) => (
-                <PreviewBlock
-                  preview={preview}
-                  multiSelect={question.multiSelect}
-                  key={preview.label}
-                />
-              ))
-            : null}
+          {question.previewsOpened &&
+            question.previews.map((preview) => (
+              <PreviewBlock
+                preview={preview}
+                multiSelect={question.multiSelect}
+                key={preview.label}
+              />
+            ))}
         </details>
       )}
     </div>
@@ -93,7 +92,7 @@ function AnswerRow(props: {
       )}
     >
       <QuestionMark chosen={row.chosen} multiSelect={multiSelect} /> {row.label}
-      {row.isFreeText ? FREE_TEXT_SUFFIX : null}
+      {row.isFreeText && FREE_TEXT_SUFFIX}
     </li>
   )
 }

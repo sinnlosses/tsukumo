@@ -61,11 +61,11 @@ export function ScreenNavMenu(props: ScreenNavMenuProps): ReactElement {
         onClick={menu.onToggle}
       >
         {MENU_MARK}
-        {menu.pendingActive ? (
+        {menu.pendingActive && (
           <span className={styles["screen-nav-toggle-mark"]}>{PENDING_MARK}</span>
-        ) : null}
+        )}
       </button>
-      {menu.open ? (
+      {menu.open && (
         // `shellStyles["screen-nav-panel"]` は見た目を持たない（面の中で他の部品を並べ直す
         // 規則 `.screen-nav-panel .screen-nav-room` などのためだけの参照。実物の見た目
         // （位置・枠・地）は `styles["screen-nav-panel"]`＝このファイル自身が持つ。CSS Modules は
@@ -85,7 +85,7 @@ export function ScreenNavMenu(props: ScreenNavMenuProps): ReactElement {
           <ScreenNavModelPermissionSelect modelPermission={parts.modelPermission} />
           <ScreenNavSettingsGear settings={parts.settings} />
         </div>
-      ) : null}
+      )}
     </div>
   )
 }

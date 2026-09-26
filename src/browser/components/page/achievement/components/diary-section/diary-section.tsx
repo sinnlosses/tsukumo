@@ -58,7 +58,7 @@ export function DiarySection(props: DiarySectionProps): ReactElement {
       aria-label="この日の日記"
       className={clsx(styles["achievement-diary"], props.isFetching && styles["is-fetching"])}
     >
-      {props.portrait.portrait.portraitUrl === undefined ? null : (
+      {props.portrait.portrait.portraitUrl !== undefined && (
         <Portrait
           url={props.portrait.portrait.portraitUrl}
           accent={props.portrait.portrait.accent}
@@ -77,15 +77,13 @@ export function DiarySection(props: DiarySectionProps): ReactElement {
           onOpenDiaryBook={props.onOpenDiaryBook}
         />
         <Bubble view={props.view} writing={props.writing} reveal={props.reveal} />
-        {props.writing.kind === "writing" ? <Progress stage={props.writing.stage} /> : null}
+        {props.writing.kind === "writing" && <Progress stage={props.writing.stage} />}
         {props.view.kind === "ready" ? (
           <Cards doneTasks={props.view.doneTasks} commitCount={props.view.commitCount} />
         ) : (
           <Cards doneTasks={undefined} commitCount={undefined} />
         )}
-        {props.view.kind === "ready" ? (
-          <Controls writing={props.writing} review={props.review} />
-        ) : null}
+        {props.view.kind === "ready" && <Controls writing={props.writing} review={props.review} />}
       </div>
     </section>
   )
@@ -117,12 +115,14 @@ function Header(props: {
         <Text element="span" size="label" tone="ink-quiet" weight="inherit" className="">
           いま書いています…
         </Text>
-      ) : latest !== undefined ? (
-        <Text element="span" size="label" tone="ink-quiet" weight="inherit" className="">
-          振り返り [{timeLabel(latest.writtenAt)}]
-        </Text>
-      ) : null}
-      {latest === undefined ? null : (
+      ) : (
+        latest !== undefined && (
+          <Text element="span" size="label" tone="ink-quiet" weight="inherit" className="">
+            振り返り [{timeLabel(latest.writtenAt)}]
+          </Text>
+        )
+      )}
+      {latest !== undefined && (
         <Button
           type="button"
           variant="link"
@@ -159,7 +159,7 @@ function Bubble(props: {
   if (writing.kind === "writing") {
     return (
       <div className={styles["achievement-diary-bubble-empty"]}>
-        {latest === undefined ? null : (
+        {latest !== undefined && (
           <Text element="p" size="body" tone="ink-quiet" weight="inherit" className="">
             {latest.body}
           </Text>
@@ -174,7 +174,7 @@ function Bubble(props: {
         <Text element="p" size="body" tone="ink-quiet" weight="inherit" className="">
           {WRITE_FAILED_NOTE}
         </Text>
-        {latest === undefined ? null : (
+        {latest !== undefined && (
           <Text element="p" size="body" tone="ink-quiet" weight="inherit" className="">
             {latest.body}
           </Text>
@@ -293,7 +293,7 @@ function Card(props: {
       >
         {props.value}
       </Text>
-      {props.note === "" ? null : (
+      {props.note !== "" && (
         <Text
           element="p"
           size="secondary"
@@ -358,11 +358,11 @@ function Controls(props: {
           {review.label}
         </Text>
       </Button>
-      {review.availability.kind === "blocked" && review.availability.reason !== "" ? (
+      {review.availability.kind === "blocked" && review.availability.reason !== "" && (
         <Text element="p" size="secondary" tone="ink-quiet" weight="inherit" className="">
           {review.availability.reason}
         </Text>
-      ) : null}
+      )}
     </div>
   )
 }

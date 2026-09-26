@@ -35,9 +35,7 @@ export function Dispatch(): ReactElement {
       wrap="nowrap"
       className={styles["dispatch"]}
     >
-      {pendingActive ? (
-        <div className={styles["dispatch-pending-glow"]} aria-hidden="true" />
-      ) : null}
+      {pendingActive && <div className={styles["dispatch-pending-glow"]} aria-hidden="true" />}
       <PendingAnswer />
       <Composer />
     </VStack>

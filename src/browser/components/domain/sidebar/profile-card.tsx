@@ -41,10 +41,10 @@ export function ProfileCard(): ReactElement {
         wrap="nowrap"
         className={styles["profile-card-text"]}
       >
-        {name === undefined ? null : <p className={styles["profile-card-name"]}>{name}</p>}
-        {tagline === undefined ? null : <p className={styles["profile-card-tagline"]}>{tagline}</p>}
+        {name !== undefined && <p className={styles["profile-card-name"]}>{name}</p>}
+        {tagline !== undefined && <p className={styles["profile-card-tagline"]}>{tagline}</p>}
       </VStack>
-      {hasCharacterPacks ? (
+      {hasCharacterPacks && (
         <span className={styles["profile-card-change"]}>
           <span aria-hidden="true" className={styles["profile-card-change-face"]}>
             変える
@@ -56,7 +56,7 @@ export function ProfileCard(): ReactElement {
             className={styles["profile-card-change-select"]}
           />
         </span>
-      ) : null}
+      )}
     </section>
   )
 }

@@ -63,7 +63,7 @@ export function DiaryBook({
       onClose={onClose}
       className={styles["diary-book"]}
     >
-      {open ? (
+      {open && (
         <VStack
           element="div"
           name={{ kind: "none" }}
@@ -123,9 +123,9 @@ export function DiaryBook({
           <div className={styles["diary-book-spread"]}>
             <Spread page={page} />
           </div>
-          {toc.open ? <Toc months={toc.months} onSelect={onSelectTocDate} /> : null}
+          {toc.open && <Toc months={toc.months} onSelect={onSelectTocDate} />}
         </VStack>
-      ) : null}
+      )}
     </Dialog>
   )
 }
@@ -199,7 +199,7 @@ function LeftPage(props: {
     <div className={styles["diary-book-left"]}>
       <Bookmark bookmark={page.bookmark} writerName={page.portraitName} />
       <TaskListing tasks={page.tasks} />
-      {page.badges.length > 0 ? <Badges badges={page.badges} /> : null}
+      {page.badges.length > 0 && <Badges badges={page.badges} />}
     </div>
   )
 }
@@ -319,7 +319,7 @@ function RightPage(props: {
         <div ref={bodyRef} className={styles["diary-book-body"]}>
           {page.right.paragraphs.map((paragraph) => (
             <p key={paragraph.key} className={styles["diary-book-paragraph"]}>
-              {paragraph.timeLabel === undefined ? null : (
+              {paragraph.timeLabel !== undefined && (
                 <span className={styles["diary-book-paragraph-time"]}>{paragraph.timeLabel}</span>
               )}
               {paragraph.body}
@@ -341,11 +341,11 @@ function RightPage(props: {
         wrap="nowrap"
         className={styles["diary-book-signature"]}
       >
-        {page.right.kind === "blank" ? (
+        {page.right.kind === "blank" && (
           <BlankReview review={page.right.review} writerName={page.portraitName} />
-        ) : null}
+        )}
         <div className={styles["diary-book-signature-portrait"]}>
-          {page.portrait.portraitUrl === undefined ? null : (
+          {page.portrait.portraitUrl !== undefined && (
             <Portrait
               url={page.portrait.portraitUrl}
               accent={page.portrait.accent}

@@ -45,7 +45,7 @@ export function SessionInfo(props: SessionInfoProps): ReactElement {
   return (
     <>
       <div className={styles["session-info"]}>
-        {props.withCharacter && hasCharacterPacks ? (
+        {props.withCharacter && hasCharacterPacks && (
           <>
             <label htmlFor={CHARACTER_SELECT_ID} className={styles["session-info-label"]}>
               キャラクター
@@ -73,7 +73,7 @@ export function SessionInfo(props: SessionInfoProps): ReactElement {
               />
             </HStack>
           </>
-        ) : null}
+        )}
         {/* セッションの行（`session-switch.tsx`）。**同じ grid の直の子**として並ぶよう、
             入れ物を挟まずラベルと値の対だけを返す部品にしてある。切り替え先が無ければ
             何も出さない。 */}

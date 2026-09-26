@@ -63,20 +63,20 @@ export function PresentationalAchievement(props: PresentationalAchievementProps)
           review={props.review}
           onOpenDiaryBook={props.onOpenDiaryBook}
         />
-        {props.view.kind === "ready" ? (
+        {props.view.kind === "ready" && (
           <BookmarkSection
             bookmark={
               props.view.diary.kind === "written" ? props.view.diary.diary.bookmark : undefined
             }
             writerName={props.diaryPortrait.name}
           />
-        ) : null}
-        {props.view.kind === "ready" ? (
+        )}
+        {props.view.kind === "ready" && (
           <SurpriseSection
             graduations={props.view.graduations}
             milestones={props.view.milestones}
           />
-        ) : null}
+        )}
         <LanternCalendar
           calendar={props.calendar}
           viewedDate={viewedDate}
