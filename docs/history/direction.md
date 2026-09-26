@@ -3,6 +3,19 @@
 `develop/direction.md` に書かれたユーザーからの指示を、タスク化した時点で**当時の記述のまま**
 ここへ移す（`docs/workflow.md`「指示メモ」参照）。新しいものを上に足す。**後から書き換えない。**
 
+
+## 2026-09-27 E2E「ターンの履歴」の揺れと css-modules-kit への移行
+
+（`## エージェントのドラフト` から。ユーザーが「タスク化していいよ」と承認し、T-739・T-740 になった。css-modules-kit への移行は、この承認を依存の入れ替えの承認として T-740 に焼いた）
+
+- **E2E「ターンの履歴 > 複数のやり取りが札として積み上がり、長い依頼の1行目は省略される」が `bun run check` の中でときどき落ちるのを直すタスクを足す**（振り返り: T-737）
+  - 根拠: ドキュメントだけの差分の受け入れで `bun run check` を3回打ち、2回目にこの E2E が1件落ちて（23 pass / 1 fail）、3回目は通った（24 pass）。1回目は単体テストが1件落ち、単体だけ流し直すと通った。既存の揺れのタスク（`character-edit.test.tsx` と「⌘Enter で送ると prompt が流れ…」）はこの E2E を扱っていない
+  - 出し先: `test/e2e/turn-history.test.ts` の揺れを直すタスク（sonnet）
+
+- **CSS Modules の型の生成を `happy-css-modules` から css-modules-kit へ移す**（調査: `docs/research/css-modules-kit.md`）
+  - 根拠: `happy-css-modules` の README が css-modules-kit を後継と明言し、最終 push は 2026-07-02 で止まっている。どちらも生成ファイルと `rootDirs` の仕組みで、移す手間は小さい
+  - 出し先: 実装タスク1件（sonnet。依存の入れ替えを含むので着手前にユーザーの承認が要る）。`@css-modules-kit/codegen` に入れ替え、`tsconfig.json` の `cmkOptions`・`rootDirs`・`include`（`*.module.css` を含める）と `package.json` の `css-types` を直し、`docs/design.md` の `styles["..."]` の型の記述を追随させる。最初に `cmk` が Bun から動くかを確かめる。Vite への移行とは依存しないので、どちらを先にしてもよい
+
 ## 2026-09-27 E2E の全件実行を速くする
 
 （`## ユーザーから` から。T-738 になった。関わる E2E だけを走らせる案は、全件をどこかで走らせ続けるかを尋ねたところ、ユーザーが「2回走らせることになるくらいなら検証時に全部流そう。代わりに、全部流しても早く済むように並列実行or速度改善するタスクを作ろう。」と答え、絞るルールは作らず速くするタスクに置き換えた）
