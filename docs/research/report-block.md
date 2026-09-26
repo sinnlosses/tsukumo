@@ -376,6 +376,26 @@ sections: z.array(reportSectionSchema).min(1).optional()
 | 中間レポート                                              | `report` に `final: boolean` を持たせて最終のときだけ閉じるか、閉じない別のツールを置く                |
 
 - 塊の形（4章）とは独立していて、11章のどの段の前にも入れられる
-- 確かめること: プロセス内 MCP サーバの `tool()` が返した `_meta` が CLI まで届くか、閉じたターンの
-  transcript の形（tool_result のあとに assistant の発言が来ない）を `sdk-message.ts` のセッションの復元と
-  `resumeSessionAt` がそのまま読めるか
+
+**実物で確かめた（2026-09-27。`@anthropic-ai/claude-agent-sdk` 0.3.280、同梱 CLI 2.1.280、
+モデルは `haiku`）。** 使い捨てのスクリプト（リポジトリの外に置き、試したあと消した。会話は作り物で、実物の transcript は写していない）で
+`createSdkMcpServer` の `tool()` に架空のツール（`fake_report`）を1つ載せ、`conclusion` の値で
+`is_error` と `_meta["claude/endTurn"]` を出し分けて試した。3点とも成り立つと分かった。
+
+| 確かめたこと                                                   | 見えたこと                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| -------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `_meta["claude/endTurn"]: true` を返すとターンが閉じるか       | 閉じた。その `tool_result`（`user` メッセージ）のあとは `assistant` を挟まず、そのまま `result`（`subtype: "success"`）が届いた                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| `is_error` の結果ではターンが閉じず、打ち直せるか              | 閉じなかった。差し戻しの文面を見たモデルは別の `conclusion` を付けて同じツールを呼び直し、次の呼び出しで `claude/endTurn` を返すとそこで閉じた                                                                                                                                                                                                                                                                                                                                                                                                  |
+| 閉じたターンの transcript を、いまの復元経路がそのまま読めるか | 読めた。`getSessionMessages` で読み直した transcript には `structured_output` のような特別な添付は付かず（`sdk.d.ts` の「End-turn tool sessions」の記述はこの形では起きない。`_meta` は生の `query()` のストリームにだけ `tool_use_result._meta` として乗り、持ち出した transcript の `message.content` 側には残らない）、実物の `toSessionEvents` / `toRestoredEvents`（`src/server/session-driver/core/`。書き換えずにそのまま import して実行）に掛けても例外を投げず、`tool-started` / `tool-finished` の対と `turn-finished` が1回だけ出た |
+
+`resumeSessionAt` は決定（`docs/history/decision.md`「chat-mode.md 4.9 記憶の圧縮と忘却（採らなかった案と経緯）」）どおり tsukumo では使わないので、代わりに実際に使っている経路（`resume: sessionId` で同じセッションIDを渡す普通の再開）で続きの会話を試した。閉じたターンのあとに起こし直しても、モデルは前のやり取りを踏まえて答え、`session_id` も変わらなかった。
+
+**注意点1つ**: `_meta` は `CallToolResult` の返り値では見えるが、`getSessionMessages` が返す
+持ち出し用の transcript（`message.content[].tool_result`）には乗らない。`Stop` フックの入力
+（`sdk-driver.ts` の `stopHooks`）が受け取る形は今回の検証範囲の外なので、`report` を閉じるツールに
+する実装では「そのターンで `report` が `claude/endTurn` 付きで通ったか」を関所（`ReportGate`）が
+別の経路（`assistant` の `tool_use` を見た時点や `result` の受け取りそのもの）で判定する必要が
+ある——`_meta` を transcript から読み直して判定する設計は選べない。
+
+**結論: 動く。** 本体へ入れる実装タスクの案は `develop/direction.md`「## エージェントのドラフト」に
+書いた。
