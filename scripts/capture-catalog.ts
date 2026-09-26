@@ -155,7 +155,7 @@ const WORK_TOGGLE_SELECTOR = "[data-work-state] button[aria-controls]:visible"
 const MENU_TOGGLE_SELECTOR = 'button[aria-label="メニュー"]'
 
 /** 書き終わりの知らせ（`diary-notice.tsx`）の「日記帳で開く」。成果の画面（`#achievement`）
- * だけに出る（`main.tsx` の `<Activity>`）。 */
+ * だけに出る（`app.tsx` の `<Activity>`）。 */
 const DIARY_NOTICE_OPEN_SELECTOR = 'button:has-text("日記帳で開く")'
 
 /** キャラクター画面、表情のカードの「消す」（`portrait-card.tsx`）。見える字は無くアイコン

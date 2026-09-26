@@ -421,7 +421,7 @@ describe("コメント中の日付", () => {
 //
 // - **枠**（`BROWSER_FRAMES`）: 全画面で共有する枠（`components/domain/<枠>/`）。差し込み口は
 //   props で受け、画面を知らない。**枠どうしは import しない**
-// - **画面**（`BROWSER_SCREENS`）: 1つの画面 = 1つのページ（`components/page/<画面>/`）。`main.tsx` が
+// - **画面**（`BROWSER_SCREENS`）: 1つの画面 = 1つのページ（`components/page/<画面>/`）。`app.tsx` が
 //   出す画面を選ぶ。**画面どうしは import しない**。会話の画面は `<Layout>` と `<Sidebar>` を
 //   置くので、画面から枠へは引いてよい
 // - **置かれる機能**（`BROWSER_PLACED_FEATURES`）: 自分の置き場所を持たず、枠か画面の中に
@@ -431,7 +431,7 @@ describe("コメント中の日付", () => {
 // `components/page/<画面>/` に分かれているので、名前だけでは引けない）。
 //
 // `browser/components/`（`page/` `domain/` `ui/` の3段。一覧のパスに無いディレクトリ）・
-// `browser/lib/` `browser/stores/` `browser/styles/` と `browser/main.tsx` は誰から引いてもよい
+// `browser/lib/` `browser/stores/` `browser/styles/` と `browser/main.tsx` / `browser/app.tsx` は誰から引いてもよい
 // 共有部分なので、ここでは見ない。**一覧に無いディレクトリが `features/` の直下・
 // `components/domain/` の直下（サブディレクトリがあるとき）・`components/page/` の下に
 // あれば `throw` する**（足し忘れが「検査の対象外」として黙って通るのを防ぐ。`browserBoxOf` と
@@ -707,7 +707,7 @@ describe("components/page/ の形", () => {
     expect(offenders.join("\n")).toBe("")
   })
 
-  it("部品のディレクトリの外から import してよいのは <部品>.tsx だけ（main.tsx とテストは除く）", () => {
+  it("部品のディレクトリの外から import してよいのは <部品>.tsx だけ（main.tsx / app.tsx とテストは除く）", () => {
     const offenders = componentBoundaryViolations()
 
     expect(offenders.join("\n")).toBe("")
@@ -796,7 +796,10 @@ function componentDirectoriesUnder(relPath: string): readonly string[] {
   })
 }
 
-/** 部品のディレクトリの外から、中の `<部品>.tsx` 以外を import している箇所（`main.tsx` は除く）。 */
+/** 入口の箱（`main`）のファイル。入口の `main.tsx` と、その中身の `<App>` を持つ `app.tsx`。 */
+const ENTRY_FILES: ReadonlySet<string> = new Set(["browser/main.tsx", "browser/app.tsx"])
+
+/** 部品のディレクトリの外から、中の `<部品>.tsx` 以外を import している箇所（`main.tsx` / `app.tsx` は除く）。 */
 function componentBoundaryViolations(): readonly string[] {
   const files = listSourceFiles(SRC_ROOT).filter((relPath) => relPath.startsWith("browser/"))
   const edges = files.flatMap((relPath) =>
@@ -814,7 +817,7 @@ function componentBoundaryViolations(): readonly string[] {
         (edge) =>
           edge.toPath.startsWith(`${componentRelPath}/`) &&
           edge.toPath !== entryFile &&
-          edge.fromPath !== "browser/main.tsx" &&
+          !ENTRY_FILES.has(edge.fromPath) &&
           !edge.fromPath.startsWith(`${componentRelPath}/`),
       )
       .map((edge) => `src/${edge.fromPath} → src/${edge.toPath}（${componentRelPath} の外から）`)
@@ -1213,7 +1216,7 @@ function browserBoxOf(relPath: string): BrowserBox | undefined {
   if (!relPath.startsWith("browser/")) {
     return undefined
   }
-  if (relPath === "browser/main.tsx") {
+  if (ENTRY_FILES.has(relPath)) {
     return "main"
   }
   if (relPath.endsWith(".d.ts") && relPath.split("/").length === 2) {

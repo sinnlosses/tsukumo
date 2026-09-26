@@ -1,5 +1,5 @@
 // 雑談ビュー（<ChatView>。docs/screen-design.md 13.7）の**入口**。**雑談モードの間だけ、メインビューの
-// 場所に出る**（入れ替えるのは入口の `src/browser/main.tsx`）。ロジックは `hooks/use-chat-view.ts`
+// 場所に出る**（入れ替えるのは会話の画面の器 `presentational-conversation.tsx`）。ロジックは `hooks/use-chat-view.ts`
 // が持ち、見た目は `presentational-chat-view.tsx` が持つ（docs/design.md 2章「機能の中を分ける」の
 // container / presenter）。
 //

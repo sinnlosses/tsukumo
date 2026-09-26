@@ -10,7 +10,7 @@
 // **hash の書き方はここに無い**（`stores/location-hash.ts`）。同じ hash の `turn` は見ている
 // ターン（`stores/turn-selection.tsx`）のもので、画面を移しても消さずに運ぶ。
 //
-// 画面を選ぶのは入口の `<Root>`（`src/browser/main.tsx`）で、**機能の側は `useScreen` を読まない**
+// 画面を選ぶのは`app.tsx` の `<Root>`で、**機能の側は `useScreen` を読まない**
 // （出る口・入る口はただのリンクで書ける。`navigateTo` が要るのは、コマンドを送った直後に
 // 画面も移す作る画面だけ）。
 //
