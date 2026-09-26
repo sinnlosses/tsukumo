@@ -1,13 +1,12 @@
 // <SessionProvider> の中身。`lib/socket.ts` で接続し、`SessionState` を React の外の store
 // （{@link createSessionStore}）に持つ。部品は {@link useSessionSelector} で自分が読む値だけを
-// 購読し、送るだけの部品は {@link useSessionDispatch} を読む（docs/design.md 6.1 / 6.2）。
+// 購読し、送るだけの部品は {@link useSessionDispatch} を読む（docs/design.md 6.2）。
 //
 // Context に配るのは store そのもの（参照が変わらない）。姿を Context で配ると、読んでいる値が
 // 変わっていない部品まで毎フレーム描き直しになる — サーバは 100ms ごとにフレームを押すので、
 // ターンが流れている間は毎秒10回それが起きていた（`useSyncExternalStore` へ移した）。
 //
-// 部品は `SessionState` と `dispatch` だけを見る。 DOM を直接いじる配線は持たない
-// （docs/design.md 6.1「部品の木」冒頭）。
+// 部品は `SessionState` と `dispatch` だけを見る。 DOM を直接いじる配線は持たない。
 
 import { createORPCClient } from "@orpc/client"
 import {

@@ -244,7 +244,7 @@ export function chatEpisodeDrafts(
 
 /**
  * 依頼の文面。畳む行を1始まりの行番号つきで並べ（日付が変わるところに見出しを挟む）、前のあらすじと
- * 直前のエピソードの見出しを続ける（`docs/design.md`「渡すもの」）。
+ * 直前のエピソードの見出しを続ける。
  */
 function chatConsolidationPrompt(material: ChatConsolidationMaterial): string {
   return [

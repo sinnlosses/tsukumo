@@ -43,7 +43,7 @@ sed -n '/^## 4\. shared/,/^## /p' docs/design.md
 | ## 3. 動きの流れ               | 起動・接続・依頼・答え待ち・再接続の順序                                                                                                              |
 | ## 4. shared                   | **両側が共有する契約**。イベント・状態・reducer・コマンド・フレーム・版                                                                               |
 | ## 5. core と adapter          | 判断（core）と境界（adapter）の境目、SDK に触るファイルの分け方、代の持ち物、ツールで受け取るものと使い捨ての `query()` の形                          |
-| ## 6. browser                  | ブラウザ側の部品の木、状態の持ち方、Markdown、重いライブラリ、立ち絵の動き                                                                            |
+| ## 6. browser                  | 状態の持ち方、Markdown、重いライブラリ、立ち絵の動き（6.1 は欠番）                                                                                    |
 | ## 7. キャラクターパック       | パックの形・探索順・`systemPrompt` の append の並び、画面から書くときの安全の境界、一覧と素材の URL、雑談の記憶の置き場（仕様は `docs/chat-mode.md`） |
 | ## 8. セッションの復元と複数化 | 復元（4.8）を新しい形に載せる。複数セッションへ広げる余地                                                                                             |
 | ## 9. 会話内容と安全           | `127.0.0.1`・Origin・起動トークン・ディスクに書く3つの例外と読み戻す口・定着・ブラウザ側のメモリ                                                      |
@@ -200,16 +200,16 @@ sed -n '/^## 4\. shared/,/^## /p' docs/design.md
 
 **置くもの**
 
-| 置くもの                     | 場所                                            | 持つもの                                                                                                                                                                                                                                                                                                       |
-| ---------------------------- | ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 契約                         | `src/shared/contract/<機能>.ts`                 | その機能の手続きの形（入力・出力・エラー）と、**断る条件の `meta`**。zod と `@orpc/contract` だけを読む（ブラウザも読む）。コマンドの契約はどれも `src/shared/command.ts` の `commandBase`（`meta` の既定と、断ったときのエラー `REFUSED`）から書く                                                            |
-| 契約の束                     | `src/shared/rpc.ts`                             | **載せる先ごとに2つ**: 読み取りの `rpcContract`（HTTP の `/rpc`）と、コマンドの `commandContract` に押し出しの購読（`frame.subscribe`。`src/shared/contract/frame.ts`）を足した `socketContract`（`/ws`）。コマンドを `/rpc` に載せないのは、画像2枚つきの依頼（約 14 MiB）を運べる口が `/ws` の上限だけだから |
-| 機能の表（コマンドだけ）     | `src/server/<機能>/core/<機能>-command.ts`      | **その機能が受けるコマンドの表**。`<機能>Commands(ports)` が手続きの名前 → 受け手の行を返す（型は `FeatureCommandTable<typeof 契約>` で、契約の手続きに行が足りなければ落ちる）。`ports` はその機能の書き込み口（中身は配線が渡す）                                                                            |
-| 行の型と、葉の行を呼ぶ関数   | `src/server/core/command-receiver.ts`           | 受け手の行の型（下の「受け手の3種」のうち `write` と `call`）・`DispatchResult`・`receiveFeatureCommand`。`shared` だけを読む                                                                                                                                                                                  |
-| セッションの口               | `src/server/session/core/command-session.ts`    | 受け手が使うセッションの口 `CommandSession`、`session` の行の型、行の種類で呼び分ける `receiveSessionCommand`                                                                                                                                                                                                  |
-| 手続き                       | `src/server/<機能>/adapter/<機能>-procedure.ts` | `implement(contract.<機能>)` の受け手。**中身は行（コマンド）か機能の読み取りへ委ねる数行**。ドメインの失敗を契約のエラーに訳すのはここだけ（コマンドなら `DispatchResult` の `ok: false` を `REFUSED` に）                                                                                                    |
-| ルータ                       | `src/router.ts`（配線）                         | 全機能の手続きを束ねる（`createRpcRouter` と、`createCommandRouter` に購読の手続きを足した `createSocketRouter`）。「どこで受けるか」の答えはこのファイル。手続きの中身も照合・断る条件の判定も書かない                                                                                                        |
-| 照合と断る条件のミドルウェア | `src/server/view-server/adapter/rpc-guard.ts`   | 起動トークン・`Origin` の照合（`rpcGuard`。`/rpc` と `/ws` の両方）と、契約の `meta` の `chatOnly` / `idleTurn` を見る門（`commandGuard`。コマンドだけ）。**断る条件を見るのはここ1箇所**（順は「雑談の外か」→「ターン中か」）                                                                                 |
+| 置くもの                                                         | 場所                                            |
+| ---------------------------------------------------------------- | ----------------------------------------------- |
+| 契約（形・**断る条件の `meta`**）                                | `src/shared/contract/<機能>.ts`                 |
+| 契約の束（`rpcContract` / `commandContract` / `socketContract`） | `src/shared/rpc.ts`                             |
+| 機能の表（コマンドだけ）                                         | `src/server/<機能>/core/<機能>-command.ts`      |
+| 行の型と、葉の行を呼ぶ関数                                       | `src/server/core/command-receiver.ts`           |
+| セッションの口 `CommandSession`                                  | `src/server/session/core/command-session.ts`    |
+| 手続き（`implement(contract.<機能>)` の受け手）                  | `src/server/<機能>/adapter/<機能>-procedure.ts` |
+| ルータ（配線）                                                   | `src/router.ts`                                 |
+| 照合と断る条件のミドルウェア                                     | `src/server/view-server/adapter/rpc-guard.ts`   |
 
 - **断る条件は契約の `meta` に書く**（行には持たない。二重に持たない）。形は
   `{ chatOnly: false | 理由, idleTurn: false | 理由 }`（`src/shared/command.ts` の `CommandMeta`）で、
@@ -248,22 +248,6 @@ sed -n '/^## 4\. shared/,/^## /p' docs/design.md
   client）で `dispatch.session.prompt({ text, images })` のように呼ぶ。**送りっぱなしで、断られても
   画面には出さない**（画面は同じ条件で先に操作子を塞いでいる）
 
-**28種の割り振り**（機能の `<機能>-command.ts` に住むもの。断る条件の列は契約の `meta`）:
-
-| 機能             | 受けるコマンド                                                                                                                                                                                                                                                                     | 受け手の種類                                                | 断る条件（`meta`）                                                                                                                         |
-| ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| `session`        | `session.prompt` `session.interrupt` `session.answer` `session.setModel` `session.setEffort` `session.setPermissionMode`（駆動へ渡す6種）・`session.nudge`・`session.switchCharacter` `session.setChatMode` `session.switchSession`（起こし直し3種）・`session.reflectAchievement` | `session`                                                   | `session.nudge` は `chatOnly` と `idleTurn`、起こし直し3種は `idleTurn`。`session.reflectAchievement` は `meta` では断らず受け手の中で見る |
-| `session`        | `session.setSessionDefault`                                                                                                                                                                                                                                                        | `write`（覚え先は `session/adapter/remembered-default.ts`） | なし                                                                                                                                       |
-| `character-pack` | 見た目の編集10種（`characterPack.setPortrait` など。書き込む側へは `CharacterEdit` の `kind` で渡る）・`characterPack.create` `characterPack.delete`                                                                                                                               | `write`                                                     | なし                                                                                                                                       |
-| `chat`           | `chat.forgetRememberedLine`                                                                                                                                                                                                                                                        | `write`                                                     | `chatOnly`                                                                                                                                 |
-| `visit`          | `visit.setEnabled`                                                                                                                                                                                                                                                                 | `write`                                                     | なし                                                                                                                                       |
-| `usage-review`   | `usageReview.dismissProposal`                                                                                                                                                                                                                                                      | `write`                                                     | なし                                                                                                                                       |
-| `host`           | `host.openFile`                                                                                                                                                                                                                                                                    | `call`（git 管理下かの門番は `tracked-file.ts`）            | なし                                                                                                                                       |
-
-`session.reflectAchievement` を `diary` に置かないのは、代の持ち物（`emit` と `diarySignal`）を使うのに
-`diary` から `session` への辺を足すと core どうしで輪になるため。依頼文を組む判断を `diary/core/` の
-純関数へ下ろすのは妨げない。
-
 読み取りは `repository`・`token-usage`・`context-usage`・`achievement` の4機能の手続き（HTTP の `/rpc`）で、
 `/prompt-image/<id>`（`<img src>` で読む）と静的な配信は HTTP の経路のまま。
 
@@ -280,191 +264,16 @@ sed -n '/^## 4\. shared/,/^## /p' docs/design.md
 ### ディレクトリ
 
 ```
-src/
-  cli.ts                      入口。引数の受け取り・環境変数の読み出し・終了コードの返し方だけ
-  main.ts                     起動の段取り。即時終了する前提不足（ポート・組み立て・疑似セッション）もここ
-  current-character.ts        いま出しているパックと選択肢の持ち主（切り替えと画面からの編集で入れ替わる）
-  view-delivery.ts            ビューの配信。組み立てたブラウザ側と開いているタブを持ち、/ws と見張りを束ねる
-  session-start.ts            セッションを1つ起こす（どの駆動で起こすか・続きをどう探すか）
-  router.ts                   全機能の手続き（読み取りとコマンド）を束ね、照合と断る条件のミドルウェアを全部の前に掛ける
-                              （上の「コマンドの受け手と手続きの置き方」）
-  types/                      どの層にも属さない ambient 宣言（import されない `*.d.ts`）だけを置く。export する型は置かない
-    opentelemetry-api.d.ts    oRPC の型宣言が読む任意の peer の型の代役（入れていない。docs/research/external-dependency.md）
-  shared/
-    rpc.ts                    手続きの口の経路名（/rpc）と、機能ごとの契約を束ねた rpcContract（読み取り）・commandContract（コマンド）・
-                              socketContract（/ws。コマンドと押し出しの購読）
-    contract/<機能>.ts        手続きの契約（読み取りの repository / token-usage / context-usage / achievement と、
-                              コマンドの session / character-pack / chat / visit / usage-review / host。断る条件の meta。
-                              押し出しの購読の frame）
-    session-event.ts          SessionEvent（zod と z.infer）
-    session-state.ts          SessionState と applySessionEvent（いまの session-view.ts）
-    session-choice.ts         切り替え先として選べるセッション1件（サーバとブラウザの両方が読む契約）
-    session-default.ts        新しいセッションの既定（モデル・許可モード。次に起こすときの初期値）
-    session-socket.ts         WebSocket の経路名とトークンのクエリ名（サーバとブラウザの両方が同じ値を見る）
-    main-view.ts              メインビューに出す形（MainViewEntry）と、ターンごとのまとめ
-    turn.ts                   記録を依頼の区切りでターンに割る（割り方の唯一の持ち主。4.2）
-    turn-step.ts              「依頼の手順」を確定した記録（SessionRecord）から導く純関数
-    turn-speech.ts            ターンごとのセリフと表情を確定した記録（SessionRecord）から引き直す純関数
-    portrait-motion.ts        立ち絵をいま動かしてよいか・どれで動かすかを決める純関数
-    command-suggestion.ts     入力欄の / 補完に出す候補（姿から導くだけ）
-    command.ts                コマンドの共通の語彙（断る条件の meta の形・断ったときのエラー・モデル／effort／許可モードの一覧）
-    frame.ts                  ServerFrame（zod）・PROTOCOL_VERSION
-    vendor-asset.ts           外部ライブラリ（npm の依存）を配る経路の名前
-    expression.ts / question.ts / pending-ask.ts / task-summary.ts / character.ts
-                              語彙（いまの domain のうち、両側が使うもの）
-    character-definition.ts   character.json そのものの形。解析と、1件を重ねた書き戻しの文字列
-    character-asset.ts        /character/<pack>/<file> の URL の組み立てと読み分け・取り直しの印・拡張子による仕分け
-    character-background.ts   キャラビューに敷く背景（character.json の background から導く）
-    expression-choice.ts      speak が選べる表情とラベル（ラベルの出どころは定義ファイル）
-    image-data-url.ts         画面から届いた画像1枚の data URL の受け渡しの形（立ち絵・背景・依頼の画像で共有）
-    portrait-image.ts         画面から届いた立ち絵1枚（data URL）の受け渡しの形
-    prompt-image.ts           依頼に添える画像（貼り付け・ドロップで届く data URL）
-    persona-memory.ts         覚えたこと（persona.md の節）に関わる、両側が見る値（1行の長さの上限）
-    chat-log.ts               雑談モードの会話のログ（セッションの姿から導くだけ）
-    context-usage.ts          いまのセッションのコンテキストの内訳（型と zod）
-    context-usage-record.ts   コンテキストの内訳を記録に残すときの形（1行 = 1セッション）
-    token-usage.ts            トークン消費の記録の形（型だけ）
-    token-usage-summary.ts    トークン消費の集計（期間で切って軸ごとに畳んだ形。型と zod）と、選べる期間
-    room.ts                   部屋の名前（ビューのポート1つ＝部屋1つ。語彙と、語彙の外の名乗り方。13.9）
-    blank-text.ts             本文が読める文字を1字も持たないかを判定する純関数（ゼロ幅スペース等も空扱い）
-    background-task.ts        背景のタスク（ターンのあとも claude が動かし続けているもの）の語彙（型だけ）
-  server/                     サーバ（Bun）側。機能ごとのディレクトリの中を、判断（core/）と境界（adapter/）の2段に割る
-                              （機能の一覧と辺は上の「サーバの機能と、機能どうしの辺」）
-    core/                     共有の判断（どの機能にも属さないもの）。node: / SDK / ws を import しない
-      config.ts               環境変数の解釈（読み取りは cli.ts。ここは渡された env を見るだけ）
-      command-receiver.ts     コマンドの受け手の行の型（write / call）と、葉の機能の行を呼ぶ receiveFeatureCommand
-    adapter/                  共有の境界（どの機能にも属さないもの）。1ファイル = 1つの境界
-      tsukumo-home.ts         ~/.tsukumo/ の場所を組み立てる唯一の口
-      bundled-path.ts         同梱物の位置（import.meta.url）
-      local-time.ts           ~/.tsukumo/ に積む JSONL の「いつ」の書き方（日の境目も時差もそのマシンのローカル時刻）
-      lib/                    境界を名乗らない道具（json-file.ts / jsonl.ts）
-    session/                  セッションを持つ・起こす・頼む（各機能の判断を束ねる）
-      core/
-        session-manager.ts    セッション1つの { generation, state, subscribers }。reducer をサーバ側でも回す
-        session-launch.ts     起こす一続きの順序（外に触る部分は session-start.ts が渡す。起動も切り替えも同じ）
-        event-batch.ts        届いたイベントをまとめて配る束（間隔と、書きかけの本文の連結）
-        driver-command.ts     起き上がっている駆動に1件頼む（渡し方と、駆動が投げたときの畳み方）
-        command-session.ts    受け手に見せるセッションの口 CommandSession と、session の行の型・呼び分け
-        session-command.ts    session が受けるコマンドの表（駆動へ渡す6種・nudge・起こし直し3種・
-                              session.reflectAchievement・session.setSessionDefault）
-      adapter/
-        remembered-default.ts 次に起こすときの初期値（~/.tsukumo/state.json。キャラクター名・モデル・effort・許可モード・訪問のオン・オフ）
-    session-driver/           セッション駆動
-      core/
-        session-driver.ts     駆動の契約（SessionDriver / SessionDriverOptions と既定値）だけ
-        sdk-message.ts        SDK のメッセージを検証して SessionEvent にする（SDK を import しない）
-        pending-answer.ts     答え待ちの列（SDK の型は持たない。結び付けるのは adapter 側）
-        self-started-turn.ts  claude が依頼なしで始めた続きのターンに turn-resumed を補う
-        visible-output-nudge.ts 本体が差し込む「本文の無い応答」への催促への対処
-        session-restore.ts    続きから始めるセッションを選ぶ・transcript を履歴イベントにする
-        session-title.ts      セッションの見出しを付けさせる判断
-        prompt-image-shelf.ts 依頼に添えた画像の原寸の棚（直近の数枚をプロセスのメモリに持ち、/prompt-image/<id> で配る）
-        plan.ts               プランの名前をどちらの出どころから採るか
-      adapter/
-        sdk-driver.ts         SessionDriver の本物の実装（query() を回す）
-        sdk-tool.ts           tsukumo の MCP サーバとツール（speak / diary / report / remember ほか）
-        sdk-session.ts        セッションの一覧・transcript の読み直し・印（listSessions / getSessionMessages / tagSession）
-        sdk-context-usage.ts  コンテキストの内訳の問い合わせと、画面が要る形への写し
-        fake-driver.ts        疑似セッションどおりに SessionEvent を流す SessionDriver（疑似セッションは fs から読む）
-        claude-account.ts     ~/.claude.json から契約の段を読む
-    report/core/              report-notation.ts / report-tool.ts / report-review.ts / report-violation.ts
-                              （レポートの記法の規約・report ツール・検査と差し戻し）
-    system-prompt/core/       system-prompt.ts（systemPrompt の append の組み立て。人格 → 規約 → 雑談の記憶）と
-                              speech-cadence.ts（セリフの間合いの規約）
-    chat/                     雑談モード
-      core/                   chat-manner.ts / chat-memory-prompt.ts / chat-nudge.ts / chat-archive-entry.ts /
-                              chat-episode-score.ts（エピソード索引の採点の純関数）/
-                              chat-consolidation.ts（定着の指示文・依頼の文面・出力の検査・純関数と定数、
-                              `<topics>` の組み立てと取り出し）/
-                              chat-consolidation-writer.ts（定着を1回走らせて索引とあらすじに書く）
-      adapter/                chat-archive.ts（~/.tsukumo/chat-archive/）/ chat-summary.ts（~/.tsukumo/chat-summary/）/
-                              persona-memory.ts（persona.md の末尾の節へ書く）/
-                              sdk-chat-consolidation.ts（定着を1回走らせる使い捨ての query()）
-    character-pack/           core/character-selection.ts（どのパックを出すかの順位）、
-                              adapter/character-pack.ts（列挙・読み込み）/ character-edit.ts（~/.tsukumo/characters/ へ書く）
-    visit/                    core/visit-timing.ts / visit-guest.ts / visit-script.ts / visit-script-writer.ts / visit-watch.ts、
-                              adapter/sdk-visit-script.ts（台本を書かせる使い捨ての query()）/ visit-clock.ts（時計）
-    diary/                    core/diary-tool.ts、adapter/diary.ts（~/.tsukumo/diary/）
-    achievement/              core/achievement.ts（数える判断）、adapter/main-history.ts（main の履歴を読む）/
-                              achievement-procedure.ts（手続き）
-    usage-review/             core/usage-review-tool.ts、adapter/previous-usage-review.ts / usage-proposal-dismissal.ts
-    token-usage/              core/token-usage.ts、adapter/token-usage-log.ts（~/.tsukumo/token-usage/）/
-                              token-usage-procedure.ts（手続き）
-    context-usage/            core/context-usage.ts、adapter/context-usage-log.ts（~/.tsukumo/context-usage/）/
-                              context-usage-procedure.ts（手続き）
-    host/                     core/host.ts（ホストのポート。showView）/ tracked-file.ts（git 管理下のときだけホストへ渡す門番）、
-                              adapter/orca-host.ts（`orca` コマンドを起こす唯一の場所）
-    view-server/              core/port-resolution.ts（どのポートで試すか）、
-                              adapter/server.ts（http）/ session-socket.ts（ws）/ rpc-guard.ts（/rpc の照合）/
-                              frame-procedure.ts（押し出しの購読の手続き）/
-                              vendor-asset.ts（node_modules の実ファイル）/
-                              bundle.ts / ui-rebuild.ts / source-fingerprint.ts（bun build と src/browser/ の見張り）
-    repository/adapter/       git.ts（`git` を起こす唯一の口）/ repository-file.ts（git ls-files）/
-                              task-summary.ts（main のタスク一覧の読み直し）/ repository-procedure.ts（手続き）
-    <機能>/core/<機能>-command.ts   その機能が受けるコマンドの表（character-pack / chat /
-                              visit / usage-review / host）
-    <機能>/adapter/<機能>-procedure.ts その機能の手続き（oRPC の受け手。読み取りの4機能とコマンドの6機能）
-  browser/
-    main.tsx                  入口。<App> を mount する（副作用はここだけ。描き始める前の1回も含む）
-    app.tsx                   <App>。Provider を重ね、その内側で <Root> を描くだけ（6.1）
-    types/                    browser 全体に効く ambient 宣言（import されない `*.d.ts`）だけを置く。どの箱にも属さない
-      css-variable.d.ts       `style` に CSS カスタムプロパティを書くための型拡張
-      css-global.d.ts         `styles/theme.css` を副作用だけで import したときの宣言（中身は空）
-      vendor-global.d.ts      外部ライブラリがブラウザのグローバルに置くものの型（`<script>` で読むので npm の型が引けない分）
-    components/               React の部品。**`app/` `page/` `domain/` `ui/` の4段**（2026-09-25・2026-09-26 決定。下の箱の表）
-      app/                    すべての画面を知る composition root。root.tsx（<Root>。版が合わないときの知らせと
-                              立ち絵の先読み）と layout.tsx（<Layout>。帯を最上部に置き、出す画面を選ぶ）
-      page/                   画面。**1つの画面 = 1つのディレクトリ（ページ）**で、名前は `stores/location-hash.ts` の
-                              `Screen` の値そのまま。中の形は下の「ページの形」（2026-09-26 決定）
-        conversation/         会話の画面。conversation.tsx（雑談モードかを読む）と presentational-conversation.tsx
-                              （<ConversationLayout> の差し込み口を4領域と <Sidebar> で埋める）
-          domain/             api-error-label.ts（入力欄とメインビューが読む、ターンの失敗の語）
-          components/         4つの領域と、2つ以上の領域が読む部品・フック
-            main-view/        TurnHeader・Turn・Report・QuestionRecord と markdown/（unified 一式）
-            character-view/   BalloonTrack・Balloon・SpeechLog・動きの hooks（立ち絵は domain/portrait.tsx）
-            chat-view/        雑談モードでメインの領域に差し替わるビュー（13.7）
-            conversation-layout/ ConversationLayout（4領域の grid）・リサイザ・比率の保存（split.ts）
-                              （2026-09-26 に画面共通の枠 `components/domain/layout/` から移した）
-            dispatch/         Composer・CommandSuggestions・FileSuggestions・PendingAnswer・TurnStatus
-            prompt-image/     依頼に添えた画像の札と控え（6.1）と、原寸を拡大して見る ImageZoom
-            hooks/            use-repository-file-paths.ts（入力欄の `@` 補完とメインビューのリンク）
-        character/            キャラクター画面と、その上に重なる新しく作るダイアログ（13.6）。
-                              パックの一覧と、選んだパックの立ち絵・差し色・背景の差し替え
-        token-usage/          トークン消費の画面（期間の消費の札・小さな棒・集計の表）
-        achievement/          成果の画面（13.10）と、どの画面にも出る書き終わりの知らせ（DiaryNotice）
-      domain/                 **tsukumo の語彙を持つ部品**。直下のファイルは2つ以上の領域が読む部品、
-                              サブディレクトリは全画面で共有する枠（領域）
-        portrait.tsx          立ち絵（6.5）
-        character-face.tsx    キャラクターの顔（13.9）
-        protocol-mismatch.tsx サーバと版が合わないときの知らせ（4.4）
-        screen-nav/           全画面の最上部の帯。部屋の名前・仕事/雑談のトグル・3画面の口・
-                              いまの作業の札（押すと依頼の手順の一覧）・モデル/許可モードの
-                              操作子（13.9）
-        sidebar/              SessionInfo・TaskSection（まん中の区画ひとまとまり）と、
-                              2区画の枠（SidebarSection）
-      ui/                     **語彙を持たない部品**。値と呼び先を全部受け取る。**部品ごとのディレクトリに
-                              分ける**（1部品1フォルダの例外の1つ。下の「1部品1フォルダは真似しない」）。
-                              variant の作法と部品の一覧は下の「`components/ui/` の部品（variant の作法と一覧）」
-        select/               select.tsx・select.module.css
-        button/               button.tsx・button.module.css
-    features/                 **置かれる機能**。自分の置き場所を持たず、領域の中に置いてもらう
-      task-board/             タスク一覧。TaskList（区画の中身）・TaskBoard（表のモーダルの入口）・
-                              PresentationalTaskBoard（器）。サイドバーに置いてもらう
-                              （下の「領域の機能と、置かれる機能」）
-        hooks/                その機能だけが読むフック（`use-task-board.ts`）
-        components/           その機能だけが使う部品（TaskTable・TaskRow・TaskItem ほか）
-        domain/               その機能の語彙の純関数（`task-status.ts`・`task-list-count.ts`・
-                              `task-sidebar-order.ts`）
-                              （領域と機能の中も同じ `hooks/` `components/` `domain/` に分け、見た目は
-                              それぞれの中の `<名前>.module.css`。6.6）
-    hooks/                    語彙を持たない React のフック（`use-modal-dialog.ts` ほか）
-    domain/                   画面全体の語彙（複数の領域・機能が読む、状態でも部品でもないもの。
-                              `appearance-color.ts`＝画面の色・`reveal-speed.ts`＝演出の速さ）
-    lib/                      ライブラリを包む道具（WebSocket・`FileReader`・React の hook）
-    utils/                    ライブラリに依存しない汎用の道具（`clock.ts`）
-    stores/                   画面全体で共有する状態（セッション・選んでいるターン・出している画面）
-    styles/                   グローバルな CSS はこの1枚だけ（theme.css。トークン・body・リンク）
-test/                         src/<相対パス>.ts → test/<相対パス>.test.ts（いまのまま）
+src/                          配線（composition root）。cli.ts（入口）・main.ts（起動の段取り）・
+                              router.ts（全機能の手続きを束ねる）ほか、起動と接続を進める数ファイル
+  types/                      どの層にも属さない ambient 宣言（import されない *.d.ts）だけを置く
+  shared/                     契約・イベント・状態・reducer・zod スキーマ（両側が読む語彙。層の直下に平置き）
+    contract/<機能>.ts        手続きの契約（形・断る条件の meta）
+  server/
+    core/ adapter/            どの機能にも属さない共有の判断・境界
+    <機能>/core/ adapter/     機能の判断・境界（上の「サーバの機能と、機能どうしの辺」）
+  browser/                    React の部品・hooks・CSS（下の「`src/browser/` の箱と、置く基準」）
+test/                         src/<相対パス>.ts → test/<相対パス>.test.ts
 characters/<name>/            character.json・persona.md・素材
 ```
 
@@ -751,20 +560,6 @@ backdrop のクリックで `onClose` が呼ばれること・中のクリック
 **色や寸法が効いているか（絵）は守らない**——置き換えのたびに目視で確かめる
 （`docs/coding-standards.md`「DOM の構造と画面の流れは E2E、見た目は目視」）。
 
-**部品の一覧**（2026-09-25 時点。props はすべて必須で、「`className` で渡すもの」は置き方の
-ほかに渡してよい目安）:
-
-| 部品              | 置き場        | props（variant と要素）                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | `className` で渡すもの                                |
-| ----------------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
-| `Text`            | `ui/text/`    | `element: "p" \| "span" \| "summary"`、`size`: `label` / `action` / `secondary` / `subheading` / `body` / `heading` / `inherit`（→ `--font-*`）、`tone`: `ink` / `ink-quiet` / `accent` / `state-ok` / `state-warn` / `state-ng` / `state-ask` / `inherit`（→ 同名の色）、`weight`: `normal`（400）/ `semibold`（600）/ `bold`（700）/ `inherit`                                                                                                                                                                                                                                                                                         | 文字の組み（1行で切る・字間・行の高さ・桁揃え・書体） |
-| `Heading`         | `ui/heading/` | `level: 1 \| 2 \| 3 \| 4`（→ `<h1>`〜`<h4>`）、`size`・`tone`・`weight` は `Text` と同じ（`size` と `weight` に `inherit` は無い）                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | `Text` と同じ                                         |
-| `Stack`           | `ui/stack/`   | `element: "div" \| "section" \| "span" \| "header" \| "footer" \| "label" \| "p"`、`name`（`Dialog` と同じ形に「付けない」を足した合併型: `{ kind: "none" }` / `{ kind: "label"; label }`（→ `aria-label`）/ `{ kind: "labelledby"; id }`（→ `aria-labelledby`））、`ref: Ref<HTMLElement> \| undefined`（React 19 の props で受ける ref。読まないなら `undefined`）、`direction`: `row` / `column`、`gap`: `none` / `xs` / `sm` / `md` / `lg` / `xl`（0 / 0.25 / 0.5 / 0.75 / 1 / 1.25rem）、`align`: `start` / `center` / `end` / `baseline` / `stretch`、`justify`: `start` / `center` / `end` / `between`、`wrap`: `nowrap` / `wrap` | 箱の見た目（余白・枠・地）                            |
-| `VStack`          | `ui/v-stack/` | `Stack` から `direction` を除いたもの（`column` に固定して `Stack` を描く）                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | `Stack` と同じ                                        |
-| `HStack`          | `ui/h-stack/` | `Stack` から `direction` を除いたもの（`row` に固定して `Stack` を描く）                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | `Stack` と同じ                                        |
-| `Button`          | `ui/button/`  | `type`: `button` / `submit`、`variant`: `outline`（`--rule` の枠）/ `outline-accent` / `outline-warn` / `solid-accent` / `solid-danger`（`--state-ng`）/ `solid-warn` / `ghost`（地も枠も無い静かな字）/ `link`（accent の字・余白0）、`size`: `Text` の `label`〜`body`、`pressed`: `none` / `on` / `off`、`disabled`、`ariaLabel` / `ariaHasPopup`（`"dialog"`）/ `title`（どれも `string                                                                                                                                                                                                                                              | undefined` の必須キー）、`onClick`                    | 箱（高さ・余白・角丸） |
-| `Dialog`          | `ui/dialog/`  | `open`、名前（`aria-label` か `aria-labelledby` の合併型）、`backdrop`: `dim`（`ground` の 70%）/ `deep`（88%）/ `clear`（透明。外側のクリックの読み替えだけ使う）、`placement`: `{ kind: "auto" }`（部品は置き方を持たない。ブラウザ既定の中央か、`className` の CSS で置く）/ `{ kind: "at"; top; left }`（座標を inline で置く）、`onClose`                                                                                                                                                                                                                                                                                           | 顔と箱（幅・余白・地・枠・角丸・影）                  |
-| `UploadIcon` ほか | `ui/icon/`    | props は無い。lucide-react の絵を大きさ 15・線の太さ 1.9 で描く（`UploadIcon` / `TrashIcon` / `PlusIcon` / `SwitchIcon` / `PencilIcon`）                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | —                                                     |
-
 - **`VStack` / `HStack`**: 向きの決まった並べは `VStack`（縦）・`HStack`（横）で書き、読む人が
   props を見ずに向きを知れるようにする。どちらも `Stack` に `direction` を渡すだけの薄い部品で、
   variant の対応表と CSS は `Stack` だけが持つ。向きを値で切り替える箇所だけ `Stack` を直接使う
@@ -826,46 +621,12 @@ backdrop のクリックで `onClose` が呼ばれること・中のクリック
   「区画」も名乗らず、タスクの語彙だけで書く（別の領域から同じものを置けるのはこのため）
 - **`components/ui/` とは別物。** `components/ui/` は**語彙を持たない**部品（値と呼び先を全部
   受け取る）で、「置かれる機能」は機能の語彙を名乗ったまま置き場所だけを借りる
-- **会話の画面を1ページにした形**（2026-09-26 決定）:
-  - もとは領域の一覧に会話の4つ（`components/page/conversation/<領域>`）が並んでいたのを、画面
-    `components/page/conversation` の1つにまとめた。4つは領域ではなくページの部品
-    （`conversation/components/<領域>/`）になり、「4つどうしも import しない」は外れた
-  - **`<ConversationLayout>` の差し込み口を埋めるのは `presentational-conversation.tsx`。**
-    `<ConversationLayout>` と `<Sidebar>` を import し、`main` には雑談モードなら `<ChatView>`、
-    そうでなければ `<MainView>` を、`character` に `<CharacterView>`、`dispatch` に `<Dispatch>` を
-    入れ、`collapseCharacter` と `mainAsGround` に雑談モードの旗を渡す。雑談モードの旗
-    （`session.state.chatMode`）をストアから読むのは `conversation.tsx`（ストアを読むだけなので
-    `hooks/use-conversation.ts` は作らない）。`<Root>` は `<Activity>` の中に `<Conversation />`
-    を置くだけで、`OVERLAY_SCREEN` と `<Activity>` の切り替え・`<ScreenNav>`・`<DiaryNotice>`・
-    `usePortraitPreload`（どちらの画面を出していても表情を先に読む）は入口に残る
-  - そのため**辺を1本足した: 画面 → 枠**（`components/page/<画面>` → `components/domain/<枠>`）。
-    枠は画面を import しない（`<ConversationLayout>` は差し込み口を props で受けたまま）。
-    画面どうし・枠どうしは import しない。検査の一覧は「枠」・「画面」・「置かれる機能」の3種類に
-    分かれ（上の表）、許す辺は「枠・画面 → 置かれる機能」と「画面 → 枠」の2つ
-  - **画面共通の枠と会話の4領域のレイアウトを分けた**（2026-09-26 決定。ユーザーの指示）:
-    もとは `components/domain/layout/` が会話の4領域のレイアウト（`<Layout>`）そのもので、
-    全画面共通の枠（帯 `<ScreenNav>` を最上部に置き、画面を下に差し込む形）は `main.tsx` の
-    `<Root>` に直接書かれていた。会話の4領域は会話の画面の部品
-    `components/page/conversation/components/conversation-layout/`（`<ConversationLayout>`。
-    `Layout` から改名）へ移し、`components/domain/layout/` はその全画面共通の枠（`<Layout>`。
-    `nav` / `screen` の2つの差し込み口を props で受けるだけで、画面も他の枠も import しない）に
-    作り直した。`<Root>` は `<Layout nav={<ScreenNav />} screen={...} />` を組んで
-    渡すだけになり、どの画面を出すかの判断（`<Activity>` の出し分け・`OVERLAY_SCREEN`）は
-    `<Root>` に残したまま枠へは渡さない（枠が「画面を知らない」を保つため）。**2つの `Layout` が
-    同じ名前を名乗ると読み手が取り違える**ので、会話の4領域側だけ改名した——
-    画面共通の枠のほうは元から `components/domain/layout/` の唯一の顔なので `Layout` のまま。
-    **同じ日のうちに、枠 `components/domain/layout/` は `components/app/layout.tsx` へ移した**
-    （ユーザーの指示）。枠の中身は帯と画面を並べるだけで読み手が `<Root>` しかなかったので、
-    出す画面の選択ごと `<Layout>` に持たせ、`<Root>` には描く前の判断（版の知らせ・立ち絵の先読み）だけを残した
-  - 読み手が会話の画面の1つに戻ったものは、上げる引き金の逆で下ろした:
-    `components/domain/prompt-image.tsx`（と CSS）→ `conversation/components/prompt-image/`、
-    `domain/api-error-label.ts` → `conversation/domain/`、`hooks/use-repository-file-paths.ts` →
-    `conversation/components/hooks/`。`components/ui/image-zoom/` も、読み手が `prompt-image.tsx`
-    だけになったので `prompt-image/components/image-zoom/` へ下ろした（前の2つは
-    下の検査「1つの機能だけが読むファイルは無い」が落とす。`components/ui/` は 2026-09-26 に
-    この検査から外したので、`image-zoom` は `ui/` へ戻してよい）
-  - 書き終わりの知らせは成果の画面の部品（`achievement/components/diary-notice/`）のまま、
-    `app.tsx` がその `diary-notice.tsx` を直に置く（画面の外から部品を引けるのは入口だけ）
+- **会話の画面は1ページ**（2026-09-26 決定）。会話の4領域は領域ではなくページの部品
+  （`conversation/components/<領域>/`）で、そのぶん**辺を1本足した: 画面 → 枠**
+  （`components/page/<画面>` → `components/domain/<枠>`。枠は画面を import しない）。
+  画面どうし・枠どうしは import せず、許す辺は「枠・画面 → 置かれる機能」と「画面 → 枠」の2つ
+- 読み手が会話の画面の1つに戻ったものは、上げる引き金の逆で下ろす
+  （例: `components/ui/image-zoom/` → `prompt-image/components/image-zoom/`）
 - 検査は `test/architecture.test.ts` の枠・画面・置かれる機能の一覧。**どれにも無いディレクトリが
   `features/` と `components/domain/` の直下、`components/page/` の下にあれば落ちる**（`chat-view` と
   `token-usage` は 2026-09-22 まで領域の一覧に無く、import が
@@ -924,71 +685,37 @@ backdrop のクリックで `onClose` が呼ばれること・中のクリック
 | `components/*.tsx`          | 部品ひとつずつ。class を付けて値を置く                                            | 算出・判定（**畳んだ値で受ける**） |
 | `domain/*.ts`               | **フックに入れられない**機能固有の語彙（対応表・文言）                            | JSX・フック・React                 |
 
-`task-board` がその1件目（2026-09-22 決定）:
+`task-board` がその1件目（2026-09-22 決定。`features/task-board/` の中に
+`task-board.tsx`（container）・`presentational-task-board.tsx`（presenter）・
+`hooks/use-task-board.ts`・`components/*.tsx`・`domain/*.ts` を並べた形）。
 
-```
-features/task-board/
-  task-board.tsx                  container。useTaskBoard を呼んで PresentationalTaskBoard へ渡す
-  task-list.tsx                   区画の中身（畳むだけの1種類なので割らない）
-  presentational-task-board.tsx   <dialog> の器（フック無し）
-  hooks/use-task-board.ts         <dialog> の ref・backdrop のクリックと、行への畳み方（BoardRow）
-  components/task-table.tsx       表（memo）
-  components/task-row.tsx         1行
-  components/readiness-cell.tsx   着手の列
-  components/task-id-list.tsx     IDの並び
-  components/task-item.tsx        区画の一覧1件（進行中を除く。印の形で status を区別する）
-  components/task-running-card.tsx  区画の一覧の先頭に出す進行中（doing）のカード
-  components/task-count-chip-list.tsx  見出し下の件数のチップ
-  components/task-run-button.tsx  押せるタスクID（一覧と表の両方が置く）
-  components/task-run-confirm.tsx 「<ID> を実行しますか」の確認（押した瞬間だけ組み立てる。下の「`components/` とストア」）
-  domain/task-status.ts           status → 色の class（表の行が読む）
-  domain/task-list-count.ts       見出し下の件数のチップの元（サイドバーが読む）
-  domain/task-sidebar-order.ts    区画の一覧の並び（進行中を先頭にまとめる純関数）
-  domain/task-sidebar-filter.ts   件数のチップで選んだ状態だけに絞る純関数（2026-09-23 決定）
-```
-
-- **部品に算出を残さない。** 「値が無いときどうするか」「どれを出すか」はフックが
-  `BoardRow` へ畳んでから渡す。部品に残ってよいのは **class を選ぶ分岐だけ**
-  （`domain/task-status.ts` の呼び出しのように、CSS の名前が絡むもの）
+- **部品に算出を残さない。** フックが畳んでから渡し、部品に残ってよいのは**class を選ぶ分岐だけ**
 - **純関数でも、まず `hooks/use-<名前>.ts` に入らないかを見る**（2026-09-22 ユーザーの選択）。
-  呼ぶのがそのフック1つなら、機能直下に `*.ts` を増やさずフックの下に関数として置く
-  （`use-task-board.ts` の `boardRows`）。**`components/` は型だけを `import type` で引く**
+  呼ぶのがそのフック1つなら、機能直下に `*.ts` を増やさずフックの下に関数として置く。
+  **`components/` は型だけを `import type` で引く**
 - **`domain/` を切るのは、フックに入れないほうが良いもののうち、その機能固有の語彙で
-  名乗れるものだけ。** 「純関数だから `domain/`」ではない。入れないほうが良いのは、**フックを
-  呼ばない相手が読む**とき——`domain/task-status.ts` は表の行（フックを呼ばない部品）が読み、
-  `domain/task-list-count.ts`・`domain/task-sidebar-order.ts`・`domain/task-sidebar-filter.ts`
-  はサイドバーの区画（`task-section.tsx` / `task-list.tsx`）が読む。フックに置くと、
+  名乗れるものだけ。** 入れないほうが良いのは、**フックを呼ばない相手が読む**とき
+  （`task-board/domain/task-status.ts` は表の行（フックを呼ばない部品）が読む）。フックに置くと、
   フックを使わない側が `use-*.ts` を import することになる
 - **`components/` は機能の中の部品**で、`browser/components/` の4段とは
   別物。**語彙を持たない汎用の部品は、読み手が1つでも `components/ui/` に置く。** 語彙を持つ部品は、
   読み手が2つの機能にまたがったら `components/domain/` の直下へ上げる
-
 - **`presentational-` の接頭辞は、この形のときだけ付けてよい**（`CLAUDE.md` 原則5 の
   「置き場所を名前にしたファイルは作らない」の例外）。**container と1対1で対になっている**
-  ことがファイル名で分かるほうが、`task-table.tsx` のような概念の名前より追いやすいため。
-  逆に、対になっていない部品に `presentational-` を付けない
+  ことがファイル名で分かるほうが追いやすいため。逆に、対になっていない部品に付けない
 - **フックと presenter の名前は、機能名ではなく container の名前に合わせる**
   （`use-<container>.ts` / `presentational-<container>.tsx`。2026-09-23 決定）。**1つの機能に
-  container はいくつあってもよく**（`dispatch` の `composer` / `pending-answer` / `turn-status`、
-  `character` の `character-create` / `character-edit`、`sidebar` の区画ごと）、機能名で
-  名乗ると対が分からなくなる。機能名と一致するのは container が1つの機能だけ
-  （`task-board` の `use-task-board.ts`）。**1ファイル1フック**
+  container はいくつあってもよく**（`dispatch` の `composer` / `pending-answer` / `turn-status` など）、
+  機能名で名乗ると対が分からなくなる。**1ファイル1フック**
 - **機能の中の `hooks/` に置くのは、その機能だけが読むフック。** 読み手が2つになったら
-  **`browser/hooks/` へ上げる**（機能の語彙を持たないものだけが上がる。`use-modal-dialog.ts` は
-  `<dialog>` の開閉を DOM へ写すだけでタスクを知らないので、最初から `browser/hooks/`）。
-  **container と対になっていないフック**（`use-active-turn-scroll.ts` のように、外の世界に
-  触るぶんだけを出したもの）も同じ `hooks/` に置き、名前は container ではなく**その概念**にする。
-  **読み手が2つになったらこちらも上げる**——`use-repository-file-paths.ts`
-  （`git ls-files` の一覧の取得）はもと `dispatch/hooks/` の1件目だったが、`main-view/markdown/`
-  （レポートに書かれたパスを押すと Orca のエディタで開ける部品）も読むようになったので
-  `browser/hooks/` へ上げた（2026-09-24）。会話の画面を1ページにしたとき（2026-09-26）、読み手が
-  どちらも同じページの部品なので、上げる先はページの `components/hooks/` に変わった（上の「ページの形」）
+  **`browser/hooks/` へ上げる**（機能の語彙を持たないものだけが上がる）。**container と対になっていない
+  フック**（外の世界に触るぶんだけを出したもの）も同じ `hooks/` に置き、名前は container ではなく
+  **その概念**にする。読み手が2つになったらこちらも上げる（ページの部品なら「ページの形」の
+  `components/hooks/`）
 - **フックでない純関数は `hooks/` に置かない。** 機能の直下に概念の名前で置く。
   **ページの部品は「ページの形」の直下の形が決め打ちなので、概念の名前のファイルも `domain/` の下**
-  （`components/page/conversation/components/conversation-layout/domain/split.ts` がその形。
-  `main-view/domain/turn-title.ts` と同じ）
-- **描き直しを止める `memo` は presenter 側に残す**（`PresentationalTaskBoard` の `TaskTable`）。
-  container はフックのぶん毎回描き直されるので、そこに `memo` を置いても効かない
+- **描き直しを止める `memo` は presenter 側に残す**（container はフックのぶん毎回描き直されるので、
+  そこに `memo` を置いても効かない）
 
 **機能の中に、概念の名前のサブディレクトリを置いてよい**（2026-09-23 決定。`markdown/` が先に
 この形で、`reveal/` が2件目）。`hooks/` `components/` `domain/` が**置き場所**を名乗るのに対し、
@@ -996,33 +723,21 @@ features/task-board/
 
 1. **ファイルが3つ以上**あり、**その概念だけで閉じている**こと（機能の中の他の部品が触るのは
    入口の1つか2つで、残りは中どうしでしか読まない）
-2. **`hooks/` `components/` `domain/` のどれか1つに収まらない**こと。収まるならそちらへ置く。
-   `reveal/` はフック・DOM を測る/書く道具・純関数・React の外の入れ物が混ざる
+2. **`hooks/` `components/` `domain/` のどれか1つに収まらない**こと。収まるならそちらへ置く
 3. **名前がその機能の中の概念**（用語集の語か、それに準ずるもの）であること
 
 **そろったら、`hooks/` `components/` `domain/` より概念のディレクトリを優先する。** 概念を
-追うのに開くディレクトリが1つで済み、機能の直下に「接頭辞だけが仲間を表す」ファイルが並ばなく
-なる。**中では接頭辞を落とす**（`reveal/band.ts`。`markdown/split-blocks.ts` と同じ）。
+追うのに開くディレクトリが1つで済む。**中では接頭辞を落とす**（`markdown/split-blocks.ts` のように）。
 
 | ディレクトリ          | 中身                                   | 外から呼ぶ入口                   |
 | --------------------- | -------------------------------------- | -------------------------------- |
 | `main-view/markdown/` | unified の設定・記法の部品・塊の切り方 | `Markdown` / `splitReportBlocks` |
 
-- **その概念のフックもこの中に置く。** 機能の中の `hooks/` は「その機能だけが読むフック」の箱
-  だが、概念のディレクトリを切ったなら、そのフックはそちらへ入れる
-  （`markdown/` の中のフック）。`hooks/` に残すと、演出を追うのに2つのディレクトリを開く
-- **読み手が1つの機能に閉じているかどうかは、いつもどおり数える。** 逆に2つ目の読み手が
-  出たら、部品は `components/domain/` か `components/ui/`、道具は `browser/lib/`、状態は `stores/` へ上げる。
-  **概念ディレクトリそのものが2つ目の読み手を得たときも同じ**——`main-view/reveal/`
-  （レポートを筆で書き上げる演出。段取り・測る・塗る・帯・ぶら下がり・筆先）は
-  `main-view` だけが読む前提で機能の中に置いていたが、2026-09-25 に成果の画面
-  （`components/page/achievement/`）の日記の吹き出しも同じ演出を再利用することになり、
-  `browser/domain/reveal/` へディレクトリごと引き上げた（`useReportReveal`（`report.tsx`と
-  `components/page/achievement/components/diary-section/diary-section.tsx`）と
-  `useBrushTip`（`mini-portrait.tsx`。成果の画面は
-  `data-brush-origin` を付けないので、ミニ立ち絵の追従だけは main-view 側にとどまる）。**中の
-  ファイル名は接頭辞を落としたまま**（`reveal/band.ts` など）で、`browser/domain/` に初めて
-  概念のサブディレクトリを持ち込む形になるが、条件（3ファイル以上・概念だけで閉じている・
+- **その概念のフックもこの中に置く。** 概念のディレクトリを切ったなら、その機能だけが読むフックも
+  そちらへ入れる（`hooks/` に残すと、演出を追うのに2つのディレクトリを開く）
+- **概念ディレクトリそのものが2つ目の読み手を得たときも、いつもどおり上げる**——`main-view/reveal/`
+  （レポートを筆で書き上げる演出）は成果の画面も再利用することになり、`browser/domain/reveal/` へ
+  ディレクトリごと引き上げた（2026-09-25）。条件（3ファイル以上・概念だけで閉じている・
   `hooks/`/`components/`/`domain/` のどれか1つに収まらない）は機能の中で切るときと同じ
 
 **`components/` とストア**: **機能の中の `components/` はストアを読んでよい**（2026-09-23 決定。
@@ -1118,31 +833,12 @@ features/task-board/
   ——外部パッケージ・`shared/` を含めて `utils/` の外を引いたら落ちる——を検査する）。
   他の層に `utils/` を作るときも、同じ検査を足す
 
-**いまのファイルの行き先**（2026-09-23 に読み手を数え直して振り分けた）:
-
-- **`browser/lib/` に残るのは7つ**。`socket.ts`=WebSocket、`refresh.ts`=`<link>` と `location`、
-  `session-token-url.ts`=`URL` と `location`、`data-url.ts`=`FileReader`、`debounce.ts`=React、
-  `reduced-motion.ts`=`matchMedia`、`tool-summary.ts`=Claude Code のツール。いずれも
-  **ファイル名が指すのが言語の外のもの**（手順2の表の上の行）で、tsukumo の語彙は名乗らない
-- **`browser/domain/` は2つ**。`appearance-color.ts`（画面の色）と `reveal-speed.ts`（演出の速さ）は
-  どちらも `localStorage` を包むが、**名前が指すのが tsukumo の語彙**なので手順1で `lib/` から外れる
-- **機能の中へ下ろしたのは5つ**（読み手が1つの機能しか無かったもの）。
-  `model-label.ts` / `permission-mode-label.ts` → `components/domain/screen-nav/domain/`、
-  `prompt-image.ts` → `components/page/conversation/components/dispatch/`、`chart.ts` / `vendor-script.ts` →
-  `components/page/conversation/components/main-view/markdown/`（6.3 が「Markdown 一式はメインビューの機能の中」と書いていたのに
-  `lib/` に残っていた2つ）
-- `shared/image-data-url.ts` は **`shared/lib/` へ**。名前が指すのは data URL という**形式**で、
-  tsukumo の語彙を名乗らず、import も持たない（読み手は `portrait-image.ts` /
-  `character-background.ts` / `prompt-image.ts` の3つ）
-- **ライブラリに依存しない小物は、`utils/` を作る前に remeda（11章）にあるかを見る**（2026-09-22 決定）。
-  8ファイルに書き写していた `isRecord` は、`core/utils/` を作らずに remeda の `isPlainObject` へ
-  寄せた。**remeda に無いものだけが `utils/` の1件目になる**
-- **`utils/` にあるのは `browser/utils/clock.ts` の1件だけ**（`Temporal` で現在のエポックミリ秒を
-  読む。import は無く、歯止めの3つを満たす）。`shared/` の平置きと、`server/` の機能の
-  中と共有の箱のファイルは、`server/adapter/lib/` の2つを除いてすべて tsukumo の語彙を名乗っている
-  （手順1）ので `lib/` `utils/` へは動かさない（`server/` を機能で割るのは上の「サーバの機能と、
-  機能どうしの辺」の決定で、この手順とは別の問い）。**実体が無い箱は先に作らない**ので、
-  ほかの層の `utils/` は最初の1件が出たときに作る
+**いまのファイルの行き先（例）**: `browser/lib/socket.ts`（WebSocket。名前が言語の外を指す）は手順2で
+`lib/` に、`browser/domain/appearance-color.ts`（画面の色）は手順1で tsukumo の語彙として `lib/` から
+外れる。`utils/` にあるのは `browser/utils/clock.ts` の1件だけ（歯止めの3つを満たす）。**ライブラリに
+依存しない小物は、`utils/` を作る前に remeda（11章）にあるかを見る**（2026-09-22 決定。8ファイルに
+書き写していた `isRecord` は `core/utils/` を作らず remeda の `isPlainObject` へ寄せた）。
+**実体が無い箱は先に作らない**ので、ほかの層の `utils/` は最初の1件が出たときに作る。
 
 ## 3. 動きの流れ
 
@@ -1464,116 +1160,7 @@ doc コメントが正典で、機能の数え方・契機・上限は `docs/req
 
 ## 6. browser
 
-### 6.1 部品の木
-
-```
-<SessionProvider>            lib/socket.ts で接続。SessionState を持つ store を Context で配る（6.2）
-└ <TurnSelectionProvider>    選んでいるターンを配る（6.2）
-   └ <Root> ─ <Layout>       components/app/。<Root> は版が合わなければ知らせだけを出し（4.4）、
-      │                      <Layout> は useScreen() で出す画面を選ぶ（6.2・13.6）。
-      │                      **会話の画面は外さず hidden で隠す**（下書き・選んでいるターン・スクロール位置を保つ）
-      ├ <ScreenNav>          **全画面の最上部の帯**（13.9）。部屋の名前・仕事/雑談のトグル・
-      │                      3つの口（会話 / キャラクター / トークン消費）・いまの作業の札
-      │                      （押すと依頼の手順の一覧）・モデル/許可モードのドロップダウン・
-      │                      右端の設定の歯車。狭い画面ではタブ帯の右端の「≡」に畳む
-      │   └ 設定の歯車       押すとポップオーバー（13.9「設定の歯車」）。いまある群は
-      │                      画面の色（ground / surface / ink。domain/appearance-color.ts。localStorage）
-      ├ <DiaryNotice>        書き終わりの知らせ（13.10）。帯と同じく、どの画面でも出す
-      ├ <Conversation>       会話の画面（conversation.tsx）。雑談モードかを読み、<Layout> の差し込み口を
-      │  │                   4領域と <Sidebar> で埋める（presentational-conversation.tsx）
-      │  └ <Layout>             grid。リサイザ。接続切れの印。答え待ちの印（タブのタイトル・枠色）。
-      │     │                   比率を動かして既定と違う値になったときだけ、上下の仕切りの右端に
-      │     │                   「比率を既定に戻す」ピルが出る（13.6）。**狭い画面では画面の高さに
-      │     │                   固定し、上段（メインビュー / サイドバー）をタブで切り替える**（4.7）
-      │     ├ <MainView>        札（<TurnHeader> + <Turn>）+ <QuestionAsk>。札の頭は ‹ › ・依頼の1行目の
-      │     │                    タイトル・n / N・最新 / 最新へで、直近20件（`MAX_MAIN_VIEW_TURNS`）を1件ずつ遡る。
-      │     │                    タイトル横の `⌄` を押すと窓の中のやり取りへ一度で飛べる一覧が開く
-      │     │                    （新しいものを上に並べ、番号は `‹` `›` の脇と同じ古いほうを1とする
-      │     │                    通し番号のまま。見ている行にだけ ● の印）
-      │     │   └ <QuestionAsk> 答え待ちの質問の**札**（レポートの下）。「質問」のチップ + header + n / N、
-      │     │                    選択肢を横に並べたカード（**選択肢ごとの `preview` は説明の下**。
-      │     │                    ラベル末尾の (Recommended) は「おすすめ」のバッジ）、
-      │     │                    下端に「これで答える」。**自由入力は入力欄が担う**（2026-09-23）
-      │     │   └ <Turn>        <RequestRest>（依頼の2行目以降 + <PromptImageThumbnails>）
-      │     │                    + [<Report> | <QuestionRecord>]*
-      │     │       └ <Report>  Markdown（6.3）。書きかけはブロック単位で memo
-      │     ├ <CharacterView>   <SpeechLog> + <Portrait> + <BalloonTrack>
-      │     │   ├ <SpeechLog>   右上の「ログ」と、舞台を帯の下まで上へ伸ばしてセリフを遡るモーダル（4.2）。
-      │     │   │               立ち絵はキャラビューから受け取り、吹き出しは <Balloon> を共有。位置は
-      │     │   │               CSS の anchor positioning でキャラビューの床と吹き出しの並びに重ねる
-      │     │   ├ <Portrait>    立ち絵。**components/domain/portrait.tsx**（キャラクター画面の並びも使う）。SVG は
-      │     │   │               インラインで差し色、ラスタは <img>。動きの hooks はキャラビュー側に残る（6.5）
-      │     │   └ <BalloonTrack> <Balloon>*。最新を一番下、下端の位置を固定（4.2 の決定どおり）。
-      │     │                   出るのは `speak` で来たセリフだけ。最新にだけ話し手の名前を添える（4.2）
-      │     ├ <Sidebar>         {taskSection} + <SessionInfo>。**雑談中は chatMode を見て自分で差し替え**、
-      │     │                   <ProfileCard> + <RecentTopicSection> + <PersonaMemorySection> +
-      │     │                   <SessionInfo>（キャラクターの対なし）になる（13.7「雑談のときのサイドバー」）
-      │     │   └ <TaskSection> **features/task-board/** を置く区画（置かれる機能。2章）。枠は props で受け取り、
-      │     │                   <TaskList>（区画の中身）と <TaskBoard> を描く。置くのは <Sidebar>
-      │     │   └ <TaskBoard>   タスク一覧の表。見出しの「一覧を見る」から <dialog> で開く（4.2）
-      │     │   └ <ProfileCard> 雑談中だけ。顔・名前・ひとことプロフィール・「変える ⌄」
-      │     │                   （<CharacterSwitch> を透明にして重ねる。13.7）
-      │     │   └ <SessionInfo> **区画ではなく下端の帯**（.sidebar-footer。見出しを名乗らず、
-      │     │                   SidebarSection も通らない）。キャラクター（左に顔。
-      │     │                   components/domain/character-face.tsx。帯と共有）とセッションの2つの
-      │     │                   <select> を、小さなラベルを上に置いて横に等分で並べる
-      │     │                   （**仕事/雑談・モデル・許可モードとキャラクター画面へ入る口は
-      │     │                   帯へ移った**。13.9）
-      │     └ <Dispatch>        <PendingAnswer> + <Composer> + <TurnStatus>
-      │         ├ <PendingAnswer> 許可（許可 / 拒否）だけ。**質問はここに出ない**（札はメインビュー）
-      │         ├ <Composer>    <textarea>。Enter 改行 / ⌘Enter 送信。**質問が出ている間は答えを書く場所**
-      │         │                （上に帯「↑ <キャラクター名> が質問しています…」、プレースホルダ
-      │         │                「選択肢以外の答えを書く…」、枠は `--state-warn`、送るボタンは「答える」）。貼り付け / ドロップ / 画像のボタンで
-      │         │                画像を添える（4.10）。<CommandSuggestions>（`/`）と
-      │         │                <FileSuggestions>（`@`。同時には出さない）・<PromptImageChips>（札）を内包。
-      │         │                下に道具の行（画像・`/`・`@` のボタン、操作の案内、<TurnStatus>）
-      │         └ <TurnStatus>  経過 / 所要、送信 ⇄ 中断（道具の行の右端）
-      ├ <TokenUsage>         トークン消費の画面（#token-usage）
-      ├ <Achievement>        成果の画面（#achievement。13.10）
-      └ <Character>          キャラクター画面（#character。13.6）。**戻る口と答え待ちの印は帯が持つ**（13.9）。
-          │                  パックのラベルと名前・「新しく作る」（<CharacterCreate> を開く）。
-          │                  **画面の色は帯の歯車へ移した**ので、この画面にはパックの持ち物だけが残る
-          ├ <CharacterEdit>   立ち絵の並び（表情ごと。<Portrait> を使う）と差し色（衣装ごと）・背景の差し替え（7.1）
-          └ <CharacterCreate> 新しく作るダイアログ（キャラクター画面に重なる。開閉は
-                              <Character> の state（`hooks/use-character.ts`）。7.1）。作れたら
-                              自動で閉じ、一覧で作ったパックを選ぶ（切り替えない）
-```
-
-**部品の置き場**（2章「`src/browser/` の箱と、置く基準」）: Provider は `app.tsx` の `<App>`、`<Root>` と出す画面を選ぶ `<Layout>` は `components/app/`（入口の `main.tsx` は `<App>` を mount するだけ）。
-**全画面で共有する枠**（`<ScreenNav>`・`<Sidebar>`）は
-`components/domain/<枠>/`、**画面**（`<Conversation>`・`<Character>`・`<TokenUsage>`・`<Achievement>`）と
-`<DiaryNotice>` は `components/page/<画面>/`。会話の画面の4領域（`<MainView>`・`<CharacterView>`・
-`<ChatView>`・`<Dispatch>`）と、2つ以上の領域が使う `<PromptImageChips>`・`<PromptImageThumbnails>`
-（と、その中の `<ImageZoom>`）はページの部品で `components/page/conversation/components/<部品>/`。
-`<TaskList>` と `<TaskBoard>` は置かれる機能の `features/task-board/`。画面・枠をまたいで使う
-`<Portrait>`・`<CharacterFace>`・`<ProtocolMismatch>`
-は `components/domain/` の直下、語彙を持たない `<Select>`・`<Stack>`・`<VStack>`・
-`<HStack>`・`<Text>`・`<Heading>`・`<Button>`・`<Dialog>` は `components/ui/select/`・
-`components/ui/stack/`・`components/ui/v-stack/`・
-`components/ui/h-stack/`・`components/ui/text/`・`components/ui/heading/`・`components/ui/button/`・
-`components/ui/dialog/`（部品ごとのディレクトリ。2章「1部品1フォルダは真似しない」の例外）。
-
-**部品は `SessionState` と `dispatch` だけを見る。** DOM を直接いじる配線（`MutationObserver`・
-`data-` 属性で状態を渡す）は持たない。
-
-**依頼に添えた画像は `components/page/conversation/components/prompt-image/prompt-image.tsx` の2つが出す**（`docs/requirements.md` 4.10）:
-送る前の札（`<PromptImageChips>`。縮めた絵と外す `×`）と、送ったあとの控え
-（`<PromptImageThumbnails>`。依頼の見出しの下と、雑談の利用者の吹き出しの中）。**どちらも1枚も
-無ければ何も描かない**ので常設の枠にならない。**どちらも押すと原寸を拡大して見られる**
-（`prompt-image/components/image-zoom/image-zoom.tsx`）——札は `<Composer>` のローカル状態にある原寸をそのまま出し、控えは押した
-瞬間に id でサーバの「棚」（`src/server/session-driver/core/prompt-image-shelf.ts`。`docs/requirements.md`
-4.10「会話内容の扱い」）から原寸を取りに行き、棚から落ちていれば控えを代わりに拡大する。
-
-**質問が出ている間も `<Composer>` は出したまま**（2026-09-23。札がメインビューへ移り、入力欄の
-領域を質問に明け渡す必要がなくなった）。入力欄は**選択肢にない答えを書く場所**になり、送ると
-その字が**いま見ている1問の答え**になる（`stores/question-answer.tsx` の `onAnswerWithText`）。
-**進行中でも送れる**——SDK は答えを待って止まっているので、送るボタンは「中断」ではなく「答える」。
-
-**選んでいるターンは `<SessionProvider>` の内側の `<TurnSelectionProvider>`
-（`browser/stores/turn-selection.tsx`）が配る**（6.2）。`<MainView>` の札だけでなく **`<CharacterView>` の吹き出しと表情も同じ選択に
-従う**（過去のターンを選んでいる間は、そのターンのセリフと**最後のセリフの表情**に戻す。
-ターンごとのセリフは `shared/turn-speech.ts` が記録から引く）。**立ち絵の「動き」は遡らない**
-（時間相対のアニメーションなので、遡るには `docs/requirements.md` 4.3 の決定の見直しが要る）。
+**6.1 は欠番**（旧「部品の木」。コードの写しだったので 2026-09-27 に撤去した）。
 
 ### 6.2 状態の持ち方
 

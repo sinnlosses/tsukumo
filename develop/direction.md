@@ -10,3 +10,8 @@
 - **同梱パックの `persona.md` が指す正典のパスを `src/server/report/core/report-notation.ts` に直す**（振り返り: T-721）
   - 根拠: 「締めのセリフの言い方」などが `src/server/core/report-notation.ts` と書いているが、実物は `src/server/report/core/` の下（委譲先の報告で指摘）
   - 出し先: タスク（同梱パックの `persona.md` のパスを直す。ホーム側 `~/.tsukumo/characters/` は人が直す）
+||||||| parent of 60947e24 (T-697: docs/design.md 2章と6章からコードの写しを消す)
+
+- **`/next-task` の委譲の指示に「`git stash` を使わない（stash は作業ツリーの間で共有され、別のセッションの退避を取り違える）」を足す**（振り返り: T-697）
+  - 根拠: T-697 のサブエージェントが、削除の前後で迷子の参照を見比べるために `git stash` を4回打った。今回は置き去りが無かったが、並行する tsukumo-N の作業ツリーが同じ stash の山を使っている。CLAUDE.md・`docs/workflow.md`・`next-task` の手順5のどれにも stash の決まりが無い
+  - 出し先: `~/.claude/skills/next-task/SKILL.md` の手順5の箇条（委譲先に渡す禁止事項の並び）。前後の比べ方は「一時コミットか `git show HEAD:<path>` で見る」と添える
