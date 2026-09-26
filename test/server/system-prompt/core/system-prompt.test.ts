@@ -142,7 +142,7 @@ describe("takeSystemPromptAppend", () => {
 
   it("雑談のときだけ載る条（覚える・忘れる・思い出す）は、仕事の append に入らない", () => {
     // 4つのツールは雑談のときだけ載るので、呼ぶ条件もこの文面だけが持つ
-    // （docs/design.md 7.1・docs/chat-mode.md 4.9）。
+    // （docs/chat-mode.md 4.9）。
     const work = takeSystemPromptAppend({ persona: PERSONA, mode: { kind: "work" } })
 
     expect(CHAT_MANNER_PROMPT).toContain("remember")

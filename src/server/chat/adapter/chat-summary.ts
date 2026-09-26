@@ -1,4 +1,4 @@
-// 雑談の要約の写し（`docs/design.md`「雑談の記憶の要約はどこに置くか」）。ファイルに触るのは
+// 雑談の要約の写し（`docs/chat-mode.md`「記憶の圧縮と忘却」、置き場は `docs/design.md`「雑談の記憶の置き場」）。ファイルに触るのは
 // ここだけ（`docs/architecture.md`「1ファイル = 1つの境界」）。置き場は `~/.tsukumo/chat-summary/<パック名>.md`、
 // パックごとに1ファイルで `cwd` には依存させない。
 //
@@ -36,7 +36,7 @@ const DELIVERED_MARK = "delivered"
 const UNDELIVERED_MARK = "undelivered"
 
 /**
- * 1ファイルの上限（`docs/design.md`「雑談の記憶の要約はどこに置くか」の表。容量の表の `synopsisBytes`）。印の行を含めて
+ * 1ファイルの上限（`docs/chat-mode.md`「記憶の圧縮と忘却」の縛りの表。容量の表の `synopsisBytes`）。印の行を含めて
  * 数える——写しと印は同じ書き込みで揃う1つのファイルなので、上限も分けない。
  */
 export const CHAT_SUMMARY_LIMIT_BYTES = CHAT_MEMORY_BUDGET.synopsisBytes

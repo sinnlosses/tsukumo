@@ -1,4 +1,4 @@
-// 雑談の記憶の容量を1つに集めた表（`docs/design.md` 7章「エピソード索引はどこに置くか」）。
+// 雑談の記憶の容量を1つに集めた表（`docs/design.md` 7.3「雑談の記憶の置き場」）。
 // 値を書き換えるだけで上げ下げできるようにする（ユーザーの指示）。設定ファイル・
 // 環境変数から上書きする口は作らない。値の根拠は書かず、`docs/chat-mode.md` 4.9「記憶の圧縮と
 // 忘却」の容量の表を指すだけにする（正典を2つにしない）。
@@ -37,8 +37,8 @@ export const CHAT_MEMORY_BUDGET = {
 } satisfies ChatMemoryBudget
 
 /**
- * {@link CHAT_RECALL_SCORE} の形。値そのものはここではなく `docs/design.md` 7章
- * 「エピソード索引はどこに置くか」の採点の式・上限と消す手を見る。
+ * {@link CHAT_RECALL_SCORE} の形。式と値の扱いは `docs/chat-mode.md` 4.9
+ * 「古い雑談は索引を引いて思い出す」の採点の式を見る。
  */
 export type ChatRecallScore = {
   /** 手がかり語への当たりに掛ける重み。 */
@@ -57,7 +57,7 @@ export type ChatRecallScore = {
   readonly recencyFloor: number
 }
 
-/** エピソード索引の採点の係数。値の根拠は `docs/design.md` 7章「エピソード索引はどこに置くか」。 */
+/** エピソード索引の採点の係数。式は `docs/chat-mode.md` 4.9「古い雑談は索引を引いて思い出す」。 */
 export const CHAT_RECALL_SCORE = {
   cueWeight: 1,
   titleWeight: 1,

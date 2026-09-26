@@ -1,4 +1,4 @@
-// 定着を1回走らせる使い捨ての `query()`（`docs/design.md`「定着はどこで走るか」）。SDK に
+// 定着を1回走らせる使い捨ての `query()`（`docs/chat-mode.md`「窓から溢れた会話は定着で畳む」）。SDK に
 // 触るので `sdk-` で始まる（`docs/architecture.md`「1ファイル = 1つの境界」）。何を渡し、受け取ったものをどう検査するかは core
 // （`parseChatConsolidationResult`）が持ち、ここは起こして `structured_output` を
 // 返すだけ。形は `queryVisitScript` に揃える。

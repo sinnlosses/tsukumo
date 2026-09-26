@@ -1,5 +1,5 @@
-// `ChatRecall`（索引を引いて古い雑談を思い出す口）の実装（`docs/design.md`「エピソード索引は
-// どこに置くか」）。ファイルには一切触らない——読むのは `ChatArchive`
+// `ChatRecall`（索引を引いて古い雑談を思い出す口）の実装（`docs/chat-mode.md`「古い雑談は索引を
+// 引いて思い出す」）。ファイルには一切触らない——読むのは `ChatArchive`
 // （雑談の会話のアーカイブを扱うアダプタ）で、ここは1ターンの回数の上限
 // （`recallListsPerTurn` / `recallEpisodesPerTurn`）を数えるだけ（`docs/architecture.md`「1ファイル = 1つの境界」）。
 //
@@ -8,7 +8,7 @@
 //
 // ターンの終わりの合図は `PersonaMemory.finishTurn` と同じ call site に相乗りする
 // （`relayMessages` の `turn-finished` 分岐。
-// `docs/design.md`「ターンの終わりの合図は今の finishTurn に相乗りする」）。
+// `docs/design.md`「雑談の記憶の置き場」）。
 
 import { CHAT_MEMORY_BUDGET, type ChatMemoryBudget } from "../../../shared/chat-memory-budget.ts"
 import { type ChatArchive, type ChatRecall } from "../../session-driver/core/session-driver.ts"

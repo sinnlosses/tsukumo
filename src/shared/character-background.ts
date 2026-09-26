@@ -41,7 +41,7 @@ export const DEFAULT_BACKGROUND_VEIL = 0.75
 /** 覆いで画像が完全に隠れる端。引き上げが行き止まらないことを保証する上限（13.8）。 */
 export const MAX_BACKGROUND_VEIL = 1
 
-/** 画面から受け取れる背景の形式。ファイル名の拡張子にもそのまま使う（`.gif` は入れない。7.1）。 */
+/** 画面から受け取れる背景の形式。ファイル名の拡張子にもそのまま使う（`.gif` は入れない。`docs/requirements.md` 4.4）。 */
 export type BackgroundFormat = "png" | "jpg" | "webp"
 
 /** 背景1枚（デコード後）の上限。立ち絵と同じ（`docs/design.md` 7.1 の表）。 */
@@ -92,7 +92,7 @@ export function toBackgroundVeil(value: unknown): number {
  *
  * - 使えるのは半角英数字と `.` `_` `-` だけ（パスの区切り・空白・引用符・括弧が入らないので、
  *   ディレクトリを跨ぐ名前にも、CSS の `url()` を抜け出す名前にもならない）
- * - 拡張子は `.png` / `.jpg` / `.jpeg` / `.webp` のどれか（7.1。`.gif` と `.svg` は入れない）
+ * - 拡張子は `.png` / `.jpg` / `.jpeg` / `.webp` のどれか（`docs/requirements.md` 4.4。`.gif` と `.svg` は入れない）
  */
 export function isBackgroundFileName(name: string): boolean {
   return (

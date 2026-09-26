@@ -69,7 +69,7 @@ export type CurrentCharacter = {
   /**
    * 画面から届いた新しいパックを作り、選択肢の増えた `character-changed` を返す
    * （作れなければ undefined）。いま出しているパックは持ち替えない — 作るだけでは
-   * 切り替えず、`<select>` から選んだときに起こし直す（docs/design.md 7.1）。
+   * 切り替えず、`<select>` から選んだときに起こし直す（docs/requirements.md 4.4）。
    */
   readonly applyCreate: (create: CharacterCreate) => SessionEvent | undefined
   /**
@@ -77,13 +77,13 @@ export type CurrentCharacter = {
    * `character-changed` を返す（消せなければ undefined。使用中は消さないので、いま出している
    * パックは持ち替えない）。一覧から名前ごと消えたときだけ、そのパックの雑談の要約と
    * アーカイブも消す（同じ名前で作り直したパックが古い記録を拾わないため。同梱に戻っただけなら
-   * 同じキャラクターが続くので残す。`docs/design.md` 7.1「消すときの細部」）。
+   * 同じキャラクターが続くので残す。`docs/requirements.md` 4.4 の「消す」）。
    */
   readonly applyDelete: (remove: CharacterDelete) => SessionEvent | undefined
   /**
    * 雑談のサイドバー「覚えていること」の「編集」から1行消し、流し直す
    * `remembered-lines-changed` を返す（一致する行が無い・書けない・そのパックが編集できない
-   * ときは undefined。`docs/design.md` 7.1「1行だけ忘れる」）。
+   * ときは undefined。`docs/chat-mode.md`「プロフィールの書き戻し」）。
    */
   readonly forgetRememberedLine: (line: string) => SessionEvent | undefined
   /**
@@ -97,7 +97,7 @@ export type CurrentCharacter = {
 /**
  * 起動時の初期パックを決め、以降の持ち回りを引き受ける。一覧は読み直せる形で持つ —
  * 画面から立ち絵を変えるとホーム（`~/.tsukumo/characters/`）にパックが現れるので、
- * `character-changed` を組むたびに引き直す（docs/design.md 7.1）。
+ * `character-changed` を組むたびに引き直す（docs/design.md 7.2）。
  */
 export function createCurrentCharacter(config: Config): CurrentCharacter {
   const defaultPack = readCharacterPack(

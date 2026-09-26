@@ -432,7 +432,7 @@
   overflow-wrap: anywhere;
 }
 
-/* 「覚えていること」（persona-memory-section.tsx）。**1行＝チップ1つ**（docs/design.md 7.1）で、
+/* 「覚えていること」（persona-memory-section.tsx）。**1行＝チップ1つ**（docs/screen-design.md 13.7）で、
    .sidebar-topic-list と同じく上に rule の細い線、印は付けない。チップと × は横並び。 */
 .sidebar-persona-memory-list {
   margin: 0;

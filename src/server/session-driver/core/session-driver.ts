@@ -41,7 +41,7 @@ export type PersonaMemory = {
 }
 
 /**
- * 雑談の要約の写しの読み書き口（`docs/design.md`「雑談の記憶の要約はどこに置くか」）。
+ * 雑談の要約の写しの読み書き口（`docs/chat-mode.md`「記憶の圧縮と忘却」）。
  * 実装は `adapter` 側（あらすじを扱うアダプタ）で、ここにあるのは契約だけ。
  *
  * 中身を読んで判定する口は無い。 載せるかどうかの判断は
@@ -54,7 +54,7 @@ export type ChatSummary = {
   /**
    * 定着が書き直したあらすじ（話題の組を含む本文）を上書きする。呼ぶと印は「渡し済み」に
    * なる——畳んだ会話は、いま動いているこのセッション自身がすでに持っている
-   * （`docs/design.md`「雑談の記憶の要約はどこに置くか」）。
+   * （`docs/chat-mode.md`「記憶の圧縮と忘却」）。
    */
   readonly write: (summary: string) => void
   /** 印を「未渡し」に戻す（`/clear` を見たとき）。 */
@@ -70,8 +70,7 @@ export type ChatSummaryRecord = {
 }
 
 /**
- * 雑談の会話のアーカイブの読み書き口（`docs/design.md`「雑談の会話のアーカイブはどこに
- * 置くか」）。実装は `adapter` 側（雑談の会話のアーカイブを扱うアダプタ）で、ここにあるのは
+ * 雑談の会話のアーカイブの読み書き口（`docs/chat-mode.md`「雑談の会話のアーカイブ」）。実装は `adapter` 側（雑談の会話のアーカイブを扱うアダプタ）で、ここにあるのは
  * 契約だけ。
  *
  * 読む口は {@link readRecent} の1つだけ（直近の雑談を逐語のまま
@@ -99,7 +98,7 @@ export type ChatArchive = {
   ) => readonly ChatArchiveRecentEntry[]
   /**
    * まだどのエピソードにも入っていない行を、古いほうから {@link ChatUnconsolidatedLimits.maxBytes}
-   * まで返す（定着の入力。`docs/design.md`「定着はどこで走るか」）。最後のエピソードの
+   * まで返す（定着の入力。`docs/chat-mode.md`「窓から溢れた会話は定着で畳む」）。最後のエピソードの
    * `to` より後で、作業記憶の窓（`recentBytes`）の外にある行だけを対象にする
    * （エピソードが無ければアーカイブの最初の行から）。行番号はここでは振らない
    * （振るのは渡す側。`docs/design.md`「キャラクターパック」）。

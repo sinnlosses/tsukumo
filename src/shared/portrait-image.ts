@@ -45,7 +45,7 @@ export function parsePortraitImage(dataUrl: string): PortraitImage | undefined {
 
 /**
  * 書き込む先のファイル名。表情の名前から組み立てるので、外から届いた文字列がパスの一部に
- * ならない（`docs/design.md` 7.1「ファイル名は受け取らず、表情と形式から組み立てる」）。
+ * ならない（`docs/design.md` 7.1「受け取った文字列をパスにしない」）。
  * 同じ表情を差し替えたときは同じ名前を上書きする。
  */
 export function portraitFileName(expression: Expression, format: PortraitFormat): string {

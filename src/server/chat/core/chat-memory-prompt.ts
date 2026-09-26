@@ -1,5 +1,5 @@
 // 雑談の記憶（それより前の要約と直近の逐語）を `systemPrompt` に載せるかどうかを決め、
-// 載せるときに添える前置きを組み立てる（`docs/design.md`「雑談の記憶の要約はどこに置くか」、
+// 載せるときに添える前置きを組み立てる（`docs/chat-mode.md`「記憶の圧縮と忘却」、
 // `docs/chat-mode.md`「直近の会話は逐語のまま読み戻す」）。雑談の作法の隣に置く
 // （モデルに見せる文面は core 側）。
 //
@@ -14,8 +14,8 @@
 //
 // 中身を読んで判定しない。 決めるのは「続きから始めないか」「写しの印が未渡しか」という
 // 構造だけの条件で、要約の文面も逐語の文面も素通りする（読んで判定する経路を作ると
-// `docs/coding-standards.md`「会話内容の扱い」とぶつかる。`docs/design.md`「覚えたことを
-// 人格に書き足す」と同じ理由）。
+// `docs/coding-standards.md`「会話内容の扱い」とぶつかる。`docs/chat-mode.md`「プロフィールの
+// 書き戻し」と同じ理由）。
 //
 // 口（`ChatSummary` / `ChatArchive`）の型はセッションの駆動側、ファイルに触る
 // 実装はそれぞれの adapter。
@@ -35,7 +35,7 @@ import {
 
 /**
  * 要約の前置き。要約であって会話ではないことと引用しないことを短く添える
- * （`docs/chat-mode.md`「渡し方」）。印の行はここに含めない——{@link ChatSummary.read}
+ * （`docs/chat-mode.md`「記憶の圧縮と忘却」）。印の行はここに含めない——{@link ChatSummary.read}
  * が返す `summary` はすでに印の行を含まない。
  */
 const CHAT_SUMMARY_PREFACE =

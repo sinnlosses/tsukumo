@@ -1,4 +1,4 @@
-// 定着（`docs/design.md`「定着はどこで走るか」、`docs/chat-mode.md`「窓から溢れた会話は
+// 定着（`docs/chat-mode.md`「窓から溢れた会話は
 // 定着で畳む」）の指示文・依頼の文面の組み立て・出力の形（JSON Schema）・出力の検査・モデルと
 // 時間切れ。純関数と定数だけで、外の世界には触らない（`docs/architecture.md`「core → adapter は禁止」）。`query()` を起こすのは
 // `queryChatConsolidation`（`docs/architecture.md`「1ファイル = 1つの境界」）。
@@ -9,7 +9,7 @@
 //
 // `<topics>` の組の書き方と取り出し方もここが持つ（組み替える前は `/compact` の文面と同じ
 // 「/compact」の文面と同じファイルにあったが、`/compact` をやめたのでこちらへ移した。
-// `docs/design.md`「最近の話題の見出しも同じファイルから取る」）。定着の出力からあらすじの本文へ組む側
+// `docs/chat-mode.md`「記憶の圧縮と忘却」）。定着の出力からあらすじの本文へ組む側
 // （`chatSummaryWithTopics`）と、写しの本文から読み出す側（`chatTopics`）を
 // 同じファイルに置くのは、印の形（`<topics>` の組）を両側で1つに保つため。
 //
@@ -44,7 +44,7 @@ export const CHAT_CONSOLIDATION_MODEL = "haiku"
 export const CHAT_CONSOLIDATION_TIMEOUT_MS = 120_000
 
 /**
- * 出力の形の文字数・件数の上限（`docs/design.md`「定着はどこで走るか」の表）。
+ * 出力の形の文字数・件数の上限（`docs/chat-mode.md`「窓から溢れた会話は定着で畳む」の「受け取る形」の表）。
  * 足りなければここだけ直す。
  */
 export const CHAT_CONSOLIDATION_LIMITS = {

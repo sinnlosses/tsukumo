@@ -119,7 +119,7 @@ type StubDriver = {
   readonly driver: SessionDriver
   readonly emit: (event: SessionEvent) => void
   readonly attach: (onEvent: (event: SessionEvent) => void) => void
-  /** 復元の再生（`onRestoredEvent`）を流す。駆動由来（`emit`）とは別の口（`docs/design.md` 7章）。 */
+  /** 復元の再生（`onRestoredEvent`）を流す。駆動由来（`emit`）とは別の口（`docs/design.md` 7.3）。 */
   readonly emitRestored: (event: SessionEvent) => void
   readonly attachRestored: (onRestoredEvent: (event: SessionEvent) => void) => void
   readonly calls: string[]

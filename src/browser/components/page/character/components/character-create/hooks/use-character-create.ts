@@ -4,7 +4,7 @@
 //
 // 受け取るのは名前・id・必須の立ち絵1枚・画面の差し色2つだけで、表情を足す・衣装ごとに
 // 差し色を分ける・背景を敷くのは作ったあと `<CharacterEdit>` の側で行う（作る口は最低限にする。
-// `docs/design.md` 7.1）。
+// `docs/requirements.md` 4.4）。
 //
 // `<Dialog>` は常にマウントし、`open` に開閉だけを追随させる（`components/ui/dialog/dialog.tsx`。
 // `features/task-board/hooks/use-task-board.ts` と同じ形）。作れたら一覧で作ったパックを選んだ

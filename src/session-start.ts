@@ -137,7 +137,7 @@ export function startSession(options: SessionStartOptions): StartedSession {
   const { config, character, fakeSession, tokenUsageLog, promptImageShelf, viewPort } = options
   // claude の作業先は tsukumo を起こしたディレクトリ（作業ツリーを分けるのは orca の側）。
   const cwd = process.cwd()
-  // 雑談の会話のアーカイブの口は1つ（`docs/design.md` 7章）。書くのは `session-manager` から
+  // 雑談の会話のアーカイブの口は1つ（`docs/design.md` 7.3）。書くのは `session-manager` から
   // 1件ずつ、読むのはセッションを起こすとき1回だけと持ち場が違うが、触るファイルは同じなので
   // 境界は増やさない（原則3）。
   const chatArchive = createChatArchive()
@@ -331,7 +331,7 @@ function diaryWriterSource(
 }
 
 /**
- * 定着の出どころ（`docs/design.md` 7章「定着はどこで走るか」）。書く先は会話のアーカイブと
+ * 定着の出どころ（`docs/chat-mode.md`「窓から溢れた会話は定着で畳む」）。書く先は会話のアーカイブと
  * 同じ口と、パックごとのあらすじのファイル。`query()` は雑談のセッションと同じ作業先・
  * 引き継いだ環境で起こす。
  */
@@ -471,7 +471,7 @@ function rememberVisitEnabled(visitEnabled: boolean): SessionEvent {
 }
 
 /**
- * そのモードのときだけ渡る口を1回の分岐でまとめる（`docs/design.md` 7章・7.1）。雑談の3つは
+ * そのモードのときだけ渡る口を1回の分岐でまとめる（`docs/chat-mode.md` 4.9）。雑談の3つは
  * 仕事のときに1つも渡らないので、`remember` / `forget` / `recall` / `recall_episode` のツールが
  * 載らず、作業の文脈が人格にもアーカイブにも入らない。
  *

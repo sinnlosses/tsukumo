@@ -6,7 +6,7 @@
 // `className`）と名前（`ariaLabel`）だけを置く側が渡す（セッションの行の `session-switch.tsx` と対）。
 //
 // 次に届く `session-info` で選択が上書きされる（サーバ側の値が正になる）。選択肢が1つでも
-// 出す（docs/design.md 7章）。パックの一覧がまだ届いていなければ何も出さない。
+// 出す（docs/requirements.md 4.4）。パックの一覧がまだ届いていなければ何も出さない。
 
 import { type ReactElement } from "react"
 
@@ -55,7 +55,7 @@ export function CharacterSwitch(props: CharacterSwitchProps): ReactElement | nul
 
 /**
  * `<select>` に選択済みで出すキャラクターパックの名前。素材が1体ぶんしか無くても
- * `<select>` は出す（無いように見えるほうが分かりにくい。docs/design.md 7章）ので、
+ * `<select>` は出す（無いように見えるほうが分かりにくい。docs/requirements.md 4.4）ので、
  * いま出しているパックが分からないときは一覧の先頭に倒す。
  */
 function resolveCharacterPack(

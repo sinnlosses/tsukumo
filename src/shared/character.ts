@@ -122,13 +122,13 @@ export type CharacterPackEntry = CharacterPackChoice & {
   /**
    * 画面から消すと何が起きるか（サーバが決める。{@link CharacterPackRemoval}）。使用中かどうかは
    * 混ぜない — 使用中のパックも消したときに起きることは同じで、押せなくするのは画面が
-   * {@link inUse} を見て行う（サーバも使用中は断る。`docs/design.md` 7.1「消すときの細部」）。
+   * {@link inUse} を見て行う（サーバも使用中は断る。`docs/requirements.md` 4.4 の「消す」）。
    */
   readonly removal: CharacterPackRemoval
 }
 
 /**
- * パックを画面から消したときに起きること（`docs/design.md` 7.1「消すときの細部」）。消すのは
+ * パックを画面から消したときに起きること（`docs/requirements.md` 4.4 の「消す」の表）。消すのは
  * いつもホーム（`~/.tsukumo/characters/<name>/`）の版だけで、違いは消したあとに一覧に何が残るか:
  *
  * - `"delete"`: ホームにしか無いパック。一覧から消え、雑談の要約とアーカイブも一緒に消える

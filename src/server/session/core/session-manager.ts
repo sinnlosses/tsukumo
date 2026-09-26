@@ -55,8 +55,7 @@ export type SessionManagerOptions = {
   /** イベントをまとめる間隔（ミリ秒）。既定は `EVENT_BATCH_INTERVAL_MS`。 */
   readonly batchIntervalMs: number
   /**
-   * 雑談の会話のアーカイブの書き込み口（`docs/design.md`「雑談の会話のアーカイブはどこに
-   * 置くか」）。本番は `createChatArchive()`、テストは
+   * 雑談の会話のアーカイブの書き込み口（`docs/design.md`「雑談の記憶の置き場」）。本番は `createChatArchive()`、テストは
    * 呼ばれた引数だけを覚えるスタブを渡す。
    */
   readonly chatArchive: ChatArchive
@@ -98,8 +97,8 @@ export type SessionManagerOptions = {
    * 種類（SDK か fake driver か）を知らない。
    *
    * 受け口は2つ。 `onEvent` は駆動（と見張り）から新しく届くイベント、`onRestoredEvent` は
-   * 前のセッションの記録を組み直した再生だけが通る（`docs/design.md`「雑談の会話の
-   * アーカイブはどこに置くか」）。畳み方と配り方はどちらも同じ（`receive` が両方を
+   * 前のセッションの記録を組み直した再生だけが通る（`docs/design.md`「雑談の記憶の
+   * 置き場」）。畳み方と配り方はどちらも同じ（`receive` が両方を
    * 同じように畳む）——分かれているのは「どちらから来たか」を呼び出し側が知れるようにする
    * ためだけ。
    *
@@ -163,7 +162,7 @@ export type SessionManager = {
 
 /**
  * `receive` に渡るイベントが「駆動から新しく届いたか（`"driver"`）、復元の再生か
- * （`"restored"`）」の印（`docs/design.md`「雑談の会話のアーカイブはどこに置くか」）。
+ * （`"restored"`）」の印（`docs/design.md`「雑談の記憶の置き場」）。
  */
 type EventOrigin = "driver" | "restored"
 
@@ -261,7 +260,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
    * 1本にする）。
    *
    * `origin` は「駆動から新しく届いたか（`"driver"`）、復元の再生か（`"restored"`）」の印
-   * （`docs/design.md`「雑談の会話のアーカイブはどこに置くか」）。畳み方と配り方は
+   * （`docs/design.md`「雑談の記憶の置き場」）。畳み方と配り方は
    * どちらも同じ——分かれているのは、雑談の会話のアーカイブへ書くのを駆動由来の依頼と
    * セリフだけに絞るため（復元で流し直されたぶんまで書くと、起こし直すたびに同じ行が
    * 二重に積まれる）。
@@ -274,7 +273,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
     replaceState(applySessionEvent(state, event, at))
     tally.batch.add({ at, event })
     // 雑談の会話のアーカイブへ1行足す。駆動由来（`"driver"`）・雑談モード・パックが
-    // 分かっているときだけ（`docs/chat-mode.md`「誰がいつ書くか」）。
+    // 分かっているときだけ（`docs/chat-mode.md`「雑談の会話のアーカイブ」）。
     if (origin === "driver" && state.chatMode) {
       appendChatArchiveEntry(options.chatArchive, state.character?.pack, at, event)
     }
@@ -307,7 +306,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
       }
     }
     // 定着を起こす。雑談の駆動由来のターンの終わりだけで、走っていれば契機を捨てる。
-    // 待たずに次へ進む（`docs/design.md`「定着はどこで走るか」）。
+    // 待たずに次へ進む（`docs/chat-mode.md`「窓から溢れた会話は定着で畳む」）。
     if (origin === "driver" && event.kind === "turn-finished" && state.chatMode) {
       startConsolidation(state.character?.pack)
     }

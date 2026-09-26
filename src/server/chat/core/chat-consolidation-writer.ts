@@ -1,4 +1,4 @@
-// 定着を1回走らせて書く口（`docs/design.md`「定着はどこで走るか」、`docs/chat-mode.md`
+// 定着を1回走らせて書く口（`docs/chat-mode.md`
 // 「窓から溢れた会話は定着で畳む」）。未定着の行を数え、契機に届いていれば使い捨ての `query()`
 // （`queryChatConsolidation`）に畳ませ、検査を通ったものを
 // エピソード → あらすじの順で書く。形は `createVisitScriptWriter` に揃える。

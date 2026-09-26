@@ -187,7 +187,7 @@ export type CharacterEdit = {
 
 /**
  * 新しいキャラクターパックを作る入力。作った直後に切り替えはしない — 切り替えは駆動の
- * 起こし直しで画面が初期化されるので、作る操作の副作用にしない（`docs/design.md` 7.1）。
+ * 起こし直しで画面が初期化されるので、作る操作の副作用にしない（`docs/requirements.md` 4.4）。
  */
 const characterCreateInput = z.object({
   // 保存するフォルダの名前（`docs/design.md` 7.1「新しく作るときの細部」）。作ったあとは
@@ -197,10 +197,10 @@ const characterCreateInput = z.object({
   // ディレクトリ名になる `id` と違って文字種は縛らない（`characterNameSchema`）。
   name: characterNameSchema,
   // 必須の1つ（`REQUIRED_EXPRESSIONS`）をここで required にするので、立ち絵が無いパックは
-  // 書き込む側まで届かない（`docs/design.md` 7.1・`characters/README.md`）。
+  // 書き込む側まで届かない（`docs/requirements.md` 4.4・`characters/README.md`）。
   portraits: z.object({ default: portraitDataUrlSchema }),
   // 画面の差し色（仕事・雑談の2つ）。どちらも必須——見本の作るダイアログが2色とも
-  // 埋まった状態で出すのに揃える（`docs/design.md` 7.1）。作ったあとに片方だけ消したくなったら
+  // 埋まった状態で出すのに揃える（`docs/requirements.md` 4.4）。作ったあとに片方だけ消したくなったら
   // `clearChatAccent` で外せる。
   accent: accentColorSchema,
   chatAccent: accentColorSchema,

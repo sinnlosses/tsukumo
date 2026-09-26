@@ -88,7 +88,7 @@ const SWITCH_BLOCKED_TITLE = FRAME_ERROR_REASON.switchDuringTurn
 /**
  * 帯とダイアログの文言を `removal` の2値（`"none"` は帯を出さないので含まない）で出し分ける
  * （`docs/screen-design.md` 13.6「このキャラクターを消す」）。同梱を直したパックは「消す」ではなく
- * 「同梱に戻す」と見せる（`docs/design.md` 7.1「消すときの細部」の理由）。活用は動的に作らず
+ * 「同梱に戻す」と見せる（`docs/requirements.md` 4.4「同梱を直したものは「同梱に戻す」と見せる」の理由）。活用は動的に作らず
  * 全部書き下す（`verb`〔辞書形。帯とダイアログの実行ボタン〕・`dialogQuestion`〔丁寧形の問い〕・
  * `blockedTitle`〔可能形。使用中で押せないときの理由〕は同じ動詞でも形が違うため）。
  */
@@ -279,7 +279,7 @@ export type CharacterDeleteBandModel =
       /** ダイアログの実行ボタンの字（帯の動詞と同じ）。 */
       readonly okLabel: string
       readonly face: { readonly kind: "absent" } | { readonly kind: "shown"; readonly url: string }
-      /** 使用中は押せない（切り替えてから。`docs/design.md` 7.1「消すときの細部」）。 */
+      /** 使用中は押せない（切り替えてから。`docs/requirements.md` 4.4 の「消す」）。 */
       readonly disabled: boolean
       readonly title: string | undefined
       readonly onSubmit: () => void

@@ -7,7 +7,7 @@
 // 読み書きは `src/server/character-pack/adapter/character-pack.ts`、ブラウザで `font-family` に
 // 効かせるのは `src/browser/stores/session.tsx`（FontFace API）。
 //
-// 画面から差し替える口は無い（`docs/design.md` 7章。手で `character.json` と書体ファイルを
+// 画面から差し替える口は無い（`docs/requirements.md` 4.4。手で `character.json` と書体ファイルを
 // パックに置く）ので、立ち絵・背景と違って data URL の受け取りやファイル名の組み立てを持たない
 // ——読む側の検証だけがここにある。
 

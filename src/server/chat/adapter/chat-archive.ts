@@ -1,4 +1,4 @@
-// 雑談の会話のアーカイブ（`docs/design.md`「雑談の会話のアーカイブはどこに置くか」）。
+// 雑談の会話のアーカイブ（`docs/chat-mode.md`「雑談の会話のアーカイブ」、置き場は `docs/design.md`「雑談の記憶の置き場」）。
 // ファイルに触るのはここだけ（`docs/architecture.md`「1ファイル = 1つの境界」）。置き場は
 // `~/.tsukumo/chat-archive/<パック名>/<YYYY-MM-DD>.jsonl`、パックごと・日ごとで `cwd` には
 // 依存させない。
@@ -59,7 +59,7 @@ const CHAT_ARCHIVE_DIR_NAME = "chat-archive"
 const ARCHIVE_FORMAT_VERSION = 1 satisfies number
 
 /**
- * エピソード索引の名前（`docs/design.md`「エピソード索引はどこに置くか」）。
+ * エピソード索引の名前（`docs/design.md`「雑談の記憶の置き場」）。
  * {@link dateFileNames} が拾う `YYYY-MM-DD.jsonl` の形を通らないので、窓の走査には混ざらない。
  */
 const EPISODE_INDEX_FILE_NAME = "episode.jsonl"
@@ -84,7 +84,7 @@ const archiveLineSchema = z.object({
   text: z.string(),
 })
 
-/** エピソード索引の1行（`docs/design.md`「エピソード索引はどこに置くか」の表）。読めない行・知らない版は飛ばす。 */
+/** エピソード索引の1行（`docs/chat-mode.md`「古い雑談は索引を引いて思い出す」の表）。読めない行・知らない版は飛ばす。 */
 const episodeLineSchema = z.object({
   v: z.literal(EPISODE_FORMAT_VERSION),
   id: z.string(),
@@ -180,7 +180,7 @@ export function createChatArchive(root: string = chatArchiveDir()): ChatArchive 
 }
 
 /**
- * JSONL の1行の形（`docs/design.md`「雑談の会話のアーカイブはどこに置くか」の表）。tsukumo の内部の型をそのまま書き出さない。
+ * JSONL の1行の形（`docs/chat-mode.md`「雑談の会話のアーカイブ」の表）。tsukumo の内部の型をそのまま書き出さない。
  * `expression` / `images` は「無いかもしれない」プロパティなので `T | undefined` で持つ（`?:`
  * は使わない。`docs/coding-standards.md`「「無いかもしれない」値」）——どちらを持つかは `speaker`
  * が決めるので、値を渡すたびにもう片方へ明示的に `undefined` を渡す。

@@ -1,5 +1,5 @@
 // 雑談で覚えたことを人格へ書き足し、覚えた1行を忘れる
-// （`docs/design.md`「覚えたことを人格に書き足す・1行だけ忘れる」）。
+// （`docs/chat-mode.md`「プロフィールの書き戻し」）。
 // 書き込んでよいのは他の編集と同じ `~/.tsukumo/characters/<pack>/persona.md` の1つだけで、
 // ホームへ写す道（`copyPackOnce`）を共有する。
 //
@@ -17,7 +17,7 @@
 // `docs/coding-standards.md`「エラーハンドリング」）。
 //
 // 画面の「編集」から1行消す口（`forgetRememberedLineFromScreen`）もここに置く
-// （`docs/design.md`「1行だけ忘れる」）。キャラクター自身の `forget`（`PersonaMemory.forget`）
+// （`docs/chat-mode.md`「プロフィールの書き戻し」）。キャラクター自身の `forget`（`PersonaMemory.forget`）
 // と同じ消し方（完全一致・節より前は触らない）を通すが、1ターン1行の上限は掛からない——
 // その上限はモデルの暴走を防ぐためのもので、利用者が画面から名指しした削除には要らない。
 
@@ -124,7 +124,7 @@ export function readRememberedLines(
 }
 
 /**
- * 画面の「編集」から1行消す（`docs/design.md`「1行だけ忘れる」）。消し方は
+ * 画面の「編集」から1行消す（`docs/chat-mode.md`「プロフィールの書き戻し」）。消し方は
  * {@link PersonaMemory.forget} と同じ（完全一致・同じ文面が2行あればいちばん古いほうを消す・
  * 節より前は触らない）だが、1ターン1行の上限は掛からない——その上限はモデルの暴走を防ぐ
  * ためのもので、利用者が画面から名指しした削除には要らない。
