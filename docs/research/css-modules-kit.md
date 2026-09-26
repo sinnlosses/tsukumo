@@ -6,10 +6,12 @@
 
 ## 結論
 
-**移すことを推奨する。** 仕組みが同型（生成ファイル＋ `tsconfig.json` の `rootDirs`）で移行コストが
-小さいのに対し、happy-css-modules（以下 hcm）は作者自身が css-modules-kit（以下 cmk）を後継と
-明言し、開発の主戦場が移っている。据え置くほど型の生成という土台をメンテナンスが止まったツールに
-置き続けるリスクが増える。
+**移せない（2026-09-27、実機確認して撤回）。** 仕組みは同型（生成ファイル＋
+`tsconfig.json` の `rootDirs`）で移行コスト自体は小さいはずだったが、実際に `cmk` を Bun 環境へ
+入れて動かすと、tsukumo の `typescript@7.0.2`（次世代ネイティブプレビュー版）に `ts.sys` が
+無いために cmk が起動直後にクラッシュし、回避策も無かった。詳細は下の「実機で確かめた結果」節。
+happy-css-modules（以下 hcm）は作者自身が css-modules-kit（以下 cmk）を後継と明言しており、
+tsukumo 側の typescript の版が変わるなどで前提が崩れたら再検討の余地はある。
 
 ## 今のコードの前提（実測）
 
@@ -114,10 +116,29 @@
 一部重なる。無理に急いで同時に進める理由は無いが、どちらを先にやっても後から出る差分は
 小さいはずで、**先着順で進めてよい**（Vite 移行のほうが規模が大きく本タスクより大掛かり）。
 
+## 実機で確かめた結果（2026-09-27）
+
+**cmk は tsukumo では動かない。Bun/Node の違いではなく、tsukumo の `typescript@7.0.2` との
+非互換が原因。** 回避策は見つからなかった。
+
+- `bun add -d @css-modules-kit/codegen` で実際に入れ、`bun run cmk --help` を実行すると、
+  `node_modules/@css-modules-kit/codegen/bin/cmk.js` の**モジュール読み込み直後・`try` 節の外**にある
+  `createLogger(cwd, shouldBePretty(undefined))` が `ts.sys.writeOutputIsTTY` を参照して
+  `TypeError: Cannot read properties of undefined (reading 'writeOutputIsTTY')` で即座に落ちる
+  （`--help` や引数解析より前にクラッシュするので、フラグでは避けられない）
+- 原因は tsukumo の `typescript` が `^7.0.2`（TypeScript の次世代ネイティブプレビュー版、いわゆる
+  Corsa）であること。この版の JS 側公開 API は `default` / `version` / `versionMajorMinor` のみで、
+  **`ts.sys` 自体が存在しない**（`node -e "require('typescript').sys"` も
+  `node -e "import('typescript').then(m => m.sys)"` も `undefined` と実測）。cmk は classic な
+  TypeScript コンパイラ API（`ts.sys`）に依存して作られており、この非互換は環境変数・CLI オプション
+  では迂回できない
+- 検証後、`bun remove @css-modules-kit/codegen` で依存を戻し、作業ツリーをクリーンに復帰させた
+- **結論**: tsukumo が `typescript@7.0.2`（Corsa）を使い続ける限り、cmk への移行は成立しない。
+  再検討するなら、tsukumo 側が classic な `typescript`（4.x/5.x 系）に戻すか、cmk が Corsa 対応の
+  `ts.sys` 代替を出すか、どちらかの前提が変わったとき
+
 ## 確かめていないこと
 
-- cmk の CLI（`bin/cmk.js`）が tsukumo の Bun 実行環境（`bun run`）でそのまま動くか
-  （実機で `cmk` を動かす検証はしていない。依存を入れないという制約のため）
 - 開発者が使っているエディタの種類（VS Code か WebStorm か等）。ts-plugin の恩恵の大小に関わる
 - cmk の `dashedIdents` 以外のオプション（`namedExports`・`animation`・`container`）が tsukumo の
   CSS の書き方（アニメーション・コンテナクエリの有無）にどう影響するか、個々の検証はしていない
