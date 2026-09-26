@@ -20,6 +20,7 @@ import { type PendingAsk } from "./pending-ask.ts"
 import { type RecordedPromptImage } from "./prompt-image.ts"
 import { type Question, type QuestionAnswer } from "./question.ts"
 import { type RateLimit } from "./rate-limit.ts"
+import { type ReportSection } from "./report-block.ts"
 import { type ReportCheck } from "./report-check.ts"
 import { type SessionChoice } from "./session-choice.ts"
 import { type SessionDefault } from "./session-default.ts"
@@ -163,8 +164,8 @@ export type SessionEvent =
   | { readonly kind: "report-drafting"; readonly toolUseId: string }
   /**
    * `report` ツールの呼び出し（docs/glossary.md「report ツール」）。メインが呼んだ
-   * ものだけが届く（サブエージェントの呼び出しは変換で捨てる）。`body` と `favor` は無ければ空の
-   * 文字列、`checks`（検証結果）は無ければ空の配列。`toolUseId` は呼び出しの id で、差し戻し（`src/server/report/core/report-review.ts`）が同じ
+   * ものだけが届く（サブエージェントの呼び出しは変換で捨てる）。`sections`（本文の節）と `checks`（検証結果）は
+   * 無ければ空の配列、`favor` は無ければ空の文字列。`toolUseId` は呼び出しの id で、差し戻し（`src/server/report/core/report-review.ts`）が同じ
    * 呼び出しの `tool-finished` と突き合わせるのに使う。`closing`（締めのセリフ）は描いたあとに
    * 差し戻しが `speech` として出すもので、画面の状態はこの欄を読まない。
    */
@@ -172,7 +173,7 @@ export type SessionEvent =
       readonly kind: "report"
       readonly toolUseId: string
       readonly conclusion: string
-      readonly body: string
+      readonly sections: readonly ReportSection[]
       readonly favor: string
       readonly checks: readonly ReportCheck[]
       readonly closing: ReportClosing

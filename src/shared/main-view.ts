@@ -13,6 +13,7 @@ import { sum } from "remeda"
 import { isBlankText } from "./blank-text.ts"
 import { type RecordedPromptImage } from "./prompt-image.ts"
 import { type Question, type QuestionAnswer } from "./question.ts"
+import { type ReportSection, reportSectionsMarkdown } from "./report-block.ts"
 import { reportChecksMarkdown } from "./report-check.ts"
 import { tidyReportBody } from "./report-tidy.ts"
 import {
@@ -275,24 +276,41 @@ function toMainViewEntries(record: SessionRecord): readonly MainViewEntry[] {
 }
 
 /**
- * `report` の引数を、`conclusion` → `checks` → `body` → `favor` の順に1つの本文へ組む
+ * `report` の引数を、`conclusion` → `checks` → `sections` → `favor` の順に1つの本文へ組む
  * （`docs/glossary.md`「report ツール」）。`checks` は検証結果の帯（{@link reportChecksMarkdown}）、
  * `favor` はレポートの記法の「お願い」の塊で包むので、サニタイズも記法の解釈もテキストの本文と
  * 同じ経路を通り、中間レポートでも最終レポートでも同じに描かれる。
  * `favor` は HTML の中に Markdown を入れるので、塊の内側の前後に空行を空ける（記法の規約と同じ）。
- * 空の `checks` / `body` / `favor` は塊ごと置かない。
+ * 空の `checks` / `sections` / `favor` は塊ごと置かない。
  *
- * `body` はここで整形する（{@link tidyReportBody}。記録は引数のまま持ち、描くたびに導く）。
+ * 逃げ道の `markdown` の塊はここで整形する（{@link tidyReportBody}。記録は引数のまま持ち、描くたびに導く）。
  */
 function reportMarkdown(report: Extract<SessionRecord, { readonly kind: "report" }>): string {
   return [
     report.conclusion,
     reportChecksMarkdown(report.checks),
-    tidyReportBody(report),
+    reportSectionsMarkdown(tidySections(report)),
     isBlankText(report.favor) ? "" : `<div class="note note-favor">\n\n${report.favor}\n\n</div>`,
   ]
     .filter((part) => !isBlankText(part))
     .join("\n\n")
+}
+
+/** 逃げ道の `markdown` の塊に整形を掛けた節の並び（ほかの塊はそのまま）。 */
+function tidySections(
+  report: Extract<SessionRecord, { readonly kind: "report" }>,
+): readonly ReportSection[] {
+  return report.sections.map((section) => ({
+    ...section,
+    blocks: section.blocks.map((block) =>
+      block.kind === "markdown"
+        ? {
+            ...block,
+            markdown: tidyReportBody({ conclusion: report.conclusion, body: block.markdown }),
+          }
+        : block,
+    ),
+  }))
 }
 
 /**

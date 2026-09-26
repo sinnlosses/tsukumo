@@ -7,6 +7,7 @@ import {
   mainViewEntries,
   mainViewTurns,
 } from "../../src/shared/main-view.ts"
+import { reportSectionsOfBody } from "../../src/shared/report-block.ts"
 import { type ReportCheck } from "../../src/shared/report-check.ts"
 import { type SessionEvent } from "../../src/shared/session-event.ts"
 import {
@@ -530,7 +531,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     kind: "report",
     toolUseId: "toolu_r1",
     conclusion,
-    body,
+    sections: reportSectionsOfBody(body),
     favor,
     checks,
     closing: { kind: "none" },

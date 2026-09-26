@@ -23,6 +23,7 @@ import { type PendingAsk } from "./pending-ask.ts"
 import { type RecordedPromptImage } from "./prompt-image.ts"
 import { type Question, type QuestionAnswer } from "./question.ts"
 import { type RateLimit } from "./rate-limit.ts"
+import { type ReportSection } from "./report-block.ts"
 import { type ReportCheck } from "./report-check.ts"
 import { type SessionChoice } from "./session-choice.ts"
 import { BUILTIN_SESSION_DEFAULT, type SessionDefault } from "./session-default.ts"
@@ -125,7 +126,7 @@ export type SessionRecord =
   | {
       readonly kind: "report"
       readonly conclusion: string
-      readonly body: string
+      readonly sections: readonly ReportSection[]
       readonly favor: string
       readonly checks: readonly ReportCheck[]
     }
@@ -676,7 +677,7 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
           {
             kind: "report",
             conclusion: event.conclusion,
-            body: event.body,
+            sections: event.sections,
             favor: event.favor,
             checks: event.checks,
           },

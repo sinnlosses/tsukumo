@@ -17,6 +17,7 @@ import { isBlankText } from "../../../shared/blank-text.ts"
 import { type EffortLevel, isEffortLevel } from "../../../shared/command.ts"
 import { type Expression } from "../../../shared/expression.ts"
 import { type RateLimit, type RateLimitBucket } from "../../../shared/rate-limit.ts"
+import { reportSectionsOfBody } from "../../../shared/report-block.ts"
 import { parseReportChecks } from "../../../shared/report-check.ts"
 import {
   type CommandDescription,
@@ -531,8 +532,8 @@ function speechEvents(
 }
 
 /**
- * `report` の引数を取り出す。`body` と `favor` の「無い」は空の文字列に、`checks` の「無い」は
- * 空の配列に畳む（描く側は空の塊を置かないだけで済む）。`closing` の「無い」（引数に
+ * `report` の引数を取り出す。文字列の `body` は逃げ道の塊1つの節に畳み（{@link reportSectionsOfBody}）、
+ * `favor` の「無い」は空の文字列に、`checks` の「無い」は空の配列に畳む（描く側は空の塊を置かないだけで済む）。`closing` の「無い」（引数に
  * `closing` が無かったころの transcript）は `none` に畳む。`conclusion` が文字列でなければ捨てる（引数の検査に落ちた呼び出しで、
  * モデルには本体がエラーを返す）。
  */
@@ -550,7 +551,7 @@ function reportEvents(
       kind: "report",
       toolUseId,
       conclusion: input.conclusion,
-      body: optionalString(input.body) ?? "",
+      sections: reportSectionsOfBody(optionalString(input.body) ?? ""),
       favor: optionalString(input.favor) ?? "",
       checks: parseReportChecks(input.checks),
       closing: speechEvents(input.closing, expressions)[0] ?? { kind: "none" },

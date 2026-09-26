@@ -7,7 +7,8 @@
 // 関所を抜ける形を塞ぐ（関所は2回目の止まりを止めないので、送り直しを通すと止めた本文が画面に
 // 出ないまま終わる。docs/research/report-tool-trial.md「残った穴の形」）。枠は規約違反の1回とは
 // 別に1ターンに1回まで（規約違反で差し戻して直した `report` を送り直す形もあったため）。
-// 比べるのは `conclusion` / `body` / `favor` の前後の空白を除いたものと、`checks` の中身。覚えるのは `ReportReview.pass`
+// 比べるのは `conclusion` / `favor` の前後の空白を除いたものと、`sections` と `checks` の中身（handler に届く `body` は
+// 呼び出しをイベントに変える側と同じ `reportSectionsOfBody` で節に畳んでから比べる）。覚えるのは `ReportReview.pass`
 // が出した（描いた）`report` だけなので、サブエージェントの `report`（変換で捨てる）とは比べない。
 //
 // 新しい事実の無い `report` も差し戻す（枠は別に1ターンに1回まで）。「新しい事実」は文面ではなく
@@ -31,6 +32,7 @@
 
 import { isDeepEqual } from "remeda"
 
+import { reportSectionsOfBody } from "../../../shared/report-block.ts"
 import { type SessionEvent } from "../../../shared/session-event.ts"
 import { type ReportDraft, reportRejectionText, reportViolations } from "./report-violation.ts"
 
@@ -69,7 +71,7 @@ export function createReportReview(): ReportReview {
   let nothingNewRejectedInTurn = false
   let held: readonly ReportEvent[] = []
   // このターンで出した（描いた）`report`。送り直しの判定にだけ使う。
-  let drawn: readonly ReportDraft[] = []
+  let drawn: readonly ReportEvent[] = []
   // 直前に描いた `report` のあとに新しい事実が届いたか（セッションの頭は届いたものとする）。
   let hasNews = true
   // メインが呼んで結果をまだ受け取っていないツールの id（`speak` / `report` は入らない）。
@@ -180,12 +182,12 @@ function closingSpeech(report: ReportEvent): readonly SessionEvent[] {
   return report.closing.kind === "speech" ? [report.closing] : []
 }
 
-/** 2つのレポートが同じ引数か。文字列の3つの欄は前後の空白を除いて、`checks` は中身で比べる。 */
-function isSameReport(left: ReportDraft, right: ReportDraft): boolean {
+/** 描いたレポートと同じ引数か。文字列の2つの欄は前後の空白を除いて、`sections` と `checks` は中身で比べる。 */
+function isSameReport(drawn: ReportEvent, draft: ReportDraft): boolean {
   return (
-    left.conclusion.trim() === right.conclusion.trim() &&
-    left.body.trim() === right.body.trim() &&
-    left.favor.trim() === right.favor.trim() &&
-    isDeepEqual(left.checks, right.checks)
+    drawn.conclusion.trim() === draft.conclusion.trim() &&
+    isDeepEqual(drawn.sections, reportSectionsOfBody(draft.body)) &&
+    drawn.favor.trim() === draft.favor.trim() &&
+    isDeepEqual(drawn.checks, draft.checks)
   )
 }

@@ -264,7 +264,7 @@ describe("startFakeSession", () => {
         kind: "report",
         toolUseId,
         conclusion: "架空の結論",
-        body: "",
+        sections: [],
         favor: "",
         checks: [],
         closing: { kind: "none" },

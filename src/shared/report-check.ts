@@ -5,6 +5,8 @@
 
 import { z } from "zod"
 
+import { htmlInline } from "./report-block.ts"
+
 /** 検証1項目の状態。確かめなかった・飛ばしたものは `unverified` にまとめ、理由は `detail` に書かせる。 */
 export const REPORT_CHECK_STATUSES = ["ok", "ng", "unverified"] as const
 
@@ -40,8 +42,8 @@ export function reportChecksMarkdown(checks: readonly ReportCheck[]): string {
     const mark = REPORT_CHECK_MARKS[status]
     const parts = [
       `<span class="badge ${mark.badge}">${mark.text}</span>`,
-      `<b>${inlineText(label)}</b>`,
-      ...(detail.trim() === "" ? [] : [inlineText(detail)]),
+      `<b>${htmlInline(label)}</b>`,
+      ...(detail.trim() === "" ? [] : [htmlInline(detail)]),
     ]
     return `<div class="check">${parts.join(" ")}</div>`
   })
@@ -54,12 +56,3 @@ const REPORT_CHECK_MARKS = {
   ng: { badge: "badge-ng", text: "NG" },
   unverified: { badge: "badge-warn", text: "未確認" },
 } as const satisfies Record<ReportCheckStatus, { readonly badge: string; readonly text: string }>
-
-function inlineText(text: string): string {
-  return text
-    .replace(/\s+/g, " ")
-    .trim()
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-}

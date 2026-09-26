@@ -6,6 +6,7 @@ import {
   REPORT_RESEND_REJECTION_TEXT,
   type ReportReview,
 } from "../../../../src/server/report/core/report-review.ts"
+import { reportSectionsOfBody } from "../../../../src/shared/report-block.ts"
 import { type SessionEvent } from "../../../../src/shared/session-event.ts"
 
 // レポートの文面はどれも作り物（docs/coding-standards.md「会話内容の扱い」）。
@@ -26,15 +27,22 @@ const FINISHED: SessionEvent = { kind: "turn-finished", outcome: { kind: "comple
 const NO_CLOSING = { kind: "none" } as const
 const CLOSING = { kind: "speech", text: "架空の締め", expression: "default" } as const
 
-const report = (
+/** handler に届いた引数を、呼び出しをイベントに変える側と同じ形のイベントにする。 */
+const reportEvent = (
   toolUseId: string,
+  { body, ...draft }: typeof VALID,
   closing: Extract<SessionEvent, { kind: "report" }>["closing"] = NO_CLOSING,
 ): Extract<SessionEvent, { kind: "report" }> => ({
   kind: "report",
   toolUseId,
-  ...VALID,
+  ...draft,
+  sections: reportSectionsOfBody(body),
   closing,
 })
+const report = (
+  toolUseId: string,
+  closing: Extract<SessionEvent, { kind: "report" }>["closing"] = NO_CLOSING,
+): Extract<SessionEvent, { kind: "report" }> => reportEvent(toolUseId, VALID, closing)
 const finished = (toolUseId: string, isError: boolean): SessionEvent => ({
   kind: "tool-finished",
   toolUseId,
@@ -55,7 +63,7 @@ const toolStarted = (
 /** `report` を handler で通して描かせる（pass に呼び出しと結果を流す）。 */
 const draw = (review: ReportReview, toolUseId: string, draft: typeof VALID): void => {
   expect(review.judge(draft)).toEqual({ kind: "accepted" })
-  review.pass({ kind: "report", toolUseId, ...draft, closing: NO_CLOSING })
+  review.pass(reportEvent(toolUseId, draft))
   review.pass(finished(toolUseId, false))
 }
 
@@ -239,7 +247,7 @@ describe("createReportReview の judge（送り直し）", () => {
 
   it("差し戻して描かなかった report とは比べない", () => {
     const review = createReportReview()
-    review.pass({ kind: "report", toolUseId: "toolu_r1", ...VALID, closing: NO_CLOSING })
+    review.pass(reportEvent("toolu_r1", VALID))
     review.pass(finished("toolu_r1", true))
 
     expect(review.judge(VALID)).toEqual({ kind: "accepted" })
@@ -374,7 +382,7 @@ describe("createReportReview の judge（新しい事実の無い report）", ()
 
   it("差し戻して描かなかった report のあとでも、新しい事実の届いた印は残る", () => {
     const review = createReportReview()
-    review.pass({ kind: "report", toolUseId: "toolu_r1", ...INVALID, closing: NO_CLOSING })
+    review.pass(reportEvent("toolu_r1", INVALID))
     review.pass(finished("toolu_r1", true))
 
     expect(review.judge(VALID)).toEqual({ kind: "accepted" })

@@ -583,7 +583,7 @@ describe("toRestoredEvents", () => {
         kind: "report",
         toolUseId: "r-2",
         conclusion: "架空の二",
-        body: "",
+        sections: [],
         favor: "",
         checks: [],
         closing: { kind: "none" },

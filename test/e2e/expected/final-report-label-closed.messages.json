@@ -109,7 +109,7 @@
       },
       "toolUseId": "fake-report-bg-interim-1",
       "conclusion": "中間の結論（架空）：ここまでで分かったことをいったんまとめた。",
-      "body": "",
+      "sections": [],
       "favor": "",
       "checks": []
     }
@@ -200,7 +200,7 @@
       },
       "toolUseId": "fake-report-bg-interim-2",
       "conclusion": "いまの結論（架空）：ここまでで分かったことをまとめた。",
-      "body": "",
+      "sections": [],
       "favor": "",
       "checks": []
     }
@@ -286,7 +286,7 @@
       },
       "toolUseId": "fake-report-bg-interim-3",
       "conclusion": "最終の結論（架空）：合図をまたいでも最終レポートの札は早まらなかった。",
-      "body": "",
+      "sections": [],
       "favor": "",
       "checks": []
     }

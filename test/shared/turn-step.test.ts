@@ -118,7 +118,7 @@ describe("currentTurnSteps（report ツール）", () => {
         kind: "report",
         toolUseId: "toolu_r1",
         conclusion: "架空の結論。",
-        body: "",
+        sections: [],
         favor: "",
         checks: [],
         closing: { kind: "none" },

@@ -1054,7 +1054,12 @@ describe("toSessionEvents（report ツール）", () => {
         kind: "report",
         toolUseId: "toolu_r1",
         conclusion: "架空の結論。",
-        body: "## 架空の見出し",
+        sections: [
+          {
+            heading: "",
+            blocks: [{ kind: "markdown", markdown: "## 架空の見出し", fold: "" }],
+          },
+        ],
         favor: "架空のお願い",
         checks: [{ status: "ok", label: "架空の検査", detail: "架空の件数" }],
         closing: { kind: "speech", text: "架空の締め", expression: "proud" },
@@ -1062,7 +1067,7 @@ describe("toSessionEvents（report ツール）", () => {
     ])
   })
 
-  it("body と favor が無いときは空の文字列に、checks が無いときは空の配列に、closing が無いときは none に畳む", () => {
+  it("body が無いときは節を空に、favor が無いときは空の文字列に、checks が無いときは空の配列に、closing が無いときは none に畳む", () => {
     const message = assistantMessage([
       {
         type: "tool_use",
@@ -1077,7 +1082,7 @@ describe("toSessionEvents（report ツール）", () => {
         kind: "report",
         toolUseId: "toolu_r1",
         conclusion: "架空の結論。",
-        body: "",
+        sections: [],
         favor: "",
         checks: [],
         closing: { kind: "none" },

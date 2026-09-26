@@ -27,7 +27,7 @@ const REPORT: SessionEvent = {
   kind: "report",
   toolUseId: "toolu_r1",
   conclusion: "架空の結論",
-  body: "",
+  sections: [],
   favor: "",
   checks: [],
   closing: { kind: "speech", text: "架空の締め", expression: "default" },
