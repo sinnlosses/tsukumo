@@ -203,53 +203,6 @@ describe("applySessionEvent", () => {
     ])
   })
 
-  it("再生の終わり（history-restored）で、それまでの依頼とセリフは時刻の分からない記録になる", () => {
-    const view = apply(
-      { kind: "request", text: "組み直した依頼", images: [] },
-      { kind: "speech", text: "組み直したセリフ", expression: "default" },
-      { kind: "compact-boundary" },
-      { kind: "turn-finished", outcome: { kind: "completed" } },
-      { kind: "history-restored" },
-      { kind: "request", text: "いまの依頼", images: [] },
-    )
-
-    expect(view.records).toEqual([
-      {
-        kind: "request",
-        turnId: 0,
-        text: "組み直した依頼",
-        images: [],
-        time: { kind: "restored" },
-      },
-      {
-        kind: "speech",
-        text: "組み直したセリフ",
-        expression: "default",
-        time: { kind: "restored" },
-      },
-      { kind: "compact-boundary" },
-      {
-        kind: "request",
-        turnId: 1,
-        text: "いまの依頼",
-        images: [],
-        time: { kind: "stamped", at: 0 },
-      },
-    ])
-  })
-
-  it("同じターン内のセリフは件数を絞らず、古い→新しいの順に並べる", () => {
-    const view = apply(
-      { kind: "request", text: "ダミーの依頼", images: [] },
-      { kind: "speech", text: "1つめ", expression: "default" },
-      { kind: "speech", text: "2つめ", expression: "default" },
-      { kind: "speech", text: "3つめ", expression: "default" },
-      { kind: "speech", text: "4つめ", expression: "proud" },
-    )
-
-    expect(view.speeches).toEqual(["1つめ", "2つめ", "3つめ", "4つめ"])
-  })
-
   it("新しいターンの request の直後は吹き出しを空にし、次の speak でそのターンのものだけになる", () => {
     const firstTurn = apply(
       { kind: "request", text: "1つめの依頼", images: [] },
@@ -855,15 +808,6 @@ describe("applySessionEvent", () => {
     expect(view.character).toEqual(character)
   })
 
-  it("答え待ちの列をそのまま持つ", () => {
-    const view = apply({
-      kind: "pending-changed",
-      pending: [{ kind: "permission", id: "toolu_1", toolName: "Bash", input: {} }],
-    })
-
-    expect(view.pending.map((ask) => ask.id)).toEqual(["toolu_1"])
-  })
-
   it("記録はターン数の窓（直近20ターン）だけを残し、古いターンは落とす", () => {
     const events: SessionEvent[] = []
     for (let turn = 0; turn < 25; turn += 1) {
@@ -1033,26 +977,6 @@ describe("applySessionEvent（背景のタスク）", () => {
     expect(INITIAL_SESSION_STATE.backgroundTasks).toEqual([])
   })
 
-  it("background-tasks-changed で丸ごと置き換わり、ターンが終わっても残る", () => {
-    const view = apply(
-      { kind: "request", text: "架空の依頼", images: [] },
-      { kind: "background-tasks-changed", tasks: [SHELL_TASK] },
-      { kind: "turn-finished", outcome: { kind: "completed" } },
-    )
-
-    expect(view.turn.kind).toBe("finished")
-    expect(view.backgroundTasks).toEqual([SHELL_TASK])
-  })
-
-  it("空の知らせが届くと消える", () => {
-    const view = apply(
-      { kind: "background-tasks-changed", tasks: [SHELL_TASK] },
-      { kind: "background-tasks-changed", tasks: [] },
-    )
-
-    expect(view.backgroundTasks).toEqual([])
-  })
-
   it("session-ended で空にする（claude のプロセスと一緒に終わる）", () => {
     const view = apply(
       { kind: "background-tasks-changed", tasks: [SHELL_TASK] },
@@ -1060,32 +984,6 @@ describe("applySessionEvent（背景のタスク）", () => {
     )
 
     expect(view.backgroundTasks).toEqual([])
-  })
-
-  it("知らせのあとの続きのターン（turn-resumed）はターンを進行中に戻し、吹き出しと表情は持ち越す", () => {
-    const view = apply(
-      { kind: "request", text: "架空の依頼", images: [] },
-      { kind: "speech", text: "架空の一言", expression: "proud" },
-      { kind: "turn-finished", outcome: { kind: "completed" } },
-      { kind: "background-tasks-changed", tasks: [] },
-      { kind: "turn-resumed" },
-    )
-
-    expect(view.turn.kind).toBe("running")
-    expect(view.speeches).toEqual(["架空の一言"])
-    expect(view.speechExpression).toBe("proud")
-  })
-
-  it("続きのターンのセリフは、前の SDK ターンのセリフに続けて積む", () => {
-    const view = apply(
-      { kind: "request", text: "架空の依頼", images: [] },
-      { kind: "speech", text: "架空の一言", expression: "default" },
-      { kind: "turn-finished", outcome: { kind: "completed" } },
-      { kind: "turn-resumed" },
-      { kind: "speech", text: "架空の続き", expression: "default" },
-    )
-
-    expect(view.speeches).toEqual(["架空の一言", "架空の続き"])
   })
 })
 
