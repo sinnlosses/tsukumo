@@ -208,7 +208,7 @@ function Step(props: {
 
 /**
  * ステップの器に付ける class。地の段（`is-interim` / `is-final`）は互いに立たない。
- * 戻り値に undefined が混じるのは CSS Modules の対応表を引くため（`src/browser/css-module.d.ts`）で、
+ * 戻り値に undefined が混じるのは CSS Modules の対応表を引くため（`src/browser/types/css-module.d.ts`）で、
  * `className` はそのまま受ける。
  */
 function stepClassName(step: MainViewStep): string | undefined {

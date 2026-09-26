@@ -1,5 +1,5 @@
 // 外部ライブラリが、ブラウザのグローバルに置くものの型。**どの箱にも属さない ambient 宣言**
-// なので `src/browser/` の直下（`css-module.d.ts` などと同じ場所）に置く。
+// なので `src/browser/types/` に置く。
 //
 // **パッケージは npm にあるが、束ねずに素の JavaScript を `<script>` で読む**ので、そこから型は
 // 付いてこない（`src/server/view-server/adapter/vendor-asset.ts`）。ここに**使っている分だけ**を手で書く。

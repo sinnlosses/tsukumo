@@ -113,7 +113,7 @@ const SPLIT_VARIABLES = {
 } satisfies Record<keyof Split, readonly [`--${string}`, `--${string}`]>
 
 // 確定済みの比率を描くときの `style`。CSS カスタムプロパティの index signature は
-// `src/browser/css-variable.d.ts` が足している。
+// `src/browser/types/css-variable.d.ts` が足している。
 function fractionStyle(key: keyof Split, percent: number): CSSProperties {
   const [near, far] = SPLIT_VARIABLES[key]
   return { [near]: `${String(percent)}fr`, [far]: `${String(100 - percent)}fr` }

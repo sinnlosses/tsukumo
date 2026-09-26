@@ -4,7 +4,7 @@
 // 名指ししている名前だけ**を中身の無い型で置く（oRPC を上げて名前が増えたら `tsc` が落ちて知らせる）。
 // 経緯は `docs/research/external-dependency.md` の表1の oRPC の行。
 //
-// 置き場は `src/` の直下（どの層にも属さない ambient 宣言で、サーバとブラウザの両方の型が辿る）。
+// 置き場は `src/types/`（どの層にも属さない ambient 宣言で、サーバとブラウザの両方の型が辿る）。
 
 declare module "@opentelemetry/api" {
   export type Tracer = unknown

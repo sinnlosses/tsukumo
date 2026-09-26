@@ -313,7 +313,8 @@ src/
   session-start.ts            セッションを1つ起こす（どの駆動で起こすか・続きをどう探すか）
   router.ts                   全機能の手続き（読み取りとコマンド）を束ね、照合と断る条件のミドルウェアを全部の前に掛ける
                               （上の「コマンドの受け手と手続きの置き方」）
-  opentelemetry-api.d.ts      oRPC の型宣言が読む任意の peer の型の代役（入れていない。docs/research/external-dependency.md）
+  types/                      どの層にも属さない ambient 宣言（import されない `*.d.ts`）だけを置く。export する型は置かない
+    opentelemetry-api.d.ts    oRPC の型宣言が読む任意の peer の型の代役（入れていない。docs/research/external-dependency.md）
   shared/
     rpc.ts                    手続きの口の経路名（/rpc）と、機能ごとの契約を束ねた rpcContract（読み取り）・commandContract（コマンド）・
                               socketContract（/ws。コマンドと押し出しの購読）
@@ -431,10 +432,11 @@ src/
   browser/
     main.tsx                  入口。<App> を mount する（副作用はここだけ。描き始める前の1回も含む）
     app.tsx                   <App>。Provider の重なりと、出す画面を選ぶ <Root>（6.1）
-    css-variable.d.ts         browser 全体に効く型拡張（import されない ambient 宣言）
-    css-module.d.ts           `*.module.css` を import したときの型（同上）
-    css-global.d.ts           `styles/theme.css` を副作用だけで import したときの宣言（中身は空。同上）
-    vendor-global.d.ts        外部ライブラリがブラウザのグローバルに置くものの型（`<script>` で読むので npm の型が引けない分。同上）
+    types/                    browser 全体に効く ambient 宣言（import されない `*.d.ts`）だけを置く。どの箱にも属さない
+      css-variable.d.ts       `style` に CSS カスタムプロパティを書くための型拡張
+      css-module.d.ts         `*.module.css` を import したときの型
+      css-global.d.ts         `styles/theme.css` を副作用だけで import したときの宣言（中身は空）
+      vendor-global.d.ts      外部ライブラリがブラウザのグローバルに置くものの型（`<script>` で読むので npm の型が引けない分）
     components/               React の部品。**`page/` `domain/` `ui/` の3段**（2026-09-25 決定。下の箱の表）
       page/                   画面。**1つの画面 = 1つのディレクトリ（ページ）**で、名前は `stores/location-hash.ts` の
                               `Screen` の値そのまま。中の形は下の「ページの形」（2026-09-26 決定）
@@ -494,14 +496,13 @@ characters/<name>/            character.json・persona.md・素材
 ```
 
 **ファイル名は概念**（原則5）。`helpers/` と `common/` は作らない（`lib/` と `utils/` を
-置く基準は下の「`lib/` と `utils/` に置く基準」）。**単数形の規約は
+置く基準は下の「`lib/` と `utils/` に置く基準」）。**ディレクトリ名に単数形の縛りは無く**（2026-09-26）、
 `src/browser/` の置き場所のディレクトリ（`components/`（とその下の `page/` `domain/` `ui/`）`features/`
-`hooks/` `domain/` `lib/` `utils/` `stores/` `styles/` と、領域・機能の中の `hooks/` `components/`
-`domain/`）だけ外れる**（bullet-proof-react の名前をそのまま採る。`components/` の下の3段は利用者の
-Next.js の雛形の名前。`shared` / `server` / `core` / `adapter` と、`server/` の下の機能の名前
-（`session-driver/` `usage-review/` など。用語集の語）と、
-領域・機能の中のファイル名は単数形のまま。`main-view/` のように領域・機能の名前は用語集の語に、
-`components/page/` の下の画面の名前は `stores/location-hash.ts` の `Screen` の値に合わせる）。
+`hooks/` `domain/` `lib/` `utils/` `stores/` `styles/` `types/` と、領域・機能の中の `hooks/` `components/`
+`domain/`）は bullet-proof-react の名前をそのまま採る（`components/` の下の3段は利用者の
+Next.js の雛形の名前）。`server/` の下の機能の名前（`session-driver/` `usage-review/` など）と
+`main-view/` のような領域・機能の名前は用語集の語に、`components/page/` の下の画面の名前は
+`stores/location-hash.ts` の `Screen` の値に合わせる。ファイル名は単数形のまま。
 **手本から採るのはディレクトリの形だけ**で、kebab-case のファイル名・barrel file（`index.ts`）を
 作らない・`@/` を使わない相対 import はそのまま（PascalCase・1部品1フォルダは真似しない）。
 **例外は `components/ui/` と、ページの `components/`（下の「ページの形」）の2つだけ**:

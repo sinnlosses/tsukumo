@@ -12,7 +12,7 @@ import { fileURLToPath } from "node:url"
 // `adapter ──▶ core ──▶ shared ◀── browser` で、**`core → adapter` は禁止**（機能をまたいでも
 // 同じに効く）。機能どうしの辺は `SERVER_FEATURE_IMPORTS` にある組だけで、層ごとに循環させない。
 
-type Layer = "shared" | "core" | "adapter" | "browser" | "cli"
+type Layer = "shared" | "core" | "adapter" | "browser" | "cli" | "ambient"
 
 // 各層が import してよい先（docs/coding-standards.md「層と依存の向き」の表そのもの）。
 const ALLOWED_IMPORTS: Readonly<Record<Layer, ReadonlySet<Layer>>> = {
@@ -21,6 +21,7 @@ const ALLOWED_IMPORTS: Readonly<Record<Layer, ReadonlySet<Layer>>> = {
   adapter: new Set(["shared", "core", "adapter"]),
   browser: new Set(["shared", "browser"]),
   cli: new Set(["shared", "core", "adapter", "browser", "cli"]),
+  ambient: new Set(),
 }
 
 // `core` を「純粋な判断」に保つための禁止（3章「許す依存の辺」）。外の世界に触るものは
@@ -497,11 +498,11 @@ describe("browser/ の機能どうしの import", () => {
 // （誰から引いてもよく、自分は `lib/` までしか引かない）。機能に固有のフックは機能の中の
 // `features/<機能>/hooks/` に置くので、こちらの箱には入らない。
 //
-// `browser/` 直下の `*.d.ts`（箱に属さない ambient 宣言。`css-variable.d.ts` / `css-module.d.ts`）と
+// `browser/types/` の `*.d.ts`（箱に属さない ambient 宣言。`css-variable.d.ts` / `css-module.d.ts`）と
 // `browser/styles/`（グローバルな CSS だけで `.ts`/`.tsx` を持たない）はどの箱にも属さないので、
 // import 元・import 先のどちらでも無視する。未知のディレクトリが `browser/` 直下や
 // `browser/components/` 直下に増えたときにテストの直し忘れで素通りしないよう、`main.tsx` でも
-// `*.d.ts`/`styles` でもない未知の区画は `layerOf` と同じく `throw` する。
+// `types/`/`styles` でもない未知の区画は `layerOf` と同じく `throw` する。
 // `browser/domain/` は**画面全体の語彙**（tsukumo の語彙を名乗り、2つ以上の機能が読むもの）の箱で、
 // `lib/`（ライブラリを包む道具）とは「ファイル名が tsukumo の語彙を名乗るか」で分かれる。
 const BROWSER_BOXES = [
@@ -1208,7 +1209,7 @@ function findBrowserBoxViolations(relPath: string): readonly BrowserBoxViolation
 }
 
 /**
- * `browser/` 相対パスから箱を決める。箱に属さない `browser/css-variable.d.ts` と `browser/styles/`（CSS のみ）は
+ * `browser/` 相対パスから箱を決める。箱に属さない `browser/types/` の `*.d.ts` と `browser/styles/`（CSS のみ）は
  * `undefined`（import 元・import 先のどちらでも無視する）。`browser/` の外は対象外なので `undefined`。
  * `components/` は `page/` `domain/` `ui/` の3段（直下に残ったファイルは新しい箱として `throw`）。
  */
@@ -1219,7 +1220,7 @@ function browserBoxOf(relPath: string): BrowserBox | undefined {
   if (ENTRY_FILES.has(relPath)) {
     return "main"
   }
-  if (relPath.endsWith(".d.ts") && relPath.split("/").length === 2) {
+  if (relPath.startsWith("browser/types/") && relPath.endsWith(".d.ts")) {
     return undefined
   }
   const [, second, third] = relPath.split("/")
@@ -1410,12 +1411,16 @@ function resolveRelativeImport(fromRelPath: string, specifier: string): string {
  * `src/` 相対パスから層を決める。**`src/` 直下のファイルは配線層**（`cli.ts` と `main.ts`、
  * そこから呼ばれる起動の段取り。`core` と `adapter` を結べるのはここだけ）、`shared/` と
  * `browser/` は先頭ディレクトリ、サーバ側は置き場（`serverPlaceOf`）の層で決まる。
+ * `types/` の `*.d.ts` はどの層にも属さない ambient 宣言で、何も import しない。
  */
 function layerOf(relPath: string): Layer {
   if (!relPath.includes("/")) {
     return "cli"
   }
   const [top] = relPath.split("/")
+  if (top === "types" && relPath.endsWith(".d.ts")) {
+    return "ambient"
+  }
   if (top === "shared" || top === "browser") {
     return top
   }

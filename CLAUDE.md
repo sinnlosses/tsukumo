@@ -57,9 +57,8 @@ bun run scripts/stop.ts       # 動いている tsukumo の一覧（--port <n> �
   Agent SDK だけは機能の `adapter/` の `sdk-` で始まるファイル群に閉じ込める
 - **原則4**: **キャラクターの中身をコードに書かない**（素材・表情・衣装の対応は定義ファイル側）
 - **原則5**: 「**ファイル名が概念になっているか**」で分ける。`helpers.ts` / `utils.ts` /
-  `common.ts` のような置き場所を名前にしたファイルは作らない。**ファイルもディレクトリも単数形**
-  （例外にする `components/` `lib/` `utils/` などと、`src/browser/` の置き場所の基準は
-  `docs/design.md` 2章）
+  `common.ts` のような置き場所を名前にしたファイルは作らない。**ファイルは単数形**
+  （置き場所のディレクトリの名前と、`src/browser/` の置き場所の基準は `docs/design.md` 2章）
 
 ## テスト方針
 
