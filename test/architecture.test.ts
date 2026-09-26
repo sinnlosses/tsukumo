@@ -431,7 +431,7 @@ describe("コメント中の日付", () => {
 // **一覧は `browser/` からの相対パスで引く**（枠と画面は `components/domain/<枠>/` と
 // `components/page/<画面>/` に分かれているので、名前だけでは引けない）。
 //
-// `browser/components/`（`page/` `domain/` `ui/` の3段。一覧のパスに無いディレクトリ）・
+// `browser/components/`（`app/` `page/` `domain/` `ui/` の4段。一覧のパスに無いディレクトリ）・
 // `browser/lib/` `browser/stores/` `browser/styles/` と `browser/main.tsx` / `browser/app.tsx` は誰から引いてもよい
 // 共有部分なので、ここでは見ない。**一覧に無いディレクトリが `features/` の直下・
 // `components/domain/` の直下（サブディレクトリがあるとき）・`components/page/` の下に
@@ -490,7 +490,7 @@ describe("browser/ の機能どうしの import", () => {
 
 // `src/browser/` の箱をまたぐ縦の辺（`docs/design.md` 2章「`src/browser/` の箱と、置く基準」の表そのもの）。
 // 上の `BROWSER_FRAMES` / `BROWSER_SCREENS` / `BROWSER_PLACED_FEATURES` の検査はまとまりどうしの横の辺を見るのに対し、こちらは
-// `main.tsx` / `features/` / `components/page/` / `components/domain/` / `components/ui/` /
+// `main.tsx` / `features/` / `components/app/` / `components/page/` / `components/domain/` / `components/ui/` /
 // `hooks/` / `domain/` / `lib/` / `utils/` / `stores/` という箱をまたぐ辺を見る
 // （`shared` への辺は層の検査 `ALLOWED_IMPORTS` がすでに見ているので、ここでは対象にしない）。
 //
@@ -508,6 +508,7 @@ describe("browser/ の機能どうしの import", () => {
 const BROWSER_BOXES = [
   "main",
   "features",
+  "components/app",
   "components/page",
   "components/domain",
   "components/ui",
@@ -526,9 +527,22 @@ const ALLOWED_BROWSER_BOX_IMPORTS: Readonly<Record<BrowserBox, ReadonlySet<Brows
   main: new Set([
     "main",
     "features",
+    "components/app",
     "components/page",
     "components/domain",
     "components/ui",
+    "hooks",
+    "domain",
+    "lib",
+    "utils",
+    "stores",
+  ]),
+  "components/app": new Set([
+    "components/app",
+    "components/page",
+    "components/domain",
+    "components/ui",
+    "features",
     "hooks",
     "domain",
     "lib",
@@ -800,7 +814,10 @@ function componentDirectoriesUnder(relPath: string): readonly string[] {
 /** 入口の箱（`main`）のファイル。入口の `main.tsx` と、その中身の `<App>` を持つ `app.tsx`。 */
 const ENTRY_FILES: ReadonlySet<string> = new Set(["browser/main.tsx", "browser/app.tsx"])
 
-/** 部品のディレクトリの外から、中の `<部品>.tsx` 以外を import している箇所（`main.tsx` / `app.tsx` は除く）。 */
+/**
+ * 部品のディレクトリの外から、中の `<部品>.tsx` 以外を import している箇所
+ * （`main.tsx` / `app.tsx` と、画面を選ぶ `components/app/` は除く）。
+ */
 function componentBoundaryViolations(): readonly string[] {
   const files = listSourceFiles(SRC_ROOT).filter((relPath) => relPath.startsWith("browser/"))
   const edges = files.flatMap((relPath) =>
@@ -819,6 +836,7 @@ function componentBoundaryViolations(): readonly string[] {
           edge.toPath.startsWith(`${componentRelPath}/`) &&
           edge.toPath !== entryFile &&
           !ENTRY_FILES.has(edge.fromPath) &&
+          !edge.fromPath.startsWith("browser/components/app/") &&
           !edge.fromPath.startsWith(`${componentRelPath}/`),
       )
       .map((edge) => `src/${edge.fromPath} → src/${edge.toPath}（${componentRelPath} の外から）`)
@@ -1211,7 +1229,7 @@ function findBrowserBoxViolations(relPath: string): readonly BrowserBoxViolation
 /**
  * `browser/` 相対パスから箱を決める。箱に属さない `browser/types/` の `*.d.ts` と `browser/styles/`（CSS のみ）は
  * `undefined`（import 元・import 先のどちらでも無視する）。`browser/` の外は対象外なので `undefined`。
- * `components/` は `page/` `domain/` `ui/` の3段（直下に残ったファイルは新しい箱として `throw`）。
+ * `components/` は `app/` `page/` `domain/` `ui/` の4段（直下に残ったファイルは新しい箱として `throw`）。
  */
 function browserBoxOf(relPath: string): BrowserBox | undefined {
   if (!relPath.startsWith("browser/")) {
@@ -1225,6 +1243,9 @@ function browserBoxOf(relPath: string): BrowserBox | undefined {
   }
   const [, second, third] = relPath.split("/")
   if (second === "components") {
+    if (third === "app") {
+      return "components/app"
+    }
     if (third === "page") {
       return "components/page"
     }
@@ -1235,7 +1256,7 @@ function browserBoxOf(relPath: string): BrowserBox | undefined {
       return "components/ui"
     }
     throw new Error(
-      `src/${relPath} の browser 箱を判定できない（components/ 直下は page/domain/ui の3段のはず）`,
+      `src/${relPath} の browser 箱を判定できない（components/ 直下は app/page/domain/ui の4段のはず）`,
     )
   }
   if (

@@ -29,7 +29,7 @@ import { useSyncExternalStore } from "react"
  * 画面の名前とラベルの一覧（唯一の正典。`docs/screen-design.md` 13.9）。**画面を1つ足すときは
  * ここへ1行足すだけでよい形にする**——`Screen` 型・帯のメニューの並び（`SCREEN_NAV_ITEMS` を
  * `use-screen-nav.ts` がそのまま使う）・hash の `?` より前のパス（{@link pathOf}）は全部ここから
- * 導く。画面の部品を引く表は `app.tsx` 側（`Record<Exclude<Screen, "conversation">, ReactElement>`
+ * 導く。画面の部品を引く表は `components/app/root.tsx` 側（`Record<Exclude<Screen, "conversation">, ReactElement>`
  * を `satisfies` で検査し、ここへ足したのに部品の登録を忘れたら型エラーになる）。
  */
 const SCREEN_LIST = [

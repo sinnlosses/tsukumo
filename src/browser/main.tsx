@@ -3,7 +3,7 @@
 // CSS もここから辿る（下の `styles/theme.css` と、各機能が import する `*.module.css`）。
 // そのため、スクリプトと CSS は1回の組み立てから出る対になる（`src/server/view-server/adapter/bundle.ts`）。
 // 副作用（`createRoot(...).render(...)`）を持つのはここだけ（`docs/architecture.md`「各ファイルの責務」）。
-// 中身（Provider と画面の選択）は `app.tsx` の `<App>` で、ここは描き始める前の1回と mount だけを持つ。
+// 中身（Provider と、画面を選ぶ `<Root>`）は `app.tsx` の `<App>` で、ここは描き始める前の1回と mount だけを持つ。
 
 import { createRoot } from "react-dom/client"
 

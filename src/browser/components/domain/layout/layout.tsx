@@ -1,7 +1,7 @@
 // **画面共通の枠**（frame。docs/design.md 2章「領域の機能と、置かれる機能」）。全画面の最上部に
 // 画面のナビの帯を置き、その下に画面を差し込む。差し込み口（`nav` / `screen`）は props で受け、
 // **どちらも `ReactNode` のまま**——どの画面を出すか・帯に何を乗せるかは知らない
-// （`app.tsx` の `<Root>` が選ぶ。もとは `<Root>` に直接書かれていた組み立てをここへ出した）。
+// （`components/app/root.tsx` の `<Root>` が選ぶ。もとは `<Root>` に直接書かれていた組み立てをここへ出した）。
 //
 // **フックも算出も持たない**（受け取った2つをただ並べるだけなので、`presentational-*` /
 // `hooks/` には割らない。`components/domain/sidebar/sidebar.tsx` がストアだけ読んで割っていない

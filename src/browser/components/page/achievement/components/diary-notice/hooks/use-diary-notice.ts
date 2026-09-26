@@ -1,7 +1,7 @@
 // 書き終わりの知らせ（`../diary-notice.tsx`。`docs/screen-design.md` 13.10「書き終わりの知らせ」）の
 // ロジック。`SessionState.diaryWriting` を読み、`written` になったら画面の下中央に浮く札を出す。
 //
-// **出すのは成果の画面だけ**で、それを決めるのは `app.tsx` の `<Root>`（ほかの画面では
+// **出すのは成果の画面だけ**で、それを決めるのは `components/app/root.tsx` の `<Root>`（ほかの画面では
 // `<Activity>` で隠す）。`diaryWriting` はセッションの状態（`useSessionSelector`）なので、
 // 隠れているあいだも読み続け、「×」で消したかどうかも失わない。
 //
