@@ -10,6 +10,12 @@
 // 比べるのは `conclusion` / `body` / `favor` の前後の空白を除いたものと、`checks` の中身。覚えるのは `ReportReview.pass`
 // が出した（描いた）`report` だけなので、サブエージェントの `report`（変換で捨てる）とは比べない。
 //
+// 新しい事実の無い `report` も差し戻す（枠は別に1ターンに1回まで）。「新しい事実」は文面ではなく
+// 直前に描いた `report` のあとに届いたもので決める: 利用者の依頼（`request` / `turn-started`）、
+// メインが呼んだ `speak` / `report` 以外のツールの結果、背景のタスクの終わり（顔ぶれから消えた）。
+// 背景のタスクの終わりはターンの外で届くので、これだけはターンの区切りで戻さない。
+// サブエージェントの `SendMessage` の合図は流れに見えないので数えない（合図は `speak` で言い直すもの）。
+//
 // 判定の窓口は `report` の handler だけ（`ReportReview.judge`。handler は
 // ツールの handler が持つ）。`assistant` メッセージの変換は `report`
 // イベントを作るだけで判定せず、`ReportReview.pass` がそのイベントを同じ呼び出しの
@@ -35,7 +41,8 @@ export type ReportVerdict =
 
 export type ReportReview = {
   /**
-   * `report` の handler から。このターンで描いた `report` の送り直しか、規約違反があれば差し戻す
+   * `report` の handler から。このターンで描いた `report` の送り直し、直前に描いた `report` の
+   * あとに新しい事実の届いていない呼び出し、規約違反のどれかなら差し戻す
    * （枠はそれぞれ1ターンに1回。使い切っていれば通す）。
    */
   readonly judge: (report: ReportDraft) => ReportVerdict
@@ -57,13 +64,20 @@ type ReportEvent = Extract<SessionEvent, { readonly kind: "report" }>
 export function createReportReview(): ReportReview {
   let rejectedInTurn = false
   let resendRejectedInTurn = false
+  let nothingNewRejectedInTurn = false
   let held: readonly ReportEvent[] = []
   // このターンで出した（描いた）`report`。送り直しの判定にだけ使う。
   let drawn: readonly ReportDraft[] = []
+  // 直前に描いた `report` のあとに新しい事実が届いたか（セッションの頭は届いたものとする）。
+  let hasNews = true
+  // メインが呼んで結果をまだ受け取っていないツールの id（`speak` / `report` は入らない）。
+  let runningTools: ReadonlySet<string> = new Set()
+  let backgroundTaskIds: readonly string[] = []
 
   const startTurn = (): void => {
     rejectedInTurn = false
     resendRejectedInTurn = false
+    nothingNewRejectedInTurn = false
     drawn = []
   }
 
@@ -72,6 +86,10 @@ export function createReportReview(): ReportReview {
       if (!resendRejectedInTurn && drawn.some((previous) => isSameReport(previous, report))) {
         resendRejectedInTurn = true
         return { kind: "rejected", text: REPORT_RESEND_REJECTION_TEXT }
+      }
+      if (!hasNews && !nothingNewRejectedInTurn) {
+        nothingNewRejectedInTurn = true
+        return { kind: "rejected", text: REPORT_NOTHING_NEW_REJECTION_TEXT }
       }
       const violations = reportViolations(report)
       if (violations.length === 0 || rejectedInTurn) {
@@ -85,7 +103,18 @@ export function createReportReview(): ReportReview {
         case "report":
           held = [...held, event]
           return []
+        case "tool-started":
+          // サブエージェントのツールは数えない（委譲中の言い直しがまさに差し戻したいもの）。
+          if (event.parentToolUseId === undefined) {
+            runningTools = new Set([...runningTools, event.toolUseId])
+          }
+          return [event]
         case "tool-finished": {
+          if (runningTools.has(event.toolUseId)) {
+            runningTools = new Set([...runningTools].filter((id) => id !== event.toolUseId))
+            hasNews = true
+            return [event]
+          }
           const report = held.find((candidate) => candidate.toolUseId === event.toolUseId)
           if (report === undefined) {
             return [event]
@@ -95,7 +124,20 @@ export function createReportReview(): ReportReview {
             return [event]
           }
           drawn = [...drawn, report]
+          hasNews = false
           return [report, event]
+        }
+        case "request":
+        case "turn-started":
+          hasNews = true
+          return [event]
+        case "background-tasks-changed": {
+          const current = event.tasks.map((task) => task.taskId)
+          if (backgroundTaskIds.some((taskId) => !current.includes(taskId))) {
+            hasNews = true
+          }
+          backgroundTaskIds = current
+          return [event]
         }
         case "session-info":
           startTurn()
@@ -120,6 +162,16 @@ export function createReportReview(): ReportReview {
 export const REPORT_RESEND_REJECTION_TEXT =
   "この `report` は、このターンですでに受け取った `report` と同じ引数になっている。" +
   "同じ引数で送り直さず、そのあとに `report` の外に書いた本文の中身を `report` に入れて呼び直すこと。"
+
+/**
+ * 新しい事実の無い `report` を差し戻すときの戻り値。固定の文面だけで、モデルが書いた本文も
+ * 画面の状態も写さない（{@link REPORT_RESEND_REJECTION_TEXT} と同じ線）。
+ */
+export const REPORT_NOTHING_NEW_REJECTION_TEXT =
+  "直前の `report` のあと、新しい依頼もツールの結果も背景のタスクの終わりも届いていないので、" +
+  "この `report` は画面に出していない。伝える新しい事実が無いターンは、`report` も締めの `speak` も" +
+  "呼ばず、何も書かずに終えてよい。言い回しを変えて同じ中身の `report` を送り直さないこと。" +
+  "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。"
 
 /** 2つのレポートが同じ引数か。文字列の3つの欄は前後の空白を除いて、`checks` は中身で比べる。 */
 function isSameReport(left: ReportDraft, right: ReportDraft): boolean {

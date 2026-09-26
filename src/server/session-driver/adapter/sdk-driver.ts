@@ -126,6 +126,13 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
     },
   })
 
+  // 依頼も `report` の差し戻しに見せる（新しい事実の届いた印。`ReportReview`）。
+  const emitTurnOpening = (event: SessionEvent): void => {
+    for (const passed of reportReview.pass(event)) {
+      options.onEvent(passed)
+    }
+  }
+
   void applyNeutralOutputStyle(session)
   void relayMessages(session, options, reportGate, reportReview, titleIntake, titleWriter)
   void relayCommandDescriptions(session, options)
@@ -137,13 +144,13 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
       // 原寸と控えはここで分かれる。 控えと id だけが記録（`request`）へ行き、原寸は
       // ストリーミング入力へ流れる（棚に残っているぶんは棚の寿命で捨てる。
       // `docs/requirements.md`「画像の添付」）。
-      options.onEvent({ kind: "request", text, images: recordedPromptImages(images) })
+      emitTurnOpening({ kind: "request", text, images: recordedPromptImages(images) })
       input.push({ text, images: images.flatMap(toImageBlocks) })
     },
     promptWithoutRecord: (text) => {
       // `request` を流さない（送った文面をログにも記録にも残さない。`docs/screen-design.md`「雑談モードの画面」）。
       // 代わりにターンの始まりだけを流し、吹き出しと進行中の印は依頼と同じに動かす。
-      options.onEvent({ kind: "turn-started" })
+      emitTurnOpening({ kind: "turn-started" })
       input.push({ text, images: [] })
     },
     interrupt: async () => {

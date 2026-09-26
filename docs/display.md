@@ -55,7 +55,10 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/display.md
   描けたか・どこに出たかといった画面の状態は載せない（2026-09-23 ユーザー決定。レポートの出力を
   「検査 → 整形 → 描画」に分けた検査の段。検査するのは「レポートの記法」の条のうち機械で判定
   できるものだけで、差し戻すのは1ターンに1回まで。同じターンで受け取った `report` と同じ引数の
-  送り直しも、固定の一文で別に1ターンに1回まで差し戻す。`src/server/report/core/report-review.ts`）。
+  送り直しも、固定の一文で別に1ターンに1回まで差し戻す。直前に描いた `report` のあとに、新しい依頼・
+  メインが呼んだツールの結果・背景のタスクの終わりのどれも届いていない `report` も、新しい事実の無い
+  言い直しとして固定の一文で別に1ターンに1回まで差し戻す（文面の近さでは判定しない。サブエージェントの
+  合図は `speak` で言い直すもので、流れにも見えないので数えない）。`src/server/report/core/report-review.ts`）。
   **4つ目を足すにはユーザーの決定が要る**
 - **検査を通った `report` の本文は、描く前に整形する**（同じ決定の整形の段。
   `src/shared/report-tidy.ts`）。落とすのは**落としても意味が変わらない行だけ**で、言い換え・
@@ -89,7 +92,7 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/display.md
 いる（撤去の根拠は `docs/history/decision.md`）。
 
 **tsukumo の中でのセリフの規約は3か所に分かれる**（2026-09-23 改訂）: **呼ぶ回数・契機**は
-`src/server/system-prompt/core/speech-cadence.ts`、**ターンの締め方**（`report` → 締めの `speak` の順で終え、
+`src/server/system-prompt/core/speech-cadence.ts`、**ターンの締め方**（`report` を呼ぶターンは `report` → 締めの `speak` の順で終え、新しい事実の無いターンはどちらも呼ばない、
 そのあとに本文を書かない、など。2026-09-25 改訂）は `src/server/report/core/report-notation.ts`、**口調・
 言い回し**はキャラクターパックの `persona.md` が持つ。3つとも `systemPrompt` の append として
 毎ターン渡る（下の「レポートの記法は、TUI と tsukumo で出し分ける」と同じ切り分け）。
