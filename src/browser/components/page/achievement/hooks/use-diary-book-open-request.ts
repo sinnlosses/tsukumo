@@ -1,7 +1,7 @@
 // 画面をまたいで日記帳の見開き（`hooks/use-diary-book.ts`）を開く一回限りの合図
 // （`docs/screen-design.md` 13.10「書き終わりの知らせ」）。見開きの開閉そのもの（`BookState`）は
 // `useDiaryBook` に残したまま——`achievement.tsx` は成果の画面を離れるとアンマウントされる
-// （`components/app/root.tsx` の `OVERLAY_SCREEN`）ので、知らせ（`diary-notice.tsx`。画面のどこからでも常駐する）が
+// （`components/app/layout.tsx` の `OVERLAY_SCREEN`）ので、知らせ（`diary-notice.tsx`。画面のどこからでも常駐する）が
 // 「この日を開いて」と呼びかけても、見開きの側がまだ生きているとは限らない。React の木の上で
 // 親子になっていない2箇所（入口が常駐させる知らせと、成果の画面の中の見開き）のあいだで合図を
 // 運ぶので、Context ではなく `location-hash.ts` と同じ「React の外の小さな store」の形にする

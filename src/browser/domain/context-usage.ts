@@ -18,7 +18,7 @@
 // 反する）。`lastTurnFinishedAt` は `running` の間も直前の値を持ち続ける
 // （`shared/session-state.ts`）ので、ここは受け取った値をそのまま使うだけでよい。**同じ
 // `state` からは同じ `refetchKey` が出る**ので、2つの機能が同時にマウントされていても
-// （`components/app/root.tsx` の `<Activity>` は会話の画面を隠すだけで外さない）`useQuery` の cache 1本に
+// （`components/app/layout.tsx` の `<Activity>` は会話の画面を隠すだけで外さない）`useQuery` の cache 1本に
 // 相乗りし、取り直しは1回で済む。
 //
 // **「取れなかった」は理由を問わず1つに畳む**（応答が落ちた・読めない形は区別しない。

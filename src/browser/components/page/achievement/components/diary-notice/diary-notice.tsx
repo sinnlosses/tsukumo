@@ -1,6 +1,6 @@
 // 書き終わりの知らせ（`docs/screen-design.md` 13.10「書き終わりの知らせ」）。日記が書き上がったら
 // **成果の画面で**、画面の下の中央に浮く札で「<日付>のページができました」を知らせる。
-// `components/app/root.tsx` の `<Root>` に常駐させ、ほかの画面では `<Activity>` で隠す（消したかどうかを
+// `components/app/layout.tsx` の `<Layout>` に常駐させ、ほかの画面では `<Activity>` で隠す（消したかどうかを
 // 画面の行き来で失わないため）。
 //
 // ロジックは `hooks/use-diary-notice.ts`（`docs/design.md` 2章「機能の中を分ける」）。ここは

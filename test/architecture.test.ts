@@ -422,8 +422,8 @@ describe("コメント中の日付", () => {
 //
 // - **枠**（`BROWSER_FRAMES`）: 全画面で共有する枠（`components/domain/<枠>/`）。差し込み口は
 //   props で受け、画面を知らない。**枠どうしは import しない**
-// - **画面**（`BROWSER_SCREENS`）: 1つの画面 = 1つのページ（`components/page/<画面>/`）。`app.tsx` が
-//   出す画面を選ぶ。**画面どうしは import しない**。会話の画面は `<Layout>` と `<Sidebar>` を
+// - **画面**（`BROWSER_SCREENS`）: 1つの画面 = 1つのページ（`components/page/<画面>/`）。`components/app/layout.tsx` が
+//   出す画面を選ぶ。**画面どうしは import しない**。会話の画面は `<Sidebar>` を
 //   置くので、画面から枠へは引いてよい
 // - **置かれる機能**（`BROWSER_PLACED_FEATURES`）: 自分の置き場所を持たず、枠か画面の中に
 //   置いてもらう。**どのまとまりも import しない（葉）**ので、枠・画面から引いても輪にならない
@@ -440,11 +440,7 @@ describe("コメント中の日付", () => {
 //
 // **会話の画面の4つの領域（`main-view` など）は `conversation/components/` の下の部品**なので、
 // 画面 `components/page/conversation` の一部として扱われる。
-const BROWSER_FRAMES = [
-  "components/domain/layout",
-  "components/domain/screen-nav",
-  "components/domain/sidebar",
-] as const
+const BROWSER_FRAMES = ["components/domain/screen-nav", "components/domain/sidebar"] as const
 const BROWSER_SCREENS = [
   "components/page/conversation",
   "components/page/character",

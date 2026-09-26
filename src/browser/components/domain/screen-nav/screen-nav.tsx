@@ -3,7 +3,7 @@
 // ロジックは `hooks/use-screen-nav.ts`、見た目は `presentational-screen-nav.tsx`
 // （2章「機能の中を分ける」の container / presenter）。
 //
-// **置くのは `components/app/root.tsx` の `<Root>`**（どの画面でも同じ帯が出る）。`<Layout>` の中に
+// **置くのは `components/app/layout.tsx` の `<Layout>`**（どの画面でも同じ帯が出る）。会話の画面の `<ConversationLayout>` の中に
 // 入れないのは、帯が会話の画面だけのものではないため。
 
 import { type ReactElement } from "react"

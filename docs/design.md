@@ -438,7 +438,8 @@ src/
       css-global.d.ts         `styles/theme.css` を副作用だけで import したときの宣言（中身は空）
       vendor-global.d.ts      外部ライブラリがブラウザのグローバルに置くものの型（`<script>` で読むので npm の型が引けない分）
     components/               React の部品。**`app/` `page/` `domain/` `ui/` の4段**（2026-09-25・2026-09-26 決定。下の箱の表）
-      app/                    root.tsx（出す画面を選ぶ <Root>。すべての画面を知る composition root）
+      app/                    すべての画面を知る composition root。root.tsx（<Root>。版が合わないときの知らせと
+                              立ち絵の先読み）と layout.tsx（<Layout>。帯を最上部に置き、出す画面を選ぶ）
       page/                   画面。**1つの画面 = 1つのディレクトリ（ページ）**で、名前は `stores/location-hash.ts` の
                               `Screen` の値そのまま。中の形は下の「ページの形」（2026-09-26 決定）
         conversation/         会話の画面。conversation.tsx（雑談モードかを読む）と presentational-conversation.tsx
@@ -462,9 +463,6 @@ src/
         portrait.tsx          立ち絵（6.5）
         character-face.tsx    キャラクターの顔（13.9）
         protocol-mismatch.tsx サーバと版が合わないときの知らせ（4.4）
-        layout/               画面共通の枠。帯（nav）を最上部に、画面（screen）をその下に置くだけの器
-                              （2026-09-26 決定。会話の4領域のレイアウト・リサイザ・比率の保存は
-                              `page/conversation/components/conversation-layout/` へ移した）
         screen-nav/           全画面の最上部の帯。部屋の名前・仕事/雑談のトグル・3画面の口・
                               いまの作業の札（押すと依頼の手順の一覧）・モデル/許可モードの
                               操作子（13.9）
@@ -520,7 +518,7 @@ Next.js の雛形の名前）。`server/` の下の機能の名前（`session-dr
 
 ```
 components/page/<ページ>/
-  <ページ>.tsx                   container（入口。components/app/root.tsx が置く）。名前は Screen の値
+  <ページ>.tsx                   container（入口。components/app/layout.tsx が置く）。名前は Screen の値
   presentational-<ページ>.tsx    presenter（器）
   <ページ>.module.css            container / presenter と、2つ以上の部品が読む CSS（あれば）
   domain/                        そのページだけの語彙（部品でも React でもないもの）
@@ -564,7 +562,7 @@ components/page/<ページ>/
 
 - **部品のディレクトリの外から引いてよいのは `<部品>.tsx` だけ**（中の `hooks/` `domain/`
   子部品・presenter・CSS は中からだけ読む。例外は `main.tsx` / `app.tsx` / `components/app/` とテスト）。ページの部品を画面の
-  外に置くとき（書き終わりの知らせ `DiaryNotice`）は、`components/app/root.tsx` がその `<部品>.tsx` を直に
+  外に置くとき（書き終わりの知らせ `DiaryNotice`）は、`components/app/layout.tsx` がその `<部品>.tsx` を直に
   import する（下の「領域の機能と、置かれる機能」）
 - **`components/` の直下の `hooks/` と、ページの `hooks/` の違いは読み手だけ。** container /
   presenter が読むならページの `hooks/`、部品しか読まないなら `components/hooks/`
@@ -587,7 +585,7 @@ components/page/<ページ>/
 | 箱                     | 置くもの                                                                                                  | import してよい先                                                                                                                   |
 | ---------------------- | --------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
 | `main.tsx` / `app.tsx` | 入口（`main.tsx` は mount だけ）と `<App>`（`app.tsx`。Provider を重ねて `<Root>` を描く）                | すべて                                                                                                                              |
-| `components/app/`      | **出す画面を選ぶ `<Root>`**。すべての画面を知る composition root                                          | `components/page` / `components/domain` / `components/ui` / `features` / `hooks` / `domain` / `lib` / `utils` / `stores` / `shared` |
+| `components/app/`      | **`<Root>` と、出す画面を選ぶ `<Layout>`**。すべての画面を知る composition root                           | `components/page` / `components/domain` / `components/ui` / `features` / `hooks` / `domain` / `lib` / `utils` / `stores` / `shared` |
 | `components/page/`     | **画面**。1つの画面（会話の画面は1つの領域）に閉じた部品・状態・保存                                      | `components/domain` / `components/ui` / `features` / `hooks` / `domain` / `lib` / `utils` / `stores` / `shared`                     |
 | `components/domain/`   | **tsukumo の語彙を持つ部品**。直下は2つ以上の領域が読む部品、サブディレクトリは全画面で共有する枠（領域） | `components/ui` / `features` / `hooks` / `domain` / `lib` / `utils` / `stores` / `shared`                                           |
 | `features/`            | **置かれる機能**（置き場所を持たず、領域に置いてもらう機能の部品・状態）                                  | `components/ui` / `hooks` / `domain` / `lib` / `utils` / `stores` / `shared`                                                        |
@@ -652,7 +650,7 @@ components/page/<ページ>/
   `stores/` が公開する hook（`useSessionSelector` / `useSessionDispatch` / `useMainViewTurns` /
   `useTurnSelection`）まで
 - **親が子を組む形も領域どうしの import に数える。** `<Layout>` は領域の中身を props で
-  受け取るだけで他の領域を知らず、**どの画面を出すかは `components/app/root.tsx` の `<Root>` が選ぶ**
+  受け取るだけで他の領域を知らず、**どの画面を出すかは `components/app/layout.tsx` の `<Layout>` が選ぶ**
   （6.1・13.6）。**画面の組み立てを `components/domain/` へ移さない**（手本の `Application.tsx` にあたるものを
   そこに作ると、枠が画面を import する逆向きの辺になる。だから `page` より上の段 `components/app/` に置く）
 - 検査は `test/architecture.test.ts`（領域と置かれる機能の一覧が横の辺を、箱の一覧が箱を
@@ -822,11 +820,11 @@ backdrop のクリックで `onClose` が呼ばれること・中のクリック
 2026-09-26 に会話の画面を1ページにし、領域を「枠」と「画面」に分けた）。**まとまりどうしの辺は
 「枠・画面 → 置かれる機能」と「画面 → 枠」だけ**を許し、それ以外は落とす。
 
-| 種類                       | どういうものか                                                     | 置き場                    | 辺                                                                                                         | いまの中身                                                   |
-| -------------------------- | ------------------------------------------------------------------ | ------------------------- | ---------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
-| **枠**（frame）            | 全画面で共有する枠。差し込み口は props で受け、画面を知らない      | `components/domain/<枠>/` | 画面と `<Root>` から import してよい。**枠どうしは import しない**                                         | `layout` / `screen-nav` / `sidebar`                          |
-| **画面**（screen）         | 1つの画面 = 1つのページ。**どの画面を出すかを決めるのは `<Root>`** | `components/page/<画面>/` | `<Root>` だけが import する。**画面どうしは import しない**                                                | `conversation` / `character` / `token-usage` / `achievement` |
-| **置かれる機能**（placed） | 自分の置き場所を持たず、枠か画面の中に置いてもらう                 | `features/<機能>/`        | 枠・画面から import してよい。**自分はどの機能も、枠・画面も、`components/domain` も import しない（葉）** | `task-board`                                                 |
+| 種類                       | どういうものか                                                       | 置き場                    | 辺                                                                                                         | いまの中身                                                   |
+| -------------------------- | -------------------------------------------------------------------- | ------------------------- | ---------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| **枠**（frame）            | 全画面で共有する枠。差し込み口は props で受け、画面を知らない        | `components/domain/<枠>/` | 画面と `<Layout>` から import してよい。**枠どうしは import しない**                                       | `screen-nav` / `sidebar`                                     |
+| **画面**（screen）         | 1つの画面 = 1つのページ。**どの画面を出すかを決めるのは `<Layout>`** | `components/page/<画面>/` | `<Layout>` だけが import する。**画面どうしは import しない**                                              | `conversation` / `character` / `token-usage` / `achievement` |
+| **置かれる機能**（placed） | 自分の置き場所を持たず、枠か画面の中に置いてもらう                   | `features/<機能>/`        | 枠・画面から import してよい。**自分はどの機能も、枠・画面も、`components/domain` も import しない（葉）** | `task-board`                                                 |
 
 - **枠・画面の単位は表の置き場のディレクトリ1つ。** 会話の画面は4つの領域（メインビュー・キャラビュー・
   雑談ビュー・入力欄）を持つが、4つはまとまりではなくページの部品（`conversation/components/<領域>/`）で、
@@ -882,7 +880,10 @@ backdrop のクリックで `onClose` が呼ばれること・中のクリック
     渡すだけになり、どの画面を出すかの判断（`<Activity>` の出し分け・`OVERLAY_SCREEN`）は
     `<Root>` に残したまま枠へは渡さない（枠が「画面を知らない」を保つため）。**2つの `Layout` が
     同じ名前を名乗ると読み手が取り違える**ので、会話の4領域側だけ改名した——
-    画面共通の枠のほうは元から `components/domain/layout/` の唯一の顔なので `Layout` のまま
+    画面共通の枠のほうは元から `components/domain/layout/` の唯一の顔なので `Layout` のまま。
+    **同じ日のうちに、枠 `components/domain/layout/` は `components/app/layout.tsx` へ移した**
+    （ユーザーの指示）。枠の中身は帯と画面を並べるだけで読み手が `<Root>` しかなかったので、
+    出す画面の選択ごと `<Layout>` に持たせ、`<Root>` には描く前の判断（版の知らせ・立ち絵の先読み）だけを残した
   - 読み手が会話の画面の1つに戻ったものは、上げる引き金の逆で下ろした:
     `components/domain/prompt-image.tsx`（と CSS）→ `conversation/components/prompt-image/`、
     `domain/api-error-label.ts` → `conversation/domain/`、`hooks/use-repository-file-paths.ts` →
@@ -2194,7 +2195,8 @@ type Diary = {
 ```
 <SessionProvider>            lib/socket.ts で接続。SessionState を持つ store を Context で配る（6.2）
 └ <TurnSelectionProvider>    選んでいるターンを配る（6.2）
-   └ <Root>                  components/app/root.tsx。useScreen() で出す画面を選ぶ（6.2・13.6）。
+   └ <Root> ─ <Layout>       components/app/。<Root> は版が合わなければ知らせだけを出し（4.4）、
+      │                      <Layout> は useScreen() で出す画面を選ぶ（6.2・13.6）。
       │                      **会話の画面は外さず hidden で隠す**（下書き・選んでいるターン・スクロール位置を保つ）
       ├ <ScreenNav>          **全画面の最上部の帯**（13.9）。部屋の名前・仕事/雑談のトグル・
       │                      3つの口（会話 / キャラクター / トークン消費）・いまの作業の札
@@ -2263,8 +2265,8 @@ type Diary = {
                               自動で閉じ、一覧で作ったパックを選ぶ（切り替えない）
 ```
 
-**部品の置き場**（2章「`src/browser/` の箱と、置く基準」）: Provider は `app.tsx` の `<App>`、出す画面を選ぶ `<Root>` は `components/app/root.tsx`（入口の `main.tsx` は `<App>` を mount するだけ）。
-**全画面で共有する枠**（`<ScreenNav>`・`<Layout>`・`<Sidebar>`）は
+**部品の置き場**（2章「`src/browser/` の箱と、置く基準」）: Provider は `app.tsx` の `<App>`、`<Root>` と出す画面を選ぶ `<Layout>` は `components/app/`（入口の `main.tsx` は `<App>` を mount するだけ）。
+**全画面で共有する枠**（`<ScreenNav>`・`<Sidebar>`）は
 `components/domain/<枠>/`、**画面**（`<Conversation>`・`<Character>`・`<TokenUsage>`・`<Achievement>`）と
 `<DiaryNotice>` は `components/page/<画面>/`。会話の画面の4領域（`<MainView>`・`<CharacterView>`・
 `<ChatView>`・`<Dispatch>`）と、2つ以上の領域が使う `<PromptImageChips>`・`<PromptImageThumbnails>`

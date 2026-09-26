@@ -582,7 +582,7 @@ effect の中と、イベントハンドラ・そこで登録した寿命の長�
 （`browser/components/page/conversation/components/conversation-layout/components/layout-resizer/
 layout-resizer.tsx` の、ドラッグの間だけ生きる `pointermove`）。
 
-**画面を離れるとアンマウントされる部品（`components/app/root.tsx` の `OVERLAY_SCREEN`）では、一回限りの合図や
+**画面を離れるとアンマウントされる部品（`components/app/layout.tsx` の `OVERLAY_SCREEN`）では、一回限りの合図や
 「もう見せた」の印を部品の state に持たない。** React の外（モジュールの store）に持つ——
 アンマウントで消える state に印を仕込むと、再訪のたびに初期値へ戻って演出が勝手にやり直しになる。
 

@@ -1789,7 +1789,7 @@ scrollable overflow は end 方向にしか伸びない**ので、上へ出た�
   `state.lastTurnFinishedAt`（直近でターンが終わった時刻。次のターンが始まっても戻らない）から
   作り、`useQuery` の `queryKey` に含めるだけで取り直せるので、`useEffect` は要らない。ターンの
   途中は前に取った値のまま出し続ける
-- **会話の画面を隠している間もサイドバーは外れない**（`components/app/root.tsx` の `<Activity mode="hidden">`）
+- **会話の画面を隠している間もサイドバーは外れない**（`components/app/layout.tsx` の `<Activity mode="hidden">`）
   ので、トークン消費の画面を開いている間もこの行はマウントされたまま。同じ `queryKey` を見る
   2つの機能が同時に居ても、`useQuery` の cache 1本に相乗りするので取り直しは1回で済む
 - **割合が70%以上のときは警告にする**（見本の説明文から取った境目。`context-usage-row.tsx` の
