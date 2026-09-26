@@ -430,7 +430,6 @@ export const COMMENT_REFERENCE_BACKLOG = [
   "test/server/diary/adapter/sdk-diary.test.ts",
   "test/server/diary/core/diary-tool.test.ts",
   "test/server/report/core/report-notation.test.ts",
-  "test/server/report/core/report-violation.test.ts",
   "test/server/repository/adapter/task-summary.test.ts",
   "test/server/session-driver/adapter/fake-driver.test.ts",
   "test/server/session-driver/adapter/sdk-driver.test.ts",

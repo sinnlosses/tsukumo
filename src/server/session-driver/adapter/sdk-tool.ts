@@ -15,6 +15,7 @@ import {
   expressionNames as toExpressionNames,
 } from "../../../shared/expression-choice.ts"
 import { type Expression } from "../../../shared/expression.ts"
+import { reportSectionSchema } from "../../../shared/report-block.ts"
 import { reportCheckSchema } from "../../../shared/report-check.ts"
 import {
   USAGE_PROPOSAL_FOLLOW_UPS,
@@ -27,6 +28,7 @@ import { type ReportReview } from "../../report/core/report-review.ts"
 import {
   REPORT_CHECKS_DESCRIPTION,
   REPORT_CLOSING_DESCRIPTION,
+  REPORT_SECTIONS_DESCRIPTION,
   REPORT_TITLE_DESCRIPTION,
   REPORT_TOOL_DESCRIPTION,
 } from "../../report/core/report-tool.ts"
@@ -176,16 +178,25 @@ function reportTool(
     REPORT_TOOL_DESCRIPTION,
     {
       conclusion: z.string().describe("結論。レポートの冒頭の1〜2文"),
-      body: z.string().optional().describe("結論のあとの根拠・比較・手順（記法は規約のまま）"),
-      favor: z.string().optional().describe("利用者へのお願い（判断・作業・情報）。無ければ省く"),
+      sections: z
+        .array(reportSectionSchema)
+        .min(1)
+        .optional()
+        .describe(REPORT_SECTIONS_DESCRIPTION),
+      favor: z
+        .string()
+        .optional()
+        .describe(
+          "利用者へのお願い（判断・作業・情報）が実際にあるときだけ1つ（2件あってもまとめる）。無ければ省く",
+        ),
       checks: z.array(reportCheckSchema).optional().describe(REPORT_CHECKS_DESCRIPTION),
       title: z.string().optional().describe(REPORT_TITLE_DESCRIPTION),
       closing: z.object(speechShape(expressions)).describe(REPORT_CLOSING_DESCRIPTION),
     },
-    async ({ conclusion, body, favor, checks, title }) => {
+    async ({ conclusion, sections, favor, checks, title }) => {
       const verdict = review.judge({
         conclusion,
-        body: body ?? "",
+        sections: sections ?? [],
         favor: favor ?? "",
         checks: checks ?? [],
       })

@@ -8,10 +8,13 @@ import { createElement } from "react"
 import { NotationBlock } from "../../../../src/browser/components/page/conversation/components/main-view/markdown/notation.tsx"
 import { REPORT_SANITIZE_SCHEMA } from "../../../../src/browser/components/page/conversation/components/main-view/markdown/sanitize-schema.ts"
 import { REPORT_NOTATION_PROMPT } from "../../../../src/server/report/core/report-notation.ts"
+import { REPORT_MERMAID_KINDS } from "../../../../src/shared/report-block.ts"
 import {
+  REPORT_BLOCK_MARK_NAMES,
   REPORT_DRAWN_MARK_NAMES,
   REPORT_NOTATION_NAMES,
   REPORT_NOTE_KINDS,
+  REPORT_WRITTEN_MARK_NAMES,
 } from "../../../../src/shared/report-notation.ts"
 
 afterEach(() => {
@@ -23,7 +26,7 @@ afterEach(() => {
 
 /**
  * tsukumo が配る mermaid（package.json で 12.0.0 に固定）で実際に描けることを目視で確かめた種類
- * （11.15.0 と 12.0.0 の両方で確かめた。docs/display.md 4.2）。規約が勧めてよいのはこの並びだけで、増やすときは
+ * （11.15.0 と 12.0.0 の両方で確かめた。docs/display.md 4.2）。`mermaid` の塊の説明が勧めてよいのはこの並びだけで、増やすときは
  * 先にメインビューへ出して描けることを確かめる。
  */
 const DRAWN_MERMAID_KINDS = [
@@ -92,16 +95,11 @@ describe("REPORT_NOTATION_PROMPT", () => {
     }
   })
 
-  it("語彙（src/shared/report-notation.ts）の印がすべて文面に現れ、部品で解決され、CSS まで届く", () => {
-    // 前の2つのテストは文面から拾った class 名しか見ないので、文面が地の文の言葉としてしか
-    // 挙げていない印（`note-warn` / `note-ng` / `note-ask` / `note-memo` / `badge-warn` /
-    // `badge-ng` は `class="..."` の外の言い添えでしか出てこない）は拾えない。語彙を唯一の
-    // 出どころにして、14の印すべてで同じ鎖（文面 → 部品 → CSS）を見る。
+  it("語彙（src/shared/report-notation.ts）の印はどれも部品で解決され、CSS まで届く", () => {
+    // 塊から組む印も、塊にする前の記録ではモデルが書いていたので、描く側は同じに解決する。
     expect(REPORT_NOTATION_NAMES.length).toBe(14)
 
     for (const name of REPORT_NOTATION_NAMES) {
-      expect(REPORT_NOTATION_PROMPT).toContain(name)
-
       const { container } = render(createElement(NotationBlock, { className: name }, "中身"))
       const element = container.firstElementChild
 
@@ -109,6 +107,16 @@ describe("REPORT_NOTATION_PROMPT", () => {
       for (const resolved of element?.className.split(" ") ?? []) {
         expect(STYLE_SHEET_SOURCE).toContain(`.${resolved}`)
       }
+    }
+  })
+
+  it("逃げ道に書く印は文面に現れ、塊から組む印は文面に class として載せない", () => {
+    // 塊の種類がある記法を逃げ道に書くと差し戻すので、文面が勧めると往復が増える。
+    for (const name of REPORT_WRITTEN_MARK_NAMES) {
+      expect(REPORT_NOTATION_PROMPT).toContain(name)
+    }
+    for (const name of [...REPORT_NOTE_KINDS.map(([kind]) => kind), ...REPORT_BLOCK_MARK_NAMES]) {
+      expect(namedClasses).not.toContain(name)
     }
   })
 
@@ -124,14 +132,12 @@ describe("REPORT_NOTATION_PROMPT", () => {
     }
   })
 
-  it("note の6種を名乗り、どれも部品がラベルを出し、その先に見た目が付いている", () => {
-    // 規約（モデルが書く名前）→ 部品（ラベルの文字）→ CSS の鎖を6種ぶん見る。種別の文字を
+  it("note の6種は、どれも部品がラベルを出し、その先に見た目が付いている", () => {
+    // 部品（ラベルの文字）→ CSS の鎖を6種ぶん見る。種別の文字を
     // 出すのは tsukumo 側（docs/screen-design.md 13.1 原則5）なので、印だけ足してラベルを足し忘れる
     // と、素の note と同じ「何の塊か読み取れない」状態に戻る。種別の並びは
     // `src/shared/report-notation.ts` の `REPORT_NOTE_KINDS` が正典（並びの理由もそこにある）。
     for (const [name, label] of REPORT_NOTE_KINDS) {
-      expect(REPORT_NOTATION_PROMPT).toContain(name)
-
       const { container } = render(
         createElement(NotationBlock, { className: `note ${name}` }, "架空の本文。"),
       )
@@ -142,12 +148,6 @@ describe("REPORT_NOTATION_PROMPT", () => {
         expect(STYLE_SHEET_SOURCE).toContain(`.${resolved}`)
       }
     }
-  })
-
-  it("note の上限は種別ごとではなく全体で持つ（6種を1つずつ置けてしまわない）", () => {
-    expect(REPORT_NOTATION_PROMPT).toContain("5種あわせて1つのレポートに1〜2個まで")
-    // 種別の語は tsukumo がラベルとして描くので、本文に書かせない。
-    expect(REPORT_NOTATION_PROMPT).toContain("ラベルの文字は tsukumo が付ける")
   })
 
   it("出力スタイルとキャラクターの人格の両方を上書きすると明示する", () => {
@@ -198,7 +198,7 @@ describe("REPORT_NOTATION_PROMPT", () => {
   })
 
   it("「結論から書く」「お願いはいちばん最後に1つ」は文面から外し、report の欄に任せる", () => {
-    // 順番は `conclusion` → `body` → `favor` の欄の並びが型で持つ。条の番号はずらさない
+    // 順番は `conclusion` → `sections` → `favor` の欄の並びが型で持つ。条の番号はずらさない
     // （条2・条3・条9 を番号で引いているところがある）。
     expect(REPORT_NOTATION_PROMPT).not.toContain("結論から書く")
     expect(REPORT_NOTATION_PROMPT).not.toContain("いちばん最後")
@@ -210,7 +210,7 @@ describe("REPORT_NOTATION_PROMPT", () => {
 
   it("検証の結果は checks に分けさせ、結論は読み手から見た変化で、文字より視覚情報を選ばせる", () => {
     // 結論の括弧に検証の結果が混ざって読みにくかった（docs/display.md 4.2）。
-    expect(REPORT_NOTATION_PROMPT).toContain("検証の結果を `conclusion` と `body` に書かない")
+    expect(REPORT_NOTATION_PROMPT).toContain("検証の結果を `conclusion` と `sections` に書かない")
     expect(REPORT_NOTATION_PROMPT).toContain("読み手から見た変化")
     expect(REPORT_NOTATION_PROMPT).toContain("8. **残ったものは、文字より視覚情報で見せる。**")
     const beforeSend = REPORT_NOTATION_PROMPT.split("### 送る前に消すもの").at(1) ?? ""
@@ -222,13 +222,11 @@ describe("REPORT_NOTATION_PROMPT", () => {
   })
 
   it("勧める mermaid の種類は、描けることを確かめたものだけ", () => {
-    for (const kind of DRAWN_MERMAID_KINDS) {
-      expect(REPORT_NOTATION_PROMPT).toContain(kind)
-    }
+    const offered: readonly string[] = REPORT_MERMAID_KINDS
+    expect(offered).toEqual(DRAWN_MERMAID_KINDS)
     for (const kind of KINDS_NOT_TO_OFFER) {
       expect(REPORT_NOTATION_PROMPT).not.toContain(kind)
     }
-    expect(REPORT_NOTATION_PROMPT).toContain(`${String(DRAWN_MERMAID_KINDS.length)}種`)
   })
 
   it("印の使いどころは「文へ倒す条件」ではなく用途で書く", () => {
@@ -239,25 +237,13 @@ describe("REPORT_NOTATION_PROMPT", () => {
     expect(REPORT_NOTATION_PROMPT).toContain("文のままでよいのは次のときだけ")
   })
 
-  it("表には見出しを付けさせ、その中身をセルに無いことへ絞る", () => {
-    // 条3（同じことを二度言わない）とのぶつかりを、見出しに書いてよい中身を絞って畳んだ決定
-    // （docs/display.md 4.2）。絞りを落とすと、見出しが表の言い直しになる。
-    expect(REPORT_NOTATION_PROMPT).toContain("表には直前の1行で見出しを付ける")
-    expect(REPORT_NOTATION_PROMPT).toContain("セルに無いこと")
-  })
-
-  it("表のセルの中にフェンスを書かせない", () => {
-    // セルでは開始フェンスにならず、閉じの無い inline code として素の文字が残る
-    // （実際に崩した）。禁じるだけでなく、言い換え先（inline code）まで書かせる。
-    expect(REPORT_NOTATION_PROMPT).toContain("表のセルの中にフェンスを書かない")
-    expect(REPORT_NOTATION_PROMPT).toContain("inline code にする")
-  })
-
-  it("図にするかの判定は、下書きの上で数えられる形で書く", () => {
-    // 「関係が2つ以上」は数えられず、同じ表の「項目が2つ以上」に負けていた（docs/display.md 4.2）。
-    expect(REPORT_NOTATION_PROMPT).toContain("名前が3つ以上出てきて")
-    expect(REPORT_NOTATION_PROMPT).not.toContain("関係が2つ以上")
-    expect(REPORT_NOTATION_PROMPT).toContain("迷ったら flowchart")
+  it("逃げ道には塊の種類が無い記法だけを書かせる", () => {
+    // 塊の種類がある記法を逃げ道に書くと差し戻される（`reportViolations` の markdown-notation）。
+    expect(REPORT_NOTATION_PROMPT).toContain(
+      "どの塊にも当てはまらない記法だけを `markdown` の塊に書く",
+    )
+    expect(REPORT_NOTATION_PROMPT).not.toContain("GFM のテーブル")
+    expect(REPORT_NOTATION_PROMPT).not.toContain("```mermaid")
   })
 
   it("印を勧めることが、書く量を増やす言い訳にならない", () => {
@@ -268,13 +254,11 @@ describe("REPORT_NOTATION_PROMPT", () => {
     expect(REPORT_NOTATION_PROMPT).toContain("印は文の代わりに置くもので、文への足し算ではない")
   })
 
-  it("地の文の段落は3文までとし、4文目の逃がし先に表・箇条書き・<details> を挙げる", () => {
+  it("地の文の段落は3文までとし、4文目の逃がし先に表・箇条書き・fold を挙げる", () => {
     // 全体の量は数で縛らないが、段落の単位にだけは数で縛る決定
     // （docs/display.md 4.2「読む時間を減らすために足すのは、規約の側」）。
     expect(REPORT_NOTATION_PROMPT).toContain("地の文の段落は3文まで")
-    expect(REPORT_NOTATION_PROMPT).toContain(
-      "4文目が要るなら、表・箇条書き・`<details>` のどれかへ移す",
-    )
+    expect(REPORT_NOTATION_PROMPT).toContain("4文目が要るなら、表・箇条書きへ移すか `fold` で畳む")
   })
 
   it("送る前の検算に、4文以上続く段落を挙げている", () => {

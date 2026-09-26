@@ -9,27 +9,62 @@
 // 掛けるのはメインビューの導出（`main-view.ts`）で、記録は引数のまま持つ。 規則を変えたとき
 // 過去のやり取りにも、セッションの復元で組み直したやり取りにも同じように効く。
 //
-// 本文は Markdown として構文解析せず、行で見る（フェンスの中は触らない。検査の段と同じ理由）。
+// 整形は塊ごとに掛ける。逃げ道（`markdown` の塊）は Markdown として構文解析せず、行で見る
+// （フェンスの中は触らない。検査の段と同じ理由）。
 
-/** 整形にかけるレポート。`body` の「無い」は空の文字列。 */
+import { type ReportBlock, type ReportSection } from "./report-block.ts"
+
+/** 整形にかけるレポート。 */
 export type ReportTidyInput = {
   readonly conclusion: string
-  readonly body: string
+  readonly sections: readonly ReportSection[]
 }
 
 /**
- * `body` から、意味を変えずに落とせる行を落とす。落とすのは次の3つで、落とすものが無ければ
- * 引数のまま返す:
+ * 節の並びから、意味を変えずに落とせるものを落とす。落とすのは次のもので、落とすものが無ければ
+ * 中身は引数のまま:
  *
- * - 冒頭で `conclusion` を繰り返している行（`conclusion` はすぐ上に描かれるので、同じ文が
- *   2度並ぶだけになる）
- * - 前置き・締めの定型だけの行（{@link BOILERPLATE_LINES} と丸ごと一致する行）
- * - 中身の無い見出し（文字が無いか、次に来るのが同じか浅い見出し・本文の終わり）
+ * - 本文の冒頭で `conclusion` を繰り返しているもの（`conclusion` はすぐ上に描かれるので、同じ文が
+ *   2度並ぶだけになる）。最初の塊が `text` なら塊ごと、逃げ道なら頭の行
+ * - 前置き・締めの定型だけの `text` の塊と、逃げ道の中の定型だけの行（{@link BOILERPLATE_LINES} と丸ごと一致するもの）
+ * - 逃げ道の中の中身の無い見出し（文字が無いか、次に来るのが同じか浅い見出し・塊の終わり）
+ * - 落として塊の残らない節（見出しごと）
  */
-export function tidyReportBody(report: ReportTidyInput): string {
-  const lines = report.body.split("\n")
+export function tidyReportSections(report: ReportTidyInput): readonly ReportSection[] {
+  return report.sections.flatMap((section, sectionIndex) => {
+    const blocks = section.blocks.flatMap((block, blockIndex) =>
+      tidyBlock(block, sectionIndex === 0 && blockIndex === 0 ? report.conclusion : ""),
+    )
+    return blocks.length === 0 ? [] : [{ ...section, blocks }]
+  })
+}
+
+/**
+ * 塊1つを整形する。落とすなら空の並び。`conclusion` は本文の冒頭の塊にだけ渡す（冒頭でない
+ * 繰り返しは落とさない）。
+ */
+function tidyBlock(block: ReportBlock, conclusion: string): readonly ReportBlock[] {
+  switch (block.kind) {
+    case "text":
+      return isBoilerplateLine(block.text) ||
+        (conclusion.trim() !== "" &&
+          joinedText(block.text.split("\n")) === joinedText(conclusion.split("\n")))
+        ? []
+        : [block]
+    case "markdown": {
+      const markdown = tidyMarkdown(block.markdown, conclusion)
+      return markdown.trim() === "" ? [] : [{ ...block, markdown }]
+    }
+    default:
+      return [block]
+  }
+}
+
+/** 逃げ道の中身から、意味を変えずに落とせる行を落とす（{@link tidyReportSections} の逃げ道の3つ）。 */
+function tidyMarkdown(markdown: string, conclusion: string): string {
+  const lines = markdown.split("\n")
   const fenced = fencedLineFlags(lines)
-  const repeated = repeatedConclusionLines(lines, fenced, report.conclusion)
+  const repeated = repeatedConclusionLines(lines, fenced, conclusion)
   const boilerplate = lines.flatMap((line, index) =>
     !fenced[index] && isBoilerplateLine(line) ? [index] : [],
   )
@@ -37,7 +72,7 @@ export function tidyReportBody(report: ReportTidyInput): string {
   const headings = emptyHeadingLines(lines, fenced, dropped)
 
   return dropped.size + headings.length === 0
-    ? report.body
+    ? markdown
     : withoutLines(lines, fenced, new Set([...dropped, ...headings]))
 }
 

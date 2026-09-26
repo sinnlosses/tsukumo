@@ -1,13 +1,22 @@
 import { describe, expect, it } from "bun:test"
 
-import { tidyReportBody } from "../../src/shared/report-tidy.ts"
+import { type ReportBlock, type ReportSection } from "../../src/shared/report-block.ts"
+import { tidyReportSections } from "../../src/shared/report-tidy.ts"
 
 // フィクスチャはすべて手で書いた架空の本文（docs/coding-standards.md「会話内容の扱い」）。
 const CONCLUSION = "架空の結論。"
 
-const tidy = (body: string, conclusion = CONCLUSION) => tidyReportBody({ conclusion, body })
+const markdown = (body: string): ReportBlock => ({ kind: "markdown", markdown: body, fold: "" })
+const text = (value: string): ReportBlock => ({ kind: "text", text: value, fold: "" })
 
-describe("tidyReportBody", () => {
+/** 逃げ道の塊1つだけの本文を整形し、残った中身を返す（塊ごと落ちたら空）。 */
+const tidy = (body: string, conclusion = CONCLUSION): string =>
+  tidyReportSections({ conclusion, sections: [{ heading: "", blocks: [markdown(body)] }] })
+    .flatMap((section) => section.blocks)
+    .map((block) => (block.kind === "markdown" ? block.markdown : ""))
+    .join("")
+
+describe("tidyReportSections（逃げ道の塊）", () => {
   it("落とすものが無ければ引数のまま返す（空行の連続も詰めない）", () => {
     const body = "## 架空の見出し\n\n架空の本文。\n\n\n\n- 架空の項目\n"
 
@@ -141,5 +150,49 @@ describe("tidyReportBody", () => {
     const body = "架空の根拠。\n\n```text\n以上です。\n## 架空の空の節"
 
     expect(tidy(body)).toBe(body)
+  })
+})
+
+describe("tidyReportSections（塊と節）", () => {
+  const tidySections = (sections: readonly ReportSection[]) =>
+    tidyReportSections({ conclusion: CONCLUSION, sections })
+
+  it("本文の冒頭の text の塊が conclusion と同じなら落とし、冒頭でなければ落とさない", () => {
+    const sections = [
+      { heading: "", blocks: [text(` ${CONCLUSION}`), text("架空の根拠。"), text(CONCLUSION)] },
+    ]
+
+    expect(tidySections(sections)).toEqual([
+      { heading: "", blocks: [text("架空の根拠。"), text(CONCLUSION)] },
+    ])
+  })
+
+  it("定型だけの text の塊を落とし、定型に中身が続く塊は落とさない", () => {
+    const sections = [
+      {
+        heading: "",
+        blocks: [text("架空の根拠。"), text("以上です。"), text("以上です。架空の補足。")],
+      },
+    ]
+
+    expect(tidySections(sections)).toEqual([
+      { heading: "", blocks: [text("架空の根拠。"), text("以上です。架空の補足。")] },
+    ])
+  })
+
+  it("塊の残らない節は見出しごと落とし、ほかの種類の塊はそのまま残す", () => {
+    const note: ReportBlock = { kind: "note", tone: "memo", text: "以上です。", fold: "" }
+    const sections = [
+      { heading: "架空の節", blocks: [text("以上です。"), markdown("何かあれば言ってください。")] },
+      { heading: "架空の次の節", blocks: [note] },
+    ]
+
+    expect(tidySections(sections)).toEqual([{ heading: "架空の次の節", blocks: [note] }])
+  })
+
+  it("落とすものが無ければ中身は引数のまま", () => {
+    const sections = [{ heading: "架空の節", blocks: [text("架空の根拠。")] }]
+
+    expect(tidySections(sections)).toEqual(sections)
   })
 })

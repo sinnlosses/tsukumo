@@ -17,7 +17,7 @@ import { type SessionEvent } from "../../../shared/session-event.ts"
  * （MCP ツールの説明文は既定で 2048 字までしか渡らず、規約の全文は入らない）。
  */
 export const REPORT_TOOL_DESCRIPTION =
-  "ターンのレポートをメインビューに出す。conclusion → checks（検証結果の帯）→ body → favor の順に描かれ、" +
+  "ターンのレポートをメインビューに出す。conclusion → checks（検証結果の帯）→ sections → favor の順に描かれ、" +
   "そのあと closing のセリフが吹き出しに出る。受け付けられるとそこでターンが終わる（あとに何も書けない）。" +
   "書き方は「レポートの記法（tsukumo）」の節に従う。"
 
@@ -27,8 +27,16 @@ export const REPORT_TOOL_DESCRIPTION =
  */
 export const REPORT_CHECKS_DESCRIPTION =
   "検証の結果（テスト・型検査・手で確かめたこと）。tsukumo が結論の下に帯で描く。" +
-  "ここに入れた結果は conclusion と body に書かない。検証をしていないターンでは省く。" +
+  "ここに入れた結果は conclusion と sections に書かない。検証をしていないターンでは省く。" +
   "label と detail は素の文字で描かれるので、バッククォートなどの記法を使わない。"
+
+/**
+ * `report` の任意の `sections` 引数（本文。節と塊の並び）の説明。塊の種類ごとの使いどころは
+ * 各塊の `describe`（`reportBlockSchema`）が持つ。
+ */
+export const REPORT_SECTIONS_DESCRIPTION =
+  "結論のあとの根拠・比較・手順。節の並びで、節ごとに塊を並べる。" +
+  "塊の文字で効くのはインラインの記法（inline code・太字・リンク）だけ。2〜3文で終わる答えでは省く。"
 
 /**
  * `report` の `closing` 引数（締めのセリフ）の説明。`report` はターンを閉じるので、締めの一言は

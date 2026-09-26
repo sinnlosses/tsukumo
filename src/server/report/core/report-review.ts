@@ -7,8 +7,7 @@
 // 関所を抜ける形を塞ぐ（関所は2回目の止まりを止めないので、送り直しを通すと止めた本文が画面に
 // 出ないまま終わる。docs/research/report-tool-trial.md「残った穴の形」）。枠は規約違反の1回とは
 // 別に1ターンに1回まで（規約違反で差し戻して直した `report` を送り直す形もあったため）。
-// 比べるのは `conclusion` / `favor` の前後の空白を除いたものと、`sections` と `checks` の中身（handler に届く `body` は
-// 呼び出しをイベントに変える側と同じ `reportSectionsOfBody` で節に畳んでから比べる）。覚えるのは `ReportReview.pass`
+// 比べるのは `conclusion` / `favor` の前後の空白を除いたものと、`sections` と `checks` の中身。覚えるのは `ReportReview.pass`
 // が出した（描いた）`report` だけなので、サブエージェントの `report`（変換で捨てる）とは比べない。
 //
 // 新しい事実の無い `report` も差し戻す（枠は別に1ターンに1回まで）。「新しい事実」は文面ではなく
@@ -32,7 +31,6 @@
 
 import { isDeepEqual } from "remeda"
 
-import { reportSectionsOfBody } from "../../../shared/report-block.ts"
 import { type SessionEvent } from "../../../shared/session-event.ts"
 import { type ReportDraft, reportRejectionText, reportViolations } from "./report-violation.ts"
 
@@ -186,7 +184,7 @@ function closingSpeech(report: ReportEvent): readonly SessionEvent[] {
 function isSameReport(drawn: ReportEvent, draft: ReportDraft): boolean {
   return (
     drawn.conclusion.trim() === draft.conclusion.trim() &&
-    isDeepEqual(drawn.sections, reportSectionsOfBody(draft.body)) &&
+    isDeepEqual(drawn.sections, draft.sections) &&
     drawn.favor.trim() === draft.favor.trim() &&
     isDeepEqual(drawn.checks, draft.checks)
   )

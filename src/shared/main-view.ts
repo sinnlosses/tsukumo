@@ -13,9 +13,9 @@ import { sum } from "remeda"
 import { isBlankText } from "./blank-text.ts"
 import { type RecordedPromptImage } from "./prompt-image.ts"
 import { type Question, type QuestionAnswer } from "./question.ts"
-import { type ReportSection, reportSectionsMarkdown } from "./report-block.ts"
+import { reportSectionsMarkdown } from "./report-block.ts"
 import { reportChecksMarkdown } from "./report-check.ts"
-import { tidyReportBody } from "./report-tidy.ts"
+import { tidyReportSections } from "./report-tidy.ts"
 import {
   MAX_SESSION_STATE_TURNS,
   type SessionRecord,
@@ -283,34 +283,17 @@ function toMainViewEntries(record: SessionRecord): readonly MainViewEntry[] {
  * `favor` は HTML の中に Markdown を入れるので、塊の内側の前後に空行を空ける（記法の規約と同じ）。
  * 空の `checks` / `sections` / `favor` は塊ごと置かない。
  *
- * 逃げ道の `markdown` の塊はここで整形する（{@link tidyReportBody}。記録は引数のまま持ち、描くたびに導く）。
+ * 節の並びはここで整形する（{@link tidyReportSections}。記録は引数のまま持ち、描くたびに導く）。
  */
 function reportMarkdown(report: Extract<SessionRecord, { readonly kind: "report" }>): string {
   return [
     report.conclusion,
     reportChecksMarkdown(report.checks),
-    reportSectionsMarkdown(tidySections(report)),
+    reportSectionsMarkdown(tidyReportSections(report)),
     isBlankText(report.favor) ? "" : `<div class="note note-favor">\n\n${report.favor}\n\n</div>`,
   ]
     .filter((part) => !isBlankText(part))
     .join("\n\n")
-}
-
-/** 逃げ道の `markdown` の塊に整形を掛けた節の並び（ほかの塊はそのまま）。 */
-function tidySections(
-  report: Extract<SessionRecord, { readonly kind: "report" }>,
-): readonly ReportSection[] {
-  return report.sections.map((section) => ({
-    ...section,
-    blocks: section.blocks.map((block) =>
-      block.kind === "markdown"
-        ? {
-            ...block,
-            markdown: tidyReportBody({ conclusion: report.conclusion, body: block.markdown }),
-          }
-        : block,
-    ),
-  }))
 }
 
 /**

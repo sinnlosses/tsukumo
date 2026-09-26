@@ -1033,7 +1033,7 @@ describe("toModelEffortSupport", () => {
 describe("toSessionEvents（report ツール）", () => {
   const REPORT_TOOL_FULL_NAME = `mcp__${TSUKUMO_MCP_SERVER_NAME}__${REPORT_TOOL_NAME}`
 
-  it("メインの report の呼び出しはレポートにする（ツールの開始にはしない）", () => {
+  it("メインの report の呼び出しはレポートにする（ツールの開始にはしない。文字列の body は逃げ道の塊1つの節に畳む）", () => {
     const message = assistantMessage([
       {
         type: "tool_use",
@@ -1067,7 +1067,49 @@ describe("toSessionEvents（report ツール）", () => {
     ])
   })
 
-  it("body が無いときは節を空に、favor が無いときは空の文字列に、checks が無いときは空の配列に、closing が無いときは none に畳む", () => {
+  it("sections は塊ごとに検証し、崩れた塊・知らない種類の塊と、塊の残らない節を落とす（省いた欄は既定で埋める）", () => {
+    const message = assistantMessage([
+      {
+        type: "tool_use",
+        id: "toolu_r1",
+        name: REPORT_TOOL_FULL_NAME,
+        input: {
+          conclusion: "架空の結論。",
+          sections: [
+            {
+              heading: "架空の節",
+              blocks: [
+                { kind: "text", text: "架空の根拠。" },
+                { kind: "chart", source: "{}" },
+                { kind: "list", style: "bullet", items: [] },
+                { kind: "code", language: "diff", source: "-a" },
+              ],
+            },
+            { heading: "架空の空の節", blocks: [{ kind: "note", tone: "架空の種別", text: "x" }] },
+            "架空の崩れた節",
+          ],
+          body: "架空の読まれない本文",
+        },
+      },
+    ])
+
+    expect(toSessionEvents(message, EXPRESSIONS)).toMatchObject([
+      {
+        kind: "report",
+        sections: [
+          {
+            heading: "架空の節",
+            blocks: [
+              { kind: "text", text: "架空の根拠。", fold: "" },
+              { kind: "code", language: "diff", path: "", source: "-a", fold: "" },
+            ],
+          },
+        ],
+      },
+    ])
+  })
+
+  it("sections も body も無いときは節を空に、favor が無いときは空の文字列に、checks が無いときは空の配列に、closing が無いときは none に畳む", () => {
     const message = assistantMessage([
       {
         type: "tool_use",

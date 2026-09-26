@@ -6,13 +6,24 @@ import {
   REPORT_RESEND_REJECTION_TEXT,
   type ReportReview,
 } from "../../../../src/server/report/core/report-review.ts"
-import { reportSectionsOfBody } from "../../../../src/shared/report-block.ts"
+import { type ReportDraft } from "../../../../src/server/report/core/report-violation.ts"
+import { type ReportSection } from "../../../../src/shared/report-block.ts"
 import { type SessionEvent } from "../../../../src/shared/session-event.ts"
 
 // レポートの文面はどれも作り物（docs/coding-standards.md「会話内容の扱い」）。
 
-const VALID = { conclusion: "架空の結論。", body: "", favor: "", checks: [] }
-const INVALID = { conclusion: "架空の結論。", body: "# 架空の見出し", favor: "", checks: [] }
+/** 逃げ道の塊1つの節（中身は架空）。 */
+const sectionsOf = (markdown: string): readonly ReportSection[] => [
+  { heading: "", blocks: [{ kind: "markdown", markdown, fold: "" }] },
+]
+
+const VALID: ReportDraft = { conclusion: "架空の結論。", sections: [], favor: "", checks: [] }
+const INVALID: ReportDraft = {
+  conclusion: "架空の結論。",
+  sections: sectionsOf("# 架空の見出し"),
+  favor: "",
+  checks: [],
+}
 
 const SESSION_INFO: SessionEvent = {
   kind: "session-info",
@@ -30,13 +41,12 @@ const CLOSING = { kind: "speech", text: "架空の締め", expression: "default"
 /** handler に届いた引数を、呼び出しをイベントに変える側と同じ形のイベントにする。 */
 const reportEvent = (
   toolUseId: string,
-  { body, ...draft }: typeof VALID,
+  draft: ReportDraft,
   closing: Extract<SessionEvent, { kind: "report" }>["closing"] = NO_CLOSING,
 ): Extract<SessionEvent, { kind: "report" }> => ({
   kind: "report",
   toolUseId,
   ...draft,
-  sections: reportSectionsOfBody(body),
   closing,
 })
 const report = (
@@ -61,7 +71,7 @@ const toolStarted = (
 })
 
 /** `report` を handler で通して描かせる（pass に呼び出しと結果を流す）。 */
-const draw = (review: ReportReview, toolUseId: string, draft: typeof VALID): void => {
+const draw = (review: ReportReview, toolUseId: string, draft: ReportDraft): void => {
   expect(review.judge(draft)).toEqual({ kind: "accepted" })
   review.pass(reportEvent(toolUseId, draft))
   review.pass(finished(toolUseId, false))
@@ -82,7 +92,7 @@ describe("createReportReview の judge", () => {
     const verdict = createReportReview().judge(INVALID)
 
     expect(verdict.kind).toBe("rejected")
-    expect(verdict.kind === "rejected" ? verdict.text : "").toContain("`#` の見出しがある")
+    expect(verdict.kind === "rejected" ? verdict.text : "").toContain("`#` / `##` の見出し")
   })
 
   it("差し戻すのは1ターンに1回まで（2回目は違反があっても通す）", () => {
@@ -182,7 +192,12 @@ describe("createReportReview の pass", () => {
 })
 
 describe("createReportReview の judge（送り直し）", () => {
-  const OTHER = { conclusion: "別の架空の結論。", body: "架空の根拠。", favor: "", checks: [] }
+  const OTHER: ReportDraft = {
+    conclusion: "別の架空の結論。",
+    sections: sectionsOf("架空の根拠。"),
+    favor: "",
+    checks: [],
+  }
 
   it("このターンで描いた report と同じ引数の呼び出しは、固定の文面で差し戻す", () => {
     const review = createReportReview()
@@ -198,7 +213,7 @@ describe("createReportReview の judge（送り直し）", () => {
 
     const padded = {
       conclusion: `  ${OTHER.conclusion}\n`,
-      body: `\n${OTHER.body}  `,
+      sections: sectionsOf("架空の根拠。"),
       favor: " ",
       checks: [],
     }
@@ -242,7 +257,7 @@ describe("createReportReview の judge（送り直し）", () => {
     expect(review.judge(VALID).kind).toBe("rejected")
     runTool(review, "toolu_t1")
     const verdict = review.judge(INVALID)
-    expect(verdict.kind === "rejected" ? verdict.text : "").toContain("`#` の見出しがある")
+    expect(verdict.kind === "rejected" ? verdict.text : "").toContain("`#` / `##` の見出し")
   })
 
   it("差し戻して描かなかった report とは比べない", () => {
@@ -281,7 +296,7 @@ describe("createReportReview の judge（送り直し）", () => {
 })
 
 describe("createReportReview の judge（新しい事実の無い report）", () => {
-  const OTHER = { conclusion: "別の架空の結論。", body: "", favor: "", checks: [] }
+  const OTHER: ReportDraft = { conclusion: "別の架空の結論。", sections: [], favor: "", checks: [] }
   const REQUEST: SessionEvent = { kind: "request", text: "架空の依頼", images: [] }
   const TURN_STARTED: SessionEvent = { kind: "turn-started" }
   const SPEAK_FINISHED = finished("toolu_s1", false)

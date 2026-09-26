@@ -150,6 +150,42 @@ describe("report でターンを閉じる", () => {
   })
 })
 
+describe("report の本文（sections）", () => {
+  it("引数は節と塊の並び（sections）で、文字列の body は無い", async () => {
+    const reply = await request(workServer(), "tools/list", {}, TOOLS_SCHEMA_REPLY)
+    const properties = reply.result.tools.find((tool) => tool.name === "report")?.inputSchema
+      .properties
+
+    expect(Object.keys(properties ?? {})).toContain("sections")
+    expect(Object.keys(properties ?? {})).not.toContain("body")
+  })
+
+  it("塊で書いた report は通り、逃げ道に塊の種類がある記法を書いた report は差し戻す", async () => {
+    const accepted = await callTool(workServer(), "report", {
+      conclusion: "架空の結論",
+      sections: [
+        {
+          heading: "架空の節",
+          blocks: [
+            { kind: "text", text: "架空の根拠。" },
+            { kind: "list", style: "bullet", items: [{ text: "架空の項目" }] },
+          ],
+        },
+      ],
+      closing: CLOSING,
+    })
+    const rejected = await callTool(workServer(), "report", {
+      conclusion: "架空の結論",
+      sections: [{ blocks: [{ kind: "markdown", markdown: "- 架空の項目" }] }],
+      closing: CLOSING,
+    })
+
+    expect(accepted).toEqual({ text: "ok", isError: false, endsTurn: true })
+    expect(rejected.isError).toBe(true)
+    expect(rejected.text).toContain("`list` の塊")
+  })
+})
+
 describe("report の title", () => {
   it("通った report の title を渡す", async () => {
     const titles: string[] = []
@@ -324,6 +360,19 @@ function noopIntake() {
 const TOOLS_LIST_REPLY = z.object({
   id: z.literal(1),
   result: z.object({ tools: z.array(z.object({ name: z.string() })) }),
+})
+
+/** `tools/list` の応答のうち、ここで読む形（名前と、引数の schema の欄の名前）。 */
+const TOOLS_SCHEMA_REPLY = z.object({
+  id: z.literal(1),
+  result: z.object({
+    tools: z.array(
+      z.object({
+        name: z.string(),
+        inputSchema: z.object({ properties: z.record(z.string(), z.unknown()) }),
+      }),
+    ),
+  }),
 })
 
 /** `tools/call` の応答のうち、ここで読む形（文面と `isError` と、ターンを閉じる印）。 */

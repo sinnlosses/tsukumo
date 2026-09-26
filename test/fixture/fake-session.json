@@ -1481,7 +1481,7 @@
           "event": {
             "kind": "tool-finished",
             "toolUseId": "fake-report-rejected-1",
-            "content": "レポートの記法の規約に次の違反がある。直して `report` を呼び直すこと:\n- `conclusion` が3文ある。2文以内にし、残りは `body` へ移す\n- `#` の見出しがある。`##` / `###` にする\n- 見出しの無い表が1個ある。表の直前の行に太字1行で見出しを付ける",
+            "content": "レポートの記法の規約に次の違反がある。直して `report` を呼び直すこと:\n- `conclusion` が3文ある。2文以内にし、残りは `sections` へ移す\n- `markdown` の塊に塊で書ける記法（`#` / `##` の見出し・表）がある。代わりに節の `heading`・`table` の塊を使う",
             "isError": true
           }
         },

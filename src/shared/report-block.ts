@@ -9,17 +9,21 @@ import { z } from "zod"
 
 const inlineText = z.string()
 
-const fold = z.string().default("").describe("畳むときの見出し。畳んでも結論が通る塊だけ")
+const fold = z.string().default("").describe("畳むときの見出し（畳んでも結論が通る塊だけ）")
 
 const textBlockSchema = z.object({
   kind: z.literal("text"),
-  text: inlineText.describe("地の文。3文まで"),
+  text: inlineText.describe("地の文。3文まで（4文目が要るなら表・箇条書きへ移すか fold で畳む）"),
   fold,
 })
 
 const listBlockSchema = z.object({
   kind: z.literal("list"),
-  style: z.enum(["bullet", "ordered", "check"]),
+  style: z
+    .enum(["bullet", "ordered", "check"])
+    .describe(
+      "bullet は発見・候補・ファイルの一覧（項目ごとに言うことが2つ以上なら表）/ ordered は順番に意味がある手順 / check は済み（done）と未了が混じる並び",
+    ),
   items: z
     .array(z.object({ text: inlineText, done: z.boolean().default(false) }))
     .min(1)
@@ -31,53 +35,95 @@ const REPORT_CELL_STATUSES = ["ok", "warn", "ng"] as const
 
 const cellSchema = z.union([
   inlineText,
-  z.object({ status: z.enum(REPORT_CELL_STATUSES), text: inlineText }),
+  z
+    .object({ status: z.enum(REPORT_CELL_STATUSES), text: inlineText })
+    .describe("状態のセル。色のバッジで描くので、状態を言う文字も text に書く"),
 ])
 
-const tableBlockSchema = z.object({
-  kind: z.literal("table"),
-  title: inlineText.describe("何を並べた表か・並べた基準・数の出どころ"),
-  columns: z.array(inlineText).min(2).readonly(),
-  rows: z.array(z.array(cellSchema).readonly()).min(1).readonly(),
-  fold,
-})
+const tableBlockSchema = z
+  .object({
+    kind: z.literal("table"),
+    title: inlineText.describe("セルに無いことだけ: 何を並べた表か・並べた基準・数の出どころ"),
+    columns: z.array(inlineText).min(2).readonly(),
+    rows: z
+      .array(z.array(cellSchema).readonly())
+      .min(1)
+      .readonly()
+      .describe("行ごとのセル。数は columns と揃える"),
+    fold,
+  })
+  .describe("比較・対応・件数。同じ形の項目が2つ以上並んだら表")
 
 const REPORT_NOTE_TONES = ["info", "warn", "ng", "ask", "memo"] as const
 
 const noteBlockSchema = z.object({
   kind: z.literal("note"),
-  tone: z.enum(REPORT_NOTE_TONES),
-  text: inlineText.describe("読み飛ばされると困る一文。1つのレポートに1〜2個まで"),
+  tone: z
+    .enum(REPORT_NOTE_TONES)
+    .describe("info は結論 / warn は注意 / ng は異常 / ask は確かめていないこと / memo は覚え書き"),
+  text: inlineText.describe(
+    "読み飛ばされると困る一文。種別を言う語（「注意:」など）は書かない。1つのレポートに1〜2個まで",
+  ),
   fold,
 })
 
-const statsBlockSchema = z.object({
-  kind: z.literal("stats"),
-  items: z
-    .array(z.object({ value: z.string(), label: inlineText }))
-    .min(2)
-    .max(4)
-    .readonly(),
-  fold,
-})
+const statsBlockSchema = z
+  .object({
+    kind: z.literal("stats"),
+    items: z
+      .array(z.object({ value: z.string(), label: inlineText }))
+      .min(2)
+      .max(4)
+      .readonly(),
+    fold,
+  })
+  .describe("結論に効く数（件数・前後の差）。数が2〜4個並び、その数自体が結論のとき")
 
-const codeBlockSchema = z.object({
-  kind: z.literal("code"),
-  language: z.string().describe("変更の前後は diff"),
-  path: z.string().default("").describe("どのファイルか"),
-  source: z.string(),
-  fold,
-})
+const codeBlockSchema = z
+  .object({
+    kind: z.literal("code"),
+    language: z.string().describe("言語名。変更の前後は diff"),
+    path: z.string().default("").describe("どのファイルか（要るときだけ。1つの塊に1ファイル）"),
+    source: z.string(),
+    fold,
+  })
+  .describe("コード・コマンド・エラー文")
 
-const mermaidBlockSchema = z.object({
-  kind: z.literal("mermaid"),
-  source: z.string().describe("名前が3つ以上出てきて間を渡す・呼ぶ・分かれるでつなぐとき"),
-  fold,
-})
+/**
+ * mermaid の種類のうち、tsukumo が配る mermaid で描けると確かめたもの（`package.json` で版を固定しているのはこの実測のため）。
+ * 挙げていない種類には構文が通らないものが混ざる。
+ */
+export const REPORT_MERMAID_KINDS = [
+  "flowchart",
+  "sequenceDiagram",
+  "stateDiagram-v2",
+  "classDiagram",
+  "erDiagram",
+  "mindmap",
+  "timeline",
+  "gantt",
+  "gitGraph",
+  "quadrantChart",
+] as const
+
+const mermaidBlockSchema = z
+  .object({
+    kind: z.literal("mermaid"),
+    source: z
+      .string()
+      .describe(
+        `図のソース。種類は ${REPORT_MERMAID_KINDS.join(" / ")} の${String(REPORT_MERMAID_KINDS.length)}種だけ（迷ったら flowchart）。` +
+          "ラベルの引用符・バッククォートは #quot; / #96; と書く",
+      ),
+    fold,
+  })
+  .describe("名前が3つ以上出てきて、その間を渡す・呼ぶ・分かれるでつなぐとき")
 
 const markdownBlockSchema = z.object({
   kind: z.literal("markdown"),
-  markdown: z.string().describe("上のどの塊にも当てはまらないときだけ"),
+  markdown: z
+    .string()
+    .describe("どの塊にも当てはまらない記法（cols・chart・svg・dl・引用・区切り線）だけ"),
   fold,
 })
 
@@ -95,14 +141,19 @@ export const reportBlockSchema = z.discriminatedUnion("kind", [
 export type ReportBlock = z.infer<typeof reportBlockSchema>
 
 export const reportSectionSchema = z.object({
-  heading: z.string().default("").describe("その節の結論を言う語。節が1つなら省いてよい"),
+  heading: z
+    .string()
+    .default("")
+    .describe(
+      "その節の結論を言う語（「変更点」「まとめ」のようなどのレポートにも当てはまる語にしない）。節が1つなら省いてよく、2つ以上なら全部に付ける",
+    ),
   blocks: z.array(reportBlockSchema).min(1).readonly(),
 })
 
 export type ReportSection = z.infer<typeof reportSectionSchema>
 
 /**
- * 文字列の本文（`report` の `body`）を節に畳む。空白だけなら節は無く、それ以外は見出しの無い節1つに
+ * 文字列の本文（`sections` に切り替える前の `report` の `body`）を節に畳む。空白だけなら節は無く、それ以外は見出しの無い節1つに
  * 逃げ道の塊1つ。頭の空行と末尾の空白は落とす（描いた見た目は変わらず、送り直しの判定で空白の差を見ないため）。
  */
 export function reportSectionsOfBody(body: string): readonly ReportSection[] {
@@ -110,6 +161,28 @@ export function reportSectionsOfBody(body: string): readonly ReportSection[] {
   return markdown === ""
     ? []
     : [{ heading: "", blocks: [{ kind: "markdown", markdown, fold: "" }] }]
+}
+
+/**
+ * `report` の引数の `sections` を取り出す。塊ごとに検証し、崩れた塊と知らない種類の塊は落とす
+ * （塊1つの読み損ねでレポートを捨てない）。塊が残らない節と、配列でない値は無いものとする。
+ */
+export function parseReportSections(value: unknown): readonly ReportSection[] {
+  const sections = z.array(z.unknown()).safeParse(value)
+  if (!sections.success) {
+    return []
+  }
+  return sections.data.flatMap((candidate) => {
+    const section = looseSectionSchema.safeParse(candidate)
+    if (!section.success) {
+      return []
+    }
+    const blocks = section.data.blocks.flatMap((block) => {
+      const parsed = reportBlockSchema.safeParse(block)
+      return parsed.success ? [parsed.data] : []
+    })
+    return blocks.length === 0 ? [] : [{ heading: section.data.heading, blocks }]
+  })
 }
 
 /** 節の並びを1つの Markdown に組む。空の塊・空の節は置かない。 */
@@ -135,6 +208,12 @@ export function htmlInline(text: string): string {
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
 }
+
+/** 塊を1つずつ検証するために、節の見出しだけを先に読む形。 */
+const looseSectionSchema = z.object({
+  heading: reportSectionSchema.shape.heading,
+  blocks: z.array(z.unknown()),
+})
 
 /** 表のセルの状態 → バッジの class（記法の `badge-*`）。 */
 const CELL_BADGES = {

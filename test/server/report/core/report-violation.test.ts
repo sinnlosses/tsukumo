@@ -1,94 +1,91 @@
 import { describe, expect, it } from "bun:test"
 
-import { REPORT_NOTATION_PROMPT } from "../../../../src/server/report/core/report-notation.ts"
 import {
   type ReportDraft,
   reportRejectionText,
   reportViolations,
 } from "../../../../src/server/report/core/report-violation.ts"
+import {
+  type ReportBlock,
+  REPORT_MERMAID_KINDS,
+  type ReportSection,
+} from "../../../../src/shared/report-block.ts"
 
 // レポートの文面はどれも作り物（docs/coding-standards.md「会話内容の扱い」）。
 
-const draft = (body: string, conclusion = "架空の結論。"): ReportDraft => ({
+const draft = (
+  blocks: readonly ReportBlock[],
+  conclusion = "架空の結論。",
+  sections: readonly ReportSection[] = [{ heading: "", blocks }],
+): ReportDraft => ({
   conclusion,
-  body,
+  sections:
+    blocks.length === 0 ? sections.filter((section) => section.blocks.length > 0) : sections,
   favor: "",
   checks: [],
 })
 
-const kinds = (report: ReportDraft) => reportViolations(report).map((violation) => violation.kind)
+const text = (value: string, fold = ""): ReportBlock => ({ kind: "text", text: value, fold })
+const markdown = (value: string): ReportBlock => ({ kind: "markdown", markdown: value, fold: "" })
+const mermaid = (source: string): ReportBlock => ({ kind: "mermaid", source, fold: "" })
+const note = (): ReportBlock => ({ kind: "note", tone: "warn", text: "架空の一文。", fold: "" })
 
-/** 規約が挙げる mermaid の10種（`report-notation.ts` の表の2行）。 */
-const MERMAID_KINDS = [
-  "flowchart",
-  "sequenceDiagram",
-  "stateDiagram-v2",
-  "classDiagram",
-  "erDiagram",
-  "mindmap",
-  "timeline",
-  "gantt",
-  "gitGraph",
-  "quadrantChart",
-] as const
+const kinds = (report: ReportDraft) => reportViolations(report).map((violation) => violation.kind)
 
 describe("reportViolations", () => {
   it("規約どおりのレポートには違反が無い", () => {
-    const body = [
-      "## 架空の見出し",
-      "",
-      "架空の段落の1文目。2文目。3文目。",
-      "",
-      "**架空の表（作り物の値）**",
-      "",
-      "| 列 | 値 |",
-      "| --- | ---: |",
-      "| a | 1 |",
-      "",
-      "```mermaid",
-      "flowchart LR",
-      "  a --> b",
-      "```",
-      "",
-      '<div class="note note-warn">架空の注意。</div>',
-    ].join("\n")
+    const blocks: readonly ReportBlock[] = [
+      text("架空の段落の1文目。2文目。3文目。"),
+      {
+        kind: "table",
+        title: "架空の表（作り物の値）",
+        columns: ["列", "値"],
+        rows: [["a", { status: "ok", text: "OK" }]],
+        fold: "",
+      },
+      mermaid("flowchart LR\n  a --> b"),
+      note(),
+      markdown('<div class="cols"><div class="card">架空の案A</div></div>'),
+    ]
 
-    expect(reportViolations(draft(body, "架空の結論の1文目。2文目。"))).toEqual([])
+    expect(reportViolations(draft(blocks, "架空の結論の1文目。2文目。"))).toEqual([])
   })
 
   describe("conclusion は2文まで", () => {
     it("3文あれば違反", () => {
-      expect(reportViolations(draft("", "架空の1文目。2文目。3文目。"))).toEqual([
+      expect(reportViolations(draft([], "架空の1文目。2文目。3文目。"))).toEqual([
         { kind: "long-conclusion", count: 3 },
       ])
     })
 
     it("句点で終わらない末尾も1文と数える", () => {
-      expect(kinds(draft("", "架空の1文目。2文目。3文目"))).toEqual(["long-conclusion"])
+      expect(kinds(draft([], "架空の1文目。2文目。3文目"))).toEqual(["long-conclusion"])
     })
 
     it("inline code と全角の丸括弧の中の句点では割らない", () => {
-      expect(kinds(draft("", "架空の結論（補足。補足。）。`a。b。` を直した。"))).toEqual([])
+      expect(kinds(draft([], "架空の結論（補足。補足。）。`a。b。` を直した。"))).toEqual([])
     })
   })
 
   describe("地の文の段落は3文まで", () => {
-    it("4文の段落は違反", () => {
-      expect(reportViolations(draft("架空の1文目。2文目。3文目。4文目。"))).toEqual([
+    it("4文の text の塊は違反", () => {
+      expect(reportViolations(draft([text("架空の1文目。2文目。3文目。4文目。")]))).toEqual([
         { kind: "long-paragraph", count: 1 },
       ])
     })
 
-    it("空行で割った段落はそれぞれで数える", () => {
-      expect(kinds(draft("架空の1文目。2文目。\n\n3文目。4文目。"))).toEqual([])
+    it("fold で畳んだ text の塊は数えない（4文目の逃げ先なので）", () => {
+      expect(kinds(draft([text("架空の1文目。2文目。3文目。4文目。", "架空の見出し")]))).toEqual([])
     })
 
-    it("箇条書き・表・引用の行は地の文に数えない", () => {
-      const body = ["- 架空の1。", "- 架空の2。", "- 架空の3。", "- 架空の4。"].join("\n")
-      expect(kinds(draft(body))).toEqual([])
+    it("逃げ道の中の段落も数え、空行で割った段落はそれぞれで数える", () => {
+      expect(kinds(draft([markdown("架空の1文目。2文目。3文目。4文目。")]))).toEqual([
+        "long-paragraph",
+      ])
+      expect(kinds(draft([markdown("架空の1文目。2文目。\n\n3文目。4文目。")]))).toEqual([])
     })
 
-    it("<details> の中の段落は数えない（4文目の逃げ先なので）", () => {
+    it("逃げ道の <details> の中の段落は数えない", () => {
       const body = [
         "<details><summary>架空の見出し</summary>",
         "",
@@ -96,113 +93,152 @@ describe("reportViolations", () => {
         "",
         "</details>",
       ].join("\n")
-      expect(kinds(draft(body))).toEqual([])
-    })
-
-    it("フェンスの中は数えない", () => {
-      expect(kinds(draft("```text\n架空の1。2。3。4。\n```"))).toEqual([])
+      expect(kinds(draft([markdown(body)]))).toEqual([])
     })
   })
 
-  describe("# の見出しを使わない", () => {
-    it("# の見出しは違反", () => {
-      expect(kinds(draft("# 架空の見出し"))).toEqual(["top-heading"])
-    })
-
-    it("## / ### は違反にしない", () => {
-      expect(kinds(draft("## 架空の見出し\n\n### 架空の小見出し"))).toEqual([])
-    })
-
-    it("フェンスの中の # は見出しにしない", () => {
-      expect(kinds(draft("```sh\n# 架空のコメント\n```"))).toEqual([])
+  describe("表の行の長さは columns と揃える", () => {
+    it("セルの数が揃わない行のある表は違反", () => {
+      const table: ReportBlock = {
+        kind: "table",
+        title: "架空の表",
+        columns: ["列", "値"],
+        rows: [["a", "1"], ["b"]],
+        fold: "",
+      }
+      expect(reportViolations(draft([table]))).toEqual([{ kind: "ragged-table", count: 1 }])
     })
   })
 
-  describe("表の直前に太字1行の見出し", () => {
-    it("見出しの無い表は違反", () => {
-      expect(reportViolations(draft("| 列 | 値 |\n| --- | --- |\n| a | 1 |"))).toEqual([
-        { kind: "untitled-table", count: 1 },
+  describe("節が2つ以上なら全部に見出し", () => {
+    it("見出しの無い節があれば違反", () => {
+      const sections = [
+        { heading: "架空の節", blocks: [text("架空の一。")] },
+        { heading: " ", blocks: [text("架空の二。")] },
+      ]
+      expect(reportViolations(draft([], "架空の結論。", sections))).toEqual([
+        { kind: "untitled-section", count: 1 },
       ])
     })
 
-    it("直前の行が地の文なら違反", () => {
-      expect(kinds(draft("架空の説明。\n\n| 列 | 値 |\n| :---: | --- |\n| a | 1 |"))).toEqual([
-        "untitled-table",
-      ])
-    })
-
-    it("太字1行の見出しがあれば違反にしない（間に空行があってもよい）", () => {
-      expect(kinds(draft("**架空の表**\n\n| 列 | 値 |\n| --- | --- |\n| a | 1 |"))).toEqual([])
+    it("節が1つなら見出しが無くてもよい", () => {
+      expect(kinds(draft([text("架空の一。")]))).toEqual([])
     })
   })
 
   describe("mermaid は規約の10種だけ", () => {
-    it("10種はどれも規約の文面に載っていて、違反にしない", () => {
-      for (const kind of MERMAID_KINDS) {
-        expect(REPORT_NOTATION_PROMPT).toContain(`${kind} は`)
-        expect(kinds(draft(`\`\`\`mermaid\n${kind}\n\`\`\``))).toEqual([])
+    it("10種は違反にしない", () => {
+      for (const kind of REPORT_MERMAID_KINDS) {
+        expect(kinds(draft([mermaid(kind)]))).toEqual([])
       }
     })
 
     it("10種の外の種類は違反", () => {
-      expect(reportViolations(draft('```mermaid\npie\n  "a" : 1\n```'))).toEqual([
+      expect(reportViolations(draft([mermaid('pie\n  "a" : 1')]))).toEqual([
         { kind: "unknown-mermaid", count: 1 },
       ])
     })
 
     it("%% の行と先頭の --- の設定は飛ばして種類を読む", () => {
-      const body = ["```mermaid", "---", "title: 架空", "---", "%% 架空", "flowchart LR", "```"]
-      expect(kinds(draft(body.join("\n")))).toEqual([])
+      const source = ["---", "title: 架空", "---", "%% 架空", "flowchart LR"].join("\n")
+      expect(kinds(draft([mermaid(source)]))).toEqual([])
     })
   })
 
-  describe("note の塊はお願いを除いて1〜2個まで", () => {
-    const note = (kind: string) => `<div class="note ${kind}">架空の一文。</div>`
-
+  describe("note の塊は1〜2個まで", () => {
     it("3つあれば違反", () => {
-      const body = [note("note-warn"), note("note-memo"), note("note-ask")].join("\n\n")
-      expect(reportViolations(draft(body))).toEqual([{ kind: "too-many-notes", count: 3 }])
-    })
-
-    it("2つなら違反にしない", () => {
-      expect(kinds(draft([note("note-warn"), note("note-memo")].join("\n\n")))).toEqual([])
-    })
-  })
-
-  describe("お願いを body に書かない", () => {
-    it("body の note-favor は違反", () => {
-      expect(kinds(draft('<div class="note note-favor">架空のお願い。</div>'))).toEqual([
-        "favor-in-body",
+      expect(reportViolations(draft([note(), note(), note()]))).toEqual([
+        { kind: "too-many-notes", count: 3 },
       ])
     })
 
-    it("favor に書いたお願いは違反にしない", () => {
-      expect(
-        reportViolations({
-          conclusion: "架空の結論。",
-          body: "",
-          favor: "架空のお願い。",
-          checks: [],
-        }),
-      ).toEqual([])
+    it("2つなら違反にしない", () => {
+      expect(kinds(draft([note(), note()]))).toEqual([])
+    })
+  })
+
+  describe("逃げ道に塊の種類がある記法を書かない", () => {
+    const notationsOf = (body: string) =>
+      reportViolations(draft([markdown(body)])).flatMap((violation) =>
+        violation.kind === "markdown-notation" ? violation.notations : [],
+      )
+
+    it("見出し・表・箇条書き・note・stats・フェンス・mermaid はそれぞれ違反", () => {
+      expect(notationsOf("# 架空")).toEqual(["heading"])
+      expect(notationsOf("## 架空")).toEqual(["heading"])
+      expect(notationsOf("| 列 | 値 |\n| --- | --- |\n| a | 1 |")).toEqual(["table"])
+      expect(notationsOf("- 架空の1\n- 架空の2")).toEqual(["list"])
+      expect(notationsOf("1. 架空の1")).toEqual(["list"])
+      expect(notationsOf('<div class="note note-warn">架空の注意。</div>')).toEqual(["note"])
+      expect(notationsOf('<div class="note note-favor">架空のお願い。</div>')).toEqual(["note"])
+      expect(notationsOf('<div class="stats"><div class="stat"><b>1</b>架空</div></div>')).toEqual([
+        "stats",
+      ])
+      expect(notationsOf("```diff src/a.ts\n-a\n+b\n```")).toEqual(["code"])
+      expect(notationsOf("```mermaid\nflowchart LR\n```")).toEqual(["mermaid"])
+    })
+
+    it("数は記法の種類の数で、種類はまとめて1つの違反にする", () => {
+      expect(reportViolations(draft([markdown("# 架空\n\n- 架空の1\n- 架空の2")]))).toEqual([
+        { kind: "markdown-notation", count: 2, notations: ["heading", "list"] },
+      ])
+    })
+
+    it("塊の種類が無い記法・### の見出し・chart のフェンスは違反にしない", () => {
+      const body = [
+        '<div class="cols"><div class="card">架空の案A</div><div class="card">架空の案B</div></div>',
+        "",
+        "> 架空の引用",
+        "",
+        "---",
+        "",
+        "### 架空の小見出し",
+        "",
+        "```chart",
+        "{}",
+        "```",
+      ].join("\n")
+      expect(kinds(draft([markdown(body)]))).toEqual([])
+    })
+
+    it("HTML の塊の中（複数の塊を畳む <details>・cols のカード）は見ない", () => {
+      const body = [
+        "<details><summary>架空の見出し</summary>",
+        "",
+        "- 架空の1",
+        "- 架空の2",
+        "",
+        "```diff src/a.ts",
+        "-a",
+        "```",
+        "",
+        "</details>",
+      ].join("\n")
+      expect(kinds(draft([markdown(body)]))).toEqual([])
+    })
+
+    it("フェンスの中の記法は見ない", () => {
+      expect(notationsOf("```chart\n# 架空\n- 架空\n```")).toEqual([])
     })
   })
 })
 
 describe("reportRejectionText", () => {
   it("違反した条と直し方を1行ずつ並べ、レポートの文面は写さない", () => {
-    const report = draft("# 架空の見出しXYZ", "架空の1文目XYZ。2文目。3文目。")
-    const text = reportRejectionText(reportViolations(report))
+    const report = draft([markdown("# 架空の見出しXYZ")], "架空の1文目XYZ。2文目。3文目。")
+    const rejection = reportRejectionText(reportViolations(report))
 
-    expect(text.split("\n")).toHaveLength(3)
-    expect(text).toContain("`conclusion` が3文ある")
-    expect(text).toContain("`#` の見出しがある")
-    expect(text).not.toContain("XYZ")
+    expect(rejection.split("\n")).toHaveLength(3)
+    expect(rejection).toContain("`conclusion` が3文ある")
+    expect(rejection).toContain(
+      "`markdown` の塊に塊で書ける記法（`#` / `##` の見出し）がある。代わりに節の `heading`を使う",
+    )
+    expect(rejection).not.toContain("XYZ")
   })
 
   it("画面の状態（描けたか・どこに出たか）を載せない", () => {
-    const text = reportRejectionText(reportViolations(draft("# 架空")))
-    expect(text).not.toContain("画面")
-    expect(text).not.toContain("メインビュー")
+    const rejection = reportRejectionText(reportViolations(draft([markdown("# 架空")])))
+    expect(rejection).not.toContain("画面")
+    expect(rejection).not.toContain("メインビュー")
   })
 })

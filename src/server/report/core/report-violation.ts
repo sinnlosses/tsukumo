@@ -5,18 +5,27 @@
 // 読み手によって結論が変わる条（効能書き・根拠の量・前置きと締めの行など）は入れない
 // ——誤って差し戻すと、直しようのない指摘でモデルを1往復させることになる。
 //
-// 本文は Markdown として構文解析せず、行で見る（フェンスの中だけは飛ばす）。描く側の
+// 本文は節と塊の並びで届くので、塊の種類ごとに数える。逃げ道（`markdown` の塊）の中だけは
+// Markdown として構文解析せず、行で見る（フェンスの中だけは飛ばす）。描く側の
 // パーサ（`src/browser/`）とは層が違って使えず、判定に要るのは行頭の形と数えられる印だけなので。
 
+import {
+  type ReportBlock,
+  REPORT_MERMAID_KINDS,
+  type ReportSection,
+} from "../../../shared/report-block.ts"
 import { type ReportCheck } from "../../../shared/report-check.ts"
 
-/** 検査にかけるレポート。`body` と `favor` の「無い」は空の文字列、`checks` の「無い」は空の配列。 */
+/** 検査にかけるレポート。`sections` と `checks` の「無い」は空の配列、`favor` の「無い」は空の文字列。 */
 export type ReportDraft = {
   readonly conclusion: string
-  readonly body: string
+  readonly sections: readonly ReportSection[]
   readonly favor: string
   readonly checks: readonly ReportCheck[]
 }
+
+/** 逃げ道の中に書くと差し戻す記法（塊の種類か節の見出しで書けるもの）。 */
+export type MarkdownNotation = keyof typeof MARKDOWN_NOTATION_NAMES
 
 /**
  * 規約違反1つ。`count` は違反の数（文の数・塊の数）で、モデルが書いた文面は持たない
@@ -25,46 +34,65 @@ export type ReportDraft = {
 export type ReportViolation =
   /** `conclusion` が3文以上ある（条1「冒頭の1〜2文で結論」）。 */
   | { readonly kind: "long-conclusion"; readonly count: number }
-  /** `body` に4文以上の地の文の段落がある（「地の文の段落は3文まで」）。`count` は段落の数。 */
+  /** 4文以上の地の文がある（「地の文の段落は3文まで」）。`count` は `text` の塊と逃げ道の段落の数。 */
   | { readonly kind: "long-paragraph"; readonly count: number }
-  /** `body` に `#` の見出しがある（条9）。 */
-  | { readonly kind: "top-heading"; readonly count: number }
-  /** 直前の行が太字1行でない表がある（「表には直前の1行で見出しを付ける」）。 */
-  | { readonly kind: "untitled-table"; readonly count: number }
-  /** mermaid の図に、規約が挙げる10種の外の種類がある。 */
+  /** `mermaid` の塊に、規約が挙げる10種の外の種類がある。 */
   | { readonly kind: "unknown-mermaid"; readonly count: number }
-  /** お願い以外の `note` の塊が3つ以上ある（「5種あわせて1〜2個まで」）。 */
+  /** `note` の塊が3つ以上ある（「1つのレポートに1〜2個まで」）。 */
   | { readonly kind: "too-many-notes"; readonly count: number }
-  /** `body` にお願いの塊（`note-favor`）がある（お願いは `favor` に入れる）。 */
-  | { readonly kind: "favor-in-body"; readonly count: number }
+  /** 行のセルの数が `columns` と揃わない表がある。`count` は表の数。 */
+  | { readonly kind: "ragged-table"; readonly count: number }
+  /** 節が2つ以上あるのに見出しの無い節がある。`count` は見出しの無い節の数。 */
+  | { readonly kind: "untitled-section"; readonly count: number }
+  /**
+   * 逃げ道の外側（HTML の塊の中でないところ）に、塊の種類がある記法を書いた。
+   * `count` は記法の種類の数、`notations` はその種類。
+   */
+  | {
+      readonly kind: "markdown-notation"
+      readonly count: number
+      readonly notations: readonly MarkdownNotation[]
+    }
 
 /** レポートの規約違反を並べる。空なら違反は無い。 */
 export function reportViolations(report: ReportDraft): readonly ReportViolation[] {
-  const { outside: lines, fences } = splitFences(report.body)
-  const noteClasses = noteClassLists(lines)
+  const blocks = report.sections.flatMap((section) => section.blocks)
+  const markdowns = blocks.flatMap((block) =>
+    block.kind === "markdown" ? [splitFences(block.markdown)] : [],
+  )
+  const notations = MARKDOWN_NOTATIONS.filter((notation) =>
+    markdowns.some((markdown) => hasNotation(markdown, notation)),
+  )
 
   const counted = [
     { kind: "long-conclusion", count: sentenceCount(report.conclusion) },
     {
       kind: "long-paragraph",
-      count: paragraphs(lines).filter((paragraph) => sentenceCount(paragraph) > 3).length,
+      count:
+        blocks.filter(
+          (block) =>
+            block.kind === "text" && block.fold.trim() === "" && sentenceCount(block.text) > 3,
+        ).length +
+        markdowns
+          .flatMap(({ outside }) => paragraphs(outside))
+          .filter((paragraph) => sentenceCount(paragraph) > 3).length,
     },
-    { kind: "top-heading", count: lines.filter((line) => TOP_HEADING.test(line)).length },
-    { kind: "untitled-table", count: untitledTableCount(lines) },
     {
       kind: "unknown-mermaid",
-      count: fences.filter(
-        (fence) => fence.info === "mermaid" && !MERMAID_KINDS.has(mermaidKind(fence.content)),
+      count: blocks.filter(
+        (block) => block.kind === "mermaid" && !MERMAID_KINDS.has(mermaidKind(block.source)),
       ).length,
     },
+    { kind: "too-many-notes", count: blocks.filter((block) => block.kind === "note").length },
+    { kind: "ragged-table", count: blocks.filter((block) => isRaggedTable(block)).length },
     {
-      kind: "too-many-notes",
-      count: noteClasses.filter((classes) => !classes.includes("note-favor")).length,
+      kind: "untitled-section",
+      count:
+        report.sections.length < 2
+          ? 0
+          : report.sections.filter((section) => section.heading.trim() === "").length,
     },
-    {
-      kind: "favor-in-body",
-      count: noteClasses.filter((classes) => classes.includes("note-favor")).length,
-    },
+    { kind: "markdown-notation", count: notations.length, notations },
   ] as const satisfies readonly ReportViolation[]
 
   return counted.filter((violation) => violation.count > VIOLATION_THRESHOLDS[violation.kind])
@@ -85,60 +113,64 @@ export function reportRejectionText(violations: readonly ReportViolation[]): str
 const VIOLATION_THRESHOLDS = {
   "long-conclusion": 2,
   "long-paragraph": 0,
-  "top-heading": 0,
-  "untitled-table": 0,
   "unknown-mermaid": 0,
   "too-many-notes": 2,
-  "favor-in-body": 0,
+  "ragged-table": 0,
+  "untitled-section": 0,
+  "markdown-notation": 0,
 } as const satisfies Record<ReportViolation["kind"], number>
 
 function violationLine(violation: ReportViolation): string {
   switch (violation.kind) {
     case "long-conclusion":
-      return `\`conclusion\` が${violation.count}文ある。2文以内にし、残りは \`body\` へ移す`
+      return `\`conclusion\` が${violation.count}文ある。2文以内にし、残りは \`sections\` へ移す`
     case "long-paragraph":
-      return `4文以上の地の文の段落が${violation.count}個ある。表・箇条書き・\`<details>\` へ移す`
-    case "top-heading":
-      return "`#` の見出しがある。`##` / `###` にする"
-    case "untitled-table":
-      return `見出しの無い表が${violation.count}個ある。表の直前の行に太字1行で見出しを付ける`
+      return `4文以上の地の文が${violation.count}個ある。表・箇条書きへ移すか、\`fold\` で畳む`
     case "unknown-mermaid":
       return `mermaid の図に規約の10種の外の種類が${violation.count}個ある。10種から選ぶ（迷ったら flowchart）`
     case "too-many-notes":
-      return `\`note\` の塊が${violation.count}個ある。お願いを除いて1〜2個まで減らす`
-    case "favor-in-body":
-      return "`body` にお願いの塊（`note-favor`）がある。`favor` へ移す"
+      return `\`note\` の塊が${violation.count}個ある。1〜2個まで減らす`
+    case "ragged-table":
+      return `行のセルの数が \`columns\` と揃わない表が${violation.count}個ある。セルの数を揃える`
+    case "untitled-section":
+      return `見出しの無い節が${violation.count}個ある。節が2つ以上なら全部に \`heading\` を付ける`
+    case "markdown-notation":
+      return `\`markdown\` の塊に塊で書ける記法（${violation.notations
+        .map((notation) => MARKDOWN_NOTATION_NAMES[notation].written)
+        .join("・")}）がある。代わりに${violation.notations
+        .map((notation) => MARKDOWN_NOTATION_NAMES[notation].replacement)
+        .join("・")}を使う`
   }
 }
 
-/**
- * 規約が挙げる mermaid の種類（`REPORT_NOTATION_PROMPT` の表の2行）。文面と揃っていることは
- * 検査が見る。
- */
-const MERMAID_KINDS: ReadonlySet<string> = new Set([
-  "flowchart",
-  "sequenceDiagram",
-  "stateDiagram-v2",
-  "classDiagram",
-  "erDiagram",
-  "mindmap",
-  "timeline",
-  "gantt",
-  "gitGraph",
-  "quadrantChart",
-])
+/** 逃げ道の中の記法 → 差し戻しの文面での呼び名と、代わりに使うもの。 */
+const MARKDOWN_NOTATION_NAMES = {
+  heading: { written: "`#` / `##` の見出し", replacement: "節の `heading`" },
+  table: { written: "表", replacement: "`table` の塊" },
+  list: { written: "箇条書き", replacement: "`list` の塊" },
+  note: { written: "`note` の塊", replacement: "`note` の塊（種別は `tone`）" },
+  stats: { written: "`stats` の塊", replacement: "`stats` の塊" },
+  code: { written: "フェンス", replacement: "`code` の塊" },
+  mermaid: { written: "mermaid のフェンス", replacement: "`mermaid` の塊" },
+} as const satisfies Record<string, { readonly written: string; readonly replacement: string }>
 
-/** `#` 1つの見出し（CommonMark の ATX 見出し。行頭の空白は3つまで）。 */
-const TOP_HEADING = /^ {0,3}#(?:[ \t]|$)/
+const MARKDOWN_NOTATIONS = Object.keys(MARKDOWN_NOTATION_NAMES).filter(
+  (name): name is MarkdownNotation => name in MARKDOWN_NOTATION_NAMES,
+)
+
+const MERMAID_KINDS: ReadonlySet<string> = new Set(REPORT_MERMAID_KINDS)
+
+/** `#` / `##` の見出し（CommonMark の ATX 見出し。行頭の空白は3つまで）。`###` は節の下の段で、塊の種類が無い。 */
+const SECTION_HEADING = /^ {0,3}#{1,2}(?:[ \t]|$)/
+
+/** 箇条書き・番号付きリスト・チェックリストの項目の頭。 */
+const LIST_ITEM = /^ {0,3}(?:[-*+]|\d{1,9}[.)])[ \t]/
 
 /** フェンスの開き（CommonMark。行頭の空白は3つまで、`` ` `` か `~` を3つ以上）。 */
 const FENCE_OPEN = /^ {0,3}(`{3,}|~{3,})(.*)$/
 
 /** 表の区切りの行（`| --- | :---: |`）。`|` を1つ以上含み、セルは `-` と両端の `:` だけ。 */
 const TABLE_DELIMITER = /^ *\|?(?: *:?-+:? *\|)+(?: *:?-+:? *)?$|^ *:?-+:? *\|(?: *:?-+:? *\|?)*$/
-
-/** 太字だけの1行（表の見出し）。 */
-const BOLD_LINE = /^ *\*\*[^*].*\*\* *$/
 
 /** 地の文の段落にしない行の頭（見出し・表・引用・箇条書き・番号・HTML・区切り線）。 */
 const NON_PROSE_LINE = /^ *(?:#|\||>|[-*+] |\d+[.)] |<|---|\*\*\*|___)/
@@ -147,35 +179,33 @@ const NON_PROSE_LINE = /^ *(?:#|\||>|[-*+] |\d+[.)] |<|---|\*\*\*|___)/
 const HTML_BLOCK_OPEN = /<(?:details|div)\b/g
 const HTML_BLOCK_CLOSE = /<\/(?:details|div)>/g
 
-/** フェンス1つ。`info` は開きの info 文字列の最初の語（無ければ空）。 */
-type Fence = { readonly info: string; readonly content: readonly string[] }
+/**
+ * フェンス1つ。`info` は開きの info 文字列の最初の語（無ければ空）、`line` は開きの行の位置。
+ */
+type Fence = { readonly info: string; readonly content: readonly string[]; readonly line: number }
+
+/** 逃げ道の中身を、フェンスの外の行とフェンスの並びに分けたもの。 */
+type SplitMarkdown = { readonly outside: readonly string[]; readonly fences: readonly Fence[] }
 
 /**
- * 本文を、フェンスの外の行とフェンスの並びに分ける。`outside` は行の並びを保つため、
+ * 逃げ道の中身を、フェンスの外の行とフェンスの並びに分ける。`outside` は行の並びを保つため、
  * フェンスの行（開き・中身・閉じ）を空行に置き換えて残す。閉じの無いフェンスは末尾まで続く。
  */
-function splitFences(body: string): {
-  readonly outside: readonly string[]
-  readonly fences: readonly Fence[]
-} {
-  type Open = {
-    readonly marker: string
-    readonly info: string
-    readonly content: readonly string[]
-  }
+function splitFences(markdown: string): SplitMarkdown {
+  type Open = Fence & { readonly marker: string }
   const initial: {
     readonly outside: readonly string[]
     readonly fences: readonly Fence[]
     readonly open: Open | undefined
   } = { outside: [], fences: [], open: undefined }
 
-  const final = body.split("\n").reduce((state, line) => {
+  const final = markdown.split("\n").reduce((state, line) => {
     const open = state.open
     if (open !== undefined) {
       return closesFence(line, open.marker)
         ? {
             outside: [...state.outside, ""],
-            fences: [...state.fences, { info: open.info, content: open.content }],
+            fences: [...state.fences, fenceOf(open)],
             open: undefined,
           }
         : {
@@ -195,16 +225,19 @@ function splitFences(body: string): {
         marker: opening[1] ?? "```",
         info: (opening[2] ?? "").trim().split(/\s+/)[0] ?? "",
         content: [],
+        line: state.outside.length,
       },
     }
   }, initial)
 
-  return final.open === undefined
-    ? { outside: final.outside, fences: final.fences }
-    : {
-        outside: final.outside,
-        fences: [...final.fences, { info: final.open.info, content: final.open.content }],
-      }
+  return {
+    outside: final.outside,
+    fences: final.open === undefined ? final.fences : [...final.fences, fenceOf(final.open)],
+  }
+}
+
+function fenceOf({ info, content, line }: Fence): Fence {
+  return { info, content, line }
 }
 
 /** フェンスの閉じか（開きと同じ文字を、開き以上の数だけ並べた行）。 */
@@ -215,6 +248,48 @@ function closesFence(line: string, marker: string): boolean {
     trimmed.length >= marker.length &&
     [...trimmed].every((char) => char === marker[0])
   )
+}
+
+/**
+ * 逃げ道の外側（HTML の塊〔`<details>` / `<div>`〕の中でないところ）に、その記法があるか。
+ * HTML の塊の中は見ない（複数の塊を1つに畳む・`cols` に並べるのは逃げ道の役目なので）。
+ */
+function hasNotation({ outside, fences }: SplitMarkdown, notation: MarkdownNotation): boolean {
+  const topLevel = topLevelFlags(outside)
+  const lines = outside.filter((_, index) => topLevel[index])
+  const topFences = fences.filter((fence) => topLevel[fence.line])
+  switch (notation) {
+    case "heading":
+      return lines.some((line) => SECTION_HEADING.test(line))
+    case "table":
+      return outside.some(
+        (line, index) =>
+          topLevel[index] && line.includes("|") && TABLE_DELIMITER.test(outside[index + 1] ?? ""),
+      )
+    case "list":
+      return lines.some((line) => LIST_ITEM.test(line))
+    case "note":
+    case "stats":
+      return lines.some((line) => classLists(line).some((classes) => classes.includes(notation)))
+    case "code":
+      return topFences.some((fence) => fence.info !== "mermaid" && fence.info !== "chart")
+    case "mermaid":
+      return topFences.some((fence) => fence.info === "mermaid")
+  }
+}
+
+/** 行ごとに、その行の頭が HTML の塊の外にあるか。 */
+function topLevelFlags(lines: readonly string[]): readonly boolean[] {
+  return lines.reduce<{ readonly flags: readonly boolean[]; readonly depth: number }>(
+    (state, line) => ({
+      flags: [...state.flags, state.depth === 0],
+      depth: Math.max(
+        state.depth + countMatches(line, HTML_BLOCK_OPEN) - countMatches(line, HTML_BLOCK_CLOSE),
+        0,
+      ),
+    }),
+    { flags: [], depth: 0 },
+  ).flags
 }
 
 /**
@@ -262,24 +337,17 @@ function sentenceCount(text: string): number {
   return /[。！？]$/.test(plain) ? terminated : terminated + 1
 }
 
-/** 表のうち、直前の空でない行が太字1行でないものの数。 */
-function untitledTableCount(lines: readonly string[]): number {
-  return lines.filter((line, index) => {
-    const next = lines[index + 1]
-    if (next === undefined || !line.includes("|") || !TABLE_DELIMITER.test(next)) {
-      return false
-    }
-    const previous = lines.slice(0, index).findLast((candidate) => candidate.trim() !== "")
-    return previous === undefined || !BOLD_LINE.test(previous)
-  }).length
+/** 行のセルの数が列の数と揃わない表か。 */
+function isRaggedTable(block: ReportBlock): boolean {
+  return block.kind === "table" && block.rows.some((row) => row.length !== block.columns.length)
 }
 
 /**
- * mermaid の図の種類（中身の最初の語）。空行・`%%` の行（コメントと init の指定）と、先頭の
+ * mermaid の図の種類（ソースの最初の語）。空行・`%%` の行（コメントと init の指定）と、先頭の
  * `---` で囲んだ設定は飛ばす。中身が空なら空文字（10種に無いので違反になる）。
  */
-function mermaidKind(content: readonly string[]): string {
-  const lines = content.map((line) => line.trim())
+function mermaidKind(source: string): string {
+  const lines = source.split("\n").map((line) => line.trim())
   const afterFrontmatter =
     lines.find((line) => line !== "") === "---"
       ? lines.slice(lines.indexOf("---", lines.indexOf("---") + 1) + 1)
@@ -288,13 +356,9 @@ function mermaidKind(content: readonly string[]): string {
   return first?.split(/\s/)[0] ?? ""
 }
 
-/** `note` の塊ごとの class の並び（`class="note note-warn"` なら `["note", "note-warn"]`）。 */
-function noteClassLists(lines: readonly string[]): readonly (readonly string[])[] {
-  return lines.flatMap((line) =>
-    [...line.matchAll(/class=["']([^"']*)["']/g)]
-      .map((match) => (match[1] ?? "").split(/\s+/))
-      .filter((classes) => classes.includes("note")),
-  )
+/** 行に書かれた class の並びごとの名前（`class="note note-warn"` なら `["note", "note-warn"]`）。 */
+function classLists(line: string): readonly (readonly string[])[] {
+  return [...line.matchAll(/class=["']([^"']*)["']/g)].map((match) => (match[1] ?? "").split(/\s+/))
 }
 
 function countMatches(text: string, pattern: RegExp): number {
