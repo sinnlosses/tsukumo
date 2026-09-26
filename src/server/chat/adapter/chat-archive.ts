@@ -3,7 +3,7 @@
 // `~/.tsukumo/chat-archive/<パック名>/<YYYY-MM-DD>.jsonl`、パックごと・日ごとで `cwd` には
 // 依存させない。
 //
-// **何を残すか・いつ書くかの判断はここが決めない。** 判断は
+// 何を残すか・いつ書くかの判断はここが決めない。 判断は
 // `src/server/session/core/session-manager.ts` の `receive` が持ち、ここが持つのは「どこに・どんな形で
 // 書くか」——1件を1行の JSONL へ変換して追記するだけ（`docs/coding-standards.md`
 // 「会話内容の扱い」とぶつからないための切り分け。`src/server/chat/adapter/chat-summary.ts` と同じ形）。
@@ -11,18 +11,18 @@
 // 書けなくても例外を投げない（常駐プロセスは1回の失敗で落ちない。
 // `docs/coding-standards.md`「エラーハンドリング」）。
 //
-// **読む口は `readRecent` の1つだけ**（かつて決めた「読む口は持たない」を覆している。理由と
+// 読む口は `readRecent` の1つだけ（かつて決めた「読む口は持たない」を覆している。理由と
 // 量の正典は `docs/chat-mode.md` 4.9「直近の会話は逐語のまま読み戻す」）。
-// 読んだものの行き先は**雑談のセッションの `systemPrompt`** だけで、画面にも手続きの応答にも
-// stderr にも出さない。**どこまで読むかは呼ぶ側が渡すバイト数**で、ここは遡って集めることと
+// 読んだものの行き先は雑談のセッションの `systemPrompt` だけで、画面にも手続きの応答にも
+// stderr にも出さない。どこまで読むかは呼ぶ側が渡すバイト数で、ここは遡って集めることと
 // 並べ替えだけをする（文面を読んで載せる・載せないを決めない）。
 //
-// **古い雑談は、エピソード索引（`episode.jsonl`）を引いてから、当たった範囲のファイルだけを
-// 開く**（`docs/chat-mode.md` 4.9「古い雑談は索引を引いて思い出す」、`docs/design.md` 7章
+// 古い雑談は、エピソード索引（`episode.jsonl`）を引いてから、当たった範囲のファイルだけを
+// 開く（`docs/chat-mode.md` 4.9「古い雑談は索引を引いて思い出す」、`docs/design.md` 7章
 // 「エピソード索引はどこに置くか」）。索引を書くのは定着（`chat-consolidation-writer.ts`）で、
 // ここが持つのは置き場と形、`recallList` / `recallEpisode` での読み方だけ。
 //
-// **`kept.jsonl`（「残す」旗の索引）はもう書きも読みもしない**（`keep` ツールが無くなった。
+// `kept.jsonl`（「残す」旗の索引）はもう書きも読みもしない（`keep` ツールが無くなった。
 // `docs/chat-mode.md` 4.9「窓から溢れた会話は定着で畳む」の「「残す」旗はやめる」）。過去に
 // 書かれたファイルが残っていても消さず、単に読まない（`readRecent` は窓の逐語だけを返す）。
 
@@ -75,7 +75,7 @@ const RECALLED_FORMAT_VERSION = 1 satisfies number
 
 /**
  * 読み戻すときに要る鍵だけを検査する（`v` が知らない版・鍵が足りない行はここで落ちる）。
- * **`expression` と `images` は読まないので、形も見ない。**
+ * `expression` と `images` は読まないので、形も見ない。
  */
 const archiveLineSchema = z.object({
   v: z.literal(ARCHIVE_FORMAT_VERSION),
@@ -97,7 +97,7 @@ const episodeLineSchema = z.object({
 })
 
 /**
- * `episode.jsonl` の1行の形。**`cues` は読むときも書くときも `readonly`**（zod の推論のままだと
+ * `episode.jsonl` の1行の形。`cues` は読むときも書くときも `readonly`（zod の推論のままだと
  * 書くとき（{@link ChatEpisodeDraft.cues}）と読むときで可変・不変が食い違うため、手で定義する）。
  */
 type EpisodeLine = {
@@ -128,7 +128,7 @@ export function chatArchiveDir(): string {
 
 /**
  * パック1つぶんのアーカイブ（日ごとの会話・「残す」旗・日ごとの索引）をディレクトリごと消す
- * （**キャラクターパックを消したときだけ**呼ばれる。`docs/design.md` 7.1「消すときの細部」）。
+ * （キャラクターパックを消したときだけ呼ばれる。`docs/design.md` 7.1「消すときの細部」）。
  * 同じ名前で作り直したパックが、消したパックとの会話を読み戻したり思い出したりしないため。
  * 無い・消せないときも何もせず続ける。名前が {@link isCharacterPackName} を通らなければパスを
  * 組み立てない（書く口と同じ規則）。
@@ -150,11 +150,11 @@ export function discardChatArchive(packName: string, root: string = chatArchiveD
  * `root` は置き場の親（既定は {@link chatArchiveDir}）。差し替えられるのはテストがホームを
  * 汚さないためにある（`createChatSummary` の `root` と同じ手）。
  *
- * **1つの口を複数のパック・複数の日にまたいで使い回せる**——`append` のたびに `packName` と
+ * 1つの口を複数のパック・複数の日にまたいで使い回せる——`append` のたびに `packName` と
  * `entry.at`（ローカル日付）から行き先のパスを組み立てる。パックの切り替え（`session.switchCharacter`）
  * をまたいでも起こし直す必要が無い。
  *
- * **書くのは `session-manager` から1件ずつ、読むのはセッションを起こすとき1回だけ**と持ち場が
+ * 書くのは `session-manager` から1件ずつ、読むのはセッションを起こすとき1回だけと持ち場が
  * 違うが、触るファイルは同じ1つなので境界は増やさない（原則3。`docs/design.md` 7章）。
  */
 export function createChatArchive(root: string = chatArchiveDir()): ChatArchive {
@@ -179,7 +179,7 @@ export function createChatArchive(root: string = chatArchiveDir()): ChatArchive 
 }
 
 /**
- * JSONL の1行の形（`docs/design.md` 7章の表）。**tsukumo の内部の型をそのまま書き出さない。**
+ * JSONL の1行の形（`docs/design.md` 7章の表）。tsukumo の内部の型をそのまま書き出さない。
  * `expression` / `images` は「無いかもしれない」プロパティなので `T | undefined` で持つ（`?:`
  * は使わない。`docs/coding-standards.md`「「無いかもしれない」値」）——どちらを持つかは `speaker`
  * が決めるので、値を渡すたびにもう片方へ明示的に `undefined` を渡す。
@@ -232,11 +232,11 @@ function readReadback(
 /**
  * 直近の会話を新しいほうから遡って集める（返すのは古い→新しいの順）。
  *
- * **ディレクトリの日付のファイル名を降順に並べ、各ファイルは末尾の行から遡る。** 文面の
- * バイト数の合計が `limitBytes` に届いたところで**それ以上は読まない**ので、アーカイブが
+ * ディレクトリの日付のファイル名を降順に並べ、各ファイルは末尾の行から遡る。 文面の
+ * バイト数の合計が `limitBytes` に届いたところでそれ以上は読まないので、アーカイブが
  * 何年ぶん増えても読む量は変わらない。
  *
- * **溢れる1件は載せない**（`docs/chat-mode.md` 4.9「切り方」）。1件だけで `limitBytes` を
+ * 溢れる1件は載せない（`docs/chat-mode.md` 4.9「切り方」）。1件だけで `limitBytes` を
  * 超える行が先頭に来たときは空を返す——行の途中で切るくらいなら逐語なしで始める。
  */
 function readRecentEntries(dir: string, limitBytes: number): readonly TimedEntry[] {
@@ -244,11 +244,11 @@ function readRecentEntries(dir: string, limitBytes: number): readonly TimedEntry
 }
 
 /**
- * 渡された順のファイルを、**各ファイルは末尾の行から遡って**集める（返すのは古い→新しいの順）。
- * 文面のバイト数の合計が `limitBytes` に届いたところで**それ以上は読まない**（**残りの
- * ファイルは開かない**）。
+ * 渡された順のファイルを、各ファイルは末尾の行から遡って集める（返すのは古い→新しいの順）。
+ * 文面のバイト数の合計が `limitBytes` に届いたところでそれ以上は読まない（残りの
+ * ファイルは開かない）。
  *
- * **窓（新しい日から全部）と `recall`（索引に当たった日だけ）で同じ1つの走査を使う** — 違うのは
+ * 窓（新しい日から全部）と `recall`（索引に当たった日だけ）で同じ1つの走査を使う — 違うのは
  * 渡すファイルの並びだけで、切り方（1件を単位にし、溢れる1件は載せない）は1箇所にある。
  */
 function readEntriesBackward(
@@ -288,11 +288,11 @@ function newestFirstFileNames(dir: string): readonly string[] {
 }
 
 /**
- * JSONL の1行を、載せる形（話者の別・文面・日付）へ畳む。**壊れた JSON・知らない版・鍵が
- * 足りない行は undefined**（1行ずつ落とす。JSONL は壊れても被害が1行）。
+ * JSONL の1行を、載せる形（話者の別・文面・日付）へ畳む。壊れた JSON・知らない版・鍵が
+ * 足りない行は undefined（1行ずつ落とす。JSONL は壊れても被害が1行）。
  *
- * **`expression` と `images` はここで読まない**（口が最初から渡さない。
- * `docs/chat-mode.md` 4.9）。日付は `at` の頭10文字で、**行だけで意味が決まる**
+ * `expression` と `images` はここで読まない（口が最初から渡さない。
+ * `docs/chat-mode.md` 4.9）。日付は `at` の頭10文字で、行だけで意味が決まる
  * （ファイル名には頼らない）。
  */
 function toTimedEntry(raw: unknown): TimedEntry | undefined {
@@ -305,7 +305,7 @@ function toTimedEntry(raw: unknown): TimedEntry | undefined {
 }
 
 /**
- * 載せる形に、**索引と突き合わせるための時刻**を添えたもの。`at` は外へ出さない
+ * 載せる形に、索引と突き合わせるための時刻を添えたもの。`at` は外へ出さない
  * （{@link ChatArchiveRecentEntry} が持つのは日付までで、時刻は渡さない）。
  */
 type TimedEntry = {
@@ -315,8 +315,8 @@ type TimedEntry = {
 
 /**
  * まだどのエピソードにも入っていない行を読む（{@link ChatArchive.unconsolidated} の実装）。
- * **最後のエピソードの `to` より後**（エピソードが無ければアーカイブの最初から）で、**直近の窓
- * （{@link readRecentEntries} が拾う範囲）の外**にある行だけを、古いほうから `maxBytes` まで
+ * 最後のエピソードの `to` より後（エピソードが無ければアーカイブの最初から）で、直近の窓
+ * （{@link readRecentEntries} が拾う範囲）の外にある行だけを、古いほうから `maxBytes` まで
  * 集める。
  */
 function readUnconsolidated(
@@ -425,8 +425,8 @@ function readEpisodeCandidates(
 }
 
 /**
- * 1件のエピソードの範囲を逐語のまま読む（{@link ChatArchive.recallEpisode} の実装）。**開いたら
- * `recalled.jsonl` に記録する**——文面は複製せず、`v`・`id`・時刻だけを追記する
+ * 1件のエピソードの範囲を逐語のまま読む（{@link ChatArchive.recallEpisode} の実装）。開いたら
+ * `recalled.jsonl` に記録する——文面は複製せず、`v`・`id`・時刻だけを追記する
  * （`docs/coding-standards.md`「会話内容の扱い」の例外表を増やさないため）。
  */
 function readEpisode(
@@ -490,7 +490,7 @@ function readRecalledCounts(root: string, packName: string): ReadonlyMap<string,
 }
 
 /**
- * 日付ごとの、次に振る通し番号の元になるカウンタ（**既にある行の続きから振る**——1回の定着で
+ * 日付ごとの、次に振る通し番号の元になるカウンタ（既にある行の続きから振る——1回の定着で
  * 複数のエピソードが同じ日に落ちても重ならない）。
  */
 function episodeIdCounters(existing: readonly EpisodeLine[]): Map<string, number> {
@@ -542,8 +542,8 @@ function trimCandidatesToBytes(
 }
 
 /**
- * `from`〜`to`（両端含む）の逐語を古いほうから `limitBytes` まで読む。**当たる日のファイルだけ
- * 開く**——アーカイブが何年ぶん増えても開くファイルの数は範囲の日数で頭打ちになる。
+ * `from`〜`to`（両端含む）の逐語を古いほうから `limitBytes` まで読む。当たる日のファイルだけ
+ * 開く——アーカイブが何年ぶん増えても開くファイルの数は範囲の日数で頭打ちになる。
  */
 function readEpisodeEntries(
   dir: string,

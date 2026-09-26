@@ -1,14 +1,14 @@
 // テストが使う、手で書いた架空のコンテキストの内訳（`docs/glossary.md`「コンテキストの内訳」）。
-// 形は `test/fixture/session-record.ts` と同じで、既定を1つ持ち、呼ぶ側は**違うところだけ**を
+// 形は `test/fixture/session-record.ts` と同じで、既定を1つ持ち、呼ぶ側は違うところだけを
 // 渡す。
 //
-// **数は架空だが、分類の並びと種別だけ本物に合わせてある**（`used` の合計が `totalTokens`、
+// 数は架空だが、分類の並びと種別だけ本物に合わせてある（`used` の合計が `totalTokens`、
 // それに `buffer` と `free` を足すと `maxTokens` になる）。実物のセッションの値は使わない
 // （docs/coding-standards.md「会話内容の扱い」）。
 
 import { type ContextUsage, type ContextUsageReport } from "../../src/shared/context-usage.ts"
 
-/** 架空の内訳1つ。**違うところだけ**を渡す。 */
+/** 架空の内訳1つ。違うところだけを渡す。 */
 export function contextUsage(overrides: Partial<ContextUsage> = {}): ContextUsage {
   return {
     model: "claude-opus-5",

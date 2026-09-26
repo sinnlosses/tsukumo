@@ -1,33 +1,33 @@
-// `main` のタスク一覧を見張る。`main` の先端のコミットが変わったとき、**または台帳の
-// 着手の印が変わったとき**に読み直し、`onChange` を呼ぶ（docs/design.md 5章「task-summary.ts」）。
+// `main` のタスク一覧を見張る。`main` の先端のコミットが変わったとき、または台帳の
+// 着手の印が変わったときに読み直し、`onChange` を呼ぶ（docs/design.md 5章「task-summary.ts」）。
 // 呼び出し側（src/session-start.ts）がこれを `tasks-changed` イベントに変えて、他のセッションの
 // イベントと同じ経路へ流す。
 //
-// **読むのは作業ツリーのファイルではなく `main` の上のもの**。タスクの正典は `main` のもので、
-// 作業ツリーのものは `git merge main` するまで別の作業ツリーで足したタスクを知らない。**境界は
-// 「`main` の上のタスク一覧」の1つ**。`git` を起こすのは `src/server/repository/adapter/git.ts`
+// 読むのは作業ツリーのファイルではなく `main` の上のもの。タスクの正典は `main` のもので、
+// 作業ツリーのものは `git merge main` するまで別の作業ツリーで足したタスクを知らない。境界は
+// 「`main` の上のタスク一覧」の1つ。`git` を起こすのは `src/server/repository/adapter/git.ts`
 // （`node:child_process` を import してよいファイルは `test/architecture.test.ts` が絞っている。
 // 成果の集計（`main-history.ts`）と同じ口を使う）。`main` の上のファイルを読む汎用の adapter を
 // 別に切らないのは、読み手がこの一覧しかなく、切っても開くファイルが増えるだけで概念が増えない
 // ため。
 //
-// **読むのは `develop/task/*.md` の front matter だけ**（claude-skills の
+// 読むのは `develop/task/*.md` の front matter だけ（claude-skills の
 // `docs/task-workflow-redesign.md`。develop/tasks.json の読み方は後から消した）:
 // `main` に `develop/task/` があれば、そこの `*.md` を1件ずつ front matter として
 // 読む（`git ls-tree` で列挙し、`git cat-file --batch` で1回の子プロセスでまとめて読む）。
-// 着手中（旧 `doing`）はファイルに書かれない。**台帳の着手の印（`task claim` / `task release`）は
-// 共有の `.git` の下だけで完結し、`main` を動かさない**（claude-skills の
+// 着手中（旧 `doing`）はファイルに書かれない。台帳の着手の印（`task claim` / `task release`）は
+// 共有の `.git` の下だけで完結し、`main` を動かさない（claude-skills の
 // `docs/task-workflow-redesign.md` 4.2）ので、`main` の先端が同じ見回りでも
 // `task-workflow/claim/` の一覧だけは毎回読み直し、前回と変わっていれば
-// `onChange` する。**このときファイルは読み直さない**——`git cat-file --batch` は先端が
+// `onChange` する。このときファイルは読み直さない——`git cat-file --batch` は先端が
 // 動いたときだけで足りるので、前回読んだ front matter（`NewTaskFile[]`）に新しい印の集合を
 // 当て直すだけにする（`src/shared/task-summary.ts` の `taskSummaryItemsOfNewTaskFiles`）
 //
-// **`main` が読めないとき（git リポジトリでない・`main` ブランチが無い・`git` が無い）、
-// `develop/task/` が無いときは「不明」にする。** 作業ツリーのファイルへは落とさない。落とすと
+// `main` が読めないとき（git リポジトリでない・`main` ブランチが無い・`git` が無い）、
+// `develop/task/` が無いときは「不明」にする。 作業ツリーのファイルへは落とさない。落とすと
 // 読み元が2つになり、`main` の名前が違うリポジトリで一覧が黙って古いほうへ戻る（「不明」なら
 // 画面で気付ける）。tsukumo を他のプロジェクトで起こしたときは `develop/task/` が無いので「不明」になる。
-// **`git` がタイムアウトしたときだけはその回を諦め、覚えている状態も変えない**（一時的な失敗なので
+// `git` がタイムアウトしたときだけはその回を諦め、覚えている状態も変えない（一時的な失敗なので
 // 次の回で読み直す。「不明」にすると一覧が一瞬消えて戻る）。
 //
 // 中身の解釈（front matter の文法・台帳の印から `doing` を作る）は src/shared/task-summary.ts の
@@ -65,8 +65,8 @@ export type TaskSummaryWatcher = {
 }
 
 /**
- * `main` のタスク一覧を見張り始める。**呼んだ時点で1回見に行き、以後はポーリングで
- * `main` の先端と台帳の着手の印を見る。** 1回の見回りが終わってから次の
+ * `main` のタスク一覧を見張り始める。呼んだ時点で1回見に行き、以後はポーリングで
+ * `main` の先端と台帳の着手の印を見る。 1回の見回りが終わってから次の
  * 見回りを予約するので、`git` が遅くても見回りは重ならない。
  * `main` が最初から読めない（先端が取れない）ときは `onChange` を呼ばない（先端が「無い→無い」で
  * 変わっていないため。`INITIAL_SESSION_STATE.tasks` の既定値 `{ kind: "unknown" }` と一致するので、
@@ -114,7 +114,7 @@ export function watchTaskSummary(
 }
 
 /**
- * 見回りのあいだ覚えておく状態。`head` は前回見た `main` の先端。**`develop/task/` があるときだけ**
+ * 見回りのあいだ覚えておく状態。`head` は前回見た `main` の先端。`develop/task/` があるときだけ
  * `git cat-file --batch` で読んだ front matter とそのときの台帳の印を持つ（先端が動かないあいだ、
  * 印だけの変化をファイルを読み直さずに拾うため）。`develop/task/` が無い・不明のときは先端だけ
  * （`main` が読めなければ `undefined`）。
@@ -138,8 +138,8 @@ type MainTasksRead =
     }
 
 /**
- * `main` の先端を取る。**先端が前回と同じでも、`develop/task/` を見ているときは台帳の着手の印だけ
- * 読み直す**（着手・解除は `main` を動かさないため）。先端が変わっていれば {@link readAtHead} で
+ * `main` の先端を取る。先端が前回と同じでも、`develop/task/` を見ているときは台帳の着手の印だけ
+ * 読み直す（着手・解除は `main` を動かさないため）。先端が変わっていれば {@link readAtHead} で
  * 中身から読み直す。
  */
 async function pollOnce(cwd: string, cache: WatcherCache): Promise<MainTasksRead> {
@@ -235,8 +235,8 @@ async function readTasksAtHead(
   }
 }
 
-/** 共有の `.git` の下の台帳から、着手の印がある ID の集合を作る。**台帳が無い・読めないときは
- * 「印なし」に倒す**（この一覧は表示だけで、台帳が正典の取り合いの判定には使わない。台帳が
+/** 共有の `.git` の下の台帳から、着手の印がある ID の集合を作る。台帳が無い・読めないときは
+ * 「印なし」に倒す（この一覧は表示だけで、台帳が正典の取り合いの判定には使わない。台帳が
  * 一時的に読めないだけで一覧全体を「不明」にはしない）。 */
 async function readClaimedTaskIds(cwd: string): Promise<ReadonlySet<string>> {
   const commonDir = await runGit(cwd, ["rev-parse", "--path-format=absolute", "--git-common-dir"])

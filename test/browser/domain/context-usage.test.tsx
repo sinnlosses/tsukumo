@@ -21,7 +21,7 @@ import {
  * 画面を丸ごと描かずに、内訳の取得と畳み方だけを測る（docs/design.md 2章「機能の中を分ける」）。
  * フィクスチャは手で書いた架空の内訳（`docs/coding-standards.md`「会話内容の扱い」）。
  *
- * **`useContextUsage` は `refetchKey` を受け取る**（`browser/domain/` は `stores/` を読めないので、
+ * `useContextUsage` は `refetchKey` を受け取る（`browser/domain/` は `stores/` を読めないので、
  * 「いつ取り直すか」は呼び出し側の責務）。ここではテストが直接キーを渡す。
  */
 

@@ -155,7 +155,7 @@ describe("characterChangedEvent", () => {
   })
 })
 
-// 一覧の1件（`CharacterPackEntry`）。**使用中以外のパックも姿ごと載る**（docs/design.md 7.2）。
+// 一覧の1件（`CharacterPackEntry`）。使用中以外のパックも姿ごと載る（docs/design.md 7.2）。
 // 3つの置き場に1つずつ、立ち絵の枚数が違う架空のパックを置く。
 describe("characterChangedEvent の一覧（packs）", () => {
   const cwd = (): string => join(dir, "cwd")
@@ -329,9 +329,9 @@ describe("characterChangedEvent の一覧（packs）", () => {
   })
 })
 
-// **人格は手で書いた架空の一文だけ**（実物の人格ファイルも会話も使わない。
-// docs/coding-standards.md「会話内容の扱い」）。**この文面を `systemPrompt` のどこへ並べるかは
-// ここの担当ではない**（`test/server/system-prompt/core/system-prompt.test.ts`）。ここが見るのは読めたかどうか。
+// 人格は手で書いた架空の一文だけ（実物の人格ファイルも会話も使わない。
+// docs/coding-standards.md「会話内容の扱い」）。この文面を `systemPrompt` のどこへ並べるかは
+// ここの担当ではない（`test/server/system-prompt/core/system-prompt.test.ts`）。ここが見るのは読めたかどうか。
 const PERSONA = "# 架空の精霊\n\n語尾に「なのじゃ」と付ける。"
 
 describe("persona.md", () => {
@@ -364,7 +364,7 @@ describe("listCharacterPacks", () => {
     return packDir
   }
 
-  /** 探し先3箇所。**ホームは必ず tmp に向ける**（本物の `~/.tsukumo` を読まない）。 */
+  /** 探し先3箇所。ホームは必ず tmp に向ける（本物の `~/.tsukumo` を読まない）。 */
   function roots(): { readonly bundled: string; readonly home: string } {
     return { bundled: join(dir, "bundled"), home: join(dir, "home") }
   }

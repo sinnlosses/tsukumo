@@ -2,7 +2,7 @@
 // 立ち絵に出す表情（押して留めた行か、出した吹き出しか）、ログに並べる行（日の区切り・時刻・印・
 // 弾む行を畳んだもの）、「...」を出すか、立ち絵をつついたときの送り先を組み立てて返す。
 //
-// **行を押して遡る・印・出すタイミング・「...」の決め方**は docs/screen-design.md 13.7。ここは
+// 行を押して遡る・印・出すタイミング・「...」の決め方は docs/screen-design.md 13.7。ここは
 // それを「部品がそのまま置ける値」へ畳むだけで、部品（`components/`）は判定を持たない。
 
 import { useState, type RefObject } from "react"
@@ -36,7 +36,7 @@ import { useRevealedChatLog } from "./use-speech-reveal.ts"
 import { useStickToBottom } from "./use-stick-to-bottom.ts"
 
 /**
- * 発言の脇に添える時刻。**前のセッションを組み直した発言は `unknown`** で、何も出さない
+ * 発言の脇に添える時刻。前のセッションを組み直した発言は `unknown` で、何も出さない
  * （docs/screen-design.md 13.7。流し直した時刻を代わりに出すと昨日の一言が「いま」に見える）。
  */
 export type ChatTimeStamp =
@@ -84,12 +84,12 @@ export type ChatViewModel = {
   /** 立ち絵の素材 URL。character が届いていなければ `undefined`（立ち絵を出さない）。 */
   readonly portraitUrl: string | undefined
   readonly accent: string | undefined
-  /** **出ている絵をそのまま説明する**（行を押して遡れば、その行の表情の名前になる）。 */
+  /** 出ている絵をそのまま説明する（行を押して遡れば、その行の表情の名前になる）。 */
   readonly altText: string
   readonly expression: Expression
   readonly outfit: Outfit
   readonly turnInProgress: boolean
-  /** 立ち絵をつついたとき。**ターン進行中は何も送らない**（サーバ側も同じ条件で断る）。 */
+  /** 立ち絵をつついたとき。ターン進行中は何も送らない（サーバ側も同じ条件で断る）。 */
   readonly onNudge: () => void
   /** ログの入れ物。下端付近を読んでいたときだけ最新へ寄せる（`use-stick-to-bottom.ts`）。 */
   readonly logRef: RefObject<HTMLDivElement | null>
@@ -101,12 +101,12 @@ export type ChatViewModel = {
 }
 
 /**
- * 立ち絵がいま従っているセリフ。**既定は「最新」**（何も押していない状態。docs/screen-design.md 13.7）で、
+ * 立ち絵がいま従っているセリフ。既定は「最新」（何も押していない状態。docs/screen-design.md 13.7）で、
  * 行を押すと「留めた」へ移る。
  *
- * 留めた側は**行の番号だけでなく、押した時点のセリフの件数も持つ** — 件数が変われば留めた
+ * 留めた側は行の番号だけでなく、押した時点のセリフの件数も持つ — 件数が変われば留めた
  * 選択は失効し、「最新」と同じ見え方へ戻る（{@link pinnedSpeechIndex}）。
- * **「最新」と「留めた」を `undefined` で書き分けない**のは、既定が「印がどこにも無い」では
+ * 「最新」と「留めた」を `undefined` で書き分けないのは、既定が「印がどこにも無い」では
  * なく「最新の行に印が付いている」になったため（`docs/coding-standards.md`
  * 「複数の「無い」が1つの状態」）。
  */
@@ -124,25 +124,25 @@ export function useChatView(): ChatViewModel {
   const dispatch = useSessionDispatch()
   const entries = chatLogEntries(records)
   const outfit = resolveOutfit(model)
-  // **ログに並べるのは、出してよいと決まった前置きだけ**（docs/screen-design.md 13.7「セリフは
+  // ログに並べるのは、出してよいと決まった前置きだけ（docs/screen-design.md 13.7「セリフは
   // 全文で現れ、吹き出しは2秒空ける」）。以下の遡り・自動スクロール・表情はすべてこの
   // `shown` を見る——出していない行を先に選べたり、自動スクロールが先取りしたりしないように。
   const { entries: shown, pending } = useRevealedChatLog(entries)
   const logRef = useStickToBottom(shown.length)
 
-  // 現れるとき短く弾む行（docs/screen-design.md 13.7）。**弾むのは画面を開いたあとに届いた
-  // 記録だけ**で、開いた時点で並んでいた記録（前の雑談の続き）には掛からない——遡って読む
+  // 現れるとき短く弾む行（docs/screen-design.md 13.7）。弾むのは画面を開いたあとに届いた
+  // 記録だけで、開いた時点で並んでいた記録（前の雑談の続き）には掛からない——遡って読む
   // ためのログが、開くたびに弾みながら組み上がることにならないように。
   const [initialCount] = useState(entries.length)
 
   // 立ち絵がいま従っているセリフ。押していなければ「最新（出した吹き出し）」で、印は
-  // 最新のセリフの行に付く。**新しいセリフが来たら留めた選択はその場で失効する** — 立ち絵は
+  // 最新のセリフの行に付く。新しいセリフが来たら留めた選択はその場で失効する — 立ち絵は
   // 常に「いまのセリフ」を表す側へ倒す。読み返しの最中でも下へ攫わないスクロールの規則
-  // （`use-stick-to-bottom.ts`）とは**揃えない**: 流れていった行の印は画面の外にあるので、
+  // （`use-stick-to-bottom.ts`）とは揃えない: 流れていった行の印は画面の外にあるので、
   // 表情だけが遡ったまま動かないと、なぜ古いのかが画面から分からなくなる。
   //
-  // 失効は effect で追いかけず、**レンダー中に件数を突き合わせて決める**（state から計算できる値。
-  // docs/coding-standards.md「useEffect の代わりに使うもの」）。**件数は `shown` で数える**
+  // 失効は effect で追いかけず、レンダー中に件数を突き合わせて決める（state から計算できる値。
+  // docs/coding-standards.md「useEffect の代わりに使うもの」）。件数は `shown` で数える
   // （待たせている間は、まだ画面に出ていないセリフぶんで先に失効させない）。
   const [viewed, setViewed] = useState<ViewedSpeech>({ kind: "latest" })
   const speechCount = countSpeeches(shown)
@@ -150,15 +150,15 @@ export function useChatView(): ChatViewModel {
   const shownSpeechIndex = lastSpeechIndex(shown)
   // 印を付ける行 = 立ち絵が従っている行（docs/screen-design.md 13.7）。留めていなければ最新のセリフ。
   const selectedIndex = pinnedIndex ?? shownSpeechIndex
-  // **`SessionState` に新しい旗は増やさない** — 今のターンでまだ `speak` が呼ばれていないかは
-  // `speechCalledInTurn` が既に持っている。**待たせているセリフが残っているあいだも出す**
+  // `SessionState` に新しい旗は増やさない — 今のターンでまだ `speak` が呼ばれていないかは
+  // `speechCalledInTurn` が既に持っている。待たせているセリフが残っているあいだも出す
   // （ターンが終わっていても、まだ出していない吹き出しがあれば「まだ喋ってくれる」の合図を
   // 続ける）。
   const showTyping = (turnInProgress && !speechCalledInTurn) || pending
   // 表情は「留めた行 → 出した吹き出し」の順に決まる（docs/screen-design.md 13.7）。
-  // **留めていないときも `speechExpression`（届いた最新）をそのまま読まない** — 待たせている
-  // 間は、届いたセリフではなく**すでに出した吹き出し**の表情のままにする。ただし**新しいターンの
-  // 始まり（まだ何も話していない）は、待っている吹き出しがあっても構わず既定へ戻す**
+  // 留めていないときも `speechExpression`（届いた最新）をそのまま読まない — 待たせている
+  // 間は、届いたセリフではなくすでに出した吹き出しの表情のままにする。ただし新しいターンの
+  // 始まり（まだ何も話していない）は、待っている吹き出しがあっても構わず既定へ戻す
   // （キャラビューと同じ扱い。`speechExpression` は `beginTurn` でここだけ即座に既定へ戻るので、
   // そのまま使ってよい）。
   const shownExpression =
@@ -168,9 +168,9 @@ export function useChatView(): ChatViewModel {
   const expression = speechExpressionAt(shown, pinnedIndex) ?? shownExpression
 
   function toggle(index: number): void {
-    // **留めた行をもう一度押したら「最新」へ戻す**（新しいセリフを待たずに追従へ戻す道）。
+    // 留めた行をもう一度押したら「最新」へ戻す（新しいセリフを待たずに追従へ戻す道）。
     // 見るのは `selectedIndex` ではなく `pinnedIndex` — 既定で印が付いている最新の行を
-    // 押したときは、解くものが無いので**留める**側に倒す（印の位置は変わらないが、
+    // 押したときは、解くものが無いので留める側に倒す（印の位置は変わらないが、
     // 次のターンが始まっても表情がその行に留まる）。
     setViewed(pinnedIndex === index ? { kind: "latest" } : { kind: "pinned", index, speechCount })
   }
@@ -259,7 +259,7 @@ function timeStamp(time: RecordTime, timeZone: string): ChatTimeStamp {
 }
 
 /**
- * ログに並んでいるキャラクターのセリフの件数。**留めた選択がまだ生きているか**を測る物差しで、
+ * ログに並んでいるキャラクターのセリフの件数。留めた選択がまだ生きているかを測る物差しで、
  * これが変われば {@link pinnedSpeechIndex} が選択を失効させる。
  */
 function countSpeeches(entries: readonly ChatLogEntry[]): number {
@@ -267,10 +267,10 @@ function countSpeeches(entries: readonly ChatLogEntry[]): number {
 }
 
 /**
- * 押して留めている行。**押した時点から件数が変わっていれば undefined**（新しいセリフが来た、
+ * 押して留めている行。押した時点から件数が変わっていれば undefined（新しいセリフが来た、
  * または窓から古い記録が落ちた）で、印も立ち絵も「最新」の側へ戻る。
  *
- * 件数1つで両方を捌けるのは、**セリフは末尾に積むだけ**で、窓
+ * 件数1つで両方を捌けるのは、セリフは末尾に積むだけで、窓
  * （`MAX_SESSION_STATE_TURNS`）を当てるのは利用者の発言が来たときだけだから
  * （`shared/session-state.ts` の `speech` と `request`）。つまり件数が同じなら並びは前へ
  * 詰まっておらず、押した番号は押した行を指したままになる。
@@ -283,7 +283,7 @@ function pinnedSpeechIndex(viewed: ViewedSpeech, speechCount: number): number | 
 }
 
 /**
- * いちばん新しいキャラクターのセリフの行。**何も押していないときに印が付く行**
+ * いちばん新しいキャラクターのセリフの行。何も押していないときに印が付く行
  * （docs/screen-design.md 13.7）。まだ1件も話していなければ undefined で、印はどこにも付かない。
  */
 function lastSpeechIndex(entries: readonly ChatLogEntry[]): number | undefined {
@@ -294,7 +294,7 @@ function lastSpeechIndex(entries: readonly ChatLogEntry[]): number | undefined {
 /**
  * その行のセリフに添えられた表情。行を指していなければ undefined（呼び出し側が次の手へ倒す）。
  *
- * **番号が指せるのはキャラクターのセリフだけ**だが、番号で持っている以上は型の上で外れうるので、
+ * 番号が指せるのはキャラクターのセリフだけだが、番号で持っている以上は型の上で外れうるので、
  * 外れたら undefined を返す（印も同じ番号で決まるので、立ち絵と印が食い違うことはない）。
  */
 function speechExpressionAt(

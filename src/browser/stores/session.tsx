@@ -1,12 +1,12 @@
-// <SessionProvider> の中身。`lib/socket.ts` で接続し、`SessionState` を **React の外の store**
-// （{@link createSessionStore}）に持つ。部品は {@link useSessionSelector} で**自分が読む値だけ**を
+// <SessionProvider> の中身。`lib/socket.ts` で接続し、`SessionState` を React の外の store
+// （{@link createSessionStore}）に持つ。部品は {@link useSessionSelector} で自分が読む値だけを
 // 購読し、送るだけの部品は {@link useSessionDispatch} を読む（docs/design.md 6.1 / 6.2）。
 //
-// **Context に配るのは store そのもの**（参照が変わらない）。姿を Context で配ると、読んでいる値が
+// Context に配るのは store そのもの（参照が変わらない）。姿を Context で配ると、読んでいる値が
 // 変わっていない部品まで毎フレーム描き直しになる — サーバは 100ms ごとにフレームを押すので、
 // ターンが流れている間は毎秒10回それが起きていた（`useSyncExternalStore` へ移した）。
 //
-// **部品は `SessionState` と `dispatch` だけを見る。** DOM を直接いじる配線は持たない
+// 部品は `SessionState` と `dispatch` だけを見る。 DOM を直接いじる配線は持たない
 // （docs/design.md 6.1「部品の木」冒頭）。
 
 import { createORPCClient } from "@orpc/client"
@@ -33,11 +33,11 @@ import { applyRefresh } from "../lib/refresh.ts"
 import { type CommandLink, connectSessionSocket, type ConnectionStatus } from "../lib/socket.ts"
 
 /**
- * コマンドを送る口。**契約（`src/shared/rpc.ts` の `commandContract`）から導いた型付きの client**
- * で、`dispatch.session.prompt({ text, images })` のように手続きの名前を辿って呼ぶ。**参照が
- * 変わらない**ので、これしか読まない部品は姿の変化で描き直されない。
+ * コマンドを送る口。契約（`src/shared/rpc.ts` の `commandContract`）から導いた型付きの client
+ * で、`dispatch.session.prompt({ text, images })` のように手続きの名前を辿って呼ぶ。参照が
+ * 変わらないので、これしか読まない部品は姿の変化で描き直されない。
  *
- * **送りっぱなしで、失敗しても投げない**（戻り値の Promise は待たなくてよい）。断られたこと
+ * 送りっぱなしで、失敗しても投げない（戻り値の Promise は待たなくてよい）。断られたこと
  * （契約の `REFUSED`）は画面に出さない——画面は同じ条件で先に操作子を塞いでいて、結果はイベントで
  * 戻ってくる。
  */
@@ -57,7 +57,7 @@ export type CommandSocket = {
 export type ProtocolAgreement = "compatible" | "mismatched"
 
 /**
- * 部品が読む姿。**接続の状態（`connection`）と版の一致（`protocol`）はブラウザだけが持つ**ので
+ * 部品が読む姿。接続の状態（`connection`）と版の一致（`protocol`）はブラウザだけが持つので
  * `SessionState` には入れず、同じ購読に相乗りさせる（docs/design.md 4.2 / 4.4 / 6.2）。
  * `connection` はまだ画面には出していない。
  */
@@ -73,7 +73,7 @@ export type SessionSnapshot = {
  */
 export type SessionStore = {
   readonly subscribe: (onStoreChange: () => void) => () => void
-  /** **同じ姿なら同じオブジェクト**を返す（セレクタの結果が毎回変わると描き直しが止まらない）。 */
+  /** 同じ姿なら同じオブジェクトを返す（セレクタの結果が毎回変わると描き直しが止まらない）。 */
   readonly getSnapshot: () => SessionSnapshot
   readonly dispatch: SessionDispatch
   /** 届いたフレームを畳む。`refresh` は姿を動かさないので呼び出し側が手前で捌く。 */
@@ -91,8 +91,8 @@ export type SessionStore = {
 export const SessionStoreContext = createContext<SessionStore | undefined>(undefined)
 
 /**
- * 姿から**必要な値だけ**を取り出して購読する。`select` が返してよいのは
- * **同じ姿なら同じものになる値**（そのままのフィールド・プリミティブ・`stores/` が姿ごとに
+ * 姿から必要な値だけを取り出して購読する。`select` が返してよいのは
+ * 同じ姿なら同じものになる値（そのままのフィールド・プリミティブ・`stores/` が姿ごとに
  * 覚えている導出）だけで、その場で作った配列やオブジェクトを返すと描き直しが止まらなくなる。
  * 複数のフィールドが要るなら、その数だけ呼ぶ。
  */
@@ -111,7 +111,7 @@ export function useSessionDispatch(): SessionDispatch {
 }
 
 /**
- * 姿とコマンドの口を持つ store を作る。**接続はあとから持たせる**（繋ぎ直しで入れ替わるのに
+ * 姿とコマンドの口を持つ store を作る。接続はあとから持たせる（繋ぎ直しで入れ替わるのに
  * `dispatch` の参照は変えたくない）。
  */
 export function createSessionStore(): SessionStore {
@@ -162,10 +162,10 @@ export function createSessionStore(): SessionStore {
       if (state === snapshot.state) {
         return
       }
-      // **答え待ち（許可要求・質問）が動いたフレームだけ緊急**にする。人が待っている箱なので
+      // 答え待ち（許可要求・質問）が動いたフレームだけ緊急にする。人が待っている箱なので
       // 遅らせない。レポートやツールの進行は毎秒10回届くので、入力欄の操作を優先できるよう
-      // トランジションに載せる。**React は `useSyncExternalStore` の描き直しを
-      // 同期レーンで走らせる**（`forceStoreRerender`）ので、入力欄との競合にいま効いているのは
+      // トランジションに載せる。React は `useSyncExternalStore` の描き直しを
+      // 同期レーンで走らせる（`forceStoreRerender`）ので、入力欄との競合にいま効いているのは
       // 購読の絞り込み（セレクタ）のほう。緊急かどうかの境目はここ1箇所に置く。
       if (state.pending !== snapshot.state.pending) {
         publish({ ...snapshot, state })
@@ -191,7 +191,7 @@ export type SessionProviderProps = {
 }
 
 /**
- * パックが差す日記の書体を FontFace API に登録する名前。**固定の1つ**でよい
+ * パックが差す日記の書体を FontFace API に登録する名前。固定の1つでよい
  * （常に「いまのパック」の1件しか同時に登録しないので、パックごとに名前を分ける必要が無い。
  * 切り替えたときは古い方を `document.fonts.delete` してから差し替える）。
  */
@@ -226,10 +226,10 @@ export function SessionProvider(props: SessionProviderProps): ReactElement {
   // （`document.title` を差し替える `src/browser/components/page/conversation/components/dispatch/dispatch.tsx` と同じ、ホスト側の値を
   // コンポーネントの外から書き換える形。使う人が変える `ground` / `surface` / `ink` は同じ
   // 手口で `src/browser/domain/appearance-color.ts` が持つ）。届いていない・パックに `accent`
-  // が無いときは既定値（theme.css の `:root`）に戻す。**雑談中はパックが `chatAccent` を持てば
-  // そちらに切り替わる**（`effectiveAccent`。docs/screen-design.md 13.2「雑談中は」/ 13.7）。
+  // が無いときは既定値（theme.css の `:root`）に戻す。雑談中はパックが `chatAccent` を持てば
+  // そちらに切り替わる（`effectiveAccent`。docs/screen-design.md 13.2「雑談中は」/ 13.7）。
   //
-  // **Context の外なので store を直に読む**（自分が配っている Context は自分では読めない）。
+  // Context の外なので store を直に読む（自分が配っている Context は自分では読めない）。
   const accent = useStoreSelector(store, (session) =>
     effectiveAccent(session.state.character, session.state.chatMode),
   )
@@ -241,14 +241,14 @@ export function SessionProvider(props: SessionProviderProps): ReactElement {
     }
   }, [accent])
 
-  // パックが差す背景（docs/screen-design.md 13.8）も同じ手口で流す。**敷くのは枠を持たない領域**
+  // パックが差す背景（docs/screen-design.md 13.8）も同じ手口で流す。敷くのは枠を持たない領域
   // （キャラビューと、雑談中のメインビュー）で、どう敷くか（覆いを1枚重ねる・下端で合わせる）は
   // CSS（`src/browser/components/page/conversation/components/conversation-layout/
   // conversation-layout.module.css` の `.layout-ground`）が持つ。ここは素材の URL と覆いの濃さを
-  // 渡すだけ。**素材の名前は `character.json` 由来の外部の値**だが、
+  // 渡すだけ。素材の名前は `character.json` 由来の外部の値だが、
   // `url()` を抜け出せない形であることは境界（`src/shared/character-background.ts` の
   // `isBackgroundFileName`）で見てある。背景が無いパックでは変数ごと外すので、`var()` の
-  // フォールバックが効いて**いままでと同じ見え方**（`ground` の上に立ち絵が直接立つ）に戻る。
+  // フォールバックが効いていままでと同じ見え方（`ground` の上に立ち絵が直接立つ）に戻る。
   const background = useStoreSelector(store, (session) => session.state.character?.background)
   const backgroundImage = background?.image
   const backgroundVeil = background?.veil
@@ -264,8 +264,8 @@ export function SessionProvider(props: SessionProviderProps): ReactElement {
   }, [backgroundImage, backgroundVeil])
 
   // パックが差す日記の書体（`docs/screen-design.md` 13.3「例外は日記の本文だけ」）。
-  // `background-image` と違い `font-family` は `url()` を直接差せないので、**FontFace API で
-  // ブラウザに書体として登録してから**、登録した名前を `--font-diary` に流す（useEffect の4類型の
+  // `background-image` と違い `font-family` は `url()` を直接差せないので、FontFace API で
+  // ブラウザに書体として登録してから、登録した名前を `--font-diary` に流す（useEffect の4類型の
   // 「外部からの読み込み」。docs/coding-standards.md「React」節）。読み込めない・無いパックでは
   // 変数ごと外し、`var()` のフォールバックで `--font-serif`（端末の明朝体）に戻る
   // （`src/browser/styles/theme.css`）。

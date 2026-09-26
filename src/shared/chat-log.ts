@@ -1,8 +1,8 @@
-// 雑談モードの会話のログ（`docs/screen-design.md` 13.7）。**セッションの姿（`session-state.ts`）から
-// 導くだけ**で、状態は持たない。
+// 雑談モードの会話のログ（`docs/screen-design.md` 13.7）。セッションの姿（`session-state.ts`）から
+// 導くだけで、状態は持たない。
 //
-// **`main-view.ts` とは別に置く。** あちらは依頼を境目にやり取りへまとめ、タブで遡る形を作る
-// （そのためにセリフの記録を落とす）。雑談のログは**素直な時系列**で、利用者の発言と
+// `main-view.ts` とは別に置く。 あちらは依頼を境目にやり取りへまとめ、タブで遡る形を作る
+// （そのためにセリフの記録を落とす）。雑談のログは素直な時系列で、利用者の発言と
 // キャラクターのセリフが交互に並ぶだけなので、並びの規則が違う。
 //
 // `node:` にも `document` にも触らない（他の shared と同じ制約）。
@@ -12,11 +12,11 @@ import { type RecordedPromptImage } from "./prompt-image.ts"
 import { type RecordTime, type SessionRecord } from "./session-state.ts"
 
 /**
- * 会話のログ1件。**話したのがどちらか**と文面、話した時刻を持つ（`docs/screen-design.md` 13.7 の
+ * 会話のログ1件。話したのがどちらかと文面、話した時刻を持つ（`docs/screen-design.md` 13.7 の
  * 「利用者の発言とキャラクターのセリフが交互に並ぶ」「時刻と日の区切り」）。
  *
  * `expression` はキャラクターの側にだけ付く（話者の印に使う）。利用者の側は代わりに、
- * 添えた画像の**控え**（`images`。添えていなければ空）を持つ（`docs/requirements.md` 4.10。
+ * 添えた画像の控え（`images`。添えていなければ空）を持つ（`docs/requirements.md` 4.10。
  * 吹き出しの中に並ぶ）。
  */
 export type ChatLogEntry =
@@ -33,17 +33,17 @@ export type ChatLogEntry =
       readonly time: RecordTime
     }
   /**
-   * 圧縮の区切り（`docs/glossary.md`「圧縮の区切り」）。**中身を持たない** — 出すのは細い線
+   * 圧縮の区切り（`docs/glossary.md`「圧縮の区切り」）。中身を持たない — 出すのは細い線
    * 1本だけで、文言は添えない（`docs/chat-mode.md` 4.9「記憶の圧縮と忘却」）。
    */
   | { readonly speaker: "boundary" }
 
 /**
- * 記録から雑談のログを組む（**古い→新しいの順**）。拾うのは利用者の依頼（`request`）と
- * セリフ（`speech`）、そして圧縮の区切り（`compact-boundary`）の3種類だけで、**本文
- * （`detail`）とツールは落とす**（雑談中はレポートを出さないと決めた。`docs/chat-mode.md` 4.9）。
+ * 記録から雑談のログを組む（古い→新しいの順）。拾うのは利用者の依頼（`request`）と
+ * セリフ（`speech`）、そして圧縮の区切り（`compact-boundary`）の3種類だけで、本文
+ * （`detail`）とツールは落とす（雑談中はレポートを出さないと決めた。`docs/chat-mode.md` 4.9）。
  *
- * **落としたぶんを「省略した」と見せない。** 雑談中に本文が出るのは規約が守られなかった
+ * 落としたぶんを「省略した」と見せない。 雑談中に本文が出るのは規約が守られなかった
  * ときだけで、画面にその事実を出しても利用者にできることが無い。
  */
 export function chatLogEntries(records: readonly SessionRecord[]): readonly ChatLogEntry[] {
@@ -69,11 +69,11 @@ export function chatLogEntries(records: readonly SessionRecord[]): readonly Chat
 }
 
 /**
- * ログに並べる1行。発言（{@link ChatLogEntry}）と、**日の区切り**（`docs/screen-design.md` 13.7
+ * ログに並べる1行。発言（{@link ChatLogEntry}）と、日の区切り（`docs/screen-design.md` 13.7
  * 「時刻と日の区切り」）の2種類。
  *
  * 発言の行が持つ `index` は {@link chatLogEntries} の並びでの位置（押して遡る行を指すのに使う。
- * 日の区切りが間に入っても番号はずれない）。日の区切りの `date` は、**その下に続く発言の日**。
+ * 日の区切りが間に入っても番号はずれない）。日の区切りの `date` は、その下に続く発言の日。
  */
 export type ChatLogRow =
   | { readonly kind: "entry"; readonly index: number; readonly entry: ChatLogEntry }
@@ -81,16 +81,16 @@ export type ChatLogRow =
 
 /**
  * ログの並びに日の区切りを差し込む（`docs/screen-design.md` 13.7「時刻と日の区切り」）。
- * **区切りが入るのは、日が変わった発言の手前だけ**で、並びの先頭には入れない。
+ * 区切りが入るのは、日が変わった発言の手前だけで、並びの先頭には入れない。
  *
- * - 日を比べる相手は**1つ前の発言**。圧縮の区切り（`boundary`）は時刻を持たないので飛ばす
- * - **時刻の分からない発言**（`restored`。前のセッションを組み直したもの）は日を持たない。
+ * - 日を比べる相手は1つ前の発言。圧縮の区切り（`boundary`）は時刻を持たないので飛ばす
+ * - 時刻の分からない発言（`restored`。前のセッションを組み直したもの）は日を持たない。
  *   そこから時刻の分かる発言へ移るところは「日が変わった」として区切る —— 組み直したぶんと
  *   いまのぶんが同じ日に見えないように
  * - 時刻の分からない発言そのものの手前には入れない（起こし直すと記録は空から始まり、
  *   組み直したぶんは必ず先頭に固まっているので、時刻の分かる発言のあとに来ることは無い）
  *
- * `timeZone` は日の境目を決めるタイムゾーン（IANA の名前）。**ここでは読まない** —
+ * `timeZone` は日の境目を決めるタイムゾーン（IANA の名前）。ここでは読まない —
  * 呼び出し側が OS の設定を読んで渡す（`shared` は外の世界に触らない）。
  */
 export function chatLogRows(
@@ -115,7 +115,7 @@ export function chatLogRows(
 }
 
 /**
- * 発言が属する日。**先頭（まだ発言が無い）・時刻の分からない発言・日付**の3つで、先頭では
+ * 発言が属する日。先頭（まだ発言が無い）・時刻の分からない発言・日付の3つで、先頭では
  * 区切らず、時刻の分からない発言からは区切る（{@link chatLogRows}）。
  */
 type EntryDay =

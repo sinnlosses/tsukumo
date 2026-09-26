@@ -1,6 +1,6 @@
-// キャラクター画面で**いま右側に出しているパック**（`docs/screen-design.md` 13.6）。hash の
+// キャラクター画面でいま右側に出しているパック（`docs/screen-design.md` 13.6）。hash の
 // `pack`（`stores/screen.tsx` の `usePackSelection`）を、届いているパックの姿へ引き当てる。
-// **一覧（`character-list.tsx`）と詳しい設定（`hooks/use-character-edit.ts`）の両方が読む**ので、
+// 一覧（`character-list.tsx`）と詳しい設定（`hooks/use-character-edit.ts`）の両方が読むので、
 // container と対にならない概念のフックとしてここに置く（docs/design.md 2章「機能の中を分ける」）。
 //
 // 引き当て方:

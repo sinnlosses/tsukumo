@@ -1,4 +1,4 @@
-// キャラクター画面の右側、**選んでいるパックの詳しい設定**の**器だけ**
+// キャラクター画面の右側、選んでいるパックの詳しい設定の器だけ
 // （<PresentationalCharacterEdit>。docs/screen-design.md 13.6 / 7.1）。上から 名乗り → 顔 →
 // 表情の格子 → 差し色（画面の差し色と立ち絵の差し色を横に並べる） → 背景。名乗りは
 // `components/character-profile.tsx`、顔は `components/face-field.tsx`、表情のカードは

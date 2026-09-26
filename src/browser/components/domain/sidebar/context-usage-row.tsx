@@ -1,21 +1,21 @@
 // サイドバー「セッション情報」の3段目——いまのコンテキストの使用量を1枚の札で出す
-// （docs/screen-design.md「使用量の行」）。押せるのは**右端の `›`（ホバー中は「詳しく ›」）
-// だけ**（行全体を押せる札にはしない）。押すとトークン消費の画面
+// （docs/screen-design.md「使用量の行」）。押せるのは右端の `›`（ホバー中は「詳しく ›」）
+// だけ（行全体を押せる札にはしない）。押すとトークン消費の画面
 // （`#token-usage`）へ移る。
 //
-// **取得と畳み込みは `browser/domain/context-usage.ts`**（トークン消費の画面の札
+// 取得と畳み込みは `browser/domain/context-usage.ts`（トークン消費の画面の札
 // `../token-usage/components/context-usage-card/context-usage-card.tsx` と2つの機能で共有している。同じ `refetchKey` を
 // 渡すので `useQuery` の cache 1本に相乗りし、取り直しは1回で済む——冒頭コメント）。
 //
-// **出す数は札の「使っている量」と同じ**（`usage.totalTokens` / `usage.maxTokens` /
+// 出す数は札の「使っている量」と同じ（`usage.totalTokens` / `usage.maxTokens` /
 // `usage.percentage`。自動圧縮バッファ・窓の外の分類は含めない）。
 //
-// **取れないとき・まだ届いていないときも札の高さは変わらない。** 3段の骨組みはいつも同じで、
+// 取れないとき・まだ届いていないときも札の高さは変わらない。 3段の骨組みはいつも同じで、
 // 1段目の割合は「—」、量の場所に一言（`PENDING_TEXT` / `UNAVAILABLE_TEXT`）を出す。3段目は
 // 空けて ` ` で高さだけ保つ（`ContextUsageCardSkeleton` の `SkeletonBlock` と同じ考え方
 // だが、灰色の塊にはしない——1行の文字だけなので、実物の文字と同じ行の高さで自然に揃う）。
 //
-// **警告の境目 70% はこのファイルだけの定数**（`WARN_THRESHOLD_PERCENTAGE`）。トークン消費の
+// 警告の境目 70% はこのファイルだけの定数（`WARN_THRESHOLD_PERCENTAGE`）。トークン消費の
 // 画面の札（`context-usage-card.tsx`）はまだ警告色を持たず、読み手が2つ目にならないので
 // `browser/domain/` へは上げない（docs/design.md 2章「上げる引き金は「2つ目の読み手が
 // 出たとき」」）。
@@ -88,7 +88,7 @@ export function ContextUsageRow(): ReactElement {
   )
 }
 
-/** 1段目の割合。**まだ届いていない・取れないときは「—」**（高さを保つための置き字）。 */
+/** 1段目の割合。まだ届いていない・取れないときは「—」（高さを保つための置き字）。 */
 function percentageText(usage: UseContextUsageResult): string {
   return usage.kind === "ready" ? `${usage.percentage}%` : PERCENTAGE_PLACEHOLDER
 }
@@ -105,8 +105,8 @@ function valueText(usage: UseContextUsageResult): string {
 }
 
 /**
- * 3段目「自動圧縮まで あと N」。70%以上は「そろそろ区切りどき。」を添える。**取れない・まだ
- * 届いていないときは空ける**（`UNTIL_PLACEHOLDER` で高さだけ保つ。一言は1段目の量の場所に出ているので、
+ * 3段目「自動圧縮まで あと N」。70%以上は「そろそろ区切りどき。」を添える。取れない・まだ
+ * 届いていないときは空ける（`UNTIL_PLACEHOLDER` で高さだけ保つ。一言は1段目の量の場所に出ているので、
  * ここで重ねて出さない）。
  */
 function untilText(usage: UseContextUsageResult): string {
@@ -134,7 +134,7 @@ function ariaLabel(usage: UseContextUsageResult): string {
   return `コンテキスト ${usage.percentage}% 使用。${suffix}`
 }
 
-/** バーの幅（%）。**100を超える割合が来ても track の中に収める**（SDK は 0〜100+ を返す）。 */
+/** バーの幅（%）。100を超える割合が来ても track の中に収める（SDK は 0〜100+ を返す）。 */
 function barPercentage(usage: UseContextUsageResult): number {
   return usage.kind === "ready" ? Math.min(usage.percentage, 100) : 0
 }

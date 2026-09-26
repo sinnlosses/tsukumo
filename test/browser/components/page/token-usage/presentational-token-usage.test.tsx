@@ -32,7 +32,7 @@ const FIXTURE_TOTALS: TokenUsageTotals = {
   costUsd: 0.5,
 }
 
-/** 記録の無い刻み（0の点）。**推移はこれも並べる**ので、棒の本数は期間の刻みの数になる。 */
+/** 記録の無い刻み（0の点）。推移はこれも並べるので、棒の本数は期間の刻みの数になる。 */
 const EMPTY_TOTALS: TokenUsageTotals = {
   inputTokens: 0,
   outputTokens: 0,

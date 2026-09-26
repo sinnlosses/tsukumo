@@ -2,18 +2,18 @@
 // 下書き・添えた画像・質問の帯を持ち、キーと貼り付け・ドロップを読み替えて、presenter がそのまま
 // 置ける値と呼び先を返す。
 //
-// 入力欄の規則（docs/display.md 4.2「入力欄」。**規則は変えない**）:
+// 入力欄の規則（docs/display.md 4.2「入力欄」。規則は変えない）:
 // - Enter は改行、Command+Enter で送信。IME の変換確定の Command+Enter は送らない
 //   （`isComposing` と、対応していない古いブラウザ向けの `keyCode === 229` の両方を見る）
 // - 送信後は入力欄を空にしてフォーカスを残す
 // - `/` 補完は前方一致→部分一致、Tab / Enter は確定だけ（送信しない）。選択の上下移動は
 //   矢印キーに加えて Ctrl+P（前へ）/ Ctrl+N（次へ）でも行える（Meta 併用は無視）
 // - `@` 補完（git 管理下のファイルのパス）は同じキー操作で、確定すると `@<パス> ` が入る
-// - 入力欄の下の `/` と `@` のボタンは、**キャレットの位置にその1文字を打つのと同じ**
+// - 入力欄の下の `/` と `@` のボタンは、キャレットの位置にその1文字を打つのと同じ
 //   （補完が開くかどうかは打ったときと同じ規則で決まる。`@` は前が空白でなければ空白を挟む）
 //
-// **補完の状態（出している候補・選んでいる位置）と確定の手は `hooks/use-suggestion.ts` が、
-// 添えた画像の持ち方と取り込みは `hooks/use-prompt-image.ts` が持つ**（docs/design.md 2章
+// 補完の状態（出している候補・選んでいる位置）と確定の手は `hooks/use-suggestion.ts` が、
+// 添えた画像の持ち方と取り込みは `hooks/use-prompt-image.ts` が持つ（docs/design.md 2章
 // 「機能の中を分ける」。どちらも container と対になっていないフックで、下書きの実体はここに
 // 残したまま渡す）。ここは下書き・質問の帯を持ち、送信とキーの読み替え（補完へ回すか・送信
 // するか）を持つ（送信の Enter と補完のキーが同じ `keydown` を共有するため）。
@@ -34,7 +34,7 @@ import {
   type CompletionTrigger,
 } from "./use-suggestion.ts"
 
-/** 打ちかけの文面と、その中のキャレットの位置。**2つで1つの状態**なので一緒に持つ。 */
+/** 打ちかけの文面と、その中のキャレットの位置。2つで1つの状態なので一緒に持つ。 */
 export type Draft = {
   readonly text: string
   readonly caret: number
@@ -56,7 +56,7 @@ export type ComposerChange = {
 }
 
 /**
- * `<textarea>` の上の帯。**答え待ちの質問のときだけ出す**（答えは選択肢の札から選ぶか、
+ * `<textarea>` の上の帯。答え待ちの質問のときだけ出す（答えは選択肢の札から選ぶか、
  * ここに書いて送る。札は
  * `components/page/conversation/components/main-view/components/question-ask/question-ask.tsx`）。
  */
@@ -65,9 +65,9 @@ export type ComposerBand =
   | { readonly kind: "question"; readonly text: string }
 
 /**
- * `<Composer>` が画面に出す形。presenter はこれをそのまま置くだけ。**画像まわり
+ * `<Composer>` が画面に出す形。presenter はこれをそのまま置くだけ。画像まわり
  * （`imageInputRef` から `onImagesChosen` まで）は `hooks/use-prompt-image.ts` の
- * `PromptImageModel` と同じ形**（`reset` は container の中だけで使うので外へは出さない）。
+ * `PromptImageModel` と同じ形（`reset` は container の中だけで使うので外へは出さない）。
  */
 export type ComposerModel = Omit<PromptImageModel, "reset"> & {
   /** `<textarea>` の入れ物。確定・送信のあとにフォーカスを戻し、キャレットを置き直す。 */
@@ -94,8 +94,8 @@ export function useComposer(): ComposerModel {
   const characterName = useSessionSelector((session) => session.state.character?.name)
   const pendingActive = useSessionSelector((session) => session.state.pending.length > 0)
   const turnInProgress = useTurnRunning()
-  // 答え待ちの質問があるあいだ、入力欄は「依頼を書く場所」ではなく**選択肢以外の答えを書く
-  // 場所**になる（札はメインビューに出ている。`stores/question-answer.tsx`）。
+  // 答え待ちの質問があるあいだ、入力欄は「依頼を書く場所」ではなく選択肢以外の答えを書く
+  // 場所になる（札はメインビューに出ている。`stores/question-answer.tsx`）。
   const question = useQuestionAnswer()
   const slashCommands = useSessionSelector((session) => session.state.slashCommands)
   const commandDescriptions = useSessionSelector((session) => session.state.commandDescriptions)
@@ -147,7 +147,7 @@ export function useComposer(): ComposerModel {
 
   const insertTrigger = (trigger: CompletionTrigger): void => {
     // ボタンを押した時点で入力欄のフォーカスは外れているが、選択の位置は残っている。
-    // **打っていない間にキャレットを動かしただけでは下書きの `caret` は追いつかない**ので、
+    // 打っていない間にキャレットを動かしただけでは下書きの `caret` は追いつかないので、
     // 入力欄から読めるならそちらを使う。
     setDraft(insertedTrigger(draft, textAreaRef.current?.selectionStart ?? draft.caret, trigger))
     suggestion.reset()
@@ -203,7 +203,7 @@ export function useComposer(): ComposerModel {
 const ANSWER_PLACEHOLDER = "選択肢以外の答えを書く…"
 
 /**
- * `<textarea>` の上の帯の文言。**誰が聞いているか**を名前で言う（原則4「キャラクターの中身を
+ * `<textarea>` の上の帯の文言。誰が聞いているかを名前で言う（原則4「キャラクターの中身を
  * コードに書かない」に従い、名前が無いパックでは名前を使わずに書く）。
  */
 function questionBandText(characterName: string | undefined): string {
@@ -212,7 +212,7 @@ function questionBandText(characterName: string | undefined): string {
 }
 
 /**
- * 入力欄のプレースホルダ。**依頼先はキャラクター**（「claude」は素の呼び方で目的と食い違う）
+ * 入力欄のプレースホルダ。依頼先はキャラクター（「claude」は素の呼び方で目的と食い違う）
  * なので、`character.name` から組み立てる。キャラクターがまだ届いていない・名前が無いときは、
  * 名前を使わずに依頼を書く操作だけを伝える（`"claude"` へ戻さない。原則4「キャラクターの中身を
  * コードに書かない」）。

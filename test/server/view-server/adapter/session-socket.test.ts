@@ -148,7 +148,7 @@ function connect(url: string): Promise<WebSocket> {
 
 /**
  * upgrade の要求だけを生で投げ、返ってきた状態コードを読む（101 = 通した、403 = 弾いた）。
- * **WebSocket のクライアント実装に依らず**「弾いたこと」を確かめるためにここだけ生で書く
+ * WebSocket のクライアント実装に依らず「弾いたこと」を確かめるためにここだけ生で書く
  * （Bun の `ws` は `origin` オプションを送らないことがある）。
  */
 function upgradeStatus(origin: string, path: string, headers: Readonly<Record<string, string>>) {
@@ -187,8 +187,8 @@ function clientOver(client: WebSocket): SocketClient {
 }
 
 /**
- * 手続きが断られたときのエラーの要点（断られなければ undefined）。**契約に書いたエラー
- * （`defined: true`・409）として届くこと**まで見る。
+ * 手続きが断られたときのエラーの要点（断られなければ undefined）。契約に書いたエラー
+ * （`defined: true`・409）として届くことまで見る。
  */
 async function refusalOf(call: Promise<unknown>): Promise<unknown> {
   try {

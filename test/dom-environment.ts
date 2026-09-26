@@ -1,10 +1,10 @@
 // `bun run check` の `bun test` の前に1回だけ読まれる（`bunfig.toml` の `preload`）。
 // `src/browser/` の部品テスト（`@testing-library/react`）が要る DOM のグローバルを用意する。
 //
-// **`happy-dom` の `Window` が持つ全部を `globalThis` へコピーしない。** `fetch` / `WebSocket` /
+// `happy-dom` の `Window` が持つ全部を `globalThis` へコピーしない。 `fetch` / `WebSocket` /
 // `setTimeout` / `console` まで happy-dom のものに差し替わると、実際の HTTP・WebSocket を使う
-// 他のテスト（`test/server/view-server/adapter/server.test.ts` など）が巻き添えになる。**DOM を組み立てる部品だけを
-// 借りる。**（`bun test --isolate` でテストファイルごとにプロセスが分かれるようになった今も、
+// 他のテスト（`test/server/view-server/adapter/server.test.ts` など）が巻き添えになる。DOM を組み立てる部品だけを
+// 借りる。（`bun test --isolate` でテストファイルごとにプロセスが分かれるようになった今も、
 // 1ファイルの中では同じ `globalThis` を共有するので、借りる範囲は絞ったままにする。
 // `--isolate` を付けている理由は `package.json` と `test/browser/components/page/conversation/components/main-view/report.test.tsx`）
 //
@@ -57,7 +57,7 @@ const BORROWED_DOM_GLOBAL_NAMES = [
   // （日記帳の右ページの本文を測って縮める）が、ページの大きさの変化を購読するのに要る。
   "ResizeObserver",
   // `src/browser/domain/reveal/measure.ts`（筆先の居場所を行から測る）のテストが
-  // **2つセットで**要る。`DOMRect` は**happy-dom がレイアウトを持たない**ので測った値を
+  // 2つセットで要る。`DOMRect` はhappy-dom がレイアウトを持たないので測った値を
   // 名乗らせるのに、`NodeFilter` は文字の節点をたどる `createTreeWalker` に渡すのに使う
   // （借りないと、測る側が例外で落ちたことに気づけないまま「筆先が出ない」だけに見える）。
   "DOMRect",
@@ -72,7 +72,7 @@ const BORROWED_DOM_GLOBAL_NAMES = [
   "localStorage",
   // `src/browser/components/page/character/components/character-edit/character-edit.tsx`
   // （選んだ立ち絵を data URL にする）のテストが要る。
-  // **2つセットで借りる** — 片方だけ差し替えると `FileReader` が相手の `Blob` を受け取れない。
+  // 2つセットで借りる — 片方だけ差し替えると `FileReader` が相手の `Blob` を受け取れない。
   "File",
   "FileReader",
 ] as const
@@ -91,10 +91,10 @@ Reflect.set(globalThis, "navigator", window.navigator)
 Reflect.set(globalThis, "IS_REACT_ACT_ENVIRONMENT", true)
 
 /**
- * テストの中でページの URL を差し替える（**ポートを見る部品のため**。`src/shared/room.ts` の
+ * テストの中でページの URL を差し替える（ポートを見る部品のため。`src/shared/room.ts` の
  * 部屋の名前は、このページを配っているポートから決まる）。
  *
- * ここに置くのは、**差し替えの口を持っているのが happy-dom の `Window` だけ**だから
+ * ここに置くのは、差し替えの口を持っているのが happy-dom の `Window` だけだから
  * （`globalThis.window` は DOM の型なので、テスト側から触るとキャストが要る）。
  */
 export function setPageUrl(url: string): void {

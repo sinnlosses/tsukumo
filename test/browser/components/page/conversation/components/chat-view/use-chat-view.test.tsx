@@ -209,7 +209,7 @@ describe("useChatView の出すタイミング（docs/screen-design.md 13.7）",
 
   /**
    * 偽の時計を進めたあと、それに `use-speech-reveal.ts` のポーリング（実装の詳細）が
-   * 気づくまで実時間を少しだけ待つ。**2秒は待たない** —— 待つのは時計ではなくポーリングの
+   * 気づくまで実時間を少しだけ待つ。2秒は待たない —— 待つのは時計ではなくポーリングの
    * 周期ぶんだけ。
    */
   async function waitForReveal(): Promise<void> {

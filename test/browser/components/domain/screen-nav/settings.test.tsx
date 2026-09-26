@@ -15,7 +15,7 @@ import { sessionStoreWith, type CommandSpy } from "../../../session-store.ts"
 
 // 帯の右端の歯車で開く設定（docs/screen-design.md 13.6 / 13.9）。いまここにある群は「画面の色」・
 // 「新しいセッションの既定」・「書き上げる演出の速さ」・「訪問」の4つ。
-// **保存の仕方は `browser/domain/appearance-color.ts` のまま**なので、鍵も検証も
+// 保存の仕方は `browser/domain/appearance-color.ts` のままなので、鍵も検証も
 // `appearance-color.test.ts` と同じものを見ている。演出の速さの保存は
 // `browser/domain/reveal-speed.ts`（`reveal-speed.test.ts` と同じ鍵）。
 
@@ -152,7 +152,7 @@ describe("設定の歯車（帯の右端）", () => {
   })
 
   // 狭い画面では歯車そのものが「≡」の面の中にあり、Esc は面ごと閉じるので戻り先が消える。
-  // **帯の側の歯車（狭い画面では `display: none`）へフォーカスを飛ばさない**ことを守る。
+  // 帯の側の歯車（狭い画面では `display: none`）へフォーカスを飛ばさないことを守る。
   it("「≡」の面の中の歯車でも Esc で閉じ、隠れている帯の側の歯車へは戻さない", () => {
     renderScreenNav()
     fireEvent.click(
@@ -273,7 +273,7 @@ describe("設定の歯車（帯の右端）", () => {
     renderScreenNav()
     fireEvent.click(gear())
 
-    // **`disabled` ではなく `aria-disabled`**（`Button` の顔。docs/design.md 2章「`Button`」）——
+    // `disabled` ではなく `aria-disabled`（`Button` の顔。docs/design.md 2章「`Button`」）——
     // native の `disabled` と違いフォーカスは残る。
     expect(resetButton().getAttribute("aria-disabled")).toBe("true")
     expect(resetButton().hasAttribute("disabled")).toBe(false)
@@ -318,7 +318,7 @@ describe("設定の歯車（帯の右端）", () => {
   })
 })
 
-// 新しいセッションの既定（docs/screen-design.md 13.6）。**覚えるのはサーバ**なので、ここが見るのは
+// 新しいセッションの既定（docs/screen-design.md 13.6）。覚えるのはサーバなので、ここが見るのは
 // 「届いた値をそのまま出す」「選ぶと `session.setSessionDefault` を送る」「全部許すは並べない」の3つ。
 describe("設定の歯車（新しいセッションの既定）", () => {
   it("届いた既定をそのまま出す", () => {
@@ -403,8 +403,8 @@ describe("設定の歯車（新しいセッションの既定）", () => {
 })
 
 // effort の欄（帯の判定 `resolveEffortSelect` をそのまま再利用する。`docs/screen-design.md`
-// 13.6）。**帯のドロップダウンと同じ対応表（`modelEffortSupport`）から、既定のモデルの対応を
-// 引く**ので、帯といま出しているモデルが違っても既定のモデルの対応がそのまま出る。
+// 13.6）。帯のドロップダウンと同じ対応表（`modelEffortSupport`）から、既定のモデルの対応を
+// 引くので、帯といま出しているモデルが違っても既定のモデルの対応がそのまま出る。
 describe("設定の歯車（新しいセッションの既定の effort）", () => {
   const OPUS_SUPPORT = {
     model: "opus",
@@ -494,7 +494,7 @@ function defaultSelect(label: string): HTMLSelectElement {
   )
 }
 
-// 書き上げる演出の速さ（docs/screen-design.md 13.6。`browser/domain/reveal-speed.ts`）。**利用者の設定**
+// 書き上げる演出の速さ（docs/screen-design.md 13.6。`browser/domain/reveal-speed.ts`）。利用者の設定
 // なので色と同じ `localStorage`（保存先は違う鍵）。
 describe("設定の歯車（書き上げる演出の速さ）", () => {
   it("既定は「標準」", () => {
@@ -542,8 +542,8 @@ describe("設定の歯車（書き上げる演出の速さ）", () => {
   })
 })
 
-// 訪問のオン・オフ（docs/screen-design.md 13.6・13.9）。**覚えるのはいま動いているセッションの
-// 値だけ**（ディスクには覚えない）ので、ここが見るのは「届いた値をそのまま出す」「選ぶと
+// 訪問のオン・オフ（docs/screen-design.md 13.6・13.9）。覚えるのはいま動いているセッションの
+// 値だけ（ディスクには覚えない）ので、ここが見るのは「届いた値をそのまま出す」「選ぶと
 // `visit.setEnabled` を送る」の2つ。
 describe("設定の歯車（訪問）", () => {
   it("届いた値をそのまま出す（既定は「する」）", () => {

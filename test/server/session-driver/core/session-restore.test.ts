@@ -21,7 +21,7 @@ import { MAX_SESSION_CHOICES } from "../../../../src/shared/session-choice.ts"
 import { type SessionEvent } from "../../../../src/shared/session-event.ts"
 import { applySessionEvent, INITIAL_SESSION_STATE } from "../../../../src/shared/session-state.ts"
 
-// フィクスチャはすべて手で書いた架空のやり取り。**実物の transcript は使わない**
+// フィクスチャはすべて手で書いた架空のやり取り。実物の transcript は使わない
 // （docs/coding-standards.md「会話内容の扱い」）。本物の claude も起こさない
 // （`listSessions` / `getSessionMessages` を呼ぶのは src/server/session-driver/adapter/sdk-session.ts の側）。
 const EXPRESSIONS: readonly Expression[] = ["default", "thinking", "proud"]
@@ -637,7 +637,7 @@ describe("toRestoredEvents", () => {
   })
 
   // SDK が展開したスラッシュコマンドは、入力欄から打ったときの見え方（`/<name>` の1行）に
-  // 畳む。**入力は架空のコマンド名で自分で組む**（実物の transcript は使わない）。
+  // 畳む。入力は架空のコマンド名で自分で組む（実物の transcript は使わない）。
   it("引数の無いスラッシュコマンドは `/<name>` の1行に畳む", () => {
     const messages = [
       userMessage(
@@ -724,7 +724,7 @@ describe("toRestoredEvents", () => {
 
   // 圧縮（`/compact`）が起きると transcript の鎖が切れ、`includeSystemMessages: true` で読んだ
   // 並びは区切りの行から始まる（`src/server/session-driver/adapter/sdk-session.ts` の `readRestoredEvents`。
-  // 実測）。**起こし直したあとに区切りがログのいちばん上に来る**ことをここで示す。
+  // 実測）。起こし直したあとに区切りがログのいちばん上に来ることをここで示す。
   it("圧縮の区切り（system の compact_boundary）が並びの先頭に来る", () => {
     const messages = [
       { type: "system", subtype: "compact_boundary", compact_metadata: { trigger: "auto" } },

@@ -1,16 +1,16 @@
 // 押し出し（フレーム）の購読とコマンドの手続きが通る WebSocket の境界（`GET /ws?t=<起動トークン>`）。
-// **ページと素材を配る HTTP は別の境界**（`server.ts`。ここは `listen` 済みのサーバに upgrade の
+// ページと素材を配る HTTP は別の境界（`server.ts`。ここは `listen` 済みのサーバに upgrade の
 // 受け口を足すだけで、自分では listen しない）。
 //
-// **1本の接続の上は、すべて oRPC の手続きの要求と応答**（`RPCHandler`。束ねたルータは配線の
+// 1本の接続の上は、すべて oRPC の手続きの要求と応答（`RPCHandler`。束ねたルータは配線の
 // `src/router.ts` の `createSocketRouter`）。押し出しもブラウザが呼ぶ購読の手続き（`frame.subscribe`）
 // の Event Iterator として流れ、購読の元（`subscribe`）は接続の context に載せる。
 //
-// **`Bun.serve` の WebSocket には寄せない**（`ws` パッケージ。docs/coding-standards.md
+// `Bun.serve` の WebSocket には寄せない（`ws` パッケージ。docs/coding-standards.md
 // 「Bun固有APIに寄せない」）。
 //
 // 安全のための決まり（docs/design.md 9章）:
-//   - **起動トークン**（`server.ts` の `createStartupToken`。起動ごとの乱数で、ディスクに
+//   - 起動トークン（`server.ts` の `createStartupToken`。起動ごとの乱数で、ディスクに
 //     書かない）が合わないと upgrade をしない
 //   - `Origin` があれば自分のオリジンと一致すること（無ければ通す）
 //   - 断るときの理由は定型文だけ（会話の内容を混ぜない）。読めないメッセージは中身をどこにも
@@ -30,11 +30,11 @@ import { type SubscribeFrames } from "./frame-procedure.ts"
 import { rpcContextOf, type SocketRpcContext } from "./rpc-guard.ts"
 
 /**
- * 受け取るメッセージ1件の上限（バイト）。**1件の依頼に添えられる画像（原寸 5 MiB × 2 枚）を
- * data URL で運べる大きさ**にしてある（内訳: 原寸2枚の base64 ≒ 13.33 MiB ＋ 控え2枚
+ * 受け取るメッセージ1件の上限（バイト）。1件の依頼に添えられる画像（原寸 5 MiB × 2 枚）を
+ * data URL で運べる大きさにしてある（内訳: 原寸2枚の base64 ≒ 13.33 MiB ＋ 控え2枚
  * ≒ 0.34 MiB ＋ 文面 20,000 文字で約 13.7 MiB。`docs/requirements.md` 4.10 の表）。
  *
- * **依頼の文面の上限はこれとは別に効いている**（zod の `MAX_PROMPT_TEXT_LENGTH`。
+ * 依頼の文面の上限はこれとは別に効いている（zod の `MAX_PROMPT_TEXT_LENGTH`。
  * `src/shared/contract/session.ts`）ので、ここを上げても送れる文面は長くならない。
  */
 const MAX_MESSAGE_BYTES = 16 * 1024 * 1024
@@ -62,7 +62,7 @@ export type SessionSocket = {
 }
 
 /**
- * HTTP サーバに WebSocket の受け口を足す。**listen はしない**（呼び出し側が済ませている）。
+ * HTTP サーバに WebSocket の受け口を足す。listen はしない（呼び出し側が済ませている）。
  *
  * 接続しただけでは購読に加わらない。ブラウザが `frame.subscribe` を呼ぶと、`hello` が1つ届いてから
  * `events` が流れ始める（順序を決めているのは `session-manager` 側）。接続が切れると oRPC が
@@ -96,7 +96,7 @@ export function attachSessionSocket(options: SessionSocketOptions): SessionSocke
     }
 
     connection.on("message", (data: RawData) => {
-      // **読めないメッセージ（手続きの要求の形でないもの）は黙って捨てる。** 受け口の既定
+      // 読めないメッセージ（手続きの要求の形でないもの）は黙って捨てる。 受け口の既定
       // （`upgrade`）は投げたものを `console.error` へ出し、JSON の読み違いの理由には届いた文面の
       // 断片が入りうる（`docs/coding-standards.md`「会話内容の扱い」）。
       procedures.message(connection, messageText(data), { context }).catch(() => {})
@@ -118,7 +118,7 @@ export function attachSessionSocket(options: SessionSocketOptions): SessionSocke
 }
 
 /**
- * upgrade を通してよいか。**経路・起動トークン・`Origin` の3つ**を見る（docs/design.md 9章）。
+ * upgrade を通してよいか。経路・起動トークン・`Origin` の3つを見る（docs/design.md 9章）。
  * `Origin` が無いとき（ブラウザ経由でない呼び出し）を通すのは、旧の POST と同じ規則。
  */
 function isAllowedUpgrade(request: IncomingMessage, options: SessionSocketOptions): boolean {

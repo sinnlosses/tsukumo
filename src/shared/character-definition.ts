@@ -1,5 +1,5 @@
-// キャラクター定義ファイル（character.json）そのものの形。**読み取り（解析）と、画面から
-// 変えられる1件を重ねた書き戻しの文字列**を持つ。
+// キャラクター定義ファイル（character.json）そのものの形。読み取り（解析）と、画面から
+// 変えられる1件を重ねた書き戻しの文字列を持つ。
 //
 // character.json は利用者が用意する外部由来のファイル（`characters/local/` に置く想定を含む）
 // なので構造を信用しない。unknown で受けて検証し、壊れている・キーが無いときは undefined に落とす
@@ -31,71 +31,71 @@ import { optionalString } from "./utils/optional-string.ts"
 export type CharacterDefinition = {
   readonly name: string | undefined
   /**
-   * 表情名 → 日本語ラベル。**表情の呼び名はキャラクターごとの言葉**なのでコードに持たない
+   * 表情名 → 日本語ラベル。表情の呼び名はキャラクターごとの言葉なのでコードに持たない
    * （docs/design.md 7章。`speak` の説明と立ち絵の alt に出る）。定義に無い表情は
    * `expressionChoices`（`shared/expression-choice.ts`）が表情名そのものをラベルにする。
    */
   readonly expressions: Readonly<Record<Expression, string | undefined>>
   /**
-   * キャラクターの色（`docs/screen-design.md` 13.2 の `accent`）。**衣装ごとの差し色
-   * （`outfitAccents`）とは別物**で、立ち絵の中だけでなく画面全体（吹き出し・選ばれたタブ・
+   * キャラクターの色（`docs/screen-design.md` 13.2 の `accent`）。衣装ごとの差し色
+   * （`outfitAccents`）とは別物で、立ち絵の中だけでなく画面全体（吹き出し・選ばれたタブ・
    * フォーカスの輪など、13.1 原則1が許す場所）に効く。無ければ画面側の既定値に落ちる。
    */
   readonly accent: string | undefined
   /**
-   * 雑談中だけ効くキャラクターの色（`docs/screen-design.md` 13.2「雑談中は」/ 13.7）。**`accent` と
-   * 同じ枠を、モードに応じて差し替えるだけ**（つまみは増えない）。**任意**で、無いパックは
+   * 雑談中だけ効くキャラクターの色（`docs/screen-design.md` 13.2「雑談中は」/ 13.7）。`accent` と
+   * 同じ枠を、モードに応じて差し替えるだけ（つまみは増えない）。任意で、無いパックは
    * 雑談中も `accent` のまま（仕事と同じ差し色）。
    */
   readonly chatAccent: string | undefined
   readonly portraits: Readonly<Record<Expression, string | undefined>>
   /**
    * ミニ立ち絵の素材のファイル名（レポートの筆先に添う1体。docs/requirements.md 4.3）。
-   * **任意**で、無いパックは `portraits.default` の縮小に落ちる（4.4「あるものだけでよい」に
+   * 任意で、無いパックは `portraits.default` の縮小に落ちる（4.4「あるものだけでよい」に
    * 例外を作らない）。表情では変わらないので `portraits` とは別の1件で持つ。
    */
   readonly mini: string | undefined
   /**
-   * 帯の左端に出す顔の素材のファイル名（`docs/screen-design.md` 13.9「顔」）。**任意**で、無ければ
+   * 帯の左端に出す顔の素材のファイル名（`docs/screen-design.md` 13.9「顔」）。任意で、無ければ
    * 帯には何も出さない（`mini` や `portraits` からのフォールバックはしない）。表情では変わらない
    * 1枚（`mini` と同じ）で、正方形を勧める。
    */
   readonly face: string | undefined
   /**
    * ひとことプロフィール（`docs/screen-design.md` 13.7「雑談のときのサイドバー」）。雑談中のサイドバーの
-   * プロフィールの札で、名前の下に1行添える。**任意**で、無いパックは名前だけになる。
-   * **キャラクターの言葉なのでコードに持たない**（`CLAUDE.md` 原則4）。空白だけの値は無いのと
+   * プロフィールの札で、名前の下に1行添える。任意で、無いパックは名前だけになる。
+   * キャラクターの言葉なのでコードに持たない（`CLAUDE.md` 原則4）。空白だけの値は無いのと
    * 同じに畳む（札に空の行が出ないように）。
    */
   readonly tagline: string | undefined
   /**
    * キャラクターが利用者を呼ぶ言葉（`docs/glossary.md`「利用者の呼び名」）。セリフのログで依頼の
-   * 区切りの頭に付く。**任意**で、無いパックは呼び名を付けない。**キャラクターの言葉なので
-   * コードに持たない**（`CLAUDE.md` 原則4）。空白だけの値は無いのと同じに畳む。
+   * 区切りの頭に付く。任意で、無いパックは呼び名を付けない。キャラクターの言葉なので
+   * コードに持たない（`CLAUDE.md` 原則4）。空白だけの値は無いのと同じに畳む。
    */
   readonly userCall: string | undefined
   /**
    * ミニ立ち絵をキャラクターの世界で何と呼ぶか（`docs/glossary.md`「ミニ立ち絵の呼び名」）。
-   * ミニ立ち絵の alt に出る。**任意**で、無いパックは画面側の中立な呼び名に落ちる。
+   * ミニ立ち絵の alt に出る。任意で、無いパックは画面側の中立な呼び名に落ちる。
    * 空白だけの値は無いのと同じに畳む。
    */
   readonly miniCall: string | undefined
   readonly outfitAccents: Readonly<Record<Outfit, string | undefined>>
   /**
-   * キャラビューに敷く背景（`docs/screen-design.md` 13.8）。**素材のファイル名と覆いの不透明度**の
-   * 組で、**無ければ背景そのものが出ない**（既定の絵には落ちない）。読めない値は
+   * キャラビューに敷く背景（`docs/screen-design.md` 13.8）。素材のファイル名と覆いの不透明度の
+   * 組で、無ければ背景そのものが出ない（既定の絵には落ちない）。読めない値は
    * `src/shared/character-background.ts` が undefined か帯の中の値に畳む。
    */
   readonly background: CharacterBackground | undefined
   /**
    * 客として訪ねてくるときにパックが持つもの（`docs/research/character-visit.md` 論点7）。型と
-   * 検証は {@link toCharacterVisit}（`src/shared/character-visit.ts`）が持つ。**任意**で、
+   * 検証は {@link toCharacterVisit}（`src/shared/character-visit.ts`）が持つ。任意で、
    * 持たないパックは客にならない。
    */
   readonly visit: CharacterVisit | undefined
   /**
    * 日記の本文に効かせる書体のファイル名（`docs/screen-design.md` 13.3「例外は日記の本文だけ」。
-   * `docs/design.md` 7章）。**任意**で、無いパックは今までどおり `--font-serif`（端末の明朝体）の
+   * `docs/design.md` 7章）。任意で、無いパックは今までどおり `--font-serif`（端末の明朝体）の
    * まま。パックに同梱した書体ファイル（`woff2` / `woff` / `ttf` / `otf`）だけを指せる——外部
    * フォントは足さない。読めない・パックの外を指す値は {@link isDiaryFontFileName} が undefined に
    * 畳む。効くのは成果の画面の日記の吹き出しと日記帳の見開きの本文だけ（レポートやセリフの
@@ -121,11 +121,11 @@ export function parseCharacterDefinition(content: string): CharacterDefinition |
 
 /**
  * 生の `character.json` の文字列に、立ち絵1件の差し替えを重ねた JSON を返す。
- * **`portraits` の当該の表情だけを差し替え、ほかのキー（`name` / `license` / `persona` の
- * 指定など）はそのまま残す**（画面から変えられるのは立ち絵と差し色だけなので、定義を
+ * `portraits` の当該の表情だけを差し替え、ほかのキー（`name` / `license` / `persona` の
+ * 指定など）はそのまま残す（画面から変えられるのは立ち絵と差し色だけなので、定義を
  * 組み直して書き戻すと利用者が手で書いた値が消えてしまう）。
  *
- * 読めない・オブジェクトでない内容は**空の定義として作り直す**（定義がまだ無いパックに
+ * 読めない・オブジェクトでない内容は空の定義として作り直す（定義がまだ無いパックに
  * 立ち絵を足せるようにするため）。
  */
 export function definitionWithPortrait(
@@ -137,7 +137,7 @@ export function definitionWithPortrait(
 }
 
 /**
- * 立ち絵1件を消した JSON を返す。**受け取れるのは必須でない表情だけ**
+ * 立ち絵1件を消した JSON を返す。受け取れるのは必須でない表情だけ
  * （`default` は型で入らない。`src/shared/expression.ts` の {@link RemovableExpression}）。
  */
 export function definitionWithoutPortrait(
@@ -171,7 +171,7 @@ export function isAccentTarget(value: string): value is AccentTarget {
 
 /**
  * 画面の差し色（`accent` / `chatAccent`）1件を差し替えた JSON を返す。ほかのキーはそのまま残す。
- * **`portraits` / `outfitAccents` と違い最上位の欄**なので、入れ子を重ねる
+ * `portraits` / `outfitAccents` と違い最上位の欄なので、入れ子を重ねる
  * {@link editedDefinitionJson} ではなく {@link editedTopLevelDefinitionJson} を使う。
  */
 export function definitionWithAccent(
@@ -183,7 +183,7 @@ export function definitionWithAccent(
 }
 
 /**
- * `chatAccent` を消した JSON を返す（画面の「仕事と同じにする」）。**`accent` を消す口は無い**
+ * `chatAccent` を消した JSON を返す（画面の「仕事と同じにする」）。`accent` を消す口は無い
  * ——`accent` が無いと吹き出しなど画面全体の色が既定値へ落ちてしまい、`outfitAccents` の
  * 「無ければ既定へ」に相当する戻り先が無いため（`docs/screen-design.md` 13.6）。
  */
@@ -192,21 +192,21 @@ export function definitionWithoutChatAccent(content: string | undefined): string
 }
 
 /**
- * 表示名として受け付ける長さの上限（`docs/design.md` 7.1）。**作るとき・`characterPack.setProfile` で
- * 変えるときの両方**が境界（`src/shared/command.ts`）でこれを見る。文字種は縛らない
+ * 表示名として受け付ける長さの上限（`docs/design.md` 7.1）。作るとき・`characterPack.setProfile` で
+ * 変えるときの両方が境界（`src/shared/command.ts`）でこれを見る。文字種は縛らない
  * （表示名は日本語も使える。長さだけがネットワーク越しに届く値としての素朴な歯止め）。
  */
 export const MAX_CHARACTER_NAME_LENGTH = 100
 
 /**
- * ひとことプロフィールとして受け付ける長さの上限（`docs/design.md` 7.1）。**「1行」の性質は
- * 覚えたこと1行の上限（`MAX_REMEMBERED_LINE_LENGTH`）と同じ値**を採る。
+ * ひとことプロフィールとして受け付ける長さの上限（`docs/design.md` 7.1）。「1行」の性質は
+ * 覚えたこと1行の上限（`MAX_REMEMBERED_LINE_LENGTH`）と同じ値を採る。
  */
 export const MAX_CHARACTER_TAGLINE_LENGTH = 120
 
 /**
- * 表示名（`character.json` の `name`）を差し替えた JSON を返す。**空文字（前後の空白だけも
- * 含む）は書かない**（`toCharacterDefinition` が空白だけの `tagline` を無いものへ畳むのと
+ * 表示名（`character.json` の `name`）を差し替えた JSON を返す。空文字（前後の空白だけも
+ * 含む）は書かない（`toCharacterDefinition` が空白だけの `tagline` を無いものへ畳むのと
  * 同じ考え方）。名前が無い定義は、読む側
  * （`src/browser/components/page/character/components/hooks/use-character-edit.ts`
  * の `character.name ?? character.pack`・`src/server/character-pack/adapter/character-pack.ts` が
@@ -218,7 +218,7 @@ export function definitionWithName(content: string | undefined, name: string): s
 }
 
 /**
- * ひとことプロフィール（`tagline`）を差し替えた JSON を返す。**空文字は消すのと同じ**
+ * ひとことプロフィール（`tagline`）を差し替えた JSON を返す。空文字は消すのと同じ
  * （`toCharacterDefinition` の読み取りが空白だけの値をもともと無いものへ畳むのに揃える）。
  */
 export function definitionWithTagline(content: string | undefined, tagline: string): string {
@@ -231,7 +231,7 @@ export function definitionWithTagline(content: string | undefined, tagline: stri
 
 /**
  * 帯の左端・一覧の丸・名乗りの大きな丸に出す顔（`character.json` の `face`）を差し替えた JSON を
- * 返す。**`mini` や `portraits` へのフォールバックは無い1枚**（`docs/screen-design.md` 13.9「顔」）。
+ * 返す。`mini` や `portraits` へのフォールバックは無い1枚（`docs/screen-design.md` 13.9「顔」）。
  */
 export function definitionWithFace(content: string | undefined, fileName: string): string {
   return editedTopLevelDefinitionJson(content, "face", fileName)
@@ -243,7 +243,7 @@ export function definitionWithoutFace(content: string | undefined): string {
 }
 
 /**
- * 背景の素材を差し替えた JSON を返す。**覆いの不透明度（`veil`）はそのまま残す** — 画面から
+ * 背景の素材を差し替えた JSON を返す。覆いの不透明度（`veil`）はそのまま残す — 画面から
  * 変えられるのは素材だけで、濃さは定義ファイルを手で直す（`docs/screen-design.md` 13.6 / 13.8）。
  */
 export function definitionWithBackground(content: string | undefined, fileName: string): string {
@@ -251,7 +251,7 @@ export function definitionWithBackground(content: string | undefined, fileName: 
 }
 
 /**
- * 背景を消した JSON を返す。**消すのは素材の指定だけ**で、`veil` は残る（もう一度差したときに
+ * 背景を消した JSON を返す。消すのは素材の指定だけで、`veil` は残る（もう一度差したときに
  * その人が書いた濃さが戻る。素材が無ければ背景は出ない）。
  */
 export function definitionWithoutBackground(content: string | undefined): string {
@@ -310,8 +310,8 @@ function stringField(record: Readonly<Record<string, unknown>>, key: string): st
 }
 
 /**
- * 定義の入れ子のキー1つを差し替えた JSON 文字列を作る。**値が undefined のキーは
- * `JSON.stringify` が落とす**ので、それが「消す」になる。整形は2スペース（利用者が
+ * 定義の入れ子のキー1つを差し替えた JSON 文字列を作る。値が undefined のキーは
+ * `JSON.stringify` が落とすので、それが「消す」になる。整形は2スペース（利用者が
  * あとから手で編集する前提のファイルなので、1行に潰さない）。
  */
 function editedDefinitionJson(

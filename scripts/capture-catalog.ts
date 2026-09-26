@@ -1,19 +1,19 @@
-// 画面の**状態のカタログ**を一括で撮る道具。fake driver（`TSUKUMO_DRIVER=fake`）の場面を
+// 画面の状態のカタログを一括で撮る道具。fake driver（`TSUKUMO_DRIVER=fake`）の場面を
 // 名前で名指しして tsukumo を1件ずつ起こし、広い窓と狭い窓の2枚を撮って、並べて見るための
 // 索引 HTML を書き出す。描画に関わる変更の `evidence`（`docs/architecture.md`
 // 「手で確かめること」）を作るための道具で、tsukumo 本体からは呼ばれないので scripts/ に置く。
 //
-// **依頼を手で送らずに、狙った状態が出る。** 場面の名前は疑似セッション（test/fixture/fake-session.json）の
+// 依頼を手で送らずに、狙った状態が出る。 場面の名前は疑似セッション（test/fixture/fake-session.json）の
 // `turns[].name` で、`TSUKUMO_FAKE_SCENE` で名指しすると起こした直後に流れる。
 //
-// **手を動かさないと出ない状態は、撮る前に操作を当てて出す**（{@link Preparation} の4種）。
-// 領域の内側は転がっても**ページ自体は転がらない**ので、`fullPage` では下の方が1枚も撮れない
+// 手を動かさないと出ない状態は、撮る前に操作を当てて出す（{@link Preparation} の4種）。
+// 領域の内側は転がってもページ自体は転がらないので、`fullPage` では下の方が1枚も撮れない
 // （図とグラフがそれ）。疑似セッションにもサーバにも手を入れず、開いたページを操作して撮る。
 //
 // 1枚だけ撮る・要素の位置と大きさを数値で読むのは `capture-view.ts`（別の道具）。こちらは
 // 「起こす → 撮る → 落とす」を繰り返す側で、測りはしない。
 //
-// **先に `bun run build` が要る。** 起こす tsukumo は `dist/browser/` に置いた成果物を読むだけで、
+// 先に `bun run build` が要る。 起こす tsukumo は `dist/browser/` に置いた成果物を読むだけで、
 // 自分では組み立てない（`src/server/view-server/adapter/bundle.ts` 冒頭）。無いと1件ずつ
 // 起動に失敗する。
 //
@@ -22,17 +22,17 @@
 //   bun run scripts/capture-catalog.ts --only question-multi  # 1つだけ
 //   bun run scripts/capture-catalog.ts --out /tmp/別の置き場
 //
-// **オプション無しで実行するとカタログ全部（広い窓・狭い窓の2枚ずつ）を撮る。** 60秒では
+// オプション無しで実行するとカタログ全部（広い窓・狭い窓の2枚ずつ）を撮る。 60秒では
 // 終わらないので、一覧が欲しいだけなら `--help` を使う。
 //
 // `--help` は専用のフラグとして実装していない。`parseOptions` が「値を取らない・値を持たない
 // フラグ」を一律で使い方の表示に落とすので、他のどの未知の引数を渡しても同じ表示になる
 // （`--only` の名前一覧はそこに含めている）。
 //
-// **撮った画像はリポジトリに置かない**（既定の出力先は /tmp。`capture-view.ts` 冒頭の決定を
+// 撮った画像はリポジトリに置かない（既定の出力先は /tmp。`capture-view.ts` 冒頭の決定を
 // 引き継ぐ）。疑似セッションは架空の会話なので画像そのものは共有してよい。
 //
-// **キャラクターは指定しない。** 起こす側が覚えている立ち絵（`~/.tsukumo/state.json`）を
+// キャラクターは指定しない。 起こす側が覚えている立ち絵（`~/.tsukumo/state.json`）を
 // そのまま使う — ここで `TSUKUMO_CHARACTER` を渡すと、利用者が最後に選んだ立ち絵を
 // 上書きしてしまうため。
 
@@ -51,12 +51,12 @@ import { appendDiaryParagraph } from "../src/server/diary/adapter/diary.ts"
 const REPO_DIR = fileURLToPath(new URL("..", import.meta.url))
 
 /**
- * 撮る前に当てる操作。**この5種だけ**にする（もとは4種で、`docs/research/ui-catalog.md` 1.4 が
+ * 撮る前に当てる操作。この5種だけにする（もとは4種で、`docs/research/ui-catalog.md` 1.4 が
  * 根拠。`hover` は、触れている間だけ出る状態（質問の箱と、メインビューの
  * 比較の札の連動）は押しても出ないため足した）。当てない件は空の並びで表し、「操作が無い」を
  * `undefined` で書かない。
  *
- * - `scroll`: その要素が見えるところまで、**それを囲む領域の内側**を送る
+ * - `scroll`: その要素が見えるところまで、それを囲む領域の内側を送る
  * - `click`: 押す（モーダルを開く口・狭い窓のタブ）
  * - `hover`: 触れる（押すと状態が進んでしまう場所）
  * - `type`: 入力欄に打つ（`/` と `@` の補完）
@@ -70,8 +70,8 @@ type Preparation =
   | { readonly kind: "hash"; readonly hash: string }
 
 /**
- * 撮る前に、その件専用の `TSUKUMO_HOME` へ置いておくもの。**既定のホーム（利用者の
- * `~/.tsukumo/`）には触らない**——日記帳の見開きや、画面から消せるキャラクターパックは
+ * 撮る前に、その件専用の `TSUKUMO_HOME` へ置いておくもの。既定のホーム（利用者の
+ * `~/.tsukumo/`）には触らない——日記帳の見開きや、画面から消せるキャラクターパックは
  * 中身が無いと出せないので、`--out` の下に立てた件専用のホームへだけ書く
  * （{@link applyHomeSetup}）。
  *
@@ -88,16 +88,16 @@ type HomeSetup =
 
 /**
  * カタログの1件。`scene` は疑似セッション（test/fixture/fake-session.json）の場面の名前で、`name` は
- * **画像のファイル名と `--only` の名指しに使う一意の名前**（同じ場面を別の操作で何枚も撮るので、
+ * 画像のファイル名と `--only` の名指しに使う一意の名前（同じ場面を別の操作で何枚も撮るので、
  * 場面の名前では足りない）。
  *
  * `skipReveal` は、撮る前に「書き上げていくように見せる演出」
- * （`src/browser/domain/reveal/use-report-reveal.ts`）を着地させておくか。**レポートが長い場面
+ * （`src/browser/domain/reveal/use-report-reveal.ts`）を着地させておくか。レポートが長い場面
  * （`notation`）は演出が終わるまで約15秒かかり、そのあいだ演出自身の自動送りが筆先を追い続けて
- * 器を送る**ので、こちらが `scroll` で送った位置をフレームごとに引き戻される（図・グラフは
- * 演出のいちばん最後に出る塊で、演出中はまだ見えていない）。演出はクリックと**キー入力**で
+ * 器を送るので、こちらが `scroll` で送った位置をフレームごとに引き戻される（図・グラフは
+ * 演出のいちばん最後に出る塊で、演出中はまだ見えていない）。演出はクリックとキー入力で
  * 打ち切れる（`use-report-reveal.ts` の `SKIP_EVENT_NAMES`）ので、`prepare` を当てる前に
- * キーを1つ打って演出を終わらせてから送る。**当てない件は待ち時間が変わらない**ので既定は
+ * キーを1つ打って演出を終わらせてから送る。当てない件は待ち時間が変わらないので既定は
  * `false`。
  */
 type CatalogEntry = {
@@ -110,19 +110,19 @@ type CatalogEntry = {
 }
 
 /**
- * 本文が入る領域（メインビュー）。**class 名は組み立てのたびにハッシュ化される**（CSS Modules）
+ * 本文が入る領域（メインビュー）。class 名は組み立てのたびにハッシュ化される（CSS Modules）
  * ので、領域を指すときは `<Layout>` が付ける `data-region` を使う。
  */
 const MAIN_REGION_SELECTOR = '[data-region="main"]'
 
-/** 本文が入る領域の中で、**領域の外まではみ出して1枚に入らない**もの（疑似セッションの `notation`）。 */
+/** 本文が入る領域の中で、領域の外まではみ出して1枚に入らないもの（疑似セッションの `notation`）。 */
 const MERMAID_SELECTOR = `${MAIN_REGION_SELECTOR} svg`
 const CHART_SELECTOR = `${MAIN_REGION_SELECTOR} canvas`
 /**
- * `note` の種別の並びのうち**いちばん上に出るもの**（情報）。ここまで送ると、続く注意・異常・
+ * `note` の種別の並びのうちいちばん上に出るもの（情報）。ここまで送ると、続く注意・異常・
  * 疑問・メモが1枚に収まる（お願いだけは規約でレポートの末尾に置くので別の1枚になる）。
- * **class 名は組み立てのたびにハッシュ化される**（`report-note_nkMPPQ`）ので、種別の印
- * （`report-note-warn` など）を巻き込まないよう**区切りの `_` まで含めて**前方一致で指す
+ * class 名は組み立てのたびにハッシュ化される（`report-note_nkMPPQ`）ので、種別の印
+ * （`report-note-warn` など）を巻き込まないよう区切りの `_` まで含めて前方一致で指す
  * （`docs/architecture.md`「手で確かめること」）。
  */
 const NOTE_KINDS_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="report-note_"]`
@@ -135,15 +135,15 @@ const NOTE_FAVOR_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="report-note-favor_
 const COMPOSER_SELECTOR = "textarea"
 
 /**
- * 狭い窓でだけ出る領域のタブと、タスク一覧を開く口。**広い窓ではタブが隠れている**ので、
+ * 狭い窓でだけ出る領域のタブと、タスク一覧を開く口。広い窓ではタブが隠れているので、
  * タブを押す手は空振りする（空振りは飛ばして次の手へ進む。{@link applyPreparation}）。
  */
 const SIDEBAR_TAB_SELECTOR = '[role="tab"]:has-text("サイドバー")'
 const TASK_BOARD_SELECTOR = 'button:has-text("一覧を見る")'
 
 /**
- * 帯の「いまの作業」の外枠（`data-work-state` を持つ div）の中の押す口。**広い画面の帯と
- * 狭い画面の「≡」の面の両方に同じ部品が置かれる**（`screen-nav-current-work.tsx`）ので、
+ * 帯の「いまの作業」の外枠（`data-work-state` を持つ div）の中の押す口。広い画面の帯と
+ * 狭い画面の「≡」の面の両方に同じ部品が置かれる（`screen-nav-current-work.tsx`）ので、
  * 見えているほうだけを `:visible` で絞る。狭い画面では先に {@link MENU_TOGGLE_SELECTOR} を
  * 押さないとこちらは見えない（{@link applyPreparation} が当たらなかった手を飛ばすので、
  * 広い画面ではこの前の「≡」を押す手が黙って空振りする）。
@@ -178,7 +178,7 @@ const DIARY_FIXTURE_BODY =
   "ダミーの振り返りとして、架空のタスクを1件終えたことにしてある。"
 
 /**
- * 並べて見たい状態。**網羅はしない** — 直したときに崩れやすい場所（答え待ちの箱・ツールの進行・
+ * 並べて見たい状態。網羅はしない — 直したときに崩れやすい場所（答え待ちの箱・ツールの進行・
  * レポートの記法・補完の候補・キャラクター画面）だけを選ぶ。足すときは疑似セッションに場面を足して、
  * その名前と、撮る前に当てる操作をここに書く。
  */
@@ -247,8 +247,8 @@ const CATALOG: readonly CatalogEntry[] = [
     prepare: [],
     skipReveal: false,
   },
-  // **記法の見本は領域に1枚ぶんが入らない**（1400x900 で 1358px のうち 855px が領域の外）。
-  // 領域を伸ばして1枚にすると他の領域が重なって本番と別の姿になるので、**送って複数枚に分ける**。
+  // 記法の見本は領域に1枚ぶんが入らない（1400x900 で 1358px のうち 855px が領域の外）。
+  // 領域を伸ばして1枚にすると他の領域が重なって本番と別の姿になるので、送って複数枚に分ける。
   {
     name: "notation-note",
     scene: "notation",
@@ -280,7 +280,7 @@ const CATALOG: readonly CatalogEntry[] = [
     label: "レポートの記法（図。領域を送った先）",
     homeSetup: { kind: "default" },
     prepare: [{ kind: "scroll", selector: MERMAID_SELECTOR }],
-    // **図はレポートの末尾に近く、演出が終わるまで自動送りに送り位置を戻され続ける**（冒頭の
+    // 図はレポートの末尾に近く、演出が終わるまで自動送りに送り位置を戻され続ける（冒頭の
     // `skipReveal` の説明）。
     skipReveal: true,
   },
@@ -335,12 +335,12 @@ const CATALOG: readonly CatalogEntry[] = [
     prepare: [{ kind: "hash", hash: "#character/new" }],
     skipReveal: false,
   },
-  // **帯の「いまの作業」の3状態**（`docs/architecture.md`「手で確かめること」）。どれも
+  // 帯の「いまの作業」の3状態（`docs/architecture.md`「手で確かめること」）。どれも
   // {@link MENU_TOGGLE_SELECTOR} → {@link WORK_TOGGLE_SELECTOR} の順で押して一覧を開く
   // （広い画面では「≡」が無いので前者は空振りしてよい）。
   {
     name: "current-work-running",
-    // **自分の `request` を持つ場面**（`test/fixture/fake-session.json`）なので、名指しで
+    // 自分の `request` を持つ場面（`test/fixture/fake-session.json`）なので、名指しで
     // 直接起こしてもターンが進行中のまま20秒続く——その間に撮れば「作業中」と実行中の手順が出る。
     scene: "current-work-running",
     label: "帯の「いまの作業」（実行中）",
@@ -353,7 +353,7 @@ const CATALOG: readonly CatalogEntry[] = [
   },
   {
     name: "current-work-failed",
-    // **自分の `request` を持つ場面**（`current-work-running` と同じ理由）。`report` 場面には
+    // 自分の `request` を持つ場面（`current-work-running` と同じ理由）。`report` 場面には
     // 失敗した手順があっても `request` が無いので「依頼の手順」に一度も現れない
     // （`src/shared/turn-step.ts` の `currentTurnSteps` は最後の `request` より前の手順を
     // 落とす）。ターンが終わったあとでも「前の依頼での手順」に失敗した1件（`isError: true` の
@@ -417,10 +417,10 @@ const CATALOG: readonly CatalogEntry[] = [
 ]
 
 /**
- * 撮る窓の大きさ。**広いほうは `capture-view.ts` の既定と同じ**で、狭いほうは切り替えの規則
+ * 撮る窓の大きさ。広いほうは `capture-view.ts` の既定と同じで、狭いほうは切り替えの規則
  * （各機能の `*.module.css` の `max-width: 760px`）の内側に入る幅にしてある。
  *
- * 狭いほうだけページ全体を撮る。**縦に積み替わる**ので、窓に収まる範囲だけでは下の領域
+ * 狭いほうだけページ全体を撮る。縦に積み替わるので、窓に収まる範囲だけでは下の領域
  * （吹き出しと答え待ちの箱）が1枚に入らない。
  */
 const SIZES = [
@@ -428,7 +428,7 @@ const SIZES = [
   { name: "narrow", width: 720, height: 900, fullPage: true },
 ] as const
 
-/** 既定の出力先。**リポジトリの外**に置く（画面には会話が写るため）。 */
+/** 既定の出力先。リポジトリの外に置く（画面には会話が写るため）。 */
 const DEFAULT_OUT_DIR = "/tmp/tsukumo-catalog"
 
 /** 起こした tsukumo が URL を出すまで待つ上限（ミリ秒）。ブラウザ側の組み立てを含む。 */
@@ -438,7 +438,7 @@ const LAUNCH_TIMEOUT_MS = 30_000
 const SETTLE_TIMEOUT_MS = 10_000
 
 /**
- * 最後の手が流れ終わるまでの余裕（ミリ秒）。**場面はページが繋がってから流れ始める**
+ * 最後の手が流れ終わるまでの余裕（ミリ秒）。場面はページが繋がってから流れ始める
  * （fake driver は最初のタブを待つ）ので、`opening`（0.2秒）とカタログの一番長い場面
  * （`turn-history` の約1.4秒）を足したものより後に撮る。
  */
@@ -446,7 +446,7 @@ const SCENE_TAIL_MS = 2000
 
 /**
  * 操作を1つ当てるのに待つ上限（ミリ秒）と、当てたあとに描き直しを待つ余裕（ミリ秒）。
- * **窓の大きさによっては当たらない口がある**（狭い窓でしか出ないタブ）ので、短めに切る。
+ * 窓の大きさによっては当たらない口がある（狭い窓でしか出ないタブ）ので、短めに切る。
  */
 const PREPARE_TIMEOUT_MS = 2000
 const PREPARE_SETTLE_MS = 800
@@ -507,7 +507,7 @@ async function main(argv: readonly string[]): Promise<number> {
 }
 
 /**
- * カタログ1件ぶん。**tsukumo を起こし直して撮る**ので、前の場面の記録が画面に残らない
+ * カタログ1件ぶん。tsukumo を起こし直して撮るので、前の場面の記録が画面に残らない
  * （同じセッションに依頼を重ねると、狙った状態だけを撮れない）。
  */
 async function captureEntry(
@@ -533,7 +533,7 @@ async function captureEntry(
     }
     return shots
   } finally {
-    // 起こしたのはこの pid だけ。**広いパターンで落とさない**（開発中の tsukumo を巻き込むため）。
+    // 起こしたのはこの pid だけ。広いパターンで落とさない（開発中の tsukumo を巻き込むため）。
     session.kill("SIGTERM")
   }
 }
@@ -551,11 +551,11 @@ async function captureShot(
     await page
       .waitForSelector(MAIN_REGION_SELECTOR, { timeout: SETTLE_TIMEOUT_MS })
       .catch(() => undefined)
-    // **疑似セッションが流れ終わってから操作を当てる。** 流れている途中で押すと、狙った状態の手前で
+    // 疑似セッションが流れ終わってから操作を当てる。 流れている途中で押すと、狙った状態の手前で
     // 画面が組み直されて操作が空振りする。
     await page.waitForTimeout(SCENE_TAIL_MS)
     if (entry.skipReveal) {
-      // **`prepare` の前に演出を終わらせる。** 演出中は自動送りがフレームごとに器を送り直す
+      // `prepare` の前に演出を終わらせる。 演出中は自動送りがフレームごとに器を送り直す
       // ので、あとに続く `scroll` の送り先をそのたびに引き戻される（{@link CatalogEntry}
       // の `skipReveal` の説明）。
       await page.keyboard.press(SKIP_REVEAL_KEY)
@@ -573,7 +573,7 @@ async function captureShot(
 }
 
 /**
- * 操作を1つ当てる。**当てられなくても撮る** — 窓の大きさによっては出ていない口がある
+ * 操作を1つ当てる。当てられなくても撮る — 窓の大きさによっては出ていない口がある
  * （狭い窓でしか出ない領域のタブ）ので、当たらなかったことだけを出して次の手へ進む。
  * 当たらなかった手のぶん画面は動いていないので、撮れた画像を見れば何が出ていないか分かる。
  */
@@ -626,7 +626,7 @@ function describePreparation(step: Preparation): string {
 }
 
 /**
- * `entry.homeSetup` を件専用のホームへ反映する。**`default` はここまで来ない**
+ * `entry.homeSetup` を件専用のホームへ反映する。`default` はここまで来ない
  * （呼び出し元の {@link captureEntry} が `home` の要らない件では呼ばない）。
  */
 async function applyHomeSetup(setup: HomeSetup, homeDir: string): Promise<void> {
@@ -651,7 +651,7 @@ async function applyHomeSetup(setup: HomeSetup, homeDir: string): Promise<void> 
       writer: { pack: "tsukumo", name: "tsukumo" },
       bookmark: {
         kind: "placed",
-        // **`T-` + 数字にしない**（`docs/coding-standards.md`
+        // `T-` + 数字にしない（`docs/coding-standards.md`
         // 「コード・ドキュメントにタスク番号を書かない」。しおりの id は自由な文字列なので、
         // その形に見えない架空の名で足りる）。
         taskId: "架空-1",
@@ -675,7 +675,7 @@ function diaryEpochMilliseconds(date: string): number {
 }
 
 /**
- * tsukumo を1つ起こす。**空きポート（`TSUKUMO_VIEW_PORT=0`）**なので、常駐している tsukumo と
+ * tsukumo を1つ起こす。空きポート（`TSUKUMO_VIEW_PORT=0`）なので、常駐している tsukumo と
  * ぶつからない。タブは開かず（`TSUKUMO_OPEN_VIEW=0`）、駆動は fake driver だけ。`home` は
  * {@link HomeSetup} が件専用のホームを立てたときだけ渡り、既定のホームを `TSUKUMO_HOME` で
  * 上書きする（無ければ既定のまま）。
@@ -722,10 +722,10 @@ function waitForViewUrl(session: ChildProcess): Promise<string> {
 }
 
 /**
- * 並べて見るための索引。**画像を1枚ずつ開かずに済ませる**のが目的なので、飾りは付けず
+ * 並べて見るための索引。画像を1枚ずつ開かずに済ませるのが目的なので、飾りは付けず
  * 見出しと画像だけを縦に並べる（外の CSS も JS も読まない）。
  *
- * **1件のぶんは1つの節にまとめ、頭に行き先の一覧を置く** — 件数が増えても、探している件まで
+ * 1件のぶんは1つの節にまとめ、頭に行き先の一覧を置く — 件数が増えても、探している件まで
  * 転がし続けずに飛べるようにする。
  */
 function indexHtml(shots: readonly Shot[]): string {

@@ -1,9 +1,9 @@
-// E2E の足場。**起こす・開く・成果物を書く・比べる・後始末**をここに置き、シナリオ
+// E2E の足場。起こす・開く・成果物を書く・比べる・後始末をここに置き、シナリオ
 // （`test/e2e/<シナリオ>.test.ts`）はここを呼ぶだけにする。形の正典は `docs/design.md` 10章
 // 「E2E の走らせ方」「E2E の成果物と再現」。
 //
 // - ブラウザは1ファイルに1つ（`beforeAll`）、tsukumo とブラウザのコンテキストは1件ごとに1つ
-// - 起こした tsukumo は `afterEach` で**自分の pid だけ**に `SIGTERM` を送り、終わるのを待ってから
+// - 起こした tsukumo は `afterEach` で自分の pid だけに `SIGTERM` を送り、終わるのを待ってから
 //   一時のディレクトリを消す
 // - 判定は DOM の構造とメッセージの列の2つの JSON だけ。スクリーンショットは目視の添え物
 //
@@ -79,8 +79,8 @@ export type ScenarioOptions = {
 export type ScenarioRoom = {
   readonly page: Page
   /**
-   * 起こした tsukumo の cwd（`realpath` を通した絶対パス）。**`main` の develop/task/ を読む
-   * タスクの一覧のように、疑似セッションの場面ではなく cwd の中身そのものが元になるシナリオ**
+   * 起こした tsukumo の cwd（`realpath` を通した絶対パス）。`main` の develop/task/ を読む
+   * タスクの一覧のように、疑似セッションの場面ではなく cwd の中身そのものが元になるシナリオ
    * だけがここへ書き足す（`git init` など）。書き足すのはブラウザが繋がったのを確かめたあと
    * にする——起こす前や繋がる前に用意すると、最初の見回りが `hello` に畳まれてしまい、
    * 変化を捕まえる `waitForEvent` の的が無くなる（docs/design.md 10章「E2E の走らせ方」）。
@@ -222,7 +222,7 @@ function makeTempDirectory(prefix: string): TempDirectory {
 }
 
 /**
- * fake driver で tsukumo を1つ起こす。**親の `TSUKUMO_` で始まる変数は外してから渡す**
+ * fake driver で tsukumo を1つ起こす。親の `TSUKUMO_` で始まる変数は外してから渡す
  * （手元で立てている値で結果が変わらないように）。キャラクターは指定せず、空のホームで同梱の
  * 既定を使う。
  */
@@ -333,7 +333,7 @@ function recordMessages(page: Page): MessageRecord {
     readonly resolve: () => void
   }[] = []
 
-  // 押し出しの購読（`frame.subscribe`）の要求番号。**購読はコマンドではない**ので列に載せず、
+  // 押し出しの購読（`frame.subscribe`）の要求番号。購読はコマンドではないので列に載せず、
   // その Event Iterator の中身（`t: 3` の `message`）をフレームとしてほどく。
   const subscriptionIds = new Set<string>()
 
@@ -559,7 +559,7 @@ const DOM_TREE_SCRIPT = `(() => {
 
 /**
  * 成果物を書き、期待値と比べる。書く前に置き換え（絶対パス・トークン・ポート）を通す。
- * **期待値が無ければ落とす**（黙って書かない）。`E2E_UPDATE=1` なら期待値を書き直す。
+ * 期待値が無ければ落とす（黙って書かない）。`E2E_UPDATE=1` なら期待値を書き直す。
  */
 function matchArtifact(
   scenario: string,

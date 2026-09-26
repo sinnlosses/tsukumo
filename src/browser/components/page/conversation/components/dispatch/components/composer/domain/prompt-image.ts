@@ -1,15 +1,15 @@
 // 貼り付け・ドロップ・ファイルを選ぶ窓で届いたファイルを、依頼に添える画像（`src/shared/prompt-image.ts` の
 // `PromptImage`）にする（`docs/requirements.md` 4.10）。
 //
-// **縮めるのはここ（ブラウザ側）だけ。** サーバは受け取った控えをそのまま記録に載せるので、
+// 縮めるのはここ（ブラウザ側）だけ。 サーバは受け取った控えをそのまま記録に載せるので、
 // 原寸が残る場所はどこにも無い。控えを作るのは「原寸を手放しても依頼の記録が読める」ように
-// するためで、**押して拡大する面は作らない**（作ろうとしても開くものが無い）。
+// するためで、押して拡大する面は作らない（作ろうとしても開くものが無い）。
 //
-// 読めなかった1枚は undefined にして呼び出し側が諦める（例外を投げない。**画面は1回の失敗で
-// 落ちない**。`docs/coding-standards.md`「エラーハンドリング」）。
+// 読めなかった1枚は undefined にして呼び出し側が諦める（例外を投げない。画面は1回の失敗で
+// 落ちない。`docs/coding-standards.md`「エラーハンドリング」）。
 //
-// **読むのは入力欄（`components/page/conversation/components/dispatch/`）だけ**なので機能の中に置く（`docs/design.md` 2章
-// 「その機能しか読まないなら機能の中」。**2つ目の機能が読み始めたら `browser/lib/` へ上げる**）。
+// 読むのは入力欄（`components/page/conversation/components/dispatch/`）だけなので機能の中に置く（`docs/design.md` 2章
+// 「その機能しか読まないなら機能の中」。2つ目の機能が読み始めたら `browser/lib/` へ上げる）。
 // フックではないので `hooks/` には置かず、機能の直下に概念の名前で置く。
 
 import {
@@ -21,19 +21,19 @@ import {
 import { readDataUrl } from "../../../../../../../../lib/data-url.ts"
 
 /**
- * 控えの長いほうの辺（px）。**記録に残り続けるものなので小さく持つ**
+ * 控えの長いほうの辺（px）。記録に残り続けるものなので小さく持つ
  * （`MAX_PROMPT_IMAGE_THUMBNAIL_BYTES` に対して十分な余裕がある）。札にも控えにも、この1枚を
  * そのまま出す。
  */
 const THUMBNAIL_MAX_EDGE_PX = 320
 
-/** 控えの形式。**受け付ける4つのうち、同じ絵をいちばん小さく持てるもの。** */
+/** 控えの形式。受け付ける4つのうち、同じ絵をいちばん小さく持てるもの。 */
 const THUMBNAIL_MEDIA_TYPE = "image/webp"
 
 const THUMBNAIL_QUALITY = 0.8
 
 /**
- * 落ちてきた・貼られたものから、**依頼に添えられる画像のファイルだけ**を拾う
+ * 落ちてきた・貼られたものから、依頼に添えられる画像のファイルだけを拾う
  * （`.svg` や PDF やフォルダは混ざらない）。外来の `null` はここで undefined に畳む。
  */
 export function promptImageFiles(transfer: DataTransfer | null | undefined): readonly File[] {
@@ -51,7 +51,7 @@ export function chosenPromptImageFiles(files: FileList | null): readonly File[] 
 }
 
 /**
- * 掴んで持ってきているものがファイルか。**`dragover` の時点では中身（`files`）がまだ読めない**
+ * 掴んで持ってきているものがファイルか。`dragover` の時点では中身（`files`）がまだ読めない
  * ので、ここだけは種類の並び（`types`）で見る（受け取れるかどうかは落ちたあとに
  * {@link promptImageFiles} が決める）。
  */
@@ -60,7 +60,7 @@ export function carriesFiles(transfer: DataTransfer | null | undefined): boolean
 }
 
 /**
- * ファイル1つを**原寸と控えの対**にする。読めない・受け付けない種類・大きすぎるときは
+ * ファイル1つを原寸と控えの対にする。読めない・受け付けない種類・大きすぎるときは
  * undefined（その1枚だけを諦める）。
  */
 export async function readPromptImage(file: File): Promise<PromptImage | undefined> {
@@ -79,7 +79,7 @@ export async function readPromptImage(file: File): Promise<PromptImage | undefin
 
 /**
  * 原寸の data URL から控えを作る。長いほうの辺を {@link THUMBNAIL_MAX_EDGE_PX} に収め、
- * **上限に収まったものだけ**を返す（収まらなければその1枚を諦める）。
+ * 上限に収まったものだけを返す（収まらなければその1枚を諦める）。
  */
 async function shrinkToThumbnail(full: string): Promise<string | undefined> {
   const decoded = await decodeImage(full)

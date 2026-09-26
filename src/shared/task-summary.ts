@@ -12,7 +12,7 @@ import { isIncludedIn } from "remeda"
 /**
  * サイドバーのタスク一覧1件分。ファイルに出てくる順のまま持つ（status ごとにまとめない）。
  *
- * `difficulty`・`loopable`・`dependencies` は**一覧の表（`src/browser/features/task-board/task-board.tsx`）が使う**。
+ * `difficulty`・`loopable`・`dependencies` は一覧の表（`src/browser/features/task-board/task-board.tsx`）が使う。
  * サイドバーの区画には出さないが、同じ読み取りから採れるものをここで揃えておく
  * （読み取りを2本に分けない）。
  */
@@ -26,9 +26,9 @@ export type TaskSummaryItem = {
 }
 
 /**
- * `develop/task/` の一覧が読めているかどうか。**「まだ届いていない」（session-state.ts の
+ * `develop/task/` の一覧が読めているかどうか。「まだ届いていない」（session-state.ts の
  * 初期値）と「読めない」（`develop/task/` が無い・front matter が INVALID）を
- * ここでは区別しない**——`watchTaskSummary`（`src/server/repository/adapter/task-summary.ts`）は
+ * ここでは区別しない——`watchTaskSummary`（`src/server/repository/adapter/task-summary.ts`）は
  * `main` が最初から読めないときは初回の通知そのものを送らないので、その口だけでは
  * 「まだ確認していない」と「確認して無かった」を型で分けられない。画面側もどちらも同じ
  * 「不明」表示にしていて対処が変わらないため、分けても情報が増えない
@@ -40,18 +40,18 @@ export type TaskSummaryResult =
 
 /**
  * 着手可否。`todo` のタスクだけが対象で、それ以外は判定しない（`taskReadiness` が undefined）。
- * `blockedBy` には**まだ完了していない依存のID**が、タスクに書かれた順で入る。
+ * `blockedBy` にはまだ完了していない依存のIDが、タスクに書かれた順で入る。
  */
 export type TaskReadiness =
   | { readonly kind: "ready" }
   | { readonly kind: "blocked"; readonly blockedBy: readonly string[] }
 
 /**
- * 1件の着手可否。**`task-workflow` の `status.py` と同じ規則**にする: `todo` 以外は判定せず、
+ * 1件の着手可否。`task-workflow` の `status.py` と同じ規則にする: `todo` 以外は判定せず、
  * 止めているのは「一覧に存在していて、まだ `done` でない依存」だけ。
- * **一覧に無いIDは止めない**（アーカイブ済み＝完了扱い）。
+ * 一覧に無いIDは止めない（アーカイブ済み＝完了扱い）。
  *
- * 第2引数には**一覧全体から一度だけ**作った「まだ `done` でないタスクのID」の集合
+ * 第2引数には一覧全体から一度だけ作った「まだ `done` でないタスクのID」の集合
  * （{@link unfinishedTaskIds}）を渡す（行ごとに呼ぶ側で毎回作り直さない）。
  */
 export function taskReadiness(
@@ -73,7 +73,7 @@ export function unfinishedTaskIds(tasks: readonly TaskSummaryItem[]): ReadonlySe
 
 /**
  * `develop/task/T-xxx.md` の front matter（新形式）。文法は claude-skills の
- * `docs/task-workflow-redesign.md` 3.2 が正典で **YAML ではない**（`id` / `summary` / `status` /
+ * `docs/task-workflow-redesign.md` 3.2 が正典で YAML ではない（`id` / `summary` / `status` /
  * `difficulty` / `loopable` / `dependencies` の6行、この順・この綴り）。着手中（旧 `doing`）は
  * ファイルに書かない（台帳の印が表す。3.2「着手中はファイルに書かない」）ので、この型の
  * `status` に `doing` は無い。
@@ -97,7 +97,7 @@ const NEW_TASK_HEADER_LINE_COUNT = 8
 
 /**
  * 1件の `develop/task/T-xxx.md` を読む。壊れていれば `undefined`（呼び出し側はその1件だけ
- * 読み飛ばす）。**行の位置で判定する**（3.2 の文法は6行・この順・この綴りと決まっているので、
+ * 読み飛ばす）。行の位置で判定する（3.2 の文法は6行・この順・この綴りと決まっているので、
  * 欠け・重複・順の違い・知らないキーはどれも「その行が期待した接頭辞で始まらない」という
  * 1種類の失敗に落ちる。Python 側の読み手 `taskfile.py` の `parse` と同じ形）。
  *
@@ -163,11 +163,11 @@ export function parseNewTaskFile(fileName: string, content: string): NewTaskFile
 
 /**
  * 前段の `parseNewTaskFile` で読み終えた {@link NewTaskFile} の並びと、台帳の着手の印から
- * 一覧に出す要約を作る。**着手中（台帳に印がある `todo`）は表示用の `status` を `"doing"` に
- * 読み替える**（ファイルには書かれていないので、ここで初めて出てくる）。並びは ID の数字順
+ * 一覧に出す要約を作る。着手中（台帳に印がある `todo`）は表示用の `status` を `"doing"` に
+ * 読み替える（ファイルには書かれていないので、ここで初めて出てくる）。並びは ID の数字順
  * （claude-skills の `docs/task-workflow-redesign.md` 3.4 が正典）。
  *
- * **ファイルを読み直さずに済む形で分けてある**——`main` の先端が動いていなくても、共有の
+ * ファイルを読み直さずに済む形で分けてある——`main` の先端が動いていなくても、共有の
  * `.git` の台帳（着手の印）だけは動く（`task claim` / `task release` は `main` を動かさない）ので、
  * `src/server/repository/adapter/task-summary.ts` は先端が同じ見回りでも `claimedIds` だけ読み直して
  * ここへ通す（`git cat-file --batch` はしない）。

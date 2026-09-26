@@ -15,7 +15,7 @@ const REVEAL_SPEED_STORAGE_KEY = "tsukumo-reveal-speed:v1"
 
 // 実際に見えている範囲（`clip-path` のポリゴン）はレイアウトの実測に乗るので、DOM だけの
 // ここでは確かめない（`docs/architecture.md`「手で確かめること」。目視で確認する）。
-// ここで守るのは**隠す・出し切る・止める**の配線だけ。
+// ここで守るのは隠す・出し切る・止めるの配線だけ。
 
 /** 演出を掛ける相手のやり取り（配る筆先に添う番号。`brush-tip.ts`）。 */
 const TURN_ID = 4
@@ -73,7 +73,7 @@ function BrushTipReadout(): string {
 }
 
 /**
- * 行に見立てた矩形（`left, top, width, height`）。**最後だけ短い**——書き終わりの筆先を
+ * 行に見立てた矩形（`left, top, width, height`）。最後だけ短い——書き終わりの筆先を
  * 「帯の右端（いちばん長い行の右）」に置くと、ここで 400 に飛ぶ。
  */
 const LINE_BOXES = [
@@ -87,9 +87,9 @@ const LINE_BOXES = [
 const ORIGIN_BOX = [0, 50, 400, 600] as const
 
 /**
- * happy-dom はレイアウトを持たない（どの矩形も 0）ので、**筆先の居場所を見る回だけ**測れる値に
+ * happy-dom はレイアウトを持たない（どの矩形も 0）ので、筆先の居場所を見る回だけ測れる値に
  * 差し替える。図の塊（`.chart-block`）は行ではなく box をそのまま1行として測られる
- * （`measure.ts` の `lineBoxesOf`）ので、**文字の行を作らずに行を並べられる**。
+ * （`measure.ts` の `lineBoxesOf`）ので、文字の行を作らずに行を並べられる。
  */
 function measureBoxes(): () => void {
   const original = Element.prototype.getBoundingClientRect
@@ -182,7 +182,7 @@ describe("useReportReveal（見せる範囲を進める配線）", () => {
 
       // 最後の行は 220〜260 の右 150。原点が 50 から始まるので、入れ物基準で 150,170,210。
       // 打ち切った時点では筆は1フレームも進んでいないので、止まった場所に残すなら何も出ない。
-      // 帯の右端に残すなら、**最後の行より長い行に引かれて** x が 400 になる。
+      // 帯の右端に残すなら、最後の行より長い行に引かれて x が 400 になる。
       expect(screen.getByText("残っている:4:150,170,210")).toBeDefined()
     } finally {
       restore()

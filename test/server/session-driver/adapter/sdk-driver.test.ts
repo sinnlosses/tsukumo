@@ -278,7 +278,7 @@ describe("stopHooks（report の関所と effort の読み取り）", () => {
 
 describe("shared の値の一覧と SDK の型", () => {
   it("PERMISSION_MODES はすべて SDK の PermissionMode として渡せる値", () => {
-    // 代入できること自体が型の検査。**SDK 側にはこれ以外の値もある**（`dontAsk`。画面には
+    // 代入できること自体が型の検査。SDK 側にはこれ以外の値もある（`dontAsk`。画面には
     // 出さないので shared の一覧には入れていない）ので、確かめるのはこの向きだけ。
     const asSdk: readonly SdkPermissionMode[] = PERMISSION_MODES
 

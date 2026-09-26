@@ -8,8 +8,8 @@ import {
 } from "../../../../src/browser/domain/reveal/band.ts"
 
 // 実際に見えている範囲（`clip-path` のポリゴン）とミニ立ち絵の見え方は目視で確かめる
-// （`docs/architecture.md`「手で確かめること」）。ここで守るのは**帯の割り出しと、その上の
-// 時間の配り方**だけ。
+// （`docs/architecture.md`「手で確かめること」）。ここで守るのは帯の割り出しと、その上の
+// 時間の配り方だけ。
 
 /** 塊を囲む枠。断りが無い限り、左端 0 ／ 右端 1000（＝いちばん広い要素の右端）とする。 */
 const FRAME = { left: 0, right: 1000 } as const

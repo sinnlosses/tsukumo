@@ -39,7 +39,7 @@ function parseInput(procedure: `${string}.${string}`, value: unknown): unknown {
 // 立ち絵の代わりに使う、1バイトぶんの架空の data URL（中身は見ないので何でもよい）。
 const TINY_PNG_DATA_URL = "data:image/png;base64,AAAA"
 
-/** 依頼に添える画像1枚ぶん（原寸と控えの対）。**どちらも手で作った最小の data URL。** */
+/** 依頼に添える画像1枚ぶん（原寸と控えの対）。どちらも手で作った最小の data URL。 */
 const TINY_PROMPT_IMAGE = { full: TINY_PNG_DATA_URL, thumbnail: TINY_PNG_DATA_URL }
 
 /** 画像を `count` 枚添えた `prompt`（ほかの欄は通る形で固定する）。 */
@@ -69,7 +69,7 @@ describe("コマンドの契約の入力（受け付ける形）", () => {
   })
 
   it("nudge・interrupt は入力を持たない（押した事実だけが届く）", () => {
-    // **文面の欄が無い**のが nudge の形そのもの（送る一言は
+    // 文面の欄が無いのが nudge の形そのもの（送る一言は
     // `src/server/chat/core/chat-nudge.ts` が持つ。docs/screen-design.md 13.7）。
     expect(INPUT_SCHEMAS.get("session.nudge")).toBeUndefined()
     expect(INPUT_SCHEMAS.get("session.interrupt")).toBeUndefined()
@@ -211,7 +211,7 @@ describe("コマンドの契約の入力（キャラクターの見た目）", (
     })
   })
 
-  // **使用中を暗黙にしない**（`docs/design.md` 7.1）。書き込む先のディレクトリ名になる値なので、
+  // 使用中を暗黙にしない（`docs/design.md` 7.1）。書き込む先のディレクトリ名になる値なので、
   // 作るときと同じ形の検査を通す。
   it("見た目の編集は書き込む先のパックが無い・パックの名前として通らない形なら undefined", () => {
     expect(parseInput("characterPack.clearBackground", {})).toBeUndefined()
@@ -257,7 +257,7 @@ describe("コマンドの契約の入力（キャラクターの見た目）", (
     ).toBeDefined()
   })
 
-  // **必須の1つ（`docs/requirements.md` 4.4 / characters/README.md）を消す操作は境界で弾く。**
+  // 必須の1つ（`docs/requirements.md` 4.4 / characters/README.md）を消す操作は境界で弾く。
   it("characterPack.clearPortrait で default を消そうとすると undefined（必須は消せない）", () => {
     expect(
       parseInput("characterPack.clearPortrait", { pack: "fictional", expression: "default" }),
@@ -449,7 +449,7 @@ describe("コマンドの契約の入力（落とす形）", () => {
     ).toBeUndefined()
   })
 
-  // **名前はディレクトリ名になる**ので、パスの区切りと `..` を通さない（docs/design.md 7.1）。
+  // 名前はディレクトリ名になるので、パスの区切りと `..` を通さない（docs/design.md 7.1）。
   it("パックの区切り・`..`・隠しディレクトリになる名前では、新しいパックを作らせない", () => {
     const rejected = [
       "../escape",
@@ -480,7 +480,7 @@ describe("コマンドの契約の入力（落とす形）", () => {
     }
   })
 
-  // **`default` はここで required**（欠けたパックが書き込む側まで届かない）。
+  // `default` はここで required（欠けたパックが書き込む側まで届かない）。
   it("必須の立ち絵が欠けた characterPack.create は undefined", () => {
     expect(
       parseInput("characterPack.create", {

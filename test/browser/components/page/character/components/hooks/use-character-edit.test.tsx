@@ -66,8 +66,8 @@ function wrapperFor(
 }
 
 /**
- * `removal` を読ませたいテストのための wrapper。**`useSelectedPack` は使用中の姿の `removal` を
- * 一覧（`characterPacks`）の同じ名前の1件から引く**ので、`wrapperFor` と違い一覧も渡す。
+ * `removal` を読ませたいテストのための wrapper。`useSelectedPack` は使用中の姿の `removal` を
+ * 一覧（`characterPacks`）の同じ名前の1件から引くので、`wrapperFor` と違い一覧も渡す。
  */
 function wrapperWithPacks(
   character: SessionState["character"],

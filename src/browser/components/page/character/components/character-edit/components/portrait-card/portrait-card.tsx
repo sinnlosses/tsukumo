@@ -1,14 +1,14 @@
 // キャラクター画面の表情のカード1枚（docs/screen-design.md 13.6）。
 //
-// - 立ち絵がある表情: 立ち絵と名前。**右上の「差し替える」「消す」のアイコンは、カードに乗せた
-//   とき・カードの中にフォーカスがあるときだけ出す**（`:hover` / `:focus-within`。キーボードでも
+// - 立ち絵がある表情: 立ち絵と名前。右上の「差し替える」「消す」のアイコンは、カードに乗せた
+//   とき・カードの中にフォーカスがあるときだけ出す（`:hover` / `:focus-within`。キーボードでも
 //   Tab で口に入ると出る）。`default` には「いつもの顔」の札を添える
-// - 立ち絵がまだ無い表情: **その表情の名前を書いた点線の空欄**。枠そのものが選ぶ口になる
+// - 立ち絵がまだ無い表情: その表情の名前を書いた点線の空欄。枠そのものが選ぶ口になる
 //
 // どちらのカードにも画像を落とせる（落とすと差し替え・足す）。出し分けは
 // `hooks/use-character-edit.ts` が畳んだ値のとおりで、判定を持たない。
 //
-// **「消す」は押しただけでは送らない。** 押すとカードの位置を測って確かめの吹き出し
+// 「消す」は押しただけでは送らない。 押すとカードの位置を測って確かめの吹き出し
 // （`components/portrait-clear-confirm.tsx`）を開き、その中の「消す」で初めて `card.clear.onClear`
 // を呼ぶ。開いているかどうかと、開いた瞬間に測った位置だけをここで持つ（`保つ」の1種類。
 // docs/design.md 2章「機能の中を分ける」）。
@@ -25,7 +25,7 @@ import { type PortraitCardModel } from "../../../hooks/use-character-edit.ts"
 import { PortraitClearConfirm } from "../portrait-clear-confirm/portrait-clear-confirm.tsx"
 
 /**
- * `<input type="file">` に出す受け付ける種類。**中身の検証はサーバ側**
+ * `<input type="file">` に出す受け付ける種類。中身の検証はサーバ側
  * （`src/shared/portrait-image.ts`）で、ここは選ぶときの絞り込みだけ。
  */
 const PORTRAIT_FILE_ACCEPT = ".svg,.png,.gif"

@@ -1,13 +1,13 @@
 // 画像を原寸で拡大して見る面（`docs/requirements.md` 4.10「画面での見え方」）。開ける場所は
 // 入力欄の札・メインビューの依頼の見出し・雑談の控えの3つだが、どれも依頼に添えた画像の部品
-// （`prompt-image.tsx`）から開くので、その子部品に置く。**領域固有の見た目・意味は持たない**。
+// （`prompt-image.tsx`）から開くので、その子部品に置く。領域固有の見た目・意味は持たない。
 //
-// **呼び出し側が開いている状態を持ち、開いている間だけこの部品を描く**
+// 呼び出し側が開いている状態を持ち、開いている間だけこの部品を描く
 // （`features/task-board/components/task-run-confirm.tsx` と同じ形）。画面より大きい絵は
 // 面の内側に収めて縮め、面の中で横スクロールはしない。閉じ方は Esc・背景のクリック・
 // 閉じるボタンの3つ。
 //
-// **絵が読めなかったとき（`<img>` の `error`）に何を出すかは呼び出し側が渡す**
+// 絵が読めなかったとき（`<img>` の `error`）に何を出すかは呼び出し側が渡す
 // （{@link ImageZoomFallback}）。この部品は代わりの絵と1行を出し分けるだけで、なぜ読めないかは
 // 知らない。
 
@@ -42,7 +42,7 @@ export type ImageZoomProps = {
 
 /** 開いた状態で組み立てられる部品。閉じるときは呼び出し側がこの部品ごと外す。 */
 export function ImageZoom(props: ImageZoomProps): ReactElement {
-  // 読めなかったか。**開くたびに組み立て直す部品なので**、閉じて開き直せばまた原寸を取りに行く。
+  // 読めなかったか。開くたびに組み立て直す部品なので、閉じて開き直せばまた原寸を取りに行く。
   const [failed, setFailed] = useState(false)
   const substitute = failed && props.fallback.kind === "substitute" ? props.fallback : undefined
 

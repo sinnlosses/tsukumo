@@ -17,15 +17,15 @@ import {
 } from "../src/server/view-server/core/port-resolution.ts"
 import { runSubprocess, type SubprocessResult } from "./fixture/subprocess.ts"
 
-// **このファイルは CLI を起動しきらないものだけを扱う。**
+// このファイルは CLI を起動しきらないものだけを扱う。
 // 起動経路が transcript の追従から SDK のセッション駆動へ変わり、CLI を最後まで
 // 起動すると Claude Code の子プロセスが立ち上がるようになった。テストから実際のセッションを
-// 起こすわけにはいかないので、**起動の前提チェックで終わるところまで**をここで守る。
+// 起こすわけにはいかないので、起動の前提チェックで終わるところまでをここで守る。
 //
 // 追従・状態ファイル・立ち絵のフォールバック・ビューの中身を端から端まで見ていたテストは、
 // この変更で対象そのものが無くなった。振る舞い自体は次のテストが守っている:
-//   - メインビュー・レポート・ツールの行・質問の記録（React の部品）: test/browser/components/page/conversation/components/main-view/**
-//   - Markdown の変換（unified）: test/browser/components/page/conversation/components/main-view/markdown/**
+//   - メインビュー・レポート・ツールの行・質問の記録（React の部品）: test/browser/components/page/conversation/components/main-view/
+//   - Markdown の変換（unified）: test/browser/components/page/conversation/components/main-view/markdown/
 //   - 配信（バインド先・経路・静的アセット・依頼の受け口）と WebSocket の経路
 //     （トークン・Origin・hello・コマンド）: test/server/view-server/adapter/server.test.ts
 //   - キャラクター定義の解釈と立ち絵の選び方: test/shared/character.test.ts
@@ -36,7 +36,7 @@ import { runSubprocess, type SubprocessResult } from "./fixture/subprocess.ts"
 const ENTRY = new URL("../src/cli.ts", import.meta.url).pathname
 
 /**
- * CLI が読む環境変数（名前は `src/server/core/config.ts` が持つ）。**引き継がずに落とす**
+ * CLI が読む環境変数（名前は `src/server/core/config.ts` が持つ）。引き継がずに落とす
  * ——tsukumo が起こした claude の中でテストを走らせると、その tsukumo 自身の設定が spawn 先へ
  * 漏れて結果が変わる（`TSUKUMO_VIEW_PORT` を渡して起こした環境では、既定ポートを前提にした
  * 下のテストが「明示指定」の経路に落ちて20秒待たされた）。渡すのは各テストが明示した分だけ。
@@ -99,7 +99,7 @@ function closeNetServer(server: NetServer): Promise<void> {
 const MAX_BAND_PICKS = 10
 
 /**
- * `VIEW_PORT_FALLBACK_ATTEMPTS` 個の連続したポートを**すべて自分で握った**私的な帯を返す。
+ * `VIEW_PORT_FALLBACK_ATTEMPTS` 個の連続したポートをすべて自分で握った私的な帯を返す。
  * 起点は OS に選ばせたエフェメラルポートで、実際の `DEFAULT_VIEW_PORT`（7327〜）は使わない。
  * よそが1つでも握っていた帯は手放して選び直す——よその握りはテストの途中で離されうるので、
  * 「塞がっている」の前提にならない。
@@ -143,8 +143,8 @@ describe("tsukumo CLI", () => {
   })
 
   // 以下の2つは「起動時の前提チェックで終わる」経路のまま安全に確かめられる。
-  // **明示指定は失敗してもずらさない**ので必ず終了コード1（セッションは起こらない）。
-  // **全滅も必ず終了コード1**（ずらす先が無いのでどのみち起こらない）。
+  // 明示指定は失敗してもずらさないので必ず終了コード1（セッションは起こらない）。
+  // 全滅も必ず終了コード1（ずらす先が無いのでどのみち起こらない）。
   // 「既定ポートが塞がっていて、ずらした先で実際に listen できる」経路だけは、成功すると
   // 本物のセッション（claude の子プロセス）が起きてしまうため、ここでは確かめない
   // （手元での目視確認に譲る。CLAUDE.md「テスト方針」）。

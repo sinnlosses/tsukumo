@@ -1,5 +1,5 @@
 // コマンドの受け手の行の型と、葉の機能の行を呼ぶところ（`docs/design.md` 2章「コマンドの受け手と
-// 手続きの置き方」）。**機能ごとの表（`<機能>/core/<機能>-command.ts`）が書く行の形**と、手続き
+// 手続きの置き方」）。機能ごとの表（`<機能>/core/<機能>-command.ts`）が書く行の形と、手続き
 // （`<機能>/adapter/<機能>-procedure.ts`）が行を呼ぶ {@link receiveFeatureCommand} を持つ。
 //
 // 行の種類のうち `session`（セッションの口を受け取るもの）はここに無い——型が
@@ -42,8 +42,8 @@ export type FeatureCommandTable<T extends CommandContract> = {
 }
 
 /**
- * 葉の機能の手続きが受ける口（手続きの context の `session`）。**セッションの口
- * （`CommandSession`）のうちイベントを流す1つだけ**を型にしてあるので、葉の機能は `session` の
+ * 葉の機能の手続きが受ける口（手続きの context の `session`）。セッションの口
+ * （`CommandSession`）のうちイベントを流す1つだけを型にしてあるので、葉の機能は `session` の
  * 型を読まずに済む（機能どうしの辺を増やさない）。
  */
 export type CommandEventSink = {
@@ -52,8 +52,8 @@ export type CommandEventSink = {
 }
 
 /**
- * 葉の機能の行を1件呼ぶ。**受け手が投げても常駐プロセスは落とさず**、行の定型文の理由を返す。
- * `write` の行が返したイベントは、**返った時点の代**へ流す。
+ * 葉の機能の行を1件呼ぶ。受け手が投げても常駐プロセスは落とさず、行の定型文の理由を返す。
+ * `write` の行が返したイベントは、返った時点の代へ流す。
  */
 export async function receiveFeatureCommand<C>(
   receiver: FeatureReceiver<C>,

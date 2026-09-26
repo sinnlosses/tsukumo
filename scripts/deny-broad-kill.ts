@@ -1,17 +1,17 @@
 // 同じマシンで動いている他のセッションの tsukumo を巻き込む `kill` を、実行される前に止める
 // Claude Code の PreToolUse hook（`.claude/settings.json` から Bash ツールに掛かる）。
 //
-// **止める理由は、プロセスのコマンドラインで見分けが付かないこと。** 手元で複数の tsukumo を
+// 止める理由は、プロセスのコマンドラインで見分けが付かないこと。 手元で複数の tsukumo を
 // 並べて動かすと、どれも `bun run src/cli.ts` として見える（`bun run dev` 経由でも同じ）。
 // そのため `pkill -f 'bun run'` はもちろん `pkill -f 'src/cli.ts'` でも、自分が起こした
-// 検証用のインスタンスではなく**利用者が使っている本体まで落ちる**。
+// 検証用のインスタンスではなく利用者が使っている本体まで落ちる。
 // `docs/workflow.md`「起こすときの作法」が文章で禁じていた事故を、ここで機構として塞ぐ。
 //
-// 拒否するのは「名前やパターンで薙ぎ払う形」だけで、**pid を名指しする `kill` は通す**
+// 拒否するのは「名前やパターンで薙ぎ払う形」だけで、pid を名指しする `kill` は通す
 // （`kill $(lsof -ti tcp:7398 -sTCP:LISTEN)` は狙いが1つに定まっているので安全）。
 //
 // hook の約束: 終了コード 2 で Bash の実行を止め、stderr の中身がモデルへ返る。
-// それ以外の終了コードでは実行を止めない（**判定に失敗したときは通す**。開発の手を
+// それ以外の終了コードでは実行を止めない（判定に失敗したときは通す。開発の手を
 // 止めないほうを既定にする）。
 
 import process from "node:process"
@@ -23,7 +23,7 @@ const BROAD_KILL_COMMAND = /(?:^|[;&|(]\s*|\n)\s*(?:sudo\s+)?(?:pkill|killall)\b
 const PGREP_PIPED_TO_KILL = /(?:^|[;&|(]\s*|\n)\s*(?:sudo\s+)?pgrep\b[^\n]*\|[^\n]*\bkill\b/
 
 /**
- * 他のセッションと取り合う対象。**この語のどれかを狙っているときだけ拒否する**ので、
+ * 他のセッションと取り合う対象。この語のどれかを狙っているときだけ拒否するので、
  * 無関係なプロセス（自分で起こした python など）を名前で止めるのは妨げない。
  */
 const SHARED_PROCESS = /\b(?:bun|node|tsukumo|claude|cli\.ts|vite)\b/
@@ -53,7 +53,7 @@ if (command !== undefined && isBroadKill(command)) {
 }
 
 /**
- * 他のセッションを巻き込む形の `kill` か。**コマンドの位置**に `pkill` / `killall` が
+ * 他のセッションを巻き込む形の `kill` か。コマンドの位置に `pkill` / `killall` が
  * 現れ、かつ取り合う対象を狙っているときだけ真になる
  * （`grep pkill docs/workflow.md` のように語として書いただけのものは通す）。
  */

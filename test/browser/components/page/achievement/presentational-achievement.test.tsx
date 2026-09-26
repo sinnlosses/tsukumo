@@ -15,7 +15,7 @@ import {
 /**
  * 各区画（`day-switch.tsx` / `diary-section.tsx` / `bookmark-section.tsx` /
  * `surprise-section.tsx` / `lantern-calendar.tsx`）の中身は個別のテストが持つ。ここは
- * **並ぶ順と、main が読めないときに他をすべて隠すこと**だけを測る（フィクスチャは架空の値。
+ * 並ぶ順と、main が読めないときに他をすべて隠すことだけを測る（フィクスチャは架空の値。
  * docs/coding-standards.md「会話内容の扱い」）。
  */
 

@@ -1,5 +1,5 @@
-// `/character/<pack>/<file>` で配るキャラクターの素材（立ち絵・顔・背景）。**URL の作り方と
-// 読み方・拡張子による仕分け**を持つ。
+// `/character/<pack>/<file>` で配るキャラクターの素材（立ち絵・顔・背景）。URL の作り方と
+// 読み方・拡張子による仕分けを持つ。
 //
 // 素材そのものは持たない。読むのは `src/server/character-pack/adapter/character-pack.ts`、配るのは
 // `src/server/view-server/adapter/server.ts`、`<img>` に載せるのは `src/browser/components/domain/portrait.tsx` で、
@@ -8,16 +8,16 @@
 export const CHARACTER_ASSET_PATH_PREFIX = "/character/"
 
 /**
- * `/character/<pack>/<file>` の URL の作り方。**使用中のパックもそれ以外も同じ形**
- * （`docs/design.md` 7.2）。`fileName` は **`character.json` に書かれたファイル名だけ**
+ * `/character/<pack>/<file>` の URL の作り方。使用中のパックもそれ以外も同じ形
+ * （`docs/design.md` 7.2）。`fileName` は `character.json` に書かれたファイル名だけ
  * を渡す前提（`src/server/character-pack/adapter/character-pack.ts` の allowlist と同じ考え方。パスから
  * 組み立てない）。パック名もファイル名も1つの区間としてエンコードするので、`/` や空白を含んでも
  * 区切りがずれない（読むのは {@link readCharacterAssetPath}）。
  *
- * `revision` は**ブラウザに再取得させるためだけ**の問い合わせ文字列 `?v=<版>`。画面から立ち絵を
+ * `revision` はブラウザに再取得させるためだけの問い合わせ文字列 `?v=<版>`。画面から立ち絵を
  * 差し替えるとファイル名が同じまま中身だけが変わるので、素材の版（更新時刻）を混ぜる。
  * パックの名前は経路に入っているので、別のパックの同じファイル名とは版が無くても URL が分かれる。
- * **配る側はこの値を見ない**（`?` 以降を落としてから配信ファイルを決める）。無ければ付けない。
+ * 配る側はこの値を見ない（`?` 以降を落としてから配信ファイルを決める）。無ければ付けない。
  */
 export function characterAssetPath(
   pack: string,
@@ -36,8 +36,8 @@ export type CharacterAssetLocation = {
 
 /**
  * {@link CHARACTER_ASSET_PATH_PREFIX} より後ろ（問い合わせ文字列を落としたもの）を、パック名と
- * ファイル名に読み分ける。**区切りの `/` がちょうど1つでないもの・どちらかが空のもの・
- * デコードできないものは undefined**（配る側が 404 にする）。デコードした名前が `..` などでも
+ * ファイル名に読み分ける。区切りの `/` がちょうど1つでないもの・どちらかが空のもの・
+ * デコードできないものは undefined（配る側が 404 にする）。デコードした名前が `..` などでも
  * ここでは弾かない — 配ってよいかは一覧と定義との突き合わせが決める（パスを組み立てないので、
  * 載っていない名前は自然に「無い」に落ちる）。
  */
@@ -61,9 +61,9 @@ export function readCharacterAssetPath(rest: string): CharacterAssetLocation | u
 }
 
 /**
- * 立ち絵の種類を拡張子だけで分ける。**ファイル名でも `characterAssetPath` が返した URL でも
- * 受け取る**（`?v=` が付いていても拡張子を見失わない）。**利用者が `characters/local/` に置いた任意の
- * ファイルを無検証で流し込まないための最低限の仕分け**（このタスクの注意事項）。
+ * 立ち絵の種類を拡張子だけで分ける。ファイル名でも `characterAssetPath` が返した URL でも
+ * 受け取る（`?v=` が付いていても拡張子を見失わない）。利用者が `characters/local/` に置いた任意の
+ * ファイルを無検証で流し込まないための最低限の仕分け（このタスクの注意事項）。
  * SVG はインラインで埋め込む（ページの CSS 変数 `--outfit-accent` を効かせるため。
  * `<img>` で読み込むと独立した文書扱いになり届かない。実測は `characters/README.md`）。
  * それ以外は `<img>` で出す。対応しないラスタ形式（拡張子が既知のものでない）は undefined を返し、
@@ -92,7 +92,7 @@ const RASTER_MIME_BY_EXTENSION: Readonly<Record<string, string>> = {
 }
 
 /**
- * 拡張子を小文字で返す。**問い合わせ文字列は落としてから見る**（`characterAssetPath` が
+ * 拡張子を小文字で返す。問い合わせ文字列は落としてから見る（`characterAssetPath` が
  * 付ける `?v=` で拡張子を見失わないため）。無ければ空文字。
  */
 function fileExtension(fileName: string): string {

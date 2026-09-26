@@ -1,5 +1,5 @@
 // キャラクター画面の顔の行（`docs/screen-design.md` 13.9「顔」）。帯の左端・一覧の丸・名乗りの
-// 大きな丸に出す1枚の縮図と、**口は「差し替える」と「消す」の2つだけ**（背景の行と同じ形。
+// 大きな丸に出す1枚の縮図と、口は「差し替える」と「消す」の2つだけ（背景の行と同じ形。
 // `background-field.tsx`）。有無の字と出し分けは `hooks/use-character-edit.ts` が畳んだ値の
 // とおりで、判定を持たない。
 
@@ -14,7 +14,7 @@ import { TrashIcon, UploadIcon } from "../../../action-icon/action-icon.tsx"
 import { type FaceFieldModel } from "../../../hooks/use-character-edit.ts"
 
 /**
- * 顔に選べる種類。**立ち絵と同じ**（`docs/screen-design.md` 13.9「顔」・`src/shared/character-face.ts`）。
+ * 顔に選べる種類。立ち絵と同じ（`docs/screen-design.md` 13.9「顔」・`src/shared/character-face.ts`）。
  * 中身の検証はサーバ側。
  */
 const FACE_FILE_ACCEPT = ".svg,.png,.gif"

@@ -1,5 +1,5 @@
 // 全機能の手続きを束ねる（配線。`docs/design.md` 2章「コマンドの受け手と手続きの置き方」）。
-// **「どの手続きをどの機能が受けるか」の答えはこのファイル**で、手続きの中身も照合・断る条件の
+// 「どの手続きをどの機能が受けるか」の答えはこのファイルで、手続きの中身も照合・断る条件の
 // 判定も書かない（名前と手続きの対応と、全部の前に掛けるミドルウェアだけ）。束は載せる先ごとに
 // 2つ——読み取り（HTTP の `/rpc`）と、コマンドに押し出しの購読を足したもの（`/ws`）。
 //
@@ -100,7 +100,7 @@ export function createCommandRouter(ports: CommandRouterPorts) {
 
 /**
  * `/ws` に載せるルータ。コマンドの手続きに、押し出しの購読（`frame.subscribe`）を足したもの
- * （形は `src/shared/rpc.ts` の `socketContract`）。**購読には照合だけを掛ける**——コマンドでは
+ * （形は `src/shared/rpc.ts` の `socketContract`）。購読には照合だけを掛ける——コマンドでは
  * ないので、断る条件（`commandGuard`）は見ない。
  */
 export function createSocketRouter(ports: CommandRouterPorts) {

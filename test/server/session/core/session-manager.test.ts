@@ -114,12 +114,12 @@ const NO_CHAT_CONSOLIDATION: ChatConsolidationSource = { kind: "dont-consolidate
 /** 振り返りの書き手を気にしないテストに渡す出どころ（起こさない）。 */
 const NO_DIARY_WRITER: DiaryWriterSource = { kind: "dont-write" }
 
-/** 呼ばれた回数と引数だけを覚える、テスト用の駆動。**本物の claude は起こさない。** */
+/** 呼ばれた回数と引数だけを覚える、テスト用の駆動。本物の claude は起こさない。 */
 type StubDriver = {
   readonly driver: SessionDriver
   readonly emit: (event: SessionEvent) => void
   readonly attach: (onEvent: (event: SessionEvent) => void) => void
-  /** 復元の再生（`onRestoredEvent`）を流す。**駆動由来（`emit`）とは別の口**（`docs/design.md` 7章）。 */
+  /** 復元の再生（`onRestoredEvent`）を流す。駆動由来（`emit`）とは別の口（`docs/design.md` 7章）。 */
   readonly emitRestored: (event: SessionEvent) => void
   readonly attachRestored: (onRestoredEvent: (event: SessionEvent) => void) => void
   readonly calls: string[]
@@ -176,8 +176,8 @@ function createStubDriver(): StubDriver {
 }
 
 /**
- * 見た目の編集で流し直す `character-changed`（手で書いた架空のパック）。**書き込みそのものは
- * 配線層の仕事**なので、ここでは「書けた/書けなかった」だけを差し替える。
+ * 見た目の編集で流し直す `character-changed`（手で書いた架空のパック）。書き込みそのものは
+ * 配線層の仕事なので、ここでは「書けた/書けなかった」だけを差し替える。
  */
 const CHARACTER_EVENT: SessionEvent = characterChangedEvent({
   ...shownPortraits({ default: "/character/default.png?v=fictional@2" }),
@@ -206,7 +206,7 @@ const TEST_TOKEN = "架空のトークン"
 const TEST_ORIGIN = "http://127.0.0.1:0"
 
 /**
- * 平らに並べた口からセッションとコマンドのルータを組む。**ルータの束ね方と門は配線と同じ**
+ * 平らに並べた口からセッションとコマンドのルータを組む。ルータの束ね方と門は配線と同じ
  * （`src/router.ts` の `createCommandRouter`）なので、`commands` で見るのは断る条件と受け手の
  * 振る舞いまで含めた手続きの結果。結果は `{ ok: true }` か、断った理由の `{ ok: false, reason }`。
  */
@@ -512,7 +512,7 @@ describe("createSessionManager", () => {
       ok: true,
     })
 
-    // 前の駆動は閉じ、新しい駆動が**画面から選ばれた名前**で起きている（＝覚える側。
+    // 前の駆動は閉じ、新しい駆動が画面から選ばれた名前で起きている（＝覚える側。
     // docs/screen-design.md 13.6）。
     expect(started[0]?.stub.calls).toContain("close")
     expect(started).toHaveLength(2)
@@ -625,7 +625,7 @@ describe("createSessionManager", () => {
     expect(started).toHaveLength(2)
     // 変わるのは「どの transcript の続きから始めるか」だけ。
     expect(started[1]?.resume).toEqual({ by: "id", sessionId: "架空の別セッション" })
-    // **パックは「いま出しているまま」**（名前で渡すと覚えた値が書き換わる。docs/screen-design.md 13.6）。
+    // パックは「いま出しているまま」（名前で渡すと覚えた値が書き換わる。docs/screen-design.md 13.6）。
     expect(started[1]?.selection).toEqual({ by: "current" })
     expect(started[1]?.chat).toBe(false)
     // 起動の1回目は今までどおり印から探す。
@@ -654,7 +654,7 @@ describe("createSessionManager", () => {
 
   it("session.setChatMode で雑談を指定して起こし直し、いま出しているパックは保つ", async () => {
     // 雑談の切り替えは `systemPrompt` の差し替えなので、`session.switchCharacter` と同じ起こし直しに
-    // なる（docs/chat-mode.md 4.9）。**パックは変えない**ことをここで見る。
+    // なる（docs/chat-mode.md 4.9）。パックは変えないことをここで見る。
     const started: SessionLaunchRequest[] = []
     const manager = createSessionManager({
       now: () => 1_000,
@@ -699,7 +699,7 @@ describe("createSessionManager", () => {
 
     expect(started).toHaveLength(2)
     expect(started[1]?.chat).toBe(true)
-    // **パックは「いま出しているまま」として渡す**（名前では渡さない）。名前で渡すと画面から
+    // パックは「いま出しているまま」として渡す（名前では渡さない）。名前で渡すと画面から
     // 選ばれたのと区別がつかず、モードを切り替えただけで覚えた値が書き換わる
     // （docs/screen-design.md 13.6）。
     expect(started[1]?.selection).toEqual({ by: "current" })
@@ -952,7 +952,7 @@ describe("createSessionManager", () => {
     }
 
     /**
-     * 手で進める書き手のスタブ。**待たない**（`write` は呼ばれたことだけ記録し、解決しない
+     * 手で進める書き手のスタブ。待たない（`write` は呼ばれたことだけ記録し、解決しない
      * Promise を返す）——中断や「書いている最中」を確かめるテストが、書き終わるのを待たずに
      * 状態を見られるようにする。`emit` で手動にイベントを流せる。
      */
@@ -1147,7 +1147,7 @@ describe("createSessionManager", () => {
     }
 
     /**
-     * 呼ばれたパック名と信号を覚え、結果は**テストが手で返す**書き手（本物の `query()` は
+     * 呼ばれたパック名と信号を覚え、結果はテストが手で返す書き手（本物の `query()` は
      * 起こさない。数える・書くのは `chat-consolidation-writer.ts` のテストが見る）。
      */
     function createManualConsolidation() {
@@ -1343,7 +1343,7 @@ describe("createSessionManager", () => {
     ).toEqual({ ok: true })
     await waitForBatch()
 
-    // 駆動には何も渡らない（**作っただけでは切り替えない**ので、起こし直しも起きない）。
+    // 駆動には何も渡らない（作っただけでは切り替えないので、起こし直しも起きない）。
     expect(stub.calls).toEqual([])
     expect(edits).toEqual([])
     expect(creates.map((create) => create.id)).toEqual(["fictional-2"])
@@ -1827,7 +1827,7 @@ describe("createSessionManager", () => {
     })
   })
 
-  // トークン消費の記録。**数と時刻とモデルの名前だけ**が
+  // トークン消費の記録。数と時刻とモデルの名前だけが
   // 記録へ渡ることを、ここで固定する。
   describe("トークン消費の記録", () => {
     const SESSION_INFO: SessionEvent = {
@@ -2104,7 +2104,7 @@ describe("createSessionManager", () => {
       ])
     })
 
-    // **この検査がいちばん重要**（`docs/coding-standards.md`「会話内容の扱い」）。依頼の文面・
+    // この検査がいちばん重要（`docs/coding-standards.md`「会話内容の扱い」）。依頼の文面・
     // セリフ・ツールの引数・ツールの結果を同じターンに流しても、記録へ渡る1行にはそのどれも
     // 現れない。
     it("依頼の文面・セリフ・ツールの引数と結果が1文字も入らない", async () => {
@@ -2147,7 +2147,7 @@ describe("createSessionManager", () => {
     })
   })
 
-  // コンテキストの内訳の記録（`src/shared/context-usage-record.ts`）。**1行 = 1セッション**で、
+  // コンテキストの内訳の記録（`src/shared/context-usage-record.ts`）。1行 = 1セッションで、
   // 取れなかった回は次のターンで取り直すことを、ここで固定する。
   describe("コンテキストの内訳の記録", () => {
     function sessionInfo(sessionId: string): SessionEvent {
@@ -2311,7 +2311,7 @@ describe("createSessionManager", () => {
   })
 })
 
-// 新しいセッションの既定（docs/screen-design.md 13.6）。**覚えるのは配線層**（`src/session-start.ts`）で、
+// 新しいセッションの既定（docs/screen-design.md 13.6）。覚えるのは配線層（`src/session-start.ts`）で、
 // ここが持つのは「受け取ったら覚えさせて、姿へ流し直す」「いまのセッションは起こし直さない」の2つ。
 describe("createSessionManager（新しいセッションの既定）", () => {
   it("session.setSessionDefault を覚えさせ、姿に載せて配る", async () => {
@@ -2342,7 +2342,7 @@ describe("createSessionManager（新しいセッションの既定）", () => {
     })
   })
 
-  // 帯のドロップダウンはセッション限り（`docs/screen-design.md` 13.6）。**既定は書き換わらない。**
+  // 帯のドロップダウンはセッション限り（`docs/screen-design.md` 13.6）。既定は書き換わらない。
   it("帯の session.setModel / session.setPermissionMode では既定を覚えない", async () => {
     const { manager, stub, remembered } = startManagerWithStub()
 
@@ -2354,8 +2354,8 @@ describe("createSessionManager（新しいセッションの既定）", () => {
   })
 })
 
-// 歯車の「訪問」のオン・オフ（`docs/screen-design.md` 13.6）。**覚え方は「新しいセッションの既定」と
-// 同じ**（`~/.tsukumo/state.json`）だが、**訪問の見張りが即座に読む値でもある**（実地での
+// 歯車の「訪問」のオン・オフ（`docs/screen-design.md` 13.6）。覚え方は「新しいセッションの既定」と
+// 同じ（`~/.tsukumo/state.json`）だが、訪問の見張りが即座に読む値でもある（実地での
 // 「訪問中にオフにすると帰る」「オフのままだと来ない」は下の `describe("訪問")` で確かめる）。
 describe("createSessionManager（訪問のオン・オフ）", () => {
   it("visit.setEnabled を覚えさせ、姿に載せて配る", async () => {
@@ -2381,7 +2381,7 @@ describe("createSessionManager（訪問のオン・オフ）", () => {
 })
 
 describe("依頼に添えた画像の棚", () => {
-  // 原寸は**手で組んだ大きめの架空の data URL**（実物の画像は使わない）。hello に載っていれば
+  // 原寸は手で組んだ大きめの架空の data URL（実物の画像は使わない）。hello に載っていれば
   // 長さで分かるように、控えより桁違いに長くしてある。
   function fullImage(label: string): PromptImage {
     return {

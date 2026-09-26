@@ -3,7 +3,7 @@
 // （`presentational-conversation-layout.tsx`）が読むだけでよい形（CSS カスタムプロパティの `style`
 // と、仕切りに渡す呼び先）へ畳む。
 //
-// **仕切りの位置が state に入るのはドラッグを離した1回だけ。** 動かしている間の位置は
+// 仕切りの位置が state に入るのはドラッグを離した1回だけ。 動かしている間の位置は
 // 過渡的な値で、効くのは CSS カスタムプロパティだけなので、pointermove の間は DOM へ直接書く
 // （`onTopLeftChange` などの `on*Change`）。離した瞬間に呼ばれる `on*Commit` だけが state を
 // 更新し、`saveSplit` で保存する。
@@ -119,7 +119,7 @@ function fractionStyle(key: keyof Split, percent: number): CSSProperties {
   return { [near]: `${String(percent)}fr`, [far]: `${String(100 - percent)}fr` }
 }
 
-// ドラッグ中の書き込み。**state を更新せず DOM へ直接書く**ので、pointermove のたびに
+// ドラッグ中の書き込み。state を更新せず DOM へ直接書くので、pointermove のたびに
 // `<ConversationLayout>` を描き直さない。離した瞬間に `commitSplit` が同じ値を state へ戻すので、
 // 次のレンダーの `style` と食い違わない。
 function writeFraction(element: HTMLElement | null, key: keyof Split, percent: number): void {

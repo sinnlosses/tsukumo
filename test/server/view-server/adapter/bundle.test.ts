@@ -14,11 +14,11 @@ import {
 // （本物のリポジトリのファイルを対象にする。CLI 起動を最後までしない test/cli.test.ts と
 // 同じ考え方で、ここは「組み立てられるか」「置いたものを読めるか」までを見る）。
 //
-// **`buildUiBundle` は `dist/browser/` を出し直す**（`.gitignore` してある成果物の置き場）。
+// `buildUiBundle` は `dist/browser/` を出し直す（`.gitignore` してある成果物の置き場）。
 // つまり `bun run check` を通すと成果物も新しくなる — 頼ってよい副作用ではないが、黙って
 // 起きると驚くので書いておく。
 //
-// **失敗の側は src/browser/ を壊さず、一時ディレクトリに書いた入口で確かめる。**
+// 失敗の側は src/browser/ を壊さず、一時ディレクトリに書いた入口で確かめる。
 
 describe("buildUiBundle", () => {
   it("src/browser/ を JS と CSS の1組にまとめ、dist/browser/ に置く", async () => {
@@ -35,7 +35,7 @@ describe("buildUiBundle", () => {
     // `layout-grid` は
     // `components/page/conversation/components/conversation-layout/conversation-layout.module.css`
     // の class。組み立てると
-    // ハッシュ付きの名前になり、**同じ名前が CSS 側の選択子と JS 側の対応表の両方に**出る。
+    // ハッシュ付きの名前になり、同じ名前が CSS 側の選択子と JS 側の対応表の両方に出る。
     expect(result.ok ? result.bundle.styleSheet : "").toContain("layout-grid")
     expect(result.ok ? result.bundle.uiScript : "").toContain("layout-grid")
   })
@@ -97,7 +97,7 @@ describe("bundleWithBun", () => {
   })
 })
 
-/** 出し先（と、壊れた入口の置き場）。**リポジトリの dist/browser/ を汚さない**ために分ける。 */
+/** 出し先（と、壊れた入口の置き場）。リポジトリの dist/browser/ を汚さないために分ける。 */
 function temporaryOutDir(): Promise<string> {
   return mkdtemp(join(tmpdir(), "tsukumo-bundle-"))
 }

@@ -1,4 +1,4 @@
-// `report` の検証結果の欄 `checks`（docs/glossary.md「検証結果」）。**形の出どころはここだけ**で、
+// `report` の検証結果の欄 `checks`（docs/glossary.md「検証結果」）。形の出どころはここだけで、
 // handler の検査（`src/server/session-driver/adapter/sdk-tool.ts`）と、呼び出しをイベントに変える側
 // （`src/server/session-driver/core/sdk-message.ts`）が同じ形を引く。描くのはメインビューの組み立て
 // （`src/shared/main-view.ts`）で、ここの {@link reportChecksMarkdown} が帯の HTML を組む。
@@ -19,7 +19,7 @@ export const reportCheckSchema = z.object({
 export type ReportCheck = z.infer<typeof reportCheckSchema>
 
 /**
- * `report` の引数の `checks` を取り出す。**「無い」と形の崩れは空の配列に畳む**（形の崩れた
+ * `report` の引数の `checks` を取り出す。「無い」と形の崩れは空の配列に畳む（形の崩れた
  * 呼び出しは handler に届く前に SDK が差し戻すので、描かれない）。
  */
 export function parseReportChecks(value: unknown): readonly ReportCheck[] {
@@ -28,7 +28,7 @@ export function parseReportChecks(value: unknown): readonly ReportCheck[] {
 }
 
 /**
- * 検証結果の帯（1行の HTML）。空なら空文字。状態は**バッジの色と文字の両方**で見せる
+ * 検証結果の帯（1行の HTML）。空なら空文字。状態はバッジの色と文字の両方で見せる
  * （色だけで意味を伝えない。docs/screen-design.md 13.1 原則5）。`label` / `detail` はモデルが
  * 書いた文字列なので HTML として逃がし、改行は空白に畳む（HTML の塊が空行で切れないように）。
  */

@@ -1,5 +1,5 @@
-// メインビューに出す形（`MainViewEntry`）と、それを**やり取り（ターン）ごとにまとめる**
-// 「決める」ロジック。**セッションの姿（`session-state.ts`）から導くだけ**で、状態は持たない。
+// メインビューに出す形（`MainViewEntry`）と、それをやり取り（ターン）ごとにまとめる
+// 「決める」ロジック。セッションの姿（`session-state.ts`）から導くだけで、状態は持たない。
 //
 // `groupIntoTurns` / `limitTurnEntries` はもとは1つのファイルにまとまっていた（移行の段6で
 // HTML の組み立てが `src/browser/components/page/conversation/components/main-view/` へ移るのに合わせ、判断そのものはサーバ・ブラウザ
@@ -28,31 +28,31 @@ import { splitIntoTurns, type TurnRest, turnIdOf } from "./turn.ts"
 /**
  * 出すやり取りの数。札の頭（前後ボタン・一覧）で遡るので、横並びのタブの幅に収める制約は無い。
  *
- * **値は {@link MAX_SESSION_STATE_TURNS}.work から導く**（メインビューの窓が記録の窓を超える
+ * 値は {@link MAX_SESSION_STATE_TURNS}.work から導く（メインビューの窓が記録の窓を超える
  * ことは無い、という関係を導出で保つ。別々の定数として持つと、どちらかだけを直したときに
  * 関係が黙って崩れる）。
  */
 export const MAX_MAIN_VIEW_TURNS = MAX_SESSION_STATE_TURNS.work
 
 /**
- * 1つのやり取りの中で**画面に出す**記録の上限。超えた分は**古いほうから**落とし、件数だけを残す
+ * 1つのやり取りの中で画面に出す記録の上限。超えた分は古いほうから落とし、件数だけを残す
  * （やり取りの境界を優先する）。
  *
- * **数えるのは実際に画面へ出るもの（レポートと質問の記録）だけ**（{@link shownEntryCount}）。
+ * 数えるのは実際に画面へ出るもの（レポートと質問の記録）だけ（{@link shownEntryCount}）。
  * ツールの実行をメインビューから外したあとも、この上限だけはツールの記録を
  * 数え続けていた: 過去のやり取り720件で測ると22件（3.1%）が上限に当たり、うち16件は
- * **画面から何も消えていないのに**「これ以前の n 件は省略した」（最大62件）を出し、残り6件は
+ * 画面から何も消えていないのに「これ以前の n 件は省略した」（最大62件）を出し、残り6件は
  * レポート1件を出してから消していた（実測）。画面に出るものだけを数えると1つの
- * やり取りの最大は6件（中位数1・p99で4件）で、この値には当たらない——**落とすための値ではなく、1つのやり取りが際限なく
- * 伸びたときの止め**（`src/browser/components/page/conversation/components/main-view/components/turn/turn.tsx` の `MAX_REQUEST_HEADING_TEXT_LENGTH`
+ * やり取りの最大は6件（中位数1・p99で4件）で、この値には当たらない——落とすための値ではなく、1つのやり取りが際限なく
+ * 伸びたときの止め（`src/browser/components/page/conversation/components/main-view/components/turn/turn.tsx` の `MAX_REQUEST_HEADING_TEXT_LENGTH`
  * と同じ立場。常駐プロセスの持ち物の上限は `MAX_SESSION_STATE_TURNS` /
  * {@link MAX_MAIN_VIEW_TURNS} が別に持つ）。
  */
 const MAX_MAIN_VIEW_ENTRIES = 40
 
 /**
- * メインビューに時系列で流す1件分の記録。**利用者の依頼**（やり取りの境界）・ツールの実行・
- * 発話の詳細の3種類。**描く側（`src/browser/components/page/conversation/components/main-view/`）が読むだけの形**で、ここが決めた結果を渡す
+ * メインビューに時系列で流す1件分の記録。利用者の依頼（やり取りの境界）・ツールの実行・
+ * 発話の詳細の3種類。描く側（`src/browser/components/page/conversation/components/main-view/`）が読むだけの形で、ここが決めた結果を渡す
  * （{@link mainViewEntries}）。
  */
 export type MainViewEntry =
@@ -86,8 +86,8 @@ export type MainViewEntry =
    */
   | { readonly kind: "report"; readonly markdown: string }
   /**
-   * 失敗で終わったターンの理由（`SessionRecord` の `turn-failure` をそのまま通す）。**ステップには
-   * 入れない**——やり取りの末尾に1つだけ出す印なので、{@link groupIntoTurns} がステップから外して
+   * 失敗で終わったターンの理由（`SessionRecord` の `turn-failure` をそのまま通す）。ステップには
+   * 入れない——やり取りの末尾に1つだけ出す印なので、{@link groupIntoTurns} がステップから外して
    * `MainViewTurn.failure` に移す。
    */
   | { readonly kind: "turn-failure"; readonly failure: TurnFailure }
@@ -113,27 +113,27 @@ export type MainViewTurnFailure =
  *
  * `body` は画面に出す本文（{@link MainViewStepBody}）。
  *
- * `interim` は、その本文が**中間レポート**（`report` ツールの最後でない呼び出し。
+ * `interim` は、その本文が中間レポート（`report` ツールの最後でない呼び出し。
  * `selectToolReports`）かどうか。`body` が `none` のときは常に false。
  * 見分けを付けて描くのは `src/browser/components/page/conversation/components/main-view/components/turn/turn.tsx` の仕事で、判定はここに置く。
  *
- * `superseded` は、**自分より後ろに本文を持つステップがあるか**（`markSupersededSteps`）。
+ * `superseded` は、自分より後ろに本文を持つステップがあるか（`markSupersededSteps`）。
  * 中間レポートが何件も積むと見通しが悪い問題に対する材料で、
  * `interim && superseded` のときだけ `turn.tsx` が畳んで描く。本文を持たないステップでも
  * 立つが、畳むかどうかの判定に使うのは中間レポートだけ。
  *
- * `final` は、その本文が**最終レポート**（そのやり取りで最後の、中間でない本文）かどうか
+ * `final` は、その本文が最終レポート（そのやり取りで最後の、中間でない本文）かどうか
  * （`markFinalReport`）。ラベルを載せる印（`.main-step.is-final`）で、書き上げる演出を掛ける
- * 相手を選ぶのにも使う（`src/browser/components/page/conversation/components/main-view/components/turn/turn.tsx`）。**ラベルを出すかどうかは
+ * 相手を選ぶのにも使う（`src/browser/components/page/conversation/components/main-view/components/turn/turn.tsx`）。ラベルを出すかどうかは
  * これだけでは決まらない（`MainViewTurn.hasInterimReport` と組み合わせる）。いちばん新しい
  * やり取りでは、やり取りが閉じている（ターンが `running` でなく、背景のタスクも残っていない）
  * ときだけ立つ（`mainViewTurns` の `closed` 引数）。
  *
- * `id` は**追加されても番号がずれない**ように、そのやり取りの中で作られた順に先頭から数えた
+ * `id` は追加されても番号がずれないように、そのやり取りの中で作られた順に先頭から数えた
  * 通し番号（`MainViewTurn.id` と同じ考え方）。`limitTurnEntries` が上限を超えた分を古いほうから
  * 落としても、残ったステップの `id` は変わらない（`groupIntoSteps` で、`limitTurnEntries` より
- * 前に振る）。`src/browser/components/page/conversation/components/main-view/components/turn/turn.tsx` の `<Step>` の `key` に使う。**配列の添字を `key` に
- * すると**、古いステップが落ちて残りの添字が1つずつ前へずれた瞬間に、React が別のステップの
+ * 前に振る）。`src/browser/components/page/conversation/components/main-view/components/turn/turn.tsx` の `<Step>` の `key` に使う。配列の添字を `key` に
+ * すると、古いステップが落ちて残りの添字が1つずつ前へずれた瞬間に、React が別のステップの
  * DOM を使い回して描き直してしまう（`<details>` の `open` のような制御されていない DOM の状態が
  * 別のステップへ乗り移って見える）。
  */
@@ -158,7 +158,7 @@ export type MainViewStepBody =
 const NO_BODY = { kind: "none" } as const satisfies MainViewStepBody
 
 /**
- * やり取りの頭に出す依頼。**文面と、添えた画像の控えで1つ**（`docs/requirements.md` 4.10。
+ * やり取りの頭に出す依頼。文面と、添えた画像の控えで1つ（`docs/requirements.md` 4.10。
  * 控えは見出しの下に並ぶ）。添えていなければ `images` は空。
  */
 export type MainViewRequest = {
@@ -168,7 +168,7 @@ export type MainViewRequest = {
 
 /**
  * 利用者の依頼1件と、それ以降のステップ。`request` が undefined なのは、最初の依頼より前の記録
- * （セッションの途中から追い始めたときに起こる）。`id` は**追加されても番号がずれない**ように
+ * （セッションの途中から追い始めたときに起こる）。`id` は追加されても番号がずれないように
  * 先頭から数えた通し番号で、タブの選択を保つのに使う（`src/browser/components/page/conversation/components/main-view/main-view.tsx`）。
  */
 export type MainViewTurn = {
@@ -176,22 +176,22 @@ export type MainViewTurn = {
   readonly request: MainViewRequest | undefined
   readonly steps: readonly MainViewStep[]
   /**
-   * このやり取りに中間レポートが1つ以上あるか（`markFinalReport`）。**最終レポートのラベルを
-   * 出す条件**で、本文が1つしか無いやり取りでは「最終」が何も区別しないので出さない
+   * このやり取りに中間レポートが1つ以上あるか（`markFinalReport`）。最終レポートのラベルを
+   * 出す条件で、本文が1つしか無いやり取りでは「最終」が何も区別しないので出さない
    * （`src/browser/components/page/conversation/components/main-view/components/turn/turn.tsx`）。
    */
   readonly hasInterimReport: boolean
-  /** 上限を超えて落とした**画面に出す**記録の件数。0 のときは何も落としていない。 */
+  /** 上限を超えて落とした画面に出す記録の件数。0 のときは何も落としていない。 */
   readonly droppedCount: number
   /** このやり取りが失敗で終わったか（{@link MainViewTurnFailure}）。 */
   readonly failure: MainViewTurnFailure
 }
 
 /**
- * メインビューに渡す記録。**書きかけの本文を末尾に足す**ので、`browser/main-view/` の部品はそのまま
+ * メインビューに渡す記録。書きかけの本文を末尾に足すので、`browser/main-view/` の部品はそのまま
  * リアルタイムの表示になる（完成した本文が来た時点で確定した記録の側へ移る）。
  *
- * **`tool` の記録も渡す**（ステップの `actions` に入る）が、`src/browser/components/page/conversation/components/main-view/components/turn/turn.tsx` は
+ * `tool` の記録も渡す（ステップの `actions` に入る）が、`src/browser/components/page/conversation/components/main-view/components/turn/turn.tsx` は
  * そこから描かない（`docs/display.md` 4.2）。帯の「いまの作業」は別に `src/shared/turn-step.ts` の
  * `currentTurnSteps` が同じ記録から直接導くので、ここで両方に配っても重複にはならない。
  */
@@ -204,11 +204,11 @@ export function mainViewEntries(state: SessionState): readonly MainViewEntry[] {
 
 /**
  * 時系列の記録を、やり取り（ターン）ごとにまとめ、直近 {@link MAX_MAIN_VIEW_TURNS} 件へ絞る。
- * **昇順（古い→新しい）で返す**（並べ替え・タブのラベル付けは呼び出し側 `src/browser/components/page/conversation/components/main-view/` の仕事）。
+ * 昇順（古い→新しい）で返す（並べ替え・タブのラベル付けは呼び出し側 `src/browser/components/page/conversation/components/main-view/` の仕事）。
  *
- * `unsettled` は**いちばん新しいやり取りで、まだ伸びうる本文の種類**で、確定していない
+ * `unsettled` はいちばん新しいやり取りで、まだ伸びうる本文の種類で、確定していない
  * 本文を出さないために要る（`report` を {@link selectToolReports} が、ツールの外の本文を
- * {@link selectLastText} が見る）。**`SessionState.turn` が `running` かどうかそのものではない**
+ * {@link selectLastText} が見る）。`SessionState.turn` が `running` かどうかそのものではない
  * ——いま走っている SDK ターンで届いた本文だけが伸びうるもので、前の SDK ターンで届いた本文は、
  * 背景のタスクの通知などで claude が同じやり取りの続きを始めても確定したまま（`report` の外の
  * 本文は例外で、続きが来うるあいだは伸びうる側に数える。作るのは `browser/stores/main-view-turn.ts`）。
@@ -244,15 +244,15 @@ export function mainViewTurns(
 /**
  * `SessionRecord` 1件をメインビューに出す形へ変える（出さないものは空で返す）。
  *
- * **`speech` は落とす**（セリフは吹き出しだけに出し、レポートに混ぜない。
+ * `speech` は落とす（セリフは吹き出しだけに出し、レポートに混ぜない。
  * docs/display.md 4.2）。ターンの通し番号は `request` の記録が持っているので、
  * 何を落としても番号はずれない。
  *
- * **`compact-boundary` も落とす**（`docs/chat-mode.md` 4.9「記憶の圧縮と忘却」）。
- * 圧縮の区切りは雑談のログ（`shared/chat-log.ts`）だけに出し、**仕事のメインビューには出さない**。
+ * `compact-boundary` も落とす（`docs/chat-mode.md` 4.9「記憶の圧縮と忘却」）。
+ * 圧縮の区切りは雑談のログ（`shared/chat-log.ts`）だけに出し、仕事のメインビューには出さない。
  *
- * **`tool` は `toolUseId` / `nested`（突き合わせにしか使わない内部の
- * 付随情報）を落とす**（メインビューの部品が見てよいのは名前・入力・結果だけ。境界で形を絞る。
+ * `tool` は `toolUseId` / `nested`（突き合わせにしか使わない内部の
+ * 付随情報）を落とす（メインビューの部品が見てよいのは名前・入力・結果だけ。境界で形を絞る。
  * docs/coding-standards.md「型を迂回するキャストを使わない」と同じ考えで、余分なフィールドを
  * 暗黙に持ち越さない）。
  */
@@ -275,14 +275,14 @@ function toMainViewEntries(record: SessionRecord): readonly MainViewEntry[] {
 }
 
 /**
- * `report` の引数を、**`conclusion` → `checks` → `body` → `favor` の順**に1つの本文へ組む
+ * `report` の引数を、`conclusion` → `checks` → `body` → `favor` の順に1つの本文へ組む
  * （`docs/glossary.md`「report ツール」）。`checks` は検証結果の帯（{@link reportChecksMarkdown}）、
- * `favor` はレポートの記法の「お願い」の塊で包むので、**サニタイズも記法の解釈もテキストの本文と
- * 同じ経路**を通り、中間レポートでも最終レポートでも同じに描かれる。
+ * `favor` はレポートの記法の「お願い」の塊で包むので、サニタイズも記法の解釈もテキストの本文と
+ * 同じ経路を通り、中間レポートでも最終レポートでも同じに描かれる。
  * `favor` は HTML の中に Markdown を入れるので、塊の内側の前後に空行を空ける（記法の規約と同じ）。
  * 空の `checks` / `body` / `favor` は塊ごと置かない。
  *
- * **`body` はここで整形する**（{@link tidyReportBody}。記録は引数のまま持ち、描くたびに導く）。
+ * `body` はここで整形する（{@link tidyReportBody}。記録は引数のまま持ち、描くたびに導く）。
  */
 function reportMarkdown(report: Extract<SessionRecord, { readonly kind: "report" }>): string {
   return [
@@ -296,8 +296,8 @@ function reportMarkdown(report: Extract<SessionRecord, { readonly kind: "report"
 }
 
 /**
- * まとめたやり取りと、その中で `report` ツールから来たステップの id（呼ばれた順）。**id の並びは
- * 描く側へ渡さない**（どの本文を出すかを決めるまでの材料で、決めたあとは本文の有無と印に畳まれる）。
+ * まとめたやり取りと、その中で `report` ツールから来たステップの id（呼ばれた順）。id の並びは
+ * 描く側へ渡さない（どの本文を出すかを決めるまでの材料で、決めたあとは本文の有無と印に畳まれる）。
  */
 type GroupedTurn = {
   readonly turn: MainViewTurn
@@ -306,7 +306,7 @@ type GroupedTurn = {
 
 /**
  * 時系列に積まれた記録を、利用者の依頼を境目にしてやり取りごとへまとめる（割るのは
- * `shared/turn.ts` の {@link splitIntoTurns}）。**割るのは表示の形に変えたあと**なので、
+ * `shared/turn.ts` の {@link splitIntoTurns}）。割るのは表示の形に変えたあとなので、
  * 依頼より前のまとまりは、メインビューに出す記録（セリフと圧縮の区切りを落としたあと）が
  * 1件でもあるときだけできる。
  */
@@ -347,7 +347,7 @@ function isStepEntry(entry: TurnRest<MainViewEntry>): entry is StepEntry {
 
 /**
  * 1つのやり取りの中のステップと、`report` ツールから来たステップの id（{@link GroupedTurn}）。
- * **ステップの id は作られた順の通し番号**（`MainViewStep.id`。`limitTurnEntries` で古い
+ * ステップの id は作られた順の通し番号（`MainViewStep.id`。`limitTurnEntries` で古い
  * ステップを落とす前に振り切る。落としたあとに振り直すと「番号がずれない」約束を満たせなくなる）。
  */
 type GroupedSteps = {
@@ -396,7 +396,7 @@ function newStep(
 }
 
 /**
- * **`report` ツールが1回も呼ばれなかったやり取りの本文を選ぶ**（`docs/display.md` 4.2）。出すのは
+ * `report` ツールが1回も呼ばれなかったやり取りの本文を選ぶ（`docs/display.md` 4.2）。出すのは
  * 最後の本文（空白だけのものは除く）1つだけで、それが最終レポートになる。それより前の本文は、
  * 資料らしい形をしていても出さない（中間レポートは `report` ツールからしか生まれない）。
  *
@@ -418,12 +418,12 @@ function selectLastText(turn: MainViewTurn, settled: boolean): MainViewTurn {
 }
 
 /**
- * **`report` ツールが呼ばれたやり取りの本文を選ぶ**（`docs/glossary.md`「report ツール」）。出すのは `report`
- * から来たステップだけで、**ツールの外に書いた本文は1つも出さない**（推測の
- * {@link selectLastText} は通さない）。**最後の呼び出しが最終レポート、それより前は中間
- * レポート**で、あとに作業が続いたかどうかは見ない。
+ * `report` ツールが呼ばれたやり取りの本文を選ぶ（`docs/glossary.md`「report ツール」）。出すのは `report`
+ * から来たステップだけで、ツールの外に書いた本文は1つも出さない（推測の
+ * {@link selectLastText} は通さない）。最後の呼び出しが最終レポート、それより前は中間
+ * レポートで、あとに作業が続いたかどうかは見ない。
  *
- * `settled` でないあいだ、**いちばん新しい `report` は出さない**。次の `report` が来れば中間
+ * `settled` でないあいだ、いちばん新しい `report` は出さない。次の `report` が来れば中間
  * レポートに、来なければ最終レポートになるので、まだ決まっていない——先に出すと、あとから
  * 中間へ変わったときに囲いが反転し、最終へ残ったときも書き上げる演出（マウントした時点でしか
  * 始まらない）が掛からない。{@link selectLastText} が確定まで何も出さないのと同じ理由。
@@ -449,8 +449,8 @@ function selectToolReports(
 }
 
 /**
- * 各ステップに「自分より後ろに本文を持つステップがあるか」（`superseded`）を立てる。**`interim` の判定そのもの（`selectToolReports`）
- * は変えない**——ここで足すのは「畳むかどうか」の材料だけ。
+ * 各ステップに「自分より後ろに本文を持つステップがあるか」（`superseded`）を立てる。`interim` の判定そのもの（`selectToolReports`）
+ * は変えない——ここで足すのは「畳むかどうか」の材料だけ。
  * `interim` かどうかを問わず全ステップに立てるのは、位置関係だけで決まる値なので
  * 中間レポート限定にする理由が無いため（畳むかどうかの判定側で `interim` と組み合わせる。
  * `src/browser/components/page/conversation/components/main-view/components/turn/turn.tsx`）。
@@ -474,9 +474,9 @@ function markSupersededSteps(turn: MainViewTurn): MainViewTurn {
 const MAX_STEP_SUMMARY_LENGTH = 40
 
 /**
- * 本文の先頭行。空行は読み飛ばす。**見出し（`# `〜`###### `）ならマークを落としてその語だけ**を
+ * 本文の先頭行。空行は読み飛ばす。見出し（`# `〜`###### `）ならマークを落としてその語だけを
  * 返す（複数畳まれたときに「## 調べた結果」ではなく「調べた結果」の方が読みやすいため）。
- * 見出し以外の行（表・箇条書き・引用・行頭の HTML タグなど）は**マークを落とさずそのまま**返す
+ * 見出し以外の行（表・箇条書き・引用・行頭の HTML タグなど）はマークを落とさずそのまま返す
  * ——「見出しならその語」以上の踏み込みはせず、迷ったところは変えない側に倒す。
  */
 function extractFirstLine(markdown: string): string {
@@ -496,11 +496,11 @@ function extractFirstLine(markdown: string): string {
 }
 
 /**
- * **最終レポート**（そのやり取りで最後の、中間でない本文）に印を立て、同じやり取りに中間レポートが
- * あるかどうかを畳む。**引くのは1箇所だけ**にして、描く側（`src/browser/components/page/conversation/components/main-view/components/turn/turn.tsx`）が
+ * 最終レポート（そのやり取りで最後の、中間でない本文）に印を立て、同じやり取りに中間レポートが
+ * あるかどうかを畳む。引くのは1箇所だけにして、描く側（`src/browser/components/page/conversation/components/main-view/components/turn/turn.tsx`）が
  * 「最後の、中間でない本文」の条件を持たずに済むようにする。
  *
- * 2つに分かれているのは、**地の段とラベルで条件が違う**ため（`docs/screen-design.md` 13.2）:
+ * 2つに分かれているのは、地の段とラベルで条件が違うため（`docs/screen-design.md` 13.2）:
  * 地は最終レポートなら常に1段上げ、ラベル（「最終レポート」）は中間レポートのあるやり取りだけに
  * 出す——本文が1つしか無いやり取りでは「最終」が何も区別せず、内容を持たない行になる。
  *
@@ -527,9 +527,9 @@ function markFinalReport(turn: MainViewTurn, closed: boolean): MainViewTurn {
 }
 
 /**
- * 1つのやり取りが**画面に出す**記録を上限まで切り詰める。落とすのは**古いほう**
- * （今回の続きを残す）。数えるのは画面に出るものだけなので、**ツールを何十件呼んでも
- * 落ちない**（{@link MAX_MAIN_VIEW_ENTRIES}）。
+ * 1つのやり取りが画面に出す記録を上限まで切り詰める。落とすのは古いほう
+ * （今回の続きを残す）。数えるのは画面に出るものだけなので、ツールを何十件呼んでも
+ * 落ちない（{@link MAX_MAIN_VIEW_ENTRIES}）。
  */
 function limitTurnEntries(turn: MainViewTurn): MainViewTurn {
   const counts = turn.steps.map(shownEntryCount)
@@ -553,8 +553,8 @@ function limitTurnEntries(turn: MainViewTurn): MainViewTurn {
 }
 
 /**
- * そのステップが画面に出す記録の件数。**`src/browser/components/page/conversation/components/main-view/components/turn/turn.tsx` が描くもの**
- * （レポートと質問の記録）だけを数え、**ツールの実行は数えない**
+ * そのステップが画面に出す記録の件数。`src/browser/components/page/conversation/components/main-view/components/turn/turn.tsx` が描くもの
+ * （レポートと質問の記録）だけを数え、ツールの実行は数えない
  * （メインビューに出ないため。`docs/display.md` 4.2）。
  */
 function shownEntryCount(step: MainViewStep): number {

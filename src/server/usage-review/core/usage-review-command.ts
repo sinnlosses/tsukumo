@@ -11,7 +11,7 @@ import { type FeatureCommandTable } from "../../core/command-receiver.ts"
 
 export type UsageReviewCommandPorts = {
   /**
-   * トークン消費の画面の札から提案を1件見送り、**流し直す `usage-proposal-dismissed` を返す**
+   * トークン消費の画面の札から提案を1件見送り、流し直す `usage-proposal-dismissed` を返す
    * （書き込み先は `src/server/usage-review/adapter/usage-proposal-dismissal.ts`）。書き込みは
    * 失敗しても投げない口なので、返すイベントは常に1つ。
    */
@@ -23,7 +23,7 @@ export function usageReviewCommands(
   ports: UsageReviewCommandPorts,
 ): FeatureCommandTable<typeof usageReviewContract> {
   return {
-    // **起こし直さない**（書いて、`usage-proposal-dismissed` を流すだけ）。
+    // 起こし直さない（書いて、`usage-proposal-dismissed` を流すだけ）。
     dismissProposal: {
       kind: "write",
       receive: ports.dismissUsageProposal,

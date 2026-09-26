@@ -3,14 +3,14 @@
 // 見た目（`presentational-achievement.tsx` と各区画の部品）がそのまま置ける形へ畳んで返す。
 // 暦（`achievement.calendar`）は別のフック `use-achievement-calendar.ts`。
 //
-// **日の切り替えは、取れた応答の `date`/`today` から計算する**（ブラウザは時計を読まないので、
+// 日の切り替えは、取れた応答の `date`/`today` から計算する（ブラウザは時計を読まないので、
 // hash の raw な値だけでは「前の日」「今日」を計算できない。`docs/design.md`「成果の集め方と
 // 配り方」）。前の日は常に計算できる（そのまま引くだけ）が、次の日と「今日へ」は「いま見ている日が
 // 今日かどうか」が要るので、応答が届くまで押せない。
 //
-// **「<パックの名前>と振り返る」ボタン（`docs/screen-design.md` 13.10「並べるもの」4）のロジックも
-// ここに持つ**——押せない条件（ターンが進行中・空の日）は `use-usage-review.ts` の
-// `startAvailability` と同じ形。**押しても画面は移らない**: `session.reflectAchievement { date }` を
+// 「<パックの名前>と振り返る」ボタン（`docs/screen-design.md` 13.10「並べるもの」4）のロジックも
+// ここに持つ——押せない条件（ターンが進行中・空の日）は `use-usage-review.ts` の
+// `startAvailability` と同じ形。押しても画面は移らない: `session.reflectAchievement { date }` を
 // 送るだけで、進みは `SessionState.diaryWriting` から同じ画面の中に出す（`writing`。同節
 // 「ボタンを押せないとき・押したあと」）。
 
@@ -54,7 +54,7 @@ import { diaryWriterPortraitOf, type DiaryWriterPortrait } from "../domain/diary
 const TODAY_REFETCH_INTERVAL_MS = 60_000
 
 /**
- * 日の切り替えの状態。**「いま何日を見ているか」が分かるかどうかで分かれる**——main が読めて
+ * 日の切り替えの状態。「いま何日を見ているか」が分かるかどうかで分かれる——main が読めて
  * いても、まだ一度も応答が届いていない・直前の取得が失敗して以前の応答も無い間は分からない
  * （下の「取れなかった」の項）。
  */
@@ -63,7 +63,7 @@ export type AchievementDaySwitch =
   | { readonly kind: "known"; readonly date: string; readonly today: string }
 
 /**
- * 画面の中身（13.10「空の日・数えられないとき」）。**日の切り替えとは別に持つ**——「main が
+ * 画面の中身（13.10「空の日・数えられないとき」）。日の切り替えとは別に持つ——「main が
  * 読めない」ときだけ日の切り替えも隠すので、`unavailable` はここでも特別に扱う。
  */
 export type AchievementView =
@@ -94,7 +94,7 @@ export type AchievementReviewButton = {
 
 /**
  * 見ている日を、いま `diary` ツールで書いているか（13.10「ボタンを押せないとき・押したあと」）。
- * **`SessionState.diaryWriting` の日付が見ている日と一致するときだけ**（別の日を書いている・
+ * `SessionState.diaryWriting` の日付が見ている日と一致するときだけ（別の日を書いている・
  * 書き終えている・そもそも振り返っていないのはどれも `none`——振り返りのボタンそのものが
  * 押せるかどうかは {@link AchievementReviewButton} が別に持つ、常に画面全体で1つの状態）。
  */
@@ -118,8 +118,8 @@ export type UseAchievementResult = {
   /** 日記の区画の立ち絵と名前（書いたパック。13.10「並べるもの」2「書いたパックが無いとき」）。 */
   readonly diaryPortrait: DiaryWriterPortrait
   /**
-   * 最新の段落を書き上げの演出で見せてよいか（13.10「書き上がったら」）。**この描画で1回だけ
-   * `true` になる**——同じ段落を日を開き直して見たときは `false`（下の `takeDiaryReveal`）。
+   * 最新の段落を書き上げの演出で見せてよいか（13.10「書き上がったら」）。この描画で1回だけ
+   * `true` になる——同じ段落を日を開き直して見たときは `false`（下の `takeDiaryReveal`）。
    */
   readonly diaryReveal: boolean
 }
@@ -179,7 +179,7 @@ export function useAchievement(): UseAchievementResult {
       : `${daySwitch.date}:${latestParagraph.writtenAt}`
   const diaryReveal = revealKey !== undefined && justWritten && !revealedDiaryKeys.has(revealKey)
 
-  // **React の外にある状態への書き込み**（4類型の1つ）。ここで覚えてから返すと、同じ描画の中で
+  // React の外にある状態への書き込み（4類型の1つ）。ここで覚えてから返すと、同じ描画の中で
   // 「見せてよい」が2回目以降 `false` になる——次に書き上げの演出を見るのは、書き足しで
   // `revealKey` が変わったとき（新しい段落）か、次に別の日で書き上がったときだけ。
   useEffect(() => {
@@ -189,7 +189,7 @@ export function useAchievement(): UseAchievementResult {
   }, [revealKey, justWritten])
 
   // 日記が書き上がったとき、その日の1日ぶんと暦を取り直す（`docs/design.md`「成果の集め方と
-  // 配り方」の「取り直す契機」）。**書いた日と見ている日が違っても広く無効化する**——1日ぶんの
+  // 配り方」の「取り直す契機」）。書いた日と見ている日が違っても広く無効化する——1日ぶんの
   // クエリキーは日付ごとに分かれるが、同時に描かれているのは見ている日の1件だけなので、
   // 広く無効化しても取り直しは1回で済む。暦は常に今日を含む固定範囲なので、書いた日を問わず
   // 鈴が変わりうる。
@@ -228,14 +228,14 @@ export function useAchievement(): UseAchievementResult {
 }
 
 /**
- * 振り返りのボタン（13.10「並べるもの」4・「ボタンを押せないとき・押したあと」）。**会話のターン
- * 中・答え待ちでも押せる**（振り返りは会話とは別の使い捨ての問い合わせ）。押せないのは、
+ * 振り返りのボタン（13.10「並べるもの」4・「ボタンを押せないとき・押したあと」）。会話のターン
+ * 中・答え待ちでも押せる（振り返りは会話とは別の使い捨ての問い合わせ）。押せないのは、
  * 日記を書いている最中（`diaryWriting.kind === "writing"`。書いているのがこの日なら
  * `Controls` が「振り返り中…」に出し分けるので、ここの理由文は他の日のときだけ見える）と、
- * 空の日のとき。**空の日の理由を先に見る**——両方成り立つときは空の日の理由だけを出す決まり
- * （同節）。押すと**日付だけを送る**（`session.reflectAchievement`。依頼文は session-manager が
+ * 空の日のとき。空の日の理由を先に見る——両方成り立つときは空の日の理由だけを出す決まり
+ * （同節）。押すと日付だけを送る（`session.reflectAchievement`。依頼文は session-manager が
  * その日の成果を数え直して組む。`docs/design.md`「日記の受け取りと保存」「コマンドと依頼」）。
- * **画面は移らない。**
+ * 画面は移らない。
  */
 function reviewButtonOf(
   view: AchievementView,
@@ -262,7 +262,7 @@ function reviewButtonOf(
   return {
     label,
     availability,
-    // **押せないときは何も送らない**（`use-screen-nav.ts` の `onChange` と同じく、guard は
+    // 押せないときは何も送らない（`use-screen-nav.ts` の `onChange` と同じく、guard は
     // ここに置き、部品は「押した事実を渡すだけ」。`aria-disabled` はフォーカスを通すための
     // 見た目の扱いで、クリックそのものは止めない）。
     onReview: () => {
@@ -293,8 +293,8 @@ function writingViewOf(
 }
 
 /**
- * 日記の区画の立ち絵と名前（13.10「並べるもの」2）。**その日の日記が書き上がっていれば書いた
- * パック**（`diary-writer.ts`）、そうでなければ**いまのパックを `default` の表情で**
+ * 日記の区画の立ち絵と名前（13.10「並べるもの」2）。その日の日記が書き上がっていれば書いた
+ * パック（`diary-writer.ts`）、そうでなければいまのパックを `default` の表情で
  * （13.10「並べるもの」2「立ち絵」）。
  */
 function diaryPortraitOf(
@@ -320,8 +320,8 @@ function isViewingToday(data: DailyAchievement | undefined): boolean {
 }
 
 /**
- * 日の切り替えの状態。**直前に届いた応答（同じ日の取得が失敗していても、前に届いていた分は
- * 残る）から計算する**——`data` は `useQuery` の既定の振る舞いで、同じキーの再取得が失敗しても
+ * 日の切り替えの状態。直前に届いた応答（同じ日の取得が失敗していても、前に届いていた分は
+ * 残る）から計算する——`data` は `useQuery` の既定の振る舞いで、同じキーの再取得が失敗しても
  * 前回成功時の値のまま残る（`isError` は別に立つ）。
  */
 function daySwitchOf(data: DailyAchievement | undefined): AchievementDaySwitch {

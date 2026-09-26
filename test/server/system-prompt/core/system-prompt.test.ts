@@ -19,14 +19,14 @@ import {
 } from "../../../../src/server/system-prompt/core/system-prompt.ts"
 import { CHAT_MEMORY_BUDGET } from "../../../../src/shared/chat-memory-budget.ts"
 
-// **`systemPrompt` に何が・どの順で載るか**を、3通り（仕事・雑談・続きから始めるとき）で固定する
-// （docs/design.md 7章）。**本物の駆動を起こして確かめることはできない**（`systemPrompt` は
+// `systemPrompt` に何が・どの順で載るかを、3通り（仕事・雑談・続きから始めるとき）で固定する
+// （docs/design.md 7章）。本物の駆動を起こして確かめることはできない（`systemPrompt` は
 // セッションを起こすときに固定され、あとから覗けない）ので、組み立ての側を見る。
 //
-// **文面そのものは写さない。** 節の中身の正典は `report-notation.ts` / `speech-cadence.ts` /
-// `chat-manner.ts` / `chat-memory-prompt.ts` で、ここが見るのは**並びとつなぎ方**だけ。
-// 期待値の見出しは定数から取り出す（文面を直してもここは二重にならない）。**雑談の記憶の2節だけ
-// 見出しを直に書く**——前置きは `chat-memory-prompt.ts` の外に出ておらず、ここで見たいのが
+// 文面そのものは写さない。 節の中身の正典は `report-notation.ts` / `speech-cadence.ts` /
+// `chat-manner.ts` / `chat-memory-prompt.ts` で、ここが見るのは並びとつなぎ方だけ。
+// 期待値の見出しは定数から取り出す（文面を直してもここは二重にならない）。雑談の記憶の2節だけ
+// 見出しを直に書く——前置きは `chat-memory-prompt.ts` の外に出ておらず、ここで見たいのが
 // 「どのモードで、どの順に載るか」の表そのものだから。
 
 /** 人格・要約・会話は手で書いた架空のものだけ（docs/coding-standards.md「会話内容の扱い」）。 */

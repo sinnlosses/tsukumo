@@ -9,8 +9,8 @@ import { type FeatureCommandTable } from "../../core/command-receiver.ts"
 
 export type ChatCommandPorts = {
   /**
-   * 雑談のサイドバー「覚えていること」の「編集」から1行消し、**流し直す
-   * `remembered-lines-changed` を返す**（書き込み先と受け付けない条件は
+   * 雑談のサイドバー「覚えていること」の「編集」から1行消し、流し直す
+   * `remembered-lines-changed` を返す（書き込み先と受け付けない条件は
    * `src/server/chat/adapter/persona-memory.ts` の `forgetRememberedLineFromScreen`）。受け付けられ
    * なかったときは undefined。セッションは起こし直さない。
    */

@@ -1,9 +1,9 @@
 // タスク一覧の表。列は `/list-tasks` が出す表に揃える。
 //
-// **狭い画面では、この表が1タスク＝1枚のカードに組み替わる**（docs/requirements.md 4.7）。
-// 組み替えるのは CSS（task-board.module.css の @media）だけで、**ここは幅を測らず表のまま書く**。
+// 狭い画面では、この表が1タスク＝1枚のカードに組み替わる（docs/requirements.md 4.7）。
+// 組み替えるのは CSS（task-board.module.css の @media）だけで、ここは幅を測らず表のまま書く。
 //
-// **依存と着手は1つの列にまとめてある。** 分けていたときは同じIDが2列に並んで表を横へ押し広げ、
+// 依存と着手は1つの列にまとめてある。 分けていたときは同じIDが2列に並んで表を横へ押し広げ、
 // いちばん読みたい要約の列が器の外へ出ていた（実測: 依存7件の行で2列あわせて約100字ぶん）。
 
 import { memo, type ReactElement } from "react"
@@ -14,13 +14,13 @@ import styles from "../task-board.module.css"
 import { TaskRow } from "./task-row.tsx"
 
 /**
- * `rows` の参照が変わらない限り描き直さない。**`<TaskBoard>` は閉じている間も `<dialog>` ごと
- * マウントされたままなので**、サイドバーの他の区画（進行中のツールなど）が変わるたびにここまで
+ * `rows` の参照が変わらない限り描き直さない。`<TaskBoard>` は閉じている間も `<dialog>` ごと
+ * マウントされたままなので、サイドバーの他の区画（進行中のツールなど）が変わるたびにここまで
  * 再描画が届く。`rows` はタスク一覧が実際に変わったときしか作り直さない
  * （`hooks/use-task-board.ts` の `useMemo`）ので、`memo` だけで「閉じている間・無関係な変化では
  * 組み直さない」が満たせる。
  *
- * **`memo` で包むときだけ `const`**（規約「部品は `function` で書く」の唯一の例外）。
+ * `memo` で包むときだけ `const`（規約「部品は `function` で書く」の唯一の例外）。
  */
 export const TaskTable = memo(TaskTableView)
 

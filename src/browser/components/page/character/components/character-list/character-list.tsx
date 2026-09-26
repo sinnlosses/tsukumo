@@ -1,8 +1,8 @@
-// キャラクター画面の左の列、**パックの一覧**（<CharacterList>。docs/screen-design.md 13.6）。
+// キャラクター画面の左の列、パックの一覧（<CharacterList>。docs/screen-design.md 13.6）。
 // 見出し「キャラクター」と件数、パックごとの行（丸い顔・名前・「表情 <枚数> · 使用中」）、点線の
 // 「新しく作る」（押すと呼び出し側の `<CharacterCreate>` ダイアログを開く。`hooks/use-character.ts`）。
 //
-// **行はただのリンク**（`#character?pack=<名前>`）で、押すと右側がそのパックの詳しい設定に替わる。
+// 行はただのリンク（`#character?pack=<名前>`）で、押すと右側がそのパックの詳しい設定に替わる。
 // 選んでいるパックは hash が持つので、再読み込みしても同じ行が選ばれたまま（`stores/screen.tsx`）。
 // 選んでいる行は `aria-current="page"` で示す（色だけにしない。13.1 原則1）。
 //

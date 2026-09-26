@@ -1,18 +1,18 @@
-// 書きかけの本文を、**空行を境にした塊へ割る**（`docs/design.md` 6.3）。呼び出し側
+// 書きかけの本文を、空行を境にした塊へ割る（`docs/design.md` 6.3）。呼び出し側
 // （`src/browser/components/page/conversation/components/main-view/components/report/report.tsx`）が塊ごとに `Markdown` を独立して描き、変わらない塊は
 // `React.memo` で描き直さない。ここは純粋関数だけを置く（React を import しない）。
 //
-// **塊をまたぐ Markdown の参照は成立しない。** 脚注（`[^1]`）は参照と定義が別の塊に落ちると
-// 記号のまま出るので、**空行を挟まず同じ塊に書いたときだけ**成立する（目視で確認済み）。
+// 塊をまたぐ Markdown の参照は成立しない。 脚注（`[^1]`）は参照と定義が別の塊に落ちると
+// 記号のまま出るので、空行を挟まず同じ塊に書いたときだけ成立する（目視で確認済み）。
 // `src/server/report/core/report-notation.ts` の規約が脚注を名乗っていないのはこのため。
 
 /**
- * 通してよい HTML（`sanitize-schema.ts`）のうち、**閉じタグが必須で中身を囲む要素**。ここに
+ * 通してよい HTML（`sanitize-schema.ts`）のうち、閉じタグが必須で中身を囲む要素。ここに
  * 載っている要素の中では空行で割らない（`<details>` の中で表や箇条書きを使うには、CommonMark の
  * 規則で空行が要るため）。
  *
  * 閉じタグを省ける要素（`p` / `li` / `dt` / `dd` / `tr` / `td` / `th` / `thead` / `tbody`）は
- * **入れない**。省略された閉じタグを待ち続けると、以降ずっと割れなくなる。
+ * 入れない。省略された閉じタグを待ち続けると、以降ずっと割れなくなる。
  */
 const HTML_BLOCK_TAG_NAMES: ReadonlySet<string> = new Set([
   "div",
@@ -48,7 +48,7 @@ const CODE_SPAN_PATTERN = /`[^`]*`/g
 const FENCE_DELIMITER_PATTERN = /^ {0,3}(`{3,}|~{3,})/
 
 /**
- * **フェンス付きコードブロックと HTML ブロックの中の空行では割らない。** 閉じていないもの
+ * フェンス付きコードブロックと HTML ブロックの中の空行では割らない。 閉じていないもの
  * （発話が途中で切れた等）は最後の塊の中に閉じるので、続きの行が表や見出しに化けたり、
  * `<details>` の中身が外へこぼれたりしない（テスト観点9）。
  */

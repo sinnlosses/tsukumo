@@ -1,18 +1,18 @@
-// レポートを「書き上げていくように見せる」演出で、**本文の DOM を測る**（読むだけで書き換え
+// レポートを「書き上げていくように見せる」演出で、本文の DOM を測る（読むだけで書き換え
 // ない。要素に書くのは `paint.ts`、進めるのは `use-report-reveal.ts`）。
 //
 // 測るのは3つ:
 //
-// - **塊の中の行**（{@link lineBoxesOf}）。帯の割り出し（`band.ts`）の材料で、
+// - 塊の中の行（{@link lineBoxesOf}）。帯の割り出し（`band.ts`）の材料で、
 //   書き終わりの行（{@link endLineOf}）も同じ測り方から出す
-// - **塊を囲む枠**（{@link frameOf}）。**行が1つも取れない塊の落とし先**で、なぞる右端
+// - 塊を囲む枠（{@link frameOf}）。行が1つも取れない塊の落とし先で、なぞる右端
 //   そのものではない（右端は帯ごとに決まる。`band.ts`）
-// - **筆先を配る座標**（{@link placeIn}）。ビューポート座標を本文の入れ物の座標へ写す
+// - 筆先を配る座標（{@link placeIn}）。ビューポート座標を本文の入れ物の座標へ写す
 //
-// **どれも呼ばれるたびに測り直す。** 書いているあいだは器が送られ、窓の幅も変わりうるので、
+// どれも呼ばれるたびに測り直す。 書いているあいだは器が送られ、窓の幅も変わりうるので、
 // 始めに測った1回では合わなくなる。
 //
-// ここが返す値はすべて**ビューポート座標**（{@link placeIn} を通したものだけが本文の入れ物の
+// ここが返す値はすべてビューポート座標（{@link placeIn} を通したものだけが本文の入れ物の
 // 座標）。
 
 import { lastLineOf, type LineBox, type RevealFrame } from "./band.ts"
@@ -34,7 +34,7 @@ export function shapesOf(block: RevealBlock): readonly MemberShape[] {
 }
 
 /**
- * 書き終わりの行（ビューポート座標）。**行が1つも取れない塊では無い**——そのときは筆先を
+ * 書き終わりの行（ビューポート座標）。行が1つも取れない塊では無い——そのときは筆先を
  * 置き直さず、最後に配ったところへ落とす（`use-report-reveal.ts` の `finish()`）。
  */
 export function endLineOf(block: RevealBlock): LineBox | undefined {
@@ -42,8 +42,8 @@ export function endLineOf(block: RevealBlock): LineBox | undefined {
 }
 
 /**
- * 測った居場所（ビューポート座標）を、**本文の入れ物を原点にした座標**へ写す
- * （`brush-tip.ts`）。入れ物の矩形は**毎フレーム測り直す**——書いているあいだは器が
+ * 測った居場所（ビューポート座標）を、本文の入れ物を原点にした座標へ写す
+ * （`brush-tip.ts`）。入れ物の矩形は毎フレーム測り直す——書いているあいだは器が
  * 送られ、窓の幅も変わりうるので、始めに測った1回では合わなくなる。
  */
 export function placeIn(origin: Element, viewport: BrushPlace): BrushPlace {
@@ -56,7 +56,7 @@ export function placeIn(origin: Element, viewport: BrushPlace): BrushPlace {
 }
 
 /**
- * 塊を囲む枠。**筆が枠から出ないための落とし先**で、なぞる右端そのものではない
+ * 塊を囲む枠。筆が枠から出ないための落とし先で、なぞる右端そのものではない
  * （右端は帯ごとに決まる。`band.ts`）。
  */
 export function frameOf(shapes: readonly MemberShape[]): RevealFrame | undefined {
@@ -73,12 +73,12 @@ export function frameOf(shapes: readonly MemberShape[]): RevealFrame | undefined
 }
 
 /**
- * 要素の中の行。**文字そのものの矩形だけ**を返す——文字の要素に `range.selectNodeContents` を
- * かけると、箇条書きの `<li>` や表の `<tr>` のような**ブロックの箱まで混じって右端が行の幅では
- * なく欄の幅になる**ので、文字の節点を1つずつ測る。
+ * 要素の中の行。文字そのものの矩形だけを返す——文字の要素に `range.selectNodeContents` を
+ * かけると、箇条書きの `<li>` や表の `<tr>` のようなブロックの箱まで混じって右端が行の幅では
+ * なく欄の幅になるので、文字の節点を1つずつ測る。
  *
- * **図・グラフは行を持たない**ので、その要素の box をまるごと1行として扱う（筆はその上を
- * 1画で通る）。**ただし右端は入れ物ではなく描かれた `svg` / `canvas` の右端を使う**——mermaid
+ * 図・グラフは行を持たないので、その要素の box をまるごと1行として扱う（筆はその上を
+ * 1画で通る）。ただし右端は入れ物ではなく描かれた `svg` / `canvas` の右端を使う——mermaid
  * （`.mermaid`）や Chart.js（`.chart-block`）は全幅の入れ物に描くので、入れ物の box をそのまま
  * 使うと帯が図の実際の幅より広く残る（`img` は入れ物を持たず要素そのものが描かれた図なので、
  * この対象にならない）。
@@ -99,9 +99,9 @@ export function lineBoxesOf(shape: MemberShape): readonly LineBox[] {
 }
 
 /**
- * 図・グラフの入れ物の中で**実際に描かれた** `svg` / `canvas` の box。要素自身が `svg` /
+ * 図・グラフの入れ物の中で実際に描かれた `svg` / `canvas` の box。要素自身が `svg` /
  * `canvas`（`img` もここでは対象外）ならそれ自身、mermaid や Chart.js のように入れ物に
- * 描いているならその中の1つ目を測る。**描かれる前**（mermaid が非同期で描き終える前）や
+ * 描いているならその中の1つ目を測る。描かれる前（mermaid が非同期で描き終える前）や
  * 描画に失敗した塊（`mermaid-broken`）では見つからず、呼び出し側が入れ物の box にそのまま
  * 落とす。
  */
@@ -110,7 +110,7 @@ function drawnBoxOf(element: RevealElement): DOMRect | undefined {
   return drawn?.getBoundingClientRect()
 }
 
-/** 要素の下にある文字の節点。**空白だけのもの**（タグのあいだの改行）は数えない。 */
+/** 要素の下にある文字の節点。空白だけのもの（タグのあいだの改行）は数えない。 */
 function textNodesOf(element: RevealElement): readonly Node[] {
   const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT)
   const nodes: Node[] = []

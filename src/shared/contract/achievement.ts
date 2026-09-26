@@ -2,7 +2,7 @@
 // `src/server/achievement/adapter/achievement-procedure.ts`。形そのもの（応答の型と zod）は
 // `src/shared/achievement.ts`（1日ぶん）と `src/shared/achievement-calendar.ts`（灯りの暦）。
 //
-// **運ぶのはコミットの数・タスクの ID と要約・日記**で、コミットの件名も会話の文面も入らない
+// 運ぶのはコミットの数・タスクの ID と要約・日記で、コミットの件名も会話の文面も入らない
 // （`docs/coding-standards.md`「会話内容の扱い」）。
 
 import { oc } from "@orpc/contract"
@@ -11,7 +11,7 @@ import { achievementCalendarSchema } from "../achievement-calendar.ts"
 import { achievementDaySelectionSchema, dailyAchievementSchema } from "../achievement.ts"
 
 /**
- * **`git` のタイムアウト・失敗**（部分的な数を出さない）。`main` が読めないだけなら失敗にせず
+ * `git` のタイムアウト・失敗（部分的な数を出さない）。`main` が読めないだけなら失敗にせず
  * `{ kind: "unknown" }` を返す（`src/server/achievement/adapter/main-history.ts` の
  * `ReadAchievementResult`）。
  */

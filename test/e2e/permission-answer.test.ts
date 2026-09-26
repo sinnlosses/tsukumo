@@ -4,9 +4,9 @@ import { useScenarioRun } from "./scenario-run.ts"
 
 // 許可のモーダル（押すと answer が流れ、箱が消える。docs/design.md 10章「E2E のシナリオの
 // 一覧」）。疑似セッションの場面 `permission` を名指しして起こし、答え待ちの箱（`pending-changed`
-// で `kind: "permission"` が届く）が出たところで「許可」を押す。**押す前に `pending-changed`
+// で `kind: "permission"` が届く）が出たところで「許可」を押す。押す前に `pending-changed`
 // の1回目（箱が出る）を待ち、押したあとは2回目（箱が消える。答えを消化した `pending-changed`）を
-// 待ってから撮る**——場面が流れ終わるのを時間で待たない（docs/design.md 10章「E2E の
+// 待ってから撮る——場面が流れ終わるのを時間で待たない（docs/design.md 10章「E2E の
 // 走らせ方」）。
 
 const run = useScenarioRun()

@@ -1,15 +1,15 @@
-// サイドバーの「セッション情報」。**残るのはキャラクターとセッションの切り替え、それに
-// いまのコンテキストの使用量の行**（docs/screen-design.md 13.9「何を外すか」・「使用量の行」）。
+// サイドバーの「セッション情報」。残るのはキャラクターとセッションの切り替え、それに
+// いまのコンテキストの使用量の行（docs/screen-design.md 13.9「何を外すか」・「使用量の行」）。
 // 仕事/雑談のトグル・モデル・許可モードのドロップダウンは帯
-// （`components/domain/screen-nav/`）へ移った。**置かれるのは区画ではなくサイドバーの下端の帯**
+// （`components/domain/screen-nav/`）へ移った。置かれるのは区画ではなくサイドバーの下端の帯
 // （`.sidebar-footer`。`sidebar.tsx`）なので、見出しは名乗らない。
 //
 // キャラクターの `<select>`（`character-switch.tsx`）は変更で `session.switchCharacter` を `dispatch`
-// する。**雑談中はここに置かない** — キャラクターの切り替えはプロフィールの札の「変える」へ
+// する。雑談中はここに置かない — キャラクターの切り替えはプロフィールの札の「変える」へ
 // 移り（`profile-card.tsx`。docs/screen-design.md 13.7「雑談のときのサイドバー」）、帯に残るのは
 // セッションの行だけになる。
 //
-// **キャラクターの左には顔を添える**（`CharacterInfo.face`。帯と共有する
+// キャラクターの左には顔を添える（`CharacterInfo.face`。帯と共有する
 // `components/domain/character-face.tsx`。`docs/screen-design.md` 13.9「顔」）。
 // `face` が無いパックでは `<CharacterFace>` が何も描かない。
 
@@ -33,8 +33,8 @@ export type SessionInfoProps = {
 /**
  * `.session-info` は grid-auto-flow: column（`sidebar.module.css`）で、ラベルと値
  * （`<select>` を含む `<span>`）を直接の子として並べる。DOM の並び（ラベル→値の対を
- * キャラクター→セッションの順で並べる）はそのまま、CSS 側が**対ごとに列を等分して値をラベルの
- * 真下に置く**ので、ここでは行ごとに別々の入れ物を作らない（キャラクターとセッションが
+ * キャラクター→セッションの順で並べる）はそのまま、CSS 側が対ごとに列を等分して値をラベルの
+ * 真下に置くので、ここでは行ごとに別々の入れ物を作らない（キャラクターとセッションが
  * 横に並んで見える）。
  */
 export function SessionInfo(props: SessionInfoProps): ReactElement {

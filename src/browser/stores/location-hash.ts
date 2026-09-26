@@ -1,9 +1,9 @@
-// `location.hash` の書き方を決める唯一の場所。**1本の hash を2つの store が読む**
+// `location.hash` の書き方を決める唯一の場所。1本の hash を2つの store が読む
 // （出している画面は `stores/screen.tsx`、見ているターンは `stores/turn-selection.tsx`）ので、
 // 片方が書くときにもう片方の部分を消さないよう、読み書きはここの {@link HashRoute} を通す。
 //
-// 形は `#<画面>?pack=<名前>&date=<日付>&turn=<番号>`。**画面は `?` の前、ターンは `turn` の値、
-// キャラクター画面で選んでいるパックは `pack` の値、成果の画面で見ている日は `date` の値**:
+// 形は `#<画面>?pack=<名前>&date=<日付>&turn=<番号>`。画面は `?` の前、ターンは `turn` の値、
+// キャラクター画面で選んでいるパックは `pack` の値、成果の画面で見ている日は `date` の値:
 //
 // - `#`                           会話の画面・今回に追従（リンクの `href` に空文字を書けないので `#`）
 // - `#?turn=3`                    会話の画面・通し番号 3 のターンに留める
@@ -11,23 +11,23 @@
 // - `#character?pack=tsukumo`     キャラクター画面で `tsukumo` のパックを選んでいる
 // - `#achievement?date=YYYY-MM-DD` 成果の画面でその日を見ている
 //
-// **パックと見ている日を `?` の前（`#character/<名前>`・`#achievement/<日付>`）に置かない**のは、
+// パックと見ている日を `?` の前（`#character/<名前>`・`#achievement/<日付>`）に置かないのは、
 // `turn` と同じく画面の上に乗る付随情報だから。`pack` を読むのはキャラクター画面のときだけ、
 // `date` を読むのは成果の画面のときだけで、ほかの画面へ移ると落ちる（戻ると使用中のパック・
-// 今日から。`docs/screen-design.md` 13.10）。**新しく作るダイアログは URL を持たない**（表示上の
+// 今日から。`docs/screen-design.md` 13.10）。新しく作るダイアログは URL を持たない（表示上の
 // 状態なので保存しない。開いているかどうかはキャラクター画面の state が持つ。
 // `hooks/use-character.ts`。`docs/screen-design.md` 13.6）。
 //
-// **今回に追従しているときは `turn` を書かない。** 留めたターンだけが URL に乗るので、何も
-// 選んでいない人のリロードは今までどおり今回を出す。**`date` も今日を見ているときは書かない**
+// 今回に追従しているときは `turn` を書かない。 留めたターンだけが URL に乗るので、何も
+// 選んでいない人のリロードは今までどおり今回を出す。`date` も今日を見ているときは書かない
 // （今日かどうかはサーバの応答でしか分からない——ブラウザは時計を読まない——ので、hash 側は
 // 「今日」を単なる「無い」として持つ。`docs/design.md` 5章「成果の集め方と配り方」）。
 
 import { useSyncExternalStore } from "react"
 
 /**
- * 画面の名前とラベルの一覧（唯一の正典。`docs/screen-design.md` 13.9）。**画面を1つ足すときは
- * ここへ1行足すだけでよい形にする**——`Screen` 型・帯のメニューの並び（`SCREEN_NAV_ITEMS` を
+ * 画面の名前とラベルの一覧（唯一の正典。`docs/screen-design.md` 13.9）。画面を1つ足すときは
+ * ここへ1行足すだけでよい形にする——`Screen` 型・帯のメニューの並び（`SCREEN_NAV_ITEMS` を
  * `use-screen-nav.ts` がそのまま使う）・hash の `?` より前のパス（{@link pathOf}）は全部ここから
  * 導く。画面の部品を引く表は `components/app/layout.tsx` 側（`Record<Exclude<Screen, "conversation">, ReactElement>`
  * を `satisfies` で検査し、ここへ足したのに部品の登録を忘れたら型エラーになる）。
@@ -50,7 +50,7 @@ export const SCREEN_NAV_ITEMS: readonly { readonly screen: Screen; readonly labe
  * 見ているターン。`"newest"` は今回に追従する（新しいターンが始まればそちらへ移る）。
  * 番号はそのターン（`shared/main-view.ts` の `mainViewTurns` が振る通し番号）に留める。
  *
- * **プリミティブの合併にしてある**のは、`useSyncExternalStore` のスナップショットにそのまま
+ * プリミティブの合併にしてあるのは、`useSyncExternalStore` のスナップショットにそのまま
  * 使えるようにするため（オブジェクトだと読むたびに別物になり、描き直しが止まらない）。
  */
 export type ViewedTurn = "newest" | number
@@ -65,7 +65,7 @@ export type PackSelection =
 
 /**
  * 成果の画面で見ている日（`docs/screen-design.md` 13.10）。`"today"` は今日を見る
- * （`date` が無いとき）。**「今日」の具体的な日付はサーバの応答でしか分からない**
+ * （`date` が無いとき）。「今日」の具体的な日付はサーバの応答でしか分からない
  * （ブラウザは時計を読まない）ので、ここでは「指定していない」ことだけを表す。
  */
 export type AchievementDateSelection =
@@ -95,7 +95,7 @@ const TODAY: AchievementDateSelection = { kind: "today" }
 const TURN_ID_PATTERN = /^-?\d+$/
 
 /**
- * hash を読んで、そこから選んだ1つの値を返す。**`select` はプリミティブを返す**
+ * hash を読んで、そこから選んだ1つの値を返す。`select` はプリミティブを返す
  * （画面だけ読む側は、ターンだけが変わった hash で描き直さずに済む）。
  */
 export function useHashRoute<T extends HashSnapshot>(select: (route: HashRoute) => T): T {
@@ -169,7 +169,7 @@ function packOf(value: string | null): PackSelection {
 }
 
 /**
- * 空の `date` は「今日」に畳む（見た日の日付キーは空にならない）。**形の検証はしない**——
+ * 空の `date` は「今日」に畳む（見た日の日付キーは空にならない）。形の検証はしない——
  * 読めない形はサーバの応答が今日に倒す（`docs/design.md` 5章）ので、ここで畳むと2箇所で
  * 同じ判定を持つことになる。
  */

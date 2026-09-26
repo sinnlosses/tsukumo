@@ -1,5 +1,5 @@
-// 答え待ちの箱の**器だけ**（<PresentationalPendingAnswer>。docs/design.md 6.1）。答え待ちが
-// 無いときと質問のときは何も描かず、**許可要求だけ**「許可」「拒否」を置く。フックも算出も
+// 答え待ちの箱の器だけ（<PresentationalPendingAnswer>。docs/design.md 6.1）。答え待ちが
+// 無いときと質問のときは何も描かず、許可要求だけ「許可」「拒否」を置く。フックも算出も
 // 持たず、`hooks/use-pending-answer.ts` が畳んだ値をそのまま置く（docs/design.md 2章
 // 「機能の中を分ける」）。
 

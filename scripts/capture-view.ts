@@ -1,11 +1,11 @@
-// 配信中のビューをヘッドレスの Chrome で開き、**画像に撮って、指定した要素の位置と大きさを
-// 数値で出す**。描画に関わる変更の `evidence`（`docs/architecture.md`「手で確かめること」）を
+// 配信中のビューをヘッドレスの Chrome で開き、画像に撮って、指定した要素の位置と大きさを
+// 数値で出す。描画に関わる変更の `evidence`（`docs/architecture.md`「手で確かめること」）を
 // 作るための道具で、tsukumo 本体からは呼ばれないので scripts/ に置く。
 //
-// **手元の Google Chrome を使う**（`channel: "chrome"`）。Playwright のブラウザは落とさないので、
+// 手元の Google Chrome を使う（`channel: "chrome"`）。Playwright のブラウザは落とさないので、
 // 入っているのは `playwright-core`（driver だけ、13MB）。Chrome が無い環境では起動に失敗する。
 //
-// **fake driver（`TSUKUMO_DRIVER=fake`）と組み合わせて使う。** 本物の claude を起こさずに画面全体を
+// fake driver（`TSUKUMO_DRIVER=fake`）と組み合わせて使う。 本物の claude を起こさずに画面全体を
 // 出せるので、API を使わずに何度でも撮り直せる（`docs/design.md` 10章）。
 //
 // 使い方:
@@ -14,10 +14,10 @@
 //   bun run scripts/capture-view.ts <URL> --out /tmp/view.png --size 1400x900 \
 //     --measure '[data-region="character"]' --measure '[data-region="sidebar"]'
 //
-// **`--measure` に class セレクタを書くときは `[class*="…"]`。** CSS Modules が `名前_ハッシュ`
+// `--measure` に class セレクタを書くときは `[class*="…"]`。 CSS Modules が `名前_ハッシュ`
 // （`report-note_nkMPPQ`）に焼くので、素の `.report-note` は必ず「無し」になる。
 //
-// **撮った画像はリポジトリに置かない**（既定の出力先は /tmp）。ビューには会話の内容が写るので、
+// 撮った画像はリポジトリに置かない（既定の出力先は /tmp）。ビューには会話の内容が写るので、
 // 画像もその扱いに従う（`docs/coding-standards.md`「会話内容の扱い」— 別の場所に複製しない。
 // fake driver の疑似セッションは架空の会話なので、その画像は共有してよい）。
 
@@ -29,14 +29,14 @@ import { chromium } from "playwright-core"
 const DEFAULT_WIDTH = 1400
 const DEFAULT_HEIGHT = 900
 
-/** 既定の出力先。**リポジトリの外**に置く（会話の内容が写るため）。 */
+/** 既定の出力先。リポジトリの外に置く（会話の内容が写るため）。 */
 const DEFAULT_OUT = "/tmp/tsukumo-view.png"
 
 /** ページの中身が落ち着くまで待つ上限（ミリ秒）。SSE が繋ぎっぱなしなので networkidle は待たない。 */
 const SETTLE_TIMEOUT_MS = 10_000
 
 /**
- * 本文が入る領域（メインビュー）。**class 名は組み立てのたびにハッシュ化される**（CSS Modules）
+ * 本文が入る領域（メインビュー）。class 名は組み立てのたびにハッシュ化される（CSS Modules）
  * ので、領域を指すときは `<Layout>` が付ける `data-region` を使う。
  */
 const MAIN_REGION_SELECTOR = '[data-region="main"]'
@@ -98,7 +98,7 @@ async function main(argv: readonly string[]): Promise<number> {
 }
 
 /**
- * 要素1つの位置と大きさを1行にする。**見つからないときは "無し"** を返して続ける
+ * 要素1つの位置と大きさを1行にする。見つからないときは "無し" を返して続ける
  * （道具なので、1つ測れなくても残りを出す）。同じセレクタに複数当たったら件数も添える。
  */
 async function describeElement(

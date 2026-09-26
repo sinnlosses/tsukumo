@@ -109,7 +109,7 @@ describe("QuestionAsk（メインビューの質問の札）", () => {
     )
 
     const answer = screen.getByRole("button", { name: "これで答える" })
-    // **押せないは `aria-disabled` の1通り**（`Button`）。本物の `disabled` にはしないので、
+    // 押せないは `aria-disabled` の1通り（`Button`）。本物の `disabled` にはしないので、
     // フォーカスは残る（`button.test.tsx` と同じ確かめ方）。
     expect(answer.getAttribute("aria-disabled")).toBe("true")
     expect(answer.hasAttribute("disabled")).toBe(false)

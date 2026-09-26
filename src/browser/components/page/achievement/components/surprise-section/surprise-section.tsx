@@ -1,5 +1,5 @@
-// 小さな驚き（卒業・節目。`docs/screen-design.md` 13.10「並べるもの」4）。**どちらも無い日は
-// 見出しごと出さない**。
+// 小さな驚き（卒業・節目。`docs/screen-design.md` 13.10「並べるもの」4）。どちらも無い日は
+// 見出しごと出さない。
 
 import { type ReactElement } from "react"
 

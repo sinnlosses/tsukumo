@@ -1,9 +1,9 @@
 // `<Character>`（キャラクター画面）のロジック（docs/design.md 2章「機能の中を分ける」の
-// container / presenter）。**新しく作るダイアログ（`<CharacterCreate>`）を開いているかどうか**を
+// container / presenter）。新しく作るダイアログ（`<CharacterCreate>`）を開いているかどうかを
 // state で持つ。表示上の状態なので URL には持たせない（`components/domain/sidebar/task-section.tsx` の
 // `boardOpen` と同じ扱い。`docs/screen-design.md` 13.6）。
 //
-// **閉じるたびに `key` を進めて作り直す**——下書きの掃除を `<CharacterCreate>` の内側で state を
+// 閉じるたびに `key` を進めて作り直す——下書きの掃除を `<CharacterCreate>` の内側で state を
 // 戻す形にすると、作れたと分かった瞬間に効果内で state を戻す呼び出しになり `useEffect` の中で
 // setState を呼ぶ形になる。閉じる側（ここ）が `key` で作り直せば、次に開いたときは自然に空へ戻る
 // （`docs/coding-standards.md`「useEffect の代わりに使うもの」の「props が変わったら state を

@@ -1,5 +1,5 @@
-// キャラクターの切り替えの `<select>`（`character-switch.tsx`）。**帯の `session-info.tsx` と
-// 雑談中の `profile-card.tsx` の両方が同じ部品を使う**（見た目と名前だけを渡す。`session-switch.tsx`
+// キャラクターの切り替えの `<select>`（`character-switch.tsx`）。帯の `session-info.tsx` と
+// 雑談中の `profile-card.tsx` の両方が同じ部品を使う（見た目と名前だけを渡す。`session-switch.tsx`
 // と対）ので、選択肢・値・塞ぐ条件・送るコマンドはここで1回だけ測る。呼び出す側のテストは
 // 自分が `CharacterSwitch` を正しく置いているかだけを見る。
 

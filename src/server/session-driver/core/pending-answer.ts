@@ -1,7 +1,7 @@
 // 答え待ちの列。SDK の `canUseTool` に届いた許可要求とキャラクターからの質問を積み、
 // 画面から答えが来るまで Promise を保留する（docs/requirements.md 4.1 / 4.2）。
 //
-// **SDK の型を import しない**（依存は src/server/adapter/ 直下の `sdk-` で始まるファイルに閉じる）。
+// SDK の型を import しない（依存は src/server/adapter/ 直下の `sdk-` で始まるファイルに閉じる）。
 // `AnswerResult` は SDK の `PermissionResult` と構造が一致するので、駆動側はそのまま返せる。
 // 答え待ちの語彙そのもの（`PendingAsk` / `Answer`）は shared にある。
 //
@@ -14,7 +14,7 @@ import { parseQuestions, type Question, type QuestionAnswer } from "../../../sha
 /** キャラクターが質問するときのツール名。これだけを質問として扱う。 */
 const ASK_USER_QUESTION_TOOL_NAME = "AskUserQuestion"
 
-/** 拒否したときにモデルへ返す定型文。**入力の中身は含めない。** */
+/** 拒否したときにモデルへ返す定型文。入力の中身は含めない。 */
 const DENY_MESSAGE = "利用者が実行を許可しなかった"
 
 /**
@@ -39,7 +39,7 @@ export type AskRequest = {
 
 /**
  * 列の外へ知らせるもの。`onChange` は積まれたとき・解決したときの合図（画面の更新）、
- * `onAnswered` は**質問に答えが付いたとき1回だけ**（メインビューに残す質問の記録。
+ * `onAnswered` は質問に答えが付いたとき1回だけ（メインビューに残す質問の記録。
  * `question-answered` を流すのは呼び出し側の駆動）。
  */
 export type PendingAnswerHandlers = {
@@ -51,7 +51,7 @@ export type PendingAnswerQueue = {
   /** 1件積んで、答えが来るまで待つ。中断されたときは拒否として解決する。 */
   readonly ask: (request: AskRequest) => Promise<AnswerResult>
   /**
-   * 積まれているものに答える。**解決済み・知らない id は無視して `false` を返す**
+   * 積まれているものに答える。解決済み・知らない id は無視して `false` を返す
    * （同じボタンを二度押しても2回目は何も起きない）。答えの種類が合わないときも無視する。
    */
   readonly answer: (id: string, answer: Answer) => boolean
@@ -102,7 +102,7 @@ export function createPendingAnswerQueue(handlers: PendingAnswerHandlers): Pendi
         return false
       }
 
-      // 質問の記録は**答えが確定したここ1回だけ**知らせる（未回答のまま終わった質問は残さない。
+      // 質問の記録は答えが確定したここ1回だけ知らせる（未回答のまま終わった質問は残さない。
       // docs/display.md 4.2「許可と質問」）。解決より先に知らせるので、答えを受けて動き
       // 出したツールのイベントより前に記録が積まれる。
       if (entry.ask.kind === "question" && answer.kind === "answers") {
@@ -148,7 +148,7 @@ function toPendingAsk(request: AskRequest): PendingAsk {
  * undefined を返し、答え待ちをそのまま残す。
  *
  * 質問の答えは `updatedInput.answers`（質問文 → 選ばれたラベル）に組む。
- * **`questions` は受け取ったものをそのまま返す**（こちらで組み直さない）。
+ * `questions` は受け取ったものをそのまま返す（こちらで組み直さない）。
  */
 function toAnswerResult(entry: Entry, answer: Answer): AnswerResult | undefined {
   if (answer.kind === "deny") {
@@ -172,8 +172,8 @@ function toAnswerResult(entry: Entry, answer: Answer): AnswerResult | undefined 
 }
 
 /**
- * SDK へ返す `answers`（質問文 → 答えの文字列）。**複数選んだ答えは
- * {@link ANSWER_SEPARATOR} でつなぐ**。何も選ばれていない質問は入れない（空の答えを
+ * SDK へ返す `answers`（質問文 → 答えの文字列）。複数選んだ答えは
+ * {@link ANSWER_SEPARATOR} でつなぐ。何も選ばれていない質問は入れない（空の答えを
  * 送らない）。
  */
 function answersRecord(

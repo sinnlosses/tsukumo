@@ -1,22 +1,22 @@
 // 帯のまん中の札「いまの作業」のロジック（docs/screen-design.md 13.9「いまの作業」/ docs/glossary.md
-// 「いまの作業」「依頼の手順」）。tsukumo がいま何をしているかの語と、押すと開く**依頼の手順**の
+// 「いまの作業」「依頼の手順」）。tsukumo がいま何をしているかの語と、押すと開く依頼の手順の
 // 一覧を、見た目が受け取れる形まで畳んで返す。
 //
-// **範囲は依頼1つ**（`src/shared/turn-step.ts` の `currentTurnSteps` が、最後の依頼より後の
+// 範囲は依頼1つ（`src/shared/turn-step.ts` の `currentTurnSteps` が、最後の依頼より後の
 // ツールの記録から導く）。要約は `src/browser/lib/tool-summary.ts`（`summarizeToolInput` /
 // `toolInputText`）を使い、どの欄を読むかを2箇所で別に決めない。
 //
-// **札は2箇所に描かれる**（広い画面の帯・狭い画面の「≡」の面の中。`ScreenNavRoom` などと同じ
-// 畳み方で、どちらを出すかは CSS が決める）。**開閉の状態は1つ**（この hook が持つ）で、
-// 押した先の DOM がどちらでも同じ一覧が開く。**「≡」とは同時に開かない**——広い画面には
+// 札は2箇所に描かれる（広い画面の帯・狭い画面の「≡」の面の中。`ScreenNavRoom` などと同じ
+// 畳み方で、どちらを出すかは CSS が決める）。開閉の状態は1つ（この hook が持つ）で、
+// 押した先の DOM がどちらでも同じ一覧が開く。「≡」とは同時に開かない——広い画面には
 // 「≡」が無く（CSS が消す）、狭い画面ではこの札そのものが「≡」の面の中にしか無いので、
 // 「≡」を開かずにこの一覧だけを開く経路が無い（画面の形で担保されるので、状態の突き合わせは
 // 要らない）。
 //
 // 閉じる合図（外側を押した・Esc）は「≡」と歯車と同じ `browser/hooks/use-dismiss-signal.ts` で
-// 取る（**開いている間だけ `document` を購読する**）。**Esc のときだけ押した口へフォーカスを
-// 戻す**のはこの札の事情なので、合図の種類を見てここで決める。**戻り先の札は
-// コールバック ref で集める**（{@link ScreenNavCurrentWork.toggleRef}）。
+// 取る（開いている間だけ `document` を購読する）。Esc のときだけ押した口へフォーカスを
+// 戻すのはこの札の事情なので、合図の種類を見てここで決める。戻り先の札は
+// コールバック ref で集める（{@link ScreenNavCurrentWork.toggleRef}）。
 
 import { useCallback, useRef, useState, type RefCallback, type RefObject } from "react"
 
@@ -46,10 +46,10 @@ const MAX_COLLAPSED_STEPS = 5
 
 /**
  * 6つの状態の語（上ほど強い。表の並びは docs/screen-design.md 13.9「いまの作業」）。
- * `background` は**ターンは終わっているが背景のタスクが動いている**とき（同「背景のタスク」）。
- * `diary` は**成果の振り返りで日記を書いている**とき（`docs/screen-design.md` 13.9「いまの作業」の
- * 表。`state.diaryWriting.kind === "writing"`）で、**会話のターンと並んで書いているので作業中より
- * 弱い**（作業中が動いていれば作業中を出す）。
+ * `background` はターンは終わっているが背景のタスクが動いているとき（同「背景のタスク」）。
+ * `diary` は成果の振り返りで日記を書いているとき（`docs/screen-design.md` 13.9「いまの作業」の
+ * 表。`state.diaryWriting.kind === "writing"`）で、会話のターンと並んで書いているので作業中より
+ * 弱い（作業中が動いていれば作業中を出す）。
  */
 export type ScreenNavCurrentWorkState =
   | "stopped"
@@ -105,8 +105,8 @@ export type ScreenNavCurrentWorkRunningStep =
     }
 
 /**
- * 札に出す要約（`.screen-nav-work-summary`）。**答え待ちで先頭の答え待ちが質問なら、実行中の
- * 手順の要約より質問の要約を優先する**（`docs/screen-design.md` 13.9「いまの作業」。答え待ちは
+ * 札に出す要約（`.screen-nav-work-summary`）。答え待ちで先頭の答え待ちが質問なら、実行中の
+ * 手順の要約より質問の要約を優先する（`docs/screen-design.md` 13.9「いまの作業」。答え待ちは
  * ターンの途中で作業が止まっている状態で、利用者がいま向き合うべきものは質問のため）。
  * 許可要求の答え待ちはこれまでどおり実行中の手順の要約に従う。
  */
@@ -125,7 +125,7 @@ export type ScreenNavCurrentWorkBackgroundTask = {
 
 /**
  * 一覧の「背景で動いているもの」の区画（docs/screen-design.md 13.9「背景のタスク」）。
- * **状態の語に関わらず、動いているものがあれば出す**（作業中・答え待ちでも、ターンの外に
+ * 状態の語に関わらず、動いているものがあれば出す（作業中・答え待ちでも、ターンの外に
  * 残るものがあると分かるように）。
  */
 export type ScreenNavCurrentWorkBackgroundList =
@@ -164,7 +164,7 @@ export type ScreenNavCurrentWorkStepList =
 
 /**
  * 一覧の見出しに添える、答えの場所の案内（`docs/screen-design.md` 13.9「いまの作業」）。
- * 答え待ちのときだけ意味を持ち、**答え待ちの中身で行き先が変わる**ので判別可能な合併型にする
+ * 答え待ちのときだけ意味を持ち、答え待ちの中身で行き先が変わるので判別可能な合併型にする
  * （docs/coding-standards.md「複数の「無い」が1つの状態」と同じ理由で、
  * boolean 1つには畳まない）:
  *
@@ -181,7 +181,7 @@ export type ScreenNavCurrentWorkPendingHint =
 export type ScreenNavCurrentWork = {
   readonly state: ScreenNavCurrentWorkState
   readonly wordLabel: string
-  /** 印（○ / ●）。依頼待ちは中抜きだが、**雑談中の依頼待ちだけ埋める**（{@link chatIdle}）。 */
+  /** 印（○ / ●）。依頼待ちは中抜きだが、雑談中の依頼待ちだけ埋める（{@link chatIdle}）。 */
   readonly mark: "○" | "●"
   /**
    * 雑談中の依頼待ちか（`docs/screen-design.md` 13.9「いまの作業」/ 13.7）。true のときだけ
@@ -198,10 +198,10 @@ export type ScreenNavCurrentWork = {
   readonly open: boolean
   readonly onToggle: () => void
   /**
-   * 札の `<button>` を預ける口（Esc で閉じたときのフォーカスの戻り先）。**`RefObject` ではなく
-   * コールバック ref** なのは、同じ札が広い画面の帯と「≡」の面の2箇所に描かれるため——
+   * 札の `<button>` を預ける口（Esc で閉じたときのフォーカスの戻り先）。`RefObject` ではなく
+   * コールバック ref なのは、同じ札が広い画面の帯と「≡」の面の2箇所に描かれるため——
    * 入れ物を1つにすると後から付いたほうで上書きされ、面を閉じた時点で戻り先が空になる。
-   * 付いている札を**全部**集めておき、Esc のときはその全部へ `.focus()` を呼ぶ
+   * 付いている札を全部集めておき、Esc のときはその全部へ `.focus()` を呼ぶ
    * （見えていないほうは `display: none` で効かない）。
    */
   readonly toggleRef: RefCallback<HTMLButtonElement>
@@ -228,7 +228,7 @@ export function useCurrentWork(navRef: RefObject<HTMLElement | null>): ScreenNav
   const toggleNodes = useRef(new Set<HTMLButtonElement>())
 
   const toggleRef = useCallback<RefCallback<HTMLButtonElement>>((node) => {
-    // **cleanup を返す形なので React 19 は `null` で呼び直さない**（外れるのは下の cleanup）。
+    // cleanup を返す形なので React 19 は `null` で呼び直さない（外れるのは下の cleanup）。
     // 型の上では `null` が来うるので、そのときは何も預からない。
     if (node === null) {
       return
@@ -263,7 +263,7 @@ export function useCurrentWork(navRef: RefObject<HTMLElement | null>): ScreenNav
 
   useDismissSignal({ open, rootRef: navRef, onDismiss })
 
-  // **質問へ**（`docs/screen-design.md` 13.9「いまの作業」）。一覧を閉じ、キャラクター/トークン消費の
+  // 質問へ（`docs/screen-design.md` 13.9「いまの作業」）。一覧を閉じ、キャラクター/トークン消費の
   // 画面を見ていれば会話の画面へ戻し、過去のやり取りを見ていれば最新へ戻してから、メインビューの
   // 質問の札までスクロールさせる（`stores/question-scroll.tsx`）。
   const onGoToQuestion = useCallback((): void => {
@@ -294,7 +294,7 @@ export function useCurrentWork(navRef: RefObject<HTMLElement | null>): ScreenNav
             ? "background"
             : "idle"
 
-  // **雑談中の依頼待ちだけ**「<名前> とおしゃべり中」に変える（`docs/screen-design.md` 13.9「いまの作業」。
+  // 雑談中の依頼待ちだけ「<名前> とおしゃべり中」に変える（`docs/screen-design.md` 13.9「いまの作業」。
   // 答え待ち・作業中・止まっているは、雑談中でもそのまま意味を持つ語なので変えない）。
   const chatIdle = state === "idle" && chatMode
 
@@ -344,10 +344,10 @@ function isRunningStep(step: TurnStep): boolean {
 }
 
 /**
- * {@link ScreenNavCurrentWorkSummary} を組み立てる。**答え待ちの先頭が質問なら、実行中の手順の
- * 要約より質問の要約を優先する**（docs/screen-design.md 13.9「いまの作業」）。許可要求の答え待ちは
- * 今までどおり実行中の手順の要約に従う。**背景で作業中なら、背景のタスクの要約を出す**
- * （同「背景のタスク」）。**振り返り中は「<日付>の日記を書いています」**（同）。
+ * {@link ScreenNavCurrentWorkSummary} を組み立てる。答え待ちの先頭が質問なら、実行中の手順の
+ * 要約より質問の要約を優先する（docs/screen-design.md 13.9「いまの作業」）。許可要求の答え待ちは
+ * 今までどおり実行中の手順の要約に従う。背景で作業中なら、背景のタスクの要約を出す
+ * （同「背景のタスク」）。振り返り中は「<日付>の日記を書いています」（同）。
  */
 function toSummaryView(
   state: ScreenNavCurrentWorkState,
@@ -378,9 +378,9 @@ function toSummaryView(
 }
 
 /**
- * 質問の要約。**1問目の `header` をそのまま使う**（`AskUserQuestion` の入力の型
+ * 質問の要約。1問目の `header` をそのまま使う（`AskUserQuestion` の入力の型
  * （`node_modules/@anthropic-ai/claude-agent-sdk/sdk-tools.d.ts`）で「最大12字」と決まっている
- * ので、`text` を切り詰める必要が無い）。**2問以上あれば「ほか n問」を添える**
+ * ので、`text` を切り詰める必要が無い）。2問以上あれば「ほか n問」を添える
  * （`shared/question.ts` の `parseQuestions` が返す質問は1〜4件）。
  */
 function questionSummaryLabel(
@@ -394,7 +394,7 @@ function questionSummaryLabel(
 }
 
 /**
- * 背景のタスクの要約。**いちばん新しく始まったもの（並びの末尾）の説明**を出し、2件以上あれば
+ * 背景のタスクの要約。いちばん新しく始まったもの（並びの末尾）の説明を出し、2件以上あれば
  * 「ほか n件」を添える（質問の要約の「ほか n問」と同じ形）。説明が無ければ種類の語で代える。
  */
 function backgroundSummaryLabel(tasks: readonly BackgroundTask[]): string | undefined {

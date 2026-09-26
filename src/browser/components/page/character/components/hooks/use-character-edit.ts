@@ -1,30 +1,30 @@
 // `<CharacterEdit>` のロジック（docs/design.md 2章「機能の中を分ける」の container / presenter）。
-// **一覧で選んでいるパック**（`hooks/use-selected-pack.ts`。使用中とは限らない）の姿を、名乗り・
+// 一覧で選んでいるパック（`hooks/use-selected-pack.ts`。使用中とは限らない）の姿を、名乗り・
 // 表情のカード・差し色・背景へ畳み、選んだ画像を data URL にして送る呼び先と一緒に返す。
 //
 // 送るのは `characterPack.setPortrait` / `characterPack.clearPortrait` / `characterPack.setOutfitAccent` / `characterPack.setAccent` /
 // `characterPack.clearChatAccent` / `characterPack.setBackground` / `characterPack.clearBackground` / `characterPack.setFace` / `characterPack.clearFace` で、
-// **どれも書き込む先のパックの
-// 名前（`pack`）を持つ**（選んでいるパックの名前を入れる。使用中以外を直しても使用中の姿は
+// どれも書き込む先のパックの
+// 名前（`pack`）を持つ（選んでいるパックの名前を入れる。使用中以外を直しても使用中の姿は
 // 変わらない。`docs/design.md` 7.1）。使用中以外のパックには「このキャラクターに切り替える」を
 // 出し、押すと `session.switchCharacter` を送る（ターン進行中は押せない。サイドバーの `<select>` と
-// 同じ理由・同じ文言）。**書き込み先と反映はサーバ側**
+// 同じ理由・同じ文言）。書き込み先と反映はサーバ側
 // （`src/server/character-pack/adapter/character-edit.ts` → `character-changed`）。ここは選んだ画像を data URL
 // にして渡すだけで、素材をブラウザ側に持ち続けない。
 //
-// **`default` には消す口を出さない**（立ち絵が必ず要る1つ。`src/shared/expression.ts` の
+// `default` には消す口を出さない（立ち絵が必ず要る1つ。`src/shared/expression.ts` の
 // `REQUIRED_EXPRESSIONS`。送られてきても `src/shared/command.ts` のスキーマが弾く）。
 //
-// **16進の色をここに書かない**（差し色はキャラクター定義の値で、定義に無い衣装の初期値は
-// `--accent` から読む。`appearance-color.ts` の `readAccentColor`）。**`--accent` はキャラクター
+// 16進の色をここに書かない（差し色はキャラクター定義の値で、定義に無い衣装の初期値は
+// `--accent` から読む。`appearance-color.ts` の `readAccentColor`）。`--accent` はキャラクター
 // を切り替えたとき（起こし直しで作り直る）しか変わらないので、マウント時に1回だけ読んで
-// `accentFallback` に持つ**（描画のたびに `getComputedStyle` を呼ばない）。
+// `accentFallback` に持つ（描画のたびに `getComputedStyle` を呼ばない）。
 //
-// 差し色を引きずっている間は、**見た目（この立ち絵の `accent` と `<input>` の表示）だけ
+// 差し色を引きずっている間は、見た目（この立ち絵の `accent` と `<input>` の表示）だけ
 // その場で更新し、`characterPack.setOutfitAccent` / `characterPack.setAccent` の送信は `useDebouncedCallback` で
-// 200ms まとめる**（`src/server/character-pack/adapter/character-edit.ts` が送信のたびに `character.json` を
-// 書き直すため）。**衣装の差し色（`outfitAccents`）と画面の差し色（`accent` / `chatAccent`）は
-// 同じ「ドラッグ中の色」という操作**なので、同じ定数（`ACCENT_DEBOUNCE_MS`）を使う
+// 200ms まとめる（`src/server/character-pack/adapter/character-edit.ts` が送信のたびに `character.json` を
+// 書き直すため）。衣装の差し色（`outfitAccents`）と画面の差し色（`accent` / `chatAccent`）は
+// 同じ「ドラッグ中の色」という操作なので、同じ定数（`ACCENT_DEBOUNCE_MS`）を使う
 // （`docs/screen-design.md` 13.6）。
 
 import { useState } from "react"
@@ -54,14 +54,14 @@ import {
 } from "../../../../../stores/session.tsx"
 import { useSelectedPack } from "./use-selected-pack.ts"
 
-/** 背景の行の、いまの状態を表す字（**印だけにしない**。13.1 原則1）。 */
+/** 背景の行の、いまの状態を表す字（印だけにしない。13.1 原則1）。 */
 const BACKGROUND_LABEL = { present: "いまの背景", absent: "背景なし" } as const
 
 /** 顔の行の、いまの状態を表す字（背景と同じ考え方。`docs/screen-design.md` 13.9「顔」）。 */
 const FACE_LABEL = { present: "いまの顔", absent: "顔なし" } as const
 
 /**
- * 衣装のラベル。**モデルの重さ（装備の重さ）の言い方はどのキャラクターでも同じ**なので画面側が
+ * 衣装のラベル。モデルの重さ（装備の重さ）の言い方はどのキャラクターでも同じなので画面側が
  * 持つ（`docs/requirements.md` 4.3。表情のラベルはキャラクター定義から取る）。見える字は
  * 装備の名前とモデルの2段に分け、読み上げには1つにつないで渡す。
  */
@@ -81,15 +81,15 @@ const DEFAULT_EXPRESSION_BADGE = "いつもの顔"
 /** 画面から変えられないパックのときに出す一言（理由は探索の順。`docs/design.md` 7.1）。 */
 const NOT_EDITABLE_NOTE = "起動先の characters/local のパックは、画面からは変えられない"
 
-// 切り替えは起こし直し（会話が消える）なので、ターン進行中だけ塞ぐ。理由の文面は**サーバが
-// 断るときと同じ1つ**（`shared` の定型文）を使う（サイドバーの `<select>` と同じ）。
+// 切り替えは起こし直し（会話が消える）なので、ターン進行中だけ塞ぐ。理由の文面はサーバが
+// 断るときと同じ1つ（`shared` の定型文）を使う（サイドバーの `<select>` と同じ）。
 const SWITCH_BLOCKED_TITLE = FRAME_ERROR_REASON.switchDuringTurn
 
 /**
  * 帯とダイアログの文言を `removal` の2値（`"none"` は帯を出さないので含まない）で出し分ける
- * （`docs/screen-design.md` 13.6「このキャラクターを消す」）。**同梱を直したパックは「消す」ではなく
- * 「同梱に戻す」と見せる**（`docs/design.md` 7.1「消すときの細部」の理由）。**活用は動的に作らず
- * 全部書き下す**（`verb`〔辞書形。帯とダイアログの実行ボタン〕・`dialogQuestion`〔丁寧形の問い〕・
+ * （`docs/screen-design.md` 13.6「このキャラクターを消す」）。同梱を直したパックは「消す」ではなく
+ * 「同梱に戻す」と見せる（`docs/design.md` 7.1「消すときの細部」の理由）。活用は動的に作らず
+ * 全部書き下す（`verb`〔辞書形。帯とダイアログの実行ボタン〕・`dialogQuestion`〔丁寧形の問い〕・
  * `blockedTitle`〔可能形。使用中で押せないときの理由〕は同じ動詞でも形が違うため）。
  */
 const DELETE_COPY = {
@@ -124,13 +124,13 @@ const DELETE_COPY = {
 >
 
 /**
- * 差し色の送信をまとめる間隔。ドラッグ中の1回1回を送らず、離れてから1回にする。**衣装の差し色と
- * 画面の差し色（仕事 / 雑談）の両方が使う**。
+ * 差し色の送信をまとめる間隔。ドラッグ中の1回1回を送らず、離れてから1回にする。衣装の差し色と
+ * 画面の差し色（仕事 / 雑談）の両方が使う。
  */
 const ACCENT_DEBOUNCE_MS = 200
 
 /**
- * まとめて送る差し色1つ。**書き込む先のパックは引きずった時点のものを値と一緒に持つ**（まとめて
+ * まとめて送る差し色1つ。書き込む先のパックは引きずった時点のものを値と一緒に持つ（まとめて
  * いる間に一覧で別のパックを選んでも、別のパックへ書かない）。
  */
 type PendingAccent<Target> = {
@@ -140,7 +140,7 @@ type PendingAccent<Target> = {
 }
 
 /**
- * 引きずっている間だけ見た目を先に進める上書き。**パックごとに分けて持つ**（一覧で別のパックへ
+ * 引きずっている間だけ見た目を先に進める上書き。パックごとに分けて持つ（一覧で別のパックへ
  * 移ったとき、前のパックで引きずった色を持ち込まない）。
  */
 type HeldColors<Target extends string> = Readonly<Record<string, Partial<Record<Target, string>>>>
@@ -184,7 +184,7 @@ export type CharacterProfileEditModel =
     }
 
 /**
- * 表情のカード1枚。**自分の絵を持たない表情は `blank`**（その表情の名前を書いた点線の枠。
+ * 表情のカード1枚。自分の絵を持たない表情は `blank`（その表情の名前を書いた点線の枠。
  * 9つそろえば出ない）。
  */
 export type PortraitCardModel = {
@@ -241,7 +241,7 @@ export type ChatAccentResetModel =
   | { readonly kind: "hidden" }
   | { readonly kind: "shown"; readonly onClick: () => void }
 
-/** 背景の行。**字（`label`）は有無どちらでも出す**。 */
+/** 背景の行。字（`label`）は有無どちらでも出す。 */
 export type BackgroundFieldModel = {
   readonly image: { readonly kind: "absent" } | { readonly kind: "present"; readonly url: string }
   readonly label: string
@@ -259,8 +259,8 @@ export type FaceFieldModel = {
 
 /**
  * 詳しい設定の最下部、キャラクターを消す／同梱に戻す帯とその確かめ
- * （`docs/screen-design.md` 13.6「このキャラクターを消す」）。**消せないパック
- * （`removal: "none"`）では出さない**。文言・押せるかはここで畳み済みで、
+ * （`docs/screen-design.md` 13.6「このキャラクターを消す」）。消せないパック
+ * （`removal: "none"`）では出さない。文言・押せるかはここで畳み済みで、
  * `components/character-delete.tsx` は判定を持たない。
  */
 export type CharacterDeleteBandModel =
@@ -312,8 +312,8 @@ export function useCharacterEdit(): CharacterEditModel {
   const dispatch = useSessionDispatch()
   const selected = useSelectedPack()
   const turnInProgress = useTurnRunning()
-  // 引きずっている間だけ見た目を先に進める上書き（パック → 衣装）。**サーバへ送るのは
-  // `sendOutfitAccent` 側でまとめる**ので、ここは表示専用（`docs/coding-standards.md`
+  // 引きずっている間だけ見た目を先に進める上書き（パック → 衣装）。サーバへ送るのは
+  // `sendOutfitAccent` 側でまとめるので、ここは表示専用（`docs/coding-standards.md`
   // 「useEffect の代わりに使うもの」の「利用者の操作で起きること」＝イベントハンドラで足す）。
   const [heldOutfitAccents, setHeldOutfitAccents] = useState<HeldColors<Outfit>>({})
   // 画面の差し色（仕事 / 雑談）も同じ考え方で先に進める（衣装とは別の最上位の欄なので別の状態）。
@@ -401,7 +401,7 @@ export function useCharacterEdit(): CharacterEditModel {
     },
   }
 
-  // 雑談の差し色（`chatAccent`）。**持たないパックでは仕事の差し色をそのまま見本に出す**
+  // 雑談の差し色（`chatAccent`）。持たないパックでは仕事の差し色をそのまま見本に出す
   // （「仕事と同じ」であることが色そのもので伝わる。ドラッグ中の仕事の値も追いかける）。
   const hasChatAccent = heldScreen.chat !== undefined || character.chatAccent !== undefined
   const chatAccent: AccentSwatchModel = {
@@ -571,8 +571,8 @@ function clearOf(expression: RemovableExpression, send: PortraitSenders): () => 
 }
 
 /**
- * 選ばれた画像を data URL にして `send` へ渡す。**同じファイルをもう一度選べるように `value` を
- * 戻す**（戻さないと `change` が起きない）。読めなかった回は何も送らない。
+ * 選ばれた画像を data URL にして `send` へ渡す。同じファイルをもう一度選べるように `value` を
+ * 戻す（戻さないと `change` が起きない）。読めなかった回は何も送らない。
  */
 async function readPicked(input: HTMLInputElement, send: (image: string) => void): Promise<void> {
   const file = input.files?.[0]
@@ -594,7 +594,7 @@ async function readFile(file: File, send: (image: string) => void): Promise<void
 
 /**
  * 帯とダイアログの文言・押せるか・送り先を畳む（`removal` が `"none"` でないときだけ呼ぶ）。
- * **打った id が一致するかどうかの判定は `components/character-delete-confirm.tsx` 側が持つ**
+ * 打った id が一致するかどうかの判定は `components/character-delete-confirm.tsx` 側が持つ
  * （ここは送り先の `pack`〔＝id〕を渡すだけ）。
  */
 function deleteBandOf(

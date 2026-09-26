@@ -17,7 +17,7 @@ export type LayoutResizerProps = {
   readonly onChange: (percent: number) => void
   /**
    * ドラッグが終わったら、最後に渡した位置（%）で1回だけ呼ばれる（保存のタイミング）。
-   * **一度も動かさずに離したときは呼ばない**（保存する変化が無く、仕切りを掴んだだけで
+   * 一度も動かさずに離したときは呼ばない（保存する変化が無く、仕切りを掴んだだけで
    * 位置が動いて見えるのを防ぐ）。
    */
   readonly onCommit: (percent: number) => void

@@ -2,22 +2,22 @@
 // container / presenter）。名前・id・立ち絵1枚・画面の差し色2つ（仕事・雑談）の作りかけの値を持ち、
 // 押せるか・id の欄の下に出す一言・作る先を presenter がそのまま置ける形へ畳んで返す。
 //
-// **受け取るのは名前・id・必須の立ち絵1枚・画面の差し色2つだけ**で、表情を足す・衣装ごとに
+// 受け取るのは名前・id・必須の立ち絵1枚・画面の差し色2つだけで、表情を足す・衣装ごとに
 // 差し色を分ける・背景を敷くのは作ったあと `<CharacterEdit>` の側で行う（作る口は最低限にする。
 // `docs/design.md` 7.1）。
 //
-// **`<Dialog>` は常にマウントし、`open` に開閉だけを追随させる**（`components/ui/dialog/dialog.tsx`。
-// `features/task-board/hooks/use-task-board.ts` と同じ形）。**作れたら一覧で作ったパックを選んだ
-// 状態にして、呼び出し元へ閉じたことを知らせる**（`session.switchCharacter` は送らない。切り替えは
+// `<Dialog>` は常にマウントし、`open` に開閉だけを追随させる（`components/ui/dialog/dialog.tsx`。
+// `features/task-board/hooks/use-task-board.ts` と同じ形）。作れたら一覧で作ったパックを選んだ
+// 状態にして、呼び出し元へ閉じたことを知らせる（`session.switchCharacter` は送らない。切り替えは
 // `<CharacterEdit>` の「このキャラクターに切り替える」の仕事。`docs/screen-design.md` 13.6）。
 //
-// **下書きの掃除はこのフックでは行わない。** 閉じるたびに呼び出し元（`hooks/use-character.ts`）が
+// 下書きの掃除はこのフックでは行わない。 閉じるたびに呼び出し元（`hooks/use-character.ts`）が
 // `<CharacterCreate>` を `key` で作り直すので、次に開いたときは自然に空へ戻る
 // （`docs/coding-standards.md`「useEffect の代わりに使うもの」の「props が変わったら state を
-// 捨てる」）。**`onClose` はこのフックの戻り値に含めない**（`features/task-board/task-board.tsx`
+// 捨てる」）。`onClose` はこのフックの戻り値に含めない（`features/task-board/task-board.tsx`
 // と同じ形で、素通りする prop は呼び出し側〔`character-create.tsx`〕が直接つなぐ）。
 //
-// **id の形はサーバと同じ規則で先に見る**（`src/shared/character.ts` の `isCharacterPackName`）。
+// id の形はサーバと同じ規則で先に見る（`src/shared/character.ts` の `isCharacterPackName`）。
 // 送ってから黙って落ちるのではなく、押せない理由を id の欄の下に出す（断られたこと〔手続きの
 // `REFUSED`〕は画面にまだ出していない）。
 
@@ -80,13 +80,13 @@ export function useCharacterCreate(open: boolean, onClose: () => void): Characte
   // 差し色の初期値は `--accent`（JS 側に既定の16進を持たない。`readAccentColor`）。
   const [accent, setAccent] = useState(readAccentColor)
   const [chatAccent, setChatAccent] = useState(readAccentColor)
-  // 送った id。**作れたかどうかは一覧に出たかで見る**（断られたことは画面に出していないので、
+  // 送った id。作れたかどうかは一覧に出たかで見る（断られたことは画面に出していないので、
   // 成否の手がかりはこれだけ）。
   const [sentId, setSentId] = useState<string | undefined>(undefined)
 
   // 送った id が一覧に出たら作れている。一覧でそのパックを選んだ状態にして、呼び出し元へ
-  // 閉じたことを知らせる（切り替えはしない。`docs/screen-design.md` 13.6）。**下書きの掃除は
-  // ここでは行わない**（上の注記）。`selectPack`（URL）と `onClose`（呼び出し元の開閉）という
+  // 閉じたことを知らせる（切り替えはしない。`docs/screen-design.md` 13.6）。下書きの掃除は
+  // ここでは行わない（上の注記）。`selectPack`（URL）と `onClose`（呼び出し元の開閉）という
   // React の外にある状態への書き込みなので `useEffect`
   // （`docs/coding-standards.md`「React」の4類型の2つ目）。
   useEffect(() => {

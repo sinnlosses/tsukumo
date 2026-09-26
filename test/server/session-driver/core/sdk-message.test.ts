@@ -13,7 +13,7 @@ import {
 import { type Expression } from "../../../../src/shared/expression.ts"
 import { type SessionEvent } from "../../../../src/shared/session-event.ts"
 
-// フィクスチャはすべて手で書いた架空のやり取り。**実物の会話は使わない**
+// フィクスチャはすべて手で書いた架空のやり取り。実物の会話は使わない
 // （docs/coding-standards.md「会話内容の扱い」）。
 const EXPRESSIONS: readonly Expression[] = ["default", "thinking", "proud"]
 
@@ -712,7 +712,7 @@ describe("toSessionEvents", () => {
     })
   })
 
-  // ステップごとの使用量。**ターンの中を持ち場ごとに割れるのはこの経路だけ**なので、
+  // ステップごとの使用量。ターンの中を持ち場ごとに割れるのはこの経路だけなので、
   // `message.id` と持ち場が付いて出ることを固定する。
   it("assistant の usage を message.id 付きのステップの使用量にする", () => {
     const message = {
@@ -789,7 +789,7 @@ describe("toSessionEvents", () => {
     expect(toSessionEvents(withoutId, EXPRESSIONS)).toEqual([])
   })
 
-  // トークン消費の記録（`docs/requirements.md` 4.1）。**運ぶのは累計そのまま**で、増分に直すのは
+  // トークン消費の記録（`docs/requirements.md` 4.1）。運ぶのは累計そのままで、増分に直すのは
   // `src/server/token-usage/core/token-usage.ts`。
   it("result の modelUsage は累計のイベントにして、ターンの終わりの前に並べる", () => {
     const message = {

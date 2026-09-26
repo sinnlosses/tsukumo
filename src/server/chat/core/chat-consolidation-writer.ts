@@ -1,12 +1,12 @@
 // 定着を1回走らせて書く口（`docs/design.md` 7章「定着はどこで走るか」、`docs/chat-mode.md` 4.9
 // 「窓から溢れた会話は定着で畳む」）。未定着の行を数え、契機に届いていれば使い捨ての `query()`
 // （`src/server/chat/adapter/sdk-chat-consolidation.ts`）に畳ませ、検査を通ったものを
-// **エピソード → あらすじの順**で書く。形は `visit/core/visit-script-writer.ts` に揃える。
+// エピソード → あらすじの順で書く。形は `visit/core/visit-script-writer.ts` に揃える。
 //
-// **いつ呼ぶか（雑談のターンの終わり）と、同時に1本に絞るのは呼び出し側**
+// いつ呼ぶか（雑談のターンの終わり）と、同時に1本に絞るのは呼び出し側
 // （`src/server/session/core/session-manager.ts`）。ここは1回ぶんだけを持つ。
 //
-// **書く口は決して reject しない**（起こせない・中断・時間切れ・形の崩れはどれも `failed`）。
+// 書く口は決して reject しない（起こせない・中断・時間切れ・形の崩れはどれも `failed`）。
 // 行は未定着のまま残り、次の契機で拾い直される。常駐プロセスは定着1回の失敗で落ちない。
 //
 // 渡す行も前のあらすじも受け取る出力も会話の内容に当たる。メモリにだけ持ち、書くのは索引と
@@ -29,7 +29,7 @@ import {
  * 1回ぶんの結果。
  *
  * - `not-due`: 未定着の行が契機（`consolidateEveryBytes`）に届いていないので起こさなかった
- * - `written`: 書けた。`topics` は**書いたあとのファイルから読み直した**最近の話題の見出し
+ * - `written`: 書けた。`topics` は書いたあとのファイルから読み直した最近の話題の見出し
  * - `failed`: 起こせない・中断・時間切れ・形の崩れ（理由は問わない。次の契機で拾い直す）
  */
 export type ChatConsolidationOutcome =
@@ -57,7 +57,7 @@ export type ChatConsolidationSource =
 export type ChatConsolidationWriterPorts = {
   /** 未定着の行の取り出しとエピソードの追記。 */
   readonly archive: Pick<ChatArchive, "unconsolidated" | "appendEpisodes">
-  /** パック1つぶんのあらすじの読み書き口（書くのは**起こした時点のパック**のファイル）。 */
+  /** パック1つぶんのあらすじの読み書き口（書くのは起こした時点のパックのファイル）。 */
   readonly chatSummary: (packName: string) => ChatSummary
   /** 使い捨ての `query()`。返すのは `structured_output` のまま（検査はここでする）。 */
   readonly query: (request: ChatConsolidationQuery, signal: AbortSignal) => Promise<unknown>

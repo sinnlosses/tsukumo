@@ -5,7 +5,7 @@ import { join } from "node:path"
 
 import { sourceFingerprint } from "../../../../src/server/view-server/adapter/source-fingerprint.ts"
 
-// 見張りつきの起動（`bun run dev`）で、**画面だけ組み直してよいか**を決める指紋。
+// 見張りつきの起動（`bun run dev`）で、画面だけ組み直してよいかを決める指紋。
 // 一時ディレクトリに `browser/` と `shared/` を模した木を作って確かめる。
 
 describe("sourceFingerprint", () => {

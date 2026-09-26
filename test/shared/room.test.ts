@@ -5,7 +5,7 @@ import { FIRST_ROOM_PORT, roomName } from "../../src/shared/room.ts"
 
 describe("roomName", () => {
   // 語彙の1つめは既定のポート（`shared` からサーバ側を import できないので値を写してある）。
-  // **写した値がずれたらここで落ちる**——ずれると既定で起こした tsukumo が2つめの名前を名乗る。
+  // 写した値がずれたらここで落ちる——ずれると既定で起こした tsukumo が2つめの名前を名乗る。
   it("語彙の1つめのポートは、ビューの既定のポートと同じ", () => {
     expect(FIRST_ROOM_PORT).toBe(DEFAULT_VIEW_PORT)
   })
@@ -29,7 +29,7 @@ describe("roomName", () => {
     ])
   })
 
-  // 語彙の外は**ポート番号をそのまま名乗る**（13個め以降・遠い番号・OS まかせの 0）。
+  // 語彙の外はポート番号をそのまま名乗る（13個め以降・遠い番号・OS まかせの 0）。
   it("13個めから先のポートは、ポート番号をそのまま名乗る", () => {
     expect(roomName(FIRST_ROOM_PORT + 12)).toBe("7339")
     expect(roomName(FIRST_ROOM_PORT + 19)).toBe("7346")

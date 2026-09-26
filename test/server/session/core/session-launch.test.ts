@@ -376,8 +376,8 @@ describe("createSessionLaunch", () => {
   })
 
   it("いま出しているパックのまま起こし直す（モードの切り替え）ときは覚えない", async () => {
-    // `session.setChatMode` の起こし直しがここを通る。**同じパックを起こすのは「画面から選ばれた」
-    // ことではない**ので、覚えた値（`~/.tsukumo/state.json`）は書き換わらない
+    // `session.setChatMode` の起こし直しがここを通る。同じパックを起こすのは「画面から選ばれた」
+    // ことではないので、覚えた値（`~/.tsukumo/state.json`）は書き換わらない
     // （docs/screen-design.md 13.6）。
     const harness = createHarness()
 
@@ -412,7 +412,7 @@ describe("createSessionLaunch", () => {
     })
     await settle()
 
-    // **`findResumeSession` は呼ばない**（印から探すのではなく、選ばれたIDがそのまま続き）。
+    // `findResumeSession` は呼ばない（印から探すのではなく、選ばれたIDがそのまま続き）。
     expect(harness.calls).toEqual([
       "choosePack:current",
       "readSessionDefault",
@@ -515,7 +515,7 @@ describe("createSessionLaunch", () => {
   })
 
   // 歯車の「訪問」のオン・オフ（`docs/screen-design.md` 13.6）。覚え方は「新しいセッションの既定」
-  // と同じで、**読むのも起こすたびに1回**（`readSessionDefault` と同じ理由）。
+  // と同じで、読むのも起こすたびに1回（`readSessionDefault` と同じ理由）。
   it("覚えた visitEnabled を、起こした初期値として visit-enabled-changed で流す", async () => {
     const harness = createHarness({ readVisitEnabled: () => false })
 

@@ -1,14 +1,14 @@
-// 画面から届いた立ち絵1枚（data URL）。**受け取り方は data URL を JSON に載せて WebSocket の
-// コマンドで渡す形**（`docs/design.md` 7.1。multipart の POST も生バイトの POST も採らない）。
+// 画面から届いた立ち絵1枚（data URL）。受け取り方は data URL を JSON に載せて WebSocket の
+// コマンドで渡す形（`docs/design.md` 7.1。multipart の POST も生バイトの POST も採らない）。
 //
-// ここは両側で共有する契約なので、**検証だけを持ち、バイト列には触らない**（base64 を
+// ここは両側で共有する契約なので、検証だけを持ち、バイト列には触らない（base64 を
 // `Buffer` にするのは書き込む側 = `src/server/character-pack/adapter/character-edit.ts`）。data URL としての
 // 読み取りと大きさの検査は `src/shared/image-data-url.ts` にあり、ここが足すのは
-// **立ち絵として受け付ける形式の表**とファイル名の組み立て。
+// 立ち絵として受け付ける形式の表とファイル名の組み立て。
 //
-// **受け付ける種類は `.svg` / `.png` / `.gif` の3つだけ**（`docs/design.md` 7.1）。
+// 受け付ける種類は `.svg` / `.png` / `.gif` の3つだけ（`docs/design.md` 7.1）。
 // `classifyPortraitFile`（`src/shared/character-asset.ts`）はほかのラスタ形式も知っているが、
-// **書き込む経路では allowlist をこの3つに絞る**（外から届いたものをそのままディスクに
+// 書き込む経路では allowlist をこの3つに絞る（外から届いたものをそのままディスクに
 // 置くため）。差し色が効くのはインラインで埋め込んだ SVG だけ（`characters/README.md`）。
 
 import { type Expression } from "./expression.ts"
@@ -30,7 +30,7 @@ export type PortraitImage = {
 }
 
 /**
- * data URL を立ち絵1枚として読む。**読めない・受け付けない種類・大きすぎる**ときは undefined
+ * data URL を立ち絵1枚として読む。読めない・受け付けない種類・大きすぎるときは undefined
  * （呼び出し側は定型文の `error` を返すだけで、届いた値を理由に混ぜない）。
  */
 export function parsePortraitImage(dataUrl: string): PortraitImage | undefined {
@@ -44,7 +44,7 @@ export function parsePortraitImage(dataUrl: string): PortraitImage | undefined {
 }
 
 /**
- * 書き込む先のファイル名。**表情の名前から組み立てる**ので、外から届いた文字列がパスの一部に
+ * 書き込む先のファイル名。表情の名前から組み立てるので、外から届いた文字列がパスの一部に
  * ならない（`docs/design.md` 7.1「ファイル名は受け取らず、表情と形式から組み立てる」）。
  * 同じ表情を差し替えたときは同じ名前を上書きする。
  */

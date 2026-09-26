@@ -14,7 +14,7 @@
 // 外だけ。句を探す相手からは `docs/history/` だけを外す（`docs/research/` は正典から引かれる）。
 //
 // 照合は「参照先のファイルに句が含まれるか」で、見出しに限らない（本文の句を引く正当な参照が
-// 多いため）。行の折り返し・空白・バッククォート・`**` の有無の違いは両側から除いて比べる。
+// 多いため）。行の折り返し・空白・バッククォート・`` の有無の違いは両側から除いて比べる。
 
 /** ソース中の参照1つ。 */
 export type SectionReference = {
@@ -160,7 +160,7 @@ function withoutTrailingEllipsis(phrase: string): string {
   return phrase.replace(/(?:…|\.\.\.)+$/u, "")
 }
 
-/** 折り返し・空白・バッククォート・強調の `**` を除く（両側を同じ形に揃えて比べるため）。 */
+/** 折り返し・空白・バッククォート・強調の `` を除く（両側を同じ形に揃えて比べるため）。 */
 function normalizeForMatch(text: string): string {
   return text.replace(/\s+/gu, "").replace(/`/gu, "").replace(/\*\*/gu, "")
 }

@@ -1,14 +1,14 @@
-// レポートの記法（モデルが書く class 名）の語彙。**印の名前の集合の出どころはここだけ**で、
+// レポートの記法（モデルが書く class 名）の語彙。印の名前の集合の出どころはここだけで、
 // 画面の対応表（`src/browser/components/page/conversation/components/main-view/markdown/notation.tsx`）はここから引く。
 //
-// **claude に教える文面（`src/server/report/core/report-notation.ts` の `REPORT_NOTATION_PROMPT`）は
-// ここから組み立てず、手で書く。** 印を足すときは文面にも書き足す必要があり、書き忘れは
+// claude に教える文面（`src/server/report/core/report-notation.ts` の `REPORT_NOTATION_PROMPT`）は
+// ここから組み立てず、手で書く。 印を足すときは文面にも書き足す必要があり、書き忘れは
 // `test/server/report/core/report-notation.test.ts` が落とす。見た目は `report-notation.module.css` の
 // `report-<名前>` で、これも同じテストが見張る。
 
 /**
- * `note` の種別。モデルが書く class 名 → tsukumo が文字として描くラベル。**並びは種別を
- * 言っている側から素の `note` の順**（`class="note note-warn"` のように種別と素の `note` を
+ * `note` の種別。モデルが書く class 名 → tsukumo が文字として描くラベル。並びは種別を
+ * 言っている側から素の `note` の順（`class="note note-warn"` のように種別と素の `note` を
  * 並べて書くので、種別を言っているほうを先に見つける。素の `note` は「情報」の受け皿なので
  * 最後）。
  */
@@ -40,7 +40,7 @@ export const REPORT_NOTATION_NAMES = [
 ] satisfies readonly string[]
 
 /**
- * **tsukumo が `report` の欄から組む印**（モデルには教えない。文面に載せないので、上の語彙の
+ * tsukumo が `report` の欄から組む印（モデルには教えない。文面に載せないので、上の語彙の
  * 「文面にも書く」決まりの外）。`checks` は検証結果の帯、`check` はその1項目で、組むのは
  * `src/shared/report-check.ts`。見た目は語彙と同じく `report-notation.module.css` の `report-<名前>`。
  */

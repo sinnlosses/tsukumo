@@ -47,7 +47,7 @@ function askedDays(days: number): boolean {
   )
 }
 
-/** `useQuery` が要る `QueryClientProvider`。**client は呼び出し側で1回だけ作る**（再レンダーの
+/** `useQuery` が要る `QueryClientProvider`。client は呼び出し側で1回だけ作る（再レンダーの
  * たびに作り直すとキャッシュが毎回リセットされ、選び直した日数の取り直しが測れない）。
  * `useTokenUsage` は `useSessionSelector`（`plan`）も読むので、`SessionStoreContext` も一緒に
  * 包む（既定は `INITIAL_SESSION_STATE` そのまま。`plan` を変えたいテストは `store` を渡す）。 */
@@ -92,7 +92,7 @@ describe("useTokenUsage", () => {
     })
 
     expect(result.current.days).toBe(DEFAULT_TOKEN_USAGE_DAYS)
-    // 取得は非同期に終わる。**確定するまで待ってからテストを終える**（待たずに終えると、
+    // 取得は非同期に終わる。確定するまで待ってからテストを終える（待たずに終えると、
     // 次のテストの実行中に応答が届いて act の外で state が更新される）。
     await waitFor(() => {
       expect(result.current.summary.trend.points.length).toBeGreaterThan(0)

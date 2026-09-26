@@ -25,7 +25,7 @@ const MODELS: readonly ModelTokenUsage[] = [
   },
 ]
 
-// ツールの名前と長さだけの内訳（**結果の本文は入らない**）。
+// ツールの名前と長さだけの内訳（結果の本文は入らない）。
 const BREAKDOWN: TurnUsageBreakdown = {
   main: {
     steps: 3,
@@ -129,7 +129,7 @@ describe("createTokenUsageLog", () => {
     expect(JSON.stringify(record)).toMatch(/"at":"2026-09-22T10:30:00[+-]\d{2}:\d{2}"/)
   })
 
-  // **文字列で入るのは時刻・セッションID・モード・鍵の名前・モデルの名前だけ**
+  // 文字列で入るのは時刻・セッションID・モード・鍵の名前・モデルの名前だけ
   // （docs/coding-standards.md「会話内容の扱い」）。会話の文面が混ざる余地が無いことを、
   // 行に出てくる文字列を数え上げて固定する。
   it("行に出てくる文字列は、鍵の名前とモデル・ツールの名前・セッションID・モード・時刻だけ", () => {
@@ -140,7 +140,7 @@ describe("createTokenUsageLog", () => {
     const [line] = readFileSync(join(root(), "2026-09-22.jsonl"), "utf8").trimEnd().split("\n")
     const strings = [...(line ?? "").matchAll(/"([^"]*)"/g)].flatMap(([, value]) => value ?? [])
     expect(strings.filter((value) => value.startsWith("2026-09-22T")).length).toBe(1)
-    // **同じ鍵の名前が内訳の持ち場ごとに繰り返す**（`inputTokens` は合計と2つの持ち場に出る）ので、
+    // 同じ鍵の名前が内訳の持ち場ごとに繰り返す（`inputTokens` は合計と2つの持ち場に出る）ので、
     // 種類を数え上げる。見たいのは「知らない文字列が1つも無い」こと。
     const kinds = [...new Set(strings.filter((value) => !value.startsWith("2026-09-22T")))]
     expect(kinds.toSorted()).toEqual(
@@ -218,7 +218,7 @@ describe("readRange", () => {
     expect(log.readRange({ startDate: "2026-10-01", endDate: "2026-10-31" })).toEqual([])
   })
 
-  // **`v` が2以外の行・壊れた行は読まずに落とす**（版1を残す価値が無いという判断。
+  // `v` が2以外の行・壊れた行は読まずに落とす（版1を残す価値が無いという判断。
   // まだ開発中で「内訳を空として読む」ことはしない）。1行ずつ検証するので、他の正しい行は
   // 生き残る。
   it("壊れた行や v が2以外の行が混じっても、落として続ける", () => {

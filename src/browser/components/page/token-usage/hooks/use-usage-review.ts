@@ -1,18 +1,18 @@
 // トークン消費の画面の「減らし方を見てもらう」区画（ふだん・見直し中・結果）のロジック
 // （docs/design.md 2章「機能の中を分ける」）。見た目は `../components/usage-review-card/usage-review-card.tsx` へ渡す。
 //
-// **見直し中かどうか・段の進み・結果・前回の提案はサーバの状態が持つ**
+// 見直し中かどうか・段の進み・結果・前回の提案はサーバの状態が持つ
 // （`SessionState.usageReview` / `previousUsageReview`。docs/design.md「見直しのツールと状態」）。
 // ここが畳むのは:
 // - 経過時間の刻み（`dispatch/hooks/use-turn-status.ts` と同じ、ローカルなタイマー。
 //   `../../../../domain/elapsed-time.ts` を共有する）
-// - 段の右に添える数（モデルの数・キャッシュ読み・ツールの種類）。**スキルからは受け取らず**、
+// - 段の右に添える数（モデルの数・キャッシュ読み・ツールの種類）。スキルからは受け取らず、
 //   既存の集計（手続き `tokenUsage.summary` に見直しの期間を渡す）から引く（design.md 決定）。
-//   **見直しの期間が選べる日数（1/7/30）でなければ数を出さない**——手続きの入力は選べる日数
+//   見直しの期間が選べる日数（1/7/30）でなければ数を出さない——手続きの入力は選べる日数
 //   だけなので、それ以外の値では引けない
 // - ボタンを押せない理由（ターンが進行中・雑談中。「解くべき論点」への回答。結果の場面の
 //   主ボタン・「もう一度見てもらう」にも同じ理由を使う——どちらも会話へ依頼を送る点は同じ）
-// - 「前回の提案」を開いた・閉じたの1つの真偽値（`viewingPrevious`）。**サーバの状態には無い**
+// - 「前回の提案」を開いた・閉じたの1つの真偽値（`viewingPrevious`）。サーバの状態には無い
 //   ——`usageReview` は起こし直すとふだんへ戻る決まりのままにし、「前回の結果を見ている」は
 //   この区画だけのローカルな見た目の話にする（docs/screen-design.md 13.2「前回の提案」）
 
@@ -246,8 +246,8 @@ function previousReviewView(
 }
 
 /**
- * 結果の場面の中身（頭の日時・期間・一言・提案の並び）。**今回の結果（`usageReview.kind ===
- * "result"`）と「前回の提案」を開いたとき（`previousUsageReview`）の両方から呼ぶ**——同じ札の
+ * 結果の場面の中身（頭の日時・期間・一言・提案の並び）。今回の結果（`usageReview.kind ===
+ * "result"`）と「前回の提案」を開いたとき（`previousUsageReview`）の両方から呼ぶ——同じ札の
  * 形で出す決まり（「解くべき論点」への回答。docs/screen-design.md 13.2）なので組み立ても1つに
  * 揃える。
  */
@@ -325,7 +325,7 @@ function asTokenUsageDays(days: number): TokenUsageDays | undefined {
 }
 
 /**
- * 見直し中の段の右の数を引く集計。**見直しの画面が使う集計と同じ手続き**
+ * 見直し中の段の右の数を引く集計。見直しの画面が使う集計と同じ手続き
  * （`tokenUsage.summary`）を、いまの期間の選択とは別に引く（同じ日数ならキャッシュを分け合う）。
  */
 function useReviewStageSummary(days: TokenUsageDays | undefined): TokenUsageSummary | undefined {
@@ -350,7 +350,7 @@ function reviewedAtLabel(epochMilliseconds: number): string {
   return `${monthDayLabel(epochMilliseconds)} ${clockTime(zoned)}`
 }
 
-/** 見た期間の一言。**1日だけは「今日」**（`presentational-token-usage.tsx` の期間の
+/** 見た期間の一言。1日だけは「今日」（`presentational-token-usage.tsx` の期間の
  * 切り替えと同じ言い換え）、それ以外は「直近 N 日」。 */
 function periodLabel(days: number): string {
   return days === 1 ? "今日" : `直近 ${String(days)} 日`

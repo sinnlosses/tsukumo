@@ -1,28 +1,28 @@
-// 切り替え先として選べるセッション1件（`docs/requirements.md` 4.8「鍵」）。**サーバとブラウザの
-// 両方が読む契約**なので shared に置く。
+// 切り替え先として選べるセッション1件（`docs/requirements.md` 4.8「鍵」）。サーバとブラウザの
+// 両方が読む契約なので shared に置く。
 //
-// **中身は印から読めるものと、SDK が付けた見出し（`heading`）だけ**（目印・セッションのID・
-// 最終更新時刻・見出し）。**`heading` は会話の内容そのものではなく、SDK 自身が作った表示用の
-// 題**（`customTitle` → 自動要約 → 最初の依頼、の順に決まる。`src/server/session-driver/adapter/sdk-session.ts`）
+// 中身は印から読めるものと、SDK が付けた見出し（`heading`）だけ（目印・セッションのID・
+// 最終更新時刻・見出し）。`heading` は会話の内容そのものではなく、SDK 自身が作った表示用の
+// 題（`customTitle` → 自動要約 → 最初の依頼、の順に決まる。`src/server/session-driver/adapter/sdk-session.ts`）
 // で、`127.0.0.1` のページに出すだけ（ログ・ファイル・外部へは出さない。
 // `docs/coding-standards.md`「会話内容の扱い」。メインビューが会話を出すのと同じ扱いで、
 // 複製にはあたらない）。
 
 /**
- * 画面に並べる切り替え先の上限。**同じディレクトリで作業を続けるほど印の付いたセッションは
- * 際限なく増える**（実測: このリポジトリで120件）ので、新しいほうから切って渡す。
+ * 画面に並べる切り替え先の上限。同じディレクトリで作業を続けるほど印の付いたセッションは
+ * 際限なく増える（実測: このリポジトリで120件）ので、新しいほうから切って渡す。
  *
- * 10 なのは、`<select>` を開いたときに一覧が画面に収まる長さだから。**これより古いものへは
- * 画面から戻れない**が、切り替えたいのは「いま並行して動かしている別の tsukumo」か
+ * 10 なのは、`<select>` を開いたときに一覧が画面に収まる長さだから。これより古いものへは
+ * 画面から戻れないが、切り替えたいのは「いま並行して動かしている別の tsukumo」か
  * 「ついさっきまでの作業」なので、この線で足りる。
  */
 export const MAX_SESSION_CHOICES = 10
 
 /**
- * 見出しに出す文字数の上限。**`<select>` の選択肢は折り返せない**ので、表示側
+ * 見出しに出す文字数の上限。`<select>` の選択肢は折り返せないので、表示側
  * （`src/browser/components/domain/sidebar/session-switch.tsx` の `truncateHeading`）はこれで切って
- * `…` を足す。**tsukumo が題を付けるとき（`src/server/session-driver/core/session-title.ts`）もこれに収まる
- * 長さで切り詰める**——同じ値を指すことで、モデルに指示する長さと表示の切り詰めがずれない。
+ * `…` を足す。tsukumo が題を付けるとき（`src/server/session-driver/core/session-title.ts`）もこれに収まる
+ * 長さで切り詰める——同じ値を指すことで、モデルに指示する長さと表示の切り詰めがずれない。
  */
 export const MAX_SESSION_HEADING_LENGTH = 24
 
@@ -32,7 +32,7 @@ export const MAX_SESSION_HEADING_LENGTH = 24
  */
 export type SessionChoice = {
   /**
-   * 目印（印を付けた tsukumo のビューのポート番号）。**一覧はいまの部屋のものだけ**なので、
+   * 目印（印を付けた tsukumo のビューのポート番号）。一覧はいまの部屋のものだけなので、
    * 並ぶ行はすべて同じ値になる（絞り込みと、行が複数ある理由は `src/server/session-driver/core/session-restore.ts`
    * の `listMarkedSessions`）。昔の印（目印の無いもの・1文字の `A` / `B` …）はポートへ戻してある
    * （`src/server/session-driver/core/session-restore.ts` の `readSessionMark`）。見分けるのは
@@ -41,11 +41,11 @@ export type SessionChoice = {
   readonly viewPort: number
   /** claude 側のセッションのID（続きから始めるときに `resume` へ渡す値）。 */
   readonly sessionId: string
-  /** transcript の最終更新時刻（エポックミリ秒）。**新しい順**に並んで届く。 */
+  /** transcript の最終更新時刻（エポックミリ秒）。新しい順に並んで届く。 */
   readonly lastModified: number
   /**
-   * 行の見出し（SDK の `summary`）。**外来の値なので境界（`session-restore.ts` の
-   * `taggedSession`）で検証し、文字列でない・空なら無いものとして畳む**。無いときの見え方は
+   * 行の見出し（SDK の `summary`）。外来の値なので境界（`session-restore.ts` の
+   * `taggedSession`）で検証し、文字列でない・空なら無いものとして畳む。無いときの見え方は
    * 呼び出し側（`src/browser/components/domain/sidebar/session-switch.tsx`）が決める。
    */
   readonly heading: string | undefined

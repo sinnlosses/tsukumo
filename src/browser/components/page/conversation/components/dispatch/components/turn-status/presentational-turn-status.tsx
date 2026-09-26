@@ -1,8 +1,8 @@
-// 送信⇄中断のボタンと経過/所要の表示の**器だけ**（<PresentationalTurnStatus>。
+// 送信⇄中断のボタンと経過/所要の表示の器だけ（<PresentationalTurnStatus>。
 // docs/design.md 6.1）。フックも算出も持たず、`hooks/use-turn-status.ts` が畳んだ値と呼び先を
 // そのまま置く（docs/design.md 2章「機能の中を分ける」）。
 //
-// **`<Composer>` の `<form>` の中に置く**ことを前提にする — 送るほう（`action.kind === "send"`）は
+// `<Composer>` の `<form>` の中に置くことを前提にする — 送るほう（`action.kind === "send"`）は
 // `type="submit"` で、押すと Composer の `onSubmit` がそのまま依頼を送る。
 
 import { type ReactElement } from "react"

@@ -1,9 +1,9 @@
-// 日記（`docs/glossary.md`「日記」）の型と、保存の形の読み手。**サーバ（`src/server/adapter/
+// 日記（`docs/glossary.md`「日記」）の型と、保存の形の読み手。サーバ（`src/server/adapter/
 // diary.ts` が読み書きする JSON）とブラウザ（成果の画面・日記帳が読む手続き `achievement.day` の
-// `diary` 区画）の両方が同じ型を見る**ので shared に置く。保存の形・置き場・書き足しの規則は
+// `diary` 区画）の両方が同じ型を見るので shared に置く。保存の形・置き場・書き足しの規則は
 // `docs/design.md`「日記の受け取りと保存」が正典で、ここは型と読み取りだけを持つ。
 //
-// **運ぶのは日記の本文・しおり・表情・書いた時刻とパックだけ**（会話の文面そのものではない。
+// 運ぶのは日記の本文・しおり・表情・書いた時刻とパックだけ（会話の文面そのものではない。
 // `docs/coding-standards.md`「会話内容の扱い」。日記はモデルが書いた成果物で、逐語の会話とは
 // 別に扱う）。
 
@@ -44,8 +44,8 @@ export type Diary = {
 }
 
 /**
- * 1日ぶんの成果の応答（`DailyAchievement.diary`）に載る、その日の日記の状態。**読めなくても
- * 「無い」と決めない**（`unreadable`。ファイルが壊れていても成果そのものは見える）。
+ * 1日ぶんの成果の応答（`DailyAchievement.diary`）に載る、その日の日記の状態。読めなくても
+ * 「無い」と決めない（`unreadable`。ファイルが壊れていても成果そのものは見える）。
  */
 export type DailyDiaryStatus =
   | { readonly kind: "written"; readonly diary: Diary }
@@ -54,7 +54,7 @@ export type DailyDiaryStatus =
 
 /**
  * 振り返りの3段の並び（`docs/design.md`「日記の受け取りと保存」「3段の進みの決まり方」）。
- * **この並びが段の順**で、いまの段より前は済、後は未着手と読む（段は戻らない）。
+ * この並びが段の順で、いまの段より前は済、後は未着手と読む（段は戻らない）。
  */
 export const DIARY_STAGES = ["read", "write", "pick"] as const
 
@@ -66,7 +66,7 @@ export type DiaryStage = (typeof DIARY_STAGES)[number]
  *
  * - `idle`: ふだん。一度も振り返っていない
  * - `writing`: 振り返り中。`startedAt` はそのターンが始まった時刻、`stage` はいまの段
- * - `written`: 直前の振り返りが書き上がった。**次の `diary-requested` まで持ち続ける**
+ * - `written`: 直前の振り返りが書き上がった。次の `diary-requested` まで持ち続ける
  * - `failed`: `writing` のままターンが終わった（成功・中断・失敗のどれでも）。`written` と同じく
  *   次の `diary-requested` まで持ち続ける
  */
@@ -112,7 +112,7 @@ export const dailyDiaryStatusSchema = z.discriminatedUnion("kind", [
 ])
 
 /**
- * 届いた値を {@link Diary} として読む。**版が違う・形が崩れていれば `undefined`**
+ * 届いた値を {@link Diary} として読む。版が違う・形が崩れていれば `undefined`
  * （`src/server/diary/adapter/diary.ts` はこれを「読めない」として扱う。手続き `achievement.day` の
  * 応答は同じ zod（`dailyDiaryStatusSchema`）で検証する）。
  */

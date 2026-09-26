@@ -1,7 +1,7 @@
 // `<PendingAnswer>` のロジック（docs/design.md 2章「機能の中を分ける」の container / presenter）。
-// 答え待ちの先頭（`state.pending[0]`）を読み、**許可要求を置くだけの値と送り先に畳む**。
+// 答え待ちの先頭（`state.pending[0]`）を読み、許可要求を置くだけの値と送り先に畳む。
 //
-// **質問はここに出ない**。質問の札はメインビュー
+// 質問はここに出ない。質問の札はメインビュー
 // （`components/page/conversation/components/main-view/components/question-ask/question-ask.tsx`）へ移り、自由入力は `<Composer>` が担う。
 // 組み立て中の答えを持つのは `stores/question-answer.tsx`。
 

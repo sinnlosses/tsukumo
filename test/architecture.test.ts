@@ -5,11 +5,11 @@ import { fileURLToPath } from "node:url"
 // 層をディレクトリで表す（docs/design.md 2章「層と依存の向き」）。ここは正規表現と node:fs だけで、
 // 許した辺以外の import を落とす。外部ツールは増やさない。
 //
-// **3層（shared / server / browser）で、サーバ側は機能ごとに判断（`server/<機能>/core/`）と
+// 3層（shared / server / browser）で、サーバ側は機能ごとに判断（`server/<機能>/core/`）と
 // 境界（`server/<機能>/adapter/`）の2段、どの機能にも属さない共有の箱は `server/core/`
-// `server/adapter/` の直下**（docs/design.md 2章「サーバの機能と、機能どうしの辺」）。配線は
+// `server/adapter/` の直下（docs/design.md 2章「サーバの機能と、機能どうしの辺」）。配線は
 // `src/` 直下のファイル（`cli.ts` / `main.ts` と、そこから呼ばれる起動の段取り）。
-// `adapter ──▶ core ──▶ shared ◀── browser` で、**`core → adapter` は禁止**（機能をまたいでも
+// `adapter ──▶ core ──▶ shared ◀── browser` で、`core → adapter` は禁止（機能をまたいでも
 // 同じに効く）。機能どうしの辺は `SERVER_FEATURE_IMPORTS` にある組だけで、層ごとに循環させない。
 
 type Layer = "shared" | "core" | "adapter" | "browser" | "cli" | "ambient"
@@ -26,7 +26,7 @@ const ALLOWED_IMPORTS: Readonly<Record<Layer, ReadonlySet<Layer>>> = {
 
 // `core` を「純粋な判断」に保つための禁止（3章「許す依存の辺」）。外の世界に触るものは
 // すべて `adapter/` にあり、`core` はそれを import できないので、ここを塞ぐと
-// **`core` から外の世界へ出る道が閉じる**。
+// `core` から外の世界へ出る道が閉じる。
 const OUTSIDE_WORLD_IMPORT = /from\s+["'](node:|@anthropic-ai\/|ws")/
 
 const SRC_ROOT = fileURLToPath(new URL("../src", import.meta.url)).replace(/\/$/, "")
@@ -66,8 +66,8 @@ describe("層と依存の向き", () => {
   })
 })
 
-// サーバの機能（docs/design.md 2章「サーバの機能と、機能どうしの辺」の1つめの表）。**機能を足す
-// ときは、ここと `SERVER_FEATURE_IMPORTS` に足す**（一覧に無いディレクトリを `server/` の下に
+// サーバの機能（docs/design.md 2章「サーバの機能と、機能どうしの辺」の1つめの表）。機能を足す
+// ときは、ここと `SERVER_FEATURE_IMPORTS` に足す（一覧に無いディレクトリを `server/` の下に
 // 作ると `layerOf` が throw する）。まだ移していないファイルは共有の箱（`server/core/`
 // `server/adapter/` の直下）に居るまま動く。
 const SERVER_FEATURES = [
@@ -247,7 +247,7 @@ describe("orca コマンドを起こす箇所", () => {
 
 // SDK（`@anthropic-ai/claude-agent-sdk`）を import するのは機能の `adapter/` 直下
 // （`server/<機能>/adapter/`）の `sdk-` で始まるファイルに閉じ込める（docs/architecture.md 原則3）。
-// SDK は1つの境界だが1ファイルには収まらないので、**許す先を一覧ではなく名前で決める** —
+// SDK は1つの境界だが1ファイルには収まらないので、許す先を一覧ではなく名前で決める —
 // 足すファイルは名前で SDK の境界を名乗ることになり、名乗らずに import すればここで落ちる。
 // import 文のクォートされた specifier だけを拾うので、バッククォートで囲んだ日本語の説明文は
 // 拾わない（orca の検査と同じやり方）。
@@ -339,7 +339,7 @@ describe("子プロセスを起こす箇所", () => {
 // 場所を1つにする」）。コメント中の `` `process.env` `` のような説明文は
 // 拾わない（実コードの行だけを見る）。
 //
-// **例外は `TSUKUMO_HOME` を読む `tsukumo-home.ts` の1つだけ** — ホームを使うのは adapter の
+// 例外は `TSUKUMO_HOME` を読む `tsukumo-home.ts` の1つだけ — ホームを使うのは adapter の
 // 既定引数の中で、配線層から渡す道が無い（そのファイルの冒頭）。ここを2つに限ることで、
 // 3つめが黙って増えない。
 describe("process.env を読む箇所", () => {
@@ -393,7 +393,7 @@ describe("経路名のリテラル", () => {
 // `src` `test` `scripts` の3つを見る（`package.json` の `lint`。`docs/` `develop/` は対象外——
 // ドキュメントは日付つきの記録を持つのが正しい）。
 //
-// **行頭が `//` `*` `/*` のコメント行だけ**を対象にする。行の途中にある `//` は文字列リテラルの
+// 行頭が `//` `*` `/*` のコメント行だけを対象にする。行の途中にある `//` は文字列リテラルの
 // 中の `//` と区別できないので拾わない——`test/` のフィクスチャに出てくる `date` フィールドの
 // ようなテストデータの日付は、行頭がコメントでないのでこれで自然に除外される。
 const COMMENT_LINE_START = /^\s*(\/\/|\*|\/\*)/
@@ -417,28 +417,51 @@ describe("コメント中の日付", () => {
   })
 })
 
+// コメントに Markdown の強調記法を使わない（`docs/coding-standards.md`「コメント」の
+// 「書き方は2つ守る」）。見るのは `//` の行と、`/*` で始まる行から `*/` を含む行までの
+// ブロックコメントの行だけ。
+// 行頭が `*` というだけでは拾わない。システムプロンプトのテンプレートリテラル
+// （`chat-manner.ts` など）は行頭が `*` の箇条書きを本文に持ち、そちらの強調は Claude に渡す文面なので対象外。
+const COMMENT_EMPHASIS = /\*\*[^*]+\*\*/
+
+describe("コメント中の強調", () => {
+  it("src / test / scripts の *.ts / *.tsx で、コメント行が強調（`**…**`）を含まない", () => {
+    const offenders = ["src", "test", "scripts"].flatMap((dirName) => {
+      const root = fileURLToPath(new URL(`../${dirName}`, import.meta.url)).replace(/\/$/, "")
+      return listSourceFiles(root).flatMap((relPath) => {
+        const lines = readFileSync(`${root}/${relPath}`, "utf8").split("\n")
+        return commentLineIndexes(lines).flatMap((index) =>
+          COMMENT_EMPHASIS.test(lines[index] ?? "") ? [`${dirName}/${relPath}:${index + 1}`] : [],
+        )
+      })
+    })
+
+    expect(offenders.join("\n")).toBe("")
+  })
+})
+
 // 画面を組み立てる部品のまとまりどうしの import を制限する（`docs/design.md` 2章「領域の機能と、置かれる機能」）。
-// まとまりは3種類あり、**辺は「枠・画面 → 置かれる機能」と「画面 → 枠」だけ**を許す。
+// まとまりは3種類あり、辺は「枠・画面 → 置かれる機能」と「画面 → 枠」だけを許す。
 //
-// - **枠**（`BROWSER_FRAMES`）: 全画面で共有する枠（`components/domain/<枠>/`）。差し込み口は
-//   props で受け、画面を知らない。**枠どうしは import しない**
-// - **画面**（`BROWSER_SCREENS`）: 1つの画面 = 1つのページ（`components/page/<画面>/`）。`components/app/layout.tsx` が
-//   出す画面を選ぶ。**画面どうしは import しない**。会話の画面は `<Sidebar>` を
+// - 枠（`BROWSER_FRAMES`）: 全画面で共有する枠（`components/domain/<枠>/`）。差し込み口は
+//   props で受け、画面を知らない。枠どうしは import しない
+// - 画面（`BROWSER_SCREENS`）: 1つの画面 = 1つのページ（`components/page/<画面>/`）。`components/app/layout.tsx` が
+//   出す画面を選ぶ。画面どうしは import しない。会話の画面は `<Sidebar>` を
 //   置くので、画面から枠へは引いてよい
-// - **置かれる機能**（`BROWSER_PLACED_FEATURES`）: 自分の置き場所を持たず、枠か画面の中に
-//   置いてもらう。**どのまとまりも import しない（葉）**ので、枠・画面から引いても輪にならない
+// - 置かれる機能（`BROWSER_PLACED_FEATURES`）: 自分の置き場所を持たず、枠か画面の中に
+//   置いてもらう。どのまとまりも import しない（葉）ので、枠・画面から引いても輪にならない
 //
-// **一覧は `browser/` からの相対パスで引く**（枠と画面は `components/domain/<枠>/` と
+// 一覧は `browser/` からの相対パスで引く（枠と画面は `components/domain/<枠>/` と
 // `components/page/<画面>/` に分かれているので、名前だけでは引けない）。
 //
 // `browser/components/`（`app/` `page/` `domain/` `ui/` の4段。一覧のパスに無いディレクトリ）・
 // `browser/lib/` `browser/stores/` `browser/styles/` と `browser/main.tsx` / `browser/app.tsx` は誰から引いてもよい
-// 共有部分なので、ここでは見ない。**一覧に無いディレクトリが `features/` の直下・
+// 共有部分なので、ここでは見ない。一覧に無いディレクトリが `features/` の直下・
 // `components/domain/` の直下（サブディレクトリがあるとき）・`components/page/` の下に
-// あれば `throw` する**（足し忘れが「検査の対象外」として黙って通るのを防ぐ。`browserBoxOf` と
+// あれば `throw` する（足し忘れが「検査の対象外」として黙って通るのを防ぐ。`browserBoxOf` と
 // 同じ作り）。
 //
-// **会話の画面の4つの領域（`main-view` など）は `conversation/components/` の下の部品**なので、
+// 会話の画面の4つの領域（`main-view` など）は `conversation/components/` の下の部品なので、
 // 画面 `components/page/conversation` の一部として扱われる。
 const BROWSER_FRAMES = ["components/domain/screen-nav", "components/domain/sidebar"] as const
 const BROWSER_SCREENS = [
@@ -490,7 +513,7 @@ describe("browser/ の機能どうしの import", () => {
 // `hooks/` / `domain/` / `lib/` / `utils/` / `stores/` という箱をまたぐ辺を見る
 // （`shared` への辺は層の検査 `ALLOWED_IMPORTS` がすでに見ているので、ここでは対象にしない）。
 //
-// `browser/hooks/` は**機能の語彙を持たない React のフック**の箱で、`components/ui/` と同じ扱い
+// `browser/hooks/` は機能の語彙を持たない React のフックの箱で、`components/ui/` と同じ扱い
 // （誰から引いてもよく、自分は `lib/` までしか引かない）。機能に固有のフックは機能の中の
 // `features/<機能>/hooks/` に置くので、こちらの箱には入らない。
 //
@@ -499,7 +522,7 @@ describe("browser/ の機能どうしの import", () => {
 // import 元・import 先のどちらでも無視する。未知のディレクトリが `browser/` 直下や
 // `browser/components/` 直下に増えたときにテストの直し忘れで素通りしないよう、`main.tsx` でも
 // `types/`/`styles` でもない未知の区画は `layerOf` と同じく `throw` する。
-// `browser/domain/` は**画面全体の語彙**（tsukumo の語彙を名乗り、2つ以上の機能が読むもの）の箱で、
+// `browser/domain/` は画面全体の語彙（tsukumo の語彙を名乗り、2つ以上の機能が読むもの）の箱で、
 // `lib/`（ライブラリを包む道具）とは「ファイル名が tsukumo の語彙を名乗るか」で分かれる。
 const BROWSER_BOXES = [
   "main",
@@ -595,7 +618,7 @@ describe("browser/ の箱をまたぐ import", () => {
 
 // `utils/` の歯止め1（docs/design.md 2章「`lib/` と `utils/` に置く基準」）。箱の辺の検査は相対 import
 // の `browser/` の中しか見ないので、外部パッケージ（`remeda`・`react`）・`node:`・`shared/` への
-// import はここで別に落とす。**`utils/` から出る import は、`utils/` の中への相対 import だけ**。
+// import はここで別に落とす。`utils/` から出る import は、`utils/` の中への相対 import だけ。
 describe("browser/utils/ の import", () => {
   it("browser/utils/ のファイルは browser/utils/ の中しか import しない", () => {
     const offenders = listSourceFiles(SRC_ROOT)
@@ -610,18 +633,18 @@ describe("browser/utils/ の import", () => {
   })
 })
 
-// 機能をまたぐ箱に、**1つの機能しか読まないファイル**が残っていないことを見る
+// 機能をまたぐ箱に、1つの機能しか読まないファイルが残っていないことを見る
 // （`docs/design.md` 2章「上げる引き金は「2つ目の読み手が出たとき」」。引き金は逆にも引き、
-// 読み手が1つに戻ったものはその機能の中へ下ろす）。**`components/domain/` の直下と
-// `components/ui/` にも同じ基準を掛ける**（2章「引き金は逆にも引く」）。
+// 読み手が1つに戻ったものはその機能の中へ下ろす）。`components/domain/` の直下と
+// `components/ui/` にも同じ基準を掛ける（2章「引き金は逆にも引く」）。
 //
-// **読み手が機能の外だけのものは対象外**（`lib/socket.ts` と `lib/refresh.ts` は `stores/` が
-// 読む。下ろす先の機能が無いので、ここに残るのが正しい）。**`stores/` はまだ対象にしていない**
+// 読み手が機能の外だけのものは対象外（`lib/socket.ts` と `lib/refresh.ts` は `stores/` が
+// 読む。下ろす先の機能が無いので、ここに残るのが正しい）。`stores/` はまだ対象にしていない
 // ——`stores/location-hash.ts`（`screen-nav` だけ）と `stores/main-view-turn.ts`
 // （`main-view` だけ）の読み手が1機能で、状態を機能の中へ下ろしてよいかは置き場の基準とは
 // 別の判断が要るため。
 //
-// `components/domain/` は**直下のファイルだけ**を対象にする（サブディレクトリは全画面で共有する
+// `components/domain/` は直下のファイルだけを対象にする（サブディレクトリは全画面で共有する
 // 枠（領域）で、1つの領域だけが読むのが正しい形。2章「`components/domain` の直下のファイルは
 // 領域ではなく共有の部品」）。`components/ui/` は部品ごとのディレクトリ（`ui/select/` など）に
 // 分かれているが、その中は「共有の部品1つぶん」なので、そのまま全体を対象にする。
@@ -649,8 +672,8 @@ describe("browser/ の機能をまたぐ箱", () => {
 })
 
 // `components/ui/` の置き方（2章「1部品1フォルダは真似しない」の例外）を検査で守る。
-// **直下にファイルを置かない**（部品ごとのディレクトリの中に置く）、**`ui/<部品>/` には必ず
-// `<部品>.tsx` がある**（ディレクトリ名がそのまま部品のファイル名になる）の2つ。barrel file
+// 直下にファイルを置かない（部品ごとのディレクトリの中に置く）、`ui/<部品>/` には必ず
+// `<部品>.tsx` がある（ディレクトリ名がそのまま部品のファイル名になる）の2つ。barrel file
 // （`index.tsx`）で束ねていないかは、ここが `<部品>.tsx` の存在を見ることで同時に落ちる
 // （`index.tsx` しか無いディレクトリは `<部品>.tsx` が無いので違反になる）。
 describe("components/ui/ の置き方", () => {
@@ -688,7 +711,7 @@ describe("components/ui/ の置き方", () => {
 // `domain/` `hooks/` `components/` だけ。部品（`components/<部品>/`）も同じ作り（`<部品>.tsx` /
 // `presentational-<部品>.tsx` / `<部品>.module.css` / `hooks/` `domain/` `components/`）で、ほかに
 // 概念のディレクトリを名前の一覧（`PAGE_CONCEPT_DIRECTORIES`。いまは `markdown` だけ）で許す。
-// **部品の `components/`（＝子部品）はさらに `components/` を持てない**（ネストは1段だけ）。
+// 部品の `components/`（＝子部品）はさらに `components/` を持てない（ネストは1段だけ）。
 // `components/` の直下はディレクトリだけで、`hooks/` は部品の形（`<名前>.tsx` など）を求めない
 // 固定の置き場として例外にする。
 const PAGE_CONCEPT_DIRECTORIES: ReadonlySet<string> = new Set(["markdown"])
@@ -847,7 +870,7 @@ function componentBoundaryViolations(): readonly string[] {
 // 含むもの。`::` の疑似要素は別の持ち物として数え、対象にしない）の property が、部品の CSS で
 // `:where()` の外に書いた property と重ならないことを見る。
 //
-// **対象は動的に決める**（`readonly className: string` を持つ `components/ui/` の部品。`Select` は
+// 対象は動的に決める（`readonly className: string` を持つ `components/ui/` の部品。`Select` は
 // 作法の例外として名指しで外す）。自分の CSS を持たない薄い部品（`VStack` / `HStack`）は、
 // レンダーする先の部品（`Stack`）の CSS を辿って「持ち物」を決める——渡した class がそのまま
 // 同じ DOM ノードに乗るため。
@@ -897,8 +920,8 @@ function pascalCaseOf(dirName: string): string {
 
 /**
  * `readonly className: string` を持つ `components/ui/` の部品（`Select` を除く）の一覧。
- * **自分の CSS を持たない薄い部品（`VStack` / `HStack`）は、`Omit<StackProps, "direction">` の
- * ように型を経由するので、本文に `readonly className: string` の字面が無い。** レンダーする先
+ * 自分の CSS を持たない薄い部品（`VStack` / `HStack`）は、`Omit<StackProps, "direction">` の
+ * ように型を経由するので、本文に `readonly className: string` の字面が無い。 レンダーする先
  * （`.tsx` の `return <部品名`）を辿り、その先が対象ならこちらも対象に加える（固定点まで
  * 繰り返し、転送が連なっても拾う）。
  */
@@ -1040,7 +1063,7 @@ function propertiesOfClass(cssContent: string, className: string): readonly stri
  * 部品が `:where()` の外に持つ property（呼び出し側の class と競ってはいけないもの）。
  * 自分の CSS を持たない部品（`VStack` / `HStack`）は、レンダーする先の部品名を `.tsx` から辿って
  * その CSS を見る（同じ DOM ノードに乗るため。`visited` は辿りが循環しないための歯止め）。
- * **`::backdrop` などの疑似要素の規則は別の持ち物として数え、ここには含めない**
+ * `::backdrop` などの疑似要素の規則は別の持ち物として数え、ここには含めない
  * （`docs/design.md` 2章「`components/ui/` の部品」の検査の注記。別の要素に描くので、呼び出し側の
  * class が同じ property 名を持っていても競らない）。
  */
@@ -1302,8 +1325,8 @@ function findBrowserFeatureViolations(relPath: string): readonly BrowserFeatureV
 /**
  * `browser/` 相対パスから、枠・画面・置かれる機能のどれかを返す。`BROWSER_FRAMES` / `BROWSER_SCREENS` /
  * `BROWSER_PLACED_FEATURES` のどれかのパスの下にあれば一致したものを返し、共有部分（`browser/lib/` など）は
- * `undefined`。**一覧に無いディレクトリが `features/` の直下・`components/domain/` の直下（サブディレクトリが
- * あるとき）・`components/page/` の下にあれば `throw`**（新しい枠・画面・機能を足したら、
+ * `undefined`。一覧に無いディレクトリが `features/` の直下・`components/domain/` の直下（サブディレクトリが
+ * あるとき）・`components/page/` の下にあれば `throw`（新しい枠・画面・機能を足したら、
  * 3つの一覧のどれかに足す）。
  */
 function browserFeatureOf(relPath: string): BrowserFeature | undefined {
@@ -1425,7 +1448,7 @@ function resolveRelativeImport(fromRelPath: string, specifier: string): string {
 }
 
 /**
- * `src/` 相対パスから層を決める。**`src/` 直下のファイルは配線層**（`cli.ts` と `main.ts`、
+ * `src/` 相対パスから層を決める。`src/` 直下のファイルは配線層（`cli.ts` と `main.ts`、
  * そこから呼ばれる起動の段取り。`core` と `adapter` を結べるのはここだけ）、`shared/` と
  * `browser/` は先頭ディレクトリ、サーバ側は置き場（`serverPlaceOf`）の層で決まる。
  * `types/` の `*.d.ts` はどの層にも属さない ambient 宣言で、何も import しない。
@@ -1449,9 +1472,9 @@ function layerOf(relPath: string): Layer {
 
 /**
  * `server/` の下のファイルの置き場を決める。`server/core/` `server/adapter/` の下（`lib/` を含む）は
- * 共有の箱、`server/<機能>/core/` `server/<機能>/adapter/` の下は機能の層。**`SERVER_FEATURES` に
+ * 共有の箱、`server/<機能>/core/` `server/<機能>/adapter/` の下は機能の層。`SERVER_FEATURES` に
  * 無いディレクトリ、機能の中で `core/` `adapter/` の外に置いたファイル、`server/` の直下の
- * ファイルは `throw`**（判断か境界かを名乗っていないものと、足し忘れた機能を素通りさせない）。
+ * ファイルは `throw`（判断か境界かを名乗っていないものと、足し忘れた機能を素通りさせない）。
  */
 function serverPlaceOf(relPath: string): ServerPlace {
   const [, second, third, ...rest] = relPath.split("/")
@@ -1573,4 +1596,23 @@ function violationsMessage(violations: readonly Violation[]): string {
   return violations
     .map((v) => `src/${v.fromPath}（${v.fromLayer}） → src/${v.toPath}（${v.toLayer}）`)
     .join("\n")
+}
+
+/**
+ * 行頭が `//` の行と、行頭が `/*` の行から `*\/` を含む行までの行番号を返す。
+ * 行の途中で開くブロックコメントは拾わない（取りこぼしても検査が緩むだけで、誤検出はしない）。
+ */
+function commentLineIndexes(lines: ReadonlyArray<string>): ReadonlyArray<number> {
+  return lines.reduce<{ readonly inBlock: boolean; readonly indexes: ReadonlyArray<number> }>(
+    ({ inBlock, indexes }, line, index) => {
+      const opens = !inBlock && /^\s*\/\*/.test(line)
+      const isComment = inBlock || opens || /^\s*\/\//.test(line)
+      const closes = (inBlock || opens) && line.includes("*/")
+      return {
+        inBlock: (inBlock || opens) && !closes,
+        indexes: isComment ? [...indexes, index] : indexes,
+      }
+    },
+    { inBlock: false, indexes: [] },
+  ).indexes
 }

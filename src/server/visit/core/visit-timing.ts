@@ -1,4 +1,4 @@
-// 訪問の出入りと台本の進みの判断（`docs/design.md` 5章「訪問の契機と状態」）。**純関数だけ**で、
+// 訪問の出入りと台本の進みの判断（`docs/design.md` 5章「訪問の契機と状態」）。純関数だけで、
 // 時計は持たない。時刻は呼び出し側（`visit-watch.ts`）が渡し、時計を回すのは adapter
 // （`src/server/visit/adapter/visit-clock.ts`）。
 //
@@ -33,7 +33,7 @@ export const VISIT_TIMING = {
 
 /**
  * 疑似セッションや手元で出入りを確かめるための縮めたしきい値（`TSUKUMO_VISIT_QUICK=1`。
- * `docs/architecture.md`「手で確かめること」）。**「1回の待ちに1度」は縮めない**ので、同じ待ちの
+ * `docs/architecture.md`「手で確かめること」）。「1回の待ちに1度」は縮めないので、同じ待ちの
  * あいだに2度は来ない。
  */
 export const QUICK_VISIT_TIMING = {
@@ -117,8 +117,8 @@ export function spendWait(tally: VisitTally): VisitTally {
 
 /**
  * 来るか・まだか（何時に）・来ないか。待ちが続けて {@link VisitTiming.waitMs} に届き、かつ前の
- * 訪問から {@link VisitTiming.cooldownMs} 空いていれば来る。**歯車の「訪問」がオフ
- * （`state.visitEnabled === false`）のあいだは来ない**（`docs/screen-design.md` 13.6）。
+ * 訪問から {@link VisitTiming.cooldownMs} 空いていれば来る。歯車の「訪問」がオフ
+ * （`state.visitEnabled === false`）のあいだは来ない（`docs/screen-design.md` 13.6）。
  */
 export function visitArrival(
   tally: VisitTally,
@@ -143,7 +143,7 @@ export function visitArrival(
 }
 
 /**
- * イベント1件を畳んだあとの姿（`state`）で、客が帰るか。**帰る合図はここに集める**
+ * イベント1件を畳んだあとの姿（`state`）で、客が帰るか。帰る合図はここに集める
  * （ブラウザ側で別々に判定しない。`docs/requirements.md` 4.3 の例外の条件3）。台本の終わりは
  * 時計から来るので {@link nextVisitLine} が決める。
  */
@@ -189,7 +189,7 @@ function departureReason(state: SessionState, event: SessionEvent): VisitEndReas
         return "pending"
       }
       break
-    // **`isWaiting` を見ない**（オフにしたら、走っているツールや背景のタスクが終わって
+    // `isWaiting` を見ない（オフにしたら、走っているツールや背景のタスクが終わって
     // いなくても帰る）。
     case "visit-enabled-changed":
       return event.visitEnabled ? "stay" : "disabled"

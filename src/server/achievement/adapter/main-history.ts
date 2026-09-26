@@ -4,14 +4,14 @@
 // 数える判断は `../core/achievement.ts`、日付キーから始まり・終わりを出すのは
 // `../../adapter/local-time.ts`。
 //
-// **読むのは作業ツリーのファイルではなく `main` の上のもの**（`task-summary.ts` と同じ理由。
+// 読むのは作業ツリーのファイルではなく `main` の上のもの（`task-summary.ts` と同じ理由。
 // 正典は `main` のもので、作業ツリーのものは `git merge main` するまで別の作業ツリーの分を
 // 知らない）。
 //
-// **`main` が読めない**（git リポジトリでない・`main` ブランチが無い・`git` が無い）ときは
+// `main` が読めない（git リポジトリでない・`main` ブランチが無い・`git` が無い）ときは
 // {@link DailyAchievement} の `{ kind: "unknown" }`（呼び出し側は 200 のまま配ってよい）。
-// それ以外の `git` の呼び出し（コミットの列挙・切り口・タスクの記録の読み取り）が**タイムアウト・
-// 失敗したときは {@link ReadAchievementResult} の `{ kind: "unavailable" }`**——こちらは
+// それ以外の `git` の呼び出し（コミットの列挙・切り口・タスクの記録の読み取り）がタイムアウト・
+// 失敗したときは {@link ReadAchievementResult} の `{ kind: "unavailable" }`——こちらは
 // 呼び出し側（`server.ts`）が 503 にする（部分的な数を出さない。docs/design.md 5章）。
 
 import { basename } from "node:path"
@@ -47,7 +47,7 @@ import {
 
 /**
  * 今日以外の日の数を覚える入れ物（`docs/design.md`「成果の集め方と配り方」「暦の数え方」）。
- * **持ち主は `src/view-delivery.ts`**（配線で1つ作り、{@link readAchievement} と
+ * 持ち主は `src/view-delivery.ts`（配線で1つ作り、{@link readAchievement} と
  * {@link readCommitCalendar} の両方に渡す。モジュールのトップレベルに可変の入れ物を置かない）。
  * 中身の `Map` は外へ出さず、覚える・引く口だけを持たせる（渡した入れ物を呼び出し先が直接
  * 書き換える形にしない。`docs/coding-standards.md`「変数は基本イミュータブル」）。
@@ -55,7 +55,7 @@ import {
  * - 日ごとの数: 暦の日ごとのコミット数（鍵は日付キー）
  * - 通算の数: 節目に使う、その日の始まりまでの通算のコミット数（鍵は見ている日の日付キー）
  *
- * **どちらも今日の分は覚えない**（毎回取り直す）。覚えた数が後で変わりうるのは、旧形式で
+ * どちらも今日の分は覚えない（毎回取り直す）。覚えた数が後で変わりうるのは、旧形式で
  * 過去の日付のコミットが後から `main` に入ったときだけで、そのずれは受け入れる
  * （プロセスを起こし直せば取り直す）。
  */
@@ -91,11 +91,11 @@ const ARCHIVE_FILE_PATH = "docs/history/tasks.md"
 /** 末尾の `/` を付けて `git ls-tree` に渡すと、そのディレクトリ自身の1行ではなく直下の一覧になる。 */
 const TASK_DIR_PATH = "develop/task/"
 
-/** `git log --since` に持たせる余裕（`docs/design.md` 5章「**--since に7日の余裕を持たせる**」）。 */
+/** `git log --since` に持たせる余裕（`docs/design.md` 5章「--since に7日の余裕を持たせる」）。 */
 const SINCE_MARGIN_DAYS = 7
 const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000
 
-/** `git log` の1件を区切る印（ファイル名に出てこない前提）。**NUL（`\x00`）は使えない**——
+/** `git log` の1件を区切る印（ファイル名に出てこない前提）。NUL（`\x00`）は使えない——
  * `node:child_process` の `execFile` は引数に NUL を含む文字列を渡すと例外を投げる。代わりに
  * ASCII の record separator（`\x1e`）を使う。 */
 const COMMIT_RECORD_SEPARATOR = "\x1e"
@@ -260,7 +260,7 @@ function commitMilestoneOfDay(
 
 /**
  * その日の始まりまでの通算のコミットの数（節目。`docs/design.md`「成果の集め方と配り方」手順7）。
- * **`dateKey` が今日以外なら `cache` の通算の数を先に見て、あれば `git` を起こさず返す**。
+ * `dateKey` が今日以外なら `cache` の通算の数を先に見て、あれば `git` を起こさず返す。
  * 無ければ履歴の頭から `range.endEpochMilliseconds` までの全コミットを1回読み、`range` の始まり
  * より前のものだけを数えて（今日以外なら）覚える。
  */
@@ -319,9 +319,9 @@ async function readAllCommitsUntil(
  * 「暦の数え方」）。`today` はサーバのローカル時刻の今日。`cache` は今日以外の日の数を覚える
  * 入れ物（持ち主は `src/view-delivery.ts`）。
  *
- * **範囲の日が1日でも覚えていなければ、`git log` を1回だけ起こして範囲全体を数え直し、今日以外を
- * 覚える。すべて覚えていれば、今日の分だけを取り直す**。**`diaryDates` は `diary.ts` が持つ
- * 一覧なので、ここでは常に空を返し、実際の値は配線層（`src/view-delivery.ts`）が差し替える。**
+ * 範囲の日が1日でも覚えていなければ、`git log` を1回だけ起こして範囲全体を数え直し、今日以外を
+ * 覚える。すべて覚えていれば、今日の分だけを取り直す。`diaryDates` は `diary.ts` が持つ
+ * 一覧なので、ここでは常に空を返し、実際の値は配線層（`src/view-delivery.ts`）が差し替える。
  */
 export async function readCommitCalendar(
   cwd: string,
@@ -490,8 +490,8 @@ function cutoffCommitOf(outcome: CutoffOutcome): string | undefined {
 
 /**
  * 1つの切り口ぶんのタスクの記録を読む。`cutoff` が `undefined`（切り口が無い＝リポジトリの
- * 最初の日）なら `git` を起こさずに空の読み元を返す。**新形式の列挙は1回の `git ls-tree`、
- * 中身（新形式のファイル・旧形式・アーカイブ）は1回の `git cat-file --batch`** にまとめる
+ * 最初の日）なら `git` を起こさずに空の読み元を返す。新形式の列挙は1回の `git ls-tree`、
+ * 中身（新形式のファイル・旧形式・アーカイブ）は1回の `git cat-file --batch` にまとめる
  * （`task-summary.ts` の `readTasksAtHead` と同じやり方）。
  */
 async function readTaskSnapshotSource(
@@ -625,7 +625,7 @@ function parseTaskFileHistoryLog(output: string): readonly RawTaskFileHistoryCom
   })
 }
 
-/** `--name-status` の1行（`A\tpath` の形）。**リネーム（`R100\told\tnew`）は拾わない**——タスク
+/** `--name-status` の1行（`A\tpath` の形）。リネーム（`R100\told\tnew`）は拾わない——タスク
  * ファイルはリネームしない運用で、`old` 側のパスだけ拾っても登録日にも消えたファイルにも使えない。 */
 function taskFileChangeOf(line: string): readonly TaskFileChange[] {
   if (line === "") {
@@ -639,7 +639,7 @@ function taskFileChangeOf(line: string): readonly TaskFileChange[] {
 
 /**
  * 消えたファイルの、消える直前の版を1回の `git cat-file --batch` で読む。
- * **`git` そのものが失敗・タイムアウトしたときだけ `undefined`**——個々のファイルが読めない
+ * `git` そのものが失敗・タイムアウトしたときだけ `undefined`——個々のファイルが読めない
  * （blob が既に無い）だけなら {@link DeletedTaskFile} の `content` が `undefined` になり、
  * 呼び出し側（`deletedDoneTaskSummariesBefore`）がその1件だけ読み飛ばす。
  */

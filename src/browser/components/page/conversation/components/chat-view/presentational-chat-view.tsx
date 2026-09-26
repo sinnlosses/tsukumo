@@ -1,8 +1,8 @@
-// 雑談ビューの**器だけ**（<PresentationalChatView>。docs/screen-design.md 13.7）。左に立ち絵、右に会話の
+// 雑談ビューの器だけ（<PresentationalChatView>。docs/screen-design.md 13.7）。左に立ち絵、右に会話の
 // ログを置く。フックも算出も持たず、`hooks/use-chat-view.ts` が組み立てた値をそのまま部品へ
 // 渡す（docs/design.md 2章「機能の中を分ける」）。
 //
-// **立ち絵の素材（URL）が無いときは立ち絵を出さず、ログだけで成立させる**。
+// 立ち絵の素材（URL）が無いときは立ち絵を出さず、ログだけで成立させる。
 
 import { type ReactElement } from "react"
 
@@ -15,7 +15,7 @@ import { type ChatViewModel } from "./hooks/use-chat-view.ts"
 export type PresentationalChatViewProps = ChatViewModel
 
 /**
- * **props はここだけ分解して受ける**。ref を持つ入れ物を `props.logRef` の形で描画中に読むと
+ * props はここだけ分解して受ける。ref を持つ入れ物を `props.logRef` の形で描画中に読むと
  * `react(refs)`（規約「レンダー中に ref を読み書きしない」）が落ちるため
  * （`layout/presentational-layout.tsx` と同じ理由）。
  */

@@ -13,7 +13,7 @@ import { tokenUsageDir } from "../../../src/server/token-usage/adapter/token-usa
 
 // ホームの差し替え口（`TSUKUMO_HOME`）は `process.env` から読むので、ここだけは環境変数を
 // 書き換えて確かめる（`bun test --isolate` はファイルごとに別プロセスなので、他のテストには
-// 漏れない）。**本物の `~/.tsukumo/` には触らない** — 渡さないときの検査はパスの組み立てだけを
+// 漏れない）。本物の `~/.tsukumo/` には触らない — 渡さないときの検査はパスの組み立てだけを
 // 見て、ファイルは読み書きしない。
 
 const HOME_ENV_NAME = "TSUKUMO_HOME"

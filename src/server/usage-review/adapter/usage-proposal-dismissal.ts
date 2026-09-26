@@ -2,7 +2,7 @@
 // 次の段に入るたびにここを読み直し（`usage_review_stage` の戻り値に混ぜる）、結果の検査も
 // 同じ一覧を見る（`src/server/usage-review/core/usage-review-tool.ts` の `dismissedKeys`）。
 //
-// **取り消す口は作らない**（見本に無い）。取り消したくなったら、このファイルの `keys` から
+// 取り消す口は作らない（見本に無い）。取り消したくなったら、このファイルの `keys` から
 // 手で1件消す。
 //
 // ファイルに触るのはここだけ（原則3）。置き場は `~/.tsukumo/usage-review-dismissed.json`。
@@ -30,7 +30,7 @@ export function dismissedUsageProposalPath(): string {
 }
 
 /**
- * 見送った識別子を読む。**ファイルが無い・壊れている・版や形が違うときは空**——一度も
+ * 見送った識別子を読む。ファイルが無い・壊れている・版や形が違うときは空——一度も
  * 見送っていないのと同じ扱いになる（`usage-review-tool.ts` はこれをそのまま
  * `dismissedKeys()` として使う）。
  *
@@ -44,7 +44,7 @@ export function readDismissedUsageProposalKeys(
 }
 
 /**
- * 識別子を1つ見送りに足す。**すでに入っていれば増やさない**（同じ札を重ねて見送っても
+ * 識別子を1つ見送りに足す。すでに入っていれば増やさない（同じ札を重ねて見送っても
  * 1件のまま）。失敗しても例外を投げない。
  */
 export function writeDismissedUsageProposalKey(

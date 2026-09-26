@@ -2,12 +2,12 @@
 // ここだけ（原則3。1ファイル = 1つの境界）。置き場は `~/.tsukumo/chat-summary/<パック名>.md`、
 // パックごとに1ファイルで `cwd` には依存させない。
 //
-// **何を載せるかの判断はここが決めない。** 判断は `src/server/chat/core/chat-memory-prompt.ts` が
+// 何を載せるかの判断はここが決めない。 判断は `src/server/chat/core/chat-memory-prompt.ts` が
 // 持ち、ここが持つのは「どこに・どう書き、どう渡すか」——写しと印の読み書きだけ
 // （`docs/coding-standards.md`「会話内容の扱い」とぶつからないための切り分け。
 // `src/server/chat/adapter/persona-memory.ts` と同じ形）。
 //
-// **中身は1行目が印、2行目から要約の本文。** 印は「次に起こすセッションへ渡す必要があるか」の
+// 中身は1行目が印、2行目から要約の本文。 印は「次に起こすセッションへ渡す必要があるか」の
 // 1ビットで、`DELIVERED_MARK` の1行だけを「渡し済み」と読み、それ以外（別の文字列・無い・
 // 読めない）はすべて「未渡し」として扱う——倒れる方向を「同じ要約が2度載る」側にする
 // （`docs/chat-mode.md` 4.9）。
@@ -36,7 +36,7 @@ const DELIVERED_MARK = "delivered"
 const UNDELIVERED_MARK = "undelivered"
 
 /**
- * 1ファイルの上限（`docs/design.md` 7章の表。容量の表の `synopsisBytes`）。**印の行を含めて**
+ * 1ファイルの上限（`docs/design.md` 7章の表。容量の表の `synopsisBytes`）。印の行を含めて
  * 数える——写しと印は同じ書き込みで揃う1つのファイルなので、上限も分けない。
  */
 export const CHAT_SUMMARY_LIMIT_BYTES = CHAT_MEMORY_BUDGET.synopsisBytes
@@ -50,7 +50,7 @@ export function chatSummaryDir(): string {
 }
 
 /**
- * パック1つぶんの写しの読み書き口を作る（**雑談モードのときだけ**呼ばれる。
+ * パック1つぶんの写しの読み書き口を作る（雑談モードのときだけ呼ばれる。
  * `src/session-start.ts`）。`packName` は {@link isCharacterPackName} を通ったものだけ受け付け、
  * 通らない名前はパスを組み立てず、読み書きとも何もしない口を返す（`..` や区切り文字が名前として
  * 通らない。`docs/design.md` 7.1 と同じ規則）。
@@ -78,7 +78,7 @@ export function createChatSummary(packName: string, root: string = chatSummaryDi
 }
 
 /**
- * パック1つぶんの写しを消す（**キャラクターパックを消したときだけ**呼ばれる。
+ * パック1つぶんの写しを消す（キャラクターパックを消したときだけ呼ばれる。
  * `docs/design.md` 7.1「消すときの細部」）。同じ名前で作り直したパックが、消したパックの要約を
  * 黙って拾わないため。無い・消せないときも何もせず続ける。名前が {@link isCharacterPackName} を
  * 通らなければパスを組み立てない（{@link createChatSummary} と同じ規則）。
@@ -95,7 +95,7 @@ export function discardChatSummary(packName: string, root: string = chatSummaryD
   }
 }
 
-/** 印だけを書き換える。**本文は既にある写しをそのまま保つ**（無ければ空のまま）。 */
+/** 印だけを書き換える。本文は既にある写しをそのまま保つ（無ければ空のまま）。 */
 function rewriteMark(path: string, delivered: boolean): void {
   const current = readRecord(path)
   writeRecord(path, { summary: current?.summary ?? "", delivered })
@@ -126,14 +126,14 @@ function writeRecord(path: string, record: ChatSummaryRecord): void {
 }
 
 /**
- * 8 KiB（印の行を含む）に収まるよう、要約の本文を行単位で切り詰める。**古いほうの行から
- * 落とし、行の途中では切らない。**
+ * 8 KiB（印の行を含む）に収まるよう、要約の本文を行単位で切り詰める。古いほうの行から
+ * 落とし、行の途中では切らない。
  *
  * 本文の行は「新しい→古い」の順に積み、収まらなくなったところで古い行を落とす（要約の文面が
  * 「前の要約 + 新しい会話」を毎回まとめ直したものなので、末尾に近いほうが新しい話題という前提。
  * `docs/chat-mode.md` 4.9）。
  *
- * **1行だけで印を除いた残りの上限を超えるとき（改行が無い）は、その1行をそのまま残す。**
+ * 1行だけで印を除いた残りの上限を超えるとき（改行が無い）は、その1行をそのまま残す。
  * 空にする（＝要約ごと消える）よりも、上限を少し超えるほうを選ぶ——「行の途中では切らない」を
  * 「8 KiB を必ず守る」より優先する。
  */

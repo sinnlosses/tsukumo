@@ -133,7 +133,7 @@ type GridProps = {
 
 function Grid(props: GridProps): ReactElement {
   const { calendar } = props
-  // **マスの並びは月曜はじまりの7列×5段の固定枠**（13.10「灯りの暦」）。データを配る
+  // マスの並びは月曜はじまりの7列×5段の固定枠（13.10「灯りの暦」）。データを配る
   // `achievementCalendarDateKeys` は今日までしか返さない（サーバは今日より後を数えない）ので、
   // 表示ぶんの35日は同じ開始日（4週前の月曜）から自分で数える——今日を含む週の残りの曜日も
   // マス自体は出す（薄く・押せない日付だけ）。
@@ -310,7 +310,7 @@ function monthDayLabel(dateKey: string): string {
 /**
  * マスの並びぶん（月曜はじまりの7列×5段＝35日）の日付キー、古い順。開始日は
  * `achievementCalendarDateKeys`（`src/shared/achievement-calendar.ts`）と同じ「今日を含む週の
- * 月曜から4週前の月曜」——**そちらは今日より後を返さない**ので、表示の枠を埋める残りの曜日は
+ * 月曜から4週前の月曜」——そちらは今日より後を返さないので、表示の枠を埋める残りの曜日は
  * ここで別に数える。
  */
 function fullCalendarDateKeys(today: string): readonly string[] {

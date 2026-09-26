@@ -1,12 +1,12 @@
 // 立ち絵をいま動かしてよいか、動かすなら5つのうちどれかを決める。「決める」層の純粋関数
 // （`src/shared/expression.ts` と同じ形。fs/process/document には触らない）。
 //
-// **動くのは利用者の注意が空いているときだけ**（docs/requirements.md 4.3、docs/design.md 6.5）。
+// 動くのは利用者の注意が空いているときだけ（docs/requirements.md 4.3、docs/design.md 6.5）。
 // 読んでいる間（ターンが進行中でない間）は呼吸だけに落とし、ターンが進行中は「待っている間の
 // 移動」にする。メインが `report` の引数を書いているあいだは「書いている」に替わる。
 // ターンが終わった直後・ツールが失敗した直後は、それぞれ一時的に「完了の反応」「失敗でびくっ」を
-// 優先して返す（優先順位は {@link resolvePortraitMotion} 参照）。**ターンが失敗で終わった直後も
-// 「失敗でびくっ」**で、そのときは「完了の反応」を出さない（docs/design.md 6.5）。
+// 優先して返す（優先順位は {@link resolvePortraitMotion} 参照）。ターンが失敗で終わった直後も
+// 「失敗でびくっ」で、そのときは「完了の反応」を出さない（docs/design.md 6.5）。
 
 import { type TurnProgress } from "./session-state.ts"
 
@@ -38,10 +38,10 @@ export const FAILURE_MOTION_WINDOW_MS = 400
 export const SUCCESS_MOTION_WINDOW_MS = 700
 
 /**
- * いま出す動き。**優先順位**: ツールが失敗した直後・ターンが失敗で終わった直後
+ * いま出す動き。優先順位: ツールが失敗した直後・ターンが失敗で終わった直後
  * （{@link FAILURE_MOTION_WINDOW_MS} 以内）が最優先（ターンが進行中でも、他のツールが動いていても
  * 割り込む）。次にターンが失敗でなく終わった直後（{@link SUCCESS_MOTION_WINDOW_MS} 以内、かつ
- * ターンが進行中でない）。**失敗で終わったターンには「完了の反応」を出さない**（びくっのあとに
+ * ターンが進行中でない）。失敗で終わったターンには「完了の反応」を出さない（びくっのあとに
  * 跳ねると、失敗を喜んで見える）。次に、ターンが
  * 進行中で `report` の引数を書いている最中なら「書いている」。どれでもなければ、
  * ターンが進行中なら「待っている間の移動」、そうでなければ「呼吸」だけの「読んでいる」。
@@ -78,7 +78,7 @@ export function resolvePortraitMotion(input: PortraitMotionInput, now: number): 
  * 「読んでいる」「待っている」へ戻す（`nextWorkingTransitionDelayMs` と同じ形。
  * `src/shared/expression.ts`）。
  *
- * **`draftingReport` は受け取らない。** 「書いている」には時間の窓が無く
+ * `draftingReport` は受け取らない。 「書いている」には時間の窓が無く
  * （値が変われば描画自体が {@link resolvePortraitMotion} を呼び直すので、タイマーで拾い直す
  * 理由が無い）、材料を {@link PortraitMotionInput} から2つだけへ絞ってある。
  */

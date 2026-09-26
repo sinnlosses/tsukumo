@@ -3,14 +3,14 @@
 // `session.switchSession` を `dispatch` する（駆動の起こし直し。会話はそのセッションの続きから
 // 始まり、画面もその記録で組み直される）。
 //
-// **置き場所がここなのは、セッションが「今回のこと」だから**（`docs/screen-design.md` 13.6
+// 置き場所がここなのは、セッションが「今回のこと」だから（`docs/screen-design.md` 13.6
 // 「今回のことはサイドバーに、それ以外はキャラクター画面に」）。キャラクターの対と同じ grid
 // （`sidebar.module.css` の `.session-info`。`grid-auto-flow: column` で対ごとに列が等分され、
 // キャラクターと横に並ぶ）に、ラベルと値の対として並ぶ。
 //
-// **一覧はいまの部屋（このビューのポート）のものだけ**（`src/server/session-driver/core/session-restore.ts`）
-// なので、行の部屋の名前はすべて同じで見分けの役に立たない。**見分けるのは SDK の見出し
-// （`SessionChoice.heading`）と最終更新時刻**（部屋の名前を出す場所は帯だけになった。
+// 一覧はいまの部屋（このビューのポート）のものだけ（`src/server/session-driver/core/session-restore.ts`）
+// なので、行の部屋の名前はすべて同じで見分けの役に立たない。見分けるのは SDK の見出し
+// （`SessionChoice.heading`）と最終更新時刻（部屋の名前を出す場所は帯だけになった。
 // `docs/screen-design.md` 13.9「部屋の名前」）。
 
 import { type ReactElement } from "react"
@@ -31,7 +31,7 @@ const SESSION_SELECT_ID = "tsukumo-session"
 
 /**
  * いま出しているセッションが一覧に無いときの行（`<select>` の値には必ず対応する選択肢が
- * 要る）。**無いのは2通り** — 新規に起こして印がまだ付いていない（印が付くのはターンが
+ * 要る）。無いのは2通り — 新規に起こして印がまだ付いていない（印が付くのはターンが
  * 終わって3秒後）か、古すぎて一覧の上限（`MAX_SESSION_CHOICES`）から漏れたか。
  */
 const CURRENT_LABEL = "いまのセッション"
@@ -39,14 +39,14 @@ const CURRENT_LABEL = "いまのセッション"
 /** そのうち、新規に起こしてまだ印が付いていないほう（IDすら分かっていない）。 */
 const UNMARKED_CURRENT_LABEL = `${CURRENT_LABEL}（記録前）`
 
-/** いま出しているセッションの行に添える字。**選ばせないのではなく、印を付けて示す。** */
+/** いま出しているセッションの行に添える字。選ばせないのではなく、印を付けて示す。 */
 const CURRENT_SUFFIX = "（表示中）"
 
 /** 切り替えは起こし直しなので、キャラクターの `<select>` と同じ条件（ターン進行中）で塞ぐ。 */
 const SWITCH_BLOCKED_TITLE = FRAME_ERROR_REASON.sessionSwitchDuringTurn
 
 /**
- * セッションの行。**切り替え先が1つも無いときは行ごと出さない**（印の付いたセッションが
+ * セッションの行。切り替え先が1つも無いときは行ごと出さない（印の付いたセッションが
  * まだ無い＝選べるものが無い。キャラクターの `<select>` と同じ振る舞い）。
  */
 export function SessionSwitch(): ReactElement | null {
@@ -100,7 +100,7 @@ export function SessionSwitch(): ReactElement | null {
 }
 
 /**
- * `<select>` に並べる選択肢。**いま出しているセッションが一覧に無いときは先頭に足す**
+ * `<select>` に並べる選択肢。いま出しているセッションが一覧に無いときは先頭に足す
  * （`value` に対応する選択肢が無いと、ブラウザが勝手に先頭を選んだ姿になり、まだ切り替えて
  * いないのに別のセッションを指して見える）。
  */
@@ -122,7 +122,7 @@ function sessionOptions(
 const NO_HEADING_LABEL = "（題なし）"
 
 /**
- * 1行の見え方。**見出し（SDK の `summary`）と最終更新時刻の両方**を出す（`docs/requirements.md`
+ * 1行の見え方。見出し（SDK の `summary`）と最終更新時刻の両方を出す（`docs/requirements.md`
  * 4.8）——一覧はいまの部屋のものだけなので部屋の名前では見分けが付かず、`/clear` で分かれた行は
  * それぞれの中身の分かる見出しで見分ける。
  *
@@ -136,9 +136,9 @@ function sessionLabel(session: SessionChoice, isCurrent: boolean): string {
 }
 
 /**
- * 見出しを {@link MAX_SESSION_HEADING_LENGTH} で切って `…` を足す。**`<select>` の選択肢は
- * 折り返せない**（`docs/screen-design.md` 13.9）ので、文字数で切る。**見出しだけを切り、時刻は
- * 切らない**——同じ部屋の行を見分けるのは時刻なので（上の {@link sessionLabel}）、見出しが
+ * 見出しを {@link MAX_SESSION_HEADING_LENGTH} で切って `…` を足す。`<select>` の選択肢は
+ * 折り返せない（`docs/screen-design.md` 13.9）ので、文字数で切る。見出しだけを切り、時刻は
+ * 切らない——同じ部屋の行を見分けるのは時刻なので（上の {@link sessionLabel}）、見出しが
  * どれだけ長くても時刻は必ず残る。
  */
 function truncateHeading(heading: string): string {
@@ -148,10 +148,10 @@ function truncateHeading(heading: string): string {
 }
 
 /**
- * エポックミリ秒を、この端末のローカル時刻の `M/D HH:MM` にする。**日付まで出す**のは、
+ * エポックミリ秒を、この端末のローカル時刻の `M/D HH:MM` にする。日付まで出すのは、
  * 何日も前の作業が一覧に残るため（時刻だけだと今日のものと見分けられない）。
  *
- * **年は出さない**（一覧に並ぶのは同じディレクトリの作業で、年をまたぐほど古いものを選ぶ
+ * 年は出さない（一覧に並ぶのは同じディレクトリの作業で、年をまたぐほど古いものを選ぶ
  * 場面が無い）。
  */
 function localTimestamp(epochMilliseconds: number): string {

@@ -1,15 +1,15 @@
-// 起動の段取り。**前提を確かめる → いま出すキャラクターを決める → ビューを配る →
-// セッションを起こして繋ぐ → 知らせてタブを開く**の順を並べるのがここの仕事で、それぞれの
+// 起動の段取り。前提を確かめる → いま出すキャラクターを決める → ビューを配る →
+// セッションを起こして繋ぐ → 知らせてタブを開くの順を並べるのがここの仕事で、それぞれの
 // 中身は同じ `src/` 直下のファイル（`current-character.ts` / `view-delivery.ts` /
 // `session-start.ts`）が持つ。
 //
-// **即時終了する前提不足はこの1つの関数に集めてある**（ポート・ブラウザ側の成果物・
+// 即時終了する前提不足はこの1つの関数に集めてある（ポート・ブラウザ側の成果物・
 // 疑似セッションの3つ。docs/coding-standards.md「常駐プロセスは描画1回の失敗で落ちない」— 動作中の一時的な失敗は
 // その回を諦めて次へ進む）。
 //
 // ここは配線層（`src/` 直下。`shared` / `core` / `adapter` / `browser` のすべてを import して
-// よい唯一の場所。docs/design.md 2章「層と依存の向き」。**`core` から `adapter` を引くのは
-// 禁じてあり、両者を結ぶのはここと同じ層だけ**）。
+// よい唯一の場所。docs/design.md 2章「層と依存の向き」。`core` から `adapter` を引くのは
+// 禁じてあり、両者を結ぶのはここと同じ層だけ）。
 
 import process from "node:process"
 
@@ -43,10 +43,10 @@ export async function run(config: Config): Promise<number> {
     return 1
   }
 
-  // ブラウザ側スクリプトと CSS は**事前に組み立てて置いてあるものを読むだけ**
-  // （`src/server/view-server/adapter/bundle.ts` 冒頭）。**起動の経路から `bun build` は消えていて**、作るのは
-  // `bun run build` と `bun run dev` の見張りだけ。無ければページが動かないので、**ここは
-  // 起動時の前提不足として即時終了する**（理由に `bun run build` を添える。理由が無いと、
+  // ブラウザ側スクリプトと CSS は事前に組み立てて置いてあるものを読むだけ
+  // （`src/server/view-server/adapter/bundle.ts` 冒頭）。起動の経路から `bun build` は消えていて、作るのは
+  // `bun run build` と `bun run dev` の見張りだけ。無ければページが動かないので、ここは
+  // 起動時の前提不足として即時終了する（理由に `bun run build` を添える。理由が無いと、
   // 起動できない側は何を打てばよいか分からない）。
   const built = await readUiBundle()
   if (!built.ok) {
@@ -54,7 +54,7 @@ export async function run(config: Config): Promise<number> {
     return 1
   }
 
-  // **古いものを黙って配らない**（「古い成果物を配る事故」への答え）。古くても画面は動くので
+  // 古いものを黙って配らない（「古い成果物を配る事故」への答え）。古くても画面は動くので
   // 止めはせず、1行だけ知らせて先へ進む。
   if (built.outdated) {
     process.stderr.write(
@@ -72,10 +72,10 @@ export async function run(config: Config): Promise<number> {
 
   const character = createCurrentCharacter(config)
 
-  // トークン消費の記録の口は**1つをここで作って両側へ渡す**（書くのはセッション、読むのは
+  // トークン消費の記録の口は1つをここで作って両側へ渡す（書くのはセッション、読むのは
   // 分析の画面へ配る側）。置き場（`~/.tsukumo/token-usage/`）を知っているファイルを増やさない。
   const tokenUsageLog = createTokenUsageLog()
-  // 依頼に添えた画像の原寸の棚も**1つをここで作って両側へ渡す**（置く・捨てるのはセッション、
+  // 依頼に添えた画像の原寸の棚も1つをここで作って両側へ渡す（置く・捨てるのはセッション、
   // 引いて配るのはビューの側）。メモリにだけ置く（ディスクには書かない）。
   const promptImageShelf = createPromptImageShelf()
 
@@ -92,7 +92,7 @@ export async function run(config: Config): Promise<number> {
     return 1
   }
 
-  // **セッションの印の目印は、実際に待ち受けているポートから決まる**（`session-restore.ts` の
+  // セッションの印の目印は、実際に待ち受けているポートから決まる（`session-restore.ts` の
   // `sessionTag`）。同じディレクトリで2つめを起こすとポートが +1 へずれるので、目印も分かれる
   // （docs/requirements.md 4.8「鍵」）。
   const session = startSession({
@@ -116,7 +116,7 @@ export async function run(config: Config): Promise<number> {
 }
 
 /**
- * プロセスが終わるときにセッションを閉じる。**閉じないと claude の子プロセスが残る**ので、
+ * プロセスが終わるときにセッションを閉じる。閉じないと claude の子プロセスが残るので、
  * 割り込み（Ctrl-C）と終了要求の両方で入力を閉じてから抜ける。
  */
 function stopSessionOnExit(closeSessions: () => void): void {
@@ -129,14 +129,14 @@ function stopSessionOnExit(closeSessions: () => void): void {
 }
 
 // 起動したことと URL は、ペインに残る唯一の出力。ここに会話の内容は出さない
-// （docs/coding-standards.md「会話内容の扱い」）。**URL には起動トークンが付く**ので、
+// （docs/coding-standards.md「会話内容の扱い」）。URL には起動トークンが付くので、
 // タブを開き直すときはこの URL をそのまま使う。
 function announce(url: string): void {
   process.stdout.write(`tsukumo: ビューを配信中\n  ${url}\n`)
 }
 
 /**
- * レイアウトページのタブを開く。**失敗しても起動は続ける**（`orca` が無い環境では
+ * レイアウトページのタブを開く。失敗しても起動は続ける（`orca` が無い環境では
  * `host.showView` が失敗を返すだけで例外は投げない。docs/coding-standards.md
  * 「エラーハンドリング」— 常駐プロセスは描画1回の失敗で落ちない）。
  */

@@ -2,18 +2,18 @@
 // メッセージを内部イベントに変えて流す（`src/server/session-driver/core/session-driver.ts` の `SessionDriver` を
 // 実装する2つのうちの本物。もう1つは `src/server/session-driver/adapter/fake-driver.ts`）。
 //
-// **`@anthropic-ai/claude-agent-sdk` を import するのは `src/server/adapter/` 直下の `sdk-` で
-// 始まるファイルだけ**（原則3。`orca` を呼ぶのが src/server/host/adapter/orca-host.ts だけなのと同じ
+// `@anthropic-ai/claude-agent-sdk` を import するのは `src/server/adapter/` 直下の `sdk-` で
+// 始まるファイルだけ（原則3。`orca` を呼ぶのが src/server/host/adapter/orca-host.ts だけなのと同じ
 // 扱いで、SDK という1つの境界が数ファイルにまたがる）。ここは `query()` を回す本体で、ツールは
 // `sdk-tool.ts`、セッションの一覧と印は `sdk-session.ts`、コンテキストの内訳は
 // `sdk-context-usage.ts`。SDK の語彙を外へ漏らさないため、どれも外に出す型は
-// `src/server/session-driver/core/session-driver.ts` か shared から取る（**境目の基準は「shared の語彙で
-// 書けるか / SDK の語彙を名乗るか」**）。
+// `src/server/session-driver/core/session-driver.ts` か shared から取る（境目の基準は「shared の語彙で
+// 書けるか / SDK の語彙を名乗るか」）。
 //
-// **セッションは1プロセスに1つ**。起こし直したときは前の続きから始める（`resume`。
+// セッションは1プロセスに1つ。起こし直したときは前の続きから始める（`resume`。
 // docs/requirements.md 4.8「セッションの復元」。選ぶ計算は src/server/session-driver/core/session-restore.ts）。
 //
-// 会話の内容（本文・ツールの入出力・セリフ）がここを通るが、**ログにもファイルにも書かない**
+// 会話の内容（本文・ツールの入出力・セリフ）がここを通るが、ログにもファイルにも書かない
 // （docs/coding-standards.md「会話内容の扱い」）。stderr に出すのは SDK 自身のエラー文と、本体の
 // 催促が届いたという事実の1行（`src/server/session-driver/core/visible-output-nudge.ts`。中身は写さない）だけ。
 
@@ -63,7 +63,7 @@ import {
 import { tsukumoServer } from "./sdk-tool.ts"
 
 /**
- * 本体の催促が届いたときに stderr へ出す1行。**固定の文面だけ**（届いたメッセージの中身は
+ * 本体の催促が届いたときに stderr へ出す1行。固定の文面だけ（届いたメッセージの中身は
  * 写さない）。出たら `CLAUDE_CODE_TERMINAL_MCP_TOOLS` が本体の更新で効かなくなっている
  * （`src/server/session-driver/core/visible-output-nudge.ts` の冒頭）。
  */
@@ -71,20 +71,20 @@ export const VISIBLE_OUTPUT_NUDGE_NOTICE =
   "tsukumo: 本体が「本文の無い応答」の催促を差し込んだ（CLAUDE_CODE_TERMINAL_MCP_TOOLS が効いていない）\n"
 
 /**
- * Agent SDK の駆動を1つ起こす（`docs/glossary.md`「セッション駆動」の実装）。**この関数は
- * 待たない**（`query()` の反復はバックグラウンドで回り続け、結果は `onEvent` に流れる）。
+ * Agent SDK の駆動を1つ起こす（`docs/glossary.md`「セッション駆動」の実装）。この関数は
+ * 待たない（`query()` の反復はバックグラウンドで回り続け、結果は `onEvent` に流れる）。
  *
- * **名前が `startSession` ではなく `startSdkDriver` なのは、`src/session-start.ts` の
- * `startSession`（セッションを1つ起こす配線）と役割が違うから** — こちらは駆動を1つ起こす
+ * 名前が `startSession` ではなく `startSdkDriver` なのは、`src/session-start.ts` の
+ * `startSession`（セッションを1つ起こす配線）と役割が違うから — こちらは駆動を1つ起こす
  * だけで、覚えた既定を読む・見張りを起こす・履歴を復元するといった一続きの段取りは持たない
  * （その段取りは `core/session-launch.ts`）。
  *
- * 反復が例外で終わったら `session-ended` を流すだけで、**プロセスは落とさない**
+ * 反復が例外で終わったら `session-ended` を流すだけで、プロセスは落とさない
  * （docs/coding-standards.md「エラーハンドリング」）。`try`/`catch` は反復を包む1つだけに
  * まとめてある。
  */
 export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
-  // **駆動が送り出すイベントは全部ここを通す**（依頼も SDK 由来も）。claude が依頼なしで
+  // 駆動が送り出すイベントは全部ここを通す（依頼も SDK 由来も）。claude が依頼なしで
   // 始めた続きのターンに `turn-started` を補うのに、依頼で開いたターンも見ている必要がある
   // （`src/server/session-driver/core/self-started-turn.ts`）。
   const options: SessionDriverOptions = { ...given, onEvent: withSelfStartedTurns(given.onEvent) }
@@ -133,14 +133,14 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
 
   return {
     prompt: (text, images) => {
-      // **原寸と控えはここで分かれる。** 控えと id だけが記録（`request`）へ行き、原寸は
+      // 原寸と控えはここで分かれる。 控えと id だけが記録（`request`）へ行き、原寸は
       // ストリーミング入力へ流れる（棚に残っているぶんは棚の寿命で捨てる。
       // `docs/requirements.md` 4.10）。
       options.onEvent({ kind: "request", text, images: recordedPromptImages(images) })
       input.push({ text, images: images.flatMap(toImageBlocks) })
     },
     promptWithoutRecord: (text) => {
-      // **`request` を流さない**（送った文面をログにも記録にも残さない。docs/screen-design.md 13.7）。
+      // `request` を流さない（送った文面をログにも記録にも残さない。docs/screen-design.md 13.7）。
       // 代わりにターンの始まりだけを流し、吹き出しと進行中の印は依頼と同じに動かす。
       options.onEvent({ kind: "turn-started" })
       input.push({ text, images: [] })
@@ -161,7 +161,7 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
         options.onEvent({ kind: "model-changed", model })
       }
     },
-    // **確認の合図をここで流さない**（`setModel` と違う）。帯に表示する値は次のターンの
+    // 確認の合図をここで流さない（`setModel` と違う）。帯に表示する値は次のターンの
     // `Stop` フック入力から読み取ったものだけで、送った値の先回りは「押した値へ先に倒さない」
     // という決定に反する（`docs/screen-design.md` 13.9「動き方の操作子」）。
     setEffort: (effort) => session.applyFlagSettings({ effortLevel: effort }),
@@ -186,8 +186,8 @@ export type QuerySeedOptions = {
   readonly effort: EffortLevel
   /**
    * 続きから始めるセッションのID。新規に起こすときは undefined（SDK 側は省略と同じ扱い）。
-   * **ここだけは `SessionDriverOptions.start`（判別可能な合併型）を `query()` 自身の語彙
-   * （`resume?: string`）へ畳んだ値**——`query()` へそのまま渡す形を検査できるように
+   * ここだけは `SessionDriverOptions.start`（判別可能な合併型）を `query()` 自身の語彙
+   * （`resume?: string`）へ畳んだ値——`query()` へそのまま渡す形を検査できるように
    * `buildQuerySeedOptions` を切り出してあるのと同じ理由で、この1箇所だけ外の世界（SDK）の
    * 形をそのまま写す（`docs/coding-standards.md`「「無いかもしれない」値」の例外1）。
    */
@@ -199,7 +199,7 @@ export type QuerySeedOptions = {
    */
   readonly settings: { readonly language: "japanese" }
   /**
-   * 子プロセスの環境変数。**渡すと tsukumo 自身の環境と混ざらず丸ごと置き換わる**ので、引き継いだ
+   * 子プロセスの環境変数。渡すと tsukumo 自身の環境と混ざらず丸ごと置き換わるので、引き継いだ
    * 環境に `CLAUDE_CODE_TERMINAL_MCP_TOOLS` を足したもの（`childProcessEnv`）を渡す。
    * `speak` で終えたターンに本体が催促を差し込むのを止めるため（`docs/chat-mode.md` 4.9）。
    */
@@ -207,14 +207,14 @@ export type QuerySeedOptions = {
 }
 
 /**
- * `query()` に渡す `options` のうち、クロージャを含まない部分を組み立てる。**本物の
+ * `query()` に渡す `options` のうち、クロージャを含まない部分を組み立てる。本物の
  * `query()` を呼ばずに、覚えた既定（モデル・effort・許可モード）が渡る形を検査できるように、
- * `startSdkDriver` から切り出してある。**
+ * `startSdkDriver` から切り出してある。
  *
- * **モデル・effort・許可モードは呼び出し側から来る**（`src/session-start.ts` が
+ * モデル・effort・許可モードは呼び出し側から来る（`src/session-start.ts` が
  * `readRememberedSessionDefault` で読んだ値。`docs/screen-design.md` 13.6）。ここで定数に倒すと、
- * 歯車で変えた既定が起こし直しても効かない。**effort は対応しないモデル（`haiku` など）でも
- * 渡す**——`query()` 自身が対応の有無で読み分ける前提を崩さない（渡すかどうかをここで
+ * 歯車で変えた既定が起こし直しても効かない。effort は対応しないモデル（`haiku` など）でも
+ * 渡す——`query()` 自身が対応の有無で読み分ける前提を崩さない（渡すかどうかをここで
  * モデルごとに出し分けない）。
  */
 export function buildQuerySeedOptions(options: SessionDriverOptions): QuerySeedOptions {
@@ -232,20 +232,20 @@ export function buildQuerySeedOptions(options: SessionDriverOptions): QuerySeedO
 }
 
 /**
- * `Stop` フックを1つ登録する。**モードによらず常に登録する**——effort を読む口（{@link EffortLevel}。`docs/screen-design.md` 13.9
+ * `Stop` フックを1つ登録する。モードによらず常に登録する——effort を読む口（{@link EffortLevel}。`docs/screen-design.md` 13.9
  * 「動き方の操作子」）は仕事でも雑談でも要るが、`report` の関所
  * （`src/server/report/core/report-tool.ts` の {@link createReportGate}）で止めるのは仕事のときだけ。
  * `SubagentStop` には載せない（サブエージェントの `report` は捨てるので、渡し直させても画面に
  * 出ない。effort もメインの手元の値だけを読めばよい）。
  *
- * **effort はブロック判定より先に読む。** `input.effort?.level` が
- * {@link isEffortLevel} を通れば `effort-changed` を流す——**帯に表示する値の源はここだけ**
+ * effort はブロック判定より先に読む。 `input.effort?.level` が
+ * {@link isEffortLevel} を通れば `effort-changed` を流す——帯に表示する値の源はここだけ
  * （実測は `docs/history/decision.md`「effort の途中変更と読み取りが成り立った実測」）。
  *
- * **関所の判定の前に1回だけ macrotask を待つ。** SDK はフックの呼び出し（制御リクエスト）を
+ * 関所の判定の前に1回だけ macrotask を待つ。 SDK はフックの呼び出し（制御リクエスト）を
  * 読んだその場で処理し、それより前に届いたメッセージは列に積んで {@link relayMessages} の反復へ
  * 渡すので、待たないと止まる直前の本文が関所に届く前に判定しうる。列を空けるのは microtask
- * だけなので、macrotask を1回待てば足りる（**雑談のときはこの待ちも関所の判定も行わない**）。
+ * だけなので、macrotask を1回待てば足りる（雑談のときはこの待ちも関所の判定も行わない）。
  *
  * `startSdkDriver` から切り出してあるのは、本物の `query()` を呼ばずにフックの中身を検査できる
  * ようにするため（{@link buildQuerySeedOptions} と同じ理由）。
@@ -281,10 +281,10 @@ export function stopHooks(
 }
 
 /**
- * 届いたメッセージを内部イベントに変えて流し続ける。**反復を包む `try`/`catch` はここだけ**で、
+ * 届いたメッセージを内部イベントに変えて流し続ける。反復を包む `try`/`catch` はここだけで、
  * 反復が終わる・落ちるのどちらもセッションの終わりとして扱う。
  *
- * `report` の関所（`reportGate`）には**メインのメッセージから出たイベントだけ**を見せる
+ * `report` の関所（`reportGate`）にはメインのメッセージから出たイベントだけを見せる
  * （サブエージェントの本文を数えない。関所を登録していないときも見せるが、判定されないだけ）。
  *
  * メインのイベントは先に `report` の差し戻し（`reportReview`）を通す——`report` を同じ呼び出しの
@@ -322,7 +322,7 @@ async function relayMessages(
           sessionId = event.sessionId
         }
         if (event.kind === "turn-finished") {
-          // **1ターンに書けるのは1行、引けるのは recall / recall_episode それぞれ決めた回数まで**
+          // 1ターンに書けるのは1行、引けるのは recall / recall_episode それぞれ決めた回数まで
           // （docs/design.md 7.1・7章）。ターンの区切りを知っているのはここだけなので、
           // 終わるたびに次の1行・次の回数を受け付けさせる。
           if (options.mode.kind === "chat") {
@@ -357,11 +357,11 @@ async function relayMessages(
 
 /**
  * グローバルの出力スタイル（`~/.claude/settings.json` の `outputStyle`）をこのセッションの中だけ
- * 中立に戻す。**そうしないと人格が二重に効く**（パックの `persona.md` と、全プロジェクトに効く
+ * 中立に戻す。そうしないと人格が二重に効く（パックの `persona.md` と、全プロジェクトに効く
  * 出力スタイルが重なる。実測: 応答が両方の人格を名乗った。docs/requirements.md 4.4）。
  *
- * 触るのは**セッション限りのフラグ層だけ**で、設定ファイルは書き換えない（`updateSettings` の
- * ほうはファイルを書くので使わない）。**失敗しても続行する** — 人格が二重になるだけで、
+ * 触るのはセッション限りのフラグ層だけで、設定ファイルは書き換えない（`updateSettings` の
+ * ほうはファイルを書くので使わない）。失敗しても続行する — 人格が二重になるだけで、
  * セッション自体は動く（docs/coding-standards.md「エラーハンドリング」）。
  */
 async function applyNeutralOutputStyle(session: {
@@ -379,7 +379,7 @@ async function applyNeutralOutputStyle(session: {
  * この制御リクエストから受け取る（組み込みコマンドの分も返る）。
  * 以降セッション中に増減したときは `commands_changed` が押してくる（src/server/session-driver/core/sdk-message.ts）。
  *
- * **取れなくてもセッションは続ける**（説明が無いまま名前だけの補完に戻るだけ。
+ * 取れなくてもセッションは続ける（説明が無いまま名前だけの補完に戻るだけ。
  * docs/coding-standards.md「エラーハンドリング」の「動作中の一時的な失敗」）。
  */
 async function relayCommandDescriptions(
@@ -398,14 +398,14 @@ async function relayCommandDescriptions(
 
 /**
  * プラン（`docs/glossary.md`「プラン」）を1回だけ取りに行く。`accountInfo()` は `email` /
- * `organization` も返すが、**駆動の外へ出すのは `toPlan` が取り出した `subscriptionType` だけ**
+ * `organization` も返すが、駆動の外へ出すのは `toPlan` が取り出した `subscriptionType` だけ
  * （`toPlan` の戻り値しか触らないので、他のフィールドに触れる経路が無い）。
  *
- * **名前は Claude Code の控えを先に見て決める**（`src/server/session-driver/core/plan.ts`。SDK の
+ * 名前は Claude Code の控えを先に見て決める（`src/server/session-driver/core/plan.ts`。SDK の
  * `subscriptionType` は契約の段と合わないことがあり、控えのほうが段と枠を別々に持つ）。
  * 控えから決まらなければ SDK の値をそのまま出す。
  *
- * **取れなくてもセッションは続ける**（API キーや Bedrock のときは元々この値が無い。
+ * 取れなくてもセッションは続ける（API キーや Bedrock のときは元々この値が無い。
  * docs/coding-standards.md「エラーハンドリング」の「動作中の一時的な失敗」。
  * {@link relayCommandDescriptions} と同じ形）。
  */
@@ -431,7 +431,7 @@ async function relayPlan(
  * ドロップダウンが、いまのモデルで選べる段を絞るのに使う（`docs/screen-design.md` 13.9
  * 「動き方の操作子」）。
  *
- * **取れなくても・空でもセッションは続ける**（画面は effort を「対応するかどうか分からない」
+ * 取れなくても・空でもセッションは続ける（画面は effort を「対応するかどうか分からない」
  * のまま扱うだけ。docs/coding-standards.md「エラーハンドリング」の「動作中の一時的な失敗」。
  * {@link relayCommandDescriptions} と同じ形）。
  */
@@ -450,8 +450,8 @@ async function relaySupportedModels(
 }
 
 /**
- * 許可要求と質問を答え待ちの列へ回す。**`canUseTool` の戻り値の型（`PermissionResult`）に
- * 合わせるのはここだけ**で、列の側は SDK を知らない（構造は一致している）。
+ * 許可要求と質問を答え待ちの列へ回す。`canUseTool` の戻り値の型（`PermissionResult`）に
+ * 合わせるのはここだけで、列の側は SDK を知らない（構造は一致している）。
  */
 function askForAnswer(
   queue: PendingAnswerQueue,
@@ -464,7 +464,7 @@ function askForAnswer(
 }
 
 /**
- * 送る依頼1件。**駆動が持つ原寸の画像はここまでで、`stream()` が渡したあとは持たない**
+ * 送る依頼1件。駆動が持つ原寸の画像はここまでで、`stream()` が渡したあとは持たない
  * （拡大表示のために残すのは棚 = `src/server/session-driver/core/prompt-image-shelf.ts` の側）。
  */
 type Prompt = {
@@ -473,7 +473,7 @@ type Prompt = {
 }
 
 /**
- * user メッセージの内容ブロック1つ。**`MessageParam` の型をそのまま使う**（自前の型を作らない。
+ * user メッセージの内容ブロック1つ。`MessageParam` の型をそのまま使う（自前の型を作らない。
  * `docs/requirements.md` 4.10 の裏取り）。
  */
 type PromptContentBlock = Extract<SDKUserMessage["message"]["content"], readonly unknown[]>[number]
@@ -482,7 +482,7 @@ type PromptContentBlock = Extract<SDKUserMessage["message"]["content"], readonly
  * ストリーミング入力。`query` には「まだ終わらない」非同期イテレータを渡し、依頼が届くたびに
  * user メッセージを1つ流す（docs/requirements.md 4.1「同じ `query` への追加入力」）。
  *
- * **画像を添えられるのはストリーミング入力だけ**（単発入力は受け付けない。
+ * 画像を添えられるのはストリーミング入力だけ（単発入力は受け付けない。
  * `docs/requirements.md` 4.10）。添えたときは `content` を配列にし、画像のブロックを先に、
  * 文面を後ろに置く。
  */
@@ -542,8 +542,8 @@ function promptContent(prompt: Prompt): SDKUserMessage["message"]["content"] {
 }
 
 /**
- * 依頼に添えられた画像1枚を、モデルへ渡す内容ブロックにする。**渡せない形・大きすぎるものは
- * 空**（その1枚を諦めて依頼そのものは送る。docs/coding-standards.md「エラーハンドリング」）。
+ * 依頼に添えられた画像1枚を、モデルへ渡す内容ブロックにする。渡せない形・大きすぎるものは
+ * 空（その1枚を諦めて依頼そのものは送る。docs/coding-standards.md「エラーハンドリング」）。
  *
  * 形は境界（`src/shared/command.ts` の zod）で見てあるので、ここは同じ関数でほどくだけ
  * （立ち絵を書き込む側が `parsePortraitImage` でほどくのと同じ扱い）。

@@ -22,7 +22,7 @@ const CHIP_ORDER = [
 ] satisfies readonly { readonly status: TaskListFilterStatus; readonly label: string }[]
 
 /**
- * サイドバーの「タスク一覧」のチップ。**進行中 → 未着手 → 完了の順で、0件でも出す**
+ * サイドバーの「タスク一覧」のチップ。進行中 → 未着手 → 完了の順で、0件でも出す
  * （モックの3チップが常に並ぶ形に合わせる。`taskListTitle` 時代の「0件は足さない」は
  * 採らない。経緯は docs/display.md 4.2）。
  *

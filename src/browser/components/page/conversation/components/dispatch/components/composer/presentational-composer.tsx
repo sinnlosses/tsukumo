@@ -1,4 +1,4 @@
-// 入力欄本体の**器だけ**（<PresentationalComposer>。docs/design.md 6.1）。`<textarea>` と補完の
+// 入力欄本体の器だけ（<PresentationalComposer>。docs/design.md 6.1）。`<textarea>` と補完の
 // 候補一覧（`/` の <CommandSuggestions>・`@` の <FileSuggestions>）を内包し、その下に道具の行
 // （画像・`/`・`@` のボタン、経過時間と送信⇄中断の <TurnStatus>）を置いた
 // `<form>` を置く。フックも算出も持たず、`hooks/use-composer.ts` が
@@ -21,7 +21,7 @@ import { type ComposerModel } from "./hooks/use-composer.ts"
 export type PresentationalComposerProps = ComposerModel
 
 /**
- * **props はここだけ分解して受ける**。ref を持つ入れ物を `props.textAreaRef` の形で描画中に
+ * props はここだけ分解して受ける。ref を持つ入れ物を `props.textAreaRef` の形で描画中に
  * 読むと `react(refs)`（規約「レンダー中に ref を読み書きしない」）が落ちるため
  * （`layout/presentational-layout.tsx` と同じ理由）。
  */

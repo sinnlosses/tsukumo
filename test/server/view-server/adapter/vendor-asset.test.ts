@@ -4,7 +4,7 @@ import { readVendorAsset } from "../../../../src/server/view-server/adapter/vend
 import { VENDOR_ASSET_CONTENT_TYPES } from "../../../../src/shared/vendor-asset.ts"
 
 // 配る名前（shared）と `node_modules` の中のファイル（adapter）は別のファイルに分かれている
-// ので、**allowlist の側から全件を辿って**片方だけ足した・パッケージが版を上げてファイルの
+// ので、allowlist の側から全件を辿って片方だけ足した・パッケージが版を上げてファイルの
 // 場所が変わった、を落とす。本物の `node_modules` を読む（依存が入っていることは
 // `bun install` 済みの前提。docs/coding-standards.md「テスト」）。
 describe("readVendorAsset", () => {

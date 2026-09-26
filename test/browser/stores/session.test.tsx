@@ -1,4 +1,4 @@
-// 姿の store（`useSyncExternalStore` + セレクタ）の**購読の粒度**を見る。読んでいる値が
+// 姿の store（`useSyncExternalStore` + セレクタ）の購読の粒度を見る。読んでいる値が
 // 動かないフレームで部品が描き直されないことは、目で見ても分からないのでここで押さえる。
 //
 // フィクスチャはすべて手で書いた架空の依頼・許可要求（docs/coding-standards.md「会話内容の扱い」）。
@@ -30,7 +30,7 @@ afterEach(() => {
   cleanup()
 })
 
-/** 姿のうち記録の件数だけを読む見張り。**描き直されたことが字で分かる**ようにしてある。 */
+/** 姿のうち記録の件数だけを読む見張り。描き直されたことが字で分かるようにしてある。 */
 function RecordCount(): ReactElement {
   const count = useSessionSelector((session) => session.state.records.length)
   return <p>{`記録${String(count)}件`}</p>

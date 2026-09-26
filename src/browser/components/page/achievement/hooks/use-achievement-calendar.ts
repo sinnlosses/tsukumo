@@ -2,7 +2,7 @@
 // 常に「今日を含む直近5週」を配るので、見ている日（`use-achievement.ts`）とは独立に1回だけ
 // 取りに行く。
 //
-// **取り直す契機**（`docs/design.md`「成果の集め方と配り方」）: 開いたとき・窓にフォーカスが
+// 取り直す契機（`docs/design.md`「成果の集め方と配り方」）: 開いたとき・窓にフォーカスが
 // 戻ったとき（`staleTime: 0` と React Query の既定の `refetchOnWindowFocus`）・60秒ごと（常に
 // 今日が範囲に入るため、`use-achievement.ts` の「今日を見ているあいだだけ」と違って無条件）・
 // 日記が書き上がったとき（`use-achievement.ts` が `queryClient.invalidateQueries` で無効化する）。

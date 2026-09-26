@@ -1,6 +1,6 @@
 // 動いている部屋（待ち受けポート × Orca のタブ）を突き合わせ、格子の HTML を組み立てる。
 // 格子を配るサーバの要求の振り分け（鍵の照合）と、格子のタブを見張って終わりどきを決める判断も
-// ここに置く。**外の世界に触らない純粋な関数だけ**をここに置く（lsof / orca / git / HTTP を
+// ここに置く。外の世界に触らない純粋な関数だけをここに置く（lsof / orca / git / HTTP を
 // 実際に扱うのは scripts/open-room-grid.ts）。テストは test/scripts/room-grid.test.ts。
 //
 // 並べるのは「ポートで待ち受けていて、かつ Orca のタブがある」部屋だけ。タブだけの部屋
@@ -15,7 +15,7 @@ import type { Listener } from "./lib/port-listener.ts"
 export const ROOM_GRID_TITLE = "tsukumoの格子"
 
 /**
- * 格子を配るパス。**部屋のレイアウトページ（`LAYOUT_PATH`）と違うパスにする** — 格子のタブの URL
+ * 格子を配るパス。部屋のレイアウトページ（`LAYOUT_PATH`）と違うパスにする — 格子のタブの URL
  * も `127.0.0.1` なので、同じパスだと {@link pickRooms} に格子自身が部屋として拾われる。
  */
 export const ROOM_GRID_PATH = "/room-grid"
@@ -65,9 +65,9 @@ export function scanPorts(
 }
 
 /**
- * 待ち受け（`Listener`）とタブの URL を突き合わせ、両方そろった部屋だけを返す。**待ち受けている
+ * 待ち受け（`Listener`）とタブの URL を突き合わせ、両方そろった部屋だけを返す。待ち受けている
  * のが tsukumo かどうかは、タブの URL のホストが `127.0.0.1` でパスがレイアウトページ
- * （`LAYOUT_PATH`）であることで判断する**（クエリの起動トークンは比べない——起動ごとに変わるため）。
+ * （`LAYOUT_PATH`）であることで判断する（クエリの起動トークンは比べない——起動ごとに変わるため）。
  */
 export function pickRooms(
   listeners: readonly Listener[],
@@ -108,7 +108,7 @@ export function roomGridPath(key: string): string {
 }
 
 /**
- * 格子のサーバへの要求を振り分ける。**格子のページには全部の部屋の起動トークンが入る**ので、
+ * 格子のサーバへの要求を振り分ける。格子のページには全部の部屋の起動トークンが入るので、
  * `127.0.0.1` の他のページやプロセスから読まれないよう、鍵（`?t=`）が合わない要求は断る。
  */
 export function routeRoomGridRequest(
@@ -135,8 +135,8 @@ const GRID_TAB_ABSENT_LIMIT = 2
 const GRID_TAB_FAILED_LIMIT = 20
 
 /**
- * 格子のタブを見張った1回ぶんを畳み込み、終わるかどうかを決める。**見えなかった回・失敗した回は
- * 続けて起きた数だけを数える**（間に見えた回が挟まれば数え直す）。失敗は Orca の一時的な不調でも
+ * 格子のタブを見張った1回ぶんを畳み込み、終わるかどうかを決める。見えなかった回・失敗した回は
+ * 続けて起きた数だけを数える（間に見えた回が挟まれば数え直す）。失敗は Orca の一時的な不調でも
  * 起きるので、見えなかった回よりずっと多く待つ。
  */
 export function observeGridTab(
@@ -170,7 +170,7 @@ const ROOM_FOCUS_NONE_ID = "room-focus-none"
 
 /**
  * 格子1枚ぶんの HTML。JS は置かない。「拡大」「格子に戻る」は同じ名前のラジオボタンの `<label>` で、
- * 選ばれたマスが `:has(:checked)` の CSS で全面に広がる。**リンク（`#` への移動）にしない** —
+ * 選ばれたマスが `:has(:checked)` の CSS で全面に広がる。リンク（`#` への移動）にしない —
  * Orca はページ内の移動でもページを読み直しに行く（`file://` で開いていたときに実測）ので、拡大の
  * たびに走査し直すことになる。
  *

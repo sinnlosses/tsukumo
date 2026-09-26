@@ -1,13 +1,13 @@
-// セッションの状態と、イベント1件を畳み込む純粋関数。**サーバ（core）とブラウザ（browser）の
-// 両方が同じものを回す**ので、shared に置く（docs/design.md 4.2）。
+// セッションの状態と、イベント1件を畳み込む純粋関数。サーバ（core）とブラウザ（browser）の
+// 両方が同じものを回すので、shared に置く（docs/design.md 4.2）。
 //
-// **`node:` にも `document` にも触らない。** 状態を持つのは呼び出し側
+// `node:` にも `document` にも触らない。 状態を持つのは呼び出し側
 // （core の session-manager と、ブラウザ側の <App>）。
 //
 // 時刻は畳み込みの中で時計を読まず、イベントに打たれた `at`（エポックミリ秒）を受け取る
 // （両側の状態が同じになるように、時刻はイベントの発生側が決める。docs/design.md 4.1）。
 //
-// **姿から導くだけのものはここに置かない**（メインビューに出す形は `main-view.ts`、
+// 姿から導くだけのものはここに置かない（メインビューに出す形は `main-view.ts`、
 // 入力欄の `/` 補完の候補は `command-suggestion.ts`）。ここが持つのは「状態そのもの」と
 // 「イベント1件でどう変わるか」だけ。
 
@@ -55,9 +55,9 @@ import {
 /**
  * メインビューに残す記録の窓（直近何ターンぶんを持ち続けるか）。常駐プロセスが
  * セッションを通して動き続ける以上、ここで持つ記録自体も無限に増やさない。
- * **`work` は `main-view.ts` の `MAX_MAIN_VIEW_TURNS` の導出元**（関係の理由はそちら）。
+ * `work` は `main-view.ts` の `MAX_MAIN_VIEW_TURNS` の導出元（関係の理由はそちら）。
  *
- * **モードごとに値が違う**（`docs/chat-mode.md` 4.9）。雑談の1ターンは
+ * モードごとに値が違う（`docs/chat-mode.md` 4.9）。雑談の1ターンは
  * セリフ1〜2件で軽く、仕事と同じ20往復では会話として短すぎるため、雑談だけ100まで持つ。
  */
 export const MAX_SESSION_STATE_TURNS = {
@@ -82,7 +82,7 @@ export type ToolRunStatus =
  *
  * - `stamped`: 起きた時刻が分かっている。`at` はそのイベントに打たれた時刻（`StampedEvent.at`。
  *   エポックミリ秒）
- * - `restored`: 前のセッションの記録を組み直したもので、**起きた時刻が分からない**
+ * - `restored`: 前のセッションの記録を組み直したもので、起きた時刻が分からない
  *   （`history-restored`）。流し直した時刻を代わりに入れると、昨日の一言が「いま」に見える
  */
 export type RecordTime =
@@ -92,21 +92,21 @@ export type RecordTime =
 /**
  * セッションの中で起きたことを起きた順に並べたもの。メインビューに出す形（`MainViewEntry`。
  * `shared/main-view.ts`）とほぼ同じだが、
- * **ツールは `toolUseId` を持つ**（あとから届く結果を突き合わせるため。表示には使わない）。
+ * ツールは `toolUseId` を持つ（あとから届く結果を突き合わせるため。表示には使わない）。
  *
- * **`speech` はここにしか無い**（`MainViewEntry` には対応する種類が無く、
+ * `speech` はここにしか無い（`MainViewEntry` には対応する種類が無く、
  * `mainViewEntries` が落とす）。セリフが出るのは吹き出しだけで、レポートには混ぜない
  * （docs/display.md 4.2）。記録に残すのは、過去のターンの吹き出しを引き直せるように
  * するため（`shared/turn-speech.ts` の `turnSpeeches`）。
  */
 export type SessionRecord =
   /**
-   * 利用者の依頼。`images` は添えた画像の**控えと、棚の原寸を指す id の組**
-   * （`docs/requirements.md` 4.10）。**原寸は記録に入らない**（`hello` に載せない）。拡大して
+   * 利用者の依頼。`images` は添えた画像の控えと、棚の原寸を指す id の組
+   * （`docs/requirements.md` 4.10）。原寸は記録に入らない（`hello` に載せない）。拡大して
    * 見るときは id で棚から取りに行く（`src/shared/prompt-image.ts` の `promptImagePath`）。
    *
-   * `turnId` は**そのターンの通し番号**（{@link SessionState.nextTurnId}）。窓から古い記録が
-   * 落ちても番号は振り直されないので、**同じターンはセッションが続くかぎり同じ番号**になる。
+   * `turnId` はそのターンの通し番号（{@link SessionState.nextTurnId}）。窓から古い記録が
+   * 落ちても番号は振り直されないので、同じターンはセッションが続くかぎり同じ番号になる。
    */
   | {
       readonly kind: "request"
@@ -118,8 +118,8 @@ export type SessionRecord =
   | { readonly kind: "detail"; readonly markdown: string }
   /**
    * `report` ツールで受け取ったレポート（docs/glossary.md「report ツール」）。
-   * 引数をそのまま持ち、**1つの本文に組むのはメインビューの導出**（`shared/main-view.ts`）。
-   * 本文（`detail`）とは別の種類にしてあるのは、**このレポートがあるターンでは本文を出さない**
+   * 引数をそのまま持ち、1つの本文に組むのはメインビューの導出（`shared/main-view.ts`）。
+   * 本文（`detail`）とは別の種類にしてあるのは、このレポートがあるターンでは本文を出さない
    * という判定に、どちらから来たかが要るため。
    */
   | {
@@ -130,7 +130,7 @@ export type SessionRecord =
       readonly checks: readonly ReportCheck[]
     }
   /**
-   * 答え終わった質問（`question-answered`）。**積むのは答えが確定した1回だけ**で、あとから
+   * 答え終わった質問（`question-answered`）。積むのは答えが確定した1回だけで、あとから
    * 書き換えない（docs/display.md 4.2「許可と質問」）。形は
    * `MainViewEntry` の `question` と同じなので、`mainViewEntries` はそのまま通す
    * （`shared/main-view.ts`）。
@@ -155,14 +155,14 @@ export type SessionRecord =
       readonly status: ToolRunStatus
     }
   /**
-   * 圧縮の区切り（`compact-boundary`。docs/glossary.md）。**中身を持たない**（画面に出すのは
+   * 圧縮の区切り（`compact-boundary`。docs/glossary.md）。中身を持たない（画面に出すのは
    * 細い線1本だけで、文言も数値も添えない）。`trimToRecentTurns` の数え方（`request` の数）は
    * 変えない — 他の記録と同じく、窓から外れれば一緒に落ちる。
    */
   | { readonly kind: "compact-boundary" }
   /**
    * 失敗で終わったターンの理由（`turn-finished` の `outcome` が `failed`。docs/glossary.md
-   * 「ターンの失敗」）。**そのターンの記録の末尾に1つだけ積む**。メインビューがターンの末尾に
+   * 「ターンの失敗」）。そのターンの記録の末尾に1つだけ積む。メインビューがターンの末尾に
    * 「失敗で終わった」と理由を出す（`shared/main-view.ts`）ので、過去のターンを遡っても
    * 成功と見分けられる。雑談のログ・依頼の手順・吹き出しは拾わない。
    */
@@ -170,26 +170,26 @@ export type SessionRecord =
 
 /**
  * `init`（`session-info`）と、続きから始めたときの `sessions-changed` がどこまで届いたか。
- * **`sessionId` / `permissionMode` はそれぞれ独立に `| undefined` だった旧い形**
+ * `sessionId` / `permissionMode` はそれぞれ独立に `| undefined` だった旧い形
  * （`docs/coding-standards.md`「複数の「無い」が1つの状態」）。`sessionId` が分かる口は2つ
  * （`init` と `sessions-changed`）、`permissionMode` は1つ（`init`）なので、どこまで届いたかが
  * 3つの状態になる。
  *
  * - `starting`: セッションがまだ起こったばかりで、`init` も `sessions-changed`
  *   （続きから始めたときの居場所）もまだ届いていない
- * - `identified`: `sessionId` だけ分かっている。**続きから始めたときに `sessions-changed` が
- *   `init` より先に届く経路がある**ので実在する状態（`sessionId` が分かっているかどうかと
+ * - `identified`: `sessionId` だけ分かっている。続きから始めたときに `sessions-changed` が
+ *   `init` より先に届く経路があるので実在する状態（`sessionId` が分かっているかどうかと
  *   `permissionMode` が分かっているかどうかは、無くなる理由が違う ——
  *   「片方だけが `undefined` になる状態が実在するか」の目安どおり分けてある）
- * - `running`: `sessionId` / `permissionMode` の両方が分かっている。**`permissionMode` を
- *   決める口は `init` だけ**（サイドバーの `session.setPermissionMode` には確定の合図が無い）で、
+ * - `running`: `sessionId` / `permissionMode` の両方が分かっている。`permissionMode` を
+ *   決める口は `init` だけ（サイドバーの `session.setPermissionMode` には確定の合図が無い）で、
  *   その `init` は必ず `sessionId` も連れてくるので、`permissionMode` だけ分かっている状態は
  *   実在しない。だから3つ目の状態を足さずにこの2つを束ねられる
  *
- * **`model` はここに入れない**（`SessionState.model` に外へ出してある）。`sessionId` /
- * `permissionMode` は `init` の1つの口でしか決まらないが、**`model` はそれに加えて
+ * `model` はここに入れない（`SessionState.model` に外へ出してある）。`sessionId` /
+ * `permissionMode` は `init` の1つの口でしか決まらないが、`model` はそれに加えて
  * `model-changed`（`/model` チャットコマンドやサイドバーの `session.setModel` の確定）でも決まり、
- * `sessionId` より先に分かることがある**（続きから始める前、`init` が来る前の
+ * `sessionId` より先に分かることがある（続きから始める前、`init` が来る前の
  * `identified`/`starting` の間にサイドバーでモデルを切り替える経路が実機にある）。
  * ここへ押し込めると `model-changed` が `running` 以外では効かなくなり、切り替えても
  * 5秒ほどで古い値に戻って見える不具合になる（実機で確認済み。修正の経緯は
@@ -208,14 +208,14 @@ export type SessionInfo =
  *
  * - `idle`: まだ一度も依頼が無い
  * - `running`: 依頼を送って、まだ終わっていない
- * - `finished`: 終わった。**`startedAt` は次の `request` まで持ち続ける**
+ * - `finished`: 終わった。`startedAt` は次の `request` まで持ち続ける
  *   （入力欄の経過時間表示 `src/browser/components/page/conversation/components/dispatch/components/turn-status/turn-status.tsx` が「所要」として
  *   出し続ける。docs/design.md 4.2）。`ending` は失敗で終わったか（{@link TurnEnding}。
  *   入力欄の「失敗」の字と、立ち絵の「失敗でびくっ」の材料。`session-ended` で終わったときは
  *   `ended`）
  *
- * 「進行中か」「始まった時刻」「終わった時刻」の3つを並べて持つと、**型としては書けるのに
- * 起きない組み合わせ**（終わっているのに始まっていない、進行中なのに終わった時刻がある）が
+ * 「進行中か」「始まった時刻」「終わった時刻」の3つを並べて持つと、型としては書けるのに
+ * 起きない組み合わせ（終わっているのに始まっていない、進行中なのに終わった時刻がある）が
  * 残るので1つの合併型にしてある（docs/coding-standards.md「複数の「無い」が1つの状態」）。
  */
 export type TurnProgress =
@@ -242,23 +242,23 @@ export type ReportDrafting =
   | { readonly kind: "drafting"; readonly toolUseId: string }
 
 /**
- * セッションの今の姿。**イベントを1件ずつ畳んで作る**ので、ここに無い情報は画面にも出ない。
+ * セッションの今の姿。イベントを1件ずつ畳んで作るので、ここに無い情報は画面にも出ない。
  *
  * `partialUtterance` は書きかけの本文で、完成した本文（`utterance`）が来たら空に戻る。
- * こうしておくと、断片と完成メッセージの**両方が届いても二重に積まれない**
+ * こうしておくと、断片と完成メッセージの両方が届いても二重に積まれない
  * （docs/display.md 4.2「書きかけの本文はそのまま記録の末尾に積まれ、ターンが終わった
  * 瞬間に整形し直す」）。
  */
 export type SessionState = {
   /**
-   * 吹き出しに並べて出す、今のターンのセリフ（古い→新しいの順。**件数の上限は無い**、
-   * ターンの境目だけで区切る）。**`request` の時点で空にする**（プレースホルダーに切り替わり、
+   * 吹き出しに並べて出す、今のターンのセリフ（古い→新しいの順。件数の上限は無い、
+   * ターンの境目だけで区切る）。`request` の時点で空にする（プレースホルダーに切り替わり、
    * 次のターンに移ったことが画面から分かる。docs/display.md 4.2。
    * {@link applySessionEvent} の `request` を参照）。まだ一度も `speak` が呼ばれていない・
    * そのターンでまだ呼ばれていなければ空配列。
    */
   readonly speeches: readonly string[]
-  /** 直近のセリフ（`speak`）に添えられた表情。**表情の源はこれだけ**（自動の上書きは無い）。 */
+  /** 直近のセリフ（`speak`）に添えられた表情。表情の源はこれだけ（自動の上書きは無い）。 */
   readonly speechExpression: Expression
   /**
    * 今のターンで `speak` が呼ばれたか（前のターンのセリフを捨てて今のターンだけの並びにするか、
@@ -266,8 +266,8 @@ export type SessionState = {
    */
   readonly speechCalledInTurn: boolean
   /**
-   * いま走っている SDK ターンで本文が届いたか（{@link TurnBodies}）。**やり取り（依頼）ではなく
-   * SDK のターンで区切る**——背景のタスクやサブエージェントの合図で claude が自分で始めたターン
+   * いま走っている SDK ターンで本文が届いたか（{@link TurnBodies}）。やり取り（依頼）ではなく
+   * SDK のターンで区切る——背景のタスクやサブエージェントの合図で claude が自分で始めたターン
    * （`turn-started`）でも戻す。メインビューが「まだ伸びうる本文」を伏せるときに、前の SDK
    * ターンで確定した本文まで巻き込まないために要る（`src/browser/stores/main-view-turn.ts`）。
    */
@@ -281,7 +281,7 @@ export type SessionState = {
   /** `init` がまだ届いていないか、届いてセッションID・許可モードが分かっているか。 */
   readonly session: SessionInfo
   /**
-   * いま動いているモデル。**`session` の外に置く**（{@link SessionInfo} の冒頭のコメント）
+   * いま動いているモデル。`session` の外に置く（{@link SessionInfo} の冒頭のコメント）
    * ——`init`（`session-info`）だけでなく `model-changed`（`/model` コマンドやサイドバーの
    * `session.setModel` の確定）でも決まり、`sessionId` より先に分かることがあるため。まだどちらの
    * 口からも届いていなければ undefined（本物の「無い」——`init` 前に何を出すかは読む側が
@@ -292,32 +292,32 @@ export type SessionState = {
    * モデルごとの effort の対応（{@link ModelEffortSupport}）。帯の effort のドロップダウンが、
    * いまのモデルで選べる段を絞るのに読む（`docs/screen-design.md` 13.9「動き方の操作子」）。
    *
-   * **源は `model-effort-support` だけ**（駆動が起動直後に1回だけ取りに行く）。まだ届いて
+   * 源は `model-effort-support` だけ（駆動が起動直後に1回だけ取りに行く）。まだ届いて
    * いなければ空——空のときは「対応するかどうか分からない」に畳む（読む側は
    * `src/browser/components/domain/screen-nav/domain/effort-label.ts`）。
    */
   readonly modelEffortSupport: readonly ModelEffortSupport[]
   /**
-   * いま効いている effort。**送った値ではなく、`Stop` フック入力から読み取った値**
+   * いま効いている effort。送った値ではなく、`Stop` フック入力から読み取った値
    * （`effort-changed`。`docs/screen-design.md` 13.9「動き方の操作子」）。
    *
-   * まだ一度もターンが終わっていない・読めていなければ undefined（**読めない値は出さない**
+   * まだ一度もターンが終わっていない・読めていなければ undefined（読めない値は出さない
    * という決定どおり、見た目上の既定へは畳まない——`model` / `permissionMode` と違う扱い）。
    * `model` と同じく `session` の外に置く（ターンの境目で戻さない。次に読めるまで前の値を
    * 保つのが「効き目と表示が食い違わない」ための挙動）。
    */
   readonly effort: EffortLevel | undefined
   /**
-   * 入力欄の `/` 補完に出せるコマンド名（`init` のたびに上書きされる）。**端末専用
-   * （`terminal_slash_commands`）は除いてある**（`commandCandidates`。
-   * docs/display.md 4.2「入力欄」）。**`init`（`session-info`）は最初の依頼を送るまで
-   * 届かない**（実測。SDK の `system`/`init` はターンのたびに届く仕組みで、
+   * 入力欄の `/` 補完に出せるコマンド名（`init` のたびに上書きされる）。端末専用
+   * （`terminal_slash_commands`）は除いてある（`commandCandidates`。
+   * docs/display.md 4.2「入力欄」）。`init`（`session-info`）は最初の依頼を送るまで
+   * 届かない（実測。SDK の `system`/`init` はターンのたびに届く仕組みで、
    * セッション開始直後には来ない）ので、それまでは空配列のまま。その間の名前の出どころは
    * `commandSuggestions`（`shared/command-suggestion.ts`）が `commandDescriptions` 側に振る。
    */
   readonly slashCommands: readonly string[]
   /**
-   * SDK から届いたコマンドの説明（名前と説明の組）。**端末専用のものも混ざったままの生の一覧**。
+   * SDK から届いたコマンドの説明（名前と説明の組）。端末専用のものも混ざったままの生の一覧。
    * `supportedCommands()`（駆動側が起動直後に呼ぶ）はセッション開始後すぐに届く
    * （実測。`init` を待たない）ので、`slashCommands` が空の間は `commandSuggestions` が
    * ここを名前の出どころとして使う（端末専用の除外はまだ効かせられない。`init` が届き
@@ -330,8 +330,8 @@ export type SessionState = {
   /** ターンの進み具合（{@link TurnProgress}）。始まった時刻・終わった時刻もここが持つ。 */
   readonly turn: TurnProgress
   /**
-   * 直近でターンが終わった時刻（`turn-finished` / `session-ended` の `at`）。**`turn` が
-   * `running` に移っても戻さない**——`turn.finished.finishedAt` は次の依頼が始まると `running` の
+   * 直近でターンが終わった時刻（`turn-finished` / `session-ended` の `at`）。`turn` が
+   * `running` に移っても戻さない——`turn.finished.finishedAt` は次の依頼が始まると `running` の
    * 腕に移って読めなくなる（{@link TurnProgress}）が、ターンの途中も「直前に終わったときの
    * 取り直しの合図」を必要とする読み手がいる（サイドバーの使用量の行とトークン消費の画面の札。
    * `browser/domain/context-usage.ts` の `contextUsageRefetchKey`。取り直すのはターンが
@@ -341,13 +341,13 @@ export type SessionState = {
    */
   readonly lastTurnFinishedAt: number | undefined
   /**
-   * 次に始まるターンに振る通し番号。**ターンが始まるたびに1つ増え、記録が窓から落ちても
-   * 戻らない**ので、**同じターンはセッションが続くかぎり同じ番号**になる。
+   * 次に始まるターンに振る通し番号。ターンが始まるたびに1つ増え、記録が窓から落ちても
+   * 戻らないので、同じターンはセッションが続くかぎり同じ番号になる。
    *
    * 番号を位置（何番目のターンか）で決めると、窓（{@link MAX_SESSION_STATE_TURNS}）が
-   * いっぱいになったあと**いちばん新しいターンの番号が止まる**。描く側はその番号を
+   * いっぱいになったあといちばん新しいターンの番号が止まる。描く側はその番号を
    * React の `key` に使っているので、止まると別のターンが同じ部品として使い回され、
-   * **書き上げる演出がマウント時にしか走らないために二度と起動しなくなる**（実測）。
+   * 書き上げる演出がマウント時にしか走らないために二度と起動しなくなる（実測）。
    */
   readonly nextTurnId: number
   /**
@@ -359,27 +359,27 @@ export type SessionState = {
   readonly tasks: TaskSummaryResult
   /**
    * キャラビューが立ち絵を取りに行く先（`character-changed` が届くまでは undefined）。
-   * **素材そのものは持たない**（`portraits` の値は `/character/<pack>/<file>` の URL。docs/design.md
+   * 素材そのものは持たない（`portraits` の値は `/character/<pack>/<file>` の URL。docs/design.md
    * 4.2）。
    */
   readonly character: CharacterInfo | undefined
   /**
    * キャラクターパックの一覧（サイドバーの `<select>` と、キャラクター画面の一覧・詳しい設定。
-   * docs/design.md 7.2）。**使用中以外のパックも姿ごと持つ**。
-   * `character-changed` と一緒に届く。**まだ届いていないときは空**で、そのときは選択肢を
+   * docs/design.md 7.2）。使用中以外のパックも姿ごと持つ。
+   * `character-changed` と一緒に届く。まだ届いていないときは空で、そのときは選択肢を
    * 出せないので `<select>` ごと出さない。
    */
   readonly characterPacks: readonly CharacterPackEntry[]
   /**
    * 切り替え先として選べるセッションの一覧（サイドバーの `<select>`。
-   * `docs/requirements.md` 4.8）。`sessions-changed` と一緒に届き、**起こしたときの姿のまま
-   * 変わらない**（ターンのたびには引き直さない）。まだ届いていない・印の付いたセッションが
+   * `docs/requirements.md` 4.8）。`sessions-changed` と一緒に届き、起こしたときの姿のまま
+   * 変わらない（ターンのたびには引き直さない）。まだ届いていない・印の付いたセッションが
    * 1つも無いときは空で、そのときは選択肢を出せないので `<select>` ごと出さない。
    */
   readonly sessions: readonly SessionChoice[]
   /**
    * 直近でツールが失敗した時刻（`tool-finished` の `isError` が true のときの `at`）。
-   * **立ち絵の「失敗でびくっ」の判定にだけ使う**（`shared/portrait-motion.ts` の
+   * 立ち絵の「失敗でびくっ」の判定にだけ使う（`shared/portrait-motion.ts` の
    * `resolvePortraitMotion`）。次のターンが始まっても戻さない（時間の窓が過ぎれば
    * `resolvePortraitMotion` 側で自然に「今は失敗直後ではない」に戻るため、`turn` が持つ
    * 終わった時刻と違って `request` での巻き戻しは要らない）。まだ一度も失敗していなければ
@@ -387,7 +387,7 @@ export type SessionState = {
    */
   readonly lastToolFailureAt: number | undefined
   /**
-   * メインがいま `report` の引数を書いているか。**立ち絵の「書いている」の判定にだけ使う**
+   * メインがいま `report` の引数を書いているか。立ち絵の「書いている」の判定にだけ使う
    * （`shared/portrait-motion.ts`）。`report-drafting` で書き始め、同じ `toolUseId` の `report` か
    * `tool-finished`（差し戻されて `report` が届かないときもこちらは届く）、ターンの境目で終わる。
    */
@@ -396,15 +396,15 @@ export type SessionState = {
    * 雑談モードに入っているか（`docs/chat-mode.md` 4.9）。入っている間はレポートを出さず、
    * メインビューが立ち絵と会話のログになる（`docs/screen-design.md` 13.7）。
    *
-   * **源は `chat-mode-changed` だけ。** 切り替えは駆動の起こし直しなので、起こし直したあとに
+   * 源は `chat-mode-changed` だけ。 切り替えは駆動の起こし直しなので、起こし直したあとに
    * サーバから流れ直す（起こし直しで状態が初期値へ戻るため）。
    */
   readonly chatMode: boolean
   /**
    * 雑談のサイドバーの「最近の話題」に出す見出し（新しい順。`docs/screen-design.md` 13.7）。
-   * **要約の本文ではなく、写しから取り出した見出しだけ**（`docs/chat-mode.md` 4.9）。
+   * 要約の本文ではなく、写しから取り出した見出しだけ（`docs/chat-mode.md` 4.9）。
    *
-   * **源は `chat-topics-changed` だけ**で、届くたびに丸ごと置き換える。起こし直すと初期値の
+   * 源は `chat-topics-changed` だけで、届くたびに丸ごと置き換える。起こし直すと初期値の
    * 空へ戻り、雑談で起こしたときだけサーバから流れ直す（仕事のときは空のまま）。空のときは
    * サイドバーが案内を出す。
    */
@@ -413,28 +413,28 @@ export type SessionState = {
    * 雑談のサイドバーの「覚えていること」に出す一覧（`persona.md` の `## 覚えたこと`。
    * `docs/design.md` 7.1・`docs/screen-design.md` 13.7）。`- ` を外した文面で、古い→新しいの順。
    *
-   * **源は `remembered-lines-changed` だけ。** 雑談で起こしたとき、キャラクター自身の
+   * 源は `remembered-lines-changed` だけ。 雑談で起こしたとき、キャラクター自身の
    * `remember` / `forget`、画面の「編集」から消したときのいずれかで流れ直す。起こし直すと
    * 初期値の空へ戻る（`chatTopics` と同じ扱い）。
    */
   readonly rememberedLines: readonly string[]
   /**
    * 新しいセッションを起こすときの既定（`docs/screen-design.md` 13.6。帯の右端の歯車が読み書きする）。
-   * **いま動いているセッションの値ではない** — そちらは {@link SessionState.model} と
+   * いま動いているセッションの値ではない — そちらは {@link SessionState.model} と
    * {@link SessionInfo} の `permissionMode` で、帯から変えてもここは変わらない。
    *
-   * **源は `session-default-changed` だけ。** 起こし直すと状態が初期値へ戻るので、
+   * 源は `session-default-changed` だけ。 起こし直すと状態が初期値へ戻るので、
    * `chat-mode-changed` と同じくサーバから流れ直す（届くまでは同梱の既定）。
    */
   readonly sessionDefault: SessionDefault
   /**
-   * 歯車の「訪問」のオン・オフ（`docs/screen-design.md` 13.6・13.9「設定の歯車」）。**覚え方は
-   * `sessionDefault` と同じ**（`~/.tsukumo/state.json`。`src/server/session/adapter/remembered-default.ts`）
-   * だが、**効き方は違う**——`visit.setEnabled` はいま動いているセッションにも即座に効く（次に
+   * 歯車の「訪問」のオン・オフ（`docs/screen-design.md` 13.6・13.9「設定の歯車」）。覚え方は
+   * `sessionDefault` と同じ（`~/.tsukumo/state.json`。`src/server/session/adapter/remembered-default.ts`）
+   * だが、効き方は違う——`visit.setEnabled` はいま動いているセッションにも即座に効く（次に
    * 起こすまで待たない）。起こすたびに覚えた値へ流れ直す（届くまでは同梱の既定
    * `DEFAULT_VISIT_ENABLED`）。
    *
-   * **源は `visit-enabled-changed` だけ。** `src/server/visit/core/visit-timing.ts` の `visitArrival` /
+   * 源は `visit-enabled-changed` だけ。 `src/server/visit/core/visit-timing.ts` の `visitArrival` /
    * `departureReason` がこの値を読み、オフなら来ない・訪問中にオフにしたらその場で帰る
    * （理由は `"disabled"`）。
    */
@@ -442,7 +442,7 @@ export type SessionState = {
   /**
    * 契約プラン（`docs/glossary.md`「プラン」）。トークン消費の画面の題の右の札に出す。
    *
-   * **源は `plan` だけ**（駆動が起動直後に1回だけ取りに行く。`src/server/session-driver/adapter/sdk-driver.ts`）。
+   * 源は `plan` だけ（駆動が起動直後に1回だけ取りに行く。`src/server/session-driver/adapter/sdk-driver.ts`）。
    * まだ届いていない・取れなかった（`accountInfo()` が落ちた・`subscriptionType` が無い）の
    * どちらも同じ undefined——どちらだったかを画面は区別しない（何も出さないだけ）ので、
    * 型でも分けない。
@@ -450,19 +450,19 @@ export type SessionState = {
   readonly plan: string | undefined
   /**
    * いま背景で動いているタスク（docs/glossary.md「背景のタスク」。帯の「いまの作業」が読む。
-   * docs/screen-design.md 13.9「背景のタスク」）。**ターンの進み具合（{@link turn}）とは独立**
+   * docs/screen-design.md 13.9「背景のタスク」）。ターンの進み具合（{@link turn}）とは独立
    * で、ターンが終わっても動いている間はここに残る。
    *
-   * **源は `background-tasks-changed` だけ**で、届くたびに丸ごと置き換える。**`session-ended` で
-   * 空にする**（claude のプロセスが終われば背景のタスクも一緒に終わる。SDK は起動時に何も
+   * 源は `background-tasks-changed` だけで、届くたびに丸ごと置き換える。`session-ended` で
+   * 空にする（claude のプロセスが終われば背景のタスクも一緒に終わる。SDK は起動時に何も
    * 流さないので、起こし直しで初期値の空へ戻るのもそのまま正しい）。
    */
   readonly backgroundTasks: readonly BackgroundTask[]
   /**
    * 見直し（docs/glossary.md「見直し」）の状態。トークン消費の画面の提案の区画が読む。
    *
-   * **源は `usage-review-stage` / `usage-review-result` の2つ**（ツールが受け付けた呼び出し）で、
-   * **見直し中のままターンが終わったら（止めた・失敗したも同じ）ふだんへ戻す**。起こし直すと
+   * 源は `usage-review-stage` / `usage-review-result` の2つ（ツールが受け付けた呼び出し）で、
+   * 見直し中のままターンが終わったら（止めた・失敗したも同じ）ふだんへ戻す。起こし直すと
    * 初期値のふだんから始まる（前回の結果を出すのはこの状態ではない）。
    */
   readonly usageReview: UsageReview
@@ -470,10 +470,10 @@ export type SessionState = {
    * 前回の見直しの結果。トークン消費の画面の「前回の提案」のリンクが読む
    * （`docs/glossary.md`「見直し」、`docs/design.md`「見直しのツールと状態」）。
    *
-   * **{@link usageReview} とは別の状態**——起こし直しでもプロセスの再起動でも消えない
+   * {@link usageReview} とは別の状態——起こし直しでもプロセスの再起動でも消えない
    * （源は `usage-review-result` が届くたびと、起こしたとき1回だけホームのファイルを
-   * 読む口。持つのは直前の1回だけ）。**`usage-proposal-dismissed` が届くと、見送った提案を
-   * ここからも取り除く**（`前回の提案」を開き直したときに、見送ったはずの札が出ない
+   * 読む口。持つのは直前の1回だけ）。`usage-proposal-dismissed` が届くと、見送った提案を
+   * ここからも取り除く（`前回の提案」を開き直したときに、見送ったはずの札が出ない
    * ようにするため）。
    */
   readonly previousUsageReview: PreviousUsageReview
@@ -481,9 +481,9 @@ export type SessionState = {
    * 成果の振り返り（docs/glossary.md「成果の振り返り」）の進み。帯の「いまの作業」の
    * 「振り返り中」が読む（`docs/screen-design.md` 13.9「いまの作業」）。
    *
-   * **源は `diary-requested` / `diary-drafting` / `diary-stage` / `diary-written` / `diary-failed`
-   * の5つ**——振り返りは会話とは別の使い捨ての問い合わせで進むので、**会話の `turn-finished` /
-   * `session-ended` では動かさない**（会話のターンと並んで書いているため）。受け付けずに終わった
+   * 源は `diary-requested` / `diary-drafting` / `diary-stage` / `diary-written` / `diary-failed`
+   * の5つ——振り返りは会話とは別の使い捨ての問い合わせで進むので、会話の `turn-finished` /
+   * `session-ended` では動かさない（会話のターンと並んで書いているため）。受け付けずに終わった
    * （時間切れ・失敗・中断のどれでも）ときは書き手が `diary-failed` を流して `failed` にする。
    * `written` と `failed` は次の `diary-requested` まで持ち続ける。起こし直すと初期値の `idle` から
    * 始まる（`docs/design.md`「日記の受け取りと保存」「状態とイベント」）。
@@ -491,17 +491,17 @@ export type SessionState = {
   readonly diaryWriting: DiaryWriting
   /**
    * いまのターンで API が不調か（{@link ApiTrouble}。入力欄の経過時間の行に「再試行中」を出す
-   * 材料と、失敗で終わったときの理由の材料）。**源は `api-retry` / `api-error`** で、ターンの
+   * 材料と、失敗で終わったときの理由の材料）。源は `api-retry` / `api-error` で、ターンの
    * 境目と、モデルが何かを出したとき（{@link MODEL_OUTPUT_EVENT_KINDS}）に `none` へ戻る。
    */
   readonly apiTrouble: ApiTrouble
   /**
-   * 利用上限の状態（{@link RateLimit}。入力欄の経過時間の行が出す）。**源は `rate-limit-changed`
-   * だけ**で、ターンの境目では戻さない（セッションを通した状態で、次の知らせが来るまで持つ）。
+   * 利用上限の状態（{@link RateLimit}。入力欄の経過時間の行が出す）。源は `rate-limit-changed`
+   * だけで、ターンの境目では戻さない（セッションを通した状態で、次の知らせが来るまで持つ）。
    */
   readonly rateLimit: RateLimit
   /**
-   * 訪問（{@link VisitState}。`src/shared/visit.ts`）。**源は訪問の3つのイベントだけ**で、
+   * 訪問（{@link VisitState}。`src/shared/visit.ts`）。源は訪問の3つのイベントだけで、
    * 出すのはサーバの訪問の見張り。台本の表情はここにだけ持ち、`speechExpression` と
    * `records` には書かない。起こし直すと初期値の `none` へ戻る。
    */
@@ -548,7 +548,7 @@ export const INITIAL_SESSION_STATE: SessionState = {
 }
 
 /**
- * **モデルが何かを出した**と言えるイベント。届いたら {@link SessionState.apiTrouble} を下ろす
+ * モデルが何かを出したと言えるイベント。届いたら {@link SessionState.apiTrouble} を下ろす
  * （呼び直しが実った・API のエラーから立て直した合図は別に来ないため）。`step-usage` は
  * 思考だけのステップでも届くので、本文が出る前に「再試行中」を下ろせる。
  */
@@ -567,7 +567,7 @@ const MODEL_OUTPUT_EVENT_KINDS: ReadonlySet<SessionEvent["kind"]> = new Set([
  *
  * `at` はイベントが起きた時刻（`StampedEvent.at`）。ターンの起点・終点と、ツールが失敗した
  * 時刻を記録するのに使う。時計をここで読まないのは、この関数を純粋関数のまま保ち、
- * **サーバとブラウザで同じ結果になる**ようにするため（docs/design.md 4.1）。
+ * サーバとブラウザで同じ結果になるようにするため（docs/design.md 4.1）。
  */
 export function applySessionEvent(
   state: SessionState,
@@ -600,9 +600,9 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
     case "plan":
       return { ...state, plan: event.plan }
     case "model-changed":
-      // **`MODEL_ALIASES` に完全一致するときだけ先回りで更新する**（`/model best` のような
+      // `MODEL_ALIASES` に完全一致するときだけ先回りで更新する（`/model best` のような
       // tsukumo が知らない値では状態を変えない。次の依頼の `init` が正しい値で上書きするので、
-      // ここで間違った値に倒す必要は無い）。**`session.kind` は見ない**——`model` は `init` の
+      // ここで間違った値に倒す必要は無い）。`session.kind` は見ない——`model` は `init` の
       // 前でも `session.setModel` の確定で決まることが実機で確認されている（`identified`/`starting`
       // の間に届いても更新できる）。ここで `running` に絞ると、切り替えても数秒で古い値に
       // 戻って見える不具合になる（`src/server/session-driver/adapter/sdk-driver.ts` の `setModel` 参照）。
@@ -629,7 +629,7 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
         ),
       }
     case "turn-started":
-      // **記録を持たないターンの始まり**（キャラクターから話しかけてもらう。docs/screen-design.md 13.7）。
+      // 記録を持たないターンの始まり（キャラクターから話しかけてもらう。docs/screen-design.md 13.7）。
       // 積むものが無いだけで、吹き出し・表情・進行中の印は `request` と同じに動かす。
       return beginTurn(state, at)
     case "turn-resumed":
@@ -723,7 +723,7 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
     // 書きかけのまま終わったターン（中断など）の本文を捨てず、確定した記録に移す。
     case "turn-finished": {
       const ending = turnEnding(event.outcome, state.apiTrouble)
-      // **`diaryWriting` はここでは動かさない**（振り返りは会話とは別の使い捨ての問い合わせで
+      // `diaryWriting` はここでは動かさない（振り返りは会話とは別の使い捨ての問い合わせで
       // 並んで進むため。`docs/design.md`「日記の受け取りと保存」「状態とイベント」）。
       return {
         ...recordTurnFailure(settleUtterance(state), ending),
@@ -735,7 +735,7 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
       }
     }
     case "session-ended":
-      // **`diaryWriting` はここでは動かさない**（`turn-finished` と同じ理由）。
+      // `diaryWriting` はここでは動かさない（`turn-finished` と同じ理由）。
       return {
         ...settleUtterance(state),
         reportDrafting: { kind: "idle" },
@@ -753,10 +753,10 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
     case "rate-limit-changed":
       return { ...state, rateLimit: event.rateLimit }
     case "conversation-cleared":
-      // `/clear` で会話が消えたら、**画面に残っている前の会話も消す**。
+      // `/clear` で会話が消えたら、画面に残っている前の会話も消す。
       // 消すのは吹き出しとメインビューが読む値だけで、キャラクター・セッション情報・
       // 答え待ちの列は残す（`pending` の正典は core の待ち行列なので、状態側で空にすると
-      // 実際の待ちと食い違う）。**普通の `request` と違うのは `records` も空にする点**
+      // 実際の待ちと食い違う）。普通の `request` と違うのは `records` も空にする点
       // （普通のターンは過去のターンを遡れるように records を残す。`/clear` は会話そのものを
       // 消す操作なので records も落とす）。
       return {
@@ -772,7 +772,7 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
     case "tasks-changed":
       return { ...state, tasks: event.tasks }
     case "sessions-changed":
-      // **`sessionId` もここで決まる**（`session-info` は最初の依頼まで届かないので、それまで
+      // `sessionId` もここで決まる（`session-info` は最初の依頼まで届かないので、それまで
       // 「いまどのセッションに居るか」を言えるのはこの経路だけ）。新規に起こしたときは
       // `current` が undefined で、そのときは今の `session` を動かさない（`init` が届いたら
       // 本物のIDで上書きされる）。すでに `running`（`init` 済み）なら `permissionMode` は
@@ -798,7 +798,7 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
     }
     case "token-usage":
     case "step-usage":
-      // **画面に出すものが何も無い**（数の記録は `~/.tsukumo/token-usage/` へ書くだけで、
+      // 画面に出すものが何も無い（数の記録は `~/.tsukumo/token-usage/` へ書くだけで、
       // 書くかどうかを決めるのは `src/server/session/core/session-manager.ts`）。ここで畳むと
       // ブラウザ側にも同じ数を持たせることになるので、姿は変えない。
       return state
@@ -830,7 +830,7 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
       return {
         ...state,
         usageReview: { kind: "result", reviewedAt: at, findings: event.findings },
-        // **`usageReview` と両方いっぺんに更新する**——結果が届いたその場で「前回の提案」も
+        // `usageReview` と両方いっぺんに更新する——結果が届いたその場で「前回の提案」も
         // 最新になる（次の起動を待たなくても、そのプロセスの中では常に同じものを指す）。
         previousUsageReview: { kind: "found", reviewedAt: at, findings: event.findings },
       }
@@ -865,8 +865,8 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
       return { ...state, visit: applyVisitEvent(state.visit, event, at) }
     case "history-restored":
       // ここまでに積んだ依頼とセリフは、前のセッションを組み直したもの。流し直したときに打った
-      // 時刻を捨て、「時刻が分からない」に書き換える（{@link RecordTime}）。**起こし直すと
-      // 記録は空から始まる**ので、ここまでの記録はすべて再生のぶんになる。
+      // 時刻を捨て、「時刻が分からない」に書き換える（{@link RecordTime}）。起こし直すと
+      // 記録は空から始まるので、ここまでの記録はすべて再生のぶんになる。
       return { ...state, records: state.records.map(withRestoredTime) }
   }
 }
@@ -921,7 +921,7 @@ function settleUsageReview(review: UsageReview): UsageReview {
 
 /**
  * `diary-drafting` / `diary-stage` で段を進める。`writing` でなければ何もしない。
- * **段は戻らない**（`DIARY_STAGES` の並びでいまの段より前へは動かさない）。
+ * 段は戻らない（`DIARY_STAGES` の並びでいまの段より前へは動かさない）。
  */
 function withDiaryStage(writing: DiaryWriting, stage: DiaryStage): DiaryWriting {
   if (writing.kind !== "writing") {
@@ -933,8 +933,8 @@ function withDiaryStage(writing: DiaryWriting, stage: DiaryStage): DiaryWriting 
 }
 
 /**
- * ターンの始まりを畳む（記録は動かさない）。**`request` と「記録を持たないターンの始まり」
- * （`turn-started`）で共通**の部分で、積むものがあるかどうかだけが違う。
+ * ターンの始まりを畳む（記録は動かさない）。`request` と「記録を持たないターンの始まり」
+ * （`turn-started`）で共通の部分で、積むものがあるかどうかだけが違う。
  */
 function beginTurn(state: SessionState, at: number): SessionState {
   return {
@@ -984,8 +984,8 @@ function recordTurnFailure(state: SessionState, ending: TurnEnding): SessionStat
 }
 
 /**
- * ターンの終わりを畳む（`turn-finished` と `session-ended` で共通）。**始まっていないターンは
- * 終われない**ので、まだ一度も依頼が無ければ `idle` のまま返す（依頼より先に `session-ended`
+ * ターンの終わりを畳む（`turn-finished` と `session-ended` で共通）。始まっていないターンは
+ * 終われないので、まだ一度も依頼が無ければ `idle` のまま返す（依頼より先に `session-ended`
  * が届く経路がある。そこでは立ち絵の「完了の反応」も出さない）。終わったあとにもう一度
  * 届いたときは、起点を動かさずに終わった時刻だけ進める。
  */
@@ -997,7 +997,7 @@ function finishTurn(turn: TurnProgress, at: number, ending: TurnEnding): TurnPro
 }
 
 /**
- * {@link SessionState.lastTurnFinishedAt} を進める。**`finishTurn` と同じ判定**（始まっていない
+ * {@link SessionState.lastTurnFinishedAt} を進める。`finishTurn` と同じ判定（始まっていない
  * ターンの `turn-finished` / `session-ended` では進めない）で、実際にターンが終わったときだけ
  * `at` にする。
  */
@@ -1007,7 +1007,7 @@ function lastTurnFinishedAtOf(state: SessionState, at: number): number | undefin
 
 /**
  * claude が自分で始めた続きのターン（`turn-resumed`）。進行中の印と SDK ターンごとの持ち物は
- * {@link beginTurn} と同じに戻すが、**吹き出しのセリフと表情は持ち越し**、ターンの通し番号も
+ * {@link beginTurn} と同じに戻すが、吹き出しのセリフと表情は持ち越し、ターンの通し番号も
  * 進めない（新しいやり取りではなく、同じやり取りの続き）。
  */
 function resumeTurn(state: SessionState, at: number): SessionState {
@@ -1044,10 +1044,10 @@ function settleReportDrafting(state: SessionState, toolUseId: string): SessionSt
 }
 
 /**
- * ツール1件の結果を記録に合わせる。**対応する `tool_use` が見つからないときは何もしない**
+ * ツール1件の結果を記録に合わせる。対応する `tool_use` が見つからないときは何もしない
  * （対応が取れない結果を作らない）。`isError` が true のときは `lastToolFailureAt` に `at` を
- * 打つ（立ち絵の「失敗でびくっ」の判定材料。`docs/design.md` 6.5）。**失敗した出力は記録の
- * `status` にそのまま残る**——読める場所は帯の「いまの作業」が開く一覧
+ * 打つ（立ち絵の「失敗でびくっ」の判定材料。`docs/design.md` 6.5）。失敗した出力は記録の
+ * `status` にそのまま残る——読める場所は帯の「いまの作業」が開く一覧
  * （`src/shared/turn-step.ts` の `currentTurnSteps`）。
  */
 function finishTool(
@@ -1077,11 +1077,11 @@ function finishTool(
 }
 
 /**
- * 直近何ターンぶんだけを残す。**ターンの境目は `request`**（`shared/turn.ts` の `splitIntoTurns`）
+ * 直近何ターンぶんだけを残す。ターンの境目は `request`（`shared/turn.ts` の `splitIntoTurns`）
  * なので、古いターンから数えて窓の外に出たものをまとめて落とす。窓の広さは `chatMode` で選ぶ
  * （{@link MAX_SESSION_STATE_TURNS}）。
  *
- * **依頼より前の記録はターンに数えない。** 窓に収まっているあいだは残し、窓を超えて古い
+ * 依頼より前の記録はターンに数えない。 窓に収まっているあいだは残し、窓を超えて古い
  * ターンを落とすときに一緒に落とす。
  */
 function trimToRecentTurns(

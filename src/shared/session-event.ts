@@ -1,10 +1,10 @@
-// セッションの中で起きた出来事（`SessionEvent`）の語彙。**サーバとブラウザの両方が読む契約**
+// セッションの中で起きた出来事（`SessionEvent`）の語彙。サーバとブラウザの両方が読む契約
 // なので shared に置く（docs/design.md 4.1）。
 //
-// **ここは型だけ**で、SDK のメッセージからの変換は core（src/server/session-driver/core/sdk-message.ts）にある
+// ここは型だけで、SDK のメッセージからの変換は core（src/server/session-driver/core/sdk-message.ts）にある
 // （変換は SDK の形に結び付いた「外部由来の値の検証」なので、両側が共有する契約には入れない）。
 //
-// **会話の内容がイベントに入る。** 外に出さない・複製しない・ログに出さない
+// 会話の内容がイベントに入る。 外に出さない・複製しない・ログに出さない
 // （docs/coding-standards.md「会話内容の扱い」）。
 
 import { isPlainObject } from "remeda"
@@ -30,7 +30,7 @@ import { type UsageReviewFindings, type UsageReviewStage } from "./usage-review.
 import { type VisitEvent } from "./visit.ts"
 
 /**
- * `/` 補完に出すコマンド1件。**説明は SDK 側が持っている**（`init` の `slash_commands` は
+ * `/` 補完に出すコマンド1件。説明は SDK 側が持っている（`init` の `slash_commands` は
  * 名前だけだが、駆動側の `supportedCommands()` と `system` の `commands_changed` が名前と説明の
  * 組を返す）。組み込みコマンドも含めて説明が付くので、tsukumo 側に説明の表を
  * 持たない。説明が空文字のコマンドは `undefined` に倒す（名前だけ出す）。
@@ -42,8 +42,8 @@ export type CommandDescription = {
 
 /**
  * SDK のモデル一覧（`supportedModels()`）1件のうち、effort に関わる部分だけを写したもの
- * （`docs/screen-design.md` 13.9「動き方の操作子」）。**「いま効いている値」ではなく「対応の
- * 有無・選べる段」だけ**（実測は `docs/history/decision.md`「effort の途中変更と読み取りが
+ * （`docs/screen-design.md` 13.9「動き方の操作子」）。「いま効いている値」ではなく「対応の
+ * 有無・選べる段」だけ（実測は `docs/history/decision.md`「effort の途中変更と読み取りが
  * 成り立った実測」）。`model` は SDK の `ModelInfo.value`（実測: エイリアスと一致するとは
  * 限らない——`fable` は `claude-fable-5-1` のような値になる）で、エイリアスへの対応付けは
  * 読む側（`src/browser/components/domain/screen-nav/domain/effort-label.ts`）が持つ（表示の整形は
@@ -60,12 +60,12 @@ export type ModelEffortSupport = {
  * 自分で起こすもの（`request` / `pending-changed` / `session-ended`）が1本の流れに混ざる。
  * 受け取る側（src/shared/session-state.ts）はどちらから来たかを区別しない。
  *
- * **未知の `kind` で落ちない**（畳み込みは知らない種別を無視する）ので、イベントを足しても
+ * 未知の `kind` で落ちない（畳み込みは知らない種別を無視する）ので、イベントを足しても
  * `PROTOCOL_VERSION` は上げない（docs/design.md 4.5）。
  */
 export type SessionEvent =
   /**
-   * `system` の `init`。**プロンプトを送るたびに届く**ので「新しいセッション」の合図にしない
+   * `system` の `init`。プロンプトを送るたびに届くので「新しいセッション」の合図にしない
    * （実測。docs/requirements.md 4.1）。`slashCommands` / `terminalSlashCommands` は
    * 毎回上書きでよい。
    */
@@ -77,15 +77,15 @@ export type SessionEvent =
       readonly slashCommands: readonly string[]
       /**
        * `slash_commands` のうち、端末専用（UX が端末に結び付く。`doctor` / `color` /
-       * `reload-plugins` など）のもの。**入力欄の補完からは除く**
+       * `reload-plugins` など）のもの。入力欄の補完からは除く
        * （docs/display.md 4.2「入力欄」。除く計算は
        * src/shared/command-suggestion.ts の `commandCandidates`）。SDK 側でフィールド自体が無いことがあるので、そのときは空配列。
        */
       readonly terminalSlashCommands: readonly string[]
     }
   /**
-   * コマンドの説明が届いた（{@link CommandDescription}）。**名前の一覧（`session-info`）とは別の
-   * 経路で来る**ので、別のイベントにしてある。端末専用かどうかは分からないので、
+   * コマンドの説明が届いた（{@link CommandDescription}）。名前の一覧（`session-info`）とは別の
+   * 経路で来るので、別のイベントにしてある。端末専用かどうかは分からないので、
    * 補完に出す/出さないの判断は名前の一覧の側が持つ（src/shared/command-suggestion.ts）。
    */
   | {
@@ -93,17 +93,17 @@ export type SessionEvent =
       readonly descriptions: readonly CommandDescription[]
     }
   /**
-   * 起動直後に分かった**プラン**（`docs/glossary.md`「プラン」。Agent SDK の `accountInfo()` の
+   * 起動直後に分かったプラン（`docs/glossary.md`「プラン」。Agent SDK の `accountInfo()` の
    * `subscriptionType`）。駆動が起動直後に1回だけ取りに行く
    * （`src/server/session-driver/adapter/sdk-driver.ts`）。
    *
-   * **`email` / `organization` はここに乗らない** — 取り出すのは `subscriptionType` だけで、
+   * `email` / `organization` はここに乗らない — 取り出すのは `subscriptionType` だけで、
    * 駆動の外へは出さない（`AccountInfo` にはアカウントを特定する値も入っている）。
    *
-   * **値は SDK が返したものをそのまま出す**（実測では `"Claude Pro"` のように人が読める
+   * 値は SDK が返したものをそのまま出す（実測では `"Claude Pro"` のように人が読める
    * 文字列。tsukumo 側に表示名の対応表は持たない——知らない値が増えても直さずに出せる）。
    *
-   * **取れなかったとき（`subscriptionType` が無い・呼び出しが落ちた）は流れない**
+   * 取れなかったとき（`subscriptionType` が無い・呼び出しが落ちた）は流れない
    * （動作中の一時的な失敗の扱い。API キーや Bedrock の
    * ときは元々この値が無い。`sdk.d.ts` の `AccountInfo`）。
    */
@@ -111,8 +111,8 @@ export type SessionEvent =
   /**
    * 利用者が送った依頼。ターンの境目になる（駆動側が送信時に起こす）。
    *
-   * `images` は添えた画像の**控えと、棚の原寸を指す id の組**（添えていなければ空）。
-   * **原寸はここに載らない** — 原寸はモデルへ渡り、あとは棚（`src/server/session-driver/core/prompt-image-shelf.ts`）
+   * `images` は添えた画像の控えと、棚の原寸を指す id の組（添えていなければ空）。
+   * 原寸はここに載らない — 原寸はモデルへ渡り、あとは棚（`src/server/session-driver/core/prompt-image-shelf.ts`）
    * が直近ぶんだけメモリで持つ（`docs/requirements.md` 4.10）。
    */
   | {
@@ -121,27 +121,27 @@ export type SessionEvent =
       readonly images: readonly RecordedPromptImage[]
     }
   /**
-   * **記録を持たないターンの始まり**（キャラクターから話しかけてもらう。`docs/screen-design.md` 13.7）。
-   * `request` と同じくターンの境目になるが、**文面を持たない** — 送った一言はログにも記録にも
+   * 記録を持たないターンの始まり（キャラクターから話しかけてもらう。`docs/screen-design.md` 13.7）。
+   * `request` と同じくターンの境目になるが、文面を持たない — 送った一言はログにも記録にも
    * 残さないと決めたので、イベントにも載せない。
    *
-   * **落とすのは組み立ての側ではなく、ここ。** 記録に積まないので、雑談のログ
+   * 落とすのは組み立ての側ではなく、ここ。 記録に積まないので、雑談のログ
    * （`src/shared/chat-log.ts`）にも仕事のメインビュー（`src/shared/main-view.ts`）にも
    * 雑談の会話のアーカイブにも、初めから流れようが無い。
    */
   | { readonly kind: "turn-started" }
   /**
-   * **claude が自分で始めた続きのターン**（背景のタスクが終わった知らせや、サブエージェントの
+   * claude が自分で始めた続きのターン（背景のタスクが終わった知らせや、サブエージェントの
    * `SendMessage` を受けて、依頼なしで続きを報告するターン。実測: `task_notification` のあと、
    * 依頼を送らなくても `init` → `assistant` → `result` が届く）。起こすのは SDK の口
    * （`src/server/session-driver/core/self-started-turn.ts`）。
    *
-   * 記録を持たない。**新しいターンではなく同じやり取りの続き**なので、
+   * 記録を持たない。新しいターンではなく同じやり取りの続きなので、
    * 吹き出しのセリフと表情は持ち越す（空にすると、合図が届くたびに吹き出しが
    * 「（まだ発話がありません）」に戻る）。
    */
   | { readonly kind: "turn-resumed" }
-  /** 書きかけのターンの本文。完成した本文が来るまでの**仮**（docs/display.md 4.2）。 */
+  /** 書きかけのターンの本文。完成した本文が来るまでの仮（docs/display.md 4.2）。 */
   | { readonly kind: "partial-utterance"; readonly text: string }
   /** 完成したターンの本文。仮の本文を置き換える。 */
   | { readonly kind: "utterance"; readonly text: string }
@@ -187,13 +187,13 @@ export type SessionEvent =
   /** 答え待ちの列が変わった（積まれた・解決した）。中身は src/shared/pending-ask.ts が持つ。 */
   | { readonly kind: "pending-changed"; readonly pending: readonly PendingAsk[] }
   /**
-   * 質問（`AskUserQuestion`）に利用者が答えた。**答えが確定した時点で1回だけ流す**
+   * 質問（`AskUserQuestion`）に利用者が答えた。答えが確定した時点で1回だけ流す
    * （docs/display.md 4.2「許可と質問」）。`pending-changed` は列が
-   * 空になったことしか伝えないので、**「何を聞いて、どう答えたか」を残せるのはこの経路だけ**
+   * 空になったことしか伝えないので、「何を聞いて、どう答えたか」を残せるのはこの経路だけ
    * （メインビューの質問の記録。`src/browser/components/page/conversation/components/main-view/components/question-record/question-record.tsx`）。
    *
    * `answers[i]` は `questions[i]` に対して選んだ答えの並び（{@link QuestionAnswer}）。
-   * **質問文も答えも会話の内容**なので、ログに出さない・外へ出さない。
+   * 質問文も答えも会話の内容なので、ログに出さない・外へ出さない。
    */
   | {
       readonly kind: "question-answered"
@@ -202,20 +202,20 @@ export type SessionEvent =
     }
   /**
    * ターンが終わった（`result`。サブエージェントの中の `result` は変換で捨てる）。`outcome` は
-   * 終わり方（`src/shared/turn-failure.ts` の {@link TurnOutcome}）。**中断は失敗にしない**。
+   * 終わり方（`src/shared/turn-failure.ts` の {@link TurnOutcome}）。中断は失敗にしない。
    * 駆動が自分で起こすのは fake driver の中断（`interrupted`）と、復元の再生の区切り（`completed`）。
    */
   | { readonly kind: "turn-finished"; readonly outcome: TurnOutcome }
   /**
-   * API の呼び出しが失敗し、待ってから呼び直す（SDK の `system` / `api_retry`）。**呼び直す
-   * たびに1回ずつ**届く。呼び直しが実った合図は来ないので、畳み込みはモデルが何かを出した
+   * API の呼び出しが失敗し、待ってから呼び直す（SDK の `system` / `api_retry`）。呼び直す
+   * たびに1回ずつ届く。呼び直しが実った合図は来ないので、畳み込みはモデルが何かを出した
    * ところで「呼び直し中」を下ろす（`src/shared/session-state.ts`）。サブエージェントの呼び直しも
    * 見分けずに届く（SDK のメッセージに持ち場の印が無い）。
    */
   | { readonly kind: "api-retry"; readonly retry: ApiRetry }
   /**
-   * API がエラーを返した（`assistant` の `error`。メインのものだけ）。**これだけではターンの
-   * 失敗にしない**——本体が立て直して続けることがある（出力の上限など）。失敗で終わったかは
+   * API がエラーを返した（`assistant` の `error`。メインのものだけ）。これだけではターンの
+   * 失敗にしない——本体が立て直して続けることがある（出力の上限など）。失敗で終わったかは
    * 続く `turn-finished` の `outcome` が決め、この種類がその理由になる。
    */
   | { readonly kind: "api-error"; readonly error: ApiErrorKind }
@@ -226,31 +226,31 @@ export type SessionEvent =
   | { readonly kind: "rate-limit-changed"; readonly rateLimit: RateLimit }
   /**
    * そのターンの終わりに SDK が渡してきたトークンの使用量（`result` の `modelUsage`）。
-   * **運ぶのは `query()` の中の累計そのまま**で、ターンごとの増分に直すのは受け取った側
+   * 運ぶのは `query()` の中の累計そのままで、ターンごとの増分に直すのは受け取った側
    * （`src/server/session/core/session-manager.ts` が前回の累計を覚えて差を取る）。
    *
-   * **画面には出ない。** 畳み込み（session-state.ts）は何もせず、行き先は
+   * 画面には出ない。 畳み込み（session-state.ts）は何もせず、行き先は
    * `~/.tsukumo/token-usage/` の記録だけ（`src/server/token-usage/adapter/token-usage-log.ts`）。`turn-finished` に
-   * 相乗りさせずに別のイベントにしてあるのは、**使用量を持たない終わり方があるから**
+   * 相乗りさせずに別のイベントにしてあるのは、使用量を持たない終わり方があるから
    * （復元の再生・fake driver・`modelUsage` の無い `result`）——「無い」を型に持ち込まずに済む。
    *
-   * **数とモデルの名前だけ**で、会話の内容は入らない（`docs/coding-standards.md`
+   * 数とモデルの名前だけで、会話の内容は入らない（`docs/coding-standards.md`
    * 「会話内容の扱い」）。
    */
   | { readonly kind: "token-usage"; readonly cumulative: readonly ModelTokenUsage[] }
   /**
    * assistant 1ステップぶんの使用量（`assistant` メッセージの `message.usage`）。
-   * **ターンの中を「メインループぶん」と「サブエージェントぶん」に割れるのはこの経路だけ**
+   * ターンの中を「メインループぶん」と「サブエージェントぶん」に割れるのはこの経路だけ
    * （`result` の `modelUsage` は両方を混ぜた累計なので、モデルが同じだと割れない）。
    *
-   * **`messageId` を運ぶのは、同じ `message.id` のステップが何度も届くから。** 返答が流れて
-   * いる間は完成したブロックごとに `assistant` が出て、`message.usage` は**まだ確定値ではない**
+   * `messageId` を運ぶのは、同じ `message.id` のステップが何度も届くから。 返答が流れて
+   * いる間は完成したブロックごとに `assistant` が出て、`message.usage` はまだ確定値ではない
    * （`sdk.d.ts`: 「several consecutive assistant messages can share message.id ...
-   * message.usage is not final」）。**同じ `message.id` の最後を取る**のは受け取った側
+   * message.usage is not final」）。同じ `message.id` の最後を取るのは受け取った側
    * （`src/server/token-usage/core/token-usage.ts`）。
    *
-   * **画面には出ない**（畳み込みは何もしない）。行き先は `~/.tsukumo/token-usage/` の記録だけ。
-   * **数だけ**で、本文も思考も入らない（`docs/coding-standards.md`「会話内容の扱い」）。
+   * 画面には出ない（畳み込みは何もしない）。行き先は `~/.tsukumo/token-usage/` の記録だけ。
+   * 数だけで、本文も思考も入らない（`docs/coding-standards.md`「会話内容の扱い」）。
    */
   | {
       readonly kind: "step-usage"
@@ -259,12 +259,12 @@ export type SessionEvent =
       readonly usage: StepTokenUsage
     }
   /**
-   * `/clear` で会話が消された（SDK の `conversation_reset`。実測）。**tsukumo は
-   * `/clear` という文字列を見ていない。** `/` コマンドは依頼の文面としてそのまま本体へ渡り、
+   * `/clear` で会話が消された（SDK の `conversation_reset`。実測）。tsukumo は
+   * `/clear` という文字列を見ていない。 `/` コマンドは依頼の文面としてそのまま本体へ渡り、
    * 本体が会話を捨てたときにこのメッセージを流してくる（`new_conversation_id` 付き。直後に
    * 新しい `session_id` の `system/init` が届く）。
    *
-   * **`/compact` では流れない**（同じ実測で `system/status` + 同じ `session_id` の `init` だけ
+   * `/compact` では流れない（同じ実測で `system/status` + 同じ `session_id` の `init` だけ
    * だった）。要約は会話を消さないので、ここで拾う必要も無い。
    */
   | { readonly kind: "conversation-cleared" }
@@ -277,12 +277,12 @@ export type SessionEvent =
    *    `local_command_run: { command: "model", args }`。実測。`src/server/session-driver/core/sdk-message.ts`）。
    *    `init` は1ターン遅れる（docs/design.md 4.1）
    * 2. サイドバーの `<select>` からの `session.setModel` を駆動が確定させたとき
-   *    （`src/server/session-driver/adapter/sdk-driver.ts` の `setModel`）。**こちらは駆動が実際に切り替えたことを
-   *    確認してから出すので、ブラウザ側のローカル echo ではない**（session-manager.ts が
+   *    （`src/server/session-driver/adapter/sdk-driver.ts` の `setModel`）。こちらは駆動が実際に切り替えたことを
+   *    確認してから出すので、ブラウザ側のローカル echo ではない（session-manager.ts が
    *    駆動を経ずにこのイベントを合成することはない）
    *
    * `model` はそのまま状態へ運ぶ値。1 のときは `/model` に渡した引数（前後の空白だけ除いてある）で
-   * **エイリアスとして知っているかどうかの検証はしていない**。2 のときは `MODEL_ALIASES`
+   * エイリアスとして知っているかどうかの検証はしていない。2 のときは `MODEL_ALIASES`
    * （src/shared/command.ts）の値そのもの。`MODEL_ALIASES` と完全一致するときだけ状態を
    * 更新する判断は畳み込み側（session-state.ts）が持つ（知らない値では状態を変えず、次の
    * `init` を待つだけにする）。
@@ -290,13 +290,13 @@ export type SessionEvent =
   | { readonly kind: "model-changed"; readonly model: string }
   /**
    * 起動直後に分かった、モデルごとの effort の対応（{@link ModelEffortSupport}）。
-   * **駆動が起動直後に1回だけ取りに行く**（`supportedModels()`）。**取れなかったとき（呼び出しが落ちた・空だった）は流れない**（動作中の
+   * 駆動が起動直後に1回だけ取りに行く（`supportedModels()`）。取れなかったとき（呼び出しが落ちた・空だった）は流れない（動作中の
    * 一時的な失敗の扱い。`docs/coding-standards.md`「エラーハンドリング」）。
    */
   | { readonly kind: "model-effort-support"; readonly models: readonly ModelEffortSupport[] }
   /**
    * いま効いている effort が分かった（`Stop` フック入力の `effort.level`。`docs/screen-design.md`
-   * 13.9「動き方の操作子」）。**読める口はこれだけ**——`帯から送った値をそのまま出さない`
+   * 13.9「動き方の操作子」）。読める口はこれだけ——`帯から送った値をそのまま出さない`
    * （実測は `docs/history/decision.md`「effort の途中変更と読み取りが成り立った実測」）。
    * ターンが終わるたびに、そのとき効いていた値で届く（変わっていなくても届く）。
    */
@@ -308,12 +308,12 @@ export type SessionEvent =
    */
   | { readonly kind: "tasks-changed"; readonly tasks: TaskSummaryResult }
   /**
-   * キャラクターパックが決まった・一覧が変わった（adapter の `character-pack.ts`。**起こしたとき・
-   * 起こし直したときの1回ずつと、画面からパックを変えた・作ったとき**）。キャラビューが立ち絵を
-   * 取りに行く先（`docs/design.md` 4.1・7.2）。**中身は URL だけ**（素材そのものは乗らない）。
+   * キャラクターパックが決まった・一覧が変わった（adapter の `character-pack.ts`。起こしたとき・
+   * 起こし直したときの1回ずつと、画面からパックを変えた・作ったとき）。キャラビューが立ち絵を
+   * 取りに行く先（`docs/design.md` 4.1・7.2）。中身は URL だけ（素材そのものは乗らない）。
    *
-   * 全パックぶんの一覧（`packs`。使用中以外のパックの姿も含む）も一緒に運ぶ。**一覧が変わる契機は
-   * いま出しているパックが変わる契機と同じ**で、使用中の印（`inUse`）も持ち替えで動くので、
+   * 全パックぶんの一覧（`packs`。使用中以外のパックの姿も含む）も一緒に運ぶ。一覧が変わる契機は
+   * いま出しているパックが変わる契機と同じで、使用中の印（`inUse`）も持ち替えで動くので、
    * イベントを分けない（`docs/design.md` 4.1）。
    */
   | ({ readonly kind: "character-changed" } & CharacterInfo & {
@@ -321,86 +321,86 @@ export type SessionEvent =
       })
   /**
    * 切り替え先として選べるセッションの一覧が分かった（`docs/requirements.md` 4.8）。
-   * **駆動を起こしたときと、起こし直したときの1回ずつ**流れる（一覧の出どころが「セッションを探すために読む transcript の一覧」そのものなので、
+   * 駆動を起こしたときと、起こし直したときの1回ずつ流れる（一覧の出どころが「セッションを探すために読む transcript の一覧」そのものなので、
    * 別の契機を作らない）。
    *
-   * **ターンのたびには流れない。** 印が付くのはターンが終わって3秒後で、押し直すたびに
-   * transcript の一覧を読み直すことになる。画面に出る最終更新時刻は**起こした時点の姿**。
+   * ターンのたびには流れない。 印が付くのはターンが終わって3秒後で、押し直すたびに
+   * transcript の一覧を読み直すことになる。画面に出る最終更新時刻は起こした時点の姿。
    *
-   * 中身は印から読めるものだけ（`src/shared/session-choice.ts`）。**会話の内容は入らない。**
+   * 中身は印から読めるものだけ（`src/shared/session-choice.ts`）。会話の内容は入らない。
    */
   | {
       readonly kind: "sessions-changed"
       readonly sessions: readonly SessionChoice[]
       /**
        * いま起こしたセッションのID（続きから始めなかったときは undefined ＝ 新規）。
-       * **`session-info` を待たずに「どれを出しているか」を言えるのはこの経路だけ** —
+       * `session-info` を待たずに「どれを出しているか」を言えるのはこの経路だけ —
        * `init` は最初の依頼を送るまで届かないので、切り替えた直後の画面は
        * どのセッションに居るのかを他から知れない。
        */
       readonly current: string | undefined
     }
   /**
-   * 雑談モードに入っている／出ている（`docs/chat-mode.md` 4.9）。**駆動を起こしたときと、
-   * `session.setChatMode` で起こし直したときの1回ずつ**流れる。
+   * 雑談モードに入っている／出ている（`docs/chat-mode.md` 4.9）。駆動を起こしたときと、
+   * `session.setChatMode` で起こし直したときの1回ずつ流れる。
    *
-   * 起こし直すと状態が初期値へ戻るので、**このイベントが無いと画面は雑談中かどうかを
-   * 見失う**（`INITIAL_SESSION_STATE.chatMode` は `false`）。
+   * 起こし直すと状態が初期値へ戻るので、このイベントが無いと画面は雑談中かどうかを
+   * 見失う（`INITIAL_SESSION_STATE.chatMode` は `false`）。
    */
   | { readonly kind: "chat-mode-changed"; readonly chat: boolean }
   /**
    * 雑談のサイドバーの「最近の話題」に出す見出し（新しい順。`docs/screen-design.md` 13.7）。
-   * **雑談で起こしたときと、定着があらすじを書き直したとき**に流れる
+   * 雑談で起こしたときと、定着があらすじを書き直したときに流れる
    * （`src/server/session/core/session-launch.ts` と `src/server/session/core/session-manager.ts`）。
    *
-   * **運ぶのは写しから取り出した見出しだけ**で、要約の本文は乗らない（`docs/requirements.md`
+   * 運ぶのは写しから取り出した見出しだけで、要約の本文は乗らない（`docs/requirements.md`
    * 4.9。取り出すのは `src/server/chat/core/chat-consolidation.ts` の `chatTopics`）。取り出せなかった・
    * 写しがまだ無いときは空の並び。
    */
   | { readonly kind: "chat-topics-changed"; readonly topics: readonly string[] }
   /**
    * 雑談のサイドバーの「覚えていること」に出す一覧（`docs/design.md` 7.1・`docs/screen-design.md` 13.7）。
-   * **雑談で起こしたときと、`remember` / `forget`（キャラクター自身）・画面の「編集」の
-   * `chat.forgetRememberedLine` のどれかで `persona.md` の `## 覚えたこと` が変わったとき**に流れる
+   * 雑談で起こしたときと、`remember` / `forget`（キャラクター自身）・画面の「編集」の
+   * `chat.forgetRememberedLine` のどれかで `persona.md` の `## 覚えたこと` が変わったときに流れる
    * （`src/server/session/core/session-launch.ts` と `src/server/chat/adapter/persona-memory.ts`）。
    *
-   * **運ぶのは節の行そのもの**（`- ` を外した文面、古い→新しいの順）。上限に当たった・
+   * 運ぶのは節の行そのもの（`- ` を外した文面、古い→新しいの順）。上限に当たった・
    * 一致する行が無かった・書けなかったときは流れない（`PersonaMemory` の契約どおり、
    * 変わらなかった回は知らせない）。
    */
   | { readonly kind: "remembered-lines-changed"; readonly lines: readonly string[] }
   /**
    * 新しいセッションの既定（モデル・許可モード）が分かった（`docs/screen-design.md` 13.6）。
-   * **駆動を起こしたときと、起こし直したときの1回ずつ**と、
-   * **歯車から `session.setSessionDefault` で覚え直したとき**に流れる。
+   * 駆動を起こしたときと、起こし直したときの1回ずつと、
+   * 歯車から `session.setSessionDefault` で覚え直したときに流れる。
    *
-   * 運ぶのは覚えた値（読めなければ同梱の既定へ畳んだあとの値）で、**いま動いている
-   * セッションの値ではない**（そちらは `session-info` の `model` / `permissionMode`）。
+   * 運ぶのは覚えた値（読めなければ同梱の既定へ畳んだあとの値）で、いま動いている
+   * セッションの値ではない（そちらは `session-info` の `model` / `permissionMode`）。
    */
   | { readonly kind: "session-default-changed"; readonly sessionDefault: SessionDefault }
   /**
    * 歯車の「訪問」のオン・オフが変わった（`docs/screen-design.md` 13.6・13.9「設定の歯車」）。
-   * **いま動いているセッションに即座に効く**——オフのあいだは
+   * いま動いているセッションに即座に効く——オフのあいだは
    * 客が来ず、訪問中にオフにしたらその場で帰る（`src/server/visit/core/visit-timing.ts`）。
-   * **ディスクには覚えない**ので、起こし直すと初期値の「する」へ戻る（`visit.setEnabled` で
+   * ディスクには覚えないので、起こし直すと初期値の「する」へ戻る（`visit.setEnabled` で
    * 書き換えるたびに流れる、この1つだけが源）。
    */
   | { readonly kind: "visit-enabled-changed"; readonly visitEnabled: boolean }
   /**
    * claude 自身の圧縮（`/compact`）が起きた（SDK の `system` / `compact_boundary`。
-   * docs/glossary.md「圧縮の区切り」）。**数値（`compact_metadata` の `pre_tokens` /
-   * `post_tokens` / `duration_ms`）は運ばない** — 画面に出さないものを契約に入れない
+   * docs/glossary.md「圧縮の区切り」）。数値（`compact_metadata` の `pre_tokens` /
+   * `post_tokens` / `duration_ms`）は運ばない — 画面に出さないものを契約に入れない
    * （`docs/chat-mode.md` 4.9「記憶の圧縮と忘却」）。
    *
-   * 画面に出すのは雑談のログの細い線1本だけで、**文言は添えない**。
+   * 画面に出すのは雑談のログの細い線1本だけで、文言は添えない。
    */
   | { readonly kind: "compact-boundary" }
   /**
    * 前のセッションの記録を組み直した再生が、ここで終わった（`src/server/session-driver/core/session-restore.ts`
-   * の `toRestoredEvents` が末尾に1つ足す）。**ここまでに積んだ依頼とセリフの記録は、起きた
-   * 時刻が分からない**（`docs/design.md` 4.2「記録の時刻」）。
+   * の `toRestoredEvents` が末尾に1つ足す）。ここまでに積んだ依頼とセリフの記録は、起きた
+   * 時刻が分からない（`docs/design.md` 4.2「記録の時刻」）。
    *
-   * 再生のイベントに打たれる `at` は**流し直した時刻**で、話した時刻ではない。transcript を
+   * 再生のイベントに打たれる `at` は流し直した時刻で、話した時刻ではない。transcript を
    * 読む口（SDK の `getSessionMessages`）が時刻を落とすので、組み直した側に本当の時刻が無い。
    * 印を畳み込みに渡さないと、起こし直した直後のログが全部「いま」の時刻に見える。
    */
@@ -408,37 +408,37 @@ export type SessionEvent =
   /**
    * 背景のタスク（docs/glossary.md「背景のタスク」）の顔ぶれが変わった（SDK の `system` /
    * `background_tasks_changed`。実測: 背景の Bash・サブエージェントが始まったときと終わったときに
-   * 1回ずつ届く）。**運ぶのは変わったあとの全員**で、受け取る側は丸ごと置き換える（SDK の
+   * 1回ずつ届く）。運ぶのは変わったあとの全員で、受け取る側は丸ごと置き換える（SDK の
    * 型定義が「REPLACE semantics」と言う水準の知らせ。始まり・終わりの対を数えないので、片方を
    * 取りこぼしても「動いている」が居残らない）。
    *
-   * **活動でないもの（SDK の `ambient`。見張り役など）は変換で落としてある**
+   * 活動でないもの（SDK の `ambient`。見張り役など）は変換で落としてある
    * （`src/server/session-driver/core/sdk-message.ts`）。
    */
   | { readonly kind: "background-tasks-changed"; readonly tasks: readonly BackgroundTask[] }
   /**
    * 見直し（docs/glossary.md「見直し」）が段に入った（`usage_review_stage` ツールが受け付けた
-   * 呼び出し）。**出すのはツールの handler**（`src/server/usage-review/core/usage-review-tool.ts`）で、
+   * 呼び出し）。出すのはツールの handler（`src/server/usage-review/core/usage-review-tool.ts`）で、
    * `assistant` メッセージの変換からは出ない——引数を検査して通したものだけを流すため。
    */
   | { readonly kind: "usage-review-stage"; readonly stage: UsageReviewStage; readonly days: number }
   /** 見直しの結果が届いた（`usage_review_result` ツールが受け付けた呼び出し。出し手は上と同じ）。 */
   | { readonly kind: "usage-review-result"; readonly findings: UsageReviewFindings }
   /**
-   * 提案を1件見送った（画面の `usageReview.dismissProposal` コマンド）。**出し手は
-   * `src/session-start.ts`**（書き込み先は `src/server/usage-review/adapter/usage-proposal-dismissal.ts`）。
+   * 提案を1件見送った（画面の `usageReview.dismissProposal` コマンド）。出し手は
+   * `src/session-start.ts`（書き込み先は `src/server/usage-review/adapter/usage-proposal-dismissal.ts`）。
    * `key` は {@link usageProposalKey} と同じ形（`kind:target`）。
    */
   | { readonly kind: "usage-proposal-dismissed"; readonly key: string }
   /**
    * `diary` ツールが振り返りの日記を1段落受け付けた（保存も済んだ。出し手は handler = 窓口
-   * `src/server/diary/core/diary-tool.ts` の `createDiaryIntake`。**検査を通して保存できたものだけ**
+   * `src/server/diary/core/diary-tool.ts` の `createDiaryIntake`。検査を通して保存できたものだけ
    * 流す）。`date` は振り返りの対象の日（`YYYY-MM-DD`）。
    */
   | { readonly kind: "diary-written"; readonly date: string }
   /**
-   * 成果の画面から振り返りを頼まれた（`session.reflectAchievement` コマンド）。**出し手は
-   * session-manager**——その日の成果を数え直し、書き手（`src/server/diary/core/diary-writer.ts`）に
+   * 成果の画面から振り返りを頼まれた（`session.reflectAchievement` コマンド）。出し手は
+   * session-manager——その日の成果を数え直し、書き手（`src/server/diary/core/diary-writer.ts`）に
    * その日ぶんを渡した直後に流す。会話とは別の使い捨ての問い合わせなので、会話の `prompt` は
    * 通らない（`docs/design.md`「日記の受け取りと保存」）。`date` は振り返りの対象の日
    * （`YYYY-MM-DD`）。段は「この日のタスクを読む」（`read`）。
@@ -446,20 +446,20 @@ export type SessionEvent =
   | { readonly kind: "diary-requested"; readonly date: string }
   /**
    * 会話とは別の使い捨ての問い合わせの `includePartialMessages` の断片で、`diary` の呼び出しの
-   * 塊が開いた（成果の画面の進みの材料。**出し手は `src/server/diary/adapter/sdk-diary.ts`**）。
+   * 塊が開いた（成果の画面の進みの材料。出し手は `src/server/diary/adapter/sdk-diary.ts`）。
    * 段は「日記を書く」（`write`）。
    */
   | { readonly kind: "diary-drafting"; readonly toolUseId: string }
   /**
    * 振り返りの段が進んだ（`docs/design.md`「日記の受け取りと保存」「3段の進みの決まり方」）。
-   * **出し手は `src/server/diary/adapter/sdk-diary.ts`**——同じ塊の引数の断片
+   * 出し手は `src/server/diary/adapter/sdk-diary.ts`——同じ塊の引数の断片
    * （`input_json_delta`）に、最上位の鍵 `bookmark` が現れた回だけ流す（`src/server/diary/core/diary-tool.ts`
    * の純関数が拾う）。運ぶのは段だけで、引数の中身はイベントに載せない。
    */
   | { readonly kind: "diary-stage"; readonly stage: DiaryStage }
   /**
    * 振り返りの使い捨ての問い合わせが `diary` を受け付けられずに終わった（時間切れ・失敗・中断の
-   * どれでも）。**出し手は書き手**（`src/server/diary/core/diary-writer.ts`）。`date` は振り返りの
+   * どれでも）。出し手は書き手（`src/server/diary/core/diary-writer.ts`）。`date` は振り返りの
    * 対象の日。`docs/design.md`「日記の受け取りと保存」「状態とイベント」。
    */
   | { readonly kind: "diary-failed"; readonly date: string }
@@ -467,7 +467,7 @@ export type SessionEvent =
   | VisitEvent
 
 /**
- * 時刻を打ったイベント1件。**時刻はイベントの発生側（サーバ）が決める**（ブラウザ側で
+ * 時刻を打ったイベント1件。時刻はイベントの発生側（サーバ）が決める（ブラウザ側で
  * 読んだ時計を畳み込みに渡さない。docs/design.md 4.1）。
  */
 export type StampedEvent = {
@@ -476,8 +476,8 @@ export type StampedEvent = {
 }
 
 /**
- * 外から届いた値を {@link SessionEvent} として受け取るための**封筒だけ**のスキーマ
- * （`kind` を持つオブジェクトであること）。**中身は検証しない**（union を zod で二重に持つと、
+ * 外から届いた値を {@link SessionEvent} として受け取るための封筒だけのスキーマ
+ * （`kind` を持つオブジェクトであること）。中身は検証しない（union を zod で二重に持つと、
  * イベントにフィールドを足すたびに型とスキーマの2か所を直すことになる）。使うのは境界の2箇所だけ — フレームの読み取り（src/shared/frame.ts）と
  * fake driver の疑似セッション（src/server/session-driver/adapter/fake-driver.ts）。
  */

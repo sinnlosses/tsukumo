@@ -411,8 +411,8 @@ describe("mainViewTurns（最終レポートの印）", () => {
 })
 
 describe("mainViewTurns（締めの speak → レポートで終える並び）", () => {
-  // 締めの `speak` のあとに本文で終える並びを、SDK から届くイベントの形で流す。**締めの `speak` は
-  // `speech` になって本文の記録にならない**ので、そのあとの本文が最後の本文のまま残る。
+  // 締めの `speak` のあとに本文で終える並びを、SDK から届くイベントの形で流す。締めの `speak` は
+  // `speech` になって本文の記録にならないので、そのあとの本文が最後の本文のまま残る。
   const speech = (text: string): SessionEvent => ({ kind: "speech", text, expression: "default" })
   const utterance = (text: string): SessionEvent => ({ kind: "utterance", text })
   const editRun = (toolUseId: string): readonly SessionEvent[] => [

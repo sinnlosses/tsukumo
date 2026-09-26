@@ -1,7 +1,7 @@
 // `report` ツールで受け取ったレポートの検査（「検査 → 整形 → 描画」の検査の段。
 // docs/display.md 4.2「出力の分離（セリフと詳細）」）。
 //
-// **検査するのは「レポートの記法」（`report-notation.ts`）の条のうち、機械で判定できるものだけ。**
+// 検査するのは「レポートの記法」（`report-notation.ts`）の条のうち、機械で判定できるものだけ。
 // 読み手によって結論が変わる条（効能書き・根拠の量・前置きと締めの行など）は入れない
 // ——誤って差し戻すと、直しようのない指摘でモデルを1往復させることになる。
 //
@@ -19,7 +19,7 @@ export type ReportDraft = {
 }
 
 /**
- * 規約違反1つ。`count` は違反の数（文の数・塊の数）で、**モデルが書いた文面は持たない**
+ * 規約違反1つ。`count` は違反の数（文の数・塊の数）で、モデルが書いた文面は持たない
  * （差し戻しの文面に写さないため。会話の中身をモデルの文脈へ戻す経路を作らない）。
  */
 export type ReportViolation =
@@ -71,7 +71,7 @@ export function reportViolations(report: ReportDraft): readonly ReportViolation[
 }
 
 /**
- * 差し戻すときの `report` の戻り値。**違反した条と直し方だけ**を1行ずつ並べ、画面の状態
+ * 差し戻すときの `report` の戻り値。違反した条と直し方だけを1行ずつ並べ、画面の状態
  * （描けたか・どこに出たか）は載せない（docs/display.md 4.2）。モデルの文脈に戻るので短くする。
  */
 export function reportRejectionText(violations: readonly ReportViolation[]): string {
@@ -112,7 +112,7 @@ function violationLine(violation: ReportViolation): string {
 }
 
 /**
- * 規約が挙げる mermaid の種類（`report-notation.ts` の表の2行）。**文面と揃っていること**は
+ * 規約が挙げる mermaid の種類（`report-notation.ts` の表の2行）。文面と揃っていることは
  * `test/server/report/core/report-violation.test.ts` が見る。
  */
 const MERMAID_KINDS: ReadonlySet<string> = new Set([
@@ -151,7 +151,7 @@ const HTML_BLOCK_CLOSE = /<\/(?:details|div)>/g
 type Fence = { readonly info: string; readonly content: readonly string[] }
 
 /**
- * 本文を、フェンスの外の行とフェンスの並びに分ける。`outside` は**行の並びを保つ**ため、
+ * 本文を、フェンスの外の行とフェンスの並びに分ける。`outside` は行の並びを保つため、
  * フェンスの行（開き・中身・閉じ）を空行に置き換えて残す。閉じの無いフェンスは末尾まで続く。
  */
 function splitFences(body: string): {
@@ -218,7 +218,7 @@ function closesFence(line: string, marker: string): boolean {
 }
 
 /**
- * 地の文の段落。**HTML の塊（`<details>` / `<div>`）の中は数えない**（4文以上の段落の逃げ先が
+ * 地の文の段落。HTML の塊（`<details>` / `<div>`）の中は数えない（4文以上の段落の逃げ先が
  * `<details>` なので）。段落は空行か、地の文でない行で切れる。
  */
 function paragraphs(lines: readonly string[]): readonly string[] {
@@ -247,8 +247,8 @@ function paragraphs(lines: readonly string[]): readonly string[] {
 }
 
 /**
- * 文の数。句点（`。` `！` `？`）で数え、句点で終わらない末尾も1文と数える。**inline code と
- * 全角の丸括弧の中は数えない**（括弧の中の句点で文を割らない）。
+ * 文の数。句点（`。` `！` `？`）で数え、句点で終わらない末尾も1文と数える。inline code と
+ * 全角の丸括弧の中は数えない（括弧の中の句点で文を割らない）。
  */
 function sentenceCount(text: string): number {
   const plain = text

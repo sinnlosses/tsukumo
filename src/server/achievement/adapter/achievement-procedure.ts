@@ -1,7 +1,7 @@
 // 成果の手続き（`docs/glossary.md`「手続き」）。形は `src/shared/contract/achievement.ts`、束ねるのは
 // 配線の `src/router.ts`。照合は束ねる側のミドルウェアが済ませている。
 //
-// **`git` のタイムアウト・失敗を契約のエラー（`UNAVAILABLE`、503）に訳すのはここだけ**（部分的な
+// `git` のタイムアウト・失敗を契約のエラー（`UNAVAILABLE`、503）に訳すのはここだけ（部分的な
 // 数を出さない）。`main` が読めないだけなら失敗にせず `{ kind: "unknown" }` をそのまま配る
 // （`main-history.ts` の `ReadAchievementResult`）。
 
@@ -14,8 +14,8 @@ import { type ReadAchievementResult, type ReadCommitCalendarResult } from "./mai
 /** この機能の手続きが使う口（中身は配線が渡す）。 */
 export type AchievementProcedurePorts = {
   /**
-   * 1日ぶんの成果（`main-history.ts` の `readAchievement` と日記を束ねたもの）。**「今日」を決めて
-   * 見る日を検証するのは配線**（`src/view-delivery.ts`）で、ここは選び方をそのまま渡す。
+   * 1日ぶんの成果（`main-history.ts` の `readAchievement` と日記を束ねたもの）。「今日」を決めて
+   * 見る日を検証するのは配線（`src/view-delivery.ts`）で、ここは選び方をそのまま渡す。
    */
   readonly readAchievementDay: (
     selection: AchievementDaySelection,

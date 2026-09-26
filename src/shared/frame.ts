@@ -1,11 +1,11 @@
-// サーバからブラウザへ押すフレーム。**封筒（`type` と `protocolVersion`）だけを zod で見る**。
+// サーバからブラウザへ押すフレーム。封筒（`type` と `protocolVersion`）だけを zod で見る。
 // 中身（`state` / `events`）は TS の型のままで、スキーマを二重に持たない
 // ——状態にフィールドを1つ足すたびにスキーマも直す手間が、移行の各段で効いてくるため。
 //
 // 押す側（src/server/session/core/session-manager.ts）は型の付いた値を組み立てるだけなので、検証が要るのは
 // 受け取る側（ブラウザ）の1箇所。
 //
-// **会話の内容がフレームに乗る**（`state` と `events`）。コマンドを断るときの理由
+// 会話の内容がフレームに乗る（`state` と `events`）。コマンドを断るときの理由
 // （{@link FRAME_ERROR_REASON}）は定型文だけで、依頼の文面を含めない（docs/coding-standards.md
 // 「会話内容の扱い」）。
 
@@ -16,32 +16,32 @@ import { stampedEventSchema, type StampedEvent } from "./session-event.ts"
 import { type SessionState } from "./session-state.ts"
 
 /**
- * フレームと状態の版。**イベントの追加では上げない**（知らない `kind` は畳み込みが無視する）。
+ * フレームと状態の版。イベントの追加では上げない（知らない `kind` は畳み込みが無視する）。
  * 既存のイベントの形・状態の形を変えたときだけ上げる（docs/design.md 4.5）。
  * 版が違うフレームを受け取ったブラウザは「ページを読み込み直してください」を出す。
  *
- * **コマンドの形を変えたときも上げる**——同じ `/ws` に乗るので、形の違うタブとプロセスの組は
+ * コマンドの形を変えたときも上げる——同じ `/ws` に乗るので、形の違うタブとプロセスの組は
  * コマンドが1件も通らなくなる（知らせで読み込み直してもらう）。
  *
  * 直近は `report` の記録とイベントに検証結果（`checks`）を足して 22 から 23 へ上げた。その前は
  * フレームを購読の手続き（`frame.subscribe`）の Event Iterator で運ぶようにしたことで 21 から 22 へ
- * （**この変更をまたぐ組〔古いタブと新しいプロセス、またはその逆〕には `hello` が届かない**ので、
+ * （この変更をまたぐ組〔古いタブと新しいプロセス、またはその逆〕には `hello` が届かないので、
  * 版の知らせも出ない。上げ直したプロセスからページを読み込み直せば戻る）。
  */
 export const PROTOCOL_VERSION = 23
 
 /**
- * 配っているものを取り直す先。`style` は CSS だけを取り直す（**開いているターンの選択も入力欄の
- * 文面も残る**）、`page` はページごと読み込み直す。
+ * 配っているものを取り直す先。`style` は CSS だけを取り直す（開いているターンの選択も入力欄の
+ * 文面も残る）、`page` はページごと読み込み直す。
  */
 export type RefreshTarget = "page" | "style"
 
 /**
  * サーバ → ブラウザのフレーム。
  *
- * - `hello`: 購読ごとに最初の1回（と、起こし直したとき）。`state` は**サーバ側の畳み込みが持っている今の姿**
+ * - `hello`: 購読ごとに最初の1回（と、起こし直したとき）。`state` はサーバ側の畳み込みが持っている今の姿
  * - `events`: 起きたイベントをまとめたもの（`src/server/session/core/session-manager.ts` が間引く）
- * - `refresh`: 配っているものを組み立て直したので取り直せ。**セッションとは無関係**で、
+ * - `refresh`: 配っているものを組み立て直したので取り直せ。セッションとは無関係で、
  *   `src/browser/` を見張っている開発中だけ届く（docs/design.md 11章）。会話の内容は乗らない
  */
 export type ServerFrame =
@@ -54,7 +54,7 @@ export type ServerFrame =
   | { readonly type: "refresh"; readonly target: RefreshTarget }
 
 /**
- * コマンドを受け付けられなかったときの理由。**定型文だけ**を並べ、依頼の文面や届いた値を
+ * コマンドを受け付けられなかったときの理由。定型文だけを並べ、依頼の文面や届いた値を
  * 混ぜない（docs/coding-standards.md「会話内容の扱い」）。旧の POST が返していた文言と揃えてある。
  * 返るのは手続きの応答のエラー（契約の `REFUSED`。`src/shared/command.ts`）で、画面は同じ文言を
  * 操作子を塞ぐときの説明にも使う。
@@ -83,7 +83,7 @@ export const FRAME_ERROR_REASON = {
 } as const
 
 /**
- * 受け取ったフレームの**封筒だけ**を確かめるスキーマ。`state` と `events[].event` は
+ * 受け取ったフレームの封筒だけを確かめるスキーマ。`state` と `events[].event` は
  * 「オブジェクトであること」までしか見ない（上のコメントの決定）。
  */
 export const serverFrameSchema = z.discriminatedUnion("type", [

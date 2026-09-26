@@ -18,7 +18,7 @@ export type DiaryBookOpenRequest = { readonly date: string; readonly token: numb
 
 let request: DiaryBookOpenRequest | undefined
 let nextToken = 1
-// 見開きが最後に拾った合図の `token`。**成果の画面を離れると見開きはアンマウントされる**ので、
+// 見開きが最後に拾った合図の `token`。成果の画面を離れると見開きはアンマウントされるので、
 // 拾ったかどうかを部品の state に持つと、画面を開き直すたびに同じ合図でまた開いてしまう。
 let handledToken = 0
 const listeners = new Set<() => void>()

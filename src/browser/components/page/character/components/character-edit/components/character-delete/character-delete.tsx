@@ -1,7 +1,7 @@
 // 詳しい設定の最下部、キャラクターを消す／同梱に戻す帯（docs/screen-design.md 13.6「このキャラクターを
 // 消す」。見本は同節が指す最下部の赤い帯）。
 //
-// **押しても即座には送らない。** 押すと確かめのダイアログ（`character-delete-confirm.tsx`）を開き、
+// 押しても即座には送らない。 押すと確かめのダイアログ（`character-delete-confirm.tsx`）を開き、
 // そこで id を打って一致して初めて `band.onSubmit` を呼ぶ。開いているかどうかだけをここで持つ
 // （「保つ」の1種類。`components/portrait-card.tsx` の `confirmClear` と同じ形。
 // docs/design.md 2章「機能の中を分ける」）。

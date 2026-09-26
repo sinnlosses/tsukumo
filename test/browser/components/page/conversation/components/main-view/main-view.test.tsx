@@ -47,7 +47,7 @@ function tool(
   }
 }
 
-// 姿は store に入れる（**描き直しはフレームが届いたときだけ**起きるので、記録を足すのも
+// 姿は store に入れる（描き直しはフレームが届いたときだけ起きるので、記録を足すのも
 // サーバと同じ経路で行う）。
 let store: SessionStore = sessionStoreWith(INITIAL_SESSION_STATE)
 
@@ -82,7 +82,7 @@ function renderMainView(
 }
 
 /**
- * 札の頭のボタンを押す。選択は hash に乗り、**happy-dom は `hashchange` を次のタスクで出す**ので
+ * 札の頭のボタンを押す。選択は hash に乗り、happy-dom は `hashchange` を次のタスクで出すので
  * （本物のブラウザも同期では出さない）、ここで流して読み直させる。
  */
 function press(name: string): void {
@@ -99,8 +99,8 @@ function rerenderMainView(records: readonly SessionRecord[]): void {
 }
 
 describe("MainView（ミニ立ち絵を置く原点）", () => {
-  // 筆先の座標はこの入れ物の左上が原点（`domain/reveal/brush-tip.ts`）。**印が外れると、書き終わった
-  // ミニ立ち絵の置き場所が黙って消える**ので、名前が付いていることだけをここで見る
+  // 筆先の座標はこの入れ物の左上が原点（`domain/reveal/brush-tip.ts`）。印が外れると、書き終わった
+  // ミニ立ち絵の置き場所が黙って消えるので、名前が付いていることだけをここで見る
   // （実際にどこに見えるかは目視。`docs/architecture.md`「手で確かめること」）。
   it("ターンを載せる入れ物に、筆先の原点の印が付く", () => {
     const { container } = renderMainView([
@@ -188,7 +188,7 @@ describe("MainView（札の頭）", () => {
   it("端ではその側を押せない（最新では ›、いちばん古いターンでは ‹）", () => {
     renderMainView(threeTurns())
 
-    // **押せないは `aria-disabled` の1通り**（`Button`）。本物の `disabled` にはしないので、
+    // 押せないは `aria-disabled` の1通り（`Button`）。本物の `disabled` にはしないので、
     // フォーカスは残る（`button.test.tsx` と同じ確かめ方）。
     expect(button(NEWER).getAttribute("aria-disabled")).toBe("true")
     expect(button(NEWER).hasAttribute("disabled")).toBe(false)
@@ -480,7 +480,7 @@ describe("MainView（中間レポート）", () => {
 
   it("上限を超えて古いステップが落ちても、開いた <details> が別のステップに化けない", () => {
     // 十分な数の中間レポート（それぞれ report + tool の対）を積み、1つのやり取りが画面に出す
-    // 記録の上限（40。**ツールの実行は数えない**ので、数えるのはレポートの件数）を超えさせる。
+    // 記録の上限（40。ツールの実行は数えないので、数えるのはレポートの件数）を超えさせる。
     // 全部のあとに非中間の締めの report を置くので、手前は全部 superseded = true になり
     // <details> で畳まれる（既存の「複数の中間レポートが追い越されると全部畳まれ」ケースと
     // 同じ形）。

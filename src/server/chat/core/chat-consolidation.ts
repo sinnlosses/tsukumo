@@ -1,13 +1,13 @@
 // 定着（`docs/design.md` 7章「定着はどこで走るか」、`docs/chat-mode.md` 4.9「窓から溢れた会話は
 // 定着で畳む」）の指示文・依頼の文面の組み立て・出力の形（JSON Schema）・出力の検査・モデルと
-// 時間切れ。**純関数と定数だけ**で、外の世界には触らない（原則2）。`query()` を起こすのは
+// 時間切れ。純関数と定数だけで、外の世界には触らない（原則2）。`query()` を起こすのは
 // `src/server/chat/adapter/sdk-chat-consolidation.ts`（原則3）。
 //
 // 渡す文面（畳む行・前のあらすじ・直前のエピソードの見出し）も受け取る出力（エピソード・
 // あらすじ・話題の見出し）もすべて会話の内容に当たる。ここで組んだ文面も検査の結果も
 // ログにもファイルにも書かない（docs/coding-standards.md「会話内容の扱い」）。
 //
-// **`<topics>` の組の書き方と取り出し方もここが持つ**（組み替える前は `/compact` の文面と同じ
+// `<topics>` の組の書き方と取り出し方もここが持つ（組み替える前は `/compact` の文面と同じ
 // `chat-compact.ts` にあったが、`/compact` をやめたのでこちらへ移した。docs/design.md 7章
 // 「最近の話題の見出しも同じファイルから取る」）。定着の出力からあらすじの本文へ組む側
 // （{@link chatSummaryWithTopics}）と、写しの本文から読み出す側（{@link chatTopics}）を
@@ -165,12 +165,12 @@ export function chatConsolidationQuery(
 }
 
 /**
- * 受け取った `structured_output` を検査する（{@link parseVisitScript} と同じ形。**丸ごと**——
+ * 受け取った `structured_output` を検査する（{@link parseVisitScript} と同じ形。丸ごと——
  * 1か所でも崩れていたら `undefined` で、行は未定着のまま残る側に倒す）。
  *
  * - 形: `episodes` が1件以上の配列で、各要素の `title` / `gist` / `cues` / `weight` が
  *   {@link CHAT_CONSOLIDATION_LIMITS} に収まる
- * - 区切り: `end` が前のエピソードより大きく、**最後のエピソードの `end` が `lineCount` と一致**
+ * - 区切り: `end` が前のエピソードより大きく、最後のエピソードの `end` が `lineCount` と一致
  *   （渡した行をすべて、切れ目なくどれかのエピソードに含めている）
  * - `synopsis` は文字列（空文字も許す）。`topics` は0〜{@link CHAT_CONSOLIDATION_LIMITS.topicsMax}件、
  *   各{@link CHAT_CONSOLIDATION_LIMITS.topicChars}字まで
@@ -212,8 +212,8 @@ export function parseChatConsolidationResult(
  * を使って {@link ChatEpisodeDraft.from} / `.to` に直す純関数（`docs/design.md` 7章
  * 「区切りを行番号で返させる」）。
  *
- * **{@link parseChatConsolidationResult} が `entries.length` を `lineCount` として検査を通した
- * `episodes` を渡す前提**（区切りが切れ目なく `entries` を覆っている）。前提が崩れているときは
+ * {@link parseChatConsolidationResult} が `entries.length` を `lineCount` として検査を通した
+ * `episodes` を渡す前提（区切りが切れ目なく `entries` を覆っている）。前提が崩れているときは
  * 変換できないエピソードを飛ばす（例外を投げない。原則2の純関数でも「壊れていたら作らない」の
  * 倒れ方は揃える）。
  */
@@ -260,7 +260,7 @@ function chatConsolidationPrompt(material: ChatConsolidationMaterial): string {
 /**
  * 畳む行を「n. 話者: 文面」の並びにする（1始まりの行番号）。日付が変わるところに
  * `### <日付>` の見出しを挟む（`chat-memory-prompt.ts` の `verbatimPart` と同じ考え方。
- * **表情・画像の枚数・時刻は載せない**）。
+ * 表情・画像の枚数・時刻は載せない）。
  */
 function numberedLines(entries: readonly ChatUnconsolidatedEntry[]): string {
   const lines: string[] = []
@@ -405,7 +405,7 @@ function coversLinesContiguously(
  * あらすじの本文から最近の話題の見出しを取り出す（書かれた順＝新しい順のまま、
  * {@link CHAT_TOPIC_LIMIT} 件まで）。
  *
- * **最後の `<topics>` から、その後ろの最初の `</topics>` までを読む。** 閉じが無い・印が無い
+ * 最後の `<topics>` から、その後ろの最初の `</topics>` までを読む。 閉じが無い・印が無い
  * ときは何も出さない（途中で切れた節や、見出しを書かなかったあらすじから推し量って出さない）。
  *
  * 中身の良し悪しは判定しない。箇条の印を落とし、空行を飛ばすだけ。
@@ -434,14 +434,14 @@ export function chatTopics(summary: string): readonly string[] {
  * パック1つぶんの写しを読み、最近の話題の見出しにして返す（写しがまだ無い・読めないときは
  * 空）。起こしたとき（`src/session-start.ts`）と、定着があらすじを書いたあと
  * （{@link chatConsolidationQuery} を使う `chat-consolidation-writer.ts`）の2か所から呼ばれる。
- * **書いたあとの写しを読み直す**ので、画面に出る見出しは次に起こしたときと同じものになる。
+ * 書いたあとの写しを読み直すので、画面に出る見出しは次に起こしたときと同じものになる。
  */
 export function readChatTopics(chatSummary: ChatSummary): readonly string[] {
   return chatTopics(chatSummary.read()?.summary ?? "")
 }
 
 /**
- * あらすじの本文の**いちばん最後**に、話題の見出しを {@link CHAT_TOPICS_OPEN} と
+ * あらすじの本文のいちばん最後に、話題の見出しを {@link CHAT_TOPICS_OPEN} と
  * {@link CHAT_TOPICS_CLOSE} の行で挟んで置く（1行1件、`- ` で始める。`docs/design.md` 7章
  * 「雑談の記憶の要約はどこに置くか」）。末尾に置くのは、上限で古いほう（先頭側）の行から
  * 落ちても組が先に落ちないため。見出しが0件でも組は置く（{@link chatTopics} が空を読む）。

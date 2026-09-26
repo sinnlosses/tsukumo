@@ -1,5 +1,5 @@
-// `speak` が選べる表情と、そのラベル。**名前はコード側の語彙（`expression.ts`）、ラベルは
-// キャラクター定義ファイル側の言葉**（docs/architecture.md 原則4「キャラクターの中身をコードに
+// `speak` が選べる表情と、そのラベル。名前はコード側の語彙（`expression.ts`）、ラベルは
+// キャラクター定義ファイル側の言葉（docs/architecture.md 原則4「キャラクターの中身をコードに
 // 書かない」、docs/design.md 7章）。
 //
 // 読むのは `speak` ツールの enum を組み立てる側（`src/server/session-driver/adapter/sdk-tool.ts`）と、
@@ -15,14 +15,14 @@ export type ExpressionChoice = {
 }
 
 /**
- * `speak` ツールが受け付ける表情と、そのラベル。**出どころは定義ファイル**
+ * `speak` ツールが受け付ける表情と、そのラベル。出どころは定義ファイル
  * （docs/architecture.md 原則4「キャラクターの中身をコードに書かない」）。
  *
- * - 選べるのは**立ち絵かラベルのどちらかが定義にある表情**（立ち絵が無い表情は `default` の
+ * - 選べるのは立ち絵かラベルのどちらかが定義にある表情（立ち絵が無い表情は `default` の
  *   絵に落ちるので、ラベルだけでも選ばせてよい。docs/requirements.md 4.4）
- * - **`default` は定義に無くても必ず含む**（未知の表情の落とし先なので、これが無いと
+ * - `default` は定義に無くても必ず含む（未知の表情の落とし先なので、これが無いと
  *   受け付けられる名前が1つも無くなる）
- * - ラベルが定義に無ければ**表情名そのもの**をラベルにする（既定の日本語をコードに持たない）
+ * - ラベルが定義に無ければ表情名そのものをラベルにする（既定の日本語をコードに持たない）
  */
 export function expressionChoices(
   definition: CharacterDefinition | undefined,

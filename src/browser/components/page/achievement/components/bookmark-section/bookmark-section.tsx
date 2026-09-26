@@ -1,5 +1,5 @@
-// しおり（この日のいちばん。`docs/screen-design.md` 13.10「並べるもの」3）。**日記が無い日・
-// しおりの無い日記（終えたタスクが0の日）は区画ごと出さない**——`bookmark` が `undefined`
+// しおり（この日のいちばん。`docs/screen-design.md` 13.10「並べるもの」3）。日記が無い日・
+// しおりの無い日記（終えたタスクが0の日）は区画ごと出さない——`bookmark` が `undefined`
 // （日記が無い）か `{ kind: "none" }`（しおりが無い）のときは何も描かない。
 
 import { type ReactElement } from "react"

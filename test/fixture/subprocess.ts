@@ -1,5 +1,5 @@
-// テストの中で子プロセス（`git`・`bun` など）を起こす口。**同期版（`execFileSync` /
-// `spawnSync`）は使わない**（`.oxlintrc.json` が test/ で止める）。
+// テストの中で子プロセス（`git`・`bun` など）を起こす口。同期版（`execFileSync` /
+// `spawnSync`）は使わない（`.oxlintrc.json` が test/ で止める）。
 //
 // bun の `spawnSync` には、子が終わったのに気づかず待ちが 100% CPU で空回りする不具合がある
 // （docs/coding-standards.md「テスト」節）。空回りの最中は `spawnSync` 自身の `timeout` も効かず、

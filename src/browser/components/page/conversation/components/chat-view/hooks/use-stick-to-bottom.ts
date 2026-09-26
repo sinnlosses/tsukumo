@@ -1,7 +1,7 @@
-// 雑談のログのスクロール位置の同期。**古い→新しいの順にそのまま積み**、下端付近を読んでいた
+// 雑談のログのスクロール位置の同期。古い→新しいの順にそのまま積み、下端付近を読んでいた
 // ときだけ新しい1件で最新へ寄せる（読み返している最中は動かさない。docs/screen-design.md 13.7）。
-// `column-reverse` を使わないのは、この並びが「最新だけを読む」吹き出しではなく**遡って読み返せる
-// ログ**だから。
+// `column-reverse` を使わないのは、この並びが「最新だけを読む」吹き出しではなく遡って読み返せる
+// ログだから。
 
 import { useCallback, useEffect, useRef, type RefObject } from "react"
 
@@ -42,10 +42,10 @@ export function useStickToBottom(count: number): RefObject<HTMLDivElement | null
     }
   }, [])
 
-  // React の外にある DOM（スクロール位置）への書き込み。**下端付近を読んでいたときだけ**
+  // React の外にある DOM（スクロール位置）への書き込み。下端付近を読んでいたときだけ
   // 最新へ寄せる（読み返している最中に下へ攫わない。docs/screen-design.md 13.7）。
   //
-  // 呼ぶのは2か所で、**どちらも同じこの規則に従う**: 件数が増えたとき（下の effect）と、
+  // 呼ぶのは2か所で、どちらも同じこの規則に従う: 件数が増えたとき（下の effect）と、
   // 件数が変わらないまま中身だけ動いたとき（その下の effect）。
   const stickToBottom = useCallback(() => {
     const log = logRef.current
@@ -62,10 +62,10 @@ export function useStickToBottom(count: number): RefObject<HTMLDivElement | null
     stickToBottom()
   }, [count, stickToBottom])
 
-  // 外部システム（DOM の並びの変化）の購読。**「...」（`components/chat-typing.tsx`）は
-  // `count` に数えない行**なので、現れて消えるたびに末尾の高さが動くのを、この購読で拾う。
+  // 外部システム（DOM の並びの変化）の購読。「...」（`components/chat-typing.tsx`）は
+  // `count` に数えない行なので、現れて消えるたびに末尾の高さが動くのを、この購読で拾う。
   //
-  // **行の側から知らせ返さない**（ログの中身の部品がスクロールを知らずに済む）。見るのは
+  // 行の側から知らせ返さない（ログの中身の部品がスクロールを知らずに済む）。見るのは
   // 子要素の増減だけなので、押して印が移ったとき（class と `aria-pressed` が変わるだけ）には
   // 動かない。
   useEffect(() => {

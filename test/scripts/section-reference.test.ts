@@ -1,7 +1,7 @@
 // `scripts/section-reference.ts` の拾う・照らす純粋関数を、小さな本文で検証する。
 // リポジトリ全体で0件を保つのは `test/section-reference.test.ts` の役目。
 //
-// **このファイル自身も拾われる側**なので、参照の形の文字列はファイル名を定数に分けて組み立てる
+// このファイル自身も拾われる側なので、参照の形の文字列はファイル名を定数に分けて組み立てる
 // （ソースに `docs/<名前>.md「…」` の形がそのまま現れないようにする）。
 
 import { describe, expect, test } from "bun:test"

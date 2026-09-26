@@ -18,13 +18,13 @@ afterEach(() => {
   cleanup()
 })
 
-// この規約は**レンダラが描けるものの一覧**でもある（docs/display.md 4.2）。文面だけが先に
+// この規約はレンダラが描けるものの一覧でもある（docs/display.md 4.2）。文面だけが先に
 // 進んで「勧めた記法が描かれない」が起きないよう、名乗った要素と class を両側に突き合わせる。
 
 /**
- * tsukumo が配る mermaid（package.json で 12.0.0 に固定）で**実際に描けることを目視で確かめた種類**
- * （11.15.0 と 12.0.0 の両方で確かめた。docs/display.md 4.2）。規約が勧めてよいのはこの並びだけで、**増やすときは
- * 先にメインビューへ出して描けることを確かめる**。
+ * tsukumo が配る mermaid（package.json で 12.0.0 に固定）で実際に描けることを目視で確かめた種類
+ * （11.15.0 と 12.0.0 の両方で確かめた。docs/display.md 4.2）。規約が勧めてよいのはこの並びだけで、増やすときは
+ * 先にメインビューへ出して描けることを確かめる。
  */
 const DRAWN_MERMAID_KINDS = [
   "flowchart",
@@ -40,7 +40,7 @@ const DRAWN_MERMAID_KINDS = [
 ]
 
 /**
- * 同じ場で**構文が通らなかった**種類と、`chart` のフェンスと用途が重なるので載せない種類。
+ * 同じ場で構文が通らなかった種類と、`chart` のフェンスと用途が重なるので載せない種類。
  * 規約に紛れ込んでいないかを見る。
  */
 const KINDS_NOT_TO_OFFER = ["sankey", "architecture", "requirementDiagram", "journey", "xychart"]
@@ -53,7 +53,7 @@ const namedClasses = [...REPORT_NOTATION_PROMPT.matchAll(/class="([^"]+)"/g)].fl
 )
 
 // 見た目はレポートの記法を描く機能の CSS（`markdown/report-notation.module.css`）にある。
-// **テストの中では class 名が CSS に書いた綴りのまま届く**（test/css-module-loader.ts）ので、
+// テストの中では class 名が CSS に書いた綴りのまま届く（test/css-module-loader.ts）ので、
 // 部品が付け直した名前をそのファイルの選択子とそのまま突き合わせられる。
 const STYLE_SHEET_SOURCE = readFileSync(
   fileURLToPath(
@@ -77,7 +77,7 @@ describe("REPORT_NOTATION_PROMPT", () => {
 
   it("名乗った class が部品に解決され、その先に見た目が付いている", () => {
     // 規約 → 部品（`notation.tsx`）→ CSS の鎖をひと続きで見る。CSS が受けるのはモデルが
-    // 書いた名前ではなく部品が付け直した名前なので、**実際に描いてから**その class を CSS に
+    // 書いた名前ではなく部品が付け直した名前なので、実際に描いてからその class を CSS に
     // 突き合わせる（片方だけ足したときにここで落ちる）。
     expect(namedClasses.length).toBeGreaterThan(0)
 
@@ -93,8 +93,8 @@ describe("REPORT_NOTATION_PROMPT", () => {
   })
 
   it("語彙（src/shared/report-notation.ts）の印がすべて文面に現れ、部品で解決され、CSS まで届く", () => {
-    // 前の2つのテストは文面から拾った class 名しか見ないので、**文面が地の文の言葉としてしか
-    // 挙げていない印**（`note-warn` / `note-ng` / `note-ask` / `note-memo` / `badge-warn` /
+    // 前の2つのテストは文面から拾った class 名しか見ないので、文面が地の文の言葉としてしか
+    // 挙げていない印（`note-warn` / `note-ng` / `note-ask` / `note-memo` / `badge-warn` /
     // `badge-ng` は `class="..."` の外の言い添えでしか出てこない）は拾えない。語彙を唯一の
     // 出どころにして、14の印すべてで同じ鎖（文面 → 部品 → CSS）を見る。
     expect(REPORT_NOTATION_NAMES.length).toBe(14)
@@ -125,10 +125,10 @@ describe("REPORT_NOTATION_PROMPT", () => {
   })
 
   it("note の6種を名乗り、どれも部品がラベルを出し、その先に見た目が付いている", () => {
-    // 規約（モデルが書く名前）→ 部品（ラベルの文字）→ CSS の鎖を6種ぶん見る。**種別の文字を
-    // 出すのは tsukumo 側**（docs/screen-design.md 13.1 原則5）なので、印だけ足してラベルを足し忘れる
-    // と、素の note と同じ「何の塊か読み取れない」状態に戻る。**種別の並びは
-    // `src/shared/report-notation.ts` の `REPORT_NOTE_KINDS` が正典**（並びの理由もそこにある）。
+    // 規約（モデルが書く名前）→ 部品（ラベルの文字）→ CSS の鎖を6種ぶん見る。種別の文字を
+    // 出すのは tsukumo 側（docs/screen-design.md 13.1 原則5）なので、印だけ足してラベルを足し忘れる
+    // と、素の note と同じ「何の塊か読み取れない」状態に戻る。種別の並びは
+    // `src/shared/report-notation.ts` の `REPORT_NOTE_KINDS` が正典（並びの理由もそこにある）。
     for (const [name, label] of REPORT_NOTE_KINDS) {
       expect(REPORT_NOTATION_PROMPT).toContain(name)
 

@@ -1,8 +1,8 @@
-// サイドバー全体の組み立て（docs/screen-design.md 13.9「顔」）。**セッション情報は区画ではなく下端の
-// 帯**（`.sidebar-footer`）なので、見出しを名乗らず、区画の枠（`SidebarSection`）も通らない。
+// サイドバー全体の組み立て（docs/screen-design.md 13.9「顔」）。セッション情報は区画ではなく下端の
+// 帯（`.sidebar-footer`）なので、見出しを名乗らず、区画の枠（`SidebarSection`）も通らない。
 // 見出しはタスクの1つだけになる。
 //
-// **雑談中は4段に差し替わる**（docs/screen-design.md 13.7「雑談のときのサイドバー」）: プロフィールの札・
+// 雑談中は4段に差し替わる（docs/screen-design.md 13.7「雑談のときのサイドバー」）: プロフィールの札・
 // 最近の話題・覚えていること・セッション。タスク一覧は出さない。
 
 import { afterEach, describe, expect, it } from "bun:test"

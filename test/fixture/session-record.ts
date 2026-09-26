@@ -1,9 +1,9 @@
 // テストが使う、手で書いた架空の記録（`SessionRecord`）1件分の組み立て
 // （docs/coding-standards.md「消すかどうか」の「同じモックの準備が複数ファイルに重複している →
 // 準備を共通のフィクスチャに寄せる」）。形は `test/fixture/character.ts` の
-// `characterInfo(overrides)` と同じ: 既定を1つ持ち、呼ぶ側は**違うところだけ**を渡す。
+// `characterInfo(overrides)` と同じ: 既定を1つ持ち、呼ぶ側は違うところだけを渡す。
 //
-// **時刻は既定で {@link STAMPED}**（時刻に依らないテストの既定値）。時刻そのものを確かめる
+// 時刻は既定で {@link STAMPED}（時刻に依らないテストの既定値）。時刻そのものを確かめる
 // テストは `time` を上書きする。
 
 import { type RecordTime, type SessionRecord } from "../../src/shared/session-state.ts"

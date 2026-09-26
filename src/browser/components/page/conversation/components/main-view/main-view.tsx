@@ -1,18 +1,18 @@
-// メインビュー本体（`<MainView>`。docs/design.md 6.1）。**レポートだけを出す**。そこに
+// メインビュー本体（`<MainView>`。docs/design.md 6.1）。レポートだけを出す。そこに
 // 質問の記録が挟まる（`docs/display.md` 4.2。ツールの実行は描かない。
-// 作業の**進行**はサイドバーが別に持つ）。
+// 作業の進行はサイドバーが別に持つ）。
 //
-// **1ターン＝1枚の札。直近 `MAX_MAIN_VIEW_TURNS` 件を札の頭の `‹` `›` で行き来する**
+// 1ターン＝1枚の札。直近 `MAX_MAIN_VIEW_TURNS` 件を札の頭の `‹` `›` で行き来する
 // （`turn-header.tsx`）。新しいターンで最新へ移すが、利用者が過去のターンを見ている間は
 // 動かさない（規則は `src/browser/stores/turn-selection.tsx` にある。docs/design.md 6.2）。
 //
 // 選んでいるターン（`turnId`）は `<TurnSelectionProvider>` の Context
-// （キャラビューの吹き出しも同じ選択に従うため、領域のローカル状態にしない）。**見ているターンが
-// 替わったときにレポートの先頭へスクロールを戻す**配線は `hooks/use-active-turn-scroll.ts`
+// （キャラビューの吹き出しも同じ選択に従うため、領域のローカル状態にしない）。見ているターンが
+// 替わったときにレポートの先頭へスクロールを戻す配線は `hooks/use-active-turn-scroll.ts`
 // へ出した（外の世界に触るフックだけが余分。docs/design.md 2章「機能の中を分ける」）。
 //
-// **レポートに書かれたパスを押せる部品にする一覧・依頼は `<RepositoryFileLinkProvider>` が
-// 配る**（`markdown/repository-link.tsx`）。この機能（`main-view`）の中でしか描かないので、
+// レポートに書かれたパスを押せる部品にする一覧・依頼は `<RepositoryFileLinkProvider>` が
+// 配る（`markdown/repository-link.tsx`）。この機能（`main-view`）の中でしか描かないので、
 // ここで1回だけ mount する。
 
 import { type ReactElement } from "react"

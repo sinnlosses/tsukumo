@@ -1,5 +1,5 @@
 // ビューサーバの待ち受けポートを決める。環境変数から読んだ値が既定か明示かの区別と、
-// **既定を使ったときだけ** EADDRINUSE で次の番号へずらすリトライを1つの概念としてここに閉じる
+// 既定を使ったときだけ EADDRINUSE で次の番号へずらすリトライを1つの概念としてここに閉じる
 // （docs/coding-standards.md「外部の入力を読む場所を1つにする」）。
 //
 // listen そのもの（node:http）は src/server/view-server/adapter/server.ts の責務のまま。ここは「どのポートで
@@ -23,8 +23,8 @@ export const MAX_PORT_NUMBER = 65535
 export const VIEW_PORT_FALLBACK_ATTEMPTS = 20
 
 /**
- * 環境変数から読んだビューのポートの読み取り結果。**既定を使ったか、明示的に渡されたかを
- * ここで区別する**（既定のときだけポートをずらすため。`0`（OS が空きを選ぶ）も明示指定として
+ * 環境変数から読んだビューのポートの読み取り結果。既定を使ったか、明示的に渡されたかを
+ * ここで区別する（既定のときだけポートをずらすため。`0`（OS が空きを選ぶ）も明示指定として
  * 扱い、ずらす対象にしない）。
  */
 export type ViewPortResolution =
@@ -61,8 +61,8 @@ export function resolveViewPort(
 }
 
 /**
- * `TSUKUMO_VIEW_PORT_FALLBACK_BASE` の生の値を、既定ポートの起点として読む。**読めない・
- * 未設定な値は {@link DEFAULT_VIEW_PORT} に倒す**（`resolveViewPort` と違い、ここでは起動を
+ * `TSUKUMO_VIEW_PORT_FALLBACK_BASE` の生の値を、既定ポートの起点として読む。読めない・
+ * 未設定な値は {@link DEFAULT_VIEW_PORT} に倒す（`resolveViewPort` と違い、ここでは起動を
  * 止めない——既定の帯そのものを差し替えるだけの小さな上書きのため）。
  */
 export function resolveViewPortFallbackBase(raw: string | undefined): number {
@@ -76,9 +76,9 @@ export type ViewPortStartResult<T> =
   | { readonly ok: false; readonly reason: string }
 
 /**
- * 決めたポートで `start` を呼ぶ。**明示指定は一度だけ試してそのまま結果を返す**
+ * 決めたポートで `start` を呼ぶ。明示指定は一度だけ試してそのまま結果を返す
  * （ユーザーの指示——指定したポートで待てないことに気づけなくなるため、ずらさない）。
- * **既定のときだけ**、EADDRINUSE が続く限り `VIEW_PORT_FALLBACK_ATTEMPTS` 回まで +1 して試す。
+ * 既定のときだけ、EADDRINUSE が続く限り `VIEW_PORT_FALLBACK_ATTEMPTS` 回まで +1 して試す。
  * EADDRINUSE 以外の失敗（EACCES など）はその場で確定させ、ずらさない
  * （`docs/coding-standards.md`のエラーハンドリング方針どおり、種類で分ける）。
  *

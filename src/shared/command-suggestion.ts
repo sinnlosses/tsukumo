@@ -1,12 +1,12 @@
-// 入力欄の `/` 補完に出す候補。**セッションの姿（`session-state.ts`）から導くだけの純粋関数**で、
+// 入力欄の `/` 補完に出す候補。セッションの姿（`session-state.ts`）から導くだけの純粋関数で、
 // 状態そのものは持たない（`docs/display.md` 4.2「入力欄」）。
 //
 // 出どころは2つある: `init` で届く名前の一覧（`SessionState.slashCommands`）と、駆動が起動直後に
-// 取りに行く説明付きの一覧（`SessionState.commandDescriptions`）。**どちらを名前の出どころに
-// するかの判断がここの仕事**で、畳み込み（`applySessionEvent`）は `init` の値を
+// 取りに行く説明付きの一覧（`SessionState.commandDescriptions`）。どちらを名前の出どころに
+// するかの判断がここの仕事で、畳み込み（`applySessionEvent`）は `init` の値を
 // {@link commandCandidates} で絞ってから持つ。
 //
-// **受け取るのは姿まるごとではなくその2つ**（入力欄は他のフィールドの変化で描き直したくない。
+// 受け取るのは姿まるごとではなくその2つ（入力欄は他のフィールドの変化で描き直したくない。
 // `mainViewTurns` が記録ではなく畳んだ結果を受け取るのと同じ絞り方）。
 //
 // `node:` にも `document` にも触らない（他の shared と同じ制約）。
@@ -20,11 +20,11 @@ import { type CommandDescription } from "./session-event.ts"
  * 同じ名前のものを引き当てるためだけに使う（説明が届いていない・説明を持たないコマンドは
  * `description` が undefined になり、名前だけで出る）。
  *
- * **`slashCommands` がまだ空（`init` が届く前）は `commandDescriptions` をそのまま名前の出どころに
- * する。** `supportedCommands()` は `init` を待たずに届くため、これで最初の依頼を送る前でも
+ * `slashCommands` がまだ空（`init` が届く前）は `commandDescriptions` をそのまま名前の出どころに
+ * する。 `supportedCommands()` は `init` を待たずに届くため、これで最初の依頼を送る前でも
  * 候補が出せる（実測。docs/display.md 4.2）。ただしこの間は端末専用
- * （`doctor` など）の除外がまだ効かない。**`init` が届き `slashCommands` が埋まった時点で、
- * 除外込みの一覧に戻る**ので、常駐セッションが長引くほど気にならない一時的な差分と割り切る。
+ * （`doctor` など）の除外がまだ効かない。`init` が届き `slashCommands` が埋まった時点で、
+ * 除外込みの一覧に戻るので、常駐セッションが長引くほど気にならない一時的な差分と割り切る。
  */
 export function commandSuggestions(
   slashCommands: readonly string[],

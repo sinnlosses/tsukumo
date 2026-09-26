@@ -13,7 +13,7 @@ import {
 
 /**
  * hash を書き換えて `hashchange` を流す。happy-dom が `location.hash` の代入でイベントを
- * 出すかは実装依存なので、**このテストは自分で流す**（本物のブラウザは必ず出す）。
+ * 出すかは実装依存なので、このテストは自分で流す（本物のブラウザは必ず出す）。
  */
 function goToHash(hash: string): void {
   act(() => {

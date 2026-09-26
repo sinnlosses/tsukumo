@@ -79,7 +79,7 @@ describe("UsageReviewCard（ふだん）", () => {
     const { getByRole, getByText } = render(<UsageReviewCard review={review} />)
 
     const startButton = getByRole("button", { name: "減らし方を見てもらう" })
-    // **押せないは `aria-disabled` の1通り**（`Button`）。本物の `disabled` にはしないので、
+    // 押せないは `aria-disabled` の1通り（`Button`）。本物の `disabled` にはしないので、
     // フォーカスは残る（`button.test.tsx` と同じ確かめ方）。
     expect(startButton.getAttribute("aria-disabled")).toBe("true")
     expect(startButton.hasAttribute("disabled")).toBe(false)

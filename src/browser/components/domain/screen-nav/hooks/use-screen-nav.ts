@@ -1,22 +1,22 @@
-// 画面のナビの帯のロジック（docs/screen-design.md 13.9 / 2章「機能の中を分ける」）。**いま出している
-// 画面・3つの口・仕事/雑談のトグル・モデル/許可モードの操作子・狭い画面の「≡」の開閉**を、
+// 画面のナビの帯のロジック（docs/screen-design.md 13.9 / 2章「機能の中を分ける」）。いま出している
+// 画面・3つの口・仕事/雑談のトグル・モデル/許可モードの操作子・狭い画面の「≡」の開閉を、
 // 見た目が受け取れる形まで畳んで返す。「いまの作業」の札は `hooks/use-current-work.ts` に
 // 分けてある（別の概念なのでファイルを分ける。CLAUDE.md 原則5）。
 //
-// **帯に出すのは `Screen` の4つすべて**（作るダイアログはキャラクター画面から開く一時的な画面
+// 帯に出すのは `Screen` の4つすべて（作るダイアログはキャラクター画面から開く一時的な画面
 // （13.6「作るダイアログ」）で、独立した画面ではないのでここには挙げない。13.9「帯に何を置くか」）。
-// **口は `<a href>` で、画面の正典は `location.hash` のまま**（`navigateTo` は使わない）。
+// 口は `<a href>` で、画面の正典は `location.hash` のまま（`navigateTo` は使わない）。
 //
-// **動き方の操作子（仕事/雑談・モデル・許可モード）が送るコマンドは、いままでサイドバーの
-// `<select>` が送っていたものと同じ**（`session.setChatMode` / `session.setModel` / `session.setPermissionMode`）。
+// 動き方の操作子（仕事/雑談・モデル・許可モード）が送るコマンドは、いままでサイドバーの
+// `<select>` が送っていたものと同じ（`session.setChatMode` / `session.setModel` / `session.setPermissionMode`）。
 // 表示はサーバから届いた値だけに従い、押した側へ先に倒さない（13.9「動き方の操作子」）。
 //
-// **2つの面（広い画面の帯・狭い画面の「≡」の面）へは、部品の値を1つの束で配る**
+// 2つの面（広い画面の帯・狭い画面の「≡」の面）へは、部品の値を1つの束で配る
 // （{@link ScreenNavParts}）。同じ値を項目ごとに配り直さないので、帯に部品を足すときに
 // 触るのはこの束の型と2つの置き場の JSX だけになる。
 //
 // 「≡」を閉じる合図（外側を押した・Esc）は `browser/hooks/use-dismiss-signal.ts` が取る
-// （**開いている間だけ `document` を購読する**）。「いまの作業」の札と歯車も同じフックを使う
+// （開いている間だけ `document` を購読する）。「いまの作業」の札と歯車も同じフックを使う
 // ので、3つの面の閉じ方が1箇所で決まる。
 
 import { useCallback, useRef, useState, type RefObject } from "react"
@@ -42,7 +42,7 @@ import {
 import { useCurrentWork, type ScreenNavCurrentWork } from "./use-current-work.ts"
 import { useSettings, type ScreenNavSettings } from "./use-settings.ts"
 
-/** 帯に並ぶ口1つ。**「いま出している画面か」は畳んで渡す**（部品は判定を持たない）。 */
+/** 帯に並ぶ口1つ。「いま出している画面か」は畳んで渡す（部品は判定を持たない）。 */
 export type ScreenNavGate = {
   readonly screen: Screen
   readonly label: string
@@ -51,8 +51,8 @@ export type ScreenNavGate = {
 }
 
 /**
- * 仕事 / 雑談のトグルが受け取れる形（13.9「動き方の操作子」）。**いまの側を押しても
- * 何も送らない**・**ターン進行中は送らない**は `onChange` の中で決めていて、部品は
+ * 仕事 / 雑談のトグルが受け取れる形（13.9「動き方の操作子」）。いまの側を押しても
+ * 何も送らない・ターン進行中は送らないは `onChange` の中で決めていて、部品は
  * 「送るかどうか」を持たない。
  */
 export type ScreenNavChatMode = {
@@ -65,12 +65,12 @@ export type ScreenNavChatMode = {
   readonly onChange: (chat: boolean) => void
 }
 
-/** モデル・effort・許可モードの操作子が受け取れる形。**ターン進行中も変えられる**（起こし直さない）。 */
+/** モデル・effort・許可モードの操作子が受け取れる形。ターン進行中も変えられる（起こし直さない）。 */
 export type ScreenNavModelPermission = {
   readonly model: string
   readonly onSetModel: (value: string) => void
   /**
-   * effort（{@link EffortSelect}）。**押した値へ先に倒さない**——選べる段・いまの値は
+   * effort（{@link EffortSelect}）。押した値へ先に倒さない——選べる段・いまの値は
    * サーバから届いた値（`model-effort-support` / `effort-changed`）だけに従う
    * （`docs/screen-design.md` 13.9「動き方の操作子」）。
    */
@@ -86,9 +86,9 @@ export type ScreenNavModelPermission = {
 export type ScreenNavFace = CharacterFaceInfo
 
 /**
- * **帯に並ぶ部品の値ひとそろい**（13.9 の表の 2〜9）。広い画面の帯（`presentational-screen-nav.tsx`）
- * と狭い画面の「≡」の面（`components/screen-nav-menu.tsx`）が、**この束をそのまま受け取って
- * それぞれの並びで置く**——どちらを出すかは CSS が決めるので、値の配り方は1本で足りる。
+ * 帯に並ぶ部品の値ひとそろい（13.9 の表の 2〜9）。広い画面の帯（`presentational-screen-nav.tsx`）
+ * と狭い画面の「≡」の面（`components/screen-nav-menu.tsx`）が、この束をそのまま受け取って
+ * それぞれの並びで置く——どちらを出すかは CSS が決めるので、値の配り方は1本で足りる。
  * 部品を1つ足すときに触るのは、ここと2つの置き場の JSX だけになる。
  */
 export type ScreenNavParts = {
@@ -116,7 +116,7 @@ export type ScreenNavMenu = {
 }
 
 export type ScreenNavView = {
-  /** いま出している画面。**狭い画面での帯の置き方**（タブ帯へ畳むか）を CSS が決めるのに使う。 */
+  /** いま出している画面。狭い画面での帯の置き方（タブ帯へ畳むか）を CSS が決めるのに使う。 */
   readonly current: Screen
   readonly parts: ScreenNavParts
   readonly menu: ScreenNavMenu
@@ -138,7 +138,7 @@ export function useScreenNav(): ScreenNavView {
     session.state.session.kind === "running" ? session.state.session.permissionMode : undefined,
   )
   const character = useSessionSelector((session) => session.state.character)
-  // **`init`（`session-info`）が届くまでの畳み先は、このセッションを起こした既定**
+  // `init`（`session-info`）が届くまでの畳み先は、このセッションを起こした既定
   // （`docs/screen-design.md` 13.6）。同梱の既定に倒すと、歯車で Sonnet にして起こし直した直後の
   // 帯だけが Opus を名乗る。
   const sessionDefault = useSessionSelector((session) => session.state.sessionDefault)
@@ -225,11 +225,11 @@ export function useScreenNav(): ScreenNavView {
 const DEFAULT_HTTP_PORT = 80
 
 /**
- * この tsukumo の部屋の名前。**どの部屋かの正典は、このページを配っている URL のポート**
+ * この tsukumo の部屋の名前。どの部屋かの正典は、このページを配っている URL のポート
  * （サーバがそのポートで待っている。`src/server/view-server/core/port-resolution.ts`）——サーバから
  * 送り直してもらう値ではないので、状態には乗せない。
  *
- * **購読はしない**（ポートはページの一生の間変わらない）。
+ * 購読はしない（ポートはページの一生の間変わらない）。
  */
 function currentRoomName(): string {
   const port = window.location.port

@@ -1,21 +1,21 @@
 // トークン消費の記録（何にどれだけ使ったかを残す）。ファイルに触るのはここだけ
 // （原則3。1ファイル = 1つの境界）。置き場は `~/.tsukumo/token-usage/<YYYY-MM-DD>.jsonl` で、
-// **日付だけで分ける** — 使用量はキャラクターパックに依らないので、パックごとに分けると
+// 日付だけで分ける — 使用量はキャラクターパックに依らないので、パックごとに分けると
 // 「その日いくら使ったか」を出すのに全部のディレクトリを混ぜ直すことになる。`cwd` にも
 // 依存させない（どのプロジェクトから起こしても同じ場所に積む）。
 //
-// **何をいつ書くかの判断はここが決めない。** 判断（累計から増分を取る・増分が無い回は書かない・
+// 何をいつ書くかの判断はここが決めない。 判断（累計から増分を取る・増分が無い回は書かない・
 // 期間で切って軸ごとに畳む）は `src/server/session/core/session-manager.ts` と
 // `src/server/token-usage/core/token-usage.ts` が持ち、ここが持つのは「どこに・どんな形で書くか」と
 // 「日付の範囲からどのファイルを開くか」だけ（`chat-archive.ts` と同じ切り分け）。
 //
-// **1行に文字列で入るのは時刻・セッションID・モード・モデルの名前・ツールの名前だけ。** 依頼の
+// 1行に文字列で入るのは時刻・セッションID・モード・モデルの名前・ツールの名前だけ。 依頼の
 // 文面・セリフ・ツールの引数と結果は通らない（渡される {@link TokenUsageEntry} にそもそも口が
 // 無く、ツールの結果は長さ（数）に畳まれてから届く。`docs/coding-standards.md`「会話内容の扱い」）。
-// **読むときも同じ** — 検証して素通しするだけで、ログにも呼び出し元にも文面を足さない。
+// 読むときも同じ — 検証して素通しするだけで、ログにも呼び出し元にも文面を足さない。
 //
 // 書けなくても・読めなくても例外を投げない（常駐プロセスは1回の失敗で落ちない。
-// `docs/coding-standards.md`「エラーハンドリング」）。**壊れた行・版が違う行は読まずに落とす**
+// `docs/coding-standards.md`「エラーハンドリング」）。壊れた行・版が違う行は読まずに落とす
 // （`chat-archive.ts` の `archiveLineSchema` と同じ手。1行ずつ検証するので被害が1行に収まる）。
 
 import { join } from "node:path"
@@ -69,8 +69,8 @@ const scopeUsageSchema = z.object({
 })
 
 /**
- * 記録の1行の形（{@link TokenUsageRecord} と同じ鍵）。**`v` が
- * {@link TOKEN_USAGE_FORMAT_VERSION} と違う行はここで落ちる**（版1の行を残す価値が無いという
+ * 記録の1行の形（{@link TokenUsageRecord} と同じ鍵）。`v` が
+ * {@link TOKEN_USAGE_FORMAT_VERSION} と違う行はここで落ちる（版1の行を残す価値が無いという
  * 判断。「内訳を空として読む」ことはしない）。
  */
 const tokenUsageRecordSchema = z.object({
@@ -91,7 +91,7 @@ export function tokenUsageDir(): string {
  * 記録の読み書き口を作る。`root` は置き場（既定は {@link tokenUsageDir}）で、差し替えられるのは
  * テストがホームを汚さないためにある（`createChatArchive` の `root` と同じ手）。
  *
- * **1つの口を日をまたいで使い回せる**——`append` のたびに `entry.at` から行き先を組み立てるので、
+ * 1つの口を日をまたいで使い回せる——`append` のたびに `entry.at` から行き先を組み立てるので、
  * 日付が変われば次の行から新しいファイルに積む。
  */
 export function createTokenUsageLog(root: string = tokenUsageDir()): TokenUsageLog {
@@ -117,7 +117,7 @@ function toRecord(entry: TokenUsageEntry): TokenUsageRecord {
 
 /**
  * 期間に入る日付のファイルだけを開き、古い→新しい順に行を集める（`TokenUsageLog.readRange` の
- * 実装）。**期間の外のファイルは開かない** — ファイル名が `YYYY-MM-DD.jsonl` で日付そのものを
+ * 実装）。期間の外のファイルは開かない — ファイル名が `YYYY-MM-DD.jsonl` で日付そのものを
  * 表すので、開く前に範囲で絞り込める（`chat-archive.ts` の走査と同じく、要らないファイルを
  * 開かないのがこの口の要点）。
  */

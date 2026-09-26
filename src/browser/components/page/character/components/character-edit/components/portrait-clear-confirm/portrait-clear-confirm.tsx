@@ -2,7 +2,7 @@
 // 「開いているか」を受けて、押したカードに添う小さな吹き出しとして出す。
 // docs/screen-design.md 13.6「表情を消す前の確かめ」）。
 //
-// **画面全体は覆わない**——`task-run-confirm.tsx` / `image-zoom.tsx` の中央寄せの確認とは違い、
+// 画面全体は覆わない——`task-run-confirm.tsx` / `image-zoom.tsx` の中央寄せの確認とは違い、
 // `<dialog>` の UA 既定の中央寄せ（`inset: 0; margin: auto;`）を外し、押した口の位置（`anchor`。
 // `getBoundingClientRect()` を押した瞬間の1回だけ測ったもの）から自分で置き場所を決める。
 // `showModal()` で top layer に出す点は同じなので、`.character-card` の `overflow: hidden` には

@@ -290,8 +290,8 @@ describe("watchTaskSummary", () => {
   })
 
   // 台帳（着手の印）は共有の `.git` の中だけで完結し、`main` を動かさない（`task claim` /
-  // `task release`。claude-skills の `docs/task-workflow-redesign.md` 4.2）。**先端が同じ
-  // 見回りでも印だけ読み直して doing / todo を切り替える**（受け入れ時の差し戻し）。
+  // `task release`。claude-skills の `docs/task-workflow-redesign.md` 4.2）。先端が同じ
+  // 見回りでも印だけ読み直して doing / todo を切り替える（受け入れ時の差し戻し）。
   it("main を動かさずに claim すると、次の見回りで doing になる", async () => {
     const repository = await initRepository("main")
     await commitNewFormatTasks(repository, [{ id: "T-001", summary: "着手前", status: "todo" }])

@@ -40,10 +40,10 @@ const TOKEN = createStartupToken()
 
 let runningView: ViewServer | undefined
 
-/** ブラウザ側スクリプトの代役。**本物のビルドはしない**（テストから `bun build` を起こさない）。 */
+/** ブラウザ側スクリプトの代役。本物のビルドはしない（テストから `bun build` を起こさない）。 */
 const TEST_UI_SCRIPT = "/* テスト用の ui スクリプト */"
 
-/** CSS の代役。**本物のビルドはしない**。 */
+/** CSS の代役。本物のビルドはしない。 */
 const TEST_STYLE_SHEET = "/* テスト用の CSS */"
 
 /**
@@ -486,7 +486,7 @@ describe("startViewServer", () => {
   })
 
   describe("/prompt-image/<id>", () => {
-    // 棚に置いた原寸の代役。**中身は手で書いた数バイト**（実物の画像は使わない）。
+    // 棚に置いた原寸の代役。中身は手で書いた数バイト（実物の画像は使わない）。
     const SHELVED_ID = "0b6f7a52-3c1e-4d7a-9f2b-5e8c1d4a6b3f"
     const SHELVED_BYTES = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x01, 0x02, 0x03])
     const SHELVED_DATA_URL = `data:image/png;base64,${SHELVED_BYTES.toString("base64")}`
@@ -583,8 +583,8 @@ describe("startViewServer", () => {
 })
 
 // 一覧に載せた URL をそのまま引いて、配信の全体（経路の読み分け → 一覧との突き合わせ →
-// パックごとの allowlist）を確かめる（docs/design.md 7.2）。**素材は手で書いた
-// 架空の SVG / PNG の中身**で、置き場は一時ディレクトリ（本物の `~/.tsukumo` を読まない）。
+// パックごとの allowlist）を確かめる（docs/design.md 7.2）。素材は手で書いた
+// 架空の SVG / PNG の中身で、置き場は一時ディレクトリ（本物の `~/.tsukumo` を読まない）。
 describe("キャラクターの素材（使用中以外のパックも配る）", () => {
   const SVG = '<svg xmlns="http://www.w3.org/2000/svg"><circle r="1"/></svg>'
   const PNG_BYTES = Buffer.from([0x89, 0x50, 0x4e, 0x47])

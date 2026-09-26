@@ -4,7 +4,7 @@
 // 受け渡しの形と、暦の範囲・灯りの段階の判定だけを持つ
 // （`docs/design.md`「成果の集め方と配り方」）。
 //
-// **運ぶのは日付とコミットの数だけ**（コミットの件名も会話の文面も入らない。
+// 運ぶのは日付とコミットの数だけ（コミットの件名も会話の文面も入らない。
 // `docs/coding-standards.md`「会話内容の扱い」）。
 
 import { z } from "zod"
@@ -49,7 +49,7 @@ export const achievementCalendarSchema = z.discriminatedUnion("kind", [
 
 /**
  * 暦の範囲（`docs/requirements.md` 4.11「灯りの段階」・`docs/design.md`「成果の集め方と配り方」）。
- * **「今日を含む週の月曜から4週前の月曜」〜今日**を、日付キーの古い順で返す（今日より後は含まない
+ * 「今日を含む週の月曜から4週前の月曜」〜今日を、日付キーの古い順で返す（今日より後は含まない
  * ——ブラウザが並べるだけで数は無い）。
  */
 export function achievementCalendarDateKeys(today: string): readonly string[] {
@@ -71,7 +71,7 @@ export function achievementCalendarDateKeys(today: string): readonly string[] {
 /** 灯りの段階（`docs/requirements.md` 4.11「灯りの段階」）。 */
 export type LampLevel = "none" | "faint" | "lit" | "bright"
 
-/** 段階の区切り（`docs/requirements.md` 4.11「灯りの段階」の表。**多いほうから**並べ、
+/** 段階の区切り（`docs/requirements.md` 4.11「灯りの段階」の表。多いほうから並べ、
  * 最初に当てはまったものを採る）。 */
 const LAMP_LEVEL_THRESHOLDS = [
   { min: 40, level: "bright" },

@@ -2,7 +2,7 @@
 // 集計の取得（TanStack Query）を持ち、見た目（`presentational-token-usage.tsx`）が
 // 算出せずにそのまま描ける形（合計込みの集計と、取れなかったかどうか）へ畳む。
 //
-// **「まだ届いていない」も「取れなかった」も、描く側から見れば空の集計**（`| undefined` を
+// 「まだ届いていない」も「取れなかった」も、描く側から見れば空の集計（`| undefined` を
 // 内側へ運ばない）。取れなかったことは `isError` で区別する。
 
 import { useQuery } from "@tanstack/react-query"

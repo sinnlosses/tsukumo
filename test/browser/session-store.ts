@@ -12,8 +12,8 @@ import { PROTOCOL_VERSION } from "../../src/shared/frame.ts"
 import { type SessionState } from "../../src/shared/session-state.ts"
 
 /**
- * 部品が送ったコマンドの受け取り口。**手続きの名前（`session.prompt` のように `.` で繋いだもの）を
- * `procedure` に、入力のフィールドを同じ階層に平らに並べた記録**を受け取る（入力の無い手続きは
+ * 部品が送ったコマンドの受け取り口。手続きの名前（`session.prompt` のように `.` で繋いだもの）を
+ * `procedure` に、入力のフィールドを同じ階層に平らに並べた記録を受け取る（入力の無い手続きは
  * `procedure` だけ）。
  */
 export type CommandSpy = (command: SentCommand) => void

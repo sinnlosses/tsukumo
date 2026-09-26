@@ -98,7 +98,7 @@ function panelWorkToggle(): HTMLElement {
   )
 }
 
-/** 帯（広い画面）の依頼の手順の一覧。**広い画面・狭い画面の両方に同じ内容が2つ描かれる**ので、
+/** 帯（広い画面）の依頼の手順の一覧。広い画面・狭い画面の両方に同じ内容が2つ描かれるので、
  * 先頭（帯側）だけを見る。 */
 function workList(): HTMLElement {
   return typedElement(
@@ -574,7 +574,7 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
 
   // 狭い画面では札そのものが「≡」の面の中にあり、Esc は面ごと閉じる（「≡」も同じ合図で
   // 閉じる。`browser/hooks/use-dismiss-signal.ts`）ので、戻り先の札は DOM から消える。
-  // **帯の側の札（狭い画面では `display: none`）へフォーカスを飛ばさない**ことをここで守る。
+  // 帯の側の札（狭い画面では `display: none`）へフォーカスを飛ばさないことをここで守る。
   it("「≡」の面の中の札でも Esc で閉じ、隠れている帯の側の札へは戻さない", () => {
     renderScreenNav({ records: [requestRecord()] })
     fireEvent.click(screen.getByRole("button", { name: "メニュー" }))

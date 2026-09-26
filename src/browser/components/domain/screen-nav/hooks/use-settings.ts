@@ -1,35 +1,35 @@
-// 帯の右端の歯車で開く**設定**のロジック（docs/screen-design.md 13.6「設定の置き場所」/ 13.9「設定の
-// 歯車」）。いまここにあるのは**地・領域・字の色**・**新しいセッションの既定**・**書き上げる
-// 演出の速さ**・**訪問のオン・オフ**の4群。
+// 帯の右端の歯車で開く設定のロジック（docs/screen-design.md 13.6「設定の置き場所」/ 13.9「設定の
+// 歯車」）。いまここにあるのは地・領域・字の色・新しいセッションの既定・書き上げる
+// 演出の速さ・訪問のオン・オフの4群。
 //
-// **4群は持ち先が違う。** 色と演出の速さは利用者の端末の設定（`localStorage`。演出の速さは
+// 4群は持ち先が違う。 色と演出の速さは利用者の端末の設定（`localStorage`。演出の速さは
 // `browser/domain/reveal-speed.ts`）、既定はサーバが覚える値（`~/.tsukumo/state.json`。
-// `session.setSessionDefault` で送り、`SessionState.sessionDefault` を読む）。**既定は次に起こすときから
-// 効く**ので、送ってもいまのセッションのモデル・許可モードは変わらない（帯のドロップダウンは
+// `session.setSessionDefault` で送り、`SessionState.sessionDefault` を読む）。既定は次に起こすときから
+// 効くので、送ってもいまのセッションのモデル・許可モードは変わらない（帯のドロップダウンは
 // セッション限りの別物）。演出の速さは `domain/reveal/use-report-reveal.ts` がマウント時に読むだけなので、
-// 変えても書いている最中の演出には効かない（次に書き始めたときから）。**訪問のオン・オフは
-// 上のどちらでもない**——サーバの `SessionState.visitEnabled` だが、ディスクには覚えず
+// 変えても書いている最中の演出には効かない（次に書き始めたときから）。訪問のオン・オフは
+// 上のどちらでもない——サーバの `SessionState.visitEnabled` だが、ディスクには覚えず
 // いま動いているセッションに即座に効く（`visit.setEnabled`。オフにすると訪問中でもその場で
 // 帰る。`docs/design.md` 5章「訪問の契機と状態」）。
 //
-// **色の持ち方は `browser/domain/appearance-color.ts` のまま**（`localStorage` の鍵も検証も変えて
+// 色の持ち方は `browser/domain/appearance-color.ts` のまま（`localStorage` の鍵も検証も変えて
 // いない。キャラクター画面から移したのは操作子だけ）。見た目（`documentElement`）
 // は `onChange` のたびそのまま反映し、`localStorage` への書き込みだけ `useDebouncedCallback` で
-// 200ms まとめる。**鍵は1つ**——保存は3色まとめて1つの入れ物を書くので、色ごとにタイマーを
+// 200ms まとめる。鍵は1つ——保存は3色まとめて1つの入れ物を書くので、色ごとにタイマーを
 // 分けても最後の1回しか効かない。1つにしておくと「既定に戻す」が引きずり中の書き込みを
 // 必ず追い越す。
 //
-// **`ground` と `ink` の差が足りずに受け取らなかった色は、その理由を面の中に1行出す**
+// `ground` と `ink` の差が足りずに受け取らなかった色は、その理由を面の中に1行出す
 // （{@link ScreenNavSettings.colorNotice}）。出さないと操作子が黙って元の色へ戻り、選んだ色が
 // 効かないように見える。次に受け取られたとき・既定に戻したとき・面を閉じたときに消す。
 //
 // `<input type="color">` に出す表示値は `displayColor` に持つ。マウント時に一度だけ
-// `readCurrentColor`（`getComputedStyle`）で読み、以降は**書いた値をそのまま state へ流す**
-// （書く → 描画中に読み直す、を避ける）。**反映済みの状態で読める**のは、保存済みの上書きを
+// `readCurrentColor`（`getComputedStyle`）で読み、以降は書いた値をそのまま state へ流す
+// （書く → 描画中に読み直す、を避ける）。反映済みの状態で読めるのは、保存済みの上書きを
 // `documentElement` へ差す1回を入口（`src/browser/main.tsx`）が済ませているため。
 //
-// **ポップオーバーは2箇所に描かれる**（広い画面の帯・狭い画面の「≡」の面の中。「いまの作業」の
-// 札と同じ畳み方で、どちらを出すかは CSS が決める）。**開閉の状態は1つ**なので、押した先の
+// ポップオーバーは2箇所に描かれる（広い画面の帯・狭い画面の「≡」の面の中。「いまの作業」の
+// 札と同じ畳み方で、どちらを出すかは CSS が決める）。開閉の状態は1つなので、押した先の
 // DOM がどちらでも同じ面が開く。閉じる合図は「≡」・「いまの作業」と同じ
 // `browser/hooks/use-dismiss-signal.ts` で、Esc の戻り先の歯車も同じくコールバック ref で
 // 集める（{@link ScreenNavSettings.toggleRef}）。
@@ -82,14 +82,14 @@ export type ScreenNavSettingsColorNotice =
   | { readonly kind: "shown"; readonly text: string }
 
 /**
- * 新しいセッションの既定の操作子（`docs/screen-design.md` 13.6）。**表示はサーバから届いた値だけに
- * 従う**（押した側へ先に倒さない。帯の操作子と同じ作法）。
+ * 新しいセッションの既定の操作子（`docs/screen-design.md` 13.6）。表示はサーバから届いた値だけに
+ * 従う（押した側へ先に倒さない。帯の操作子と同じ作法）。
  */
 export type ScreenNavSettingsSessionDefault = {
   readonly model: ModelAlias
   readonly onChangeModel: (value: string) => void
   /**
-   * effort（{@link EffortSelect}）。**帯の判定をそのまま再利用する**
+   * effort（{@link EffortSelect}）。帯の判定をそのまま再利用する
    * （`resolveEffortSelect`。`domain/effort-label.ts`）——対応表（`modelEffortSupport`）は
    * 駆動が起動直後に届けるモデル横断の一覧なので、いま帯に出しているモデルと無関係に、
    * ここで選んでいる既定のモデルの対応も同じ関数で引ける。
@@ -110,8 +110,8 @@ export type ScreenNavSettingsRevealSpeed = {
 }
 
 /**
- * 訪問のオン・オフの操作子（`docs/screen-design.md` 13.6・13.9）。**表示はサーバから届いた値だけに
- * 従う**（`sessionDefault` と同じ作法）——`SessionState.visitEnabled` はディスクに覚えないので、
+ * 訪問のオン・オフの操作子（`docs/screen-design.md` 13.6・13.9）。表示はサーバから届いた値だけに
+ * 従う（`sessionDefault` と同じ作法）——`SessionState.visitEnabled` はディスクに覚えないので、
  * 起こし直すたびに既定の「する」へ戻る。
  */
 export type ScreenNavSettingsVisit = {
@@ -131,7 +131,7 @@ export type ScreenNavSettings = {
   readonly resetDisabled: boolean
   readonly onReset: () => void
   /**
-   * 歯車の `<button>` を預ける口（Esc で閉じたときのフォーカスの戻り先）。**2箇所に描かれる**
+   * 歯車の `<button>` を預ける口（Esc で閉じたときのフォーカスの戻り先）。2箇所に描かれる
    * ので入れ物は1つにできず、付いている歯車を全部集めるコールバック ref にする
    * （理由は `hooks/use-current-work.ts` の {@link ScreenNavCurrentWork.toggleRef} と同じ）。
    */
@@ -145,7 +145,7 @@ const COLOR_FIELDS = [
 ] as const satisfies readonly { readonly key: AppearanceColorKey; readonly label: string }[]
 
 /**
- * 差が足りずに受け取らなかったときの1行。**変えようとした側の色を主語にする**（相手の色を
+ * 差が足りずに受け取らなかったときの1行。変えようとした側の色を主語にする（相手の色を
  * 先に動かせば通ることが読み取れるように、相手の名前も出す）。
  */
 const LOW_CONTRAST_NOTICE = {
@@ -191,7 +191,7 @@ export function useSettings(navRef: RefObject<HTMLElement | null>): ScreenNavSet
   }, [])
 
   const toggleRef = useCallback<RefCallback<HTMLButtonElement>>((node) => {
-    // **cleanup を返す形なので React 19 は `null` で呼び直さない**（外れるのは下の cleanup）。
+    // cleanup を返す形なので React 19 は `null` で呼び直さない（外れるのは下の cleanup）。
     if (node === null) {
       return
     }
@@ -244,7 +244,7 @@ export function useSettings(navRef: RefObject<HTMLElement | null>): ScreenNavSet
   }
 
   function changeRevealSpeed(value: string): void {
-    // **知らない値は受け取らない**（`<select>` の選択肢の外から来たときは何もしない）。
+    // 知らない値は受け取らない（`<select>` の選択肢の外から来たときは何もしない）。
     if (isRevealSpeed(value)) {
       setRevealSpeed(value)
       saveRevealSpeed(value)
@@ -268,7 +268,7 @@ export function useSettings(navRef: RefObject<HTMLElement | null>): ScreenNavSet
     sessionDefault: {
       model: sessionDefault.model,
       onChangeModel: (value) => {
-        // **知らない値は送らない**（`<select>` の選択肢の外から来たときは何もしない）。
+        // 知らない値は送らない（`<select>` の選択肢の外から来たときは何もしない）。
         if (isModelAlias(value)) {
           dispatch.session.setSessionDefault({
             model: value,
@@ -306,7 +306,7 @@ export function useSettings(navRef: RefObject<HTMLElement | null>): ScreenNavSet
     visit: {
       value: visitToggleValueOf(visitEnabled),
       onChange: (value) => {
-        // **知らない値は送らない**（`<select>` の選択肢の外から来たときは何もしない）。
+        // 知らない値は送らない（`<select>` の選択肢の外から来たときは何もしない）。
         if (isVisitToggleValue(value)) {
           dispatch.visit.setEnabled({ enabled: value === "on" })
         }

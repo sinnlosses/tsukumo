@@ -1,17 +1,17 @@
-// 立ち絵1件（<Portrait>。docs/design.md 6.1・6.5 / docs/screen-design.md 13.6）。**キャラビューとキャラクター画面の
-// 立ち絵の並びの2つが読む**ので `components/domain/`（tsukumo の語彙を持つ部品）に置く（2章
-// 「上げる引き金」）。**動きを決めるのは呼び出し側**で、ここは受け取った値を属性に渡すだけ。**SVG は `fetch` して中身をそのまま
-// インライン**にし（差し色の CSS 変数 `--outfit-accent` を効かせるため。`<img>` で読み込むと
+// 立ち絵1件（<Portrait>。docs/design.md 6.1・6.5 / docs/screen-design.md 13.6）。キャラビューとキャラクター画面の
+// 立ち絵の並びの2つが読むので `components/domain/`（tsukumo の語彙を持つ部品）に置く（2章
+// 「上げる引き金」）。動きを決めるのは呼び出し側で、ここは受け取った値を属性に渡すだけ。SVG は `fetch` して中身をそのまま
+// インラインにし（差し色の CSS 変数 `--outfit-accent` を効かせるため。`<img>` で読み込むと
 // 独立した文書扱いになり届かない。`characters/README.md` の実測）、ラスタは `<img>` で出す
 // （docs/requirements.md 4.4）。
 // 素材は `/character/<pack>/<file>` から取りに行くだけで、`SessionState` には URL しか乗らない
 // （docs/design.md 4.2・5章）。
 //
-// **`expression` / `outfit` は表情・衣装の差し替えにだけ使う**（立ち絵そのものの差し替えで
-// 表す。docs/requirements.md 4.3）。**`motion` が立ち絵の動き**（呼吸・待っている間の移動・
+// `expression` / `outfit` は表情・衣装の差し替えにだけ使う（立ち絵そのものの差し替えで
+// 表す。docs/requirements.md 4.3）。`motion` が立ち絵の動き（呼吸・待っている間の移動・
 // 書いている・完了の反応・失敗でびくっ）を `data-motion` 属性で CSS 側（`portrait.module.css`）に渡す。
 //
-// **どこに・どれだけの大きさで置くかは呼び出し側**（`className`）。ここが持つのは中身の
+// どこに・どれだけの大きさで置くかは呼び出し側（`className`）。ここが持つのは中身の
 // 収め方と動きだけで、置き方は領域ごとに違う（キャラビューは床に立たせ、キャラクター画面の
 // 並びは固定の高さで畳に並べる）。
 // 「1枚の矩形」として位置・大きさ・傾き・上下・不透明度だけを動かす割り切りなので、
@@ -35,26 +35,26 @@ export type PortraitProps = {
   readonly outfit: Outfit
   /**
    * いまの動き。決めるのは呼び出し側（`components/page/conversation/components/character-view/hooks/use-character-view.ts` の
-   * `resolvePortraitMotion`）。**動かさない置き方もある**ので `undefined` を許す
+   * `resolvePortraitMotion`）。動かさない置き方もあるので `undefined` を許す
    * （キャラクター画面の立ち絵の並び。13.6）。そのときは `data-motion` が付かず、
    * `character.css` の動きの規則はどれも当たらない。
    */
   readonly motion: PortraitMotion | undefined
   /**
    * 置き方（余白・高さ・幅の上限）を足す class 名。呼び出し側の `*.module.css` のもので、
-   * **立ち絵自身の見た目は持たない**。足すものが無ければ `undefined`。
+   * 立ち絵自身の見た目は持たない。足すものが無ければ `undefined`。
    */
   readonly className: string | undefined
 }
 
 /**
- * SVG の中身を `fetch` する（TanStack Query）。**`/character/<pack>/<file>` の URL は
- * パックの名前を経路に、素材の版を問い合わせ文字列に含む**（`characterAssetPath`）ので、立ち絵や
+ * SVG の中身を `fetch` する（TanStack Query）。`/character/<pack>/<file>` の URL は
+ * パックの名前を経路に、素材の版を問い合わせ文字列に含む（`characterAssetPath`）ので、立ち絵や
  * 差し色を変えると URL 自体が変わる。`queryKey` を URL だけにすれば、中身が変わったときは
- * 別のキャッシュ行になり、**同じ URL の中身はセッション中変わらない**ので取り直す理由が無い
+ * 別のキャッシュ行になり、同じ URL の中身はセッション中変わらないので取り直す理由が無い
  * （`staleTime` / `gcTime` を `Infinity` にする）。
  *
- * **読めなかったときは `undefined` を返す。** 読み込みが終わっていないときと同じ「いまの URL の
+ * 読めなかったときは `undefined` を返す。 読み込みが終わっていないときと同じ「いまの URL の
  * 中身が無い」になり、呼び出し側の描き分けも同じ（立ち絵が出ないだけで、落ちない）。
  */
 function useSvgMarkup(url: string | undefined): string | undefined {
@@ -71,13 +71,13 @@ function useSvgMarkup(url: string | undefined): string | undefined {
 }
 
 /**
- * キャラクターの立ち絵を**表情の数だけ先に読んでおく**（docs/screen-design.md 13.7「切り替えの
+ * キャラクターの立ち絵を表情の数だけ先に読んでおく（docs/screen-design.md 13.7「切り替えの
  * ときの立ち絵」）。仕事 / 雑談を切り替えると立ち絵は別の領域で新しくマウントされ、表情も
  * 切り替え前と違うことがある。読んでいない絵だと、読み終わるまで立ち絵の場所が空いたまま
  * 移り変わりが終わり、そのあとで絵がいきなり現れる（実測: 初めての表情で約250ms）。
  *
  * SVG は {@link useSvgMarkup} と同じキャッシュ行へ入れ、ラスタは `Image` に読ませて
- * **キャラクターが変わるまで参照を持ち続ける**（`/character/<pack>/<file>` は `no-store` で配るので、
+ * キャラクターが変わるまで参照を持ち続ける（`/character/<pack>/<file>` は `no-store` で配るので、
  * 参照が切れた絵はブラウザが読み直すことがある）。
  */
 export function usePortraitPreload(portraits: Readonly<Record<string, string>> | undefined): void {
@@ -146,8 +146,8 @@ export function Portrait(props: PortraitProps): ReactElement {
 
   // SVG はエスケープせずファイルの中身をそのまま差し込む（インライン埋め込みそのものが目的
   // のため）。読み込みが終わっていない・失敗したときは空のまま
-  // （吹き出しだけで成立させる。落ちない）。**`dangerouslySetInnerHTML` と `children` は
-  // 同じ要素に同時に渡さない**（React が警告する）ので、SVG のときは別の `return` にする。
+  // （吹き出しだけで成立させる。落ちない）。`dangerouslySetInnerHTML` と `children` は
+  // 同じ要素に同時に渡さない（React が警告する）ので、SVG のときは別の `return` にする。
   if (kind === "svg") {
     return (
       <div

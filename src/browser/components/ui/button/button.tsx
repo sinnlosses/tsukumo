@@ -1,9 +1,9 @@
 // ボタンの部品（`docs/design.md` 2章「`components/ui/` の部品（variant の作法と一覧）」）。
-// **持つのは顔（枠・地・字の色と hover・focus-visible・押せないとき・押されたとき）だけ**——箱
+// 持つのは顔（枠・地・字の色と hover・focus-visible・押せないとき・押されたとき）だけ——箱
 // （高さ・余白・角丸）は呼び出し側が `className` で渡す（同節「箱（高さ・余白・角丸）は className
 // で渡す」）。
 //
-// **押せないは `aria-disabled` の1通り**（`disabled` を使わない。フォーカスは残るので `title` の
+// 押せないは `aria-disabled` の1通り（`disabled` を使わない。フォーカスは残るので `title` の
 // 理由が読める）。押されても {@link ButtonProps.onClick} を呼ばない。
 //
 // `size` の対応表は `Text` と同じものを使う（`ui/text/text.tsx` の `TEXT_SIZE_CLASS`。
@@ -73,7 +73,7 @@ export function Button(props: ButtonProps): ReactElement {
   )
 
   const handleClick = (): void => {
-    // **押せないときは呼ばない**（`aria-disabled` は native の `disabled` と違いクリックを
+    // 押せないときは呼ばない（`aria-disabled` は native の `disabled` と違いクリックを
     // 止めないので、ここで読み替える）。
     if (props.disabled) {
       return

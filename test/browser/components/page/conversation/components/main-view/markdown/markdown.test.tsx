@@ -266,7 +266,7 @@ describe("Markdown（unified への置き換えが求める記法）", () => {
   it("MermaidBlock は失敗したら mermaid のエラー図を描かず、コードとエラー文を出す", async () => {
     // この環境（happy-dom。実際のネットワークが無い）では同梱スクリプトの読み込み自体が失敗する
     // （`flushEffects` の説明と同じ経路）。mermaid のグローバルを差し替えて構文エラーを
-    // 再現する代わりに、**この自然に起きる失敗を「壊れたときの経路」として検証する**
+    // 再現する代わりに、この自然に起きる失敗を「壊れたときの経路」として検証する
     // （読み込み失敗も構文エラーも MermaidBlock は同じ catch で受け止める設計のため）。
     const { container } = render(<Markdown text={"```mermaid\nflowchart TD\nA --> B\n```"} />)
 
@@ -306,8 +306,8 @@ describe("Markdown（unified への置き換えが求める記法）", () => {
   })
 
   it("フェンスに書いたファイル名がブロックの左上のラベルになる", () => {
-    // 言語名のあとのファイル名は mdast では `code` の `data.meta` に入り、**rehype-raw が
-    // 木を書き出して読み直す時点で落ちる**。属性へ移す `code-file-name.ts` とサニタイザの
+    // 言語名のあとのファイル名は mdast では `code` の `data.meta` に入り、rehype-raw が
+    // 木を書き出して読み直す時点で落ちる。属性へ移す `code-file-name.ts` とサニタイザの
     // 許可（`code`）が両方効いていないと、ここでラベルが出ない。
     const { container } = render(<Markdown text={"```diff develop/tasks.json\n-  1\n+  2\n```"} />)
 

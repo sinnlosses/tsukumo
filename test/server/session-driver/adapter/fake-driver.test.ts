@@ -120,7 +120,7 @@ describe("startFakeSession", () => {
     await tick()
 
     await driver.setEffort("xhigh")
-    // **setEffort 自体は何も流さない**（押した値へ先に倒さない。13.9「動き方の操作子」）。
+    // setEffort 自体は何も流さない（押した値へ先に倒さない。13.9「動き方の操作子」）。
     expect(sink.events.some((event) => event.kind === "effort-changed")).toBe(false)
 
     driver.prompt("架空の依頼", [])

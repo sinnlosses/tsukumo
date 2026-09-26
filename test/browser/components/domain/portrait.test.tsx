@@ -40,8 +40,8 @@ function stubFetch(body: string): void {
 }
 
 // `<Portrait>` は `useQuery`（`components/domain/portrait.tsx`）を使うので `QueryClientProvider` が要る
-// （`test/browser/` の他の部品テストが Context の Provider で包むのと同じ形）。**キャッシュはテストを
-// またがせない**ので、テストごとに新しい `QueryClient` を作る。
+// （`test/browser/` の他の部品テストが Context の Provider で包むのと同じ形）。キャッシュはテストを
+// またがせないので、テストごとに新しい `QueryClient` を作る。
 
 describe("Portrait", () => {
   it("SVG の URL は fetch して中身をそのままインラインにする", async () => {
@@ -236,7 +236,7 @@ describe("usePortraitPreload", () => {
       expect(client.getQueryData<string>(["/character/proud.svg"])).toBe(PLAUSIBLE_SVG)
     })
 
-    // 仕事 / 雑談を切り替えたときの新しいマウント。**最初の描画から絵がある**（空かない）。
+    // 仕事 / 雑談を切り替えたときの新しいマウント。最初の描画から絵がある（空かない）。
     render(
       <QueryClientProvider client={client}>
         <Portrait

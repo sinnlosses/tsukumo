@@ -32,8 +32,8 @@ function usage(model: string, input: number, output: number, cost: number): Mode
   }
 }
 
-// ここから下は summarizeTokenUsage 用のフィクスチャ。**壊れた行・版違いの行を落とすのは
-// adapter（token-usage-log.test.ts）の役目**なので、ここには渡さない — summarizeTokenUsage は
+// ここから下は summarizeTokenUsage 用のフィクスチャ。壊れた行・版違いの行を落とすのは
+// adapter（token-usage-log.test.ts）の役目なので、ここには渡さない — summarizeTokenUsage は
 // 既に検証済みの行だけを受け取る前提の純関数。
 const EMPTY_STEP = {
   inputTokens: 0,
@@ -119,8 +119,8 @@ describe("tokenUsageDelta", () => {
   })
 })
 
-// ここから下はターンの中の内訳。**イベントには会話の文面が乗るが、畳んだ結果には長さしか
-// 残らない**ことを固定する（docs/coding-standards.md「会話内容の扱い」）。フィクスチャの文面は
+// ここから下はターンの中の内訳。イベントには会話の文面が乗るが、畳んだ結果には長さしか
+// 残らないことを固定する（docs/coding-standards.md「会話内容の扱い」）。フィクスチャの文面は
 // すべて手で書いた架空のもの。
 function toolStarted(toolUseId: string, name: string, parentToolUseId?: string): SessionEvent {
   return {
@@ -230,7 +230,7 @@ describe("tallyTurnUsage / turnUsageBreakdown", () => {
     ])
   })
 
-  // **同じ `message.id` の `assistant` が何度も届く**（返答が流れている間。最初の1つは
+  // 同じ `message.id` の `assistant` が何度も届く（返答が流れている間。最初の1つは
   // `output_tokens` が 1〜3 になる）ので、最後に届いたものだけを数える。
   it("同じ message.id のステップは最後の usage だけを数える", () => {
     const breakdown = turnUsageBreakdown(
@@ -262,8 +262,8 @@ describe("tallyTurnUsage / turnUsageBreakdown", () => {
     expect(breakdown.subagent.tokens.inputTokens).toBe(55_431)
   })
 
-  // ターンの合計（`models`）と内訳が矛盾しないための不変条件——**同じステップも同じ呼び出しも
-  // 二度は数えない**（持ち場は排他で、`message.id` は畳まれる）。
+  // ターンの合計（`models`）と内訳が矛盾しないための不変条件——同じステップも同じ呼び出しも
+  // 二度は数えない（持ち場は排他で、`message.id` は畳まれる）。
   it("内訳を足すと元の数に戻る（持ち場をまたいで二重に数えない）", () => {
     const tally = tallyAll([
       stepUsage("msg-1", "main", 100, 20),
@@ -323,7 +323,7 @@ describe("tallyTurnUsage / turnUsageBreakdown", () => {
     expect(breakdown.main.steps).toBe(0)
   })
 
-  // **この検査がいちばん重要**（docs/coding-standards.md「会話内容の扱い」）。積み上げた入れ物と
+  // この検査がいちばん重要（docs/coding-standards.md「会話内容の扱い」）。積み上げた入れ物と
   // 畳んだ内訳のどちらにも、ツールの引数と結果の文面が1文字も残らない。
   it("ツールの引数と結果の文面は、積み上げた入れ物にも畳んだ内訳にも残らない", () => {
     const secrets = ["架空のツールの引数", "架空のツールの結果", "架空の値"]

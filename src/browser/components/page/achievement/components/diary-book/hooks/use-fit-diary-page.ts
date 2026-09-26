@@ -1,6 +1,6 @@
 // 日記帳の右ページ（`../diary-book.tsx`）の縦書きの本文を、ページに収まるまで縮める
-// （`docs/screen-design.md` 13.10「日記帳の見開き」）。**字の数からは見積もらず、描いた本文が
-// 横にはみ出しているか（`scrollWidth > clientWidth`）を測って決める**——書体・窓の幅・段落の数で
+// （`docs/screen-design.md` 13.10「日記帳の見開き」）。字の数からは見積もらず、描いた本文が
+// 横にはみ出しているか（`scrollWidth > clientWidth`）を測って決める——書体・窓の幅・段落の数で
 // 1列に入る字の数が変わるので、見積もりは黙って外れる。
 //
 // 縮める量はページの `--diary-scale` に書く。字の大きさ・罫の間隔・右の余白はどれもこの値を
@@ -16,7 +16,7 @@ const SCALE_STEP = 0.05
 /**
  * `pageRef` の `--diary-scale` を、`bodyRef` の本文が横にはみ出さない最大の値にする。
  * 本文が入れ替わる（別の日・書き足し）か、ページか段落の大きさが変わるたびに測り直す。
- * **`bodyRef` の要素は日を送っても作り直されない前提**（`diary-book.tsx` は書いた日も白紙の日も
+ * `bodyRef` の要素は日を送っても作り直されない前提（`diary-book.tsx` は書いた日も白紙の日も
  * 同じ位置の `<div>` に描く）。
  */
 export function useFitDiaryPage(
@@ -24,7 +24,7 @@ export function useFitDiaryPage(
   bodyRef: RefObject<HTMLElement | null>,
 ): void {
   // React の外（DOM の style）への書き込みと、大きさ・中身の変化の購読
-  // （docs/coding-standards.md「React」の4類型）。**`useLayoutEffect` でなければならない**——
+  // （docs/coding-standards.md「React」の4類型）。`useLayoutEffect` でなければならない——
   // `useEffect` だと縮める前の本文が1フレームだけはみ出して見える。
   useLayoutEffect(() => {
     const page = pageRef.current

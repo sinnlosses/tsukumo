@@ -1,6 +1,6 @@
 // 手続きの照合と断る条件（`docs/design.md` 2章「コマンドの受け手と手続きの置き方」の表の「照合と
-// 断る条件のミドルウェア」）。**起動トークンと `Origin` を全部の手続きの前に1つのミドルウェアで
-// 見て**（`/rpc` と `/ws` の両方）、**コマンドはさらに契約の `meta` の断る条件を見る**。束ねるのは
+// 断る条件のミドルウェア」）。起動トークンと `Origin` を全部の手続きの前に1つのミドルウェアで
+// 見て（`/rpc` と `/ws` の両方）、コマンドはさらに契約の `meta` の断る条件を見る。束ねるのは
 // 配線の `src/router.ts` で、手続きの側は照合も断る条件も知らない。
 //
 // 規則は `/ws` の upgrade（`session-socket.ts` の `isAllowedUpgrade`）と同じ: トークンが合うこと、
@@ -18,8 +18,8 @@ import { type CommandSession } from "../../session/core/command-session.ts"
 import { type SubscribeFrames } from "./frame-procedure.ts"
 
 /**
- * 手続き1回ぶんの照合の材料。**要求から写した2つ（外の世界を写した直後なので `| undefined`）と、
- * 照らし合わせる相手の2つ**を持つ。作るのは {@link rpcContextOf}。
+ * 手続き1回ぶんの照合の材料。要求から写した2つ（外の世界を写した直後なので `| undefined`）と、
+ * 照らし合わせる相手の2つを持つ。作るのは {@link rpcContextOf}。
  */
 export type RpcContext = {
   /** 要求の `?t=`。無ければ undefined。 */
@@ -33,14 +33,14 @@ export type RpcContext = {
 }
 
 /**
- * コマンドの手続き1回ぶんの材料。照合の材料に、**いまのセッションの口**を足したもの（`/ws` の
+ * コマンドの手続き1回ぶんの材料。照合の材料に、いまのセッションの口を足したもの（`/ws` の
  * 接続ごとに `session-socket.ts` が作る）。`session` の手続きはこれを受け手へ渡し、葉の機能の
  * 手続きはそのうち `emit` だけを見る。
  */
 export type CommandRpcContext = RpcContext & { readonly session: CommandSession }
 
 /**
- * `/ws` の手続き1回ぶんの材料。コマンドの材料に、**押し出しの購読の元**（`frame.subscribe` が
+ * `/ws` の手続き1回ぶんの材料。コマンドの材料に、押し出しの購読の元（`frame.subscribe` が
  * 読む）を足したもの。
  */
 export type SocketRpcContext = CommandRpcContext & { readonly subscribe: SubscribeFrames }
@@ -60,7 +60,7 @@ export function rpcContextOf(
 }
 
 /**
- * 照合のミドルウェア。**合わなければ 403**（`FORBIDDEN`）で、手続きの受け手は呼ばれない。
+ * 照合のミドルウェア。合わなければ 403（`FORBIDDEN`）で、手続きの受け手は呼ばれない。
  * 理由（どちらが合わなかったか）は返さない。
  */
 export const rpcGuard = os.$context<RpcContext>().middleware(({ context, next }) => {
@@ -79,8 +79,8 @@ function isAllowedRpcRequest(context: RpcContext): boolean {
 
 /**
  * 断る条件のミドルウェア。契約の `meta`（`src/shared/command.ts` の `CommandMeta`）を見て、
- * 当たれば**定型文の理由を添えた `REFUSED`** を返し、手続きの受け手は呼ばれない。**見る順は
- * 「雑談の外か」→「ターン中か」**——仕事のときに押された `nudge` にターン中の理由を返さないため。
+ * 当たれば定型文の理由を添えた `REFUSED` を返し、手続きの受け手は呼ばれない。見る順は
+ * 「雑談の外か」→「ターン中か」——仕事のときに押された `nudge` にターン中の理由を返さないため。
  *
  * 画面も同じ条件で操作子を塞ぐが、ここでも見る（画面を経ない依頼・無効化の描画が間に合わなかった
  * ときの取りこぼし対策）。

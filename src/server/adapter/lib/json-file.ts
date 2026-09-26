@@ -1,10 +1,10 @@
 // `~/.tsukumo/` に置く、丸ごと置き換える形の JSON ファイル（`remembered-default.ts` の
 // `state.json`・`previous-usage-review.ts`・`usage-proposal-dismissal.ts`）が同じ手で書き写して
-// いた読み書きをここに1つにする。**境界（どこに・何のために書くか）は名乗らず、JSON ファイルの
-// 扱い方だけを知っている**（`docs/design.md` 2章「`lib/` と `utils/` に置く基準」——`lib/jsonl.ts`
+// いた読み書きをここに1つにする。境界（どこに・何のために書くか）は名乗らず、JSON ファイルの
+// 扱い方だけを知っている（`docs/design.md` 2章「`lib/` と `utils/` に置く基準」——`lib/jsonl.ts`
 // と同じ立場で、こちらは1行ずつの JSONL ではなく1ファイル丸ごとの JSON を対象にする）。
 //
-// **検証はしない。** 読んだ値の形が正しいかは呼び出し元の zod スキーマに委ねる（`unknown` の
+// 検証はしない。 読んだ値の形が正しいかは呼び出し元の zod スキーマに委ねる（`unknown` の
 // まま返す）。書けなくても・読めなくても例外を投げない（常駐プロセスは1回の失敗で落ちない。
 // `docs/coding-standards.md`「エラーハンドリング」）。
 

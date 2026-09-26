@@ -1,7 +1,7 @@
-// fake driver。**claude を起こさずに**、疑似セッションどおりのイベントを時間の順に流す
+// fake driver。claude を起こさずに、疑似セッションどおりのイベントを時間の順に流す
 // （docs/design.md 5章「fake-driver.ts」）。`TSUKUMO_DRIVER=fake` で選ぶ。
 //
-// 用途は目視確認と Playwright（docs/design.md 10章）。**疑似セッションは手で書いた架空の会話だけ**で、
+// 用途は目視確認と Playwright（docs/design.md 10章）。疑似セッションは手で書いた架空の会話だけで、
 // 実物の transcript は使わない（docs/coding-standards.md「会話内容の扱い」）。
 //
 // 契約は本物の駆動（src/server/session-driver/core/session-driver.ts の `SessionDriver`）と同じ。違うのは中身が
@@ -29,15 +29,15 @@ import { type SessionDriver } from "../core/session-driver.ts"
 const DEFAULT_SESSION_URL = new URL("../../../../test/fixture/fake-session.json", import.meta.url)
 
 /**
- * fake driver が流す固定のプラン（`docs/glossary.md`「プラン」）。**会話の内容ではない**ので、
+ * fake driver が流す固定のプラン（`docs/glossary.md`「プラン」）。会話の内容ではないので、
  * 疑似セッションの JSON に持たせず、ここに直接書く。
  */
 const FAKE_PLAN = "Claude Max"
 
 /**
  * fake driver が起こした直後に1回だけ流す、モデルごとの effort の対応（`docs/screen-design.md`
- * 13.9「動き方の操作子」）。**会話の内容ではない**ので疑似セッションの JSON には持たせず、
- * ここに直接書く。**本物の `supportedModels()` の実測値をそのまま写した**（`opus` / `sonnet` は
+ * 13.9「動き方の操作子」）。会話の内容ではないので疑似セッションの JSON には持たせず、
+ * ここに直接書く。本物の `supportedModels()` の実測値をそのまま写した（`opus` / `sonnet` は
  * 5段すべてに対応し、`fable` はエイリアスと違う値〔`claude-fable-5-1`〕で返る。`haiku` は
  * `supportsEffort` 自体が無い）——effort に対応しないモデルで選べなくなることと、エイリアスと
  * 一致しない値の当て方（`src/browser/components/domain/screen-nav/domain/effort-label.ts`）の両方を
@@ -66,8 +66,8 @@ export const FAKE_DEFAULT_EFFORT: EffortLevel = "medium"
 
 /**
  * fake driver が返すコンテキストの内訳（`docs/glossary.md`「コンテキストの内訳」）の数。
- * **会話の内容ではない**ので疑似セッションの JSON には持たせず、ここに直接書く。架空の値だが、
- * **分類の並びと種別・合計と窓の関係だけは本物に合わせてある**（`used` の合計が
+ * 会話の内容ではないので疑似セッションの JSON には持たせず、ここに直接書く。架空の値だが、
+ * 分類の並びと種別・合計と窓の関係だけは本物に合わせてある（`used` の合計が
  * `totalTokens`、それに `buffer` と `free` を足すと窓の大きさになる）。
  */
 const FAKE_CONTEXT_USAGE = {
@@ -96,10 +96,10 @@ const FAKE_CONTEXT_USAGE = {
   skills: [{ name: "next-task", source: "userSettings", tokens: 120 }],
 } satisfies Omit<ContextUsage, "model">
 
-/** 疑似セッションの1手。`afterMs` は**その場面の始まりからの経過**（前の手からの差分ではない）。 */
+/** 疑似セッションの1手。`afterMs` はその場面の始まりからの経過（前の手からの差分ではない）。 */
 const fakeSessionStepSchema = z.object({ afterMs: z.number().min(0), event: sessionEventSchema })
 
-/** 依頼1回ぶんの場面。**名前で名指しできる**（{@link FakeDriverOptions.scene}）。 */
+/** 依頼1回ぶんの場面。名前で名指しできる（{@link FakeDriverOptions.scene}）。 */
 const fakeSessionSceneSchema = z.object({
   name: z.string().min(1),
   steps: z.array(fakeSessionStepSchema),
@@ -107,7 +107,7 @@ const fakeSessionSceneSchema = z.object({
 
 /**
  * 疑似セッション。`opening` は起こした直後に流す場面、`turns` は依頼を受けるたびに順に流す場面。
- * 依頼が場面の数を超えたら**先頭に戻って繰り返す**（起こしっぱなしで何度でも試せるように）。
+ * 依頼が場面の数を超えたら先頭に戻って繰り返す（起こしっぱなしで何度でも試せるように）。
  */
 const fakeSessionSchema = z.object({
   opening: z.array(fakeSessionStepSchema),
@@ -119,7 +119,7 @@ export type FakeSessionStep = { readonly afterMs: number; readonly event: Sessio
 
 /**
  * 名前の付いた場面。名前は疑似セッションの中で重ならない前提で、同じ名前があれば先に書いたほうを
- * 使う。**名前は画面の状態の呼び名**（`question-multi` など）で、会話の内容ではない。
+ * 使う。名前は画面の状態の呼び名（`question-multi` など）で、会話の内容ではない。
  */
 export type FakeSessionScene = {
   readonly name: string
@@ -134,22 +134,22 @@ export type FakeSession = {
 export type FakeDriverOptions = {
   readonly session: FakeSession
   /**
-   * 起こした直後に `opening` へ続けて流す場面の名前（`TSUKUMO_FAKE_SCENE`）。**依頼を送らずに
-   * 特定の状態を出す**ための口で、状態のカタログを撮る道具が使う
+   * 起こした直後に `opening` へ続けて流す場面の名前（`TSUKUMO_FAKE_SCENE`）。依頼を送らずに
+   * 特定の状態を出すための口で、状態のカタログを撮る道具が使う
    * （`docs/architecture.md`「手で確かめること」）。名前が疑似セッションに無ければ `opening` だけを
    * 流す。
    */
   readonly scene: string | undefined
   /**
-   * このセッションを起こした既定（モデル・許可モード。`docs/screen-design.md` 13.6）。**疑似
-   * セッションが流す `session-info` にもこの値を載せる** — 固定値のままだと、歯車で既定を
+   * このセッションを起こした既定（モデル・許可モード。`docs/screen-design.md` 13.6）。疑似
+   * セッションが流す `session-info` にもこの値を載せる — 固定値のままだと、歯車で既定を
    * 変えて起こし直しても帯が疑似セッションに書いた値を出してしまう（本物は SDK の `init` が
    * 実際に起こした値を返す）。
    */
   readonly sessionDefault: SessionDefault
   /**
-   * 最初のビュー（ブラウザのタブ）が繋がったら解ける約束。**`opening` と名指しの場面はこれが
-   * 解けてから流し始める**——起こした直後から流すと、ページが繋がる前に届いたぶんは `hello` の
+   * 最初のビュー（ブラウザのタブ）が繋がったら解ける約束。`opening` と名指しの場面はこれが
+   * 解けてから流し始める——起こした直後から流すと、ページが繋がる前に届いたぶんは `hello` の
    * 状態に畳まれ、どこからが `events` として届くかが開くまでの時間で変わる（E2E のメッセージの
    * 列が走らせるたびに揃わない。`docs/design.md` 10章「E2E の走らせ方」）。起こし直した代は
    * もう繋がっているので、解けた約束を渡す。
@@ -160,7 +160,7 @@ export type FakeDriverOptions = {
 }
 
 /**
- * 疑似セッションを読む。**読めない・形が違うときは undefined**（呼び出し側が起動を止める。
+ * 疑似セッションを読む。読めない・形が違うときは undefined（呼び出し側が起動を止める。
  * 疑似セッションが無ければ fake driver には意味が無いので、起動時の前提不足として扱ってよい）。
  */
 export function readFakeSession(
@@ -190,8 +190,8 @@ export function readFakeSession(
  * 答え待ち（`pending-changed`）も疑似セッションから積まれ、`answer()` で解けて次の
  * `pending-changed` が流れる（本物の `canUseTool` と同じ見え方になる）。
  *
- * `options.scene` に名前があれば、その場面を `opening` の続きとして流し、**次の `prompt()` は
- * その次の場面から**続く（依頼を送らずに特定の状態へ着けるための口）。
+ * `options.scene` に名前があれば、その場面を `opening` の続きとして流し、次の `prompt()` は
+ * その次の場面から続く（依頼を送らずに特定の状態へ着けるための口）。
  */
 export function startFakeSession(options: FakeDriverOptions): SessionDriver {
   const timers = new Set<ReturnType<typeof setTimeout>>()
@@ -202,7 +202,7 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
   // `setPermissionMode` で変わる（本物は SDK が持つ値で、ここはその代わり）。
   let model: string = options.sessionDefault.model
   let permissionMode: string = options.sessionDefault.permissionMode
-  // いま効いている effort。`setEffort` で変わるが、**画面に届くのはターンが終わったとき**
+  // いま効いている effort。`setEffort` で変わるが、画面に届くのはターンが終わったとき
   // （本物の `Stop` フック入力と同じ遅れを疑似セッションでも再現する。`docs/screen-design.md`
   // 13.9「動き方の操作子」の「effort のドロップダウンだけ、表示の更新が遅れる」）。
   let effort: EffortLevel = FAKE_DEFAULT_EFFORT
@@ -216,13 +216,13 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
       pending = event.pending
     }
     for (const passed of reportReview.pass(event)) {
-      // 疑似セッションが書いた `session-info` のモデル・許可モードは**いまの値で置き換える**
+      // 疑似セッションが書いた `session-info` のモデル・許可モードはいまの値で置き換える
       // （疑似セッションの持ち物ではなく、起こし方で決まる値なので）。
       options.onEvent(
         passed.kind === "session-info" ? { ...passed, model, permissionMode } : passed,
       )
     }
-    // **ターンが終わるたびに、そのとき効いている effort を読めたことにする**（本物の `Stop`
+    // ターンが終わるたびに、そのとき効いている effort を読めたことにする（本物の `Stop`
     // フック入力を疑似する。`reportReview.pass` は通さない——`report` の差し戻しとは無関係）。
     if (event.kind === "turn-finished") {
       options.onEvent({ kind: "effort-changed", effort })
@@ -287,14 +287,14 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
 
   return {
     prompt: (text, images) => {
-      // 疑似セッションを流すだけの駆動でも、**控えと id だけを記録へ渡す**のは本物と同じ
+      // 疑似セッションを流すだけの駆動でも、控えと id だけを記録へ渡すのは本物と同じ
       // （`docs/requirements.md` 4.10）。
       emit({ kind: "request", text, images: recordedPromptImages(images) })
       playNextTurn()
     },
     promptWithoutRecord: () => {
       // 記録に残さない依頼（`docs/screen-design.md` 13.7）。本物と同じく `request` の代わりに
-      // ターンの始まりだけを流し、**文面はどこにも残さない**（疑似セッションは次の場面へ進む）。
+      // ターンの始まりだけを流し、文面はどこにも残さない（疑似セッションは次の場面へ進む）。
       emit({ kind: "turn-started" })
       playNextTurn()
     },
@@ -304,19 +304,19 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
     },
     answer: (id, answer) => settle(id, answer),
     pending: () => pending,
-    // 本物は SDK に問い合わせる。fake driver は claude を起こさないので、**いま動いている
-    // モデルだけを載せた**固定の内訳を返す（画面の札を疑似セッションでも確かめられるように）。
+    // 本物は SDK に問い合わせる。fake driver は claude を起こさないので、いま動いている
+    // モデルだけを載せた固定の内訳を返す（画面の札を疑似セッションでも確かめられるように）。
     readContextUsage: () =>
       Promise.resolve({ kind: "ready", usage: { model, ...FAKE_CONTEXT_USAGE } }),
     setModel: (next) => {
-      // **名前が無い切り替えは覚えない**（本物も `undefined` のときは何も知らせない）。
+      // 名前が無い切り替えは覚えない（本物も `undefined` のときは何も知らせない）。
       if (next !== undefined) {
         model = next
       }
       emit({ kind: "session-info", ...sessionInfo() })
       return Promise.resolve()
     },
-    // **確認の合図をここで流さない**（本物の `sdk-driver.ts` の `setEffort` と同じ）。画面に
+    // 確認の合図をここで流さない（本物の `sdk-driver.ts` の `setEffort` と同じ）。画面に
     // 届くのは、次にターンが終わって `emit` が `effort-changed` を流したとき。
     setEffort: (next) => {
       effort = next
@@ -343,13 +343,13 @@ function openingSpanMs(opening: readonly FakeSessionStep[]): number {
 }
 
 /**
- * `session-info` の土台。**fake driver なので固定値**（本物は SDK の `init` から来る）。
+ * `session-info` の土台。fake driver なので固定値（本物は SDK の `init` から来る）。
  * ここに会話の内容は入らない。
  *
  * 形は `SessionEvent`（`kind: "session-info"`）と同じものを使う（同じ「無い」を2箇所で
- * 書き直さない）。**`model` / `permissionMode` がここで `| undefined` なのは、SDK の `init`
- * をそのまま写す境界だから**（`docs/coding-standards.md`「「無いかもしれない」値」の例外1）。
- * **値そのものは `emit` が載せ替える**ので、この土台が持つのは「無い」のまま。
+ * 書き直さない）。`model` / `permissionMode` がここで `| undefined` なのは、SDK の `init`
+ * をそのまま写す境界だから（`docs/coding-standards.md`「「無いかもしれない」値」の例外1）。
+ * 値そのものは `emit` が載せ替えるので、この土台が持つのは「無い」のまま。
  * 状態側（`src/shared/session-state.ts`）では `model` は `SessionState.model` へ独立に写る。
  */
 function sessionInfo(): Omit<Extract<SessionEvent, { kind: "session-info" }>, "kind"> {

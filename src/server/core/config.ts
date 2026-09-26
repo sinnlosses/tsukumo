@@ -1,4 +1,4 @@
-// 環境変数の解釈と、**環境変数の名前の一覧**（docs/coding-standards.md「外部の入力を読む場所を
+// 環境変数の解釈と、環境変数の名前の一覧（docs/coding-standards.md「外部の入力を読む場所を
 // 1つにする」。モジュールのトップレベルでは触らず、{@link readConfig} を
 // 呼んだときだけ読む）。値を読むのは呼び出し側の src/cli.ts。
 //
@@ -40,31 +40,31 @@ export const WATCH_UI_ENV_NAME = "TSUKUMO_WATCH_UI"
 export const VISIT_QUICK_ENV_NAME = "TSUKUMO_VISIT_QUICK"
 /**
  * サーバの時計を凍らせる瞬間（ISO 8601 の瞬間。末尾に `Z` かオフセットが要る）。E2E が走らせる
- * たびに同じ成果物を得るための口（`docs/design.md` 10章「E2E の成果物と再現」）。**進まない
- * 時計**になる。読むのは {@link readConfig} で、時計を作るのは src/server/adapter/local-time.ts。
+ * たびに同じ成果物を得るための口（`docs/design.md` 10章「E2E の成果物と再現」）。進まない
+ * 時計になる。読むのは {@link readConfig} で、時計を作るのは src/server/adapter/local-time.ts。
  */
 export const FIXED_CLOCK_ENV_NAME = "TSUKUMO_FIXED_CLOCK"
 /**
- * tsukumo が自分の持ち物を置くホームのパス（相対は cwd 相対、絶対はそのまま）。**名前はここに
- * 置くが、読むのは {@link readConfig} ではなく src/server/adapter/tsukumo-home.ts**（理由は
+ * tsukumo が自分の持ち物を置くホームのパス（相対は cwd 相対、絶対はそのまま）。名前はここに
+ * 置くが、読むのは {@link readConfig} ではなく src/server/adapter/tsukumo-home.ts（理由は
  * そのファイルの冒頭。配線層から配る道が無い）。
  */
 export const HOME_ENV_NAME = "TSUKUMO_HOME"
 
 /**
- * セッションの駆動の種類。`fake` は**本物の claude を起こさず**、疑似セッションどおりにイベントを
+ * セッションの駆動の種類。`fake` は本物の claude を起こさず、疑似セッションどおりにイベントを
  * 流す（src/server/session-driver/adapter/fake-driver.ts）。目視確認・Playwright 用（docs/design.md 10章）。
  */
 export type DriverKind = "sdk" | "fake"
 
 export type Config = {
   /**
-   * `TSUKUMO_VIEW_PORT` の生の値。**ここでは数として解釈しない**（既定か明示かの区別と
+   * `TSUKUMO_VIEW_PORT` の生の値。ここでは数として解釈しない（既定か明示かの区別と
    * ずらす判断は src/server/view-server/core/port-resolution.ts が持つ）。
    */
   readonly rawViewPort: string | undefined
   /**
-   * `TSUKUMO_VIEW_PORT_FALLBACK_BASE` の生の値。**ここでは数として解釈しない**
+   * `TSUKUMO_VIEW_PORT_FALLBACK_BASE` の生の値。ここでは数として解釈しない
    * （{@link resolveViewPortFallbackBase} が読み解く）。
    */
   readonly rawViewPortFallbackBase: string | undefined
@@ -74,13 +74,13 @@ export type Config = {
   readonly driver: DriverKind
   /**
    * fake driver で名指しする場面（未設定なら undefined ＝ 依頼を受けるまで `opening` だけ）。
-   * **依頼を送らずに特定の画面を出す**ための口で、状態のカタログを撮るときに使う
+   * 依頼を送らずに特定の画面を出すための口で、状態のカタログを撮るときに使う
    * （`docs/architecture.md`「手で確かめること」）。`driver` が `sdk` のときは効かない。
    */
   readonly fakeScene: string | undefined
   readonly newSession: boolean
   /**
-   * `src/browser/` を見張って組み立て直すか。**既定は見張らない。** `tsukumo` は `bun link` で
+   * `src/browser/` を見張って組み立て直すか。既定は見張らない。 `tsukumo` は `bun link` で
    * リポジトリを指しているので普段使いと開発が同じ経路になり、常に入れると仕事中の保存で
    * ページが読み込み直されうる（docs/design.md 11章）。
    */
@@ -92,7 +92,7 @@ export type Config = {
    */
   readonly fixedClock: Temporal.Instant | undefined
   /**
-   * 起こした環境変数の全部。**claude の子プロセスへそのまま引き継ぐためのもの**で、tsukumo 自身は
+   * 起こした環境変数の全部。claude の子プロセスへそのまま引き継ぐためのもので、tsukumo 自身は
    * ここから読まない（読むのは上の各フィールド）。SDK の `env` は tsukumo 自身の環境と混ぜずに丸ごと
    * 置き換えるので、足したい変数（`src/server/session-driver/core/visible-output-nudge.ts`）と一緒に渡す必要が
    * あり、環境変数を読む場所（`src/cli.ts`）を増やさずに済ませるためにここで運ぶ。
@@ -101,7 +101,7 @@ export type Config = {
 }
 
 /**
- * 環境変数を1回だけ読んで設定にする。**不正な値でここでは落とさない**（読めない値は既定へ
+ * 環境変数を1回だけ読んで設定にする。不正な値でここでは落とさない（読めない値は既定へ
  * 倒し、ポート番号のように起動を止めるべきものだけを呼び出し側が判断する）。
  */
 export function readConfig(env: Readonly<Record<string, string | undefined>>): Config {

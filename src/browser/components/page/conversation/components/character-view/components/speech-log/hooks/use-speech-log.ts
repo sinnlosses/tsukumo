@@ -1,13 +1,13 @@
 // `<SpeechLog>` のロジック（docs/design.md 2章「機能の中を分ける」の container / presenter）。
 // 開いているかどうかを持ち、それを `<dialog>` の DOM へ写し、確定した記録（`SessionRecord`）を
-// **並べるだけの形**に畳む。
+// 並べるだけの形に畳む。
 //
 // 並びは `turnSpeeches` で引き直す — 過去のターンのタブを選んだときに吹き出しを遡らせるのと
-// 同じ材料で、別に溜めない。**古い→新しいを上→下**に、依頼の区切りとセリフを1本に並べる
+// 同じ材料で、別に溜めない。古い→新しいを上→下に、依頼の区切りとセリフを1本に並べる
 // （キャラビューの吹き出しの並びをそのまま上へ伸ばした形。docs/display.md 4.2）。
 // 開いた直後は並びの下端（最新）へ転がしておく。
 //
-// **並びを組み立てるのは開いている間だけ**（閉じているときに記録が伸びるたびに作り直さない）。
+// 並びを組み立てるのは開いている間だけ（閉じているときに記録が伸びるたびに作り直さない）。
 
 import { useEffect, useRef, useState, type RefObject } from "react"
 import { sumBy } from "remeda"
@@ -26,7 +26,7 @@ import {
 } from "../../../../../../../../utils/clock.ts"
 
 /**
- * セリフの古さの段。**最新からいくつ前か**で決め、`recent`（1つ前）→ `older`（2つ前）→
+ * セリフの古さの段。最新からいくつ前かで決め、`recent`（1つ前）→ `older`（2つ前）→
  * `oldest`（3つ前から先は全部）の順に薄くなる。薄さの値は CSS が持つ（`character-view.module.css`）。
  */
 export type SpeechAge = "latest" | "recent" | "older" | "oldest"
@@ -78,8 +78,8 @@ export function useSpeechLog(): SpeechLogModel {
   const scrollerRef = useRef<HTMLElement>(null)
 
   // 開いた直後に下端（最新）を見せる（`scrollTop` は React の外にある状態への書き込み）。
-  // **`<Dialog>`（`components/ui/dialog/dialog.tsx`）の中の `useModalDialog` の effect より後に
-  // 走る** — `<Dialog>` はこの部品の子なので、React は子の effect を親より先に実行する。閉じた
+  // `<Dialog>`（`components/ui/dialog/dialog.tsx`）の中の `useModalDialog` の effect より後に
+  // 走る — `<Dialog>` はこの部品の子なので、React は子の effect を親より先に実行する。閉じた
   // `<dialog>` は描かれておらず（`display: none`）、`showModal()` の前に測ると高さが 0 で転がらない。
   useEffect(() => {
     const scroller = scrollerRef.current

@@ -15,7 +15,7 @@ import { typedElement } from "../../../../typed-element.ts"
 import { type CommandSpy, putState, sessionStoreWith } from "../../../session-store.ts"
 
 // 手で書いた架空のキャラクターパック2つ（docs/coding-standards.md「会話内容の扱い」）。
-// 使用中の `fictional` と、使用中ではない `other`。立ち絵は**ラスタ**にしてある（`<Portrait>` は
+// 使用中の `fictional` と、使用中ではない `other`。立ち絵はラスタにしてある（`<Portrait>` は
 // SVG のときだけ中身を `fetch` しに行くので、このテストの関心ではない非同期がまぎれる）。
 const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = characterInfo({
   tagline: "架空のひとこと",
@@ -88,7 +88,7 @@ function renderCharacter(state: Partial<SessionState> = {}, spy: CommandSpy = ()
 
 /**
  * 一覧の行を押す。行は `<a href>` で、happy-dom が押したリンクの hash を書くか・`hashchange` を
- * 出すかは実装依存なので、**href の hash をこのテストが書いて流す**（本物のブラウザは必ず出す）。
+ * 出すかは実装依存なので、href の hash をこのテストが書いて流す（本物のブラウザは必ず出す）。
  */
 function clickListRow(name: string): void {
   const row = screen.getByRole("link", { name: new RegExp(name) })
@@ -237,7 +237,7 @@ describe("Character", () => {
     renderCharacter({ turn: { kind: "running", startedAt: 1 } })
 
     const button = screen.getByRole("button", { name: /このキャラクターに切り替える/ })
-    // **押せないは `aria-disabled` の1通り**（`Button`）。本物の `disabled` にはしないので、
+    // 押せないは `aria-disabled` の1通り（`Button`）。本物の `disabled` にはしないので、
     // フォーカスは残る（`button.test.tsx` と同じ確かめ方）。
     expect(button.getAttribute("aria-disabled")).toBe("true")
     expect(button.hasAttribute("disabled")).toBe(false)
@@ -265,7 +265,7 @@ describe("Character", () => {
     expect(document.querySelector(".character-screen-pending")).toBeNull()
   })
 
-  // 地・領域・字の色は帯の歯車へ移り（13.6 の表）、**パックの持ち物である差し色だけが残る**。
+  // 地・領域・字の色は帯の歯車へ移り（13.6 の表）、パックの持ち物である差し色だけが残る。
   it("地・領域・字の色の操作子は持たず、差し色は残る", () => {
     renderCharacter()
 

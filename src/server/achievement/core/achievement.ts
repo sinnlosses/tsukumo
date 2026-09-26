@@ -1,9 +1,9 @@
-// 成果（`docs/glossary.md`「成果」）を数える判断だけを持つ。**ファイルI/O も `git` も触らない
-// 純関数**（`docs/design.md` 5章「成果の集め方と配り方」）——`main` の上から実際に読むのは
+// 成果（`docs/glossary.md`「成果」）を数える判断だけを持つ。ファイルI/O も `git` も触らない
+// 純関数（`docs/design.md` 5章「成果の集め方と配り方」）——`main` の上から実際に読むのは
 // `src/server/achievement/adapter/main-history.ts` で、ここはその結果を渡されて数える。
 //
 // 数え方の規則は `docs/requirements.md` 4.11 が正典。ここが持つのは:
-// - **運用の帳面**のパスの判定（コミットの数から外すファイル）
+// - 運用の帳面のパスの判定（コミットの数から外すファイル）
 // - `git log` から読んだコミットの並びを、日の範囲と運用の帳面で絞ってコミット数にする
 // - `main` の先端 H にタスクの記録があるか（{@link hasTaskTracking}。無ければ応答全体の
 //   `doneTasks` を `unknown` にする）
@@ -12,7 +12,7 @@
 //   アーカイブの3つの読み元。旧形式はタスク板が読まなくなったので、`passes` まで含めてここで読む）
 // - 2つの切り口の差（前の日には無かった `done`）を取る（{@link doneTasksSince}）
 //
-// **会話の文面は扱わない**——運ぶのはコミットの数とタスクの ID・summary だけ
+// 会話の文面は扱わない——運ぶのはコミットの数とタスクの ID・summary だけ
 // （`docs/coding-standards.md`「会話内容の扱い」）。
 
 import { isPlainObject, prop, sortBy } from "remeda"
@@ -32,8 +32,8 @@ export type AchievementCommit = {
 }
 
 /**
- * `[startEpochSeconds, endEpochSeconds)` に committer date が入り、**変更したファイルが
- * すべて運用の帳面のものではない**コミットだけを数える。`git log --no-merges` で merge
+ * `[startEpochSeconds, endEpochSeconds)` に committer date が入り、変更したファイルが
+ * すべて運用の帳面のものではないコミットだけを数える。`git log --no-merges` で merge
  * commit は既に除かれている前提（`main-history.ts` が渡す前に絞る）。
  *
  * 変更ファイルが0件（空コミット）は「すべて帳面」に含めて外す——空コミットは成果として
@@ -49,8 +49,8 @@ export function countAchievementCommits(
 
 /**
  * {@link countAchievementCommits} と同じ絞り込みで、該当するコミットそのもの（committer date
- * の並び順のまま）を返す。**節目（コミットの節目。{@link commitMilestoneOf}）が、その日のどの
- * 時刻のコミットで N 件目に届いたかを出すのに使う**——数だけでなく個々のコミットの時刻が要る。
+ * の並び順のまま）を返す。節目（コミットの節目。{@link commitMilestoneOf}）が、その日のどの
+ * 時刻のコミットで N 件目に届いたかを出すのに使う——数だけでなく個々のコミットの時刻が要る。
  */
 export function achievementCommitsInRange(
   commits: readonly AchievementCommit[],
@@ -76,7 +76,7 @@ export type TaskSnapshotSource = {
 }
 
 /**
- * `main` の先端 H の時点でタスクの記録があるか。**これで一度だけ決める**——個々の日の切り口に
+ * `main` の先端 H の時点でタスクの記録があるか。これで一度だけ決める——個々の日の切り口に
  * 読み元が無いのは「その日はまだ0件」であって「記録が無い」ではない（`docs/requirements.md`
  * 4.11「タスクの記録がどちらの形式も無いリポジトリ…」）。呼び出し側（`main-history.ts`）が
  * H の切り口をここに渡して、`false` なら応答の `doneTasks` を `unknown` にする。
@@ -90,10 +90,10 @@ export function hasTaskTracking(source: TaskSnapshotSource): boolean {
 }
 
 /**
- * 切り口ぶんの読み元から `done` の ID → summary を組み立てる。**優先順は新形式 → 旧形式 →
- * アーカイブ**（同じ ID が複数の読み元にあっても先に見つかったものを残す。
- * `docs/requirements.md` 4.11「画面と依頼に出す summary は…」）。**読み元がどれも無くても
- * 空の並びを返す**（「その日はまだ0件」。「記録が無い」の判定は {@link hasTaskTracking} が
+ * 切り口ぶんの読み元から `done` の ID → summary を組み立てる。優先順は新形式 → 旧形式 →
+ * アーカイブ（同じ ID が複数の読み元にあっても先に見つかったものを残す。
+ * `docs/requirements.md` 4.11「画面と依頼に出す summary は…」）。読み元がどれも無くても
+ * 空の並びを返す（「その日はまだ0件」。「記録が無い」の判定は {@link hasTaskTracking} が
  * 別に持つ）。
  */
 export function doneTaskSummaries(source: TaskSnapshotSource): ReadonlyMap<string, string> {
@@ -129,8 +129,8 @@ export function doneTaskSummaries(source: TaskSnapshotSource): ReadonlyMap<strin
 export type TaskSummaryDiffItem = { readonly id: string; readonly summary: string }
 
 /**
- * 2つの切り口の `done` の差を取る。**前の日の切り口には無かった（またはまだ `done` でなかった）
- * ID だけ**を、当日の切り口の順のまま返す。
+ * 2つの切り口の `done` の差を取る。前の日の切り口には無かった（またはまだ `done` でなかった）
+ * ID だけを、当日の切り口の順のまま返す。
  */
 export function doneTasksSince(
   today: ReadonlyMap<string, string>,
@@ -140,7 +140,7 @@ export function doneTasksSince(
 }
 
 /**
- * 2つの読み元の `done` の ID → summary を足し合わせる。**同じ ID があれば先（`a`）を残す**
+ * 2つの読み元の `done` の ID → summary を足し合わせる。同じ ID があれば先（`a`）を残す
  * （優先順は呼び出し側が決める。ここは足し合わせるだけ）。
  */
 export function unionDoneTaskSummaries(
@@ -186,8 +186,8 @@ export type TaskFileHistoryCommit = {
 
 /**
  * ファイルごとの登録日（最古の `A` のコミットの日付）の表（`docs/requirements.md` 4.11
- * 「卒業と節目」）。**`develop/tasks.json` の `D` を含むコミット（形式の切り替え）で入った
- * ファイルは表に入れない**——旧形式で登録したタスクとみなす。
+ * 「卒業と節目」）。`develop/tasks.json` の `D` を含むコミット（形式の切り替え）で入った
+ * ファイルは表に入れない——旧形式で登録したタスクとみなす。
  */
 export function taskRegistrationDates(
   commits: readonly TaskFileHistoryCommit[],
@@ -232,8 +232,8 @@ export type DeletedTaskFile = {
 
 /**
  * 消えたファイルのうち、`beforeEpochSeconds` より前に消え、消える直前の版が `status: done` の
- * ものを id → summary で返す（`docs/requirements.md` 4.11「`done` になった日」）。**切り口
- * （{@link doneTaskSummaries}）の結果と {@link unionDoneTaskSummaries} で足し合わせて使う**——
+ * ものを id → summary で返す（`docs/requirements.md` 4.11「`done` になった日」）。切り口
+ * （{@link doneTaskSummaries}）の結果と {@link unionDoneTaskSummaries} で足し合わせて使う——
  * その日のうちに消されたタスクが、終えたタスクからも通算の数からも漏れないようにする。
  */
 export function deletedDoneTaskSummariesBefore(
@@ -303,8 +303,8 @@ function taskIdNumber(id: string): number {
 /**
  * タスクの節目（`docs/requirements.md` 4.11「節目」）。その日に終えたタスクを ID の順に、
  * 前の日の終わりまでの通算の数（`totalBeforeToday`）に足していき、{@link TASK_MILESTONE_STEP}
- * の倍数に届いたものを返す。**1日に複数の刻みをまたいだら、大きいほう（最後に届いたもの）
- * だけ**を返す（forward に足していくので、あとから見つかったほうが自然に上書きする）。
+ * の倍数に届いたものを返す。1日に複数の刻みをまたいだら、大きいほう（最後に届いたもの）
+ * だけを返す（forward に足していくので、あとから見つかったほうが自然に上書きする）。
  */
 export function taskMilestoneOf(
   items: readonly TaskSummaryDiffItem[],
@@ -327,7 +327,7 @@ export function taskMilestoneOf(
 /**
  * コミットの節目（`docs/requirements.md` 4.11「節目」）。その日のコミットを committer date の
  * 順に、前の日の終わりまでの通算の数に足していき、{@link COMMIT_MILESTONE_STEP} の倍数に
- * 届いたものを返す。**時刻（`HH:MM`）はここでは組み立てない**——呼び出し側
+ * 届いたものを返す。時刻（`HH:MM`）はここでは組み立てない——呼び出し側
  * （`main-history.ts`）が `local-time.ts` で committer date（エポック秒）から組み立てる。
  */
 export function commitMilestoneOf(
@@ -356,8 +356,8 @@ export type AchievementCommitWithDate = AchievementCommit & { readonly localDate
 /**
  * 暦ぶんのコミット（`readCommitsSince` で1回まとめて読んだもの）を、日付キーごとのコミット数に
  * 畳む（{@link countAchievementCommits} と同じ絞り込み——運用の帳面だけを触ったコミットは除く。
- * merge commit は `git log --no-merges` で既に除かれている前提）。**コミットが無い日はキーごと
- * 出てこない**（呼び出し側が `0` で埋める）。
+ * merge commit は `git log --no-merges` で既に除かれている前提）。コミットが無い日はキーごと
+ * 出てこない（呼び出し側が `0` で埋める）。
  */
 export function achievementCommitCountsByDate(
   commits: readonly AchievementCommitWithDate[],
@@ -423,17 +423,17 @@ function firstLineOf(value: unknown): string | undefined {
 
 /** 節の見出し（`## T-XXX <名前>` または名前無しの `## T-XXX`）。 */
 const ARCHIVE_HEADING_PATTERN = /^## (T-\d{3,})[ \t]*(.*)$/
-/** `**passes**:` の値。バックティック付き／無し、大文字小文字、`yes` の揺れをすべて拾う
+/** `passes:` の値。バックティック付き／無し、大文字小文字、`yes` の揺れをすべて拾う
  * （実際のアーカイブに出てくる形。`docs/history/tasks.md` を参照）。 */
 const ARCHIVE_PASSES_PATTERN = /\*\*passes\*\*:\s*`?([A-Za-z]+)`?/
-/** 見出しに名前が無い古い節が使う「**タスク**: <summary>」行。 */
+/** 見出しに名前が無い古い節が使う「タスク: <summary>」行。 */
 const ARCHIVE_TASK_LINE_PATTERN = /^\*\*タスク\*\*:\s*(.+)$/m
 const ARCHIVE_PASSING_VALUES = new Set(["true", "yes"])
 
 /**
- * `docs/history/tasks.md` から `done`（`passes` が真）の節だけを拾う。**節の境界は次の見出し**
- * （`## T-XXX`）なので、本文の中に別の `**passes**:` らしき文字列があっても後の節の値を
- * 誤って拾わない。**壊れた・読めない節はその1件だけ読み飛ばす**（他の要素と同じ安全側の判断）。
+ * `docs/history/tasks.md` から `done`（`passes` が真）の節だけを拾う。節の境界は次の見出し
+ * （`## T-XXX`）なので、本文の中に別の `passes:` らしき文字列があっても後の節の値を
+ * 誤って拾わない。壊れた・読めない節はその1件だけ読み飛ばす（他の要素と同じ安全側の判断）。
  */
 function archivedDoneTasksOf(content: string): readonly OldFormatDoneTask[] {
   const sections = content.split(/\n(?=## T-\d{3,})/)

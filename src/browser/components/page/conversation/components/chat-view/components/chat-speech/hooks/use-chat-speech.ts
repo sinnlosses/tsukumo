@@ -1,7 +1,7 @@
-// キャラクターのセリフ1件（`components/chat-speech.tsx`）の押し方の読み替え。**押すとその時の
-// 表情へ立ち絵が遡る**（docs/screen-design.md 13.7「会話を遡る」）。
+// キャラクターのセリフ1件（`components/chat-speech.tsx`）の押し方の読み替え。押すとその時の
+// 表情へ立ち絵が遡る（docs/screen-design.md 13.7「会話を遡る」）。
 //
-// **セリフをドラッグで選んでコピーできる**ので、押したのか文字を選び終えて手を離したのかを
+// セリフをドラッグで選んでコピーできるので、押したのか文字を選び終えて手を離したのかを
 // 見分ける必要がある——それがこのフックの役目。
 
 import { useRef, type KeyboardEvent, type MouseEvent } from "react"
@@ -28,7 +28,7 @@ export type ChatSpeechView = {
 }
 
 export function useChatSpeech(onToggle: () => void): ChatSpeechView {
-  // 押し始めた場所。**セリフの行は文字をドラッグで選べる**ので、選び終えて手を離したときの
+  // 押し始めた場所。セリフの行は文字をドラッグで選べるので、選び終えて手を離したときの
   // click と、押した click を、動いた距離で見分ける（{@link isSelectionDrag}）。
   const pressOriginRef = useRef<PressOrigin | undefined>(undefined)
 
@@ -39,7 +39,7 @@ export function useChatSpeech(onToggle: () => void): ChatSpeechView {
     onClick: (event) => {
       const origin = pressOriginRef.current
       pressOriginRef.current = undefined
-      // **文字を選んだだけのときは遡らない**（選び終えて手を離すと click も飛ぶ）。
+      // 文字を選んだだけのときは遡らない（選び終えて手を離すと click も飛ぶ）。
       if (isSelectionDrag(origin, event)) {
         return
       }
@@ -57,11 +57,11 @@ export function useChatSpeech(onToggle: () => void): ChatSpeechView {
 }
 
 /**
- * その click が「押した」ではなく「文字をドラッグで選び終えた」ものか。**選び終えて手を離した
- * 瞬間にも click は飛ぶ**ので、見分けないとコピーしようとするたびに立ち絵が遡ってしまう。
+ * その click が「押した」ではなく「文字をドラッグで選び終えた」ものか。選び終えて手を離した
+ * 瞬間にも click は飛ぶので、見分けないとコピーしようとするたびに立ち絵が遡ってしまう。
  *
- * 見るのは**押し始めてから動いた距離**だけ（{@link DRAG_THRESHOLD_PX}）。
- * **いま選ばれている文字（`window.getSelection()`）は見ない** — 選んだ直後にその行を押すと、
+ * 見るのは押し始めてから動いた距離だけ（{@link DRAG_THRESHOLD_PX}）。
+ * いま選ばれている文字（`window.getSelection()`）は見ない — 選んだ直後にその行を押すと、
  * 選択が消えるのは手を離したあと（ブラウザが「選択を掴んで運ぶ」動きを待つため）なので、
  * その回の click が丸ごと落ちて押せなくなる（実機の Chrome で確認）。
  *
@@ -77,7 +77,7 @@ function isSelectionDrag(origin: PressOrigin | undefined, event: PointerAt): boo
 
 /**
  * 押したことにするキー（WAI-ARIA の button パターンと同じ Enter と Space）。
- * **`<button>` と違って `role="button"` の要素にはブラウザが click を送らない**ので、
+ * `<button>` と違って `role="button"` の要素にはブラウザが click を送らないので、
  * キーボードで遡る道はここで自分で開ける。
  */
 function isActivationKey(key: string): boolean {

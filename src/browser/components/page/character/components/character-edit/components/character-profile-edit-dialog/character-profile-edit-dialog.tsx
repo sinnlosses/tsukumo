@@ -3,10 +3,10 @@
 // （`character-delete-confirm.tsx` と同じ形。閉じたら呼び出し側がこの部品ごと外すので、次に開いた
 // ときは渡された初期値から下書きが始まる）。
 //
-// **形は作るダイアログ（`character-create.tsx`）と同じ枠・同じ欄の書き方**
+// 形は作るダイアログ（`character-create.tsx`）と同じ枠・同じ欄の書き方
 // （`docs/screen-design.md` 13.6）。id は作ったあと変えない欄なので出さない
-// （作ったあとは変えない、と決めている）。**枠・見出し・欄・footer の CSS は
-// 作るダイアログのクラスをそのまま流用する**（`.character-create-*`。見た目が同じなので、
+// （作ったあとは変えない、と決めている）。枠・見出し・欄・footer の CSS は
+// 作るダイアログのクラスをそのまま流用する（`.character-create-*`。見た目が同じなので、
 // このためだけの見た目違いのクラスを増やさない）。
 
 import { useState, type ReactElement } from "react"

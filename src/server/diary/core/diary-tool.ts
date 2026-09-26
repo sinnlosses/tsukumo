@@ -3,10 +3,10 @@
 // 状態を変えずに断り、理由を添えて呼び直させる（`report` / 見直しの2つと同じ線）。保存は
 // `src/server/diary/adapter/diary.ts`、決定の理由は `docs/design.md`「日記の受け取りと保存」。
 //
-// **引数の形（文字列・列挙）は zod の形で SDK が先に検査する**（崩れていれば handler は
+// 引数の形（文字列・列挙）は zod の形で SDK が先に検査する（崩れていれば handler は
 // 呼ばれない）。ここで見るのは形の外の条（1問い合わせに1回・本文やしおりの中身・保存の失敗）だけ。
 //
-// **3段目の合図（引数の断片から最上位の鍵 `bookmark` を見つける純関数）もここに持つ**
+// 3段目の合図（引数の断片から最上位の鍵 `bookmark` を見つける純関数）もここに持つ
 // （`docs/design.md`「日記の受け取りと保存」「3段の進みの決まり方」）。断片をつないで観測する
 // 状態機械は `sdk-diary.ts`（問い合わせ1回ぶんの持ち物なのでそちらに置く）。
 
@@ -23,7 +23,7 @@ export const DIARY_BODY_MAX_CHARS = 600
 /** `bookmark.reason` の上限（仮）。 */
 export const DIARY_BOOKMARK_REASON_MAX_CHARS = 120
 
-/** モデルに見せる `diary` の説明。**いつ呼ぶか・1回だけ・断られたら呼び直す**をここに書く。 */
+/** モデルに見せる `diary` の説明。いつ呼ぶか・1回だけ・断られたら呼び直すをここに書く。 */
 export const DIARY_TOOL_DESCRIPTION =
   "その日の日記を書く。1回だけ呼ぶ。受け付けられないときは理由が返るので、直して呼び直すこと。"
 
@@ -75,8 +75,8 @@ export type DiaryIntake = {
 }
 
 /**
- * {@link DiaryIntake} を1つ作る。**問い合わせ1回ごとに呼び出し側（`src/server/diary/core/diary-writer.ts`）が
- * 新しく作る**——窓口が「いま書く日」を覚えたり忘れたりしない。`day` は書く日、`writer` は
+ * {@link DiaryIntake} を1つ作る。問い合わせ1回ごとに呼び出し側（`src/server/diary/core/diary-writer.ts`）が
+ * 新しく作る——窓口が「いま書く日」を覚えたり忘れたりしない。`day` は書く日、`writer` は
  * 書いた時点のパック、`now` は書いた時刻（エポックミリ秒）、`save` は保存の口、`onEvent` は
  * イベントの流れ（ここで例外を投げない）。
  */
@@ -190,7 +190,7 @@ const DIARY_BOOKMARK_KEY = "bookmark"
 /**
  * 引数の断片（累積した JSON の途中経過）の最上位に、しおりの鍵 `bookmark` が現れたかどうかを
  * 判定する純関数（`docs/design.md`「日記の受け取りと保存」「3段の進みの決まり方」）。文字列の
- * 中かどうかと入れ子の深さを数えながら読み、**閉じていない断片でも渡し直せば拾える**——
+ * 中かどうかと入れ子の深さを数えながら読み、閉じていない断片でも渡し直せば拾える——
  * 鍵の名前が断片の切れ目をまたいでいても、累積したものを毎回渡し直す前提で作ってある。
  */
 export function diaryArgumentHasBookmarkKey(accumulatedPartialJson: string): boolean {

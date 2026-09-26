@@ -1,12 +1,12 @@
 // `ChatRecall`（索引を引いて古い雑談を思い出す口）の実装（`docs/design.md` 7章「エピソード索引は
 // どこに置くか」）。ファイルには一切触らない——読むのは {@link ChatArchive}
-// （`src/server/chat/adapter/chat-archive.ts`）で、ここは**1ターンの回数の上限
-// （`recallListsPerTurn` / `recallEpisodesPerTurn`）を数えるだけ**（原則3）。
+// （`src/server/chat/adapter/chat-archive.ts`）で、ここは1ターンの回数の上限
+// （`recallListsPerTurn` / `recallEpisodesPerTurn`）を数えるだけ（原則3）。
 //
-// **上限に当たった呼び出しは {@link ChatArchive} を読まずに `"exhausted"` を返す。** アーカイブが
+// 上限に当たった呼び出しは {@link ChatArchive} を読まずに `"exhausted"` を返す。 アーカイブが
 // 何年ぶん増えても、上限に当たった回はファイルを1つも開かない。
 //
-// **ターンの終わりの合図は `PersonaMemory.finishTurn` と同じ call site に相乗りする**
+// ターンの終わりの合図は `PersonaMemory.finishTurn` と同じ call site に相乗りする
 // （`src/server/session-driver/adapter/sdk-driver.ts` の `turn-finished` 分岐。
 // `docs/design.md` 7章「ターンの終わりの合図は今の finishTurn に相乗りする」）。
 
@@ -25,7 +25,7 @@ export function createChatRecall(
   now: () => number,
   budget: ChatMemoryBudget = CHAT_MEMORY_BUDGET,
 ): ChatRecall {
-  // そのターンで引いた回数（**別々に数える**。`remember` / `forget` と同じ形）。
+  // そのターンで引いた回数（別々に数える。`remember` / `forget` と同じ形）。
   let listCount = 0
   let episodeCount = 0
 

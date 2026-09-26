@@ -10,7 +10,7 @@ import { repositoryContract } from "../../../shared/contract/repository.ts"
 export type RepositoryProcedurePorts = {
   /**
    * git 管理下のファイルのパス（`repository-file.ts` の `listRepositoryFiles` を作業ディレクトリに
-   * 束ねたもの）。**git 管理下でない・`git` が無いときは空**を返す契約。
+   * 束ねたもの）。git 管理下でない・`git` が無いときは空を返す契約。
    */
   readonly listRepositoryFiles: () => Promise<readonly string[]>
 }

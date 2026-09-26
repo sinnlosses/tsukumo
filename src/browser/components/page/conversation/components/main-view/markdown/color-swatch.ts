@@ -23,7 +23,7 @@ export type ResolvedColor = {
 export type ColorTokenReader = (name: string) => ResolvedColor | undefined
 
 /**
- * inline code の文字列が色を指していれば、見せ方を返す。**文字列全体が1つの色のときだけ**
+ * inline code の文字列が色を指していれば、見せ方を返す。文字列全体が1つの色のときだけ
  * （文中に色が混ざっているものは地にしない）。トークンの地は `var(--…)` のまま渡すので、
  * キャラクターパックで `accent` が変わっても地は追いかける。
  */
@@ -43,8 +43,8 @@ export function colorSwatch(text: string, readToken: ColorTokenReader): ColorSwa
 }
 
 /**
- * ページのトークンを実効の色に解決する（ブラウザの中でだけ動く）。**`getComputedStyle` で
- * カスタムプロパティを直接読むと式のまま返る**ので、いったん要素の `color` に載せてから読み戻す。
+ * ページのトークンを実効の色に解決する（ブラウザの中でだけ動く）。`getComputedStyle` で
+ * カスタムプロパティを直接読むと式のまま返るので、いったん要素の `color` に載せてから読み戻す。
  * 色でないトークン（`font-body` など）は `color` に載せると無効になって親の色を継ぐので、
  * 親に置いた見張りの色がそのまま返ってきたら色ではないと見なす。
  */

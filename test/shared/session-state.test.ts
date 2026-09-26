@@ -24,9 +24,9 @@ function apply(...events: readonly SessionEvent[]): SessionState {
 
 /**
  * `state.session` が `running`（`init` 済みで `permissionMode` も分かっている）である前提で
- * 取り出す。まだなら失敗させる。**`running` という名前は他のテストがローカル変数として
- * 使っている**（ツールが動いている状態の意味）ので、ここでは衝突しないよう `runningSession`
- * にする。**`model` はここに無い**（`SessionState.model` を直接読む。`session` の外にある
+ * 取り出す。まだなら失敗させる。`running` という名前は他のテストがローカル変数として
+ * 使っている（ツールが動いている状態の意味）ので、ここでは衝突しないよう `runningSession`
+ * にする。`model` はここに無い（`SessionState.model` を直接読む。`session` の外にある
  * 理由は `SessionInfo` 冒頭のコメント）。
  */
 function runningSession(
@@ -760,7 +760,7 @@ describe("applySessionEvent", () => {
     ]
     const listed = apply({ kind: "sessions-changed", sessions, current: "s-架空-1" })
     expect(listed.sessions).toEqual(sessions)
-    // **`init` を待たずに居場所が決まる**（続きから始めたときだけ）。`model` / `permissionMode`
+    // `init` を待たずに居場所が決まる（続きから始めたときだけ）。`model` / `permissionMode`
     // はまだなので `identified`（`sessionId` だけ）に留まる。
     expect(listed.session.kind).toBe("identified")
     expect(sessionIdOf(listed)).toBe("s-架空-1")
@@ -899,8 +899,8 @@ describe("applySessionEvent", () => {
   })
 
   it("窓がいっぱいになっても、ターンの通し番号は止まらずに増え続ける", () => {
-    // 番号を位置で決めていたころは、窓（20ターン）を超えると**いちばん新しいターンの番号が
-    // 19 で止まり**、描く側が `key` に使っているせいで部品が作り直されず、書き上げる演出が
+    // 番号を位置で決めていたころは、窓（20ターン）を超えるといちばん新しいターンの番号が
+    // 19 で止まり、描く側が `key` に使っているせいで部品が作り直されず、書き上げる演出が
     // 二度と起動しなかった（`src/browser/domain/reveal/use-report-reveal.ts`）。
     const events: SessionEvent[] = []
     for (let turn = 0; turn < 25; turn += 1) {

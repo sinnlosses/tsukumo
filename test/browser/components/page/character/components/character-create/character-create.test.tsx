@@ -81,7 +81,7 @@ describe("CharacterCreate", () => {
 
   it("id・必須の立ち絵がそろうまで「作る」を押せない", async () => {
     render(characterCreate(true, () => {}))
-    // **押せないは `aria-disabled` の1通り**（`Button`）。本物の `disabled` にはしないので、
+    // 押せないは `aria-disabled` の1通り（`Button`）。本物の `disabled` にはしないので、
     // フォーカスは残る（`button.test.tsx` と同じ確かめ方）。
     expect(submitButton().getAttribute("aria-disabled")).toBe("true")
     expect(submitButton().hasAttribute("disabled")).toBe(false)
@@ -110,7 +110,7 @@ describe("CharacterCreate", () => {
     expect(calls).toEqual([])
   })
 
-  // **id はディレクトリ名になる**ので、送る前に画面で止める（docs/design.md 7.1）。
+  // id はディレクトリ名になるので、送る前に画面で止める（docs/design.md 7.1）。
   it("形の合わない id では押せず、理由を id の欄の下に出す", async () => {
     render(characterCreate(true, () => {}))
     fireEvent.change(screen.getByLabelText("id"), { target: { value: "../escape" } })

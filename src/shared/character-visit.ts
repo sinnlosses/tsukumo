@@ -1,5 +1,5 @@
 // 客として訪ねてくるときにパックが持つもの（`character.json` の `visit` の節。
-// `docs/research/character-visit.md` 論点4・論点7）。**`visit` は丸ごと省略できる任意の節**で、
+// `docs/research/character-visit.md` 論点4・論点7）。`visit` は丸ごと省略できる任意の節で、
 // 持たないパックは客にならない。character.json は利用者が用意する外部由来のファイルなので、
 // ここでも構造を信用せず unknown で受けて検証する（docs/coding-standards.md「型を迂回する
 // キャストを使わない」）。
@@ -29,7 +29,7 @@ export type VisitScriptLine = {
 export type VisitScript = readonly VisitScriptLine[]
 
 /**
- * 客として訪ねてくるときにパックが持つもの。**`farewell` は必須**（無ければ客になれない）で、
+ * 客として訪ねてくるときにパックが持つもの。`farewell` は必須（無ければ客になれない）で、
  * `peek` と `scripts` は任意。
  */
 export type CharacterVisit = {
@@ -42,9 +42,9 @@ export type CharacterVisit = {
 }
 
 /**
- * `character.json` の `visit` を読む。**オブジェクトでない・`farewell` が無い/空/文字列でない
- * 要素を含むときは `visit` ごと undefined**（客にならない）。`scripts` は配列でなければ空の一覧に
- * 畳み、**形の崩れた台本1本だけを一覧から落とす**（`visit` 自体は生かす。`farewell` と違い
+ * `character.json` の `visit` を読む。オブジェクトでない・`farewell` が無い/空/文字列でない
+ * 要素を含むときは `visit` ごと undefined（客にならない）。`scripts` は配列でなければ空の一覧に
+ * 畳み、形の崩れた台本1本だけを一覧から落とす（`visit` 自体は生かす。`farewell` と違い
  * 任意の節なので、崩れた1本のために他の台本まで捨てない）。
  */
 export function toCharacterVisit(value: unknown): CharacterVisit | undefined {

@@ -16,7 +16,7 @@ import { rpcError, stubRpcFetch, type RpcFetchStub } from "../../../rpc-fetch-st
 import { type CommandSpy, sessionStoreWith } from "../../../session-store.ts"
 
 // `<SessionInfo>` は `<ContextUsageRow>`（`useContextUsage`。`useQuery`）を持つので、
-// ここのテストにも `QueryClientProvider` が要る。**ここでの内訳の中身は測らない**
+// ここのテストにも `QueryClientProvider` が要る。ここでの内訳の中身は測らない
 // （それは `test/browser/components/domain/sidebar/context-usage-row.test.tsx`）ので、取りに行った先は
 // 常に「取れない」に落とす軽いスタブで足りる。
 
@@ -100,7 +100,7 @@ describe("SessionInfo", () => {
     expect(selectValue(select)).toBe("tsukumo-spirit")
   })
 
-  // キャラクター画面への入る口は**帯**（`components/domain/screen-nav/`）へ移った（docs/screen-design.md 13.9）。
+  // キャラクター画面への入る口は帯（`components/domain/screen-nav/`）へ移った（docs/screen-design.md 13.9）。
   // ここには同じ口を2つ置かない。
   it("キャラクターの行にキャラクター画面への口は置かない", () => {
     renderSessionInfo({

@@ -11,7 +11,7 @@ import {
   parsePromptImageThumbnail,
 } from "../../src/shared/prompt-image.ts"
 
-// 中身は見ないので、base64 として読める短い文字列で足りる（**実物の画像は使わない**。
+// 中身は見ないので、base64 として読める短い文字列で足りる（実物の画像は使わない。
 // docs/coding-standards.md「会話内容の扱い」）。
 const IMAGE_BASE64 = "iVBORw0KGgo="
 

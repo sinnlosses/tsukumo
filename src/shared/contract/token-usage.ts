@@ -2,7 +2,7 @@
 // `src/server/token-usage/adapter/token-usage-procedure.ts`。形そのもの（集計の型と zod）は
 // `src/shared/token-usage-summary.ts`。
 //
-// **配るのは利用者が何にいくら使ったか**で、配る中身に文面は入らない（記録の1行にそもそも口が無い。
+// 配るのは利用者が何にいくら使ったかで、配る中身に文面は入らない（記録の1行にそもそも口が無い。
 // `docs/coding-standards.md`「会話内容の扱い」）。
 
 import { oc } from "@orpc/contract"

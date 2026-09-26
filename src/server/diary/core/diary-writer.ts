@@ -2,9 +2,9 @@
 // 同じ形: 材料を集め、会話とは別の使い捨ての `query()`（`src/server/diary/adapter/sdk-diary.ts`）に
 // 書かせ、受け取ったものを「書けた／書けなかった」に畳む。
 //
-// **決して reject しない**（起こせない・中断・時間切れはどれも「書けなかった」に落ちる。常駐
-// プロセスは振り返り1回の失敗で落ちない）。**書けたときの `diary-written` は窓口
-// （{@link createDiaryIntake}）が流す**——ここは、それが流れなかったときだけ `diary-failed` を
+// 決して reject しない（起こせない・中断・時間切れはどれも「書けなかった」に落ちる。常駐
+// プロセスは振り返り1回の失敗で落ちない）。書けたときの `diary-written` は窓口
+// （{@link createDiaryIntake}）が流す——ここは、それが流れなかったときだけ `diary-failed` を
 // 流す（二重に流さない）。
 //
 // 材料も日記も会話の内容に当たる。メモリにだけ持ち、ログにもファイルにも書かない
@@ -38,7 +38,7 @@ export type DiaryWriteRequest = {
 
 /**
  * 書く時点のパックと環境（`docs/design.md`「日記の受け取りと保存」「問い合わせの起こし方」）。
- * **呼ぶたびに読み直す**——キャラクターを切り替えたあとの振り返りは、切り替えたあとのパックで
+ * 呼ぶたびに読み直す——キャラクターを切り替えたあとの振り返りは、切り替えたあとのパックで
  * 書く。
  */
 export type DiaryWriterContext = {
@@ -77,7 +77,7 @@ export type DiaryWriterPorts = {
   /** 1段落を保存する口（`src/server/diary/adapter/diary.ts` の `appendDiaryParagraph`）。 */
   readonly save: SaveDiaryParagraph
   /**
-   * 書く時点のパックと環境。**まだ1回もパックが決まっていなければ undefined**（起こったことが
+   * 書く時点のパックと環境。まだ1回もパックが決まっていなければ undefined（起こったことが
    * 無い想定だが、念のため「書けなかった」に畳む）。
    */
   readonly readContext: () => DiaryWriterContext | undefined
@@ -98,7 +98,7 @@ export type DiaryWriterPorts = {
 }
 
 /**
- * {@link DiaryWriter} を1つ作る。**呼ぶたびに窓口（`DiaryIntake`）を1つ作る**——窓口が
+ * {@link DiaryWriter} を1つ作る。呼ぶたびに窓口（`DiaryIntake`）を1つ作る——窓口が
  * 「いま書く日」を覚えたり忘れたりしない（`docs/design.md`「日記の受け取りと保存」
  * 「コマンドと依頼」）。
  */
@@ -152,7 +152,7 @@ export function createDiaryWriter(ports: DiaryWriterPorts): DiaryWriter {
 }
 
 /**
- * `systemPrompt` を**文字列で丸ごと置き換える**（Claude Code の既定の指示文も CLAUDE.md も
+ * `systemPrompt` を文字列で丸ごと置き換える（Claude Code の既定の指示文も CLAUDE.md も
  * 載らない。`docs/design.md`「日記の受け取りと保存」「問い合わせの起こし方」）。人格が空の
  * パックは、書く役目の指示だけで起こす。
  */

@@ -1,15 +1,15 @@
-// 帯の右端の歯車と、押すと開く**設定**のポップオーバー（docs/screen-design.md 13.6 / 13.9「設定の
+// 帯の右端の歯車と、押すと開く設定のポップオーバー（docs/screen-design.md 13.6 / 13.9「設定の
 // 歯車」）。ロジックは `hooks/use-settings.ts`、ここは受け取った値をそのまま置く器
 // （2章「機能の中を分ける」）。
 //
-// **区切りの見出し + ラベルと操作子の2列**（13.9 が指す設定のモックの形）。群は「画面の色」・
+// 区切りの見出し + ラベルと操作子の2列（13.9 が指す設定のモックの形）。群は「画面の色」・
 // 「新しいセッションの既定」・「書き上げる演出の速さ」・「訪問」の4つ。
 //
-// **同じ部品を広い画面の帯と狭い画面の「≡」の面の両方に置く**（「いまの作業」の札と同じ
+// 同じ部品を広い画面の帯と狭い画面の「≡」の面の両方に置く（「いまの作業」の札と同じ
 // 畳み方。どちらを出すかは CSS の `@media` が決める）。開閉の状態は1つの hook が持つので、
-// どちらから押しても同じ面が開く——**id は `useId()` でこの器ごとに振る**（2箇所に描くため、
-// `aria-controls` と `<label for>` が指す先が重ならないようにする）。**Esc の戻り先として歯車の
-// DOM を預ける口（`settings.toggleRef`）も、2箇所ぶんを集めるコールバック ref**（`use-settings.ts`）。
+// どちらから押しても同じ面が開く——id は `useId()` でこの器ごとに振る（2箇所に描くため、
+// `aria-controls` と `<label for>` が指す先が重ならないようにする）。Esc の戻り先として歯車の
+// DOM を預ける口（`settings.toggleRef`）も、2箇所ぶんを集めるコールバック ref（`use-settings.ts`）。
 
 import clsx from "clsx"
 import { useId, type ReactElement } from "react"
@@ -39,7 +39,7 @@ const SETTINGS_LABEL = "設定"
 const MODEL_OPTIONS = MODEL_LABELS.map(([value, label]) => ({ value, label }))
 
 /**
- * 既定の `<select>` に出す許可モード。**「全部許す」は落とす**（既定には選べない。
+ * 既定の `<select>` に出す許可モード。「全部許す」は落とす（既定には選べない。
  * `src/shared/session-default.ts`）——帯のドロップダウンからはその都度選べる。
  */
 const PERMISSION_MODE_OPTIONS = PERMISSION_MODE_LABELS.filter(([value]) =>
@@ -54,14 +54,14 @@ const VISIT_TOGGLE_OPTIONS = VISIT_TOGGLE_LABELS.map(([value, label]) => ({ valu
 
 export function ScreenNavSettingsGear(props: ScreenNavSettingsProps): ReactElement {
   const { settings } = props
-  // **預け先はここで分解して受ける**（`settings.toggleRef` の形のまま `ref` に渡すと、
+  // 預け先はここで分解して受ける（`settings.toggleRef` の形のまま `ref` に渡すと、
   // `react(refs)`（規約「レンダー中に ref を読み書きしない」）が `settings` への参照ごと
   // レンダー中の ref の読み書きとみなして落ちる。`presentational-screen-nav.tsx` と同じ事情）。
   const { toggleRef } = settings
   const panelId = useId()
   const fieldId = useId()
 
-  // **`shellStyles` は見た目を持たない**（広い画面から隠す規則
+  // `shellStyles` は見た目を持たない（広い画面から隠す規則
   // `.screen-nav > .screen-nav-settings` と「≡」の面の中で縦に積む規則
   // `.screen-nav-panel .screen-nav-settings*` のためだけの参照）。CSS Modules は class 名を
   // ファイルごとにハッシュ化するので、`screen-nav.module.css` 側の選択子を当てるにはこのファイル

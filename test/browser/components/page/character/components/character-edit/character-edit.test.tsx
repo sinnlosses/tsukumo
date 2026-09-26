@@ -20,7 +20,7 @@ import {
 import { typedElement } from "../../../../../../typed-element.ts"
 import { type CommandSpy, sessionStoreWith } from "../../../../../session-store.ts"
 
-// **立ち絵があるのはこの3つだけ**（残りの表情は空の枠として並ぶ。数を見るテストがある）。
+// 立ち絵があるのはこの3つだけ（残りの表情は空の枠として並ぶ。数を見るテストがある）。
 const EXPRESSIONS_WITH_PORTRAIT = ["default", "thinking", "proud"] as const
 
 // 手で書いた架空のキャラクターパック（docs/coding-standards.md「会話内容の扱い」）。
@@ -30,7 +30,7 @@ const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = characterInfo(
     { name: "thinking", label: "作業中" },
     { name: "proud", label: "どや顔" },
   ],
-  // **ラスタにしてある**（`<Portrait>` は SVG のときだけ中身を `fetch` しに行くので、この
+  // ラスタにしてある（`<Portrait>` は SVG のときだけ中身を `fetch` しに行くので、この
   // テストの関心ではない非同期がまぎれる）。SVG の読み込みは
   // `test/browser/components/domain/portrait.test.tsx` が見る。
   ...shownPortraits({
@@ -117,7 +117,7 @@ describe("CharacterEdit", () => {
     expect(screen.getByLabelText("戦闘配置（opus）")).toBeDefined()
   })
 
-  // **必須の1つ（default）は消せない**（`docs/requirements.md` 4.4）。画面にも口を出さない。
+  // 必須の1つ（default）は消せない（`docs/requirements.md` 4.4）。画面にも口を出さない。
   it("default には消す口を出さない（立ち絵があっても）", () => {
     renderCharacterEdit(FIXTURE_CHARACTER)
 
@@ -125,14 +125,14 @@ describe("CharacterEdit", () => {
     expect(screen.getByRole("button", { name: "どや顔を消す" })).toBeDefined()
   })
 
-  // **必須から外れたので、thinking は立ち絵があれば消せる**（`src/shared/expression.ts`）。
+  // 必須から外れたので、thinking は立ち絵があれば消せる（`src/shared/expression.ts`）。
   it("thinking は立ち絵があれば消す口を出す", () => {
     renderCharacterEdit(FIXTURE_CHARACTER)
 
     expect(screen.getByRole("button", { name: "作業中を消す" })).toBeDefined()
   })
 
-  // **立ち絵が無い表情は、その表情の名前を書いた点線の空欄**（docs/screen-design.md 13.6）。
+  // 立ち絵が無い表情は、その表情の名前を書いた点線の空欄（docs/screen-design.md 13.6）。
   it("立ち絵が無い表情は名前つきの空欄で出し、消す口は出さない", () => {
     renderCharacterEdit(FIXTURE_CHARACTER)
 
@@ -420,7 +420,7 @@ describe("CharacterEdit", () => {
       typedElement(screen.getByLabelText("雑談"), HTMLInputElement, "雑談の入力欄").disabled,
     ).toBe(true)
     const resetButton = screen.getByRole("button", { name: "雑談も仕事と同じにする" })
-    // **押せないは `aria-disabled` の1通り**（`Button`。`docs/design.md` 2章）。本物の `disabled`
+    // 押せないは `aria-disabled` の1通り（`Button`。`docs/design.md` 2章）。本物の `disabled`
     // にはしないので、フォーカスは残る（`button.test.tsx` と同じ確かめ方）。
     expect(resetButton.getAttribute("aria-disabled")).toBe("true")
     expect(resetButton.hasAttribute("disabled")).toBe(false)
@@ -490,7 +490,7 @@ describe("CharacterEdit", () => {
     )
   })
 
-  // 背景（`docs/screen-design.md` 13.8）。**口は「差し替える」と「消す」の2つだけ**で、覆いの濃さの
+  // 背景（`docs/screen-design.md` 13.8）。口は「差し替える」と「消す」の2つだけで、覆いの濃さの
   // つまみは出さない。
   it("背景が無いパックでは、点線の枠と「背景なし」を出し、消す口は出さない", () => {
     renderCharacterEdit(FIXTURE_CHARACTER)
@@ -556,7 +556,7 @@ describe("CharacterEdit", () => {
     expect(input.value).toBe("")
   })
 
-  // 顔（`docs/screen-design.md` 13.9「顔」）。**口は「差し替える」と「消す」の2つだけ**で、背景と
+  // 顔（`docs/screen-design.md` 13.9「顔」）。口は「差し替える」と「消す」の2つだけで、背景と
   // 同じ形。
   it("顔が無いパックでは、点線の丸と「顔なし」を出し、消す口は出さない", () => {
     renderCharacterEdit(FIXTURE_CHARACTER)
@@ -741,7 +741,7 @@ describe("CharacterEdit", () => {
       expect(dialog?.hasAttribute("open")).toBe(true)
       expect(screen.getByText("別の精霊 を消しますか？")).toBeDefined()
       const okButton = screen.getByRole("button", { name: "消す" })
-      // **押せないは `aria-disabled` の1通り**（`Button`）。本物の `disabled` にはしないので、
+      // 押せないは `aria-disabled` の1通り（`Button`）。本物の `disabled` にはしないので、
       // フォーカスは残る（`button.test.tsx` と同じ確かめ方）。
       expect(okButton.getAttribute("aria-disabled")).toBe("true")
       expect(okButton.hasAttribute("disabled")).toBe(false)

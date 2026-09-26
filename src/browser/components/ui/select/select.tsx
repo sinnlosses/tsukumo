@@ -2,7 +2,7 @@
 // 要るため `browser/component/` に置く（`browser/` の作法1。移行の段3。段の記録は
 // `docs/history/decision.md`「design.md 12. 移行の段階」）。
 //
-// **持つ見た目は、どのプルダウンでも同じになる分だけ**（下向きの矢印と、ブラウザ既定の矢印を
+// 持つ見た目は、どのプルダウンでも同じになる分だけ（下向きの矢印と、ブラウザ既定の矢印を
 // 消すこと。`select.module.css`）。寸法・枠・地・字の段と、選択肢・値・変更時の呼び先は
 // すべて呼び出し側が渡す。
 
@@ -20,11 +20,11 @@ export type SelectProps = {
   readonly id: string
   readonly ariaLabel: string
   /**
-   * 矢印を重ねる枠に足す class。**置き方（列の中での伸び縮み）と字の色だけ**を渡す
+   * 矢印を重ねる枠に足す class。置き方（列の中での伸び縮み）と字の色だけを渡す
    * （矢印は `currentColor` で描くので、色はここから継ぐ）。
    */
   readonly frameClassName: string
-  /** `<select>` 自身に足す class。**右の余白は矢印ぶん空ける**（空けないと字が矢印の下へ潜る）。 */
+  /** `<select>` 自身に足す class。右の余白は矢印ぶん空ける（空けないと字が矢印の下へ潜る）。 */
   readonly className: string
   readonly value: string
   readonly options: readonly SelectOption[]

@@ -1,10 +1,10 @@
 // トークン消費の画面の器（docs/design.md 2章「機能の中を分ける」）。フックも算出も持たず、
 // 受け取った集計をそのまま置く。取得と期間の選択は `hooks/use-token-usage.ts`。
 //
-// **数そのものを読ませたいところは表、大小と傾きを見せたいところは棒**。モード別
+// 数そのものを読ませたいところは表、大小と傾きを見せたいところは棒。モード別
 // （仕事/雑談）と1ターンあたりの中央値は、見ても減らす手が変わらないので出さない。
 //
-// **画面に会話の文面は出ない**（集計にそもそも文面が入っていない。
+// 画面に会話の文面は出ない（集計にそもそも文面が入っていない。
 // `src/shared/token-usage-summary.ts`）。
 
 import clsx from "clsx"
@@ -32,14 +32,14 @@ import { type UseTokenUsageResult } from "./hooks/use-token-usage.ts"
 import { type UseUsageReviewResult } from "./hooks/use-usage-review.ts"
 import styles from "./token-usage.module.css"
 
-/** 記録が1件も無い期間の一言（**空でも壊れない**。札も表も出さずこれだけ）。 */
+/** 記録が1件も無い期間の一言（空でも壊れない。札も表も出さずこれだけ）。 */
 const EMPTY_NOTE = "この期間の記録はまだ無い"
 
 /** 集計を取れなかったときの一言（記録が無いときと区別する）。 */
 const FAILED_NOTE = "集計を取れなかった"
 
 /**
- * ツール別に並べる件数。**上から数件で「何が文脈を食ったか」は分かる**ので、初めは全部を
+ * ツール別に並べる件数。上から数件で「何が文脈を食ったか」は分かるので、初めは全部を
  * 出さずに残りの件数だけを添える（数十種類が並ぶと表の意味が薄れる）。「ほか n 件を見る」を
  * 押すと残りも出る（{@link ToolUsageCard}）。
  */
@@ -53,7 +53,7 @@ export type PresentationalTokenUsageProps = UseTokenUsageResult & {
 }
 
 export function PresentationalTokenUsage(props: PresentationalTokenUsageProps): ReactElement {
-  // **記録が1件も無い期間かどうかはモデル別で見る** — 推移は期間のすべての刻みが0で並ぶので
+  // 記録が1件も無い期間かどうかはモデル別で見る — 推移は期間のすべての刻みが0で並ぶので
   // 長さでは分からない。行はモデルの増分が1つでもあるときにだけ積まれる
   // （`src/server/session/core/session-manager.ts`）ので、モデル別が空なら行が無い。
   const isEmpty = props.summary.byModel.length === 0
@@ -166,7 +166,7 @@ function PeriodChoices(props: PeriodChoicesProps): ReactElement {
   )
 }
 
-/** 期間の名乗り。**1日だけは「今日」**（棒も時間ごとに割れるので、日数では読み違える）。 */
+/** 期間の名乗り。1日だけは「今日」（棒も時間ごとに割れるので、日数では読み違える）。 */
 function daysLabel(days: TokenUsageDays): string {
   return days === 1 ? "今日" : `${days}日`
 }
@@ -177,7 +177,7 @@ type PeriodUsageCardsProps = {
 }
 
 /**
- * 期間の合計の札4枚（入力・出力・キャッシュ読み・キャッシュ作成）。**札ごとに縦軸が独立する**
+ * 期間の合計の札4枚（入力・出力・キャッシュ読み・キャッシュ作成）。札ごとに縦軸が独立する
  * ので、桁の違うキャッシュ読みを同じ並びに置いてもほかが潰れない。
  */
 function PeriodUsageCards(props: PeriodUsageCardsProps): ReactElement {
@@ -216,9 +216,9 @@ type ModelUsageCardProps = {
 }
 
 /**
- * モデル別の札（期間の合計の札 `.usage-card` と同じ枠・同じ地）。**届く順がそのまま並び順**
+ * モデル別の札（期間の合計の札 `.usage-card` と同じ枠・同じ地）。届く順がそのまま並び順
  * （出力の多い順。同じなら名前順——`src/server/token-usage/core/token-usage.ts` の `summarizeByModel`）。
- * **出力の列だけ**に、その列の最大に対する横棒を添える。
+ * 出力の列だけに、その列の最大に対する横棒を添える。
  */
 function ModelUsageCard(props: ModelUsageCardProps): ReactElement {
   const peak = Math.max(0, ...props.byModel.map((entry) => entry.totals.outputTokens))
@@ -265,10 +265,10 @@ type ToolUsageCardProps = {
 }
 
 /**
- * ツール別の札。**上位 {@link TOOL_ROWS} 件だけ**を出し、残りがあれば「ほか n 件を見る」で
+ * ツール別の札。上位 {@link TOOL_ROWS} 件だけを出し、残りがあれば「ほか n 件を見る」で
  * 開く（押した状態は画面のこの表示だけの見た目の話なので `useState` で持つ。開いたら
  * 「閉じる」に変えて戻せるようにする——並べ替えた6件より下を毎回スクロールで探させないため）。
- * **結果の大きさの列だけ**に横棒を添える。
+ * 結果の大きさの列だけに横棒を添える。
  */
 function ToolUsageCard(props: ToolUsageCardProps): ReactElement {
   const [expanded, setExpanded] = useState(false)
@@ -362,7 +362,7 @@ type BarredValueProps = {
 
 /**
  * 数の右に横棒を添える（並べ順を決めている列だけに使う。`period-usage-card.tsx` の縦棒と
- * 同じ「その列の最大に対する割合」）。**塗りは量の棒の青（`--usage-bar`）**——期間の合計の棒
+ * 同じ「その列の最大に対する割合」）。塗りは量の棒の青（`--usage-bar`）——期間の合計の棒
  * （`.usage-card-bar`）と同じ色で、分類の色ではない。数の文字が必ず隣に並ぶので、色だけで
  * 意味を伝えることにはならない（`docs/screen-design.md` 13.1 原則5・13.2）。
  */

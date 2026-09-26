@@ -1,11 +1,11 @@
 // 期間の消費の札1枚（トークン消費の画面。`presentational-token-usage.tsx` が4枚並べる）。
 // 見出し・期間の合計・その数だけの小さな棒グラフを1枚に閉じる。
 //
-// **札ごとに縦軸が独立する。** 棒の高さはその札の中の最大で割るので、桁の違う数（キャッシュ
-// 読みはほかより3桁大きいことがある）を並べても互いに潰れない。**札をまたいで高さを比べる
-// ものではない**ので、いちばん高い棒に「最大 <数>」を添えて縦軸の代わりにする。
+// 札ごとに縦軸が独立する。 棒の高さはその札の中の最大で割るので、桁の違う数（キャッシュ
+// 読みはほかより3桁大きいことがある）を並べても互いに潰れない。札をまたいで高さを比べる
+// ものではないので、いちばん高い棒に「最大 <数>」を添えて縦軸の代わりにする。
 //
-// **Chart.js は使わない。** 軸も凡例も目盛りも無い棒で、描くのに要るのは高さの割合だけ。
+// Chart.js は使わない。 軸も凡例も目盛りも無い棒で、描くのに要るのは高さの割合だけ。
 // 4枚を同時に出すこの画面では、canvas 4枚と読み込みが失敗した回の見せ方を抱えるより、
 // 必ず描ける CSS のほうが軽い（`src/browser/components/page/conversation/components/main-view/markdown/chart.ts` は読まない）。
 
@@ -68,7 +68,7 @@ export function PeriodUsageCard(props: PeriodUsageCardProps): ReactElement {
 }
 
 /**
- * 「最大 <数>」をどちら端に寄せるか。**いちばん高い棒に近い側へ寄せる**（棒のちょうど真上に
+ * 「最大 <数>」をどちら端に寄せるか。いちばん高い棒に近い側へ寄せる（棒のちょうど真上に
  * 重ねると、端の棒が最大だった回に札の外へはみ出す）。棒が無い回は左。
  */
 function peakClassName(values: readonly number[], peak: number): string {
@@ -78,7 +78,7 @@ function peakClassName(values: readonly number[], peak: number): string {
 }
 
 /**
- * 棒1本の綴り。**記録の無い刻みは塗りを落とす**（高さの印だけを残す。同じ塗りのままだと、
+ * 棒1本の綴り。記録の無い刻みは塗りを落とす（高さの印だけを残す。同じ塗りのままだと、
  * 空だった刻みと「少しだけ使った」刻みが同じに見える）。
  */
 function barClassName(value: number): string {
@@ -87,7 +87,7 @@ function barClassName(value: number): string {
 }
 
 /**
- * 棒1本の高さ（その札の最大に対する割合）。**0 の刻みも 0% の棒として並ぶ**（棒の最小の高さは
+ * 棒1本の高さ（その札の最大に対する割合）。0 の刻みも 0% の棒として並ぶ（棒の最小の高さは
  * CSS が持つので、記録の無い日も印として見える）。最大が 0 なら全部 0%。
  */
 function barHeight(value: number, peak: number): string {
@@ -95,7 +95,7 @@ function barHeight(value: number, peak: number): string {
 }
 
 /**
- * 期間の端のラベル（最初と最後だけ）。**途中の刻みには付けない** — 30日なら30本、今日なら
+ * 期間の端のラベル（最初と最後だけ）。途中の刻みには付けない — 30日なら30本、今日なら
  * 24本が札の幅（狭い画面では10rem ほど）に並ぶので、全部に付けると重なって読めない。
  */
 function edgeLabel(trend: TokenUsageTrend, edge: "first" | "last"): string {

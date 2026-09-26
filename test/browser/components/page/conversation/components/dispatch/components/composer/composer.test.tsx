@@ -65,7 +65,7 @@ function fetchedProcedures(): readonly string[] {
 }
 
 // `@` 補完は `useQuery`（`file-suggestions.tsx`）で一覧を取るので `QueryClientProvider` が要る。
-// **キャッシュはテストをまたがせない**ので、テストごとに新しい `QueryClient` を作る。
+// キャッシュはテストをまたがせないので、テストごとに新しい `QueryClient` を作る。
 function renderComposer(
   stateOverrides: Partial<SessionState> = {},
   dispatch: CommandSpy = () => {},

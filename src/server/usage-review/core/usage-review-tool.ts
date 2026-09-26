@@ -3,7 +3,7 @@
 // 決めて受け付けた呼び出しをイベントにする窓口（{@link createUsageReviewIntake}）。
 // 決定の理由は docs/design.md「見直しのツールと状態」。
 //
-// **引数の形（型・列挙・整数）は zod の形で SDK が先に検査する**（崩れていれば handler は
+// 引数の形（型・列挙・整数）は zod の形で SDK が先に検査する（崩れていれば handler は
 // 呼ばれず、SDK が理由を `isError` 付きで返す）。ここで見るのは形の外の条（空の欄・件数・
 // 識別子の重なり・見送った提案）だけ。
 
@@ -28,7 +28,7 @@ export const USAGE_REVIEW_RESULT_TOOL_NAME = "usage_review_result"
 export const MAX_USAGE_PROPOSALS = 5
 
 /**
- * モデルに見せる `usage_review_stage` の説明。**いつ呼ぶか**をここに書く（スキルの手順は
+ * モデルに見せる `usage_review_stage` の説明。いつ呼ぶかをここに書く（スキルの手順は
  * これを前提にする）。
  */
 export const USAGE_REVIEW_STAGE_TOOL_DESCRIPTION =
@@ -75,7 +75,7 @@ export type UsageReviewIntake = {
 
 /**
  * {@link UsageReviewIntake} を1つ作る。`dismissedKeys` は利用者が見送った提案の識別子
- * （`usageProposalKey`）を**呼ぶたびに読み直す**口（見直しの途中で見送りが増えても効く）。
+ * （`usageProposalKey`）を呼ぶたびに読み直す口（見直しの途中で見送りが増えても効く）。
  * `onEvent` は駆動のイベントの流れ（ここで例外を投げない）。
  */
 export function createUsageReviewIntake(
@@ -99,7 +99,7 @@ export function createUsageReviewIntake(
 }
 
 /**
- * 形の外の条の違反1つ。`count` は違反の数で、**モデルが書いた文面は持たない**（差し戻しの
+ * 形の外の条の違反1つ。`count` は違反の数で、モデルが書いた文面は持たない（差し戻しの
  * 文面に写さない。`report-violation.ts` と同じ線）。
  */
 type UsageReviewViolation =
@@ -163,8 +163,8 @@ function violationLine(violation: UsageReviewViolation): string {
 }
 
 /**
- * `usage_review_stage` の戻り値。見送った提案が無ければ `"ok"` だけ。**並べるのは tsukumo が
- * 記録した識別子だけ**で、画面の状態は載せない。
+ * `usage_review_stage` の戻り値。見送った提案が無ければ `"ok"` だけ。並べるのは tsukumo が
+ * 記録した識別子だけで、画面の状態は載せない。
  */
 function usageReviewStageReply(dismissed: readonly string[]): string {
   return dismissed.length === 0

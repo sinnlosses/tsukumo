@@ -66,7 +66,7 @@ function writeBundledPack(name: string): string {
 
 /**
  * 立ち絵を全表情そろえ、ミニ立ち絵も持つパックを置く（実際に使われているパックと同じ形）。
- * **背景はまだ無い**ので、ここに背景を1枚足せることが画像の数の上限の下限になる。
+ * 背景はまだ無いので、ここに背景を1枚足せることが画像の数の上限の下限になる。
  */
 function writeFullPack(name: string): string {
   const packDir = join(dir, "bundled", name)
@@ -94,7 +94,7 @@ function setPortrait(
 
 /**
  * 新しいパックを作るコマンド（必須の1枚・仕事と雑談の差し色は境界で required なので、ここでも
- * 必ず入る）。**名前は既定で空**（=「id をそのまま表示名に使う」を試すテストが多いため）で、
+ * 必ず入る）。名前は既定で空（=「id をそのまま表示名に使う」を試すテストが多いため）で、
  * 表示名を試すテストだけ `overrides` で足す。
  */
 function createCharacter(id: string, overrides: Partial<CharacterCreate> = {}): CharacterCreate {

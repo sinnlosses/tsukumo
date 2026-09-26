@@ -1,7 +1,7 @@
-// ソースの置き場の中身から、1つの指紋（ハッシュ）を作る。**見張りつきの起動で、画面だけ組み
-// 直してよいかを決める**ために使う（`src/server/view-server/adapter/ui-rebuild.ts`。docs/design.md 11章）。
+// ソースの置き場の中身から、1つの指紋（ハッシュ）を作る。見張りつきの起動で、画面だけ組み
+// 直してよいかを決めるために使う（`src/server/view-server/adapter/ui-rebuild.ts`。docs/design.md 11章）。
 //
-// **時刻ではなく中身で見る。** `git merge` で書き戻されただけのファイルや `touch` で、
+// 時刻ではなく中身で見る。 `git merge` で書き戻されただけのファイルや `touch` で、
 // 組み直しを止めてしまわないため。
 
 import { createHash } from "node:crypto"
@@ -10,7 +10,7 @@ import { join, sep } from "node:path"
 
 /**
  * `root` の下のファイルすべて（`excludedTopLevel` に挙げた直下の置き場を除く）の相対パスと中身を
- * 束ねたハッシュを返す。**読めなかったときは `undefined`**（呼び出し側が「分からない」を
+ * 束ねたハッシュを返す。読めなかったときは `undefined`（呼び出し側が「分からない」を
  * 「変わった」に寄せないため）。
  */
 export async function sourceFingerprint(

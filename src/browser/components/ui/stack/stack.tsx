@@ -1,6 +1,6 @@
 // 並べるための規則（`display: flex` + 向き・間隔・揃え・折り返し）を寄せる variant 部品
-// （`docs/design.md` 2章「`components/ui/` の部品（variant の作法と一覧）」）。**持つのは並べる
-// ことだけ**——寸法・枠・地・置き方（margin・flex・align-self など）は呼び出し側が `className`
+// （`docs/design.md` 2章「`components/ui/` の部品（variant の作法と一覧）」）。持つのは並べる
+// ことだけ——寸法・枠・地・置き方（margin・flex・align-self など）は呼び出し側が `className`
 // で渡す（`docs/design.md` 同節「呼び出し側からの上書き（className）」）。
 //
 // 向きの決まった並べは `VStack`（縦）・`HStack`（横）で書く（`ui/v-stack/` `ui/h-stack/`）。

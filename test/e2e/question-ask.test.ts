@@ -8,7 +8,7 @@ import { useScenarioRun } from "./scenario-run.ts"
 // `question-long`（長いラベルと長い説明の折り返し）、`question-preview`（選択肢ごとの比較を
 // メインビューに出す）。
 //
-// **選ぶ・答えるところまでは自動操作しない**（`docs/architecture.md`「手で確かめること」に、
+// 選ぶ・答えるところまでは自動操作しない（`docs/architecture.md`「手で確かめること」に、
 // 質問の場面を Playwright で自動操作すると `turnInProgress` が解けないまま残ることがある、という
 // 既知の症状がある）。ここで確かめるのは、答え待ちの札が出た時点の DOM の構造だけ。
 
@@ -63,8 +63,8 @@ describe("質問", () => {
 
     await room.waitForEvent("pending-changed")
     // question-preview は turn-finished を流さない場面（答えないまま比較だけを見せる）ので、
-    // その次に届く speech まで待ってから撮る。**1回目の speech は `opening` の立ち上がりの
-    // 一言**（名指しの場面より先に流れる）なので、2回目（この場面自身の speech）を待つ。
+    // その次に届く speech まで待ってから撮る。1回目の speech は `opening` の立ち上がりの
+    // 一言（名指しの場面より先に流れる）なので、2回目（この場面自身の speech）を待つ。
     await room.waitForEvent("speech", 2)
     await room.settleAndMatch(ELAPSED_MS)
   })

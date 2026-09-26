@@ -1,7 +1,7 @@
 // `<Composer>` に添える画像（`docs/requirements.md` 4.10）の持ち方と、貼り付け・ドロップ・
-// ファイルを選ぶ窓からの取り込み。**保つ（`images` の state）と外と同期（非同期の読み込み・
+// ファイルを選ぶ窓からの取り込み。保つ（`images` の state）と外と同期（非同期の読み込み・
 // ファイルを選ぶ `<input>` の入れ物）の2種類がそろうので、container と対になっていないフック
-// として `use-composer.ts` から切り出した**（docs/design.md 2章「機能の中を分ける」。読み込み
+// として `use-composer.ts` から切り出した（docs/design.md 2章「機能の中を分ける」。読み込み
 // そのもの（原寸と控えを作る・添えられる種類か見分ける）は `../prompt-image.ts` の純関数のまま
 // 残し、ここは state とイベントの読み替えだけを持つ）。
 
@@ -36,7 +36,7 @@ export type PromptImageModel = {
   readonly onPickImages: () => void
   /** ファイルを選ぶ窓で選び終えたとき。 */
   readonly onImagesChosen: (event: { readonly target: HTMLInputElement }) => void
-  /** 送った・送信を諦めたときに呼ぶ（**送った時点で原寸を手放す**。札が消え、以降どこからも開けない）。 */
+  /** 送った・送信を諦めたときに呼ぶ（送った時点で原寸を手放す。札が消え、以降どこからも開けない）。 */
   readonly reset: () => void
 }
 
@@ -45,8 +45,8 @@ export function usePromptImage(args: UsePromptImageArgs): PromptImageModel {
   const imageInputRef = useRef<HTMLInputElement | null>(null)
 
   /**
-   * 貼られた・落ちてきたファイルを札に足す。**枚数の上限（{@link MAX_PROMPT_IMAGES}）で頭を
-   * 打ち**、読めなかった1枚は黙って落ちる（画面は1回の失敗で落ちない）。
+   * 貼られた・落ちてきたファイルを札に足す。枚数の上限（{@link MAX_PROMPT_IMAGES}）で頭を
+   * 打ち、読めなかった1枚は黙って落ちる（画面は1回の失敗で落ちない）。
    */
   const attachFiles = (files: readonly File[]): void => {
     void (async () => {

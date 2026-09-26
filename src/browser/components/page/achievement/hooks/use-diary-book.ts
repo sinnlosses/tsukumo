@@ -3,18 +3,18 @@
 // 「外と同期」、漢数字・しおり・終えたこと・卒業と節目の畳み込みという「畳む」の3種がそろうので
 // フックを切る（docs/design.md 2章「機能の中を分ける」）。
 //
-// **container / presentational の3分割は採らない。** 開く口が暦のマス（`lantern-calendar.tsx`）と
+// container / presentational の3分割は採らない。 開く口が暦のマス（`lantern-calendar.tsx`）と
 // 日記の区画（`diary-section.tsx`）の2箇所にまたがり、どちらも `achievement.tsx`
 // （成果の画面の container）から配る値が要るので、`useDiaryBook` は `achievement.tsx` から
 // 直接呼び、戻り値をそのまま渡す部品を `../components/diary-book/diary-book.tsx`
 // （`DiarySection` / `LanternCalendar` と同じ、フックを持たない受け取るだけの部品）に置く。
 //
-// **1日ぶんの取得は `use-achievement.ts` と同じ手続き・同じ応答形**（`achievement.day`）を、
+// 1日ぶんの取得は `use-achievement.ts` と同じ手続き・同じ応答形（`achievement.day`）を、
 // 開いている日だけ別に引く（同じ日ならキャッシュを分け合う）。前後の日・目次に並べる日は `use-achievement-calendar.ts` が既に
 // 持っている `diaryDates`（すべての日記のある日、新しい順）をそのまま受け取る（新しい経路は
 // 増やさない）。
 //
-// **正典と実物・仮決めのすり合わせ**:
+// 正典と実物・仮決めのすり合わせ:
 // 1. 目次にしおりのタスク ID は載せない（`diaryDates` はファイル名の一覧だけで中身を読まない
 //    設計のため。`src/server/diary/adapter/diary.ts` の `listDiaryDates`）
 // 2. 「日記帳で読む」から開いたときの添え書きは「この日の日記から開きました」と仮に決めた
@@ -188,8 +188,8 @@ export function useDiaryBook(params: {
   const character = useSessionSelector((session) => session.state.character)
   const characterPacks = useSessionSelector((session) => session.state.characterPacks)
 
-  // 書き終わりの知らせの「日記帳で開く」（`diary-notice.tsx`）を拾って開く。**`useEffect` は
-  // 使わない**——4類型のどれにも当たらない（`docs/coding-standards.md`「React」）。合図は
+  // 書き終わりの知らせの「日記帳で開く」（`diary-notice.tsx`）を拾って開く。`useEffect` は
+  // 使わない——4類型のどれにも当たらない（`docs/coding-standards.md`「React」）。合図は
   // `useDiaryBookOpenRequest`（`useSyncExternalStore`。「外部ストアの購読」）で拾い、拾ったかどうかは
   // `takeDiaryBookOpenRequest` が React の外に持つ（画面を開き直しても同じ合図で開き直さない）。
   const pendingRequest = takeDiaryBookOpenRequest(useDiaryBookOpenRequest())

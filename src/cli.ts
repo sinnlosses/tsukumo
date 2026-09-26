@@ -1,4 +1,4 @@
-// tsukumo のエントリポイント。**引数の受け取り・環境変数の読み出し・終了コードの返し方**だけを
+// tsukumo のエントリポイント。引数の受け取り・環境変数の読み出し・終了コードの返し方だけを
 // 持ち、起動の段取りは `src/main.ts` が進める（docs/design.md 2章「ディレクトリ」）。
 
 import process from "node:process"

@@ -37,8 +37,8 @@ afterEach(() => {
 })
 
 /**
- * `init` が届いたあと（`running`）の架空の土台。`permissionMode` だけ変えて使う。**`model` は
- * ここに無い**（`SessionState.model` は `session` と独立なので、`renderScreenNav` の第一引数に
+ * `init` が届いたあと（`running`）の架空の土台。`permissionMode` だけ変えて使う。`model` は
+ * ここに無い（`SessionState.model` は `session` と独立なので、`renderScreenNav` の第一引数に
  * 直接渡す）。既定値は見た目上の既定（`PERMISSION_MODE_FALLBACK`）に合わせてある。
  */
 const RUNNING_SESSION: Extract<SessionInfo, { kind: "running" }> = {
@@ -80,7 +80,7 @@ describe("ScreenNav", () => {
     expect(screen.getByRole("link", { name: "成果" }).getAttribute("href")).toBe("#achievement")
   })
 
-  // **色だけで伝えない**ので、いまの画面の口には地と字の濃さを変える class が付く（13.9）。
+  // 色だけで伝えないので、いまの画面の口には地と字の濃さを変える class が付く（13.9）。
   it("いま出している画面の口に is-active が付く", () => {
     window.location.hash = "#token-usage"
     renderScreenNav()
@@ -111,7 +111,7 @@ describe("ScreenNav", () => {
     expect(document.querySelector(".screen-nav-work-word")?.textContent).toBe("答え待ち")
   })
 
-  // 部屋の名前は帯の左端（13.9）。**ポートの並び順に割り当たる**（`src/shared/room.ts`）ので、
+  // 部屋の名前は帯の左端（13.9）。ポートの並び順に割り当たる（`src/shared/room.ts`）ので、
   // 出ている名前でどの tsukumo を見ているかが分かる。
   it("帯の左端に、このページのポートの部屋の名前を出す", () => {
     setPageUrl("http://127.0.0.1:7329/")
@@ -434,8 +434,8 @@ describe("ScreenNav", () => {
       expect(screen.getByLabelText("許可モード").className).not.toContain("is-danger")
     })
 
-    // 狭い画面では帯に置く幅が無いので、口と同じく「≡」の中へ入る（13.9）。**帯の側にも
-    // 同じ部品が残っている**ので、`getByLabelText` は使わず落ちてきた面の中だけを見る。
+    // 狭い画面では帯に置く幅が無いので、口と同じく「≡」の中へ入る（13.9）。帯の側にも
+    // 同じ部品が残っているので、`getByLabelText` は使わず落ちてきた面の中だけを見る。
     it("「≡」を開くと、落ちてきた面にもドロップダウンが出る", () => {
       renderScreenNav({ model: "claude-haiku-5" })
 

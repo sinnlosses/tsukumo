@@ -1,12 +1,12 @@
 // コンテキストの内訳の分類（`docs/glossary.md`「コンテキストの内訳」）を画面に出すときの
-// 名前と色。**SDK が返すのは英語の表示名**なので、知っているものだけ日本語に置き換え、
-// **知らない名前は英語のまま出す**（訳せないものを隠さない）。
+// 名前と色。SDK が返すのは英語の表示名なので、知っているものだけ日本語に置き換え、
+// 知らない名前は英語のまま出す（訳せないものを隠さない）。
 //
-// **分類の判定には使わない。** 何が中身で何が空きかは `kind` が持っていて（`src/shared/
+// 分類の判定には使わない。 何が中身で何が空きかは `kind` が持っていて（`src/shared/
 // context-usage.ts`）、ここが持つのは見せ方だけ。
 //
-// 色は `token-usage.module.css` の `.context-tone-<tone>` に対応する（13.1 原則5。**凡例に
-// 分類名が必ず並ぶ**ので、色は読みやすさの重ねがけになる）。
+// 色は `token-usage.module.css` の `.context-tone-<tone>` に対応する（13.1 原則5。凡例に
+// 分類名が必ず並ぶので、色は読みやすさの重ねがけになる）。
 
 /** 分類1つの見せ方。 */
 export type CategoryLook = {
@@ -17,7 +17,7 @@ export type CategoryLook = {
 }
 
 /**
- * 知っている分類の見せ方。**鍵は SDK が返す表示名そのもの**（`/context` の行の名前）。
+ * 知っている分類の見せ方。鍵は SDK が返す表示名そのもの（`/context` の行の名前）。
  * `Map` にしてあるのは、知らない名前を引いたときに「無い」が返る形で受けるため。
  */
 const CATEGORY_LOOKS = new Map<string, CategoryLook>([
@@ -40,8 +40,8 @@ export function categoryLook(name: string): CategoryLook {
 
 /**
  * 読み込み中の骨組みが凡例に並べる分類の名前（`context-usage-card.tsx` の
- * `ContextUsageCardSkeleton`）。**窓の外（`deferred`）は除く**（届く札でも横棒には積まないので、
- * 骨組みでも数えない）。トークン数はまだ分からないが、**分類そのものは毎回同じ6+2種**なので、
+ * `ContextUsageCardSkeleton`）。窓の外（`deferred`）は除く（届く札でも横棒には積まないので、
+ * 骨組みでも数えない）。トークン数はまだ分からないが、分類そのものは毎回同じ6+2種なので、
  * 名前と色は実物と同じものを出す（届いてから変わるのは数だけ）。並びは届く札の並び
  * （`used` → `free` → `buffer`）に合わせる。
  */

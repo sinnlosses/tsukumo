@@ -4,7 +4,7 @@ import { toContextUsage } from "../../../../src/server/session-driver/adapter/sd
 import { UNAVAILABLE_CONTEXT_USAGE } from "../../../../src/shared/context-usage.ts"
 
 /**
- * SDK が `getContextUsage()` で返す形の抜粋（**手で書いた架空の値**。鍵の綴りは実測に合わせた
+ * SDK が `getContextUsage()` で返す形の抜粋（手で書いた架空の値。鍵の綴りは実測に合わせた
  * camelCase で、`skills` は1件ずつの並びではなくまとめの中に入っている）。
  */
 const SDK_CONTEXT_USAGE = {

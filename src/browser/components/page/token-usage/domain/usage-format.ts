@@ -1,12 +1,12 @@
-// トークン消費の画面に出す期間の合計と、バイト数の書き方。**表の桁を揃えて横幅を食わせない**
+// トークン消費の画面に出す期間の合計と、バイト数の書き方。表の桁を揃えて横幅を食わせない
 // ための畳み方だけを持つ（合計は `hooks/use-token-usage.ts` が呼び、書き方は
-// `presentational-token-usage.tsx` が呼ぶ）。**トークン数の書き方（`formatCount`）は
-// `browser/utils/format-count.ts` へ上げてある**（サイドバーの使用量の行と2つの機能が
+// `presentational-token-usage.tsx` が呼ぶ）。トークン数の書き方（`formatCount`）は
+// `browser/utils/format-count.ts` へ上げてある（サイドバーの使用量の行と2つの機能が
 // 読むようになったため）。
 //
-// **数のほかは扱わない** — ここに来るのはトークン数・バイト数・モデルの名前だけで、
+// 数のほかは扱わない — ここに来るのはトークン数・バイト数・モデルの名前だけで、
 // 会話の文面は集計にそもそも入っていない（`src/shared/token-usage-summary.ts`）。
-// **`costUsd`（USD建てのコスト）はここでは書き方を持たない**（画面に出さない。記録と集計の
+// `costUsd`（USD建てのコスト）はここでは書き方を持たない（画面に出さない。記録と集計の
 // 形自体は `src/shared/token-usage.ts` / `src/shared/token-usage-summary.ts` に残る）。
 
 import {
@@ -26,7 +26,7 @@ const EMPTY_TOTALS = {
 } satisfies TokenUsageTotals
 
 /**
- * 期間の合計。**モデル別の並びを足し合わせる**（日ごとを足しても同じ数になるが、モデル別の
+ * 期間の合計。モデル別の並びを足し合わせる（日ごとを足しても同じ数になるが、モデル別の
  * ほうが「期間に居たモデル」と並べて読めるので、同じ出どころから取る）。
  */
 export function totalUsage(byModel: readonly ModelUsageTotal[]): TokenUsageTotals {

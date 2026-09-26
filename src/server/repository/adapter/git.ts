@@ -1,9 +1,9 @@
-// `git` を起こす口（docs/design.md 5章「成果の集め方と配り方」）。**`main` の上のものを読む
-// 2つの境界（`task-summary.ts` と `main-history.ts`）が両方使う**ので、`node:child_process` を
+// `git` を起こす口（docs/design.md 5章「成果の集め方と配り方」）。`main` の上のものを読む
+// 2つの境界（`task-summary.ts` と `main-history.ts`）が両方使うので、`node:child_process` を
 // 直に触るのはここだけに閉じ込める（原則3。1ファイル = 1つの境界。`test/architecture.test.ts`
 // 「子プロセスを起こす箇所」の許可はこのファイル）。
 //
-// **例外を投げない**（常駐プロセスは1回の失敗で落ちない。`docs/coding-standards.md`
+// 例外を投げない（常駐プロセスは1回の失敗で落ちない。`docs/coding-standards.md`
 // 「エラーハンドリング」）。呼び出し側が「不明」にするか、その回を諦めるかを決める。
 
 import { execFile, spawn } from "node:child_process"
@@ -28,7 +28,7 @@ export type BatchOutcome =
   | { readonly kind: "failed" }
   | { readonly kind: "timed-out" }
 
-/** `git` を起こす。**例外を投げない**（失敗は `failed` / `timed-out` として返す）。 */
+/** `git` を起こす。例外を投げない（失敗は `failed` / `timed-out` として返す）。 */
 export function runGit(cwd: string, args: readonly string[]): Promise<GitOutcome> {
   return new Promise((resolve) => {
     execFile(
@@ -49,9 +49,9 @@ export function runGit(cwd: string, args: readonly string[]): Promise<GitOutcome
 
 /**
  * `git cat-file --batch` を1回起こし、`requests`（`<コミット>:<パス>` または blob の
- * sha そのものの並び）を渡した順に読む。**バイト列として切り出す**（`--batch` の1件は
+ * sha そのものの並び）を渡した順に読む。バイト列として切り出す（`--batch` の1件は
  * `<sha> <type> <size>\n` の見出し行の次にちょうど `<size>` バイトの中身、そのあとに区切りの
- * 改行が1つ続く形なので、UTF-8 の文字数ではなくバイト数で進める）。**例外を投げない**
+ * 改行が1つ続く形なので、UTF-8 の文字数ではなくバイト数で進める）。例外を投げない
  * （失敗は `failed` / `timed-out`）。
  */
 export function runGitCatFileBatch(

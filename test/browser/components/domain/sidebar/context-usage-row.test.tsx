@@ -16,12 +16,12 @@ import { stubRpcFetch } from "../../../rpc-fetch-stub.ts"
 import { sessionStoreWith } from "../../../session-store.ts"
 
 /**
- * サイドバー「セッション情報」の使用量の行。**出す数は札
- * （`test/browser/components/page/token-usage/components/context-usage-card/context-usage-card.test.tsx`）と同じ出どころ**
+ * サイドバー「セッション情報」の使用量の行。出す数は札
+ * （`test/browser/components/page/token-usage/components/context-usage-card/context-usage-card.test.tsx`）と同じ出どころ
  * （`usage.totalTokens` / `usage.maxTokens` / `usage.percentage`）なので、ここでは行として
  * 描いたときの文字・押した先（右端の `›` だけ）・70%以上の警告・取れないときの高さだけを測る。
  *
- * **`fetch` は使わず `QueryClient` に直接 `setQueryData` する**（`renderRow` の既定の状態
+ * `fetch` は使わず `QueryClient` に直接 `setQueryData` する（`renderRow` の既定の状態
  * — `state.turn` が `idle` — なら `refetchKey` は必ず 0 になる。`browser/domain/context-usage.ts`
  * の `contextUsageRefetchKey`）。取得そのものは `test/browser/domain/context-usage.test.tsx` が
  * 測るので、ここで `fetch` を経由すると非同期の隙間が増えるだけで測るものが増えない
@@ -98,8 +98,8 @@ describe("ContextUsageRow", () => {
   })
 
   it("届く前は一言を出し、行の高さを揺らす骨組みは持たない", () => {
-    // 「まだ届いていない」を測るための1回だけ、`fetch` を差し替える。**戻ってこない
-    // Promise**にする——中途半端に解決する Promise を残すと、後片付けのタイミング次第で
+    // 「まだ届いていない」を測るための1回だけ、`fetch` を差し替える。戻ってこない
+    // Promiseにする——中途半端に解決する Promise を残すと、後片付けのタイミング次第で
     // 次のテストの act 外の更新として警告が出るため（`setQueryData` を使わない唯一の理由）。
     const fetchStub = stubRpcFetch(() => ({ kind: "pending" }))
     try {

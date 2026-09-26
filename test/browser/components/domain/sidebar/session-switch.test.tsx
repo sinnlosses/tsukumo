@@ -38,7 +38,7 @@ const SESSIONS: readonly SessionChoice[] = [
 ]
 
 /**
- * `sessionId` だけ分かっている架空の土台。**このテストが見るのはセッションの切り替えだけ**
+ * `sessionId` だけ分かっている架空の土台。このテストが見るのはセッションの切り替えだけ
  * （`model` / `permissionMode` は関係ない）ので、`init` 前でも `sessionId` だけ分かる
  * `identified` を使う（`sessions-changed` が `init` より先に届く経路と同じ形）。
  */
@@ -59,7 +59,7 @@ function renderSessionSwitch(
 }
 
 /**
- * 画面に出るはずの `M/D HH:MM`。**この端末のタイムゾーンで組み立てる**ので、どこで回しても
+ * 画面に出るはずの `M/D HH:MM`。この端末のタイムゾーンで組み立てるので、どこで回しても
  * 同じ判定になる（部品と同じ「ローカル時刻」の約束を、別の道筋で組み立てて突き合わせる）。
  */
 function localLabel(at: Temporal.ZonedDateTime): string {
@@ -116,7 +116,7 @@ describe("SessionSwitch", () => {
     ])
   })
 
-  // `<select>` の選択肢は折り返せないので、見出しは文字数で切る。**時刻は切らない**
+  // `<select>` の選択肢は折り返せないので、見出しは文字数で切る。時刻は切らない
   // （同じ部屋の行を見分けるのは時刻なので、見出しがどれだけ長くても必ず残す）。
   it("長い見出しは文字数で切り、時刻はそのまま残す", () => {
     const longHeading = "あ".repeat(40)

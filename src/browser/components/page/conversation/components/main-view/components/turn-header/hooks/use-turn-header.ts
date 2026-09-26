@@ -1,13 +1,13 @@
 // `<TurnHeader>` のロジック（docs/design.md 2章「機能の中を分ける」の container / presenter）。
-// 前後のターンの id・見ているターンのタイトル・一覧の開閉と並びを、**画面に出す形**へ畳んで返す。
+// 前後のターンの id・見ているターンのタイトル・一覧の開閉と並びを、画面に出す形へ畳んで返す。
 //
-// **開閉は帯に前例がある `browser/hooks/use-dismiss-signal.ts` の `useDismissSignal`**
+// 開閉は帯に前例がある `browser/hooks/use-dismiss-signal.ts` の `useDismissSignal`
 // （もう一度押す・外側・Esc で閉じる。Esc は開く口へフォーカスを戻す）。行を選ぶとその場で
 // 閉じてターンを移す——最新の行を選べば `onSelect` の先（`stores/turn-selection.tsx` の
 // `selectTurn`）がそのまま追従に戻す規則を持っているので、ここで特別扱いはしない。
 //
-// **一覧の並びは新しいものを上にする**。行の番号（n / N）は `‹` `›` の脇に出す「n / N」と
-// **同じ、古いほうを1とする通し番号**なので、並びを新しい順にしても数字自体は矛盾しない
+// 一覧の並びは新しいものを上にする。行の番号（n / N）は `‹` `›` の脇に出す「n / N」と
+// 同じ、古いほうを1とする通し番号なので、並びを新しい順にしても数字自体は矛盾しない
 // （最新の行だけは番号の代わりに「最新」を出す）。
 
 import { useCallback, useId, useRef, useState, type RefObject } from "react"
@@ -19,8 +19,8 @@ import {
 
 /**
  * 一覧の1行ぶんの見出しと全文（`main-view.tsx` が `domain/turn-title.ts` の `turnTitle` /
- * `turnHistoryText` で作る）。**`title` は札の頭とアクセシブルネームに使う1行**、
- * **`historyText` は一覧の行に出す、選択してコピーできる依頼の全文**（複数行を含む）で、
+ * `turnHistoryText` で作る）。`title` は札の頭とアクセシブルネームに使う1行、
+ * `historyText` は一覧の行に出す、選択してコピーできる依頼の全文（複数行を含む）で、
  * 別のもの。
  */
 export type TurnHeaderEntry = {
@@ -30,7 +30,7 @@ export type TurnHeaderEntry = {
 }
 
 export type TurnHeaderProps = {
-  /** 窓の中のターン。**古い順**（末尾が最新）。 */
+  /** 窓の中のターン。古い順（末尾が最新）。 */
   readonly turns: readonly TurnHeaderEntry[]
   readonly activeTurnId: number
   readonly onSelect: (turnId: number) => void
@@ -38,7 +38,7 @@ export type TurnHeaderProps = {
 
 /**
  * 開いた一覧の1行。番号は古いほうを1とする通し番号のまま、並びだけ新しい順（`toReversed`）。
- * **`title` は飛ぶ口のアクセシブルネームに使う1行、`text` は行に出す選択できる依頼の全文**
+ * `title` は飛ぶ口のアクセシブルネームに使う1行、`text` は行に出す選択できる依頼の全文
  * （`presentational-turn-header.tsx` の `TurnHistoryList`）。
  */
 export type TurnHeaderHistoryRow = {

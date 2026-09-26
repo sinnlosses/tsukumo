@@ -1,12 +1,12 @@
-// 見直し（docs/glossary.md「見直し」）の状態と、その結果の1件である提案。**サーバ（core が
+// 見直し（docs/glossary.md「見直し」）の状態と、その結果の1件である提案。サーバ（core が
 // ツールの引数を検査して状態を畳む）とブラウザ（トークン消費の画面が区画を描く）の両方が同じ
-// 型を見る**ので shared に置く。ツールと状態の決定は docs/design.md「見直しのツールと状態」。
+// 型を見るので shared に置く。ツールと状態の決定は docs/design.md「見直しのツールと状態」。
 //
-// **入るのはスキルがツールに渡した結果だけ**で、依頼の文面も本文も入らない
+// 入るのはスキルがツールに渡した結果だけで、依頼の文面も本文も入らない
 // （docs/coding-standards.md「会話内容の扱い」）。
 
 /**
- * 見直しの段（docs/glossary.md「見直しの段」）。**この並びが段の順**で、いまの段より前は済、
+ * 見直しの段（docs/glossary.md「見直しの段」）。この並びが段の順で、いまの段より前は済、
  * 後は未着手と読む。
  */
 export const USAGE_REVIEW_STAGES = ["model", "cache", "tool", "context", "proposal"] as const
@@ -23,7 +23,7 @@ export const USAGE_REVIEW_STAGE_LABELS = {
 } as const satisfies Record<UsageReviewStage, string>
 
 /**
- * 提案の種類。**提案の識別子の半分**（{@link usageProposalKey}）なので、言い回しで揺れない
+ * 提案の種類。提案の識別子の半分（{@link usageProposalKey}）なので、言い回しで揺れない
  * 固定の列挙にする。列挙に無い種類はツールの境界で断る（黙って別の種類に寄せない）。
  * スキル `token-usage-diet` が検討する候補（SKILL.md「4. 何を候補にするか」）に揃えてある。
  */
@@ -89,7 +89,7 @@ export type UsageReviewFindings = {
  * - `idle`: ふだん。一度も見直していない・見直しが結果を渡さずに終わった
  * - `running`: 見直し中。`startedAt` はそのターンが始まった時刻（ボタンを押してからの経過を
  *   出すため。最初の段が届くまでの間も数える）、`stage` はいまの段
- * - `result`: 結果が届いた。`reviewedAt` は届いた時刻。**次の見直しが始まるまで持ち続ける**
+ * - `result`: 結果が届いた。`reviewedAt` は届いた時刻。次の見直しが始まるまで持ち続ける
  */
 export type UsageReview =
   | { readonly kind: "idle" }
@@ -102,7 +102,7 @@ export type UsageReview =
   | { readonly kind: "result"; readonly reviewedAt: number; readonly findings: UsageReviewFindings }
 
 /**
- * 提案の識別子。**種類と対象の組**で、見出しや根拠の言い回しが変わっても同じ提案を指す
+ * 提案の識別子。種類と対象の組で、見出しや根拠の言い回しが変わっても同じ提案を指す
  * （見送った提案を次の見直しで出さないための照合に使う）。
  */
 export function usageProposalKey(proposal: Pick<UsageProposal, "kind" | "target">): string {
@@ -111,13 +111,13 @@ export function usageProposalKey(proposal: Pick<UsageProposal, "kind" | "target"
 
 /**
  * 前回の見直しの結果。トークン消費の画面の「前回の提案」のリンクが読む
- * （`docs/design.md`「見直しのツールと状態」）。**{@link UsageReview} の `result` とは別の状態**
+ * （`docs/design.md`「見直しのツールと状態」）。{@link UsageReview} の `result` とは別の状態
  * ——`usageReview` は起こし直すとふだんへ戻るが（`docs/glossary.md`「見直し」）、こちらは
  * ホームのファイル（`~/.tsukumo/usage-review.json`）に残り続け、起こし直しでも
  * プロセスの再起動でも消えない。
  *
  * - `none`: 一度も見直していない（リンクを出さない）
- * - `found`: 直前の1回の結果。**持つのは直前の1回だけ**——古い結果は新しいもので置き換わり、
+ * - `found`: 直前の1回の結果。持つのは直前の1回だけ——古い結果は新しいもので置き換わり、
  *   履歴には残らない
  */
 export type PreviousUsageReview =
@@ -125,8 +125,8 @@ export type PreviousUsageReview =
   | { readonly kind: "found"; readonly reviewedAt: number; readonly findings: UsageReviewFindings }
 
 /**
- * ホームから読んだ前回の結果から、見送った提案を除く。**見送りは前回の結果のファイルを
- * 書き換えない**ので、起動し直したときはここで除かないと見送った札が戻ってくる。
+ * ホームから読んだ前回の結果から、見送った提案を除く。見送りは前回の結果のファイルを
+ * 書き換えないので、起動し直したときはここで除かないと見送った札が戻ってくる。
  */
 export function withoutDismissedProposals(
   previous: PreviousUsageReview,
@@ -147,7 +147,7 @@ export function withoutDismissedProposals(
 }
 
 /**
- * 「減らし方を見てもらう」を押したときに会話へ送る依頼文。**期間は書かない**——スキルの既定
+ * 「減らし方を見てもらう」を押したときに会話へ送る依頼文。期間は書かない——スキルの既定
  * （直近7日）に任せる。押す口の依頼文が種類ごとに散らばらないよう、
  * {@link usageProposalRequestText} と同じくここに置く。
  */
@@ -155,7 +155,7 @@ export const USAGE_REVIEW_REQUEST_TEXT =
   "トークン消費の減らし方を見てほしい。直近の使い方（モデル・ツール・キャッシュ・コンテキスト）から、効きそうな見直しを挙げて。"
 
 /**
- * 押す口を押したときに会話へ送る依頼文。**提案に依頼文を持たせない**のは、スキルが書く欄を
+ * 押す口を押したときに会話へ送る依頼文。提案に依頼文を持たせないのは、スキルが書く欄を
  * 増やさず、押す口ごとの頼み方を1箇所で揃えるため。
  */
 export function usageProposalRequestText(proposal: UsageProposal): string {

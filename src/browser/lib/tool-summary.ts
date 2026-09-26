@@ -1,16 +1,16 @@
-// ツール名＋入力を、画面に出してよい1行の要約にする。**帯の「いまの作業」
+// ツール名＋入力を、画面に出してよい1行の要約にする。帯の「いまの作業」
 // （`src/browser/components/domain/screen-nav/`）と入力欄の答え待ちの箱
-// （`src/browser/components/page/conversation/components/dispatch/components/pending-answer/pending-answer.tsx`）の両方が読む**ので、機能をまたぐ道具として
+// （`src/browser/components/page/conversation/components/dispatch/components/pending-answer/pending-answer.tsx`）の両方が読むので、機能をまたぐ道具として
 // `browser/lib/` に置く（docs/design.md 2章「`src/browser/` の箱と、置く基準」）。
 //
-// **段3では `shared` に置いていた**（旧の答え待ちの箱 `presentation/view.ts` と新しい
+// 段3では `shared` に置いていた（旧の答え待ちの箱 `presentation/view.ts` と新しい
 // `browser/sidebar/activity.tsx` の両方が読むのに、`browser → presentation` も `presentation → browser` も
-// 禁じられていて、共有できる場所が `shared` しか無かったため）。**段4で答え待ちの箱が
-// `browser/` に来て旧側の読み手が消えた**ので、ここへ移した。表示の整形であってサーバとブラウザの
+// 禁じられていて、共有できる場所が `shared` しか無かったため）。段4で答え待ちの箱が
+// `browser/` に来て旧側の読み手が消えたので、ここへ移した。表示の整形であってサーバとブラウザの
 // 契約ではないので、`shared` に置いたままにしない（`shared` が何でも入る置き場になるのを
 // 防ぐ。docs/design.md 2章）。
 //
-// **入力の全文は返さない**（docs/coding-standards.md「会話内容の扱い」）。純粋関数。
+// 入力の全文は返さない（docs/coding-standards.md「会話内容の扱い」）。純粋関数。
 
 import { isPlainObject } from "remeda"
 
@@ -32,7 +32,7 @@ const TOOL_SUMMARY_FIELD_BY_TOOL: Readonly<Record<string, string>> = {
 
 /**
  * ツール名＋入力を、画面に出してよい1行の要約にする。入力がオブジェクトの形でないときは空文字。
- * **切り詰めるだけ**（どの欄を読むかは {@link toolInputText} の1箇所で決める。
+ * 切り詰めるだけ（どの欄を読むかは {@link toolInputText} の1箇所で決める。
  * docs/screen-design.md 13.9「いまの作業」）。
  */
 export function summarizeToolInput(toolName: string, input: unknown): string {
@@ -41,7 +41,7 @@ export function summarizeToolInput(toolName: string, input: unknown): string {
 
 /**
  * ツール名＋入力から、要約と同じ欄（Bash は `command`、Edit / Write / Read は `file_path`）の値を
- * **切り詰めずに**返す。帯の「いまの作業」が開く一覧の「実行中の手順の全文」に使う
+ * 切り詰めずに返す。帯の「いまの作業」が開く一覧の「実行中の手順の全文」に使う
  * （docs/screen-design.md 13.9）。入力がオブジェクトの形でない・欄が見つからないときは空文字。
  */
 export function toolInputText(toolName: string, input: unknown): string {

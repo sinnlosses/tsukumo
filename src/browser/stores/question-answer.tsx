@@ -1,22 +1,22 @@
-// 答え待ちの質問に対する**答えの組み立て**を配る Context（`<QuestionAnswerProvider>`）と、
+// 答え待ちの質問に対する答えの組み立てを配る Context（`<QuestionAnswerProvider>`）と、
 // 両側が読む1つのモデル（{@link useQuestionAnswer}）。
 //
-// **質問の札はメインビュー（`components/page/conversation/components/main-view/components/question-ask/question-ask.tsx`）に出て、自由入力は入力欄
-// （`components/page/conversation/components/dispatch/`）が担う**ので、1つの状態を2つの領域が読み書きする。`browser/` の機能
+// 質問の札はメインビュー（`components/page/conversation/components/main-view/components/question-ask/question-ask.tsx`）に出て、自由入力は入力欄
+// （`components/page/conversation/components/dispatch/`）が担うので、1つの状態を2つの領域が読み書きする。`browser/` の機能
 // どうしは import できない（docs/design.md 2章、`test/architecture.test.ts`）ため、置き場所は
 // 「画面全体で共有する状態」の `browser/stores/`（docs/design.md 6.2）。
 //
-// **Context が持つのは組み立て中の答えだけ**（何問目を見ているか・質問ごとに選んだラベル・
+// Context が持つのは組み立て中の答えだけ（何問目を見ているか・質問ごとに選んだラベル・
 // 入力欄に書いて記録した答え）。質問そのものは `SessionState` から来るので、それを読んで
-// 画面に出す形へ畳むのは {@link useQuestionAnswer}——**読む側ごとに購読する**ので、Provider は
+// 画面に出す形へ畳むのは {@link useQuestionAnswer}——読む側ごとに購読するので、Provider は
 // 答え待ちの id しか読まない（中身まで読むと、Provider の下＝画面全体が描き直しになる）。
 //
-// **`SessionState` には入れない。** サーバから来るものではなく、画面の都合の状態だから
+// `SessionState` には入れない。 サーバから来るものではなく、画面の都合の状態だから
 // （`stores/turn-selection.tsx` と同じ理由）。
 //
-// **`answer.labels[i]` は `questions[i]` に対して選んだ答えの並び**（`shared/pending-ask.ts` の
+// `answer.labels[i]` は `questions[i]` に対して選んだ答えの並び（`shared/pending-ask.ts` の
 // 契約）。複数選択で2つ以上選んだときはそのまま複数の要素として送り、入力欄に書いた文字列は
-// 同じ並びの末尾に足す。**1つの文字列に畳むのはここではない**（SDK が求める
+// 同じ並びの末尾に足す。1つの文字列に畳むのはここではない（SDK が求める
 // 「質問1件に対して1つの文字列」へ畳むのは `src/server/session-driver/core/pending-answer.ts` の役目。ここで畳むと、
 // メインビューに残す記録の側で選択肢と突き合わせられなくなる）。
 
@@ -38,7 +38,7 @@ import {
 import { useSessionDispatch, useSessionSelector, type SessionDispatch } from "./session.tsx"
 
 /**
- * 選択肢1つぶんの札。**`label` は SDK へ返す元のラベル**で、`text` は画面に出す字
+ * 選択肢1つぶんの札。`label` は SDK へ返す元のラベルで、`text` は画面に出す字
  * （末尾の `(Recommended)` を外したもの。外した印は {@link QuestionOptionRow.recommended}）。
  */
 export type QuestionOptionRow = {
@@ -55,7 +55,7 @@ export type QuestionAnswerModel =
   | { readonly kind: "none" }
   | {
       readonly kind: "asking"
-      /** 答え待ちの id（`PendingAsk.id`）。**別の質問に入れ替わった合図**として読む。 */
+      /** 答え待ちの id（`PendingAsk.id`）。別の質問に入れ替わった合図として読む。 */
       readonly id: string
       readonly header: string
       readonly text: string
@@ -66,7 +66,7 @@ export type QuestionAnswerModel =
       readonly showBack: boolean
       /** いま見ているのが最後の1問か（答えると全問ぶんを送る）。 */
       readonly last: boolean
-      /** **並びはラベルの辞書順**（`sortQuestionOptions`）。 */
+      /** 並びはラベルの辞書順（`sortQuestionOptions`）。 */
       readonly options: readonly QuestionOptionRow[]
       /** この問に対して入力欄に書いて記録した答え（まだ送っていない。無ければ空文字）。 */
       readonly writtenAnswer: string
@@ -107,7 +107,7 @@ export function QuestionAnswerProvider(props: QuestionAnswerProviderProps): Reac
   const [shownPendingId, setShownPendingId] = useState<string | undefined>(undefined)
 
   // 答え待ちが入れ替わったら（別の質問が来た・答え終わった）組み立て中の答えを捨てる。
-  // 捨てるのは**レンダー中に見比べて**決める（画面の外と同期する処理ではないので `useEffect` は
+  // 捨てるのはレンダー中に見比べて決める（画面の外と同期する処理ではないので `useEffect` は
   // 使わない。docs/coding-standards.md「useEffect の代わりに使うもの」）。
   if (shownPendingId !== pendingId) {
     setShownPendingId(pendingId)
@@ -122,7 +122,7 @@ export function QuestionAnswerProvider(props: QuestionAnswerProviderProps): Reac
 }
 
 /**
- * 組み立て中の答え。**質問ごとに持ち続ける**（「戻る」で前の質問に戻ったとき、選んだものが
+ * 組み立て中の答え。質問ごとに持ち続ける（「戻る」で前の質問に戻ったとき、選んだものが
  * 残っているように）。`selections[i]` / `writtenAnswers[i]` は `questions[i]` に対応し、
  * まだ触っていない問の位置は空のまま（読む側が `?? []` / `?? ""` で受ける）。
  */
@@ -164,7 +164,7 @@ function askingModel(
 
   /**
    * この問の答え（選んだラベルと、入力欄に書いた答え）を確定して次へ進む。
-   * **最後の1問なら全問ぶんを1回で送る**。
+   * 最後の1問なら全問ぶんを1回で送る。
    */
   const advance = (choices: readonly string[], written: string): void => {
     if (!last) {
@@ -198,7 +198,7 @@ function askingModel(
     canAnswer: selected.length > 0 || writtenAnswer !== "",
     onToggle: (label) => {
       // 単一選択は選び直しで置き換え、複数選択は押すたびに入り切りする。どちらも
-      // **選んだ時点で送らない**（送るのは「これで答える」と入力欄の「答える」だけ）。
+      // 選んだ時点で送らない（送るのは「これで答える」と入力欄の「答える」だけ）。
       const next = question.multiSelect
         ? selected.includes(label)
           ? selected.filter((candidate) => candidate !== label)
@@ -238,7 +238,7 @@ function answerFor(answer: DraftAnswer, target: number): readonly string[] {
 }
 
 /**
- * 並びの `target` 番目だけ差し替える。**まだ届いていない位置は `filler` で埋める**
+ * 並びの `target` 番目だけ差し替える。まだ届いていない位置は `filler` で埋める
  * （質問ごとの答えは触った問だけ入るので、後ろの問から先に触られることがある）。
  */
 function replaced<T>(values: readonly T[], target: number, value: T, filler: T): readonly T[] {
@@ -247,10 +247,10 @@ function replaced<T>(values: readonly T[], target: number, value: T, filler: T):
 }
 
 /**
- * 選択肢を札の行へ畳む。**並びはラベルの辞書順**（`shared/question.ts` の
+ * 選択肢を札の行へ畳む。並びはラベルの辞書順（`shared/question.ts` の
  * `sortQuestionOptions`。docs/display.md 4.2）。
  *
- * **自由入力（「その他」）の選択肢は札に出さない**（自由入力は入力欄が担うので、押しても
+ * 自由入力（「その他」）の選択肢は札に出さない（自由入力は入力欄が担うので、押しても
  * 意味のない札になる）。`sortQuestionOptions` は今までどおり通すので、モデルが
  * 「その他」を含めてきたかどうかで残りの並びは変わらない。
  */
@@ -268,7 +268,7 @@ function optionRows(question: Question, selected: readonly string[]): readonly Q
 }
 
 /**
- * ラベル末尾の「おすすめ」の印（`AskUserQuestion` のモデルが自分で書く）。**字からは外して
- * バッジにする**が、**SDK へ返す答えは元のラベルのまま**（`QuestionOptionRow.label`）。
+ * ラベル末尾の「おすすめ」の印（`AskUserQuestion` のモデルが自分で書く）。字からは外して
+ * バッジにするが、SDK へ返す答えは元のラベルのまま（`QuestionOptionRow.label`）。
  */
 const RECOMMENDED_SUFFIX = /\s*\(Recommended\)\s*$/i

@@ -85,8 +85,8 @@ describe("createContextUsageLog", () => {
     expect(JSON.stringify(record)).toMatch(/"at":"2026-09-22T09:00:00[+-]\d{2}:\d{2}"/)
   })
 
-  // **ターンごとの記録より広い線**（`src/shared/context-usage-record.ts`）——分類の表示名・
-  // MCP ツール名・メモリファイルのパス・スキル名まで入る。**広がったのはそこまで**で、
+  // ターンごとの記録より広い線（`src/shared/context-usage-record.ts`）——分類の表示名・
+  // MCP ツール名・メモリファイルのパス・スキル名まで入る。広がったのはそこまでで、
   // 会話の文面が混ざる余地が無いことを、行に出てくる文字列を数え上げて固定する。
   it("行に出てくる文字列は、鍵の名前と内訳の名前・セッションID・モード・時刻だけ", () => {
     const log = createContextUsageLog(root())
@@ -96,7 +96,7 @@ describe("createContextUsageLog", () => {
     const [line] = readFileSync(join(root(), "2026-09-22.jsonl"), "utf8").trimEnd().split("\n")
     const strings = [...(line ?? "").matchAll(/"([^"]*)"/g)].flatMap(([, value]) => value ?? [])
     expect(strings.filter((value) => value.startsWith("2026-09-22T")).length).toBe(1)
-    // **同じ鍵の名前が内訳の行ごとに繰り返す**（`name` / `tokens` は3つの並びすべてに出る）ので、
+    // 同じ鍵の名前が内訳の行ごとに繰り返す（`name` / `tokens` は3つの並びすべてに出る）ので、
     // 種類を数え上げる。見たいのは「知らない文字列が1つも無い」こと。
     const kinds = [...new Set(strings.filter((value) => !value.startsWith("2026-09-22T")))]
     expect(kinds.toSorted()).toEqual(

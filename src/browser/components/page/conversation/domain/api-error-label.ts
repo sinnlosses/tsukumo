@@ -2,7 +2,7 @@
 // 「ターンの失敗」）。読むのは入力欄の経過時間の行（`components/page/conversation/components/dispatch/`）と、メインビューの
 // やり取りの末尾（`components/page/conversation/components/main-view/`）の2つ。
 //
-// **綴り（`rate_limit` など）も一緒に出す**のは描く側の仕事で、ここは語だけを持つ。語は
+// 綴り（`rate_limit` など）も一緒に出すのは描く側の仕事で、ここは語だけを持つ。語は
 // 「何が起きたか」を言い、直し方までは言わない（直し方は種類ごとに違い、tsukumo からは確かめられない）。
 
 import { type ApiErrorKind } from "../../../../../shared/api-trouble.ts"

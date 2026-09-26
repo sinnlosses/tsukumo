@@ -1,6 +1,6 @@
 // レポートの ```chart フェンスの中身（Chart.js の設定を JSON で書いたもの）をグラフとして描く。
-// **Chart.js を読み込んで暗い配色へ寄せるのは `src/browser/components/page/conversation/components/main-view/markdown/chart.ts`**（トークン消費の
-// 画面も同じ口を使う）で、ここが持つのは**フェンスの中身を config として渡すところ**だけ。
+// Chart.js を読み込んで暗い配色へ寄せるのは `src/browser/components/page/conversation/components/main-view/markdown/chart.ts`（トークン消費の
+// 画面も同じ口を使う）で、ここが持つのはフェンスの中身を config として渡すところだけ。
 //
 // もとは別ファイルの処理だったものを、部品の `useEffect` に持ち替えた（移行の段6。
 // docs/design.md 6.4）。

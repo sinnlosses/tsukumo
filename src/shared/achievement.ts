@@ -1,11 +1,11 @@
-// 成果の画面（`docs/screen-design.md` 13.10）が取りに行く応答の型。**両側（サーバとブラウザ）が
-// 同じ値を見る**ので shared に置く（`token-usage-summary.ts` と同じ考え方）。手続きの形は
+// 成果の画面（`docs/screen-design.md` 13.10）が取りに行く応答の型。両側（サーバとブラウザ）が
+// 同じ値を見るので shared に置く（`token-usage-summary.ts` と同じ考え方）。手続きの形は
 // `src/shared/contract/achievement.ts`。
 // 数え方の規則そのものは `docs/requirements.md` 4.11 が正典で、ここは受け渡しの形と、見る日の
 // 決め方・振り返りの依頼文だけを持つ（`docs/design.md` 5章「成果の集め方と配り方」）。語は
 // `docs/glossary.md`「成果」。
 //
-// **運ぶのはコミットの数とタスクの ID・summary だけ**（コミットの件名も会話の文面も入らない。
+// 運ぶのはコミットの数とタスクの ID・summary だけ（コミットの件名も会話の文面も入らない。
 // `docs/coding-standards.md`「会話内容の扱い」）。
 
 import { z } from "zod"
@@ -33,7 +33,7 @@ export type AchievementTask = {
 }
 
 /**
- * その日に終えたタスクの一覧。**タスクの記録がどちらの形式も無いリポジトリ**（tsukumo を
+ * その日に終えたタスクの一覧。タスクの記録がどちらの形式も無いリポジトリ（tsukumo を
  * ほかのプロジェクトで起こしたとき）では `unknown`——コミットの数だけは出す
  * （`docs/requirements.md` 4.11）。
  */
@@ -42,7 +42,7 @@ export type AchievementDoneTasks =
   | { readonly kind: "known"; readonly items: readonly AchievementTask[] }
 
 /**
- * 先輩タスクの卒業1件（`docs/requirements.md` 4.11「卒業と節目」）。**登録から7日以上経っていた**
+ * 先輩タスクの卒業1件（`docs/requirements.md` 4.11「卒業と節目」）。登録から7日以上経っていた
  * その日に終えたタスクだけが対象。
  */
 export type AchievementGraduation = {
@@ -125,8 +125,8 @@ export const dailyAchievementSchema = z.discriminatedUnion("kind", [
 const MAX_LISTED_REQUEST_TASKS = 20
 
 /**
- * 空の日か（コミットも終えたタスクも0）。**終えたタスクの記録が無い（`unknown`）ときは
- * 「空」と決めない**——コミットが0でもタスクの有無が分からないため、押せなくする理由には
+ * 空の日か（コミットも終えたタスクも0）。終えたタスクの記録が無い（`unknown`）ときは
+ * 「空」と決めない——コミットが0でもタスクの有無が分からないため、押せなくする理由には
  * しない（`docs/screen-design.md` 13.10「コミットはあり、終えたタスクが0」の割り切りを、
  * タスクが数えられないときにも安全側へ倒す）。
  */
@@ -140,8 +140,8 @@ export function isEmptyAchievementDay(
 /**
  * 振り返りのボタンを押したときに、会話とは別の使い捨ての問い合わせへ送る依頼文
  * （`docs/requirements.md` 4.11「振り返りの依頼」、語は `docs/glossary.md`「成果の振り返り」）。
- * **画面に出している数だけから組み立てる**——コミットの件名や会話の文面は入れない
- * （`docs/coding-standards.md`「会話内容の扱い」）。**モードでは文面を変えない**（会話のモードに
+ * 画面に出している数だけから組み立てる——コミットの件名や会話の文面は入れない
+ * （`docs/coding-standards.md`「会話内容の扱い」）。モードでは文面を変えない（会話のモードに
  * 関わらず同じ問い合わせに渡すため）。
  */
 export function achievementReflectionRequestText(params: {
@@ -248,8 +248,8 @@ export function nextDateKey(dateKey: string): string {
 }
 
 /**
- * 見る日を日付キーに決める。**今日を選んだ・`YYYY-MM-DD` に読めない・`today` より先のときは
- * `today` に倒す**（呼ぶ側が書き間違えても画面は出る。`docs/requirements.md` 4.11）。「今日」を
+ * 見る日を日付キーに決める。今日を選んだ・`YYYY-MM-DD` に読めない・`today` より先のときは
+ * `today` に倒す（呼ぶ側が書き間違えても画面は出る。`docs/requirements.md` 4.11）。「今日」を
  * 決めるのは呼ぶ側（サーバのローカル時刻）で、ここは比べるだけ。
  */
 export function resolveAchievementDateKey(

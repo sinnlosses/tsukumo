@@ -1,4 +1,4 @@
-// 会話のログ（docs/screen-design.md 13.7）。**古い→新しいの順にそのまま積む**。下端付近を読んでいた
+// 会話のログ（docs/screen-design.md 13.7）。古い→新しいの順にそのまま積む。下端付近を読んでいた
 // ときだけ最新へ寄せるのは `hooks/use-stick-to-bottom.ts` で、ここは受け取った ref を入れ物に
 // 付けるだけ。行は `hooks/use-chat-view.ts` が畳んだ形（`ChatRow`）で受け、判定を持たない。
 
@@ -16,13 +16,13 @@ import { ChatTyping } from "../chat-typing/chat-typing.tsx"
 
 /**
  * まだ一度も話していないときの案内（吹き出しの「（まだ発話がありません）」と同じ立場）。
- * **最初の一言を促すのはこの文面**（docs/screen-design.md 13.7）— 促す操作子が立ち絵へ移ったので、
+ * 最初の一言を促すのはこの文面（docs/screen-design.md 13.7）— 促す操作子が立ち絵へ移ったので、
  * ログが空のときに「どこを押せばよいか」を指すものがここ以外に無い。
  */
 const EMPTY_LOG_MESSAGE = "（まだ何も話していません。立ち絵をつつくと話しかけてくれます）"
 
 /**
- * **props はここだけ分解して受ける**。ref を持つ入れ物を `props.logRef` の形で描画中に読むと
+ * props はここだけ分解して受ける。ref を持つ入れ物を `props.logRef` の形で描画中に読むと
  * `react(refs)`（規約「レンダー中に ref を読み書きしない」）が落ちるため
  * （`layout/presentational-layout.tsx` と同じ理由）。
  */
@@ -56,7 +56,7 @@ export function ChatLog({
               case "day":
                 return <ChatDay key={row.key} dateTime={row.dateTime} label={row.label} />
               case "boundary":
-                // 圧縮の区切り（docs/glossary.md「圧縮の区切り」）。**文言を添えない細い線1本**で、
+                // 圧縮の区切り（docs/glossary.md「圧縮の区切り」）。文言を添えない細い線1本で、
                 // 押せない・畳めない（利用者の操作の対象にしない。docs/chat-mode.md 4.9）。
                 // `<hr>` は元々「文言を持たない区切り」を表す要素なので、説明文を足す必要が無い。
                 return (
@@ -81,7 +81,7 @@ export function ChatLog({
                 return (
                   <div key={row.key} className={clsx(styles["chat-row"], styles["chat-row-user"])}>
                     {/* 利用者の発言は押せない（遡る先の表情を持たないので、押しても何も起きない）。
-                     **添えた画像の控えは吹き出しの中に並ぶ**（`docs/requirements.md` 4.10。
+                     添えた画像の控えは吹き出しの中に並ぶ（`docs/requirements.md` 4.10。
                      控えだけは押すと拡大する）。 */}
                     <div
                       className={clsx(styles["chat-entry"], styles["chat-entry-user"])}

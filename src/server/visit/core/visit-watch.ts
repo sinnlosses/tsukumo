@@ -1,17 +1,17 @@
-// 訪問の見張り（`docs/design.md` 5章「訪問の契機と状態」）。**駆動1代ぶんの持ち物**として
+// 訪問の見張り（`docs/design.md` 5章「訪問の契機と状態」）。駆動1代ぶんの持ち物として
 // `session-manager.ts` が代ごとに1つ作り、駆動由来のイベントを畳むたびに {@link VisitWatch.observe}
 // へ渡す。起こし直すと代ごと捨てられるので、掛けていた時計も待ちの勘定も一緒に消える。
 //
 // 判断は `visit-timing.ts`（来る・帰る・次の行）と `visit-guest.ts`（誰がどの台本で）の純関数で、
-// ここが持つのは**イベントをまたぐ勘定と、掛けた時計と、作っている最中の台本の中断**だけ。
+// ここが持つのはイベントをまたぐ勘定と、掛けた時計と、作っている最中の台本の中断だけ。
 // 台本は来ると決めた時点で作り始め（`visit-script-writer.ts`）、できたら `visit-started` を出す。
 // 作れなかった（時間切れも）らパックの台本へ落とし、それも無ければ来ない。作っている最中に
 // 帰る合図が来たら中断して来ない（`visit-script.ts` の `interruptsVisitScript`）。時計そのものは渡される
 // （{@link VisitClock}。本番は `src/server/visit/adapter/visit-clock.ts`）。
 //
 // 出したイベント（`visit-started` / `visit-line-advanced` / `visit-ended`）は `emit` で
-// session-manager の受け口へ戻し、ほかのイベントと同じく畳んで配る。**そのイベントも見張りの
-// `observe` に戻ってくる**ので、行の時計と待ちの勘定はそこで進める（出したその場では進めない）。
+// session-manager の受け口へ戻し、ほかのイベントと同じく畳んで配る。そのイベントも見張りの
+// `observe` に戻ってくるので、行の時計と待ちの勘定はそこで進める（出したその場では進めない）。
 //
 // 台本は会話の内容に当たる。ログにもファイルにも書かない（docs/coding-standards.md「会話内容の扱い」）。
 
@@ -56,7 +56,7 @@ export type VisitPorts = {
   /** しきい値（本番は `VISIT_TIMING`、確かめるときは `QUICK_VISIT_TIMING`）。 */
   readonly timing: VisitTiming
   readonly clock: VisitClock
-  /** 客になれるパックの一覧。**来るときに1回だけ読む**（`visitGuests` で拾ったもの）。 */
+  /** 客になれるパックの一覧。来るときに1回だけ読む（`visitGuests` で拾ったもの）。 */
   readonly listGuests: () => readonly VisitGuest[]
   /** 0 以上 1 未満の乱数（客・台本・帰りの一言を選ぶ）。 */
   readonly random: () => number
@@ -74,7 +74,7 @@ export type VisitWatchOptions = VisitPorts & {
 }
 
 export type VisitWatch = {
-  /** 駆動由来のイベント1件を**畳んだあとに**渡す（`at` はそのイベントに打った時刻）。 */
+  /** 駆動由来のイベント1件を畳んだあとに渡す（`at` はそのイベントに打った時刻）。 */
   readonly observe: (event: SessionEvent, at: number) => void
   /** 掛けている時計を外す（代を閉じるとき）。 */
   readonly close: () => void
@@ -113,7 +113,7 @@ export function createVisitWatch(options: VisitWatchOptions): VisitWatch {
   }
 
   /**
-   * 客を選び、台本を用意して迎える。**来ようとした時点でこの待ちは使い切る**（あるじが
+   * 客を選び、台本を用意して迎える。来ようとした時点でこの待ちは使い切る（あるじが
    * 分からない・候補が居ない・台本が無いときも、この待ちでは聞き直さない）。
    */
   const arrive = (now: number): void => {

@@ -95,7 +95,7 @@ function fieldMatch(term: string, texts: readonly string[]): number {
 
 /**
  * 1語と1つの文面の当たり（含まれれば1、でなければ語の2文字ずつの組のうち文面に含まれる割合）。
- * **1文字の語は2文字の組が作れないので、含まれるかどうかだけで見る**（`docs/chat-mode.md`
+ * 1文字の語は2文字の組が作れないので、含まれるかどうかだけで見る（`docs/chat-mode.md`
  * 4.9「古い雑談は索引を引いて思い出す」）。
  */
 function matchValue(term: string, text: string): number {

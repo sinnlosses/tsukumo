@@ -3,14 +3,14 @@ import { afterAll, afterEach, describe, expect, it, mock } from "bun:test"
 import { cleanup, render } from "@testing-library/react"
 
 // `Markdown`（本物は react-markdown 一式で重い）を、呼ばれた回数と引数だけ記録する代役に
-// 差し替える。**`Report` が「変わらない塊は再描画しない」（`docs/design.md` 6.3）ことは、
-// 本物の unified の出力では確かめづらい**（同じ入力なら同じ出力になるため、再描画したか
+// 差し替える。`Report` が「変わらない塊は再描画しない」（`docs/design.md` 6.3）ことは、
+// 本物の unified の出力では確かめづらい（同じ入力なら同じ出力になるため、再描画したか
 // どうかが DOM からは見分けられない）。呼ばれたかどうかを直接数えるのが確実。
 //
-// **`mock.module` はプロセス全体に効き、`mock.restore()` でも他のファイルへの漏れは止まらない**
+// `mock.module` はプロセス全体に効き、`mock.restore()` でも他のファイルへの漏れは止まらない
 // （素の `bun test` だと `test/browser/components/page/conversation/components/main-view/markdown/markdown.test.tsx` が代役の `Markdown` を見て10件落ちる。
-// 実測）。**そのため `package.json` の `test` / `check` は `bun test --isolate` にして
-// ある**（テストファイルごとにプロセスを分ける。実測で 1.1 秒 → 2.4 秒）。ここを素の `bun test`
+// 実測）。そのため `package.json` の `test` / `check` は `bun test --isolate` にして
+// ある（テストファイルごとにプロセスを分ける。実測で 1.1 秒 → 2.4 秒）。ここを素の `bun test`
 // に戻すなら、先にこのファイルの差し替えをやめる必要がある。
 let calls: string[] = []
 

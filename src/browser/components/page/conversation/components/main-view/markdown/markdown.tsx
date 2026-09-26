@@ -1,38 +1,38 @@
 // レポート（発話の詳細）の Markdown を HTML に描く、unified（react-markdown 一式）の構成。
 //
 // もとは移行前の自前レンダラ（行ベースのパーサ、約300行）
-// だったものを、移行の段6で unified に置き換えた（docs/design.md 6.3）。**対応する記法が広がる**
+// だったものを、移行の段6で unified に置き換えた（docs/design.md 6.3）。対応する記法が広がる
 // （引用・ネストしたリスト・水平線・GFM の列揃えは自前の実装では描けなかった）。
 //
 // - `remark-gfm` で表・取り消し線・自動リンク・チェックボックス・列揃え（`:---:` / `---:`）を読む
 // - `remark-cjk-friendly` で、CommonMark の delimiter run 規則（強調記号の直前・直後が約物だと
 //   強調と認識されない）を日本語向けに補う。CommonMark の仕様どおりの挙動として、
-//   `**「呼んだか」**` のように中身を約物で始める・終える強調が記法のまま出てしまう
+//   `「呼んだか」` のように中身を約物で始める・終える強調が記法のまま出てしまう
 //   （旧レンダラは素朴な正規表現 `/\*\*([^*]+)\*\*/g` だったので、この規則に関係なく通っていた）。
-//   このリポジトリのレポートは `**「…」**` を多用するため、このプラグインで直す
+//   このリポジトリのレポートは `「…」` を多用するため、このプラグインで直す
 // - {@link rehypeCodeFileName} で、フェンスの info 文字列に書いたファイル名を `code` の属性に移す
-//   （**`rehype-raw` より前**。理由は `code-file-name.ts`）
+//   （`rehype-raw` より前。理由は `code-file-name.ts`）
 // - `rehype-raw` で、Markdown の中に直接書いた HTML ブロック・インライン HTML を解釈する
 // - {@link rehypeTaskCheck} で、チェックリストの `<input type="checkbox">` を静的な印に畳む
-//   （**サニタイズより前**。理由は `task-check.ts`）
+//   （サニタイズより前。理由は `task-check.ts`）
 // - `rehype-sanitize`（{@link REPORT_SANITIZE_SCHEMA}）で許可リストに無い要素・属性を落とす。
-//   **サニタイズはここ1箇所に集約**（docs/display.md 4.2）
+//   サニタイズはここ1箇所に集約（docs/display.md 4.2）
 // - `rehype-highlight` でコードの色付け（`pre > code` に `hljs` の class と `<span>` を足す。
 //   テーマ CSS は `/vendor/highlight-theme.min.css` としてサーバが配る。
 //   `src/server/view-server/adapter/vendor-asset.ts`）
 //
-// **```mermaid / ```chart のフェンスは「コード」ではなく図・グラフの入れ物にする**
+// ```mermaid / ```chart のフェンスは「コード」ではなく図・グラフの入れ物にする
 // （{@link MermaidBlock} / {@link ChartBlock}）。`pre` を上書きし、中の `code` 要素の
 // `className`（`language-mermaid` / `language-chart`）を見て振り分ける。
 //
-// **レポートの記法の class 名（`note` / `badge` / `cols` / `card` / `stats` / `stat`）は
-// `div` / `span` の上書きで部品に解決する**（{@link NotationBlock} / {@link NotationInline}）。
+// レポートの記法の class 名（`note` / `badge` / `cols` / `card` / `stats` / `stat`）は
+// `div` / `span` の上書きで部品に解決する（{@link NotationBlock} / {@link NotationInline}）。
 //
-// **表は横スクロールの器で包む**（{@link Table}）。器をここで作るのは、**`rehype-raw` が生の
-// HTML も同じ hast の木に入れる**ので、`table` の上書き1つで Markdown の表とレポートが直接
+// 表は横スクロールの器で包む（{@link Table}）。器をここで作るのは、`rehype-raw` が生の
+// HTML も同じ hast の木に入れるので、`table` の上書き1つで Markdown の表とレポートが直接
 // 書いた `<table>` の両方に効くため。
 //
-// **git 管理下のパスを押すと Orca のエディタで開ける**（inline code・フェンスのファイル名・
+// git 管理下のパスを押すと Orca のエディタで開ける（inline code・フェンスのファイル名・
 // 相対リンクの3か所。判定と依頼は {@link repositoryFilePath} / `repository-link.tsx` に
 // まとめてある）。
 
@@ -58,7 +58,7 @@ import { REPORT_SANITIZE_SCHEMA } from "./sanitize-schema.ts"
 import { rehypeTaskCheck } from "./task-check.ts"
 
 /**
- * hast の要素をどの部品で描くか。**レンダーごとに作り直さない**（同じ参照でないと
+ * hast の要素をどの部品で描くか。レンダーごとに作り直さない（同じ参照でないと
  * react-markdown が木を作り直す）ので、モジュールの定数に置く。
  */
 const REPORT_COMPONENTS = {
@@ -74,11 +74,11 @@ const REPORT_COMPONENTS = {
 
 /**
  * 脚注（`[^1]`）の節に mdast-util-to-hast が付ける英語の語を、日本語に替える。既定は
- * `<h2 class="sr-only">Footnotes</h2>` で、**`sr-only` の CSS はこのページに無い**（機能ごとの
+ * `<h2 class="sr-only">Footnotes</h2>` で、`sr-only` の CSS はこのページに無い（機能ごとの
  * CSS Modules は class 名をハッシュ化するので、当てる側で受け取ることもできない）。
- * **そのままだと英語の見出しが本文に見える。**
+ * そのままだと英語の見出しが本文に見える。
  *
- * **隠すのではなく見出しとして出す**（`footnoteLabelProperties` を空にして `sr-only` を外す）。
+ * 隠すのではなく見出しとして出す（`footnoteLabelProperties` を空にして `sr-only` を外す）。
  * 脚注の節は本文の続きに `<ol>` が現れるだけなので、見出しが無いと地の文の箇条書きと
  * 見分けが付かない。タグは既定の `h2` のままにして、{@link SectionHeading} の書き替え
  * （`h4`）と同じ段に乗せる。
@@ -98,7 +98,7 @@ export function Markdown(props: MarkdownProps): ReactElement {
   return (
     <ReactMarkdown
       // remark-cjk-friendly は remark-gfm より後（README の使用例どおり）。
-      // **効くのは `**` と `*` だけで、GFM の取り消し線 `~~` には効かない**（あちらは
+      // 効くのは `` と `*` だけで、GFM の取り消し線 `~~` には効かない（あちらは
       // micromark-extension-gfm-strikethrough の別の判定を通るため。直すには
       // remark-cjk-friendly-gfm-strikethrough が要る）。取り消し線はレポートの規約
       // （src/server/report/core/report-notation.ts）が勧めていないので、穴のまま置いてある。
@@ -128,10 +128,10 @@ type PreProps = JSX.IntrinsicElements["pre"] & ExtraProps
  * {@link MermaidBlock} / {@link ChartBlock} に振り、それ以外は素の `<pre>` のまま描く
  * （色付けは `rehype-highlight` がすでにこの木に当ててある）。
  *
- * **フェンスにファイル名が書いてあれば、ブロックの左上にラベルとして出す**
+ * フェンスにファイル名が書いてあれば、ブロックの左上にラベルとして出す
  * （```diff src/foo.ts。{@link rehypeCodeFileName} が属性に移してある）。差分だけを見て
- * どのファイルか分からない、を防ぐため。**書いていないフェンスは素の `<pre>` のまま**で、
- * ラベルの行は出ない。**git 管理下の一覧にあるファイル名は押せるボタンにする**
+ * どのファイルか分からない、を防ぐため。書いていないフェンスは素の `<pre>` のままで、
+ * ラベルの行は出ない。git 管理下の一覧にあるファイル名は押せるボタンにする
  * （`repository-link.tsx`）。
  */
 function Pre(props: PreProps): ReactElement {
@@ -221,8 +221,8 @@ type SectionHeadingProps = JSX.IntrinsicElements["h2"] & ExtraProps
 /**
  * レポートの見出し `##`（mdast の depth 2。hast では `h2`）を `h4` として描く。ページには
  * 利用者の依頼を示す本物の `<h2 className={styles["turn-title"]}>` が1つあるので（`turn-header.tsx`）、
- * レポートの中の見出しが同じ段に並ぶと見出しの階層が壊れる。**許可リスト
- * （{@link REPORT_SANITIZE_SCHEMA}）には `h2` のまま残す**（サニタイズはここより前に効くので、
+ * レポートの中の見出しが同じ段に並ぶと見出しの階層が壊れる。許可リスト
+ * （{@link REPORT_SANITIZE_SCHEMA}）には `h2` のまま残す（サニタイズはここより前に効くので、
  * 落としてしまうと書き替える前に中身が消える）。見た目は `.detail-block h4`
  * （`report-notation.module.css`）。
  */
@@ -242,12 +242,12 @@ function SubHeading(props: SubHeadingProps): ReactElement {
 type CodeProps = JSX.IntrinsicElements["code"] & ExtraProps
 
 /**
- * コード（inline code・フェンスの中の `<code>` の両方がここを通る）。**中身の文字が git 管理下の
- * 一覧にあるパスなら、押せるボタンで包む**（人格の規約が `file_path:line_number` の形で書く
+ * コード（inline code・フェンスの中の `<code>` の両方がここを通る）。中身の文字が git 管理下の
+ * 一覧にあるパスなら、押せるボタンで包む（人格の規約が `file_path:line_number` の形で書く
  * inline code）。フェンスの中の複数行のコードは1つのパスと一致しないので、そのまま
  * `<code>` になる（色付け・言語の `className` は変えない）。
  *
- * **中身の文字が1つの色（カラーコードか色のトークン名）なら、その色を地にする**
+ * 中身の文字が1つの色（カラーコードか色のトークン名）なら、その色を地にする
  * （{@link colorSwatch}）。「`ink-quiet`（灰）」のように言葉で色を言い添えなくても見て分かる。
  */
 function Code(props: CodeProps): ReactElement {
@@ -297,13 +297,13 @@ function Code(props: CodeProps): ReactElement {
 type AnchorProps = JSX.IntrinsicElements["a"] & ExtraProps
 
 /**
- * リンク。**スキームの許可は {@link REPORT_SANITIZE_SCHEMA} の `protocols` が済ませている**
+ * リンク。スキームの許可は {@link REPORT_SANITIZE_SCHEMA} の `protocols` が済ませている
  * （通らない `href` はここに来る前に落ちている）ので、`http:` / `https:` / `mailto:` と、
  * ページ内の合図（`#fnref` のような脚注の往復）はそのまま `<a>` にする（外部へ飛ぶときの
  * 安全策 `rel="noopener noreferrer"` を添えるだけ）。
  *
- * **スキームの無い相対リンク（`[x](src/foo.ts)`）は別扱い。** **押すとページ自身が
- * `/src/foo.ts` へ遷移してしまう不具合があった**（`sanitize-schema.ts` の `protocols` は相対
+ * スキームの無い相対リンク（`[x](src/foo.ts)`）は別扱い。 押すとページ自身が
+ * `/src/foo.ts` へ遷移してしまう不具合があった（`sanitize-schema.ts` の `protocols` は相対
  * リンクを素通しするため）ので、`<a>` にしない:
  * - git 管理下の一覧にあれば、押すと Orca のエディタで開くボタン
  * - 無ければ、ファイルを指さないリンクなので押しても何も起きない素のテキスト（`<span>`）
@@ -350,9 +350,9 @@ function hasUrlScheme(href: string): boolean {
 type TableProps = JSX.IntrinsicElements["table"] & ExtraProps
 
 /**
- * 表。**列が多い表は領域の内幅に収まらない**ので、横スクロールの器で包んで表だけを転がす
+ * 表。列が多い表は領域の内幅に収まらないので、横スクロールの器で包んで表だけを転がす
  * （ページ全体は横スクロールさせない。`.table-scroll` の CSS は `report-notation.module.css`）。
- * **器は React 側で作るので、{@link REPORT_SANITIZE_SCHEMA} の許可リストは通らない**
+ * 器は React 側で作るので、{@link REPORT_SANITIZE_SCHEMA} の許可リストは通らない
  * （レポートの記法は増えない）。
  */
 function Table(props: TableProps): ReactElement {

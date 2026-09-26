@@ -1,5 +1,5 @@
-// 差し色の色見本1つ（画面の差し色・立ち絵の差し色の両方。docs/screen-design.md 13.6）。**札全体が
-// `<label>`** で、左の色見本は `<input type="color">` そのもの（押すとブラウザの色の選び方が開く）。
+// 差し色の色見本1つ（画面の差し色・立ち絵の差し色の両方。docs/screen-design.md 13.6）。札全体が
+// `<label>` で、左の色見本は `<input type="color">` そのもの（押すとブラウザの色の選び方が開く）。
 // 右端に今の値を16進の字で添える（色だけにしない。13.1 原則1）。
 
 import { type ReactElement } from "react"

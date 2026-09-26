@@ -1,5 +1,5 @@
 // サーバの WebSocket（`/ws?t=<token>`）へつなぎ、届いたフレームを封筒だけ検証してから渡す
-// （docs/design.md 6.1 / 6.2「接続・再接続・フレームの zod 検証」）。**core を import しない**
+// （docs/design.md 6.1 / 6.2「接続・再接続・フレームの zod 検証」）。core を import しない
 // （原則2/3。`browser` が触れる契約は `shared` だけ）。`/ws` の経路名・トークンのクエリ名の値は
 // `shared/session-socket.ts` が正典で、`adapter/session-socket.ts` と両方から import する（値の再掲は
 // しない）。経路にトークンを足す口は `lib/session-token-url.ts` に寄せてあり、ここは
@@ -9,9 +9,9 @@
 // 次のフレームを待つ（`docs/coding-standards.md`「常駐プロセスは描画1回の失敗で落ちない」と
 // 同じ考え方をブラウザ側でも取る）。
 //
-// **1本の接続の上は、すべて oRPC の手続き**（`src/server/view-server/adapter/session-socket.ts`）。
+// 1本の接続の上は、すべて oRPC の手続き（`src/server/view-server/adapter/session-socket.ts`）。
 // 押し出しも、接続ごとに1回呼ぶ購読の手続き `frame.subscribe` の Event Iterator として届く。
-// **購読が終わったら（投げても）接続を閉じて繋ぎ直す**——つなぎ直した購読の最初の `hello` で
+// 購読が終わったら（投げても）接続を閉じて繋ぎ直す——つなぎ直した購読の最初の `hello` で
 // 状態を置き換えるので、途中の取りこぼしを気にしない（docs/design.md 3章「再接続」）。
 
 import { type ClientContext, type ClientLink, createORPCClient } from "@orpc/client"
@@ -33,7 +33,7 @@ export type CommandLink = ClientLink<ClientContext>
 
 export type SessionSocket = {
   /**
-   * コマンドの手続きを送る口。**繋ぎ直しても同じもの**で、その時点の接続へ送る。接続していない
+   * コマンドの手続きを送る口。繋ぎ直しても同じもので、その時点の接続へ送る。接続していない
    * 間は送らずに捨てる（呼び出し側は状態を見て判断する）。
    */
   readonly commandLink: CommandLink
@@ -107,8 +107,8 @@ function socketUrl(): string {
 }
 
 /**
- * 接続の上で `frame.subscribe` を購読し、読めたフレームを渡し続ける。**購読が終わるか投げたら
- * 戻る**（接続が切れた・サーバが購読を閉じた）。読めないフレームはその1つだけ捨てる。
+ * 接続の上で `frame.subscribe` を購読し、読めたフレームを渡し続ける。購読が終わるか投げたら
+ * 戻る（接続が切れた・サーバが購読を閉じた）。読めないフレームはその1つだけ捨てる。
  */
 async function receiveFrames(
   link: CommandLink,

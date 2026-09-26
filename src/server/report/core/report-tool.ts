@@ -1,12 +1,12 @@
 // `report` ツールまわりの決まりごと（docs/glossary.md「report ツール」）。仕事のセッションでは
-// レポートを常にこのツールで受け取る。**雑談のときは載せない**（雑談は本文を書かない決まり。
+// レポートを常にこのツールで受け取る。雑談のときは載せない（雑談は本文を書かない決まり。
 // `docs/chat-mode.md`）。ツールを載せるのは `src/server/session-driver/adapter/sdk-tool.ts`、呼び出しを
 // イベントに変えるのは `src/server/session-driver/core/sdk-message.ts`、書き方の規約は `report-notation.ts`。
 //
 // ここに置くのは、ツールの説明文と `Stop` フックの関所（{@link createReportGate}。登録は
 // `src/server/session-driver/adapter/sdk-driver.ts`）。関所は、SDK のターンの最後の `report` のあと（無ければ
-// ターンの頭から）に1行を超える本文を書いて止まろうとしたら差し戻す。**そのターンで `report` が
-// 済んでいるかで理由を分ける**: 済んでいなければ `report` で渡し直させ、済んでいれば「もう画面に
+// ターンの頭から）に1行を超える本文を書いて止まろうとしたら差し戻す。そのターンで `report` が
+// 済んでいるかで理由を分ける: 済んでいなければ `report` で渡し直させ、済んでいれば「もう画面に
 // 出ている」と伝えて、言い直しなら何も足さずに終えさせる（一律に「画面に出ていない」と返すと、
 // モデルが同じ中身の `report` を出し直して中身の似た2枚が並び、締めのセリフで差し戻しに触れる）。
 // `report` の呼び出しそのものの検査と差し戻しは `report-review.ts`（こちらは描く前の検査の段）。
@@ -15,7 +15,7 @@ import { MAX_SESSION_HEADING_LENGTH } from "../../../shared/session-choice.ts"
 import { type SessionEvent } from "../../../shared/session-event.ts"
 
 /**
- * モデルに見せる `report` ツールの説明。**記法の条はここに書かず、規約の節を1行で指す**
+ * モデルに見せる `report` ツールの説明。記法の条はここに書かず、規約の節を1行で指す
  * （MCP ツールの説明文は既定で 2048 字までしか渡らず、規約の全文は入らない）。
  */
 export const REPORT_TOOL_DESCRIPTION =
@@ -32,7 +32,7 @@ export const REPORT_CHECKS_DESCRIPTION =
   "label と detail は素の文字で描かれるので、バッククォートなどの記法を使わない。"
 
 /**
- * `report` の任意の `title` 引数の説明。**セッション一覧の見出しにする題を付けさせる条はここだけ**
+ * `report` の任意の `title` 引数の説明。セッション一覧の見出しにする題を付けさせる条はここだけ
  * （人格ではなく tsukumo 側の条に書く）。利用者の `/rename` を上書きしない判断はモデルに任せず、
  * `session-title.ts` が持つ。
  */
@@ -42,7 +42,7 @@ export const REPORT_TITLE_DESCRIPTION =
 
 /**
  * `Stop` の関所が差し戻すときにモデルへ返す理由（そのターンで `report` が済んでいないとき）。
- * **固定の文面だけ**で、モデルが書いた本文は写さない（会話の中身をモデルの文脈へ戻す経路を作らない）。
+ * 固定の文面だけで、モデルが書いた本文は写さない（会話の中身をモデルの文脈へ戻す経路を作らない）。
  * 差し戻しは利用者の画面に出ないので、セリフで触れさせない（触れると利用者には意味の通らない
  * 言い訳になる）。
  */
@@ -54,7 +54,7 @@ export const REPORT_GATE_REASON =
 
 /**
  * `Stop` の関所が差し戻すときにモデルへ返す理由（そのターンで `report` が済んでいるとき）。
- * **レポートはもう画面に出ている**ので、渡し直させない。あとに書いた本文がレポートの言い直しなら
+ * レポートはもう画面に出ているので、渡し直させない。あとに書いた本文がレポートの言い直しなら
  * 何も呼ばずに終えさせ、レポートに無い事実があるときだけ新しい `report` を呼ばせる。
  */
 export const REPORT_GATE_AFTER_REPORT_REASON =
@@ -64,15 +64,15 @@ export const REPORT_GATE_AFTER_REPORT_REASON =
   "この差し戻しは利用者には見えないので、セリフでもレポートでも触れない。"
 
 /**
- * `Stop` の関所。届いたイベントを {@link ReportGate.observe} で見て、SDK のターンの中で**最後の
- * `report` のあと（無ければターンの頭から）に書いた本文**を覚えておき、止まろうとしたときに
+ * `Stop` の関所。届いたイベントを {@link ReportGate.observe} で見て、SDK のターンの中で最後の
+ * `report` のあと（無ければターンの頭から）に書いた本文を覚えておき、止まろうとしたときに
  * {@link ReportGate.verdict} が差し戻すか（と、その理由）を決める。
  *
- * - **ターンの頭は `session-info`**（`init` は SDK のターンの頭に毎回届く。依頼で始まるターンも、
+ * - ターンの頭は `session-info`（`init` は SDK のターンの頭に毎回届く。依頼で始まるターンも、
  *   背景のタスクやサブエージェントの合図で claude が自分で始めるターンも同じ）。`turn-finished`
  *   でも空に戻す（`init` が来ない経路があっても前のターンの本文を持ち越さない）
- * - **本文は `utterance` だけ**を数える（書きかけの断片は、同じ本文が `utterance` で届き直す）
- * - **サブエージェントの中の本文は渡さないこと**（呼び出し側の仕事。委譲先の報告はメインにだけ
+ * - 本文は `utterance` だけを数える（書きかけの断片は、同じ本文が `utterance` で届き直す）
+ * - サブエージェントの中の本文は渡さないこと（呼び出し側の仕事。委譲先の報告はメインにだけ
  *   届くもので、画面に出すかの判断はメインの本文で決まる）
  */
 export type ReportGate = {
@@ -90,7 +90,7 @@ export type ReportGateVerdict =
   | { readonly kind: "pass" }
   | { readonly kind: "block"; readonly reason: string }
 
-/** {@link ReportGate} を1つ作る。**セッション1つに1つ**（ターンの区切りを自分で見ている）。 */
+/** {@link ReportGate} を1つ作る。セッション1つに1つ（ターンの区切りを自分で見ている）。 */
 export function createReportGate(): ReportGate {
   let turn: GateTurn = EMPTY_TURN
 

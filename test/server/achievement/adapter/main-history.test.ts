@@ -40,9 +40,9 @@ async function git(cwd: string, ...args: readonly string[]): Promise<void> {
   await runSubprocessOrThrow("git", args, { cwd })
 }
 
-/** `date`（`YYYY-MM-DD`）の `hhmm` を、**`readAchievement` が読む `Temporal.Now.timeZoneId()` と
- * 同じゾーンのローカル時刻**として絶対時刻（オフセット付き ISO）に直す。**固定のオフセット
- * （`+09:00` 決め打ち）は使わない**——`bun test` はプロセスの `TZ` を `UTC` にする
+/** `date`（`YYYY-MM-DD`）の `hhmm` を、`readAchievement` が読む `Temporal.Now.timeZoneId()` と
+ * 同じゾーンのローカル時刻として絶対時刻（オフセット付き ISO）に直す。固定のオフセット
+ * （`+09:00` 決め打ち）は使わない——`bun test` はプロセスの `TZ` を `UTC` にする
  * （ホストが JST でも変わらない）ため、決め打つと `localDateEpochRange` が見る日の境界と
  * ずれ、境界に近い時刻のコミットが意図と違う日に数えられる。 */
 function isoDateAt(date: string, hhmm: string): string {
@@ -111,7 +111,7 @@ function newFormatTaskContent(id: string, summary: string, status: string): stri
   ].join("\n")
 }
 
-/** 複数の新形式タスクファイルを**1回のコミット**で書く（節目（通算のタスクの数）のテストで
+/** 複数の新形式タスクファイルを1回のコミットで書く（節目（通算のタスクの数）のテストで
  * 大量のタスクを安く用意するための道具。1件ごとに `git commit` すると `git` の起動回数が
  * 増えてテストが重くなるため）。 */
 async function commitManyNewFormatTasks(
@@ -703,7 +703,7 @@ describe("readCommitCalendar", () => {
     })
 
     // 1回目で覚えた過去の日（09-01）の数を、実際の `git` の中身とは違う値に手で書き換える。
-    // **2回目がこの書き換えた値をそのまま返せば、`git` を再度起こしていない証拠**（過去の日を
+    // 2回目がこの書き換えた値をそのまま返せば、`git` を再度起こしていない証拠（過去の日を
     // 実際に取り直したなら本物の数（1）に戻ってしまう）。今日はいつも取り直すので新しいコミットを
     // 増やし、その分が反映されることも確かめる。
     cache.rememberDailyCount("2026-09-01", 999)
@@ -729,7 +729,7 @@ describe("readCommitCalendar", () => {
     expect(cache.totalBeforeDayOf("2026-09-23")).toBe(1)
 
     // 覚えた「その日の始まりまでの通算」を、実際の `git` の中身とは違う値に手で書き換える。
-    // **2回目がこの書き換えた値をそのまま使えば、`git` を再度起こしていない証拠**。
+    // 2回目がこの書き換えた値をそのまま使えば、`git` を再度起こしていない証拠。
     cache.rememberTotalBeforeDay("2026-09-23", 999)
     await readAchievement(repository, "2026-09-23", TODAY, cache)
 

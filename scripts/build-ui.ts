@@ -1,4 +1,4 @@
-// ブラウザ側（`src/browser/`）を組み立てて `dist/browser/` に置く。**起動時ではなくここで作る**
+// ブラウザ側（`src/browser/`）を組み立てて `dist/browser/` に置く。起動時ではなくここで作る
 // （`src/server/view-server/adapter/bundle.ts` 冒頭）。
 //
 // 打つのは `bun install` のあとに1回と、`src/browser/` を直したあと。`bun run dev` の見張りは

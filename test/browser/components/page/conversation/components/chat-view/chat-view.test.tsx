@@ -28,7 +28,7 @@ afterEach(() => {
 })
 
 // 並びの規則（古い→新しい・交互）は `shared/chat-log.ts` が決めるので、ここでは
-// **その順が DOM の順にそのまま出る**ことだけを見る（`column-reverse` などで
+// その順が DOM の順にそのまま出ることだけを見る（`column-reverse` などで
 // 見かけを反転していない）。文面は手で書いた架空のもの。
 
 const RECORDS: readonly SessionRecord[] = [
@@ -62,7 +62,7 @@ function portraitExpression(): string | null | undefined {
 
 /**
  * マウスで押す1回ぶん（押し始めから手を離すまで）。`moveX` だけ横に動かすと、
- * **文字をドラッグで選んだ**ことになる（`hooks/use-chat-speech.ts` の `isSelectionDrag`）。
+ * 文字をドラッグで選んだことになる（`hooks/use-chat-speech.ts` の `isSelectionDrag`）。
  *
  * 文字がほんとうに選べるかはテストでは見られない（DOM の実装では選択が起きない）ので、
  * そちらは目視で確かめる（`docs/architecture.md`「手で確かめること」）。
@@ -99,7 +99,7 @@ describe("ChatView", () => {
     renderChatView({ records: [] })
 
     expect(document.querySelectorAll("[data-speaker]")).toHaveLength(0)
-    // **最初の一言を促すのはこの文面**（促す操作子は立ち絵へ移った。docs/screen-design.md 13.7）。
+    // 最初の一言を促すのはこの文面（促す操作子は立ち絵へ移った。docs/screen-design.md 13.7）。
     expect(
       screen.getByText("（まだ何も話していません。立ち絵をつつくと話しかけてくれます）"),
     ).toBeTruthy()
@@ -107,7 +107,7 @@ describe("ChatView", () => {
 })
 
 describe("ChatView の時刻と日の区切り", () => {
-  // 時刻は**このマシンのタイムゾーンの壁時計**で組む（部品は OS のタイムゾーンで出すので、
+  // 時刻はこのマシンのタイムゾーンの壁時計で組む（部品は OS のタイムゾーンで出すので、
   // どこで走らせても同じ `HH:MM` と日付になる）。文面は手で書いた架空のもの。
   function localAt(isoLocal: string): RecordTime {
     return {
@@ -420,7 +420,7 @@ describe("ChatView のセリフが現れる（docs/screen-design.md 13.7）", ()
     })
   }
 
-  // **弾む動き自体（CSS のアニメーション）はここでは見ない**——見えるかどうかは目視で確かめる
+  // 弾む動き自体（CSS のアニメーション）はここでは見ない——見えるかどうかは目視で確かめる
   // （docs/architecture.md「手で確かめること」）。ここで守るのは、届いたばかりのセリフが
   // 全文でその場に出て、`.chat-entry-pop` が掛かる行の配線。
 
@@ -605,7 +605,7 @@ describe("ChatView の立ち絵をつつく", () => {
   const NUDGE_HINT = "話しかけてもらう"
 
   /**
-   * つつける立ち絵。**探すのは案内の側**（`aria-describedby`）— ログのセリフの行も
+   * つつける立ち絵。探すのは案内の側（`aria-describedby`）— ログのセリフの行も
    * `role="button"` なので、名前（＝立ち絵の alt）ではなく説明で見分ける。
    */
   function portraitButton(): HTMLElement {
@@ -613,7 +613,7 @@ describe("ChatView の立ち絵をつつく", () => {
   }
 
   /**
-   * ターン進行中の立ち絵。**案内ごと消える**ので説明では見分けられず、中の立ち絵
+   * ターン進行中の立ち絵。案内ごと消えるので説明では見分けられず、中の立ち絵
    * （`data-expression`）を持つほうのボタンを取る。
    */
   function blockedPortraitButton(): HTMLElement {
@@ -634,7 +634,7 @@ describe("ChatView の立ち絵をつつく", () => {
 
     fireEvent.click(portraitButton())
 
-    // **送るのは押した事実だけ**（文面は `src/server/chat/core/chat-nudge.ts` が持つ）。
+    // 送るのは押した事実だけ（文面は `src/server/chat/core/chat-nudge.ts` が持つ）。
     expect(sent).toEqual([{ procedure: "session.nudge" }])
   })
 
@@ -659,7 +659,7 @@ describe("ChatView の立ち絵をつつく", () => {
     // Enter / Space の受けを自前で足さなくてよい（ブラウザが click に変える）。
     expect(button.tagName).toBe("BUTTON")
     expect(button.getAttribute("type")).toBe("button")
-    // 立ち絵はボタンの中にあり、**名前は立ち絵の alt のまま**（案内は説明の側）。
+    // 立ち絵はボタンの中にあり、名前は立ち絵の alt のまま（案内は説明の側）。
     expect(button.querySelector("[data-expression]")).toBeTruthy()
     expect(button.getAttribute("aria-label")).toBe(null)
 
@@ -675,8 +675,8 @@ describe("ChatView の立ち絵をつつく", () => {
       (command) => sent.push(command),
     )
 
-    // **`disabled` にはしない**（キーボードで辿り着ける道ごと消える）。押せないことは
-    // `aria-disabled` で伝え、**案内は出さない**（`docs/screen-design.md` 13.7）。
+    // `disabled` にはしない（キーボードで辿り着ける道ごと消える）。押せないことは
+    // `aria-disabled` で伝え、案内は出さない（`docs/screen-design.md` 13.7）。
     const button = blockedPortraitButton()
     expect(button.getAttribute("aria-disabled")).toBe("true")
     expect(screen.queryByText(NUDGE_HINT)).toBe(null)

@@ -1,21 +1,21 @@
-// 画面から届いたキャラクターの変更（**新しいパックを作る**・立ち絵と差し色と背景を差し替える・
-// **パックを消す**）をキャラクターパックに書き込む。**書き込んでよい・消してよいのは
-// `~/.tsukumo/characters/<name>/` の下だけ**（`docs/design.md` 7.1。`state.json` と同じ親の下で、
+// 画面から届いたキャラクターの変更（新しいパックを作る・立ち絵と差し色と背景を差し替える・
+// パックを消す）をキャラクターパックに書き込む。書き込んでよい・消してよいのは
+// `~/.tsukumo/characters/<name>/` の下だけ（`docs/design.md` 7.1。`state.json` と同じ親の下で、
 // リポジトリの作業ツリーが汚れない）。読む側は `src/server/character-pack/adapter/character-pack.ts`。
 //
-// **ディレクトリ名になる名前だけは外から受け取る**（新しいパックを作るときの `<name>`）ので、
-// 形は境界（`src/shared/character.ts` の `isCharacterPackName`）で見てある。ここは**既にある
-// 名前とぶつかったら書かない**ことだけを見る（後勝ちで既存のパックが黙って隠れないため）。
+// ディレクトリ名になる名前だけは外から受け取る（新しいパックを作るときの `<name>`）ので、
+// 形は境界（`src/shared/character.ts` の `isCharacterPackName`）で見てある。ここは既にある
+// 名前とぶつかったら書かないことだけを見る（後勝ちで既存のパックが黙って隠れないため）。
 //
-// **ファイル名を外から受け取らない。** 立ち絵の名前は表情と形式から組み立て
+// ファイル名を外から受け取らない。 立ち絵の名前は表情と形式から組み立て
 // （`src/shared/portrait-image.ts` の `portraitFileName`）、背景の名前は形式だけから組み立てる
 // （`src/shared/character-background.ts` の `backgroundFileName`）ので、届いた文字列がパスの一部に
 // なる経路がそもそも無い。
 //
-// **書き込む先のパックはコマンドの `pack` で指す**（使用中のパックに限らない）。名前は一覧と
+// 書き込む先のパックはコマンドの `pack` で指す（使用中のパックに限らない）。名前は一覧と
 // 突き合わせて引くだけで、パスには使わない（書く先はホームの下の、引けたパックの名前）。
 //
-// **書き込む前に、書き込む先のパックをホームへ丸ごと写す**（同梱のパックを直さないため）。
+// 書き込む前に、書き込む先のパックをホームへ丸ごと写す（同梱のパックを直さないため）。
 // 写すのは定義・人格・定義が指している素材（立ち絵・背景）で、ホームに既に同じ名前のパックが
 // あるときは写さない（画面から重ねた変更を上書きしてしまわないため）。
 //
@@ -83,19 +83,19 @@ import {
 const EXTRA_IMAGE_FILES_PER_PACK = 4
 
 /**
- * 1つのパックが持てる画像の数（`docs/design.md` 7.1 の表）。**立ち絵・ミニ立ち絵・背景・顔・
- * 訪問の peek を全部入れた数**で、表情の全体（{@link EXPRESSIONS}）＋ ミニ立ち絵1 ＋ 背景1 ＋
+ * 1つのパックが持てる画像の数（`docs/design.md` 7.1 の表）。立ち絵・ミニ立ち絵・背景・顔・
+ * 訪問の peek を全部入れた数で、表情の全体（{@link EXPRESSIONS}）＋ ミニ立ち絵1 ＋ 背景1 ＋
  * 顔1 ＋ peek1。
  *
- * **数を直に書かないのは、表情を足したときに黙って足りなくなるから。** 表情が 6つから8つに
+ * 数を直に書かないのは、表情を足したときに黙って足りなくなるから。 表情が 6つから8つに
  * 増えたあとも 8 のまま据え置かれていて、立ち絵を全部そろえたパックでは背景の差し替えだけが
  * 弾かれていた（13.8）。
  */
 export const MAX_IMAGE_FILES_PER_PACK = EXPRESSIONS.length + EXTRA_IMAGE_FILES_PER_PACK
 
 /**
- * `edit.pack` で指されたパックに立ち絵1枚・差し色1色・背景1枚を書き込み、**書けたパックを
- * 読み直して返す**（呼び出し側は、使用中のパックならそれに持ち替え、どちらでも
+ * `edit.pack` で指されたパックに立ち絵1枚・差し色1色・背景1枚を書き込み、書けたパックを
+ * 読み直して返す（呼び出し側は、使用中のパックならそれに持ち替え、どちらでも
  * `characterChangedEvent` で一覧ごと画面へ流し直す）。受け付けられなかったときは undefined:
  *
  * - 一覧（`current` と `packs`。素材を配るのと同じ `findCharacterPack` の規則）に無い名前
@@ -128,15 +128,15 @@ export function editCharacterPack(
 }
 
 /**
- * 新しいキャラクターパックを1つ作り、**作れたパックを読み直して返す**（呼び出し側はそれを
+ * 新しいキャラクターパックを1つ作り、作れたパックを読み直して返す（呼び出し側はそれを
  * `characterChangedEvent` に渡し、増えた選択肢を画面へ流す）。作らないときは undefined:
  *
- * - `taken`（いま切り替えられるパックの名前）に同じ名前がある。**既存の名前は弾く** —
+ * - `taken`（いま切り替えられるパックの名前）に同じ名前がある。既存の名前は弾く —
  *   探索の順で後ろが勝つので、黙って既存のパックを隠してしまわないため
  * - 書き込み先に同じ名前のディレクトリが既にある（一覧に出ていない壊れたパックの置き場）
- * - ディスクに書けない（**書きかけのディレクトリは消す**ので、欠けたパックは残らない）
+ * - ディスクに書けない（書きかけのディレクトリは消すので、欠けたパックは残らない）
  *
- * **`default` の1枚があることは境界で済んでいる**
+ * `default` の1枚があることは境界で済んでいる
  * （`src/shared/contract/character-pack.ts` の `portraits` が required）。ここは書く順だけを守る:
  * 素材 → 定義の順に書くので、途中で失敗したディレクトリは `character.json` を持たず、
  * パックとして一覧に出ない。
@@ -168,8 +168,8 @@ export function createCharacterPack(
 }
 
 /**
- * `remove.pack` で指されたパックの**ホームの版**（`<roots.home>/<name>`）を消し、**消して起きた
- * こと**を返す（`"delete"` なら一覧から消え、`"revert-to-bundled"` なら同梱の版が一覧に戻る。
+ * `remove.pack` で指されたパックのホームの版（`<roots.home>/<name>`）を消し、消して起きた
+ * ことを返す（`"delete"` なら一覧から消え、`"revert-to-bundled"` なら同梱の版が一覧に戻る。
  * 呼び出し側は一覧を読み直して `character-changed` を流し直し、`"delete"` のときだけ雑談の
  * 記録も消す。`docs/design.md` 7.1「消すときの細部」）。消さないときは undefined:
  *
@@ -179,7 +179,7 @@ export function createCharacterPack(
  *   `TSUKUMO_CHARACTER` で指した一覧の外。{@link characterPackRemoval} が `"none"`）
  * - ディスクから消せない
  *
- * **消す先はホームの置き場と一覧の名前から組む**（`characterPackRemoval` が、一覧のパックの
+ * 消す先はホームの置き場と一覧の名前から組む（`characterPackRemoval` が、一覧のパックの
  * 場所がまさにそこだと確かめてある）。届いた名前はパスに使わない。ホームの版がシンボリック
  * リンクなら消えるのはリンクだけで、指している先は残る（`rmSync` はリンクを辿らない）。
  *
@@ -211,10 +211,10 @@ export function deleteCharacterPack(
 }
 
 /**
- * ホームにまだ同じ名前のパックが無ければ、書き込む先のパックを丸ごと写す。**人格
- * （`persona.md`）も写す**（写し忘れると、次の起動でそのパックの人格が消える）。
+ * ホームにまだ同じ名前のパックが無ければ、書き込む先のパックを丸ごと写す。人格
+ * （`persona.md`）も写す（写し忘れると、次の起動でそのパックの人格が消える）。
  *
- * **ホームへ書く前に必ず通る道**なので、立ち絵の差し替え以外の書き込み
+ * ホームへ書く前に必ず通る道なので、立ち絵の差し替え以外の書き込み
  * （`src/server/chat/adapter/persona-memory.ts`）もここを共有する（写す規則を二重に書かない）。
  */
 export function copyPackOnce(pack: CharacterPack, dir: string): void {
@@ -426,8 +426,8 @@ function faceFileNameOf(content: string | undefined): string | undefined {
 }
 
 /**
- * 差し替え・消去で参照が外れた素材のファイルを消す（**書いた先のディレクトリの中の、
- * 定義のどこからも参照されていない画像だけ**）。形式を変えて差し替えたときに古い拡張子の
+ * 差し替え・消去で参照が外れた素材のファイルを消す（書いた先のディレクトリの中の、
+ * 定義のどこからも参照されていない画像だけ）。形式を変えて差し替えたときに古い拡張子の
  * ファイルが残り続けるのを防ぐ。消せなくてもそのまま続ける。
  */
 function removeUnreferencedImage(dir: string, fileName: string | undefined): void {
@@ -444,8 +444,8 @@ function removeUnreferencedImage(dir: string, fileName: string | undefined): voi
 }
 
 /**
- * 画像の数の上限を超えないか（**背景も同じ数に入る**。7.1 / 13.8）。**同じ名前を上書きする
- * だけなら増えない**ので、既にある名前はそのまま通す。
+ * 画像の数の上限を超えないか（背景も同じ数に入る。7.1 / 13.8）。同じ名前を上書きする
+ * だけなら増えないので、既にある名前はそのまま通す。
  */
 function withinImageFileLimit(dir: string, fileName: string): boolean {
   const existing = readdirSync(dir).filter(isCharacterImageFileName)
@@ -454,7 +454,7 @@ function withinImageFileLimit(dir: string, fileName: string): boolean {
 
 /**
  * 定義が指している素材のファイル名（立ち絵・ミニ立ち絵・背景。重複なし・ディレクトリを
- * 跨がないものだけ）。**写す先と消してよいものの両方がこの一覧で決まる。**
+ * 跨がないものだけ）。写す先と消してよいものの両方がこの一覧で決まる。
  */
 function referencedImageFileNames(definition: CharacterDefinition | undefined): readonly string[] {
   const names = [
@@ -468,7 +468,7 @@ function referencedImageFileNames(definition: CharacterDefinition | undefined): 
 }
 
 /**
- * キャラクターの素材として扱ってよいファイル名か。**定義ファイルに書かれた名前も外部由来**な
+ * キャラクターの素材として扱ってよいファイル名か。定義ファイルに書かれた名前も外部由来な
  * ので、ディレクトリを跨ぐ名前（`../foo`）はここで落とす（写す・消すのがホームの1階層に閉じる）。
  */
 function isCharacterImageFileName(name: string | undefined): name is string {
@@ -476,8 +476,8 @@ function isCharacterImageFileName(name: string | undefined): name is string {
 }
 
 /**
- * 新しいパックの必須の1枚を書き、表情ごとのファイル名を返す。**ほどけなかったときは
- * undefined**（境界で検証済みなので、ここで起きるのは配線の誤りのときだけ。型を迂回せず
+ * 新しいパックの必須の1枚を書き、表情ごとのファイル名を返す。ほどけなかったときは
+ * undefined（境界で検証済みなので、ここで起きるのは配線の誤りのときだけ。型を迂回せず
  * ほどくために、`editCharacterPack` と同じ関数をもう一度通す）。
  */
 function writeRequiredPortraits(
@@ -497,7 +497,7 @@ function writeRequiredPortraits(
 }
 
 /**
- * 新しいパックの `character.json`。**表示名（`name`）は空なら書かない**——読む側
+ * 新しいパックの `character.json`。表示名（`name`）は空なら書かない——読む側
  * （`components/hooks/use-character-edit.ts` の `character.name ?? character.pack` /
  * `CharacterPackChoice.label` の
  * `pack.definition?.name ?? pack.name`）が id へ落とすので、ここで id を代入し直さない

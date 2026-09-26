@@ -1,4 +1,4 @@
-// レイアウトの領域の比率（3本の仕切りの位置）。**`localStorage` に比率だけ保存する**
+// レイアウトの領域の比率（3本の仕切りの位置）。`localStorage` に比率だけ保存する
 // （会話は保存しない。`docs/design.md` 6.2）。読み書きに失敗しても既定へ落ちるだけで、
 // 例外は投げない。
 
@@ -9,9 +9,9 @@ export type Split = {
   readonly topLeft: number
   readonly bottomLeft: number
   /**
-   * キャラビューを畳んでいるとき（雑談モード）の上下比。**まだ一度も動かしていない間は
-   * `undefined`** で、読む側が `rowTop` に落とす（`<Layout>`）。**`rowTop` の値をここへ
-   * コピーして持たせない** — 焼き付けると、あとから仕事の比率を変えたときに雑談側が
+   * キャラビューを畳んでいるとき（雑談モード）の上下比。まだ一度も動かしていない間は
+   * `undefined` で、読む側が `rowTop` に落とす（`<Layout>`）。`rowTop` の値をここへ
+   * コピーして持たせない — 焼き付けると、あとから仕事の比率を変えたときに雑談側が
    * 追随しなくなる。
    */
   readonly collapsedRowTop: number | undefined
@@ -63,7 +63,7 @@ export function loadSplit(): Split {
       const bottomLeft = parsed["bottomLeft"]
       const collapsedRowTop = parsed["collapsedRowTop"]
       if (isValidPercent(rowTop) && isValidPercent(topLeft) && isValidPercent(bottomLeft)) {
-        // **雑談用の上下比だけは、無くても壊れていても `undefined` に畳むだけ**にする
+        // 雑談用の上下比だけは、無くても壊れていても `undefined` に畳むだけにする
         // （他の3項と違い DEFAULT_SPLIT 全体へは落とさない）。この項が無い保存値＝
         // 雑談で一度も動かしていない状態で、項を足す前に保存した値もそのまま読める。
         return {
@@ -82,7 +82,7 @@ export function loadSplit(): Split {
 
 /**
  * 3本の比率と雑談の上下比が、すべて既定と同じか（「比率を既定に戻す」ピルを出すかの判定に使う。
- * `hooks/use-layout.ts`）。**`collapsedRowTop` の `undefined` は既定として扱う**（まだ一度も
+ * `hooks/use-layout.ts`）。`collapsedRowTop` の `undefined` は既定として扱う（まだ一度も
  * 動かしていない状態なので、既定と違うとは言わない）。
  */
 export function isDefaultSplit(split: Split): boolean {

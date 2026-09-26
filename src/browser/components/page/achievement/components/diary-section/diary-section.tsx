@@ -309,7 +309,7 @@ function Card(props: {
 }
 
 /** 振り返りのボタン、または進行中の「振り返り中…」（呼ぶのは `view.kind === "ready"` のときだけ。
- * `DiarySection` 参照）。**会話の画面へ移る口は置かない**（振り返りは会話の画面に何も出さない。
+ * `DiarySection` 参照）。会話の画面へ移る口は置かない（振り返りは会話の画面に何も出さない。
  * 13.10「ボタンを押せないとき・押したあと」）。 */
 function Controls(props: {
   readonly writing: AchievementWriting

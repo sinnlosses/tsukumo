@@ -1,20 +1,20 @@
-// **答え待ちの質問の札**（メインビューの、いまのやり取りのレポートの下）。
+// 答え待ちの質問の札（メインビューの、いまのやり取りのレポートの下）。
 // 頭に「質問」のチップと `header`・右端に
 // 「n / N」、本文の下に選択肢を横に並べたカード（選んだカードの枠が `--state-warn`）、
 // 下端に「選択肢にない答えは、下の入力欄に書いて送れます」と「これで答える」を置く。
 //
-// **以前は入力欄の上の狭い箱が質問を持ち、`preview`（Markdown）だけをメインビューの
-// 「比べる面」に出していた**（`pending-question.tsx`）。札をメインビューへ移したので面は
-// 要らなくなり、`preview` は**選択肢の説明の下**にそのまま入る。
+// 以前は入力欄の上の狭い箱が質問を持ち、`preview`（Markdown）だけをメインビューの
+// 「比べる面」に出していた（`pending-question.tsx`）。札をメインビューへ移したので面は
+// 要らなくなり、`preview` は選択肢の説明の下にそのまま入る。
 //
-// **選択の状態と進み方は `stores/question-answer.tsx` が持つ**（自由入力を担う入力欄
+// 選択の状態と進み方は `stores/question-answer.tsx` が持つ（自由入力を担う入力欄
 // （`components/page/conversation/components/dispatch/`）と同じ1つの答えを組み立てるため。`browser/` の機能どうしは
 // import できない。docs/design.md 2章 / 6.2）。ここは受け取った行を置くだけで、判定を持たない。
 //
-// **質問の本文は会話の内容そのもの**なので、ここから外へ出す経路は作らない
+// 質問の本文は会話の内容そのものなので、ここから外へ出す経路は作らない
 // （`docs/coding-standards.md`「会話内容の扱い」）。
 //
-// **札まで連れてくるスクロールは `hooks/use-question-ask-scroll.ts`**（外の世界に触るフックだけが
+// 札まで連れてくるスクロールは `hooks/use-question-ask-scroll.ts`（外の世界に触るフックだけが
 // 余分。docs/design.md 2章「機能の中を分ける」）。
 
 import clsx from "clsx"
@@ -49,7 +49,7 @@ const WRITTEN_ANSWER_PREFIX = "入力欄に書いた答え: "
 export function QuestionAsk(): ReactElement | null {
   const question = useQuestionAnswer()
   // 過去のやり取りを見ている間も札は出す（答えは待たせたままにできない）。そのときだけ、
-  // 質問が**いまのやり取り**のものだと分かるように戻る口を添える。
+  // 質問がいまのやり取りのものだと分かるように戻る口を添える。
   const { activeTurnId, newestTurnId, selectTurn } = useTurnSelection()
   const { signal: scrollSignal } = useQuestionScroll()
   const askId = question.kind === "asking" ? question.id : undefined
@@ -180,8 +180,8 @@ export function QuestionAsk(): ReactElement | null {
 }
 
 /**
- * 選択肢1つぶんのカード。**押す口は `<input>` と `<label>` の組**（単一選択は radio、
- * **複数選択はチェックボックス**。`docs/display.md` 4.2）で、説明と `preview` は
+ * 選択肢1つぶんのカード。押す口は `<input>` と `<label>` の組（単一選択は radio、
+ * 複数選択はチェックボックス。`docs/display.md` 4.2）で、説明と `preview` は
  * その外に置く——`preview` は表や図になるので、`<label>`（中身は文字の並びだけ）にも
  * `<button>` にも入れられない。
  */
@@ -245,10 +245,10 @@ function QuestionOption(props: {
       )}
       {option.preview !== undefined && (
         // レポートと同じ見た目の語彙（`.detail-block` の子のセレクタ。
-        // `markdown/report-notation.module.css`）に乗せる。**`.question-ask-option .detail-block`
+        // `markdown/report-notation.module.css`）に乗せる。`.question-ask-option .detail-block`
         // の余白の打ち消し（`question-ask.module.css`）は CSS Modules が class 名をファイルごとに
         // ハッシュ化するため、そちらの `.detail-block`（この選択子のためだけの空の再定義）も
-        // 一緒に付ける**（`components/domain/portrait.module.css` の `.portrait` と同じ手口。
+        // 一緒に付ける（`components/domain/portrait.module.css` の `.portrait` と同じ手口。
         // docs/design.md 6.6）。
         <div className={clsx(notationStyles["detail-block"], styles["detail-block"])}>
           <Markdown text={option.preview} />

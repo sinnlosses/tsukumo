@@ -3,7 +3,7 @@
 // ミドルウェア（`rpc-guard.ts`）が済ませているので、ここは表の行（`session/core/session-command.ts`）へ
 // 委ね、受け付けなかったことを契約のエラーに訳すだけ。
 //
-// **セッションの口（`CommandSession`）は手続きの context で受ける**（`/ws` の接続が持つ。
+// セッションの口（`CommandSession`）は手続きの context で受ける（`/ws` の接続が持つ。
 // `session-socket.ts`）。
 
 import { implement, type ORPCErrorConstructorMap } from "@orpc/server"

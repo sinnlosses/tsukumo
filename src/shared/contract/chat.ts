@@ -10,7 +10,7 @@ import { MAX_REMEMBERED_LINE_LENGTH } from "../persona-memory.ts"
 export const chatContract = {
   /**
    * 雑談のサイドバー「覚えていること」の「編集」から1行消す（`docs/design.md` 7.1「1行だけ
-   * 忘れる」）。**指し方はキャラクター自身の `forget` ツールと同じ完全一致**——チップに出した
+   * 忘れる」）。指し方はキャラクター自身の `forget` ツールと同じ完全一致——チップに出した
    * 文面（`- ` を外した1行）をそのまま送る。書き込みは
    * `src/server/chat/adapter/persona-memory.ts` の `forgetRememberedLineFromScreen` を通し、
    * 1ターン1行の上限（モデルの `forget` の上限）は掛からない。サイドバーの「覚えていること」

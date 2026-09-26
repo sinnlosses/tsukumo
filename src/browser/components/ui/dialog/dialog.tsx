@@ -1,6 +1,6 @@
 // ダイアログの部品（`docs/design.md` 2章「`components/ui/` の部品（variant の作法と一覧）」の
-// `Dialog`）。**持つのは振る舞い（開閉・Esc・外側クリック）と背景（`backdrop`）と置き方
-// （`placement`）だけ**——顔と箱（幅・余白・地・枠・角丸・影）は呼び出し側が `className` で渡す。
+// `Dialog`）。持つのは振る舞い（開閉・Esc・外側クリック）と背景（`backdrop`）と置き方
+// （`placement`）だけ——顔と箱（幅・余白・地・枠・角丸・影）は呼び出し側が `className` で渡す。
 //
 // `useModalDialog` の呼び出し・Esc の `close`・backdrop のクリックの読み替え（`event.target` が
 // `<dialog>` 自身のときだけ）をここに持ち、どれも {@link DialogProps.onClose} を呼ぶ。呼び出し側は

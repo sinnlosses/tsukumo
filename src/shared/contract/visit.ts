@@ -8,7 +8,7 @@ import { commandBase } from "../command.ts"
 export const visitContract = {
   /**
    * 歯車の「訪問」のオン・オフ（`docs/screen-design.md` 13.6・13.9「設定の歯車」）。
-   * **`session.setSessionDefault` と違い、いま動いているセッションに即座に効く**。
+   * `session.setSessionDefault` と違い、いま動いているセッションに即座に効く。
    */
   setEnabled: commandBase.input(z.object({ enabled: z.boolean() })),
 }

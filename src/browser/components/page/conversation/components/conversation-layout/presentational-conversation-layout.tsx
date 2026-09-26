@@ -6,11 +6,11 @@
 // ので、外から領域を指す口——画面を撮って位置と大きさを測る `scripts/capture-view.ts` や、
 // 開発者ツールで測るとき——はこちらを使う。
 //
-// **枠を持たない領域（`.layout-ground`）は、キャラビューと雑談中のメインビューで同じ class を
-// 共有する**（覆いの式を1箇所にしか書かないため。docs/screen-design.md 13.8）。
+// 枠を持たない領域（`.layout-ground`）は、キャラビューと雑談中のメインビューで同じ class を
+// 共有する（覆いの式を1箇所にしか書かないため。docs/screen-design.md 13.8）。
 //
-// **狭い画面では上段の2領域をタブで切り替える**（docs/requirements.md 4.7）。どちらを隠すかは
-// CSS（`.layout-row-top[data-narrow-pane]` の `@media`）が決めるので、**ここは幅を測らない**
+// 狭い画面では上段の2領域をタブで切り替える（docs/requirements.md 4.7）。どちらを隠すかは
+// CSS（`.layout-row-top[data-narrow-pane]` の `@media`）が決めるので、ここは幅を測らない
 // — 広い画面ではタブ自身が `display: none` で、選んでいる側の値は何にも効かない。
 
 import clsx from "clsx"
@@ -29,22 +29,22 @@ export type PresentationalConversationLayoutProps = UseConversationLayoutResult 
   readonly character: ReactNode
   readonly dispatch: ReactNode
   /**
-   * キャラビューの領域を畳み、下段を入力欄だけにするか。**立ち絵が上段へ移ったときに使う**
-   * （雑談モード。docs/screen-design.md 13.7）。**ここは「なぜ畳むか」を知らない** — 領域の数が
+   * キャラビューの領域を畳み、下段を入力欄だけにするか。立ち絵が上段へ移ったときに使う
+   * （雑談モード。docs/screen-design.md 13.7）。ここは「なぜ畳むか」を知らない — 領域の数が
    * 変わることだけを受け取る。
    */
   readonly collapseCharacter: boolean
   /**
-   * メインの領域を、枠を持つウィジェットではなく**地そのもの**として描くか（枠と角丸を外し、
-   * 背景があればそこへ敷く。docs/screen-design.md 13.8）。**ここも「なぜそうするか」を知らない** —
+   * メインの領域を、枠を持つウィジェットではなく地そのものとして描くか（枠と角丸を外し、
+   * 背景があればそこへ敷く。docs/screen-design.md 13.8）。ここも「なぜそうするか」を知らない —
    * キャラビューと同じ立場になることだけを受け取る（立てるのは雑談モードの入口。13.7）。
    */
   readonly mainAsGround: boolean
 }
 
-// 狭い画面のタブ。**名前は用語集の語のまま**（docs/glossary.md）。
+// 狭い画面のタブ。名前は用語集の語のまま（docs/glossary.md）。
 /**
- * 比率を戻す口の字。**字そのものが見えているピルなので、`aria-label` / `title` は持たない**
+ * 比率を戻す口の字。字そのものが見えているピルなので、`aria-label` / `title` は持たない
  * （見える字がそのままアクセシブルネームになる）。
  */
 const RESET_SPLIT_LABEL = "比率を既定に戻す"
@@ -55,7 +55,7 @@ const NARROW_PANES = [
 ] satisfies readonly { readonly pane: NarrowPane; readonly label: string }[]
 
 /**
- * **props はここだけ分解して受ける**（他の部品は `props.x` のまま）。ref を持つ入れ物を
+ * props はここだけ分解して受ける（他の部品は `props.x` のまま）。ref を持つ入れ物を
  * `props.gridRef` の形で描画中に読むと `react(refs)`（規約「レンダー中に ref を読み書きしない」）
  * が落ちるため（`task-board/presentational-task-board.tsx` と同じ理由）。
  */
