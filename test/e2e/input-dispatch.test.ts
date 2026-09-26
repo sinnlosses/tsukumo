@@ -16,6 +16,12 @@ describe("入力欄から送る", () => {
   it("入力欄に書いて ⌘Enter で送ると prompt が流れ、request が戻って続きの場面が流れる", async () => {
     const room = await run.open({ scenario: "input-dispatch", scene: "none", viewport: "wide" })
 
+    // `opening` の1言（speech）が届く前に送ると、その1言と `report` の書きかけの本文
+    // （partial-utterance）が同じ束で流れ、束の切れ目がどちらの手前に来るかが走らせるたびに
+    // 変わる（`event-batch.ts` の `EVENT_BATCH_INTERVAL_MS` と `opening` の `afterMs` が
+    // 同じ時刻に重なるため）。先に待ってから送ることで、並びを固定する。
+    await room.waitForEvent("speech")
+
     const textArea = room.page.locator("textarea")
     await textArea.fill("入力欄から送る場面を見たい（架空の依頼）")
     await textArea.press("Meta+Enter")

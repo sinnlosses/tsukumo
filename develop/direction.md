@@ -13,3 +13,6 @@
 - **`/next-task` の委譲の指示に「`git stash` を使わない（stash は作業ツリーの間で共有され、別のセッションの退避を取り違える）」を足す**（振り返り: T-697）
   - 根拠: T-697 のサブエージェントが、削除の前後で迷子の参照を見比べるために `git stash` を4回打った。今回は置き去りが無かったが、並行する tsukumo-N の作業ツリーが同じ stash の山を使っている。CLAUDE.md・`docs/workflow.md`・`next-task` の手順5のどれにも stash の決まりが無い
   - 出し先: `~/.claude/skills/next-task/SKILL.md` の手順5の箇条（委譲先に渡す禁止事項の並び）。前後の比べ方は「一時コミットか `git show HEAD:<path>` で見る」と添える
+- **E2E「許可のモーダル」の並びの揺れを、競う相手を待ってから押す形で直す**（振り返り: T-672）
+  - 根拠: `test/e2e/permission-answer.test.ts` が `bun run check` の中でときどき `toEqual` で落ちる。許可を押したときの `pending-changed` と、場面の `speech`（afterMs 200）が別々のタイマーで競って並びが入れ替わる（委譲先の報告で指摘、追っているタスクは無い）。T-672 の `input-dispatch` と同じ正体
+  - 出し先: タスク（押す前に `room.waitForEvent("speech")` のように競う相手を待つ。確かめたいことは弱めない）

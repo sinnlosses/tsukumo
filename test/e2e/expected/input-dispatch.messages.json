@@ -4,20 +4,6 @@
     "protocolVersion": 23
   },
   {
-    "sent": "session.prompt",
-    "order": 1,
-    "input": {
-      "text": "入力欄から送る場面を見たい（架空の依頼）",
-      "images": []
-    }
-  },
-  {
-    "received": "response",
-    "order": 1,
-    "status": 200,
-    "body": {}
-  },
-  {
     "received": "event",
     "at": 1768438800000,
     "event": {
@@ -56,6 +42,29 @@
     "received": "event",
     "at": 1768438800000,
     "event": {
+      "kind": "speech",
+      "text": "疑似セッションの駆動で立ち上がったよ。ここはぜんぶ作り物の会話。",
+      "expression": "default"
+    }
+  },
+  {
+    "sent": "session.prompt",
+    "order": 1,
+    "input": {
+      "text": "入力欄から送る場面を見たい（架空の依頼）",
+      "images": []
+    }
+  },
+  {
+    "received": "response",
+    "order": 1,
+    "status": 200,
+    "body": {}
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
       "kind": "request",
       "text": "入力欄から送る場面を見たい（架空の依頼）",
       "images": []
@@ -66,24 +75,7 @@
     "at": 1768438800000,
     "event": {
       "kind": "partial-utterance",
-      "text": "## 疑似セッションのレポート\n\n"
-    }
-  },
-  {
-    "received": "event",
-    "at": 1768438800000,
-    "event": {
-      "kind": "speech",
-      "text": "疑似セッションの駆動で立ち上がったよ。ここはぜんぶ作り物の会話。",
-      "expression": "default"
-    }
-  },
-  {
-    "received": "event",
-    "at": 1768438800000,
-    "event": {
-      "kind": "partial-utterance",
-      "text": "これは架空の本文で、実物の会話ではない。\n"
+      "text": "## 疑似セッションのレポート\n\nこれは架空の本文で、実物の会話ではない。\n"
     }
   },
   {

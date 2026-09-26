@@ -204,7 +204,13 @@ async function openRoom(
       mkdirSync(outDir, { recursive: true })
       await page.screenshot({ path: path.join(outDir, `${options.scenario}.png`) })
       matchArtifact(options.scenario, "dom", dom, replacements, outDir)
-      matchArtifact(options.scenario, "messages", messages.list(), replacements, outDir)
+      matchArtifact(
+        options.scenario,
+        "messages",
+        collapsePartialUtterances(messages.list()),
+        replacements,
+        outDir,
+      )
     },
   }
 }
@@ -438,6 +444,42 @@ function recordMessages(page: Page): MessageRecord {
       })
     },
   }
+}
+
+/**
+ * 連なる `partial-utterance` を1件に畳む（`event-batch.ts` の `joinPartialUtterances` と同じ
+ * 畳み方だが、束の切れ目そのもの——サーバ側の束ねと `test/fixture/fake-session.json` の
+ * `afterMs` が同じ時刻に重なると、どちらのタイマーが先に走るかで束の切れ目が走らせるたびに
+ * 変わる（`docs/design.md` 10章「E2E の成果物と再現」）——を比べる前に消すためにここでも行う。
+ * 消えるのは切れ目の位置だけで、他の種別との並びは変えない。
+ */
+function collapsePartialUtterances(entries: readonly unknown[]): readonly unknown[] {
+  return entries.reduce<readonly unknown[]>((collapsed, entry) => {
+    const previousText = partialUtteranceText(collapsed[collapsed.length - 1])
+    const currentText = partialUtteranceText(entry)
+    if (previousText === undefined || currentText === undefined) {
+      return [...collapsed, entry]
+    }
+    return [
+      ...collapsed.slice(0, -1),
+      {
+        ...asRecord(entry),
+        event: { kind: "partial-utterance", text: previousText + currentText },
+      },
+    ]
+  }, [])
+}
+
+/** `partial-utterance` の `text`。それ以外の並び（`received: "event"` でないものを含む）は `undefined`。 */
+function partialUtteranceText(entry: unknown): string | undefined {
+  const record = asRecord(entry)
+  const event = asRecord(record["event"])
+  const text = event["text"]
+  return record["received"] === "event" &&
+    event["kind"] === "partial-utterance" &&
+    typeof text === "string"
+    ? text
+    : undefined
 }
 
 /**
