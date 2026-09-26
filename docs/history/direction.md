@@ -3,6 +3,57 @@
 `develop/direction.md` に書かれたユーザーからの指示を、タスク化した時点で**当時の記述のまま**
 ここへ移す（`docs/workflow.md`「指示メモ」参照）。新しいものを上に足す。**後から書き換えない。**
 
+## 2026-09-26 zustand・Node + Vite + Vitest への移行・Storybook・React Compiler
+
+（会話から。フレームワークを入れない理由の説明のあと、手作りの store は zustand に置き換える価値があると答えて下の1つ目の発言があった。続けてゼロから組むなら Node + Vite + Vitest を選ぶと答え、移行の見積もりと利点を出したあとに2つ目の発言があった。エージェントが `## ユーザーから` に書いた。Node の入れ方は3つ目の発言で決まった。zustand が T-680・T-681、移行が T-682〜T-686、Storybook が T-687、React Compiler が T-688 になった）
+
+```text
+いいね。zustand を入れよう。積んでもらえる?
+```
+
+```text
+よし、タスク化してくれる?移行とstorybook、React Compilerの話も
+```
+
+```text
+Nodeはv26にしようと思うよ。miseでセットアップしたいから、それもお願いしていいかな?
+```
+
+- ブラウザ側の自作 store を zustand に置き換える（2026-09-26）。対象は `useSyncExternalStore` で
+  書いている `src/browser/stores/` の各 store と、`domain/reveal/brush-tip.ts`・
+  `components/page/achievement/hooks/use-diary-book-open-request.ts`。`subscribe` / `getSnapshot` /
+  listeners の定型と Context の Provider を消すのが狙い。`docs/research/architecture-rethink.md`
+  の状態管理の行で「配り方が面倒になったら zustand」と控えにしていたものを本採用にする。
+  - まず小さい1つ（`question-scroll.tsx` か `turn-selection.tsx`）を置き換えて形を決めてから残りへ広げる
+  - セレクタが毎回新しいオブジェクトを返すと描き直しが止まらない罠は zustand でも残るので、
+    `useShallow` の使いどころを規約（`docs/coding-standards.md`「React」節）に書く
+  - `docs/architecture.md` の状態管理の記述と `docs/design.md` 6.2 を追随させる
+- ランタイムと組み立てを Bun から Node + Vite + Vitest へ移す（2026-09-26）。`docs/design.md` 1章の
+  「箱が変わったときだけ見直す」（2026-09-17）を覆して今やる。狙いは `bun test` の罠
+  （`mock.module` の漏れ・`--isolate` が返らない）を消すこと、HMR で状態を保ったまま差し替えること、
+  Vite 前提の道具を本物の組み立てのまま使うこと。次の5つに割る（上ほど先）:
+  1. 起動と scripts を Node へ（`bin/tsukumo` の shebang・`package.json` の scripts・`spawn("bun")` の
+     4か所と E2E の `process.execPath run`・`.claude/settings.json` の hook）。`tsconfig` の
+     `types: ["bun"]` を `@types/node` と `lib: ["DOM"]` へ。**手元の Node は v22.13.1 で、型剥がしが
+     フラグ無しで効くのは 22.18 から**なので、Node を上げるか `tsx` を足すかは着手時に人間に聞く
+     （グローバルなツールの導入に当たる）。パッケージマネージャは `bun install` のままでよい
+  2. テストを Vitest へ（`bun:test` の 223 ファイル、`mock.module` の2ファイルは `vi.mock` の巻き上げに
+     合わせて書き直す、`bunfig.toml` の preload は setupFiles と happy-dom 環境の指定へ）。
+     移す前と後で `bun test` の約 26 秒に対する所要時間を測って記録する
+  3. 組み立てを `vite build` へ（`bundle.ts`・`build-ui.ts`・`source-fingerprint.ts`。JS と CSS Modules の
+     対を1回の組み立てで焼く性質は保つ）
+  4. 開発中の作り直しを HMR へ（`ui-rebuild.ts` を Vite の middleware mode を `node:http` に差し込む形に
+     置き換えるか、`vite build --watch` に留めるかを決めてから移す）
+  5. ドキュメント（design・architecture・README・coding-standards・CLAUDE.md・workflow・requirements
+     の bun の記述、約150か所）を追随させ、「Bun固有APIに寄せない」の規約を畳む
+- Storybook を入れる（2026-09-26。上の移行の 3 が済んでから）。`docs/research/ui-catalog.md` で
+  見送った主な理由（Vite の class 名が `bun build` と別の綴りになる）が移行で消えるので採り直す。
+  今の `scripts/capture-catalog.ts` の役（目視の手順）とどう分担するかを決め、`docs/architecture.md`
+  「手で確かめること」を追随させる
+- React Compiler を入れる（2026-09-26。上の移行の 3 が済んでから）。Vite の React プラグインに
+  babel プラグインとして足し、不要になった `memo` / `useCallback` / `useMemo`（今は 16 か所）を消す。
+  `docs/coding-standards.md`「React」節に手で memo しない旨を書く
+
 ## 2026-09-26 `report` の `body` を型付きの塊にし、部品で描く設計を詰める
 
 （会話から。レポートの流れ（検査 → 整形 → 描画）を説明したあとに下の発言があり、エージェントが「`body` を型付きの塊の並びにし、当てはまらないものは Markdown の塊で受ける」案を出して、設計のタスクを先に立て T-678 をその後ろに付け替えてよいかを聞いた。その返事で T-679 になり、T-678 の依存に足した）
