@@ -1963,3 +1963,24 @@ Command+Enter にしてほしい」。**以前は Enter で送信、Shift+Enter 
 通っていない」は、立ち絵が `<img>` になったことで関係なくなった。「詳細ビューの HTML の
 置き場所・寿命・後始末」は、**HTML をディスクに書かない**と決めたことで問題自体が消えた
 （4.2、`docs/architecture.md`「HTML はローカルの HTTP サーバから配る」）。
+
+## design.md 1. 何を変え、何を残すか（移行前後の対照表）
+
+2026-09-27 に `docs/design.md`「1. 何を変え、何を残すか」の章から移した（design.md の役割を
+「コードを1ファイル読んでも分からない構造の規則だけを持つ」に絞ったため。いまも効く技術選択は
+`docs/architecture.md`「設計判断」「描く層の移行で決めた技術選択」に移した）。
+
+**変えるのは「描く」層の重心だけ。** サーバが HTML 文字列を組み立てて Server-Sent Events で押し、
+ブラウザが Idiomorph で当てる形をやめ、**両側が共有する型付きプロトコルでイベントを押し、
+ブラウザ側の React の部品が状態から描く**形にする。言語は TypeScript のまま、ランタイムは当面 Bun
+（Node で動く形を保つ）。
+
+| 残すもの                                                                                                                       | 変えるもの                                                                     |
+| ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------ |
+| Agent SDK で Claude Code を動かす。SDK を import する場所を機能の `adapter/` 直下の `sdk-` で始まるファイルに閉じる            | サーバ側の HTML 組み立て（`presentation/view.ts`）→ ブラウザ側の部品           |
+| `speak(text, expression)` の MCP ツール。戻り値は `"ok"` だけ                                                                  | SSE 5本 + POST 6本 → WebSocket 1本（フレームとコマンド）                       |
+| `SessionEvent` の union と `applySessionEvent` の純粋な畳み込み                                                                | 自前の Markdown レンダラとサニタイザ → unified（remark / rehype）              |
+| 答え待ちの列（`canUseTool` の Promise を保留する）                                                                             | 4層（domain / usecase / presentation / infrastructure）→ 3層                   |
+| 会話をプロセスの外へ出さない。`127.0.0.1` だけ。ディスクに書かない                                                             | キャラクター定義 → 人格を含む**パック**                                        |
+| 起動時は組み立て済みの成果物（`dist/browser/`）を読むだけ（束ねるのは `bun run build`。2026-09-21 に起動時の組み立てをやめた） | 1プロセス = 1セッション固定 → 起こし直せる `SessionManager`（セッションは1つ） |
+| ホストのポート（`showView` 1つ）と Orca のアダプタ                                                                             | HTML の文字列一致のテスト → 部品のテストと fake driver                         |
