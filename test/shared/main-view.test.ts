@@ -7,6 +7,7 @@ import {
   mainViewEntries,
   mainViewTurns,
 } from "../../src/shared/main-view.ts"
+import { type ReportCheck } from "../../src/shared/report-check.ts"
 import { type SessionEvent } from "../../src/shared/session-event.ts"
 import {
   applySessionEvent,
@@ -461,12 +462,18 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     mainViewTurns(mainViewEntries(fold(events)), unsettled).at(-1)
   const ask: SessionEvent = { kind: "request", text: "架空の依頼", images: [] }
   const text = (markdown: string): SessionEvent => ({ kind: "utterance", text: markdown })
-  const report = (conclusion: string, body = "", favor = ""): SessionEvent => ({
+  const report = (
+    conclusion: string,
+    body = "",
+    favor = "",
+    checks: readonly ReportCheck[] = [],
+  ): SessionEvent => ({
     kind: "report",
     toolUseId: "toolu_r1",
     conclusion,
     body,
     favor,
+    checks,
   })
   const toolRun = (id: string): readonly SessionEvent[] => [
     {
@@ -523,7 +530,31 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     expect(shownReports(turn)).toEqual(["架空の答え。\n\n以上です。"])
   })
 
-  it("body と favor が空ならその塊を置かない", () => {
+  it("checks は結論のすぐ下に検証結果の帯として組む（body・favor より前）", () => {
+    const turn = turnOf(
+      [
+        ask,
+        report("架空の結論。", "架空の根拠。", "架空のお願い", [
+          { status: "ok", label: "架空の検査", detail: "架空の件数" },
+          { status: "unverified", label: "架空の目視", detail: "" },
+        ]),
+        finished,
+      ],
+      SETTLED,
+    )
+
+    expect(shownReports(turn)).toEqual([
+      "架空の結論。\n\n" +
+        '<div class="checks">' +
+        '<div class="check"><span class="badge badge-ok">OK</span> <b>架空の検査</b> 架空の件数</div>' +
+        '<div class="check"><span class="badge badge-warn">未確認</span> <b>架空の目視</b></div>' +
+        "</div>\n\n" +
+        '架空の根拠。\n\n<div class="note note-favor">\n\n架空のお願い\n\n</div>',
+    ])
+    expect(firstLineOf(turn?.steps[0])).toBe("架空の結論。")
+  })
+
+  it("checks・body・favor が空ならその塊を置かない（帯も出ない）", () => {
     const turn = turnOf([ask, report("架空の結論だけ。"), finished], SETTLED)
 
     expect(shownReports(turn)).toEqual(["架空の結論だけ。"])

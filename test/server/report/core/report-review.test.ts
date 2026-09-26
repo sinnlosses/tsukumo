@@ -9,8 +9,8 @@ import { type SessionEvent } from "../../../../src/shared/session-event.ts"
 
 // レポートの文面はどれも作り物（docs/coding-standards.md「会話内容の扱い」）。
 
-const VALID = { conclusion: "架空の結論。", body: "", favor: "" }
-const INVALID = { conclusion: "架空の結論。", body: "# 架空の見出し", favor: "" }
+const VALID = { conclusion: "架空の結論。", body: "", favor: "", checks: [] }
+const INVALID = { conclusion: "架空の結論。", body: "# 架空の見出し", favor: "", checks: [] }
 
 const SESSION_INFO: SessionEvent = {
   kind: "session-info",
@@ -118,7 +118,7 @@ describe("createReportReview の pass", () => {
 })
 
 describe("createReportReview の judge（送り直し）", () => {
-  const OTHER = { conclusion: "別の架空の結論。", body: "架空の根拠。", favor: "" }
+  const OTHER = { conclusion: "別の架空の結論。", body: "架空の根拠。", favor: "", checks: [] }
 
   /** `report` を handler で通して描かせる（pass に呼び出しと結果を流す）。 */
   const draw = (review: ReportReview, toolUseId: string, draft: typeof VALID): void => {
@@ -139,7 +139,12 @@ describe("createReportReview の judge（送り直し）", () => {
     const review = createReportReview()
     draw(review, "toolu_r1", OTHER)
 
-    const padded = { conclusion: `  ${OTHER.conclusion}\n`, body: `\n${OTHER.body}  `, favor: " " }
+    const padded = {
+      conclusion: `  ${OTHER.conclusion}\n`,
+      body: `\n${OTHER.body}  `,
+      favor: " ",
+      checks: [],
+    }
     expect(review.judge(padded).kind).toBe("rejected")
   })
 
@@ -149,6 +154,9 @@ describe("createReportReview の judge（送り直し）", () => {
 
     expect(review.judge(OTHER)).toEqual({ kind: "accepted" })
     expect(review.judge({ ...VALID, favor: "架空のお願い。" })).toEqual({ kind: "accepted" })
+    expect(
+      review.judge({ ...VALID, checks: [{ status: "ng", label: "架空の検査", detail: "" }] }),
+    ).toEqual({ kind: "accepted" })
   })
 
   it("送り直しを差し戻すのは1ターンに1回まで（2回目の送り直しは通す）", () => {

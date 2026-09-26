@@ -12,6 +12,7 @@ import { type JSX, type ReactElement, type ReactNode } from "react"
 import { type ExtraProps } from "react-markdown"
 
 import {
+  REPORT_DRAWN_MARK_NAMES,
   REPORT_NOTATION_NAMES,
   REPORT_NOTE_KINDS,
 } from "../../../../../../../shared/report-notation.ts"
@@ -20,10 +21,14 @@ import styles from "./report-notation.module.css"
 /**
  * モデルが書く class 名 → tsukumo が装飾に使う class 名（`report-notation.module.css` のもの。
  * 組み立て時にハッシュ化される）。ここに無い名前は素通しする。**印の名前の集合は
- * `src/shared/report-notation.ts` が正典**（`report-<名前>` が CSS 側の綴りの規則）。
+ * `src/shared/report-notation.ts` が正典**（`report-<名前>` が CSS 側の綴りの規則）。tsukumo が
+ * 組む印（検証結果の帯）も同じ表で解決する。
  */
 const NOTATION_CLASS_NAMES: ReadonlyMap<string, string | undefined> = new Map(
-  REPORT_NOTATION_NAMES.map((name) => [name, styles[`report-${name}`]]),
+  [...REPORT_NOTATION_NAMES, ...REPORT_DRAWN_MARK_NAMES].map((name) => [
+    name,
+    styles[`report-${name}`],
+  ]),
 )
 
 /**

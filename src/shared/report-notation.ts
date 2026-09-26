@@ -38,3 +38,10 @@ export const REPORT_NOTATION_NAMES = [
   ...REPORT_NOTE_KINDS.map(([name]) => name),
   ...REPORT_MARK_NAMES,
 ] satisfies readonly string[]
+
+/**
+ * **tsukumo が `report` の欄から組む印**（モデルには教えない。文面に載せないので、上の語彙の
+ * 「文面にも書く」決まりの外）。`checks` は検証結果の帯、`check` はその1項目で、組むのは
+ * `src/shared/report-check.ts`。見た目は語彙と同じく `report-notation.module.css` の `report-<名前>`。
+ */
+export const REPORT_DRAWN_MARK_NAMES = ["checks", "check"] as const satisfies readonly string[]

@@ -82,6 +82,28 @@
 .detail-block .report-badge-ng {
   color: var(--state-ng);
 }
+/* 検証結果の帯（`report` の `checks` から tsukumo が組む。src/shared/report-check.ts）。結論のすぐ下に
+   上下の罫で挟んだ1本の帯として置き、項目は横に並べて入らなければ折り返す。状態はバッジの色と
+   文字（OK / NG / 未確認）の両方で読める。 */
+.detail-block .report-checks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1.25rem;
+  margin: 0.5rem 0;
+  padding: 0.4rem 0;
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+  font-size: var(--font-secondary);
+  color: var(--ink-quiet);
+}
+.detail-block .report-check {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4rem;
+}
+.detail-block .report-check b {
+  color: var(--ink);
+}
 /* 情報の塊（素の `note`。結論を言う役）。**いちばん読ませたい印がいちばん弱かった**（引用と同じ
    灰色の3px の縦罫で、地の差も無かった。実測）ので、縦罫を ink まで上げ、地を「浮く」段にする。
    6種（情報・注意・異常・疑問・メモ・お願い）に共通の余白と縦罫もここが持つ。

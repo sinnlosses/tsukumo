@@ -7,7 +7,7 @@
 // 関所を抜ける形を塞ぐ（関所は2回目の止まりを止めないので、送り直しを通すと止めた本文が画面に
 // 出ないまま終わる。docs/research/report-tool-trial.md「残った穴の形」）。枠は規約違反の1回とは
 // 別に**1ターンに1回まで**（規約違反で差し戻して直した `report` を送り直す形もあったため）。
-// 比べるのは `conclusion` / `body` / `favor` の前後の空白を除いたもの。覚えるのは {@link ReportReview.pass}
+// 比べるのは `conclusion` / `body` / `favor` の前後の空白を除いたものと、`checks` の中身。覚えるのは {@link ReportReview.pass}
 // が出した（描いた）`report` だけなので、サブエージェントの `report`（変換で捨てる）とは比べない。
 //
 // **判定の窓口は `report` の handler だけ**（{@link ReportReview.judge}。handler は
@@ -22,6 +22,8 @@
 // `parent_tool_use_id` は届かない）ので、**サブエージェントが違反した `report` を呼ぶと、その
 // ターンの差し戻しの1回を使う**。サブエージェントの `report` はどのみち描かないので、失うのは
 // メインの差し戻しの機会だけ。
+
+import { isDeepEqual } from "remeda"
 
 import { type SessionEvent } from "../../../shared/session-event.ts"
 import { type ReportDraft, reportRejectionText, reportViolations } from "./report-violation.ts"
@@ -119,11 +121,12 @@ export const REPORT_RESEND_REJECTION_TEXT =
   "この `report` は、このターンですでに受け取った `report` と同じ引数になっている。" +
   "同じ引数で送り直さず、そのあとに `report` の外に書いた本文の中身を `report` に入れて呼び直すこと。"
 
-/** 2つのレポートが同じ引数か。3つの欄をそれぞれ前後の空白を除いて比べる。 */
+/** 2つのレポートが同じ引数か。文字列の3つの欄は前後の空白を除いて、`checks` は中身で比べる。 */
 function isSameReport(left: ReportDraft, right: ReportDraft): boolean {
   return (
     left.conclusion.trim() === right.conclusion.trim() &&
     left.body.trim() === right.body.trim() &&
-    left.favor.trim() === right.favor.trim()
+    left.favor.trim() === right.favor.trim() &&
+    isDeepEqual(left.checks, right.checks)
   )
 }

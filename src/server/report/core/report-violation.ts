@@ -8,11 +8,14 @@
 // 本文は Markdown として構文解析せず、行で見る（フェンスの中だけは飛ばす）。描く側の
 // パーサ（`src/browser/`）とは層が違って使えず、判定に要るのは行頭の形と数えられる印だけなので。
 
-/** 検査にかけるレポート。`body` と `favor` の「無い」は空の文字列。 */
+import { type ReportCheck } from "../../../shared/report-check.ts"
+
+/** 検査にかけるレポート。`body` と `favor` の「無い」は空の文字列、`checks` の「無い」は空の配列。 */
 export type ReportDraft = {
   readonly conclusion: string
   readonly body: string
   readonly favor: string
+  readonly checks: readonly ReportCheck[]
 }
 
 /**

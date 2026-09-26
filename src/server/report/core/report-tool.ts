@@ -19,8 +19,17 @@ import { type SessionEvent } from "../../../shared/session-event.ts"
  * （MCP ツールの説明文は既定で 2048 字までしか渡らず、規約の全文は入らない）。
  */
 export const REPORT_TOOL_DESCRIPTION =
-  "ターンのレポートをメインビューに出す。conclusion → body → favor の順に描かれる。" +
+  "ターンのレポートをメインビューに出す。conclusion → checks（検証結果の帯）→ body → favor の順に描かれる。" +
   "書き方は「レポートの記法（tsukumo）」の節に従う。"
+
+/**
+ * `report` の任意の `checks` 引数の説明。記法の条（`report-notation.ts` の条1）と同じことを
+ * 引数の側でも言う（どちらを先に読んでも欄を取り違えないように）。
+ */
+export const REPORT_CHECKS_DESCRIPTION =
+  "検証の結果（テスト・型検査・手で確かめたこと）。tsukumo が結論の下に帯で描く。" +
+  "ここに入れた結果は conclusion と body に書かない。検証をしていないターンでは省く。" +
+  "label と detail は素の文字で描かれるので、バッククォートなどの記法を使わない。"
 
 /**
  * `report` の任意の `title` 引数の説明。**セッション一覧の見出しにする題を付けさせる条はここだけ**

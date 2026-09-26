@@ -260,7 +260,14 @@ describe("startFakeSession", () => {
 
   it("report は結果が届くまで預かり、差し戻された（isError の）ものは流さない（本物の駆動と同じ）", async () => {
     const report = (toolUseId: string) =>
-      ({ kind: "report", toolUseId, conclusion: "架空の結論", body: "", favor: "" }) as const
+      ({
+        kind: "report",
+        toolUseId,
+        conclusion: "架空の結論",
+        body: "",
+        favor: "",
+        checks: [],
+      }) as const
     const finished = (toolUseId: string, isError: boolean) =>
       ({ kind: "tool-finished", toolUseId, content: "架空の結果", isError }) as const
     const sink = collect()

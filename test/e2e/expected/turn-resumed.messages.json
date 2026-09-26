@@ -1,7 +1,7 @@
 [
   {
     "received": "hello",
-    "protocolVersion": 22
+    "protocolVersion": 23
   },
   {
     "received": "event",
@@ -105,7 +105,8 @@
       "toolUseId": "fake-report-call-resume-1",
       "conclusion": "中間の結論（架空）：ここまでで分かったことをいったんまとめた。",
       "body": "- 下調べは終わった（架空の結果）\n- 続きは合図を待って進める",
-      "favor": ""
+      "favor": "",
+      "checks": []
     }
   },
   {
@@ -236,7 +237,8 @@
       "toolUseId": "fake-report-call-resume-2",
       "conclusion": "最終の結論（架空）：合図をまたいでも報告は消えなかった。",
       "body": "- 中間の報告は合図のあいだも出したまま\n- 吹き出しも前のセリフを保った\n- 最後にこの最終報告へ差し替わる",
-      "favor": ""
+      "favor": "",
+      "checks": []
     }
   },
   {

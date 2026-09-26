@@ -23,6 +23,7 @@ import { type PendingAsk } from "./pending-ask.ts"
 import { type RecordedPromptImage } from "./prompt-image.ts"
 import { type Question, type QuestionAnswer } from "./question.ts"
 import { type RateLimit } from "./rate-limit.ts"
+import { type ReportCheck } from "./report-check.ts"
 import { type SessionChoice } from "./session-choice.ts"
 import { BUILTIN_SESSION_DEFAULT, type SessionDefault } from "./session-default.ts"
 import {
@@ -126,6 +127,7 @@ export type SessionRecord =
       readonly conclusion: string
       readonly body: string
       readonly favor: string
+      readonly checks: readonly ReportCheck[]
     }
   /**
    * 答え終わった質問（`question-answered`）。**積むのは答えが確定した1回だけ**で、あとから
@@ -676,6 +678,7 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
             conclusion: event.conclusion,
             body: event.body,
             favor: event.favor,
+            checks: event.checks,
           },
         ],
       }

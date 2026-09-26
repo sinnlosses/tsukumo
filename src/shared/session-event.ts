@@ -20,6 +20,7 @@ import { type PendingAsk } from "./pending-ask.ts"
 import { type RecordedPromptImage } from "./prompt-image.ts"
 import { type Question, type QuestionAnswer } from "./question.ts"
 import { type RateLimit } from "./rate-limit.ts"
+import { type ReportCheck } from "./report-check.ts"
 import { type SessionChoice } from "./session-choice.ts"
 import { type SessionDefault } from "./session-default.ts"
 import { type TaskSummaryResult } from "./task-summary.ts"
@@ -155,7 +156,7 @@ export type SessionEvent =
   /**
    * `report` ツールの呼び出し（docs/glossary.md「report ツール」）。メインが呼んだ
    * ものだけが届く（サブエージェントの呼び出しは変換で捨てる）。`body` と `favor` は無ければ空の
-   * 文字列。`toolUseId` は呼び出しの id で、差し戻し（`src/server/report/core/report-review.ts`）が同じ
+   * 文字列、`checks`（検証結果）は無ければ空の配列。`toolUseId` は呼び出しの id で、差し戻し（`src/server/report/core/report-review.ts`）が同じ
    * 呼び出しの `tool-finished` と突き合わせるのに使う。
    */
   | {
@@ -164,6 +165,7 @@ export type SessionEvent =
       readonly conclusion: string
       readonly body: string
       readonly favor: string
+      readonly checks: readonly ReportCheck[]
     }
   | {
       readonly kind: "tool-started"

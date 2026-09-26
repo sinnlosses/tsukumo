@@ -8,7 +8,11 @@ import { createElement } from "react"
 import { NotationBlock } from "../../../../src/browser/components/page/conversation/components/main-view/markdown/notation.tsx"
 import { REPORT_SANITIZE_SCHEMA } from "../../../../src/browser/components/page/conversation/components/main-view/markdown/sanitize-schema.ts"
 import { REPORT_NOTATION_PROMPT } from "../../../../src/server/report/core/report-notation.ts"
-import { REPORT_NOTATION_NAMES, REPORT_NOTE_KINDS } from "../../../../src/shared/report-notation.ts"
+import {
+  REPORT_DRAWN_MARK_NAMES,
+  REPORT_NOTATION_NAMES,
+  REPORT_NOTE_KINDS,
+} from "../../../../src/shared/report-notation.ts"
 
 afterEach(() => {
   cleanup()
@@ -108,6 +112,18 @@ describe("REPORT_NOTATION_PROMPT", () => {
     }
   })
 
+  it("tsukumo が組む印（検証結果の帯）は文面に載せず、部品で解決され、CSS まで届く", () => {
+    for (const name of REPORT_DRAWN_MARK_NAMES) {
+      expect(REPORT_NOTATION_PROMPT).not.toContain(`class="${name}"`)
+
+      const { container } = render(createElement(NotationBlock, { className: name }, "中身"))
+      const resolved = container.firstElementChild?.className ?? name
+
+      expect(resolved).not.toBe(name)
+      expect(STYLE_SHEET_SOURCE).toContain(`.${resolved}`)
+    }
+  })
+
   it("note の6種を名乗り、どれも部品がラベルを出し、その先に見た目が付いている", () => {
     // 規約（モデルが書く名前）→ 部品（ラベルの文字）→ CSS の鎖を6種ぶん見る。**種別の文字を
     // 出すのは tsukumo 側**（docs/screen-design.md 13.1 原則5）なので、印だけ足してラベルを足し忘れる
@@ -187,6 +203,15 @@ describe("REPORT_NOTATION_PROMPT", () => {
     expect(REPORT_NOTATION_PROMPT).toContain("1. **結論は `conclusion` に1〜2文で書く。**")
     expect(REPORT_NOTATION_PROMPT).toContain("`favor` に入れる")
     expect(REPORT_NOTATION_PROMPT).toContain("10. **見出しを付けるなら")
+  })
+
+  it("検証の結果は checks に分けさせ、結論は読み手から見た変化で、文字より視覚情報を選ばせる", () => {
+    // 結論の括弧に検証の結果が混ざって読みにくかった（docs/display.md 4.2）。
+    expect(REPORT_NOTATION_PROMPT).toContain("検証の結果を `conclusion` と `body` に書かない")
+    expect(REPORT_NOTATION_PROMPT).toContain("読み手から見た変化")
+    expect(REPORT_NOTATION_PROMPT).toContain("8. **残ったものは、文字より視覚情報で見せる。**")
+    const beforeSend = REPORT_NOTATION_PROMPT.split("### 送る前に消すもの").at(1) ?? ""
+    expect(beforeSend).toContain("`checks` へ移す")
   })
 
   it("「描けない」記法は無い（移行の段6で unified に置き換えたため）", () => {

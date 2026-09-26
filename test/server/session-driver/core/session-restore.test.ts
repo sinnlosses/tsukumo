@@ -579,7 +579,7 @@ describe("toRestoredEvents", () => {
     )
 
     expect(reports).toEqual([
-      { kind: "report", toolUseId: "r-2", conclusion: "架空の二", body: "", favor: "" },
+      { kind: "report", toolUseId: "r-2", conclusion: "架空の二", body: "", favor: "", checks: [] },
     ])
   })
 

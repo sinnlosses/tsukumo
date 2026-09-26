@@ -86,6 +86,7 @@ describe("mainViewTurnsOf（claude が自分で始めた続きのターン）", 
     conclusion,
     body: "",
     favor: "",
+    checks: [],
   })
   const finished: SessionEvent = { kind: "turn-finished", outcome: { kind: "completed" } }
   const resumed: SessionEvent = { kind: "turn-resumed" }
@@ -167,6 +168,7 @@ describe("mainViewTurnsOf（続きのターンを2回以上含む並びを1件�
     conclusion: "架空の中間レポート",
     body: "",
     favor: "",
+    checks: [],
   }
   const finished: SessionEvent = { kind: "turn-finished", outcome: { kind: "completed" } }
   const resumed: SessionEvent = { kind: "turn-resumed" }
@@ -186,6 +188,7 @@ describe("mainViewTurnsOf（続きのターンを2回以上含む並びを1件�
     conclusion: "架空の最終レポート",
     body: "",
     favor: "",
+    checks: [],
   }
 
   // 依頼 → 中間 report → 合図（turn-resumed → speech → ターンの終わり）→ 合図（同じ形）→

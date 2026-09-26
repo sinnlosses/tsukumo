@@ -17,6 +17,7 @@ import { isBlankText } from "../../../shared/blank-text.ts"
 import { type EffortLevel, isEffortLevel } from "../../../shared/command.ts"
 import { type Expression } from "../../../shared/expression.ts"
 import { type RateLimit, type RateLimitBucket } from "../../../shared/rate-limit.ts"
+import { parseReportChecks } from "../../../shared/report-check.ts"
 import {
   type CommandDescription,
   type ModelEffortSupport,
@@ -527,8 +528,8 @@ function speechEvents(input: unknown, expressions: readonly Expression[]): reado
 }
 
 /**
- * `report` の引数を取り出す。**`body` と `favor` の「無い」は空の文字列に畳む**（描く側は空の塊を
- * 置かないだけで済む）。`conclusion` が文字列でなければ捨てる（引数の検査に落ちた呼び出しで、
+ * `report` の引数を取り出す。**`body` と `favor` の「無い」は空の文字列に、`checks` の「無い」は
+ * 空の配列に畳む**（描く側は空の塊を置かないだけで済む）。`conclusion` が文字列でなければ捨てる（引数の検査に落ちた呼び出しで、
  * モデルには本体がエラーを返す）。
  */
 function reportEvents(toolUseId: string, input: unknown): readonly SessionEvent[] {
@@ -543,6 +544,7 @@ function reportEvents(toolUseId: string, input: unknown): readonly SessionEvent[
       conclusion: input.conclusion,
       body: optionalString(input.body) ?? "",
       favor: optionalString(input.favor) ?? "",
+      checks: parseReportChecks(input.checks),
     },
   ]
 }

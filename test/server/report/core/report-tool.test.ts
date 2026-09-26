@@ -30,6 +30,7 @@ const REPORT: SessionEvent = {
   conclusion: "架空の結論",
   body: "",
   favor: "",
+  checks: [],
 }
 const SPEECH: SessionEvent = { kind: "speech", text: "架空の締め", expression: "default" }
 const FINISHED: SessionEvent = { kind: "turn-finished", outcome: { kind: "completed" } }

@@ -13,6 +13,7 @@ const draft = (body: string, conclusion = "架空の結論。"): ReportDraft => 
   conclusion,
   body,
   favor: "",
+  checks: [],
 })
 
 const kinds = (report: ReportDraft) => reportViolations(report).map((violation) => violation.kind)
@@ -177,7 +178,12 @@ describe("reportViolations", () => {
 
     it("favor に書いたお願いは違反にしない", () => {
       expect(
-        reportViolations({ conclusion: "架空の結論。", body: "", favor: "架空のお願い。" }),
+        reportViolations({
+          conclusion: "架空の結論。",
+          body: "",
+          favor: "架空のお願い。",
+          checks: [],
+        }),
       ).toEqual([])
     })
   })

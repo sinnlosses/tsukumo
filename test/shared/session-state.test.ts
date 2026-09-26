@@ -955,6 +955,7 @@ describe("applySessionEvent（report を書いている間）", () => {
         conclusion: "架空の結論。",
         body: "",
         favor: "",
+        checks: [],
       }).reportDrafting,
     ).toEqual({ kind: "idle" })
   })

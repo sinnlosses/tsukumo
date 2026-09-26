@@ -1039,7 +1039,12 @@ describe("toSessionEvents（report ツール）", () => {
         type: "tool_use",
         id: "toolu_r1",
         name: REPORT_TOOL_FULL_NAME,
-        input: { conclusion: "架空の結論。", body: "## 架空の見出し", favor: "架空のお願い" },
+        input: {
+          conclusion: "架空の結論。",
+          body: "## 架空の見出し",
+          favor: "架空のお願い",
+          checks: [{ status: "ok", label: "架空の検査", detail: "架空の件数" }],
+        },
       },
     ])
 
@@ -1050,11 +1055,12 @@ describe("toSessionEvents（report ツール）", () => {
         conclusion: "架空の結論。",
         body: "## 架空の見出し",
         favor: "架空のお願い",
+        checks: [{ status: "ok", label: "架空の検査", detail: "架空の件数" }],
       },
     ])
   })
 
-  it("body と favor が無いときは空の文字列に畳む", () => {
+  it("body と favor が無いときは空の文字列に、checks が無いときは空の配列に畳む", () => {
     const message = assistantMessage([
       {
         type: "tool_use",
@@ -1065,7 +1071,14 @@ describe("toSessionEvents（report ツール）", () => {
     ])
 
     expect(toSessionEvents(message, EXPRESSIONS)).toEqual([
-      { kind: "report", toolUseId: "toolu_r1", conclusion: "架空の結論。", body: "", favor: "" },
+      {
+        kind: "report",
+        toolUseId: "toolu_r1",
+        conclusion: "架空の結論。",
+        body: "",
+        favor: "",
+        checks: [],
+      },
     ])
   })
 

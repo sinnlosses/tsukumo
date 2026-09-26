@@ -15,6 +15,7 @@ import {
   expressionNames as toExpressionNames,
 } from "../../../shared/expression-choice.ts"
 import { type Expression } from "../../../shared/expression.ts"
+import { reportCheckSchema } from "../../../shared/report-check.ts"
 import {
   USAGE_PROPOSAL_FOLLOW_UPS,
   USAGE_PROPOSAL_IMPACTS,
@@ -23,7 +24,11 @@ import {
 } from "../../../shared/usage-review.ts"
 import { chatRecallEpisodeText, chatRecallListText } from "../../chat/core/chat-memory-prompt.ts"
 import { type ReportReview } from "../../report/core/report-review.ts"
-import { REPORT_TITLE_DESCRIPTION, REPORT_TOOL_DESCRIPTION } from "../../report/core/report-tool.ts"
+import {
+  REPORT_CHECKS_DESCRIPTION,
+  REPORT_TITLE_DESCRIPTION,
+  REPORT_TOOL_DESCRIPTION,
+} from "../../report/core/report-tool.ts"
 import {
   USAGE_REVIEW_RESULT_TOOL_DESCRIPTION,
   USAGE_REVIEW_RESULT_TOOL_NAME,
@@ -171,10 +176,16 @@ function reportTool(review: ReportReview, onReportTitle: (title: string) => void
       conclusion: z.string().describe("結論。レポートの冒頭の1〜2文"),
       body: z.string().optional().describe("結論のあとの根拠・比較・手順（記法は規約のまま）"),
       favor: z.string().optional().describe("利用者へのお願い（判断・作業・情報）。無ければ省く"),
+      checks: z.array(reportCheckSchema).optional().describe(REPORT_CHECKS_DESCRIPTION),
       title: z.string().optional().describe(REPORT_TITLE_DESCRIPTION),
     },
-    async ({ conclusion, body, favor, title }) => {
-      const verdict = review.judge({ conclusion, body: body ?? "", favor: favor ?? "" })
+    async ({ conclusion, body, favor, checks, title }) => {
+      const verdict = review.judge({
+        conclusion,
+        body: body ?? "",
+        favor: favor ?? "",
+        checks: checks ?? [],
+      })
       if (verdict.kind === "rejected") {
         return { content: [{ type: "text" as const, text: verdict.text }], isError: true }
       }

@@ -201,6 +201,7 @@ describe("stopHooks（report の関所と effort の読み取り）", () => {
       conclusion: "架空の結論",
       body: "",
       favor: "",
+      checks: [],
     })
     gate.observe(LONG_BODY)
 

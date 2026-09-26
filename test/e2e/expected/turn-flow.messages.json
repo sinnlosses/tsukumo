@@ -1,7 +1,7 @@
 [
   {
     "received": "hello",
-    "protocolVersion": 22
+    "protocolVersion": 23
   },
   {
     "received": "event",
@@ -111,7 +111,8 @@
       "toolUseId": "fake-report-call-1",
       "conclusion": "途中の結論: 目盛りを決めているのは `a.ts` だけだった。",
       "body": "- 読んだのは `/tmp/dummy/a.ts` と `/tmp/dummy/b.ts` の2つ\n- 目盛りを決めているのは `a.ts` のほう\n- `b.ts` は目盛りを読むだけ",
-      "favor": ""
+      "favor": "",
+      "checks": []
     }
   },
   {
@@ -170,7 +171,24 @@
       "toolUseId": "fake-report-call-2",
       "conclusion": "架空の結論: 目盛りを 24 に直し、`a.ts` だけで済んだ。",
       "body": "**直したファイルと結果（架空の数）**\n\n| ファイル | 変えたこと | 状態 |\n| --- | --- | :---: |\n| `a.ts` | 目盛りを 12 から 24 へ | <span class=\"badge badge-ok\">OK</span> |\n| `b.ts` | 読むだけなので変えない | <span class=\"badge badge-warn\">要注意</span> |\n\n```diff src/a.ts\n-const TICKS = 12\n+const TICKS = 24\n```\n\n<div class=\"note note-warn\">\n\n`b.ts` のキャッシュは古い目盛りを持ったまま残る。\n\n</div>",
-      "favor": "`b.ts` のキャッシュを消してよいか決めてほしい（架空のお願い）。"
+      "favor": "`b.ts` のキャッシュを消してよいか決めてほしい（架空のお願い）。",
+      "checks": [
+        {
+          "status": "ok",
+          "label": "bun run check",
+          "detail": "架空の 1234 件が通った"
+        },
+        {
+          "status": "ng",
+          "label": "目盛りの E2E",
+          "detail": "架空の 1 件が落ちた"
+        },
+        {
+          "status": "unverified",
+          "label": "狭い窓での見た目",
+          "detail": "手で確かめていない"
+        }
+      ]
     }
   },
   {
