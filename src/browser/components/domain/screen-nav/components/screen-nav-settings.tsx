@@ -99,7 +99,7 @@ export function ScreenNavSettingsGear(props: ScreenNavSettingsProps): ReactEleme
             size="label"
             tone="ink-quiet"
             weight="inherit"
-            className={styles["screen-nav-settings-heading"] ?? ""}
+            className={styles["screen-nav-settings-heading"]}
           >
             画面の色
           </Text>
@@ -112,7 +112,7 @@ export function ScreenNavSettingsGear(props: ScreenNavSettingsProps): ReactEleme
               align="center"
               justify="between"
               wrap="nowrap"
-              className={styles["screen-nav-settings-row"] ?? ""}
+              className={styles["screen-nav-settings-row"]}
               key={color.key}
             >
               <label htmlFor={`${fieldId}-${color.key}`}>{color.label}</label>
@@ -132,7 +132,7 @@ export function ScreenNavSettingsGear(props: ScreenNavSettingsProps): ReactEleme
               size="label"
               tone="state-warn"
               weight="inherit"
-              className={styles["screen-nav-settings-notice"] ?? ""}
+              className={styles["screen-nav-settings-notice"]}
             >
               {settings.colorNotice.text}
             </Text>
@@ -142,7 +142,7 @@ export function ScreenNavSettingsGear(props: ScreenNavSettingsProps): ReactEleme
             size="label"
             tone="ink-quiet"
             weight="inherit"
-            className={styles["screen-nav-settings-heading"] ?? ""}
+            className={styles["screen-nav-settings-heading"]}
           >
             新しいセッションの既定
           </Text>
@@ -154,14 +154,14 @@ export function ScreenNavSettingsGear(props: ScreenNavSettingsProps): ReactEleme
             align="center"
             justify="between"
             wrap="nowrap"
-            className={styles["screen-nav-settings-row"] ?? ""}
+            className={styles["screen-nav-settings-row"]}
           >
             <label htmlFor={`${fieldId}-default-model`}>モデル</label>
             <Select
               id={`${fieldId}-default-model`}
               ariaLabel="新しいセッションの既定のモデル"
-              frameClassName={styles["screen-nav-settings-select-frame"] ?? ""}
-              className={styles["screen-nav-settings-select"] ?? ""}
+              frameClassName={styles["screen-nav-settings-select-frame"]}
+              className={styles["screen-nav-settings-select"]}
               value={settings.sessionDefault.model}
               disabled={false}
               title={undefined}
@@ -177,15 +177,15 @@ export function ScreenNavSettingsGear(props: ScreenNavSettingsProps): ReactEleme
             align="center"
             justify="between"
             wrap="nowrap"
-            className={styles["screen-nav-settings-row"] ?? ""}
+            className={styles["screen-nav-settings-row"]}
           >
             <label htmlFor={`${fieldId}-default-effort`}>effort</label>
             {settings.sessionDefault.effort.kind === "known" ? (
               <Select
                 id={`${fieldId}-default-effort`}
                 ariaLabel="新しいセッションの既定の effort"
-                frameClassName={styles["screen-nav-settings-select-frame"] ?? ""}
-                className={styles["screen-nav-settings-select"] ?? ""}
+                frameClassName={styles["screen-nav-settings-select-frame"]}
+                className={styles["screen-nav-settings-select"]}
                 value={settings.sessionDefault.effort.value}
                 disabled={false}
                 title={undefined}
@@ -199,8 +199,8 @@ export function ScreenNavSettingsGear(props: ScreenNavSettingsProps): ReactEleme
               <Select
                 id={`${fieldId}-default-effort`}
                 ariaLabel="新しいセッションの既定の effort"
-                frameClassName={styles["screen-nav-settings-select-frame"] ?? ""}
-                className={styles["screen-nav-settings-select"] ?? ""}
+                frameClassName={styles["screen-nav-settings-select-frame"]}
+                className={styles["screen-nav-settings-select"]}
                 value={EFFORT_PLACEHOLDER_VALUE}
                 disabled={true}
                 title={settings.sessionDefault.effort.reason}
@@ -217,14 +217,14 @@ export function ScreenNavSettingsGear(props: ScreenNavSettingsProps): ReactEleme
             align="center"
             justify="between"
             wrap="nowrap"
-            className={styles["screen-nav-settings-row"] ?? ""}
+            className={styles["screen-nav-settings-row"]}
           >
             <label htmlFor={`${fieldId}-default-permission-mode`}>許可モード</label>
             <Select
               id={`${fieldId}-default-permission-mode`}
               ariaLabel="新しいセッションの既定の許可モード"
-              frameClassName={styles["screen-nav-settings-select-frame"] ?? ""}
-              className={styles["screen-nav-settings-select"] ?? ""}
+              frameClassName={styles["screen-nav-settings-select-frame"]}
+              className={styles["screen-nav-settings-select"]}
               value={settings.sessionDefault.permissionMode}
               disabled={false}
               title={undefined}
@@ -237,7 +237,7 @@ export function ScreenNavSettingsGear(props: ScreenNavSettingsProps): ReactEleme
             size="label"
             tone="ink-quiet"
             weight="inherit"
-            className={styles["screen-nav-settings-heading"] ?? ""}
+            className={styles["screen-nav-settings-heading"]}
           >
             書き上げる演出の速さ
           </Text>
@@ -249,14 +249,14 @@ export function ScreenNavSettingsGear(props: ScreenNavSettingsProps): ReactEleme
             align="center"
             justify="between"
             wrap="nowrap"
-            className={styles["screen-nav-settings-row"] ?? ""}
+            className={styles["screen-nav-settings-row"]}
           >
             <label htmlFor={`${fieldId}-reveal-speed`}>速さ</label>
             <Select
               id={`${fieldId}-reveal-speed`}
               ariaLabel="書き上げる演出の速さ"
-              frameClassName={styles["screen-nav-settings-select-frame"] ?? ""}
-              className={styles["screen-nav-settings-select"] ?? ""}
+              frameClassName={styles["screen-nav-settings-select-frame"]}
+              className={styles["screen-nav-settings-select"]}
               value={settings.revealSpeed.value}
               disabled={false}
               title={undefined}
@@ -269,7 +269,7 @@ export function ScreenNavSettingsGear(props: ScreenNavSettingsProps): ReactEleme
             size="label"
             tone="ink-quiet"
             weight="inherit"
-            className={styles["screen-nav-settings-heading"] ?? ""}
+            className={styles["screen-nav-settings-heading"]}
           >
             訪問
           </Text>
@@ -281,14 +281,14 @@ export function ScreenNavSettingsGear(props: ScreenNavSettingsProps): ReactEleme
             align="center"
             justify="between"
             wrap="nowrap"
-            className={styles["screen-nav-settings-row"] ?? ""}
+            className={styles["screen-nav-settings-row"]}
           >
             <label htmlFor={`${fieldId}-visit-enabled`}>客の出入り</label>
             <Select
               id={`${fieldId}-visit-enabled`}
               ariaLabel="訪問のオン・オフ"
-              frameClassName={styles["screen-nav-settings-select-frame"] ?? ""}
-              className={styles["screen-nav-settings-select"] ?? ""}
+              frameClassName={styles["screen-nav-settings-select-frame"]}
+              className={styles["screen-nav-settings-select"]}
               value={settings.visit.value}
               disabled={false}
               title={undefined}
@@ -304,7 +304,7 @@ export function ScreenNavSettingsGear(props: ScreenNavSettingsProps): ReactEleme
             align="center"
             justify="between"
             wrap="nowrap"
-            className={styles["screen-nav-settings-row"] ?? ""}
+            className={styles["screen-nav-settings-row"]}
           >
             <Button
               type="button"
@@ -315,7 +315,7 @@ export function ScreenNavSettingsGear(props: ScreenNavSettingsProps): ReactEleme
               ariaLabel={undefined}
               ariaHasPopup={undefined}
               title={undefined}
-              className={styles["screen-nav-settings-reset"] ?? ""}
+              className={styles["screen-nav-settings-reset"]}
               onClick={settings.onReset}
             >
               既定に戻す

@@ -128,7 +128,7 @@ export function PortraitCard(props: {
           align="stretch"
           justify="start"
           wrap="nowrap"
-          className={styles["character-card-actions"] ?? ""}
+          className={styles["character-card-actions"]}
         >
           {/* 見える字は無い（アイコンだけ）。**どの表情のことかは読み上げに残す**ので、
               `<input>` 側に aria-label を置き、`title` で乗せたときの名前を出す。 */}

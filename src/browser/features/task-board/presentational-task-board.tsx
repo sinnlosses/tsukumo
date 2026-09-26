@@ -35,7 +35,7 @@ export function PresentationalTaskBoard({
       backdrop="dim"
       placement={{ kind: "auto" }}
       onClose={onClose}
-      className={styles["task-board"] ?? ""}
+      className={styles["task-board"]}
     >
       <div className={styles["task-board-body"]}>
         <div className={styles["task-board-head"]}>
@@ -51,7 +51,7 @@ export function PresentationalTaskBoard({
             ariaLabel={undefined}
             ariaHasPopup={undefined}
             title={undefined}
-            className={styles["task-board-close"] ?? ""}
+            className={styles["task-board-close"]}
             onClick={onClose}
           >
             閉じる

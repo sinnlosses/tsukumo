@@ -46,7 +46,7 @@ export function MainView(): ReactElement {
           size="inherit"
           tone="ink-quiet"
           weight="inherit"
-          className={styles["placeholder"] ?? ""}
+          className={styles["placeholder"]}
         >
           {EMPTY_MESSAGE}
         </Text>

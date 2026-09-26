@@ -52,15 +52,15 @@ export function CharacterProfileEditDialog(props: CharacterProfileEditDialogProp
       backdrop="dim"
       placement={{ kind: "auto" }}
       onClose={props.onClose}
-      className={styles["character-create-dialog"] ?? ""}
+      className={styles["character-create-dialog"]}
     >
-      <div className={styles["character-create-body"]}>
+      <div>
         <Heading
           level={2}
           size="heading"
           tone="inherit"
           weight="bold"
-          className={styles["character-create-heading"] ?? ""}
+          className={styles["character-create-heading"]}
         >
           名前とプロフィール
         </Heading>
@@ -114,7 +114,7 @@ export function CharacterProfileEditDialog(props: CharacterProfileEditDialogProp
             ariaLabel={undefined}
             ariaHasPopup={undefined}
             title={undefined}
-            className={styles["character-button-outline"] ?? ""}
+            className={styles["character-button-outline"]}
             onClick={props.onClose}
           >
             やめる
@@ -128,7 +128,7 @@ export function CharacterProfileEditDialog(props: CharacterProfileEditDialogProp
             ariaLabel={undefined}
             ariaHasPopup={undefined}
             title={undefined}
-            className={styles["character-create-submit"] ?? ""}
+            className={styles["character-create-submit"]}
             onClick={submit}
           >
             <Text element="span" size="inherit" tone="inherit" weight="bold" className="">

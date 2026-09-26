@@ -41,7 +41,7 @@ export type StackProps = {
 const DIRECTION_CLASS = {
   row: styles["stack-direction-row"],
   column: styles["stack-direction-column"],
-} satisfies Record<StackDirection, string | undefined>
+} satisfies Record<StackDirection, string>
 
 const GAP_CLASS = {
   none: styles["stack-gap-none"],
@@ -50,7 +50,7 @@ const GAP_CLASS = {
   md: styles["stack-gap-md"],
   lg: styles["stack-gap-lg"],
   xl: styles["stack-gap-xl"],
-} satisfies Record<StackGap, string | undefined>
+} satisfies Record<StackGap, string>
 
 const ALIGN_CLASS = {
   start: styles["stack-align-start"],
@@ -58,19 +58,19 @@ const ALIGN_CLASS = {
   end: styles["stack-align-end"],
   baseline: styles["stack-align-baseline"],
   stretch: styles["stack-align-stretch"],
-} satisfies Record<StackAlign, string | undefined>
+} satisfies Record<StackAlign, string>
 
 const JUSTIFY_CLASS = {
   start: styles["stack-justify-start"],
   center: styles["stack-justify-center"],
   end: styles["stack-justify-end"],
   between: styles["stack-justify-between"],
-} satisfies Record<StackJustify, string | undefined>
+} satisfies Record<StackJustify, string>
 
 const WRAP_CLASS = {
   nowrap: styles["stack-wrap-nowrap"],
   wrap: styles["stack-wrap-wrap"],
-} satisfies Record<StackWrap, string | undefined>
+} satisfies Record<StackWrap, string>
 
 export function Stack(props: StackProps): ReactElement {
   const className = clsx(

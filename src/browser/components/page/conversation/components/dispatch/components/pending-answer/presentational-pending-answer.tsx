@@ -28,7 +28,7 @@ export function PresentationalPendingAnswer(
               size="inherit"
               tone="inherit"
               weight="bold"
-              className={styles["pending-tool"] ?? ""}
+              className={styles["pending-tool"]}
             >
               {props.toolName}
             </Text>
@@ -42,7 +42,7 @@ export function PresentationalPendingAnswer(
             align="stretch"
             justify="start"
             wrap="nowrap"
-            className={styles["pending-actions"] ?? ""}
+            className={styles["pending-actions"]}
           >
             <button
               type="button"

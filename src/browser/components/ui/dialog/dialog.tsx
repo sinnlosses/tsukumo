@@ -42,7 +42,7 @@ const DIALOG_BACKDROP_CLASS = {
   dim: styles["dialog-backdrop-dim"],
   deep: styles["dialog-backdrop-deep"],
   clear: styles["dialog-backdrop-clear"],
-} satisfies Record<DialogBackdrop, string | undefined>
+} satisfies Record<DialogBackdrop, string>
 
 export function Dialog(props: DialogProps): ReactElement {
   const dialogRef = useModalDialog(props.open)

@@ -24,7 +24,7 @@ import styles from "./report-notation.module.css"
  * `src/shared/report-notation.ts` が正典（`report-<名前>` が CSS 側の綴りの規則）。tsukumo が
  * 組む印（検証結果の帯）も同じ表で解決する。
  */
-const NOTATION_CLASS_NAMES: ReadonlyMap<string, string | undefined> = new Map(
+const NOTATION_CLASS_NAMES: ReadonlyMap<string, string> = new Map(
   [...REPORT_NOTATION_NAMES, ...REPORT_DRAWN_MARK_NAMES].map((name) => [
     name,
     styles[`report-${name}`],

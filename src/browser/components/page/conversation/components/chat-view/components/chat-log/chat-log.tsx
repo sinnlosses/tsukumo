@@ -45,7 +45,7 @@ export function ChatLog({
           size="secondary"
           tone="ink-quiet"
           weight="inherit"
-          className={styles["chat-empty"] ?? ""}
+          className={styles["chat-empty"]}
         >
           {EMPTY_LOG_MESSAGE}
         </Text>

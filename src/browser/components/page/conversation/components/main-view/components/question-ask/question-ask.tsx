@@ -72,7 +72,7 @@ export function QuestionAsk(): ReactElement | null {
         align="center"
         justify="start"
         wrap="wrap"
-        className={styles["question-ask-head"] ?? ""}
+        className={styles["question-ask-head"]}
       >
         <span className={styles["question-ask-chip"]}>{QUESTION_CHIP}</span>
         <Text
@@ -80,7 +80,7 @@ export function QuestionAsk(): ReactElement | null {
           size="secondary"
           tone="ink-quiet"
           weight="inherit"
-          className={styles["question-ask-header"] ?? ""}
+          className={styles["question-ask-header"]}
         >
           {question.header}
         </Text>
@@ -103,7 +103,7 @@ export function QuestionAsk(): ReactElement | null {
           size="label"
           tone="ink-quiet"
           weight="inherit"
-          className={styles["question-ask-progress"] ?? ""}
+          className={styles["question-ask-progress"]}
         >
           {question.progressLabel}
         </Text>
@@ -113,7 +113,7 @@ export function QuestionAsk(): ReactElement | null {
         size="inherit"
         tone="inherit"
         weight="bold"
-        className={styles["question-ask-text"] ?? ""}
+        className={styles["question-ask-text"]}
       >
         {question.text}
       </Text>
@@ -133,7 +133,7 @@ export function QuestionAsk(): ReactElement | null {
           size="secondary"
           tone="state-warn"
           weight="inherit"
-          className={styles["question-ask-written"] ?? ""}
+          className={styles["question-ask-written"]}
         >
           {WRITTEN_ANSWER_PREFIX}
           {question.writtenAnswer}
@@ -147,14 +147,14 @@ export function QuestionAsk(): ReactElement | null {
         align="center"
         justify="between"
         wrap="wrap"
-        className={styles["question-ask-foot"] ?? ""}
+        className={styles["question-ask-foot"]}
       >
         <Text
           element="span"
           size="label"
           tone="ink-quiet"
           weight="inherit"
-          className={styles["question-ask-hint"] ?? ""}
+          className={styles["question-ask-hint"]}
         >
           {FREE_TEXT_HINT}
         </Text>
@@ -167,7 +167,7 @@ export function QuestionAsk(): ReactElement | null {
           ariaLabel={undefined}
           ariaHasPopup={undefined}
           title={undefined}
-          className={styles["question-ask-answer"] ?? ""}
+          className={styles["question-ask-answer"]}
           onClick={question.onAnswer}
         >
           <Text element="span" size="inherit" tone="inherit" weight="bold" className="">
@@ -202,7 +202,7 @@ function QuestionOption(props: {
         align="baseline"
         justify="start"
         wrap="nowrap"
-        className={styles["question-ask-option-choose"] ?? ""}
+        className={styles["question-ask-option-choose"]}
       >
         <input
           type={props.multiSelect ? "checkbox" : "radio"}
@@ -216,7 +216,7 @@ function QuestionOption(props: {
           size="inherit"
           tone="inherit"
           weight="bold"
-          className={styles["question-ask-option-label"] ?? ""}
+          className={styles["question-ask-option-label"]}
         >
           {option.text}
         </Text>
@@ -226,7 +226,7 @@ function QuestionOption(props: {
             size="label"
             tone="state-warn"
             weight="inherit"
-            className={styles["question-ask-option-badge"] ?? ""}
+            className={styles["question-ask-option-badge"]}
           >
             {RECOMMENDED_BADGE}
           </Text>
@@ -238,7 +238,7 @@ function QuestionOption(props: {
           size="secondary"
           tone="ink-quiet"
           weight="inherit"
-          className={styles["question-ask-option-description"] ?? ""}
+          className={styles["question-ask-option-description"]}
         >
           {option.description}
         </Text>

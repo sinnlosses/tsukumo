@@ -37,7 +37,7 @@ export function SidebarSection(props: SidebarSectionProps): ReactElement {
         size="subheading"
         tone="ink"
         weight="bold"
-        className={styles["sidebar-block-heading"] ?? ""}
+        className={styles["sidebar-block-heading"]}
       >
         <span className={styles["sidebar-block-title"]}>{props.title}</span>
         {props.action === undefined ? null : (
@@ -50,7 +50,7 @@ export function SidebarSection(props: SidebarSectionProps): ReactElement {
             ariaLabel={undefined}
             ariaHasPopup="dialog"
             title={undefined}
-            className={styles["sidebar-block-action"] ?? ""}
+            className={styles["sidebar-block-action"]}
             onClick={props.action.onAction}
           >
             {props.action.label}

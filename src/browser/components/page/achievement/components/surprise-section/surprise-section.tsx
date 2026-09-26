@@ -40,7 +40,7 @@ export function SurpriseSection(props: SurpriseSectionProps): ReactElement | nul
           size="secondary"
           tone="ink-quiet"
           weight="normal"
-          className={styles["achievement-surprise-note"] ?? ""}
+          className={styles["achievement-surprise-note"]}
         >
           この日に起きた特別なこと
         </Text>

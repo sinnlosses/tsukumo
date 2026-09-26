@@ -33,7 +33,7 @@ function TaskTableView(props: { readonly rows: readonly BoardRow[] | undefined }
         size="inherit"
         tone="ink-quiet"
         weight="inherit"
-        className={styles["task-empty"] ?? ""}
+        className={styles["task-empty"]}
       >
         develop/tasks.json が読めない
       </Text>
@@ -46,7 +46,7 @@ function TaskTableView(props: { readonly rows: readonly BoardRow[] | undefined }
         size="inherit"
         tone="ink-quiet"
         weight="inherit"
-        className={styles["task-empty"] ?? ""}
+        className={styles["task-empty"]}
       >
         タスクが無い
       </Text>

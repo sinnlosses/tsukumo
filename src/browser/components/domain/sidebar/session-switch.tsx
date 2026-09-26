@@ -75,13 +75,13 @@ export function SessionSwitch(): ReactElement | null {
         align="center"
         justify="start"
         wrap="nowrap"
-        className={styles["session-info-value"] ?? ""}
+        className={styles["session-info-value"]}
       >
         <Select
           id={SESSION_SELECT_ID}
           ariaLabel="セッション"
-          frameClassName={styles["session-info-select-frame"] ?? ""}
-          className={switchStyles["session-select"] ?? ""}
+          frameClassName={styles["session-info-select-frame"]}
+          className={switchStyles["session-select"]}
           value={current}
           disabled={turnInProgress}
           title={turnInProgress ? SWITCH_BLOCKED_TITLE : undefined}

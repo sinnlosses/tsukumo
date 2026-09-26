@@ -53,7 +53,7 @@ export function DaySwitch(props: DaySwitchProps): ReactElement {
           ariaLabel="前の日"
           ariaHasPopup={undefined}
           title={undefined}
-          className={styles["achievement-day-switch-button"] ?? ""}
+          className={styles["achievement-day-switch-button"]}
           onClick={props.onPreviousDay}
         >
           ‹
@@ -66,7 +66,7 @@ export function DaySwitch(props: DaySwitchProps): ReactElement {
           align="center"
           justify="start"
           wrap="nowrap"
-          className={styles["achievement-day-switch-label"] ?? ""}
+          className={styles["achievement-day-switch-label"]}
         >
           {known ? (
             <>
@@ -75,7 +75,7 @@ export function DaySwitch(props: DaySwitchProps): ReactElement {
                 size="label"
                 tone="accent"
                 weight="bold"
-                className={styles["achievement-day-switch-relative"] ?? ""}
+                className={styles["achievement-day-switch-relative"]}
               >
                 {relativeLabel(daySwitch.date, daySwitch.today)}
               </Text>
@@ -96,7 +96,7 @@ export function DaySwitch(props: DaySwitchProps): ReactElement {
           ariaLabel="次の日"
           ariaHasPopup={undefined}
           title={undefined}
-          className={styles["achievement-day-switch-button"] ?? ""}
+          className={styles["achievement-day-switch-button"]}
           onClick={props.onNextDay}
         >
           ›
@@ -111,7 +111,7 @@ export function DaySwitch(props: DaySwitchProps): ReactElement {
             ariaLabel={undefined}
             ariaHasPopup={undefined}
             title={undefined}
-            className={styles["achievement-day-switch-today"] ?? ""}
+            className={styles["achievement-day-switch-today"]}
             onClick={props.onToday}
           >
             今日へ

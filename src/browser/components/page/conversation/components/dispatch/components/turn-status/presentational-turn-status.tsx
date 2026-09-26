@@ -27,7 +27,7 @@ export function PresentationalTurnStatus(props: PresentationalTurnStatusProps): 
       align="center"
       justify="start"
       wrap="nowrap"
-      className={styles["dispatch-row"] ?? ""}
+      className={styles["dispatch-row"]}
     >
       {/* API の知らせ（再試行中・利用上限・失敗の理由）。行に出すのは短い字だけで、全文は
           `title` で読ませる。`role="status"` で、変わったことを支援技術にも伝える。 */}
@@ -37,7 +37,7 @@ export function PresentationalTurnStatus(props: PresentationalTurnStatusProps): 
           size="secondary"
           tone={props.notice.tone === "warn" ? "state-warn" : "state-ng"}
           weight="inherit"
-          className={styles["dispatch-notice"] ?? ""}
+          className={styles["dispatch-notice"]}
         >
           <span role="status" title={props.notice.detail}>
             {props.notice.label}
@@ -49,7 +49,7 @@ export function PresentationalTurnStatus(props: PresentationalTurnStatusProps): 
         size="secondary"
         tone="ink-quiet"
         weight="inherit"
-        className={styles["dispatch-elapsed-row"] ?? ""}
+        className={styles["dispatch-elapsed-row"]}
       >
         <span>{props.elapsedLabel}</span>{" "}
         <Text
@@ -57,7 +57,7 @@ export function PresentationalTurnStatus(props: PresentationalTurnStatusProps): 
           size="inherit"
           tone="ink"
           weight="inherit"
-          className={styles["dispatch-elapsed"] ?? ""}
+          className={styles["dispatch-elapsed"]}
         >
           {props.elapsedText}
         </Text>

@@ -33,7 +33,7 @@ export function Dispatch(): ReactElement {
       align="stretch"
       justify="start"
       wrap="nowrap"
-      className={styles["dispatch"] ?? ""}
+      className={styles["dispatch"]}
     >
       {pendingActive ? (
         <div className={styles["dispatch-pending-glow"]} aria-hidden="true" />

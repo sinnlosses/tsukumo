@@ -31,7 +31,7 @@ export function Balloon(props: BalloonProps): ReactElement {
           size="label"
           tone="accent"
           weight="bold"
-          className={styles["balloon-speaker"] ?? ""}
+          className={styles["balloon-speaker"]}
         >
           {props.speaker}
         </Text>

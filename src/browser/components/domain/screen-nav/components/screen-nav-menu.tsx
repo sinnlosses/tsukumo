@@ -74,7 +74,7 @@ export function ScreenNavMenu(props: ScreenNavMenuProps): ReactElement {
           <CharacterFace
             url={parts.face.url}
             alt={parts.face.alt}
-            className={shellStyles["screen-nav-face"] ?? ""}
+            className={shellStyles["screen-nav-face"]}
           />
           <ScreenNavRoom name={parts.room} />
           <ScreenNavChatModeToggle chatMode={parts.chatMode} />

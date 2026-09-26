@@ -37,7 +37,7 @@ export function PersonaMemorySection(): ReactElement {
   return (
     <SidebarSection
       title="覚えていること"
-      extraClass={styles["sidebar-block-chat"] ?? ""}
+      extraClass={styles["sidebar-block-chat"]}
       action={
         lines.length === 0
           ? undefined
@@ -80,7 +80,7 @@ export function PersonaMemorySection(): ReactElement {
                   ariaLabel={`「${line}」を消す`}
                   ariaHasPopup={undefined}
                   title={undefined}
-                  className={styles["sidebar-persona-memory-remove"] ?? ""}
+                  className={styles["sidebar-persona-memory-remove"]}
                   onClick={() => {
                     setConfirmLine(line)
                   }}
@@ -141,7 +141,7 @@ function PersonaMemoryForgetConfirm(props: PersonaMemoryForgetConfirmProps): Rea
       backdrop="dim"
       placement={{ kind: "auto" }}
       onClose={props.onClose}
-      className={styles["sidebar-persona-memory-confirm"] ?? ""}
+      className={styles["sidebar-persona-memory-confirm"]}
     >
       <p className={styles["sidebar-persona-memory-confirm-question"]}>
         「{props.line}」を消しますか
@@ -155,7 +155,7 @@ function PersonaMemoryForgetConfirm(props: PersonaMemoryForgetConfirmProps): Rea
         align="stretch"
         justify="end"
         wrap="nowrap"
-        className={styles["sidebar-persona-memory-confirm-actions"] ?? ""}
+        className={styles["sidebar-persona-memory-confirm-actions"]}
       >
         <Button
           type="button"
@@ -166,7 +166,7 @@ function PersonaMemoryForgetConfirm(props: PersonaMemoryForgetConfirmProps): Rea
           ariaLabel={undefined}
           ariaHasPopup={undefined}
           title={undefined}
-          className={styles["sidebar-persona-memory-confirm-cancel"] ?? ""}
+          className={styles["sidebar-persona-memory-confirm-cancel"]}
           onClick={props.onClose}
         >
           キャンセル
@@ -180,7 +180,7 @@ function PersonaMemoryForgetConfirm(props: PersonaMemoryForgetConfirmProps): Rea
           ariaLabel={undefined}
           ariaHasPopup={undefined}
           title={undefined}
-          className={styles["sidebar-persona-memory-confirm-ok"] ?? ""}
+          className={styles["sidebar-persona-memory-confirm-ok"]}
           onClick={forget}
         >
           消す

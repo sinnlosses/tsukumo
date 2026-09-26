@@ -58,7 +58,7 @@ export function PeriodUsageCard(props: PeriodUsageCardProps): ReactElement {
         align="stretch"
         justify="between"
         wrap="nowrap"
-        className={styles["usage-card-scale"] ?? ""}
+        className={styles["usage-card-scale"]}
       >
         <span>{edgeLabel(props.trend, "first")}</span>
         <span>{edgeLabel(props.trend, "last")}</span>

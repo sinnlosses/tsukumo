@@ -34,7 +34,7 @@ export function TaskSection(): ReactElement {
     <>
       <SidebarSection
         title="タスク"
-        extraClass={styles["sidebar-block-tasks"] ?? ""}
+        extraClass={styles["sidebar-block-tasks"]}
         action={{
           label: "一覧を見る",
           onAction: () => {

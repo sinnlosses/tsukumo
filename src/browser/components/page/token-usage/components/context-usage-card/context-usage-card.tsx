@@ -82,7 +82,7 @@ export function ContextUsageCard(props: ContextUsageCardProps): ReactElement {
           align="baseline"
           justify="start"
           wrap="wrap"
-          className={styles["context-aside"] ?? ""}
+          className={styles["context-aside"]}
         >
           <span className={styles["context-until"]}>
             <span className={styles["context-until-label"]}>自動圧縮まで</span>
@@ -165,7 +165,7 @@ function ContextUsageCardSkeleton(): ReactElement {
           align="baseline"
           justify="start"
           wrap="wrap"
-          className={styles["context-aside"] ?? ""}
+          className={styles["context-aside"]}
         >
           <span className={styles["context-until"]}>
             <span className={styles["context-until-label"]}>自動圧縮まで</span>{" "}
@@ -319,7 +319,7 @@ function DeferredTable(props: DeferredTableProps): ReactElement | null {
 /** 横棒の一区間と凡例の四角に付ける色の綴り（`token-usage.module.css`）。分類の表示名から
  * 引く（骨組みは `ContextUsageRow` を持たず名前だけ知っているので、届いた札の行
  * （`row.name`）と骨組みの分類名（`SKELETON_ROW_NAMES` の要素）の両方から呼べる形にしてある）。 */
-function toneClassName(name: string): string | undefined {
+function toneClassName(name: string): string {
   return styles[`context-tone-${categoryLook(name).tone}`]
 }
 

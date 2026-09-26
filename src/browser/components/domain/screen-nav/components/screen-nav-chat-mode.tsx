@@ -44,7 +44,7 @@ export function ScreenNavChatModeToggle(props: ScreenNavChatModeProps): ReactEle
         ariaLabel={undefined}
         ariaHasPopup={undefined}
         title={disabled ? title : undefined}
-        className={styles["screen-nav-chat-mode-button"] ?? ""}
+        className={styles["screen-nav-chat-mode-button"]}
         onClick={() => onChange(false)}
       >
         <Briefcase size={15} strokeWidth={1.8} />
@@ -59,7 +59,7 @@ export function ScreenNavChatModeToggle(props: ScreenNavChatModeProps): ReactEle
         ariaLabel={undefined}
         ariaHasPopup={undefined}
         title={disabled ? title : undefined}
-        className={styles["screen-nav-chat-mode-button"] ?? ""}
+        className={styles["screen-nav-chat-mode-button"]}
         onClick={() => onChange(true)}
       >
         <Coffee size={15} strokeWidth={1.8} />

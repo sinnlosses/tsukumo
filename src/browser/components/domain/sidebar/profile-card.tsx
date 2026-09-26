@@ -30,7 +30,7 @@ export function ProfileCard(): ReactElement {
 
   return (
     <section className={styles["profile-card"]} aria-label="プロフィール">
-      <CharacterFace url={faceUrl} alt={name ?? ""} className={styles["profile-card-face"] ?? ""} />
+      <CharacterFace url={faceUrl} alt={name ?? ""} className={styles["profile-card-face"]} />
       <VStack
         element="div"
         name={{ kind: "none" }}
@@ -39,7 +39,7 @@ export function ProfileCard(): ReactElement {
         align="stretch"
         justify="start"
         wrap="nowrap"
-        className={styles["profile-card-text"] ?? ""}
+        className={styles["profile-card-text"]}
       >
         {name === undefined ? null : <p className={styles["profile-card-name"]}>{name}</p>}
         {tagline === undefined ? null : <p className={styles["profile-card-tagline"]}>{tagline}</p>}
@@ -52,8 +52,8 @@ export function ProfileCard(): ReactElement {
           <CharacterSwitch
             id={PROFILE_CHARACTER_SELECT_ID}
             ariaLabel="キャラクターを変える"
-            frameClassName={styles["profile-card-change-frame"] ?? ""}
-            className={styles["profile-card-change-select"] ?? ""}
+            frameClassName={styles["profile-card-change-frame"]}
+            className={styles["profile-card-change-select"]}
           />
         </span>
       ) : null}

@@ -38,7 +38,7 @@ export function PresentationalCharacterCreate({
       backdrop="dim"
       placement={{ kind: "auto" }}
       onClose={onClose}
-      className={styles["character-create-dialog"] ?? ""}
+      className={styles["character-create-dialog"]}
     >
       <VStack
         element="div"
@@ -55,7 +55,7 @@ export function PresentationalCharacterCreate({
           size="heading"
           tone="inherit"
           weight="bold"
-          className={styles["character-create-heading"] ?? ""}
+          className={styles["character-create-heading"]}
         >
           新しいキャラクター
         </Heading>
@@ -101,7 +101,7 @@ export function PresentationalCharacterCreate({
                   size="label"
                   tone="ink-quiet"
                   weight="inherit"
-                  className={styles["character-screen-note"] ?? ""}
+                  className={styles["character-screen-note"]}
                 >
                   {form.idNote.text}
                 </Text>
@@ -130,7 +130,7 @@ export function PresentationalCharacterCreate({
             ariaLabel={undefined}
             ariaHasPopup={undefined}
             title={undefined}
-            className={styles["character-button-outline"] ?? ""}
+            className={styles["character-button-outline"]}
             onClick={onClose}
           >
             やめる
@@ -144,7 +144,7 @@ export function PresentationalCharacterCreate({
             ariaLabel={undefined}
             ariaHasPopup={undefined}
             title={undefined}
-            className={styles["character-create-submit"] ?? ""}
+            className={styles["character-create-submit"]}
             onClick={form.onSubmit}
           >
             <Text element="span" size="inherit" tone="inherit" weight="bold" className="">

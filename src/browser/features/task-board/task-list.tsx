@@ -39,7 +39,7 @@ export function TaskList(props: TaskListProps): ReactElement {
         size="inherit"
         tone="ink-quiet"
         weight="inherit"
-        className={styles["task-empty"] ?? ""}
+        className={styles["task-empty"]}
       >
         不明
       </Text>
@@ -52,7 +52,7 @@ export function TaskList(props: TaskListProps): ReactElement {
         size="inherit"
         tone="ink-quiet"
         weight="inherit"
-        className={styles["task-empty"] ?? ""}
+        className={styles["task-empty"]}
       >
         タスクが無い
       </Text>
@@ -67,7 +67,7 @@ export function TaskList(props: TaskListProps): ReactElement {
         size="inherit"
         tone="ink-quiet"
         weight="inherit"
-        className={styles["task-empty"] ?? ""}
+        className={styles["task-empty"]}
       >
         {taskListFilterLabel(props.selectedStatus)}のタスクが無い
       </Text>

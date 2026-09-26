@@ -45,7 +45,7 @@ export function CharacterDeleteConfirm(props: CharacterDeleteConfirmProps): Reac
       backdrop="dim"
       placement={{ kind: "auto" }}
       onClose={props.onClose}
-      className={styles["character-delete-dialog"] ?? ""}
+      className={styles["character-delete-dialog"]}
     >
       <VStack
         element="div"
@@ -72,7 +72,7 @@ export function CharacterDeleteConfirm(props: CharacterDeleteConfirmProps): Reac
           size="secondary"
           tone="ink-quiet"
           weight="inherit"
-          className={styles["character-delete-note"] ?? ""}
+          className={styles["character-delete-note"]}
         >
           {band.dialogNote}
         </Text>
@@ -101,7 +101,7 @@ export function CharacterDeleteConfirm(props: CharacterDeleteConfirmProps): Reac
             ariaLabel={undefined}
             ariaHasPopup={undefined}
             title={undefined}
-            className={styles["character-button-outline"] ?? ""}
+            className={styles["character-button-outline"]}
             onClick={props.onClose}
           >
             やめる
@@ -115,7 +115,7 @@ export function CharacterDeleteConfirm(props: CharacterDeleteConfirmProps): Reac
             ariaLabel={undefined}
             ariaHasPopup={undefined}
             title={undefined}
-            className={styles["character-delete-ok"] ?? ""}
+            className={styles["character-delete-ok"]}
             onClick={props.onConfirm}
           >
             <Text element="span" size="inherit" tone="inherit" weight="bold" className="">

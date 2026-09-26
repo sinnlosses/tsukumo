@@ -13,8 +13,20 @@ export type CategoryLook = {
   /** 画面に出す名前。 */
   readonly label: string
   /** 色の綴り（`token-usage.module.css` の `.context-tone-<tone>`）。 */
-  readonly tone: string
+  readonly tone: ContextTone
 }
+
+/** 色の綴り。`token-usage.module.css` にある `.context-tone-<tone>` の数だけ並ぶ。 */
+export type ContextTone =
+  | "system-prompt"
+  | "system-tools"
+  | "mcp-tools"
+  | "memory-files"
+  | "skills"
+  | "messages"
+  | "free"
+  | "buffer"
+  | "other"
 
 /**
  * 知っている分類の見せ方。鍵は SDK が返す表示名そのもの（`/context` の行の名前）。

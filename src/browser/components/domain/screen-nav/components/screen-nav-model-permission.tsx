@@ -64,8 +64,8 @@ export function ScreenNavModelPermissionSelect(props: ScreenNavModelPermissionPr
       <Select
         id={modelSelectId}
         ariaLabel="モデル"
-        frameClassName={styles["screen-nav-select"] ?? ""}
-        className={styles["screen-nav-model-select"] ?? ""}
+        frameClassName={styles["screen-nav-select"]}
+        className={styles["screen-nav-model-select"]}
         value={model}
         disabled={false}
         title="モデル"
@@ -76,8 +76,8 @@ export function ScreenNavModelPermissionSelect(props: ScreenNavModelPermissionPr
         <Select
           id={effortSelectId}
           ariaLabel="effort"
-          frameClassName={styles["screen-nav-select"] ?? ""}
-          className={styles["screen-nav-effort-select"] ?? ""}
+          frameClassName={styles["screen-nav-select"]}
+          className={styles["screen-nav-effort-select"]}
           value={effort.value}
           disabled={false}
           title="effort"
@@ -88,8 +88,8 @@ export function ScreenNavModelPermissionSelect(props: ScreenNavModelPermissionPr
         <Select
           id={effortSelectId}
           ariaLabel="effort"
-          frameClassName={styles["screen-nav-select"] ?? ""}
-          className={styles["screen-nav-effort-select"] ?? ""}
+          frameClassName={styles["screen-nav-select"]}
+          className={styles["screen-nav-effort-select"]}
           value={EFFORT_PLACEHOLDER_VALUE}
           disabled={true}
           title={effort.reason}
@@ -100,7 +100,7 @@ export function ScreenNavModelPermissionSelect(props: ScreenNavModelPermissionPr
       <Select
         id={permissionModeSelectId}
         ariaLabel="許可モード"
-        frameClassName={styles["screen-nav-select"] ?? ""}
+        frameClassName={styles["screen-nav-select"]}
         className={permissionModeClass}
         value={permissionMode}
         disabled={false}

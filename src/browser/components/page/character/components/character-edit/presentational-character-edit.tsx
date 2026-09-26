@@ -42,7 +42,7 @@ export function PresentationalCharacterEdit(
         align="stretch"
         justify="start"
         wrap="nowrap"
-        className={styles["character-section"] ?? ""}
+        className={styles["character-section"]}
       >
         <Heading level={2} size="body" tone="inherit" weight="bold" className="">
           <span id="character-face">顔</span>
@@ -57,7 +57,7 @@ export function PresentationalCharacterEdit(
         align="stretch"
         justify="start"
         wrap="nowrap"
-        className={styles["character-section"] ?? ""}
+        className={styles["character-section"]}
       >
         <Heading level={2} size="body" tone="inherit" weight="bold" className="">
           <span id="character-expressions">表情</span>
@@ -77,7 +77,7 @@ export function PresentationalCharacterEdit(
           align="stretch"
           justify="start"
           wrap="nowrap"
-          className={styles["character-section"] ?? ""}
+          className={styles["character-section"]}
         >
           <HStack
             element="div"
@@ -113,7 +113,7 @@ export function PresentationalCharacterEdit(
                 size="action"
                 tone="ink-quiet"
                 weight="normal"
-                className={styles["character-section-note"] ?? ""}
+                className={styles["character-section-note"]}
               >
                 雑談も仕事と同じ
               </Text>
@@ -132,7 +132,7 @@ export function PresentationalCharacterEdit(
           align="stretch"
           justify="start"
           wrap="nowrap"
-          className={styles["character-section"] ?? ""}
+          className={styles["character-section"]}
         >
           <Heading level={2} size="body" tone="inherit" weight="bold" className="">
             <span id="character-outfit-accent">立ち絵の差し色</span>
@@ -152,7 +152,7 @@ export function PresentationalCharacterEdit(
         align="stretch"
         justify="start"
         wrap="nowrap"
-        className={styles["character-section"] ?? ""}
+        className={styles["character-section"]}
       >
         <Heading level={2} size="body" tone="inherit" weight="bold" className="">
           <span id="character-background">背景</span>

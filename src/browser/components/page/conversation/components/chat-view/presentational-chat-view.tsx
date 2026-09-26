@@ -41,7 +41,7 @@ export function PresentationalChatView({
       align="end"
       justify="start"
       wrap="nowrap"
-      className={styles["chat-region"] ?? ""}
+      className={styles["chat-region"]}
     >
       {portraitUrl !== undefined && (
         <NudgePortrait

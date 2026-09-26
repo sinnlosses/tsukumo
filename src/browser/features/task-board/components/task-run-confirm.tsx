@@ -54,7 +54,7 @@ export function TaskRunConfirm(props: TaskRunConfirmProps): ReactElement {
       backdrop="dim"
       placement={{ kind: "auto" }}
       onClose={props.onClose}
-      className={styles["task-run-confirm"] ?? ""}
+      className={styles["task-run-confirm"]}
     >
       <Text element="p" size="heading" tone="inherit" weight="semibold" className="">
         {props.taskId} を実行しますか
@@ -78,7 +78,7 @@ export function TaskRunConfirm(props: TaskRunConfirmProps): ReactElement {
           ariaLabel={undefined}
           ariaHasPopup={undefined}
           title={undefined}
-          className={styles["task-run-cancel"] ?? ""}
+          className={styles["task-run-cancel"]}
           onClick={props.onClose}
         >
           キャンセル
@@ -93,7 +93,7 @@ export function TaskRunConfirm(props: TaskRunConfirmProps): ReactElement {
             ariaLabel={undefined}
             ariaHasPopup={undefined}
             title={undefined}
-            className={styles["task-run-ok"] ?? ""}
+            className={styles["task-run-ok"]}
             onClick={run}
           >
             実行する

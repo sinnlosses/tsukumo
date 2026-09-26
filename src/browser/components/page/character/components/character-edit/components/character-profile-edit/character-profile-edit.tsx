@@ -36,7 +36,7 @@ export function CharacterProfileEdit(props: {
         ariaLabel={undefined}
         ariaHasPopup={undefined}
         title={undefined}
-        className={styles["character-button-outline"] ?? ""}
+        className={styles["character-button-outline"]}
         onClick={() => {
           setOpen(true)
         }}

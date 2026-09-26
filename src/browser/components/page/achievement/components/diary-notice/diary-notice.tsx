@@ -35,7 +35,7 @@ export function DiaryNotice(): ReactElement | null {
         align="stretch"
         justify="start"
         wrap="nowrap"
-        className={styles["diary-notice-icon"] ?? ""}
+        className={styles["diary-notice-icon"]}
       >
         <Bell size={18} />
       </HStack>
@@ -51,7 +51,7 @@ export function DiaryNotice(): ReactElement | null {
         ariaLabel={undefined}
         ariaHasPopup={undefined}
         title={undefined}
-        className={styles["diary-notice-open"] ?? ""}
+        className={styles["diary-notice-open"]}
         onClick={view.onOpen}
       >
         <Text element="span" size="inherit" tone="inherit" weight="bold" className="">
@@ -67,7 +67,7 @@ export function DiaryNotice(): ReactElement | null {
         ariaLabel={DISMISS_SR_LABEL}
         ariaHasPopup={undefined}
         title={undefined}
-        className={styles["diary-notice-dismiss"] ?? ""}
+        className={styles["diary-notice-dismiss"]}
         onClick={view.onDismiss}
       >
         {DISMISS_LABEL}

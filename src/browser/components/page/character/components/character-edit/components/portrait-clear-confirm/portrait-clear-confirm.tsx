@@ -48,7 +48,7 @@ export function PortraitClearConfirm(props: PortraitClearConfirmProps): ReactEle
       backdrop="clear"
       placement={anchoredPlacement(props.anchor)}
       onClose={props.onClose}
-      className={styles["character-clear-confirm"] ?? ""}
+      className={styles["character-clear-confirm"]}
     >
       <HStack
         element="div"
@@ -74,7 +74,7 @@ export function PortraitClearConfirm(props: PortraitClearConfirmProps): ReactEle
         size="action"
         tone="ink-quiet"
         weight="inherit"
-        className={styles["character-clear-confirm-note"] ?? ""}
+        className={styles["character-clear-confirm-note"]}
       >
         この表情を使う場面では「{props.fallbackLabel}」が出ます。
       </Text>
@@ -97,7 +97,7 @@ export function PortraitClearConfirm(props: PortraitClearConfirmProps): ReactEle
           ariaLabel={undefined}
           ariaHasPopup={undefined}
           title={undefined}
-          className={styles["character-button-outline"] ?? ""}
+          className={styles["character-button-outline"]}
           onClick={props.onClose}
         >
           やめる
@@ -111,7 +111,7 @@ export function PortraitClearConfirm(props: PortraitClearConfirmProps): ReactEle
           ariaLabel={undefined}
           ariaHasPopup={undefined}
           title={undefined}
-          className={styles["character-clear-confirm-ok"] ?? ""}
+          className={styles["character-clear-confirm-ok"]}
           onClick={props.onConfirm}
         >
           <Text element="span" size="inherit" tone="inherit" weight="bold" className="">

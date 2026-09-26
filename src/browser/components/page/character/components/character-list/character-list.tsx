@@ -64,14 +64,14 @@ export function CharacterList(props: { readonly onCreate: () => void }): ReactEl
               align="stretch"
               justify="start"
               wrap="nowrap"
-              className={styles["character-list-text"] ?? ""}
+              className={styles["character-list-text"]}
             >
               <Text
                 element="span"
                 size="subheading"
                 tone="inherit"
                 weight={isSelected ? "bold" : "normal"}
-                className={styles["character-list-name"] ?? ""}
+                className={styles["character-list-name"]}
               >
                 {entry.label}
               </Text>

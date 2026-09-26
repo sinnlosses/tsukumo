@@ -269,7 +269,7 @@ bun test --isolate test/cli.test.ts  # 単体テストファイルのみ実行
 bun run test:e2e              # E2E（組み立ててから test/e2e/ を走らせる。手元の Chrome が要る。成果物と
                               #   スクリーンショットは /tmp/tsukumo-e2e/）
 bun run test:e2e:update       # E2E の期待値（test/e2e/expected/）を書き直す。git diff で読んでから入れる
-bun run typecheck             # tsc --noEmit
+bun run typecheck             # css-types のあと tsc --noEmit
 bun run lint                  # oxlint（--fix は lint:fix）
 bun run format                # oxfmt で自動整形（--check は format:check）
 bun run build                 # ブラウザ側（src/browser/）を dist/browser/ に組み立てる。起動時には組み立てない

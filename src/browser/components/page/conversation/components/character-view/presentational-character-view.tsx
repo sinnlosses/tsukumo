@@ -52,7 +52,7 @@ export function PresentationalCharacterView({
       align="stretch"
       justify="start"
       wrap="nowrap"
-      className={styles["character-region"] ?? ""}
+      className={styles["character-region"]}
     >
       <SpeechLog portrait={portrait} speakerName={speakerName} />
       <HStack
@@ -63,7 +63,7 @@ export function PresentationalCharacterView({
         align="end"
         justify="start"
         wrap="wrap"
-        className={styles["character-layout"] ?? ""}
+        className={styles["character-layout"]}
       >
         {portrait}
         <BalloonTrack speeches={speeches} emptyMessage={emptyMessage} speakerName={speakerName} />

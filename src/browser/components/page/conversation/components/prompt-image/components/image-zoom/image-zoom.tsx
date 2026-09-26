@@ -53,7 +53,7 @@ export function ImageZoom(props: ImageZoomProps): ReactElement {
       backdrop="dim"
       placement={{ kind: "auto" }}
       onClose={props.onClose}
-      className={styles["image-zoom"] ?? ""}
+      className={styles["image-zoom"]}
     >
       <img
         className={styles["image-zoom-image"]}
@@ -71,7 +71,7 @@ export function ImageZoom(props: ImageZoomProps): ReactElement {
         ariaLabel={undefined}
         ariaHasPopup={undefined}
         title={undefined}
-        className={styles["image-zoom-close"] ?? ""}
+        className={styles["image-zoom-close"]}
         onClick={props.onClose}
       >
         {CLOSE_LABEL}

@@ -109,7 +109,7 @@ function Header(props: {
         size="label"
         tone="accent"
         weight="bold"
-        className={styles["achievement-diary-name"] ?? ""}
+        className={styles["achievement-diary-name"]}
       >
         {props.portrait.name}の日記
       </Text>
@@ -132,7 +132,7 @@ function Header(props: {
           ariaLabel={undefined}
           ariaHasPopup={undefined}
           title={undefined}
-          className={styles["achievement-diary-open-book"] ?? ""}
+          className={styles["achievement-diary-open-book"]}
           onClick={props.onOpenDiaryBook}
         >
           日記帳で読む
@@ -289,7 +289,7 @@ function Card(props: {
         size="heading"
         tone="ink"
         weight="inherit"
-        className={styles["achievement-card-value"] ?? ""}
+        className={styles["achievement-card-value"]}
       >
         {props.value}
       </Text>
@@ -299,7 +299,7 @@ function Card(props: {
           size="secondary"
           tone="ink-quiet"
           weight="inherit"
-          className={styles["achievement-card-note"] ?? ""}
+          className={styles["achievement-card-note"]}
         >
           {props.note}
         </Text>
@@ -327,7 +327,7 @@ function Controls(props: {
           ariaLabel={undefined}
           ariaHasPopup={undefined}
           title={undefined}
-          className={styles["achievement-review-button"] ?? ""}
+          className={styles["achievement-review-button"]}
           onClick={() => {}}
         >
           <Text element="span" size="inherit" tone="inherit" weight="bold" className="">
@@ -351,7 +351,7 @@ function Controls(props: {
         ariaLabel={undefined}
         ariaHasPopup={undefined}
         title={undefined}
-        className={styles["achievement-review-button"] ?? ""}
+        className={styles["achievement-review-button"]}
         onClick={review.onReview}
       >
         <Text element="span" size="inherit" tone="inherit" weight="bold" className="">

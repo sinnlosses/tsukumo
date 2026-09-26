@@ -36,7 +36,7 @@ export function AccentSwatch(props: {
         align="stretch"
         justify="start"
         wrap="nowrap"
-        className={styles["character-swatch-name"] ?? ""}
+        className={styles["character-swatch-name"]}
       >
         <Text element="span" size="secondary" tone="inherit" weight="inherit" className="">
           {swatch.label}
@@ -52,7 +52,7 @@ export function AccentSwatch(props: {
         size="label"
         tone="ink-quiet"
         weight="inherit"
-        className={styles["character-swatch-hex"] ?? ""}
+        className={styles["character-swatch-hex"]}
       >
         {swatch.value}
       </Text>

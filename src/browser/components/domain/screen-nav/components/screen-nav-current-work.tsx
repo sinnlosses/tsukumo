@@ -95,7 +95,7 @@ function CurrentWorkList(props: {
         size="inherit"
         tone="inherit"
         weight="semibold"
-        className={styles["screen-nav-work-heading"] ?? ""}
+        className={styles["screen-nav-work-heading"]}
       >
         {work.wordLabel}
         {work.pendingHint.kind === "input" ? "。入力欄の上で答えられる" : ""}
@@ -110,7 +110,7 @@ function CurrentWorkList(props: {
           ariaLabel={undefined}
           ariaHasPopup={undefined}
           title={undefined}
-          className={styles["screen-nav-work-go-to-question"] ?? ""}
+          className={styles["screen-nav-work-go-to-question"]}
           onClick={work.pendingHint.onGoToQuestion}
         >
           {GO_TO_QUESTION_LABEL}
@@ -123,7 +123,7 @@ function CurrentWorkList(props: {
             size="inherit"
             tone="ink-quiet"
             weight="inherit"
-            className={styles["screen-nav-work-full-heading"] ?? ""}
+            className={styles["screen-nav-work-full-heading"]}
           >
             実行中の {work.runningStep.toolName}
           </Text>
@@ -139,7 +139,7 @@ function CurrentWorkList(props: {
             size="inherit"
             tone="ink-quiet"
             weight="inherit"
-            className={styles["screen-nav-work-background-heading"] ?? ""}
+            className={styles["screen-nav-work-background-heading"]}
           >
             {work.backgroundList.headingLabel}
           </Text>
@@ -157,7 +157,7 @@ function CurrentWorkList(props: {
             size="inherit"
             tone="ink-quiet"
             weight="inherit"
-            className={styles["screen-nav-work-steps-heading"] ?? ""}
+            className={styles["screen-nav-work-steps-heading"]}
           >
             {work.stepList.headingLabel}
           </Text>
@@ -176,7 +176,7 @@ function CurrentWorkList(props: {
               ariaLabel={undefined}
               ariaHasPopup={undefined}
               title={undefined}
-              className={styles["screen-nav-work-toggle-all"] ?? ""}
+              className={styles["screen-nav-work-toggle-all"]}
               onClick={work.stepList.onToggleExpanded}
             >
               {work.stepList.toggleAll.label}
@@ -217,7 +217,6 @@ function CurrentWorkBackgroundRow(props: {
 function CurrentWorkStepRow(props: { readonly step: ScreenNavCurrentWorkStep }): ReactElement {
   const { step } = props
   const classes = clsx(
-    styles["screen-nav-work-step"],
     step.nested && styles["screen-nav-work-step-nested"],
     step.status.kind === "done" && styles["screen-nav-work-step-done"],
     step.status.kind === "running" && styles["screen-nav-work-step-running"],

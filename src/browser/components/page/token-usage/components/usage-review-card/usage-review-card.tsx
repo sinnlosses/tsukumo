@@ -89,7 +89,7 @@ function IdleReviewCard(props: {
       <CharacterFace
         url={review.face.url}
         alt={review.face.alt}
-        className={styles["usage-review-face"] ?? ""}
+        className={styles["usage-review-face"]}
       />
       <VStack
         element="div"
@@ -99,7 +99,7 @@ function IdleReviewCard(props: {
         align="stretch"
         justify="start"
         wrap="nowrap"
-        className={styles["usage-review-body"] ?? ""}
+        className={styles["usage-review-body"]}
       >
         <span className={styles["usage-review-heading"]}>{IDLE_HEADING}</span>
         <span className={styles["usage-review-note"]}>{IDLE_NOTE}</span>
@@ -114,7 +114,7 @@ function IdleReviewCard(props: {
           ariaLabel={undefined}
           ariaHasPopup={undefined}
           title={undefined}
-          className={styles["usage-review-start"] ?? ""}
+          className={styles["usage-review-start"]}
           onClick={review.onStart}
         >
           <Text element="span" size="inherit" tone="inherit" weight="bold" className="">
@@ -162,7 +162,7 @@ function RunningReviewCard(props: {
         <CharacterFace
           url={review.face.url}
           alt={review.face.alt}
-          className={styles["usage-review-face"] ?? ""}
+          className={styles["usage-review-face"]}
         />
         <VStack
           element="div"
@@ -172,7 +172,7 @@ function RunningReviewCard(props: {
           align="stretch"
           justify="start"
           wrap="nowrap"
-          className={styles["usage-review-body"] ?? ""}
+          className={styles["usage-review-body"]}
         >
           <span className={styles["usage-review-heading"]}>{RUNNING_HEADING}</span>
           {review.speech.kind === "said" ? (
@@ -246,7 +246,7 @@ function ResultReviewCard(props: {
         <CharacterFace
           url={review.face.url}
           alt={review.face.alt}
-          className={styles["usage-review-face"] ?? ""}
+          className={styles["usage-review-face"]}
         />
         <div className={styles["usage-review-result-bubble"]}>
           <Text
@@ -254,7 +254,7 @@ function ResultReviewCard(props: {
             size="label"
             tone="accent"
             weight="bold"
-            className={styles["usage-review-result-bubble-label"] ?? ""}
+            className={styles["usage-review-result-bubble-label"]}
           >
             tsukumo
           </Text>
@@ -359,7 +359,7 @@ function ImpactBadge(props: { readonly impact: UsageProposalImpact }): ReactElem
     large: styles["usage-review-impact-large"],
     medium: styles["usage-review-impact-medium"],
     small: styles["usage-review-impact-small"],
-  } as const satisfies Record<UsageProposalImpact, string | undefined>
+  } as const satisfies Record<UsageProposalImpact, string>
 
   return (
     <span className={clsx(styles["usage-review-impact"], toneClass[impact])}>

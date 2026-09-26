@@ -517,7 +517,7 @@ describe("browser/ の機能どうしの import", () => {
 // （誰から引いてもよく、自分は `lib/` までしか引かない）。機能に固有のフックは機能の中の
 // `features/<機能>/hooks/` に置くので、こちらの箱には入らない。
 //
-// `browser/types/` の `*.d.ts`（箱に属さない ambient 宣言。`css-variable.d.ts` / `css-module.d.ts`）と
+// `browser/types/` の `*.d.ts`（箱に属さない ambient 宣言。`css-variable.d.ts` / `css-global.d.ts`）と
 // `browser/styles/`（グローバルな CSS だけで `.ts`/`.tsx` を持たない）はどの箱にも属さないので、
 // import 元・import 先のどちらでも無視する。未知のディレクトリが `browser/` 直下や
 // `browser/components/` 直下に増えたときにテストの直し忘れで素通りしないよう、`main.tsx` でも

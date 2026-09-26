@@ -64,7 +64,7 @@ export function PresentationalTurnHeader({
           ariaLabel={OLDER_LABEL}
           ariaHasPopup={undefined}
           title={OLDER_LABEL}
-          className={styles["turn-nav-button"] ?? ""}
+          className={styles["turn-nav-button"]}
           onClick={onOlder}
         >
           <span aria-hidden="true">‹</span>
@@ -78,7 +78,7 @@ export function PresentationalTurnHeader({
           ariaLabel={NEWER_LABEL}
           ariaHasPopup={undefined}
           title={NEWER_LABEL}
-          className={styles["turn-nav-button"] ?? ""}
+          className={styles["turn-nav-button"]}
           onClick={onNewer}
         >
           <span aria-hidden="true">›</span>
@@ -105,7 +105,7 @@ export function PresentationalTurnHeader({
               size="subheading"
               tone="inherit"
               weight="bold"
-              className={styles["turn-title-text"] ?? ""}
+              className={styles["turn-title-text"]}
             >
               {activeTitle}
             </Text>
@@ -122,7 +122,7 @@ export function PresentationalTurnHeader({
           size="secondary"
           tone="ink-quiet"
           weight="inherit"
-          className={styles["turn-position"] ?? ""}
+          className={styles["turn-position"]}
         >
           {positionLabel}
         </Text>
@@ -161,7 +161,7 @@ function TurnHistoryList(props: {
         size="inherit"
         tone="ink-quiet"
         weight="semibold"
-        className={styles["turn-history-heading"] ?? ""}
+        className={styles["turn-history-heading"]}
       >
         {HISTORY_HEADING}
       </Text>

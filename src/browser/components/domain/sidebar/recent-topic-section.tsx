@@ -16,11 +16,7 @@ import styles from "./sidebar.module.css"
 export function RecentTopicSection(): ReactElement {
   const topics = useSessionSelector((session) => session.state.chatTopics)
   return (
-    <SidebarSection
-      title="最近の話題"
-      extraClass={styles["sidebar-block-chat"] ?? ""}
-      action={undefined}
-    >
+    <SidebarSection title="最近の話題" extraClass={styles["sidebar-block-chat"]} action={undefined}>
       {topics.length === 0 ? (
         <Text element="p" size="inherit" tone="ink-quiet" weight="inherit" className="">
           まだ話題が無い（話が積もると、ここに並ぶ）

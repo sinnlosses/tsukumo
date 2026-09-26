@@ -60,7 +60,7 @@ export function PresentationalComposer({
           size="secondary"
           tone="state-warn"
           weight="inherit"
-          className={styles["dispatch-band"] ?? ""}
+          className={styles["dispatch-band"]}
         >
           {band.text}
         </Text>
@@ -73,7 +73,7 @@ export function PresentationalComposer({
         align="stretch"
         justify="start"
         wrap="nowrap"
-        className={styles["dispatch-text-wrap"] ?? ""}
+        className={styles["dispatch-text-wrap"]}
       >
         <PromptImageChips images={images} onRemove={onRemoveImage} />
         <textarea
@@ -113,7 +113,7 @@ export function PresentationalComposer({
           ariaLabel="画像を添える"
           ariaHasPopup={undefined}
           title="画像を添える"
-          className={styles["dispatch-tool"] ?? ""}
+          className={styles["dispatch-tool"]}
           onClick={onPickImages}
         >
           <ImageIcon size={TOOL_ICON_SIZE} strokeWidth={1.8} />
@@ -127,7 +127,7 @@ export function PresentationalComposer({
           ariaLabel="コマンドを補完する"
           ariaHasPopup={undefined}
           title="コマンドを補完する"
-          className={styles["dispatch-tool"] ?? ""}
+          className={styles["dispatch-tool"]}
           onClick={() => onInsertTrigger("/")}
         >
           <Slash size={TOOL_ICON_SIZE} strokeWidth={1.8} />
@@ -141,7 +141,7 @@ export function PresentationalComposer({
           ariaLabel="ファイルを補完する"
           ariaHasPopup={undefined}
           title="ファイルを補完する"
-          className={styles["dispatch-tool"] ?? ""}
+          className={styles["dispatch-tool"]}
           onClick={() => onInsertTrigger("@")}
         >
           <AtSign size={TOOL_ICON_SIZE} strokeWidth={1.8} />

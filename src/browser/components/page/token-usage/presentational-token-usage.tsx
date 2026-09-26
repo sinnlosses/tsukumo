@@ -77,7 +77,7 @@ export function PresentationalTokenUsage(props: PresentationalTokenUsageProps): 
             size="label"
             tone="ink-quiet"
             weight="inherit"
-            className={styles["token-usage-plan"] ?? ""}
+            className={styles["token-usage-plan"]}
           >
             {props.plan}
           </Text>
@@ -315,7 +315,7 @@ function ToolUsageCard(props: ToolUsageCardProps): ReactElement {
           ariaLabel={undefined}
           ariaHasPopup={undefined}
           title={undefined}
-          className={styles["usage-table-more"] ?? ""}
+          className={styles["usage-table-more"]}
           onClick={() => {
             setExpanded((current) => !current)
           }}
@@ -343,7 +343,7 @@ function TableCardHead(props: TableCardHeadProps): ReactElement {
       align="baseline"
       justify="start"
       wrap="nowrap"
-      className={styles["usage-table-head"] ?? ""}
+      className={styles["usage-table-head"]}
     >
       <h3 className={styles["usage-table-title"]}>{props.title}</h3>
       <span className={styles["usage-table-order"]}>{props.order}</span>

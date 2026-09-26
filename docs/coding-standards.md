@@ -177,13 +177,12 @@ components/domain/portrait.test.tsx` の `fetch` のスタブ（`fetch` の実�
 テンプレート文字列で手で組まず、`clsx(...)` に渡す。clsx は依存にある（`package.json`。
 2026-09-26 に承認）。
 
-CSS Modules の `styles["..."]` は `string | undefined` と型付けされるので、手で組むと
-`?? ""` や `value !== undefined` の型ガードが混ざり、区切りの空白をどちらが持つかも呼び出し側が
-気にすることになる。clsx は `undefined`・`false`・空文字を捨てて空白でつなぐので、渡す側は
-並べるだけで済む。
+class 名を手で組むと、条件で落とす class を空文字に畳む三項演算子が混ざり、区切りの空白を
+どちらが持つかも呼び出し側が気にすることになる。clsx は `undefined`・`false`・空文字を捨てて
+空白でつなぐので、渡す側は並べるだけで済む。
 
 - 条件付きの class は `cond && styles["x"]` の形で渡す。オブジェクト記法
-  （`{ [styles["x"]]: cond }`）は、キーが `undefined` になりうるので使わない
+  （`{ [styles["x"]]: cond }`）は使わず、書き方を1つにそろえる
 - class 名が1つだけのとき（`className={styles["x"]}`）は包まない
 
 ## 型注釈より `satisfies`

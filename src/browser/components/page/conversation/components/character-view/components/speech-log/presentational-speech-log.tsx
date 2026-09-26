@@ -61,7 +61,7 @@ export function PresentationalSpeechLog({
         backdrop="clear"
         placement={{ kind: "auto" }}
         onClose={onClose}
-        className={styles["speech-log"] ?? ""}
+        className={styles["speech-log"]}
       >
         {/* 枠の中を丸ごと覆う。空いたところを押しても target が `<dialog>` にならない
             （＝枠の外を押したときだけ閉じる）。 */}
@@ -80,7 +80,7 @@ export function PresentationalSpeechLog({
             align="end"
             justify="start"
             wrap="nowrap"
-            className={styles["speech-log-floor"] ?? ""}
+            className={styles["speech-log-floor"]}
           >
             {portrait}
           </HStack>
@@ -92,7 +92,7 @@ export function PresentationalSpeechLog({
             align="stretch"
             justify="start"
             wrap="nowrap"
-            className={styles["speech-log-scroller"] ?? ""}
+            className={styles["speech-log-scroller"]}
           >
             <p className={styles["speech-log-more"]} aria-hidden="true">
               {MORE_LABEL}
@@ -103,7 +103,7 @@ export function PresentationalSpeechLog({
                 size="secondary"
                 tone="ink-quiet"
                 weight="inherit"
-                className={styles["speech-log-empty"] ?? ""}
+                className={styles["speech-log-empty"]}
               >
                 {EMPTY_MESSAGE}
               </Text>

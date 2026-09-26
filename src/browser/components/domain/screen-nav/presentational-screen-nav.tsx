@@ -44,7 +44,7 @@ export function PresentationalScreenNav({
         <CharacterFace
           url={parts.face.url}
           alt={parts.face.alt}
-          className={styles["screen-nav-face"] ?? ""}
+          className={styles["screen-nav-face"]}
         />
         <ScreenNavRoom name={parts.room} />
       </div>

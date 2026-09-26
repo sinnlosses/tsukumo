@@ -53,7 +53,7 @@ export function Turn(props: TurnProps): ReactElement {
           size="secondary"
           tone="ink-quiet"
           weight="inherit"
-          className={styles["turn-dropped"] ?? ""}
+          className={styles["turn-dropped"]}
         >
           これ以前の {turn.droppedCount} 件は省略した
         </Text>
@@ -102,7 +102,7 @@ function TurnFailureNotice(props: { readonly failure: TurnFailure }): ReactEleme
         size="label"
         tone="state-ng"
         weight="inherit"
-        className={styles["step-heading"] ?? ""}
+        className={styles["step-heading"]}
       >
         失敗で終わった
       </Text>
@@ -168,7 +168,7 @@ function Step(props: {
           size="label"
           tone="ink-quiet"
           weight="inherit"
-          className={styles["step-heading"] ?? ""}
+          className={styles["step-heading"]}
         >
           {interimSummary(step.body)}
         </Text>
@@ -185,7 +185,7 @@ function Step(props: {
           size="label"
           tone="ink-quiet"
           weight="inherit"
-          className={styles["step-heading"] ?? ""}
+          className={styles["step-heading"]}
         >
           中間レポート
         </Text>
@@ -196,7 +196,7 @@ function Step(props: {
           size="label"
           tone="ink-quiet"
           weight="inherit"
-          className={styles["step-heading"] ?? ""}
+          className={styles["step-heading"]}
         >
           最終レポート
         </Text>
@@ -206,16 +206,13 @@ function Step(props: {
   )
 }
 
-/**
- * ステップの器に付ける class。地の段（`is-interim` / `is-final`）は互いに立たない。
- * 戻り値に undefined が混じるのは CSS Modules の対応表を引くため（`src/browser/types/css-module.d.ts`）で、
- * `className` はそのまま受ける。
- */
-function stepClassName(step: MainViewStep): string | undefined {
-  if (step.interim) {
-    return `${styles["main-step"]} ${styles["is-interim"]}`
-  }
-  return step.final ? `${styles["main-step"]} ${styles["is-final"]}` : styles["main-step"]
+/** ステップの器に付ける class。地の段（`is-interim` / `is-final`）は互いに立たない。 */
+function stepClassName(step: MainViewStep): string {
+  return clsx(
+    styles["main-step"],
+    step.interim && styles["is-interim"],
+    !step.interim && step.final && styles["is-final"],
+  )
 }
 
 /**

@@ -86,7 +86,7 @@ export function CommandSuggestions(props: CommandSuggestionsProps): ReactElement
               size="secondary"
               tone="ink-quiet"
               weight="inherit"
-              className={styles["dispatch-suggestion-description"] ?? ""}
+              className={styles["dispatch-suggestion-description"]}
             >
               {command.description}
             </Text>

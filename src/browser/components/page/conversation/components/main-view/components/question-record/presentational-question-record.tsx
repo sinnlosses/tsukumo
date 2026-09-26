@@ -29,7 +29,7 @@ export function PresentationalQuestionRecord(
   props: PresentationalQuestionRecordProps,
 ): ReactElement {
   return (
-    <section className={clsx(styles["tool-block"], styles["tool-block-question"])}>
+    <section className={styles["tool-block"]}>
       {props.questions.map((question) => (
         <QuestionBlock question={question} key={question.key} />
       ))}
@@ -47,7 +47,7 @@ function QuestionBlock(props: { readonly question: QuestionRecordQuestionModel }
         size="body"
         tone="inherit"
         weight="bold"
-        className={styles["question-record-heading"] ?? ""}
+        className={styles["question-record-heading"]}
       >
         {question.header}: {question.text}
       </Heading>
@@ -113,7 +113,7 @@ function PreviewBlock(props: {
         size="inherit"
         tone="inherit"
         weight="semibold"
-        className={styles["question-preview-label"] ?? ""}
+        className={styles["question-preview-label"]}
       >
         <QuestionMark chosen={preview.chosen} multiSelect={multiSelect} /> {preview.label}
       </Text>

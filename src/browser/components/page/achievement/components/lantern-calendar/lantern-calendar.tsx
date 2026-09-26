@@ -1,6 +1,7 @@
 // 灯りの暦（`docs/screen-design.md` 13.10「灯りの暦」）。直近5週の日ごとの成果を、狐火の灯りで
 // 並べる。マスを押すと見ている日が変わる（見開きを開く口はまだ無い。別タスクで足す）。
 
+import clsx from "clsx"
 import { type ReactElement } from "react"
 import { keys } from "remeda"
 
@@ -64,7 +65,7 @@ export function LanternCalendar(props: LanternCalendarProps): ReactElement {
             size="secondary"
             tone="ink-quiet"
             weight="normal"
-            className={styles["achievement-calendar-note"] ?? ""}
+            className={styles["achievement-calendar-note"]}
           >
             成果のあった日に狐火がともります · 押すとその日へ
           </Text>
@@ -96,7 +97,7 @@ function Legend(): ReactElement {
       align="stretch"
       justify="start"
       wrap="wrap"
-      className={styles["achievement-calendar-legend"] ?? ""}
+      className={styles["achievement-calendar-legend"]}
     >
       {keys(LAMP_LABEL).map((level) => (
         <Text
@@ -105,7 +106,7 @@ function Legend(): ReactElement {
           size="label"
           tone="ink-quiet"
           weight="inherit"
-          className={styles["achievement-calendar-legend-item"] ?? ""}
+          className={styles["achievement-calendar-legend-item"]}
         >
           <Lamp level={level} />
           {LAMP_LABEL[level]}
@@ -116,7 +117,7 @@ function Legend(): ReactElement {
         size="label"
         tone="ink-quiet"
         weight="inherit"
-        className={styles["achievement-calendar-legend-item"] ?? ""}
+        className={styles["achievement-calendar-legend-item"]}
       >
         <Bell />
         日記あり
@@ -153,7 +154,7 @@ function Grid(props: GridProps): ReactElement {
             size="label"
             tone="ink-quiet"
             weight="inherit"
-            className={styles["achievement-calendar-head"] ?? ""}
+            className={styles["achievement-calendar-head"]}
           >
             {head}
           </Text>
@@ -216,7 +217,7 @@ function DayCell(props: DayCellProps): ReactElement {
         size="label"
         tone="ink-quiet"
         weight="inherit"
-        className={styles["achievement-calendar-day-date"] ?? ""}
+        className={styles["achievement-calendar-day-date"]}
       >
         {cellDateLabel(props.date, props.index)}
       </Text>
@@ -229,7 +230,7 @@ function DayCell(props: DayCellProps): ReactElement {
           align="stretch"
           justify="start"
           wrap="nowrap"
-          className={styles["achievement-calendar-day-bell"] ?? ""}
+          className={styles["achievement-calendar-day-bell"]}
         >
           <Bell />
         </HStack>
@@ -241,7 +242,7 @@ function DayCell(props: DayCellProps): ReactElement {
           size="label"
           tone="accent"
           weight="bold"
-          className={styles["achievement-calendar-day-today"] ?? ""}
+          className={styles["achievement-calendar-day-today"]}
         >
           今日
         </Text>
@@ -267,7 +268,10 @@ export function Lamp(props: { readonly level: LampLevel }): ReactElement {
       height={size}
       viewBox="0 0 24 24"
       aria-hidden="true"
-      className={styles[`achievement-calendar-lamp-${props.level}`]}
+      className={clsx(
+        props.level === "lit" && styles["achievement-calendar-lamp-lit"],
+        props.level === "bright" && styles["achievement-calendar-lamp-bright"],
+      )}
     >
       <path d={FLAME_PATH} fill="var(--accent)" fillOpacity={opacity} />
       {props.level === "bright" ? (

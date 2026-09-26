@@ -434,7 +434,6 @@ src/
     app.tsx                   <App>。Provider を重ね、その内側で <Root> を描くだけ（6.1）
     types/                    browser 全体に効く ambient 宣言（import されない `*.d.ts`）だけを置く。どの箱にも属さない
       css-variable.d.ts       `style` に CSS カスタムプロパティを書くための型拡張
-      css-module.d.ts         `*.module.css` を import したときの型
       css-global.d.ts         `styles/theme.css` を副作用だけで import したときの宣言（中身は空）
       vendor-global.d.ts      外部ライブラリがブラウザのグローバルに置くものの型（`<script>` で読むので npm の型が引けない分）
     components/               React の部品。**`app/` `page/` `domain/` `ui/` の4段**（2026-09-25・2026-09-26 決定。下の箱の表）
@@ -2419,6 +2418,13 @@ class 名は用語集の語（`balloon` / `portrait` / `turn-header` など）�
 `styles["balloon-track"]` と引く（キャメルケースへ変換しない）。実際に DOM へ付く名前は
 `balloon-track_uHH43w` のように**組み立てのたびにハッシュ化される**ので、外から要素を指す口が
 要るところは `data-*` を持つ（4領域の `data-region`。`scripts/capture-view.ts` が使う）。
+
+**`styles["..."]` の型は、CSS に書いた class 名ごとに生成した型宣言から来る**（`happy-css-modules`。
+`bun run css-types` が `dist/css-module-type/` に `src/` と同じ並びで書き、`tsconfig.json` の
+`rootDirs` で `*.module.css` の隣にあるものとして解決させる）。CSS に無い名前を引くと型エラーに
+なり、ある名前は `string` で届くので `?? ""` で受けない。生成物を部品の隣に置かないのは、ページと
+部品の直下に置けるファイルが決まっているため（2章「ページの形」）。`typecheck` と `build` が
+先に生成するので、手で打つのは CSS を書き換えた直後にエディタの型を追いつかせたいときだけ。
 
 同居に移した理由は `docs/history/decision.md`「design.md 6.6 CSS（機能と同居させる形に
 移した理由）」。

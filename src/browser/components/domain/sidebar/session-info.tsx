@@ -58,18 +58,18 @@ export function SessionInfo(props: SessionInfoProps): ReactElement {
               align="center"
               justify="start"
               wrap="nowrap"
-              className={styles["session-info-value"] ?? ""}
+              className={styles["session-info-value"]}
             >
               <CharacterFace
                 url={faceUrl}
                 alt={characterName ?? ""}
-                className={styles["session-info-face"] ?? ""}
+                className={styles["session-info-face"]}
               />
               <CharacterSwitch
                 id={CHARACTER_SELECT_ID}
                 ariaLabel="キャラクター"
-                frameClassName={styles["session-info-select-frame"] ?? ""}
-                className={styles["character-select"] ?? ""}
+                frameClassName={styles["session-info-select-frame"]}
+                className={styles["character-select"]}
               />
             </HStack>
           </>

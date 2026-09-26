@@ -34,7 +34,7 @@ export function CharacterProfile(props: { readonly profile: CharacterProfileMode
         align="stretch"
         justify="start"
         wrap="nowrap"
-        className={styles["character-profile-text"] ?? ""}
+        className={styles["character-profile-text"]}
       >
         <div className={styles["character-profile-headline"]}>
           <Heading
@@ -42,7 +42,7 @@ export function CharacterProfile(props: { readonly profile: CharacterProfileMode
             size="heading"
             tone="inherit"
             weight="bold"
-            className={styles["character-profile-name"] ?? ""}
+            className={styles["character-profile-name"]}
           >
             {profile.name}
           </Heading>
@@ -51,7 +51,7 @@ export function CharacterProfile(props: { readonly profile: CharacterProfileMode
             size="action"
             tone="ink-quiet"
             weight="inherit"
-            className={styles["character-profile-id"] ?? ""}
+            className={styles["character-profile-id"]}
           >
             id: {profile.id}
           </Text>
@@ -68,7 +68,7 @@ export function CharacterProfile(props: { readonly profile: CharacterProfileMode
             size="label"
             tone="ink-quiet"
             weight="inherit"
-            className={styles["character-screen-note"] ?? ""}
+            className={styles["character-screen-note"]}
           >
             {profile.note.text}
           </Text>
@@ -83,7 +83,7 @@ export function CharacterProfile(props: { readonly profile: CharacterProfileMode
           align="center"
           justify="start"
           wrap="wrap"
-          className={styles["character-profile-actions"] ?? ""}
+          className={styles["character-profile-actions"]}
         >
           <CharacterProfileEdit edit={profile.editProfile} />
           {profile.switchTo.kind === "shown" ? (
@@ -96,7 +96,7 @@ export function CharacterProfile(props: { readonly profile: CharacterProfileMode
               ariaLabel={undefined}
               ariaHasPopup={undefined}
               title={profile.switchTo.title}
-              className={styles["character-button-outline"] ?? ""}
+              className={styles["character-button-outline"]}
               onClick={profile.switchTo.onSwitch}
             >
               <SwitchIcon />

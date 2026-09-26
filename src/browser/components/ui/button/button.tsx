@@ -56,7 +56,7 @@ export const BUTTON_VARIANT_CLASS = {
   "solid-warn": styles["button-variant-solid-warn"],
   ghost: styles["button-variant-ghost"],
   link: styles["button-variant-link"],
-} satisfies Record<ButtonVariant, string | undefined>
+} satisfies Record<ButtonVariant, string>
 
 const BUTTON_PRESSED_ARIA = {
   none: undefined,

@@ -61,7 +61,7 @@ export function DiaryBook({
       backdrop="deep"
       placement={{ kind: "auto" }}
       onClose={onClose}
-      className={styles["diary-book"] ?? ""}
+      className={styles["diary-book"]}
     >
       {open ? (
         <VStack
@@ -72,7 +72,7 @@ export function DiaryBook({
           align="stretch"
           justify="start"
           wrap="nowrap"
-          className={styles["diary-book-stage"] ?? ""}
+          className={styles["diary-book-stage"]}
         >
           <HStack
             element="div"
@@ -100,7 +100,7 @@ export function DiaryBook({
               ariaLabel={undefined}
               ariaHasPopup={undefined}
               title={undefined}
-              className={styles["diary-book-topbar-button"] ?? ""}
+              className={styles["diary-book-topbar-button"]}
               onClick={onToggleToc}
             >
               {TOC_LABEL}
@@ -114,7 +114,7 @@ export function DiaryBook({
               ariaLabel={undefined}
               ariaHasPopup={undefined}
               title={undefined}
-              className={styles["diary-book-topbar-button"] ?? ""}
+              className={styles["diary-book-topbar-button"]}
               onClick={onClose}
             >
               {CLOSE_LABEL}
@@ -148,7 +148,7 @@ function NavButton(props: {
       ariaLabel={undefined}
       ariaHasPopup={undefined}
       title={undefined}
-      className={styles["diary-book-topbar-button"] ?? ""}
+      className={styles["diary-book-topbar-button"]}
       onClick={props.onClick}
     >
       {props.reverse ? (
@@ -236,7 +236,7 @@ function Bookmark(props: {
 function TaskListing(props: { readonly tasks: DiaryBookTaskList }): ReactElement {
   const { tasks } = props
   return (
-    <div className={styles["diary-book-tasks"]}>
+    <div>
       <p className={styles["diary-book-tasks-heading"]}>{DONE_HEADING}</p>
       {tasks.tasksKnown ? (
         <ul className={styles["diary-book-task-list"]}>
@@ -257,7 +257,7 @@ function TaskListing(props: { readonly tasks: DiaryBookTaskList }): ReactElement
         size="label"
         tone="ink-quiet"
         weight="inherit"
-        className={styles["diary-book-tasks-footer"] ?? ""}
+        className={styles["diary-book-tasks-footer"]}
       >
         {tasks.moreCount > 0
           ? `ほか ${String(tasks.moreCount)} 件 · コミット ${String(tasks.commitCount)}`
@@ -277,7 +277,7 @@ function Badges(props: { readonly badges: readonly DiaryBookBadge[] }): ReactEle
       align="stretch"
       justify="start"
       wrap="wrap"
-      className={styles["diary-book-badges"] ?? ""}
+      className={styles["diary-book-badges"]}
     >
       {props.badges.map((badge) => (
         <div key={badge.key} className={styles["diary-book-badge"]}>
@@ -339,7 +339,7 @@ function RightPage(props: {
         align="end"
         justify="start"
         wrap="nowrap"
-        className={styles["diary-book-signature"] ?? ""}
+        className={styles["diary-book-signature"]}
       >
         {page.right.kind === "blank" ? (
           <BlankReview review={page.right.review} writerName={page.portraitName} />
@@ -379,7 +379,7 @@ function BlankReview(props: {
         ariaLabel={undefined}
         ariaHasPopup={undefined}
         title={undefined}
-        className={styles["diary-book-review-button"] ?? ""}
+        className={styles["diary-book-review-button"]}
         onClick={review.onReview}
       >
         <Text element="span" size="inherit" tone="inherit" weight="bold" className="">
@@ -392,7 +392,7 @@ function BlankReview(props: {
           size="label"
           tone="ink-quiet"
           weight="inherit"
-          className={styles["diary-book-review-note"] ?? ""}
+          className={styles["diary-book-review-note"]}
         >
           {review.availability.reason}
         </Text>
@@ -402,7 +402,7 @@ function BlankReview(props: {
           size="label"
           tone="ink-quiet"
           weight="inherit"
-          className={styles["diary-book-review-note"] ?? ""}
+          className={styles["diary-book-review-note"]}
         >
           {props.writerName}がこのページに日記を書きます
         </Text>
@@ -429,7 +429,7 @@ function Toc(props: {
               size="subheading"
               tone="ink"
               weight="bold"
-              className={styles["diary-book-toc-heading"] ?? ""}
+              className={styles["diary-book-toc-heading"]}
             >
               {month.heading}
             </Heading>
