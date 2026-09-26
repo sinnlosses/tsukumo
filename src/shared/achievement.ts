@@ -2,7 +2,7 @@
 // 同じ値を見るので shared に置く（`token-usage-summary.ts` と同じ考え方）。手続きの形は
 // `src/shared/contract/achievement.ts`。
 // 数え方の規則そのものは `docs/requirements.md` 4.11 が正典で、ここは受け渡しの形と、見る日の
-// 決め方・振り返りの依頼文だけを持つ（`docs/design.md` 5章「成果の集め方と配り方」）。語は
+// 決め方・振り返りの依頼文だけを持つ（`docs/requirements.md`「成果の振り返り」）。語は
 // `docs/glossary.md`「成果」。
 //
 // 運ぶのはコミットの数とタスクの ID・summary だけ（コミットの件名も会話の文面も入らない。
@@ -42,7 +42,7 @@ export type AchievementDoneTasks =
   | { readonly kind: "known"; readonly items: readonly AchievementTask[] }
 
 /**
- * 先輩タスクの卒業1件（`docs/requirements.md` 4.11「卒業と節目」）。登録から7日以上経っていた
+ * 先輩タスクの卒業1件（`docs/requirements.md`「卒業と節目」）。登録から7日以上経っていた
  * その日に終えたタスクだけが対象。
  */
 export type AchievementGraduation = {
@@ -55,7 +55,7 @@ export type AchievementGraduation = {
 }
 
 /**
- * 節目1件（`docs/requirements.md` 4.11「卒業と節目」）。通算のタスクの数・コミットの数が
+ * 節目1件（`docs/requirements.md`「卒業と節目」）。通算のタスクの数・コミットの数が
  * 刻みの倍数をその日にまたいだとき。1日に同じ種類を複数またいでも大きいほう1つだけ。
  */
 export type AchievementMilestone =
@@ -121,7 +121,7 @@ export const dailyAchievementSchema = z.discriminatedUnion("kind", [
   }),
 ])
 
-/** 一覧に並べるタスクの上限（`docs/requirements.md` 4.11「振り返りの依頼」）。 */
+/** 一覧に並べるタスクの上限（`docs/requirements.md`「振り返りの依頼」）。 */
 const MAX_LISTED_REQUEST_TASKS = 20
 
 /**
@@ -139,7 +139,7 @@ export function isEmptyAchievementDay(
 
 /**
  * 振り返りのボタンを押したときに、会話とは別の使い捨ての問い合わせへ送る依頼文
- * （`docs/requirements.md` 4.11「振り返りの依頼」、語は `docs/glossary.md`「成果の振り返り」）。
+ * （`docs/requirements.md`「振り返りの依頼」、語は `docs/glossary.md`「成果の振り返り」）。
  * 画面に出している数だけから組み立てる——コミットの件名や会話の文面は入れない
  * （`docs/coding-standards.md`「会話内容の扱い」）。モードでは文面を変えない（会話のモードに
  * 関わらず同じ問い合わせに渡すため）。

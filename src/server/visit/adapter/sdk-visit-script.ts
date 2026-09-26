@@ -1,4 +1,4 @@
-// 訪問の台本を書かせる使い捨ての `query()`（`docs/design.md`「訪問の台本」）。SDK に触るので
+// 訪問の台本を書かせる使い捨ての `query()`（`docs/requirements.md`「訪問」）。SDK に触るので
 // `sdk-` で始まる（`docs/architecture.md`「1ファイル = 1つの境界」）。何を渡し、受け取ったものをどう検査するかは core
 // （`parseVisitScript` と `createVisitScriptWriter`）が持ち、ここは起こして
 // `structured_output` を返すだけ。

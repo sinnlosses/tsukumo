@@ -116,8 +116,8 @@ export const sessionContract = {
   /**
    * 成果の画面のボタン（と見開きの「この日を振り返る」）から送る、成果の振り返り
    * （`docs/glossary.md`「成果の振り返り」）。画面は日付だけを送る——依頼文は
-   * サーバ（`src/server/session/core/session-command.ts`）がその日の成果を数え直して組む（`docs/design.md`「日記の受け取りと
-   * 保存」「コマンドと依頼」）。`date` は `YYYY-MM-DD`。会話のターン中・答え待ちでも受けるので
+   * サーバ（`src/server/session/core/session-command.ts`）がその日の成果を数え直して組む（`docs/requirements.md`
+   * 「振り返りの依頼」）。`date` は `YYYY-MM-DD`。会話のターン中・答え待ちでも受けるので
    * `meta` では断らない（断るかどうかは受け手の中で見る）。
    */
   reflectAchievement: commandBase.input(

@@ -468,7 +468,7 @@ export type SessionState = {
   readonly usageReview: UsageReview
   /**
    * 前回の見直しの結果。トークン消費の画面の「前回の提案」のリンクが読む
-   * （`docs/glossary.md`「見直し」、`docs/design.md`「見直しのツールと状態」）。
+   * （`docs/glossary.md`「見直し」、`docs/requirements.md`「トークン消費の見直し」）。
    *
    * {@link usageReview} とは別の状態——起こし直しでもプロセスの再起動でも消えない
    * （源は `usage-review-result` が届くたびと、起こしたとき1回だけホームのファイルを
@@ -486,7 +486,7 @@ export type SessionState = {
    * `session-ended` では動かさない（会話のターンと並んで書いているため）。受け付けずに終わった
    * （時間切れ・失敗・中断のどれでも）ときは書き手が `diary-failed` を流して `failed` にする。
    * `written` と `failed` は次の `diary-requested` まで持ち続ける。起こし直すと初期値の `idle` から
-   * 始まる（`docs/design.md`「日記の受け取りと保存」「状態とイベント」）。
+   * 始まる（`docs/requirements.md`「会話から切り離す」）。
    */
   readonly diaryWriting: DiaryWriting
   /**
@@ -724,7 +724,7 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
     case "turn-finished": {
       const ending = turnEnding(event.outcome, state.apiTrouble)
       // `diaryWriting` はここでは動かさない（振り返りは会話とは別の使い捨ての問い合わせで
-      // 並んで進むため。`docs/design.md`「日記の受け取りと保存」「状態とイベント」）。
+      // 並んで進むため。`docs/requirements.md`「会話から切り離す」）。
       return {
         ...recordTurnFailure(settleUtterance(state), ending),
         turn: finishTurn(state.turn, at, ending),

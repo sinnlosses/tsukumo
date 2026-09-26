@@ -153,8 +153,8 @@ export function startSession(options: SessionStartOptions): StartedSession {
   // 直下）で、依存し合わせない。同じ日を両方から数えても、今日以外の日はどちらかが先に
   // 覚えた数を使うだけで結果は変わらない（`src/server/achievement/adapter/main-history.ts`）。
   const achievementCommitCache = createAchievementCommitCache()
-  // 振り返りの書き手が読む、直近に起こした代のパック情報（`docs/design.md`「日記の受け取りと
-  // 保存」「問い合わせの起こし方」）。`startDriver` を呼ぶたびに更新する——書いた時点の
+  // 振り返りの書き手が読む、直近に起こした代のパック情報（`docs/requirements.md`
+  // 「書き手のモデルは会話のいまのモデル」）。`startDriver` を呼ぶたびに更新する——書いた時点の
   // パックで書かせるため（キャラクターを切り替えたあとの振り返りは、切り替えたあとのパックで
   // 書く）。
   let diaryContext: DiaryWriterContext | undefined = undefined
@@ -202,7 +202,7 @@ export function startSession(options: SessionStartOptions): StartedSession {
       // （`persona-memory.ts` の `readRememberedLines`）。
       readRememberedLines: (pack) => readRememberedLines(pack),
       // `main` の develop/tasks.json の見張り。サイドバーの React の部品が `tasks-changed` を状態に
-      // 畳んで読む（docs/design.md 5章「task-summary.ts」）。
+      // 畳んで読む（読み方は `task-summary.ts` の冒頭）。
       watchTasks: (onEvent) =>
         watchTaskSummary(cwd, (tasks) => onEvent({ kind: "tasks-changed", tasks })),
       findResumeSession: (pack, chat) =>
@@ -234,7 +234,7 @@ export function startSession(options: SessionStartOptions): StartedSession {
         readRestoredEvents(resumed, expressionChoices(pack.definition)),
     }),
     // 前回の見直しの結果は、起こしたときにホームから読んで初期の姿へ差し込む
-    // （`docs/design.md`「見直しのツールと状態」）。書くのは結果が届くたびで、
+    // （`docs/requirements.md`「トークン消費の見直し」）。書くのは結果が届くたびで、
     // どちらも既定の置き場（`~/.tsukumo/usage-review.json`）をそのまま使う。読むときに
     // 見送った提案を除く（見送りは前回の結果のファイルを書き換えないため）。
     readPreviousUsageReview: () =>
@@ -269,7 +269,7 @@ export function startSession(options: SessionStartOptions): StartedSession {
         return result.kind === "ok" ? result.achievement : undefined
       },
       // 振り返りの書き手の出どころ。疑似セッションでは起こさない
-      // （`docs/design.md`「日記の受け取りと保存」「問い合わせの起こし方」）。
+      // （`docs/requirements.md`「会話から切り離す」）。
       diary:
         fakeSession === undefined
           ? diaryWriterSource(cwd, () => diaryContext, now)
@@ -310,7 +310,7 @@ export function startSession(options: SessionStartOptions): StartedSession {
 }
 
 /**
- * 振り返りの書き手の出どころ（`docs/design.md`「日記の受け取りと保存」）。書く時点のパックは
+ * 振り返りの書き手の出どころ（`docs/requirements.md`「日記」）。書く時点のパックは
  * `readContext` で毎回読み直す——`session-command.ts` が数え直した材料と組み合わせて
  * {@link createDiaryWriter} へ渡す。`cwd` はリポジトリの見分けに使う（`appendDiaryParagraph`）。
  */
@@ -352,7 +352,7 @@ function chatConsolidationSource(
 }
 
 /**
- * 訪問の台本をその場で作る口（`docs/design.md` 5章「訪問の台本」）。人格と表情は作るときに
+ * 訪問の台本をその場で作る口（`docs/requirements.md`「訪問」）。人格と表情は作るときに
  * パックの一覧を読み直し、今日の成果は `readAchievementDay` と同じ数え方で読む（読めなければ
  * 「分からない」）。`query()` は仕事のセッションと同じ作業先・引き継いだ環境で起こす。
  */
@@ -443,7 +443,7 @@ function startDriver(options: {
     mode,
     inheritedEnv,
     // 段に入るたびに読み直す（見直しの途中で見送りが増えても効く。
-    // `docs/design.md`「見直しのツールと状態」）。
+    // `docs/requirements.md`「トークン消費の見直し」）。
     dismissedUsageProposalKeys: () => readDismissedUsageProposalKeys(),
     onEvent,
   })

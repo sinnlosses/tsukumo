@@ -2,7 +2,7 @@
 // （docs/design.md 2章「機能の中を分ける」）。見た目は `../components/usage-review-card/usage-review-card.tsx` へ渡す。
 //
 // 見直し中かどうか・段の進み・結果・前回の提案はサーバの状態が持つ
-// （`SessionState.usageReview` / `previousUsageReview`。docs/design.md「見直しのツールと状態」）。
+// （`SessionState.usageReview` / `previousUsageReview`。`docs/requirements.md`「トークン消費の見直し」）。
 // ここが畳むのは:
 // - 経過時間の刻み（`dispatch/hooks/use-turn-status.ts` と同じ、ローカルなタイマー。
 //   `../../../../domain/elapsed-time.ts` を共有する）
@@ -298,7 +298,7 @@ function stageViews(
   }))
 }
 
-/** モデル・キャッシュ・ツールの3段だけ数を持つ（design.md「見直しのツールと状態」決定）。 */
+/** モデル・キャッシュ・ツールの3段だけ数を持つ（`docs/requirements.md`「トークン消費の見直し」決定）。 */
 function stageCount(
   stage: UsageReviewStage,
   summary: TokenUsageSummary | undefined,

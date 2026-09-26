@@ -103,7 +103,7 @@ const RECALL_EPISODE_TOOL_DESCRIPTION =
  * （自分の過去の雑談の目次と1件の逐語）だけ、`report` が返すのは差し戻すときの規約違反だけ
  * （`docs/display.md`「出力の分離（セリフと詳細）」）、見直しの2つが返すのは利用者が見送った提案の識別子と差し戻しの
  * 理由だけ。`diary` は会話のこのサーバには載らない（振り返りは会話とは別の使い捨ての
- * 問い合わせ。`queryDiary`。docs/design.md「日記の受け取りと保存」）。
+ * 問い合わせ。`queryDiary`。`docs/requirements.md`「日記」）。
  *
  * 常に載るのは `speak` だけで、`remember` / `forget` / `recall` / `recall_episode`
  * は雑談モードのときだけ（`mode` が `chat` のときだけ）載る。仕事のときに出すと、作業の文脈が

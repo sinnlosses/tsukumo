@@ -4,8 +4,9 @@
 // 暦（`achievement.calendar`）は別のフック `use-achievement-calendar.ts`。
 //
 // 日の切り替えは、取れた応答の `date`/`today` から計算する（ブラウザは時計を読まないので、
-// hash の raw な値だけでは「前の日」「今日」を計算できない。`docs/design.md`「成果の集め方と
-// 配り方」）。前の日は常に計算できる（そのまま引くだけ）が、次の日と「今日へ」は「いま見ている日が
+// hash の raw な値だけでは「前の日」「今日」を計算できない。`docs/design.md`
+// 「成果は `SessionState` に入れない」）。
+// 前の日は常に計算できる（そのまま引くだけ）が、次の日と「今日へ」は「いま見ている日が
 // 今日かどうか」が要るので、応答が届くまで押せない。
 //
 // 「<パックの名前>と振り返る」ボタン（`docs/screen-design.md` 13.10「並べるもの」4）のロジックも
@@ -50,7 +51,7 @@ import {
 import { monthDayLabel } from "../../../../utils/month-day-label.ts"
 import { diaryWriterPortraitOf, type DiaryWriterPortrait } from "../domain/diary-writer.ts"
 
-/** 今日を見ているあいだだけ取り直す間隔（13.10「並べるもの」のさらに上、5章「取り直す契機」）。 */
+/** 今日を見ているあいだだけ取り直す間隔（13.10「並べるもの」のさらに上、`docs/requirements.md`「取り直す契機」）。 */
 const TODAY_REFETCH_INTERVAL_MS = 60_000
 
 /**
@@ -152,7 +153,7 @@ export function useAchievement(): UseAchievementResult {
     // `isError` で伝わる。
     ...rpc.achievement.day.queryOptions({ input: selection }),
     // 開くたびに・日を切り替えるたびに取り直す（前の日の分もあとから main に入った分で変わりうる。
-    // `docs/design.md` 5章）。
+    // `docs/requirements.md`「取り直す契機」）。
     staleTime: 0,
     // 日を切り替えた直後は、前の日の中身を薄く残したまま新しい日を待つ（同じ「取りに行っている
     // 間」の見せ方。新しく開いた日には無関係な値だが、`isFetching` と組んで使うのは呼ぶ側）。
@@ -188,8 +189,8 @@ export function useAchievement(): UseAchievementResult {
     }
   }, [revealKey, justWritten])
 
-  // 日記が書き上がったとき、その日の1日ぶんと暦を取り直す（`docs/design.md`「成果の集め方と
-  // 配り方」の「取り直す契機」）。書いた日と見ている日が違っても広く無効化する——1日ぶんの
+  // 日記が書き上がったとき、その日の1日ぶんと暦を取り直す（`docs/requirements.md`
+  // 「取り直す契機」）。書いた日と見ている日が違っても広く無効化する——1日ぶんの
   // クエリキーは日付ごとに分かれるが、同時に描かれているのは見ている日の1件だけなので、
   // 広く無効化しても取り直しは1回で済む。暦は常に今日を含む固定範囲なので、書いた日を問わず
   // 鈴が変わりうる。
@@ -234,7 +235,7 @@ export function useAchievement(): UseAchievementResult {
  * `Controls` が「振り返り中…」に出し分けるので、ここの理由文は他の日のときだけ見える）と、
  * 空の日のとき。空の日の理由を先に見る——両方成り立つときは空の日の理由だけを出す決まり
  * （同節）。押すと日付だけを送る（`session.reflectAchievement`。依頼文は session-manager が
- * その日の成果を数え直して組む。`docs/design.md`「日記の受け取りと保存」「コマンドと依頼」）。
+ * その日の成果を数え直して組む。`docs/requirements.md`「振り返りの依頼」）。
  * 画面は移らない。
  */
 function reviewButtonOf(

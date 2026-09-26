@@ -1,5 +1,5 @@
-// fake driver。claude を起こさずに、疑似セッションどおりのイベントを時間の順に流す
-// （`docs/design.md`「fake-driver.ts」）。`TSUKUMO_DRIVER=fake` で選ぶ。
+// fake driver。claude を起こさずに、疑似セッションどおりのイベントを時間の順に流す。
+// `TSUKUMO_DRIVER=fake` で選ぶ。
 //
 // 用途は目視確認と Playwright（`docs/design.md`「テスト」）。疑似セッションは手で書いた架空の会話だけで、
 // 実物の transcript は使わない（docs/coding-standards.md「会話内容の扱い」）。

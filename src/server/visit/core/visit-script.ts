@@ -1,5 +1,5 @@
-// 訪問の台本を使い捨ての `query()` に書かせるための材料・指示文・形の検査（`docs/design.md`
-// 「訪問の台本」、提案は `docs/research/character-visit.md` 論点2）。純関数と定数だけで、
+// 訪問の台本を使い捨ての `query()` に書かせるための材料・指示文・形の検査（`docs/requirements.md`
+// 「訪問」、提案は `docs/research/character-visit.md` 論点2）。純関数と定数だけで、
 // `query()` を呼ぶのは `queryVisitScript`、材料を集めて呼ぶ順序は
 // `createVisitScriptWriter`。
 //

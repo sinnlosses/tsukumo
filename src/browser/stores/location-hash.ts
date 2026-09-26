@@ -21,7 +21,7 @@
 // 今回に追従しているときは `turn` を書かない。 留めたターンだけが URL に乗るので、何も
 // 選んでいない人のリロードは今までどおり今回を出す。`date` も今日を見ているときは書かない
 // （今日かどうかはサーバの応答でしか分からない——ブラウザは時計を読まない——ので、hash 側は
-// 「今日」を単なる「無い」として持つ。`docs/design.md` 5章「成果の集め方と配り方」）。
+// 「今日」を単なる「無い」として持つ。`docs/requirements.md`「成果の振り返り」）。
 
 import { useSyncExternalStore } from "react"
 
@@ -170,7 +170,7 @@ function packOf(value: string | null): PackSelection {
 
 /**
  * 空の `date` は「今日」に畳む（見た日の日付キーは空にならない）。形の検証はしない——
- * 読めない形はサーバの応答が今日に倒す（`docs/design.md` 5章）ので、ここで畳むと2箇所で
+ * 読めない形はサーバの応答が今日に倒す（`docs/requirements.md`「成果の振り返り」）ので、ここで畳むと2箇所で
  * 同じ判定を持つことになる。
  */
 function achievementDateOf(value: string | null): AchievementDateSelection {

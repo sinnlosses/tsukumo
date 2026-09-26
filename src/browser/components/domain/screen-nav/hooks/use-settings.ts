@@ -10,7 +10,7 @@
 // 変えても書いている最中の演出には効かない（次に書き始めたときから）。訪問のオン・オフは
 // 上のどちらでもない——サーバの `SessionState.visitEnabled` だが、ディスクには覚えず
 // いま動いているセッションに即座に効く（`visit.setEnabled`。オフにすると訪問中でもその場で
-// 帰る。`docs/design.md` 5章「訪問の契機と状態」）。
+// 帰る。`docs/requirements.md`「訪問」）。
 //
 // 色の持ち方は `browser/domain/appearance-color.ts` のまま（`localStorage` の鍵も検証も変えて
 // いない。キャラクター画面から移したのは操作子だけ）。見た目（`documentElement`）

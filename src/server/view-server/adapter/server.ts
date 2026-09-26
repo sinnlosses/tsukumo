@@ -1,6 +1,6 @@
 // ビューサーバ。ページ・アセット（`/assets` `/vendor` `/character`）の静的配信と、控えを押した
 // ときに引く依頼の画像の原寸（`GET /prompt-image/<id>?t=<起動トークン>`。`<img src>` で読むので
-// HTTP のまま）を持つ（`docs/design.md`「server.ts」）。読み取りの手続きは `/rpc` に載せるだけ
+// HTTP のまま）を持つ。読み取りの手続きは `/rpc` に載せるだけ
 // で、中身は配線の `createRouter` が束ねたルータ、照合は `rpcGuard` のミドルウェア。
 // フレームとコマンドが通る WebSocket は別の境界（接続を扱うアダプタ。listen 済みのこのサーバに
 // 受け口を足す）。

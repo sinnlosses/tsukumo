@@ -97,7 +97,7 @@ export async function startViewDelivery(options: ViewDeliveryOptions): Promise<V
   let readContextUsage: () => Promise<ContextUsageReport> = () =>
     Promise.resolve(UNAVAILABLE_CONTEXT_USAGE)
   // 成果の画面（1日ぶん・暦）が今日以外の日の数を覚える入れ物。両方の口が同じ1つを見る
-  // （`docs/design.md`「成果の集め方と配り方」「暦の数え方」）。
+  // （`docs/requirements.md`「灯りの段階」）。
   const achievementCommitCache = createAchievementCommitCache()
 
   // 読み取りの手続き（`/rpc`）。口の中身を選んで渡すのはここ（配線）で、束ねるのは `src/router.ts`。
@@ -111,7 +111,7 @@ export async function startViewDelivery(options: ViewDeliveryOptions): Promise<V
     // 「今日」を決めるのは配線層（`readTokenUsageSummary` と同じ理由）。見る日の検証・今日への
     // 丸め込みも呼ぶたびにここで済ませ、`main-history.ts` には検証済みの日付キーだけを渡す。
     // 日記（`diary.ts`）はここで合わせる（`main-history.ts` は数だけを持ち、日記の置き場を
-    // 知らない。`docs/design.md`「成果の集め方と配り方」）。
+    // 知らない。`docs/requirements.md`「成果の振り返り」）。
     readAchievementDay: async (selection) => {
       const today = todayLocalDateKey()
       const dateKey = resolveAchievementDateKey(selection, today)

@@ -945,7 +945,7 @@ DOM の状態（スクロール位置・`<details>` の開閉・フォーカス�
 「良いevidenceの書き方」と `docs/workflow.md`「タスクを書くとき・受け入れるとき」）。
 
 **fake driver（`TSUKUMO_DRIVER=fake`）で起こせる**ので、claude を起こさず（API を使わず）に
-下の手順を回せる（`docs/design.md` 5章・10章）。
+下の手順を回せる（`docs/design.md` 10章）。
 
 **状態ごとの画面を並べて見るときは `bun run scripts/capture-catalog.ts`。** 疑似セッションの場面
 （`test/fixture/fake-session.json` の `turns[].name`）ごとに tsukumo を1件ずつ空きポートで起こし、
@@ -1042,7 +1042,7 @@ Network タブで `/ws` の upgrade が101を返し、`hello` フレーム（購
 （`scripts/capture-catalog.ts`）が、消せるキャラクターパック（同梱の `chou` を別名でコピー）や
 架空の日記を、撮る前にそこへ書く。**既定のホーム（利用者の `~/.tsukumo/`）には触らない。**
 
-**訪問（`docs/design.md` 5章「訪問の契機と状態」）の出入りを確かめるときは、`TSUKUMO_VISIT_QUICK=1`
+**訪問（`docs/requirements.md` 4.13「訪問」）の出入りを確かめるときは、`TSUKUMO_VISIT_QUICK=1`
 を添えて疑似セッションの場面 `visit-long-tool` か `visit-background` を使う**（しきい値が 5 秒に
 縮む。添えないと 90 秒待つ）。画面にはまだ描かないので、見るのは状態だけ——開発者ツールの
 Network タブで `/ws` のフレームを見るか、接続し直して `hello` の `state.visit` を読む。

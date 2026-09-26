@@ -1,5 +1,5 @@
 // `main` の履歴を読み、成果（`docs/glossary.md`「成果」）を数える境界
-// （`docs/design.md`「成果の集め方と配り方」）。`git` を起こすのは `runGit` / `runGitCatFileBatch`、
+// （`docs/requirements.md`「成果の振り返り」）。`git` を起こすのは `runGit` / `runGitCatFileBatch`、
 // 数える判断は `countAchievementCommits` などの純関数、日付キーから始まり・終わりを出すのは
 // `localDateEpochRange`。
 //
@@ -10,7 +10,7 @@
 // `DailyAchievement` の `{ kind: "unknown" }`（呼び出し側は 200 のまま配ってよい）。
 // それ以外の `git` の呼び出し（コミットの列挙・切り口・タスクの記録の読み取り）がタイムアウト・
 // 失敗したときは `ReadAchievementResult` の `{ kind: "unavailable" }`——こちらは
-// 呼び出し側が 503 にする（部分的な数を出さない。`docs/design.md`「成果の集め方と配り方」）。
+// 呼び出し側が 503 にする（部分的な数を出さない。`docs/requirements.md`「成果の振り返り」）。
 
 import { basename } from "node:path"
 
@@ -44,7 +44,7 @@ import {
 } from "../core/achievement.ts"
 
 /**
- * 今日以外の日の数を覚える入れ物（`docs/design.md`「成果の集め方と配り方」「暦の数え方」）。
+ * 今日以外の日の数を覚える入れ物（`docs/requirements.md`「灯りの段階」）。
  * 持ち主は配線（1つ作り、{@link readAchievement} と
  * {@link readCommitCalendar} の両方に渡す。モジュールのトップレベルに可変の入れ物を置かない）。
  * 中身の `Map` は外へ出さず、覚える・引く口だけを持たせる（渡した入れ物を呼び出し先が直接
@@ -89,7 +89,11 @@ const ARCHIVE_FILE_PATH = "docs/history/tasks.md"
 /** 末尾の `/` を付けて `git ls-tree` に渡すと、そのディレクトリ自身の1行ではなく直下の一覧になる。 */
 const TASK_DIR_PATH = "develop/task/"
 
-/** `git log --since` に持たせる余裕（`docs/design.md`「--since に7日の余裕を持たせる」）。 */
+/**
+ * `git log --since` に持たせる余裕。`--since` はコミットの日付の古いものに続けて当たると辿るのを
+ * 打ち切るので、日付が前後する履歴（旧形式では作業ツリーで積んだ時刻のままのコミットが後から
+ * `main` に入る）でも取りこぼさないように、数える日より7日前から辿って core が範囲で絞る。
+ */
 const SINCE_MARGIN_DAYS = 7
 const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000
 
@@ -257,7 +261,7 @@ function commitMilestoneOfDay(
 }
 
 /**
- * その日の始まりまでの通算のコミットの数（節目。`docs/design.md`「成果の集め方と配り方」手順7）。
+ * その日の始まりまでの通算のコミットの数（節目。`docs/requirements.md`「卒業と節目」）。
  * `dateKey` が今日以外なら `cache` の通算の数を先に見て、あれば `git` を起こさず返す。
  * 無ければ履歴の頭から `range.endEpochMilliseconds` までの全コミットを1回読み、`range` の始まり
  * より前のものだけを数えて（今日以外なら）覚える。
@@ -313,8 +317,8 @@ async function readAllCommitsUntil(
 }
 
 /**
- * 灯りの暦（直近5週ぶん）の日ごとのコミット数を読む（`docs/design.md`「成果の集め方と配り方」
- * 「暦の数え方」）。`today` はサーバのローカル時刻の今日。`cache` は今日以外の日の数を覚える
+ * 灯りの暦（直近5週ぶん）の日ごとのコミット数を読む（`docs/requirements.md`「灯りの段階」）。
+ * `git log` は1回で、今日以外の日は `cache` に覚えて取り直さない。`today` はサーバのローカル時刻の今日。`cache` は今日以外の日の数を覚える
  * 入れ物（持ち主は配線）。
  *
  * 範囲の日が1日でも覚えていなければ、`git log` を1回だけ起こして範囲全体を数え直し、今日以外を
@@ -458,7 +462,7 @@ type CutoffOutcome =
   | { readonly kind: "unavailable" }
 
 /**
- * `epochMs` より前の最新のコミット（`--first-parent`。`docs/design.md`「切り口」）。
+ * `epochMs` より前の最新のコミット（`--first-parent`。`docs/requirements.md`「`done` になった日」の切り口）。
  * 空の出力（そのリポジトリの最初の日）は `empty`——`git` の失敗とは区別する
  * （前者は「空の集合として比べる」、後者は 503）。
  */
@@ -559,7 +563,7 @@ type RawTaskFileHistoryCommit = {
 
 /**
  * `develop/task/` と `develop/tasks.json` の出入りを、`git log --name-status` 1回で読む
- * （`docs/design.md`「成果の集め方と配り方」「タスクファイルの出入り」）。`git` が失敗・タイムアウトしたら `undefined`。
+ * （`docs/requirements.md`「卒業と節目」）。`git` が失敗・タイムアウトしたら `undefined`。
  */
 async function readTaskFileHistory(
   cwd: string,

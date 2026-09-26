@@ -1,8 +1,8 @@
 // 灯りの暦（`docs/glossary.md`「灯りの暦」）が取りに行く応答の型。`src/shared/achievement.ts` の
 // 1日ぶんとは別の手続き（`src/shared/contract/achievement.ts` の `calendar`）。
-// 数え方・範囲・灯りの段階の規則は `docs/requirements.md` 4.11「灯りの段階」が正典で、ここは
+// 数え方・範囲・灯りの段階の規則は `docs/requirements.md`「灯りの段階」が正典で、ここは
 // 受け渡しの形と、暦の範囲・灯りの段階の判定だけを持つ
-// （`docs/design.md`「成果の集め方と配り方」）。
+// （`docs/requirements.md`「成果の振り返り」）。
 //
 // 運ぶのは日付とコミットの数だけ（コミットの件名も会話の文面も入らない。
 // `docs/coding-standards.md`「会話内容の扱い」）。
@@ -48,7 +48,7 @@ export const achievementCalendarSchema = z.discriminatedUnion("kind", [
 ])
 
 /**
- * 暦の範囲（`docs/requirements.md` 4.11「灯りの段階」・`docs/design.md`「成果の集め方と配り方」）。
+ * 暦の範囲（`docs/requirements.md`「灯りの段階」・`docs/requirements.md`「成果の振り返り」）。
  * 「今日を含む週の月曜から4週前の月曜」〜今日を、日付キーの古い順で返す（今日より後は含まない
  * ——ブラウザが並べるだけで数は無い）。
  */
@@ -68,10 +68,10 @@ export function achievementCalendarDateKeys(today: string): readonly string[] {
   return dateKeys
 }
 
-/** 灯りの段階（`docs/requirements.md` 4.11「灯りの段階」）。 */
+/** 灯りの段階（`docs/requirements.md`「灯りの段階」）。 */
 export type LampLevel = "none" | "faint" | "lit" | "bright"
 
-/** 段階の区切り（`docs/requirements.md` 4.11「灯りの段階」の表。多いほうから並べ、
+/** 段階の区切り（`docs/requirements.md`「灯りの段階」の表。多いほうから並べ、
  * 最初に当てはまったものを採る）。 */
 const LAMP_LEVEL_THRESHOLDS = [
   { min: 40, level: "bright" },
@@ -80,7 +80,7 @@ const LAMP_LEVEL_THRESHOLDS = [
   { min: 0, level: "none" },
 ] as const satisfies readonly { readonly min: number; readonly level: LampLevel }[]
 
-/** その日のコミットの数から灯りの段階を決める（`docs/requirements.md` 4.11「灯りの段階」）。 */
+/** その日のコミットの数から灯りの段階を決める（`docs/requirements.md`「灯りの段階」）。 */
 export function lampLevel(commitCount: number): LampLevel {
   const matched = LAMP_LEVEL_THRESHOLDS.find((threshold) => commitCount >= threshold.min)
   return matched === undefined ? "none" : matched.level

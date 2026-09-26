@@ -1,4 +1,4 @@
-// `git` を起こす口（`docs/design.md`「成果の集め方と配り方」）。`main` の上のものを読む
+// `git` を起こす口（`docs/requirements.md`「成果の振り返り」）。`main` の上のものを読む
 // 2つの境界が両方使うので、`node:child_process` を
 // 直に触るのはここだけに閉じ込める（`docs/architecture.md`「1ファイル = 1つの境界」。
 // 検査の「子プロセスを起こしてよい箇所」の許可はこのファイル）。

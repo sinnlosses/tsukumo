@@ -1,6 +1,5 @@
 // キャラクターパックを読む。character.json とその立ち絵ファイルの実際の I/O はここに閉じる
-// （「外に触るのはここだけ」の側。定義の解釈は `parseCharacterDefinition` の仕事。
-// `docs/design.md`「character-pack.ts」）。
+// （「外に触るのはここだけ」の側。定義の解釈は `parseCharacterDefinition` の仕事）。
 //
 // fs にほとんど触らない関数（`characterChangedEvent`）もここに置く。
 // 層は「外の世界に触るか」で決め、ファイルの中身の純度では割らない（理由は
@@ -11,7 +10,7 @@
 //
 // 素材の中身（SVG・画像のバイト列）は SessionState にも character-changed イベントにも乗せない。
 // ブラウザは `/character/<pack>/<file>` から取りに行く（`docs/design.md`「SessionEvent」・
-// 「character-pack.ts」・「キャラクターパック」）。
+// 「キャラクターパック」）。
 
 import { readdirSync, readFileSync, statSync } from "node:fs"
 import { basename, join } from "node:path"

@@ -2,13 +2,16 @@
 // 1つにする」。モジュールのトップレベルでは触らず、`readConfig` を
 // 呼んだときだけ読む）。値を読むのは呼び出し側の配線。
 //
-// 値の意味と既定は `docs/design.md`「config.ts」の表が正典。
+// 値の意味と既定は各名前の doc コメントが正典（利用者向けの一覧は `README.md`「環境変数」）。
 //
 // セッションの印（`sessionTag` / `readSessionMark`）は環境変数ではないので、目印を読み書きする
 // 持ち主に置く（続きから始めるセッションを選ぶ計算と
 // 同じ場所）。
 
-/** ビューを配るポート（既定は `DEFAULT_VIEW_PORT`）。 */
+/**
+ * ビューを配るポート（既定は `DEFAULT_VIEW_PORT`）。既定のまま塞がっていれば +1 ずつ20個まで試し、
+ * 明示したときはずらさない（`resolveViewPort`）。
+ */
 export const VIEW_PORT_ENV_NAME = "TSUKUMO_VIEW_PORT"
 /**
  * `TSUKUMO_VIEW_PORT` が未設定のときに使う既定ポートの起点を差し替える（既定は
@@ -21,11 +24,15 @@ export const VIEW_PORT_ENV_NAME = "TSUKUMO_VIEW_PORT"
  * 使えない。この口で起点をテストごとの私的な帯へ逃がす。
  */
 export const VIEW_PORT_FALLBACK_BASE_ENV_NAME = "TSUKUMO_VIEW_PORT_FALLBACK_BASE"
-/** キャラクターパック定義ディレクトリのパス（相対は cwd 相対、絶対はそのまま）。 */
+/**
+ * キャラクターパック定義ディレクトリのパス（相対は cwd 相対、絶対はそのまま。既定は同梱の
+ * `tsukumo-spirit`）。パスとしてだけ解き、パックの名前では指せない（`local` は `<cwd>/local`）。
+ * 一覧は同梱・ホーム・起動先の `characters/local` を常に返すので、要るのはその外に置いたときだけ。
+ */
 export const CHARACTER_ENV_NAME = "TSUKUMO_CHARACTER"
 /** 起動時にタブを自動で開くか（`0` のときだけ開かない）。 */
 export const OPEN_VIEW_ENV_NAME = "TSUKUMO_OPEN_VIEW"
-/** セッションの駆動（`sdk` / `fake`）。 */
+/** セッションの駆動（`sdk` / `fake`。既定は `sdk`）。 */
 export const DRIVER_ENV_NAME = "TSUKUMO_DRIVER"
 /** fake driver で、起こした直後に流す場面の名前（疑似セッションの `turns[].name`）。 */
 export const FAKE_SCENE_ENV_NAME = "TSUKUMO_FAKE_SCENE"
@@ -45,7 +52,9 @@ export const VISIT_QUICK_ENV_NAME = "TSUKUMO_VISIT_QUICK"
  */
 export const FIXED_CLOCK_ENV_NAME = "TSUKUMO_FIXED_CLOCK"
 /**
- * tsukumo が自分の持ち物を置くホームのパス（相対は cwd 相対、絶対はそのまま）。名前はここに
+ * tsukumo が自分の持ち物を置くホームのパス（相対は cwd 相対、絶対はそのまま。`~` は展開しない。
+ * 既定は `~/.tsukumo`）。渡すのは tsukumo を2つ並行させる人が明示するときだけで、
+ * `TSUKUMO_VIEW_PORT` と揃えて分けないとホームは共有されたまま。名前はここに
  * 置くが、読むのは {@link readConfig} ではなく `tsukumoHomeDir`（理由は
  * そのファイルの冒頭。配線層から配る道が無い）。
  */

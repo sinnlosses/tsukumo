@@ -1,4 +1,4 @@
-// 日記の読み書き（`docs/design.md`「日記の受け取りと保存」「保存の形」）。ファイルに触るのは
+// 日記の読み書き（`docs/requirements.md`「日記」）。ファイルに触るのは
 // ここだけ（`docs/architecture.md`「1ファイル = 1つの境界」）。置き場は
 // `~/.tsukumo/diary/<リポジトリ>/<YYYY-MM-DD>.json`（`TSUKUMO_HOME` を分けていればその下）。
 //
@@ -98,7 +98,7 @@ export async function appendDiaryParagraph(
 /**
  * その日の日記の状態を読む（`DailyAchievement.diary` に載せる形）。ファイルが無い・
  * リポジトリが見分けられないときは `none`、ファイルはあるのに読めない（JSON が壊れている・
- * 版が違う）ときだけ `unreadable`（成果そのものは配る。`docs/design.md`「日記の受け取りと保存」）。
+ * 版が違う）ときだけ `unreadable`（成果そのものは配る。`docs/requirements.md`「日記」）。
  */
 export async function readDiaryDay(
   cwd: string,
@@ -121,7 +121,7 @@ export async function readDiaryDay(
 
 /**
  * 日記のある日の一覧（新しい順）。中身は読まず、置き場の `readdir` 1回でファイル名だけを見る
- * （`docs/design.md`「日記の受け取りと保存」）。リポジトリが見分けられない・置き場が無いときは
+ * （`docs/requirements.md`「日記」）。リポジトリが見分けられない・置き場が無いときは
  * 空の並び。
  */
 export async function listDiaryDates(

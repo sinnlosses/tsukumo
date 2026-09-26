@@ -1,4 +1,4 @@
-// 日記を書かせる使い捨ての `query()`（`docs/design.md`「日記の受け取りと保存」）。SDK に触るので
+// 日記を書かせる使い捨ての `query()`（`docs/requirements.md`「日記」）。SDK に触るので
 // `sdk-` で始まる（`docs/architecture.md`「1ファイル = 1つの境界」）。持たせるのは `diary` ツール1つだけの、プロセス内の MCP サーバ。
 // `includePartialMessages` の断片を3段の合図（`diary-drafting` / `diary-stage`）へ変えて流す。
 //
@@ -35,7 +35,7 @@ import {
   type DiaryIntake,
 } from "../core/diary-tool.ts"
 
-/** 呼び直す余地（仮。`docs/design.md`「日記の受け取りと保存」「問い合わせの起こし方」）。 */
+/** 呼び直す余地（仮。`docs/requirements.md`「会話から切り離す」）。 */
 const DIARY_QUERY_MAX_TURNS = 4
 
 const DIARY_TOOL_FULL_NAME = tsukumoToolFullName(DIARY_TOOL_NAME)
@@ -96,8 +96,8 @@ export async function queryDiary(
     },
   })
 
-  // `diary` の呼び出しの塊を追いかけ、断片を3段の合図に変える（`docs/design.md`
-  // 「日記の受け取りと保存」「3段の進みの決まり方」）。
+  // `diary` の呼び出しの塊を追いかけ、断片を3段の合図に変える（`docs/requirements.md`
+  // 「進みは3段で見せる」）。
   const observer = createDiaryStreamObserver()
   for await (const message of session) {
     for (const event of observer.observe(message)) {

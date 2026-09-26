@@ -5,7 +5,7 @@
 // 独立した文書扱いになり届かない。`characters/README.md` の実測）、ラスタは `<img>` で出す
 // （docs/requirements.md 4.4）。
 // 素材は `/character/<pack>/<file>` から取りに行くだけで、`SessionState` には URL しか乗らない
-// （docs/design.md 4.2・5章）。
+// （docs/design.md 4.2）。
 //
 // `expression` / `outfit` は表情・衣装の差し替えにだけ使う（立ち絵そのものの差し替えで
 // 表す。docs/requirements.md 4.3）。`motion` が立ち絵の動き（呼吸・待っている間の移動・

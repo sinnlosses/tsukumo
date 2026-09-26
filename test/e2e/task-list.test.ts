@@ -7,7 +7,7 @@ import { useScenarioRun } from "./scenario-run.ts"
 
 // タスクの一覧（docs/design.md 10章「E2E のシナリオの一覧」）。この一覧だけは疑似セッションの
 // 場面ではなく、cwd の `main` にある `develop/task/*.md` が元になる
-// （同章「task-summary.ts」）。足場として、一時の cwd に `git init` して `develop/task/` を
+// （読み方は `src/server/repository/adapter/task-summary.ts` の冒頭）。足場として、一時の cwd に `git init` して `develop/task/` を
 // 手書きし、`main` へコミットする。
 //
 // リポジトリを作るのは、ブラウザが繋がった（`speech` が届いた）のを確かめたあとにする。

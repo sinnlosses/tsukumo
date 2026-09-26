@@ -1,4 +1,4 @@
-// 振り返り1回ぶんの書き手（`docs/design.md`「日記の受け取りと保存」）。`createVisitScriptWriter` と
+// 振り返り1回ぶんの書き手（`docs/requirements.md`「日記」）。`createVisitScriptWriter` と
 // 同じ形: 材料を集め、会話とは別の使い捨ての `query()`（`queryDiary`）に
 // 書かせ、受け取ったものを「書けた／書けなかった」に畳む。
 //
@@ -19,7 +19,7 @@ import {
   type SaveDiaryParagraph,
 } from "./diary-tool.ts"
 
-/** 120 秒で諦める（仮。`docs/design.md`「日記の受け取りと保存」「問い合わせの起こし方」）。 */
+/** 120 秒で諦める（仮。`docs/requirements.md`「会話から切り離す」）。 */
 const DIARY_WRITE_TIMEOUT_MS = 120_000
 
 /** 日記を書く役目の短い指示（人格のあとに続ける）。 */
@@ -37,7 +37,7 @@ export type DiaryWriteRequest = {
 }
 
 /**
- * 書く時点のパックと環境（`docs/design.md`「日記の受け取りと保存」「問い合わせの起こし方」）。
+ * 書く時点のパックと環境（`docs/requirements.md`「会話から切り離す」）。
  * 呼ぶたびに読み直す——キャラクターを切り替えたあとの振り返りは、切り替えたあとのパックで
  * 書く。
  */
@@ -99,8 +99,8 @@ export type DiaryWriterPorts = {
 
 /**
  * {@link DiaryWriter} を1つ作る。呼ぶたびに窓口（`DiaryIntake`）を1つ作る——窓口が
- * 「いま書く日」を覚えたり忘れたりしない（`docs/design.md`「日記の受け取りと保存」
- * 「コマンドと依頼」）。
+ * 「いま書く日」を覚えたり忘れたりしない（`docs/requirements.md`
+ * 「振り返りの依頼」）。
  */
 export function createDiaryWriter(ports: DiaryWriterPorts): DiaryWriter {
   return async (request, onEvent, callerSignal) => {
@@ -153,7 +153,7 @@ export function createDiaryWriter(ports: DiaryWriterPorts): DiaryWriter {
 
 /**
  * `systemPrompt` を文字列で丸ごと置き換える（Claude Code の既定の指示文も CLAUDE.md も
- * 載らない。`docs/design.md`「日記の受け取りと保存」「問い合わせの起こし方」）。人格が空の
+ * 載らない。`docs/requirements.md`「会話から切り離す」）。人格が空の
  * パックは、書く役目の指示だけで起こす。
  */
 function diarySystemPrompt(persona: string): string {

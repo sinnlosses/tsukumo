@@ -440,7 +440,7 @@ export type SessionEvent =
    * 成果の画面から振り返りを頼まれた（`session.reflectAchievement` コマンド）。出し手は
    * session-manager——その日の成果を数え直し、書き手（`src/server/diary/core/diary-writer.ts`）に
    * その日ぶんを渡した直後に流す。会話とは別の使い捨ての問い合わせなので、会話の `prompt` は
-   * 通らない（`docs/design.md`「日記の受け取りと保存」）。`date` は振り返りの対象の日
+   * 通らない（`docs/requirements.md`「日記」）。`date` は振り返りの対象の日
    * （`YYYY-MM-DD`）。段は「この日のタスクを読む」（`read`）。
    */
   | { readonly kind: "diary-requested"; readonly date: string }
@@ -451,7 +451,7 @@ export type SessionEvent =
    */
   | { readonly kind: "diary-drafting"; readonly toolUseId: string }
   /**
-   * 振り返りの段が進んだ（`docs/design.md`「日記の受け取りと保存」「3段の進みの決まり方」）。
+   * 振り返りの段が進んだ（`docs/requirements.md`「進みは3段で見せる」）。
    * 出し手は `src/server/diary/adapter/sdk-diary.ts`——同じ塊の引数の断片
    * （`input_json_delta`）に、最上位の鍵 `bookmark` が現れた回だけ流す（`src/server/diary/core/diary-tool.ts`
    * の純関数が拾う）。運ぶのは段だけで、引数の中身はイベントに載せない。
@@ -460,7 +460,7 @@ export type SessionEvent =
   /**
    * 振り返りの使い捨ての問い合わせが `diary` を受け付けられずに終わった（時間切れ・失敗・中断の
    * どれでも）。出し手は書き手（`src/server/diary/core/diary-writer.ts`）。`date` は振り返りの
-   * 対象の日。`docs/design.md`「日記の受け取りと保存」「状態とイベント」。
+   * 対象の日。`docs/requirements.md`「会話から切り離す」。
    */
   | { readonly kind: "diary-failed"; readonly date: string }
   /** 訪問の出入りと台本の進み（出し手はサーバの訪問の見張り。形は `src/shared/visit.ts`）。 */

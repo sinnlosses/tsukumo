@@ -1,6 +1,6 @@
 // 見直し（docs/glossary.md「見直し」）の状態と、その結果の1件である提案。サーバ（core が
 // ツールの引数を検査して状態を畳む）とブラウザ（トークン消費の画面が区画を描く）の両方が同じ
-// 型を見るので shared に置く。ツールと状態の決定は docs/design.md「見直しのツールと状態」。
+// 型を見るので shared に置く。ツールと状態の決定は `docs/requirements.md`「トークン消費の見直し」。
 //
 // 入るのはスキルがツールに渡した結果だけで、依頼の文面も本文も入らない
 // （docs/coding-standards.md「会話内容の扱い」）。
@@ -111,7 +111,7 @@ export function usageProposalKey(proposal: Pick<UsageProposal, "kind" | "target"
 
 /**
  * 前回の見直しの結果。トークン消費の画面の「前回の提案」のリンクが読む
- * （`docs/design.md`「見直しのツールと状態」）。{@link UsageReview} の `result` とは別の状態
+ * （`docs/requirements.md`「トークン消費の見直し」）。{@link UsageReview} の `result` とは別の状態
  * ——`usageReview` は起こし直すとふだんへ戻るが（`docs/glossary.md`「見直し」）、こちらは
  * ホームのファイル（`~/.tsukumo/usage-review.json`）に残り続け、起こし直しでも
  * プロセスの再起動でも消えない。

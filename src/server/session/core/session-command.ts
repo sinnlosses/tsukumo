@@ -38,8 +38,8 @@ export type SessionCommandPorts = {
    */
   readonly rememberSessionDefault: (sessionDefault: SessionDefault) => SessionEvent
   /**
-   * 成果の振り返りを受けたときに、その日の成果を数え直す口（`docs/design.md`「日記の受け取りと
-   * 保存」「コマンドと依頼」）。画面が出している手続き `achievement.day` と同じ数え方を使う。
+   * 成果の振り返りを受けたときに、その日の成果を数え直す口（`docs/requirements.md`
+   * 「振り返りの依頼」）。画面が出している手続き `achievement.day` と同じ数え方を使う。
    * `main` が読めない・`git` の呼び出しが失敗したときは undefined。
    */
   readonly readAchievementDay: (date: string) => Promise<DailyAchievement | undefined>
@@ -132,7 +132,7 @@ export function sessionCommands(ports: SessionCommandPorts): SessionCommandTable
         }),
     },
     // 会話のターン中・答え待ちでも受けるので `meta` では断らない。断るかどうかは受け手の中で
-    // 見る（`docs/design.md`「日記の受け取りと保存」「コマンドと依頼」）。
+    // 見る（`docs/requirements.md`「振り返りの依頼」）。
     reflectAchievement: {
       kind: "session",
       receive: (input, session) => reflectAchievement(input.date, session, ports),
@@ -206,7 +206,7 @@ async function reflectAchievement(
 
   if (ports.diary.kind === "dont-write") {
     // 疑似セッション: claude を起こさず、`diary-requested` のすぐ後に `diary-failed` を流す
-    // （`docs/design.md`「日記の受け取りと保存」「問い合わせの起こし方」）。
+    // （`docs/requirements.md`「会話から切り離す」）。
     generation.emit({ kind: "diary-failed", date })
     return { ok: true }
   }

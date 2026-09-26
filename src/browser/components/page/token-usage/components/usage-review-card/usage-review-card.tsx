@@ -54,7 +54,7 @@ const IMPACT_LABELS = {
   small: "小",
 } as const satisfies Record<UsageProposalImpact, string>
 
-/** 主ボタンの文言（`docs/design.md`「見直しのツールと状態」——押す口は2つに固定）。 */
+/** 主ボタンの文言（`docs/requirements.md`「トークン消費の見直し」——押す口は2つに固定）。 */
 const FOLLOW_UP_LABELS = {
   delegate: "tsukumo に頼む",
   task: "タスクにする",

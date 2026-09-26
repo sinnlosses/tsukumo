@@ -1,7 +1,7 @@
 // 日記（`docs/glossary.md`「日記」）の型と、保存の形の読み手。サーバ（`src/server/adapter/
 // diary.ts` が読み書きする JSON）とブラウザ（成果の画面・日記帳が読む手続き `achievement.day` の
-// `diary` 区画）の両方が同じ型を見るので shared に置く。保存の形・置き場・書き足しの規則は
-// `docs/design.md`「日記の受け取りと保存」が正典で、ここは型と読み取りだけを持つ。
+// `diary` 区画）の両方が同じ型を見るので shared に置く。書き足しの規則は
+// `docs/requirements.md`「日記」、置き場と書き方は `appendDiaryParagraph` で、ここは型と読み取りだけを持つ。
 //
 // 運ぶのは日記の本文・しおり・表情・書いた時刻とパックだけ（会話の文面そのものではない。
 // `docs/coding-standards.md`「会話内容の扱い」。日記はモデルが書いた成果物で、逐語の会話とは
@@ -53,7 +53,7 @@ export type DailyDiaryStatus =
   | { readonly kind: "unreadable" }
 
 /**
- * 振り返りの3段の並び（`docs/design.md`「日記の受け取りと保存」「3段の進みの決まり方」）。
+ * 振り返りの3段の並び（`docs/requirements.md`「進みは3段で見せる」）。
  * この並びが段の順で、いまの段より前は済、後は未着手と読む（段は戻らない）。
  */
 export const DIARY_STAGES = ["read", "write", "pick"] as const
@@ -61,8 +61,8 @@ export const DIARY_STAGES = ["read", "write", "pick"] as const
 export type DiaryStage = (typeof DIARY_STAGES)[number]
 
 /**
- * 振り返りの進み（`SessionState.diaryWriting`。`docs/design.md`「日記の受け取りと保存」
- * 「状態とイベント」）。
+ * 振り返りの進み（`SessionState.diaryWriting`。`docs/requirements.md`
+ * 「進みは3段で見せる」）。
  *
  * - `idle`: ふだん。一度も振り返っていない
  * - `writing`: 振り返り中。`startedAt` はそのターンが始まった時刻、`stage` はいまの段

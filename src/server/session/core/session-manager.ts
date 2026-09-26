@@ -119,7 +119,7 @@ export type SessionManagerOptions = {
     request: SessionLaunchRequest,
   ) => Promise<SessionDriver>
   /**
-   * ホームに残っている前回の見直しの結果（`docs/design.md`「見直しのツールと状態」）。起こした
+   * ホームに残っている前回の見直しの結果（`docs/requirements.md`「トークン消費の見直し」）。起こした
    * ときに1回だけ読み、初期の姿（{@link SessionState.previousUsageReview}）に載せる——
    * `INITIAL_SESSION_STATE` は静的な定数なので、ここでしか差し込めない。
    */
@@ -184,8 +184,8 @@ type GenerationTally = {
   /** 訪問の見張り（待ちの勘定と掛けた時計。起こし直すと一緒に捨てる）。 */
   readonly visit: VisitWatch
   /**
-   * 振り返りの書き手を中断する信号（代の持ち物。`docs/design.md`「日記の受け取りと保存」
-   * 「コマンドと依頼」）。起こし直しで代を閉じたら、書いている最中の問い合わせも中断する。
+   * 振り返りの書き手を中断する信号（代の持ち物。`docs/requirements.md`
+   * 「会話から切り離す」）。起こし直しで代を閉じたら、書いている最中の問い合わせも中断する。
    */
   readonly diarySignal: AbortSignal
 }
@@ -215,8 +215,8 @@ type SessionGeneration = GenerationTally & {
 export function createSessionManager(options: SessionManagerOptions): SessionManager {
   const subscribers = new Set<(frame: ServerFrame) => void>()
   // 前回の見直しの結果だけ、起こしたときにホームから読んで載せる——`INITIAL_SESSION_STATE`
-  // は静的な定数なので、実行時の値をここで1回だけ差し込む（`docs/design.md`「見直しの
-  // ツールと状態」）。
+  // は静的な定数なので、実行時の値をここで1回だけ差し込む（`docs/requirements.md`
+  // 「トークン消費の見直し」）。
   let state: SessionState = {
     ...INITIAL_SESSION_STATE,
     previousUsageReview: options.readPreviousUsageReview(),
@@ -292,7 +292,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
     // 1つをこの順に変換する）ので、書き終えたあとに捨てることになる。
     // 見直しの結果を、次の起動でも「前回の提案」として配れるようにホームへ書く。駆動由来
     // （`"driver"`）だけ——復元の再生にはこの種類のイベントは出てこない
-    // （`docs/design.md`「見直しのツールと状態」）が、ほかの書き込みと条件を揃えてある。
+    // （`docs/requirements.md`「トークン消費の見直し」）が、ほかの書き込みと条件を揃えてある。
     if (origin === "driver" && event.kind === "usage-review-result") {
       options.writePreviousUsageReview(at, event.findings)
     }
@@ -459,7 +459,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
       generation.close()
       // `previousUsageReview` だけは起こし直しをまたいで残す——ホームのファイルに残る
       // 記録であって、駆動1代の持ち物ではない（`usageReview` は起こし直すとふだんへ戻る。
-      // `docs/design.md`「見直しのツールと状態」）。
+      // `docs/requirements.md`「トークン消費の見直し」）。
       replaceState({ ...INITIAL_SESSION_STATE, previousUsageReview: state.previousUsageReview })
       generation = startGeneration(request, "after-hello")
       await generation.driver

@@ -298,7 +298,7 @@ class 名を手で組むと、条件で落とす class を空文字に畳む三�
 
 ```ts
 // 避ける: パスで指し、節を番号で指し、使い手を並べ、行コメントに {@link} を書いている
-// 環境変数の解釈は src/server/core/config.ts（docs/design.md 5章「config.ts」）。
+// 環境変数の解釈は src/server/core/config.ts（docs/design.md 3章「起動」）。
 // `scripts/open-room-grid.ts` と {@link startSession} が使う。
 
 // こうする

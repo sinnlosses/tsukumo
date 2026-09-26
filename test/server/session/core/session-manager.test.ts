@@ -933,7 +933,7 @@ describe("createSessionManager", () => {
     })
   })
 
-  describe("成果の振り返り（session.reflectAchievement。docs/design.md「日記の受け取りと保存」）", () => {
+  describe("成果の振り返り（session.reflectAchievement。`docs/requirements.md`「日記」）", () => {
     const KNOWN_DAY: DailyAchievement = {
       kind: "known",
       date: "2026-09-23",

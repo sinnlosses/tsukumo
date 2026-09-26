@@ -535,7 +535,7 @@ transcript は読まない（`docs/coding-standards.md`「会話内容の扱い�
 - 索引の上限は**持たない**（読むのは採点のためだけで、返す量は `recallListBytes` と
   `recallEpisodeBytes` で頭打ち）
 
-**引く契機を tsukumo は作らない。** **作法の条（`docs/design.md` 5章の `chat-manner.ts`）と
+**引く契機を tsukumo は作らない。** **作法の条（`chat-manner.ts`）と
 ツールの説明で足りる** — 引くかどうかはキャラクターが自分で決める。tsukumo が隠しの依頼を
 送ったり、利用者の依頼の文面で引いたりはしない（採らなかった案は `docs/history/decision.md`）。
 **呼ばなければ古い話は出てこない**のは組み替える前と同じ弱さで、受け入れる。

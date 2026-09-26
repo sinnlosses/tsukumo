@@ -1,5 +1,5 @@
 // 成果（`docs/glossary.md`「成果」）を数える判断だけを持つ。ファイルI/O も `git` も触らない
-// 純関数（`docs/design.md`「成果の集め方と配り方」）——`main` の上から実際に読むのは
+// 純関数（`docs/requirements.md`「成果の振り返り」）——`main` の上から実際に読むのは
 // 呼び出し側で、ここはその結果を渡されて数える。
 //
 // 数え方の規則は `docs/requirements.md`「成果の振り返り」が正典。ここが持つのは:
@@ -156,7 +156,7 @@ export function unionDoneTaskSummaries(
   return merged
 }
 
-// --- タスクファイルの出入り（登録日・消えたファイル。docs/design.md「成果の集め方と配り方」「タスクファイルの出入り」） ---
+// --- タスクファイルの出入り（登録日・消えたファイル。`docs/requirements.md`「卒業と節目」） ---
 
 /** `develop/task/T-xxx.md` のパスから ID を取る。当てはまらなければ `undefined`。 */
 const TASK_FILE_PATH_PATTERN = /^develop\/task\/(T-\d{3,})\.md$/
@@ -346,7 +346,7 @@ export function commitMilestoneOf(
   return crossed
 }
 
-// --- 灯りの暦（docs/design.md「成果の集め方と配り方」「暦の数え方」）。 ---
+// --- 灯りの暦（`docs/requirements.md`「灯りの段階」）。 ---
 
 /** {@link AchievementCommit} に、committer date をローカルの日付に直したものを添えたもの
  * （呼び出し側が `localDateKey` 関数で変換して渡す。OS のタイムゾーンを読むのは adapter の

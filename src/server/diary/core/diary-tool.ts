@@ -1,13 +1,13 @@
 // `diary` ツールまわりの決まりごと（docs/glossary.md「diary ツール」）。書けるのは会話とは別の
 // 使い捨ての問い合わせ（`queryDiary`）だけで、形の外れた呼び出しは
 // 状態を変えずに断り、理由を添えて呼び直させる（`report` / 見直しの2つと同じ線）。保存は
-// `appendDiaryParagraph`、決定の理由は `docs/design.md`「日記の受け取りと保存」。
+// `appendDiaryParagraph`、決定の理由は `docs/requirements.md`「日記」。
 //
 // 引数の形（文字列・列挙）は zod の形で SDK が先に検査する（崩れていれば handler は
 // 呼ばれない）。ここで見るのは形の外の条（1問い合わせに1回・本文やしおりの中身・保存の失敗）だけ。
 //
 // 3段目の合図（引数の断片から最上位の鍵 `bookmark` を見つける純関数）もここに持つ
-// （`docs/design.md`「日記の受け取りと保存」「3段の進みの決まり方」）。断片をつないで観測する
+// （`docs/requirements.md`「進みは3段で見せる」）。断片をつないで観測する
 // 状態機械は `createDiaryStreamObserver`（問い合わせ1回ぶんの持ち物なのでそちらに置く）。
 
 import { type DiaryBookmark } from "../../../shared/diary.ts"
@@ -189,7 +189,7 @@ const DIARY_BOOKMARK_KEY = "bookmark"
 
 /**
  * 引数の断片（累積した JSON の途中経過）の最上位に、しおりの鍵 `bookmark` が現れたかどうかを
- * 判定する純関数（`docs/design.md`「日記の受け取りと保存」「3段の進みの決まり方」）。文字列の
+ * 判定する純関数（`docs/requirements.md`「進みは3段で見せる」）。文字列の
  * 中かどうかと入れ子の深さを数えながら読み、閉じていない断片でも渡し直せば拾える——
  * 鍵の名前が断片の切れ目をまたいでいても、累積したものを毎回渡し直す前提で作ってある。
  */
