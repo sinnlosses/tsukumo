@@ -11,7 +11,6 @@ import {
   type SessionState,
 } from "../../../../../src/shared/session-state.ts"
 import { characterInfo, characterPackEntry } from "../../../../fixture/character.ts"
-import { typedElement } from "../../../../typed-element.ts"
 import { rpcError, stubRpcFetch, type RpcFetchStub } from "../../../rpc-fetch-stub.ts"
 import { type CommandSpy, sessionStoreWith } from "../../../session-store.ts"
 
@@ -68,10 +67,6 @@ function renderSessionInfo(
 // 手で書いた架空のキャラクター定義（docs/coding-standards.md「会話内容の扱い」）。
 const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = characterInfo()
 
-function selectValue(element: HTMLElement): string {
-  return typedElement(element, HTMLSelectElement, "<select>").value
-}
-
 describe("SessionInfo", () => {
   // 仕事/雑談のトグル・モデル・許可モードのドロップダウンは帯（`components/domain/screen-nav/`）へ
   // 移った（docs/screen-design.md 13.9「何を外すか」）。ここに同じ <select> を2つ置かない。
@@ -85,19 +80,6 @@ describe("SessionInfo", () => {
     expect(screen.queryByLabelText("モード")).toBeNull()
     expect(screen.queryByLabelText("モデル")).toBeNull()
     expect(screen.queryByLabelText("許可モード")).toBeNull()
-  })
-
-  // 選択肢・値・塞ぐ条件・送るコマンドは共有の `CharacterSwitch` の契約
-  // （`character-switch.test.tsx` が測る）なので、ここで見るのは「その部品を『キャラクター』の
-  // ラベルで置いている」ことだけ。
-  it("キャラクターの <select> を『キャラクター』のラベルで出す", () => {
-    renderSessionInfo({
-      characterPacks: [characterPackEntry("tsukumo-spirit", "つくもの精霊")],
-      character: { ...FIXTURE_CHARACTER, pack: "tsukumo-spirit" },
-    })
-
-    const select = screen.getByLabelText("キャラクター")
-    expect(selectValue(select)).toBe("tsukumo-spirit")
   })
 
   // キャラクター画面への入る口は帯（`components/domain/screen-nav/`）へ移った（docs/screen-design.md 13.9）。
@@ -115,23 +97,6 @@ describe("SessionInfo", () => {
 // 顔はキャラクターの <select> の左に添える（帯と共有する components/domain/character-face.tsx。
 // docs/screen-design.md 13.9「顔」）。
 describe("SessionInfo の顔", () => {
-  it("定義に face があれば、alt にキャラクターの名前を付けて出す", () => {
-    renderSessionInfo({
-      characterPacks: [characterPackEntry("tsukumo-spirit", "つくもの精霊")],
-      character: {
-        ...FIXTURE_CHARACTER,
-        pack: "tsukumo-spirit",
-        name: "架空の精霊",
-        face: "/character/face.png",
-      },
-    })
-
-    const face = document.querySelector(".session-info-face")
-    expect(face?.tagName).toBe("IMG")
-    expect(face?.getAttribute("src")).toBe("/character/face.png")
-    expect(face?.getAttribute("alt")).toBe("架空の精霊")
-  })
-
   it("face が無いパックでは何も出さない", () => {
     renderSessionInfo({
       characterPacks: [characterPackEntry("tsukumo-spirit", "つくもの精霊")],

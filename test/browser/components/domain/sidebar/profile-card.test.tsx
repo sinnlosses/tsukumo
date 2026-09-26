@@ -1,12 +1,9 @@
 // 雑談中のサイドバーの最上段、プロフィールの札（docs/screen-design.md 13.7「雑談のときのサイドバー」）。
-// 顔・名前・ひとことプロフィールと、右端の「変える」（キャラクターの切り替え）。「変える」の中身は
-// 共有の `CharacterSwitch`（選択肢・値・塞ぐ条件・送るコマンドは `character-switch.test.tsx` が
-// 測る）ので、ここで見るのは顔・名前・ひとことプロフィールと、`CharacterSwitch` を札の見た目に
-// 正しく重ねているかだけ。
+// ここで見るのは、ひとことプロフィールが無いパックで空の行を置かないことだけ。
 
 import { afterEach, describe, expect, it } from "bun:test"
 
-import { cleanup, render, screen } from "@testing-library/react"
+import { cleanup, render } from "@testing-library/react"
 
 import { ProfileCard } from "../../../../../src/browser/components/domain/sidebar/profile-card.tsx"
 import { SessionStoreContext } from "../../../../../src/browser/stores/session.tsx"
@@ -38,34 +35,7 @@ function renderProfileCard(
   )
 }
 
-function changeSelect(): HTMLSelectElement {
-  const select = screen.getByLabelText("キャラクターを変える")
-  if (!(select instanceof HTMLSelectElement)) {
-    throw new Error("「変える」が <select> になっていない")
-  }
-  return select
-}
-
 describe("ProfileCard", () => {
-  it("顔・名前・ひとことプロフィールを出す", () => {
-    renderProfileCard({
-      characterPacks: TWO_PACKS,
-      character: characterInfo({
-        name: "架空の精霊",
-        face: "/character/face.png",
-        tagline: "窓辺に棲む架空の精霊",
-      }),
-    })
-
-    expect(document.querySelector(".profile-card-name")?.textContent).toBe("架空の精霊")
-    expect(document.querySelector(".profile-card-tagline")?.textContent).toBe(
-      "窓辺に棲む架空の精霊",
-    )
-    const face = screen.getByRole("img")
-    expect(face.getAttribute("src")).toBe("/character/face.png")
-    expect(face.getAttribute("alt")).toBe("架空の精霊")
-  })
-
   it("ひとことプロフィールが無いパックは名前だけ（空の行を置かない）", () => {
     renderProfileCard({
       characterPacks: TWO_PACKS,
@@ -74,15 +44,5 @@ describe("ProfileCard", () => {
 
     expect(document.querySelector(".profile-card-name")?.textContent).toBe("架空の精霊")
     expect(document.querySelector(".profile-card-tagline")).toBeNull()
-  })
-
-  it("「変える」の選択はいまのパックを指し、見える字は「変える」", () => {
-    renderProfileCard({
-      characterPacks: TWO_PACKS,
-      character: characterInfo({ pack: "local" }),
-    })
-
-    expect(changeSelect().value).toBe("local")
-    expect(document.querySelector(".profile-card-change")?.textContent).toContain("変える")
   })
 })

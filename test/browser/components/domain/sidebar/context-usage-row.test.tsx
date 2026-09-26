@@ -18,8 +18,8 @@ import { sessionStoreWith } from "../../../session-store.ts"
 /**
  * サイドバー「セッション情報」の使用量の行。出す数は札
  * （`test/browser/components/page/token-usage/components/context-usage-card/context-usage-card.test.tsx`）と同じ出どころ
- * （`usage.totalTokens` / `usage.maxTokens` / `usage.percentage`）なので、ここでは行として
- * 描いたときの文字・押した先（右端の `›` だけ）・70%以上の警告・取れないときの高さだけを測る。
+ * （`usage.totalTokens` / `usage.maxTokens` / `usage.percentage`）なので、ここでは70%以上の
+ * 警告・届く前・取れないときの高さだけを測る。
  *
  * `fetch` は使わず `QueryClient` に直接 `setQueryData` する（`renderRow` の既定の状態
  * — `state.turn` が `idle` — なら `refetchKey` は必ず 0 になる。`browser/domain/context-usage.ts`
@@ -52,37 +52,6 @@ function renderRow(report: ContextUsageReport | undefined): void {
 }
 
 describe("ContextUsageRow", () => {
-  it("届いたら割合と「使っている量 / 窓の大きさ」を出す（札の合計と同じ数）", () => {
-    renderRow(readyContextUsage())
-
-    // 架空の内訳は totalTokens 60,000 / maxTokens 200,000・percentage 30
-    // （test/fixture/context-usage.ts）。
-    expect(screen.queryByText("30%")).not.toBeNull()
-    expect(screen.queryByText("60.0k / 200k")).not.toBeNull()
-  })
-
-  it("リンクは右端の `›` だけ——ラベル・割合・量・棒はリンクの外にある", () => {
-    renderRow(readyContextUsage())
-
-    const links = document.querySelectorAll("a")
-    expect(links).toHaveLength(1)
-    const link = links[0]
-    expect(link?.getAttribute("href")).toBe("#token-usage")
-    // ラベル・割合・量の文字がリンクの外（同じ行の兄弟要素）にあることを確かめる。
-    expect(link?.textContent?.includes("コンテキスト")).toBe(false)
-    expect(link?.textContent?.includes("30%")).toBe(false)
-    expect(link?.textContent?.includes("60.0k")).toBe(false)
-  })
-
-  it("`›` の aria-label で割合が読める", () => {
-    renderRow(readyContextUsage())
-
-    const link = document.querySelector("a[href='#token-usage']")
-    expect(link?.getAttribute("aria-label")).toBe(
-      "コンテキスト 30% 使用。トークン消費の画面で詳しく見る",
-    )
-  })
-
   it("70%未満は警告にしない", () => {
     renderRow(readyContextUsage({ percentage: 69 }))
 

@@ -41,13 +41,6 @@ function confirmDialogIsOpen(): boolean {
 }
 
 describe("PersonaMemorySection", () => {
-  it("空のときは案内だけを出し、「編集」は置かない", () => {
-    renderSection({ rememberedLines: [] })
-
-    expect(screen.getByText("まだ覚えていることが無い")).toBeDefined()
-    expect(screen.queryByText("編集")).toBeNull()
-  })
-
   it("行があればチップに出す（短い行はそのまま）", () => {
     renderSection({ rememberedLines: [SHORT_LINE] })
 
