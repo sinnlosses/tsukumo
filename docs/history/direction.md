@@ -3,6 +3,14 @@
 `develop/direction.md` に書かれたユーザーからの指示を、タスク化した時点で**当時の記述のまま**
 ここへ移す（`docs/workflow.md`「指示メモ」参照）。新しいものを上に足す。**後から書き換えない。**
 
+## 2026-09-26 画面共通のレイアウトを `domain/layout` に、会話の4領域を会話の画面へ
+
+（会話から。エージェントが T-693 にした）
+
+```text
+browser/components/domain/layout は画面共通のレイアウトを定義するところで、今はそれが /Users/sinnlos/orca/workspaces/tsukumo/tsukumo-task/src/browser/main.tsx に記載されている。逆に、今の layout/配下は conversation 用のレイアウトだから、それは conversation の /Users/sinnlos/orca/workspaces/tsukumo/tsukumo-task/src/browser/components/page/conversation/presentational-conversation.tsx に書くのが自然じゃないかな。タスク化してくれる?
+```
+
 ## 2026-09-26 仕事の会話も1つの記憶に入れる
 
 （会話から。1つ目の発言にエージェントが「仕組みは流用できるが、仕事の会話を残さない決定を覆すことになる」と答え、決めることを4つ挙げたあとに2つ目の発言があった。あらすじは直近ではないと訂正し、3・4を選択肢で聞いて「あらすじ＋直近を小さく」「依頼の冒頭＋レポートの結論」が選ばれた。前段の決定が T-690、実装が T-691・T-692 になった）
