@@ -12,9 +12,9 @@
 import clsx from "clsx"
 import { useState, type ReactElement } from "react"
 
+import { TrashIcon } from "../../../../../../ui/icon/icon.tsx"
 import { Text } from "../../../../../../ui/text/text.tsx"
 import styles from "../../../../character.module.css"
-import { TrashIcon } from "../../../action-icon/action-icon.tsx"
 import { type CharacterDeleteBandModel } from "../../../hooks/use-character-edit.ts"
 import { CharacterDeleteConfirm } from "../character-delete-confirm/character-delete-confirm.tsx"
 

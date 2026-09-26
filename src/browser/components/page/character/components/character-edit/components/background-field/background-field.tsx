@@ -7,10 +7,10 @@ import clsx from "clsx"
 import { type ReactElement } from "react"
 
 import { HStack } from "../../../../../../ui/h-stack/h-stack.tsx"
+import { TrashIcon, UploadIcon } from "../../../../../../ui/icon/icon.tsx"
 import { Text } from "../../../../../../ui/text/text.tsx"
 import { VStack } from "../../../../../../ui/v-stack/v-stack.tsx"
 import styles from "../../../../character.module.css"
-import { TrashIcon, UploadIcon } from "../../../action-icon/action-icon.tsx"
 import { type BackgroundFieldModel } from "../../../hooks/use-character-edit.ts"
 
 /**

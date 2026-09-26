@@ -635,8 +635,9 @@ describe("browser/utils/ の import", () => {
 
 // 機能をまたぐ箱に、1つの機能しか読まないファイルが残っていないことを見る
 // （`docs/design.md` 2章「上げる引き金は「2つ目の読み手が出たとき」」。引き金は逆にも引き、
-// 読み手が1つに戻ったものはその機能の中へ下ろす）。`components/domain/` の直下と
-// `components/ui/` にも同じ基準を掛ける（2章「引き金は逆にも引く」）。
+// 読み手が1つに戻ったものはその機能の中へ下ろす）。`components/domain/` の直下にも
+// 同じ基準を掛ける（2章「引き金は逆にも引く」）。`components/ui/` は汎用の部品の置き場で、
+// 読み手の数を問わないので対象外（2章「`components/ui/` の部品」の「読み手の数は問わない」）。
 //
 // 読み手が機能の外だけのものは対象外（`lib/socket.ts` と `lib/refresh.ts` は `stores/` が
 // 読む。下ろす先の機能が無いので、ここに残るのが正しい）。`stores/` はまだ対象にしていない
@@ -646,17 +647,15 @@ describe("browser/utils/ の import", () => {
 //
 // `components/domain/` は直下のファイルだけを対象にする（サブディレクトリは全画面で共有する
 // 枠（領域）で、1つの領域だけが読むのが正しい形。2章「`components/domain` の直下のファイルは
-// 領域ではなく共有の部品」）。`components/ui/` は部品ごとのディレクトリ（`ui/select/` など）に
-// 分かれているが、その中は「共有の部品1つぶん」なので、そのまま全体を対象にする。
+// 領域ではなく共有の部品」）。
 const SHARED_BROWSER_BOXES = ["lib", "domain"] as const
 
 describe("browser/ の機能をまたぐ箱", () => {
-  it("browser/lib/・browser/domain/・components/domain/ 直下・components/ui/ に、1つの機能だけが読むファイルは無い", () => {
+  it("browser/lib/・browser/domain/・components/domain/ 直下に、1つの機能だけが読むファイルは無い", () => {
     const files = listSourceFiles(SRC_ROOT).filter(
       (relPath) =>
         SHARED_BROWSER_BOXES.some((box) => relPath.startsWith(`browser/${box}/`)) ||
-        isDirectBrowserComponentsDomainFile(relPath) ||
-        relPath.startsWith("browser/components/ui/"),
+        isDirectBrowserComponentsDomainFile(relPath),
     )
     expect(files.length).toBeGreaterThan(0)
 

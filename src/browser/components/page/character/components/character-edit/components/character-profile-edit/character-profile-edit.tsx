@@ -10,8 +10,8 @@
 import { useState, type ReactElement } from "react"
 
 import { Button } from "../../../../../../ui/button/button.tsx"
+import { PencilIcon } from "../../../../../../ui/icon/icon.tsx"
 import styles from "../../../../character.module.css"
-import { PencilIcon } from "../../../action-icon/action-icon.tsx"
 import { type CharacterProfileEditModel } from "../../../hooks/use-character-edit.ts"
 import { CharacterProfileEditDialog } from "../character-profile-edit-dialog/character-profile-edit-dialog.tsx"
 

@@ -623,8 +623,7 @@ components/page/<ページ>/
 - **接続（`lib/socket.ts`）と再読み込み（`lib/refresh.ts`）は状態ではなく道具**なので `lib/`。
   入口の `main.tsx` と `app.tsx` は直下のまま（`src/browser/app/` を作らない理由は下の段落）
 - **領域どうし・機能どうしは import しない**（唯一の例外が「領域 → 置かれる機能」の1方向。次の節）。
-  またいで要るものは、**部品なら `components/domain/`（語彙を持つ）か `components/ui/`（持たない）、
-  フックなら `hooks/`、状態なら `stores/`、
+  またいで要るものは、**語彙を持つ部品なら `components/domain/`、フックなら `hooks/`、状態なら `stores/`、
   それ以外は tsukumo の語彙を名乗るなら `domain/`、ライブラリを包む道具なら `lib/` へ上げる**。
   上げる引き金は「2つ目の読み手が出たとき」で、
   1つの領域しか読まないものは領域の中に残す（`components/page/conversation/components/conversation-layout/domain/split.ts` がその例。
@@ -634,7 +633,7 @@ components/page/<ページ>/
   （2026-09-23 決定。`browser/lib/` に溜まっていた `model-label.ts` /
   `permission-mode-label.ts` → 帯の `domain/`、`prompt-image.ts` →
   入力欄、`chart.ts` / `vendor-script.ts` → メインビューの `markdown/`）。
-  **`browser/lib/` と `browser/domain/`、`components/domain/` の直下と `components/ui/` に
+  **`browser/lib/` と `browser/domain/`、`components/domain/` の直下に
   「1つの領域（機能）だけが読むファイル」が無いことは `test/architecture.test.ts` が見る**
   （領域・機能が1つも読まない——`stores/` や `main.tsx` / `app.tsx` や共有の部品だけが読む `socket.ts` /
   `refresh.ts` のようなもの——は対象外）
@@ -762,11 +761,10 @@ bullet-proof-react の要素）」）。**`utils/` は 2026-09-21 に、`hooks/`
 `className` で渡す）。揃えて丸めるかは別の判断として持ち越す（丸めると決めたら、変わる画面を
 目視で確かめる項目を付けて置き換える）。
 
-**読み手の数**: 「browser/ の機能をまたぐ箱」の検査（上の「引き金は逆にも引く」）は
-`components/ui/` にもそのまま掛け、**例外を作らない**。部品は、**2つ以上の領域・機能（か
-`components/ui/` の部品）から読まれるコミットで作る**。1つからしか読まれないなら `ui/` に作らず
-その機能の中に置く。**variant の値ごとの読み手は数えない**（`Dialog` の `backdrop: "deep"` の
-読み手が日記帳だけでもよい）が、使う箇所の無い値は作らない。**`components/ui/` はストアを読めない**
+**読み手の数は問わない**: `components/ui/` は**汎用の部品の置き場**で、置くかどうかは
+**tsukumo の語彙を持たないか**だけで決める（2026-09-26 のユーザーの指示。読み手が1つの領域・機能だけでも
+`ui/` に置く）。「browser/ の機能をまたぐ箱」の検査（上の「引き金は逆にも引く」）は `components/ui/` に
+掛けない。使う箇所の無い variant の値は作らない。**`components/ui/` はストアを読めない**
 ままで、部品は値と呼び先を全部 props で受ける（開いているかは呼び出し側の state、押したときは
 `onClick` / `onClose`）。
 
@@ -782,15 +780,16 @@ backdrop のクリックで `onClose` が呼ばれること・中のクリック
 **部品の一覧**（2026-09-25 時点。props はすべて必須で、「`className` で渡すもの」は置き方の
 ほかに渡してよい目安）:
 
-| 部品      | 置き場        | props（variant と要素）                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | `className` で渡すもの                                |
-| --------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
-| `Text`    | `ui/text/`    | `element: "p" \| "span" \| "summary"`、`size`: `label` / `action` / `secondary` / `subheading` / `body` / `heading` / `inherit`（→ `--font-*`）、`tone`: `ink` / `ink-quiet` / `accent` / `state-ok` / `state-warn` / `state-ng` / `state-ask` / `inherit`（→ 同名の色）、`weight`: `normal`（400）/ `semibold`（600）/ `bold`（700）/ `inherit`                                                                                                                                                                                                                                                                                         | 文字の組み（1行で切る・字間・行の高さ・桁揃え・書体） |
-| `Heading` | `ui/heading/` | `level: 1 \| 2 \| 3 \| 4`（→ `<h1>`〜`<h4>`）、`size`・`tone`・`weight` は `Text` と同じ（`size` と `weight` に `inherit` は無い）                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | `Text` と同じ                                         |
-| `Stack`   | `ui/stack/`   | `element: "div" \| "section" \| "span" \| "header" \| "footer" \| "label" \| "p"`、`name`（`Dialog` と同じ形に「付けない」を足した合併型: `{ kind: "none" }` / `{ kind: "label"; label }`（→ `aria-label`）/ `{ kind: "labelledby"; id }`（→ `aria-labelledby`））、`ref: Ref<HTMLElement> \| undefined`（React 19 の props で受ける ref。読まないなら `undefined`）、`direction`: `row` / `column`、`gap`: `none` / `xs` / `sm` / `md` / `lg` / `xl`（0 / 0.25 / 0.5 / 0.75 / 1 / 1.25rem）、`align`: `start` / `center` / `end` / `baseline` / `stretch`、`justify`: `start` / `center` / `end` / `between`、`wrap`: `nowrap` / `wrap` | 箱の見た目（余白・枠・地）                            |
-| `VStack`  | `ui/v-stack/` | `Stack` から `direction` を除いたもの（`column` に固定して `Stack` を描く）                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | `Stack` と同じ                                        |
-| `HStack`  | `ui/h-stack/` | `Stack` から `direction` を除いたもの（`row` に固定して `Stack` を描く）                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | `Stack` と同じ                                        |
-| `Button`  | `ui/button/`  | `type`: `button` / `submit`、`variant`: `outline`（`--rule` の枠）/ `outline-accent` / `outline-warn` / `solid-accent` / `solid-danger`（`--state-ng`）/ `solid-warn` / `ghost`（地も枠も無い静かな字）/ `link`（accent の字・余白0）、`size`: `Text` の `label`〜`body`、`pressed`: `none` / `on` / `off`、`disabled`、`ariaLabel` / `ariaHasPopup`（`"dialog"`）/ `title`（どれも `string                                                                                                                                                                                                                                              | undefined` の必須キー）、`onClick`                    | 箱（高さ・余白・角丸） |
-| `Dialog`  | `ui/dialog/`  | `open`、名前（`aria-label` か `aria-labelledby` の合併型）、`backdrop`: `dim`（`ground` の 70%）/ `deep`（88%）/ `clear`（透明。外側のクリックの読み替えだけ使う）、`placement`: `{ kind: "auto" }`（部品は置き方を持たない。ブラウザ既定の中央か、`className` の CSS で置く）/ `{ kind: "at"; top; left }`（座標を inline で置く）、`onClose`                                                                                                                                                                                                                                                                                           | 顔と箱（幅・余白・地・枠・角丸・影）                  |
+| 部品              | 置き場        | props（variant と要素）                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | `className` で渡すもの                                |
+| ----------------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| `Text`            | `ui/text/`    | `element: "p" \| "span" \| "summary"`、`size`: `label` / `action` / `secondary` / `subheading` / `body` / `heading` / `inherit`（→ `--font-*`）、`tone`: `ink` / `ink-quiet` / `accent` / `state-ok` / `state-warn` / `state-ng` / `state-ask` / `inherit`（→ 同名の色）、`weight`: `normal`（400）/ `semibold`（600）/ `bold`（700）/ `inherit`                                                                                                                                                                                                                                                                                         | 文字の組み（1行で切る・字間・行の高さ・桁揃え・書体） |
+| `Heading`         | `ui/heading/` | `level: 1 \| 2 \| 3 \| 4`（→ `<h1>`〜`<h4>`）、`size`・`tone`・`weight` は `Text` と同じ（`size` と `weight` に `inherit` は無い）                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | `Text` と同じ                                         |
+| `Stack`           | `ui/stack/`   | `element: "div" \| "section" \| "span" \| "header" \| "footer" \| "label" \| "p"`、`name`（`Dialog` と同じ形に「付けない」を足した合併型: `{ kind: "none" }` / `{ kind: "label"; label }`（→ `aria-label`）/ `{ kind: "labelledby"; id }`（→ `aria-labelledby`））、`ref: Ref<HTMLElement> \| undefined`（React 19 の props で受ける ref。読まないなら `undefined`）、`direction`: `row` / `column`、`gap`: `none` / `xs` / `sm` / `md` / `lg` / `xl`（0 / 0.25 / 0.5 / 0.75 / 1 / 1.25rem）、`align`: `start` / `center` / `end` / `baseline` / `stretch`、`justify`: `start` / `center` / `end` / `between`、`wrap`: `nowrap` / `wrap` | 箱の見た目（余白・枠・地）                            |
+| `VStack`          | `ui/v-stack/` | `Stack` から `direction` を除いたもの（`column` に固定して `Stack` を描く）                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | `Stack` と同じ                                        |
+| `HStack`          | `ui/h-stack/` | `Stack` から `direction` を除いたもの（`row` に固定して `Stack` を描く）                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | `Stack` と同じ                                        |
+| `Button`          | `ui/button/`  | `type`: `button` / `submit`、`variant`: `outline`（`--rule` の枠）/ `outline-accent` / `outline-warn` / `solid-accent` / `solid-danger`（`--state-ng`）/ `solid-warn` / `ghost`（地も枠も無い静かな字）/ `link`（accent の字・余白0）、`size`: `Text` の `label`〜`body`、`pressed`: `none` / `on` / `off`、`disabled`、`ariaLabel` / `ariaHasPopup`（`"dialog"`）/ `title`（どれも `string                                                                                                                                                                                                                                              | undefined` の必須キー）、`onClick`                    | 箱（高さ・余白・角丸） |
+| `Dialog`          | `ui/dialog/`  | `open`、名前（`aria-label` か `aria-labelledby` の合併型）、`backdrop`: `dim`（`ground` の 70%）/ `deep`（88%）/ `clear`（透明。外側のクリックの読み替えだけ使う）、`placement`: `{ kind: "auto" }`（部品は置き方を持たない。ブラウザ既定の中央か、`className` の CSS で置く）/ `{ kind: "at"; top; left }`（座標を inline で置く）、`onClose`                                                                                                                                                                                                                                                                                           | 顔と箱（幅・余白・地・枠・角丸・影）                  |
+| `UploadIcon` ほか | `ui/icon/`    | props は無い。lucide-react の絵を大きさ 15・線の太さ 1.9 で描く（`UploadIcon` / `TrashIcon` / `PlusIcon` / `SwitchIcon` / `PencilIcon`）                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | —                                                     |
 
 - **`VStack` / `HStack`**: 向きの決まった並べは `VStack`（縦）・`HStack`（横）で書き、読む人が
   props を見ずに向きを知れるようにする。どちらも `Stack` に `direction` を渡すだけの薄い部品で、
@@ -888,8 +887,9 @@ backdrop のクリックで `onClose` が呼ばれること・中のクリック
     `components/domain/prompt-image.tsx`（と CSS）→ `conversation/components/prompt-image/`、
     `domain/api-error-label.ts` → `conversation/domain/`、`hooks/use-repository-file-paths.ts` →
     `conversation/components/hooks/`。`components/ui/image-zoom/` も、読み手が `prompt-image.tsx`
-    だけになったので `prompt-image/components/image-zoom/` へ下ろした（前の2つと `image-zoom` は
-    下の検査「1つの機能だけが読むファイルは無い」が落とす）
+    だけになったので `prompt-image/components/image-zoom/` へ下ろした（前の2つは
+    下の検査「1つの機能だけが読むファイルは無い」が落とす。`components/ui/` は 2026-09-26 に
+    この検査から外したので、`image-zoom` は `ui/` へ戻してよい）
   - 書き終わりの知らせは成果の画面の部品（`achievement/components/diary-notice/`）のまま、
     `app.tsx` がその `diary-notice.tsx` を直に置く（画面の外から部品を引けるのは入口だけ）
 - 検査は `test/architecture.test.ts` の枠・画面・置かれる機能の一覧。**どれにも無いディレクトリが
@@ -986,8 +986,8 @@ features/task-board/
   はサイドバーの区画（`task-section.tsx` / `task-list.tsx`）が読む。フックに置くと、
   フックを使わない側が `use-*.ts` を import することになる
 - **`components/` は機能の中の部品**で、`browser/components/` の4段とは
-  別物。**読み手が2つの機能にまたがったら、語彙を持つなら `components/domain/` の直下、持たないなら
-  `components/ui/` へ上げる**
+  別物。**語彙を持たない汎用の部品は、読み手が1つでも `components/ui/` に置く。** 語彙を持つ部品は、
+  読み手が2つの機能にまたがったら `components/domain/` の直下へ上げる
 
 - **`presentational-` の接頭辞は、この形のときだけ付けてよい**（`CLAUDE.md` 原則5 の
   「置き場所を名前にしたファイルは作らない」の例外）。**container と1対1で対になっている**

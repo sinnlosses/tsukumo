@@ -9,9 +9,9 @@
 import clsx from "clsx"
 import { type DragEvent, type ReactElement } from "react"
 
+import { UploadIcon } from "../../../../../../ui/icon/icon.tsx"
 import { Text } from "../../../../../../ui/text/text.tsx"
 import styles from "../../../../character.module.css"
-import { UploadIcon } from "../../../action-icon/action-icon.tsx"
 import { type PortraitDropModel } from "../../hooks/use-character-create.ts"
 
 const PORTRAIT_FILE_ACCEPT = ".svg,.png,.gif"

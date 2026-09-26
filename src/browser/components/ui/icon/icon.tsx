@@ -1,6 +1,6 @@
-// キャラクター画面の口に添える線のアイコン（差し替える・消す・足す）。字を持たない口
-// （カードに乗せたとき出る2つ）は読み上げの名前を口の側に持つので、ここは絵だけ。
-// 線の色は読み手の `currentColor`（色は `character.module.css` が決める）。
+// 操作の口に添える線のアイコン（差し替える・消す・足す・切り替える・名乗りを変える）。
+// 絵は lucide-react で、大きさと線の太さをここで揃える。読み上げの名前は口の側が持つので、
+// ここは絵だけ。線の色は読み手の `currentColor`。
 
 import { ArrowLeftRight, Pencil, Plus, Trash2, Upload } from "lucide-react"
 import { type ReactElement } from "react"

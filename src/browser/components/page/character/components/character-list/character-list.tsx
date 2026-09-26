@@ -15,10 +15,10 @@ import { EXPRESSIONS } from "../../../../../../shared/expression.ts"
 import { usePackHref } from "../../../../../stores/screen.tsx"
 import { useSessionSelector } from "../../../../../stores/session.tsx"
 import { Heading } from "../../../../ui/heading/heading.tsx"
+import { PlusIcon } from "../../../../ui/icon/icon.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
 import { VStack } from "../../../../ui/v-stack/v-stack.tsx"
 import styles from "../../character.module.css"
-import { PlusIcon } from "../action-icon/action-icon.tsx"
 import { useSelectedPack } from "../hooks/use-selected-pack.ts"
 
 export function CharacterList(props: { readonly onCreate: () => void }): ReactElement {
