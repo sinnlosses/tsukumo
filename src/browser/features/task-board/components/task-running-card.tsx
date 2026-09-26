@@ -10,6 +10,7 @@ import { type ReactElement } from "react"
 
 import { type TaskSummaryItem } from "../../../../shared/task-summary.ts"
 import { HStack } from "../../../components/ui/h-stack/h-stack.tsx"
+import { Text } from "../../../components/ui/text/text.tsx"
 import styles from "../task-board.module.css"
 import { TaskRunButton } from "./task-run-button.tsx"
 
@@ -29,7 +30,15 @@ export function TaskRunningCard(props: { readonly task: TaskSummaryItem }): Reac
         <span className={styles["task-running-badge"]}>進行中</span>
         <TaskRunButton taskId={props.task.id} />
       </HStack>
-      <span className={styles["task-running-body"]}>{props.task.summary}</span>
+      <Text
+        element="span"
+        size="subheading"
+        tone="inherit"
+        weight="inherit"
+        className={styles["task-running-body"]}
+      >
+        {props.task.summary}
+      </Text>
     </li>
   )
 }

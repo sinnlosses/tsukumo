@@ -24,6 +24,7 @@ import clsx from "clsx"
 import { type ReactElement } from "react"
 
 import { HStack } from "../../../components/ui/h-stack/h-stack.tsx"
+import { Text } from "../../../components/ui/text/text.tsx"
 import {
   contextUsageRefetchKey,
   type UseContextUsageResult,
@@ -62,9 +63,25 @@ export function ContextUsageRow(): ReactElement {
         wrap="nowrap"
         className=""
       >
-        <span className={styles["context-usage-row-label"]}>{ROW_LABEL}</span>
+        <Text
+          element="span"
+          size="label"
+          tone="ink-quiet"
+          weight="inherit"
+          className={styles["context-usage-row-label"]}
+        >
+          {ROW_LABEL}
+        </Text>
         <span className={styles["context-usage-row-percentage"]}>{percentageText(usage)}</span>
-        <span className={styles["context-usage-row-value"]}>{valueText(usage)}</span>
+        <Text
+          element="span"
+          size="label"
+          tone="ink-quiet"
+          weight="inherit"
+          className={styles["context-usage-row-value"]}
+        >
+          {valueText(usage)}
+        </Text>
         <span className={styles["context-usage-row-spacer"]} aria-hidden="true" />
         <a
           href="#token-usage"

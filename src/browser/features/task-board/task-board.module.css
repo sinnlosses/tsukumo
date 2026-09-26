@@ -113,10 +113,10 @@
   font-size: var(--font-label);
   color: color-mix(in srgb, var(--ink-quiet), var(--accent) 40%);
 }
-/* 2行目（summary）。進行中は他の行と違い折り返して全文出す（1行に切り詰めない）。 */
+/* 2行目（summary）。進行中は他の行と違い折り返して全文出す（1行に切り詰めない）。字の段は
+   `Text`（size="subheading"）が持つ。 */
 .task-running-body {
   white-space: normal;
-  font-size: var(--font-subheading);
   line-height: 1.5;
 }
 .task-list {
@@ -157,15 +157,14 @@
   min-width: 0;
 }
 /* 未着手・完了の行の summary は1行に収め、入りきらない分は「…」にする（全文は
-   「一覧を見る」の表で読む。docs/display.md 4.2）。**font-size を明示する**——親
-   （`.sidebar-block`）の `--font-secondary` に頼ると、`.task-item` がサイドバー以外の文脈に
-   置かれたときに黙って崩れる。 */
+   「一覧を見る」の表で読む。docs/display.md 4.2）。**字の段を明示する**（`Text`
+   `size="secondary"`）——親（`.sidebar-block`）の `--font-secondary` に頼ると、`.task-item` が
+   サイドバー以外の文脈に置かれたときに黙って崩れる。 */
 .task-item-summary {
   overflow: hidden;
   min-width: 0;
   white-space: nowrap;
   text-overflow: ellipsis;
-  font-size: var(--font-secondary);
 }
 /* タスクのIDは機械が付けた名前なので等幅（docs/screen-design.md 13.1 原則3）。書体そのものの定義は
    `src/browser/styles/theme.css` のトークンにあり、ここは宛てるだけ。summary（13px）より
@@ -358,10 +357,10 @@
 /* 背景（backdrop）は `<Dialog backdrop="dim">` が持つ（`dialog.module.css`）。 */
 /* 問い（`Text`。size="heading" tone="inherit" weight="semibold"。margin: 0 は既定と同じなので
    ここには残さない）。 */
-/* 送る文面（または送れない理由）。問いより弱い濃さで、問いの下に1行だけ置く。 */
+/* 送る文面（または送れない理由）。問いより弱い濃さで、問いの下に1行だけ置く。色は
+   `Text`（tone="ink-quiet"）が持つ。 */
 .task-run-note {
   margin: 0.5rem 0 0;
-  color: var(--ink-quiet);
 }
 .task-run-prompt {
   font-family: var(--font-mono);

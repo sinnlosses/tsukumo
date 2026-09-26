@@ -10,6 +10,7 @@ import clsx from "clsx"
 import { type ReactElement } from "react"
 
 import { type TaskSummaryItem } from "../../../../shared/task-summary.ts"
+import { Text } from "../../../components/ui/text/text.tsx"
 import styles from "../task-board.module.css"
 import { TaskRunButton } from "./task-run-button.tsx"
 
@@ -21,7 +22,15 @@ export function TaskItem(props: { readonly task: TaskSummaryItem }): ReactElemen
       </span>
       <span className={styles["task-item-body"]}>
         <TaskRunButton taskId={props.task.id} />
-        <span className={styles["task-item-summary"]}>{props.task.summary}</span>
+        <Text
+          element="span"
+          size="secondary"
+          tone="inherit"
+          weight="inherit"
+          className={styles["task-item-summary"]}
+        >
+          {props.task.summary}
+        </Text>
       </span>
     </li>
   )

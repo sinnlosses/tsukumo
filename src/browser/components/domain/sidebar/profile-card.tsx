@@ -15,6 +15,7 @@
 import { type ReactElement } from "react"
 
 import { CharacterFace } from "../../../components/domain/character-face.tsx"
+import { Text } from "../../../components/ui/text/text.tsx"
 import { VStack } from "../../../components/ui/v-stack/v-stack.tsx"
 import { useSessionSelector } from "../../../stores/session.tsx"
 import { CharacterSwitch } from "./character-switch.tsx"
@@ -41,8 +42,28 @@ export function ProfileCard(): ReactElement {
         wrap="nowrap"
         className={styles["profile-card-text"]}
       >
-        {name !== undefined && <p className={styles["profile-card-name"]}>{name}</p>}
-        {tagline !== undefined && <p className={styles["profile-card-tagline"]}>{tagline}</p>}
+        {name !== undefined && (
+          <Text
+            element="p"
+            size="heading"
+            tone="ink"
+            weight="bold"
+            className={styles["profile-card-name"]}
+          >
+            {name}
+          </Text>
+        )}
+        {tagline !== undefined && (
+          <Text
+            element="p"
+            size="action"
+            tone="ink-quiet"
+            weight="inherit"
+            className={styles["profile-card-tagline"]}
+          >
+            {tagline}
+          </Text>
+        )}
       </VStack>
       {hasCharacterPacks && (
         <span className={styles["profile-card-change"]}>

@@ -143,10 +143,24 @@ function PersonaMemoryForgetConfirm(props: PersonaMemoryForgetConfirmProps): Rea
       onClose={props.onClose}
       className={styles["sidebar-persona-memory-confirm"]}
     >
-      <p className={styles["sidebar-persona-memory-confirm-question"]}>
+      <Text
+        element="p"
+        size="heading"
+        tone="inherit"
+        weight="semibold"
+        className={styles["sidebar-persona-memory-confirm-question"]}
+      >
         「{props.line}」を消しますか
-      </p>
-      <p className={styles["sidebar-persona-memory-confirm-note"]}>消すと元に戻せない。</p>
+      </Text>
+      <Text
+        element="p"
+        size="inherit"
+        tone="ink-quiet"
+        weight="inherit"
+        className={styles["sidebar-persona-memory-confirm-note"]}
+      >
+        消すと元に戻せない。
+      </Text>
       <HStack
         element="div"
         name={{ kind: "none" }}

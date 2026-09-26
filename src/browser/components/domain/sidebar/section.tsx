@@ -14,6 +14,7 @@ import { type ReactElement, type ReactNode } from "react"
 
 import { Button } from "../../../components/ui/button/button.tsx"
 import { Heading } from "../../../components/ui/heading/heading.tsx"
+import { Text } from "../../../components/ui/text/text.tsx"
 import styles from "./sidebar.module.css"
 
 export type SidebarSectionAction = {
@@ -39,7 +40,15 @@ export function SidebarSection(props: SidebarSectionProps): ReactElement {
         weight="bold"
         className={styles["sidebar-block-heading"]}
       >
-        <span className={styles["sidebar-block-title"]}>{props.title}</span>
+        <Text
+          element="span"
+          size="inherit"
+          tone="inherit"
+          weight="inherit"
+          className={styles["sidebar-block-title"]}
+        >
+          {props.title}
+        </Text>
         {props.action !== undefined && (
           <Button
             type="button"

@@ -4,6 +4,7 @@
 
 import { Fragment, type ReactElement } from "react"
 
+import { Text } from "../../../components/ui/text/text.tsx"
 import styles from "../task-board.module.css"
 
 export function TaskIdList(props: { readonly ids: readonly string[] }): ReactElement {
@@ -12,7 +13,15 @@ export function TaskIdList(props: { readonly ids: readonly string[] }): ReactEle
       {props.ids.map((id, index) => (
         <Fragment key={id}>
           {index === 0 ? "" : ", "}
-          <span className={styles["task-dep-id"]}>{id}</span>
+          <Text
+            element="span"
+            size="inherit"
+            tone="inherit"
+            weight="inherit"
+            className={styles["task-dep-id"]}
+          >
+            {id}
+          </Text>
         </Fragment>
       ))}
     </>

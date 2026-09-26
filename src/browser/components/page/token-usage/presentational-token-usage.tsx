@@ -369,7 +369,9 @@ type BarredValueProps = {
 function BarredValue(props: BarredValueProps): ReactElement {
   return (
     <span className={styles["usage-table-bar-cell"]}>
-      <span>{props.formatted}</span>
+      <Text element="span" size="inherit" tone="inherit" weight="inherit" className="">
+        {props.formatted}
+      </Text>
       <span className={styles["usage-table-bar"]}>
         <span
           className={styles["usage-table-bar-fill"]}

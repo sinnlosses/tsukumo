@@ -60,13 +60,25 @@ export function TaskRunConfirm(props: TaskRunConfirmProps): ReactElement {
         {props.taskId} を実行しますか
       </Text>
       {turnInProgress ? (
-        <p className={styles["task-run-note"]}>
+        <Text
+          element="p"
+          size="inherit"
+          tone="ink-quiet"
+          weight="inherit"
+          className={styles["task-run-note"]}
+        >
           いまターンが動いているので送れない。終わってからもう一度押す。
-        </p>
+        </Text>
       ) : (
-        <p className={styles["task-run-note"]}>
+        <Text
+          element="p"
+          size="inherit"
+          tone="ink-quiet"
+          weight="inherit"
+          className={styles["task-run-note"]}
+        >
           入力欄に <code className={styles["task-run-prompt"]}>{prompt}</code> と打つのと同じ。
-        </p>
+        </Text>
       )}
       <div className={styles["task-run-actions"]}>
         <Button
