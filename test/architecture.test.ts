@@ -2,6 +2,8 @@ import { describe, expect, it } from "bun:test"
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs"
 import { fileURLToPath } from "node:url"
 
+import { commentLineIndexes } from "./comment-line.ts"
+
 // 層をディレクトリで表す（docs/design.md 2章「層と依存の向き」）。ここは正規表現と node:fs だけで、
 // 許した辺以外の import を落とす。外部ツールは増やさない。
 //
@@ -1595,23 +1597,4 @@ function violationsMessage(violations: readonly Violation[]): string {
   return violations
     .map((v) => `src/${v.fromPath}（${v.fromLayer}） → src/${v.toPath}（${v.toLayer}）`)
     .join("\n")
-}
-
-/**
- * 行頭が `//` の行と、行頭が `/*` の行から `*\/` を含む行までの行番号を返す。
- * 行の途中で開くブロックコメントは拾わない（取りこぼしても検査が緩むだけで、誤検出はしない）。
- */
-function commentLineIndexes(lines: ReadonlyArray<string>): ReadonlyArray<number> {
-  return lines.reduce<{ readonly inBlock: boolean; readonly indexes: ReadonlyArray<number> }>(
-    ({ inBlock, indexes }, line, index) => {
-      const opens = !inBlock && /^\s*\/\*/.test(line)
-      const isComment = inBlock || opens || /^\s*\/\//.test(line)
-      const closes = (inBlock || opens) && line.includes("*/")
-      return {
-        inBlock: (inBlock || opens) && !closes,
-        indexes: isComment ? [...indexes, index] : indexes,
-      }
-    },
-    { inBlock: false, indexes: [] },
-  ).indexes
 }
