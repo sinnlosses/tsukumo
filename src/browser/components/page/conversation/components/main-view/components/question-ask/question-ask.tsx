@@ -17,6 +17,7 @@
 // **札まで連れてくるスクロールは `hooks/use-question-ask-scroll.ts`**（外の世界に触るフックだけが
 // 余分。docs/design.md 2章「機能の中を分ける」）。
 
+import clsx from "clsx"
 import { type ReactElement } from "react"
 
 import { Button } from "../../../../../../../components/ui/button/button.tsx"
@@ -192,11 +193,7 @@ function QuestionOption(props: {
   const { option } = props
 
   return (
-    <li
-      className={`${styles["question-ask-option"]}${
-        option.selected ? ` ${styles["is-selected"]}` : ""
-      }`}
-    >
+    <li className={clsx(styles["question-ask-option"], option.selected && styles["is-selected"])}>
       <HStack
         element="label"
         name={{ kind: "none" }}
@@ -253,7 +250,7 @@ function QuestionOption(props: {
         // ハッシュ化するため、そちらの `.detail-block`（この選択子のためだけの空の再定義）も
         // 一緒に付ける**（`components/domain/portrait.module.css` の `.portrait` と同じ手口。
         // docs/design.md 6.6）。
-        <div className={`${notationStyles["detail-block"]} ${styles["detail-block"]}`}>
+        <div className={clsx(notationStyles["detail-block"], styles["detail-block"])}>
           <Markdown text={option.preview} />
         </div>
       )}

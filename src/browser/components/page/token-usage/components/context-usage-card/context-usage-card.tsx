@@ -17,6 +17,7 @@
 // 同じ塗りを出せる（値（トークン数・割合・時刻）だけが届くまで分からない）。**骨組みと届いた
 // 札の高さを揃え、レイアウトシフトを防ぐのが目的。**
 
+import clsx from "clsx"
 import { type ReactElement } from "react"
 
 import { type ContextUsageItem } from "../../../../../../shared/context-usage.ts"
@@ -103,7 +104,7 @@ export function ContextUsageCard(props: ContextUsageCardProps): ReactElement {
         {card.rows.map((row) => (
           <span
             key={row.name}
-            className={`${styles["context-span"]} ${toneClassName(row.name)}`}
+            className={clsx(styles["context-span"], toneClassName(row.name))}
             style={{ "--context-share": `${row.share}%` }}
           />
         ))}
@@ -113,7 +114,7 @@ export function ContextUsageCard(props: ContextUsageCardProps): ReactElement {
         {card.rows.map((row) => (
           <div key={row.name} className={styles["context-legend-row"]}>
             <dt className={styles["context-legend-name"]}>
-              <span className={`${styles["context-swatch"]} ${toneClassName(row.name)}`} />
+              <span className={clsx(styles["context-swatch"], toneClassName(row.name))} />
               {categoryLook(row.name).label}
             </dt>
             <dd className={styles["context-legend-value"]}>
@@ -178,13 +179,13 @@ function ContextUsageCardSkeleton(): ReactElement {
 
       <p className={styles["context-total"]}>
         <SkeletonBlock
-          className={`${styles["context-total-value"]} ${styles["context-skeleton-total-value"]}`}
+          className={clsx(styles["context-total-value"], styles["context-skeleton-total-value"])}
         />
         <SkeletonBlock
-          className={`${styles["context-total-max"]} ${styles["context-skeleton-total-max"]}`}
+          className={clsx(styles["context-total-max"], styles["context-skeleton-total-max"])}
         />
         <SkeletonBlock
-          className={`${styles["context-total-share"]} ${styles["context-skeleton-total-share"]}`}
+          className={clsx(styles["context-total-share"], styles["context-skeleton-total-share"])}
         />
       </p>
 
@@ -192,7 +193,7 @@ function ContextUsageCardSkeleton(): ReactElement {
         {/* 横棒だけは他と違い、中身の文字（`&nbsp;`）ではなく親（`.context-bar`）の
             高さに合わせて伸ばす（`flex` の既定の `stretch`）ので `SkeletonBlock` は使わない。 */}
         <span
-          className={`${styles["context-skeleton-block"]} ${styles["context-skeleton-bar"]}`}
+          className={clsx(styles["context-skeleton-block"], styles["context-skeleton-bar"])}
           aria-hidden="true"
         />
       </div>
@@ -203,7 +204,7 @@ function ContextUsageCardSkeleton(): ReactElement {
           return (
             <div key={name} className={styles["context-legend-row"]}>
               <dt className={styles["context-legend-name"]}>
-                <span className={`${styles["context-swatch"]} ${toneClassName(name)}`} />
+                <span className={clsx(styles["context-swatch"], toneClassName(name))} />
                 {look.label}
               </dt>
               <dd className={styles["context-legend-value"]}>
@@ -235,7 +236,7 @@ type SkeletonBlockProps = {
  */
 function SkeletonBlock(props: SkeletonBlockProps): ReactElement {
   return (
-    <span className={`${styles["context-skeleton-block"]} ${props.className}`} aria-hidden="true">
+    <span className={clsx(styles["context-skeleton-block"], props.className)} aria-hidden="true">
       {"\u00a0"}
     </span>
   )
@@ -318,8 +319,8 @@ function DeferredTable(props: DeferredTableProps): ReactElement | null {
 /** 横棒の一区間と凡例の四角に付ける色の綴り（`token-usage.module.css`）。**分類の表示名から
  * 引く**（骨組みは `ContextUsageRow` を持たず名前だけ知っているので、届いた札の行
  * （`row.name`）と骨組みの分類名（`SKELETON_ROW_NAMES` の要素）の両方から呼べる形にしてある）。 */
-function toneClassName(name: string): string {
-  return styles[`context-tone-${categoryLook(name).tone}`] ?? ""
+function toneClassName(name: string): string | undefined {
+  return styles[`context-tone-${categoryLook(name).tone}`]
 }
 
 /** 割合（`3.9%`）。**小数第1位まで**（1%未満の分類も0にならない）。 */

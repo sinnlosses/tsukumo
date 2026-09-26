@@ -7,6 +7,7 @@
 // **セリフをコピーできなかった**。押せることは role と `aria-pressed` で表し、キーの受けだけ
 // 自前で足す。
 
+import clsx from "clsx"
 import { type ReactElement } from "react"
 
 import styles from "../../chat-view.module.css"
@@ -22,9 +23,12 @@ export function ChatSpeech(props: {
 
   return (
     <div
-      className={`${styles["chat-entry"]} ${styles["chat-entry-character"]}${
-        props.selected ? ` ${styles["is-selected"]}` : ""
-      }${props.pop ? ` ${styles["chat-entry-pop"]}` : ""}`}
+      className={clsx(
+        styles["chat-entry"],
+        styles["chat-entry-character"],
+        props.selected && styles["is-selected"],
+        props.pop && styles["chat-entry-pop"],
+      )}
       data-speaker="character"
       role="button"
       tabIndex={0}

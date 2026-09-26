@@ -3,6 +3,7 @@
 // `ui/text/` の1つを読み、二重に持たない。`Text` との違いは要素が `<h1>`〜`<h4>` になることと、
 // `margin: 0` を既定に持つことだけ（見出しの意味〔`level`〕と見た目〔`size`〕は別の props）。
 
+import clsx from "clsx"
 import { type ReactElement, type ReactNode } from "react"
 
 import {
@@ -38,15 +39,13 @@ const HEADING_ELEMENT = {
 } as const satisfies Record<HeadingLevel, "h1" | "h2" | "h3" | "h4">
 
 export function Heading(props: HeadingProps): ReactElement {
-  const className = [
+  const className = clsx(
     styles["heading"],
     TEXT_SIZE_CLASS[props.size],
     TEXT_TONE_CLASS[props.tone],
     TEXT_WEIGHT_CLASS[props.weight],
     props.className,
-  ]
-    .filter((value): value is string => value !== undefined && value !== "")
-    .join(" ")
+  )
 
   const Element = HEADING_ELEMENT[props.level]
   return <Element className={className}>{props.children}</Element>

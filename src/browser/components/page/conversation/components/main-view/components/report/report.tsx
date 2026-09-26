@@ -9,6 +9,7 @@
 // **書き上げていくように見せる演出（`domain/reveal/use-report-reveal.ts`）はここに掛ける。**
 // 完成した DOM の根を渡すだけで、塊の中身（`memo` の効く `ReportBlock`）には触らない。
 
+import clsx from "clsx"
 import { memo, type ReactElement } from "react"
 
 import { useReportReveal } from "../../../../../../../domain/reveal/use-report-reveal.ts"
@@ -45,7 +46,7 @@ function ReportView(props: ReportProps): ReactElement {
     // `main-view.module.css` にある。CSS Modules は class 名をファイルごとにハッシュ化するので、
     // 片方だけでは打ち消しが当たらない（`components/domain/portrait.module.css` の `.portrait` と
     // 同じ手口。docs/design.md 6.6）。
-    <div className={`${notationStyles["detail-block"]} ${styles["detail-block"]}`} ref={rootRef}>
+    <div className={clsx(notationStyles["detail-block"], styles["detail-block"])} ref={rootRef}>
       {blocks.map((block) => (
         <ReportBlock key={block} text={block} />
       ))}

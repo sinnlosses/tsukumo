@@ -7,6 +7,7 @@
 // **画面に会話の文面は出ない**（集計にそもそも文面が入っていない。
 // `src/shared/token-usage-summary.ts`）。
 
+import clsx from "clsx"
 import { type ReactElement, useState } from "react"
 
 import {
@@ -225,7 +226,7 @@ function ModelUsageCard(props: ModelUsageCardProps): ReactElement {
   return (
     <section className={styles["usage-card"]}>
       <TableCardHead title="モデル別" order="出力の多い順" />
-      <table className={`${styles["token-usage-table"]} ${styles["model-usage-table"]}`}>
+      <table className={clsx(styles["token-usage-table"], styles["model-usage-table"])}>
         <thead>
           <tr>
             <th scope="col">モデル</th>
@@ -278,7 +279,7 @@ function ToolUsageCard(props: ToolUsageCardProps): ReactElement {
   return (
     <section className={styles["usage-card"]}>
       <TableCardHead title="ツール別" order="結果の大きい順" />
-      <table className={`${styles["token-usage-table"]} ${styles["tool-usage-table"]}`}>
+      <table className={clsx(styles["token-usage-table"], styles["tool-usage-table"])}>
         <thead>
           <tr>
             <th scope="col">ツール</th>

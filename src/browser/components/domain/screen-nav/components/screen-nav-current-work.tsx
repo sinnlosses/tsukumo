@@ -11,6 +11,7 @@
 // **失敗した手順の `<details>` は、もとサイドバーにあった `activity.tsx` の `FailureDetail` を
 // そのまま移した**（引数と出力を読める場所はここだけ。docs/screen-design.md 13.9）。
 
+import clsx from "clsx"
 import { useId, type ReactElement } from "react"
 
 import { Button } from "../../../../components/ui/button/button.tsx"
@@ -49,14 +50,14 @@ export function ScreenNavCurrentWorkPill(props: ScreenNavCurrentWorkProps): Reac
   // 自身の class も要る（docs/design.md 6.6）。
   return (
     <div
-      className={`${styles["screen-nav-work"]} ${shellStyles["screen-nav-work"]}`}
+      className={clsx(styles["screen-nav-work"], shellStyles["screen-nav-work"])}
       data-work-state={work.state}
       data-chat-idle={work.chatIdle}
     >
       <button
         type="button"
         ref={toggleRef}
-        className={`${styles["screen-nav-work-toggle"]} ${shellStyles["screen-nav-work-toggle"]}`}
+        className={clsx(styles["screen-nav-work-toggle"], shellStyles["screen-nav-work-toggle"])}
         aria-expanded={work.open}
         aria-controls={listId}
         onClick={work.onToggle}
@@ -86,7 +87,7 @@ function CurrentWorkList(props: {
   return (
     <div
       id={props.id}
-      className={`${styles["screen-nav-work-list"]} ${shellStyles["screen-nav-work-list"]}`}
+      className={clsx(styles["screen-nav-work-list"], shellStyles["screen-nav-work-list"])}
       role="region"
     >
       <Text
@@ -215,15 +216,13 @@ function CurrentWorkBackgroundRow(props: {
 /** 手順1件。**サブエージェントの中（nested）は1段下げる。失敗は `<details>` で開いて読める。** */
 function CurrentWorkStepRow(props: { readonly step: ScreenNavCurrentWorkStep }): ReactElement {
   const { step } = props
-  const classes = [
+  const classes = clsx(
     styles["screen-nav-work-step"],
-    step.nested ? styles["screen-nav-work-step-nested"] : "",
-    step.status.kind === "done" ? styles["screen-nav-work-step-done"] : "",
-    step.status.kind === "running" ? styles["screen-nav-work-step-running"] : "",
-    step.status.kind === "failed" ? styles["screen-nav-work-step-failed"] : "",
-  ]
-    .filter((name) => name !== "")
-    .join(" ")
+    step.nested && styles["screen-nav-work-step-nested"],
+    step.status.kind === "done" && styles["screen-nav-work-step-done"],
+    step.status.kind === "running" && styles["screen-nav-work-step-running"],
+    step.status.kind === "failed" && styles["screen-nav-work-step-failed"],
+  )
 
   return (
     <li className={classes}>

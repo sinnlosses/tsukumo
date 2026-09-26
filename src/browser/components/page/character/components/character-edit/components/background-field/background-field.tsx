@@ -3,6 +3,7 @@
 // キャラビューだけ。有無の字と出し分けは `hooks/use-character-edit.ts` が畳んだ値のとおりで、
 // 判定を持たない。
 
+import clsx from "clsx"
 import { type ReactElement } from "react"
 
 import { HStack } from "../../../../../../ui/h-stack/h-stack.tsx"
@@ -84,7 +85,7 @@ export function BackgroundField(props: {
           {background.image.kind === "absent" ? null : (
             <button
               type="button"
-              className={`${styles["character-button"]} ${styles["character-button-danger"]}`}
+              className={clsx(styles["character-button"], styles["character-button-danger"])}
               aria-label="背景を消す"
               disabled={disabled}
               onClick={background.onClear}

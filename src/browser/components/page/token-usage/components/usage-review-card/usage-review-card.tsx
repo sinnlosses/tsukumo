@@ -11,6 +11,7 @@
 // （`use-usage-review.ts` の `resultView` が組み立てを1つに揃えている）。効きめの札の色・主
 // ボタンの文言は `docs/screen-design.md` 13.2「結果の場面」の決定どおり。
 
+import clsx from "clsx"
 import { type ReactElement } from "react"
 
 import {
@@ -83,7 +84,7 @@ function IdleReviewCard(props: {
   return (
     <section
       aria-label={SECTION_LABEL}
-      className={`${styles["usage-review"]} ${styles["usage-review-invite"]}`}
+      className={clsx(styles["usage-review"], styles["usage-review-invite"])}
     >
       <CharacterFace
         url={review.face.url}
@@ -155,7 +156,7 @@ function RunningReviewCard(props: {
     <section
       aria-label={SECTION_LABEL}
       aria-busy="true"
-      className={`${styles["usage-review"]} ${styles["usage-review-running"]}`}
+      className={clsx(styles["usage-review"], styles["usage-review-running"])}
     >
       <div className={styles["usage-review-running-head"]}>
         <CharacterFace
@@ -204,13 +205,11 @@ function RunningReviewCard(props: {
 
 function StageRow(props: { readonly stage: UsageReviewStageView }): ReactElement {
   const { stage } = props
-  const classes = [
+  const classes = clsx(
     styles["usage-review-stage"],
-    stage.status === "done" ? styles["usage-review-stage-done"] : "",
-    stage.status === "running" ? styles["usage-review-stage-running"] : "",
-  ]
-    .filter((name) => name !== "")
-    .join(" ")
+    stage.status === "done" && styles["usage-review-stage-done"],
+    stage.status === "running" && styles["usage-review-stage-running"],
+  )
 
   return (
     <li className={classes}>
@@ -241,7 +240,7 @@ function ResultReviewCard(props: {
   return (
     <section
       aria-label={SECTION_LABEL}
-      className={`${styles["usage-review"]} ${styles["usage-review-result"] ?? ""}`}
+      className={clsx(styles["usage-review"], styles["usage-review-result"])}
     >
       <div className={styles["usage-review-result-head"]}>
         <CharacterFace
@@ -363,7 +362,7 @@ function ImpactBadge(props: { readonly impact: UsageProposalImpact }): ReactElem
   } as const satisfies Record<UsageProposalImpact, string | undefined>
 
   return (
-    <span className={`${styles["usage-review-impact"]} ${toneClass[impact] ?? ""}`}>
+    <span className={clsx(styles["usage-review-impact"], toneClass[impact])}>
       <span className={styles["usage-review-impact-label"]}>{IMPACT_BADGE_LABEL}</span>
       <span className={styles["usage-review-impact-value"]}>{IMPACT_LABELS[impact]}</span>
     </span>

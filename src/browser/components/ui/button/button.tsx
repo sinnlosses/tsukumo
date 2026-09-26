@@ -9,6 +9,7 @@
 // `size` の対応表は `Text` と同じものを使う（`ui/text/text.tsx` の `TEXT_SIZE_CLASS`。
 // 二重に持たない）。
 
+import clsx from "clsx"
 import { type ReactElement, type ReactNode } from "react"
 
 import { TEXT_SIZE_CLASS, type TextSize } from "../text/text.tsx"
@@ -64,14 +65,12 @@ const BUTTON_PRESSED_ARIA = {
 } satisfies Record<ButtonPressed, "true" | "false" | undefined>
 
 export function Button(props: ButtonProps): ReactElement {
-  const className = [
+  const className = clsx(
     styles["button"],
     BUTTON_VARIANT_CLASS[props.variant],
     TEXT_SIZE_CLASS[props.size],
     props.className,
-  ]
-    .filter((value): value is string => value !== undefined && value !== "")
-    .join(" ")
+  )
 
   const handleClick = (): void => {
     // **押せないときは呼ばない**（`aria-disabled` は native の `disabled` と違いクリックを

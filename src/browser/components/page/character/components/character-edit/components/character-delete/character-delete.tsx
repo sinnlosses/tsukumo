@@ -9,6 +9,7 @@
 // 消せないパック（`removal: "none"`）では `band.kind` が `"hidden"` なので何も出さない
 // （出し分けは `hooks/use-character-edit.ts` が畳んだ値のとおりで、ここは判定を持たない）。
 
+import clsx from "clsx"
 import { useState, type ReactElement } from "react"
 
 import { Text } from "../../../../../../ui/text/text.tsx"
@@ -43,7 +44,7 @@ export function CharacterDelete(props: {
         </div>
         <button
           type="button"
-          className={`${styles["character-button"]} ${styles["character-button-danger"]}`}
+          className={clsx(styles["character-button"], styles["character-button-danger"])}
           disabled={band.disabled}
           title={band.title}
           onClick={() => {

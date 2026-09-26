@@ -11,6 +11,7 @@
 // `aria-controls` と `<label for>` が指す先が重ならないようにする）。**Esc の戻り先として歯車の
 // DOM を預ける口（`settings.toggleRef`）も、2箇所ぶんを集めるコールバック ref**（`use-settings.ts`）。
 
+import clsx from "clsx"
 import { useId, type ReactElement } from "react"
 
 import { isSessionDefaultPermissionMode } from "../../../../../shared/session-default.ts"
@@ -66,11 +67,14 @@ export function ScreenNavSettingsGear(props: ScreenNavSettingsProps): ReactEleme
   // ファイルごとにハッシュ化するので、`screen-nav.module.css` 側の選択子を当てるにはこのファイル
   // 自身の class も要る（docs/design.md 6.6）。
   return (
-    <div className={`${styles["screen-nav-settings"]} ${shellStyles["screen-nav-settings"]}`}>
+    <div className={clsx(styles["screen-nav-settings"], shellStyles["screen-nav-settings"])}>
       <button
         type="button"
         ref={toggleRef}
-        className={`${styles["screen-nav-settings-toggle"]} ${shellStyles["screen-nav-settings-toggle"]}`}
+        className={clsx(
+          styles["screen-nav-settings-toggle"],
+          shellStyles["screen-nav-settings-toggle"],
+        )}
         aria-expanded={settings.open}
         aria-controls={panelId}
         aria-label={SETTINGS_LABEL}
@@ -82,7 +86,10 @@ export function ScreenNavSettingsGear(props: ScreenNavSettingsProps): ReactEleme
       {settings.open ? (
         <div
           id={panelId}
-          className={`${styles["screen-nav-settings-panel"]} ${shellStyles["screen-nav-settings-panel"]}`}
+          className={clsx(
+            styles["screen-nav-settings-panel"],
+            shellStyles["screen-nav-settings-panel"],
+          )}
           role="region"
           aria-label={SETTINGS_LABEL}
         >

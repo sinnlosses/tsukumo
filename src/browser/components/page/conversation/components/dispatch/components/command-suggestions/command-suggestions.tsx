@@ -9,6 +9,7 @@
 // （送信の Enter と同じ `keydown` を共有するため）。ここは絞り込みの純粋関数と、一覧を描く
 // だけの部品。
 
+import clsx from "clsx"
 import { type ReactElement } from "react"
 import { prop, sortBy } from "remeda"
 
@@ -67,9 +68,10 @@ export function CommandSuggestions(props: CommandSuggestionsProps): ReactElement
       {props.matches.map((command, index) => (
         <li
           key={command.name}
-          className={`${styles["dispatch-suggestion-item"]}${
-            index === props.selectedIndex ? ` ${styles["is-selected"]}` : ""
-          }`}
+          className={clsx(
+            styles["dispatch-suggestion-item"],
+            index === props.selectedIndex && styles["is-selected"],
+          )}
           onMouseDown={(event) => {
             // mousedown の既定動作（フォーカス移動）を止め、textarea にフォーカスを残す
             // （旧 command-suggestions.ts と同じ理由）。

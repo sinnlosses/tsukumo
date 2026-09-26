@@ -5,6 +5,7 @@
 // `docs/screen-design.md` 13.9）。**失敗で終わったやり取りは、末尾に「失敗で終わった」と理由を
 // 出す**（`docs/display.md` 4.2「メインビュー」。色だけでなく字で成功と見分ける）。
 
+import clsx from "clsx"
 import { Fragment, useState, type ReactElement } from "react"
 
 import {
@@ -95,7 +96,7 @@ export function Turn(props: TurnProps): ReactElement {
  */
 function TurnFailureNotice(props: { readonly failure: TurnFailure }): ReactElement {
   return (
-    <section className={`${styles["main-step"]} ${styles["is-failed"]}`} role="note">
+    <section className={clsx(styles["main-step"], styles["is-failed"])} role="note">
       <Text
         element="p"
         size="label"
@@ -161,7 +162,7 @@ function Step(props: {
 
   if (step.interim && step.superseded) {
     return (
-      <details className={`${styles["main-step"]} ${styles["is-interim"]}`}>
+      <details className={clsx(styles["main-step"], styles["is-interim"])}>
         <Text
           element="summary"
           size="label"

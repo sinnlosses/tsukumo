@@ -36,6 +36,7 @@
 // 相対リンクの3か所。判定と依頼は {@link repositoryFilePath} / `repository-link.tsx` に
 // まとめてある）。
 
+import clsx from "clsx"
 import { type Element } from "hast"
 import { type JSX, type ReactElement, type ReactNode } from "react"
 import ReactMarkdown, { type Components, type ExtraProps, type Options } from "react-markdown"
@@ -264,9 +265,11 @@ function Code(props: CodeProps): ReactElement {
     ) : (
       <code
         {...rest}
-        className={[className, styles["report-color"], styles[`report-color-ink-${swatch.ink}`]]
-          .filter((name) => name !== undefined)
-          .join(" ")}
+        className={clsx(
+          className,
+          styles["report-color"],
+          styles[`report-color-ink-${swatch.ink}`],
+        )}
         style={{ background: swatch.background }}
       >
         {children as ReactNode}
@@ -329,7 +332,7 @@ function Anchor(props: AnchorProps): ReactElement {
     <button
       type="button"
       title={title}
-      className={`${styles["report-file-link"]}${className === undefined ? "" : ` ${className}`}`}
+      className={clsx(styles["report-file-link"], className)}
       onClick={() => {
         link.open(path)
       }}

@@ -12,6 +12,7 @@
 // CSS（`.layout-row-top[data-narrow-pane]` の `@media`）が決めるので、**ここは幅を測らない**
 // — 広い画面ではタブ自身が `display: none` で、選んでいる側の値は何にも効かない。
 
+import clsx from "clsx"
 import { type ReactElement, type ReactNode } from "react"
 
 import { type NarrowPane, type UseLayoutResult } from "./hooks/use-layout.ts"
@@ -92,9 +93,7 @@ export function PresentationalLayout({
             key={entry.pane}
             role="tab"
             aria-selected={entry.pane === narrowPane}
-            className={`${styles["layout-tab"]}${
-              entry.pane === narrowPane ? ` ${styles["is-active"]}` : ""
-            }`}
+            className={clsx(styles["layout-tab"], entry.pane === narrowPane && styles["is-active"])}
             onClick={() => {
               onNarrowPaneChange(entry.pane)
             }}
@@ -104,15 +103,17 @@ export function PresentationalLayout({
         ))}
       </div>
       <div
-        className={`${styles["layout-row"]} ${styles["layout-row-top"]}`}
+        className={clsx(styles["layout-row"], styles["layout-row-top"])}
         ref={rowTopRef}
         data-narrow-pane={narrowPane}
         style={rowTopStyle}
       >
         <section
-          className={`${styles["layout-region"]} ${styles["layout-main"]}${
-            mainAsGround ? ` ${styles["layout-ground"]}` : ""
-          }`}
+          className={clsx(
+            styles["layout-region"],
+            styles["layout-main"],
+            mainAsGround && styles["layout-ground"],
+          )}
           data-region="main"
         >
           {main}
@@ -125,7 +126,7 @@ export function PresentationalLayout({
           onCommit={onTopLeftCommit}
         />
         <section
-          className={`${styles["layout-region"]} ${styles["layout-sidebar"]}`}
+          className={clsx(styles["layout-region"], styles["layout-sidebar"])}
           data-region="sidebar"
         >
           {sidebar}
@@ -151,7 +152,7 @@ export function PresentationalLayout({
         )}
       </div>
       <div
-        className={`${styles["layout-row"]} ${styles["layout-row-bottom"]}`}
+        className={clsx(styles["layout-row"], styles["layout-row-bottom"])}
         ref={rowBottomRef}
         data-collapse-character={collapseCharacter}
         style={rowBottomStyle}
@@ -161,7 +162,7 @@ export function PresentationalLayout({
         {!collapseCharacter && (
           <>
             <section
-              className={`${styles["layout-region"]} ${styles["layout-ground"]}`}
+              className={clsx(styles["layout-region"], styles["layout-ground"])}
               data-region="character"
             >
               {character}
@@ -176,7 +177,7 @@ export function PresentationalLayout({
           </>
         )}
         <section
-          className={`${styles["layout-region"]} ${styles["layout-dispatch"]}`}
+          className={clsx(styles["layout-region"], styles["layout-dispatch"])}
           data-region="dispatch"
         >
           {dispatch}

@@ -13,6 +13,7 @@
 // を呼ぶ。開いているかどうかと、開いた瞬間に測った位置だけをここで持つ（`保つ」の1種類。
 // docs/design.md 2章「機能の中を分ける」）。
 
+import clsx from "clsx"
 import { type DragEvent, type ReactElement, useRef, useState } from "react"
 
 import { Portrait } from "../../../../../../domain/portrait.tsx"
@@ -74,7 +75,7 @@ export function PortraitCard(props: {
   if (card.image.kind === "blank") {
     return (
       <label
-        className={`${styles["character-card"]} ${styles["character-card-blank"]}`}
+        className={clsx(styles["character-card"], styles["character-card-blank"])}
         data-expression={card.expression}
         onDragOver={onDragOver}
         onDrop={onDrop}
@@ -138,7 +139,10 @@ export function PortraitCard(props: {
           {clear.kind === "shown" ? (
             <button
               type="button"
-              className={`${styles["character-card-action"]} ${styles["character-card-action-danger"]}`}
+              className={clsx(
+                styles["character-card-action"],
+                styles["character-card-action-danger"],
+              )}
               aria-label={clear.ariaLabel}
               title="消す"
               disabled={disabled}

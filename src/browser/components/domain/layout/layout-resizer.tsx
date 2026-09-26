@@ -2,6 +2,7 @@
 // `pointerup` で書く（`docs/coding-standards.md`「Bun固有APIに寄せない」と同じ考えで、
 // ブラウザ標準の API に留める）。
 
+import clsx from "clsx"
 import { useEffectEvent, type PointerEvent, type ReactElement, type RefObject } from "react"
 
 import styles from "./layout.module.css"
@@ -66,7 +67,7 @@ export function LayoutResizer(props: LayoutResizerProps): ReactElement {
 
   return (
     <div
-      className={`${styles["layout-resizer"]} ${styles[`layout-resizer-${props.orientation}`]}`}
+      className={clsx(styles["layout-resizer"], styles[`layout-resizer-${props.orientation}`])}
       role="separator"
       aria-orientation={props.orientation}
       aria-label={props.ariaLabel}

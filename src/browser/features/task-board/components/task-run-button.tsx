@@ -10,6 +10,7 @@
 // 済んだタスク（`done`）・着手中（`doing`）のIDも押せるままにする——実行してよいかを決めるのは
 // `/next-task` の側で、画面は `develop/tasks.json` を読むだけ（書き換える口は持たない）。
 
+import clsx from "clsx"
 import { useState, type ReactElement } from "react"
 
 import styles from "../task-board.module.css"
@@ -22,7 +23,7 @@ export function TaskRunButton(props: { readonly taskId: string }): ReactElement 
     <>
       <button
         type="button"
-        className={`${styles["task-id"]} ${styles["task-id-button"]}`}
+        className={clsx(styles["task-id"], styles["task-id-button"])}
         onClick={() => {
           setConfirming(true)
         }}

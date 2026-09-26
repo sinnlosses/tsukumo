@@ -6,6 +6,7 @@
 // どちらの状態でも画像を落とせる（落とすと差し替え）。判定は持たず、`hooks/use-character-create.ts`
 // が畳んだ `PortraitDropModel` をそのまま置く。
 
+import clsx from "clsx"
 import { type DragEvent, type ReactElement } from "react"
 
 import { Text } from "../../../../../../ui/text/text.tsx"
@@ -44,7 +45,7 @@ export function PortraitDrop(props: { readonly drop: PortraitDropModel }): React
   if (drop.image.kind === "picked") {
     return (
       <label
-        className={`${styles["character-card"]} ${styles["character-create-portrait"]}`}
+        className={clsx(styles["character-card"], styles["character-create-portrait"])}
         onDragOver={onDragOver}
         onDrop={onDrop}
       >
@@ -59,7 +60,11 @@ export function PortraitDrop(props: { readonly drop: PortraitDropModel }): React
 
   return (
     <label
-      className={`${styles["character-card"]} ${styles["character-card-blank"]} ${styles["character-create-portrait"]}`}
+      className={clsx(
+        styles["character-card"],
+        styles["character-card-blank"],
+        styles["character-create-portrait"],
+      )}
       onDragOver={onDragOver}
       onDrop={onDrop}
     >

@@ -5,6 +5,7 @@
 // セルにだけ `data-label` を持たせる**（CSS が `::before` でラベルを出す。ID・status・要約は
 // 値そのもので分かるので持たせない）。
 
+import clsx from "clsx"
 import { type ReactElement } from "react"
 
 import { taskStatusClass } from "../domain/task-status.ts"
@@ -15,10 +16,9 @@ import { TaskRunButton } from "./task-run-button.tsx"
 
 export function TaskRow(props: { readonly row: BoardRow }): ReactElement {
   const row = props.row
-  const doneClass = row.done ? ` ${styles["task-done"]}` : ""
 
   return (
-    <tr className={`${styles["task-board-row"]}${doneClass}`}>
+    <tr className={clsx(styles["task-board-row"], row.done && styles["task-done"])}>
       <th scope="row" className={styles["task-id"]}>
         <TaskRunButton taskId={row.id} />
       </th>

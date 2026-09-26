@@ -20,6 +20,7 @@
 // `browser/domain/` へは上げない（docs/design.md 2章「上げる引き金は「2つ目の読み手が
 // 出たとき」」）。
 
+import clsx from "clsx"
 import { type ReactElement } from "react"
 
 import { HStack } from "../../../components/ui/h-stack/h-stack.tsx"
@@ -50,9 +51,7 @@ export function ContextUsageRow(): ReactElement {
   const warn = isWarn(usage)
 
   return (
-    <div
-      className={`${styles["context-usage-row"]}${warn ? ` ${styles["context-usage-row-warn"]}` : ""}`}
-    >
+    <div className={clsx(styles["context-usage-row"], warn && styles["context-usage-row-warn"])}>
       <HStack
         element="div"
         name={{ kind: "none" }}

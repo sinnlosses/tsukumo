@@ -6,6 +6,7 @@
 // 向きの決まった並べは `VStack`（縦）・`HStack`（横）で書く（`ui/v-stack/` `ui/h-stack/`）。
 // `Stack` を直に使うのは、向きを値で切り替える箇所だけ。
 
+import clsx from "clsx"
 import { createElement, type ReactElement, type ReactNode, type Ref } from "react"
 
 import styles from "./stack.module.css"
@@ -72,7 +73,7 @@ const WRAP_CLASS = {
 } satisfies Record<StackWrap, string | undefined>
 
 export function Stack(props: StackProps): ReactElement {
-  const className = [
+  const className = clsx(
     styles["stack"],
     DIRECTION_CLASS[props.direction],
     GAP_CLASS[props.gap],
@@ -80,9 +81,7 @@ export function Stack(props: StackProps): ReactElement {
     JUSTIFY_CLASS[props.justify],
     WRAP_CLASS[props.wrap],
     props.className,
-  ]
-    .filter((value): value is string => value !== undefined && value !== "")
-    .join(" ")
+  )
 
   // JSX（`<Element ref={…}>`）で書くと、要素の合併型のぶん ref の型が交差になり
   // （`HTMLDivElement` と `HTMLLabelElement` と…の ref を同時に満たす）、`HTMLElement` の ref を

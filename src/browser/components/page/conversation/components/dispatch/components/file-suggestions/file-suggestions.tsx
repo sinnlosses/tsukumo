@@ -11,6 +11,7 @@
 //
 // キー操作（上下・Tab・Enter・Esc）と確定は呼び出し側（`hooks/use-composer.ts`）が持つ（`/` 補完と同じ）。
 
+import clsx from "clsx"
 import { type ReactElement } from "react"
 import { identity, sortBy } from "remeda"
 
@@ -89,9 +90,10 @@ export function FileSuggestions(props: FileSuggestionsProps): ReactElement | nul
       {props.matches.map((path, index) => (
         <li
           key={path}
-          className={`${styles["dispatch-suggestion-item"]}${
-            index === props.selectedIndex ? ` ${styles["is-selected"]}` : ""
-          }`}
+          className={clsx(
+            styles["dispatch-suggestion-item"],
+            index === props.selectedIndex && styles["is-selected"],
+          )}
           onMouseDown={(event) => {
             // mousedown の既定動作（フォーカス移動）を止め、textarea にフォーカスを残す
             // （`/` 補完の候補一覧と同じ理由）。

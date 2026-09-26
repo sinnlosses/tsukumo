@@ -2,6 +2,7 @@
 // ときだけ最新へ寄せるのは `hooks/use-stick-to-bottom.ts` で、ここは受け取った ref を入れ物に
 // 付けるだけ。行は `hooks/use-chat-view.ts` が畳んだ形（`ChatRow`）で受け、判定を持たない。
 
+import clsx from "clsx"
 import { type ReactElement, type RefObject } from "react"
 
 import { Text } from "../../../../../../ui/text/text.tsx"
@@ -65,7 +66,7 @@ export function ChatLog({
                 return (
                   <div
                     key={row.key}
-                    className={`${styles["chat-row"]} ${styles["chat-row-character"]}`}
+                    className={clsx(styles["chat-row"], styles["chat-row-character"])}
                   >
                     <ChatSpeech
                       text={row.text}
@@ -78,12 +79,12 @@ export function ChatLog({
                 )
               case "user":
                 return (
-                  <div key={row.key} className={`${styles["chat-row"]} ${styles["chat-row-user"]}`}>
+                  <div key={row.key} className={clsx(styles["chat-row"], styles["chat-row-user"])}>
                     {/* 利用者の発言は押せない（遡る先の表情を持たないので、押しても何も起きない）。
                      **添えた画像の控えは吹き出しの中に並ぶ**（`docs/requirements.md` 4.10。
                      控えだけは押すと拡大する）。 */}
                     <div
-                      className={`${styles["chat-entry"]} ${styles["chat-entry-user"]}`}
+                      className={clsx(styles["chat-entry"], styles["chat-entry-user"])}
                       data-speaker="user"
                     >
                       {row.text}

@@ -3,6 +3,7 @@
 // 持たず、`hooks/use-pending-answer.ts` が畳んだ値をそのまま置く（docs/design.md 2章
 // 「機能の中を分ける」）。
 
+import clsx from "clsx"
 import { type ReactElement } from "react"
 
 import { HStack } from "../../../../../../ui/h-stack/h-stack.tsx"
@@ -20,7 +21,7 @@ export function PresentationalPendingAnswer(
       return null
     case "permission":
       return (
-        <div className={`${styles["pending-answer"]} ${styles["pending-permission"]}`}>
+        <div className={clsx(styles["pending-answer"], styles["pending-permission"])}>
           <p className={styles["pending-summary"]}>
             <Text
               element="span"
@@ -45,14 +46,14 @@ export function PresentationalPendingAnswer(
           >
             <button
               type="button"
-              className={`${styles["pending-action"]} ${styles["pending-allow"]}`}
+              className={clsx(styles["pending-action"], styles["pending-allow"])}
               onClick={props.onAllow}
             >
               許可
             </button>
             <button
               type="button"
-              className={`${styles["pending-action"]} ${styles["pending-deny"]}`}
+              className={clsx(styles["pending-action"], styles["pending-deny"])}
               onClick={props.onDeny}
             >
               拒否

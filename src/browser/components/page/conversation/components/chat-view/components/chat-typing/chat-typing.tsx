@@ -11,6 +11,7 @@
 // 表示（`components/page/conversation/components/dispatch/components/turn-status/turn-status.tsx`）が文字で伝えているので、支援技術の木からは
 // `aria-hidden` で外す。
 
+import clsx from "clsx"
 import { type ReactElement } from "react"
 
 import styles from "../../chat-view.module.css"
@@ -18,7 +19,7 @@ import styles from "../../chat-view.module.css"
 export function ChatTyping(): ReactElement {
   return (
     <div
-      className={`${styles["chat-entry"]} ${styles["chat-entry-typing"]}`}
+      className={clsx(styles["chat-entry"], styles["chat-entry-typing"])}
       data-speaker="typing"
       aria-hidden="true"
     >

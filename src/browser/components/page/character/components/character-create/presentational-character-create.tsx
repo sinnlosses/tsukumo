@@ -9,6 +9,7 @@
 // （下書きを空へ戻す）は `onClose` を通す（`onClose` はフックを介さず呼び出し側から直接渡る。
 // `character-create.tsx`）。
 
+import clsx from "clsx"
 import { type ReactElement } from "react"
 
 import { Button } from "../../../../ui/button/button.tsx"
@@ -83,7 +84,10 @@ export function PresentationalCharacterCreate({
               <input
                 id="character-create-id"
                 type="text"
-                className={`${styles["character-create-input"]} ${styles["character-create-input-mono"]}`}
+                className={clsx(
+                  styles["character-create-input"],
+                  styles["character-create-input-mono"],
+                )}
                 value={form.id}
                 onChange={(event) => form.onIdChange(event.target.value)}
               />

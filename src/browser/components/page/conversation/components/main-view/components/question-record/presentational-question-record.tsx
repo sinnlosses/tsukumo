@@ -5,6 +5,7 @@
 // 「何を聞いて、どう答えたか」を1つの塊で出す。選ばれた答えには印を付ける。**自由入力の答え**は
 // 選択肢の並びの下に別の行として出す（`docs/display.md` 4.2「許可と質問」）。
 
+import clsx from "clsx"
 import { type ReactElement } from "react"
 
 import { Heading } from "../../../../../../../components/ui/heading/heading.tsx"
@@ -28,7 +29,7 @@ export function PresentationalQuestionRecord(
   props: PresentationalQuestionRecordProps,
 ): ReactElement {
   return (
-    <section className={`${styles["tool-block"]} ${styles["tool-block-question"]}`}>
+    <section className={clsx(styles["tool-block"], styles["tool-block-question"])}>
       {props.questions.map((question) => (
         <QuestionBlock question={question} key={question.key} />
       ))}
@@ -85,9 +86,11 @@ function AnswerRow(props: {
 
   return (
     <li
-      className={`${styles["question-option"]}${row.chosen ? ` ${styles["is-chosen"]}` : ""}${
-        row.isFreeText ? ` ${styles["is-free-text"]}` : ""
-      }`}
+      className={clsx(
+        styles["question-option"],
+        row.chosen && styles["is-chosen"],
+        row.isFreeText && styles["is-free-text"],
+      )}
     >
       <QuestionMark chosen={row.chosen} multiSelect={multiSelect} /> {row.label}
       {row.isFreeText ? FREE_TEXT_SUFFIX : null}

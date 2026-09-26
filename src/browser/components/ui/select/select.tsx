@@ -6,6 +6,7 @@
 // 消すこと。`select.module.css`）。寸法・枠・地・字の段と、選択肢・値・変更時の呼び先は
 // すべて呼び出し側が渡す。
 
+import clsx from "clsx"
 import { type ReactElement } from "react"
 
 import styles from "./select.module.css"
@@ -35,11 +36,11 @@ export type SelectProps = {
 
 export function Select(props: SelectProps): ReactElement {
   return (
-    <span className={`${styles["select-frame"] ?? ""} ${props.frameClassName}`}>
+    <span className={clsx(styles["select-frame"], props.frameClassName)}>
       <select
         id={props.id}
         aria-label={props.ariaLabel}
-        className={`${styles["select-field"] ?? ""} ${props.className}`}
+        className={clsx(styles["select-field"], props.className)}
         value={props.value}
         disabled={props.disabled}
         title={props.title}

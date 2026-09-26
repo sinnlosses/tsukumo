@@ -4,6 +4,7 @@
 // 狭い画面では帯の左端が無い（「≡」だけになる）ので、**同じ部品が「≡」の中の先頭にも出る**
 // （答え待ちの印と同じ畳み方。どちらを出すかは `screen-nav.module.css` の `@media`）。
 
+import clsx from "clsx"
 import { type ReactElement } from "react"
 
 import shellStyles from "../screen-nav.module.css"
@@ -19,7 +20,7 @@ export function ScreenNavRoom(props: ScreenNavRoomProps): ReactElement {
   // ファイルごとにハッシュ化するので、`screen-nav.module.css` 側の選択子を当てるにはこのファイル
   // 自身の class も要る（docs/design.md 6.6）。
   return (
-    <span className={`${styles["screen-nav-room"]} ${shellStyles["screen-nav-room"]}`}>
+    <span className={clsx(styles["screen-nav-room"], shellStyles["screen-nav-room"])}>
       {props.name}
     </span>
   )

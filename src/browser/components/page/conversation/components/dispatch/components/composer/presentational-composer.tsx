@@ -4,6 +4,7 @@
 // `<form>` を置く。フックも算出も持たず、`hooks/use-composer.ts` が
 // 組み立てた値と呼び先をそのまま置く（docs/design.md 2章「機能の中を分ける」）。
 
+import clsx from "clsx"
 import { type ReactElement } from "react"
 
 import { PROMPT_IMAGE_MEDIA_TYPES } from "../../../../../../../../shared/prompt-image.ts"
@@ -48,7 +49,7 @@ export function PresentationalComposer({
 }: PresentationalComposerProps): ReactElement {
   return (
     <form
-      className={`${styles["dispatch-form"]}${answering ? ` ${styles["is-answering"]}` : ""}`}
+      className={clsx(styles["dispatch-form"], answering && styles["is-answering"])}
       onSubmit={onSubmit}
     >
       {/* 質問に答えている間だけ出る帯（誰が聞いているか。`hooks/use-composer.ts`）。 */}

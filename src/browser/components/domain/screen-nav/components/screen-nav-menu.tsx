@@ -14,6 +14,7 @@
 // 色だけに頼らない。13.1 原則1）。開くと「いまの作業」の札の語が「答え待ち」に変わるので、
 // 帯の右端にあった専用の印（`screen-nav-pending.tsx`）はもう無い（13.9「何を外すか」）。
 
+import clsx from "clsx"
 import { type ReactElement } from "react"
 
 import { CharacterFace } from "../../../../components/domain/character-face.tsx"
@@ -69,7 +70,7 @@ export function ScreenNavMenu(props: ScreenNavMenuProps): ReactElement {
         // 規則 `.screen-nav-panel .screen-nav-room` などのためだけの参照。実物の見た目
         // （位置・枠・地）は `styles["screen-nav-panel"]`＝このファイル自身が持つ。CSS Modules は
         // class 名をファイルごとにハッシュ化するので両方要る。docs/design.md 6.6）。
-        <div className={`${styles["screen-nav-panel"]} ${shellStyles["screen-nav-panel"]}`}>
+        <div className={clsx(styles["screen-nav-panel"], shellStyles["screen-nav-panel"])}>
           <CharacterFace
             url={parts.face.url}
             alt={parts.face.alt}

@@ -10,6 +10,7 @@
 // 原則4 の対象外）。`aria-hidden` のインライン SVG + `currentColor` で、字（「仕事」「雑談」）は
 // 必ず残す。アイコンのライブラリは入れない（絵は2つだけ）。
 
+import clsx from "clsx"
 import { type ReactElement } from "react"
 
 import { Button } from "../../../../components/ui/button/button.tsx"
@@ -76,7 +77,7 @@ export function ScreenNavChatModeToggle(props: ScreenNavChatModeProps): ReactEle
   // 自身の class も要る。docs/design.md 6.6）。
   return (
     <div
-      className={`${styles["screen-nav-chat-mode"]} ${shellStyles["screen-nav-chat-mode"]}`}
+      className={clsx(styles["screen-nav-chat-mode"], shellStyles["screen-nav-chat-mode"])}
       role="group"
       aria-label="モード"
     >

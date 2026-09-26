@@ -8,6 +8,7 @@
 // `Heading` はこのファイルの `TEXT_SIZE_CLASS` / `TEXT_TONE_CLASS` / `TEXT_WEIGHT_CLASS` を
 // そのまま import する。
 
+import clsx from "clsx"
 import { type ReactElement, type ReactNode } from "react"
 
 import styles from "./text.module.css"
@@ -71,15 +72,13 @@ export const TEXT_WEIGHT_CLASS = {
 } satisfies Record<TextWeight, string | undefined>
 
 export function Text(props: TextProps): ReactElement {
-  const className = [
+  const className = clsx(
     styles["text"],
     TEXT_SIZE_CLASS[props.size],
     TEXT_TONE_CLASS[props.tone],
     TEXT_WEIGHT_CLASS[props.weight],
     props.className,
-  ]
-    .filter((value): value is string => value !== undefined && value !== "")
-    .join(" ")
+  )
 
   const Element = props.element
   return <Element className={className}>{props.children}</Element>

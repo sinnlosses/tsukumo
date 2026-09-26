@@ -29,6 +29,7 @@
 // 素材は `CharacterInfo.mini`（`character.json` の任意の `mini`。無いパックは
 // `portraits.default` に落ちたものが届く。畳むのは `shared/character.ts`）。
 
+import clsx from "clsx"
 import { type CSSProperties, type ReactElement } from "react"
 
 import { resolveOutfit } from "../../../../../../../../shared/expression.ts"
@@ -107,9 +108,7 @@ export function MiniPortrait(props: MiniPortraitProps): ReactElement | null {
  * 立ち絵の高さぶんの縦移動なので、横画の間合い（0.05s）では落ちたように見える。
  */
 function followClassName(tip: BrushTip): string {
-  return [styles["mini-portrait"], motionClassName(tip)]
-    .filter((name) => name !== undefined)
-    .join(" ")
+  return clsx(styles["mini-portrait"], motionClassName(tip))
 }
 
 /** 追従の間合いを差し替える印。**横画のあいだは素のまま**なので、そのときだけ undefined。 */

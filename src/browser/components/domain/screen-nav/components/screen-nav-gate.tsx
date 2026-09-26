@@ -5,6 +5,7 @@
 // 13.1 原則1。「≡」の面の中では狭い画面のタブと同じ丸い枠になる）。ここに残す判断は
 // **class を選ぶ分岐だけ**で、「どれがいまの画面か」は `hooks/use-screen-nav.ts` が畳んである。
 
+import clsx from "clsx"
 import { type ReactElement } from "react"
 
 import { type ScreenNavGate as Gate } from "../hooks/use-screen-nav.ts"
@@ -22,10 +23,14 @@ export function ScreenNavGate(props: ScreenNavGateProps): ReactElement {
   // `.screen-nav-panel .screen-nav-gate` / `.is-active` のためだけの参照）。CSS Modules は
   // class 名をファイルごとにハッシュ化するので、`screen-nav.module.css` 側の選択子を当てるには
   // このファイル自身の class も要る（docs/design.md 6.6）。
-  const activeClass = props.gate.active ? ` ${styles["is-active"]} ${shellStyles["is-active"]}` : ""
   return (
     <a
-      className={`${styles["screen-nav-gate"]} ${shellStyles["screen-nav-gate"]}${activeClass}`}
+      className={clsx(
+        styles["screen-nav-gate"],
+        shellStyles["screen-nav-gate"],
+        props.gate.active && styles["is-active"],
+        props.gate.active && shellStyles["is-active"],
+      )}
       href={props.gate.href}
       aria-current={props.gate.active ? "page" : undefined}
       onClick={props.onSelect}

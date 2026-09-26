@@ -2,6 +2,7 @@
 // 「空の日・数えられないとき」）。立ち絵・頭の行・吹き出し・数の札2枚・振り返りのボタン（または
 // 3段の進み）を持つ。
 
+import clsx from "clsx"
 import { type ReactElement } from "react"
 
 import { type AchievementDoneTasks } from "../../../../../../shared/achievement.ts"
@@ -52,10 +53,11 @@ export function DiarySection(props: DiarySectionProps): ReactElement {
     )
   }
 
-  const dimmed = props.isFetching ? ` ${styles["is-fetching"] ?? ""}` : ""
-
   return (
-    <section aria-label="この日の日記" className={`${styles["achievement-diary"] ?? ""}${dimmed}`}>
+    <section
+      aria-label="この日の日記"
+      className={clsx(styles["achievement-diary"], props.isFetching && styles["is-fetching"])}
+    >
       {props.portrait.portrait.portraitUrl === undefined ? null : (
         <Portrait
           url={props.portrait.portrait.portraitUrl}

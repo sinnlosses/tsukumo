@@ -6,6 +6,7 @@
 // （字も打ち消し線にする）、想定外の値は注意色の「!」にする。summary は1行に収め、
 // 入りきらない分は末尾を「…」にする（全文を読みたいときは「一覧を見る」の表を開く）。
 
+import clsx from "clsx"
 import { type ReactElement } from "react"
 
 import { type TaskSummaryItem } from "../../../../shared/task-summary.ts"
@@ -13,10 +14,8 @@ import styles from "../task-board.module.css"
 import { TaskRunButton } from "./task-run-button.tsx"
 
 export function TaskItem(props: { readonly task: TaskSummaryItem }): ReactElement {
-  const doneClass = props.task.status === "done" ? ` ${styles["task-done"]}` : ""
-
   return (
-    <li className={`${styles["task-item"]}${doneClass}`}>
+    <li className={clsx(styles["task-item"], props.task.status === "done" && styles["task-done"])}>
       <span>
         <TaskMark status={props.task.status} />
       </span>

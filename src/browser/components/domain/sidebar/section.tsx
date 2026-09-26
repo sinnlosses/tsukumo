@@ -9,6 +9,7 @@
 // **見出しそのものは押せるようにしない** — 区画ごと開閉するのではなく、別の場所（モーダル）を
 // 開く操作なので、押せる範囲は見出しの文字と分けておく。
 
+import clsx from "clsx"
 import { type ReactElement, type ReactNode } from "react"
 
 import { Button } from "../../../components/ui/button/button.tsx"
@@ -30,7 +31,7 @@ export type SidebarSectionProps = {
 
 export function SidebarSection(props: SidebarSectionProps): ReactElement {
   return (
-    <section className={`${styles["sidebar-block"]} ${props.extraClass}`}>
+    <section className={clsx(styles["sidebar-block"], props.extraClass)}>
       <Heading
         level={2}
         size="subheading"

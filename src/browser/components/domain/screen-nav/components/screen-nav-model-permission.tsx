@@ -14,6 +14,7 @@
 // `disabled` にする**（`docs/screen-design.md` 13.9「動き方の操作子」。
 // `src/browser/components/domain/screen-nav/domain/effort-label.ts` の `EffortSelect`）。
 
+import clsx from "clsx"
 import { useId, type ReactElement } from "react"
 
 import { Select } from "../../../../components/ui/select/select.tsx"
@@ -38,9 +39,10 @@ export function ScreenNavModelPermissionSelect(props: ScreenNavModelPermissionPr
     permissionModeDangerous,
     onSetPermissionMode,
   } = props.modelPermission
-  const permissionModeClass = permissionModeDangerous
-    ? `${styles["screen-nav-permission-mode-select"]} ${styles["is-danger"]}`
-    : (styles["screen-nav-permission-mode-select"] ?? "")
+  const permissionModeClass = clsx(
+    styles["screen-nav-permission-mode-select"],
+    permissionModeDangerous && styles["is-danger"],
+  )
   // **同じ部品が広い画面の帯と狭い画面の「≡」の両方に載る**（部屋の名前・トグルと同じ畳み方）ので、
   // `id` は `useId()` で毎回作る（固定文字列だと開いている間だけ id が重複し、HTML として不正になる）。
   const modelSelectId = useId()
@@ -54,7 +56,10 @@ export function ScreenNavModelPermissionSelect(props: ScreenNavModelPermissionPr
   // このファイル自身の class も要る（docs/design.md 6.6）。
   return (
     <span
-      className={`${styles["screen-nav-model-permission"]} ${shellStyles["screen-nav-model-permission"]}`}
+      className={clsx(
+        styles["screen-nav-model-permission"],
+        shellStyles["screen-nav-model-permission"],
+      )}
     >
       <Select
         id={modelSelectId}

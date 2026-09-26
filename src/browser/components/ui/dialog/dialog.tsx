@@ -6,6 +6,7 @@
 // `<dialog>` 自身のときだけ）をここに持ち、どれも {@link DialogProps.onClose} を呼ぶ。呼び出し側は
 // `onDialogClick` を自分で組み立てなくてよい。
 
+import clsx from "clsx"
 import { type CSSProperties, type MouseEvent, type ReactElement, type ReactNode } from "react"
 
 import { useModalDialog } from "../../../hooks/use-modal-dialog.ts"
@@ -53,9 +54,7 @@ export function Dialog(props: DialogProps): ReactElement {
     }
   }
 
-  const className = [DIALOG_BACKDROP_CLASS[props.backdrop], props.className]
-    .filter((value): value is string => value !== undefined && value !== "")
-    .join(" ")
+  const className = clsx(DIALOG_BACKDROP_CLASS[props.backdrop], props.className)
 
   const style: CSSProperties =
     props.placement.kind === "at"
