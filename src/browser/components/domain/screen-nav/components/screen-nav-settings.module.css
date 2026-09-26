@@ -14,7 +14,7 @@
   display: flex;
   flex: none;
 }
-/* 見本どおり枠も地も無い 36px の四角に線画の歯車だけを置く（`GearIcon`）。開いているときは
+/* 見本どおり枠も地も無い 36px の四角に線画の歯車だけを置く（lucide の `Settings`）。開いているときは
    字の濃さに加えて地も敷く（色だけで伝えない。13.1 原則1）。 */
 .screen-nav-settings-toggle {
   display: flex;

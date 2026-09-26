@@ -14,6 +14,7 @@
 // — 広い画面ではタブ自身が `display: none` で、選んでいる側の値は何にも効かない。
 
 import clsx from "clsx"
+import { RotateCw } from "lucide-react"
 import { type ReactElement, type ReactNode } from "react"
 
 import { LayoutResizer } from "./components/layout-resizer/layout-resizer.tsx"
@@ -150,7 +151,7 @@ export function PresentationalConversationLayout({
               持たないので、そこへ移すと押せないものにフォーカスが残る。body へ落ちるのに任せる） */}
         {isSplitChanged && (
           <button type="button" className={styles["layout-reset-split"]} onClick={onReset}>
-            <ResetSplitIcon />
+            <RotateCw size={14} />
             {RESET_SPLIT_LABEL}
           </button>
         )}
@@ -188,28 +189,5 @@ export function PresentationalConversationLayout({
         </section>
       </div>
     </div>
-  )
-}
-
-/** 比率を戻す口の絵（回る矢印）。レイアウトの道具の絵なのでコードに置く（原則4 の対象外）。 */
-function ResetSplitIcon(): ReactElement {
-  return (
-    <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" focusable="false">
-      <path
-        d="M13 8a5 5 0 1 1-1.5-3.6"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.3"
-        strokeLinecap="round"
-      />
-      <path
-        d="M11.8 1.8v2.9H8.9"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.3"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
   )
 }

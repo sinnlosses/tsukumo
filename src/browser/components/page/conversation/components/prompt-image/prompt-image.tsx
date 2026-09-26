@@ -14,6 +14,7 @@
 //
 // 1枚も無いときは何も描かないので、常設の枠にならない（`docs/screen-design.md` 13.1 原則2）。
 
+import { Search } from "lucide-react"
 import { useState, type ReactElement } from "react"
 
 import {
@@ -67,7 +68,7 @@ export function PromptImageChips(props: PromptImageChipsProps): ReactElement | n
               onClick={() => setZoomedIndex(index)}
             >
               <img className={styles["prompt-image"]} src={image.thumbnail} alt={IMAGE_ALT} />
-              <ZoomIcon />
+              <Search className={styles["prompt-image-zoom-icon"]} size={16} />
             </button>
             <button
               type="button"
@@ -126,7 +127,7 @@ export function PromptImageThumbnails(props: PromptImageThumbnailsProps): ReactE
               onClick={() => setZoomedIndex(index)}
             >
               <img className={styles["prompt-image"]} src={image.thumbnail} alt={IMAGE_ALT} />
-              <ZoomIcon />
+              <Search className={styles["prompt-image-zoom-icon"]} size={16} />
             </button>
           </li>
         ))}
@@ -150,28 +151,4 @@ export function PromptImageThumbnails(props: PromptImageThumbnailsProps): ReactE
  */
 function shelvedImageUrl(id: string): string {
   return sessionTokenUrl(promptImagePath(id))
-}
-
-/** 虫眼鏡（札の絵にホバー・フォーカスで重ねる飾り）。キャラクターの外の道具の絵なのでコードに
-    置く（原則4 の対象外。`speech-log.tsx` の `LogIcon` と同じ扱い）。 */
-function ZoomIcon(): ReactElement {
-  return (
-    <svg
-      className={styles["prompt-image-zoom-icon"]}
-      viewBox="0 0 16 16"
-      width="16"
-      height="16"
-      aria-hidden="true"
-      focusable="false"
-    >
-      <circle cx="6.8" cy="6.8" r="4.3" fill="none" stroke="currentColor" strokeWidth="1.3" />
-      <path
-        d="M10 10l3.2 3.2"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.3"
-        strokeLinecap="round"
-      />
-    </svg>
-  )
 }

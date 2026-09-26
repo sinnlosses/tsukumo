@@ -10,6 +10,7 @@
 // `<dialog>` は top layer に出るので、キャラビューの `overflow` には切り取られない。開閉・Esc・
 // backdrop のクリックは `components/ui/dialog/dialog.tsx` が持つ。
 
+import { History, X } from "lucide-react"
 import { type ReactElement, type ReactNode } from "react"
 
 import { Dialog } from "../../../../../../ui/dialog/dialog.tsx"
@@ -51,7 +52,7 @@ export function PresentationalSpeechLog({
         aria-expanded={open}
         onClick={onOpen}
       >
-        <LogIcon />
+        <History size={16} />
         {OPEN_LABEL}
       </button>
       <Dialog
@@ -68,7 +69,7 @@ export function PresentationalSpeechLog({
           {/* 閉じる口を列より先に置く。`showModal()` は中の最初のフォーカスできる要素へ
               フォーカスを移すので、後ろに置くと転がる列（溢れると Tab で届く）が先に選ばれる。 */}
           <button type="button" className={styles["speech-log-close"]} onClick={onClose}>
-            <CloseIcon />
+            <X size={16} />
             {CLOSE_LABEL}
           </button>
           <HStack
@@ -152,51 +153,5 @@ function SpeechLogRow(props: {
     <li className={styles["speech-log-speech"]} data-age={entry.age}>
       <Balloon text={entry.text} latest={latest} speaker={latest ? props.speakerName : undefined} />
     </li>
-  )
-}
-
-/** 時計を巻き戻す絵（ログ）。キャラビューの道具の絵なのでコードに置く（原則4 の対象外）。 */
-function LogIcon(): ReactElement {
-  return (
-    <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false">
-      <path
-        d="M2.6 8a5.4 5.4 0 1 0 1.6-3.8"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.3"
-        strokeLinecap="round"
-      />
-      <path
-        d="M3.8 1.9v2.6h2.6"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.3"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M8 5.2V8l1.9 1.3"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.3"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
-}
-
-/** 閉じる印（×）。 */
-function CloseIcon(): ReactElement {
-  return (
-    <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false">
-      <path
-        d="M6 6l12 12M18 6L6 18"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-    </svg>
   )
 }
