@@ -1,6 +1,7 @@
-// `<Layout>` のロジック（docs/design.md 2章「機能の中を分ける」）。3本の仕切りの比率
-// （`Split`）を state に持ち、狭い画面のタブの選択と合わせて、見た目（`presentational-layout.tsx`）
-// が読むだけでよい形（CSS カスタムプロパティの `style` と、仕切りに渡す呼び先）へ畳む。
+// `<ConversationLayout>` のロジック（docs/design.md 2章「機能の中を分ける」）。3本の仕切りの比率
+// （`Split`）を state に持ち、狭い画面のタブの選択と合わせて、見た目
+// （`presentational-conversation-layout.tsx`）が読むだけでよい形（CSS カスタムプロパティの `style`
+// と、仕切りに渡す呼び先）へ畳む。
 //
 // **仕切りの位置が state に入るのはドラッグを離した1回だけ。** 動かしている間の位置は
 // 過渡的な値で、効くのは CSS カスタムプロパティだけなので、pointermove の間は DOM へ直接書く
@@ -9,12 +10,12 @@
 
 import { useRef, useState, type CSSProperties, type RefObject } from "react"
 
-import { DEFAULT_SPLIT, isDefaultSplit, loadSplit, saveSplit, type Split } from "../split.ts"
+import { DEFAULT_SPLIT, isDefaultSplit, loadSplit, saveSplit, type Split } from "../domain/split.ts"
 
 /** 狭い画面のとき、上段に出している領域。 */
 export type NarrowPane = "main" | "sidebar"
 
-export type UseLayoutResult = {
+export type UseConversationLayoutResult = {
   readonly narrowPane: NarrowPane
   readonly onNarrowPaneChange: (pane: NarrowPane) => void
   readonly gridRef: RefObject<HTMLDivElement | null>
@@ -39,10 +40,10 @@ export type UseLayoutResult = {
 
 /**
  * `collapseCharacter`（雑談モードでキャラビューを畳んでいるか）は呼び出すたびに渡し直す
- * （`<Layout>` の props そのままで、state には持たない）。畳んでいる間の上下比は別の項
+ * （`<ConversationLayout>` の props そのままで、state には持たない）。畳んでいる間の上下比は別の項
  * （`collapsedRowTop`）に覚えるので、どちらでドラッグしても相手の比率は動かない。
  */
-export function useLayout(collapseCharacter: boolean): UseLayoutResult {
+export function useConversationLayout(collapseCharacter: boolean): UseConversationLayoutResult {
   const [split, setSplit] = useState<Split>(loadSplit)
   const [narrowPane, setNarrowPane] = useState<NarrowPane>("main")
   const gridRef = useRef<HTMLDivElement>(null)
@@ -102,7 +103,7 @@ export function useLayout(collapseCharacter: boolean): UseLayoutResult {
 
 // 仕切り1本が動かす CSS カスタムプロパティの組（手前の領域・奥の領域）。レンダー時の `style` と
 // ドラッグ中の直接書き込みが同じ名前を見るように、名前はここにだけ書く。
-// CSS 側のフォールバック値（layout.module.css）は DEFAULT_SPLIT と一致させること。
+// CSS 側のフォールバック値（conversation-layout.module.css）は DEFAULT_SPLIT と一致させること。
 const SPLIT_VARIABLES = {
   rowTop: ["--layout-row-top", "--layout-row-bottom"],
   // 畳んでいる間の上下比は、同じ仕切りが同じ2つの名前を動かす（覚える先だけが別）。
@@ -119,7 +120,7 @@ function fractionStyle(key: keyof Split, percent: number): CSSProperties {
 }
 
 // ドラッグ中の書き込み。**state を更新せず DOM へ直接書く**ので、pointermove のたびに
-// `<Layout>` を描き直さない。離した瞬間に `commitSplit` が同じ値を state へ戻すので、
+// `<ConversationLayout>` を描き直さない。離した瞬間に `commitSplit` が同じ値を state へ戻すので、
 // 次のレンダーの `style` と食い違わない。
 function writeFraction(element: HTMLElement | null, key: keyof Split, percent: number): void {
   if (element === null) {

@@ -23,7 +23,7 @@
        **キャラビューの立ち絵の半分以下に収める**のが目的（4.3「明確に小さく」）。本文の行の
        高さに合わせる形（3倍＝79px）は窓で変わらず、**狭い窓でキャラビューの立ち絵の 61% まで
        育っていた**（実測: 720x900 で 79px 対 128px）。
-       狭い窓ではキャラビューの領域が 9.5rem に固定される（`components/domain/layout/layout.module.css`
+       狭い窓ではキャラビューの領域が 9.5rem に固定される（`components/page/conversation/components/conversation-layout/conversation-layout.module.css`
        の @media）ので、**立ち絵は窓の高さによらず 128px**——半分＝64px が動かない上限になる。
        8vmin なら切り替えの境目（幅 760px）でも 60.8px で、そこを割らない。
        下限 60px: **2倍（53px）では姿が判別できなかった**（目視: 下の縁取りを

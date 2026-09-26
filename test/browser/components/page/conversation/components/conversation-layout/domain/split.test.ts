@@ -5,7 +5,7 @@ import {
   isDefaultSplit,
   loadSplit,
   saveSplit,
-} from "../../../../../src/browser/components/domain/layout/split.ts"
+} from "../../../../../../../../src/browser/components/page/conversation/components/conversation-layout/domain/split.ts"
 
 // `localStorage` に持つ比率の読み取り側。読めない・保存が無い・可動域の外のときに
 // DEFAULT_SPLIT へ落ちる契約（docs/display.md 4.2「表示できないものがあっても残りを

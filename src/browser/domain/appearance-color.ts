@@ -48,7 +48,8 @@ const ACCENT_TOKEN_NAME = "--accent"
 /**
  * 背景の覆いの不透明度の下限を渡す先（`docs/screen-design.md` 13.8）。**敷くのは枠を持たない領域
  * （キャラビューと雑談中のメインビュー）だけ**で、読むのは
- * `src/browser/components/domain/layout/layout.module.css` の `.layout-ground` 1箇所
+ * `src/browser/components/page/conversation/components/conversation-layout/
+ * conversation-layout.module.css` の `.layout-ground` 1箇所
  * （2つの領域が同じ class を共有する）。パックが書いた `veil` とこの下限の**大きいほう**が効く。
  */
 const BACKGROUND_VEIL_FLOOR_TOKEN_NAME = "--character-background-veil-floor"

@@ -1,32 +1,28 @@
-// レイアウト全体（`<Layout>`。docs/design.md 6.1）の**入口**。ロジック（3本の仕切りの比率・
-// 狭い画面のタブ）は `hooks/use-layout.ts` が持ち、見た目は `presentational-layout.tsx` が持つ
-// （docs/design.md 2章「機能の中を分ける」の container / presenter）。
+// **画面共通の枠**（frame。docs/design.md 2章「領域の機能と、置かれる機能」）。全画面の最上部に
+// 画面のナビの帯を置き、その下に画面を差し込む。差し込み口（`nav` / `screen`）は props で受け、
+// **どちらも `ReactNode` のまま**——どの画面を出すか・帯に何を乗せるかは知らない
+// （`main.tsx` の `<Root>` が選ぶ。もとは `<Root>` に直接書かれていた組み立てをここへ出した）。
 //
-// もとは静的な HTML の組み立てとブラウザ側の配線に分かれていた処理だった（移行の段6で
-// React の部品にし、段3〜5の複数の root を1つにまとめた。段の記録は
-// `docs/history/decision.md`「design.md 12. 移行の段階」）。
+// **フックも算出も持たない**（受け取った2つをただ並べるだけなので、`presentational-*` /
+// `hooks/` には割らない。`components/domain/sidebar/sidebar.tsx` がストアだけ読んで割っていない
+// のと同じ判断）。**他の枠（`screen-nav` など）を import しない**——帯は `<Root>` が組み立てて
+// `nav` に渡す（`test/architecture.test.ts`「枠どうしは import しない」）。
 //
-// **領域の中身（`<MainView>` / `<Sidebar>` / `<CharacterView>` / `<Dispatch>`）は props で
-// 受け取る。** ここから他の `features/` を import しない（`test/architecture.test.ts`
-// 「browser/ の機能どうしの import」）。組み立てるのは入口の `src/browser/main.tsx`。
-//
-// ここに残すのは「フックを呼んで、受け取ったものを渡す」だけ。**条件分岐も算出もここには
-// 置かない**（増えたらフックか見た目のどちらかに寄せる）。
+// 会話の画面の4領域（メイン・サイドバー・キャラビュー・入力欄）はここではなく、会話の画面の部品
+// `components/page/conversation/components/conversation-layout/`（`<ConversationLayout>`）にある。
 
 import { type ReactElement, type ReactNode } from "react"
 
-import { useLayout } from "./hooks/use-layout.ts"
-import { PresentationalLayout } from "./presentational-layout.tsx"
-
 export type LayoutProps = {
-  readonly main: ReactNode
-  readonly sidebar: ReactNode
-  readonly character: ReactNode
-  readonly dispatch: ReactNode
-  readonly collapseCharacter: boolean
-  readonly mainAsGround: boolean
+  readonly nav: ReactNode
+  readonly screen: ReactNode
 }
 
-export function Layout(props: LayoutProps): ReactElement {
-  return <PresentationalLayout {...props} {...useLayout(props.collapseCharacter)} />
+export function Layout({ nav, screen }: LayoutProps): ReactElement {
+  return (
+    <>
+      {nav}
+      {screen}
+    </>
+  )
 }

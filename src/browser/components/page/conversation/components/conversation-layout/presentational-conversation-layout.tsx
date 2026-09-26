@@ -1,5 +1,6 @@
-// `<Layout>` の器（docs/design.md 2章「機能の中を分ける」）。フックも算出も持たず、受け取った
-// 値と呼び先をそのまま置く。ロジック（比率の state・ドラッグの読み替え）は `hooks/use-layout.ts`。
+// `<ConversationLayout>` の器（docs/design.md 2章「機能の中を分ける」）。フックも算出も持たず、
+// 受け取った値と呼び先をそのまま置く。ロジック（比率の state・ドラッグの読み替え）は
+// `hooks/use-conversation-layout.ts`。
 //
 // 4領域は `data-region` でも名乗る。class 名は組み立てのたびにハッシュ化される（CSS Modules）
 // ので、外から領域を指す口——画面を撮って位置と大きさを測る `scripts/capture-view.ts` や、
@@ -15,11 +16,14 @@
 import clsx from "clsx"
 import { type ReactElement, type ReactNode } from "react"
 
-import { type NarrowPane, type UseLayoutResult } from "./hooks/use-layout.ts"
-import { LayoutResizer } from "./layout-resizer.tsx"
-import styles from "./layout.module.css"
+import { LayoutResizer } from "./components/layout-resizer/layout-resizer.tsx"
+import styles from "./conversation-layout.module.css"
+import {
+  type NarrowPane,
+  type UseConversationLayoutResult,
+} from "./hooks/use-conversation-layout.ts"
 
-export type PresentationalLayoutProps = UseLayoutResult & {
+export type PresentationalConversationLayoutProps = UseConversationLayoutResult & {
   readonly main: ReactNode
   readonly sidebar: ReactNode
   readonly character: ReactNode
@@ -55,7 +59,7 @@ const NARROW_PANES = [
  * `props.gridRef` の形で描画中に読むと `react(refs)`（規約「レンダー中に ref を読み書きしない」）
  * が落ちるため（`task-board/presentational-task-board.tsx` と同じ理由）。
  */
-export function PresentationalLayout({
+export function PresentationalConversationLayout({
   gridRef,
   rowTopRef,
   rowBottomRef,
@@ -78,7 +82,7 @@ export function PresentationalLayout({
   dispatch,
   collapseCharacter,
   mainAsGround,
-}: PresentationalLayoutProps): ReactElement {
+}: PresentationalConversationLayoutProps): ReactElement {
   return (
     <div
       className={styles["layout-grid"]}
@@ -133,7 +137,7 @@ export function PresentationalLayout({
         </section>
       </div>
       {/* **畳んでいる間もこの仕切りは出す**（雑談中でも入力欄の高さを変えられる）。
-            覚える先は `hooks/use-layout.ts` の中で切り替わるだけで、仕切りそのものは1本。 */}
+            覚える先は `hooks/use-conversation-layout.ts` の中で切り替わるだけで、仕切りそのものは1本。 */}
       <div className={styles["layout-divider"]}>
         <LayoutResizer
           orientation="horizontal"

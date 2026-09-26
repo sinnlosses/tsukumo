@@ -40,7 +40,7 @@
   /* 右上の「ログ」の口（領域の角から 4px、高さ 30px）が占める高さぶんの余白。吹き出しの並びが
      スクロールしてもここまでは伸びない（下の .balloon-track）。 */
   --speech-log-open-space: 26px;
-  /* 領域を仕切り（components/domain/layout/layout-resizer.tsx）で低くしたとき、吹き出しの文字・余白・
+  /* 領域を仕切り（components/page/conversation/components/conversation-layout/components/layout-resizer/layout-resizer.tsx）で低くしたとき、吹き出しの文字・余白・
      列の幅を領域の高さ（`cqh`）に連動させて縮める（利用者の報告: 立ち絵は --portrait-height で
      領域の高さに比例して縮むのに、吹き出しは固定量のままで縮まないぶん相対的に大きく見える）。
      **既定の高さでは変えない**——実測で既定の領域の高さは 252px。clamp() の中間の式が
@@ -540,7 +540,7 @@
 }
 
 /* 狭い画面（docs/requirements.md 4.7）。**領域は下段に 9.5rem で固定される**
-   （components/domain/layout/layout.module.css の @media）ので、高さの基準そのものは残る。変えるのは
+   （components/page/conversation/components/conversation-layout/conversation-layout.module.css の @media）ので、高さの基準そのものは残る。変えるのは
    割合と固定量のほうで、広い領域向けの既定（立ち絵 78% ＋ 2.25rem 沈める、吹き出しの下に
    28px の余白）をそのまま当てると、低い領域では立ち絵の顔が切れ、吹き出しが余白に押し出されて
    領域の外へ出る。立ち絵は領域いっぱいまで使い、下の余白は接地ぶんだけに詰める。 */

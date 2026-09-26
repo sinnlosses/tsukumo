@@ -5,8 +5,8 @@
 import clsx from "clsx"
 import { useEffectEvent, type PointerEvent, type ReactElement, type RefObject } from "react"
 
-import styles from "./layout.module.css"
-import { clampPercent } from "./split.ts"
+import styles from "../../conversation-layout.module.css"
+import { clampPercent } from "../../domain/split.ts"
 
 export type LayoutResizerProps = {
   readonly orientation: "horizontal" | "vertical"

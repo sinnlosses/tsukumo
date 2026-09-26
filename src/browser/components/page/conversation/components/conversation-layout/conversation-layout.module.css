@@ -1,8 +1,10 @@
-/* まとめたレイアウト（`<Layout>`。src/browser/components/domain/layout/layout.tsx）。上段（メイン・サイドバー）と
-   下段（キャラビュー・入力欄）で仕切りの位置を独立に動かせるようにするため、上下の行を
-   それぞれ別の grid（.layout-row-top / .layout-row-bottom）にし、行の高さ・各行の列幅は
-   CSS カスタムプロパティで持つ（<Layout> がドラッグに応じて style で書き換える）。
-   ここに書いた var() の第2引数（フォールバック値）は src/browser/components/domain/layout/split.ts の
+/* まとめたレイアウト（`<ConversationLayout>`。
+   src/browser/components/page/conversation/components/conversation-layout/conversation-layout.tsx）。
+   上段（メイン・サイドバー）と下段（キャラビュー・入力欄）で仕切りの位置を独立に動かせるようにする
+   ため、上下の行をそれぞれ別の grid（.layout-row-top / .layout-row-bottom）にし、行の高さ・各行の
+   列幅は CSS カスタムプロパティで持つ（<ConversationLayout> がドラッグに応じて style で書き換える）。
+   ここに書いた var() の第2引数（フォールバック値）は
+   src/browser/components/page/conversation/components/conversation-layout/domain/split.ts の
    DEFAULT_SPLIT と一致させること。
 
    狭い画面での畳み方（画面の高さに固定し、上段はタブで1つずつ出す）は、このファイルの末尾の
@@ -35,7 +37,7 @@
   grid-template-columns: var(--layout-bottom-left, 50fr) auto var(--layout-bottom-right, 50fr);
 }
 /* キャラビューを畳んだとき（雑談モード。立ち絵が上段へ移る。docs/screen-design.md 13.7）。
-   **領域と仕切りは <Layout> が描かない**ので、ここは残った入力欄に全幅を渡すだけ。 */
+   **領域と仕切りは <ConversationLayout> が描かない**ので、ここは残った入力欄に全幅を渡すだけ。 */
 .layout-row-bottom[data-collapse-character="true"] {
   grid-template-columns: 1fr;
 }
@@ -106,7 +108,7 @@
   overflow-y: hidden;
 }
 /* 答え待ちの間の枠の強調（`.dispatch-pending-glow`。components/page/conversation/components/dispatch/dispatch.module.css）は、
-   `<Dispatch>` の兄弟としてではなく、この領域（`<Layout>` が描く `.layout-dispatch` の
+   `<Dispatch>` の兄弟としてではなく、この領域（`<ConversationLayout>` が描く `.layout-dispatch` の
    `<section>`）自身の内側の縁に沿わせたい。そこに `position: absolute; inset: 0` を
    置くための基準をここで用意する（部品は自分の subtree の外の DOM を直接いじらない。
    基準を用意するのは CSS 側で、JS の配線ではない）。 */
@@ -196,7 +198,7 @@
   color: var(--ink);
 }
 
-/* 領域の比率を既定に戻すピル（`<Layout>` が直接描く。docs/screen-design.md 13.6）。比率が既定と
+/* 領域の比率を既定に戻すピル（`<ConversationLayout>` が直接描く。docs/screen-design.md 13.6）。比率が既定と
    違うときだけ出る。**上下の仕切りの右端**に絵＋字で置く。
    仕切りの行は 0.6rem しかないので、口は上下の隙間（grid の gap）へはみ出して仕切りの線の高さに
    縦の中央を合わせる。右端は下段の領域の右端（.layout-row-bottom）に揃える。 */

@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it } from "bun:test"
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { useRef, useState, type ReactElement } from "react"
 
-import { LayoutResizer } from "../../../../../src/browser/components/domain/layout/layout-resizer.tsx"
+import { LayoutResizer } from "../../../../../../../../../src/browser/components/page/conversation/components/conversation-layout/components/layout-resizer/layout-resizer.tsx"
 
 type HostProps = {
   readonly onCommit: (moves: number, percent: number) => void

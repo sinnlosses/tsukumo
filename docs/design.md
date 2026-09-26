@@ -439,12 +439,14 @@ src/
       page/                   画面。**1つの画面 = 1つのディレクトリ（ページ）**で、名前は `stores/location-hash.ts` の
                               `Screen` の値そのまま。中の形は下の「ページの形」（2026-09-26 決定）
         conversation/         会話の画面。conversation.tsx（雑談モードかを読む）と presentational-conversation.tsx
-                              （<Layout> の差し込み口を4領域と <Sidebar> で埋める）
+                              （<ConversationLayout> の差し込み口を4領域と <Sidebar> で埋める）
           domain/             api-error-label.ts（入力欄とメインビューが読む、ターンの失敗の語）
           components/         4つの領域と、2つ以上の領域が読む部品・フック
             main-view/        TurnHeader・Turn・Report・QuestionRecord と markdown/（unified 一式）
             character-view/   BalloonTrack・Balloon・SpeechLog・動きの hooks（立ち絵は domain/portrait.tsx）
             chat-view/        雑談モードでメインの領域に差し替わるビュー（13.7）
+            conversation-layout/ ConversationLayout（4領域の grid）・リサイザ・比率の保存（split.ts）
+                              （2026-09-26 に画面共通の枠 `components/domain/layout/` から移した）
             dispatch/         Composer・CommandSuggestions・FileSuggestions・PendingAnswer・TurnStatus
             prompt-image/     依頼に添えた画像の札と控え（6.1）と、原寸を拡大して見る ImageZoom
             hooks/            use-repository-file-paths.ts（入力欄の `@` 補完とメインビューのリンク）
@@ -457,7 +459,9 @@ src/
         portrait.tsx          立ち絵（6.5）
         character-face.tsx    キャラクターの顔（13.9）
         protocol-mismatch.tsx サーバと版が合わないときの知らせ（4.4）
-        layout/               Layout・領域の枠・リサイザ・比率の保存
+        layout/               画面共通の枠。帯（nav）を最上部に、画面（screen）をその下に置くだけの器
+                              （2026-09-26 決定。会話の4領域のレイアウト・リサイザ・比率の保存は
+                              `page/conversation/components/conversation-layout/` へ移した）
         screen-nav/           全画面の最上部の帯。部屋の名前・仕事/雑談のトグル・3画面の口・
                               いまの作業の札（押すと依頼の手順の一覧）・モデル/許可モードの
                               操作子（13.9）
@@ -622,7 +626,7 @@ components/page/<ページ>/
   フックなら `hooks/`、状態なら `stores/`、
   それ以外は tsukumo の語彙を名乗るなら `domain/`、ライブラリを包む道具なら `lib/` へ上げる**。
   上げる引き金は「2つ目の読み手が出たとき」で、
-  1つの領域しか読まないものは領域の中に残す（`components/domain/layout/split.ts` がその例。
+  1つの領域しか読まないものは領域の中に残す（`components/page/conversation/components/conversation-layout/domain/split.ts` がその例。
   `appearance-color.ts` は**引き金が引かれたほう**の例——3色の操作子が帯の歯車へ移って
   帯とキャラクター画面の2つが読むようになったので、`browser/domain/` へ上げた）
 - **引き金は逆にも引く。** 読み手が1つの領域だけに戻ったら、その中へ**下ろす**
@@ -850,18 +854,30 @@ backdrop のクリックで `onClose` が呼ばれること・中のクリック
   - もとは領域の一覧に会話の4つ（`components/page/conversation/<領域>`）が並んでいたのを、画面
     `components/page/conversation` の1つにまとめた。4つは領域ではなくページの部品
     （`conversation/components/<領域>/`）になり、「4つどうしも import しない」は外れた
-  - **`<Layout>` の差し込み口を埋めるのは `presentational-conversation.tsx`。** `<Layout>` と
-    `<Sidebar>` を import し、`main` には雑談モードなら `<ChatView>`、そうでなければ `<MainView>` を、
-    `character` に `<CharacterView>`、`dispatch` に `<Dispatch>` を入れ、`collapseCharacter` と
-    `mainAsGround` に雑談モードの旗を渡す。雑談モードの旗（`session.state.chatMode`）をストアから
-    読むのは `conversation.tsx`（ストアを読むだけなので `hooks/use-conversation.ts` は作らない）。
-    `main.tsx` は `<Activity>` の中に `<Conversation />` を置くだけで、`OVERLAY_SCREEN` と
-    `<Activity>` の切り替え・`<ScreenNav>`・`<DiaryNotice>`・`usePortraitPreload`（どちらの
-    画面を出していても表情を先に読む）は入口に残る
+  - **`<ConversationLayout>` の差し込み口を埋めるのは `presentational-conversation.tsx`。**
+    `<ConversationLayout>` と `<Sidebar>` を import し、`main` には雑談モードなら `<ChatView>`、
+    そうでなければ `<MainView>` を、`character` に `<CharacterView>`、`dispatch` に `<Dispatch>` を
+    入れ、`collapseCharacter` と `mainAsGround` に雑談モードの旗を渡す。雑談モードの旗
+    （`session.state.chatMode`）をストアから読むのは `conversation.tsx`（ストアを読むだけなので
+    `hooks/use-conversation.ts` は作らない）。`main.tsx` は `<Activity>` の中に `<Conversation />`
+    を置くだけで、`OVERLAY_SCREEN` と `<Activity>` の切り替え・`<ScreenNav>`・`<DiaryNotice>`・
+    `usePortraitPreload`（どちらの画面を出していても表情を先に読む）は入口に残る
   - そのため**辺を1本足した: 画面 → 枠**（`components/page/<画面>` → `components/domain/<枠>`）。
-    枠は画面を import しない（`<Layout>` は差し込み口を props で受けたまま）。画面どうし・枠どうしは
-    import しない。検査の一覧は「枠」・「画面」・「置かれる機能」の3種類に分かれ（上の表）、
-    許す辺は「枠・画面 → 置かれる機能」と「画面 → 枠」の2つ
+    枠は画面を import しない（`<ConversationLayout>` は差し込み口を props で受けたまま）。
+    画面どうし・枠どうしは import しない。検査の一覧は「枠」・「画面」・「置かれる機能」の3種類に
+    分かれ（上の表）、許す辺は「枠・画面 → 置かれる機能」と「画面 → 枠」の2つ
+  - **画面共通の枠と会話の4領域のレイアウトを分けた**（2026-09-26 決定。ユーザーの指示）:
+    もとは `components/domain/layout/` が会話の4領域のレイアウト（`<Layout>`）そのもので、
+    全画面共通の枠（帯 `<ScreenNav>` を最上部に置き、画面を下に差し込む形）は `main.tsx` の
+    `<Root>` に直接書かれていた。会話の4領域は会話の画面の部品
+    `components/page/conversation/components/conversation-layout/`（`<ConversationLayout>`。
+    `Layout` から改名）へ移し、`components/domain/layout/` はその全画面共通の枠（`<Layout>`。
+    `nav` / `screen` の2つの差し込み口を props で受けるだけで、画面も他の枠も import しない）に
+    作り直した。`main.tsx` の `<Root>` は `<Layout nav={<ScreenNav />} screen={...} />` を組んで
+    渡すだけになり、どの画面を出すかの判断（`<Activity>` の出し分け・`OVERLAY_SCREEN`）は
+    `<Root>` に残したまま枠へは渡さない（枠が「画面を知らない」を保つため）。**2つの `Layout` が
+    同じ名前を名乗ると読み手が取り違える**ので、会話の4領域側だけ改名した——
+    画面共通の枠のほうは元から `components/domain/layout/` の唯一の顔なので `Layout` のまま
   - 読み手が会話の画面の1つに戻ったものは、上げる引き金の逆で下ろした:
     `components/domain/prompt-image.tsx`（と CSS）→ `conversation/components/prompt-image/`、
     `domain/api-error-label.ts` → `conversation/domain/`、`hooks/use-repository-file-paths.ts` →
@@ -987,8 +1003,10 @@ features/task-board/
   （レポートに書かれたパスを押すと Orca のエディタで開ける部品）も読むようになったので
   `browser/hooks/` へ上げた（2026-09-24）。会話の画面を1ページにしたとき（2026-09-26）、読み手が
   どちらも同じページの部品なので、上げる先はページの `components/hooks/` に変わった（上の「ページの形」）
-- **フックでない純関数は `hooks/` に置かない。** 機能の直下に概念の名前で置く
-  （`components/domain/layout/split.ts` がその形）
+- **フックでない純関数は `hooks/` に置かない。** 機能の直下に概念の名前で置く。
+  **ページの部品は「ページの形」の直下の形が決め打ちなので、概念の名前のファイルも `domain/` の下**
+  （`components/page/conversation/components/conversation-layout/domain/split.ts` がその形。
+  `main-view/domain/turn-title.ts` と同じ）
 - **描き直しを止める `memo` は presenter 側に残す**（`PresentationalTaskBoard` の `TaskTable`）。
   container はフックのぶん毎回描き直されるので、そこに `memo` を置いても効かない
 
@@ -1063,7 +1081,7 @@ features/task-board/
   import できないため。上の箱の表）
 - 領域（`src/browser/components/domain/<枠>/`・`components/page/`）と `src/browser/features/` の中のものは、
   **その領域（機能）しか読まないならその中に残す**
-  （上げる引き金は「2つ目の読み手が出たとき」。`components/domain/layout/split.ts` と
+  （上げる引き金は「2つ目の読み手が出たとき」。`components/page/conversation/components/conversation-layout/domain/split.ts` と
   `components/page/conversation/components/main-view/markdown/split-blocks.ts` がその例で、名前が形式（Markdown）を指していても
   読み手が1つなので機能の中）
 

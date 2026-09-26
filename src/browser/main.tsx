@@ -17,6 +17,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { Activity, type ReactElement } from "react"
 import { createRoot } from "react-dom/client"
 
+import { Layout } from "./components/domain/layout/layout.tsx"
 import { usePortraitPreload } from "./components/domain/portrait.tsx"
 import { ProtocolMismatch } from "./components/domain/protocol-mismatch.tsx"
 import { ScreenNav } from "./components/domain/screen-nav/screen-nav.tsx"
@@ -71,20 +72,25 @@ function Root(): ReactElement {
     return <ProtocolMismatch />
   }
   return (
-    <>
-      {/* 画面のナビの帯（13.9）。**どの画面でも最上部に出る**ので、画面を選ぶ分岐の外に置く。
-          会話の画面の `<Layout>` は、帯が奪う高さを CSS の変数（theme.css）から読んで縮む。 */}
-      <ScreenNav />
-      {/* 書き終わりの知らせ（13.10「書き終わりの知らせ」）。**成果の画面でだけ出す**。ほかの画面へ
-          移っても「×」で消したかどうかを忘れないよう、外さずに `<Activity>` で隠す。 */}
-      <Activity mode={screen === "achievement" ? "visible" : "hidden"}>
-        <DiaryNotice />
-      </Activity>
-      <Activity mode={screen === "conversation" ? "visible" : "hidden"}>
-        <Conversation />
-      </Activity>
-      {screen === "conversation" ? null : OVERLAY_SCREEN[screen]}
-    </>
+    <Layout
+      // 画面のナビの帯（13.9）。**どの画面でも最上部に出る**ので、画面を選ぶ分岐の外で組む。
+      // 会話の画面の `<ConversationLayout>` は、帯が奪う高さを CSS の変数（theme.css）から読んで
+      // 縮む。**枠（`<Layout>`）は帯の中身を知らない**ので、ここで組んでから渡す。
+      nav={<ScreenNav />}
+      screen={
+        <>
+          {/* 書き終わりの知らせ（13.10「書き終わりの知らせ」）。**成果の画面でだけ出す**。ほかの
+              画面へ移っても「×」で消したかどうかを忘れないよう、外さずに `<Activity>` で隠す。 */}
+          <Activity mode={screen === "achievement" ? "visible" : "hidden"}>
+            <DiaryNotice />
+          </Activity>
+          <Activity mode={screen === "conversation" ? "visible" : "hidden"}>
+            <Conversation />
+          </Activity>
+          {screen === "conversation" ? null : OVERLAY_SCREEN[screen]}
+        </>
+      }
+    />
   )
 }
 

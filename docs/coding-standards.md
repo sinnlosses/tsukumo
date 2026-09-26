@@ -559,7 +559,8 @@ React 19。関数コンポーネントと Hooks だけを使う（クラスコ�
 
 `useEffectEvent` で包んだ関数は**レンダー中には呼べない**（React が投げる）。呼んでよいのは
 effect の中と、イベントハンドラ・そこで登録した寿命の長いリスナの中
-（`browser/components/domain/layout/layout-resizer.tsx` の、ドラッグの間だけ生きる `pointermove`）。
+（`browser/components/page/conversation/components/conversation-layout/components/layout-resizer/
+layout-resizer.tsx` の、ドラッグの間だけ生きる `pointermove`）。
 
 **画面を離れるとアンマウントされる部品（`main.tsx` の `OVERLAY_SCREEN`）では、一回限りの合図や
 「もう見せた」の印を部品の state に持たない。** React の外（モジュールの store）に持つ——
