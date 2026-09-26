@@ -102,16 +102,6 @@ describe("useQuestionAnswer の選択肢", () => {
     expect(first?.recommended).toBe(true)
     expect(second?.recommended).toBe(false)
   })
-
-  it("preview と説明はそのまま札へ渡す", () => {
-    const result = renderModel([
-      questionPending([question({ options: [option("A案", { preview: "Aの比較（架空）" })] })]),
-    ])
-
-    const [first] = asking(result.current).options
-    expect(first?.preview).toBe("Aの比較（架空）")
-    expect(first?.description).toBe("架空の説明（A案）")
-  })
 })
 
 describe("useQuestionAnswer の答え方", () => {

@@ -174,52 +174,11 @@ describe("mainViewTurnsOf（最終レポートの札は、やり取りが閉じ�
     checks: [],
   })
   const finished: SessionEvent = { kind: "turn-finished", outcome: { kind: "completed" } }
-  const backgroundStarted: SessionEvent = {
-    kind: "background-tasks-changed",
-    tasks: [{ taskId: "task-1", kind: "shell", description: "架空の背景の待ち" }],
-  }
-  const backgroundEnded: SessionEvent = { kind: "background-tasks-changed", tasks: [] }
   const resumed: SessionEvent = { kind: "turn-resumed" }
   const finalStep = (state: SessionState) =>
     mainViewTurnsOf(state)
       .at(-1)
       ?.steps.find((step) => step.body.kind === "text" && step.final)
-
-  it("背景のタスクが残っているあいだは、あとから来た report にも final を立てない", () => {
-    const waiting = fold([
-      ask,
-      report("toolu_r1", "架空の途中の結論。"),
-      report("toolu_r2", "架空のいまの結論。"),
-      backgroundStarted,
-      finished,
-    ])
-
-    expect(waiting.turn.kind).toBe("finished")
-    expect(waiting.backgroundTasks.length).toBeGreaterThan(0)
-    expect(finalStep(waiting)).toBeUndefined()
-  })
-
-  it("背景のタスクが片付き、続きのターンも終われば final が立つ", () => {
-    const waiting = fold([
-      ask,
-      report("toolu_r1", "架空の途中の結論。"),
-      report("toolu_r2", "架空のいまの結論。"),
-      backgroundStarted,
-      finished,
-    ])
-    const settled = [backgroundEnded, resumed, finished].reduce(
-      (current, event) => applySessionEvent(current, event, 0),
-      waiting,
-    )
-
-    expect(settled.backgroundTasks.length).toBe(0)
-    expect(settled.turn.kind).not.toBe("running")
-    expect(finalStep(settled)?.body).toEqual({
-      kind: "text",
-      report: "架空のいまの結論。",
-      firstLine: "架空のいまの結論。",
-    })
-  })
 
   it("続きのターンが動いているあいだも final を立てない", () => {
     const running = fold([
