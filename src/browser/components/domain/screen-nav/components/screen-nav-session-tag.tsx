@@ -7,6 +7,7 @@
 import clsx from "clsx"
 import { useState, type ReactElement } from "react"
 
+import { Text } from "../../../ui/text/text.tsx"
 import { useSessionDigest } from "../hooks/use-session-digest.ts"
 import type {
   ScreenNavSessionIdentity,
@@ -38,7 +39,15 @@ export function ScreenNavSessionTag(props: ScreenNavSessionTagProps): ReactEleme
       onFocus={() => setPeeking(true)}
       onBlur={() => setPeeking(false)}
     >
-      <span className={styles["screen-nav-room"]}>{tag.room}</span>
+      <Text
+        element="span"
+        size="heading"
+        tone="ink"
+        weight="bold"
+        className={styles["screen-nav-room"]}
+      >
+        {tag.room}
+      </Text>
       <span className={styles["screen-nav-session-tag-dash"]} aria-hidden="true">
         -
       </span>

@@ -91,11 +91,17 @@ export function ContextUsageCard(props: ContextUsageCardProps): ReactElement {
         </HStack>
       </HStack>
 
-      <p className={styles["context-total"]}>
+      <Text
+        element="p"
+        size="inherit"
+        tone="inherit"
+        weight="inherit"
+        className={styles["context-total"]}
+      >
         <span className={styles["context-total-value"]}>{formatCount(card.totalTokens)}</span>
         <span className={styles["context-total-max"]}>{`/ ${formatCount(card.maxTokens)}`}</span>
         <span className={styles["context-total-share"]}>{`${card.percentage}%`}</span>
-      </p>
+      </Text>
 
       <div className={styles["context-bar"]}>
         {card.rows.map((row) => (
@@ -174,7 +180,13 @@ function ContextUsageCardSkeleton(): ReactElement {
         </HStack>
       </HStack>
 
-      <p className={styles["context-total"]}>
+      <Text
+        element="p"
+        size="inherit"
+        tone="inherit"
+        weight="inherit"
+        className={styles["context-total"]}
+      >
         <SkeletonBlock
           className={clsx(styles["context-total-value"], styles["context-skeleton-total-value"])}
         />
@@ -184,7 +196,7 @@ function ContextUsageCardSkeleton(): ReactElement {
         <SkeletonBlock
           className={clsx(styles["context-total-share"], styles["context-skeleton-total-share"])}
         />
-      </p>
+      </Text>
 
       <div className={styles["context-bar"]}>
         {/* 横棒だけは他と違い、中身の文字（`&nbsp;`）ではなく親（`.context-bar`）の

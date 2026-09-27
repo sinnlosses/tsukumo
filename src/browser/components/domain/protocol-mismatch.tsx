@@ -16,8 +16,12 @@ export function ProtocolMismatch(): ReactElement {
       <Text element="p" size="subheading" tone="inherit" weight="bold" className="">
         tsukumo とこのページの版が合いません
       </Text>
-      <p>ページを読み込み直してください。</p>
-      <p>読み込み直しても出るときは、tsukumo を上げ直してください。</p>
+      <Text element="p" size="body" tone="ink" weight="normal" className="">
+        ページを読み込み直してください。
+      </Text>
+      <Text element="p" size="body" tone="ink" weight="normal" className="">
+        読み込み直しても出るときは、tsukumo を上げ直してください。
+      </Text>
     </div>
   )
 }

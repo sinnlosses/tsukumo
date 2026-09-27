@@ -14,7 +14,3 @@
   line-height: var(--line-height-body);
   overflow-wrap: anywhere;
 }
-.protocol-mismatch p {
-  margin: 0;
-}
-/* 題（`Text`。size="subheading" tone="inherit" weight="bold"）。 */

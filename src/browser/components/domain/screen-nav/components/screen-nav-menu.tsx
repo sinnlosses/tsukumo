@@ -17,6 +17,7 @@
 import clsx from "clsx"
 import type { ReactElement } from "react"
 
+import { Text } from "../../../ui/text/text.tsx"
 import type { ScreenNavMenu as Menu, ScreenNavParts } from "../hooks/use-screen-nav.ts"
 import shellStyles from "../screen-nav.module.css"
 import { ScreenNavCharacterPicker } from "./screen-nav-character-picker.tsx"
@@ -62,7 +63,15 @@ export function ScreenNavMenu(props: ScreenNavMenuProps): ReactElement {
       >
         {MENU_MARK}
         {menu.pendingActive && (
-          <span className={styles["screen-nav-toggle-mark"]}>{PENDING_MARK}</span>
+          <Text
+            element="span"
+            size="label"
+            tone="state-warn"
+            weight="inherit"
+            className={styles["screen-nav-toggle-mark"]}
+          >
+            {PENDING_MARK}
+          </Text>
         )}
       </button>
       {menu.open && (

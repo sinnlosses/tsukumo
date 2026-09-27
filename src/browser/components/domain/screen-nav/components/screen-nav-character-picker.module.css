@@ -118,6 +118,4 @@
 }
 .screen-nav-character-picker-in-use {
   flex: none;
-  color: var(--accent);
-  font-size: var(--font-label);
 }

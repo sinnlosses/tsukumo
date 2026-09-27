@@ -600,10 +600,6 @@
   font-size: 0.625rem;
   font-weight: 700;
 }
-.usage-review-impact-value {
-  font-size: var(--font-subheading);
-  font-weight: 700;
-}
 .usage-review-impact-large {
   background: var(--accent);
   color: var(--ground);

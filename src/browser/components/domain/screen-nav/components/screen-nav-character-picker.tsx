@@ -9,6 +9,7 @@ import clsx from "clsx"
 import { ChevronDown } from "lucide-react"
 import { useId, type ReactElement } from "react"
 
+import { Text } from "../../../ui/text/text.tsx"
 import { CharacterFace } from "../../character-face.tsx"
 import type { ScreenNavCharacterPicker as Picker } from "../hooks/use-character-picker.ts"
 import shellStyles from "../screen-nav.module.css"
@@ -78,11 +79,25 @@ export function ScreenNavCharacterPicker(props: ScreenNavCharacterPickerProps): 
                   alt=""
                   className={styles["screen-nav-character-picker-face"]}
                 />
-                <span className={styles["screen-nav-character-picker-name"]}>{option.label}</span>
+                <Text
+                  element="span"
+                  size="inherit"
+                  tone="inherit"
+                  weight="inherit"
+                  className={styles["screen-nav-character-picker-name"]}
+                >
+                  {option.label}
+                </Text>
                 {option.inUse && (
-                  <span className={styles["screen-nav-character-picker-in-use"]}>
+                  <Text
+                    element="span"
+                    size="label"
+                    tone="accent"
+                    weight="inherit"
+                    className={styles["screen-nav-character-picker-in-use"]}
+                  >
                     {IN_USE_MARK}
-                  </span>
+                  </Text>
                 )}
               </button>
             </li>

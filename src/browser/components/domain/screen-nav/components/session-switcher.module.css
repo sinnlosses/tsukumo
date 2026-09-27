@@ -84,10 +84,7 @@
   border-right: 1px solid var(--rule-quiet);
 }
 .session-switcher-empty {
-  margin: 0;
   padding: 1rem 0.75rem;
-  color: var(--ink-quiet);
-  font-size: var(--font-secondary);
 }
 .session-switcher-group-label {
   padding: 0.625rem 0.75rem 0.25rem;
@@ -128,21 +125,15 @@
   flex: 1 1 auto;
   min-width: 0;
   overflow: hidden;
-  font-size: var(--font-secondary);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .session-switcher-row-current {
   flex: none;
-  color: var(--accent);
-  font-size: var(--font-label);
-  font-weight: 700;
 }
 .session-switcher-row-time {
   flex: none;
-  color: var(--ink-quiet);
   font-family: var(--font-mono);
-  font-size: var(--font-label);
   white-space: nowrap;
 }
 /* 右の欄: 見出し（大きな短縮ID・時刻と依頼の数・キャラクター）→ 要約 → 最後のひとこと → ボタン。 */
@@ -171,17 +162,13 @@
 .session-switcher-detail-meta {
   flex: 1 1 auto;
   min-width: 0;
-  color: var(--ink-quiet);
   font-family: var(--font-mono);
-  font-size: var(--font-action);
 }
 .session-switcher-detail-character {
   display: inline-flex;
   flex: none;
   align-items: center;
   gap: 0.375rem;
-  color: var(--ink-quiet);
-  font-size: var(--font-action);
 }
 .session-switcher-detail-face {
   width: 1.25rem;
@@ -201,9 +188,6 @@
 }
 .session-switcher-summary-heading {
   margin: 0 0 0.125rem;
-  color: var(--accent);
-  font-size: var(--font-action);
-  font-weight: 700;
   letter-spacing: 0.08em;
 }
 .session-switcher-paragraph {
@@ -215,11 +199,6 @@
 /* 「残り：」で始まる段落は一段控えめに（見本の最後の段落）。 */
 .session-switcher-paragraph[data-remaining="true"] {
   color: var(--ink-quiet);
-}
-.session-switcher-note {
-  margin: 0;
-  color: var(--ink-quiet);
-  font-size: var(--font-secondary);
 }
 .session-switcher-last-line {
   margin-top: 0.5rem;

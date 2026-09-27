@@ -216,7 +216,15 @@ function StageRow(props: { readonly stage: UsageReviewStageView }): ReactElement
       <span className={styles["usage-review-stage-mark"]} aria-hidden="true">
         {stageMark(stage.status)}
       </span>
-      <span className={styles["usage-review-stage-label"]}>{stage.label}</span>
+      <Text
+        element="span"
+        size="inherit"
+        tone="inherit"
+        weight="inherit"
+        className={styles["usage-review-stage-label"]}
+      >
+        {stage.label}
+      </Text>
       {stage.count.kind === "shown" && (
         <span className={styles["usage-review-stage-count"]}>{stage.count.label}</span>
       )}
@@ -364,7 +372,9 @@ function ImpactBadge(props: { readonly impact: UsageProposalImpact }): ReactElem
   return (
     <span className={clsx(styles["usage-review-impact"], toneClass[impact])}>
       <span className={styles["usage-review-impact-label"]}>{IMPACT_BADGE_LABEL}</span>
-      <span className={styles["usage-review-impact-value"]}>{IMPACT_LABELS[impact]}</span>
+      <Text element="span" size="subheading" tone="inherit" weight="bold" className="">
+        {IMPACT_LABELS[impact]}
+      </Text>
     </span>
   )
 }

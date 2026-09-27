@@ -69,7 +69,15 @@ export function ScreenNavCurrentWorkPill(props: ScreenNavCurrentWorkProps): Reac
         {work.summary.kind === "text" && (
           <>
             <span className={styles["screen-nav-work-sep"]} aria-hidden="true" />
-            <span className={styles["screen-nav-work-summary"]}>{work.summary.label}</span>
+            <Text
+              element="span"
+              size="inherit"
+              tone="inherit"
+              weight="inherit"
+              className={styles["screen-nav-work-summary"]}
+            >
+              {work.summary.label}
+            </Text>
           </>
         )}
       </button>
@@ -207,7 +215,15 @@ function CurrentWorkBackgroundRow(props: {
       <span className={styles["screen-nav-work-step-mark"]} aria-hidden="true">
         …
       </span>{" "}
-      <span className={styles["screen-nav-work-background-kind"]}>{task.kindLabel}</span>
+      <Text
+        element="span"
+        size="inherit"
+        tone="inherit"
+        weight="inherit"
+        className={styles["screen-nav-work-background-kind"]}
+      >
+        {task.kindLabel}
+      </Text>
       {task.description !== "" && ` ${task.description}`}
     </li>
   )

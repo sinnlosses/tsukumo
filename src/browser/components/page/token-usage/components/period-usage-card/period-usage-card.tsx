@@ -18,6 +18,7 @@ import type {
 } from "../../../../../../shared/token-usage/token-usage-summary.ts"
 import { formatCount } from "../../../../../utils/format-count.ts"
 import { HStack } from "../../../../ui/h-stack/h-stack.tsx"
+import { Text } from "../../../../ui/text/text.tsx"
 import styles from "../../token-usage.module.css"
 
 export type PeriodUsageCardProps = {
@@ -60,8 +61,12 @@ export function PeriodUsageCard(props: PeriodUsageCardProps): ReactElement {
         wrap="nowrap"
         className={styles["usage-card-scale"]}
       >
-        <span>{edgeLabel(props.trend, "first")}</span>
-        <span>{edgeLabel(props.trend, "last")}</span>
+        <Text element="span" size="inherit" tone="inherit" weight="inherit" className="">
+          {edgeLabel(props.trend, "first")}
+        </Text>
+        <Text element="span" size="inherit" tone="inherit" weight="inherit" className="">
+          {edgeLabel(props.trend, "last")}
+        </Text>
       </HStack>
     </section>
   )

@@ -10,6 +10,8 @@ import { useId, type ReactElement } from "react"
 
 import type { CharacterFaceInfo } from "../../../../domain/character-face.ts"
 import { Dialog } from "../../../ui/dialog/dialog.tsx"
+import { Heading } from "../../../ui/heading/heading.tsx"
+import { Text } from "../../../ui/text/text.tsx"
 import { CharacterFace } from "../../character-face.tsx"
 import type { SessionDigestView } from "../hooks/use-session-digest.ts"
 import { useSessionSwitcherSelection } from "../hooks/use-session-switcher-selection.ts"
@@ -107,10 +109,26 @@ function SessionSwitcherBody(props: SessionSwitcherProps): ReactElement {
           className={styles["session-switcher-list"]}
         >
           {switcher.rows.length === 0 && (
-            <p className={styles["session-switcher-empty"]}>{NO_SESSIONS}</p>
+            <Text
+              element="p"
+              size="secondary"
+              tone="ink-quiet"
+              weight="inherit"
+              className={styles["session-switcher-empty"]}
+            >
+              {NO_SESSIONS}
+            </Text>
           )}
           {switcher.rows.length > 0 && selection.rows.length === 0 && (
-            <p className={styles["session-switcher-empty"]}>{NO_MATCH}</p>
+            <Text
+              element="p"
+              size="secondary"
+              tone="ink-quiet"
+              weight="inherit"
+              className={styles["session-switcher-empty"]}
+            >
+              {NO_MATCH}
+            </Text>
           )}
           {GROUP_ORDER.map((group) => ({
             group,
@@ -134,11 +152,35 @@ function SessionSwitcherBody(props: SessionSwitcherProps): ReactElement {
                     onDoubleClick={() => switcher.onSwitch(row.sessionId)}
                   >
                     <span className={styles["session-switcher-row-id"]}>{row.shortId}</span>
-                    <span className={styles["session-switcher-row-heading"]}>{row.heading}</span>
+                    <Text
+                      element="span"
+                      size="secondary"
+                      tone="inherit"
+                      weight="inherit"
+                      className={styles["session-switcher-row-heading"]}
+                    >
+                      {row.heading}
+                    </Text>
                     {row.current && (
-                      <span className={styles["session-switcher-row-current"]}>{CURRENT_MARK}</span>
+                      <Text
+                        element="span"
+                        size="label"
+                        tone="accent"
+                        weight="bold"
+                        className={styles["session-switcher-row-current"]}
+                      >
+                        {CURRENT_MARK}
+                      </Text>
                     )}
-                    <span className={styles["session-switcher-row-time"]}>{row.timeLabel}</span>
+                    <Text
+                      element="span"
+                      size="label"
+                      tone="ink-quiet"
+                      weight="inherit"
+                      className={styles["session-switcher-row-time"]}
+                    >
+                      {row.timeLabel}
+                    </Text>
                   </div>
                 ))}
               </div>
@@ -156,15 +198,15 @@ function SessionSwitcherBody(props: SessionSwitcherProps): ReactElement {
         )}
       </div>
       <div className={styles["session-switcher-hints"]}>
-        <span>
+        <Text element="span" size="inherit" tone="inherit" weight="inherit" className="">
           <kbd>↑</kbd> <kbd>↓</kbd> 選ぶ
-        </span>
-        <span>
+        </Text>
+        <Text element="span" size="inherit" tone="inherit" weight="inherit" className="">
           <kbd>Enter</kbd> 切り替える
-        </span>
-        <span>
+        </Text>
+        <Text element="span" size="inherit" tone="inherit" weight="inherit" className="">
           <kbd>Esc</kbd> 閉じる
-        </span>
+        </Text>
       </div>
     </div>
   )
@@ -189,15 +231,29 @@ function SessionSwitcherDetail(props: SessionSwitcherDetailProps): ReactElement 
     <section className={styles["session-switcher-detail"]} aria-label={`セッション ${row.shortId}`}>
       <div className={styles["session-switcher-detail-head"]}>
         <span className={styles["session-switcher-detail-id"]}>{row.shortId}</span>
-        <span className={styles["session-switcher-detail-meta"]}>{meta}</span>
-        <span className={styles["session-switcher-detail-character"]}>
+        <Text
+          element="span"
+          size="action"
+          tone="ink-quiet"
+          weight="inherit"
+          className={styles["session-switcher-detail-meta"]}
+        >
+          {meta}
+        </Text>
+        <Text
+          element="span"
+          size="action"
+          tone="ink-quiet"
+          weight="inherit"
+          className={styles["session-switcher-detail-character"]}
+        >
           <CharacterFace
             url={character.url}
             alt=""
             className={styles["session-switcher-detail-face"]}
           />
           {character.alt}
-        </span>
+        </Text>
       </div>
       <div className={styles["session-switcher-detail-body"]}>
         <DigestBody digest={digest} characterName={character.alt} />
@@ -225,16 +281,34 @@ type DigestBodyProps = {
 function DigestBody(props: DigestBodyProps): ReactElement {
   const { digest } = props
   if (digest.kind === "loading") {
-    return <p className={styles["session-switcher-note"]}>{LOADING}</p>
+    return (
+      <Text element="p" size="secondary" tone="ink-quiet" weight="inherit" className="">
+        {LOADING}
+      </Text>
+    )
   }
   if (digest.kind === "unavailable") {
-    return <p className={styles["session-switcher-note"]}>{UNAVAILABLE}</p>
+    return (
+      <Text element="p" size="secondary" tone="ink-quiet" weight="inherit" className="">
+        {UNAVAILABLE}
+      </Text>
+    )
   }
   return (
     <>
-      <h3 className={styles["session-switcher-summary-heading"]}>{SUMMARY_HEADING}</h3>
+      <Heading
+        level={3}
+        size="action"
+        tone="accent"
+        weight="bold"
+        className={styles["session-switcher-summary-heading"]}
+      >
+        {SUMMARY_HEADING}
+      </Heading>
       {digest.summary === undefined ? (
-        <p className={styles["session-switcher-note"]}>{NO_SUMMARY}</p>
+        <Text element="p" size="secondary" tone="ink-quiet" weight="inherit" className="">
+          {NO_SUMMARY}
+        </Text>
       ) : (
         summaryParagraphs(digest.summary).map((paragraph, index) => (
           <p
