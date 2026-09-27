@@ -2,6 +2,14 @@
 
 ## ユーザーから
 
+- docs の責務を組み替え、各ファイルの責務・読む時・直す時を明確にする（2026-09-27 のユーザーの指示。案は同日の会話）
+  - `docs/architecture.md` を全体構造の入口にする（層・機能と辺・置き場所の基準・プロトコルの不変条件・動きの順序・安全の境界。いまの design.md 2〜5・9章と、architecture.md「採用アーキテクチャ」「新しいコードを置く場所」を合わせる）。`architecture-proposal` スキルが「採用後の正典は `docs/architecture.md`」と名指ししているのとも合う
+  - 機能・領域ごとの詳細は `docs/architecture/` に置く（chat-mode・display・screen-design と、design.md の 6章 browser・7章 キャラクターパック・10章 テスト（architecture.md「手で確かめること」を合わせる）・11章 ビルド）
+  - architecture.md「設計判断（なぜ今の形なのか）」は **`docs/architecture/adr/`** に1判断1ファイルで移す（ユーザー決定。`domain-modeling` の既定 `docs/adr/` ではなく、設計に関わるものとして architecture の下に置く）
+  - 「既知の制約・注意点」「現在の実装状況」の置き先は、中身を読んでから決める（前者は各機能のファイルへ分ける、後者の経緯は `docs/history/` へ、が見込み）
+  - 各ファイルの冒頭に責務・読む時・直す時を書き、CLAUDE.md の索引も合わせる
+  - 参照は design.md 1544・architecture.md 476 箇所あり、章の句で引かれているので段に分けて1段ずつ main へ送る（段の例: adr を作って設計判断を移す → design.md の機能別の章を移す → 残りを architecture.md に合わせて design.md を消す → chat-mode などを移す）
+
 ## エージェントのドラフト
 
 - **`report` の `inputSchema` を縮める（`.readonly()` が出す `readOnly: true` と、8回繰り返す `fold` の説明）**（振り返り: T-705）
