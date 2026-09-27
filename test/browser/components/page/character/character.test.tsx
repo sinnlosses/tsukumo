@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import { Character } from "../../../../../src/browser/components/page/character/character.tsx"
@@ -139,14 +139,16 @@ describe("Character", () => {
     expect(screen.getByRole("heading", { name: "新しいキャラクター" })).toBeDefined()
 
     fireEvent.change(screen.getByLabelText("id"), { target: { value: "fictional-3" } })
-    await act(async () => {
-      fireEvent.change(screen.getByLabelText("いつもの顔の立ち絵を選ぶ"), {
-        target: { files: [new File(["<svg/>"], "picked.svg", { type: "image/svg+xml" })] },
-      })
-      await new Promise((resolve) => setTimeout(resolve, 20))
+    fireEvent.change(screen.getByLabelText("いつもの顔の立ち絵を選ぶ"), {
+      target: { files: [new File(["<svg/>"], "picked.svg", { type: "image/svg+xml" })] },
+    })
+    // FileReader は非同期なので、立ち絵が読み込めて「作る」が押せるようになるまでポーリングで待つ。
+    const submitButton = screen.getByRole("button", { name: "作る" })
+    await waitFor(() => {
+      expect(submitButton.getAttribute("aria-disabled")).toBe("false")
     })
 
-    fireEvent.click(screen.getByRole("button", { name: "作る" }))
+    fireEvent.click(submitButton)
     expect(calls).toHaveLength(1)
     expect(calls[0]).toMatchObject({ procedure: "characterPack.create", id: "fictional-3" })
     // まだ一覧に出ていないので、ダイアログは開いたまま。
@@ -188,17 +190,18 @@ describe("Character", () => {
     fireEvent.change(input, {
       target: { files: [new File(["png"], "picked.png", { type: "image/png" })] },
     })
-    // FileReader は非同期なので、dispatch まで1拍待つ。
-    await new Promise((resolve) => setTimeout(resolve, 20))
 
-    expect(calls).toEqual([
-      {
-        procedure: "characterPack.setPortrait",
-        pack: "other",
-        expression: "proud",
-        image: `data:image/png;base64,${Buffer.from("png").toString("base64")}`,
-      },
-    ])
+    // FileReader は非同期なので、dispatch されるまでポーリングで待つ。
+    await waitFor(() => {
+      expect(calls).toEqual([
+        {
+          procedure: "characterPack.setPortrait",
+          pack: "other",
+          expression: "proud",
+          image: `data:image/png;base64,${Buffer.from("png").toString("base64")}`,
+        },
+      ])
+    })
   })
 
   it("選んでいるパックは hash に残るので、開き直しても同じパックが出る", () => {

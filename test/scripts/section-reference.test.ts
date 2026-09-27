@@ -2,13 +2,17 @@
 // リポジトリ全体で0件を保つのは `test/section-reference.test.ts` の役目。
 //
 // このファイル自身も拾われる側なので、参照の形の文字列はファイル名を定数に分けて組み立てる
-// （ソースに `docs/<名前>.md「…」` の形がそのまま現れないようにする）。
+// （ソースに `docs/<名前>.md「…」` の形がそのまま現れないようにする）。無いファイルのパスは
+// 素のパスとしても拾われるので、`docs/` と名前を分けて組み立てる。
 
 import { describe, expect, test } from "vitest"
 
 import {
+  findFileReferences,
+  findMissingFileReferences,
   findSectionReferences,
   findStrayReferences,
+  formatMissingFileReference,
   formatStrayReference,
   isScannedSource,
 } from "../../scripts/section-reference.ts"
@@ -18,6 +22,7 @@ const RESEARCH = "docs/research/topic.md"
 const HISTORY = "docs/history/tasks.md"
 const CLAUDE = "CLAUDE.md"
 const GONE = "docs/gone.md"
+const ABSENT = `docs/${"absent"}.md`
 
 function phrasesOf(text: string): string[] {
   return findSectionReferences("src/sample.ts", text).map((reference) => reference.phrase)
@@ -109,6 +114,42 @@ describe("findStrayReferences", () => {
 
   test("参照先のファイルが無ければ、そのことを添えて迷子にする", () => {
     expect(straysOf("何か", GONE)).toEqual([`src/sample.ts:1: ${GONE}「何か」（参照先が無い）`])
+  })
+})
+
+describe("findFileReferences", () => {
+  function targetsOf(text: string): string[] {
+    return findFileReferences("src/sample.ts", text).map((reference) => reference.targetPath)
+  }
+
+  test("「」の有無を問わず docs/ 以下の .md のパスを拾い、行を添える", () => {
+    expect(
+      findFileReferences("src/sample.ts", `前置き\n// ${DISPLAY}「吹き出し」と ${ABSENT}\n`),
+    ).toEqual([
+      { sourcePath: "src/sample.ts", line: 2, targetPath: DISPLAY },
+      { sourcePath: "src/sample.ts", line: 2, targetPath: ABSENT },
+    ])
+  })
+
+  test("docs/history/ を指すパスも拾う", () => {
+    expect(targetsOf(`\`${HISTORY}\``)).toEqual([HISTORY])
+  })
+
+  test("直前が / のもの（別のリポジトリ・URL の中のパス）は拾わない", () => {
+    expect(targetsOf(`claude-skills/${DISPLAY} https://example.com/${DISPLAY}`)).toEqual([])
+  })
+
+  test("実在を照らさない一覧のパスは拾わない", () => {
+    expect(targetsOf(`${GONE} ${RESEARCH}`)).toEqual([])
+  })
+})
+
+describe("findMissingFileReferences", () => {
+  test("実在するファイルの一覧に無いパスだけを返し、そのことを添えて1行にする", () => {
+    const references = findFileReferences("src/sample.ts", `${DISPLAY}\n${ABSENT}\n`)
+    expect(
+      findMissingFileReferences(references, new Set([DISPLAY])).map(formatMissingFileReference),
+    ).toEqual([`src/sample.ts:2: ${ABSENT}（ファイルが無い）`])
   })
 })
 

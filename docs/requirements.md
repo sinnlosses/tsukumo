@@ -107,7 +107,7 @@ sed -n '/^### 4.1 Claude Code の駆動/,/^#\{2,4\} /p' docs/requirements.md
 移ること」だと確認済み（`docs/history/direction.md` 2026-09-09「詳細ペインの実体」）。
 
 **Orca は「ページを表示する箱」**であって、中身は箱を差し替えても動く Web アプリとして作る
-（`docs/architecture.md`「箱（Orca のタブ）と中身（Web アプリ）を分ける」）。
+（`docs/architecture/adr/0011-separate-shell-and-app.md`）。
 
 ### 実現の手段
 
@@ -115,7 +115,7 @@ sed -n '/^### 4.1 Claude Code の駆動/,/^#\{2,4\} /p' docs/requirements.md
 子プロセスとして起こし、会話・ツール実行・許可プロンプト・質問を構造化イベントで受け取って、
 入力欄・レポート・吹き出し・ボタンを tsukumo が描く。**Claude Code の TUI は使わない。**
 この形を採る理由は「3. 技術制約」、**2026-09-11 に TUI を使う形から転換した経緯**と採らなかった案は
-`docs/architecture.md`「Claude Code の TUI を捨て、SDK で動かす」が正典。
+`docs/architecture/adr/0008-sdk-instead-of-tui.md` が正典。
 
 名前は付喪神から。長く使った道具に魂が宿るように、ターミナルという道具に姿と声を与える。
 
@@ -149,7 +149,7 @@ sed -n '/^### 4.1 Claude Code の駆動/,/^#\{2,4\} /p' docs/requirements.md
 - **端末（PTY）を自前で持つこと**（2026-09-11）。画面の中でシェルや TUI を動かすことはやらない。
   **設計上の余地も残さない**（2026-09-13。tsukumo 自身が Orca のタブの中にいて隣にターミナルが
   あるので、画面の中に端末を持つ用途が無いことを確認した。実験の経緯は
-  `docs/architecture.md`「Claude Code の TUI を捨て、SDK で動かす」）
+  `docs/architecture/adr/0008-sdk-instead-of-tui.md`）
 - **起動時に選ばせる画面**（2026-09-13）。復元は**常に自動で続きから**なので、起動のたびに
   どれを続けるかを選ばせる画面は作らない。**続けるセッションは起動後に帯の `<select>` から
   切り替えられる**（2026-09-22。4.8）
@@ -161,7 +161,7 @@ sed -n '/^### 4.1 Claude Code の駆動/,/^#\{2,4\} /p' docs/requirements.md
 - **箱を Orca 以外に用意すること。** いまの箱は Orca のブラウザタブで、開くのに
   `orca tab create --url` を使う。他の箱（VS Code・Electron・素のブラウザ）へ載せ替えるときは
   **ホストのポートの `showView` を差し替えるだけ**で済む形に保つが、**いま2つ目の実装は作らない**
-  （`docs/architecture.md`「ホスト依存の操作は1つのポートにまとめる」）
+  （`docs/architecture/adr/0015-single-host-port.md`）
 - `orca` コマンドが無い環境では、**ビューを開くことを諦めて動作を続ける**（起動失敗にしない。
   URL は表示するので、手で開けば同じページが見える）
 - **レポートの中身の要約・再構成。** 読みづらさの主因は見た目だと確認済みなので
@@ -204,8 +204,8 @@ sed -n '/^### 4.1 Claude Code の駆動/,/^#\{2,4\} /p' docs/requirements.md
   決定。1回ぶんのエピソードとあらすじを返したら終わり、同時に1本だけ。4.9「記憶の圧縮と忘却」）
 - **Electron などのスタンドアロンのアプリに包むこと**（2026-09-21 に未決から落とした）。
   箱は Orca のタブのままにする。ただし**載せ替えられる形は保つ** — ホスト依存の操作は
-  `showView` 1つに閉じてあり、包みたくなったらそこを差し替える（`docs/architecture.md`
-  「ホスト依存の操作は1つのポートにまとめる」。候補は `docs/research/app-shell.md`）
+  `showView` 1つに閉じてあり、包みたくなったらそこを差し替える
+  （`docs/architecture/adr/0015-single-host-port.md`。候補は `docs/research/app-shell.md`）
 - **statusline 側にも小さいマスコットを出すこと**（案B。2026-09-21 に節ごと落とした。
   経緯は `docs/history/decision.md`）
 - Windows / Linux での動作保証。動けばよいが、確認するのは macOS のみ
@@ -230,7 +230,7 @@ Orca は「ページを表示する箱」として第一級であり、VS Code �
 **だから TUI を使わない。** Agent SDK（`@anthropic-ai/claude-agent-sdk`）で Claude Code を動かし、
 会話・ツール実行・許可・質問を構造化イベントとして受け取る。描くべきものは全部こちらに届くので、
 **割り込む必要がそもそも無くなる**（TUI をそのまま使っていた頃の形と、そこから転換した経緯は
-`docs/architecture.md`「Claude Code の TUI を捨て、SDK で動かす」）。
+`docs/architecture/adr/0008-sdk-instead-of-tui.md`）。
 
 **SDK で使えることは一次情報で確認済み**（2026-09-11、code.claude.com/docs の agent-sdk 各ページ）:
 構造化イベント、`canUseTool`（許可と `AskUserQuestion` の両方が届く）、ストリーミング入力モードでの
@@ -239,8 +239,7 @@ Orca は「ページを表示する箱」として第一級であり、VS Code �
 並ぶ（対話端末が要る `/theme` `/terminal-setup` などは使えない）。
 
 **headless CLI（`claude -p --input-format stream-json`）は採らない。採るなら SDK 一択**
-（理由と、PTY で TUI を包む案は `docs/architecture.md`「Claude Code の TUI を捨て、SDK で
-動かす」が正典）。
+（理由と、PTY で TUI を包む案は `docs/architecture/adr/0008-sdk-instead-of-tui.md` が正典）。
 
 ## 4. 機能要件
 
@@ -453,7 +452,7 @@ Orca は「ページを表示する箱」として第一級であり、VS Code �
 
 **このリポジトリは公開されている。** 権利のある画像（公式絵・ファンアート等）を
 コミットしないため、利用者の素材は `characters/local/` に置く
-（`docs/architecture.md`「キャラクター素材はリポジトリに同梱しない」）。
+（`docs/architecture/adr/0014-no-bundled-character-asset.md`）。
 
 **定義ファイル**（`character.json`）は次を持つ:
 
@@ -1199,7 +1198,7 @@ tsukumo 本体は分析しない。
 ## 5. 実行環境・非機能要件
 
 実装スタック: **Node + TypeScript**（2026-09-26 に Bun から移すと決め、2026-09-27 に完了した。
-理由は `docs/architecture.md`「設計判断」「描く層の移行で決めた技術選択」）。チェックコマンドは
+理由は `docs/architecture/adr/0002-render-migration-tech-choice.md`）。チェックコマンドは
 `pnpm run check`。
 
 実行時の依存は次のとおり:

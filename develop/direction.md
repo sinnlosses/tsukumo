@@ -40,3 +40,10 @@
 - **`test/cli.test.ts` と `test/server/view-server/adapter/bundle.test.ts` が並列実行で `dist/browser/` を取り合い、`task ship` の検証がときどき落ちる**（振り返り: T-751）
   - 根拠: T-750・T-751 の `task ship` がどちらも `cli.test.ts` の「ブラウザ側の成果物を読めない」で VERIFY_FAILED になり、直前の同じ作業ツリーでの `pnpm run check` は通っていた。`bundle.test.ts` は `buildUiBundle()` で本物の `dist/browser/` を出し直し、`vite.config.ts` の `emptyOutDir: true` で一度空にするので、その間に `cli.test.ts` が起動すると成果物が無く見える
   - 出し先: タスク（`bundle.test.ts` の組み立てを一時ディレクトリへ向けるか、`dist/browser/` を読むテストを同じファイルに寄せて並列から外し、`pnpm run test` を続けて10回流して落ちないことを完了条件にする）
+
+- **参照の検査が、パスで行が終わり次の行が「 で始まる参照を拾えないのを直す**（振り返り: T-768）
+  - 根拠: T-768 で旧 `docs/architecture.md` の句を引く参照のうち5件がこの形で、`section-reference.ts` もスクリプトの洗い出しも拾えず、`git grep` で手で見つけた。後段（T-769〜T-771）は数百件を張り替えるので、同じ漏れが迷子のまま残りうる
+  - 出し先: タスク（`REFERENCE_HEAD` を行をまたいで照らす形にし、T-769 の前に入れる）
+- **委譲の前に、作業ツリーが立ち上がっているか（`node_modules` と `dist/browser/`）をメインが確かめる**（振り返り: T-671）
+  - 根拠: T-671 の委譲先は、作業ツリーに `vitest` が入っておらず `dist/browser/` も無いのを見つけ、CLAUDE.md が「人がやる」とする `pnpm install` と `pnpm run build` を自分で打って進めた。bun から pnpm へ移したあと、古い作業ツリーでは同じ状態が他でも起き得る。T-759 はホームや共有の環境を扱い、作業ツリーの立ち上げは扱っていない
+  - 出し先: `next-task` 手順4と5の間（`node_modules/.bin/vitest` と `dist/browser/` が無ければ委譲せず、人に立ち上げを頼んで `task release` する）。`docs/workflow.md` の上乗せでもよい

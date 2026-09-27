@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import { cleanup, fireEvent, render, screen } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import { CharacterEdit } from "../../../../../../../src/browser/components/page/character/components/character-edit/character-edit.tsx"
@@ -195,16 +195,17 @@ describe("CharacterEdit", () => {
     fireEvent.drop(blank, {
       dataTransfer: { files: [new File(["png"], "dropped.png", { type: "image/png" })] },
     })
-    await new Promise((resolve) => setTimeout(resolve, 20))
 
-    expect(calls).toEqual([
-      {
-        procedure: "characterPack.setPortrait",
-        pack: "fictional",
-        expression: "sad",
-        image: `data:image/png;base64,${Buffer.from("png").toString("base64")}`,
-      },
-    ])
+    await waitFor(() => {
+      expect(calls).toEqual([
+        {
+          procedure: "characterPack.setPortrait",
+          pack: "fictional",
+          expression: "sad",
+          image: `data:image/png;base64,${Buffer.from("png").toString("base64")}`,
+        },
+      ])
+    })
   })
 
   // 消す前の確かめ（docs/screen-design.md 13.6「表情を消す前の確かめ」）。
@@ -291,17 +292,18 @@ describe("CharacterEdit", () => {
     fireEvent.change(input, {
       target: { files: [new File(["<svg/>"], "picked.svg", { type: "image/svg+xml" })] },
     })
-    // FileReader は非同期なので、dispatch まで1拍待つ。
-    await new Promise((resolve) => setTimeout(resolve, 20))
 
-    expect(calls).toEqual([
-      {
-        procedure: "characterPack.setPortrait",
-        pack: "fictional",
-        expression: "proud",
-        image: `data:image/svg+xml;base64,${Buffer.from("<svg/>").toString("base64")}`,
-      },
-    ])
+    // FileReader は非同期なので、dispatch されるまでポーリングで待つ。
+    await waitFor(() => {
+      expect(calls).toEqual([
+        {
+          procedure: "characterPack.setPortrait",
+          pack: "fictional",
+          expression: "proud",
+          image: `data:image/svg+xml;base64,${Buffer.from("<svg/>").toString("base64")}`,
+        },
+      ])
+    })
     // 同じファイルをもう一度選べるように戻している。
     expect(input.value).toBe("")
   })
@@ -540,15 +542,16 @@ describe("CharacterEdit", () => {
     fireEvent.change(input, {
       target: { files: [new File(["png"], "forest.png", { type: "image/png" })] },
     })
-    await new Promise((resolve) => setTimeout(resolve, 20))
 
-    expect(calls).toEqual([
-      {
-        procedure: "characterPack.setBackground",
-        pack: "fictional",
-        image: `data:image/png;base64,${Buffer.from("png").toString("base64")}`,
-      },
-    ])
+    await waitFor(() => {
+      expect(calls).toEqual([
+        {
+          procedure: "characterPack.setBackground",
+          pack: "fictional",
+          image: `data:image/png;base64,${Buffer.from("png").toString("base64")}`,
+        },
+      ])
+    })
     expect(input.value).toBe("")
   })
 
@@ -603,15 +606,16 @@ describe("CharacterEdit", () => {
     fireEvent.change(input, {
       target: { files: [new File(["png"], "face.png", { type: "image/png" })] },
     })
-    await new Promise((resolve) => setTimeout(resolve, 20))
 
-    expect(calls).toEqual([
-      {
-        procedure: "characterPack.setFace",
-        pack: "fictional",
-        image: `data:image/png;base64,${Buffer.from("png").toString("base64")}`,
-      },
-    ])
+    await waitFor(() => {
+      expect(calls).toEqual([
+        {
+          procedure: "characterPack.setFace",
+          pack: "fictional",
+          image: `data:image/png;base64,${Buffer.from("png").toString("base64")}`,
+        },
+      ])
+    })
     expect(input.value).toBe("")
   })
 

@@ -20,7 +20,9 @@ export type SubprocessOptions = {
   readonly input?: string
 }
 
-/** `command` を起こし、終わるまで待って終了コードと出力を返す。起こせなかったときだけ reject する。 */
+/** `command` を起こし、終わるまで待って終了コードと出力を返す。起こせなかったときだけ reject する。
+ * 標準入力を読まずに終わる `command` では書き込みが `EPIPE` になりうるが、それは失敗ではないので
+ * 無視し、終了コードは `close` の側で見る。 */
 export function runSubprocess(
   command: string,
   args: readonly string[],
@@ -35,6 +37,7 @@ export function runSubprocess(
     child.stdout.on("data", (chunk: string) => stdout.push(chunk))
     child.stderr.on("data", (chunk: string) => stderr.push(chunk))
     child.on("error", reject)
+    child.stdin.on("error", () => {})
     child.on("close", (code) => {
       resolve({
         exitCode: code === null ? undefined : code,

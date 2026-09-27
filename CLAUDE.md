@@ -20,8 +20,8 @@ tsukumo は Agent SDK（`@anthropic-ai/claude-agent-sdk`）で Claude Code を�
 
 **IMPORTANT**: Claude Code の TUI に描画を混ぜる方式（パイプ・hook の stdout・本体へのパッチ）は
 技術的に不可能なので、**TUI を使わず SDK で動かす側に回っている。** 設計を変えようとする前に
-`docs/requirements.md`「3. 技術制約」と `docs/architecture.md`「Claude Code の TUI を捨て、
-SDK で動かす」を必ず読む。
+`docs/requirements.md`「3. 技術制約」と `docs/architecture/adr/0008-sdk-instead-of-tui.md` を
+必ず読む。
 
 ## セットアップ / 環境構築
 
@@ -30,8 +30,8 @@ SDK で動かす」を必ず読む。
   **`pnpm run build` でブラウザ側を1回組み立てる**（`dist/browser/` は `.gitignore`。無いと起動が
   前提不足で止まる）
 - `tsukumo` コマンドは `pnpm link --global` で入っている（`docs/requirements.md` 4.6）
-- ホストに依存する操作は1つの抽象の裏に置く（`docs/architecture.md`「ホスト依存の操作は1つのポートに
-  まとめる」）。**`orca` 以外の外部コマンド依存を増やすときはユーザーの承認を得る**
+- ホストに依存する操作は1つの抽象の裏に置く（`docs/architecture/adr/0015-single-host-port.md`）。
+  **`orca` 以外の外部コマンド依存を増やすときはユーザーの承認を得る**
 - 環境の実測値は `docs/requirements.md`「5. 実行環境・非機能要件」。時間が経つと変わるので、
   前提にする前にその場で確かめる
 

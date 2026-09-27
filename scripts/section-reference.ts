@@ -15,6 +15,9 @@
 //
 // 照合は「参照先のファイルに句が含まれるか」で、見出しに限らない（本文の句を引く正当な参照が
 // 多いため）。行の折り返し・空白・バッククォート・`` の有無の違いは両側から除いて比べる。
+//
+// 「」の無い素のパス（`docs/` 以下の `.md`）は、句を照らせないのでファイルの実在だけを照らす。
+// こちらは `docs/history/` を指すものも照らす。
 
 /** ソース中の参照1つ。 */
 export type SectionReference = {
@@ -26,6 +29,16 @@ export type SectionReference = {
   readonly targetPath: string
   /** 「」の中身（行をまたいでいたら、継続行のコメント記号と字下げを除いて繋いだもの）。 */
   readonly phrase: string
+}
+
+/** ソース中の、`docs/` 以下の `.md` を指すパス1つ（「句」の有無を問わない）。 */
+export type FileReference = {
+  /** パスを書いているファイル（リポジトリ直下からの相対パス）。 */
+  readonly sourcePath: string
+  /** パスのある行（1始まり）。 */
+  readonly line: number
+  /** 指している先（`docs/display.md` の形）。 */
+  readonly targetPath: string
 }
 
 /** 照らした結果、参照先に句が見つからなかったもの。 */
@@ -49,6 +62,19 @@ const UNSCANNED_PREFIXES = [
 // 指していない）だけ。
 const REFERENCE_HEAD =
   /(?<![\w/.-])((?:docs\/[a-z0-9-]+(?:\/[a-z0-9-]+)*|CLAUDE)\.md)`?[ \t]*(?:(?:\d+(?:\.\d+)*章?|原則\d+)[ \t]*)?の?[ \t]*「/gu
+
+// `docs/` 以下の `.md` のパス。直前が `/` や英数字のもの（URL や別のリポジトリの中のパス）は拾わない。
+const FILE_PATH = /(?<![\w/.-])docs\/[a-z0-9-]+(?:\/[a-z0-9-]+)*\.md(?![\w-])/gu
+
+// 素のパスのうち、実在を照らさないもの（パスの完全一致）。
+const UNCHECKED_FILE_PATHS = new Set<string>([
+  // claude-skills のリポジトリのファイル。
+  "docs/task-workflow-redesign.md",
+  // 参照を拾う検査のテストが使う架空のパス。
+  "docs/gone.md",
+  "docs/research/topic.md",
+  "docs/note.md",
+])
 
 // 句が閉じずに行が終わったとき、次の何行まで追うか（それより長い句は書き損じとみなして捨てる）。
 const MAX_CONTINUATION_LINES = 3
@@ -100,6 +126,31 @@ export function findStrayReferences(
       ? []
       : [{ ...reference, targetMissing: false }]
   })
+}
+
+/**
+ * ファイル1つの本文から、`docs/` 以下の `.md` を指すパスをすべて拾う（実在を照らさないものは除く）。
+ */
+export function findFileReferences(sourcePath: string, text: string): FileReference[] {
+  return text.split("\n").flatMap((lineText, index) =>
+    [...lineText.matchAll(FILE_PATH)]
+      .map((match) => match[0])
+      .filter((targetPath) => !UNCHECKED_FILE_PATHS.has(targetPath))
+      .map((targetPath) => ({ sourcePath, line: index + 1, targetPath })),
+  )
+}
+
+/** パスのうち、`existingPaths` に無いファイルを指すものを返す。 */
+export function findMissingFileReferences(
+  references: readonly FileReference[],
+  existingPaths: ReadonlySet<string>,
+): FileReference[] {
+  return references.filter((reference) => !existingPaths.has(reference.targetPath))
+}
+
+/** 無いファイルを指すパス1つを、一覧に出す1行にする。 */
+export function formatMissingFileReference(reference: FileReference): string {
+  return `${reference.sourcePath}:${reference.line}: ${reference.targetPath}（ファイルが無い）`
 }
 
 /** 迷子の参照1つを、一覧に出す1行にする。 */

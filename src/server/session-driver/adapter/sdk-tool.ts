@@ -101,8 +101,8 @@ const RECALL_EPISODE_TOOL_DESCRIPTION =
 
 /**
  * プロセス内の MCP サーバ。戻り値は既定が "ok" だけで、tsukumo の内部の状態や画面の事情が
- * モデルへ戻る経路を作らない（docs/architecture.md「セリフはテキストの規約ではなく、ツール
- * 呼び出しで受け取る」・`docs/design.md`「画面から作るときの置き場と受け取り方」）。例外は `recall` / `recall_episode` と `report` と
+ * モデルへ戻る経路を作らない（docs/architecture/adr/0009-speech-via-tool.md・
+ * `docs/design.md`「画面から作るときの置き場と受け取り方」）。例外は `recall` / `recall_episode` と `report` と
  * 見直しの2つで、`recall` / `recall_episode` が返すのはそのセッションが自分で読める外の事実
  * （自分の過去の雑談の目次と1件の逐語）だけ、`report` が返すのは差し戻すときの規約違反だけ
  * （`docs/display.md`「出力の分離（セリフと詳細）」）、見直しの2つが返すのは利用者が見送った提案の識別子と差し戻しの

@@ -10,7 +10,7 @@
 export const VIEW_PORT_ENV_NAME = "TSUKUMO_VIEW_PORT"
 
 // ビューを配る既定のポート。固定にしてあるのは、開き直したブラウザタブが同じ URL のまま
-// 使えるように（docs/architecture.md「HTML はローカルの HTTP サーバから配る」）。
+// 使えるように（docs/architecture/adr/0017-serve-from-local-http.md）。
 export const DEFAULT_VIEW_PORT = 7327
 
 // ポート番号として読める上限（下限は `0` ＝ OS が空きを選ぶ）。セッションの印の目印も
