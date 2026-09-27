@@ -45,7 +45,7 @@ sed -n '/^### 消すかどうか/,/^#\{2,4\} /p' docs/coding-standards.md
 | ### null は自前の型に出さない                   | `null` を書いてよい3つの場所と、境界で畳む理由                                                                                                                                                                                                                                                                 |
 | ## 会話内容の扱い                               | **会話（SDK のイベント・transcript）を外へ出さない**。最優先の規約。書き出す例外は3つ、読み戻して渡す例外は3つだけ                                                                                                                                                                                             |
 | ## 層と依存の向き                               | 4つの単位と、許した import の辺。命名（ファイルは単数形・置き場所のディレクトリ名）                                                                                                                                                                                                                            |
-| ## React                                        | `useEffect` を書いてよい4類型と、代わりに使うもの。**部品は `function` で書く**。**部品の中で部品を定義しない**。**条件付きの描画は `&&` で書く**。**zustand の store の書き方と `useShallow` の使いどころ**                                                                                                   |
+| ## React                                        | `useEffect` を書いてよい4類型と、代わりに使うもの。**部品は `function` で書く**。**部品の中で部品を定義しない**。**条件付きの描画は `&&` で書く**。**zustand の store の書き方と `useShallow` の使いどころ**。**TanStack Query へ置き換えるときの `retry` の扱い**                                             |
 | ## テスト                                       | 置き場所・モック・カバレッジ・消す/足す・E2E と目視の線・語彙に依存する期待値の直書き                                                                                                                                                                                                                          |
 | ## `Date` を使わない                            | 時刻は `Temporal` で扱う理由と、`no-restricted-globals` での検査                                                                                                                                                                                                                                               |
 | ## 整形の対象外                                 | `.claude/` を oxfmt にかけない理由                                                                                                                                                                                                                                                                             |
@@ -742,6 +742,12 @@ store には値だけでなく、React に属さない口も同じく持たせ�
 `setState(..., true)` で丸ごと入れ直す。会話の姿は `test/browser/session-store.ts` の `putSession` が
 戻してから入れる）
 （`test/browser/components/domain/screen-nav/current-work.test.tsx`）。
+
+### TanStack Query と queryOptions
+
+`fetch` を `queryOptions` へ置き換えるときは、失敗時の挙動が変わらないかを見る。既定では
+再試行が3回掛かり、約7秒骨組みのまま待つ。すぐ控えへ倒していた読み取りなら `retry: false`
+を付ける（`src/browser/domain/context-usage.ts` など）。
 
 ## テスト
 
