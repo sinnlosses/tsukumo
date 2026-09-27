@@ -3,6 +3,40 @@
 `develop/direction.md` に書かれたユーザーからの指示を、タスク化した時点で**当時の記述のまま**
 ここへ移す（`docs/workflow.md`「指示メモ」参照）。新しいものを上に足す。**後から書き換えない。**
 
+## 2026-09-27 振り返りと T-725 のドラフト4件
+
+出典: `develop/draft/` のドラフト4件。ユーザーが4件すべてを選んで承認した。
+
+（`develop/draft/2026-09-27-cli-test-port-band-flake.md` から。T-797 になった）
+
+### `cli.test.ts` の「上限まで塞がっている」テストが、連続した空きポートを握れずに落ちる揺れを直す（振り返り: T-725）
+
+- 札: 揺れ
+- 根拠: T-725 の受け入れの `pnpm run check` で、`test/cli.test.ts` の「既定ポートから上限まで全部塞がっていると、試した範囲を伝えて終了コード1で終わる」が `holdFallbackBand`（`test/cli.test.ts:126`）の「連続した 20 個の空きポートを握れない」で1回落ちた。単独の `vitest run test/cli.test.ts` と、直後の `pnpm run check` の打ち直しでは通った。差分（記法の条の文面）とは無関係。直前の T-738 で E2E をファイル単位で3本並べたので、同じ機械で同時に起きる tsukumo が増え、既定ポートの近くの帯が塞がりやすくなっている疑いがある（確かめていない）
+- 出し先: 新しいタスク（帯を既定ポートに固定せず、テストが握れた帯に既定ポートを差し替えて試せる形にするなど、他の作業ツリーや並べた E2E と帯を取り合わないようにする。`pnpm run check` を10回続けて流し、このテストが1度も落ちないことを確かめる）
+
+（`develop/draft/2026-09-27-t725-tool-step-duration.md` から。T-798 になった）
+
+### ツールの一歩に開始・終了の時刻を持たせ、検証の所要時間を tsukumo が機械で測る（T-725 から）
+
+- 札: 正典の不備
+- 根拠: T-725 では所要時間をモデルに測らせる条（`REPORT_NOTATION_PROMPT` の条1・`REPORT_CHECKS_DESCRIPTION`）だけを入れた。`tool-started` / `tool-finished`（`src/server/session-driver/core/sdk-message.ts`）はすべてのツール呼び出しを通るが、SDK のメッセージにも `SessionRecord` の `kind: "tool"` にも `TurnStep`（`src/shared/turn-step.ts`）にも時刻が無い。`docs/coding-standards.md`「仕組みをヒューリスティックより優先する」に照らすと機械で測るほうが本命だが、`session-event`・`session-state`・`sdk-message`・`turn-step` の4箇所に跨り1コミットに収まらなかった
+- 出し先: 新しいタスク（サーバがツールの一歩の開始・終了を受け取った時刻を記録して `TurnStep` まで運び、サイドバーの一歩か `checks` の帯に所要時間を出す。入ったら条1 の「モデルが測る」を外す）
+
+（`develop/draft/2026-09-27-t776-task-id-in-comment-check.md` から。T-799（検査は既にあり、データ用ファイルのコメントの穴に絞った） になった）
+
+### コード・テストのコメントに書かれたタスク番号を検査で落とす（振り返り: T-776）
+
+- 根拠: T-776 の委譲先が `test/server/achievement/adapter/main-history.test.ts` のコメントに「（T-776）」と書き、受け入れでメインが消した。CLAUDE.md の規約（コード・ドキュメントにタスク番号を書かない）は文で書かれているだけで、`src/`・`test/`・`scripts/` のコメントを見る検査が無い。いまも `main-history.test.ts:504`（「T-560 が持つ」）などコメント中の番号が残っている（フィクスチャの文字列 `"T-001"` のような値は別扱い）
+- 出し先: 新しいタスク（`test/task-id.test.ts` か lint に、コメント中の `T-` + 3桁を落とす検査を足し、既存の違反を直す。フィクスチャの文字列と `docs/requirements.md` の対応タスク列は対象外）
+
+（`develop/draft/2026-09-27-t790-delegate-without-agent-tool.md` から。T-800（置き場はユーザーの答え「claude-skills に置いて張る (Recommended)」） になった）
+
+### 委譲先に Agent ツールを持たせない（振り返り: T-790）
+
+- 根拠: T-790 の委譲先は、依頼文に「サブエージェントの中では別のエージェント（fork を含む）を立てない」とあったのに、調べもののために `Agent` をフォアグラウンドで1回呼んだ（`run_in_background: false`）。依頼文の1行では守られなかった。フォアグラウンドの委譲はその間 `main` への合図も止める
+- 出し先: `next-task` スキルの手順5。委譲に使う `subagent_type` を、`tools` から `Agent` を外したエージェント定義（`.claude/agents/` か `~/.claude/agents/` に置く）にして、仕組みで立てられなくする。置き場所がグローバルなら人の承認が要る
+
 ## 2026-09-27 ブラウザ側のライブラリの検討（T-736）から既存タスクへの書き足し
 
 （`develop/draft/2026-09-27-t688-react-compiler-plugin-react-6.md` と `develop/draft/2026-09-27-t728-floating-parts-base-ui.md` から。出典: T-736 の委譲先が積んだ2件。ユーザーの答え「取り込もうか」で承認した。T-688 は完了条件と背景に焼いた。T-728 は取り込む時点で完了していて、Base UI を入れずに `session-switcher.tsx` が `role="listbox"` を持つ形になっていたので、本文には書き足していない）
