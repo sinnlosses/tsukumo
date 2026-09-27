@@ -25,6 +25,7 @@ import { EFFORT_LEVELS, MODEL_ALIASES, PERMISSION_MODES } from "../../../../src/
 import { API_ERROR_KINDS } from "../../../../src/shared/session-driver/api-trouble.ts"
 import { BUILTIN_SESSION_DEFAULT } from "../../../../src/shared/session/session-default.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
+import { fixedChatSummary } from "../../../fixture/chat.ts"
 
 // `startSession` 自体は本物の claude を子プロセスとして起こすので、ここでは呼ばない
 // （docs/requirements.md 4.6 / CLAUDE.md「よく使うコマンド」）。`query()` に渡る `options` の
@@ -118,16 +119,6 @@ function chatMode(chatSummary: ChatSummary): SessionMode {
   }
 }
 
-/** 何もしない `ChatSummary`（`Stop` フックは写しに触らない）。 */
-function fakeChatSummary(): ChatSummary {
-  return {
-    read: () => undefined,
-    write: () => {},
-    markUndelivered: () => {},
-    markDelivered: () => {},
-  }
-}
-
 /** `Stop` フックの入力（テスト用）。`last_assistant_message` は関所が見ないので載せない。 */
 function stopInput(stopHookActive: boolean, effortLevel?: string): StopHookInput {
   return {
@@ -160,7 +151,7 @@ describe("stopHooks（report の関所と effort の読み取り）", () => {
   it("仕事でも雑談でも Stop だけを登録し、SubagentStop には載せない", () => {
     expect(Object.keys(stopHooks(WORK_MODE, createReportGate(), () => {}))).toEqual(["Stop"])
     expect(
-      Object.keys(stopHooks(chatMode(fakeChatSummary()), createReportGate(), () => {})),
+      Object.keys(stopHooks(chatMode(fixedChatSummary(undefined)), createReportGate(), () => {})),
     ).toEqual(["Stop"])
   })
 
@@ -209,7 +200,7 @@ describe("stopHooks（report の関所と effort の読み取り）", () => {
 
     expect(
       await runStop(
-        stopHooks(chatMode(fakeChatSummary()), gate, () => {}),
+        stopHooks(chatMode(fixedChatSummary(undefined)), gate, () => {}),
         false,
       ),
     ).toEqual({})
@@ -226,7 +217,9 @@ describe("stopHooks（report の関所と effort の読み取り）", () => {
 
     const chatEvents: SessionEvent[] = []
     await runStop(
-      stopHooks(chatMode(fakeChatSummary()), createReportGate(), (event) => chatEvents.push(event)),
+      stopHooks(chatMode(fixedChatSummary(undefined)), createReportGate(), (event) =>
+        chatEvents.push(event),
+      ),
       false,
       "low",
     )

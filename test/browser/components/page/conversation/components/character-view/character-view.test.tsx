@@ -1,4 +1,4 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { QueryClientProvider } from "@tanstack/react-query"
 import { cleanup, render } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
@@ -15,6 +15,7 @@ import {
 } from "../../../../../../../src/shared/session/session-state.ts"
 import { characterInfo, shownPortraits } from "../../../../../../fixture/character.ts"
 import { requestRecord, speechRecord } from "../../../../../../fixture/session-record.ts"
+import { createTestQueryClient } from "../../../../../query-client.tsx"
 import { putSession } from "../../../../../session-store.ts"
 
 // フィクスチャはすべて手で書いた架空のキャラクター定義・セリフ（docs/coding-standards.md「会話内容の扱い」）。
@@ -36,7 +37,7 @@ function renderCharacterView(
 ): void {
   window.location.hash = formatHash({ ...parseHash(""), turn: viewedTurn })
   putSession({ ...INITIAL_SESSION_STATE, ...stateOverrides })
-  const queryClient = new QueryClient()
+  const queryClient = createTestQueryClient()
   render(
     <QueryClientProvider client={queryClient}>
       <CharacterView />

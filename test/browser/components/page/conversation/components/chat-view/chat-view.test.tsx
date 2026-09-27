@@ -1,4 +1,4 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { QueryClientProvider } from "@tanstack/react-query"
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
@@ -16,6 +16,7 @@ import {
   requestRecord,
   speechRecord,
 } from "../../../../../../fixture/session-record.ts"
+import { createTestQueryClient } from "../../../../../query-client.tsx"
 import { type CommandSpy, putState, putSession } from "../../../../../session-store.ts"
 
 afterEach(() => {
@@ -38,7 +39,7 @@ const RECORDS: readonly SessionRecord[] = [
 function renderChatView(stateOverrides: Partial<SessionState>, spy: CommandSpy = () => {}): void {
   putSession({ ...INITIAL_SESSION_STATE, ...stateOverrides }, spy)
   render(
-    <QueryClientProvider client={new QueryClient()}>
+    <QueryClientProvider client={createTestQueryClient()}>
       <ChatView />
     </QueryClientProvider>,
   )

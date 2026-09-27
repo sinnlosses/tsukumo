@@ -3,7 +3,7 @@ import { join } from "node:path"
 
 import { describe, it } from "vitest"
 
-import { runSubprocessOrThrow } from "../fixture/subprocess.ts"
+import { git, initGitRepository } from "../fixture/git-repository.ts"
 import { type ScenarioRoom, useScenarioRun } from "./scenario-run.ts"
 
 // タスクの一覧（docs/design.md 10章「E2E のシナリオの一覧」）。この一覧だけは疑似セッションの
@@ -21,10 +21,6 @@ const run = useScenarioRun()
 
 /** 撮るときの経過（凍らせた瞬間から）。「何秒前」の類いをこの値で揃える。 */
 const ELAPSED_MS = 60_000
-
-async function git(cwd: string, ...args: readonly string[]): Promise<void> {
-  await runSubprocessOrThrow("git", args, { cwd })
-}
 
 /** `develop/task/T-xxx.md` を1件、新形式の front matter で書く（claude-skills の
  * `docs/task-workflow-redesign.md` 3.2）。会話の内容ではない架空のタスク。 */
@@ -51,11 +47,7 @@ function writeTask(cwd: string, id: string, summary: string, status: string): vo
 async function openTaskListRoom(scenario: string): Promise<ScenarioRoom> {
   const room = await run.open({ scenario, scene: "none", viewport: "wide" })
 
-  await git(room.cwd, "init", "--quiet", "-b", "main")
-  await git(room.cwd, "config", "user.name", "tsukumo-e2e")
-  await git(room.cwd, "config", "user.email", "tsukumo-e2e@example.invalid")
-  await git(room.cwd, "config", "commit.gpgsign", "false")
-  await git(room.cwd, "config", "core.hooksPath", "/dev/null")
+  await initGitRepository(room.cwd)
   writeTask(room.cwd, "T-001", "架空のタスク（未着手）", "todo")
   writeTask(room.cwd, "T-002", "架空のタスク（完了）", "done")
   await git(room.cwd, "add", "develop/task")

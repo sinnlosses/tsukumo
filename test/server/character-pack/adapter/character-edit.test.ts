@@ -1,16 +1,7 @@
-import {
-  existsSync,
-  mkdirSync,
-  mkdtempSync,
-  readFileSync,
-  rmSync,
-  symlinkSync,
-  writeFileSync,
-} from "node:fs"
-import { tmpdir } from "node:os"
+import { existsSync, mkdirSync, readFileSync, symlinkSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 
-import { afterEach, beforeEach, describe, expect, it } from "vitest"
+import { describe, expect, it } from "vitest"
 
 import {
   createCharacterPack,
@@ -29,6 +20,7 @@ import type {
   CharacterDelete,
   CharacterEdit,
 } from "../../../../src/shared/contract/character-pack.ts"
+import { useTempDir } from "../../../fixture/temp-dir.ts"
 
 // フィクスチャは手で書いた架空のパック（実物の素材・人格は使わない）。
 const DEFINITION_JSON = JSON.stringify({
@@ -46,16 +38,16 @@ const SVG_DATA_URL = `data:image/svg+xml;base64,${Buffer.from(PLAUSIBLE_SVG).toS
 /** 背景の差し替えに使う架空の WebP（中身は見ないので数バイトでよい）。 */
 const WEBP_DATA_URL = "data:image/webp;base64,AAECAwQ="
 
-let dir: string
+const dir = useTempDir("character-edit")
 
 /** 書き込み先の親（本物の `~/.tsukumo/characters` の代わり）。 */
 function home(): string {
-  return join(dir, "home")
+  return join(dir(), "home")
 }
 
 /** 同梱のパックを1つ置く（定義・人格・立ち絵3枚）。 */
 function writeBundledPack(name: string): string {
-  const packDir = join(dir, "bundled", name)
+  const packDir = join(dir(), "bundled", name)
   mkdirSync(packDir, { recursive: true })
   writeFileSync(join(packDir, "character.json"), DEFINITION_JSON)
   writeFileSync(join(packDir, "persona.md"), PERSONA)
@@ -70,7 +62,7 @@ function writeBundledPack(name: string): string {
  * 背景はまだ無いので、ここに背景を1枚足せることが画像の数の上限の下限になる。
  */
 function writeFullPack(name: string): string {
-  const packDir = join(dir, "bundled", name)
+  const packDir = join(dir(), "bundled", name)
   mkdirSync(packDir, { recursive: true })
   const portraits = Object.fromEntries(
     EXPRESSIONS.map((expression) => [expression, `${expression}.png`]),
@@ -109,14 +101,6 @@ function createCharacter(id: string, overrides: Partial<CharacterCreate> = {}): 
   }
 }
 
-beforeEach(() => {
-  dir = mkdtempSync(join(tmpdir(), "tsukumo-character-edit-"))
-})
-
-afterEach(() => {
-  rmSync(dir, { recursive: true, force: true })
-})
-
 describe("editCharacterPack（立ち絵）", () => {
   it("同梱のパックを直さず、ホームへ写してから書く（人格も一緒に写る）", () => {
     const bundled = writeBundledPack("tsukumo")
@@ -125,7 +109,7 @@ describe("editCharacterPack（立ち絵）", () => {
       readCharacterPack(bundled),
       [],
       setPortrait("proud", PNG_DATA_URL),
-      join(dir, "cwd"),
+      join(dir(), "cwd"),
       home(),
     )
 
@@ -146,7 +130,7 @@ describe("editCharacterPack（立ち絵）", () => {
       readCharacterPack(bundled),
       [],
       setPortrait("default", SVG_DATA_URL),
-      join(dir, "cwd"),
+      join(dir(), "cwd"),
       home(),
     )
 
@@ -161,7 +145,7 @@ describe("editCharacterPack（立ち絵）", () => {
       readCharacterPack(bundled),
       [],
       setPortrait("default", PNG_DATA_URL),
-      join(dir, "cwd"),
+      join(dir(), "cwd"),
       home(),
     )
 
@@ -171,7 +155,7 @@ describe("editCharacterPack（立ち絵）", () => {
 
   it("保存した値は次の起動で読まれる（ホームが同梱に勝つ）", () => {
     const bundled = writeBundledPack("tsukumo")
-    const cwd = join(dir, "cwd")
+    const cwd = join(dir(), "cwd")
 
     editCharacterPack(
       readCharacterPack(bundled),
@@ -182,7 +166,7 @@ describe("editCharacterPack（立ち絵）", () => {
     )
 
     // 起こし直したときと同じ手順で読み直す。
-    const packs = listCharacterPacks(cwd, { bundled: join(dir, "bundled"), home: home() })
+    const packs = listCharacterPacks(cwd, { bundled: join(dir(), "bundled"), home: home() })
     expect(packs.map((pack) => pack.name)).toEqual(["tsukumo"])
     expect(packs[0]?.dir).toBe(join(home(), "tsukumo"))
     expect(packs[0]?.definition?.portraits.proud).toBe("proud.png")
@@ -191,7 +175,7 @@ describe("editCharacterPack（立ち絵）", () => {
 
   it("2回目の編集ではホームの版を土台にする（前の変更を上書きしない）", () => {
     const bundled = writeBundledPack("tsukumo")
-    const cwd = join(dir, "cwd")
+    const cwd = join(dir(), "cwd")
 
     const first = editCharacterPack(
       readCharacterPack(bundled),
@@ -217,7 +201,7 @@ describe("editCharacterPack（立ち絵）", () => {
       readCharacterPack(bundled),
       [],
       { kind: "clearPortrait", pack: "tsukumo", expression: "proud" },
-      join(dir, "cwd"),
+      join(dir(), "cwd"),
       home(),
     )
 
@@ -228,7 +212,7 @@ describe("editCharacterPack（立ち絵）", () => {
 
   it("立ち絵の数が上限に達していたら、新しい名前では受け付けない", () => {
     const bundled = writeBundledPack("tsukumo")
-    const cwd = join(dir, "cwd")
+    const cwd = join(dir(), "cwd")
     // まず写させてから、上限まで画像で埋める。
     const edited = editCharacterPack(
       readCharacterPack(bundled),
@@ -254,14 +238,14 @@ describe("editCharacterPack（立ち絵）", () => {
   })
 
   it("定義がまだ無いパックにも立ち絵を足せる", () => {
-    const empty = join(dir, "bundled", "bare")
+    const empty = join(dir(), "bundled", "bare")
     mkdirSync(empty, { recursive: true })
 
     const edited = editCharacterPack(
       readCharacterPack(empty),
       [],
       setPortrait("default", PNG_DATA_URL, "bare"),
-      join(dir, "cwd"),
+      join(dir(), "cwd"),
       home(),
     )
 
@@ -282,7 +266,7 @@ describe("editCharacterPack（差し色）", () => {
         outfit: "heavy",
         color: "#ffb3a7",
       },
-      join(dir, "cwd"),
+      join(dir(), "cwd"),
       home(),
     )
 
@@ -299,7 +283,7 @@ describe("editCharacterPack（画面の差し色）", () => {
       readCharacterPack(bundled),
       [],
       { kind: "setAccent", pack: "tsukumo", target: "work", color: "#123456" },
-      join(dir, "cwd"),
+      join(dir(), "cwd"),
       home(),
     )
 
@@ -313,7 +297,7 @@ describe("editCharacterPack（画面の差し色）", () => {
       readCharacterPack(bundled),
       [],
       { kind: "setAccent", pack: "tsukumo", target: "chat", color: "#f2984a" },
-      join(dir, "cwd"),
+      join(dir(), "cwd"),
       home(),
     )
 
@@ -322,7 +306,7 @@ describe("editCharacterPack（画面の差し色）", () => {
 
   it("雑談の差し色を消すと、仕事の差し色に戻る（chatAccent が undefined になる）", () => {
     const bundled = writeBundledPack("tsukumo")
-    const cwd = join(dir, "cwd")
+    const cwd = join(dir(), "cwd")
 
     const withChatAccent = editCharacterPack(
       readCharacterPack(bundled),
@@ -360,7 +344,7 @@ describe("editCharacterPack（名前とプロフィール）", () => {
         name: "新しい表示名",
         tagline: "ひとことプロフィール",
       },
-      join(dir, "cwd"),
+      join(dir(), "cwd"),
       home(),
     )
 
@@ -371,8 +355,8 @@ describe("editCharacterPack（名前とプロフィール）", () => {
 
     // 一覧に読み直しても書き変わった定義が出る（サーバは書いたあと `event()` で一覧を読み直す。
     // `src/current-character.ts` の `applyEdit`）。
-    const packs = listCharacterPacks(join(dir, "cwd"), {
-      bundled: join(dir, "bundled"),
+    const packs = listCharacterPacks(join(dir(), "cwd"), {
+      bundled: join(dir(), "bundled"),
       home: home(),
     })
     expect(packs.find((pack) => pack.name === "tsukumo")?.definition?.name).toBe("新しい表示名")
@@ -388,7 +372,7 @@ describe("editCharacterPack（名前とプロフィール）", () => {
       readCharacterPack(bundled),
       [],
       { kind: "setProfile", pack: "tsukumo", name: "", tagline: "残る一言" },
-      join(dir, "cwd"),
+      join(dir(), "cwd"),
       home(),
     )
 
@@ -403,7 +387,7 @@ describe("editCharacterPack（名前とプロフィール）", () => {
       readCharacterPack(bundled),
       [],
       { kind: "setProfile", pack: "tsukumo", name: "残る名前", tagline: "  " },
-      join(dir, "cwd"),
+      join(dir(), "cwd"),
       home(),
     )
 
@@ -420,7 +404,7 @@ describe("editCharacterPack（背景）", () => {
       readCharacterPack(bundled),
       [],
       { kind: "setBackground", pack: "tsukumo", image: PNG_DATA_URL },
-      join(dir, "cwd"),
+      join(dir(), "cwd"),
       home(),
     )
 
@@ -439,7 +423,7 @@ describe("editCharacterPack（背景）", () => {
       readCharacterPack(bundled),
       [],
       { kind: "setBackground", pack: "tsukumo", image: PNG_DATA_URL },
-      join(dir, "cwd"),
+      join(dir(), "cwd"),
       home(),
     )
 
@@ -448,7 +432,7 @@ describe("editCharacterPack（背景）", () => {
 
   it("形式を変えて差し替えると、参照が外れた古い背景は残らない", () => {
     const bundled = writeBundledPack("tsukumo")
-    const cwd = join(dir, "cwd")
+    const cwd = join(dir(), "cwd")
 
     const first = editCharacterPack(
       readCharacterPack(bundled),
@@ -475,7 +459,7 @@ describe("editCharacterPack（背景）", () => {
 
   it("背景を消すと定義から外れ、ファイルも残らない（立ち絵は残る）", () => {
     const bundled = writeBundledPack("tsukumo")
-    const cwd = join(dir, "cwd")
+    const cwd = join(dir(), "cwd")
 
     const withBackground = editCharacterPack(
       readCharacterPack(bundled),
@@ -510,7 +494,7 @@ describe("editCharacterPack（顔）", () => {
       readCharacterPack(bundled),
       [],
       { kind: "setFace", pack: "tsukumo", image: PNG_DATA_URL },
-      join(dir, "cwd"),
+      join(dir(), "cwd"),
       home(),
     )
 
@@ -522,7 +506,7 @@ describe("editCharacterPack（顔）", () => {
 
   it("形式を変えて差し替えると、参照が外れた古い顔は残らない", () => {
     const bundled = writeBundledPack("tsukumo")
-    const cwd = join(dir, "cwd")
+    const cwd = join(dir(), "cwd")
 
     const first = editCharacterPack(
       readCharacterPack(bundled),
@@ -549,7 +533,7 @@ describe("editCharacterPack（顔）", () => {
 
   it("顔を消すと定義から外れ、ファイルも残らない（立ち絵は残る）", () => {
     const bundled = writeBundledPack("tsukumo")
-    const cwd = join(dir, "cwd")
+    const cwd = join(dir(), "cwd")
 
     const withFace = editCharacterPack(
       readCharacterPack(bundled),
@@ -578,7 +562,7 @@ describe("editCharacterPack（顔）", () => {
 
 describe("editCharacterPack（訪問の peek）", () => {
   it("visit を持つパックをほかの編集で写すとき、visit.peek もホームへ写る", () => {
-    const packDir = join(dir, "bundled", "tsukumo")
+    const packDir = join(dir(), "bundled", "tsukumo")
     mkdirSync(packDir, { recursive: true })
     writeFileSync(
       join(packDir, "character.json"),
@@ -600,7 +584,7 @@ describe("editCharacterPack（訪問の peek）", () => {
         outfit: "heavy",
         color: "#ffb3a7",
       },
-      join(dir, "cwd"),
+      join(dir(), "cwd"),
       home(),
     )
 
@@ -611,7 +595,7 @@ describe("editCharacterPack（訪問の peek）", () => {
 
 describe("editCharacterPack（受け付けないもの）", () => {
   it("起動先の characters/local のパックは書かない（ホームに書いても次の起動で負けるため）", () => {
-    const cwd = join(dir, "cwd")
+    const cwd = join(dir(), "cwd")
     const localDir = join(cwd, "characters", "local")
     mkdirSync(localDir, { recursive: true })
     writeFileSync(join(localDir, "character.json"), DEFINITION_JSON)
@@ -629,7 +613,7 @@ describe("editCharacterPack（受け付けないもの）", () => {
   })
 
   it("使用中でないパックとして起動先の characters/local を指しても書かない", () => {
-    const cwd = join(dir, "cwd")
+    const cwd = join(dir(), "cwd")
     const localDir = join(cwd, "characters", "local")
     mkdirSync(localDir, { recursive: true })
     writeFileSync(join(localDir, "character.json"), DEFINITION_JSON)
@@ -656,7 +640,7 @@ describe("editCharacterPack（受け付けないもの）", () => {
         current,
         [current],
         setPortrait("proud", PNG_DATA_URL, "fictional-missing"),
-        join(dir, "cwd"),
+        join(dir(), "cwd"),
         home(),
       ),
     ).toBeUndefined()
@@ -667,8 +651,8 @@ describe("editCharacterPack（受け付けないもの）", () => {
 
 describe("editCharacterPack（使用中でないパック）", () => {
   it("立ち絵・差し色・背景を変えると、ホームのそのパックの下だけが書き変わる", () => {
-    const cwd = join(dir, "cwd")
-    const roots = { bundled: join(dir, "bundled"), home: home() }
+    const cwd = join(dir(), "cwd")
+    const roots = { bundled: join(dir(), "bundled"), home: home() }
     const current = readCharacterPack(writeBundledPack("tsukumo"))
     writeBundledPack("fictional-other")
     // 画面が1回ごとに一覧を読み直すのと同じく、編集のたびに一覧を引き直して渡す。
@@ -697,7 +681,7 @@ describe("editCharacterPack（使用中でないパック）", () => {
     // 使用中のパックはホームへ写されず、同梱のどちらのパックも触っていない。
     expect(existsSync(join(home(), "tsukumo"))).toBe(false)
     expect(readCharacterPack(current.dir).definition).toEqual(current.definition)
-    const bundledOther = readCharacterPack(join(dir, "bundled", "fictional-other")).definition
+    const bundledOther = readCharacterPack(join(dir(), "bundled", "fictional-other")).definition
     expect(bundledOther?.portraits.proud).toBe("proud.svg")
     expect(bundledOther?.accent).toBeUndefined()
     expect(bundledOther?.background).toBeUndefined()
@@ -731,11 +715,11 @@ describe("createCharacterPack", () => {
   })
 
   it("作ったパックは切り替えの一覧に出て、次の起動でも残る", () => {
-    const cwd = join(dir, "cwd")
+    const cwd = join(dir(), "cwd")
     writeBundledPack("tsukumo")
     createCharacterPack(createCharacter("fictional-2"), ["tsukumo"], home())
 
-    const packs = listCharacterPacks(cwd, { bundled: join(dir, "bundled"), home: home() })
+    const packs = listCharacterPacks(cwd, { bundled: join(dir(), "bundled"), home: home() })
     expect(packs.map((pack) => pack.name)).toEqual(["tsukumo", "fictional-2"])
     expect(packs[1]?.definition?.portraits.default).toBe("default.svg")
   })
@@ -746,7 +730,7 @@ describe("createCharacterPack", () => {
     expect(createCharacterPack(createCharacter("tsukumo"), ["tsukumo"], home())).toBeUndefined()
     // 書き込み先には何も作らない（同梱のパックも触っていない）。
     expect(existsSync(join(home(), "tsukumo"))).toBe(false)
-    expect(readCharacterPack(join(dir, "bundled", "tsukumo")).definition?.portraits.default).toBe(
+    expect(readCharacterPack(join(dir(), "bundled", "tsukumo")).definition?.portraits.default).toBe(
       "default.svg",
     )
   })
@@ -761,19 +745,19 @@ describe("createCharacterPack", () => {
 
   it("立ち絵を書けなかったら、定義の無いディレクトリを残さない", () => {
     // 書き込み先の親をファイルにしておくと、ディレクトリを作る時点で失敗する。
-    writeFileSync(join(dir, "blocked"), "x")
+    writeFileSync(join(dir(), "blocked"), "x")
 
     expect(
-      createCharacterPack(createCharacter("fictional-2"), [], join(dir, "blocked")),
+      createCharacterPack(createCharacter("fictional-2"), [], join(dir(), "blocked")),
     ).toBeUndefined()
-    expect(existsSync(join(dir, "blocked", "fictional-2"))).toBe(false)
+    expect(existsSync(join(dir(), "blocked", "fictional-2"))).toBe(false)
   })
 })
 
 describe("deleteCharacterPack", () => {
-  const cwd = (): string => join(dir, "cwd")
+  const cwd = (): string => join(dir(), "cwd")
   const roots = (): { readonly bundled: string; readonly home: string } => ({
-    bundled: join(dir, "bundled"),
+    bundled: join(dir(), "bundled"),
     home: home(),
   })
 
@@ -820,7 +804,7 @@ describe("deleteCharacterPack", () => {
     writeBundledPack("tsukumo")
     writeBundledPack("spirit")
     // 同梱の tsukumo を画面で直す（ホームへ写ってから書かれる）。
-    const spirit = readCharacterPack(join(dir, "bundled", "spirit"))
+    const spirit = readCharacterPack(join(dir(), "bundled", "spirit"))
     editCharacterPack(
       spirit,
       listCharacterPacks(cwd(), roots()),
@@ -834,7 +818,7 @@ describe("deleteCharacterPack", () => {
     expect(removal).toBe("revert-to-bundled")
     expect(existsSync(join(home(), "tsukumo"))).toBe(false)
     const reverted = after.find((listed) => listed.name === "tsukumo")
-    expect(reverted?.dir).toBe(join(dir, "bundled", "tsukumo"))
+    expect(reverted?.dir).toBe(join(dir(), "bundled", "tsukumo"))
     expect(reverted?.definition?.portraits.proud).toBe("proud.svg")
     expect(reverted?.persona).toBe(PERSONA)
   })
@@ -857,7 +841,7 @@ describe("deleteCharacterPack", () => {
     const { removal } = deleteFromList("tsukumo", "spirit")
 
     expect(removal).toBeUndefined()
-    expect(existsSync(join(dir, "bundled", "spirit", "character.json"))).toBe(true)
+    expect(existsSync(join(dir(), "bundled", "spirit", "character.json"))).toBe(true)
   })
 
   it("起動先の characters/local は、ホームに同じ名前があっても断り、どちらのファイルも残る", () => {
@@ -887,7 +871,7 @@ describe("deleteCharacterPack", () => {
 
   it("ホームの版がシンボリックリンクなら、消えるのはリンクだけで指している先は残る", () => {
     writeBundledPack("tsukumo")
-    const outside = writePackUnder(join(dir, "outside"), "linked")
+    const outside = writePackUnder(join(dir(), "outside"), "linked")
     mkdirSync(home(), { recursive: true })
     symlinkSync(outside, join(home(), "linked"))
 

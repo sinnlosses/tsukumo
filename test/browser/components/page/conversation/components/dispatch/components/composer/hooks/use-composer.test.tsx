@@ -1,6 +1,4 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { act, cleanup, renderHook, waitFor } from "@testing-library/react"
-import type { ReactElement, ReactNode } from "react"
 import { afterEach, describe, expect, it } from "vitest"
 
 import {
@@ -13,6 +11,7 @@ import {
   type SessionState,
 } from "../../../../../../../../../../src/shared/session/session-state.ts"
 import { characterInfo } from "../../../../../../../../../fixture/character.ts"
+import { queryClientWrapper } from "../../../../../../../../query-client.tsx"
 import {
   rpcOutput,
   stubRpcFetch,
@@ -56,11 +55,7 @@ function renderUseComposer(
   spy: CommandSpy = () => {},
 ): { readonly result: { readonly current: ReturnType<typeof useComposer> } } {
   putSession({ ...INITIAL_SESSION_STATE, ...stateOverrides }, spy)
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-  function Wrapper({ children }: { readonly children: ReactNode }): ReactElement {
-    return <QueryClientProvider client={client}>{children}</QueryClientProvider>
-  }
-  const { result } = renderHook(() => useComposer(), { wrapper: Wrapper })
+  const { result } = renderHook(() => useComposer(), { wrapper: queryClientWrapper() })
   return { result }
 }
 

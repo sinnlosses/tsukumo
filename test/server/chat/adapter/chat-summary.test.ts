@@ -1,14 +1,14 @@
-import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
+import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 
-import { afterEach, beforeEach, describe, expect, it } from "vitest"
+import { describe, expect, it } from "vitest"
 
 import {
   CHAT_SUMMARY_LIMIT_BYTES,
   createChatSummary,
   discardChatSummary,
 } from "../../../../src/server/chat/adapter/chat-summary.ts"
+import { useTempDir } from "../../../fixture/temp-dir.ts"
 
 const textEncoder = new TextEncoder()
 function byteLength(text: string): number {
@@ -19,19 +19,11 @@ function byteLength(text: string): number {
 // docs/coding-standards.md「会話内容の扱い」）。
 const SUMMARY = "利用者と最近読んだ本の話をした。次は続きの巻の感想を聞きたがっていた。"
 
-let dir: string
-
-beforeEach(() => {
-  dir = mkdtempSync(join(tmpdir(), "tsukumo-chat-summary-"))
-})
-
-afterEach(() => {
-  rmSync(dir, { recursive: true, force: true })
-})
+const dir = useTempDir("chat-summary")
 
 /** 書き込み先の親（本物の `~/.tsukumo/chat-summary` の代わり）。 */
 function root(): string {
-  return join(dir, "chat-summary")
+  return join(dir(), "chat-summary")
 }
 
 describe("createChatSummary", () => {

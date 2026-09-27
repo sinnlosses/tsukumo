@@ -1,4 +1,4 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { QueryClientProvider } from "@tanstack/react-query"
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
@@ -16,6 +16,7 @@ import {
   shownPortraits,
 } from "../../../../../../fixture/character.ts"
 import { typedElement } from "../../../../../../typed-element.ts"
+import { createTestQueryClient } from "../../../../../query-client.tsx"
 import { type CommandSpy, putSession } from "../../../../../session-store.ts"
 
 // 立ち絵があるのはこの3つだけ（残りの表情は空の枠として並ぶ。数を見るテストがある）。
@@ -63,7 +64,7 @@ function renderCharacterEdit(
   characterPacks: readonly CharacterPackEntry[] = [],
 ): void {
   putSession({ ...INITIAL_SESSION_STATE, character, characterPacks }, dispatch)
-  const queryClient = new QueryClient()
+  const queryClient = createTestQueryClient()
   render(
     <QueryClientProvider client={queryClient}>
       <CharacterEdit />

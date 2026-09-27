@@ -1,8 +1,7 @@
-import { mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
+import { mkdirSync, readdirSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 
-import { afterEach, beforeEach, describe, expect, it } from "vitest"
+import { beforeEach, describe, expect, it } from "vitest"
 
 import { isoWithOffset } from "../../../../src/server/adapter/local-time.ts"
 import {
@@ -10,34 +9,22 @@ import {
   listDiaryDates,
   readDiaryDay,
 } from "../../../../src/server/diary/adapter/diary.ts"
-import { runSubprocessOrThrow } from "../../../fixture/subprocess.ts"
+import { initGitRepository } from "../../../fixture/git-repository.ts"
+import { useTempDir } from "../../../fixture/temp-dir.ts"
 
 // 本物の `git` を起こす（リポジトリの見分けそのものが検査の対象）。リポジトリとホームは
 // 一時ディレクトリに毎回作り、中身は架空の文面だけにする（docs/coding-standards.md「会話内容の
 // 扱い」）。
 
-let root: string
+const root = useTempDir("diary")
 let repository: string
 let home: string
 
 beforeEach(async () => {
-  root = mkdtempSync(join(tmpdir(), "tsukumo-diary-"))
-  repository = join(root, "repository")
-  home = join(root, "home")
-  mkdirSync(repository)
-  await git(repository, "init", "-q", "-b", "main")
-  await git(repository, "config", "user.name", "tsukumo-test")
-  await git(repository, "config", "user.email", "tsukumo-test@example.invalid")
-  await git(repository, "config", "commit.gpgsign", "false")
+  repository = join(root(), "repository")
+  home = join(root(), "home")
+  await initGitRepository(repository)
 })
-
-afterEach(() => {
-  rmSync(root, { recursive: true, force: true })
-})
-
-async function git(cwd: string, ...args: readonly string[]): Promise<void> {
-  await runSubprocessOrThrow("git", args, { cwd })
-}
 
 const WRITER = { pack: "tsukumo", name: "つくも" }
 
@@ -137,7 +124,7 @@ describe("appendDiaryParagraph / readDiaryDay", () => {
   })
 
   it("git リポジトリでなければ保存できない・読めない", async () => {
-    const notARepository = join(root, "not-a-repository")
+    const notARepository = join(root(), "not-a-repository")
     mkdirSync(notARepository)
 
     expect(
@@ -180,12 +167,8 @@ describe("listDiaryDates", () => {
 
 describe("リポジトリの見分け", () => {
   it("別のリポジトリの同じ日は混ざらない", async () => {
-    const other = join(root, "other-repository")
-    mkdirSync(other)
-    await git(other, "init", "-q", "-b", "main")
-    await git(other, "config", "user.name", "tsukumo-test")
-    await git(other, "config", "user.email", "tsukumo-test@example.invalid")
-    await git(other, "config", "commit.gpgsign", "false")
+    const other = join(root(), "other-repository")
+    await initGitRepository(other)
 
     await appendDiaryParagraph(repository, paragraphInput("2026-09-23", "こちらのリポジトリ"), home)
     await appendDiaryParagraph(other, paragraphInput("2026-09-23", "あちらのリポジトリ"), home)

@@ -2,9 +2,6 @@ import { describe, expect, it } from "vitest"
 
 import {
   isSubagentMessage,
-  REPORT_TOOL_NAME,
-  TSUKUMO_MCP_SERVER_NAME,
-  SPEAK_TOOL_NAME,
   toCommandDescriptions,
   toModelEffortSupport,
   toPlan,
@@ -12,12 +9,11 @@ import {
 } from "../../../../src/server/session-driver/core/sdk-message.ts"
 import type { Expression } from "../../../../src/shared/character-pack/expression.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
+import { REPORT_TOOL_FULL_NAME, SPEAK_TOOL_FULL_NAME } from "../../../fixture/sdk-message.ts"
 
 // フィクスチャはすべて手で書いた架空のやり取り。実物の会話は使わない
 // （docs/coding-standards.md「会話内容の扱い」）。
 const EXPRESSIONS: readonly Expression[] = ["default", "thinking", "proud"]
-
-const SPEAK_TOOL_FULL_NAME = `mcp__${TSUKUMO_MCP_SERVER_NAME}__${SPEAK_TOOL_NAME}`
 
 function assistantMessage(
   content: readonly unknown[],
@@ -1029,8 +1025,6 @@ describe("toModelEffortSupport", () => {
 })
 
 describe("toSessionEvents（report ツール）", () => {
-  const REPORT_TOOL_FULL_NAME = `mcp__${TSUKUMO_MCP_SERVER_NAME}__${REPORT_TOOL_NAME}`
-
   it("メインの report の呼び出しはレポートにする（ツールの開始にはしない。文字列の body は逃げ道の塊1つの節に畳む）", () => {
     const message = assistantMessage([
       {

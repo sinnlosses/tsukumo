@@ -1,16 +1,7 @@
-import {
-  existsSync,
-  mkdirSync,
-  mkdtempSync,
-  readdirSync,
-  readFileSync,
-  rmSync,
-  writeFileSync,
-} from "node:fs"
-import { tmpdir } from "node:os"
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 
-import { afterEach, beforeEach, describe, expect, it } from "vitest"
+import { describe, expect, it } from "vitest"
 
 import {
   createChatArchive,
@@ -21,25 +12,18 @@ import type {
   ChatEpisodeDraft,
   ChatReadbackLimits,
 } from "../../../../src/server/session-driver/core/session-driver.ts"
+import { useTempDir } from "../../../fixture/temp-dir.ts"
 
 // フィクスチャは手で書いた架空の依頼・セリフだけ（実物の会話は使わない。
 // docs/coding-standards.md「会話内容の扱い」）。
 const REQUEST_TEXT = "ただいま"
 const SPEECH_TEXT = "おかえり"
 
-let dir: string
-
-beforeEach(() => {
-  dir = mkdtempSync(join(tmpdir(), "tsukumo-chat-archive-"))
-})
-
-afterEach(() => {
-  rmSync(dir, { recursive: true, force: true })
-})
+const dir = useTempDir("chat-archive")
 
 /** 書き込み先の親（本物の `~/.tsukumo/chat-archive` の代わり）。 */
 function root(): string {
-  return join(dir, "chat-archive")
+  return join(dir(), "chat-archive")
 }
 
 /** ある日のローカル正午のエポックミリ秒（日をまたぐ心配をしない値）。 */

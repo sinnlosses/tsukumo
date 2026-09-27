@@ -7,6 +7,7 @@ import type {
   ChatEpisodeReadResult,
 } from "../../../../src/server/session-driver/core/session-driver.ts"
 import type { ChatMemoryBudget } from "../../../../src/shared/chat/chat-memory-budget.ts"
+import { NOOP_CHAT_ARCHIVE } from "../../../fixture/chat.ts"
 
 // フィクスチャは手で書いた架空の候補・逐語だけ（実物の会話は使わない。
 // docs/coding-standards.md「会話内容の扱い」）。
@@ -32,7 +33,7 @@ const FOUND_EPISODE: ChatEpisodeReadResult = {
   overflowed: false,
 }
 
-/** 呼ばれた引数と回数を覚える `ChatArchive`（テスト用。`recallList` / `recallEpisode` 以外は使わない）。 */
+/** 呼ばれた引数と回数を覚える `ChatArchive`（テスト用）。 */
 function fakeChatArchive(): ChatArchive & {
   readonly recallListCalls: () => readonly unknown[]
   readonly recallEpisodeCalls: () => readonly unknown[]
@@ -40,15 +41,7 @@ function fakeChatArchive(): ChatArchive & {
   const recallListCalls: unknown[] = []
   const recallEpisodeCalls: unknown[] = []
   return {
-    append: () => {},
-    readRecent: () => [],
-    unconsolidated: () => ({
-      entries: [],
-      usedBytes: 0,
-      previousEpisodeTitle: "",
-      overflowed: false,
-    }),
-    appendEpisodes: () => {},
+    ...NOOP_CHAT_ARCHIVE,
     recallList: (packName, keyword, limitBytes, now) => {
       recallListCalls.push({ packName, keyword, limitBytes, now })
       return FOUND_LIST

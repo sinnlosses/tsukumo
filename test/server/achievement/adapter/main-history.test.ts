@@ -1,8 +1,7 @@
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
+import { mkdirSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 
-import { afterEach, beforeEach, describe, expect, it } from "vitest"
+import { beforeEach, describe, expect, it } from "vitest"
 
 import {
   createAchievementCommitCache,
@@ -12,34 +11,22 @@ import {
 } from "../../../../src/server/achievement/adapter/main-history.ts"
 import type { AchievementCalendar } from "../../../../src/shared/achievement/achievement-calendar.ts"
 import type { DailyAchievement } from "../../../../src/shared/achievement/achievement.ts"
+import { git, initGitRepository } from "../../../fixture/git-repository.ts"
 import { runSubprocessOrThrow } from "../../../fixture/subprocess.ts"
+import { useTempDir } from "../../../fixture/temp-dir.ts"
 
 // 本物の `git` を起こす（`main` の上から実際に読むことそのものが検査の対象）。リポジトリは
 // 一時ディレクトリに毎回作り、中身は架空のコミット・タスクだけにする
 // （docs/coding-standards.md「会話内容の扱い」）。コミットの日付は `GIT_COMMITTER_DATE` で
 // 固定し、実行した日に依らず同じ結果になるようにする。
 
-let root: string
+const root = useTempDir("main-history")
 let repository: string
 
 beforeEach(async () => {
-  root = mkdtempSync(join(tmpdir(), "tsukumo-main-history-"))
-  repository = join(root, "repository")
-  mkdirSync(repository)
-  await git(repository, "init", "-q", "-b", "main")
-  await git(repository, "config", "user.name", "tsukumo-test")
-  await git(repository, "config", "user.email", "tsukumo-test@example.invalid")
-  await git(repository, "config", "commit.gpgsign", "false")
-  await git(repository, "config", "core.hooksPath", "/dev/null")
+  repository = join(root(), "repository")
+  await initGitRepository(repository)
 })
-
-afterEach(() => {
-  rmSync(root, { recursive: true, force: true })
-})
-
-async function git(cwd: string, ...args: readonly string[]): Promise<void> {
-  await runSubprocessOrThrow("git", args, { cwd })
-}
 
 /** `date`（`YYYY-MM-DD`）の `hhmm` を、`readAchievement` が読む `Temporal.Now.timeZoneId()` と
  * 同じゾーンのローカル時刻として絶対時刻（オフセット付き ISO）に直す。固定のオフセット
@@ -182,7 +169,7 @@ describe("readAchievement", () => {
 
   it("git リポジトリでないディレクトリでは「不明」", async () => {
     const result = await readAchievement(
-      root,
+      root(),
       "2026-09-24",
       "2026-09-24",
       createAchievementCommitCache(),
@@ -392,7 +379,7 @@ describe("readAchievement", () => {
 
   it("main が無い・git が無いリポジトリでも例外を投げない", async () => {
     await expect(
-      readAchievement(root, "2026-09-24", "2026-09-24", createAchievementCommitCache()),
+      readAchievement(root(), "2026-09-24", "2026-09-24", createAchievementCommitCache()),
     ).resolves.toEqual({
       kind: "ok",
       achievement: { kind: "unknown" },
@@ -648,7 +635,7 @@ describe("readCommitCalendar", () => {
   })
 
   it("git リポジトリでないディレクトリでは「不明」", async () => {
-    const result = await readCommitCalendar(root, TODAY, createAchievementCommitCache())
+    const result = await readCommitCalendar(root(), TODAY, createAchievementCommitCache())
 
     expect(result).toEqual({ kind: "ok", calendar: { kind: "unknown" } })
   })

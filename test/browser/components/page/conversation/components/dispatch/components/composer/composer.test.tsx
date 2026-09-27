@@ -1,4 +1,4 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { QueryClientProvider } from "@tanstack/react-query"
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
@@ -12,6 +12,7 @@ import {
 } from "../../../../../../../../../src/shared/session/session-state.ts"
 import { characterInfo } from "../../../../../../../../fixture/character.ts"
 import { typedElement } from "../../../../../../../../typed-element.ts"
+import { createTestQueryClient } from "../../../../../../../query-client.tsx"
 import { rpcOutput, stubRpcFetch, type RpcFetchStub } from "../../../../../../../rpc-fetch-stub.ts"
 import { type CommandSpy, putSession } from "../../../../../../../session-store.ts"
 
@@ -71,7 +72,7 @@ function renderComposer(
   dispatch: CommandSpy = () => {},
 ): void {
   putSession({ ...INITIAL_SESSION_STATE, ...stateOverrides }, dispatch)
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  const client = createTestQueryClient()
   render(
     <QueryClientProvider client={client}>
       <Composer />

@@ -1,10 +1,9 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { cleanup, renderHook, waitFor } from "@testing-library/react"
-import type { ReactElement, ReactNode } from "react"
 import { afterEach, describe, expect, it } from "vitest"
 
 import { useAchievementCalendar } from "../../../../../../src/browser/components/page/achievement/hooks/use-achievement-calendar.ts"
 import type { AchievementCalendar } from "../../../../../../src/shared/achievement/achievement-calendar.ts"
+import { createTestQueryClient, queryClientWrapper } from "../../../../query-client.tsx"
 import {
   rpcError,
   rpcOutput,
@@ -27,16 +26,6 @@ function stubFetch(reply: () => RpcStubReply): void {
   fetchStub = stubRpcFetch(reply)
 }
 
-function wrapper(client: QueryClient): (props: { children: ReactNode }) => ReactElement {
-  return function Wrapper({ children }: { children: ReactNode }): ReactElement {
-    return <QueryClientProvider client={client}>{children}</QueryClientProvider>
-  }
-}
-
-function newClient(): QueryClient {
-  return new QueryClient({ defaultOptions: { queries: { retry: false } } })
-}
-
 const KNOWN: AchievementCalendar = {
   kind: "known",
   today: "2026-09-24",
@@ -47,14 +36,18 @@ const KNOWN: AchievementCalendar = {
 describe("useAchievementCalendar", () => {
   it("届く前は loading", () => {
     stubFetch(() => rpcOutput(KNOWN))
-    const { result } = renderHook(() => useAchievementCalendar(), { wrapper: wrapper(newClient()) })
+    const { result } = renderHook(() => useAchievementCalendar(), {
+      wrapper: queryClientWrapper(createTestQueryClient()),
+    })
 
     expect(result.current.kind).toBe("loading")
   })
 
   it("届けばそのまま渡す", async () => {
     stubFetch(() => rpcOutput(KNOWN))
-    const { result } = renderHook(() => useAchievementCalendar(), { wrapper: wrapper(newClient()) })
+    const { result } = renderHook(() => useAchievementCalendar(), {
+      wrapper: queryClientWrapper(createTestQueryClient()),
+    })
 
     await waitFor(() => {
       expect(result.current.kind).toBe("known")
@@ -64,7 +57,9 @@ describe("useAchievementCalendar", () => {
 
   it("main が読めなければ unknown", async () => {
     stubFetch(() => rpcOutput({ kind: "unknown" }))
-    const { result } = renderHook(() => useAchievementCalendar(), { wrapper: wrapper(newClient()) })
+    const { result } = renderHook(() => useAchievementCalendar(), {
+      wrapper: queryClientWrapper(createTestQueryClient()),
+    })
 
     await waitFor(() => {
       expect(result.current.kind).toBe("unknown")
@@ -73,7 +68,9 @@ describe("useAchievementCalendar", () => {
 
   it("取りに行って失敗したときも unknown（main が読めないときと同じ1行になる）", async () => {
     stubFetch(() => rpcError(503, "UNAVAILABLE"))
-    const { result } = renderHook(() => useAchievementCalendar(), { wrapper: wrapper(newClient()) })
+    const { result } = renderHook(() => useAchievementCalendar(), {
+      wrapper: queryClientWrapper(createTestQueryClient()),
+    })
 
     await waitFor(() => {
       expect(result.current.kind).toBe("unknown")

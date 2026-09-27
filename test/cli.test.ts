@@ -16,6 +16,7 @@ import {
   MAX_PORT_NUMBER,
   VIEW_PORT_FALLBACK_ATTEMPTS,
 } from "../src/server/view-server/core/port-resolution.ts"
+import { closeNetServer, listenOnEphemeralPort, portOf } from "./fixture/net-server.ts"
 import { runSubprocess, type SubprocessResult } from "./fixture/subprocess.ts"
 
 // このファイルは CLI を起動しきらないものだけを扱う。
@@ -65,15 +66,6 @@ function runCliToExit(
   })
 }
 
-/** ポート1つを塞ぐダミーの TCP サーバ（`node:http` を起こす必要はなく、塞げれば十分）。 */
-function listenOnEphemeralPort(): Promise<NetServer> {
-  return new Promise((resolve, reject) => {
-    const server = createNetServer()
-    server.on("error", reject)
-    server.listen(0, "127.0.0.1", () => resolve(server))
-  })
-}
-
 /** 指定したポートを塞ぐ。既に塞がっている（例: 常駐している 7327 番）ときはそのまま無視する。 */
 function listenOnPortIfFree(port: number): Promise<NetServer | undefined> {
   return new Promise((resolve) => {
@@ -81,18 +73,6 @@ function listenOnPortIfFree(port: number): Promise<NetServer | undefined> {
     server.on("error", () => resolve(undefined))
     server.listen(port, "127.0.0.1", () => resolve(server))
   })
-}
-
-function portOf(server: NetServer): number {
-  const address = server.address()
-  if (address === null || typeof address === "string") {
-    throw new Error("ポート番号を取れない")
-  }
-  return address.port
-}
-
-function closeNetServer(server: NetServer): Promise<void> {
-  return new Promise((resolve) => server.close(() => resolve()))
 }
 
 /** {@link holdFallbackBand} が帯を選び直す回数の上限。 */

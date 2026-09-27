@@ -1,26 +1,18 @@
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
+import { writeFileSync } from "node:fs"
 import { join } from "node:path"
 
-import { afterEach, beforeEach, describe, expect, it } from "vitest"
+import { describe, expect, it } from "vitest"
 
 import {
   readDismissedUsageProposalKeys,
   writeDismissedUsageProposalKey,
 } from "../../../../src/server/usage-review/adapter/usage-proposal-dismissal.ts"
+import { useTempDir } from "../../../fixture/temp-dir.ts"
 
-let dir: string
-
-beforeEach(() => {
-  dir = mkdtempSync(join(tmpdir(), "tsukumo-usage-proposal-dismissal-"))
-})
-
-afterEach(() => {
-  rmSync(dir, { recursive: true, force: true })
-})
+const dir = useTempDir("usage-proposal-dismissal")
 
 function path(): string {
-  return join(dir, "usage-review-dismissed.json")
+  return join(dir(), "usage-review-dismissed.json")
 }
 
 describe("readDismissedUsageProposalKeys", () => {

@@ -1,14 +1,15 @@
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
+import { mkdirSync, rmSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 
-import { afterEach, beforeEach, describe, expect, it } from "vitest"
+import { afterEach, describe, expect, it } from "vitest"
 
 import {
   watchTaskSummary,
   type TaskSummaryWatcher,
 } from "../../../../src/server/repository/adapter/task-summary.ts"
+import { git, initGitRepository } from "../../../fixture/git-repository.ts"
 import { runSubprocessOrThrow } from "../../../fixture/subprocess.ts"
+import { useTempDir } from "../../../fixture/temp-dir.ts"
 
 // 本物の `git` を起こす（`main` の先端を見て読み直すことそのものが検査の対象）。リポジトリは
 // 一時ディレクトリに毎回作り、中身は架空のタスクだけにする。
@@ -23,32 +24,18 @@ const WAIT_LIMIT_MS = 3000
 /** 「通知が来ない」ことを確かめるときに待つ長さ（見回りが何周もする長さ）。 */
 const QUIET_PERIOD_MS = 300
 
-let root: string
+const root = useTempDir("task-summary")
 let watcher: TaskSummaryWatcher | undefined
-
-beforeEach(() => {
-  root = mkdtempSync(join(tmpdir(), "tsukumo-task-summary-"))
-})
 
 afterEach(() => {
   watcher?.close()
   watcher = undefined
-  rmSync(root, { recursive: true, force: true })
 })
-
-async function git(cwd: string, ...args: readonly string[]): Promise<void> {
-  await runSubprocessOrThrow("git", args, { cwd })
-}
 
 /** `branch` を初期ブランチにしたリポジトリを作る。署名やフックは利用者の設定に左右されないよう切る。 */
 async function initRepository(branch: string): Promise<string> {
-  const repository = join(root, "repository")
-  mkdirSync(repository)
-  await git(repository, "init", "-b", branch)
-  await git(repository, "config", "user.name", "tsukumo-test")
-  await git(repository, "config", "user.email", "tsukumo-test@example.invalid")
-  await git(repository, "config", "commit.gpgsign", "false")
-  await git(repository, "config", "core.hooksPath", "/dev/null")
+  const repository = join(root(), "repository")
+  await initGitRepository(repository, branch)
   return repository
 }
 
@@ -111,7 +98,7 @@ async function release(cwd: string, id: string): Promise<void> {
 
 /** `main` を出している本体とは別に、`git merge main` をしない作業ツリーを切る。 */
 async function addWorktree(repository: string): Promise<string> {
-  const worktree = join(root, "worktree")
+  const worktree = join(root(), "worktree")
   await git(repository, "worktree", "add", "-b", "feature", worktree)
   return worktree
 }
@@ -213,9 +200,9 @@ describe("watchTaskSummary", () => {
   })
 
   it("git リポジトリでないディレクトリでは、ファイルがあっても呼ばれない（既定の「不明」のまま）", async () => {
-    writeNewFormatTask(root, "T-001", "1つめ", "todo")
+    writeNewFormatTask(root(), "T-001", "1つめ", "todo")
     const changes: unknown[] = []
-    watch(root, changes)
+    watch(root(), changes)
     await sleep(QUIET_PERIOD_MS)
 
     expect(changes).toEqual([])

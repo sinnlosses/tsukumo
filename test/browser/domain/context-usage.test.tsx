@@ -1,6 +1,4 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { cleanup, renderHook, waitFor } from "@testing-library/react"
-import type { ReactElement, ReactNode } from "react"
 import { afterEach, describe, expect, it } from "vitest"
 
 import {
@@ -8,6 +6,7 @@ import {
   useContextUsage,
 } from "../../../src/browser/domain/context-usage.ts"
 import { readyContextUsage } from "../../fixture/context-usage.ts"
+import { createTestQueryClient, queryClientWrapper } from "../query-client.tsx"
 import {
   rpcError,
   rpcOutput,
@@ -41,23 +40,11 @@ function fetchCount(): number {
   return fetchStub?.calls().length ?? 0
 }
 
-function contextUsageWrapper(
-  client: QueryClient,
-): (props: { children: ReactNode }) => ReactElement {
-  return function Wrapper({ children }: { children: ReactNode }): ReactElement {
-    return <QueryClientProvider client={client}>{children}</QueryClientProvider>
-  }
-}
-
-function newClient(): QueryClient {
-  return new QueryClient({ defaultOptions: { queries: { retry: false } } })
-}
-
 describe("useContextUsage", () => {
   it("内訳の手続きを呼ぶ", async () => {
     stubContextUsageFetch(() => rpcOutput(readyContextUsage()))
 
-    renderHook(() => useContextUsage(0), { wrapper: contextUsageWrapper(newClient()) })
+    renderHook(() => useContextUsage(0), { wrapper: queryClientWrapper(createTestQueryClient()) })
 
     await waitFor(() => {
       expect(fetchStub?.calls()[0]?.procedure).toBe("contextUsage/report")
@@ -68,7 +55,7 @@ describe("useContextUsage", () => {
     stubContextUsageFetch(() => rpcOutput(readyContextUsage()))
 
     const { result } = renderHook(() => useContextUsage(0), {
-      wrapper: contextUsageWrapper(newClient()),
+      wrapper: queryClientWrapper(createTestQueryClient()),
     })
 
     await waitFor(() => {
@@ -96,7 +83,7 @@ describe("useContextUsage", () => {
     stubContextUsageFetch(() => rpcOutput(readyContextUsage()))
 
     const { result } = renderHook(() => useContextUsage(0), {
-      wrapper: contextUsageWrapper(newClient()),
+      wrapper: queryClientWrapper(createTestQueryClient()),
     })
 
     // まだ応答が届いていない最初のレンダーでは「読み込み中」（「取れない」ではない）。
@@ -111,7 +98,7 @@ describe("useContextUsage", () => {
     stubContextUsageFetch(() => rpcError(403, "FORBIDDEN"))
 
     const { result } = renderHook(() => useContextUsage(0), {
-      wrapper: contextUsageWrapper(newClient()),
+      wrapper: queryClientWrapper(createTestQueryClient()),
     })
 
     expect(result.current.kind).toBe("pending")
@@ -125,7 +112,7 @@ describe("useContextUsage", () => {
     stubContextUsageFetch(() => rpcOutput(readyContextUsage()))
 
     const { result, rerender } = renderHook(({ key }: { key: number }) => useContextUsage(key), {
-      wrapper: contextUsageWrapper(newClient()),
+      wrapper: queryClientWrapper(createTestQueryClient()),
       initialProps: { key: 0 },
     })
 
@@ -157,7 +144,7 @@ describe("useContextUsage", () => {
       ({ lastTurnFinishedAt }: { lastTurnFinishedAt: number | undefined }) =>
         useContextUsage(contextUsageRefetchKey(lastTurnFinishedAt)),
       {
-        wrapper: contextUsageWrapper(newClient()),
+        wrapper: queryClientWrapper(createTestQueryClient()),
         initialProps: { lastTurnFinishedAt: 300 },
       },
     )

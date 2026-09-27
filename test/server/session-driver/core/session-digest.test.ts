@@ -1,41 +1,17 @@
 import { describe, expect, it } from "vitest"
 
-import {
-  REPORT_TOOL_NAME,
-  SPEAK_TOOL_NAME,
-  TSUKUMO_MCP_SERVER_NAME,
-} from "../../../../src/server/session-driver/core/sdk-message.ts"
 import { toSessionDigest } from "../../../../src/server/session-driver/core/session-digest.ts"
 import type { Expression } from "../../../../src/shared/character-pack/expression.ts"
 import { MAX_SESSION_SUMMARY_LENGTH } from "../../../../src/shared/session/session-digest.ts"
+import {
+  assistantMessage,
+  REPORT_TOOL_FULL_NAME,
+  SPEAK_TOOL_FULL_NAME,
+  userMessage,
+} from "../../../fixture/sdk-message.ts"
 
 // フィクスチャはすべて手で書いた架空のやり取り（docs/coding-standards.md「会話内容の扱い」）。
 const EXPRESSIONS: readonly Expression[] = ["default", "proud"]
-
-const SPEAK_TOOL_FULL_NAME = `mcp__${TSUKUMO_MCP_SERVER_NAME}__${SPEAK_TOOL_NAME}`
-const REPORT_TOOL_FULL_NAME = `mcp__${TSUKUMO_MCP_SERVER_NAME}__${REPORT_TOOL_NAME}`
-
-function userMessage(content: unknown): unknown {
-  return {
-    type: "user",
-    uuid: "u-1",
-    session_id: "s-1",
-    message: { role: "user", content },
-    parent_tool_use_id: null,
-    parent_agent_id: null,
-  }
-}
-
-function assistantMessage(content: readonly unknown[]): unknown {
-  return {
-    type: "assistant",
-    uuid: "a-1",
-    session_id: "s-1",
-    message: { role: "assistant", content },
-    parent_tool_use_id: null,
-    parent_agent_id: null,
-  }
-}
 
 function reportCall(id: string, input: Readonly<Record<string, unknown>>): unknown {
   return assistantMessage([{ type: "tool_use", id, name: REPORT_TOOL_FULL_NAME, input }])

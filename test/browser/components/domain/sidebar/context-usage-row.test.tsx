@@ -1,4 +1,4 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { QueryClientProvider } from "@tanstack/react-query"
 import { cleanup, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
@@ -10,6 +10,7 @@ import {
 } from "../../../../../src/shared/context-usage/context-usage.ts"
 import { INITIAL_SESSION_STATE } from "../../../../../src/shared/session/session-state.ts"
 import { readyContextUsage } from "../../../../fixture/context-usage.ts"
+import { createTestQueryClient } from "../../../query-client.tsx"
 import { stubRpcFetch } from "../../../rpc-fetch-stub.ts"
 import { putSession } from "../../../session-store.ts"
 
@@ -35,7 +36,7 @@ const REFETCH_KEY = 0
 
 function renderRow(report: ContextUsageReport | undefined): void {
   putSession(INITIAL_SESSION_STATE)
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  const client = createTestQueryClient()
   if (report !== undefined) {
     // 鍵は手続きの鍵に取り直しの合図を足したもの（`browser/domain/context-usage.ts`）。
     client.setQueryData([...rpc.contextUsage.report.queryKey(), REFETCH_KEY], report)

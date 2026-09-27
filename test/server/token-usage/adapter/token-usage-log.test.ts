@@ -1,8 +1,7 @@
-import { appendFileSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs"
-import { tmpdir } from "node:os"
+import { appendFileSync, mkdirSync, readdirSync, readFileSync } from "node:fs"
 import { join } from "node:path"
 
-import { afterEach, beforeEach, describe, expect, it } from "vitest"
+import { describe, expect, it } from "vitest"
 
 import { createTokenUsageLog } from "../../../../src/server/token-usage/adapter/token-usage-log.ts"
 import type { TokenUsageEntry } from "../../../../src/server/token-usage/core/token-usage.ts"
@@ -11,6 +10,8 @@ import {
   type ModelTokenUsage,
   type TurnUsageBreakdown,
 } from "../../../../src/shared/token-usage/token-usage.ts"
+import { keysOf, readJsonLines } from "../../../fixture/jsonl.ts"
+import { useTempDir } from "../../../fixture/temp-dir.ts"
 
 // 数はすべて手で書いた架空のもの（実物の使用量も会話も使わない。
 // docs/coding-standards.md「会話内容の扱い」）。
@@ -53,19 +54,11 @@ const BREAKDOWN: TurnUsageBreakdown = {
   },
 }
 
-let dir: string
-
-beforeEach(() => {
-  dir = mkdtempSync(join(tmpdir(), "tsukumo-token-usage-"))
-})
-
-afterEach(() => {
-  rmSync(dir, { recursive: true, force: true })
-})
+const dir = useTempDir("token-usage")
 
 /** 書き込み先（本物の `~/.tsukumo/token-usage` の代わり）。 */
 function root(): string {
-  return join(dir, "token-usage")
+  return join(dir(), "token-usage")
 }
 
 /** ある日のローカル時刻のエポックミリ秒（日をまたぐ心配をしない値）。 */
@@ -86,16 +79,7 @@ function entry(when: number, models: readonly ModelTokenUsage[] = MODELS): Token
 }
 
 function readLines(fileName: string): unknown[] {
-  return readFileSync(join(root(), fileName), "utf8")
-    .trimEnd()
-    .split("\n")
-    .filter((line) => line.length > 0)
-    .map((line): unknown => JSON.parse(line))
-}
-
-/** 行の鍵の並び（順序を見たいので `toMatchObject` とは別に取る）。 */
-function keysOf(value: unknown): readonly string[] {
-  return typeof value === "object" && value !== null ? Object.keys(value) : []
+  return readJsonLines(join(root(), fileName))
 }
 
 describe("createTokenUsageLog", () => {

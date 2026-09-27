@@ -1,4 +1,4 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { QueryClientProvider } from "@tanstack/react-query"
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
@@ -10,6 +10,7 @@ import {
 } from "../../../../../src/shared/session/session-state.ts"
 import { characterInfo, characterPackEntry, shownPortraits } from "../../../../fixture/character.ts"
 import { typedElement } from "../../../../typed-element.ts"
+import { createTestQueryClient } from "../../../query-client.tsx"
 import { type CommandSpy, putState, putSession } from "../../../session-store.ts"
 
 // 手で書いた架空のキャラクターパック2つ（docs/coding-standards.md「会話内容の扱い」）。
@@ -76,7 +77,7 @@ function renderCharacter(state: Partial<SessionState> = {}, spy: CommandSpy = ()
     spy,
   )
   render(
-    <QueryClientProvider client={new QueryClient()}>
+    <QueryClientProvider client={createTestQueryClient()}>
       <Character />
     </QueryClientProvider>,
   )
@@ -130,7 +131,7 @@ describe("Character", () => {
       (command) => calls.push(command),
     )
     render(
-      <QueryClientProvider client={new QueryClient()}>
+      <QueryClientProvider client={createTestQueryClient()}>
         <Character />
       </QueryClientProvider>,
     )

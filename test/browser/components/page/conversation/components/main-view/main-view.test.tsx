@@ -1,4 +1,4 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { QueryClientProvider } from "@tanstack/react-query"
 import { act, cleanup, fireEvent, render, screen, type RenderResult } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
@@ -18,6 +18,7 @@ import {
   requestRecord,
 } from "../../../../../../fixture/session-record.ts"
 import { typedElement } from "../../../../../../typed-element.ts"
+import { createTestQueryClient } from "../../../../../query-client.tsx"
 import { putState, putSession } from "../../../../../session-store.ts"
 
 afterEach(() => {
@@ -61,9 +62,7 @@ function renderMainView(
   // 内側で mount するので `useQuery` が要る。ここでは一覧の中身を見ないので、フェッチそのものは
   // 差し替えない（`window.fetch` は happy-dom の対象外なので落ちるだけで、テストは待たない）。
   return render(
-    <QueryClientProvider
-      client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
-    >
+    <QueryClientProvider client={createTestQueryClient()}>
       <MainView />
     </QueryClientProvider>,
   )

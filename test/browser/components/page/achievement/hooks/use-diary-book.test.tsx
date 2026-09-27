@@ -1,4 +1,4 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import type { QueryClient } from "@tanstack/react-query"
 import { act, cleanup, renderHook, waitFor } from "@testing-library/react"
 import type { ReactElement, ReactNode } from "react"
 import { afterEach, describe, expect, it } from "vitest"
@@ -13,6 +13,7 @@ import {
   INITIAL_SESSION_STATE,
   type SessionState,
 } from "../../../../../../src/shared/session/session-state.ts"
+import { createTestQueryClient, queryClientWrapper } from "../../../../query-client.tsx"
 import {
   rpcOutput,
   stubRpcFetch,
@@ -20,7 +21,7 @@ import {
   type RpcFetchStub,
   type RpcStubReply,
 } from "../../../../rpc-fetch-stub.ts"
-import { type CommandSpy, putSession } from "../../../../session-store.ts"
+import { type CommandSpy, putSession, stateWith } from "../../../../session-store.ts"
 
 /**
  * 漢数字の純関数と、見開きの開閉・取得・前後の送り・目次・白紙の日の振り返りボタンを測る
@@ -46,17 +47,7 @@ function wrapper(
   spy: CommandSpy = () => {},
 ): (props: { children: ReactNode }) => ReactElement {
   putSession(state, spy)
-  return function Wrapper({ children }: { children: ReactNode }): ReactElement {
-    return <QueryClientProvider client={client}>{children}</QueryClientProvider>
-  }
-}
-
-function newClient(): QueryClient {
-  return new QueryClient({ defaultOptions: { queries: { retry: false } } })
-}
-
-function stateWith(patch: Partial<SessionState>): SessionState {
-  return { ...INITIAL_SESSION_STATE, ...patch }
+  return queryClientWrapper(client)
 }
 
 const KNOWN_TODAY: AchievementDaySwitch = { kind: "known", date: "2026-09-24", today: "2026-09-24" }
@@ -126,7 +117,7 @@ describe("useDiaryBook（開閉）", () => {
           daySwitch: KNOWN_TODAY,
           onDateSelected: (date) => selected.push(date),
         }),
-      { wrapper: wrapper(newClient()) },
+      { wrapper: wrapper(createTestQueryClient()) },
     )
 
     expect(result.current.open).toBe(false)
@@ -153,7 +144,7 @@ describe("useDiaryBook（開閉）", () => {
           daySwitch: { kind: "known", date: "2026-09-16", today: "2026-09-24" },
           onDateSelected: (date) => selected.push(date),
         }),
-      { wrapper: wrapper(newClient()) },
+      { wrapper: wrapper(createTestQueryClient()) },
     )
 
     act(() => {
@@ -174,7 +165,7 @@ describe("useDiaryBook（開閉）", () => {
           daySwitch: UNKNOWN_DAY_SWITCH,
           onDateSelected: () => {},
         }),
-      { wrapper: wrapper(newClient()) },
+      { wrapper: wrapper(createTestQueryClient()) },
     )
 
     act(() => {
@@ -188,7 +179,7 @@ describe("useDiaryBook（開閉）", () => {
     stubFetch(() => rpcOutput(WRITTEN_DAY))
     const { result } = renderHook(
       () => useDiaryBook({ calendar: CALENDAR, daySwitch: KNOWN_TODAY, onDateSelected: () => {} }),
-      { wrapper: wrapper(newClient()) },
+      { wrapper: wrapper(createTestQueryClient()) },
     )
 
     act(() => {
@@ -210,7 +201,7 @@ describe("useDiaryBook（書かれた日）", () => {
     stubFetch(() => rpcOutput(WRITTEN_DAY))
     const { result } = renderHook(
       () => useDiaryBook({ calendar: CALENDAR, daySwitch: KNOWN_TODAY, onDateSelected: () => {} }),
-      { wrapper: wrapper(newClient()) },
+      { wrapper: wrapper(createTestQueryClient()) },
     )
 
     act(() => {
@@ -260,7 +251,7 @@ describe("useDiaryBook（書かれた日）", () => {
     stubFetch(() => rpcOutput(noBookmark))
     const { result } = renderHook(
       () => useDiaryBook({ calendar: CALENDAR, daySwitch: KNOWN_TODAY, onDateSelected: () => {} }),
-      { wrapper: wrapper(newClient()) },
+      { wrapper: wrapper(createTestQueryClient()) },
     )
 
     act(() => {
@@ -294,7 +285,7 @@ describe("useDiaryBook（白紙の日）", () => {
           daySwitch: KNOWN_TODAY,
           onDateSelected: (date) => selected.push(date),
         }),
-      { wrapper: wrapper(newClient(), stateWith({}), spy) },
+      { wrapper: wrapper(createTestQueryClient(), stateWith({}), spy) },
     )
 
     act(() => {
@@ -333,7 +324,7 @@ describe("useDiaryBook（白紙の日）", () => {
           daySwitch: KNOWN_TODAY,
           onDateSelected: () => {},
         }),
-      { wrapper: wrapper(newClient(), stateWith({}), spy) },
+      { wrapper: wrapper(createTestQueryClient(), stateWith({}), spy) },
     )
 
     act(() => {
@@ -364,7 +355,10 @@ describe("useDiaryBook（白紙の日）", () => {
     const { result } = renderHook(
       () => useDiaryBook({ calendar: CALENDAR, daySwitch: KNOWN_TODAY, onDateSelected: () => {} }),
       {
-        wrapper: wrapper(newClient(), stateWith({ turn: { kind: "running", startedAt: 0 } })),
+        wrapper: wrapper(
+          createTestQueryClient(),
+          stateWith({ turn: { kind: "running", startedAt: 0 } }),
+        ),
       },
     )
 
@@ -391,7 +385,7 @@ describe("useDiaryBook（前後の送りと目次）", () => {
     stubFetch(() => rpcOutput(WRITTEN_DAY))
     const { result } = renderHook(
       () => useDiaryBook({ calendar: CALENDAR, daySwitch: KNOWN_TODAY, onDateSelected: () => {} }),
-      { wrapper: wrapper(newClient()) },
+      { wrapper: wrapper(createTestQueryClient()) },
     )
 
     act(() => {
@@ -411,7 +405,7 @@ describe("useDiaryBook（前後の送りと目次）", () => {
     stubFetch(() => rpcOutput(WRITTEN_DAY))
     const { result } = renderHook(
       () => useDiaryBook({ calendar: CALENDAR, daySwitch: KNOWN_TODAY, onDateSelected: () => {} }),
-      { wrapper: wrapper(newClient()) },
+      { wrapper: wrapper(createTestQueryClient()) },
     )
 
     act(() => {
@@ -446,7 +440,7 @@ describe("useDiaryBook（前後の送りと目次）", () => {
           daySwitch: KNOWN_TODAY,
           onDateSelected: () => {},
         }),
-      { wrapper: wrapper(newClient()) },
+      { wrapper: wrapper(createTestQueryClient()) },
     )
 
     act(() => {
@@ -468,7 +462,7 @@ describe("useDiaryBook（書き終わりの知らせから開く）", () => {
     stubFetch(() => rpcOutput(WRITTEN_DAY))
     const { result } = renderHook(
       () => useDiaryBook({ calendar: CALENDAR, daySwitch: KNOWN_TODAY, onDateSelected: () => {} }),
-      { wrapper: wrapper(newClient()) },
+      { wrapper: wrapper(createTestQueryClient()) },
     )
     expect(result.current.open).toBe(false)
 
@@ -488,7 +482,7 @@ describe("useDiaryBook（書き終わりの知らせから開く）", () => {
 
     const { result } = renderHook(
       () => useDiaryBook({ calendar: CALENDAR, daySwitch: KNOWN_TODAY, onDateSelected: () => {} }),
-      { wrapper: wrapper(newClient()) },
+      { wrapper: wrapper(createTestQueryClient()) },
     )
 
     expect(result.current.open).toBe(true)
@@ -505,14 +499,14 @@ describe("useDiaryBook（書き終わりの知らせから開く）", () => {
     })
     const first = renderHook(
       () => useDiaryBook({ calendar: CALENDAR, daySwitch: KNOWN_TODAY, onDateSelected: () => {} }),
-      { wrapper: wrapper(newClient()) },
+      { wrapper: wrapper(createTestQueryClient()) },
     )
     expect(first.result.current.open).toBe(true)
     first.unmount()
 
     const second = renderHook(
       () => useDiaryBook({ calendar: CALENDAR, daySwitch: KNOWN_TODAY, onDateSelected: () => {} }),
-      { wrapper: wrapper(newClient()) },
+      { wrapper: wrapper(createTestQueryClient()) },
     )
     expect(second.result.current.open).toBe(false)
   })

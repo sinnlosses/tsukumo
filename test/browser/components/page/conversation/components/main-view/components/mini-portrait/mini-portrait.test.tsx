@@ -1,4 +1,4 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { QueryClientProvider } from "@tanstack/react-query"
 import { act, cleanup, render } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
@@ -13,6 +13,7 @@ import {
   type SessionState,
 } from "../../../../../../../../../src/shared/session/session-state.ts"
 import { characterInfo, shownPortraits } from "../../../../../../../../fixture/character.ts"
+import { createTestQueryClient } from "../../../../../../../query-client.tsx"
 import { putSession } from "../../../../../../../session-store.ts"
 
 // どこに見えているか（重なり・大きさ）は目視で確かめる（`docs/architecture.md`
@@ -46,7 +47,7 @@ afterEach(() => {
 function renderMiniPortrait(character: SessionState["character"]): void {
   putSession({ ...INITIAL_SESSION_STATE, character })
   render(
-    <QueryClientProvider client={new QueryClient()}>
+    <QueryClientProvider client={createTestQueryClient()}>
       <MiniPortrait shownTurnId={SHOWN_TURN_ID} />
     </QueryClientProvider>,
   )

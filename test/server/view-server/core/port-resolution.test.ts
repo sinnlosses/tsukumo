@@ -1,5 +1,3 @@
-import { createServer as createNetServer, type Server as NetServer } from "node:net"
-
 import { describe, expect, it } from "vitest"
 
 import { createRpcRouter } from "../../../../src/router.ts"
@@ -21,6 +19,7 @@ import { UNAVAILABLE_CONTEXT_USAGE } from "../../../../src/shared/context-usage/
 import { UNAVAILABLE_PLAN_USAGE } from "../../../../src/shared/plan-usage/plan-usage.ts"
 import { UNAVAILABLE_SESSION_DIGEST } from "../../../../src/shared/session/session-digest.ts"
 import { EMPTY_TOKEN_USAGE_SUMMARY } from "../../../../src/shared/token-usage/token-usage-summary.ts"
+import { closeNetServer, listenOnEphemeralPort, portOf } from "../../../fixture/net-server.ts"
 
 /** 配るものの中身はここでは見ない（確かめるのはどのポートで listen したかだけ）。 */
 const emptyViewUi: ViewUi = { kind: "bundle", bundle: { uiScript: "", styleSheet: "" } }
@@ -45,31 +44,6 @@ const emptyViewServerOptions: ViewServerOptions = {
 /** `node:http` の `listen` が投げるエラーに似せた、`code` 付きのエラーを作る。 */
 function errnoError(code: string): NodeJS.ErrnoException {
   return Object.assign(new Error(`listen ${code}: ダミー`), { code })
-}
-
-/** ポート1つを塞ぐダミーの TCP サーバ。`node:http` を起こす必要はない（塞げれば十分）。 */
-function listenOnEphemeralPort(): Promise<NetServer> {
-  return new Promise((resolve, reject) => {
-    const server = createNetServer()
-    server.on("error", reject)
-    server.listen(0, "127.0.0.1", () => {
-      resolve(server)
-    })
-  })
-}
-
-function portOf(server: NetServer): number {
-  const address = server.address()
-  if (address === null || typeof address === "string") {
-    throw new Error("ポート番号を取れない")
-  }
-  return address.port
-}
-
-function closeNetServer(server: NetServer): Promise<void> {
-  return new Promise((resolve) => {
-    server.close(() => resolve())
-  })
 }
 
 describe("resolveViewPort", () => {

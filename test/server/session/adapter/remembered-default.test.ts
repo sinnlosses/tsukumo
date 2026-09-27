@@ -1,8 +1,7 @@
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
+import { writeFileSync } from "node:fs"
 import { join } from "node:path"
 
-import { afterEach, beforeEach, describe, expect, it } from "vitest"
+import { describe, expect, it } from "vitest"
 
 import {
   readRememberedCharacter,
@@ -14,19 +13,12 @@ import {
 } from "../../../../src/server/session/adapter/remembered-default.ts"
 import { BUILTIN_SESSION_DEFAULT } from "../../../../src/shared/session/session-default.ts"
 import { DEFAULT_VISIT_ENABLED } from "../../../../src/shared/visit/visit.ts"
+import { useTempDir } from "../../../fixture/temp-dir.ts"
 
-let dir: string
-
-beforeEach(() => {
-  dir = mkdtempSync(join(tmpdir(), "tsukumo-remembered-default-"))
-})
-
-afterEach(() => {
-  rmSync(dir, { recursive: true, force: true })
-})
+const dir = useTempDir("remembered-default")
 
 function statePath(): string {
-  return join(dir, "state.json")
+  return join(dir(), "state.json")
 }
 
 describe("readRememberedCharacter", () => {
@@ -205,7 +197,7 @@ describe("writeRememberedSessionDefault", () => {
   // ホームを分けて動かしたとき（`TSUKUMO_HOME`）に、別のホームの値が混ざらないこと
   // （置き場所の差し替えは `path` 引数1つで、読むのも書くのも同じ引数を通る）。
   it("別の置き場所の state.json とは混ざらない", () => {
-    const otherPath = join(dir, "other-home", "state.json")
+    const otherPath = join(dir(), "other-home", "state.json")
     writeRememberedSessionDefault(
       { model: "sonnet", effort: "high", permissionMode: "plan" },
       statePath(),
@@ -303,7 +295,7 @@ describe("writeRememberedVisitEnabled", () => {
 
   // ホームを分けて動かしたとき（`TSUKUMO_HOME`）に、別のホームの値が混ざらないこと。
   it("別の置き場所の state.json とは混ざらない", () => {
-    const otherPath = join(dir, "other-home", "state.json")
+    const otherPath = join(dir(), "other-home", "state.json")
     writeRememberedVisitEnabled(false, statePath())
     writeRememberedVisitEnabled(true, otherPath)
 

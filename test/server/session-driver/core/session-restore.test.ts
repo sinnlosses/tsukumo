@@ -2,11 +2,6 @@ import { describe, expect, it } from "vitest"
 
 import type { Config } from "../../../../src/server/core/config.ts"
 import {
-  REPORT_TOOL_NAME,
-  SPEAK_TOOL_NAME,
-  TSUKUMO_MCP_SERVER_NAME,
-} from "../../../../src/server/session-driver/core/sdk-message.ts"
-import {
   canResume,
   listMarkedSessions,
   readSessionMark,
@@ -23,6 +18,12 @@ import {
   applySessionEvent,
   INITIAL_SESSION_STATE,
 } from "../../../../src/shared/session/session-state.ts"
+import {
+  assistantMessage,
+  REPORT_TOOL_FULL_NAME,
+  SPEAK_TOOL_FULL_NAME,
+  userMessage,
+} from "../../../fixture/sdk-message.ts"
 
 // フィクスチャはすべて手で書いた架空のやり取り。実物の transcript は使わない
 // （docs/coding-standards.md「会話内容の扱い」）。本物の claude も起こさない
@@ -37,33 +38,8 @@ const OTHER_PACK_TAG = sessionTag("別の架空のパック", false, DEFAULT_VIE
 // 2つめの tsukumo（ポートが1つずれたぶん、目印も 7328 になる＝別の部屋）。
 const SECOND_TAG = sessionTag("架空のパック", false, DEFAULT_VIEW_PORT + 1)
 
-const SPEAK_TOOL_FULL_NAME = `mcp__${TSUKUMO_MCP_SERVER_NAME}__${SPEAK_TOOL_NAME}`
-const REPORT_TOOL_FULL_NAME = `mcp__${TSUKUMO_MCP_SERVER_NAME}__${REPORT_TOOL_NAME}`
-
 function sessionInfo(overrides: Readonly<Record<string, unknown>>): unknown {
   return { sessionId: "s-0", summary: "架空のセッション", lastModified: 1_000, ...overrides }
-}
-
-function userMessage(content: unknown): unknown {
-  return {
-    type: "user",
-    uuid: "u-1",
-    session_id: "s-1",
-    message: { role: "user", content },
-    parent_tool_use_id: null,
-    parent_agent_id: null,
-  }
-}
-
-function assistantMessage(content: readonly unknown[]): unknown {
-  return {
-    type: "assistant",
-    uuid: "a-1",
-    session_id: "s-1",
-    message: { role: "assistant", content },
-    parent_tool_use_id: null,
-    parent_agent_id: null,
-  }
 }
 
 describe("sessionTag", () => {

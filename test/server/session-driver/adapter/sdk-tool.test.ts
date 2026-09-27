@@ -11,6 +11,7 @@ import {
   applySessionEvent,
   INITIAL_SESSION_STATE,
 } from "../../../../src/shared/session/session-state.ts"
+import { fixedChatSummary } from "../../../fixture/chat.ts"
 
 // どのツールが載るか・呼ぶと何が返るかを、モデルが見るのと同じ MCP の `tools/list` /
 // `tools/call` で確かめる（サーバの中身を覗かず、公開された口だけを通す）。本物の claude は
@@ -23,12 +24,7 @@ const WORK_MODE: SessionMode = { kind: "work" }
 const CHAT_MODE: SessionMode = {
   kind: "chat",
   personaMemory: { remember: () => {}, forget: () => {}, finishTurn: () => {} },
-  chatSummary: {
-    read: () => undefined,
-    write: () => {},
-    markUndelivered: () => {},
-    markDelivered: () => {},
-  },
+  chatSummary: fixedChatSummary(undefined),
   chatRecall: {
     recallList: () => ({ kind: "not-found" }),
     recallEpisode: () => ({ kind: "not-found" }),

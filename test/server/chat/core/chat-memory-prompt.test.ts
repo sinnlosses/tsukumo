@@ -13,6 +13,7 @@ import type {
   ChatSummaryRecord,
 } from "../../../../src/server/session-driver/core/session-driver.ts"
 import { CHAT_MEMORY_BUDGET } from "../../../../src/shared/chat/chat-memory-budget.ts"
+import { inMemoryChatSummary, NOOP_CHAT_ARCHIVE } from "../../../fixture/chat.ts"
 
 // フィクスチャは手で書いた架空の要約・会話だけ（実物の会話は使わない。
 // docs/coding-standards.md「会話内容の扱い」）。
@@ -25,48 +26,33 @@ const RECENT: readonly ChatArchiveRecentEntry[] = [
 const PACK_NAME = "fictional-pack"
 const LIMITS: ChatReadbackLimits = { recentBytes: CHAT_MEMORY_BUDGET.recentBytes }
 
-/** メモリ上の `ChatSummary`（テスト用）。呼ばれた回数も数える。 */
+/** メモリ上の `ChatSummary`（テスト用）。届けた印を付けた回数も数える。 */
 function fakeChatSummary(initial: ChatSummaryRecord | undefined): ChatSummary & {
   readonly markDeliveredCalls: () => number
 } {
-  let record = initial
+  const summary = inMemoryChatSummary(initial)
   let markDeliveredCount = 0
   return {
-    read: () => record,
-    write: (summary) => {
-      record = { summary, delivered: true }
-    },
-    markUndelivered: () => {
-      record = { summary: record?.summary ?? "", delivered: false }
-    },
+    ...summary,
     markDelivered: () => {
       markDeliveredCount += 1
-      record = { summary: record?.summary ?? "", delivered: true }
+      summary.markDelivered()
     },
     markDeliveredCalls: () => markDeliveredCount,
   }
 }
 
-/** メモリ上の `ChatArchive`（テスト用）。読み戻しに渡された引数も覚える。 */
+/** 読み戻しで `entries` を返す `ChatArchive`（テスト用）。読み戻しに渡された引数も覚える。 */
 function fakeChatArchive(entries: readonly ChatArchiveRecentEntry[]): ChatArchive & {
   readonly readRecentArgs: () => readonly { packName: string; limits: ChatReadbackLimits }[]
 } {
   const calls: { packName: string; limits: ChatReadbackLimits }[] = []
   return {
-    append: () => {},
+    ...NOOP_CHAT_ARCHIVE,
     readRecent: (packName, limits) => {
       calls.push({ packName, limits })
       return entries
     },
-    unconsolidated: () => ({
-      entries: [],
-      usedBytes: 0,
-      previousEpisodeTitle: "",
-      overflowed: false,
-    }),
-    appendEpisodes: () => {},
-    recallList: () => ({ kind: "not-found" }),
-    recallEpisode: () => ({ kind: "not-found" }),
     readRecentArgs: () => calls,
   }
 }

@@ -1,28 +1,20 @@
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
+import { writeFileSync } from "node:fs"
 import { join } from "node:path"
 
-import { afterEach, beforeEach, describe, expect, it } from "vitest"
+import { describe, expect, it } from "vitest"
 
 import {
   readPreviousUsageReview,
   writePreviousUsageReview,
 } from "../../../../src/server/usage-review/adapter/previous-usage-review.ts"
 import type { UsageReviewFindings } from "../../../../src/shared/usage-review/usage-review.ts"
+import { useTempDir } from "../../../fixture/temp-dir.ts"
 
 // 数も文面もすべて手で書いた架空のもの（会話の実物は使わない。docs/coding-standards.md「会話内容の扱い」）。
-let dir: string
-
-beforeEach(() => {
-  dir = mkdtempSync(join(tmpdir(), "tsukumo-previous-usage-review-"))
-})
-
-afterEach(() => {
-  rmSync(dir, { recursive: true, force: true })
-})
+const dir = useTempDir("previous-usage-review")
 
 function path(): string {
-  return join(dir, "usage-review.json")
+  return join(dir(), "usage-review.json")
 }
 
 const FINDINGS: UsageReviewFindings = {

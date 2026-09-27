@@ -11,11 +11,8 @@ import {
   parseChatConsolidationResult,
   readChatTopics,
 } from "../../../../src/server/chat/core/chat-consolidation.ts"
-import type {
-  ChatSummary,
-  ChatSummaryRecord,
-  ChatUnconsolidatedEntry,
-} from "../../../../src/server/session-driver/core/session-driver.ts"
+import type { ChatUnconsolidatedEntry } from "../../../../src/server/session-driver/core/session-driver.ts"
+import { fixedChatSummary } from "../../../fixture/chat.ts"
 
 // 畳む行・あらすじ・エピソードはすべて手で書いた架空のもの（docs/coding-standards.md
 // 「会話内容の扱い」）。`queryChatConsolidation` 自体（本物の `query()` を起こす部分）は
@@ -40,15 +37,6 @@ const SUMMARY_WITH_TOPICS = [
   "</topics>",
   "</summary>",
 ].join("\n")
-
-function fakeChatSummary(record: ChatSummaryRecord | undefined): ChatSummary {
-  return {
-    read: () => record,
-    write: () => {},
-    markUndelivered: () => {},
-    markDelivered: () => {},
-  }
-}
 
 const ENTRIES: readonly ChatUnconsolidatedEntry[] = [
   { at: "2026-09-20T10:00:00+09:00", speaker: "user", text: "架空の発言1" },
@@ -338,7 +326,7 @@ describe("chatTopics", () => {
 
 describe("readChatTopics", () => {
   it("写しの本文から見出しを取り出す", () => {
-    const chatSummary = fakeChatSummary({ summary: SUMMARY_WITH_TOPICS, delivered: true })
+    const chatSummary = fixedChatSummary({ summary: SUMMARY_WITH_TOPICS, delivered: true })
 
     expect(readChatTopics(chatSummary)).toEqual([
       "架空の新しい話題",
@@ -348,6 +336,6 @@ describe("readChatTopics", () => {
   })
 
   it("写しがまだ無い（一度も定着していない）ときは空", () => {
-    expect(readChatTopics(fakeChatSummary(undefined))).toEqual([])
+    expect(readChatTopics(fixedChatSummary(undefined))).toEqual([])
   })
 })

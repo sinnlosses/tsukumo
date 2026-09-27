@@ -1,5 +1,5 @@
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs"
-import { homedir, tmpdir } from "node:os"
+import { writeFileSync } from "node:fs"
+import { homedir } from "node:os"
 import { join } from "node:path"
 import process from "node:process"
 
@@ -11,6 +11,7 @@ import { chatArchiveDir } from "../../../src/server/chat/adapter/chat-archive.ts
 import { chatSummaryDir } from "../../../src/server/chat/adapter/chat-summary.ts"
 import { readRememberedCharacter } from "../../../src/server/session/adapter/remembered-default.ts"
 import { tokenUsageDir } from "../../../src/server/token-usage/adapter/token-usage-log.ts"
+import { useTempDir } from "../../fixture/temp-dir.ts"
 
 // ホームの差し替え口（`TSUKUMO_HOME`）は `process.env` から読むので、ここだけは環境変数を
 // 書き換えて確かめる（Vitest はテストファイルごとに別のワーカーで走らせるので、他のテストには
@@ -19,11 +20,10 @@ import { tokenUsageDir } from "../../../src/server/token-usage/adapter/token-usa
 
 const HOME_ENV_NAME = "TSUKUMO_HOME"
 
-let dir: string
+const dir = useTempDir("home")
 let original: string | undefined
 
 beforeEach(() => {
-  dir = mkdtempSync(join(tmpdir(), "tsukumo-home-"))
   original = process.env[HOME_ENV_NAME]
   delete process.env[HOME_ENV_NAME]
 })
@@ -34,27 +34,26 @@ afterEach(() => {
   } else {
     process.env[HOME_ENV_NAME] = original
   }
-  rmSync(dir, { recursive: true, force: true })
 })
 
 describe("TSUKUMO_HOME を渡すとホームがそこへ移る", () => {
   it("ホームそのものが渡した絶対パスになる", () => {
-    process.env[HOME_ENV_NAME] = dir
-    expect(tsukumoHomeDir()).toBe(dir)
+    process.env[HOME_ENV_NAME] = dir()
+    expect(tsukumoHomeDir()).toBe(dir())
   })
 
   it("ホームの下に並ぶ置き場（パック・雑談の要約・アーカイブ・トークンの記録）が揃って移る", () => {
-    process.env[HOME_ENV_NAME] = dir
+    process.env[HOME_ENV_NAME] = dir()
 
-    expect(homeCharacterDir()).toBe(join(dir, "characters"))
-    expect(chatSummaryDir()).toBe(join(dir, "chat-summary"))
-    expect(chatArchiveDir()).toBe(join(dir, "chat-archive"))
-    expect(tokenUsageDir()).toBe(join(dir, "token-usage"))
+    expect(homeCharacterDir()).toBe(join(dir(), "characters"))
+    expect(chatSummaryDir()).toBe(join(dir(), "chat-summary"))
+    expect(chatArchiveDir()).toBe(join(dir(), "chat-archive"))
+    expect(tokenUsageDir()).toBe(join(dir(), "token-usage"))
   })
 
   it("覚えたキャラクター（state.json）も移った先から読まれる", () => {
-    process.env[HOME_ENV_NAME] = dir
-    writeFileSync(join(dir, "state.json"), JSON.stringify({ character: "moved-pack" }))
+    process.env[HOME_ENV_NAME] = dir()
+    writeFileSync(join(dir(), "state.json"), JSON.stringify({ character: "moved-pack" }))
 
     expect(readRememberedCharacter()).toBe("moved-pack")
   })

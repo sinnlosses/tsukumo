@@ -1,20 +1,21 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { act, cleanup, renderHook, waitFor } from "@testing-library/react"
-import type { ReactElement, ReactNode } from "react"
 import { afterEach, describe, expect, it } from "vitest"
 
 import { useUsageReview } from "../../../../../../src/browser/components/page/token-usage/hooks/use-usage-review.ts"
-import {
-  INITIAL_SESSION_STATE,
-  type SessionState,
-} from "../../../../../../src/shared/session/session-state.ts"
+import type { SessionState } from "../../../../../../src/shared/session/session-state.ts"
 import {
   USAGE_REVIEW_REQUEST_TEXT,
   type UsageProposal,
   type UsageReviewFindings,
 } from "../../../../../../src/shared/usage-review/usage-review.ts"
+import { createTestQueryClient, queryClientWrapper } from "../../../../query-client.tsx"
 import { rpcOutput, stubRpcFetch, type RpcFetchStub } from "../../../../rpc-fetch-stub.ts"
-import { type CommandSpy, type SentCommand, putSession } from "../../../../session-store.ts"
+import {
+  type CommandSpy,
+  putSession,
+  type SentCommand,
+  stateWith,
+} from "../../../../session-store.ts"
 
 /**
  * 画面（`token-usage.tsx`）を丸ごと描かずに、区画のロジックだけを測る
@@ -57,20 +58,6 @@ function stubSummaryFetch(): void {
   fetchStub = stubRpcFetch(() => rpcOutput(FIXTURE_SUMMARY))
 }
 
-function newClient(): QueryClient {
-  return new QueryClient({ defaultOptions: { queries: { retry: false } } })
-}
-
-function wrapper(client: QueryClient): (props: { children: ReactNode }) => ReactElement {
-  return function Wrapper({ children }: { children: ReactNode }): ReactElement {
-    return <QueryClientProvider client={client}>{children}</QueryClientProvider>
-  }
-}
-
-function stateWith(patch: Partial<SessionState>): SessionState {
-  return { ...INITIAL_SESSION_STATE, ...patch }
-}
-
 function renderUsageReview(
   state: SessionState,
   spy: CommandSpy = () => {},
@@ -78,7 +65,7 @@ function renderUsageReview(
   stubSummaryFetch()
   putSession(state, spy)
   return renderHook(() => useUsageReview(), {
-    wrapper: wrapper(newClient()),
+    wrapper: queryClientWrapper(createTestQueryClient()),
   })
 }
 

@@ -1,29 +1,22 @@
-import { mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs"
-import { tmpdir } from "node:os"
+import { readdirSync, readFileSync } from "node:fs"
 import { join } from "node:path"
 
-import { afterEach, beforeEach, describe, expect, it } from "vitest"
+import { describe, expect, it } from "vitest"
 
 import { createContextUsageLog } from "../../../../src/server/context-usage/adapter/context-usage-log.ts"
 import type { ContextUsageEntry } from "../../../../src/server/context-usage/core/context-usage.ts"
 import { CONTEXT_USAGE_FORMAT_VERSION } from "../../../../src/shared/context-usage/context-usage-record.ts"
 import { contextUsage } from "../../../fixture/context-usage.ts"
+import { keysOf, readJsonLines } from "../../../fixture/jsonl.ts"
+import { useTempDir } from "../../../fixture/temp-dir.ts"
 
 // 数も名前もすべて手で書いた架空のもの（実物のセッションの内訳は使わない。
 // docs/coding-standards.md「会話内容の扱い」）。
-let dir: string
-
-beforeEach(() => {
-  dir = mkdtempSync(join(tmpdir(), "tsukumo-context-usage-"))
-})
-
-afterEach(() => {
-  rmSync(dir, { recursive: true, force: true })
-})
+const dir = useTempDir("context-usage")
 
 /** 書き込み先（本物の `~/.tsukumo/context-usage` の代わり）。 */
 function root(): string {
-  return join(dir, "context-usage")
+  return join(dir(), "context-usage")
 }
 
 /** ある日のローカル時刻のエポックミリ秒（日をまたぐ心配をしない値）。 */
@@ -44,16 +37,7 @@ function entry(when: number, sessionId = "claude-session-1"): ContextUsageEntry 
 }
 
 function readLines(fileName: string): unknown[] {
-  return readFileSync(join(root(), fileName), "utf8")
-    .trimEnd()
-    .split("\n")
-    .filter((line) => line.length > 0)
-    .map((line): unknown => JSON.parse(line))
-}
-
-/** 行の鍵の並び（順序を見たいので `toMatchObject` とは別に取る）。 */
-function keysOf(value: unknown): readonly string[] {
-  return typeof value === "object" && value !== null ? Object.keys(value) : []
+  return readJsonLines(join(root(), fileName))
 }
 
 describe("createContextUsageLog", () => {

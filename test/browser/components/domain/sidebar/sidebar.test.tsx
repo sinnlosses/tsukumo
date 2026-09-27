@@ -5,7 +5,7 @@
 // 雑談中は4段に差し替わる（docs/screen-design.md 13.7「雑談のときのサイドバー」）: プロフィールの札・
 // 最近の話題・覚えていること・下端の帯。タスク一覧は出さない。
 
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { QueryClientProvider } from "@tanstack/react-query"
 import { cleanup, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
@@ -15,6 +15,7 @@ import {
   type SessionState,
 } from "../../../../../src/shared/session/session-state.ts"
 import { characterInfo, characterPackEntry } from "../../../../fixture/character.ts"
+import { createTestQueryClient } from "../../../query-client.tsx"
 import { rpcError, stubRpcFetch, type RpcFetchStub } from "../../../rpc-fetch-stub.ts"
 import { putSession } from "../../../session-store.ts"
 
@@ -37,7 +38,7 @@ function stubContextUsageUnavailable(): void {
 function renderSidebar(stateOverrides: Partial<SessionState>): void {
   stubContextUsageUnavailable()
   putSession({ ...INITIAL_SESSION_STATE, ...stateOverrides })
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  const client = createTestQueryClient()
   render(
     <QueryClientProvider client={client}>
       <Sidebar />

@@ -1,4 +1,4 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import type { QueryClient } from "@tanstack/react-query"
 import { act, cleanup, renderHook, waitFor } from "@testing-library/react"
 import type { ReactElement, ReactNode } from "react"
 import { afterEach, describe, expect, it } from "vitest"
@@ -9,6 +9,7 @@ import {
   type SessionState,
 } from "../../../../../../src/shared/session/session-state.ts"
 import { DEFAULT_TOKEN_USAGE_DAYS } from "../../../../../../src/shared/token-usage/token-usage-summary.ts"
+import { createTestQueryClient, queryClientWrapper } from "../../../../query-client.tsx"
 import {
   rpcError,
   rpcOutput,
@@ -54,9 +55,7 @@ function tokenUsageWrapper(
   state: SessionState = INITIAL_SESSION_STATE,
 ): (props: { children: ReactNode }) => ReactElement {
   putSession(state)
-  return function Wrapper({ children }: { children: ReactNode }): ReactElement {
-    return <QueryClientProvider client={client}>{children}</QueryClientProvider>
-  }
+  return queryClientWrapper(client)
 }
 
 const FIXTURE_TOTALS = {
@@ -74,16 +73,12 @@ const FIXTURE_SUMMARY = {
   byTool: [],
 }
 
-function newClient(): QueryClient {
-  return new QueryClient({ defaultOptions: { queries: { retry: false } } })
-}
-
 describe("useTokenUsage", () => {
   it("初期の期間は既定の日数", async () => {
     stubTokenUsageFetch(() => rpcOutput(FIXTURE_SUMMARY))
 
     const { result } = renderHook(() => useTokenUsage(), {
-      wrapper: tokenUsageWrapper(newClient()),
+      wrapper: tokenUsageWrapper(createTestQueryClient()),
     })
 
     expect(result.current.days).toBe(DEFAULT_TOKEN_USAGE_DAYS)
@@ -97,7 +92,7 @@ describe("useTokenUsage", () => {
   it("onDaysChange で選ぶと日数が変わり、その日数で取り直す", async () => {
     stubTokenUsageFetch(() => rpcOutput(FIXTURE_SUMMARY))
     const { result } = renderHook(() => useTokenUsage(), {
-      wrapper: tokenUsageWrapper(newClient()),
+      wrapper: tokenUsageWrapper(createTestQueryClient()),
     })
     await waitFor(() => {
       expect(askedDays(DEFAULT_TOKEN_USAGE_DAYS)).toBe(true)
@@ -117,7 +112,7 @@ describe("useTokenUsage", () => {
     stubTokenUsageFetch(() => rpcOutput(FIXTURE_SUMMARY))
 
     const { result } = renderHook(() => useTokenUsage(), {
-      wrapper: tokenUsageWrapper(newClient()),
+      wrapper: tokenUsageWrapper(createTestQueryClient()),
     })
 
     await waitFor(() => {
@@ -131,7 +126,7 @@ describe("useTokenUsage", () => {
     stubTokenUsageFetch(() => rpcError(500))
 
     const { result } = renderHook(() => useTokenUsage(), {
-      wrapper: tokenUsageWrapper(newClient()),
+      wrapper: tokenUsageWrapper(createTestQueryClient()),
     })
 
     await waitFor(() => {
@@ -144,7 +139,10 @@ describe("useTokenUsage", () => {
   it("plan は state.plan をそのまま返す", async () => {
     stubTokenUsageFetch(() => rpcOutput(FIXTURE_SUMMARY))
     const { result } = renderHook(() => useTokenUsage(), {
-      wrapper: tokenUsageWrapper(newClient(), { ...INITIAL_SESSION_STATE, plan: "max" }),
+      wrapper: tokenUsageWrapper(createTestQueryClient(), {
+        ...INITIAL_SESSION_STATE,
+        plan: "max",
+      }),
     })
 
     expect(result.current.plan).toBe("max")
@@ -154,7 +152,7 @@ describe("useTokenUsage", () => {
     stubTokenUsageFetch(() => rpcOutput(FIXTURE_SUMMARY))
 
     const { result } = renderHook(() => useTokenUsage(), {
-      wrapper: tokenUsageWrapper(newClient()),
+      wrapper: tokenUsageWrapper(createTestQueryClient()),
     })
 
     expect(result.current.plan).toBeUndefined()

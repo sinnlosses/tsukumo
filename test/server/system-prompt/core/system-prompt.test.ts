@@ -7,7 +7,6 @@ import type {
   ChatArchive,
   ChatArchiveRecentEntry,
   ChatSummary,
-  ChatSummaryRecord,
   SessionMode,
   SessionStart,
 } from "../../../../src/server/session-driver/core/session-driver.ts"
@@ -18,6 +17,7 @@ import {
   toSystemPromptMode,
 } from "../../../../src/server/system-prompt/core/system-prompt.ts"
 import { CHAT_MEMORY_BUDGET } from "../../../../src/shared/chat/chat-memory-budget.ts"
+import { inMemoryChatSummary, NOOP_CHAT_ARCHIVE } from "../../../fixture/chat.ts"
 
 // `systemPrompt` に何が・どの順で載るかを、3通り（仕事・雑談・続きから始めるとき）で固定する
 // （docs/design.md 7章）。本物の駆動を起こして確かめることはできない（`systemPrompt` は
@@ -37,6 +37,9 @@ const RECENT: readonly ChatArchiveRecentEntry[] = [
   { speaker: "character", text: "おかえりなのじゃ", date: "2026-09-21" },
 ]
 
+/** 読み戻すと `RECENT` を返す `ChatArchive`。 */
+const RECENT_CHAT_ARCHIVE = { ...NOOP_CHAT_ARCHIVE, readRecent: () => RECENT } satisfies ChatArchive
+
 describe("takeSystemPromptAppend", () => {
   it("仕事のときは 人格 → セリフの間合い → レポートの記法 の順でつながる", () => {
     const append = takeSystemPromptAppend({ persona: PERSONA, mode: { kind: "work" } })
@@ -45,11 +48,11 @@ describe("takeSystemPromptAppend", () => {
   })
 
   it("雑談のときは 人格 → 雑談の作法 → 雑談の記憶 の順でつながる（仕事の2つは載らない）", () => {
-    const summary = fakeChatSummary({ summary: SUMMARY, delivered: false })
-    const archive = fakeChatArchive()
+    const summary = inMemoryChatSummary({ summary: SUMMARY, delivered: false })
+    const archive = RECENT_CHAT_ARCHIVE
     const expectedMemory = takeChatMemoryPromptParts({
       start: { kind: "new" },
-      chatSummary: fakeChatSummary({ summary: SUMMARY, delivered: false }),
+      chatSummary: inMemoryChatSummary({ summary: SUMMARY, delivered: false }),
       chatArchive: archive,
       packName: "架空",
       readbackLimits: { recentBytes: CHAT_MEMORY_BUDGET.recentBytes },
@@ -66,11 +69,11 @@ describe("takeSystemPromptAppend", () => {
   })
 
   it("続きから始めて写しが渡し済みなら、雑談の記憶は載らない（人格 → 雑談の作法 だけ）", () => {
-    const summary = fakeChatSummary({ summary: SUMMARY, delivered: true })
+    const summary = inMemoryChatSummary({ summary: SUMMARY, delivered: true })
 
     const append = takeSystemPromptAppend({
       persona: PERSONA,
-      mode: chatMode({ kind: "resume", sessionId: "fictional" }, summary, fakeChatArchive()),
+      mode: chatMode({ kind: "resume", sessionId: "fictional" }, summary, RECENT_CHAT_ARCHIVE),
     })
 
     expect(append).toBe(`${PERSONA}\n\n${CHAT_MANNER_PROMPT}`)
@@ -82,16 +85,16 @@ describe("takeSystemPromptAppend", () => {
       persona: PERSONA,
       mode: chatMode(
         { kind: "new" },
-        fakeChatSummary({ summary: SUMMARY, delivered: false }),
-        fakeChatArchive(),
+        inMemoryChatSummary({ summary: SUMMARY, delivered: false }),
+        RECENT_CHAT_ARCHIVE,
       ),
     })
     const resumed = takeSystemPromptAppend({
       persona: PERSONA,
       mode: chatMode(
         { kind: "resume", sessionId: "fictional" },
-        fakeChatSummary({ summary: SUMMARY, delivered: true }),
-        fakeChatArchive(),
+        inMemoryChatSummary({ summary: SUMMARY, delivered: true }),
+        RECENT_CHAT_ARCHIVE,
       ),
     })
 
@@ -120,8 +123,8 @@ describe("takeSystemPromptAppend", () => {
       persona: PERSONA,
       mode: chatMode(
         { kind: "new" },
-        fakeChatSummary({ summary: SUMMARY, delivered: false }),
-        fakeChatArchive(),
+        inMemoryChatSummary({ summary: SUMMARY, delivered: false }),
+        RECENT_CHAT_ARCHIVE,
       ),
     })
 
@@ -130,11 +133,11 @@ describe("takeSystemPromptAppend", () => {
   })
 
   it("雑談の記憶を載せたら写しの印は「渡し済み」に戻る（名前の `take` はこの副作用）", () => {
-    const summary = fakeChatSummary({ summary: SUMMARY, delivered: false })
+    const summary = inMemoryChatSummary({ summary: SUMMARY, delivered: false })
 
     takeSystemPromptAppend({
       persona: PERSONA,
-      mode: chatMode({ kind: "new" }, summary, fakeChatArchive()),
+      mode: chatMode({ kind: "new" }, summary, RECENT_CHAT_ARCHIVE),
     })
 
     expect(summary.read()?.delivered).toBe(true)
@@ -166,8 +169,8 @@ describe("takeSystemPromptAppend", () => {
 
 describe("toSystemPromptMode", () => {
   it("読み戻す量は表（CHAT_MEMORY_BUDGET）から読む", () => {
-    const chatSummary = fakeChatSummary({ summary: SUMMARY, delivered: false })
-    const chatArchive = fakeChatArchive()
+    const chatSummary = inMemoryChatSummary({ summary: SUMMARY, delivered: false })
+    const chatArchive = RECENT_CHAT_ARCHIVE
     const sessionMode: SessionMode = {
       kind: "chat",
       personaMemory: { remember: () => {}, forget: () => {}, finishTurn: () => {} },
@@ -209,40 +212,6 @@ function chatMode(
       packName: "架空",
       readbackLimits: { recentBytes: CHAT_MEMORY_BUDGET.recentBytes },
     },
-  }
-}
-
-/** メモリ上の `ChatSummary`（テスト用）。 */
-function fakeChatSummary(initial: ChatSummaryRecord): ChatSummary {
-  let record = initial
-  return {
-    read: () => record,
-    write: (summary) => {
-      record = { summary, delivered: true }
-    },
-    markUndelivered: () => {
-      record = { summary: record.summary, delivered: false }
-    },
-    markDelivered: () => {
-      record = { summary: record.summary, delivered: true }
-    },
-  }
-}
-
-/** メモリ上の `ChatArchive`（テスト用）。読み戻しは架空の2往復を返すだけ。 */
-function fakeChatArchive(): ChatArchive {
-  return {
-    append: () => {},
-    readRecent: () => RECENT,
-    unconsolidated: () => ({
-      entries: [],
-      usedBytes: 0,
-      previousEpisodeTitle: "",
-      overflowed: false,
-    }),
-    appendEpisodes: () => {},
-    recallList: () => ({ kind: "not-found" }),
-    recallEpisode: () => ({ kind: "not-found" }),
   }
 }
 

@@ -3,11 +3,8 @@ import { afterEach, describe, expect, it } from "vitest"
 
 import { DiaryNotice } from "../../../../../../../src/browser/components/page/achievement/components/diary-notice/diary-notice.tsx"
 import { useDiaryBookOpenRequest } from "../../../../../../../src/browser/components/page/achievement/hooks/use-diary-book-open-request.ts"
-import {
-  INITIAL_SESSION_STATE,
-  type SessionState,
-} from "../../../../../../../src/shared/session/session-state.ts"
-import { putState, putSession } from "../../../../../session-store.ts"
+import type { SessionState } from "../../../../../../../src/shared/session/session-state.ts"
+import { putSession, putState, stateWith } from "../../../../../session-store.ts"
 
 /**
  * 書き終わりの知らせ（`docs/screen-design.md` 13.10「書き終わりの知らせ」）。フィクスチャの日付は
@@ -18,10 +15,6 @@ afterEach(() => {
   cleanup()
   window.location.hash = ""
 })
-
-function stateWith(patch: Partial<SessionState>): SessionState {
-  return { ...INITIAL_SESSION_STATE, ...patch }
-}
 
 function renderNotice(state: SessionState): ReturnType<typeof render> {
   putSession(state)

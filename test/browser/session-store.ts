@@ -9,7 +9,7 @@ import { isPlainObject } from "remeda"
 
 import { useSession } from "../../src/browser/stores/session.ts"
 import { PROTOCOL_VERSION } from "../../src/shared/frame.ts"
-import type { SessionState } from "../../src/shared/session/session-state.ts"
+import { INITIAL_SESSION_STATE, type SessionState } from "../../src/shared/session/session-state.ts"
 
 /**
  * 部品が送ったコマンドの受け取り口。手続きの名前（`session.prompt` のように `.` で繋いだもの）を
@@ -48,4 +48,9 @@ export function putState(state: SessionState): void {
     protocolVersion: PROTOCOL_VERSION,
     state,
   })
+}
+
+/** 初期の姿のうち `patch` に書いたところだけを差し替えた姿。 */
+export function stateWith(patch: Partial<SessionState>): SessionState {
+  return { ...INITIAL_SESSION_STATE, ...patch }
 }

@@ -89,27 +89,13 @@ import {
   shownOutfitAccents,
   shownPortraits,
 } from "../../../fixture/character.ts"
+import { NOOP_CHAT_ARCHIVE } from "../../../fixture/chat.ts"
 import { contextUsage, readyContextUsage } from "../../../fixture/context-usage.ts"
 import { createManualClock } from "../../../fixture/manual-clock.ts"
 import { readyPlanUsage } from "../../../fixture/plan-usage.ts"
 
 // 疑似セッションもセリフも手で書いた架空のもの（docs/coding-standards.md「会話内容の扱い」）。
 const BATCH_MS = 5
-
-/** 雑談の会話のアーカイブを気にしないテストに渡す、何もしない書き込み口。 */
-const NOOP_CHAT_ARCHIVE: ChatArchive = {
-  append: () => {},
-  readRecent: () => [],
-  unconsolidated: () => ({
-    entries: [],
-    usedBytes: 0,
-    previousEpisodeTitle: "",
-    overflowed: false,
-  }),
-  appendEpisodes: () => {},
-  recallList: () => ({ kind: "not-found" }),
-  recallEpisode: () => ({ kind: "not-found" }),
-}
 
 /** トークン消費の記録を気にしないテストに渡す、何もしない書き込み口。 */
 const NOOP_TOKEN_USAGE_LOG: TokenUsageLog = { append: () => {}, readRange: () => [] }
@@ -1736,20 +1722,10 @@ describe("createSessionManager", () => {
       const stub = createStubDriver()
       const archiveCalls: { readonly packName: string; readonly entry: ChatArchiveEntry }[] = []
       const chatArchive: ChatArchive = {
+        ...NOOP_CHAT_ARCHIVE,
         append: (packName, entry) => {
           archiveCalls.push({ packName, entry })
         },
-        // 読み戻しは起こすときの配線（`src/session-start.ts`）が使う口で、ここは通らない。
-        readRecent: () => [],
-        unconsolidated: () => ({
-          entries: [],
-          usedBytes: 0,
-          previousEpisodeTitle: "",
-          overflowed: false,
-        }),
-        appendEpisodes: () => {},
-        recallList: () => ({ kind: "not-found" }),
-        recallEpisode: () => ({ kind: "not-found" }),
       }
       const manager = createSessionManager({
         now: () => 1_000,

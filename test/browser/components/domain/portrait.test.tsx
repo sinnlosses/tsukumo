@@ -1,4 +1,4 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { QueryClientProvider } from "@tanstack/react-query"
 import { cleanup, render, waitFor } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
@@ -7,6 +7,7 @@ import {
   usePortraitPreload,
 } from "../../../../src/browser/components/domain/portrait.tsx"
 import { typedElement } from "../../../typed-element.ts"
+import { createTestQueryClient } from "../../query-client.tsx"
 
 // フィクスチャはすべて手で書いた架空の SVG・URL（docs/coding-standards.md「会話内容の扱い」）。
 
@@ -45,7 +46,7 @@ function stubFetch(body: string): void {
 describe("Portrait", () => {
   it("SVG の URL は fetch して中身をそのままインラインにする", async () => {
     stubFetch(PLAUSIBLE_SVG)
-    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const client = createTestQueryClient()
 
     render(
       <QueryClientProvider client={client}>
@@ -68,7 +69,7 @@ describe("Portrait", () => {
 
   it("同じ URL の立ち絵に戻っても fetch をやり直さない（表情の往復）", async () => {
     stubFetch(PLAUSIBLE_SVG)
-    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const client = createTestQueryClient()
 
     const { rerender } = render(
       <QueryClientProvider client={client}>
@@ -126,7 +127,7 @@ describe("Portrait", () => {
   })
 
   it("ラスタ画像の URL は <img> で出す（fetch しない）", () => {
-    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const client = createTestQueryClient()
     render(
       <QueryClientProvider client={client}>
         <Portrait
@@ -150,7 +151,7 @@ describe("Portrait", () => {
   })
 
   it("(5) 差し色を CSS 変数 --outfit-accent として当てる", () => {
-    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const client = createTestQueryClient()
     render(
       <QueryClientProvider client={client}>
         <Portrait
@@ -170,7 +171,7 @@ describe("Portrait", () => {
   })
 
   it("差し色が無いときは style 属性ごと省略する", () => {
-    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const client = createTestQueryClient()
     render(
       <QueryClientProvider client={client}>
         <Portrait
@@ -190,7 +191,7 @@ describe("Portrait", () => {
   })
 
   it("motion をそのまま data-motion 属性へ渡す（CSS 側が動きを選ぶ手がかり）", () => {
-    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const client = createTestQueryClient()
     render(
       <QueryClientProvider client={client}>
         <Portrait
@@ -219,7 +220,7 @@ function Preload(props: { readonly portraits: Readonly<Record<string, string>> }
 describe("usePortraitPreload", () => {
   it("SVG の立ち絵を先に読み、あとからマウントした立ち絵は読み終わった絵で描き始める", async () => {
     stubFetch(PLAUSIBLE_SVG)
-    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const client = createTestQueryClient()
     const portraits = {
       default: "/character/default.svg",
       proud: "/character/proud.svg",
@@ -264,7 +265,7 @@ describe("usePortraitPreload", () => {
         }
       },
     })
-    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const client = createTestQueryClient()
 
     const { unmount } = render(
       <QueryClientProvider client={client}>

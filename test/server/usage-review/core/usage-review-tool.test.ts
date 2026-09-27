@@ -1,8 +1,6 @@
-import { mkdtempSync, rmSync } from "node:fs"
-import { tmpdir } from "node:os"
 import { join } from "node:path"
 
-import { afterEach, beforeEach, describe, expect, it } from "vitest"
+import { describe, expect, it } from "vitest"
 
 import {
   readDismissedUsageProposalKeys,
@@ -14,23 +12,16 @@ import {
   type UsageReviewFindings,
   usageProposalKey,
 } from "../../../../src/shared/usage-review/usage-review.ts"
+import { useTempDir } from "../../../fixture/temp-dir.ts"
 
 // 見送った提案の一覧が、ホームのファイル（読み書きは
 // `src/server/usage-review/adapter/usage-proposal-dismissal.ts`）から `createUsageReviewIntake` へ実際に
 // 渡ることを確かめる（`test/server/session-driver/adapter/sdk-tool.test.ts` は同じ口を偽の配列で確かめている）。
 
-let dir: string
-
-beforeEach(() => {
-  dir = mkdtempSync(join(tmpdir(), "tsukumo-usage-review-dismissal-wiring-"))
-})
-
-afterEach(() => {
-  rmSync(dir, { recursive: true, force: true })
-})
+const dir = useTempDir("usage-review-dismissal-wiring")
 
 function path(): string {
-  return join(dir, "usage-review-dismissed.json")
+  return join(dir(), "usage-review-dismissed.json")
 }
 
 const DISMISSED_PROPOSAL = {

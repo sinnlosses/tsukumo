@@ -1,8 +1,7 @@
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs"
-import { tmpdir } from "node:os"
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 
-import { afterEach, beforeEach, describe, expect, it } from "vitest"
+import { describe, expect, it } from "vitest"
 
 import { readCharacterPack } from "../../../../src/server/character-pack/adapter/character-pack.ts"
 import {
@@ -13,6 +12,7 @@ import {
   REMEMBERED_SECTION_HEADING,
 } from "../../../../src/server/chat/adapter/persona-memory.ts"
 import { MAX_REMEMBERED_LINE_LENGTH } from "../../../../src/shared/chat/persona-memory.ts"
+import { useTempDir } from "../../../fixture/temp-dir.ts"
 
 // フィクスチャは手で書いた架空のパックと架空の1行だけ（実物の会話・人格は使わない。
 // docs/coding-standards.md「会話内容の扱い」）。
@@ -46,24 +46,16 @@ const PERSONA_WITH_BULLET = `# 架空の精霊
 /** 書き足す1行（キャラクター自身の設定。手で書いた架空のもの）。 */
 const LINE = "苦いお茶より甘いお茶が好き"
 
-let dir: string
-
-beforeEach(() => {
-  dir = mkdtempSync(join(tmpdir(), "tsukumo-persona-memory-"))
-})
-
-afterEach(() => {
-  rmSync(dir, { recursive: true, force: true })
-})
+const dir = useTempDir("persona-memory")
 
 /** 書き込み先の親（本物の `~/.tsukumo/characters` の代わり）。 */
 function home(): string {
-  return join(dir, "home")
+  return join(dir(), "home")
 }
 
 /** 同梱のパックを1つ置く（定義・人格・立ち絵1枚）。 */
 function writeBundledPack(name: string, persona: string = PERSONA): string {
-  const packDir = join(dir, "bundled", name)
+  const packDir = join(dir(), "bundled", name)
   mkdirSync(packDir, { recursive: true })
   writeFileSync(join(packDir, "character.json"), DEFINITION_JSON)
   writeFileSync(join(packDir, "persona.md"), persona)
@@ -96,7 +88,7 @@ describe("createPersonaMemory", () => {
   it("末尾に `## 覚えたこと` の節を作って1行足す（書き先はホームのパック）", () => {
     const pack = readCharacterPack(writeBundledPack("架空"))
 
-    createPersonaMemory(pack, dir, home()).remember(LINE)
+    createPersonaMemory(pack, dir(), home()).remember(LINE)
 
     const written = homePersona("架空")
     expect(written).toBeDefined()
@@ -107,7 +99,7 @@ describe("createPersonaMemory", () => {
 
   it("節より前のバイト列は、節を作るときも足すときも変わらない", () => {
     const pack = readCharacterPack(writeBundledPack("架空"))
-    const memory = createPersonaMemory(pack, dir, home())
+    const memory = createPersonaMemory(pack, dir(), home())
 
     memory.remember(LINE)
     const first = homePersona("架空") ?? ""
@@ -128,7 +120,7 @@ describe("createPersonaMemory", () => {
   it("書き足したあとの persona.md はそのまま読み直せる（readCharacterPack が壊れない）", () => {
     const pack = readCharacterPack(writeBundledPack("架空"))
 
-    createPersonaMemory(pack, dir, home()).remember(LINE)
+    createPersonaMemory(pack, dir(), home()).remember(LINE)
 
     const reread = readCharacterPack(join(home(), "架空"))
     expect(reread.definition?.name).toBe("架空の精霊")
@@ -137,11 +129,11 @@ describe("createPersonaMemory", () => {
   })
 
   it("人格が無いパックでも、節だけの persona.md を作って書ける", () => {
-    const packDir = join(dir, "bundled", "人格なし")
+    const packDir = join(dir(), "bundled", "人格なし")
     mkdirSync(packDir, { recursive: true })
     writeFileSync(join(packDir, "character.json"), DEFINITION_JSON)
 
-    createPersonaMemory(readCharacterPack(packDir), dir, home()).remember(LINE)
+    createPersonaMemory(readCharacterPack(packDir), dir(), home()).remember(LINE)
 
     expect(homePersona("人格なし")).toBe(`${REMEMBERED_SECTION_HEADING}\n\n- ${LINE}\n`)
   })
@@ -149,7 +141,7 @@ describe("createPersonaMemory", () => {
 
 describe("上限: 1ターンに1行", () => {
   it("同じターンの2回目以降は書かず、ターンが終われば次の1行を受け付ける", () => {
-    const memory = createPersonaMemory(readCharacterPack(writeBundledPack("架空")), dir, home())
+    const memory = createPersonaMemory(readCharacterPack(writeBundledPack("架空")), dir(), home())
 
     memory.remember(LINE)
     memory.remember("同じターンの2行目")
@@ -164,7 +156,7 @@ describe("上限: 1ターンに1行", () => {
   })
 
   it("受け付けられなかった行はターンの1行を使わない（長すぎた次にもう一度書ける）", () => {
-    const memory = createPersonaMemory(readCharacterPack(writeBundledPack("架空")), dir, home())
+    const memory = createPersonaMemory(readCharacterPack(writeBundledPack("架空")), dir(), home())
 
     memory.remember("あ".repeat(MAX_REMEMBERED_LINE_LENGTH + 1))
     memory.remember(LINE)
@@ -177,19 +169,19 @@ describe("上限: 1行の長さ", () => {
   it("120文字ちょうどは書き、超えた行と改行を含む行は書かない", () => {
     const pack = readCharacterPack(writeBundledPack("架空"))
 
-    const tooLong = createPersonaMemory(pack, dir, home())
+    const tooLong = createPersonaMemory(pack, dir(), home())
     tooLong.remember("あ".repeat(MAX_REMEMBERED_LINE_LENGTH + 1))
     expect(homePersona("架空")).toBeUndefined()
 
-    const multiline = createPersonaMemory(pack, dir, home())
+    const multiline = createPersonaMemory(pack, dir(), home())
     multiline.remember(`${LINE}\n## 好きなもの`)
     expect(homePersona("架空")).toBeUndefined()
 
-    const empty = createPersonaMemory(pack, dir, home())
+    const empty = createPersonaMemory(pack, dir(), home())
     empty.remember("   ")
     expect(homePersona("架空")).toBeUndefined()
 
-    const justFits = createPersonaMemory(pack, dir, home())
+    const justFits = createPersonaMemory(pack, dir(), home())
     justFits.remember("あ".repeat(MAX_REMEMBERED_LINE_LENGTH))
     expect(rememberedLines(homePersona("架空") ?? "")).toEqual([
       `- ${"あ".repeat(MAX_REMEMBERED_LINE_LENGTH)}`,
@@ -199,7 +191,7 @@ describe("上限: 1行の長さ", () => {
 
 describe("上限: 節が持てる行数", () => {
   it("20行を超えるといちばん古い行が落ちる（節より前は変わらない）", () => {
-    const memory = createPersonaMemory(readCharacterPack(writeBundledPack("架空")), dir, home())
+    const memory = createPersonaMemory(readCharacterPack(writeBundledPack("架空")), dir(), home())
 
     for (let index = 1; index <= MAX_REMEMBERED_LINES + 1; index += 1) {
       memory.remember(`覚えたこと${index}`)
@@ -217,7 +209,7 @@ describe("上限: 節が持てる行数", () => {
 
 describe("forget", () => {
   it("完全一致した1行だけを消す（節より前と、残りの行は変わらない）", () => {
-    const memory = createPersonaMemory(readCharacterPack(writeBundledPack("架空")), dir, home())
+    const memory = createPersonaMemory(readCharacterPack(writeBundledPack("架空")), dir(), home())
 
     memory.remember(LINE)
     memory.finishTurn()
@@ -235,7 +227,7 @@ describe("forget", () => {
   })
 
   it("`- ` の印と前後の空白は吸収して指せる", () => {
-    const memory = createPersonaMemory(readCharacterPack(writeBundledPack("架空")), dir, home())
+    const memory = createPersonaMemory(readCharacterPack(writeBundledPack("架空")), dir(), home())
 
     memory.remember(LINE)
     memory.finishTurn()
@@ -249,14 +241,14 @@ describe("forget", () => {
   it("一致する行が無ければ何も変えない（ホームへ写しも作らない）", () => {
     const pack = readCharacterPack(writeBundledPack("架空"))
 
-    createPersonaMemory(pack, dir, home()).forget("覚えていないこと")
+    createPersonaMemory(pack, dir(), home()).forget("覚えていないこと")
 
     expect(homePersona("架空")).toBeUndefined()
     expect(readFileSync(join(pack.dir, "persona.md"), "utf8")).toBe(PERSONA)
   })
 
   it("言い換え・前方一致では消せない（完全一致だけ）", () => {
-    const memory = createPersonaMemory(readCharacterPack(writeBundledPack("架空")), dir, home())
+    const memory = createPersonaMemory(readCharacterPack(writeBundledPack("架空")), dir(), home())
 
     memory.remember(LINE)
     memory.finishTurn()
@@ -267,7 +259,7 @@ describe("forget", () => {
 
   it("人が書いた節の箇条書きは消せない（節より前は触らない）", () => {
     const pack = readCharacterPack(writeBundledPack("架空", PERSONA_WITH_BULLET))
-    const memory = createPersonaMemory(pack, dir, home())
+    const memory = createPersonaMemory(pack, dir(), home())
 
     memory.remember(LINE)
     memory.finishTurn()
@@ -280,7 +272,7 @@ describe("forget", () => {
   })
 
   it("同じ文面が2行あるときは、いちばん古い1つだけを消す", () => {
-    const memory = createPersonaMemory(readCharacterPack(writeBundledPack("架空")), dir, home())
+    const memory = createPersonaMemory(readCharacterPack(writeBundledPack("架空")), dir(), home())
 
     memory.remember(LINE)
     memory.finishTurn()
@@ -295,7 +287,7 @@ describe("forget", () => {
 
   it("最後の1行を消すと見出しごと消え、節より前は1バイトも変わらない", () => {
     const pack = readCharacterPack(writeBundledPack("架空"))
-    const memory = createPersonaMemory(pack, dir, home())
+    const memory = createPersonaMemory(pack, dir(), home())
 
     memory.remember(LINE)
     memory.finishTurn()
@@ -310,7 +302,7 @@ describe("forget", () => {
 
 describe("上限: 1ターンに1行消す", () => {
   it("同じターンの2回目以降は消さず、ターンが終われば次の1行を消せる", () => {
-    const memory = createPersonaMemory(readCharacterPack(writeBundledPack("架空")), dir, home())
+    const memory = createPersonaMemory(readCharacterPack(writeBundledPack("架空")), dir(), home())
 
     for (const line of ["覚えたこと1", "覚えたこと2", "覚えたこと3"]) {
       memory.remember(line)
@@ -329,7 +321,7 @@ describe("上限: 1ターンに1行消す", () => {
   })
 
   it("一致しなかった回はターンの1行を使わない", () => {
-    const memory = createPersonaMemory(readCharacterPack(writeBundledPack("架空")), dir, home())
+    const memory = createPersonaMemory(readCharacterPack(writeBundledPack("架空")), dir(), home())
 
     memory.remember(LINE)
     memory.finishTurn()
@@ -340,7 +332,7 @@ describe("上限: 1ターンに1行消す", () => {
   })
 
   it("`remember` と `forget` は別に数える（同じターンで覚え直せる）", () => {
-    const memory = createPersonaMemory(readCharacterPack(writeBundledPack("架空")), dir, home())
+    const memory = createPersonaMemory(readCharacterPack(writeBundledPack("架空")), dir(), home())
 
     memory.remember(LINE)
     memory.finishTurn()
@@ -354,7 +346,7 @@ describe("上限: 1ターンに1行消す", () => {
 
 describe("書かないパック", () => {
   it("起動先の characters/local と同じ名前のパックには書かない", () => {
-    const cwd = join(dir, "cwd")
+    const cwd = join(dir(), "cwd")
     const localDir = join(cwd, "characters", "local")
     mkdirSync(localDir, { recursive: true })
     writeFileSync(join(localDir, "character.json"), DEFINITION_JSON)
@@ -367,7 +359,7 @@ describe("書かないパック", () => {
   })
 
   it("起動先の characters/local と同じ名前のパックからは消しもしない", () => {
-    const cwd = join(dir, "cwd")
+    const cwd = join(dir(), "cwd")
     const localDir = join(cwd, "characters", "local")
     mkdirSync(localDir, { recursive: true })
     writeFileSync(join(localDir, "character.json"), DEFINITION_JSON)
@@ -388,7 +380,7 @@ describe("onChange（画面のサイドバーへ流し直す口）", () => {
     const changes: (readonly string[])[] = []
     const memory = createPersonaMemory(
       readCharacterPack(writeBundledPack("架空")),
-      dir,
+      dir(),
       home(),
       (lines) => changes.push(lines),
     )
@@ -402,7 +394,7 @@ describe("onChange（画面のサイドバーへ流し直す口）", () => {
     const changes: (readonly string[])[] = []
     const memory = createPersonaMemory(
       readCharacterPack(writeBundledPack("架空")),
-      dir,
+      dir(),
       home(),
       (lines) => changes.push(lines),
     )
@@ -417,7 +409,7 @@ describe("onChange（画面のサイドバーへ流し直す口）", () => {
   it("消せたときも、更新後の一覧を渡して呼ぶ（消せなかった回は呼ばない）", () => {
     const changes: (readonly string[])[] = []
     const pack = readCharacterPack(writeBundledPack("架空"))
-    const memory = createPersonaMemory(pack, dir, home(), (lines) => changes.push(lines))
+    const memory = createPersonaMemory(pack, dir(), home(), (lines) => changes.push(lines))
 
     memory.remember(LINE)
     memory.finishTurn()
@@ -433,7 +425,7 @@ describe("onChange（画面のサイドバーへ流し直す口）", () => {
 describe("readRememberedLines", () => {
   it("ホームの写しがあれば、そこから `- ` を外した一覧を返す（古い→新しいの順）", () => {
     const pack = readCharacterPack(writeBundledPack("架空"))
-    const memory = createPersonaMemory(pack, dir, home())
+    const memory = createPersonaMemory(pack, dir(), home())
     memory.remember(LINE)
     memory.finishTurn()
     memory.remember("星を見るのが好き")
@@ -459,30 +451,30 @@ describe("readRememberedLines", () => {
 describe("forgetRememberedLineFromScreen（画面の「編集」から1行消す）", () => {
   it("完全一致した1行だけを消し、更新後の一覧を返す（節より前は変わらない）", () => {
     const pack = readCharacterPack(writeBundledPack("架空"))
-    const memory = createPersonaMemory(pack, dir, home())
+    const memory = createPersonaMemory(pack, dir(), home())
     memory.remember(LINE)
     memory.finishTurn()
     memory.remember("星を見るのが好き")
 
-    expect(forgetRememberedLineFromScreen(pack, dir, LINE, home())).toEqual(["星を見るのが好き"])
+    expect(forgetRememberedLineFromScreen(pack, dir(), LINE, home())).toEqual(["星を見るのが好き"])
     expect(beforeSection(homePersona("架空") ?? "")).toBe(`${PERSONA}\n`)
   })
 
   it("**1ターン1行の上限は掛からない**（続けて2行消せる）", () => {
     const pack = readCharacterPack(writeBundledPack("架空"))
-    const memory = createPersonaMemory(pack, dir, home())
+    const memory = createPersonaMemory(pack, dir(), home())
     memory.remember("覚えたこと1")
     memory.finishTurn()
     memory.remember("覚えたこと2")
 
-    expect(forgetRememberedLineFromScreen(pack, dir, "覚えたこと1", home())).toEqual([
+    expect(forgetRememberedLineFromScreen(pack, dir(), "覚えたこと1", home())).toEqual([
       "覚えたこと2",
     ])
-    expect(forgetRememberedLineFromScreen(pack, dir, "覚えたこと2", home())).toEqual([])
+    expect(forgetRememberedLineFromScreen(pack, dir(), "覚えたこと2", home())).toEqual([])
   })
 
   it("起動先の characters/local と同じ名前のパックからは消せない（undefined）", () => {
-    const cwd = join(dir, "cwd")
+    const cwd = join(dir(), "cwd")
     const localDir = join(cwd, "characters", "local")
     mkdirSync(localDir, { recursive: true })
     writeFileSync(join(localDir, "character.json"), DEFINITION_JSON)
