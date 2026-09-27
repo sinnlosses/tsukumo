@@ -47,3 +47,12 @@
 - **委譲の前に、作業ツリーが立ち上がっているか（`node_modules` と `dist/browser/`）をメインが確かめる**（振り返り: T-671）
   - 根拠: T-671 の委譲先は、作業ツリーに `vitest` が入っておらず `dist/browser/` も無いのを見つけ、CLAUDE.md が「人がやる」とする `pnpm install` と `pnpm run build` を自分で打って進めた。bun から pnpm へ移したあと、古い作業ツリーでは同じ状態が他でも起き得る。T-759 はホームや共有の環境を扱い、作業ツリーの立ち上げは扱っていない
   - 出し先: `next-task` 手順4と5の間（`node_modules/.bin/vitest` と `dist/browser/` が無ければ委譲せず、人に立ち上げを頼んで `task release` する）。`docs/workflow.md` の上乗せでもよい
+- **Vitest で単体テストのファイルが並列に走るようになってから、`pnpm run check` の揺れが増えたのをまとめて扱う**（振り返り: T-686）
+  - 根拠: T-686 の受け入れと送り出しで、文書とコメントしか変えていないのに `check` が3回落ちた。`test/architecture.test.ts` の className の検査が既定の 5000ms で時間切れ・`test/cli.test.ts` が `dist/browser/` の対を読めない（上の `bundle.test.ts` の項）・`main-history.test.ts` の実行中に unhandled error。どれも単独では通る
+  - 出し先: タスク（重い検査の `testTimeout` を個別に伸ばすか、実物のファイルやプロセスに触るファイルを `poolOptions` などで直列にする。`pnpm run test` を10回回して落ちないことを完了条件にする）
+- **`task ship` が `VERIFY_FAILED` で止まったあと打ち直すと、付け替え済みのため `verify=skipped` のまま送られる**（振り返り: T-686）
+  - 根拠: T-686 で1回目の `ship` が付け替え後の検証で落ち、2回目は `rebased=no verify=skipped` で `SHIPPED` になった。送ったあとに手で `check` を回して通ることは確かめたが、検証に落ちた中身がそのまま main に入りうる
+  - 出し先: `task-workflow` の `task.py`（`VERIFY_FAILED` の印を残し、次の `ship` で付け替えが無くても検証を走らせる）
+- **T-764 の完了条件に、本物の GitHub・bd の設定で確かめていない3点を足す**（振り返り: T-762）
+  - 根拠: T-762 は偽の `gh`・`bd github sync` でしか試していない。(1) actor（作業ツリー名）が Issue の assignee に送られて弾かれないか、(2) `gh project item-edit` と Project の JSON の形が偽物と合っているか（形は記憶から作った）、(3) 自己テストで `bd init --stealth` を並列に回した時間帯に `~/.config/bd/config.yaml` の `metrics.disabled` が `false` に変わっていた（戻し済み。`bd init` を1本ずつ打つことは WORKFLOW.md に書いた）
+  - 出し先: T-764 の `## 完了条件`（移したあと `bd github sync --push-only` で Issue 1件と Status 欄が期待どおりになること、`bd init` のあと `bd metrics` が OFF のままであることを確かめる）
