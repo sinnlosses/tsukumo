@@ -6,6 +6,7 @@
 // - 起こした tsukumo は `afterEach` で自分の pid だけに `SIGTERM` を送り、終わるのを待ってから
 //   一時のディレクトリを消す
 // - 判定は DOM の構造とメッセージの列の2つの JSON だけ。スクリーンショットは目視の添え物
+// - `open` は疑似セッションの予定の最初の静かな区切りまでが届いてから部屋を渡す
 //
 // 成果物に入るのは疑似セッション（`test/fixture/fake-session.json`）の手書きの会話だけ
 // （docs/coding-standards.md「会話内容の扱い」）。起動トークンと絶対パスは置き換えてから書く。
@@ -26,7 +27,14 @@ import process from "node:process"
 import { fileURLToPath } from "node:url"
 
 import { type Browser, chromium, type Page } from "playwright-core"
+import { countBy, sortBy } from "remeda"
 import { afterAll, afterEach, beforeAll, expect } from "vitest"
+
+import {
+  type FakeSessionStep,
+  readFakeSession,
+  startupSteps,
+} from "../../src/server/session-driver/adapter/fake-driver.ts"
 
 /** サーバとブラウザの時計を凍らせる瞬間（走らせる日に依らない固定の値）。 */
 const FIXED_INSTANT = "2026-01-15T01:00:00Z"
@@ -47,6 +55,13 @@ const LAUNCH_TIMEOUT_MS = 15_000
 
 /** 狙ったイベントが届くまで待つ上限（ミリ秒）。場面の長さ（20 秒まで）に余裕を持たせる。 */
 const EVENT_TIMEOUT_MS = 30_000
+
+/**
+ * 疑似セッションの予定で、次の手までこれ以上空いた時点を静かな区切りと見なす。
+ * `open` は最初の区切りまでの手を待つので、渡したあとの操作が場面のタイマーと競わない。
+ * 場面の中の手の間隔（`test/fixture/fake-session.json` では 100ms 刻み）より長く、場面の区切り以下にする。
+ */
+const QUIET_GAP_MS = 500
 
 /**
  * DOM の構造が落ち着いたと見なすまでの読み直しの間隔と回数。時計を止めたあとは時間で進むものが
@@ -75,14 +90,17 @@ export type ScenarioOptions = {
   readonly viewport: keyof typeof VIEWPORTS
 }
 
-/** 起こして開いた1件。シナリオはこれに対して待ち・操作・判定を行う。 */
+/**
+ * 起こして開いた1件。シナリオはこれに対して待ち・操作・判定を行う。
+ * 渡した時点で、`opening` と名指しの場面の予定のうち最初の静かな区切り（`QUIET_GAP_MS`）までの手は届いている。
+ */
 export type ScenarioRoom = {
   readonly page: Page
   /**
    * 起こした tsukumo の cwd（`realpath` を通した絶対パス）。`main` の develop/task/ を読む
    * タスクの一覧のように、疑似セッションの場面ではなく cwd の中身そのものが元になるシナリオ
-   * だけがここへ書き足す（`git init` など）。書き足すのはブラウザが繋がったのを確かめたあと
-   * にする——起こす前や繋がる前に用意すると、最初の見回りが `hello` に畳まれてしまい、
+   * だけがここへ書き足す（`git init` など）。書き足すのは `open` が部屋を渡したあとにする。
+   * 起こす前や繋がる前に用意すると、最初の見回りが `hello` に畳まれてしまい、
    * 変化を捕まえる `waitForEvent` の的が無くなる（docs/design.md 10章「E2E の走らせ方」）。
    */
   readonly cwd: string
@@ -178,6 +196,7 @@ async function openRoom(
 
   const messages = recordMessages(page)
   await page.goto(viewUrl, { waitUntil: "domcontentloaded" })
+  await waitForQuietPoint(messages, options.scene)
 
   const replacements: readonly (readonly [string, string])[] = [
     // 長いものから置き換える（一時のディレクトリは互いの前置きにならないが、根は短い）。
@@ -213,6 +232,33 @@ async function openRoom(
       )
     },
   }
+}
+
+/**
+ * fake driver が流し始める予定（`startupSteps`）を読み、最初の静かな区切りまでの手が
+ * 種別ごとの回数ですべて届くまで待つ。区切りは予定の時刻だけから決まり、走らせる速さに依らない。
+ */
+async function waitForQuietPoint(messages: MessageRecord, scene: string): Promise<void> {
+  const session = readFakeSession()
+  if (session === undefined) {
+    throw new Error("疑似セッション（test/fixture/fake-session.json）が読めない")
+  }
+  const counts = countBy(
+    stepsThroughQuietPoint(startupSteps(session, scene)),
+    (step) => step.event.kind,
+  )
+  for (const [kind, count] of Object.entries(counts)) {
+    await messages.waitForEvent(kind, count)
+  }
+}
+
+/** 時刻の順に並べた予定を、次の手まで `QUIET_GAP_MS` 以上空く最初の手まで切り出す。 */
+function stepsThroughQuietPoint(steps: readonly FakeSessionStep[]): readonly FakeSessionStep[] {
+  const ordered = sortBy(steps, (step) => step.afterMs)
+  const quietIndex = ordered.findIndex(
+    (step, index) => (ordered[index + 1]?.afterMs ?? Infinity) - step.afterMs >= QUIET_GAP_MS,
+  )
+  return ordered.slice(0, quietIndex + 1)
 }
 
 type TempDirectory = {

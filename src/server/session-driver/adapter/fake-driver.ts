@@ -271,20 +271,14 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
   // 同じく `supportedModels()` の代わり（`relaySupportedModels`）。
   emit({ kind: "model-effort-support", models: FAKE_MODEL_EFFORT_SUPPORT })
 
-  // 名指しされた場面（無ければ findIndex が -1 を返すだけ）。`opening` と重ならないように、
-  // その終わりから続けて流す。
-  const namedIndex = options.session.turns.findIndex((scene) => scene.name === options.scene)
-  const namedScene = namedIndex < 0 ? undefined : options.session.turns[namedIndex]
   void options.firstViewer.then(() => {
     if (closed) {
       return
     }
-    play(options.session.opening, 0)
-    if (namedScene !== undefined) {
-      play(namedScene.steps, openingSpanMs(options.session.opening))
-    }
+    play(startupSteps(options.session, options.scene), 0)
   })
-  let playedTurns = namedScene === undefined ? 0 : namedIndex + 1
+  const namedIndex = options.session.turns.findIndex((scene) => scene.name === options.scene)
+  let playedTurns = namedIndex + 1
 
   /** 次の場面を流す（依頼でも、記録に残さない依頼でも同じ）。 */
   const playNextTurn = (): void => {
@@ -351,9 +345,24 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
   }
 }
 
-/** `opening` が流れ終わる時刻（一番遅い手の `afterMs`）。名指しの場面はこの後ろに続ける。 */
-function openingSpanMs(opening: readonly FakeSessionStep[]): number {
-  return opening.reduce((span, step) => Math.max(span, step.afterMs), 0)
+/**
+ * 最初のビューが繋がってから流す手を、流し始めからの `afterMs` で1本に並べる。
+ * `opening` のあとに、名指しの場面（`scene`）を `opening` の一番遅い手の時刻から続ける。
+ * 名前が疑似セッションに無ければ `opening` だけ。
+ */
+export function startupSteps(
+  session: FakeSession,
+  scene: string | undefined,
+): readonly FakeSessionStep[] {
+  const namedScene = session.turns.find((candidate) => candidate.name === scene)
+  const openingSpanMs = session.opening.reduce((span, step) => Math.max(span, step.afterMs), 0)
+  return [
+    ...session.opening,
+    ...(namedScene?.steps ?? []).map((step) => ({
+      ...step,
+      afterMs: openingSpanMs + step.afterMs,
+    })),
+  ]
 }
 
 /**

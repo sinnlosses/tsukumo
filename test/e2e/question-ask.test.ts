@@ -25,7 +25,6 @@ describe("質問", () => {
       viewport: "wide",
     })
 
-    await room.waitForEvent("pending-changed")
     await room.waitForEvent("turn-finished")
     await room.settleAndMatch(ELAPSED_MS)
   })
@@ -37,7 +36,6 @@ describe("質問", () => {
       viewport: "wide",
     })
 
-    await room.waitForEvent("pending-changed")
     await room.waitForEvent("turn-finished")
     await room.settleAndMatch(ELAPSED_MS)
   })
@@ -49,7 +47,6 @@ describe("質問", () => {
       viewport: "wide",
     })
 
-    await room.waitForEvent("pending-changed")
     await room.waitForEvent("turn-finished")
     await room.settleAndMatch(ELAPSED_MS)
   })
@@ -61,11 +58,7 @@ describe("質問", () => {
       viewport: "wide",
     })
 
-    await room.waitForEvent("pending-changed")
-    // question-preview は turn-finished を流さない場面（答えないまま比較だけを見せる）ので、
-    // その次に届く speech まで待ってから撮る。1回目の speech は `opening` の立ち上がりの
-    // 一言（名指しの場面より先に流れる）なので、2回目（この場面自身の speech）を待つ。
-    await room.waitForEvent("speech", 2)
+    // turn-finished を流さない場面で、`open` が渡した時点で場面の手はすべて届いている。
     await room.settleAndMatch(ELAPSED_MS)
   })
 })

@@ -11,7 +11,7 @@ import { type ScenarioRoom, useScenarioRun } from "./scenario-run.ts"
 // （読み方は `src/server/repository/adapter/task-summary.ts` の冒頭）。足場として、一時の cwd に `git init` して `develop/task/` を
 // 手書きし、`main` へコミットする。
 //
-// リポジトリを作るのは、ブラウザが繋がった（`speech` が届いた）のを確かめたあとにする。
+// リポジトリを作るのは、`open` が部屋を渡した（ブラウザが繋がった）あとにする。
 // 起こす前や繋がる前に用意すると、tsukumo の最初の見回り（起こした時点で1回走る）が
 // ブラウザの `hello` に畳まれてしまい、`tasks-changed` が `events` として届かず
 // `waitForEvent` の的が無くなる（10章「E2E の走らせ方」の「場面が流れ終わるのを時間で
@@ -50,7 +50,6 @@ function writeTask(cwd: string, id: string, summary: string, status: string): vo
 
 async function openTaskListRoom(scenario: string): Promise<ScenarioRoom> {
   const room = await run.open({ scenario, scene: "none", viewport: "wide" })
-  await room.waitForEvent("speech")
 
   await git(room.cwd, "init", "--quiet", "-b", "main")
   await git(room.cwd, "config", "user.name", "tsukumo-e2e")
