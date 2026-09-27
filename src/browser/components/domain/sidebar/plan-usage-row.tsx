@@ -10,9 +10,9 @@
 // 取得中に前の値があれば、2段の枠の行を薄く残したまま「取得中…」を出す（`fetching` が
 // `true` のとき）。
 //
-// `aria-busy` は付けない。
-// ターンが終わるたびに取り直すので、`turn-finished` が続けて届くと取り直しが重なり、
-// E2E の「DOM が落ち着くまで待つ」判定（`aria-busy="true"` の要素が消えるまで待つ）が時間切れになる。
+// 取り直しのあいだは札に `aria-busy` を立てる。
+// E2E の「DOM が落ち着くまで待つ」判定はこれを見て、ターンの終わりに始まった取り直しが
+// 終わるまで撮らない。
 
 import clsx from "clsx"
 import { CircleX, TriangleAlert } from "lucide-react"
@@ -50,7 +50,7 @@ export function PlanUsageRow(): ReactElement {
   const windows = windowsOf(state)
 
   return (
-    <div className={styles["plan-usage-row"]}>
+    <div className={styles["plan-usage-row"]} aria-busy={fetching ? "true" : undefined}>
       <div className={styles["plan-usage-row-header"]}>
         <span className={styles["plan-usage-row-label"]}>{ROW_LABEL}</span>
         <span className={styles["plan-usage-row-spacer"]} aria-hidden="true" />
