@@ -129,7 +129,7 @@ node scripts/stop.ts           # 動いている tsukumo の一覧（--port <n> 
 - ブランチ: 切らない（自分でブランチを切らない）。**枝の寿命は作業ツリーの寿命と同じ**で、
   1本の枝がいくつでもタスクを持つ
 
-状態はチャットではなく `develop/task/`（1件1ファイル）と `develop/direction.md` に残す。手順は
+状態はチャットではなく `develop/task/`（1件1ファイル）・`develop/direction.md`・`develop/draft/`（エージェントのドラフト。1件1ファイル）に残す。手順は
 `~/.claude/skills/task-workflow/WORKFLOW.md` が正典で、このリポジトリの上乗せは
 `docs/workflow.md`。**タスクは `difficulty` と同じモデルのサブエージェントに委譲し**、判断が
 想定より要ると分かったら押し切らず `difficulty` を上げて再開する。完了は検証できる証拠で判定する。
