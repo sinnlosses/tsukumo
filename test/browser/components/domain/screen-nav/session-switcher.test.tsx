@@ -103,14 +103,18 @@ describe("セッションの札と切り替え画面", () => {
     expect(switcherOpen()).toBe(true)
   })
 
-  it("⌘K でも開き、もう一度押すと閉じる", () => {
+  it("札の一行は短縮IDに乗ったときだけ出て、部屋の名前に乗っても出ない", () => {
     renderNav({})
+    const [tag] = screen.getAllByRole("button", { name: /セッション FA。/u })
+    if (tag === undefined) {
+      throw new Error("札が無い")
+    }
 
-    fireEvent.keyDown(document, { key: "k", metaKey: true })
-    expect(switcherOpen()).toBe(true)
+    fireEvent.pointerEnter(within(tag).getByText("空色の間"))
+    expect(screen.queryByRole("tooltip")).toBeNull()
 
-    fireEvent.keyDown(document, { key: "k", metaKey: true })
-    expect(switcherOpen()).toBe(false)
+    fireEvent.pointerEnter(within(tag).getByText("FA"))
+    expect(screen.getByRole("tooltip").textContent).toContain("セッション FA")
   })
 
   it("一覧は今日・昨日・それより前に分かれ、いまの行に「いま」が付く", () => {

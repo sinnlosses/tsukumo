@@ -57,6 +57,16 @@
         ]
       },
       {
+        "tag": "span",
+        "attributes": {
+          "role": "tooltip"
+        },
+        "children": [
+          "セッション FA · 1/15 09:12〜 · 依頼 3",
+          "押して切り替え"
+        ]
+      },
+      {
         "tag": "div",
         "attributes": {
           "role": "group",

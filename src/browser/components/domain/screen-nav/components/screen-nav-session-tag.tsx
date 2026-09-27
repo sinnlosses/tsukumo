@@ -1,6 +1,6 @@
 // 帯の左端の部屋の名前と、いまのセッションの短縮IDの札（`docs/screen-design.md`「セッションの札」）。「浅葱の間 - FA」の全体が1つのボタンで、押すと切り替え画面が開く
-// （プルダウンにはしない）。ホバーかフォーカスで、いまのセッションの一行
-// （ID・始まった時刻・依頼の数・「押して切り替え ⌘K」）を下に出す。
+// （プルダウンにはしない）。短縮IDへのホバーか札へのフォーカスで、いまのセッションの一行
+// （ID・始まった時刻・依頼の数・「押して切り替え」）を下に出す。
 //
 // 狭い画面では帯の左端が無い（「≡」だけになる）ので、同じ部品が「≡」の中の先頭にも出る。
 
@@ -21,7 +21,7 @@ export type ScreenNavSessionTagProps = {
   readonly onOpened: () => void
 }
 
-const SHORTCUT_HINT = "押して切り替え ⌘K"
+const SWITCH_HINT = "押して切り替え"
 const UNKNOWN_SESSION = "記録前のセッション"
 
 export function ScreenNavSessionTag(props: ScreenNavSessionTagProps): ReactElement {
@@ -33,8 +33,6 @@ export function ScreenNavSessionTag(props: ScreenNavSessionTagProps): ReactEleme
   return (
     <span
       className={clsx(styles["screen-nav-session-tag"], shellStyles["screen-nav-session-tag"])}
-      onPointerEnter={() => setPeeking(true)}
-      onPointerLeave={() => setPeeking(false)}
       onFocus={() => setPeeking(true)}
       onBlur={() => setPeeking(false)}
     >
@@ -55,7 +53,13 @@ export function ScreenNavSessionTag(props: ScreenNavSessionTagProps): ReactEleme
             <span className={styles["screen-nav-session-tag-dash"]} aria-hidden="true">
               -
             </span>
-            <span className={styles["screen-nav-session-tag-id"]}>{tag.identity.shortId}</span>
+            <span
+              className={styles["screen-nav-session-tag-id"]}
+              onPointerEnter={() => setPeeking(true)}
+              onPointerLeave={() => setPeeking(false)}
+            >
+              {tag.identity.shortId}
+            </span>
           </>
         )}
       </button>
@@ -82,7 +86,7 @@ function SessionTagTooltip(props: SessionTagTooltipProps): ReactElement {
   return (
     <span role="tooltip" className={styles["screen-nav-session-tag-tooltip"]}>
       {parts.filter((part) => part !== "").join(" · ")}
-      <span className={styles["screen-nav-session-tag-hint"]}>{SHORTCUT_HINT}</span>
+      <span className={styles["screen-nav-session-tag-hint"]}>{SWITCH_HINT}</span>
     </span>
   )
 }

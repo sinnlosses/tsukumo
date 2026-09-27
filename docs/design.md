@@ -1179,25 +1179,25 @@ test/e2e/expected/` で意図した変化だけであることを確かめる �
 
 「載せない」は終わりの構造では捕まえられないもの。
 
-| シナリオ（機能）                                                    | 場面（`fake-session.json`）                                                                                                       | ファイル（`test/e2e/`） |
-| ------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | ----------------------- |
-| ターンの流れ（依頼 → ツール → report → 締めのセリフ）               | `report-tool`                                                                                                                     | `turn-flow`             |
-| 入力欄から送る（`prompt` が流れ、`request` が戻る）                 | 名指し無し（`opening` → 送ると `report`）                                                                                         | `input-dispatch`        |
-| speak → キャラビューの吹き出し                                      | `closing-narration`・`question-multi`（セリフ3つ）                                                                                | `speak-bubble`          |
-| report → メインビュー（記法・差し戻し・整え）                       | `notation`・`report-rejected`・`report-tidied`                                                                                    | `report-main-view`      |
-| 途中の発話と流れる本文                                              | `narration`・`long-report`                                                                                                        | `narration-flow`        |
-| 許可のモーダル（押すと `answer` が流れ、箱が消える）                | `permission`                                                                                                                      | `permission-answer`     |
-| 質問（単数・複数・プレビュー）                                      | `question-pair`・`question-multi`・`question-long`・`question-preview`                                                            | `question-ask`          |
-| 続きのターン（`turn-resumed`）                                      | `resumed-report`                                                                                                                  | `turn-resumed`          |
-| ツールの実行といまの作業                                            | `long-tool`（`tool-started` の直後で撮る）                                                                                        | `current-work`          |
-| 背景のタスク                                                        | `background-task-short`（再開まで数秒。長い版 `background-task` は再開まで 12 秒超）                                              | `background-task`       |
-| 最終レポートの札                                                    | `background-task-interim-report`                                                                                                  | `final-report-label`    |
-| ターンの履歴                                                        | `turn-history`                                                                                                                    | `turn-history`          |
-| タスクの一覧                                                        | 名指し無し（`opening` のみ）。ブラウザが繋がったあと cwd に `git init` して `develop/task/` を手書きし、`main` へコミットする足場 | `task-list`             |
-| 雑談の切り替えと忘却の区切り                                        | `chat-compact-boundary`                                                                                                           | `chat-compact-boundary` |
-| 復元した雑談の履歴                                                  | `chat-restored-history`                                                                                                           | `chat-restored-history` |
-| セッションの札と切り替え画面（札・⌘K・↓ と Enter・狭い画面の「≡」） | `session-list`（作り物の一覧を `sessions-changed` で流す。右の欄は疑似セッションの `sessionDigests`）                             | `session-switch`        |
-| 途中のちらつき・止まって見える発話                                  | `interim-flicker`・`narration-stuck`・`narration-flash`                                                                           | 載せない（目視）        |
+| シナリオ（機能）                                                | 場面（`fake-session.json`）                                                                                                       | ファイル（`test/e2e/`） |
+| --------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | ----------------------- |
+| ターンの流れ（依頼 → ツール → report → 締めのセリフ）           | `report-tool`                                                                                                                     | `turn-flow`             |
+| 入力欄から送る（`prompt` が流れ、`request` が戻る）             | 名指し無し（`opening` → 送ると `report`）                                                                                         | `input-dispatch`        |
+| speak → キャラビューの吹き出し                                  | `closing-narration`・`question-multi`（セリフ3つ）                                                                                | `speak-bubble`          |
+| report → メインビュー（記法・差し戻し・整え）                   | `notation`・`report-rejected`・`report-tidied`                                                                                    | `report-main-view`      |
+| 途中の発話と流れる本文                                          | `narration`・`long-report`                                                                                                        | `narration-flow`        |
+| 許可のモーダル（押すと `answer` が流れ、箱が消える）            | `permission`                                                                                                                      | `permission-answer`     |
+| 質問（単数・複数・プレビュー）                                  | `question-pair`・`question-multi`・`question-long`・`question-preview`                                                            | `question-ask`          |
+| 続きのターン（`turn-resumed`）                                  | `resumed-report`                                                                                                                  | `turn-resumed`          |
+| ツールの実行といまの作業                                        | `long-tool`（`tool-started` の直後で撮る）                                                                                        | `current-work`          |
+| 背景のタスク                                                    | `background-task-short`（再開まで数秒。長い版 `background-task` は再開まで 12 秒超）                                              | `background-task`       |
+| 最終レポートの札                                                | `background-task-interim-report`                                                                                                  | `final-report-label`    |
+| ターンの履歴                                                    | `turn-history`                                                                                                                    | `turn-history`          |
+| タスクの一覧                                                    | 名指し無し（`opening` のみ）。ブラウザが繋がったあと cwd に `git init` して `develop/task/` を手書きし、`main` へコミットする足場 | `task-list`             |
+| 雑談の切り替えと忘却の区切り                                    | `chat-compact-boundary`                                                                                                           | `chat-compact-boundary` |
+| 復元した雑談の履歴                                              | `chat-restored-history`                                                                                                           | `chat-restored-history` |
+| セッションの札と切り替え画面（札・↓ と Enter・狭い画面の「≡」） | `session-list`（作り物の一覧を `sessions-changed` で流す。右の欄は疑似セッションの `sessionDigests`）                             | `session-switch`        |
+| 途中のちらつき・止まって見える発話                              | `interim-flicker`・`narration-stuck`・`narration-flash`                                                                           | 載せない（目視）        |
 
 **まだ無いシナリオ**: `/` の補完（`opening` のコマンド一覧に打つ）・`@` の補完（一時の cwd に手書きの
 ファイルを置く足場が要る）・API の不調（`api-retry`・`api-failure`・`rate-limit`）・書き終わりの知らせ

@@ -1,14 +1,11 @@
 // 帯の左上の部屋の名前の札と、押すと開く切り替え画面のロジック（`docs/screen-design.md`
-// 「セッションの札」「切り替え画面」）。札・切り替え画面・⌘K の3つが同じ開閉の状態を
+// 「セッションの札」「切り替え画面」）。札と切り替え画面が同じ開閉の状態を
 // 読むので、状態はここに1つだけ持つ。
 //
 // 一覧（`SessionState.sessions`）は軽いもの（ID・見出し・時刻）だけで、依頼の数・要約・
 // 最後のセリフは選んだ1件ぶんだけ取りに行く（`useSessionDigest`）。
-//
-// ⌘K（Ctrl+K）は画面のどこからでも開く。`document` の購読は React の外との同期なので
-// `useEffect` で取る（「外部システムの購読」）。
 
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useState } from "react"
 
 import { FRAME_ERROR_REASON } from "../../../../../shared/frame.ts"
 import type { SessionChoice } from "../../../../../shared/session/session-choice.ts"
@@ -101,19 +98,6 @@ export function useSessionSwitcher(room: string): SessionSwitcherView {
   }, [])
   const onClose = useCallback((): void => {
     setOpen(false)
-  }, [])
-
-  useEffect(() => {
-    function toggleOnShortcut(event: KeyboardEvent): void {
-      if ((event.metaKey || event.ctrlKey) && !event.altKey && event.key.toLowerCase() === "k") {
-        event.preventDefault()
-        setOpen((wasOpen) => !wasOpen)
-      }
-    }
-    document.addEventListener("keydown", toggleOnShortcut)
-    return () => {
-      document.removeEventListener("keydown", toggleOnShortcut)
-    }
   }, [])
 
   const shortIds = shortSessionIds([

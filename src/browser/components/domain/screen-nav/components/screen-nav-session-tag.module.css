@@ -3,14 +3,14 @@
    `theme.css` のトークンに写したもの。「≡」の面の中の見た目
    （`.screen-nav-panel .screen-nav-session-tag`）は `screen-nav.module.css` の @media が持つ。 */
 
-/* ホバーの一行（.screen-nav-session-tag-tooltip）を札の真下に重ねる基準。 */
+/* 短縮IDへのホバーの一行（.screen-nav-session-tag-tooltip）を札の真下に重ねる基準。 */
 .screen-nav-session-tag {
   position: relative;
   display: flex;
   flex: none;
 }
-/* 札そのもの。ふだんは枠も地も無く字だけに見せ、ホバー・開いているときに枠と地で押せることを
-   示す（色だけで伝えない。13.1 原則1）。 */
+/* 札そのもの。ふだんは枠も地も無く字だけに見せ、短縮IDへのホバー・開いているときに枠と地で
+   押せることを示す（色だけで伝えない。13.1 原則1）。 */
 .screen-nav-session-tag-button {
   display: flex;
   align-items: baseline;
@@ -25,7 +25,7 @@
   line-height: 2.5rem;
   cursor: pointer;
 }
-.screen-nav-session-tag-button:hover,
+.screen-nav-session-tag-button:has(.screen-nav-session-tag-id:hover),
 .screen-nav-session-tag-button[aria-expanded="true"] {
   border-color: var(--accent);
   background: var(--surface-accent);
