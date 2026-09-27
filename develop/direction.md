@@ -25,3 +25,9 @@
 - **`test/server/achievement/adapter/main-history.test.ts` が `bun run check` の中でときどき `EPIPE`（`child.stdin.end` への書き込み）を出して落ちるのを直す**（振り返り: T-750）
   - 根拠: T-750 の受け入れで、2718 件すべて pass のまま「main ブランチが無いリポジトリでは「不明」」の直後に未処理の `EPIPE` が1件出て `bun run check` が落ち、打ち直すと通った。T-750 は `src/browser` だけを触っている。子プロセスが stdin を読む前に終わる経路で書き込みの失敗を拾っていないと見られる。既存の揺れのタスク（T-671・T-739）はこのファイルを扱っていない
   - 出し先: タスク（stdin の `error` を拾うか書き込みを待つ形にし、`bun run test` を続けて10回流して出ないことを完了条件にする）
+- **Vitest で単体テストのファイルが並列に走るようになってから、`pnpm run check` の揺れが増えたのをまとめて扱う**（振り返り: T-686）
+  - 根拠: T-686 の受け入れと送り出しで、文書とコメントしか変えていないのに `check` が3回落ちた。`test/architecture.test.ts` の className の検査が既定の 5000ms で時間切れ・`test/cli.test.ts` が `dist/browser/` の対を読めない（上の `bundle.test.ts` の項）・`main-history.test.ts` の実行中に unhandled error。どれも単独では通る
+  - 出し先: タスク（重い検査の `testTimeout` を個別に伸ばすか、実物のファイルやプロセスに触るファイルを `poolOptions` などで直列にする。`pnpm run test` を10回回して落ちないことを完了条件にする）
+- **`task ship` が `VERIFY_FAILED` で止まったあと打ち直すと、付け替え済みのため `verify=skipped` のまま送られる**（振り返り: T-686）
+  - 根拠: T-686 で1回目の `ship` が付け替え後の検証で落ち、2回目は `rebased=no verify=skipped` で `SHIPPED` になった。送ったあとに手で `check` を回して通ることは確かめたが、検証に落ちた中身がそのまま main に入りうる
+  - 出し先: `task-workflow` の `task.py`（`VERIFY_FAILED` の印を残し、次の `ship` で付け替えが無くても検証を走らせる）
