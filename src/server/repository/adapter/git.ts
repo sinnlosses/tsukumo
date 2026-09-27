@@ -89,6 +89,7 @@ export function runGitCatFileBatch(
       chunks.push(chunk)
     })
     child.on("error", () => finish({ kind: "failed" }))
+    child.stdin.on("error", () => finish({ kind: "failed" }))
     child.on("close", (code) => {
       if (settled) {
         return
