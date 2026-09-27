@@ -74,8 +74,9 @@
 
 **前提条件**
 
-- [mise](https://mise.jdx.dev/) で入れた Node 26 と Bun 1.4（TS をそのまま node で実行する。
-  Bun はパッケージ管理と `bun link` に使う）。リポジトリの `mise.toml` がバージョンを固定している
+- [mise](https://mise.jdx.dev/) で入れた Node 26 と pnpm 10（TS をそのまま node で実行する。
+  pnpm はパッケージ管理と `pnpm link --global` に使う）。リポジトリの `mise.toml` がバージョンを
+  固定している
 - Claude Code が使える状態になっていること（Agent SDK が `claude` を子プロセスとして起こす）
 - 画面を出す箱として `orca` コマンドが使えること
   （無くてもタブが自動で開かないだけで、配信は続く）
@@ -84,38 +85,34 @@
 # 1. インストール
 git clone https://github.com/sinnlosses/tsukumo.git
 cd tsukumo
-mise install    # mise.toml が指す node@26 と bun@1.4 を入れる
-bun install
+mise install    # mise.toml が指す node@26 と pnpm@10 を入れる
+pnpm install
 
 # 2. ブラウザ側を組み立てる（成果物は dist/browser/。起動時には組み立てないので、無いと起動が止まる）
-bun run build
+pnpm run build
 
-# 3. tsukumo コマンドをグローバルに入れる（~/.bun/bin/tsukumo がこのリポジトリを指す）
-bun link
+# 3. tsukumo コマンドをグローバルに入れる（pnpm setup 済みの PNPM_HOME にリンクが張られる）
+pnpm link --global
 
 # 4. コマンドが通っているか確かめる
-which tsukumo   # ~/.bun/bin/tsukumo が出れば通っている
+which tsukumo   # PNPM_HOME の下の tsukumo が出れば通っている
 
 # 5. 好きなプロジェクトのディレクトリで起動する（characters/ も develop/ も無いディレクトリでよい）
 cd ~/path/to/your-project
 tsukumo
 ```
 
-`which tsukumo` が何も出さないときは `command not found` になります。`~/.bun/bin` が `PATH` に
-通っていないのが原因なので、シェルの設定（`.zshrc` / `.bashrc` など）に追加してください
-（mise の導入手順は [mise 公式](https://mise.jdx.dev/getting-started.html) を参照）:
+`which tsukumo` が何も出さないときは `command not found` になります。`pnpm setup` を先に打って
+`PNPM_HOME` を `PATH` に通す必要があります（`.zshrc` / `.bashrc` などに追記されます。
+mise の導入手順は [mise 公式](https://mise.jdx.dev/getting-started.html) を参照）。
 
-```bash
-export PATH="$HOME/.bun/bin:$PATH"
-```
+`pnpm link --global` を消すときは、**このリポジトリの直下で** `pnpm unlink --global` を実行します。
 
-`bun link` を消すときは、**このリポジトリの直下で** `bun unlink` を実行します。
-
-リポジトリ直下で開発しながら動かす場合は `bun run start` が `tsukumo` と同じ意味になります。
-`bun run dev` は起動の前に `bun run build` で1回組み立ててから、`start` と同じものに Vite の
+リポジトリ直下で開発しながら動かす場合は `pnpm run start` が `tsukumo` と同じ意味になります。
+`pnpm run dev` は起動の前に `pnpm run build` で1回組み立ててから、`start` と同じものに Vite の
 開発サーバを差し込んで起こします。`src/browser/` を保存すると、開いているタブへ画面の状態を保ったまま
 差し替わります（HMR。`src/server/core/` と `src/shared/` を直したときは上げ直しが要ります。開発中に直した
-ぶんを `tsukumo` に乗せるには `bun run build` を打ちます）。
+ぶんを `tsukumo` に乗せるには `pnpm run build` を打ちます）。
 
 ## 仕組み
 
@@ -172,7 +169,7 @@ tsukumo は**1つのプロセス**で、Agent SDK で Claude Code を子プロ�
 プロセスは動かしたままタブだけ閉じてしまったときは、開き直す道具があります。
 
 ```bash
-bun run scripts/open-views.ts http://127.0.0.1:7327
+node scripts/open-views.ts http://127.0.0.1:7327
 ```
 
 ## 使い方
@@ -264,26 +261,26 @@ TSUKUMO_CHARACTER=characters/local tsukumo
 ## 開発
 
 ```bash
-bun run check                 # typecheck + lint + format:check + test + test:e2e（変更後は必ずこれを通す）
-bun run test                  # 単体テスト全体（Vitest。`test/e2e/` は外す）
+pnpm run check                 # typecheck + lint + format:check + test + test:e2e（変更後は必ずこれを通す）
+pnpm run test                  # 単体テスト全体（Vitest。`test/e2e/` は外す）
 npx vitest run test/cli.test.ts  # 単体テストファイルのみ実行
-bun run test:e2e              # E2E（組み立ててから test/e2e/ を走らせる。手元の Chrome が要る。成果物と
+pnpm run test:e2e              # E2E（組み立ててから test/e2e/ を走らせる。手元の Chrome が要る。成果物と
                               #   スクリーンショットは /tmp/tsukumo-e2e/）
-bun run test:e2e:update       # E2E の期待値（test/e2e/expected/）を書き直す。git diff で読んでから入れる
-bun run typecheck             # css-types のあと tsc --noEmit
-bun run lint                  # oxlint（--fix は lint:fix）
-bun run format                # oxfmt で自動整形（--check は format:check）
-bun run build                 # ブラウザ側（src/browser/）を dist/browser/ に組み立てる。起動時には組み立てない
-                              #   ので、bun install のあとと src/browser/ を直したあとに打つ
-bun run start                 # セッションを起こし、ページのタブを Orca 内に開く（`tsukumo` コマンドと同じ。
+pnpm run test:e2e:update       # E2E の期待値（test/e2e/expected/）を書き直す。git diff で読んでから入れる
+pnpm run typecheck             # css-types のあと tsc --noEmit
+pnpm run lint                  # oxlint（--fix は lint:fix）
+pnpm run format                # oxfmt で自動整形（--check は format:check）
+pnpm run build                 # ブラウザ側（src/browser/）を dist/browser/ に組み立てる。起動時には組み立てない
+                              #   ので、pnpm install のあとと src/browser/ を直したあとに打つ
+pnpm run start                 # セッションを起こし、ページのタブを Orca 内に開く（`tsukumo` コマンドと同じ。
                               #   TSUKUMO_OPEN_VIEW=0 で自動オープンを止める。本物の claude を子プロセスで起こす。
                               #   成果物が無ければ前提不足で止まり、ソースのほうが新しければ1行知らせて古いまま配る）
-bun run dev                   # bun run build のあと、start と同じ経路を Vite の開発サーバつき（--dev）で起こす
+pnpm run dev                   # pnpm run build のあと、start と同じ経路を Vite の開発サーバつき（--dev）で起こす
                               #   （src/server/core/ と src/shared/ を直したときは上げ直しが要る。docs/design.md 11章）
-bun run scripts/open-views.ts <URL>  # プロセスは動いたままタブだけ閉じたときに開き直す
-bun run grid                  # 待ち受けていてタブもある部屋を iframe の格子に並べて Orca に開く。格子のタブが
+node scripts/open-views.ts <URL>  # プロセスは動いたままタブだけ閉じたときに開き直す
+pnpm run grid                  # 待ち受けていてタブもある部屋を iframe の格子に並べて Orca に開く。格子のタブが
                               #   あるあいだ常駐し、再読み込みのたびに並べ直す。タブを閉じると終わる
-bun run scripts/stop.ts       # 動いている tsukumo を一覧する（--port <n> でそれ1つだけ止める。pkill / killall は
+node scripts/stop.ts           # 動いている tsukumo を一覧する（--port <n> でそれ1つだけ止める。pkill / killall は
                               #   hook が拒否する。並べて動かすとどれも `node src/cli.ts` に見えて区別できないため）
 ```
 
@@ -319,7 +316,7 @@ bun run scripts/stop.ts       # 動いている tsukumo を一覧する（--port
 ├── assets/                 # ロゴ
 ├── docs/                   # 要件定義・設計・アーキテクチャ・規約・用語集（正典）
 ├── develop/                # 進捗管理（task/・direction.md）。機能には関係しない
-├── bin/tsukumo             # エントリポイント（bun link でグローバルに入る）
+├── bin/tsukumo             # エントリポイント（pnpm link --global でグローバルに入る）
 └── package.json
 ```
 

@@ -1,5 +1,5 @@
 // ブラウザ側スクリプト（`src/browser/`）と CSS を `vite build` で1本ずつにまとめる。作る口と
-// 読む口を分けてある: 作るのは `bun run build` だけで、
+// 読む口を分けてある: 作るのは `pnpm run build` だけで、
 // 起動は置いてある成果物を読むだけ（`readUiBundle`）。
 //
 // スクリプトと CSS は1回の `vite build` から出る対。CSS Modules（`*.module.css`）は
@@ -7,7 +7,7 @@
 // できてしまう。入口はブラウザ側の入口ファイル1つだけで、CSS はそこから import で辿れるもの
 // （`styles/theme.css` と各機能の `*.module.css`）が1本にまとまる。
 //
-// 成果物は `dist/browser/` に置く（`.gitignore` してあるので、各自が `bun run build` で作る）。
+// 成果物は `dist/browser/` に置く（`.gitignore` してあるので、各自が `pnpm run build` で作る）。
 // 起動時に `src/browser/` と成果物の新しさを比べ、古ければ知らせる（`readUiBundle` の `outdated`）。
 // 古くても画面は動くので止めはしない。
 //
@@ -54,7 +54,7 @@ const BUNDLED_SOURCE_DIR_RELATIVE_PATHS: readonly (readonly string[])[] = [
   ["src", "shared"],
 ]
 
-/** 成果物の置き場。`.gitignore` してあるので、各自が `bun run build` で作る。 */
+/** 成果物の置き場。`.gitignore` してあるので、各自が `pnpm run build` で作る。 */
 const BUILT_DIR_RELATIVE_PATH: readonly string[] = ["dist", "browser"]
 
 /**
@@ -104,7 +104,7 @@ export function builtUiDir(): string {
 
 /**
  * 置いてある成果物を読む。`vite build` は起こさない（起動の経路はここだけを通る。
- * `docs/design.md`「ビルドと依存」）。無ければ起動時の前提不足として扱えるよう、`bun run build` を促す理由を
+ * `docs/design.md`「ビルドと依存」）。無ければ起動時の前提不足として扱えるよう、`pnpm run build` を促す理由を
  * 添えて失敗を返す。
  */
 export async function readUiBundle(): Promise<StoredBundleResult> {
@@ -113,7 +113,7 @@ export async function readUiBundle(): Promise<StoredBundleResult> {
   if (bundle === undefined) {
     return {
       ok: false,
-      reason: `${builtDir} にスクリプトと CSS の対が無い（bun run build で作る）`,
+      reason: `${builtDir} にスクリプトと CSS の対が無い（pnpm run build で作る）`,
     }
   }
 

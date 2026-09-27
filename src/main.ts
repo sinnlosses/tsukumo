@@ -51,8 +51,8 @@ export async function run(config: Config, launch: LaunchOptions): Promise<number
 
   // ブラウザ側スクリプトと CSS は事前に組み立てて置いてあるものを読むだけ
   // （`src/server/view-server/adapter/bundle.ts` 冒頭）。起動の経路から `vite build` は消えていて、作るのは
-  // `bun run build` だけ。無ければページが動かないので、ここは
-  // 起動時の前提不足として即時終了する（理由に `bun run build` を添える。理由が無いと、
+  // `pnpm run build` だけ。無ければページが動かないので、ここは
+  // 起動時の前提不足として即時終了する（理由に `pnpm run build` を添える。理由が無いと、
   // 起動できない側は何を打てばよいか分からない）。
   const built = await readUiBundle()
   if (!built.ok) {
@@ -64,7 +64,7 @@ export async function run(config: Config, launch: LaunchOptions): Promise<number
   // 止めはせず、1行だけ知らせて先へ進む。
   if (built.outdated) {
     process.stderr.write(
-      "tsukumo: ソース（src/browser/ src/shared/）のほうが成果物より新しい（bun run build まで古い画面が出る）\n",
+      "tsukumo: ソース（src/browser/ src/shared/）のほうが成果物より新しい（pnpm run build まで古い画面が出る）\n",
     )
   }
 

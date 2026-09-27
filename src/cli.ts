@@ -13,11 +13,11 @@ import {
 const USAGE = `tsukumo — キャラクターと一緒に仕事をするためのターミナル環境
 
 使い方:
-  tsukumo   （プロジェクトのディレクトリで打つ。開発中はリポジトリ直下の bun run start でも同じ）
+  tsukumo   （プロジェクトのディレクトリで打つ。開発中はリポジトリ直下の pnpm run start でも同じ）
 
 引数:
   --dev     Vite の開発サーバを差し込み、src/browser/ の保存を画面の状態を保ったまま当てる
-            （tsukumo 自身を直しながら動かすとき用。bun run dev が渡す。src/ の browser 以外を
+            （tsukumo 自身を直しながら動かすとき用。pnpm run dev が渡す。src/ の browser 以外を
             直したときは上げ直しが要る）
 
 起動すると Claude Code のセッションが立ち上がり、ビューの配信とレイアウトページのタブを

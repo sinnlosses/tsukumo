@@ -25,11 +25,11 @@ SDK で動かす」を必ず読む。
 
 ## セットアップ / 環境構築
 
-- mise で Node 26・Bun 1.4 を入れる（`mise.toml` がバージョンを固定。TS は node でそのまま
-  実行し、Bun はパッケージ管理と `bun link` に使う）。`bun install` のあと
-  **`bun run build` でブラウザ側を1回組み立てる**（`dist/browser/` は `.gitignore`。無いと起動が
+- mise で Node 26・pnpm 10 を入れる（`mise.toml` がバージョンを固定。TS は node でそのまま
+  実行し、pnpm はパッケージ管理と `pnpm link --global` に使う）。`pnpm install` のあと
+  **`pnpm run build` でブラウザ側を1回組み立てる**（`dist/browser/` は `.gitignore`。無いと起動が
   前提不足で止まる）
-- `tsukumo` コマンドは `bun link` で入っている（`docs/requirements.md` 4.6）
+- `tsukumo` コマンドは `pnpm link --global` で入っている（`docs/requirements.md` 4.6）
 - ホストに依存する操作は1つの抽象の裏に置く（`docs/architecture.md`「ホスト依存の操作は1つのポートに
   まとめる」）。**`orca` 以外の外部コマンド依存を増やすときはユーザーの承認を得る**
 - 環境の実測値は `docs/requirements.md`「5. 実行環境・非機能要件」。時間が経つと変わるので、
@@ -40,10 +40,10 @@ SDK で動かす」を必ず読む。
 全体の一覧は `README.md`「開発」。ここには手が間違えやすいものだけを置く。
 
 ```bash
-bun run check                 # typecheck + lint + format:check + test + test:e2e（変更後は必ずこれを通す）
-bun run test                  # 単体テスト（Vitest）
-bun run build                 # src/browser/ を直したら打つ（起動時には組み立てない）
-bun run scripts/stop.ts       # 動いている tsukumo の一覧（--port <n> でそれ1つだけ止める）
+pnpm run check                 # typecheck + lint + format:check + test + test:e2e（変更後は必ずこれを通す）
+pnpm run test                  # 単体テスト（Vitest）
+pnpm run build                 # src/browser/ を直したら打つ（起動時には組み立てない）
+node scripts/stop.ts           # 動いている tsukumo の一覧（--port <n> でそれ1つだけ止める）
 ```
 
 ## アーキテクチャ概要
@@ -68,7 +68,7 @@ bun run scripts/stop.ts       # 動いている tsukumo の一覧（--port <n> �
 **DOM の構造と画面の流れは E2E で守り、見た目（色・崩れ）は目視で確かめる**（E2E は
 `docs/design.md` 10章「E2E の走らせ方」、目視は `docs/architecture.md`「手で確かめること」）。
 
-**IMPORTANT**: 変更後は必ず `bun run check` を通してから完了を報告する。テスト件数などの根拠なしに
+**IMPORTANT**: 変更後は必ず `pnpm run check` を通してから完了を報告する。テスト件数などの根拠なしに
 「完了しました」と言わない。**描画に関わる変更は、加えて何をどう確かめたか**（何が見えたか）を添える。
 
 ## コーディング規約・レビュー方針
@@ -125,8 +125,8 @@ bun run scripts/stop.ts       # 動いている tsukumo の一覧（--port <n> �
 
 ## タスク運用
 
-- 検証コマンド: `bun run check`（変更後は必ずこれを通す。受け入れ判定に使う）
-- 整形コマンド: `bun run format`
+- 検証コマンド: `pnpm run check`（変更後は必ずこれを通す。受け入れ判定に使う）
+- 整形コマンド: `pnpm run format`
 - ブランチ: 切らない（自分でブランチを切らない）。**枝の寿命は作業ツリーの寿命と同じ**で、
   1本の枝がいくつでもタスクを持つ
 
@@ -134,7 +134,7 @@ bun run scripts/stop.ts       # 動いている tsukumo の一覧（--port <n> �
 `~/.claude/skills/task-workflow/WORKFLOW.md` が正典で、このリポジトリの上乗せは
 `docs/workflow.md`。**タスクは `difficulty` と同じモデルのサブエージェントに委譲し**、判断が
 想定より要ると分かったら押し切らず `difficulty` を上げて再開する。完了は検証できる証拠で判定する。
-新しい作業ツリーの立ち上げ（`bun install` と `bun run build`）は人がやる。
+新しい作業ツリーの立ち上げ（`pnpm install` と `pnpm run build`）は人がやる。
 
 **IMPORTANT**: 次は必ず人間の承認を得てから行う — 外部への公開・送信、破壊的な git 操作、
 認証情報や権限の変更、**`~/.claude/settings.json` などグローバル設定の書き換え**、
@@ -146,7 +146,7 @@ bun run scripts/stop.ts       # 動いている tsukumo の一覧（--port <n> �
 **`docs/` の各ファイルは冒頭の「節の索引」の表に見出し名がそのまま入っている**ので、見出し名で
 探すと索引の行に先に当たる。位置は行頭から特定し（`\n### 4.7 `）、編集の前後で
 `grep -c '^#\{2,3\} ' <ファイル>` の数が合うかを見る。節を削る・移す・改名するときは、引かれている
-句が消えていないかを `bun run scripts/find-stray-reference.ts` で見る（`bun run check` でも落ちる）。
+句が消えていないかを `node scripts/find-stray-reference.ts` で見る（`pnpm run check` でも落ちる）。
 
 ## 索引
 

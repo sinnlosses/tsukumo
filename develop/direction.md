@@ -30,3 +30,6 @@
 - **正典と実物のずれ2件（`src/shared/utils/` の import を見る検査が無い・`src/shared/session-state.ts` の tasks の「不明」表示が指す `docs/design.md` 4.1 に記述が無い）**（振り返り: T-698）
   - 根拠: T-698 の通読で見つかった。2章は「他の層に `utils/` を作るときも同じ検査を足す」と定めるが `src/shared/utils/optional-string.ts` に検査が無い。4.1 のずれは T-698 の前から
   - 出し先: タスク（検査を足し、コメントの指し先を正典の実在する句に張り替える）
+- **`test/server/view-server/adapter/bundle.test.ts` が実物の `dist/browser/` を書き換え、並んで走る `test/cli.test.ts` の起動が成果物の対を読めずに落ちる揺れを直す**（振り返り: T-760）
+  - 根拠: T-760 の委譲先が `pnpm run check` を数回回すうちに、`cli.test.ts` の1件がこの組み合わせで落ちた（単独では通る）。`bundle.test.ts` のコメントに副作用として書かれているが、それを扱うタスクは無い。Vitest に移って単体テストのファイルが並列に走るようになってから当たりやすくなっている見込み（確かめていない）
+  - 出し先: タスク（`buildUiBundle` の出し先を引数で渡して一時ディレクトリに書くか、2つのファイルを直列にする。`pnpm run test` を10回回して落ちないことを完了条件にする）
