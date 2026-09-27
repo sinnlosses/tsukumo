@@ -1,4 +1,4 @@
-import { act, cleanup, renderHook } from "@testing-library/react"
+import { act, cleanup, renderHook, waitFor } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
 import { useCharacterCreate } from "../../../../../../../../src/browser/components/page/character/components/character-create/hooks/use-character-create.ts"
@@ -39,15 +39,17 @@ function renderUseCharacterCreate(
 }
 
 /** 必須の立ち絵を選ぶ（`FileReader` は非同期なので、読み終わって state が変わるまで待つ）。 */
-async function pickPortrait(onPick: (input: HTMLInputElement) => void): Promise<void> {
+async function pickPortrait(hook: ReturnType<typeof renderUseCharacterCreate>): Promise<void> {
   const input = document.createElement("input")
   input.type = "file"
   Object.defineProperty(input, "files", {
     value: [new File(["<svg/>"], "picked.svg", { type: "image/svg+xml" })],
   })
-  await act(async () => {
-    onPick(input)
-    await new Promise((resolve) => setTimeout(resolve, 20))
+  act(() => {
+    hook.result.current.form.portrait.onPick(input)
+  })
+  await waitFor(() => {
+    expect(hook.result.current.form.portrait.image.kind).toBe("picked")
   })
 }
 
@@ -90,7 +92,7 @@ describe("useCharacterCreate", () => {
     })
     expect(hook.result.current.form.canSubmit).toBe(false)
 
-    await pickPortrait(hook.result.current.form.portrait.onPick)
+    await pickPortrait(hook)
 
     expect(hook.result.current.form.canSubmit).toBe(true)
     expect(hook.result.current.form.portrait.image.kind).toBe("picked")
@@ -110,7 +112,7 @@ describe("useCharacterCreate", () => {
       hook.result.current.form.workAccent.onChange("#22ff88")
       hook.result.current.form.chatAccent.onChange("#ff8822")
     })
-    await pickPortrait(hook.result.current.form.portrait.onPick)
+    await pickPortrait(hook)
 
     act(() => {
       hook.result.current.form.onSubmit()

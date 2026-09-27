@@ -1170,10 +1170,24 @@ describe("components/ui/ の部品の className", () => {
       (relPath) => relPath.startsWith("browser/") && relPath.endsWith(".tsx"),
     )
 
+    const targetOwnProperties = new Map(
+      targets.map(({ dirName }) => [dirName, new Set(ownExternalProperties(dirName))]),
+    )
+    const cssContentCache = new Map<string, string>()
+    const cssContentOf = (cssRelPath: string): string => {
+      const cached = cssContentCache.get(cssRelPath)
+      if (cached !== undefined) {
+        return cached
+      }
+      const content = readFileSync(`${SRC_ROOT}/${cssRelPath}`, "utf8")
+      cssContentCache.set(cssRelPath, content)
+      return content
+    }
+
     const offenders = files.flatMap((relPath) => {
       const content = readFileSync(`${SRC_ROOT}/${relPath}`, "utf8")
       return targets.flatMap(({ dirName, name }) => {
-        const ownProperties = new Set(ownExternalProperties(dirName))
+        const ownProperties = targetOwnProperties.get(dirName) ?? new Set<string>()
         return jsxUsagesWithClassName(content, name).flatMap(({ classNameExpr }) => {
           if (!isAllowedClassNameExpression(classNameExpr)) {
             return [
@@ -1184,7 +1198,7 @@ describe("components/ui/ の部品の className", () => {
           if (cssRelPath === undefined) {
             return [`src/${relPath}: <${name}> に渡す className の "styles" が import されていない`]
           }
-          const cssContent = readFileSync(`${SRC_ROOT}/${cssRelPath}`, "utf8")
+          const cssContent = cssContentOf(cssRelPath)
           return classNamesInExpression(classNameExpr).flatMap((className) => {
             const overlap = propertiesOfClass(cssContent, className).filter((property) =>
               ownProperties.has(property),

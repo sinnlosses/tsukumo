@@ -583,6 +583,7 @@ describe("readAchievement", () => {
       })
     })
 
+    // 248件＋2件のコミットで git を何度も起動するので、負荷が高いと既定の5000msを超える
     it("タスクの節目: 通算250件目（仮の刻み）に届いたタスクを返す", async () => {
       const before = Array.from({ length: 248 }, (_, index) => ({
         id: `T-${String(index + 1).padStart(3, "0")}`,
@@ -605,7 +606,7 @@ describe("readAchievement", () => {
       )
 
       expect(achievement.milestones).toContainEqual({ kind: "task", count: 250, taskId: "T-250" })
-    })
+    }, 20000)
 
     it("タスクの記録が無いリポジトリでは、卒業もタスクの節目も出ない", async () => {
       await commitAt(repository, "2026-09-23", "10:00", "README.md")
