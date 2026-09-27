@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import {
+  parseReportSections,
   type ReportBlock,
   type ReportSection,
   reportSectionsMarkdown,
@@ -29,6 +30,31 @@ describe("reportSectionsOfBody", () => {
         blocks: [{ kind: "markdown", markdown: "    架空の字下げ\n\n架空の本文。", fold: "" }],
       },
     ])
+  })
+})
+
+describe("parseReportSections", () => {
+  it("progress の塊は知らない種類として落とさない（unknownBlockCount が0になる）", () => {
+    const progress = {
+      kind: "progress",
+      steps: ["架空の一", "架空の二"],
+      current: 1,
+      fold: "",
+    }
+
+    const parsed = parseReportSections([{ heading: "", blocks: [progress] }])
+
+    expect(parsed.unknownBlockCount).toBe(0)
+    expect(parsed.sections).toEqual([{ heading: "", blocks: [progress] }])
+  })
+
+  it("知らない種類の塊は落とし、unknownBlockCount で数える", () => {
+    const parsed = parseReportSections([
+      { heading: "", blocks: [{ kind: "架空の種類" }, text("架空の一。")] },
+    ])
+
+    expect(parsed.unknownBlockCount).toBe(1)
+    expect(parsed.sections).toEqual([{ heading: "", blocks: [text("架空の一。")] }])
   })
 })
 

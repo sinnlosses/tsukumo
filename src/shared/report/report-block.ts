@@ -205,17 +205,13 @@ export function reportSectionsOfBody(body: string): readonly ReportSection[] {
     : [{ heading: "", blocks: [{ kind: "markdown", markdown, fold: "" }] }]
 }
 
-/** `reportBlockSchema` が知っている塊の種類。 */
-export const REPORT_BLOCK_KINDS = [
-  "text",
-  "list",
-  "table",
-  "note",
-  "stats",
-  "code",
-  "mermaid",
-  "markdown",
-] as const satisfies readonly ReportBlock["kind"][]
+/**
+ * `reportBlockSchema` が知っている塊の種類。`reportBlockSchema` の枝から導き、塊を1種類足して
+ * ここへ書き忘れる経路を型で塞ぐ（列挙し直すと `satisfies` は部分集合しか検査しない）。
+ */
+export const REPORT_BLOCK_KINDS: readonly ReportBlock["kind"][] = reportBlockSchema.options.map(
+  (option) => option.shape.kind.value,
+)
 
 export type ParsedReportSections = {
   readonly sections: readonly ReportSection[]
