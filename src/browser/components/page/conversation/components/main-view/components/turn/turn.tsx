@@ -106,7 +106,15 @@ function TurnFailureNotice(props: { readonly failure: TurnFailure }): ReactEleme
       >
         失敗で終わった
       </Text>
-      <p className={styles["turn-failure-reason"]}>{turnFailureLabel(props.failure)}</p>
+      <Text
+        element="p"
+        size="inherit"
+        tone="inherit"
+        weight="inherit"
+        className={styles["turn-failure-reason"]}
+      >
+        {turnFailureLabel(props.failure)}
+      </Text>
     </section>
   )
 }

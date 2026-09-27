@@ -20,6 +20,7 @@ import { useEffect, useRef, useState, type ReactElement } from "react"
 import { isObjectType } from "remeda"
 
 import { vendorAssetPath } from "../../../../../../../shared/vendor-asset.ts"
+import { Text } from "../../../../../ui/text/text.tsx"
 import styles from "./report-notation.module.css"
 import { loadVendorScript } from "./vendor-script.ts"
 
@@ -75,7 +76,15 @@ export function MermaidBlock(props: MermaidBlockProps): ReactElement {
         <pre>
           <code>{props.code}</code>
         </pre>
-        <p className={styles["mermaid-error"]}>{error}</p>
+        <Text
+          element="p"
+          size="secondary"
+          tone="ink-quiet"
+          weight="inherit"
+          className={styles["mermaid-error"]}
+        >
+          {error}
+        </Text>
       </div>
     )
   }

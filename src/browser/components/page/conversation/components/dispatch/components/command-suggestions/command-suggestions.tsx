@@ -79,7 +79,15 @@ export function CommandSuggestions(props: CommandSuggestionsProps): ReactElement
             props.onSelect(index)
           }}
         >
-          <span className={styles["dispatch-suggestion-name"]}>/{command.name}</span>
+          <Text
+            element="span"
+            size="inherit"
+            tone="inherit"
+            weight="inherit"
+            className={styles["dispatch-suggestion-name"]}
+          >
+            /{command.name}
+          </Text>
           {command.description !== undefined && command.description !== "" && (
             <Text
               element="span"

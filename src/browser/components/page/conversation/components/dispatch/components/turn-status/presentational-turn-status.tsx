@@ -51,7 +51,9 @@ export function PresentationalTurnStatus(props: PresentationalTurnStatusProps): 
         weight="inherit"
         className={styles["dispatch-elapsed-row"]}
       >
-        <span>{props.elapsedLabel}</span>{" "}
+        <Text element="span" size="inherit" tone="inherit" weight="inherit" className="">
+          {props.elapsedLabel}
+        </Text>{" "}
         <Text
           element="span"
           size="inherit"

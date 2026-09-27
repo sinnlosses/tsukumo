@@ -36,7 +36,15 @@ export function Balloon(props: BalloonProps): ReactElement {
           {props.speaker}
         </Text>
       )}
-      <span className={styles["balloon-text"]}>{props.text}</span>
+      <Text
+        element="span"
+        size="inherit"
+        tone="inherit"
+        weight="inherit"
+        className={styles["balloon-text"]}
+      >
+        {props.text}
+      </Text>
     </div>
   )
 }
