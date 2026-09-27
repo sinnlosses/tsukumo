@@ -592,12 +592,9 @@ async function settledDom(page: Page, scenario: string, outDir: string): Promise
     }
     if (attempt === SETTLE_ATTEMPTS - 1) {
       const diff = diffDomTrees(JSON.parse(previous), JSON.parse(current))
+      const busyHints = await page.evaluate<readonly string[]>(BUSY_ELEMENT_HINTS_SCRIPT)
       const diffPath = path.join(outDir, `${scenario}.settle-diff.txt`)
-      writeFileSync(
-        diffPath,
-        diff.length === 0 ? "(差分なし。最後の2回のあいだで落ち着いた)\n" : `${diff.join("\n")}\n`,
-        "utf8",
-      )
+      writeFileSync(diffPath, `${settleDiffText(diff, busyHints)}\n`, "utf8")
       throw new Error(
         `DOM が落ち着かない（${String(SETTLE_INTERVAL_MS * SETTLE_ATTEMPTS)}ms）。最後の2回の差分: ${path.relative(REPOSITORY_ROOT, diffPath)}\n${diff.slice(0, 5).join("\n")}`,
       )
@@ -607,7 +604,34 @@ async function settledDom(page: Page, scenario: string, outDir: string): Promise
   throw new Error(`DOM が落ち着かない（${String(SETTLE_INTERVAL_MS * SETTLE_ATTEMPTS)}ms）`)
 }
 
+/** `settle-diff.txt` の本文。差分に加え、投げた時点で `aria-busy="true"` だった要素の手がかりを残す。 */
+function settleDiffText(diff: readonly string[], busyHints: readonly string[]): string {
+  const diffText = diff.length === 0 ? "(差分なし。最後の2回のあいだで落ち着いた)" : diff.join("\n")
+  const busyText =
+    busyHints.length === 0
+      ? `aria-busy="true" の要素: (無し)`
+      : `aria-busy="true" の要素:\n${busyHints.join("\n")}`
+  return `${diffText}\n\n${busyText}`
+}
+
 const HAS_BUSY_ELEMENT_SCRIPT = `document.querySelector('[aria-busy="true"]') !== null`
+
+/** 投げた時点で `aria-busy="true"` の各要素を、`aria-label`・役割・タグ名・class のうち分かる手がかりで表す。 */
+const BUSY_ELEMENT_HINTS_SCRIPT = `(() => {
+  return Array.from(document.querySelectorAll('[aria-busy="true"]')).map((element) => {
+    const label = element.getAttribute("aria-label")
+    const role = element.getAttribute("role")
+    const tag = element.tagName.toLowerCase()
+    const className = element.getAttribute("class")
+    const hints = [
+      label ? \`aria-label="\${label}"\` : undefined,
+      role ? \`role="\${role}"\` : undefined,
+      \`tag=\${tag}\`,
+      className ? \`class="\${className}"\` : undefined,
+    ].filter((hint) => hint !== undefined)
+    return hints.join(" ")
+  })
+})()`
 
 /** 差分の1件に出す値の長さの上限と、書き出す件数の上限。 */
 const DIFF_VALUE_LENGTH_LIMIT = 80
