@@ -6,7 +6,11 @@
 // 時刻は既定で {@link STAMPED}（時刻に依らないテストの既定値）。時刻そのものを確かめる
 // テストは `time` を上書きする。
 
-import type { RecordTime, SessionRecord } from "../../src/shared/session/session-state.ts"
+import type {
+  RecordTime,
+  SessionRecord,
+  ToolRunStatus,
+} from "../../src/shared/session/session-state.ts"
 
 /** 利用者の依頼1件。 */
 export function requestRecord(
@@ -63,6 +67,7 @@ export function toolRecord(
     name: "Bash",
     input: { command: "架空のコマンド" },
     nested: false,
+    startedAt: STAMPED,
     status: { kind: "running" },
     ...overrides,
   }
@@ -70,3 +75,15 @@ export function toolRecord(
 
 /** 時刻に依らないテストの記録に添える既定の時刻。 */
 const STAMPED = { kind: "stamped", at: 0 } satisfies RecordTime
+
+/** 終わったツールの `status`。所要時間を確かめるテストでは `finishedAt` を渡し直す。 */
+export function finishedToolStatus(
+  overrides: Partial<Omit<Extract<ToolRunStatus, { readonly kind: "finished" }>, "kind">> = {},
+): Extract<ToolRunStatus, { readonly kind: "finished" }> {
+  return {
+    kind: "finished",
+    finishedAt: STAMPED,
+    result: { content: "ok", isError: false },
+    ...overrides,
+  }
+}

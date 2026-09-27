@@ -70,6 +70,8 @@ export type ToolRunStatus =
   | { readonly kind: "running" }
   | {
       readonly kind: "finished"
+      /** 終わった時刻（{@link RecordTime}）。復元で読み戻したときの扱いはそちらを参照。 */
+      readonly finishedAt: RecordTime
       readonly result: { readonly content: string; readonly isError: boolean }
     }
 
@@ -149,6 +151,8 @@ export type SessionRecord =
       readonly name: string
       readonly input: unknown
       readonly nested: boolean
+      /** 始まった時刻（{@link RecordTime}）。所要時間は帯の「依頼の手順」が導く（`turn-step.ts`）。 */
+      readonly startedAt: RecordTime
       readonly status: ToolRunStatus
     }
   /**
@@ -689,6 +693,7 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
             name: event.name,
             input: event.input,
             nested,
+            startedAt: { kind: "stamped", at },
             status: { kind: "running" },
           },
         ],
@@ -866,11 +871,28 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
   }
 }
 
-/** 依頼とセリフの記録を「時刻が分からない」にする（他の種類は時刻を持たないのでそのまま）。 */
+/**
+ * 依頼・セリフ・ツールの記録を「時刻が分からない」にする（他の種類は時刻を持たないのでそのまま）。
+ * ツールは `startedAt` と、終わっていれば `status.finishedAt` の両方を畳み直す——`tool-started` /
+ * `tool-finished` は再生でも `at`（replay した時刻）を積んでいるので、`stamped` のままだと
+ * replay の速さが本物の所要時間に見えてしまう（帯の「依頼の手順」の所要時間表示。
+ * `shared/session/turn-step.ts` の `toolDuration`）。
+ */
 function withRestoredTime(record: SessionRecord): SessionRecord {
-  return record.kind === "request" || record.kind === "speech"
-    ? { ...record, time: { kind: "restored" } }
-    : record
+  if (record.kind === "request" || record.kind === "speech") {
+    return { ...record, time: { kind: "restored" } }
+  }
+  if (record.kind === "tool") {
+    return {
+      ...record,
+      startedAt: { kind: "restored" },
+      status:
+        record.status.kind === "finished"
+          ? { ...record.status, finishedAt: { kind: "restored" } }
+          : record.status,
+    }
+  }
+  return record
 }
 
 /**
@@ -1064,7 +1086,14 @@ function finishTool(
     ...state,
     records: [
       ...state.records.slice(0, index),
-      { ...record, status: { kind: "finished", result: { content, isError } } },
+      {
+        ...record,
+        status: {
+          kind: "finished",
+          finishedAt: { kind: "stamped", at },
+          result: { content, isError },
+        },
+      },
       ...state.records.slice(index + 1),
     ],
     lastToolFailureAt: isError ? at : state.lastToolFailureAt,

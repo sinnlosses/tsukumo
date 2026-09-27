@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest"
 
 import {
   createReportGate,
-  REPORT_CHECKS_DESCRIPTION,
   REPORT_GATE_REASON,
   REPORT_TOOL_DESCRIPTION,
 } from "../../../../src/server/report/core/report-tool.ts"
@@ -12,13 +11,6 @@ describe("REPORT_TOOL_DESCRIPTION", () => {
   it("MCP ツールの説明文の既定の上限（2048字）に収まり、記法は規約の節を指すだけ", () => {
     expect(REPORT_TOOL_DESCRIPTION.length).toBeLessThan(2048)
     expect(REPORT_TOOL_DESCRIPTION).toContain("「レポートの記法（tsukumo）」の節")
-  })
-})
-
-describe("REPORT_CHECKS_DESCRIPTION", () => {
-  it("detail に所要時間を添えさせ、測れないときは「未計測」と書かせる", () => {
-    expect(REPORT_CHECKS_DESCRIPTION).toContain("detail には測った所要時間を添える")
-    expect(REPORT_CHECKS_DESCRIPTION).toContain("「未計測」と書く")
   })
 })
 

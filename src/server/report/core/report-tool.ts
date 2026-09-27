@@ -29,8 +29,7 @@ export const REPORT_TOOL_DESCRIPTION =
 export const REPORT_CHECKS_DESCRIPTION =
   "検証の結果（テスト・型検査・手で確かめたこと）。tsukumo が結論の下に帯で描く。" +
   "ここに入れた結果は conclusion と sections に書かない。検証をしていないターンでは省く。" +
-  "label と detail は素の文字で描かれるので、バッククォートなどの記法を使わない。" +
-  "detail には測った所要時間を添える（測っていない・測れないときは「未計測」と書く）。"
+  "label と detail は素の文字で描かれるので、バッククォートなどの記法を使わない。"
 
 /**
  * `report` の任意の `sections` 引数（本文。節と塊の並び）の説明。塊の種類ごとの使いどころは

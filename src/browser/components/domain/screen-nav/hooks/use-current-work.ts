@@ -28,10 +28,12 @@ import type {
 import type { PendingAsk } from "../../../../../shared/session-driver/pending-ask.ts"
 import {
   currentTurnSteps,
+  toolDuration,
   type TurnStep,
   type TurnStepList,
   type TurnStepStatus,
 } from "../../../../../shared/session/turn-step.ts"
+import { formatElapsed } from "../../../../domain/elapsed-time.ts"
 import { DEFAULT_CHARACTER_NAME } from "../../../../domain/portrait-appearance.ts"
 import { summarizeToolInput, toolInputText } from "../../../../domain/tool-summary.ts"
 import { useDismissSignal, type DismissCause } from "../../../../hooks/use-dismiss-signal.ts"
@@ -494,9 +496,18 @@ function toToggleAllView(
   return { kind: "expandable", label }
 }
 
+/**
+ * 手順1件の見出し。終わっていて所要時間が測れれば（{@link toolDuration}）末尾に添える
+ * （`tool-started` / `tool-finished` の `at` から機械で測った値。復元した手順は測れないので
+ * 添えない）。
+ */
 function stepLabel(step: TurnStep): string {
   const summary = summarizeToolInput(step.name, step.input)
-  return summary === "" ? step.name : `${step.name}: ${summary}`
+  const base = summary === "" ? step.name : `${step.name}: ${summary}`
+  const duration = toolDuration(step)
+  return duration.kind === "known"
+    ? `${base}（${formatElapsed(Math.round(duration.milliseconds / 1000))}）`
+    : base
 }
 
 function toStepView(step: TurnStep): ScreenNavCurrentWorkStep {

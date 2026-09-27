@@ -37,7 +37,12 @@ function tool(
     name: "Read",
     input: {},
     nested: false,
-    status: { kind: "finished", result: { content: "ok", isError: false } },
+    startedAt: { kind: "stamped", at: 0 },
+    status: {
+      kind: "finished",
+      finishedAt: { kind: "stamped", at: 0 },
+      result: { content: "ok", isError: false },
+    },
     ...overrides,
   }
 }

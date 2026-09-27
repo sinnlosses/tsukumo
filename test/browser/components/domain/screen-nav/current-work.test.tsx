@@ -12,7 +12,11 @@ import {
   type SessionState,
 } from "../../../../../src/shared/session/session-state.ts"
 import { characterInfo } from "../../../../fixture/character.ts"
-import { requestRecord, toolRecord } from "../../../../fixture/session-record.ts"
+import {
+  finishedToolStatus,
+  requestRecord,
+  toolRecord,
+} from "../../../../fixture/session-record.ts"
 import { typedElement } from "../../../../typed-element.ts"
 import { putState, putSession } from "../../../session-store.ts"
 
@@ -395,7 +399,11 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
           toolUseId: "toolu_old",
           name: "Read",
           input: { file_path: "/tmp/old.txt" },
-          status: { kind: "finished", result: { content: "ok", isError: false } },
+          startedAt: { kind: "stamped", at: 0 },
+          status: finishedToolStatus({
+            result: { content: "ok", isError: false },
+            finishedAt: { kind: "stamped", at: 12_000 },
+          }),
         }),
         toolRecord({ toolUseId: "toolu_new", name: "Bash", input: { command: "echo new" } }),
       ],
@@ -404,10 +412,36 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
     fireEvent.click(workToggle())
 
     const rows = document.querySelectorAll(".screen-nav-work-steps li")
+    // 済んだ手順には所要時間（tool-started / tool-finished の at から機械で測った値）が付く。
     expect([...rows].map((row) => row.textContent)).toEqual([
-      "✓ Read: /tmp/old.txt",
+      "✓ Read: /tmp/old.txt（12秒）",
       "… Bash: echo new",
     ])
+  })
+
+  it("復元した手順（開始・終了が restored）は所要時間を出さない", () => {
+    renderScreenNav({
+      turn: { kind: "running", startedAt: 0 },
+      records: [
+        requestRecord(),
+        toolRecord({
+          toolUseId: "toolu_restored",
+          name: "Read",
+          input: { file_path: "/tmp/restored.txt" },
+          startedAt: { kind: "restored" },
+          status: finishedToolStatus({
+            result: { content: "ok", isError: false },
+            finishedAt: { kind: "restored" },
+          }),
+        }),
+      ],
+    })
+
+    fireEvent.click(workToggle())
+
+    expect(document.querySelector(".screen-nav-work-steps li")?.textContent).toBe(
+      "✓ Read: /tmp/restored.txt",
+    )
   })
 
   it("6件以上あると「手順をすべて見る」の口が出て、押すと全件に広がる", () => {
@@ -418,7 +452,7 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
           toolUseId: `toolu_${String(index)}`,
           name: "Read",
           input: { file_path: `/tmp/${String(index)}.txt` },
-          status: { kind: "finished", result: { content: "ok", isError: false } },
+          status: finishedToolStatus({ result: { content: "ok", isError: false } }),
         }),
       ),
     ]
@@ -442,14 +476,14 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
         toolUseId: "toolu_failed",
         name: "Bash",
         input: { command: "架空のコマンド" },
-        status: { kind: "finished", result: { content: "架空のエラー出力", isError: true } },
+        status: finishedToolStatus({ result: { content: "架空のエラー出力", isError: true } }),
       }),
       ...Array.from({ length: 5 }, (_unused, index) =>
         toolRecord({
           toolUseId: `toolu_${String(index)}`,
           name: "Read",
           input: { file_path: `/tmp/${String(index)}.txt` },
-          status: { kind: "finished", result: { content: "ok", isError: false } },
+          status: finishedToolStatus({ result: { content: "ok", isError: false } }),
         }),
       ),
     ]
@@ -470,7 +504,7 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
           toolUseId: "toolu_1",
           name: "Bash",
           input: { command: "架空のコマンド" },
-          status: { kind: "finished", result: { content: "架空のエラー出力", isError: true } },
+          status: finishedToolStatus({ result: { content: "架空のエラー出力", isError: true } }),
         }),
       ],
     })

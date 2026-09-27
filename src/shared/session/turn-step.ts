@@ -4,17 +4,18 @@
 //
 // `node:` にも `document` にも触らない（他の shared と同じ制約）。
 
-import type { SessionRecord } from "./session-state.ts"
+import type { RecordTime, SessionRecord } from "./session-state.ts"
 import { splitIntoTurns } from "./turn.ts"
 
 /**
  * 依頼の手順1件の進み具合。`failed` の `output` は失敗の中身
- * （`<details>` で開いて読む。docs/screen-design.md 13.9）。
+ * （`<details>` で開いて読む。docs/screen-design.md 13.9）。`done` / `failed` が持つ
+ * `finishedAt` は所要時間の計算に使う（{@link toolDuration}）。
  */
 export type TurnStepStatus =
   | { readonly kind: "running" }
-  | { readonly kind: "done" }
-  | { readonly kind: "failed"; readonly output: string }
+  | { readonly kind: "done"; readonly finishedAt: RecordTime }
+  | { readonly kind: "failed"; readonly output: string; readonly finishedAt: RecordTime }
 
 /**
  * いちばん新しい依頼（ターン）の中で claude が呼んだツール1回ぶん（docs/glossary.md
@@ -28,7 +29,28 @@ export type TurnStep = {
   readonly input: unknown
   /** サブエージェントの中で動いたか（`tool-started` の `parentToolUseId` があるか）。 */
   readonly nested: boolean
+  readonly startedAt: RecordTime
   readonly status: TurnStepStatus
+}
+
+/** ツール1件の所要時間（{@link toolDuration}）。復元した手順は `unknown`（`RecordTime` を参照）。 */
+export type ToolDuration =
+  | { readonly kind: "known"; readonly milliseconds: number }
+  | { readonly kind: "unknown" }
+
+/**
+ * {@link TurnStep} 1件の所要時間。実行中、または開始・終了のどちらかが `restored`
+ * （前のセッションから読み戻した手順。`session-state.ts` の `withRestoredTime`）なら `unknown`。
+ */
+export function toolDuration(step: TurnStep): ToolDuration {
+  if (step.status.kind === "running") {
+    return { kind: "unknown" }
+  }
+  const { startedAt } = step
+  const { finishedAt } = step.status
+  return startedAt.kind === "stamped" && finishedAt.kind === "stamped"
+    ? { kind: "known", milliseconds: finishedAt.at - startedAt.at }
+    : { kind: "unknown" }
 }
 
 /**
@@ -79,11 +101,16 @@ function toTurnStep(record: Extract<SessionRecord, { readonly kind: "tool" }>): 
     name: record.name,
     input: record.input,
     nested: record.nested,
+    startedAt: record.startedAt,
     status:
       record.status.kind === "running"
         ? { kind: "running" }
         : record.status.result.isError
-          ? { kind: "failed", output: record.status.result.content }
-          : { kind: "done" },
+          ? {
+              kind: "failed",
+              output: record.status.result.content,
+              finishedAt: record.status.finishedAt,
+            }
+          : { kind: "done", finishedAt: record.status.finishedAt },
   }
 }

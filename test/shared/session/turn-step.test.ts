@@ -5,8 +5,17 @@ import {
   applySessionEvent,
   INITIAL_SESSION_STATE,
 } from "../../../src/shared/session/session-state.ts"
-import { currentTurnSteps, type TurnStep } from "../../../src/shared/session/turn-step.ts"
-import { requestRecord, speechRecord, toolRecord } from "../../fixture/session-record.ts"
+import {
+  currentTurnSteps,
+  toolDuration,
+  type TurnStep,
+} from "../../../src/shared/session/turn-step.ts"
+import {
+  finishedToolStatus,
+  requestRecord,
+  speechRecord,
+  toolRecord,
+} from "../../fixture/session-record.ts"
 
 // フィクスチャはすべて手で書いた架空の依頼・ツール呼び出し（docs/coding-standards.md「会話内容の扱い」）。
 
@@ -32,10 +41,7 @@ describe("currentTurnSteps（依頼の手順を最後の依頼から導く）", 
     const list = currentTurnSteps(
       [
         requestRecord({ turnId: 0 }),
-        toolRecord({
-          toolUseId: "toolu_old",
-          status: { kind: "finished", result: { content: "ok", isError: false } },
-        }),
+        toolRecord({ toolUseId: "toolu_old", status: finishedToolStatus() }),
         requestRecord({ turnId: 1 }),
         toolRecord({ toolUseId: "toolu_new" }),
       ],
@@ -49,18 +55,17 @@ describe("currentTurnSteps（依頼の手順を最後の依頼から導く）", 
     const list = currentTurnSteps(
       [
         requestRecord(),
-        toolRecord({
-          toolUseId: "toolu_done",
-          status: { kind: "finished", result: { content: "ok", isError: false } },
-        }),
+        toolRecord({ toolUseId: "toolu_done", status: finishedToolStatus() }),
         toolRecord({
           toolUseId: "toolu_failed",
-          status: { kind: "finished", result: { content: "架空のエラー出力", isError: true } },
+          status: finishedToolStatus({ result: { content: "架空のエラー出力", isError: true } }),
         }),
         toolRecord({ toolUseId: "toolu_running", status: { kind: "running" } }),
       ],
       false,
     )
+
+    const stamped = { kind: "stamped", at: 0 } as const
 
     expect(turnSteps(list)).toEqual([
       {
@@ -68,20 +73,23 @@ describe("currentTurnSteps（依頼の手順を最後の依頼から導く）", 
         name: "Bash",
         input: { command: "架空のコマンド" },
         nested: false,
-        status: { kind: "done" },
+        startedAt: stamped,
+        status: { kind: "done", finishedAt: stamped },
       },
       {
         toolUseId: "toolu_failed",
         name: "Bash",
         input: { command: "架空のコマンド" },
         nested: false,
-        status: { kind: "failed", output: "架空のエラー出力" },
+        startedAt: stamped,
+        status: { kind: "failed", output: "架空のエラー出力", finishedAt: stamped },
       },
       {
         toolUseId: "toolu_running",
         name: "Bash",
         input: { command: "架空のコマンド" },
         nested: false,
+        startedAt: stamped,
         status: { kind: "running" },
       },
     ])
@@ -100,16 +108,54 @@ describe("currentTurnSteps（依頼の手順を最後の依頼から導く）", 
     const list = currentTurnSteps(
       [
         requestRecord(),
-        toolRecord({
-          toolUseId: "toolu_done",
-          status: { kind: "finished", result: { content: "ok", isError: false } },
-        }),
+        toolRecord({ toolUseId: "toolu_done", status: finishedToolStatus() }),
         toolRecord({ toolUseId: "toolu_running", status: { kind: "running" } }),
       ],
       true,
     )
 
     expect(turnSteps(list).map((step) => step.toolUseId)).toEqual(["toolu_done"])
+  })
+})
+
+describe("toolDuration（所要時間。tool-started / tool-finished の at から機械で測る）", () => {
+  it("開始・終了の両方が stamped なら known", () => {
+    const list = currentTurnSteps(
+      [
+        requestRecord(),
+        toolRecord({
+          startedAt: { kind: "stamped", at: 1_000 },
+          status: finishedToolStatus({ finishedAt: { kind: "stamped", at: 4_500 } }),
+        }),
+      ],
+      false,
+    )
+
+    expect(toolDuration(turnSteps(list)[0]!)).toEqual({ kind: "known", milliseconds: 3_500 })
+  })
+
+  it("実行中は unknown", () => {
+    const list = currentTurnSteps(
+      [requestRecord(), toolRecord({ status: { kind: "running" } })],
+      false,
+    )
+
+    expect(toolDuration(turnSteps(list)[0]!)).toEqual({ kind: "unknown" })
+  })
+
+  it("復元した手順（開始・終了が restored）は unknown（replay の速さを所要時間に見せない）", () => {
+    const list = currentTurnSteps(
+      [
+        requestRecord(),
+        toolRecord({
+          startedAt: { kind: "restored" },
+          status: finishedToolStatus({ finishedAt: { kind: "restored" } }),
+        }),
+      ],
+      false,
+    )
+
+    expect(toolDuration(turnSteps(list)[0]!)).toEqual({ kind: "unknown" })
   })
 })
 

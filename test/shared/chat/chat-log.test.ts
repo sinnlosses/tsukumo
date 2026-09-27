@@ -55,6 +55,7 @@ describe("chatLogEntries", () => {
         name: "Read",
         input: {},
         nested: false,
+        startedAt: { kind: "stamped", at: 0 },
         status: { kind: "running" },
       },
       { kind: "question", questions: [], answers: [] },

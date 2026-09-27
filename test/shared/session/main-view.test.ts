@@ -38,7 +38,11 @@ const edit = (path: string): MainViewEntry => ({
   kind: "tool",
   name: "Edit",
   input: { file_path: path },
-  status: { kind: "finished", result: { content: "ok", isError: false } },
+  status: {
+    kind: "finished",
+    finishedAt: { kind: "stamped", at: 0 },
+    result: { content: "ok", isError: false },
+  },
 })
 /** `report` ツールで受け取ったレポート（引数を組んだあとの形）。中間レポートはここからしか生まれない。 */
 const toolReport = (markdown: string): MainViewEntry => ({ kind: "report", markdown })

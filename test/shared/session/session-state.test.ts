@@ -281,6 +281,7 @@ describe("applySessionEvent", () => {
         name: "Read",
         input: {},
         nested: false,
+        startedAt: { kind: "stamped", at: 0 },
         status: { kind: "running" },
       },
     ])
@@ -307,7 +308,12 @@ describe("applySessionEvent", () => {
         name: "Read",
         input: { path: "/tmp/a" },
         nested: false,
-        status: { kind: "finished", result: { content: "ダミーの結果", isError: true } },
+        startedAt: { kind: "stamped", at: 0 },
+        status: {
+          kind: "finished",
+          finishedAt: { kind: "stamped", at: 0 },
+          result: { content: "ダミーの結果", isError: true },
+        },
       },
     ])
     // メインビューへ渡す tool の記録が持つのは名前・入力・結果だけ（描くかどうかは
@@ -317,7 +323,11 @@ describe("applySessionEvent", () => {
         kind: "tool",
         name: "Read",
         input: { path: "/tmp/a" },
-        status: { kind: "finished", result: { content: "ダミーの結果", isError: true } },
+        status: {
+          kind: "finished",
+          finishedAt: { kind: "stamped", at: 0 },
+          result: { content: "ダミーの結果", isError: true },
+        },
       },
     ])
   })
@@ -342,7 +352,11 @@ describe("applySessionEvent", () => {
         kind: "tool",
         name: "Read",
         input: {},
-        status: { kind: "finished", result: { content: "結果", isError: false } },
+        status: {
+          kind: "finished",
+          finishedAt: { kind: "stamped", at: 0 },
+          result: { content: "結果", isError: false },
+        },
       },
       { kind: "detail", markdown: "レポート本文" },
     ])
