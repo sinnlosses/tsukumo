@@ -12,7 +12,7 @@
 import { type AnyContractProcedure, type InferSchemaOutput, oc } from "@orpc/contract"
 import { z } from "zod"
 
-import { type FRAME_ERROR_REASON } from "./frame.ts"
+import type { FRAME_ERROR_REASON } from "./frame.ts"
 
 /**
  * 許可モードの値の全体。この一覧は shared に1つだけ置く（docs/design.md 4.3）。

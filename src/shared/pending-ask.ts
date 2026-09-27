@@ -9,7 +9,7 @@
 
 import { z } from "zod"
 
-import { type Question, type QuestionAnswer } from "./question.ts"
+import type { Question, QuestionAnswer } from "./question.ts"
 
 /** 答え待ち1件。`id` は SDK の `toolUseID`（1つのツール呼び出しに1つ）。 */
 export type PendingAsk =

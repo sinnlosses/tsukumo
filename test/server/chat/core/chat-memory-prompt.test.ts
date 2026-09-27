@@ -5,12 +5,12 @@ import {
   chatRecallListText,
   takeChatMemoryPromptParts,
 } from "../../../../src/server/chat/core/chat-memory-prompt.ts"
-import {
-  type ChatArchive,
-  type ChatArchiveRecentEntry,
-  type ChatReadbackLimits,
-  type ChatSummary,
-  type ChatSummaryRecord,
+import type {
+  ChatArchive,
+  ChatArchiveRecentEntry,
+  ChatReadbackLimits,
+  ChatSummary,
+  ChatSummaryRecord,
 } from "../../../../src/server/session-driver/core/session-driver.ts"
 import { CHAT_MEMORY_BUDGET } from "../../../../src/shared/chat-memory-budget.ts"
 

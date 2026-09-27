@@ -3,7 +3,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-libra
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import { Character } from "../../../../../src/browser/components/page/character/character.tsx"
-import { type PendingAsk } from "../../../../../src/shared/pending-ask.ts"
+import type { PendingAsk } from "../../../../../src/shared/pending-ask.ts"
 import {
   INITIAL_SESSION_STATE,
   type SessionState,

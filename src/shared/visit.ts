@@ -12,7 +12,7 @@
 // 台本は会話の内容に当たる（いまはパックに書いた定型だが、生成した台本も同じ経路を通る）。
 // ログにもファイルにも書かない（docs/coding-standards.md「会話内容の扱い」）。
 
-import { type VisitScript } from "./character-visit.ts"
+import type { VisitScript } from "./character-visit.ts"
 
 /**
  * 歯車の「訪問」のオン・オフの同梱の既定（`docs/screen-design.md` 13.6・13.9「設定の歯車」）。

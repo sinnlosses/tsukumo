@@ -22,15 +22,15 @@
 // 呼び出すのは配線層で、雑談のときしかこの関数を呼ばない
 // （仕事のときは呼ばずに空の配列を使う）ので、この関数自体は雑談であることを前提にしてよい。
 
-import {
-  type ChatArchive,
-  type ChatArchiveRecentEntry,
-  type ChatEpisodeCandidate,
-  type ChatReadbackLimits,
-  type ChatRecallEpisodeResult,
-  type ChatRecallListResult,
-  type ChatSummary,
-  type SessionStart,
+import type {
+  ChatArchive,
+  ChatArchiveRecentEntry,
+  ChatEpisodeCandidate,
+  ChatReadbackLimits,
+  ChatRecallEpisodeResult,
+  ChatRecallListResult,
+  ChatSummary,
+  SessionStart,
 } from "../../session-driver/core/session-driver.ts"
 
 /**

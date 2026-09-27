@@ -5,7 +5,7 @@
 // 読み込み直して直るのは「プロセスは新しく、タブが古い」ときだけで、逆（プロセスが古い）は
 // tsukumo を上げ直すまで直らないので、両方を1行ずつ書く。
 
-import { type ReactElement } from "react"
+import type { ReactElement } from "react"
 
 import { Text } from "../ui/text/text.tsx"
 import styles from "./protocol-mismatch.module.css"

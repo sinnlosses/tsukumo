@@ -6,13 +6,13 @@
 // 会話へ戻る口と答え待ちの印、地・領域・字の色の操作子は、全画面の最上部の帯
 // （`components/domain/screen-nav/`。13.9）にあるので、この画面は持たない。
 
-import { type ReactElement } from "react"
+import type { ReactElement } from "react"
 
 import styles from "./character.module.css"
 import { CharacterCreate } from "./components/character-create/character-create.tsx"
 import { CharacterEdit } from "./components/character-edit/character-edit.tsx"
 import { CharacterList } from "./components/character-list/character-list.tsx"
-import { type UseCharacterResult } from "./hooks/use-character.ts"
+import type { UseCharacterResult } from "./hooks/use-character.ts"
 
 export type PresentationalCharacterProps = UseCharacterResult
 

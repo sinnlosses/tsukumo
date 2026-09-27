@@ -30,7 +30,7 @@ import {
   type CharacterPackRemoval,
   toCharacterInfo,
 } from "../../../shared/character.ts"
-import { type SessionEvent } from "../../../shared/session-event.ts"
+import type { SessionEvent } from "../../../shared/session-event.ts"
 import { bundledFilePath } from "../../adapter/bundled-path.ts"
 import { tsukumoHomeDir } from "../../adapter/tsukumo-home.ts"
 

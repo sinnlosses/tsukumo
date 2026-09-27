@@ -10,8 +10,8 @@ import {
   readCommitCalendar,
   type ReadAchievementResult,
 } from "../../../../src/server/achievement/adapter/main-history.ts"
-import { type AchievementCalendar } from "../../../../src/shared/achievement-calendar.ts"
-import { type DailyAchievement } from "../../../../src/shared/achievement.ts"
+import type { AchievementCalendar } from "../../../../src/shared/achievement-calendar.ts"
+import type { DailyAchievement } from "../../../../src/shared/achievement.ts"
 import { runSubprocessOrThrow } from "../../../fixture/subprocess.ts"
 
 // 本物の `git` を起こす（`main` の上から実際に読むことそのものが検査の対象）。リポジトリは

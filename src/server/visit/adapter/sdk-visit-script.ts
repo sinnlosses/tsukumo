@@ -11,7 +11,7 @@
 
 import { query } from "@anthropic-ai/claude-agent-sdk"
 
-import { type VisitScriptQuery } from "../core/visit-script.ts"
+import type { VisitScriptQuery } from "../core/visit-script.ts"
 
 /** 子プロセスを起こす場所と環境変数（仕事のセッションと同じものを引き継ぐ）。 */
 export type VisitScriptProcess = {

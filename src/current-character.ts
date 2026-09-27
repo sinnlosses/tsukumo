@@ -30,18 +30,18 @@ import {
 import { discardChatArchive } from "./server/chat/adapter/chat-archive.ts"
 import { discardChatSummary } from "./server/chat/adapter/chat-summary.ts"
 import { forgetRememberedLineFromScreen } from "./server/chat/adapter/persona-memory.ts"
-import { type Config } from "./server/core/config.ts"
+import type { Config } from "./server/core/config.ts"
 import {
   readRememberedCharacter,
   writeRememberedCharacter,
 } from "./server/session/adapter/remembered-default.ts"
-import { type CharacterAssetLocation } from "./shared/character-asset.ts"
-import {
-  type CharacterCreate,
-  type CharacterDelete,
-  type CharacterEdit,
+import type { CharacterAssetLocation } from "./shared/character-asset.ts"
+import type {
+  CharacterCreate,
+  CharacterDelete,
+  CharacterEdit,
 } from "./shared/contract/character-pack.ts"
-import { type SessionEvent } from "./shared/session-event.ts"
+import type { SessionEvent } from "./shared/session-event.ts"
 
 /** いま出しているキャラクターパックへの窓口。持っているパックそのものは外へ出さない。 */
 export type CurrentCharacter = {

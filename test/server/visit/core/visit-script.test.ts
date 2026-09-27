@@ -11,7 +11,7 @@ import {
   visitWaitedMs,
   visitWorkExcerpt,
 } from "../../../../src/server/visit/core/visit-script.ts"
-import { type SessionEvent } from "../../../../src/shared/session-event.ts"
+import type { SessionEvent } from "../../../../src/shared/session-event.ts"
 import {
   applySessionEvent,
   INITIAL_SESSION_STATE,

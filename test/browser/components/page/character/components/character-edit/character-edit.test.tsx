@@ -3,7 +3,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import { CharacterEdit } from "../../../../../../../src/browser/components/page/character/components/character-edit/character-edit.tsx"
-import { type CharacterPackEntry } from "../../../../../../../src/shared/character.ts"
+import type { CharacterPackEntry } from "../../../../../../../src/shared/character.ts"
 import { EXPRESSIONS } from "../../../../../../../src/shared/expression.ts"
 import {
   INITIAL_SESSION_STATE,

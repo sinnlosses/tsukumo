@@ -21,7 +21,7 @@
 
 import { sumBy } from "remeda"
 
-import { type BrushStroke } from "./brush-tip.ts"
+import type { BrushStroke } from "./brush-tip.ts"
 import { clamp } from "./paint.ts"
 
 /**

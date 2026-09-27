@@ -4,7 +4,7 @@
 // 使用中以外のパックにはさらに「このキャラクターに切り替える」を置く。出し分けは
 // `hooks/use-character-edit.ts` が畳んだ値のとおりで、判定を持たない。
 
-import { type ReactElement } from "react"
+import type { ReactElement } from "react"
 
 import { Button } from "../../../../../../ui/button/button.tsx"
 import { HStack } from "../../../../../../ui/h-stack/h-stack.tsx"
@@ -13,7 +13,7 @@ import { SwitchIcon } from "../../../../../../ui/icon/icon.tsx"
 import { Text } from "../../../../../../ui/text/text.tsx"
 import { VStack } from "../../../../../../ui/v-stack/v-stack.tsx"
 import styles from "../../../../character.module.css"
-import { type CharacterProfileModel } from "../../../hooks/use-character-edit.ts"
+import type { CharacterProfileModel } from "../../../hooks/use-character-edit.ts"
 import { CharacterProfileEdit } from "../character-profile-edit/character-profile-edit.tsx"
 
 export function CharacterProfile(props: { readonly profile: CharacterProfileModel }): ReactElement {

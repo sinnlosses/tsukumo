@@ -15,10 +15,10 @@
 // 帯の右端にあった専用の印（`screen-nav-pending.tsx`）はもう無い（13.9「何を外すか」）。
 
 import clsx from "clsx"
-import { type ReactElement } from "react"
+import type { ReactElement } from "react"
 
 import { CharacterFace } from "../../../../components/domain/character-face.tsx"
-import { type ScreenNavMenu as Menu, type ScreenNavParts } from "../hooks/use-screen-nav.ts"
+import type { ScreenNavMenu as Menu, ScreenNavParts } from "../hooks/use-screen-nav.ts"
 import shellStyles from "../screen-nav.module.css"
 import { ScreenNavChatModeToggle } from "./screen-nav-chat-mode.tsx"
 import { ScreenNavCurrentWorkPill } from "./screen-nav-current-work.tsx"

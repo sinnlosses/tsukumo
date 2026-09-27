@@ -17,7 +17,7 @@ import { randomBytes } from "node:crypto"
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http"
 import process from "node:process"
 
-import { type Router } from "@orpc/server"
+import type { Router } from "@orpc/server"
 import { BodyLimitPlugin, RPCHandler } from "@orpc/server/fetch"
 import { isPlainObject } from "remeda"
 
@@ -34,9 +34,9 @@ import {
 import { RPC_PATH, type rpcContract } from "../../../shared/rpc.ts"
 import { SESSION_TOKEN_QUERY_NAME } from "../../../shared/session-socket.ts"
 import { VENDOR_PATH_PREFIX, vendorAssetPath } from "../../../shared/vendor-asset.ts"
-import { type UiBundle } from "./bundle.ts"
+import type { UiBundle } from "./bundle.ts"
 import { type RpcContext, rpcContextOf } from "./rpc-guard.ts"
-import { type UiDevServer } from "./ui-dev-server.ts"
+import type { UiDevServer } from "./ui-dev-server.ts"
 import { readVendorAsset } from "./vendor-asset.ts"
 
 /**

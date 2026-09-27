@@ -1,9 +1,9 @@
 import { cleanup, renderHook } from "@testing-library/react"
-import { type ReactElement, type ReactNode } from "react"
+import type { ReactElement, ReactNode } from "react"
 import { afterEach, describe, expect, it } from "vitest"
 
 import { usePendingAnswer } from "../../../../../../../../../../src/browser/components/page/conversation/components/dispatch/components/pending-answer/hooks/use-pending-answer.ts"
-import { type PendingAsk } from "../../../../../../../../../../src/shared/pending-ask.ts"
+import type { PendingAsk } from "../../../../../../../../../../src/shared/pending-ask.ts"
 import { INITIAL_SESSION_STATE } from "../../../../../../../../../../src/shared/session-state.ts"
 import { type CommandSpy, putSession } from "../../../../../../../../session-store.ts"
 

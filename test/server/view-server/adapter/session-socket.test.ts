@@ -1,15 +1,15 @@
 import { createServer, request as httpRequest, type IncomingMessage, type Server } from "node:http"
-import { type Duplex } from "node:stream"
+import type { Duplex } from "node:stream"
 
 import { createORPCClient, ORPCError } from "@orpc/client"
 import { RPCLink } from "@orpc/client/websocket"
-import { type ContractRouterClient } from "@orpc/contract"
+import type { ContractRouterClient } from "@orpc/contract"
 import { afterEach, describe, expect, it } from "vitest"
 import WebSocket from "ws"
 
 import { createSocketRouter } from "../../../../src/router.ts"
 import { createPromptImageShelf } from "../../../../src/server/session-driver/core/prompt-image-shelf.ts"
-import { type CommandSession } from "../../../../src/server/session/core/command-session.ts"
+import type { CommandSession } from "../../../../src/server/session/core/command-session.ts"
 import { createStartupToken } from "../../../../src/server/view-server/adapter/server.ts"
 import {
   attachSessionSocket,
@@ -20,7 +20,7 @@ import {
   PROTOCOL_VERSION,
   type ServerFrame,
 } from "../../../../src/shared/frame.ts"
-import { type socketContract } from "../../../../src/shared/rpc.ts"
+import type { socketContract } from "../../../../src/shared/rpc.ts"
 import { SESSION_SOCKET_PATH } from "../../../../src/shared/session-socket.ts"
 import { INITIAL_SESSION_STATE } from "../../../../src/shared/session-state.ts"
 

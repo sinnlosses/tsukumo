@@ -11,7 +11,7 @@
 // 除外する値が無いので、`command.ts` の `EFFORT_LEVELS` をそのまま選べる段の全体として使う
 // （`SessionDefaultPermissionMode` のような部分集合の型は作らない）。
 
-import { type EffortLevel, type ModelAlias, type PermissionMode } from "./command.ts"
+import type { EffortLevel, ModelAlias, PermissionMode } from "./command.ts"
 
 /**
  * 既定に選べる許可モード。「全部許す」（`bypassPermissions`）は入らない

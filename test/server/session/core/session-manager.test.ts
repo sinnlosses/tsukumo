@@ -3,23 +3,23 @@ import { isPlainObject } from "remeda"
 import { describe, expect, it } from "vitest"
 
 import { type CommandRouterPorts, createCommandRouter } from "../../../../src/router.ts"
-import { type CharacterSelection } from "../../../../src/server/character-pack/core/character-selection.ts"
-import {
-  type ChatConsolidationOutcome,
-  type ChatConsolidationSource,
+import type { CharacterSelection } from "../../../../src/server/character-pack/core/character-selection.ts"
+import type {
+  ChatConsolidationOutcome,
+  ChatConsolidationSource,
 } from "../../../../src/server/chat/core/chat-consolidation-writer.ts"
 import { CHAT_NUDGE_PROMPT } from "../../../../src/server/chat/core/chat-nudge.ts"
-import {
-  type ContextUsageEntry,
-  type ContextUsageLog,
+import type {
+  ContextUsageEntry,
+  ContextUsageLog,
 } from "../../../../src/server/context-usage/core/context-usage.ts"
-import {
-  type DiaryWriteRequest,
-  type DiaryWriterSource,
+import type {
+  DiaryWriteRequest,
+  DiaryWriterSource,
 } from "../../../../src/server/diary/core/diary-writer.ts"
-import {
-  type ReportUsageEntry,
-  type ReportUsageLog,
+import type {
+  ReportUsageEntry,
+  ReportUsageLog,
 } from "../../../../src/server/report/core/report-usage.ts"
 import {
   createPromptImageShelf,
@@ -27,53 +27,53 @@ import {
   recordedPromptImages,
   type ShelvedPromptImage,
 } from "../../../../src/server/session-driver/core/prompt-image-shelf.ts"
-import {
-  type ChatArchive,
-  type ChatArchiveEntry,
-  type SessionDriver,
+import type {
+  ChatArchive,
+  ChatArchiveEntry,
+  SessionDriver,
 } from "../../../../src/server/session-driver/core/session-driver.ts"
-import { type SessionLaunchRequest } from "../../../../src/server/session/core/session-launch.ts"
+import type { SessionLaunchRequest } from "../../../../src/server/session/core/session-launch.ts"
 import {
   createSessionManager as createSessionManagerWithoutCommands,
   type SessionManagerOptions,
 } from "../../../../src/server/session/core/session-manager.ts"
-import {
-  type TokenUsageEntry,
-  type TokenUsageLog,
+import type {
+  TokenUsageEntry,
+  TokenUsageLog,
 } from "../../../../src/server/token-usage/core/token-usage.ts"
-import { type VisitGuest } from "../../../../src/server/visit/core/visit-guest.ts"
+import type { VisitGuest } from "../../../../src/server/visit/core/visit-guest.ts"
 import { VISIT_TIMING } from "../../../../src/server/visit/core/visit-timing.ts"
-import { type VisitPorts } from "../../../../src/server/visit/core/visit-watch.ts"
-import { type DailyAchievement } from "../../../../src/shared/achievement.ts"
-import { type VisitScript } from "../../../../src/shared/character-visit.ts"
+import type { VisitPorts } from "../../../../src/server/visit/core/visit-watch.ts"
+import type { DailyAchievement } from "../../../../src/shared/achievement.ts"
+import type { VisitScript } from "../../../../src/shared/character-visit.ts"
 import {
   type ContextUsageReport,
   UNAVAILABLE_CONTEXT_USAGE,
 } from "../../../../src/shared/context-usage.ts"
-import {
-  type CharacterCreate,
-  type CharacterDelete,
-  type CharacterEdit,
+import type {
+  CharacterCreate,
+  CharacterDelete,
+  CharacterEdit,
 } from "../../../../src/shared/contract/character-pack.ts"
-import { type UsageProposalDismissal } from "../../../../src/shared/contract/usage-review.ts"
+import type { UsageProposalDismissal } from "../../../../src/shared/contract/usage-review.ts"
 import {
   FRAME_ERROR_REASON,
   PROTOCOL_VERSION,
   type ServerFrame,
 } from "../../../../src/shared/frame.ts"
-import { type PromptImage } from "../../../../src/shared/prompt-image.ts"
-import { type ReportSection } from "../../../../src/shared/report-block.ts"
-import { type SessionDefault } from "../../../../src/shared/session-default.ts"
-import { type SessionEvent } from "../../../../src/shared/session-event.ts"
+import type { PromptImage } from "../../../../src/shared/prompt-image.ts"
+import type { ReportSection } from "../../../../src/shared/report-block.ts"
+import type { SessionDefault } from "../../../../src/shared/session-default.ts"
+import type { SessionEvent } from "../../../../src/shared/session-event.ts"
 import {
   INITIAL_SESSION_STATE,
   MAX_SESSION_STATE_TURNS,
   type SessionState,
 } from "../../../../src/shared/session-state.ts"
-import {
-  type ModelTokenUsage,
-  type ScopeUsage,
-  type TurnUsageBreakdown,
+import type {
+  ModelTokenUsage,
+  ScopeUsage,
+  TurnUsageBreakdown,
 } from "../../../../src/shared/token-usage.ts"
 import { type PreviousUsageReview, usageProposalKey } from "../../../../src/shared/usage-review.ts"
 import {

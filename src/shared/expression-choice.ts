@@ -5,7 +5,7 @@
 // 読むのは `speak` ツールの enum を組み立てる側（`src/server/session-driver/adapter/sdk-tool.ts`）と、
 // 表情のラベルを出す画面。`node:` にも `document` にも触らない（他の shared と同じ制約）。
 
-import { type CharacterDefinition } from "./character-definition.ts"
+import type { CharacterDefinition } from "./character-definition.ts"
 import { type Expression, EXPRESSIONS } from "./expression.ts"
 
 /** `speak` で選べる表情1つ分。名前はコード側の語彙、ラベルは定義ファイル側の言葉。 */

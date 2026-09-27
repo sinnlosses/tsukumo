@@ -12,7 +12,7 @@
 // キー操作（上下・Tab・Enter・Esc）と確定は呼び出し側（`hooks/use-composer.ts`）が持つ（`/` 補完と同じ）。
 
 import clsx from "clsx"
-import { type ReactElement } from "react"
+import type { ReactElement } from "react"
 import { identity, sortBy } from "remeda"
 
 import { Text } from "../../../../../../ui/text/text.tsx"

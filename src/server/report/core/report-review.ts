@@ -31,7 +31,7 @@
 
 import { isDeepEqual } from "remeda"
 
-import { type SessionEvent } from "../../../shared/session-event.ts"
+import type { SessionEvent } from "../../../shared/session-event.ts"
 import { type ReportDraft, reportRejectionText, reportViolations } from "./report-violation.ts"
 
 /** handler の判定。`rejected` の `text` はそのまま `report` の戻り値になる。 */

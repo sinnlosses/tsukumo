@@ -17,8 +17,8 @@ import {
   type Expression,
   type Outfit,
 } from "../../../../../../../shared/expression.ts"
-import { type RecordedPromptImage } from "../../../../../../../shared/prompt-image.ts"
-import { type RecordTime } from "../../../../../../../shared/session-state.ts"
+import type { RecordedPromptImage } from "../../../../../../../shared/prompt-image.ts"
+import type { RecordTime } from "../../../../../../../shared/session-state.ts"
 import { portraitAppearance } from "../../../../../../domain/portrait-appearance.ts"
 import { useSession, useTurnRunning } from "../../../../../../stores/session.ts"
 import {

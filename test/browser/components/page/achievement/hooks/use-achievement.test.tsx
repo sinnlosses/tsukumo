@@ -1,14 +1,11 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { act, cleanup, renderHook, waitFor } from "@testing-library/react"
-import { type ReactElement, type ReactNode } from "react"
+import type { ReactElement, ReactNode } from "react"
 import { afterEach, describe, expect, it } from "vitest"
 
 import { useAchievement } from "../../../../../../src/browser/components/page/achievement/hooks/use-achievement.ts"
-import { type DailyAchievement } from "../../../../../../src/shared/achievement.ts"
-import {
-  type CharacterInfo,
-  type CharacterPackEntry,
-} from "../../../../../../src/shared/character.ts"
+import type { DailyAchievement } from "../../../../../../src/shared/achievement.ts"
+import type { CharacterInfo, CharacterPackEntry } from "../../../../../../src/shared/character.ts"
 import {
   INITIAL_SESSION_STATE,
   type SessionState,

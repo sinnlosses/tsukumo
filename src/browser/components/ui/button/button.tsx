@@ -10,7 +10,7 @@
 // 二重に持たない）。
 
 import clsx from "clsx"
-import { type ReactElement, type ReactNode } from "react"
+import type { ReactElement, ReactNode } from "react"
 
 import { TEXT_SIZE_CLASS, type TextSize } from "../text/text.tsx"
 import styles from "./button.module.css"

@@ -4,14 +4,14 @@
 // とおりで、判定を持たない。
 
 import clsx from "clsx"
-import { type ReactElement } from "react"
+import type { ReactElement } from "react"
 
 import { HStack } from "../../../../../../ui/h-stack/h-stack.tsx"
 import { TrashIcon, UploadIcon } from "../../../../../../ui/icon/icon.tsx"
 import { Text } from "../../../../../../ui/text/text.tsx"
 import { VStack } from "../../../../../../ui/v-stack/v-stack.tsx"
 import styles from "../../../../character.module.css"
-import { type FaceFieldModel } from "../../../hooks/use-character-edit.ts"
+import type { FaceFieldModel } from "../../../hooks/use-character-edit.ts"
 
 /**
  * 顔に選べる種類。立ち絵と同じ（`docs/screen-design.md` 13.9「顔」・`src/shared/character-face.ts`）。

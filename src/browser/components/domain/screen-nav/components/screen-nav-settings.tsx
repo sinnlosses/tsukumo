@@ -25,7 +25,7 @@ import { EFFORT_PLACEHOLDER_VALUE, effortLabel } from "../domain/effort-label.ts
 import { MODEL_LABELS } from "../domain/model-label.ts"
 import { PERMISSION_MODE_LABELS } from "../domain/permission-mode-label.ts"
 import { VISIT_TOGGLE_LABELS } from "../domain/visit-toggle-label.ts"
-import { type ScreenNavSettings } from "../hooks/use-settings.ts"
+import type { ScreenNavSettings } from "../hooks/use-settings.ts"
 import shellStyles from "../screen-nav.module.css"
 import styles from "./screen-nav-settings.module.css"
 

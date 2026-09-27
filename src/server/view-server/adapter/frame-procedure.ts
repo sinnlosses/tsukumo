@@ -8,7 +8,7 @@
 import { implement } from "@orpc/server"
 
 import { frameContract } from "../../../shared/contract/frame.ts"
-import { type ServerFrame } from "../../../shared/frame.ts"
+import type { ServerFrame } from "../../../shared/frame.ts"
 
 /**
  * 接続を購読に加える口。呼んだ瞬間に `hello` を同期で1つ `send` へ渡し、以後のフレームを配る。

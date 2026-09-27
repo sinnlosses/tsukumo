@@ -9,7 +9,7 @@
 // `data-screen` でいま出している画面を名乗るのは、狭い画面で帯の置き方が変わるため
 // （会話の画面だけは、いまあるタブ帯の右端に重ねる。13.9）。
 
-import { type ReactElement } from "react"
+import type { ReactElement } from "react"
 
 import { CharacterFace } from "../../../components/domain/character-face.tsx"
 import { ScreenNavChatModeToggle } from "./components/screen-nav-chat-mode.tsx"
@@ -19,7 +19,7 @@ import { ScreenNavMenu } from "./components/screen-nav-menu.tsx"
 import { ScreenNavModelPermissionSelect } from "./components/screen-nav-model-permission.tsx"
 import { ScreenNavRoom } from "./components/screen-nav-room.tsx"
 import { ScreenNavSettingsGear } from "./components/screen-nav-settings.tsx"
-import { type ScreenNavView } from "./hooks/use-screen-nav.ts"
+import type { ScreenNavView } from "./hooks/use-screen-nav.ts"
 import styles from "./screen-nav.module.css"
 
 export type PresentationalScreenNavProps = ScreenNavView

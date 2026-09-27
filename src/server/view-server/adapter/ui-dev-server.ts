@@ -12,7 +12,7 @@
 // `src/shared/` はサーバ側でも畳み込みに使われていて、ブラウザ側だけ新しくすると両側が
 // 食い違ったまま動く。
 
-import { type IncomingMessage, type Server, type ServerResponse } from "node:http"
+import type { IncomingMessage, Server, ServerResponse } from "node:http"
 
 import { bundledFilePath } from "../../adapter/bundled-path.ts"
 import { UI_SOURCE_DIR_RELATIVE_PATH, VITE_CONFIG_RELATIVE_PATH } from "./bundle.ts"

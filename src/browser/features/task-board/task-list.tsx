@@ -15,9 +15,9 @@
 // 置き場所（サイドバーの区画）はサイドバーの持ち物で、ここは中身だけを描く。 区画の枠と
 // 見出しは `components/domain/sidebar/section.tsx` にある（docs/design.md 2章）。
 
-import { type ReactElement } from "react"
+import type { ReactElement } from "react"
 
-import { type TaskSummaryResult } from "../../../shared/task-summary.ts"
+import type { TaskSummaryResult } from "../../../shared/task-summary.ts"
 import { Text } from "../../components/ui/text/text.tsx"
 import { TaskItem } from "./components/task-item.tsx"
 import { TaskRunningCard } from "./components/task-running-card.tsx"

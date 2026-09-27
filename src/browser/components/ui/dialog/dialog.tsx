@@ -7,7 +7,7 @@
 // `onDialogClick` を自分で組み立てなくてよい。
 
 import clsx from "clsx"
-import { type CSSProperties, type MouseEvent, type ReactElement, type ReactNode } from "react"
+import type { CSSProperties, MouseEvent, ReactElement, ReactNode } from "react"
 
 import { useModalDialog } from "../../../hooks/use-modal-dialog.ts"
 import styles from "./dialog.module.css"

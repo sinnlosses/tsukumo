@@ -17,7 +17,7 @@
 
 // 型は `rehype-sanitize` の `Options` から取る（実体は hast-util-sanitize の `Schema` だが、
 // あちらは推移的な依存なので直接 import しない。足してよい依存は docs/design.md 11章の一覧だけ）。
-import { type Options as Schema } from "rehype-sanitize"
+import type { Options as Schema } from "rehype-sanitize"
 
 import { CODE_FILE_NAME_PROPERTY } from "./code-file-name.ts"
 

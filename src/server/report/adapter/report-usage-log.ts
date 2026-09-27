@@ -10,7 +10,7 @@ import {
 import { appendJsonLine } from "../../adapter/lib/jsonl.ts"
 import { isoWithOffset, localDateKey } from "../../adapter/local-time.ts"
 import { tsukumoHomeDir } from "../../adapter/tsukumo-home.ts"
-import { type ReportUsageEntry, type ReportUsageLog } from "../core/report-usage.ts"
+import type { ReportUsageEntry, ReportUsageLog } from "../core/report-usage.ts"
 
 const REPORT_USAGE_DIR_NAME = "report-usage"
 

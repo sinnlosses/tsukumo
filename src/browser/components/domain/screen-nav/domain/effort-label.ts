@@ -11,8 +11,8 @@
 // 起こした直後はまだ1件も読めていないため、「対応するモデルだが、まだ読めていない」を
 // 独立した状態として持つ（`EffortSelect` の `unknown`）。
 
-import { type EffortLevel, type ModelAlias } from "../../../../../shared/command.ts"
-import { type ModelEffortSupport } from "../../../../../shared/session-event.ts"
+import type { EffortLevel, ModelAlias } from "../../../../../shared/command.ts"
+import type { ModelEffortSupport } from "../../../../../shared/session-event.ts"
 
 /**
  * effort の値と、画面に出すラベル。モデルと同じく機械が付けた値（13.1 原則3。値そのものは

@@ -9,9 +9,9 @@
 // `costUsd`（USD建てのコスト）はここでは書き方を持たない（画面に出さない。記録と集計の
 // 形自体は `src/shared/token-usage.ts` / `src/shared/token-usage-summary.ts` に残る）。
 
-import {
-  type ModelUsageTotal,
-  type TokenUsageTotals,
+import type {
+  ModelUsageTotal,
+  TokenUsageTotals,
 } from "../../../../../shared/token-usage-summary.ts"
 import { round } from "../../../../utils/format-count.ts"
 

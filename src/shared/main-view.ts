@@ -11,8 +11,8 @@
 import { sum } from "remeda"
 
 import { isBlankText } from "./blank-text.ts"
-import { type RecordedPromptImage } from "./prompt-image.ts"
-import { type Question, type QuestionAnswer } from "./question.ts"
+import type { RecordedPromptImage } from "./prompt-image.ts"
+import type { Question, QuestionAnswer } from "./question.ts"
 import { reportSectionsMarkdown } from "./report-block.ts"
 import { reportChecksMarkdown } from "./report-check.ts"
 import { tidyReportSections } from "./report-tidy.ts"
@@ -23,7 +23,7 @@ import {
   type ToolRunStatus,
   type TurnBodies,
 } from "./session-state.ts"
-import { type TurnFailure } from "./turn-failure.ts"
+import type { TurnFailure } from "./turn-failure.ts"
 import { splitIntoTurns, type TurnRest, turnIdOf } from "./turn.ts"
 
 /**

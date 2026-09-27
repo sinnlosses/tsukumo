@@ -2,12 +2,12 @@
 // `<label>` で、左の色見本は `<input type="color">` そのもの（押すとブラウザの色の選び方が開く）。
 // 右端に今の値を16進の字で添える（色だけにしない。13.1 原則1）。
 
-import { type ReactElement } from "react"
+import type { ReactElement } from "react"
 
 import { Text } from "../../../../ui/text/text.tsx"
 import { VStack } from "../../../../ui/v-stack/v-stack.tsx"
 import styles from "../../character.module.css"
-import { type AccentSwatchModel } from "../hooks/use-character-edit.ts"
+import type { AccentSwatchModel } from "../hooks/use-character-edit.ts"
 
 export function AccentSwatch(props: {
   readonly swatch: AccentSwatchModel

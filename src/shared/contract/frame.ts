@@ -6,7 +6,7 @@
 
 import { eventIterator, oc, type } from "@orpc/contract"
 
-import { type ServerFrame } from "../frame.ts"
+import type { ServerFrame } from "../frame.ts"
 
 export const frameContract = {
   /**

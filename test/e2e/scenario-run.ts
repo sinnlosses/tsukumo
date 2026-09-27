@@ -292,14 +292,19 @@ function waitForViewUrl(child: ChildProcess): Promise<string> {
 }
 
 /**
- * ブラウザの時計を凍らせた瞬間から始める。`page.clock.install` は `Date.now()` を差し替えるが
- * `Temporal.Now` は差し替えないので、`Temporal.Now.instant()` を `Date.now()` に従わせる
- * （ブラウザで「いま」を読むのは `src/browser/utils/clock.ts` の1つだけで、そこが呼ぶのは
- * これだけ）。差し込む台本は文字列で渡す——ページの中で動くコードで、このファイルの型と
- * lint の対象にしない。
+ * ブラウザの時計を凍らせた瞬間から始める。`page.clock.install` だけでは `pauseAt` を
+ * 呼ぶまで実時間で進み、止まったサーバの時計（`TSUKUMO_FIXED_CLOCK`）とずれて、
+ * `SUCCESS_MOTION_WINDOW_MS` のような時間の窓の判定が実行の速さで揺れる。
+ *
+ * `page.clock.install` は `Date.now()` を差し替えるが `Temporal.Now` は差し替えないので、
+ * `Temporal.Now.instant()` を `Date.now()` に従わせる（ブラウザで「いま」を読むのは
+ * `src/browser/utils/clock.ts` の1つだけで、そこが呼ぶのはこれだけ）。差し込む台本は
+ * 文字列で渡す——ページの中で動くコードで、このファイルの型と lint の対象にしない。
  */
 async function installFixedClock(page: Page): Promise<void> {
-  await page.clock.install({ time: Temporal.Instant.from(FIXED_INSTANT).epochMilliseconds })
+  const fixed = Temporal.Instant.from(FIXED_INSTANT).epochMilliseconds
+  await page.clock.install({ time: fixed })
+  await page.clock.pauseAt(fixed)
   await page.addInitScript(
     "Temporal.Now.instant = () => Temporal.Instant.fromEpochMilliseconds(Date.now())",
   )

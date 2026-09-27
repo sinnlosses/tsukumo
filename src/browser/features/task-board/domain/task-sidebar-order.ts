@@ -2,7 +2,7 @@
 // develop/tasks.json のファイルの順のままにする（todo と done は混ざったままでよい。
 // 経緯は docs/display.md 4.2）。
 
-import { type TaskSummaryItem } from "../../../../shared/task-summary.ts"
+import type { TaskSummaryItem } from "../../../../shared/task-summary.ts"
 
 export type TaskSidebarOrder = {
   /** 先頭に並べる進行中のタスク（ファイルの順のまま。2件以上あれば2枚以上のカードになる）。 */

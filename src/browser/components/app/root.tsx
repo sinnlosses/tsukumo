@@ -2,7 +2,7 @@
 // 描く前のことだけを持つ——サーバとの接続、パックの見た目、サーバと版が合わないときの知らせと、立ち絵の先読み。
 // 帯と画面の組み立ては `layout.tsx` の `<Layout>`。
 
-import { type ReactElement } from "react"
+import type { ReactElement } from "react"
 
 import { useSession, useSessionConnection } from "../../stores/session.ts"
 import { usePortraitPreload } from "../domain/portrait.tsx"

@@ -6,8 +6,8 @@ import {
   useQuestionDraft,
   type QuestionAnswerModel,
 } from "../../../src/browser/stores/question-answer.ts"
-import { type PendingAsk } from "../../../src/shared/pending-ask.ts"
-import { type Question, type QuestionOption } from "../../../src/shared/question.ts"
+import type { PendingAsk } from "../../../src/shared/pending-ask.ts"
+import type { Question, QuestionOption } from "../../../src/shared/question.ts"
 import { INITIAL_SESSION_STATE } from "../../../src/shared/session-state.ts"
 import { type CommandSpy, putSession } from "../session-store.ts"
 

@@ -7,7 +7,7 @@
 
 import process from "node:process"
 
-import { type CurrentCharacter } from "./current-character.ts"
+import type { CurrentCharacter } from "./current-character.ts"
 import { createSocketRouter } from "./router.ts"
 import {
   type AchievementCommitCache,
@@ -30,7 +30,7 @@ import {
 import { readChatTopics } from "./server/chat/core/chat-consolidation.ts"
 import { createChatRecall } from "./server/chat/core/chat-recall.ts"
 import { createContextUsageLog } from "./server/context-usage/adapter/context-usage-log.ts"
-import { type Config } from "./server/core/config.ts"
+import type { Config } from "./server/core/config.ts"
 import { appendDiaryParagraph } from "./server/diary/adapter/diary.ts"
 import { queryDiary } from "./server/diary/adapter/sdk-diary.ts"
 import {
@@ -50,12 +50,12 @@ import {
   listSwitchableSessions,
   readRestoredEvents,
 } from "./server/session-driver/adapter/sdk-session.ts"
-import { type PromptImageShelf } from "./server/session-driver/core/prompt-image-shelf.ts"
-import {
-  type ChatArchive,
-  type SessionDriver,
-  type SessionMode,
-  type SessionStart,
+import type { PromptImageShelf } from "./server/session-driver/core/prompt-image-shelf.ts"
+import type {
+  ChatArchive,
+  SessionDriver,
+  SessionMode,
+  SessionStart,
 } from "./server/session-driver/core/session-driver.ts"
 import { canResume, sessionTag } from "./server/session-driver/core/session-restore.ts"
 import {
@@ -74,7 +74,7 @@ import {
   takeSystemPromptAppend,
   toSystemPromptMode,
 } from "./server/system-prompt/core/system-prompt.ts"
-import { type TokenUsageLog } from "./server/token-usage/core/token-usage.ts"
+import type { TokenUsageLog } from "./server/token-usage/core/token-usage.ts"
 import {
   readPreviousUsageReview,
   writePreviousUsageReview,
@@ -83,7 +83,7 @@ import {
   readDismissedUsageProposalKeys,
   writeDismissedUsageProposalKey,
 } from "./server/usage-review/adapter/usage-proposal-dismissal.ts"
-import { type SocketRouter } from "./server/view-server/adapter/session-socket.ts"
+import type { SocketRouter } from "./server/view-server/adapter/session-socket.ts"
 import { queryVisitScript } from "./server/visit/adapter/sdk-visit-script.ts"
 import { createVisitClock } from "./server/visit/adapter/visit-clock.ts"
 import { visitGuests } from "./server/visit/core/visit-guest.ts"
@@ -94,11 +94,11 @@ import {
 import { visitCast } from "./server/visit/core/visit-script.ts"
 import { QUICK_VISIT_TIMING, VISIT_TIMING } from "./server/visit/core/visit-timing.ts"
 import { UNKNOWN_ACHIEVEMENT } from "./shared/achievement.ts"
-import { type UsageProposalDismissal } from "./shared/contract/usage-review.ts"
+import type { UsageProposalDismissal } from "./shared/contract/usage-review.ts"
 import { expressionChoices } from "./shared/expression-choice.ts"
-import { type SessionChoice } from "./shared/session-choice.ts"
-import { type SessionDefault } from "./shared/session-default.ts"
-import { type SessionEvent } from "./shared/session-event.ts"
+import type { SessionChoice } from "./shared/session-choice.ts"
+import type { SessionDefault } from "./shared/session-default.ts"
+import type { SessionEvent } from "./shared/session-event.ts"
 import { usageProposalKey, withoutDismissedProposals } from "./shared/usage-review.ts"
 
 export type SessionStartOptions = {

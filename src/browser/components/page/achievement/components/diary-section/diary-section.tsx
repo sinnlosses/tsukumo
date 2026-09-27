@@ -3,9 +3,9 @@
 // 3段の進み）を持つ。
 
 import clsx from "clsx"
-import { type ReactElement } from "react"
+import type { ReactElement } from "react"
 
-import { type AchievementDoneTasks } from "../../../../../../shared/achievement.ts"
+import type { AchievementDoneTasks } from "../../../../../../shared/achievement.ts"
 import { DIARY_STAGES, type DiaryStage } from "../../../../../../shared/diary.ts"
 import { Portrait } from "../../../../../components/domain/portrait.tsx"
 import { Button } from "../../../../../components/ui/button/button.tsx"
@@ -13,11 +13,11 @@ import { Heading } from "../../../../../components/ui/heading/heading.tsx"
 import { Text } from "../../../../../components/ui/text/text.tsx"
 import { useReportReveal } from "../../../../../domain/reveal/use-report-reveal.ts"
 import styles from "../../achievement.module.css"
-import { type DiaryWriterPortrait } from "../../domain/diary-writer.ts"
-import {
-  type AchievementReviewButton,
-  type AchievementView,
-  type AchievementWriting,
+import type { DiaryWriterPortrait } from "../../domain/diary-writer.ts"
+import type {
+  AchievementReviewButton,
+  AchievementView,
+  AchievementWriting,
 } from "../../hooks/use-achievement.ts"
 
 const EMPTY_DAY_NOTE = "この日に main へ入った成果は無い。"

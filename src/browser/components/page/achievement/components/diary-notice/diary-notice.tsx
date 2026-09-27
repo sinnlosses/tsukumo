@@ -6,7 +6,7 @@
 // ロジックは `hooks/use-diary-notice.ts`（`docs/design.md` 2章「機能の中を分ける」）。ここは
 // 受け取った値をそのまま並べるだけ。
 
-import { type ReactElement } from "react"
+import type { ReactElement } from "react"
 
 import { Button } from "../../../../../components/ui/button/button.tsx"
 import { HStack } from "../../../../../components/ui/h-stack/h-stack.tsx"

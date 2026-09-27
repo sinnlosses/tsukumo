@@ -7,7 +7,7 @@
 // 呼ばれず、SDK が理由を `isError` 付きで返す）。ここで見るのは形の外の条（空の欄・件数・
 // 識別子の重なり・見送った提案）だけ。
 
-import { type SessionEvent } from "../../../shared/session-event.ts"
+import type { SessionEvent } from "../../../shared/session-event.ts"
 import {
   USAGE_PROPOSAL_KIND_TARGETS,
   USAGE_PROPOSAL_KINDS,

@@ -30,7 +30,7 @@
 // `portraits.default` に落ちたものが届く。畳むのは `shared/character.ts`）。
 
 import clsx from "clsx"
-import { type CSSProperties, type ReactElement } from "react"
+import type { CSSProperties, ReactElement } from "react"
 
 import { resolveOutfit } from "../../../../../../../../shared/expression.ts"
 import { Portrait } from "../../../../../../../components/domain/portrait.tsx"

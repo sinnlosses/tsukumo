@@ -14,7 +14,7 @@ import {
   REPORT_MERMAID_KINDS,
   type ReportSection,
 } from "../../../shared/report-block.ts"
-import { type ReportCheck } from "../../../shared/report-check.ts"
+import type { ReportCheck } from "../../../shared/report-check.ts"
 
 /** 検査にかけるレポート。`sections` と `checks` の「無い」は空の配列、`favor` の「無い」は空の文字列。 */
 export type ReportDraft = {

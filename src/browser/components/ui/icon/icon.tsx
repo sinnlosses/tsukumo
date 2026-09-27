@@ -3,7 +3,7 @@
 // ここは絵だけ。線の色は読み手の `currentColor`。
 
 import { ArrowLeftRight, Pencil, Plus, Trash2, Upload } from "lucide-react"
-import { type ReactElement } from "react"
+import type { ReactElement } from "react"
 
 /** 差し替える（上向きの矢印と下の線）。 */
 export function UploadIcon(): ReactElement {

@@ -16,10 +16,10 @@ import {
   createChatArchive,
   discardChatArchive,
 } from "../../../../src/server/chat/adapter/chat-archive.ts"
-import {
-  type ChatArchive,
-  type ChatEpisodeDraft,
-  type ChatReadbackLimits,
+import type {
+  ChatArchive,
+  ChatEpisodeDraft,
+  ChatReadbackLimits,
 } from "../../../../src/server/session-driver/core/session-driver.ts"
 
 // フィクスチャは手で書いた架空の依頼・セリフだけ（実物の会話は使わない。

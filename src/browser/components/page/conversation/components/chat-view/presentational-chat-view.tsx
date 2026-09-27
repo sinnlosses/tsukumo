@@ -4,13 +4,13 @@
 //
 // 立ち絵の素材（URL）が無いときは立ち絵を出さず、ログだけで成立させる。
 
-import { type ReactElement } from "react"
+import type { ReactElement } from "react"
 
 import { HStack } from "../../../../../components/ui/h-stack/h-stack.tsx"
 import styles from "./chat-view.module.css"
 import { ChatLog } from "./components/chat-log/chat-log.tsx"
 import { NudgePortrait } from "./components/nudge-portrait/nudge-portrait.tsx"
-import { type ChatViewModel } from "./hooks/use-chat-view.ts"
+import type { ChatViewModel } from "./hooks/use-chat-view.ts"
 
 export type PresentationalChatViewProps = ChatViewModel
 

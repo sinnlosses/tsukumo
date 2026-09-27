@@ -1,10 +1,10 @@
 // `visit` が受けるコマンドの表（`docs/design.md`「コマンドの受け手と手続きの置き方」）。
 // 手続き（`visitProcedure`）がここの行へ委ねる。
 
-import { type visitContract } from "../../../shared/contract/visit.ts"
+import type { visitContract } from "../../../shared/contract/visit.ts"
 import { FRAME_ERROR_REASON } from "../../../shared/frame.ts"
-import { type SessionEvent } from "../../../shared/session-event.ts"
-import { type FeatureCommandTable } from "../../core/command-receiver.ts"
+import type { SessionEvent } from "../../../shared/session-event.ts"
+import type { FeatureCommandTable } from "../../core/command-receiver.ts"
 
 export type VisitCommandPorts = {
   /**

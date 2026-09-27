@@ -17,19 +17,19 @@ import {
   type TokenUsageTotals,
   type TokenUsageTrend,
 } from "../../../../shared/token-usage-summary.ts"
-import { type ToolUsageCount } from "../../../../shared/token-usage.ts"
+import type { ToolUsageCount } from "../../../../shared/token-usage.ts"
 import { Button } from "../../../components/ui/button/button.tsx"
 import { HStack } from "../../../components/ui/h-stack/h-stack.tsx"
 import { Text } from "../../../components/ui/text/text.tsx"
 import { VStack } from "../../../components/ui/v-stack/v-stack.tsx"
-import { type UseContextUsageResult } from "../../../domain/context-usage.ts"
+import type { UseContextUsageResult } from "../../../domain/context-usage.ts"
 import { formatCount } from "../../../utils/format-count.ts"
 import { ContextUsageCard } from "./components/context-usage-card/context-usage-card.tsx"
 import { PeriodUsageCard } from "./components/period-usage-card/period-usage-card.tsx"
 import { UsageReviewCard } from "./components/usage-review-card/usage-review-card.tsx"
 import { formatBytes } from "./domain/usage-format.ts"
-import { type UseTokenUsageResult } from "./hooks/use-token-usage.ts"
-import { type UseUsageReviewResult } from "./hooks/use-usage-review.ts"
+import type { UseTokenUsageResult } from "./hooks/use-token-usage.ts"
+import type { UseUsageReviewResult } from "./hooks/use-usage-review.ts"
 import styles from "./token-usage.module.css"
 
 /** 記録が1件も無い期間の一言（空でも壊れない。札も表も出さずこれだけ）。 */

@@ -11,7 +11,7 @@
 //
 // `node:` にも `document` にも触らない（他の shared と同じ制約）。
 
-import { type CommandDescription } from "./session-event.ts"
+import type { CommandDescription } from "./session-event.ts"
 
 /**
  * 入力欄の `/` 補完に出す候補（名前と、あれば説明）。

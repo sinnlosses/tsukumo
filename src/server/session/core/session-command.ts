@@ -8,21 +8,17 @@ import {
   type DailyAchievement,
   isEmptyAchievementDay,
 } from "../../../shared/achievement.ts"
-import { type CommandInputs } from "../../../shared/command.ts"
-import { type sessionContract } from "../../../shared/contract/session.ts"
+import type { CommandInputs } from "../../../shared/command.ts"
+import type { sessionContract } from "../../../shared/contract/session.ts"
 import { FRAME_ERROR_REASON } from "../../../shared/frame.ts"
 import { BUILTIN_SESSION_DEFAULT, type SessionDefault } from "../../../shared/session-default.ts"
-import { type SessionEvent } from "../../../shared/session-event.ts"
-import { type DispatchResult } from "../../core/command-receiver.ts"
-import { type DiaryDayTask } from "../../diary/core/diary-tool.ts"
-import { type DiaryWriteRequest, type DiaryWriterSource } from "../../diary/core/diary-writer.ts"
-import { type PromptImageShelf } from "../../session-driver/core/prompt-image-shelf.ts"
-import { type SessionDriver } from "../../session-driver/core/session-driver.ts"
-import {
-  type CommandReceiver,
-  type CommandSession,
-  type SessionReceiver,
-} from "./command-session.ts"
+import type { SessionEvent } from "../../../shared/session-event.ts"
+import type { DispatchResult } from "../../core/command-receiver.ts"
+import type { DiaryDayTask } from "../../diary/core/diary-tool.ts"
+import type { DiaryWriteRequest, DiaryWriterSource } from "../../diary/core/diary-writer.ts"
+import type { PromptImageShelf } from "../../session-driver/core/prompt-image-shelf.ts"
+import type { SessionDriver } from "../../session-driver/core/session-driver.ts"
+import type { CommandReceiver, CommandSession, SessionReceiver } from "./command-session.ts"
 import { ACCEPTED, askDriver, declined, nudge } from "./driver-command.ts"
 
 export type SessionCommandPorts = {

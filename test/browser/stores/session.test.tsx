@@ -10,7 +10,7 @@ import { afterEach, describe, expect, it } from "vitest"
 import { PendingAnswer } from "../../../src/browser/components/page/conversation/components/dispatch/components/pending-answer/pending-answer.tsx"
 import { useSession } from "../../../src/browser/stores/session.ts"
 import { PROTOCOL_VERSION } from "../../../src/shared/frame.ts"
-import { type PendingAsk } from "../../../src/shared/pending-ask.ts"
+import type { PendingAsk } from "../../../src/shared/pending-ask.ts"
 import { INITIAL_SESSION_STATE } from "../../../src/shared/session-state.ts"
 import { putSession } from "../session-store.ts"
 

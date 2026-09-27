@@ -6,7 +6,7 @@
 // `components/background-field.tsx` に任せる。フックも算出も持たず、`hooks/use-character-edit.ts` が
 // 畳んだ値をそのまま置く（docs/design.md 2章「機能の中を分ける」）。
 
-import { type ReactElement } from "react"
+import type { ReactElement } from "react"
 
 import { Button } from "../../../../ui/button/button.tsx"
 import { HStack } from "../../../../ui/h-stack/h-stack.tsx"
@@ -15,7 +15,7 @@ import { Text } from "../../../../ui/text/text.tsx"
 import { VStack } from "../../../../ui/v-stack/v-stack.tsx"
 import styles from "../../character.module.css"
 import { AccentSwatch } from "../accent-swatch/accent-swatch.tsx"
-import { type CharacterEditModel } from "../hooks/use-character-edit.ts"
+import type { CharacterEditModel } from "../hooks/use-character-edit.ts"
 import { BackgroundField } from "./components/background-field/background-field.tsx"
 import { CharacterDelete } from "./components/character-delete/character-delete.tsx"
 import { CharacterProfile } from "./components/character-profile/character-profile.tsx"

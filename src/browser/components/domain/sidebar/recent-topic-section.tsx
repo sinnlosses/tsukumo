@@ -6,7 +6,7 @@
 // 空のときは案内を出す。 一度も圧縮していないパックと、見出しを取り出せなかった要約は
 // 同じ空で届き、どちらも次の圧縮で埋まるので、案内も1つにする。
 
-import { type ReactElement } from "react"
+import type { ReactElement } from "react"
 
 import { Text } from "../../../components/ui/text/text.tsx"
 import { useSession } from "../../../stores/session.ts"

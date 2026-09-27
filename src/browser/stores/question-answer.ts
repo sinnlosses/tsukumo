@@ -13,7 +13,7 @@
 
 import { create } from "zustand"
 
-import { type PendingAsk } from "../../shared/pending-ask.ts"
+import type { PendingAsk } from "../../shared/pending-ask.ts"
 import {
   FREE_TEXT_OPTION_LABEL,
   sortQuestionOptions,

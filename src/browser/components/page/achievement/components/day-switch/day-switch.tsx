@@ -3,7 +3,7 @@
 // 計算にも「今日へ」の判定にも、直前に届いた日付が要る（`hooks/use-achievement.ts` の
 // {@link AchievementDaySwitch}）。
 
-import { type ReactElement } from "react"
+import type { ReactElement } from "react"
 
 import { previousDateKey } from "../../../../../../shared/achievement.ts"
 import { Button } from "../../../../../components/ui/button/button.tsx"
@@ -13,7 +13,7 @@ import { Text } from "../../../../../components/ui/text/text.tsx"
 import { VStack } from "../../../../../components/ui/v-stack/v-stack.tsx"
 import { dayLabel } from "../../../../../utils/day-label.ts"
 import styles from "../../achievement.module.css"
-import { type AchievementDaySwitch } from "../../hooks/use-achievement.ts"
+import type { AchievementDaySwitch } from "../../hooks/use-achievement.ts"
 
 const LOADING_VALUE = "…"
 

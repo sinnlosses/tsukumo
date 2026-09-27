@@ -2,7 +2,7 @@
 // 入口の `main.tsx` はこれを `createRoot(...).render(...)` するだけ（Vite の流儀と同じ分け方）。
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import { type ReactElement } from "react"
+import type { ReactElement } from "react"
 
 import { Root } from "./components/app/root.tsx"
 

@@ -8,14 +8,14 @@
 import clsx from "clsx"
 import { Fragment, useState, type ReactElement } from "react"
 
-import {
-  type MainViewAction,
-  type MainViewRequest,
-  type MainViewStep,
-  type MainViewStepBody,
-  type MainViewTurn,
+import type {
+  MainViewAction,
+  MainViewRequest,
+  MainViewStep,
+  MainViewStepBody,
+  MainViewTurn,
 } from "../../../../../../../../shared/main-view.ts"
-import { type TurnFailure } from "../../../../../../../../shared/turn-failure.ts"
+import type { TurnFailure } from "../../../../../../../../shared/turn-failure.ts"
 import { Text } from "../../../../../../../components/ui/text/text.tsx"
 import { VStack } from "../../../../../../../components/ui/v-stack/v-stack.tsx"
 import { turnFailureLabel } from "../../../../domain/api-error-label.ts"

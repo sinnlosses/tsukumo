@@ -13,7 +13,7 @@
 // あらすじのファイルだけで、ログには出さない（docs/coding-standards.md「会話内容の扱い」）。
 
 import { CHAT_MEMORY_BUDGET } from "../../../shared/chat-memory-budget.ts"
-import { type ChatArchive, type ChatSummary } from "../../session-driver/core/session-driver.ts"
+import type { ChatArchive, ChatSummary } from "../../session-driver/core/session-driver.ts"
 import {
   CHAT_CONSOLIDATION_TIMEOUT_MS,
   chatConsolidationQuery,

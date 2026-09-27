@@ -1,9 +1,9 @@
 // `host` が受けるコマンドの表（`docs/design.md`「コマンドの受け手と手続きの置き方」）。
 // 手続き（`hostProcedure`）がここの行へ委ねる。
 
-import { type hostContract } from "../../../shared/contract/host.ts"
+import type { hostContract } from "../../../shared/contract/host.ts"
 import { FRAME_ERROR_REASON } from "../../../shared/frame.ts"
-import { type FeatureCommandTable } from "../../core/command-receiver.ts"
+import type { FeatureCommandTable } from "../../core/command-receiver.ts"
 
 export type HostCommandPorts = {
   /**

@@ -315,7 +315,7 @@ node scripts/stop.ts           # 動いている tsukumo を一覧する（--por
 ├── scripts/                # 閉じたタブを開き直す道具など
 ├── assets/                 # ロゴ
 ├── docs/                   # 要件定義・設計・アーキテクチャ・規約・用語集（正典）
-├── develop/                # 進捗管理（task/・direction.md）。機能には関係しない
+├── develop/                # 進捗管理（task/・direction.md・draft/）。機能には関係しない
 ├── bin/tsukumo             # エントリポイント（pnpm link --global でグローバルに入る）
 └── package.json
 ```

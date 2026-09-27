@@ -15,9 +15,9 @@ import {
   type ExpressionChoice,
   expressionNames as toExpressionNames,
 } from "../../../shared/expression-choice.ts"
-import { type SessionChoice } from "../../../shared/session-choice.ts"
-import { type SessionEvent } from "../../../shared/session-event.ts"
-import { type SessionDriverOptions } from "../core/session-driver.ts"
+import type { SessionChoice } from "../../../shared/session-choice.ts"
+import type { SessionEvent } from "../../../shared/session-event.ts"
+import type { SessionDriverOptions } from "../core/session-driver.ts"
 import {
   listMarkedSessions,
   selectSessionToResume,

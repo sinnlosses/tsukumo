@@ -7,7 +7,7 @@
 // 会話の内容がイベントとして通るが、ログにもファイルにも書かない
 // （docs/coding-standards.md「会話内容の扱い」）。配る先は渡された `EventBatchOptions.deliver` だけ。
 
-import { type StampedEvent } from "../../../shared/session-event.ts"
+import type { StampedEvent } from "../../../shared/session-event.ts"
 
 /**
  * イベントをまとめて配る間隔。旧の `PUBLISH_INTERVAL_MS` と同じ 100ms。

@@ -2,11 +2,11 @@ import { cleanup, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
 import { DiarySection } from "../../../../../../../src/browser/components/page/achievement/components/diary-section/diary-section.tsx"
-import { type DiaryWriterPortrait } from "../../../../../../../src/browser/components/page/achievement/domain/diary-writer.ts"
-import {
-  type AchievementReviewButton,
-  type AchievementView,
-  type AchievementWriting,
+import type { DiaryWriterPortrait } from "../../../../../../../src/browser/components/page/achievement/domain/diary-writer.ts"
+import type {
+  AchievementReviewButton,
+  AchievementView,
+  AchievementWriting,
 } from "../../../../../../../src/browser/components/page/achievement/hooks/use-achievement.ts"
 
 /**

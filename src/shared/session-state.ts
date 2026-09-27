@@ -11,34 +11,25 @@
 // 入力欄の `/` 補完の候補は `command-suggestion.ts`）。ここが持つのは「状態そのもの」と
 // 「イベント1件でどう変わるか」だけ。
 
-import { type ApiTrouble } from "./api-trouble.ts"
-import { type BackgroundTask } from "./background-task.ts"
+import type { ApiTrouble } from "./api-trouble.ts"
+import type { BackgroundTask } from "./background-task.ts"
 import { isBlankText } from "./blank-text.ts"
-import { type CharacterInfo, type CharacterPackEntry } from "./character.ts"
+import type { CharacterInfo, CharacterPackEntry } from "./character.ts"
 import { commandCandidates } from "./command-suggestion.ts"
 import { type EffortLevel, isModelAlias } from "./command.ts"
 import { DIARY_STAGES, type DiaryStage, type DiaryWriting } from "./diary.ts"
-import { type Expression } from "./expression.ts"
-import { type PendingAsk } from "./pending-ask.ts"
-import { type RecordedPromptImage } from "./prompt-image.ts"
-import { type Question, type QuestionAnswer } from "./question.ts"
-import { type RateLimit } from "./rate-limit.ts"
-import { type ReportSection } from "./report-block.ts"
-import { type ReportCheck } from "./report-check.ts"
-import { type SessionChoice } from "./session-choice.ts"
+import type { Expression } from "./expression.ts"
+import type { PendingAsk } from "./pending-ask.ts"
+import type { RecordedPromptImage } from "./prompt-image.ts"
+import type { Question, QuestionAnswer } from "./question.ts"
+import type { RateLimit } from "./rate-limit.ts"
+import type { ReportSection } from "./report-block.ts"
+import type { ReportCheck } from "./report-check.ts"
+import type { SessionChoice } from "./session-choice.ts"
 import { BUILTIN_SESSION_DEFAULT, type SessionDefault } from "./session-default.ts"
-import {
-  type CommandDescription,
-  type ModelEffortSupport,
-  type SessionEvent,
-} from "./session-event.ts"
-import { type TaskSummaryResult } from "./task-summary.ts"
-import {
-  type TurnEnding,
-  type TurnFailure,
-  type TurnFailureCause,
-  type TurnOutcome,
-} from "./turn-failure.ts"
+import type { CommandDescription, ModelEffortSupport, SessionEvent } from "./session-event.ts"
+import type { TaskSummaryResult } from "./task-summary.ts"
+import type { TurnEnding, TurnFailure, TurnFailureCause, TurnOutcome } from "./turn-failure.ts"
 import { splitIntoTurns } from "./turn.ts"
 import {
   type PreviousUsageReview,

@@ -29,11 +29,8 @@
 
 import { useState } from "react"
 
-import { type AccentTarget } from "../../../../../../shared/character-definition.ts"
-import {
-  type CharacterInfo,
-  type CharacterPackRemoval,
-} from "../../../../../../shared/character.ts"
+import type { AccentTarget } from "../../../../../../shared/character-definition.ts"
+import type { CharacterInfo, CharacterPackRemoval } from "../../../../../../shared/character.ts"
 import { resolveExpressionLabel } from "../../../../../../shared/expression-choice.ts"
 import {
   type Expression,

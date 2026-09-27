@@ -7,7 +7,7 @@
 // （`to` から経った日数で減衰し、思い出した回数が多いほど緩む）→ 点（一致 × `weight` × 新しさ）。
 
 import { CHAT_RECALL_SCORE, type ChatRecallScore } from "../../../shared/chat-memory-budget.ts"
-import { type ChatEpisodeCandidate } from "../../session-driver/core/session-driver.ts"
+import type { ChatEpisodeCandidate } from "../../session-driver/core/session-driver.ts"
 
 /**
  * `episode.jsonl` の1行のうち、採点に要る部分だけ（版・`from` は読まない。読んで検証するのは

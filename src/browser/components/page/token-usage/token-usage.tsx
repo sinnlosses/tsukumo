@@ -15,7 +15,7 @@
 // 読んで内訳の取り直しの合図を作るのはここ——`browser/domain/` は `stores/` を読めないので
 // （`contextUsageRefetchKey` の冒頭コメント）、`useSession` はここで呼ぶ。
 
-import { type ReactElement } from "react"
+import type { ReactElement } from "react"
 
 import { contextUsageRefetchKey, useContextUsage } from "../../../domain/context-usage.ts"
 import { useSession } from "../../../stores/session.ts"

@@ -12,7 +12,7 @@
 
 import { z } from "zod"
 
-import { type ModelTokenUsage, type ToolUsageCount } from "./token-usage.ts"
+import type { ModelTokenUsage, ToolUsageCount } from "./token-usage.ts"
 
 /**
  * 選べる期間（今日を含む直近何日か）。3つだけにしてあるのは、この3段で見たいものが

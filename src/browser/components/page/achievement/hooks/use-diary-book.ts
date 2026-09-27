@@ -33,8 +33,8 @@ import {
   type AchievementTask,
   type DailyAchievement,
 } from "../../../../../shared/achievement.ts"
-import { type CharacterInfo, type CharacterPackEntry } from "../../../../../shared/character.ts"
-import { type DailyDiaryStatus, type Diary } from "../../../../../shared/diary.ts"
+import type { CharacterInfo, CharacterPackEntry } from "../../../../../shared/character.ts"
+import type { DailyDiaryStatus, Diary } from "../../../../../shared/diary.ts"
 import {
   DEFAULT_CHARACTER_NAME,
   portraitAppearance,
@@ -46,11 +46,11 @@ import { dayLabel } from "../../../../utils/day-label.ts"
 import { monthDayLabel } from "../../../../utils/month-day-label.ts"
 import { diaryWriterPortraitOf } from "../domain/diary-writer.ts"
 import { kanjiDateLabel, kanjiNumeral, kanjiWeekdayLabel } from "../domain/kanji-date.ts"
-import { type AchievementCalendarView } from "./use-achievement-calendar.ts"
-import {
-  type AchievementDaySwitch,
-  type AchievementReviewAvailability,
-  type AchievementReviewButton,
+import type { AchievementCalendarView } from "./use-achievement-calendar.ts"
+import type {
+  AchievementDaySwitch,
+  AchievementReviewAvailability,
+  AchievementReviewButton,
 } from "./use-achievement.ts"
 import { takeDiaryBookOpenRequest, useDiaryBookOpenRequest } from "./use-diary-book-open-request.ts"
 

@@ -9,7 +9,7 @@
 // キーにして結果を覚える（`WeakMap` なので、古い姿と一緒に落ちる）。
 
 import { mainViewEntries, mainViewTurns, type MainViewTurn } from "../../shared/main-view.ts"
-import { type SessionState, type TurnBodies } from "../../shared/session-state.ts"
+import type { SessionState, TurnBodies } from "../../shared/session-state.ts"
 import { useSession } from "./session.ts"
 
 const TURNS_BY_STATE = new WeakMap<SessionState, readonly MainViewTurn[]>()

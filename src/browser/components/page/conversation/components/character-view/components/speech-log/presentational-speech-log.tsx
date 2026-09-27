@@ -11,7 +11,7 @@
 // backdrop のクリックは `components/ui/dialog/dialog.tsx` が持つ。
 
 import { History, X } from "lucide-react"
-import { type ReactElement, type ReactNode } from "react"
+import type { ReactElement, ReactNode } from "react"
 
 import { Button } from "../../../../../../ui/button/button.tsx"
 import { Dialog } from "../../../../../../ui/dialog/dialog.tsx"
@@ -20,7 +20,7 @@ import { Text } from "../../../../../../ui/text/text.tsx"
 import { VStack } from "../../../../../../ui/v-stack/v-stack.tsx"
 import styles from "../../character-view.module.css"
 import { Balloon } from "../balloon/balloon.tsx"
-import { type SpeechLogEntry, type SpeechLogModel } from "./hooks/use-speech-log.ts"
+import type { SpeechLogEntry, SpeechLogModel } from "./hooks/use-speech-log.ts"
 
 const OPEN_LABEL = "ログ"
 const CLOSE_LABEL = "ログを閉じる"

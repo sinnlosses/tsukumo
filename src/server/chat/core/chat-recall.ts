@@ -11,7 +11,7 @@
 // `docs/design.md`「雑談の記憶の置き場」）。
 
 import { CHAT_MEMORY_BUDGET, type ChatMemoryBudget } from "../../../shared/chat-memory-budget.ts"
-import { type ChatArchive, type ChatRecall } from "../../session-driver/core/session-driver.ts"
+import type { ChatArchive, ChatRecall } from "../../session-driver/core/session-driver.ts"
 
 /**
  * `ChatRecall` を1つ作る（雑談モードのときだけ、配線の `sessionMode` から

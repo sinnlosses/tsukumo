@@ -9,12 +9,12 @@
 // 4枚を同時に出すこの画面では、canvas 4枚と読み込みが失敗した回の見せ方を抱えるより、
 // 必ず描ける CSS のほうが軽い（`src/browser/components/page/conversation/components/main-view/markdown/chart.ts` は読まない）。
 
-import { type ReactElement } from "react"
+import type { ReactElement } from "react"
 
-import {
-  type TokenUsageTotals,
-  type TokenUsageTrend,
-  type TokenUsageTrendUnit,
+import type {
+  TokenUsageTotals,
+  TokenUsageTrend,
+  TokenUsageTrendUnit,
 } from "../../../../../../shared/token-usage-summary.ts"
 import { formatCount } from "../../../../../utils/format-count.ts"
 import { HStack } from "../../../../ui/h-stack/h-stack.tsx"

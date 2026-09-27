@@ -18,10 +18,10 @@
 
 import { isPlainObject } from "remeda"
 
-import {
-  type ChatEpisodeDraft,
-  type ChatSummary,
-  type ChatUnconsolidatedEntry,
+import type {
+  ChatEpisodeDraft,
+  ChatSummary,
+  ChatUnconsolidatedEntry,
 } from "../../session-driver/core/session-driver.ts"
 
 /** サイドバーの「最近の話題」に出す見出しの件数の上限（`docs/screen-design.md`「雑談モードの画面」）。 */

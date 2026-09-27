@@ -1,9 +1,9 @@
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
-import { type ReactElement } from "react"
+import type { ReactElement } from "react"
 import { afterEach, describe, expect, it } from "vitest"
 
 import { CharacterCreate } from "../../../../../../../src/browser/components/page/character/components/character-create/character-create.tsx"
-import { type CharacterPackEntry } from "../../../../../../../src/shared/character.ts"
+import type { CharacterPackEntry } from "../../../../../../../src/shared/character.ts"
 import { INITIAL_SESSION_STATE } from "../../../../../../../src/shared/session-state.ts"
 import { characterPackEntry } from "../../../../../../fixture/character.ts"
 import { typedElement } from "../../../../../../typed-element.ts"

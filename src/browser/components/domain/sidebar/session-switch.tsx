@@ -13,7 +13,7 @@
 // （`SessionChoice.heading`）と最終更新時刻（部屋の名前を出す場所は帯だけになった。
 // `docs/screen-design.md` 13.9「部屋の名前」）。
 
-import { type ReactElement } from "react"
+import type { ReactElement } from "react"
 
 import { FRAME_ERROR_REASON } from "../../../../shared/frame.ts"
 import {

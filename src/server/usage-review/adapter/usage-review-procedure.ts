@@ -4,7 +4,7 @@
 
 import { implement, type ORPCErrorConstructorMap } from "@orpc/server"
 
-import { type COMMAND_ERRORS } from "../../../shared/command.ts"
+import type { COMMAND_ERRORS } from "../../../shared/command.ts"
 import { usageReviewContract } from "../../../shared/contract/usage-review.ts"
 import {
   type CommandEventSink,

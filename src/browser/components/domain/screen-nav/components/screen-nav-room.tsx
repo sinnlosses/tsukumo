@@ -5,7 +5,7 @@
 // （答え待ちの印と同じ畳み方。どちらを出すかは `screen-nav.module.css` の `@media`）。
 
 import clsx from "clsx"
-import { type ReactElement } from "react"
+import type { ReactElement } from "react"
 
 import shellStyles from "../screen-nav.module.css"
 import styles from "./screen-nav-room.module.css"
