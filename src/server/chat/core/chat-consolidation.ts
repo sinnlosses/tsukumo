@@ -209,7 +209,7 @@ export function parseChatConsolidationResult(
 
 /**
  * 行番号の区切り（{@link ChatConsolidationEpisode.end}）を、渡した行の {@link ChatUnconsolidatedEntry.at}
- * を使って {@link ChatEpisodeDraft.from} / `.to` に直す純関数（`docs/design.md`
+ * を使って {@link ChatEpisodeDraft.from} / `.to` に直す純関数（`docs/chat-mode.md`
  * 「区切りを行番号で返させる」）。
  *
  * {@link parseChatConsolidationResult} が `entries.length` を `lineCount` として検査を通した
@@ -443,7 +443,7 @@ export function readChatTopics(chatSummary: ChatSummary): readonly string[] {
 /**
  * あらすじの本文のいちばん最後に、話題の見出しを {@link CHAT_TOPICS_OPEN} と
  * {@link CHAT_TOPICS_CLOSE} の行で挟んで置く（1行1件、`- ` で始める。`docs/design.md`
- * 「雑談の記憶の要約はどこに置くか」）。末尾に置くのは、上限で古いほう（先頭側）の行から
+ * 「雑談の記憶の置き場」）。末尾に置くのは、上限で古いほう（先頭側）の行から
  * 落ちても組が先に落ちないため。見出しが0件でも組は置く（{@link chatTopics} が空を読む）。
  */
 export function chatSummaryWithTopics(synopsis: string, topics: readonly string[]): string {

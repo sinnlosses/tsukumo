@@ -115,7 +115,7 @@ export type ChatArchive = {
   ) => ChatUnconsolidatedBatch
   /**
    * 定着ができたエピソードを追記する（`id` はここで振る。`docs/design.md`
-   * 「エピソード索引はどこに置くか」）。書けなくても例外は投げない。
+   * 「雑談の記憶の置き場」）。書けなくても例外は投げない。
    */
   readonly appendEpisodes: (packName: string, episodes: readonly ChatEpisodeDraft[]) => void
   /**

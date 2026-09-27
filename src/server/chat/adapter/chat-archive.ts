@@ -19,7 +19,7 @@
 //
 // 古い雑談は、エピソード索引（`episode.jsonl`）を引いてから、当たった範囲のファイルだけを
 // 開く（`docs/chat-mode.md`「古い雑談は索引を引いて思い出す」、`docs/design.md`
-// 「エピソード索引はどこに置くか」）。索引を書くのは定着（`ChatConsolidationWriter`）で、
+// 「雑談の記憶の置き場」）。索引を書くのは定着（`ChatConsolidationWriter`）で、
 // ここが持つのは置き場と形、`recallList` / `recallEpisode` での読み方だけ。
 //
 // `kept.jsonl`（「残す」旗の索引）はもう書きも読みもしない（`keep` ツールが無くなった。

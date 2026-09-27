@@ -533,8 +533,9 @@ CSS の3つを揃える**（レンダラを直したのに規約が古いまま�
   （` ```diff src/foo.ts ` のブロック左上のラベル）、Markdown の相対リンク
   （`[x](src/foo.ts)`。スキームの無い相対リンクはこれまで押すとページ自身が遷移してしまう不具合
   だったので、**ファイルを指すときだけ `<a>` を離れてボタンにし、指さないときは押しても何も
-  起きない素のテキストにする**）。押す部品・依頼・サーバ側の検証は `docs/design.md` 4.3
-  「ブラウザ → サーバのコマンド」と `src/browser/components/page/conversation/components/main-view/markdown/repository-link.tsx`
+  起きない素のテキストにする**）。押す部品・依頼・サーバ側の検証は
+  `src/browser/components/page/conversation/components/main-view/markdown/repository-link.tsx` と
+  `src/shared/contract/host.ts` の `hostContract.openFile`
 - **色を指す inline code は、その色を地にして出す。** 中身の文字全体が1つのカラーコード
   （`#bca0ec` など。3・4・6・8桁）か、ページの色のトークン名（`ink-quiet` / `--ink-quiet` /
   `var(--ink-quiet)`）のときだけで、文中に色が混ざったものとフェンスの中は変えない。字は地の

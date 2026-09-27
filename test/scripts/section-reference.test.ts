@@ -75,6 +75,19 @@ describe("findSectionReferences", () => {
   test("3行先までに閉じなければ拾わない", () => {
     expect(phrasesOf(`${DISPLAY}「a\nb\nc\nd\ne」`)).toEqual([])
   })
+
+  test("パスで行が終わり、次の行の頭が「で始まる形も拾う", () => {
+    expect(phrasesOf(`${DISPLAY} 4.2\n「二」\n`)).toEqual(["二"])
+    expect(phrasesOf(`${DISPLAY} の\n「一」\n`)).toEqual(["一"])
+  })
+
+  test("行をまたぐ形でも、継続行のコメント記号と字下げを除いて拾う", () => {
+    expect(phrasesOf(`// ${DISPLAY}\n// 「前半\n//   後半」\n`)).toEqual(["前半後半"])
+  })
+
+  test("次の行が「で始まらなければ拾わない", () => {
+    expect(phrasesOf(`${DISPLAY}\nただの次の行\n`)).toEqual([])
+  })
 })
 
 describe("findStrayReferences", () => {

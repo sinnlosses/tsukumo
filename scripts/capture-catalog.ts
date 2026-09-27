@@ -652,7 +652,7 @@ async function applyHomeSetup(setup: HomeSetup, homeDir: string): Promise<void> 
       bookmark: {
         kind: "placed",
         // `T-` + 数字にしない（`docs/coding-standards.md`
-        // 「コード・ドキュメントにタスク番号を書かない」。しおりの id は自由な文字列なので、
+        // 「タスク番号を書かない」。しおりの id は自由な文字列なので、
         // その形に見えない架空の名で足りる）。
         taskId: "架空-1",
         summary: "架空の要約（capture-catalog.ts が撮るためのダミー）",
