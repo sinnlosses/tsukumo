@@ -103,17 +103,15 @@ describe("セッションの札と切り替え画面", () => {
     expect(switcherOpen()).toBe(true)
   })
 
-  it("札の一行は短縮IDに乗ったときだけ出て、部屋の名前に乗っても出ない", () => {
+  it("押せるのは短縮IDだけで、部屋の名前はボタンの外に出る", () => {
     renderNav({})
     const [tag] = screen.getAllByRole("button", { name: /セッション FA。/u })
     if (tag === undefined) {
       throw new Error("札が無い")
     }
 
-    fireEvent.pointerEnter(within(tag).getByText("空色の間"))
-    expect(screen.queryByRole("tooltip")).toBeNull()
-
-    fireEvent.pointerEnter(within(tag).getByText("FA"))
+    expect(tag.textContent).toBe("FA")
+    fireEvent.pointerEnter(tag)
     expect(screen.getByRole("tooltip").textContent).toContain("セッション FA")
   })
 

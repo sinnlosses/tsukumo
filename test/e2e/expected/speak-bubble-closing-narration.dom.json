@@ -34,6 +34,16 @@
           }
         ]
       },
+      "<port>",
+      {
+        "tag": "span",
+        "attributes": {
+          "aria-hidden": "true"
+        },
+        "children": [
+          "-"
+        ]
+      },
       {
         "tag": "button",
         "attributes": {
@@ -43,16 +53,6 @@
           "type": "button"
         },
         "children": [
-          "<port>",
-          {
-            "tag": "span",
-            "attributes": {
-              "aria-hidden": "true"
-            },
-            "children": [
-              "-"
-            ]
-          },
           "FA"
         ]
       },
