@@ -121,6 +121,9 @@ function pastTurnSpeech(
  * （`lastToolFailureAt` / `turn` 自体はその後変わらないので、依存配列だけを見ている
  * 素朴な1回きりのタイマーでは再計算のきっかけが無い）。そこで、タイマーが発火するたびに
  * 自分で次の窓までの遅延を計算し直して、無くなるまで立て直す。
+ *
+ * 遅延を計算する前に必ず `now` を進める。効果が走るまでに窓をすでに過ぎていると、
+ * 遅延が負でタイマーが立たず、古い `now` のまま動きが戻らなくなる。
  */
 function usePortraitMotion(input: PortraitMotionInput): PortraitMotion {
   // 材料は分解して受ける（`input` の入れ物ごと依存にすると、中身が同じでもレンダーのたびに
@@ -133,17 +136,13 @@ function usePortraitMotion(input: PortraitMotionInput): PortraitMotion {
     let timer: ReturnType<typeof setTimeout> | undefined
 
     const scheduleNext = (): void => {
-      const delay = nextPortraitMotionTransitionDelayMs(
-        { turn, lastToolFailureAt },
-        nowEpochMilliseconds(),
-      )
+      const at = nowEpochMilliseconds()
+      setNow(at)
+      const delay = nextPortraitMotionTransitionDelayMs({ turn, lastToolFailureAt }, at)
       if (delay === undefined) {
         return
       }
-      timer = setTimeout(() => {
-        setNow(nowEpochMilliseconds())
-        scheduleNext()
-      }, delay)
+      timer = setTimeout(scheduleNext, delay)
     }
 
     scheduleNext()
