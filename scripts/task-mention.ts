@@ -1,4 +1,4 @@
-// `src/` / `test/` / `scripts/` / `docs/`（`docs/history/` を除く）のコメント・テスト名・本文に
+// `src/` / `test/` / `scripts/` / `docs/` / `story/`（`docs/history/` を除く）のコメント・テスト名・本文に
 // 書かれたタスク番号（`develop/task/T-xxx.md` のパスも `T-` + 3桁以上の並びを含むので同じ形で
 // 拾える）を拾う純粋関数。`scripts/lib/task-mention-repository.ts`（リポジトリから集める入口）と
 // `test/task-id.test.ts`（0件を保つテスト）が使う。

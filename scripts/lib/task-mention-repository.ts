@@ -1,4 +1,4 @@
-// `src/` / `test/` / `scripts/` / `docs/`（`docs/history/` を除く）のファイルを読み、
+// `src/` / `test/` / `scripts/` / `docs/` / `story/`（`docs/history/` を除く）のファイルを読み、
 // `scripts/task-mention.ts` の純粋関数に渡して迷子のタスク番号を集める、という概念1つを持つ。
 // `test/task-id.test.ts` が使う。
 
@@ -13,7 +13,13 @@ import {
 } from "../task-mention.ts"
 
 // 検査するディレクトリ（リポジトリ直下から）。
-const SCANNED_DIRECTORIES = ["src", "test", "scripts", "docs"] as const satisfies readonly string[]
+const SCANNED_DIRECTORIES = [
+  "src",
+  "test",
+  "scripts",
+  "docs",
+  "story",
+] as const satisfies readonly string[]
 
 // 検査するファイルの拡張子（コード・スタイル・ドキュメント）。
 const SCANNED_EXTENSIONS = new Set([".ts", ".tsx", ".css", ".md"])
