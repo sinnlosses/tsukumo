@@ -52,6 +52,7 @@ import { createSessionTitleIntake, type SessionTitleIntake } from "../core/sessi
 import { childProcessEnv, isVisibleOutputNudge } from "../core/visible-output-nudge.ts"
 import { readClaudeAccountTier } from "./claude-account.ts"
 import { readContextUsage } from "./sdk-context-usage.ts"
+import { readPlanUsage } from "./sdk-plan-usage.ts"
 import {
   createSessionTitleWriter,
   readSessionDigest,
@@ -156,6 +157,7 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
     answer: (id, answer) => queue.answer(id, answer),
     pending: () => queue.list(),
     readContextUsage: () => readContextUsage(session),
+    readPlanUsage: () => readPlanUsage(session),
     readSessionDigest: (sessionId) => readSessionDigest(sessionId, options.expressions),
     setModel: async (model) => {
       await session.setModel(model)

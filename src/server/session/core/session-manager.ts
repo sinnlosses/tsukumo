@@ -21,6 +21,10 @@ import {
 } from "../../../shared/context-usage/context-usage.ts"
 import { FRAME_ERROR_REASON, PROTOCOL_VERSION, type ServerFrame } from "../../../shared/frame.ts"
 import {
+  type PlanUsageReport,
+  UNAVAILABLE_PLAN_USAGE,
+} from "../../../shared/plan-usage/plan-usage.ts"
+import {
   type SessionDigest,
   UNAVAILABLE_SESSION_DIGEST,
 } from "../../../shared/session/session-digest.ts"
@@ -164,6 +168,11 @@ export type SessionManager = {
    * フレームにも乗らない。取れなかったときは「取れない」。
    */
   readonly readContextUsage: () => Promise<ContextUsageReport>
+  /**
+   * いまの利用枠を駆動から取る（サイドバーの札が引く。`docs/glossary.md`「利用枠」）。押すのでは
+   * なく引くので、状態にもフレームにも乗らない。取れなかったときは「取れない」。
+   */
+  readonly readPlanUsage: () => Promise<PlanUsageReport>
   /**
    * セッション1件の中身を駆動から取る（切り替え画面が選んだ1件ぶんだけ引く。
    * `docs/glossary.md`「セッションの要約」）。読んでよいのは、いま配っている一覧
@@ -520,6 +529,15 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
         return await started.readContextUsage()
       } catch {
         return UNAVAILABLE_CONTEXT_USAGE
+      }
+    },
+    readPlanUsage: async () => {
+      // 起こし直しの最中・起こせなかったときは駆動そのものが無い（`readContextUsage` と同じ扱い）。
+      try {
+        const started = await generation.driver
+        return await started.readPlanUsage()
+      } catch {
+        return UNAVAILABLE_PLAN_USAGE
       }
     },
     readSessionDigest: async (sessionId) => {

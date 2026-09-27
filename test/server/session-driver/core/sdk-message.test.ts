@@ -655,10 +655,8 @@ describe("toSessionEvents", () => {
       ]
 
       expect(messages.flatMap((message) => toSessionEvents(message, EXPRESSIONS))).toEqual([
-        {
-          kind: "rate-limit-changed",
-          rateLimit: { kind: "warning", bucket: "five-hour", resetsAt: 1_800_000_000_000 },
-        },
+        // 「近い」（allowed_warning）は clear に畳む——枠の残り具合はサイドバーの利用枠が出す。
+        { kind: "rate-limit-changed", rateLimit: { kind: "clear" } },
         {
           kind: "rate-limit-changed",
           rateLimit: { kind: "rejected", bucket: "seven-day", resetsAt: undefined },

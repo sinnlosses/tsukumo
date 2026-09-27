@@ -25,12 +25,7 @@ import type { TurnProgress } from "../../../../../../../../../shared/session/ses
 import { formatElapsed } from "../../../../../../../../domain/elapsed-time.ts"
 import { useQuestionAnswer } from "../../../../../../../../stores/question-answer.ts"
 import { useSession } from "../../../../../../../../stores/session.ts"
-import {
-  clockTime,
-  localTimeZoneId,
-  nowEpochMilliseconds,
-  zonedDateTime,
-} from "../../../../../../../../utils/clock.ts"
+import { dayAwareClockTime, nowEpochMilliseconds } from "../../../../../../../../utils/clock.ts"
 import { apiErrorLabel, turnFailureLabel } from "../../../../../domain/api-error-label.ts"
 
 const SEND_LABEL = "送信"
@@ -133,8 +128,10 @@ export function useTurnStatus(): TurnStatusModel {
 
 /**
  * 行に出す API の知らせ。強い順に1つだけ: 進行中の再試行 → 利用上限に達した → 失敗で
- * 終わったターンの理由 → 利用上限が近い。利用上限は戻る時刻を過ぎても次の知らせが来るまで
- * 出し続ける（戻ったかどうかは tsukumo からは分からず、次に API を呼んだときの知らせで消える）。
+ * 終わったターンの理由。「利用上限が近い」は出さない——枠の残り具合はサイドバーの利用枠が
+ * 出す（`docs/research/plan-usage.md`「論点3」）。利用上限に達した知らせは戻る時刻を過ぎても
+ * 次の知らせが来るまで出し続ける（戻ったかどうかは tsukumo からは分からず、次に API を
+ * 呼んだときの知らせで消える）。
  */
 function turnStatusNotice(
   turn: TurnProgress,
@@ -160,39 +157,24 @@ function turnStatusNotice(
     const reason = turnFailureLabel(turn.ending.failure)
     return { kind: "shown", tone: "ng", label: reason, detail: `失敗で終わった: ${reason}` }
   }
-  return rateLimit.kind === "warning" ? rateLimitNotice(rateLimit, now) : { kind: "none" }
+  return { kind: "none" }
 }
 
 function rateLimitNotice(
-  rateLimit: Extract<RateLimit, { readonly kind: "warning" | "rejected" }>,
+  rateLimit: Extract<RateLimit, { readonly kind: "rejected" }>,
   now: number,
 ): TurnStatusNotice {
   const bucketLabel = RATE_LIMIT_BUCKET_LABEL[rateLimit.bucket]
   const subject = bucketLabel === "" ? "利用上限" : `${bucketLabel}の利用上限`
   const resetText =
-    rateLimit.resetsAt === undefined ? undefined : resetTimeText(rateLimit.resetsAt, now)
-  const rejected = rateLimit.kind === "rejected"
-  const state = rejected ? `${subject}に達した` : `${subject}が近い`
+    rateLimit.resetsAt === undefined ? undefined : dayAwareClockTime(rateLimit.resetsAt, now)
+  const state = `${subject}に達した`
   return {
     kind: "shown",
-    tone: rejected ? "ng" : "warn",
-    label: rejected
-      ? resetText === undefined
-        ? "利用上限"
-        : `利用上限 ${resetText}まで`
-      : "利用上限が近い",
+    tone: "ng",
+    label: resetText === undefined ? "利用上限" : `利用上限 ${resetText}まで`,
     detail: resetText === undefined ? state : `${state}。${resetText}に戻る`,
   }
-}
-
-/** 戻る時刻の字。今日なら `HH:MM`、別の日なら `M/D HH:MM`（読む人のタイムゾーンで）。 */
-function resetTimeText(resetsAt: number, now: number): string {
-  const timeZone = localTimeZoneId()
-  const at = zonedDateTime(resetsAt, timeZone)
-  const today = zonedDateTime(now, timeZone)
-  return at.toPlainDate().equals(today.toPlainDate())
-    ? clockTime(at)
-    : `${String(at.month)}/${String(at.day)} ${clockTime(at)}`
 }
 
 /**

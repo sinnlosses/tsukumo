@@ -9,8 +9,8 @@
 // ここが持ち、中身は置かれる機能（`features/task-board/`）から借りる
 // （docs/design.md 2章「領域の機能と、置かれる機能」）。
 //
-// 下端の帯はいまのコンテキストの使用量の札だけ（`docs/display.md` 4.2）。区画ではないので見出しを
-// 名乗らず、`SidebarSection` の枠も借りない——サイドバーの左右いっぱいに広がり、上端の罫線と
+// 下端の帯はいまのコンテキストの使用量の札と利用枠の札（`docs/display.md` 4.2）。区画ではないので
+// 見出しを名乗らず、`SidebarSection` の枠も借りない——サイドバーの左右いっぱいに広がり、上端の罫線と
 // 一段沈んだ地で、伸び縮みするタスクの区画と切り分ける（寸法の出どころは `sidebar.module.css`
 // 冒頭の見本）。キャラクターとセッションの切り替えはここに置かない（帯の左上の顔と札。
 // `docs/screen-design.md` 13.9「キャラクターの選び口」「セッションの札」）。
@@ -26,6 +26,7 @@ import type { ReactElement } from "react"
 import { useSession } from "../../../stores/session.ts"
 import { ContextUsageRow } from "./context-usage-row.tsx"
 import { PersonaMemorySection } from "./persona-memory-section.tsx"
+import { PlanUsageRow } from "./plan-usage-row.tsx"
 import { ProfileCard } from "./profile-card.tsx"
 import { RecentTopicSection } from "./recent-topic-section.tsx"
 import styles from "./sidebar.module.css"
@@ -49,6 +50,7 @@ export function Sidebar(): ReactElement {
       )}
       <div className={styles["sidebar-footer"]}>
         <ContextUsageRow />
+        <PlanUsageRow />
       </div>
     </>
   )

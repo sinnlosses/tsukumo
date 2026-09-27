@@ -61,6 +61,7 @@ import {
   PROTOCOL_VERSION,
   type ServerFrame,
 } from "../../../../src/shared/frame.ts"
+import { UNAVAILABLE_PLAN_USAGE } from "../../../../src/shared/plan-usage/plan-usage.ts"
 import type { ReportSection } from "../../../../src/shared/report/report-block.ts"
 import type { PromptImage } from "../../../../src/shared/session-driver/prompt-image.ts"
 import type { SessionDefault } from "../../../../src/shared/session/session-default.ts"
@@ -90,6 +91,7 @@ import {
 } from "../../../fixture/character.ts"
 import { contextUsage, readyContextUsage } from "../../../fixture/context-usage.ts"
 import { createManualClock } from "../../../fixture/manual-clock.ts"
+import { readyPlanUsage } from "../../../fixture/plan-usage.ts"
 
 // 疑似セッションもセリフも手で書いた架空のもの（docs/coding-standards.md「会話内容の扱い」）。
 const BATCH_MS = 5
@@ -165,6 +167,10 @@ function createStubDriver(): StubDriver {
       readContextUsage: () => {
         calls.push("readContextUsage")
         return Promise.resolve(readyContextUsage())
+      },
+      readPlanUsage: () => {
+        calls.push("readPlanUsage")
+        return Promise.resolve(readyPlanUsage())
       },
       readSessionDigest: (sessionId: string) => {
         calls.push(`readSessionDigest:${sessionId}`)
@@ -1679,6 +1685,7 @@ describe("createSessionManager", () => {
           answer: () => true,
           pending: () => [],
           readContextUsage: () => Promise.resolve(UNAVAILABLE_CONTEXT_USAGE),
+          readPlanUsage: () => Promise.resolve(UNAVAILABLE_PLAN_USAGE),
           readSessionDigest: () => Promise.resolve(UNAVAILABLE_SESSION_DIGEST),
           setModel: () => Promise.resolve(),
           setEffort: () => Promise.resolve(),

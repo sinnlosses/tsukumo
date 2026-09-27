@@ -25,6 +25,7 @@ import { chatContract } from "./contract/chat.ts"
 import { contextUsageContract } from "./contract/context-usage.ts"
 import { frameContract } from "./contract/frame.ts"
 import { hostContract } from "./contract/host.ts"
+import { planUsageContract } from "./contract/plan-usage.ts"
 import { repositoryContract } from "./contract/repository.ts"
 import { sessionDigestContract } from "./contract/session-digest.ts"
 import { sessionContract } from "./contract/session.ts"
@@ -39,6 +40,7 @@ export const rpcContract = {
   repository: repositoryContract,
   tokenUsage: tokenUsageContract,
   contextUsage: contextUsageContract,
+  planUsage: planUsageContract,
   achievement: achievementContract,
   sessionDigest: sessionDigestContract,
 }

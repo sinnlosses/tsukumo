@@ -400,7 +400,8 @@ function toApiErrorKind(value: unknown): ApiErrorKind {
  * `rate_limit_event` の `rate_limit_info` を `rate-limit-changed` にする。`status` が3つの
  * どれでもなければ出さない。`resetsAt` は秒で届くのでミリ秒に直す（Claude Code 本体が
  * `resetsAt*1000` で扱っているのを 0.3.280 の同梱の本体で確かめた）。超過利用（`overage*`）と
- * 使用率は運ばない（`RateLimit`）。
+ * 使用率は運ばない（`RateLimit`）。「近い」（`allowed_warning`）は `clear` に畳む
+ * （`docs/research/plan-usage.md`「論点3」。読み手が居なくなったので状態として持ち回らない）。
  */
 function rateLimitEvents(info: unknown): readonly SessionEvent[] {
   if (!isPlainObject(info)) {
@@ -414,11 +415,11 @@ function rateLimitEvents(info: unknown): readonly SessionEvent[] {
 function toRateLimit(info: Readonly<Record<string, unknown>>): RateLimit | undefined {
   switch (info.status) {
     case "allowed":
-      return { kind: "clear" }
     case "allowed_warning":
+      return { kind: "clear" }
     case "rejected":
       return {
-        kind: info.status === "rejected" ? "rejected" : "warning",
+        kind: "rejected",
         bucket: rateLimitBucket(info.rateLimitType),
         resetsAt: isFiniteNumber(info.resetsAt) ? info.resetsAt * 1000 : undefined,
       }

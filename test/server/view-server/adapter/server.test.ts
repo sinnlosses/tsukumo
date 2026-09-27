@@ -26,6 +26,7 @@ import type {
 } from "../../../../src/shared/achievement/achievement.ts"
 import type { CharacterAssetLocation } from "../../../../src/shared/character-pack/character-asset.ts"
 import { UNAVAILABLE_CONTEXT_USAGE } from "../../../../src/shared/context-usage/context-usage.ts"
+import { UNAVAILABLE_PLAN_USAGE } from "../../../../src/shared/plan-usage/plan-usage.ts"
 import { RPC_PATH, type RpcClient } from "../../../../src/shared/rpc.ts"
 import { promptImagePath } from "../../../../src/shared/session-driver/prompt-image.ts"
 import { UNAVAILABLE_SESSION_DIGEST } from "../../../../src/shared/session/session-digest.ts"
@@ -69,6 +70,7 @@ const EMPTY_RPC_PORTS = {
   listRepositoryFiles: () => Promise.resolve([]),
   readTokenUsageSummary: () => EMPTY_TOKEN_USAGE_SUMMARY,
   readContextUsage: () => Promise.resolve(UNAVAILABLE_CONTEXT_USAGE),
+  readPlanUsage: () => Promise.resolve(UNAVAILABLE_PLAN_USAGE),
   readSessionDigest: () => Promise.resolve(UNAVAILABLE_SESSION_DIGEST),
   readAchievementDay: () => Promise.resolve({ kind: "ok", achievement: { kind: "unknown" } }),
   readAchievementCalendar: () => Promise.resolve({ kind: "ok", calendar: { kind: "unknown" } }),

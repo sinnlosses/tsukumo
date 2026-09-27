@@ -17,9 +17,11 @@ export type RateLimitBucket =
  * いまの利用上限の状態（`SessionState.rateLimit`。SDK の `rate_limit_event` の
  * `rate_limit_info`）。claude.ai の契約で使っているときだけ届く（API キーでは届かない）。
  *
- * - `clear`: 上限に余裕がある（`allowed`）か、まだ知らせが届いていない
- * - `warning`: 上限が近い（`allowed_warning`）
+ * - `clear`: 上限に余裕がある（`allowed`）・まだ知らせが届いていない・近い（`allowed_warning`）
  * - `rejected`: 上限に達して、戻るまで使えない
+ *
+ * 「近い」（`allowed_warning`）は `clear` に畳む——枠の残り具合はサイドバーの利用枠が
+ * 出すので、入力欄の読み手がいなくなった（`docs/research/plan-usage.md`「論点3」）。
  *
  * `resetsAt` は戻る時刻（エポックミリ秒。SDK は秒で送ってくるので境界で直す）。知らせに
  * 無ければ undefined（画面は時刻を添えずに出す）。使用率（`utilization`）は運ばない——
@@ -28,7 +30,7 @@ export type RateLimitBucket =
 export type RateLimit =
   | { readonly kind: "clear" }
   | {
-      readonly kind: "warning" | "rejected"
+      readonly kind: "rejected"
       readonly bucket: RateLimitBucket
       readonly resetsAt: number | undefined
     }
