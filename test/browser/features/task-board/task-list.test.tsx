@@ -26,6 +26,7 @@ const TASKS: readonly TaskSummaryItem[] = [
     difficulty: "sonnet",
     loopable: "Y",
     dependencies: [],
+    assignee: undefined,
   },
   {
     id: "X-002",
@@ -34,6 +35,7 @@ const TASKS: readonly TaskSummaryItem[] = [
     difficulty: "haiku",
     loopable: "Y",
     dependencies: [],
+    assignee: undefined,
   },
   {
     id: "X-003",
@@ -42,6 +44,7 @@ const TASKS: readonly TaskSummaryItem[] = [
     difficulty: undefined,
     loopable: undefined,
     dependencies: [],
+    assignee: undefined,
   },
   {
     id: "X-004",
@@ -50,6 +53,7 @@ const TASKS: readonly TaskSummaryItem[] = [
     difficulty: "sonnet",
     loopable: "N",
     dependencies: [],
+    assignee: undefined,
   },
 ]
 
@@ -82,6 +86,29 @@ describe("taskList", () => {
     expect(items[1]?.textContent).toContain("X-001")
     expect(items[2]?.textContent).toContain("X-002")
     expect(items[3]?.textContent).toContain("X-003")
+  })
+
+  it("進行中のカードは、着手した作業ツリーが分かればその名前を添える", () => {
+    const items: readonly TaskSummaryItem[] = [
+      {
+        id: "X-006",
+        summary: "架空の着手中",
+        status: "doing",
+        difficulty: undefined,
+        loopable: undefined,
+        dependencies: [],
+        assignee: "wt-架空",
+      },
+    ]
+    render(<TaskList tasks={known(items)} selectedStatus={undefined} />)
+
+    expect(document.querySelector(".task-running-assignee")?.textContent).toBe("wt-架空")
+  })
+
+  it("着手した作業ツリーが分からない進行中のカードには名前の欄を出さない", () => {
+    render(<TaskList tasks={known(TASKS)} selectedStatus={undefined} />)
+
+    expect(document.querySelector(".task-running-assignee")).toBeNull()
   })
 
   it("todo は空の丸の印を持つ", () => {
@@ -118,6 +145,7 @@ describe("taskList", () => {
         difficulty: undefined,
         loopable: undefined,
         dependencies: [],
+        assignee: undefined,
       },
     ]
     render(<TaskList tasks={known(items)} selectedStatus={undefined} />)

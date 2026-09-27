@@ -7,6 +7,7 @@ import {
   watchTaskSummary,
   type TaskSummaryWatcher,
 } from "../../../../src/server/repository/adapter/task-summary.ts"
+import { bd, initBeads, useBeadsHome } from "../../../fixture/beads-repository.ts"
 import { git, initGitRepository } from "../../../fixture/git-repository.ts"
 import { runSubprocessOrThrow } from "../../../fixture/subprocess.ts"
 import { useTempDir } from "../../../fixture/temp-dir.ts"
@@ -14,7 +15,7 @@ import { useTempDir } from "../../../fixture/temp-dir.ts"
 // 本物の `git` を起こす（`main` の先端を見て読み直すことそのものが検査の対象）。リポジトリは
 // 一時ディレクトリに毎回作り、中身は架空のタスクだけにする。
 
-// 実際のポーリング間隔（TASK_SUMMARY_POLL_INTERVAL_MS）を待つとテストが遅くなるので、
+// 実際のポーリング間隔（TASK_SUMMARY_POLL_INTERVALS）を待つとテストが遅くなるので、
 // テストだけ短い間隔に差し替える。
 const TEST_POLL_INTERVAL_MS = 10
 
@@ -63,7 +64,11 @@ function writeNewFormatTask(cwd: string, id: string, summary: string, status: st
 
 async function commitNewFormatTasks(
   cwd: string,
-  tasks: readonly { readonly id: string; readonly summary: string; readonly status: string }[],
+  tasks: readonly {
+    readonly id: string
+    readonly summary: string
+    readonly status: string
+  }[],
 ): Promise<void> {
   for (const task of tasks) {
     writeNewFormatTask(cwd, task.id, task.summary, task.status)
@@ -104,12 +109,19 @@ async function addWorktree(repository: string): Promise<string> {
 }
 
 function watch(cwd: string, changes: unknown[]): void {
-  watcher = watchTaskSummary(cwd, (tasks) => changes.push(tasks), TEST_POLL_INTERVAL_MS)
+  watcher = watchTaskSummary(cwd, (tasks) => changes.push(tasks), {
+    git: TEST_POLL_INTERVAL_MS,
+    beads: TEST_POLL_INTERVAL_MS,
+  })
 }
 
 /** 通知が `count` 件に達するまで待つ（超えたら、そこまでの通知のまま期待値との比較で落ちる）。 */
-async function waitForChanges(changes: readonly unknown[], count: number): Promise<void> {
-  const deadline = performance.now() + WAIT_LIMIT_MS
+async function waitForChanges(
+  changes: readonly unknown[],
+  count: number,
+  limitMs = WAIT_LIMIT_MS,
+): Promise<void> {
+  const deadline = performance.now() + limitMs
   while (changes.length < count && performance.now() < deadline) {
     await sleep(TEST_POLL_INTERVAL_MS)
   }
@@ -323,6 +335,138 @@ describe("watchTaskSummary", () => {
     const changes: unknown[] = []
     watch(repository, changes)
     await waitForChanges(changes, 1)
+
+    expect(changes).toEqual([UNKNOWN])
+  })
+})
+
+// Beads 方式（`main` の先端の CLAUDE.md の `- タスクの置き場: beads`）。本物の `bd` を、`HOME` を
+// 一時ディレクトリへ向けて起こす（`test/fixture/beads-repository.ts`）。`bd init` は1回数秒かかる。
+describe("watchTaskSummary（Beads 方式）", () => {
+  const home = useBeadsHome(() => join(root(), "home"))
+
+  /** `bd` の見回りは1回が約0.2秒なので、通知を待つ上限を長くとる。 */
+  const BEADS_WAIT_LIMIT_MS = 15_000
+
+  /** Beads 方式の設定を `main` に入れ、`.beads` を作ったリポジトリ。 */
+  async function initBeadsRepository(): Promise<string> {
+    const repository = await initRepository("main")
+    writeFileSync(
+      join(repository, "CLAUDE.md"),
+      "# 架空\n\n## タスク運用\n\n- ブランチ: 切らない\n- タスクの置き場: beads\n",
+    )
+    await git(repository, "add", "CLAUDE.md")
+    await git(repository, "commit", "-m", "config")
+    await initBeads(repository, home())
+    return repository
+  }
+
+  it(
+    "bd の課題を状態を読み替えて出し、着手中は作業ツリーの名前を添える。閉じた課題は出さない",
+    { timeout: 60_000 },
+    async () => {
+      const repository = await initBeadsRepository()
+      await bd(
+        repository,
+        home(),
+        "create",
+        "--id",
+        "t-010",
+        "未着手",
+        "-l",
+        "difficulty:opus,loopable:Y",
+      )
+      await bd(
+        repository,
+        home(),
+        "create",
+        "--id",
+        "t-002",
+        "保留",
+        "-l",
+        "difficulty:haiku,loopable:N",
+      )
+      await bd(repository, home(), "update", "t-002", "--status", "pending")
+      await bd(repository, home(), "create", "--id", "t-003", "着手中", "--deps", "t-010")
+      await bd(repository, home(), "update", "t-003", "--claim")
+      await bd(repository, home(), "create", "--id", "t-001", "済み")
+      await bd(repository, home(), "close", "t-001")
+      const changes: unknown[] = []
+      watch(repository, changes)
+      await waitForChanges(changes, 1, BEADS_WAIT_LIMIT_MS)
+
+      expect(changes).toEqual([
+        known(
+          {
+            id: "T-002",
+            summary: "保留",
+            status: "hold",
+            difficulty: "haiku",
+            loopable: "N",
+            dependencies: [],
+            assignee: undefined,
+          },
+          {
+            id: "T-003",
+            summary: "着手中",
+            status: "doing",
+            difficulty: undefined,
+            loopable: undefined,
+            dependencies: ["T-010"],
+            assignee: "wt-test",
+          },
+          {
+            id: "T-010",
+            summary: "未着手",
+            status: "todo",
+            difficulty: "opus",
+            loopable: "Y",
+            dependencies: [],
+            assignee: undefined,
+          },
+        ),
+      ])
+    },
+  )
+
+  it(
+    "main を動かさずに bd で閉じると、次の見回りで一覧から消える",
+    { timeout: 60_000 },
+    async () => {
+      const repository = await initBeadsRepository()
+      await bd(repository, home(), "create", "--id", "t-001", "閉じる前")
+      const changes: unknown[] = []
+      watch(repository, changes)
+      await waitForChanges(changes, 1, BEADS_WAIT_LIMIT_MS)
+
+      await bd(repository, home(), "close", "t-001")
+      await waitForChanges(changes, 2, BEADS_WAIT_LIMIT_MS)
+
+      expect(changes).toEqual([
+        known({
+          id: "T-001",
+          summary: "閉じる前",
+          status: "todo",
+          difficulty: undefined,
+          loopable: undefined,
+          dependencies: [],
+          assignee: undefined,
+        }),
+        known(),
+      ])
+    },
+  )
+
+  it("方式の行が beads なのに .beads が無ければ「不明」", async () => {
+    const repository = await initRepository("main")
+    writeFileSync(join(repository, "CLAUDE.md"), "## タスク運用\n\n- タスクの置き場: beads\n")
+    await git(repository, "add", "CLAUDE.md")
+    await commitNewFormatTasks(repository, [
+      { id: "T-001", summary: "ファイルは見ない", status: "todo" },
+    ])
+    const changes: unknown[] = []
+    watch(repository, changes)
+    await waitForChanges(changes, 1, BEADS_WAIT_LIMIT_MS)
 
     expect(changes).toEqual([UNKNOWN])
   })

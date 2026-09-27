@@ -422,14 +422,16 @@ describe("shared/ の機能どうしの import", () => {
 })
 
 // `node:child_process` を起こすのはホスト（orca）・ビルド（vite build）・`git` を起こす1つの口
-// （`main` の上のタスク一覧・成果の集計・git 管理下のファイルの列挙のどれもがここを使う）の
-// 3つの境界に閉じ込める（docs/architecture.md 原則3）。
+// （`main` の上のタスク一覧・成果の集計・git 管理下のファイルの列挙のどれもがここを使う）・
+// `bd` を起こす1つの口（Beads 方式のタスク一覧と成果の集計）の4つの境界に閉じ込める
+// （docs/architecture.md 原則3）。
 describe("子プロセスを起こす箇所", () => {
-  it("`node:child_process` を import するのは orca-host.ts・bundle.ts・git.ts だけ", () => {
+  it("`node:child_process` を import するのは orca-host.ts・bundle.ts・git.ts・beads.ts だけ", () => {
     const allowed = new Set([
       "server/host/adapter/orca-host.ts",
       "server/view-server/adapter/bundle.ts",
       "server/repository/adapter/git.ts",
+      "server/repository/adapter/beads.ts",
     ])
     const offenders = listSourceFiles(SRC_ROOT)
       .filter((relPath) => !allowed.has(relPath))

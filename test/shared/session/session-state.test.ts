@@ -708,6 +708,7 @@ describe("applySessionEvent", () => {
         difficulty: "sonnet",
         loopable: "Y",
         dependencies: [],
+        assignee: undefined,
       },
     ]
     const withTasks = apply({ kind: "tasks-changed", tasks: { kind: "known", items } })

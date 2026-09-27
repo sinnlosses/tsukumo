@@ -1,5 +1,6 @@
-// タスク一覧の要約（id・summary・status・difficulty・loopable・依存）を読む。「読む」層。
-// develop/task/T-xxx.md の front matter（新形式）だけを読む。
+// タスク一覧の要約（id・summary・status・difficulty・loopable・依存・着手した作業ツリー）の形と、
+// ファイル方式の develop/task/T-xxx.md の front matter の読み方。「読む」層。
+// Beads 方式の課題からの写しは beads-issue.ts。
 //
 // タスク一覧は Claude Code とサイドカーの進捗管理ファイルで、利用者との会話内容とは別物。
 // ここは会話の内容を一切扱わない。
@@ -23,11 +24,16 @@ export type TaskSummaryItem = {
   readonly difficulty: string | undefined
   readonly loopable: string | undefined
   readonly dependencies: readonly string[]
+  /**
+   * 着手した作業ツリーの名前（Beads の `assignee`）。ファイル方式の台帳の印は持ち主を運ばないので
+   * 常に `undefined`。Beads 方式でも着手していない・持ち主の無い課題では `undefined`。
+   */
+  readonly assignee: string | undefined
 }
 
 /**
- * `develop/task/` の一覧が読めているかどうか。「まだ届いていない」（session-state.ts の
- * 初期値）と「読めない」（`develop/task/` が無い・front matter が INVALID）を
+ * タスクの一覧が読めているかどうか。「まだ届いていない」（session-state.ts の
+ * 初期値）と「読めない」（`develop/task/` が無い・`bd` が読めない・方式の行が読めない）を
  * ここでは区別しない——`watchTaskSummary`（`src/server/repository/adapter/task-summary.ts`）は
  * `main` が最初から読めないときは初回の通知そのものを送らないので、その口だけでは
  * 「まだ確認していない」と「確認して無かった」を型で分けられない。画面側もどちらも同じ
@@ -191,6 +197,7 @@ function taskSummaryItemOfNewTaskFile(
     difficulty: task.difficulty,
     loopable: task.loopable,
     dependencies: task.dependencies,
+    assignee: undefined,
   }
 }
 

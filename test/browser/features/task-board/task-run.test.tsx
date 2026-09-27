@@ -32,6 +32,7 @@ const TASKS: readonly TaskSummaryItem[] = [
     difficulty: "haiku",
     loopable: "Y",
     dependencies: [],
+    assignee: undefined,
   },
   {
     id: "X-002",
@@ -40,6 +41,7 @@ const TASKS: readonly TaskSummaryItem[] = [
     difficulty: "opus",
     loopable: "Y",
     dependencies: [],
+    assignee: undefined,
   },
 ]
 

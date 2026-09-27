@@ -11,6 +11,7 @@ import {
 } from "../../../../src/server/achievement/adapter/main-history.ts"
 import type { AchievementCalendar } from "../../../../src/shared/achievement/achievement-calendar.ts"
 import type { DailyAchievement } from "../../../../src/shared/achievement/achievement.ts"
+import { bd, initBeads, useBeadsHome } from "../../../fixture/beads-repository.ts"
 import { git, initGitRepository } from "../../../fixture/git-repository.ts"
 import { runSubprocessOrThrow } from "../../../fixture/subprocess.ts"
 import { useTempDir } from "../../../fixture/temp-dir.ts"
@@ -610,6 +611,90 @@ describe("readAchievement", () => {
       expect(achievement.graduations).toEqual([])
       expect(achievement.milestones).toEqual([])
     })
+  })
+})
+
+// Beads 方式（`main` の先端の CLAUDE.md の `- タスクの置き場: beads`）。本物の `bd` を、`HOME` を
+// 一時ディレクトリへ向けて起こす（`test/fixture/beads-repository.ts`）。`bd close` の時刻は
+// 変えられないので、Beads の側は今日、git の側は過去の日に置く。
+describe("readAchievement（Beads 方式）", () => {
+  const home = useBeadsHome(() => join(root(), "home"))
+  const today = Temporal.Now.plainDateISO().toString()
+
+  /**
+   * 移す前の git に、done の T-001 と未完了の T-002 のファイルを置き、過去の日に Beads へ移す
+   * （T-002 だけを Beads に作り、`develop/task/` を消して方式の行を beads にする）。
+   */
+  async function migrateToBeads(): Promise<void> {
+    await commitNewFormatTask(repository, "2026-09-10", "10:00", "T-001", "git で済んだ", "todo")
+    await commitNewFormatTask(repository, "2026-09-10", "11:00", "T-002", "移した", "todo")
+    await commitAt(
+      repository,
+      "2026-09-12",
+      "10:00",
+      "develop/task/T-001.md",
+      newFormatTaskContent("T-001", "git で済んだ", "done"),
+    )
+    await initBeads(repository, home())
+    await bd(repository, home(), "create", "--id", "t-002", "移した")
+    await git(repository, "rm", "--quiet", "-r", "develop/task")
+    await commitAt(
+      repository,
+      "2026-09-20",
+      "10:00",
+      "CLAUDE.md",
+      "## タスク運用\n\n- タスクの置き場: beads\n",
+    )
+  }
+
+  it(
+    "境の前は git の done、後は Beads の閉じた課題で数え、二重にも欠けにもならない",
+    { timeout: 60_000 },
+    async () => {
+      await migrateToBeads()
+      await bd(repository, home(), "close", "t-002")
+      await bd(repository, home(), "create", "--id", "t-003", "Beads で作って済んだ")
+      await bd(repository, home(), "close", "t-003")
+      await bd(repository, home(), "create", "--id", "t-004", "やめた", "-l", "cancelled")
+      await bd(repository, home(), "close", "t-004")
+      await bd(repository, home(), "create", "--id", "t-005", "まだ")
+      const cache = createAchievementCommitCache()
+
+      const gitDay = known(await readAchievement(repository, "2026-09-12", today, cache))
+      const migrationDay = known(await readAchievement(repository, "2026-09-20", today, cache))
+      const beadsDay = known(await readAchievement(repository, today, today, cache))
+
+      expect(gitDay.doneTasks).toEqual({
+        kind: "known",
+        items: [{ id: "T-001", summary: "git で済んだ" }],
+      })
+      expect(migrationDay.doneTasks).toEqual({ kind: "known", items: [] })
+      expect(beadsDay.doneTasks).toEqual({
+        kind: "known",
+        items: [
+          { id: "T-002", summary: "移した" },
+          { id: "T-003", summary: "Beads で作って済んだ" },
+        ],
+      })
+      // 移した課題の登録日は git のファイルの日（Beads の作った日は移した日なので使わない）。
+      expect(beadsDay.graduations).toEqual([
+        expect.objectContaining({ id: "T-002", registeredOn: "2026-09-10" }),
+      ])
+    },
+  )
+
+  it("方式の行が beads なのに .beads が無ければ「取れなかった」（部分的な数を出さない）", async () => {
+    await commitAt(
+      repository,
+      "2026-09-20",
+      "10:00",
+      "CLAUDE.md",
+      "## タスク運用\n\n- タスクの置き場: beads\n",
+    )
+
+    expect(
+      await readAchievement(repository, "2026-09-20", today, createAchievementCommitCache()),
+    ).toEqual({ kind: "unavailable" })
   })
 })
 

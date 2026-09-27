@@ -3,8 +3,8 @@
 // 2件以上あれば、この部品を2枚以上並べる（`task-list.tsx`）。並びの決定の経緯は
 // docs/display.md 4.2。
 //
-// 1行目に「進行中」の札とID、2行目にsummaryを置く2行の構成（サイドバーのモック参照。
-// `docs/history/mockup/` の同名の .png / .html）。
+// 1行目に「進行中」の札とID（Beads 方式では着手した作業ツリーの名前をIDの後ろに添える）、
+// 2行目にsummaryを置く2行の構成（サイドバーのモック参照。`docs/history/mockup/` の同名の .png / .html）。
 
 import type { ReactElement } from "react"
 
@@ -29,6 +29,11 @@ export function TaskRunningCard(props: { readonly task: TaskSummaryItem }): Reac
       >
         <span className={styles["task-running-badge"]}>進行中</span>
         <TaskRunButton taskId={props.task.id} />
+        {props.task.assignee !== undefined && (
+          <span className={styles["task-running-assignee"]} title="着手した作業ツリー">
+            {props.task.assignee}
+          </span>
+        )}
       </HStack>
       <Text
         element="span"

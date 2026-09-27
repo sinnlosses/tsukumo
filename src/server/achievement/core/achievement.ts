@@ -10,7 +10,8 @@
 // - 日ごとの切り口（呼び出し側が `git` で取ったスナップショット）の中身から、
 //   `done` のタスクの ID と `summary` を集める（`doneTaskSummaries`。新形式・旧形式・
 //   アーカイブの3つの読み元。旧形式はタスク板が読まなくなったので、`passes` まで含めてここで読む）
-// - 2つの切り口の差（前の日には無かった `done`）を取る（`doneTasksSince`）
+// - 2つの切り口の差（前の日には無かった `done`）を取る（`doneTasksSince`）。Beads 方式の閉じた課題は
+//   呼び出し側が `unionDoneTaskSummaries` で切り口に足してから渡す
 //
 // 会話の文面は扱わない——運ぶのはコミットの数とタスクの ID・summary だけ
 // （`docs/coding-standards.md`「会話内容の扱い」）。
@@ -185,14 +186,31 @@ export type TaskFileHistoryCommit = {
 }
 
 /**
- * ファイルごとの登録日（最古の `A` のコミットの日付）の表（`docs/requirements.md`「成果の振り返り」
- * 「卒業と節目」）。`develop/tasks.json` の `D` を含むコミット（形式の切り替え）で入った
- * ファイルは表に入れない——旧形式で登録したタスクとみなす。
+ * タスクごとの登録日の表（`docs/requirements.md`「成果の振り返り」「卒業と節目」）。
+ * git のタスクファイルは最古の `A` のコミットの日付。`develop/tasks.json` の `D` を含むコミット
+ * （形式の切り替え）で入ったファイルは表に入れない——旧形式で登録したタスクとみなす。
+ *
+ * `beadsCreatedOn`（Beads の課題の作った日。ファイル方式なら空）は、git のタスクファイルとして
+ * 一度も現れなかった ID にだけ使う。Beads へ移した課題の作った日は移した日で、登録日ではないため。
  */
 export function taskRegistrationDates(
   commits: readonly TaskFileHistoryCommit[],
+  beadsCreatedOn: ReadonlyMap<string, string>,
 ): ReadonlyMap<string, string> {
   const registeredOn = new Map<string, string>()
+  const seenInGit = new Set(
+    commits.flatMap((commit) =>
+      commit.changes.flatMap((change) => {
+        const id = taskFileIdOfPath(change.path)
+        return id === undefined ? [] : [id]
+      }),
+    ),
+  )
+  for (const [id, createdOn] of beadsCreatedOn) {
+    if (!seenInGit.has(id)) {
+      registeredOn.set(id, createdOn)
+    }
+  }
 
   for (const commit of commits) {
     const isFormatSwitch = commit.changes.some(

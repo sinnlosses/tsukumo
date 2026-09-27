@@ -296,7 +296,7 @@ describe("taskRegistrationDates", () => {
       historyCommit("2026-09-22", [{ status: "M", path: "develop/task/T-001.md" }]),
     ]
 
-    expect([...taskRegistrationDates(commits)]).toEqual([["T-001", "2026-09-20"]])
+    expect([...taskRegistrationDates(commits, new Map())]).toEqual([["T-001", "2026-09-20"]])
   })
 
   it("develop/tasks.json の D を含むコミットで入ったファイルは登録日の表に入れない（形式の切り替え）", () => {
@@ -307,13 +307,35 @@ describe("taskRegistrationDates", () => {
       ]),
     ]
 
-    expect([...taskRegistrationDates(commits)]).toEqual([])
+    expect([...taskRegistrationDates(commits, new Map())]).toEqual([])
   })
 
   it("同じコミットでも develop/tasks.json の D が無ければ登録日に入れる", () => {
     const commits = [historyCommit("2026-09-23", [{ status: "A", path: "develop/task/T-001.md" }])]
 
-    expect([...taskRegistrationDates(commits)]).toEqual([["T-001", "2026-09-23"]])
+    expect([...taskRegistrationDates(commits, new Map())]).toEqual([["T-001", "2026-09-23"]])
+  })
+
+  it("Beads の作った日は、git のタスクファイルに一度も現れなかった ID にだけ使う（移した課題の作った日は登録日でない）", () => {
+    const commits = [
+      historyCommit("2026-09-10", [{ status: "A", path: "develop/task/T-001.md" }]),
+      historyCommit("2026-09-23", [
+        { status: "D", path: "develop/tasks.json" },
+        { status: "A", path: "develop/task/T-002.md" },
+      ]),
+    ]
+    const beadsCreatedOn = new Map([
+      ["T-001", "2026-09-27"],
+      ["T-002", "2026-09-27"],
+      ["T-003", "2026-09-28"],
+    ])
+
+    expect(new Map(taskRegistrationDates(commits, beadsCreatedOn))).toEqual(
+      new Map([
+        ["T-001", "2026-09-10"],
+        ["T-003", "2026-09-28"],
+      ]),
+    )
   })
 })
 

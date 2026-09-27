@@ -40,7 +40,7 @@ const MISSING = "—"
 
 export type BoardRow = {
   readonly id: string
-  /** 色分けに使う生の status。`develop/tasks.json` に無ければ `undefined`。 */
+  /** 色分けに使う生の status。読めなければ `undefined`。 */
   readonly status: string | undefined
   readonly statusText: string
   readonly difficultyText: string
@@ -71,7 +71,7 @@ export function boardRows(tasks: TaskSummaryResult): readonly BoardRow[] | undef
   return items.map((task) => ({
     id: task.id,
     status: task.status,
-    statusText: task.status ?? MISSING,
+    statusText: statusTextOf(task.status, task.assignee),
     difficultyText: task.difficulty ?? MISSING,
     loopableText: loopableMark(task.loopable),
     readiness: taskReadiness(task, unfinished),
@@ -79,6 +79,12 @@ export function boardRows(tasks: TaskSummaryResult): readonly BoardRow[] | undef
     summary: task.summary,
     done: task.status === "done",
   }))
+}
+
+/** status の文字。着手した作業ツリーが分かれば括弧で添える（Beads 方式の着手中）。 */
+function statusTextOf(status: string | undefined, assignee: string | undefined): string {
+  const text = status ?? MISSING
+  return assignee === undefined ? text : `${text}（${assignee}）`
 }
 
 /**

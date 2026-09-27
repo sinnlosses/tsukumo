@@ -25,6 +25,7 @@ const TASKS: readonly TaskSummaryItem[] = [
     difficulty: "haiku",
     loopable: "Y",
     dependencies: [],
+    assignee: undefined,
   },
   {
     id: "X-002",
@@ -33,6 +34,7 @@ const TASKS: readonly TaskSummaryItem[] = [
     difficulty: "opus",
     loopable: undefined,
     dependencies: [],
+    assignee: undefined,
   },
   {
     id: "X-003",
@@ -41,6 +43,7 @@ const TASKS: readonly TaskSummaryItem[] = [
     difficulty: "sonnet",
     loopable: "N",
     dependencies: ["X-002"],
+    assignee: undefined,
   },
 ]
 
@@ -71,6 +74,7 @@ describe("TaskBoard", () => {
       difficulty: "haiku",
       loopable: "Y",
       dependencies: [],
+      assignee: undefined,
     }
     render(<TaskBoard tasks={known([...TASKS, doing])} open={true} onClose={() => {}} />)
 
@@ -78,6 +82,21 @@ describe("TaskBoard", () => {
     expect(cell.className).toContain("task-status-doing")
     // todo は別の class（状態ごとに分かれていることを押さえる）。
     expect(screen.getAllByText("todo")[0]?.className).toContain("task-status-todo")
+  })
+
+  it("着手した作業ツリーが分かれば status に括弧で添える（色分けは status のまま）", () => {
+    const doing: TaskSummaryItem = {
+      id: "X-004",
+      summary: "架空の着手中",
+      status: "doing",
+      difficulty: "haiku",
+      loopable: "Y",
+      dependencies: [],
+      assignee: "wt-架空",
+    }
+    render(<TaskBoard tasks={known([...TASKS, doing])} open={true} onClose={() => {}} />)
+
+    expect(screen.getByText("doing（wt-架空）").className).toContain("task-status-doing")
   })
 
   it("列は ID・status・難易度・loopable・着手・要約（依存は着手の列に入る）", () => {
@@ -140,6 +159,7 @@ describe("TaskBoard", () => {
       difficulty: "haiku",
       loopable: "Y",
       dependencies: ["X-001", "X-002"],
+      assignee: undefined,
     }
     render(<TaskBoard tasks={known([...TASKS, doing])} open={true} onClose={() => {}} />)
 
@@ -211,7 +231,7 @@ describe("TaskBoard", () => {
   it("tasks が読めないときは表の代わりにその旨を出す", () => {
     render(<TaskBoard tasks={{ kind: "unknown" }} open={true} onClose={() => {}} />)
 
-    expect(screen.getByText("develop/tasks.json が読めない")).toBeDefined()
+    expect(screen.getByText("タスクの一覧が読めない")).toBeDefined()
   })
 
   it("タスクが0件のときは「タスクが無い」を出す", () => {

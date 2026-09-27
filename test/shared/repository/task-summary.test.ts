@@ -17,6 +17,7 @@ describe("taskReadiness", () => {
     difficulty: undefined,
     loopable: undefined,
     dependencies,
+    assignee: undefined,
   })
 
   const FINISHED = item("X-001", "done", [])
@@ -65,6 +66,7 @@ describe("unfinishedTaskIds", () => {
     difficulty: undefined,
     loopable: undefined,
     dependencies: [],
+    assignee: undefined,
   })
 
   it("done でないタスクのIDだけを集める", () => {

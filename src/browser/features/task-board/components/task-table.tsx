@@ -35,7 +35,7 @@ function TaskTableView(props: { readonly rows: readonly BoardRow[] | undefined }
         weight="inherit"
         className={styles["task-empty"]}
       >
-        develop/tasks.json が読めない
+        タスクの一覧が読めない
       </Text>
     )
   }

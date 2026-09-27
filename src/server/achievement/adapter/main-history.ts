@@ -6,6 +6,11 @@
 // 読むのは作業ツリーのファイルではなく `main` の上のもの（正典は `main` のもので、
 // 作業ツリーのものは `git merge main` するまで別の作業ツリーの分を知らない）。
 //
+// Beads 方式（`main` の先端の設定ファイルの `- タスクの置き場: beads`）では、終えたタスクを
+// git の切り口と Beads の閉じた課題（`closed_at`）の両方から読み、ID で和をとる。移す前は Beads に
+// 閉じた課題が無く、移したあとは `main` に `develop/task/` が無いので、境を数で持たなくても
+// 欠けず、同じ ID が両方にあっても1件にしかならない（`docs/requirements.md`「`done` になった日」）。
+//
 // `main` が読めない（git リポジトリでない・`main` ブランチが無い・`git` が無い）ときは
 // `DailyAchievement` の `{ kind: "unknown" }`（呼び出し側は 200 のまま配ってよい）。
 // それ以外の `git` の呼び出し（コミットの列挙・切り口・タスクの記録の読み取り）がタイムアウト・
@@ -22,8 +27,15 @@ import type {
   AchievementMilestone,
   DailyAchievement,
 } from "../../../shared/achievement/achievement.ts"
+import {
+  closedBeadsTaskSummariesBefore,
+  taskIdOfBeadsId,
+  type BeadsIssue,
+} from "../../../shared/repository/beads-issue.ts"
 import { localDateEpochRange, localDateKey, localTimeHHMM } from "../../adapter/local-time.ts"
+import { readBeadsIssues } from "../../repository/adapter/beads.ts"
 import { runGit, runGitCatFileBatch } from "../../repository/adapter/git.ts"
+import { readTaskStoreAt } from "../../repository/adapter/task-store.ts"
 import {
   achievementCommitCountsByDate,
   achievementCommitsInRange,
@@ -172,7 +184,11 @@ export async function readAchievement(
   if (headSource === "unavailable") {
     return { kind: "unavailable" }
   }
-  if (!hasTaskTracking(headSource)) {
+  const beads = await readBeadsIssuesOfStore(cwd, head)
+  if (beads === "unavailable") {
+    return { kind: "unavailable" }
+  }
+  if (beads === "invalid" || (beads === "files" && !hasTaskTracking(headSource))) {
     return {
       kind: "ok",
       achievement: {
@@ -215,15 +231,22 @@ export async function readAchievement(
   if (deletedFiles === undefined) {
     return { kind: "unavailable" }
   }
-  const registeredOnById = taskRegistrationDates(history.commits)
+  const issues = beads === "files" ? [] : beads
+  const registeredOnById = taskRegistrationDates(history.commits, beadsCreatedOn(issues))
 
   const endUnion = unionDoneTaskSummaries(
-    doneTaskSummaries(todaySource),
-    deletedDoneTaskSummariesBefore(deletedFiles, endEpochSeconds),
+    unionDoneTaskSummaries(
+      doneTaskSummaries(todaySource),
+      deletedDoneTaskSummariesBefore(deletedFiles, endEpochSeconds),
+    ),
+    closedBeadsTaskSummariesBefore(issues, range.endEpochMilliseconds),
   )
   const startUnion = unionDoneTaskSummaries(
-    doneTaskSummaries(yesterdaySource),
-    deletedDoneTaskSummariesBefore(deletedFiles, startEpochSeconds),
+    unionDoneTaskSummaries(
+      doneTaskSummaries(yesterdaySource),
+      deletedDoneTaskSummariesBefore(deletedFiles, startEpochSeconds),
+    ),
+    closedBeadsTaskSummariesBefore(issues, range.startEpochMilliseconds),
   )
   const items = doneTasksSince(endUnion, startUnion)
   const graduations = graduationsOf(items, registeredOnById, dateKey)
@@ -245,6 +268,36 @@ export async function readAchievement(
       diary: { kind: "none" },
     },
   }
+}
+
+/**
+ * `main` の先端の設定ファイルで方式を決め、Beads 方式なら `bd` の全件を読む。ファイル方式なら
+ * `"files"`、方式の行が読めなければ `"invalid"`（終えたタスクを「数えられない」にする）。
+ * `git`・`bd` が失敗・タイムアウトしたら `"unavailable"`（部分的な数を出さない）。
+ */
+async function readBeadsIssuesOfStore(
+  cwd: string,
+  head: string,
+): Promise<readonly BeadsIssue[] | "files" | "invalid" | "unavailable"> {
+  const config = await readTaskStoreAt(cwd, head)
+  if (config.kind !== "read") {
+    return "unavailable"
+  }
+  if (config.store.kind !== "beads") {
+    return config.store.kind
+  }
+  const beads = await readBeadsIssues(cwd)
+  return beads.kind === "issues" ? beads.issues : "unavailable"
+}
+
+/** Beads の課題ごとの作った日（タスクID → ローカルの日付キー）。登録日の表に足す。 */
+function beadsCreatedOn(issues: readonly BeadsIssue[]): ReadonlyMap<string, string> {
+  return new Map(
+    issues.map((issue) => [
+      taskIdOfBeadsId(issue.id),
+      localDateKey(issue.createdAtEpochMilliseconds),
+    ]),
+  )
 }
 
 /** {@link commitMilestoneOf} の結果を {@link AchievementMilestone} の形にする（時刻は
