@@ -1,4 +1,4 @@
-// 姿の store（`useSyncExternalStore` + セレクタ）の購読の粒度を見る。読んでいる値が
+// 姿の store（`useSession` のセレクタ）の購読の粒度を見る。読んでいる値が
 // 動かないフレームで部品が描き直されないことは、目で見ても分からないのでここで押さえる。
 //
 // フィクスチャはすべて手で書いた架空の依頼・許可要求（docs/coding-standards.md「会話内容の扱い」）。
@@ -9,15 +9,11 @@ import { act, cleanup, render, screen } from "@testing-library/react"
 import { Profiler, type ReactElement } from "react"
 
 import { PendingAnswer } from "../../../src/browser/components/page/conversation/components/dispatch/components/pending-answer/pending-answer.tsx"
-import {
-  SessionStoreContext,
-  useSessionSelector,
-  type SessionStore,
-} from "../../../src/browser/stores/session.tsx"
+import { useSession } from "../../../src/browser/stores/session.ts"
 import { PROTOCOL_VERSION } from "../../../src/shared/frame.ts"
 import { type PendingAsk } from "../../../src/shared/pending-ask.ts"
 import { INITIAL_SESSION_STATE } from "../../../src/shared/session-state.ts"
-import { sessionStoreWith } from "../session-store.ts"
+import { putSession } from "../session-store.ts"
 
 const FIXTURE_PERMISSION: PendingAsk = {
   kind: "permission",
@@ -32,27 +28,27 @@ afterEach(() => {
 
 /** 姿のうち記録の件数だけを読む見張り。描き直されたことが字で分かるようにしてある。 */
 function RecordCount(): ReactElement {
-  const count = useSessionSelector((session) => session.state.records.length)
+  const count = useSession((session) => session.state.records.length)
   return <p>{`記録${String(count)}件`}</p>
 }
 
 /** 許可要求1件を出したうえで、`<PendingAnswer>` が描き直された回数を数える。 */
-function renderPendingAnswer(store: SessionStore, countCommit: () => void): void {
+function renderPendingAnswer(countCommit: () => void): void {
   render(
-    <SessionStoreContext.Provider value={store}>
+    <>
       <Profiler id="pending-answer" onRender={countCommit}>
         <PendingAnswer />
       </Profiler>
       <RecordCount />
-    </SessionStoreContext.Provider>,
+    </>,
   )
 }
 
 describe("姿の store の購読", () => {
   it("答え待ちが動かないフレームでは、`dispatch` しか使わない答えの箱を描き直さない", () => {
     let commits = 0
-    const store = sessionStoreWith({ ...INITIAL_SESSION_STATE, pending: [FIXTURE_PERMISSION] })
-    renderPendingAnswer(store, () => {
+    putSession({ ...INITIAL_SESSION_STATE, pending: [FIXTURE_PERMISSION] })
+    renderPendingAnswer(() => {
       commits += 1
     })
 
@@ -62,7 +58,7 @@ describe("姿の store の購読", () => {
     const afterFirstRender = commits
 
     act(() => {
-      store.receive({
+      useSession.getState().receive({
         type: "events",
         events: [{ at: 0, event: { kind: "request", text: "架空の依頼", images: [] } }],
       })
@@ -75,14 +71,14 @@ describe("姿の store の購読", () => {
 
   it("答え待ちが動いたフレームでは描き直す", () => {
     let commits = 0
-    const store = sessionStoreWith({ ...INITIAL_SESSION_STATE, pending: [FIXTURE_PERMISSION] })
-    renderPendingAnswer(store, () => {
+    putSession({ ...INITIAL_SESSION_STATE, pending: [FIXTURE_PERMISSION] })
+    renderPendingAnswer(() => {
       commits += 1
     })
     const afterFirstRender = commits
 
     act(() => {
-      store.receive({
+      useSession.getState().receive({
         type: "events",
         events: [{ at: 0, event: { kind: "pending-changed", pending: [] } }],
       })
@@ -93,29 +89,29 @@ describe("姿の store の購読", () => {
   })
 
   it("コマンドを送る口は、フレームが届いても同じ関数のまま", () => {
-    const store = sessionStoreWith(INITIAL_SESSION_STATE)
-    const dispatch = store.dispatch
+    putSession(INITIAL_SESSION_STATE)
+    const dispatch = useSession.getState().dispatch
 
     act(() => {
-      store.receive({
+      useSession.getState().receive({
         type: "events",
         events: [{ at: 0, event: { kind: "request", text: "架空の依頼", images: [] } }],
       })
     })
 
-    expect(store.dispatch).toBe(dispatch)
+    expect(useSession.getState().dispatch).toBe(dispatch)
   })
 
   it("姿が変わらないフレーム（空の `events`）では、購読している部品に知らせない", () => {
     let commits = 0
-    const store = sessionStoreWith({ ...INITIAL_SESSION_STATE, pending: [FIXTURE_PERMISSION] })
-    renderPendingAnswer(store, () => {
+    putSession({ ...INITIAL_SESSION_STATE, pending: [FIXTURE_PERMISSION] })
+    renderPendingAnswer(() => {
       commits += 1
     })
     const afterFirstRender = commits
 
     act(() => {
-      store.receive({ type: "events", events: [] })
+      useSession.getState().receive({ type: "events", events: [] })
     })
 
     expect(commits).toBe(afterFirstRender)
@@ -129,35 +125,35 @@ describe("サーバと版が合わないとき（docs/design.md 4.4）", () => {
   } as const
 
   it("`hello` の版が違えば `mismatched` になり、そのあとの `events` を畳まない", () => {
-    const store = sessionStoreWith(INITIAL_SESSION_STATE)
+    putSession(INITIAL_SESSION_STATE)
 
-    store.receive({
+    useSession.getState().receive({
       type: "hello",
       protocolVersion: PROTOCOL_VERSION - 1,
       state: INITIAL_SESSION_STATE,
     })
-    store.receive(REQUEST_EVENTS)
+    useSession.getState().receive(REQUEST_EVENTS)
 
-    expect(store.getSnapshot().protocol).toBe("mismatched")
-    expect(store.getSnapshot().state.records).toHaveLength(0)
+    expect(useSession.getState().protocol).toBe("mismatched")
+    expect(useSession.getState().state.records).toHaveLength(0)
   })
 
   it("版の合う `hello` がまた届けば `compatible` に戻り、その姿を使う", () => {
-    const store = sessionStoreWith(INITIAL_SESSION_STATE)
-    store.receive({
+    putSession(INITIAL_SESSION_STATE)
+    useSession.getState().receive({
       type: "hello",
       protocolVersion: PROTOCOL_VERSION - 1,
       state: INITIAL_SESSION_STATE,
     })
 
-    store.receive({
+    useSession.getState().receive({
       type: "hello",
       protocolVersion: PROTOCOL_VERSION,
       state: INITIAL_SESSION_STATE,
     })
-    store.receive(REQUEST_EVENTS)
+    useSession.getState().receive(REQUEST_EVENTS)
 
-    expect(store.getSnapshot().protocol).toBe("compatible")
-    expect(store.getSnapshot().state.records).toHaveLength(1)
+    expect(useSession.getState().protocol).toBe("compatible")
+    expect(useSession.getState().state.records).toHaveLength(1)
   })
 })

@@ -60,7 +60,7 @@ import {
 } from "../../../../domain/reveal-speed.ts"
 import { useDismissSignal, type DismissCause } from "../../../../hooks/use-dismiss-signal.ts"
 import { useDebouncedCallback } from "../../../../lib/debounce.ts"
-import { useSessionDispatch, useSessionSelector } from "../../../../stores/session.tsx"
+import { useSession } from "../../../../stores/session.ts"
 import { resolveEffortSelect, type EffortSelect } from "../domain/effort-label.ts"
 import {
   isVisitToggleValue,
@@ -163,10 +163,10 @@ const APPEARANCE_COLOR_SAVE_KEY = "appearance-color"
 
 /** `navRef` は帯全体（`<nav>`）。外側を押したかの判定に使う（「≡」・「いまの作業」と同じ `ref`）。 */
 export function useSettings(navRef: RefObject<HTMLElement | null>): ScreenNavSettings {
-  const dispatch = useSessionDispatch()
-  const sessionDefault = useSessionSelector((session) => session.state.sessionDefault)
-  const modelEffortSupport = useSessionSelector((session) => session.state.modelEffortSupport)
-  const visitEnabled = useSessionSelector((session) => session.state.visitEnabled)
+  const dispatch = useSession((session) => session.dispatch)
+  const sessionDefault = useSession((session) => session.state.sessionDefault)
+  const modelEffortSupport = useSession((session) => session.state.modelEffortSupport)
+  const visitEnabled = useSession((session) => session.state.visitEnabled)
   const [open, setOpen] = useState(false)
   // いま DOM に付いている歯車。React の外にある資源を持つ可変の入れ物なので ref に置く。
   const toggleNodes = useRef(new Set<HTMLButtonElement>())

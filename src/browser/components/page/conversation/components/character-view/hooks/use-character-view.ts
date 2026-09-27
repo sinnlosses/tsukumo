@@ -28,8 +28,8 @@ import {
 import { type SessionRecord } from "../../../../../../../shared/session-state.ts"
 import { turnSpeeches, type TurnSpeech } from "../../../../../../../shared/turn-speech.ts"
 import { portraitAppearance } from "../../../../../../domain/portrait-appearance.ts"
-import { useSessionSelector } from "../../../../../../stores/session.tsx"
-import { useTurnSelection } from "../../../../../../stores/turn-selection.tsx"
+import { useSession } from "../../../../../../stores/session.ts"
+import { useTurnSelection } from "../../../../../../stores/turn-selection.ts"
 import { nowEpochMilliseconds } from "../../../../../../utils/clock.ts"
 
 /**
@@ -60,16 +60,14 @@ export type CharacterViewModel = {
 
 export function useCharacterView(): CharacterViewModel {
   const { activeTurnId, newestTurnId } = useTurnSelection()
-  const records = useSessionSelector((session) => session.state.records)
-  const speeches = useSessionSelector((session) => session.state.speeches)
-  const speechExpression = useSessionSelector((session) => session.state.speechExpression)
-  const model = useSessionSelector((session) => session.state.model)
-  const character = useSessionSelector((session) => session.state.character)
-  const turn = useSessionSelector((session) => session.state.turn)
-  const lastToolFailureAt = useSessionSelector((session) => session.state.lastToolFailureAt)
-  const draftingReport = useSessionSelector(
-    (session) => session.state.reportDrafting.kind === "drafting",
-  )
+  const records = useSession((session) => session.state.records)
+  const speeches = useSession((session) => session.state.speeches)
+  const speechExpression = useSession((session) => session.state.speechExpression)
+  const model = useSession((session) => session.state.model)
+  const character = useSession((session) => session.state.character)
+  const turn = useSession((session) => session.state.turn)
+  const lastToolFailureAt = useSession((session) => session.state.lastToolFailureAt)
+  const draftingReport = useSession((session) => session.state.reportDrafting.kind === "drafting")
 
   const pastTurn = pastTurnSpeech(records, activeTurnId, newestTurnId)
   // 過去のターンでは、記録に残った表情（そのターンの最後のセリフのもの）をそのまま当てる。

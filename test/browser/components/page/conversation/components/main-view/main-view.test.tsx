@@ -6,12 +6,7 @@ import { act, cleanup, fireEvent, render, screen, type RenderResult } from "@tes
 import { QuestionRecord } from "../../../../../../../src/browser/components/page/conversation/components/main-view/components/question-record/question-record.tsx"
 import { MainView } from "../../../../../../../src/browser/components/page/conversation/components/main-view/main-view.tsx"
 import { BRUSH_ORIGIN_ATTRIBUTE } from "../../../../../../../src/browser/domain/reveal/brush-tip.ts"
-import { QuestionAnswerProvider } from "../../../../../../../src/browser/stores/question-answer.tsx"
-import {
-  type SessionStore,
-  SessionStoreContext,
-} from "../../../../../../../src/browser/stores/session.tsx"
-import { TurnSelectionProvider } from "../../../../../../../src/browser/stores/turn-selection.tsx"
+import { useQuestionDraft } from "../../../../../../../src/browser/stores/question-answer.ts"
 import { type MainViewQuestion } from "../../../../../../../src/shared/main-view.ts"
 import {
   INITIAL_SESSION_STATE,
@@ -24,11 +19,13 @@ import {
   requestRecord,
 } from "../../../../../../fixture/session-record.ts"
 import { typedElement } from "../../../../../../typed-element.ts"
-import { putState, sessionStoreWith } from "../../../../../session-store.ts"
+import { putState, putSession } from "../../../../../session-store.ts"
 
 afterEach(() => {
   cleanup()
-  // 過去のターンを選ぶと hash に乗る（`stores/turn-selection.tsx`）ので、次のテストへ持ち越さない。
+  // 組み立て中の答えはモジュール単位で残るので、次のテストへ持ち越さない。
+  useQuestionDraft.setState(useQuestionDraft.getInitialState(), true)
+  // 過去のターンを選ぶと hash に乗る（`stores/turn-selection.ts`）ので、次のテストへ持ち越さない。
   window.location.hash = ""
 })
 
@@ -46,10 +43,6 @@ function tool(
   }
 }
 
-// 姿は store に入れる（描き直しはフレームが届いたときだけ起きるので、記録を足すのも
-// サーバと同じ経路で行う）。
-let store: SessionStore = sessionStoreWith(INITIAL_SESSION_STATE)
-
 /** `turn` を渡すと、そのターンの進み具合で描く（既定は動いていない）。 */
 function renderMainView(
   records: readonly SessionRecord[],
@@ -59,7 +52,7 @@ function renderMainView(
   // （前の SDK ターンで確定した本文は、動いているあいだも出したままになるため）。
   const bodiesInTurn =
     turn.kind === "running" ? { report: true, utterance: true } : INITIAL_SESSION_STATE.bodiesInTurn
-  store = sessionStoreWith({ ...INITIAL_SESSION_STATE, records, turn, bodiesInTurn })
+  putSession({ ...INITIAL_SESSION_STATE, records, turn, bodiesInTurn })
   // `MainView` は `<RepositoryFileLinkProvider>`（レポートのパスを押せる部品にする一覧の取得）を
   // 内側で mount するので `useQuery` が要る。ここでは一覧の中身を見ないので、フェッチそのものは
   // 差し替えない（`window.fetch` は happy-dom の対象外なので落ちるだけで、テストは待たない）。
@@ -67,13 +60,7 @@ function renderMainView(
     <QueryClientProvider
       client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
     >
-      <SessionStoreContext.Provider value={store}>
-        <TurnSelectionProvider>
-          <QuestionAnswerProvider>
-            <MainView />
-          </QuestionAnswerProvider>
-        </TurnSelectionProvider>
-      </SessionStoreContext.Provider>
+      <MainView />
     </QueryClientProvider>,
   )
 }
@@ -91,7 +78,7 @@ function press(name: string): void {
 
 function rerenderMainView(records: readonly SessionRecord[]): void {
   act(() => {
-    putState(store, { ...INITIAL_SESSION_STATE, records })
+    putState({ ...INITIAL_SESSION_STATE, records })
   })
 }
 

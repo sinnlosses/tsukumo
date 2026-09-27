@@ -21,12 +21,12 @@ import {
 } from "../../../features/task-board/domain/task-list-count.ts"
 import { TaskBoard } from "../../../features/task-board/task-board.tsx"
 import { TaskList } from "../../../features/task-board/task-list.tsx"
-import { useSessionSelector } from "../../../stores/session.tsx"
+import { useSession } from "../../../stores/session.ts"
 import { SidebarSection } from "./section.tsx"
 import styles from "./sidebar.module.css"
 
 export function TaskSection(): ReactElement {
-  const tasks = useSessionSelector((session) => session.state.tasks)
+  const tasks = useSession((session) => session.state.tasks)
   const [boardOpen, setBoardOpen] = useState(false)
   const [selectedStatus, setSelectedStatus] = useState<TaskListFilterStatus | undefined>(undefined)
 

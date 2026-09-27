@@ -3,7 +3,7 @@
 //
 // 開閉は帯に前例がある `browser/hooks/use-dismiss-signal.ts` の `useDismissSignal`
 // （もう一度押す・外側・Esc で閉じる。Esc は開く口へフォーカスを戻す）。行を選ぶとその場で
-// 閉じてターンを移す——最新の行を選べば `onSelect` の先（`stores/turn-selection.tsx` の
+// 閉じてターンを移す——最新の行を選べば `onSelect` の先（`stores/turn-selection.ts` の
 // `selectTurn`）がそのまま追従に戻す規則を持っているので、ここで特別扱いはしない。
 //
 // 一覧の並びは新しいものを上にする。行の番号（n / N）は `‹` `›` の脇に出す「n / N」と

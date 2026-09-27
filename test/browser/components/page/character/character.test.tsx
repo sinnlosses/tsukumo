@@ -4,7 +4,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 
 import { Character } from "../../../../../src/browser/components/page/character/character.tsx"
-import { SessionStoreContext } from "../../../../../src/browser/stores/session.tsx"
 import { type PendingAsk } from "../../../../../src/shared/pending-ask.ts"
 import {
   INITIAL_SESSION_STATE,
@@ -12,7 +11,7 @@ import {
 } from "../../../../../src/shared/session-state.ts"
 import { characterInfo, characterPackEntry, shownPortraits } from "../../../../fixture/character.ts"
 import { typedElement } from "../../../../typed-element.ts"
-import { type CommandSpy, putState, sessionStoreWith } from "../../../session-store.ts"
+import { type CommandSpy, putState, putSession } from "../../../session-store.ts"
 
 // 手で書いた架空のキャラクターパック2つ（docs/coding-standards.md「会話内容の扱い」）。
 // 使用中の `fictional` と、使用中ではない `other`。立ち絵はラスタにしてある（`<Portrait>` は
@@ -68,7 +67,7 @@ afterEach(() => {
 })
 
 function renderCharacter(state: Partial<SessionState> = {}, spy: CommandSpy = () => {}): void {
-  const store = sessionStoreWith(
+  putSession(
     {
       ...INITIAL_SESSION_STATE,
       character: FIXTURE_CHARACTER,
@@ -79,9 +78,7 @@ function renderCharacter(state: Partial<SessionState> = {}, spy: CommandSpy = ()
   )
   render(
     <QueryClientProvider client={new QueryClient()}>
-      <SessionStoreContext.Provider value={store}>
-        <Character />
-      </SessionStoreContext.Provider>
+      <Character />
     </QueryClientProvider>,
   )
 }
@@ -129,15 +126,13 @@ describe("Character", () => {
   // 送られた id（次の選択に効く）だけを見る。
   it("新しく作るはダイアログを開き、作れたら閉じて一覧でそのパックを選ぶ", async () => {
     const calls: unknown[] = []
-    const store = sessionStoreWith(
+    putSession(
       { ...INITIAL_SESSION_STATE, character: FIXTURE_CHARACTER, characterPacks: FIXTURE_PACKS },
       (command) => calls.push(command),
     )
     render(
       <QueryClientProvider client={new QueryClient()}>
-        <SessionStoreContext.Provider value={store}>
-          <Character />
-        </SessionStoreContext.Provider>
+        <Character />
       </QueryClientProvider>,
     )
 
@@ -160,7 +155,7 @@ describe("Character", () => {
 
     // 選択肢の増えた character-changed（`hello` で丸ごと入れ替え）が届いたあと。
     act(() => {
-      putState(store, {
+      putState({
         ...INITIAL_SESSION_STATE,
         character: FIXTURE_CHARACTER,
         characterPacks: [...FIXTURE_PACKS, characterPackEntry("fictional-3", "fictional-3")],

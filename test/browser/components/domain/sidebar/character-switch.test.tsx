@@ -8,14 +8,13 @@ import { afterEach, describe, expect, it } from "bun:test"
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 
 import { CharacterSwitch } from "../../../../../src/browser/components/domain/sidebar/character-switch.tsx"
-import { SessionStoreContext } from "../../../../../src/browser/stores/session.tsx"
 import { FRAME_ERROR_REASON } from "../../../../../src/shared/frame.ts"
 import {
   INITIAL_SESSION_STATE,
   type SessionState,
 } from "../../../../../src/shared/session-state.ts"
 import { characterInfo, characterPackEntry } from "../../../../fixture/character.ts"
-import { type CommandSpy, sessionStoreWith } from "../../../session-store.ts"
+import { type CommandSpy, putSession } from "../../../session-store.ts"
 
 afterEach(() => {
   cleanup()
@@ -30,16 +29,14 @@ function renderSwitch(
   stateOverrides: Partial<SessionState>,
   dispatch: CommandSpy = () => {},
 ): void {
-  const store = sessionStoreWith({ ...INITIAL_SESSION_STATE, ...stateOverrides }, dispatch)
+  putSession({ ...INITIAL_SESSION_STATE, ...stateOverrides }, dispatch)
   render(
-    <SessionStoreContext.Provider value={store}>
-      <CharacterSwitch
-        id="character-switch-fixture"
-        ariaLabel="架空のラベル"
-        frameClassName="fixture-frame"
-        className="fixture-select"
-      />
-    </SessionStoreContext.Provider>,
+    <CharacterSwitch
+      id="character-switch-fixture"
+      ariaLabel="架空のラベル"
+      frameClassName="fixture-frame"
+      className="fixture-select"
+    />,
   )
 }
 

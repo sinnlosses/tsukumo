@@ -17,17 +17,17 @@ import { type ReactElement } from "react"
 import { CharacterFace } from "../../../components/domain/character-face.tsx"
 import { Text } from "../../../components/ui/text/text.tsx"
 import { VStack } from "../../../components/ui/v-stack/v-stack.tsx"
-import { useSessionSelector } from "../../../stores/session.tsx"
+import { useSession } from "../../../stores/session.ts"
 import { CharacterSwitch } from "./character-switch.tsx"
 import styles from "./sidebar.module.css"
 
 const PROFILE_CHARACTER_SELECT_ID = "tsukumo-profile-character"
 
 export function ProfileCard(): ReactElement {
-  const faceUrl = useSessionSelector((session) => session.state.character?.face)
-  const name = useSessionSelector((session) => session.state.character?.name)
-  const tagline = useSessionSelector((session) => session.state.character?.tagline)
-  const hasCharacterPacks = useSessionSelector((session) => session.state.characterPacks.length > 0)
+  const faceUrl = useSession((session) => session.state.character?.face)
+  const name = useSession((session) => session.state.character?.name)
+  const tagline = useSession((session) => session.state.character?.tagline)
+  const hasCharacterPacks = useSession((session) => session.state.characterPacks.length > 0)
 
   return (
     <section className={styles["profile-card"]} aria-label="プロフィール">

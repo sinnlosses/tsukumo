@@ -43,11 +43,7 @@ import {
   selectAchievementToday,
   useAchievementDateSelection,
 } from "../../../../stores/screen.tsx"
-import {
-  useSessionDispatch,
-  useSessionSelector,
-  type SessionDispatch,
-} from "../../../../stores/session.tsx"
+import { useSession, type SessionDispatch } from "../../../../stores/session.ts"
 import { monthDayLabel } from "../../../../utils/month-day-label.ts"
 import { diaryWriterPortraitOf, type DiaryWriterPortrait } from "../domain/diary-writer.ts"
 
@@ -142,11 +138,11 @@ const revealedDiaryKeys = new Set<string>()
 
 export function useAchievement(): UseAchievementResult {
   const selection = useAchievementDateSelection()
-  const dispatch = useSessionDispatch()
+  const dispatch = useSession((session) => session.dispatch)
   const queryClient = useQueryClient()
-  const character = useSessionSelector((session) => session.state.character)
-  const characterPacks = useSessionSelector((session) => session.state.characterPacks)
-  const diaryWriting = useSessionSelector((session) => session.state.diaryWriting)
+  const character = useSession((session) => session.state.character)
+  const characterPacks = useSession((session) => session.state.characterPacks)
+  const diaryWriting = useSession((session) => session.state.diaryWriting)
   const query = useQuery({
     // 見ている日の選び方をそのまま入力にする（今日を見ているときは日付を送らない——サーバの
     // 既定も今日なので、hash に何も無いことと揃う）。403・503 は例外になり、取れなかったことは

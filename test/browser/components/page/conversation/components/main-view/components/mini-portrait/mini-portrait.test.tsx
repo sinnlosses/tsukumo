@@ -9,13 +9,12 @@ import {
   restBrushTip,
   type BrushTip,
 } from "../../../../../../../../../src/browser/domain/reveal/brush-tip.ts"
-import { SessionStoreContext } from "../../../../../../../../../src/browser/stores/session.tsx"
 import {
   INITIAL_SESSION_STATE,
   type SessionState,
 } from "../../../../../../../../../src/shared/session-state.ts"
 import { characterInfo, shownPortraits } from "../../../../../../../../fixture/character.ts"
-import { sessionStoreWith } from "../../../../../../../session-store.ts"
+import { putSession } from "../../../../../../../session-store.ts"
 
 // どこに見えているか（重なり・大きさ）は目視で確かめる（`docs/architecture.md`
 // 「手で確かめること」）。ここで守るのは、筆先に連れて出入りすることと、置く座標を筆先から
@@ -46,12 +45,10 @@ afterEach(() => {
 })
 
 function renderMiniPortrait(character: SessionState["character"]): void {
-  const store = sessionStoreWith({ ...INITIAL_SESSION_STATE, character })
+  putSession({ ...INITIAL_SESSION_STATE, character })
   render(
     <QueryClientProvider client={new QueryClient()}>
-      <SessionStoreContext.Provider value={store}>
-        <MiniPortrait shownTurnId={SHOWN_TURN_ID} />
-      </SessionStoreContext.Provider>
+      <MiniPortrait shownTurnId={SHOWN_TURN_ID} />
     </QueryClientProvider>,
   )
 }

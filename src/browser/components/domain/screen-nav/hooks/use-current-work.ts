@@ -37,8 +37,8 @@ import { useDismissSignal, type DismissCause } from "../../../../hooks/use-dismi
 import { summarizeToolInput, toolInputText } from "../../../../lib/tool-summary.ts"
 import { useQuestionScroll } from "../../../../stores/question-scroll.ts"
 import { navigateTo, useScreen } from "../../../../stores/screen.tsx"
-import { useSessionSelector, useTurnRunning } from "../../../../stores/session.tsx"
-import { useTurnSelection } from "../../../../stores/turn-selection.tsx"
+import { useSession, useTurnRunning } from "../../../../stores/session.ts"
+import { useTurnSelection } from "../../../../stores/turn-selection.ts"
 import { monthDayLabel } from "../../../../utils/month-day-label.ts"
 
 /** 閉じている間に出す手順の件数（依頼の手順が6件以上あると「すべて見る」の口が出る）。 */
@@ -209,14 +209,14 @@ export type ScreenNavCurrentWork = {
 
 /** `navRef` は帯全体（`<nav>`）。外側を押したかの判定に使う（「≡」と同じ `ref`）。 */
 export function useCurrentWork(navRef: RefObject<HTMLElement | null>): ScreenNavCurrentWork {
-  const endedReason = useSessionSelector((session) => session.state.endedReason)
-  const pending = useSessionSelector((session) => session.state.pending)
+  const endedReason = useSession((session) => session.state.endedReason)
+  const pending = useSession((session) => session.state.pending)
   const turnInProgress = useTurnRunning()
-  const records = useSessionSelector((session) => session.state.records)
-  const backgroundTasks = useSessionSelector((session) => session.state.backgroundTasks)
-  const diaryWriting = useSessionSelector((session) => session.state.diaryWriting)
-  const chatMode = useSessionSelector((session) => session.state.chatMode)
-  const characterName = useSessionSelector((session) => session.state.character?.name)
+  const records = useSession((session) => session.state.records)
+  const backgroundTasks = useSession((session) => session.state.backgroundTasks)
+  const diaryWriting = useSession((session) => session.state.diaryWriting)
+  const chatMode = useSession((session) => session.state.chatMode)
+  const characterName = useSession((session) => session.state.character?.name)
   const screen = useScreen()
   const { activeTurnId, newestTurnId, selectTurn } = useTurnSelection()
   const requestScroll = useQuestionScroll((state) => state.requestScroll)

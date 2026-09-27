@@ -22,7 +22,7 @@ import {
 } from "../../../../shared/session-choice.ts"
 import { HStack } from "../../../components/ui/h-stack/h-stack.tsx"
 import { Select } from "../../../components/ui/select/select.tsx"
-import { useSessionDispatch, useSessionSelector, useTurnRunning } from "../../../stores/session.tsx"
+import { useSession, useTurnRunning } from "../../../stores/session.ts"
 import { clockTime, localTimeZoneId, zonedDateTime } from "../../../utils/clock.ts"
 import switchStyles from "./session-switch.module.css"
 import styles from "./sidebar.module.css"
@@ -50,9 +50,9 @@ const SWITCH_BLOCKED_TITLE = FRAME_ERROR_REASON.sessionSwitchDuringTurn
  * まだ無い＝選べるものが無い。キャラクターの `<select>` と同じ振る舞い）。
  */
 export function SessionSwitch(): ReactElement | null {
-  const dispatch = useSessionDispatch()
-  const sessions = useSessionSelector((session) => session.state.sessions)
-  const currentSessionId = useSessionSelector((session) =>
+  const dispatch = useSession((session) => session.dispatch)
+  const sessions = useSession((session) => session.state.sessions)
+  const currentSessionId = useSession((session) =>
     session.state.session.kind === "starting" ? undefined : session.state.session.sessionId,
   )
   const turnInProgress = useTurnRunning()

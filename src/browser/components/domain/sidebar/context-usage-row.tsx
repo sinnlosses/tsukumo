@@ -30,7 +30,7 @@ import {
   type UseContextUsageResult,
   useContextUsage,
 } from "../../../domain/context-usage.ts"
-import { useSessionSelector } from "../../../stores/session.tsx"
+import { useSession } from "../../../stores/session.ts"
 import { formatCount } from "../../../utils/format-count.ts"
 import styles from "./sidebar.module.css"
 
@@ -45,7 +45,7 @@ const UNTIL_PLACEHOLDER = "\u00a0"
 const WARN_THRESHOLD_PERCENTAGE = 70
 
 export function ContextUsageRow(): ReactElement {
-  const refetchKey = useSessionSelector((session) =>
+  const refetchKey = useSession((session) =>
     contextUsageRefetchKey(session.state.lastTurnFinishedAt),
   )
   const usage = useContextUsage(refetchKey)

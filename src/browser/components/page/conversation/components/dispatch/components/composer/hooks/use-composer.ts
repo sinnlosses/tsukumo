@@ -20,12 +20,8 @@
 
 import { useEffect, useRef, useState, type KeyboardEvent, type RefObject } from "react"
 
-import { useQuestionAnswer } from "../../../../../../../../stores/question-answer.tsx"
-import {
-  useSessionDispatch,
-  useSessionSelector,
-  useTurnRunning,
-} from "../../../../../../../../stores/session.tsx"
+import { useQuestionAnswer } from "../../../../../../../../stores/question-answer.ts"
+import { useSession, useTurnRunning } from "../../../../../../../../stores/session.ts"
 import { usePromptImage, type PromptImageModel } from "./use-prompt-image.ts"
 import {
   insertedTrigger,
@@ -90,15 +86,15 @@ export type ComposerModel = Omit<PromptImageModel, "reset"> & {
 }
 
 export function useComposer(): ComposerModel {
-  const dispatch = useSessionDispatch()
-  const characterName = useSessionSelector((session) => session.state.character?.name)
-  const pendingActive = useSessionSelector((session) => session.state.pending.length > 0)
+  const dispatch = useSession((session) => session.dispatch)
+  const characterName = useSession((session) => session.state.character?.name)
+  const pendingActive = useSession((session) => session.state.pending.length > 0)
   const turnInProgress = useTurnRunning()
   // 答え待ちの質問があるあいだ、入力欄は「依頼を書く場所」ではなく選択肢以外の答えを書く
-  // 場所になる（札はメインビューに出ている。`stores/question-answer.tsx`）。
+  // 場所になる（札はメインビューに出ている。`stores/question-answer.ts`）。
   const question = useQuestionAnswer()
-  const slashCommands = useSessionSelector((session) => session.state.slashCommands)
-  const commandDescriptions = useSessionSelector((session) => session.state.commandDescriptions)
+  const slashCommands = useSession((session) => session.state.slashCommands)
+  const commandDescriptions = useSession((session) => session.state.commandDescriptions)
   const [draft, setDraft] = useState<Draft>(EMPTY_DRAFT)
   const textAreaRef = useRef<HTMLTextAreaElement | null>(null)
 

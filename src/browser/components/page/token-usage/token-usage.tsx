@@ -13,18 +13,18 @@
 // ここに残すのは「フックを呼んで、受け取ったものを渡す」だけ。条件分岐も算出もここには
 // 置かない（増えたらフックか見た目のどちらかに寄せる）。`state.lastTurnFinishedAt` を
 // 読んで内訳の取り直しの合図を作るのはここ——`browser/domain/` は `stores/` を読めないので
-// （`contextUsageRefetchKey` の冒頭コメント）、`useSessionSelector` はここで呼ぶ。
+// （`contextUsageRefetchKey` の冒頭コメント）、`useSession` はここで呼ぶ。
 
 import { type ReactElement } from "react"
 
 import { contextUsageRefetchKey, useContextUsage } from "../../../domain/context-usage.ts"
-import { useSessionSelector } from "../../../stores/session.tsx"
+import { useSession } from "../../../stores/session.ts"
 import { useTokenUsage } from "./hooks/use-token-usage.ts"
 import { useUsageReview } from "./hooks/use-usage-review.ts"
 import { PresentationalTokenUsage } from "./presentational-token-usage.tsx"
 
 export function TokenUsage(): ReactElement {
-  const refetchKey = useSessionSelector((session) =>
+  const refetchKey = useSession((session) =>
     contextUsageRefetchKey(session.state.lastTurnFinishedAt),
   )
   return (

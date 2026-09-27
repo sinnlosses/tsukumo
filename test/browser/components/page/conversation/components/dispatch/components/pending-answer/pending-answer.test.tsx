@@ -3,13 +3,12 @@ import { afterEach, describe, expect, it } from "bun:test"
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 
 import { PendingAnswer } from "../../../../../../../../../src/browser/components/page/conversation/components/dispatch/components/pending-answer/pending-answer.tsx"
-import { SessionStoreContext } from "../../../../../../../../../src/browser/stores/session.tsx"
 import { type PendingAsk } from "../../../../../../../../../src/shared/pending-ask.ts"
 import {
   INITIAL_SESSION_STATE,
   type SessionState,
 } from "../../../../../../../../../src/shared/session-state.ts"
-import { type CommandSpy, sessionStoreWith } from "../../../../../../../session-store.ts"
+import { type CommandSpy, putSession } from "../../../../../../../session-store.ts"
 
 /**
  * 入力欄の上の箱は許可要求だけを持つ（質問の札はメインビューへ移り、その検査は `test/browser/components/page/conversation/components/main-view/components/question-ask/question-ask.test.tsx` と
@@ -26,12 +25,8 @@ function renderPendingAnswer(
   dispatch: CommandSpy = () => {},
 ): HTMLElement {
   const state: SessionState = { ...INITIAL_SESSION_STATE, pending }
-  const store = sessionStoreWith(state, dispatch)
-  const { container } = render(
-    <SessionStoreContext.Provider value={store}>
-      <PendingAnswer />
-    </SessionStoreContext.Provider>,
-  )
+  putSession(state, dispatch)
+  const { container } = render(<PendingAnswer />)
   return container
 }
 

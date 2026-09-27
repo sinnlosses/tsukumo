@@ -6,13 +6,12 @@ import { afterEach, describe, expect, it } from "bun:test"
 import { cleanup, render } from "@testing-library/react"
 
 import { ProfileCard } from "../../../../../src/browser/components/domain/sidebar/profile-card.tsx"
-import { SessionStoreContext } from "../../../../../src/browser/stores/session.tsx"
 import {
   INITIAL_SESSION_STATE,
   type SessionState,
 } from "../../../../../src/shared/session-state.ts"
 import { characterInfo, characterPackEntry } from "../../../../fixture/character.ts"
-import { type CommandSpy, sessionStoreWith } from "../../../session-store.ts"
+import { type CommandSpy, putSession } from "../../../session-store.ts"
 
 afterEach(() => {
   cleanup()
@@ -27,12 +26,8 @@ function renderProfileCard(
   stateOverrides: Partial<SessionState>,
   dispatch: CommandSpy = () => {},
 ): void {
-  const store = sessionStoreWith({ ...INITIAL_SESSION_STATE, ...stateOverrides }, dispatch)
-  render(
-    <SessionStoreContext.Provider value={store}>
-      <ProfileCard />
-    </SessionStoreContext.Provider>,
-  )
+  putSession({ ...INITIAL_SESSION_STATE, ...stateOverrides }, dispatch)
+  render(<ProfileCard />)
 }
 
 describe("ProfileCard", () => {

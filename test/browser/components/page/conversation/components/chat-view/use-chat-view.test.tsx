@@ -9,10 +9,6 @@ import {
   type ChatTimeStamp,
 } from "../../../../../../../src/browser/components/page/conversation/components/chat-view/hooks/use-chat-view.ts"
 import {
-  SessionStoreContext,
-  type SessionStore,
-} from "../../../../../../../src/browser/stores/session.tsx"
-import {
   INITIAL_SESSION_STATE,
   type RecordTime,
   type SessionRecord,
@@ -24,7 +20,7 @@ import {
   requestRecord,
   speechRecord,
 } from "../../../../../../fixture/session-record.ts"
-import { type CommandSpy, putState, sessionStoreWith } from "../../../../../session-store.ts"
+import { type CommandSpy, putState, putSession } from "../../../../../session-store.ts"
 
 /**
  * `<ChatView>` を丸ごと描かずに、表情の決め方・行への畳み方・「...」と案内の出し分け・
@@ -52,15 +48,14 @@ function renderUseChatView(
   stateOverrides: Partial<SessionState>,
   spy: CommandSpy = () => {},
 ): {
-  readonly store: SessionStore
   readonly result: { readonly current: ReturnType<typeof useChatView> }
 } {
-  const store = sessionStoreWith({ ...INITIAL_SESSION_STATE, ...stateOverrides }, spy)
+  putSession({ ...INITIAL_SESSION_STATE, ...stateOverrides }, spy)
   function Wrapper({ children }: { readonly children: ReactNode }): ReactElement {
-    return <SessionStoreContext.Provider value={store}>{children}</SessionStoreContext.Provider>
+    return <>{children}</>
   }
   const { result } = renderHook(() => useChatView(), { wrapper: Wrapper })
-  return { store, result }
+  return { result }
 }
 
 function speechRows(rows: readonly ChatRow[]): readonly Extract<ChatRow, { kind: "speech" }>[] {
@@ -161,7 +156,7 @@ describe("useChatView のセリフを遡る", () => {
   })
 
   it("新しいセリフが来ると留めた選択は失効する", () => {
-    const { store, result } = renderUseChatView({
+    const { result } = renderUseChatView({
       records: RECORDS,
       character: FIXTURE_CHARACTER,
       speechExpression: "proud",
@@ -171,7 +166,7 @@ describe("useChatView のセリフを遡る", () => {
     })
 
     act(() => {
-      putState(store, {
+      putState({
         ...INITIAL_SESSION_STATE,
         records: [...RECORDS, speechRecord({ text: "3つめのセリフ" })],
         character: FIXTURE_CHARACTER,
@@ -185,11 +180,11 @@ describe("useChatView のセリフを遡る", () => {
 
 describe("useChatView の弾む行", () => {
   it("開いた時点で並んでいた記録は弾まず、あとから届いた記録だけが弾む", () => {
-    const { store, result } = renderUseChatView({ records: RECORDS })
+    const { result } = renderUseChatView({ records: RECORDS })
     expect(speechRows(result.current.rows).map((row) => row.pop)).toEqual([false, false])
 
     act(() => {
-      putState(store, {
+      putState({
         ...INITIAL_SESSION_STATE,
         records: [...RECORDS, speechRecord({ text: "3つめのセリフ" })],
       })
@@ -233,10 +228,10 @@ describe("useChatView の出すタイミング（docs/screen-design.md 13.7）",
   it("2件のセリフが続けて届いたとき、2件目は2秒経つまでログに出ず、そのあいだ「...」が出る", async () => {
     const clock = mockNow(0)
     try {
-      const { store, result } = renderUseChatView({ records: [] })
+      const { result } = renderUseChatView({ records: [] })
 
       act(() => {
-        putState(store, {
+        putState({
           ...INITIAL_SESSION_STATE,
           records: [speechRecord({ text: "1件目の架空のセリフ", expression: "proud" })],
           speechExpression: "proud",
@@ -247,7 +242,7 @@ describe("useChatView の出すタイミング（docs/screen-design.md 13.7）",
 
       // 時計は動かさないまま、続けて2件目が届く。
       act(() => {
-        putState(store, {
+        putState({
           ...INITIAL_SESSION_STATE,
           records: [
             speechRecord({ text: "1件目の架空のセリフ", expression: "proud" }),
@@ -275,10 +270,10 @@ describe("useChatView の出すタイミング（docs/screen-design.md 13.7）",
   it("前の吹き出しから2秒以上空いて届いたセリフは、すぐ出る", () => {
     const clock = mockNow(0)
     try {
-      const { store, result } = renderUseChatView({ records: [] })
+      const { result } = renderUseChatView({ records: [] })
 
       act(() => {
-        putState(store, {
+        putState({
           ...INITIAL_SESSION_STATE,
           records: [speechRecord({ text: "1件目の架空のセリフ" })],
           speechCalledInTurn: true,
@@ -289,7 +284,7 @@ describe("useChatView の出すタイミング（docs/screen-design.md 13.7）",
       // 2件目が届く前に、時計を2秒より先へ進めておく。
       clock.mockReturnValue(Temporal.Instant.fromEpochMilliseconds(3000))
       act(() => {
-        putState(store, {
+        putState({
           ...INITIAL_SESSION_STATE,
           records: [
             speechRecord({ text: "1件目の架空のセリフ" }),
@@ -309,10 +304,10 @@ describe("useChatView の出すタイミング（docs/screen-design.md 13.7）",
   it("待たせているあいだ、立ち絵の表情は出した吹き出しのもの", async () => {
     const clock = mockNow(0)
     try {
-      const { store, result } = renderUseChatView({ records: [], character: FIXTURE_CHARACTER })
+      const { result } = renderUseChatView({ records: [], character: FIXTURE_CHARACTER })
 
       act(() => {
-        putState(store, {
+        putState({
           ...INITIAL_SESSION_STATE,
           records: [speechRecord({ text: "1件目の架空のセリフ", expression: "proud" })],
           character: FIXTURE_CHARACTER,
@@ -323,7 +318,7 @@ describe("useChatView の出すタイミング（docs/screen-design.md 13.7）",
       expect(result.current.expression).toBe("proud")
 
       act(() => {
-        putState(store, {
+        putState({
           ...INITIAL_SESSION_STATE,
           records: [
             speechRecord({ text: "1件目の架空のセリフ", expression: "proud" }),
@@ -350,10 +345,10 @@ describe("useChatView の出すタイミング（docs/screen-design.md 13.7）",
   it("ターンが終わったあとも、待たせているセリフが残っていれば「...」が出続ける", () => {
     const clock = mockNow(0)
     try {
-      const { store, result } = renderUseChatView({ records: [] })
+      const { result } = renderUseChatView({ records: [] })
 
       act(() => {
-        putState(store, {
+        putState({
           ...INITIAL_SESSION_STATE,
           records: [speechRecord({ text: "1件目の架空のセリフ" })],
           speechCalledInTurn: true,
@@ -362,7 +357,7 @@ describe("useChatView の出すタイミング（docs/screen-design.md 13.7）",
       })
 
       act(() => {
-        putState(store, {
+        putState({
           ...INITIAL_SESSION_STATE,
           records: [
             speechRecord({ text: "1件目の架空のセリフ" }),

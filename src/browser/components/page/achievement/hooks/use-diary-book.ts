@@ -41,12 +41,7 @@ import {
   type PortraitAppearance,
 } from "../../../../domain/portrait-appearance.ts"
 import { rpc } from "../../../../lib/rpc-client.ts"
-import {
-  useSessionDispatch,
-  useSessionSelector,
-  useTurnRunning,
-  type SessionDispatch,
-} from "../../../../stores/session.tsx"
+import { useSession, useTurnRunning, type SessionDispatch } from "../../../../stores/session.ts"
 import { dayLabel } from "../../../../utils/day-label.ts"
 import { monthDayLabel } from "../../../../utils/month-day-label.ts"
 import { diaryWriterPortraitOf } from "../domain/diary-writer.ts"
@@ -183,15 +178,15 @@ export function useDiaryBook(params: {
   const viewedDate = params.daySwitch.kind === "known" ? params.daySwitch.date : undefined
 
   const [state, setState] = useState<BookState>({ kind: "closed" })
-  const dispatch = useSessionDispatch()
+  const dispatch = useSession((session) => session.dispatch)
   const turnRunning = useTurnRunning()
-  const character = useSessionSelector((session) => session.state.character)
-  const characterPacks = useSessionSelector((session) => session.state.characterPacks)
+  const character = useSession((session) => session.state.character)
+  const characterPacks = useSession((session) => session.state.characterPacks)
 
   // 書き終わりの知らせの「日記帳で開く」（`diary-notice.tsx`）を拾って開く。`useEffect` は
   // 使わない——4類型のどれにも当たらない（`docs/coding-standards.md`「React」）。合図は
-  // `useDiaryBookOpenRequest`（`useSyncExternalStore`。「外部ストアの購読」）で拾い、拾ったかどうかは
-  // `takeDiaryBookOpenRequest` が React の外に持つ（画面を開き直しても同じ合図で開き直さない）。
+  // `useDiaryBookOpenRequest` で拾い、拾ったかどうかは
+  // `takeDiaryBookOpenRequest` が部品の外に持つ（画面を開き直しても同じ合図で開き直さない）。
   const pendingRequest = takeDiaryBookOpenRequest(useDiaryBookOpenRequest())
   if (pendingRequest !== undefined) {
     setState({ kind: "open", source: "notice", date: pendingRequest.date, tocOpen: false })

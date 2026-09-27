@@ -4,10 +4,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 
 import { ChatView } from "../../../../../../../src/browser/components/page/conversation/components/chat-view/chat-view.tsx"
-import {
-  SessionStoreContext,
-  type SessionStore,
-} from "../../../../../../../src/browser/stores/session.tsx"
 import { type Expression } from "../../../../../../../src/shared/expression.ts"
 import {
   INITIAL_SESSION_STATE,
@@ -21,7 +17,7 @@ import {
   requestRecord,
   speechRecord,
 } from "../../../../../../fixture/session-record.ts"
-import { type CommandSpy, putState, sessionStoreWith } from "../../../../../session-store.ts"
+import { type CommandSpy, putState, putSession } from "../../../../../session-store.ts"
 
 afterEach(() => {
   cleanup()
@@ -40,19 +36,13 @@ const RECORDS: readonly SessionRecord[] = [
 
 // 立ち絵（`<Portrait>`）は `useQuery` を使うので `QueryClientProvider` が要る。表情を見る
 // テストだけがキャラクター定義を差し込む（定義が無いと立ち絵そのものが出ない）。
-function renderChatView(
-  stateOverrides: Partial<SessionState>,
-  spy: CommandSpy = () => {},
-): SessionStore {
-  const store = sessionStoreWith({ ...INITIAL_SESSION_STATE, ...stateOverrides }, spy)
+function renderChatView(stateOverrides: Partial<SessionState>, spy: CommandSpy = () => {}): void {
+  putSession({ ...INITIAL_SESSION_STATE, ...stateOverrides }, spy)
   render(
     <QueryClientProvider client={new QueryClient()}>
-      <SessionStoreContext.Provider value={store}>
-        <ChatView />
-      </SessionStoreContext.Provider>
+      <ChatView />
     </QueryClientProvider>,
   )
-  return store
 }
 
 /** 立ち絵にいま当たっている表情（`<Portrait>` が `data-expression` に出す）。 */
@@ -246,14 +236,14 @@ describe("ChatView の時刻と日の区切り", () => {
 
 describe("ChatView のセリフを遡る", () => {
   it("新しいセリフが来ると、印が最新へ移る", () => {
-    const store = renderChatView({
+    renderChatView({
       records: RECORDS,
       character: FIXTURE_CHARACTER,
       speechExpression: "proud",
     })
 
     act(() => {
-      putState(store, {
+      putState({
         ...INITIAL_SESSION_STATE,
         records: [...RECORDS, speechRecord({ text: "3つめのセリフ", expression: "curious" })],
         character: FIXTURE_CHARACTER,
@@ -333,7 +323,7 @@ describe("ChatView のセリフを遡る", () => {
   })
 
   it("遡っている最中に新しいセリフが来たら選択が解け、新しいセリフの表情へ戻る", () => {
-    const store = renderChatView({
+    renderChatView({
       records: RECORDS,
       character: FIXTURE_CHARACTER,
       speechExpression: "proud",
@@ -342,7 +332,7 @@ describe("ChatView のセリフを遡る", () => {
     const firstSpeech = screen.getByText("1つめのセリフ")
     fireEvent.click(firstSpeech)
     act(() => {
-      putState(store, {
+      putState({
         ...INITIAL_SESSION_STATE,
         records: [...RECORDS, speechRecord({ text: "3つめのセリフ", expression: "curious" })],
         character: FIXTURE_CHARACTER,
@@ -356,7 +346,7 @@ describe("ChatView のセリフを遡る", () => {
   })
 
   it("窓から古い記録が落ちて並びが前へ詰まっても、選択は失効して最新へ戻る", () => {
-    const store = renderChatView({
+    renderChatView({
       records: RECORDS,
       character: FIXTURE_CHARACTER,
       speechExpression: "proud",
@@ -364,7 +354,7 @@ describe("ChatView のセリフを遡る", () => {
 
     fireEvent.click(screen.getByText("1つめのセリフ"))
     act(() => {
-      putState(store, {
+      putState({
         ...INITIAL_SESSION_STATE,
         // 古い1往復が落ちた姿（番号で持った選択が別の行を指す）。
         records: RECORDS.slice(2),
@@ -379,7 +369,7 @@ describe("ChatView のセリフを遡る", () => {
   })
 
   it("利用者が発言しただけでは選択は解けない（解くのは新しいセリフ）", () => {
-    const store = renderChatView({
+    renderChatView({
       records: RECORDS,
       character: FIXTURE_CHARACTER,
       speechExpression: "proud",
@@ -387,7 +377,7 @@ describe("ChatView のセリフを遡る", () => {
 
     fireEvent.click(screen.getByText("2つめのセリフ"))
     act(() => {
-      putState(store, {
+      putState({
         ...INITIAL_SESSION_STATE,
         records: [...RECORDS, requestRecord({ turnId: 4, text: "3つめの依頼" })],
         character: FIXTURE_CHARACTER,
@@ -409,9 +399,9 @@ describe("ChatView のセリフが現れる（docs/screen-design.md 13.7）", ()
   }
 
   /** 3件目のセリフが届いたところ（2件目までは開いた時点で並んでいる）。 */
-  function arrive(store: SessionStore, text: string, expression: Expression): void {
+  function arrive(text: string, expression: Expression): void {
     act(() => {
-      putState(store, {
+      putState({
         ...INITIAL_SESSION_STATE,
         records: [...RECORDS, speechRecord({ text, expression })],
         character: FIXTURE_CHARACTER,
@@ -425,13 +415,13 @@ describe("ChatView のセリフが現れる（docs/screen-design.md 13.7）", ()
   // 全文でその場に出て、`.chat-entry-pop` が掛かる行の配線。
 
   it("届いたばかりのセリフは全文で出て、弾む行になる", () => {
-    const store = renderChatView({
+    renderChatView({
       records: RECORDS,
       character: FIXTURE_CHARACTER,
       speechExpression: "proud",
     })
 
-    arrive(store, "3つめのセリフ", "curious")
+    arrive("3つめのセリフ", "curious")
 
     expect(logEntries()).toHaveLength(5)
     expect(screen.getByText("3つめのセリフ")).toBeTruthy()
@@ -449,7 +439,7 @@ describe("ChatView のセリフが現れる（docs/screen-design.md 13.7）", ()
     const clock = spyOn(Temporal.Now, "instant")
     clock.mockReturnValue(Temporal.Instant.fromEpochMilliseconds(0))
     try {
-      const store = renderChatView({
+      renderChatView({
         records: [],
         character: FIXTURE_CHARACTER,
         turn: { kind: "running", startedAt: 0 },
@@ -457,7 +447,7 @@ describe("ChatView のセリフが現れる（docs/screen-design.md 13.7）", ()
       })
 
       act(() => {
-        putState(store, {
+        putState({
           ...INITIAL_SESSION_STATE,
           records: [speechRecord({ text: "1つめの架空のセリフ", expression: "proud" })],
           character: FIXTURE_CHARACTER,
@@ -467,7 +457,7 @@ describe("ChatView のセリフが現れる（docs/screen-design.md 13.7）", ()
         })
       })
       act(() => {
-        putState(store, {
+        putState({
           ...INITIAL_SESSION_STATE,
           records: [
             speechRecord({ text: "1つめの架空のセリフ", expression: "proud" }),
@@ -519,7 +509,7 @@ describe("ChatView の「...」（返事を待つ間）", () => {
   })
 
   it("セリフが届くと「...」は消え、セリフの行に入れ替わる", () => {
-    const store = renderChatView({
+    renderChatView({
       records: RECORDS,
       character: FIXTURE_CHARACTER,
       speechExpression: "proud",
@@ -530,7 +520,7 @@ describe("ChatView の「...」（返事を待つ間）", () => {
     expect(typingEntry()).toBeTruthy()
 
     act(() => {
-      putState(store, {
+      putState({
         ...INITIAL_SESSION_STATE,
         records: [...RECORDS, speechRecord({ text: "3つめのセリフ", expression: "curious" })],
         character: FIXTURE_CHARACTER,

@@ -5,10 +5,6 @@ import { act, cleanup, renderHook, waitFor } from "@testing-library/react"
 import { type ReactElement, type ReactNode } from "react"
 
 import { useAchievement } from "../../../../../../src/browser/components/page/achievement/hooks/use-achievement.ts"
-import {
-  SessionStoreContext,
-  type SessionStore,
-} from "../../../../../../src/browser/stores/session.tsx"
 import { type DailyAchievement } from "../../../../../../src/shared/achievement.ts"
 import {
   type CharacterInfo,
@@ -25,7 +21,7 @@ import {
   type RpcFetchStub,
   type RpcStubReply,
 } from "../../../../rpc-fetch-stub.ts"
-import { type CommandSpy, sessionStoreWith } from "../../../../session-store.ts"
+import { type CommandSpy, putSession } from "../../../../session-store.ts"
 
 /**
  * 画面（`achievement.tsx`）を丸ごと描かずに、日の切り替えと取得の畳み方・振り返りの
@@ -48,14 +44,12 @@ function stubAchievementFetch(reply: () => RpcStubReply): void {
 
 function achievementWrapper(
   client: QueryClient,
-  store: SessionStore = sessionStoreWith(INITIAL_SESSION_STATE),
+  state: SessionState = INITIAL_SESSION_STATE,
+  spy: CommandSpy = () => {},
 ): (props: { children: ReactNode }) => ReactElement {
+  putSession(state, spy)
   return function Wrapper({ children }: { children: ReactNode }): ReactElement {
-    return (
-      <SessionStoreContext.Provider value={store}>
-        <QueryClientProvider client={client}>{children}</QueryClientProvider>
-      </SessionStoreContext.Provider>
-    )
+    return <QueryClientProvider client={client}>{children}</QueryClientProvider>
   }
 }
 
@@ -202,7 +196,7 @@ describe("useAchievement（振り返りのボタン）", () => {
     const spy: CommandSpy = (command) => sent.push(command)
     const sent: unknown[] = []
     const { result } = renderHook(() => useAchievement(), {
-      wrapper: achievementWrapper(newClient(), sessionStoreWith(stateWith({}), spy)),
+      wrapper: achievementWrapper(newClient(), stateWith({}), spy),
     })
     await waitFor(() => {
       expect(result.current.view.kind).toBe("ready")
@@ -224,7 +218,8 @@ describe("useAchievement（振り返りのボタン）", () => {
     const { result } = renderHook(() => useAchievement(), {
       wrapper: achievementWrapper(
         newClient(),
-        sessionStoreWith(stateWith({ turn: { kind: "running", startedAt: 0 } }), spy),
+        stateWith({ turn: { kind: "running", startedAt: 0 } }),
+        spy,
       ),
     })
     await waitFor(() => {
@@ -246,12 +241,10 @@ describe("useAchievement（振り返りのボタン）", () => {
     const { result } = renderHook(() => useAchievement(), {
       wrapper: achievementWrapper(
         newClient(),
-        sessionStoreWith(
-          stateWith({
-            diaryWriting: { kind: "writing", date: "2026-09-20", startedAt: 0, stage: "read" },
-          }),
-          spy,
-        ),
+        stateWith({
+          diaryWriting: { kind: "writing", date: "2026-09-20", startedAt: 0, stage: "read" },
+        }),
+        spy,
       ),
     })
     await waitFor(() => {
@@ -282,12 +275,10 @@ describe("useAchievement（振り返りのボタン）", () => {
     const { result } = renderHook(() => useAchievement(), {
       wrapper: achievementWrapper(
         newClient(),
-        sessionStoreWith(
-          stateWith({
-            diaryWriting: { kind: "writing", date: "2026-09-20", startedAt: 0, stage: "read" },
-          }),
-          spy,
-        ),
+        stateWith({
+          diaryWriting: { kind: "writing", date: "2026-09-20", startedAt: 0, stage: "read" },
+        }),
+        spy,
       ),
     })
     await waitFor(() => {
@@ -309,7 +300,7 @@ describe("useAchievement（振り返りのボタン）", () => {
   it("雑談中でも押せる", async () => {
     stubAchievementFetch(() => rpcOutput(KNOWN_TODAY))
     const { result } = renderHook(() => useAchievement(), {
-      wrapper: achievementWrapper(newClient(), sessionStoreWith(stateWith({ chatMode: true }))),
+      wrapper: achievementWrapper(newClient(), stateWith({ chatMode: true })),
     })
     await waitFor(() => {
       expect(result.current.view.kind).toBe("ready")
@@ -321,7 +312,7 @@ describe("useAchievement（振り返りのボタン）", () => {
   it("キャラクターの名前を持たないときは既定の名前でボタンの文言を組む", async () => {
     stubAchievementFetch(() => rpcOutput(KNOWN_TODAY))
     const { result } = renderHook(() => useAchievement(), {
-      wrapper: achievementWrapper(newClient(), sessionStoreWith(stateWith({}))),
+      wrapper: achievementWrapper(newClient(), stateWith({})),
     })
     await waitFor(() => {
       expect(result.current.view.kind).toBe("ready")
@@ -337,11 +328,9 @@ describe("useAchievement（書いている進み）", () => {
     const { result } = renderHook(() => useAchievement(), {
       wrapper: achievementWrapper(
         newClient(),
-        sessionStoreWith(
-          stateWith({
-            diaryWriting: { kind: "writing", date: "2026-09-24", startedAt: 0, stage: "write" },
-          }),
-        ),
+        stateWith({
+          diaryWriting: { kind: "writing", date: "2026-09-24", startedAt: 0, stage: "write" },
+        }),
       ),
     })
     await waitFor(() => {
@@ -356,11 +345,9 @@ describe("useAchievement（書いている進み）", () => {
     const { result } = renderHook(() => useAchievement(), {
       wrapper: achievementWrapper(
         newClient(),
-        sessionStoreWith(
-          stateWith({
-            diaryWriting: { kind: "writing", date: "2026-09-20", startedAt: 0, stage: "read" },
-          }),
-        ),
+        stateWith({
+          diaryWriting: { kind: "writing", date: "2026-09-20", startedAt: 0, stage: "read" },
+        }),
       ),
     })
     await waitFor(() => {
@@ -375,7 +362,7 @@ describe("useAchievement（書いている進み）", () => {
     const { result } = renderHook(() => useAchievement(), {
       wrapper: achievementWrapper(
         newClient(),
-        sessionStoreWith(stateWith({ diaryWriting: { kind: "failed", date: "2026-09-24" } })),
+        stateWith({ diaryWriting: { kind: "failed", date: "2026-09-24" } }),
       ),
     })
     await waitFor(() => {
@@ -390,10 +377,7 @@ describe("useAchievement（日記の立ち絵）", () => {
   it("日記が無い日は、いまのパックの名前を default の表情で出す", async () => {
     stubAchievementFetch(() => rpcOutput(KNOWN_TODAY))
     const { result } = renderHook(() => useAchievement(), {
-      wrapper: achievementWrapper(
-        newClient(),
-        sessionStoreWith(stateWith({ character: FIXTURE_CHARACTER })),
-      ),
+      wrapper: achievementWrapper(newClient(), stateWith({ character: FIXTURE_CHARACTER })),
     })
     await waitFor(() => {
       expect(result.current.view.kind).toBe("ready")
@@ -405,10 +389,7 @@ describe("useAchievement（日記の立ち絵）", () => {
   it("日記が書き上がっていれば、書いたパックの名前を出す（いまのパックと違ってもよい）", async () => {
     stubAchievementFetch(() => rpcOutput(WRITTEN_TODAY))
     const { result } = renderHook(() => useAchievement(), {
-      wrapper: achievementWrapper(
-        newClient(),
-        sessionStoreWith(stateWith({ character: FIXTURE_CHARACTER })),
-      ),
+      wrapper: achievementWrapper(newClient(), stateWith({ character: FIXTURE_CHARACTER })),
     })
     await waitFor(() => {
       expect(result.current.view.kind).toBe("ready")
@@ -421,10 +402,7 @@ describe("useAchievement（日記の立ち絵）", () => {
     stubAchievementFetch(() => rpcOutput(WRITTEN_TODAY))
     const packs: readonly CharacterPackEntry[] = []
     const { result } = renderHook(() => useAchievement(), {
-      wrapper: achievementWrapper(
-        newClient(),
-        sessionStoreWith(stateWith({ characterPacks: packs })),
-      ),
+      wrapper: achievementWrapper(newClient(), stateWith({ characterPacks: packs })),
     })
     await waitFor(() => {
       expect(result.current.view.kind).toBe("ready")

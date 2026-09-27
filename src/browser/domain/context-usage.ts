@@ -9,7 +9,7 @@
 // 取り直す（`useQuery` の `queryKey` に含めるだけで、`useEffect` は要らない）。「ターンが終わる
 // たびに取り直す」ための実際の値（`state.lastTurnFinishedAt` から作る）は
 // {@link contextUsageRefetchKey} が純関数として持ち、`state.lastTurnFinishedAt` を読む
-// `useSessionSelector` は `stores/` を読める機能の側（`token-usage.tsx` /
+// `useSession` は `stores/` を読める機能の側（`token-usage.tsx` /
 // `context-usage-row.tsx`）が呼ぶ。`state.turn` ではなく `state.lastTurnFinishedAt` を読む
 // ——`turn` は `running` に移ると終わった時刻を失う（`shared/session-state.ts` の
 // `TurnProgress`）ので、`turn` から作ると新しいターンが始まった瞬間に合図が `0` へ戻り、

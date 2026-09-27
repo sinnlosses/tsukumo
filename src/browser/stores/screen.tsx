@@ -8,7 +8,7 @@
 // サーバの経路は増えない（`?token` はそのまま）。
 //
 // hash の書き方はここに無い（`stores/location-hash.ts`）。同じ hash の `turn` は見ている
-// ターン（`stores/turn-selection.tsx`）のもので、画面を移しても消さずに運ぶ。
+// ターン（`stores/turn-selection.ts`）のもので、画面を移しても消さずに運ぶ。
 //
 // 画面を選ぶのは `components/app/layout.tsx` の `<Layout>` で、機能の側は `useScreen` を読まない
 // （出る口・入る口はただのリンクで書ける。`navigateTo` が要るのは、コマンドを送った直後に

@@ -7,12 +7,11 @@ import { afterEach, describe, expect, it } from "bun:test"
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 
 import { PersonaMemorySection } from "../../../../../src/browser/components/domain/sidebar/persona-memory-section.tsx"
-import { SessionStoreContext } from "../../../../../src/browser/stores/session.tsx"
 import {
   INITIAL_SESSION_STATE,
   type SessionState,
 } from "../../../../../src/shared/session-state.ts"
-import { type CommandSpy, sessionStoreWith } from "../../../session-store.ts"
+import { type CommandSpy, putSession } from "../../../session-store.ts"
 
 afterEach(() => {
   cleanup()
@@ -25,12 +24,8 @@ function renderSection(
   stateOverrides: Partial<SessionState>,
   dispatch: CommandSpy = () => {},
 ): void {
-  const store = sessionStoreWith({ ...INITIAL_SESSION_STATE, ...stateOverrides }, dispatch)
-  render(
-    <SessionStoreContext.Provider value={store}>
-      <PersonaMemorySection />
-    </SessionStoreContext.Provider>,
-  )
+  putSession({ ...INITIAL_SESSION_STATE, ...stateOverrides }, dispatch)
+  render(<PersonaMemorySection />)
 }
 
 /** 確認ダイアログが開いているか（happy-dom も showModal() で `open` 属性を付ける）。 */

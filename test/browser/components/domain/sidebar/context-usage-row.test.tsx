@@ -5,7 +5,6 @@ import { cleanup, render, screen } from "@testing-library/react"
 
 import { ContextUsageRow } from "../../../../../src/browser/components/domain/sidebar/context-usage-row.tsx"
 import { rpc } from "../../../../../src/browser/lib/rpc-client.ts"
-import { SessionStoreContext } from "../../../../../src/browser/stores/session.tsx"
 import {
   type ContextUsageReport,
   UNAVAILABLE_CONTEXT_USAGE,
@@ -13,7 +12,7 @@ import {
 import { INITIAL_SESSION_STATE } from "../../../../../src/shared/session-state.ts"
 import { readyContextUsage } from "../../../../fixture/context-usage.ts"
 import { stubRpcFetch } from "../../../rpc-fetch-stub.ts"
-import { sessionStoreWith } from "../../../session-store.ts"
+import { putSession } from "../../../session-store.ts"
 
 /**
  * サイドバー「セッション情報」の使用量の行。出す数は札
@@ -36,18 +35,16 @@ afterEach(() => {
 const REFETCH_KEY = 0
 
 function renderRow(report: ContextUsageReport | undefined): void {
-  const store = sessionStoreWith(INITIAL_SESSION_STATE)
+  putSession(INITIAL_SESSION_STATE)
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   if (report !== undefined) {
     // 鍵は手続きの鍵に取り直しの合図を足したもの（`browser/domain/context-usage.ts`）。
     client.setQueryData([...rpc.contextUsage.report.queryKey(), REFETCH_KEY], report)
   }
   render(
-    <SessionStoreContext.Provider value={store}>
-      <QueryClientProvider client={client}>
-        <ContextUsageRow />
-      </QueryClientProvider>
-    </SessionStoreContext.Provider>,
+    <QueryClientProvider client={client}>
+      <ContextUsageRow />
+    </QueryClientProvider>,
   )
 }
 

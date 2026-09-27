@@ -2,7 +2,7 @@
 // ロジック。`SessionState.diaryWriting` を読み、`written` になったら画面の下中央に浮く札を出す。
 //
 // 出すのは成果の画面だけで、それを決めるのは `components/app/layout.tsx` の `<Layout>`（ほかの画面では
-// `<Activity>` で隠す）。`diaryWriting` はセッションの状態（`useSessionSelector`）なので、
+// `<Activity>` で隠す）。`diaryWriting` はセッションの状態（`useSession`）なので、
 // 隠れているあいだも読み続け、「×」で消したかどうかも失わない。
 //
 // 消えるのは「×」・「日記帳で開く」・次の振り返りを押したとき・起こし直したとき（同節）。
@@ -16,7 +16,7 @@
 import { useState } from "react"
 
 import { selectAchievementDate } from "../../../../../../stores/screen.tsx"
-import { useSessionSelector } from "../../../../../../stores/session.tsx"
+import { useSession } from "../../../../../../stores/session.ts"
 import { monthDayLabel } from "../../../../../../utils/month-day-label.ts"
 import { requestDiaryBookOpen } from "../../../hooks/use-diary-book-open-request.ts"
 
@@ -33,7 +33,7 @@ export type DiaryNoticeView =
     }
 
 export function useDiaryNotice(): DiaryNoticeView {
-  const diaryWriting = useSessionSelector((session) => session.state.diaryWriting)
+  const diaryWriting = useSession((session) => session.state.diaryWriting)
   const [dismissedKey, setDismissedKey] = useState<string | undefined>(undefined)
 
   if (diaryWriting.kind !== "written") {

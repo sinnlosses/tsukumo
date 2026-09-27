@@ -23,8 +23,8 @@ import {
 } from "../../../../../../../../../shared/rate-limit.ts"
 import { type TurnProgress } from "../../../../../../../../../shared/session-state.ts"
 import { formatElapsed } from "../../../../../../../../domain/elapsed-time.ts"
-import { useQuestionAnswer } from "../../../../../../../../stores/question-answer.tsx"
-import { useSessionDispatch, useSessionSelector } from "../../../../../../../../stores/session.tsx"
+import { useQuestionAnswer } from "../../../../../../../../stores/question-answer.ts"
+import { useSession } from "../../../../../../../../stores/session.ts"
 import {
   clockTime,
   localTimeZoneId,
@@ -87,15 +87,15 @@ const RATE_LIMIT_BUCKET_LABEL = {
 } satisfies Record<RateLimitBucket, string>
 
 export function useTurnStatus(): TurnStatusModel {
-  const dispatch = useSessionDispatch()
+  const dispatch = useSession((session) => session.dispatch)
   // 質問に答えている間は、ターンが進行中でも「中断」ではなく答えるボタンを出す
   // （SDK は答えを待って止まっているので、押す先は中断ではなく送信）。
   const question = useQuestionAnswer()
   // 姿の `turn` は進み具合が変わったときだけ入れ替わるので、そのまま依存にしてよい
-  // （畳み込みは変わらないフィールドの参照を持ち回る。`stores/session.tsx`）。
-  const turn = useSessionSelector((session) => session.state.turn)
-  const apiTrouble = useSessionSelector((session) => session.state.apiTrouble)
-  const rateLimit = useSessionSelector((session) => session.state.rateLimit)
+  // （畳み込みは変わらないフィールドの参照を持ち回る。`stores/session.ts`）。
+  const turn = useSession((session) => session.state.turn)
+  const apiTrouble = useSession((session) => session.state.apiTrouble)
+  const rateLimit = useSession((session) => session.state.rateLimit)
   const [now, setNow] = useState(() => nowEpochMilliseconds())
 
   // 進行中の間だけ1秒ごとに刻む。終わったら止める（終わった時刻で経過時間が固定されるので、

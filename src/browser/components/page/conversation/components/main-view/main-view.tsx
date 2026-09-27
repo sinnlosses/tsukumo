@@ -4,9 +4,9 @@
 //
 // 1ターン＝1枚の札。直近 `MAX_MAIN_VIEW_TURNS` 件を札の頭の `‹` `›` で行き来する
 // （`turn-header.tsx`）。新しいターンで最新へ移すが、利用者が過去のターンを見ている間は
-// 動かさない（規則は `src/browser/stores/turn-selection.tsx` にある。docs/design.md 6.2）。
+// 動かさない（規則は `useTurnSelection` にある。docs/design.md 6.2）。
 //
-// 選んでいるターン（`turnId`）は `<TurnSelectionProvider>` の Context
+// 選んでいるターン（`turnId`）は `useTurnSelection` から読む
 // （キャラビューの吹き出しも同じ選択に従うため、領域のローカル状態にしない）。見ているターンが
 // 替わったときにレポートの先頭へスクロールを戻す配線は `hooks/use-active-turn-scroll.ts`
 // へ出した（外の世界に触るフックだけが余分。docs/design.md 2章「機能の中を分ける」）。
@@ -19,7 +19,7 @@ import { type ReactElement } from "react"
 
 import { Text } from "../../../../../components/ui/text/text.tsx"
 import { useMainViewTurns } from "../../../../../stores/main-view-turn.ts"
-import { useTurnSelection } from "../../../../../stores/turn-selection.tsx"
+import { useTurnSelection } from "../../../../../stores/turn-selection.ts"
 import { MiniPortrait } from "./components/mini-portrait/mini-portrait.tsx"
 import { QuestionAsk } from "./components/question-ask/question-ask.tsx"
 import { TurnHeader } from "./components/turn-header/turn-header.tsx"
@@ -34,7 +34,7 @@ const EMPTY_MESSAGE = "（まだ作業がありません）"
 export function MainView(): ReactElement {
   const { activeTurnId, newestTurnId, selectTurn } = useTurnSelection()
   // 畳んだ結果は `stores/main-view-turn.ts` が姿ごとに1回だけ作る（昇順。追従を決める
-  // `stores/turn-selection.tsx` と同じものを読む）。
+  // `stores/turn-selection.ts` と同じものを読む）。
   const turns = useMainViewTurns()
   const scrollerRef = useActiveTurnScroll(activeTurnId)
 

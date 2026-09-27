@@ -4,31 +4,28 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { cleanup, render, screen } from "@testing-library/react"
 
 import { Dispatch } from "../../../../../../../src/browser/components/page/conversation/components/dispatch/dispatch.tsx"
-import { QuestionAnswerProvider } from "../../../../../../../src/browser/stores/question-answer.tsx"
-import { SessionStoreContext } from "../../../../../../../src/browser/stores/session.tsx"
+import { useQuestionDraft } from "../../../../../../../src/browser/stores/question-answer.ts"
 import {
   INITIAL_SESSION_STATE,
   type SessionState,
 } from "../../../../../../../src/shared/session-state.ts"
-import { sessionStoreWith } from "../../../../../session-store.ts"
+import { putSession } from "../../../../../session-store.ts"
 
 afterEach(() => {
   cleanup()
+  // 組み立て中の答えはモジュール単位で残るので、次のテストへ持ち越さない。
+  useQuestionDraft.setState(useQuestionDraft.getInitialState(), true)
   document.title = "tsukumo"
 })
 
 function renderDispatch(stateOverrides: Partial<SessionState>): void {
-  const store = sessionStoreWith({ ...INITIAL_SESSION_STATE, ...stateOverrides })
+  putSession({ ...INITIAL_SESSION_STATE, ...stateOverrides })
   // 中の `<Composer>` が `@` 補完の一覧を `useQuery` で取るので Provider が要る
   // （この検査では取りに行かないが、hook そのものは呼ばれる）。
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   render(
     <QueryClientProvider client={client}>
-      <SessionStoreContext.Provider value={store}>
-        <QuestionAnswerProvider>
-          <Dispatch />
-        </QuestionAnswerProvider>
-      </SessionStoreContext.Provider>
+      <Dispatch />
     </QueryClientProvider>,
   )
 }

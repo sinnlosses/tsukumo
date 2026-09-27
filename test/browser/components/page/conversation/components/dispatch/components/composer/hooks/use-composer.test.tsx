@@ -8,8 +8,7 @@ import {
   useComposer,
   type ComposerKey,
 } from "../../../../../../../../../../src/browser/components/page/conversation/components/dispatch/components/composer/hooks/use-composer.ts"
-import { QuestionAnswerProvider } from "../../../../../../../../../../src/browser/stores/question-answer.tsx"
-import { SessionStoreContext } from "../../../../../../../../../../src/browser/stores/session.tsx"
+import { useQuestionDraft } from "../../../../../../../../../../src/browser/stores/question-answer.ts"
 import {
   INITIAL_SESSION_STATE,
   type SessionState,
@@ -20,7 +19,7 @@ import {
   stubRpcFetch,
   type RpcFetchStub,
 } from "../../../../../../../../rpc-fetch-stub.ts"
-import { type CommandSpy, sessionStoreWith } from "../../../../../../../../session-store.ts"
+import { type CommandSpy, putSession } from "../../../../../../../../session-store.ts"
 
 /**
  * `<Composer>` を描かずに、下書き・候補の出し分けと選択位置・キーの読み替え・送り先だけを測る
@@ -33,6 +32,8 @@ let fetchStub: RpcFetchStub | undefined = undefined
 
 afterEach(() => {
   cleanup()
+  // 組み立て中の答えはモジュール単位で残るので、次のテストへ持ち越さない。
+  useQuestionDraft.setState(useQuestionDraft.getInitialState(), true)
   fetchStub?.restore()
   fetchStub = undefined
 })
@@ -55,16 +56,10 @@ function renderUseComposer(
   stateOverrides: Partial<SessionState> = {},
   spy: CommandSpy = () => {},
 ): { readonly result: { readonly current: ReturnType<typeof useComposer> } } {
-  const store = sessionStoreWith({ ...INITIAL_SESSION_STATE, ...stateOverrides }, spy)
+  putSession({ ...INITIAL_SESSION_STATE, ...stateOverrides }, spy)
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   function Wrapper({ children }: { readonly children: ReactNode }): ReactElement {
-    return (
-      <QueryClientProvider client={client}>
-        <SessionStoreContext.Provider value={store}>
-          <QuestionAnswerProvider>{children}</QuestionAnswerProvider>
-        </SessionStoreContext.Provider>
-      </QueryClientProvider>
-    )
+    return <QueryClientProvider client={client}>{children}</QueryClientProvider>
   }
   const { result } = renderHook(() => useComposer(), { wrapper: Wrapper })
   return { result }

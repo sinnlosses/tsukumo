@@ -3,7 +3,6 @@ import { afterEach, describe, expect, it } from "bun:test"
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 
 import { SessionSwitch } from "../../../../../src/browser/components/domain/sidebar/session-switch.tsx"
-import { SessionStoreContext } from "../../../../../src/browser/stores/session.tsx"
 import { FRAME_ERROR_REASON } from "../../../../../src/shared/frame.ts"
 import { type SessionChoice } from "../../../../../src/shared/session-choice.ts"
 import {
@@ -12,7 +11,7 @@ import {
   type SessionState,
 } from "../../../../../src/shared/session-state.ts"
 import { typedElement } from "../../../../typed-element.ts"
-import { type CommandSpy, sessionStoreWith } from "../../../session-store.ts"
+import { type CommandSpy, putSession } from "../../../session-store.ts"
 
 afterEach(() => {
   cleanup()
@@ -50,12 +49,8 @@ function renderSessionSwitch(
   stateOverrides: Partial<SessionState>,
   dispatch: CommandSpy = () => {},
 ): void {
-  const store = sessionStoreWith({ ...INITIAL_SESSION_STATE, ...stateOverrides }, dispatch)
-  render(
-    <SessionStoreContext.Provider value={store}>
-      <SessionSwitch />
-    </SessionStoreContext.Provider>,
-  )
+  putSession({ ...INITIAL_SESSION_STATE, ...stateOverrides }, dispatch)
+  render(<SessionSwitch />)
 }
 
 /**

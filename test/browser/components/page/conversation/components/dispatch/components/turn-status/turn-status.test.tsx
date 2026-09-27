@@ -3,31 +3,26 @@ import { afterEach, describe, expect, it, spyOn } from "bun:test"
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 
 import { TurnStatus } from "../../../../../../../../../src/browser/components/page/conversation/components/dispatch/components/turn-status/turn-status.tsx"
-import { QuestionAnswerProvider } from "../../../../../../../../../src/browser/stores/question-answer.tsx"
-import { SessionStoreContext } from "../../../../../../../../../src/browser/stores/session.tsx"
+import { useQuestionDraft } from "../../../../../../../../../src/browser/stores/question-answer.ts"
 import {
   INITIAL_SESSION_STATE,
   type SessionState,
 } from "../../../../../../../../../src/shared/session-state.ts"
 import { typedElement } from "../../../../../../../../typed-element.ts"
-import { type CommandSpy, sessionStoreWith } from "../../../../../../../session-store.ts"
+import { type CommandSpy, putSession } from "../../../../../../../session-store.ts"
 
 afterEach(() => {
   cleanup()
+  // 組み立て中の答えはモジュール単位で残るので、次のテストへ持ち越さない。
+  useQuestionDraft.setState(useQuestionDraft.getInitialState(), true)
 })
 
 function renderTurnStatus(
   stateOverrides: Partial<SessionState>,
   dispatch: CommandSpy = () => {},
 ): void {
-  const store = sessionStoreWith({ ...INITIAL_SESSION_STATE, ...stateOverrides }, dispatch)
-  render(
-    <SessionStoreContext.Provider value={store}>
-      <QuestionAnswerProvider>
-        <TurnStatus />
-      </QuestionAnswerProvider>
-    </SessionStoreContext.Provider>,
-  )
+  putSession({ ...INITIAL_SESSION_STATE, ...stateOverrides }, dispatch)
+  render(<TurnStatus />)
 }
 
 describe("TurnStatus", () => {

@@ -7,7 +7,6 @@ import {
   type CharacterEditModel,
   useCharacterEdit,
 } from "../../../../../../../src/browser/components/page/character/components/hooks/use-character-edit.ts"
-import { SessionStoreContext } from "../../../../../../../src/browser/stores/session.tsx"
 import { type CharacterPackEntry } from "../../../../../../../src/shared/character.ts"
 import {
   INITIAL_SESSION_STATE,
@@ -19,7 +18,7 @@ import {
   shownOutfitAccents,
   shownPortraits,
 } from "../../../../../../fixture/character.ts"
-import { type CommandSpy, sessionStoreWith } from "../../../../../session-store.ts"
+import { type CommandSpy, putSession } from "../../../../../session-store.ts"
 
 /**
  * 立ち絵の並び（`<CharacterEdit>`）を描かずに、カード・差し色・背景への畳み方と送り先だけを
@@ -59,9 +58,9 @@ function wrapperFor(
   character: SessionState["character"],
   spy: CommandSpy,
 ): (props: { readonly children: ReactNode }) => ReactElement {
-  const store = sessionStoreWith({ ...INITIAL_SESSION_STATE, character }, spy)
+  putSession({ ...INITIAL_SESSION_STATE, character }, spy)
   return function Wrapper({ children }: { readonly children: ReactNode }): ReactElement {
-    return <SessionStoreContext.Provider value={store}>{children}</SessionStoreContext.Provider>
+    return <>{children}</>
   }
 }
 
@@ -74,12 +73,9 @@ function wrapperWithPacks(
   packs: readonly CharacterPackEntry[],
   spy: CommandSpy,
 ): (props: { readonly children: ReactNode }) => ReactElement {
-  const store = sessionStoreWith(
-    { ...INITIAL_SESSION_STATE, character, characterPacks: packs },
-    spy,
-  )
+  putSession({ ...INITIAL_SESSION_STATE, character, characterPacks: packs }, spy)
   return function Wrapper({ children }: { readonly children: ReactNode }): ReactElement {
-    return <SessionStoreContext.Provider value={store}>{children}</SessionStoreContext.Provider>
+    return <>{children}</>
   }
 }
 

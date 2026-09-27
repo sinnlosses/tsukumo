@@ -400,7 +400,7 @@ describe("Markdown（remark-cjk-friendly。CJK の強調が記法のまま出る
 })
 
 describe("Markdown（レポートのパスを押して Orca のエディタで開く）", () => {
-  /** `<RepositoryFileLinkProvider>` の実データ（`useQuery` / `useSessionDispatch`）は使わず、
+  /** `<RepositoryFileLinkProvider>` の実データ（`useQuery` / `useSession`）は使わず、
    * Context だけを直接差し込む（部品のテストを軽くするため。`main-view.tsx` が実データを配る）。 */
   function withFiles(
     paths: readonly string[],

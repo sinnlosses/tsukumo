@@ -6,10 +6,9 @@ import { type ReactElement, type ReactNode } from "react"
 
 import { useTokenUsage } from "../../../../../../src/browser/components/page/token-usage/hooks/use-token-usage.ts"
 import {
-  SessionStoreContext,
-  type SessionStore,
-} from "../../../../../../src/browser/stores/session.tsx"
-import { INITIAL_SESSION_STATE } from "../../../../../../src/shared/session-state.ts"
+  INITIAL_SESSION_STATE,
+  type SessionState,
+} from "../../../../../../src/shared/session-state.ts"
 import { DEFAULT_TOKEN_USAGE_DAYS } from "../../../../../../src/shared/token-usage-summary.ts"
 import {
   rpcError,
@@ -18,7 +17,7 @@ import {
   type RpcFetchStub,
   type RpcStubReply,
 } from "../../../../rpc-fetch-stub.ts"
-import { sessionStoreWith } from "../../../../session-store.ts"
+import { putSession } from "../../../../session-store.ts"
 
 /**
  * 画面（`token-usage.tsx`）を丸ごと描かずに、期間の選択と取得の畳み方だけを測る
@@ -49,18 +48,15 @@ function askedDays(days: number): boolean {
 
 /** `useQuery` が要る `QueryClientProvider`。client は呼び出し側で1回だけ作る（再レンダーの
  * たびに作り直すとキャッシュが毎回リセットされ、選び直した日数の取り直しが測れない）。
- * `useTokenUsage` は `useSessionSelector`（`plan`）も読むので、`SessionStoreContext` も一緒に
- * 包む（既定は `INITIAL_SESSION_STATE` そのまま。`plan` を変えたいテストは `store` を渡す）。 */
+ * `useTokenUsage` は `plan` も姿から読むので、姿も一緒に入れる
+ * （既定は `INITIAL_SESSION_STATE` そのまま。`plan` を変えたいテストは `state` を渡す）。 */
 function tokenUsageWrapper(
   client: QueryClient,
-  store: SessionStore = sessionStoreWith(INITIAL_SESSION_STATE),
+  state: SessionState = INITIAL_SESSION_STATE,
 ): (props: { children: ReactNode }) => ReactElement {
+  putSession(state)
   return function Wrapper({ children }: { children: ReactNode }): ReactElement {
-    return (
-      <SessionStoreContext.Provider value={store}>
-        <QueryClientProvider client={client}>{children}</QueryClientProvider>
-      </SessionStoreContext.Provider>
-    )
+    return <QueryClientProvider client={client}>{children}</QueryClientProvider>
   }
 }
 
@@ -148,10 +144,8 @@ describe("useTokenUsage", () => {
 
   it("plan は state.plan をそのまま返す", async () => {
     stubTokenUsageFetch(() => rpcOutput(FIXTURE_SUMMARY))
-    const store = sessionStoreWith({ ...INITIAL_SESSION_STATE, plan: "max" })
-
     const { result } = renderHook(() => useTokenUsage(), {
-      wrapper: tokenUsageWrapper(newClient(), store),
+      wrapper: tokenUsageWrapper(newClient(), { ...INITIAL_SESSION_STATE, plan: "max" }),
     })
 
     expect(result.current.plan).toBe("max")

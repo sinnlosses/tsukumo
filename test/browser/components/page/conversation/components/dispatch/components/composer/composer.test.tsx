@@ -4,8 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
 
 import { Composer } from "../../../../../../../../../src/browser/components/page/conversation/components/dispatch/components/composer/composer.tsx"
-import { QuestionAnswerProvider } from "../../../../../../../../../src/browser/stores/question-answer.tsx"
-import { SessionStoreContext } from "../../../../../../../../../src/browser/stores/session.tsx"
+import { useQuestionDraft } from "../../../../../../../../../src/browser/stores/question-answer.ts"
 import { type CharacterInfo } from "../../../../../../../../../src/shared/character.ts"
 import { type PendingAsk } from "../../../../../../../../../src/shared/pending-ask.ts"
 import {
@@ -15,7 +14,7 @@ import {
 import { characterInfo } from "../../../../../../../../fixture/character.ts"
 import { typedElement } from "../../../../../../../../typed-element.ts"
 import { rpcOutput, stubRpcFetch, type RpcFetchStub } from "../../../../../../../rpc-fetch-stub.ts"
-import { type CommandSpy, sessionStoreWith } from "../../../../../../../session-store.ts"
+import { type CommandSpy, putSession } from "../../../../../../../session-store.ts"
 
 // フィクスチャはすべて手で書いた架空のもの（docs/coding-standards.md「会話内容の扱い」）。
 const FIXTURE_CHARACTER: CharacterInfo = characterInfo({
@@ -50,6 +49,8 @@ let fetchStub: RpcFetchStub | undefined = undefined
 
 afterEach(() => {
   cleanup()
+  // 組み立て中の答えはモジュール単位で残るので、次のテストへ持ち越さない。
+  useQuestionDraft.setState(useQuestionDraft.getInitialState(), true)
   fetchStub?.restore()
   fetchStub = undefined
 })
@@ -70,15 +71,11 @@ function renderComposer(
   stateOverrides: Partial<SessionState> = {},
   dispatch: CommandSpy = () => {},
 ): void {
-  const store = sessionStoreWith({ ...INITIAL_SESSION_STATE, ...stateOverrides }, dispatch)
+  putSession({ ...INITIAL_SESSION_STATE, ...stateOverrides }, dispatch)
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   render(
     <QueryClientProvider client={client}>
-      <SessionStoreContext.Provider value={store}>
-        <QuestionAnswerProvider>
-          <Composer />
-        </QuestionAnswerProvider>
-      </SessionStoreContext.Provider>
+      <Composer />
     </QueryClientProvider>,
   )
 }

@@ -43,7 +43,7 @@ export type QuestionAnswer = readonly string[]
 
 /**
  * `AskUserQuestion` の自由入力の選択肢のラベル。このラベルの選択肢は札に出さず、自由入力は
- * 入力欄が担う（`src/browser/stores/question-answer.tsx`）。{@link sortQuestionOptions} が
+ * 入力欄が担う（`src/browser/stores/question-answer.ts`）。{@link sortQuestionOptions} が
  * 並べ替えで末尾に固定する対象でもあるので、両側から同じ定数を読めるようここに置く。
  */
 export const FREE_TEXT_OPTION_LABEL = "その他"

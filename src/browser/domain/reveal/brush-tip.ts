@@ -15,9 +15,9 @@
 // 浮く（画面で出た）。捨てずに持たせておくのは、過去のターンを見て戻ったときに
 // 元の場所へそのまま戻れるようにするため。
 //
-// React の外に1つだけ持つ（演出は同時に1つしか走らない。`use-report-reveal.ts`）。
+// 1つだけ持つ（演出は同時に1つしか走らない。`use-report-reveal.ts`）。
 
-import { useSyncExternalStore } from "react"
+import { create } from "zustand"
 
 /**
  * 筆先の座標の原点になる入れ物の印（`components/page/conversation/components/main-view/main-view.tsx` が
@@ -74,10 +74,7 @@ export type BrushTip = BrushPlace & {
 
 /** 筆先を配る。 */
 export function publishBrushTip(next: BrushTip | undefined): void {
-  tip = next
-  for (const listener of listeners) {
-    listener()
-  }
+  useBrushTipStore.setState({ tip: next })
 }
 
 /**
@@ -87,6 +84,7 @@ export function publishBrushTip(next: BrushTip | undefined): void {
  * 消さないようにする。
  */
 export function restBrushTip(): void {
+  const tip = useBrushTipStore.getState().tip
   if (tip === undefined || tip.phase === "resting") {
     return
   }
@@ -101,20 +99,11 @@ export function restBrushTip(): void {
 
 /** いまの筆先（まだ一度も書かれていなければ undefined）。 */
 export function useBrushTip(): BrushTip | undefined {
-  return useSyncExternalStore(subscribeBrushTip, brushTipSnapshot, brushTipSnapshot)
+  return useBrushTipStore((state) => state.tip)
 }
 
-let tip: BrushTip | undefined = undefined
-const listeners = new Set<() => void>()
-
-function subscribeBrushTip(onChange: () => void): () => void {
-  listeners.add(onChange)
-  return () => {
-    listeners.delete(onChange)
-  }
+type BrushTipState = {
+  readonly tip: BrushTip | undefined
 }
 
-/** 同じ筆先なら同じオブジェクトを返す（`useSyncExternalStore` の約束）。 */
-function brushTipSnapshot(): BrushTip | undefined {
-  return tip
-}
+const useBrushTipStore = create<BrushTipState>()(() => ({ tip: undefined }))

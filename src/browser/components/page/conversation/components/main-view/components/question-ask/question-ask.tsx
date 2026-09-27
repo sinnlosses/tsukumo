@@ -7,7 +7,7 @@
 // 「比べる面」に出していた（`pending-question.tsx`）。札をメインビューへ移したので面は
 // 要らなくなり、`preview` は選択肢の説明の下にそのまま入る。
 //
-// 選択の状態と進み方は `stores/question-answer.tsx` が持つ（自由入力を担う入力欄
+// 選択の状態と進み方は `stores/question-answer.ts` が持つ（自由入力を担う入力欄
 // （`components/page/conversation/components/dispatch/`）と同じ1つの答えを組み立てるため。`browser/` の機能どうしは
 // import できない。docs/design.md 2章 / 6.2）。ここは受け取った行を置くだけで、判定を持たない。
 //
@@ -26,9 +26,9 @@ import { Text } from "../../../../../../../components/ui/text/text.tsx"
 import {
   useQuestionAnswer,
   type QuestionOptionRow,
-} from "../../../../../../../stores/question-answer.tsx"
+} from "../../../../../../../stores/question-answer.ts"
 import { useQuestionScroll } from "../../../../../../../stores/question-scroll.ts"
-import { useTurnSelection } from "../../../../../../../stores/turn-selection.tsx"
+import { useTurnSelection } from "../../../../../../../stores/turn-selection.ts"
 import { Markdown } from "../../markdown/markdown.tsx"
 import notationStyles from "../../markdown/report-notation.module.css"
 import { useQuestionAskScroll } from "./hooks/use-question-ask-scroll.ts"

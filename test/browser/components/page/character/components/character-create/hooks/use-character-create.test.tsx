@@ -1,20 +1,15 @@
 import { afterEach, describe, expect, it } from "bun:test"
 
 import { act, cleanup, renderHook } from "@testing-library/react"
-import { type ReactElement, type ReactNode } from "react"
 
 import { useCharacterCreate } from "../../../../../../../../src/browser/components/page/character/components/character-create/hooks/use-character-create.ts"
-import {
-  type SessionStore,
-  SessionStoreContext,
-} from "../../../../../../../../src/browser/stores/session.tsx"
 import { type CharacterPackEntry } from "../../../../../../../../src/shared/character.ts"
 import {
   INITIAL_SESSION_STATE,
   type SessionState,
 } from "../../../../../../../../src/shared/session-state.ts"
 import { characterPackEntry } from "../../../../../../../fixture/character.ts"
-import { type CommandSpy, putState, sessionStoreWith } from "../../../../../../session-store.ts"
+import { type CommandSpy, putState, putSession } from "../../../../../../session-store.ts"
 
 /**
  * ダイアログを描かずに、押せるか・id の欄の下の一言・作る／自動で閉じて選ぶ、の送り先だけを
@@ -35,20 +30,13 @@ afterEach(() => {
   window.location.hash = ""
 })
 
-function wrapperOf(store: SessionStore): (props: { readonly children: ReactNode }) => ReactElement {
-  return function Wrapper({ children }: { readonly children: ReactNode }): ReactElement {
-    return <SessionStoreContext.Provider value={store}>{children}</SessionStoreContext.Provider>
-  }
-}
-
 function renderUseCharacterCreate(
   state: SessionState,
   onClose: () => void = () => {},
   spy: CommandSpy = () => {},
 ) {
-  const store = sessionStoreWith(state, spy)
-  const hook = renderHook(() => useCharacterCreate(true, onClose), { wrapper: wrapperOf(store) })
-  return { store, hook }
+  putSession(state, spy)
+  return renderHook(() => useCharacterCreate(true, onClose))
 }
 
 /** 必須の立ち絵を選ぶ（`FileReader` は非同期なので、読み終わって state が変わるまで待つ）。 */
@@ -66,7 +54,7 @@ async function pickPortrait(onPick: (input: HTMLInputElement) => void): Promise<
 
 describe("useCharacterCreate", () => {
   it("id が空・形が合う・崩れているで id の欄の下の一言が決まる", () => {
-    const { hook } = renderUseCharacterCreate(BASE_STATE)
+    const hook = renderUseCharacterCreate(BASE_STATE)
 
     expect(hook.result.current.form.idNote.kind).toBe("hint")
 
@@ -96,7 +84,7 @@ describe("useCharacterCreate", () => {
   })
 
   it("必須の立ち絵を選ぶと押せるようになる", async () => {
-    const { hook } = renderUseCharacterCreate(BASE_STATE)
+    const hook = renderUseCharacterCreate(BASE_STATE)
 
     act(() => {
       hook.result.current.form.onIdChange("fictional-2")
@@ -112,7 +100,7 @@ describe("useCharacterCreate", () => {
   it("作ると characterPack.create を送り、一覧に出たら閉じて一覧でそのパックを選ぶ", async () => {
     const calls: unknown[] = []
     const closed: string[] = []
-    const { hook, store } = renderUseCharacterCreate(
+    const hook = renderUseCharacterCreate(
       BASE_STATE,
       () => closed.push("closed"),
       (command) => calls.push(command),
@@ -144,7 +132,7 @@ describe("useCharacterCreate", () => {
     expect(closed).toEqual([])
 
     act(() => {
-      putState(store, {
+      putState({
         ...BASE_STATE,
         characterPacks: [...FIXTURE_PACKS, characterPackEntry("fictional-2", "fictional-2")],
       })

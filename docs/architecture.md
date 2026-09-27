@@ -120,7 +120,8 @@ Claude Code を動かす）の核（セッション駆動・イベントの変�
 | `src/server/host/adapter/orca-host.ts`                                       | adapter    | `src/server/host/core/host.ts` を Orca の CLI で実装する。**`orca` を呼ぶのはここだけ**                                                                             |
 | `src/browser/main.tsx`                                                       | browser    | ブラウザ側の入口。`<App>` を mount する（副作用はここだけ）                                                                                                         |
 | `src/browser/app.tsx`                                                        | browser    | `<App>`。Provider を重ねて `<Root>` を描く                                                                                                                          |
-| `src/browser/components/app/root.tsx`                                        | browser    | `<Root>`。版が合わないときの知らせと立ち絵の先読みをして `<Layout>` を描く                                                                                          |
+| `src/browser/components/app/root.tsx`                                        | browser    | `<Root>`。サーバと繋ぎ（`useSessionConnection`）、パックの見た目を差し、版が合わないときの知らせと立ち絵の先読みをして `<Layout>` を描く                            |
+| `src/browser/components/app/pack-appearance.ts`                              | browser    | パックが差す `accent`・背景・日記の書体を `document.documentElement` の CSS 変数へ流す                                                                              |
 | `src/browser/components/app/layout.tsx`                                      | browser    | `<Layout>`。帯を最上部に置き、出す画面を選ぶ                                                                                                                        |
 | `src/cli.ts`                                                                 | （配線）   | 入口。引数の受け取り・環境変数の読み出し・終了コードの返し方だけ                                                                                                    |
 | `src/main.ts`                                                                | （配線）   | 起動の段取り。**即時終了する前提不足（ポート・組み立て・疑似セッション）はここに集めてある**                                                                        |
@@ -146,7 +147,7 @@ Claude Code を動かす）の核（セッション駆動・イベントの変�
   信用しない）。おかげで変換のテストは SDK を起動しない
 - **`session-state.ts` は純粋な畳み込み。** 姿から導くだけのもの（メインビューに出す形・`/`
   補完の候補）は `main-view.ts` / `command-suggestion.ts` に分けてある。状態を持つのはサーバ側の `session-manager` と
-  ブラウザ側だけで、「イベント1件でどう変わるか」はすべてここのテストで守れる
+  ブラウザ側（`browser/stores/session.ts` の zustand の store）だけで、「イベント1件でどう変わるか」はすべてここのテストで守れる
 - **`speak` のセリフは MCP の handler ではなく `assistant` メッセージの変換から取り出す。**
   handler は `"ok"` を返すだけにして、イベントの流れを1本に保つ
 

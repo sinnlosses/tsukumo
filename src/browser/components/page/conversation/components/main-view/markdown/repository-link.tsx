@@ -14,7 +14,7 @@
 
 import { createContext, useContext, useMemo, type ReactElement, type ReactNode } from "react"
 
-import { useSessionDispatch } from "../../../../../../stores/session.tsx"
+import { useSession } from "../../../../../../stores/session.ts"
 import { useRepositoryFilePaths } from "../../hooks/use-repository-file-paths.ts"
 
 /** 末尾の `:行` または `:行:桁`（数字だけ）。 */
@@ -73,7 +73,7 @@ export type RepositoryFileLinkProviderProps = {
 export function RepositoryFileLinkProvider(props: RepositoryFileLinkProviderProps): ReactElement {
   // 常に取りに行く（`@` 補完と違い、レポートのどこにパスが出るかは描く前に分からない）。
   const paths = useRepositoryFilePaths(true)
-  const dispatch = useSessionDispatch()
+  const dispatch = useSession((session) => session.dispatch)
   const files = useMemo(() => new Set(paths), [paths])
   const link: RepositoryFileLink = {
     files,

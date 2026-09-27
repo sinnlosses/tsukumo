@@ -8,7 +8,7 @@ import {
 } from "../../../../../../src/browser/components/page/achievement/hooks/use-diary-book-open-request.ts"
 
 /**
- * 画面をまたいで見開きを開く一回限りの合図（`useSyncExternalStore`）。この起動のあいだ持ち続ける
+ * 画面をまたいで見開きを開く一回限りの合図。この起動のあいだ持ち続ける
  * モジュールの外の store なので、テストは値そのものよりも「呼ぶたびに変わる」ことを見る。
  */
 

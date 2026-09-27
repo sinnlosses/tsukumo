@@ -244,7 +244,7 @@ sed -n '/^## 4\. shared/,/^## /p' docs/design.md
   捨てずに** async generator へ写し、手続きの `signal`（接続が切れると oRPC が中断する）で購読を外す。
   購読には照合（`rpcGuard`）だけを掛け、断る条件（`commandGuard`）は見ない。サーバに届く読めない
   メッセージは中身をどこにも出さずに捨てる
-- ブラウザは `src/browser/stores/session.tsx` の `dispatch`（`commandContract` から導いた型付きの
+- ブラウザは `src/browser/stores/session.ts` の `dispatch`（`commandContract` から導いた型付きの
   client）で `dispatch.session.prompt({ text, images })` のように呼ぶ。**送りっぱなしで、断られても
   画面には出さない**（画面は同じ条件で先に操作子を塞いでいる）
 
@@ -390,15 +390,15 @@ components/page/<ページ>/
   は持たないので `ui`。**`components/domain` の直下の部品は `stores/` を読んでよい**（箱の表で辺を
   許す。いまは読んでいるものは無く、値と呼び先を props で受け取っている）。`components/ui` は読めない
 - **`stores/` は「状態ライブラリの置き場」ではなく「画面全体で共有する状態の置き場」**
-  （zustand を入れない決定は 6.2 のまま）。実体は7つあり、
-  `stores/session.tsx` は `SessionState` を畳んで全領域に配り（`useSyncExternalStore` + セレクタ。
-  Context で配るのは store そのもの）、`stores/main-view-turn.ts` はそこから**ターンの畳み**を
-  姿ごとに1回だけ導き、`stores/turn-selection.tsx` は `location.hash` の `turn` から
-  メインビューとキャラビューに同じターンの選択を配り、`stores/screen.tsx` は `location.hash` から
+  （store の書き方は 6.2）。実体は7つあり、
+  `stores/session.ts` は `SessionState` を畳んで全領域に配る zustand の store（接続とコマンドの口も
+  同じ store が持つ）、`stores/main-view-turn.ts` はそこから**ターンの畳み**を
+  姿ごとに1回だけ導き、`stores/turn-selection.ts` は `location.hash` の `turn` と姿から
+  メインビューとキャラビューに同じターンの選択を導き、`stores/screen.tsx` は `location.hash` から
   **出している画面**を読む（書く口 `navigateTo` も同じ
   ファイル。13.6）。**1本の hash の書き方は `stores/location-hash.ts` だけが知る**（`screen.tsx` と
-  `turn-selection.tsx` の2つがここを通して読み書きする）。`stores/question-answer.tsx` は答え待ちの質問に対する
-  **答えの組み立て**を配る Context（質問の札はメインビュー、自由入力は入力欄と、読み手が
+  `turn-selection.ts` の2つがここを通して読み書きする）。`stores/question-answer.ts` は答え待ちの質問に対する
+  **答えの組み立て**を持つ zustand の store（質問の札はメインビュー、自由入力は入力欄と、読み手が
   2領域にまたがる）。`stores/question-scroll.ts` は帯の「いまの作業」の一覧の「質問へ」から
   メインビューの質問の札へスクロールしてほしいという**一回限りの合図**を配る zustand の store。**どれも
   複数の領域が読む**ので領域の中に置けず、`app.tsx` に残すと領域が
@@ -429,8 +429,7 @@ components/page/<ページ>/
   `browser/domain/` で、`components/` と `hooks/` が中と画面全体の2段に分かれているのと
   同じ形（2026-09-23 決定）
 - **領域と機能は `app.tsx` と `stores/` の中身を「組み立てる側」として import しない。** 触れるのは
-  `stores/` が公開する hook（`useSessionSelector` / `useSessionDispatch` / `useMainViewTurns` /
-  `useTurnSelection`）まで
+  `stores/` が公開する hook（`useSession` / `useMainViewTurns` / `useTurnSelection`）まで
 - **親が子を組む形も領域どうしの import に数える。** `<Layout>` は領域の中身を props で
   受け取るだけで他の領域を知らず、**どの画面を出すかは `components/app/layout.tsx` の `<Layout>` が選ぶ**
   （6.1・13.6）。**画面の組み立てを `components/domain/` へ移さない**（手本の `Application.tsx` にあたるものを
@@ -656,7 +655,7 @@ backdrop のクリックで `onClose` が呼ばれること・中のクリック
 | **外と同期**（副作用） | `useEffect`・タイマー・`<dialog>` の DOM・取得（`useQuery`）・DOM の出来事の読み替え | 1秒ごとの刻み・`showModal()`・`git ls-files` の一覧の取得 |
 | **畳む**（算出）       | 受け取った値を**画面に出す形**へ変える                                               | 経過秒 → 「1分05秒」・並びの反転・候補の絞り込み          |
 
-**ストアを読むだけは数えない。** `useSessionSelector` / `useSessionDispatch` / `useTurnRunning` /
+**ストアを読むだけは数えない。** `useSession` / `useTurnRunning` /
 `useQuestionAnswer` は「props で降ろす代わりに自分で読む」だけで、読む場所が変わっても部品の
 中身は増えない（降ろす道が遠いときに読むためのもの。6.2）。**これしか無い部品はフックが何本
 あっても1ファイルのまま**（`sidebar/session-info.tsx` / `profile-card.tsx` /
@@ -1004,8 +1003,8 @@ Layout に出す。復帰したときにセッションを続きから起こし�
 `SessionState` の外側にある決定だけ。
 
 **`connection`（接続中／切断中）は `SessionState` に入れない**（サーバ側に意味が無いため）。
-ブラウザだけが持つ状態で、`src/browser/stores/session.tsx` の `SessionSnapshot`
-（`connection: ConnectionStatus`）が `SessionState` と同じ購読に相乗りさせて配る。
+ブラウザだけが持つ状態で、`src/browser/stores/session.ts` の `SessionStoreState`
+（`connection: ConnectionStatus`）が `SessionState` と同じ store に相乗りさせて配る。
 
 `speeches.slice(-1)`（`request` で前のターンの最後の1件だけ残す）・`speechCalledInTurn`・
 `MAX_SESSION_STATE_TURNS` の窓、といった**畳み込みの規則も `shared` の側が持つ**。
@@ -1094,7 +1093,7 @@ Layout に出す。復帰したときにセッションを続きから起こし�
   古いタブの組み合わせで起きる。見張りつきの起動で**画面だけ**組み直されたときの道は11章の
   指紋の突き合わせで塞いだが、塞ぎ損ねたときは tsukumo を上げ直すまで直らないので、知らせには
   それも書く）。版の合う `hello` がまた届けば戻る
-  （`src/browser/stores/session.tsx` の `protocol`）
+  （`src/browser/stores/session.ts` の `protocol`）
 
 ### 4.5 版と互換
 
@@ -1164,22 +1163,25 @@ doc コメントが正典で、機能の数え方・契機・上限は `docs/req
 
 ### 6.2 状態の持ち方
 
-| 状態                                                             | 置き場所                                                                                                                                                                       |
-| ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `SessionState`                                                   | `<SessionProvider>` が持つ**React の外の store**（`applySessionEvent` で `events` を畳み、`hello` で置き換える）。部品は `useSessionSelector` で**自分が読む値だけ**を購読する |
-| 接続中 / 切断中、プロトコルの版違い                              | 同じ store の snapshot に相乗りさせる（`browser/stores/session.tsx`。`SessionState` には入れない）                                                                             |
-| 選んでいるターン（`turnId`）、追従中か（いちばん下を見ていたか） | `location.hash` の `turn`（`#?turn=3`。追従中は書かない）を `browser/stores/turn-selection.tsx` の Context が読んで配る（メインビューとキャラビューの両方が読む）              |
-| 入力欄の下書き、候補の開閉と選択位置                             | `<Composer>` のローカル状態                                                                                                                                                    |
-| 質問の選択（送る前）・何問目を見ているか・入力欄に書いた答え     | `browser/stores/question-answer.tsx` の Context（**メインビューの札と入力欄の両方が読み書きする**ので機能のローカル状態にしない）                                              |
-| 経過時間の秒数                                                   | `<TurnStatus>` の1秒タイマー（`turn` の `startedAt` から計算）                                                                                                                 |
-| 領域の比率                                                       | `<Layout>`。`localStorage` に**比率だけ**保存（会話は保存しない）                                                                                                              |
-| 出している画面（会話 / キャラクター / 作る）                     | `location.hash` の `?` より前（`stores/screen.tsx` の `useScreen()` が `hashchange` を読む）。保存しない（URL が持つ。13.6）。hash の書き方は `stores/location-hash.ts` だけ   |
+| 状態                                                             | 置き場所                                                                                                                                                                      |
+| ---------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `SessionState`                                                   | `browser/stores/session.ts` の zustand の store `useSession`（`applySessionEvent` で `events` を畳み、`hello` で置き換える）。部品はセレクタで**自分が読む値だけ**を購読する  |
+| 接続中 / 切断中、プロトコルの版違い                              | 同じ store に相乗りさせる（`SessionState` には入れない）。接続は `<Root>` が `useSessionConnection()` で張る                                                                  |
+| 選んでいるターン（`turnId`）、追従中か（いちばん下を見ていたか） | `location.hash` の `turn`（`#?turn=3`。追従中は書かない）。`browser/stores/turn-selection.ts` の `useTurnSelection()` が hash と姿から導く（自分では状態を持たない）          |
+| 入力欄の下書き、候補の開閉と選択位置                             | `<Composer>` のローカル状態                                                                                                                                                   |
+| 質問の選択（送る前）・何問目を見ているか・入力欄に書いた答え     | `browser/stores/question-answer.ts` の zustand の store（**メインビューの札と入力欄の両方が読み書きする**ので機能のローカル状態にしない。どの答え待ちに対する下書きかも持つ） |
+| 経過時間の秒数                                                   | `<TurnStatus>` の1秒タイマー（`turn` の `startedAt` から計算）                                                                                                                |
+| 領域の比率                                                       | `<Layout>`。`localStorage` に**比率だけ**保存（会話は保存しない）                                                                                                             |
+| 出している画面（会話 / キャラクター / 作る）                     | `location.hash` の `?` より前（`stores/screen.tsx` の `useScreen()` が `hashchange` を読む）。保存しない（URL が持つ。13.6）。hash の書き方は `stores/location-hash.ts` だけ  |
 
-zustand などの状態ライブラリは**入れない**。`useSyncExternalStore` + セレクタで足りる
-（畳み込みは `shared` の `applySessionEvent` のまま。**姿そのものを Context で配らない** —
-読んでいる値が変わっていない部品まで毎フレーム描き直しになるため）。
+画面全体で共有する状態は **zustand の `create()`** で書き、`Context` の `Provider` で配らない
+（書き方と `useShallow` の使いどころは `docs/coding-standards.md`「zustand の store」）。
+**姿そのものを購読しない** — 読んでいる値が変わっていない部品まで毎フレーム描き直しになるため、
+部品はセレクタで自分が読む値だけを取る。
 **答え待ち（`pending`）が動くフレームだけ緊急**にし、レポートやツールの進行は
-`startTransition` に載せる。
+`startTransition` に載せる（`useSession` の `receive` の中）。
+**`location.hash` を正典にする状態は zustand に写さない**（`stores/location-hash.ts` の
+`useHashRoute` が `useSyncExternalStore` で直接購読する。写すと hash と store の2か所に持つことになる）。
 **`browser/stores/` はその「画面全体で共有する状態」の置き場であって、状態ライブラリの置き場ではない**
 （2章）。
 

@@ -3,14 +3,13 @@ import { afterEach, describe, expect, it } from "bun:test"
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 
 import { SpeechLog } from "../../../../../../../../../src/browser/components/page/conversation/components/character-view/components/speech-log/speech-log.tsx"
-import { SessionStoreContext } from "../../../../../../../../../src/browser/stores/session.tsx"
 import {
   INITIAL_SESSION_STATE,
   type SessionRecord,
 } from "../../../../../../../../../src/shared/session-state.ts"
 import { characterInfo } from "../../../../../../../../fixture/character.ts"
 import { requestRecord, speechRecord } from "../../../../../../../../fixture/session-record.ts"
-import { sessionStoreWith } from "../../../../../../../session-store.ts"
+import { putSession } from "../../../../../../../session-store.ts"
 
 // フィクスチャはすべて手で書いた架空の依頼・セリフ（docs/coding-standards.md「会話内容の扱い」）。
 
@@ -26,16 +25,12 @@ function renderSpeechLogWithCall(
   records: readonly SessionRecord[],
   userCall: string | undefined,
 ): void {
-  const store = sessionStoreWith({
+  putSession({
     ...INITIAL_SESSION_STATE,
     records,
     character: characterInfo({ userCall }),
   })
-  render(
-    <SessionStoreContext.Provider value={store}>
-      <SpeechLog portrait={<img alt="架空の立ち絵" />} speakerName="架空の名前" />
-    </SessionStoreContext.Provider>,
-  )
+  render(<SpeechLog portrait={<img alt="架空の立ち絵" />} speakerName="架空の名前" />)
 }
 
 function dialog(): HTMLDialogElement {

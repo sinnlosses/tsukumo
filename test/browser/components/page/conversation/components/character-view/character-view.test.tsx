@@ -4,11 +4,11 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { cleanup, render } from "@testing-library/react"
 
 import { CharacterView } from "../../../../../../../src/browser/components/page/conversation/components/character-view/character-view.tsx"
-import { SessionStoreContext } from "../../../../../../../src/browser/stores/session.tsx"
 import {
-  TurnSelectionContext,
-  type TurnSelectionValue,
-} from "../../../../../../../src/browser/stores/turn-selection.tsx"
+  formatHash,
+  parseHash,
+  type ViewedTurn,
+} from "../../../../../../../src/browser/stores/location-hash.ts"
 import {
   INITIAL_SESSION_STATE,
   type SessionRecord,
@@ -16,7 +16,7 @@ import {
 } from "../../../../../../../src/shared/session-state.ts"
 import { characterInfo, shownPortraits } from "../../../../../../fixture/character.ts"
 import { requestRecord, speechRecord } from "../../../../../../fixture/session-record.ts"
-import { sessionStoreWith } from "../../../../../session-store.ts"
+import { putSession } from "../../../../../session-store.ts"
 
 // フィクスチャはすべて手で書いた架空のキャラクター定義・セリフ（docs/coding-standards.md「会話内容の扱い」）。
 
@@ -26,29 +26,21 @@ const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = characterInfo(
 
 afterEach(() => {
   cleanup()
+  window.location.hash = ""
 })
 
-/** ターンが1つも無い（タブも出ていない）ときの選択。今回を見ている扱いになる。 */
-const NO_TURN_SELECTION: TurnSelectionValue = {
-  activeTurnId: undefined,
-  newestTurnId: undefined,
-  selectTurn: () => {},
-}
-
 // `<CharacterView>` は立ち絵に `<Portrait>`（`useQuery`）を使うので `QueryClientProvider` が要る。
+// 過去のターンを見るテストは、そのターンの通し番号（`request` の `turnId`）を hash に乗せてから描く。
 function renderCharacterView(
   stateOverrides: Partial<SessionState>,
-  selection: TurnSelectionValue = NO_TURN_SELECTION,
+  viewedTurn: ViewedTurn = "newest",
 ): void {
-  const store = sessionStoreWith({ ...INITIAL_SESSION_STATE, ...stateOverrides })
+  window.location.hash = formatHash({ ...parseHash(""), turn: viewedTurn })
+  putSession({ ...INITIAL_SESSION_STATE, ...stateOverrides })
   const queryClient = new QueryClient()
   render(
     <QueryClientProvider client={queryClient}>
-      <SessionStoreContext.Provider value={store}>
-        <TurnSelectionContext.Provider value={selection}>
-          <CharacterView />
-        </TurnSelectionContext.Provider>
-      </SessionStoreContext.Provider>
+      <CharacterView />
     </QueryClientProvider>,
   )
 }
@@ -58,7 +50,7 @@ const TWO_TURN_RECORDS: readonly SessionRecord[] = [
   requestRecord({ text: "1つ目の依頼" }),
   speechRecord({ text: "1つ目のセリフA", expression: "proud" }),
   speechRecord({ text: "1つ目のセリフB", expression: "flustered" }),
-  requestRecord({ text: "2つ目の依頼" }),
+  requestRecord({ turnId: 1, text: "2つ目の依頼" }),
   speechRecord({ text: "2つ目のセリフ", expression: "default" }),
 ]
 
@@ -76,7 +68,7 @@ describe("CharacterView", () => {
   it("(1) 過去のターンを選ぶと、そのターンのセリフだけが吹き出しに出る", () => {
     renderCharacterView(
       { records: TWO_TURN_RECORDS, speeches: ["2つ目のセリフ"], character: FIXTURE_CHARACTER },
-      { activeTurnId: 0, newestTurnId: 1, selectTurn: () => {} },
+      0,
     )
 
     expect(
@@ -89,7 +81,7 @@ describe("CharacterView", () => {
   it("(2) 今回のターンを選ぶと、従来どおり今のセリフが出る", () => {
     renderCharacterView(
       { records: TWO_TURN_RECORDS, speeches: ["2つ目のセリフ"], character: FIXTURE_CHARACTER },
-      { activeTurnId: 1, newestTurnId: 1, selectTurn: () => {} },
+      1,
     )
 
     expect(
@@ -100,14 +92,14 @@ describe("CharacterView", () => {
   it("(3) セリフが1件も無い過去のターンでも壊れず、そのターン向けの文言が出る", () => {
     const records: readonly SessionRecord[] = [
       requestRecord({ text: "1つ目の依頼" }),
-      requestRecord({ text: "2つ目の依頼" }),
+      requestRecord({ turnId: 1, text: "2つ目の依頼" }),
       speechRecord({ text: "2つ目のセリフ" }),
     ]
 
     expect(() =>
       renderCharacterView(
         { records, speeches: ["2つ目のセリフ"], character: FIXTURE_CHARACTER },
-        { activeTurnId: 0, newestTurnId: 1, selectTurn: () => {} },
+        0,
       ),
     ).not.toThrow()
 
@@ -136,7 +128,7 @@ describe("CharacterView", () => {
           }),
         },
       },
-      { activeTurnId: 0, newestTurnId: 1, selectTurn: () => {} },
+      0,
     )
 
     expect(document.querySelector(".portrait")?.getAttribute("data-expression")).toBe("flustered")

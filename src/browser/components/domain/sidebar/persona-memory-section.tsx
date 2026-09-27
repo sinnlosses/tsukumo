@@ -18,7 +18,7 @@ import { Button } from "../../../components/ui/button/button.tsx"
 import { Dialog } from "../../../components/ui/dialog/dialog.tsx"
 import { HStack } from "../../../components/ui/h-stack/h-stack.tsx"
 import { Text } from "../../../components/ui/text/text.tsx"
-import { useSessionDispatch, useSessionSelector } from "../../../stores/session.tsx"
+import { useSession } from "../../../stores/session.ts"
 import { SidebarSection } from "./section.tsx"
 import styles from "./sidebar.module.css"
 
@@ -26,7 +26,7 @@ import styles from "./sidebar.module.css"
 const REMEMBERED_LINE_CHIP_LENGTH = 20
 
 export function PersonaMemorySection(): ReactElement {
-  const lines = useSessionSelector((session) => session.state.rememberedLines)
+  const lines = useSession((session) => session.state.rememberedLines)
   const [editing, setEditing] = useState(false)
   // 押して開いた1行（文面そのもので指す。同じ文面が2行あっても、どちらを開いても見え方は
   // 同じなので困らない）。
@@ -127,7 +127,7 @@ type PersonaMemoryForgetConfirmProps = {
  * 次に届く `remembered-lines-changed` で必ず最新になる。
  */
 function PersonaMemoryForgetConfirm(props: PersonaMemoryForgetConfirmProps): ReactElement {
-  const dispatch = useSessionDispatch()
+  const dispatch = useSession((session) => session.dispatch)
 
   const forget = (): void => {
     dispatch.chat.forgetRememberedLine({ line: props.line })

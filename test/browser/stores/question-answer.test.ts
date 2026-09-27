@@ -1,18 +1,16 @@
 import { afterEach, describe, expect, it } from "bun:test"
 
 import { act, cleanup, renderHook } from "@testing-library/react"
-import { type ReactElement, type ReactNode } from "react"
 
 import {
-  QuestionAnswerProvider,
   useQuestionAnswer,
+  useQuestionDraft,
   type QuestionAnswerModel,
-} from "../../../src/browser/stores/question-answer.tsx"
-import { SessionStoreContext } from "../../../src/browser/stores/session.tsx"
+} from "../../../src/browser/stores/question-answer.ts"
 import { type PendingAsk } from "../../../src/shared/pending-ask.ts"
 import { type Question, type QuestionOption } from "../../../src/shared/question.ts"
 import { INITIAL_SESSION_STATE } from "../../../src/shared/session-state.ts"
-import { type CommandSpy, sessionStoreWith } from "../session-store.ts"
+import { type CommandSpy, putSession } from "../session-store.ts"
 
 /**
  * 答え待ちの質問に対して組み立てる答え（メインビューの札と入力欄の両方が読み書きする1つの
@@ -22,6 +20,8 @@ import { type CommandSpy, sessionStoreWith } from "../session-store.ts"
 
 afterEach(() => {
   cleanup()
+  // 組み立て中の答えはモジュール単位で残るので、次のテストへ持ち越さない。
+  useQuestionDraft.setState(useQuestionDraft.getInitialState(), true)
 })
 
 function option(label: string, extra: Partial<QuestionOption> = {}): QuestionOption {
@@ -46,16 +46,8 @@ function renderModel(
   pending: readonly PendingAsk[],
   spy: CommandSpy = () => {},
 ): { readonly current: QuestionAnswerModel } {
-  const store = sessionStoreWith({ ...INITIAL_SESSION_STATE, pending }, spy)
-  const { result } = renderHook(() => useQuestionAnswer(), {
-    wrapper: function Wrapper({ children }: { readonly children: ReactNode }): ReactElement {
-      return (
-        <SessionStoreContext.Provider value={store}>
-          <QuestionAnswerProvider>{children}</QuestionAnswerProvider>
-        </SessionStoreContext.Provider>
-      )
-    },
-  })
+  putSession({ ...INITIAL_SESSION_STATE, pending }, spy)
+  const { result } = renderHook(() => useQuestionAnswer())
   return result
 }
 

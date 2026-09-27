@@ -1,4 +1,4 @@
-// 導出（`mainViewTurns`）を姿1つにつき1回だけ畳んでいること。`useSyncExternalStore` の
+// 導出（`mainViewTurns`）を姿1つにつき1回だけ畳んでいること。`useSession` の
 // セレクタはここを通るので、同じ姿から毎回違う配列が返ると描き直しが止まらなくなる。
 //
 // フィクスチャはすべて手で書いた架空のやり取り（docs/coding-standards.md「会話内容の扱い」）。

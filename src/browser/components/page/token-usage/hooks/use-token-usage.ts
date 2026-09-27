@@ -16,7 +16,7 @@ import {
   type TokenUsageTotals,
 } from "../../../../../shared/token-usage-summary.ts"
 import { rpc } from "../../../../lib/rpc-client.ts"
-import { useSessionSelector } from "../../../../stores/session.tsx"
+import { useSession } from "../../../../stores/session.ts"
 import { totalUsage } from "../domain/usage-format.ts"
 
 export type UseTokenUsageResult = {
@@ -39,7 +39,7 @@ export function useTokenUsage(): UseTokenUsageResult {
     }),
   )
   const summary = query.data ?? EMPTY_TOKEN_USAGE_SUMMARY
-  const plan = useSessionSelector((session) => session.state.plan)
+  const plan = useSession((session) => session.state.plan)
 
   return {
     days,

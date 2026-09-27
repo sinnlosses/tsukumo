@@ -9,12 +9,12 @@
 import { type ReactElement } from "react"
 
 import { Text } from "../../../components/ui/text/text.tsx"
-import { useSessionSelector } from "../../../stores/session.tsx"
+import { useSession } from "../../../stores/session.ts"
 import { SidebarSection } from "./section.tsx"
 import styles from "./sidebar.module.css"
 
 export function RecentTopicSection(): ReactElement {
-  const topics = useSessionSelector((session) => session.state.chatTopics)
+  const topics = useSession((session) => session.state.chatTopics)
   return (
     <SidebarSection title="最近の話題" extraClass={styles["sidebar-block-chat"]} action={undefined}>
       {topics.length === 0 ? (

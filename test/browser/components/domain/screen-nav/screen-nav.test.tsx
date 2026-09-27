@@ -3,8 +3,6 @@ import { afterEach, describe, expect, it } from "bun:test"
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 
 import { ScreenNav } from "../../../../../src/browser/components/domain/screen-nav/screen-nav.tsx"
-import { SessionStoreContext } from "../../../../../src/browser/stores/session.tsx"
-import { TurnSelectionProvider } from "../../../../../src/browser/stores/turn-selection.tsx"
 import { MODEL_ALIASES } from "../../../../../src/shared/command.ts"
 import { type PendingAsk } from "../../../../../src/shared/pending-ask.ts"
 import {
@@ -15,7 +13,7 @@ import {
 import { setPageUrl } from "../../../../dom-environment.ts"
 import { characterInfo } from "../../../../fixture/character.ts"
 import { typedElement } from "../../../../typed-element.ts"
-import { type CommandSpy, sessionStoreWith } from "../../../session-store.ts"
+import { type CommandSpy, putSession } from "../../../session-store.ts"
 
 // 手で書いた架空の答え待ち（許可の問い合わせ1件。docs/coding-standards.md「会話内容の扱い」）。
 const FIXTURE_PENDING: PendingAsk = {
@@ -47,14 +45,8 @@ const RUNNING_SESSION: Extract<SessionInfo, { kind: "running" }> = {
 }
 
 function renderScreenNav(state: Partial<SessionState> = {}, spy: CommandSpy = () => {}): void {
-  const store = sessionStoreWith({ ...INITIAL_SESSION_STATE, ...state }, spy)
-  render(
-    <SessionStoreContext.Provider value={store}>
-      <TurnSelectionProvider>
-        <ScreenNav />
-      </TurnSelectionProvider>
-    </SessionStoreContext.Provider>,
-  )
+  putSession({ ...INITIAL_SESSION_STATE, ...state }, spy)
+  render(<ScreenNav />)
 }
 
 /** 帯に並んでいる口（狭い画面の「≡」の中は数えない）。 */

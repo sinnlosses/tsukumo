@@ -100,7 +100,7 @@
   flex: 0 1 auto;
   min-width: 0;
 }
-/* ラベル末尾の `(Recommended)` を字から外して載せるバッジ（`stores/question-answer.tsx`）。 */
+/* ラベル末尾の `(Recommended)` を字から外して載せるバッジ（`stores/question-answer.ts`）。 */
 /* 字の段・色は `Text`（size="label" tone="state-warn" weight="inherit"）が持つ。箱（枠・角丸・
    余白）だけここに残す（語彙に無い見た目）。 */
 .question-ask-option-badge {

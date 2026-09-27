@@ -19,8 +19,8 @@ import { TokenUsage } from "../page/token-usage/token-usage.tsx"
 /**
  * 出している画面を選ぶ（`location.hash`。docs/screen-design.md 13.6）。会話の画面は外さず
  * `<Activity mode="hidden">` で隠す — 入力欄の下書き・選んでいるターン・スクロール位置は
- * どれも部品のローカル状態なので、外すと戻ったときに失われる（`<SessionProvider>` はこの上に
- * 居るので会話そのものは隠れている間も進み続ける）。`hidden` 属性と違い描画も止まるので、
+ * どれも部品のローカル状態なので、外すと戻ったときに失われる（サーバとの接続は
+ * `<Root>` が持つので会話そのものは隠れている間も進み続ける）。`hidden` 属性と違い描画も止まるので、
  * キャラクター画面を開いている間の再描画が減る。
  */
 export function Layout(): ReactElement {

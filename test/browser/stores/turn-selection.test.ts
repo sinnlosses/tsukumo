@@ -1,17 +1,14 @@
 import { afterEach, describe, expect, it } from "bun:test"
 
 import { act, cleanup, renderHook } from "@testing-library/react"
-import { type ReactNode } from "react"
 
-import { SessionStoreContext, type SessionStore } from "../../../src/browser/stores/session.tsx"
 import {
-  TurnSelectionProvider,
   useTurnSelection,
   type TurnSelectionValue,
-} from "../../../src/browser/stores/turn-selection.tsx"
+} from "../../../src/browser/stores/turn-selection.ts"
 import { INITIAL_SESSION_STATE, type SessionRecord } from "../../../src/shared/session-state.ts"
 import { detailRecord, requestRecord } from "../../fixture/session-record.ts"
-import { putState, sessionStoreWith } from "../session-store.ts"
+import { putState, putSession } from "../session-store.ts"
 
 afterEach(() => {
   cleanup()
@@ -26,19 +23,10 @@ function turns(count: number): readonly SessionRecord[] {
   ]).flat()
 }
 
-function renderSelection(records: readonly SessionRecord[]): {
-  readonly store: SessionStore
-  readonly current: () => TurnSelectionValue
-} {
-  const store = sessionStoreWith({ ...INITIAL_SESSION_STATE, records })
-  const { result } = renderHook(() => useTurnSelection(), {
-    wrapper: ({ children }: { readonly children: ReactNode }) => (
-      <SessionStoreContext.Provider value={store}>
-        <TurnSelectionProvider>{children}</TurnSelectionProvider>
-      </SessionStoreContext.Provider>
-    ),
-  })
-  return { store, current: () => result.current }
+function renderSelection(records: readonly SessionRecord[]): () => TurnSelectionValue {
+  putSession({ ...INITIAL_SESSION_STATE, records })
+  const { result } = renderHook(() => useTurnSelection())
+  return () => result.current
 }
 
 /** happy-dom は `hashchange` を次のタスクで出すので、ここで流して読み直させる。 */
@@ -48,9 +36,9 @@ function flushHashChange(): void {
   })
 }
 
-describe("TurnSelectionProvider（hash → 選択）", () => {
+describe("useTurnSelection（hash → 選択）", () => {
   it("hash に turn が無ければ今回を見る", () => {
-    const { current } = renderSelection(turns(3))
+    const current = renderSelection(turns(3))
 
     expect(current().activeTurnId).toBe(2)
     expect(current().newestTurnId).toBe(2)
@@ -59,14 +47,14 @@ describe("TurnSelectionProvider（hash → 選択）", () => {
   it("hash の turn が指すターンを見る（リロードしても同じターンに戻る）", () => {
     window.location.hash = "#?turn=1"
 
-    const { current } = renderSelection(turns(3))
+    const current = renderSelection(turns(3))
 
     expect(current().activeTurnId).toBe(1)
   })
 
   it("hash が変わると読み直す（ブラウザの「戻る」）", () => {
     window.location.hash = "#?turn=0"
-    const { current } = renderSelection(turns(3))
+    const current = renderSelection(turns(3))
 
     window.location.hash = "#?turn=1"
     flushHashChange()
@@ -77,30 +65,30 @@ describe("TurnSelectionProvider（hash → 選択）", () => {
   it("hash が指すターンが窓に無ければ今回を見る", () => {
     window.location.hash = "#?turn=42"
 
-    const { current } = renderSelection(turns(3))
+    const current = renderSelection(turns(3))
 
     expect(current().activeTurnId).toBe(2)
   })
 
   it("留めたターンは新しいターンが来ても動かず、追従中なら新しいターンへ移る", () => {
-    const { store, current } = renderSelection(turns(3))
+    const current = renderSelection(turns(3))
     act(() => {
-      putState(store, { ...INITIAL_SESSION_STATE, records: turns(4) })
+      putState({ ...INITIAL_SESSION_STATE, records: turns(4) })
     })
     expect(current().activeTurnId).toBe(3)
 
     window.location.hash = "#?turn=1"
     flushHashChange()
     act(() => {
-      putState(store, { ...INITIAL_SESSION_STATE, records: turns(5) })
+      putState({ ...INITIAL_SESSION_STATE, records: turns(5) })
     })
     expect(current().activeTurnId).toBe(1)
   })
 })
 
-describe("TurnSelectionProvider（選択 → hash）", () => {
+describe("useTurnSelection（選択 → hash）", () => {
   it("過去のターンを選ぶと hash に乗り、今回を選ぶと外れる", () => {
-    const { current } = renderSelection(turns(3))
+    const current = renderSelection(turns(3))
 
     act(() => {
       current().selectTurn(0)
@@ -116,7 +104,7 @@ describe("TurnSelectionProvider（選択 → hash）", () => {
 
   it("画面の部分は消さない", () => {
     window.location.hash = "#character"
-    const { current } = renderSelection(turns(3))
+    const current = renderSelection(turns(3))
 
     act(() => {
       current().selectTurn(1)

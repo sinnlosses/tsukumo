@@ -19,7 +19,7 @@ import { type ReactElement } from "react"
 import { Button } from "../../../components/ui/button/button.tsx"
 import { Dialog } from "../../../components/ui/dialog/dialog.tsx"
 import { Text } from "../../../components/ui/text/text.tsx"
-import { useSessionDispatch, useTurnRunning } from "../../../stores/session.tsx"
+import { useSession, useTurnRunning } from "../../../stores/session.ts"
 import { useBoardClose } from "../board-close.tsx"
 import styles from "../task-board.module.css"
 
@@ -35,7 +35,7 @@ export type TaskRunConfirmProps = {
  * 表を閉じてから出す形にすると、断ったあとに一覧へ戻れない。
  */
 export function TaskRunConfirm(props: TaskRunConfirmProps): ReactElement {
-  const dispatch = useSessionDispatch()
+  const dispatch = useSession((session) => session.dispatch)
   const turnInProgress = useTurnRunning()
   const closeBoard = useBoardClose()
   const prompt = `/next-task ${props.taskId}`

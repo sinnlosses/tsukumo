@@ -1,5 +1,5 @@
 // `location.hash` の書き方を決める唯一の場所。1本の hash を2つの store が読む
-// （出している画面は `stores/screen.tsx`、見ているターンは `stores/turn-selection.tsx`）ので、
+// （出している画面は `stores/screen.tsx`、見ているターンは `stores/turn-selection.ts`）ので、
 // 片方が書くときにもう片方の部分を消さないよう、読み書きはここの {@link HashRoute} を通す。
 //
 // 形は `#<画面>?pack=<名前>&date=<日付>&turn=<番号>`。画面は `?` の前、ターンは `turn` の値、

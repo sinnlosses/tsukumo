@@ -40,12 +40,7 @@ import {
 import { characterFaceInfo, type CharacterFaceInfo } from "../../../../domain/character-face.ts"
 import { formatElapsed } from "../../../../domain/elapsed-time.ts"
 import { rpc } from "../../../../lib/rpc-client.ts"
-import {
-  useSessionDispatch,
-  useSessionSelector,
-  useTurnRunning,
-  type SessionDispatch,
-} from "../../../../stores/session.tsx"
+import { useSession, useTurnRunning, type SessionDispatch } from "../../../../stores/session.ts"
 import {
   clockTime,
   localTimeZoneId,
@@ -148,13 +143,13 @@ export type UseUsageReviewResult = {
 )
 
 export function useUsageReview(): UseUsageReviewResult {
-  const dispatch = useSessionDispatch()
+  const dispatch = useSession((session) => session.dispatch)
   const turnRunning = useTurnRunning()
-  const chatMode = useSessionSelector((session) => session.state.chatMode)
-  const usageReview = useSessionSelector((session) => session.state.usageReview)
-  const previousUsageReview = useSessionSelector((session) => session.state.previousUsageReview)
-  const character = useSessionSelector((session) => session.state.character)
-  const speeches = useSessionSelector((session) => session.state.speeches)
+  const chatMode = useSession((session) => session.state.chatMode)
+  const usageReview = useSession((session) => session.state.usageReview)
+  const previousUsageReview = useSession((session) => session.state.previousUsageReview)
+  const character = useSession((session) => session.state.character)
+  const speeches = useSession((session) => session.state.speeches)
   const [viewingPrevious, setViewingPrevious] = useState(false)
 
   const reviewDays = usageReview.kind === "running" ? asTokenUsageDays(usageReview.days) : undefined

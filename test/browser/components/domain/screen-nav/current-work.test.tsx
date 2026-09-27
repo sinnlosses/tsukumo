@@ -5,14 +5,6 @@ import { act, cleanup, fireEvent, render, screen, within } from "@testing-librar
 import { ScreenNav } from "../../../../../src/browser/components/domain/screen-nav/screen-nav.tsx"
 import { parseHash } from "../../../../../src/browser/stores/location-hash.ts"
 import { useQuestionScroll } from "../../../../../src/browser/stores/question-scroll.ts"
-import {
-  type SessionStore,
-  SessionStoreContext,
-} from "../../../../../src/browser/stores/session.tsx"
-import {
-  TurnSelectionContext,
-  type TurnSelectionValue,
-} from "../../../../../src/browser/stores/turn-selection.tsx"
 import { type BackgroundTask } from "../../../../../src/shared/background-task.ts"
 import { type PendingAsk } from "../../../../../src/shared/pending-ask.ts"
 import { type Question } from "../../../../../src/shared/question.ts"
@@ -23,7 +15,7 @@ import {
 import { characterInfo } from "../../../../fixture/character.ts"
 import { requestRecord, toolRecord } from "../../../../fixture/session-record.ts"
 import { typedElement } from "../../../../typed-element.ts"
-import { putState, sessionStoreWith } from "../../../session-store.ts"
+import { putState, putSession } from "../../../session-store.ts"
 
 // フィクスチャはすべて手で書いた架空の依頼・ツール呼び出し・質問（docs/coding-standards.md
 // 「会話内容の扱い」）。
@@ -52,27 +44,9 @@ function questionPending(headers: readonly string[]): PendingAsk {
   return { kind: "question", id: "ask-1", questions: headers.map(fixtureQuestion) }
 }
 
-function renderScreenNav(
-  state: Partial<SessionState> = {},
-  options: {
-    readonly selection?: Partial<TurnSelectionValue>
-  } = {},
-): SessionStore {
-  const store = sessionStoreWith({ ...INITIAL_SESSION_STATE, ...state })
-  const selection: TurnSelectionValue = {
-    activeTurnId: 1,
-    newestTurnId: 1,
-    selectTurn: () => {},
-    ...options.selection,
-  }
-  render(
-    <SessionStoreContext.Provider value={store}>
-      <TurnSelectionContext.Provider value={selection}>
-        <ScreenNav />
-      </TurnSelectionContext.Provider>
-    </SessionStoreContext.Provider>,
-  )
-  return store
+function renderScreenNav(state: Partial<SessionState> = {}): void {
+  putSession({ ...INITIAL_SESSION_STATE, ...state })
+  render(<ScreenNav />)
 }
 
 /** 帯（広い画面）にある「いまの作業」の札。 */
@@ -219,7 +193,7 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
     })
 
     it("背景のタスクが終わると「依頼待ち」に戻り、一覧からも消える", () => {
-      const store = renderScreenNav({
+      renderScreenNav({
         turn: FINISHED_TURN,
         records: [requestRecord()],
         backgroundTasks: [SHELL_TASK],
@@ -227,7 +201,7 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
       fireEvent.click(workToggle())
 
       act(() => {
-        putState(store, {
+        putState({
           ...INITIAL_SESSION_STATE,
           turn: FINISHED_TURN,
           records: [requestRecord()],
@@ -353,25 +327,24 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
   })
 
   it("「質問へ」を押すと、一覧を閉じて会話の画面・最新のやり取りへ戻し、質問の札へのスクロールを合図する", () => {
-    window.location.hash = "#character"
-    const moved: number[] = []
+    window.location.hash = "#character?turn=1"
     const signalBefore = useQuestionScroll.getState().signal
-    renderScreenNav(
-      { pending: [questionPending(["最初の見出し"])] },
-      { selection: { activeTurnId: 1, newestTurnId: 3, selectTurn: (id) => moved.push(id) } },
-    )
+    renderScreenNav({
+      pending: [questionPending(["最初の見出し"])],
+      records: [1, 2, 3].map((turnId) => requestRecord({ turnId })),
+    })
 
     fireEvent.click(workToggle())
     fireEvent.click(screen.getByRole("button", { name: "質問へ" }))
 
     expect(document.querySelector(".screen-nav-work-list")).toBeNull()
     expect(parseHash(window.location.hash).screen).toBe("conversation")
-    expect(moved).toEqual([3])
+    expect(parseHash(window.location.hash).turn).toBe("newest")
     expect(useQuestionScroll.getState().signal).toBe(signalBefore + 1)
   })
 
   it("答え終わると、質問の要約と「質問へ」が消えて元に戻る", () => {
-    const store = renderScreenNav({
+    renderScreenNav({
       turn: { kind: "running", startedAt: 0 },
       pending: [questionPending(["最初の見出し"])],
       records: [requestRecord()],
@@ -381,7 +354,7 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
     expect(document.querySelector(".screen-nav-work-summary")?.textContent).toBe("最初の見出し")
 
     act(() => {
-      putState(store, {
+      putState({
         ...INITIAL_SESSION_STATE,
         turn: { kind: "running", startedAt: 0 },
         pending: [],

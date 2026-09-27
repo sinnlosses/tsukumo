@@ -4,7 +4,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { cleanup, render, screen } from "@testing-library/react"
 
 import { SessionInfo } from "../../../../../src/browser/components/domain/sidebar/session-info.tsx"
-import { SessionStoreContext } from "../../../../../src/browser/stores/session.tsx"
 import {
   INITIAL_SESSION_STATE,
   type SessionInfo as SessionInfoState,
@@ -12,7 +11,7 @@ import {
 } from "../../../../../src/shared/session-state.ts"
 import { characterInfo, characterPackEntry } from "../../../../fixture/character.ts"
 import { rpcError, stubRpcFetch, type RpcFetchStub } from "../../../rpc-fetch-stub.ts"
-import { type CommandSpy, sessionStoreWith } from "../../../session-store.ts"
+import { type CommandSpy, putSession } from "../../../session-store.ts"
 
 // `<SessionInfo>` は `<ContextUsageRow>`（`useContextUsage`。`useQuery`）を持つので、
 // ここのテストにも `QueryClientProvider` が要る。ここでの内訳の中身は測らない
@@ -45,22 +44,17 @@ const RUNNING_SESSION: Extract<SessionInfoState, { kind: "running" }> = {
   permissionMode: "default",
 }
 
-/**
- * 本物の WebSocket 接続（`<App>`）を経由せず、`SessionContext` へ直接値を差し込んで描く
- * （`src/browser/stores/session.tsx` が部品のテスト用に Context 自体を公開している）。
- */
+/** 本物の WebSocket 接続（`<Root>`）を経由せず、`useSession` の store へ直接姿を差し込んで描く。 */
 function renderSessionInfo(
   stateOverrides: Partial<SessionState>,
   dispatch: CommandSpy = () => {},
 ): void {
   stubContextUsageUnavailable()
-  const store = sessionStoreWith({ ...INITIAL_SESSION_STATE, ...stateOverrides }, dispatch)
+  putSession({ ...INITIAL_SESSION_STATE, ...stateOverrides }, dispatch)
   render(
-    <SessionStoreContext.Provider value={store}>
-      <QueryClientProvider client={newQueryClient()}>
-        <SessionInfo withCharacter={true} />
-      </QueryClientProvider>
-    </SessionStoreContext.Provider>,
+    <QueryClientProvider client={newQueryClient()}>
+      <SessionInfo withCharacter={true} />
+    </QueryClientProvider>,
   )
 }
 

@@ -3,10 +3,9 @@ import { afterEach, describe, expect, it } from "bun:test"
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react"
 
 import { TaskSection } from "../../../../../src/browser/components/domain/sidebar/task-section.tsx"
-import { SessionStoreContext } from "../../../../../src/browser/stores/session.tsx"
 import { INITIAL_SESSION_STATE } from "../../../../../src/shared/session-state.ts"
 import { type TaskSummaryResult } from "../../../../../src/shared/task-summary.ts"
-import { sessionStoreWith } from "../../../session-store.ts"
+import { putSession } from "../../../session-store.ts"
 
 // フィクスチャはすべて手で書いた架空のタスク（実物の develop/tasks.json は使わない）。
 
@@ -59,12 +58,8 @@ const MIXED_TASKS: TaskSummaryResult = {
 }
 
 function renderTaskSection(tasks: TaskSummaryResult): void {
-  const store = sessionStoreWith({ ...INITIAL_SESSION_STATE, tasks })
-  render(
-    <SessionStoreContext.Provider value={store}>
-      <TaskSection />
-    </SessionStoreContext.Provider>,
-  )
+  putSession({ ...INITIAL_SESSION_STATE, tasks })
+  render(<TaskSection />)
 }
 
 /**

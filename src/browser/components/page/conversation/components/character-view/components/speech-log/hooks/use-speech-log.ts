@@ -17,7 +17,7 @@ import {
   type SessionRecord,
 } from "../../../../../../../../../shared/session-state.ts"
 import { turnSpeeches, type TurnSpeech } from "../../../../../../../../../shared/turn-speech.ts"
-import { useSessionSelector } from "../../../../../../../../stores/session.tsx"
+import { useSession } from "../../../../../../../../stores/session.ts"
 import {
   clockDateTime,
   clockTime,
@@ -72,8 +72,8 @@ export type SpeechLogModel = {
 }
 
 export function useSpeechLog(): SpeechLogModel {
-  const records = useSessionSelector((session) => session.state.records)
-  const userCall = useSessionSelector((session) => session.state.character?.userCall)
+  const records = useSession((session) => session.state.records)
+  const userCall = useSession((session) => session.state.character?.userCall)
   const [open, setOpen] = useState(false)
   const scrollerRef = useRef<HTMLElement>(null)
 

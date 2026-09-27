@@ -4,12 +4,11 @@ import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { type ReactElement } from "react"
 
 import { CharacterCreate } from "../../../../../../../src/browser/components/page/character/components/character-create/character-create.tsx"
-import { SessionStoreContext } from "../../../../../../../src/browser/stores/session.tsx"
 import { type CharacterPackEntry } from "../../../../../../../src/shared/character.ts"
 import { INITIAL_SESSION_STATE } from "../../../../../../../src/shared/session-state.ts"
 import { characterPackEntry } from "../../../../../../fixture/character.ts"
 import { typedElement } from "../../../../../../typed-element.ts"
-import { type CommandSpy, sessionStoreWith } from "../../../../../session-store.ts"
+import { type CommandSpy, putSession } from "../../../../../session-store.ts"
 
 // 手で書いた架空のキャラクターパック（docs/coding-standards.md「会話内容の扱い」）。
 const FIXTURE_PACKS: readonly CharacterPackEntry[] = [characterPackEntry("fictional", "架空の精霊")]
@@ -25,12 +24,8 @@ function characterCreate(
   dispatch: CommandSpy = () => {},
   packs: readonly CharacterPackEntry[] = FIXTURE_PACKS,
 ): ReactElement {
-  const store = sessionStoreWith({ ...INITIAL_SESSION_STATE, characterPacks: packs }, dispatch)
-  return (
-    <SessionStoreContext.Provider value={store}>
-      <CharacterCreate open={open} onClose={onClose} />
-    </SessionStoreContext.Provider>
-  )
+  putSession({ ...INITIAL_SESSION_STATE, characterPacks: packs }, dispatch)
+  return <CharacterCreate open={open} onClose={onClose} />
 }
 
 /** 開いているかどうかは `<dialog>` の `open` 属性で見る（`task-board.test.tsx` と同じ）。 */

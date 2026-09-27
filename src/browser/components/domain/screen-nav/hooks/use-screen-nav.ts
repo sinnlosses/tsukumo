@@ -28,11 +28,7 @@ import { characterFaceInfo, type CharacterFaceInfo } from "../../../../domain/ch
 import { useDismissSignal } from "../../../../hooks/use-dismiss-signal.ts"
 import { SCREEN_NAV_ITEMS, type Screen } from "../../../../stores/location-hash.ts"
 import { useScreen, useScreenHref } from "../../../../stores/screen.tsx"
-import {
-  useSessionDispatch,
-  useSessionSelector,
-  useTurnRunning,
-} from "../../../../stores/session.tsx"
+import { useSession, useTurnRunning } from "../../../../stores/session.ts"
 import { resolveEffortSelect, type EffortSelect } from "../domain/effort-label.ts"
 import { resolveModelAlias } from "../domain/model-label.ts"
 import {
@@ -125,23 +121,23 @@ export type ScreenNavView = {
 }
 
 export function useScreenNav(): ScreenNavView {
-  const dispatch = useSessionDispatch()
+  const dispatch = useSession((session) => session.dispatch)
   const current = useScreen()
   const screenHref = useScreenHref()
-  const pendingActive = useSessionSelector((session) => session.state.pending.length > 0)
-  const chatMode = useSessionSelector((session) => session.state.chatMode)
+  const pendingActive = useSession((session) => session.state.pending.length > 0)
+  const chatMode = useSession((session) => session.state.chatMode)
   const turnInProgress = useTurnRunning()
-  const model = useSessionSelector((session) => session.state.model)
-  const modelEffortSupport = useSessionSelector((session) => session.state.modelEffortSupport)
-  const effort = useSessionSelector((session) => session.state.effort)
-  const permissionMode = useSessionSelector((session) =>
+  const model = useSession((session) => session.state.model)
+  const modelEffortSupport = useSession((session) => session.state.modelEffortSupport)
+  const effort = useSession((session) => session.state.effort)
+  const permissionMode = useSession((session) =>
     session.state.session.kind === "running" ? session.state.session.permissionMode : undefined,
   )
-  const character = useSessionSelector((session) => session.state.character)
+  const character = useSession((session) => session.state.character)
   // `init`（`session-info`）が届くまでの畳み先は、このセッションを起こした既定
   // （`docs/screen-design.md` 13.6）。同梱の既定に倒すと、歯車で Sonnet にして起こし直した直後の
   // 帯だけが Opus を名乗る。
-  const sessionDefault = useSessionSelector((session) => session.state.sessionDefault)
+  const sessionDefault = useSession((session) => session.state.sessionDefault)
   const [menuOpen, setMenuOpen] = useState(false)
   const ref = useRef<HTMLElement>(null)
   const work = useCurrentWork(ref)

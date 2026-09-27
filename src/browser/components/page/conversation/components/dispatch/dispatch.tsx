@@ -6,13 +6,13 @@
 import { useEffect, useRef, type ReactElement } from "react"
 
 import { VStack } from "../../../../../components/ui/v-stack/v-stack.tsx"
-import { useSessionSelector } from "../../../../../stores/session.tsx"
+import { useSession } from "../../../../../stores/session.ts"
 import { Composer } from "./components/composer/composer.tsx"
 import { PendingAnswer } from "./components/pending-answer/pending-answer.tsx"
 import styles from "./dispatch.module.css"
 
 export function Dispatch(): ReactElement {
-  const pendingActive = useSessionSelector((session) => session.state.pending.length > 0)
+  const pendingActive = useSession((session) => session.state.pending.length > 0)
   // 最初に読んだ元のタイトルへ戻す（読むのは1回だけ）。
   const originalTitleRef = useRef<string | undefined>(undefined)
 

@@ -28,7 +28,7 @@ const RECONNECT_MAX_DELAY_MS = 8000
 
 export type ConnectionStatus = "connecting" | "open" | "closed"
 
-/** コマンドの手続きを送る口（oRPC の link。型付きの client は `stores/session.tsx` が作る）。 */
+/** コマンドの手続きを送る口（oRPC の link。型付きの client は `stores/session.ts` が作る）。 */
 export type CommandLink = ClientLink<ClientContext>
 
 export type SessionSocket = {

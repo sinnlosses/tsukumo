@@ -6,10 +6,6 @@ import { type ReactElement, type ReactNode } from "react"
 
 import { useUsageReview } from "../../../../../../src/browser/components/page/token-usage/hooks/use-usage-review.ts"
 import {
-  SessionStoreContext,
-  type SessionStore,
-} from "../../../../../../src/browser/stores/session.tsx"
-import {
   INITIAL_SESSION_STATE,
   type SessionState,
 } from "../../../../../../src/shared/session-state.ts"
@@ -19,7 +15,7 @@ import {
   type UsageReviewFindings,
 } from "../../../../../../src/shared/usage-review.ts"
 import { rpcOutput, stubRpcFetch, type RpcFetchStub } from "../../../../rpc-fetch-stub.ts"
-import { type CommandSpy, type SentCommand, sessionStoreWith } from "../../../../session-store.ts"
+import { type CommandSpy, type SentCommand, putSession } from "../../../../session-store.ts"
 
 /**
  * 画面（`token-usage.tsx`）を丸ごと描かずに、区画のロジックだけを測る
@@ -66,16 +62,9 @@ function newClient(): QueryClient {
   return new QueryClient({ defaultOptions: { queries: { retry: false } } })
 }
 
-function wrapper(
-  store: SessionStore,
-  client: QueryClient,
-): (props: { children: ReactNode }) => ReactElement {
+function wrapper(client: QueryClient): (props: { children: ReactNode }) => ReactElement {
   return function Wrapper({ children }: { children: ReactNode }): ReactElement {
-    return (
-      <SessionStoreContext.Provider value={store}>
-        <QueryClientProvider client={client}>{children}</QueryClientProvider>
-      </SessionStoreContext.Provider>
-    )
+    return <QueryClientProvider client={client}>{children}</QueryClientProvider>
   }
 }
 
@@ -88,8 +77,9 @@ function renderUsageReview(
   spy: CommandSpy = () => {},
 ): ReturnType<typeof renderHook<ReturnType<typeof useUsageReview>, unknown>> {
   stubSummaryFetch()
+  putSession(state, spy)
   return renderHook(() => useUsageReview(), {
-    wrapper: wrapper(sessionStoreWith(state, spy), newClient()),
+    wrapper: wrapper(newClient()),
   })
 }
 

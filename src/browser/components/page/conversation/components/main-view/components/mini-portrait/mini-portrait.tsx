@@ -35,7 +35,7 @@ import { type CSSProperties, type ReactElement } from "react"
 import { resolveOutfit } from "../../../../../../../../shared/expression.ts"
 import { Portrait } from "../../../../../../../components/domain/portrait.tsx"
 import { useBrushTip, type BrushTip } from "../../../../../../../domain/reveal/brush-tip.ts"
-import { useSessionSelector } from "../../../../../../../stores/session.tsx"
+import { useSession } from "../../../../../../../stores/session.ts"
 import styles from "./mini-portrait.module.css"
 
 /**
@@ -60,8 +60,8 @@ export type MiniPortraitProps = {
 
 export function MiniPortrait(props: MiniPortraitProps): ReactElement | null {
   const tip = useBrushTip()
-  const character = useSessionSelector((session) => session.state.character)
-  const model = useSessionSelector((session) => session.state.model)
+  const character = useSession((session) => session.state.character)
+  const model = useSession((session) => session.state.model)
   const url = character?.mini
 
   // 筆先が無い（まだ一度も書かれていない）とき・別のやり取りの筆先のとき・縮小する素材すら

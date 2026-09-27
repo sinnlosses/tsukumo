@@ -3,25 +3,28 @@ import { afterEach, describe, expect, it, spyOn } from "bun:test"
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 
 import { QuestionAsk } from "../../../../../../../../../src/browser/components/page/conversation/components/main-view/components/question-ask/question-ask.tsx"
-import { QuestionAnswerProvider } from "../../../../../../../../../src/browser/stores/question-answer.tsx"
+import { useQuestionDraft } from "../../../../../../../../../src/browser/stores/question-answer.ts"
 import { useQuestionScroll } from "../../../../../../../../../src/browser/stores/question-scroll.ts"
-import { SessionStoreContext } from "../../../../../../../../../src/browser/stores/session.tsx"
-import {
-  TurnSelectionContext,
-  type TurnSelectionValue,
-} from "../../../../../../../../../src/browser/stores/turn-selection.tsx"
 import { type PendingAsk } from "../../../../../../../../../src/shared/pending-ask.ts"
 import {
   type Question,
   type QuestionOption,
 } from "../../../../../../../../../src/shared/question.ts"
-import { INITIAL_SESSION_STATE } from "../../../../../../../../../src/shared/session-state.ts"
-import { type CommandSpy, sessionStoreWith } from "../../../../../../../session-store.ts"
+import {
+  INITIAL_SESSION_STATE,
+  type SessionRecord,
+} from "../../../../../../../../../src/shared/session-state.ts"
+import { requestRecord } from "../../../../../../../../fixture/session-record.ts"
+import { type CommandSpy, putSession } from "../../../../../../../session-store.ts"
 
 // フィクスチャはすべて手で書いた架空の質問（docs/coding-standards.md「会話内容の扱い」）。
 
 afterEach(() => {
   cleanup()
+  // 組み立て中の答えはモジュール単位で残るので、次のテストへ持ち越さない。
+  useQuestionDraft.setState(useQuestionDraft.getInitialState(), true)
+  // 過去のやり取りを見るテストは hash の `turn` を書くので、次のテストへ持ち越さない。
+  window.location.hash = ""
   // 押した回数はモジュール単位で残るので、次のテストへ持ち越さない。
   useQuestionScroll.setState({ signal: 0 })
 })
@@ -44,25 +47,14 @@ function renderQuestionAsk(
   pending: readonly PendingAsk[],
   options: {
     readonly dispatch?: CommandSpy
-    readonly selection?: Partial<TurnSelectionValue>
+    readonly records?: readonly SessionRecord[]
   } = {},
 ): HTMLElement {
-  const store = sessionStoreWith({ ...INITIAL_SESSION_STATE, pending }, options.dispatch)
-  const selection: TurnSelectionValue = {
-    activeTurnId: 2,
-    newestTurnId: 2,
-    selectTurn: () => {},
-    ...options.selection,
-  }
-  const { container } = render(
-    <SessionStoreContext.Provider value={store}>
-      <TurnSelectionContext.Provider value={selection}>
-        <QuestionAnswerProvider>
-          <QuestionAsk />
-        </QuestionAnswerProvider>
-      </TurnSelectionContext.Provider>
-    </SessionStoreContext.Provider>,
+  putSession(
+    { ...INITIAL_SESSION_STATE, pending, records: options.records ?? [] },
+    options.dispatch,
   )
+  const { container } = render(<QuestionAsk />)
   return container
 }
 
@@ -166,13 +158,14 @@ describe("QuestionAsk（メインビューの質問の札）", () => {
   })
 
   it("過去のやり取りを見ている間は、いまのやり取りへ戻る口を添える", () => {
-    const moved: number[] = []
+    window.location.hash = "#?turn=1"
     renderQuestionAsk([{ kind: "question", id: "ask-1", questions: [question()] }], {
-      selection: { activeTurnId: 1, newestTurnId: 3, selectTurn: (id) => moved.push(id) },
+      records: [1, 2, 3].map((turnId) => requestRecord({ turnId })),
     })
 
     fireEvent.click(screen.getByText("最新のやり取りへ"))
-    expect(moved).toEqual([3])
+    // 今回を選ぶと追従に戻り、hash から `turn` が外れる。
+    expect(window.location.hash).toBe("")
   })
 
   it("質問が来たら札まで連れてくる（scrollIntoView）", () => {

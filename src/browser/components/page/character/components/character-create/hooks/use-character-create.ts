@@ -27,7 +27,7 @@ import { isCharacterPackName } from "../../../../../../../shared/character.ts"
 import { readAccentColor } from "../../../../../../domain/appearance-color.ts"
 import { readDataUrl } from "../../../../../../lib/data-url.ts"
 import { selectPack } from "../../../../../../stores/screen.tsx"
-import { useSessionDispatch, useSessionSelector } from "../../../../../../stores/session.tsx"
+import { useSession } from "../../../../../../stores/session.ts"
 import { type AccentSwatchModel } from "../../hooks/use-character-edit.ts"
 
 const NAME_HINT = "画面や吹き出しに出る名前"
@@ -71,8 +71,8 @@ export type CharacterCreateModel = {
  * state。表示上の状態なので URL には持たせない（`stores/location-hash.ts`）。
  */
 export function useCharacterCreate(open: boolean, onClose: () => void): CharacterCreateModel {
-  const dispatch = useSessionDispatch()
-  const characterPacks = useSessionSelector((session) => session.state.characterPacks)
+  const dispatch = useSession((session) => session.dispatch)
+  const characterPacks = useSession((session) => session.state.characterPacks)
 
   const [name, setName] = useState("")
   const [id, setId] = useState("")

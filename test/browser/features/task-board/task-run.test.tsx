@@ -5,13 +5,12 @@ import { type ReactNode } from "react"
 
 import { TaskBoard } from "../../../../src/browser/features/task-board/task-board.tsx"
 import { TaskList } from "../../../../src/browser/features/task-board/task-list.tsx"
-import { SessionStoreContext } from "../../../../src/browser/stores/session.tsx"
 import { INITIAL_SESSION_STATE, type SessionState } from "../../../../src/shared/session-state.ts"
 import {
   type TaskSummaryItem,
   type TaskSummaryResult,
 } from "../../../../src/shared/task-summary.ts"
-import { type CommandSpy, sessionStoreWith } from "../../session-store.ts"
+import { type CommandSpy, putSession } from "../../session-store.ts"
 
 // フィクスチャはすべて手で書いた架空のタスク（実物の develop/tasks.json は使わない）。
 
@@ -68,8 +67,8 @@ function renderWithStore(
   spy: CommandSpy,
   overrides: Partial<SessionState> = {},
 ): void {
-  const store = sessionStoreWith({ ...INITIAL_SESSION_STATE, ...overrides }, spy)
-  render(<SessionStoreContext.Provider value={store}>{node}</SessionStoreContext.Provider>)
+  putSession({ ...INITIAL_SESSION_STATE, ...overrides }, spy)
+  render(<>{node}</>)
 }
 
 /** 送られたコマンドを配列に溜める受け取り口。 */
@@ -199,17 +198,15 @@ describe("タスクIDから実行を頼む", () => {
   // 届くと一覧ごと消える（表を閉じる判定は `event.target` が表自身のときだけ）。
   it("確認を開いても表は開いたまま", () => {
     const closed: string[] = []
-    const store = sessionStoreWith(INITIAL_SESSION_STATE)
+    putSession(INITIAL_SESSION_STATE)
     render(
-      <SessionStoreContext.Provider value={store}>
-        <TaskBoard
-          tasks={known(TASKS)}
-          open={true}
-          onClose={() => {
-            closed.push("表")
-          }}
-        />
-      </SessionStoreContext.Provider>,
+      <TaskBoard
+        tasks={known(TASKS)}
+        open={true}
+        onClose={() => {
+          closed.push("表")
+        }}
+      />,
     )
 
     fireEvent.click(screen.getByRole("button", { name: "X-002" }))

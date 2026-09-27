@@ -17,7 +17,7 @@ import { type ReactElement } from "react"
 
 import { CharacterFace } from "../../../components/domain/character-face.tsx"
 import { HStack } from "../../../components/ui/h-stack/h-stack.tsx"
-import { useSessionSelector } from "../../../stores/session.tsx"
+import { useSession } from "../../../stores/session.ts"
 import { CharacterSwitch } from "./character-switch.tsx"
 import { ContextUsageRow } from "./context-usage-row.tsx"
 import { SessionSwitch } from "./session-switch.tsx"
@@ -38,9 +38,9 @@ export type SessionInfoProps = {
  * 横に並んで見える）。
  */
 export function SessionInfo(props: SessionInfoProps): ReactElement {
-  const hasCharacterPacks = useSessionSelector((session) => session.state.characterPacks.length > 0)
-  const faceUrl = useSessionSelector((session) => session.state.character?.face)
-  const characterName = useSessionSelector((session) => session.state.character?.name)
+  const hasCharacterPacks = useSession((session) => session.state.characterPacks.length > 0)
+  const faceUrl = useSession((session) => session.state.character?.face)
+  const characterName = useSession((session) => session.state.character?.name)
 
   return (
     <>

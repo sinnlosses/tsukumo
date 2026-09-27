@@ -4,10 +4,9 @@ import { cleanup, renderHook } from "@testing-library/react"
 import { type ReactElement, type ReactNode } from "react"
 
 import { usePendingAnswer } from "../../../../../../../../../../src/browser/components/page/conversation/components/dispatch/components/pending-answer/hooks/use-pending-answer.ts"
-import { SessionStoreContext } from "../../../../../../../../../../src/browser/stores/session.tsx"
 import { type PendingAsk } from "../../../../../../../../../../src/shared/pending-ask.ts"
 import { INITIAL_SESSION_STATE } from "../../../../../../../../../../src/shared/session-state.ts"
-import { type CommandSpy, sessionStoreWith } from "../../../../../../../../session-store.ts"
+import { type CommandSpy, putSession } from "../../../../../../../../session-store.ts"
 
 /**
  * 答え待ちの箱（`<PendingAnswer>`）を描かずに、答え待ちの先頭の畳み方と許可要求の送り先だけを
@@ -24,9 +23,9 @@ function wrapperFor(
   pending: readonly PendingAsk[],
   spy: CommandSpy,
 ): (props: { readonly children: ReactNode }) => ReactElement {
-  const store = sessionStoreWith({ ...INITIAL_SESSION_STATE, pending }, spy)
+  putSession({ ...INITIAL_SESSION_STATE, pending }, spy)
   return function Wrapper({ children }: { readonly children: ReactNode }): ReactElement {
-    return <SessionStoreContext.Provider value={store}>{children}</SessionStoreContext.Provider>
+    return <>{children}</>
   }
 }
 

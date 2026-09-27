@@ -11,14 +11,13 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { cleanup, render, screen } from "@testing-library/react"
 
 import { Sidebar } from "../../../../../src/browser/components/domain/sidebar/sidebar.tsx"
-import { SessionStoreContext } from "../../../../../src/browser/stores/session.tsx"
 import {
   INITIAL_SESSION_STATE,
   type SessionState,
 } from "../../../../../src/shared/session-state.ts"
 import { characterInfo, characterPackEntry } from "../../../../fixture/character.ts"
 import { rpcError, stubRpcFetch, type RpcFetchStub } from "../../../rpc-fetch-stub.ts"
-import { sessionStoreWith } from "../../../session-store.ts"
+import { putSession } from "../../../session-store.ts"
 
 // セッション情報の帯は `<ContextUsageRow>`（`useContextUsage`。`useQuery`）を持つので、
 // ここのテストにも `QueryClientProvider` が要る。内訳の中身は測らないので、
@@ -38,14 +37,12 @@ function stubContextUsageUnavailable(): void {
 
 function renderSidebar(stateOverrides: Partial<SessionState>): void {
   stubContextUsageUnavailable()
-  const store = sessionStoreWith({ ...INITIAL_SESSION_STATE, ...stateOverrides })
+  putSession({ ...INITIAL_SESSION_STATE, ...stateOverrides })
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   render(
-    <SessionStoreContext.Provider value={store}>
-      <QueryClientProvider client={client}>
-        <Sidebar />
-      </QueryClientProvider>
-    </SessionStoreContext.Provider>,
+    <QueryClientProvider client={client}>
+      <Sidebar />
+    </QueryClientProvider>,
   )
 }
 

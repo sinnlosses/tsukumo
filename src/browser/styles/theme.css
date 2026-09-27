@@ -7,7 +7,7 @@
 
   /* 差せる4つのつまみ（13.2）。ground / surface / ink は使う人が差す経路をまだ持たない
      （13.5。受け渡しの経路は未決）。accent だけ character.json から流し込む
-     （`src/shared/character.ts` の `accent` → `src/browser/stores/session.tsx` が
+     （`src/shared/character.ts` の `accent` → `src/browser/components/app/pack-appearance.ts` が
      `document.documentElement` にこの変数を差し替える）。ここに書く値は
      tsukumo-spirit（`characters/tsukumo-spirit/character.json`）と同じ、パックが
      届く前・パックに `accent` が無いときの既定値。 */
@@ -122,7 +122,7 @@
      並べ、最後を `serif` に落とす。外部フォントは足さない。 */
   --font-serif: "Hiragino Mincho ProN", "Yu Mincho", "YuMincho", "Noto Serif JP", serif;
   /* 日記の本文が実際に使う書体（13.3）。**既定は `--font-serif` そのもの**で、キャラクターパックが
-     書体を同梱していれば `src/browser/stores/session.tsx` がここだけを上書きする
+     書体を同梱していれば `src/browser/components/app/pack-appearance.ts` がここだけを上書きする
      （FontFace で読み込めた登録名 → `--font-serif` の順に並べたフォールバック）。書体を持たない
      パックはこの変数を触らないので、既定のまま端末の明朝体になる。 */
   --font-diary: var(--font-serif);

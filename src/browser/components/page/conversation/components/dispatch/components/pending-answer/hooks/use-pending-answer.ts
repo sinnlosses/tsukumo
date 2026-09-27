@@ -3,10 +3,10 @@
 //
 // 質問はここに出ない。質問の札はメインビュー
 // （`components/page/conversation/components/main-view/components/question-ask/question-ask.tsx`）へ移り、自由入力は `<Composer>` が担う。
-// 組み立て中の答えを持つのは `stores/question-answer.tsx`。
+// 組み立て中の答えを持つのは `stores/question-answer.ts`。
 
 import { summarizeToolInput } from "../../../../../../../../lib/tool-summary.ts"
-import { useSessionDispatch, useSessionSelector } from "../../../../../../../../stores/session.tsx"
+import { useSession } from "../../../../../../../../stores/session.ts"
 
 /** `<PendingAnswer>` が画面に出す形。presenter は `kind` で出し分けて置くだけ。 */
 export type PendingAnswerModel =
@@ -21,8 +21,8 @@ export type PendingAnswerModel =
     }
 
 export function usePendingAnswer(): PendingAnswerModel {
-  const pending = useSessionSelector((session) => session.state.pending[0])
-  const dispatch = useSessionDispatch()
+  const pending = useSession((session) => session.state.pending[0])
+  const dispatch = useSession((session) => session.dispatch)
 
   if (pending === undefined || pending.kind !== "permission") {
     return { kind: "none" }

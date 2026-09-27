@@ -8,10 +8,6 @@ import { type AchievementCalendarView } from "../../../../../../src/browser/comp
 import { type AchievementDaySwitch } from "../../../../../../src/browser/components/page/achievement/hooks/use-achievement.ts"
 import { requestDiaryBookOpen } from "../../../../../../src/browser/components/page/achievement/hooks/use-diary-book-open-request.ts"
 import { useDiaryBook } from "../../../../../../src/browser/components/page/achievement/hooks/use-diary-book.ts"
-import {
-  SessionStoreContext,
-  type SessionStore,
-} from "../../../../../../src/browser/stores/session.tsx"
 import { type DailyAchievement } from "../../../../../../src/shared/achievement.ts"
 import { type Diary } from "../../../../../../src/shared/diary.ts"
 import {
@@ -25,7 +21,7 @@ import {
   type RpcFetchStub,
   type RpcStubReply,
 } from "../../../../rpc-fetch-stub.ts"
-import { type CommandSpy, sessionStoreWith } from "../../../../session-store.ts"
+import { type CommandSpy, putSession } from "../../../../session-store.ts"
 
 /**
  * 漢数字の純関数と、見開きの開閉・取得・前後の送り・目次・白紙の日の振り返りボタンを測る
@@ -47,14 +43,12 @@ function stubFetch(reply: (call: RpcCall) => RpcStubReply): void {
 
 function wrapper(
   client: QueryClient,
-  store: SessionStore = sessionStoreWith(INITIAL_SESSION_STATE),
+  state: SessionState = INITIAL_SESSION_STATE,
+  spy: CommandSpy = () => {},
 ): (props: { children: ReactNode }) => ReactElement {
+  putSession(state, spy)
   return function Wrapper({ children }: { children: ReactNode }): ReactElement {
-    return (
-      <SessionStoreContext.Provider value={store}>
-        <QueryClientProvider client={client}>{children}</QueryClientProvider>
-      </SessionStoreContext.Provider>
-    )
+    return <QueryClientProvider client={client}>{children}</QueryClientProvider>
   }
 }
 
@@ -301,7 +295,7 @@ describe("useDiaryBook（白紙の日）", () => {
           daySwitch: KNOWN_TODAY,
           onDateSelected: (date) => selected.push(date),
         }),
-      { wrapper: wrapper(newClient(), sessionStoreWith(stateWith({}), spy)) },
+      { wrapper: wrapper(newClient(), stateWith({}), spy) },
     )
 
     act(() => {
@@ -340,7 +334,7 @@ describe("useDiaryBook（白紙の日）", () => {
           daySwitch: KNOWN_TODAY,
           onDateSelected: () => {},
         }),
-      { wrapper: wrapper(newClient(), sessionStoreWith(stateWith({}), spy)) },
+      { wrapper: wrapper(newClient(), stateWith({}), spy) },
     )
 
     act(() => {
@@ -371,10 +365,7 @@ describe("useDiaryBook（白紙の日）", () => {
     const { result } = renderHook(
       () => useDiaryBook({ calendar: CALENDAR, daySwitch: KNOWN_TODAY, onDateSelected: () => {} }),
       {
-        wrapper: wrapper(
-          newClient(),
-          sessionStoreWith(stateWith({ turn: { kind: "running", startedAt: 0 } })),
-        ),
+        wrapper: wrapper(newClient(), stateWith({ turn: { kind: "running", startedAt: 0 } })),
       },
     )
 

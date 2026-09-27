@@ -4,13 +4,9 @@
 
 import { type ReactElement } from "react"
 
-import { useSessionSelector } from "../../../stores/session.tsx"
+import { useSession } from "../../../stores/session.ts"
 import { PresentationalConversation } from "./presentational-conversation.tsx"
 
 export function Conversation(): ReactElement {
-  return (
-    <PresentationalConversation
-      chatMode={useSessionSelector((session) => session.state.chatMode)}
-    />
-  )
+  return <PresentationalConversation chatMode={useSession((session) => session.state.chatMode)} />
 }

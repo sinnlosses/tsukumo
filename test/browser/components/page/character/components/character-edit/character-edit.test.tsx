@@ -4,7 +4,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 
 import { CharacterEdit } from "../../../../../../../src/browser/components/page/character/components/character-edit/character-edit.tsx"
-import { SessionStoreContext } from "../../../../../../../src/browser/stores/session.tsx"
 import { type CharacterPackEntry } from "../../../../../../../src/shared/character.ts"
 import { EXPRESSIONS } from "../../../../../../../src/shared/expression.ts"
 import {
@@ -18,7 +17,7 @@ import {
   shownPortraits,
 } from "../../../../../../fixture/character.ts"
 import { typedElement } from "../../../../../../typed-element.ts"
-import { type CommandSpy, sessionStoreWith } from "../../../../../session-store.ts"
+import { type CommandSpy, putSession } from "../../../../../session-store.ts"
 
 // 立ち絵があるのはこの3つだけ（残りの表情は空の枠として並ぶ。数を見るテストがある）。
 const EXPRESSIONS_WITH_PORTRAIT = ["default", "thinking", "proud"] as const
@@ -64,13 +63,11 @@ function renderCharacterEdit(
   dispatch: CommandSpy = () => {},
   characterPacks: readonly CharacterPackEntry[] = [],
 ): void {
-  const store = sessionStoreWith({ ...INITIAL_SESSION_STATE, character, characterPacks }, dispatch)
+  putSession({ ...INITIAL_SESSION_STATE, character, characterPacks }, dispatch)
   const queryClient = new QueryClient()
   render(
     <QueryClientProvider client={queryClient}>
-      <SessionStoreContext.Provider value={store}>
-        <CharacterEdit />
-      </SessionStoreContext.Provider>
+      <CharacterEdit />
     </QueryClientProvider>,
   )
 }

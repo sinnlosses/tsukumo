@@ -3,14 +3,12 @@ import { afterEach, beforeEach, describe, expect, it } from "bun:test"
 import { cleanup, fireEvent, render } from "@testing-library/react"
 
 import { ScreenNav } from "../../../../../src/browser/components/domain/screen-nav/screen-nav.tsx"
-import { SessionStoreContext } from "../../../../../src/browser/stores/session.tsx"
-import { TurnSelectionProvider } from "../../../../../src/browser/stores/turn-selection.tsx"
 import {
   INITIAL_SESSION_STATE,
   type SessionState,
 } from "../../../../../src/shared/session-state.ts"
 import { typedElement } from "../../../../typed-element.ts"
-import { sessionStoreWith, type CommandSpy } from "../../../session-store.ts"
+import { putSession, type CommandSpy } from "../../../session-store.ts"
 
 // 帯の右端の歯車で開く設定（docs/screen-design.md 13.6 / 13.9）。いまここにある群は「画面の色」・
 // 「新しいセッションの既定」・「書き上げる演出の速さ」・「訪問」の4つ。
@@ -46,20 +44,13 @@ afterEach(() => {
   }
   themeStyleElement?.remove()
   themeStyleElement = undefined
-  // `<TurnSelectionProvider>` は hash の `turn` を正典にする（`stores/turn-selection.tsx`）ので、
-  // 次のテストへ持ち越さない。
+  // 見ているターンは hash の `turn` を正典にする（`useTurnSelection`）ので、次のテストへ持ち越さない。
   window.location.hash = ""
 })
 
 function renderScreenNav(state: Partial<SessionState> = {}, spy: CommandSpy = () => {}): void {
-  const store = sessionStoreWith({ ...INITIAL_SESSION_STATE, ...state }, spy)
-  render(
-    <SessionStoreContext.Provider value={store}>
-      <TurnSelectionProvider>
-        <ScreenNav />
-      </TurnSelectionProvider>
-    </SessionStoreContext.Provider>,
-  )
+  putSession({ ...INITIAL_SESSION_STATE, ...state }, spy)
+  render(<ScreenNav />)
 }
 
 /** 帯（広い画面）にある歯車。狭い画面の「≡」の面の中のものは数えない。 */

@@ -366,7 +366,7 @@ class 名を手で組むと、条件で落とす class を空文字に畳む三�
 | --- | ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1   | **外の世界の値を写した直後**             | その `\| undefined` を書いている関数が `src/server/adapter/` にある、または `unknown` / 定義ファイルの中身 / 環境変数 / SDK のイベントを引数に取っている |
 | 2   | **TypeScript が生む `undefined`**        | 型注釈を書いていない（`noUncheckedIndexedAccess` の添字・`Map.get`・`Array.at` / `find` / `findLast` の戻り値）                                          |
-| 3   | **React が型で要求するもの**             | `useState` / `useRef` / `createContext` の型引数、`CSSProperties` の拡張                                                                                 |
+| 3   | **React が型で要求するもの**             | `useState` / `useRef` / `createContext` / zustand の `create` の型引数、`CSSProperties` の拡張                                                           |
 | 4   | **React の外の資源を持つ可変の入れ物**   | `let` 宣言で、初期値が `undefined`、あとから代入がある（タイマー・ソケット・キャッシュ・畳み込みの途中）                                                 |
 | 5   | **丸ごと省略できるオプション引数の中身** | 引数オブジェクトごと省略でき、既定値がある                                                                                                               |
 
@@ -620,7 +620,7 @@ React 19。関数コンポーネントと Hooks だけを使う（クラスコ�
 
 | 類型                             | 例                                                                                                                              |
 | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| 外部システムの購読               | WebSocket の接続（`browser/stores/session.tsx`）                                                                                |
+| 外部システムの購読               | WebSocket の接続（`browser/stores/session.ts` の `useSessionConnection`）                                                       |
 | React の外にある状態への書き込み | `document.title`・CSS カスタムプロパティ・`dialog.showModal()`・`scrollTop`                                                     |
 | タイマー                         | 経過時間の1秒刻み（`browser/components/page/conversation/components/dispatch/components/turn-status/hooks/use-turn-status.ts`） |
 | 外部からの読み込み               | `fetch`・vendor script の読み込み                                                                                               |
@@ -638,7 +638,7 @@ React 19。関数コンポーネントと Hooks だけを使う（クラスコ�
 | props が変わったら state を捨てる | `key` で部品ごと作り直す                         |
 | 利用者の操作で起きること          | イベントハンドラ                                 |
 | effect から最新の値を読みたいだけ | `useEffectEvent`（React 19.3 にある）            |
-| 外部ストアの購読                  | `useSyncExternalStore`                           |
+| 外部ストアの購読                  | zustand の store・`useSyncExternalStore`         |
 | DOM ノードの取り付け・取り外し    | ref コールバック（React 19 は cleanup を返せる） |
 
 `useEffectEvent` で包んだ関数は**レンダー中には呼べない**（React が投げる）。呼んでよいのは
@@ -723,12 +723,21 @@ export const useQuestionScroll = create<QuestionScrollState>()((set) => ({
 部品は**自分が読む値だけ**をセレクタで購読する（`useQuestionScroll((state) => state.signal)`）。
 セレクタが**その場で配列・オブジェクトを新しく作って返す**とき（複数のフィールドをまとめて
 返す、フィルタした配列を返すなど）だけ `useShallow` で包む——包まないと、参照が毎回変わり
-読んでいる値が変わっていなくても描き直しが止まらない（`stores/session.tsx` の
-`useSessionSelector` が `useSyncExternalStore` で守っているのと同じ罠）。1つのフィールドだけを
-返すセレクタには要らない。
+読んでいる値が変わっていなくても描き直しが止まらない（zustand のセレクタも中は
+`useSyncExternalStore` なので、同じ姿から毎回違う参照が返ると描き直し続ける）。1つのフィールドだけを
+返すセレクタには要らない。姿から重い導出を返すときは、`useShallow` ではなく姿をキーに覚える
+（`stores/main-view-turn.ts` の `mainViewTurnsOf`）。
+
+store には値だけでなく、React に属さない口も同じく持たせる（`stores/session.ts` の `dispatch` や
+`receive`）。store の外の資源（接続など）は `create()` に渡す関数の閉包に置き、購読させない。
+外の世界と繋ぐ `useEffect` は store の横の hook にして、画面の根で1回呼ぶ（`useSessionConnection`）。
+`location.hash` のように正典が React の外にある値は zustand に写さず、`useSyncExternalStore` で
+直接購読する（`stores/location-hash.ts`）。
 
 テストで姿を差し込みたいときは `Provider` の代わりに store を直接操作する。`getState()` /
-`setState()` は React の外からも呼べるので、`afterEach` で初期値に戻す
+`setState()` は React の外からも呼べるので、`afterEach` で初期値に戻す（`getInitialState()` を
+`setState(..., true)` で丸ごと入れ直す。会話の姿は `test/browser/session-store.ts` の `putSession` が
+戻してから入れる）
 （`test/browser/components/domain/screen-nav/current-work.test.tsx`）。
 
 ## テスト

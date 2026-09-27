@@ -14,7 +14,7 @@ import {
   type CharacterPackRemoval,
 } from "../../../../../../shared/character.ts"
 import { usePackSelection } from "../../../../../stores/screen.tsx"
-import { useSessionSelector } from "../../../../../stores/session.tsx"
+import { useSession } from "../../../../../stores/session.ts"
 
 export type SelectedPack =
   | {
@@ -32,8 +32,8 @@ export type SelectedPack =
 
 export function useSelectedPack(): SelectedPack {
   const selection = usePackSelection()
-  const character = useSessionSelector((session) => session.state.character)
-  const packs = useSessionSelector((session) => session.state.characterPacks)
+  const character = useSession((session) => session.state.character)
+  const packs = useSession((session) => session.state.characterPacks)
 
   if (character === undefined) {
     return { kind: "waiting" }

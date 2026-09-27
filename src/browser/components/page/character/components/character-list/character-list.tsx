@@ -13,7 +13,7 @@ import { type ReactElement } from "react"
 
 import { EXPRESSIONS } from "../../../../../../shared/expression.ts"
 import { usePackHref } from "../../../../../stores/screen.tsx"
-import { useSessionSelector } from "../../../../../stores/session.tsx"
+import { useSession } from "../../../../../stores/session.ts"
 import { Heading } from "../../../../ui/heading/heading.tsx"
 import { PlusIcon } from "../../../../ui/icon/icon.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
@@ -22,7 +22,7 @@ import styles from "../../character.module.css"
 import { useSelectedPack } from "../hooks/use-selected-pack.ts"
 
 export function CharacterList(props: { readonly onCreate: () => void }): ReactElement {
-  const packs = useSessionSelector((session) => session.state.characterPacks)
+  const packs = useSession((session) => session.state.characterPacks)
   const selected = useSelectedPack()
   const packHref = usePackHref()
   const selectedName = selected.kind === "ready" ? selected.character.pack : undefined

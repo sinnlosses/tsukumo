@@ -22,7 +22,7 @@
 
 import { type ReactElement } from "react"
 
-import { useSessionSelector } from "../../../stores/session.tsx"
+import { useSession } from "../../../stores/session.ts"
 import { PersonaMemorySection } from "./persona-memory-section.tsx"
 import { ProfileCard } from "./profile-card.tsx"
 import { RecentTopicSection } from "./recent-topic-section.tsx"
@@ -31,7 +31,7 @@ import styles from "./sidebar.module.css"
 import { TaskSection } from "./task-section.tsx"
 
 export function Sidebar(): ReactElement {
-  const chatMode = useSessionSelector((session) => session.state.chatMode)
+  const chatMode = useSession((session) => session.state.chatMode)
   return (
     <>
       {chatMode ? (

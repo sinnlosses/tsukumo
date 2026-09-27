@@ -47,11 +47,7 @@ import { FRAME_ERROR_REASON } from "../../../../../../shared/frame.ts"
 import { readAccentColor } from "../../../../../domain/appearance-color.ts"
 import { readDataUrl } from "../../../../../lib/data-url.ts"
 import { useDebouncedCallback } from "../../../../../lib/debounce.ts"
-import {
-  type SessionDispatch,
-  useSessionDispatch,
-  useTurnRunning,
-} from "../../../../../stores/session.tsx"
+import { type SessionDispatch, useSession, useTurnRunning } from "../../../../../stores/session.ts"
 import { useSelectedPack } from "./use-selected-pack.ts"
 
 /** 背景の行の、いまの状態を表す字（印だけにしない。13.1 原則1）。 */
@@ -309,7 +305,7 @@ export type CharacterEditModel =
     }
 
 export function useCharacterEdit(): CharacterEditModel {
-  const dispatch = useSessionDispatch()
+  const dispatch = useSession((session) => session.dispatch)
   const selected = useSelectedPack()
   const turnInProgress = useTurnRunning()
   // 引きずっている間だけ見た目を先に進める上書き（パック → 衣装）。サーバへ送るのは

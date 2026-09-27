@@ -13,7 +13,7 @@ import { type ReactElement } from "react"
 import { type CharacterPackChoice } from "../../../../shared/character.ts"
 import { FRAME_ERROR_REASON } from "../../../../shared/frame.ts"
 import { Select } from "../../../components/ui/select/select.tsx"
-import { useSessionDispatch, useSessionSelector, useTurnRunning } from "../../../stores/session.tsx"
+import { useSession, useTurnRunning } from "../../../stores/session.ts"
 
 // 切り替えは起こし直し（会話が消える）なので、ターン進行中だけ塞ぐ。理由の文面はサーバが
 // 断るときと同じ1つ（`shared` の定型文）を使う。
@@ -27,9 +27,9 @@ export type CharacterSwitchProps = {
 }
 
 export function CharacterSwitch(props: CharacterSwitchProps): ReactElement | null {
-  const dispatch = useSessionDispatch()
-  const characterPacks = useSessionSelector((session) => session.state.characterPacks)
-  const currentPackName = useSessionSelector((session) => session.state.character?.pack)
+  const dispatch = useSession((session) => session.dispatch)
+  const characterPacks = useSession((session) => session.state.characterPacks)
+  const currentPackName = useSession((session) => session.state.character?.pack)
   const turnInProgress = useTurnRunning()
 
   if (characterPacks.length === 0) {

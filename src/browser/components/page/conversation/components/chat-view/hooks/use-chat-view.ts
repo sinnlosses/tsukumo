@@ -20,11 +20,7 @@ import {
 import { type RecordedPromptImage } from "../../../../../../../shared/prompt-image.ts"
 import { type RecordTime } from "../../../../../../../shared/session-state.ts"
 import { portraitAppearance } from "../../../../../../domain/portrait-appearance.ts"
-import {
-  useSessionDispatch,
-  useSessionSelector,
-  useTurnRunning,
-} from "../../../../../../stores/session.tsx"
+import { useSession, useTurnRunning } from "../../../../../../stores/session.ts"
 import {
   clockDateTime,
   clockTime,
@@ -115,13 +111,13 @@ type ViewedSpeech =
   | { readonly kind: "pinned"; readonly index: number; readonly speechCount: number }
 
 export function useChatView(): ChatViewModel {
-  const records = useSessionSelector((session) => session.state.records)
-  const speechExpression = useSessionSelector((session) => session.state.speechExpression)
-  const model = useSessionSelector((session) => session.state.model)
-  const character = useSessionSelector((session) => session.state.character)
+  const records = useSession((session) => session.state.records)
+  const speechExpression = useSession((session) => session.state.speechExpression)
+  const model = useSession((session) => session.state.model)
+  const character = useSession((session) => session.state.character)
   const turnInProgress = useTurnRunning()
-  const speechCalledInTurn = useSessionSelector((session) => session.state.speechCalledInTurn)
-  const dispatch = useSessionDispatch()
+  const speechCalledInTurn = useSession((session) => session.state.speechCalledInTurn)
+  const dispatch = useSession((session) => session.dispatch)
   const entries = chatLogEntries(records)
   const outfit = resolveOutfit(model)
   // ログに並べるのは、出してよいと決まった前置きだけ（docs/screen-design.md 13.7「セリフは
