@@ -362,7 +362,7 @@ describe("watchTaskSummary（Beads 方式）", () => {
   }
 
   it(
-    "bd の課題を状態を読み替えて出し、着手中は作業ツリーの名前を添える。閉じた課題は出さない",
+    "bd の課題を状態を読み替えて出し、着手中は作業ツリーの名前を添える。閉じた課題は done で出す",
     { timeout: 60_000 },
     async () => {
       const repository = await initBeadsRepository()
@@ -398,6 +398,15 @@ describe("watchTaskSummary（Beads 方式）", () => {
       expect(changes).toEqual([
         known(
           {
+            id: "T-001",
+            summary: "済み",
+            status: "done",
+            difficulty: undefined,
+            loopable: undefined,
+            dependencies: [],
+            assignee: undefined,
+          },
+          {
             id: "T-002",
             summary: "保留",
             status: "hold",
@@ -430,7 +439,7 @@ describe("watchTaskSummary（Beads 方式）", () => {
   )
 
   it(
-    "main を動かさずに bd で閉じると、次の見回りで一覧から消える",
+    "main を動かさずに bd で閉じると、次の見回りで done に変わる",
     { timeout: 60_000 },
     async () => {
       const repository = await initBeadsRepository()
@@ -452,7 +461,15 @@ describe("watchTaskSummary（Beads 方式）", () => {
           dependencies: [],
           assignee: undefined,
         }),
-        known(),
+        known({
+          id: "T-001",
+          summary: "閉じる前",
+          status: "done",
+          difficulty: undefined,
+          loopable: undefined,
+          dependencies: [],
+          assignee: undefined,
+        }),
       ])
     },
   )

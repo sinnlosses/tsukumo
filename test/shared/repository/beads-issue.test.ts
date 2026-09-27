@@ -22,7 +22,7 @@ function issue(overrides: Partial<BeadsIssue> & Pick<BeadsIssue, "id" | "status"
 }
 
 describe("taskSummaryItemsOfBeadsIssues", () => {
-  it("open・pending・in_progress を todo・hold・doing に読み替え、閉じた課題は出さない", () => {
+  it("open・pending・in_progress を todo・hold・doing に読み替え、閉じた課題は done で出す", () => {
     const items = taskSummaryItemsOfBeadsIssues([
       issue({ id: "t-001", status: "open" }),
       issue({ id: "t-002", status: "pending" }),
@@ -35,7 +35,45 @@ describe("taskSummaryItemsOfBeadsIssues", () => {
       ["T-001", "todo", undefined],
       ["T-002", "hold", undefined],
       ["T-003", "doing", "wt-a"],
+      ["T-004", "done", undefined],
       ["T-005", "blocked", undefined],
+    ])
+  })
+
+  it("label cancelled の閉じた課題は dropped で出す", () => {
+    const items = taskSummaryItemsOfBeadsIssues([
+      issue({
+        id: "t-006",
+        status: "closed",
+        closedAtEpochMilliseconds: 1,
+        labels: ["cancelled"],
+      }),
+    ])
+
+    expect(items.map((item) => item.status)).toEqual(["dropped"])
+  })
+
+  it("閉じた課題は closedAtEpochMilliseconds の新しい順に10件だけ出す", () => {
+    const closedIssues = Array.from({ length: 12 }, (_, index) =>
+      issue({
+        id: `t-${100 + index}`,
+        status: "closed",
+        closedAtEpochMilliseconds: index,
+      }),
+    )
+    const items = taskSummaryItemsOfBeadsIssues(closedIssues)
+
+    expect(items.map((item) => item.id)).toEqual([
+      "T-102",
+      "T-103",
+      "T-104",
+      "T-105",
+      "T-106",
+      "T-107",
+      "T-108",
+      "T-109",
+      "T-110",
+      "T-111",
     ])
   })
 

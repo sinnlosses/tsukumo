@@ -72,9 +72,17 @@ export function taskReadiness(
   return blockedBy.length === 0 ? { kind: "ready" } : { kind: "blocked", blockedBy }
 }
 
-/** 一覧のうち、まだ `done` でないタスクのID集合。`taskReadiness` へ渡す前に一覧全体から1回だけ作る。 */
+/**
+ * 一覧のうち、まだ完了していないタスクのID集合。`taskReadiness` へ渡す前に一覧全体から1回だけ作る。
+ * `done` と `dropped` はどちらも閉じたタスクとして依存を止めない（task-workflow の `task.py`
+ * `_is_resolved` と同じ規則: `t.status in ("done", "dropped")`）。
+ */
 export function unfinishedTaskIds(tasks: readonly TaskSummaryItem[]): ReadonlySet<string> {
-  return new Set(tasks.filter((task) => task.status !== "done").map((task) => task.id))
+  return new Set(
+    tasks
+      .filter((task) => task.status !== "done" && task.status !== "dropped")
+      .map((task) => task.id),
+  )
 }
 
 /**

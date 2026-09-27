@@ -26,25 +26,42 @@ export type BeadsIssue = {
 }
 
 /**
- * タスクの一覧に出す要約。閉じた課題は出さない（task-workflow の `task status` の既定と同じ）。
- * 閉じた依存先は一覧に無いので、`taskReadiness` は止めない（`bd ready` と同じ規則）。
+ * タスクの一覧に出す要約。閉じていない課題はすべて出し、閉じた課題は `closedAtEpochMilliseconds`
+ * の新しいものから {@link CLOSED_TASK_DISPLAY_LIMIT} 件だけ出す。
+ * 閉じた課題は `done`（label `cancelled` があれば `dropped`）で出し、`unfinishedTaskIds` は
+ * どちらも完了扱いにするので `taskReadiness` を止めない。
  * 並びは番号の順で、番号でない ID（トラッカーから取り込んだ振り分け前のもの）は後ろに ID の順で付く。
  */
 export function taskSummaryItemsOfBeadsIssues(
   issues: readonly BeadsIssue[],
 ): readonly TaskSummaryItem[] {
-  const items = issues
-    .filter((issue) => issue.status !== CLOSED_STATUS)
-    .map((issue) => ({
-      id: taskIdOfBeadsId(issue.id),
-      summary: issue.title,
-      status: TASK_STATUS_OF_BEADS_STATUS.get(issue.status) ?? issue.status,
-      difficulty: labelValueOf(issue.labels, DIFFICULTY_LABEL_PREFIX),
-      loopable: labelValueOf(issue.labels, LOOPABLE_LABEL_PREFIX),
-      dependencies: issue.blockedBy.map(taskIdOfBeadsId),
-      assignee: issue.assignee,
-    }))
-  return sortByTaskId(items)
+  const unfinished = issues.filter((issue) => issue.status !== CLOSED_STATUS)
+  const closed = sortBy(
+    issues.filter((issue) => issue.status === CLOSED_STATUS),
+    [(issue) => issue.closedAtEpochMilliseconds ?? 0, "desc"],
+  ).slice(0, CLOSED_TASK_DISPLAY_LIMIT)
+
+  return sortByTaskId([...unfinished, ...closed].map(taskSummaryItemOfBeadsIssue))
+}
+
+function taskSummaryItemOfBeadsIssue(issue: BeadsIssue): TaskSummaryItem {
+  return {
+    id: taskIdOfBeadsId(issue.id),
+    summary: issue.title,
+    status: statusOfBeadsIssue(issue),
+    difficulty: labelValueOf(issue.labels, DIFFICULTY_LABEL_PREFIX),
+    loopable: labelValueOf(issue.labels, LOOPABLE_LABEL_PREFIX),
+    dependencies: issue.blockedBy.map(taskIdOfBeadsId),
+    assignee: issue.assignee,
+  }
+}
+
+/** 閉じた課題は `done`／`dropped` に、それ以外は開いた状態の読み替えに直す。 */
+function statusOfBeadsIssue(issue: BeadsIssue): string {
+  if (issue.status === CLOSED_STATUS) {
+    return issue.labels.includes(CANCELLED_LABEL) ? "dropped" : "done"
+  }
+  return TASK_STATUS_OF_BEADS_STATUS.get(issue.status) ?? issue.status
 }
 
 /**
@@ -76,6 +93,8 @@ export function taskIdOfBeadsId(beadsId: string): string {
 
 const CLOSED_STATUS = "closed"
 const CANCELLED_LABEL = "cancelled"
+/** タスク板に残す、閉じた課題の件数（`done` と `dropped` を合わせて数える）。 */
+const CLOSED_TASK_DISPLAY_LIMIT = 10
 const DIFFICULTY_LABEL_PREFIX = "difficulty:"
 const LOOPABLE_LABEL_PREFIX = "loopable:"
 const BEADS_NUMBERED_ID_PATTERN = /^t-(\d{3,})$/

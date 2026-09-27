@@ -25,12 +25,16 @@ describe("taskReadiness", () => {
   const AFTER_FINISHED = item("X-003", "todo", ["X-001"])
   const AFTER_UNFINISHED = item("X-004", "todo", ["X-002", "X-001"])
   const AFTER_ARCHIVED = item("X-005", "todo", ["X-900"])
+  const DROPPED = item("X-006", "dropped", [])
+  const AFTER_DROPPED = item("X-007", "todo", ["X-006"])
   const TASKS: readonly TaskSummaryItem[] = [
     FINISHED,
     FREE,
     AFTER_FINISHED,
     AFTER_UNFINISHED,
     AFTER_ARCHIVED,
+    DROPPED,
+    AFTER_DROPPED,
   ]
   const UNFINISHED = unfinishedTaskIds(TASKS)
 
@@ -56,6 +60,10 @@ describe("taskReadiness", () => {
   it("一覧に無い依存は止めない（アーカイブ済みは完了扱い）", () => {
     expect(taskReadiness(AFTER_ARCHIVED, UNFINISHED)).toEqual({ kind: "ready" })
   })
+
+  it("依存が dropped なら着手できる", () => {
+    expect(taskReadiness(AFTER_DROPPED, UNFINISHED)).toEqual({ kind: "ready" })
+  })
 })
 
 describe("unfinishedTaskIds", () => {
@@ -69,11 +77,12 @@ describe("unfinishedTaskIds", () => {
     assignee: undefined,
   })
 
-  it("done でないタスクのIDだけを集める", () => {
+  it("done・dropped でないタスクのIDだけを集める", () => {
     const tasks: readonly TaskSummaryItem[] = [
       item("X-001", "done"),
       item("X-002", "todo"),
       item("X-003", "doing"),
+      item("X-004", "dropped"),
     ]
 
     expect(unfinishedTaskIds(tasks)).toEqual(new Set(["X-002", "X-003"]))
