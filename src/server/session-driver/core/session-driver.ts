@@ -165,6 +165,11 @@ export type ChatUnconsolidatedBatch = {
   readonly usedBytes: number
   /** 最後のエピソードの見出し（無ければ空文字。話題が続いているかを定着に見分けさせるため）。 */
   readonly previousEpisodeTitle: string
+  /**
+   * `maxBytes` に届いて打ち切ったか。
+   * 先頭の1件だけで `maxBytes` を超えるときも `true` で、その1件は切らずに単独で `entries` に入る。
+   */
+  readonly overflowed: boolean
 }
 
 /**

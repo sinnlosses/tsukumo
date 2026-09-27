@@ -326,7 +326,7 @@ function readUnconsolidated(
   limits: ChatUnconsolidatedLimits,
 ): ChatUnconsolidatedBatch {
   if (!isCharacterPackName(packName)) {
-    return { entries: [], usedBytes: 0, previousEpisodeTitle: "" }
+    return { entries: [], usedBytes: 0, previousEpisodeTitle: "", overflowed: false }
   }
 
   const dir = join(root, packName)
@@ -344,6 +344,7 @@ function readUnconsolidated(
 
   const entries: ChatUnconsolidatedEntry[] = []
   let usedBytes = 0
+  let overflowed = false
   for (const timed of all) {
     if (afterAt !== undefined && !isAfterAt(timed.at, afterAt)) {
       continue
@@ -353,12 +354,19 @@ function readUnconsolidated(
     }
     const bytes = byteLength(timed.entry.text)
     if (usedBytes + bytes > limits.maxBytes) {
+      overflowed = true
+      // 先頭の1件だけで maxBytes を超えるときは、切らずにその1件だけを単独で渡す
+      // （行の途中では切らない決めを保ったまま、その回で必ず前へ進める）。
+      if (entries.length === 0) {
+        entries.push({ at: timed.at, speaker: timed.entry.speaker, text: timed.entry.text })
+        usedBytes += bytes
+      }
       break
     }
     entries.push({ at: timed.at, speaker: timed.entry.speaker, text: timed.entry.text })
     usedBytes += bytes
   }
-  return { entries, usedBytes, previousEpisodeTitle: previousEpisode?.title ?? "" }
+  return { entries, usedBytes, previousEpisodeTitle: previousEpisode?.title ?? "", overflowed }
 }
 
 /**

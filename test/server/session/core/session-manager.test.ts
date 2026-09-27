@@ -91,7 +91,12 @@ const BATCH_MS = 5
 const NOOP_CHAT_ARCHIVE: ChatArchive = {
   append: () => {},
   readRecent: () => [],
-  unconsolidated: () => ({ entries: [], usedBytes: 0, previousEpisodeTitle: "" }),
+  unconsolidated: () => ({
+    entries: [],
+    usedBytes: 0,
+    previousEpisodeTitle: "",
+    overflowed: false,
+  }),
   appendEpisodes: () => {},
   recallList: () => ({ kind: "not-found" }),
   recallEpisode: () => ({ kind: "not-found" }),
@@ -1687,7 +1692,12 @@ describe("createSessionManager", () => {
         },
         // 読み戻しは起こすときの配線（`src/session-start.ts`）が使う口で、ここは通らない。
         readRecent: () => [],
-        unconsolidated: () => ({ entries: [], usedBytes: 0, previousEpisodeTitle: "" }),
+        unconsolidated: () => ({
+          entries: [],
+          usedBytes: 0,
+          previousEpisodeTitle: "",
+          overflowed: false,
+        }),
         appendEpisodes: () => {},
         recallList: () => ({ kind: "not-found" }),
         recallEpisode: () => ({ kind: "not-found" }),

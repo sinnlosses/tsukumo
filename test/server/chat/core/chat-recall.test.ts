@@ -42,7 +42,12 @@ function fakeChatArchive(): ChatArchive & {
   return {
     append: () => {},
     readRecent: () => [],
-    unconsolidated: () => ({ entries: [], usedBytes: 0, previousEpisodeTitle: "" }),
+    unconsolidated: () => ({
+      entries: [],
+      usedBytes: 0,
+      previousEpisodeTitle: "",
+      overflowed: false,
+    }),
     appendEpisodes: () => {},
     recallList: (packName, keyword, limitBytes, now) => {
       recallListCalls.push({ packName, keyword, limitBytes, now })

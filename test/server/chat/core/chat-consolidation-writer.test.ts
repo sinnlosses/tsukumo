@@ -25,6 +25,7 @@ const DUE_BATCH: ChatUnconsolidatedBatch = {
   ],
   usedBytes: CHAT_MEMORY_BUDGET.consolidateEveryBytes,
   previousEpisodeTitle: "架空の直前の見出し",
+  overflowed: false,
 }
 
 const VALID_OUTPUT = {
@@ -99,6 +100,45 @@ describe("createChatConsolidationWriter", () => {
         maxBytes: CHAT_MEMORY_BUDGET.consolidateEveryBytes * 2,
       },
     ])
+  })
+
+  it.each([
+    [
+      "先頭1件だけで上限（契機の2倍）を超えるとき",
+      {
+        entries: [
+          { at: "2026-09-20T10:00:00+09:00", speaker: "user" as const, text: "架空の発言" },
+        ],
+        usedBytes: CHAT_MEMORY_BUDGET.consolidateEveryBytes * 2 + 1,
+        previousEpisodeTitle: "",
+        overflowed: true,
+      },
+    ],
+    [
+      "溢れる前の合計が契機に届かないとき（例: 先頭 5 KiB＋次 12 KiB）",
+      {
+        entries: [
+          { at: "2026-09-20T10:00:00+09:00", speaker: "user" as const, text: "架空の発言" },
+        ],
+        usedBytes: CHAT_MEMORY_BUDGET.consolidateEveryBytes - 1,
+        previousEpisodeTitle: "",
+        overflowed: true,
+      },
+    ],
+  ])("%s は overflowed が立っていれば query() を起こす", async (_name, batch) => {
+    const singleEntryOutput = {
+      episodes: [
+        { end: 1, title: "架空の見出し", gist: "架空の要旨", cues: ["架空の手がかり"], weight: 2 },
+      ],
+      synopsis: "架空の書き直したあらすじ",
+      topics: ["架空の話題1"],
+    }
+    const ports = createPorts(batch, () => Promise.resolve(singleEntryOutput))
+
+    const outcome = await ports.write("fictional", NEVER_ABORTED)
+
+    expect(outcome).toEqual({ kind: "written", topics: ["架空の話題1"] })
+    expect(ports.queries).toHaveLength(1)
   })
 
   it("届いていれば、前のあらすじ（話題の組を除く）と直前の見出しを渡し、エピソード → あらすじの順に書いて、書いたファイルの話題を返す", async () => {

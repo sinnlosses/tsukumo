@@ -86,7 +86,9 @@ async function consolidate(
       recentBytes: CHAT_MEMORY_BUDGET.recentBytes,
       maxBytes: CHAT_MEMORY_BUDGET.consolidateEveryBytes * 2,
     })
-    if (batch.usedBytes < CHAT_MEMORY_BUDGET.consolidateEveryBytes) {
+    // maxBytes に届いて打ち切ったとき（先頭の1件だけで超えるときを含む）は、契機に
+    // 届いていなくてもここまでを渡す。待つと、残りの行がずっと畳まれなくなるため。
+    if (!batch.overflowed && batch.usedBytes < CHAT_MEMORY_BUDGET.consolidateEveryBytes) {
       return NOT_DUE
     }
 

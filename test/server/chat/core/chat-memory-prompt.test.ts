@@ -58,7 +58,12 @@ function fakeChatArchive(entries: readonly ChatArchiveRecentEntry[]): ChatArchiv
       calls.push({ packName, limits })
       return entries
     },
-    unconsolidated: () => ({ entries: [], usedBytes: 0, previousEpisodeTitle: "" }),
+    unconsolidated: () => ({
+      entries: [],
+      usedBytes: 0,
+      previousEpisodeTitle: "",
+      overflowed: false,
+    }),
     appendEpisodes: () => {},
     recallList: () => ({ kind: "not-found" }),
     recallEpisode: () => ({ kind: "not-found" }),
