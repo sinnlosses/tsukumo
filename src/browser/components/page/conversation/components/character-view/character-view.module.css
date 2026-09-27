@@ -37,6 +37,9 @@
      重なっても顔にはかからないことを目視で確認済み。 */
   --balloon-bottom-gap: 28px;
   --balloon-right-gap: 20px;
+  /* 列のスクロールバーと吹き出しの間。--balloon-right-gap の外側の余白からこの分を列の内側へ
+     移すので、吹き出しの位置は変わらず、スクロールバーだけがこの分右へ寄る。 */
+  --balloon-scrollbar-gap: 8px;
   /* 右上の「ログ」の口（領域の角から 4px、高さ 30px）が占める高さぶんの余白。吹き出しの並びが
      スクロールしてもここまでは伸びない（下の .balloon-track）。 */
   --speech-log-open-space: 26px;
@@ -110,8 +113,9 @@
   gap: 10px;
   min-width: 0;
   min-height: 0;
-  margin-right: var(--balloon-right-gap);
+  margin-right: calc(var(--balloon-right-gap) - var(--balloon-scrollbar-gap));
   margin-bottom: var(--balloon-bottom-gap);
+  padding-right: var(--balloon-scrollbar-gap);
   /* max() の下限は、領域を仕切りで低くしたときに calc の側が 0 以下になって**吹き出しが
      丸ごと消える**のを防ぐためのもの。下限が勝つのは領域が --balloon-bottom-gap + 6rem
      より低いときだけで、そこでは最新の位置の固定より読めることを優先する。 */
@@ -423,6 +427,7 @@
   bottom: anchor(bottom);
   left: anchor(left);
   z-index: 1;
+  padding-right: var(--balloon-scrollbar-gap);
   overflow-y: auto;
 }
 /* 立ち絵があるときは、キャラビューの列（`.portrait + .balloon-track`）と同じく尻尾ぶんを左に空ける。 */
