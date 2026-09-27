@@ -3,7 +3,6 @@ import { afterEach, describe, expect, it } from "bun:test"
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 
 import { ScreenNav } from "../../../../../src/browser/components/domain/screen-nav/screen-nav.tsx"
-import { QuestionScrollProvider } from "../../../../../src/browser/stores/question-scroll.tsx"
 import { SessionStoreContext } from "../../../../../src/browser/stores/session.tsx"
 import { TurnSelectionProvider } from "../../../../../src/browser/stores/turn-selection.tsx"
 import { MODEL_ALIASES } from "../../../../../src/shared/command.ts"
@@ -52,9 +51,7 @@ function renderScreenNav(state: Partial<SessionState> = {}, spy: CommandSpy = ()
   render(
     <SessionStoreContext.Provider value={store}>
       <TurnSelectionProvider>
-        <QuestionScrollProvider>
-          <ScreenNav />
-        </QuestionScrollProvider>
+        <ScreenNav />
       </TurnSelectionProvider>
     </SessionStoreContext.Provider>,
   )

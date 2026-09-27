@@ -27,7 +27,7 @@ import {
   useQuestionAnswer,
   type QuestionOptionRow,
 } from "../../../../../../../stores/question-answer.tsx"
-import { useQuestionScroll } from "../../../../../../../stores/question-scroll.tsx"
+import { useQuestionScroll } from "../../../../../../../stores/question-scroll.ts"
 import { useTurnSelection } from "../../../../../../../stores/turn-selection.tsx"
 import { Markdown } from "../../markdown/markdown.tsx"
 import notationStyles from "../../markdown/report-notation.module.css"
@@ -51,7 +51,7 @@ export function QuestionAsk(): ReactElement | null {
   // 過去のやり取りを見ている間も札は出す（答えは待たせたままにできない）。そのときだけ、
   // 質問がいまのやり取りのものだと分かるように戻る口を添える。
   const { activeTurnId, newestTurnId, selectTurn } = useTurnSelection()
-  const { signal: scrollSignal } = useQuestionScroll()
+  const scrollSignal = useQuestionScroll((state) => state.signal)
   const askId = question.kind === "asking" ? question.id : undefined
   const cardRef = useQuestionAskScroll(askId, scrollSignal)
 

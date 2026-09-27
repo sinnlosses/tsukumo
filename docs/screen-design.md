@@ -1548,10 +1548,9 @@ scrollable overflow は end 方向にしか伸びない**ので、上へ出た�
 - **「質問へ」を押すと**: 一覧を閉じ、キャラクター/トークン消費の画面を見ていれば会話の画面へ
   戻し（`stores/screen.tsx` の `navigateTo`）、過去のやり取りを見ていれば最新のやり取りへ戻し
   （`stores/turn-selection.tsx` の `selectTurn`）、メインビューの質問の札までスクロールさせる。
-  スクロールの合図は **`stores/question-scroll.tsx`**（新規） という小さな Context 越しに運ぶ
-  ——`browser/` の機能どうしは import できないため、`stores/turn-selection.tsx` /
-  `stores/question-answer.tsx` と同じ形（Provider が持つ値を「いまの作業」と質問の札の両方が
-  読み書きする）。持つのは「押された回数」だけで、質問の札はその値が変わるたびに
+  スクロールの合図は **`stores/question-scroll.ts`** という小さな zustand の store 越しに運ぶ
+  ——`browser/` の機能どうしは import できないため、「いまの作業」と質問の札の両方が同じ store を
+  読み書きする。持つのは「押された回数」だけで、質問の札はその値が変わるたびに
   `cardRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" })` をやり直す
   （新しい質問が来たときと同じ経路。`question-ask.tsx`）
 

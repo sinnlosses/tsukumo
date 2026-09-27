@@ -4,10 +4,7 @@ import { act, cleanup, fireEvent, render, screen, within } from "@testing-librar
 
 import { ScreenNav } from "../../../../../src/browser/components/domain/screen-nav/screen-nav.tsx"
 import { parseHash } from "../../../../../src/browser/stores/location-hash.ts"
-import {
-  QuestionScrollContext,
-  type QuestionScrollValue,
-} from "../../../../../src/browser/stores/question-scroll.tsx"
+import { useQuestionScroll } from "../../../../../src/browser/stores/question-scroll.ts"
 import {
   type SessionStore,
   SessionStoreContext,
@@ -36,6 +33,8 @@ afterEach(() => {
   // 「質問へ」は会話の画面（`#`）へ hash を書き換える（`stores/screen.tsx`）ので、次のテストへ
   // 持ち越さない。
   window.location.hash = ""
+  // 押した回数はモジュール単位で残るので、次のテストへ持ち越さない。
+  useQuestionScroll.setState({ signal: 0 })
 })
 
 const FIXTURE_PENDING: PendingAsk = {
@@ -57,7 +56,6 @@ function renderScreenNav(
   state: Partial<SessionState> = {},
   options: {
     readonly selection?: Partial<TurnSelectionValue>
-    readonly scroll?: Partial<QuestionScrollValue>
   } = {},
 ): SessionStore {
   const store = sessionStoreWith({ ...INITIAL_SESSION_STATE, ...state })
@@ -67,13 +65,10 @@ function renderScreenNav(
     selectTurn: () => {},
     ...options.selection,
   }
-  const scroll: QuestionScrollValue = { signal: 0, requestScroll: () => {}, ...options.scroll }
   render(
     <SessionStoreContext.Provider value={store}>
       <TurnSelectionContext.Provider value={selection}>
-        <QuestionScrollContext.Provider value={scroll}>
-          <ScreenNav />
-        </QuestionScrollContext.Provider>
+        <ScreenNav />
       </TurnSelectionContext.Provider>
     </SessionStoreContext.Provider>,
   )
@@ -360,13 +355,10 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
   it("「質問へ」を押すと、一覧を閉じて会話の画面・最新のやり取りへ戻し、質問の札へのスクロールを合図する", () => {
     window.location.hash = "#character"
     const moved: number[] = []
-    let scrollCount = 0
+    const signalBefore = useQuestionScroll.getState().signal
     renderScreenNav(
       { pending: [questionPending(["最初の見出し"])] },
-      {
-        selection: { activeTurnId: 1, newestTurnId: 3, selectTurn: (id) => moved.push(id) },
-        scroll: { requestScroll: () => (scrollCount += 1) },
-      },
+      { selection: { activeTurnId: 1, newestTurnId: 3, selectTurn: (id) => moved.push(id) } },
     )
 
     fireEvent.click(workToggle())
@@ -375,7 +367,7 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
     expect(document.querySelector(".screen-nav-work-list")).toBeNull()
     expect(parseHash(window.location.hash).screen).toBe("conversation")
     expect(moved).toEqual([3])
-    expect(scrollCount).toBe(1)
+    expect(useQuestionScroll.getState().signal).toBe(signalBefore + 1)
   })
 
   it("答え終わると、質問の要約と「質問へ」が消えて元に戻る", () => {

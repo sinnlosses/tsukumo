@@ -4,10 +4,7 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 
 import { QuestionAsk } from "../../../../../../../../../src/browser/components/page/conversation/components/main-view/components/question-ask/question-ask.tsx"
 import { QuestionAnswerProvider } from "../../../../../../../../../src/browser/stores/question-answer.tsx"
-import {
-  QuestionScrollContext,
-  type QuestionScrollValue,
-} from "../../../../../../../../../src/browser/stores/question-scroll.tsx"
+import { useQuestionScroll } from "../../../../../../../../../src/browser/stores/question-scroll.ts"
 import { SessionStoreContext } from "../../../../../../../../../src/browser/stores/session.tsx"
 import {
   TurnSelectionContext,
@@ -25,6 +22,8 @@ import { type CommandSpy, sessionStoreWith } from "../../../../../../../session-
 
 afterEach(() => {
   cleanup()
+  // 押した回数はモジュール単位で残るので、次のテストへ持ち越さない。
+  useQuestionScroll.setState({ signal: 0 })
 })
 
 function option(label: string, extra: Partial<QuestionOption> = {}): QuestionOption {
@@ -46,7 +45,6 @@ function renderQuestionAsk(
   options: {
     readonly dispatch?: CommandSpy
     readonly selection?: Partial<TurnSelectionValue>
-    readonly scroll?: Partial<QuestionScrollValue>
   } = {},
 ): HTMLElement {
   const store = sessionStoreWith({ ...INITIAL_SESSION_STATE, pending }, options.dispatch)
@@ -56,15 +54,12 @@ function renderQuestionAsk(
     selectTurn: () => {},
     ...options.selection,
   }
-  const scroll: QuestionScrollValue = { signal: 0, requestScroll: () => {}, ...options.scroll }
   const { container } = render(
     <SessionStoreContext.Provider value={store}>
       <TurnSelectionContext.Provider value={selection}>
-        <QuestionScrollContext.Provider value={scroll}>
-          <QuestionAnswerProvider>
-            <QuestionAsk />
-          </QuestionAnswerProvider>
-        </QuestionScrollContext.Provider>
+        <QuestionAnswerProvider>
+          <QuestionAsk />
+        </QuestionAnswerProvider>
       </TurnSelectionContext.Provider>
     </SessionStoreContext.Provider>,
   )

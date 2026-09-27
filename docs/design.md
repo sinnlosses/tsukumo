@@ -399,8 +399,8 @@ components/page/<ページ>/
   ファイル。13.6）。**1本の hash の書き方は `stores/location-hash.ts` だけが知る**（`screen.tsx` と
   `turn-selection.tsx` の2つがここを通して読み書きする）。`stores/question-answer.tsx` は答え待ちの質問に対する
   **答えの組み立て**を配る Context（質問の札はメインビュー、自由入力は入力欄と、読み手が
-  2領域にまたがる）。`stores/question-scroll.tsx` は帯の「いまの作業」の一覧の「質問へ」から
-  メインビューの質問の札へスクロールしてほしいという**一回限りの合図**を配る Context。**どれも
+  2領域にまたがる）。`stores/question-scroll.ts` は帯の「いまの作業」の一覧の「質問へ」から
+  メインビューの質問の札へスクロールしてほしいという**一回限りの合図**を配る zustand の store。**どれも
   複数の領域が読む**ので領域の中に置けず、`app.tsx` に残すと領域が
   入口を import することになる（だから箱が要る）
 - **接続（`lib/socket.ts`）と再読み込み（`lib/refresh.ts`）は状態ではなく道具**なので `lib/`。

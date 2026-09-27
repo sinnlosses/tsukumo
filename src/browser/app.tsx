@@ -9,7 +9,6 @@ import { type ReactElement } from "react"
 
 import { Root } from "./components/app/root.tsx"
 import { QuestionAnswerProvider } from "./stores/question-answer.tsx"
-import { QuestionScrollProvider } from "./stores/question-scroll.tsx"
 import { SessionProvider } from "./stores/session.tsx"
 import { TurnSelectionProvider } from "./stores/turn-selection.tsx"
 
@@ -21,11 +20,7 @@ export function App(): ReactElement {
           {/* 答え待ちの質問に組み立てている答えは、メインビューの札と入力欄の両方が
             読み書きする（`stores/question-answer.tsx`）。 */}
           <QuestionAnswerProvider>
-            {/* 帯の「質問へ」からメインビューの質問の札へのスクロールの合図
-              （`stores/question-scroll.tsx`）。 */}
-            <QuestionScrollProvider>
-              <Root />
-            </QuestionScrollProvider>
+            <Root />
           </QuestionAnswerProvider>
         </TurnSelectionProvider>
       </SessionProvider>

@@ -45,7 +45,7 @@ sed -n '/^### 消すかどうか/,/^#\{2,4\} /p' docs/coding-standards.md
 | ### null は自前の型に出さない                   | `null` を書いてよい3つの場所と、境界で畳む理由                                                                                                                                                                                                                                                                 |
 | ## 会話内容の扱い                               | **会話（SDK のイベント・transcript）を外へ出さない**。最優先の規約。書き出す例外は3つ、読み戻して渡す例外は3つだけ                                                                                                                                                                                             |
 | ## 層と依存の向き                               | 4つの単位と、許した import の辺。命名（ファイルは単数形・置き場所のディレクトリ名）                                                                                                                                                                                                                            |
-| ## React                                        | `useEffect` を書いてよい4類型と、代わりに使うもの。**部品は `function` で書く**。**部品の中で部品を定義しない**。**条件付きの描画は `&&` で書く**                                                                                                                                                              |
+| ## React                                        | `useEffect` を書いてよい4類型と、代わりに使うもの。**部品は `function` で書く**。**部品の中で部品を定義しない**。**条件付きの描画は `&&` で書く**。**zustand の store の書き方と `useShallow` の使いどころ**                                                                                                   |
 | ## テスト                                       | 置き場所・モック・カバレッジ・消す/足す・E2E と目視の線・語彙に依存する期待値の直書き                                                                                                                                                                                                                          |
 | ## Bun固有APIに寄せない                         | `Bun.*` ではなく `node:` の標準APIを使う理由と、唯一の例外                                                                                                                                                                                                                                                     |
 | ## `Date` を使わない                            | 時刻は `Temporal` で扱う理由と、`no-restricted-globals` での検査                                                                                                                                                                                                                                               |
@@ -706,6 +706,30 @@ JSX の中で「条件が立ったときだけ描く」は `{条件 && <部品 /
 この左辺の型は lint では落とせない。oxlint には eslint-plugin-react の `jsx-no-leaked-render` に当たる
 ルールが無く、代わりになる `typescript/strict-boolean-expressions` は型情報付きの lint
 （`oxlint-tsgolint` の導入）が要るうえ、JSX に限らずすべての条件式に掛かる。
+
+### zustand の store
+
+`browser/stores/` に置く「画面全体で共有する状態」は zustand の `create()` で書く
+（`stores/question-scroll.ts`）。`Context` の `Provider` は作らない——store は `create()` が返す
+hook そのものが持ち、部品はどこからでもその hook を呼べる。
+
+```ts
+export const useQuestionScroll = create<QuestionScrollState>()((set) => ({
+  signal: 0,
+  requestScroll: () => set((state) => ({ signal: state.signal + 1 })),
+}))
+```
+
+部品は**自分が読む値だけ**をセレクタで購読する（`useQuestionScroll((state) => state.signal)`）。
+セレクタが**その場で配列・オブジェクトを新しく作って返す**とき（複数のフィールドをまとめて
+返す、フィルタした配列を返すなど）だけ `useShallow` で包む——包まないと、参照が毎回変わり
+読んでいる値が変わっていなくても描き直しが止まらない（`stores/session.tsx` の
+`useSessionSelector` が `useSyncExternalStore` で守っているのと同じ罠）。1つのフィールドだけを
+返すセレクタには要らない。
+
+テストで姿を差し込みたいときは `Provider` の代わりに store を直接操作する。`getState()` /
+`setState()` は React の外からも呼べるので、`afterEach` で初期値に戻す
+（`test/browser/components/domain/screen-nav/current-work.test.tsx`）。
 
 ## テスト
 

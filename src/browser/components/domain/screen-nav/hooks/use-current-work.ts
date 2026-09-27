@@ -35,7 +35,7 @@ import {
 import { DEFAULT_CHARACTER_NAME } from "../../../../domain/portrait-appearance.ts"
 import { useDismissSignal, type DismissCause } from "../../../../hooks/use-dismiss-signal.ts"
 import { summarizeToolInput, toolInputText } from "../../../../lib/tool-summary.ts"
-import { useQuestionScroll } from "../../../../stores/question-scroll.tsx"
+import { useQuestionScroll } from "../../../../stores/question-scroll.ts"
 import { navigateTo, useScreen } from "../../../../stores/screen.tsx"
 import { useSessionSelector, useTurnRunning } from "../../../../stores/session.tsx"
 import { useTurnSelection } from "../../../../stores/turn-selection.tsx"
@@ -219,7 +219,7 @@ export function useCurrentWork(navRef: RefObject<HTMLElement | null>): ScreenNav
   const characterName = useSessionSelector((session) => session.state.character?.name)
   const screen = useScreen()
   const { activeTurnId, newestTurnId, selectTurn } = useTurnSelection()
-  const { requestScroll } = useQuestionScroll()
+  const requestScroll = useQuestionScroll((state) => state.requestScroll)
 
   const [open, setOpen] = useState(false)
   const [expanded, setExpanded] = useState(false)
@@ -265,7 +265,7 @@ export function useCurrentWork(navRef: RefObject<HTMLElement | null>): ScreenNav
 
   // 質問へ（`docs/screen-design.md` 13.9「いまの作業」）。一覧を閉じ、キャラクター/トークン消費の
   // 画面を見ていれば会話の画面へ戻し、過去のやり取りを見ていれば最新へ戻してから、メインビューの
-  // 質問の札までスクロールさせる（`stores/question-scroll.tsx`）。
+  // 質問の札までスクロールさせる（`stores/question-scroll.ts`）。
   const onGoToQuestion = useCallback((): void => {
     setOpen(false)
     setExpanded(false)

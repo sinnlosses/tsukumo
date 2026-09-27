@@ -251,7 +251,6 @@ export const COMMENT_REFERENCE_BACKLOG = [
   "src/browser/stores/location-hash.ts",
   "src/browser/stores/main-view-turn.ts",
   "src/browser/stores/question-answer.tsx",
-  "src/browser/stores/question-scroll.tsx",
   "src/browser/stores/screen.tsx",
   "src/browser/stores/session.tsx",
   "src/browser/stores/turn-selection.tsx",

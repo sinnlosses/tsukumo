@@ -7,7 +7,6 @@ import { QuestionRecord } from "../../../../../../../src/browser/components/page
 import { MainView } from "../../../../../../../src/browser/components/page/conversation/components/main-view/main-view.tsx"
 import { BRUSH_ORIGIN_ATTRIBUTE } from "../../../../../../../src/browser/domain/reveal/brush-tip.ts"
 import { QuestionAnswerProvider } from "../../../../../../../src/browser/stores/question-answer.tsx"
-import { QuestionScrollProvider } from "../../../../../../../src/browser/stores/question-scroll.tsx"
 import {
   type SessionStore,
   SessionStoreContext,
@@ -71,9 +70,7 @@ function renderMainView(
       <SessionStoreContext.Provider value={store}>
         <TurnSelectionProvider>
           <QuestionAnswerProvider>
-            <QuestionScrollProvider>
-              <MainView />
-            </QuestionScrollProvider>
+            <MainView />
           </QuestionAnswerProvider>
         </TurnSelectionProvider>
       </SessionStoreContext.Provider>
