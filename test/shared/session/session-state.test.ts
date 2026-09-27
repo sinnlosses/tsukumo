@@ -542,6 +542,63 @@ describe("applySessionEvent", () => {
     expect(restarted.turn).toEqual({ kind: "running", startedAt: 400 })
   })
 
+  it("turn-resumed は始まった時刻を付け直さない（背景のタスクを挟んだ続きのターンでも、入力欄の経過時間が依頼を送った時刻から数え続ける）", () => {
+    const started = applySessionEvent(
+      INITIAL_SESSION_STATE,
+      { kind: "request", text: "背景へ委譲する依頼", images: [] },
+      100,
+    )
+    expect(started.turn).toEqual({ kind: "running", startedAt: 100 })
+
+    // メインが背景のタスクへ委譲してターンを終えても、背景のタスクは残ったまま
+    // （`turn-finished` は `backgroundTasks` を空にしない）。
+    const delegated = applySessionEvent(
+      started,
+      {
+        kind: "background-tasks-changed",
+        tasks: [{ taskId: "task-1", kind: "agent", description: "架空の委譲" }],
+      },
+      150,
+    )
+    const finished = applySessionEvent(
+      delegated,
+      { kind: "turn-finished", outcome: { kind: "completed" } },
+      300,
+    )
+    expect(finished.turn).toEqual({
+      kind: "finished",
+      startedAt: 100,
+      finishedAt: 300,
+      ending: { kind: "ended" },
+    })
+    expect(finished.backgroundTasks).toEqual([
+      { taskId: "task-1", kind: "agent", description: "架空の委譲" },
+    ])
+
+    // 背景のタスクが終わり、claude が自分で始めた続きのターン（`turn-resumed`）が届く。
+    // 起点はここで付け直さず、最初の依頼を送った時刻（100）のまま。
+    const clearedBackground = applySessionEvent(
+      finished,
+      { kind: "background-tasks-changed", tasks: [] },
+      950,
+    )
+    const resumed = applySessionEvent(clearedBackground, { kind: "turn-resumed" }, 1_000)
+    expect(resumed.turn).toEqual({ kind: "running", startedAt: 100 })
+
+    // その続きのターンが終わったときの所要時間も、最初の依頼からの時間になる。
+    const finishedAgain = applySessionEvent(
+      resumed,
+      { kind: "turn-finished", outcome: { kind: "completed" } },
+      1_500,
+    )
+    expect(finishedAgain.turn).toEqual({
+      kind: "finished",
+      startedAt: 100,
+      finishedAt: 1_500,
+      ending: { kind: "ended" },
+    })
+  })
+
   it("lastTurnFinishedAt は turn が running に戻っても前の値のまま、次の turn-finished で進む（サイドバーの使用量の行・トークン消費の画面の取り直しの合図。受け入れの確認で見つかった不具合の再現）", () => {
     expect(INITIAL_SESSION_STATE.lastTurnFinishedAt).toBeUndefined()
 

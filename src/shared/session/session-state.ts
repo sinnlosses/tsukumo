@@ -208,12 +208,15 @@ export type SessionInfo =
  * `finished` になる（入力欄が送信と中断を切り替える判断材料。docs/requirements.md 4.7）。
  *
  * - `idle`: まだ一度も依頼が無い
- * - `running`: 依頼を送って、まだ終わっていない
+ * - `running`: 依頼を送って、まだ終わっていない。委譲した続きを claude が自分で始めたとき
+ *   （`turn-resumed`）も `startedAt` は付け直さず、依頼を送った時刻のまま引き継ぐ
+ *   （`resumeTurn`）
  * - `finished`: 終わった。`startedAt` は次の `request` まで持ち続ける
- *   （入力欄の経過時間表示 `src/browser/components/page/conversation/components/dispatch/components/turn-status/turn-status.tsx` が「所要」として
+ *   （入力欄の経過時間表示 `src/browser/components/page/conversation/components/dispatch/components/turn-status/hooks/use-turn-status.ts` が「所要」として
  *   出し続ける。docs/design.md 4.2）。`ending` は失敗で終わったか（{@link TurnEnding}。
  *   入力欄の「失敗」の字と、立ち絵の「失敗でびくっ」の材料。`session-ended` で終わったときは
- *   `ended`）
+ *   `ended`）。ここが `finished` でも {@link SessionState.backgroundTasks} が残っていれば
+ *   入力欄は「経過」のまま数え続ける（`use-turn-status.ts` の `isCounting`）
  *
  * 「進行中か」「始まった時刻」「終わった時刻」の3つを並べて持つと、型としては書けるのに
  * 起きない組み合わせ（終わっているのに始まっていない、進行中なのに終わった時刻がある）が
@@ -1025,14 +1028,15 @@ function lastTurnFinishedAtOf(state: SessionState, at: number): number | undefin
 /**
  * claude が自分で始めた続きのターン（`turn-resumed`）。進行中の印と SDK ターンごとの持ち物は
  * {@link beginTurn} と同じに戻すが、吹き出しのセリフと表情は持ち越し、ターンの通し番号も
- * 進めない（新しいやり取りではなく、同じやり取りの続き）。
+ * 進めない（新しいやり取りではなく、同じやり取りの続き）。始まった時刻も付け直さない
+ * （入力欄の経過時間が、背景のタスクを挟んだ続きのターンでも依頼を送った時刻から数える）。
  */
 function resumeTurn(state: SessionState, at: number): SessionState {
   return {
     ...state,
     partialUtterance: "",
     reportDrafting: { kind: "idle" },
-    turn: { kind: "running", startedAt: at },
+    turn: { kind: "running", startedAt: state.turn.kind === "idle" ? at : state.turn.startedAt },
     bodiesInTurn: NO_TURN_BODIES,
     apiTrouble: { kind: "none" },
   }

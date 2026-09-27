@@ -1,8 +1,9 @@
 // `<TurnStatus>` のロジック（docs/design.md 2章「機能の中を分ける」の container / presenter）。
 // 経過時間の刻みと、送信⇄中断のどちらを出すかを畳んだ値にして返す。
 //
-// 経過時間は `state.turn` が持つ始まった時刻から数え、終わっていればその時刻で止まる
-// （1秒の刻みはここのローカルなタイマー。`SessionState` に秒数は持たない。docs/design.md
+// 経過時間は `state.turn` が持つ始まった時刻から数える。ターンが終わっていても
+// `backgroundTasks` が残っている間は「経過」のまま数え続け、残っていないターンの終わりで
+// 初めてその時刻に止まる（1秒の刻みはここのローカルなタイマー。`SessionState` に秒数は持たない。docs/design.md
 // 4.2 / 6.2）。
 //
 // 押す先を決めるのもここ。 進行中でなければ `type="submit"` で、押すと `<Composer>` の
@@ -91,26 +92,23 @@ export function useTurnStatus(): TurnStatusModel {
   const turn = useSession((session) => session.state.turn)
   const apiTrouble = useSession((session) => session.state.apiTrouble)
   const rateLimit = useSession((session) => session.state.rateLimit)
+  const backgroundTaskCount = useSession((session) => session.state.backgroundTasks.length)
   const [now, setNow] = useState(() => nowEpochMilliseconds())
+  const counting = isCounting(turn, backgroundTaskCount)
 
-  // 進行中の間だけ1秒ごとに刻む。終わったら止める（終わった時刻で経過時間が固定されるので、
+  // 数えている間だけ1秒ごとに刻む。終わったら止める（終わった時刻で経過時間が固定されるので、
   // タイマーは要らない）。
   useEffect(() => {
-    if (turn.kind !== "running") {
+    if (!counting) {
       return undefined
     }
     const timer = setInterval(() => setNow(nowEpochMilliseconds()), TICK_INTERVAL_MS)
     return () => clearInterval(timer)
-  }, [turn])
+  }, [counting])
 
   return {
-    elapsedLabel:
-      turn.kind === "finished"
-        ? turn.ending.kind === "failed"
-          ? FAILED_LABEL
-          : FINISHED_LABEL
-        : ELAPSED_LABEL,
-    elapsedText: elapsedText(turn, now),
+    elapsedLabel: elapsedLabel(turn, backgroundTaskCount),
+    elapsedText: elapsedText(turn, backgroundTaskCount, now),
     action:
       turn.kind === "running" && question.kind !== "asking"
         ? {
@@ -188,14 +186,29 @@ function sendLabel(lastQuestion: boolean | undefined): string {
   return lastQuestion ? ANSWER_LABEL : NEXT_LABEL
 }
 
+/** 依頼を送ってから、まだ数え続けているか。ターンが終わっていても背景のタスクが残っている間は数える。 */
+function isCounting(turn: TurnProgress, backgroundTaskCount: number): boolean {
+  return turn.kind === "running" || (turn.kind === "finished" && backgroundTaskCount > 0)
+}
+
+/** 経過時間に添える字。{@link isCounting} の間は「経過」、そうでなければ「所要」・「失敗」。 */
+function elapsedLabel(turn: TurnProgress, backgroundTaskCount: number): string {
+  if (turn.kind !== "finished" || backgroundTaskCount > 0) {
+    return ELAPSED_LABEL
+  }
+  return turn.ending.kind === "failed" ? FAILED_LABEL : FINISHED_LABEL
+}
+
 /**
  * 経過（進行中）・所要（終わったあと）として出す文字列。まだ一度も依頼が無ければ `-`。
- * `now` を使うのは進行中のときだけで、終わったターンは終わった時刻で固定される。
+ * `now` を使うのは {@link isCounting} の間だけで、数え終わったターンは終わった時刻で固定される。
  */
-function elapsedText(turn: TurnProgress, now: number): string {
+function elapsedText(turn: TurnProgress, backgroundTaskCount: number, now: number): string {
   if (turn.kind === "idle") {
     return "-"
   }
-  const until = turn.kind === "finished" ? turn.finishedAt : now
-  return formatElapsed(Math.max(0, Math.floor((until - turn.startedAt) / 1000)))
+  if (turn.kind === "finished" && backgroundTaskCount === 0) {
+    return formatElapsed(Math.max(0, Math.floor((turn.finishedAt - turn.startedAt) / 1000)))
+  }
+  return formatElapsed(Math.max(0, Math.floor((now - turn.startedAt) / 1000)))
 }
