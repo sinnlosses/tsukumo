@@ -1,6 +1,5 @@
-import { afterEach, describe, expect, it } from "bun:test"
-
 import { cleanup, render, screen } from "@testing-library/react"
+import { afterEach, describe, expect, it } from "vitest"
 
 import { Text, type TextProps } from "../../../../../src/browser/components/ui/text/text.tsx"
 

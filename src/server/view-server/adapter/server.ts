@@ -4,6 +4,7 @@
 // で、中身は配線の `createRouter` が束ねたルータ、照合は `rpcGuard` のミドルウェア。
 // フレームとコマンドが通る WebSocket は別の境界（接続を扱うアダプタ。listen 済みのこのサーバに
 // 受け口を足す）。
+// Vite の開発サーバを差し込んだ起動では、経路の表に無い要求をそちらへ回す（`ViewUi` の `dev`）。
 //
 // `Bun.serve` は使わない（`node:http`。docs/coding-standards.md「Bun固有APIに寄せない」）。
 //
@@ -35,7 +36,9 @@ import {
 import { RPC_PATH, type rpcContract } from "../../../shared/rpc.ts"
 import { SESSION_TOKEN_QUERY_NAME } from "../../../shared/session-socket.ts"
 import { VENDOR_PATH_PREFIX, vendorAssetPath } from "../../../shared/vendor-asset.ts"
+import { type UiBundle } from "./bundle.ts"
 import { type RpcContext, rpcContextOf } from "./rpc-guard.ts"
+import { type UiDevServer } from "./ui-dev-server.ts"
 import { readVendorAsset } from "./vendor-asset.ts"
 
 /**
@@ -67,14 +70,12 @@ function styleSheetPath(): string {
 }
 
 /**
- * ブラウザに配る2つの成果物の取り出し口。値ではなく関数なのは、開発中に組み立て直したものへ
- * 差し替わるため（見張るアダプタ）。呼ぶたびに今の版を返す契約で、サーバはどちらが
- * 今の版かを自分では持たない。
+ * ブラウザ側をどこから配るか。`bundle` は組み立て済みのスクリプトと CSS の対を `/assets/` から、
+ * `dev` は Vite の開発サーバが入口から辿るモジュールを、ここの経路に無い要求として配る。
  */
-export type ViewAssets = {
-  readonly uiScript: () => string
-  readonly styleSheet: () => string
-}
+export type ViewUi =
+  | { readonly kind: "bundle"; readonly bundle: UiBundle }
+  | { readonly kind: "dev"; readonly devServer: UiDevServer }
 
 /** `/character/<pack>/<file>` を1件配るために要るもの。中身はキャラクターパックを読むアダプタが決める。 */
 export type CharacterAssetFile = {
@@ -115,11 +116,10 @@ const BIND_HOST = "127.0.0.1"
 /** {@link startViewServer} が配るために要るもの一式（渡すのは配線）。 */
 export type ViewServerOptions = {
   /**
-   * ブラウザ側スクリプトと CSS の取り出し口（束ねるアダプタが読んだもの）。
-   * 見張りが組み立て直すと差し替わるので、持ち主は呼び出し側 = 配線で、
-   * ここは要求のたびに引きに行く。
+   * いまのブラウザ側の配り方。動作中に `dev` から `bundle` へ替わりうるので、
+   * 要求のたびに引く。
    */
-  readonly assets: ViewAssets
+  readonly ui: () => ViewUi
   /**
    * `/character/<pack>/<file>` の1件を配ってよい形にする（キャラクターパックを読むアダプタの
    * `readCharacterAsset` を束ねたもの）。
@@ -231,33 +231,22 @@ const ROUTES = [
     match: { kind: "exact", path: LAYOUT_PATH },
     method: "ANY",
     requiresToken: false,
-    handle: (_request, response) => writeHtml(response, buildLayoutPage()),
+    handle: (request, response, _path, { options }) =>
+      writeLayoutPage(request, response, options.ui()),
   },
   {
     match: { kind: "exact", path: uiScriptPath() },
     method: "GET",
     requiresToken: false,
-    handle: (_request, response, _path, { options }) => {
-      // 組み立てたブラウザ側スクリプト（`src/browser/`）。ディスクには無いので、vendor と違って
-      // ファイルを読みに行かない。
-      response.writeHead(200, {
-        "content-type": "text/javascript; charset=utf-8",
-        "cache-control": "no-store",
-      })
-      response.end(options.assets.uiScript())
-    },
+    handle: (_request, response, _path, { options }) =>
+      writeBundledAsset(response, options.ui(), "text/javascript", (bundle) => bundle.uiScript),
   },
   {
     match: { kind: "exact", path: styleSheetPath() },
     method: "GET",
     requiresToken: false,
-    handle: (_request, response, _path, { options }) => {
-      response.writeHead(200, {
-        "content-type": "text/css; charset=utf-8",
-        "cache-control": "no-store",
-      })
-      response.end(options.assets.styleSheet())
-    },
+    handle: (_request, response, _path, { options }) =>
+      writeBundledAsset(response, options.ui(), "text/css", (bundle) => bundle.styleSheet),
   },
   {
     match: { kind: "prefix", prefix: VENDOR_PATH_PREFIX },
@@ -311,8 +300,12 @@ function respond(
 ): void {
   const route = findRoute(path, request.method)
   if (route === undefined) {
-    response.writeHead(404, { "content-type": "text/plain; charset=utf-8" })
-    response.end("not found\n")
+    const ui = runtime.options.ui()
+    if (ui.kind === "dev") {
+      ui.devServer.handle(request, response, () => writeNotFound(response))
+      return
+    }
+    writeNotFound(response)
     return
   }
 
@@ -326,25 +319,76 @@ function respond(
 }
 
 /**
+ * ページを配る。`dev` のときは開発サーバが HMR の client を差し込んだものを配り、
+ * 差し込めなかったら 500 にする。
+ */
+function writeLayoutPage(request: IncomingMessage, response: ServerResponse, ui: ViewUi): void {
+  if (ui.kind === "bundle") {
+    writeHtml(response, buildLayoutPage([styleSheetPath()], uiScriptPath()))
+    return
+  }
+
+  ui.devServer
+    .transformPage(request.url ?? LAYOUT_PATH, buildLayoutPage([], ui.devServer.entryScriptPath))
+    .then(
+      (html) => writeHtml(response, html),
+      () => {
+        response.writeHead(500, { "content-type": "text/plain; charset=utf-8" })
+        response.end("internal server error\n")
+      },
+    )
+}
+
+/**
+ * 組み立て済みの対の片方を配る。ディスクには無いので、vendor と違ってファイルを読みに行かない。
+ * `dev` のときは対を持っていないので 404。
+ */
+function writeBundledAsset(
+  response: ServerResponse,
+  ui: ViewUi,
+  contentType: string,
+  pick: (bundle: UiBundle) => string,
+): void {
+  if (ui.kind !== "bundle") {
+    writeNotFound(response)
+    return
+  }
+
+  response.writeHead(200, {
+    "content-type": `${contentType}; charset=utf-8`,
+    "cache-control": "no-store",
+  })
+  response.end(pick(ui.bundle))
+}
+
+function writeNotFound(response: ServerResponse): void {
+  response.writeHead(404, { "content-type": "text/plain; charset=utf-8" })
+  response.end("not found\n")
+}
+
+/**
  * ページ本体。中身は `<div id="app">` だけ（メインビュー・キャラビュー・サイドバー・
  * 入力欄のすべてが React の部品になり、ブラウザ側の入口が1つの root として mount する。
  * 移行の段6。段の記録は `docs/history/decision.md`「design.md 12. 移行の段階」）。ページを丸ごと再読み込みしない理由は
  * `docs/architecture.md`「ビューの更新は Server-Sent Events で押す」（更新は今は WebSocket）
  * を参照。
  */
-function buildLayoutPage(): string {
+function buildLayoutPage(ownStyleSheets: readonly string[], script: string): string {
+  const styleSheetLinks = [vendorAssetPath("highlight-theme.min.css"), ...ownStyleSheets]
+    .map((href) => `<link rel="stylesheet" href="${href}">`)
+    .join("\n")
+
   return `<!doctype html>
 <html lang="ja">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>tsukumo</title>
-<link rel="stylesheet" href="${vendorAssetPath("highlight-theme.min.css")}">
-<link rel="stylesheet" href="${styleSheetPath()}">
+${styleSheetLinks}
 </head>
 <body>
 <div id="app"></div>
-<script type="module" src="${uiScriptPath()}"></script>
+<script type="module" src="${script}"></script>
 </body>
 </html>
 `

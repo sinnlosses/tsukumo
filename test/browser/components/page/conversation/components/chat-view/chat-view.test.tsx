@@ -1,7 +1,6 @@
-import { afterEach, describe, expect, it, spyOn } from "bun:test"
-
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
+import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { ChatView } from "../../../../../../../src/browser/components/page/conversation/components/chat-view/chat-view.tsx"
 import { type Expression } from "../../../../../../../src/shared/expression.ts"
@@ -436,7 +435,7 @@ describe("ChatView のセリフが現れる（docs/screen-design.md 13.7）", ()
   })
 
   it("続けて届いた2件目は、前の吹き出しから2秒空くまで出ない（そのあいだ「...」が出る）", async () => {
-    const clock = spyOn(Temporal.Now, "instant")
+    const clock = vi.spyOn(Temporal.Now, "instant")
     clock.mockReturnValue(Temporal.Instant.fromEpochMilliseconds(0))
     try {
       renderChatView({

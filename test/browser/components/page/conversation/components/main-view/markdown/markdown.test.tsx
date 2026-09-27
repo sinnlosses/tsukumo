@@ -1,7 +1,6 @@
-import { afterEach, describe, expect, it } from "bun:test"
-
 import { cleanup, fireEvent, render } from "@testing-library/react"
 import { act, type ReactNode } from "react"
+import { afterEach, describe, expect, it } from "vitest"
 
 import { Markdown } from "../../../../../../../../src/browser/components/page/conversation/components/main-view/markdown/markdown.tsx"
 import { RepositoryFileLinkContext } from "../../../../../../../../src/browser/components/page/conversation/components/main-view/markdown/repository-link.tsx"

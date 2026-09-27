@@ -1,4 +1,4 @@
-import { describe, expect, it } from "bun:test"
+import { describe, expect, it } from "vitest"
 
 import { CHAT_MANNER_PROMPT } from "../../../../src/server/chat/core/chat-manner.ts"
 import { takeChatMemoryPromptParts } from "../../../../src/server/chat/core/chat-memory-prompt.ts"

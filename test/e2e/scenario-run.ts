@@ -10,7 +10,6 @@
 // 成果物に入るのは疑似セッション（`test/fixture/fake-session.json`）の手書きの会話だけ
 // （docs/coding-standards.md「会話内容の扱い」）。起動トークンと絶対パスは置き換えてから書く。
 
-import { afterAll, afterEach, beforeAll, expect } from "bun:test"
 import { type ChildProcess, spawn } from "node:child_process"
 import {
   existsSync,
@@ -27,6 +26,7 @@ import process from "node:process"
 import { fileURLToPath } from "node:url"
 
 import { type Browser, chromium, type Page } from "playwright-core"
+import { afterAll, afterEach, beforeAll, expect } from "vitest"
 
 /** サーバとブラウザの時計を凍らせる瞬間（走らせる日に依らない固定の値）。 */
 const FIXED_INSTANT = "2026-01-15T01:00:00Z"
@@ -244,7 +244,6 @@ function spawnTsukumo(scene: string, home: string, cwd: string): ChildProcess {
       ...(scene === "none" ? {} : { TSUKUMO_FAKE_SCENE: scene }),
       TSUKUMO_VIEW_PORT: "0",
       TSUKUMO_OPEN_VIEW: "0",
-      TSUKUMO_WATCH_UI: "0",
       TSUKUMO_HOME: home,
       TSUKUMO_FIXED_CLOCK: FIXED_INSTANT,
       TZ: TIME_ZONE,

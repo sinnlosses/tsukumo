@@ -1,6 +1,5 @@
-import { afterEach, describe, expect, it } from "bun:test"
-
 import { cleanup, render, screen } from "@testing-library/react"
+import { afterEach, describe, expect, it } from "vitest"
 
 import { BalloonTrack } from "../../../../../../../../../src/browser/components/page/conversation/components/character-view/components/balloon-track/balloon-track.tsx"
 

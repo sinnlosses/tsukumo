@@ -1,8 +1,9 @@
-import { afterEach, beforeEach, describe, expect, it } from "bun:test"
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs"
 import { homedir, tmpdir } from "node:os"
 import { join } from "node:path"
 import process from "node:process"
+
+import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import { tsukumoHomeDir } from "../../../src/server/adapter/tsukumo-home.ts"
 import { homeCharacterDir } from "../../../src/server/character-pack/adapter/character-pack.ts"

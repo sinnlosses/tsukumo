@@ -1,4 +1,4 @@
-import { describe, expect, it } from "bun:test"
+import { describe, expect, it } from "vitest"
 
 import { clockDateTime, clockTime, zonedDateTime } from "../../../src/browser/utils/clock.ts"
 

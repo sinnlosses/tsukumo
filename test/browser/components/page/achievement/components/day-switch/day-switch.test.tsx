@@ -1,6 +1,5 @@
-import { afterEach, describe, expect, it } from "bun:test"
-
 import { cleanup, render, screen } from "@testing-library/react"
+import { afterEach, describe, expect, it } from "vitest"
 
 import { DaySwitch } from "../../../../../../../src/browser/components/page/achievement/components/day-switch/day-switch.tsx"
 import { type AchievementDaySwitch } from "../../../../../../../src/browser/components/page/achievement/hooks/use-achievement.ts"

@@ -1,7 +1,6 @@
-import { afterEach, describe, expect, it } from "bun:test"
-
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { useRef, useState, type ReactElement } from "react"
+import { afterEach, describe, expect, it } from "vitest"
 
 import { LayoutResizer } from "../../../../../../../../../src/browser/components/page/conversation/components/conversation-layout/components/layout-resizer/layout-resizer.tsx"
 

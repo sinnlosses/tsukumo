@@ -5,10 +5,9 @@
 // 雑談中は4段に差し替わる（docs/screen-design.md 13.7「雑談のときのサイドバー」）: プロフィールの札・
 // 最近の話題・覚えていること・セッション。タスク一覧は出さない。
 
-import { afterEach, describe, expect, it } from "bun:test"
-
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { cleanup, render, screen } from "@testing-library/react"
+import { afterEach, describe, expect, it } from "vitest"
 
 import { Sidebar } from "../../../../../src/browser/components/domain/sidebar/sidebar.tsx"
 import {

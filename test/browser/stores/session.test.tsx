@@ -3,10 +3,9 @@
 //
 // フィクスチャはすべて手で書いた架空の依頼・許可要求（docs/coding-standards.md「会話内容の扱い」）。
 
-import { afterEach, describe, expect, it } from "bun:test"
-
 import { act, cleanup, render, screen } from "@testing-library/react"
 import { Profiler, type ReactElement } from "react"
+import { afterEach, describe, expect, it } from "vitest"
 
 import { PendingAnswer } from "../../../src/browser/components/page/conversation/components/dispatch/components/pending-answer/pending-answer.tsx"
 import { useSession } from "../../../src/browser/stores/session.ts"

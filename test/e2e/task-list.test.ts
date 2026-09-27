@@ -1,6 +1,7 @@
-import { describe, it } from "bun:test"
 import { mkdirSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
+
+import { describe, it } from "vitest"
 
 import { runSubprocessOrThrow } from "../fixture/subprocess.ts"
 import { useScenarioRun } from "./scenario-run.ts"

@@ -1,7 +1,8 @@
-import { afterEach, beforeEach, describe, expect, it } from "bun:test"
 import { mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
+
+import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import { createContextUsageLog } from "../../../../src/server/context-usage/adapter/context-usage-log.ts"
 import { type ContextUsageEntry } from "../../../../src/server/context-usage/core/context-usage.ts"

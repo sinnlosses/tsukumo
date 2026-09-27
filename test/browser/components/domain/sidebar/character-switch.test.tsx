@@ -3,9 +3,8 @@
 // と対）ので、選択肢・値・塞ぐ条件・送るコマンドはここで1回だけ測る。呼び出す側のテストは
 // 自分が `CharacterSwitch` を正しく置いているかだけを見る。
 
-import { afterEach, describe, expect, it } from "bun:test"
-
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
+import { afterEach, describe, expect, it } from "vitest"
 
 import { CharacterSwitch } from "../../../../../src/browser/components/domain/sidebar/character-switch.tsx"
 import { FRAME_ERROR_REASON } from "../../../../../src/shared/frame.ts"

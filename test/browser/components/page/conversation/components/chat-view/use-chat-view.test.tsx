@@ -1,7 +1,6 @@
-import { afterEach, describe, expect, it, spyOn } from "bun:test"
-
 import { act, cleanup, renderHook } from "@testing-library/react"
 import { type ReactElement, type ReactNode } from "react"
+import { afterEach, describe, expect, it, vi } from "vitest"
 
 import {
   useChatView,
@@ -196,8 +195,8 @@ describe("useChatView の弾む行", () => {
 
 describe("useChatView の出すタイミング（docs/screen-design.md 13.7）", () => {
   /** `Temporal.Now.instant` を差し込み、`use-speech-reveal.ts` が読む「いま」を固定する。 */
-  function mockNow(ms: number): ReturnType<typeof spyOn> {
-    const clock = spyOn(Temporal.Now, "instant")
+  function mockNow(ms: number): ReturnType<typeof vi.spyOn> {
+    const clock = vi.spyOn(Temporal.Now, "instant")
     clock.mockReturnValue(Temporal.Instant.fromEpochMilliseconds(ms))
     return clock
   }

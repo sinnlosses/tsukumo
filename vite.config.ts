@@ -16,6 +16,11 @@ export default defineConfig({
   // tsconfig の `verbatimModuleSyntax` のままだと `import "hast"` が残り、
   // 型しか持たないパッケージを解決できずに組み立てが止まる。
   oxc: { typescript: { onlyRemoveTypeImports: false } },
+  // 開発サーバが依存を先に束ねる前の走査は、上の `oxc` を読まずに自分の変換を使う。
+  // 同じ指定が無いと `hast` を依存として探し、走査ごと諦める。
+  optimizeDeps: {
+    rolldownOptions: { transform: { typescript: { onlyRemoveTypeImports: false } } },
+  },
   build: {
     emptyOutDir: true,
     minify: false,

@@ -1,6 +1,5 @@
-import { describe, expect, it } from "bun:test"
-
 import { type McpSdkServerConfigWithInstance } from "@anthropic-ai/claude-agent-sdk"
+import { describe, expect, it } from "vitest"
 import { z } from "zod"
 
 import { createReportReview } from "../../../../src/server/report/core/report-review.ts"

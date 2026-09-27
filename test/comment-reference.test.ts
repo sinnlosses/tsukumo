@@ -1,6 +1,7 @@
-import { describe, expect, it } from "bun:test"
 import { readdirSync, readFileSync, statSync } from "node:fs"
 import { fileURLToPath } from "node:url"
+
+import { describe, expect, it } from "vitest"
 
 import { commentLineIndexes } from "./comment-line.ts"
 import { COMMENT_REFERENCE_BACKLOG } from "./comment-reference-backlog.ts"

@@ -28,11 +28,17 @@ import {
 import { startSession } from "./session-start.ts"
 import { startViewDelivery } from "./view-delivery.ts"
 
+/** 環境変数ではなく起動の引数で選ぶもの。 */
+export type LaunchOptions = {
+  /** Vite の開発サーバを差し込むか（`--dev`）。 */
+  readonly devServer: boolean
+}
+
 /**
  * 起動の段取りを順に進め、終了コードを返す。0 のときはビューサーバとセッションを残したまま
  * プロセスを生かし続けるので、呼び出し側は 0 以外のときだけ `process.exit` する。
  */
-export async function run(config: Config): Promise<number> {
+export async function run(config: Config, launch: LaunchOptions): Promise<number> {
   // 起動時に前提（ポート番号として読める）が満たされていないときだけ即時終了する。
   const portResolution = resolveViewPort(
     config.rawViewPort,
@@ -45,7 +51,7 @@ export async function run(config: Config): Promise<number> {
 
   // ブラウザ側スクリプトと CSS は事前に組み立てて置いてあるものを読むだけ
   // （`src/server/view-server/adapter/bundle.ts` 冒頭）。起動の経路から `vite build` は消えていて、作るのは
-  // `bun run build` と `bun run dev` の見張りだけ。無ければページが動かないので、ここは
+  // `bun run build` だけ。無ければページが動かないので、ここは
   // 起動時の前提不足として即時終了する（理由に `bun run build` を添える。理由が無いと、
   // 起動できない側は何を打てばよいか分からない）。
   const built = await readUiBundle()
@@ -85,7 +91,7 @@ export async function run(config: Config): Promise<number> {
     character,
     tokenUsageLog,
     promptImageShelf,
-    watchSource: config.watchUi,
+    devServer: launch.devServer,
   })
   if (!view.ok) {
     process.stderr.write(`tsukumo: ビューを配れない: ${view.reason}\n`)

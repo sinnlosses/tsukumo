@@ -4,10 +4,11 @@
 // このファイル自身も拾われる側なので、タスク番号の形の文字列は数値を変数に分けて組み立てる
 // （ソースに `T-` + 3桁以上の並びがそのまま現れないようにする）。
 
-import { describe, expect, test } from "bun:test"
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
+
+import { describe, expect, test } from "vitest"
 
 import { collectStrayTaskMentions } from "../../scripts/lib/task-mention-repository.ts"
 import {

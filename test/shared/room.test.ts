@@ -1,4 +1,4 @@
-import { describe, expect, it } from "bun:test"
+import { describe, expect, it } from "vitest"
 
 import { DEFAULT_VIEW_PORT } from "../../src/server/view-server/core/port-resolution.ts"
 import { FIRST_ROOM_PORT, roomName } from "../../src/shared/room.ts"

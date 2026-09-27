@@ -1,6 +1,5 @@
-import { afterEach, describe, expect, it } from "bun:test"
-
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
+import { afterEach, describe, expect, it } from "vitest"
 
 import { SessionSwitch } from "../../../../../src/browser/components/domain/sidebar/session-switch.tsx"
 import { FRAME_ERROR_REASON } from "../../../../../src/shared/frame.ts"

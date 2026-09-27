@@ -1,7 +1,6 @@
-import { afterEach, describe, expect, it, spyOn } from "bun:test"
-
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { act, cleanup, fireEvent, render, screen, type RenderResult } from "@testing-library/react"
+import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { QuestionRecord } from "../../../../../../../src/browser/components/page/conversation/components/main-view/components/question-record/question-record.tsx"
 import { MainView } from "../../../../../../../src/browser/components/page/conversation/components/main-view/main-view.tsx"
@@ -369,7 +368,9 @@ describe("MainView（ターン切り替えでレポートの先頭へ戻す）",
       detailRecord("2つ目のレポート"),
     ])
 
-    const scrollIntoView = spyOn(Element.prototype, "scrollIntoView").mockImplementation(() => {})
+    const scrollIntoView = vi
+      .spyOn(Element.prototype, "scrollIntoView")
+      .mockImplementation(() => {})
 
     press(OLDER)
 
@@ -380,7 +381,9 @@ describe("MainView（ターン切り替えでレポートの先頭へ戻す）",
   })
 
   it("出ているターンが無いときは呼ばれない", () => {
-    const scrollIntoView = spyOn(Element.prototype, "scrollIntoView").mockImplementation(() => {})
+    const scrollIntoView = vi
+      .spyOn(Element.prototype, "scrollIntoView")
+      .mockImplementation(() => {})
 
     renderMainView([])
 

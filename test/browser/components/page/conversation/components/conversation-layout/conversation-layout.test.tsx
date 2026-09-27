@@ -1,6 +1,5 @@
-import { afterEach, beforeEach, describe, expect, it } from "bun:test"
-
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
+import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import { ConversationLayout } from "../../../../../../../src/browser/components/page/conversation/components/conversation-layout/conversation-layout.tsx"
 import {

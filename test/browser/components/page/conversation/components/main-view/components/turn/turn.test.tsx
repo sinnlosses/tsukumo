@@ -1,6 +1,5 @@
-import { afterAll, afterEach, describe, expect, it, mock } from "bun:test"
-
 import { cleanup, render } from "@testing-library/react"
+import { afterEach, describe, expect, it, vi } from "vitest"
 
 import {
   type MainViewStep,
@@ -11,16 +10,13 @@ import {
 // 本物の `Report`（react-markdown 一式と演出の配線を持つ）ではなく、どの本文に演出を掛けると
 // 言われたかだけを記録する代役に差し替える。演出そのもの（`reveal/use-report-reveal.ts`）は
 // レイアウトを測るので DOM だけのテストでは確かめられず、ここで見たいのは対象の選び方の規則だけ。
-//
-// `mock.module` はプロセス全体に効くので、テストは `bun test --isolate` で回す
-// （理由は `test/browser/components/page/conversation/components/main-view/components/report/report.test.tsx` の冒頭）。
 let revealed: {
   readonly markdown: string
   readonly reveal: boolean
   readonly turnId: number
 }[] = []
 
-mock.module(
+vi.mock(
   "../../../../../../../../../src/browser/components/page/conversation/components/main-view/components/report/report.tsx",
   () => ({
     Report: (props: { readonly markdown: string; readonly reveal: boolean; turnId: number }) => {
@@ -36,10 +32,6 @@ const { Turn } =
 afterEach(() => {
   cleanup()
   revealed = []
-})
-
-afterAll(() => {
-  mock.restore()
 })
 
 /** 本文を持つステップの `body`。先頭行は本文そのもの（1行の本文しか使わないため）。 */

@@ -1,6 +1,5 @@
-import { afterEach, describe, expect, it, spyOn } from "bun:test"
-
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
+import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { TurnStatus } from "../../../../../../../../../src/browser/components/page/conversation/components/dispatch/components/turn-status/turn-status.tsx"
 import { useQuestionDraft } from "../../../../../../../../../src/browser/stores/question-answer.ts"
@@ -53,9 +52,9 @@ describe("TurnStatus", () => {
 
   it("(5) 経過時間は running の起点から数え、ラベルは「経過」（進行中）", () => {
     const now = 1_700_000_010_000
-    const clock = spyOn(Temporal.Now, "instant").mockReturnValue(
-      Temporal.Instant.fromEpochMilliseconds(now),
-    )
+    const clock = vi
+      .spyOn(Temporal.Now, "instant")
+      .mockReturnValue(Temporal.Instant.fromEpochMilliseconds(now))
     try {
       renderTurnStatus({ turn: { kind: "running", startedAt: now - 5_000 } })
 
@@ -166,8 +165,8 @@ describe("TurnStatus", () => {
 
     it("利用上限に達していれば、戻る時刻を添えて出す（失敗の理由より強い）", () => {
       const now = Temporal.ZonedDateTime.from("2026-09-24T12:00:00[UTC]")
-      const clock = spyOn(Temporal.Now, "instant").mockReturnValue(now.toInstant())
-      const zone = spyOn(Temporal.Now, "timeZoneId").mockReturnValue("UTC")
+      const clock = vi.spyOn(Temporal.Now, "instant").mockReturnValue(now.toInstant())
+      const zone = vi.spyOn(Temporal.Now, "timeZoneId").mockReturnValue("UTC")
       try {
         renderTurnStatus({
           turn: {
@@ -195,8 +194,8 @@ describe("TurnStatus", () => {
 
     it("利用上限が近いときは「利用上限が近い」を出し、別の日に戻るなら日付も添える", () => {
       const now = Temporal.ZonedDateTime.from("2026-09-24T12:00:00[UTC]")
-      const clock = spyOn(Temporal.Now, "instant").mockReturnValue(now.toInstant())
-      const zone = spyOn(Temporal.Now, "timeZoneId").mockReturnValue("UTC")
+      const clock = vi.spyOn(Temporal.Now, "instant").mockReturnValue(now.toInstant())
+      const zone = vi.spyOn(Temporal.Now, "timeZoneId").mockReturnValue("UTC")
       try {
         renderTurnStatus({
           rateLimit: {

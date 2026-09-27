@@ -1,6 +1,5 @@
-import { afterEach, describe, expect, it } from "bun:test"
-
 import { act, cleanup, fireEvent, render, renderHook, screen } from "@testing-library/react"
+import { afterEach, describe, expect, it } from "vitest"
 
 import { DiaryNotice } from "../../../../../../../src/browser/components/page/achievement/components/diary-notice/diary-notice.tsx"
 import { useDiaryBookOpenRequest } from "../../../../../../../src/browser/components/page/achievement/hooks/use-diary-book-open-request.ts"

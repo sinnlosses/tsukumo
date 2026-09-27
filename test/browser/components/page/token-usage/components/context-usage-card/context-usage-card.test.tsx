@@ -1,6 +1,5 @@
-import { afterEach, describe, expect, it } from "bun:test"
-
 import { cleanup, render } from "@testing-library/react"
+import { afterEach, describe, expect, it } from "vitest"
 
 import { ContextUsageCard } from "../../../../../../../src/browser/components/page/token-usage/components/context-usage-card/context-usage-card.tsx"
 import { type UseContextUsageResult } from "../../../../../../../src/browser/domain/context-usage.ts"

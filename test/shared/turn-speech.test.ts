@@ -1,4 +1,4 @@
-import { describe, expect, it } from "bun:test"
+import { describe, expect, it } from "vitest"
 
 import { MAX_MAIN_VIEW_TURNS, mainViewEntries, mainViewTurns } from "../../src/shared/main-view.ts"
 import { INITIAL_SESSION_STATE, type SessionRecord } from "../../src/shared/session-state.ts"

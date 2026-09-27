@@ -3,7 +3,7 @@
 //
 // フィクスチャの起動トークンはすべて架空の値（docs/coding-standards.md「会話内容の扱い」）。
 
-import { describe, expect, test } from "bun:test"
+import { describe, expect, test } from "vitest"
 
 import type { Listener } from "../../scripts/lib/port-listener.ts"
 import {

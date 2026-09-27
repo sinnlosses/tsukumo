@@ -1,6 +1,5 @@
-import { afterEach, describe, expect, it } from "bun:test"
-
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
+import { afterEach, describe, expect, it } from "vitest"
 
 import {
   PromptImageChips,
@@ -200,7 +199,9 @@ describe("PromptImageThumbnails", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "この画像を拡大" }))
 
-    expect(zoomedImage()?.getAttribute("src")).toStartWith(promptImagePath(RECORDED_A.id))
+    expect(zoomedImage()?.getAttribute("src")?.startsWith(promptImagePath(RECORDED_A.id))).toBe(
+      true,
+    )
     expect(zoomDialog()?.textContent).not.toContain("原寸はもう手放した")
   })
 })

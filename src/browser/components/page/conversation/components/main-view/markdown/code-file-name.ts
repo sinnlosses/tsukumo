@@ -11,7 +11,7 @@
 // 中身は解釈せず、前後の空白を落としてそのまま運ぶ（`src/server/report/core/report-notation.ts` の
 // 規約が「パスを1つ」と決めていて、それ以外が来たときも読み手に見せたほうが手掛かりになる）。
 
-import { type Element, type ElementContent, type Properties, type Root } from "hast"
+import type { Element, ElementContent, Properties, Root } from "hast"
 
 /**
  * ファイル名を運ぶ hast のプロパティ名（DOM に出るときの属性名は `data-filename`）。

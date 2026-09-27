@@ -1,4 +1,4 @@
-import { describe, expect, it } from "bun:test"
+import { describe, expect, it } from "vitest"
 
 import { readConfig } from "../../../src/server/core/config.ts"
 
@@ -12,7 +12,6 @@ describe("readConfig", () => {
       driver: "sdk",
       fakeScene: undefined,
       newSession: false,
-      watchUi: false,
       quickVisit: false,
       fixedClock: undefined,
       inheritedEnv: {},
@@ -28,7 +27,6 @@ describe("readConfig", () => {
       TSUKUMO_DRIVER: "fake",
       TSUKUMO_FAKE_SCENE: " question-multi ",
       TSUKUMO_NEW_SESSION: "1",
-      TSUKUMO_WATCH_UI: "1",
       TSUKUMO_VISIT_QUICK: "1",
     }
 
@@ -40,7 +38,6 @@ describe("readConfig", () => {
       driver: "fake",
       fakeScene: "question-multi",
       newSession: true,
-      watchUi: true,
       quickVisit: true,
       fixedClock: undefined,
       // 子プロセスへ引き継ぐ分は、読んだ環境をそのまま持つ

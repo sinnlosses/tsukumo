@@ -1,5 +1,6 @@
-import { describe, expect, it } from "bun:test"
 import { fileURLToPath } from "node:url"
+
+import { describe, expect, it } from "vitest"
 
 import { collectTaskIds } from "../scripts/lib/task-id-repository.ts"
 import { collectStrayTaskMentions } from "../scripts/lib/task-mention-repository.ts"

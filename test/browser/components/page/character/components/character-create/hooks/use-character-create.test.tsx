@@ -1,6 +1,5 @@
-import { afterEach, describe, expect, it } from "bun:test"
-
 import { act, cleanup, renderHook } from "@testing-library/react"
+import { afterEach, describe, expect, it } from "vitest"
 
 import { useCharacterCreate } from "../../../../../../../../src/browser/components/page/character/components/character-create/hooks/use-character-create.ts"
 import { type CharacterPackEntry } from "../../../../../../../../src/shared/character.ts"

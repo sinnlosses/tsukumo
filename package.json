@@ -9,7 +9,7 @@
   "type": "module",
   "scripts": {
     "start": "node src/cli.ts",
-    "dev": "bun run build && TSUKUMO_WATCH_UI=1 node src/cli.ts",
+    "dev": "bun run build && node src/cli.ts --dev",
     "build": "bun run css-types && node scripts/build-ui.ts",
     "css-types": "hcm 'src/**/*.module.css' --outDir dist/css-module-type --logLevel silent",
     "grid": "node scripts/open-room-grid.ts",
@@ -18,8 +18,8 @@
     "lint:fix": "oxlint src test scripts vite.config.ts --fix",
     "format": "oxfmt .",
     "format:check": "oxfmt . --check",
-    "test": "bun test --isolate --path-ignore-patterns='test/e2e/**'",
-    "test:e2e": "bun run build && bun test --isolate --timeout=60000 test/e2e/",
+    "test": "vitest run",
+    "test:e2e": "bun run build && vitest run --config vitest.e2e.config.ts",
     "test:e2e:update": "E2E_UPDATE=1 bun run test:e2e",
     "check": "bun run typecheck && bun run lint && bun run format:check && bun run test && bun run test:e2e"
   },
@@ -50,7 +50,6 @@
   },
   "devDependencies": {
     "@testing-library/react": "^16.3.3",
-    "@types/bun": "^1.4.2",
     "@types/node": "^26.0.0",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
@@ -62,7 +61,8 @@
     "oxlint": "^1.85.0",
     "playwright-core": "^1.63.0",
     "typescript": "^7.0.2",
-    "vite": "^8.3.1"
+    "vite": "^8.3.1",
+    "vitest": "^5.0.2"
   },
   "engines": {
     "bun": ">=1.3"

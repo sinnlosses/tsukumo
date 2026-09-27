@@ -1,4 +1,4 @@
-import { describe, expect, it } from "bun:test"
+import { describe, expect, it } from "vitest"
 
 import { createChatRecall } from "../../../../src/server/chat/core/chat-recall.ts"
 import {

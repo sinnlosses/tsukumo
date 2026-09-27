@@ -3,7 +3,7 @@
 //
 // フィクスチャはすべて手で書いた架空のやり取り（docs/coding-standards.md「会話内容の扱い」）。
 
-import { describe, expect, it } from "bun:test"
+import { describe, expect, it } from "vitest"
 
 import { mainViewTurnsOf } from "../../../src/browser/stores/main-view-turn.ts"
 import { type SessionEvent } from "../../../src/shared/session-event.ts"

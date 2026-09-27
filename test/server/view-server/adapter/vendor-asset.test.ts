@@ -1,4 +1,4 @@
-import { describe, expect, it } from "bun:test"
+import { describe, expect, it } from "vitest"
 
 import { readVendorAsset } from "../../../../src/server/view-server/adapter/vendor-asset.ts"
 import { VENDOR_ASSET_CONTENT_TYPES } from "../../../../src/shared/vendor-asset.ts"

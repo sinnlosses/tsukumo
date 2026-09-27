@@ -1,4 +1,4 @@
-import { describe, expect, it } from "bun:test"
+import { describe, expect, it } from "vitest"
 
 import { orderTasksForSidebar } from "../../../../../src/browser/features/task-board/domain/task-sidebar-order.ts"
 import { type TaskSummaryItem } from "../../../../../src/shared/task-summary.ts"

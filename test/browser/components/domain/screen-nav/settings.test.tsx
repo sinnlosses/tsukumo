@@ -1,6 +1,5 @@
-import { afterEach, beforeEach, describe, expect, it } from "bun:test"
-
 import { cleanup, fireEvent, render } from "@testing-library/react"
+import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import { ScreenNav } from "../../../../../src/browser/components/domain/screen-nav/screen-nav.tsx"
 import {

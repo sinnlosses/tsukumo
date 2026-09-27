@@ -2,8 +2,9 @@
 // スクリプトを実際に起こして確かめる。判定だけを取り出して呼ぶと、hook が守るべき
 // 「終了コードで伝える」という約束のほうが抜けるため。
 
-import { describe, expect, test } from "bun:test"
 import process from "node:process"
+
+import { describe, expect, test } from "vitest"
 
 import { runSubprocess } from "../fixture/subprocess.ts"
 

@@ -1,17 +1,21 @@
 // テストの中で `*.module.css` の import を「CSS に書いた class 名をそのまま返す対応表」に
-// 解決する（`bunfig.toml` の `preload`）。
+// 解決する Vite プラグイン。単体テストの設定の `plugins` に渡す。
 //
-// bun のテストランナーは CSS を組み立てないので、何もしないと対応表が空で届き、部品が付ける
-// class 名がすべて `undefined` になる（class 名で引く部品テストが当たらなくなる）。ここで返すのは
-// CSS に書いた綴りそのもので、ブラウザに出る実際の名前（ハッシュ付き）とは違う。
-// CSS に無い名前は `undefined` のままにして、綴りの間違いがテストで黙って通らないようにする。
+// Vite / Vitest 自身の CSS Modules の処理（`vite:css`）は、ブラウザに出す実際の class 名と
+// 同じハッシュ付きの名前を生成する。部品テストは CSS に書いた綴りで引くので、それより先に
+// このプラグインが横取りする必要がある。`resolveId` で仮想の id（`\0` 始まり）に差し替えるのは、
+// `vite:css` が id の拡張子だけを見て CSS かどうかを判断しており、`transform` の中身を
+// 差し替えるだけでは `vite:css` 自身の変換を止められないため。
 //
-// `Bun.plugin` を使うのは、差し替える先がテストランナーの読み込みそのものだから
-// （`docs/coding-standards.md`「Bun固有APIに寄せない」の `bun:test` と同じ側）。
+// CSS に無い名前は対応表に無いので `undefined` のままになり、綴りの間違いがテストで
+// 黙って通らない。
 
 import { readFile } from "node:fs/promises"
 
-import { plugin } from "bun"
+import type { Plugin } from "vite"
+
+const VIRTUAL_PREFIX = "\0css-module-identity:"
+const VIRTUAL_SUFFIX = ".mjs"
 
 /** 選択子に出てくる class 名。数字で始まる長さの単位（`.5rem`）とは重ならない。 */
 const CLASS_NAME_PATTERN = /\.(-?[A-Za-z_][A-Za-z0-9_-]*)/g
@@ -19,16 +23,31 @@ const CLASS_NAME_PATTERN = /\.(-?[A-Za-z_][A-Za-z0-9_-]*)/g
 /** ブロックコメント。中の説明文に出てくる class 名を拾わないよう先に落とす。 */
 const COMMENT_PATTERN = /\/\*[\s\S]*?\*\//g
 
-plugin({
-  name: "css-module-identity",
-  setup(build) {
-    build.onLoad({ filter: /\.module\.css$/ }, async (args) => {
-      const source = await readFile(args.path, "utf8")
+export function cssModuleIdentityPlugin(): Plugin {
+  return {
+    name: "css-module-identity",
+    enforce: "pre",
+    async resolveId(source, importer) {
+      if (!source.endsWith(".module.css")) {
+        return
+      }
+      const resolved = await this.resolve(source, importer, { skipSelf: true })
+      if (!resolved) {
+        return
+      }
+      return `${VIRTUAL_PREFIX}${resolved.id}${VIRTUAL_SUFFIX}`
+    },
+    async load(id) {
+      if (!id.startsWith(VIRTUAL_PREFIX) || !id.endsWith(VIRTUAL_SUFFIX)) {
+        return
+      }
+      const path = id.slice(VIRTUAL_PREFIX.length, -VIRTUAL_SUFFIX.length)
+      const source = await readFile(path, "utf8")
       const names = [...source.replace(COMMENT_PATTERN, "").matchAll(CLASS_NAME_PATTERN)].flatMap(
         ([, name]) => name ?? [],
       )
       const classNames = Object.fromEntries(names.map((name) => [name, name]))
-      return { contents: `export default ${JSON.stringify(classNames)}`, loader: "js" }
-    })
-  },
-})
+      return `export default ${JSON.stringify(classNames)}`
+    },
+  }
+}

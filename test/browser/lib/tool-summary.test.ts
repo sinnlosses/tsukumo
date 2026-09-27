@@ -1,4 +1,4 @@
-import { describe, expect, it } from "bun:test"
+import { describe, expect, it } from "vitest"
 
 import { summarizeToolInput, toolInputText } from "../../../src/browser/lib/tool-summary.ts"
 
@@ -29,7 +29,7 @@ describe("summarizeToolInput", () => {
     const summary = summarizeToolInput("Bash", { command: long })
 
     expect(summary.length).toBeLessThan(long.length)
-    expect(summary).toEndWith("…")
+    expect(summary.endsWith("…")).toBe(true)
   })
 
   it("要約に使わないフィールドの値は混ざらない", () => {

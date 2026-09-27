@@ -1,9 +1,9 @@
-import { afterEach, describe, expect, it } from "bun:test"
 import { readFileSync } from "node:fs"
 import { fileURLToPath } from "node:url"
 
 import { cleanup, render } from "@testing-library/react"
 import { createElement } from "react"
+import { afterEach, describe, expect, it } from "vitest"
 
 import { NotationBlock } from "../../../../src/browser/components/page/conversation/components/main-view/markdown/notation.tsx"
 import { REPORT_SANITIZE_SCHEMA } from "../../../../src/browser/components/page/conversation/components/main-view/markdown/sanitize-schema.ts"

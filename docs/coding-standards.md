@@ -748,49 +748,29 @@ store には値だけでなく、React に属さない口も同じく持たせ�
 - テストは `test/` 以下に、テスト対象と同じディレクトリ構成で置く
   （`src/<相対パス>.ts` → `test/<相対パス>.test.ts`）。**E2E だけは `test/e2e/<シナリオ>.test.ts`**
   （1つのファイルの振る舞いではないため。形は `docs/design.md` 10章「E2E の走らせ方」）
-- テストランナーは `bun test`。`describe` / `it` / `expect` は `bun:test` から import する
+- テストランナーは Vitest。`describe` / `it` / `expect` は `vitest` から import する
 - **モックするのはシステム境界だけ**: ファイルシステム、時刻、端末の能力判定（画像プロトコルが
-  使えるか）。`bun:test` の `mock` / `spyOn` を使う。自分たちのモジュール同士はモックしない
+  使えるか）。Vitest の `vi.fn` / `vi.spyOn` を使う。自分たちのモジュール同士はモックしない
   （`/tdd` の `mocking.md` が正典）
-- **`bun test` はプロセスのタイムゾーンを UTC にして走る**（`process.env.TZ` は未設定のまま、
-  `Temporal.Now.timeZoneId()` が `"UTC"` を返す。ホストが JST でも変わらない。2026-09-25 に
-  実測）。日付の境目を見るテストは、オフセットを `+09:00` のように固定せず、
-  `Temporal.Now.timeZoneId()` を基準に時刻を組む。固定すると `bun test` が見る日の境界と
-  ずれ、境界に近い時刻のコミット・イベントが意図と違う日に数えられる
-  （`test/server/adapter/main-history.test.ts` の `isoDateAt`）
+- **単体テストのプロセスのタイムゾーンは UTC に固定してある**（単体テストの設定の `test.env.TZ`。
+  ホストが JST でも `Temporal.Now.timeZoneId()` は `"UTC"` を返す）。日付の境目を見るテストは、
+  オフセットを `+09:00` のように固定せず、`Temporal.Now.timeZoneId()` を基準に時刻を組む。
+  固定すると単体テストが見る日の境界とずれ、境界に近い時刻のコミット・イベントが意図と違う日に
+  数えられる（`test/server/adapter/main-history.test.ts` の `isoDateAt`）
 - 非公開関数は、`export` された関数の振る舞いを通して検証する。テストのためだけに `export`
   しない（上の「関数の並び順」節と同じ規約）
 - **語彙（表情・衣装など全域を列挙する定数）の長さに依存する期待値は、その定数から導く**
   （`EXPRESSIONS.length` のように）。個数を直書きすると、列挙が1つ伸びたときに `tsc` の型検査
-  では検知できず、`bun test` を走らせて初めて落ちる。「typecheck が通った」を作業の完了の合図に
+  では検知できず、単体テストを走らせて初めて落ちる。「typecheck が通った」を作業の完了の合図に
   しないための書き方
 - **CLI やサーバを起こすテストは、マシンの負荷が高いと時間切れで落ちることがある**（1件に
   457秒かかったことがある）。`bun run check` は他の重い処理と同時に走らせず、時間切れで落ちたら
   まず打ち直して、同じテストが続けて落ちるかを見る
 - **テストの中で子プロセスを同期で待たない**（`execFileSync` / `execSync` / `spawnSync`。
   `.oxlintrc.json` が `test/` で止める）。`test/fixture/subprocess.ts` の `runSubprocess` /
-  `runSubprocessOrThrow` を使う。bun の `spawnSync` には、macOS arm64 で子の終了を取りこぼし、
-  待ちが 100% CPU で空回りする不具合が報告されている（oven-sh/bun #34069、修正 PR #40078。
-  2026-09-26 時点でどちらも open）。空回り中は `spawnSync` の `timeout` も効かないので、1回の
-  固まりが `bun run check` 全体を止めうる。非同期で待てば、取りこぼしてもその1件がテストの
-  時間切れで落ちて次へ進む。**`bun test --isolate` が 100% CPU のまま返らなかったのはこれだと
-  断定できていない**（手元の数百回の繰り返しでは再現しなかった）
-- **`bun test --isolate` が返らなくなったら、止める前にどのファイルかを取る。** `--isolate` は
-  子プロセスを起こさず1つのプロセスの中でファイルを順に流し、非 TTY の出力は最後の要約しか
-  出さないので、ログからもプロセスの引数からも分からない。次の preload を一時ディレクトリに置いて
-  `--preload <パス>` で渡して流し直すと、いま走っているファイル（`Bun.main`）とテストの前後が
-  時刻つきで残る（preload はファイルごとに評価し直される）。止まったら、最後の行のファイルと、
-  `B`（テストの中）で終わっているか `E`（テストの外）で終わっているかを見る。あわせて
-  `ps -o pid,ppid,stat,command -ax` で、そのプロセスの子に終わったまま（`Z`）のものが無いかを
-  見る（上の不具合なら残っている）
-
-  ```ts
-  import { appendFileSync } from "node:fs"
-  import { afterEach, beforeEach } from "bun:test"
-  const log = "<書き出す先>"
-  beforeEach(() => appendFileSync(log, `${performance.now().toFixed(0)} B ${Bun.main}\n`))
-  afterEach(() => appendFileSync(log, `${performance.now().toFixed(0)} E ${Bun.main}\n`))
-  ```
+  `runSubprocessOrThrow` を使う。同期で待つと、詰まったときにテストの時間切れが効かず、
+  1件の詰まりが `bun run check` 全体を止めうる。非同期で待てば、詰まってもその1件が
+  時間切れで落ちて次へ進む
 
 ### カバレッジに閾値を設けない
 
@@ -884,9 +864,9 @@ E2E が見るのは `data-*`・`aria-*`・文字と要素の入れ子までで�
 
 組み立ては 2026-09-27 に `bun build` から `vite build` へ移した。`src/server/view-server/adapter/bundle.ts` は
 `node` で vite の CLI を起こすので、組み立ての経路にも `bun` は残っていない。組み立てが走るのは
-`bun run build`（と `bun run dev` の見張り）のときだけで、起動の経路には無い。
+`bun run build`（`bun run dev` も起こす前に打つ）のときだけで、起動の経路には無い。開発中の
+差し替えは Vite の開発サーバが同じプロセスの中で受け持つ（`docs/design.md` 11章「作り直しを押す仕組み」）。
 
-**唯一の例外は `bun:test`**（テストランナーそのものなので、移すときは差し替えるしかない）。
 性能上どうしても `Bun.*` が必要になったら、その理由をコメントに残したうえで使う。
 
 ## `Date` を使わない
