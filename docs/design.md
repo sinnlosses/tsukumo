@@ -260,6 +260,7 @@ src/                          配線（composition root）。cli.ts（入口）�
     <機能>/core/ adapter/     機能の判断・境界（上の「サーバの機能と、機能どうしの辺」）
   browser/                    React の部品・hooks・CSS（下の「`src/browser/` の箱と、置く基準」）
 test/                         src/<相対パス>.ts → test/<相対パス>.test.ts
+story/                        src/<相対パス>.tsx → story/<相対パス>.story.tsx（Storybook。設定は .storybook/）
 characters/<name>/            character.json・persona.md・素材
 ```
 
@@ -275,6 +276,13 @@ kebab-case のファイル名・barrel file を作らない・`@/` を使わな�
 **実体が無い箱は先に作らない**（手本の `app/` `api/` `config/` `assets/` `testing/` などは作らない。
 理由は `docs/history/decision.md`「design.md 2. 全体構成 / ディレクトリ（採らなかった bullet-proof-react の要素）」）。
 ファイルを移すときは、パスを指す記述が `.module.css` のコメントにもあるので `grep -rn` の対象から外さない。
+
+**story（Storybook）は `src/` に置かず、`story/` の下に描く部品と同じ相対パスで置く**
+（テストと同じ写し方）。`src/browser/` は配る束の中身だけにしておき、上の箱と機能の辺の検査が
+story を読み手として数えないようにするため。story が import してよいのは `src/browser/` と
+`src/shared/` だけ（ブラウザで描くので browser の層と同じ）。置き場と辺は
+`test/architecture.test.ts`（`describe("story の置き場", …)`）が見る。ファイル名の接尾辞は
+単数形の `.story.tsx`（原則5。Storybook は `.stories` と `.story` のどちらも読む）。
 
 **ページの形**（`components/page/<ページ>/`）:
 
@@ -1283,6 +1291,15 @@ E2E が通るのは**疑似セッションに書いた並びだけ**で、fake d
 | dev     | `@types/react` `@types/react-dom` `@types/ws` `@testing-library/react` `happy-dom` | 型とテスト                                                   |
 | dev     | `playwright-core`                                                                  | 画面の確認（`scripts/capture-*.ts`）と E2E（10章）           |
 | dev     | `vitest` `vite`                                                                    | テストランナーとブラウザ側の組み立て・開発サーバ             |
+| dev     | `storybook` `@storybook/react-vite`                                                | 部品を props ごとに並べて見る（`pnpm run storybook`）        |
+
+**Storybook は本体と同じ `vite.config.ts` を読む**（`.storybook/main.ts` の `viteConfigPath`。
+`build` の節だけは Storybook が捨てる）。CSS Modules の class 名は Vite が CSS の中身と行から焼く
+（置き場の root に依存しない）ので、`pnpm run build` の成果物と同じ綴りになる。部品が実行時に取りに
+行く `/character/<pack>/<file>` は同梱の `characters/` を、`/vendor/<name>` は `readVendorAsset` の
+対応表をそのまま Storybook の開発サーバが配る。型は `tsconfig.storybook.json` で別に見る——
+Storybook の型定義（`react-docgen-typescript` ほか）が TypeScript 7 の型と噛み合わず、
+ライブラリの `.d.ts` の検査を外す必要があるため（本体の `tsconfig.json` は外さない）。
 
 `zod` と `@anthropic-ai/claude-agent-sdk` はある。`ws` を選ぶのは**ランタイム固有の API に寄せない**ため。
 **`playwright-core` はブラウザを落とさず手元の Google Chrome を動かし**、テストランナー（`@playwright/test`）は足さない。

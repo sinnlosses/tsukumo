@@ -318,6 +318,19 @@ fs から読んだ**文字列**で渡すので、`core → adapter` の辺は増
 **タスク一覧のモーダルを撮る件には `develop/task/` の実データのタスク一覧が写る**ので、
 画像そのものを他所へ共有・複製しない。
 
+**部品1つの状態違いを並べて見るときは Storybook（`pnpm run storybook`、`http://localhost:6006/`）。**
+`capture-catalog.ts` とは見るものを分ける。**Storybook は部品を props で切り替えて見る道**
+（`note` の6種・`badge` の3種・表・図・グラフ・立ち絵の SVG とラスタ・吹き出しの長い文と空のとき）で、
+story は `story/` の下にある。**`capture-catalog.ts` は画面に入れたときの見え方を見る道**
+（領域の内側のスクロール・モーダル・補完・狭い窓での積み替え・実データのタスク一覧）で、
+tsukumo を本当に起こして撮る。崩れの多くは部品単体ではなく領域に入れたときに出るので、
+**描画の変更の `evidence` は引き続き `capture-catalog.ts`（か手で起こした tsukumo）で撮る**。
+Storybook は部品を直している最中に状態を切り替えて見るための補助で、`capture-catalog.ts` を
+Storybook の story を撮る形に寄せることはしない（寄せると疑似セッション・サーバ・領域の
+組み合わせが写らなくなる）。Storybook の class 名は本体の成果物と同じ綴りになる
+（`docs/design.md` 11章）ので、`[class*="…"]` の probe は Storybook の iframe
+（`/iframe.html?id=<story の id>`）でもそのまま使える。**起こした Storybook は撮り終えたら止める。**
+
 **変更前と撮り比べるときは `node scripts/serve-revision.ts <コミット>`。** 名指ししたコミットを
 `/tmp/tsukumo-revision/<sha>/` へ取り出し、そこで組み立てて、空けたポート（既定 7340）と一時ホームで
 tsukumo を1つ起こし、URL を出す（`--scene` で疑似セッションの場面も流せる）。その URL を
