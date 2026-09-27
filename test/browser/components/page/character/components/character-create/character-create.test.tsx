@@ -1,4 +1,4 @@
-import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import type { ReactElement } from "react"
 import { afterEach, describe, expect, it } from "vitest"
 
@@ -44,14 +44,15 @@ function submitButton(): HTMLButtonElement {
   return typedElement(screen.getByRole("button", { name: "作る" }), HTMLButtonElement, "作るボタン")
 }
 
-/** 必須の立ち絵を選ぶ。`FileReader` は非同期なので、読み終わって state が変わるまで待つ。 */
+/**
+ * 必須の立ち絵を選ぶ。`FileReader` は非同期なので、決め打ちの時間では負荷の下で読み終わりを
+ * 取りこぼす（`aria-label` が「差し替える」に変わる = 読み終わって state が変わった、まで画面で待つ）。
+ */
 async function pickPortrait(): Promise<void> {
-  await act(async () => {
-    fireEvent.change(screen.getByLabelText("いつもの顔の立ち絵を選ぶ"), {
-      target: { files: [new File(["<svg/>"], "picked.svg", { type: "image/svg+xml" })] },
-    })
-    await new Promise((resolve) => setTimeout(resolve, 20))
+  fireEvent.change(screen.getByLabelText("いつもの顔の立ち絵を選ぶ"), {
+    target: { files: [new File(["<svg/>"], "picked.svg", { type: "image/svg+xml" })] },
   })
+  await screen.findByLabelText("いつもの顔の立ち絵を差し替える")
 }
 
 describe("CharacterCreate", () => {
