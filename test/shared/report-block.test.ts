@@ -118,6 +118,22 @@ describe("reportSectionsMarkdown", () => {
     )
   })
 
+  it("stats の値とラベルの inline code は code 要素にし、中の文字も HTML として逃がす", () => {
+    const stats: ReportBlock = {
+      kind: "stats",
+      items: [
+        { value: "`3`", label: "架空の `a<b` 件" },
+        { value: "0", label: "架空の `` `x` `` 件" },
+      ],
+      fold: "",
+    }
+
+    expect(markdownOf(stats)).toBe(
+      '<div class="stats"><div class="stat"><b><code>3</code></b>架空の <code>a&lt;b</code> 件</div>' +
+        '<div class="stat"><b>0</b>架空の <code>`x`</code> 件</div></div>',
+    )
+  })
+
   it("コードと mermaid はフェンスで囲み、中のバッククォートより長いフェンスにする", () => {
     expect(
       markdownOf({
@@ -165,6 +181,10 @@ describe("reportSectionsMarkdown", () => {
       ["---", "\\---"],
     ])("行頭の塊の記法 %p は素の文字として出す", (source, expected) => {
       expect(markdownOf(text(source))).toBe(expected)
+    })
+
+    it("行頭が3連バッククォートでも、同じ行にバッククォートがあればフェンスでなく inline code なので逃がさない", () => {
+      expect(markdownOf(text("```x``` と書く"))).toBe("```x``` と書く")
     })
 
     it("箇条書きの項目の行頭も逃がす", () => {

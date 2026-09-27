@@ -201,12 +201,11 @@ export function reportSectionsMarkdown(sections: readonly ReportSection[]): stri
  * HTML の中に埋める1行の文字。改行を空白に畳み、HTML として逃がす（Markdown の記法は効かない）。
  */
 export function htmlInline(text: string): string {
-  return text
-    .replace(/\s+/g, " ")
-    .trim()
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
+  return escapeHtml(text.replace(/\s+/g, " ").trim())
+}
+
+function escapeHtml(text: string): string {
+  return text.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;")
 }
 
 /** 塊を1つずつ検証するために、節の見出しだけを先に読む形。 */
@@ -269,7 +268,7 @@ function blockMarkdown(block: ReportBlock): string {
       return `<div class="stats">${block.items
         .map(
           ({ value, label }) =>
-            `<div class="stat"><b>${htmlInline(value)}</b>${htmlInline(label)}</div>`,
+            `<div class="stat"><b>${htmlInlineWithCode(value)}</b>${htmlInlineWithCode(label)}</div>`,
         )
         .join("")}</div>`
     case "code":
@@ -330,7 +329,32 @@ function fencedMarkdown(info: string, source: string): string {
  */
 function markdownInline(text: string): string {
   const flat = text.replace(/\s*\n\s*/g, " ").trim()
-  return escapeLineStart(outsideCodeSpans(flat, (part) => part.replaceAll("<", "&lt;")))
+  return escapeLineStart(
+    mapCodeSpans(
+      flat,
+      (part) => part.replaceAll("<", "&lt;"),
+      (span) => span,
+    ),
+  )
+}
+
+/**
+ * HTML の中に埋める1行の文字。`htmlInline` と同じく逃がし、inline code だけは `code` 要素にする
+ * （HTML の中では Markdown の inline code が効かないため）。
+ */
+function htmlInlineWithCode(text: string): string {
+  return mapCodeSpans(
+    text.replace(/\s+/g, " ").trim(),
+    (part) => escapeHtml(part),
+    (span) => `<code>${escapeHtml(codeSpanContent(span))}</code>`,
+  )
+}
+
+/** inline code の中身。CommonMark に合わせ、両端に空白があれば1つずつ落とす。 */
+function codeSpanContent(span: string): string {
+  const fence = /^`+/.exec(span)?.[0].length ?? 0
+  const inner = span.slice(fence, span.length - fence)
+  return /^ .*[^ ].* $/.test(inner) ? inner.slice(1, -1) : inner
 }
 
 function escapeLineStart(text: string): string {
@@ -340,19 +364,24 @@ function escapeLineStart(text: string): string {
   if (ORDERED_LIST_START.test(text)) {
     return text.replace(ORDERED_LIST_START, "$1\\$2")
   }
-  return /^(?:#|>|\||[-+*](?=\s|$)|`{3,}|~{3,})/.test(text) ? `\\${text}` : text
+  // info 文字列にバッククォートがある行はフェンスにならない（CommonMark）。```x``` は inline code
+  return /^(?:#|>|\||[-+*](?=\s|$)|`{3,}[^`]*$|~{3,})/.test(text) ? `\\${text}` : text
 }
 
-function outsideCodeSpans(text: string, escape: (part: string) => string): string {
+function mapCodeSpans(
+  text: string,
+  outside: (part: string) => string,
+  span: (codeSpan: string) => string,
+): string {
   const { parts, last } = [...text.matchAll(CODE_SPAN)].reduce<{
     readonly parts: readonly string[]
     readonly last: number
   }>(
     (acc, match) => ({
-      parts: [...acc.parts, escape(text.slice(acc.last, match.index)), match[0]],
+      parts: [...acc.parts, outside(text.slice(acc.last, match.index)), span(match[0])],
       last: match.index + match[0].length,
     }),
     { parts: [], last: 0 },
   )
-  return [...parts, escape(text.slice(last))].join("")
+  return [...parts, outside(text.slice(last))].join("")
 }
