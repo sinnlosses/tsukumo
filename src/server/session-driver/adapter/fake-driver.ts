@@ -10,6 +10,7 @@
 import { readFileSync } from "node:fs"
 import { fileURLToPath } from "node:url"
 
+import { sortBy } from "remeda"
 import { z } from "zod"
 
 import type { EffortLevel } from "../../../shared/command.ts"
@@ -252,14 +253,30 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
     }
   }
 
+  // 次の手の setTimeout は前の手が発火してから差分の時間で登録する。
+  // 絶対時刻でまとめて登録すると、CPU を奪われて止まったあとに期限切れの手がまとめて発火し、手のあいだの間隔が消える。
+  // 同じ afterMs の手は setTimeout を挟まずに続けて流す（挟むと hello と最初の events の境目が揺れる）。
   const play = (steps: readonly FakeSessionStep[], startMs: number): void => {
-    for (const step of steps) {
+    const ordered = sortBy(steps, (step) => step.afterMs)
+    const playFrom = (index: number, firedAtMs: number): void => {
+      const step = ordered[index]
+      if (step === undefined) {
+        return
+      }
+      const delay = step.afterMs - firedAtMs
+      if (delay <= 0) {
+        emit(step.event)
+        playFrom(index + 1, step.afterMs)
+        return
+      }
       const timer = setTimeout(() => {
         timers.delete(timer)
         emit(step.event)
-      }, startMs + step.afterMs)
+        playFrom(index + 1, step.afterMs)
+      }, delay)
       timers.add(timer)
     }
+    playFrom(0, startMs)
   }
 
   const settle = (id: string, answer: Answer): boolean => {
