@@ -1,0 +1,87 @@
+[
+  {
+    "received": "hello",
+    "protocolVersion": 23
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "session-info",
+      "sessionId": "fake-session",
+      "model": "opus",
+      "permissionMode": "auto",
+      "slashCommands": [
+        "clear",
+        "compact",
+        "doctor"
+      ],
+      "terminalSlashCommands": [
+        "doctor"
+      ]
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "command-descriptions",
+      "descriptions": [
+        {
+          "name": "clear",
+          "description": "会話を消して始め直す（架空の説明）"
+        },
+        {
+          "name": "compact",
+          "description": "会話を要約してまとめる（架空の説明）"
+        }
+      ]
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "speech",
+      "text": "疑似セッションの駆動で立ち上がったよ。ここはぜんぶ作り物の会話。",
+      "expression": "default"
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "sessions-changed",
+      "sessions": [
+        {
+          "viewPort": 7327,
+          "sessionId": "fake-session",
+          "lastModified": 1768438500000,
+          "startedAt": 1768435920000,
+          "heading": "入力欄の送信ボタンの位置を架空に直す"
+        },
+        {
+          "viewPort": 7327,
+          "sessionId": "7b3f0000-0000-4000-8000-000000000001",
+          "lastModified": 1768399500000,
+          "startedAt": 1768389000000,
+          "heading": "架空の成果の画面に振り返りの口を置きたい"
+        },
+        {
+          "viewPort": 7327,
+          "sessionId": "c3a10000-0000-4000-8000-000000000002",
+          "lastModified": 1768366920000,
+          "startedAt": 1768365000000,
+          "heading": "/retrospect"
+        },
+        {
+          "viewPort": 7327,
+          "sessionId": "2d000000-0000-4000-8000-000000000003",
+          "lastModified": 1768224600000,
+          "startedAt": 1768219200000
+        }
+      ],
+      "current": "fake-session"
+    }
+  }
+]

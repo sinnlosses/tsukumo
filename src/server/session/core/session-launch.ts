@@ -49,6 +49,7 @@ export type SessionLaunchSeed<Pack extends NamedCharacterPack> = {
  * | `session.switchCharacter` | `name`          | `latest` | 覚える |
  * | `session.setChatMode`    | `current`       | `latest` | 覚えない |
  * | `session.switchSession`   | `current`       | `id`     | 覚えない |
+ * | `session.startNewSession` | `current`       | `new`    | 覚えない |
  */
 export type SessionLaunchRequest = {
   /** これから起こすパックの決め方。 */
@@ -72,6 +73,8 @@ export type SessionResume =
    * 続きにする。claude 側が知らないIDだったときは新規のセッションとして起き上がる。
    */
   | { readonly by: "id"; readonly sessionId: string }
+  /** 探さずに新規で起こす（`session.startNewSession`）。 */
+  | { readonly by: "new" }
 
 /** 一続きの中で外の世界に頼むこと。実装はすべて配線層が `adapter` から渡す。 */
 export type SessionLaunchPorts<Pack extends NamedCharacterPack> = {
@@ -194,10 +197,7 @@ export function createSessionLaunch<Pack extends NamedCharacterPack>(
     // キャラクターごと・モードごとに別のセッションを持つ（`docs/design.md`「キャラクターパック」、
     // `docs/chat-mode.md`「雑談モード」）。起動時も切り替え時も、これから起こす側の続きを探す。
     // 画面から選ばれたときだけは探さない（選ばれたIDがそのまま続きになる）。
-    const start: SessionStart =
-      request.resume.by === "id"
-        ? { kind: "resume", sessionId: request.resume.sessionId }
-        : await ports.findResumeSession(pack, chat)
+    const start = await sessionStartOf(ports, request.resume, pack, chat)
     // 切り替え先の一覧も、起こすたびに引き直す（画面はこのイベントでしか一覧を知れない。
     // 起こし直すと状態が初期値へ戻るので、`character-changed` と同じ扱い）。どれを出して
     // いるかも一緒に流すので、最初の依頼を送る前でも画面は居場所を指せる。画面へ渡す形
@@ -224,6 +224,23 @@ export function createSessionLaunch<Pack extends NamedCharacterPack>(
         driver.close()
       },
     }
+  }
+}
+
+/** これから起こすセッションを決める。画面から選ばれたIDと新規は探さない。 */
+async function sessionStartOf<Pack extends NamedCharacterPack>(
+  ports: SessionLaunchPorts<Pack>,
+  resume: SessionResume,
+  pack: Pack,
+  chat: boolean,
+): Promise<SessionStart> {
+  switch (resume.by) {
+    case "id":
+      return { kind: "resume", sessionId: resume.sessionId }
+    case "new":
+      return { kind: "new" }
+    case "latest":
+      return ports.findResumeSession(pack, chat)
   }
 }
 

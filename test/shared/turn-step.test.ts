@@ -123,6 +123,7 @@ describe("currentTurnSteps（report ツール）", () => {
         checks: [],
         closing: { kind: "none" },
         unknownBlockCount: 0,
+        sessionSummary: undefined,
       },
     ]
     const state = events.reduce(

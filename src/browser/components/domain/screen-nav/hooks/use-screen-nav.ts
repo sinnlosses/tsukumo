@@ -1,7 +1,7 @@
 // 画面のナビの帯のロジック（docs/screen-design.md 13.9 / 2章「機能の中を分ける」）。いま出している
 // 画面・3つの口・仕事/雑談のトグル・モデル/許可モードの操作子・狭い画面の「≡」の開閉を、
-// 見た目が受け取れる形まで畳んで返す。「いまの作業」の札は `hooks/use-current-work.ts` に
-// 分けてある（別の概念なのでファイルを分ける。CLAUDE.md 原則5）。
+// 見た目が受け取れる形まで畳んで返す。「いまの作業」の札・キャラクターの選び口・セッションの札と
+// 切り替え画面は `hooks/` の隣のファイルに分けてある（別の概念なのでファイルを分ける。CLAUDE.md 原則5）。
 //
 // 帯に出すのは `Screen` の4つすべて（作るダイアログはキャラクター画面から開く一時的な画面
 // （13.6「作るダイアログ」）で、独立した画面ではないのでここには挙げない。13.9「帯に何を置くか」）。
@@ -24,7 +24,6 @@ import { useCallback, useRef, useState, type RefObject } from "react"
 import { isEffortLevel, isModelAlias, isPermissionMode } from "../../../../../shared/command.ts"
 import { FRAME_ERROR_REASON } from "../../../../../shared/frame.ts"
 import { roomName } from "../../../../../shared/room.ts"
-import { characterFaceInfo, type CharacterFaceInfo } from "../../../../domain/character-face.ts"
 import { useDismissSignal } from "../../../../hooks/use-dismiss-signal.ts"
 import { SCREEN_NAV_ITEMS, type Screen } from "../../../../stores/location-hash.ts"
 import { useScreen, useScreenHref } from "../../../../stores/screen.tsx"
@@ -35,7 +34,13 @@ import {
   isDangerousPermissionMode,
   resolvePermissionMode,
 } from "../domain/permission-mode-label.ts"
+import { useCharacterPicker, type ScreenNavCharacterPicker } from "./use-character-picker.ts"
 import { useCurrentWork, type ScreenNavCurrentWork } from "./use-current-work.ts"
+import {
+  useSessionSwitcher,
+  type ScreenNavSessionSwitcher,
+  type ScreenNavSessionTag,
+} from "./use-session-switcher.ts"
 import { useSettings, type ScreenNavSettings } from "./use-settings.ts"
 
 /** 帯に並ぶ口1つ。「いま出している画面か」は畳んで渡す（部品は判定を持たない）。 */
@@ -78,9 +83,6 @@ export type ScreenNavModelPermission = {
   readonly onSetPermissionMode: (value: string) => void
 }
 
-/** 帯の左端に出す顔（13.9「顔」）。`url` が無ければ `<CharacterFace>` は何も描かない。 */
-export type ScreenNavFace = CharacterFaceInfo
-
 /**
  * 帯に並ぶ部品の値ひとそろい（13.9 の表の 2〜9）。広い画面の帯（`presentational-screen-nav.tsx`）
  * と狭い画面の「≡」の面（`components/screen-nav-menu.tsx`）が、この束をそのまま受け取って
@@ -88,10 +90,10 @@ export type ScreenNavFace = CharacterFaceInfo
  * 部品を1つ足すときに触るのは、ここと2つの置き場の JSX だけになる。
  */
 export type ScreenNavParts = {
-  /** この tsukumo の部屋の名前（`src/shared/room.ts`。13.9）。 */
-  readonly room: string
-  /** いまのパックのキャラクターの顔（`CharacterInfo.face`。13.9「顔」）。 */
-  readonly face: ScreenNavFace
+  /** いまのパックの顔と、押すと開くキャラクターの選び口（`hooks/use-character-picker.ts`）。 */
+  readonly character: ScreenNavCharacterPicker
+  /** 部屋の名前とセッションの短縮IDの札（`hooks/use-session-switcher.ts`）。 */
+  readonly sessionTag: ScreenNavSessionTag
   readonly gates: readonly ScreenNavGate[]
   readonly chatMode: ScreenNavChatMode
   readonly modelPermission: ScreenNavModelPermission
@@ -115,6 +117,8 @@ export type ScreenNavView = {
   /** いま出している画面。狭い画面での帯の置き方（タブ帯へ畳むか）を CSS が決めるのに使う。 */
   readonly current: Screen
   readonly parts: ScreenNavParts
+  /** 札か ⌘K で開く切り替え画面（帯の外に1つだけ描く）。 */
+  readonly switcher: ScreenNavSessionSwitcher
   readonly menu: ScreenNavMenu
   /** 帯の外側を押したかを見るための入れ物（「≡」を閉じる判定に使う）。 */
   readonly ref: RefObject<HTMLElement | null>
@@ -133,7 +137,6 @@ export function useScreenNav(): ScreenNavView {
   const permissionMode = useSession((session) =>
     session.state.session.kind === "running" ? session.state.session.permissionMode : undefined,
   )
-  const character = useSession((session) => session.state.character)
   // `init`（`session-info`）が届くまでの畳み先は、このセッションを起こした既定
   // （`docs/screen-design.md` 13.6）。同梱の既定に倒すと、歯車で Sonnet にして起こし直した直後の
   // 帯だけが Opus を名乗る。
@@ -142,6 +145,8 @@ export function useScreenNav(): ScreenNavView {
   const ref = useRef<HTMLElement>(null)
   const work = useCurrentWork(ref)
   const settings = useSettings(ref)
+  const character = useCharacterPicker(ref)
+  const { tag: sessionTag, switcher } = useSessionSwitcher(currentRoomName())
 
   const onSelect = useCallback((): void => {
     setMenuOpen(false)
@@ -168,8 +173,8 @@ export function useScreenNav(): ScreenNavView {
   return {
     current,
     parts: {
-      room: currentRoomName(),
-      face: characterFaceInfo(character),
+      character,
+      sessionTag,
       gates: SCREEN_NAV_ITEMS.map((entry) => ({
         screen: entry.screen,
         label: entry.label,
@@ -212,6 +217,7 @@ export function useScreenNav(): ScreenNavView {
       settings,
       onSelect,
     },
+    switcher,
     menu: { open: menuOpen, pendingActive, onToggle: onToggleMenu },
     ref,
   }

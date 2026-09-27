@@ -1,5 +1,5 @@
 // `session` 自身が受けるコマンドの表（`docs/design.md`「コマンドの受け手と手続きの置き方」）。
-// 駆動へ渡す6種・`nudge`・起こし直し3種・成果の振り返り・新しいセッションの既定の12種。
+// 駆動へ渡す6種・`nudge`・起こし直し4種・成果の振り返り・新しいセッションの既定の13種。
 // 手続き（`sessionProcedure`）がここの行へ委ねる。断る条件は契約
 // `sessionContract` の `meta`。
 
@@ -125,6 +125,16 @@ export function sessionCommands(ports: SessionCommandPorts): SessionCommandTable
           selection: { by: "current" },
           chat: session.state().chatMode,
           resume: { by: "id", sessionId: input.sessionId },
+        }),
+    },
+    // キャラクターもモードもいま出しているまま、続きを探さずに新規で起こす。
+    startNewSession: {
+      kind: "session",
+      receive: (_input, session) =>
+        session.restart({
+          selection: { by: "current" },
+          chat: session.state().chatMode,
+          resume: { by: "new" },
         }),
     },
     // 会話のターン中・答え待ちでも受けるので `meta` では断らない。断るかどうかは受け手の中で

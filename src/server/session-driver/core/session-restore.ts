@@ -200,10 +200,11 @@ export function selectSessionToResume(sessions: unknown, tag: string): string | 
 export function listMarkedSessions(sessions: unknown, tag: string): readonly SessionChoice[] {
   return markedSessions(sessions)
     .filter((session) => session.tag === tag)
-    .map(({ viewPort, sessionId, lastModified, heading }) => ({
+    .map(({ viewPort, sessionId, lastModified, startedAt, heading }) => ({
       viewPort,
       sessionId,
       lastModified,
+      startedAt,
       heading,
     }))
     .sort((left, right) => right.lastModified - left.lastModified)
@@ -284,6 +285,10 @@ function taggedSession(value: unknown): readonly TaggedSession[] {
           tag: mark.tag,
           sessionId,
           lastModified,
+          startedAt:
+            typeof value.createdAt === "number" && Number.isFinite(value.createdAt)
+              ? value.createdAt
+              : lastModified,
           heading: headingFrom(value.summary),
         },
       ]

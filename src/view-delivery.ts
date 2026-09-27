@@ -38,6 +38,7 @@ import type { StartedSession } from "./session-start.ts"
 import { resolveAchievementDateKey } from "./shared/achievement.ts"
 import { type ContextUsageReport, UNAVAILABLE_CONTEXT_USAGE } from "./shared/context-usage.ts"
 import type { RefreshTarget, ServerFrame } from "./shared/frame.ts"
+import { type SessionDigest, UNAVAILABLE_SESSION_DIGEST } from "./shared/session-digest.ts"
 
 export type ViewDeliveryOptions = {
   /** どのポートで試すか（決めるのは `src/server/view-server/core/port-resolution.ts`）。 */
@@ -97,6 +98,9 @@ export async function startViewDelivery(options: ViewDeliveryOptions): Promise<V
   // 「取れない」を返すものを置いておき、`connect` で本物に差し替える（`ui` と同じ持ち方）。
   let readContextUsage: () => Promise<ContextUsageReport> = () =>
     Promise.resolve(UNAVAILABLE_CONTEXT_USAGE)
+  // セッション1件の中身の読み口も同じ持ち方（繋がるまでは「読めない」）。
+  let readSessionDigest: (sessionId: string) => Promise<SessionDigest> = () =>
+    Promise.resolve(UNAVAILABLE_SESSION_DIGEST)
   // 成果の画面（1日ぶん・暦）が今日以外の日の数を覚える入れ物。両方の口が同じ1つを見る
   // （`docs/requirements.md`「灯りの段階」）。
   const achievementCommitCache = createAchievementCommitCache()
@@ -109,6 +113,7 @@ export async function startViewDelivery(options: ViewDeliveryOptions): Promise<V
     readTokenUsageSummary: (days) =>
       summarizeRecentTokenUsage(options.tokenUsageLog, todayLocalDateKey(), days),
     readContextUsage: () => readContextUsage(),
+    readSessionDigest: (sessionId) => readSessionDigest(sessionId),
     // 「今日」を決めるのは配線層（`readTokenUsageSummary` と同じ理由）。見る日の検証・今日への
     // 丸め込みも呼ぶたびにここで済ませ、`main-history.ts` には検証済みの日付キーだけを渡す。
     // 日記（`diary.ts`）はここで合わせる（`main-history.ts` は数だけを持ち、日記の置き場を
@@ -178,6 +183,7 @@ export async function startViewDelivery(options: ViewDeliveryOptions): Promise<V
     port: started.port,
     connect: ({ manager, socketRouter }) => {
       readContextUsage = manager.readContextUsage
+      readSessionDigest = manager.readSessionDigest
       attachSessionSocket({
         httpServer: server.httpServer,
         token,

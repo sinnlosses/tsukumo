@@ -356,17 +356,15 @@ export type SessionState = {
    */
   readonly character: CharacterInfo | undefined
   /**
-   * キャラクターパックの一覧（サイドバーの `<select>` と、キャラクター画面の一覧・詳しい設定。
+   * キャラクターパックの一覧（帯のキャラクターの選び口と、キャラクター画面の一覧・詳しい設定。
    * docs/design.md 7.2）。使用中以外のパックも姿ごと持つ。
-   * `character-changed` と一緒に届く。まだ届いていないときは空で、そのときは選択肢を
-   * 出せないので `<select>` ごと出さない。
+   * `character-changed` と一緒に届く。まだ届いていないときは空。
    */
   readonly characterPacks: readonly CharacterPackEntry[]
   /**
-   * 切り替え先として選べるセッションの一覧（サイドバーの `<select>`。
-   * `docs/requirements.md` 4.8）。`sessions-changed` と一緒に届き、起こしたときの姿のまま
-   * 変わらない（ターンのたびには引き直さない）。まだ届いていない・印の付いたセッションが
-   * 1つも無いときは空で、そのときは選択肢を出せないので `<select>` ごと出さない。
+   * 切り替え先として選べるセッションの一覧（切り替え画面。`docs/requirements.md` 4.8）。
+   * `sessions-changed` と一緒に届き、起こしたときの姿のまま変わらない（ターンのたびには
+   * 引き直さない）。まだ届いていない・印の付いたセッションが1つも無いときは空。
    */
   readonly sessions: readonly SessionChoice[]
   /**

@@ -16,7 +16,9 @@ import {
   expressionNames as toExpressionNames,
 } from "../../../shared/expression-choice.ts"
 import type { SessionChoice } from "../../../shared/session-choice.ts"
+import { type SessionDigest, UNAVAILABLE_SESSION_DIGEST } from "../../../shared/session-digest.ts"
 import type { SessionEvent } from "../../../shared/session-event.ts"
+import { toSessionDigest } from "../core/session-digest.ts"
 import type { SessionDriverOptions } from "../core/session-driver.ts"
 import {
   listMarkedSessions,
@@ -60,7 +62,7 @@ export async function findSessionToResume(cwd: string, tag: string): Promise<str
 }
 
 /**
- * 切り替え先として選べるセッションを一覧にする（画面のセッションの `<select>`。
+ * 切り替え先として選べるセッションを一覧にする（切り替え画面。
  * `docs/requirements.md`「セッションの復元」）。絞り込みと並びは `listMarkedSessions` が決める。
  *
  * 絞り込みの鍵も `includeWorktrees` を入れる理由も {@link findSessionToResume} と同じで、違うのは
@@ -108,6 +110,28 @@ export async function readRestoredEvents(
     )
   } catch {
     return []
+  }
+}
+
+/**
+ * セッション1件の中身（依頼の数・要約・最後のセリフ）を transcript から読む
+ * （`docs/glossary.md`「セッションの要約」）。組み方は `toSessionDigest`。`dir` を渡さない理由と
+ * `includeSystemMessages` を入れる理由は {@link readRestoredEvents} と同じ。
+ *
+ * 読めなければ「読めない」（切り替え画面の右が空になるだけ）。読んだ内容はどこにも書き出さない
+ * （docs/coding-standards.md「会話内容の扱い」）。
+ */
+export async function readSessionDigest(
+  sessionId: string,
+  expressions: readonly ExpressionChoice[],
+): Promise<SessionDigest> {
+  try {
+    return toSessionDigest(
+      await getSessionMessages(sessionId, { includeSystemMessages: true }),
+      toExpressionNames(expressions),
+    )
+  } catch {
+    return UNAVAILABLE_SESSION_DIGEST
   }
 }
 

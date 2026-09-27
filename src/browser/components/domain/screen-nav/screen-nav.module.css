@@ -1,5 +1,5 @@
 /* 画面のナビの帯（`<ScreenNav>`。src/browser/components/domain/screen-nav/。docs/screen-design.md 13.9）。
-   **全画面の最上部に1本**。左端に顔と部屋の名前（名乗り）、その右に仕事/雑談のトグル、縦の仕切り、
+   **全画面の最上部に1本**。左端に顔と部屋の名前とセッションの札（名乗り）、その右に仕事/雑談のトグル、縦の仕切り、
    3つの口（会話 / キャラクター / トークン消費）、その右に「いまの作業」の札、その右にモデル・許可モードの
    ドロップダウン、いちばん右端に設定の歯車。
 
@@ -12,11 +12,11 @@
    **口は枠も地も無い文字のタブ**で、帯の高さいっぱいに伸びる。いま出している画面の口は
    字の濃さと太さ、下端の差し色の下線で示す（色だけで伝えない。13.1 原則1）。
 
-   **部品ごとの見た目（部屋の名前・仕事/雑談のトグル・口・いまの作業・モデル/許可モード・
+   **部品ごとの見た目（顔とキャラクターの選び口・部屋の名前とセッションの札・切り替え画面・仕事/雑談のトグル・口・いまの作業・モデル/許可モード・
    設定の歯車・「≡」の面そのもの）は `components/screen-nav-*.module.css` に分かれている**
    （その部品しか使わない class の塊なので隣へ分けた。docs/design.md 6.6）。このファイルに残すのは
    **どの部品も単独では持てない、帯全体の組み立てと responsive な出し分け**——`.screen-nav` 本体・
-   名乗り（`.screen-nav-identity` / `.screen-nav-face`）・仕切り・口の並びの器（`.screen-nav-gates`）、
+   名乗り（`.screen-nav-identity`）・仕切り・口の並びの器（`.screen-nav-gates`）、
    そして狭い画面（760px 以下）の `@media` 一式。
 
    **`@media` の中で他の部品の class を指す規則**（`.screen-nav > .screen-nav-chat-mode` の
@@ -45,21 +45,7 @@
   display: flex;
   flex: none;
   align-items: center;
-  gap: 10px;
-}
-/* いまのパックのキャラクターの顔（13.9「顔」）。**丸く切り抜き**、透過の縁が帯に溶けないように
-   丸の地を --surface-accent で塗り、外側に差し色の輪を掛ける。大きさは帯の高さ（52px）に
-   合わせて決めた固定値（式にすると「≡」の面の顔まで帯の高さに引きずられる）。`face` が無い
-   パックでは `<CharacterFace>` が何も描かないので、この class 自体が出ない。**輪は 2026-09-23 に
-   2px から 1px へ細くした**（ユーザーの指示）。 */
-.screen-nav-face {
-  flex: none;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: var(--surface-accent);
-  box-shadow: 0 0 0 1px var(--accent);
-  object-fit: cover;
+  gap: 12px;
 }
 /* トグルと口の間の縦の仕切り（飾りなので読み上げない）。 */
 .screen-nav-divider {
@@ -116,12 +102,31 @@
     height: 26px;
     box-shadow: none;
   }
-  .screen-nav-panel .screen-nav-room {
-    color: var(--ink-quiet);
+  /* 面の先頭の名乗り（顔・部屋の名前とセッションの札）は横に並べて真ん中に寄せる。札の字は
+     帯の上より小さく、押せる形（枠と地）は帯の上と同じまま。 */
+  .screen-nav-panel-identity {
+    position: relative;
+    display: flex;
+    align-self: stretch;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+  .screen-nav-panel .screen-nav-session-tag {
     font-size: var(--font-secondary);
-    font-weight: normal;
-    letter-spacing: normal;
-    text-align: center;
+  }
+  /* キャラクターの選び口は、面の中では顔の真下ではなく名乗りの行の下に、面の幅いっぱいで重ねる
+     （基準を名乗りの行へ移すため、顔の入れ物は静的に置く）。 */
+  .screen-nav-panel .screen-nav-character-picker {
+    position: static;
+  }
+  .screen-nav-panel .screen-nav-character-picker-panel {
+    top: calc(100% + 0.3rem);
+    right: 0;
+    left: 0;
+    width: auto;
+    min-width: 0;
+    max-width: none;
   }
   .screen-nav-panel .screen-nav-gate {
     display: block;

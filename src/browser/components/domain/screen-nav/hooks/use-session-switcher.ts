@@ -1,0 +1,211 @@
+// 帯の左上の部屋の名前の札と、押すと開く切り替え画面のロジック（`docs/screen-design.md`
+// 「セッションの札」「切り替え画面」）。札・切り替え画面・⌘K の3つが同じ開閉の状態を
+// 読むので、状態はここに1つだけ持つ。
+//
+// 一覧（`SessionState.sessions`）は軽いもの（ID・見出し・時刻）だけで、依頼の数・要約・
+// 最後のセリフは選んだ1件ぶんだけ取りに行く（`useSessionDigest`）。
+//
+// ⌘K（Ctrl+K）は画面のどこからでも開く。`document` の購読は React の外との同期なので
+// `useEffect` で取る（「外部システムの購読」）。
+
+import { useCallback, useEffect, useState } from "react"
+
+import { FRAME_ERROR_REASON } from "../../../../../shared/frame.ts"
+import type { SessionChoice } from "../../../../../shared/session-choice.ts"
+import { useSession, useTurnRunning } from "../../../../stores/session.ts"
+import {
+  clockTime,
+  localTimeZoneId,
+  nowEpochMilliseconds,
+  zonedDateTime,
+} from "../../../../utils/clock.ts"
+import { shortSessionIds } from "../domain/session-short-id.ts"
+
+/** 一覧の日の区切り（見本の「今日」「昨日」「それより前」）。 */
+export type SessionSwitcherGroup = "today" | "yesterday" | "earlier"
+
+export const SESSION_SWITCHER_GROUP_LABELS = {
+  today: "今日",
+  yesterday: "昨日",
+  earlier: "それより前",
+} as const satisfies Record<SessionSwitcherGroup, string>
+
+/** 切り替え画面の一覧の1行（見た目が受け取れる形まで畳んだもの）。 */
+export type SessionSwitcherRow = {
+  readonly sessionId: string
+  readonly shortId: string
+  /** SDK の見出し。無ければ {@link NO_HEADING_LABEL}。 */
+  readonly heading: string
+  readonly group: SessionSwitcherGroup
+  /** 行の右端の時刻。いま出している行は始まった時刻に「〜」を添え、ほかは最終更新時刻。 */
+  readonly timeLabel: string
+  /** 右の欄の見出しの横に出す、始まり〜最終更新の範囲（`9/26 20:10 – 23:05`）。 */
+  readonly rangeLabel: string
+  readonly current: boolean
+}
+
+/**
+ * 帯の札に出す、いまのセッションの名乗り。ID が分かる前（新規に起こして最初の依頼を送る前）は
+ * 短縮IDを出せない。
+ */
+export type ScreenNavSessionIdentity =
+  | {
+      readonly kind: "known"
+      readonly sessionId: string
+      readonly shortId: string
+      /** 一覧に載っていれば始まった時刻（`9/27 09:12〜`）。載っていなければ空。 */
+      readonly startedLabel: string
+    }
+  | { readonly kind: "unknown" }
+
+/** 帯の左上の札（部屋の名前 + 短縮ID）。 */
+export type ScreenNavSessionTag = {
+  readonly room: string
+  readonly identity: ScreenNavSessionIdentity
+  readonly open: boolean
+  readonly onOpen: () => void
+}
+
+/** 切り替え画面が受け取れる形。 */
+export type ScreenNavSessionSwitcher = {
+  readonly open: boolean
+  readonly onClose: () => void
+  readonly rows: readonly SessionSwitcherRow[]
+  /** ターン進行中は切り替えも新しいセッションも送らない（起こし直しなので）。 */
+  readonly blocked: boolean
+  /** `blocked` のときだけ理由を持つ。 */
+  readonly blockedTitle: string | undefined
+  readonly onSwitch: (sessionId: string) => void
+  readonly onStartNew: () => void
+}
+
+export type SessionSwitcherView = {
+  readonly tag: ScreenNavSessionTag
+  readonly switcher: ScreenNavSessionSwitcher
+}
+
+/** 見出しが無い（SDK の `summary` が空・読めない）行に代わりに出す字。 */
+export const NO_HEADING_LABEL = "（題なし）"
+
+export function useSessionSwitcher(room: string): SessionSwitcherView {
+  const dispatch = useSession((session) => session.dispatch)
+  const sessions = useSession((session) => session.state.sessions)
+  const currentSessionId = useSession((session) =>
+    session.state.session.kind === "starting" ? undefined : session.state.session.sessionId,
+  )
+  const turnInProgress = useTurnRunning()
+  const [open, setOpen] = useState(false)
+
+  const onOpen = useCallback((): void => {
+    setOpen(true)
+  }, [])
+  const onClose = useCallback((): void => {
+    setOpen(false)
+  }, [])
+
+  useEffect(() => {
+    function toggleOnShortcut(event: KeyboardEvent): void {
+      if ((event.metaKey || event.ctrlKey) && !event.altKey && event.key.toLowerCase() === "k") {
+        event.preventDefault()
+        setOpen((wasOpen) => !wasOpen)
+      }
+    }
+    document.addEventListener("keydown", toggleOnShortcut)
+    return () => {
+      document.removeEventListener("keydown", toggleOnShortcut)
+    }
+  }, [])
+
+  const shortIds = shortSessionIds([
+    ...(currentSessionId === undefined ? [] : [currentSessionId]),
+    ...sessions.map((session) => session.sessionId),
+  ])
+  const timeZone = localTimeZoneId()
+  const today = zonedDateTime(nowEpochMilliseconds(), timeZone).toPlainDate()
+  const rows = sessions.map((session) =>
+    switcherRow(session, shortIds, session.sessionId === currentSessionId, today, timeZone),
+  )
+  const currentChoice = sessions.find((session) => session.sessionId === currentSessionId)
+
+  return {
+    tag: {
+      room,
+      identity:
+        currentSessionId === undefined
+          ? { kind: "unknown" }
+          : {
+              kind: "known",
+              sessionId: currentSessionId,
+              shortId: shortIds.get(currentSessionId) ?? "",
+              startedLabel:
+                currentChoice === undefined
+                  ? ""
+                  : `${monthDayTime(zonedDateTime(currentChoice.startedAt, timeZone))}〜`,
+            },
+      open,
+      onOpen,
+    },
+    switcher: {
+      open,
+      onClose,
+      rows,
+      blocked: turnInProgress,
+      blockedTitle: turnInProgress ? FRAME_ERROR_REASON.sessionSwitchDuringTurn : undefined,
+      onSwitch: (sessionId) => {
+        if (turnInProgress) {
+          return
+        }
+        setOpen(false)
+        // いま出しているものを選び直しても起こし直さない（会話が消えるだけで何も変わらない）。
+        if (sessionId !== currentSessionId) {
+          dispatch.session.switchSession({ sessionId })
+        }
+      },
+      onStartNew: () => {
+        if (turnInProgress) {
+          return
+        }
+        setOpen(false)
+        dispatch.session.startNewSession()
+      },
+    },
+  }
+}
+
+function switcherRow(
+  session: SessionChoice,
+  shortIds: ReadonlyMap<string, string>,
+  current: boolean,
+  today: Temporal.PlainDate,
+  timeZone: string,
+): SessionSwitcherRow {
+  const started = zonedDateTime(session.startedAt, timeZone)
+  const modified = zonedDateTime(session.lastModified, timeZone)
+  const group = groupOf(modified.toPlainDate(), today)
+  const sameDay = started.toPlainDate().equals(modified.toPlainDate())
+  return {
+    sessionId: session.sessionId,
+    shortId: shortIds.get(session.sessionId) ?? "",
+    heading: session.heading ?? NO_HEADING_LABEL,
+    group,
+    timeLabel: current
+      ? `${clockTime(started)}〜`
+      : group === "earlier"
+        ? monthDayTime(modified)
+        : clockTime(modified),
+    rangeLabel: `${monthDayTime(started)} – ${sameDay ? clockTime(modified) : monthDayTime(modified)}`,
+    current,
+  }
+}
+
+function groupOf(date: Temporal.PlainDate, today: Temporal.PlainDate): SessionSwitcherGroup {
+  if (date.equals(today)) {
+    return "today"
+  }
+  return date.equals(today.subtract({ days: 1 })) ? "yesterday" : "earlier"
+}
+
+/** `M/D HH:MM`（年は出さない。一覧に並ぶのは同じ部屋の直近の作業だけ）。 */
+function monthDayTime(at: Temporal.ZonedDateTime): string {
+  return `${String(at.month)}/${String(at.day)} ${clockTime(at)}`
+}

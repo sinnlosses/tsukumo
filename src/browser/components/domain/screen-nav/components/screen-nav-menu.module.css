@@ -1,7 +1,7 @@
 /* 狭い画面（760px 以下）の「≡」と、押すと落ちてくる面（`screen-nav-menu.tsx`）。もとは
    screen-nav.module.css の一部だったが、この部品しか使わない class の塊なので隣へ分けた
    （docs/design.md 6.6）。**面の中で他の部品を並べ直す規則**
-   （`.screen-nav-panel .screen-nav-room` など）は他の部品しか使わないので、それぞれの部品の
+   （`.screen-nav-panel .screen-nav-session-tag` など）は他の部品しか使わないので、それぞれの部品の
    隣（`screen-nav.module.css` の @media）に残る。`screen-nav-menu.tsx` はそちらのハッシュ
    （`.screen-nav-panel`）を自分の要素に重ねて渡す（docs/design.md 6.6）。 */
 

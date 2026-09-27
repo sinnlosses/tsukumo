@@ -334,12 +334,14 @@ describe("listMarkedSessions", () => {
         viewPort: DEFAULT_VIEW_PORT,
         sessionId: "s-third",
         lastModified: 200,
+        startedAt: 200,
         heading: "架空のセッション",
       },
       {
         viewPort: DEFAULT_VIEW_PORT,
         sessionId: "s-first",
         lastModified: 100,
+        startedAt: 100,
         heading: "架空のセッション",
       },
     ])
@@ -358,6 +360,7 @@ describe("listMarkedSessions", () => {
         viewPort: DEFAULT_VIEW_PORT,
         sessionId: "s-here",
         lastModified: 100,
+        startedAt: 100,
         heading: "架空のセッション",
       },
     ])
@@ -366,6 +369,7 @@ describe("listMarkedSessions", () => {
         viewPort: DEFAULT_VIEW_PORT + 1,
         sessionId: "s-other-room",
         lastModified: 300,
+        startedAt: 300,
         heading: "架空のセッション",
       },
     ])
@@ -385,6 +389,7 @@ describe("listMarkedSessions", () => {
         viewPort: DEFAULT_VIEW_PORT,
         sessionId: "s-work",
         lastModified: 100,
+        startedAt: 100,
         heading: "架空のセッション",
       },
     ])
@@ -393,6 +398,7 @@ describe("listMarkedSessions", () => {
         viewPort: DEFAULT_VIEW_PORT,
         sessionId: "s-chat",
         lastModified: 300,
+        startedAt: 300,
         heading: "架空のセッション",
       },
     ])
@@ -412,6 +418,7 @@ describe("listMarkedSessions", () => {
         viewPort: DEFAULT_VIEW_PORT,
         sessionId: "s-legacy",
         lastModified: 500,
+        startedAt: 500,
         heading: "架空のセッション",
       },
     ])
@@ -430,6 +437,7 @@ describe("listMarkedSessions", () => {
         viewPort: DEFAULT_VIEW_PORT,
         sessionId: "s-legacy-a",
         lastModified: 900,
+        startedAt: 900,
         heading: "架空のセッション",
       },
     ])
@@ -438,6 +446,7 @@ describe("listMarkedSessions", () => {
         viewPort: DEFAULT_VIEW_PORT + 1,
         sessionId: "s-legacy-b",
         lastModified: 800,
+        startedAt: 800,
         heading: "架空のセッション",
       },
     ])
@@ -467,6 +476,7 @@ describe("listMarkedSessions", () => {
       sessionInfo({
         sessionId: "s-titled",
         lastModified: 400,
+        startedAt: 400,
         tag: TAG,
         summary: "架空の作業その1",
       }),
@@ -480,16 +490,47 @@ describe("listMarkedSessions", () => {
         viewPort: DEFAULT_VIEW_PORT,
         sessionId: "s-titled",
         lastModified: 400,
+        startedAt: 400,
         heading: "架空の作業その1",
       },
       {
         viewPort: DEFAULT_VIEW_PORT,
         sessionId: "s-missing",
         lastModified: 300,
+        startedAt: 300,
         heading: undefined,
       },
-      { viewPort: DEFAULT_VIEW_PORT, sessionId: "s-number", lastModified: 200, heading: undefined },
-      { viewPort: DEFAULT_VIEW_PORT, sessionId: "s-blank", lastModified: 100, heading: undefined },
+      {
+        viewPort: DEFAULT_VIEW_PORT,
+        sessionId: "s-number",
+        lastModified: 200,
+        startedAt: 200,
+        heading: undefined,
+      },
+      {
+        viewPort: DEFAULT_VIEW_PORT,
+        sessionId: "s-blank",
+        lastModified: 100,
+        startedAt: 100,
+        heading: undefined,
+      },
+    ])
+  })
+
+  it("始まった時刻は SDK の createdAt を使い、無ければ最終更新時刻に畳む", () => {
+    const sessions = [
+      sessionInfo({ sessionId: "s-created", lastModified: 300, createdAt: 120, tag: TAG }),
+      sessionInfo({ sessionId: "s-no-created", lastModified: 200, tag: TAG }),
+    ]
+
+    expect(
+      listMarkedSessions(sessions, TAG).map(({ sessionId, startedAt }) => ({
+        sessionId,
+        startedAt,
+      })),
+    ).toEqual([
+      { sessionId: "s-created", startedAt: 120 },
+      { sessionId: "s-no-created", startedAt: 200 },
     ])
   })
 })

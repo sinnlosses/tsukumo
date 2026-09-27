@@ -1,0 +1,418 @@
+[
+  {
+    "tag": "nav",
+    "attributes": {
+      "aria-label": "画面",
+      "data-screen": "conversation"
+    },
+    "children": [
+      {
+        "tag": "button",
+        "attributes": {
+          "aria-expanded": "false",
+          "aria-label": "メニュー",
+          "type": "button"
+        },
+        "children": [
+          "≡"
+        ]
+      },
+      {
+        "tag": "dialog",
+        "attributes": {
+          "aria-label": "セッションを切り替える",
+          "open": true
+        },
+        "children": [
+          {
+            "tag": "svg"
+          },
+          {
+            "tag": "input",
+            "attributes": {
+              "aria-label": "セッションを探す",
+              "role": "combobox",
+              "aria-expanded": "true",
+              "type": "search",
+              "value": ""
+            }
+          },
+          {
+            "tag": "button",
+            "attributes": {
+              "type": "button"
+            },
+            "children": [
+              "＋ 新しいセッション"
+            ]
+          },
+          {
+            "tag": "div",
+            "attributes": {
+              "role": "listbox",
+              "aria-label": "セッション"
+            },
+            "children": [
+              {
+                "tag": "div",
+                "attributes": {
+                  "role": "group",
+                  "aria-label": "今日"
+                },
+                "children": [
+                  {
+                    "tag": "div",
+                    "attributes": {
+                      "aria-hidden": "true"
+                    },
+                    "children": [
+                      "今日"
+                    ]
+                  },
+                  {
+                    "tag": "div",
+                    "attributes": {
+                      "role": "option",
+                      "aria-selected": "false",
+                      "data-current": "true"
+                    },
+                    "children": [
+                      "FA",
+                      "入力欄の送信ボタンの位置を架空に直す",
+                      "いま",
+                      "09:12〜"
+                    ]
+                  }
+                ]
+              },
+              {
+                "tag": "div",
+                "attributes": {
+                  "role": "group",
+                  "aria-label": "昨日"
+                },
+                "children": [
+                  {
+                    "tag": "div",
+                    "attributes": {
+                      "aria-hidden": "true"
+                    },
+                    "children": [
+                      "昨日"
+                    ]
+                  },
+                  {
+                    "tag": "div",
+                    "attributes": {
+                      "role": "option",
+                      "aria-selected": "true",
+                      "data-current": "false"
+                    },
+                    "children": [
+                      "7B",
+                      "架空の成果の画面に振り返りの口を置きたい",
+                      "23:05"
+                    ]
+                  },
+                  {
+                    "tag": "div",
+                    "attributes": {
+                      "role": "option",
+                      "aria-selected": "false",
+                      "data-current": "false"
+                    },
+                    "children": [
+                      "C3",
+                      "/retrospect",
+                      "14:02"
+                    ]
+                  }
+                ]
+              },
+              {
+                "tag": "div",
+                "attributes": {
+                  "role": "group",
+                  "aria-label": "それより前"
+                },
+                "children": [
+                  {
+                    "tag": "div",
+                    "attributes": {
+                      "aria-hidden": "true"
+                    },
+                    "children": [
+                      "それより前"
+                    ]
+                  },
+                  {
+                    "tag": "div",
+                    "attributes": {
+                      "role": "option",
+                      "aria-selected": "false",
+                      "data-current": "false"
+                    },
+                    "children": [
+                      "2D",
+                      "（題なし）",
+                      "1/12 22:30"
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "section",
+            "attributes": {
+              "aria-label": "セッション 7B"
+            },
+            "children": [
+              "7B",
+              "1/14 20:10 – 23:05 · 依頼 12",
+              {
+                "tag": "img",
+                "attributes": {
+                  "alt": "",
+                  "src": "/character/tsukumo-spirit/face.svg"
+                }
+              },
+              "つくもの精霊",
+              {
+                "tag": "h3",
+                "children": [
+                  "このセッションの要約"
+                ]
+              },
+              {
+                "tag": "p",
+                "attributes": {
+                  "data-remaining": "false"
+                },
+                "children": [
+                  "架空の成果の画面の土台づくり。帯に成果の口を足し、日ごとの数を集めてブラウザへ渡すところまで進めた。"
+                ]
+              },
+              {
+                "tag": "p",
+                "attributes": {
+                  "data-remaining": "false"
+                },
+                "children": [
+                  "途中で呼び出しが遅いことに気づき、互いに依存しない呼び出しを同時に走らせる形に直した。"
+                ]
+              },
+              {
+                "tag": "p",
+                "attributes": {
+                  "data-remaining": "true"
+                },
+                "children": [
+                  "残り：数が0の日の見せ方は、次のセッションで決める。"
+                ]
+              },
+              "最後のひとこと",
+              "つくもの精霊",
+              "「",
+              "ボタン置いといたぞ。押したら会話のほうでボクが振り返る！",
+              "」",
+              {
+                "tag": "button",
+                "attributes": {
+                  "type": "button"
+                },
+                "children": [
+                  "7B に切り替える"
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "tag": "div",
+    "attributes": {
+      "data-collapse-character": "false"
+    },
+    "children": [
+      {
+        "tag": "div",
+        "attributes": {
+          "role": "tablist"
+        },
+        "children": [
+          {
+            "tag": "button",
+            "attributes": {
+              "role": "tab",
+              "aria-selected": "true",
+              "type": "button"
+            },
+            "children": [
+              "メインビュー"
+            ]
+          },
+          {
+            "tag": "button",
+            "attributes": {
+              "role": "tab",
+              "aria-selected": "false",
+              "type": "button"
+            },
+            "children": [
+              "サイドバー"
+            ]
+          }
+        ]
+      },
+      {
+        "tag": "div",
+        "attributes": {
+          "data-narrow-pane": "main"
+        },
+        "children": [
+          {
+            "tag": "section",
+            "attributes": {
+              "data-region": "main"
+            },
+            "children": [
+              {
+                "tag": "p",
+                "children": [
+                  "（まだ作業がありません）"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "tag": "div",
+        "attributes": {
+          "data-collapse-character": "false"
+        },
+        "children": [
+          {
+            "tag": "section",
+            "attributes": {
+              "data-region": "character"
+            },
+            "children": [
+              {
+                "tag": "button",
+                "attributes": {
+                  "aria-expanded": "false",
+                  "type": "button"
+                },
+                "children": [
+                  {
+                    "tag": "svg"
+                  },
+                  "ログ"
+                ]
+              },
+              {
+                "tag": "div",
+                "attributes": {
+                  "role": "img",
+                  "aria-label": "つくもの精霊（通常）",
+                  "data-expression": "default",
+                  "data-outfit": "heavy",
+                  "data-motion": "reading"
+                },
+                "children": [
+                  {
+                    "tag": "svg"
+                  }
+                ]
+              },
+              {
+                "tag": "div",
+                "attributes": {
+                  "data-latest": "true"
+                },
+                "children": [
+                  "つくもの精霊",
+                  "疑似セッションの駆動で立ち上がったよ。ここはぜんぶ作り物の会話。"
+                ]
+              }
+            ]
+          },
+          {
+            "tag": "section",
+            "attributes": {
+              "data-region": "dispatch"
+            },
+            "children": [
+              {
+                "tag": "form",
+                "children": [
+                  {
+                    "tag": "textarea",
+                    "attributes": {
+                      "value": ""
+                    }
+                  },
+                  {
+                    "tag": "button",
+                    "attributes": {
+                      "aria-disabled": "false",
+                      "aria-label": "画像を添える",
+                      "type": "button"
+                    },
+                    "children": [
+                      {
+                        "tag": "svg"
+                      }
+                    ]
+                  },
+                  {
+                    "tag": "button",
+                    "attributes": {
+                      "aria-disabled": "false",
+                      "aria-label": "コマンドを補完する",
+                      "type": "button"
+                    },
+                    "children": [
+                      {
+                        "tag": "svg"
+                      }
+                    ]
+                  },
+                  {
+                    "tag": "button",
+                    "attributes": {
+                      "aria-disabled": "false",
+                      "aria-label": "ファイルを補完する",
+                      "type": "button"
+                    },
+                    "children": [
+                      {
+                        "tag": "svg"
+                      }
+                    ]
+                  },
+                  "経過",
+                  "-",
+                  {
+                    "tag": "button",
+                    "attributes": {
+                      "data-shortcut": "⌘⏎",
+                      "type": "submit"
+                    },
+                    "children": [
+                      "送信"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]

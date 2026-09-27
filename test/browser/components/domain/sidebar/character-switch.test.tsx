@@ -1,7 +1,6 @@
-// キャラクターの切り替えの `<select>`（`character-switch.tsx`）。帯の `session-info.tsx` と
-// 雑談中の `profile-card.tsx` の両方が同じ部品を使う（見た目と名前だけを渡す。`session-switch.tsx`
-// と対）ので、選択肢・値・塞ぐ条件・送るコマンドはここで1回だけ測る。呼び出す側のテストは
-// 自分が `CharacterSwitch` を正しく置いているかだけを見る。
+// キャラクターの切り替えの `<select>`（`character-switch.tsx`）。選択肢・値・塞ぐ条件・送るコマンドは
+// ここで1回だけ測る。置く側（雑談中の `profile-card.tsx`）のテストは、自分が `CharacterSwitch` を
+// 正しく置いているかだけを見る。
 
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"

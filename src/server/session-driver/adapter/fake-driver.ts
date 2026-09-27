@@ -17,6 +17,11 @@ import type { ContextUsage } from "../../../shared/context-usage.ts"
 import type { Answer, PendingAsk } from "../../../shared/pending-ask.ts"
 import type { SessionDefault } from "../../../shared/session-default.ts"
 import {
+  type SessionDigest,
+  sessionDigestSchema,
+  UNAVAILABLE_SESSION_DIGEST,
+} from "../../../shared/session-digest.ts"
+import {
   type ModelEffortSupport,
   type SessionEvent,
   sessionEventSchema,
@@ -112,6 +117,7 @@ const fakeSessionSceneSchema = z.object({
 const fakeSessionSchema = z.object({
   opening: z.array(fakeSessionStepSchema),
   turns: z.array(fakeSessionSceneSchema),
+  sessionDigests: z.record(z.string(), sessionDigestSchema).default({}),
 })
 
 /** 疑似セッションの1手（読み取り専用の形。zod の出力もこの形に収まる）。 */
@@ -129,6 +135,11 @@ export type FakeSessionScene = {
 export type FakeSession = {
   readonly opening: readonly FakeSessionStep[]
   readonly turns: readonly FakeSessionScene[]
+  /**
+   * 切り替え画面で選んだセッションの中身（`readSessionDigest` が返す）。キーはセッションのID で、
+   * 一覧に載せるのは場面が流す `sessions-changed`。無いIDは「読めない」になる。
+   */
+  readonly sessionDigests: Readonly<Record<string, SessionDigest>>
 }
 
 export type FakeDriverOptions = {
@@ -308,6 +319,9 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
     // モデルだけを載せた固定の内訳を返す（画面の札を疑似セッションでも確かめられるように）。
     readContextUsage: () =>
       Promise.resolve({ kind: "ready", usage: { model, ...FAKE_CONTEXT_USAGE } }),
+    // 本物は transcript を読む。fake driver は疑似セッションに書いた架空の中身を返す。
+    readSessionDigest: (sessionId) =>
+      Promise.resolve(options.session.sessionDigests[sessionId] ?? UNAVAILABLE_SESSION_DIGEST),
     setModel: (next) => {
       // 名前が無い切り替えは覚えない（本物も `undefined` のときは何も知らせない）。
       if (next !== undefined) {

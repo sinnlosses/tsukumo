@@ -1,7 +1,7 @@
 // セッションのコマンドの契約（`docs/glossary.md`「契約」）。受け手は
 // `src/server/session/adapter/session-procedure.ts`、委ね先の行は
-// `src/server/session/core/session-command.ts`。駆動へ渡す6種・`nudge`・起こし直し3種・成果の
-// 振り返り・新しいセッションの既定の12種。
+// `src/server/session/core/session-command.ts`。駆動へ渡す6種・`nudge`・起こし直し4種・成果の
+// 振り返り・新しいセッションの既定の13種。
 //
 // 依頼の文面（`prompt` の `text`）と答えは会話の内容そのもの（`docs/coding-standards.md`
 // 「会話内容の扱い」）。
@@ -19,6 +19,7 @@ import {
   parsePromptImage,
   parsePromptImageThumbnail,
 } from "../prompt-image.ts"
+import { MAX_SESSION_ID_LENGTH } from "../session-choice.ts"
 import { SESSION_DEFAULT_PERMISSION_MODES } from "../session-default.ts"
 
 /**
@@ -26,12 +27,6 @@ import { SESSION_DEFAULT_PERMISSION_MODES } from "../session-default.ts"
  * （旧の入力欄の送信経路にあった `MAX_DISPATCH_TEXT_LENGTH` と同じ値をここへ移した）。
  */
 export const MAX_PROMPT_TEXT_LENGTH = 20_000
-
-/**
- * 画面から選び直せるセッションのIDの上限。UUID を通せる素朴な上限であって、形の検査では
- * ない（知らないIDは起こす側が新規に倒すので、ここで形まで縛らない）。
- */
-const MAX_SESSION_ID_LENGTH = 200
 
 /**
  * 依頼に添える画像1枚（`docs/requirements.md` 4.10）。原寸と控えの対で、大きさと種類は
@@ -113,6 +108,14 @@ export const sessionContract = {
   switchSession: commandBase
     .meta({ chatOnly: false, idleTurn: FRAME_ERROR_REASON.sessionSwitchDuringTurn })
     .input(z.object({ sessionId: z.string().min(1).max(MAX_SESSION_ID_LENGTH) })),
+  /**
+   * 新しいセッションを起こす（切り替え画面の「＋ 新しいセッション」）。`switchSession` と同じく
+   * 駆動の起こし直しで、キャラクターも雑談かどうかもいま出しているまま、続きを探さずに新規で起こす。
+   */
+  startNewSession: commandBase.meta({
+    chatOnly: false,
+    idleTurn: FRAME_ERROR_REASON.sessionSwitchDuringTurn,
+  }),
   /**
    * 成果の画面のボタン（と見開きの「この日を振り返る」）から送る、成果の振り返り
    * （`docs/glossary.md`「成果の振り返り」）。画面は日付だけを送る——依頼文は

@@ -29,6 +29,10 @@ import {
   type RepositoryProcedurePorts,
   repositoryProcedure,
 } from "./server/repository/adapter/repository-procedure.ts"
+import {
+  type SessionDigestProcedurePorts,
+  sessionDigestProcedure,
+} from "./server/session/adapter/session-digest-procedure.ts"
 import { sessionProcedure } from "./server/session/adapter/session-procedure.ts"
 import type { SessionCommandPorts } from "./server/session/core/session-command.ts"
 import {
@@ -54,7 +58,8 @@ import { commandContract, rpcContract } from "./shared/rpc.ts"
 export type RpcRouterPorts = RepositoryProcedurePorts &
   TokenUsageProcedurePorts &
   ContextUsageProcedurePorts &
-  AchievementProcedurePorts
+  AchievementProcedurePorts &
+  SessionDigestProcedurePorts
 
 /** 読み取りの手続きを束ね、照合のミドルウェアを全部の前に掛ける（`/rpc` に載る）。 */
 export function createRpcRouter(ports: RpcRouterPorts) {
@@ -66,6 +71,7 @@ export function createRpcRouter(ports: RpcRouterPorts) {
       tokenUsage: tokenUsageProcedure(ports),
       contextUsage: contextUsageProcedure(ports),
       achievement: achievementProcedure(ports),
+      sessionDigest: sessionDigestProcedure(ports),
     })
 }
 
@@ -81,7 +87,7 @@ export type CommandRouterPorts = {
 
 /**
  * コマンドの手続きを束ね、照合と断る条件のミドルウェアを全部の前に掛ける（`/ws` に載る）。
- * 28種の網羅は契約（`commandContract`）が型で見る。
+ * 29種の網羅は契約（`commandContract`）が型で見る。
  */
 export function createCommandRouter(ports: CommandRouterPorts) {
   return implement(commandContract)

@@ -11,6 +11,7 @@ import {
 } from "../../../../src/server/session/core/session-launch.ts"
 import { UNAVAILABLE_CONTEXT_USAGE } from "../../../../src/shared/context-usage.ts"
 import { BUILTIN_SESSION_DEFAULT } from "../../../../src/shared/session-default.ts"
+import { UNAVAILABLE_SESSION_DIGEST } from "../../../../src/shared/session-digest.ts"
 import type { SessionEvent } from "../../../../src/shared/session-event.ts"
 import { DEFAULT_VISIT_ENABLED } from "../../../../src/shared/visit.ts"
 import {
@@ -29,11 +30,18 @@ const SWITCHED: Pack = { name: "kagami" }
 // 切り替え先の一覧（目印・最終更新時刻・見出し。見出しは作り物の文字列
 // docs/coding-standards.md「会話内容の扱い」）。
 const CHOICES = [
-  { viewPort: 7328, sessionId: "other-session", lastModified: 2_000, heading: "架空の見出しその1" },
+  {
+    viewPort: 7328,
+    sessionId: "other-session",
+    lastModified: 2_000,
+    startedAt: 1_500,
+    heading: "架空の見出しその1",
+  },
   {
     viewPort: 7327,
     sessionId: "prev-work-session",
     lastModified: 1_000,
+    startedAt: 500,
     heading: "架空の見出しその2",
   },
 ] as const
@@ -56,6 +64,7 @@ function createStubDriver(): { readonly driver: SessionDriver; readonly calls: s
       answer: () => true,
       pending: () => [],
       readContextUsage: () => Promise.resolve(UNAVAILABLE_CONTEXT_USAGE),
+      readSessionDigest: () => Promise.resolve(UNAVAILABLE_SESSION_DIGEST),
       setModel: () => Promise.resolve(),
       setEffort: () => Promise.resolve(),
       setPermissionMode: () => Promise.resolve(),

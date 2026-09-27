@@ -60,6 +60,12 @@ export function sessionProcedure(ports: SessionCommandPorts) {
         errors,
       ),
     ),
+    startNewSession: procedure.startNewSession.handler(({ input, context, errors }) =>
+      refusedUnlessAccepted(
+        receiveSessionCommand(table.startNewSession, input, context.session),
+        errors,
+      ),
+    ),
     reflectAchievement: procedure.reflectAchievement.handler(({ input, context, errors }) =>
       refusedUnlessAccepted(
         receiveSessionCommand(table.reflectAchievement, input, context.session),

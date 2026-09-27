@@ -20,6 +20,7 @@ import {
   UNAVAILABLE_CONTEXT_USAGE,
 } from "../../../shared/context-usage.ts"
 import { FRAME_ERROR_REASON, PROTOCOL_VERSION, type ServerFrame } from "../../../shared/frame.ts"
+import { type SessionDigest, UNAVAILABLE_SESSION_DIGEST } from "../../../shared/session-digest.ts"
 import type { SessionEvent } from "../../../shared/session-event.ts"
 import {
   applySessionEvent,
@@ -157,6 +158,13 @@ export type SessionManager = {
    * フレームにも乗らない。取れなかったときは「取れない」。
    */
   readonly readContextUsage: () => Promise<ContextUsageReport>
+  /**
+   * セッション1件の中身を駆動から取る（切り替え画面が選んだ1件ぶんだけ引く。
+   * `docs/glossary.md`「セッションの要約」）。読んでよいのは、いま配っている一覧
+   * （`sessions-changed`）に載ったものと、いま出しているセッションだけ——画面から届いたIDで
+   * よその transcript を読まない。それ以外と、取れなかったときは「読めない」。
+   */
+  readonly readSessionDigest: (sessionId: string) => Promise<SessionDigest>
   /** 接続を購読に加える。まず `hello` を1つ送ってから加え、外すための関数を返す。 */
   readonly subscribe: (send: (frame: ServerFrame) => void) => () => void
   /** 駆動を閉じる（プロセスを終えるとき。claude の子プロセスを残さないため必ず呼ぶ）。 */
@@ -508,6 +516,17 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
         return UNAVAILABLE_CONTEXT_USAGE
       }
     },
+    readSessionDigest: async (sessionId) => {
+      if (!isReadableSession(state, sessionId)) {
+        return UNAVAILABLE_SESSION_DIGEST
+      }
+      try {
+        const started = await generation.driver
+        return await started.readSessionDigest(sessionId)
+      } catch {
+        return UNAVAILABLE_SESSION_DIGEST
+      }
+    },
     subscribe: (send) => {
       send(helloFrame())
       subscribers.add(send)
@@ -522,6 +541,14 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
       consolidationAbort.abort()
     },
   }
+}
+
+/** 画面から中身を頼まれてよいセッションか（一覧に載ったものか、いま出しているもの）。 */
+function isReadableSession(state: SessionState, sessionId: string): boolean {
+  return (
+    state.sessions.some((session) => session.sessionId === sessionId) ||
+    (state.session.kind !== "starting" && state.session.sessionId === sessionId)
+  )
 }
 
 /** 購読者全員に配る。閉じかけている接続を無視するのは送る側（接続を扱うアダプタ）の仕事。 */

@@ -26,6 +26,14 @@ const FAKE_SESSION = {
       steps: [{ afterMs: 0, event: { kind: "utterance", text: "架空の本文2" } }],
     },
   ],
+  sessionDigests: {
+    "fake-other": {
+      kind: "known",
+      requestCount: 2,
+      summary: "架空の要約",
+      lastLine: "架空のセリフ",
+    },
+  },
 } as const
 
 function collect(): {
@@ -58,6 +66,22 @@ describe("startFakeSession", () => {
       { kind: "model-effort-support", models: FAKE_MODEL_EFFORT_SUPPORT },
       { kind: "speech", text: "架空の挨拶", expression: "default" },
     ])
+  })
+
+  it("セッションの中身は疑似セッションに書いたものを返し、無いIDは「読めない」", async () => {
+    const driver = startFakeSession({
+      session: FAKE_SESSION,
+      scene: undefined,
+      sessionDefault: BUILTIN_SESSION_DEFAULT,
+      firstViewer: Promise.resolve(),
+      onEvent: () => {},
+    })
+
+    expect(await driver.readSessionDigest("fake-other")).toEqual(
+      FAKE_SESSION.sessionDigests["fake-other"],
+    )
+    expect(await driver.readSessionDigest("fake-missing")).toEqual({ kind: "unavailable" })
+    driver.close()
   })
 
   it("prompt で request を流してから、次の場面を流す", async () => {
@@ -210,6 +234,7 @@ describe("startFakeSession", () => {
     const sink = collect()
     const driver = startFakeSession({
       session: {
+        sessionDigests: {},
         opening: [
           {
             afterMs: 0,
@@ -239,6 +264,7 @@ describe("startFakeSession", () => {
     const sink = collect()
     const driver = startFakeSession({
       session: {
+        sessionDigests: {},
         opening: [{ afterMs: 50, event: { kind: "utterance", text: "遅れて来る本文" } }],
         turns: [],
       },
@@ -269,12 +295,14 @@ describe("startFakeSession", () => {
         checks: [],
         closing: { kind: "none" },
         unknownBlockCount: 0,
+        sessionSummary: undefined,
       }) as const
     const finished = (toolUseId: string, isError: boolean) =>
       ({ kind: "tool-finished", toolUseId, content: "架空の結果", isError }) as const
     const sink = collect()
     const driver = startFakeSession({
       session: {
+        sessionDigests: {},
         opening: [],
         turns: [
           {

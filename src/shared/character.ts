@@ -21,7 +21,7 @@ import { type Expression, EXPRESSIONS, type Outfit, OUTFITS } from "./expression
 export type CharacterInfo = {
   /**
    * いま出しているキャラクターパックの名前（`characters/<pack>` のディレクトリ名）。
-   * `session.switchCharacter` の鍵で、サイドバーの `<select>` の選択値でもある。素材の URL の
+   * `session.switchCharacter` の鍵。素材の URL の
    * `<pack>` の区間もこれ。
    */
   readonly pack: string

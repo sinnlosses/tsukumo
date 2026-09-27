@@ -10,6 +10,7 @@
 // `report` の呼び出しそのものの検査と差し戻しは `ReportReview`（こちらは描く前の検査の段）。
 
 import { MAX_SESSION_HEADING_LENGTH } from "../../../shared/session-choice.ts"
+import { MAX_SESSION_SUMMARY_LENGTH } from "../../../shared/session-digest.ts"
 import type { SessionEvent } from "../../../shared/session-event.ts"
 
 /**
@@ -54,6 +55,17 @@ export const REPORT_CLOSING_DESCRIPTION =
 export const REPORT_TITLE_DESCRIPTION =
   `セッション一覧の見出しにする短い題（${String(MAX_SESSION_HEADING_LENGTH)}字以内）。` +
   "話の中心がはっきりした最初と、大きく変わったときだけ渡す。変える必要が無ければ省く。"
+
+/**
+ * `report` の任意の `sessionSummary` 引数の説明。切り替え画面に出すセッション全体の要約を
+ * 書かせる条はここと「レポートの記法（tsukumo）」の節の1段落だけ。書いた値は transcript の
+ * `report` の入力に残り、切り替え画面はそれを読み戻す（tsukumo は別の場所へ書き出さない）。
+ */
+export const REPORT_SESSION_SUMMARY_DESCRIPTION =
+  "このセッションでここまでにしたことの要約（セッションの切り替え画面に出る。レポートには描かれない）。" +
+  "毎回、前の要約を踏まえてセッション全体を書き直す。中立の文体の日本語で2〜3段落・" +
+  `${String(MAX_SESSION_SUMMARY_LENGTH)}字以内、段落は空行で区切る。` +
+  "残っていることがあれば最後の段落を「残り：」で始める。"
 
 /**
  * `Stop` の関所が差し戻すときにモデルへ返す理由。

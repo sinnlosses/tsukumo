@@ -54,6 +54,7 @@ import { readClaudeAccountTier } from "./claude-account.ts"
 import { readContextUsage } from "./sdk-context-usage.ts"
 import {
   createSessionTitleWriter,
+  readSessionDigest,
   scheduleMarkSession,
   type SessionTitleWriter,
 } from "./sdk-session.ts"
@@ -155,6 +156,7 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
     answer: (id, answer) => queue.answer(id, answer),
     pending: () => queue.list(),
     readContextUsage: () => readContextUsage(session),
+    readSessionDigest: (sessionId) => readSessionDigest(sessionId, options.expressions),
     setModel: async (model) => {
       await session.setModel(model)
       // サイドバーの `<select>` は `state.model` をそのまま出すので、ここで確認の合図を

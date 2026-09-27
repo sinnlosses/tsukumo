@@ -1,7 +1,8 @@
 // 画面のナビの帯の器だけ（docs/design.md 2章「機能の中を分ける」/ docs/screen-design.md 13.9）。フックも算出も
 // 持たず、受け取った値と呼び先をそのまま置く。
 //
-// 全画面の最上部に出る1本の帯で、顔と部屋の名前（名乗りの塊）が左端、その右に仕事/雑談の
+// 全画面の最上部に出る1本の帯で、顔（押すとキャラクターを選ぶ）と部屋の名前とセッションの札
+// （押すと切り替え画面）の名乗りの塊が左端、その右に仕事/雑談の
 // トグル、縦の仕切り、3つの口（会話 / キャラクター / トークン消費）、その右に「いまの作業」の札、
 // その右にモデル・許可モードのドロップダウン、いちばん右端に設定の歯車。狭い画面では
 // `<ScreenNavMenu>` の「≡」に畳む（どちらを出すかは `screen-nav.module.css` の `@media` が決める）。
@@ -11,14 +12,15 @@
 
 import type { ReactElement } from "react"
 
-import { CharacterFace } from "../../../components/domain/character-face.tsx"
+import { ScreenNavCharacterPicker } from "./components/screen-nav-character-picker.tsx"
 import { ScreenNavChatModeToggle } from "./components/screen-nav-chat-mode.tsx"
 import { ScreenNavCurrentWorkPill } from "./components/screen-nav-current-work.tsx"
 import { ScreenNavGate } from "./components/screen-nav-gate.tsx"
 import { ScreenNavMenu } from "./components/screen-nav-menu.tsx"
 import { ScreenNavModelPermissionSelect } from "./components/screen-nav-model-permission.tsx"
-import { ScreenNavRoom } from "./components/screen-nav-room.tsx"
+import { ScreenNavSessionTag } from "./components/screen-nav-session-tag.tsx"
 import { ScreenNavSettingsGear } from "./components/screen-nav-settings.tsx"
+import { SessionSwitcher } from "./components/session-switcher.tsx"
 import type { ScreenNavView } from "./hooks/use-screen-nav.ts"
 import styles from "./screen-nav.module.css"
 
@@ -35,18 +37,15 @@ export type PresentationalScreenNavProps = ScreenNavView
 export function PresentationalScreenNav({
   current,
   parts,
+  switcher,
   menu,
   ref,
 }: PresentationalScreenNavProps): ReactElement {
   return (
     <nav className={styles["screen-nav"]} aria-label="画面" data-screen={current} ref={ref}>
       <div className={styles["screen-nav-identity"]}>
-        <CharacterFace
-          url={parts.face.url}
-          alt={parts.face.alt}
-          className={styles["screen-nav-face"]}
-        />
-        <ScreenNavRoom name={parts.room} />
+        <ScreenNavCharacterPicker picker={parts.character} />
+        <ScreenNavSessionTag tag={parts.sessionTag} onOpened={parts.onSelect} />
       </div>
       <ScreenNavChatModeToggle chatMode={parts.chatMode} />
       <span className={styles["screen-nav-divider"]} aria-hidden="true" />
@@ -59,6 +58,7 @@ export function PresentationalScreenNav({
       <ScreenNavModelPermissionSelect modelPermission={parts.modelPermission} />
       <ScreenNavSettingsGear settings={parts.settings} />
       <ScreenNavMenu parts={parts} menu={menu} />
+      <SessionSwitcher switcher={switcher} character={parts.character.face} />
     </nav>
   )
 }

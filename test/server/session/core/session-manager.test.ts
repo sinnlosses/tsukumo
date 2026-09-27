@@ -64,6 +64,10 @@ import {
 import type { PromptImage } from "../../../../src/shared/prompt-image.ts"
 import type { ReportSection } from "../../../../src/shared/report-block.ts"
 import type { SessionDefault } from "../../../../src/shared/session-default.ts"
+import {
+  type SessionDigest,
+  UNAVAILABLE_SESSION_DIGEST,
+} from "../../../../src/shared/session-digest.ts"
 import type { SessionEvent } from "../../../../src/shared/session-event.ts"
 import {
   INITIAL_SESSION_STATE,
@@ -158,6 +162,10 @@ function createStubDriver(): StubDriver {
       readContextUsage: () => {
         calls.push("readContextUsage")
         return Promise.resolve(readyContextUsage())
+      },
+      readSessionDigest: (sessionId: string) => {
+        calls.push(`readSessionDigest:${sessionId}`)
+        return Promise.resolve(FAKE_SESSION_DIGEST)
       },
       setModel: (model: string | undefined) => {
         calls.push(`setModel:${model ?? ""}`)
@@ -377,6 +385,14 @@ function waitForBatch(): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, BATCH_MS * 4))
 }
 
+/** 駆動が返すセッションの中身（作り物。docs/coding-standards.md「会話内容の扱い」）。 */
+const FAKE_SESSION_DIGEST: SessionDigest = {
+  kind: "known",
+  requestCount: 3,
+  summary: "架空の要約",
+  lastLine: "架空のセリフ",
+}
+
 describe("createSessionManager", () => {
   it("subscribe した直後に hello（snapshot）が届き、以降は events が続く", async () => {
     const { manager, stub } = startManagerWithStub()
@@ -405,6 +421,28 @@ describe("createSessionManager", () => {
 
     expect(await manager.readContextUsage()).toEqual(readyContextUsage())
     expect(stub.calls).toContain("readContextUsage")
+  })
+
+  it("セッションの中身は、一覧に載ったものといま出しているものだけ駆動へ問い合わせる", async () => {
+    const { manager, stub } = startManagerWithStub()
+    stub.emit({
+      kind: "sessions-changed",
+      sessions: [
+        {
+          viewPort: 7327,
+          sessionId: "fake-listed",
+          lastModified: 2_000,
+          startedAt: 1_000,
+          heading: "架空の見出し",
+        },
+      ],
+      current: "fake-current",
+    })
+
+    expect(await manager.readSessionDigest("fake-listed")).toEqual(FAKE_SESSION_DIGEST)
+    expect(await manager.readSessionDigest("fake-current")).toEqual(FAKE_SESSION_DIGEST)
+    expect(await manager.readSessionDigest("fake-elsewhere")).toEqual(UNAVAILABLE_SESSION_DIGEST)
+    expect(stub.calls).not.toContain("readSessionDigest:fake-elsewhere")
   })
 
   it("hello の snapshot は、それまでのイベントをサーバ側でも畳んだ姿", async () => {
@@ -1638,6 +1676,7 @@ describe("createSessionManager", () => {
           answer: () => true,
           pending: () => [],
           readContextUsage: () => Promise.resolve(UNAVAILABLE_CONTEXT_USAGE),
+          readSessionDigest: () => Promise.resolve(UNAVAILABLE_SESSION_DIGEST),
           setModel: () => Promise.resolve(),
           setEffort: () => Promise.resolve(),
           setPermissionMode: () => Promise.resolve(),
@@ -2366,6 +2405,7 @@ describe("createSessionManager", () => {
         checks: [],
         closing: { kind: "none" },
         unknownBlockCount,
+        sessionSummary: undefined,
       }
     }
 
@@ -2433,6 +2473,7 @@ describe("createSessionManager", () => {
           blockKinds: ["text"],
           notations: [],
           unknownBlockCount: 0,
+          sessionSummary: undefined,
         },
       ])
     })

@@ -14,7 +14,7 @@
 //
 // 起動トークンが要る（`/ws` と同じく `?t=<起動トークン>` を付ける。照合は
 // `src/server/view-server/adapter/rpc-guard.ts`）。配るのは利用者の作業ディレクトリの中身・
-// 使った量・いまのセッションが積んでいるものの内訳・タスクの要約で、誰にでも配ってよい静的な物
+// 使った量・いまのセッションが積んでいるものの内訳・タスクの要約・同じ部屋のセッションの要約で、誰にでも配ってよい静的な物
 // ではない。
 
 import type { ContractRouterClient } from "@orpc/contract"
@@ -26,6 +26,7 @@ import { contextUsageContract } from "./contract/context-usage.ts"
 import { frameContract } from "./contract/frame.ts"
 import { hostContract } from "./contract/host.ts"
 import { repositoryContract } from "./contract/repository.ts"
+import { sessionDigestContract } from "./contract/session-digest.ts"
 import { sessionContract } from "./contract/session.ts"
 import { tokenUsageContract } from "./contract/token-usage.ts"
 import { usageReviewContract } from "./contract/usage-review.ts"
@@ -39,6 +40,7 @@ export const rpcContract = {
   tokenUsage: tokenUsageContract,
   contextUsage: contextUsageContract,
   achievement: achievementContract,
+  sessionDigest: sessionDigestContract,
 }
 
 /** ブラウザが手続きを呼ぶ client の型（契約から導く）。 */

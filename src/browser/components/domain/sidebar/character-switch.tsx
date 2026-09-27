@@ -1,9 +1,7 @@
-// キャラクターの切り替えの `<select>`（`session.switchCharacter`。docs/design.md 7章）。置き場所は
-// モードで2つに分かれる — 仕事のときは下端の帯（`session-info.tsx`。ラベル「キャラクター」の
-// 真下）、雑談のときはプロフィールの札の「変える」（`profile-card.tsx`。見た目のボタンの上に
-// 透明にして重ねる。docs/screen-design.md 13.7「雑談のときのサイドバー」）。どちらでも振る舞いは同じ
-// なので、選択肢・値・塞ぐ条件・送るコマンドをここに1つだけ持ち、見た目（`frameClassName` /
-// `className`）と名前（`ariaLabel`）だけを置く側が渡す（セッションの行の `session-switch.tsx` と対）。
+// キャラクターの切り替えの `<select>`（`session.switchCharacter`。docs/design.md 7章）。雑談のときの
+// プロフィールの札の「変える」（`profile-card.tsx`。見た目のボタンの上に透明にして重ねる。
+// docs/screen-design.md 13.7「雑談のときのサイドバー」）が置く。見た目（`frameClassName` /
+// `className`）と名前（`ariaLabel`）は置く側が渡す。
 //
 // 次に届く `session-info` で選択が上書きされる（サーバ側の値が正になる）。選択肢が1つでも
 // 出す（docs/requirements.md 4.4）。パックの一覧がまだ届いていなければ何も出さない。

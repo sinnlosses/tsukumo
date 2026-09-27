@@ -18,6 +18,7 @@ import type { ContextUsageReport } from "../../../shared/context-usage.ts"
 import type { ExpressionChoice } from "../../../shared/expression-choice.ts"
 import type { Expression } from "../../../shared/expression.ts"
 import type { Answer, PendingAsk } from "../../../shared/pending-ask.ts"
+import type { SessionDigest } from "../../../shared/session-digest.ts"
 import type { SessionEvent } from "../../../shared/session-event.ts"
 import type { ShelvedPromptImage } from "./prompt-image-shelf.ts"
 
@@ -419,6 +420,12 @@ export type SessionDriver = {
    * 出せないだけで、常駐プロセスは落ちない。`docs/coding-standards.md`「エラーハンドリング」）。
    */
   readonly readContextUsage: () => Promise<ContextUsageReport>
+  /**
+   * 同じ部屋のセッション1件の中身（依頼の数・要約・最後のセリフ。`docs/glossary.md`「セッションの要約」）を
+   * transcript から読む。どのIDなら読んでよいかは呼ぶ側（`session-manager`）が決める。
+   * 読めなかったときは「読めない」を返し、例外を投げない。
+   */
+  readonly readSessionDigest: (sessionId: string) => Promise<SessionDigest>
   /** モデルを切り替える（画面からの切り替えは後続タスクで配線する）。 */
   readonly setModel: (model: string | undefined) => Promise<void>
   /**

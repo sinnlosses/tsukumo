@@ -505,7 +505,7 @@ function sessionMode(
 }
 
 /**
- * 画面の `<select>` に出す、切り替え先のセッションの一覧（`docs/requirements.md` 4.8）。
+ * 切り替え画面に出す、切り替え先のセッションの一覧（`docs/requirements.md` 4.8）。
  * いまの部屋の印を持つものだけが並ぶ（絞り込みの理由は
  * `src/server/session-driver/core/session-restore.ts` の `listMarkedSessions`）。
  *

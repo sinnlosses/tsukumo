@@ -1,59 +1,11 @@
 /* サイドバー（`src/browser/components/domain/sidebar/`）。伸び縮みする区画（タスク一覧）の**枠**と、
-   下端に固定する帯（セッション情報）を持つ。**区画の中身（タスク一覧）と、そこから開く表の
+   下端に固定する帯（コンテキストの使用量）を持つ。**区画の中身（タスク一覧）と、そこから開く表の
    見た目はここには無い** — 置かれる機能の側に1枚でまとまっている（docs/design.md 2章
    「領域の機能と、置かれる機能」）。サイドバーは置き場所を貸しているだけ。
 
    **寸法の出どころは `docs/history/mockup/sidebar-tasks-2026-09-23.html`**（見本の
    inline style の px を、`theme.css` のトークンに写した値で持つ。px をそのまま書かない）。 */
 
-/* 値の上に小さく置く見出し（見本の 11px = --font-label）。**値より1段小さい**ので、
-   選択そのものより先に読ませない。 */
-.session-info-label {
-  white-space: nowrap;
-  font-size: var(--font-label);
-}
-/* ラベルの真下の1行（顔 + <select>）。並べ・間隔・折り返さないことは `HStack`
-   （`gap="sm"` `wrap="nowrap"`。見本の gap は 8px）が持つ。**折り返さない** — 顔が下へ
-   回ると行の高さが倍になり、帯が伸びてタスクの区画を押し上げる。 */
-.session-info-value {
-  min-width: 0;
-}
-/* 帯の <select> を包む枠（キャラクター／セッションで共有。枠と矢印そのものは
-   `components/ui/select/select.module.css`）。**この行の残り幅をすべて取る** — 顔のぶんを除いた右端までが
-   <select> の幅になり、矢印はその右端に付く。 */
-.session-info-select-frame {
-  flex: 1 1 auto;
-  min-width: 0;
-  color: var(--ink);
-}
-/* 帯の <select>（キャラクター／セッションで同じ見た目。セッション側は
-   session-switch.module.css）。見本は高さ 34px・角 8px・内側 8px で、**サイドバーの他の
-   <select> より大きい** — 帯は下端に1段だけ残る操作なので、押す的を小さくしない。 */
-.character-select {
-  flex: 1 1 auto;
-  min-width: 0;
-  height: 2.125rem;
-  padding: 0 1.75rem 0 0.5rem;
-  text-overflow: ellipsis;
-  border: 1px solid var(--rule);
-  border-radius: 0.5rem;
-  background: var(--surface);
-  color: var(--ink);
-  font-size: var(--font-secondary);
-}
-/* キャラクターの <select> の左に添える顔（13.9「顔」）。帯（screen-nav.module.css の
-   .screen-nav-face）と同じ考え方で丸く切り抜く。**大きさは文字ではなく <select> の高さに
-   合わせる**（見本 28px。行の文字に合わせると顔だと分からない大きさになる）。
-   `<CharacterFace>` が `face` の無いパックでは何も描かないので、この class 自体が
-   出ないこともある。 */
-.session-info-face {
-  flex: none;
-  width: 1.75rem;
-  height: 1.75rem;
-  border-radius: 50%;
-  background: var(--surface-accent);
-  object-fit: cover;
-}
 /* サイドバーの区画1つ。見出し（h2、伸縮しない）と .sidebar-block-scroll（残りを埋めて
    内側でスクロールする）の縦積みにする。区画自身は伸縮できないと内側の overflow-y: auto が
    効かないので min-height: 0 が要る。 */
@@ -123,7 +75,7 @@
 .sidebar-block-action {
   flex: 0 0 auto;
 }
-/* サイドバーの下端に敷く帯（セッション情報）。**区画ではない**ので `.sidebar-block` の枠も
+/* サイドバーの下端に敷く帯（コンテキストの使用量）。**区画ではない**ので `.sidebar-block` の枠も
    内側スクロールも借りず、`sidebar.tsx` が直に置く。見本
    （docs/history/mockup/sidebar-tasks-2026-09-23.html）の footer は
    `border-top` + 一段沈んだ地 + `padding: 12px 18px 14px` で、**領域の左右いっぱい**に広がる。
@@ -139,35 +91,9 @@
   border-top: 1px solid var(--rule);
   background: var(--ground);
 }
-/* キャラクター・セッションの2つの対（ラベル→値）を**横に等分して並べ、値をラベルの真下に置く**
-   （見本の footer は `flex: 1 1 0` の2列）。DOM の並びはラベル1・値1・ラベル2・値2 のまま
-   （`session-info.tsx` / `session-switch.tsx` は入れ物を挟まず対だけを返す）で、
-   `grid-auto-flow: column` が列ごとに2行（ラベル→値）を詰めるので、対ごとに列が分かれて
-   横並びに見える。**列は `minmax(0, 1fr)` で等分**し、はみ出るぶんは `<select>` 自身の省略に
-   任せる（`session-switch.module.css` の `max-width: 100%`）。 */
-.session-info {
-  display: grid;
-  grid-template-rows: auto auto;
-  grid-auto-flow: column;
-  grid-auto-columns: minmax(0, 1fr);
-  column-gap: 0.75rem;
-  row-gap: 0.25rem;
-  align-items: center;
-  color: var(--ink-quiet);
-}
-/* 狭い画面でも**横並びのまま**にする（390px 幅でも1列あたり 160px 前後あり、見本の 176px と
-   ほぼ変わらない。実測済み）。縦に積むと帯が倍の高さになり、狭い画面ほど
-   惜しいタスクの区画を削ってしまう。 */
-/* 下端の帯に何も並ばないとき（雑談中で、切り替え先のセッションがまだ1つも無い）は帯ごと
-   出さない。罫線と沈んだ地だけの空の帯が残ると、中身のある段に見える。 */
-.sidebar-footer:has(> .session-info:empty) {
-  display: none;
-}
-
-/* いまのコンテキストの使用量（帯の3段目。docs/screen-design.md「使用量の行」）。**押せるのは
+/* いまのコンテキストの使用量（下端の帯の中身。docs/screen-design.md「使用量の行」）。**押せるのは
    右端の `›` だけ**（外枠は `<a>` ではなく `<div>`。行全体を押せる札にはしない）。
-   キャラクター・セッションの2つの対と並びを揃えず、帯の左右いっぱいに1枚の
-   札で敷く——2つの対の `grid` は「ラベル→値」の対専用なので、ここは別の入れ物にする。
+   帯の左右いっぱいに1枚の札で敷く。
 
    **札として浮かせる**：左右は `.sidebar-footer` の内側 padding（1.125rem。footer 自身の値で
    `--region-padding` とは別物）ぶん外へ張り出し（負のマージン 10px）、自分の padding（10px）で
@@ -179,7 +105,7 @@
   display: flex;
   flex-direction: column;
   gap: 0.375rem;
-  margin: 0.5rem -0.625rem 0;
+  margin: 0 -0.625rem;
   padding: 0.5rem 0.625rem;
   border: 1px solid transparent;
   border-radius: 0.625rem;

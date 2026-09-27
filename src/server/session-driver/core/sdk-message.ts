@@ -535,7 +535,7 @@ function speechEvents(
  * `report` の引数を取り出す。`sections` は塊ごとに検証して崩れた塊・知らない種類の塊を落とし（{@link parseReportSections}）、
  * `sections` の無い呼び出し（引数が文字列の `body` だったころの transcript）は `body` を逃げ道の塊1つの節に畳む（{@link reportSectionsOfBody}）。
  * `favor` の「無い」は空の文字列に、`checks` の「無い」は空の配列に畳む（描く側は空の塊を置かないだけで済む）。`closing` の「無い」（引数に
- * `closing` が無かったころの transcript）は `none` に畳む。`conclusion` が文字列でなければ捨てる（引数の検査に落ちた呼び出しで、
+ * `closing` が無かったころの transcript）は `none` に畳む。`sessionSummary` の「無い」（空白だけも）は undefined。`conclusion` が文字列でなければ捨てる（引数の検査に落ちた呼び出しで、
  * モデルには本体がエラーを返す）。
  */
 function reportEvents(
@@ -562,8 +562,14 @@ function reportEvents(
       checks: parseReportChecks(input.checks),
       closing: speechEvents(input.closing, expressions)[0] ?? { kind: "none" },
       unknownBlockCount: parsed.unknownBlockCount,
+      sessionSummary: nonBlankString(input.sessionSummary),
     },
   ]
+}
+
+/** 文字列で、空白だけでないときだけ返す（`report` の任意の引数の「無い」を1つに畳む）。 */
+function nonBlankString(value: unknown): string | undefined {
+  return typeof value === "string" && value.trim() !== "" ? value : undefined
 }
 
 /** モデルから見えるツールのフルネーム。MCP サーバ名とツール名から決まる。 */

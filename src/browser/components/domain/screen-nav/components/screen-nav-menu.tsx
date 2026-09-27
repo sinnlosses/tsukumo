@@ -4,7 +4,7 @@
 // 落ちてくる面は開いている間だけの要素（閉じているときは描かない）。奪う面積を
 // タブ帯の右端の 44px だけに保つための形で、開いている間は上に重ねて出す（段を増やさない）。
 //
-// 落ちてくる面の並びは 顔と部屋の名前 → トグル → 3つの口 → いまの作業 → モデル・許可モード →
+// 落ちてくる面の並びは 顔と部屋の名前の札（押すとキャラクターの選び口・切り替え画面） → トグル → 3つの口 → いまの作業 → モデル・許可モード →
 // 設定の歯車（13.9「狭い画面」）。振る舞い（ターン進行中の扱い・送るコマンド）は
 // 広い画面と同じ部品をそのまま使う。「いまの作業」を押すと、一覧はこの面の中でその場で
 // 下に開く（重ねない。面ごと縦に伸び、面の内側でスクロールする。13.9「狭い画面」）。
@@ -17,15 +17,15 @@
 import clsx from "clsx"
 import type { ReactElement } from "react"
 
-import { CharacterFace } from "../../../../components/domain/character-face.tsx"
 import type { ScreenNavMenu as Menu, ScreenNavParts } from "../hooks/use-screen-nav.ts"
 import shellStyles from "../screen-nav.module.css"
+import { ScreenNavCharacterPicker } from "./screen-nav-character-picker.tsx"
 import { ScreenNavChatModeToggle } from "./screen-nav-chat-mode.tsx"
 import { ScreenNavCurrentWorkPill } from "./screen-nav-current-work.tsx"
 import { ScreenNavGate } from "./screen-nav-gate.tsx"
 import styles from "./screen-nav-menu.module.css"
 import { ScreenNavModelPermissionSelect } from "./screen-nav-model-permission.tsx"
-import { ScreenNavRoom } from "./screen-nav-room.tsx"
+import { ScreenNavSessionTag } from "./screen-nav-session-tag.tsx"
 import { ScreenNavSettingsGear } from "./screen-nav-settings.tsx"
 
 export type ScreenNavMenuProps = {
@@ -71,12 +71,10 @@ export function ScreenNavMenu(props: ScreenNavMenuProps): ReactElement {
         // （位置・枠・地）は `styles["screen-nav-panel"]`＝このファイル自身が持つ。CSS Modules は
         // class 名をファイルごとにハッシュ化するので両方要る。docs/design.md 6.6）。
         <div className={clsx(styles["screen-nav-panel"], shellStyles["screen-nav-panel"])}>
-          <CharacterFace
-            url={parts.face.url}
-            alt={parts.face.alt}
-            className={shellStyles["screen-nav-face"]}
-          />
-          <ScreenNavRoom name={parts.room} />
+          <div className={shellStyles["screen-nav-panel-identity"]}>
+            <ScreenNavCharacterPicker picker={parts.character} />
+            <ScreenNavSessionTag tag={parts.sessionTag} onOpened={parts.onSelect} />
+          </div>
           <ScreenNavChatModeToggle chatMode={parts.chatMode} />
           {parts.gates.map((gate) => (
             <ScreenNavGate key={gate.screen} gate={gate} onSelect={parts.onSelect} />

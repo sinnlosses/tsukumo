@@ -28,6 +28,7 @@ import type { CharacterAssetLocation } from "../../../../src/shared/character-as
 import { UNAVAILABLE_CONTEXT_USAGE } from "../../../../src/shared/context-usage.ts"
 import { promptImagePath } from "../../../../src/shared/prompt-image.ts"
 import { RPC_PATH, type RpcClient } from "../../../../src/shared/rpc.ts"
+import { UNAVAILABLE_SESSION_DIGEST } from "../../../../src/shared/session-digest.ts"
 import {
   EMPTY_TOKEN_USAGE_SUMMARY,
   type TokenUsageDays,
@@ -68,6 +69,7 @@ const EMPTY_RPC_PORTS = {
   listRepositoryFiles: () => Promise.resolve([]),
   readTokenUsageSummary: () => EMPTY_TOKEN_USAGE_SUMMARY,
   readContextUsage: () => Promise.resolve(UNAVAILABLE_CONTEXT_USAGE),
+  readSessionDigest: () => Promise.resolve(UNAVAILABLE_SESSION_DIGEST),
   readAchievementDay: () => Promise.resolve({ kind: "ok", achievement: { kind: "unknown" } }),
   readAchievementCalendar: () => Promise.resolve({ kind: "ok", calendar: { kind: "unknown" } }),
 } satisfies RpcRouterPorts

@@ -1045,6 +1045,7 @@ describe("toSessionEvents（report ツール）", () => {
           favor: "架空のお願い",
           checks: [{ status: "ok", label: "架空の検査", detail: "架空の件数" }],
           closing: { text: "架空の締め", expression: "proud" },
+          sessionSummary: "架空の要約",
         },
       },
     ])
@@ -1064,8 +1065,28 @@ describe("toSessionEvents（report ツール）", () => {
         checks: [{ status: "ok", label: "架空の検査", detail: "架空の件数" }],
         closing: { kind: "speech", text: "架空の締め", expression: "proud" },
         unknownBlockCount: 0,
+        sessionSummary: "架空の要約",
       },
     ])
+  })
+
+  it("report の sessionSummary が文字列でない・空白だけなら無いものとして畳む", () => {
+    const summaries = [42, "   "].map((sessionSummary) => {
+      const [event] = toSessionEvents(
+        assistantMessage([
+          {
+            type: "tool_use",
+            id: "toolu_r1",
+            name: REPORT_TOOL_FULL_NAME,
+            input: { conclusion: "架空の結論。", sessionSummary },
+          },
+        ]),
+        EXPRESSIONS,
+      )
+      return event?.kind === "report" ? event.sessionSummary : "report でない"
+    })
+
+    expect(summaries).toEqual([undefined, undefined])
   })
 
   it("sections は塊ごとに検証し、崩れた塊・知らない種類の塊と、塊の残らない節を落とす（省いた欄は既定で埋める）", () => {

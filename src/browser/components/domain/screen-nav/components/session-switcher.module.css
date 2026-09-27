@@ -1,0 +1,314 @@
+/* セッションの切り替え画面。値は見本 `docs/history/mockup/session-switch-2026-09-27/HD-5-Switcher.dc.html`
+   の inline style を `theme.css` のトークンに写したもの（見本の #66d1be は --accent、#1f1e28 は
+   --surface、#3a3946 は --rule、#15141b は --ground に当たる）。背景は `<Dialog backdrop="dim">` が持つ。
+
+   狭い画面（760px 以下）では2列を縦に積む（一覧が上、要約が下。末尾の @media）。 */
+
+/* 箱。見本は 1040x600 で、帯の下に少し空けて横の中央に置く。**窓より大きくしない**。 */
+.session-switcher {
+  box-sizing: border-box;
+  width: min(65rem, calc(100vw - 2rem));
+  height: min(37.5rem, calc(100dvh - 4rem));
+  margin: 6rem auto auto;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--rule);
+  border-radius: 1.125rem;
+  background: var(--surface);
+  box-shadow: 0 30px 80px rgb(0 0 0 / 0.6);
+  color: var(--ink);
+}
+.session-switcher-frame {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+/* 上の段: 虫眼鏡・探す欄・「＋ 新しいセッション」。 */
+.session-switcher-search {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.875rem 1.125rem;
+  border-bottom: 1px solid var(--rule-quiet);
+  color: var(--ink-quiet);
+}
+.session-switcher-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 2.25rem;
+  border: none;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--font-body);
+}
+/* 探す欄は開いている間ずっとフォーカスを持つ（↑↓ と Enter を受ける口）ので、輪は出さない。 */
+.session-switcher-input:focus-visible {
+  outline: none;
+}
+.session-switcher-input::placeholder {
+  color: var(--ink-quiet);
+}
+.session-switcher-new {
+  flex: none;
+  height: 2.125rem;
+  padding: 0 0.75rem;
+  border: 1px dashed var(--rule);
+  border-radius: 0.5625rem;
+  background: transparent;
+  color: color-mix(in srgb, var(--accent) 55%, var(--ink));
+  font-size: var(--font-secondary);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.session-switcher-new:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+.session-switcher-new:disabled {
+  color: var(--ink-quiet);
+  cursor: not-allowed;
+}
+/* まん中の段: 左の一覧（見本 430px）と右の要約。 */
+.session-switcher-columns {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.session-switcher-list {
+  flex: none;
+  width: 26.875rem;
+  box-sizing: border-box;
+  padding: 0.375rem 0.5rem;
+  overflow-y: auto;
+  border-right: 1px solid var(--rule-quiet);
+}
+.session-switcher-empty {
+  margin: 0;
+  padding: 1rem 0.75rem;
+  color: var(--ink-quiet);
+  font-size: var(--font-secondary);
+}
+.session-switcher-group-label {
+  padding: 0.625rem 0.75rem 0.25rem;
+  color: var(--ink-quiet);
+  font-size: var(--font-label);
+}
+/* 一覧の1行: 短縮ID・見出し・（いま）・時刻。選んでいる行は枠と地で示す（色だけで伝えない）。 */
+.session-switcher-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5625rem 0.75rem;
+  border-radius: 0.625rem;
+  color: var(--ink-quiet);
+  cursor: pointer;
+}
+.session-switcher-row:hover {
+  background: var(--surface-raised);
+}
+.session-switcher-row[aria-selected="true"] {
+  background: var(--surface-accent);
+  box-shadow: inset 0 0 0 1.5px var(--accent);
+  color: var(--ink);
+}
+.session-switcher-row-id {
+  flex: none;
+  width: 2.25rem;
+  color: color-mix(in srgb, var(--accent) 55%, var(--ink));
+  font-family: var(--font-mono);
+  font-size: var(--font-subheading);
+  letter-spacing: 0.06em;
+}
+.session-switcher-row[aria-selected="true"] .session-switcher-row-id,
+.session-switcher-row[data-current="true"] .session-switcher-row-id {
+  color: var(--ink);
+}
+.session-switcher-row-heading {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  font-size: var(--font-secondary);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.session-switcher-row-current {
+  flex: none;
+  color: var(--accent);
+  font-size: var(--font-label);
+  font-weight: 700;
+}
+.session-switcher-row-time {
+  flex: none;
+  color: var(--ink-quiet);
+  font-family: var(--font-mono);
+  font-size: var(--font-label);
+  white-space: nowrap;
+}
+/* 右の欄: 見出し（大きな短縮ID・時刻と依頼の数・キャラクター）→ 要約 → 最後のひとこと → ボタン。 */
+.session-switcher-detail {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 0;
+  min-height: 0;
+  padding: 1.375rem 1.625rem;
+}
+.session-switcher-detail-head {
+  display: flex;
+  flex: none;
+  align-items: baseline;
+  gap: 0.75rem;
+}
+.session-switcher-detail-id {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: 1.875rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+}
+.session-switcher-detail-meta {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--ink-quiet);
+  font-family: var(--font-mono);
+  font-size: var(--font-action);
+}
+.session-switcher-detail-character {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 0.375rem;
+  color: var(--ink-quiet);
+  font-size: var(--font-action);
+}
+.session-switcher-detail-face {
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 50%;
+  background: var(--surface-accent);
+  object-fit: cover;
+}
+/* 要約と最後のひとことは長くなりうるので、ここだけ内側で転がす（ボタンを押し出さない）。 */
+.session-switcher-detail-body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-height: 0;
+  overflow-y: auto;
+}
+.session-switcher-summary-heading {
+  margin: 0 0 0.125rem;
+  color: var(--accent);
+  font-size: var(--font-action);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+.session-switcher-paragraph {
+  margin: 0;
+  color: var(--ink);
+  font-size: var(--font-subheading);
+  line-height: 1.9;
+}
+/* 「残り：」で始まる段落は一段控えめに（見本の最後の段落）。 */
+.session-switcher-paragraph[data-remaining="true"] {
+  color: var(--ink-quiet);
+}
+.session-switcher-note {
+  margin: 0;
+  color: var(--ink-quiet);
+  font-size: var(--font-secondary);
+}
+.session-switcher-last-line {
+  margin-top: 0.5rem;
+  padding: 0.75rem 0.875rem;
+  border: 1px solid var(--rule-quiet);
+  border-radius: 0.625rem;
+  background: var(--ground);
+}
+.session-switcher-last-line-label {
+  margin-bottom: 0.25rem;
+  color: var(--ink-quiet);
+  font-size: var(--font-label);
+}
+.session-switcher-last-line-text {
+  color: color-mix(in srgb, var(--accent) 25%, var(--ink));
+  font-size: var(--font-secondary);
+  line-height: 1.7;
+}
+.session-switcher-detail-foot {
+  display: flex;
+  flex: none;
+  justify-content: flex-end;
+}
+.session-switcher-switch {
+  height: 2.5rem;
+  padding: 0 1.125rem;
+  border: none;
+  border-radius: 0.625rem;
+  background: var(--accent);
+  color: var(--ground);
+  font-size: var(--font-subheading);
+  font-weight: 700;
+  cursor: pointer;
+}
+.session-switcher-switch:disabled {
+  background: var(--surface-raised);
+  color: var(--ink-quiet);
+  cursor: not-allowed;
+}
+/* 下の段: キーの案内。 */
+.session-switcher-hints {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.625rem 1.125rem;
+  border-top: 1px solid var(--rule-quiet);
+  color: var(--ink-quiet);
+  font-size: var(--font-action);
+}
+.session-switcher-hints kbd {
+  padding: 1px 6px;
+  border: 1px solid var(--rule);
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  background: var(--surface-raised);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: var(--font-label);
+}
+.session-switcher-hints-anywhere {
+  margin-left: auto;
+}
+
+@media (max-width: 760px) {
+  /* 狭い画面では2列を縦に積む。一覧は上に高さを決めて置き、残りを要約に渡す。キーの案内は
+     指で触る画面では読まないので畳む。 */
+  .session-switcher {
+    height: calc(100dvh - 2rem);
+    margin: 1rem auto auto;
+  }
+  .session-switcher-columns {
+    flex-direction: column;
+  }
+  .session-switcher-list {
+    width: auto;
+    max-height: 40%;
+    border-right: none;
+    border-bottom: 1px solid var(--rule-quiet);
+  }
+  .session-switcher-detail {
+    padding: 1rem;
+  }
+  /* 見出しの行は折り返す（大きな短縮IDの横に時刻と依頼の数が入りきらない）。 */
+  .session-switcher-detail-head {
+    flex-wrap: wrap;
+    row-gap: 0.25rem;
+  }
+  .session-switcher-hints {
+    display: none;
+  }
+}

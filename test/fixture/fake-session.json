@@ -2745,6 +2745,66 @@
           }
         }
       ]
+    },
+    {
+      "name": "session-list",
+      "steps": [
+        {
+          "afterMs": 0,
+          "event": {
+            "kind": "sessions-changed",
+            "sessions": [
+              {
+                "viewPort": 7327,
+                "sessionId": "fake-session",
+                "lastModified": 1768438500000,
+                "startedAt": 1768435920000,
+                "heading": "入力欄の送信ボタンの位置を架空に直す"
+              },
+              {
+                "viewPort": 7327,
+                "sessionId": "7b3f0000-0000-4000-8000-000000000001",
+                "lastModified": 1768399500000,
+                "startedAt": 1768389000000,
+                "heading": "架空の成果の画面に振り返りの口を置きたい"
+              },
+              {
+                "viewPort": 7327,
+                "sessionId": "c3a10000-0000-4000-8000-000000000002",
+                "lastModified": 1768366920000,
+                "startedAt": 1768365000000,
+                "heading": "/retrospect"
+              },
+              {
+                "viewPort": 7327,
+                "sessionId": "2d000000-0000-4000-8000-000000000003",
+                "lastModified": 1768224600000,
+                "startedAt": 1768219200000
+              }
+            ],
+            "current": "fake-session"
+          }
+        }
+      ]
     }
-  ]
+  ],
+  "sessionDigests": {
+    "fake-session": {
+      "kind": "known",
+      "requestCount": 3,
+      "summary": "架空のいまのセッション。入力欄の送信ボタンの位置を直している途中。",
+      "lastLine": "いま直してるとこだよ。"
+    },
+    "7b3f0000-0000-4000-8000-000000000001": {
+      "kind": "known",
+      "requestCount": 12,
+      "summary": "架空の成果の画面の土台づくり。帯に成果の口を足し、日ごとの数を集めてブラウザへ渡すところまで進めた。\n\n途中で呼び出しが遅いことに気づき、互いに依存しない呼び出しを同時に走らせる形に直した。\n\n残り：数が0の日の見せ方は、次のセッションで決める。",
+      "lastLine": "ボタン置いといたぞ。押したら会話のほうでボクが振り返る！"
+    },
+    "c3a10000-0000-4000-8000-000000000002": {
+      "kind": "known",
+      "requestCount": 1,
+      "lastLine": "振り返りはここまで。"
+    }
+  }
 }

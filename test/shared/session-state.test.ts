@@ -708,8 +708,20 @@ describe("applySessionEvent", () => {
 
     // 目印・最終更新時刻・見出し（見出しは作り物の文字列。docs/coding-standards.md「会話内容の扱い」）。
     const sessions = [
-      { viewPort: 7328, sessionId: "s-架空-2", lastModified: 2_000, heading: "架空の見出しその2" },
-      { viewPort: 7327, sessionId: "s-架空-1", lastModified: 1_000, heading: "架空の見出しその1" },
+      {
+        viewPort: 7328,
+        sessionId: "s-架空-2",
+        lastModified: 2_000,
+        startedAt: 1_500,
+        heading: "架空の見出しその2",
+      },
+      {
+        viewPort: 7327,
+        sessionId: "s-架空-1",
+        lastModified: 1_000,
+        startedAt: 500,
+        heading: "架空の見出しその1",
+      },
     ]
     const listed = apply({ kind: "sessions-changed", sessions, current: "s-架空-1" })
     expect(listed.sessions).toEqual(sessions)
@@ -734,7 +746,13 @@ describe("applySessionEvent", () => {
       {
         kind: "sessions-changed",
         sessions: [
-          { viewPort: 7327, sessionId: "s-架空-新", lastModified: 0, heading: "架空の見出し" },
+          {
+            viewPort: 7327,
+            sessionId: "s-架空-新",
+            lastModified: 0,
+            startedAt: 0,
+            heading: "架空の見出し",
+          },
         ],
         current: "s-架空-新",
       },
@@ -902,6 +920,7 @@ describe("applySessionEvent（report を書いている間）", () => {
         checks: [],
         closing: { kind: "none" },
         unknownBlockCount: 0,
+        sessionSummary: undefined,
       }).reportDrafting,
     ).toEqual({ kind: "idle" })
   })

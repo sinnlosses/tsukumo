@@ -29,6 +29,7 @@ import {
   REPORT_CHECKS_DESCRIPTION,
   REPORT_CLOSING_DESCRIPTION,
   REPORT_SECTIONS_DESCRIPTION,
+  REPORT_SESSION_SUMMARY_DESCRIPTION,
   REPORT_TITLE_DESCRIPTION,
   REPORT_TOOL_DESCRIPTION,
 } from "../../report/core/report-tool.ts"
@@ -191,6 +192,7 @@ function reportTool(
         ),
       checks: z.array(reportCheckSchema).optional().describe(REPORT_CHECKS_DESCRIPTION),
       title: z.string().optional().describe(REPORT_TITLE_DESCRIPTION),
+      sessionSummary: z.string().optional().describe(REPORT_SESSION_SUMMARY_DESCRIPTION),
       closing: z.object(speechShape(expressions)).describe(REPORT_CLOSING_DESCRIPTION),
     },
     async ({ conclusion, sections, favor, checks, title }) => {

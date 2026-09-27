@@ -168,7 +168,9 @@ export type SessionEvent =
    * 無ければ空の配列、`favor` は無ければ空の文字列。`toolUseId` は呼び出しの id で、差し戻し（`src/server/report/core/report-review.ts`）が同じ
    * 呼び出しの `tool-finished` と突き合わせるのに使う。`closing`（締めのセリフ）は描いたあとに
    * 差し戻しが `speech` として出すもので、画面の状態はこの欄を読まない。`unknownBlockCount` は知らない種類で
-   * 境界で落とした塊の数で、画面の状態は読まない。
+   * 境界で落とした塊の数で、画面の状態は読まない。`sessionSummary` はセッション全体の要約
+   * （`docs/glossary.md`「セッションの要約」）で、書かれていなければ undefined。レポートには描かず、
+   * 切り替え画面が transcript から読み戻す（`toSessionDigest`）。
    */
   | {
       readonly kind: "report"
@@ -179,6 +181,7 @@ export type SessionEvent =
       readonly checks: readonly ReportCheck[]
       readonly closing: ReportClosing
       readonly unknownBlockCount: number
+      readonly sessionSummary: string | undefined
     }
   | {
       readonly kind: "tool-started"

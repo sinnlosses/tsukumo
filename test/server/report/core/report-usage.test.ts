@@ -18,6 +18,7 @@ function reportEvent(
     checks: [],
     closing: { kind: "none" },
     unknownBlockCount,
+    sessionSummary: undefined,
   }
 }
 
@@ -67,6 +68,7 @@ describe("reportUsageEntryOf", () => {
       blockKinds: [],
       notations: [],
       unknownBlockCount: 2,
+      sessionSummary: undefined,
     })
   })
 })

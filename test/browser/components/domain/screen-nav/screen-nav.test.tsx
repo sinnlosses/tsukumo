@@ -10,9 +10,9 @@ import {
   type SessionState,
 } from "../../../../../src/shared/session-state.ts"
 import { setPageUrl } from "../../../../dom-environment.ts"
-import { characterInfo } from "../../../../fixture/character.ts"
+import { characterInfo, characterPackEntry } from "../../../../fixture/character.ts"
 import { typedElement } from "../../../../typed-element.ts"
-import { type CommandSpy, putSession } from "../../../session-store.ts"
+import { type CommandSpy, putSession, type SentCommand } from "../../../session-store.ts"
 
 // 手で書いた架空の答え待ち（許可の問い合わせ1件。docs/coding-standards.md「会話内容の扱い」）。
 const FIXTURE_PENDING: PendingAsk = {
@@ -105,7 +105,7 @@ describe("ScreenNav", () => {
     setPageUrl("http://127.0.0.1:7329/")
     renderScreenNav()
 
-    expect(document.querySelector(".screen-nav-identity > .screen-nav-room")?.textContent).toBe(
+    expect(document.querySelector(".screen-nav-identity .screen-nav-room")?.textContent).toBe(
       "菜の花の間",
     )
   })
@@ -115,7 +115,7 @@ describe("ScreenNav", () => {
     setPageUrl("http://127.0.0.1:9000/")
     renderScreenNav()
 
-    expect(document.querySelector(".screen-nav-identity > .screen-nav-room")?.textContent).toBe(
+    expect(document.querySelector(".screen-nav-identity .screen-nav-room")?.textContent).toBe(
       "9000",
     )
   })
@@ -127,7 +127,7 @@ describe("ScreenNav", () => {
         character: characterInfo({ name: "架空の精霊", face: "/character/face.png" }),
       })
 
-      const face = document.querySelector(".screen-nav-identity > .screen-nav-face")
+      const face = document.querySelector(".screen-nav-identity .screen-nav-face")
       expect(face?.tagName).toBe("IMG")
       expect(face?.getAttribute("src")).toBe("/character/face.png")
       expect(face?.getAttribute("alt")).toBe("架空の精霊")
@@ -136,13 +136,13 @@ describe("ScreenNav", () => {
     it("face が無いパックでは何も出さない（mini や立ち絵からは補わない）", () => {
       renderScreenNav({ character: characterInfo({ face: undefined }) })
 
-      expect(document.querySelector(".screen-nav-identity > .screen-nav-face")).toBeNull()
+      expect(document.querySelector(".screen-nav-identity .screen-nav-face")).toBeNull()
     })
 
     it("character が届く前（undefined）も何も出さない", () => {
       renderScreenNav()
 
-      expect(document.querySelector(".screen-nav-identity > .screen-nav-face")).toBeNull()
+      expect(document.querySelector(".screen-nav-identity .screen-nav-face")).toBeNull()
     })
 
     it("キャラクターを切り替えると顔も変わる（character-changed で state.character が入れ替わる想定）", () => {
@@ -169,6 +169,61 @@ describe("ScreenNav", () => {
       expect(
         document.querySelector(".screen-nav-panel .screen-nav-face")?.getAttribute("src"),
       ).toBe("/character/face.png")
+    })
+  })
+
+  // 顔の右下の「⌄」で開くキャラクターの選び口（13.9「キャラクターの選び口」）。
+  describe("キャラクターの選び口", () => {
+    const PACKS = [
+      characterPackEntry("fictional", "架空の精霊"),
+      characterPackEntry("local", "架空の同居人"),
+    ]
+
+    it("顔を押すと選び口が開き、ほかのキャラクターを選ぶと switchCharacter を送って閉じる", () => {
+      const sent: SentCommand[] = []
+      renderScreenNav(
+        {
+          character: characterInfo({ pack: "fictional", name: "架空の精霊" }),
+          characterPacks: PACKS.map((pack) => ({ ...pack, inUse: pack.name === "fictional" })),
+        },
+        (command) => sent.push(command),
+      )
+      const [face] = screen.getAllByRole("button", {
+        name: "キャラクターを選ぶ（いまは 架空の精霊）",
+      })
+      if (face === undefined) {
+        throw new Error("顔の口が無い")
+      }
+
+      fireEvent.click(face)
+      expect(face.getAttribute("aria-expanded")).toBe("true")
+      fireEvent.click(screen.getByRole("button", { name: "架空の同居人" }))
+
+      expect(sent).toEqual([{ procedure: "session.switchCharacter", name: "local" }])
+      expect(face.getAttribute("aria-expanded")).toBe("false")
+    })
+
+    it("いまのキャラクターを選び直しても送らず、ターン中はほかのキャラクターを押せない", () => {
+      const sent: SentCommand[] = []
+      renderScreenNav(
+        {
+          character: characterInfo({ pack: "fictional", name: "架空の精霊" }),
+          characterPacks: PACKS.map((pack) => ({ ...pack, inUse: pack.name === "fictional" })),
+          turn: { kind: "running", startedAt: 0 },
+        },
+        (command) => sent.push(command),
+      )
+      const [face] = screen.getAllByRole("button", { name: /キャラクターを選ぶ/u })
+      if (face === undefined) {
+        throw new Error("顔の口が無い")
+      }
+      fireEvent.click(face)
+
+      expect(screen.getByRole("button", { name: "架空の同居人" }).hasAttribute("disabled")).toBe(
+        true,
+      )
+      fireEvent.click(screen.getByRole("button", { name: /^架空の精霊/u }))
+      expect(sent).toEqual([])
     })
   })
 
