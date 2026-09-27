@@ -224,9 +224,12 @@ async function openRoom(
     cwd: cwd.real,
     waitForEvent: (kind, occurrence) => messages.waitForEvent(kind, occurrence),
     settleAndMatch: async (elapsedMs) => {
-      await page.clock.pauseAt(Temporal.Instant.from(FIXED_INSTANT).epochMilliseconds + elapsedMs)
       const outDir = path.join(OUTPUT_ROOT, options.scenario)
       mkdirSync(outDir, { recursive: true })
+      // 撮る時刻へ進める前に、ターンの終わりに始まった取り直しを済ませる。
+      // 済むのが進める前か後かで、取れた時刻（利用枠の「10:00 時点」など）が揺れる。
+      await settledDom(page, options.scenario, outDir)
+      await page.clock.pauseAt(Temporal.Instant.from(FIXED_INSTANT).epochMilliseconds + elapsedMs)
       const dom = await settledDom(page, options.scenario, outDir)
       await page.screenshot({ path: path.join(outDir, `${options.scenario}.png`) })
       // 両方を書いてから比べる（先の比べで落ちると、控えに前の回の成果物が混ざる）。
@@ -577,6 +580,12 @@ async function settledDom(page: Page, scenario: string, outDir: string): Promise
   let previous = JSON.stringify(await page.evaluate(DOM_TREE_SCRIPT))
   for (let attempt = 0; attempt < SETTLE_ATTEMPTS; attempt += 1) {
     await page.waitForTimeout(SETTLE_INTERVAL_MS)
+    // 止めた時計では、取得の結果を画面へ知らせるごく短い setTimeout も眠ったままになる
+    // （React Query の通知など。0ms 進めるだけでは起きない回がある）。
+    // 取得中の印が残るあいだだけ 1ms 進めて起こす。
+    if (await page.evaluate(HAS_BUSY_ELEMENT_SCRIPT)) {
+      await page.clock.runFor(1)
+    }
     const current = JSON.stringify(await page.evaluate(DOM_TREE_SCRIPT))
     if (current === previous && !(await page.evaluate(HAS_BUSY_ELEMENT_SCRIPT))) {
       return JSON.parse(current)
