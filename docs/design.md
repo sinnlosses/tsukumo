@@ -1144,11 +1144,11 @@ E2E が通るのは**疑似セッションに書いた並びだけ**で、fake d
 ## 11. ビルドと依存
 
 - **成果物は事前に組み立てて `dist/browser/` に置き、起動（`src/main.ts`）は置いてあるものを読む**
-  （`docs/architecture.md`「ブラウザ側は事前に組み立てて置く」）。作るのは `pnpm run build`
+  （`docs/architecture/adr/0006-prebuild-browser.md`）。作るのは `pnpm run build`
   （`scripts/build-ui.ts`）だけで、`pnpm run dev` も起こす前に1回組み立てる（HMR を止めたときに戻る先）
 - `pnpm run build` が起こすのは `node node_modules/vite/bin/vite.js build src/browser --config vite.config.ts --outDir dist/browser`
   の1本で、`main.js` と `main.css` の対が置かれる（名前をハッシュ付きにせず固定する理由と、JS API ではなく
-  CLI を起こす理由は `docs/architecture.md`「組み立ては `vite build` の CLI を子プロセスで起こす」）
+  CLI を起こす理由は `docs/architecture/adr/0007-vite-build-cli.md`）
 - **`dist/` は `.gitignore` する。** リポジトリを取り直したら `pnpm install` のあとに `pnpm run build` を
   1回打つ（`tsukumo` は `pnpm link --global` でこのリポジトリを指しているので、**「配布」の実体はこのリポジトリ
   そのもの**）

@@ -9,8 +9,8 @@
 //   （URL は `pnpm run start` が起動時に表示するもの）
 //
 // 開くのはまとめたページ（LAYOUT_PATH、`/`）1つだけ。 3つのビューは1枚の HTML に
-// まとめてあるので、ブラウザタブも1つで足りる（`docs/architecture.md`「ビューは1枚のページに
-// まとめる」）。個別のビュー（`/main` `/character` `/sidebar`）のページはもう無い。
+// まとめてあるので、ブラウザタブも1つで足りる（`docs/architecture/adr/0018-single-page-view.md`）。
+// 個別のビュー（`/main` `/character` `/sidebar`）のページはもう無い。
 
 import process from "node:process"
 

@@ -171,8 +171,8 @@ export function takeChatMemoryPromptParts(sources: ChatMemorySources): readonly 
  *
  * ここと {@link chatRecallEpisodeText} が「戻り値は `"ok"` だけ」の例外
  * （`docs/chat-mode.md`「雑談モード」）。返しているのは tsukumo の状態ではなくその会話自身の過去
- * なので、`docs/architecture.md`「戻り値は `"ok"` だけにする」が塞いでいる逆流路
- * （tsukumo → モデル）は開かない。
+ * なので、`docs/architecture/adr/0009-speech-via-tool.md`「戻り値は `"ok"` だけにする」が
+ * 塞いでいる逆流路（tsukumo → モデル）は開かない。
  */
 export function chatRecallListText(result: ChatRecallListResult): string {
   if (result.kind === "exhausted") {

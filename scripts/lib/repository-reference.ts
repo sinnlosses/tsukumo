@@ -1,11 +1,14 @@
-// リポジトリのファイルを読み、`scripts/section-reference.ts` の純粋関数に渡して迷子の参照を
-// 集める、という概念1つを持つ。`scripts/find-stray-reference.ts`（一覧を出す入口）と
+// リポジトリのファイルを読み、`scripts/section-reference.ts` の純粋関数に渡して迷子の参照と
+// 無いファイルを指すパスを集める、という概念1つを持つ。`scripts/find-stray-reference.ts`（一覧を出す入口）と
 // `test/section-reference.test.ts`（0件を保つテスト）が同じ読み方を要るので、ここに1つだけ置く。
 
 import { existsSync, readdirSync, readFileSync } from "node:fs"
 import { extname, join, relative } from "node:path"
 
 import {
+  type FileReference,
+  findFileReferences,
+  findMissingFileReferences,
   findSectionReferences,
   findStrayReferences,
   isScannedSource,
@@ -30,6 +33,19 @@ export function collectStrayReferences(root: string): StrayReference[] {
       .map((path) => [path, readFileSync(join(root, path), "utf8")] as const),
   )
   return findStrayReferences(references, targets)
+}
+
+/** `root` 以下を読み、無いファイルを指す `docs/` 以下の `.md` のパスをすべて返す。 */
+export function collectMissingFileReferences(root: string): FileReference[] {
+  const references = listSourcePaths(root, root)
+    .filter(isScannedSource)
+    .flatMap((path) => findFileReferences(path, readFileSync(join(root, path), "utf8")))
+  const existingPaths = new Set(
+    references
+      .map((reference) => reference.targetPath)
+      .filter((path) => existsSync(join(root, path))),
+  )
+  return findMissingFileReferences(references, existingPaths)
 }
 
 /** `directory` 以下の読む対象のファイルを、`root` からの相対パスで返す（シンボリックリンクは辿らない）。 */
