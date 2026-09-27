@@ -223,6 +223,13 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/display.md
   **条8** を「文字より視覚情報で見せる（文のままでよいのは表の前に挙げたときだけ）」に広げた。
   条5 の「確かめていないこと」には `checks` の `unverified` を添え、送る前の検算に1行足した。
   条の番号は他の文書から引かれているので動かさない（`src/server/report/core/report-notation.ts`）
+- **`checks` の `detail` に所要時間を添える**（2026-09-27 ユーザー指示。E2E などにどれだけ時間が
+  かかっているかを把握するため）。**条1**（`REPORT_NOTATION_PROMPT`）と `checks` の引数の説明
+  （`REPORT_CHECKS_DESCRIPTION`）の両方に、測れた検証は所要時間を添え、測っていない・測れない
+  確認（目視など）は `detail` に「未計測」と書く条を足した。tsukumo 側はツールの呼び出しに時刻を
+  持たせていないため、モデルに測らせるヒューリスティックだけを先に入れた。機械測定（`tool-started` /
+  `tool-finished` に時刻を持たせ、`src/shared/turn-step.ts` まで運ぶ）は複数の層に跨り1コミットに
+  収まらないため見送った
 
 #### レポートの記法は、TUI と tsukumo で出し分ける
 

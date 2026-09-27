@@ -217,6 +217,11 @@ describe("REPORT_NOTATION_PROMPT", () => {
     expect(beforeSend).toContain("`checks` へ移す")
   })
 
+  it("checks の detail に所要時間を添えさせ、測れないときは「未計測」と書かせる", () => {
+    expect(REPORT_NOTATION_PROMPT).toContain("測った所要時間が分かれば添える")
+    expect(REPORT_NOTATION_PROMPT).toContain("「未計測」と書く")
+  })
+
   it("「描けない」記法は無い（移行の段6で unified に置き換えたため）", () => {
     expect(REPORT_NOTATION_PROMPT).not.toContain("描けない")
   })
