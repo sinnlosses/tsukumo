@@ -3,7 +3,7 @@
 **この文書は調査メモであって正典ではない。** `docs/` の他ファイルにある「節の索引」はここには
 作らない。タスクの管理（`develop/task/` の1件1ファイルと git の外の台帳）を GitHub Projects
 （と Issues）へ移すべきかという、ユーザーからの指示（2026-09-27）の検討と、その決定の記録。
-**GitHub に Project・Issue を作る・書き込む操作はしていない。**
+「双方向の同期で確かめたこと」の実測は捨てた private リポジトリで行い、`sinnlosses/tsukumo` には書き込んでいない。
 
 ## 結論
 
@@ -159,6 +159,64 @@ https://github.com/Ninegd/ccpm ・ https://www.augmentcode.com/guides/how-to-run
 | 使用状況の送信                                | 既定で有効。`bd metrics off` で止めた（この端末の全体の設定）                                                                                                           |
 | `bd jira sync --pull`                         | 試していない（Jira のサイトとトークンが無い）。`--pull` で取り込みだけにできることはヘルプで確かめた                                                                    |
 
+## 双方向の同期で確かめたこと（2026-09-27、`bd` 1.3.0・捨てたリポジトリ）
+
+タスクIDを Issue 番号（`GH-<n>`、Beads の中は `gh-<n>`）にし、引数なしの `bd github sync` で双方向に同期する
+ための実測。捨てる private リポジトリと、`bd init --stealth -p gh` で作った捨てた `.beads` で行った。
+挙動の理由は `bd` 1.3.0 のソース（`internal/tracker/engine.go`・`internal/github/mapping.go`）で確かめた。
+
+**取り込みと ID**
+
+| 場面                                                                                          | 結果                                                                                                                                                                                                                                                   |
+| --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| GitHub で立てた Issue の取り込み                                                              | ID は `gh-<ミリ秒>-1-<hash>`（取り込みの時刻と hash）。`external_ref` は Issue の URL。label は `type::`・`priority::`・`status::` を除いてそのまま入る（`difficulty:sonnet`・`loopable:Y`・`human`）。題は `title`、本文は `description`              |
+| 立てた直後の `sync`                                                                           | 一覧の API にまだ出ず、取り込まれなかった。そのあとの `sync` は前回の時刻以降に更新された Issue だけを読むので、**その Issue は編集されるまで二度と取り込まれない**（2件で再現）。`bd github pull <番号>` なら取り込める（`#5` や URL は受け付けない） |
+| `bd rename <取り込んだID> gh-<n>`                                                             | 通る。`external_ref` はそのままで、次の `sync` も同じ Issue に結び付き、Issue は増えない。依存・comment・`bd history` も付け替わる                                                                                                                     |
+| `bd rename` の行き先が既にある                                                                | `issue gh-2 already exists` で終了コード 1                                                                                                                                                                                                             |
+| `bd rename` の書式の検査                                                                      | しない（`gh-0001` にも付け替えられる）                                                                                                                                                                                                                 |
+| 接頭辞 `t` のデータベースで `bd rename t-807 gh-5`                                            | 通る。ただし `bd create --id gh-…` は `prefix mismatch` で拒まれるので、付け替えたあと `issue_prefix` を `gh` に変える                                                                                                                                 |
+| `bd create --id gh-9` → `bd github push gh-9`                                                 | Issue は次の番号（`#4`）で作られ、ID と番号がずれる。**番号は Issue を作るまで決まらない**                                                                                                                                                             |
+| `bd create --id gh-new-<名前>` → `bd github push` → `external_ref` の末尾の番号 → `bd rename` | `gh-5` ↔ `#5` になる。push で落ちたら `external_ref` が無いまま残る                                                                                                                                                                                    |
+| 採番を `bd` に任せた ID                                                                       | `gh-5ao` のような短い hash（数字だけになりうるので `gh-<n>` と紛れる）                                                                                                                                                                                 |
+
+**GitHub での変更の取り込み**
+
+| 場面                                                         | 結果                                                                                                                                                                                                                    |
+| ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 題・本文・label の編集                                       | 取り込まれる。label は GitHub の集合で置き換わる（`difficulty:sonnet` → `difficulty:opus`）                                                                                                                             |
+| GitHub で閉じる／開き直す                                    | Beads でも `closed`／`open` になる（`ship:*` も `cancelled` も付かない。閉じた課題は依存を解く）                                                                                                                        |
+| `acceptance_criteria`・`notes`                               | GitHub へ出ない（Issue の本文は `description` だけ）。GitHub での編集も届かないので、往復で壊れない                                                                                                                     |
+| comment                                                      | どちらの向きにも写らない（Beads の `## 結果` は GitHub に出ず、GitHub のコメントは Beads に入らない）                                                                                                                   |
+| label `cancelled`・`ship:done`・`difficulty:*`・`loopable:*` | GitHub の label になり、GitHub で本文を直したあとの取り込みでもそのまま残る                                                                                                                                             |
+| 独自の状態 `pending:frozen`                                  | GitHub へは `open`（`status::` label なし）で出る。**GitHub で題か本文を直すと取り込みで `open` に戻る**                                                                                                                |
+| 組み込みの状態 `deferred`                                    | label `status::deferred` として往復し、GitHub で編集しても `deferred` のまま。`bd ready` から外れる。GitHub で label を外せば `open` に戻る                                                                             |
+| 着手中（`in_progress`・assignee は作業ツリーの名前）         | 状態は label `status::in_progress` で往復するが、assignee は GitHub の担当者で上書きされ、**GitHub で本文を直すと assignee が空になる**。錠そのものは残る（他の actor の `--claim` は `status in_progress` で拒まれる） |
+
+**両側で同じ課題を変えたとき**（Beads で題を、GitHub で本文を変えた）
+
+| 衝突の解き方                               | 結果                                                    |
+| ------------------------------------------ | ------------------------------------------------------- |
+| `--prefer-newer`（既定）で GitHub が新しい | GitHub の版で丸ごと置き換わり、Beads の題の変更は消える |
+| `--prefer-newer` で Beads が新しい         | Beads の版を丸ごと送り、GitHub の本文の変更は消える     |
+| `--prefer-github`                          | 新しさによらず GitHub の版。Beads の変更は消える        |
+| `--prefer-local`                           | 新しさによらず Beads の版。GitHub の変更は消える        |
+
+どれも課題ごとの勝ち負けで、欄ごとには合わせない。出力に `Conflict on gh-2: <どちらを残したか>` の行が出る。
+衝突と数えるのは、前回の `sync` より後に両側が更新された課題だけ。
+
+**前回の同期の時刻**（`bd` が取り込みの基準にする時刻）
+
+| 場面                                                                               | 結果                                                                                                                             |
+| ---------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| GitHub で本文を直す → 別の課題を `bd github push` → 引数なしの `sync`              | 直した本文は取り込まれない。push も pull も `--issues` つきの `sync` も、前回の同期の時刻を今に進める                            |
+| `bd github pull <番号>`（番号を指定した取り込み）                                  | 前回の同期の時刻によらず、その Issue を読んで違えば取り込む                                                                      |
+| Beads で題を、GitHub で本文を直す → `bd github pull <番号>` → `bd github push`     | 取り込みは前回の同期より後に Beads で変えた課題を飛ばし、push が Beads の版で GitHub を上書きする（GitHub の本文の変更は消える） |
+| 取り込みで空になった assignee を `bd update --assignee` で戻す → 引数なしの `sync` | 戻したまま（assignee は GitHub へ送らない）                                                                                      |
+| 前回の同期の時刻を消すコマンド                                                     | 無い（`bd` 1.3.0）                                                                                                               |
+
+**確かめていないこと**: Project の Status 欄を `gh project item-edit` で書くと Issue の更新時刻が動くか
+（捨てた Project を作っていない）。Jira の方式は前の節のとおり。
+
 ## 運用の設計
 
 ### 3層
@@ -209,6 +267,8 @@ flowchart LR
 <div class="note note-warn">`.beads` は git の外（`--stealth`）に置くので、今のように「タスクの記録が git の履歴に残る」ことはなくなる。消えないように、`bd backup`（または `bd export` の JSONL）を git の外の決まった場所へ定期的に取る。`bd export` の JSONL には作成者のメールアドレス（`owner`）が入るので、公開リポジトリにコミットしない。</div>
 
 ### GitHub の方式
+
+この節は `--push-only` だった最初の設計。ID を Issue 番号にして双方向に同期する今の運用は task-workflow の `WORKFLOW.md`「Beads 方式」。
 
 - 登録は `bd create`、GitHub へは `bd github sync --push-only`（Issue と label）
 - Project の Status 欄は `bd` が書かないので、`task` の橋渡しが `gh project item-edit` で書く
