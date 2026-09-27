@@ -337,7 +337,6 @@ export const COMMENT_REFERENCE_BACKLOG = [
   "test/browser/components/domain/sidebar/session-info.test.tsx",
   "test/browser/components/domain/sidebar/session-switch.test.tsx",
   "test/browser/components/domain/sidebar/sidebar.test.tsx",
-  "test/browser/components/domain/sidebar/task-section.test.tsx",
   "test/browser/components/page/achievement/components/diary-book/diary-book.test.tsx",
   "test/browser/components/page/achievement/components/diary-notice/diary-notice.test.tsx",
   "test/browser/components/page/achievement/components/diary-section/diary-section.test.tsx",

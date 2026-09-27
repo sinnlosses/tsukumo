@@ -4,7 +4,7 @@ import { join } from "node:path"
 import { describe, it } from "vitest"
 
 import { runSubprocessOrThrow } from "../fixture/subprocess.ts"
-import { useScenarioRun } from "./scenario-run.ts"
+import { type ScenarioRoom, useScenarioRun } from "./scenario-run.ts"
 
 // タスクの一覧（docs/design.md 10章「E2E のシナリオの一覧」）。この一覧だけは疑似セッションの
 // 場面ではなく、cwd の `main` にある `develop/task/*.md` が元になる
@@ -48,22 +48,54 @@ function writeTask(cwd: string, id: string, summary: string, status: string): vo
   writeFileSync(join(cwd, "develop", "task", `${id}.md`), content)
 }
 
+async function openTaskListRoom(scenario: string): Promise<ScenarioRoom> {
+  const room = await run.open({ scenario, scene: "none", viewport: "wide" })
+  await room.waitForEvent("speech")
+
+  await git(room.cwd, "init", "--quiet", "-b", "main")
+  await git(room.cwd, "config", "user.name", "tsukumo-e2e")
+  await git(room.cwd, "config", "user.email", "tsukumo-e2e@example.invalid")
+  await git(room.cwd, "config", "commit.gpgsign", "false")
+  await git(room.cwd, "config", "core.hooksPath", "/dev/null")
+  writeTask(room.cwd, "T-001", "架空のタスク（未着手）", "todo")
+  writeTask(room.cwd, "T-002", "架空のタスク（完了）", "done")
+  await git(room.cwd, "add", "develop/task")
+  await git(room.cwd, "commit", "--quiet", "-m", "架空のタスク一覧")
+
+  await room.waitForEvent("tasks-changed")
+  return room
+}
+
 describe("タスクの一覧", () => {
   it("main の develop/task/ を読み、サイドバーのタスク一覧に並ぶ", async () => {
-    const room = await run.open({ scenario: "task-list", scene: "none", viewport: "wide" })
-    await room.waitForEvent("speech")
+    const room = await openTaskListRoom("task-list")
+    await room.settleAndMatch(ELAPSED_MS)
+  })
 
-    await git(room.cwd, "init", "--quiet", "-b", "main")
-    await git(room.cwd, "config", "user.name", "tsukumo-e2e")
-    await git(room.cwd, "config", "user.email", "tsukumo-e2e@example.invalid")
-    await git(room.cwd, "config", "commit.gpgsign", "false")
-    await git(room.cwd, "config", "core.hooksPath", "/dev/null")
-    writeTask(room.cwd, "T-001", "架空のタスク（未着手）", "todo")
-    writeTask(room.cwd, "T-002", "架空のタスク（完了）", "done")
-    await git(room.cwd, "add", "develop/task")
-    await git(room.cwd, "commit", "--quiet", "-m", "架空のタスク一覧")
+  it("見出しの「一覧を見る」で表が開く", async () => {
+    const room = await openTaskListRoom("task-list-board-open")
+    await room.page.getByRole("button", { name: "一覧を見る" }).click()
+    await room.settleAndMatch(ELAPSED_MS)
+  })
 
-    await room.waitForEvent("tasks-changed")
+  it("チップを押すとその状態だけに絞り、選んだチップにだけ aria-pressed が付く", async () => {
+    const room = await openTaskListRoom("task-list-filtered")
+    await room.page.getByRole("button", { name: "未着手 1" }).click()
+    await room.settleAndMatch(ELAPSED_MS)
+  })
+
+  it("選んでいるチップをもう一度押すと全件に戻る", async () => {
+    const room = await openTaskListRoom("task-list-filtered-off")
+    const chip = room.page.getByRole("button", { name: "未着手 1" })
+    await chip.click()
+    await chip.click()
+    await room.settleAndMatch(ELAPSED_MS)
+  })
+
+  it("別のチップを押すと絞り込みが切り替わる", async () => {
+    const room = await openTaskListRoom("task-list-filtered-switched")
+    await room.page.getByRole("button", { name: "未着手 1" }).click()
+    await room.page.getByRole("button", { name: "完了 1" }).click()
     await room.settleAndMatch(ELAPSED_MS)
   })
 })
