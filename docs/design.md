@@ -79,8 +79,8 @@ shared（語彙・イベント・状態・reducer・zod スキーマ）は brows
 | 層               | 置くもの                                                                                                                                                                                                                                                                                        | import してよい先                                       | 実行場所         |
 | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- | ---------------- |
 | `shared`         | 概念の語彙・`SessionEvent`・`SessionState`・`applySessionEvent`・コマンドとフレームの zod・手続きの契約。**`SessionState` から純粋に導けるもの**も含む（ブラウザしか読まないものを含む。`main-view.ts` `turn-step.ts` `turn-speech.ts` `portrait-motion.ts` `room.ts` `command-suggestion.ts`） | `shared` のみ（`zod`・`@orpc/contract`・`remeda` は可） | サーバとブラウザ |
-| `server/core`    | サーバ側の純粋な判断。セッション管理・駆動の契約・イベントの検証・ポートの決定・設定の解釈。**`server/<機能>/core/` と、共有の `server/core/`**                                                                                                                                                 | `shared` / `core`                                       | サーバ（Bun）    |
-| `server/adapter` | 外の世界に触る場所。SDK・WebSocket・HTTP・ホスト・ファイル・子プロセス・fake driver。**`server/<機能>/adapter/` と、共有の `server/adapter/`**                                                                                                                                                  | `shared` / `core` / `adapter`                           | サーバ（Bun）    |
+| `server/core`    | サーバ側の純粋な判断。セッション管理・駆動の契約・イベントの検証・ポートの決定・設定の解釈。**`server/<機能>/core/` と、共有の `server/core/`**                                                                                                                                                 | `shared` / `core`                                       | サーバ（Node）   |
+| `server/adapter` | 外の世界に触る場所。SDK・WebSocket・HTTP・ホスト・ファイル・子プロセス・fake driver。**`server/<機能>/adapter/` と、共有の `server/adapter/`**                                                                                                                                                  | `shared` / `core` / `adapter`                           | サーバ（Node）   |
 | `browser`        | React の部品・hooks・CSS・Markdown の変換                                                                                                                                                                                                                                                       | `shared`（React などの npm は可）                       | ブラウザ         |
 | `src/` 直下      | 配線（composition root。`cli.ts` / `main.ts` と起動の段取り）                                                                                                                                                                                                                                   | すべて                                                  | サーバ           |
 
@@ -1047,8 +1047,8 @@ characters/<name>/
   （`channel: "chrome"`、headless）。**新しい外部コマンドは足さない**
 - **置き場所は `test/e2e/<シナリオ>.test.ts`**（1ファイル = 1つの機能のまとまり。E2E は1つのファイルの
   振る舞いではないので、`src/` の写しの構成には従わない）
-- **`bun run check` の中の別の段にする**（`bun run test` は既定の設定が `test/e2e/` を外し、E2E は
-  `bun run test:e2e` が E2E 専用の設定で走らせる）。時間切れの既定を E2E の段だけ延ばし、単体テストを
+- **`pnpm run check` の中の別の段にする**（`pnpm run test` は既定の設定が `test/e2e/` を外し、E2E は
+  `pnpm run test:e2e` が E2E 専用の設定で走らせる）。時間切れの既定を E2E の段だけ延ばし、単体テストを
   1ファイル走らせるときに Chrome を要らないままにするため。E2E の設定はファイルを並べず
   （`fileParallelism: false`。並べると負荷で待ちが揺れる）、単体の `setupFiles` の DOM のグローバルを渡さない
 - **`dist/browser/` は E2E の段が自分で組み立てる**（起動は古い成果物でも止まらずに配る〔11章〕ので、
@@ -1095,7 +1095,7 @@ characters/<name>/
 
 **置き場所と比べ方**: 期待値は `test/e2e/expected/<シナリオ>.*.json` に置いてリポジトリに入れ、走らせた
 結果とスクリーンショットは `/tmp/tsukumo-e2e/<シナリオ>/` に毎回書き直す。比べ方は `toEqual` で、
-**期待値が無ければ落とす**（黙って書かない）。**期待値の更新**は `bun run test:e2e:update` → `git diff
+**期待値が無ければ落とす**（黙って書かない）。**期待値の更新**は `pnpm run test:e2e:update` → `git diff
 test/e2e/expected/` で意図した変化だけであることを確かめる → 直した変更と同じコミットに入れる。
 
 ### E2E のシナリオの一覧
@@ -1144,19 +1144,19 @@ E2E が通るのは**疑似セッションに書いた並びだけ**で、fake d
 ## 11. ビルドと依存
 
 - **成果物は事前に組み立てて `dist/browser/` に置き、起動（`src/main.ts`）は置いてあるものを読む**
-  （`docs/architecture.md`「ブラウザ側は事前に組み立てて置く」）。作るのは `bun run build`
-  （`scripts/build-ui.ts`）だけで、`bun run dev` も起こす前に1回組み立てる（HMR を止めたときに戻る先）
-- `bun run build` が起こすのは `node node_modules/vite/bin/vite.js build src/browser --config vite.config.ts --outDir dist/browser`
+  （`docs/architecture.md`「ブラウザ側は事前に組み立てて置く」）。作るのは `pnpm run build`
+  （`scripts/build-ui.ts`）だけで、`pnpm run dev` も起こす前に1回組み立てる（HMR を止めたときに戻る先）
+- `pnpm run build` が起こすのは `node node_modules/vite/bin/vite.js build src/browser --config vite.config.ts --outDir dist/browser`
   の1本で、`main.js` と `main.css` の対が置かれる（名前をハッシュ付きにせず固定する理由と、JS API ではなく
   CLI を起こす理由は `docs/architecture.md`「組み立ては `vite build` の CLI を子プロセスで起こす」）
-- **`dist/` は `.gitignore` する。** リポジトリを取り直したら `bun install` のあとに `bun run build` を
-  1回打つ（`tsukumo` は `bun link` でこのリポジトリを指しているので、**「配布」の実体はこのリポジトリ
+- **`dist/` は `.gitignore` する。** リポジトリを取り直したら `pnpm install` のあとに `pnpm run build` を
+  1回打つ（`tsukumo` は `pnpm link --global` でこのリポジトリを指しているので、**「配布」の実体はこのリポジトリ
   そのもの**）
-- **成果物が無ければ起動しない**（起動時の前提不足。理由に `bun run build` を添える）。**ソース
+- **成果物が無ければ起動しない**（起動時の前提不足。理由に `pnpm run build` を添える）。**ソース
   （`src/browser/` と `src/shared/`）のほうが新しければ、1行知らせてそのまま配る**（古くても画面は
   動くので止めず、黙って配らないことで事故を防ぐ）。HMR と違い、ここは `src/shared/` も見る
 
-**作り直しを押す仕組み。** 開発中は HMR で差し替える。`bun run dev`（= `bun run build && node src/cli.ts --dev`）で起こすと、
+**作り直しを押す仕組み。** 開発中は HMR で差し替える。`pnpm run dev`（= `pnpm run build && node src/cli.ts --dev`）で起こすと、
 `src/server/view-server/adapter/ui-dev-server.ts` が Vite の開発サーバを **middleware mode** で起こし、
 ビューサーバ（`node:http`）に差し込む。設定は組み立てと同じ `vite.config.ts` で、root は `src/browser/`。
 
@@ -1166,9 +1166,9 @@ E2E が通るのは**疑似セッションに書いた並びだけ**で、fake d
   経路と守り方は変わらない。`/assets/` の対は `dev` のあいだ 404）
 - **HMR の WebSocket は `/vite-hmr`**。`/ws` の受け口は合わない upgrade を閉じるので、Vite が受ける
   upgrade は触らずに譲る（`ownsUpgrade` / `yieldsUpgrade`）
-- **本番（`tsukumo`・`bun run start`）では Vite を読み込まない。** `vite` は `startUiDevServer` の中で
+- **本番（`tsukumo`・`pnpm run start`）では Vite を読み込まない。** `vite` は `startUiDevServer` の中で
   動的に import し、呼ぶのは `--dev` のときだけ（常に入れると仕事中の保存で画面が差し替わりうる）
-- **開発サーバは `dist/browser/` を書き換えない**（次の起動に乗せるには `bun run build` が要る）。
+- **開発サーバは `dist/browser/` を書き換えない**（次の起動に乗せるには `pnpm run build` が要る）。
   **型を見ない**ので、型エラーだけのコードはそのまま当たる。**当たるのはブラウザに配る側だけ**:
 
 | 直した場所                                | どうなるか                                                                                             |
@@ -1201,5 +1201,5 @@ E2E が通るのは**疑似セッションに書いた並びだけ**で、fake d
 | dev     | `playwright-core`                                                                  | 画面の確認（`scripts/capture-*.ts`）と E2E（10章）           |
 | dev     | `vitest` `vite`                                                                    | テストランナーとブラウザ側の組み立て・開発サーバ             |
 
-`zod` と `@anthropic-ai/claude-agent-sdk` はある。`ws` を選ぶのは **`Bun.*` の固有 API に寄せない**ため。
+`zod` と `@anthropic-ai/claude-agent-sdk` はある。`ws` を選ぶのは**ランタイム固有の API に寄せない**ため。
 **`playwright-core` はブラウザを落とさず手元の Google Chrome を動かし**、テストランナー（`@playwright/test`）は足さない。

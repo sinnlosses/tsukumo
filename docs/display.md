@@ -292,7 +292,7 @@ CSS の3つを揃える**（レンダラを直したのに規約が古いまま�
 `src/server/report/adapter/report-usage-log.ts`、何を1行にするかは
 `src/server/report/core/report-usage.ts` が持つ。
 
-**集計するスクリプトは `scripts/report-block-usage.ts`**（`bun run scripts/report-block-usage.ts
+**集計するスクリプトは `scripts/report-block-usage.ts`**（`node scripts/report-block-usage.ts
 --days <日数>`、既定28日）。「逃げ道の中の記法 × レポート数」と「塊の種類 × レポート数」の
 2つの表を出す。
 

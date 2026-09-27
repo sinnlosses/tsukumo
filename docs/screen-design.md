@@ -582,7 +582,7 @@ IBM Plex Mono）と字の大きさ、「ほか n 件を見る」の色（見本�
 - **切り替えは `location.hash`**（`#character`。無ければ会話の画面。キャラクター画面で選んでいる
   パックも `#character?pack=<名前>` として同じ hash に乗る。下の「キャラクター画面の中身」）。
   `stores/screen.tsx` の `useScreen()` が `hashchange` を読む（`useSyncExternalStore`）。
-  リロードしても同じ画面に戻り、ブラウザの「戻る」が効き、`bun run dev` の再読み込み
+  リロードしても同じ画面に戻り、ブラウザの「戻る」が効き、`pnpm run dev` の再読み込み
   （HMR が当てられずにページごと読み込み直したとき・`domain/refresh.ts`）でもキャラクター画面に留まれる。サーバの経路は増えない（`?token` はそのまま）。
   **ルーターのライブラリは入れない**（画面は3つで、分岐は hook 1つで足りる）
 - **会話の画面は外さず `hidden` で隠す**（6.1「部品を外すのではなく隠す」と同じ）。

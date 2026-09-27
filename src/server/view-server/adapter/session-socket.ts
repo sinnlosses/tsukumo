@@ -6,9 +6,6 @@
 // `createSocketRouter`）。押し出しもブラウザが呼ぶ購読の手続き（`frame.subscribe`）
 // の Event Iterator として流れ、購読の元（`subscribe`）は接続の context に載せる。
 //
-// `Bun.serve` の WebSocket には寄せない（`ws` パッケージ。docs/coding-standards.md
-// 「Bun固有APIに寄せない」）。
-//
 // 安全のための決まり（`docs/design.md`「会話内容と安全」）:
 //   - 起動トークン（`createStartupToken`。起動ごとの乱数で、ディスクに
 //     書かない）が合わないと upgrade をしない
