@@ -512,19 +512,22 @@ function asRecord(value: unknown): Readonly<Record<string, unknown>> {
 /**
  * DOM の構造を読み、2回続けて同じになるまで読み直す（時計は止めてあるので、残るのは描き直しと
  * 素材の読み込みだけ）。
+ * 2回同じでも `aria-busy="true"` の要素が残っている間は落ち着いたと見なさない（取得中の表示は文字が変わらない）。
  */
 async function settledDom(page: Page): Promise<unknown> {
   let previous = JSON.stringify(await page.evaluate(DOM_TREE_SCRIPT))
   for (let attempt = 0; attempt < SETTLE_ATTEMPTS; attempt += 1) {
     await page.waitForTimeout(SETTLE_INTERVAL_MS)
     const current = JSON.stringify(await page.evaluate(DOM_TREE_SCRIPT))
-    if (current === previous) {
+    if (current === previous && !(await page.evaluate(HAS_BUSY_ELEMENT_SCRIPT))) {
       return JSON.parse(current)
     }
     previous = current
   }
   throw new Error(`DOM が落ち着かない（${String(SETTLE_INTERVAL_MS * SETTLE_ATTEMPTS)}ms）`)
 }
+
+const HAS_BUSY_ELEMENT_SCRIPT = `document.querySelector('[aria-busy="true"]') !== null`
 
 /**
  * `document.body` から木を組む台本（ページの中で動く）。残すもの・落とすものは

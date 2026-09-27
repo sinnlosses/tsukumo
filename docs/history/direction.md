@@ -3,6 +3,12 @@
 `develop/direction.md` に書かれたユーザーからの指示を、タスク化した時点で**当時の記述のまま**
 ここへ移す（`docs/workflow.md`「指示メモ」参照）。新しいものを上に足す。**後から書き換えない。**
 
+## 2026-09-27 browser と server を package.json で分けるか
+
+（`develop/direction.md` の「ユーザーから」。T-796 になった）
+
+- https://github.com/pingdotgg/t3code/tree/main/apps のように、browser と server で package.json を作って分けるほうが良さそうな印象を持ったけどどうかな?
+
 ## 2026-09-27 振り返り（T-762）の本物の GitHub・bd での確かめ
 
 （`develop/draft/2026-09-27-t764-real-github-and-bd-metrics.md` から。出典: T-762 の振り返りで積んだ1件。ユーザーの答え「取り込む (Recommended)」で承認した。新しいタスクにせず T-764 の完了条件と背景に足した）
