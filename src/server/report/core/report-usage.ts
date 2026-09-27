@@ -3,15 +3,25 @@
 
 import type { ReportSection } from "../../../shared/report/report-block.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
-import { type MarkdownNotation, notationsInSections } from "./report-violation.ts"
+import {
+  containedNotationsInSections,
+  escapeNotationsInSections,
+  type EscapeNotation,
+  type MarkdownNotation,
+  notationsInSections,
+} from "./report-violation.ts"
 
 export type ReportUsageEntry = {
   readonly at: number
   readonly sessionId: string
   /** その回に出た塊の種類（重複無し）。 */
   readonly blockKinds: readonly string[]
-  /** その回に逃げ道（`markdown` の塊）の中に出た記法の種類（重複無し）。 */
+  /** その回に逃げ道（`markdown` の塊）の外側に出た記法の種類（重複無し）。 */
   readonly notations: readonly MarkdownNotation[]
+  /** その回に逃げ道の HTML の容れ物の中に出た記法の種類（重複無し）。 */
+  readonly containedNotations: readonly MarkdownNotation[]
+  /** その回に逃げ道に出た、塊の無い記法の種類（重複無し）。 */
+  readonly escapeNotations: readonly EscapeNotation[]
   readonly unknownBlockCount: number
 }
 
@@ -31,6 +41,8 @@ export function reportUsageEntryOf(
     sessionId,
     blockKinds: blockKindsOf(event.sections),
     notations: notationsInSections(event.sections),
+    containedNotations: containedNotationsInSections(event.sections),
+    escapeNotations: escapeNotationsInSections(event.sections),
     unknownBlockCount: event.unknownBlockCount,
   }
 }

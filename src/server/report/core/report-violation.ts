@@ -54,15 +54,60 @@ export type ReportViolation =
       readonly notations: readonly MarkdownNotation[]
     }
 
-/** 逃げ道（`markdown` の塊）の中に出た記法の種類（重複無し）。 */
+/** 逃げ道の外側（HTML の容れ物の中でないところ）に出た記法の種類（重複無し）。 */
 export function notationsInSections(
   sections: readonly ReportSection[],
 ): readonly MarkdownNotation[] {
-  const markdowns = sections
+  return markdownNotationsAt(sections, false)
+}
+
+/**
+ * 逃げ道の HTML の容れ物（`<details>` / `<div>`）の中に出た記法の種類（重複無し）。
+ * 複数の塊を畳む・`cols` に並べるのは逃げ道の役目なので、ここに出ても差し戻さない。
+ */
+export function containedNotationsInSections(
+  sections: readonly ReportSection[],
+): readonly MarkdownNotation[] {
+  return markdownNotationsAt(sections, true)
+}
+
+function markdownNotationsAt(
+  sections: readonly ReportSection[],
+  inContainer: boolean,
+): readonly MarkdownNotation[] {
+  const markdowns = markdownsOf(sections)
+  return MARKDOWN_NOTATIONS.filter((notation) =>
+    markdowns.some((markdown) => hasNotation(markdown, notation, inContainer)),
+  )
+}
+
+/** 逃げ道（`markdown` の塊）の中身を、塊ごとにフェンスの外の行とフェンスの並びに分けたもの。 */
+function markdownsOf(sections: readonly ReportSection[]): readonly SplitMarkdown[] {
+  return sections
     .flatMap((section) => section.blocks)
     .flatMap((block) => (block.kind === "markdown" ? [splitFences(block.markdown)] : []))
-  return MARKDOWN_NOTATIONS.filter((notation) =>
-    markdowns.some((markdown) => hasNotation(markdown, notation)),
+}
+
+/** 塊の無い記法（`REPORT_NOTATION_PROMPT` の表にある、塊に当てはまらない記法）。 */
+export type EscapeNotation = (typeof ESCAPE_NOTATIONS)[number]
+
+export const ESCAPE_NOTATIONS = [
+  "colsCard",
+  "chart",
+  "svg",
+  "dl",
+  "quote",
+  "hr",
+  "details",
+] as const satisfies readonly string[]
+
+/** 逃げ道に出た、塊の無い記法の種類（重複無し）。 */
+export function escapeNotationsInSections(
+  sections: readonly ReportSection[],
+): readonly EscapeNotation[] {
+  const markdowns = markdownsOf(sections)
+  return ESCAPE_NOTATIONS.filter((notation) =>
+    markdowns.some((markdown) => hasEscapeNotation(markdown, notation)),
   )
 }
 
@@ -190,6 +235,14 @@ const NON_PROSE_LINE = /^ *(?:#|\||>|[-*+] |\d+[.)] |<|---|\*\*\*|___)/
 const HTML_BLOCK_OPEN = /<(?:details|div)\b/g
 const HTML_BLOCK_CLOSE = /<\/(?:details|div)>/g
 
+/** 塊の無い記法の印。 */
+const SVG_TAG = /<svg\b/
+const DL_TAG = /<dl\b/
+const DETAILS_TAG = /<details\b/
+const QUOTE_LINE = /^ {0,3}>/
+/** 水平線（CommonMark の thematic break。`-` / `*` / `_` のどれかを3つ以上、空白を挟んでもよい）。 */
+const HR_LINE = /^ {0,3}(?:-[ \t]*){3,}$|^ {0,3}(?:\*[ \t]*){3,}$|^ {0,3}(?:_[ \t]*){3,}$/
+
 /**
  * フェンス1つ。`info` は開きの info 文字列の最初の語（無ければ空）、`line` は開きの行の位置。
  */
@@ -262,20 +315,26 @@ function closesFence(line: string, marker: string): boolean {
 }
 
 /**
- * 逃げ道の外側（HTML の塊〔`<details>` / `<div>`〕の中でないところ）に、その記法があるか。
- * HTML の塊の中は見ない（複数の塊を1つに畳む・`cols` に並べるのは逃げ道の役目なので）。
+ * その記法が、逃げ道の HTML の容れ物〔`<details>` / `<div>`〕の中と外のどちらにあるか。
+ * `inContainer` が `false` なら外側だけ（差し戻しの判定はここ）、`true` なら中だけを見る
+ * （複数の塊を1つに畳む・`cols` に並べるのは逃げ道の役目なので、中は差し戻さない）。
  */
-function hasNotation({ outside, fences }: SplitMarkdown, notation: MarkdownNotation): boolean {
+function hasNotation(
+  { outside, fences }: SplitMarkdown,
+  notation: MarkdownNotation,
+  inContainer: boolean,
+): boolean {
   const topLevel = topLevelFlags(outside)
-  const lines = outside.filter((_, index) => topLevel[index])
-  const topFences = fences.filter((fence) => topLevel[fence.line])
+  const atLevel = (index: number): boolean => topLevel[index] === !inContainer
+  const lines = outside.filter((_, index) => atLevel(index))
+  const levelFences = fences.filter((fence) => atLevel(fence.line))
   switch (notation) {
     case "heading":
       return lines.some((line) => SECTION_HEADING.test(line))
     case "table":
       return outside.some(
         (line, index) =>
-          topLevel[index] && line.includes("|") && TABLE_DELIMITER.test(outside[index + 1] ?? ""),
+          atLevel(index) && line.includes("|") && TABLE_DELIMITER.test(outside[index + 1] ?? ""),
       )
     case "list":
       return lines.some((line) => LIST_ITEM.test(line))
@@ -284,9 +343,31 @@ function hasNotation({ outside, fences }: SplitMarkdown, notation: MarkdownNotat
     case "progress":
       return lines.some((line) => classLists(line).some((classes) => classes.includes(notation)))
     case "code":
-      return topFences.some((fence) => fence.info !== "mermaid" && fence.info !== "chart")
+      return levelFences.some((fence) => fence.info !== "mermaid" && fence.info !== "chart")
     case "mermaid":
-      return topFences.some((fence) => fence.info === "mermaid")
+      return levelFences.some((fence) => fence.info === "mermaid")
+  }
+}
+
+/** 塊の無い記法があるか。フェンスの中は見ない（`chart` だけはフェンスの info で判定する）。 */
+function hasEscapeNotation({ outside, fences }: SplitMarkdown, notation: EscapeNotation): boolean {
+  switch (notation) {
+    case "colsCard":
+      return outside.some((line) =>
+        classLists(line).some((classes) => classes.includes("cols") || classes.includes("card")),
+      )
+    case "chart":
+      return fences.some((fence) => fence.info === "chart")
+    case "svg":
+      return outside.some((line) => SVG_TAG.test(line))
+    case "dl":
+      return outside.some((line) => DL_TAG.test(line))
+    case "quote":
+      return outside.some((line) => QUOTE_LINE.test(line))
+    case "hr":
+      return outside.some((line) => HR_LINE.test(line))
+    case "details":
+      return outside.some((line) => DETAILS_TAG.test(line))
   }
 }
 

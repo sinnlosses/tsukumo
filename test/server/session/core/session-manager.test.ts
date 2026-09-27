@@ -2458,6 +2458,8 @@ describe("createSessionManager", () => {
           sessionId: "claude-session-1",
           blockKinds: ["text"],
           notations: [],
+          containedNotations: [],
+          escapeNotations: [],
           unknownBlockCount: 0,
           sessionSummary: undefined,
         },

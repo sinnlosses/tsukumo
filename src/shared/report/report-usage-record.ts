@@ -3,7 +3,7 @@
 // （`docs/coding-standards.md`「会話内容の扱い」）。
 
 /** 行の形の版。形を変えたら上げ、古い行と見分ける。 */
-export const REPORT_USAGE_FORMAT_VERSION = 1 satisfies number
+export const REPORT_USAGE_FORMAT_VERSION = 2 satisfies number
 
 export type ReportUsageRecord = {
   readonly v: typeof REPORT_USAGE_FORMAT_VERSION
@@ -13,8 +13,12 @@ export type ReportUsageRecord = {
   readonly sessionId: string
   /** その回に出た塊の種類（重複無し）。 */
   readonly blockKinds: readonly string[]
-  /** その回に逃げ道（`markdown` の塊）の中に出た記法の種類（重複無し）。 */
+  /** その回に逃げ道（`markdown` の塊）の外側に出た記法の種類（重複無し）。 */
   readonly notations: readonly string[]
+  /** その回に逃げ道の HTML の容れ物の中に出た記法の種類（重複無し）。 */
+  readonly containedNotations: readonly string[]
+  /** その回に逃げ道に出た、塊の無い記法の種類（重複無し）。 */
+  readonly escapeNotations: readonly string[]
   /** 知らない種類で境界で落とした塊の数。 */
   readonly unknownBlockCount: number
 }

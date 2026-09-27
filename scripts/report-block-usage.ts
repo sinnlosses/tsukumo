@@ -11,7 +11,7 @@ import { z } from "zod"
 
 import { dateFileNames, readJsonLines } from "../src/server/adapter/lib/jsonl.ts"
 import { reportUsageDir } from "../src/server/report/adapter/report-usage-log.ts"
-import { MARKDOWN_NOTATIONS } from "../src/server/report/core/report-violation.ts"
+import { ESCAPE_NOTATIONS, MARKDOWN_NOTATIONS } from "../src/server/report/core/report-violation.ts"
 import { REPORT_BLOCK_KINDS } from "../src/shared/report/report-block.ts"
 import { REPORT_USAGE_FORMAT_VERSION } from "../src/shared/report/report-usage-record.ts"
 
@@ -23,6 +23,8 @@ const recordSchema = z.object({
   v: z.literal(REPORT_USAGE_FORMAT_VERSION),
   blockKinds: z.array(z.string()),
   notations: z.array(z.string()),
+  containedNotations: z.array(z.string()),
+  escapeNotations: z.array(z.string()),
   unknownBlockCount: z.number(),
 })
 type UsageRecord = z.infer<typeof recordSchema>
@@ -45,7 +47,20 @@ process.stdout.write(
 )
 process.stdout.write("\n\n")
 process.stdout.write(
-  table("逃げ道の中の記法 × レポート数", MARKDOWN_NOTATIONS, records, (record) => record.notations),
+  table("逃げ道の外の記法 × レポート数", MARKDOWN_NOTATIONS, records, (record) => record.notations),
+)
+process.stdout.write("\n\n")
+process.stdout.write(
+  table(
+    "逃げ道の容れ物の中の記法 × レポート数",
+    MARKDOWN_NOTATIONS,
+    records,
+    (record) => record.containedNotations,
+  ),
+)
+process.stdout.write("\n\n")
+process.stdout.write(
+  table("塊の無い記法 × レポート数", ESCAPE_NOTATIONS, records, (record) => record.escapeNotations),
 )
 process.stdout.write("\n\n")
 const unknownTotal = records.reduce((total, record) => total + record.unknownBlockCount, 0)

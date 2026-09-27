@@ -43,7 +43,7 @@ describe("reportUsageEntryOf", () => {
     expect(entry.blockKinds).toEqual(["text", "table"])
   })
 
-  it("逃げ道（markdown の塊）の中に出た記法の種類を数える", () => {
+  it("逃げ道（markdown の塊）の外側に出た記法の種類を数える", () => {
     const event = reportEvent([
       {
         heading: "架空の節",
@@ -55,6 +55,70 @@ describe("reportUsageEntryOf", () => {
 
     expect(entry.blockKinds).toEqual(["markdown"])
     expect(entry.notations).toEqual(["list"])
+    expect(entry.containedNotations).toEqual([])
+  })
+
+  it("逃げ道の HTML の容れ物の中に出た記法の種類は、外の記法と分けて数える", () => {
+    const event = reportEvent([
+      {
+        heading: "架空の節",
+        blocks: [
+          {
+            kind: "markdown",
+            markdown: "<details><summary>架空の見出し</summary>\n\n- 架空の1つ目\n\n</details>",
+            fold: "",
+          },
+        ],
+      },
+    ])
+
+    const entry = reportUsageEntryOf(event, "claude-session-1", 1_000)
+
+    expect(entry.notations).toEqual([])
+    expect(entry.containedNotations).toEqual(["list"])
+  })
+
+  it("塊の無い記法（cols/card・chart・svg・dl・引用・区切り線・details）の種類を数える", () => {
+    const event = reportEvent([
+      {
+        heading: "架空の節",
+        blocks: [
+          {
+            kind: "markdown",
+            markdown: [
+              '<div class="cols"><div class="card">架空の中身</div></div>',
+              "",
+              "> 架空の引用",
+              "",
+              "---",
+              "",
+              '<svg viewBox="0 0 1 1"></svg>',
+              "",
+              "<dl><dt>架空の用語</dt><dd>架空の説明</dd></dl>",
+              "",
+              "<details><summary>架空の見出し</summary>中身</details>",
+              "",
+              "```chart",
+              "{}",
+              "```",
+            ].join("\n"),
+            fold: "",
+          },
+        ],
+      },
+    ])
+
+    const entry = reportUsageEntryOf(event, "claude-session-1", 1_000)
+
+    expect(entry.escapeNotations).toEqual([
+      "colsCard",
+      "chart",
+      "svg",
+      "dl",
+      "quote",
+      "hr",
+      "details",
+    ])
   })
 
   it("知らない種類で境界で落とした塊の数と、渡した時刻・セッションIDをそのまま運ぶ", () => {
@@ -67,6 +131,8 @@ describe("reportUsageEntryOf", () => {
       sessionId: "claude-session-9",
       blockKinds: [],
       notations: [],
+      containedNotations: [],
+      escapeNotations: [],
       unknownBlockCount: 2,
       sessionSummary: undefined,
     })

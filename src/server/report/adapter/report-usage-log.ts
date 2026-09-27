@@ -34,6 +34,8 @@ function toRecord(entry: ReportUsageEntry): ReportUsageRecord {
     sessionId: entry.sessionId,
     blockKinds: entry.blockKinds,
     notations: entry.notations,
+    containedNotations: entry.containedNotations,
+    escapeNotations: entry.escapeNotations,
     unknownBlockCount: entry.unknownBlockCount,
   }
 }

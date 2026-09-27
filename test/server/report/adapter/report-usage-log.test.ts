@@ -37,6 +37,8 @@ function entry(when: number, sessionId = "claude-session-1"): ReportUsageEntry {
     sessionId,
     blockKinds: ["text", "table"],
     notations: ["list"],
+    containedNotations: [],
+    escapeNotations: [],
     unknownBlockCount: 0,
   }
 }
@@ -58,7 +60,7 @@ describe("createReportUsageLog", () => {
     expect(readLines("2026-09-23.jsonl").length).toBe(1)
   })
 
-  it("1行の鍵は版・日時・セッションID・塊の種類・逃げ道の記法・知らない種類の数で、日時は ISO 8601（オフセット付き）", () => {
+  it("1行の鍵は版・日時・セッションID・塊の種類・逃げ道の記法（外・容れ物の中・塊の無いもの）・知らない種類の数で、日時は ISO 8601（オフセット付き）", () => {
     const log = createReportUsageLog(root())
 
     log.append(entry(at(9, 0)))
@@ -70,6 +72,8 @@ describe("createReportUsageLog", () => {
       "sessionId",
       "blockKinds",
       "notations",
+      "containedNotations",
+      "escapeNotations",
       "unknownBlockCount",
     ])
     expect(record).toMatchObject({
@@ -77,6 +81,8 @@ describe("createReportUsageLog", () => {
       sessionId: "claude-session-1",
       blockKinds: ["text", "table"],
       notations: ["list"],
+      containedNotations: [],
+      escapeNotations: [],
       unknownBlockCount: 0,
     })
     // オフセットはそのマシンのローカル時刻で決まるので、頭だけを見る。
