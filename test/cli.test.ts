@@ -9,7 +9,6 @@ import {
   OPEN_VIEW_ENV_NAME,
   VIEW_PORT_ENV_NAME,
   VIEW_PORT_FALLBACK_BASE_ENV_NAME,
-  WATCH_UI_ENV_NAME,
 } from "../src/server/core/config.ts"
 import {
   MAX_PORT_NUMBER,
@@ -49,7 +48,6 @@ const CLI_ENV_NAMES: ReadonlySet<string> = new Set([
   DRIVER_ENV_NAME,
   FAKE_SCENE_ENV_NAME,
   NEW_SESSION_ENV_NAME,
-  WATCH_UI_ENV_NAME,
 ])
 
 function runCliToExit(

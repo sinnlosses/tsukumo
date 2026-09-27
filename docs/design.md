@@ -127,23 +127,23 @@ sed -n '/^## 4\. shared/,/^## /p' docs/design.md
 決定）。機能の名前は `docs/glossary.md` の語（単数形）で、**1つの機能 = 1つのディレクトリ**。
 機能の中は `core/`（判断）と `adapter/`（境界）の2段だけで、中身の無い段は作らない。
 
-| 機能              | 何の機能か                                                                                | `core/`                                                                                                                                                  | `adapter/`                                                                               |
-| ----------------- | ----------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| `session/`        | セッションを持つ・起こす・頼む。**各機能の判断を束ねる**（下の「束ねる機能」）            | `session-manager` `session-launch` `event-batch` `driver-command` `command-session` `session-command`                                                    | `remembered-default`                                                                     |
-| `session-driver/` | セッション駆動。契約・SDK の実装・fake driver・メッセージの変換・答え待ち・続きから始める | `session-driver` `sdk-message` `pending-answer` `self-started-turn` `visible-output-nudge` `session-restore` `session-title` `prompt-image-shelf` `plan` | `sdk-driver` `sdk-tool` `sdk-session` `sdk-context-usage` `fake-driver` `claude-account` |
-| `report/`         | レポートの記法・`report` ツール・検査と差し戻し・塊の使われ方の記録                       | `report-notation` `report-tool` `report-review` `report-violation` `report-usage`                                                                        | `report-usage-log`                                                                       |
-| `system-prompt/`  | `systemPrompt` の append の組み立てと、セリフの間合いの規約                               | `system-prompt` `speech-cadence`                                                                                                                         | —                                                                                        |
-| `chat/`           | 雑談モード。作法・記憶・話しかけ・アーカイブ・要約・覚えたこと・定着                      | `chat-manner` `chat-memory-prompt` `chat-nudge` `chat-archive-entry` `chat-episode-score` `chat-consolidation` `chat-consolidation-writer` `chat-recall` | `chat-archive` `chat-summary` `persona-memory` `sdk-chat-consolidation`                  |
-| `character-pack/` | キャラクターパックの選択・読み込み・画面からの編集                                        | `character-selection`                                                                                                                                    | `character-pack` `character-edit`                                                        |
-| `visit/`          | 訪問。契機・来客・台本・見張り                                                            | `visit-timing` `visit-guest` `visit-script` `visit-script-writer` `visit-watch`                                                                          | `sdk-visit-script` `visit-clock`                                                         |
-| `diary/`          | 日記。`diary` ツールと保存                                                                | `diary-tool` `diary-writer`                                                                                                                              | `diary` `sdk-diary`                                                                      |
-| `achievement/`    | 成果。`main` の履歴から数える                                                             | `achievement`                                                                                                                                            | `main-history`                                                                           |
-| `usage-review/`   | 見直し。2つのツール・前回の結果・見送り                                                   | `usage-review-tool`                                                                                                                                      | `previous-usage-review` `usage-proposal-dismissal`                                       |
-| `token-usage/`    | トークン消費の記録と集計                                                                  | `token-usage`                                                                                                                                            | `token-usage-log`                                                                        |
-| `context-usage/`  | コンテキストの内訳の記録                                                                  | `context-usage`                                                                                                                                          | `context-usage-log`                                                                      |
-| `host/`           | ホストのポートと Orca の実装、ホストへ渡す前の門番                                        | `host` `tracked-file`                                                                                                                                    | `orca-host`                                                                              |
-| `view-server/`    | ビューサーバ。ポートの決定・http・ws・同梱の外部ライブラリ・ブラウザ側の組み立てと見張り  | `port-resolution`                                                                                                                                        | `server` `session-socket` `vendor-asset` `bundle` `ui-rebuild` `source-fingerprint`      |
-| `repository/`     | 作業ディレクトリの git リポジトリを読む。`git` を起こす口・管理下のファイル・タスク一覧   | —                                                                                                                                                        | `git` `repository-file` `task-summary`                                                   |
+| 機能              | 何の機能か                                                                                   | `core/`                                                                                                                                                  | `adapter/`                                                                               |
+| ----------------- | -------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `session/`        | セッションを持つ・起こす・頼む。**各機能の判断を束ねる**（下の「束ねる機能」）               | `session-manager` `session-launch` `event-batch` `driver-command` `command-session` `session-command`                                                    | `remembered-default`                                                                     |
+| `session-driver/` | セッション駆動。契約・SDK の実装・fake driver・メッセージの変換・答え待ち・続きから始める    | `session-driver` `sdk-message` `pending-answer` `self-started-turn` `visible-output-nudge` `session-restore` `session-title` `prompt-image-shelf` `plan` | `sdk-driver` `sdk-tool` `sdk-session` `sdk-context-usage` `fake-driver` `claude-account` |
+| `report/`         | レポートの記法・`report` ツール・検査と差し戻し・塊の使われ方の記録                          | `report-notation` `report-tool` `report-review` `report-violation` `report-usage`                                                                        | `report-usage-log`                                                                       |
+| `system-prompt/`  | `systemPrompt` の append の組み立てと、セリフの間合いの規約                                  | `system-prompt` `speech-cadence`                                                                                                                         | —                                                                                        |
+| `chat/`           | 雑談モード。作法・記憶・話しかけ・アーカイブ・要約・覚えたこと・定着                         | `chat-manner` `chat-memory-prompt` `chat-nudge` `chat-archive-entry` `chat-episode-score` `chat-consolidation` `chat-consolidation-writer` `chat-recall` | `chat-archive` `chat-summary` `persona-memory` `sdk-chat-consolidation`                  |
+| `character-pack/` | キャラクターパックの選択・読み込み・画面からの編集                                           | `character-selection`                                                                                                                                    | `character-pack` `character-edit`                                                        |
+| `visit/`          | 訪問。契機・来客・台本・見張り                                                               | `visit-timing` `visit-guest` `visit-script` `visit-script-writer` `visit-watch`                                                                          | `sdk-visit-script` `visit-clock`                                                         |
+| `diary/`          | 日記。`diary` ツールと保存                                                                   | `diary-tool` `diary-writer`                                                                                                                              | `diary` `sdk-diary`                                                                      |
+| `achievement/`    | 成果。`main` の履歴から数える                                                                | `achievement`                                                                                                                                            | `main-history`                                                                           |
+| `usage-review/`   | 見直し。2つのツール・前回の結果・見送り                                                      | `usage-review-tool`                                                                                                                                      | `previous-usage-review` `usage-proposal-dismissal`                                       |
+| `token-usage/`    | トークン消費の記録と集計                                                                     | `token-usage`                                                                                                                                            | `token-usage-log`                                                                        |
+| `context-usage/`  | コンテキストの内訳の記録                                                                     | `context-usage`                                                                                                                                          | `context-usage-log`                                                                      |
+| `host/`           | ホストのポートと Orca の実装、ホストへ渡す前の門番                                           | `host` `tracked-file`                                                                                                                                    | `orca-host`                                                                              |
+| `view-server/`    | ビューサーバ。ポートの決定・http・ws・同梱の外部ライブラリ・ブラウザ側の組み立てと開発サーバ | `port-resolution`                                                                                                                                        | `server` `session-socket` `vendor-asset` `bundle` `ui-dev-server` `source-fingerprint`   |
+| `repository/`     | 作業ディレクトリの git リポジトリを読む。`git` を起こす口・管理下のファイル・タスク一覧      | —                                                                                                                                                        | `git` `repository-file` `task-summary`                                                   |
 
 **どの機能にも属さない共有のもの**は、`server/core/` と `server/adapter/` の**直下**に置く
 （`core/config.ts`、`adapter/tsukumo-home.ts` `bundled-path.ts` `local-time.ts` と
@@ -844,8 +844,8 @@ backdrop のクリックで `onClose` が呼ばれること・中のクリック
 
 ### 起動
 
-1. `cli.ts` が `config.ts` で環境変数を読み、`main.ts` の `run(config)` を呼ぶ
-   （ポート・キャラクター・自動オープン・駆動の種類・新規起動）
+1. `cli.ts` が `config.ts` で環境変数を読み、`main.ts` の `run(config, launch)` を呼ぶ
+   （ポート・キャラクター・自動オープン・駆動の種類・新規起動。`launch` は引数の `--dev`）
 2. `main.ts` が**即時終了する前提**を3つ確かめる — ポート番号として読めるか（`port-resolution.ts`）、
    `bundle.ts` の `readUiBundle` が**組み立て済みの成果物**（`dist/browser/` のスクリプトと CSS の
    1組。束ねるのは事前の `bun run build`）を読めるか（無ければ前提不足で即時終了。ソース
@@ -854,7 +854,7 @@ backdrop のクリックで `onClose` が呼ばれること・中のクリック
 3. `current-character.ts` が `character-pack.ts` で一覧を引き、既定のパック（または指定されたもの・
    覚えていたもの）を初期パックに決める。**以降このパックの持ち回りはここに閉じる**
 4. `view-delivery.ts` が**起動トークン**を1つ作り、`server.ts` を `127.0.0.1` で listen させる
-   （`TSUKUMO_WATCH_UI` のときは `src/browser/` の見張りもここで始める）
+   （`--dev` のときは Vite の開発サーバもここで差し込む。11章「作り直しを押す仕組み」）
 5. `session-start.ts` が `session-manager.ts` にセッションを1つ作る。駆動は `TSUKUMO_DRIVER` が
    `fake` なら fake driver、それ以外は SDK。復元（8章）はここで判定する。起こしたセッションは
    `view-delivery.ts` の `connect` で `/ws` に繋ぐ
@@ -1091,7 +1091,7 @@ Layout に出す。復帰したときにセッションを続きから起こし�
 
 - `protocolVersion` が browser の `PROTOCOL_VERSION` と違えば、browser は会話の画面の代わりに
   「ページを読み込み直してください」を出し、以降の `events` を畳まない（起こし直したプロセスと
-  古いタブの組み合わせで起きる。見張りつきの起動で**画面だけ**組み直されたときの道は11章の
+  古いタブの組み合わせで起きる。開発サーバを差し込んだ起動で**画面だけ**差し替わったときの道は11章の
   指紋の突き合わせで塞いだが、塞ぎ損ねたときは tsukumo を上げ直すまで直らないので、知らせには
   それも書く）。版の合う `hello` がまた届けば戻る
   （`src/browser/stores/session.tsx` の `protocol`）
@@ -1556,7 +1556,7 @@ E2E が判定に使うのは DOM の構造と WebSocket のメッセージの列
   `SIGTERM` を送り、終わるのを待ってから一時のディレクトリを消す（後始末を E2E の側で閉じる。
   広いパターンで止めない）
 - **起こし方**: `TSUKUMO_DRIVER=fake`・`TSUKUMO_VIEW_PORT=0`（空きポート。並べた作業ツリーと
-  ぶつからない）・`TSUKUMO_OPEN_VIEW=0`・`TSUKUMO_WATCH_UI=0`・`TSUKUMO_HOME` は1件ごとの
+  ぶつからない）・`TSUKUMO_OPEN_VIEW=0`・`TSUKUMO_HOME` は1件ごとの
   一時ディレクトリ・**cwd も1件ごとの一時ディレクトリ**（リポジトリで起こすと `develop/task/`
   の実データと git の履歴が画面に入り、日ごとに変わる）・`TZ=Asia/Tokyo`・下の固定の時計。
   **親の環境から `TSUKUMO_` で始まる変数は外してから渡す**（手元で `TSUKUMO_VISIT_QUICK` などを
@@ -1690,12 +1690,12 @@ E2E が通るのは**疑似セッションに書いた並びだけ**で、fake d
 ## 11. ビルドと依存
 
 - **成果物は事前に組み立てて `dist/browser/` に置く**（2026-09-21 決定。それまでは起動のたびに
-  組み立てていた）。作るのは `bun run build`（`scripts/build-ui.ts`）と `bun run dev` の見張りの
-  2つで、**起動（`src/main.ts`）は置いてあるものを読む**。組み立ての子プロセスは起動の
+  組み立てていた）。作るのは `bun run build`（`scripts/build-ui.ts`）だけで、
+  **起動（`src/main.ts`）は置いてあるものを読む**。組み立ての子プロセスは起動の
   経路から消えた（`docs/architecture.md`「ブラウザ側は事前に組み立てて置く」）。**同日のうちに
   追加で、`bun run dev` は起こす前に `bun run build` を1回打つようにした**（`package.json` の
-  `dev` が `bun run build && TSUKUMO_WATCH_UI=1 bun run src/cli.ts` になる。見張りが直すのは
-  保存のたび、この前置きは起動の1回だけで、上の「起動は置いてあるものを読む」は変わらない）
+  `dev` が `bun run build && node src/cli.ts --dev` になる。開発サーバを差し込んでも起動のときに
+  読む対は要り、サーバ側のソースが変わったときに戻る先にもなる）
 - `bun run build` が起こすのは `node node_modules/vite/bin/vite.js build src/browser --config vite.config.ts --outDir dist/browser`
   の1本で、`main.js` と `main.css` の対が置かれる（JSX は `@vitejs/plugin-react` が変換する。
   CSS は `main.tsx` から import で辿れるものが1本にまとまる。名前をハッシュ付きにせず固定する理由と、
@@ -1707,58 +1707,71 @@ E2E が通るのは**疑似セッションに書いた並びだけ**で、fake d
 - **成果物が無ければ起動しない**（起動時の前提不足として終了コード1。理由に `bun run build` を
   添える）。**ソース（`src/browser/` と `src/shared/`）のほうが新しければ、1行知らせてそのまま
   配る** — 2026-09-12 の決定が挙げていた「古い成果物を配る事故」には**黙って配らない**ことで
-  答える（古くても画面は動くので止めない）。**見張りが `src/browser/` しか見ないのと違い、
+  答える（古くても画面は動くので止めない）。**HMR が `src/browser/` にしか当たらないのと違い、
   ここは `src/shared/` も見る**（起動時はプロセスごと入れ替わるので、両側が食い違わない）
 - tsconfig に `"jsx": "react-jsx"` を足す。ブラウザの型は `@types/bun` が持っているのでそのまま
-- **HMR（差分を当てる）は持たない。** 代わりに、**`src/browser/` を見張って組み立て直し、開いている
-  タブに「取り直せ」を押す**（2026-09-16 決定。下の「作り直しを押す仕組み」）。組み立てには Vite を使うが
-  （2026-09-27）、Vite の開発サーバと HMR は使わない
+- **開発中は Vite の開発サーバを差し込み、HMR で差し替える**（2026-09-27 決定。それまでは
+  `src/browser/` を見張って組み立て直し、タブに「取り直せ」を押していた）。下の「作り直しを押す仕組み」
 
-**作り直しを押す仕組み。** `src/server/view-server/adapter/ui-rebuild.ts` が `node:fs` の `watch` で `src/browser/` を**再帰に**見張り、保存が静まって
-から（120ms）`bundle.ts` の `buildUiBundle()` を呼び直す。**出し先は起動が読むのと同じ
-`dist/browser/`** なので、開発中に直したぶんはそのまま次の起動に乗る（`bun run dev` を閉じたあとに
-`bun run build` を打ち直さなくてよい）。組み上がったものは `src/view-delivery.ts` が持ち替え、
-`shared` の `refresh` フレーム（4.4）で開いているタブへ押す。**差分は当てない**（当てた時点で
-HMR そのものになり、規模が跳ねる）。配るのは前と同じくメモリに持った文字列。
+**作り直しを押す仕組み。** `bun run dev`（= `bun run build && node src/cli.ts --dev`）で起こすと、
+`src/server/view-server/adapter/ui-dev-server.ts` が Vite の開発サーバを **middleware mode** で起こし、
+ビューサーバ（`node:http`）に差し込む。設定は組み立てと同じ `vite.config.ts` で、root は `src/browser/`。
 
-**救えるのはブラウザに配る側だけ**で、`src/` を直すたびに上げ直さずに済むわけではない:
+- **配り方は `server.ts` の `ViewUi` の合併型**（`bundle` / `dev`）。`dev` のとき、ページは
+  `<script type="module" src="/main.tsx">` を開発サーバの `transformIndexHtml` に通したもの
+  （HMR の client と React Fast Refresh の前置きが入る）で、**経路の表に無い要求だけ**を開発サーバへ回す。
+  `/rpc`・`/vendor/`・`/character/`・`/prompt-image/` の経路と守り方は変わらない。`/assets/` の対は
+  `dev` のあいだ 404
+- **HMR の WebSocket は `/vite-hmr`**（サブプロトコル `vite-hmr`）で、ページと同じオリジンに繋ぐ。
+  `/ws` の受け口（`session-socket.ts`）は合わない upgrade に 403 を書いて閉じるので、
+  **開発サーバの `ownsUpgrade` が真の upgrade は触らずに譲る**（`yieldsUpgrade`）。譲る条件は Vite が
+  受ける条件（経路とサブプロトコル）と同じにしてあり、どちらも受けない upgrade は残らない
+- **本番（`tsukumo`・`bun run start`）では Vite を読み込まない。** `vite` は `startUiDevServer` の中で
+  動的に import するだけで、呼ぶのは `--dev` のときだけ
+- Vite の JS API は同じプロセスの `process.env.NODE_ENV` を `development` に書き換える。claude の
+  子プロセスへ渡す環境（`inheritedEnv`）は `src/cli.ts` が**起動時の写し**を `readConfig` に渡して作るので、
+  そちらには混ざらない
+- 依存の事前の束ね（`optimizeDeps`）の走査は `oxc` の指定を読まないので、`vite.config.ts` の
+  `optimizeDeps.rolldownOptions.transform` にも型だけの import を消す指定を置く（無いと `hast` を
+  依存として探して走査ごと諦める）
+- **開発サーバは `dist/browser/` を書き換えない。** 開発中に直したぶんを次の `tsukumo` の起動に
+  乗せるには `bun run build` が要る（打たなければ、起動が「ソースのほうが新しい」と1行知らせる）
 
-| 直した場所                       | どうなるか                                                                                                       |
-| -------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| `src/browser/**/*.css`           | ページを読み込み直す（下の注記）。状態は繋ぎ直しの `hello` で戻る                                                |
-| `src/browser/` の `.ts` / `.tsx` | ページを読み込み直す（`refresh` の `page`）。状態は繋ぎ直しの `hello` で戻る                                     |
-| `src/shared/`                    | **プロセスの上げ直しが要る**（下）。上げ直すまで画面の組み直しも止まる                                           |
-| `src/server/core/` `src/` 直下   | **プロセスの上げ直しが要る**。サーバ側のコードは動いているプロセスの中にある。上げ直すまで画面の組み直しも止まる |
+**当たるのはブラウザに配る側だけ**で、`src/` を直すたびに上げ直さずに済むわけではない:
 
-**CSS だけを取り直す道（`refresh` の `style`）は使わない**（2026-09-20）。CSS Modules の class 名は
-ハッシュ化されて JS 側の対応表にも焼かれるので、片方だけ新しくすると綴りが食い違って崩れた画面が
-残る。`shared` には `style` が残っているが、押すのは常に `page`。
+| 直した場所                        | どうなるか                                                                                                                                           |
+| --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/browser/` の部品（`.tsx`）   | 差分が当たり、部品の状態（入力欄の書きかけ・選んでいるターン・開いている画面）を保つ（React Fast Refresh）                                           |
+| `src/browser/**/*.module.css`     | 差分が当たる（class 名は開発サーバの中で JS と CSS が揃う）                                                                                          |
+| `src/browser/` の部品以外の `.ts` | Vite が当てられないと判断すればページごと読み込み直す。状態は繋ぎ直しの `hello` で戻る                                                               |
+| `src/shared/`                     | **プロセスの上げ直しが要る**（下）。HMR を止めて起動のときの対へ戻る                                                                                 |
+| `src/server/core/` `src/` 直下    | **プロセスの上げ直しが要る**。サーバ側のコードは動いているプロセスの中にある。そのあと `src/browser/` か `src/shared/` を保存したときに HMR が止まる |
 
-`src/shared/` を見張らないのは、**畳み込み（`session-state.ts`）がサーバ側でも回っている**から。
-ブラウザ側だけ新しくすると、新旧が食い違ったまま動く状態ができる。片方だけ救うより
-「`src/browser/` だけが救える」という1本の線のほうが信用できる。
+**サーバ側のソースが起動時から変わっていたら、HMR を止める**（2026-09-23 決定の見張りの決まりを
+2026-09-27 に開発サーバへ移した）。tsukumo の中の Claude が同じ作業ツリーで `git merge main` を打つと
+`src/browser/` と `src/shared/` が一度に変わり、新しい契約の画面が古いサーバと話すことになる
+（版が合わない知らせが出て、読み込み直しても戻れない）。`src/shared/` は**畳み込み（`session-state.ts`）が
+サーバ側でも回っている**ので、ブラウザ側だけ新しくすると新旧が食い違ったまま動く。そこで開発サーバの
+始めに**サーバ側のソース（`src/` の下で `browser/` 以外）の中身の指紋**を取り、保存のたびに
+（開発サーバのプラグインの `hotUpdate`）取り直して比べる（`src/server/view-server/adapter/source-fingerprint.ts`）。
+違えば何も当てず、**配り方を起動のときに読んだ対（`bundle`）へ戻して**タブに `refresh` の `page` を押し、
+理由の1行をペインに出す。以後は上げ直すまで何も当てない。**時刻ではなく中身で比べる**ので、同じ中身へ
+書き戻されただけなら止まらない。指紋が取れなかったときは止める根拠が無いので当てる。サーバ側だけを
+直して `src/browser/` と `src/shared/` を保存しないあいだは比べる契機が無いが、そのあいだは画面も
+変わらないので食い違わない。
 
-**サーバ側のソースが起動時から変わっていたら、組み直さない**（2026-09-23 決定）。見張るのは
-`src/browser/` だけでも、**組み立ては import で辿れる `src/shared/` も束ねる**。tsukumo の中の
-Claude が同じ作業ツリーで `git merge main` を打つと `src/browser/` と `src/shared/` が一度に
-変わり、見張りが新しい契約の画面を組んで古いサーバへ配っていた（版が合わない知らせが出て、
-読み込み直しても同じ画面が配られるので戻れなかった）。そこで見張りの始めに**サーバ側のソース
-（`src/` の下で `browser/` 以外）の中身の指紋**を取り、組み直す前に取り直して比べる
-（`src/server/view-server/adapter/source-fingerprint.ts`）。違えば組み立てず、前の版を配り続けて理由の1行を
-ペインに出す（組み立てに失敗したときと同じ扱い）。**時刻ではなく中身で比べる**ので、同じ中身へ
-書き戻されただけなら組み直しは止まらない。指紋が取れなかったときは止める根拠が無いので組み直す。
+**開発サーバを差し込むのは `--dev` のときだけ**（既定は差し込まない）。`tsukumo` は `bun link` で
+リポジトリを指していて**普段使いと開発が同じ経路**なので、常に入れると仕事中の保存で画面が
+差し替わりうる。tsukumo 自身を直しながら動かすときだけ **`bun run dev`** で入れる。
+`bun run start` は差し込まないままにしてある（普段使いと開発を打ち分けで分ける）。
 
-**見張るのは `TSUKUMO_WATCH_UI=1` のときだけ**（既定は見張らない）。`tsukumo` は `bun link` で
-リポジトリを指していて**普段使いと開発が同じ経路**なので、常に入れると仕事中の保存でページが
-読み込み直されうる（入力欄の書きかけが消える）。tsukumo 自身を直しながら動かすときだけ
-**`bun run dev`**（= `bun run build && TSUKUMO_WATCH_UI=1 bun run src/cli.ts`）で入れる。
-`bun run start` は見張らないままにしてある（普段使いと開発を打ち分けで分ける）。
+**書きかけを保存して組み立てられないときは、Vite の知らせがページに重なって出る**（Vite の
+エラーの重ね表示と、ターミナルの1行）。直して保存し直せば消える。`vite build` と同じく開発サーバも
+**型を見ない**ので、型エラーだけのコードはそのまま当たる。
 
-**組み立て直しが失敗したときは、前の版を配り続ける。** `onRebuilt` を呼ばず `refresh` も押さない
-ので、ブラウザは何も起きていないように見える。理由の1行だけがペインに出る（常駐プロセスは
-描画1回の失敗で落ちない、の側）。なお `vite build` はトランスパイルだけで**型を見ない**ので、
-型エラーだけのコードは組み上がってそのまま配られる。組み立てが失敗するのは構文が壊れているとき・
-import 先が解けないとき（＝書きかけを保存したとき）。
+**`refresh` フレーム**（4.4）はいま、HMR を止めて起動のときの対へ戻すときの `page` にだけ使う。
+`style` は `shared` に残っているが押さない（CSS Modules の class 名は JS 側の対応表にも焼かれるので、
+組み立て済みの対の片方だけを新しくすると綴りが食い違う）。
 
 **足す依存**（**2026-09-13 に「移行しようか」の
 決定で一括して承認済み**。ここに無いものを足すときは改めて承認を得る）:

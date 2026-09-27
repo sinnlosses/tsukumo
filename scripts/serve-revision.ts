@@ -197,7 +197,6 @@ function spawnTsukumo(revision: Revision, options: Options): ChildProcess {
       TSUKUMO_VIEW_PORT: String(options.port),
       TSUKUMO_HOME: revision.homeDir,
       TSUKUMO_OPEN_VIEW: "0",
-      TSUKUMO_WATCH_UI: "0",
     },
     stdio: ["ignore", "pipe", "inherit"],
   })

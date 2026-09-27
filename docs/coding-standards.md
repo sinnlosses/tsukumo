@@ -875,7 +875,8 @@ E2E が見るのは `data-*`・`aria-*`・文字と要素の入れ子までで�
 
 組み立ては 2026-09-27 に `bun build` から `vite build` へ移した。`src/server/view-server/adapter/bundle.ts` は
 `node` で vite の CLI を起こすので、組み立ての経路にも `bun` は残っていない。組み立てが走るのは
-`bun run build`（と `bun run dev` の見張り）のときだけで、起動の経路には無い。
+`bun run build`（`bun run dev` も起こす前に打つ）のときだけで、起動の経路には無い。開発中の
+差し替えは Vite の開発サーバが同じプロセスの中で受け持つ（`docs/design.md` 11章「作り直しを押す仕組み」）。
 
 **唯一の例外は `bun:test`**（テストランナーそのものなので、移すときは差し替えるしかない）。
 性能上どうしても `Bun.*` が必要になったら、その理由をコメントに残したうえで使う。

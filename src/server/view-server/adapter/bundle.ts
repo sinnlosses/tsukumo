@@ -1,5 +1,5 @@
 // ブラウザ側スクリプト（`src/browser/`）と CSS を `vite build` で1本ずつにまとめる。作る口と
-// 読む口を分けてある: 作るのは `bun run build`（と `bun run dev` の見張り）だけで、
+// 読む口を分けてある: 作るのは `bun run build` だけで、
 // 起動は置いてある成果物を読むだけ（`readUiBundle`）。
 //
 // スクリプトと CSS は1回の `vite build` から出る対。CSS Modules（`*.module.css`）は
@@ -12,8 +12,8 @@
 // 古くても画面は動くので止めはしない。
 //
 // `vite` は JS API ではなく CLI を `node` の子プロセスで起こす。
-// JS API は同じプロセスの `process.env.NODE_ENV` を書き換えるので、見張りつきで常駐する
-// サーバの中では呼ばない。
+// 組み立ての JS API は同じプロセスの `process.env.NODE_ENV` を `production` に書き換えるので、
+// 常駐するサーバの中では呼ばない。
 // 設定はリポジトリ直下の Vite の設定ファイルで、入口の置き場と出し先はここが引数で渡す。
 //
 // 型検査はここではしない（`vite build` はトランスパイルだけで型を見ない）。型は
@@ -27,7 +27,7 @@ import { stripVTControlCharacters } from "node:util"
 import { bundledFilePath } from "../../adapter/bundled-path.ts"
 
 /** Vite の設定ファイル。入口のファイル名と、出す2つのファイル名はここに書いてある。 */
-const VITE_CONFIG_RELATIVE_PATH: readonly string[] = ["vite.config.ts"]
+export const VITE_CONFIG_RELATIVE_PATH: readonly string[] = ["vite.config.ts"]
 
 /** `vite` の CLI の実体（`node_modules/.bin/vite` が指す先）。 */
 const VITE_CLI_RELATIVE_PATH: readonly string[] = ["node_modules", "vite", "bin", "vite.js"]
@@ -41,15 +41,13 @@ const STYLE_SHEET_FILE_NAME = "main.css"
 
 /**
  * ブラウザ側のソースの置き場。組み立ての入口であり、新しさを比べる相手でもあるので
- * ここが持つ（見張るアダプタの見張り先も同じ1つ）。
+ * ここが持つ（開発サーバの root も同じ1つ）。
  */
 export const UI_SOURCE_DIR_RELATIVE_PATH: readonly string[] = ["src", "browser"]
 
 /**
  * 成果物の新しさを比べる相手。束ねに入るソースの置き場で、`src/browser/` は `src/shared/` を
- * import している。見張り（見張るアダプタ）が `src/browser/` しか見ないのとは
- * 別の話で、あちらは動作中にサーバ側とブラウザ側が食い違うのを避けるため。起動時は
- * プロセスごと入れ替わるので、`src/shared/` も見てよい。
+ * import している。
  */
 const BUNDLED_SOURCE_DIR_RELATIVE_PATHS: readonly (readonly string[])[] = [
   UI_SOURCE_DIR_RELATIVE_PATH,
@@ -126,10 +124,6 @@ export async function readUiBundle(): Promise<StoredBundleResult> {
  * ブラウザ側（`src/browser/`）を組み立てて `dist/browser/` に置き、置いたものを読んで返す。
  * JSX は `@vitejs/plugin-react` が変換し、CSS Modules は `vite build` が class 名を
  * ハッシュ化して JS 側の対応表に入れる（`docs/design.md`「ビルドと依存」）。
- *
- * 呼ぶのは `bun run build` と `bun run dev` の見張り
- * （見張るアダプタ）の2つだけ。見張りも同じ場所へ出すので、
- * 開発中に直したぶんはそのまま次の起動に乗る。
  */
 export function buildUiBundle(): Promise<BundleResult> {
   return bundleWithVite(bundledFilePath(...UI_SOURCE_DIR_RELATIVE_PATH), builtUiDir())

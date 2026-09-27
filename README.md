@@ -112,9 +112,10 @@ export PATH="$HOME/.bun/bin:$PATH"
 `bun link` を消すときは、**このリポジトリの直下で** `bun unlink` を実行します。
 
 リポジトリ直下で開発しながら動かす場合は `bun run start` が `tsukumo` と同じ意味になります。
-`bun run dev` は起動の前に `bun run build` で1回組み立ててから `start` と同じものを起こしつつ
-`src/browser/` を見張り、保存のたびに組み立て直して開いているタブへ反映します（`src/server/core/` と
-`src/shared/` を直したときは上げ直しが要ります）。
+`bun run dev` は起動の前に `bun run build` で1回組み立ててから、`start` と同じものに Vite の
+開発サーバを差し込んで起こします。`src/browser/` を保存すると、開いているタブへ画面の状態を保ったまま
+差し替わります（HMR。`src/server/core/` と `src/shared/` を直したときは上げ直しが要ります。開発中に直した
+ぶんを `tsukumo` に乗せるには `bun run build` を打ちます）。
 
 ## 仕組み
 
@@ -207,7 +208,6 @@ bun run scripts/open-views.ts http://127.0.0.1:7327
 | `TSUKUMO_DRIVER`      |      | `sdk`                              | セッションの駆動。`fake` を渡すと本物の `claude` を起こさず、疑似セッションどおりにイベントを流す（目視確認・自動テスト用）                                                         |
 | `TSUKUMO_FAKE_SCENE`  |      | 流さない                           | `fake` のとき起こした直後に流す疑似セッションの場面の名前。依頼を送らずに特定の画面を出すための口で、状態のカタログを撮るときに使う                                                 |
 | `TSUKUMO_NEW_SESSION` |      | 復元する                           | `1` を渡すと前回の続きから復元せず、新規にセッションを起こす                                                                                                                        |
-| `TSUKUMO_WATCH_UI`    |      | 見張らない                         | `1` を渡すと `src/browser/` を見張り、保存のたびに組み立て直す（`bun run dev` が設定する）                                                                                          |
 | `TSUKUMO_HOME`        |      | `~/.tsukumo`                       | tsukumo が覚えたキャラクター・雑談のアーカイブ・トークン記録・作ったパックを置くホーム。**並行して2つを動かすときだけ** `TSUKUMO_VIEW_PORT` と一緒に分けて渡す。相対パスは cwd 相対 |
 
 ### キャラクターを差し替える
@@ -279,7 +279,7 @@ bun run build                 # ブラウザ側（src/browser/）を dist/browse
 bun run start                 # セッションを起こし、ページのタブを Orca 内に開く（`tsukumo` コマンドと同じ。
                               #   TSUKUMO_OPEN_VIEW=0 で自動オープンを止める。本物の claude を子プロセスで起こす。
                               #   成果物が無ければ前提不足で止まり、ソースのほうが新しければ1行知らせて古いまま配る）
-bun run dev                   # bun run build のあと、start と同じ経路を src/browser/ の見張りつきで起こす
+bun run dev                   # bun run build のあと、start と同じ経路を Vite の開発サーバつき（--dev）で起こす
                               #   （src/server/core/ と src/shared/ を直したときは上げ直しが要る。docs/design.md 11章）
 bun run scripts/open-views.ts <URL>  # プロセスは動いたままタブだけ閉じたときに開き直す
 bun run grid                  # 待ち受けていてタブもある部屋を iframe の格子に並べて Orca に開く。格子のタブが

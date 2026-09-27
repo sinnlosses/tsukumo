@@ -4,9 +4,9 @@ import { createServer as createNetServer, type Server as NetServer } from "node:
 import { createRpcRouter } from "../../../../src/router.ts"
 import {
   startViewServer,
-  type ViewAssets,
   type ViewServer,
   type ViewServerOptions,
+  type ViewUi,
 } from "../../../../src/server/view-server/adapter/server.ts"
 import {
   DEFAULT_VIEW_PORT,
@@ -20,11 +20,11 @@ import { UNAVAILABLE_CONTEXT_USAGE } from "../../../../src/shared/context-usage.
 import { EMPTY_TOKEN_USAGE_SUMMARY } from "../../../../src/shared/token-usage-summary.ts"
 
 /** 配るものの中身はここでは見ない（確かめるのはどのポートで listen したかだけ）。 */
-const emptyViewAssets: ViewAssets = { uiScript: () => "", styleSheet: () => "" }
+const emptyViewUi: ViewUi = { kind: "bundle", bundle: { uiScript: "", styleSheet: "" } }
 
 /** 同じく、配るものの中身は見ない（素材もファイル一覧も集計も空で足りる）。 */
 const emptyViewServerOptions: ViewServerOptions = {
-  assets: emptyViewAssets,
+  ui: () => emptyViewUi,
   serveCharacterAsset: () => undefined,
   findPromptImage: () => undefined,
   rpcRouter: createRpcRouter({

@@ -78,7 +78,10 @@ async function startView(
   rpcPorts: Partial<RpcRouterPorts> = {},
 ): Promise<ViewServer> {
   const server = await startViewServer(0, {
-    assets: { uiScript: () => TEST_UI_SCRIPT, styleSheet: () => TEST_STYLE_SHEET },
+    ui: () => ({
+      kind: "bundle",
+      bundle: { uiScript: TEST_UI_SCRIPT, styleSheet: TEST_STYLE_SHEET },
+    }),
     serveCharacterAsset,
     findPromptImage,
     rpcRouter: createRpcRouter({ ...EMPTY_RPC_PORTS, ...rpcPorts }),
@@ -183,6 +186,43 @@ describe("startViewServer", () => {
     expect(response.status).toBe(200)
     expect(response.headers.get("content-type")).toContain("text/css")
     expect(await response.text()).toBe(TEST_STYLE_SHEET)
+  })
+
+  it("開発サーバを差し込んだときは、ページを開発サーバに通し、経路に無い要求をそちらへ回す", async () => {
+    const server = await startViewServer(0, {
+      ui: () => ({
+        kind: "dev",
+        devServer: {
+          entryScriptPath: "/main.tsx",
+          transformPage: (_url, html) =>
+            Promise.resolve(html.replace("</head>", "<!-- hmr -->\n</head>")),
+          handle: (request, response, next) => {
+            if (request.url !== "/main.tsx") {
+              next()
+              return
+            }
+            response.writeHead(200, { "content-type": "text/javascript" })
+            response.end("/* 開発サーバの入口 */")
+          },
+          ownsUpgrade: () => false,
+        },
+      }),
+      serveCharacterAsset: noCharacterAsset,
+      findPromptImage: noPromptImage,
+      rpcRouter: createRpcRouter(EMPTY_RPC_PORTS),
+      token: TOKEN,
+    })
+    runningView = server
+    const origin = viewOrigin(server)
+
+    const page = await (await fetch(server.layoutUrl)).text()
+    expect(page).toContain('<script type="module" src="/main.tsx"></script>')
+    expect(page).toContain("<!-- hmr -->")
+    expect(page).not.toContain("/assets/style.css")
+
+    expect(await (await fetch(`${origin}/main.tsx`)).text()).toBe("/* 開発サーバの入口 */")
+    expect((await fetch(`${origin}/assets/ui.js`)).status).toBe(404)
+    expect((await fetch(`${origin}/unknown`)).status).toBe(404)
   })
 
   it("外部ライブラリを配る（allowlist に載っている名前だけ）", async () => {

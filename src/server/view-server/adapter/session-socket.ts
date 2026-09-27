@@ -51,6 +51,11 @@ export type SessionSocketOptions = {
   readonly socketRouter: SocketRouter
   /** 手続きの context に載せるセッションの口（`session-manager` の `commandSession`）。 */
   readonly commandSession: CommandSession
+  /**
+   * 同じサーバに upgrade の受け口を足したほかの持ち主が受ける upgrade か。そうならここは
+   * 断らずに触らない（断りの 403 を書くと、あちらが繋いだ接続を壊す）。
+   */
+  readonly yieldsUpgrade: (request: IncomingMessage) => boolean
 }
 
 /** `/ws` に載せるルータ（コマンドと押し出しの購読）。 */
@@ -73,6 +78,9 @@ export function attachSessionSocket(options: SessionSocketOptions): SessionSocke
   const procedures = new RPCHandler(options.socketRouter)
 
   const onUpgrade = (request: IncomingMessage, socket: Duplex, head: Buffer): void => {
+    if (options.yieldsUpgrade(request)) {
+      return
+    }
     if (!isAllowedUpgrade(request, options)) {
       // 理由は返さない（トークンの有無を探る手掛かりを増やさない）。
       socket.write("HTTP/1.1 403 Forbidden\r\nConnection: close\r\n\r\n")

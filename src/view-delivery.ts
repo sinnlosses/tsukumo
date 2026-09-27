@@ -1,6 +1,6 @@
-// ビューの配信。組み立てたブラウザ側（スクリプトと CSS）と、開いているタブを持ち、
-// `127.0.0.1` のサーバ・`/ws`・`src/browser/` の見張りを1つに束ねる。可変なのは「いま配っている
-// 組み立て」「開いているタブ」「コンテキストの内訳の読み口」の3つで、どれもこのファイルの外へ
+// ビューの配信。ブラウザ側の配り方（組み立て済みの対か、Vite の開発サーバか）と、開いているタブを持ち、
+// `127.0.0.1` のサーバ・`/ws`・開発サーバを1つに束ねる。可変なのは「いまの配り方」
+// 「開いているタブ」「コンテキストの内訳の読み口」の3つで、どれもこのファイルの外へ
 // 出ない。
 //
 // ここは配線層（`src/` 直下。docs/design.md 2章「層と依存の向き」）。
@@ -23,9 +23,13 @@ import {
   type TokenUsageLog,
 } from "./server/token-usage/core/token-usage.ts"
 import { type UiBundle } from "./server/view-server/adapter/bundle.ts"
-import { createStartupToken, startViewServer } from "./server/view-server/adapter/server.ts"
+import {
+  createStartupToken,
+  startViewServer,
+  type ViewUi,
+} from "./server/view-server/adapter/server.ts"
 import { attachSessionSocket } from "./server/view-server/adapter/session-socket.ts"
-import { watchUiSource } from "./server/view-server/adapter/ui-rebuild.ts"
+import { startUiDevServer } from "./server/view-server/adapter/ui-dev-server.ts"
 import {
   type ResolvedViewPort,
   startOnResolvedPort,
@@ -39,8 +43,8 @@ export type ViewDeliveryOptions = {
   /** どのポートで試すか（決めるのは `src/server/view-server/core/port-resolution.ts`）。 */
   readonly portResolution: ResolvedViewPort
   /**
-   * 起動のときに読んだブラウザ側の1組（`dist/browser/` に置いてあるもの）。見張りが組み立て
-   * 直すとここで差し替わるので、持ち主はサーバではなくこちら側。
+   * 起動のときに読んだブラウザ側の1組（`dist/browser/` に置いてあるもの）。開発サーバを
+   * 起こしたときも、サーバ側のソースが変わったらこれへ戻る。
    */
   readonly bundle: UiBundle
   /** `/character/<pack>/<file>` に配る1件の出どころ。 */
@@ -55,11 +59,8 @@ export type ViewDeliveryOptions = {
    * `src/main.ts`）。ここは引くだけで、置くのと捨てるのはセッションの側。
    */
   readonly promptImageShelf: PromptImageShelf
-  /**
-   * `src/browser/` を見張り、保存のたびに組み立て直して開いているタブへ取り直しを押すか
-   * （`TSUKUMO_WATCH_UI`）。
-   */
-  readonly watchSource: boolean
+  /** Vite の開発サーバを差し込み、`src/browser/` の保存を HMR で当てるか（`--dev`）。 */
+  readonly devServer: boolean
 }
 
 /** 配り始めた結果。失敗は起動時の前提不足なので、理由だけを返して呼び出し側が即時終了する。 */
@@ -86,14 +87,14 @@ export async function startViewDelivery(options: ViewDeliveryOptions): Promise<V
   // 起動トークンはこのプロセスのメモリにだけ置く（ディスクに書かない。docs/design.md 9章）。
   // ビューサーバ（`/prompt-image`・`/rpc`）と WebSocket が同じ1つを見る。
   const token = createStartupToken()
-  // `TSUKUMO_WATCH_UI` のときだけ組み立て直したものへ丸ごと差し替わるので、サーバには
-  // 取り出し口だけを渡す。
-  let assets = options.bundle
+  // 開発サーバを起こしたときと、そこから組み立て済みの対へ戻ったときに替わるので、
+  // サーバには取り出し口だけを渡す。
+  let ui: ViewUi = { kind: "bundle", bundle: options.bundle }
   // 開いているタブ。セッションのイベントとは別に押したいもの（いまは `refresh` だけ）が
   // あるので、購読をセッションに渡すついでにここでも持つ。
   const viewers = new Set<(frame: ServerFrame) => void>()
   // コンテキストの内訳の読み口。セッションは配り始めたあとに繋がるので、繋がるまでは
-  // 「取れない」を返すものを置いておき、`connect` で本物に差し替える（`assets` と同じ持ち方）。
+  // 「取れない」を返すものを置いておき、`connect` で本物に差し替える（`ui` と同じ持ち方）。
   let readContextUsage: () => Promise<ContextUsageReport> = () =>
     Promise.resolve(UNAVAILABLE_CONTEXT_USAGE)
   // 成果の画面（1日ぶん・暦）が今日以外の日の数を覚える入れ物。両方の口が同じ1つを見る
@@ -141,7 +142,7 @@ export async function startViewDelivery(options: ViewDeliveryOptions): Promise<V
   // 試してそのまま失敗する。
   const started = await startOnResolvedPort(options.portResolution, (port) =>
     startViewServer(port, {
-      assets: { uiScript: () => assets.uiScript, styleSheet: () => assets.styleSheet },
+      ui: () => ui,
       serveCharacterAsset: (location) => options.character.serveAsset(location),
       findPromptImage: (id) => options.promptImageShelf.find(id),
       rpcRouter,
@@ -153,24 +154,22 @@ export async function startViewDelivery(options: ViewDeliveryOptions): Promise<V
   }
   const server = started.server
 
-  if (options.watchSource) {
-    watchUiSource({
-      // CSS だけを取り直させない（`refresh` の `style`）。CSS Modules の class 名は
-      // ハッシュ化されて JS 側の対応表にも焼かれるので、片方だけ新しくすると綴りが食い違って
-      // 崩れた画面が残る。ページごと読み込み直す（選択も書きかけも `hello` で戻る）。
-      onRebuilt: (bundle) => {
-        assets = bundle
-        pushRefresh(viewers, "page")
-      },
-      // 組み立て直せなくても前の版が配られたままなので、知らせるだけで続ける。
-      // 理由（`vite build` の出力）はターミナルにだけ出す — ブラウザの画面には出さない。
-      onFailure: (failure) => {
-        process.stderr.write(`tsukumo: ${failure.reason}\n`)
-        if (failure.detail !== undefined && failure.detail !== "") {
-          process.stderr.write(`${failure.detail}\n`)
-        }
-      },
-    })
+  const devServer = options.devServer
+    ? await startUiDevServer({
+        httpServer: server.httpServer,
+        // 差分を当て続けると新しいブラウザ側が古いサーバと話すことになるので、起動のときの対へ
+        // 戻してページごと読み込み直させる。上げ直すまでは保存しても何も当たらない。
+        onServerSourceChanged: () => {
+          ui = { kind: "bundle", bundle: options.bundle }
+          process.stderr.write(
+            "tsukumo: サーバ側のソース（src/ の browser 以外）が起動時から変わったので、HMR を止めて起動のときの画面へ戻す（tsukumo を上げ直すまで反映しない）\n",
+          )
+          pushRefresh(viewers, "page")
+        },
+      })
+    : undefined
+  if (devServer !== undefined) {
+    ui = { kind: "dev", devServer }
   }
 
   return {
@@ -193,6 +192,7 @@ export async function startViewDelivery(options: ViewDeliveryOptions): Promise<V
         },
         socketRouter,
         commandSession: manager.commandSession,
+        yieldsUpgrade: (request) => devServer?.ownsUpgrade(request) ?? false,
       })
     },
   }

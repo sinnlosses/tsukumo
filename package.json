@@ -9,7 +9,7 @@
   "type": "module",
   "scripts": {
     "start": "node src/cli.ts",
-    "dev": "bun run build && TSUKUMO_WATCH_UI=1 node src/cli.ts",
+    "dev": "bun run build && node src/cli.ts --dev",
     "build": "bun run css-types && node scripts/build-ui.ts",
     "css-types": "hcm 'src/**/*.module.css' --outDir dist/css-module-type --logLevel silent",
     "grid": "node scripts/open-room-grid.ts",

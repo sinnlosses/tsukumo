@@ -15,6 +15,11 @@ const USAGE = `tsukumo — キャラクターと一緒に仕事をするため�
 使い方:
   tsukumo   （プロジェクトのディレクトリで打つ。開発中はリポジトリ直下の bun run start でも同じ）
 
+引数:
+  --dev     Vite の開発サーバを差し込み、src/browser/ の保存を画面の状態を保ったまま当てる
+            （tsukumo 自身を直しながら動かすとき用。bun run dev が渡す。src/ の browser 以外を
+            直したときは上げ直しが要る）
+
 起動すると Claude Code のセッションが立ち上がり、ビューの配信とレイアウトページのタブを
 開くところまで1コマンドで進む。**前に同じディレクトリで同じキャラクターと話していたセッションが
 あれば、その続きから始まる**（docs/requirements.md 4.8。キャラクターごとに別のセッションを持つ。
@@ -41,9 +46,6 @@ const USAGE = `tsukumo — キャラクターと一緒に仕事をするため�
                       scripts/capture-catalog.ts が使う）
   TSUKUMO_NEW_SESSION 1 を渡すと前の続きから始めず、新しいセッションとして起こす
                       （この起動の間は、切り替えた先のキャラクターも新規から始まる）
-  TSUKUMO_WATCH_UI    1 を渡すと src/browser/ を見張り、保存のたびに組み立て直して開いているタブへ
-                      取り直しを押す（tsukumo 自身を直しながら動かすとき用。既定は見張らない。
-                      src/server/core/ と src/shared/ を直したときは上げ直しが要る）
   TSUKUMO_HOME        tsukumo が自分の持ち物を置くホーム（既定 ~/.tsukumo。覚えたキャラクター・
                       雑談の要約とアーカイブ・トークンの記録・画面から作ったパックがこの下に並ぶ）。
                       **2つを並行して動かすときだけ**、TSUKUMO_VIEW_PORT と一緒に分けて渡す。
@@ -61,7 +63,9 @@ async function main(args: readonly string[]): Promise<number> {
   }
 
   // 環境変数を読むのはここだけ（解釈は src/server/core/config.ts）。
-  return run(readConfig(process.env))
+  // 写しを渡すのは、Vite の開発サーバ（`startUiDevServer`）があとで `process.env.NODE_ENV` を
+  // 書き換えても、claude の子プロセスへ渡す環境に混ざらないようにするため。
+  return run(readConfig({ ...process.env }), { devServer: args.includes("--dev") })
 }
 
 const exitCode = await main(process.argv.slice(2))

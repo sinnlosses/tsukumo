@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from "bun:test"
-import { createServer, request as httpRequest, type Server } from "node:http"
+import { createServer, request as httpRequest, type IncomingMessage, type Server } from "node:http"
+import { type Duplex } from "node:stream"
 
 import { createORPCClient, ORPCError } from "@orpc/client"
 import { RPCLink } from "@orpc/client/websocket"
@@ -25,6 +26,9 @@ import { INITIAL_SESSION_STATE } from "../../../../src/shared/session-state.ts"
 
 // 会話は流さない（フレームの中身は初期状態と架空のセリフだけ）。
 const TOKEN = createStartupToken()
+
+/** ほかの持ち主が受ける upgrade の経路（この経路だけを譲る）。 */
+const YIELDED_UPGRADE_PATH = "/other-socket"
 
 let running: { readonly server: Server; readonly socket: SessionSocket } | undefined = undefined
 
@@ -102,6 +106,7 @@ async function start(openFileResult = true): Promise<Started> {
       },
     }),
     commandSession: IDLE_WORK_SESSION,
+    yieldsUpgrade: (request) => request.url === YIELDED_UPGRADE_PATH,
   })
 
   running = { server, socket }
@@ -230,6 +235,17 @@ describe("attachSessionSocket", () => {
 
     expect(await upgradeStatus(started.origin, SESSION_SOCKET_PATH, {})).toBe(403)
     expect(await upgradeStatus(started.origin, `${SESSION_SOCKET_PATH}?t=ちがう`, {})).toBe(403)
+  })
+
+  it("ほかの持ち主が受ける upgrade には触らない", async () => {
+    const started = await start()
+    running?.server.on("upgrade", (request: IncomingMessage, socket: Duplex) => {
+      if (request.url === YIELDED_UPGRADE_PATH) {
+        socket.end("HTTP/1.1 418 I'm a teapot\r\nConnection: close\r\n\r\n")
+      }
+    })
+
+    expect(await upgradeStatus(started.origin, YIELDED_UPGRADE_PATH, {})).toBe(418)
   })
 
   it("Origin が自分と違う接続は 403 で弾く（Origin が無ければ通す）", async () => {

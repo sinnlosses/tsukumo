@@ -690,7 +690,6 @@ function spawnTsukumo(scene: string, home: string | undefined): ChildProcess {
       TSUKUMO_FAKE_SCENE: scene,
       TSUKUMO_VIEW_PORT: "0",
       TSUKUMO_OPEN_VIEW: "0",
-      TSUKUMO_WATCH_UI: "0",
     },
     stdio: ["ignore", "pipe", "inherit"],
   })

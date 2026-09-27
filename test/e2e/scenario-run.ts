@@ -244,7 +244,6 @@ function spawnTsukumo(scene: string, home: string, cwd: string): ChildProcess {
       ...(scene === "none" ? {} : { TSUKUMO_FAKE_SCENE: scene }),
       TSUKUMO_VIEW_PORT: "0",
       TSUKUMO_OPEN_VIEW: "0",
-      TSUKUMO_WATCH_UI: "0",
       TSUKUMO_HOME: home,
       TSUKUMO_FIXED_CLOCK: FIXED_INSTANT,
       TZ: TIME_ZONE,
