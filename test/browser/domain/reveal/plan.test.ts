@@ -1,4 +1,4 @@
-import { describe, expect, it } from "bun:test"
+import { describe, expect, it } from "vitest"
 
 import { revealTimingOf, type RevealTiming } from "../../../../src/browser/domain/reveal-speed.ts"
 import {

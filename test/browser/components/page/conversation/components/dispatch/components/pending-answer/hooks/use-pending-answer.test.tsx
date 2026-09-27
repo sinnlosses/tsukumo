@@ -1,7 +1,6 @@
-import { afterEach, describe, expect, it } from "bun:test"
-
 import { cleanup, renderHook } from "@testing-library/react"
 import { type ReactElement, type ReactNode } from "react"
+import { afterEach, describe, expect, it } from "vitest"
 
 import { usePendingAnswer } from "../../../../../../../../../../src/browser/components/page/conversation/components/dispatch/components/pending-answer/hooks/use-pending-answer.ts"
 import { SessionStoreContext } from "../../../../../../../../../../src/browser/stores/session.tsx"

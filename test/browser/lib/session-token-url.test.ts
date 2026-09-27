@@ -1,4 +1,4 @@
-import { describe, expect, it } from "bun:test"
+import { describe, expect, it } from "vitest"
 
 import { sessionTokenUrl } from "../../../src/browser/lib/session-token-url.ts"
 import { setPageUrl } from "../../dom-environment.ts"

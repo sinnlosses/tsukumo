@@ -1,6 +1,5 @@
-import { afterEach, describe, expect, it } from "bun:test"
-
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
+import { afterEach, describe, expect, it } from "vitest"
 
 import { Select } from "../../../../../src/browser/components/ui/select/select.tsx"
 import { typedElement } from "../../../../typed-element.ts"

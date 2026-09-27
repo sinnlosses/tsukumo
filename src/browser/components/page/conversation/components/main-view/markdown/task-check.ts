@@ -11,7 +11,7 @@
 // レポートが直接書いた `<input>` もここで印に変わり、チェックボックス以外の `input` は
 // 許可リストが落とす）。
 
-import { type Element, type ElementContent, type Properties, type Root } from "hast"
+import type { Element, ElementContent, Properties, Root } from "hast"
 
 import styles from "./report-notation.module.css"
 

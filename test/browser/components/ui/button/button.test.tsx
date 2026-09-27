@@ -1,6 +1,5 @@
-import { afterEach, describe, expect, it, mock } from "bun:test"
-
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
+import { afterEach, describe, expect, it, vi } from "vitest"
 
 import {
   Button,
@@ -64,14 +63,14 @@ describe("Button", () => {
   })
 
   it("押すと onClick を呼ぶ", () => {
-    const onClick = mock(() => {})
+    const onClick = vi.fn(() => {})
     const element = renderButton({ ...BASE_PROPS, onClick })
     fireEvent.click(element)
     expect(onClick).toHaveBeenCalledTimes(1)
   })
 
   it('disabled のときは押しても onClick を呼ばず、aria-disabled="true" が付く', () => {
-    const onClick = mock(() => {})
+    const onClick = vi.fn(() => {})
     const element = renderButton({ ...BASE_PROPS, disabled: true, onClick })
     expect(element.getAttribute("aria-disabled")).toBe("true")
     fireEvent.click(element)

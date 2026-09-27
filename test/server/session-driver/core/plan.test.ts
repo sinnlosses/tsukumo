@@ -1,4 +1,4 @@
-import { describe, expect, it } from "bun:test"
+import { describe, expect, it } from "vitest"
 
 import { planName } from "../../../../src/server/session-driver/core/plan.ts"
 

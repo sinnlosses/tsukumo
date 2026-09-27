@@ -1,6 +1,5 @@
-import { afterEach, describe, expect, it, mock } from "bun:test"
-
 import { cleanup, fireEvent, render } from "@testing-library/react"
+import { afterEach, describe, expect, it, vi } from "vitest"
 
 import {
   Dialog,
@@ -55,21 +54,21 @@ describe("Dialog", () => {
   })
 
   it("Esc（<dialog> の close イベント）で onClose を呼ぶ", () => {
-    const onClose = mock(() => {})
+    const onClose = vi.fn(() => {})
     const dialog = renderDialog({ ...BASE_PROPS, onClose })
     fireEvent(dialog, new Event("close"))
     expect(onClose).toHaveBeenCalledTimes(1)
   })
 
   it("外側（backdrop）のクリックで onClose を呼ぶ", () => {
-    const onClose = mock(() => {})
+    const onClose = vi.fn(() => {})
     const dialog = renderDialog({ ...BASE_PROPS, onClose })
     fireEvent.click(dialog)
     expect(onClose).toHaveBeenCalledTimes(1)
   })
 
   it("中のクリックでは onClose を呼ばない", () => {
-    const onClose = mock(() => {})
+    const onClose = vi.fn(() => {})
     const dialog = renderDialog({ ...BASE_PROPS, onClose })
     const button = dialog.querySelector("button")
     if (button === null) {

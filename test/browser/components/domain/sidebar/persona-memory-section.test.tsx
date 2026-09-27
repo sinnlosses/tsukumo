@@ -2,9 +2,8 @@
 // 手で書いた架空の1行だけ（実物の persona.md・会話は使わない。
 // docs/coding-standards.md「会話内容の扱い」）。
 
-import { afterEach, describe, expect, it } from "bun:test"
-
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
+import { afterEach, describe, expect, it } from "vitest"
 
 import { PersonaMemorySection } from "../../../../../src/browser/components/domain/sidebar/persona-memory-section.tsx"
 import { SessionStoreContext } from "../../../../../src/browser/stores/session.tsx"

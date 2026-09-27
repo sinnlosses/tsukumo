@@ -1,10 +1,10 @@
-import { afterEach, describe, expect, it } from "bun:test"
 import { createServer, request as httpRequest, type IncomingMessage, type Server } from "node:http"
 import { type Duplex } from "node:stream"
 
 import { createORPCClient, ORPCError } from "@orpc/client"
 import { RPCLink } from "@orpc/client/websocket"
 import { type ContractRouterClient } from "@orpc/contract"
+import { afterEach, describe, expect, it } from "vitest"
 import WebSocket from "ws"
 
 import { createSocketRouter } from "../../../../src/router.ts"

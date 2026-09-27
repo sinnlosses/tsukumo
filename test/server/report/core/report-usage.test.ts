@@ -1,4 +1,4 @@
-import { describe, expect, it } from "bun:test"
+import { describe, expect, it } from "vitest"
 
 import { reportUsageEntryOf } from "../../../../src/server/report/core/report-usage.ts"
 import { type ReportSection } from "../../../../src/shared/report-block.ts"

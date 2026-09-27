@@ -1,4 +1,4 @@
-import { describe, expect, it } from "bun:test"
+import { describe, expect, it } from "vitest"
 
 import { type Config } from "../../../../src/server/core/config.ts"
 import {

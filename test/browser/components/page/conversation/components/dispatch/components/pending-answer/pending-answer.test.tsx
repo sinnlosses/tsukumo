@@ -1,6 +1,5 @@
-import { afterEach, describe, expect, it } from "bun:test"
-
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
+import { afterEach, describe, expect, it } from "vitest"
 
 import { PendingAnswer } from "../../../../../../../../../src/browser/components/page/conversation/components/dispatch/components/pending-answer/pending-answer.tsx"
 import { SessionStoreContext } from "../../../../../../../../../src/browser/stores/session.tsx"

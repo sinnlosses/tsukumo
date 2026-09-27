@@ -1,7 +1,6 @@
-import { afterEach, describe, expect, it } from "bun:test"
-
 import { cleanup, fireEvent, render, screen, type RenderResult } from "@testing-library/react"
 import { type ReactElement } from "react"
+import { afterEach, describe, expect, it } from "vitest"
 
 import { saveRevealSpeed } from "../../../../src/browser/domain/reveal-speed.ts"
 import {

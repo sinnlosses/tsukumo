@@ -1,4 +1,4 @@
-import { describe, expect, it } from "bun:test"
+import { describe, expect, it } from "vitest"
 
 import { DIARY_VERSION, readDiary, type Diary } from "../../src/shared/diary.ts"
 

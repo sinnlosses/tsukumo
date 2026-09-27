@@ -1,7 +1,6 @@
-import { afterEach, describe, expect, it } from "bun:test"
-
 import { act, cleanup, renderHook } from "@testing-library/react"
 import { type ReactElement, type ReactNode } from "react"
+import { afterEach, describe, expect, it } from "vitest"
 
 import {
   QuestionAnswerProvider,

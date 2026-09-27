@@ -1,4 +1,4 @@
-import { describe, expect, it } from "bun:test"
+import { describe, expect, it } from "vitest"
 
 import { createChatConsolidationWriter } from "../../../../src/server/chat/core/chat-consolidation-writer.ts"
 import {
@@ -127,8 +127,8 @@ describe("createChatConsolidationWriter", () => {
       },
     ])
     // 本文の最後に tsukumo が組を置き、同じ取り出し方で読める。
-    expect(ports.summary()).toStartWith("架空の書き直したあらすじ\n")
-    expect(ports.summary()).toEndWith("</topics>")
+    expect(ports.summary().startsWith("架空の書き直したあらすじ\n")).toBe(true)
+    expect(ports.summary().endsWith("</topics>")).toBe(true)
     expect(chatTopics(ports.summary())).toEqual(["架空の話題1", "架空の話題2"])
     expect(ports.summaryPacks).toEqual(["fictional"])
   })

@@ -1,7 +1,8 @@
-import { describe, expect, it } from "bun:test"
 import { mkdir, mkdtemp, writeFile } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
+
+import { describe, expect, it } from "vitest"
 
 import { sourceFingerprint } from "../../../../src/server/view-server/adapter/source-fingerprint.ts"
 

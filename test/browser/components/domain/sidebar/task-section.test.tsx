@@ -1,6 +1,5 @@
-import { afterEach, describe, expect, it } from "bun:test"
-
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react"
+import { afterEach, describe, expect, it } from "vitest"
 
 import { TaskSection } from "../../../../../src/browser/components/domain/sidebar/task-section.tsx"
 import { SessionStoreContext } from "../../../../../src/browser/stores/session.tsx"

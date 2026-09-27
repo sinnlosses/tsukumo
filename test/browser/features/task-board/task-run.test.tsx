@@ -1,7 +1,6 @@
-import { afterEach, describe, expect, it } from "bun:test"
-
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { type ReactNode } from "react"
+import { afterEach, describe, expect, it } from "vitest"
 
 import { TaskBoard } from "../../../../src/browser/features/task-board/task-board.tsx"
 import { TaskList } from "../../../../src/browser/features/task-board/task-list.tsx"

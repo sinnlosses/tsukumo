@@ -1,8 +1,9 @@
-import { describe, expect, it } from "bun:test"
 import { mkdtempSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { fileURLToPath } from "node:url"
+
+import { describe, expect, it } from "vitest"
 
 import { listRepositoryFiles } from "../../../../src/server/repository/adapter/repository-file.ts"
 

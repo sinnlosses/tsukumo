@@ -1,6 +1,5 @@
-import { afterEach, describe, expect, it } from "bun:test"
-
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
+import { afterEach, describe, expect, it } from "vitest"
 
 import { SpeechLog } from "../../../../../../../../../src/browser/components/page/conversation/components/character-view/components/speech-log/speech-log.tsx"
 import { SessionStoreContext } from "../../../../../../../../../src/browser/stores/session.tsx"
@@ -177,9 +176,9 @@ describe("SpeechLog", () => {
       "きみ「組み直した依頼」",
       "きみ「いまの依頼」14:32",
     ])
-    expect(requests[1]?.querySelector("time")?.getAttribute("dateTime")).toStartWith(
-      "2026-09-23T14:32",
-    )
+    expect(
+      requests[1]?.querySelector("time")?.getAttribute("dateTime")?.startsWith("2026-09-23T14:32"),
+    ).toBe(true)
     // 最新のセリフを含むターンの区切りだけが濃い。
     expect(requests.map((request) => request.getAttribute("data-current"))).toEqual([
       "false",

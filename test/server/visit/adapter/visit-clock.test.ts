@@ -1,4 +1,4 @@
-import { describe, expect, it } from "bun:test"
+import { describe, expect, it } from "vitest"
 
 import { createVisitClock } from "../../../../src/server/visit/adapter/visit-clock.ts"
 

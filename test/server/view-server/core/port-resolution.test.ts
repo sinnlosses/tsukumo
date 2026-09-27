@@ -1,5 +1,6 @@
-import { describe, expect, it } from "bun:test"
 import { createServer as createNetServer, type Server as NetServer } from "node:net"
+
+import { describe, expect, it } from "vitest"
 
 import { createRpcRouter } from "../../../../src/router.ts"
 import {

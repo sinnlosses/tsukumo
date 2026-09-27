@@ -1,4 +1,4 @@
-import { describe, expect, it } from "bun:test"
+import { describe, expect, it } from "vitest"
 
 import { parseCharacterDefinition } from "../../src/shared/character-definition.ts"
 import { type CharacterInfo, effectiveAccent, toCharacterInfo } from "../../src/shared/character.ts"

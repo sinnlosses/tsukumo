@@ -1,4 +1,3 @@
-import { afterEach, describe, expect, it, spyOn } from "bun:test"
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs"
 import { get } from "node:http"
 import { tmpdir } from "node:os"
@@ -6,6 +5,7 @@ import { join } from "node:path"
 
 import { createORPCClient, ORPCError } from "@orpc/client"
 import { RPCLink } from "@orpc/client/fetch"
+import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { createRpcRouter, type RpcRouterPorts } from "../../../../src/router.ts"
 import {
@@ -147,7 +147,7 @@ describe("startViewServer", () => {
   it("ループバックにだけバインドする", async () => {
     const server = await startView()
 
-    expect(viewOrigin(server)).toStartWith("http://127.0.0.1:")
+    expect(viewOrigin(server).startsWith("http://127.0.0.1:")).toBe(true)
   })
 
   it("layoutUrl は同じサーバの / を指す", async () => {
@@ -608,7 +608,7 @@ describe("startViewServer", () => {
 
   it("listen 後に error が起きても閉じない。stderr に1行書いて配信を続ける", async () => {
     const server = await startView()
-    const stderr = spyOn(process.stderr, "write").mockImplementation(() => true)
+    const stderr = vi.spyOn(process.stderr, "write").mockImplementation(() => true)
 
     try {
       server.httpServer.emit("error", new Error("架空のエラー"))

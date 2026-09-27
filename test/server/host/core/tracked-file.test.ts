@@ -1,4 +1,4 @@
-import { describe, expect, it } from "bun:test"
+import { describe, expect, it } from "vitest"
 
 import { type HostResult } from "../../../../src/server/host/core/host.ts"
 import { openTrackedFile } from "../../../../src/server/host/core/tracked-file.ts"

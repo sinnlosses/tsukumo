@@ -1,6 +1,5 @@
-import { afterEach, describe, expect, it } from "bun:test"
-
 import { cleanup, renderHook } from "@testing-library/react"
+import { afterEach, describe, expect, it } from "vitest"
 
 import { useChatSpeech } from "../../../../../../../../../../src/browser/components/page/conversation/components/chat-view/components/chat-speech/hooks/use-chat-speech.ts"
 

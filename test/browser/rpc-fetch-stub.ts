@@ -47,7 +47,7 @@ export function stubRpcFetch(reply: (call: RpcCall) => RpcStubReply): RpcFetchSt
     calls.push(call)
     return responseOf(reply(call))
   }
-  globalThis.fetch = Object.assign(stub, { preconnect: original.preconnect })
+  globalThis.fetch = stub
   return {
     calls: () => [...calls],
     restore: () => {

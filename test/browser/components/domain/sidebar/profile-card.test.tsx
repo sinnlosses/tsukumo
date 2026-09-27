@@ -1,9 +1,8 @@
 // 雑談中のサイドバーの最上段、プロフィールの札（docs/screen-design.md 13.7「雑談のときのサイドバー」）。
 // ここで見るのは、ひとことプロフィールが無いパックで空の行を置かないことだけ。
 
-import { afterEach, describe, expect, it } from "bun:test"
-
 import { cleanup, render } from "@testing-library/react"
+import { afterEach, describe, expect, it } from "vitest"
 
 import { ProfileCard } from "../../../../../src/browser/components/domain/sidebar/profile-card.tsx"
 import { SessionStoreContext } from "../../../../../src/browser/stores/session.tsx"

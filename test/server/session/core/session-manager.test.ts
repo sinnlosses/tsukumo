@@ -1,7 +1,6 @@
-import { describe, expect, it } from "bun:test"
-
 import { createRouterClient, ORPCError } from "@orpc/server"
 import { isPlainObject } from "remeda"
+import { describe, expect, it } from "vitest"
 
 import { type CommandRouterPorts, createCommandRouter } from "../../../../src/router.ts"
 import { type CharacterSelection } from "../../../../src/server/character-pack/core/character-selection.ts"

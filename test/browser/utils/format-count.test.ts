@@ -1,4 +1,4 @@
-import { describe, expect, it } from "bun:test"
+import { describe, expect, it } from "vitest"
 
 import { formatCount, round } from "../../../src/browser/utils/format-count.ts"
 

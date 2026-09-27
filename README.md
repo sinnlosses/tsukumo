@@ -14,7 +14,7 @@
   <img src="https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript" alt="TypeScript">
   <img src="https://img.shields.io/badge/Claude_Agent_SDK-0.3-D97757?logo=anthropic" alt="Claude Agent SDK">
   <img src="https://img.shields.io/badge/Lint-oxlint-cc9c00" alt="oxlint">
-  <img src="https://img.shields.io/badge/Tested_with-bun%3Atest-000000?logo=bun" alt="bun:test">
+  <img src="https://img.shields.io/badge/Tested_with-Vitest-6E9F18?logo=vitest" alt="Vitest">
 </p>
 
 ---
@@ -265,9 +265,8 @@ TSUKUMO_CHARACTER=characters/local tsukumo
 
 ```bash
 bun run check                 # typecheck + lint + format:check + test + test:e2e（変更後は必ずこれを通す）
-bun run test                  # 単体テスト全体（`bun test --isolate`。`test/e2e/` は外す。素の `bun test` は
-                              #   使わない — `mock.module` がファイルをまたいで漏れる）
-bun test --isolate test/cli.test.ts  # 単体テストファイルのみ実行
+bun run test                  # 単体テスト全体（Vitest。`test/e2e/` は外す）
+npx vitest run test/cli.test.ts  # 単体テストファイルのみ実行
 bun run test:e2e              # E2E（組み立ててから test/e2e/ を走らせる。手元の Chrome が要る。成果物と
                               #   スクリーンショットは /tmp/tsukumo-e2e/）
 bun run test:e2e:update       # E2E の期待値（test/e2e/expected/）を書き直す。git diff で読んでから入れる

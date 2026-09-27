@@ -1,4 +1,4 @@
-import { describe, expect, it } from "bun:test"
+import { describe, expect, it } from "vitest"
 
 import { splitReportBlocks } from "../../../../../../../../src/browser/components/page/conversation/components/main-view/markdown/split-blocks.ts"
 

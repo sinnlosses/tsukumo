@@ -1,8 +1,7 @@
-import { afterEach, describe, expect, it } from "bun:test"
-
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { cleanup, renderHook, waitFor } from "@testing-library/react"
 import { type ReactElement, type ReactNode } from "react"
+import { afterEach, describe, expect, it } from "vitest"
 
 import { useAchievementCalendar } from "../../../../../../src/browser/components/page/achievement/hooks/use-achievement-calendar.ts"
 import { type AchievementCalendar } from "../../../../../../src/shared/achievement-calendar.ts"

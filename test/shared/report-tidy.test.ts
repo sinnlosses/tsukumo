@@ -1,4 +1,4 @@
-import { describe, expect, it } from "bun:test"
+import { describe, expect, it } from "vitest"
 
 import { type ReportBlock, type ReportSection } from "../../src/shared/report-block.ts"
 import { tidyReportSections } from "../../src/shared/report-tidy.ts"

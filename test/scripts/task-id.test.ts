@@ -1,7 +1,7 @@
 // `scripts/task-id.ts` の拾う・数える純粋関数を、小さな本文とID一覧で検証する。
 // リポジトリ全体で重複が無いことを保つのは `test/task-id.test.ts` の役目。
 
-import { describe, expect, test } from "bun:test"
+import { describe, expect, test } from "vitest"
 
 import {
   extractHeadingTaskIds,

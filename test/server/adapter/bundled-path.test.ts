@@ -1,6 +1,7 @@
-import { describe, expect, it } from "bun:test"
 import { join } from "node:path"
 import { fileURLToPath } from "node:url"
+
+import { describe, expect, it } from "vitest"
 
 import { bundledFilePath, resolveBundledDir } from "../../../src/server/adapter/bundled-path.ts"
 

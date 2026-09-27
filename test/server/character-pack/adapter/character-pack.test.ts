@@ -1,7 +1,8 @@
-import { afterEach, beforeEach, describe, expect, it } from "bun:test"
 import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { basename, join } from "node:path"
+
+import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import { bundledFilePath } from "../../../../src/server/adapter/bundled-path.ts"
 import {
@@ -272,8 +273,12 @@ describe("characterChangedEvent の一覧（packs）", () => {
         ? event.packs.find((entry) => entry.name === "from-screen")
         : undefined
 
-    expect(other?.character.portraits?.default).toStartWith("/character/from-screen/default.png")
-    expect(other?.character.background?.image).toStartWith("/character/from-screen/background.png")
+    expect(
+      other?.character.portraits?.default?.startsWith("/character/from-screen/default.png"),
+    ).toBe(true)
+    expect(
+      other?.character.background?.image?.startsWith("/character/from-screen/background.png"),
+    ).toBe(true)
     expect(other?.character.tagline).toBe("架空のひとこと")
   })
 

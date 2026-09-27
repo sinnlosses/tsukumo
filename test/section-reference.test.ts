@@ -1,5 +1,6 @@
-import { describe, expect, it } from "bun:test"
 import { fileURLToPath } from "node:url"
+
+import { describe, expect, it } from "vitest"
 
 import { collectStrayReferences } from "../scripts/lib/repository-reference.ts"
 import { formatStrayReference } from "../scripts/section-reference.ts"

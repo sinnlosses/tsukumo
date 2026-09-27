@@ -1,4 +1,4 @@
-import { describe, expect, it } from "bun:test"
+import { describe, expect, it } from "vitest"
 
 import { PRE_REQUEST_TURN_ID, splitIntoTurns, turnIdOf } from "../../src/shared/turn.ts"
 

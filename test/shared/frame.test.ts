@@ -1,4 +1,4 @@
-import { describe, expect, it } from "bun:test"
+import { describe, expect, it } from "vitest"
 
 import { parseServerFrame, PROTOCOL_VERSION } from "../../src/shared/frame.ts"
 import { INITIAL_SESSION_STATE } from "../../src/shared/session-state.ts"

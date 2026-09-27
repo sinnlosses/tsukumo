@@ -1,5 +1,3 @@
-import { describe, expect, it } from "bun:test"
-
 import {
   type EffortLevel as SdkEffortLevel,
   type HookCallbackMatcher,
@@ -8,6 +6,7 @@ import {
   type SDKAssistantMessageError,
   type StopHookInput,
 } from "@anthropic-ai/claude-agent-sdk"
+import { describe, expect, it } from "vitest"
 
 import {
   createReportGate,

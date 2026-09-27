@@ -1304,9 +1304,9 @@ class 名は用語集の語（`balloon` / `portrait` / `turn-header` など）�
 読み込み順ではなく詳細度で勝たせる。
 
 **テストの中では class 名が CSS に書いた綴りのまま届く**（`test/css-module-loader.ts` が
-`bun test` の読み込みに差し込む）。`bun` のテストランナーは CSS を組み立てないので、これが無いと
-対応表が空で届いて class 名が全部 `undefined` になる。CSS に無い名前は `undefined` のままなので、
-**綴りを間違えるとテストで落ちる**。
+単体テストの設定に渡す Vite プラグイン）。Vite の既定の CSS Modules の変換はブラウザに出す
+実際の名前と同じハッシュ付きの名前を生成するので、これが無いと部品テストが綴りで引けない。
+CSS に無い名前は `undefined` のままなので、**綴りを間違えるとテストで落ちる**。
 
 ## 7. キャラクターパック
 
@@ -1517,7 +1517,7 @@ characters/<name>/
 | SDK の型との一致               | `PERMISSION_MODES` / `MODEL_ALIASES` が SDK の型と同じ値であること（型レベルの検査）                                                            | `test/server/session-driver/adapter/sdk-driver.test.ts`  |
 | `session-manager`              | fake driver を差し込み、`hello` → `events` の順序・バッチ・`dispatch` の分岐                                                                    | `test/server/session/core/session-manager.test.ts`       |
 | `server`（ws）                 | 購読 → `hello` が先に届き、押した順に取りこぼさず流れる、切断で購読が外れる、トークン無しは 403、Origin 違いは 403、コマンド → 受け手が呼ばれる | `test/server/view-server/adapter/session-socket.test.ts` |
-| browser の部品                 | `bun test` + `happy-dom` + `@testing-library/react`。**役割と文言で当てる**（HTML の文字列一致はしない）                                        | `test/browser/**`                                        |
+| browser の部品                 | Vitest + `happy-dom` + `@testing-library/react`。**役割と文言で当てる**（HTML の文字列一致はしない）                                            | `test/browser/**`                                        |
 | 層の検査                       | `shared ← core` / `shared ← browser` / `core ⟂ browser` の3辺。外部ツールは増やさない                                                           | `test/architecture.test.ts`                              |
 | 画面の見た目                   | **fake driver で起こした tsukumo に Playwright**（`webapp-testing` スキル）。数値で読めるものは CDP で読む。色・間合いは人の目                  | `scripts/`（本体から呼ばれない）                         |
 | 状態のカタログ                 | 疑似セッションの場面を名指しして起こし直し、広い窓と狭い窓で撮って索引 HTML に並べる（`TSUKUMO_FAKE_SCENE`）                                    | `scripts/capture-catalog.ts`                             |
@@ -1530,22 +1530,23 @@ E2E が判定に使うのは DOM の構造と WebSocket のメッセージの列
 
 ### E2E の走らせ方
 
-- **ランナーは `bun:test`**（`describe` / `it` / `expect`。ランナーを足さない）。ブラウザは
+- **ランナーは Vitest**（`describe` / `it` / `expect`。単体テストとランナーを共有する）。ブラウザは
   `playwright-core` の `chromium`（`channel: "chrome"`、headless）で、既に `scripts/capture-*.ts`
   が使っている依存の範囲に収まる。**新しい外部コマンドは足さない**（`git` はタスクの一覧の
   場面で一時の作業先を作るのに使うが、tsukumo 自身が既に使っている）
 - **置き場所は `test/e2e/<シナリオ>.test.ts`**（1ファイル = 1つの機能のまとまり。`src/` の写しの
   構成には従わない——E2E は1つのファイルの振る舞いではないため）。起こす・開く・成果物を
   書く・比べるの足場は `test/e2e/` の中の1ファイルに置き、シナリオはそれを呼ぶだけにする
-- **`bun run check` の中の別の段にする。** `bun run test`（単体）は
-  `--path-ignore-patterns` で `test/e2e/` を外し、E2E は `bun run test:e2e`（`bun run build` を
-  打ってから `bun test --isolate --timeout=<長め> test/e2e/`）で走らせる。`check` は
+- **`bun run check` の中の別の段にする。** `bun run test`（単体）は既定の設定が `test/e2e/` を
+  外し、E2E は `bun run test:e2e`（`bun run build` を打ってから、E2E 専用の設定で
+  `vitest run` を長めのタイムアウトで走らせる）で走らせる。`check` は
   `typecheck && lint && format:check && test && test:e2e` の順（安い段で先に落とす）。理由:
-  - `bun test --isolate` がときどき終わらない症状（未解決）と混ぜない。止まったときに、どちらの
-    段で止まったかが外から分かる
-  - 1件の時間切れの既定（5 秒）が単体と E2E で合わない。段を分ければ E2E の段だけ延ばせる
+  - 1件の時間切れの既定が単体と E2E で合わない。段を分ければ E2E の段だけ延ばせる
   - 前提（`dist/browser/` と Chrome）が単体テストと違う。単体テストを1ファイル走らせるときに
     Chrome を要らないままにする
+  - E2E はファイルごとに tsukumo とブラウザを1組起こす重いテストなので、E2E 専用の設定だけ
+    ファイルを並べて走らせない（`fileParallelism: false`）。並べるとマシンの負荷が上がり、
+    待ちが揺れる
 - **`dist/browser/` は E2E の段が自分で組み立てる**（`test:e2e` の頭の `bun run build`）。起動は
   古い成果物でも止まらずに配る（11章）ので、組み立てを前提にすると `src/browser/` を直したあと
   の E2E が古い画面を確かめて通ってしまう
@@ -1570,8 +1571,8 @@ E2E が判定に使うのは DOM の構造と WebSocket のメッセージの列
   比が変わり、目視用の場面と別の姿になる）。必要な瞬間が遅い場面は、短い場面を疑似セッションに足す
 - 所要時間の目安は E2E の段で 60 秒まで。超えたら件を削らずに `--parallel` を足す（ポートも
   ホームも1件ごとに分かれているので並べてよい）
-- `bunfig.toml` の preload（`test/dom-environment.ts` の DOM のグローバル）は E2E の段にも
-  かかる。`playwright-core` と干渉したら、E2E の段だけ preload を外す形を足場の側で作る
+- 単体テストの設定の `setupFiles`（`test/dom-environment.ts` の DOM のグローバル）は E2E 専用の
+  設定には渡していない。`playwright-core` と干渉する組み合わせを増やさないため
 
 ### E2E の成果物と再現
 
@@ -1709,7 +1710,8 @@ E2E が通るのは**疑似セッションに書いた並びだけ**で、fake d
   配る** — 2026-09-12 の決定が挙げていた「古い成果物を配る事故」には**黙って配らない**ことで
   答える（古くても画面は動くので止めない）。**HMR が `src/browser/` にしか当たらないのと違い、
   ここは `src/shared/` も見る**（起動時はプロセスごと入れ替わるので、両側が食い違わない）
-- tsconfig に `"jsx": "react-jsx"` を足す。ブラウザの型は `@types/bun` が持っているのでそのまま
+- tsconfig に `"jsx": "react-jsx"` を足す。ブラウザの型は tsconfig の `lib`（`DOM` /
+  `DOM.Iterable`）が持っているのでそのまま
 - **開発中は Vite の開発サーバを差し込み、HMR で差し替える**（2026-09-27 決定。それまでは
   `src/browser/` を見張って組み立て直し、タブに「取り直せ」を押していた）。下の「作り直しを押す仕組み」
 
@@ -1786,6 +1788,7 @@ E2E が通るのは**疑似セッションに書いた並びだけ**で、fake d
 | runtime | `mermaid` `chart.js` `highlight.js`                                                | ブラウザへそのまま配る外部ライブラリ（6.4）。2026-09-20 に `vendor/` の同梱から移した               |
 | dev     | `@types/react` `@types/react-dom` `@types/ws` `@testing-library/react` `happy-dom` | 型とテスト                                                                                          |
 | dev     | `playwright-core`                                                                  | 画面全体の確認（10章）                                                                              |
+| dev     | `vitest` `vite`                                                                    | テストランナー。2026-09-26 にユーザーの判断で `bun test` から移した                                 |
 
 `zod` はある。`@anthropic-ai/claude-agent-sdk` はある。**`Bun.*` の固有 API に寄せない**規約は続く
 （`ws` を選ぶのはそのため）。
@@ -1794,5 +1797,5 @@ E2E が通るのは**疑似セッションに書いた並びだけ**で、fake d
 約130MB のブラウザを `~/Library/Caches/ms-playwright` へ取りに行くが、`playwright-core` は driver
 だけ（13MB）で、`chromium.launch({ channel: "chrome" })` として**手元の Google Chrome を動かす**。
 リポジトリの外に何も置かないので、`node_modules` を消せば消える。**テストランナーは足さない**
-（`@playwright/test` ではなくライブラリだけを使い、`bun test` と競合させない）。呼ぶのは
+（`@playwright/test` ではなくライブラリだけを使い、Vitest と競合させない）。呼ぶのは
 `scripts/capture-view.ts` で、**`bun run check` には入れない**（生きたサーバが要って遅いため)。

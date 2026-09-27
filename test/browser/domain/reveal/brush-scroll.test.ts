@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "bun:test"
+import { afterEach, describe, expect, it } from "vitest"
 
 import { brushScroller } from "../../../../src/browser/domain/reveal/brush-scroll.ts"
 

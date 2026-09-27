@@ -1,4 +1,4 @@
-import { describe, expect, it } from "bun:test"
+import { describe, expect, it } from "vitest"
 
 import { localDateEpochRange, localTimeHHMM } from "../../../src/server/adapter/local-time.ts"
 

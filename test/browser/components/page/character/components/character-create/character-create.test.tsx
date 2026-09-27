@@ -1,7 +1,6 @@
-import { afterEach, describe, expect, it } from "bun:test"
-
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { type ReactElement } from "react"
+import { afterEach, describe, expect, it } from "vitest"
 
 import { CharacterCreate } from "../../../../../../../src/browser/components/page/character/components/character-create/character-create.tsx"
 import { SessionStoreContext } from "../../../../../../../src/browser/stores/session.tsx"

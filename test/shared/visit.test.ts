@@ -1,4 +1,4 @@
-import { describe, expect, it } from "bun:test"
+import { describe, expect, it } from "vitest"
 
 import { type VisitScript } from "../../src/shared/character-visit.ts"
 import { type SessionEvent } from "../../src/shared/session-event.ts"

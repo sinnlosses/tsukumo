@@ -1,5 +1,6 @@
-import { describe, expect, it } from "bun:test"
 import { fileURLToPath } from "node:url"
+
+import { describe, expect, it } from "vitest"
 
 import { formatConflictMarker } from "../scripts/conflict-marker.ts"
 import { collectConflictMarkers } from "../scripts/lib/repository-conflict-marker.ts"

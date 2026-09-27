@@ -1,4 +1,4 @@
-import { describe, expect, it } from "bun:test"
+import { describe, expect, it } from "vitest"
 
 import { withSelfStartedTurns } from "../../../../src/server/session-driver/core/self-started-turn.ts"
 import { type SessionEvent } from "../../../../src/shared/session-event.ts"

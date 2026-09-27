@@ -1,6 +1,5 @@
-import { afterEach, describe, expect, it, spyOn } from "bun:test"
-
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
+import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { QuestionAsk } from "../../../../../../../../../src/browser/components/page/conversation/components/main-view/components/question-ask/question-ask.tsx"
 import { QuestionAnswerProvider } from "../../../../../../../../../src/browser/stores/question-answer.tsx"
@@ -176,7 +175,9 @@ describe("QuestionAsk（メインビューの質問の札）", () => {
   })
 
   it("質問が来たら札まで連れてくる（scrollIntoView）", () => {
-    const scrollIntoView = spyOn(Element.prototype, "scrollIntoView").mockImplementation(() => {})
+    const scrollIntoView = vi
+      .spyOn(Element.prototype, "scrollIntoView")
+      .mockImplementation(() => {})
     try {
       renderQuestionAsk([{ kind: "question", id: "ask-1", questions: [question()] }])
 

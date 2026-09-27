@@ -1,4 +1,4 @@
-import { describe, expect, it } from "bun:test"
+import { describe, expect, it } from "vitest"
 
 import { PERMISSION_MODES } from "../../src/shared/command.ts"
 import { sessionContract } from "../../src/shared/contract/session.ts"

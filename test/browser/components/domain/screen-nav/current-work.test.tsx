@@ -1,6 +1,5 @@
-import { afterEach, describe, expect, it } from "bun:test"
-
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react"
+import { afterEach, describe, expect, it } from "vitest"
 
 import { ScreenNav } from "../../../../../src/browser/components/domain/screen-nav/screen-nav.tsx"
 import { parseHash } from "../../../../../src/browser/stores/location-hash.ts"

@@ -1,12 +1,10 @@
-// `bun run check` の `bun test` の前に1回だけ読まれる（`bunfig.toml` の `preload`）。
+// `vitest.config.ts` の `test.setupFiles` から、テストファイルごとに1回読まれる。
 // `src/browser/` の部品テスト（`@testing-library/react`）が要る DOM のグローバルを用意する。
 //
 // `happy-dom` の `Window` が持つ全部を `globalThis` へコピーしない。 `fetch` / `WebSocket` /
 // `setTimeout` / `console` まで happy-dom のものに差し替わると、実際の HTTP・WebSocket を使う
 // 他のテスト（`test/server/view-server/adapter/server.test.ts` など）が巻き添えになる。DOM を組み立てる部品だけを
-// 借りる。（`bun test --isolate` でテストファイルごとにプロセスが分かれるようになった今も、
-// 1ファイルの中では同じ `globalThis` を共有するので、借りる範囲は絞ったままにする。
-// `--isolate` を付けている理由は `package.json` と `test/browser/components/page/conversation/components/main-view/report.test.tsx`）
+// 借りる（Vitest がテストファイルごとにモジュールの登録を分けるので、この設定はファイルの外へは漏れない）。
 //
 // `@happy-dom/global-registrator`（this 一式を1関数でやってくれる別パッケージ）は使わない
 // （`docs/design.md` 11章の依存一覧に無い。ここは持ってきた `happy-dom` だけで済ませる）。

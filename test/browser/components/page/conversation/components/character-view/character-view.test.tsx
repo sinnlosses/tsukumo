@@ -1,7 +1,6 @@
-import { afterEach, describe, expect, it } from "bun:test"
-
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { cleanup, render } from "@testing-library/react"
+import { afterEach, describe, expect, it } from "vitest"
 
 import { CharacterView } from "../../../../../../../src/browser/components/page/conversation/components/character-view/character-view.tsx"
 import { SessionStoreContext } from "../../../../../../../src/browser/stores/session.tsx"
