@@ -2,8 +2,7 @@
 // （docs/design.md 6.1 / 6.2「接続・再接続・フレームの zod 検証」）。core を import しない
 // （原則2/3。`browser` が触れる契約は `shared` だけ）。`/ws` の経路名・トークンのクエリ名の値は
 // `shared/session-socket.ts` が正典で、`adapter/session-socket.ts` と両方から import する（値の再掲は
-// しない）。経路にトークンを足す口は `lib/session-token-url.ts` に寄せてあり、ここは
-// `ws:` / `wss:` とホストの組み立てだけを持つ。
+// しない）。経路とクエリは呼ぶ側から受け取り、ここは `ws:` / `wss:` とホストの組み立てだけを持つ。
 //
 // 接続が切れたら、間隔を指数的に伸ばしながら再接続する。読めないフレームは黙って捨てて
 // 次のフレームを待つ（`docs/coding-standards.md`「常駐プロセスは描画1回の失敗で落ちない」と
@@ -20,8 +19,6 @@ import { type ContractRouterClient } from "@orpc/contract"
 
 import { type frameContract } from "../../shared/contract/frame.ts"
 import { parseServerFrame, type ServerFrame } from "../../shared/frame.ts"
-import { SESSION_SOCKET_PATH } from "../../shared/session-socket.ts"
-import { sessionTokenUrl } from "./session-token-url.ts"
 
 const RECONNECT_INITIAL_DELAY_MS = 500
 const RECONNECT_MAX_DELAY_MS = 8000
@@ -46,8 +43,11 @@ export type SessionSocketHandlers = {
   readonly onStatusChange: (status: ConnectionStatus) => void
 }
 
-/** 今のページの URL から `/ws?t=<token>` を組み立てて繋ぎ、切れたら再接続し続ける。 */
-export function connectSessionSocket(handlers: SessionSocketHandlers): SessionSocket {
+/** 今のページのホストへ `socketPath`（クエリを含む相対パス）で繋ぎ、切れたら再接続し続ける。 */
+export function connectSessionSocket(
+  socketPath: string,
+  handlers: SessionSocketHandlers,
+): SessionSocket {
   let socket: WebSocket | undefined = undefined
   // いまの接続の上の手続きの口（接続ごとに作り直す）。
   let link: CommandLink | undefined = undefined
@@ -57,7 +57,7 @@ export function connectSessionSocket(handlers: SessionSocketHandlers): SessionSo
 
   const connect = (): void => {
     handlers.onStatusChange("connecting")
-    const opened = new WebSocket(socketUrl())
+    const opened = new WebSocket(socketUrl(socketPath))
     const openedLink = new RPCLink({ websocket: opened })
     socket = opened
     link = openedLink
@@ -100,10 +100,10 @@ export function connectSessionSocket(handlers: SessionSocketHandlers): SessionSo
   }
 }
 
-function socketUrl(): string {
+function socketUrl(path: string): string {
   const here = new URL(window.location.href)
   const protocol = here.protocol === "https:" ? "wss:" : "ws:"
-  return `${protocol}//${here.host}${sessionTokenUrl(SESSION_SOCKET_PATH)}`
+  return `${protocol}//${here.host}${path}`
 }
 
 /**

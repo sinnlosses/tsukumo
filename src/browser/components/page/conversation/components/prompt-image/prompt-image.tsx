@@ -22,7 +22,7 @@ import {
   promptImagePath,
   type RecordedPromptImage,
 } from "../../../../../../shared/prompt-image.ts"
-import { sessionTokenUrl } from "../../../../../lib/session-token-url.ts"
+import { sessionTokenUrl } from "../../../../../domain/session-token-url.ts"
 import { ImageZoom, type ImageZoomFallback } from "../../../../ui/image-zoom/image-zoom.tsx"
 import styles from "./prompt-image.module.css"
 
@@ -147,7 +147,7 @@ export function PromptImageThumbnails(props: PromptImageThumbnailsProps): ReactE
 
 /**
  * 棚の原寸を取りに行く URL。起動トークンはこのページの URL から引き継ぐ
- * （`/ws`・`/rpc` と同じ形。`lib/session-token-url.ts` に寄せた）。
+ * （`/ws`・`/rpc` と同じ形）。
  */
 function shelvedImageUrl(id: string): string {
   return sessionTokenUrl(promptImagePath(id))

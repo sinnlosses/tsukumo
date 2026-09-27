@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest"
 
-import { sessionTokenUrl } from "../../../src/browser/lib/session-token-url.ts"
+import { sessionTokenUrl } from "../../../src/browser/domain/session-token-url.ts"
 import { setPageUrl } from "../../dom-environment.ts"
 
-// `window.location.href` を境界として持つので、`setPageUrl`（happy-dom の URL 差し替え口。
-// test/dom-environment.ts）でページの URL を変えてから確かめる。
+// `window.location.href` を境界として持つので、`setPageUrl`（happy-dom の URL 差し替え口）で
+// ページの URL を変えてから確かめる。
 
 describe("sessionTokenUrl", () => {
   it("ページの URL にあるトークンを経路へ付ける", () => {

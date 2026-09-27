@@ -15,7 +15,7 @@ import {
   type TokenUsageSummary,
   type TokenUsageTotals,
 } from "../../../../../shared/token-usage-summary.ts"
-import { rpc } from "../../../../lib/rpc-client.ts"
+import { rpc } from "../../../../domain/rpc.ts"
 import { useSession } from "../../../../stores/session.ts"
 import { totalUsage } from "../domain/usage-format.ts"
 

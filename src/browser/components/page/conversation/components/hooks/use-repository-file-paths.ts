@@ -11,7 +11,7 @@
 
 import { useQuery } from "@tanstack/react-query"
 
-import { rpc } from "../../../../../lib/rpc-client.ts"
+import { rpc } from "../../../../../domain/rpc.ts"
 
 /**
  * 一覧を取り直す間隔。0 でも `Infinity` でもないのは、セッションの間にファイルが増える
