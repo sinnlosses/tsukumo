@@ -15,15 +15,14 @@ import {
 // （本物のリポジトリのファイルを対象にする。CLI 起動を最後までしない test/cli.test.ts と
 // 同じ考え方で、ここは「組み立てられるか」「置いたものを読めるか」までを見る）。
 //
-// `buildUiBundle` は `dist/browser/` を出し直す（`.gitignore` してある成果物の置き場）。
-// つまり `pnpm run check` を通すと成果物も新しくなる — 頼ってよい副作用ではないが、黙って
-// 起きると驚くので書いておく。
+// 出し先は一時ディレクトリに取る（実物の dist/browser/ は書き換えない）。同じ `dist/browser/`
+// を CLI 起動時に読む test/cli.test.ts と並んで走ると、書き直している最中を読んで落ちる。
 //
 // 失敗の側は src/browser/ を壊さず、一時ディレクトリに書いた入口（`main.tsx`）で確かめる。
 
 describe("buildUiBundle", () => {
-  it("src/browser/ を JS と CSS の1組にまとめ、dist/browser/ に置く", async () => {
-    const result = await buildUiBundle()
+  it("src/browser/ を JS と CSS の1組にまとめ、指定した出し先に置く", async () => {
+    const result = await buildUiBundle(await temporaryDir())
 
     expect(result.ok).toBe(true)
     expect(result.ok ? result.bundle.uiScript.length : 0).toBeGreaterThan(0)
@@ -31,7 +30,7 @@ describe("buildUiBundle", () => {
   })
 
   it("CSS Modules の class 名が、CSS の選択子と JS の対応表に同じ綴りで入っている", async () => {
-    const result = await buildUiBundle()
+    const result = await buildUiBundle(await temporaryDir())
 
     // `layout-grid` は
     // `components/page/conversation/components/conversation-layout/conversation-layout.module.css`
@@ -44,8 +43,9 @@ describe("buildUiBundle", () => {
 
 describe("readUiBundle", () => {
   it("置いてある成果物を、組み立て直さずにそのまま読む", async () => {
-    const built = await buildUiBundle()
-    const read = await readUiBundle()
+    const outDir = await temporaryDir()
+    const built = await buildUiBundle(outDir)
+    const read = await readUiBundle(outDir)
 
     expect(read.ok).toBe(true)
     expect(read.ok ? read.bundle.uiScript : "").toBe(built.ok ? built.bundle.uiScript : "")
@@ -53,9 +53,10 @@ describe("readUiBundle", () => {
   })
 
   it("組み立てた直後は古くないと言う", async () => {
-    await buildUiBundle()
+    const outDir = await temporaryDir()
+    await buildUiBundle(outDir)
 
-    const read = await readUiBundle()
+    const read = await readUiBundle(outDir)
 
     expect(read.ok ? read.outdated : true).toBe(false)
   })
