@@ -52,7 +52,10 @@ export function ContextUsageRow(): ReactElement {
   const warn = isWarn(usage)
 
   return (
-    <div className={clsx(styles["context-usage-row"], warn && styles["context-usage-row-warn"])}>
+    <div
+      className={clsx(styles["context-usage-row"], warn && styles["context-usage-row-warn"])}
+      aria-busy={usage.kind === "pending" ? "true" : undefined}
+    >
       <HStack
         element="div"
         name={{ kind: "none" }}

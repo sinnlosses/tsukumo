@@ -93,12 +93,6 @@ export type ScenarioRoom = {
    */
   readonly waitForEvent: (kind: string, occurrence?: number) => Promise<void>
   /**
-   * `trigger` を呼び、そのあとにコンテキストの内訳の応答が1回届くまで待つ。
-   * 回数は `trigger` を呼ぶ前に数えておく（あとで数えると、速く返った応答とすれ違って待ち続ける）。
-   * `settleAndMatch` の安定待ちは DOM の中身を見ないので、挟まないと「取得中…」のまま撮りうる。
-   */
-  readonly waitForContextUsageRefetch: (trigger: () => Promise<void>) => Promise<void>
-  /**
    * ブラウザの時計を「凍らせた瞬間 + `elapsedMs`」で止め、DOM が落ち着くのを待ってから
    * 成果物を書き、期待値と比べる（期待値が無ければ落とす。`E2E_UPDATE=1` なら書き直す）。
    */
@@ -183,7 +177,6 @@ async function openRoom(
   await installFixedClock(page)
 
   const messages = recordMessages(page)
-  const contextUsageReports = recordContextUsageReports(page)
   await page.goto(viewUrl, { waitUntil: "domcontentloaded" })
 
   const replacements: readonly (readonly [string, string])[] = [
@@ -204,11 +197,6 @@ async function openRoom(
     page,
     cwd: cwd.real,
     waitForEvent: (kind, occurrence) => messages.waitForEvent(kind, occurrence),
-    waitForContextUsageRefetch: async (trigger) => {
-      const wait = contextUsageReports.waitForNext()
-      await trigger()
-      await wait
-    },
     settleAndMatch: async (elapsedMs) => {
       await page.clock.pauseAt(Temporal.Instant.from(FIXED_INSTANT).epochMilliseconds + elapsedMs)
       const dom = await settledDom(page)
@@ -322,41 +310,6 @@ async function installFixedClock(page: Page): Promise<void> {
   await page.addInitScript(
     "Temporal.Now.instant = () => Temporal.Instant.fromEpochMilliseconds(Date.now())",
   )
-}
-
-/** コンテキストの内訳を取る手続きの経路の一部（`src/shared/contract/context-usage.ts` の `report`）。 */
-const CONTEXT_USAGE_REPORT_PATH = "/contextUsage/report"
-
-type ContextUsageReportRecord = {
-  /** 呼んだ時点より後に届く、最初の1回を待つ。 */
-  readonly waitForNext: () => Promise<void>
-}
-
-/**
- * コンテキストの内訳の応答（`/rpc/contextUsage/report`）が届いた回数を、ページを開いた直後
- * から数え続ける。
- */
-function recordContextUsageReports(page: Page): ContextUsageReportRecord {
-  let count = 0
-  let waiters: readonly { readonly target: number; readonly resolve: () => void }[] = []
-  page.on("response", (response) => {
-    if (!response.url().includes(CONTEXT_USAGE_REPORT_PATH)) {
-      return
-    }
-    count += 1
-    for (const waiter of waiters.filter((candidate) => count >= candidate.target)) {
-      waiter.resolve()
-    }
-    waiters = waiters.filter((candidate) => count < candidate.target)
-  })
-  return {
-    waitForNext: () => {
-      const target = count + 1
-      return new Promise((resolve) => {
-        waiters = [...waiters, { target, resolve }]
-      })
-    },
-  }
 }
 
 /** 購読の手続きの経路（oRPC の要求の `u`）。 */
@@ -559,19 +512,22 @@ function asRecord(value: unknown): Readonly<Record<string, unknown>> {
 /**
  * DOM の構造を読み、2回続けて同じになるまで読み直す（時計は止めてあるので、残るのは描き直しと
  * 素材の読み込みだけ）。
+ * 2回同じでも `aria-busy="true"` の要素が残っている間は落ち着いたと見なさない（取得中の表示は文字が変わらない）。
  */
 async function settledDom(page: Page): Promise<unknown> {
   let previous = JSON.stringify(await page.evaluate(DOM_TREE_SCRIPT))
   for (let attempt = 0; attempt < SETTLE_ATTEMPTS; attempt += 1) {
     await page.waitForTimeout(SETTLE_INTERVAL_MS)
     const current = JSON.stringify(await page.evaluate(DOM_TREE_SCRIPT))
-    if (current === previous) {
+    if (current === previous && !(await page.evaluate(HAS_BUSY_ELEMENT_SCRIPT))) {
       return JSON.parse(current)
     }
     previous = current
   }
   throw new Error(`DOM が落ち着かない（${String(SETTLE_INTERVAL_MS * SETTLE_ATTEMPTS)}ms）`)
 }
+
+const HAS_BUSY_ELEMENT_SCRIPT = `document.querySelector('[aria-busy="true"]') !== null`
 
 /**
  * `document.body` から木を組む台本（ページの中で動く）。残すもの・落とすものは

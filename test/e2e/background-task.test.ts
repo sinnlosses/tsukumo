@@ -23,7 +23,7 @@ describe("背景のタスク", () => {
       viewport: "wide",
     })
 
-    await room.waitForContextUsageRefetch(() => room.waitForEvent("turn-finished"))
+    await room.waitForEvent("turn-finished")
     await room.settleAndMatch(ELAPSED_MS)
   })
 
@@ -34,9 +34,7 @@ describe("背景のタスク", () => {
       viewport: "wide",
     })
 
-    await room.waitForContextUsageRefetch(() =>
-      room.waitForEvent("turn-finished", RESUMED_TURN_FINISHED_OCCURRENCE),
-    )
+    await room.waitForEvent("turn-finished", RESUMED_TURN_FINISHED_OCCURRENCE)
     await room.settleAndMatch(ELAPSED_MS)
   })
 })

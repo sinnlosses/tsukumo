@@ -1107,9 +1107,15 @@ test/e2e/expected/` で意図した変化だけであることを確かめる �
    `afterMs` と操作で流れるイベントを競わせない（`permission-answer`: 押して流れる
    `pending-changed` と場面の `speech`（`afterMs` 200）が競って揺れた。`input-dispatch`: `opening` の
    `speech` と依頼後の `partial-utterance` が同じ時刻に届いて競った）
-2. **撮る前に、非同期の取得（TanStack Query など）が済んだことを DOM の印で待つ。** 「取得中」の
-   文字や途中の `data-motion` を期待値に入れない（`background-task`: 取得が済む前に DOM を
-   撮っている疑いで、コンテキスト使用量が「取得中…」のまま撮られていた）
+2. **非同期の取得（TanStack Query など）が済むまで表示が続く要素は `aria-busy="true"` を出し、
+   `settledDom`（`test/e2e/scenario-run.ts`）は DOM が2回続けて同じでも `aria-busy="true"` が
+   残っていれば撮らずに待つ。** `settledDom` は DOM の中身を見ず「2回続けて同じ文字列」だけで
+   落ち着いたと判定するので、「取得中…」のように取得の途中でも文字が変わらない表示があると、
+   応答が届く前の DOM を2回連続で捉えて安定と誤判定する。回数や経路を数えるシナリオ専用の待ちは
+   書く側の注意に頼るので、表示する側の印1つで機械的に効くこちらを選ぶ（`context-usage-card.tsx`・
+   `usage-review-card.tsx` の先例に揃え、`context-usage-row.tsx` にも足した）。「取得中」の文字や
+   途中の `data-motion` を期待値に入れない（`background-task`: コンテキスト使用量の取得が
+   `turn-finished` の直後にまだ返っておらず、「取得中…」のまま2回連続で捉えられていた）
 3. **期待値を撮り直したら `git diff test/e2e/expected/` の中に途中の状態が入っていないかを見る。**
    揺れずに間違っている期待値は揺れより見つけにくい（立ち絵の反応が `success`/`failure` の
    まま戻らない期待値11ファイルが、ブラウザの時計を凍らせるまで長く正解として記録されていた）
