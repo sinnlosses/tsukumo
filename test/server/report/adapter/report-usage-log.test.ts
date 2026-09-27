@@ -36,6 +36,7 @@ function entry(when: number, sessionId = "claude-session-1"): ReportUsageEntry {
     at: when,
     sessionId,
     blockKinds: ["text", "table"],
+    blockFields: ["tableChange"],
     notations: ["list"],
     containedNotations: [],
     escapeNotations: [],
@@ -60,7 +61,7 @@ describe("createReportUsageLog", () => {
     expect(readLines("2026-09-23.jsonl").length).toBe(1)
   })
 
-  it("1行の鍵は版・日時・セッションID・塊の種類・逃げ道の記法（外・容れ物の中・塊の無いもの）・知らない種類の数で、日時は ISO 8601（オフセット付き）", () => {
+  it("1行の鍵は版・日時・セッションID・塊の種類と欄・逃げ道の記法（外・容れ物の中・塊の無いもの）・知らない種類の数で、日時は ISO 8601（オフセット付き）", () => {
     const log = createReportUsageLog(root())
 
     log.append(entry(at(9, 0)))
@@ -71,6 +72,7 @@ describe("createReportUsageLog", () => {
       "at",
       "sessionId",
       "blockKinds",
+      "blockFields",
       "notations",
       "containedNotations",
       "escapeNotations",
@@ -80,6 +82,7 @@ describe("createReportUsageLog", () => {
       v: REPORT_USAGE_FORMAT_VERSION,
       sessionId: "claude-session-1",
       blockKinds: ["text", "table"],
+      blockFields: ["tableChange"],
       notations: ["list"],
       containedNotations: [],
       escapeNotations: [],

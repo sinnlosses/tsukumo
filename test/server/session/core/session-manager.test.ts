@@ -2457,6 +2457,7 @@ describe("createSessionManager", () => {
           at: 1_000,
           sessionId: "claude-session-1",
           blockKinds: ["text"],
+          blockFields: [],
           notations: [],
           containedNotations: [],
           escapeNotations: [],

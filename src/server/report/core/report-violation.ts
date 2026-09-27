@@ -88,7 +88,10 @@ function markdownsOf(sections: readonly ReportSection[]): readonly SplitMarkdown
     .flatMap((block) => (block.kind === "markdown" ? [splitFences(block.markdown)] : []))
 }
 
-/** 塊の無い記法（`REPORT_NOTATION_PROMPT` の表にある、塊に当てはまらない記法）。 */
+/**
+ * 塊の無い記法（`REPORT_NOTATION_PROMPT` の表にある、塊に当てはまらない記法）。
+ * `dl` は表から外して `list` の `label` で書かせるが、逃げ道に残る数を見るために数え続ける。
+ */
 export type EscapeNotation = (typeof ESCAPE_NOTATIONS)[number]
 
 export const ESCAPE_NOTATIONS = [

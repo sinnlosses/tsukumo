@@ -63,8 +63,8 @@ describe("reportSectionsMarkdown", () => {
 
   it("箇条書き・番号付き・チェックリストを組む", () => {
     const items = [
-      { text: "架空の一", done: true },
-      { text: "架空の二", done: false },
+      { label: "", text: "架空の一", done: true },
+      { label: "", text: "架空の二", done: false },
     ]
 
     expect(markdownOf({ kind: "list", style: "bullet", items, fold: "" })).toBe(
@@ -124,6 +124,91 @@ describe("reportSectionsMarkdown", () => {
     )
   })
 
+  it("変わったセルは前の値と矢印の文字を ink-quiet の span に、後の値を地の文字にし、前後がどちらも数なら列を右に揃える", () => {
+    const table: ReportBlock = {
+      kind: "table",
+      title: "",
+      columns: ["項目", "件数", "名前"],
+      rows: [
+        ["架空の a", { from: "12", to: "8" }, { from: "`old|x`", to: "架空の新" }],
+        ["架空の b", "3", "架空の据え置き"],
+      ],
+      fold: "",
+    }
+
+    expect(markdownOf(table)).toBe(
+      [
+        "| 項目 | 件数 | 名前 |",
+        "| --- | ---: | --- |",
+        '| 架空の a | <span class="change-from">12 →</span> 8 | <span class="change-from">`old\\|x` →</span> 架空の新 |',
+        "| 架空の b | 3 | 架空の据え置き |",
+      ].join("\n"),
+    )
+  })
+
+  it("状態のセルと変わったセルが混じる列は中央に揃えない", () => {
+    const table: ReportBlock = {
+      kind: "table",
+      title: "",
+      columns: ["項目", "結果"],
+      rows: [
+        ["架空の a", { status: "ok", text: "" }],
+        ["架空の b", { from: "架空の前", to: "架空の後" }],
+      ],
+      fold: "",
+    }
+
+    expect(markdownOf(table)).toContain("| --- | --- |")
+  })
+
+  it("stats の before は数の上に矢印の文字を添えて出し、差は出さない", () => {
+    const stats: ReportBlock = {
+      kind: "stats",
+      items: [
+        { before: "12", value: "8", label: "架空の件数" },
+        { before: "", value: "0", label: "架空の失敗" },
+      ],
+      fold: "",
+    }
+
+    expect(markdownOf(stats)).toBe(
+      '<div class="stats"><div class="stat"><span class="stat-before">12 →</span><b>8</b>架空の件数</div>' +
+        '<div class="stat"><b>0</b>架空の失敗</div></div>',
+    )
+  })
+
+  it("名前のある並びは印を保ったまま名前と説明を span に分けて容れ物で包み、名前の無い項目も同じ形にする", () => {
+    const items = [
+      { label: "架空の名前", text: "架空の **説明**", done: true },
+      { label: "", text: "架空の説明だけ", done: false },
+    ]
+
+    expect(markdownOf({ kind: "list", style: "check", items, fold: "" })).toBe(
+      [
+        '<div class="labeled-list">',
+        "",
+        '- [x] <span class="list-label">架空の名前</span><span class="list-text">架空の **説明**</span>',
+        '- [ ] <span class="list-label"></span><span class="list-text">架空の説明だけ</span>',
+        "",
+        "</div>",
+      ].join("\n"),
+    )
+  })
+
+  it("flow は項目を札にして札の間に矢印の文字を置き、名前があれば札の頭に太字で添える", () => {
+    const items = [
+      { label: "", text: "架空の `入口`", done: false },
+      { label: "架空の段", text: "架空の<中>", done: true },
+      { label: "", text: "架空の出口", done: false },
+    ]
+
+    expect(markdownOf({ kind: "list", style: "flow", items, fold: "" })).toBe(
+      '<div class="flow"><span class="flow-step">架空の <code>入口</code></span>' +
+        '<span class="flow-arrow">→</span><span class="flow-step"><b>架空の段</b>架空の&lt;中&gt;</span>' +
+        '<span class="flow-arrow">→</span><span class="flow-step">架空の出口</span></div>',
+    )
+  })
+
   it("note は種別の class の塊で、中に Markdown を入れるので内側の前後に空行を空ける", () => {
     expect(markdownOf({ kind: "note", tone: "warn", text: "架空の注意", fold: "" })).toBe(
       '<div class="note note-warn">\n\n架空の注意\n\n</div>',
@@ -137,8 +222,8 @@ describe("reportSectionsMarkdown", () => {
     const stats: ReportBlock = {
       kind: "stats",
       items: [
-        { value: "312", label: "架空の<件数>" },
-        { value: "0", label: "架空の失敗" },
+        { before: "", value: "312", label: "架空の<件数>" },
+        { before: "", value: "0", label: "架空の失敗" },
       ],
       fold: "",
     }
@@ -153,8 +238,8 @@ describe("reportSectionsMarkdown", () => {
     const stats: ReportBlock = {
       kind: "stats",
       items: [
-        { value: "`3`", label: "架空の `a<b` 件" },
-        { value: "0", label: "架空の `` `x` `` 件" },
+        { before: "", value: "`3`", label: "架空の `a<b` 件" },
+        { before: "", value: "0", label: "架空の `` `x` `` 件" },
       ],
       fold: "",
     }
@@ -259,7 +344,7 @@ describe("reportSectionsMarkdown", () => {
         markdownOf({
           kind: "list",
           style: "bullet",
-          items: [{ text: "## 架空", done: false }],
+          items: [{ label: "", text: "## 架空", done: false }],
           fold: "",
         }),
       ).toBe("- \\## 架空")

@@ -33,6 +33,7 @@ function toRecord(entry: ReportUsageEntry): ReportUsageRecord {
     at: isoWithOffset(entry.at),
     sessionId: entry.sessionId,
     blockKinds: entry.blockKinds,
+    blockFields: entry.blockFields,
     notations: entry.notations,
     containedNotations: entry.containedNotations,
     escapeNotations: entry.escapeNotations,

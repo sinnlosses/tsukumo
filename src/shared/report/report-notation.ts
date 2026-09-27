@@ -29,23 +29,31 @@ export const REPORT_NOTE_KINDS = [
 export const REPORT_WRITTEN_MARK_NAMES = ["cols", "card"] as const satisfies readonly string[]
 
 /**
- * `note` 以外の印のうち、tsukumo が塊から組むもの（表のセルの状態のバッジ・`stats` の塊・
- * `progress` の塊）。モデルには教えない。ラベルは付かず、見た目だけを持つ。
+ * `note` 以外の印のうち、tsukumo が塊から組むもの（表のセルの状態のバッジと変化・`stats` の塊・
+ * 名前付きの `list`・`list` の `flow`・`progress` の塊）。モデルには教えない。ラベルは付かず、見た目だけを持つ。
  */
 export const REPORT_BLOCK_MARK_NAMES = [
   "badge",
   "badge-ok",
   "badge-warn",
   "badge-ng",
+  "change-from",
   "stats",
   "stat",
+  "stat-before",
+  "labeled-list",
+  "list-label",
+  "list-text",
+  "flow",
+  "flow-step",
+  "flow-arrow",
   "progress",
   "progress-step",
   "progress-step-done",
   "progress-step-current",
 ] as const satisfies readonly string[]
 
-/** 語彙が挙げる印の名前の全体（`note` の6種 + それ以外の12種）。 */
+/** 語彙が挙げる印の名前の全体（`note` の6種 + それ以外）。 */
 export const REPORT_NOTATION_NAMES = [
   ...REPORT_NOTE_KINDS.map(([name]) => name),
   ...REPORT_WRITTEN_MARK_NAMES,

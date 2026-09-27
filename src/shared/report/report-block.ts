@@ -13,19 +13,30 @@ const fold = z.string().default("").describe("畳むときの見出し（畳ん�
 
 const textBlockSchema = z.object({
   kind: z.literal("text"),
-  text: inlineText.describe("地の文。3文まで（4文目が要るなら表・箇条書きへ移すか fold で畳む）"),
+  text: inlineText.describe(
+    "地の文。3文まで（4文目が要るなら表・箇条書きへ移すか fold で畳む）。結論に効く数が2つ以上並ぶなら stats",
+  ),
   fold,
 })
 
 const listBlockSchema = z.object({
   kind: z.literal("list"),
   style: z
-    .enum(["bullet", "ordered", "check"])
+    .enum(["bullet", "ordered", "check", "flow"])
     .describe(
-      "bullet は発見・候補・ファイルの一覧（項目ごとに言うことが2つ以上なら表）/ ordered は順番に意味がある手順 / check は済み（done）と未了が混じる並び",
+      "bullet は発見・候補・ファイルの一覧（項目ごとに言うことが2つ以上なら表）/ ordered は順番に意味がある手順 / check は済み（done）と未了が混じる並び / " +
+        "flow は一本道で3段以上辿る流れ（A → B → C と書かず項目を段にする。分岐・合流・戻りがあるなら mermaid の flowchart）",
     ),
   items: z
-    .array(z.object({ text: inlineText, done: z.boolean().default(false) }))
+    .array(
+      z.object({
+        label: inlineText
+          .default("")
+          .describe("名前と説明の対の名前（「名前: 説明」と text に書かず、名前をここに分ける）"),
+        text: inlineText,
+        done: z.boolean().default(false),
+      }),
+    )
     .min(1)
     .readonly(),
   fold,
@@ -38,6 +49,9 @@ const cellSchema = z.union([
   z
     .object({ status: z.enum(REPORT_CELL_STATUSES), text: inlineText })
     .describe("状態のセル。色のバッジで描くので、状態を言う文字も text に書く"),
+  z
+    .object({ from: inlineText, to: inlineText })
+    .describe("変わったセル（A → B と書かず前と後に分ける。状態は隣の列に置く）"),
 ])
 
 const tableBlockSchema = z
@@ -71,7 +85,13 @@ const statsBlockSchema = z
   .object({
     kind: z.literal("stats"),
     items: z
-      .array(z.object({ value: z.string(), label: inlineText }))
+      .array(
+        z.object({
+          before: z.string().default("").describe("変わる前の数（前後を見せるときだけ）"),
+          value: z.string(),
+          label: inlineText,
+        }),
+      )
       .min(2)
       .max(4)
       .readonly(),
@@ -117,7 +137,9 @@ const mermaidBlockSchema = z
       ),
     fold,
   })
-  .describe("名前が3つ以上出てきて、その間を渡す・呼ぶ・分かれるでつなぐとき")
+  .describe(
+    "名前が3つ以上出てきて、その間を渡す・呼ぶ・分かれるでつなぐとき（一本道なら list の flow）",
+  )
 
 const progressBlockSchema = z
   .object({
@@ -142,7 +164,7 @@ const markdownBlockSchema = z.object({
   kind: z.literal("markdown"),
   markdown: z
     .string()
-    .describe("どの塊にも当てはまらない記法（cols・chart・svg・dl・引用・区切り線）だけ"),
+    .describe("どの塊にも当てはまらない記法（cols・chart・svg・引用・区切り線）だけ"),
   fold,
 })
 
@@ -307,12 +329,7 @@ function blockMarkdown(block: ReportBlock): string {
     case "text":
       return markdownInline(block.text)
     case "list":
-      return block.items
-        .map(
-          (item, index) =>
-            `${listMarker(block.style, index, item.done)} ${markdownInline(item.text)}`,
-        )
-        .join("\n")
+      return listMarkdown(block)
     case "table":
       return tableMarkdown(block)
     case "note":
@@ -322,8 +339,8 @@ function blockMarkdown(block: ReportBlock): string {
     case "stats":
       return `<div class="stats">${block.items
         .map(
-          ({ value, label }) =>
-            `<div class="stat"><b>${htmlInlineWithCode(value)}</b>${htmlInlineWithCode(label)}</div>`,
+          ({ before, value, label }) =>
+            `<div class="stat">${before.trim() === "" ? "" : `<span class="stat-before">${htmlInlineWithCode(before)} →</span>`}<b>${htmlInlineWithCode(value)}</b>${htmlInlineWithCode(label)}</div>`,
         )
         .join("")}</div>`
     case "code":
@@ -354,8 +371,38 @@ function progressMarkdown(block: Extract<ReportBlock, { readonly kind: "progress
   return `<div class="progress">${steps.join("")}</div>`
 }
 
+type ListBlock = Extract<ReportBlock, { readonly kind: "list" }>
+
+/**
+ * 名前（`label`）が1つでもある並びは、Markdown の並びのまま名前と説明を `span` に分けて容れ物で包む
+ * （名前と説明の2列に揃えるのは CSS。`style` の印と説明の inline の記法はそのまま効く）。
+ */
+function listMarkdown(block: ListBlock): string {
+  const style = block.style
+  if (style === "flow") {
+    return flowMarkdown(block)
+  }
+  const labeled = block.items.some((item) => item.label.trim() !== "")
+  const lines = block.items.map((item, index) => {
+    const marker = listMarker(style, index, item.done)
+    return labeled
+      ? `${marker} <span class="list-label">${markdownInline(item.label)}</span><span class="list-text">${markdownInline(item.text)}</span>`
+      : `${marker} ${markdownInline(item.text)}`
+  })
+  return labeled ? `<div class="labeled-list">\n\n${lines.join("\n")}\n\n</div>` : lines.join("\n")
+}
+
+/** 項目を札にし、札の間に矢印の文字を置く。名前があれば札の頭に太字で添える。 */
+function flowMarkdown(block: ListBlock): string {
+  const steps = block.items.map(({ label, text }) => {
+    const name = label.trim() === "" ? "" : `<b>${htmlInlineWithCode(label)}</b>`
+    return `<span class="flow-step">${name}${htmlInlineWithCode(text)}</span>`
+  })
+  return `<div class="flow">${steps.join('<span class="flow-arrow">→</span>')}</div>`
+}
+
 function listMarker(
-  style: Extract<ReportBlock, { readonly kind: "list" }>["style"],
+  style: Exclude<ListBlock["style"], "flow">,
   index: number,
   done: boolean,
 ): string {
@@ -387,19 +434,30 @@ type ColumnAlign = "left" | "right" | "center"
 /** 見た目だけの数字（符号・桁区切り・小数点・末尾の % を許す）。単位付きの数字は左揃えのまま。 */
 const NUMERIC_CELL_PATTERN = /^-?\d[\d,]*(?:\.\d+)?%?$/
 
-/** 列の全セルが状態なら中央、全セルが数なら右に揃える。 */
+type ReportCell = z.infer<typeof cellSchema>
+
+/** 列の全セルが状態なら中央、全セルが数（前と後がどちらも数の変化を含む）なら右に揃える。 */
 function columnAlign(
   rows: Extract<ReportBlock, { readonly kind: "table" }>["rows"],
   index: number,
 ): ColumnAlign {
   const cells = rows.map((row) => row[index])
-  if (cells.every((cell) => typeof cell === "object")) {
+  if (cells.every((cell) => typeof cell === "object" && "status" in cell)) {
     return "center"
   }
-  if (cells.every((cell) => typeof cell === "string" && NUMERIC_CELL_PATTERN.test(cell))) {
+  if (cells.every((cell) => cell !== undefined && isNumericCell(cell))) {
     return "right"
   }
   return "left"
+}
+
+function isNumericCell(cell: ReportCell): boolean {
+  if (typeof cell === "string") {
+    return NUMERIC_CELL_PATTERN.test(cell)
+  }
+  return (
+    "from" in cell && NUMERIC_CELL_PATTERN.test(cell.from) && NUMERIC_CELL_PATTERN.test(cell.to)
+  )
 }
 
 /** GFM の列揃えの記法（`:---:` / `---:`）。 */
@@ -414,9 +472,15 @@ function alignMarker(align: ColumnAlign): string {
   }
 }
 
-function cellMarkdown(cell: z.infer<typeof cellSchema>): string {
+function cellMarkdown(cell: ReportCell): string {
   if (typeof cell === "string") {
     return markdownInline(cell).replaceAll("|", "\\|")
+  }
+  if ("from" in cell) {
+    return `<span class="change-from">${markdownInline(cell.from)} →</span> ${markdownInline(cell.to)}`.replaceAll(
+      "|",
+      "\\|",
+    )
   }
   const badge = CELL_BADGES[cell.status]
   const mark = `<span class="badge ${badge.className}">${badge.label}</span>`

@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it } from "vitest"
 
 import { Markdown } from "../../../../../../../../src/browser/components/page/conversation/components/main-view/markdown/markdown.tsx"
 import { RepositoryFileLinkContext } from "../../../../../../../../src/browser/components/page/conversation/components/main-view/markdown/repository-link.tsx"
+import { reportSectionsMarkdown } from "../../../../../../../../src/shared/report/report-block.ts"
 import { typedElement } from "../../../../../../../typed-element.ts"
 
 afterEach(() => {
@@ -87,6 +88,36 @@ describe("Markdown（unified への置き換えが求める記法）", () => {
     // 数の側は <b> でも <strong> でも同じ見た目になる（CSS はどちらも受ける）。
     expect(container.querySelector("div.report-stat > b")?.textContent).toBe("312")
     expect(container.querySelector("div.report-stat > strong")?.textContent).toBe("0")
+  })
+
+  it("名前のある list は、項目ごとに印・名前・説明が li の直下に並び、説明の inline の記法が効く", () => {
+    const text = reportSectionsMarkdown([
+      {
+        heading: "",
+        blocks: [
+          {
+            kind: "list",
+            style: "check",
+            items: [
+              { label: "架空の名前", text: "架空の **説明**", done: true },
+              { label: "", text: "架空の説明だけ", done: false },
+            ],
+            fold: "",
+          },
+        ],
+      },
+    ])
+    const { container } = render(<Markdown text={text} />)
+
+    // CSS が li を subgrid にして名前と説明の列を揃えるので、この3つが li の直下に無いと列が崩れる。
+    const items = container.querySelectorAll("div.report-labeled-list > ul > li")
+    expect(items).toHaveLength(2)
+    expect([...(items[0]?.children ?? [])].map((child) => child.className.split(" ")[0])).toEqual([
+      "report-task-check",
+      "report-list-label",
+      "report-list-text",
+    ])
+    expect(items[0]?.querySelector("span.report-list-text > strong")?.textContent).toBe("説明")
   })
 
   it("数のバー（meter / progress）は許可リストに無いので落ちる", () => {

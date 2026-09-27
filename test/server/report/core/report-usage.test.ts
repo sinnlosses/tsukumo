@@ -43,6 +43,53 @@ describe("reportUsageEntryOf", () => {
     expect(entry.blockKinds).toEqual(["text", "table"])
   })
 
+  it("既定の値でない塊の欄を、節をまたいで重複を畳んだ集合にする", () => {
+    const event = reportEvent([
+      {
+        heading: "架空の節1",
+        blocks: [
+          {
+            kind: "table",
+            title: "",
+            columns: ["a", "b"],
+            rows: [["架空の", { from: "1", to: "2" }]],
+            fold: "",
+          },
+          {
+            kind: "stats",
+            items: [
+              { before: "", value: "1", label: "架空の一" },
+              { before: "", value: "2", label: "架空の二" },
+            ],
+            fold: "",
+          },
+        ],
+      },
+      {
+        heading: "架空の節2",
+        blocks: [
+          {
+            kind: "list",
+            style: "flow",
+            items: [{ label: "架空の名前", text: "架空の段", done: false }],
+            fold: "",
+          },
+          {
+            kind: "table",
+            title: "",
+            columns: ["a", "b"],
+            rows: [["架空の", { from: "3", to: "4" }]],
+            fold: "",
+          },
+        ],
+      },
+    ])
+
+    const entry = reportUsageEntryOf(event, "claude-session-1", 1_000)
+
+    expect(entry.blockFields).toEqual(["tableChange", "listLabel", "listFlow"])
+  })
+
   it("逃げ道（markdown の塊）の外側に出た記法の種類を数える", () => {
     const event = reportEvent([
       {
@@ -130,6 +177,7 @@ describe("reportUsageEntryOf", () => {
       at: 12_345,
       sessionId: "claude-session-9",
       blockKinds: [],
+      blockFields: [],
       notations: [],
       containedNotations: [],
       escapeNotations: [],
