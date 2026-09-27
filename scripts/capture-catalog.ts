@@ -13,14 +13,14 @@
 // 1枚だけ撮る・要素の位置と大きさを数値で読むのは `capture-view.ts`（別の道具）。こちらは
 // 「起こす → 撮る → 落とす」を繰り返す側で、測りはしない。
 //
-// 先に `bun run build` が要る。 起こす tsukumo は `dist/browser/` に置いた成果物を読むだけで、
+// 先に `pnpm run build` が要る。 起こす tsukumo は `dist/browser/` に置いた成果物を読むだけで、
 // 自分では組み立てない（`src/server/view-server/adapter/bundle.ts` 冒頭）。無いと1件ずつ
 // 起動に失敗する。
 //
 // 使い方:
-//   bun run scripts/capture-catalog.ts --help                # --only に使える名前の一覧（撮らない）
-//   bun run scripts/capture-catalog.ts --only question-multi  # 1つだけ
-//   bun run scripts/capture-catalog.ts --out /tmp/別の置き場
+//   node scripts/capture-catalog.ts --help                # --only に使える名前の一覧（撮らない）
+//   node scripts/capture-catalog.ts --only question-multi  # 1つだけ
+//   node scripts/capture-catalog.ts --out /tmp/別の置き場
 //
 // オプション無しで実行するとカタログ全部（広い窓・狭い窓の2枚ずつ）を撮る。 60秒では
 // 終わらないので、一覧が欲しいだけなら `--help` を使う。
@@ -458,7 +458,7 @@ const PREPARE_SETTLE_MS = 800
  */
 const SKIP_REVEAL_KEY = "Escape"
 
-const USAGE = `使い方: bun run scripts/capture-catalog.ts [オプション]
+const USAGE = `使い方: node scripts/capture-catalog.ts [オプション]
 
   --out <dir>     画像と索引の出力先（既定 ${DEFAULT_OUT_DIR}）
   --only <name>   カタログのうち1件だけ撮る（${CATALOG.map((entry) => entry.name).join(" / ")}）

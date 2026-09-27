@@ -1,14 +1,14 @@
 // 手元で動いている tsukumo を数え上げ、ポートで名指しした1つだけを止める。
 //
 // 複数の tsukumo を並べて動かすと、プロセスのコマンドラインはどれも `node src/cli.ts` に
-// なって見分けが付かない（`bun run dev` 経由でも同じ）。そのため名前やパターンで止めると
+// なって見分けが付かない（`pnpm run dev` 経由でも同じ）。そのため名前やパターンで止めると
 // 利用者が使っている本体まで落ちる。見分けが付く手がかりは待ち受けているポートだけなので、
 // この道具はポートを入口にする。`scripts/deny-broad-kill.ts` が広い `kill` を拒否したとき、
 // 代わりに案内する先がここ。
 //
 // 使い方:
-//   bun run scripts/stop.ts                # 動いている tsukumo を一覧する（止めない）
-//   bun run scripts/stop.ts --port 7398    # そのポートで待っているものだけ止める
+//   node scripts/stop.ts                # 動いている tsukumo を一覧する（止めない）
+//   node scripts/stop.ts --port 7398    # そのポートで待っているものだけ止める
 
 import process from "node:process"
 
@@ -19,8 +19,8 @@ import {
 import { candidatePorts, findListener } from "./lib/port-listener.ts"
 
 const USAGE = `使い方:
-  bun run scripts/stop.ts                # 動いている tsukumo を一覧する（止めない）
-  bun run scripts/stop.ts --port <ポート>  # そのポートで待っているものだけ止める`
+  node scripts/stop.ts                # 動いている tsukumo を一覧する（止めない）
+  node scripts/stop.ts --port <ポート>  # そのポートで待っているものだけ止める`
 
 /** SIGTERM を送ってから、本当に終わったかを見に行くまでの待ち時間（ミリ秒）。 */
 const TERMINATION_GRACE_MS = 700
@@ -53,7 +53,7 @@ function listAll(): void {
   for (const listener of listeners) {
     process.stdout.write(`${String(listener.port)}\t${String(listener.pid)}\t${listener.command}\n`)
   }
-  process.stdout.write(`\n止めるには: bun run scripts/stop.ts --port <ポート>\n`)
+  process.stdout.write(`\n止めるには: node scripts/stop.ts --port <ポート>\n`)
 }
 
 /** 名指しされたポートのものだけに SIGTERM を送り、終わったかどうかまで見届ける。 */

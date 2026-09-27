@@ -12,10 +12,10 @@ const HOOK_PATH = "scripts/deny-broad-kill.ts"
 
 describe("広い kill を拒否する hook", () => {
   test.each([
-    ["パターンで薙ぐ pkill", "pkill -f 'bun run'"],
+    ["パターンで薙ぐ pkill", "pkill -f 'pnpm run'"],
     ["エントリポイントを狙う pkill", 'pkill -f "src/cli.ts"'],
-    ["名前で薙ぐ killall", "killall bun"],
-    ["pgrep から kill へ流す形", "pgrep -f bun | xargs kill"],
+    ["名前で薙ぐ killall", "killall node"],
+    ["pgrep から kill へ流す形", "pgrep -f pnpm | xargs kill"],
     ["前段のコマンドに続けて書いた pkill", "echo stopping && pkill -f tsukumo"],
   ])("%s は止める", async (_name, command) => {
     expect(await runHook(command)).toBe(2)
@@ -31,7 +31,7 @@ describe("広い kill を拒否する hook", () => {
   })
 
   test("Bash 以外のツールには関わらない", async () => {
-    expect(await runHook("pkill -f bun", "Read")).toBe(0)
+    expect(await runHook("pkill -f pnpm", "Read")).toBe(0)
   })
 
   test("形が違う入力では実行を止めない", async () => {

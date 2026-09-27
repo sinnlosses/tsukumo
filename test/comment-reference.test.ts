@@ -33,8 +33,8 @@ const SOURCE_FILE_NAME = /[\w./@-]*[\w-]\.tsx?(?![\w.])/g
 // 扱うデータの形を示す例のパス（名前を foo / bar / baz にする約束）。
 const NOT_A_POINTER = /\.d\.ts$|^\.[a-z]|(?:^|\/)(?:foo|bar|baz)\.tsx?$/
 
-// コマンドとして打つ形（`bun run` のあとのスクリプト）は、指し先ではなく打つ文字列。
-const COMMAND_PREFIX = /\bbun (?:run )?$/
+// コマンドとして打つ形（`node` や `pnpm run` のあとのスクリプト）は、指し先ではなく打つ文字列。
+const COMMAND_PREFIX = /\b(?:node|pnpm(?: run)?) $/
 
 const NUMBERED_SECTION_REFERENCE =
   /(?<![\w/.-])(?:docs\/[a-z0-9-]+(?:\/[a-z0-9-]+)*|CLAUDE|README)\.md`?[ \t]*(?:\d+(?:\.\d+)*章?|原則\d+)(?![\w.])/

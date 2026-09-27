@@ -9,9 +9,9 @@
 // 出せるので、API を使わずに何度でも撮り直せる（`docs/design.md` 10章）。
 //
 // 使い方:
-//   TSUKUMO_DRIVER=fake TSUKUMO_VIEW_PORT=7398 bun run start &
-//   bun run scripts/capture-view.ts 'http://127.0.0.1:7398/?t=<起動時に出るトークン>'
-//   bun run scripts/capture-view.ts <URL> --out /tmp/view.png --size 1400x900 \
+//   TSUKUMO_DRIVER=fake TSUKUMO_VIEW_PORT=7398 pnpm run start &
+//   node scripts/capture-view.ts 'http://127.0.0.1:7398/?t=<起動時に出るトークン>'
+//   node scripts/capture-view.ts <URL> --out /tmp/view.png --size 1400x900 \
 //     --measure '[data-region="character"]' --measure '[data-region="sidebar"]'
 //
 // `--measure` に class セレクタを書くときは `[class*="…"]`。 CSS Modules が `名前_ハッシュ`
@@ -41,7 +41,7 @@ const SETTLE_TIMEOUT_MS = 10_000
  */
 const MAIN_REGION_SELECTOR = '[data-region="main"]'
 
-const USAGE = `使い方: bun run scripts/capture-view.ts <URL> [オプション]
+const USAGE = `使い方: node scripts/capture-view.ts <URL> [オプション]
 
   --out <path>          画像の出力先（既定 ${DEFAULT_OUT}）
   --size <幅>x<高さ>    窓の大きさ（既定 ${String(DEFAULT_WIDTH)}x${String(DEFAULT_HEIGHT)}）

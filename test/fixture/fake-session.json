@@ -1402,7 +1402,7 @@
             ],
             "favor": "`b.ts` のキャッシュを消してよいか決めてほしい（架空のお願い）。",
             "checks": [
-              { "status": "ok", "label": "bun run check", "detail": "架空の 1234 件が通った" },
+              { "status": "ok", "label": "pnpm run check", "detail": "架空の 1234 件が通った" },
               { "status": "ng", "label": "目盛りの E2E", "detail": "架空の 1 件が落ちた" },
               {
                 "status": "unverified",
