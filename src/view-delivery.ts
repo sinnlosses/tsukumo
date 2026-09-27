@@ -1,6 +1,6 @@
 // ビューの配信。ブラウザ側の配り方（組み立て済みの対か、Vite の開発サーバか）と、開いているタブを持ち、
 // `127.0.0.1` のサーバ・`/ws`・開発サーバを1つに束ねる。可変なのは「いまの配り方」
-// 「開いているタブ」「コンテキストの内訳の読み口」の3つで、どれもこのファイルの外へ
+// 「開いているタブ」「コンテキストの内訳と利用枠の読み口」の3つで、どれもこのファイルの外へ
 // 出ない。
 //
 // ここは配線層（`src/` 直下。docs/design.md 2章「層と依存の向き」）。
@@ -35,10 +35,14 @@ import {
   startOnResolvedPort,
 } from "./server/view-server/core/port-resolution.ts"
 import type { StartedSession } from "./session-start.ts"
-import { resolveAchievementDateKey } from "./shared/achievement.ts"
-import { type ContextUsageReport, UNAVAILABLE_CONTEXT_USAGE } from "./shared/context-usage.ts"
+import { resolveAchievementDateKey } from "./shared/achievement/achievement.ts"
+import {
+  type ContextUsageReport,
+  UNAVAILABLE_CONTEXT_USAGE,
+} from "./shared/context-usage/context-usage.ts"
 import type { RefreshTarget, ServerFrame } from "./shared/frame.ts"
-import { type SessionDigest, UNAVAILABLE_SESSION_DIGEST } from "./shared/session-digest.ts"
+import { type PlanUsageReport, UNAVAILABLE_PLAN_USAGE } from "./shared/plan-usage/plan-usage.ts"
+import { type SessionDigest, UNAVAILABLE_SESSION_DIGEST } from "./shared/session/session-digest.ts"
 
 export type ViewDeliveryOptions = {
   /** どのポートで試すか（決めるのは `src/server/view-server/core/port-resolution.ts`）。 */
@@ -98,6 +102,8 @@ export async function startViewDelivery(options: ViewDeliveryOptions): Promise<V
   // 「取れない」を返すものを置いておき、`connect` で本物に差し替える（`ui` と同じ持ち方）。
   let readContextUsage: () => Promise<ContextUsageReport> = () =>
     Promise.resolve(UNAVAILABLE_CONTEXT_USAGE)
+  // 利用枠の読み口も同じ持ち方（繋がるまでは「取れない」）。
+  let readPlanUsage: () => Promise<PlanUsageReport> = () => Promise.resolve(UNAVAILABLE_PLAN_USAGE)
   // セッション1件の中身の読み口も同じ持ち方（繋がるまでは「読めない」）。
   let readSessionDigest: (sessionId: string) => Promise<SessionDigest> = () =>
     Promise.resolve(UNAVAILABLE_SESSION_DIGEST)
@@ -113,6 +119,7 @@ export async function startViewDelivery(options: ViewDeliveryOptions): Promise<V
     readTokenUsageSummary: (days) =>
       summarizeRecentTokenUsage(options.tokenUsageLog, todayLocalDateKey(), days),
     readContextUsage: () => readContextUsage(),
+    readPlanUsage: () => readPlanUsage(),
     readSessionDigest: (sessionId) => readSessionDigest(sessionId),
     // 「今日」を決めるのは配線層（`readTokenUsageSummary` と同じ理由）。見る日の検証・今日への
     // 丸め込みも呼ぶたびにここで済ませ、`main-history.ts` には検証済みの日付キーだけを渡す。
@@ -183,6 +190,7 @@ export async function startViewDelivery(options: ViewDeliveryOptions): Promise<V
     port: started.port,
     connect: ({ manager, socketRouter }) => {
       readContextUsage = manager.readContextUsage
+      readPlanUsage = manager.readPlanUsage
       readSessionDigest = manager.readSessionDigest
       attachSessionSocket({
         httpServer: server.httpServer,

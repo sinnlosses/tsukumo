@@ -15,7 +15,7 @@
 // ようになったら、層を写した core ファイルではなく概念で切る
 // （`docs/architecture.md`「新しいコードを置く場所」）。
 
-import { CHAT_MEMORY_BUDGET } from "../../../shared/chat-memory-budget.ts"
+import { CHAT_MEMORY_BUDGET } from "../../../shared/chat/chat-memory-budget.ts"
 import { CHAT_MANNER_PROMPT } from "../../chat/core/chat-manner.ts"
 import {
   type ChatMemorySources,

@@ -6,7 +6,7 @@
 // 2文字ずつの重なりでも拾う）→ 足切り（一致が `minMatch` 未満は候補にしない）→ 新しさ
 // （`to` から経った日数で減衰し、思い出した回数が多いほど緩む）→ 点（一致 × `weight` × 新しさ）。
 
-import { CHAT_RECALL_SCORE, type ChatRecallScore } from "../../../shared/chat-memory-budget.ts"
+import { CHAT_RECALL_SCORE, type ChatRecallScore } from "../../../shared/chat/chat-memory-budget.ts"
 import type { ChatEpisodeCandidate } from "../../session-driver/core/session-driver.ts"
 
 /**

@@ -3,26 +3,25 @@
    `theme.css` のトークンに写したもの。「≡」の面の中の見た目
    （`.screen-nav-panel .screen-nav-session-tag`）は `screen-nav.module.css` の @media が持つ。 */
 
-/* ホバーの一行（.screen-nav-session-tag-tooltip）を札の真下に重ねる基準。 */
+/* 部屋の名前・「-」・短縮IDのボタンを字の並びで揃える。ホバーの一行
+   （.screen-nav-session-tag-tooltip）を札の真下に重ねる基準も兼ねる。 */
 .screen-nav-session-tag {
   position: relative;
   display: flex;
   flex: none;
-}
-/* 札そのもの。ふだんは枠も地も無く字だけに見せ、ホバー・開いているときに枠と地で押せることを
-   示す（色だけで伝えない。13.1 原則1）。 */
-.screen-nav-session-tag-button {
-  display: flex;
   align-items: baseline;
   gap: 0.5rem;
-  height: 2.5rem;
-  padding: 0 0.625rem 0 0.375rem;
-  align-self: center;
+}
+/* 押せるのは短縮IDだけ。ふだんは枠も地も無く字だけに見せ、ホバー・開いているときに枠と地で
+   押せることを示す（色だけで伝えない。13.1 原則1）。 */
+.screen-nav-session-tag-button {
+  display: inline-flex;
+  align-items: baseline;
+  padding: 0.375rem 0.5rem;
   border: 1px solid transparent;
   border-radius: 0.625rem;
   background: transparent;
   color: var(--ink);
-  line-height: 2.5rem;
   cursor: pointer;
 }
 .screen-nav-session-tag-button:hover,
@@ -53,7 +52,7 @@
   letter-spacing: 0.08em;
   line-height: 1.4;
 }
-/* ホバーの一行。見本どおり明るい地に暗い字で、帯の下の領域に重ねる（押し下げない）。 */
+/* 短縮IDへのホバーの一行。見本どおり明るい地に暗い字で、帯の下の領域に重ねる（押し下げない）。 */
 .screen-nav-session-tag-tooltip {
   position: absolute;
   top: calc(100% + 0.5rem);

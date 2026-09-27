@@ -17,8 +17,11 @@
 
 import { isPlainObject, prop, sortBy } from "remeda"
 
-import type { AchievementGraduation, AchievementMilestone } from "../../../shared/achievement.ts"
-import { parseNewTaskFile } from "../../../shared/task-summary.ts"
+import type {
+  AchievementGraduation,
+  AchievementMilestone,
+} from "../../../shared/achievement/achievement.ts"
+import { parseNewTaskFile } from "../../../shared/repository/task-summary.ts"
 
 /** `git log` から読んだコミット1件（呼び出し側が `--name-only` の出力を割ったもの）。 */
 export type AchievementCommit = {

@@ -7,12 +7,15 @@ import {
   achievementReflectionRequestText,
   type DailyAchievement,
   isEmptyAchievementDay,
-} from "../../../shared/achievement.ts"
+} from "../../../shared/achievement/achievement.ts"
 import type { CommandInputs } from "../../../shared/command.ts"
 import type { sessionContract } from "../../../shared/contract/session.ts"
 import { FRAME_ERROR_REASON } from "../../../shared/frame.ts"
-import { BUILTIN_SESSION_DEFAULT, type SessionDefault } from "../../../shared/session-default.ts"
-import type { SessionEvent } from "../../../shared/session-event.ts"
+import {
+  BUILTIN_SESSION_DEFAULT,
+  type SessionDefault,
+} from "../../../shared/session/session-default.ts"
+import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import type { DispatchResult } from "../../core/command-receiver.ts"
 import type { DiaryDayTask } from "../../diary/core/diary-tool.ts"
 import type { DiaryWriteRequest, DiaryWriterSource } from "../../diary/core/diary-writer.ts"

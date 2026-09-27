@@ -92,7 +92,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### 部屋
 
-- **英語識別子（予定）**: `room`（名前は `roomName(viewPort)`。`src/shared/room.ts`）
+- **英語識別子（予定）**: `room`（名前は `roomName(viewPort)`。`src/shared/view-server/room.ts`）
 - **定義**: 起こした tsukumo 1つの居場所。**ビューのポート1つが部屋1つ**で、同じディレクトリで
   2つめを起こすとポートがずれて別の部屋になる
 - **注記**: 名前は和の色名12個をポートの並び順に割り当てたもの（7327 が「空色の間」。
@@ -164,7 +164,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### 利用上限
 
-- **英語識別子（予定）**: `rateLimit`（型は `src/shared/rate-limit.ts` の `RateLimit`、状態は
+- **英語識別子（予定）**: `rateLimit`（型は `src/shared/session-driver/rate-limit.ts` の `RateLimit`、状態は
   `SessionState.rateLimit`、イベントは `rate-limit-changed`）
 - **定義**: claude.ai の契約で使える量の枠（5時間枠・7日間枠など）に達した、という状態と、
   いつ戻るか。SDK の `rate_limit_event` が運ぶ
@@ -210,7 +210,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### ターンの失敗
 
-- **英語識別子（予定）**: `turnFailure`（型は `src/shared/turn-failure.ts` の `TurnFailure`、
+- **英語識別子（予定）**: `turnFailure`（型は `src/shared/session-driver/turn-failure.ts` の `TurnFailure`、
   記録は `SessionRecord` の `turn-failure`、終わり方は `turn-finished` の `outcome`）
 - **定義**: ターンが**失敗で終わった**ことと、その理由（API のエラーの種類・往復の上限・予算の
   上限・実行中のエラー）。**中断は失敗に含めない**
@@ -222,7 +222,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### 背景のタスク
 
-- **英語識別子（予定）**: `backgroundTask`（型は `src/shared/background-task.ts` の
+- **英語識別子（予定）**: `backgroundTask`（型は `src/shared/session-driver/background-task.ts` の
   `BackgroundTask`、状態は `SessionState.backgroundTasks`、イベントは `background-tasks-changed`）
 - **定義**: ターンが終わったあとも claude が動かし続けているもの（`run_in_background` の Bash・
   背景のサブエージェントなど）。SDK の `system` / `background_tasks_changed` が顔ぶれ全体を
@@ -263,7 +263,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
   **呼び出しそのものも検査する**: 機械で判定できる記法の条に違反した呼び出しは描かずに、違反と
   直し方を戻り値で返して呼び直させる（1ターンに1回まで。`src/server/report/core/report-review.ts`）。
   本文は描く前に塊ごとに整形して、意味の変わらないもの（`conclusion` の繰り返し・定型だけの塊と行・
-  逃げ道の中の中身の無い見出し・塊の残らない節）を落とす（`src/shared/report-tidy.ts`）
+  逃げ道の中の中身の無い見出し・塊の残らない節）を落とす（`src/shared/report/report-tidy.ts`）
 - **避ける言い方**: レポートツール、reply
 
 ### remember ツール
@@ -404,7 +404,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 - **注記**: **押せない・畳めない**（利用者の操作の対象にしない）。**圧縮の数値**
   （`compact_metadata` の `pre_tokens` / `post_tokens` / `duration_ms`）は運ばない・画面に
   出さない
-- **注記**: **仕事のメインビューには出さない。** 出るのは雑談のログ（`shared/chat-log.ts` の
+- **注記**: **仕事のメインビューには出さない。** 出るのは雑談のログ（`shared/chat/chat-log.ts` の
   `chatLogEntries`）だけ
 - **避ける言い方**: 忘却の印、要約の境界、コンパクション境界
 
@@ -463,7 +463,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 - **英語識別子（予定）**: `UsageReviewStage`（`model` / `cache` / `tool` / `context` / `proposal`）
 - **定義**: 見直しの進みを区切る5つの段。モデルの使い分け → キャッシュの効き方 → ツールの呼び方と
   結果の大きさ → コンテキストの中身 → 見直し案をまとめる、の順
-- **注記**: 段の並びと見出しは `src/shared/usage-review.ts` が持つ。**いまの段より前は済、後は
+- **注記**: 段の並びと見出しは `src/shared/usage-review/usage-review.ts` が持つ。**いまの段より前は済、後は
   未着手**と読む（済んだ段を1つずつ運ばない）。段の右に添える数（モデルの数など）はスキルから
   受け取らず、画面が tsukumo の集計から出す
 - **避ける言い方**: ステップ（依頼の手順・`step-usage` と紛れる）、フェーズ
@@ -510,7 +510,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### 前回の見直し
 
-- **英語識別子（予定）**: `PreviousUsageReview`（`src/shared/usage-review.ts`）
+- **英語識別子（予定）**: `PreviousUsageReview`（`src/shared/usage-review/usage-review.ts`）
 - **定義**: 直前の1回の見直しの結果。ホームのファイル（`previous-usage-review.ts` が読み書き）に
   残り、トークン消費の画面の「前回の提案」のリンクが読む
 - **注記**: **「見直し」の状態（`idle` / `running` / `result`）とは別**——見直しは起こし直すと
@@ -714,7 +714,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 - **英語識別子（予定）**: `interim`（`MainViewStep.interim`）
 - **定義**: **ターンの途中で出たレポート**。1つのターンで `report` ツールが何度か呼ばれたときの、
-  最後でない呼び出し（`src/shared/main-view.ts` の `selectToolReports`）。メインビューには印を
+  最後でない呼び出し（`src/shared/session/main-view.ts` の `selectToolReports`）。メインビューには印を
   付けた枠で残る。通った `report` はそこで SDK のターンを閉じるので、中間レポートは背景のタスクや
   委譲の合図で始まる続きのターンをまたいで生まれる
 - **注記**: `report` が呼ばれなかったターンには中間レポートは無い（最後の本文だけを出す）。規則は
@@ -742,7 +742,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 ### 検証結果
 
 - **英語識別子（予定）**: `checks`（`report` ツールの引数の名前）/ `ReportCheck`（1項目。
-  `src/shared/report-check.ts`）/ `ReportCheckStatus`（`ok` / `ng` / `unverified`）
+  `src/shared/report/report-check.ts`）/ `ReportCheckStatus`（`ok` / `ng` / `unverified`）
 - **定義**: **そのターンで何をどう確かめたか**（テスト・型検査・手で見たこと）。1項目は
   状態（`status`）・何で確かめたか（`label`）・件数や差分（`detail`）で、`report` の `checks` に
   並べて入れる。tsukumo が結論のすぐ下に1本の帯として描き、状態はバッジの色と文字
@@ -754,7 +754,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### 節
 
-- **英語識別子（予定）**: `ReportSection`（`src/shared/report-block.ts`）/ `sections`（記録と
+- **英語識別子（予定）**: `ReportSection`（`src/shared/report/report-block.ts`）/ `sections`（記録と
   `SessionEvent` の `report` の欄）/ `heading`（節の見出し）
 - **定義**: **レポートの本文を区切る1段**。見出し（`heading`）と、その下に平らに並ぶ塊の並びを持つ。
   本文は節の並びで、入れ子は節の1段だけ。見出しが空の節は見出しを描かない
@@ -766,7 +766,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### 塊
 
-- **英語識別子（予定）**: `ReportBlock`（`src/shared/report-block.ts`）/ `kind`（`text` / `list` /
+- **英語識別子（予定）**: `ReportBlock`（`src/shared/report/report-block.ts`）/ `kind`（`text` / `list` /
   `table` / `note` / `stats` / `code` / `mermaid` / `progress` / `markdown`）/ `fold`（畳むときの見出し）
 - **定義**: **節の中に並ぶ、種類の決まった本文の1単位**。種類ごとに決まった形で Markdown に組んで
   描く（`reportSectionsMarkdown`）。塊の文字は行頭の塊の記法と `<` を逃がし、インラインの記法
@@ -846,7 +846,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### 依頼の手順
 
-- **英語識別子（予定）**: `turnStep`（一覧を導く関数は `src/shared/turn-step.ts` の
+- **英語識別子（予定）**: `turnStep`（一覧を導く関数は `src/shared/session/turn-step.ts` の
   `currentTurnSteps`）
 - **定義**: いちばん新しい依頼（ターン）の中で claude が呼んだツール1回ぶん。済み / 実行中 /
   失敗 のどれかで、ツール名と対象（`summarizeToolInput` の要約）を持つ
@@ -1030,7 +1030,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
   `frame.subscribe` の Event Iterator の1件として届く。`hello` は購読の最初の snapshot、`events` は
   まとめたイベント、`refresh` は開発中の取り直しの合図。**コマンドの応答はフレームではない**
   （同じ `/ws` に乗る手続きの応答。下の「コマンド」）
-- **注記**: 経路名 `/ws` とトークンのクエリ名は `src/shared/session-socket.ts` が正典で、
+- **注記**: 経路名 `/ws` とトークンのクエリ名は `src/shared/view-server/session-socket.ts` が正典で、
   `adapter` と `browser` は値を再掲しない
 - **避ける言い方**: メッセージ（SDK の `SDKMessage` と紛れる）、パケット
 

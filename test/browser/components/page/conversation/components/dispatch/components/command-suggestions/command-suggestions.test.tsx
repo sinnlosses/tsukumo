@@ -7,7 +7,7 @@ import {
   matchingCommands,
   shouldShowCommandSuggestions,
 } from "../../../../../../../../../src/browser/components/page/conversation/components/dispatch/components/command-suggestions/command-suggestions.tsx"
-import type { CommandDescription } from "../../../../../../../../../src/shared/session-event.ts"
+import type { CommandDescription } from "../../../../../../../../../src/shared/session/session-event.ts"
 
 afterEach(() => {
   cleanup()

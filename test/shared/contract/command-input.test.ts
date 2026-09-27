@@ -3,16 +3,16 @@ import { describe, expect, it } from "vitest"
 import {
   MAX_CHARACTER_NAME_LENGTH,
   MAX_CHARACTER_TAGLINE_LENGTH,
-} from "../../../src/shared/character-definition.ts"
-import { MAX_CHARACTER_PACK_NAME_LENGTH } from "../../../src/shared/character.ts"
+} from "../../../src/shared/character-pack/character-definition.ts"
+import { MAX_CHARACTER_PACK_NAME_LENGTH } from "../../../src/shared/character-pack/character.ts"
+import { MAX_PORTRAIT_BYTES } from "../../../src/shared/character-pack/portrait-image.ts"
+import { MAX_REMEMBERED_LINE_LENGTH } from "../../../src/shared/chat/persona-memory.ts"
 import { MAX_PROMPT_TEXT_LENGTH } from "../../../src/shared/contract/session.ts"
-import { MAX_REMEMBERED_LINE_LENGTH } from "../../../src/shared/persona-memory.ts"
-import { MAX_PORTRAIT_BYTES } from "../../../src/shared/portrait-image.ts"
+import { commandContract } from "../../../src/shared/rpc.ts"
 import {
   MAX_PROMPT_IMAGE_THUMBNAIL_DATA_URL_LENGTH,
   MAX_PROMPT_IMAGES,
-} from "../../../src/shared/prompt-image.ts"
-import { commandContract } from "../../../src/shared/rpc.ts"
+} from "../../../src/shared/session-driver/prompt-image.ts"
 
 /** 手続きの名前（`session.prompt` のように機能と手続きを `.` で繋いだもの）→ 入力のスキーマ。 */
 const INPUT_SCHEMAS = new Map(

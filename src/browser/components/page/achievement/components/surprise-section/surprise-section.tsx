@@ -6,10 +6,10 @@ import type { ReactElement } from "react"
 import type {
   AchievementGraduation,
   AchievementMilestone,
-} from "../../../../../../shared/achievement.ts"
-import { Heading } from "../../../../../components/ui/heading/heading.tsx"
-import { Text } from "../../../../../components/ui/text/text.tsx"
-import { VStack } from "../../../../../components/ui/v-stack/v-stack.tsx"
+} from "../../../../../../shared/achievement/achievement.ts"
+import { Heading } from "../../../../ui/heading/heading.tsx"
+import { Text } from "../../../../ui/text/text.tsx"
+import { VStack } from "../../../../ui/v-stack/v-stack.tsx"
 import styles from "../../achievement.module.css"
 
 export type SurpriseSectionProps = {

@@ -7,12 +7,12 @@ import { useUsageReview } from "../../../../../../src/browser/components/page/to
 import {
   INITIAL_SESSION_STATE,
   type SessionState,
-} from "../../../../../../src/shared/session-state.ts"
+} from "../../../../../../src/shared/session/session-state.ts"
 import {
   USAGE_REVIEW_REQUEST_TEXT,
   type UsageProposal,
   type UsageReviewFindings,
-} from "../../../../../../src/shared/usage-review.ts"
+} from "../../../../../../src/shared/usage-review/usage-review.ts"
 import { rpcOutput, stubRpcFetch, type RpcFetchStub } from "../../../../rpc-fetch-stub.ts"
 import { type CommandSpy, type SentCommand, putSession } from "../../../../session-store.ts"
 

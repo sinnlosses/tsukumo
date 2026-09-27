@@ -355,7 +355,7 @@ const CATALOG: readonly CatalogEntry[] = [
     name: "current-work-failed",
     // 自分の `request` を持つ場面（`current-work-running` と同じ理由）。`report` 場面には
     // 失敗した手順があっても `request` が無いので「依頼の手順」に一度も現れない
-    // （`src/shared/turn-step.ts` の `currentTurnSteps` は最後の `request` より前の手順を
+    // （`src/shared/session/turn-step.ts` の `currentTurnSteps` は最後の `request` より前の手順を
     // 落とす）。ターンが終わったあとでも「前の依頼での手順」に失敗した1件（`isError: true` の
     // Bash）が残る。
     scene: "current-work-failed",

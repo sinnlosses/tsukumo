@@ -20,15 +20,15 @@
 import clsx from "clsx"
 import type { ReactElement } from "react"
 
-import { Button } from "../../../../../../../components/ui/button/button.tsx"
-import { HStack } from "../../../../../../../components/ui/h-stack/h-stack.tsx"
-import { Text } from "../../../../../../../components/ui/text/text.tsx"
 import {
   useQuestionAnswer,
   type QuestionOptionRow,
 } from "../../../../../../../stores/question-answer.ts"
 import { useQuestionScroll } from "../../../../../../../stores/question-scroll.ts"
 import { useTurnSelection } from "../../../../../../../stores/turn-selection.ts"
+import { Button } from "../../../../../../ui/button/button.tsx"
+import { HStack } from "../../../../../../ui/h-stack/h-stack.tsx"
+import { Text } from "../../../../../../ui/text/text.tsx"
 import { Markdown } from "../../markdown/markdown.tsx"
 import notationStyles from "../../markdown/report-notation.module.css"
 import { useQuestionAskScroll } from "./hooks/use-question-ask-scroll.ts"

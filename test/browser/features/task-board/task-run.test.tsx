@@ -4,8 +4,14 @@ import { afterEach, describe, expect, it } from "vitest"
 
 import { TaskBoard } from "../../../../src/browser/features/task-board/task-board.tsx"
 import { TaskList } from "../../../../src/browser/features/task-board/task-list.tsx"
-import { INITIAL_SESSION_STATE, type SessionState } from "../../../../src/shared/session-state.ts"
-import type { TaskSummaryItem, TaskSummaryResult } from "../../../../src/shared/task-summary.ts"
+import type {
+  TaskSummaryItem,
+  TaskSummaryResult,
+} from "../../../../src/shared/repository/task-summary.ts"
+import {
+  INITIAL_SESSION_STATE,
+  type SessionState,
+} from "../../../../src/shared/session/session-state.ts"
 import { type CommandSpy, putSession } from "../../session-store.ts"
 
 // フィクスチャはすべて手で書いた架空のタスク（実物の develop/tasks.json は使わない）。

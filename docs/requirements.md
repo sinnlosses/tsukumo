@@ -333,7 +333,7 @@ Orca は「ページを表示する箱」として第一級であり、VS Code �
   - **ラベルはパックごとに違う**（語の系統が違うパックは別の言い回しを持つ。実物は各パックの
     `character.json`）
   - **選択肢に出るのは、立ち絵かラベルのどちらかが定義にある表情**
-    （`src/shared/expression-choice.ts`）。**`default` は定義に無くても必ず出る**（未知の表情の
+    （`src/shared/character-pack/expression-choice.ts`）。**`default` は定義に無くても必ず出る**（未知の表情の
     落とし先なので、これが無いと受け付けられる名前が1つも無くなる）
   - つまり**ラベルだけ足したパックでも、その表情を選べる**（立ち絵は `default` に落ちる）。
     **絵が揃っていないパックでも壊れない**のはこのため。選択肢から外れるのは、立ち絵もラベルも
@@ -360,7 +360,7 @@ Orca は「ページを表示する箱」として第一級であり、VS Code �
   Asuna output style の「出撃時の掛け声」のモデル分岐と対応させる。モデルは**SDK に渡した値と
   `system` の `init` から分かる**。値の形式（短い別名か解決済みの完全なモデルIDか）は場合に
   よるので、衣装の判定は部分一致で行う
-- 表情・衣装の対応は、キャラクター定義ファイルの形式が決まるまで `src/shared/expression.ts` に置く
+- 表情・衣装の対応は、キャラクター定義ファイルの形式が決まるまで `src/shared/character-pack/expression.ts` に置く
   （決まったら定義ファイル側へ移す。**移行の段8で `character.json` の `expressions` へ移す**。
   `docs/design.md` 7章）
 - **立ち絵は動くが話さない**（2026-09-13）。演出はブラウザ側の `Portrait` 部品の中に閉じる
@@ -754,7 +754,7 @@ tsukumo 側のキャッシュ・スナップショットは作らない。
   自動要約 → 最初の依頼、の順に決まる表示用の題。`getSessionInfo` / `listSessions` が返す
   `SDKSessionInfo.summary`）。追加のモデル呼び出しで tsukumo が題を作ることはしない。
   `SessionChoice.heading` として運び、読めない・空なら無いものとして畳む
-  （`src/shared/session-choice.ts`）。**`/clear` で分かれたセッションは別の行のまま**でよく
+  （`src/shared/session/session-choice.ts`）。**`/clear` で分かれたセッションは別の行のまま**でよく
   （それぞれに中身の分かる見出しが付けば足りる）、前後をつなぐ仕組みは作らない。行の形
   （短縮ID・見出し・時刻・見出しが無いときの見え方）は `docs/screen-design.md`「切り替え画面」
   が正典。**画面から新しいセッションを起こす口**（切り替え画面の「＋ 新しいセッション」。

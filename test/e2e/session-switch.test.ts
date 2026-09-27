@@ -49,7 +49,7 @@ describe("セッションの切り替え", () => {
     await room.settleAndMatch(ELAPSED_MS)
   })
 
-  it("⌘K で開き、↓ で選んで Enter で切り替えると switchSession が流れて起こし直す", async () => {
+  it("札で開き、↓ で選んで Enter で切り替えると switchSession が流れて起こし直す", async () => {
     const room = await run.open({
       scenario: "session-switch-enter",
       scene: "session-list",
@@ -57,7 +57,7 @@ describe("セッションの切り替え", () => {
     })
 
     await room.waitForEvent("sessions-changed")
-    await room.page.keyboard.press("Meta+k")
+    await room.page.getByRole("button", { name: SESSION_TAG }).click()
     const search = room.page.getByRole("combobox", { name: "セッションを探す" })
     await search.waitFor()
     await search.press("ArrowDown")

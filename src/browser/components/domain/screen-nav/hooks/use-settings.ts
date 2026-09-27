@@ -40,7 +40,7 @@ import { isEffortLevel, isModelAlias, type ModelAlias } from "../../../../../sha
 import {
   isSessionDefaultPermissionMode,
   type SessionDefaultPermissionMode,
-} from "../../../../../shared/session-default.ts"
+} from "../../../../../shared/session/session-default.ts"
 import {
   applyAppearanceColorOverride,
   changeAppearanceColor,

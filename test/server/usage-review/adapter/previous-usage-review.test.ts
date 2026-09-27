@@ -8,7 +8,7 @@ import {
   readPreviousUsageReview,
   writePreviousUsageReview,
 } from "../../../../src/server/usage-review/adapter/previous-usage-review.ts"
-import type { UsageReviewFindings } from "../../../../src/shared/usage-review.ts"
+import type { UsageReviewFindings } from "../../../../src/shared/usage-review/usage-review.ts"
 
 // 数も文面もすべて手で書いた架空のもの（会話の実物は使わない。docs/coding-standards.md「会話内容の扱い」）。
 let dir: string

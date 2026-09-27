@@ -26,6 +26,10 @@ import {
 import { hostProcedure } from "./server/host/adapter/host-procedure.ts"
 import type { HostCommandPorts } from "./server/host/core/host-command.ts"
 import {
+  type PlanUsageProcedurePorts,
+  planUsageProcedure,
+} from "./server/plan-usage/adapter/plan-usage-procedure.ts"
+import {
   type RepositoryProcedurePorts,
   repositoryProcedure,
 } from "./server/repository/adapter/repository-procedure.ts"
@@ -58,6 +62,7 @@ import { commandContract, rpcContract } from "./shared/rpc.ts"
 export type RpcRouterPorts = RepositoryProcedurePorts &
   TokenUsageProcedurePorts &
   ContextUsageProcedurePorts &
+  PlanUsageProcedurePorts &
   AchievementProcedurePorts &
   SessionDigestProcedurePorts
 
@@ -70,6 +75,7 @@ export function createRpcRouter(ports: RpcRouterPorts) {
       repository: repositoryProcedure(ports),
       tokenUsage: tokenUsageProcedure(ports),
       contextUsage: contextUsageProcedure(ports),
+      planUsage: planUsageProcedure(ports),
       achievement: achievementProcedure(ports),
       sessionDigest: sessionDigestProcedure(ports),
     })

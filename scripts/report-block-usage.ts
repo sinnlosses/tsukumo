@@ -12,8 +12,8 @@ import { z } from "zod"
 import { dateFileNames, readJsonLines } from "../src/server/adapter/lib/jsonl.ts"
 import { reportUsageDir } from "../src/server/report/adapter/report-usage-log.ts"
 import { MARKDOWN_NOTATIONS } from "../src/server/report/core/report-violation.ts"
-import { REPORT_BLOCK_KINDS } from "../src/shared/report-block.ts"
-import { REPORT_USAGE_FORMAT_VERSION } from "../src/shared/report-usage-record.ts"
+import { REPORT_BLOCK_KINDS } from "../src/shared/report/report-block.ts"
+import { REPORT_USAGE_FORMAT_VERSION } from "../src/shared/report/report-usage-record.ts"
 
 const USAGE = `使い方:
   node scripts/report-block-usage.ts             # 直近28日

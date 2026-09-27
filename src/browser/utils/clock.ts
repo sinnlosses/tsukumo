@@ -5,7 +5,7 @@
 
 /**
  * いまのエポックミリ秒。返すのはエポックミリ秒の数で、`Temporal.Instant` のままでは
- * 返さない — 経過時間の比較と引き算に使う相手（`src/shared/portrait-motion.ts` /
+ * 返さない — 経過時間の比較と引き算に使う相手（`src/shared/session/portrait-motion.ts` /
  * `session-state.ts` の `at`）が数の契約だから。
  */
 export function nowEpochMilliseconds(): number {
@@ -39,4 +39,19 @@ export function clockTime(at: Temporal.ZonedDateTime): string {
  */
 export function clockDateTime(at: Temporal.ZonedDateTime): string {
   return at.toString({ timeZoneName: "never", smallestUnit: "minute" })
+}
+
+/**
+ * 戻る時刻の字。今日なら `HH:MM`、別の日なら `M/D HH:MM`（読む人のタイムゾーンで）。
+ * 入力欄の利用上限の知らせ（`use-turn-status.ts`）とサイドバーの利用枠の札
+ * （`plan-usage-row.tsx`）の2つが読むので、ここに1つだけ置く
+ * （docs/design.md 2章「上げる引き金は「2つ目の読み手が出たとき」」）。
+ */
+export function dayAwareClockTime(epochMilliseconds: number, now: number): string {
+  const timeZone = localTimeZoneId()
+  const at = zonedDateTime(epochMilliseconds, timeZone)
+  const today = zonedDateTime(now, timeZone)
+  return at.toPlainDate().equals(today.toPlainDate())
+    ? clockTime(at)
+    : `${String(at.month)}/${String(at.day)} ${clockTime(at)}`
 }

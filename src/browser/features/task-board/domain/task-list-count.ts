@@ -3,7 +3,7 @@
 // ので、この機能はもう持たない（以前は `taskListTitle` が「タスク一覧 todo N / doing N /
 // done N」を組み立てていた。経緯は docs/display.md 4.2）。
 
-import type { TaskSummaryItem } from "../../../../shared/task-summary.ts"
+import type { TaskSummaryItem } from "../../../../shared/repository/task-summary.ts"
 
 export type TaskListCountItem = {
   readonly status: "doing" | "todo" | "done"

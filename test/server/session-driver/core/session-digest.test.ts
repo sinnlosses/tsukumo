@@ -6,8 +6,8 @@ import {
   TSUKUMO_MCP_SERVER_NAME,
 } from "../../../../src/server/session-driver/core/sdk-message.ts"
 import { toSessionDigest } from "../../../../src/server/session-driver/core/session-digest.ts"
-import type { Expression } from "../../../../src/shared/expression.ts"
-import { MAX_SESSION_SUMMARY_LENGTH } from "../../../../src/shared/session-digest.ts"
+import type { Expression } from "../../../../src/shared/character-pack/expression.ts"
+import { MAX_SESSION_SUMMARY_LENGTH } from "../../../../src/shared/session/session-digest.ts"
 
 // フィクスチャはすべて手で書いた架空のやり取り（docs/coding-standards.md「会話内容の扱い」）。
 const EXPRESSIONS: readonly Expression[] = ["default", "proud"]

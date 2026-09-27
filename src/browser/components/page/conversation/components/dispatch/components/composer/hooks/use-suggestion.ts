@@ -15,8 +15,8 @@
 
 import { useState } from "react"
 
-import { commandSuggestions } from "../../../../../../../../../shared/command-suggestion.ts"
-import type { CommandDescription } from "../../../../../../../../../shared/session-event.ts"
+import { commandSuggestions } from "../../../../../../../../../shared/session/command-suggestion.ts"
+import type { CommandDescription } from "../../../../../../../../../shared/session/session-event.ts"
 import { useRepositoryFilePaths } from "../../../../hooks/use-repository-file-paths.ts"
 import {
   matchingCommands,

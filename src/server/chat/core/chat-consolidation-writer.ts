@@ -12,7 +12,7 @@
 // 渡す行も前のあらすじも受け取る出力も会話の内容に当たる。メモリにだけ持ち、書くのは索引と
 // あらすじのファイルだけで、ログには出さない（docs/coding-standards.md「会話内容の扱い」）。
 
-import { CHAT_MEMORY_BUDGET } from "../../../shared/chat-memory-budget.ts"
+import { CHAT_MEMORY_BUDGET } from "../../../shared/chat/chat-memory-budget.ts"
 import type { ChatArchive, ChatSummary } from "../../session-driver/core/session-driver.ts"
 import {
   CHAT_CONSOLIDATION_TIMEOUT_MS,

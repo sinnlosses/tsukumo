@@ -21,8 +21,8 @@ import {
   type ServerFrame,
 } from "../../../../src/shared/frame.ts"
 import type { socketContract } from "../../../../src/shared/rpc.ts"
-import { SESSION_SOCKET_PATH } from "../../../../src/shared/session-socket.ts"
-import { INITIAL_SESSION_STATE } from "../../../../src/shared/session-state.ts"
+import { INITIAL_SESSION_STATE } from "../../../../src/shared/session/session-state.ts"
+import { SESSION_SOCKET_PATH } from "../../../../src/shared/view-server/session-socket.ts"
 
 // 会話は流さない（フレームの中身は初期状態と架空のセリフだけ）。
 const TOKEN = createStartupToken()

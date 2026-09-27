@@ -9,7 +9,7 @@ import {
   type TokenUsageDays,
   type TokenUsageSummary,
   type TokenUsageTotals,
-} from "../../../../../src/shared/token-usage-summary.ts"
+} from "../../../../../src/shared/token-usage/token-usage-summary.ts"
 
 /**
  * 見た目だけを測る（`hooks/use-token-usage.ts` は素通しなので、フィクスチャは手で書いた

@@ -19,7 +19,7 @@
 import { useEffect, useRef, useState, type ReactElement } from "react"
 import { isObjectType } from "remeda"
 
-import { vendorAssetPath } from "../../../../../../../shared/vendor-asset.ts"
+import { vendorAssetPath } from "../../../../../../../shared/view-server/vendor-asset.ts"
 import { Text } from "../../../../../ui/text/text.tsx"
 import styles from "./report-notation.module.css"
 import { loadVendorScript } from "./vendor-script.ts"

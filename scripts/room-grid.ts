@@ -8,7 +8,7 @@
 
 import type { OrcaTab } from "../src/server/host/adapter/orca-host.ts"
 import { LAYOUT_PATH } from "../src/server/view-server/adapter/server.ts"
-import { SESSION_TOKEN_QUERY_NAME } from "../src/shared/session-socket.ts"
+import { SESSION_TOKEN_QUERY_NAME } from "../src/shared/view-server/session-socket.ts"
 import type { Listener } from "./lib/port-listener.ts"
 
 /** 前回開いた格子のタブを見分けて閉じるための、固定の `<title>`。会話由来ではない定型文。 */

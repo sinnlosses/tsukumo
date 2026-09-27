@@ -7,8 +7,8 @@ import { rpc } from "../../../../../src/browser/domain/rpc.ts"
 import {
   type ContextUsageReport,
   UNAVAILABLE_CONTEXT_USAGE,
-} from "../../../../../src/shared/context-usage.ts"
-import { INITIAL_SESSION_STATE } from "../../../../../src/shared/session-state.ts"
+} from "../../../../../src/shared/context-usage/context-usage.ts"
+import { INITIAL_SESSION_STATE } from "../../../../../src/shared/session/session-state.ts"
 import { readyContextUsage } from "../../../../fixture/context-usage.ts"
 import { stubRpcFetch } from "../../../rpc-fetch-stub.ts"
 import { putSession } from "../../../session-store.ts"

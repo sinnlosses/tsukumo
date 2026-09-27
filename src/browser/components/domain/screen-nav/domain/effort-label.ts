@@ -12,7 +12,7 @@
 // 独立した状態として持つ（`EffortSelect` の `unknown`）。
 
 import type { EffortLevel, ModelAlias } from "../../../../../shared/command.ts"
-import type { ModelEffortSupport } from "../../../../../shared/session-event.ts"
+import type { ModelEffortSupport } from "../../../../../shared/session/session-event.ts"
 
 /**
  * effort の値と、画面に出すラベル。モデルと同じく機械が付けた値（13.1 原則3。値そのものは
@@ -99,7 +99,7 @@ export function resolveEffortSelect(
  *
  * 実測: `supportedModels()` の `value` はエイリアスと一致するとは限らない——`opus` /
  * `sonnet` / `haiku` は一致するが、`fable` は `claude-fable-5-1` のような値になる
- * （`src/shared/session-event.ts` の `ModelEffortSupport` を参照）。
+ * （`src/shared/session/session-event.ts` の `ModelEffortSupport` を参照）。
  */
 function findModelEffortSupport(
   support: readonly ModelEffortSupport[],

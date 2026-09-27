@@ -2,11 +2,11 @@ import { act, cleanup, renderHook, waitFor } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
 import { useCharacterCreate } from "../../../../../../../../src/browser/components/page/character/components/character-create/hooks/use-character-create.ts"
-import type { CharacterPackEntry } from "../../../../../../../../src/shared/character.ts"
+import type { CharacterPackEntry } from "../../../../../../../../src/shared/character-pack/character.ts"
 import {
   INITIAL_SESSION_STATE,
   type SessionState,
-} from "../../../../../../../../src/shared/session-state.ts"
+} from "../../../../../../../../src/shared/session/session-state.ts"
 import { characterPackEntry } from "../../../../../../../fixture/character.ts"
 import { type CommandSpy, putState, putSession } from "../../../../../../session-store.ts"
 

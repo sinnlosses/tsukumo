@@ -6,7 +6,7 @@ import { useQuestionDraft } from "../../../../../../../../../src/browser/stores/
 import {
   INITIAL_SESSION_STATE,
   type SessionState,
-} from "../../../../../../../../../src/shared/session-state.ts"
+} from "../../../../../../../../../src/shared/session/session-state.ts"
 import { typedElement } from "../../../../../../../../typed-element.ts"
 import { type CommandSpy, putSession } from "../../../../../../../session-store.ts"
 
@@ -192,26 +192,10 @@ describe("TurnStatus", () => {
       }
     })
 
-    it("利用上限が近いときは「利用上限が近い」を出し、別の日に戻るなら日付も添える", () => {
-      const now = Temporal.ZonedDateTime.from("2026-09-24T12:00:00[UTC]")
-      const clock = vi.spyOn(Temporal.Now, "instant").mockReturnValue(now.toInstant())
-      const zone = vi.spyOn(Temporal.Now, "timeZoneId").mockReturnValue("UTC")
-      try {
-        renderTurnStatus({
-          rateLimit: {
-            kind: "warning",
-            bucket: "seven-day",
-            resetsAt: now.add({ days: 2 }).epochMilliseconds,
-          },
-        })
+    it("利用上限が近い（clear に畳んだ状態）では知らせを出さない——枠の残り具合はサイドバーの利用枠が出す", () => {
+      renderTurnStatus({ rateLimit: { kind: "clear" } })
 
-        const notice = screen.getByRole("status")
-        expect(notice.textContent).toBe("利用上限が近い")
-        expect(notice.title).toBe("7日間枠の利用上限が近い。9/26 12:00に戻る")
-      } finally {
-        clock.mockRestore()
-        zone.mockRestore()
-      }
+      expect(screen.queryByRole("status")).toBeNull()
     })
   })
 })

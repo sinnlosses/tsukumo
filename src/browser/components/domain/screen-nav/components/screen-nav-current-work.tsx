@@ -14,8 +14,8 @@
 import clsx from "clsx"
 import { useId, type ReactElement } from "react"
 
-import { Button } from "../../../../components/ui/button/button.tsx"
-import { Text } from "../../../../components/ui/text/text.tsx"
+import { Button } from "../../../ui/button/button.tsx"
+import { Text } from "../../../ui/text/text.tsx"
 import type {
   ScreenNavCurrentWork,
   ScreenNavCurrentWorkBackgroundTask,

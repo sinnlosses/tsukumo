@@ -4,7 +4,7 @@ import type { ReactElement, ReactNode } from "react"
 import { afterEach, describe, expect, it } from "vitest"
 
 import { useAchievementCalendar } from "../../../../../../src/browser/components/page/achievement/hooks/use-achievement-calendar.ts"
-import type { AchievementCalendar } from "../../../../../../src/shared/achievement-calendar.ts"
+import type { AchievementCalendar } from "../../../../../../src/shared/achievement/achievement-calendar.ts"
 import {
   rpcError,
   rpcOutput,

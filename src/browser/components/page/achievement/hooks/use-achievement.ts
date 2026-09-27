@@ -26,9 +26,16 @@ import {
   type AchievementGraduation,
   type AchievementMilestone,
   type DailyAchievement,
-} from "../../../../../shared/achievement.ts"
-import type { CharacterInfo, CharacterPackEntry } from "../../../../../shared/character.ts"
-import type { DailyDiaryStatus, DiaryStage, DiaryWriting } from "../../../../../shared/diary.ts"
+} from "../../../../../shared/achievement/achievement.ts"
+import type {
+  CharacterInfo,
+  CharacterPackEntry,
+} from "../../../../../shared/character-pack/character.ts"
+import type {
+  DailyDiaryStatus,
+  DiaryStage,
+  DiaryWriting,
+} from "../../../../../shared/diary/diary.ts"
 import {
   DEFAULT_CHARACTER_NAME,
   portraitAppearance,

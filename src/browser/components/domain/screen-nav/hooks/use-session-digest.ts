@@ -6,7 +6,7 @@
 
 import { skipToken, useQuery } from "@tanstack/react-query"
 
-import type { SessionDigest } from "../../../../../shared/session-digest.ts"
+import type { SessionDigest } from "../../../../../shared/session/session-digest.ts"
 import { rpc } from "../../../../domain/rpc.ts"
 
 /** まだ届いていないあいだは `loading`（「読めない」と取り違えないための区別）。 */

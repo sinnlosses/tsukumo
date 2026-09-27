@@ -17,14 +17,21 @@
 // `portraits` / `outfitAccents` とは別に {@link shownPortraits} / {@link shownOutfitAccents} を置く
 // （`toCharacterInfo` と同じ畳み方で、呼ぶ側は「ある」ものだけを書く）。
 //
-// `character-changed` イベントは `{ kind } & CharacterInfo & { packs }`（src/shared/session-event.ts）
+// `character-changed` イベントは `{ kind } & CharacterInfo & { packs }`（src/shared/session/session-event.ts）
 // なので、{@link characterChangedEvent} は `characterInfo` に `kind` / `packs` を足して広げるだけ。
 // 一覧の1件（`CharacterPackEntry`）は {@link characterPackEntry} で組む。
 
-import type { CharacterDefinition } from "../../src/shared/character-definition.ts"
-import type { CharacterInfo, CharacterPackEntry } from "../../src/shared/character.ts"
-import { type Expression, EXPRESSIONS, type Outfit } from "../../src/shared/expression.ts"
-import type { SessionEvent } from "../../src/shared/session-event.ts"
+import type { CharacterDefinition } from "../../src/shared/character-pack/character-definition.ts"
+import type {
+  CharacterInfo,
+  CharacterPackEntry,
+} from "../../src/shared/character-pack/character.ts"
+import {
+  type Expression,
+  EXPRESSIONS,
+  type Outfit,
+} from "../../src/shared/character-pack/expression.ts"
+import type { SessionEvent } from "../../src/shared/session/session-event.ts"
 
 /** 画面に渡る姿（`SessionState.character` と `character-changed` の中身）。 */
 export function characterInfo(overrides: Partial<CharacterInfo> = {}): CharacterInfo {

@@ -13,16 +13,16 @@ import { z } from "zod"
 import {
   type ExpressionChoice,
   expressionNames as toExpressionNames,
-} from "../../../shared/expression-choice.ts"
-import type { Expression } from "../../../shared/expression.ts"
-import { reportSectionSchema } from "../../../shared/report-block.ts"
-import { reportCheckSchema } from "../../../shared/report-check.ts"
+} from "../../../shared/character-pack/expression-choice.ts"
+import type { Expression } from "../../../shared/character-pack/expression.ts"
+import { reportSectionSchema } from "../../../shared/report/report-block.ts"
+import { reportCheckSchema } from "../../../shared/report/report-check.ts"
 import {
   USAGE_PROPOSAL_FOLLOW_UPS,
   USAGE_PROPOSAL_IMPACTS,
   USAGE_PROPOSAL_KINDS,
   USAGE_REVIEW_STAGES,
-} from "../../../shared/usage-review.ts"
+} from "../../../shared/usage-review/usage-review.ts"
 import { chatRecallEpisodeText, chatRecallListText } from "../../chat/core/chat-memory-prompt.ts"
 import type { ReportReview } from "../../report/core/report-review.ts"
 import {

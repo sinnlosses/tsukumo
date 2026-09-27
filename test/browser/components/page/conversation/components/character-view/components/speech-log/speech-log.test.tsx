@@ -5,7 +5,7 @@ import { SpeechLog } from "../../../../../../../../../src/browser/components/pag
 import {
   INITIAL_SESSION_STATE,
   type SessionRecord,
-} from "../../../../../../../../../src/shared/session-state.ts"
+} from "../../../../../../../../../src/shared/session/session-state.ts"
 import { characterInfo } from "../../../../../../../../fixture/character.ts"
 import { requestRecord, speechRecord } from "../../../../../../../../fixture/session-record.ts"
 import { putSession } from "../../../../../../../session-store.ts"

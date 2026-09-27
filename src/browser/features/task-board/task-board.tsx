@@ -7,7 +7,7 @@
 
 import type { ReactElement } from "react"
 
-import type { TaskSummaryResult } from "../../../shared/task-summary.ts"
+import type { TaskSummaryResult } from "../../../shared/repository/task-summary.ts"
 import { BoardCloseContext } from "./board-close.tsx"
 import { useTaskBoard } from "./hooks/use-task-board.ts"
 import { PresentationalTaskBoard } from "./presentational-task-board.tsx"

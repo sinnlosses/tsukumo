@@ -5,7 +5,7 @@ import type {
   MainViewStep,
   MainViewStepBody,
   MainViewTurn,
-} from "../../../../../../../../../src/shared/main-view.ts"
+} from "../../../../../../../../../src/shared/session/main-view.ts"
 
 // 本物の `Report`（react-markdown 一式と演出の配線を持つ）ではなく、どの本文に演出を掛けると
 // 言われたかだけを記録する代役に差し替える。演出そのもの（`reveal/use-report-reveal.ts`）は

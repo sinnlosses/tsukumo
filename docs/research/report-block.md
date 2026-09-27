@@ -7,7 +7,7 @@
 
 **きっかけ**: `report` の `body`（Markdown の文字列）を、型の付いた塊の配列として受け取り、塊の種類ごとに
 決まった部品で描けないか（利用者は方向に同意し、「もっと考えないといけない」としている）。
-前例は検証結果の欄 `checks`（`src/shared/report-check.ts`。型で受けて帯で描く）。
+前例は検証結果の欄 `checks`（`src/shared/report/report-check.ts`。型で受けて帯で描く）。
 
 **対象**: `main` の `1ed67333`。
 
@@ -30,7 +30,7 @@
 ## 1. いまの流れと、条の守られ方
 
 流れは「検査（`report-review.ts` / `report-violation.ts`）→ 記録（引数のまま）→ 整形
-（`src/shared/report-tidy.ts`）→ 組み立て（`src/shared/main-view.ts` の `reportMarkdown`）→ Markdown の描画
+（`src/shared/report/report-tidy.ts`）→ 組み立て（`src/shared/session/main-view.ts` の `reportMarkdown`）→ Markdown の描画
 （`src/browser/components/page/conversation/components/main-view/markdown/`）」。
 
 **`body` に関わる条がいまどう守られているか**
@@ -106,7 +106,7 @@ json-render と A2UI が平らな表にしている理由（流しながら描�
 1つ消える。どちらにも当たらない `cols`・`chart`・`svg`・`dl`・引用・区切り線は逃げ道に残す。
 
 ```ts
-// src/shared/report-block.ts（案）。checks と同じく zod の形の出どころはここだけ
+// src/shared/report/report-block.ts（案）。checks と同じく zod の形の出どころはここだけ
 const inlineText = z.string() // インラインの Markdown（5章）。改行は描くときに畳む
 
 const fold = {
@@ -196,7 +196,7 @@ sections: z.array(reportSectionSchema).min(1).optional()
 ```
 
 - **`note` の種別の名前は記法の class 名（`note-warn` など）と別に持つ**。描くときに class 名へ写すのは
-  組み立ての1箇所で、ラベル（「注意」など）は今と同じく `src/shared/report-notation.ts` の表から引く
+  組み立ての1箇所で、ラベル（「注意」など）は今と同じく `src/shared/report/report-notation.ts` の表から引く
 - **型では表せず、handler の検査に残す条**: 表の行の長さが `columns` と揃うこと・節が2つ以上なら全部に
   `heading` があること・`note` の数・`text` の文の数・mermaid の種類
 - **`fold` を容れ物にしない理由**: `<details>` の中身は1種類の塊が大半（2章）で、容れ物にすると
@@ -270,7 +270,7 @@ sections: z.array(reportSectionSchema).min(1).optional()
 | 検査 `too-many-notes` / `unknown-mermaid` / `long-conclusion` | 残る（数え方が「塊を数える」「`source` の頭の語」に単純になる）                                                                 |
 | 検査（新）                                                    | 表の行の長さ・節の見出しの有無・逃げ道の中の記法                                                                                |
 | 整形 `report-tidy.ts`                                         | 残る。「中身の無い見出し」は型（`blocks` が1つ以上）で起きなくなり、`markdown` の塊と過去の記録のためだけに残る                 |
-| 許可リスト `src/shared/report-notation.ts`                    | 残る。組み立てが塊を class 名へ写すときにここを引き、逃げ道の中の記法もここで決まる                                             |
+| 許可リスト `src/shared/report/report-notation.ts`             | 残る。組み立てが塊を class 名へ写すときにここを引き、逃げ道の中の記法もここで決まる                                             |
 | `sanitize-schema.ts`                                          | 残る（逃げ道と過去の記録。組み立てが出す HTML も通す）                                                                          |
 | 記法の文面 `REPORT_NOTATION_PROMPT`                           | 10か条は残る（中身の書き方）。条9・条10 は節の `heading` の説明へ移る。**表のうち塊になった行は落ち、使い方は各塊の説明へ移る** |
 
@@ -312,7 +312,7 @@ sections: z.array(reportSectionSchema).min(1).optional()
 
 ## 11. 段階的に移す順番
 
-1. **塊の形と組み立て**（見た目は変えない）: `src/shared/report-block.ts` に形と「塊 → Markdown」を置き、
+1. **塊の形と組み立て**（見た目は変えない）: `src/shared/report/report-block.ts` に形と「塊 → Markdown」を置き、
    記録と `SessionEvent` を `sections` に替える。ツールの引数はまだ `body` のままで、境界で逃げ道の塊
    1つに畳む。過去のレポートの見た目が変わらないことを E2E で見る
 2. **ツールの引数を `sections` に切り替える**: schema と各塊の説明、検査と整形の塊ごとの掛け直し、

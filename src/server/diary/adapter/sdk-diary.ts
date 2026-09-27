@@ -20,9 +20,9 @@ import {
   type ExpressionChoice,
   expressionNames,
   resolveExpressionLabel,
-} from "../../../shared/expression-choice.ts"
-import type { Expression } from "../../../shared/expression.ts"
-import type { SessionEvent } from "../../../shared/session-event.ts"
+} from "../../../shared/character-pack/expression-choice.ts"
+import type { Expression } from "../../../shared/character-pack/expression.ts"
+import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import {
   TSUKUMO_MCP_SERVER_NAME,
   tsukumoToolFullName,

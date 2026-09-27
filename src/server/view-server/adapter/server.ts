@@ -25,15 +25,15 @@ import {
   CHARACTER_ASSET_PATH_PREFIX,
   type CharacterAssetLocation,
   readCharacterAssetPath,
-} from "../../../shared/character-asset.ts"
+} from "../../../shared/character-pack/character-asset.ts"
+import { RPC_PATH, type rpcContract } from "../../../shared/rpc.ts"
 import {
   parsePromptImage,
   PROMPT_IMAGE_PATH_PREFIX,
   promptImageIdSchema,
-} from "../../../shared/prompt-image.ts"
-import { RPC_PATH, type rpcContract } from "../../../shared/rpc.ts"
-import { SESSION_TOKEN_QUERY_NAME } from "../../../shared/session-socket.ts"
-import { VENDOR_PATH_PREFIX, vendorAssetPath } from "../../../shared/vendor-asset.ts"
+} from "../../../shared/session-driver/prompt-image.ts"
+import { SESSION_TOKEN_QUERY_NAME } from "../../../shared/view-server/session-socket.ts"
+import { VENDOR_PATH_PREFIX, vendorAssetPath } from "../../../shared/view-server/vendor-asset.ts"
 import type { UiBundle } from "./bundle.ts"
 import { type RpcContext, rpcContextOf } from "./rpc-guard.ts"
 import type { UiDevServer } from "./ui-dev-server.ts"

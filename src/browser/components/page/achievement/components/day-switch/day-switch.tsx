@@ -5,13 +5,13 @@
 
 import type { ReactElement } from "react"
 
-import { previousDateKey } from "../../../../../../shared/achievement.ts"
-import { Button } from "../../../../../components/ui/button/button.tsx"
-import { HStack } from "../../../../../components/ui/h-stack/h-stack.tsx"
-import { Heading } from "../../../../../components/ui/heading/heading.tsx"
-import { Text } from "../../../../../components/ui/text/text.tsx"
-import { VStack } from "../../../../../components/ui/v-stack/v-stack.tsx"
+import { previousDateKey } from "../../../../../../shared/achievement/achievement.ts"
 import { dayLabel } from "../../../../../utils/day-label.ts"
+import { Button } from "../../../../ui/button/button.tsx"
+import { HStack } from "../../../../ui/h-stack/h-stack.tsx"
+import { Heading } from "../../../../ui/heading/heading.tsx"
+import { Text } from "../../../../ui/text/text.tsx"
+import { VStack } from "../../../../ui/v-stack/v-stack.tsx"
 import styles from "../../achievement.module.css"
 import type { AchievementDaySwitch } from "../../hooks/use-achievement.ts"
 

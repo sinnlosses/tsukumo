@@ -23,8 +23,6 @@
 import clsx from "clsx"
 import type { ReactElement } from "react"
 
-import { HStack } from "../../../components/ui/h-stack/h-stack.tsx"
-import { Text } from "../../../components/ui/text/text.tsx"
 import {
   contextUsageRefetchKey,
   type UseContextUsageResult,
@@ -32,6 +30,8 @@ import {
 } from "../../../domain/context-usage.ts"
 import { useSession } from "../../../stores/session.ts"
 import { formatCount } from "../../../utils/format-count.ts"
+import { HStack } from "../../ui/h-stack/h-stack.tsx"
+import { Text } from "../../ui/text/text.tsx"
 import styles from "./sidebar.module.css"
 
 const ROW_LABEL = "コンテキスト"

@@ -8,13 +8,13 @@
 
 import { useRef, type ReactElement } from "react"
 
-import { Portrait } from "../../../../../components/domain/portrait.tsx"
-import { Button } from "../../../../../components/ui/button/button.tsx"
-import { Dialog } from "../../../../../components/ui/dialog/dialog.tsx"
-import { HStack } from "../../../../../components/ui/h-stack/h-stack.tsx"
-import { Heading } from "../../../../../components/ui/heading/heading.tsx"
-import { Text } from "../../../../../components/ui/text/text.tsx"
-import { VStack } from "../../../../../components/ui/v-stack/v-stack.tsx"
+import { Portrait } from "../../../../domain/portrait.tsx"
+import { Button } from "../../../../ui/button/button.tsx"
+import { Dialog } from "../../../../ui/dialog/dialog.tsx"
+import { HStack } from "../../../../ui/h-stack/h-stack.tsx"
+import { Heading } from "../../../../ui/heading/heading.tsx"
+import { Text } from "../../../../ui/text/text.tsx"
+import { VStack } from "../../../../ui/v-stack/v-stack.tsx"
 import styles from "../../achievement.module.css"
 import type { AchievementReviewButton } from "../../hooks/use-achievement.ts"
 import type {

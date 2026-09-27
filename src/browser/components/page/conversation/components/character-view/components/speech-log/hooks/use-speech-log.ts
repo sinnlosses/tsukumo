@@ -12,8 +12,14 @@
 import { useEffect, useRef, useState, type RefObject } from "react"
 import { sumBy } from "remeda"
 
-import type { RecordTime, SessionRecord } from "../../../../../../../../../shared/session-state.ts"
-import { turnSpeeches, type TurnSpeech } from "../../../../../../../../../shared/turn-speech.ts"
+import type {
+  RecordTime,
+  SessionRecord,
+} from "../../../../../../../../../shared/session/session-state.ts"
+import {
+  turnSpeeches,
+  type TurnSpeech,
+} from "../../../../../../../../../shared/session/turn-speech.ts"
 import { useSession } from "../../../../../../../../stores/session.ts"
 import {
   clockDateTime,

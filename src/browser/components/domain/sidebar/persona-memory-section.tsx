@@ -14,11 +14,11 @@
 
 import { useState, type ReactElement } from "react"
 
-import { Button } from "../../../components/ui/button/button.tsx"
-import { Dialog } from "../../../components/ui/dialog/dialog.tsx"
-import { HStack } from "../../../components/ui/h-stack/h-stack.tsx"
-import { Text } from "../../../components/ui/text/text.tsx"
 import { useSession } from "../../../stores/session.ts"
+import { Button } from "../../ui/button/button.tsx"
+import { Dialog } from "../../ui/dialog/dialog.tsx"
+import { HStack } from "../../ui/h-stack/h-stack.tsx"
+import { Text } from "../../ui/text/text.tsx"
 import { SidebarSection } from "./section.tsx"
 import styles from "./sidebar.module.css"
 

@@ -17,7 +17,7 @@ import {
   takeSystemPromptAppend,
   toSystemPromptMode,
 } from "../../../../src/server/system-prompt/core/system-prompt.ts"
-import { CHAT_MEMORY_BUDGET } from "../../../../src/shared/chat-memory-budget.ts"
+import { CHAT_MEMORY_BUDGET } from "../../../../src/shared/chat/chat-memory-budget.ts"
 
 // `systemPrompt` に何が・どの順で載るかを、3通り（仕事・雑談・続きから始めるとき）で固定する
 // （docs/design.md 7章）。本物の駆動を起こして確かめることはできない（`systemPrompt` は

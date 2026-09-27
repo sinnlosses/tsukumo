@@ -9,8 +9,11 @@ import {
   writeDismissedUsageProposalKey,
 } from "../../../../src/server/usage-review/adapter/usage-proposal-dismissal.ts"
 import { createUsageReviewIntake } from "../../../../src/server/usage-review/core/usage-review-tool.ts"
-import type { SessionEvent } from "../../../../src/shared/session-event.ts"
-import { type UsageReviewFindings, usageProposalKey } from "../../../../src/shared/usage-review.ts"
+import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
+import {
+  type UsageReviewFindings,
+  usageProposalKey,
+} from "../../../../src/shared/usage-review/usage-review.ts"
 
 // 見送った提案の一覧が、ホームのファイル（読み書きは
 // `src/server/usage-review/adapter/usage-proposal-dismissal.ts`）から `createUsageReviewIntake` へ実際に

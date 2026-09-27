@@ -150,7 +150,7 @@ describe("useContextUsage", () => {
     stubContextUsageFetch(() => rpcOutput(readyContextUsage()))
 
     // `state.lastTurnFinishedAt` から作った key の並び（`contextUsageRefetchKey` を経由）。
-    // `running` に移っても `lastTurnFinishedAt` 自体は戻らない（`shared/session-state.ts`）ので、
+    // `running` に移っても `lastTurnFinishedAt` 自体は戻らない（`shared/session/session-state.ts`）ので、
     // ここでは同じ 300 が続くことをそのまま key に反映する——`state.turn` から作っていた旧実装が
     // 巻き戻っていた場面（受け入れの確認で見つかった不具合）の再現。
     const { result, rerender } = renderHook(

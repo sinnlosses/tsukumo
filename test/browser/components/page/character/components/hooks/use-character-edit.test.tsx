@@ -6,11 +6,11 @@ import {
   type CharacterEditModel,
   useCharacterEdit,
 } from "../../../../../../../src/browser/components/page/character/components/hooks/use-character-edit.ts"
-import type { CharacterPackEntry } from "../../../../../../../src/shared/character.ts"
+import type { CharacterPackEntry } from "../../../../../../../src/shared/character-pack/character.ts"
 import {
   INITIAL_SESSION_STATE,
   type SessionState,
-} from "../../../../../../../src/shared/session-state.ts"
+} from "../../../../../../../src/shared/session/session-state.ts"
 import {
   characterInfo,
   characterPackEntry,

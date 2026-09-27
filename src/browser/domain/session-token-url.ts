@@ -6,7 +6,7 @@
 //
 // 返すのは相対パス+クエリだけで、プロトコルとホストは付けない。
 
-import { SESSION_TOKEN_QUERY_NAME } from "../../shared/session-socket.ts"
+import { SESSION_TOKEN_QUERY_NAME } from "../../shared/view-server/session-socket.ts"
 
 /** `path` に起動トークンを付けた URL を返す。 */
 export function sessionTokenUrl(path: string): string {

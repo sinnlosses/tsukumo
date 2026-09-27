@@ -3,8 +3,8 @@
 // （`sessionCommands`）へ渡る。断る条件は契約の `meta` にあり、見るのは `rpcGuard`で、
 // ここは口の形と `session` の行の型、行を呼ぶ `receiveSessionCommand` だけを持つ。
 
-import type { SessionEvent } from "../../../shared/session-event.ts"
-import type { SessionState } from "../../../shared/session-state.ts"
+import type { SessionEvent } from "../../../shared/session/session-event.ts"
+import type { SessionState } from "../../../shared/session/session-state.ts"
 import {
   type DispatchResult,
   type FeatureReceiver,

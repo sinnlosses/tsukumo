@@ -9,11 +9,11 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-li
 import { afterEach, describe, expect, it } from "vitest"
 
 import { ScreenNav } from "../../../../../src/browser/components/domain/screen-nav/screen-nav.tsx"
-import type { SessionChoice } from "../../../../../src/shared/session-choice.ts"
+import type { SessionChoice } from "../../../../../src/shared/session/session-choice.ts"
 import {
   INITIAL_SESSION_STATE,
   type SessionState,
-} from "../../../../../src/shared/session-state.ts"
+} from "../../../../../src/shared/session/session-state.ts"
 import { setPageUrl } from "../../../../dom-environment.ts"
 import { rpcOutput, stubRpcFetch, type RpcFetchStub } from "../../../rpc-fetch-stub.ts"
 import { type CommandSpy, putSession, type SentCommand } from "../../../session-store.ts"
@@ -103,14 +103,16 @@ describe("セッションの札と切り替え画面", () => {
     expect(switcherOpen()).toBe(true)
   })
 
-  it("⌘K でも開き、もう一度押すと閉じる", () => {
+  it("押せるのは短縮IDだけで、部屋の名前はボタンの外に出る", () => {
     renderNav({})
+    const [tag] = screen.getAllByRole("button", { name: /セッション FA。/u })
+    if (tag === undefined) {
+      throw new Error("札が無い")
+    }
 
-    fireEvent.keyDown(document, { key: "k", metaKey: true })
-    expect(switcherOpen()).toBe(true)
-
-    fireEvent.keyDown(document, { key: "k", metaKey: true })
-    expect(switcherOpen()).toBe(false)
+    expect(tag.textContent).toBe("FA")
+    fireEvent.pointerEnter(tag)
+    expect(screen.getByRole("tooltip").textContent).toContain("セッション FA")
   })
 
   it("一覧は今日・昨日・それより前に分かれ、いまの行に「いま」が付く", () => {
@@ -149,6 +151,28 @@ describe("セッションの札と切り替え画面", () => {
 
     expect(sent).toEqual([{ procedure: "session.switchSession", sessionId: "c3000000-0000" }])
     expect(switcherOpen()).toBe(false)
+  })
+
+  it("Ctrl+N でも ↓ と同じに下の行を選ぶ", () => {
+    const sent: SentCommand[] = []
+    renderNav({}, (command) => sent.push(command))
+    openByTag()
+
+    fireEvent.keyDown(searchBox(), { key: "n", ctrlKey: true })
+    fireEvent.keyDown(searchBox(), { key: "Enter" })
+
+    expect(sent).toEqual([{ procedure: "session.switchSession", sessionId: "c3000000-0000" }])
+  })
+
+  it("Ctrl+P でも ↑ と同じに上の行（いま出しているセッション）を選ぶ", () => {
+    const sent: SentCommand[] = []
+    renderNav({}, (command) => sent.push(command))
+    openByTag()
+
+    fireEvent.keyDown(searchBox(), { key: "p", ctrlKey: true })
+    fireEvent.keyDown(searchBox(), { key: "Enter" })
+
+    expect(sent).toEqual([])
   })
 
   it("いま出しているセッションを選んで Enter しても送らない", () => {

@@ -53,8 +53,8 @@
 `test/browser/components/page/conversation/main-view/markdown/notation.test.tsx`・
 `test/browser/components/page/conversation/main-view/report.test.tsx`・`test/browser/stores/main-view-turn.test.ts`・
 `test/server/adapter/vendor-asset.test.ts`・`test/server/core/report-notation.test.ts`・
-`test/shared/character.test.ts`・`test/shared/portrait-image.test.ts`・
-`test/shared/portrait-motion.test.ts`・`test/shared/turn-speech.test.ts`・`test/shared/utterance.test.ts`
+`test/shared/character-pack/character.test.ts`・`test/shared/character-pack/portrait-image.test.ts`・
+`test/shared/session/portrait-motion.test.ts`・`test/shared/session/turn-speech.test.ts`・`test/shared/utterance.test.ts`
 
 **ただしこれは消す理由にならない。** 規約の表がそう決めている（「そのテストを外しても到達行・分岐が
 減らない」は**それだけでは消す理由にしない**）。実際この15個は、どれも**同じ振る舞いを上位が別の入力で
@@ -68,12 +68,12 @@
 
 ### テスト1件
 
-| ファイル                         | テスト名                         | 代わりに守っているテスト                                                                                                    |
-| -------------------------------- | -------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| `test/shared/expression.test.ts` | `fable の完全なモデルIDでも拾う` | 同ファイルの `完全なモデルIDに含まれていても拾う`（`claude-opus-4-1-20250805`）と `fable は opus と同じ戦闘配置`（`fable`） |
+| ファイル                                        | テスト名                         | 代わりに守っているテスト                                                                                                    |
+| ----------------------------------------------- | -------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `test/shared/character-pack/expression.test.ts` | `fable の完全なモデルIDでも拾う` | 同ファイルの `完全なモデルIDに含まれていても拾う`（`claude-opus-4-1-20250805`）と `fable は opus と同じ戦闘配置`（`fable`） |
 
 理由: `resolveOutfit` は `OUTFIT_BY_MODEL_SUBSTRING` を1回 `find` するだけで、短い別名も完全なモデルIDも
-**同じ1本の分岐**を通る（`src/shared/expression.ts`）。`claude-fable-5-1` は「完全なモデルIDでも拾う」と
+**同じ1本の分岐**を通る（`src/shared/character-pack/expression.ts`）。`claude-fable-5-1` は「完全なモデルIDでも拾う」と
 「`fable` は heavy」の積でしかなく、その2つはそれぞれ別のテストが固定している。後者の2件には
 **部分一致にしている理由のコメントも付いている**ので、説明の置き場所としても残るのはそちら。
 
@@ -92,7 +92,7 @@
 
 「代わりに守っているテスト」を添えられなかったので外した。
 
-- `test/shared/character.test.ts` の `素材の版が違えば、同じパック・同じファイル名でも URL が変わる` —
+- `test/shared/character-pack/character.test.ts` の `素材の版が違えば、同じパック・同じファイル名でも URL が変わる` —
   `characterAssetCacheKey` の混ぜ方と `toCharacterInfo` の `pack` の配線は別のテストが固定しているが、
   **`toCharacterInfo` が `revision` を `characterAssetCacheKey` に渡していること**を守るのはこれだけ。
   消すと引数を落としても誰も落ちない
@@ -192,13 +192,13 @@
   コードのコメントにある取り決め。**足すなら先に要件側へ書く**のが順序
 - `src/server/adapter/fake-driver.ts:155-199`（`interrupt` / `setModel` / `setPermissionMode`）— 目視確認と
   Playwright のための代役で、守るべき契約は本物の駆動（`src/server/core/session-driver.ts`）の側
-- `src/server/core/sdk-message.ts:172,199,219,257,265`・`src/shared/main-view.ts:378`・
-  `src/shared/portrait-image.ts:40` ほかの「読めない値は空文字・`undefined`」— 同じ関数の別の入口で
+- `src/server/core/sdk-message.ts:172,199,219,257,265`・`src/shared/session/main-view.ts:378`・
+  `src/shared/character-pack/portrait-image.ts:40` ほかの「読めない値は空文字・`undefined`」— 同じ関数の別の入口で
   同じ結果を既に固定している
 
 ## 付記（この作業の範囲外）
 
-テスト名に**タスク番号が残っている**ものが `test/shared/main-view.test.ts` の回帰テストと
+テスト名に**タスク番号が残っている**ものが `test/shared/session/main-view.test.ts` の回帰テストと
 `test/browser/components/page/conversation/main-view/main-view.test.tsx` の対応する回帰テストにある。
 `CLAUDE.md`「コーディング規約」の「コード・ドキュメントにタスク番号を書かない」に反するが、
 ここではテストに手を入れないので直していない。

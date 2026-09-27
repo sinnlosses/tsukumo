@@ -4,7 +4,7 @@
 
 import type { ReactElement } from "react"
 
-import type { TaskReadiness } from "../../../../shared/task-summary.ts"
+import type { TaskReadiness } from "../../../../shared/repository/task-summary.ts"
 import { Text } from "../../../components/ui/text/text.tsx"
 import { TaskIdList } from "./task-id-list.tsx"
 

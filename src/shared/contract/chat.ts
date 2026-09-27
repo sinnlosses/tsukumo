@@ -3,9 +3,9 @@
 
 import { z } from "zod"
 
+import { MAX_REMEMBERED_LINE_LENGTH } from "../chat/persona-memory.ts"
 import { commandBase } from "../command.ts"
 import { FRAME_ERROR_REASON } from "../frame.ts"
-import { MAX_REMEMBERED_LINE_LENGTH } from "../persona-memory.ts"
 
 export const chatContract = {
   /**

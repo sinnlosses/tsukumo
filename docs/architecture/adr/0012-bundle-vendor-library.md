@@ -8,7 +8,7 @@ Chart.js）を使うことにした（2026-09-10 のユーザーの決定。2026
 外部スクリプトはそのページの中身を読めるうえ、表示のたびに外部へリクエストが飛ぶ。
 ローカルの HTTP サーバ（`127.0.0.1`）から配れば、**機能はそのまま・表示時の外部通信はゼロ**に
 できる。配る名前は allowlist の対応表で、リクエストのパスからファイル名を組み立てない
-（`..` で外へ出る経路を作らない。`src/shared/vendor-asset.ts` と `src/server/view-server/adapter/server.ts`）。
+（`..` で外へ出る経路を作らない。`src/shared/view-server/vendor-asset.ts` と `src/server/view-server/adapter/server.ts`）。
 
 **実ファイルは `node_modules` から読む**（2026-09-20。ユーザーの指示「外部ライブラリは
 package.json に定義したり」で、cdnjs から落としたものを `vendor/` に置く形をやめた）。

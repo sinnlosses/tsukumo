@@ -2,7 +2,10 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
 import { TaskBoard } from "../../../../src/browser/features/task-board/task-board.tsx"
-import type { TaskSummaryItem, TaskSummaryResult } from "../../../../src/shared/task-summary.ts"
+import type {
+  TaskSummaryItem,
+  TaskSummaryResult,
+} from "../../../../src/shared/repository/task-summary.ts"
 
 // フィクスチャはすべて手で書いた架空のタスク（実物の develop/tasks.json は使わない）。
 

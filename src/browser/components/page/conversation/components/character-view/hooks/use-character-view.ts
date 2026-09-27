@@ -18,15 +18,15 @@ import {
   resolveOutfit,
   type Expression,
   type Outfit,
-} from "../../../../../../../shared/expression.ts"
+} from "../../../../../../../shared/character-pack/expression.ts"
 import {
   nextPortraitMotionTransitionDelayMs,
   resolvePortraitMotion,
   type PortraitMotion,
   type PortraitMotionInput,
-} from "../../../../../../../shared/portrait-motion.ts"
-import type { SessionRecord } from "../../../../../../../shared/session-state.ts"
-import { turnSpeeches, type TurnSpeech } from "../../../../../../../shared/turn-speech.ts"
+} from "../../../../../../../shared/session/portrait-motion.ts"
+import type { SessionRecord } from "../../../../../../../shared/session/session-state.ts"
+import { turnSpeeches, type TurnSpeech } from "../../../../../../../shared/session/turn-speech.ts"
 import { portraitAppearance } from "../../../../../../domain/portrait-appearance.ts"
 import { useSession } from "../../../../../../stores/session.ts"
 import { useTurnSelection } from "../../../../../../stores/turn-selection.ts"

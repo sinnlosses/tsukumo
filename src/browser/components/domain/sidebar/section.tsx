@@ -12,9 +12,9 @@
 import clsx from "clsx"
 import type { ReactElement, ReactNode } from "react"
 
-import { Button } from "../../../components/ui/button/button.tsx"
-import { Heading } from "../../../components/ui/heading/heading.tsx"
-import { Text } from "../../../components/ui/text/text.tsx"
+import { Button } from "../../ui/button/button.tsx"
+import { Heading } from "../../ui/heading/heading.tsx"
+import { Text } from "../../ui/text/text.tsx"
 import styles from "./sidebar.module.css"
 
 export type SidebarSectionAction = {

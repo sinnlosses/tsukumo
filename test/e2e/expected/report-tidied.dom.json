@@ -34,6 +34,16 @@
           }
         ]
       },
+      "<port>",
+      {
+        "tag": "span",
+        "attributes": {
+          "aria-hidden": "true"
+        },
+        "children": [
+          "-"
+        ]
+      },
       {
         "tag": "button",
         "attributes": {
@@ -43,16 +53,6 @@
           "type": "button"
         },
         "children": [
-          "<port>",
-          {
-            "tag": "span",
-            "attributes": {
-              "aria-hidden": "true"
-            },
-            "children": [
-              "-"
-            ]
-          },
           "FA"
         ]
       },
@@ -494,7 +494,46 @@
                   "aria-hidden": "true"
                 }
               },
-              "自動圧縮まで あと 33.5k"
+              "自動圧縮まで あと 33.5k",
+              "利用枠",
+              {
+                "tag": "span",
+                "attributes": {
+                  "aria-hidden": "true"
+                }
+              },
+              "10:00 時点",
+              {
+                "tag": "button",
+                "attributes": {
+                  "aria-disabled": "false",
+                  "aria-label": "利用枠を取り直す",
+                  "type": "button"
+                },
+                "children": [
+                  {
+                    "tag": "svg"
+                  }
+                ]
+              },
+              "5時間",
+              {
+                "tag": "span",
+                "attributes": {
+                  "aria-hidden": "true"
+                }
+              },
+              "34%",
+              "1/15 20:00に戻る",
+              "7日間",
+              {
+                "tag": "span",
+                "attributes": {
+                  "aria-hidden": "true"
+                }
+              },
+              "61%",
+              "1/18 20:00に戻る"
             ]
           }
         ]

@@ -8,7 +8,7 @@
 
 import type { ReactElement } from "react"
 
-import type { TaskSummaryItem } from "../../../../shared/task-summary.ts"
+import type { TaskSummaryItem } from "../../../../shared/repository/task-summary.ts"
 import { HStack } from "../../../components/ui/h-stack/h-stack.tsx"
 import { Text } from "../../../components/ui/text/text.tsx"
 import styles from "../task-board.module.css"

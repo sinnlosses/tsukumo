@@ -14,10 +14,10 @@
 
 import type { ReactElement } from "react"
 
-import { CharacterFace } from "../../../components/domain/character-face.tsx"
-import { Text } from "../../../components/ui/text/text.tsx"
-import { VStack } from "../../../components/ui/v-stack/v-stack.tsx"
 import { useSession } from "../../../stores/session.ts"
+import { Text } from "../../ui/text/text.tsx"
+import { VStack } from "../../ui/v-stack/v-stack.tsx"
+import { CharacterFace } from "../character-face.tsx"
 import { CharacterSwitch } from "./character-switch.tsx"
 import styles from "./sidebar.module.css"
 

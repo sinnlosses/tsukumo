@@ -17,13 +17,13 @@
 // 捨てる」）。`onClose` はこのフックの戻り値に含めない（`features/task-board/task-board.tsx`
 // と同じ形で、素通りする prop は呼び出し側〔`character-create.tsx`〕が直接つなぐ）。
 //
-// id の形はサーバと同じ規則で先に見る（`src/shared/character.ts` の `isCharacterPackName`）。
+// id の形はサーバと同じ規則で先に見る（`src/shared/character-pack/character.ts` の `isCharacterPackName`）。
 // 送ってから黙って落ちるのではなく、押せない理由を id の欄の下に出す（断られたこと〔手続きの
 // `REFUSED`〕は画面にまだ出していない）。
 
 import { useEffect, useState } from "react"
 
-import { isCharacterPackName } from "../../../../../../../shared/character.ts"
+import { isCharacterPackName } from "../../../../../../../shared/character-pack/character.ts"
 import { readAccentColor } from "../../../../../../domain/appearance-color.ts"
 import { selectPack } from "../../../../../../stores/screen.tsx"
 import { useSession } from "../../../../../../stores/session.ts"

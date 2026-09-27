@@ -9,7 +9,7 @@ import {
   type PromptImage,
   promptImagePath,
   type RecordedPromptImage,
-} from "../../../../../../../src/shared/prompt-image.ts"
+} from "../../../../../../../src/shared/session-driver/prompt-image.ts"
 import { setPageUrl } from "../../../../../../dom-environment.ts"
 import { typedElement } from "../../../../../../typed-element.ts"
 

@@ -7,7 +7,7 @@
 // 絞っている間は出ない（「!」の印で出るのは何も選んでいない＝全件のときだけ。経緯は
 // docs/display.md 4.2）。
 
-import type { TaskSummaryItem } from "../../../../shared/task-summary.ts"
+import type { TaskSummaryItem } from "../../../../shared/repository/task-summary.ts"
 import type { TaskListFilterStatus } from "./task-list-count.ts"
 
 /**

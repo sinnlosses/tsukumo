@@ -3,6 +3,77 @@
 `develop/direction.md` に書かれたユーザーからの指示を、タスク化した時点で**当時の記述のまま**
 ここへ移す（`docs/workflow.md`「指示メモ」参照）。新しいものを上に足す。**後から書き換えない。**
 
+## 2026-09-27 所要時間の表示、文書だけの変更の検証、T-804 のドラフト3件
+
+出典: `develop/direction.md` の `## ユーザーから`、会話の指示、`develop/draft/` のドラフト3件。ドラフトはユーザーが3件とも選んで承認した。
+
+（`develop/direction.md` の `## ユーザーから` から。T-808 になった）
+
+- 入力画面で送信してから経過と完了時に所要時間を表示しているけど、メインエージェントがサブエージェントに引き渡した時点で止まってしまっているからメインエージェントの完了をもって完了としてほしい
+
+（会話から。T-809 になった）
+
+- 「文章しか変えてないのにe2eするのは不自然だからなにか回避策があってもいいかもね?」。文書だけの変更で typecheck・lint・E2E を省き、format:check と単体テストは残す案を示し、「いいよ。」で承認
+
+（`develop/draft/2026-09-27-report-block-kinds-progress.md` から。T-805 になった）
+
+### `REPORT_BLOCK_KINDS` に `progress` を足し、塊の一覧を形から導いて抜けを防ぐ（作業中: T-804）
+
+- 根拠: `src/shared/report/report-block.ts` の `REPORT_BLOCK_KINDS` に `progress` が無い（`satisfies readonly ReportBlock["kind"][]` は部分集合しか検査しない）。そのため描けた `progress` の塊が `parseReportSections` の `unknownBlockCount` に数えられ、`~/.tsukumo/report-usage/2026-09-27.jsonl` の112件のうち3件（`progress` を含む3件すべて）が「知らない種類で落とした塊1つ」と記録されている。`scripts/report-block-usage.ts` の表も `progress` を既知の種類として持たないので、0件になった週に行が出ず外す基準が当たらない
+- 出し先: `REPORT_BLOCK_KINDS` を `reportBlockSchema` の選択肢から導く（か、全種類を持つことを型で検査する）タスク。`unknownBlockCount` の数え方を直すテストを足す。difficulty は sonnet の見込み（`shared` の1ファイルと集計のスクリプト。プロトコルは変わらない）
+
+（`develop/draft/2026-09-27-report-usage-escape-notation.md` から。T-806 になった）
+
+### 使われ方の記録に塊の無い記法と容れ物の中か外かを足し、塊を足す基準をそれに当てる（作業中: T-804）
+
+- 根拠: `docs/display.md`「塊を足す・外す基準」の足す基準は「逃げ道の中の同じ記法が3%以上」だが、記録する記法（`src/server/report/core/report-violation.ts` の `MARKDOWN_NOTATIONS`）は塊のある8種だけで、塊の無い記法（`cols` / `card`・`chart`・`svg`・`dl`・引用・区切り線・`<details>`）を数えていない。新しい塊の候補を数える経路が無く、基準が空振りする。一方で塊のある記法が逃げ道に入ったレポートは記録112件のうち8件（7.1%）あるが、HTML の容れ物の中に書いたのか、差し戻しの枠を使い切った2回目なのかを記録が区別しない（`docs/research/report-architecture.md` 1章・6章）
+- 出し先: `report-usage.ts` の1行に「塊の無い記法の種類」と「塊のある記法が HTML の塊の中に出たか外に出たか」を足し（中身は持たない。形式の版を上げる）、`scripts/report-block-usage.ts` に表を足す。`docs/display.md`「塊を足す・外す基準」を、足す基準は塊の無い記法に、容れ物（複数の塊を畳む・並べる）の判断は塊のある記法の容れ物の中の数に当てる形へ書き換える。T-746 より前に済ませる（欄と塊を足す前後で見比べるため）。difficulty は sonnet の見込み（記録・集計・正典の1小節。モデルの出力は変わらない）
+
+（`develop/draft/2026-09-27-character-create-submit-flake.md` から。T-807 になった）
+
+### 単体テスト `character-create` の送信の検査がときどき空の dispatch で落ちる揺れを直す（振り返り: T-804）
+
+- 札: 揺れ
+- 根拠: T-804（文書とタスクファイルだけを変えた）の受け入れの `pnpm run check` で、`test/browser/components/page/character/components/character-create/character-create.test.tsx` の「そろった状態で押すと、…を載せた characterPack.create を dispatch する」が `expected [] to deeply equal [ { …(6) } ]` で落ちた。単独で3回流すと3回とも通り、打ち直した `pnpm run check` も通った。`await pickPortrait()` のあと立ち絵の読み込み（データ URL への変換）が負荷の下で終わる前に送信ボタンを押している疑いがある（確かめていない）
+- 出し先: 新しいタスク（押す前に立ち絵が選ばれた状態を画面で待つ形にするなど、読み込みの完了を待ってから押すように直す。全件を並べて負荷を掛けた `pnpm run check` を続けて10回流し、1度も落ちないことを確かめる）
+
+## 2026-09-27 レポートのテンプレートの着想と、background-task の揺れのドラフト
+
+出典: `develop/direction.md` の `## ユーザーから` と、`develop/draft/` のドラフト1件。ドラフトは「T-803 の背景に足す」をユーザーが選んで承認した。会話では、T-745〜T-748 を提案の後ろに並べる（「後ろに並べる」）を選んだ。
+
+（`develop/direction.md` の `## ユーザーから` から。T-804 になった）
+
+- タスクの性質に合わせたHTMLレポートを作るため、複数のHTMLテンプレートを用意しておき、そこに claude のレスポンス json のデータを埋める形を考えたい
+  - 良いテンプレートが見つからない場合にはフリーフォーマットで書けるようにするけど、出力を元にテンプレートに落としこめる仕組みがあると良い?
+  - まず、この考え方は効力が不充分なものとして考えてより良いアーキテクチャを提案してほしい
+
+（`develop/draft/2026-09-27-background-task-settle-timeout.md` から。T-803 の背景に足した）
+
+### E2E `background-task` が「DOM が落ち着かない（5000ms）」で落ちる揺れを直す（T-801 の送り出しから）
+
+- 札: 揺れ
+- 根拠: T-801（タスクファイル1件を足しただけのコミット）の `task ship` の検証で、`test/e2e/background-task.test.ts` の「背景で走らせた直後は、ターンが終わっても背景のタスクが残る」が `settleAndMatch`（`test/e2e/scenario-run.ts:221`）の「DOM が落ち着かない（5000ms）」で落ちた。直後に同じ作業ツリーで `pnpm run check` を2回流すと2回とも通った。T-790 で `settledDom` が `aria-busy="true"` の消えるまで待つようになり、T-738 で E2E をファイル単位で3本並べたあとに出た形なので、取り直しが並列の負荷で5秒を超える・`aria-busy` が外れない、のどちらかの疑いがある（確かめていない）
+- 出し先: 新しいタスク（落ちたときの DOM を控えて、`aria-busy` が残っていたのか DOM が動き続けていたのかを分け、原因に合わせて直す。`pnpm run check` を10回続けて流し、1度も落ちないことを確かめる）
+
+## 2026-09-27 振り返りのドラフト2件と T-719 の扱い
+
+出典: `develop/draft/` のドラフト2件。ユーザーが2件とも選んで承認した。会話では、T-719 について「見送る」を選んだ（T-670 が見送りになり、移す候補が無くなったため）。
+
+（`develop/draft/2026-09-27-task-files-still-say-bun.md` から。T-802 になった）
+
+### 未完了のタスクファイルに残る `bun run` / `bun test` を pnpm + Vitest の言い方へ一括で直す（振り返り: T-726）
+
+- 札: 正典の不備
+- 根拠: テストの走らせ手が Bun から pnpm + Vitest へ移ったあとも、未完了（todo・hold）のタスクファイル34件に `bun run` / `bun test` が残っている。このセッションで着手した T-738・T-725・T-726 の3件すべてで、本文を読み替えるか直してから進める必要があった（T-738 はユーザーの指示で本文を直した。T-726 の委譲先は friction log に「前提ずれ」として書いた）
+- 出し先: 新しいタスク（未完了のタスクファイルの `bun run check` などを `pnpm run check` に置き換え、Bun にしか無い口（`--isolate`・`--parallel` など）に触れている本文は Vitest での意味に直す。`task` コマンドで1件ずつではなく1コミットで直す）
+
+（`develop/draft/2026-09-27-e2e-report-main-view-settle-flake.md` から。T-803 になった）
+
+### E2E `report-main-view` の「DOM が落ち着かない」揺れを扱う（振り返り: T-732）
+
+- 根拠: 黄 揺れ: T-732 の委譲先の1回目の `pnpm run check` で `test/e2e/report-main-view.test.ts` が `settledDom` の「DOM が落ち着かない」で落ち、単独の再実行と2回目の check では通った（T-732 は import のパスを移しただけで振る舞いは変えていない。受け入れの check は1回で通過）。委譲先はこれを friction log に書かず「なし」と報告した（黄 自己申告の不正確さ）
+- 出し先: タスク（`report-main-view` で DOM が落ち着かない原因を、T-793 が残す成果物で特定して直す。`pnpm run test:e2e` を続けて10回流して落ちないことを完了条件にする）。あわせて `/next-task` の依頼文に「検証の打ち直しで通ったことも friction log に `揺れ` で書く」と一言足すかを決める
+
 ## 2026-09-27 振り返りと T-725 のドラフト4件
 
 出典: `develop/draft/` のドラフト4件。ユーザーが4件すべてを選んで承認した。

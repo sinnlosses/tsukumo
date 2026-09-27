@@ -1,4 +1,4 @@
-// 貼り付け・ドロップ・ファイルを選ぶ窓で届いたファイルを、依頼に添える画像（`src/shared/prompt-image.ts` の
+// 貼り付け・ドロップ・ファイルを選ぶ窓で届いたファイルを、依頼に添える画像（`src/shared/session-driver/prompt-image.ts` の
 // `PromptImage`）にする（`docs/requirements.md` 4.10）。
 //
 // 縮めるのはここ（ブラウザ側）だけ。 サーバは受け取った控えをそのまま記録に載せるので、
@@ -17,7 +17,7 @@ import {
   parsePromptImage,
   parsePromptImageThumbnail,
   type PromptImage,
-} from "../../../../../../../../../shared/prompt-image.ts"
+} from "../../../../../../../../../shared/session-driver/prompt-image.ts"
 import { readDataUrl } from "../../../../../../../../utils/data-url.ts"
 
 /**

@@ -3,12 +3,12 @@ import { afterEach, describe, expect, it } from "vitest"
 
 import { ScreenNav } from "../../../../../src/browser/components/domain/screen-nav/screen-nav.tsx"
 import { MODEL_ALIASES } from "../../../../../src/shared/command.ts"
-import type { PendingAsk } from "../../../../../src/shared/pending-ask.ts"
+import type { PendingAsk } from "../../../../../src/shared/session-driver/pending-ask.ts"
 import {
   INITIAL_SESSION_STATE,
   type SessionInfo,
   type SessionState,
-} from "../../../../../src/shared/session-state.ts"
+} from "../../../../../src/shared/session/session-state.ts"
 import { setPageUrl } from "../../../../dom-environment.ts"
 import { characterInfo, characterPackEntry } from "../../../../fixture/character.ts"
 import { typedElement } from "../../../../typed-element.ts"
@@ -22,7 +22,7 @@ const FIXTURE_PENDING: PendingAsk = {
   input: {},
 }
 
-// 部屋の名前はこのページを配っているポートから決まる（`src/shared/room.ts`）ので、
+// 部屋の名前はこのページを配っているポートから決まる（`src/shared/view-server/room.ts`）ので、
 // ポートを見るテストは URL ごと差し替える。既定へ戻すのは afterEach。
 const DEFAULT_PAGE_URL = "http://127.0.0.1/"
 
@@ -99,7 +99,7 @@ describe("ScreenNav", () => {
     expect(document.querySelector(".screen-nav-work-word")?.textContent).toBe("答え待ち")
   })
 
-  // 部屋の名前は帯の左端（13.9）。ポートの並び順に割り当たる（`src/shared/room.ts`）ので、
+  // 部屋の名前は帯の左端（13.9）。ポートの並び順に割り当たる（`src/shared/view-server/room.ts`）ので、
   // 出ている名前でどの tsukumo を見ているかが分かる。
   it("帯の左端に、このページのポートの部屋の名前を出す", () => {
     setPageUrl("http://127.0.0.1:7329/")

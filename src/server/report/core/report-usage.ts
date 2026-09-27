@@ -1,8 +1,8 @@
 // `report` の塊の使われ方の記録1行ぶんの中身。
 // 持つのはそのレポートに出た名前の集合と数だけで、塊の中身・逃げ道の文字は入れない。
 
-import type { ReportSection } from "../../../shared/report-block.ts"
-import type { SessionEvent } from "../../../shared/session-event.ts"
+import type { ReportSection } from "../../../shared/report/report-block.ts"
+import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import { type MarkdownNotation, notationsInSections } from "./report-violation.ts"
 
 export type ReportUsageEntry = {

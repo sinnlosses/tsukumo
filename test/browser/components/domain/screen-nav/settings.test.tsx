@@ -5,7 +5,7 @@ import { ScreenNav } from "../../../../../src/browser/components/domain/screen-n
 import {
   INITIAL_SESSION_STATE,
   type SessionState,
-} from "../../../../../src/shared/session-state.ts"
+} from "../../../../../src/shared/session/session-state.ts"
 import { typedElement } from "../../../../typed-element.ts"
 import { putSession, type CommandSpy } from "../../../session-store.ts"
 

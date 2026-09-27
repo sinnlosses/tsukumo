@@ -8,17 +8,17 @@
 import { useState, type RefObject } from "react"
 
 import {
-  chatLogEntries,
-  chatLogRows,
-  type ChatLogEntry,
-} from "../../../../../../../shared/chat-log.ts"
-import {
   resolveOutfit,
   type Expression,
   type Outfit,
-} from "../../../../../../../shared/expression.ts"
-import type { RecordedPromptImage } from "../../../../../../../shared/prompt-image.ts"
-import type { RecordTime } from "../../../../../../../shared/session-state.ts"
+} from "../../../../../../../shared/character-pack/expression.ts"
+import {
+  chatLogEntries,
+  chatLogRows,
+  type ChatLogEntry,
+} from "../../../../../../../shared/chat/chat-log.ts"
+import type { RecordedPromptImage } from "../../../../../../../shared/session-driver/prompt-image.ts"
+import type { RecordTime } from "../../../../../../../shared/session/session-state.ts"
 import { portraitAppearance } from "../../../../../../domain/portrait-appearance.ts"
 import { useSession, useTurnRunning } from "../../../../../../stores/session.ts"
 import {
@@ -191,7 +191,7 @@ export function useChatView(): ChatViewModel {
 }
 
 /**
- * ログの並び（`shared/chat-log.ts` の `chatLogRows`）を、部品がそのまま置ける行へ畳む。
+ * ログの並び（`shared/chat/chat-log.ts` の `chatLogRows`）を、部品がそのまま置ける行へ畳む。
  * 日付と時刻の文字もここで組む（部品は `<time>` に置くだけ）。
  */
 function chatRows(
@@ -268,7 +268,7 @@ function countSpeeches(entries: readonly ChatLogEntry[]): number {
  *
  * 件数1つで両方を捌けるのは、セリフは末尾に積むだけで、窓
  * （`MAX_SESSION_STATE_TURNS`）を当てるのは利用者の発言が来たときだけだから
- * （`shared/session-state.ts` の `speech` と `request`）。つまり件数が同じなら並びは前へ
+ * （`shared/session/session-state.ts` の `speech` と `request`）。つまり件数が同じなら並びは前へ
  * 詰まっておらず、押した番号は押した行を指したままになる。
  */
 function pinnedSpeechIndex(viewed: ViewedSpeech, speechCount: number): number | undefined {

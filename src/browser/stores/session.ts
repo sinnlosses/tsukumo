@@ -8,12 +8,12 @@ import { create } from "zustand"
 
 import { PROTOCOL_VERSION, type ServerFrame } from "../../shared/frame.ts"
 import type { CommandClient } from "../../shared/rpc.ts"
-import { SESSION_SOCKET_PATH } from "../../shared/session-socket.ts"
 import {
   applySessionEvent,
   INITIAL_SESSION_STATE,
   type SessionState,
-} from "../../shared/session-state.ts"
+} from "../../shared/session/session-state.ts"
+import { SESSION_SOCKET_PATH } from "../../shared/view-server/session-socket.ts"
 import { applyRefresh } from "../domain/refresh.ts"
 import { sessionTokenUrl } from "../domain/session-token-url.ts"
 import { type CommandLink, connectSessionSocket, type ConnectionStatus } from "../lib/socket.ts"

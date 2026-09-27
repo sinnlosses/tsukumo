@@ -9,7 +9,7 @@ import {
   type ReportBlock,
   REPORT_MERMAID_KINDS,
   type ReportSection,
-} from "../../../../src/shared/report-block.ts"
+} from "../../../../src/shared/report/report-block.ts"
 
 // レポートの文面はどれも作り物（docs/coding-standards.md「会話内容の扱い」）。
 

@@ -1,0 +1,177 @@
+import { describe, expect, it } from "vitest"
+
+import {
+  FAILURE_MOTION_WINDOW_MS,
+  nextPortraitMotionTransitionDelayMs,
+  resolvePortraitMotion,
+  SUCCESS_MOTION_WINDOW_MS,
+  type PortraitMotionInput,
+} from "../../../src/shared/session/portrait-motion.ts"
+
+describe("resolvePortraitMotion", () => {
+  const FAILED_TURN = {
+    kind: "finished",
+    startedAt: 0,
+    finishedAt: 1000,
+    ending: { kind: "failed", failure: { kind: "api-error", error: "overloaded" } },
+  } satisfies PortraitMotionInput["turn"]
+
+  it("ターンが失敗で終わった直後（窓の内）は「失敗でびくっ」", () => {
+    const input: PortraitMotionInput = {
+      turn: FAILED_TURN,
+      lastToolFailureAt: undefined,
+      draftingReport: false,
+    }
+    expect(resolvePortraitMotion(input, 1000 + FAILURE_MOTION_WINDOW_MS - 1)).toBe("failure")
+  })
+
+  it("失敗で終わったターンには、びくっの窓を過ぎても「完了の反応」を出さない", () => {
+    const input: PortraitMotionInput = {
+      turn: FAILED_TURN,
+      lastToolFailureAt: undefined,
+      draftingReport: false,
+    }
+    expect(resolvePortraitMotion(input, 1000 + FAILURE_MOTION_WINDOW_MS)).toBe("reading")
+    expect(nextPortraitMotionTransitionDelayMs(input, 1000)).toBe(FAILURE_MOTION_WINDOW_MS)
+    expect(nextPortraitMotionTransitionDelayMs(input, 1000 + FAILURE_MOTION_WINDOW_MS)).toBe(
+      undefined,
+    )
+  })
+
+  it("ターンが進行中でなく、直近の完了・失敗も無ければ「読んでいる」（呼吸だけ）", () => {
+    const input: PortraitMotionInput = {
+      turn: { kind: "idle" },
+      lastToolFailureAt: undefined,
+      draftingReport: false,
+    }
+    expect(resolvePortraitMotion(input, 0)).toBe("reading")
+  })
+
+  it("ターンが進行中なら「待っている」（領域の中を歩く）", () => {
+    const input: PortraitMotionInput = {
+      turn: { kind: "running", startedAt: 0 },
+      lastToolFailureAt: undefined,
+      draftingReport: false,
+    }
+    expect(resolvePortraitMotion(input, 0)).toBe("waiting")
+  })
+
+  it("ターンが終わった直後（窓の内）は「完了の反応」", () => {
+    const input: PortraitMotionInput = {
+      turn: { kind: "finished", startedAt: 0, finishedAt: 1000, ending: { kind: "ended" } },
+      lastToolFailureAt: undefined,
+      draftingReport: false,
+    }
+    expect(resolvePortraitMotion(input, 1000 + SUCCESS_MOTION_WINDOW_MS - 1)).toBe("success")
+  })
+
+  it("完了の反応の窓を過ぎたら「読んでいる」に戻る", () => {
+    const input: PortraitMotionInput = {
+      turn: { kind: "finished", startedAt: 0, finishedAt: 1000, ending: { kind: "ended" } },
+      lastToolFailureAt: undefined,
+      draftingReport: false,
+    }
+    expect(resolvePortraitMotion(input, 1000 + SUCCESS_MOTION_WINDOW_MS)).toBe("reading")
+  })
+
+  it("ツールが失敗した直後（窓の内）は「失敗でびくっ」", () => {
+    const input: PortraitMotionInput = {
+      turn: { kind: "running", startedAt: 0 },
+      lastToolFailureAt: 2000,
+      draftingReport: false,
+    }
+    expect(resolvePortraitMotion(input, 2000 + FAILURE_MOTION_WINDOW_MS - 1)).toBe("failure")
+  })
+
+  it("失敗の窓を過ぎたら、ターンが進行中のままなら「待っている」へ戻る", () => {
+    const input: PortraitMotionInput = {
+      turn: { kind: "running", startedAt: 0 },
+      lastToolFailureAt: 2000,
+      draftingReport: false,
+    }
+    expect(resolvePortraitMotion(input, 2000 + FAILURE_MOTION_WINDOW_MS)).toBe("waiting")
+  })
+
+  it("失敗は完了の反応より優先する", () => {
+    const input: PortraitMotionInput = {
+      turn: { kind: "finished", startedAt: 0, finishedAt: 1000, ending: { kind: "ended" } },
+      lastToolFailureAt: 1000,
+      draftingReport: false,
+    }
+    expect(resolvePortraitMotion(input, 1000 + 1)).toBe("failure")
+  })
+
+  it("ターンが進行中で report の引数を書いている最中なら「書いている」", () => {
+    const input: PortraitMotionInput = {
+      turn: { kind: "running", startedAt: 0 },
+      lastToolFailureAt: undefined,
+      draftingReport: true,
+    }
+    expect(resolvePortraitMotion(input, 0)).toBe("writing")
+  })
+
+  it("ターンが進行中でなければ、report を書いている印があっても「書いている」にならない（読んでいるに戻る）", () => {
+    const input: PortraitMotionInput = {
+      turn: { kind: "idle" },
+      lastToolFailureAt: undefined,
+      draftingReport: true,
+    }
+    expect(resolvePortraitMotion(input, 0)).toBe("reading")
+  })
+
+  it("完了の反応は「書いている」より優先する", () => {
+    const input: PortraitMotionInput = {
+      turn: { kind: "finished", startedAt: 0, finishedAt: 1000, ending: { kind: "ended" } },
+      lastToolFailureAt: undefined,
+      draftingReport: true,
+    }
+    expect(resolvePortraitMotion(input, 1000 + SUCCESS_MOTION_WINDOW_MS - 1)).toBe("success")
+  })
+
+  it("失敗でびくっは「書いている」より優先する", () => {
+    const input: PortraitMotionInput = {
+      turn: { kind: "running", startedAt: 0 },
+      lastToolFailureAt: 2000,
+      draftingReport: true,
+    }
+    expect(resolvePortraitMotion(input, 2000 + FAILURE_MOTION_WINDOW_MS - 1)).toBe("failure")
+  })
+})
+
+describe("nextPortraitMotionTransitionDelayMs", () => {
+  it("完了も失敗も起きていなければ undefined", () => {
+    const input: PortraitMotionInput = {
+      turn: { kind: "idle" },
+      lastToolFailureAt: undefined,
+      draftingReport: false,
+    }
+    expect(nextPortraitMotionTransitionDelayMs(input, 0)).toBeUndefined()
+  })
+
+  it("窓をすでに過ぎていれば undefined", () => {
+    const input: PortraitMotionInput = {
+      turn: { kind: "finished", startedAt: 0, finishedAt: 0, ending: { kind: "ended" } },
+      lastToolFailureAt: undefined,
+      draftingReport: false,
+    }
+    expect(nextPortraitMotionTransitionDelayMs(input, SUCCESS_MOTION_WINDOW_MS)).toBeUndefined()
+  })
+
+  it("完了の反応の窓が残っていれば、その残り時間を返す", () => {
+    const input: PortraitMotionInput = {
+      turn: { kind: "finished", startedAt: 0, finishedAt: 1000, ending: { kind: "ended" } },
+      lastToolFailureAt: undefined,
+      draftingReport: false,
+    }
+    expect(nextPortraitMotionTransitionDelayMs(input, 1200)).toBe(SUCCESS_MOTION_WINDOW_MS - 200)
+  })
+
+  it("失敗の窓のほうが早く終わるなら、そちらの残り時間を返す", () => {
+    const input: PortraitMotionInput = {
+      turn: { kind: "finished", startedAt: 0, finishedAt: 1000, ending: { kind: "ended" } },
+      lastToolFailureAt: 1000,
+      draftingReport: false,
+    }
+    expect(nextPortraitMotionTransitionDelayMs(input, 1000)).toBe(FAILURE_MOTION_WINDOW_MS)
+  })
+})

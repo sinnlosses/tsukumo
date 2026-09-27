@@ -6,7 +6,7 @@ import type {
   ChatEpisodeRecallListResult,
   ChatEpisodeReadResult,
 } from "../../../../src/server/session-driver/core/session-driver.ts"
-import type { ChatMemoryBudget } from "../../../../src/shared/chat-memory-budget.ts"
+import type { ChatMemoryBudget } from "../../../../src/shared/chat/chat-memory-budget.ts"
 
 // フィクスチャは手で書いた架空の候補・逐語だけ（実物の会話は使わない。
 // docs/coding-standards.md「会話内容の扱い」）。

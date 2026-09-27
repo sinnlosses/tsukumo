@@ -48,7 +48,7 @@ export const SCREEN_NAV_ITEMS: readonly { readonly screen: Screen; readonly labe
 
 /**
  * 見ているターン。`"newest"` は今回に追従する（新しいターンが始まればそちらへ移る）。
- * 番号はそのターン（`shared/main-view.ts` の `mainViewTurns` が振る通し番号）に留める。
+ * 番号はそのターン（`shared/session/main-view.ts` の `mainViewTurns` が振る通し番号）に留める。
  *
  * プリミティブの合併にしてあるのは、`useSyncExternalStore` のスナップショットにそのまま
  * 使えるようにするため（オブジェクトだと読むたびに別物になり、描き直しが止まらない）。

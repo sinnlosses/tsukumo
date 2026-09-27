@@ -12,7 +12,7 @@
 // （`src/server/character-pack/adapter/character-edit.ts` → `character-changed`）。ここは選んだ画像を data URL
 // にして渡すだけで、素材をブラウザ側に持ち続けない。
 //
-// `default` には消す口を出さない（立ち絵が必ず要る1つ。`src/shared/expression.ts` の
+// `default` には消す口を出さない（立ち絵が必ず要る1つ。`src/shared/character-pack/expression.ts` の
 // `REQUIRED_EXPRESSIONS`。送られてきても `src/shared/command.ts` のスキーマが弾く）。
 //
 // 16進の色をここに書かない（差し色はキャラクター定義の値で、定義に無い衣装の初期値は
@@ -29,9 +29,12 @@
 
 import { useState } from "react"
 
-import type { AccentTarget } from "../../../../../../shared/character-definition.ts"
-import type { CharacterInfo, CharacterPackRemoval } from "../../../../../../shared/character.ts"
-import { resolveExpressionLabel } from "../../../../../../shared/expression-choice.ts"
+import type { AccentTarget } from "../../../../../../shared/character-pack/character-definition.ts"
+import type {
+  CharacterInfo,
+  CharacterPackRemoval,
+} from "../../../../../../shared/character-pack/character.ts"
+import { resolveExpressionLabel } from "../../../../../../shared/character-pack/expression-choice.ts"
 import {
   type Expression,
   EXPRESSIONS,
@@ -39,7 +42,7 @@ import {
   type Outfit,
   type RemovableExpression,
   OUTFITS,
-} from "../../../../../../shared/expression.ts"
+} from "../../../../../../shared/character-pack/expression.ts"
 import { FRAME_ERROR_REASON } from "../../../../../../shared/frame.ts"
 import { readAccentColor } from "../../../../../domain/appearance-color.ts"
 import { type SessionDispatch, useSession, useTurnRunning } from "../../../../../stores/session.ts"

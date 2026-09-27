@@ -8,7 +8,7 @@ import {
   CONTEXT_CATEGORY_KINDS,
   type ContextUsageReport,
   UNAVAILABLE_CONTEXT_USAGE,
-} from "../../../shared/context-usage.ts"
+} from "../../../shared/context-usage/context-usage.ts"
 
 /**
  * コンテキストの内訳を取るときの細かさ。`'full'` に固定する（分類ごとに token-count API で

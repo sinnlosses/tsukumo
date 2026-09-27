@@ -17,8 +17,11 @@ import { basename } from "node:path"
 import {
   achievementCalendarDateKeys,
   type AchievementCalendar,
-} from "../../../shared/achievement-calendar.ts"
-import type { AchievementMilestone, DailyAchievement } from "../../../shared/achievement.ts"
+} from "../../../shared/achievement/achievement-calendar.ts"
+import type {
+  AchievementMilestone,
+  DailyAchievement,
+} from "../../../shared/achievement/achievement.ts"
 import { localDateEpochRange, localDateKey, localTimeHHMM } from "../../adapter/local-time.ts"
 import { runGit, runGitCatFileBatch } from "../../repository/adapter/git.ts"
 import {

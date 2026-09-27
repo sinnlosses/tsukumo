@@ -5,12 +5,12 @@
 // 拾わないためで、画面が復元で見せるものと数が揃う。読んだものはどこにも書き出さない
 // （docs/coding-standards.md「会話内容の扱い」）。
 
-import type { Expression } from "../../../shared/expression.ts"
+import type { Expression } from "../../../shared/character-pack/expression.ts"
 import {
   MAX_SESSION_SUMMARY_LENGTH,
   type SessionDigest,
   UNAVAILABLE_SESSION_DIGEST,
-} from "../../../shared/session-digest.ts"
+} from "../../../shared/session/session-digest.ts"
 import { toRestoredEvents } from "./session-restore.ts"
 
 /** transcript のメッセージ列を、セッション1件の中身にする。列でなければ読めなかったものとして扱う。 */

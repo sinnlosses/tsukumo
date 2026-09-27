@@ -40,8 +40,8 @@ const ALLOWED_DATA_FILES = [
   "test/server/achievement/core/achievement.test.ts",
   "test/server/repository/adapter/task-summary.test.ts",
   "test/server/achievement/adapter/main-history.test.ts",
-  "test/shared/task-summary.test.ts",
-  "test/shared/achievement.test.ts",
+  "test/shared/repository/task-summary.test.ts",
+  "test/shared/achievement/achievement.test.ts",
   "test/e2e/task-list.test.ts",
 ] as const satisfies readonly string[]
 

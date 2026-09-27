@@ -24,8 +24,8 @@
 
 import { groupBy, prop, sortBy, sumBy } from "remeda"
 
-import type { SessionEvent } from "../../../shared/session-event.ts"
-import type { SessionState } from "../../../shared/session-state.ts"
+import type { SessionEvent } from "../../../shared/session/session-event.ts"
+import type { SessionState } from "../../../shared/session/session-state.ts"
 import type {
   ModelUsageTotal,
   TokenUsageDays,
@@ -33,7 +33,7 @@ import type {
   TokenUsageTotals,
   TokenUsageTrend,
   TokenUsageTrendUnit,
-} from "../../../shared/token-usage-summary.ts"
+} from "../../../shared/token-usage/token-usage-summary.ts"
 import type {
   ModelTokenUsage,
   ScopeUsage,
@@ -43,7 +43,7 @@ import type {
   TokenUsageRecord,
   TurnUsageBreakdown,
   TurnUsageScope,
-} from "../../../shared/token-usage.ts"
+} from "../../../shared/token-usage/token-usage.ts"
 import { byteLength } from "../../../shared/utils/byte-length.ts"
 
 /**

@@ -3,7 +3,7 @@
 // フックを呼ばない部品が読む対応表、表示の整形は契約ではない）。
 
 import { isPermissionMode, type PermissionMode } from "../../../../../shared/command.ts"
-import { BUILTIN_SESSION_DEFAULT } from "../../../../../shared/session-default.ts"
+import { BUILTIN_SESSION_DEFAULT } from "../../../../../shared/session/session-default.ts"
 
 /**
  * 許可モードの値と、日本語ラベル。並びは `<select>` に出す順（緩い側が下）。

@@ -15,9 +15,9 @@
 
 import { isPlainObject } from "remeda"
 
-import type { Expression } from "../../../shared/expression.ts"
-import { MAX_SESSION_CHOICES, type SessionChoice } from "../../../shared/session-choice.ts"
-import type { SessionEvent } from "../../../shared/session-event.ts"
+import type { Expression } from "../../../shared/character-pack/expression.ts"
+import { MAX_SESSION_CHOICES, type SessionChoice } from "../../../shared/session/session-choice.ts"
+import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import type { Config } from "../../core/config.ts"
 import { createReportReview } from "../../report/core/report-review.ts"
 import { DEFAULT_VIEW_PORT, MAX_PORT_NUMBER } from "../../view-server/core/port-resolution.ts"

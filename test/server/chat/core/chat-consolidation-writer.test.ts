@@ -11,7 +11,7 @@ import type {
   ChatUnconsolidatedBatch,
   ChatUnconsolidatedLimits,
 } from "../../../../src/server/session-driver/core/session-driver.ts"
-import { CHAT_MEMORY_BUDGET } from "../../../../src/shared/chat-memory-budget.ts"
+import { CHAT_MEMORY_BUDGET } from "../../../../src/shared/chat/chat-memory-budget.ts"
 
 // 畳む行・あらすじ・エピソードはすべて手で書いた架空のもの（docs/coding-standards.md
 // 「会話内容の扱い」）。`query()` は差し替え、本物の claude は起こさない。

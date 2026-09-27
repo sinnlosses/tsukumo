@@ -12,7 +12,7 @@ import {
   type RecordTime,
   type SessionRecord,
   type SessionState,
-} from "../../../../../../../src/shared/session-state.ts"
+} from "../../../../../../../src/shared/session/session-state.ts"
 import { characterInfo, shownPortraits } from "../../../../../../fixture/character.ts"
 import {
   compactBoundaryRecord,

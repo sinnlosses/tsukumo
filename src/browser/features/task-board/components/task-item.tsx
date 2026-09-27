@@ -9,7 +9,7 @@
 import clsx from "clsx"
 import type { ReactElement } from "react"
 
-import type { TaskSummaryItem } from "../../../../shared/task-summary.ts"
+import type { TaskSummaryItem } from "../../../../shared/repository/task-summary.ts"
 import { Text } from "../../../components/ui/text/text.tsx"
 import styles from "../task-board.module.css"
 import { TaskRunButton } from "./task-run-button.tsx"

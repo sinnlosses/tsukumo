@@ -5,7 +5,7 @@
 import { z } from "zod"
 
 import { commandBase } from "../command.ts"
-import { USAGE_PROPOSAL_KINDS } from "../usage-review.ts"
+import { USAGE_PROPOSAL_KINDS } from "../usage-review/usage-review.ts"
 
 /**
  * 提案の対象（`UsageProposal.target`）の上限。形の検査ではなく素朴な上限——対象は

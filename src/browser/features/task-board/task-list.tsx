@@ -17,7 +17,7 @@
 
 import type { ReactElement } from "react"
 
-import type { TaskSummaryResult } from "../../../shared/task-summary.ts"
+import type { TaskSummaryResult } from "../../../shared/repository/task-summary.ts"
 import { Text } from "../../components/ui/text/text.tsx"
 import { TaskItem } from "./components/task-item.tsx"
 import { TaskRunningCard } from "./components/task-running-card.tsx"

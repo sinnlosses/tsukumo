@@ -13,13 +13,14 @@
 // 既定のモデル・effort・許可モードはここに無い（`BUILTIN_SESSION_DEFAULT`）。覚えた値を歯車から書き換えられるようになって、
 // ブラウザも同じ畳み先を読むようになったため（`docs/screen-design.md`「設定の置き場所」）。
 
+import type { ExpressionChoice } from "../../../shared/character-pack/expression-choice.ts"
+import type { Expression } from "../../../shared/character-pack/expression.ts"
 import type { EffortLevel, ModelAlias, PermissionMode } from "../../../shared/command.ts"
-import type { ContextUsageReport } from "../../../shared/context-usage.ts"
-import type { ExpressionChoice } from "../../../shared/expression-choice.ts"
-import type { Expression } from "../../../shared/expression.ts"
-import type { Answer, PendingAsk } from "../../../shared/pending-ask.ts"
-import type { SessionDigest } from "../../../shared/session-digest.ts"
-import type { SessionEvent } from "../../../shared/session-event.ts"
+import type { ContextUsageReport } from "../../../shared/context-usage/context-usage.ts"
+import type { PlanUsageReport } from "../../../shared/plan-usage/plan-usage.ts"
+import type { Answer, PendingAsk } from "../../../shared/session-driver/pending-ask.ts"
+import type { SessionDigest } from "../../../shared/session/session-digest.ts"
+import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import type { ShelvedPromptImage } from "./prompt-image-shelf.ts"
 
 /**
@@ -420,6 +421,12 @@ export type SessionDriver = {
    * 出せないだけで、常駐プロセスは落ちない。`docs/coding-standards.md`「エラーハンドリング」）。
    */
   readonly readContextUsage: () => Promise<ContextUsageReport>
+  /**
+   * いまの利用枠（`docs/glossary.md`「利用枠」）を取る。知らせを待たずに取りに行く口
+   * （SDK の実験中の口）で、取れなかった・claude.ai の契約でないときは例外を投げず
+   * それぞれの結果を返す。
+   */
+  readonly readPlanUsage: () => Promise<PlanUsageReport>
   /**
    * 同じ部屋のセッション1件の中身（依頼の数・要約・最後のセリフ。`docs/glossary.md`「セッションの要約」）を
    * transcript から読む。どのIDなら読んでよいかは呼ぶ側（`session-manager`）が決める。

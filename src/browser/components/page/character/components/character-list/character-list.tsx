@@ -11,7 +11,7 @@
 
 import type { ReactElement } from "react"
 
-import { EXPRESSIONS } from "../../../../../../shared/expression.ts"
+import { EXPRESSIONS } from "../../../../../../shared/character-pack/expression.ts"
 import { usePackHref } from "../../../../../stores/screen.tsx"
 import { useSession } from "../../../../../stores/session.ts"
 import { Button } from "../../../../ui/button/button.tsx"

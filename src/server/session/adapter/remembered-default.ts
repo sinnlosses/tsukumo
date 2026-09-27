@@ -25,8 +25,8 @@ import {
   BUILTIN_SESSION_DEFAULT,
   SESSION_DEFAULT_PERMISSION_MODES,
   type SessionDefault,
-} from "../../../shared/session-default.ts"
-import { DEFAULT_VISIT_ENABLED } from "../../../shared/visit.ts"
+} from "../../../shared/session/session-default.ts"
+import { DEFAULT_VISIT_ENABLED } from "../../../shared/visit/visit.ts"
 import { readJsonFile, writeJsonFile } from "../../adapter/lib/json-file.ts"
 import { tsukumoHomeDir } from "../../adapter/tsukumo-home.ts"
 

@@ -10,9 +10,9 @@
 //
 // 答え待ち（待たせているのが利用者）と雑談モード（往復そのものが会話）は待ちに数えない。
 
-import type { SessionEvent } from "../../../shared/session-event.ts"
-import type { SessionRecord, SessionState } from "../../../shared/session-state.ts"
-import type { VisitEndReason, VisitState } from "../../../shared/visit.ts"
+import type { SessionEvent } from "../../../shared/session/session-event.ts"
+import type { SessionRecord, SessionState } from "../../../shared/session/session-state.ts"
+import type { VisitEndReason, VisitState } from "../../../shared/visit/visit.ts"
 
 /** しきい値の組。値は実物で遊んでから詰める出発点。 */
 export type VisitTiming = {

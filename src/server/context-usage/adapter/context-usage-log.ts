@@ -20,7 +20,7 @@ import { join } from "node:path"
 import {
   CONTEXT_USAGE_FORMAT_VERSION,
   type ContextUsageRecord,
-} from "../../../shared/context-usage-record.ts"
+} from "../../../shared/context-usage/context-usage-record.ts"
 import { appendJsonLine } from "../../adapter/lib/jsonl.ts"
 import { isoWithOffset, localDateKey } from "../../adapter/local-time.ts"
 import { tsukumoHomeDir } from "../../adapter/tsukumo-home.ts"

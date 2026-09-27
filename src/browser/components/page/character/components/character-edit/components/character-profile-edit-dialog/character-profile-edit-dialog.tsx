@@ -14,7 +14,7 @@ import { useState, type ReactElement } from "react"
 import {
   MAX_CHARACTER_NAME_LENGTH,
   MAX_CHARACTER_TAGLINE_LENGTH,
-} from "../../../../../../../../shared/character-definition.ts"
+} from "../../../../../../../../shared/character-pack/character-definition.ts"
 import { Button } from "../../../../../../ui/button/button.tsx"
 import { Dialog } from "../../../../../../ui/dialog/dialog.tsx"
 import { Heading } from "../../../../../../ui/heading/heading.tsx"

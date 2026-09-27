@@ -586,7 +586,7 @@ Layout に出す。復帰したときにセッションを続きから起こし�
 
 ### 4.1 SessionEvent
 
-`SessionEvent` の一覧とフィールド、各イベントの出どころは `src/shared/session-event.ts` の型定義
+`SessionEvent` の一覧とフィールド、各イベントの出どころは `src/shared/session/session-event.ts` の型定義
 （`kind` ごとの doc コメント）を正典とする。ここに残すのは、コードから読み取れない決定だけ。
 
 **イベントは時刻を持って送る**（`StampedEvent`）。`at` はサーバの時計で、reducer は
@@ -609,7 +609,7 @@ Layout に出す。復帰したときにセッションを続きから起こし�
 ターンの中では流れない。1件の形・配り直す契機・素材の URL は 7.2。
 
 **API の不調は3つのイベントと `turn-finished` の `outcome` で運ぶ**（`api-retry` / `api-error` /
-`rate-limit-changed`、`outcome: completed | interrupted | failed(cause)`。型は `src/shared/turn-failure.ts`）。
+`rate-limit-changed`、`outcome: completed | interrupted | failed(cause)`。型は `src/shared/session-driver/turn-failure.ts`）。
 
 - **`api-error` だけではターンの失敗にしない**——本体が立て直して続けることがあるので、失敗かどうかは
   `result` を写した `outcome` が決める
@@ -621,7 +621,7 @@ Layout に出す。復帰したときにセッションを続きから起こし�
 
 ### 4.2 SessionState
 
-`SessionState`（`src/shared/session-state.ts`）の各フィールドと理由は、その型（および
+`SessionState`（`src/shared/session/session-state.ts`）の各フィールドと理由は、その型（および
 `TurnProgress` / `CharacterInfo` など内訳の型）の doc コメントを正典とする。ここに残すのは、
 `SessionState` の外側にある決定だけ。
 
@@ -631,7 +631,7 @@ Layout に出す。復帰したときにセッションを続きから起こし�
 
 **畳み込みの規則は `shared` の側が持つ**（`speeches.slice(-1)`・`speechCalledInTurn`・
 `MAX_SESSION_STATE_TURNS` の窓）。**記録（`SessionRecord`）を依頼の区切りでターンに割るのは
-`src/shared/turn.ts` の `splitIntoTurns` だけ**で、メインビュー・ターンごとのセリフ・依頼の手順・記録の
+`src/shared/session/turn.ts` の `splitIntoTurns` だけ**で、メインビュー・ターンごとのセリフ・依頼の手順・記録の
 窓はその並びの上で自分の形に変え、依頼より前の記録（`PRE_REQUEST_TURN_ID`）をどう扱うかも各所が決める。
 
 **成果は `SessionState` に入れない。** 成果の画面の中身は、画面が開いているときにブラウザが読み取りの
@@ -649,10 +649,10 @@ Layout に出す。復帰したときにセッションを続きから起こし�
 
 **API の不調の持ち方**。3つに分けて持つ。消える理由がそれぞれ違うため:
 
-- **`apiTrouble`**（`src/shared/api-trouble.ts`）は**いまのターンの中だけ**の状態。ターンの境目と、
+- **`apiTrouble`**（`src/shared/session-driver/api-trouble.ts`）は**いまのターンの中だけ**の状態。ターンの境目と、
   **モデルが何かを出したとき**（`MODEL_OUTPUT_EVENT_KINDS`）に下ろす。呼び直しが実った合図は SDK から
   来ないので、応答が届いたことを合図の代わりにする
-- **`rateLimit`**（`src/shared/rate-limit.ts`）は**セッションを通した**状態で、次の
+- **`rateLimit`**（`src/shared/session-driver/rate-limit.ts`）は**セッションを通した**状態で、次の
   `rate-limit-changed` が来るまで持つ（戻る時刻を過ぎても、戻ったかは次の知らせでしか分からない）
 - **失敗の理由**は `turn` の `finished` の `ending`（次の依頼まで）と、記録の `turn-failure`（記録の窓から
   落ちるまで）の2か所に残す
@@ -679,7 +679,7 @@ Layout に出す。復帰したときにセッションを続きから起こし�
 「コマンドの受け手と手続きの置き方」。
 
 - `text` の上限は `MAX_PROMPT_TEXT_LENGTH`（`src/shared/contract/session.ts`）
-- `images` は**原寸と控えの対**（`PromptImage`。`src/shared/prompt-image.ts` が正典）。値そのものは
+- `images` は**原寸と控えの対**（`PromptImage`。`src/shared/session-driver/prompt-image.ts` が正典）。値そのものは
   `docs/requirements.md` 4.10 が正典。**1枚も無いのが普通**なので、field ごと省いた形も受け取って空に
   畳む。WebSocket の `maxPayload` は原寸が上限まで全部通る大きさにしてある
 - `PermissionMode` と `ModelAlias` の値の一覧は **`shared`（`src/shared/command.ts`）に1つだけ
@@ -966,7 +966,7 @@ characters/<name>/
 
 ### 7.2 パックの一覧と素材の URL
 
-**1件の形は `CharacterPackEntry`**（`src/shared/character.ts`。姿は `CharacterInfo` をそのまま入れ子で
+**1件の形は `CharacterPackEntry`**（`src/shared/character-pack/character.ts`。姿は `CharacterInfo` をそのまま入れ子で
 持つ）。**変えられるか（`editable`）・消すと何が起きるか（`removal`）はサーバが決めて持たせ**、画面は
 理由を推し量らない。
 
@@ -978,7 +978,7 @@ characters/<name>/
 **素材の URL は `/character/<pack>/<file>?v=<版>` の1つの形に揃える**（使用中のパックも同じ）:
 
 - パック名とファイル名は**それぞれ `encodeURIComponent` した1区間**。組み立て（`characterAssetPath`）と
-  読み分け（`readCharacterAssetPath`）は `src/shared/character-asset.ts` の1箇所で、区切りの `/` が
+  読み分け（`readCharacterAssetPath`）は `src/shared/character-pack/character-asset.ts` の1箇所で、区切りの `/` が
   ちょうど1つでない経路・デコードできない経路は 404
 - **取り直しの印（`?v=`）は素材の版（更新時刻）だけ**（ファイル名が同じまま中身だけ変わるため）。
   配る側は `?` 以降を見ない
@@ -1014,7 +1014,7 @@ characters/<name>/
 - **判断は `chat/core/` の純関数**（載せる判断・定着の指示文と検査・採点。アダプタは読んで渡すだけ）で、
   **定着の契機（ターンの終わり・同時に1本）は `session-manager` が持つ**。走っているかどうかの1ビットは
   駆動の代ではなく `session-manager` 自身が持つ（起こし直しで代だけを作り直しても、同じ行を2本で畳まない）。
-  容量の表と採点の係数は複数の機能が読むので `src/shared/chat-memory-budget.ts`
+  容量の表と採点の係数は複数の機能が読むので `src/shared/chat/chat-memory-budget.ts`
 
 ## 8. セッションの復元と複数化
 
@@ -1043,24 +1043,24 @@ characters/<name>/
 
 `docs/coding-standards.md`「会話内容の扱い」は最優先のまま。境界と、会話をディスクに書く例外:
 
-| 項目                                               | 扱い                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
-| -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| バインド先                                         | `127.0.0.1` だけ。変えない                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
-| Origin                                             | WebSocket の upgrade で確かめる（`Origin` が無ければ通す、あれば自分と一致）                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
-| 起動トークン                                       | 起動ごとに乱数を1つ作り、`/ws?t=` で要求する。ページの URL に付けて配る（`showView` に渡す URL に含む）。同じマシンの別プロセスが `127.0.0.1:7327` を読める、という既知の割り切りを塞ぐ                                                                                                                                                                                                                                                                                                                                                                                                                                |
-| ディスク                                           | 会話を**書く**のは**3つの例外だけ**（下の「あらすじ」「雑談の会話のアーカイブ」「エピソード索引」。「直近の雑談を逐語で読み戻す」と「定着」の行は書かずに**読む・渡す**ほう）。組み立てた成果物（`dist/browser/`）に会話は入らない。`localStorage` に置くのは領域の比率だけ（キャラクターパックへ書くのは**会話ではなくキャラクターの属性1行**だけ。下の行）                                                                                                                                                                                                                                                           |
-| ブラウザ側のメモリ                                 | `SessionState` として会話の一部を持つ。**同じオリジンの `127.0.0.1` のタブの中に閉じる**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
-| ログ                                               | 断ったときの理由（`REFUSED`）は定型文。サーバの stderr に会話を出さない                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
-| 定着（雑談の記憶を畳む）                           | 窓から溢れた雑談の逐語を、背景の使い捨て `query()`（同じマシンの claude の子プロセス。`persistSession: false`・ツールなし）に渡してエピソードとあらすじを書かせる。**ユーザーが認めた例外**（`docs/requirements.md` 2.2 の外部送信に当たらない。範囲と形は `docs/chat-mode.md` 4.9「窓から溢れた会話は定着で畳む」、置き場は 7.3）。渡した文面も受け取った出力も**画面にも 手続きの応答にも stderr にも出さない**（画面に出すのは話題の見出しだけ）。tsukumo は `/compact` を投げない                                                                                                                                  |
-| あらすじ                                           | `~/.tsukumo/chat-summary/<pack>.md` に**最新の1つだけ**を上書きで持つ（8 KiB まで。書くのは定着）。**ユーザーが認めた「別の場所に複製しない」の例外の1つ目**（範囲・理由・形・上限は `docs/chat-mode.md` 4.9、置き場は 7.3）。載せ直すのは**雑談のセッションの `systemPrompt`** で、条件は「新規に起こした」か「`/clear` を見たあと」の2つ（1行目の印が持つ）                                                                                                                                                                                                                                                          |
-| 雑談の会話のアーカイブ                             | `~/.tsukumo/chat-archive/<pack>/<日付>.jsonl` に、雑談の依頼とセリフを表情つきで1行ずつ追記する。**ユーザーが認めた「別の場所に複製しない」の例外の2つ目**（範囲・理由・形・上限は `docs/chat-mode.md` 4.9、置き場は 7.3）。**画面の 100 ターンには影響されない。** 画面にも 手続きの応答にも stderr にも出さない                                                                                                                                                                                                                                                                                                      |
-| エピソード索引                                     | `~/.tsukumo/chat-archive/<pack>/episode.jsonl` に、定着が書いた見出し・要旨・手がかり語と、アーカイブの行の範囲を1件ずつ追記する（思い出した記録は `recalled.jsonl`。文面を持たない）。**例外の3つ目**。**逐語は持たず、アーカイブを指す目次**。`recall` の一覧と `recall_episode` の1件（8 KiB・1ターンに2件）だけが雑談の文脈へ戻す（範囲と形は `docs/chat-mode.md` 4.9、置き場は 7.3）                                                                                                                                                                                                                              |
-| 直近の雑談を逐語で読み戻す                         | アーカイブの**新しいほうから 64 KiB まで**を読み、**雑談のセッションの `systemPrompt`** へ逐語のまま載せる。載せる条件はあらすじと同じ2つ。**渡す先はそこだけ**で、画面にも手続きの応答にも stderr にも出さず、**仕事の側の文脈にも載せない**。逐語が新しいセッションの transcript に書かれることは承認に含まれる（範囲と量は `docs/chat-mode.md` 4.9「直近の会話は逐語のまま読み戻す」、読み口の置き場は 7.3）                                                                                                                                                                                                        |
-| 人格への書き戻し（覚えたこと）                     | 雑談で覚えたことを `~/.tsukumo/characters/<pack>/persona.md` の末尾の節へ1行ずつ足す。**利用者については書かない**（範囲・形・上限は `docs/chat-mode.md` 4.9）。会話の文面はディスクに届かない                                                                                                                                                                                                                                                                                                                                                                                                                         |
-| コンテキストの内訳の記録                           | `~/.tsukumo/context-usage/<日付>.jsonl` に、**セッション1つにつき1行**だけ積む（最初のターンが終わったとき、`detail: "full"` で取った値）。**会話の複製ではない** — 入るのは数と、SDK が内訳として返す名前（分類の表示名・MCP ツール名・メモリファイルのパス・スキル名）だけで、文面の口が型に無い。**ターンごとのトークン消費の記録（`~/.tsukumo/token-usage/`）とは置き場も版も分ける** — 「書いてよいもの」の線が種類ごとに違い、同じファイルに混ぜると広いほうの線が狭いほうにもかかるため（線の正典は `src/shared/context-usage-record.ts`）                                                                      |
-| 見直しの結果と見送りの記録                         | `~/.tsukumo/usage-review.json`（前回の見直しの結果。直前の1回だけ）と `~/.tsukumo/usage-review-dismissed.json`（見送った提案の識別子）。**会話の複製ではない** — 入るのはスキルが渡した見直しの結果（`UsageReviewFindings`。見出し・根拠・やることの文字列を含むが、これ自体が「見直しの結果」であって会話ではない）と、種類:対象の形の識別子の文字列だけ（線の正典は `src/shared/usage-review.ts`）                                                                                                                                                                                                                   |
-| 日記                                               | `~/.tsukumo/diary/<リポジトリ>/<日付>.json` に、振り返りの使い捨ての問い合わせでキャラクターが `diary` ツールで渡した日記（本文・しおり・表情）を、書いた時刻と書いたパックの名前を添えて日ごとに書き足す（**ユーザーの決定**。置き場と形は `src/server/diary/adapter/diary.ts` の冒頭）。**会話の複製ではない** — 入るのはツールが渡した日記（キャラクターがその日の仕事について書いた成果物）と、タスクの ID・`summary`・理由だけで、依頼の文面・セリフ・ほかのツールの引数と結果は通らない（線の正典は `src/shared/diary.ts`）。**文面はログにも 手続きの応答にも stderr にも出さず、画面（成果の画面）にだけ配る** |
-| テストのフィクスチャ・fake driver の疑似セッション | 手で書いた架空の会話だけ                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| 項目                                               | 扱い                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| バインド先                                         | `127.0.0.1` だけ。変えない                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| Origin                                             | WebSocket の upgrade で確かめる（`Origin` が無ければ通す、あれば自分と一致）                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| 起動トークン                                       | 起動ごとに乱数を1つ作り、`/ws?t=` で要求する。ページの URL に付けて配る（`showView` に渡す URL に含む）。同じマシンの別プロセスが `127.0.0.1:7327` を読める、という既知の割り切りを塞ぐ                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| ディスク                                           | 会話を**書く**のは**3つの例外だけ**（下の「あらすじ」「雑談の会話のアーカイブ」「エピソード索引」。「直近の雑談を逐語で読み戻す」と「定着」の行は書かずに**読む・渡す**ほう）。組み立てた成果物（`dist/browser/`）に会話は入らない。`localStorage` に置くのは領域の比率だけ（キャラクターパックへ書くのは**会話ではなくキャラクターの属性1行**だけ。下の行）                                                                                                                                                                                                                                                                 |
+| ブラウザ側のメモリ                                 | `SessionState` として会話の一部を持つ。**同じオリジンの `127.0.0.1` のタブの中に閉じる**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| ログ                                               | 断ったときの理由（`REFUSED`）は定型文。サーバの stderr に会話を出さない                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| 定着（雑談の記憶を畳む）                           | 窓から溢れた雑談の逐語を、背景の使い捨て `query()`（同じマシンの claude の子プロセス。`persistSession: false`・ツールなし）に渡してエピソードとあらすじを書かせる。**ユーザーが認めた例外**（`docs/requirements.md` 2.2 の外部送信に当たらない。範囲と形は `docs/chat-mode.md` 4.9「窓から溢れた会話は定着で畳む」、置き場は 7.3）。渡した文面も受け取った出力も**画面にも 手続きの応答にも stderr にも出さない**（画面に出すのは話題の見出しだけ）。tsukumo は `/compact` を投げない                                                                                                                                        |
+| あらすじ                                           | `~/.tsukumo/chat-summary/<pack>.md` に**最新の1つだけ**を上書きで持つ（8 KiB まで。書くのは定着）。**ユーザーが認めた「別の場所に複製しない」の例外の1つ目**（範囲・理由・形・上限は `docs/chat-mode.md` 4.9、置き場は 7.3）。載せ直すのは**雑談のセッションの `systemPrompt`** で、条件は「新規に起こした」か「`/clear` を見たあと」の2つ（1行目の印が持つ）                                                                                                                                                                                                                                                                |
+| 雑談の会話のアーカイブ                             | `~/.tsukumo/chat-archive/<pack>/<日付>.jsonl` に、雑談の依頼とセリフを表情つきで1行ずつ追記する。**ユーザーが認めた「別の場所に複製しない」の例外の2つ目**（範囲・理由・形・上限は `docs/chat-mode.md` 4.9、置き場は 7.3）。**画面の 100 ターンには影響されない。** 画面にも 手続きの応答にも stderr にも出さない                                                                                                                                                                                                                                                                                                            |
+| エピソード索引                                     | `~/.tsukumo/chat-archive/<pack>/episode.jsonl` に、定着が書いた見出し・要旨・手がかり語と、アーカイブの行の範囲を1件ずつ追記する（思い出した記録は `recalled.jsonl`。文面を持たない）。**例外の3つ目**。**逐語は持たず、アーカイブを指す目次**。`recall` の一覧と `recall_episode` の1件（8 KiB・1ターンに2件）だけが雑談の文脈へ戻す（範囲と形は `docs/chat-mode.md` 4.9、置き場は 7.3）                                                                                                                                                                                                                                    |
+| 直近の雑談を逐語で読み戻す                         | アーカイブの**新しいほうから 64 KiB まで**を読み、**雑談のセッションの `systemPrompt`** へ逐語のまま載せる。載せる条件はあらすじと同じ2つ。**渡す先はそこだけ**で、画面にも手続きの応答にも stderr にも出さず、**仕事の側の文脈にも載せない**。逐語が新しいセッションの transcript に書かれることは承認に含まれる（範囲と量は `docs/chat-mode.md` 4.9「直近の会話は逐語のまま読み戻す」、読み口の置き場は 7.3）                                                                                                                                                                                                              |
+| 人格への書き戻し（覚えたこと）                     | 雑談で覚えたことを `~/.tsukumo/characters/<pack>/persona.md` の末尾の節へ1行ずつ足す。**利用者については書かない**（範囲・形・上限は `docs/chat-mode.md` 4.9）。会話の文面はディスクに届かない                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| コンテキストの内訳の記録                           | `~/.tsukumo/context-usage/<日付>.jsonl` に、**セッション1つにつき1行**だけ積む（最初のターンが終わったとき、`detail: "full"` で取った値）。**会話の複製ではない** — 入るのは数と、SDK が内訳として返す名前（分類の表示名・MCP ツール名・メモリファイルのパス・スキル名）だけで、文面の口が型に無い。**ターンごとのトークン消費の記録（`~/.tsukumo/token-usage/`）とは置き場も版も分ける** — 「書いてよいもの」の線が種類ごとに違い、同じファイルに混ぜると広いほうの線が狭いほうにもかかるため（線の正典は `src/shared/context-usage/context-usage-record.ts`）                                                              |
+| 見直しの結果と見送りの記録                         | `~/.tsukumo/usage-review.json`（前回の見直しの結果。直前の1回だけ）と `~/.tsukumo/usage-review-dismissed.json`（見送った提案の識別子）。**会話の複製ではない** — 入るのはスキルが渡した見直しの結果（`UsageReviewFindings`。見出し・根拠・やることの文字列を含むが、これ自体が「見直しの結果」であって会話ではない）と、種類:対象の形の識別子の文字列だけ（線の正典は `src/shared/usage-review/usage-review.ts`）                                                                                                                                                                                                            |
+| 日記                                               | `~/.tsukumo/diary/<リポジトリ>/<日付>.json` に、振り返りの使い捨ての問い合わせでキャラクターが `diary` ツールで渡した日記（本文・しおり・表情）を、書いた時刻と書いたパックの名前を添えて日ごとに書き足す（**ユーザーの決定**。置き場と形は `src/server/diary/adapter/diary.ts` の冒頭）。**会話の複製ではない** — 入るのはツールが渡した日記（キャラクターがその日の仕事について書いた成果物）と、タスクの ID・`summary`・理由だけで、依頼の文面・セリフ・ほかのツールの引数と結果は通らない（線の正典は `src/shared/diary/diary.ts`）。**文面はログにも 手続きの応答にも stderr にも出さず、画面（成果の画面）にだけ配る** |
+| テストのフィクスチャ・fake driver の疑似セッション | 手で書いた架空の会話だけ                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 
 例外を認めた日付と発言は `docs/history/decision.md`「design.md 2〜11章（約1000行へ締めたときに落とした経緯と実測）」。
 
@@ -1068,7 +1068,7 @@ characters/<name>/
 
 | 対象                           | 方法                                                                                                                                            | 置き場所                                                 |
 | ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
-| reducer（`applySessionEvent`） | 純粋関数として単体で                                                                                                                            | `test/shared/session-state.test.ts`                      |
+| reducer（`applySessionEvent`） | 純粋関数として単体で                                                                                                                            | `test/shared/session/session-state.test.ts`              |
 | zod スキーマ                   | 受け付ける形・落とす形を1件ずつ                                                                                                                 | `test/shared/command.test.ts` など                       |
 | SDK の型との一致               | `PERMISSION_MODES` / `MODEL_ALIASES` が SDK の型と同じ値であること（型レベルの検査）                                                            | `test/server/session-driver/adapter/sdk-driver.test.ts`  |
 | `session-manager`              | fake driver を差し込み、`hello` → `events` の順序・バッチ・`dispatch` の分岐                                                                    | `test/server/session/core/session-manager.test.ts`       |
@@ -1145,6 +1145,10 @@ characters/<name>/
 **期待値が無ければ落とす**（黙って書かない）。**期待値の更新**は `pnpm run test:e2e:update` → `git diff
 test/e2e/expected/` で意図した変化だけであることを確かめる → 直した変更と同じコミットに入れる。
 
+**期待値と食い違った回**は、`matchArtifact`（`test/e2e/scenario-run.ts`）がその回の成果物と期待値との
+行単位の差分を `/tmp/tsukumo-e2e/failures/<シナリオ>/<Temporal の刻んだ名前>/` へ残す（あとで通った回に
+上書きされない。シナリオごとに直近5回まで）。落ちたときのエラー文に残した場所のパスが出る。
+
 ### E2E の揺れを生まない書き方
 
 過去の揺れと「揺れずに間違った期待値」から取り出した条。例は `test/e2e/` のシナリオのファイル名で
@@ -1168,9 +1172,10 @@ test/e2e/expected/` で意図した変化だけであることを確かめる �
 3. **期待値を撮り直したら `git diff test/e2e/expected/` の中に途中の状態が入っていないかを見る。**
    揺れずに間違っている期待値は揺れより見つけにくい（立ち絵の反応が `success`/`failure` の
    まま戻らない期待値11ファイルが、ブラウザの時計を凍らせるまで長く正解として記録されていた）
-4. **揺れを見たら、打ち直す前に落ちた it の名前と `/tmp/tsukumo-e2e/<シナリオ>/` の成果物を
-   控える。** 打ち直すと上書きされて原因が追えなくなる（`speak-bubble`: 1回だけ落ち、打ち直し
-   3回は通過したが、成果物を控えていなかったので原因は追えなかった）
+4. **揺れを見たら、打ち直す前に落ちた it の名前を控える。** 成果物と期待値との差分は
+   `matchArtifact` が `/tmp/tsukumo-e2e/failures/<シナリオ>/` へ自動で残すので、打ち直しても
+   消えない（`speak-bubble`: 1回だけ落ち、打ち直し3回は通過したが、当時は自動で残らず原因を
+   追えなかった）
 5. **シナリオを足した・待ち方を直したときは、そのファイルを続けて回して（回数を決めて書く）
    落ちないことを確かめ、回数を `## 結果` に書く。** 揺れは1回流しただけでは出ないことが多い
    （`permission-answer` の待ちを直したときは、単独で12回続けて回して確かめた）
@@ -1179,25 +1184,25 @@ test/e2e/expected/` で意図した変化だけであることを確かめる �
 
 「載せない」は終わりの構造では捕まえられないもの。
 
-| シナリオ（機能）                                                    | 場面（`fake-session.json`）                                                                                                       | ファイル（`test/e2e/`） |
-| ------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | ----------------------- |
-| ターンの流れ（依頼 → ツール → report → 締めのセリフ）               | `report-tool`                                                                                                                     | `turn-flow`             |
-| 入力欄から送る（`prompt` が流れ、`request` が戻る）                 | 名指し無し（`opening` → 送ると `report`）                                                                                         | `input-dispatch`        |
-| speak → キャラビューの吹き出し                                      | `closing-narration`・`question-multi`（セリフ3つ）                                                                                | `speak-bubble`          |
-| report → メインビュー（記法・差し戻し・整え）                       | `notation`・`report-rejected`・`report-tidied`                                                                                    | `report-main-view`      |
-| 途中の発話と流れる本文                                              | `narration`・`long-report`                                                                                                        | `narration-flow`        |
-| 許可のモーダル（押すと `answer` が流れ、箱が消える）                | `permission`                                                                                                                      | `permission-answer`     |
-| 質問（単数・複数・プレビュー）                                      | `question-pair`・`question-multi`・`question-long`・`question-preview`                                                            | `question-ask`          |
-| 続きのターン（`turn-resumed`）                                      | `resumed-report`                                                                                                                  | `turn-resumed`          |
-| ツールの実行といまの作業                                            | `long-tool`（`tool-started` の直後で撮る）                                                                                        | `current-work`          |
-| 背景のタスク                                                        | `background-task-short`（再開まで数秒。長い版 `background-task` は再開まで 12 秒超）                                              | `background-task`       |
-| 最終レポートの札                                                    | `background-task-interim-report`                                                                                                  | `final-report-label`    |
-| ターンの履歴                                                        | `turn-history`                                                                                                                    | `turn-history`          |
-| タスクの一覧                                                        | 名指し無し（`opening` のみ）。ブラウザが繋がったあと cwd に `git init` して `develop/task/` を手書きし、`main` へコミットする足場 | `task-list`             |
-| 雑談の切り替えと忘却の区切り                                        | `chat-compact-boundary`                                                                                                           | `chat-compact-boundary` |
-| 復元した雑談の履歴                                                  | `chat-restored-history`                                                                                                           | `chat-restored-history` |
-| セッションの札と切り替え画面（札・⌘K・↓ と Enter・狭い画面の「≡」） | `session-list`（作り物の一覧を `sessions-changed` で流す。右の欄は疑似セッションの `sessionDigests`）                             | `session-switch`        |
-| 途中のちらつき・止まって見える発話                                  | `interim-flicker`・`narration-stuck`・`narration-flash`                                                                           | 載せない（目視）        |
+| シナリオ（機能）                                                | 場面（`fake-session.json`）                                                                                                       | ファイル（`test/e2e/`） |
+| --------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | ----------------------- |
+| ターンの流れ（依頼 → ツール → report → 締めのセリフ）           | `report-tool`                                                                                                                     | `turn-flow`             |
+| 入力欄から送る（`prompt` が流れ、`request` が戻る）             | 名指し無し（`opening` → 送ると `report`）                                                                                         | `input-dispatch`        |
+| speak → キャラビューの吹き出し                                  | `closing-narration`・`question-multi`（セリフ3つ）                                                                                | `speak-bubble`          |
+| report → メインビュー（記法・差し戻し・整え）                   | `notation`・`report-rejected`・`report-tidied`                                                                                    | `report-main-view`      |
+| 途中の発話と流れる本文                                          | `narration`・`long-report`                                                                                                        | `narration-flow`        |
+| 許可のモーダル（押すと `answer` が流れ、箱が消える）            | `permission`                                                                                                                      | `permission-answer`     |
+| 質問（単数・複数・プレビュー）                                  | `question-pair`・`question-multi`・`question-long`・`question-preview`                                                            | `question-ask`          |
+| 続きのターン（`turn-resumed`）                                  | `resumed-report`                                                                                                                  | `turn-resumed`          |
+| ツールの実行といまの作業                                        | `long-tool`（`tool-started` の直後で撮る）                                                                                        | `current-work`          |
+| 背景のタスク                                                    | `background-task-short`（再開まで数秒。長い版 `background-task` は再開まで 12 秒超）                                              | `background-task`       |
+| 最終レポートの札                                                | `background-task-interim-report`                                                                                                  | `final-report-label`    |
+| ターンの履歴                                                    | `turn-history`                                                                                                                    | `turn-history`          |
+| タスクの一覧                                                    | 名指し無し（`opening` のみ）。ブラウザが繋がったあと cwd に `git init` して `develop/task/` を手書きし、`main` へコミットする足場 | `task-list`             |
+| 雑談の切り替えと忘却の区切り                                    | `chat-compact-boundary`                                                                                                           | `chat-compact-boundary` |
+| 復元した雑談の履歴                                              | `chat-restored-history`                                                                                                           | `chat-restored-history` |
+| セッションの札と切り替え画面（札・↓ と Enter・狭い画面の「≡」） | `session-list`（作り物の一覧を `sessions-changed` で流す。右の欄は疑似セッションの `sessionDigests`）                             | `session-switch`        |
+| 途中のちらつき・止まって見える発話                              | `interim-flicker`・`narration-stuck`・`narration-flash`                                                                           | 載せない（目視）        |
 
 **まだ無いシナリオ**: `/` の補完（`opening` のコマンド一覧に打つ）・`@` の補完（一時の cwd に手書きの
 ファイルを置く足場が要る）・API の不調（`api-retry`・`api-failure`・`rate-limit`）・書き終わりの知らせ

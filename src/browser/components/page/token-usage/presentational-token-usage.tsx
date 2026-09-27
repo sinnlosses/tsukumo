@@ -5,7 +5,7 @@
 // （仕事/雑談）と1ターンあたりの中央値は、見ても減らす手が変わらないので出さない。
 //
 // 画面に会話の文面は出ない（集計にそもそも文面が入っていない。
-// `src/shared/token-usage-summary.ts`）。
+// `src/shared/token-usage/token-usage-summary.ts`）。
 
 import clsx from "clsx"
 import { type ReactElement, useState } from "react"
@@ -16,14 +16,14 @@ import {
   type TokenUsageDays,
   type TokenUsageTotals,
   type TokenUsageTrend,
-} from "../../../../shared/token-usage-summary.ts"
-import type { ToolUsageCount } from "../../../../shared/token-usage.ts"
-import { Button } from "../../../components/ui/button/button.tsx"
-import { HStack } from "../../../components/ui/h-stack/h-stack.tsx"
-import { Text } from "../../../components/ui/text/text.tsx"
-import { VStack } from "../../../components/ui/v-stack/v-stack.tsx"
+} from "../../../../shared/token-usage/token-usage-summary.ts"
+import type { ToolUsageCount } from "../../../../shared/token-usage/token-usage.ts"
 import type { UseContextUsageResult } from "../../../domain/context-usage.ts"
 import { formatCount } from "../../../utils/format-count.ts"
+import { Button } from "../../ui/button/button.tsx"
+import { HStack } from "../../ui/h-stack/h-stack.tsx"
+import { Text } from "../../ui/text/text.tsx"
+import { VStack } from "../../ui/v-stack/v-stack.tsx"
 import { ContextUsageCard } from "./components/context-usage-card/context-usage-card.tsx"
 import { PeriodUsageCard } from "./components/period-usage-card/period-usage-card.tsx"
 import { UsageReviewCard } from "./components/usage-review-card/usage-review-card.tsx"

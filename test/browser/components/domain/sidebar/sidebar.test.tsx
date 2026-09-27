@@ -13,7 +13,7 @@ import { Sidebar } from "../../../../../src/browser/components/domain/sidebar/si
 import {
   INITIAL_SESSION_STATE,
   type SessionState,
-} from "../../../../../src/shared/session-state.ts"
+} from "../../../../../src/shared/session/session-state.ts"
 import { characterInfo, characterPackEntry } from "../../../../fixture/character.ts"
 import { rpcError, stubRpcFetch, type RpcFetchStub } from "../../../rpc-fetch-stub.ts"
 import { putSession } from "../../../session-store.ts"

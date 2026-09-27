@@ -23,7 +23,7 @@ import { useCallback, useRef, useState, type RefObject } from "react"
 
 import { isEffortLevel, isModelAlias, isPermissionMode } from "../../../../../shared/command.ts"
 import { FRAME_ERROR_REASON } from "../../../../../shared/frame.ts"
-import { roomName } from "../../../../../shared/room.ts"
+import { roomName } from "../../../../../shared/view-server/room.ts"
 import { useDismissSignal } from "../../../../hooks/use-dismiss-signal.ts"
 import { SCREEN_NAV_ITEMS, type Screen } from "../../../../stores/location-hash.ts"
 import { useScreen, useScreenHref } from "../../../../stores/screen.tsx"
@@ -117,7 +117,7 @@ export type ScreenNavView = {
   /** いま出している画面。狭い画面での帯の置き方（タブ帯へ畳むか）を CSS が決めるのに使う。 */
   readonly current: Screen
   readonly parts: ScreenNavParts
-  /** 札か ⌘K で開く切り替え画面（帯の外に1つだけ描く）。 */
+  /** 札を押すと開く切り替え画面（帯の外に1つだけ描く）。 */
   readonly switcher: ScreenNavSessionSwitcher
   readonly menu: ScreenNavMenu
   /** 帯の外側を押したかを見るための入れ物（「≡」を閉じる判定に使う）。 */

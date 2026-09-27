@@ -13,9 +13,11 @@
 
 import { type ChildProcess, spawn } from "node:child_process"
 import {
+  cpSync,
   existsSync,
   mkdirSync,
   mkdtempSync,
+  readdirSync,
   readFileSync,
   realpathSync,
   rmSync,
@@ -45,6 +47,9 @@ const TIME_ZONE = "Asia/Tokyo"
 /** 走らせた結果とスクリーンショットの置き場（リポジトリの外。毎回書き直す）。 */
 const OUTPUT_ROOT = "/tmp/tsukumo-e2e"
 
+/** 期待値と食い違った回を、シナリオごとに直近何回まで `failures/` の下へ残すか。 */
+const FAILURE_RETENTION_COUNT = 5
+
 /** 期待値の置き場（リポジトリに入れる）。 */
 const EXPECTED_ROOT = fileURLToPath(new URL("./expected", import.meta.url))
 
@@ -65,10 +70,12 @@ const QUIET_GAP_MS = 500
 
 /**
  * DOM の構造が落ち着いたと見なすまでの読み直しの間隔と回数。時計を止めたあとは時間で進むものが
- * 無いので、残るのは React の描き直しと素材の読み込みだけ。
+ * 無いので、残るのは React の描き直し・素材の読み込みと、`aria-busy` が待つ本物の往復だけ。
+ * 往復は時計に依らず、同じ機械で複数の `check` が重なると 5000ms を超えることがあるので、
+ * 回数はその3倍にしてある。
  */
 const SETTLE_INTERVAL_MS = 100
-const SETTLE_ATTEMPTS = 50
+const SETTLE_ATTEMPTS = 150
 
 /** 期待値を書き直すか（`pnpm run test:e2e:update`）。 */
 const UPDATE_EXPECTED = process.env["E2E_UPDATE"] === "1"
@@ -218,18 +225,23 @@ async function openRoom(
     waitForEvent: (kind, occurrence) => messages.waitForEvent(kind, occurrence),
     settleAndMatch: async (elapsedMs) => {
       await page.clock.pauseAt(Temporal.Instant.from(FIXED_INSTANT).epochMilliseconds + elapsedMs)
-      const dom = await settledDom(page)
       const outDir = path.join(OUTPUT_ROOT, options.scenario)
       mkdirSync(outDir, { recursive: true })
+      const dom = await settledDom(page, options.scenario, outDir)
       await page.screenshot({ path: path.join(outDir, `${options.scenario}.png`) })
-      matchArtifact(options.scenario, "dom", dom, replacements, outDir)
-      matchArtifact(
-        options.scenario,
-        "messages",
-        collapsePartialUtterances(messages.list()),
-        replacements,
-        outDir,
-      )
+      // 両方を書いてから比べる（先の比べで落ちると、控えに前の回の成果物が混ざる）。
+      const texts = {
+        dom: writeArtifact(options.scenario, "dom", dom, replacements, outDir),
+        messages: writeArtifact(
+          options.scenario,
+          "messages",
+          collapsePartialUtterances(messages.list()),
+          replacements,
+          outDir,
+        ),
+      } satisfies Record<ArtifactKind, string>
+      matchArtifact(options.scenario, "dom", texts.dom, outDir)
+      matchArtifact(options.scenario, "messages", texts.messages, outDir)
     },
   }
 }
@@ -559,8 +571,9 @@ function asRecord(value: unknown): Readonly<Record<string, unknown>> {
  * DOM の構造を読み、2回続けて同じになるまで読み直す（時計は止めてあるので、残るのは描き直しと
  * 素材の読み込みだけ）。
  * 2回同じでも `aria-busy="true"` の要素が残っている間は落ち着いたと見なさない（取得中の表示は文字が変わらない）。
+ * 落ち着かずに投げるときは、最後の2回の読みの差分を `outDir/<scenario>.settle-diff.txt` に残す。
  */
-async function settledDom(page: Page): Promise<unknown> {
+async function settledDom(page: Page, scenario: string, outDir: string): Promise<unknown> {
   let previous = JSON.stringify(await page.evaluate(DOM_TREE_SCRIPT))
   for (let attempt = 0; attempt < SETTLE_ATTEMPTS; attempt += 1) {
     await page.waitForTimeout(SETTLE_INTERVAL_MS)
@@ -568,12 +581,66 @@ async function settledDom(page: Page): Promise<unknown> {
     if (current === previous && !(await page.evaluate(HAS_BUSY_ELEMENT_SCRIPT))) {
       return JSON.parse(current)
     }
+    if (attempt === SETTLE_ATTEMPTS - 1) {
+      const diff = diffDomTrees(JSON.parse(previous), JSON.parse(current))
+      const diffPath = path.join(outDir, `${scenario}.settle-diff.txt`)
+      writeFileSync(
+        diffPath,
+        diff.length === 0 ? "(差分なし。最後の2回のあいだで落ち着いた)\n" : `${diff.join("\n")}\n`,
+        "utf8",
+      )
+      throw new Error(
+        `DOM が落ち着かない（${String(SETTLE_INTERVAL_MS * SETTLE_ATTEMPTS)}ms）。最後の2回の差分: ${path.relative(REPOSITORY_ROOT, diffPath)}\n${diff.slice(0, 5).join("\n")}`,
+      )
+    }
     previous = current
   }
   throw new Error(`DOM が落ち着かない（${String(SETTLE_INTERVAL_MS * SETTLE_ATTEMPTS)}ms）`)
 }
 
 const HAS_BUSY_ELEMENT_SCRIPT = `document.querySelector('[aria-busy="true"]') !== null`
+
+/** 差分の1件に出す値の長さの上限と、書き出す件数の上限。 */
+const DIFF_VALUE_LENGTH_LIMIT = 80
+const DIFF_LINE_LIMIT = 40
+
+/** 2つの DOM の木を葉までのパスで比べ、値が変わった・無くなった・増えたパスを返す。 */
+function diffDomTrees(previous: unknown, current: unknown): readonly string[] {
+  const previousLeaves = new Map(toLeaves(previous, "$"))
+  const currentLeaves = new Map(toLeaves(current, "$"))
+  return [...new Set([...previousLeaves.keys(), ...currentLeaves.keys()])]
+    .filter((leafPath) => previousLeaves.get(leafPath) !== currentLeaves.get(leafPath))
+    .slice(0, DIFF_LINE_LIMIT)
+    .map(
+      (leafPath) =>
+        `${leafPath}: ${truncateForDiff(previousLeaves.get(leafPath))} -> ${truncateForDiff(currentLeaves.get(leafPath))}`,
+    )
+}
+
+function truncateForDiff(value: string | undefined): string {
+  if (value === undefined) {
+    return "(無し)"
+  }
+  return value.length > DIFF_VALUE_LENGTH_LIMIT
+    ? `${value.slice(0, DIFF_VALUE_LENGTH_LIMIT)}…`
+    : value
+}
+
+function toLeaves(value: unknown, atPath: string): readonly (readonly [string, string])[] {
+  if (Array.isArray(value)) {
+    return value.length === 0
+      ? [[atPath, "[]"]]
+      : value.flatMap((item, index) => toLeaves(item, `${atPath}[${String(index)}]`))
+  }
+  if (typeof value === "object" && value !== null) {
+    const record = asRecord(value)
+    const keys = Object.keys(record)
+    return keys.length === 0
+      ? [[atPath, "{}"]]
+      : keys.flatMap((key) => toLeaves(record[key], `${atPath}.${key}`))
+  }
+  return [[atPath, JSON.stringify(value)]]
+}
 
 /**
  * `document.body` から木を組む台本（ページの中で動く）。残すもの・落とすものは
@@ -654,21 +721,29 @@ const DOM_TREE_SCRIPT = `(() => {
   return childrenOf(document.body);
 })()`
 
+type ArtifactKind = "dom" | "messages"
+
 /**
- * 成果物を書き、期待値と比べる。書く前に置き換え（絶対パス・トークン・ポート）を通す。
- * 期待値が無ければ落とす（黙って書かない）。`E2E_UPDATE=1` なら期待値を書き直す。
+ * 成果物を書き、書いた文字列を返す。書く前に置き換え（絶対パス・トークン・ポート）を通す。
  */
-function matchArtifact(
+function writeArtifact(
   scenario: string,
-  kind: "dom" | "messages",
+  kind: ArtifactKind,
   value: unknown,
   replacements: readonly (readonly [string, string])[],
   outDir: string,
-): void {
+): string {
   const text = `${replaceAll(JSON.stringify(value, undefined, 2), replacements)}\n`
-  const fileName = `${scenario}.${kind}.json`
-  writeFileSync(path.join(outDir, fileName), text, "utf8")
+  writeFileSync(path.join(outDir, `${scenario}.${kind}.json`), text, "utf8")
+  return text
+}
 
+/**
+ * 書いた成果物を期待値と比べる。期待値が無ければ落とす（黙って書かない）。
+ * `E2E_UPDATE=1` なら期待値を書き直す。
+ */
+function matchArtifact(scenario: string, kind: ArtifactKind, text: string, outDir: string): void {
+  const fileName = `${scenario}.${kind}.json`
   const expectedPath = path.join(EXPECTED_ROOT, fileName)
   if (UPDATE_EXPECTED) {
     mkdirSync(EXPECTED_ROOT, { recursive: true })
@@ -680,9 +755,83 @@ function matchArtifact(
       `期待値が無い: ${path.relative(REPOSITORY_ROOT, expectedPath)}（pnpm run test:e2e:update で書き、git diff で中身を確かめる）`,
     )
   }
-  expect(JSON.parse(text)).toEqual(JSON.parse(readFileSync(expectedPath, "utf8")))
+  const expectedText = readFileSync(expectedPath, "utf8")
+  try {
+    expect(JSON.parse(text)).toEqual(JSON.parse(expectedText))
+  } catch (error) {
+    const failureDir = recordFailure(scenario, outDir)
+    writeFileSync(path.join(failureDir, `${scenario}.${kind}.expected.json`), expectedText, "utf8")
+    writeFileSync(
+      path.join(failureDir, `${scenario}.${kind}.diff.txt`),
+      lineDiff(expectedText, text),
+      "utf8",
+    )
+    throw new Error(`${kind} が期待値と食い違った。その回の成果物と差分を残した: ${failureDir}`, {
+      cause: error,
+    })
+  }
 }
 
 function replaceAll(text: string, replacements: readonly (readonly [string, string])[]): string {
   return replacements.reduce((current, [from, to]) => current.split(from).join(to), text)
+}
+
+/**
+ * 期待値と食い違った回の `outDir`（DOM・メッセージの列・スクリーンショット）を、あとで通った
+ * 回に上書きされない場所へコピーし、シナリオごとに直近 `FAILURE_RETENTION_COUNT` 回だけ残す。
+ */
+function recordFailure(scenario: string, outDir: string): string {
+  // `outDir`（`OUTPUT_ROOT/<シナリオ>/`）の外に置く。中に置くと、この回のコピーが
+  // 自分自身を含んでしまう。
+  const failuresRoot = path.join(OUTPUT_ROOT, "failures", scenario)
+  const stamp = Temporal.Now.instant().toString().replaceAll(":", "-")
+  const failureDir = path.join(failuresRoot, stamp)
+  mkdirSync(failureDir, { recursive: true })
+  for (const name of readdirSync(outDir)) {
+    cpSync(path.join(outDir, name), path.join(failureDir, name))
+  }
+  pruneOldFailures(failuresRoot, stamp)
+  return failureDir
+}
+
+function pruneOldFailures(failuresRoot: string, keptStamp: string): void {
+  const stamps = readdirSync(failuresRoot)
+    .filter((name) => name !== keptStamp)
+    .sort()
+  const overflow = stamps.length - (FAILURE_RETENTION_COUNT - 1)
+  for (const stamp of stamps.slice(0, Math.max(overflow, 0))) {
+    rmSync(path.join(failuresRoot, stamp), { recursive: true, force: true })
+  }
+}
+
+/**
+ * 期待値と実際の行の共通の前後を落とし、食い違った真ん中だけを `-`/`+` で並べる。JSON を
+ * 整形して比べているので、局所的な食い違いなら読める差分になる。
+ */
+function lineDiff(expectedText: string, actualText: string): string {
+  const expectedLines = expectedText.split("\n")
+  const actualLines = actualText.split("\n")
+  let prefix = 0
+  while (
+    prefix < expectedLines.length &&
+    prefix < actualLines.length &&
+    expectedLines[prefix] === actualLines[prefix]
+  ) {
+    prefix += 1
+  }
+  let expectedEnd = expectedLines.length
+  let actualEnd = actualLines.length
+  while (
+    expectedEnd > prefix &&
+    actualEnd > prefix &&
+    expectedLines[expectedEnd - 1] === actualLines[actualEnd - 1]
+  ) {
+    expectedEnd -= 1
+    actualEnd -= 1
+  }
+  return [
+    `@@ ${String(prefix + 1)} 行目から`,
+    ...expectedLines.slice(prefix, expectedEnd).map((line) => `- ${line}`),
+    ...actualLines.slice(prefix, actualEnd).map((line) => `+ ${line}`),
+  ].join("\n")
 }

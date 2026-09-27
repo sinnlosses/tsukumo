@@ -1,4 +1,4 @@
-// セッションの切り替え画面（`docs/screen-design.md`「切り替え画面」）。帯の札か ⌘K で開く
+// セッションの切り替え画面（`docs/screen-design.md`「切り替え画面」）。帯の札を押すと開く
 // モーダルで、左に探す欄と日付で区切った一覧、右に選んでいるセッションの要約と切り替えのボタン。
 // ↑↓ で選び、Enter で切り替え、Esc で閉じる（Esc と外側のクリックは `<Dialog>` が持つ）。
 //
@@ -8,9 +8,9 @@
 import { Search } from "lucide-react"
 import { useId, type ReactElement } from "react"
 
-import { CharacterFace } from "../../../../components/domain/character-face.tsx"
-import { Dialog } from "../../../../components/ui/dialog/dialog.tsx"
 import type { CharacterFaceInfo } from "../../../../domain/character-face.ts"
+import { Dialog } from "../../../ui/dialog/dialog.tsx"
+import { CharacterFace } from "../../character-face.tsx"
 import type { SessionDigestView } from "../hooks/use-session-digest.ts"
 import { useSessionSwitcherSelection } from "../hooks/use-session-switcher-selection.ts"
 import {
@@ -164,9 +164,6 @@ function SessionSwitcherBody(props: SessionSwitcherProps): ReactElement {
         </span>
         <span>
           <kbd>Esc</kbd> 閉じる
-        </span>
-        <span className={styles["session-switcher-hints-anywhere"]}>
-          どこからでも <kbd>⌘</kbd> <kbd>K</kbd> で開けます
         </span>
       </div>
     </div>

@@ -19,7 +19,7 @@ export type SessionSwitcherSelection = {
   readonly selected: SessionSwitcherRow | undefined
   readonly digest: SessionDigestView
   readonly onSelect: (sessionId: string) => void
-  /** 探す欄のキー操作（↑↓ で選び、Enter で切り替える。Esc は `<dialog>` が閉じる）。 */
+  /** 探す欄のキー操作（↑↓ か Ctrl+P / Ctrl+N で選び、Enter で切り替える。Esc は `<dialog>` が閉じる）。 */
   readonly onKeyDown: (event: KeyboardEvent<HTMLInputElement>) => void
 }
 
@@ -56,9 +56,13 @@ export function useSessionSwitcherSelection(
       if (event.nativeEvent.isComposing) {
         return
       }
-      if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+      if (event.key === "ArrowDown" || (event.ctrlKey && !event.metaKey && event.key === "n")) {
         event.preventDefault()
-        move(event.key === "ArrowDown" ? 1 : -1)
+        move(1)
+      }
+      if (event.key === "ArrowUp" || (event.ctrlKey && !event.metaKey && event.key === "p")) {
+        event.preventDefault()
+        move(-1)
       }
       if (event.key === "Enter" && selected !== undefined) {
         event.preventDefault()

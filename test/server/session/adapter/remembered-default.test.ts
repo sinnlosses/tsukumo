@@ -12,8 +12,8 @@ import {
   writeRememberedSessionDefault,
   writeRememberedVisitEnabled,
 } from "../../../../src/server/session/adapter/remembered-default.ts"
-import { BUILTIN_SESSION_DEFAULT } from "../../../../src/shared/session-default.ts"
-import { DEFAULT_VISIT_ENABLED } from "../../../../src/shared/visit.ts"
+import { BUILTIN_SESSION_DEFAULT } from "../../../../src/shared/session/session-default.ts"
+import { DEFAULT_VISIT_ENABLED } from "../../../../src/shared/visit/visit.ts"
 
 let dir: string
 

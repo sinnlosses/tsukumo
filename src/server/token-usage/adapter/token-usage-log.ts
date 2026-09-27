@@ -22,7 +22,10 @@ import { join } from "node:path"
 
 import { z } from "zod"
 
-import { TOKEN_USAGE_FORMAT_VERSION, type TokenUsageRecord } from "../../../shared/token-usage.ts"
+import {
+  TOKEN_USAGE_FORMAT_VERSION,
+  type TokenUsageRecord,
+} from "../../../shared/token-usage/token-usage.ts"
 import { appendJsonLine, dateFileNames, readJsonLines } from "../../adapter/lib/jsonl.ts"
 import { isoWithOffset, localDateKey } from "../../adapter/local-time.ts"
 import { tsukumoHomeDir } from "../../adapter/tsukumo-home.ts"

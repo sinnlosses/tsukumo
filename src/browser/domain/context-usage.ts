@@ -11,12 +11,12 @@
 // {@link contextUsageRefetchKey} が純関数として持ち、`state.lastTurnFinishedAt` を読む
 // `useSession` は `stores/` を読める機能の側（`token-usage.tsx` /
 // `context-usage-row.tsx`）が呼ぶ。`state.turn` ではなく `state.lastTurnFinishedAt` を読む
-// ——`turn` は `running` に移ると終わった時刻を失う（`shared/session-state.ts` の
+// ——`turn` は `running` に移ると終わった時刻を失う（`shared/session/session-state.ts` の
 // `TurnProgress`）ので、`turn` から作ると新しいターンが始まった瞬間に合図が `0` へ戻り、
 // ターンの途中で骨組み・古い値へ
 // 巻き戻ってしまう（実測。「取り直すのはターンが終わるたび。ターンの途中は前の値のまま」に
 // 反する）。`lastTurnFinishedAt` は `running` の間も直前の値を持ち続ける
-// （`shared/session-state.ts`）ので、ここは受け取った値をそのまま使うだけでよい。同じ
+// （`shared/session/session-state.ts`）ので、ここは受け取った値をそのまま使うだけでよい。同じ
 // `state` からは同じ `refetchKey` が出るので、2つの機能が同時にマウントされていても
 // （`components/app/layout.tsx` の `<Activity>` は会話の画面を隠すだけで外さない）`useQuery` の cache 1本に
 // 相乗りし、取り直しは1回で済む。
@@ -35,7 +35,7 @@ import {
   type ContextUsageItem,
   type ContextUsageReport,
   UNAVAILABLE_CONTEXT_USAGE,
-} from "../../shared/context-usage.ts"
+} from "../../shared/context-usage/context-usage.ts"
 import { rpc } from "./rpc.ts"
 
 /** 横棒の一区間と、凡例の1行（同じ並びを両方が使うので、色と名前が必ず対になる）。 */
@@ -51,7 +51,7 @@ export type ContextUsageRow = {
 
 /**
  * 内訳1つぶんを描くために要るもの。判別可能な合併型で、取れないときは実物を出さない
- * （`src/shared/context-usage.ts` の {@link ContextUsageReport} と同じ割り方）。
+ * （`src/shared/context-usage/context-usage.ts` の {@link ContextUsageReport} と同じ割り方）。
  * `pending` は届く前の骨組み用、`unavailable` は取れなかったときの一言用。
  */
 export type UseContextUsageResult =

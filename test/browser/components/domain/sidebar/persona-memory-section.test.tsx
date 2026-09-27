@@ -9,7 +9,7 @@ import { PersonaMemorySection } from "../../../../../src/browser/components/doma
 import {
   INITIAL_SESSION_STATE,
   type SessionState,
-} from "../../../../../src/shared/session-state.ts"
+} from "../../../../../src/shared/session/session-state.ts"
 import { type CommandSpy, putSession } from "../../../session-store.ts"
 
 afterEach(() => {

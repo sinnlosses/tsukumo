@@ -28,10 +28,10 @@ import {
   type SDKUserMessage,
 } from "@anthropic-ai/claude-agent-sdk"
 
+import { expressionNames as toExpressionNames } from "../../../shared/character-pack/expression-choice.ts"
 import { type EffortLevel, isEffortLevel, type PermissionMode } from "../../../shared/command.ts"
-import { expressionNames as toExpressionNames } from "../../../shared/expression-choice.ts"
-import { parsePromptImage, type PromptImage } from "../../../shared/prompt-image.ts"
-import type { SessionEvent } from "../../../shared/session-event.ts"
+import { parsePromptImage, type PromptImage } from "../../../shared/session-driver/prompt-image.ts"
+import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import { createReportReview, type ReportReview } from "../../report/core/report-review.ts"
 import { createReportGate, type ReportGate } from "../../report/core/report-tool.ts"
 import { createUsageReviewIntake } from "../../usage-review/core/usage-review-tool.ts"
@@ -52,6 +52,7 @@ import { createSessionTitleIntake, type SessionTitleIntake } from "../core/sessi
 import { childProcessEnv, isVisibleOutputNudge } from "../core/visible-output-nudge.ts"
 import { readClaudeAccountTier } from "./claude-account.ts"
 import { readContextUsage } from "./sdk-context-usage.ts"
+import { readPlanUsage } from "./sdk-plan-usage.ts"
 import {
   createSessionTitleWriter,
   readSessionDigest,
@@ -156,6 +157,7 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
     answer: (id, answer) => queue.answer(id, answer),
     pending: () => queue.list(),
     readContextUsage: () => readContextUsage(session),
+    readPlanUsage: () => readPlanUsage(session),
     readSessionDigest: (sessionId) => readSessionDigest(sessionId, options.expressions),
     setModel: async (model) => {
       await session.setModel(model)

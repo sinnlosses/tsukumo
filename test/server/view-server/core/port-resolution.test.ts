@@ -17,9 +17,10 @@ import {
   startOnResolvedPort,
   VIEW_PORT_FALLBACK_ATTEMPTS,
 } from "../../../../src/server/view-server/core/port-resolution.ts"
-import { UNAVAILABLE_CONTEXT_USAGE } from "../../../../src/shared/context-usage.ts"
-import { UNAVAILABLE_SESSION_DIGEST } from "../../../../src/shared/session-digest.ts"
-import { EMPTY_TOKEN_USAGE_SUMMARY } from "../../../../src/shared/token-usage-summary.ts"
+import { UNAVAILABLE_CONTEXT_USAGE } from "../../../../src/shared/context-usage/context-usage.ts"
+import { UNAVAILABLE_PLAN_USAGE } from "../../../../src/shared/plan-usage/plan-usage.ts"
+import { UNAVAILABLE_SESSION_DIGEST } from "../../../../src/shared/session/session-digest.ts"
+import { EMPTY_TOKEN_USAGE_SUMMARY } from "../../../../src/shared/token-usage/token-usage-summary.ts"
 
 /** 配るものの中身はここでは見ない（確かめるのはどのポートで listen したかだけ）。 */
 const emptyViewUi: ViewUi = { kind: "bundle", bundle: { uiScript: "", styleSheet: "" } }
@@ -33,6 +34,7 @@ const emptyViewServerOptions: ViewServerOptions = {
     listRepositoryFiles: () => Promise.resolve([]),
     readTokenUsageSummary: () => EMPTY_TOKEN_USAGE_SUMMARY,
     readContextUsage: () => Promise.resolve(UNAVAILABLE_CONTEXT_USAGE),
+    readPlanUsage: () => Promise.resolve(UNAVAILABLE_PLAN_USAGE),
     readSessionDigest: () => Promise.resolve(UNAVAILABLE_SESSION_DIGEST),
     readAchievementDay: () => Promise.resolve({ kind: "ok", achievement: { kind: "unknown" } }),
     readAchievementCalendar: () => Promise.resolve({ kind: "ok", calendar: { kind: "unknown" } }),

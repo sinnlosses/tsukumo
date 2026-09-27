@@ -10,9 +10,9 @@
 // （`docs/requirements.md`「進みは3段で見せる」）。断片をつないで観測する
 // 状態機械は `createDiaryStreamObserver`（問い合わせ1回ぶんの持ち物なのでそちらに置く）。
 
-import type { DiaryBookmark } from "../../../shared/diary.ts"
-import type { Expression } from "../../../shared/expression.ts"
-import type { SessionEvent } from "../../../shared/session-event.ts"
+import type { Expression } from "../../../shared/character-pack/expression.ts"
+import type { DiaryBookmark } from "../../../shared/diary/diary.ts"
+import type { SessionEvent } from "../../../shared/session/session-event.ts"
 
 /** ツールの名前（docs/glossary.md「diary ツール」）。 */
 export const DIARY_TOOL_NAME = "diary"

@@ -17,7 +17,10 @@
 
 import { isPlainObject } from "remeda"
 
-import { MAX_BACKGROUND_VEIL, MIN_BACKGROUND_VEIL } from "../../shared/character-background.ts"
+import {
+  MAX_BACKGROUND_VEIL,
+  MIN_BACKGROUND_VEIL,
+} from "../../shared/character-pack/character-background.ts"
 
 export type AppearanceColorKey = "ground" | "surface" | "ink"
 

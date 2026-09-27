@@ -10,8 +10,8 @@ import {
   toPlan,
   toSessionEvents,
 } from "../../../../src/server/session-driver/core/sdk-message.ts"
-import type { Expression } from "../../../../src/shared/expression.ts"
-import type { SessionEvent } from "../../../../src/shared/session-event.ts"
+import type { Expression } from "../../../../src/shared/character-pack/expression.ts"
+import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 
 // フィクスチャはすべて手で書いた架空のやり取り。実物の会話は使わない
 // （docs/coding-standards.md「会話内容の扱い」）。
@@ -655,10 +655,8 @@ describe("toSessionEvents", () => {
       ]
 
       expect(messages.flatMap((message) => toSessionEvents(message, EXPRESSIONS))).toEqual([
-        {
-          kind: "rate-limit-changed",
-          rateLimit: { kind: "warning", bucket: "five-hour", resetsAt: 1_800_000_000_000 },
-        },
+        // 「近い」（allowed_warning）は clear に畳む——枠の残り具合はサイドバーの利用枠が出す。
+        { kind: "rate-limit-changed", rateLimit: { kind: "clear" } },
         {
           kind: "rate-limit-changed",
           rateLimit: { kind: "rejected", bucket: "seven-day", resetsAt: undefined },

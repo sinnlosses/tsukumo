@@ -3,11 +3,11 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-libra
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import { Character } from "../../../../../src/browser/components/page/character/character.tsx"
-import type { PendingAsk } from "../../../../../src/shared/pending-ask.ts"
+import type { PendingAsk } from "../../../../../src/shared/session-driver/pending-ask.ts"
 import {
   INITIAL_SESSION_STATE,
   type SessionState,
-} from "../../../../../src/shared/session-state.ts"
+} from "../../../../../src/shared/session/session-state.ts"
 import { characterInfo, characterPackEntry, shownPortraits } from "../../../../fixture/character.ts"
 import { typedElement } from "../../../../typed-element.ts"
 import { type CommandSpy, putState, putSession } from "../../../session-store.ts"

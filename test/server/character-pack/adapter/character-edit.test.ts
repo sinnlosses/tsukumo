@@ -22,13 +22,13 @@ import {
   listCharacterPacks,
   readCharacterPack,
 } from "../../../../src/server/character-pack/adapter/character-pack.ts"
-import { DEFAULT_BACKGROUND_VEIL } from "../../../../src/shared/character-background.ts"
+import { DEFAULT_BACKGROUND_VEIL } from "../../../../src/shared/character-pack/character-background.ts"
+import { EXPRESSIONS } from "../../../../src/shared/character-pack/expression.ts"
 import type {
   CharacterCreate,
   CharacterDelete,
   CharacterEdit,
 } from "../../../../src/shared/contract/character-pack.ts"
-import { EXPRESSIONS } from "../../../../src/shared/expression.ts"
 
 // フィクスチャは手で書いた架空のパック（実物の素材・人格は使わない）。
 const DEFINITION_JSON = JSON.stringify({

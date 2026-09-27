@@ -7,7 +7,7 @@
 // 契約の `meta`（`CommandContract` にある）にあり、見るのは `rpcGuard`。
 
 import type { CommandContract, CommandInputs, CommandRefusalReason } from "../../shared/command.ts"
-import type { SessionEvent } from "../../shared/session-event.ts"
+import type { SessionEvent } from "../../shared/session/session-event.ts"
 
 /** コマンドを受け付けられたか。理由は定型文（`FRAME_ERROR_REASON`）だけを返す。 */
 export type DispatchResult = { readonly ok: true } | { readonly ok: false; readonly reason: string }

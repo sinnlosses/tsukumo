@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import { filterTasksForSidebar } from "../../../../../src/browser/features/task-board/domain/task-sidebar-filter.ts"
-import type { TaskSummaryItem } from "../../../../../src/shared/task-summary.ts"
+import type { TaskSummaryItem } from "../../../../../src/shared/repository/task-summary.ts"
 
 // フィクスチャはすべて手で書いた架空のタスク（実物の develop/tasks.json は使わない）。
 

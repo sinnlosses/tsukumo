@@ -2,7 +2,7 @@
 // 「いまの作業」「依頼の手順」）。tsukumo がいま何をしているかの語と、押すと開く依頼の手順の
 // 一覧を、見た目が受け取れる形まで畳んで返す。
 //
-// 範囲は依頼1つ（`src/shared/turn-step.ts` の `currentTurnSteps` が、最後の依頼より後の
+// 範囲は依頼1つ（`src/shared/session/turn-step.ts` の `currentTurnSteps` が、最後の依頼より後の
 // ツールの記録から導く）。要約は `src/browser/domain/tool-summary.ts`（`summarizeToolInput` /
 // `toolInputText`）を使い、どの欄を読むかを2箇所で別に決めない。
 //
@@ -20,15 +20,18 @@
 
 import { useCallback, useRef, useState, type RefCallback, type RefObject } from "react"
 
-import type { BackgroundTask, BackgroundTaskKind } from "../../../../../shared/background-task.ts"
-import type { DiaryWriting } from "../../../../../shared/diary.ts"
-import type { PendingAsk } from "../../../../../shared/pending-ask.ts"
+import type { DiaryWriting } from "../../../../../shared/diary/diary.ts"
+import type {
+  BackgroundTask,
+  BackgroundTaskKind,
+} from "../../../../../shared/session-driver/background-task.ts"
+import type { PendingAsk } from "../../../../../shared/session-driver/pending-ask.ts"
 import {
   currentTurnSteps,
   type TurnStep,
   type TurnStepList,
   type TurnStepStatus,
-} from "../../../../../shared/turn-step.ts"
+} from "../../../../../shared/session/turn-step.ts"
 import { DEFAULT_CHARACTER_NAME } from "../../../../domain/portrait-appearance.ts"
 import { summarizeToolInput, toolInputText } from "../../../../domain/tool-summary.ts"
 import { useDismissSignal, type DismissCause } from "../../../../hooks/use-dismiss-signal.ts"
@@ -378,7 +381,7 @@ function toSummaryView(
  * 質問の要約。1問目の `header` をそのまま使う（`AskUserQuestion` の入力の型
  * （`node_modules/@anthropic-ai/claude-agent-sdk/sdk-tools.d.ts`）で「最大12字」と決まっている
  * ので、`text` を切り詰める必要が無い）。2問以上あれば「ほか n問」を添える
- * （`shared/question.ts` の `parseQuestions` が返す質問は1〜4件）。
+ * （`shared/session-driver/question.ts` の `parseQuestions` が返す質問は1〜4件）。
  */
 function questionSummaryLabel(
   pending: Extract<PendingAsk, { readonly kind: "question" }>,

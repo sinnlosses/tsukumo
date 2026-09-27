@@ -120,7 +120,7 @@ prototype を持つものを見るときだけ `isObjectType` で、`code` の�
 
 **`src/` にはこの規則を掛けていない。** `src/browser/components/page/conversation/main-view/
 markdown/` の `children as ReactNode`（react-markdown の型定義が要求する形）や
-`src/shared/character-background.ts` の `value as Record<string, unknown>`
+`src/shared/character-pack/character-background.ts` の `value as Record<string, unknown>`
 （境界での検証はこの節の上の「唯一の逃げ道」どおりに1関数へ封じ込めてある）は、DOM 要素の
 キャストとは性質が違う別の関心事なので、直す量に対して1つの規則で縛る効果が薄いと判断した。
 

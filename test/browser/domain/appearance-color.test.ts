@@ -14,7 +14,7 @@ import {
 import {
   MAX_BACKGROUND_VEIL,
   MIN_BACKGROUND_VEIL,
-} from "../../../src/shared/character-background.ts"
+} from "../../../src/shared/character-pack/character-background.ts"
 
 const STORAGE_KEY = "tsukumo-appearance-color:v1"
 

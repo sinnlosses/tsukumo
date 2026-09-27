@@ -6,7 +6,7 @@ import { join } from "node:path"
 import {
   REPORT_USAGE_FORMAT_VERSION,
   type ReportUsageRecord,
-} from "../../../shared/report-usage-record.ts"
+} from "../../../shared/report/report-usage-record.ts"
 import { appendJsonLine } from "../../adapter/lib/jsonl.ts"
 import { isoWithOffset, localDateKey } from "../../adapter/local-time.ts"
 import { tsukumoHomeDir } from "../../adapter/tsukumo-home.ts"

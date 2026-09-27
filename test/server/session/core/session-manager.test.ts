@@ -44,12 +44,12 @@ import type {
 import type { VisitGuest } from "../../../../src/server/visit/core/visit-guest.ts"
 import { VISIT_TIMING } from "../../../../src/server/visit/core/visit-timing.ts"
 import type { VisitPorts } from "../../../../src/server/visit/core/visit-watch.ts"
-import type { DailyAchievement } from "../../../../src/shared/achievement.ts"
-import type { VisitScript } from "../../../../src/shared/character-visit.ts"
+import type { DailyAchievement } from "../../../../src/shared/achievement/achievement.ts"
+import type { VisitScript } from "../../../../src/shared/character-pack/character-visit.ts"
 import {
   type ContextUsageReport,
   UNAVAILABLE_CONTEXT_USAGE,
-} from "../../../../src/shared/context-usage.ts"
+} from "../../../../src/shared/context-usage/context-usage.ts"
 import type {
   CharacterCreate,
   CharacterDelete,
@@ -61,25 +61,29 @@ import {
   PROTOCOL_VERSION,
   type ServerFrame,
 } from "../../../../src/shared/frame.ts"
-import type { PromptImage } from "../../../../src/shared/prompt-image.ts"
-import type { ReportSection } from "../../../../src/shared/report-block.ts"
-import type { SessionDefault } from "../../../../src/shared/session-default.ts"
+import { UNAVAILABLE_PLAN_USAGE } from "../../../../src/shared/plan-usage/plan-usage.ts"
+import type { ReportSection } from "../../../../src/shared/report/report-block.ts"
+import type { PromptImage } from "../../../../src/shared/session-driver/prompt-image.ts"
+import type { SessionDefault } from "../../../../src/shared/session/session-default.ts"
 import {
   type SessionDigest,
   UNAVAILABLE_SESSION_DIGEST,
-} from "../../../../src/shared/session-digest.ts"
-import type { SessionEvent } from "../../../../src/shared/session-event.ts"
+} from "../../../../src/shared/session/session-digest.ts"
+import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import {
   INITIAL_SESSION_STATE,
   MAX_SESSION_STATE_TURNS,
   type SessionState,
-} from "../../../../src/shared/session-state.ts"
+} from "../../../../src/shared/session/session-state.ts"
 import type {
   ModelTokenUsage,
   ScopeUsage,
   TurnUsageBreakdown,
-} from "../../../../src/shared/token-usage.ts"
-import { type PreviousUsageReview, usageProposalKey } from "../../../../src/shared/usage-review.ts"
+} from "../../../../src/shared/token-usage/token-usage.ts"
+import {
+  type PreviousUsageReview,
+  usageProposalKey,
+} from "../../../../src/shared/usage-review/usage-review.ts"
 import {
   characterChangedEvent,
   shownOutfitAccents,
@@ -87,6 +91,7 @@ import {
 } from "../../../fixture/character.ts"
 import { contextUsage, readyContextUsage } from "../../../fixture/context-usage.ts"
 import { createManualClock } from "../../../fixture/manual-clock.ts"
+import { readyPlanUsage } from "../../../fixture/plan-usage.ts"
 
 // 疑似セッションもセリフも手で書いた架空のもの（docs/coding-standards.md「会話内容の扱い」）。
 const BATCH_MS = 5
@@ -162,6 +167,10 @@ function createStubDriver(): StubDriver {
       readContextUsage: () => {
         calls.push("readContextUsage")
         return Promise.resolve(readyContextUsage())
+      },
+      readPlanUsage: () => {
+        calls.push("readPlanUsage")
+        return Promise.resolve(readyPlanUsage())
       },
       readSessionDigest: (sessionId: string) => {
         calls.push(`readSessionDigest:${sessionId}`)
@@ -1676,6 +1685,7 @@ describe("createSessionManager", () => {
           answer: () => true,
           pending: () => [],
           readContextUsage: () => Promise.resolve(UNAVAILABLE_CONTEXT_USAGE),
+          readPlanUsage: () => Promise.resolve(UNAVAILABLE_PLAN_USAGE),
           readSessionDigest: () => Promise.resolve(UNAVAILABLE_SESSION_DIGEST),
           setModel: () => Promise.resolve(),
           setEffort: () => Promise.resolve(),
@@ -2216,7 +2226,7 @@ describe("createSessionManager", () => {
     })
   })
 
-  // コンテキストの内訳の記録（`src/shared/context-usage-record.ts`）。1行 = 1セッションで、
+  // コンテキストの内訳の記録（`src/shared/context-usage/context-usage-record.ts`）。1行 = 1セッションで、
   // 取れなかった回は次のターンで取り直すことを、ここで固定する。
   describe("コンテキストの内訳の記録", () => {
     function sessionInfo(sessionId: string): SessionEvent {
