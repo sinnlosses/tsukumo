@@ -31,7 +31,7 @@ tsukumo は Agent SDK（`@anthropic-ai/claude-agent-sdk`）で Claude Code を�
   前提不足で止まる）
 - `tsukumo` コマンドは `pnpm link --global` で入っている（`docs/requirements.md` 4.6）
 - ホストに依存する操作は1つの抽象の裏に置く（`docs/architecture/adr/0015-single-host-port.md`）。
-  **`orca` 以外の外部コマンド依存を増やすときはユーザーの承認を得る**
+  **`orca`・`bd`・`dolt`・`gh` 以外の外部コマンド依存を増やすときはユーザーの承認を得る**
 - 環境の実測値は `docs/requirements.md`「5. 実行環境・非機能要件」。時間が経つと変わるので、
   前提にする前にその場で確かめる
 
@@ -129,14 +129,18 @@ node scripts/stop.ts           # 動いている tsukumo の一覧（--port <n> 
 - 整形コマンド: `pnpm run format`
 - ブランチ: 切らない（自分でブランチを切らない）。**枝の寿命は作業ツリーの寿命と同じ**で、
   1本の枝がいくつでもタスクを持つ
+- タスクの置き場: beads
+- トラッカー: github
+- GitHub Project: `sinnlosses/1`
 
-状態はチャットではなく `develop/task/`（1件1ファイル）・`develop/direction.md`・`develop/draft/`（エージェントのドラフト。1件1ファイル）に残す。手順は
+状態はチャットではなく Beads（`task show T-xxx` で読み、`task edit` で直す。`.beads` は本体の作業ツリーの根で git の外）・`develop/direction.md`・`develop/draft/`（エージェントのドラフト。1件1ファイル）に残す。手順は
 `~/.claude/skills/task-workflow/WORKFLOW.md` が正典で、このリポジトリの上乗せは
 `docs/workflow.md`。**タスクは `difficulty` と同じモデルのサブエージェントに委譲し**、判断が
 想定より要ると分かったら押し切らず `difficulty` を上げて再開する。完了は検証できる証拠で判定する。
 新しい作業ツリーの立ち上げ（`pnpm install` と `pnpm run build`）は人がやる。
 
-**IMPORTANT**: 次は必ず人間の承認を得てから行う — 外部への公開・送信、破壊的な git 操作、
+**IMPORTANT**: 次は必ず人間の承認を得てから行う — 外部への公開・送信（`task` が行う GitHub の
+`sinnlosses/tsukumo` の Issue・label と Project 1 への書き込みは除く）、破壊的な git 操作、
 認証情報や権限の変更、**`~/.claude/settings.json` などグローバル設定の書き換え**、
 **グローバルなツールの導入**。`~/.claude/settings.json` の hooks と statusLine は orca が専有して
 いるので、**足すときは既存エントリを壊さず追記する。**

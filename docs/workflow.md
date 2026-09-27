@@ -4,7 +4,8 @@
 共通。フィールド定義・`summary` の書き方・`difficulty` の基準・evidence の粒度・
 コミットメッセージ・指示メモ・アーカイブのトリガーと手順は、すべてそちらにある）。
 プロジェクト固有の値は `CLAUDE.md` の「## タスク運用」節が持つ（このリポジトリでは
-検証コマンド = `pnpm run check`、整形コマンド = `pnpm run format`）。
+検証コマンド = `pnpm run check`、整形コマンド = `pnpm run format`、タスクの置き場 = Beads、
+トラッカー = GitHub の `sinnlosses/tsukumo` と Project 1）。
 
 **2026-09-12 に、共通版と重複していた節をこの文書から落とした**（正典が二重になり、片方だけ
 直して気づかない事故を避けるため）。ここに残すのは、**共通版が知らないこのリポジトリの事情**だけ。
@@ -21,8 +22,9 @@
   必ず書く**（orca が専有している。`CLAUDE.md` の IMPORTANT と `docs/architecture.md`「既知の制約・注意点」）
 - **環境側の前提はその場で確かめる。** ターミナルの画像プロトコル対応、外部コマンドの有無、
   常駐プロセスの生死は時間とともに変わる。docs やタスク本文に書かれた実測を鵜呑みにしない
-- **spec の出典**は `docs/requirements.md` と `develop/task/` の各タスク本文
-  （issueトラッカーは未設定）。**standards の出典**は `CLAUDE.md` ＋
+- **spec の出典**は `docs/requirements.md` と各タスクの本文（`task show T-xxx`。GitHub の Issue は
+  その写しで、正は Beads）。2026-09-27 より前に閉じたタスクの本文は、git の履歴の `develop/task/` と
+  `docs/history/tasks.md` にある。**standards の出典**は `CLAUDE.md` ＋
   `docs/coding-standards.md` ＋ `docs/architecture.md` の3つ。`code-review` スキルが
   「リポジトリ内から探す」と言うのはこれらのこと
 - **ブランチは自分で切らない。** コミット先はいま居るブランチで、作業ツリーを分けるのは
@@ -125,8 +127,8 @@ enum・キャラクターパックの読み込み）は起こし直さないと�
 ## 作業ツリーを並行させるとき
 
 作業ツリーが分かれていれば、2つのタスクを並行して進めてよい（触る層が重なっていても選んでよい。
-相手の足元のファイルは動かない。取り合いを防ぐのは共通版の台帳——`task claim` が全作業ツリーで
-共有する `.git` の下に印を置く）。**検証コマンドは並行して打ってよい**（自分の作業ツリーで走る
+相手の足元のファイルは動かない。取り合いを防ぐのは Beads の着手の印——`task claim` が本体の
+作業ツリーの `.beads` に `bd update --claim` を打つ）。**検証コマンドは並行して打ってよい**（自分の作業ツリーで走る
 ので、相手の作業中の変更を拾わない）が、次の2点は tsukumo 固有の落とし穴:
 
 - **ポートは作業ツリーで分かれない。** `pnpm run check` に含まれる `test/cli.test.ts`
