@@ -84,6 +84,7 @@ import {
   type PreviousUsageReview,
   usageProposalKey,
 } from "../../../../src/shared/usage-review/usage-review.ts"
+import { VISIT_LINE_MIN_INTERVAL_MS } from "../../../../src/shared/visit/visit-line-timing.ts"
 import {
   characterChangedEvent,
   shownOutfitAccents,
@@ -2963,7 +2964,7 @@ describe("訪問", () => {
     await Promise.resolve()
     waitForVisit(run)
 
-    run.advance(VISIT_TIMING.lineIntervalMs)
+    run.advance(VISIT_LINE_MIN_INTERVAL_MS)
 
     expect(run.snapshot().visit).toEqual({
       kind: "visiting",
@@ -2986,7 +2987,7 @@ describe("訪問", () => {
 
     for (const run of [visited, unvisited]) {
       waitForVisit(run)
-      run.advance(VISIT_TIMING.lineIntervalMs)
+      run.advance(VISIT_LINE_MIN_INTERVAL_MS)
     }
     const during = visited.snapshot()
     for (const run of [visited, unvisited]) {
@@ -3001,7 +3002,7 @@ describe("訪問", () => {
       kind: "left",
       guest: "fictional-guest",
       farewell: "架空の帰りの一言",
-      leftAt: VISIT_TIMING.waitMs + VISIT_TIMING.lineIntervalMs,
+      leftAt: VISIT_TIMING.waitMs + VISIT_LINE_MIN_INTERVAL_MS,
     })
     expect(after.speechExpression).toBe("flustered")
     expect({ ...after, visit: without.visit }).toEqual(without)
@@ -3022,7 +3023,7 @@ describe("訪問", () => {
     expect(run.snapshot().visit.kind).toBe("visiting")
 
     await run.manager.commands.session.switchCharacter({ name: "fictional" })
-    run.advance(VISIT_TIMING.lineIntervalMs * 10)
+    run.advance(VISIT_LINE_MIN_INTERVAL_MS * 10)
 
     expect(run.snapshot().visit).toEqual({ kind: "none" })
     expect(run.pendingTimers()).toBe(0)
@@ -3033,7 +3034,7 @@ describe("訪問", () => {
     const run = startManagerWithVisit(GUESTS)
     await Promise.resolve()
     waitForVisit(run)
-    run.advance(VISIT_TIMING.lineIntervalMs)
+    run.advance(VISIT_LINE_MIN_INTERVAL_MS)
     expect(run.snapshot().visit.kind).toBe("visiting")
 
     const result = await run.manager.commands.visit.setEnabled({ enabled: false })
@@ -3045,7 +3046,7 @@ describe("訪問", () => {
       kind: "left",
       guest: "fictional-guest",
       farewell: "架空の帰りの一言",
-      leftAt: VISIT_TIMING.waitMs + VISIT_TIMING.lineIntervalMs,
+      leftAt: VISIT_TIMING.waitMs + VISIT_LINE_MIN_INTERVAL_MS,
     })
   })
 

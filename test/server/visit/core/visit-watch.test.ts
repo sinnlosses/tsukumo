@@ -20,10 +20,16 @@ import {
   INITIAL_SESSION_STATE,
   type SessionState,
 } from "../../../../src/shared/session/session-state.ts"
+import {
+  VISIT_LINE_MIN_INTERVAL_MS,
+  VISIT_LINE_MS_PER_CHARACTER,
+} from "../../../../src/shared/visit/visit-line-timing.ts"
 import { characterChangedEvent } from "../../../fixture/character.ts"
 import { createManualClock } from "../../../fixture/manual-clock.ts"
 
 // 依頼・セリフ・台本はすべて手で書いた架空のもの（docs/coding-standards.md「会話内容の扱い」）。
+// どの行も間の下限（`VISIT_LINE_MIN_INTERVAL_MS`）に収まる短さで揃え、字数で延ばす側は
+// 別のテストで確かめる。
 const SCRIPT: VisitScript = [
   { speaker: "guest", expression: "curious", text: "架空の客の一言目" },
   { speaker: "host", expression: "proud", text: "架空のあるじの返事" },
@@ -106,13 +112,32 @@ describe("createVisitWatch", () => {
       { kind: "visit-started", guest: "guest", script: SCRIPT, farewell: "架空の帰りの一言" },
     ])
 
-    run.advance(VISIT_TIMING.lineIntervalMs * 3)
+    run.advance(VISIT_LINE_MIN_INTERVAL_MS * 3)
     expect(run.emitted.slice(1)).toEqual([
       { kind: "visit-line-advanced", line: 1 },
       { kind: "visit-line-advanced", line: 2 },
       { kind: "visit-ended", reason: "script-finished" },
     ])
     expect(run.state().visit.kind).toBe("left")
+  })
+
+  it("長い行は字数ぶん間を延ばし、下限より早くは進まない", () => {
+    const longLine = "あ".repeat(60)
+    const script: VisitScript = [
+      { speaker: "guest", expression: "curious", text: longLine },
+      { speaker: "host", expression: "proud", text: "架空のあるじの返事" },
+    ]
+    const run = startWatch([{ pack: "guest", visit: { ...GUEST_VISIT, scripts: [script] } }])
+    run.feed(REQUEST)
+    run.feed(TOOL_STARTED)
+    run.advance(VISIT_TIMING.waitMs)
+
+    const longLineIntervalMs = longLine.length * VISIT_LINE_MS_PER_CHARACTER
+    run.advance(longLineIntervalMs - 1)
+    expect(run.emitted).toHaveLength(1)
+
+    run.advance(1)
+    expect(run.emitted[1]).toEqual({ kind: "visit-line-advanced", line: 1 })
   })
 
   it("訪問中に帰る合図が来たらその場で帰り、行はもう進まない", () => {
@@ -122,7 +147,7 @@ describe("createVisitWatch", () => {
     run.advance(VISIT_TIMING.waitMs)
 
     run.feed({ kind: "speech", text: "架空のセリフ", expression: "proud" })
-    run.advance(VISIT_TIMING.lineIntervalMs * 10)
+    run.advance(VISIT_LINE_MIN_INTERVAL_MS * 10)
 
     expect(run.emitted.map((event) => event.kind)).toEqual(["visit-started", "visit-ended"])
     expect(run.emitted[1]).toEqual({ kind: "visit-ended", reason: "speech" })
@@ -132,7 +157,7 @@ describe("createVisitWatch", () => {
     const run = startWatch()
     run.feed(REQUEST)
     run.feed(TOOL_STARTED)
-    run.advance(VISIT_TIMING.waitMs + VISIT_TIMING.lineIntervalMs * 3)
+    run.advance(VISIT_TIMING.waitMs + VISIT_LINE_MIN_INTERVAL_MS * 3)
 
     run.advance(VISIT_TIMING.cooldownMs * 2)
 

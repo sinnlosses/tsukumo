@@ -20,15 +20,12 @@ export type VisitTiming = {
   readonly waitMs: number
   /** 前の訪問が帰ってからこれだけは来ない。 */
   readonly cooldownMs: number
-  /** 台本の1行を出しておく間（`docs/screen-design.md`「吹き出しは2秒空ける」の2秒）。 */
-  readonly lineIntervalMs: number
 }
 
 /** 本番のしきい値（短いビルドでは来ず、`pnpm run check` 1回ぶん程度の待ちで来るくらい）。 */
 export const VISIT_TIMING = {
   waitMs: 90_000,
   cooldownMs: 30 * 60_000,
-  lineIntervalMs: 2_000,
 } satisfies VisitTiming
 
 /**
@@ -39,7 +36,6 @@ export const VISIT_TIMING = {
 export const QUICK_VISIT_TIMING = {
   waitMs: 5_000,
   cooldownMs: 0,
-  lineIntervalMs: 2_000,
 } satisfies VisitTiming
 
 /**

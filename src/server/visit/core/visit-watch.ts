@@ -17,6 +17,7 @@
 
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import type { SessionState } from "../../../shared/session/session-state.ts"
+import { visitLineIntervalMs } from "../../../shared/visit/visit-line-timing.ts"
 import type { VisitEvent } from "../../../shared/visit/visit.ts"
 import {
   chooseVisit,
@@ -192,10 +193,10 @@ export function createVisitWatch(options: VisitWatchOptions): VisitWatch {
     })
   }
 
-  /** いまの行を出しておく間だけ待ち、次の行へ進めるか、言い終えたら帰す。 */
-  const scheduleLine = (): void => {
+  /** いまの行の字数ぶんだけ待ち、次の行へ進めるか、言い終えたら帰す。 */
+  const scheduleLine = (text: string): void => {
     cancelLine()
-    cancelLine = options.clock.after(options.timing.lineIntervalMs, () => {
+    cancelLine = options.clock.after(visitLineIntervalMs(text), () => {
       cancelLine = NOTHING_TO_CANCEL
       const visit = options.readState().visit
       if (visit.kind !== "visiting") {
@@ -224,8 +225,11 @@ export function createVisitWatch(options: VisitWatchOptions): VisitWatch {
         options.emit({ kind: "visit-ended", reason: departure.reason })
         return
       }
-      if (event.kind === "visit-started" || event.kind === "visit-line-advanced") {
-        scheduleLine()
+      if (
+        (event.kind === "visit-started" || event.kind === "visit-line-advanced") &&
+        state.visit.kind === "visiting"
+      ) {
+        scheduleLine(state.visit.script[state.visit.line]?.text ?? "")
       }
       if (event.kind === "visit-ended") {
         cancelLine()
