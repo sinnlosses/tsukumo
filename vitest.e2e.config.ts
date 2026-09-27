@@ -7,7 +7,7 @@ export default defineConfig({
     testTimeout: 60_000,
     hookTimeout: 60_000,
     env: { TZ: "UTC" },
-    // ファイルごとに tsukumo とブラウザを起こすので、並べると負荷で待ちが揺れて落ちる。
-    fileParallelism: false,
+    // 単体テスト（vitest.config.ts）と合わせて、並行する作業ツリーが重なってもコア数を超えない本数にする。
+    maxWorkers: "30%",
   },
 })
