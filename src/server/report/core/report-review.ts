@@ -25,9 +25,11 @@
 // 結果（`tool_result`）が必ず handler より後に届くことだけを当てにしている。
 //
 // handler はサブエージェントの呼び出しとメインの呼び出しを見分けられない（MCP の handler に
-// `parent_tool_use_id` は届かない）ので、サブエージェントが違反した `report` を呼ぶと、その
-// ターンの差し戻しの1回を使う。サブエージェントの `report` はどのみち描かないので、失うのは
-// メインの差し戻しの機会だけ。
+// `parent_tool_use_id` は届かず、届くのはその呼び出し自身の `_meta["claudecode/toolUseId"]` と
+// `requestId` だけ。`toolUseId` を `assistant` メッセージの `tool_use` と突き合わせるには、上の
+// 届く順の保証が要る）ので、サブエージェントの `report` も差し戻しの判定に数える。違反の差し戻し・
+// 送り直し・新しい事実の判定のどれでも、サブエージェントの呼び出しがそのターンの1回を使いうる。
+// サブエージェントの `report` はどのみち描かないので、失うのはメインの差し戻しの機会だけ。
 
 import { isDeepEqual } from "remeda"
 
