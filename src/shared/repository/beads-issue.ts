@@ -1,6 +1,8 @@
 // Beads（`bd`）の課題1件を、タスクの一覧と成果が読む形に写す。「読む」層。
 // 対応は task-workflow の WORKFLOW.md「Beads 方式」の表が正典
-// （`open` → `todo`・`pending` → `hold`・`in_progress` → 着手中・`closed` → `done`、label `cancelled` があれば `dropped`）。
+// （`open` → `todo`・`pending`／`deferred` → `hold`・`in_progress` → 着手中・`closed` → `done`、
+// label `cancelled` があれば `dropped`）。ID は `issue_prefix` が `t` なら `t-<n>` → `T-<n>`、
+// `gh` なら `gh-<n>` → `GH-<n>`（`taskIdOfBeadsId`）。
 //
 // ここはファイルI/Oも `bd` も持たない。`bd` を起こして JSON を検証するのは `readBeadsIssues`。
 
@@ -100,10 +102,18 @@ export function closedBeadsTaskSummariesBefore(
   return new Map(sortByTaskId(closed).map((task) => [task.id, task.summary]))
 }
 
-/** Beads の番号の ID（`t-` + 数字）をタスクID（`T-` + 数字）にする。番号でない ID はそのまま。 */
+/**
+ * Beads の番号の ID をタスクIDにする（`t-` + 3桁以上の数字は `T-` + 数字、`gh-` + 数字
+ * （ゼロ埋めなし）は `GH-` + 数字。どちらの形かは Beads の `issue_prefix` で決まる。
+ * 番号でない ID（振り分け前の取り込み）はそのまま）。
+ */
 export function taskIdOfBeadsId(beadsId: string): string {
-  const digits = BEADS_NUMBERED_ID_PATTERN.exec(beadsId)?.[1]
-  return digits === undefined ? beadsId : `T-${digits}`
+  const tDigits = BEADS_NUMBERED_T_ID_PATTERN.exec(beadsId)?.[1]
+  if (tDigits !== undefined) {
+    return `T-${tDigits}`
+  }
+  const ghDigits = BEADS_NUMBERED_GH_ID_PATTERN.exec(beadsId)?.[1]
+  return ghDigits === undefined ? beadsId : `GH-${ghDigits}`
 }
 
 /**
@@ -178,12 +188,18 @@ const CANCELLED_LABEL = "cancelled"
 const CLOSED_TASK_DISPLAY_LIMIT = 10
 const DIFFICULTY_LABEL_PREFIX = "difficulty:"
 const LOOPABLE_LABEL_PREFIX = "loopable:"
-const BEADS_NUMBERED_ID_PATTERN = /^t-(\d{3,})$/
+const BEADS_NUMBERED_T_ID_PATTERN = /^t-(\d{3,})$/
+const BEADS_NUMBERED_GH_ID_PATTERN = /^gh-(\d+)$/
 
-/** 閉じていない状態の読み替え。表に無い状態（`blocked` など）は Beads の語のまま出す。 */
+/**
+ * 閉じていない状態の読み替え。表に無い状態（`blocked` など）は Beads の語のまま出す。
+ * `deferred` は組み込みの保留状態、`pending` は切り替え前の独自の状態（WORKFLOW.md
+ * 「Beads 方式」）で、どちらも「保留」として出す。
+ */
 const TASK_STATUS_OF_BEADS_STATUS = new Map<string, string>([
   ["open", "todo"],
   ["pending", "hold"],
+  ["deferred", "hold"],
   ["in_progress", "doing"],
 ])
 
@@ -196,8 +212,8 @@ function sortByTaskId<T extends { readonly id: string }>(tasks: readonly T[]): r
   return sortBy(tasks, [(task) => taskNumberOf(task.id), "asc"], [(task) => task.id, "asc"])
 }
 
-/** タスクIDの数字の部分。番号でない ID は並びの最後に落とす。 */
+/** タスクIDの数字の部分（`T-` と `GH-` のどちらも）。番号でない ID は並びの最後に落とす。 */
 function taskNumberOf(taskId: string): number {
-  const digits = /^T-(\d+)$/.exec(taskId)?.[1]
+  const digits = /^(?:T|GH)-(\d+)$/.exec(taskId)?.[1]
   return digits === undefined ? Number.POSITIVE_INFINITY : Number(digits)
 }

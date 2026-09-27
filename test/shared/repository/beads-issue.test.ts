@@ -45,6 +45,22 @@ describe("taskSummaryItemsOfBeadsIssues", () => {
     ])
   })
 
+  it("組み込みの deferred も pending と同じく hold に読み替える", () => {
+    const items = taskSummaryItemsOfBeadsIssues([issue({ id: "gh-6", status: "deferred" })])
+
+    expect(items.map((item) => [item.id, item.status])).toEqual([["GH-6", "hold"]])
+  })
+
+  it("gh-<n> の課題は GH-<n> として出し、t-<n> と混ざっても番号順に並ぶ", () => {
+    const items = taskSummaryItemsOfBeadsIssues([
+      issue({ id: "gh-20", status: "open" }),
+      issue({ id: "t-005", status: "open" }),
+      issue({ id: "gh-3", status: "open" }),
+    ])
+
+    expect(items.map((item) => item.id)).toEqual(["GH-3", "T-005", "GH-20"])
+  })
+
   it("label cancelled の閉じた課題は dropped で出す", () => {
     const items = taskSummaryItemsOfBeadsIssues([
       issue({
@@ -151,9 +167,11 @@ describe("closedBeadsTaskSummariesBefore", () => {
 })
 
 describe("taskIdOfBeadsId", () => {
-  it("番号の ID だけ T- に直し、番号でない ID はそのまま", () => {
+  it("t- の番号は T- に、gh- の番号は GH- に直し、番号でない ID はそのまま", () => {
     expect(taskIdOfBeadsId("t-123")).toBe("T-123")
     expect(taskIdOfBeadsId("t-a3f2")).toBe("t-a3f2")
+    expect(taskIdOfBeadsId("gh-5")).toBe("GH-5")
+    expect(taskIdOfBeadsId("gh-1234-1-a3f2")).toBe("gh-1234-1-a3f2")
   })
 })
 

@@ -21,7 +21,8 @@ describe("タスクIDの重複", () => {
   })
 })
 
-// CLAUDE.md「コード・ドキュメントにタスク番号（`T-` + 3桁）を書かない」を、`src/` / `test/` /
+// CLAUDE.md「コード・ドキュメントにタスク番号（`T-` + 3桁、または GitHub の Issue 番号 `GH-<n>`）を
+// 書かない」を、`src/` / `test/` /
 // `scripts/` / `docs/` / `story/`（`docs/history/` を除く）のコメント・テスト名・本文で保つ
 // （拾う形・許す範囲は `findTaskMentions` のコメント）。
 describe("タスク番号の書き込み", () => {

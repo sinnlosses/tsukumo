@@ -22,7 +22,7 @@
   必ず書く**（orca が専有している。`CLAUDE.md` の IMPORTANT と `docs/architecture.md`「既知の制約・注意点」）
 - **環境側の前提はその場で確かめる。** ターミナルの画像プロトコル対応、外部コマンドの有無、
   常駐プロセスの生死は時間とともに変わる。docs やタスク本文に書かれた実測を鵜呑みにしない
-- **spec の出典**は `docs/requirements.md` と各タスクの本文（`task show T-xxx`。GitHub の Issue は
+- **spec の出典**は `docs/requirements.md` と各タスクの本文（`task show GH-<n>`。GitHub の Issue は
   その写しで、正は Beads）。2026-09-27 より前に閉じたタスクの本文は、git の履歴の `develop/task/` と
   `docs/history/tasks.md` にある。**standards の出典**は `CLAUDE.md` ＋
   `docs/coding-standards.md` ＋ `docs/architecture.md` の3つ。`code-review` スキルが

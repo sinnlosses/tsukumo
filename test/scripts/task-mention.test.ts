@@ -2,7 +2,7 @@
 // リポジトリ全体で0件を保つのは別の検査の役目。
 //
 // このファイル自身も拾われる側なので、タスク番号の形の文字列は数値を変数に分けて組み立てる
-// （ソースに `T-` + 3桁以上の並びがそのまま現れないようにする）。
+// （ソースに `T-` + 3桁以上・`GH-` + 数字の並びがそのまま現れないようにする）。
 
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
@@ -24,6 +24,8 @@ const OTHER_SAMPLE_NUMBER = 998
 const OTHER_SAMPLE_ID = `T-${OTHER_SAMPLE_NUMBER}`
 const KNOWN_EXCEPTION_NUMBER = 225
 const KNOWN_EXCEPTION_ID = `T-${KNOWN_EXCEPTION_NUMBER}`
+const GH_SAMPLE_NUMBER = 5
+const GH_SAMPLE_ID = `GH-${GH_SAMPLE_NUMBER}`
 const REQUIREMENTS_PATH = "docs/requirements.md"
 
 describe("findTaskMentions", () => {
@@ -42,6 +44,18 @@ describe("findTaskMentions", () => {
 
   test("2桁以下は拾わない", () => {
     expect(findTaskMentions("src/sample.ts", "T-12 はタスク番号ではない")).toEqual([])
+  })
+
+  test("`GH-` に数字が続く並び（ゼロ埋めなしの1桁でも）を拾う", () => {
+    expect(findTaskMentions("src/sample.ts", `// ${GH_SAMPLE_ID} を直した`)).toEqual([
+      { sourcePath: "src/sample.ts", line: 1, id: GH_SAMPLE_ID, context: "comment" },
+    ])
+  })
+
+  test("小文字の `gh-` は拾わない（Beads の中の表記）", () => {
+    expect(
+      findTaskMentions("src/sample.ts", `gh-${GH_SAMPLE_NUMBER} はタスク番号ではない`),
+    ).toEqual([])
   })
 
   test("何も無ければ空", () => {

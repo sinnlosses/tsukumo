@@ -310,10 +310,12 @@ export function graduationsOf(
   return sortBy(graduations, prop("registeredOn"))
 }
 
-/** `T-NNN` の数の部分（`NNN`）。並び替えだけに使う。桁が読めなければ `Number.POSITIVE_INFINITY`
- * （並びの最後に落ちるだけで、例外は投げない）。 */
+/**
+ * `T-NNN`・`GH-NNN` の数の部分（`NNN`）。並び替えだけに使う。桁が読めなければ
+ * `Number.POSITIVE_INFINITY`（並びの最後に落ちるだけで、例外は投げない）。
+ */
 function taskIdNumber(id: string): number {
-  const match = /^T-(\d+)$/.exec(id)
+  const match = /^(?:T|GH)-(\d+)$/.exec(id)
   const digits = match?.[1]
   return digits === undefined ? Number.POSITIVE_INFINITY : Number(digits)
 }

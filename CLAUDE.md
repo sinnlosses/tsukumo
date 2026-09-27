@@ -102,8 +102,8 @@ node scripts/stop.ts           # 動いている tsukumo の一覧（--port <n> 
   （代替は `docs/coding-standards.md`「React」節）
 - 可読性が良くなる場合は **remeda** を優先する
 - **2つ以上の class 名をつなぐときは clsx を使う**（`docs/coding-standards.md`「class 名は clsx で組む」）
-- コード・ドキュメントにタスク番号（`T-` + 3桁）を書かない（例外は `docs/requirements.md`
-  「7. 未決事項」の対応タスク列）
+- コード・ドキュメントにタスク番号（`T-` + 3桁、または GitHub の Issue 番号 `GH-<n>`）を書かない
+  （例外は `docs/requirements.md`「7. 未決事項」の対応タスク列）
 - **案が2つ以上あるときは、書いたあとのコードを読む人が把握しやすいほうを選ぶ**（工数と行数は
   指標にしない）。**機械的な仕組みをヒューリスティックより優先する**
 - 識別子は `docs/glossary.md` の「英語識別子（予定）」に合わせる（変えるなら用語集が先）

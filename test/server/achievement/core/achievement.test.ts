@@ -412,6 +412,15 @@ describe("taskMilestoneOf", () => {
     expect(taskMilestoneOf(items, 100)).toBeUndefined()
   })
 
+  it("GH-<n> の ID も番号順に足す（T-xxx と混ざっても数で並ぶ）", () => {
+    const items = [
+      { id: "GH-102", summary: "b" },
+      { id: "T-101", summary: "a" },
+    ]
+
+    expect(taskMilestoneOf(items, 248)).toEqual({ kind: "task", count: 250, taskId: "GH-102" })
+  })
+
   it("1日に複数の刻みをまたいだら、最後にまたいだものだけ返す", () => {
     // 250件ぶんの刻みを2回またぐには、少なくとも250件超のタスクが同じ日に終わる必要がある
     // （現実的には稀だが、ロジックが「あとから見つかったほうを残す」ことを確かめる）。
