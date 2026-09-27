@@ -318,7 +318,7 @@ describe("手続き（oRPC）を import する箇所", () => {
   })
 })
 
-// `node:child_process` を起こすのはホスト（orca）・ビルド（bun build）・`git` を起こす1つの口
+// `node:child_process` を起こすのはホスト（orca）・ビルド（vite build）・`git` を起こす1つの口
 // （`main` の上のタスク一覧・成果の集計・git 管理下のファイルの列挙のどれもがここを使う）の
 // 3つの境界に閉じ込める（docs/architecture.md 原則3）。
 describe("子プロセスを起こす箇所", () => {

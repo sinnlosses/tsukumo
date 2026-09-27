@@ -110,7 +110,7 @@ Claude Code を動かす）の核（セッション駆動・イベントの変�
 | `src/server/view-server/adapter/session-socket.ts`                           | adapter    | `/ws` の upgrade（起動トークンと Origin を確かめる）とコマンドの受け口                                                                                              |
 | `src/server/core/config.ts`                                                  | core       | 環境変数の読み取り。**`process.env` を読むのはここだけ**                                                                                                            |
 | `src/server/view-server/core/port-resolution.ts`                             | core       | ビューを配るポートの決定。既定は EADDRINUSE でずらし、明示指定は一度だけ試す                                                                                        |
-| `src/server/view-server/adapter/bundle.ts`                                   | adapter    | `bun build` で作った1組を `dist/browser/` に置く／そこから読む（起動は読むだけ）                                                                                    |
+| `src/server/view-server/adapter/bundle.ts`                                   | adapter    | `vite build` で作った1組を `dist/browser/` に置く／そこから読む（起動は読むだけ）                                                                                   |
 | `src/server/adapter/bundled-path.ts`                                         | adapter    | 自分で持ち歩くもの（`characters/`・`node_modules/`）の置き場所を、起動先のディレクトリに依存せず解く                                                                |
 | `src/server/character-pack/adapter/character-pack.ts`                        | adapter    | キャラクターパックの列挙・読み込みと `/character/<pack>/<file>` が配ってよい1件の判定                                                                               |
 | `src/server/repository/adapter/task-summary.ts`                              | adapter    | `main` の `develop/task/` の読み直し。`main` の先端が変わったときだけ `tasks-changed` を起こす（`git rev-parse` / `git ls-tree` / `git cat-file --batch` を起こす） |
@@ -288,7 +288,7 @@ fs から読んだ**文字列**で渡すので、`core → adapter` の辺は増
 上の移行と同じ検討の中で決め、いまも効いている個別の技術選択（**蒸し返さない**。理由は
 `docs/research/architecture-rethink.md`）:
 
-- UI は **React 19**。Preact は alias で差し替えられる位置に置く（`bun build` の `--define` / alias）
+- UI は **React 19**。Preact は alias で差し替えられる位置に置く（`vite.config.ts` の `resolve.alias`）
 - 通信は **WebSocket 1本**（`ws` パッケージ。`Bun.serve` の WebSocket に寄せない）
 - Markdown は **react-markdown + remark-gfm + rehype-raw + rehype-sanitize + rehype-highlight**
 - 立ち絵は**動くが話さない**（表情の遷移・まばたき・登場と退場の演出。音声・口パクは持たない）
@@ -396,6 +396,32 @@ without an output directory`。2026-09-18 の実測）。標準出力で受け�
 依存（`node_modules`）や tsconfig の変化は拾わない。そこまで見るなら組み立て直すほうが早いので、
 **気づく口**として割り切っている。**見張りが `src/browser/` しか見ないのとは別の話**で、あちらは
 動作中に両側が食い違うのを避けるため、こちらは起動時でプロセスごと入れ替わる。
+
+#### 組み立ては `vite build` の CLI を子プロセスで起こす（2026-09-27）
+
+**`bun build` をやめ、`vite build` で組み立てる。** Node + Vite + Vitest へ移す段の3段目で、
+Vite 前提の道具（Storybook・React Compiler）を本物と同じ設定で使えるようにするため。設定は
+リポジトリ直下の `vite.config.ts` の1つで、入口の置き場（`src/browser/`）と出し先（`dist/browser/`）は
+`bundle.ts` が CLI の引数で渡す（テストは一時ディレクトリの入口で失敗の側を確かめる）。
+
+- **出す名前は `main.js` と `main.css` に固定する。** Vite の既定はハッシュ付きの名前
+  （`assets/main-<hash>.js`）だが、サーバは起動時に読んでメモリから `/assets/ui.js` と
+  `/assets/style.css` で配るので、名前で古さを見分ける必要が無い。`readPair` はこの2つの名前を
+  読むだけで、拡張子で探さない（出し先に別の `.js` が残っていても拾い違えない）。出し先は毎回
+  空にする（`emptyOutDir`。空にするのは組み立てが通って書き出す直前だけなので、壊れた保存で配っている
+  ものは消えない）
+- **JS API ではなく CLI を `node` の子プロセスで起こす。** Vite の JS API は呼んだプロセスの
+  `process.env.NODE_ENV` を書き換えるので、見張りつきで常駐するサーバの中で呼ぶと、組み立て1回が
+  サーバ全体の環境を変える。子プロセスなら組み立ての副作用はそこで閉じ、`bun test` から呼んでも
+  起動と同じ `node` で組み立てる。子プロセスを起こすのは前と同じ `bundle.ts` の1ファイル
+- CLI の失敗の出力は、端末でなくても色の制御文字が入り、vite 自身のスタックが続く。理由として
+  ターミナルに出す前に両方を落とす
+- tsconfig の `verbatimModuleSyntax` のままだと、`import { type Element } from "hast"` が
+  `import "hast"` として残り、型しか持たないパッケージを解決できずに止まる。`vite.config.ts` で
+  型だけの import を読み込みごと消す（`onlyRemoveTypeImports: false`。`bun build` と同じ振る舞い）
+- **React は本番版で束ねられる**（`vite build` が `process.env.NODE_ENV` を `"production"` に置き換える）。
+  `bun build` は開発版を束ねていたので、開発版だけが出す警告はブラウザのコンソールに出なくなった
+- 縮めない（`minify: false`）。ローカルから配るだけなので、読める成果物のほうが調べやすい
 
 #### Claude Code の TUI を捨て、SDK で動かす
 
@@ -560,7 +586,7 @@ JavaScript をそのままブラウザへ配っていて描けるかどうかは
 11.11.2 でバイト一致）。
 
 **大きいものは使うときだけ読む。** mermaid は 5.3MB あるので、レポートが実際に mermaid の
-コードブロックを書いたときにだけ `<script>` を足す（Chart.js も同じ）。**だから `bun build` の
+コードブロックを書いたときにだけ `<script>` を足す（Chart.js も同じ）。**だから `vite build` の
 束ねには入れない**——入れると図が1つも無いレポートでも最初の読み込みで運ぶことになる。
 highlight.js は `rehype-highlight` として束ねに入り、ブラウザへ配るのはテーマの CSS だけ。
 

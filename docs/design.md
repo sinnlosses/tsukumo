@@ -48,7 +48,7 @@ sed -n '/^## 4\. shared/,/^## /p' docs/design.md
 | ## 8. セッションの復元と複数化 | 復元（4.8）を新しい形に載せる。複数セッションへ広げる余地                                                                                             |
 | ## 9. 会話内容と安全           | `127.0.0.1`・Origin・起動トークン・ディスクに書く3つの例外と読み戻す口・定着・ブラウザ側のメモリ                                                      |
 | ## 10. テスト                  | reducer・スキーマ・部品・**E2E（走らせ方・成果物・シナリオ）**・層の検査                                                                              |
-| ## 11. ビルドと依存            | `bun build` の入口、tsconfig、**足す依存の一覧（承認済み）**                                                                                          |
+| ## 11. ビルドと依存            | `vite build` の入口、tsconfig、**足す依存の一覧（承認済み）**                                                                                         |
 
 ## 2. 全体構成
 
@@ -1218,13 +1218,13 @@ react-markdown
 
 | もの                                                               | 読み方                                                                                                                      | 置き場所            |
 | ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------- | ------------------- |
-| React・react-markdown 一式・`ws`（ブラウザ側は標準の `WebSocket`） | `bun build` が npm から束ねる                                                                                               | `node_modules`      |
+| React・react-markdown 一式・`ws`（ブラウザ側は標準の `WebSocket`） | `vite build` が npm から束ねる                                                                                              | `node_modules`      |
 | highlight.js                                                       | `rehype-highlight`（`lowlight` の common 言語）を束ねる。テーマ CSS だけ `/vendor/` で配る                                  | 束ねる / `/vendor/` |
 | mermaid（5.3MB）・Chart.js                                         | **束ねず `/vendor/` で配り、その記法が出たときだけ `<script>` で読む**。`MermaidBlock` / `ChartBlock` が `useEffect` で描く | `/vendor/`          |
 | Idiomorph                                                          | **消える**                                                                                                                  | —                   |
 
 `/vendor/<name>` が返すのは `node_modules` の実ファイル（`src/server/view-server/adapter/vendor-asset.ts`）で、
-**CDN からは読まない**。`bun build` の出力は1本（コード分割はしない。分割するとディスクに
+**CDN からは読まない**。`vite build` の出力は1本（コード分割はしない。分割するとディスクに
 置かないメモリ配信と噛み合わない）。
 
 ### 6.5 立ち絵の動き
@@ -1494,7 +1494,7 @@ characters/<name>/
 | バインド先                                         | `127.0.0.1` だけ。変えない                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | Origin                                             | WebSocket の upgrade で確かめる（いまの POST と同じ規則。`Origin` が無ければ通す、あれば自分と一致）                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | 起動トークン                                       | 起動ごとに乱数を1つ作り、`/ws?t=` で要求する。ページの URL に付けて配る（`showView` に渡す URL に含む）。同じマシンの別プロセスが `127.0.0.1:7327` を読める、という既知の割り切りを塞ぐ                                                                                                                                                                                                                                                                                                                                                                                                                                         |
-| ディスク                                           | 会話を**書く**のは**3つの例外だけ**（下の「あらすじ」「雑談の会話のアーカイブ」「エピソード索引」。「直近の雑談を逐語で読み戻す」と「定着」の行は書かずに**読む・渡す**ほう）。`bun build` の出力もメモリ。`localStorage` に置くのは領域の比率だけ（キャラクターパックへ書くのは**会話ではなくキャラクターの属性1行**だけ。下の行）                                                                                                                                                                                                                                                                                             |
+| ディスク                                           | 会話を**書く**のは**3つの例外だけ**（下の「あらすじ」「雑談の会話のアーカイブ」「エピソード索引」。「直近の雑談を逐語で読み戻す」と「定着」の行は書かずに**読む・渡す**ほう）。`vite build` の出力は起動時に読んでメモリから配る。`localStorage` に置くのは領域の比率だけ（キャラクターパックへ書くのは**会話ではなくキャラクターの属性1行**だけ。下の行）                                                                                                                                                                                                                                                                      |
 | ブラウザ側のメモリ                                 | `SessionState` として会話の一部を持つ。**同じオリジンの `127.0.0.1` のタブの中に閉じる**（いまも DOM として持っている。持ち方が変わるだけ）                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | ログ                                               | 断ったときの理由（`REFUSED`）は定型文。サーバの stderr に会話を出さない（いまのまま）                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | 定着（雑談の記憶を畳む）                           | 窓から溢れた雑談の逐語を、背景の使い捨て `query()`（同じマシンの claude の子プロセス。`persistSession: false`・ツールなし）に渡してエピソードとあらすじを書かせる。**ユーザーが 2026-09-25 に認めた例外**（`docs/requirements.md` 2.2 の外部送信に当たらない。範囲と形は `docs/chat-mode.md` 4.9「窓から溢れた会話は定着で畳む」、置き場は 7.3）。渡した文面も受け取った出力も**画面にも 手続きの応答にも stderr にも出さない**（画面に出すのは話題の見出しだけ）。tsukumo は `/compact` を投げない                                                                                                                             |
@@ -1691,15 +1691,15 @@ E2E が通るのは**疑似セッションに書いた並びだけ**で、fake d
 
 - **成果物は事前に組み立てて `dist/browser/` に置く**（2026-09-21 決定。それまでは起動のたびに
   組み立てていた）。作るのは `bun run build`（`scripts/build-ui.ts`）と `bun run dev` の見張りの
-  2つで、**起動（`src/main.ts`）は置いてあるものを読む**。`bun build` の子プロセスは起動の
+  2つで、**起動（`src/main.ts`）は置いてあるものを読む**。組み立ての子プロセスは起動の
   経路から消えた（`docs/architecture.md`「ブラウザ側は事前に組み立てて置く」）。**同日のうちに
   追加で、`bun run dev` は起こす前に `bun run build` を1回打つようにした**（`package.json` の
   `dev` が `bun run build && TSUKUMO_WATCH_UI=1 bun run src/cli.ts` になる。見張りが直すのは
   保存のたび、この前置きは起動の1回だけで、上の「起動は置いてあるものを読む」は変わらない）
-- `bun run build` が起こすのは `bun build src/browser/main.tsx --target=browser --outdir dist/browser`
-  の1本で、`main.js` と `main.css` の対が置かれる（JSX は tsconfig の `"jsx": "react-jsx"` で自動。
-  CSS は `main.tsx` から import で辿れるものが1本にまとまる。`--outdir` が要るのは CSS Modules で
-  出力が2本になるため）
+- `bun run build` が起こすのは `node node_modules/vite/bin/vite.js build src/browser --config vite.config.ts --outDir dist/browser`
+  の1本で、`main.js` と `main.css` の対が置かれる（JSX は `@vitejs/plugin-react` が変換する。
+  CSS は `main.tsx` から import で辿れるものが1本にまとまる。名前をハッシュ付きにせず固定する理由と、
+  JS API ではなく CLI を起こす理由は `docs/architecture.md`「組み立ては `vite build` の CLI を子プロセスで起こす」）
 - **`dist/` は `.gitignore` する。** 2.6MB の生成物を `src/browser/` を直すたびに履歴へ入れない。
   代わりに、リポジトリを取り直したら `bun install` のあとに `bun run build` を1回打つ
   （`tsukumo` は `bun link` でこのリポジトリを指しているので、**「配布」の実体はこのリポジトリ
@@ -1711,8 +1711,8 @@ E2E が通るのは**疑似セッションに書いた並びだけ**で、fake d
   ここは `src/shared/` も見る**（起動時はプロセスごと入れ替わるので、両側が食い違わない）
 - tsconfig に `"jsx": "react-jsx"` を足す。ブラウザの型は `@types/bun` が持っているのでそのまま
 - **HMR（差分を当てる）は持たない。** 代わりに、**`src/browser/` を見張って組み立て直し、開いている
-  タブに「取り直せ」を押す**（2026-09-16 決定。下の「作り直しを押す仕組み」）。**Vite は足していない**し、
-  `Bun.serve` の HMR も `Bun.build()` も使わない（「Bun固有APIに寄せない」規約のまま）
+  タブに「取り直せ」を押す**（2026-09-16 決定。下の「作り直しを押す仕組み」）。組み立てには Vite を使うが
+  （2026-09-27）、Vite の開発サーバと HMR は使わない
 
 **作り直しを押す仕組み。** `src/server/view-server/adapter/ui-rebuild.ts` が `node:fs` の `watch` で `src/browser/` を**再帰に**見張り、保存が静まって
 から（120ms）`bundle.ts` の `buildUiBundle()` を呼び直す。**出し先は起動が読むのと同じ
@@ -1756,7 +1756,7 @@ Claude が同じ作業ツリーで `git merge main` を打つと `src/browser/` 
 
 **組み立て直しが失敗したときは、前の版を配り続ける。** `onRebuilt` を呼ばず `refresh` も押さない
 ので、ブラウザは何も起きていないように見える。理由の1行だけがペインに出る（常駐プロセスは
-描画1回の失敗で落ちない、の側）。なお `bun build` はトランスパイルだけで**型を見ない**ので、
+描画1回の失敗で落ちない、の側）。なお `vite build` はトランスパイルだけで**型を見ない**ので、
 型エラーだけのコードは組み上がってそのまま配られる。組み立てが失敗するのは構文が壊れているとき・
 import 先が解けないとき（＝書きかけを保存したとき）。
 

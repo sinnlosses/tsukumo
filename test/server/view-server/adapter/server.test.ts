@@ -40,7 +40,7 @@ const TOKEN = createStartupToken()
 
 let runningView: ViewServer | undefined
 
-/** ブラウザ側スクリプトの代役。本物のビルドはしない（テストから `bun build` を起こさない）。 */
+/** ブラウザ側スクリプトの代役。本物のビルドはしない（テストから `vite build` を起こさない）。 */
 const TEST_UI_SCRIPT = "/* テスト用の ui スクリプト */"
 
 /** CSS の代役。本物のビルドはしない。 */

@@ -13,5 +13,12 @@
     "types": ["node"],
     "rootDirs": [".", "dist/css-module-type"]
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "test/**/*.ts", "test/**/*.tsx", "scripts/**/*.ts"]
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "test/**/*.ts",
+    "test/**/*.tsx",
+    "scripts/**/*.ts",
+    "vite.config.ts"
+  ]
 }

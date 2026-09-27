@@ -51,7 +51,7 @@ export function createStartupToken(): string {
 export const LAYOUT_PATH = "/"
 
 /**
- * 自前のブラウザ側スクリプト（`src/browser/` を `bun build` でまとめたもの）と CSS を配る経路。
+ * 自前のブラウザ側スクリプト（`src/browser/` を `vite build` でまとめたもの）と CSS を配る経路。
  * 成果物は `dist/browser/` にあり、起動のときに読んでメモリに持つ
  * （束ねるアダプタ）。
  */

@@ -1,5 +1,5 @@
 // ブラウザ側の入口。
-// `bun build src/browser/main.tsx --target=browser` がここから辿って束ねる（tsconfig の `"jsx": "react-jsx"`）。
+// `vite build`（Vite の設定の `input`）がここから辿って束ねる。
 // CSS もここから辿る（下の `styles/theme.css` と、各機能が import する `*.module.css`）。
 // そのため、スクリプトと CSS は1回の組み立てから出る対になる（`src/server/view-server/adapter/bundle.ts`）。
 // 副作用（`createRoot(...).render(...)`）を持つのはここだけ（`docs/architecture.md`「各ファイルの責務」）。

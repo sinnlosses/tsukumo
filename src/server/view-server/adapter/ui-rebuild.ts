@@ -28,7 +28,7 @@ import { sourceFingerprint } from "./source-fingerprint.ts"
 /**
  * 最後の通知からこれだけ静かになってから組み立て直す。エディタの保存1回で `fs.watch` は
  * 何度も鳴る（macOS でも rename と change が続けて届く）ので、まとめないと同じ保存で
- * `bun build` が何本も走る。
+ * `vite build` が何本も走る。
  */
 const REBUILD_DEBOUNCE_MS = 120
 
@@ -48,7 +48,7 @@ export type UiRebuildFailure = {
   /** {@link UI_REBUILD_FAILURE_REASON} のどれか。 */
   readonly reason: string
   /**
-   * `bun build` が書いた理由（複数行。見張りが止まったときのように無いこともある）。
+   * `vite build` が書いた理由（複数行。見張りが止まったときのように無いこともある）。
    * 中身は `BundleResult` の `reason` と同じで、会話は通らない（`BundleResult` の型の注記）。
    */
   readonly detail: string | undefined
@@ -120,7 +120,7 @@ export function watchUiSource(options: UiSourceWatchOptions): UiSourceWatcher {
 }
 
 /**
- * スクリプトと CSS を組み立て直す（1回の `bun build` から出る1組。`buildUiBundle`）。サーバ側の
+ * スクリプトと CSS を組み立て直す（1回の `vite build` から出る1組。`buildUiBundle`）。サーバ側の
  * ソースが起動時から変わっていたら組み立てない（前の版を配り続ける）。どちらかの指紋が
  * 取れなかったときは、止める根拠が無いので組み立てる。
  */

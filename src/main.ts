@@ -44,7 +44,7 @@ export async function run(config: Config): Promise<number> {
   }
 
   // ブラウザ側スクリプトと CSS は事前に組み立てて置いてあるものを読むだけ
-  // （`src/server/view-server/adapter/bundle.ts` 冒頭）。起動の経路から `bun build` は消えていて、作るのは
+  // （`src/server/view-server/adapter/bundle.ts` 冒頭）。起動の経路から `vite build` は消えていて、作るのは
   // `bun run build` と `bun run dev` の見張りだけ。無ければページが動かないので、ここは
   // 起動時の前提不足として即時終了する（理由に `bun run build` を添える。理由が無いと、
   // 起動できない側は何を打てばよいか分からない）。

@@ -6,11 +6,11 @@ import { join } from "node:path"
 import {
   buildUiBundle,
   builtUiDir,
-  bundleWithBun,
+  bundleWithVite,
   readUiBundle,
 } from "../../../../src/server/view-server/adapter/bundle.ts"
 
-// `bun build` を実際に起こす統合的なテスト。src/browser/ が壊れていないことも合わせて確かめる
+// `vite build` を実際に起こす統合的なテスト。src/browser/ が壊れていないことも合わせて確かめる
 // （本物のリポジトリのファイルを対象にする。CLI 起動を最後までしない test/cli.test.ts と
 // 同じ考え方で、ここは「組み立てられるか」「置いたものを読めるか」までを見る）。
 //
@@ -18,7 +18,7 @@ import {
 // つまり `bun run check` を通すと成果物も新しくなる — 頼ってよい副作用ではないが、黙って
 // 起きると驚くので書いておく。
 //
-// 失敗の側は src/browser/ を壊さず、一時ディレクトリに書いた入口で確かめる。
+// 失敗の側は src/browser/ を壊さず、一時ディレクトリに書いた入口（`main.tsx`）で確かめる。
 
 describe("buildUiBundle", () => {
   it("src/browser/ を JS と CSS の1組にまとめ、dist/browser/ に置く", async () => {
@@ -29,15 +29,15 @@ describe("buildUiBundle", () => {
     expect(result.ok ? result.bundle.styleSheet.length : 0).toBeGreaterThan(0)
   })
 
-  it("CSS Modules の class 名が、CSS と JS の対応表の両方に入っている", async () => {
+  it("CSS Modules の class 名が、CSS の選択子と JS の対応表に同じ綴りで入っている", async () => {
     const result = await buildUiBundle()
 
     // `layout-grid` は
     // `components/page/conversation/components/conversation-layout/conversation-layout.module.css`
-    // の class。組み立てると
-    // ハッシュ付きの名前になり、同じ名前が CSS 側の選択子と JS 側の対応表の両方に出る。
-    expect(result.ok ? result.bundle.styleSheet : "").toContain("layout-grid")
-    expect(result.ok ? result.bundle.uiScript : "").toContain("layout-grid")
+    // の class。組み立てるとハッシュ付きの名前になる。
+    const selector = /\.(_?layout-grid_[\w-]+)/.exec(result.ok ? result.bundle.styleSheet : "")
+    const hashedName = selector?.[1] ?? "（CSS に layout-grid の選択子が無い）"
+    expect(result.ok ? result.bundle.uiScript : "").toContain(`"${hashedName}"`)
   })
 })
 
@@ -66,31 +66,32 @@ describe("builtUiDir", () => {
   })
 })
 
-describe("bundleWithBun", () => {
-  it("存在しない入口を渡すと、解決できなかったことを理由として返す", async () => {
-    const result = await bundleWithBun("/tmp/tsukumo-does-not-exist.ts", await temporaryOutDir())
+describe("bundleWithVite", () => {
+  it("入口の無い置き場を渡すと、入口を解決できなかったことを理由として返す", async () => {
+    const result = await bundleWithVite("/tmp/tsukumo-does-not-exist", await temporaryDir())
 
     expect(result.ok).toBe(false)
-    expect(result.ok ? "" : result.reason).toContain("tsukumo-does-not-exist.ts")
+    expect(result.ok ? "" : result.reason).toContain("main.tsx")
   })
 
-  it("構文エラーの入口を渡すと、bun のエラー文を理由として返す", async () => {
-    const entry = join(await temporaryOutDir(), "broken.ts")
-    await writeFile(entry, "export const broken = (\n")
+  it("構文エラーの入口を渡すと、vite のエラー文を色とスタックを除いて理由として返す", async () => {
+    const sourceDir = await temporaryDir()
+    await writeFile(join(sourceDir, "main.tsx"), "export const broken = (\n")
 
-    const result = await bundleWithBun(entry, await temporaryOutDir())
+    const result = await bundleWithVite(sourceDir, await temporaryDir())
 
     expect(result.ok).toBe(false)
     const reason = result.ok ? "" : result.reason
-    expect(reason).toContain("error:")
-    expect(reason).toContain("broken.ts")
+    expect(reason).toContain("main.tsx:1:")
+    expect(reason).not.toContain("\u001b[")
+    expect(reason).not.toMatch(/^\s+at /m)
   })
 
   it("CSS を持たない入口では、対が揃わなかったことを理由として返す", async () => {
-    const entry = join(await temporaryOutDir(), "no-style.ts")
-    await writeFile(entry, "export const value = 1\n")
+    const sourceDir = await temporaryDir()
+    await writeFile(join(sourceDir, "main.tsx"), "export const value = 1\n")
 
-    const result = await bundleWithBun(entry, await temporaryOutDir())
+    const result = await bundleWithVite(sourceDir, await temporaryDir())
 
     expect(result.ok).toBe(false)
     expect(result.ok ? "" : result.reason).toContain("対")
@@ -98,6 +99,6 @@ describe("bundleWithBun", () => {
 })
 
 /** 出し先（と、壊れた入口の置き場）。リポジトリの dist/browser/ を汚さないために分ける。 */
-function temporaryOutDir(): Promise<string> {
+function temporaryDir(): Promise<string> {
   return mkdtemp(join(tmpdir(), "tsukumo-bundle-"))
 }

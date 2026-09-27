@@ -598,7 +598,7 @@ bullet-proof-react の名前（`features/` `components/` `lib/` `stores/` `style
 
 **barrel file を作らない。** ディレクトリに `index.ts` を置いて中身をまとめて re-export しない
 （import は実ファイルを直接指す）。理由は2つ: (1) 束ねるときの tree-shaking が効かなくなる
-（`browser` は `bun build` で1本に束ねる。`docs/design.md` 11章）。(2) `index.ts` という名前自体が
+（`browser` は `vite build` で1本に束ねる。`docs/design.md` 11章）。(2) `index.ts` という名前自体が
 「置き場所を名前にしたファイル」になり、原則5に反する（ディレクトリ名がすでに概念や置き場所を
 表すのに、その中の `index.ts` は何も指さない。**ディレクトリ名の例外を足した後も、ファイル名は
 概念のまま**）。2026-09-13、`src/browser/` を切った段（`docs/history/decision.md`
@@ -849,13 +849,9 @@ E2E が見るのは `data-*`・`aria-*`・文字と要素の入れ子までで�
 内蔵していて、依存が最小で済む」からであって、Bun でなければ書けない処理があるからではない。
 標準APIに寄せておけば、Bun に不都合が出たとき Node へ移すのがランタイムの入れ替えだけで済む。
 
-**ただし退避先は完全ではない。** `src/server/view-server/adapter/bundle.ts` は `execFile("bun", ["build", ...])` で
-**`bun` コマンドそのものに依存している**ので（`Bun.*` の API は使っていない）、Node へ移す
-ときは束ねる仕組みの差し替えが別に要る。この規約が守っているのは、その一点を除いた残り全部。
-**2026-09-21 に事前組み立てへ変えた**ので、`bun build` が要るのは `bun run build`（と
-`bun run dev` の見張り）のときだけで、**起動の経路には残っていない**。**同日のうちに
-`bun run dev` の前置きとして `bun run build` を足したが、これは `package.json` の `&&` が
-外から呼ぶだけで、`src/main.ts` の起動処理（`run()`）自体は変わらず組み立てない。**
+組み立ては 2026-09-27 に `bun build` から `vite build` へ移した。`src/server/view-server/adapter/bundle.ts` は
+`node` で vite の CLI を起こすので、組み立ての経路にも `bun` は残っていない。組み立てが走るのは
+`bun run build`（と `bun run dev` の見張り）のときだけで、起動の経路には無い。
 
 **唯一の例外は `bun:test`**（テストランナーそのものなので、移すときは差し替えるしかない）。
 性能上どうしても `Bun.*` が必要になったら、その理由をコメントに残したうえで使う。
