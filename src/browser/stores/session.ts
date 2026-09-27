@@ -13,7 +13,7 @@ import {
   INITIAL_SESSION_STATE,
   type SessionState,
 } from "../../shared/session-state.ts"
-import { applyRefresh } from "../lib/refresh.ts"
+import { applyRefresh } from "../domain/refresh.ts"
 import { type CommandLink, connectSessionSocket, type ConnectionStatus } from "../lib/socket.ts"
 
 /**

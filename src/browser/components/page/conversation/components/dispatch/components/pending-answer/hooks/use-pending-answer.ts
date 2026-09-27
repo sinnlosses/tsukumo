@@ -5,7 +5,7 @@
 // （`components/page/conversation/components/main-view/components/question-ask/question-ask.tsx`）へ移り、自由入力は `<Composer>` が担う。
 // 組み立て中の答えを持つのは `stores/question-answer.ts`。
 
-import { summarizeToolInput } from "../../../../../../../../lib/tool-summary.ts"
+import { summarizeToolInput } from "../../../../../../../../domain/tool-summary.ts"
 import { useSession } from "../../../../../../../../stores/session.ts"
 
 /** `<PendingAnswer>` が画面に出す形。presenter は `kind` で出し分けて置くだけ。 */

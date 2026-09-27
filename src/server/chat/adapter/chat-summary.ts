@@ -20,7 +20,7 @@ import { dirname, join } from "node:path"
 
 import { isCharacterPackName } from "../../../shared/character.ts"
 import { CHAT_MEMORY_BUDGET } from "../../../shared/chat-memory-budget.ts"
-import { byteLength } from "../../../shared/lib/byte-length.ts"
+import { byteLength } from "../../../shared/utils/byte-length.ts"
 import { tsukumoHomeDir } from "../../adapter/tsukumo-home.ts"
 import { readOptionalFile } from "../../character-pack/adapter/character-pack.ts"
 import {

@@ -583,7 +583,7 @@ IBM Plex Mono）と字の大きさ、「ほか n 件を見る」の色（見本�
   パックも `#character?pack=<名前>` として同じ hash に乗る。下の「キャラクター画面の中身」）。
   `stores/screen.tsx` の `useScreen()` が `hashchange` を読む（`useSyncExternalStore`）。
   リロードしても同じ画面に戻り、ブラウザの「戻る」が効き、`bun run dev` の再読み込み
-  （HMR が当てられずにページごと読み込み直したとき・`lib/refresh.ts`）でもキャラクター画面に留まれる。サーバの経路は増えない（`?token` はそのまま）。
+  （HMR が当てられずにページごと読み込み直したとき・`domain/refresh.ts`）でもキャラクター画面に留まれる。サーバの経路は増えない（`?token` はそのまま）。
   **ルーターのライブラリは入れない**（画面は3つで、分岐は hook 1つで足りる）
 - **会話の画面は外さず `hidden` で隠す**（6.1「部品を外すのではなく隠す」と同じ）。
   サーバとの接続はその上の `<Root>` が持つので会話は進み続け、入力欄の下書き・選んでいるターン・
@@ -1490,7 +1490,7 @@ scrollable overflow は end 方向にしか伸びない**ので、上へ出た�
 
 **札**は `<button type="button" aria-expanded aria-controls>` で、字は
 「印・状態の語・（あれば）縦線・実行中の手順の要約」の順に1行で並ぶ。要約は
-`ツール名: 対象`（`summarizeToolInput`。`src/browser/lib/tool-summary.ts`）で、入りきらなければ
+`ツール名: 対象`（`summarizeToolInput`。`src/browser/domain/tool-summary.ts`）で、入りきらなければ
 末尾を「…」で切る。状態の語は6つで、上の行ほど強い:
 
 | 語           | いつ                                       | 見た目                            | 右の要約                                                                                                                |

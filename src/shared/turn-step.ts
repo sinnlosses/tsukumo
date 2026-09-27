@@ -18,7 +18,7 @@ export type TurnStepStatus =
 
 /**
  * いちばん新しい依頼（ターン）の中で claude が呼んだツール1回ぶん（docs/glossary.md
- * 「依頼の手順」）。引数はここまで持ち込む（要約は表示側 `src/browser/lib/tool-summary.ts` の
+ * 「依頼の手順」）。引数はここまで持ち込む（要約は表示側 `src/browser/domain/tool-summary.ts` の
  * 仕事。`docs/coding-standards.md`「会話内容の扱い」のとおり、要約に断片が入りうることは
  * 呼び出し側が承知した上で使う）。
  */

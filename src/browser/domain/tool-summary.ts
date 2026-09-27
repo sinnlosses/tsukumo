@@ -1,14 +1,4 @@
-// ツール名＋入力を、画面に出してよい1行の要約にする。帯の「いまの作業」
-// （`src/browser/components/domain/screen-nav/`）と入力欄の答え待ちの箱
-// （`src/browser/components/page/conversation/components/dispatch/components/pending-answer/pending-answer.tsx`）の両方が読むので、機能をまたぐ道具として
-// `browser/lib/` に置く（docs/design.md 2章「`src/browser/` の箱と、置く基準」）。
-//
-// 段3では `shared` に置いていた（旧の答え待ちの箱 `presentation/view.ts` と新しい
-// `browser/sidebar/activity.tsx` の両方が読むのに、`browser → presentation` も `presentation → browser` も
-// 禁じられていて、共有できる場所が `shared` しか無かったため）。段4で答え待ちの箱が
-// `browser/` に来て旧側の読み手が消えたので、ここへ移した。表示の整形であってサーバとブラウザの
-// 契約ではないので、`shared` に置いたままにしない（`shared` が何でも入る置き場になるのを
-// 防ぐ。docs/design.md 2章）。
+// ツール名＋入力を、画面に出してよい1行の要約にする。
 //
 // 入力の全文は返さない（docs/coding-standards.md「会話内容の扱い」）。純粋関数。
 

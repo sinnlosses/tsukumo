@@ -45,9 +45,9 @@ import {
 } from "../../../../../../shared/expression.ts"
 import { FRAME_ERROR_REASON } from "../../../../../../shared/frame.ts"
 import { readAccentColor } from "../../../../../domain/appearance-color.ts"
-import { readDataUrl } from "../../../../../lib/data-url.ts"
-import { useDebouncedCallback } from "../../../../../lib/debounce.ts"
 import { type SessionDispatch, useSession, useTurnRunning } from "../../../../../stores/session.ts"
+import { readDataUrl } from "../../../../../utils/data-url.ts"
+import { useDebouncedCallback } from "../../../../../utils/debounce.ts"
 import { useSelectedPack } from "./use-selected-pack.ts"
 
 /** 背景の行の、いまの状態を表す字（印だけにしない。13.1 原則1）。 */

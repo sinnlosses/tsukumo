@@ -599,7 +599,7 @@ const ALLOWED_BROWSER_BOX_IMPORTS: Readonly<Record<BrowserBox, ReadonlySet<Brows
   domain: new Set(["domain", "lib", "utils"]),
   lib: new Set(["lib", "utils"]),
   utils: new Set(["utils"]),
-  stores: new Set(["stores", "lib", "utils"]),
+  stores: new Set(["stores", "domain", "lib", "utils"]),
 }
 
 type BrowserBoxViolation = {
@@ -621,15 +621,22 @@ describe("browser/ の箱をまたぐ import", () => {
 })
 
 // `utils/` の歯止め1（docs/design.md 2章「`lib/` と `utils/` に置く基準」）。箱の辺の検査は相対 import
-// の `browser/` の中しか見ないので、外部パッケージ（`remeda`・`react`）・`node:`・`shared/` への
-// import はここで別に落とす。`utils/` から出る import は、`utils/` の中への相対 import だけ。
+// の `browser/` の中しか見ないので、`node:`・`shared/` への import はここで別に落とす。用途を問わない
+// 汎用のライブラリ（`react`・`remeda`）は歯止め1で許しているので落とさない。`utils/` から出る import は、
+// `utils/` の中への相対 import と、この一覧の汎用ライブラリだけ。
+const UTILS_ALLOWED_EXTERNAL_PACKAGES: ReadonlySet<string> = new Set(["react", "remeda"])
+
 describe("browser/utils/ の import", () => {
-  it("browser/utils/ のファイルは browser/utils/ の中しか import しない", () => {
+  it("browser/utils/ のファイルは browser/utils/ の中と汎用のライブラリしか import しない", () => {
     const offenders = listSourceFiles(SRC_ROOT)
       .filter((relPath) => relPath.startsWith("browser/utils/"))
       .flatMap((relPath) =>
         importSpecifiers(readFileSync(`${SRC_ROOT}/${relPath}`, "utf8"))
-          .filter((specifier) => !isInsideBrowserUtils(relPath, specifier))
+          .filter(
+            (specifier) =>
+              !isInsideBrowserUtils(relPath, specifier) &&
+              !UTILS_ALLOWED_EXTERNAL_PACKAGES.has(specifier),
+          )
           .map((specifier) => `src/${relPath} → ${specifier}`),
       )
 
@@ -643,7 +650,7 @@ describe("browser/utils/ の import", () => {
 // 同じ基準を掛ける（2章「引き金は逆にも引く」）。`components/ui/` は汎用の部品の置き場で、
 // 読み手の数を問わないので対象外（2章「`components/ui/` の部品」の「読み手の数は問わない」）。
 //
-// 読み手が機能の外だけのものは対象外（`lib/socket.ts` と `lib/refresh.ts` は `stores/` が
+// 読み手が機能の外だけのものは対象外（`lib/socket.ts` と `domain/refresh.ts` は `stores/` が
 // 読む。下ろす先の機能が無いので、ここに残るのが正しい）。`stores/` はまだ対象にしていない
 // ——`stores/location-hash.ts`（`screen-nav` だけ）と `stores/main-view-turn.ts`
 // （`main-view` だけ）の読み手が1機能で、状態を機能の中へ下ろしてよいかは置き場の基準とは
