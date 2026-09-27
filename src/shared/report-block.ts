@@ -119,6 +119,25 @@ const mermaidBlockSchema = z
   })
   .describe("名前が3つ以上出てきて、その間を渡す・呼ぶ・分かれるでつなぐとき")
 
+const progressBlockSchema = z
+  .object({
+    kind: z.literal("progress"),
+    steps: z
+      .array(inlineText)
+      .min(1)
+      .readonly()
+      .describe("段の名前の並び。空文字の段は tsukumo が1始まりの番号を振る"),
+    current: z
+      .number()
+      .int()
+      .min(0)
+      .describe("いまの段の位置（0始まり）。全部済んだら steps.length"),
+    fold,
+  })
+  .describe(
+    "「N のうち M 段目」のように段（フェーズ）の名前と位置が分かっているとき。文字で「N のうち M」と書かない",
+  )
+
 const markdownBlockSchema = z.object({
   kind: z.literal("markdown"),
   markdown: z
@@ -135,6 +154,7 @@ export const reportBlockSchema = z.discriminatedUnion("kind", [
   statsBlockSchema,
   codeBlockSchema,
   mermaidBlockSchema,
+  progressBlockSchema,
   markdownBlockSchema,
 ])
 
@@ -275,9 +295,28 @@ function blockMarkdown(block: ReportBlock): string {
       return fencedMarkdown([block.language, block.path].join(" ").trim(), block.source)
     case "mermaid":
       return fencedMarkdown("mermaid", block.source)
+    case "progress":
+      return progressMarkdown(block)
     case "markdown":
       return block.markdown
   }
+}
+
+/**
+ * 済んだ段は `済`、いまの段は `今`、残りの段は番号を前置きし、class だけでなく文字でも見分けられるようにする。
+ * 名前が空文字の段は1始まりの番号を名前にする（残りの段は前置きがすでに番号なので名前を出さない）。
+ */
+function progressMarkdown(block: Extract<ReportBlock, { readonly kind: "progress" }>): string {
+  const steps = block.steps.map((step, index) => {
+    const ordinal = index + 1
+    const state = index < block.current ? "done" : index === block.current ? "current" : "upcoming"
+    const mark = state === "done" ? "済" : state === "current" ? "今" : String(ordinal)
+    const stepClass =
+      state === "upcoming" ? "progress-step" : `progress-step progress-step-${state}`
+    const label = step.trim() !== "" ? step : state === "upcoming" ? "" : String(ordinal)
+    return `<div class="${stepClass}"><b>${htmlInlineWithCode(mark)}</b>${htmlInlineWithCode(label)}</div>`
+  })
+  return `<div class="progress">${steps.join("")}</div>`
 }
 
 function listMarker(

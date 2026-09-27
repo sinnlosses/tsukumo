@@ -134,6 +134,42 @@ describe("reportSectionsMarkdown", () => {
     )
   })
 
+  it("progress は段の図で、済んだ段・いまの段・残りの段を class と文字（済/今/番号）で見分ける", () => {
+    const progress: ReportBlock = {
+      kind: "progress",
+      steps: ["架空の一", "架空の二", "架空の三"],
+      current: 1,
+      fold: "",
+    }
+
+    expect(markdownOf(progress)).toBe(
+      '<div class="progress">' +
+        '<div class="progress-step progress-step-done"><b>済</b>架空の一</div>' +
+        '<div class="progress-step progress-step-current"><b>今</b>架空の二</div>' +
+        '<div class="progress-step"><b>3</b>架空の三</div>' +
+        "</div>",
+    )
+  })
+
+  it("progress の名前の無い段は1始まりの番号で出し、残りの段では番号を二重に出さない", () => {
+    const progress: ReportBlock = {
+      kind: "progress",
+      steps: ["", ""],
+      current: 1,
+      fold: "",
+    }
+
+    expect(markdownOf(progress)).toBe(
+      '<div class="progress">' +
+        '<div class="progress-step progress-step-done"><b>済</b>1</div>' +
+        '<div class="progress-step progress-step-current"><b>今</b>2</div>' +
+        "</div>",
+    )
+    expect(markdownOf({ ...progress, current: 0 })).toContain(
+      '<div class="progress-step"><b>2</b></div>',
+    )
+  })
+
   it("コードと mermaid はフェンスで囲み、中のバッククォートより長いフェンスにする", () => {
     expect(
       markdownOf({

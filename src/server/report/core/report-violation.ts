@@ -150,6 +150,7 @@ const MARKDOWN_NOTATION_NAMES = {
   list: { written: "箇条書き", replacement: "`list` の塊" },
   note: { written: "`note` の塊", replacement: "`note` の塊（種別は `tone`）" },
   stats: { written: "`stats` の塊", replacement: "`stats` の塊" },
+  progress: { written: "`progress` の塊", replacement: "`progress` の塊" },
   code: { written: "フェンス", replacement: "`code` の塊" },
   mermaid: { written: "mermaid のフェンス", replacement: "`mermaid` の塊" },
 } as const satisfies Record<string, { readonly written: string; readonly replacement: string }>
@@ -270,6 +271,7 @@ function hasNotation({ outside, fences }: SplitMarkdown, notation: MarkdownNotat
       return lines.some((line) => LIST_ITEM.test(line))
     case "note":
     case "stats":
+    case "progress":
       return lines.some((line) => classLists(line).some((classes) => classes.includes(notation)))
     case "code":
       return topFences.some((fence) => fence.info !== "mermaid" && fence.info !== "chart")

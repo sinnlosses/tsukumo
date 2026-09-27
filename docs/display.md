@@ -100,14 +100,18 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/display.md
 **本文は `report` の `sections`（節と塊の並び）で受け取る**（2026-09-27。形の案は
 `docs/research/report-block.md`、用語は `docs/glossary.md`「節」「塊」）。
 
-- 塊は `text` / `list` / `table` / `note` / `stats` / `code` / `mermaid` と、逃げ道の `markdown` の8種。
-  **種類ごとの使いどころは各塊の `describe`（`src/shared/report-block.ts`）が持ち**、
+- 塊は `text` / `list` / `table` / `note` / `stats` / `code` / `mermaid` / `progress` と、逃げ道の
+  `markdown` の9種。**種類ごとの使いどころは各塊の `describe`（`src/shared/report-block.ts`）が持ち**、
   `REPORT_NOTATION_PROMPT` の表には逃げ道に残る記法（`cols` / `card`・`chart`・`svg`・`dl`・引用・
   区切り線・複数の塊をまとめて畳む `<details>`）だけを置く。同じことを両方に書くと毎ターンの文脈に2回載る
+- **段（フェーズ）の位置は `progress` の塊で見せる**（2026-09-27 決定。`{ steps, current }` で受け、
+  済んだ段・いまの段・残りの段を枠と `<b>` の文字（済／今／番号）の両方で見分ける。文字列で
+  「N のうち M」と書かせる差し戻しは足さない——過去のレポート522件のうち文字で書いたものは10件
+  〔1.9%〕で、日付・版番号・分数との誤検出を抑える手間に見合わない。`docs/research/report-block.md` 11章）
 - **型で守られるようになった検査は外した**（表の見出し〔`table.title` が必須〕・`#` の見出し〔見出しは
   節の欄〕・本文の中のお願い〔`note` の種別に無い〕）。代わりに差し戻すのは、行のセルの数が `columns` と
   揃わない表・節が2つ以上あるのに見出しの無い節・**逃げ道の外側（HTML の塊の中でないところ）に塊の種類が
-  ある記法**（`#` / `##` の見出し・表・箇条書き・`note`・`stats`・フェンス・mermaid）。最後の1つが無いと、
+  ある記法**（`#` / `##` の見出し・表・箇条書き・`note`・`stats`・`progress`・フェンス・mermaid）。最後の1つが無いと、
   本文を丸ごと逃げ道に入れて型を素通りできる。HTML の塊の中を見ないのは、複数の塊を `<details>` に
   まとめて畳む・`cols` に並べるのが逃げ道の役目だから
 - 崩れた塊・知らない種類の塊は入口（`sdk-message.ts` の `reportEvents`）で落とし、塊1つの読み損ねで

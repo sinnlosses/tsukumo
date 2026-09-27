@@ -82,6 +82,42 @@
 .detail-block .report-badge-ng {
   color: var(--state-ng);
 }
+/* 段の図（`report` の `progress` の塊から tsukumo が組む。src/shared/report-block.ts）。
+   済んだ・いま・残りの見分けは `<b>` の文字が持ち、枠と地は補助。 */
+.detail-block .report-progress {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem 0.4rem;
+  margin: 0.5rem 0;
+}
+.detail-block .report-progress-step {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.3rem;
+  padding: 0.2rem 0.6rem;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  font-size: var(--font-secondary);
+  color: var(--ink-quiet);
+}
+.detail-block .report-progress-step:not(:last-child)::after {
+  content: "→";
+  margin-left: 0.4rem;
+  color: var(--ink-quiet);
+}
+.detail-block .report-progress-step b {
+  font-weight: 700;
+}
+.detail-block .report-progress-step-done {
+  background: var(--surface-raised);
+  color: var(--ink-quiet);
+}
+.detail-block .report-progress-step-current {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--surface), var(--accent) 10%);
+  color: var(--ink);
+}
 /* 検証結果の帯（`report` の `checks` から tsukumo が組む。src/shared/report-check.ts）。結論のすぐ下に
    上下の罫で挟んだ1本の帯として置き、項目は横に並べて入らなければ折り返す。状態はバッジの色と
    文字（OK / NG / 未確認）の両方で読める。 */

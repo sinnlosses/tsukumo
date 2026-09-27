@@ -733,14 +733,16 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 ### 塊
 
 - **英語識別子（予定）**: `ReportBlock`（`src/shared/report-block.ts`）/ `kind`（`text` / `list` /
-  `table` / `note` / `stats` / `code` / `mermaid` / `markdown`）/ `fold`（畳むときの見出し）
+  `table` / `note` / `stats` / `code` / `mermaid` / `progress` / `markdown`）/ `fold`（畳むときの見出し）
 - **定義**: **節の中に並ぶ、種類の決まった本文の1単位**。種類ごとに決まった形で Markdown に組んで
   描く（`reportSectionsMarkdown`）。塊の文字は行頭の塊の記法と `<` を逃がし、インラインの記法
   （inline code・太字・リンク）だけが効く。`fold` のある塊は `<details>` に畳む
 - **注記**: **`markdown` の塊が逃げ道**で、中身は逃がさず今の本文と同じ経路で描き、行を落とす整形
   （`tidyReportSections`）もこの塊に掛かる。どの塊にも当てはまらないときだけ使い、逃げ道の外側に塊の
-  種類がある記法（見出し・表・箇条書き・`note`・`stats`・フェンス）を書いた `report` は差し戻す。
-  崩れた塊・知らない種類の塊は入口で落とす。種類ごとの使いどころは各塊の `describe` が持つ
+  種類がある記法（見出し・表・箇条書き・`note`・`stats`・`progress`・フェンス）を書いた `report` は
+  差し戻す。崩れた塊・知らない種類の塊は入口で落とす。種類ごとの使いどころは各塊の `describe` が持つ。
+  **`progress` は段（フェーズ）の位置**（`steps` と `current`）を、済んだ段・いまの段・残りの段が
+  枠と文字（済／今／番号）の両方で見分けられる図として描く（`docs/display.md` 4.2）
 - **避ける言い方**: ブロック（Markdown の block と紛れる）、要素（HTML の要素と紛れる）
 
 ### 選択肢の比較

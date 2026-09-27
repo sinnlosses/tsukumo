@@ -174,6 +174,9 @@ describe("reportViolations", () => {
       expect(notationsOf('<div class="stats"><div class="stat"><b>1</b>架空</div></div>')).toEqual([
         "stats",
       ])
+      expect(
+        notationsOf('<div class="progress"><div class="progress-step"><b>1</b>架空</div></div>'),
+      ).toEqual(["progress"])
       expect(notationsOf("```diff src/a.ts\n-a\n+b\n```")).toEqual(["code"])
       expect(notationsOf("```mermaid\nflowchart LR\n```")).toEqual(["mermaid"])
     })
