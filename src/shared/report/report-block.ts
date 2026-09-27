@@ -226,16 +226,20 @@ export function parseReportSections(value: unknown): ParsedReportSections {
   }
 }
 
-/** 節の並びを1つの Markdown に組む。空の塊・空の節は置かない。 */
+/** 節と節の境目に置く、見た目を持たない印。書き上げる演出（`planReveal`）がこれで節を1トピックに割る。 */
+const SECTION_BREAK_MARKDOWN = '<div class="report-section-break"></div>'
+
+/** 節の並びを1つの Markdown に組む。空の塊・空の節は置かず、節の間に {@link SECTION_BREAK_MARKDOWN} を挟む。 */
 export function reportSectionsMarkdown(sections: readonly ReportSection[]): string {
-  return joinParts(
-    sections.map((section) =>
+  const parts = sections
+    .map((section) =>
       joinParts([
         section.heading.trim() === "" ? "" : `## ${markdownInline(section.heading)}`,
         ...section.blocks.map((block) => foldedBlockMarkdown(block)),
       ]),
-    ),
-  )
+    )
+    .filter((part) => part.trim() !== "")
+  return parts.join(`\n\n${SECTION_BREAK_MARKDOWN}\n\n`)
 }
 
 /**
@@ -262,12 +266,15 @@ function isUnknownKindBlock(block: unknown): boolean {
   return kind.success && !REPORT_BLOCK_KINDS.some((known) => known === kind.data.kind)
 }
 
-/** 表のセルの状態 → バッジの class（記法の `badge-*`）。 */
+/** 表のセルの状態 → バッジの class（記法の `badge-*`）と、書き手の文字に関わらず付ける語。 */
 const CELL_BADGES = {
-  ok: "badge-ok",
-  warn: "badge-warn",
-  ng: "badge-ng",
-} as const satisfies Record<(typeof REPORT_CELL_STATUSES)[number], string>
+  ok: { className: "badge-ok", label: "OK" },
+  warn: { className: "badge-warn", label: "要注意" },
+  ng: { className: "badge-ng", label: "NG" },
+} as const satisfies Record<
+  (typeof REPORT_CELL_STATUSES)[number],
+  { readonly className: string; readonly label: string }
+>
 
 /** `note` の種別 → 記法の class。ラベルは描く側が class から引く（`REPORT_NOTE_KINDS`）。 */
 const NOTE_CLASSES = {
@@ -364,21 +371,59 @@ function listMarker(
 
 function tableMarkdown(table: Extract<ReportBlock, { readonly kind: "table" }>): string {
   const row = (cells: readonly string[]): string => `| ${cells.join(" | ")} |`
+  const aligns = table.columns.map((_, index) => columnAlign(table.rows, index))
   return joinParts([
     table.title.trim() === "" ? "" : `**${markdownInline(table.title)}**`,
     [
       row(table.columns.map((column) => cellMarkdown(column))),
-      row(table.columns.map(() => "---")),
+      row(aligns.map(alignMarker)),
       ...table.rows.map((cells) => row(cells.map((cell) => cellMarkdown(cell)))),
     ].join("\n"),
   ])
+}
+
+type ColumnAlign = "left" | "right" | "center"
+
+/** 見た目だけの数字（符号・桁区切り・小数点・末尾の % を許す）。単位付きの数字は左揃えのまま。 */
+const NUMERIC_CELL_PATTERN = /^-?\d[\d,]*(?:\.\d+)?%?$/
+
+/** 列の全セルが状態なら中央、全セルが数なら右に揃える。 */
+function columnAlign(
+  rows: Extract<ReportBlock, { readonly kind: "table" }>["rows"],
+  index: number,
+): ColumnAlign {
+  const cells = rows.map((row) => row[index])
+  if (cells.every((cell) => typeof cell === "object")) {
+    return "center"
+  }
+  if (cells.every((cell) => typeof cell === "string" && NUMERIC_CELL_PATTERN.test(cell))) {
+    return "right"
+  }
+  return "left"
+}
+
+/** GFM の列揃えの記法（`:---:` / `---:`）。 */
+function alignMarker(align: ColumnAlign): string {
+  switch (align) {
+    case "left":
+      return "---"
+    case "right":
+      return "---:"
+    case "center":
+      return ":---:"
+  }
 }
 
 function cellMarkdown(cell: z.infer<typeof cellSchema>): string {
   if (typeof cell === "string") {
     return markdownInline(cell).replaceAll("|", "\\|")
   }
-  return `<span class="badge ${CELL_BADGES[cell.status]}">${markdownInline(cell.text).replaceAll("|", "\\|")}</span>`
+  const badge = CELL_BADGES[cell.status]
+  const mark = `<span class="badge ${badge.className}">${badge.label}</span>`
+  const text = cell.text.trim()
+  return text === "" || text === badge.label
+    ? mark
+    : `${mark} ${markdownInline(text).replaceAll("|", "\\|")}`
 }
 
 /**

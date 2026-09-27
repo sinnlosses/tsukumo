@@ -4,9 +4,9 @@
 // 文字を足していく実装にしない（`docs/requirements.md` 4.3）。DOM は完成品のまま置き、
 // 見せる範囲だけを進めるので、ここが返すのは「塊ごとの出し始めと出し終わりの時刻」だけになる。
 //
-// 塊は「トピック」。見出し・水平線を境に、そこから次の
-// 境目までの要素をひとまとめにする。段落や表の1つ1つではない——細かく割ると筆が何度も
-// 折り返して落ち着かず、目で追えなくなる。1つのトピックを大きく1回のZ字で書く。
+// 塊は「トピック」。`report` の節1つが1トピックで、境目は `reportSectionsMarkdown` が節の間に挟む印で知る。
+// 段落や表の1つ1つではない——細かく割ると筆が何度も折り返して落ち着かず、目で追えなくなる。
+// 1つのトピックを大きく1回のZ字で書く。
 //
 // 塊1つぶんの時間を決める物差し（{@link RevealTiming}）は呼び出し側から受け取る
 // （`src/browser/domain/reveal-speed.ts`。利用者が歯車で選ぶ「書き上げる演出の速さ」）。ここは
@@ -51,8 +51,8 @@ const FIGURE_WEIGHT = 100
 
 const FIGURE_SELECTOR = ".mermaid, .mermaid-broken, .chart-block, canvas, svg, img"
 
-/** ここから新しいトピックが始まる、という境目。見出しと水平線。 */
-const TOPIC_START_SELECTOR = "h1, h2, h3, h4, h5, h6, hr"
+/** 節と節の境目の印（`SECTION_BREAK_MARKDOWN` と同じ class 名）。 */
+const SECTION_BREAK_SELECTOR = ".report-section-break"
 
 /**
  * 根の直下の要素をトピックへまとめ、書く順（文書の順）に時間を割り当てる。1つぶんの時間は
@@ -97,24 +97,33 @@ export function blockProgress(block: RevealBlock, elapsedMs: number): number {
   return linear < 0.5 ? 4 * linear ** 3 : 1 - (2 - 2 * linear) ** 3 / 2
 }
 
-/** 見出し・水平線の手前で切って、続く要素をひとまとめにする。 */
+/** 節の境目の印で切って、続く要素をひとまとめにする。印そのものはトピックに入れない。 */
 function toTopics(
   elements: readonly RevealElement[],
 ): readonly (readonly [RevealMember, ...(readonly RevealMember[])])[] {
-  return elements.reduce<readonly (readonly [RevealMember, ...(readonly RevealMember[])])[]>(
-    (topics, element) => {
+  return elements.reduce<{
+    readonly topics: readonly (readonly [RevealMember, ...(readonly RevealMember[])])[]
+    readonly atBreak: boolean
+  }>(
+    (acc, element) => {
+      if (isSectionBreak(element)) {
+        return { topics: acc.topics, atBreak: true }
+      }
       const member: RevealMember = { element, kind: blockKind(element) }
-      const last = topics.at(-1)
-      return last === undefined || startsTopic(element)
-        ? [...topics, [member]]
-        : [...topics.slice(0, -1), [last[0], ...last.slice(1), member]]
+      const last = acc.topics.at(-1)
+      return last === undefined || acc.atBreak
+        ? { topics: [...acc.topics, [member]], atBreak: false }
+        : {
+            topics: [...acc.topics.slice(0, -1), [last[0], ...last.slice(1), member]],
+            atBreak: false,
+          }
     },
-    [],
-  )
+    { topics: [], atBreak: false },
+  ).topics
 }
 
-function startsTopic(element: RevealElement): boolean {
-  return element.matches(TOPIC_START_SELECTOR)
+function isSectionBreak(element: RevealElement): boolean {
+  return element.matches(SECTION_BREAK_SELECTOR)
 }
 
 function topicDurationMs(members: readonly RevealMember[], timing: RevealTiming): number {

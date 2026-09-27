@@ -48,7 +48,16 @@ describe("reportSectionsMarkdown", () => {
     ]
 
     expect(reportSectionsMarkdown(sections)).toBe(
-      "## 架空の節\n\n架空の一。\n\n## 架空の次の節\n\n架空の二。",
+      '## 架空の節\n\n架空の一。\n\n<div class="report-section-break"></div>\n\n' +
+        "## 架空の次の節\n\n架空の二。",
+    )
+  })
+
+  it("節と節の境目には見た目を持たない印を挟む。見出しの無い節どうしでも挟む", () => {
+    const sections = [section([text("架空の一。")]), section([text("架空の二。")])]
+
+    expect(reportSectionsMarkdown(sections)).toBe(
+      '架空の一。\n\n<div class="report-section-break"></div>\n\n架空の二。',
     )
   })
 
@@ -69,14 +78,14 @@ describe("reportSectionsMarkdown", () => {
     )
   })
 
-  it("表は太字1行の見出しのあとに GFM の表で組み、状態のセルはバッジにする", () => {
+  it("表は太字1行の見出しのあとに GFM の表で組み、状態のセルは列の中央に揃えたバッジに状態の語を付ける（書き手の文字と同じなら重ねない）", () => {
     const table: ReportBlock = {
       kind: "table",
       title: "架空の表",
       columns: ["項目", "結果"],
       rows: [
         ["架空の a|b", { status: "ok", text: "通過" }],
-        ["架空の c", { status: "ng", text: "失敗" }],
+        ["架空の c", { status: "ng", text: "NG" }],
       ],
       fold: "",
     }
@@ -86,9 +95,31 @@ describe("reportSectionsMarkdown", () => {
         "**架空の表**",
         "",
         "| 項目 | 結果 |",
-        "| --- | --- |",
-        '| 架空の a\\|b | <span class="badge badge-ok">通過</span> |',
-        '| 架空の c | <span class="badge badge-ng">失敗</span> |',
+        "| --- | :---: |",
+        '| 架空の a\\|b | <span class="badge badge-ok">OK</span> 通過 |',
+        '| 架空の c | <span class="badge badge-ng">NG</span> |',
+      ].join("\n"),
+    )
+  })
+
+  it("列の全セルが数なら右揃え（桁を縦に揃える）にする。単位が付くと数だけの列にならない", () => {
+    const table: ReportBlock = {
+      kind: "table",
+      title: "",
+      columns: ["項目", "件数", "割合"],
+      rows: [
+        ["架空の a", "312", "12.5%"],
+        ["架空の b", "-8", "架空の8件"],
+      ],
+      fold: "",
+    }
+
+    expect(markdownOf(table)).toBe(
+      [
+        "| 項目 | 件数 | 割合 |",
+        "| --- | ---: | --- |",
+        "| 架空の a | 312 | 12.5% |",
+        "| 架空の b | -8 | 架空の8件 |",
       ].join("\n"),
     )
   })

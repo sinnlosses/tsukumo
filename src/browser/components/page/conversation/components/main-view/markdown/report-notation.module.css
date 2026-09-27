@@ -368,11 +368,14 @@
   width: 100%;
   margin: 0.5rem 0;
 }
+/* 列の揃えは `columnAlign` の GFM の記法から style 属性で届き、ここの left に勝つ。
+   数だけの列で桁が縦に揃うよう、数字は等幅にする。 */
 .detail-block th,
 .detail-block td {
   border: 1px solid var(--rule);
   padding: 0.3rem 0.5rem;
   text-align: left;
+  font-variant-numeric: tabular-nums;
 }
 /* 見出し行は表の中の「浮く」塊（docs/screen-design.md 13.2）。太字は Markdown の th の既定で付くが、
    **行そのものが見出しだと分かる**のは地の段のほう。

@@ -26,6 +26,9 @@ const MS_PER_CHARACTER = STANDARD_TIMING.msPerCharacter
 const MIN_BLOCK_MS = STANDARD_TIMING.minBlockMs
 const MAX_BLOCK_MS = STANDARD_TIMING.maxBlockMs
 
+/** 節と節の境目の印（`src/shared/report/report-block.ts` の `SECTION_BREAK_MARKDOWN` と同じ class）。 */
+const BREAK = '<div class="report-section-break"></div>'
+
 function rootWith(html: string): HTMLElement {
   const root = document.createElement("div")
   root.innerHTML = html
@@ -58,10 +61,10 @@ describe("planReveal（トピックへのまとめ方と時間の割り当て）
     expect(planReveal(rootWith(""), STANDARD_TIMING)).toEqual([])
   })
 
-  it("見出しから次の見出しまでを1つの塊にまとめる", () => {
+  it("節の境目の印から次の印までを1つの塊にまとめる", () => {
     const root = rootWith(
       "<h3>はじめ</h3><p>あ</p><table><tbody><tr><td>い</td></tr></tbody></table>" +
-        "<h3>つぎ</h3><p>う</p>",
+        `${BREAK}<h3>つぎ</h3><p>う</p>`,
     )
 
     expect(tagsOf(root)).toEqual([
@@ -70,15 +73,21 @@ describe("planReveal（トピックへのまとめ方と時間の割り当て）
     ])
   })
 
-  it("水平線も塊の切れ目にする", () => {
-    expect(tagsOf(rootWith("<p>あ</p><hr /><p>い</p>"))).toEqual([["P"], ["HR", "P"]])
+  it("見出し・副見出し・水平線だけでは塊を分けない（節の境目の印だけが切れ目）", () => {
+    expect(
+      tagsOf(rootWith("<p>あ</p><hr /><h5>節の中の副見出し</h5><h3>他の見出し</h3><p>い</p>")),
+    ).toEqual([["P", "HR", "H5", "H3", "P"]])
   })
 
-  it("見出しより前の要素も、それだけで1つの塊になる", () => {
-    expect(tagsOf(rootWith("<p>まえがき</p><h3>本題</h3><p>なかみ</p>"))).toEqual([
+  it("印より前の要素も、それだけで1つの塊になる", () => {
+    expect(tagsOf(rootWith(`<p>まえがき</p>${BREAK}<h3>本題</h3><p>なかみ</p>`))).toEqual([
       ["P"],
       ["H3", "P"],
     ])
+  })
+
+  it("見出しの無い節どうしの境目にも印は入るので、見出しが無くても1つの塊になる", () => {
+    expect(tagsOf(rootWith(`<p>あ</p>${BREAK}<p>い</p>`))).toEqual([["P"], ["P"]])
   })
 
   it("塊1つぶんの時間は、その塊の中の文字数の合計で決まる", () => {
@@ -100,7 +109,7 @@ describe("planReveal（トピックへのまとめ方と時間の割り当て）
     const head = `<h3>見出し</h3><p>${"あ".repeat(100)}</p>`
     const alone = planReveal(rootWith(head), STANDARD_TIMING)
     const withTail = planReveal(
-      rootWith(`${head}<h3>つぎ</h3><p>${"う".repeat(500)}</p>`),
+      rootWith(`${head}${BREAK}<h3>つぎ</h3><p>${"う".repeat(500)}</p>`),
       STANDARD_TIMING,
     )
 
@@ -115,7 +124,10 @@ describe("planReveal（トピックへのまとめ方と時間の割り当て）
   })
 
   it("塊は隙間なく前から順に並ぶ", () => {
-    const blocks = planReveal(rootWith("<h3>あ</h3><h3>い</h3><h3>う</h3>"), STANDARD_TIMING)
+    const blocks = planReveal(
+      rootWith(`<h3>あ</h3>${BREAK}<h3>い</h3>${BREAK}<h3>う</h3>`),
+      STANDARD_TIMING,
+    )
 
     expect(blocks.map((block) => block.startMs)).toEqual([
       0,
