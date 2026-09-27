@@ -56,7 +56,7 @@ export const FREE_TEXT_OPTION_LABEL = "その他"
  *
  * - ラベルは日本語が普通なので `localeCompare` で比べる（`src/server/character-pack/adapter/character-pack.ts`
  *   の `listPackDirs` と同じ比べ方）。ロケールは `"ja"` に固定する — 省くと実行環境の既定
- *   ロケールに解決され、ブラウザ（`ja`）と Bun のテスト（`en-US`）で漢字の並びが食い違う
+ *   ロケールに解決され、ブラウザ（`ja`）とテストを走らせる環境で漢字の並びが食い違う
  *   （目視確認で判明。テストが通る並びと画面に出る並びが別物になる）
  * - 自由入力（{@link FREE_TEXT_OPTION_LABEL}）だけは並べ替えに混ぜず、末尾に固定する
  *   （札には出さない選択肢だが、並べ替えの結果が含めてきたかどうかで変わらないようにする）

@@ -511,7 +511,7 @@ function toFetchRequest(request: IncomingMessage, serverOrigin: string): Request
     }
   }
   const hasBody = request.method !== "GET" && request.method !== "HEAD"
-  // 流れの本文には `duplex: "half"` が要る（Node の fetch）が、Bun の `RequestInit` の型には無いので、
+  // 流れの本文には `duplex: "half"` が要る（Node の fetch）が、DOM の `RequestInit` の型には無いので、
   // 型を広げた入れ物に入れてから渡す。
   const init: RequestInit & { readonly duplex: "half" } = {
     method: request.method,

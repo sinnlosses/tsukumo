@@ -17,7 +17,7 @@
 // 設定はリポジトリ直下の Vite の設定ファイルで、入口の置き場と出し先はここが引数で渡す。
 //
 // 型検査はここではしない（`vite build` はトランスパイルだけで型を見ない）。型は
-// `bun run check` の `tsc --noEmit` が見る。
+// `pnpm run check` の `tsc --noEmit` が見る。
 
 import { execFile } from "node:child_process"
 import { readdir, readFile, stat } from "node:fs/promises"
@@ -152,7 +152,6 @@ export async function bundleWithVite(sourceDir: string, outDir: string): Promise
 
 /**
  * `vite build` を起こす。うまくいったら `undefined`、だめなら理由を持った結果を返す。
- * `node` で起こすのは、`bun test` から呼ばれたときも起動と同じランタイムで組み立てるため。
  */
 function runViteBuild(sourceDir: string, outDir: string): Promise<BundleResult | undefined> {
   return new Promise((resolve) => {

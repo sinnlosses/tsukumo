@@ -24,7 +24,7 @@ export type VisitTiming = {
   readonly lineIntervalMs: number
 }
 
-/** 本番のしきい値（短いビルドでは来ず、`bun run check` 1回ぶん程度の待ちで来るくらい）。 */
+/** 本番のしきい値（短いビルドでは来ず、`pnpm run check` 1回ぶん程度の待ちで来るくらい）。 */
 export const VISIT_TIMING = {
   waitMs: 90_000,
   cooldownMs: 30 * 60_000,
