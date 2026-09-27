@@ -1,4 +1,5 @@
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs"
+import path from "node:path"
 import { fileURLToPath } from "node:url"
 
 import { describe, expect, it } from "vitest"
@@ -495,18 +496,19 @@ describe("経路名のリテラル", () => {
 // コメントに特定の日付を書かない（`docs/coding-standards.md`「コメント」の表。「いつ決まったか・
 // 誰が言ったか（特定の日付・「〜の指摘」「ユーザーの決定」）」は禁止で、理由（Why / Why not）は
 // 残す。日付つきの記録は `docs/architecture.md` と `docs/history/` が持つ）。`oxlint` と同じ
-// `src` `test` `scripts` の3つを見る（`package.json` の `lint`。`docs/` `develop/` は対象外——
+// `src` `test` `scripts` `story` `.storybook` を見る（`package.json` の `lint`。`docs/` `develop/` は対象外——
 // ドキュメントは日付つきの記録を持つのが正しい）。
 //
 // 行頭が `//` `*` `/*` のコメント行だけを対象にする。行の途中にある `//` は文字列リテラルの
 // 中の `//` と区別できないので拾わない——`test/` のフィクスチャに出てくる `date` フィールドの
 // ようなテストデータの日付は、行頭がコメントでないのでこれで自然に除外される。
+const LINTED_DIRS: readonly string[] = ["src", "test", "scripts", "story", ".storybook"]
 const COMMENT_LINE_START = /^\s*(\/\/|\*|\/\*)/
 const SPECIFIC_DATE = /\d{4}-\d{2}-\d{2}/
 
 describe("コメント中の日付", () => {
-  it("src / test / scripts の *.ts / *.tsx で、コメント行が特定の日付（YYYY-MM-DD）を含まない", () => {
-    const offenders = ["src", "test", "scripts"].flatMap((dirName) => {
+  it("src / test / scripts / story / .storybook の *.ts / *.tsx で、コメント行が特定の日付（YYYY-MM-DD）を含まない", () => {
+    const offenders = LINTED_DIRS.flatMap((dirName) => {
       const root = fileURLToPath(new URL(`../${dirName}`, import.meta.url)).replace(/\/$/, "")
       return listSourceFiles(root).flatMap((relPath) => {
         const lines = readFileSync(`${root}/${relPath}`, "utf8").split("\n")
@@ -530,8 +532,8 @@ describe("コメント中の日付", () => {
 const COMMENT_EMPHASIS = /\*\*[^*]+\*\*/
 
 describe("コメント中の強調", () => {
-  it("src / test / scripts の *.ts / *.tsx で、コメント行が強調（`**…**`）を含まない", () => {
-    const offenders = ["src", "test", "scripts"].flatMap((dirName) => {
+  it("src / test / scripts / story / .storybook の *.ts / *.tsx で、コメント行が強調（`**…**`）を含まない", () => {
+    const offenders = LINTED_DIRS.flatMap((dirName) => {
       const root = fileURLToPath(new URL(`../${dirName}`, import.meta.url)).replace(/\/$/, "")
       return listSourceFiles(root).flatMap((relPath) => {
         const lines = readFileSync(`${root}/${relPath}`, "utf8").split("\n")
@@ -542,6 +544,47 @@ describe("コメント中の強調", () => {
     })
 
     expect(offenders.join("\n")).toBe("")
+  })
+})
+
+// story（Storybook）の置き場（`docs/design.md` 2章「ディレクトリ」）。
+// story は `src/` の外の `story/` に、描く部品と同じ相対パスで置く（`src/X.tsx` → `story/X.story.tsx`）。
+// `src/` の中に置くと、上の箱と機能の辺の検査が story を読み手として数えてしまう。
+// story はブラウザで描くので、import してよいのは browser と shared だけ（browser の層と同じ）。
+const STORY_ROOT = fileURLToPath(new URL("../story", import.meta.url)).replace(/\/$/, "")
+const STORY_SUFFIX = ".story.tsx"
+
+describe("story の置き場", () => {
+  it("src/ の中に story を置かない", () => {
+    const offenders = listSourceFiles(SRC_ROOT).filter((relPath) => relPath.endsWith(STORY_SUFFIX))
+
+    expect(offenders).toEqual([])
+  })
+
+  it("story/ の story は、同じ相対パスの src/ の部品を持つ", () => {
+    const offenders = listSourceFiles(STORY_ROOT).filter(
+      (relPath) =>
+        !relPath.endsWith(STORY_SUFFIX) ||
+        !existsSync(`${SRC_ROOT}/${relPath.slice(0, -STORY_SUFFIX.length)}.tsx`),
+    )
+
+    expect(offenders).toEqual([])
+  })
+
+  it("story/ の相対 import は src/browser/ と src/shared/ だけを指す", () => {
+    const offenders = listSourceFiles(STORY_ROOT).flatMap((relPath) =>
+      relativeImportSpecifiers(readFileSync(`${STORY_ROOT}/${relPath}`, "utf8"))
+        .map((specifier) =>
+          path.relative(
+            SRC_ROOT,
+            path.resolve(path.dirname(`${STORY_ROOT}/${relPath}`), specifier),
+          ),
+        )
+        .filter((target) => !target.startsWith("browser/") && !target.startsWith("shared/"))
+        .map((target) => `story/${relPath} → src/${target}`),
+    )
+
+    expect(offenders).toEqual([])
   })
 })
 

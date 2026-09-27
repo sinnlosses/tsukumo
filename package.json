@@ -13,15 +13,16 @@
     "build": "pnpm run css-types && node scripts/build-ui.ts",
     "css-types": "hcm 'src/**/*.module.css' --outDir dist/css-module-type --logLevel silent",
     "grid": "node scripts/open-room-grid.ts",
-    "typecheck": "pnpm run css-types && tsc --noEmit",
-    "lint": "oxlint src test scripts vite.config.ts",
-    "lint:fix": "oxlint src test scripts vite.config.ts --fix",
+    "typecheck": "pnpm run css-types && tsc --noEmit && tsc --noEmit -p tsconfig.storybook.json",
+    "lint": "oxlint src test scripts story .storybook vite.config.ts",
+    "lint:fix": "oxlint src test scripts story .storybook vite.config.ts --fix",
     "format": "oxfmt .",
     "format:check": "oxfmt . --check",
     "test": "vitest run",
     "test:e2e": "pnpm run build && vitest run --config vitest.e2e.config.ts",
     "test:e2e:update": "E2E_UPDATE=1 pnpm run test:e2e",
-    "check": "nice sh -c 'pnpm run typecheck && pnpm run lint && pnpm run format:check && pnpm run test && pnpm run test:e2e'"
+    "check": "nice sh -c 'pnpm run typecheck && pnpm run lint && pnpm run format:check && pnpm run test && pnpm run test:e2e'",
+    "storybook": "storybook dev --port 6006 --no-open"
   },
   "dependencies": {
     "@anthropic-ai/claude-agent-sdk": "^0.3.280",
@@ -49,6 +50,7 @@
     "zustand": "^5.0.15"
   },
   "devDependencies": {
+    "@storybook/react-vite": "^10.6.0",
     "@testing-library/react": "^16.3.3",
     "@types/hast": "^3.0.5",
     "@types/node": "^26.0.0",
@@ -62,6 +64,7 @@
     "oxlint": "^1.85.0",
     "playwright-core": "^1.63.0",
     "postcss": "^8.5.28",
+    "storybook": "^10.6.0",
     "typescript": "^7.0.2",
     "vite": "^8.3.1",
     "vitest": "^5.0.2"

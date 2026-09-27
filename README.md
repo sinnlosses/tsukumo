@@ -277,6 +277,8 @@ pnpm run start                 # セッションを起こし、ページのタ�
                               #   成果物が無ければ前提不足で止まり、ソースのほうが新しければ1行知らせて古いまま配る）
 pnpm run dev                   # pnpm run build のあと、start と同じ経路を Vite の開発サーバつき（--dev）で起こす
                               #   （src/server/core/ と src/shared/ を直したときは上げ直しが要る。docs/design.md 11章）
+pnpm run storybook             # 部品を props ごとに並べる Storybook を http://localhost:6006/ に起こす
+                              #   （story は story/ の下。本体と同じ vite.config.ts で組み立てる）
 node scripts/open-views.ts <URL>  # プロセスは動いたままタブだけ閉じたときに開き直す
 pnpm run grid                  # 待ち受けていてタブもある部屋を iframe の格子に並べて Orca に開く。格子のタブが
                               #   あるあいだ常駐し、再読み込みのたびに並べ直す。タブを閉じると終わる
@@ -311,6 +313,7 @@ node scripts/stop.ts           # 動いている tsukumo を一覧する（--por
 │   └── session-start.ts    # セッションを1つ起こす（駆動の選択・続きの探索・配線）
 │                           #   ※ src/ 直下は配線層。全層を import してよい唯一の場所
 ├── test/                   # テスト（src/ と同じディレクトリ構成 ＋ architecture.test.ts）
+├── story/                  # Storybook の story（src/ と同じディレクトリ構成。設定は .storybook/）
 ├── characters/             # キャラクター定義と素材（tsukumo-spirit が既定、local/ は .gitignore）
 ├── scripts/                # 閉じたタブを開き直す道具など
 ├── assets/                 # ロゴ
