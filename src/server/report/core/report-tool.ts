@@ -9,9 +9,9 @@
 // `report` を呼ばずに1行を超える本文を書いて止まろうとしたターンだけで、`report` で渡し直させる。
 // `report` の呼び出しそのものの検査と差し戻しは `ReportReview`（こちらは描く前の検査の段）。
 
-import { MAX_SESSION_HEADING_LENGTH } from "../../../shared/session-choice.ts"
-import { MAX_SESSION_SUMMARY_LENGTH } from "../../../shared/session-digest.ts"
-import type { SessionEvent } from "../../../shared/session-event.ts"
+import { MAX_SESSION_HEADING_LENGTH } from "../../../shared/session/session-choice.ts"
+import { MAX_SESSION_SUMMARY_LENGTH } from "../../../shared/session/session-digest.ts"
+import type { SessionEvent } from "../../../shared/session/session-event.ts"
 
 /**
  * モデルに見せる `report` ツールの説明。記法の条はここに書かず、規約の節を1行で指す

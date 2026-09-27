@@ -9,11 +9,11 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-li
 import { afterEach, describe, expect, it } from "vitest"
 
 import { ScreenNav } from "../../../../../src/browser/components/domain/screen-nav/screen-nav.tsx"
-import type { SessionChoice } from "../../../../../src/shared/session-choice.ts"
+import type { SessionChoice } from "../../../../../src/shared/session/session-choice.ts"
 import {
   INITIAL_SESSION_STATE,
   type SessionState,
-} from "../../../../../src/shared/session-state.ts"
+} from "../../../../../src/shared/session/session-state.ts"
 import { setPageUrl } from "../../../../dom-environment.ts"
 import { rpcOutput, stubRpcFetch, type RpcFetchStub } from "../../../rpc-fetch-stub.ts"
 import { type CommandSpy, putSession, type SentCommand } from "../../../session-store.ts"

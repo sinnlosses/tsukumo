@@ -12,8 +12,8 @@ import type { IncomingMessage } from "node:http"
 import { ORPCError, os } from "@orpc/server"
 
 import { COMMAND_ERRORS, type CommandMeta, NO_COMMAND_REFUSAL } from "../../../shared/command.ts"
-import { SESSION_TOKEN_QUERY_NAME } from "../../../shared/session-socket.ts"
-import type { SessionState } from "../../../shared/session-state.ts"
+import type { SessionState } from "../../../shared/session/session-state.ts"
+import { SESSION_TOKEN_QUERY_NAME } from "../../../shared/view-server/session-socket.ts"
 import type { CommandSession } from "../../session/core/command-session.ts"
 import type { SubscribeFrames } from "./frame-procedure.ts"
 

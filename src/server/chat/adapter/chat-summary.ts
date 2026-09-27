@@ -18,8 +18,8 @@
 import { mkdirSync, rmSync, writeFileSync } from "node:fs"
 import { dirname, join } from "node:path"
 
-import { isCharacterPackName } from "../../../shared/character.ts"
-import { CHAT_MEMORY_BUDGET } from "../../../shared/chat-memory-budget.ts"
+import { isCharacterPackName } from "../../../shared/character-pack/character.ts"
+import { CHAT_MEMORY_BUDGET } from "../../../shared/chat/chat-memory-budget.ts"
 import { byteLength } from "../../../shared/utils/byte-length.ts"
 import { tsukumoHomeDir } from "../../adapter/tsukumo-home.ts"
 import { readOptionalFile } from "../../character-pack/adapter/character-pack.ts"

@@ -6,7 +6,7 @@ import { useDiaryBookOpenRequest } from "../../../../../../../src/browser/compon
 import {
   INITIAL_SESSION_STATE,
   type SessionState,
-} from "../../../../../../../src/shared/session-state.ts"
+} from "../../../../../../../src/shared/session/session-state.ts"
 import { putState, putSession } from "../../../../../session-store.ts"
 
 /**

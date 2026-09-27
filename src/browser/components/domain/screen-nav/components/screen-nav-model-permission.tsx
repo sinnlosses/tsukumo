@@ -17,7 +17,7 @@
 import clsx from "clsx"
 import { useId, type ReactElement } from "react"
 
-import { Select } from "../../../../components/ui/select/select.tsx"
+import { Select } from "../../../ui/select/select.tsx"
 import { EFFORT_PLACEHOLDER_VALUE, effortLabel } from "../domain/effort-label.ts"
 import { MODEL_LABELS } from "../domain/model-label.ts"
 import { PERMISSION_MODE_LABELS } from "../domain/permission-mode-label.ts"

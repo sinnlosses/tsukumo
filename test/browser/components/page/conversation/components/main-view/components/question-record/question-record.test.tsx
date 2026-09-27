@@ -10,7 +10,7 @@ import { afterEach, describe, expect, it } from "vitest"
 
 import { QuestionRecord } from "../../../../../../../../../src/browser/components/page/conversation/components/main-view/components/question-record/question-record.tsx"
 import { TEXT_TONE_CLASS } from "../../../../../../../../../src/browser/components/ui/text/text.tsx"
-import type { MainViewQuestion } from "../../../../../../../../../src/shared/main-view.ts"
+import type { MainViewQuestion } from "../../../../../../../../../src/shared/session/main-view.ts"
 
 /** 印（●/○/■/□）は `<QuestionMark>` が描く、`.question-option` / `.question-preview-label` の
  * 直下の唯一の `<span>`（`Text`）。選んだ側だけ `TEXT_TONE_CLASS.accent` を持つ。 */

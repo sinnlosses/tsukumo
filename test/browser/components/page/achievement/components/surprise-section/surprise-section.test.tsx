@@ -5,7 +5,7 @@ import { SurpriseSection } from "../../../../../../../src/browser/components/pag
 import type {
   AchievementGraduation,
   AchievementMilestone,
-} from "../../../../../../../src/shared/achievement.ts"
+} from "../../../../../../../src/shared/achievement/achievement.ts"
 
 afterEach(() => {
   cleanup()

@@ -15,9 +15,9 @@
 //
 // 台本は会話の内容に当たる。ログにもファイルにも書かない（docs/coding-standards.md「会話内容の扱い」）。
 
-import type { SessionEvent } from "../../../shared/session-event.ts"
-import type { SessionState } from "../../../shared/session-state.ts"
-import type { VisitEvent } from "../../../shared/visit.ts"
+import type { SessionEvent } from "../../../shared/session/session-event.ts"
+import type { SessionState } from "../../../shared/session/session-state.ts"
+import type { VisitEvent } from "../../../shared/visit/visit.ts"
 import {
   chooseVisit,
   type VisitChoice,

@@ -35,10 +35,13 @@ import {
   startOnResolvedPort,
 } from "./server/view-server/core/port-resolution.ts"
 import type { StartedSession } from "./session-start.ts"
-import { resolveAchievementDateKey } from "./shared/achievement.ts"
-import { type ContextUsageReport, UNAVAILABLE_CONTEXT_USAGE } from "./shared/context-usage.ts"
+import { resolveAchievementDateKey } from "./shared/achievement/achievement.ts"
+import {
+  type ContextUsageReport,
+  UNAVAILABLE_CONTEXT_USAGE,
+} from "./shared/context-usage/context-usage.ts"
 import type { RefreshTarget, ServerFrame } from "./shared/frame.ts"
-import { type SessionDigest, UNAVAILABLE_SESSION_DIGEST } from "./shared/session-digest.ts"
+import { type SessionDigest, UNAVAILABLE_SESSION_DIGEST } from "./shared/session/session-digest.ts"
 
 export type ViewDeliveryOptions = {
   /** どのポートで試すか（決めるのは `src/server/view-server/core/port-resolution.ts`）。 */

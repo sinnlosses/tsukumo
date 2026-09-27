@@ -6,7 +6,7 @@
 // 読まないなら機能の中」。2つ目の機能が読み始めたら `browser/lib/` へ上げる）。
 // 描く config は読み手が持つ。
 
-import { vendorAssetPath } from "../../../../../../../shared/vendor-asset.ts"
+import { vendorAssetPath } from "../../../../../../../shared/view-server/vendor-asset.ts"
 import { loadVendorScript } from "./vendor-script.ts"
 
 const CHART_SRC = vendorAssetPath("chart.umd.min.js")

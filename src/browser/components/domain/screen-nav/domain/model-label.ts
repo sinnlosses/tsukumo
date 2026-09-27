@@ -7,7 +7,7 @@
 // `shared` には置かない（`shared/command.ts`「画面に出す日本語ラベルは描く側が持つ」）。
 
 import type { ModelAlias } from "../../../../../shared/command.ts"
-import { BUILTIN_SESSION_DEFAULT } from "../../../../../shared/session-default.ts"
+import { BUILTIN_SESSION_DEFAULT } from "../../../../../shared/session/session-default.ts"
 
 /**
  * モデルのエイリアスと、日本語ラベル。並びは重い順（Fable は Opus の上の階層なので先頭）で、

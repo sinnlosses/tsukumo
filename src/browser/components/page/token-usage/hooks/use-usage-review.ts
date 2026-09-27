@@ -23,7 +23,7 @@ import {
   TOKEN_USAGE_DAYS_CHOICES,
   type TokenUsageDays,
   type TokenUsageSummary,
-} from "../../../../../shared/token-usage-summary.ts"
+} from "../../../../../shared/token-usage/token-usage-summary.ts"
 import {
   USAGE_REVIEW_REQUEST_TEXT,
   USAGE_REVIEW_STAGE_LABELS,
@@ -36,7 +36,7 @@ import {
   type UsageProposalFollowUp,
   type UsageReviewFindings,
   type UsageReviewStage,
-} from "../../../../../shared/usage-review.ts"
+} from "../../../../../shared/usage-review/usage-review.ts"
 import { characterFaceInfo, type CharacterFaceInfo } from "../../../../domain/character-face.ts"
 import { formatElapsed } from "../../../../domain/elapsed-time.ts"
 import { rpc } from "../../../../domain/rpc.ts"

@@ -6,12 +6,12 @@ import { QuestionRecord } from "../../../../../../../src/browser/components/page
 import { MainView } from "../../../../../../../src/browser/components/page/conversation/components/main-view/main-view.tsx"
 import { BRUSH_ORIGIN_ATTRIBUTE } from "../../../../../../../src/browser/domain/reveal/brush-tip.ts"
 import { useQuestionDraft } from "../../../../../../../src/browser/stores/question-answer.ts"
-import type { MainViewQuestion } from "../../../../../../../src/shared/main-view.ts"
+import type { MainViewQuestion } from "../../../../../../../src/shared/session/main-view.ts"
 import {
   INITIAL_SESSION_STATE,
   type SessionRecord,
   type SessionState,
-} from "../../../../../../../src/shared/session-state.ts"
+} from "../../../../../../../src/shared/session/session-state.ts"
 import {
   detailRecord,
   reportRecord,
@@ -523,7 +523,7 @@ describe("MainView（中間レポート）", () => {
 
 describe("MainView（質問の記録）", () => {
   // `QuestionRecord` を直接見る（`MainView` を経由した「記録が積まれてから見えるまで」は
-  // `test/shared/session-state.test.ts` の畳み込みと、この部品の組み合わせで足りる）。
+  // `test/shared/session/session-state.test.ts` の畳み込みと、この部品の組み合わせで足りる）。
   it("選ばれた答えに印が付く", () => {
     const entry: MainViewQuestion = {
       kind: "question",

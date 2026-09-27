@@ -17,9 +17,9 @@
 
 import type { ReactElement } from "react"
 
-import { Text } from "../../../../../components/ui/text/text.tsx"
 import { useMainViewTurns } from "../../../../../stores/main-view-turn.ts"
 import { useTurnSelection } from "../../../../../stores/turn-selection.ts"
+import { Text } from "../../../../ui/text/text.tsx"
 import { MiniPortrait } from "./components/mini-portrait/mini-portrait.tsx"
 import { QuestionAsk } from "./components/question-ask/question-ask.tsx"
 import { TurnHeader } from "./components/turn-header/turn-header.tsx"

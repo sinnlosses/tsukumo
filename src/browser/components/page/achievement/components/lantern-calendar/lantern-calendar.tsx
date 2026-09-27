@@ -9,10 +9,10 @@ import {
   lampLevel,
   type AchievementCalendarDay,
   type LampLevel,
-} from "../../../../../../shared/achievement-calendar.ts"
-import { HStack } from "../../../../../components/ui/h-stack/h-stack.tsx"
-import { Heading } from "../../../../../components/ui/heading/heading.tsx"
-import { Text } from "../../../../../components/ui/text/text.tsx"
+} from "../../../../../../shared/achievement/achievement-calendar.ts"
+import { HStack } from "../../../../ui/h-stack/h-stack.tsx"
+import { Heading } from "../../../../ui/heading/heading.tsx"
+import { Text } from "../../../../ui/text/text.tsx"
 import styles from "../../achievement.module.css"
 import type { AchievementCalendarView } from "../../hooks/use-achievement-calendar.ts"
 
@@ -320,7 +320,7 @@ function monthDayLabel(dateKey: string): string {
 
 /**
  * マスの並びぶん（月曜はじまりの7列×5段＝35日）の日付キー、古い順。開始日は
- * `achievementCalendarDateKeys`（`src/shared/achievement-calendar.ts`）と同じ「今日を含む週の
+ * `achievementCalendarDateKeys`（`src/shared/achievement/achievement-calendar.ts`）と同じ「今日を含む週の
  * 月曜から4週前の月曜」——そちらは今日より後を返さないので、表示の枠を埋める残りの曜日は
  * ここで別に数える。
  */

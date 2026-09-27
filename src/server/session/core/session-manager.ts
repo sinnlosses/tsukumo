@@ -18,16 +18,22 @@
 import {
   type ContextUsageReport,
   UNAVAILABLE_CONTEXT_USAGE,
-} from "../../../shared/context-usage.ts"
+} from "../../../shared/context-usage/context-usage.ts"
 import { FRAME_ERROR_REASON, PROTOCOL_VERSION, type ServerFrame } from "../../../shared/frame.ts"
-import { type SessionDigest, UNAVAILABLE_SESSION_DIGEST } from "../../../shared/session-digest.ts"
-import type { SessionEvent } from "../../../shared/session-event.ts"
+import {
+  type SessionDigest,
+  UNAVAILABLE_SESSION_DIGEST,
+} from "../../../shared/session/session-digest.ts"
+import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import {
   applySessionEvent,
   INITIAL_SESSION_STATE,
   type SessionState,
-} from "../../../shared/session-state.ts"
-import type { PreviousUsageReview, UsageReviewFindings } from "../../../shared/usage-review.ts"
+} from "../../../shared/session/session-state.ts"
+import type {
+  PreviousUsageReview,
+  UsageReviewFindings,
+} from "../../../shared/usage-review/usage-review.ts"
 import { appendChatArchiveEntry } from "../../chat/core/chat-archive-entry.ts"
 import type { ChatConsolidationSource } from "../../chat/core/chat-consolidation-writer.ts"
 import {

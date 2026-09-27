@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import { createReportUsageLog } from "../../../../src/server/report/adapter/report-usage-log.ts"
 import type { ReportUsageEntry } from "../../../../src/server/report/core/report-usage.ts"
-import { REPORT_USAGE_FORMAT_VERSION } from "../../../../src/shared/report-usage-record.ts"
+import { REPORT_USAGE_FORMAT_VERSION } from "../../../../src/shared/report/report-usage-record.ts"
 
 // 数も名前もすべて手で書いた架空のもの（実物のレポートの中身は使わない。
 // docs/coding-standards.md「会話内容の扱い」）。

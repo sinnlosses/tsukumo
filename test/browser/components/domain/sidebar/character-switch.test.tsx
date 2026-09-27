@@ -10,7 +10,7 @@ import { FRAME_ERROR_REASON } from "../../../../../src/shared/frame.ts"
 import {
   INITIAL_SESSION_STATE,
   type SessionState,
-} from "../../../../../src/shared/session-state.ts"
+} from "../../../../../src/shared/session/session-state.ts"
 import { characterInfo, characterPackEntry } from "../../../../fixture/character.ts"
 import { type CommandSpy, putSession } from "../../../session-store.ts"
 

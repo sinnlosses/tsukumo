@@ -12,7 +12,7 @@ import {
   readRememberedLines,
   REMEMBERED_SECTION_HEADING,
 } from "../../../../src/server/chat/adapter/persona-memory.ts"
-import { MAX_REMEMBERED_LINE_LENGTH } from "../../../../src/shared/persona-memory.ts"
+import { MAX_REMEMBERED_LINE_LENGTH } from "../../../../src/shared/chat/persona-memory.ts"
 
 // フィクスチャは手で書いた架空のパックと架空の1行だけ（実物の会話・人格は使わない。
 // docs/coding-standards.md「会話内容の扱い」）。

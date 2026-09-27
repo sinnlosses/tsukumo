@@ -5,7 +5,10 @@
 import { implement } from "@orpc/server"
 
 import { sessionDigestContract } from "../../../shared/contract/session-digest.ts"
-import { type SessionDigest, UNAVAILABLE_SESSION_DIGEST } from "../../../shared/session-digest.ts"
+import {
+  type SessionDigest,
+  UNAVAILABLE_SESSION_DIGEST,
+} from "../../../shared/session/session-digest.ts"
 
 /** この機能の手続きが使う口（中身は配線が渡す）。 */
 export type SessionDigestProcedurePorts = {

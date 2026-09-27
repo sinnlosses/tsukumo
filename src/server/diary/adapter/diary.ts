@@ -24,7 +24,7 @@ import {
   type Diary,
   type DiaryBookmark,
   type DiaryParagraph,
-} from "../../../shared/diary.ts"
+} from "../../../shared/diary/diary.ts"
 import { isoWithOffset } from "../../adapter/local-time.ts"
 import { tsukumoHomeDir } from "../../adapter/tsukumo-home.ts"
 import { readOptionalFile } from "../../character-pack/adapter/character-pack.ts"

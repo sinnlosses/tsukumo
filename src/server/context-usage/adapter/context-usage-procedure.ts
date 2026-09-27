@@ -8,7 +8,7 @@ import { implement } from "@orpc/server"
 import {
   type ContextUsageReport,
   UNAVAILABLE_CONTEXT_USAGE,
-} from "../../../shared/context-usage.ts"
+} from "../../../shared/context-usage/context-usage.ts"
 import { contextUsageContract } from "../../../shared/contract/context-usage.ts"
 
 /** この機能の手続きが使う口（中身は配線が渡す）。 */

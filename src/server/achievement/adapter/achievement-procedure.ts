@@ -7,7 +7,7 @@
 
 import { implement } from "@orpc/server"
 
-import type { AchievementDaySelection } from "../../../shared/achievement.ts"
+import type { AchievementDaySelection } from "../../../shared/achievement/achievement.ts"
 import { achievementContract } from "../../../shared/contract/achievement.ts"
 import type { ReadAchievementResult, ReadCommitCalendarResult } from "./main-history.ts"
 

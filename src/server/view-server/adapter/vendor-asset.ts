@@ -14,7 +14,7 @@
 
 import { readFileSync } from "node:fs"
 
-import { VENDOR_ASSET_CONTENT_TYPES } from "../../../shared/vendor-asset.ts"
+import { VENDOR_ASSET_CONTENT_TYPES } from "../../../shared/view-server/vendor-asset.ts"
 import { bundledFilePath } from "../../adapter/bundled-path.ts"
 
 /** 依存の置き場。tsukumo 自身の場所の直下にある（`pnpm install` が作るもの）。 */

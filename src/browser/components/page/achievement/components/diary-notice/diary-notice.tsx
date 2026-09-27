@@ -8,9 +8,9 @@
 
 import type { ReactElement } from "react"
 
-import { Button } from "../../../../../components/ui/button/button.tsx"
-import { HStack } from "../../../../../components/ui/h-stack/h-stack.tsx"
-import { Text } from "../../../../../components/ui/text/text.tsx"
+import { Button } from "../../../../ui/button/button.tsx"
+import { HStack } from "../../../../ui/h-stack/h-stack.tsx"
+import { Text } from "../../../../ui/text/text.tsx"
 import { Bell } from "../lantern-calendar/lantern-calendar.tsx"
 import styles from "./diary-notice.module.css"
 import { useDiaryNotice } from "./hooks/use-diary-notice.ts"

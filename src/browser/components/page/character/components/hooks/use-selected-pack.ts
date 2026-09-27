@@ -9,7 +9,10 @@
 // - 一覧にある使用中以外の名前 → 一覧の1件の姿（`CharacterPackEntry.character`）
 // - 一覧に無い名前（消した・古い URL） → 使用中の姿に落ちる（行き止まりにしない）
 
-import type { CharacterInfo, CharacterPackRemoval } from "../../../../../../shared/character.ts"
+import type {
+  CharacterInfo,
+  CharacterPackRemoval,
+} from "../../../../../../shared/character-pack/character.ts"
 import { usePackSelection } from "../../../../../stores/screen.tsx"
 import { useSession } from "../../../../../stores/session.ts"
 

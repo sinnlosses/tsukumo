@@ -13,13 +13,13 @@
 // 既定のモデル・effort・許可モードはここに無い（`BUILTIN_SESSION_DEFAULT`）。覚えた値を歯車から書き換えられるようになって、
 // ブラウザも同じ畳み先を読むようになったため（`docs/screen-design.md`「設定の置き場所」）。
 
+import type { ExpressionChoice } from "../../../shared/character-pack/expression-choice.ts"
+import type { Expression } from "../../../shared/character-pack/expression.ts"
 import type { EffortLevel, ModelAlias, PermissionMode } from "../../../shared/command.ts"
-import type { ContextUsageReport } from "../../../shared/context-usage.ts"
-import type { ExpressionChoice } from "../../../shared/expression-choice.ts"
-import type { Expression } from "../../../shared/expression.ts"
-import type { Answer, PendingAsk } from "../../../shared/pending-ask.ts"
-import type { SessionDigest } from "../../../shared/session-digest.ts"
-import type { SessionEvent } from "../../../shared/session-event.ts"
+import type { ContextUsageReport } from "../../../shared/context-usage/context-usage.ts"
+import type { Answer, PendingAsk } from "../../../shared/session-driver/pending-ask.ts"
+import type { SessionDigest } from "../../../shared/session/session-digest.ts"
+import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import type { ShelvedPromptImage } from "./prompt-image-shelf.ts"
 
 /**

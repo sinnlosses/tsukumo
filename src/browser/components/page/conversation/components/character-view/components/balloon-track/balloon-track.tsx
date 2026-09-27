@@ -48,7 +48,7 @@ export function BalloonTrack(props: BalloonTrackProps): ReactElement {
 
   // DOM は新しい順（先頭が最新）。`.balloon-track` の column-reverse で視覚上は下端に出る。
   // key は props.speeches の古い側から数えた位置（＝配列に足される前からの通し番号）。
-  // speeches はターンの中で末尾へ積むだけ（src/shared/session-state.ts）なので、この番号は
+  // speeches はターンの中で末尾へ積むだけ（src/shared/session/session-state.ts）なので、この番号は
   // セリフが増えても既存のセリフでは変わらない。位置（newestFirst の index）を key にすると、
   // 増えるたびに既存のセリフの key がずれて、別のセリフの内容が同じ DOM ノードへ上書きされる
   // （React がノードを再利用してしまい、`data-latest` が外れる瞬間が起きないので

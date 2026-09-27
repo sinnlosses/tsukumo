@@ -17,9 +17,9 @@ import {
   startOnResolvedPort,
   VIEW_PORT_FALLBACK_ATTEMPTS,
 } from "../../../../src/server/view-server/core/port-resolution.ts"
-import { UNAVAILABLE_CONTEXT_USAGE } from "../../../../src/shared/context-usage.ts"
-import { UNAVAILABLE_SESSION_DIGEST } from "../../../../src/shared/session-digest.ts"
-import { EMPTY_TOKEN_USAGE_SUMMARY } from "../../../../src/shared/token-usage-summary.ts"
+import { UNAVAILABLE_CONTEXT_USAGE } from "../../../../src/shared/context-usage/context-usage.ts"
+import { UNAVAILABLE_SESSION_DIGEST } from "../../../../src/shared/session/session-digest.ts"
+import { EMPTY_TOKEN_USAGE_SUMMARY } from "../../../../src/shared/token-usage/token-usage-summary.ts"
 
 /** 配るものの中身はここでは見ない（確かめるのはどのポートで listen したかだけ）。 */
 const emptyViewUi: ViewUi = { kind: "bundle", bundle: { uiScript: "", styleSheet: "" } }

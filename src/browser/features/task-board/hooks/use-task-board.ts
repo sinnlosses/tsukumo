@@ -16,7 +16,7 @@ import {
   unfinishedTaskIds,
   type TaskReadiness,
   type TaskSummaryResult,
-} from "../../../../shared/task-summary.ts"
+} from "../../../../shared/repository/task-summary.ts"
 
 export type TaskBoardView = {
   readonly open: boolean
@@ -59,7 +59,7 @@ export type BoardRow = {
  * 出す文言が違うので、ここでは畳まない）。
  *
  * 「まだ done でないタスクのID」は一覧全体から1回だけ作り、行ごとの `taskReadiness` へ
- * 使い回す（`src/shared/task-summary.ts` 参照。以前は行ごとに作り直していた）。
+ * 使い回す（`src/shared/repository/task-summary.ts` 参照。以前は行ごとに作り直していた）。
  */
 export function boardRows(tasks: TaskSummaryResult): readonly BoardRow[] | undefined {
   if (tasks.kind === "unknown") {

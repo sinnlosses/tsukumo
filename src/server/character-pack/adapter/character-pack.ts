@@ -19,18 +19,18 @@ import {
   type CharacterAssetLocation,
   classifyPortraitFile,
   rasterMimeType,
-} from "../../../shared/character-asset.ts"
+} from "../../../shared/character-pack/character-asset.ts"
 import {
   type CharacterDefinition,
   parseCharacterDefinition,
-} from "../../../shared/character-definition.ts"
-import { diaryFontMimeType } from "../../../shared/character-diary-font.ts"
+} from "../../../shared/character-pack/character-definition.ts"
+import { diaryFontMimeType } from "../../../shared/character-pack/character-diary-font.ts"
 import {
   type CharacterPackEntry,
   type CharacterPackRemoval,
   toCharacterInfo,
-} from "../../../shared/character.ts"
-import type { SessionEvent } from "../../../shared/session-event.ts"
+} from "../../../shared/character-pack/character.ts"
+import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import { bundledFilePath } from "../../adapter/bundled-path.ts"
 import { tsukumoHomeDir } from "../../adapter/tsukumo-home.ts"
 

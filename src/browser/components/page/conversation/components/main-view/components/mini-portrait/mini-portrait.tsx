@@ -27,15 +27,15 @@
 //   本文の末尾に敷く
 //
 // 素材は `CharacterInfo.mini`（`character.json` の任意の `mini`。無いパックは
-// `portraits.default` に落ちたものが届く。畳むのは `shared/character.ts`）。
+// `portraits.default` に落ちたものが届く。畳むのは `shared/character-pack/character.ts`）。
 
 import clsx from "clsx"
 import type { CSSProperties, ReactElement } from "react"
 
-import { resolveOutfit } from "../../../../../../../../shared/expression.ts"
-import { Portrait } from "../../../../../../../components/domain/portrait.tsx"
+import { resolveOutfit } from "../../../../../../../../shared/character-pack/expression.ts"
 import { useBrushTip, type BrushTip } from "../../../../../../../domain/reveal/brush-tip.ts"
 import { useSession } from "../../../../../../../stores/session.ts"
+import { Portrait } from "../../../../../../domain/portrait.tsx"
 import styles from "./mini-portrait.module.css"
 
 /**

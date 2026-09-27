@@ -8,7 +8,7 @@ import clsx from "clsx"
 import { AtSign, ImageIcon, Slash } from "lucide-react"
 import type { ReactElement } from "react"
 
-import { PROMPT_IMAGE_MEDIA_TYPES } from "../../../../../../../../shared/prompt-image.ts"
+import { PROMPT_IMAGE_MEDIA_TYPES } from "../../../../../../../../shared/session-driver/prompt-image.ts"
 import { Button } from "../../../../../../ui/button/button.tsx"
 import { Text } from "../../../../../../ui/text/text.tsx"
 import { VStack } from "../../../../../../ui/v-stack/v-stack.tsx"

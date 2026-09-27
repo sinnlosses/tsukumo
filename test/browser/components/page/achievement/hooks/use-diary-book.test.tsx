@@ -7,12 +7,12 @@ import type { AchievementCalendarView } from "../../../../../../src/browser/comp
 import type { AchievementDaySwitch } from "../../../../../../src/browser/components/page/achievement/hooks/use-achievement.ts"
 import { requestDiaryBookOpen } from "../../../../../../src/browser/components/page/achievement/hooks/use-diary-book-open-request.ts"
 import { useDiaryBook } from "../../../../../../src/browser/components/page/achievement/hooks/use-diary-book.ts"
-import type { DailyAchievement } from "../../../../../../src/shared/achievement.ts"
-import type { Diary } from "../../../../../../src/shared/diary.ts"
+import type { DailyAchievement } from "../../../../../../src/shared/achievement/achievement.ts"
+import type { Diary } from "../../../../../../src/shared/diary/diary.ts"
 import {
   INITIAL_SESSION_STATE,
   type SessionState,
-} from "../../../../../../src/shared/session-state.ts"
+} from "../../../../../../src/shared/session/session-state.ts"
 import {
   rpcOutput,
   stubRpcFetch,

@@ -6,7 +6,7 @@ import { useQuestionDraft } from "../../../../../../../../../src/browser/stores/
 import {
   INITIAL_SESSION_STATE,
   type SessionState,
-} from "../../../../../../../../../src/shared/session-state.ts"
+} from "../../../../../../../../../src/shared/session/session-state.ts"
 import { typedElement } from "../../../../../../../../typed-element.ts"
 import { type CommandSpy, putSession } from "../../../../../../../session-store.ts"
 

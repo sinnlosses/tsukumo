@@ -8,19 +8,19 @@
 
 import { z } from "zod"
 
-import { MAX_CHARACTER_PACK_NAME_LENGTH } from "../character.ts"
+import { MAX_CHARACTER_PACK_NAME_LENGTH } from "../character-pack/character.ts"
 import { commandBase, EFFORT_LEVELS, MODEL_ALIASES, PERMISSION_MODES } from "../command.ts"
 import { FRAME_ERROR_REASON } from "../frame.ts"
-import { answerSchema } from "../pending-ask.ts"
+import { answerSchema } from "../session-driver/pending-ask.ts"
 import {
   MAX_PROMPT_IMAGE_DATA_URL_LENGTH,
   MAX_PROMPT_IMAGE_THUMBNAIL_DATA_URL_LENGTH,
   MAX_PROMPT_IMAGES,
   parsePromptImage,
   parsePromptImageThumbnail,
-} from "../prompt-image.ts"
-import { MAX_SESSION_ID_LENGTH } from "../session-choice.ts"
-import { SESSION_DEFAULT_PERMISSION_MODES } from "../session-default.ts"
+} from "../session-driver/prompt-image.ts"
+import { MAX_SESSION_ID_LENGTH } from "../session/session-choice.ts"
+import { SESSION_DEFAULT_PERMISSION_MODES } from "../session/session-default.ts"
 
 /**
  * 依頼として送れる文面の上限。送信のための素朴な上限であって、秘匿・検閲のためではない
@@ -30,7 +30,7 @@ export const MAX_PROMPT_TEXT_LENGTH = 20_000
 
 /**
  * 依頼に添える画像1枚（`docs/requirements.md` 4.10）。原寸と控えの対で、大きさと種類は
- * `src/shared/prompt-image.ts` が見る（受け取るのは `.png` / `.jpg` / `.gif` / `.webp` の4つ
+ * `src/shared/session-driver/prompt-image.ts` が見る（受け取るのは `.png` / `.jpg` / `.gif` / `.webp` の4つ
  * だけ。`.svg` は API が取らないので渡せない）。
  *
  * 上限が2つあるのは、2つの寿命が違うから（原寸は送った時点で手放し、記録に残るのは
@@ -133,7 +133,7 @@ export const sessionContract = {
    *
    * 3つを1つのコマンドで運ぶのは、覚え先（`~/.tsukumo/state.json`）が1組で書き換わる
    * ものだから（1つだけ覚えている状態を作らない）。「全部許す」は選択肢に無いので、
-   * 届いても検証で落ちる（`SESSION_DEFAULT_PERMISSION_MODES`。`src/shared/session-default.ts`）。
+   * 届いても検証で落ちる（`SESSION_DEFAULT_PERMISSION_MODES`。`src/shared/session/session-default.ts`）。
    * effort は除外する値が無いので `EFFORT_LEVELS` をそのまま受け付ける。
    */
   setSessionDefault: commandBase.input(

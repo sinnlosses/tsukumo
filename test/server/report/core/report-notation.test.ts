@@ -8,14 +8,14 @@ import { afterEach, describe, expect, it } from "vitest"
 import { NotationBlock } from "../../../../src/browser/components/page/conversation/components/main-view/markdown/notation.tsx"
 import { REPORT_SANITIZE_SCHEMA } from "../../../../src/browser/components/page/conversation/components/main-view/markdown/sanitize-schema.ts"
 import { REPORT_NOTATION_PROMPT } from "../../../../src/server/report/core/report-notation.ts"
-import { REPORT_MERMAID_KINDS } from "../../../../src/shared/report-block.ts"
+import { REPORT_MERMAID_KINDS } from "../../../../src/shared/report/report-block.ts"
 import {
   REPORT_BLOCK_MARK_NAMES,
   REPORT_DRAWN_MARK_NAMES,
   REPORT_NOTATION_NAMES,
   REPORT_NOTE_KINDS,
   REPORT_WRITTEN_MARK_NAMES,
-} from "../../../../src/shared/report-notation.ts"
+} from "../../../../src/shared/report/report-notation.ts"
 
 afterEach(() => {
   cleanup()
@@ -95,7 +95,7 @@ describe("REPORT_NOTATION_PROMPT", () => {
     }
   })
 
-  it("語彙（src/shared/report-notation.ts）の印はどれも部品で解決され、CSS まで届く", () => {
+  it("語彙（src/shared/report/report-notation.ts）の印はどれも部品で解決され、CSS まで届く", () => {
     // 塊から組む印も、塊にする前の記録ではモデルが書いていたので、描く側は同じに解決する。
     expect(REPORT_NOTATION_NAMES.length).toBe(18)
 
@@ -136,7 +136,7 @@ describe("REPORT_NOTATION_PROMPT", () => {
     // 部品（ラベルの文字）→ CSS の鎖を6種ぶん見る。種別の文字を
     // 出すのは tsukumo 側（docs/screen-design.md 13.1 原則5）なので、印だけ足してラベルを足し忘れる
     // と、素の note と同じ「何の塊か読み取れない」状態に戻る。種別の並びは
-    // `src/shared/report-notation.ts` の `REPORT_NOTE_KINDS` が正典（並びの理由もそこにある）。
+    // `src/shared/report/report-notation.ts` の `REPORT_NOTE_KINDS` が正典（並びの理由もそこにある）。
     for (const [name, label] of REPORT_NOTE_KINDS) {
       const { container } = render(
         createElement(NotationBlock, { className: `note ${name}` }, "架空の本文。"),

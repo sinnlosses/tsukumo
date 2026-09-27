@@ -10,13 +10,16 @@ import type {
 import { VISIT_SCRIPT_TIMEOUT_MS } from "../../../../src/server/visit/core/visit-script.ts"
 import { QUICK_VISIT_TIMING, VISIT_TIMING } from "../../../../src/server/visit/core/visit-timing.ts"
 import { createVisitWatch } from "../../../../src/server/visit/core/visit-watch.ts"
-import type { CharacterVisit, VisitScript } from "../../../../src/shared/character-visit.ts"
-import type { SessionEvent } from "../../../../src/shared/session-event.ts"
+import type {
+  CharacterVisit,
+  VisitScript,
+} from "../../../../src/shared/character-pack/character-visit.ts"
+import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import {
   applySessionEvent,
   INITIAL_SESSION_STATE,
   type SessionState,
-} from "../../../../src/shared/session-state.ts"
+} from "../../../../src/shared/session/session-state.ts"
 import { characterChangedEvent } from "../../../fixture/character.ts"
 import { createManualClock } from "../../../fixture/manual-clock.ts"
 

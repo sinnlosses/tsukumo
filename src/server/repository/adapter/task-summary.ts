@@ -41,7 +41,7 @@ import {
   taskSummaryItemsOfNewTaskFiles,
   type NewTaskFile,
   type TaskSummaryResult,
-} from "../../../shared/task-summary.ts"
+} from "../../../shared/repository/task-summary.ts"
 import { runGit, runGitCatFileBatch } from "./git.ts"
 
 /** 見回りの間隔。`git rev-parse` 1回は手元で約10msなので、この間隔なら毎回起こしても

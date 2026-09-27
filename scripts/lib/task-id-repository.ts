@@ -6,7 +6,7 @@
 import { readdirSync, readFileSync } from "node:fs"
 import { join } from "node:path"
 
-import { parseNewTaskFile } from "../../src/shared/task-summary.ts"
+import { parseNewTaskFile } from "../../src/shared/repository/task-summary.ts"
 import { extractHeadingTaskIds } from "../task-id.ts"
 
 /** `root` 以下の `develop/task/*.md` と `docs/history/tasks.md` から、タスクIDをすべて集める。 */

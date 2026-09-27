@@ -8,8 +8,8 @@
 import clsx from "clsx"
 import type { ReactElement } from "react"
 
-import { Heading } from "../../../../../../../components/ui/heading/heading.tsx"
-import { Text } from "../../../../../../../components/ui/text/text.tsx"
+import { Heading } from "../../../../../../ui/heading/heading.tsx"
+import { Text } from "../../../../../../ui/text/text.tsx"
 import { Markdown } from "../../markdown/markdown.tsx"
 import notationStyles from "../../markdown/report-notation.module.css"
 import type {

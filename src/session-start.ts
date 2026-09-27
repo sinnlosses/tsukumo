@@ -93,13 +93,13 @@ import {
 } from "./server/visit/core/visit-script-writer.ts"
 import { visitCast } from "./server/visit/core/visit-script.ts"
 import { QUICK_VISIT_TIMING, VISIT_TIMING } from "./server/visit/core/visit-timing.ts"
-import { UNKNOWN_ACHIEVEMENT } from "./shared/achievement.ts"
+import { UNKNOWN_ACHIEVEMENT } from "./shared/achievement/achievement.ts"
+import { expressionChoices } from "./shared/character-pack/expression-choice.ts"
 import type { UsageProposalDismissal } from "./shared/contract/usage-review.ts"
-import { expressionChoices } from "./shared/expression-choice.ts"
-import type { SessionChoice } from "./shared/session-choice.ts"
-import type { SessionDefault } from "./shared/session-default.ts"
-import type { SessionEvent } from "./shared/session-event.ts"
-import { usageProposalKey, withoutDismissedProposals } from "./shared/usage-review.ts"
+import type { SessionChoice } from "./shared/session/session-choice.ts"
+import type { SessionDefault } from "./shared/session/session-default.ts"
+import type { SessionEvent } from "./shared/session/session-event.ts"
+import { usageProposalKey, withoutDismissedProposals } from "./shared/usage-review/usage-review.ts"
 
 export type SessionStartOptions = {
   readonly config: Config

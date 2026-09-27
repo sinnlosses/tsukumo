@@ -114,11 +114,11 @@ sed -n '/^### 13\.7 /,/^### /p' docs/screen-design.md
 `outfitAccents` は既にあり、そちらは立ち絵の中だけに効く）。
 
 **雑談中は、パックが持てば `chatAccent` の値に差し替わる**（2026-09-23 決定。
-`character.json` の任意の欄、検証は `src/shared/character-definition.ts`）。**新しいつまみを
+`character.json` の任意の欄、検証は `src/shared/character-pack/character-definition.ts`）。**新しいつまみを
 足すのではなく、`accent` という1つの枠がモードに応じて別の値を取るだけ**（`--surface-accent` /
 `--surface-raised` などの導出も、値の由来を意識せず `--accent` を読むだけなので自動で追随する）。
 `chatAccent` を持たないパックは雑談中も `accent` のまま（仕事と同じ差し色）。仕事へ戻すと
-`accent` に戻る（`src/shared/character.ts` の `effectiveAccent`。`docs/screen-design.md` 13.7）。
+`accent` に戻る（`src/shared/character-pack/character.ts` の `effectiveAccent`。`docs/screen-design.md` 13.7）。
 
 **コントラストの下限を守る。** `ground` と `ink` の組は、使う人が何を入れても本文が読める比を
 下回らないところで止める。下回る値が来たら、受け取らずに既定へ落とす。
@@ -490,7 +490,7 @@ IBM Plex Mono）と字の大きさ、「ほか n 件を見る」の色（見本�
 - **帯で変えた値は既定を書き換えない**（帯はセッション限り）。逆に、歯車で既定を変えても
   **いま動いているセッションは変わらない**（効くのは次に起こすときから）
 - **既定に「全部許す」（`bypassPermissions`）は選べない。** `<select>` に出さないだけでなく、
-  コマンドの検証でも落とす（`SESSION_DEFAULT_PERMISSION_MODES`。`src/shared/session-default.ts`）。
+  コマンドの検証でも落とす（`SESSION_DEFAULT_PERMISSION_MODES`。`src/shared/session/session-default.ts`）。
   全部許すのは起こしたあと帯からその都度選ぶもので、次に起こすたびに黙って全部許す状態から
   始まる形にはしない
 - **読めない・欠けている・知らない値は同梱の既定**（Opus・`medium`・`auto`）。壊れた
@@ -823,8 +823,8 @@ IBM Plex Mono）と字の大きさ、「ほか n 件を見る」の色（見本�
   ウィジェットの中ではなく `ground`（絵があればその絵）の上に直接立つ。**仕事へ戻せば枠も角丸も
   戻り**、背景はキャラビューへ帰る
 - **立ち絵はメインでも枠と地を持たない**（13.1 原則2。居る場所が変わっても原則は変わらない）
-- **会話のログは `speak` のセリフから作る。** `shared/main-view.ts` の `mainViewEntries` は
-  セリフの記録を落とし続け、**雑談のログは `shared/chat-log.ts` の `chatLogEntries` が
+- **会話のログは `speak` のセリフから作る。** `shared/session/main-view.ts` の `mainViewEntries` は
+  セリフの記録を落とし続け、**雑談のログは `shared/chat/chat-log.ts` の `chatLogEntries` が
   別に組む**（2026-09-20、プロトタイプで確かめて決めた）。`mainViewEntries` は依頼を境目に
   やり取りへまとめて札で遡る形を作っており、**素直な時系列で積む雑談とは並びの規則が違う**
 - **ログに並ぶのは雑談のセッションのぶんだけ**（2026-09-20 決定。`docs/chat-mode.md` 4.9）。
@@ -859,7 +859,7 @@ IBM Plex Mono）と字の大きさ、「ほか n 件を見る」の色（見本�
   セリフだけがログに並ぶ**
   - **送った文面はログにも記録にも残さない**（2026-09-21、ユーザーの選択）。**落とすのは組み立ての
     側ではない** — 駆動が `request` の代わりに**文面を持たないイベント**（`turn-started`）を流すので、
-    雑談のログ（`shared/chat-log.ts`）にも仕事のメインビュー（`shared/main-view.ts`）にも雑談の
+    雑談のログ（`shared/chat/chat-log.ts`）にも仕事のメインビュー（`shared/session/main-view.ts`）にも雑談の
     会話のアーカイブにも**初めから流れようが無い**。上の「ログの組み立てで仕切っているのでは
     ない」と同じ立場で、組む前の段階で決まっている。**アーカイブが書くのは `request` と `speech`
     の2種類だけ**なので、ここも別に除外を足す必要が無い
@@ -935,7 +935,7 @@ IBM Plex Mono）と字の大きさ、「ほか n 件を見る」の色（見本�
 
 1. **プロフィールの札**（`components/domain/sidebar/profile-card.tsx`）: 顔（13.9「顔」と同じ素材・丸・
    差し色の輪で、大きさだけ 64px）・名前（パックの `name`）・**ひとことプロフィール**
-   （`character.json` の新しい欄 `tagline`。検証は `src/shared/character-definition.ts`。
+   （`character.json` の新しい欄 `tagline`。検証は `src/shared/character-pack/character-definition.ts`。
    **無いパックは名前だけ**で、空の行を置かない）・右端の「変える ⌄」。領域の左右と上の縁まで
    広げ、地は `surface` を `accent` で**5%だけ**染める（名前という文字のラベルがある塊なので
    13.2「意味を持つ塊の地」の範囲。選ばれたものの地の `surface-accent` とは分ける）。下の罫線は
@@ -1065,7 +1065,7 @@ LINE / Discord と同じ形で、日の区切りだけの案・ホバーした�
   まで古い呼び名が残る
 - **区切りは日が変わった発言の手前にだけ入り、ログの先頭には入れない**。日を比べる相手は1つ前の
   発言で、圧縮の区切りは飛ばす。日の境目は画面を見ている人のタイムゾーン
-  （`utils/clock.ts` の `localTimeZoneId`）で決め、並びを組むのは `shared/chat-log.ts` の
+  （`utils/clock.ts` の `localTimeZoneId`）で決め、並びを組むのは `shared/chat/chat-log.ts` の
   `chatLogRows`（タイムゾーンは引数で受け取る）
 - **前のセッションを組み直した発言（時刻が分からない）には時刻を出さない**。そこから
   いまの発言へ移るところに、いまの発言の日付の区切りを入れる。**「時刻の無い行 = 前のセッション
@@ -1590,7 +1590,7 @@ scrollable overflow は end 方向にしか伸びない**ので、上へ出た�
 
 **範囲は依頼1つ**（いまの `finishedTools` の「直近50件」ではない）。**状態の畳み込み（reducer）も
 イベントも変えない** — セッションの記録（`records`）が、依頼ごとにツールの記録を結果つきで
-すでに持っている（`tool` の記録の `status`）。一覧は `src/shared/turn-step.ts` の
+すでに持っている（`tool` の記録の `status`）。一覧は `src/shared/session/turn-step.ts` の
 `currentTurnSteps` が、**最後の `request` より後の `tool` の記録**を拾って導く（姿から導くだけの
 ものなので `session-state.ts` には置かない。`turn-speech.ts` と同じ置き方）:
 
@@ -1639,13 +1639,13 @@ scrollable overflow は end 方向にしか伸びない**ので、上へ出た�
   積む**（2026-09-24。空にしていたときは、合図が届くたびに「（まだ発話がありません）」に戻った）。
   **メインビューには新しいやり取りを立てず、元の依頼のやり取りに積む**（依頼の記録が無いため）。
   続きの報告がそのやり取りの締めの本文になり、前の本文は中間レポートに回るか落ちる
-  （`src/shared/main-view.ts` の選び方のまま）。続きのターンが走っている間は、**そのターンで届いた
+  （`src/shared/session/main-view.ts` の選び方のまま）。続きのターンが走っている間は、**そのターンで届いた
   本文だけ**を出さない（まだ伸びうる本文を出さない、と同じ理由。前の SDK ターンで確定した本文は
   出したまま。`docs/display.md` 4.2）
 - **立ち絵の「たいくつ」（`bored`）は自動では出さない。** 表情の源は `speak` の1つだけ
   （`docs/requirements.md` 4.3）で、背景のタスクの間に表情を上書きする経路は持たない。長い
   待ちを背景に回すときに `bored` を選ぶのはキャラクター自身。立ち絵の動きも、ターンが
-  終わっていれば「読んでいる」（呼吸だけ）のまま（`src/shared/portrait-motion.ts`）
+  終わっていれば「読んでいる」（呼吸だけ）のまま（`src/shared/session/portrait-motion.ts`）
 - 見え方は疑似セッションの場面 `background-task`（`TSUKUMO_FAKE_SCENE=background-task`）で
   確かめられる。ターンが終わってから約15秒、背景で1件動き続けたあと、続きのターンが走る
 
@@ -1691,7 +1691,7 @@ scrollable overflow は end 方向にしか伸びない**ので、上へ出た�
 （2026-09-23 決定）。キャラクターを替えると変わる。
 
 - **素材は `character.json` の新しい欄 `face`**（ファイル名1つ。立ち絵と同じ種類のファイルを
-  受け付ける。正方形を勧める）。検証は `src/shared/character-definition.ts`、画面へは
+  受け付ける。正方形を勧める）。検証は `src/shared/character-pack/character-definition.ts`、画面へは
   `CharacterInfo` に `/character/<pack>/<file>` の URL として載せる（`mini` と同じ経路・同じ取り直しの印）
 - **表情では変わらない1枚**（`mini` と同じ）。表情はキャラビューの立ち絵が持つ
 - **丸く切り抜く**（`border-radius: 50%` と `object-fit: cover`）。透過の絵の縁が帯に溶けない
@@ -1736,7 +1736,7 @@ scrollable overflow は end 方向にしか伸びない**ので、上へ出た�
 #### 部屋の名前
 
 **ビューのポート1つ＝部屋1つ**で、和の色名12個をポートの並び順に割り当てる（2026-09-22 決定。
-`src/shared/room.ts`）。7327 から順に
+`src/shared/view-server/room.ts`）。7327 から順に
 空色 / 若葉 / 菜の花 / 夕焼け / 藍 / 藤 / 朱 / 灰 / 若草 / 海 / 桜 / 墨 で、表示は「〜の間」
 （語彙は読みにくい名前を避けて 2026-09-23 に入れ替えた）。
 
@@ -2446,7 +2446,7 @@ SEIKA-4a-Base.dc.html` から取った。しおり・小さな驚きの卒業の
 | 表示の側で地を抜く（色を抜く・切り抜く）    | 素材の中身に触らない決まり（`docs/requirements.md` 4.3「1枚の矩形」）。素材がどう作られているかを当てにする |
 
 **台本の表情があるじ（や客）のパックに無いとき**: **その話し手の `default` の立ち絵を出す**（立ち絵の
-表は全域で、無い表情は既に `default` の絵に落ちる。`src/shared/character.ts`）。`speak` で立ち絵の無い
+表は全域で、無い表情は既に `default` の絵に落ちる。`src/shared/character-pack/character.ts`）。`speak` で立ち絵の無い
 表情が来たときと同じ扱いで、訪問のための分岐を足さない。吹き出しはそのまま出す。生成した台本は話し手の
 パックの選択肢で検査済みだが、**パックに書いた台本（`visit.scripts`）はあるじのパックに照らしていない**
 ので、届くのは主にこちら。

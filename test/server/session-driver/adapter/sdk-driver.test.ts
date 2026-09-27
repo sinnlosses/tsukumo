@@ -21,10 +21,10 @@ import type {
   SessionDriverOptions,
   SessionMode,
 } from "../../../../src/server/session-driver/core/session-driver.ts"
-import { API_ERROR_KINDS } from "../../../../src/shared/api-trouble.ts"
 import { EFFORT_LEVELS, MODEL_ALIASES, PERMISSION_MODES } from "../../../../src/shared/command.ts"
-import { BUILTIN_SESSION_DEFAULT } from "../../../../src/shared/session-default.ts"
-import type { SessionEvent } from "../../../../src/shared/session-event.ts"
+import { API_ERROR_KINDS } from "../../../../src/shared/session-driver/api-trouble.ts"
+import { BUILTIN_SESSION_DEFAULT } from "../../../../src/shared/session/session-default.ts"
+import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 
 // `startSession` 自体は本物の claude を子プロセスとして起こすので、ここでは呼ばない
 // （docs/requirements.md 4.6 / CLAUDE.md「よく使うコマンド」）。`query()` に渡る `options` の

@@ -9,7 +9,7 @@
 // 入れる。
 //
 // 画面に会話の文面は出ない — メッセージは分類1行の数としてだけ出る
-// （`src/shared/context-usage.ts`）。
+// （`src/shared/context-usage/context-usage.ts`）。
 //
 // 届く前は「骨組み」を出す（`ContextUsageCardSkeleton`）。届いた札と同じ外形
 // （同じ `section`・見出しと添え書き・数の行・横棒・凡例・畳んだ内訳の見出し）で、中身の
@@ -20,7 +20,7 @@
 import clsx from "clsx"
 import type { ReactElement } from "react"
 
-import type { ContextUsageItem } from "../../../../../../shared/context-usage.ts"
+import type { ContextUsageItem } from "../../../../../../shared/context-usage/context-usage.ts"
 import type { ContextUsageRow, UseContextUsageResult } from "../../../../../domain/context-usage.ts"
 import { clockTime, localTimeZoneId, zonedDateTime } from "../../../../../utils/clock.ts"
 import { formatCount } from "../../../../../utils/format-count.ts"

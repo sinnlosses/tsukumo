@@ -8,7 +8,7 @@
 // 利用者が `/rename` などで書き換えた題は上書きしないため、SDK 側の現在値
 // （`customTitle`）が「tsukumo が最後に自分で書いたもの」と一致するときだけ書く。
 
-import { MAX_SESSION_HEADING_LENGTH } from "../../../shared/session-choice.ts"
+import { MAX_SESSION_HEADING_LENGTH } from "../../../shared/session/session-choice.ts"
 
 /**
  * 見出しを書くかどうかの判断に要る状態。tsukumo が最後に書いた題だけを持ち回る

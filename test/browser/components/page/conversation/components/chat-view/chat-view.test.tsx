@@ -3,13 +3,13 @@ import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { ChatView } from "../../../../../../../src/browser/components/page/conversation/components/chat-view/chat-view.tsx"
-import type { Expression } from "../../../../../../../src/shared/expression.ts"
+import type { Expression } from "../../../../../../../src/shared/character-pack/expression.ts"
 import {
   INITIAL_SESSION_STATE,
   type RecordTime,
   type SessionRecord,
   type SessionState,
-} from "../../../../../../../src/shared/session-state.ts"
+} from "../../../../../../../src/shared/session/session-state.ts"
 import { characterInfo, shownPortraits } from "../../../../../../fixture/character.ts"
 import {
   detailRecord,
@@ -22,7 +22,7 @@ afterEach(() => {
   cleanup()
 })
 
-// 並びの規則（古い→新しい・交互）は `shared/chat-log.ts` が決めるので、ここでは
+// 並びの規則（古い→新しい・交互）は `shared/chat/chat-log.ts` が決めるので、ここでは
 // その順が DOM の順にそのまま出ることだけを見る（`column-reverse` などで
 // 見かけを反転していない）。文面は手で書いた架空のもの。
 

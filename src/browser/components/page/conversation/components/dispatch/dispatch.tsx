@@ -5,8 +5,8 @@
 
 import { useEffect, useRef, type ReactElement } from "react"
 
-import { VStack } from "../../../../../components/ui/v-stack/v-stack.tsx"
 import { useSession } from "../../../../../stores/session.ts"
+import { VStack } from "../../../../ui/v-stack/v-stack.tsx"
 import { Composer } from "./components/composer/composer.tsx"
 import { PendingAnswer } from "./components/pending-answer/pending-answer.tsx"
 import styles from "./dispatch.module.css"

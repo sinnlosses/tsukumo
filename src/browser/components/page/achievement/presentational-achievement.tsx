@@ -4,8 +4,8 @@
 
 import type { ReactElement } from "react"
 
-import { Heading } from "../../../components/ui/heading/heading.tsx"
-import { Text } from "../../../components/ui/text/text.tsx"
+import { Heading } from "../../ui/heading/heading.tsx"
+import { Text } from "../../ui/text/text.tsx"
 import styles from "./achievement.module.css"
 import { BookmarkSection } from "./components/bookmark-section/bookmark-section.tsx"
 import { DaySwitch } from "./components/day-switch/day-switch.tsx"

@@ -4,15 +4,15 @@
 // 2章「ページの形」）に置く。
 //
 // 書いたパックは「いま出しているパック」と別物——日記の段落は書いた時点のパックのディレクトリ
-// 名・名前・表情を凍結して持つ（`src/shared/diary.ts`）。名前は日記に残したものをそのまま出し、
+// 名・名前・表情を凍結して持つ（`src/shared/diary/diary.ts`）。名前は日記に残したものをそのまま出し、
 // 立ち絵は `SessionState.characterPacks`（`docs/design.md` 7.2）からそのディレクトリ名を引ける
 // ときだけ出す。パックを消した・名前を変えたなど引けないときは、名前だけを残し立ち絵は出さない
 // （いまのパックの絵で代えない——別の誰かが書いたように見えるため）。
 
-import type { CharacterPackEntry } from "../../../../../shared/character.ts"
-import type { DiaryParagraph } from "../../../../../shared/diary.ts"
-import { resolveExpressionLabel } from "../../../../../shared/expression-choice.ts"
-import { isExpression } from "../../../../../shared/expression.ts"
+import type { CharacterPackEntry } from "../../../../../shared/character-pack/character.ts"
+import { resolveExpressionLabel } from "../../../../../shared/character-pack/expression-choice.ts"
+import { isExpression } from "../../../../../shared/character-pack/expression.ts"
+import type { DiaryParagraph } from "../../../../../shared/diary/diary.ts"
 import {
   portraitAppearance,
   type PortraitAppearance,

@@ -26,7 +26,7 @@ import { PortraitClearConfirm } from "../portrait-clear-confirm/portrait-clear-c
 
 /**
  * `<input type="file">` に出す受け付ける種類。中身の検証はサーバ側
- * （`src/shared/portrait-image.ts`）で、ここは選ぶときの絞り込みだけ。
+ * （`src/shared/character-pack/portrait-image.ts`）で、ここは選ぶときの絞り込みだけ。
  */
 const PORTRAIT_FILE_ACCEPT = ".svg,.png,.gif"
 

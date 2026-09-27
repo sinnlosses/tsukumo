@@ -5,7 +5,7 @@
 
 /**
  * いまのエポックミリ秒。返すのはエポックミリ秒の数で、`Temporal.Instant` のままでは
- * 返さない — 経過時間の比較と引き算に使う相手（`src/shared/portrait-motion.ts` /
+ * 返さない — 経過時間の比較と引き算に使う相手（`src/shared/session/portrait-motion.ts` /
  * `session-state.ts` の `at`）が数の契約だから。
  */
 export function nowEpochMilliseconds(): number {

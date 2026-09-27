@@ -11,7 +11,7 @@ import {
 import {
   INITIAL_SESSION_STATE,
   type SessionState,
-} from "../../../../../../../../../src/shared/session-state.ts"
+} from "../../../../../../../../../src/shared/session/session-state.ts"
 import { characterInfo, shownPortraits } from "../../../../../../../../fixture/character.ts"
 import { putSession } from "../../../../../../../session-store.ts"
 

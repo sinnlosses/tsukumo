@@ -11,21 +11,24 @@
 
 import { isPlainObject } from "remeda"
 
-import { API_ERROR_KINDS, type ApiErrorKind } from "../../../shared/api-trouble.ts"
-import type { BackgroundTask, BackgroundTaskKind } from "../../../shared/background-task.ts"
-import { isBlankText } from "../../../shared/blank-text.ts"
+import type { Expression } from "../../../shared/character-pack/expression.ts"
 import { type EffortLevel, isEffortLevel } from "../../../shared/command.ts"
-import type { Expression } from "../../../shared/expression.ts"
-import type { RateLimit, RateLimitBucket } from "../../../shared/rate-limit.ts"
-import { parseReportSections, reportSectionsOfBody } from "../../../shared/report-block.ts"
-import { parseReportChecks } from "../../../shared/report-check.ts"
+import { parseReportSections, reportSectionsOfBody } from "../../../shared/report/report-block.ts"
+import { parseReportChecks } from "../../../shared/report/report-check.ts"
+import { API_ERROR_KINDS, type ApiErrorKind } from "../../../shared/session-driver/api-trouble.ts"
+import type {
+  BackgroundTask,
+  BackgroundTaskKind,
+} from "../../../shared/session-driver/background-task.ts"
+import type { RateLimit, RateLimitBucket } from "../../../shared/session-driver/rate-limit.ts"
+import type { TurnOutcome } from "../../../shared/session-driver/turn-failure.ts"
 import type {
   CommandDescription,
   ModelEffortSupport,
   SessionEvent,
-} from "../../../shared/session-event.ts"
-import type { ModelTokenUsage } from "../../../shared/token-usage.ts"
-import type { TurnOutcome } from "../../../shared/turn-failure.ts"
+} from "../../../shared/session/session-event.ts"
+import type { ModelTokenUsage } from "../../../shared/token-usage/token-usage.ts"
+import { isBlankText } from "../../../shared/utils/blank-text.ts"
 import { optionalString } from "../../../shared/utils/optional-string.ts"
 
 /** プロセス内の MCP サーバの名前。モデルからは `mcp__<サーバ名>__<ツール名>` として見える。 */

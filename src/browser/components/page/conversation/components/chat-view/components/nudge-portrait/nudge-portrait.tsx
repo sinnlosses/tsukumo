@@ -19,7 +19,10 @@
 
 import { useId, type ReactElement } from "react"
 
-import type { Expression, Outfit } from "../../../../../../../../shared/expression.ts"
+import type {
+  Expression,
+  Outfit,
+} from "../../../../../../../../shared/character-pack/expression.ts"
 import { Portrait } from "../../../../../../domain/portrait.tsx"
 import { Text } from "../../../../../../ui/text/text.tsx"
 import styles from "../../chat-view.module.css"

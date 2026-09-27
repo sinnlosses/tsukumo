@@ -21,7 +21,7 @@ import {
   type PromptImage,
   promptImagePath,
   type RecordedPromptImage,
-} from "../../../../../../shared/prompt-image.ts"
+} from "../../../../../../shared/session-driver/prompt-image.ts"
 import { sessionTokenUrl } from "../../../../../domain/session-token-url.ts"
 import { Button } from "../../../../ui/button/button.tsx"
 import { ImageZoom, type ImageZoomFallback } from "../../../../ui/image-zoom/image-zoom.tsx"

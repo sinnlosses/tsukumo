@@ -8,16 +8,16 @@
 import clsx from "clsx"
 import { Fragment, useState, type ReactElement } from "react"
 
+import type { TurnFailure } from "../../../../../../../../shared/session-driver/turn-failure.ts"
 import type {
   MainViewAction,
   MainViewRequest,
   MainViewStep,
   MainViewStepBody,
   MainViewTurn,
-} from "../../../../../../../../shared/main-view.ts"
-import type { TurnFailure } from "../../../../../../../../shared/turn-failure.ts"
-import { Text } from "../../../../../../../components/ui/text/text.tsx"
-import { VStack } from "../../../../../../../components/ui/v-stack/v-stack.tsx"
+} from "../../../../../../../../shared/session/main-view.ts"
+import { Text } from "../../../../../../ui/text/text.tsx"
+import { VStack } from "../../../../../../ui/v-stack/v-stack.tsx"
 import { turnFailureLabel } from "../../../../domain/api-error-label.ts"
 import { PromptImageThumbnails } from "../../../prompt-image/prompt-image.tsx"
 import { requestLinesAfterTitle, truncateRequestText } from "../../domain/turn-title.ts"
@@ -73,7 +73,7 @@ export function Turn(props: TurnProps): ReactElement {
               振った通し番号）を使う。添字だと、古いステップが落ちて残りの添字が1つずつ前へ
               ずれた瞬間に React が別のステップの DOM を使い回してしまい、`<details>` の `open`
               のような制御されていない DOM の状態が別のステップへ乗り移って見える
-              （`src/shared/main-view.ts` の `MainViewStep.id` を参照）。 */}
+              （`src/shared/session/main-view.ts` の `MainViewStep.id` を参照）。 */}
           {turn.steps.map((step) => (
             <Step
               step={step}
@@ -127,12 +127,12 @@ function TurnFailureNotice(props: { readonly failure: TurnFailure }): ReactEleme
  *
  * 中間レポート（`step.interim`）は見分けが付く形で描く。 話が途中の本文なので、
  * 小さなラベルを載せて地と枠を変える（`.main-step.is-interim`。判定そのものは
- * `src/shared/main-view.ts` が済ませてある）。
+ * `src/shared/session/main-view.ts` が済ませてある）。
  *
  * 最終レポート（`step.final`）は地を中間レポートと同じ ground にし（`.main-step.is-final`）、
  * ラベルを載せる。 ラベルを出すのは `finalLabel` が立っているとき——中間レポートの
  * あるやり取りだけで、本文が1つしか無いやり取りでは「最終」が何も区別しない（条件は
- * `src/shared/main-view.ts` の `markFinalReport` が畳んである）。
+ * `src/shared/session/main-view.ts` の `markFinalReport` が畳んである）。
  *
  * 後ろに別のレポートが現れた中間レポート（`step.superseded`）は畳む。 何件も開いたまま
  * 積まれると見通しが悪いため。畳んだ分は `<details>` にするだけで
@@ -227,7 +227,7 @@ function stepClassName(step: MainViewStep): string {
  * 演出を掛ける候補のステップ（最終レポート＝確定したレポートを持つ最後のステップ）。
  * 中間レポートは流れている最中に少しずつ出る本文なので、ここでは選ばない（演出は中間レポートにも
  * 既に出し切った本文にも掛けない）。
- * 選び方そのものは `src/shared/main-view.ts` の `markFinalReport` が済ませてある。
+ * 選び方そのものは `src/shared/session/main-view.ts` の `markFinalReport` が済ませてある。
  */
 function finalReportStepId(turn: MainViewTurn): number | undefined {
   return turn.steps.find((step) => step.final)?.id

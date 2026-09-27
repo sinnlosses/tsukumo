@@ -12,8 +12,8 @@
 import { isPlainObject } from "remeda"
 import { z } from "zod"
 
-import { stampedEventSchema, type StampedEvent } from "./session-event.ts"
-import type { SessionState } from "./session-state.ts"
+import { stampedEventSchema, type StampedEvent } from "./session/session-event.ts"
+import type { SessionState } from "./session/session-state.ts"
 
 /**
  * フレームと状態の版。イベントの追加では上げない（知らない `kind` は畳み込みが無視する）。

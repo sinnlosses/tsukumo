@@ -89,7 +89,7 @@ Reflect.set(globalThis, "navigator", window.navigator)
 Reflect.set(globalThis, "IS_REACT_ACT_ENVIRONMENT", true)
 
 /**
- * テストの中でページの URL を差し替える（ポートを見る部品のため。`src/shared/room.ts` の
+ * テストの中でページの URL を差し替える（ポートを見る部品のため。`src/shared/view-server/room.ts` の
  * 部屋の名前は、このページを配っているポートから決まる）。
  *
  * ここに置くのは、差し替えの口を持っているのが happy-dom の `Window` だけだから

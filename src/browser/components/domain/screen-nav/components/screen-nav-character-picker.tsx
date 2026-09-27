@@ -9,7 +9,7 @@ import clsx from "clsx"
 import { ChevronDown } from "lucide-react"
 import { useId, type ReactElement } from "react"
 
-import { CharacterFace } from "../../../../components/domain/character-face.tsx"
+import { CharacterFace } from "../../character-face.tsx"
 import type { ScreenNavCharacterPicker as Picker } from "../hooks/use-character-picker.ts"
 import shellStyles from "../screen-nav.module.css"
 import styles from "./screen-nav-character-picker.module.css"

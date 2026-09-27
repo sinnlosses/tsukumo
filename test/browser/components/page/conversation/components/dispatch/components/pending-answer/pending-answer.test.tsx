@@ -2,11 +2,11 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
 import { PendingAnswer } from "../../../../../../../../../src/browser/components/page/conversation/components/dispatch/components/pending-answer/pending-answer.tsx"
-import type { PendingAsk } from "../../../../../../../../../src/shared/pending-ask.ts"
+import type { PendingAsk } from "../../../../../../../../../src/shared/session-driver/pending-ask.ts"
 import {
   INITIAL_SESSION_STATE,
   type SessionState,
-} from "../../../../../../../../../src/shared/session-state.ts"
+} from "../../../../../../../../../src/shared/session/session-state.ts"
 import { type CommandSpy, putSession } from "../../../../../../../session-store.ts"
 
 /**

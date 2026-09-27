@@ -15,14 +15,14 @@ import {
   REPORT_DRAWN_MARK_NAMES,
   REPORT_NOTATION_NAMES,
   REPORT_NOTE_KINDS,
-} from "../../../../../../../shared/report-notation.ts"
+} from "../../../../../../../shared/report/report-notation.ts"
 import { Text } from "../../../../../ui/text/text.tsx"
 import styles from "./report-notation.module.css"
 
 /**
  * モデルが書く class 名 → tsukumo が装飾に使う class 名（`report-notation.module.css` のもの。
  * 組み立て時にハッシュ化される）。ここに無い名前は素通しする。印の名前の集合は
- * `src/shared/report-notation.ts` が正典（`report-<名前>` が CSS 側の綴りの規則）。tsukumo が
+ * `src/shared/report/report-notation.ts` が正典（`report-<名前>` が CSS 側の綴りの規則）。tsukumo が
  * 組む印（検証結果の帯）も同じ表で解決する。
  */
 const NOTATION_CLASS_NAMES: ReadonlyMap<string, string> = new Map(
@@ -34,7 +34,7 @@ const NOTATION_CLASS_NAMES: ReadonlyMap<string, string> = new Map(
 
 /**
  * `note` の種別（モデルが書く class 名）→ tsukumo が文字として描くラベル。上から順に見て
- * 最初に当たったものを使う（並びの理由は `src/shared/report-notation.ts` の `REPORT_NOTE_KINDS`）。
+ * 最初に当たったものを使う（並びの理由は `src/shared/report/report-notation.ts` の `REPORT_NOTE_KINDS`）。
  */
 const NOTE_LABELS = REPORT_NOTE_KINDS
 

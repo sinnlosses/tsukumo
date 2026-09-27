@@ -5,14 +5,14 @@
 // 読むようになったため）。
 //
 // 数のほかは扱わない — ここに来るのはトークン数・バイト数・モデルの名前だけで、
-// 会話の文面は集計にそもそも入っていない（`src/shared/token-usage-summary.ts`）。
+// 会話の文面は集計にそもそも入っていない（`src/shared/token-usage/token-usage-summary.ts`）。
 // `costUsd`（USD建てのコスト）はここでは書き方を持たない（画面に出さない。記録と集計の
-// 形自体は `src/shared/token-usage.ts` / `src/shared/token-usage-summary.ts` に残る）。
+// 形自体は `src/shared/token-usage/token-usage.ts` / `src/shared/token-usage/token-usage-summary.ts` に残る）。
 
 import type {
   ModelUsageTotal,
   TokenUsageTotals,
-} from "../../../../../shared/token-usage-summary.ts"
+} from "../../../../../shared/token-usage/token-usage-summary.ts"
 import { round } from "../../../../utils/format-count.ts"
 
 /** 合計する対象が無いときの値（`src/server/token-usage/core/token-usage.ts` の `EMPTY_TOTALS` と同じ並び）。 */

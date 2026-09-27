@@ -1,4 +1,4 @@
-// メインビューに出すターン（`shared/main-view.ts` の導出）を、姿1つにつき1回だけ畳む場所。
+// メインビューに出すターン（`shared/session/main-view.ts` の導出）を、姿1つにつき1回だけ畳む場所。
 //
 // 畳みは `groupIntoTurns` → `selectLastText` / `selectToolReports` → `markSupersededSteps` → `markFinalReport` →
 // `limitTurnEntries` の5パスで、記録は最大20ターン分ある。同じ導出を読むのは `stores/turn-selection.ts`（選んで
@@ -8,8 +8,12 @@
 // `useSession` のセレクタは同じ姿なら同じものを返す必要があるので、姿そのものを
 // キーにして結果を覚える（`WeakMap` なので、古い姿と一緒に落ちる）。
 
-import { mainViewEntries, mainViewTurns, type MainViewTurn } from "../../shared/main-view.ts"
-import type { SessionState, TurnBodies } from "../../shared/session-state.ts"
+import {
+  mainViewEntries,
+  mainViewTurns,
+  type MainViewTurn,
+} from "../../shared/session/main-view.ts"
+import type { SessionState, TurnBodies } from "../../shared/session/session-state.ts"
 import { useSession } from "./session.ts"
 
 const TURNS_BY_STATE = new WeakMap<SessionState, readonly MainViewTurn[]>()
@@ -50,7 +54,7 @@ export function mainViewTurnsOf(state: SessionState): readonly MainViewTurn[] {
  * `report` の外の本文だけは、前の SDK ターンのものも伏せる。 ターンが動いているあいだと、
  * 背景のタスクが残っているあいだ（続きのターンが来うる）は出さない。`report` の無いやり取りで
  * 出るのは `report` を呼ぶまでのつなぎの一言が多く、`report` が来た時点でどのみち消える
- * （`shared/main-view.ts` の `selectToolReports`）ので、出したものが消える往復も起きない。
+ * （`shared/session/main-view.ts` の `selectToolReports`）ので、出したものが消える往復も起きない。
  */
 function unsettledBodies(state: SessionState): TurnBodies {
   const running = state.turn.kind === "running"

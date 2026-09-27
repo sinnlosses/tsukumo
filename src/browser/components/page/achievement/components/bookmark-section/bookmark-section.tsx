@@ -4,7 +4,7 @@
 
 import type { ReactElement } from "react"
 
-import type { DiaryBookmark } from "../../../../../../shared/diary.ts"
+import type { DiaryBookmark } from "../../../../../../shared/diary/diary.ts"
 import styles from "../../achievement.module.css"
 
 export type BookmarkSectionProps = {

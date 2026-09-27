@@ -7,16 +7,18 @@
 
 import { z } from "zod"
 
-import { MAX_BACKGROUND_DATA_URL_LENGTH, parseBackgroundImage } from "../character-background.ts"
+import {
+  MAX_BACKGROUND_DATA_URL_LENGTH,
+  parseBackgroundImage,
+} from "../character-pack/character-background.ts"
 import {
   type AccentTarget,
   isAccentTarget,
   MAX_CHARACTER_NAME_LENGTH,
   MAX_CHARACTER_TAGLINE_LENGTH,
-} from "../character-definition.ts"
-import { MAX_FACE_DATA_URL_LENGTH, parseFaceImage } from "../character-face.ts"
-import { isCharacterPackName } from "../character.ts"
-import { commandBase } from "../command.ts"
+} from "../character-pack/character-definition.ts"
+import { MAX_FACE_DATA_URL_LENGTH, parseFaceImage } from "../character-pack/character-face.ts"
+import { isCharacterPackName } from "../character-pack/character.ts"
 import {
   type Expression,
   isExpression,
@@ -24,11 +26,15 @@ import {
   isRemovableExpression,
   type Outfit,
   type RemovableExpression,
-} from "../expression.ts"
-import { MAX_PORTRAIT_DATA_URL_LENGTH, parsePortraitImage } from "../portrait-image.ts"
+} from "../character-pack/expression.ts"
+import {
+  MAX_PORTRAIT_DATA_URL_LENGTH,
+  parsePortraitImage,
+} from "../character-pack/portrait-image.ts"
+import { commandBase } from "../command.ts"
 
 /**
- * 立ち絵1枚の data URL。大きさと種類はここで見る（`src/shared/portrait-image.ts`。
+ * 立ち絵1枚の data URL。大きさと種類はここで見る（`src/shared/character-pack/portrait-image.ts`。
  * 受け取るのは `.svg` / `.png` / `.gif` の3つだけ）。
  *
  * 文字列のまま持ち、`{ format, base64 }` へのほどきは書き込む側（`src/server/character-pack/adapter/character-edit.ts`）が
@@ -42,7 +48,7 @@ const portraitDataUrlSchema = z
 
 /**
  * 背景1枚の data URL（`docs/screen-design.md` 13.8）。受け取るのは `.png` / `.jpg` / `.webp` の
- * 3つだけ（`src/shared/character-background.ts`。`.gif` は入れない — 動く背景は読む面の隣で
+ * 3つだけ（`src/shared/character-pack/character-background.ts`。`.gif` は入れない — 動く背景は読む面の隣で
  * 気が散る）。立ち絵と同じく文字列のまま持ち、ほどくのは書き込む側。
  */
 const backgroundDataUrlSchema = z
@@ -52,7 +58,7 @@ const backgroundDataUrlSchema = z
 
 /**
  * 帯の左端・一覧の丸・名乗りの大きな丸に出す顔1枚の data URL（`docs/screen-design.md` 13.9「顔」）。
- * 受け取るのは立ち絵と同じ `.svg` / `.png` / `.gif` の3つだけ（`src/shared/character-face.ts`。
+ * 受け取るのは立ち絵と同じ `.svg` / `.png` / `.gif` の3つだけ（`src/shared/character-pack/character-face.ts`。
  * 立ち絵と同じ「キャラクターの絵」という素材の性質なので、写真が主な背景〔`.png` / `.jpg` /
  * `.webp`〕ではなく立ち絵に揃える）。
  */
@@ -67,7 +73,7 @@ const accentColorSchema = z.string().regex(/^#[0-9a-f]{6}$/i)
 /**
  * 新しく作るパックの名前。ここだけは受け取った文字列がディレクトリ名になるので、
  * 切り替え（`session.switchCharacter`）の「長さだけ」より厳しく見る
- * （`src/shared/character.ts` の {@link isCharacterPackName}。パスの区切りと `..` を
+ * （`src/shared/character-pack/character.ts` の {@link isCharacterPackName}。パスの区切りと `..` を
  * 名前として通さない）。
  */
 const newCharacterPackNameSchema = z.string().refine(isCharacterPackName)
@@ -83,7 +89,7 @@ const editedCharacterPackNameSchema = z.string().refine(isCharacterPackName)
 
 /**
  * 表示名（`character.json` の `name`）。空文字も通す — 空なら書き込む側が id へ落とす
- * （`src/shared/character-definition.ts` の `definitionWithName`。`docs/design.md` 7.1）ので、
+ * （`src/shared/character-pack/character-definition.ts` の `definitionWithName`。`docs/design.md` 7.1）ので、
  * ここでは長さの素朴な上限だけを見る。ディレクトリ名になる {@link newCharacterPackNameSchema} /
  * {@link editedCharacterPackNameSchema} と違って文字種は縛らない（日本語も使える）。
  */
@@ -101,7 +107,7 @@ const expressionSchema = z.custom<Expression>(
 
 /**
  * 立ち絵を消せる表情。`default` はここで弾かれる（必須の1つ。
- * `src/shared/expression.ts` の `REQUIRED_EXPRESSIONS`）。
+ * `src/shared/character-pack/expression.ts` の `REQUIRED_EXPRESSIONS`）。
  */
 const removableExpressionSchema = z.custom<RemovableExpression>(
   (value) => typeof value === "string" && isRemovableExpression(value),
@@ -109,7 +115,7 @@ const removableExpressionSchema = z.custom<RemovableExpression>(
 
 const outfitSchema = z.custom<Outfit>((value) => typeof value === "string" && isOutfit(value))
 
-/** 画面の差し色（`accent` / `chatAccent`）のうちどちらを差すか。`src/shared/character-definition.ts`。 */
+/** 画面の差し色（`accent` / `chatAccent`）のうちどちらを差すか。`src/shared/character-pack/character-definition.ts`。 */
 const accentTargetSchema = z.custom<AccentTarget>(
   (value) => typeof value === "string" && isAccentTarget(value),
 )
@@ -146,14 +152,14 @@ const characterEditInput = {
   /**
    * 雑談の差し色（`chatAccent`）を消し、雑談中も仕事の差し色（`accent`）と同じに戻す
    * （`docs/screen-design.md` 13.6「仕事と同じにする」）。`accent` を消す口は無い
-   * （`src/shared/character-definition.ts` の `definitionWithoutChatAccent`）。
+   * （`src/shared/character-pack/character-definition.ts` の `definitionWithoutChatAccent`）。
    */
   clearChatAccent: z.object({ pack: editedCharacterPackNameSchema }),
   /**
    * 名前とひとことプロフィールを変える（見本の「名前とプロフィールを変える」ボタン。画面側は
    * `docs/screen-design.md` 13.6）。1つの画面のボタンから2つの欄をまとめて
    * 送るので、コマンドも1つにする。どちらも空文字を通し、空なら書き込む側が畳む（名前は
-   * id へ、ひとことは「無い」へ。`src/shared/character-definition.ts` の `definitionWithName` /
+   * id へ、ひとことは「無い」へ。`src/shared/character-pack/character-definition.ts` の `definitionWithName` /
    * `definitionWithTagline`）。
    */
   setProfile: z.object({

@@ -8,10 +8,10 @@
 
 import type { ReactElement } from "react"
 
-import type { CharacterPackChoice } from "../../../../shared/character.ts"
+import type { CharacterPackChoice } from "../../../../shared/character-pack/character.ts"
 import { FRAME_ERROR_REASON } from "../../../../shared/frame.ts"
-import { Select } from "../../../components/ui/select/select.tsx"
 import { useSession, useTurnRunning } from "../../../stores/session.ts"
+import { Select } from "../../ui/select/select.tsx"
 
 // 切り替えは起こし直し（会話が消える）なので、ターン進行中だけ塞ぐ。理由の文面はサーバが
 // 断るときと同じ1つ（`shared` の定型文）を使う。

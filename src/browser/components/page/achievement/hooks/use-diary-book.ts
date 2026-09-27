@@ -24,7 +24,10 @@
 import { skipToken, useQuery } from "@tanstack/react-query"
 import { useState } from "react"
 
-import { lampLevel, type LampLevel } from "../../../../../shared/achievement-calendar.ts"
+import {
+  lampLevel,
+  type LampLevel,
+} from "../../../../../shared/achievement/achievement-calendar.ts"
 import {
   isEmptyAchievementDay,
   type AchievementDoneTasks,
@@ -32,9 +35,12 @@ import {
   type AchievementMilestone,
   type AchievementTask,
   type DailyAchievement,
-} from "../../../../../shared/achievement.ts"
-import type { CharacterInfo, CharacterPackEntry } from "../../../../../shared/character.ts"
-import type { DailyDiaryStatus, Diary } from "../../../../../shared/diary.ts"
+} from "../../../../../shared/achievement/achievement.ts"
+import type {
+  CharacterInfo,
+  CharacterPackEntry,
+} from "../../../../../shared/character-pack/character.ts"
+import type { DailyDiaryStatus, Diary } from "../../../../../shared/diary/diary.ts"
 import {
   DEFAULT_CHARACTER_NAME,
   portraitAppearance,

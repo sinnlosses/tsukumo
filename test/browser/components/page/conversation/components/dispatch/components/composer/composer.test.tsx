@@ -4,12 +4,12 @@ import { afterEach, describe, expect, it } from "vitest"
 
 import { Composer } from "../../../../../../../../../src/browser/components/page/conversation/components/dispatch/components/composer/composer.tsx"
 import { useQuestionDraft } from "../../../../../../../../../src/browser/stores/question-answer.ts"
-import type { CharacterInfo } from "../../../../../../../../../src/shared/character.ts"
-import type { PendingAsk } from "../../../../../../../../../src/shared/pending-ask.ts"
+import type { CharacterInfo } from "../../../../../../../../../src/shared/character-pack/character.ts"
+import type { PendingAsk } from "../../../../../../../../../src/shared/session-driver/pending-ask.ts"
 import {
   INITIAL_SESSION_STATE,
   type SessionState,
-} from "../../../../../../../../../src/shared/session-state.ts"
+} from "../../../../../../../../../src/shared/session/session-state.ts"
 import { characterInfo } from "../../../../../../../../fixture/character.ts"
 import { typedElement } from "../../../../../../../../typed-element.ts"
 import { rpcOutput, stubRpcFetch, type RpcFetchStub } from "../../../../../../../rpc-fetch-stub.ts"

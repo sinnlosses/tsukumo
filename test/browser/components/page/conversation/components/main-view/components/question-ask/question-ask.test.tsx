@@ -4,12 +4,15 @@ import { afterEach, describe, expect, it, vi } from "vitest"
 import { QuestionAsk } from "../../../../../../../../../src/browser/components/page/conversation/components/main-view/components/question-ask/question-ask.tsx"
 import { useQuestionDraft } from "../../../../../../../../../src/browser/stores/question-answer.ts"
 import { useQuestionScroll } from "../../../../../../../../../src/browser/stores/question-scroll.ts"
-import type { PendingAsk } from "../../../../../../../../../src/shared/pending-ask.ts"
-import type { Question, QuestionOption } from "../../../../../../../../../src/shared/question.ts"
+import type { PendingAsk } from "../../../../../../../../../src/shared/session-driver/pending-ask.ts"
+import type {
+  Question,
+  QuestionOption,
+} from "../../../../../../../../../src/shared/session-driver/question.ts"
 import {
   INITIAL_SESSION_STATE,
   type SessionRecord,
-} from "../../../../../../../../../src/shared/session-state.ts"
+} from "../../../../../../../../../src/shared/session/session-state.ts"
 import { requestRecord } from "../../../../../../../../fixture/session-record.ts"
 import { type CommandSpy, putSession } from "../../../../../../../session-store.ts"
 

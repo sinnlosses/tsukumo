@@ -31,8 +31,8 @@ import { join } from "node:path"
 
 import { z } from "zod"
 
-import { isCharacterPackName } from "../../../shared/character.ts"
-import type { Expression } from "../../../shared/expression.ts"
+import { isCharacterPackName } from "../../../shared/character-pack/character.ts"
+import type { Expression } from "../../../shared/character-pack/expression.ts"
 import { byteLength } from "../../../shared/utils/byte-length.ts"
 import { appendJsonLine, dateFileNames, readJsonLines } from "../../adapter/lib/jsonl.ts"
 import { isoWithOffset, localDateKey } from "../../adapter/local-time.ts"

@@ -20,7 +20,7 @@ import {
   USAGE_PROPOSAL_IMPACTS,
   USAGE_PROPOSAL_KINDS,
   type UsageReviewFindings,
-} from "../../../shared/usage-review.ts"
+} from "../../../shared/usage-review/usage-review.ts"
 import { readJsonFile, writeJsonFile } from "../../adapter/lib/json-file.ts"
 import { tsukumoHomeDir } from "../../adapter/tsukumo-home.ts"
 

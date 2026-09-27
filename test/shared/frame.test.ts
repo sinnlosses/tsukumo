@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import { parseServerFrame, PROTOCOL_VERSION } from "../../src/shared/frame.ts"
-import { INITIAL_SESSION_STATE } from "../../src/shared/session-state.ts"
+import { INITIAL_SESSION_STATE } from "../../src/shared/session/session-state.ts"
 
 // フレームの中身（state / events）は封筒どまりの検証で、union は TS の型のまま
 // （docs/design.md 4章）。ここで確かめるのはその封筒。

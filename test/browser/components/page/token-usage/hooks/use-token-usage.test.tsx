@@ -7,8 +7,8 @@ import { useTokenUsage } from "../../../../../../src/browser/components/page/tok
 import {
   INITIAL_SESSION_STATE,
   type SessionState,
-} from "../../../../../../src/shared/session-state.ts"
-import { DEFAULT_TOKEN_USAGE_DAYS } from "../../../../../../src/shared/token-usage-summary.ts"
+} from "../../../../../../src/shared/session/session-state.ts"
+import { DEFAULT_TOKEN_USAGE_DAYS } from "../../../../../../src/shared/token-usage/token-usage-summary.ts"
 import {
   rpcError,
   rpcOutput,

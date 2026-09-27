@@ -15,7 +15,7 @@ import type { BackgroundFieldModel } from "../../../hooks/use-character-edit.ts"
 
 /**
  * 背景に選べる種類（`docs/design.md` 7.1 / `docs/screen-design.md` 13.8）。`.gif` は入れない（動く背景は読む面の
- * 隣で気が散る）。中身の検証はサーバ側（`src/shared/character-background.ts`）。
+ * 隣で気が散る）。中身の検証はサーバ側（`src/shared/character-pack/character-background.ts`）。
  */
 const BACKGROUND_FILE_ACCEPT = ".png,.jpg,.jpeg,.webp"
 

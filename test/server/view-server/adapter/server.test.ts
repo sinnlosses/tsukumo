@@ -19,21 +19,21 @@ import {
   startViewServer,
   type ViewServer,
 } from "../../../../src/server/view-server/adapter/server.ts"
-import type { AchievementCalendar } from "../../../../src/shared/achievement-calendar.ts"
+import type { AchievementCalendar } from "../../../../src/shared/achievement/achievement-calendar.ts"
 import type {
   AchievementDaySelection,
   DailyAchievement,
-} from "../../../../src/shared/achievement.ts"
-import type { CharacterAssetLocation } from "../../../../src/shared/character-asset.ts"
-import { UNAVAILABLE_CONTEXT_USAGE } from "../../../../src/shared/context-usage.ts"
-import { promptImagePath } from "../../../../src/shared/prompt-image.ts"
+} from "../../../../src/shared/achievement/achievement.ts"
+import type { CharacterAssetLocation } from "../../../../src/shared/character-pack/character-asset.ts"
+import { UNAVAILABLE_CONTEXT_USAGE } from "../../../../src/shared/context-usage/context-usage.ts"
 import { RPC_PATH, type RpcClient } from "../../../../src/shared/rpc.ts"
-import { UNAVAILABLE_SESSION_DIGEST } from "../../../../src/shared/session-digest.ts"
+import { promptImagePath } from "../../../../src/shared/session-driver/prompt-image.ts"
+import { UNAVAILABLE_SESSION_DIGEST } from "../../../../src/shared/session/session-digest.ts"
 import {
   EMPTY_TOKEN_USAGE_SUMMARY,
   type TokenUsageDays,
   type TokenUsageSummary,
-} from "../../../../src/shared/token-usage-summary.ts"
+} from "../../../../src/shared/token-usage/token-usage-summary.ts"
 import { readyContextUsage } from "../../../fixture/context-usage.ts"
 
 // 会話は流さない（配るのはページ・同梱物・立ち絵と、架空のファイル一覧だけ）。

@@ -5,7 +5,7 @@ import { LanternCalendar } from "../../../../../../../src/browser/components/pag
 import {
   achievementCalendarDateKeys,
   type AchievementCalendar,
-} from "../../../../../../../src/shared/achievement-calendar.ts"
+} from "../../../../../../../src/shared/achievement/achievement-calendar.ts"
 
 afterEach(() => {
   cleanup()

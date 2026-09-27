@@ -17,7 +17,7 @@ import type { ReactElement } from "react"
 import type {
   UsageProposalFollowUp,
   UsageProposalImpact,
-} from "../../../../../../shared/usage-review.ts"
+} from "../../../../../../shared/usage-review/usage-review.ts"
 import { CharacterFace } from "../../../../domain/character-face.tsx"
 import { Button } from "../../../../ui/button/button.tsx"
 import { Text } from "../../../../ui/text/text.tsx"

@@ -8,15 +8,15 @@ import {
   turnUsageBreakdown,
   type TurnUsageTally,
 } from "../../../../src/server/token-usage/core/token-usage.ts"
-import type { SessionEvent } from "../../../../src/shared/session-event.ts"
-import type { TokenUsageTrend } from "../../../../src/shared/token-usage-summary.ts"
+import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
+import type { TokenUsageTrend } from "../../../../src/shared/token-usage/token-usage-summary.ts"
 import {
   TOKEN_USAGE_FORMAT_VERSION,
   type ModelTokenUsage,
   type TokenUsageRecord,
   type ToolUsageCount,
   type TurnUsageScope,
-} from "../../../../src/shared/token-usage.ts"
+} from "../../../../src/shared/token-usage/token-usage.ts"
 
 // ここで使う数はすべて手で書いた架空のもの（実物の使用量も会話も使わない。
 // docs/coding-standards.md「会話内容の扱い」）。

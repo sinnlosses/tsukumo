@@ -12,7 +12,7 @@ import type {
   ChatSummary,
   ChatSummaryRecord,
 } from "../../../../src/server/session-driver/core/session-driver.ts"
-import { CHAT_MEMORY_BUDGET } from "../../../../src/shared/chat-memory-budget.ts"
+import { CHAT_MEMORY_BUDGET } from "../../../../src/shared/chat/chat-memory-budget.ts"
 
 // フィクスチャは手で書いた架空の要約・会話だけ（実物の会話は使わない。
 // docs/coding-standards.md「会話内容の扱い」）。

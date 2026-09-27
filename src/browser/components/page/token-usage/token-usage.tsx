@@ -8,7 +8,7 @@
 // 駆動、見直しはサーバの状態）。
 //
 // 入る口も会話へ戻る口も、全画面の最上部の帯（`components/domain/screen-nav/`。13.9）にある。
-// 期間の既定は7日で、30日にも切り替えられる（`src/shared/token-usage-summary.ts`）。
+// 期間の既定は7日で、30日にも切り替えられる（`src/shared/token-usage/token-usage-summary.ts`）。
 //
 // ここに残すのは「フックを呼んで、受け取ったものを渡す」だけ。条件分岐も算出もここには
 // 置かない（増えたらフックか見た目のどちらかに寄せる）。`state.lastTurnFinishedAt` を

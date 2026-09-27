@@ -62,13 +62,13 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/display.md
   合図は `speak` で言い直すもので、流れにも見えないので数えない）。`src/server/report/core/report-review.ts`）。
   **4つ目を足すにはユーザーの決定が要る**
 - **検査を通った `report` の本文は、描く前に整形する**（同じ決定の整形の段。
-  `src/shared/report-tidy.ts`）。落とすのは**落としても意味が変わらないものだけ**で、言い換え・
+  `src/shared/report/report-tidy.ts`）。落とすのは**落としても意味が変わらないものだけ**で、言い換え・
   要約・並べ替えはしない: 本文の冒頭で `conclusion` を繰り返しているもの（冒頭の `text` の塊か、
   逃げ道の頭の行）・前置きと締めの定型だけの `text` の塊と逃げ道の行（閉じた一覧との丸ごとの一致。
   型で当てると中身のある行まで黙って消えるので置かない）・逃げ道の中の中身の無い見出し・
   塊が残らなくなった節。**分担の基準は「直すのに書き直しが要るか」**——要るもの（段落を表へ移す・
   結論を短くする）は検査が差し戻し、消すだけで直るものは整形が黙って落とす。同じ条を両方には
-  置かない。**記録は引数のまま持ち、メインビューの導出（`src/shared/main-view.ts`）で掛ける**ので、
+  置かない。**記録は引数のまま持ち、メインビューの導出（`src/shared/session/main-view.ts`）で掛ける**ので、
   規則を変えると過去のやり取りと、セッションの復元で組み直したやり取りにも効く。**空行の連続は
   詰めない**（CommonMark でも本文を塊に割る側でも1つの切れ目と同じに描かれ、フェンスと HTML の
   塊の中では中身なので、落としても見え方が変わらない）。`report` の無いやり取りの本文には掛けない
@@ -109,7 +109,7 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/display.md
 `docs/research/report-block.md`、用語は `docs/glossary.md`「節」「塊」）。
 
 - 塊は `text` / `list` / `table` / `note` / `stats` / `code` / `mermaid` / `progress` と、逃げ道の
-  `markdown` の9種。**種類ごとの使いどころは各塊の `describe`（`src/shared/report-block.ts`）が持ち**、
+  `markdown` の9種。**種類ごとの使いどころは各塊の `describe`（`src/shared/report/report-block.ts`）が持ち**、
   `REPORT_NOTATION_PROMPT` の表には逃げ道に残る記法（`cols` / `card`・`chart`・`svg`・`dl`・引用・
   区切り線・複数の塊をまとめて畳む `<details>`）だけを置く。同じことを両方に書くと毎ターンの文脈に2回載る
 - **段（フェーズ）の位置は `progress` の塊で見せる**（2026-09-27 決定。`{ steps, current }` で受け、
@@ -189,7 +189,7 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/display.md
   **合図は SDK の `conversation_reset` メッセージ**（実測は `docs/history/decision.md`）。
   tsukumo は依頼の文面が `/clear` かどうかを見ない。**`/compact` では届かない**ので、要約では何もリセットされない
 - **レポートの構造は tsukumo 側の規約（`src/server/report/core/report-notation.ts`）と `report` の
-  塊の形（`src/shared/report-block.ts`）で決める**（正典は
+  塊の形（`src/shared/report/report-block.ts`）で決める**（正典は
   下の「レポートの記法は、TUI と tsukumo で出し分ける」。グローバルの `asuna.md` は TUI 向けに
   保ち、HTML の記法と mermaid / chart のフェンスは外してある）。内容の種類ごとに使う構造は
   塊の種類と各塊の説明が持ち、塊に無い記法（chart・`cols` / `card` の HTML など）だけを規約の表で示す。
@@ -210,12 +210,12 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/display.md
   状態はいまのバッジに寄せ、`ok` → `badge-ok`「OK」・`ng` → `badge-ng`「NG」・`unverified` →
   `badge-warn`「未確認」と**色と文字の両方**で見せる。**`checks` は省ける**（雑談・調べものだけの
   ターンでは渡さず、帯も出ない。内部では入口〔`sdk-message.ts`〕で空の配列に畳む）。
-  **帯は `favor` と同じくメインビューの組み立て（`src/shared/main-view.ts`）で本文の HTML に入れる**
+  **帯は `favor` と同じくメインビューの組み立て（`src/shared/session/main-view.ts`）で本文の HTML に入れる**
   ——中間レポート・最終レポート・transcript からの復元・畳んだ中間レポートの見出し（`firstLine` は
   結論の行のまま）のどれも、本文と同じ経路で同じに出る。別の部品にすると、ステップの本文の型と
-  書き上げる演出の両方に2つ目の経路が要る。帯の HTML は `src/shared/report-check.ts` が組み、
+  書き上げる演出の両方に2つ目の経路が要る。帯の HTML は `src/shared/report/report-check.ts` が組み、
   モデルの文字列は HTML として逃がして改行を空白に畳む（Markdown は解釈しない）。帯の class
-  （`checks` / `check`）はモデルに教えない印として語彙（`src/shared/report-notation.ts` の
+  （`checks` / `check`）はモデルに教えない印として語彙（`src/shared/report/report-notation.ts` の
   `REPORT_DRAWN_MARK_NAMES`）に置く。記録とイベントの形が変わったので `PROTOCOL_VERSION` を
   23 に上げた
 - **記法の条の足し方**（同じ 2026-09-26 の決定）: 条を増やさず、**条1** に「検証の結果は `checks` に
@@ -228,7 +228,7 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/display.md
   （`REPORT_CHECKS_DESCRIPTION`）の両方に、測れた検証は所要時間を添え、測っていない・測れない
   確認（目視など）は `detail` に「未計測」と書く条を足した。tsukumo 側はツールの呼び出しに時刻を
   持たせていないため、モデルに測らせるヒューリスティックだけを先に入れた。機械測定（`tool-started` /
-  `tool-finished` に時刻を持たせ、`src/shared/turn-step.ts` まで運ぶ）は複数の層に跨り1コミットに
+  `tool-finished` に時刻を持たせ、`src/shared/session/turn-step.ts` まで運ぶ）は複数の層に跨り1コミットに
   収まらないため見送った
 
 #### レポートの記法は、TUI と tsukumo で出し分ける

@@ -26,12 +26,12 @@
 import { copyFileSync, existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs"
 import { basename, join } from "node:path"
 
-import { classifyPortraitFile } from "../../../shared/character-asset.ts"
+import { classifyPortraitFile } from "../../../shared/character-pack/character-asset.ts"
 import {
   type BackgroundImage,
   backgroundFileName,
   parseBackgroundImage,
-} from "../../../shared/character-background.ts"
+} from "../../../shared/character-pack/character-background.ts"
 import {
   type CharacterDefinition,
   definitionWithAccent,
@@ -46,25 +46,29 @@ import {
   definitionWithPortrait,
   definitionWithTagline,
   parseCharacterDefinition,
-} from "../../../shared/character-definition.ts"
-import { type FaceImage, faceFileName, parseFaceImage } from "../../../shared/character-face.ts"
-import type { CharacterPackRemoval } from "../../../shared/character.ts"
-import type {
-  CharacterCreate,
-  CharacterDelete,
-  CharacterEdit,
-} from "../../../shared/contract/character-pack.ts"
+} from "../../../shared/character-pack/character-definition.ts"
+import {
+  type FaceImage,
+  faceFileName,
+  parseFaceImage,
+} from "../../../shared/character-pack/character-face.ts"
+import type { CharacterPackRemoval } from "../../../shared/character-pack/character.ts"
 import {
   type Expression,
   EXPRESSIONS,
   type RemovableExpression,
   type RequiredExpression,
-} from "../../../shared/expression.ts"
+} from "../../../shared/character-pack/expression.ts"
 import {
   type PortraitImage,
   parsePortraitImage,
   portraitFileName,
-} from "../../../shared/portrait-image.ts"
+} from "../../../shared/character-pack/portrait-image.ts"
+import type {
+  CharacterCreate,
+  CharacterDelete,
+  CharacterEdit,
+} from "../../../shared/contract/character-pack.ts"
 import {
   type CharacterPack,
   CHARACTER_DEFINITION_FILE_NAME,

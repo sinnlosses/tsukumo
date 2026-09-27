@@ -9,11 +9,11 @@ import {
   createSessionLaunch,
   type SessionLaunchPorts,
 } from "../../../../src/server/session/core/session-launch.ts"
-import { UNAVAILABLE_CONTEXT_USAGE } from "../../../../src/shared/context-usage.ts"
-import { BUILTIN_SESSION_DEFAULT } from "../../../../src/shared/session-default.ts"
-import { UNAVAILABLE_SESSION_DIGEST } from "../../../../src/shared/session-digest.ts"
-import type { SessionEvent } from "../../../../src/shared/session-event.ts"
-import { DEFAULT_VISIT_ENABLED } from "../../../../src/shared/visit.ts"
+import { UNAVAILABLE_CONTEXT_USAGE } from "../../../../src/shared/context-usage/context-usage.ts"
+import { BUILTIN_SESSION_DEFAULT } from "../../../../src/shared/session/session-default.ts"
+import { UNAVAILABLE_SESSION_DIGEST } from "../../../../src/shared/session/session-digest.ts"
+import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
+import { DEFAULT_VISIT_ENABLED } from "../../../../src/shared/visit/visit.ts"
 import {
   characterChangedEvent,
   characterPackEntry,

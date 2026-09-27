@@ -15,12 +15,12 @@ import clsx from "clsx"
 import { Settings } from "lucide-react"
 import { useId, type ReactElement } from "react"
 
-import { isSessionDefaultPermissionMode } from "../../../../../shared/session-default.ts"
-import { Button } from "../../../../components/ui/button/button.tsx"
-import { HStack } from "../../../../components/ui/h-stack/h-stack.tsx"
-import { Select } from "../../../../components/ui/select/select.tsx"
-import { Text } from "../../../../components/ui/text/text.tsx"
+import { isSessionDefaultPermissionMode } from "../../../../../shared/session/session-default.ts"
 import { REVEAL_SPEED_LABELS } from "../../../../domain/reveal-speed.ts"
+import { Button } from "../../../ui/button/button.tsx"
+import { HStack } from "../../../ui/h-stack/h-stack.tsx"
+import { Select } from "../../../ui/select/select.tsx"
+import { Text } from "../../../ui/text/text.tsx"
 import { EFFORT_PLACEHOLDER_VALUE, effortLabel } from "../domain/effort-label.ts"
 import { MODEL_LABELS } from "../domain/model-label.ts"
 import { PERMISSION_MODE_LABELS } from "../domain/permission-mode-label.ts"
@@ -41,7 +41,7 @@ const MODEL_OPTIONS = MODEL_LABELS.map(([value, label]) => ({ value, label }))
 
 /**
  * 既定の `<select>` に出す許可モード。「全部許す」は落とす（既定には選べない。
- * `src/shared/session-default.ts`）——帯のドロップダウンからはその都度選べる。
+ * `src/shared/session/session-default.ts`）——帯のドロップダウンからはその都度選べる。
  */
 const PERMISSION_MODE_OPTIONS = PERMISSION_MODE_LABELS.filter(([value]) =>
   isSessionDefaultPermissionMode(value),

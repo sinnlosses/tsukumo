@@ -10,7 +10,10 @@
 // （`relayMessages` の `turn-finished` 分岐。
 // `docs/design.md`「雑談の記憶の置き場」）。
 
-import { CHAT_MEMORY_BUDGET, type ChatMemoryBudget } from "../../../shared/chat-memory-budget.ts"
+import {
+  CHAT_MEMORY_BUDGET,
+  type ChatMemoryBudget,
+} from "../../../shared/chat/chat-memory-budget.ts"
 import type { ChatArchive, ChatRecall } from "../../session-driver/core/session-driver.ts"
 
 /**

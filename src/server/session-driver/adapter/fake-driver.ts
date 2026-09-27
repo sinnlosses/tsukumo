@@ -13,19 +13,19 @@ import { fileURLToPath } from "node:url"
 import { z } from "zod"
 
 import type { EffortLevel } from "../../../shared/command.ts"
-import type { ContextUsage } from "../../../shared/context-usage.ts"
-import type { Answer, PendingAsk } from "../../../shared/pending-ask.ts"
-import type { SessionDefault } from "../../../shared/session-default.ts"
+import type { ContextUsage } from "../../../shared/context-usage/context-usage.ts"
+import type { Answer, PendingAsk } from "../../../shared/session-driver/pending-ask.ts"
+import type { SessionDefault } from "../../../shared/session/session-default.ts"
 import {
   type SessionDigest,
   sessionDigestSchema,
   UNAVAILABLE_SESSION_DIGEST,
-} from "../../../shared/session-digest.ts"
+} from "../../../shared/session/session-digest.ts"
 import {
   type ModelEffortSupport,
   type SessionEvent,
   sessionEventSchema,
-} from "../../../shared/session-event.ts"
+} from "../../../shared/session/session-event.ts"
 import { createReportReview } from "../../report/core/report-review.ts"
 import { recordedPromptImages } from "../core/prompt-image-shelf.ts"
 import type { SessionDriver } from "../core/session-driver.ts"

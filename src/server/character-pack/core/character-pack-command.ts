@@ -10,7 +10,7 @@ import type {
   characterPackContract,
 } from "../../../shared/contract/character-pack.ts"
 import { FRAME_ERROR_REASON } from "../../../shared/frame.ts"
-import type { SessionEvent } from "../../../shared/session-event.ts"
+import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import type { FeatureCommandTable, WriteReceiver } from "../../core/command-receiver.ts"
 
 export type CharacterPackCommandPorts = {

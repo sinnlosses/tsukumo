@@ -19,7 +19,7 @@ import process from "node:process"
 
 import { closeTab, listTabs, openTab, type OrcaTab } from "../src/server/host/adapter/orca-host.ts"
 import { createStartupToken } from "../src/server/view-server/adapter/server.ts"
-import { roomName } from "../src/shared/room.ts"
+import { roomName } from "../src/shared/view-server/room.ts"
 import { candidatePorts, findListener, run, type Listener } from "./lib/port-listener.ts"
 import {
   buildRoomGridHtml,

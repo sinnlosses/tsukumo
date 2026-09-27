@@ -24,7 +24,7 @@
 import { writeFileSync } from "node:fs"
 import { join } from "node:path"
 
-import { MAX_REMEMBERED_LINE_LENGTH } from "../../../shared/persona-memory.ts"
+import { MAX_REMEMBERED_LINE_LENGTH } from "../../../shared/chat/persona-memory.ts"
 import { copyPackOnce } from "../../character-pack/adapter/character-edit.ts"
 import {
   type CharacterPack,

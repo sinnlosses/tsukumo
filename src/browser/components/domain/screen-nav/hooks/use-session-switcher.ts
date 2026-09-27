@@ -11,7 +11,7 @@
 import { useCallback, useEffect, useState } from "react"
 
 import { FRAME_ERROR_REASON } from "../../../../../shared/frame.ts"
-import type { SessionChoice } from "../../../../../shared/session-choice.ts"
+import type { SessionChoice } from "../../../../../shared/session/session-choice.ts"
 import { useSession, useTurnRunning } from "../../../../stores/session.ts"
 import {
   clockTime,

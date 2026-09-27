@@ -14,10 +14,13 @@ import {
 import {
   type ExpressionChoice,
   expressionNames as toExpressionNames,
-} from "../../../shared/expression-choice.ts"
-import type { SessionChoice } from "../../../shared/session-choice.ts"
-import { type SessionDigest, UNAVAILABLE_SESSION_DIGEST } from "../../../shared/session-digest.ts"
-import type { SessionEvent } from "../../../shared/session-event.ts"
+} from "../../../shared/character-pack/expression-choice.ts"
+import type { SessionChoice } from "../../../shared/session/session-choice.ts"
+import {
+  type SessionDigest,
+  UNAVAILABLE_SESSION_DIGEST,
+} from "../../../shared/session/session-digest.ts"
+import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import { toSessionDigest } from "../core/session-digest.ts"
 import type { SessionDriverOptions } from "../core/session-driver.ts"
 import {

@@ -6,7 +6,10 @@
 // それに `buffer` と `free` を足すと `maxTokens` になる）。実物のセッションの値は使わない
 // （docs/coding-standards.md「会話内容の扱い」）。
 
-import type { ContextUsage, ContextUsageReport } from "../../src/shared/context-usage.ts"
+import type {
+  ContextUsage,
+  ContextUsageReport,
+} from "../../src/shared/context-usage/context-usage.ts"
 
 /** 架空の内訳1つ。違うところだけを渡す。 */
 export function contextUsage(overrides: Partial<ContextUsage> = {}): ContextUsage {

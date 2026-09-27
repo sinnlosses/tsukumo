@@ -4,7 +4,7 @@
 //
 // `SessionState.visitEnabled` はブールだが、`<select>` の値は文字列なので、ここで両方向の
 // 変換を持つ（色・演出の速さと違い、値そのものはブラウザに保存しない。
-// `src/shared/session-event.ts` の `visit-enabled-changed`）。
+// `src/shared/session/session-event.ts` の `visit-enabled-changed`）。
 
 export type VisitToggleValue = "on" | "off"
 

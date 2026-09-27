@@ -3,12 +3,12 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import { CharacterEdit } from "../../../../../../../src/browser/components/page/character/components/character-edit/character-edit.tsx"
-import type { CharacterPackEntry } from "../../../../../../../src/shared/character.ts"
-import { EXPRESSIONS } from "../../../../../../../src/shared/expression.ts"
+import type { CharacterPackEntry } from "../../../../../../../src/shared/character-pack/character.ts"
+import { EXPRESSIONS } from "../../../../../../../src/shared/character-pack/expression.ts"
 import {
   INITIAL_SESSION_STATE,
   type SessionState,
-} from "../../../../../../../src/shared/session-state.ts"
+} from "../../../../../../../src/shared/session/session-state.ts"
 import {
   characterInfo,
   characterPackEntry,
@@ -121,7 +121,7 @@ describe("CharacterEdit", () => {
     expect(screen.getByRole("button", { name: "どや顔を消す" })).toBeDefined()
   })
 
-  // 必須から外れたので、thinking は立ち絵があれば消せる（`src/shared/expression.ts`）。
+  // 必須から外れたので、thinking は立ち絵があれば消せる（`src/shared/character-pack/expression.ts`）。
   it("thinking は立ち絵があれば消す口を出す", () => {
     renderCharacterEdit(FIXTURE_CHARACTER)
 

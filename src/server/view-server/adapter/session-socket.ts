@@ -21,7 +21,10 @@ import { RPCHandler } from "@orpc/server/websocket"
 import { type RawData, WebSocketServer } from "ws"
 
 import type { socketContract } from "../../../shared/rpc.ts"
-import { SESSION_SOCKET_PATH, SESSION_TOKEN_QUERY_NAME } from "../../../shared/session-socket.ts"
+import {
+  SESSION_SOCKET_PATH,
+  SESSION_TOKEN_QUERY_NAME,
+} from "../../../shared/view-server/session-socket.ts"
 import type { CommandSession } from "../../session/core/command-session.ts"
 import type { SubscribeFrames } from "./frame-procedure.ts"
 import { rpcContextOf, type SocketRpcContext } from "./rpc-guard.ts"

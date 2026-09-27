@@ -22,7 +22,7 @@
 2. **それでも297行のうち約50行（17%）は減らせる。** 手は2つだけ——「判別可能な合併型にする」と
    「入口で全域なレコードに畳む」。**どちらもいまの規約がすでに命じていて、適用されていないだけ**
    （`docs/coding-standards.md`「### 複数の「無い」が1つの状態」の**「避ける」例がそのままの形で
-   `src/shared/session-state.ts` に生き残っている**）
+   `src/shared/session/session-state.ts` に生き残っている**）
 3. **規約を「`| undefined` 禁止」へ書き換えるのは勧めない。** 禁止すると
    「`?:` を使わない」条と「`null` を自前の型に出さない」条が同時に効かなくなり、
    **「無い」の表し方が1つも残らない**。逃げ道は `!` か `as` で、これは「型を迂回するキャストを
@@ -52,8 +52,8 @@
 | C コメント中の言及（コードではない）       |       0 |           0 |              1 |       1 |           0 |   **2** |
 | **計**                                     | **101** |      **40** |         **62** |  **87** |       **7** | **297** |
 
-多い順のファイル: `src/shared/character.ts`(25) / `src/shared/character-definition.ts`(20) /
-`src/shared/session-state.ts`(11) / `src/server/adapter/character-pack.ts`(11) /
+多い順のファイル: `src/shared/character-pack/character.ts`(25) / `src/shared/character-pack/character-definition.ts`(20) /
+`src/shared/session/session-state.ts`(11) / `src/server/adapter/character-pack.ts`(11) /
 `src/server/adapter/character-edit.ts`(11) / `src/server/adapter/sdk-driver.ts`(9)。
 
 ### 種類の見分け方（再現できる規則）
@@ -102,12 +102,12 @@
 | #   | 場所                                                                                                                      | いまの形                                                                        | 1つの状態                        | 置き換え先                                                                                                |  減 |
 | --- | ------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- | -------------------------------- | --------------------------------------------------------------------------------------------------------- | --: |
 | 1   | `src/server/core/session-driver.ts:263,269,275,281`                                                                       | `personaMemory` / `chatSummary` / `chatKeep` / `chatRecall` が各 `\| undefined` | **雑談モードかどうか**           | `mode: { kind: "work" } \| { kind: "chat"; personaMemory; chatSummary; chatKeep; chatRecall }`            |   4 |
-| 2   | `src/shared/session-state.ts:194,200` ＋ `turnInProgress`                                                                 | `turnInProgress: boolean` と時刻2つ                                             | **ターンの進み具合**             | `turn: { kind: "idle" } \| { kind: "running"; startedAt } \| { kind: "finished"; startedAt; finishedAt }` |   2 |
-| 3   | `src/shared/portrait-motion.ts:20` ＋ `turnInProgress`                                                                    | #2 の写し                                                                       | 同上                             | #2 と同じ形を受け取る                                                                                     |   1 |
-| 4   | `src/shared/session-state.ts:143,144,145`                                                                                 | `sessionId` / `model` / `permissionMode`                                        | **`init` がまだ届いていない**    | `session: { kind: "starting" } \| { kind: "running"; sessionId; model; permissionMode }`                  |   3 |
+| 2   | `src/shared/session/session-state.ts:194,200` ＋ `turnInProgress`                                                         | `turnInProgress: boolean` と時刻2つ                                             | **ターンの進み具合**             | `turn: { kind: "idle" } \| { kind: "running"; startedAt } \| { kind: "finished"; startedAt; finishedAt }` |   2 |
+| 3   | `src/shared/session/portrait-motion.ts:20` ＋ `turnInProgress`                                                            | #2 の写し                                                                       | 同上                             | #2 と同じ形を受け取る                                                                                     |   1 |
+| 4   | `src/shared/session/session-state.ts:143,144,145`                                                                         | `sessionId` / `model` / `permissionMode`                                        | **`init` がまだ届いていない**    | `session: { kind: "starting" } \| { kind: "running"; sessionId; model; permissionMode }`                  |   3 |
 | 5   | `src/server/core/session-driver.ts:250` ほか（`session-launch.ts:23` / `sdk-driver.ts:227` / `chat-memory-prompt.ts:95`） | `resume: string \| undefined`                                                   | **新規に起こす／続きから起こす** | `start: { kind: "new" } \| { kind: "resume"; sessionId }`                                                 |   4 |
-| 6   | `src/shared/session-state.ts:97` / `src/shared/main-view.ts:58`                                                           | `result: {...} \| undefined`                                                    | **ツールがまだ終わっていない**   | `{ kind: "running" } \| { kind: "finished"; result }`                                                     |   2 |
-| 7   | `src/shared/main-view.ts:98,102`                                                                                          | `report` / `firstLine`                                                          | **本文がまだ来ていない**         | `body: { kind: "none" } \| { kind: "text"; report; firstLine }`                                           |   2 |
+| 6   | `src/shared/session/session-state.ts:97` / `src/shared/session/main-view.ts:58`                                           | `result: {...} \| undefined`                                                    | **ツールがまだ終わっていない**   | `{ kind: "running" } \| { kind: "finished"; result }`                                                     |   2 |
+| 7   | `src/shared/session/main-view.ts:98,102`                                                                                  | `report` / `firstLine`                                                          | **本文がまだ来ていない**         | `body: { kind: "none" } \| { kind: "text"; report; firstLine }`                                           |   2 |
 | 8   | `src/server/adapter/fake-driver.ts:206,207`                                                                               | `model` / `permissionMode`                                                      | #4 の偽物側の写し                | #4 と同じ                                                                                                 |   2 |
 
 **#1 は確認済み**: `src/session-start.ts:160,164,168` で3つとも `seed.chat ? ... : undefined`、
@@ -115,7 +115,7 @@
 `undefined` になる状態は実在しない。
 
 **#2 の注意（見積もりに効く）**: `turnInProgress` は
-`src/server/core/session-manager.ts:382,392,408` / `src/shared/main-view.ts:161` /
+`src/server/core/session-manager.ts:382,392,408` / `src/shared/session/main-view.ts:161` /
 `src/browser/components/domain/sidebar/session-info.tsx:111` など**6箇所以上が `boolean` として読んでいる**。
 合併型にすると読み替えが要る（`state.turn.kind === "running"`）。**減る行数は2行、
 書き換わる行数は十数行**——この比は他の#でも同じで、**行数の得は小さい**。
@@ -127,9 +127,9 @@
 - `src/server/core/config.ts:38,40,48` — 環境変数の未設定。3つは**独立**（片方だけ設定する運用が実在する）
 - `src/browser/domain/appearance-color.ts:17,18,19` — `ground`/`surface`/`ink` は
   1色だけ変える操作が実在するので独立
-- `src/shared/character-definition.ts:21,33,40,47` / `src/shared/task-summary.ts:18,19,20` —
+- `src/shared/character-pack/character-definition.ts:21,33,40,47` / `src/shared/repository/task-summary.ts:18,19,20` —
   定義ファイル・`tasks.json` の**任意の項目**。外の世界の形そのもの（3節の例外1）
-- `src/shared/session-event.ts:107`（`parentToolUseId`）/ `:33`（`description`）/ `:53,54` —
+- `src/shared/session/session-event.ts:107`（`parentToolUseId`）/ `:33`（`description`）/ `:53,54` —
   SDK が渡してこない値（例外1）
 - React の props 約15行（`portrait.tsx:32,42,47` / `select.tsx:22` / `section.tsx:22` ほか）—
   4節の衝突。**いまの規約が `?:` を禁じているので `| undefined` 以外に書きようがない**
@@ -138,18 +138,18 @@
 
 いま `Readonly<Record<Expression, string | undefined>>` が2つの用途に兼用されている。
 
-| 用途                   | 持ち主                                                          | 「この表情だけ無い」が意味を持つか                                                                              |
-| ---------------------- | --------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| **定義ファイルの写し** | `CharacterDefinition.portraits`（`character-definition.ts:34`） | **持つ。** `src/shared/expression-choice.ts:37` が「その表情の絵があるか」で `speak` の選択肢を作る             |
-| **画面へ渡す姿**       | `CharacterInfo.portraits`（`character.ts:30`）                  | **持たない。** 読む側は `resolvePortraitUrl` で必ず `?? portraits.default` に落としている（`character.ts:183`） |
-| **編集画面の手持ち**   | `HeldPortraits`（`character-create.tsx:40`）                    | **持つ。**「まだ入れていない枠」を数える（`character-create.tsx:57`）                                           |
+| 用途                   | 持ち主                                                          | 「この表情だけ無い」が意味を持つか                                                                                 |
+| ---------------------- | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| **定義ファイルの写し** | `CharacterDefinition.portraits`（`character-definition.ts:34`） | **持つ。** `src/shared/character-pack/expression-choice.ts:37` が「その表情の絵があるか」で `speak` の選択肢を作る |
+| **画面へ渡す姿**       | `CharacterInfo.portraits`（`character.ts:30`）                  | **持たない。** 読む側は `resolvePortraitUrl` で必ず `?? portraits.default` に落としている（`character.ts:183`）    |
+| **編集画面の手持ち**   | `HeldPortraits`（`character-create.tsx:40`）                    | **持つ。**「まだ入れていない枠」を数える（`character-create.tsx:57`）                                              |
 
 **提案**: 真ん中だけを畳む。`CharacterInfo.portraits` を作る時点で `default` へのフォールバックを
 済ませ、**`Readonly<Record<Expression, string>>` の全域なレコード**にする。`default` すら無い
 パックでは**表ごと持たない**（`portraits: Readonly<Record<Expression, string>> | undefined` が1つ
 残るだけ）。同じことを `outfitAccents` にも行う。
 
-これで `src/shared/character.ts` の 30 / 38 / 130 / 132 / 149 / 150 / 151 / 155（`EMPTY_PORTRAITS`）/
+これで `src/shared/character-pack/character.ts` の 30 / 38 / 130 / 132 / 149 / 150 / 151 / 155（`EMPTY_PORTRAITS`）/
 166（`EMPTY_OUTFIT_ACCENTS`）/ 180 / 182 / 188 / 190 の**13行が消え**、`resolvePortraitUrl` /
 `resolveOutfitAccent` は**関数ごと不要**になる（表を引くだけになる）。呼ぶ側
 （`character-view.tsx:135,137` / `chat-view.tsx:99,101` / `mini-portrait.tsx:50` /
@@ -176,8 +176,8 @@
 - 置き換えても**「無い」は消えず、`{ ok: false }` という名前に変わるだけ**。
   分岐の数は同じで、`.ok` と `.value` の2段になるぶん読む手数は増える
 
-**ただし1つだけ例外**: `src/shared/task-summary.ts:41` の `readTaskSummaries` が返す
-`undefined` は「**ファイルの形が信用できない**」を表し、`src/shared/session-state.ts:175` の
+**ただし1つだけ例外**: `src/shared/repository/task-summary.ts:41` の `readTaskSummaries` が返す
+`undefined` は「**ファイルの形が信用できない**」を表し、`src/shared/session/session-state.ts:175` の
 `tasks: ... | undefined`（「まだ届いていない」）と**画面上で同じ「不明」に合流している**。
 ここは「1つの `undefined` に複数の意味が乗っている」（規約が「避ける」と書いている3パターンの2つめ）
 なので、`tasks: { kind: "unknown" } \| { kind: "known"; items }` に割る価値がある（S に数えた5行
@@ -269,17 +269,17 @@
 **並行制約**: `CLAUDE.md`「タスク運用」のとおり、同じ作業ツリーを複数のセッションが共有する。
 下の表の「触る層」が重なるものは同時に着手しない。**目視が要るものは並行させない**。
 
-| #   | タスク                                               | 触る層                                                                                        |   減る行 | 目視                                   | difficulty |
-| --- | ---------------------------------------------------- | --------------------------------------------------------------------------------------------- | -------: | -------------------------------------- | ---------- |
-| 0   | **規約本文を書き直す**（3節の例外一覧 ＋ 4節の索引） | `docs/coding-standards.md` / `CLAUDE.md`                                                      |        0 | 不要                                   | opus       |
-| 1   | 雑談モードの4つの口を合併型に（2.1 #1）              | `server/core/session-driver.ts` / `adapter/sdk-driver.ts` / `src/session-start.ts`            |        9 | 不要（雑談モードの起動確認のみ）       | opus       |
-| 2   | 起こし方（`resume`）を合併型に（2.1 #5）             | `server/core` / `adapter/sdk-driver.ts`                                                       |        4 | 不要                                   | sonnet     |
-| 3   | ターンの進み具合を合併型に（2.1 #2 #3）              | `shared/session-state.ts` / `shared/portrait-motion.ts` / `browser`（経過時間・立ち絵の動き） |        5 | **要**（立ち絵の4つの動き・経過時間）  | opus       |
-| 4   | `init` の3点を合併型に（2.1 #4 #8）                  | `shared/session-state.ts` / `adapter/fake-driver.ts` / `browser/sidebar`                      |        5 | **要**（サイドバー）                   | sonnet     |
-| 5   | ツールの結果・本文を合併型に（2.1 #6 #7）            | `shared/session-state.ts` / `shared/main-view.ts` / `browser/main-view`                       |        4 | **要**（メインビュー）                 | opus       |
-| 6   | タスク一覧の「不明」を合併型に（2.3 の例外）         | `shared/task-summary.ts` / `shared/session-event.ts` / `browser/sidebar`                      |        6 | **要**（サイドバー）                   | sonnet     |
-| 7   | 立ち絵・差し色の対応表を入口で全域に畳む（2.2）      | `shared/character.ts` ＋ `browser` の3画面                                                    |       17 | **要**（立ち絵・ミニ立ち絵・編集画面） | opus       |
-| 　  | **計**                                               |                                                                                               | **約50** |                                        |            |
+| #   | タスク                                               | 触る層                                                                                                        |   減る行 | 目視                                   | difficulty |
+| --- | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- | -------: | -------------------------------------- | ---------- |
+| 0   | **規約本文を書き直す**（3節の例外一覧 ＋ 4節の索引） | `docs/coding-standards.md` / `CLAUDE.md`                                                                      |        0 | 不要                                   | opus       |
+| 1   | 雑談モードの4つの口を合併型に（2.1 #1）              | `server/core/session-driver.ts` / `adapter/sdk-driver.ts` / `src/session-start.ts`                            |        9 | 不要（雑談モードの起動確認のみ）       | opus       |
+| 2   | 起こし方（`resume`）を合併型に（2.1 #5）             | `server/core` / `adapter/sdk-driver.ts`                                                                       |        4 | 不要                                   | sonnet     |
+| 3   | ターンの進み具合を合併型に（2.1 #2 #3）              | `shared/session/session-state.ts` / `shared/session/portrait-motion.ts` / `browser`（経過時間・立ち絵の動き） |        5 | **要**（立ち絵の4つの動き・経過時間）  | opus       |
+| 4   | `init` の3点を合併型に（2.1 #4 #8）                  | `shared/session/session-state.ts` / `adapter/fake-driver.ts` / `browser/sidebar`                              |        5 | **要**（サイドバー）                   | sonnet     |
+| 5   | ツールの結果・本文を合併型に（2.1 #6 #7）            | `shared/session/session-state.ts` / `shared/session/main-view.ts` / `browser/main-view`                       |        4 | **要**（メインビュー）                 | opus       |
+| 6   | タスク一覧の「不明」を合併型に（2.3 の例外）         | `shared/repository/task-summary.ts` / `shared/session/session-event.ts` / `browser/sidebar`                   |        6 | **要**（サイドバー）                   | sonnet     |
+| 7   | 立ち絵・差し色の対応表を入口で全域に畳む（2.2）      | `shared/character-pack/character.ts` ＋ `browser` の3画面                                                     |       17 | **要**（立ち絵・ミニ立ち絵・編集画面） | opus       |
+| 　  | **計**                                               |                                                                                                               | **約50** |                                        |            |
 
 **割り方は「層ごと」ではなく「1つの状態ごと」にした。** 理由: 2.1 の8組はどれも
 `shared` → `server` → `browser` を**縦に貫く**（`SessionState` は3層すべてが読む）ので、

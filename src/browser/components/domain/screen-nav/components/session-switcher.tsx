@@ -8,9 +8,9 @@
 import { Search } from "lucide-react"
 import { useId, type ReactElement } from "react"
 
-import { CharacterFace } from "../../../../components/domain/character-face.tsx"
-import { Dialog } from "../../../../components/ui/dialog/dialog.tsx"
 import type { CharacterFaceInfo } from "../../../../domain/character-face.ts"
+import { Dialog } from "../../../ui/dialog/dialog.tsx"
+import { CharacterFace } from "../../character-face.tsx"
 import type { SessionDigestView } from "../hooks/use-session-digest.ts"
 import { useSessionSwitcherSelection } from "../hooks/use-session-switcher-selection.ts"
 import {

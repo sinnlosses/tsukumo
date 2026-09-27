@@ -10,7 +10,7 @@ import { useRef, useState, type ClipboardEvent, type DragEvent, type RefObject }
 import {
   MAX_PROMPT_IMAGES,
   type PromptImage,
-} from "../../../../../../../../../shared/prompt-image.ts"
+} from "../../../../../../../../../shared/session-driver/prompt-image.ts"
 import {
   carriesFiles,
   chosenPromptImageFiles,

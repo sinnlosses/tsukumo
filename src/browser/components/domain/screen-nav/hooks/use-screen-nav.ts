@@ -23,7 +23,7 @@ import { useCallback, useRef, useState, type RefObject } from "react"
 
 import { isEffortLevel, isModelAlias, isPermissionMode } from "../../../../../shared/command.ts"
 import { FRAME_ERROR_REASON } from "../../../../../shared/frame.ts"
-import { roomName } from "../../../../../shared/room.ts"
+import { roomName } from "../../../../../shared/view-server/room.ts"
 import { useDismissSignal } from "../../../../hooks/use-dismiss-signal.ts"
 import { SCREEN_NAV_ITEMS, type Screen } from "../../../../stores/location-hash.ts"
 import { useScreen, useScreenHref } from "../../../../stores/screen.tsx"

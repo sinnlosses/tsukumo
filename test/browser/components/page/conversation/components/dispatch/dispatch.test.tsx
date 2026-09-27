@@ -7,7 +7,7 @@ import { useQuestionDraft } from "../../../../../../../src/browser/stores/questi
 import {
   INITIAL_SESSION_STATE,
   type SessionState,
-} from "../../../../../../../src/shared/session-state.ts"
+} from "../../../../../../../src/shared/session/session-state.ts"
 import { putSession } from "../../../../../session-store.ts"
 
 afterEach(() => {

@@ -11,7 +11,7 @@ import { useQuestionDraft } from "../../../../../../../../../../src/browser/stor
 import {
   INITIAL_SESSION_STATE,
   type SessionState,
-} from "../../../../../../../../../../src/shared/session-state.ts"
+} from "../../../../../../../../../../src/shared/session/session-state.ts"
 import { characterInfo } from "../../../../../../../../../fixture/character.ts"
 import {
   rpcOutput,

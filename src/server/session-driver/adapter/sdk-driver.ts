@@ -28,10 +28,10 @@ import {
   type SDKUserMessage,
 } from "@anthropic-ai/claude-agent-sdk"
 
+import { expressionNames as toExpressionNames } from "../../../shared/character-pack/expression-choice.ts"
 import { type EffortLevel, isEffortLevel, type PermissionMode } from "../../../shared/command.ts"
-import { expressionNames as toExpressionNames } from "../../../shared/expression-choice.ts"
-import { parsePromptImage, type PromptImage } from "../../../shared/prompt-image.ts"
-import type { SessionEvent } from "../../../shared/session-event.ts"
+import { parsePromptImage, type PromptImage } from "../../../shared/session-driver/prompt-image.ts"
+import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import { createReportReview, type ReportReview } from "../../report/core/report-review.ts"
 import { createReportGate, type ReportGate } from "../../report/core/report-tool.ts"
 import { createUsageReviewIntake } from "../../usage-review/core/usage-review-tool.ts"
