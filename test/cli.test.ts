@@ -1,3 +1,4 @@
+import { randomInt } from "node:crypto"
 import { createServer as createNetServer, type Server as NetServer } from "node:net"
 
 import { describe, expect, it } from "vitest"
@@ -97,9 +98,14 @@ function closeNetServer(server: NetServer): Promise<void> {
 /** {@link holdFallbackBand} が帯を選び直す回数の上限。 */
 const MAX_BAND_PICKS = 10
 
+/** IANA の動的ポートの下端（macOS の net.inet.ip.portrange.first と同じ）。 */
+const DYNAMIC_PORT_FIRST = 49152
+
 /**
  * `VIEW_PORT_FALLBACK_ATTEMPTS` 個の連続したポートをすべて自分で握った私的な帯を返す。
- * 起点は OS に選ばせたエフェメラルポートで、実際の `DEFAULT_VIEW_PORT`（7327〜）は使わない。
+ * 起点は動的ポートの範囲から乱数で選び、実際の `DEFAULT_VIEW_PORT`（7327〜）は使わない。
+ * OS に listen(0) で選ばせると、同時に選ばせた他のプロセスと連番になり、
+ * 選び直しても1つずれた帯を踏み続けて上限を使い切る。
  * よそが1つでも握っていた帯は手放して選び直す——よその握りはテストの途中で離されうるので、
  * 「塞がっている」の前提にならない。
  */
@@ -108,12 +114,7 @@ async function holdFallbackBand(): Promise<{
   readonly blockers: readonly NetServer[]
 }> {
   for (let pick = 0; pick < MAX_BAND_PICKS; pick++) {
-    const probe = await listenOnEphemeralPort()
-    const anchor = portOf(probe)
-    await closeNetServer(probe)
-    if (anchor + VIEW_PORT_FALLBACK_ATTEMPTS - 1 > MAX_PORT_NUMBER) {
-      continue
-    }
+    const anchor = randomInt(DYNAMIC_PORT_FIRST, MAX_PORT_NUMBER - VIEW_PORT_FALLBACK_ATTEMPTS + 2)
     const held = await Promise.all(
       Array.from({ length: VIEW_PORT_FALLBACK_ATTEMPTS }, (_, i) => listenOnPortIfFree(anchor + i)),
     )
