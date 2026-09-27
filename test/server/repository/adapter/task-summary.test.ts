@@ -1,4 +1,4 @@
-import { mkdirSync, rmSync, writeFileSync } from "node:fs"
+import { mkdirSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 
 import { afterEach, describe, expect, it } from "vitest"
@@ -8,8 +8,7 @@ import {
   type TaskSummaryWatcher,
 } from "../../../../src/server/repository/adapter/task-summary.ts"
 import { bd, initBeads, useBeadsHome } from "../../../fixture/beads-repository.ts"
-import { git, initGitRepository } from "../../../fixture/git-repository.ts"
-import { runSubprocessOrThrow } from "../../../fixture/subprocess.ts"
+import { claimTask, git, initGitRepository, releaseTask } from "../../../fixture/git-repository.ts"
 import { useTempDir } from "../../../fixture/temp-dir.ts"
 
 // 本物の `git` を起こす（`main` の先端を見て読み直すことそのものが検査の対象）。リポジトリは
@@ -75,30 +74,6 @@ async function commitNewFormatTasks(
   }
   await git(cwd, "add", "develop/task")
   await git(cwd, "commit", "-m", "tasks")
-}
-
-/** 共有の `.git` の下の台帳の置き場（claude-skills の `docs/task-workflow-redesign.md` が正典）。 */
-async function ledgerRoot(cwd: string): Promise<string> {
-  const stdout = await runSubprocessOrThrow(
-    "git",
-    ["rev-parse", "--path-format=absolute", "--git-common-dir"],
-    { cwd },
-  )
-  return stdout.trim()
-}
-
-/** `id` に着手の印を立てる（`mkdir claim/T-xxx` そのもの。`owner` の中身は台帳の取り合いの判定に
- * しか使わないので、ここでは印の有無だけを作れば足りる）。 */
-async function claim(cwd: string, id: string): Promise<void> {
-  mkdirSync(join(await ledgerRoot(cwd), "task-workflow", "claim", id), { recursive: true })
-}
-
-/** `id` の着手の印を消す（`task release` 相当）。 */
-async function release(cwd: string, id: string): Promise<void> {
-  rmSync(join(await ledgerRoot(cwd), "task-workflow", "claim", id), {
-    recursive: true,
-    force: true,
-  })
 }
 
 /** `main` を出している本体とは別に、`git merge main` をしない作業ツリーを切る。 */
@@ -280,7 +255,7 @@ describe("watchTaskSummary", () => {
       { id: "T-001", summary: "着手中", status: "todo" },
       { id: "T-002", summary: "未着手", status: "todo" },
     ])
-    await claim(repository, "T-001")
+    await claimTask(repository, "T-001")
     const changes: unknown[] = []
     watch(repository, changes)
     await waitForChanges(changes, 1)
@@ -293,7 +268,7 @@ describe("watchTaskSummary", () => {
   it("着手の印は todo 以外には効かない（done はそのまま）", async () => {
     const repository = await initRepository("main")
     await commitNewFormatTasks(repository, [{ id: "T-001", summary: "済み", status: "done" }])
-    await claim(repository, "T-001")
+    await claimTask(repository, "T-001")
     const changes: unknown[] = []
     watch(repository, changes)
     await waitForChanges(changes, 1)
@@ -312,7 +287,7 @@ describe("watchTaskSummary", () => {
     await waitForChanges(changes, 1)
     expect(changes).toEqual([known(notified("T-001", "着手前", "todo"))])
 
-    await claim(repository, "T-001")
+    await claimTask(repository, "T-001")
     await waitForChanges(changes, 2)
 
     expect(changes).toEqual([
@@ -324,13 +299,13 @@ describe("watchTaskSummary", () => {
   it("main を動かさずに release すると、次の見回りで todo に戻る", async () => {
     const repository = await initRepository("main")
     await commitNewFormatTasks(repository, [{ id: "T-001", summary: "着手前", status: "todo" }])
-    await claim(repository, "T-001")
+    await claimTask(repository, "T-001")
     const changes: unknown[] = []
     watch(repository, changes)
     await waitForChanges(changes, 1)
     expect(changes).toEqual([known(notified("T-001", "着手前", "doing"))])
 
-    await release(repository, "T-001")
+    await releaseTask(repository, "T-001")
     await waitForChanges(changes, 2)
 
     expect(changes).toEqual([

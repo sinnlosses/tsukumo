@@ -78,24 +78,6 @@ describe("taskList", () => {
     expect(screen.getByText("タスクが無い")).toBeDefined()
   })
 
-  it("進行中（doing）はカードで先頭に出て、残りはファイルの順のまま並ぶ", () => {
-    render(<TaskList tasks={known(TASKS)} selectedStatus={undefined} />)
-
-    const cards = document.querySelectorAll<HTMLElement>(".task-running-card")
-    expect(cards).toHaveLength(1)
-    expect(cards[0]?.textContent).toContain("X-004")
-    expect(cards[0]?.textContent).toContain("架空のタスク4")
-    expect(cards[0]?.textContent).toContain("進行中")
-
-    const items = screen.getAllByRole("listitem")
-    // 先頭が進行中のカード、続けて doing を除いたファイルの順（X-001, X-002, X-003）。
-    expect(items).toHaveLength(4)
-    expect(items[0]).toBe(cards[0])
-    expect(items[1]?.textContent).toContain("X-001")
-    expect(items[2]?.textContent).toContain("X-002")
-    expect(items[3]?.textContent).toContain("X-003")
-  })
-
   it("進行中のカードは、着手した作業ツリーが分かればその名前を添える", () => {
     const items: readonly TaskSummaryItem[] = [
       {

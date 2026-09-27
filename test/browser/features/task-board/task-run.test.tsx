@@ -92,61 +92,6 @@ function confirmDialog(): Element | null {
 }
 
 describe("タスクIDから実行を頼む", () => {
-  it("押すまで確認は組み立てない（閉じた <dialog> を件数ぶん置かない）", () => {
-    renderList()
-
-    expect(confirmDialog()).toBeNull()
-  })
-
-  it("一覧のIDを押すと、そのIDの確認が開く", () => {
-    renderList()
-
-    fireEvent.click(screen.getByRole("button", { name: "X-002" }))
-
-    expect(confirmDialog()?.hasAttribute("open")).toBe(true)
-    expect(screen.getByText("X-002 を実行しますか")).toBeDefined()
-    expect(confirmDialog()?.textContent).toContain("/next-task X-002")
-  })
-
-  it("「実行する」で /next-task <ID> を送り、確認を閉じる", () => {
-    const sent: unknown[] = []
-    renderList(collectInto(sent))
-
-    fireEvent.click(screen.getByRole("button", { name: "X-002" }))
-    fireEvent.click(screen.getByRole("button", { name: "実行する" }))
-
-    expect(sent).toEqual([{ procedure: "session.prompt", text: "/next-task X-002", images: [] }])
-    expect(confirmDialog()).toBeNull()
-  })
-
-  it("「キャンセル」では何も送らず、確認だけ閉じる", () => {
-    const sent: unknown[] = []
-    renderList(collectInto(sent))
-
-    fireEvent.click(screen.getByRole("button", { name: "X-002" }))
-    fireEvent.click(screen.getByRole("button", { name: "キャンセル" }))
-
-    expect(sent).toEqual([])
-    expect(confirmDialog()).toBeNull()
-  })
-
-  // Esc は `<dialog>` を閉じて `close` イベントを出す（ブラウザの既定の振る舞い）。
-  // 受けるのは `<dialog onClose={...}>` なので、ここはそのイベントだけを起こす。
-  it("Esc で閉じたときも何も送らない", () => {
-    const sent: unknown[] = []
-    renderList(collectInto(sent))
-
-    fireEvent.click(screen.getByRole("button", { name: "X-002" }))
-    const dialog = confirmDialog()
-    if (dialog === null) {
-      throw new Error("確認が開いていない")
-    }
-    fireEvent(dialog, new Event("close"))
-
-    expect(sent).toEqual([])
-    expect(confirmDialog()).toBeNull()
-  })
-
   it("ターンが動いている間は「実行する」を出さず、理由を出す", () => {
     const sent: unknown[] = []
     renderList(collectInto(sent), RUNNING_TURN)
@@ -156,16 +101,6 @@ describe("タスクIDから実行を頼む", () => {
     expect(screen.queryByRole("button", { name: "実行する" })).toBeNull()
     expect(confirmDialog()?.textContent).toContain("いまターンが動いているので送れない")
     expect(sent).toEqual([])
-  })
-
-  it("済んだタスクのIDも押せる（実行してよいかを決めるのは画面ではない）", () => {
-    const sent: unknown[] = []
-    renderList(collectInto(sent))
-
-    fireEvent.click(screen.getByRole("button", { name: "X-001" }))
-    fireEvent.click(screen.getByRole("button", { name: "実行する" }))
-
-    expect(sent).toEqual([{ procedure: "session.prompt", text: "/next-task X-001", images: [] }])
   })
 
   it("表のIDからも同じ確認を開いて送れる", () => {

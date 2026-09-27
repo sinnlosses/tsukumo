@@ -3,7 +3,7 @@ import { join } from "node:path"
 
 import { describe, it } from "vitest"
 
-import { git, initGitRepository } from "../fixture/git-repository.ts"
+import { claimTask, git, initGitRepository } from "../fixture/git-repository.ts"
 import { type ScenarioRoom, useScenarioRun } from "./scenario-run.ts"
 
 // タスクの一覧（docs/design.md「E2E のシナリオの一覧」）。この一覧だけは疑似セッションの
@@ -57,6 +57,26 @@ async function openTaskListRoom(scenario: string): Promise<ScenarioRoom> {
   return room
 }
 
+/**
+ * 上と同じ2件に、着手の印（`task claim` 相当）を立てた `todo` を1件加える。台帳は
+ * `main` を動かさないので、コミットのあとに claim しても1回の `tasks-changed` に乗る
+ * （`readTasksAtHead` が先端を読み直すたびに台帳も読むため）。
+ */
+async function openTaskListRoomWithRunningTask(scenario: string): Promise<ScenarioRoom> {
+  const room = await run.open({ scenario, scene: "none", viewport: "wide" })
+
+  await initGitRepository(room.cwd)
+  writeTask(room.cwd, "T-001", "架空のタスク（未着手）", "todo")
+  writeTask(room.cwd, "T-002", "架空のタスク（完了）", "done")
+  writeTask(room.cwd, "T-003", "架空のタスク（進行中）", "todo")
+  await git(room.cwd, "add", "develop/task")
+  await git(room.cwd, "commit", "--quiet", "-m", "架空のタスク一覧")
+  await claimTask(room.cwd, "T-003")
+
+  await room.waitForEvent("tasks-changed")
+  return room
+}
+
 describe("タスクの一覧", () => {
   it("main の develop/task/ を読み、サイドバーのタスク一覧に並ぶ", async () => {
     const room = await openTaskListRoom("task-list")
@@ -87,6 +107,40 @@ describe("タスクの一覧", () => {
     const room = await openTaskListRoom("task-list-filtered-switched")
     await room.page.getByRole("button", { name: "未着手 1" }).click()
     await room.page.getByRole("button", { name: "完了 1" }).click()
+    await room.settleAndMatch(ELAPSED_MS)
+  })
+
+  it("claim した todo は進行中のカードで先頭に出て、残りはファイルの順のまま並ぶ", async () => {
+    const room = await openTaskListRoomWithRunningTask("task-list-running")
+    await room.settleAndMatch(ELAPSED_MS)
+  })
+
+  it("一覧のIDを押すと実行の確認が開く", async () => {
+    const room = await openTaskListRoom("task-list-run-confirm")
+    await room.page.getByRole("button", { name: "T-001", exact: true }).click()
+    await room.settleAndMatch(ELAPSED_MS)
+  })
+
+  it("確認の「実行する」を押すと /next-task <ID> が送られて確認が閉じる（済んだタスクのIDも押せる）", async () => {
+    const room = await openTaskListRoom("task-list-run-executed")
+    await room.page.getByRole("button", { name: "T-002", exact: true }).click()
+    await room.page.getByRole("button", { name: "実行する", exact: true }).click()
+    await room.waitForEvent("request")
+    await room.waitForEvent("turn-finished")
+    await room.settleAndMatch(ELAPSED_MS)
+  })
+
+  it("確認の「キャンセル」を押すと何も送らず確認だけ閉じる", async () => {
+    const room = await openTaskListRoom("task-list-run-cancel")
+    await room.page.getByRole("button", { name: "T-001", exact: true }).click()
+    await room.page.getByRole("button", { name: "キャンセル", exact: true }).click()
+    await room.settleAndMatch(ELAPSED_MS)
+  })
+
+  it("確認を Esc で閉じても何も送らない", async () => {
+    const room = await openTaskListRoom("task-list-run-escape")
+    await room.page.getByRole("button", { name: "T-001", exact: true }).click()
+    await room.page.keyboard.press("Escape")
     await room.settleAndMatch(ELAPSED_MS)
   })
 })
