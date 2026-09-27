@@ -3,6 +3,33 @@
 `develop/direction.md` に書かれたユーザーからの指示を、タスク化した時点で**当時の記述のまま**
 ここへ移す（`docs/workflow.md`「指示メモ」参照）。新しいものを上に足す。**後から書き換えない。**
 
+## 2026-09-28 振り返り（T-806・T-807・T-808・T-812）のドラフト4件
+
+（`develop/draft/` から。出典: T-806・T-807・T-808・T-812 の受け入れの振り返りで積んだ4件。ユーザーが `/plan-tasks` の問いで3項目すべてを選んで承認した。check-plan の2件は同じ揺れなので T-824 にまとめ、fake-driver は T-825、消す権限の確認は T-826 になった）
+
+### `test/scripts/check-plan.test.ts` の git を走らせるテストに、負荷の下でも収まる時間の上限を付ける（振り返り: T-808）
+
+- 札: 黄 揺れ（1回目）
+- 根拠: T-808 の受け入れで `pnpm run check` の1回目が、変更と無関係な `collectChangedPaths` の「主ブランチへ送ったあと（マージベースが主ブランチの先端）でも、枝のコミットの差分を拾う」（`test/scripts/check-plan.test.ts:115`）の既定 5000ms 超えで落ち、打ち直したら 2790 件すべて通った。一時リポジトリで git を複数回走らせるテストで、フル実行の並列の負荷に既定の上限が足りていない
+- 出し先: タスクにする。`check-plan.test.ts` のうち一時リポジトリで git を走らせるテストに、ファイル単位でまとまった時間の上限を与える（テストごとに数字を散らさない）
+
+### check-plan のテストがフルの検証の負荷でタイムアウトする（振り返り: T-806）
+
+- 札: 黄 揺れ（1回目）
+- 根拠: T-806 の委譲先で、1回目の `pnpm run check` が `test/scripts/check-plan.test.ts` の「主ブランチへ送ったあと（マージベースが主ブランチの先端）でも、枝のコミットの差分を拾う」でタイムアウトして落ちた。単独で打ち直すと通り、2回目の `pnpm run check` は全件通った。変更は report の使われ方の記録だけで、このテストとは無関係
+- 出し先: `test/scripts/check-plan.test.ts` の git を叩くテストの所要時間を測り、タイムアウトを延ばすか並列の外へ出すタスクにする（同じ揺れが T-807 の `character-create` と同じく負荷の下で起きている）
+
+### `fake-driver.test.ts` の report の預かりが負荷の下で揺れる（振り返り: T-807）
+
+- 黄 揺れ: `pnpm run test` を3並行×10ラウンド流した負荷試験で、`test/server/session-driver/adapter/fake-driver.test.ts`「report は結果が届くまで預かり、差し戻された（isError の）ものは流さない」が30回中1回だけ `expected […isError:true] to deeply equal […isError:false]` で落ちた（T-807 の委譲先の friction log）。受け入れでも単独の `pnpm run test` が1回だけ 1 failed になり、続けて4回流すと再現しなかった（どのテストかは取り損ねた）
+- 提案: T-807 と同じく決め打ちの待ちや到着順に頼っていないかを調べて直すタスクにする（完了条件は T-807 と同じく負荷の下で10回流して落ちないこと）
+
+### 捨てるリポジトリを作る前に、消す権限があるかを確かめる（振り返り: T-812）
+
+- 札: 赤 道具（1回目）
+- 根拠: T-812 の委譲先は実測のために `gh repo create --private` で `sinnlosses/tsukumo-bd-sync-probe-1790517328` を作ったが、`gh` のトークンに `delete_repo` スコープが無く、`gh repo delete` が HTTP 403 で拒まれた。捨てるはずのリポジトリが残り、人に削除を頼むことになった
+- 出し先: 外部に捨てる資源（リポジトリ・Project）を作る完了条件を書くとき、または委譲の依頼に、「作る前に `gh auth status` のスコープで消せることを確かめ、消せなければ作らずに人にスコープの追加を頼む」を1行足す（`task-workflow` の `WORKFLOW.md` か `next-task` の手順5）
+
 ## 2026-09-28 GitHub API の消費を節約する指示
 
 出典: 会話での指示（`develop/direction.md` を経由していない）。調べて示した5案（A〜E）のうち、ユーザーが A〜D を独立のタスクとして採った。
