@@ -115,7 +115,7 @@
           "href": "/?t=<token>#character"
         },
         "children": [
-          "キャラクター"
+          "キャラ"
         ]
       },
       {
@@ -124,7 +124,7 @@
           "href": "/?t=<token>#token-usage"
         },
         "children": [
-          "トークン消費"
+          "トークン"
         ]
       },
       {

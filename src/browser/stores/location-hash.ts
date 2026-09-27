@@ -34,8 +34,8 @@ import { useSyncExternalStore } from "react"
  */
 const SCREEN_LIST = [
   { screen: "conversation", label: "会話" },
-  { screen: "character", label: "キャラクター" },
-  { screen: "token-usage", label: "トークン消費" },
+  { screen: "character", label: "キャラ" },
+  { screen: "token-usage", label: "トークン" },
   { screen: "achievement", label: "成果" },
 ] as const satisfies readonly { readonly screen: string; readonly label: string }[]
 

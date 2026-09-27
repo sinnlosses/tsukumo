@@ -54,17 +54,13 @@ function gateNames(): readonly string[] {
 }
 
 describe("ScreenNav", () => {
-  it("4つの口（会話 / キャラクター / トークン消費 / 成果）を hash のリンクで出す", () => {
+  it("4つの口（会話 / キャラ / トークン / 成果）を hash のリンクで出す", () => {
     renderScreenNav()
 
-    expect(gateNames()).toEqual(["会話", "キャラクター", "トークン消費", "成果"])
+    expect(gateNames()).toEqual(["会話", "キャラ", "トークン", "成果"])
     expect(screen.getByRole("link", { name: "会話" }).getAttribute("href")).toBe("#")
-    expect(screen.getByRole("link", { name: "キャラクター" }).getAttribute("href")).toBe(
-      "#character",
-    )
-    expect(screen.getByRole("link", { name: "トークン消費" }).getAttribute("href")).toBe(
-      "#token-usage",
-    )
+    expect(screen.getByRole("link", { name: "キャラ" }).getAttribute("href")).toBe("#character")
+    expect(screen.getByRole("link", { name: "トークン" }).getAttribute("href")).toBe("#token-usage")
     expect(screen.getByRole("link", { name: "成果" }).getAttribute("href")).toBe("#achievement")
   })
 
@@ -73,11 +69,9 @@ describe("ScreenNav", () => {
     window.location.hash = "#token-usage"
     renderScreenNav()
 
-    expect(screen.getByRole("link", { name: "トークン消費" }).className).toContain("is-active")
+    expect(screen.getByRole("link", { name: "トークン" }).className).toContain("is-active")
     expect(screen.getByRole("link", { name: "会話" }).className).not.toContain("is-active")
-    expect(screen.getByRole("link", { name: "トークン消費" }).getAttribute("aria-current")).toBe(
-      "page",
-    )
+    expect(screen.getByRole("link", { name: "トークン" }).getAttribute("aria-current")).toBe("page")
   })
 
   it("hash が無いときは会話の口が is-active", () => {
@@ -238,8 +232,8 @@ describe("ScreenNav", () => {
     const opened = document.querySelector(".screen-nav-panel")
     expect([...(opened?.querySelectorAll("a") ?? [])].map((node) => node.textContent)).toEqual([
       "会話",
-      "キャラクター",
-      "トークン消費",
+      "キャラ",
+      "トークン",
       "成果",
     ])
     expect(toggle.getAttribute("aria-expanded")).toBe("true")
