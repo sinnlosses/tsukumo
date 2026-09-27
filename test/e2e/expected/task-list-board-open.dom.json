@@ -291,7 +291,7 @@
                             },
                             "children": [
                               "未着手",
-                              "1"
+                              "2"
                             ]
                           }
                         ]
@@ -345,6 +345,21 @@
                             ]
                           },
                           "架空のタスク（完了）"
+                        ]
+                      },
+                      {
+                        "tag": "li",
+                        "children": [
+                          {
+                            "tag": "button",
+                            "attributes": {
+                              "type": "button"
+                            },
+                            "children": [
+                              "T-004"
+                            ]
+                          },
+                          "架空のタスク（依存あり）"
                         ]
                       }
                     ]
@@ -532,6 +547,62 @@
                                 "tag": "td",
                                 "children": [
                                   "架空のタスク（完了）"
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "tag": "tr",
+                            "children": [
+                              {
+                                "tag": "th",
+                                "children": [
+                                  {
+                                    "tag": "button",
+                                    "attributes": {
+                                      "type": "button"
+                                    },
+                                    "children": [
+                                      "T-004"
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "tag": "td",
+                                "children": [
+                                  "todo"
+                                ]
+                              },
+                              {
+                                "tag": "td",
+                                "children": [
+                                  "sonnet"
+                                ]
+                              },
+                              {
+                                "tag": "td",
+                                "attributes": {
+                                  "data-label": "loopable"
+                                },
+                                "children": [
+                                  "Y"
+                                ]
+                              },
+                              {
+                                "tag": "td",
+                                "attributes": {
+                                  "data-label": "着手"
+                                },
+                                "children": [
+                                  "待ち:",
+                                  "T-001"
+                                ]
+                              },
+                              {
+                                "tag": "td",
+                                "children": [
+                                  "架空のタスク（依存あり）"
                                 ]
                               }
                             ]

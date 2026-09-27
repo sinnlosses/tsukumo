@@ -119,18 +119,6 @@ describe("parseNewTaskFile（3.4 の読み取りの見本）", () => {
     return VALID_LINES.map((line, index) => overrides[index] ?? line).join("\n")
   }
 
-  it("6行そろっていれば読める（他の行が INVALID を作らないことの確認）", () => {
-    expect(parseNewTaskFile("T-521.md", contentOf({}))).toEqual({
-      id: "T-521",
-      summary: "架空のタスク",
-      status: "todo",
-      difficulty: "sonnet",
-      loopable: "Y",
-      dependencies: [],
-      body: "\n## 目的\n\n架空の本文。\n",
-    })
-  })
-
   it("本文は front matter を閉じる2つ目の `---` の行より後ろだけになる", () => {
     const lines = [
       "---",

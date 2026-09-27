@@ -80,6 +80,21 @@
               "kind": "file",
               "path": "develop/task/T-002.md"
             }
+          },
+          {
+            "id": "T-004",
+            "summary": "架空のタスク（依存あり）",
+            "status": "todo",
+            "difficulty": "sonnet",
+            "loopable": "Y",
+            "dependencies": [
+              "T-001"
+            ],
+            "body": "\n## 目的\n\n架空の本文で、実物のタスクではない。\n",
+            "location": {
+              "kind": "file",
+              "path": "develop/task/T-004.md"
+            }
           }
         ]
       }

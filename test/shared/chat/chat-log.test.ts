@@ -5,45 +5,16 @@ import {
   chatLogRows,
   type ChatLogEntry,
 } from "../../../src/shared/chat/chat-log.ts"
-import type { SessionRecord } from "../../../src/shared/session/session-state.ts"
-import {
-  compactBoundaryRecord,
-  detailRecord,
-  requestRecord,
-  speechRecord,
-} from "../../fixture/session-record.ts"
+import { detailRecord, requestRecord, speechRecord } from "../../fixture/session-record.ts"
 
 // 雑談のログは素直な時系列（docs/screen-design.md「雑談モードの画面」）。`mainViewEntries` のように依頼で
 // まとめ直さないことを、並びと落とすものの2点で固定する。
 //
-
-const RECORDS: readonly SessionRecord[] = [
-  requestRecord({ turnId: 0, text: "1つめの依頼" }),
-  speechRecord({ text: "1つめのセリフ" }),
-  requestRecord({ turnId: 1, text: "2つめの依頼" }),
-  speechRecord({ text: "2つめのセリフ", expression: "proud" }),
-]
+// 交互に積む並びと圧縮の区切りは、雑談の切り替えと忘却の区切りを撮る E2E のシナリオが守る。
+// 本文・ツール・質問を落とす分岐だけは、疑似セッションに同じ並び（雑談中に本文が出る、規約違反の
+// 場面）が無いのでここに残す（docs/design.md「E2E に任せず単体テストに残すもの」）。
 
 describe("chatLogEntries", () => {
-  it("利用者の発言とセリフが、記録の順（古い→新しい）のまま交互に積む", () => {
-    expect(chatLogEntries(RECORDS)).toEqual([
-      { speaker: "user", text: "1つめの依頼", images: [], time: { kind: "stamped", at: 0 } },
-      {
-        speaker: "character",
-        text: "1つめのセリフ",
-        expression: "default",
-        time: { kind: "stamped", at: 0 },
-      },
-      { speaker: "user", text: "2つめの依頼", images: [], time: { kind: "stamped", at: 0 } },
-      {
-        speaker: "character",
-        text: "2つめのセリフ",
-        expression: "proud",
-        time: { kind: "stamped", at: 0 },
-      },
-    ])
-  })
-
   it("本文・ツール・質問は落とす（雑談中はレポートを出さない）", () => {
     const entries = chatLogEntries([
       requestRecord({ turnId: 2, text: "架空の依頼" }),
@@ -62,25 +33,6 @@ describe("chatLogEntries", () => {
     ])
 
     expect(entries.map((entry) => entry.speaker)).toEqual(["user", "character"])
-  })
-
-  it("圧縮の区切り（compact-boundary）は1件のイベントから1件のログの区切りになる", () => {
-    const entries = chatLogEntries([
-      requestRecord({ turnId: 3, text: "1つめの依頼" }),
-      compactBoundaryRecord(),
-      speechRecord({ text: "2つめのセリフ" }),
-    ])
-
-    expect(entries).toEqual([
-      { speaker: "user", text: "1つめの依頼", images: [], time: { kind: "stamped", at: 0 } },
-      { speaker: "boundary" },
-      {
-        speaker: "character",
-        text: "2つめのセリフ",
-        expression: "default",
-        time: { kind: "stamped", at: 0 },
-      },
-    ])
   })
 })
 

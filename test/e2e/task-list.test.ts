@@ -24,7 +24,13 @@ const ELAPSED_MS = 60_000
 
 /** `develop/task/T-xxx.md` を1件、新形式の front matter で書く（claude-skills の
  * `docs/task-workflow-redesign.md` が正典）。会話の内容ではない架空のタスク。 */
-function writeTask(cwd: string, id: string, summary: string, status: string): void {
+function writeTask(
+  cwd: string,
+  id: string,
+  summary: string,
+  status: string,
+  dependencies: readonly string[] = [],
+): void {
   mkdirSync(join(cwd, "develop", "task"), { recursive: true })
   const content = [
     "---",
@@ -33,7 +39,7 @@ function writeTask(cwd: string, id: string, summary: string, status: string): vo
     `status: ${status}`,
     "difficulty: sonnet",
     "loopable: Y",
-    "dependencies: []",
+    `dependencies: [${dependencies.join(", ")}]`,
     "---",
     "",
     "## 目的",
@@ -50,6 +56,21 @@ async function openTaskListRoom(scenario: string): Promise<ScenarioRoom> {
   await initGitRepository(room.cwd)
   writeTask(room.cwd, "T-001", "架空のタスク（未着手）", "todo")
   writeTask(room.cwd, "T-002", "架空のタスク（完了）", "done")
+  await git(room.cwd, "add", "develop/task")
+  await git(room.cwd, "commit", "--quiet", "-m", "架空のタスク一覧")
+
+  await room.waitForEvent("tasks-changed")
+  return room
+}
+
+/** 上と同じ2件に、まだ完了していないタスクに依存する `todo` を1件加える。 */
+async function openTaskListRoomWithDependency(scenario: string): Promise<ScenarioRoom> {
+  const room = await run.open({ scenario, scene: "none", viewport: "wide" })
+
+  await initGitRepository(room.cwd)
+  writeTask(room.cwd, "T-001", "架空のタスク（未着手）", "todo")
+  writeTask(room.cwd, "T-002", "架空のタスク（完了）", "done")
+  writeTask(room.cwd, "T-004", "架空のタスク（依存あり）", "todo", ["T-001"])
   await git(room.cwd, "add", "develop/task")
   await git(room.cwd, "commit", "--quiet", "-m", "架空のタスク一覧")
 
@@ -83,8 +104,8 @@ describe("タスクの一覧", () => {
     await room.settleAndMatch(ELAPSED_MS)
   })
 
-  it("見出しの「一覧を見る」で表が開く", async () => {
-    const room = await openTaskListRoom("task-list-board-open")
+  it("見出しの「一覧を見る」で表が開く（依存が残るタスクは「待ち」に依存先のIDが並ぶ）", async () => {
+    const room = await openTaskListRoomWithDependency("task-list-board-open")
     await room.page.getByRole("button", { name: "一覧を見る" }).click()
     await room.settleAndMatch(ELAPSED_MS)
   })
