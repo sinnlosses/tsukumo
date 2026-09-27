@@ -13,7 +13,7 @@
 // `components/domain/character-face.tsx`。`docs/screen-design.md` 13.9「顔」）。
 // `face` が無いパックでは `<CharacterFace>` が何も描かない。
 
-import { type ReactElement } from "react"
+import type { ReactElement } from "react"
 
 import { CharacterFace } from "../../../components/domain/character-face.tsx"
 import { HStack } from "../../../components/ui/h-stack/h-stack.tsx"

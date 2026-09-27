@@ -2,10 +2,10 @@ import { cleanup, fireEvent, render } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
 import { UsageReviewCard } from "../../../../../../../src/browser/components/page/token-usage/components/usage-review-card/usage-review-card.tsx"
-import {
-  type UsageReviewResultProposalView,
-  type UsageReviewStageView,
-  type UseUsageReviewResult,
+import type {
+  UsageReviewResultProposalView,
+  UsageReviewStageView,
+  UseUsageReviewResult,
 } from "../../../../../../../src/browser/components/page/token-usage/hooks/use-usage-review.ts"
 
 /**

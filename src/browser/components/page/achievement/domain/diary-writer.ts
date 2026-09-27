@@ -9,8 +9,8 @@
 // ときだけ出す。パックを消した・名前を変えたなど引けないときは、名前だけを残し立ち絵は出さない
 // （いまのパックの絵で代えない——別の誰かが書いたように見えるため）。
 
-import { type CharacterPackEntry } from "../../../../../shared/character.ts"
-import { type DiaryParagraph } from "../../../../../shared/diary.ts"
+import type { CharacterPackEntry } from "../../../../../shared/character.ts"
+import type { DiaryParagraph } from "../../../../../shared/diary.ts"
 import { resolveExpressionLabel } from "../../../../../shared/expression-choice.ts"
 import { isExpression } from "../../../../../shared/expression.ts"
 import {

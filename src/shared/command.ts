@@ -12,8 +12,6 @@
 import { type AnyContractProcedure, type InferSchemaOutput, oc } from "@orpc/contract"
 import { z } from "zod"
 
-// 文全体を import type にする。`import { type X }` は Node の型消去で消えずに frame.ts を読み込み、
-// frame.ts との import の輪ができて node で起こすと初期化前参照で落ちる。
 import type { FRAME_ERROR_REASON } from "./frame.ts"
 
 /**

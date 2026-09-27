@@ -578,6 +578,10 @@ tsukumo から外へは出ない。
 `test/architecture.test.ts` が落とす**ので、向きを変えたくなったら先にこのテストと `docs/design.md`
 2章を直す。
 
+**型だけの import は文全体の `import type` で書く**（`import { type X }` ではなく）。Node の
+型消去は `import { type X }` を `import {} from` として残し、読み込み先を値として評価するので、
+import の輪ができると初期化前参照で落ちる。`typescript/no-import-type-side-effects` が落とす。
+
 **`browser` 層の中も、箱（`main.tsx` / `app.tsx` / `features/` / `components/` / `lib/` / `stores/`）ごとに
 import してよい先が決まっている**（表は二重に書かず `docs/design.md` 2章「`src/browser/` の箱と、
 置く基準」を正典とする）。この縦の辺も `test/architecture.test.ts` が落とす。

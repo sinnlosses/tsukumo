@@ -1,11 +1,11 @@
 import { cleanup, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
-import {
-  type AchievementDaySwitch,
-  type AchievementReviewButton,
+import type {
+  AchievementDaySwitch,
+  AchievementReviewButton,
 } from "../../../../../src/browser/components/page/achievement/hooks/use-achievement.ts"
-import { type DiaryBookModel } from "../../../../../src/browser/components/page/achievement/hooks/use-diary-book.ts"
+import type { DiaryBookModel } from "../../../../../src/browser/components/page/achievement/hooks/use-diary-book.ts"
 import {
   PresentationalAchievement,
   type PresentationalAchievementProps,

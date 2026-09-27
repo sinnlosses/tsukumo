@@ -18,7 +18,7 @@
 
 import { query } from "@anthropic-ai/claude-agent-sdk"
 
-import { type ChatConsolidationQuery } from "../core/chat-consolidation.ts"
+import type { ChatConsolidationQuery } from "../core/chat-consolidation.ts"
 
 /** 子プロセスを起こす場所と環境変数（雑談のセッションと同じものを引き継ぐ）。 */
 export type ChatConsolidationProcess = {

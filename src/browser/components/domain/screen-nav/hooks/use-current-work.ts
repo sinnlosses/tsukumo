@@ -20,12 +20,9 @@
 
 import { useCallback, useRef, useState, type RefCallback, type RefObject } from "react"
 
-import {
-  type BackgroundTask,
-  type BackgroundTaskKind,
-} from "../../../../../shared/background-task.ts"
-import { type DiaryWriting } from "../../../../../shared/diary.ts"
-import { type PendingAsk } from "../../../../../shared/pending-ask.ts"
+import type { BackgroundTask, BackgroundTaskKind } from "../../../../../shared/background-task.ts"
+import type { DiaryWriting } from "../../../../../shared/diary.ts"
+import type { PendingAsk } from "../../../../../shared/pending-ask.ts"
 import {
   currentTurnSteps,
   type TurnStep,

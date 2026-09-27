@@ -17,7 +17,7 @@ import { isPlainObject } from "remeda"
 
 import { optionalString } from "../../../shared/utils/optional-string.ts"
 import { readJsonFile } from "../../adapter/lib/json-file.ts"
-import { type ClaudeAccountTier } from "../core/plan.ts"
+import type { ClaudeAccountTier } from "../core/plan.ts"
 
 const ACCOUNT_FILE_NAME = ".claude.json"
 

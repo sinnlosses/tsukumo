@@ -7,9 +7,9 @@
 // 差し色の地なので、色の変化だけでは選択と区別できない。枠線と太字を添える
 // （`task-board.module.css` の `.task-count-chip-button[aria-pressed="true"]`）。
 
-import { type ReactElement } from "react"
+import type { ReactElement } from "react"
 
-import { type TaskListCountItem, type TaskListFilterStatus } from "../domain/task-list-count.ts"
+import type { TaskListCountItem, TaskListFilterStatus } from "../domain/task-list-count.ts"
 import styles from "../task-board.module.css"
 
 export function TaskCountChipList(props: {

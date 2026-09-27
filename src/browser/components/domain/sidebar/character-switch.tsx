@@ -8,9 +8,9 @@
 // 次に届く `session-info` で選択が上書きされる（サーバ側の値が正になる）。選択肢が1つでも
 // 出す（docs/requirements.md 4.4）。パックの一覧がまだ届いていなければ何も出さない。
 
-import { type ReactElement } from "react"
+import type { ReactElement } from "react"
 
-import { type CharacterPackChoice } from "../../../../shared/character.ts"
+import type { CharacterPackChoice } from "../../../../shared/character.ts"
 import { FRAME_ERROR_REASON } from "../../../../shared/frame.ts"
 import { Select } from "../../../components/ui/select/select.tsx"
 import { useSession, useTurnRunning } from "../../../stores/session.ts"

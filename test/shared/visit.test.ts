@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 
-import { type VisitScript } from "../../src/shared/character-visit.ts"
-import { type SessionEvent } from "../../src/shared/session-event.ts"
+import type { VisitScript } from "../../src/shared/character-visit.ts"
+import type { SessionEvent } from "../../src/shared/session-event.ts"
 import { applySessionEvent, INITIAL_SESSION_STATE } from "../../src/shared/session-state.ts"
 import { applyVisitEvent, INITIAL_VISIT_STATE, type VisitState } from "../../src/shared/visit.ts"
 

@@ -3,15 +3,15 @@
 // （`sessionCommands`）へ渡る。断る条件は契約の `meta` にあり、見るのは `rpcGuard`で、
 // ここは口の形と `session` の行の型、行を呼ぶ `receiveSessionCommand` だけを持つ。
 
-import { type SessionEvent } from "../../../shared/session-event.ts"
-import { type SessionState } from "../../../shared/session-state.ts"
+import type { SessionEvent } from "../../../shared/session-event.ts"
+import type { SessionState } from "../../../shared/session-state.ts"
 import {
   type DispatchResult,
   type FeatureReceiver,
   receiveFeatureCommand,
 } from "../../core/command-receiver.ts"
-import { type SessionDriver } from "../../session-driver/core/session-driver.ts"
-import { type SessionLaunchRequest } from "./session-launch.ts"
+import type { SessionDriver } from "../../session-driver/core/session-driver.ts"
+import type { SessionLaunchRequest } from "./session-launch.ts"
 
 /**
  * いまの代に固定した口。長く続く受け手が、起こし直しをまたいで新しい代に混ざらないために

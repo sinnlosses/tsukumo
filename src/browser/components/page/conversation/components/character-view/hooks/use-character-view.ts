@@ -25,7 +25,7 @@ import {
   type PortraitMotion,
   type PortraitMotionInput,
 } from "../../../../../../../shared/portrait-motion.ts"
-import { type SessionRecord } from "../../../../../../../shared/session-state.ts"
+import type { SessionRecord } from "../../../../../../../shared/session-state.ts"
 import { turnSpeeches, type TurnSpeech } from "../../../../../../../shared/turn-speech.ts"
 import { portraitAppearance } from "../../../../../../domain/portrait-appearance.ts"
 import { useSession } from "../../../../../../stores/session.ts"

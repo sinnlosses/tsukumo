@@ -1,11 +1,11 @@
 // 小さな驚き（卒業・節目。`docs/screen-design.md` 13.10「並べるもの」4）。どちらも無い日は
 // 見出しごと出さない。
 
-import { type ReactElement } from "react"
+import type { ReactElement } from "react"
 
-import {
-  type AchievementGraduation,
-  type AchievementMilestone,
+import type {
+  AchievementGraduation,
+  AchievementMilestone,
 } from "../../../../../../shared/achievement.ts"
 import { Heading } from "../../../../../components/ui/heading/heading.tsx"
 import { Text } from "../../../../../components/ui/text/text.tsx"

@@ -8,7 +8,7 @@
 // 優先して返す（優先順位は {@link resolvePortraitMotion} 参照）。ターンが失敗で終わった直後も
 // 「失敗でびくっ」で、そのときは「完了の反応」を出さない（docs/design.md 6.5）。
 
-import { type TurnProgress } from "./session-state.ts"
+import type { TurnProgress } from "./session-state.ts"
 
 /** 立ち絵がいまとる動き。CSS 側は `data-motion` としてこの値をそのまま受け取る。 */
 export type PortraitMotion = "reading" | "waiting" | "writing" | "success" | "failure"

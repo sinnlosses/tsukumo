@@ -7,15 +7,15 @@
 // `Origin` があれば自分のオリジンと一致すること（無ければ通す。ブラウザ経由でない呼び出し）。
 // 経路名は RPCHandler が照らし合わせるので、ここでは見ない。
 
-import { type IncomingMessage } from "node:http"
+import type { IncomingMessage } from "node:http"
 
 import { ORPCError, os } from "@orpc/server"
 
 import { COMMAND_ERRORS, type CommandMeta, NO_COMMAND_REFUSAL } from "../../../shared/command.ts"
 import { SESSION_TOKEN_QUERY_NAME } from "../../../shared/session-socket.ts"
-import { type SessionState } from "../../../shared/session-state.ts"
-import { type CommandSession } from "../../session/core/command-session.ts"
-import { type SubscribeFrames } from "./frame-procedure.ts"
+import type { SessionState } from "../../../shared/session-state.ts"
+import type { CommandSession } from "../../session/core/command-session.ts"
+import type { SubscribeFrames } from "./frame-procedure.ts"
 
 /**
  * 手続き1回ぶんの照合の材料。要求から写した2つ（外の世界を写した直後なので `| undefined`）と、

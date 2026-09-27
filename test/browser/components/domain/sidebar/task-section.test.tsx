@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it } from "vitest"
 
 import { TaskSection } from "../../../../../src/browser/components/domain/sidebar/task-section.tsx"
 import { INITIAL_SESSION_STATE } from "../../../../../src/shared/session-state.ts"
-import { type TaskSummaryResult } from "../../../../../src/shared/task-summary.ts"
+import type { TaskSummaryResult } from "../../../../../src/shared/task-summary.ts"
 import { putSession } from "../../../session-store.ts"
 
 // フィクスチャはすべて手で書いた架空のタスク（実物の develop/tasks.json は使わない）。

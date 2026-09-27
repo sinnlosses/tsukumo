@@ -8,7 +8,7 @@
 // `<ConversationLayout>` に2つの旗を別々に渡すのは、畳むことと枠を外すことが別の話で、片方だけが
 // 要る形もありうるため。
 
-import { type ReactElement } from "react"
+import type { ReactElement } from "react"
 
 import { Sidebar } from "../../domain/sidebar/sidebar.tsx"
 import { CharacterView } from "./components/character-view/character-view.tsx"

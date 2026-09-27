@@ -10,7 +10,7 @@
 // 指すターンが窓（`MAX_MAIN_VIEW_TURNS` 件）に無ければ今回を出す（hash は書き換えない —
 // 描くたびに外の状態を書くことになるため）。
 
-import { type SessionState } from "../../shared/session-state.ts"
+import type { SessionState } from "../../shared/session-state.ts"
 import { readHashRoute, useHashRoute, writeHashRoute } from "./location-hash.ts"
 import { mainViewTurnsOf } from "./main-view-turn.ts"
 import { useSession } from "./session.ts"

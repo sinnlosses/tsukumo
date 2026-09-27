@@ -17,7 +17,7 @@
 // 使った量・いまのセッションが積んでいるものの内訳・タスクの要約で、誰にでも配ってよい静的な物
 // ではない。
 
-import { type ContractRouterClient } from "@orpc/contract"
+import type { ContractRouterClient } from "@orpc/contract"
 
 import { achievementContract } from "./contract/achievement.ts"
 import { characterPackContract } from "./contract/character-pack.ts"

@@ -2,10 +2,10 @@
 // 手続き（`chatProcedure`）がここの行へ委ねる。断る条件は契約
 // `chatContract` の `meta`。
 
-import { type chatContract } from "../../../shared/contract/chat.ts"
+import type { chatContract } from "../../../shared/contract/chat.ts"
 import { FRAME_ERROR_REASON } from "../../../shared/frame.ts"
-import { type SessionEvent } from "../../../shared/session-event.ts"
-import { type FeatureCommandTable } from "../../core/command-receiver.ts"
+import type { SessionEvent } from "../../../shared/session-event.ts"
+import type { FeatureCommandTable } from "../../core/command-receiver.ts"
 
 export type ChatCommandPorts = {
   /**

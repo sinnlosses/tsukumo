@@ -6,9 +6,9 @@ import {
   REPORT_RESEND_REJECTION_TEXT,
   type ReportReview,
 } from "../../../../src/server/report/core/report-review.ts"
-import { type ReportDraft } from "../../../../src/server/report/core/report-violation.ts"
-import { type ReportSection } from "../../../../src/shared/report-block.ts"
-import { type SessionEvent } from "../../../../src/shared/session-event.ts"
+import type { ReportDraft } from "../../../../src/server/report/core/report-violation.ts"
+import type { ReportSection } from "../../../../src/shared/report-block.ts"
+import type { SessionEvent } from "../../../../src/shared/session-event.ts"
 
 // レポートの文面はどれも作り物（docs/coding-standards.md「会話内容の扱い」）。
 

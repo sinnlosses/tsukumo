@@ -21,8 +21,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { useEffect, type CSSProperties, type ReactElement } from "react"
 
 import { classifyPortraitFile } from "../../../shared/character-asset.ts"
-import { type Expression, type Outfit } from "../../../shared/expression.ts"
-import { type PortraitMotion } from "../../../shared/portrait-motion.ts"
+import type { Expression, Outfit } from "../../../shared/expression.ts"
+import type { PortraitMotion } from "../../../shared/portrait-motion.ts"
 import styles from "./portrait.module.css"
 
 export type PortraitProps = {

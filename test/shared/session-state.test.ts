@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest"
 
-import { type BackgroundTask } from "../../src/shared/background-task.ts"
+import type { BackgroundTask } from "../../src/shared/background-task.ts"
 import { MAX_MAIN_VIEW_TURNS, mainViewEntries, mainViewTurns } from "../../src/shared/main-view.ts"
-import { type SessionEvent, type StampedEvent } from "../../src/shared/session-event.ts"
+import type { SessionEvent, StampedEvent } from "../../src/shared/session-event.ts"
 import {
   applySessionEvent,
   INITIAL_SESSION_STATE,

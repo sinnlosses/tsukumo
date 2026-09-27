@@ -23,10 +23,10 @@ import {
   readCharacterPack,
 } from "../../../../src/server/character-pack/adapter/character-pack.ts"
 import { DEFAULT_BACKGROUND_VEIL } from "../../../../src/shared/character-background.ts"
-import {
-  type CharacterCreate,
-  type CharacterDelete,
-  type CharacterEdit,
+import type {
+  CharacterCreate,
+  CharacterDelete,
+  CharacterEdit,
 } from "../../../../src/shared/contract/character-pack.ts"
 import { EXPRESSIONS } from "../../../../src/shared/expression.ts"
 

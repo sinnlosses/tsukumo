@@ -22,10 +22,10 @@ import {
   takeChatMemoryPromptParts,
 } from "../../chat/core/chat-memory-prompt.ts"
 import { REPORT_NOTATION_PROMPT } from "../../report/core/report-notation.ts"
-import {
-  type ChatArchive,
-  type SessionMode,
-  type SessionStart,
+import type {
+  ChatArchive,
+  SessionMode,
+  SessionStart,
 } from "../../session-driver/core/session-driver.ts"
 import { SPEECH_CADENCE_PROMPT } from "./speech-cadence.ts"
 

@@ -16,27 +16,27 @@ import {
   achievementProcedure,
 } from "./server/achievement/adapter/achievement-procedure.ts"
 import { characterPackProcedure } from "./server/character-pack/adapter/character-pack-procedure.ts"
-import { type CharacterPackCommandPorts } from "./server/character-pack/core/character-pack-command.ts"
+import type { CharacterPackCommandPorts } from "./server/character-pack/core/character-pack-command.ts"
 import { chatProcedure } from "./server/chat/adapter/chat-procedure.ts"
-import { type ChatCommandPorts } from "./server/chat/core/chat-command.ts"
+import type { ChatCommandPorts } from "./server/chat/core/chat-command.ts"
 import {
   type ContextUsageProcedurePorts,
   contextUsageProcedure,
 } from "./server/context-usage/adapter/context-usage-procedure.ts"
 import { hostProcedure } from "./server/host/adapter/host-procedure.ts"
-import { type HostCommandPorts } from "./server/host/core/host-command.ts"
+import type { HostCommandPorts } from "./server/host/core/host-command.ts"
 import {
   type RepositoryProcedurePorts,
   repositoryProcedure,
 } from "./server/repository/adapter/repository-procedure.ts"
 import { sessionProcedure } from "./server/session/adapter/session-procedure.ts"
-import { type SessionCommandPorts } from "./server/session/core/session-command.ts"
+import type { SessionCommandPorts } from "./server/session/core/session-command.ts"
 import {
   type TokenUsageProcedurePorts,
   tokenUsageProcedure,
 } from "./server/token-usage/adapter/token-usage-procedure.ts"
 import { usageReviewProcedure } from "./server/usage-review/adapter/usage-review-procedure.ts"
-import { type UsageReviewCommandPorts } from "./server/usage-review/core/usage-review-command.ts"
+import type { UsageReviewCommandPorts } from "./server/usage-review/core/usage-review-command.ts"
 import { frameProcedure } from "./server/view-server/adapter/frame-procedure.ts"
 import {
   commandGuard,
@@ -46,7 +46,7 @@ import {
   type SocketRpcContext,
 } from "./server/view-server/adapter/rpc-guard.ts"
 import { visitProcedure } from "./server/visit/adapter/visit-procedure.ts"
-import { type VisitCommandPorts } from "./server/visit/core/visit-command.ts"
+import type { VisitCommandPorts } from "./server/visit/core/visit-command.ts"
 import { frameContract } from "./shared/contract/frame.ts"
 import { commandContract, rpcContract } from "./shared/rpc.ts"
 

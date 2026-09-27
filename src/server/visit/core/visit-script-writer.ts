@@ -9,8 +9,8 @@
 // 材料も台本も会話の内容に当たる。メモリにだけ持ち、ログにもファイルにも書かない
 // （docs/coding-standards.md「会話内容の扱い」）。
 
-import { type DailyAchievement } from "../../../shared/achievement.ts"
-import { type VisitScript } from "../../../shared/character-visit.ts"
+import type { DailyAchievement } from "../../../shared/achievement.ts"
+import type { VisitScript } from "../../../shared/character-visit.ts"
 import {
   parseVisitScript,
   type VisitCastLookup,

@@ -1,10 +1,10 @@
-import {
-  type EffortLevel as SdkEffortLevel,
-  type HookCallbackMatcher,
-  type HookEvent,
-  type PermissionMode as SdkPermissionMode,
-  type SDKAssistantMessageError,
-  type StopHookInput,
+import type {
+  EffortLevel as SdkEffortLevel,
+  HookCallbackMatcher,
+  HookEvent,
+  PermissionMode as SdkPermissionMode,
+  SDKAssistantMessageError,
+  StopHookInput,
 } from "@anthropic-ai/claude-agent-sdk"
 import { describe, expect, it } from "vitest"
 
@@ -16,15 +16,15 @@ import {
   buildQuerySeedOptions,
   stopHooks,
 } from "../../../../src/server/session-driver/adapter/sdk-driver.ts"
-import {
-  type ChatSummary,
-  type SessionDriverOptions,
-  type SessionMode,
+import type {
+  ChatSummary,
+  SessionDriverOptions,
+  SessionMode,
 } from "../../../../src/server/session-driver/core/session-driver.ts"
 import { API_ERROR_KINDS } from "../../../../src/shared/api-trouble.ts"
 import { EFFORT_LEVELS, MODEL_ALIASES, PERMISSION_MODES } from "../../../../src/shared/command.ts"
 import { BUILTIN_SESSION_DEFAULT } from "../../../../src/shared/session-default.ts"
-import { type SessionEvent } from "../../../../src/shared/session-event.ts"
+import type { SessionEvent } from "../../../../src/shared/session-event.ts"
 
 // `startSession` 自体は本物の claude を子プロセスとして起こすので、ここでは呼ばない
 // （docs/requirements.md 4.6 / CLAUDE.md「よく使うコマンド」）。`query()` に渡る `options` の

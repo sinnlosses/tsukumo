@@ -13,17 +13,17 @@
 //   - 断るときの理由は定型文だけ（会話の内容を混ぜない）。読めないメッセージは中身をどこにも
 //     出さずに捨てる
 
-import { type IncomingMessage, type Server } from "node:http"
-import { type Duplex } from "node:stream"
+import type { IncomingMessage, Server } from "node:http"
+import type { Duplex } from "node:stream"
 
-import { type Router } from "@orpc/server"
+import type { Router } from "@orpc/server"
 import { RPCHandler } from "@orpc/server/websocket"
 import { type RawData, WebSocketServer } from "ws"
 
-import { type socketContract } from "../../../shared/rpc.ts"
+import type { socketContract } from "../../../shared/rpc.ts"
 import { SESSION_SOCKET_PATH, SESSION_TOKEN_QUERY_NAME } from "../../../shared/session-socket.ts"
-import { type CommandSession } from "../../session/core/command-session.ts"
-import { type SubscribeFrames } from "./frame-procedure.ts"
+import type { CommandSession } from "../../session/core/command-session.ts"
+import type { SubscribeFrames } from "./frame-procedure.ts"
 import { rpcContextOf, type SocketRpcContext } from "./rpc-guard.ts"
 
 /**

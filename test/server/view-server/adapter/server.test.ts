@@ -19,12 +19,12 @@ import {
   startViewServer,
   type ViewServer,
 } from "../../../../src/server/view-server/adapter/server.ts"
-import { type AchievementCalendar } from "../../../../src/shared/achievement-calendar.ts"
-import {
-  type AchievementDaySelection,
-  type DailyAchievement,
+import type { AchievementCalendar } from "../../../../src/shared/achievement-calendar.ts"
+import type {
+  AchievementDaySelection,
+  DailyAchievement,
 } from "../../../../src/shared/achievement.ts"
-import { type CharacterAssetLocation } from "../../../../src/shared/character-asset.ts"
+import type { CharacterAssetLocation } from "../../../../src/shared/character-asset.ts"
 import { UNAVAILABLE_CONTEXT_USAGE } from "../../../../src/shared/context-usage.ts"
 import { promptImagePath } from "../../../../src/shared/prompt-image.ts"
 import { RPC_PATH, type RpcClient } from "../../../../src/shared/rpc.ts"

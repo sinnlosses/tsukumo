@@ -13,13 +13,13 @@
 // 既定のモデル・effort・許可モードはここに無い（`BUILTIN_SESSION_DEFAULT`）。覚えた値を歯車から書き換えられるようになって、
 // ブラウザも同じ畳み先を読むようになったため（`docs/screen-design.md`「設定の置き場所」）。
 
-import { type EffortLevel, type ModelAlias, type PermissionMode } from "../../../shared/command.ts"
-import { type ContextUsageReport } from "../../../shared/context-usage.ts"
-import { type ExpressionChoice } from "../../../shared/expression-choice.ts"
-import { type Expression } from "../../../shared/expression.ts"
-import { type Answer, type PendingAsk } from "../../../shared/pending-ask.ts"
-import { type SessionEvent } from "../../../shared/session-event.ts"
-import { type ShelvedPromptImage } from "./prompt-image-shelf.ts"
+import type { EffortLevel, ModelAlias, PermissionMode } from "../../../shared/command.ts"
+import type { ContextUsageReport } from "../../../shared/context-usage.ts"
+import type { ExpressionChoice } from "../../../shared/expression-choice.ts"
+import type { Expression } from "../../../shared/expression.ts"
+import type { Answer, PendingAsk } from "../../../shared/pending-ask.ts"
+import type { SessionEvent } from "../../../shared/session-event.ts"
+import type { ShelvedPromptImage } from "./prompt-image-shelf.ts"
 
 /**
  * 覚えたことを人格に書き足す口と、覚えた1行を忘れる口（`docs/design.md`「画面から作るときの置き場と受け取り方」）。

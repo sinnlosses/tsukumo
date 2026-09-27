@@ -6,9 +6,9 @@
 // 1行目に「進行中」の札とID、2行目にsummaryを置く2行の構成（サイドバーのモック参照。
 // `docs/history/mockup/` の同名の .png / .html）。
 
-import { type ReactElement } from "react"
+import type { ReactElement } from "react"
 
-import { type TaskSummaryItem } from "../../../../shared/task-summary.ts"
+import type { TaskSummaryItem } from "../../../../shared/task-summary.ts"
 import { HStack } from "../../../components/ui/h-stack/h-stack.tsx"
 import { Text } from "../../../components/ui/text/text.tsx"
 import styles from "../task-board.module.css"

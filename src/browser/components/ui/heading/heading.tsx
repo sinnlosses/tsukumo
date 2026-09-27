@@ -4,7 +4,7 @@
 // `margin: 0` を既定に持つことだけ（見出しの意味〔`level`〕と見た目〔`size`〕は別の props）。
 
 import clsx from "clsx"
-import { type ReactElement, type ReactNode } from "react"
+import type { ReactElement, ReactNode } from "react"
 
 import {
   TEXT_SIZE_CLASS,

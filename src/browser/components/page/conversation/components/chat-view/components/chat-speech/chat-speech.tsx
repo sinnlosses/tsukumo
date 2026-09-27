@@ -8,7 +8,7 @@
 // 自前で足す。
 
 import clsx from "clsx"
-import { type ReactElement } from "react"
+import type { ReactElement } from "react"
 
 import styles from "../../chat-view.module.css"
 import { useChatSpeech } from "./hooks/use-chat-speech.ts"

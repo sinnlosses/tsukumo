@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import { chatLogEntries, chatLogRows, type ChatLogEntry } from "../../src/shared/chat-log.ts"
-import { type SessionRecord } from "../../src/shared/session-state.ts"
+import type { SessionRecord } from "../../src/shared/session-state.ts"
 import {
   compactBoundaryRecord,
   detailRecord,

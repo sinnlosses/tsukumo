@@ -8,7 +8,7 @@
 //
 // 長さでは切らない。 1行に収まらないぶんは CSS が省略する（`.turn-title`）。
 
-import { type MainViewTurn } from "../../../../../../../shared/main-view.ts"
+import type { MainViewTurn } from "../../../../../../../shared/main-view.ts"
 
 /** 依頼もレポートもタイトルにならないターン（依頼より前の記録で、本文もまだ無い）のタイトル。 */
 const TURN_TITLE_FALLBACK = "（依頼なし）"

@@ -20,7 +20,7 @@
 // モードで同じ部品を使い、区画ひとまとまりは領域の側に置く（docs/design.md 2章「領域の機能と、
 // 置かれる機能」）ので、どちらの形もサイドバーの中に閉じる。
 
-import { type ReactElement } from "react"
+import type { ReactElement } from "react"
 
 import { useSession } from "../../../stores/session.ts"
 import { PersonaMemorySection } from "./persona-memory-section.tsx"

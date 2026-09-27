@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { type SessionEvent } from "../../src/shared/session-event.ts"
+import type { SessionEvent } from "../../src/shared/session-event.ts"
 import { applySessionEvent, INITIAL_SESSION_STATE } from "../../src/shared/session-state.ts"
 import { currentTurnSteps, type TurnStep } from "../../src/shared/turn-step.ts"
 import { requestRecord, speechRecord, toolRecord } from "../fixture/session-record.ts"

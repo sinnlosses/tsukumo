@@ -7,9 +7,9 @@
 
 import { implement } from "@orpc/server"
 
-import { type AchievementDaySelection } from "../../../shared/achievement.ts"
+import type { AchievementDaySelection } from "../../../shared/achievement.ts"
 import { achievementContract } from "../../../shared/contract/achievement.ts"
-import { type ReadAchievementResult, type ReadCommitCalendarResult } from "./main-history.ts"
+import type { ReadAchievementResult, ReadCommitCalendarResult } from "./main-history.ts"
 
 /** この機能の手続きが使う口（中身は配線が渡す）。 */
 export type AchievementProcedurePorts = {

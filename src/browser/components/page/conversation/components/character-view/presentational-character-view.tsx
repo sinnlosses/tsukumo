@@ -9,7 +9,7 @@
 // 立ち絵の素材（URL）が無いときは `<Portrait>` を出さず、吹き出しだけで成立させる
 // （docs/display.md 4.2「フォールバック」）。
 
-import { type ReactElement } from "react"
+import type { ReactElement } from "react"
 
 import { Portrait } from "../../../../../components/domain/portrait.tsx"
 import { HStack } from "../../../../../components/ui/h-stack/h-stack.tsx"
@@ -17,7 +17,7 @@ import { VStack } from "../../../../../components/ui/v-stack/v-stack.tsx"
 import styles from "./character-view.module.css"
 import { BalloonTrack } from "./components/balloon-track/balloon-track.tsx"
 import { SpeechLog } from "./components/speech-log/speech-log.tsx"
-import { type CharacterViewModel } from "./hooks/use-character-view.ts"
+import type { CharacterViewModel } from "./hooks/use-character-view.ts"
 
 export type PresentationalCharacterViewProps = CharacterViewModel
 

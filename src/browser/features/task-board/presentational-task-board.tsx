@@ -8,13 +8,13 @@
 //
 // `<dialog>` は top layer に出るので、サイドバー領域の `overflow` には切り取られない。
 
-import { type ReactElement } from "react"
+import type { ReactElement } from "react"
 
 import { Button } from "../../components/ui/button/button.tsx"
 import { Dialog } from "../../components/ui/dialog/dialog.tsx"
 import { Heading } from "../../components/ui/heading/heading.tsx"
 import { TaskTable } from "./components/task-table.tsx"
-import { type BoardRow } from "./hooks/use-task-board.ts"
+import type { BoardRow } from "./hooks/use-task-board.ts"
 import styles from "./task-board.module.css"
 
 export type PresentationalTaskBoardProps = {

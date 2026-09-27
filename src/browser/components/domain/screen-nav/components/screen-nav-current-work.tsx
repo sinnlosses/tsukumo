@@ -16,10 +16,10 @@ import { useId, type ReactElement } from "react"
 
 import { Button } from "../../../../components/ui/button/button.tsx"
 import { Text } from "../../../../components/ui/text/text.tsx"
-import {
-  type ScreenNavCurrentWork,
-  type ScreenNavCurrentWorkBackgroundTask,
-  type ScreenNavCurrentWorkStep,
+import type {
+  ScreenNavCurrentWork,
+  ScreenNavCurrentWorkBackgroundTask,
+  ScreenNavCurrentWorkStep,
 } from "../hooks/use-current-work.ts"
 import shellStyles from "../screen-nav.module.css"
 import styles from "./screen-nav-current-work.module.css"

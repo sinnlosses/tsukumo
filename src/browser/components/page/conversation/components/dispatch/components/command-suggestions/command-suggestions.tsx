@@ -10,10 +10,10 @@
 // だけの部品。
 
 import clsx from "clsx"
-import { type ReactElement } from "react"
+import type { ReactElement } from "react"
 import { prop, sortBy } from "remeda"
 
-import { type CommandDescription } from "../../../../../../../../shared/session-event.ts"
+import type { CommandDescription } from "../../../../../../../../shared/session-event.ts"
 import { Text } from "../../../../../../ui/text/text.tsx"
 import styles from "../../dispatch.module.css"
 

@@ -12,21 +12,21 @@
 // ボタンの文言は `docs/screen-design.md` 13.2「結果の場面」の決定どおり。
 
 import clsx from "clsx"
-import { type ReactElement } from "react"
+import type { ReactElement } from "react"
 
-import {
-  type UsageProposalFollowUp,
-  type UsageProposalImpact,
+import type {
+  UsageProposalFollowUp,
+  UsageProposalImpact,
 } from "../../../../../../shared/usage-review.ts"
 import { CharacterFace } from "../../../../domain/character-face.tsx"
 import { Button } from "../../../../ui/button/button.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
 import { VStack } from "../../../../ui/v-stack/v-stack.tsx"
-import {
-  type UsageReviewResultProposalView,
-  type UsageReviewStageStatus,
-  type UsageReviewStageView,
-  type UseUsageReviewResult,
+import type {
+  UsageReviewResultProposalView,
+  UsageReviewStageStatus,
+  UsageReviewStageView,
+  UseUsageReviewResult,
 } from "../../hooks/use-usage-review.ts"
 import styles from "../../token-usage.module.css"
 

@@ -6,7 +6,7 @@
 // 対応表だから（同2章「機能の中を分ける」）。表示の整形はサーバとブラウザの契約ではないので
 // `shared` には置かない（`shared/command.ts`「画面に出す日本語ラベルは描く側が持つ」）。
 
-import { type ModelAlias } from "../../../../../shared/command.ts"
+import type { ModelAlias } from "../../../../../shared/command.ts"
 import { BUILTIN_SESSION_DEFAULT } from "../../../../../shared/session-default.ts"
 
 /**

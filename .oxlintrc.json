@@ -22,7 +22,8 @@
       "error",
       { "prefer": "type-imports", "fixStyle": "inline-type-imports" }
     ],
-    "typescript/no-explicit-any": "error"
+    "typescript/no-explicit-any": "error",
+    "typescript/no-import-type-side-effects": "error"
   },
   "overrides": [
     {

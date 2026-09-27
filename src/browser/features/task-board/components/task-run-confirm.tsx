@@ -14,7 +14,7 @@
 // どの機能の語彙も持たない確認ではない（タスクIDと `/next-task` を知っている）ので
 // `browser/components/` には上げない。上げたとしてもあちらの箱は `stores/` を引けない。
 
-import { type ReactElement } from "react"
+import type { ReactElement } from "react"
 
 import { Button } from "../../../components/ui/button/button.tsx"
 import { Dialog } from "../../../components/ui/dialog/dialog.tsx"

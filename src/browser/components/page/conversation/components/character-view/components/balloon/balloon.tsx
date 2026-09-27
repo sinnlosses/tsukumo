@@ -9,7 +9,7 @@
 // 話し手の名前は最新の1件にだけ添える（どれを誰が言ったかは尻尾が結ぶので、過去の分に
 // 繰り返さない）。本文は `.balloon-text` に分けてあり、名前と混ざらずに読める。
 
-import { type ReactElement } from "react"
+import type { ReactElement } from "react"
 
 import { Text } from "../../../../../../ui/text/text.tsx"
 import styles from "../../character-view.module.css"

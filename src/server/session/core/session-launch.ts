@@ -9,14 +9,14 @@
 // 外の世界（パックの読み込み・覚えた値・claude の transcript・見張り）には触らず、すべて
 // 渡された関数（`SessionLaunchPorts`）越しに頼む。結ぶのは配線層。
 
-import { type SessionChoice } from "../../../shared/session-choice.ts"
-import { type SessionDefault } from "../../../shared/session-default.ts"
-import { type SessionEvent } from "../../../shared/session-event.ts"
-import {
-  type CharacterSelection,
-  type NamedCharacterPack,
+import type { SessionChoice } from "../../../shared/session-choice.ts"
+import type { SessionDefault } from "../../../shared/session-default.ts"
+import type { SessionEvent } from "../../../shared/session-event.ts"
+import type {
+  CharacterSelection,
+  NamedCharacterPack,
 } from "../../character-pack/core/character-selection.ts"
-import { type SessionDriver, type SessionStart } from "../../session-driver/core/session-driver.ts"
+import type { SessionDriver, SessionStart } from "../../session-driver/core/session-driver.ts"
 
 /** 駆動と同じ間だけ動く見張り（いまは `develop/tasks.json`）。駆動を閉じると一緒に閉じる。 */
 export type SessionWatcher = { readonly close: () => void }

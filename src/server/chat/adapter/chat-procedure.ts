@@ -5,7 +5,7 @@
 
 import { implement, type ORPCErrorConstructorMap } from "@orpc/server"
 
-import { type COMMAND_ERRORS } from "../../../shared/command.ts"
+import type { COMMAND_ERRORS } from "../../../shared/command.ts"
 import { chatContract } from "../../../shared/contract/chat.ts"
 import {
   type CommandEventSink,

@@ -15,7 +15,7 @@
 // 配る（`markdown/repository-link.tsx`）。この機能（`main-view`）の中でしか描かないので、
 // ここで1回だけ mount する。
 
-import { type ReactElement } from "react"
+import type { ReactElement } from "react"
 
 import { Text } from "../../../../../components/ui/text/text.tsx"
 import { useMainViewTurns } from "../../../../../stores/main-view-turn.ts"

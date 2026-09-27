@@ -7,7 +7,7 @@
 // ここに残すのは「フックを呼んで、受け取ったものを渡す」だけ。条件分岐も算出もここには
 // 置かない（増えたらフックか見た目のどちらかに寄せる）。
 
-import { type ReactElement } from "react"
+import type { ReactElement } from "react"
 
 import { useTurnHeader, type TurnHeaderProps } from "./hooks/use-turn-header.ts"
 import { PresentationalTurnHeader } from "./presentational-turn-header.tsx"

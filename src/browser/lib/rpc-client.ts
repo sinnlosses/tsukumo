@@ -8,7 +8,7 @@ import { createORPCClient } from "@orpc/client"
 import { RPCLink } from "@orpc/client/fetch"
 import { createTanstackQueryUtils } from "@orpc/tanstack-query"
 
-import { type RpcClient } from "../../shared/rpc.ts"
+import type { RpcClient } from "../../shared/rpc.ts"
 
 /**
  * 手続きごとの `queryOptions` / `key` を持つ口を作る（`rpc.tokenUsage.summary.queryOptions({ input })`

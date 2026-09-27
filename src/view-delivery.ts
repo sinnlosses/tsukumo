@@ -7,7 +7,7 @@
 
 import process from "node:process"
 
-import { type CurrentCharacter } from "./current-character.ts"
+import type { CurrentCharacter } from "./current-character.ts"
 import { createRpcRouter } from "./router.ts"
 import {
   createAchievementCommitCache,
@@ -17,12 +17,12 @@ import {
 import { todayLocalDateKey } from "./server/adapter/local-time.ts"
 import { listDiaryDates, readDiaryDay } from "./server/diary/adapter/diary.ts"
 import { listRepositoryFiles } from "./server/repository/adapter/repository-file.ts"
-import { type PromptImageShelf } from "./server/session-driver/core/prompt-image-shelf.ts"
+import type { PromptImageShelf } from "./server/session-driver/core/prompt-image-shelf.ts"
 import {
   summarizeRecentTokenUsage,
   type TokenUsageLog,
 } from "./server/token-usage/core/token-usage.ts"
-import { type UiBundle } from "./server/view-server/adapter/bundle.ts"
+import type { UiBundle } from "./server/view-server/adapter/bundle.ts"
 import {
   createStartupToken,
   startViewServer,
@@ -34,10 +34,10 @@ import {
   type ResolvedViewPort,
   startOnResolvedPort,
 } from "./server/view-server/core/port-resolution.ts"
-import { type StartedSession } from "./session-start.ts"
+import type { StartedSession } from "./session-start.ts"
 import { resolveAchievementDateKey } from "./shared/achievement.ts"
 import { type ContextUsageReport, UNAVAILABLE_CONTEXT_USAGE } from "./shared/context-usage.ts"
-import { type RefreshTarget, type ServerFrame } from "./shared/frame.ts"
+import type { RefreshTarget, ServerFrame } from "./shared/frame.ts"
 
 export type ViewDeliveryOptions = {
   /** どのポートで試すか（決めるのは `src/server/view-server/core/port-resolution.ts`）。 */

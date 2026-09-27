@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it } from "vitest"
 
 import { SessionSwitch } from "../../../../../src/browser/components/domain/sidebar/session-switch.tsx"
 import { FRAME_ERROR_REASON } from "../../../../../src/shared/frame.ts"
-import { type SessionChoice } from "../../../../../src/shared/session-choice.ts"
+import type { SessionChoice } from "../../../../../src/shared/session-choice.ts"
 import {
   INITIAL_SESSION_STATE,
   type SessionInfo,

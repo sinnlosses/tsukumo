@@ -4,7 +4,7 @@
 //
 // `node:` にも `document` にも触らない（他の shared と同じ制約）。
 
-import { type SessionRecord } from "./session-state.ts"
+import type { SessionRecord } from "./session-state.ts"
 import { splitIntoTurns } from "./turn.ts"
 
 /**

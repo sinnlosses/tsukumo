@@ -3,7 +3,7 @@
 //
 // 押せない・畳めない。文字は `ink-quiet`（読む面の原則。13.1 原則1）で、区切りは色を持たない。
 
-import { type ReactElement } from "react"
+import type { ReactElement } from "react"
 
 import styles from "../../chat-view.module.css"
 

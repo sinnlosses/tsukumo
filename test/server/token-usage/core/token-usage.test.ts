@@ -8,8 +8,8 @@ import {
   turnUsageBreakdown,
   type TurnUsageTally,
 } from "../../../../src/server/token-usage/core/token-usage.ts"
-import { type SessionEvent } from "../../../../src/shared/session-event.ts"
-import { type TokenUsageTrend } from "../../../../src/shared/token-usage-summary.ts"
+import type { SessionEvent } from "../../../../src/shared/session-event.ts"
+import type { TokenUsageTrend } from "../../../../src/shared/token-usage-summary.ts"
 import {
   TOKEN_USAGE_FORMAT_VERSION,
   type ModelTokenUsage,

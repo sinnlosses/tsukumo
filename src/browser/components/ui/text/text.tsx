@@ -9,7 +9,7 @@
 // そのまま import する。
 
 import clsx from "clsx"
-import { type ReactElement, type ReactNode } from "react"
+import type { ReactElement, ReactNode } from "react"
 
 import styles from "./text.module.css"
 

@@ -6,7 +6,7 @@
 // 時刻は既定で {@link STAMPED}（時刻に依らないテストの既定値）。時刻そのものを確かめる
 // テストは `time` を上書きする。
 
-import { type RecordTime, type SessionRecord } from "../../src/shared/session-state.ts"
+import type { RecordTime, SessionRecord } from "../../src/shared/session-state.ts"
 
 /** 利用者の依頼1件。 */
 export function requestRecord(

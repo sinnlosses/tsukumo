@@ -38,7 +38,7 @@
 
 import clsx from "clsx"
 import type { Element } from "hast"
-import { type JSX, type ReactElement, type ReactNode } from "react"
+import type { JSX, ReactElement, ReactNode } from "react"
 import ReactMarkdown, { type Components, type ExtraProps, type Options } from "react-markdown"
 import rehypeHighlight from "rehype-highlight"
 import rehypeRaw from "rehype-raw"

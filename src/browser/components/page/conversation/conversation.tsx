@@ -2,7 +2,7 @@
 // 4領域の差し込みは `presentational-conversation.tsx` が持つ（docs/design.md 2章「ページの形」と
 // 「領域の機能と、置かれる機能」）。ストアを読むだけなので `hooks/use-conversation.ts` は作らない。
 
-import { type ReactElement } from "react"
+import type { ReactElement } from "react"
 
 import { useSession } from "../../../stores/session.ts"
 import { PresentationalConversation } from "./presentational-conversation.tsx"

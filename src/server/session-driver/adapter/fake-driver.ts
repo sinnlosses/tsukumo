@@ -12,10 +12,10 @@ import { fileURLToPath } from "node:url"
 
 import { z } from "zod"
 
-import { type EffortLevel } from "../../../shared/command.ts"
-import { type ContextUsage } from "../../../shared/context-usage.ts"
-import { type Answer, type PendingAsk } from "../../../shared/pending-ask.ts"
-import { type SessionDefault } from "../../../shared/session-default.ts"
+import type { EffortLevel } from "../../../shared/command.ts"
+import type { ContextUsage } from "../../../shared/context-usage.ts"
+import type { Answer, PendingAsk } from "../../../shared/pending-ask.ts"
+import type { SessionDefault } from "../../../shared/session-default.ts"
 import {
   type ModelEffortSupport,
   type SessionEvent,
@@ -23,7 +23,7 @@ import {
 } from "../../../shared/session-event.ts"
 import { createReportReview } from "../../report/core/report-review.ts"
 import { recordedPromptImages } from "../core/prompt-image-shelf.ts"
-import { type SessionDriver } from "../core/session-driver.ts"
+import type { SessionDriver } from "../core/session-driver.ts"
 
 /** 既定の疑似セッション。tsukumo 自身の場所から解く（cwd に依存させない）。 */
 const DEFAULT_SESSION_URL = new URL("../../../../test/fixture/fake-session.json", import.meta.url)

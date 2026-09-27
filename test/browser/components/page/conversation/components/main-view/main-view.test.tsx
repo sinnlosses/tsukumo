@@ -6,7 +6,7 @@ import { QuestionRecord } from "../../../../../../../src/browser/components/page
 import { MainView } from "../../../../../../../src/browser/components/page/conversation/components/main-view/main-view.tsx"
 import { BRUSH_ORIGIN_ATTRIBUTE } from "../../../../../../../src/browser/domain/reveal/brush-tip.ts"
 import { useQuestionDraft } from "../../../../../../../src/browser/stores/question-answer.ts"
-import { type MainViewQuestion } from "../../../../../../../src/shared/main-view.ts"
+import type { MainViewQuestion } from "../../../../../../../src/shared/main-view.ts"
 import {
   INITIAL_SESSION_STATE,
   type SessionRecord,

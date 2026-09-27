@@ -16,8 +16,8 @@
 // 座標）。
 
 import { lastLineOf, type LineBox, type RevealFrame } from "./band.ts"
-import { type BrushPlace } from "./brush-tip.ts"
-import { type RevealBlock, type RevealElement, type RevealMember } from "./plan.ts"
+import type { BrushPlace } from "./brush-tip.ts"
+import type { RevealBlock, RevealElement, RevealMember } from "./plan.ts"
 
 /** 要素1つと、そのいまの位置。1フレームの中で box を2度測らないために組で持ち回る。 */
 export type MemberShape = {

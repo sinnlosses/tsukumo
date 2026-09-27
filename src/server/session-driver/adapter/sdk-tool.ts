@@ -14,7 +14,7 @@ import {
   type ExpressionChoice,
   expressionNames as toExpressionNames,
 } from "../../../shared/expression-choice.ts"
-import { type Expression } from "../../../shared/expression.ts"
+import type { Expression } from "../../../shared/expression.ts"
 import { reportSectionSchema } from "../../../shared/report-block.ts"
 import { reportCheckSchema } from "../../../shared/report-check.ts"
 import {
@@ -24,7 +24,7 @@ import {
   USAGE_REVIEW_STAGES,
 } from "../../../shared/usage-review.ts"
 import { chatRecallEpisodeText, chatRecallListText } from "../../chat/core/chat-memory-prompt.ts"
-import { type ReportReview } from "../../report/core/report-review.ts"
+import type { ReportReview } from "../../report/core/report-review.ts"
 import {
   REPORT_CHECKS_DESCRIPTION,
   REPORT_CLOSING_DESCRIPTION,
@@ -42,7 +42,7 @@ import {
   usageReviewStageGuide,
 } from "../../usage-review/core/usage-review-tool.ts"
 import { REPORT_TOOL_NAME, SPEAK_TOOL_NAME, TSUKUMO_MCP_SERVER_NAME } from "../core/sdk-message.ts"
-import { type ChatRecall, type PersonaMemory, type SessionMode } from "../core/session-driver.ts"
+import type { ChatRecall, PersonaMemory, SessionMode } from "../core/session-driver.ts"
 
 /** モデルに見せる `speak` ツールの説明。セリフと本文の境目はここだけで説明する。 */
 const SPEAK_TOOL_DESCRIPTION =

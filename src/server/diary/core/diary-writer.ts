@@ -10,8 +10,8 @@
 // 材料も日記も会話の内容に当たる。メモリにだけ持ち、ログにもファイルにも書かない
 // （docs/coding-standards.md「会話内容の扱い」）。
 
-import { type ExpressionChoice } from "../../../shared/expression-choice.ts"
-import { type SessionEvent } from "../../../shared/session-event.ts"
+import type { ExpressionChoice } from "../../../shared/expression-choice.ts"
+import type { SessionEvent } from "../../../shared/session-event.ts"
 import {
   createDiaryIntake,
   type DiaryDayTask,

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { type ReportBlock, type ReportSection } from "../../src/shared/report-block.ts"
+import type { ReportBlock, ReportSection } from "../../src/shared/report-block.ts"
 import { tidyReportSections } from "../../src/shared/report-tidy.ts"
 
 // フィクスチャはすべて手で書いた架空の本文（docs/coding-standards.md「会話内容の扱い」）。
