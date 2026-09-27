@@ -23,6 +23,7 @@ import {
   type RecordedPromptImage,
 } from "../../../../../../shared/prompt-image.ts"
 import { sessionTokenUrl } from "../../../../../lib/session-token-url.ts"
+import { Button } from "../../../../ui/button/button.tsx"
 import { ImageZoom, type ImageZoomFallback } from "../../../../ui/image-zoom/image-zoom.tsx"
 import styles from "./prompt-image.module.css"
 
@@ -61,15 +62,21 @@ export function PromptImageChips(props: PromptImageChipsProps): ReactElement | n
           <li className={styles["prompt-image-chip"]} key={index}>
             {/* ボタンの中にボタンを入れないので、絵を押すボタンと外す `×` は兄弟にして、
                 `×` を絵の右上に重ねる（CSS 側）。 */}
-            <button
+            <Button
               type="button"
+              variant="ghost"
+              size="label"
+              pressed="none"
+              disabled={false}
+              ariaLabel={ZOOM_LABEL}
+              ariaHasPopup={undefined}
+              title={undefined}
               className={styles["prompt-image-zoom"]}
-              aria-label={ZOOM_LABEL}
               onClick={() => setZoomedIndex(index)}
             >
               <img className={styles["prompt-image"]} src={image.thumbnail} alt={IMAGE_ALT} />
               <Search className={styles["prompt-image-zoom-icon"]} size={16} />
-            </button>
+            </Button>
             <button
               type="button"
               className={styles["prompt-image-remove"]}
@@ -120,15 +127,21 @@ export function PromptImageThumbnails(props: PromptImageThumbnailsProps): ReactE
       <ul className={styles["prompt-images"]}>
         {props.images.map((image, index) => (
           <li className={styles["prompt-image-thumbnail"]} key={image.id}>
-            <button
+            <Button
               type="button"
+              variant="ghost"
+              size="label"
+              pressed="none"
+              disabled={false}
+              ariaLabel={ZOOM_LABEL}
+              ariaHasPopup={undefined}
+              title={undefined}
               className={styles["prompt-image-zoom"]}
-              aria-label={ZOOM_LABEL}
               onClick={() => setZoomedIndex(index)}
             >
               <img className={styles["prompt-image"]} src={image.thumbnail} alt={IMAGE_ALT} />
               <Search className={styles["prompt-image-zoom-icon"]} size={16} />
-            </button>
+            </Button>
           </li>
         ))}
       </ul>

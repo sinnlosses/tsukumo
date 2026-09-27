@@ -83,6 +83,8 @@
   white-space: nowrap;
 }
 /* 字の段・色は `Text`（size="label" tone="ink-quiet" weight="inherit"）が持つ。 */
+/* 枠・地・字の色・hover は `<Button variant="outline-dashed">`（`ui/button/button.tsx`）が持つ。ここは
+   箱（並べ・高さ・余白・角丸・字の大きさ）だけ。 */
 .character-list-new {
   display: flex;
   align-items: center;
@@ -90,15 +92,8 @@
   gap: 0.5rem;
   height: 2.75rem;
   margin-top: 0.4rem;
-  background: none;
-  border: 1px dashed var(--rule);
   border-radius: 0.625rem;
-  color: var(--ink);
   font-size: var(--font-subheading);
-  cursor: pointer;
-}
-.character-list-new:hover {
-  border-color: var(--accent);
 }
 
 /* ---- 右: 詳しい設定 ---- */
@@ -560,7 +555,7 @@
 .character-button-danger:hover {
   border-color: var(--state-ng);
 }
-/* `<Button variant="outline">` に置き換えた「やめる」「名前とプロフィールを変える」
+/* `<Button variant="outline-dashed">` に置き換えた「やめる」「名前とプロフィールを変える」
    「このキャラクターに切り替える」の箱だけ（顔は Button が持つ）。`.character-button` と
    同じ寸法——**`.character-button` 自体はここでは変えない**（`<label>` の差し替える・
    `.character-button-danger` と組む消すボタンなど、Button 化していない箇所がまだ使うため）。 */

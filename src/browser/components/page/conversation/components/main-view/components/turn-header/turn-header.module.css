@@ -41,9 +41,6 @@
   border-radius: 0.4rem;
   line-height: 1;
 }
-.turn-to-newest:hover {
-  border-color: var(--accent);
-}
 /* タイトル（下向きの矢印を含むボタン）と一覧そのものをまとめる枠。**`position` は付けない**
    ——一覧（.turn-history）はこの枠のさらに外、`.turn-header`（position: sticky）を基準に
    ヘッダーいっぱいの幅で重ねる（下の `.turn-history` 参照）。この枠自体は
@@ -217,27 +214,22 @@
   white-space: nowrap;
 }
 /* 「最新」の印と「最新へ」の口は同じ形にして、同じ場所で入れ替わる。印は選ばれたものと同じ
-   示し方（accent の枠と surface-accent の地。13.1 原則1）、口は枠だけの静かなボタン。
-   `line-height` を 1 に詰めるのは `.turn-position` と同じ理由。 */
+   示し方（accent の枠と surface-accent の地。13.1 原則1）。
+   `line-height` を 1 に詰めるのは `.turn-position` と同じ理由。「最新へ」の枠・地・字の色・
+   hover は `<Button variant="outline">`（`ui/button/button.tsx`）が持つ。 */
 .turn-newest-badge,
 .turn-to-newest {
   padding: 0.15rem 0.65rem;
-  border: 1px solid var(--rule);
   border-radius: 999px;
   font-size: var(--font-secondary);
   line-height: 1;
   white-space: nowrap;
 }
 .turn-newest-badge {
-  border-color: var(--accent);
+  border: 1px solid var(--accent);
   background: var(--surface-accent);
   color: var(--ink);
   font-weight: 700;
-}
-.turn-to-newest {
-  background: transparent;
-  color: var(--ink);
-  cursor: pointer;
 }
 
 /* 狭い画面（1列に畳む幅。docs/requirements.md 4.7）。main-view.module.css と同じ境目。 */

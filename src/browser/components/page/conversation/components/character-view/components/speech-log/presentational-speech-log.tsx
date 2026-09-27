@@ -13,6 +13,7 @@
 import { History, X } from "lucide-react"
 import { type ReactElement, type ReactNode } from "react"
 
+import { Button } from "../../../../../../ui/button/button.tsx"
 import { Dialog } from "../../../../../../ui/dialog/dialog.tsx"
 import { HStack } from "../../../../../../ui/h-stack/h-stack.tsx"
 import { Text } from "../../../../../../ui/text/text.tsx"
@@ -68,10 +69,21 @@ export function PresentationalSpeechLog({
         <div className={styles["speech-log-stage"]}>
           {/* 閉じる口を列より先に置く。`showModal()` は中の最初のフォーカスできる要素へ
               フォーカスを移すので、後ろに置くと転がる列（溢れると Tab で届く）が先に選ばれる。 */}
-          <button type="button" className={styles["speech-log-close"]} onClick={onClose}>
+          <Button
+            type="button"
+            variant="outline-accent-tinted"
+            size="action"
+            pressed="none"
+            disabled={false}
+            ariaLabel={undefined}
+            ariaHasPopup={undefined}
+            title={undefined}
+            className={styles["speech-log-close"]}
+            onClick={onClose}
+          >
             <X size={16} />
             {CLOSE_LABEL}
-          </button>
+          </Button>
           <HStack
             element="div"
             name={{ kind: "none" }}

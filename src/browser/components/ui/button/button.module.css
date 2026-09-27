@@ -34,6 +34,37 @@
   background: var(--surface-accent);
 }
 
+/* 点線の枠（`--rule`）。hover で枠が accent になる。 */
+.button-variant-outline-dashed {
+  border: 1px dashed var(--rule);
+  background: none;
+  color: var(--ink);
+}
+.button-variant-outline-dashed:hover {
+  border-color: var(--accent);
+}
+
+/* 枠だけ（`--rule`）で、hover で枠が warn になる。 */
+.button-variant-outline-hover-warn {
+  border: 1px solid var(--rule);
+  background: none;
+  color: var(--ink);
+}
+.button-variant-outline-hover-warn:hover {
+  border-color: var(--state-warn);
+}
+
+/* 枠だけ（`--rule`）で、hover で枠と字が `--state-ng` になる。 */
+.button-variant-outline-hover-danger {
+  border: 1px solid var(--rule);
+  background: none;
+  color: var(--ink);
+}
+.button-variant-outline-hover-danger:hover {
+  border-color: var(--state-ng);
+  color: var(--state-ng);
+}
+
 /* warn の枠。 */
 .button-variant-outline-warn {
   border: 1px solid var(--state-warn);
@@ -42,6 +73,28 @@
 }
 .button-variant-outline-warn:hover {
   background: color-mix(in srgb, var(--state-warn) 12%, transparent);
+}
+
+/* accent の枠と不透明な `--surface-accent` の地。字は accent 寄りで、hover で ink になる。 */
+.button-variant-outline-accent-tinted {
+  border: 1px solid var(--accent);
+  background: var(--surface-accent);
+  color: color-mix(in srgb, var(--accent) 45%, var(--ink));
+}
+.button-variant-outline-accent-tinted:hover {
+  color: var(--ink);
+}
+
+/* 不透明な `--surface-accent` の地と accent の字。枠は半透明の accent で、hover で地を一段濃くし
+   枠を accent にする。 */
+.button-variant-tinted-accent {
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  background: var(--surface-accent);
+  color: var(--accent);
+}
+.button-variant-tinted-accent:hover {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--surface), var(--accent) 24%);
 }
 
 /* accent の塗り。 */

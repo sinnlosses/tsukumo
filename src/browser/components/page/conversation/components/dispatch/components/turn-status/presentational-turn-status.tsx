@@ -7,6 +7,7 @@
 
 import { type ReactElement } from "react"
 
+import { Button } from "../../../../../../ui/button/button.tsx"
 import { HStack } from "../../../../../../ui/h-stack/h-stack.tsx"
 import { Text } from "../../../../../../ui/text/text.tsx"
 import styles from "../../dispatch.module.css"
@@ -63,13 +64,22 @@ export function PresentationalTurnStatus(props: PresentationalTurnStatusProps): 
         </Text>
       </Text>
       {props.action.kind === "interrupt" ? (
-        <button
+        <Button
           type="button"
+          variant="outline-hover-danger"
+          size="secondary"
+          pressed="none"
+          disabled={false}
+          ariaLabel={undefined}
+          ariaHasPopup={undefined}
+          title={undefined}
           className={styles["dispatch-interrupt"]}
           onClick={props.action.onInterrupt}
         >
-          {props.action.label}
-        </button>
+          <Text element="span" size="inherit" tone="inherit" weight="bold" className="">
+            {props.action.label}
+          </Text>
+        </Button>
       ) : (
         <button
           type="submit"

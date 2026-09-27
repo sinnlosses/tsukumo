@@ -517,7 +517,9 @@
 .speech-log-speech[data-age="oldest"] > .balloon {
   color: color-mix(in srgb, var(--ink) 55%, var(--surface));
 }
-/* 閉じる口。枠の右上で、転がる列より上に重ねる（地は不透明）。 */
+/* 閉じる口。枠の右上で、転がる列より上に重ねる。枠・地・字の色・hover は
+   `<Button variant="outline-accent-tinted">`（`ui/button/button.tsx`）が持つ——ここは箱（位置・重なり・
+   並べ・高さ・余白・角丸・字の大きさ）だけ。 */
 .speech-log-close {
   position: absolute;
   top: 12px;
@@ -528,15 +530,8 @@
   gap: 6px;
   height: 32px;
   padding: 0 12px;
-  border: 1px solid var(--accent);
   border-radius: 8px;
-  background: var(--surface-accent);
-  color: color-mix(in srgb, var(--accent) 45%, var(--ink));
   font-size: var(--font-action);
-  cursor: pointer;
-}
-.speech-log-close:hover {
-  color: var(--ink);
 }
 
 /* 狭い画面（docs/requirements.md 4.7）。**領域は下段に 9.5rem で固定される**

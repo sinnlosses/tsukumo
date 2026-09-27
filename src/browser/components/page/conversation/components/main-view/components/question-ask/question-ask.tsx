@@ -85,18 +85,36 @@ export function QuestionAsk(): ReactElement | null {
           {question.header}
         </Text>
         {showToNewest && (
-          <button
+          <Button
             type="button"
+            variant="outline-hover-warn"
+            size="label"
+            pressed="none"
+            disabled={false}
+            ariaLabel={undefined}
+            ariaHasPopup={undefined}
+            title={undefined}
             className={styles["question-ask-to-newest"]}
             onClick={() => selectTurn(newestTurnId)}
           >
             {TO_NEWEST_LABEL}
-          </button>
+          </Button>
         )}
         {question.showBack && (
-          <button type="button" className={styles["question-ask-back"]} onClick={question.onBack}>
+          <Button
+            type="button"
+            variant="outline-hover-warn"
+            size="label"
+            pressed="none"
+            disabled={false}
+            ariaLabel={undefined}
+            ariaHasPopup={undefined}
+            title={undefined}
+            className={styles["question-ask-back"]}
+            onClick={question.onBack}
+          >
             {BACK_LABEL}
-          </button>
+          </Button>
         )}
         <Text
           element="span"

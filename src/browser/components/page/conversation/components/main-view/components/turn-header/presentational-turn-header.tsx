@@ -129,9 +129,20 @@ export function PresentationalTurnHeader({
         {isNewest ? (
           <span className={styles["turn-newest-badge"]}>{NEWEST_BADGE}</span>
         ) : (
-          <button type="button" className={styles["turn-to-newest"]} onClick={onToNewest}>
+          <Button
+            type="button"
+            variant="outline"
+            size="secondary"
+            pressed="none"
+            disabled={false}
+            ariaLabel={undefined}
+            ariaHasPopup={undefined}
+            title={undefined}
+            className={styles["turn-to-newest"]}
+            onClick={onToNewest}
+          >
             {TO_NEWEST_LABEL}
-          </button>
+          </Button>
         )}
       </div>
     </header>

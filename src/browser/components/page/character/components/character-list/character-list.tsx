@@ -14,6 +14,7 @@ import { type ReactElement } from "react"
 import { EXPRESSIONS } from "../../../../../../shared/expression.ts"
 import { usePackHref } from "../../../../../stores/screen.tsx"
 import { useSession } from "../../../../../stores/session.ts"
+import { Button } from "../../../../ui/button/button.tsx"
 import { Heading } from "../../../../ui/heading/heading.tsx"
 import { PlusIcon } from "../../../../ui/icon/icon.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
@@ -82,10 +83,21 @@ export function CharacterList(props: { readonly onCreate: () => void }): ReactEl
           </a>
         )
       })}
-      <button type="button" className={styles["character-list-new"]} onClick={props.onCreate}>
+      <Button
+        type="button"
+        variant="outline-dashed"
+        size="subheading"
+        pressed="none"
+        disabled={false}
+        ariaLabel={undefined}
+        ariaHasPopup={undefined}
+        title={undefined}
+        className={styles["character-list-new"]}
+        onClick={props.onCreate}
+      >
         <PlusIcon />
         新しく作る
-      </button>
+      </Button>
     </nav>
   )
 }

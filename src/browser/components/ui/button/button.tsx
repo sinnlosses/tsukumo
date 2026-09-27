@@ -18,7 +18,12 @@ import styles from "./button.module.css"
 export type ButtonType = "button" | "submit"
 export type ButtonVariant =
   | "outline"
+  | "outline-dashed"
+  | "outline-hover-warn"
+  | "outline-hover-danger"
   | "outline-accent"
+  | "outline-accent-tinted"
+  | "tinted-accent"
   | "outline-warn"
   | "solid-accent"
   | "solid-danger"
@@ -49,7 +54,12 @@ export type ButtonProps = {
 
 export const BUTTON_VARIANT_CLASS = {
   outline: styles["button-variant-outline"],
+  "outline-dashed": styles["button-variant-outline-dashed"],
+  "outline-hover-warn": styles["button-variant-outline-hover-warn"],
+  "outline-hover-danger": styles["button-variant-outline-hover-danger"],
   "outline-accent": styles["button-variant-outline-accent"],
+  "outline-accent-tinted": styles["button-variant-outline-accent-tinted"],
+  "tinted-accent": styles["button-variant-tinted-accent"],
   "outline-warn": styles["button-variant-outline-warn"],
   "solid-accent": styles["button-variant-solid-accent"],
   "solid-danger": styles["button-variant-solid-danger"],

@@ -31,7 +31,12 @@ function renderButton(props: Omit<ButtonProps, "children">): HTMLElement {
 describe("Button", () => {
   it.each([
     ["outline", "button-variant-outline"],
+    ["outline-dashed", "button-variant-outline-dashed"],
+    ["outline-hover-warn", "button-variant-outline-hover-warn"],
+    ["outline-hover-danger", "button-variant-outline-hover-danger"],
     ["outline-accent", "button-variant-outline-accent"],
+    ["outline-accent-tinted", "button-variant-outline-accent-tinted"],
+    ["tinted-accent", "button-variant-tinted-accent"],
     ["outline-warn", "button-variant-outline-warn"],
     ["solid-accent", "button-variant-solid-accent"],
     ["solid-danger", "button-variant-solid-danger"],

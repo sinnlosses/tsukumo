@@ -17,6 +17,7 @@ import clsx from "clsx"
 import { RotateCw } from "lucide-react"
 import { type ReactElement, type ReactNode } from "react"
 
+import { Button } from "../../../../ui/button/button.tsx"
 import { LayoutResizer } from "./components/layout-resizer/layout-resizer.tsx"
 import styles from "./conversation-layout.module.css"
 import {
@@ -150,10 +151,21 @@ export function PresentationalConversationLayout({
         {/* 押して消えたあとのフォーカスは動かさない（仕切り `role="separator"` はキー操作を
               持たないので、そこへ移すと押せないものにフォーカスが残る。body へ落ちるのに任せる） */}
         {isSplitChanged && (
-          <button type="button" className={styles["layout-reset-split"]} onClick={onReset}>
+          <Button
+            type="button"
+            variant="tinted-accent"
+            size="action"
+            pressed="none"
+            disabled={false}
+            ariaLabel={undefined}
+            ariaHasPopup={undefined}
+            title={undefined}
+            className={styles["layout-reset-split"]}
+            onClick={onReset}
+          >
             <RotateCw size={14} />
             {RESET_SPLIT_LABEL}
-          </button>
+          </Button>
         )}
       </div>
       <div

@@ -40,17 +40,15 @@
   border-radius: 0.4rem;
   background: var(--surface);
 }
-/* 札・控えの絵を押すボタン（押すと原寸を拡大の面で開く）。既定のボタンの見た目は消し、
-   絵と同じ矩形にする。`position: relative` は虫眼鏡を重ねる基準で、`×` はこのボタンの
-   兄弟なので `.prompt-image-chip` のほうを基準に重なる。 */
+/* 札・控えの絵を押すボタン（押すと原寸を拡大の面で開く）。枠・地は `<Button variant="ghost">`
+   （`ui/button/button.tsx`）が持つ（もともと透明なので見た目は変わらない）。`position: relative`
+   は虫眼鏡を重ねる基準で、`×` はこのボタンの兄弟なので `.prompt-image-chip` のほうを基準に
+   重なる。 */
 .prompt-image-zoom {
   position: relative;
   display: block;
   padding: 0;
-  border: none;
-  background: none;
   line-height: 0;
-  cursor: pointer;
 }
 /* 虫眼鏡。**既定では見えず、ホバー・フォーカスでだけ出す飾り**——押せば開くのは
    見えていなくても同じ（タッチ端末はホバーを持たない）。 */
