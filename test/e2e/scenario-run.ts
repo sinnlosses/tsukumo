@@ -303,7 +303,9 @@ function waitForViewUrl(child: ChildProcess): Promise<string> {
  */
 async function installFixedClock(page: Page): Promise<void> {
   const fixed = Temporal.Instant.from(FIXED_INSTANT).epochMilliseconds
-  await page.clock.install({ time: fixed })
+  // install から pauseAt までに時計が実時間で進むので、同じ時刻で install すると
+  // pauseAt(fixed) が過去を指して投げる。手前で install して fixed へ進めて止める。
+  await page.clock.install({ time: fixed - 1000 })
   await page.clock.pauseAt(fixed)
   await page.addInitScript(
     "Temporal.Now.instant = () => Temporal.Instant.fromEpochMilliseconds(Date.now())",
