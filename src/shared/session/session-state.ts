@@ -364,10 +364,10 @@ export type SessionState = {
    */
   readonly nextTurnId: number
   /**
-   * develop/tasks.json の一覧（サイドバーのタスク一覧）。`tasks-changed` が届くまでは
-   * `{ kind: "unknown" }`（読めない・まだ読んでいないのどちらも同じ「不明」表示になる。
-   * docs/design.md 4.1。この2つを型でも分けない理由は
-   * {@link TaskSummaryResult}（`src/shared/repository/task-summary.ts`）のコメントを参照）。
+   * タスク一覧（サイドバーのタスク一覧）。`tasks-changed` が届くまでは `{ kind: "unknown" }`
+   * （読めない・まだ読んでいないのどちらも同じ「不明」表示になる理由と、この2つを型でも
+   * 分けない理由は {@link TaskSummaryResult}（`src/shared/repository/task-summary.ts`）の
+   * コメントを参照）。
    */
   readonly tasks: TaskSummaryResult
   /**
