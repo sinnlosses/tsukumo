@@ -489,7 +489,7 @@ describe("readAchievement", () => {
 
     it("同じ日のうちに終えて消えた（剪定された）タスクは、終えたタスク・卒業のどちらからも漏れない", async () => {
       // 剪定は task prune が行う操作そのもの（develop/task/T-xxx.md を git rm する）を、
-      // ここでは直接 git 操作で再現する（task prune コマンド自体は T-560 が持つ）。
+      // ここでは直接 git 操作で再現する（task prune コマンド自体は別のタスクが持つ）。
       await commitNewFormatTask(
         repository,
         "2026-09-01",
@@ -535,8 +535,8 @@ describe("readAchievement", () => {
     })
 
     it("前の日までに消えた（剪定された）done のタスクは、通算の数に混ざって前の日の終わりの切り口に含まれる", async () => {
-      // T-070 は前の日のうちに done → 剪定されている。今日、新たに1件 done にしたとき、
-      // 「前の日には無かった」差分に T-070 が誤って再登場しないことを確かめる
+      // 前の日のうちに done → 剪定されているタスクがある。今日、新たに1件 done にしたとき、
+      // 「前の日には無かった」差分にそのタスクが誤って再登場しないことを確かめる
       // （消えたファイルは前の日の切り口にも同じ規則で混ぜる）。
       await commitNewFormatTask(
         repository,
@@ -622,8 +622,8 @@ describe("readAchievement（Beads 方式）", () => {
   const today = Temporal.Now.plainDateISO().toString()
 
   /**
-   * 移す前の git に、done の T-001 と未完了の T-002 のファイルを置き、過去の日に Beads へ移す
-   * （T-002 だけを Beads に作り、`develop/task/` を消して方式の行を beads にする）。
+   * 移す前の git に、done のタスクと未完了のタスクのファイルを置き、過去の日に Beads へ移す
+   * （未完了の方だけを Beads に作り、`develop/task/` を消して方式の行を beads にする）。
    */
   async function migrateToBeads(): Promise<void> {
     await commitNewFormatTask(repository, "2026-09-10", "10:00", "T-001", "git で済んだ", "todo")

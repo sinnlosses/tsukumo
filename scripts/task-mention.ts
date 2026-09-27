@@ -5,11 +5,17 @@
 //
 // CLAUDE.md「コード・ドキュメントにタスク番号（`T-` + 3桁）を書かない」をコードの側で裏付ける。
 // 許すのは3つだけ: (1) タスクファイルの形（front matter・ID とファイル名の対応・見出しの集計）を
-// 確かめるテストが、タスクIDをデータとして使うファイル（`ALLOWED_DATA_FILES`）、
+// 確かめるテストが、タスクIDを文字列リテラルのデータとして使うファイル（`ALLOWED_DATA_FILES`）。
+// ただしファイル丸ごとではなく、出現の置き場所が `data`（コメントでもテスト名でもない）のときだけ
+// 許す——同じファイルでもコメント（`//`・`/* */`・JSDoc）とテスト名（`describe`/`it`/`test` の
+// 最初の文字列引数）に書かれた出現は拾う。置き場所の判定は `contextRangesOf` が行う、
 // (2) 既知の例外 `T-225`（`scripts/task-id.ts` と同じ理由でここでも例外にする）、
 // (3) `docs/requirements.md`「7. 未決事項」の表の「対応タスク」列（CLAUDE.md が唯一許す docs の
 // 例外）。(3) は `maskAllowedRequirementsPendingTaskColumn` が、拾う前にその列だけ伏せて実現する
 // （伏せた場所は 1列目や節の外まで広げない）。
+
+/** タスク番号の出現が置かれている場所。`data` だけが `ALLOWED_DATA_FILES` の例外の対象。 */
+export type TaskMentionContext = "comment" | "testName" | "data"
 
 /** タスク番号の出現1件。 */
 export type TaskMention = {
@@ -19,9 +25,15 @@ export type TaskMention = {
   readonly line: number
   /** 拾った ID（`T-xxx` の形）。 */
   readonly id: string
+  /** 出現が置かれている場所（コメント・テスト名・それ以外のデータ）。 */
+  readonly context: TaskMentionContext
 }
 
 const TASK_ID_PATTERN = /T-\d{3,}/gu
+
+// `describe`/`it`/`test`（`.skip` などの修飾つきも）の最初の引数として開く引用符の直前まで。
+// テスト名の文字列そのものは、この直後から対応する閉じ引用符までになる。
+const TEST_CALL_OPENING_QUOTE_PATTERN = /\b(?:describe|it|test)(?:\.\w+)?\(\s*(["'`])/gu
 
 const KNOWN_EXCEPTION_ID = "T-225"
 
@@ -47,27 +59,33 @@ const ALLOWED_DATA_FILES = [
 ] as const satisfies readonly string[]
 
 /**
- * ファイル1つの本文から、タスク番号の出現をすべて拾う。
+ * ファイル1つの本文から、タスク番号の出現をすべて拾う。出現ごとに、コメント・テスト名・
+ * それ以外のデータのどこに置かれているか（`context`）も添える。
  */
 export function findTaskMentions(sourcePath: string, text: string): TaskMention[] {
-  const lines = text.split("\n")
-  return lines.flatMap((lineText, index) =>
+  const ranges = contextRangesOf(text)
+  const lineStarts = lineStartOffsetsOf(text)
+  return text.split("\n").flatMap((lineText, index) =>
     [...lineText.matchAll(TASK_ID_PATTERN)].map((match) => ({
       sourcePath,
       line: index + 1,
       id: match[0],
+      context: contextAt(ranges, (lineStarts[index] ?? 0) + (match.index ?? 0)),
     })),
   )
 }
 
 /**
  * 拾った出現のうち、許した範囲（既知の例外 `T-225` と、タスクファイルの形を確かめるテストの
- * データ）に無いものだけを返す。`docs/requirements.md` の対応タスク列は、拾う前に
- * `maskAllowedRequirementsPendingTaskColumn` で伏せてあるのでここには出現しない。
+ * データのうち `data`（コメントでもテスト名でもない）に置かれたもの）に無いものだけを返す。
+ * `docs/requirements.md` の対応タスク列は、拾う前に `maskAllowedRequirementsPendingTaskColumn`
+ * で伏せてあるのでここには出現しない。
  */
 export function findStrayTaskMentions(mentions: readonly TaskMention[]): TaskMention[] {
   return mentions.filter(
-    (mention) => mention.id !== KNOWN_EXCEPTION_ID && !isAllowedDataFile(mention.sourcePath),
+    (mention) =>
+      mention.id !== KNOWN_EXCEPTION_ID &&
+      !(isAllowedDataFile(mention.sourcePath) && mention.context === "data"),
   )
 }
 
@@ -126,4 +144,118 @@ function maskLastTableCell(lineText: string): string {
   const cell = lineText.slice(secondLastPipeIndex + 1, lastPipeIndex)
   const after = lineText.slice(lastPipeIndex)
   return `${before}${cell.replaceAll(TASK_ID_PATTERN, "")}${after}`
+}
+
+/** 出現の置き場所の範囲1件（`text` の中の絶対位置）。 */
+type MentionContextRange = {
+  readonly start: number
+  readonly end: number
+  readonly context: Exclude<TaskMentionContext, "data">
+}
+
+/**
+ * `text` の中で、コメント（行コメントとブロックコメント）とテスト名の範囲をすべて求める。
+ * 範囲に無い出現は `contextAt` が `data` として返す。
+ */
+function contextRangesOf(text: string): readonly MentionContextRange[] {
+  const commentRanges = commentRangesOf(text)
+  const codeText = maskRanges(text, commentRanges)
+  return [...commentRanges, ...testNameRangesOf(codeText)]
+}
+
+/** 絶対位置 `index` に置かれた出現の場所（`ranges` の外なら `data`）。 */
+function contextAt(ranges: readonly MentionContextRange[], index: number): TaskMentionContext {
+  const range = ranges.find((candidate) => index >= candidate.start && index < candidate.end)
+  return range === undefined ? "data" : range.context
+}
+
+/**
+ * `text` の中の行コメント・ブロックコメント（JSDoc を含む）の範囲を、文字列リテラルの中身は
+ * 除いて求める。
+ */
+function commentRangesOf(text: string): MentionContextRange[] {
+  const ranges: MentionContextRange[] = []
+  let quote = ""
+  let index = 0
+  while (index < text.length) {
+    if (quote !== "") {
+      if (text[index] === "\\") {
+        index += 2
+        continue
+      }
+      if (text[index] === quote) {
+        quote = ""
+      }
+      index += 1
+      continue
+    }
+    const ch = text[index]
+    if (ch === '"' || ch === "'" || ch === "`") {
+      quote = ch
+      index += 1
+      continue
+    }
+    if (ch === "/" && text[index + 1] === "/") {
+      const newlineIndex = text.indexOf("\n", index)
+      const end = newlineIndex === -1 ? text.length : newlineIndex
+      ranges.push({ start: index, end, context: "comment" })
+      index = end
+      continue
+    }
+    if (ch === "/" && text[index + 1] === "*") {
+      const closeIndex = text.indexOf("*/", index + 2)
+      const end = closeIndex === -1 ? text.length : closeIndex + 2
+      ranges.push({ start: index, end, context: "comment" })
+      index = end
+      continue
+    }
+    index += 1
+  }
+  return ranges
+}
+
+/** `ranges` に当たる部分を、同じ長さの空白で覆う（あとの走査からコメントの中身を除くため）。 */
+function maskRanges(text: string, ranges: readonly MentionContextRange[]): string {
+  return ranges.reduce(
+    (masked, range) =>
+      masked.slice(0, range.start) + " ".repeat(range.end - range.start) + masked.slice(range.end),
+    text,
+  )
+}
+
+/**
+ * コメントを覆ったあとの `codeText` から、`describe`/`it`/`test` の最初の文字列引数
+ * （テスト名）の範囲をすべて求める。
+ */
+function testNameRangesOf(codeText: string): MentionContextRange[] {
+  return [...codeText.matchAll(TEST_CALL_OPENING_QUOTE_PATTERN)].map((match) => {
+    const quote = match[1] ?? ""
+    const contentStart = (match.index ?? 0) + match[0].length
+    return {
+      start: contentStart,
+      end: closingQuoteIndexOf(codeText, contentStart, quote),
+      context: "testName",
+    }
+  })
+}
+
+/** `start` から見て、エスケープを飛ばしつつ最初に現れる `quote` の位置（無ければ末尾）。 */
+function closingQuoteIndexOf(text: string, start: number, quote: string): number {
+  let index = start
+  while (index < text.length) {
+    if (text[index] === "\\") {
+      index += 2
+      continue
+    }
+    if (text[index] === quote) {
+      return index
+    }
+    index += 1
+  }
+  return text.length
+}
+
+/** `text` の各行（0始まりの添字）が始まる絶対位置。 */
+function lineStartOffsetsOf(text: string): number[] {
+  return [0, ...[...text.matchAll(/\n/gu)].map((match) => (match.index ?? 0) + 1)]
 }

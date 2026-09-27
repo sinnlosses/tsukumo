@@ -171,7 +171,7 @@ describe("parseNewTaskFile（3.4 の読み取りの見本）", () => {
     expect(parseNewTaskFile("T-521.md", content)?.dependencies).toEqual([])
   })
 
-  it("dependencies: [T-001, T-1000] はその2件（3桁未満・4桁のどちらも読める）", () => {
+  it("dependencies に3桁と4桁の番号が並んでいても、その2件を読める", () => {
     const content = contentOf({ 6: "dependencies: [T-001, T-1000]" })
 
     expect(parseNewTaskFile("T-521.md", content)?.dependencies).toEqual(["T-001", "T-1000"])
@@ -212,7 +212,7 @@ describe("parseNewTaskFile（3.4 の読み取りの見本）", () => {
     expect(parseNewTaskFile("T-521.md", content)).toBeUndefined()
   })
 
-  it("ファイル名 T-010.md で id: T-011 のときは INVALID（ファイル名の語幹と id の不一致）", () => {
+  it("ファイル名の語幹と id が食い違うときは INVALID", () => {
     const content = contentOf({ 1: "id: T-011" })
 
     expect(parseNewTaskFile("T-010.md", content)).toBeUndefined()

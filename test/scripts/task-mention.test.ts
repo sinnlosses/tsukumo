@@ -27,16 +27,16 @@ const KNOWN_EXCEPTION_ID = `T-${KNOWN_EXCEPTION_NUMBER}`
 const REQUIREMENTS_PATH = "docs/requirements.md"
 
 describe("findTaskMentions", () => {
-  test("`T-` に3桁以上の数字が続く並びを拾い、行を添える", () => {
+  test("`T-` に3桁以上の数字が続く並びを拾い、行と置き場所（`//` コメント）を添える", () => {
     expect(findTaskMentions("src/sample.ts", `前置き\n// ${SAMPLE_ID} を直した\n`)).toEqual([
-      { sourcePath: "src/sample.ts", line: 2, id: SAMPLE_ID },
+      { sourcePath: "src/sample.ts", line: 2, id: SAMPLE_ID, context: "comment" },
     ])
   })
 
-  test("1行に複数あればすべて拾う", () => {
+  test("1行に複数あればすべて拾う（コメントでもテスト名でもなければ `data`）", () => {
     expect(findTaskMentions("src/sample.ts", `${SAMPLE_ID} と ${KNOWN_EXCEPTION_ID}`)).toEqual([
-      { sourcePath: "src/sample.ts", line: 1, id: SAMPLE_ID },
-      { sourcePath: "src/sample.ts", line: 1, id: KNOWN_EXCEPTION_ID },
+      { sourcePath: "src/sample.ts", line: 1, id: SAMPLE_ID, context: "data" },
+      { sourcePath: "src/sample.ts", line: 1, id: KNOWN_EXCEPTION_ID, context: "data" },
     ])
   })
 
@@ -47,32 +47,92 @@ describe("findTaskMentions", () => {
   test("何も無ければ空", () => {
     expect(findTaskMentions("src/sample.ts", "タスク番号を書いていない本文")).toEqual([])
   })
+
+  test("ブロックコメント（JSDoc の複数行）の中も `comment` にする", () => {
+    const text = ["/**", ` * ${SAMPLE_ID} の説明`, " */", "コード本体"].join("\n")
+    expect(findTaskMentions("src/sample.ts", text)).toEqual([
+      { sourcePath: "src/sample.ts", line: 2, id: SAMPLE_ID, context: "comment" },
+    ])
+  })
+
+  test("`describe`/`it`/`test` の最初の文字列引数（テスト名）は `testName` にする", () => {
+    expect(
+      findTaskMentions("test/sample.test.ts", `it("${SAMPLE_ID} を確かめる", () => {})`),
+    ).toEqual([{ sourcePath: "test/sample.test.ts", line: 1, id: SAMPLE_ID, context: "testName" }])
+  })
+
+  test("テスト名の外（関数呼び出しの引数）は `data` のまま", () => {
+    expect(
+      findTaskMentions("test/sample.test.ts", `expect(readTask("${SAMPLE_ID}")).toBeDefined()`),
+    ).toEqual([{ sourcePath: "test/sample.test.ts", line: 1, id: SAMPLE_ID, context: "data" }])
+  })
+
+  test("文字列リテラルの中の `//` は行コメントの開始と誤認しない", () => {
+    const text = `const url = "https://example.com/${SAMPLE_ID}"`
+    expect(findTaskMentions("src/sample.ts", text)).toEqual([
+      { sourcePath: "src/sample.ts", line: 1, id: SAMPLE_ID, context: "data" },
+    ])
+  })
 })
 
 describe("findStrayTaskMentions", () => {
   test("既知の例外は、ファイルによらず除く", () => {
     expect(
-      findStrayTaskMentions([{ sourcePath: "src/sample.ts", line: 1, id: KNOWN_EXCEPTION_ID }]),
+      findStrayTaskMentions([
+        { sourcePath: "src/sample.ts", line: 1, id: KNOWN_EXCEPTION_ID, context: "data" },
+      ]),
     ).toEqual([])
   })
 
-  test("タスクファイルの形を確かめるテストのデータは除く", () => {
+  test("タスクファイルの形を確かめるテストのデータ（`data`）は除く", () => {
     expect(
-      findStrayTaskMentions([{ sourcePath: "test/task-id.test.ts", line: 1, id: SAMPLE_ID }]),
+      findStrayTaskMentions([
+        { sourcePath: "test/task-id.test.ts", line: 1, id: SAMPLE_ID, context: "data" },
+      ]),
     ).toEqual([])
+  })
+
+  test("同じ許したファイルでも、コメントに書いた番号は迷子にする", () => {
+    const mention = {
+      sourcePath: "test/task-id.test.ts",
+      line: 1,
+      id: SAMPLE_ID,
+      context: "comment",
+    } as const
+    expect(findStrayTaskMentions([mention])).toEqual([mention])
+  })
+
+  test("同じ許したファイルでも、テスト名に書いた番号は迷子にする", () => {
+    const mention = {
+      sourcePath: "test/task-id.test.ts",
+      line: 1,
+      id: SAMPLE_ID,
+      context: "testName",
+    } as const
+    expect(findStrayTaskMentions([mention])).toEqual([mention])
   })
 
   test("それ以外は迷子にする", () => {
-    const mention = { sourcePath: "src/sample.ts", line: 3, id: SAMPLE_ID }
+    const mention = {
+      sourcePath: "src/sample.ts",
+      line: 3,
+      id: SAMPLE_ID,
+      context: "data",
+    } as const
     expect(findStrayTaskMentions([mention])).toEqual([mention])
   })
 })
 
 describe("formatStrayTaskMention", () => {
   test("ファイル・行・IDを1行にする", () => {
-    expect(formatStrayTaskMention({ sourcePath: "src/sample.ts", line: 3, id: SAMPLE_ID })).toBe(
-      `src/sample.ts:3: ${SAMPLE_ID}`,
-    )
+    expect(
+      formatStrayTaskMention({
+        sourcePath: "src/sample.ts",
+        line: 3,
+        id: SAMPLE_ID,
+        context: "data",
+      }),
+    ).toBe(`src/sample.ts:3: ${SAMPLE_ID}`)
   })
 })
 
@@ -101,7 +161,7 @@ describe("maskAllowedRequirementsPendingTaskColumn", () => {
     ].join("\n")
     const masked = maskAllowedRequirementsPendingTaskColumn(REQUIREMENTS_PATH, text)
     expect(findTaskMentions(REQUIREMENTS_PATH, masked)).toEqual([
-      { sourcePath: REQUIREMENTS_PATH, line: 5, id: SAMPLE_ID },
+      { sourcePath: REQUIREMENTS_PATH, line: 5, id: SAMPLE_ID, context: "data" },
     ])
   })
 
@@ -117,7 +177,7 @@ describe("maskAllowedRequirementsPendingTaskColumn", () => {
     ].join("\n")
     const masked = maskAllowedRequirementsPendingTaskColumn(REQUIREMENTS_PATH, text)
     expect(findTaskMentions(REQUIREMENTS_PATH, masked)).toEqual([
-      { sourcePath: REQUIREMENTS_PATH, line: 5, id: SAMPLE_ID },
+      { sourcePath: REQUIREMENTS_PATH, line: 5, id: SAMPLE_ID, context: "data" },
     ])
   })
 
@@ -136,7 +196,7 @@ describe("maskAllowedRequirementsPendingTaskColumn", () => {
     ].join("\n")
     const masked = maskAllowedRequirementsPendingTaskColumn(REQUIREMENTS_PATH, text)
     expect(findTaskMentions(REQUIREMENTS_PATH, masked)).toEqual([
-      { sourcePath: REQUIREMENTS_PATH, line: 10, id: SAMPLE_ID },
+      { sourcePath: REQUIREMENTS_PATH, line: 10, id: SAMPLE_ID, context: "data" },
     ])
   })
 
@@ -151,7 +211,7 @@ describe("maskAllowedRequirementsPendingTaskColumn", () => {
     const otherPath = "docs/workflow.md"
     const masked = maskAllowedRequirementsPendingTaskColumn(otherPath, text)
     expect(findTaskMentions(otherPath, masked)).toEqual([
-      { sourcePath: otherPath, line: 5, id: SAMPLE_ID },
+      { sourcePath: otherPath, line: 5, id: SAMPLE_ID, context: "data" },
     ])
   })
 })
