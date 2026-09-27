@@ -3,6 +3,20 @@
 `develop/direction.md` に書かれたユーザーからの指示を、タスク化した時点で**当時の記述のまま**
 ここへ移す（`docs/workflow.md`「指示メモ」参照）。新しいものを上に足す。**後から書き換えない。**
 
+## 2026-09-27 ブラウザ側のライブラリの検討（T-736）から既存タスクへの書き足し
+
+（`develop/draft/2026-09-27-t688-react-compiler-plugin-react-6.md` と `develop/draft/2026-09-27-t728-floating-parts-base-ui.md` から。出典: T-736 の委譲先が積んだ2件。ユーザーの答え「取り込もうか」で承認した。T-688 は完了条件と背景に焼いた。T-728 は取り込む時点で完了していて、Base UI を入れずに `session-switcher.tsx` が `role="listbox"` を持つ形になっていたので、本文には書き足していない）
+
+### T-688 の完了条件と背景を、`@vitejs/plugin-react` 6 での React Compiler の入れ方に合わせる（作業中: T-736）
+
+- 根拠: T-688 の完了条件は「`babel-plugin-react-compiler` が `@vitejs/plugin-react` の babel プラグインとして組み立てに入っている」だが、入っている `@vitejs/plugin-react` 6.1.1 には babel の口が無い。README「React Compiler」が示す道は2つで、(a) `react({ compiler: true })`（Rust 移植の `oxc-transform-react` を任意の peer として足す。README は experimental と書く）、(b) `@rolldown/plugin-babel` と `@babel/core` と `babel-plugin-react-compiler` を足し、`babel({ presets: [reactCompilerPreset()] })` を並べる。t3code の `apps/web/package.json` は (b)（devDependencies に `@rolldown/plugin-babel` と `babel-plugin-react-compiler` 1.0.0）
+- 出し先: T-688 の `## 完了条件` の1行目を「React Compiler が `vite.config.ts` の組み立てに入っている（(a)・(b) のどちらかを選び、選んだ理由を結果に書く）」に直し、`## 背景` に上の2つの道と README の場所（`node_modules/@vitejs/plugin-react/README.md`「React Compiler」）を1項で足す
+
+### T-728 の背景に、浮かぶ部品を素の要素で書くか Base UI で書くかの見立てを足す（作業中: T-736）
+
+- 根拠: T-736 の検討（`docs/research/browser-library.md`）で Base UI は「いまは入れない」とし、浮かぶ部品が要る最初の場面を T-728（ID の札のホバーの一行と、探す欄＋一覧の切り替え画面）とした。いまの `components/ui/` に浮かぶ部品は無く、`Dialog` は素の `<dialog>`、浮かぶ位置は CSS の anchor positioning（`character-view.module.css`）で書いている。Base UI の組み立ての増分は `Tooltip` で gzip 28KB・`Autocomplete` で 42KB（2026-09-27 に `/tmp` で測った）。いまの `/`・`@` の補完の一覧は `role="listbox"` も `aria-activedescendant` も持たない
+- 出し先: T-728 の `## 背景` に1項。「ホバーの一行は素の `popover` と anchor positioning で書き、切り替え画面は `Dialog` の中に探す欄と一覧を置く。一覧は `role="listbox"` と `aria-activedescendant` で ↑↓ の選択を伝える。位置の追従やキーボードの扱いを自前で抱える量が `Dialog` の自作を超えたら、Base UI の `Tooltip` / `Preview Card` / `Autocomplete` を `docs/research/browser-library.md`「見直す条件」に従って測り直す（依存を足すならユーザーの承認）」
+
 ## 2026-09-27 browser と server を package.json で分けるか
 
 （`develop/direction.md` の「ユーザーから」。T-796 になった）
