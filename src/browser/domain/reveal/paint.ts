@@ -12,9 +12,9 @@
 // どちらもレイアウトを動かさない（`clip-path` も `opacity` も場所を取ったまま隠す）ので、
 // 本文の高さは最初から最後まで変わらない。
 
-import { type BrushStep } from "./band.ts"
-import { type MemberShape } from "./measure.ts"
-import { type RevealBlock } from "./plan.ts"
+import type { BrushStep } from "./band.ts"
+import type { MemberShape } from "./measure.ts"
+import type { RevealBlock } from "./plan.ts"
 
 /** 何も見せていない状態の `clip-path`（高さ 0 に畳む。場所は取ったまま）。 */
 const HIDDEN_CLIP = "inset(0 0 100% 0)"

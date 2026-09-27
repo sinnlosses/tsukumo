@@ -9,7 +9,7 @@
 // 切り取られない。`::backdrop` は透明にして、画面を暗く覆わずに「外側クリックで閉じる」の
 // 読み替えだけ borrow する（`task-run-confirm.tsx` と同じ `event.target === dialogRef.current`）。
 
-import { type ReactElement } from "react"
+import type { ReactElement } from "react"
 
 import { Button } from "../../../../../../ui/button/button.tsx"
 import { Dialog, type DialogPlacement } from "../../../../../../ui/dialog/dialog.tsx"

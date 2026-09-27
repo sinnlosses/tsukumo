@@ -2,7 +2,7 @@
 // 対応表と CSS は `Stack`（`ui/stack/`）だけが持つ（`docs/design.md` 2章「`components/ui/` の
 // 部品（variant の作法と一覧）」の「`VStack` / `HStack`」）。
 
-import { type ReactElement } from "react"
+import type { ReactElement } from "react"
 
 import { Stack, type StackProps } from "../stack/stack.tsx"
 

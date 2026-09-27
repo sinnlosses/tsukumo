@@ -6,7 +6,7 @@
 
 import clsx from "clsx"
 import { AtSign, ImageIcon, Slash } from "lucide-react"
-import { type ReactElement } from "react"
+import type { ReactElement } from "react"
 
 import { PROMPT_IMAGE_MEDIA_TYPES } from "../../../../../../../../shared/prompt-image.ts"
 import { Button } from "../../../../../../ui/button/button.tsx"
@@ -17,7 +17,7 @@ import styles from "../../dispatch.module.css"
 import { CommandSuggestions } from "../command-suggestions/command-suggestions.tsx"
 import { FileSuggestions } from "../file-suggestions/file-suggestions.tsx"
 import { TurnStatus } from "../turn-status/turn-status.tsx"
-import { type ComposerModel } from "./hooks/use-composer.ts"
+import type { ComposerModel } from "./hooks/use-composer.ts"
 
 export type PresentationalComposerProps = ComposerModel
 

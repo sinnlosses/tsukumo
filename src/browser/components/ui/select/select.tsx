@@ -7,7 +7,7 @@
 // すべて呼び出し側が渡す。
 
 import clsx from "clsx"
-import { type ReactElement } from "react"
+import type { ReactElement } from "react"
 
 import styles from "./select.module.css"
 

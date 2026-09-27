@@ -3,7 +3,7 @@ import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { ChatView } from "../../../../../../../src/browser/components/page/conversation/components/chat-view/chat-view.tsx"
-import { type Expression } from "../../../../../../../src/shared/expression.ts"
+import type { Expression } from "../../../../../../../src/shared/expression.ts"
 import {
   INITIAL_SESSION_STATE,
   type RecordTime,

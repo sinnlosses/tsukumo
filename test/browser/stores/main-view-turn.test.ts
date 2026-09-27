@@ -6,7 +6,7 @@
 import { describe, expect, it } from "vitest"
 
 import { mainViewTurnsOf } from "../../../src/browser/stores/main-view-turn.ts"
-import { type SessionEvent } from "../../../src/shared/session-event.ts"
+import type { SessionEvent } from "../../../src/shared/session-event.ts"
 import {
   applySessionEvent,
   INITIAL_SESSION_STATE,

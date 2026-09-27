@@ -4,14 +4,14 @@
 // 判定を持たない。
 
 import clsx from "clsx"
-import { type ReactElement } from "react"
+import type { ReactElement } from "react"
 
 import { HStack } from "../../../../../../ui/h-stack/h-stack.tsx"
 import { TrashIcon, UploadIcon } from "../../../../../../ui/icon/icon.tsx"
 import { Text } from "../../../../../../ui/text/text.tsx"
 import { VStack } from "../../../../../../ui/v-stack/v-stack.tsx"
 import styles from "../../../../character.module.css"
-import { type BackgroundFieldModel } from "../../../hooks/use-character-edit.ts"
+import type { BackgroundFieldModel } from "../../../hooks/use-character-edit.ts"
 
 /**
  * 背景に選べる種類（`docs/design.md` 7.1 / `docs/screen-design.md` 13.8）。`.gif` は入れない（動く背景は読む面の

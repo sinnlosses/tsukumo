@@ -18,7 +18,7 @@
 // 余分。docs/design.md 2章「機能の中を分ける」）。
 
 import clsx from "clsx"
-import { type ReactElement } from "react"
+import type { ReactElement } from "react"
 
 import { Button } from "../../../../../../../components/ui/button/button.tsx"
 import { HStack } from "../../../../../../../components/ui/h-stack/h-stack.tsx"

@@ -11,7 +11,7 @@ import process from "node:process"
 
 import { buildUiBundle, builtUiDir } from "../src/server/view-server/adapter/bundle.ts"
 
-const result = await buildUiBundle()
+const result = await buildUiBundle(builtUiDir())
 if (!result.ok) {
   process.stderr.write(`ブラウザ側を組み立てられない\n${result.reason}\n`)
   process.exit(1)

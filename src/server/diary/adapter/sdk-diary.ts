@@ -21,8 +21,8 @@ import {
   expressionNames,
   resolveExpressionLabel,
 } from "../../../shared/expression-choice.ts"
-import { type Expression } from "../../../shared/expression.ts"
-import { type SessionEvent } from "../../../shared/session-event.ts"
+import type { Expression } from "../../../shared/expression.ts"
+import type { SessionEvent } from "../../../shared/session-event.ts"
 import {
   TSUKUMO_MCP_SERVER_NAME,
   tsukumoToolFullName,

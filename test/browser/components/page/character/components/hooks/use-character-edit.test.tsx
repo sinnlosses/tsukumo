@@ -1,12 +1,12 @@
 import { act, cleanup, renderHook } from "@testing-library/react"
-import { type ReactElement, type ReactNode } from "react"
+import type { ReactElement, ReactNode } from "react"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import {
   type CharacterEditModel,
   useCharacterEdit,
 } from "../../../../../../../src/browser/components/page/character/components/hooks/use-character-edit.ts"
-import { type CharacterPackEntry } from "../../../../../../../src/shared/character.ts"
+import type { CharacterPackEntry } from "../../../../../../../src/shared/character.ts"
 import {
   INITIAL_SESSION_STATE,
   type SessionState,

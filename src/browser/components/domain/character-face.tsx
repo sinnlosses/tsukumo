@@ -14,7 +14,7 @@
 // SVG も `<img>` で出す（差し色 `--outfit-accent` を効かせるための `Portrait` のインライン埋め込みは
 // 使わない。顔は表情でも衣装でも変わらない1枚なので、SVG が内蔵する既定色のまま出ればよい）。
 
-import { type ReactElement } from "react"
+import type { ReactElement } from "react"
 
 export type CharacterFaceProps = {
   /** `/character/<pack>/<file>` の URL。無ければ顔を出さない。 */

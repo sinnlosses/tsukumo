@@ -6,7 +6,7 @@
 // 置くのは `components/app/layout.tsx` の `<Layout>`（どの画面でも同じ帯が出る）。会話の画面の `<ConversationLayout>` の中に
 // 入れないのは、帯が会話の画面だけのものではないため。
 
-import { type ReactElement } from "react"
+import type { ReactElement } from "react"
 
 import { useScreenNav } from "./hooks/use-screen-nav.ts"
 import { PresentationalScreenNav } from "./presentational-screen-nav.tsx"

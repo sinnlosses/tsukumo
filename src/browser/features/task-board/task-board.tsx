@@ -5,9 +5,9 @@
 // ここに残すのは「フックを呼んで、受け取ったものを渡す」だけ。条件分岐も算出もここには
 // 置かない（増えたらフックか見た目のどちらかに寄せる）。
 
-import { type ReactElement } from "react"
+import type { ReactElement } from "react"
 
-import { type TaskSummaryResult } from "../../../shared/task-summary.ts"
+import type { TaskSummaryResult } from "../../../shared/task-summary.ts"
 import { BoardCloseContext } from "./board-close.tsx"
 import { useTaskBoard } from "./hooks/use-task-board.ts"
 import { PresentationalTaskBoard } from "./presentational-task-board.tsx"

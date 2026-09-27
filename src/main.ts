@@ -16,11 +16,11 @@ import process from "node:process"
 import { createCurrentCharacter } from "./current-character.ts"
 import { type Config, VIEW_PORT_ENV_NAME } from "./server/core/config.ts"
 import { createOrcaHost } from "./server/host/adapter/orca-host.ts"
-import { type Host } from "./server/host/core/host.ts"
+import type { Host } from "./server/host/core/host.ts"
 import { readFakeSession } from "./server/session-driver/adapter/fake-driver.ts"
 import { createPromptImageShelf } from "./server/session-driver/core/prompt-image-shelf.ts"
 import { createTokenUsageLog } from "./server/token-usage/adapter/token-usage-log.ts"
-import { readUiBundle } from "./server/view-server/adapter/bundle.ts"
+import { builtUiDir, readUiBundle } from "./server/view-server/adapter/bundle.ts"
 import {
   resolveViewPort,
   resolveViewPortFallbackBase,
@@ -54,7 +54,7 @@ export async function run(config: Config, launch: LaunchOptions): Promise<number
   // `pnpm run build` だけ。無ければページが動かないので、ここは
   // 起動時の前提不足として即時終了する（理由に `pnpm run build` を添える。理由が無いと、
   // 起動できない側は何を打てばよいか分からない）。
-  const built = await readUiBundle()
+  const built = await readUiBundle(builtUiDir())
   if (!built.ok) {
     process.stderr.write(`tsukumo: ブラウザ側の成果物を読めない\n${built.reason}\n`)
     return 1

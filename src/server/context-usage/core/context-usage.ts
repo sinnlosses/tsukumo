@@ -15,9 +15,9 @@ import {
   type ContextUsageReport,
   UNAVAILABLE_CONTEXT_USAGE,
 } from "../../../shared/context-usage.ts"
-import { type SessionState } from "../../../shared/session-state.ts"
-import { type TokenUsageMode } from "../../../shared/token-usage.ts"
-import { type SessionDriver } from "../../session-driver/core/session-driver.ts"
+import type { SessionState } from "../../../shared/session-state.ts"
+import type { TokenUsageMode } from "../../../shared/token-usage.ts"
+import type { SessionDriver } from "../../session-driver/core/session-driver.ts"
 
 /**
  * 1セッションぶんの記録（書き出す行そのものではない）。`at` はエポックミリ秒で、

@@ -23,7 +23,7 @@
 
 import { sumBy } from "remeda"
 
-import { type RevealTiming } from "../reveal-speed.ts"
+import type { RevealTiming } from "../reveal-speed.ts"
 
 /** 見せる範囲を進められる要素。`clip-path` と `opacity` を持つもの（レポートの塊は全部これ）。 */
 export type RevealElement = HTMLElement | SVGElement

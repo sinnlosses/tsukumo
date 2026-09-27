@@ -8,8 +8,8 @@
 // ——規約の表に無い見せ方——を落とさない）。class 名そのものは無害で、危ない経路
 // （`script` の除去・`href` のスキーム・`style` の値）は `sanitize-schema.ts` が別に見る。
 
-import { type JSX, type ReactElement, type ReactNode } from "react"
-import { type ExtraProps } from "react-markdown"
+import type { JSX, ReactElement, ReactNode } from "react"
+import type { ExtraProps } from "react-markdown"
 
 import {
   REPORT_DRAWN_MARK_NAMES,

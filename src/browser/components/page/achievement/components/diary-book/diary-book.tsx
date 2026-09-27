@@ -16,14 +16,14 @@ import { Heading } from "../../../../../components/ui/heading/heading.tsx"
 import { Text } from "../../../../../components/ui/text/text.tsx"
 import { VStack } from "../../../../../components/ui/v-stack/v-stack.tsx"
 import styles from "../../achievement.module.css"
-import { type AchievementReviewButton } from "../../hooks/use-achievement.ts"
-import {
-  type DiaryBookBadge,
-  type DiaryBookBookmark,
-  type DiaryBookModel,
-  type DiaryBookPage,
-  type DiaryBookTaskList,
-  type DiaryBookTocMonth,
+import type { AchievementReviewButton } from "../../hooks/use-achievement.ts"
+import type {
+  DiaryBookBadge,
+  DiaryBookBookmark,
+  DiaryBookModel,
+  DiaryBookPage,
+  DiaryBookTaskList,
+  DiaryBookTocMonth,
 } from "../../hooks/use-diary-book.ts"
 import { Lamp } from "../lantern-calendar/lantern-calendar.tsx"
 import { useFitDiaryPage } from "./hooks/use-fit-diary-page.ts"

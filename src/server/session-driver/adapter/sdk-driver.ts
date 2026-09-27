@@ -31,7 +31,7 @@ import {
 import { type EffortLevel, isEffortLevel, type PermissionMode } from "../../../shared/command.ts"
 import { expressionNames as toExpressionNames } from "../../../shared/expression-choice.ts"
 import { parsePromptImage, type PromptImage } from "../../../shared/prompt-image.ts"
-import { type SessionEvent } from "../../../shared/session-event.ts"
+import type { SessionEvent } from "../../../shared/session-event.ts"
 import { createReportReview, type ReportReview } from "../../report/core/report-review.ts"
 import { createReportGate, type ReportGate } from "../../report/core/report-tool.ts"
 import { createUsageReviewIntake } from "../../usage-review/core/usage-review-tool.ts"
@@ -47,11 +47,7 @@ import {
   TSUKUMO_MCP_SERVER_NAME,
 } from "../core/sdk-message.ts"
 import { withSelfStartedTurns } from "../core/self-started-turn.ts"
-import {
-  type SessionDriver,
-  type SessionDriverOptions,
-  type SessionMode,
-} from "../core/session-driver.ts"
+import type { SessionDriver, SessionDriverOptions, SessionMode } from "../core/session-driver.ts"
 import { createSessionTitleIntake, type SessionTitleIntake } from "../core/session-title.ts"
 import { childProcessEnv, isVisibleOutputNudge } from "../core/visible-output-nudge.ts"
 import { readClaudeAccountTier } from "./claude-account.ts"

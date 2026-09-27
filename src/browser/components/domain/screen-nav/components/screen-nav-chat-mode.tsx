@@ -11,10 +11,10 @@
 
 import clsx from "clsx"
 import { Briefcase, Coffee } from "lucide-react"
-import { type ReactElement } from "react"
+import type { ReactElement } from "react"
 
 import { Button } from "../../../../components/ui/button/button.tsx"
-import { type ScreenNavChatMode } from "../hooks/use-screen-nav.ts"
+import type { ScreenNavChatMode } from "../hooks/use-screen-nav.ts"
 import shellStyles from "../screen-nav.module.css"
 import styles from "./screen-nav-chat-mode.module.css"
 

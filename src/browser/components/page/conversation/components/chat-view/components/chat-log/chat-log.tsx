@@ -3,12 +3,12 @@
 // 付けるだけ。行は `hooks/use-chat-view.ts` が畳んだ形（`ChatRow`）で受け、判定を持たない。
 
 import clsx from "clsx"
-import { type ReactElement, type RefObject } from "react"
+import type { ReactElement, RefObject } from "react"
 
 import { Text } from "../../../../../../ui/text/text.tsx"
 import { PromptImageThumbnails } from "../../../prompt-image/prompt-image.tsx"
 import styles from "../../chat-view.module.css"
-import { type ChatRow } from "../../hooks/use-chat-view.ts"
+import type { ChatRow } from "../../hooks/use-chat-view.ts"
 import { ChatDay } from "../chat-day/chat-day.tsx"
 import { ChatSpeech } from "../chat-speech/chat-speech.tsx"
 import { ChatTime } from "../chat-time/chat-time.tsx"

@@ -19,7 +19,7 @@
 
 import { useState, type ToggleEvent } from "react"
 
-import { type MainViewQuestion } from "../../../../../../../../../shared/main-view.ts"
+import type { MainViewQuestion } from "../../../../../../../../../shared/main-view.ts"
 import {
   sortQuestionOptions,
   type Question,

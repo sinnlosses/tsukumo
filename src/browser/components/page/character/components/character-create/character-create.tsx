@@ -9,7 +9,7 @@
 // 置かない（増えたらフックか見た目のどちらかに寄せる）。`onClose` だけはフックの戻り値に
 // 含めず、ここで素通りさせる（`features/task-board/task-board.tsx` と同じ形）。
 
-import { type ReactElement } from "react"
+import type { ReactElement } from "react"
 
 import { useCharacterCreate } from "./hooks/use-character-create.ts"
 import { PresentationalCharacterCreate } from "./presentational-character-create.tsx"

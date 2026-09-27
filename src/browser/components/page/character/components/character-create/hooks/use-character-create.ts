@@ -28,7 +28,7 @@ import { readAccentColor } from "../../../../../../domain/appearance-color.ts"
 import { selectPack } from "../../../../../../stores/screen.tsx"
 import { useSession } from "../../../../../../stores/session.ts"
 import { readDataUrl } from "../../../../../../utils/data-url.ts"
-import { type AccentSwatchModel } from "../../hooks/use-character-edit.ts"
+import type { AccentSwatchModel } from "../../hooks/use-character-edit.ts"
 
 const NAME_HINT = "画面や吹き出しに出る名前"
 const ID_HINT =

@@ -7,9 +7,9 @@
 //
 // `node:` にも `document` にも触らない（他の shared と同じ制約）。
 
-import { type Expression } from "./expression.ts"
-import { type RecordedPromptImage } from "./prompt-image.ts"
-import { type RecordTime, type SessionRecord } from "./session-state.ts"
+import type { Expression } from "./expression.ts"
+import type { RecordedPromptImage } from "./prompt-image.ts"
+import type { RecordTime, SessionRecord } from "./session-state.ts"
 
 /**
  * 会話のログ1件。話したのがどちらかと文面、話した時刻を持つ（`docs/screen-design.md` 13.7 の

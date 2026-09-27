@@ -21,7 +21,7 @@ import { Select } from "../../../../components/ui/select/select.tsx"
 import { EFFORT_PLACEHOLDER_VALUE, effortLabel } from "../domain/effort-label.ts"
 import { MODEL_LABELS } from "../domain/model-label.ts"
 import { PERMISSION_MODE_LABELS } from "../domain/permission-mode-label.ts"
-import { type ScreenNavModelPermission } from "../hooks/use-screen-nav.ts"
+import type { ScreenNavModelPermission } from "../hooks/use-screen-nav.ts"
 import shellStyles from "../screen-nav.module.css"
 import styles from "./screen-nav-model-permission.module.css"
 

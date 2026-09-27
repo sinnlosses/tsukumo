@@ -103,12 +103,11 @@ export function builtUiDir(): string {
 }
 
 /**
- * 置いてある成果物を読む。`vite build` は起こさない（起動の経路はここだけを通る。
+ * `builtDir` にある成果物を読む。`vite build` は起こさない（起動の経路はここだけを通る。
  * `docs/design.md`「ビルドと依存」）。無ければ起動時の前提不足として扱えるよう、`pnpm run build` を促す理由を
  * 添えて失敗を返す。
  */
-export async function readUiBundle(): Promise<StoredBundleResult> {
-  const builtDir = builtUiDir()
+export async function readUiBundle(builtDir: string): Promise<StoredBundleResult> {
   const bundle = await readPair(builtDir)
   if (bundle === undefined) {
     return {
@@ -121,12 +120,12 @@ export async function readUiBundle(): Promise<StoredBundleResult> {
 }
 
 /**
- * ブラウザ側（`src/browser/`）を組み立てて `dist/browser/` に置き、置いたものを読んで返す。
+ * ブラウザ側（`src/browser/`）を組み立てて `outDir` に置き、置いたものを読んで返す。
  * JSX は `@vitejs/plugin-react` が変換し、CSS Modules は `vite build` が class 名を
  * ハッシュ化して JS 側の対応表に入れる（`docs/design.md`「ビルドと依存」）。
  */
-export function buildUiBundle(): Promise<BundleResult> {
-  return bundleWithVite(bundledFilePath(...UI_SOURCE_DIR_RELATIVE_PATH), builtUiDir())
+export function buildUiBundle(outDir: string): Promise<BundleResult> {
+  return bundleWithVite(bundledFilePath(...UI_SOURCE_DIR_RELATIVE_PATH), outDir)
 }
 
 /**

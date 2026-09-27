@@ -21,7 +21,7 @@ import { HStack } from "../../../../../../ui/h-stack/h-stack.tsx"
 import { PlusIcon, TrashIcon, UploadIcon } from "../../../../../../ui/icon/icon.tsx"
 import { Text } from "../../../../../../ui/text/text.tsx"
 import styles from "../../../../character.module.css"
-import { type PortraitCardModel } from "../../../hooks/use-character-edit.ts"
+import type { PortraitCardModel } from "../../../hooks/use-character-edit.ts"
 import { PortraitClearConfirm } from "../portrait-clear-confirm/portrait-clear-confirm.tsx"
 
 /**

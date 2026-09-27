@@ -15,9 +15,9 @@
 
 import { type ClientContext, type ClientLink, createORPCClient } from "@orpc/client"
 import { RPCLink } from "@orpc/client/websocket"
-import { type ContractRouterClient } from "@orpc/contract"
+import type { ContractRouterClient } from "@orpc/contract"
 
-import { type frameContract } from "../../shared/contract/frame.ts"
+import type { frameContract } from "../../shared/contract/frame.ts"
 import { parseServerFrame, type ServerFrame } from "../../shared/frame.ts"
 
 const RECONNECT_INITIAL_DELAY_MS = 500

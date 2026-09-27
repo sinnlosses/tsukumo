@@ -48,11 +48,11 @@ import {
   parseCharacterDefinition,
 } from "../../../shared/character-definition.ts"
 import { type FaceImage, faceFileName, parseFaceImage } from "../../../shared/character-face.ts"
-import { type CharacterPackRemoval } from "../../../shared/character.ts"
-import {
-  type CharacterCreate,
-  type CharacterDelete,
-  type CharacterEdit,
+import type { CharacterPackRemoval } from "../../../shared/character.ts"
+import type {
+  CharacterCreate,
+  CharacterDelete,
+  CharacterEdit,
 } from "../../../shared/contract/character-pack.ts"
 import {
   type Expression,

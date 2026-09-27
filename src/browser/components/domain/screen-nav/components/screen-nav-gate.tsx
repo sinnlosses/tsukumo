@@ -6,9 +6,9 @@
 // class を選ぶ分岐だけで、「どれがいまの画面か」は `hooks/use-screen-nav.ts` が畳んである。
 
 import clsx from "clsx"
-import { type ReactElement } from "react"
+import type { ReactElement } from "react"
 
-import { type ScreenNavGate as Gate } from "../hooks/use-screen-nav.ts"
+import type { ScreenNavGate as Gate } from "../hooks/use-screen-nav.ts"
 import shellStyles from "../screen-nav.module.css"
 import styles from "./screen-nav-gate.module.css"
 

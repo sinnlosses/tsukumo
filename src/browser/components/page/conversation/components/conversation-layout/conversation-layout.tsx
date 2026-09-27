@@ -16,7 +16,7 @@
 // ここに残すのは「フックを呼んで、受け取ったものを渡す」だけ。条件分岐も算出もここには
 // 置かない（増えたらフックか見た目のどちらかに寄せる）。
 
-import { type ReactElement, type ReactNode } from "react"
+import type { ReactElement, ReactNode } from "react"
 
 import { useConversationLayout } from "./hooks/use-conversation-layout.ts"
 import { PresentationalConversationLayout } from "./presentational-conversation-layout.tsx"

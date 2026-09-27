@@ -15,7 +15,7 @@ import { useState, type ReactElement } from "react"
 import { TrashIcon } from "../../../../../../ui/icon/icon.tsx"
 import { Text } from "../../../../../../ui/text/text.tsx"
 import styles from "../../../../character.module.css"
-import { type CharacterDeleteBandModel } from "../../../hooks/use-character-edit.ts"
+import type { CharacterDeleteBandModel } from "../../../hooks/use-character-edit.ts"
 import { CharacterDeleteConfirm } from "../character-delete-confirm/character-delete-confirm.tsx"
 
 export function CharacterDelete(props: {

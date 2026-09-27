@@ -8,7 +8,7 @@
 // ここに残すのは「フックを呼んで、受け取ったものを渡す」だけ。条件分岐も算出もここには
 // 置かない（増えたらフックか見た目のどちらかに寄せる）。
 
-import { type ReactElement } from "react"
+import type { ReactElement } from "react"
 
 import { useQuestionRecord, type QuestionRecordProps } from "./hooks/use-question-record.ts"
 import { PresentationalQuestionRecord } from "./presentational-question-record.tsx"

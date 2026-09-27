@@ -4,10 +4,10 @@
 //
 // 前のセッションを組み直した発言（時刻が `unknown`）には何も出さない（docs/screen-design.md 13.7）。
 
-import { type ReactElement } from "react"
+import type { ReactElement } from "react"
 
 import styles from "../../chat-view.module.css"
-import { type ChatTimeStamp } from "../../hooks/use-chat-view.ts"
+import type { ChatTimeStamp } from "../../hooks/use-chat-view.ts"
 
 export function ChatTime(props: { readonly time: ChatTimeStamp }): ReactElement | null {
   if (props.time.kind === "unknown") {

@@ -12,8 +12,8 @@
 
 import { isPlainObject } from "remeda"
 
-import { type DailyAchievement } from "../../../shared/achievement.ts"
-import { type CharacterDefinition } from "../../../shared/character-definition.ts"
+import type { DailyAchievement } from "../../../shared/achievement.ts"
+import type { CharacterDefinition } from "../../../shared/character-definition.ts"
 import {
   VISIT_SPEAKERS,
   type VisitScript,
@@ -21,8 +21,8 @@ import {
   type VisitSpeaker,
 } from "../../../shared/character-visit.ts"
 import { type ExpressionChoice, expressionChoices } from "../../../shared/expression-choice.ts"
-import { type SessionEvent } from "../../../shared/session-event.ts"
-import { type SessionRecord, type SessionState } from "../../../shared/session-state.ts"
+import type { SessionEvent } from "../../../shared/session-event.ts"
+import type { SessionRecord, SessionState } from "../../../shared/session-state.ts"
 import { isWaiting, type VisitWait } from "./visit-timing.ts"
 
 /** 台本を書かせるモデル（軽いもの。仕事のセッションのモデルとは別に決める）。 */

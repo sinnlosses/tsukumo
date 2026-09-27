@@ -26,7 +26,7 @@
 // ここに残すのは「フックを呼んで、受け取ったものを渡す」だけ。条件分岐も算出もここには
 // 置かない（増えたらフックか見た目のどちらかに寄せる）。
 
-import { type ReactElement } from "react"
+import type { ReactElement } from "react"
 
 import { useChatView } from "./hooks/use-chat-view.ts"
 import { PresentationalChatView } from "./presentational-chat-view.tsx"

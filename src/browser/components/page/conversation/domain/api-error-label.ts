@@ -5,8 +5,8 @@
 // 綴り（`rate_limit` など）も一緒に出すのは描く側の仕事で、ここは語だけを持つ。語は
 // 「何が起きたか」を言い、直し方までは言わない（直し方は種類ごとに違い、tsukumo からは確かめられない）。
 
-import { type ApiErrorKind } from "../../../../../shared/api-trouble.ts"
-import { type TurnFailure } from "../../../../../shared/turn-failure.ts"
+import type { ApiErrorKind } from "../../../../../shared/api-trouble.ts"
+import type { TurnFailure } from "../../../../../shared/turn-failure.ts"
 
 const API_ERROR_LABEL = {
   authentication_failed: "認証が切れた",

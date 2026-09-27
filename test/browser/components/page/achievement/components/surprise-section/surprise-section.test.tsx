@@ -2,9 +2,9 @@ import { cleanup, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
 import { SurpriseSection } from "../../../../../../../src/browser/components/page/achievement/components/surprise-section/surprise-section.tsx"
-import {
-  type AchievementGraduation,
-  type AchievementMilestone,
+import type {
+  AchievementGraduation,
+  AchievementMilestone,
 } from "../../../../../../../src/shared/achievement.ts"
 
 afterEach(() => {

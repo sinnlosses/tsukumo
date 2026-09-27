@@ -2,7 +2,7 @@
 // 並べる。マスを押すと見ている日が変わる（見開きを開く口はまだ無い。別タスクで足す）。
 
 import clsx from "clsx"
-import { type ReactElement } from "react"
+import type { ReactElement } from "react"
 import { keys } from "remeda"
 
 import {
@@ -14,7 +14,7 @@ import { HStack } from "../../../../../components/ui/h-stack/h-stack.tsx"
 import { Heading } from "../../../../../components/ui/heading/heading.tsx"
 import { Text } from "../../../../../components/ui/text/text.tsx"
 import styles from "../../achievement.module.css"
-import { type AchievementCalendarView } from "../../hooks/use-achievement-calendar.ts"
+import type { AchievementCalendarView } from "../../hooks/use-achievement-calendar.ts"
 
 const WEEKDAY_HEADS = ["月", "火", "水", "木", "金", "土", "日"] satisfies readonly string[]
 

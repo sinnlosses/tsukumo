@@ -1,17 +1,17 @@
 import { describe, expect, it } from "vitest"
 
 import { readFakeSession } from "../../../../src/server/session-driver/adapter/fake-driver.ts"
-import { type VisitGuest } from "../../../../src/server/visit/core/visit-guest.ts"
-import {
-  type VisitScriptDraft,
-  type VisitScriptOutcome,
-  type VisitScriptSource,
+import type { VisitGuest } from "../../../../src/server/visit/core/visit-guest.ts"
+import type {
+  VisitScriptDraft,
+  VisitScriptOutcome,
+  VisitScriptSource,
 } from "../../../../src/server/visit/core/visit-script-writer.ts"
 import { VISIT_SCRIPT_TIMEOUT_MS } from "../../../../src/server/visit/core/visit-script.ts"
 import { QUICK_VISIT_TIMING, VISIT_TIMING } from "../../../../src/server/visit/core/visit-timing.ts"
 import { createVisitWatch } from "../../../../src/server/visit/core/visit-watch.ts"
-import { type CharacterVisit, type VisitScript } from "../../../../src/shared/character-visit.ts"
-import { type SessionEvent } from "../../../../src/shared/session-event.ts"
+import type { CharacterVisit, VisitScript } from "../../../../src/shared/character-visit.ts"
+import type { SessionEvent } from "../../../../src/shared/session-event.ts"
 import {
   applySessionEvent,
   INITIAL_SESSION_STATE,

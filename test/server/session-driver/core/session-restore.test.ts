@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { type Config } from "../../../../src/server/core/config.ts"
+import type { Config } from "../../../../src/server/core/config.ts"
 import {
   REPORT_TOOL_NAME,
   SPEAK_TOOL_NAME,
@@ -15,10 +15,10 @@ import {
   toRestoredEvents,
 } from "../../../../src/server/session-driver/core/session-restore.ts"
 import { DEFAULT_VIEW_PORT } from "../../../../src/server/view-server/core/port-resolution.ts"
-import { type Expression } from "../../../../src/shared/expression.ts"
+import type { Expression } from "../../../../src/shared/expression.ts"
 import { mainViewEntries } from "../../../../src/shared/main-view.ts"
 import { MAX_SESSION_CHOICES } from "../../../../src/shared/session-choice.ts"
-import { type SessionEvent } from "../../../../src/shared/session-event.ts"
+import type { SessionEvent } from "../../../../src/shared/session-event.ts"
 import { applySessionEvent, INITIAL_SESSION_STATE } from "../../../../src/shared/session-state.ts"
 
 // フィクスチャはすべて手で書いた架空のやり取り。実物の transcript は使わない

@@ -23,7 +23,7 @@ import { execFile } from "node:child_process"
 
 import { isObjectType, isPlainObject } from "remeda"
 
-import { type Host, type HostResult } from "../core/host.ts"
+import type { Host, HostResult } from "../core/host.ts"
 
 const ORCA_COMMAND = "orca"
 

@@ -10,7 +10,7 @@
 // `character-create.tsx`）。
 
 import clsx from "clsx"
-import { type ReactElement } from "react"
+import type { ReactElement } from "react"
 
 import { Button } from "../../../../ui/button/button.tsx"
 import { Dialog } from "../../../../ui/dialog/dialog.tsx"
@@ -20,7 +20,7 @@ import { VStack } from "../../../../ui/v-stack/v-stack.tsx"
 import styles from "../../character.module.css"
 import { AccentSwatch } from "../accent-swatch/accent-swatch.tsx"
 import { PortraitDrop } from "./components/portrait-drop/portrait-drop.tsx"
-import { type CharacterCreateModel } from "./hooks/use-character-create.ts"
+import type { CharacterCreateModel } from "./hooks/use-character-create.ts"
 
 export type PresentationalCharacterCreateProps = CharacterCreateModel & {
   readonly onClose: () => void

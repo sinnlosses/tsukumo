@@ -11,10 +11,10 @@ import {
   parseChatConsolidationResult,
   readChatTopics,
 } from "../../../../src/server/chat/core/chat-consolidation.ts"
-import {
-  type ChatSummary,
-  type ChatSummaryRecord,
-  type ChatUnconsolidatedEntry,
+import type {
+  ChatSummary,
+  ChatSummaryRecord,
+  ChatUnconsolidatedEntry,
 } from "../../../../src/server/session-driver/core/session-driver.ts"
 
 // 畳む行・あらすじ・エピソードはすべて手で書いた架空のもの（docs/coding-standards.md

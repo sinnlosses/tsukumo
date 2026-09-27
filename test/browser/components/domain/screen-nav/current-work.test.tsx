@@ -4,9 +4,9 @@ import { afterEach, describe, expect, it } from "vitest"
 import { ScreenNav } from "../../../../../src/browser/components/domain/screen-nav/screen-nav.tsx"
 import { parseHash } from "../../../../../src/browser/stores/location-hash.ts"
 import { useQuestionScroll } from "../../../../../src/browser/stores/question-scroll.ts"
-import { type BackgroundTask } from "../../../../../src/shared/background-task.ts"
-import { type PendingAsk } from "../../../../../src/shared/pending-ask.ts"
-import { type Question } from "../../../../../src/shared/question.ts"
+import type { BackgroundTask } from "../../../../../src/shared/background-task.ts"
+import type { PendingAsk } from "../../../../../src/shared/pending-ask.ts"
+import type { Question } from "../../../../../src/shared/question.ts"
 import {
   INITIAL_SESSION_STATE,
   type SessionState,

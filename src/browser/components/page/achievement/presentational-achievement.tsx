@@ -2,7 +2,7 @@
 // そのまま各区画へ配るだけ。並べる順は `docs/screen-design.md` 13.10「並べるもの」のとおり
 // （日の切り替え → 日記の区画 → しおり → 小さな驚き → 灯りの暦）。
 
-import { type ReactElement } from "react"
+import type { ReactElement } from "react"
 
 import { Heading } from "../../../components/ui/heading/heading.tsx"
 import { Text } from "../../../components/ui/text/text.tsx"
@@ -13,9 +13,9 @@ import { DiaryBook } from "./components/diary-book/diary-book.tsx"
 import { DiarySection } from "./components/diary-section/diary-section.tsx"
 import { LanternCalendar } from "./components/lantern-calendar/lantern-calendar.tsx"
 import { SurpriseSection } from "./components/surprise-section/surprise-section.tsx"
-import { type AchievementCalendarView } from "./hooks/use-achievement-calendar.ts"
-import { type UseAchievementResult } from "./hooks/use-achievement.ts"
-import { type DiaryBookModel } from "./hooks/use-diary-book.ts"
+import type { AchievementCalendarView } from "./hooks/use-achievement-calendar.ts"
+import type { UseAchievementResult } from "./hooks/use-achievement.ts"
+import type { DiaryBookModel } from "./hooks/use-diary-book.ts"
 
 const UNAVAILABLE_NOTE = "このディレクトリでは成果を数えられない（main が読めない）"
 

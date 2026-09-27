@@ -5,7 +5,7 @@
 import { implement } from "@orpc/server"
 
 import { tokenUsageContract } from "../../../shared/contract/token-usage.ts"
-import { type TokenUsageDays, type TokenUsageSummary } from "../../../shared/token-usage-summary.ts"
+import type { TokenUsageDays, TokenUsageSummary } from "../../../shared/token-usage-summary.ts"
 
 /** この機能の手続きが使う口（中身は配線が渡す）。 */
 export type TokenUsageProcedurePorts = {

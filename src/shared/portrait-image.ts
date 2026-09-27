@@ -11,7 +11,7 @@
 // 書き込む経路では allowlist をこの3つに絞る（外から届いたものをそのままディスクに
 // 置くため）。差し色が効くのはインラインで埋め込んだ SVG だけ（`characters/README.md`）。
 
-import { type Expression } from "./expression.ts"
+import type { Expression } from "./expression.ts"
 import { maxImageDataUrlLength, parseImageDataUrl } from "./image-data-url.ts"
 
 /** 画面から受け取れる立ち絵の形式。ファイル名の拡張子にもそのまま使う。 */

@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest"
 
-import { type CharacterSelection } from "../../../../src/server/character-pack/core/character-selection.ts"
-import {
-  type SessionDriver,
-  type SessionStart,
+import type { CharacterSelection } from "../../../../src/server/character-pack/core/character-selection.ts"
+import type {
+  SessionDriver,
+  SessionStart,
 } from "../../../../src/server/session-driver/core/session-driver.ts"
 import {
   createSessionLaunch,
@@ -11,7 +11,7 @@ import {
 } from "../../../../src/server/session/core/session-launch.ts"
 import { UNAVAILABLE_CONTEXT_USAGE } from "../../../../src/shared/context-usage.ts"
 import { BUILTIN_SESSION_DEFAULT } from "../../../../src/shared/session-default.ts"
-import { type SessionEvent } from "../../../../src/shared/session-event.ts"
+import type { SessionEvent } from "../../../../src/shared/session-event.ts"
 import { DEFAULT_VISIT_ENABLED } from "../../../../src/shared/visit.ts"
 import {
   characterChangedEvent,

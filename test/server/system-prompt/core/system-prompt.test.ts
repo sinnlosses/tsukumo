@@ -3,13 +3,13 @@ import { describe, expect, it } from "vitest"
 import { CHAT_MANNER_PROMPT } from "../../../../src/server/chat/core/chat-manner.ts"
 import { takeChatMemoryPromptParts } from "../../../../src/server/chat/core/chat-memory-prompt.ts"
 import { REPORT_NOTATION_PROMPT } from "../../../../src/server/report/core/report-notation.ts"
-import {
-  type ChatArchive,
-  type ChatArchiveRecentEntry,
-  type ChatSummary,
-  type ChatSummaryRecord,
-  type SessionMode,
-  type SessionStart,
+import type {
+  ChatArchive,
+  ChatArchiveRecentEntry,
+  ChatSummary,
+  ChatSummaryRecord,
+  SessionMode,
+  SessionStart,
 } from "../../../../src/server/session-driver/core/session-driver.ts"
 import { SPEECH_CADENCE_PROMPT } from "../../../../src/server/system-prompt/core/speech-cadence.ts"
 import {

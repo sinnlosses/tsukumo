@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
-import { type UseUsageReviewResult } from "../../../../../src/browser/components/page/token-usage/hooks/use-usage-review.ts"
+import type { UseUsageReviewResult } from "../../../../../src/browser/components/page/token-usage/hooks/use-usage-review.ts"
 import { PresentationalTokenUsage } from "../../../../../src/browser/components/page/token-usage/presentational-token-usage.tsx"
 import {
   EMPTY_TOKEN_USAGE_SUMMARY,

@@ -2,7 +2,7 @@ import { cleanup, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
 import { BookmarkSection } from "../../../../../../../src/browser/components/page/achievement/components/bookmark-section/bookmark-section.tsx"
-import { type DiaryBookmark } from "../../../../../../../src/shared/diary.ts"
+import type { DiaryBookmark } from "../../../../../../../src/shared/diary.ts"
 
 afterEach(() => {
   cleanup()

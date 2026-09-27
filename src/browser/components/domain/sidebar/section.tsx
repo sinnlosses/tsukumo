@@ -10,7 +10,7 @@
 // 開く操作なので、押せる範囲は見出しの文字と分けておく。
 
 import clsx from "clsx"
-import { type ReactElement, type ReactNode } from "react"
+import type { ReactElement, ReactNode } from "react"
 
 import { Button } from "../../../components/ui/button/button.tsx"
 import { Heading } from "../../../components/ui/heading/heading.tsx"

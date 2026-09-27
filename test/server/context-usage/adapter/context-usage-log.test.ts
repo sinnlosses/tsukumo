@@ -5,7 +5,7 @@ import { join } from "node:path"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import { createContextUsageLog } from "../../../../src/server/context-usage/adapter/context-usage-log.ts"
-import { type ContextUsageEntry } from "../../../../src/server/context-usage/core/context-usage.ts"
+import type { ContextUsageEntry } from "../../../../src/server/context-usage/core/context-usage.ts"
 import { CONTEXT_USAGE_FORMAT_VERSION } from "../../../../src/shared/context-usage-record.ts"
 import { contextUsage } from "../../../fixture/context-usage.ts"
 

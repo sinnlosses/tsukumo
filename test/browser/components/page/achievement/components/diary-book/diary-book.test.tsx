@@ -2,9 +2,9 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
 import { DiaryBook } from "../../../../../../../src/browser/components/page/achievement/components/diary-book/diary-book.tsx"
-import {
-  type DiaryBookModel,
-  type DiaryBookPage,
+import type {
+  DiaryBookModel,
+  DiaryBookPage,
 } from "../../../../../../../src/browser/components/page/achievement/hooks/use-diary-book.ts"
 
 /**

@@ -4,7 +4,7 @@
 // 起こしは `unref()` する——訪問は待ちのあいだの添え物なので、掛けた時計がプロセスの終わりを
 // 引き止めない（`main` のタスク一覧の見回りと同じ扱い）。
 
-import { type VisitClock } from "../core/visit-watch.ts"
+import type { VisitClock } from "../core/visit-watch.ts"
 
 export function createVisitClock(): VisitClock {
   return {

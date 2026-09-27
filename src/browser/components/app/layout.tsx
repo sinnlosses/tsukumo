@@ -7,7 +7,7 @@
 
 import { Activity, type ReactElement } from "react"
 
-import { type Screen } from "../../stores/location-hash.ts"
+import type { Screen } from "../../stores/location-hash.ts"
 import { useScreen } from "../../stores/screen.tsx"
 import { ScreenNav } from "../domain/screen-nav/screen-nav.tsx"
 import { Achievement } from "../page/achievement/achievement.tsx"

@@ -12,7 +12,7 @@
 // 整形は塊ごとに掛ける。逃げ道（`markdown` の塊）は Markdown として構文解析せず、行で見る
 // （フェンスの中は触らない。検査の段と同じ理由）。
 
-import { type ReportBlock, type ReportSection } from "./report-block.ts"
+import type { ReportBlock, ReportSection } from "./report-block.ts"
 
 /** 整形にかけるレポート。 */
 export type ReportTidyInput = {

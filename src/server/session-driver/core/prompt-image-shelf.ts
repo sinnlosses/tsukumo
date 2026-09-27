@@ -14,8 +14,8 @@
 
 import { sumBy } from "remeda"
 
-import { type PromptImage, type RecordedPromptImage } from "../../../shared/prompt-image.ts"
-import { type SessionRecord } from "../../../shared/session-state.ts"
+import type { PromptImage, RecordedPromptImage } from "../../../shared/prompt-image.ts"
+import type { SessionRecord } from "../../../shared/session-state.ts"
 
 /**
  * 棚に置く原寸の合計の大きさ（data URL の文字列の長さの合計）の上限。なぜ枚数ではなく

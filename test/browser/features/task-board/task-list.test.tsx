@@ -2,10 +2,7 @@ import { cleanup, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
 import { TaskList } from "../../../../src/browser/features/task-board/task-list.tsx"
-import {
-  type TaskSummaryItem,
-  type TaskSummaryResult,
-} from "../../../../src/shared/task-summary.ts"
+import type { TaskSummaryItem, TaskSummaryResult } from "../../../../src/shared/task-summary.ts"
 
 // フィクスチャはすべて手で書いた架空のタスク（develop/tasks.json の内容は会話ではないが、
 // テストのフィクスチャとしても実物は使わない）。

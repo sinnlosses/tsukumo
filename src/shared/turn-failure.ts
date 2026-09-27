@@ -4,7 +4,7 @@
 // 理由は型の決まった値だけで、SDK の `result` の `errors`（自由文）は運ばない
 // （会話の断片が混ざりうる。docs/coding-standards.md「会話内容の扱い」）。
 
-import { type ApiErrorKind } from "./api-trouble.ts"
+import type { ApiErrorKind } from "./api-trouble.ts"
 
 /**
  * `result` だけから分かる失敗の理由（`turn-finished` の `outcome` が `failed` のとき）。

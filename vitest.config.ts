@@ -12,5 +12,6 @@ export default defineConfig({
     setupFiles: ["./test/dom-environment.ts"],
     exclude: ["**/node_modules/**", "test/e2e/**"],
     env: { TZ: "UTC" },
+    maxWorkers: "30%",
   },
 })

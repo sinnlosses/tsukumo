@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest"
 
 import { reportUsageEntryOf } from "../../../../src/server/report/core/report-usage.ts"
-import { type ReportSection } from "../../../../src/shared/report-block.ts"
-import { type SessionEvent } from "../../../../src/shared/session-event.ts"
+import type { ReportSection } from "../../../../src/shared/report-block.ts"
+import type { SessionEvent } from "../../../../src/shared/session-event.ts"
 
 // 中身はすべて手で書いた架空のもの（docs/coding-standards.md「会話内容の扱い」）。
 function reportEvent(

@@ -23,7 +23,7 @@ import { Heading } from "../../../../../../ui/heading/heading.tsx"
 import { Text } from "../../../../../../ui/text/text.tsx"
 import { VStack } from "../../../../../../ui/v-stack/v-stack.tsx"
 import styles from "../../../../character.module.css"
-import { type CharacterDeleteBandModel } from "../../../hooks/use-character-edit.ts"
+import type { CharacterDeleteBandModel } from "../../../hooks/use-character-edit.ts"
 
 export type CharacterDeleteConfirmProps = {
   readonly band: Extract<CharacterDeleteBandModel, { readonly kind: "shown" }>

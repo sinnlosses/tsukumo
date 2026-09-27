@@ -5,11 +5,11 @@ import {
   type ChatConsolidationQuery,
   chatTopics,
 } from "../../../../src/server/chat/core/chat-consolidation.ts"
-import {
-  type ChatEpisodeDraft,
-  type ChatSummary,
-  type ChatUnconsolidatedBatch,
-  type ChatUnconsolidatedLimits,
+import type {
+  ChatEpisodeDraft,
+  ChatSummary,
+  ChatUnconsolidatedBatch,
+  ChatUnconsolidatedLimits,
 } from "../../../../src/server/session-driver/core/session-driver.ts"
 import { CHAT_MEMORY_BUDGET } from "../../../../src/shared/chat-memory-budget.ts"
 

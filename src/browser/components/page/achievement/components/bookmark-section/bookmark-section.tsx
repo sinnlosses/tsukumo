@@ -2,9 +2,9 @@
 // しおりの無い日記（終えたタスクが0の日）は区画ごと出さない——`bookmark` が `undefined`
 // （日記が無い）か `{ kind: "none" }`（しおりが無い）のときは何も描かない。
 
-import { type ReactElement } from "react"
+import type { ReactElement } from "react"
 
-import { type DiaryBookmark } from "../../../../../../shared/diary.ts"
+import type { DiaryBookmark } from "../../../../../../shared/diary.ts"
 import styles from "../../achievement.module.css"
 
 export type BookmarkSectionProps = {

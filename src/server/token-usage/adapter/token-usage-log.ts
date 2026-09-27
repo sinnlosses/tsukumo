@@ -26,11 +26,7 @@ import { TOKEN_USAGE_FORMAT_VERSION, type TokenUsageRecord } from "../../../shar
 import { appendJsonLine, dateFileNames, readJsonLines } from "../../adapter/lib/jsonl.ts"
 import { isoWithOffset, localDateKey } from "../../adapter/local-time.ts"
 import { tsukumoHomeDir } from "../../adapter/tsukumo-home.ts"
-import {
-  type TokenUsageEntry,
-  type TokenUsageLog,
-  type TokenUsagePeriod,
-} from "../core/token-usage.ts"
+import type { TokenUsageEntry, TokenUsageLog, TokenUsagePeriod } from "../core/token-usage.ts"
 
 /** 置き場のディレクトリ名（`~/.tsukumo/token-usage/`）。 */
 const TOKEN_USAGE_DIR_NAME = "token-usage"

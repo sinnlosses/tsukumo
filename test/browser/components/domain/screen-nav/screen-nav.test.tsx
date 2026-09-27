@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it } from "vitest"
 
 import { ScreenNav } from "../../../../../src/browser/components/domain/screen-nav/screen-nav.tsx"
 import { MODEL_ALIASES } from "../../../../../src/shared/command.ts"
-import { type PendingAsk } from "../../../../../src/shared/pending-ask.ts"
+import type { PendingAsk } from "../../../../../src/shared/pending-ask.ts"
 import {
   INITIAL_SESSION_STATE,
   type SessionInfo,

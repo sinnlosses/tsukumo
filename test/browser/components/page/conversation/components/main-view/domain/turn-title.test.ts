@@ -6,10 +6,7 @@ import {
   turnHistoryText,
   turnTitle,
 } from "../../../../../../../../src/browser/components/page/conversation/components/main-view/domain/turn-title.ts"
-import {
-  type MainViewStep,
-  type MainViewTurn,
-} from "../../../../../../../../src/shared/main-view.ts"
+import type { MainViewStep, MainViewTurn } from "../../../../../../../../src/shared/main-view.ts"
 
 // フィクスチャはすべて手で書いた架空の依頼とレポート（実物の会話は使わない）。
 

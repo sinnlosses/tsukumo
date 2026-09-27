@@ -4,12 +4,12 @@
 // 「機能の中を分ける」）。
 
 import clsx from "clsx"
-import { type ReactElement } from "react"
+import type { ReactElement } from "react"
 
 import { HStack } from "../../../../../../ui/h-stack/h-stack.tsx"
 import { Text } from "../../../../../../ui/text/text.tsx"
 import styles from "../../dispatch.module.css"
-import { type PendingAnswerModel } from "./hooks/use-pending-answer.ts"
+import type { PendingAnswerModel } from "./hooks/use-pending-answer.ts"
 
 export type PresentationalPendingAnswerProps = PendingAnswerModel
 

@@ -28,8 +28,8 @@
 // ターンごとの記録の線は変えない。 `src/shared/token-usage.ts` の行に鍵は1つも増えず、
 // `TOKEN_USAGE_FORMAT_VERSION` も据え置き。
 
-import { type ContextUsage } from "./context-usage.ts"
-import { type TokenUsageMode } from "./token-usage.ts"
+import type { ContextUsage } from "./context-usage.ts"
+import type { TokenUsageMode } from "./token-usage.ts"
 
 /**
  * 行の形の版（`token-usage` とは別のファイルに積むので、版も別に数える）。形を変えたら

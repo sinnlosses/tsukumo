@@ -3,15 +3,15 @@
 // ここの行へ委ねる。どれも駆動には渡らず、セッションも起こし直さない
 // （書いて、`character-changed` を流し直すだけ。`docs/design.md`「画面から作るときの置き場と受け取り方」）。
 
-import {
-  type CharacterCreate,
-  type CharacterDelete,
-  type CharacterEdit,
-  type characterPackContract,
+import type {
+  CharacterCreate,
+  CharacterDelete,
+  CharacterEdit,
+  characterPackContract,
 } from "../../../shared/contract/character-pack.ts"
 import { FRAME_ERROR_REASON } from "../../../shared/frame.ts"
-import { type SessionEvent } from "../../../shared/session-event.ts"
-import { type FeatureCommandTable, type WriteReceiver } from "../../core/command-receiver.ts"
+import type { SessionEvent } from "../../../shared/session-event.ts"
+import type { FeatureCommandTable, WriteReceiver } from "../../core/command-receiver.ts"
 
 export type CharacterPackCommandPorts = {
   /**

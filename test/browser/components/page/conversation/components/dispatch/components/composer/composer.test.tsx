@@ -4,8 +4,8 @@ import { afterEach, describe, expect, it } from "vitest"
 
 import { Composer } from "../../../../../../../../../src/browser/components/page/conversation/components/dispatch/components/composer/composer.tsx"
 import { useQuestionDraft } from "../../../../../../../../../src/browser/stores/question-answer.ts"
-import { type CharacterInfo } from "../../../../../../../../../src/shared/character.ts"
-import { type PendingAsk } from "../../../../../../../../../src/shared/pending-ask.ts"
+import type { CharacterInfo } from "../../../../../../../../../src/shared/character.ts"
+import type { PendingAsk } from "../../../../../../../../../src/shared/pending-ask.ts"
 import {
   INITIAL_SESSION_STATE,
   type SessionState,

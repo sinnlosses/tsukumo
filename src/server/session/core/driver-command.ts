@@ -10,8 +10,8 @@
 
 import { FRAME_ERROR_REASON } from "../../../shared/frame.ts"
 import { CHAT_NUDGE_PROMPT } from "../../chat/core/chat-nudge.ts"
-import { type DispatchResult } from "../../core/command-receiver.ts"
-import { type SessionDriver } from "../../session-driver/core/session-driver.ts"
+import type { DispatchResult } from "../../core/command-receiver.ts"
+import type { SessionDriver } from "../../session-driver/core/session-driver.ts"
 
 /** 受け付けなかったことを、定型文の理由だけで返す（駆動には触らない）。 */
 export function declined(reason: string): Promise<DispatchResult> {

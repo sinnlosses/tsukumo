@@ -16,12 +16,9 @@
 
 import { useEffect, useState } from "react"
 
-import { type ApiTrouble } from "../../../../../../../../../shared/api-trouble.ts"
-import {
-  type RateLimit,
-  type RateLimitBucket,
-} from "../../../../../../../../../shared/rate-limit.ts"
-import { type TurnProgress } from "../../../../../../../../../shared/session-state.ts"
+import type { ApiTrouble } from "../../../../../../../../../shared/api-trouble.ts"
+import type { RateLimit, RateLimitBucket } from "../../../../../../../../../shared/rate-limit.ts"
+import type { TurnProgress } from "../../../../../../../../../shared/session-state.ts"
 import { formatElapsed } from "../../../../../../../../domain/elapsed-time.ts"
 import { useQuestionAnswer } from "../../../../../../../../stores/question-answer.ts"
 import { useSession } from "../../../../../../../../stores/session.ts"

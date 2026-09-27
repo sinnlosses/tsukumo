@@ -12,7 +12,7 @@
 // 名前もひとことプロフィールも無ければその行を置かない（空の行を出さない。顔も
 // `<CharacterFace>` が何も描かない）。
 
-import { type ReactElement } from "react"
+import type { ReactElement } from "react"
 
 import { CharacterFace } from "../../../components/domain/character-face.tsx"
 import { Text } from "../../../components/ui/text/text.tsx"

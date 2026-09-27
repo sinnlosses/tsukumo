@@ -8,8 +8,8 @@
 import { fromKeys } from "remeda"
 
 import { characterAssetPath } from "./character-asset.ts"
-import { type CharacterBackground } from "./character-background.ts"
-import { type CharacterDefinition } from "./character-definition.ts"
+import type { CharacterBackground } from "./character-background.ts"
+import type { CharacterDefinition } from "./character-definition.ts"
 import { type ExpressionChoice, expressionChoices } from "./expression-choice.ts"
 import { type Expression, EXPRESSIONS, type Outfit, OUTFITS } from "./expression.ts"
 

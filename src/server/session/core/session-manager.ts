@@ -20,35 +20,35 @@ import {
   UNAVAILABLE_CONTEXT_USAGE,
 } from "../../../shared/context-usage.ts"
 import { FRAME_ERROR_REASON, PROTOCOL_VERSION, type ServerFrame } from "../../../shared/frame.ts"
-import { type SessionEvent } from "../../../shared/session-event.ts"
+import type { SessionEvent } from "../../../shared/session-event.ts"
 import {
   applySessionEvent,
   INITIAL_SESSION_STATE,
   type SessionState,
 } from "../../../shared/session-state.ts"
-import { type PreviousUsageReview, type UsageReviewFindings } from "../../../shared/usage-review.ts"
+import type { PreviousUsageReview, UsageReviewFindings } from "../../../shared/usage-review.ts"
 import { appendChatArchiveEntry } from "../../chat/core/chat-archive-entry.ts"
-import { type ChatConsolidationSource } from "../../chat/core/chat-consolidation-writer.ts"
+import type { ChatConsolidationSource } from "../../chat/core/chat-consolidation-writer.ts"
 import {
   type ContextUsageLog,
   createContextUsageRecorder,
 } from "../../context-usage/core/context-usage.ts"
-import { type DispatchResult } from "../../core/command-receiver.ts"
+import type { DispatchResult } from "../../core/command-receiver.ts"
 import { type ReportUsageLog, reportUsageEntryOf } from "../../report/core/report-usage.ts"
 import {
   type PromptImageShelf,
   releasedPromptImageIds,
 } from "../../session-driver/core/prompt-image-shelf.ts"
-import { type ChatArchive, type SessionDriver } from "../../session-driver/core/session-driver.ts"
+import type { ChatArchive, SessionDriver } from "../../session-driver/core/session-driver.ts"
 import {
   createTokenUsageRecorder,
   type TokenUsageLog,
   type TokenUsageRecorder,
 } from "../../token-usage/core/token-usage.ts"
 import { createVisitWatch, type VisitPorts, type VisitWatch } from "../../visit/core/visit-watch.ts"
-import { type CommandSession } from "./command-session.ts"
+import type { CommandSession } from "./command-session.ts"
 import { createEventBatch, type EventBatch } from "./event-batch.ts"
-import { type SessionLaunchRequest } from "./session-launch.ts"
+import type { SessionLaunchRequest } from "./session-launch.ts"
 
 export type SessionManagerOptions = {
   /** 現在時刻（エポックミリ秒）を返す関数（呼び出し側が時計を渡す。テストは偽の時計を渡す）。 */

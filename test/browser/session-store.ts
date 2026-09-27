@@ -9,7 +9,7 @@ import { isPlainObject } from "remeda"
 
 import { useSession } from "../../src/browser/stores/session.ts"
 import { PROTOCOL_VERSION } from "../../src/shared/frame.ts"
-import { type SessionState } from "../../src/shared/session-state.ts"
+import type { SessionState } from "../../src/shared/session-state.ts"
 
 /**
  * 部品が送ったコマンドの受け取り口。手続きの名前（`session.prompt` のように `.` で繋いだもの）を

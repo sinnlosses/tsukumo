@@ -6,7 +6,7 @@
 // `page` はページごと読み込み直す（状態はサーバ側の畳み込みが
 // 持っていて、繋ぎ直すと `hello` で戻ってくる）。
 
-import { type RefreshTarget } from "../../shared/frame.ts"
+import type { RefreshTarget } from "../../shared/frame.ts"
 import { nowEpochMilliseconds } from "../utils/clock.ts"
 
 /** `<link>` の href に足して取り直させるクエリ。値は時刻で、サーバ側では読まない。 */

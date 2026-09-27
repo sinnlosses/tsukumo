@@ -2,9 +2,9 @@
 // 置き場の基準は `docs/design.md` 2章「`lib/` と `utils/` に置く基準」— 名乗るのが tsukumo の
 // 語彙（立ち絵・キャラクター・表情・衣装）で、読み手が2つ以上の機能（`character-view` /
 // `chat-view`）なので `browser/domain/`。
-import { type CharacterInfo } from "../../shared/character.ts"
+import type { CharacterInfo } from "../../shared/character.ts"
 import { resolveExpressionLabel } from "../../shared/expression-choice.ts"
-import { type Expression, type Outfit } from "../../shared/expression.ts"
+import type { Expression, Outfit } from "../../shared/expression.ts"
 
 /** character.json に `name` が無い・定義自体が無いときの、キャラクターの既定の呼び名。 */
 export const DEFAULT_CHARACTER_NAME = "キャラクター"

@@ -7,7 +7,7 @@ import { startTransition, useEffect } from "react"
 import { create } from "zustand"
 
 import { PROTOCOL_VERSION, type ServerFrame } from "../../shared/frame.ts"
-import { type CommandClient } from "../../shared/rpc.ts"
+import type { CommandClient } from "../../shared/rpc.ts"
 import { SESSION_SOCKET_PATH } from "../../shared/session-socket.ts"
 import {
   applySessionEvent,

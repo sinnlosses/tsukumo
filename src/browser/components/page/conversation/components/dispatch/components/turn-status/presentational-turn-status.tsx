@@ -5,13 +5,13 @@
 // `<Composer>` の `<form>` の中に置くことを前提にする — 送るほう（`action.kind === "send"`）は
 // `type="submit"` で、押すと Composer の `onSubmit` がそのまま依頼を送る。
 
-import { type ReactElement } from "react"
+import type { ReactElement } from "react"
 
 import { Button } from "../../../../../../ui/button/button.tsx"
 import { HStack } from "../../../../../../ui/h-stack/h-stack.tsx"
 import { Text } from "../../../../../../ui/text/text.tsx"
 import styles from "../../dispatch.module.css"
-import { type TurnStatusModel } from "./hooks/use-turn-status.ts"
+import type { TurnStatusModel } from "./hooks/use-turn-status.ts"
 
 /** Command+Enter で送信できることを示す記号（`dispatch.module.css` が `::after` で描く）。 */
 const SEND_SHORTCUT_HINT = "⌘⏎"

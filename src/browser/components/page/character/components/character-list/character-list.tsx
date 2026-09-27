@@ -9,7 +9,7 @@
 // ストアを読んで行へ畳み、渡された `onCreate` をそのまま口に付けるだけ（振る舞いは「畳む」の
 // 1種類）なので、container / presenter には割らない（docs/design.md 2章「機能の中を分ける」）。
 
-import { type ReactElement } from "react"
+import type { ReactElement } from "react"
 
 import { EXPRESSIONS } from "../../../../../../shared/expression.ts"
 import { usePackHref } from "../../../../../stores/screen.tsx"

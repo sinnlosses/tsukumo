@@ -21,7 +21,7 @@
 
 import { useEffect, useState } from "react"
 
-import { type ChatLogEntry } from "../../../../../../../shared/chat-log.ts"
+import type { ChatLogEntry } from "../../../../../../../shared/chat-log.ts"
 import { nowEpochMilliseconds } from "../../../../../../utils/clock.ts"
 
 /** キャラクターの吹き出しどうしを最低これだけ空ける（ms）。 */

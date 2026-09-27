@@ -6,17 +6,17 @@
 // 選択肢の並びの下に別の行として出す（`docs/display.md` 4.2「許可と質問」）。
 
 import clsx from "clsx"
-import { type ReactElement } from "react"
+import type { ReactElement } from "react"
 
 import { Heading } from "../../../../../../../components/ui/heading/heading.tsx"
 import { Text } from "../../../../../../../components/ui/text/text.tsx"
 import { Markdown } from "../../markdown/markdown.tsx"
 import notationStyles from "../../markdown/report-notation.module.css"
-import {
-  type QuestionRecordAnswerRow,
-  type QuestionRecordModel,
-  type QuestionRecordPreviewRow,
-  type QuestionRecordQuestionModel,
+import type {
+  QuestionRecordAnswerRow,
+  QuestionRecordModel,
+  QuestionRecordPreviewRow,
+  QuestionRecordQuestionModel,
 } from "./hooks/use-question-record.ts"
 import styles from "./question-record.module.css"
 

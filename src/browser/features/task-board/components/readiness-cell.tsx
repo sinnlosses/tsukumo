@@ -2,9 +2,9 @@
 // 着手の判断に要らないので出さない）、判定しない status は依存をそのまま並べる。
 // 色だけで伝えないので READY / 待ち の文字も出す。
 
-import { type ReactElement } from "react"
+import type { ReactElement } from "react"
 
-import { type TaskReadiness } from "../../../../shared/task-summary.ts"
+import type { TaskReadiness } from "../../../../shared/task-summary.ts"
 import { Text } from "../../../components/ui/text/text.tsx"
 import { TaskIdList } from "./task-id-list.tsx"
 

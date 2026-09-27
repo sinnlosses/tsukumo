@@ -7,8 +7,8 @@
 // 質問は渡さない（`docs/chat-mode.md`「広げていないこと」）。会話の文面が引数として通るが、
 // ログには出さない（`docs/coding-standards.md`「会話内容の扱い」）。
 
-import { type SessionEvent } from "../../../shared/session-event.ts"
-import { type ChatArchive } from "../../session-driver/core/session-driver.ts"
+import type { SessionEvent } from "../../../shared/session-event.ts"
+import type { ChatArchive } from "../../session-driver/core/session-driver.ts"
 
 /**
  * イベント1件を雑談の会話のアーカイブへ渡す。拾うのは `chatLogEntries`

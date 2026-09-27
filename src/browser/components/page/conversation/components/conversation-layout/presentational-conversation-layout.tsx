@@ -15,15 +15,12 @@
 
 import clsx from "clsx"
 import { RotateCw } from "lucide-react"
-import { type ReactElement, type ReactNode } from "react"
+import type { ReactElement, ReactNode } from "react"
 
 import { Button } from "../../../../ui/button/button.tsx"
 import { LayoutResizer } from "./components/layout-resizer/layout-resizer.tsx"
 import styles from "./conversation-layout.module.css"
-import {
-  type NarrowPane,
-  type UseConversationLayoutResult,
-} from "./hooks/use-conversation-layout.ts"
+import type { NarrowPane, UseConversationLayoutResult } from "./hooks/use-conversation-layout.ts"
 
 export type PresentationalConversationLayoutProps = UseConversationLayoutResult & {
   readonly main: ReactNode

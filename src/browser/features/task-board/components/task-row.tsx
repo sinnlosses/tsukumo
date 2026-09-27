@@ -6,10 +6,10 @@
 // 値そのもので分かるので持たせない）。
 
 import clsx from "clsx"
-import { type ReactElement } from "react"
+import type { ReactElement } from "react"
 
 import { taskStatusClass } from "../domain/task-status.ts"
-import { type BoardRow } from "../hooks/use-task-board.ts"
+import type { BoardRow } from "../hooks/use-task-board.ts"
 import styles from "../task-board.module.css"
 import { ReadinessCell } from "./readiness-cell.tsx"
 import { TaskRunButton } from "./task-run-button.tsx"

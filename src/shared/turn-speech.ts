@@ -8,8 +8,8 @@
 //
 // `node:` にも `document` にも触らない（他の shared と同じ制約）。
 
-import { type Expression } from "./expression.ts"
-import { type SessionRecord } from "./session-state.ts"
+import type { Expression } from "./expression.ts"
+import type { SessionRecord } from "./session-state.ts"
 import { splitIntoTurns, turnIdOf } from "./turn.ts"
 
 /**
