@@ -4,14 +4,16 @@
 //
 // ここはファイルI/Oも `bd` も持たない。`bd` を起こして JSON を検証するのは `readBeadsIssues`。
 
-import { sortBy } from "remeda"
+import { isIncludedIn, sortBy } from "remeda"
 
-import type { TaskSummaryItem } from "./task-summary.ts"
+import type { TaskLocation, TaskSummaryItem } from "./task-summary.ts"
 
 /**
- * `bd list --json` の1件のうち、この読み手が使う欄だけ。本文（description など）と作成者（owner）は
- * 持たない。`assignee` は着手した作業ツリーの名前で、`closedAt` は閉じた時刻（エポックミリ秒）。
- * どちらも Beads の側で無ければ `undefined`（外の世界の「無い」をそのまま写したもの）。
+ * `bd list --json` の1件のうち、この読み手が使う欄だけ。作成者（owner）は持たない。`assignee` は
+ * 着手した作業ツリーの名前で、`closedAt` は閉じた時刻（エポックミリ秒）。どちらも Beads の側で
+ * 無ければ `undefined`（外の世界の「無い」をそのまま写したもの）。`description`・
+ * `acceptanceCriteria`・`notes` は本文の枠の節（`composeBeadsBody` が組む）、`externalRef` は
+ * 置き場所（`TaskLocation`）に使う生の値で、無ければ空文字列／`undefined`。
  */
 export type BeadsIssue = {
   readonly id: string
@@ -23,6 +25,10 @@ export type BeadsIssue = {
   readonly assignee: string | undefined
   readonly createdAtEpochMilliseconds: number
   readonly closedAtEpochMilliseconds: number | undefined
+  readonly description: string
+  readonly acceptanceCriteria: string
+  readonly notes: string
+  readonly externalRef: string | undefined
 }
 
 /**
@@ -53,7 +59,16 @@ function taskSummaryItemOfBeadsIssue(issue: BeadsIssue): TaskSummaryItem {
     loopable: labelValueOf(issue.labels, LOOPABLE_LABEL_PREFIX),
     dependencies: issue.blockedBy.map(taskIdOfBeadsId),
     assignee: issue.assignee,
+    body: composeBeadsBody(issue.description, issue.acceptanceCriteria, issue.notes),
+    location: locationOfBeadsIssue(issue),
   }
+}
+
+/** 課題の `external_ref` が `https://` で始まる URL のときだけそれを置き場所にする。 */
+function locationOfBeadsIssue(issue: BeadsIssue): TaskLocation {
+  return issue.externalRef !== undefined && issue.externalRef.startsWith("https://")
+    ? { kind: "issue", url: issue.externalRef }
+    : { kind: "none" }
 }
 
 /** 閉じた課題は `done`／`dropped` に、それ以外は開いた状態の読み替えに直す。 */
@@ -89,6 +104,72 @@ export function closedBeadsTaskSummariesBefore(
 export function taskIdOfBeadsId(beadsId: string): string {
   const digits = BEADS_NUMBERED_ID_PATTERN.exec(beadsId)?.[1]
   return digits === undefined ? beadsId : `T-${digits}`
+}
+
+/**
+ * 課題の `description`・`acceptanceCriteria`・`notes` を `task show` と同じ並びに組む。
+ * task-workflow の `beads.py` の `compose_body`・`_sections`（`taskfile.SECTION_HEADINGS`）の写しで、
+ * 枠の7節をこの順に必ず置き（中身が空でも見出しだけ出す）、枠の外の見出しはそのあと。`## 結果`
+ * （Beads の comment）は `bd list` に載らないので持たない。
+ */
+export function composeBeadsBody(description: string, acceptance: string, notes: string): string {
+  const { preamble, sections } = sectionsOf(description)
+  const contents = new Map(sections)
+  contents.set(ACCEPTANCE_HEADING, trimNewlines(acceptance))
+  contents.set(PLAN_HEADING, trimNewlines(notes))
+
+  const framedBlocks = SECTION_HEADINGS.map(
+    (heading) => [heading, contents.get(heading) ?? ""] as const,
+  )
+  const extraBlocks = sections.filter(([heading]) => !isIncludedIn(heading, SECTION_HEADINGS))
+  const blocks = [...framedBlocks, ...extraBlocks]
+
+  const parts = preamble.trim() === "" ? [] : [trimNewlines(preamble)]
+  for (const [heading, content] of blocks) {
+    parts.push(content === "" ? heading : `${heading}\n\n${content}`)
+  }
+  const text = parts.join("\n\n")
+  return text === "" ? "" : `${text}\n`
+}
+
+/** 本文の枠の7節（`docs/display.md`「タスクのモーダル」が指す `taskfile.SECTION_HEADINGS` の写し）。 */
+const PLAN_HEADING = "## やること"
+const ACCEPTANCE_HEADING = "## 完了条件"
+const SECTION_HEADINGS = [
+  "## 目的・背景",
+  "## 決まっていること（蒸し返さない）",
+  "## 解くべき論点",
+  PLAN_HEADING,
+  ACCEPTANCE_HEADING,
+  "## 注意",
+  "## 参考情報",
+] as const
+
+/** `(見出しより前, [(見出しの行, 中身), ...])`。見出しは行頭の `## `。中身は前後の改行だけ落とす。 */
+function sectionsOf(text: string): {
+  readonly preamble: string
+  readonly sections: readonly (readonly [string, string])[]
+} {
+  const preambleLines: string[] = []
+  const sections: { heading: string; lines: string[] }[] = []
+  for (const line of text.split("\n")) {
+    if (line.startsWith("## ")) {
+      sections.push({ heading: line.trimEnd(), lines: [] })
+    } else if (sections.length > 0) {
+      sections[sections.length - 1]?.lines.push(line)
+    } else {
+      preambleLines.push(line)
+    }
+  }
+  return {
+    preamble: preambleLines.join("\n"),
+    sections: sections.map((section) => [section.heading, trimNewlines(section.lines.join("\n"))]),
+  }
+}
+
+/** Python の `str.strip("\n")` と同じ（改行だけを前後から落とし、ほかの空白は残す）。 */
+function trimNewlines(value: string): string {
+  return value.replace(/^\n+/, "").replace(/\n+$/, "")
 }
 
 const CLOSED_STATUS = "closed"

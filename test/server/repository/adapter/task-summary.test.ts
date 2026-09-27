@@ -136,9 +136,21 @@ function known(...items: readonly Record<string, unknown>[]): Record<string, unk
   return { kind: "known", items }
 }
 
-/** 通知されるはずの1件（`difficulty`・`loopable` は `writeNewFormatTask` の既定値のまま）。 */
+/** `writeNewFormatTask` が書く本文（front matter より後ろ）。 */
+const WRITTEN_BODY = "\n## 目的\n\n架空の本文。\n"
+
+/** 通知されるはずの1件（`difficulty`・`loopable`・本文は `writeNewFormatTask` の既定値のまま）。 */
 function notified(id: string, summary: string, status: string): Record<string, unknown> {
-  return { id, summary, status, difficulty: "sonnet", loopable: "Y", dependencies: [] }
+  return {
+    id,
+    summary,
+    status,
+    difficulty: "sonnet",
+    loopable: "Y",
+    dependencies: [],
+    body: WRITTEN_BODY,
+    location: { kind: "file", path: `develop/task/${id}.md` },
+  }
 }
 
 const UNKNOWN: Record<string, unknown> = { kind: "unknown" }
@@ -340,6 +352,24 @@ describe("watchTaskSummary", () => {
   })
 })
 
+/** 本文・完了条件・やることを付けずに作った課題の本文（`composeBeadsBody` が組む枠だけの骨組み）。 */
+const BEADS_EMPTY_BODY = [
+  "## 目的・背景",
+  "",
+  "## 決まっていること（蒸し返さない）",
+  "",
+  "## 解くべき論点",
+  "",
+  "## やること",
+  "",
+  "## 完了条件",
+  "",
+  "## 注意",
+  "",
+  "## 参考情報",
+  "",
+].join("\n")
+
 // Beads 方式（`main` の先端の CLAUDE.md の `- タスクの置き場: beads`）。本物の `bd` を、`HOME` を
 // 一時ディレクトリへ向けて起こす（`test/fixture/beads-repository.ts`）。`bd init` は1回数秒かかる。
 describe("watchTaskSummary（Beads 方式）", () => {
@@ -405,6 +435,8 @@ describe("watchTaskSummary（Beads 方式）", () => {
             loopable: undefined,
             dependencies: [],
             assignee: undefined,
+            body: BEADS_EMPTY_BODY,
+            location: { kind: "none" },
           },
           {
             id: "T-002",
@@ -414,6 +446,8 @@ describe("watchTaskSummary（Beads 方式）", () => {
             loopable: "N",
             dependencies: [],
             assignee: undefined,
+            body: BEADS_EMPTY_BODY,
+            location: { kind: "none" },
           },
           {
             id: "T-003",
@@ -423,6 +457,8 @@ describe("watchTaskSummary（Beads 方式）", () => {
             loopable: undefined,
             dependencies: ["T-010"],
             assignee: "wt-test",
+            body: BEADS_EMPTY_BODY,
+            location: { kind: "none" },
           },
           {
             id: "T-010",
@@ -432,6 +468,8 @@ describe("watchTaskSummary（Beads 方式）", () => {
             loopable: "Y",
             dependencies: [],
             assignee: undefined,
+            body: BEADS_EMPTY_BODY,
+            location: { kind: "none" },
           },
         ),
       ])
@@ -460,6 +498,8 @@ describe("watchTaskSummary（Beads 方式）", () => {
           loopable: undefined,
           dependencies: [],
           assignee: undefined,
+          body: BEADS_EMPTY_BODY,
+          location: { kind: "none" },
         }),
         known({
           id: "T-001",
@@ -469,6 +509,8 @@ describe("watchTaskSummary（Beads 方式）", () => {
           loopable: undefined,
           dependencies: [],
           assignee: undefined,
+          body: BEADS_EMPTY_BODY,
+          location: { kind: "none" },
         }),
       ])
     },

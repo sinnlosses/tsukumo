@@ -13,9 +13,9 @@ import { isIncludedIn } from "remeda"
 /**
  * サイドバーのタスク一覧1件分。ファイルに出てくる順のまま持つ（status ごとにまとめない）。
  *
- * `difficulty`・`loopable`・`dependencies` は一覧の表（`src/browser/features/task-board/task-board.tsx`）が使う。
- * サイドバーの区画には出さないが、同じ読み取りから採れるものをここで揃えておく
- * （読み取りを2本に分けない）。
+ * `difficulty`・`loopable`・`dependencies`・`body`・`location` は一覧の表
+ * （`src/browser/features/task-board/task-board.tsx`）が使う。サイドバーの区画には出さないが、
+ * 同じ読み取りから採れるものをここで揃えておく（読み取りを2本に分けない）。
  */
 export type TaskSummaryItem = {
   readonly id: string
@@ -29,7 +29,24 @@ export type TaskSummaryItem = {
    * 常に `undefined`。Beads 方式でも着手していない・持ち主の無い課題では `undefined`。
    */
   readonly assignee: string | undefined
+  /**
+   * タスクの本文（Markdown）。ファイル方式は `develop/task/<ID>.md` の front matter より後ろ、
+   * Beads 方式は課題の `description`・`acceptance_criteria`・`notes` を `task show` と同じ順に
+   * 組んだもの（`composeBeadsBody`。`## 結果` は Beads の comment にあり `bd list` に載らないので
+   * 持たない）。本文が無い課題・ファイルでも空文字列で持つ（`undefined` にしない）。
+   */
+  readonly body: string
+  readonly location: TaskLocation
 }
+
+/**
+ * タスクの置き場所。ファイル方式は `develop/task/<ID>.md` のパス、Beads 方式は課題の
+ * `external_ref` が `https://` で始まる URL のときだけその URL。どちらも無ければ `none`。
+ */
+export type TaskLocation =
+  | { readonly kind: "file"; readonly path: string }
+  | { readonly kind: "issue"; readonly url: string }
+  | { readonly kind: "none" }
 
 /**
  * タスクの一覧が読めているかどうか。「まだ届いていない」（session-state.ts の
@@ -99,7 +116,13 @@ export type NewTaskFile = {
   readonly difficulty: "haiku" | "sonnet" | "opus"
   readonly loopable: "Y" | "N"
   readonly dependencies: readonly string[]
+  /** front matter を閉じる2つ目の `---` の行より後ろ（そのまま。空なら空文字列）。 */
+  readonly body: string
 }
+
+/** ファイル方式のタスクファイルの置き場所。`main` からの相対パス。末尾の `/` を付けて `git ls-tree`
+ * に渡すと、そのディレクトリ自身の1行ではなく直下の一覧になる。 */
+export const TASK_DIR_PATH = "develop/task/"
 
 const NEW_TASK_ID_PATTERN = /^T-\d{3,}$/
 const NEW_TASK_STATUS_VALUES = ["todo", "hold", "done", "dropped"] as const
@@ -172,7 +195,8 @@ export function parseNewTaskFile(fileName: string, content: string): NewTaskFile
     return undefined
   }
 
-  return { id, summary, status, difficulty, loopable, dependencies }
+  const body = lines.slice(NEW_TASK_HEADER_LINE_COUNT).join("\n")
+  return { id, summary, status, difficulty, loopable, dependencies, body }
 }
 
 /**
@@ -206,6 +230,8 @@ function taskSummaryItemOfNewTaskFile(
     loopable: task.loopable,
     dependencies: task.dependencies,
     assignee: undefined,
+    body: task.body,
+    location: { kind: "file", path: `${TASK_DIR_PATH}${task.id}.md` },
   }
 }
 

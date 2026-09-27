@@ -2,8 +2,9 @@
 // 閉じ込める（検査の「子プロセスを起こしてよい箇所」の許可はこのファイル）。
 // 起こすのは読むだけの `bd list` で、ネットワークにも出ない。
 //
-// `bd list --json` には作成者（owner）が入り、`--brief` を付けなければ本文も入る。どちらも
-// 境界で落とし、`BeadsIssue` の欄だけを運ぶ（ログにも出さない）。
+// `bd list --json` には作成者（owner）も入るが、境界で落とす（`BeadsIssue` の欄だけを運ぶ）。
+// 本文（description・acceptance_criteria・notes）と `external_ref` はタスクのモーダルの詳細が
+// 使うので運ぶ（会話内容ではないが、ログには出さない）。
 //
 // 例外を投げない（常駐プロセスは1回の失敗で落ちない）。`.beads` が無い・`bd` が無いときも `failed`。
 
@@ -28,7 +29,7 @@ export function readBeadsIssues(cwd: string): Promise<BeadsOutcome> {
   return new Promise((resolve) => {
     execFile(
       "bd",
-      ["list", "--json", "--all", "-n", "0", "--brief", "--flat"],
+      ["list", "--json", "--all", "-n", "0", "--flat"],
       { cwd, timeout: GIT_TIMEOUT_MS, maxBuffer: MAX_OUTPUT_BYTES, encoding: "utf8" },
       (error, stdout) => {
         if (error === null) {
@@ -51,6 +52,10 @@ const beadsIssueSchema = z.object({
   assignee: z.string().nullish(),
   created_at: z.iso.datetime({ offset: true }),
   closed_at: z.iso.datetime({ offset: true }).nullish(),
+  description: z.string().nullish(),
+  acceptance_criteria: z.string().nullish(),
+  notes: z.string().nullish(),
+  external_ref: z.string().nullish(),
 })
 
 function beadsOutcomeOf(stdout: string): BeadsOutcome {
@@ -86,6 +91,10 @@ function beadsIssueOf(issue: z.infer<typeof beadsIssueSchema>): BeadsIssue {
       issue.closed_at === null || issue.closed_at === undefined
         ? undefined
         : epochMillisecondsOf(issue.closed_at),
+    description: issue.description ?? "",
+    acceptanceCriteria: issue.acceptance_criteria ?? "",
+    notes: issue.notes ?? "",
+    externalRef: nonEmpty(issue.external_ref),
   }
 }
 

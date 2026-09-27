@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
 
+import type { TaskSummaryItem } from "../../../src/shared/repository/task-summary.ts"
 import type { BackgroundTask } from "../../../src/shared/session-driver/background-task.ts"
 import {
   MAX_MAIN_VIEW_TURNS,
@@ -757,7 +758,7 @@ describe("applySessionEvent", () => {
   it("tasks-changed で develop/tasks.json の一覧を持ち、届くまでは不明", () => {
     expect(INITIAL_SESSION_STATE.tasks).toEqual({ kind: "unknown" })
 
-    const items = [
+    const items: readonly TaskSummaryItem[] = [
       {
         id: "X-001",
         summary: "架空のタスク",
@@ -766,6 +767,8 @@ describe("applySessionEvent", () => {
         loopable: "Y",
         dependencies: [],
         assignee: undefined,
+        body: "",
+        location: { kind: "none" },
       },
     ]
     const withTasks = apply({ kind: "tasks-changed", tasks: { kind: "known", items } })

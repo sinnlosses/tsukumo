@@ -33,6 +33,8 @@ const TASKS: readonly TaskSummaryItem[] = [
     loopable: "Y",
     dependencies: [],
     assignee: undefined,
+    body: "",
+    location: { kind: "none" },
   },
   {
     id: "X-002",
@@ -42,6 +44,8 @@ const TASKS: readonly TaskSummaryItem[] = [
     loopable: "Y",
     dependencies: [],
     assignee: undefined,
+    body: "",
+    location: { kind: "none" },
   },
 ]
 

@@ -18,6 +18,8 @@ describe("taskReadiness", () => {
     loopable: undefined,
     dependencies,
     assignee: undefined,
+    body: "",
+    location: { kind: "none" },
   })
 
   const FINISHED = item("X-001", "done", [])
@@ -75,6 +77,8 @@ describe("unfinishedTaskIds", () => {
     loopable: undefined,
     dependencies: [],
     assignee: undefined,
+    body: "",
+    location: { kind: "none" },
   })
 
   it("done・dropped でないタスクのIDだけを集める", () => {
@@ -123,7 +127,30 @@ describe("parseNewTaskFile（3.4 の読み取りの見本）", () => {
       difficulty: "sonnet",
       loopable: "Y",
       dependencies: [],
+      body: "\n## 目的\n\n架空の本文。\n",
     })
+  })
+
+  it("本文は front matter を閉じる2つ目の `---` の行より後ろだけになる", () => {
+    const lines = [
+      "---",
+      "id: T-521",
+      "summary: 架空のタスク",
+      "status: todo",
+      "difficulty: sonnet",
+      "loopable: Y",
+      "dependencies: []",
+      "---",
+      "本文の1行目",
+    ]
+
+    expect(parseNewTaskFile("T-521.md", lines.join("\n"))?.body).toBe("本文の1行目")
+  })
+
+  it("front matter だけで本文が無ければ空文字列", () => {
+    const content = VALID_LINES.slice(0, 8).join("\n")
+
+    expect(parseNewTaskFile("T-521.md", content)?.body).toBe("")
   })
 
   it("summary は前後の空白を落とし、中身はそのまま（`` ` `` 始まり・`:` ・`#` ・`[` を含んでも）", () => {

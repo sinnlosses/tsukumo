@@ -61,7 +61,12 @@
             "status": "todo",
             "difficulty": "sonnet",
             "loopable": "Y",
-            "dependencies": []
+            "dependencies": [],
+            "body": "\n## 目的\n\n架空の本文で、実物のタスクではない。\n",
+            "location": {
+              "kind": "file",
+              "path": "develop/task/T-001.md"
+            }
           },
           {
             "id": "T-002",
@@ -69,7 +74,12 @@
             "status": "done",
             "difficulty": "sonnet",
             "loopable": "Y",
-            "dependencies": []
+            "dependencies": [],
+            "body": "\n## 目的\n\n架空の本文で、実物のタスクではない。\n",
+            "location": {
+              "kind": "file",
+              "path": "develop/task/T-002.md"
+            }
           }
         ]
       }

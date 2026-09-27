@@ -27,6 +27,8 @@ const TASKS: readonly TaskSummaryItem[] = [
     loopable: "Y",
     dependencies: [],
     assignee: undefined,
+    body: "",
+    location: { kind: "none" },
   },
   {
     id: "X-002",
@@ -36,6 +38,8 @@ const TASKS: readonly TaskSummaryItem[] = [
     loopable: "Y",
     dependencies: [],
     assignee: undefined,
+    body: "",
+    location: { kind: "none" },
   },
   {
     id: "X-003",
@@ -45,6 +49,8 @@ const TASKS: readonly TaskSummaryItem[] = [
     loopable: undefined,
     dependencies: [],
     assignee: undefined,
+    body: "",
+    location: { kind: "none" },
   },
   {
     id: "X-004",
@@ -54,6 +60,8 @@ const TASKS: readonly TaskSummaryItem[] = [
     loopable: "N",
     dependencies: [],
     assignee: undefined,
+    body: "",
+    location: { kind: "none" },
   },
 ]
 
@@ -98,6 +106,8 @@ describe("taskList", () => {
         loopable: undefined,
         dependencies: [],
         assignee: "wt-架空",
+        body: "",
+        location: { kind: "none" },
       },
     ]
     render(<TaskList tasks={known(items)} selectedStatus={undefined} />)
@@ -146,6 +156,8 @@ describe("taskList", () => {
         loopable: undefined,
         dependencies: [],
         assignee: undefined,
+        body: "",
+        location: { kind: "none" },
       },
     ]
     render(<TaskList tasks={known(items)} selectedStatus={undefined} />)

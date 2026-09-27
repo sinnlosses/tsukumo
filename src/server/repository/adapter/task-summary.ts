@@ -38,6 +38,7 @@ import { taskSummaryItemsOfBeadsIssues } from "../../../shared/repository/beads-
 import {
   parseNewTaskFile,
   taskSummaryItemsOfNewTaskFiles,
+  TASK_DIR_PATH,
   type NewTaskFile,
   type TaskSummaryResult,
 } from "../../../shared/repository/task-summary.ts"
@@ -65,9 +66,6 @@ export type TaskSummaryPollIntervals = {
 
 /** 完全な参照名で指す（`main` だけだと同名のタグやファイルと曖昧になりうる）。 */
 const MAIN_BRANCH_REF = "refs/heads/main"
-
-/** 末尾の `/` を付けて `git ls-tree` に渡すと、そのディレクトリ自身の1行ではなく直下の一覧になる。 */
-const TASK_DIR_PATH = "develop/task/"
 
 /** 台帳の置き場（`$(git rev-parse --path-format=absolute --git-common-dir)` の下）の中の、
  * 着手の印（claude-skills の `docs/task-workflow-redesign.md`）。 */

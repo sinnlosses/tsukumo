@@ -26,6 +26,8 @@ const TASKS: readonly TaskSummaryItem[] = [
     loopable: "Y",
     dependencies: [],
     assignee: undefined,
+    body: "",
+    location: { kind: "none" },
   },
   {
     id: "X-002",
@@ -35,6 +37,8 @@ const TASKS: readonly TaskSummaryItem[] = [
     loopable: undefined,
     dependencies: [],
     assignee: undefined,
+    body: "",
+    location: { kind: "none" },
   },
   {
     id: "X-003",
@@ -44,6 +48,8 @@ const TASKS: readonly TaskSummaryItem[] = [
     loopable: "N",
     dependencies: ["X-002"],
     assignee: undefined,
+    body: "",
+    location: { kind: "none" },
   },
 ]
 
@@ -75,6 +81,8 @@ describe("TaskBoard", () => {
       loopable: "Y",
       dependencies: [],
       assignee: undefined,
+      body: "",
+      location: { kind: "none" },
     }
     render(<TaskBoard tasks={known([...TASKS, doing])} open={true} onClose={() => {}} />)
 
@@ -93,6 +101,8 @@ describe("TaskBoard", () => {
       loopable: "Y",
       dependencies: [],
       assignee: "wt-架空",
+      body: "",
+      location: { kind: "none" },
     }
     render(<TaskBoard tasks={known([...TASKS, doing])} open={true} onClose={() => {}} />)
 
@@ -160,6 +170,8 @@ describe("TaskBoard", () => {
       loopable: "Y",
       dependencies: ["X-001", "X-002"],
       assignee: undefined,
+      body: "",
+      location: { kind: "none" },
     }
     render(<TaskBoard tasks={known([...TASKS, doing])} open={true} onClose={() => {}} />)
 

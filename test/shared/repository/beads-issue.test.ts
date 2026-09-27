@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 
 import {
   closedBeadsTaskSummariesBefore,
+  composeBeadsBody,
   taskIdOfBeadsId,
   taskSummaryItemsOfBeadsIssues,
   type BeadsIssue,
@@ -17,6 +18,10 @@ function issue(overrides: Partial<BeadsIssue> & Pick<BeadsIssue, "id" | "status"
     assignee: undefined,
     createdAtEpochMilliseconds: 0,
     closedAtEpochMilliseconds: undefined,
+    description: "",
+    acceptanceCriteria: "",
+    notes: "",
+    externalRef: undefined,
     ...overrides,
   }
 }
@@ -95,7 +100,21 @@ describe("taskSummaryItemsOfBeadsIssues", () => {
       loopable: "N",
       dependencies: ["T-002", "t-a1b2"],
       assignee: undefined,
+      body: composeBeadsBody("", "", ""),
+      location: { kind: "none" },
     })
+  })
+
+  it("external_ref が https:// の URL のときだけ置き場所にする", () => {
+    const [withUrl, withoutUrl, notHttps] = taskSummaryItemsOfBeadsIssues([
+      issue({ id: "t-020", status: "open", externalRef: "https://example.com/issues/1" }),
+      issue({ id: "t-021", status: "open" }),
+      issue({ id: "t-022", status: "open", externalRef: "example.com/issues/1" }),
+    ])
+
+    expect(withUrl?.location).toEqual({ kind: "issue", url: "https://example.com/issues/1" })
+    expect(withoutUrl?.location).toEqual({ kind: "none" })
+    expect(notHttps?.location).toEqual({ kind: "none" })
   })
 
   it("番号の順に並べ、番号でない ID は後ろに ID の順で付ける", () => {
@@ -135,5 +154,65 @@ describe("taskIdOfBeadsId", () => {
   it("番号の ID だけ T- に直し、番号でない ID はそのまま", () => {
     expect(taskIdOfBeadsId("t-123")).toBe("T-123")
     expect(taskIdOfBeadsId("t-a3f2")).toBe("t-a3f2")
+  })
+})
+
+// タスクファイルの枠の7節（`docs/display.md`「タスクのモーダル」が指す `taskfile.SECTION_HEADINGS`）。
+// `task show` と同じ順にこの7つを必ず出す（中身が空でも見出しだけ）。
+const FRAME_HEADINGS = [
+  "## 目的・背景",
+  "## 決まっていること（蒸し返さない）",
+  "## 解くべき論点",
+  "## やること",
+  "## 完了条件",
+  "## 注意",
+  "## 参考情報",
+] as const
+
+/** 枠の7節に `overrides` の中身を差し込んだ期待値。`extra` は枠の外の見出しを後ろに付ける。 */
+function expectedBody(
+  overrides: Partial<Record<(typeof FRAME_HEADINGS)[number], string>>,
+  extra: readonly string[] = [],
+): string {
+  const framed = FRAME_HEADINGS.map((heading) => {
+    const content = overrides[heading]
+    return content === undefined || content === "" ? heading : `${heading}\n\n${content}`
+  })
+  return `${[...framed, ...extra].join("\n\n")}\n`
+}
+
+describe("composeBeadsBody（task show と同じ並びに組む）", () => {
+  it("description・acceptance_criteria・notes がどれも無ければ、枠の7節だけの骨組みになる", () => {
+    expect(composeBeadsBody("", "", "")).toBe(expectedBody({}))
+  })
+
+  it("description だけあれば、対応する節にだけ中身が入る", () => {
+    const description = "## 目的・背景\n\n本文一行目\n"
+
+    expect(composeBeadsBody(description, "", "")).toBe(
+      expectedBody({ "## 目的・背景": "本文一行目" }),
+    )
+  })
+
+  it("acceptance_criteria（完了条件）だけあれば、その節にだけ中身が入る", () => {
+    expect(composeBeadsBody("", "完了条件の中身", "")).toBe(
+      expectedBody({ "## 完了条件": "完了条件の中身" }),
+    )
+  })
+
+  it("notes（やること）が空でも、ほかの節の中身はそのまま出る", () => {
+    const description = "## 目的・背景\n\n目的\n"
+
+    expect(composeBeadsBody(description, "完了条件", "")).toBe(
+      expectedBody({ "## 目的・背景": "目的", "## 完了条件": "完了条件" }),
+    )
+  })
+
+  it("枠の外の見出しは、枠の7節のあとにそのまま付く", () => {
+    const description = "## 目的・背景\n\n目的\n\n## 独自メモ\n\nメモ本文\n"
+
+    expect(composeBeadsBody(description, "", "")).toBe(
+      expectedBody({ "## 目的・背景": "目的" }, ["## 独自メモ\n\nメモ本文"]),
+    )
   })
 })

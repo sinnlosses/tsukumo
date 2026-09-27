@@ -14,6 +14,8 @@ function taskOf(id: string, status: string | undefined): TaskSummaryItem {
     loopable: undefined,
     dependencies: [],
     assignee: undefined,
+    body: "",
+    location: { kind: "none" },
   }
 }
 
