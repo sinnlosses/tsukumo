@@ -1230,6 +1230,7 @@ test/e2e/expected/` で意図した変化だけであることを確かめる �
 | タスクの一覧                                                    | 名指し無し（`opening` のみ）。ブラウザが繋がったあと cwd に `git init` して `develop/task/` を手書きし、`main` へコミットする足場 | `task-list`             |
 | 雑談の切り替えと忘却の区切り                                    | `chat-compact-boundary`                                                                                                           | `chat-compact-boundary` |
 | 復元した雑談の履歴                                              | `chat-restored-history`                                                                                                           | `chat-restored-history` |
+| 覚えていること（チップの開閉・編集・消す）                      | `chat-remembered-lines`                                                                                                           | `chat-remembered-lines` |
 | セッションの札と切り替え画面（札・↓ と Enter・狭い画面の「≡」） | `session-list`（作り物の一覧を `sessions-changed` で流す。右の欄は疑似セッションの `sessionDigests`）                             | `session-switch`        |
 | 途中のちらつき・止まって見える発話                              | `interim-flicker`・`narration-stuck`・`narration-flash`                                                                           | 載せない（目視）        |
 

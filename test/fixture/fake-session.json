@@ -2786,6 +2786,28 @@
           }
         }
       ]
+    },
+    {
+      "name": "chat-remembered-lines",
+      "steps": [
+        {
+          "afterMs": 0,
+          "event": {
+            "kind": "chat-mode-changed",
+            "chat": true
+          }
+        },
+        {
+          "afterMs": 0,
+          "event": {
+            "kind": "remembered-lines-changed",
+            "lines": [
+              "架空の1行",
+              "架空の長い1行架空の長い1行架空の長い1行架空の長い1行架空の長い1行"
+            ]
+          }
+        }
+      ]
     }
   ],
   "sessionDigests": {
