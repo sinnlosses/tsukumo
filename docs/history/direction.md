@@ -3,6 +3,25 @@
 `develop/direction.md` に書かれたユーザーからの指示を、タスク化した時点で**当時の記述のまま**
 ここへ移す（`docs/workflow.md`「指示メモ」参照）。新しいものを上に足す。**後から書き換えない。**
 
+## 2026-09-27 振り返りのドラフト2件と T-719 の扱い
+
+出典: `develop/draft/` のドラフト2件。ユーザーが2件とも選んで承認した。会話では、T-719 について「見送る」を選んだ（T-670 が見送りになり、移す候補が無くなったため）。
+
+（`develop/draft/2026-09-27-task-files-still-say-bun.md` から。T-802 になった）
+
+### 未完了のタスクファイルに残る `bun run` / `bun test` を pnpm + Vitest の言い方へ一括で直す（振り返り: T-726）
+
+- 札: 正典の不備
+- 根拠: テストの走らせ手が Bun から pnpm + Vitest へ移ったあとも、未完了（todo・hold）のタスクファイル34件に `bun run` / `bun test` が残っている。このセッションで着手した T-738・T-725・T-726 の3件すべてで、本文を読み替えるか直してから進める必要があった（T-738 はユーザーの指示で本文を直した。T-726 の委譲先は friction log に「前提ずれ」として書いた）
+- 出し先: 新しいタスク（未完了のタスクファイルの `bun run check` などを `pnpm run check` に置き換え、Bun にしか無い口（`--isolate`・`--parallel` など）に触れている本文は Vitest での意味に直す。`task` コマンドで1件ずつではなく1コミットで直す）
+
+（`develop/draft/2026-09-27-e2e-report-main-view-settle-flake.md` から。T-803 になった）
+
+### E2E `report-main-view` の「DOM が落ち着かない」揺れを扱う（振り返り: T-732）
+
+- 根拠: 黄 揺れ: T-732 の委譲先の1回目の `pnpm run check` で `test/e2e/report-main-view.test.ts` が `settledDom` の「DOM が落ち着かない」で落ち、単独の再実行と2回目の check では通った（T-732 は import のパスを移しただけで振る舞いは変えていない。受け入れの check は1回で通過）。委譲先はこれを friction log に書かず「なし」と報告した（黄 自己申告の不正確さ）
+- 出し先: タスク（`report-main-view` で DOM が落ち着かない原因を、T-793 が残す成果物で特定して直す。`pnpm run test:e2e` を続けて10回流して落ちないことを完了条件にする）。あわせて `/next-task` の依頼文に「検証の打ち直しで通ったことも friction log に `揺れ` で書く」と一言足すかを決める
+
 ## 2026-09-27 振り返りと T-725 のドラフト4件
 
 出典: `develop/draft/` のドラフト4件。ユーザーが4件すべてを選んで承認した。
