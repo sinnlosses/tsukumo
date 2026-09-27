@@ -869,7 +869,11 @@
               {
                 "tag": "div",
                 "attributes": {
-                  "data-latest": "true"
+                  "data-latest": "true",
+                  "data-interactive": "true",
+                  "data-selected": "true",
+                  "role": "button",
+                  "aria-pressed": "true"
                 },
                 "children": [
                   "つくもの精霊",

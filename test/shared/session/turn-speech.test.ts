@@ -31,7 +31,7 @@ describe("turnSpeeches（依頼を境目にセリフを分ける）", () => {
       speechRecord({ text: "2つ目のセリフ" }),
     ])
 
-    expect(turns.map((turn) => turn.speeches)).toEqual([
+    expect(turns.map((turn) => turn.speeches.map((speech) => speech.text))).toEqual([
       ["1つ目のセリフA", "1つ目のセリフB"],
       ["2つ目のセリフ"],
     ])
@@ -47,7 +47,11 @@ describe("turnSpeeches（依頼を境目にセリフを分ける）", () => {
       speechRecord({ text: "3つ目のセリフ" }),
     ])
 
-    expect(turns.map((turn) => turn.speeches)).toEqual([["1つ目のセリフ"], [], ["3つ目のセリフ"]])
+    expect(turns.map((turn) => turn.speeches.map((speech) => speech.text))).toEqual([
+      ["1つ目のセリフ"],
+      [],
+      ["3つ目のセリフ"],
+    ])
     expect(turns[1]?.expression).toBeUndefined()
   })
 
@@ -118,7 +122,7 @@ describe("turnSpeeches（通し番号）", () => {
     expect(speechTurns[0]).toEqual({
       id: PRE_REQUEST_TURN_ID,
       request: undefined,
-      speeches: ["依頼より前のセリフ"],
+      speeches: [{ text: "依頼より前のセリフ", expression: "default" }],
       expression: "default",
     })
   })
@@ -139,7 +143,12 @@ describe("turnSpeeches（通し番号）", () => {
 
     expect(speechTurns.map((turn) => turn.id)).toEqual(viewTurns.map((turn) => turn.id))
     expect(speechTurns).toEqual([
-      { id: 0, request: "1つ目の依頼", speeches: ["1つ目のセリフ"], expression: "default" },
+      {
+        id: 0,
+        request: "1つ目の依頼",
+        speeches: [{ text: "1つ目のセリフ", expression: "default" }],
+        expression: "default",
+      },
     ])
   })
 
@@ -164,7 +173,11 @@ describe("turnSpeeches（通し番号）", () => {
     )
     expect(viewTurns.map((turn) => turn.id)).toEqual(expectedIds)
     expect(
-      viewTurns.map((turn) => speechTurns.find((candidate) => candidate.id === turn.id)?.speeches),
+      viewTurns.map((turn) =>
+        speechTurns
+          .find((candidate) => candidate.id === turn.id)
+          ?.speeches.map((speech) => speech.text),
+      ),
     ).toEqual(expectedIds.map((id) => [`セリフ${String(id)}`]))
   })
 })

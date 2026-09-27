@@ -529,7 +529,11 @@
               {
                 "tag": "div",
                 "attributes": {
-                  "data-latest": "true"
+                  "data-latest": "true",
+                  "data-interactive": "true",
+                  "data-selected": "true",
+                  "role": "button",
+                  "aria-pressed": "true"
                 },
                 "children": [
                   "つくもの精霊",
@@ -539,7 +543,11 @@
               {
                 "tag": "div",
                 "attributes": {
-                  "data-latest": "false"
+                  "data-latest": "false",
+                  "data-interactive": "true",
+                  "data-selected": "false",
+                  "role": "button",
+                  "aria-pressed": "false"
                 },
                 "children": [
                   "終わったよ。まとめを届けるね。"
@@ -548,7 +556,11 @@
               {
                 "tag": "div",
                 "attributes": {
-                  "data-latest": "false"
+                  "data-latest": "false",
+                  "data-interactive": "true",
+                  "data-selected": "false",
+                  "role": "button",
+                  "aria-pressed": "false"
                 },
                 "children": [
                   "2つ目の合図。もう少しで終わりそう。"
@@ -557,7 +569,11 @@
               {
                 "tag": "div",
                 "attributes": {
-                  "data-latest": "false"
+                  "data-latest": "false",
+                  "data-interactive": "true",
+                  "data-selected": "false",
+                  "role": "button",
+                  "aria-pressed": "false"
                 },
                 "children": [
                   "1つ目の合図が届いた。まだ続けてるよ。"
@@ -566,7 +582,11 @@
               {
                 "tag": "div",
                 "attributes": {
-                  "data-latest": "false"
+                  "data-latest": "false",
+                  "data-interactive": "true",
+                  "data-selected": "false",
+                  "role": "button",
+                  "aria-pressed": "false"
                 },
                 "children": [
                   "いったんまとめたよ。"
@@ -575,7 +595,11 @@
               {
                 "tag": "div",
                 "attributes": {
-                  "data-latest": "false"
+                  "data-latest": "false",
+                  "data-interactive": "true",
+                  "data-selected": "false",
+                  "role": "button",
+                  "aria-pressed": "false"
                 },
                 "children": [
                   "分かった、区切りごとに知らせながら進めるね。"

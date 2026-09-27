@@ -275,7 +275,7 @@ describe("mainViewTurnsOf（続きのターンを2回以上含む並びを1件�
         expect(shownBodies(state)).toContain("架空の中間レポート")
       }
 
-      if (state.speeches.includes("架空のいちど目の続き")) {
+      if (state.speeches.some((speech) => speech.text === "架空のいちど目の続き")) {
         sawFirstSpeech = true
       }
       if (sawFirstSpeech) {
@@ -285,6 +285,9 @@ describe("mainViewTurnsOf（続きのターンを2回以上含む並びを1件�
 
     // 畳み終えたところで、中間・最終の両方のレポートが出ていて、吹き出しは2回ぶんとも残る。
     expect(shownBodies(state)).toEqual(["架空の中間レポート", "架空の最終レポート"])
-    expect(state.speeches).toEqual(["架空のいちど目の続き", "架空のにど目の続き"])
+    expect(state.speeches.map((speech) => speech.text)).toEqual([
+      "架空のいちど目の続き",
+      "架空のにど目の続き",
+    ])
   })
 })

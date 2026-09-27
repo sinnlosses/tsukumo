@@ -1,6 +1,6 @@
 // キャラクターのセリフ1件（docs/screen-design.md 13.7）。押すとその時の表情へ立ち絵が遡り、
 // 現れたばかりの1件はここで短く弾む。押し方の読み替え（ドラッグとの見分け・キー）は
-// `hooks/use-chat-speech.ts` が持つ。
+// `components/hooks/use-speech-press.ts`（仕事モードの吹き出し・セリフのログと共有）が持つ。
 //
 // `<button>` ではなく `role="button"` の `<div>`。ブラウザは `<button>` の中の文字を
 // ドラッグで掴ませず（`user-select` を何にしても選べないことを実機の Chrome で確認した）、
@@ -10,8 +10,8 @@
 import clsx from "clsx"
 import type { ReactElement } from "react"
 
+import { useSpeechPress } from "../../../hooks/use-speech-press.ts"
 import styles from "../../chat-view.module.css"
-import { useChatSpeech } from "./hooks/use-chat-speech.ts"
 
 export function ChatSpeech(props: {
   readonly text: string
@@ -19,7 +19,7 @@ export function ChatSpeech(props: {
   readonly pop: boolean
   readonly onToggle: () => void
 }): ReactElement {
-  const speech = useChatSpeech(props.onToggle)
+  const speech = useSpeechPress(props.onToggle)
 
   return (
     <div

@@ -9,17 +9,22 @@
 //
 // 吹き出しに出るのは `speak` で来たセリフだけ。 ツールの実行中に「作業中」の一言を重ねる
 // 経路は、表情の自動の上書きごと撤去した（docs/display.md 4.2）。
+//
+// 吹き出しを押すとそのセリフの表情へ立ち絵が遡る（docs/screen-design.md 13.7「会話を遡る」の
+// 仕事モードの対応物）。印・押し方の組み立ては `hooks/use-character-view.ts` が持ち、ここは
+// 受け取った値をそのまま `<Balloon>` へ渡すだけ。
 
 import type { ReactElement } from "react"
 
 import styles from "../../character-view.module.css"
+import type { CharacterViewSpeech } from "../../hooks/use-character-view.ts"
 import { Balloon } from "../balloon/balloon.tsx"
 
 const PLACEHOLDER_UTTERANCE = "（まだ発話がありません）"
 
 export type BalloonTrackProps = {
   /** 古い→新しいの順（`SessionState.speeches` と同じ並び）。 */
-  readonly speeches: readonly string[]
+  readonly speeches: readonly CharacterViewSpeech[]
   /**
    * セリフが1件も無いときに出す文言。undefined なら今のターン向けの既定文
    * （「まだ」＝これから来る、の言い方）。過去のターンには合わないので、呼び出し側が
@@ -41,6 +46,7 @@ export function BalloonTrack(props: BalloonTrackProps): ReactElement {
           text={props.emptyMessage ?? PLACEHOLDER_UTTERANCE}
           latest={true}
           speaker={undefined}
+          interaction={{ kind: "static" }}
         />
       </div>
     )
@@ -64,9 +70,10 @@ export function BalloonTrack(props: BalloonTrackProps): ReactElement {
       {newestFirst.map((speech, index) => (
         <Balloon
           key={oldestIndexOf(index)}
-          text={speech}
+          text={speech.text}
           latest={index === 0}
           speaker={index === 0 ? props.speakerName : undefined}
+          interaction={{ kind: "toggleable", selected: speech.selected, onToggle: speech.onToggle }}
         />
       ))}
     </div>

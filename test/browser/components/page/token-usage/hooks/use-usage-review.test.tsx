@@ -208,7 +208,13 @@ describe("useUsageReview（見直し中）", () => {
     const running = { kind: "running" as const, startedAt: 0, days: 7, stage: "model" as const }
 
     const withSpeech = renderUsageReview(
-      stateWith({ usageReview: running, speeches: ["ひとつめ", "ふたつめ"] }),
+      stateWith({
+        usageReview: running,
+        speeches: [
+          { text: "ひとつめ", expression: "default" },
+          { text: "ふたつめ", expression: "default" },
+        ],
+      }),
     )
     expect(
       withSpeech.result.current.kind === "running" ? withSpeech.result.current.speech : undefined,

@@ -1217,6 +1217,7 @@ test/e2e/expected/` で意図した変化だけであることを確かめる �
 | ターンの流れ（依頼 → ツール → report → 締めのセリフ）           | `report-tool`                                                                                                                     | `turn-flow`             |
 | 入力欄から送る（`prompt` が流れ、`request` が戻る）             | 名指し無し（`opening` → 送ると `report`）                                                                                         | `input-dispatch`        |
 | speak → キャラビューの吹き出し                                  | `closing-narration`・`question-multi`（セリフ3つ）                                                                                | `speak-bubble`          |
+| 会話を遡る（仕事モードの吹き出し・セリフのログ）                | `question-multi`（セリフ3つが表情違いで並ぶ。使い回し）                                                                           | `speech-rewind`         |
 | report → メインビュー（記法・差し戻し・整え）                   | `notation`・`report-rejected`・`report-tidied`                                                                                    | `report-main-view`      |
 | 途中の発話と流れる本文                                          | `narration`・`long-report`                                                                                                        | `narration-flow`        |
 | 許可のモーダル（押すと `answer` が流れ、箱が消える）            | `permission`                                                                                                                      | `permission-answer`     |

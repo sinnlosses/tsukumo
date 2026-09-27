@@ -246,6 +246,15 @@ export type ReportDrafting =
   | { readonly kind: "drafting"; readonly toolUseId: string }
 
 /**
+ * `speak` で来た1件のセリフと、そのときの表情。吹き出し・セリフのログが押して遡る先の材料になる
+ * （`shared/session/turn-speech.ts` の `TurnSpeech.speeches` も同じ形を使う）。
+ */
+export type Speech = {
+  readonly text: string
+  readonly expression: Expression
+}
+
+/**
  * セッションの今の姿。イベントを1件ずつ畳んで作るので、ここに無い情報は画面にも出ない。
  *
  * `partialUtterance` は書きかけの本文で、完成した本文（`utterance`）が来たら空に戻る。
@@ -261,7 +270,7 @@ export type SessionState = {
    * {@link applySessionEvent} の `request` を参照）。まだ一度も `speak` が呼ばれていない・
    * そのターンでまだ呼ばれていなければ空配列。
    */
-  readonly speeches: readonly string[]
+  readonly speeches: readonly Speech[]
   /** 直近のセリフ（`speak`）に添えられた表情。表情の源はこれだけ（自動の上書きは無い）。 */
   readonly speechExpression: Expression
   /**
@@ -662,7 +671,10 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
         ],
         // 前のターンのセリフが残っているなら、ここで捨てて今のターンだけの並びにする
         // （docs/display.md 4.2「吹き出し」の「今のターンの分を縦に積んで」）。
-        speeches: [...(state.speechCalledInTurn ? state.speeches : []), event.text],
+        speeches: [
+          ...(state.speechCalledInTurn ? state.speeches : []),
+          { text: event.text, expression: event.expression },
+        ],
         speechExpression: event.expression,
         speechCalledInTurn: true,
       }

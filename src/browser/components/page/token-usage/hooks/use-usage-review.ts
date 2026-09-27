@@ -19,6 +19,7 @@
 import { skipToken, useQuery } from "@tanstack/react-query"
 import { useEffect, useState } from "react"
 
+import type { Speech } from "../../../../../shared/session/session-state.ts"
 import {
   TOKEN_USAGE_DAYS_CHOICES,
   type TokenUsageDays,
@@ -274,8 +275,8 @@ function resultView(
 }
 
 /** 直近のセリフ（吹き出しと同じ `state.speeches` の最後の1件）。 */
-function latestSpeechView(speeches: readonly string[]): UsageReviewSpeechView {
-  const text = speeches.at(-1)
+function latestSpeechView(speeches: readonly Speech[]): UsageReviewSpeechView {
+  const text = speeches.at(-1)?.text
   return text === undefined ? { kind: "none" } : { kind: "said", text }
 }
 

@@ -20,7 +20,9 @@ describe("許可のモーダル", () => {
       viewport: "wide",
     })
 
-    await room.page.getByRole("button", { name: "許可" }).click()
+    // exact: true — セリフの吹き出しも押せる行になり、その文面がたまたま「許可」を含むため
+    // （吹き出しを押すと表情へ立ち絵が遡る。docs/screen-design.md「会話を遡る」）。
+    await room.page.getByRole("button", { name: "許可", exact: true }).click()
     await room.waitForEvent("pending-changed", 2)
     await room.waitForEvent("turn-finished")
     await room.settleAndMatch(ELAPSED_MS)

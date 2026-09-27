@@ -1,11 +1,12 @@
 import { cleanup, renderHook } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
-import { useChatSpeech } from "../../../../../../../../../../src/browser/components/page/conversation/components/chat-view/components/chat-speech/hooks/use-chat-speech.ts"
+import { useSpeechPress } from "../../../../../../../src/browser/components/page/conversation/components/hooks/use-speech-press.ts"
 
 /**
- * セリフの行（`components/chat-speech.tsx`）を描かずに、押し方の読み替え——ドラッグとの見分け・
- * 遡るキー——だけを測る（docs/design.md 2章「機能の中を分ける」）。
+ * セリフの行（雑談の `ChatSpeech`・仕事モードの `Balloon` と `speech-log` の行）を
+ * 描かずに、押し方の読み替え——ドラッグとの見分け・遡るキー——だけを測る
+ * （docs/design.md「機能の中を分ける」）。
  */
 
 afterEach(() => {
@@ -16,11 +17,11 @@ type Toggled = { count: number }
 
 function renderSpeech(): {
   readonly toggled: Toggled
-  readonly result: { readonly current: ReturnType<typeof useChatSpeech> }
+  readonly result: { readonly current: ReturnType<typeof useSpeechPress> }
 } {
   const toggled: Toggled = { count: 0 }
   const { result } = renderHook(() =>
-    useChatSpeech(() => {
+    useSpeechPress(() => {
       toggled.count += 1
     }),
   )
@@ -28,7 +29,7 @@ function renderSpeech(): {
 }
 
 /** 押し始めから手を離すまで。`moveX` だけ横に動かすとドラッグで文字を選んだことになる。 */
-function press(view: ReturnType<typeof useChatSpeech>, moveX: number, detail = 1): void {
+function press(view: ReturnType<typeof useSpeechPress>, moveX: number, detail = 1): void {
   view.onMouseDown({ clientX: 20, clientY: 30, detail })
   view.onClick({ clientX: 20 + moveX, clientY: 30, detail })
 }
@@ -48,7 +49,7 @@ function key(value: string): {
   }
 }
 
-describe("useChatSpeech の押し方", () => {
+describe("useSpeechPress の押し方", () => {
   it("手が動いていない押しは遡る", () => {
     const { toggled, result } = renderSpeech()
 

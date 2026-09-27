@@ -8,6 +8,11 @@
 // 開いた直後は並びの下端（最新）へ転がしておく。
 //
 // 並びを組み立てるのは開いている間だけ（閉じているときに記録が伸びるたびに作り直さない）。
+//
+// セリフの行を押すとそのセリフの表情へ立ち絵が遡る（docs/screen-design.md 13.7「会話を遡る」の
+// 仕事モードの対応物）。留めた状態そのものは `<CharacterView>`（`hooks/use-character-view.ts`）が
+// 持ち、ここは `pinnedSpeech` / `onToggleSpeech` として受け取って印と押す口へ写すだけ
+// （床の立ち絵と状態を共有するため。`character-view/domain/pinned-speech.ts`）。
 
 import { useEffect, useRef, useState, type RefObject } from "react"
 import { sumBy } from "remeda"
@@ -21,12 +26,14 @@ import {
   type TurnSpeech,
 } from "../../../../../../../../../shared/session/turn-speech.ts"
 import { useSession } from "../../../../../../../../stores/session.ts"
+import { useTurnSelection } from "../../../../../../../../stores/turn-selection.ts"
 import {
   clockDateTime,
   clockTime,
   localTimeZoneId,
   zonedDateTime,
 } from "../../../../../../../../utils/clock.ts"
+import { isSpeechSelected, type PinnedSpeech } from "../../../domain/pinned-speech.ts"
 
 /**
  * セリフの古さの段。最新からいくつ前かで決め、`recent`（1つ前）→ `older`（2つ前）→
@@ -56,6 +63,9 @@ export type SpeechLogEntry =
       readonly key: string
       readonly text: string
       readonly age: SpeechAge
+      /** 印を付ける行（= 立ち絵が従っている行）か。 */
+      readonly selected: boolean
+      readonly onToggle: () => void
     }
 
 /** `<SpeechLog>` が画面に出す形。 */
@@ -74,9 +84,13 @@ export type SpeechLogModel = {
   readonly onClose: () => void
 }
 
-export function useSpeechLog(): SpeechLogModel {
+export function useSpeechLog(
+  pinnedSpeech: PinnedSpeech | undefined,
+  onToggleSpeech: (turnId: number, index: number) => void,
+): SpeechLogModel {
   const records = useSession((session) => session.state.records)
   const userCall = useSession((session) => session.state.character?.userCall)
+  const { activeTurnId } = useTurnSelection()
   const [open, setOpen] = useState(false)
   const scrollerRef = useRef<HTMLElement>(null)
 
@@ -94,7 +108,9 @@ export function useSpeechLog(): SpeechLogModel {
   return {
     scrollerRef,
     open,
-    entries: open ? logEntries(records, localTimeZoneId()) : [],
+    entries: open
+      ? logEntries(records, localTimeZoneId(), activeTurnId, pinnedSpeech, onToggleSpeech)
+      : [],
     userCall,
     onOpen: () => setOpen(true),
     onClose: () => setOpen(false),
@@ -104,11 +120,18 @@ export function useSpeechLog(): SpeechLogModel {
 function logEntries(
   records: readonly SessionRecord[],
   timeZone: string,
+  activeTurnId: number | undefined,
+  pinnedSpeech: PinnedSpeech | undefined,
+  onToggleSpeech: (turnId: number, index: number) => void,
 ): readonly SpeechLogEntry[] {
   const turns = turnSpeeches(records).filter((turn) => turn.speeches.length > 0)
   const requestTimes = requestTimesByTurn(records)
   const speechCount = sumBy(turns, (turn) => turn.speeches.length)
   const lastTurnId = turns.at(-1)?.id
+  // 何も留めていないとき、印が付くのは「いま表示しているターン」の最後の行
+  // （docs/screen-design.md「何も押していないときは最新のセリフに印が付き」）。
+  const activeSpeechCount = turns.find((turn) => turn.id === activeTurnId)?.speeches.length
+  const defaultIndex = activeSpeechCount === undefined ? undefined : activeSpeechCount - 1
 
   return turns.flatMap((turn, turnIndex) => {
     // このターンの先頭のセリフが、全体の古い側から数えて何件目か。
@@ -116,12 +139,16 @@ function logEntries(
     const requestTime = requestTimes.get(turn.id)
     const time: SpeechLogTime =
       requestTime === undefined ? { kind: "unknown" } : logTime(requestTime, timeZone)
-    const speeches = turn.speeches.map((text, index): SpeechLogEntry => ({
+    const speeches = turn.speeches.map((speech, index): SpeechLogEntry => ({
       kind: "speech",
       // セリフはターンの中で末尾へ積むだけなので、ターンの番号と位置がそのまま同一性になる。
       key: `speech-${String(turn.id)}-${String(index)}`,
-      text,
+      text: speech.text,
       age: speechAge(speechCount - 1 - (offset + index)),
+      selected: isSpeechSelected(pinnedSpeech, turn.id, index, activeTurnId, defaultIndex),
+      onToggle: () => {
+        onToggleSpeech(turn.id, index)
+      },
     }))
     return [...requestEntries(turn, time, turn.id === lastTurnId), ...speeches]
   })

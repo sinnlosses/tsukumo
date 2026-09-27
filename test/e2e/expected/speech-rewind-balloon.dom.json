@@ -139,7 +139,7 @@
       {
         "tag": "div",
         "attributes": {
-          "data-work-state": "idle",
+          "data-work-state": "pending",
           "data-chat-idle": "false"
         },
         "children": [
@@ -156,10 +156,17 @@
                   "aria-hidden": "true"
                 },
                 "children": [
-                  "○"
+                  "●"
                 ]
               },
-              "依頼待ち"
+              "答え待ち",
+              {
+                "tag": "span",
+                "attributes": {
+                  "aria-hidden": "true"
+                }
+              },
+              "架空の選択"
             ]
           }
         ]
@@ -278,7 +285,7 @@
                                   "type": "button"
                                 },
                                 "children": [
-                                  "report ツールの描き方を確かめたい（架空の依頼）",
+                                  "multiSelect の質問に答える場面（架空）。答えると箱が消える。",
                                   {
                                     "tag": "span",
                                     "attributes": {
@@ -294,207 +301,127 @@
                         ]
                       },
                       {
-                        "tag": "details",
-                        "children": [
-                          {
-                            "tag": "summary",
-                            "children": [
-                              "中間レポート: 途中の結論: 目盛りを決めているのは `a.ts` だけだった。"
-                            ]
-                          }
-                        ]
-                      },
-                      {
                         "tag": "section",
                         "children": [
                           {
                             "tag": "p",
                             "children": [
-                              "最終レポート"
+                              "multiSelect の質問に答える場面（架空）。答えると箱が消える。"
                             ]
-                          },
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "tag": "section",
+                    "children": [
+                      {
+                        "tag": "header",
+                        "children": [
+                          "質問",
+                          "架空の選択",
+                          "1 / 1"
+                        ]
+                      },
+                      {
+                        "tag": "p",
+                        "children": [
+                          "架空の質問：どの案を試す？"
+                        ]
+                      },
+                      {
+                        "tag": "ul",
+                        "children": [
                           {
-                            "tag": "p",
-                            "children": [
-                              "架空の結論: 目盛りを 24 に直し、",
-                              {
-                                "tag": "code",
-                                "children": [
-                                  "a.ts"
-                                ]
-                              },
-                              "だけで済んだ。"
-                            ]
-                          },
-                          "OK",
-                          {
-                            "tag": "b",
-                            "children": [
-                              "pnpm run check"
-                            ]
-                          },
-                          "架空の 1234 件が通った",
-                          "NG",
-                          {
-                            "tag": "b",
-                            "children": [
-                              "目盛りの E2E"
-                            ]
-                          },
-                          "架空の 1 件が落ちた",
-                          "未確認",
-                          {
-                            "tag": "b",
-                            "children": [
-                              "狭い窓での見た目"
-                            ]
-                          },
-                          "手で確かめていない",
-                          {
-                            "tag": "p",
+                            "tag": "li",
                             "children": [
                               {
-                                "tag": "strong",
-                                "children": [
-                                  "直したファイルと結果（架空の数）"
-                                ]
-                              }
-                            ]
-                          },
-                          {
-                            "tag": "table",
-                            "children": [
-                              {
-                                "tag": "thead",
+                                "tag": "label",
                                 "children": [
                                   {
-                                    "tag": "tr",
-                                    "children": [
-                                      {
-                                        "tag": "th",
-                                        "children": [
-                                          "ファイル"
-                                        ]
-                                      },
-                                      {
-                                        "tag": "th",
-                                        "children": [
-                                          "変えたこと"
-                                        ]
-                                      },
-                                      {
-                                        "tag": "th",
-                                        "children": [
-                                          "状態"
-                                        ]
-                                      }
-                                    ]
-                                  }
-                                ]
-                              },
-                              {
-                                "tag": "tbody",
-                                "children": [
-                                  {
-                                    "tag": "tr",
-                                    "children": [
-                                      {
-                                        "tag": "td",
-                                        "children": [
-                                          {
-                                            "tag": "code",
-                                            "children": [
-                                              "a.ts"
-                                            ]
-                                          }
-                                        ]
-                                      },
-                                      {
-                                        "tag": "td",
-                                        "children": [
-                                          "目盛りを 12 から 24 へ"
-                                        ]
-                                      },
-                                      {
-                                        "tag": "td",
-                                        "children": [
-                                          "OK"
-                                        ]
-                                      }
-                                    ]
+                                    "tag": "input",
+                                    "attributes": {
+                                      "type": "checkbox",
+                                      "checked": false,
+                                      "value": "on"
+                                    }
                                   },
+                                  "A案"
+                                ]
+                              },
+                              {
+                                "tag": "p",
+                                "children": [
+                                  "架空の説明A"
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "tag": "li",
+                            "children": [
+                              {
+                                "tag": "label",
+                                "children": [
                                   {
-                                    "tag": "tr",
-                                    "children": [
-                                      {
-                                        "tag": "td",
-                                        "children": [
-                                          {
-                                            "tag": "code",
-                                            "children": [
-                                              "b.ts"
-                                            ]
-                                          }
-                                        ]
-                                      },
-                                      {
-                                        "tag": "td",
-                                        "children": [
-                                          "読むだけなので変えない"
-                                        ]
-                                      },
-                                      {
-                                        "tag": "td",
-                                        "children": [
-                                          "要注意"
-                                        ]
-                                      }
-                                    ]
-                                  }
+                                    "tag": "input",
+                                    "attributes": {
+                                      "type": "checkbox",
+                                      "checked": false,
+                                      "value": "on"
+                                    }
+                                  },
+                                  "B案"
+                                ]
+                              },
+                              {
+                                "tag": "p",
+                                "children": [
+                                  "架空の説明B"
                                 ]
                               }
                             ]
                           },
-                          "src/a.ts",
                           {
-                            "tag": "pre",
+                            "tag": "li",
                             "children": [
                               {
-                                "tag": "code",
-                                "attributes": {
-                                  "data-filename": "src/a.ts"
-                                },
+                                "tag": "label",
                                 "children": [
-                                  "-const TICKS = 12",
-                                  "+const TICKS = 24"
+                                  {
+                                    "tag": "input",
+                                    "attributes": {
+                                      "type": "checkbox",
+                                      "checked": false,
+                                      "value": "on"
+                                    }
+                                  },
+                                  "C案"
+                                ]
+                              },
+                              {
+                                "tag": "p",
+                                "children": [
+                                  "架空の説明C"
                                 ]
                               }
                             ]
-                          },
-                          "注意",
+                          }
+                        ]
+                      },
+                      {
+                        "tag": "footer",
+                        "children": [
+                          "選択肢にない答えは、下の入力欄に書いて送れます",
                           {
-                            "tag": "p",
+                            "tag": "button",
+                            "attributes": {
+                              "aria-disabled": "true",
+                              "type": "button"
+                            },
                             "children": [
-                              {
-                                "tag": "code",
-                                "children": [
-                                  "b.ts"
-                                ]
-                              },
-                              "のキャッシュは古い目盛りを持ったまま残る。"
-                            ]
-                          },
-                          "お願い",
-                          {
-                            "tag": "p",
-                            "children": [
-                              {
-                                "tag": "code",
-                                "children": [
-                                  "b.ts"
-                                ]
-                              },
-                              "のキャッシュを消してよいか決めてほしい（架空のお願い）。"
+                              "これで答える"
                             ]
                           }
                         ]
@@ -670,8 +597,8 @@
                 "tag": "div",
                 "attributes": {
                   "role": "img",
-                  "aria-label": "つくもの精霊（どや顔）",
-                  "data-expression": "proud",
+                  "aria-label": "つくもの精霊（思案）",
+                  "data-expression": "thinking",
                   "data-outfit": "heavy",
                   "data-motion": "reading"
                 },
@@ -686,13 +613,26 @@
                 "attributes": {
                   "data-latest": "true",
                   "data-interactive": "true",
+                  "data-selected": "false",
+                  "role": "button",
+                  "aria-pressed": "false"
+                },
+                "children": [
+                  "つくもの精霊",
+                  "吹き出しが3つ並ぶ場面（架空）。"
+                ]
+              },
+              {
+                "tag": "div",
+                "attributes": {
+                  "data-latest": "false",
+                  "data-interactive": "true",
                   "data-selected": "true",
                   "role": "button",
                   "aria-pressed": "true"
                 },
                 "children": [
-                  "つくもの精霊",
-                  "書けたよ！"
+                  "選ぶのを待っている間の、架空のひとこと。"
                 ]
               },
               {
@@ -705,7 +645,7 @@
                   "aria-pressed": "false"
                 },
                 "children": [
-                  "途中まで書いたよ。"
+                  "複数選べる質問を出したよ。チェックボックスで選んでみて。"
                 ]
               },
               {
@@ -718,7 +658,7 @@
                   "aria-pressed": "false"
                 },
                 "children": [
-                  "見てくるね。"
+                  "疑似セッションの駆動で立ち上がったよ。ここはぜんぶ作り物の会話。"
                 ]
               }
             ]
@@ -738,8 +678,20 @@
             },
             "children": [
               {
+                "tag": "div",
+                "attributes": {
+                  "aria-hidden": "true"
+                }
+              },
+              {
                 "tag": "form",
                 "children": [
+                  {
+                    "tag": "p",
+                    "children": [
+                      "↑ つくもの精霊 が質問しています。上の選択肢から選ぶか、ここに書いて答えてください"
+                    ]
+                  },
                   {
                     "tag": "textarea",
                     "attributes": {
@@ -785,8 +737,8 @@
                       }
                     ]
                   },
-                  "所要",
-                  "0秒",
+                  "経過",
+                  "-",
                   {
                     "tag": "button",
                     "attributes": {
@@ -794,7 +746,7 @@
                       "type": "submit"
                     },
                     "children": [
-                      "送信"
+                      "答える"
                     ]
                   }
                 ]

@@ -29,7 +29,14 @@ function renderSpeechLogWithCall(
     records,
     character: characterInfo({ userCall }),
   })
-  render(<SpeechLog portrait={<img alt="架空の立ち絵" />} speakerName="架空の名前" />)
+  render(
+    <SpeechLog
+      portrait={<img alt="架空の立ち絵" />}
+      speakerName="架空の名前"
+      pinnedSpeech={undefined}
+      onToggleSpeech={() => {}}
+    />,
+  )
 }
 
 function dialog(): HTMLDialogElement {
@@ -210,5 +217,57 @@ describe("SpeechLog", () => {
     openLog()
 
     expect(screen.getByText("（まだ発話がありません）")).toBeDefined()
+  })
+
+  it("何も留めていなければ最新の行に印が付き、行を押すと onToggleSpeech がその番号で呼ばれる", () => {
+    const toggled: (readonly [number, number])[] = []
+    putSession({
+      ...INITIAL_SESSION_STATE,
+      records: [
+        requestRecord({ text: "架空の依頼", turnId: 0 }),
+        speechRecord({ text: "1つ目のセリフ" }),
+        speechRecord({ text: "2つ目のセリフ" }),
+      ],
+      character: characterInfo({}),
+    })
+    render(
+      <SpeechLog
+        portrait={<img alt="架空の立ち絵" />}
+        speakerName="架空の名前"
+        pinnedSpeech={undefined}
+        onToggleSpeech={(turnId, index) => toggled.push([turnId, index])}
+      />,
+    )
+    openLog()
+
+    const rows = [...document.querySelectorAll(".speech-log-speech .balloon")]
+    expect(rows.map((row) => row.getAttribute("aria-pressed"))).toEqual(["false", "true"])
+
+    fireEvent.click(rows[0] ?? dialog())
+    expect(toggled).toEqual([[0, 0]])
+  })
+
+  it("留めた行と同じ (turnId, index) の行にだけ印が付く", () => {
+    putSession({
+      ...INITIAL_SESSION_STATE,
+      records: [
+        requestRecord({ text: "架空の依頼", turnId: 0 }),
+        speechRecord({ text: "1つ目のセリフ" }),
+        speechRecord({ text: "2つ目のセリフ" }),
+      ],
+      character: characterInfo({}),
+    })
+    render(
+      <SpeechLog
+        portrait={<img alt="架空の立ち絵" />}
+        speakerName="架空の名前"
+        pinnedSpeech={{ turnId: 0, index: 0 }}
+        onToggleSpeech={() => {}}
+      />,
+    )
+    openLog()
+
+    const rows = [...document.querySelectorAll(".speech-log-speech .balloon")]
+    expect(rows.map((row) => row.getAttribute("aria-pressed"))).toEqual(["true", "false"])
   })
 })

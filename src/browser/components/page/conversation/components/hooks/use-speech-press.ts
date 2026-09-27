@@ -1,5 +1,8 @@
-// キャラクターのセリフ1件（`components/chat-speech.tsx`）の押し方の読み替え。押すとその時の
-// 表情へ立ち絵が遡る（docs/screen-design.md 13.7「会話を遡る」）。
+// キャラクターのセリフ1件を押す読み替え。押すとその時の表情へ立ち絵が遡る
+// （docs/screen-design.md「会話を遡る」）。雑談のログの行（`chat-view/components/chat-speech/`）と
+// 仕事モードの吹き出し・セリフのログの行（`character-view/components/balloon/`・
+// `character-view/components/speech-log/`）の3箇所が読むので、会話の画面の `components/hooks/`
+// に置く（docs/design.md「ページの形」）。
 //
 // セリフをドラッグで選んでコピーできるので、押したのか文字を選び終えて手を離したのかを
 // 見分ける必要がある——それがこのフックの役目。
@@ -21,15 +24,15 @@ type PressOrigin = {
 /** 見分けに使うマウスの値（押し始めと手を離したとき）。 */
 type PointerAt = Pick<MouseEvent, "clientX" | "clientY" | "detail">
 
-export type ChatSpeechView = {
+export type SpeechPressView = {
   readonly onMouseDown: (event: PointerAt) => void
   readonly onClick: (event: PointerAt) => void
   readonly onKeyDown: (event: Pick<KeyboardEvent, "key" | "preventDefault">) => void
 }
 
-export function useChatSpeech(onToggle: () => void): ChatSpeechView {
+export function useSpeechPress(onToggle: () => void): SpeechPressView {
   // 押し始めた場所。セリフの行は文字をドラッグで選べるので、選び終えて手を離したときの
-  // click と、押した click を、動いた距離で見分ける（{@link isSelectionDrag}）。
+  // click と、押した click を、動いた距離で見分ける（下の `isSelectionDrag`）。
   const pressOriginRef = useRef<PressOrigin | undefined>(undefined)
 
   return {

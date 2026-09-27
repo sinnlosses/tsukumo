@@ -13,6 +13,7 @@
 
 import type { ReactElement, ReactNode } from "react"
 
+import type { PinnedSpeech } from "../../domain/pinned-speech.ts"
 import { useSpeechLog } from "./hooks/use-speech-log.ts"
 import { PresentationalSpeechLog } from "./presentational-speech-log.tsx"
 
@@ -24,8 +25,21 @@ export type SpeechLogProps = {
   readonly portrait: ReactNode
   /** 最新の吹き出しに添える話し手の名前。キャラビューの最新の吹き出しと同じもの。 */
   readonly speakerName: string | undefined
+  /**
+   * いま留めている行（キャラビューと状態を共有する。`character-view/domain/pinned-speech.ts`）。
+   * 何も留めていなければ undefined。
+   */
+  readonly pinnedSpeech: PinnedSpeech | undefined
+  /** ログの行を押したとき。キャラビューの吹き出しと同じ状態を動かす。 */
+  readonly onToggleSpeech: (turnId: number, index: number) => void
 }
 
 export function SpeechLog(props: SpeechLogProps): ReactElement {
-  return <PresentationalSpeechLog {...useSpeechLog()} {...props} />
+  return (
+    <PresentationalSpeechLog
+      {...useSpeechLog(props.pinnedSpeech, props.onToggleSpeech)}
+      portrait={props.portrait}
+      speakerName={props.speakerName}
+    />
+  )
 }

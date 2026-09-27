@@ -31,6 +31,8 @@ export function PresentationalCharacterView({
   speeches,
   emptyMessage,
   speakerName,
+  pinnedSpeech,
+  onToggleSpeech,
 }: PresentationalCharacterViewProps): ReactElement {
   const portrait = portraitUrl !== undefined && (
     <Portrait
@@ -54,7 +56,12 @@ export function PresentationalCharacterView({
       wrap="nowrap"
       className={styles["character-region"]}
     >
-      <SpeechLog portrait={portrait} speakerName={speakerName} />
+      <SpeechLog
+        portrait={portrait}
+        speakerName={speakerName}
+        pinnedSpeech={pinnedSpeech}
+        onToggleSpeech={onToggleSpeech}
+      />
       <HStack
         element="div"
         name={{ kind: "none" }}

@@ -1,5 +1,5 @@
 import { QueryClientProvider } from "@tanstack/react-query"
-import { cleanup, render } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
 import { CharacterView } from "../../../../../../../src/browser/components/page/conversation/components/character-view/character-view.tsx"
@@ -8,6 +8,7 @@ import {
   parseHash,
   type ViewedTurn,
 } from "../../../../../../../src/browser/stores/location-hash.ts"
+import type { Expression } from "../../../../../../../src/shared/character-pack/expression.ts"
 import {
   INITIAL_SESSION_STATE,
   type SessionRecord,
@@ -19,6 +20,14 @@ import { createTestQueryClient } from "../../../../../query-client.tsx"
 import { putSession } from "../../../../../session-store.ts"
 
 // フィクスチャはすべて手で書いた架空のキャラクター定義・セリフ（docs/coding-standards.md「会話内容の扱い」）。
+
+/** `SessionState.speeches` の1件（表情は既定でよいテストのための簡略記法）。 */
+function speech(
+  text: string,
+  expression: Expression = "default",
+): SessionState["speeches"][number] {
+  return { text, expression }
+}
 
 const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = characterInfo({
   ...shownPortraits({ default: "/character/default.png" }),
@@ -57,7 +66,7 @@ const TWO_TURN_RECORDS: readonly SessionRecord[] = [
 describe("CharacterView", () => {
   it("(3) 立ち絵の URL が無い（character が undefined）ときは、吹き出しだけが出て落ちない", () => {
     expect(() =>
-      renderCharacterView({ character: undefined, speeches: ["やあ、調子はどう？"] }),
+      renderCharacterView({ character: undefined, speeches: [speech("やあ、調子はどう？")] }),
     ).not.toThrow()
 
     expect(document.querySelector(".portrait")).toBeNull()
@@ -67,7 +76,11 @@ describe("CharacterView", () => {
 
   it("(1) 過去のターンを選ぶと、そのターンのセリフだけが吹き出しに出る", () => {
     renderCharacterView(
-      { records: TWO_TURN_RECORDS, speeches: ["2つ目のセリフ"], character: FIXTURE_CHARACTER },
+      {
+        records: TWO_TURN_RECORDS,
+        speeches: [speech("2つ目のセリフ")],
+        character: FIXTURE_CHARACTER,
+      },
       0,
     )
 
@@ -80,7 +93,11 @@ describe("CharacterView", () => {
 
   it("(2) 今回のターンを選ぶと、従来どおり今のセリフが出る", () => {
     renderCharacterView(
-      { records: TWO_TURN_RECORDS, speeches: ["2つ目のセリフ"], character: FIXTURE_CHARACTER },
+      {
+        records: TWO_TURN_RECORDS,
+        speeches: [speech("2つ目のセリフ")],
+        character: FIXTURE_CHARACTER,
+      },
       1,
     )
 
@@ -98,7 +115,7 @@ describe("CharacterView", () => {
 
     expect(() =>
       renderCharacterView(
-        { records, speeches: ["2つ目のセリフ"], character: FIXTURE_CHARACTER },
+        { records, speeches: [speech("2つ目のセリフ")], character: FIXTURE_CHARACTER },
         0,
       ),
     ).not.toThrow()
@@ -114,7 +131,7 @@ describe("CharacterView", () => {
     renderCharacterView(
       {
         records: TWO_TURN_RECORDS,
-        speeches: ["2つ目のセリフ"],
+        speeches: [speech("2つ目のセリフ")],
         speechExpression: "default",
         character: {
           ...FIXTURE_CHARACTER,
@@ -135,5 +152,68 @@ describe("CharacterView", () => {
     expect(document.querySelector(".portrait-image")?.getAttribute("src")).toBe(
       "/character/flustered.png",
     )
+  })
+})
+
+describe("CharacterView（吹き出し・セリフのログを押すと遡る。docs/screen-design.md 13.7）", () => {
+  const CHARACTER_WITH_PROUD: NonNullable<SessionState["character"]> = {
+    ...FIXTURE_CHARACTER,
+    expressions: [
+      { name: "default", label: "通常" },
+      { name: "proud", label: "得意げ" },
+    ],
+    ...shownPortraits({
+      default: "/character/default.png",
+      proud: "/character/proud.png",
+    }),
+  }
+
+  /** 今のターンに、表情の違うセリフを2件並べた状態。 */
+  function twoSpeechState(): Partial<SessionState> {
+    return {
+      records: [
+        requestRecord({ text: "架空の依頼", turnId: 0 }),
+        speechRecord({ text: "1つ目のセリフ", expression: "default" }),
+        speechRecord({ text: "2つ目のセリフ", expression: "proud" }),
+      ],
+      speeches: [speech("1つ目のセリフ", "default"), speech("2つ目のセリフ", "proud")],
+      speechExpression: "proud",
+      speechCalledInTurn: true,
+      character: CHARACTER_WITH_PROUD,
+    }
+  }
+
+  it("吹き出しを押すと、そのセリフの表情へ立ち絵が遡り、もう一度押すと最新へ戻る", () => {
+    renderCharacterView(twoSpeechState())
+    expect(document.querySelector(".portrait")?.getAttribute("data-expression")).toBe("proud")
+
+    const olderBalloon = document.querySelector("[data-latest='false']")
+    expect(olderBalloon?.textContent).toBe("1つ目のセリフ")
+    fireEvent.click(olderBalloon!)
+
+    expect(document.querySelector(".portrait")?.getAttribute("data-expression")).toBe("default")
+    expect(olderBalloon?.getAttribute("aria-pressed")).toBe("true")
+
+    fireEvent.click(olderBalloon!)
+    expect(document.querySelector(".portrait")?.getAttribute("data-expression")).toBe("proud")
+  })
+
+  it("セリフのログの行を押すと、ログの床の立ち絵がその表情になる", () => {
+    renderCharacterView(twoSpeechState())
+    fireEvent.click(screen.getByRole("button", { name: "ログ" }))
+
+    const olderRow = [...document.querySelectorAll(".speech-log-speech .balloon")].find(
+      (balloon) => balloon.textContent === "1つ目のセリフ",
+    )
+    expect(olderRow).toBeDefined()
+    fireEvent.click(olderRow!)
+
+    expect(
+      document.querySelector(".speech-log-floor .portrait")?.getAttribute("data-expression"),
+    ).toBe("default")
+    // 状態は1つ（吹き出しとログで共有する。docs/display.md「吹き出し」）。
+    expect(
+      document.querySelector(".character-layout .portrait")?.getAttribute("data-expression"),
+    ).toBe("default")
   })
 })

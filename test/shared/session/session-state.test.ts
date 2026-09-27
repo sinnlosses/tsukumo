@@ -229,7 +229,7 @@ describe("applySessionEvent", () => {
       0,
     )
     // 次の speak が来た時点で、そのターンのものだけになる。
-    expect(secondTurnSpoken.speeches).toEqual(["2つめのセリフ"])
+    expect(secondTurnSpoken.speeches).toEqual([{ text: "2つめのセリフ", expression: "default" }])
   })
 
   it("ツールが動いていても表情は直前の speak のまま変わらない（自動の上書きは 2026-09-17 に撤去）", () => {

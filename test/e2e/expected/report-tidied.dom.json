@@ -589,7 +589,11 @@
               {
                 "tag": "div",
                 "attributes": {
-                  "data-latest": "true"
+                  "data-latest": "true",
+                  "data-interactive": "true",
+                  "data-selected": "true",
+                  "role": "button",
+                  "aria-pressed": "true"
                 },
                 "children": [
                   "つくもの精霊",
@@ -599,7 +603,11 @@
               {
                 "tag": "div",
                 "attributes": {
-                  "data-latest": "false"
+                  "data-latest": "false",
+                  "data-interactive": "true",
+                  "data-selected": "false",
+                  "role": "button",
+                  "aria-pressed": "false"
                 },
                 "children": [
                   "まとめて書くね。"

@@ -677,7 +677,11 @@
               {
                 "tag": "div",
                 "attributes": {
-                  "data-latest": "true"
+                  "data-latest": "true",
+                  "data-interactive": "true",
+                  "data-selected": "false",
+                  "role": "button",
+                  "aria-pressed": "false"
                 },
                 "children": [
                   "つくもの精霊",
@@ -687,7 +691,11 @@
               {
                 "tag": "div",
                 "attributes": {
-                  "data-latest": "false"
+                  "data-latest": "false",
+                  "data-interactive": "true",
+                  "data-selected": "false",
+                  "role": "button",
+                  "aria-pressed": "false"
                 },
                 "children": [
                   "疑似セッションの駆動で立ち上がったよ。ここはぜんぶ作り物の会話。"

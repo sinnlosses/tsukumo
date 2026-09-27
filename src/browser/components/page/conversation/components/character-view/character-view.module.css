@@ -140,6 +140,22 @@
 .balloon-text {
   white-space: pre-wrap;
 }
+/* 押せる吹き出し（吹き出しの並び・セリフのログの両方。docs/screen-design.md 13.7「会話を遡る」の
+   仕事モードの対応物）。地を差し色の側へ寄せるだけで示す（雑談の `.chat-entry-character` と同じ
+   理由）。印の付いている行には掛けない。 */
+.balloon[data-interactive="true"] {
+  cursor: pointer;
+}
+.balloon[data-interactive="true"]:hover:not([data-selected="true"]) {
+  background: color-mix(in srgb, var(--surface), var(--accent) 18%);
+}
+/* 立ち絵がいま従っている行（`data-latest="true"` はすでに強い見た目を持つので、それ以外の
+   ときだけ縁と地を強める。縁を太らせないのは行の高さが動くのを避けるため——雑談の
+   `.chat-entry-character.is-selected` と同じ）。 */
+.balloon[data-selected="true"]:not([data-latest="true"]) {
+  background: color-mix(in srgb, var(--surface), var(--accent) 26%);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
 /* 話し手の名前（最新の1件にだけ付く。`balloon.tsx`）。吹き出しの主が誰かを示す札なので、
    accent を出してよい場所に数える（docs/screen-design.md 13.1 原則1）。本文とは gap ではなく
    margin-bottom で離す（吹き出し内の唯一の要素間隔なので、`.balloon` 側に汎用の gap を

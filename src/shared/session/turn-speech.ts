@@ -9,7 +9,7 @@
 // `node:` にも `document` にも触らない（他の shared と同じ制約）。
 
 import type { Expression } from "../character-pack/expression.ts"
-import type { SessionRecord } from "./session-state.ts"
+import type { SessionRecord, Speech } from "./session-state.ts"
 import { splitIntoTurns, turnIdOf } from "./turn.ts"
 
 /**
@@ -23,8 +23,11 @@ export type TurnSpeech = {
    * 依頼を持たないので undefined。
    */
   readonly request: string | undefined
-  /** そのターンのセリフ（古い→新しいの順）。1件も無いターンは空配列。 */
-  readonly speeches: readonly string[]
+  /**
+   * そのターンのセリフ（古い→新しいの順）。1件も無いターンは空配列。表情ごと持つのは、
+   * セリフを押して立ち絵を遡らせるため（`character-view` の吹き出しとセリフのログ）。
+   */
+  readonly speeches: readonly Speech[]
   /** そのターンの最後のセリフに添えられた表情。セリフが1件も無ければ undefined。 */
   readonly expression: Expression | undefined
 }
@@ -49,7 +52,10 @@ export function turnSpeeches(records: readonly SessionRecord[]): readonly TurnSp
         return {
           id: turnIdOf(turn),
           request: turn.kind === "pre-request" ? undefined : turn.request.text,
-          speeches: speeches.map((speech) => speech.text),
+          speeches: speeches.map((speech) => ({
+            text: speech.text,
+            expression: speech.expression,
+          })),
           expression: speeches.at(-1)?.expression,
         }
       })

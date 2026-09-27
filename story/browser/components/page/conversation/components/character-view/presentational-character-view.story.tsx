@@ -4,8 +4,14 @@
 import type { Meta, StoryObj } from "@storybook/react-vite"
 import type { ReactElement } from "react"
 
+import type { CharacterViewSpeech } from "../../../../../../../src/browser/components/page/conversation/components/character-view/hooks/use-character-view.ts"
 import { PresentationalCharacterView } from "../../../../../../../src/browser/components/page/conversation/components/character-view/presentational-character-view.tsx"
 import { characterAssetPath } from "../../../../../../../src/shared/character-pack/character-asset.ts"
+
+/** 見本では押しても何も変わらない（押す挙動そのものは別のテストが見る）。 */
+function speech(text: string): CharacterViewSpeech {
+  return { text, selected: false, onToggle: () => {} }
+}
 
 const meta = {
   component: PresentationalCharacterView,
@@ -17,9 +23,11 @@ const meta = {
     expression: "default",
     outfit: "default",
     motion: "reading",
-    speeches: ["読み終わったよ。", "次はテストを走らせてみるね（架空）。"],
+    speeches: [speech("読み終わったよ。"), speech("次はテストを走らせてみるね（架空）。")],
     emptyMessage: undefined,
     speakerName: "つくもの精霊",
+    pinnedSpeech: undefined,
+    onToggleSpeech: () => {},
   },
 } satisfies Meta<typeof PresentationalCharacterView>
 
@@ -38,8 +46,10 @@ export const LongSpeech = {
     expression: "proud",
     portraitUrl: characterAssetPath("tsukumo-spirit", "proud.svg", undefined),
     speeches: [
-      "まずは読むね。",
-      "3つのファイルを直して、テストも足しておいたよ。見た目に関わる変更だから、撮った画面も並べておくね（架空の例）。",
+      speech("まずは読むね。"),
+      speech(
+        "3つのファイルを直して、テストも足しておいたよ。見た目に関わる変更だから、撮った画面も並べておくね（架空の例）。",
+      ),
     ],
   },
 } satisfies Story
