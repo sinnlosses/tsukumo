@@ -681,7 +681,7 @@ function diaryEpochMilliseconds(date: string): number {
  * 上書きする（無ければ既定のまま）。
  */
 function spawnTsukumo(scene: string, home: string | undefined): ChildProcess {
-  return spawn("bun", ["run", path.join(REPO_DIR, "src", "cli.ts")], {
+  return spawn("node", [path.join(REPO_DIR, "src", "cli.ts")], {
     cwd: REPO_DIR,
     env: {
       ...process.env,

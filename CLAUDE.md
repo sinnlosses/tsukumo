@@ -25,8 +25,10 @@ SDK で動かす」を必ず読む。
 
 ## セットアップ / 環境構築
 
-- Bun 1.3 以上。`bun install` のあと **`bun run build` でブラウザ側を1回組み立てる**
-  （`dist/browser/` は `.gitignore`。無いと起動が前提不足で止まる）
+- mise で Node 26・Bun 1.4 を入れる（`mise.toml` がバージョンを固定。TS は node でそのまま
+  実行し、Bun はパッケージ管理と `bun link` に使う）。`bun install` のあと
+  **`bun run build` でブラウザ側を1回組み立てる**（`dist/browser/` は `.gitignore`。無いと起動が
+  前提不足で止まる）
 - `tsukumo` コマンドは `bun link` で入っている（`docs/requirements.md` 4.6）
 - ホストに依存する操作は1つの抽象の裏に置く（`docs/architecture.md`「ホスト依存の操作は1つのポートに
   まとめる」）。**`orca` 以外の外部コマンド依存を増やすときはユーザーの承認を得る**

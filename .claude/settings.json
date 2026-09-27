@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bun run \"$CLAUDE_PROJECT_DIR/scripts/deny-broad-kill.ts\""
+            "command": "node \"$CLAUDE_PROJECT_DIR/scripts/deny-broad-kill.ts\""
           }
         ]
       }

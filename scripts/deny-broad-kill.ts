@@ -2,7 +2,7 @@
 // Claude Code の PreToolUse hook（`.claude/settings.json` から Bash ツールに掛かる）。
 //
 // 止める理由は、プロセスのコマンドラインで見分けが付かないこと。 手元で複数の tsukumo を
-// 並べて動かすと、どれも `bun run src/cli.ts` として見える（`bun run dev` 経由でも同じ）。
+// 並べて動かすと、どれも `node src/cli.ts` として見える（`bun run dev` 経由でも同じ）。
 // そのため `pkill -f 'bun run'` はもちろん `pkill -f 'src/cli.ts'` でも、自分が起こした
 // 検証用のインスタンスではなく利用者が使っている本体まで落ちる。
 // `docs/workflow.md`「起こすときの作法」が文章で禁じていた事故を、ここで機構として塞ぐ。
@@ -28,7 +28,7 @@ const PGREP_PIPED_TO_KILL = /(?:^|[;&|(]\s*|\n)\s*(?:sudo\s+)?pgrep\b[^\n]*\|[^\
  */
 const SHARED_PROCESS = /\b(?:bun|node|tsukumo|claude|cli\.ts|vite)\b/
 
-const REFUSAL = `この作業ツリーでは複数の tsukumo が同時に動いている。どれも \`bun run src/cli.ts\` として見えるので、
+const REFUSAL = `この作業ツリーでは複数の tsukumo が同時に動いている。どれも \`node src/cli.ts\` として見えるので、
 名前やパターンで止めると利用者が使っている本体まで落ちる（docs/workflow.md「起こすときの作法」）。
 
 代わりに、止める相手を1つに絞ること:

@@ -236,7 +236,7 @@ function spawnTsukumo(scene: string, home: string, cwd: string): ChildProcess {
   const inherited = Object.fromEntries(
     Object.entries(process.env).filter(([name]) => !name.startsWith("TSUKUMO_")),
   )
-  return spawn(process.execPath, ["run", path.join(REPOSITORY_ROOT, "src", "cli.ts")], {
+  return spawn("node", [path.join(REPOSITORY_ROOT, "src", "cli.ts")], {
     cwd,
     env: {
       ...inherited,

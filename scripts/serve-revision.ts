@@ -172,7 +172,7 @@ function lendGitDirectory(treeDir: string): void {
  */
 function buildUi(revision: Revision): boolean {
   try {
-    execFileSync("bun", ["run", path.join(revision.treeDir, "scripts", "build-ui.ts")], {
+    execFileSync("node", [path.join(revision.treeDir, "scripts", "build-ui.ts")], {
       cwd: revision.treeDir,
       stdio: ["ignore", "ignore", "inherit"],
     })
@@ -188,7 +188,7 @@ function buildUi(revision: Revision): boolean {
  * ホームは /tmp の下 — 利用者が使っている tsukumo とポートもホームも重ならない。
  */
 function spawnTsukumo(revision: Revision, options: Options): ChildProcess {
-  return spawn("bun", ["run", path.join(revision.treeDir, "src", "cli.ts")], {
+  return spawn("node", [path.join(revision.treeDir, "src", "cli.ts")], {
     cwd: revision.treeDir,
     env: {
       ...process.env,

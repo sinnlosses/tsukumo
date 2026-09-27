@@ -60,7 +60,7 @@ function runCliToExit(
     value === undefined || CLI_ENV_NAMES.has(key) ? [] : [[key, value] as const],
   )
 
-  return runSubprocess("bun", ["run", ENTRY, ...args], {
+  return runSubprocess("node", [ENTRY, ...args], {
     env: { ...Object.fromEntries(inherited), ...env },
   })
 }

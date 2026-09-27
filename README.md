@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Bun-1.3-000000?logo=bun" alt="Bun">
+  <img src="https://img.shields.io/badge/Node-26-339933?logo=node.js" alt="Node">
   <img src="https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript" alt="TypeScript">
   <img src="https://img.shields.io/badge/Claude_Agent_SDK-0.3-D97757?logo=anthropic" alt="Claude Agent SDK">
   <img src="https://img.shields.io/badge/Lint-oxlint-cc9c00" alt="oxlint">
@@ -74,7 +74,8 @@
 
 **前提条件**
 
-- Bun 1.3 以上（TypeScript をそのまま実行し、テストランナーも内蔵している）
+- [mise](https://mise.jdx.dev/) で入れた Node 26 と Bun 1.4（TS をそのまま node で実行する。
+  Bun はパッケージ管理と `bun link` に使う）。リポジトリの `mise.toml` がバージョンを固定している
 - Claude Code が使える状態になっていること（Agent SDK が `claude` を子プロセスとして起こす）
 - 画面を出す箱として `orca` コマンドが使えること
   （無くてもタブが自動で開かないだけで、配信は続く）
@@ -83,6 +84,7 @@
 # 1. インストール
 git clone https://github.com/sinnlosses/tsukumo.git
 cd tsukumo
+mise install    # mise.toml が指す node@26 と bun@1.4 を入れる
 bun install
 
 # 2. ブラウザ側を組み立てる（成果物は dist/browser/。起動時には組み立てないので、無いと起動が止まる）
@@ -101,7 +103,7 @@ tsukumo
 
 `which tsukumo` が何も出さないときは `command not found` になります。`~/.bun/bin` が `PATH` に
 通っていないのが原因なので、シェルの設定（`.zshrc` / `.bashrc` など）に追加してください
-（Bun 自体の導入手順は [Bun 公式](https://bun.com/docs/installation) を参照）:
+（mise の導入手順は [mise 公式](https://mise.jdx.dev/getting-started.html) を参照）:
 
 ```bash
 export PATH="$HOME/.bun/bin:$PATH"
@@ -131,7 +133,7 @@ tsukumo は**1つのプロセス**で、Agent SDK で Claude Code を子プロ�
       ▲                       │
       │ SSE で押す            ▼ POST（依頼・回答・中断）
 ┌────────────────────────────────────────────────┐
-│ tsukumo（Bun の1プロセス）                     │
+│ tsukumo（Node の1プロセス）                    │
 │   ビューサーバ 127.0.0.1:7327                  │
 │   セッション駆動（SDK の query）               │
 │   speak ツール（プロセス内の MCP サーバ）      │
@@ -283,7 +285,7 @@ bun run scripts/open-views.ts <URL>  # プロセスは動いたままタブだ�
 bun run grid                  # 待ち受けていてタブもある部屋を iframe の格子に並べて Orca に開く。格子のタブが
                               #   あるあいだ常駐し、再読み込みのたびに並べ直す。タブを閉じると終わる
 bun run scripts/stop.ts       # 動いている tsukumo を一覧する（--port <n> でそれ1つだけ止める。pkill / killall は
-                              #   hook が拒否する。並べて動かすとどれも `bun run src/cli.ts` に見えて区別できないため）
+                              #   hook が拒否する。並べて動かすとどれも `node src/cli.ts` に見えて区別できないため）
 ```
 
 **ブラウザに出た絵は自動テストで守りません。** 配信（バインド先・経路・push）まではテストし、
@@ -300,7 +302,7 @@ bun run scripts/stop.ts       # 動いている tsukumo を一覧する（--port
 ├── src/
 │   ├── shared/             # サーバとブラウザの両方で動く契約（SessionEvent・SessionState・
 │   │                       #   ClientCommand・ServerFrame など。zod。node: も document も触らない）
-│   ├── server/             # サーバ（Bun）。判断と境界の2段に割れる
+│   ├── server/             # サーバ（Node）。判断と境界の2段に割れる
 │   │   ├── core/           #   純粋な判断。セッション管理・イベントの検証・設定の解釈
 │   │   │                   #     （node: も SDK も ws も import しない）
 │   │   └── adapter/        #   外の世界に触る境界。1ファイル = 1つの境界
