@@ -353,6 +353,7 @@ async function relayMessages(
           if (options.mode.kind === "chat") {
             options.mode.chatSummary.markUndelivered()
           }
+          titleWriter.noteConversationCleared()
         }
         options.onEvent(event)
       }

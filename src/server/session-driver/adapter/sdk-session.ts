@@ -31,6 +31,7 @@ import {
 import {
   decideSessionTitle,
   INITIAL_SESSION_TITLE_STATE,
+  noteConversationCleared,
   type SessionTitleState,
 } from "../core/session-title.ts"
 
@@ -177,6 +178,12 @@ export type SessionTitleWriter = {
    * 重なると、直後に書いた値が消える実測があるため。
    */
   readonly schedule: (sessionId: string, candidate: string, options: SessionDriverOptions) => void
+  /**
+   * `/clear` の合図を受けたことを伝える。本体が前のセッションの題を新しいセッションへ
+   * 書き写すため、次に書くときだけ現在値を tsukumo が最後に書いたものとみなす
+   * （{@link noteConversationCleared}）。
+   */
+  readonly noteConversationCleared: () => void
 }
 
 /**
@@ -196,9 +203,12 @@ export function createSessionTitleWriter(): SessionTitleWriter {
     try {
       const info = await getSessionInfo(sessionId, { dir: options.cwd })
       const action = decideSessionTitle(state, candidate, info?.customTitle)
+      // `renameSession` の成否に関わらず、この判断で `adoptCurrentTitleNext` は使い切る
+      // （`lastWritten` は実際に書けたときだけ進めたいので、ここでは触らない）。
+      state = { ...state, adoptCurrentTitleNext: false }
       if (action.kind === "write") {
         await renameSession(sessionId, action.title, { dir: options.cwd })
-        state = { lastWritten: action.title }
+        state = { ...state, lastWritten: action.title }
       }
     } catch {
       // 題が書けなかっただけなので、何も流さずに諦める。
@@ -210,6 +220,9 @@ export function createSessionTitleWriter(): SessionTitleWriter {
       setTimeout(() => {
         void writeTitle(sessionId, candidate, options)
       }, SESSION_TAG_DELAY_MS).unref()
+    },
+    noteConversationCleared() {
+      state = noteConversationCleared(state)
     },
   }
 }

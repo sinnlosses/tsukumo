@@ -11,15 +11,33 @@
 import { MAX_SESSION_HEADING_LENGTH } from "../../../shared/session/session-choice.ts"
 
 /**
- * 見出しを書くかどうかの判断に要る状態。tsukumo が最後に書いた題だけを持ち回る
- * （{@link decideSessionTitle}）。
+ * 見出しを書くかどうかの判断に要る状態。tsukumo が最後に書いた題と、`/clear` の合図を
+ * まだ消費していないかを持ち回る（{@link decideSessionTitle}）。
  */
 export type SessionTitleState = {
   readonly lastWritten: string | undefined
+  /**
+   * `/clear` の合図を受けてから、まだ {@link decideSessionTitle} を呼んでいない
+   * （{@link noteConversationCleared}）。本体は `/clear` のたびに前のセッションの題を
+   * 新しいセッションへ書き写すので、次の判断だけは現在値を tsukumo が最後に書いたものとみなす。
+   */
+  readonly adoptCurrentTitleNext: boolean
 }
 
-/** {@link SessionTitleState} の初期値（まだ一度も書いていない）。 */
-export const INITIAL_SESSION_TITLE_STATE: SessionTitleState = { lastWritten: undefined }
+/** {@link SessionTitleState} の初期値（まだ一度も書いておらず、`/clear` の合図も無い）。 */
+export const INITIAL_SESSION_TITLE_STATE: SessionTitleState = {
+  lastWritten: undefined,
+  adoptCurrentTitleNext: false,
+}
+
+/**
+ * `/clear` の合図（`conversation-cleared`）を受けたことを状態へ持ち越す。合図を受けた時点では
+ * 新しいセッションIDも書き写された題もまだ無いことがあるため、実際の判断は次に
+ * {@link decideSessionTitle} を呼ぶときまで遅らせる。
+ */
+export function noteConversationCleared(state: SessionTitleState): SessionTitleState {
+  return { ...state, adoptCurrentTitleNext: true }
+}
 
 /** {@link decideSessionTitle} の判断。 */
 export type SessionTitleAction =
@@ -30,8 +48,8 @@ export type SessionTitleAction =
  * 題を書くべきかを決める。3つに分かれる:
  *
  * - 切り詰めた候補が SDK 側の現在値と同じ → 書いても変わらないので `skip`
- * - 現在値が「無い」でも「tsukumo が最後に書いたもの」でもない → 利用者が `/rename` などで
- *   書き換えたとみなし、上書きしない（`skip`）
+ * - 現在値が「無い」でも「tsukumo が最後に書いたもの」でも「`/clear` の合図のあと最初に
+ *   見る値」でもない → 利用者が `/rename` などで書き換えたとみなし、上書きしない（`skip`）
  * - それ以外 → `write`（候補は {@link MAX_SESSION_HEADING_LENGTH} に切り詰め済み）
  */
 export function decideSessionTitle(
@@ -43,7 +61,8 @@ export function decideSessionTitle(
   if (title === currentTitle) {
     return { kind: "skip" }
   }
-  if (currentTitle !== undefined && currentTitle !== state.lastWritten) {
+  const treatAsOwn = currentTitle === state.lastWritten || state.adoptCurrentTitleNext
+  if (currentTitle !== undefined && !treatAsOwn) {
     return { kind: "skip" }
   }
   return { kind: "write", title }

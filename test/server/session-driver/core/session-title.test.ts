@@ -4,6 +4,7 @@ import {
   createSessionTitleIntake,
   decideSessionTitle,
   INITIAL_SESSION_TITLE_STATE,
+  noteConversationCleared,
   type SessionTitleState,
 } from "../../../../src/server/session-driver/core/session-title.ts"
 import { MAX_SESSION_HEADING_LENGTH } from "../../../../src/shared/session/session-choice.ts"
@@ -18,7 +19,10 @@ describe("decideSessionTitle", () => {
   })
 
   it("現在値が tsukumo が最後に書いたものと同じなら、新しい候補で書き直す", () => {
-    const state: SessionTitleState = { lastWritten: "架空の前の題" }
+    const state: SessionTitleState = {
+      lastWritten: "架空の前の題",
+      adoptCurrentTitleNext: false,
+    }
 
     const action = decideSessionTitle(state, "架空の新しい題", "架空の前の題")
 
@@ -26,7 +30,7 @@ describe("decideSessionTitle", () => {
   })
 
   it("候補が現在値と同じなら書かない（変わらないので無駄打ちしない）", () => {
-    const state: SessionTitleState = { lastWritten: "架空の題" }
+    const state: SessionTitleState = { lastWritten: "架空の題", adoptCurrentTitleNext: false }
 
     const action = decideSessionTitle(state, "架空の題", "架空の題")
 
@@ -44,9 +48,34 @@ describe("decideSessionTitle", () => {
   })
 
   it("tsukumo が最後に書いた題と現在値が食い違っていれば、以後も上書きしない", () => {
-    const state: SessionTitleState = { lastWritten: "架空の前の題" }
+    const state: SessionTitleState = {
+      lastWritten: "架空の前の題",
+      adoptCurrentTitleNext: false,
+    }
 
     const action = decideSessionTitle(state, "架空の新しい題", "利用者が書き換えた架空の題")
+
+    expect(action).toEqual({ kind: "skip" })
+  })
+
+  it("`/clear` の合図のあとは、書き写された題を tsukumo が書いたものとみなして上書きできる", () => {
+    const state = noteConversationCleared({
+      lastWritten: "架空の前の題",
+      adoptCurrentTitleNext: false,
+    })
+
+    const action = decideSessionTitle(state, "架空の新しい題", "書き写された架空の題")
+
+    expect(action).toEqual({ kind: "write", title: "架空の新しい題" })
+  })
+
+  it("`/clear` の合図が無ければ、書き写された題があっても上書きしない（従来どおり）", () => {
+    const state: SessionTitleState = {
+      lastWritten: "架空の前の題",
+      adoptCurrentTitleNext: false,
+    }
+
+    const action = decideSessionTitle(state, "架空の新しい題", "書き写された架空の題")
 
     expect(action).toEqual({ kind: "skip" })
   })
