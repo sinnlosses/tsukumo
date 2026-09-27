@@ -3,6 +3,64 @@
 `develop/direction.md` に書かれたユーザーからの指示を、タスク化した時点で**当時の記述のまま**
 ここへ移す（`docs/workflow.md`「指示メモ」参照）。新しいものを上に足す。**後から書き換えない。**
 
+## 2026-09-27 タスクIDを GitHub の Issue 番号にする指示と、振り返りのドラフト5件
+
+出典: `develop/direction.md` の `## ユーザーから`、`develop/draft/` のドラフト5件。ドラフトはユーザーが `/plan-tasks` の選択肢で5件とも承認した。表記（`GH-<n>`）と実測の場（捨てる private リポジトリ）、移行を人が立ち会うタスクにすることは、同じ `/plan-tasks` の選択肢でユーザーが決めた。
+
+（`develop/direction.md` の `## ユーザーから` から。T-812・T-813・T-814・T-816 になった）
+
+### タスクIDを GitHub の Issue 番号にし、GitHub と Beads を双方向に同期する（2026-09-27）
+
+- いまは `T-xxx`（Beads では `t-xxx`）と GitHub の `#n` が別の番号で、GitHub 側で書いた変更は `--push-only` のため捨てられる。見る場所が2つあるのに書けるのが片方だけで、どちらを見ればよいか迷う
+- 決めたこと: **GitHub の Issue 番号をタスクIDにする。** 同期は `bd github sync` の双方向（既定の形）にし、GitHub で書いた登録・編集・状態の変更も Beads に入るようにする。錠（`bd update --claim`）は今のまま Beads
+- 解くべき論点（タスク化のときに決める）:
+  - 表記: コミットの件名・`task` の入出力で `#5` と書くか別の形か。過去の `T-001`〜`T-811`（git の履歴・`docs/history/`）と見分けが付くこと
+  - 採番: 登録は先に Issue を作って番号を得る流れになる（採番の錠と `last-id` は要らなくなるか）。GitHub で人が立てた Issue を `difficulty`・`loopable` の付いた着手できるタスクにする手順（今の `task adopt`）
+  - 未完了の50件の付け替え（Beads の `external_ref` に Issue の URL がある）
+  - 衝突の解き方（`--prefer-newer` / `--prefer-github` / `--prefer-local`）。双方向の `sync` は試していないので、捨てたリポジトリで実測してから決める
+  - 着手中の T-763（tsukumo のタスク板と成果を Beads から読む）がタスクIDの形に依存する
+- 直す先: claude-skills の `task-workflow`（`WORKFLOW.md`「Beads 方式」・`scripts/`）と追随するスキル、tsukumo の `CLAUDE.md`・`docs/workflow.md`
+
+（`develop/draft/2026-09-27-delegate-no-git-stash.md` から。T-675 の完了条件に既にあったので、背景に3例目として足した）
+
+### 委譲先に `git stash` を使わせず、作業前との比べ方を渡す（振り返り: T-798）
+
+- 札: 黄 制約違反（1回目）
+- 根拠: T-798 の委譲先が、typecheck の落ちが作業前からあるかを確かめるために `git stash` を5回打った（`material.py --signals` の「よく打ったコマンド」）。stash の積み場は全作業ツリーと他のセッションで共有されていて、素の `git stash` / `pop` は他のセッションの退避を取り違えうる（Claude Code の環境の注意書き）。今回は取り違えずに戻せた
+- 出し先: `next-task` の手順5の委譲の依頼文に「`git stash` を使わない。作業前の状態と比べたいときは `git worktree add` の一時ツリーか、主ブランチの結果で比べる」の1項目を足す
+
+（`develop/draft/2026-09-27-delegate-reports-each-done-condition.md` から。T-675 の完了条件に1行足した）
+
+### 委譲先の報告で、完了条件を1行ずつ「どう確かめたか」と突き合わせさせる（振り返り: T-745）
+
+- 札: 赤 自己申告の不正確さ（1回目）
+- 根拠: 委譲先は「実装完了・目視確認済み」と報告したが、完了条件2のうち「バッジの文字（OK / 要注意 / NG）を tsukumo が付ける」が未実装だった。数の列の `tabular-nums` も CSS の `[align]` セレクタが一致せず効いていなかった（GFM の列揃えは style 属性で届く）が、目視はスクリーンショットだけで計算済みの値を見ていなかった。どちらも受け入れでメインが直した
+- 出し先: `next-task` の手順5の依頼に「報告では `## 完了条件` の各行について、満たしたか・何で確かめたかを1行ずつ書く。CSS を足したら計算済みのスタイルで効いたことを確かめる」を足す
+
+（`develop/draft/2026-09-27-t763-verify-after-final-deletion.md` から。T-812 の完了条件に1行入れた）
+
+### 置き場を切り替えるタスクは、消し終えた状態で検証コマンドを打つ（振り返り: T-763）
+
+- 札: 黄 実装の誤り（1回目）
+- 根拠: T-764 は `develop/task/` の最後の1件（T-764.md）を残したまま `pnpm run check --full` を打った。その1件は完了の記録を先にコミットするために残していて、消したのは検証のあと。そのため、ディレクトリが無いと `test/task-id.test.ts` が ENOENT で落ちることを見逃したまま main へ送った（送り出しは `verify=skipped`）。T-763 の委譲先が HEAD で落ちるのに気づき、`scripts/lib/task-id-repository.ts` を直した
+- 出し先: task-workflow の WORKFLOW.md「旧形式からの移行」か「Beads 方式」の切り替えの手順に、「`develop/task/` を消すコミットは、消したあとの木で検証コマンドを打ってから送る」の1行を足す
+
+（`develop/draft/2026-09-27-t809-completion-before-subagent-stops.md` から。T-817 になった）
+
+### 委譲の完了の知らせが届いても、委譲先がまだ書いていることがある（振り返り: T-809）
+
+- 札: 赤 自己申告の不正確さ（1回目）
+- 根拠: T-809 では委譲先の「completed」の知らせと最終報告（`pnpm run check` 通過・単体 1739 件）が、委譲先が `pnpm run check` を回している最中に届いた。メインが受け入れで検証を打つと、委譲先の書いたコードが lint（テストでの `execFileSync`）・コメントの指し方・タスク番号の検査で落ちた。メインが直しているあいだも委譲先は同じファイルを書き続け、メインの修正を「linter の自動修正」と取り違えていた。2通目の完了報告（`完了 | 4/4` の合図と hand-back）はそのあとに届いた
+- 出し先: `next-task` の手順6（受け入れ）に、「作業ツリーを直し始める前に、委譲先の `完了 | N/N` の合図か hand-back が届いていることを確かめる。届いていなければ `SendMessage` で止めてから触る」の条を足す
+
+（`develop/draft/2026-09-27-task-id-check-covers-story.md` から。T-818 になった）
+
+### タスク番号の検査の範囲に `story/` を足す（振り返り: T-745）
+
+- 札: 黄 制約違反（1回目）
+- 根拠: 委譲先が `story/` の見本のコメントに `T-745` を2箇所書き、`pnpm run check` は通った。`test/task-id.test.ts` の検査が `src/`・`test/`・`scripts/`・`docs/` だけを見ていて `story/` を見ない。受け入れでメインが見つけて消した
+- 出し先: `test/task-id.test.ts` の対象に `story/` を足すタスク
+
 ## 2026-09-27 振り返り（T-795・T-782）の利用枠の揺れと自己テストの雛形
 
 （`develop/draft/2026-09-27-t795-plan-usage-row-e2e-flake.md` から。出典: T-795 の振り返りで積んだ1件。ユーザーが `/plan-tasks` を呼んで承認した。T-810 になった）
