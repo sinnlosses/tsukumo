@@ -37,7 +37,8 @@ export const REPORT_CHECKS_DESCRIPTION =
  */
 export const REPORT_SECTIONS_DESCRIPTION =
   "結論のあとの根拠・比較・手順。節の並びで、節ごとに塊を並べる。" +
-  "塊の文字で効くのはインラインの記法（inline code・太字・リンク）だけ。2〜3文で終わる答えでは省く。"
+  "塊の文字で効くのはインラインの記法（inline code・太字・リンク）だけ。2〜3文で終わる答えでは省く。" +
+  "塊の fold に見出しを書くと畳んで描く（畳んでも結論が通る塊だけ）。"
 
 /**
  * `report` の `closing` 引数（締めのセリフ）の説明。`report` はターンを閉じるので、締めの一言は

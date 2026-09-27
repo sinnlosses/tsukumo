@@ -9,7 +9,9 @@ import { z } from "zod"
 
 const inlineText = z.string()
 
-const fold = z.string().default("").describe("畳むときの見出し（畳んでも結論が通る塊だけ）")
+// 畳むときの見出し。説明は `REPORT_SECTIONS_DESCRIPTION` に1回だけ書く
+// （ここに `.describe` を足すと塊の数だけ繰り返されて JSON Schema が膨らむ）。
+const fold = z.string().default("")
 
 const textBlockSchema = z.object({
   kind: z.literal("text"),
@@ -37,8 +39,7 @@ const listBlockSchema = z.object({
         done: z.boolean().default(false),
       }),
     )
-    .min(1)
-    .readonly(),
+    .min(1),
   fold,
 })
 
@@ -58,12 +59,8 @@ const tableBlockSchema = z
   .object({
     kind: z.literal("table"),
     title: inlineText.describe("セルに無いことだけ: 何を並べた表か・並べた基準・数の出どころ"),
-    columns: z.array(inlineText).min(2).readonly(),
-    rows: z
-      .array(z.array(cellSchema).readonly())
-      .min(1)
-      .readonly()
-      .describe("行ごとのセル。数は columns と揃える"),
+    columns: z.array(inlineText).min(2),
+    rows: z.array(z.array(cellSchema)).min(1).describe("行ごとのセル。数は columns と揃える"),
     fold,
   })
   .describe("比較・対応・件数。同じ形の項目が2つ以上並んだら表")
@@ -93,8 +90,7 @@ const statsBlockSchema = z
         }),
       )
       .min(2)
-      .max(4)
-      .readonly(),
+      .max(4),
     fold,
   })
   .describe("結論に効く数（件数・前後の差）。数が2〜4個並び、その数自体が結論のとき")
@@ -147,7 +143,6 @@ const progressBlockSchema = z
     steps: z
       .array(inlineText)
       .min(1)
-      .readonly()
       .describe("段の名前の並び。空文字の段は tsukumo が1始まりの番号を振る"),
     current: z
       .number()
@@ -180,7 +175,7 @@ export const reportBlockSchema = z.discriminatedUnion("kind", [
   markdownBlockSchema,
 ])
 
-export type ReportBlock = z.infer<typeof reportBlockSchema>
+export type ReportBlock = DeepReadonly<z.infer<typeof reportBlockSchema>>
 
 export const reportSectionSchema = z.object({
   heading: z
@@ -189,10 +184,20 @@ export const reportSectionSchema = z.object({
     .describe(
       "その節の結論を言う語（「変更点」「まとめ」のようなどのレポートにも当てはまる語にしない）。節が1つなら省いてよく、2つ以上なら全部に付ける",
     ),
-  blocks: z.array(reportBlockSchema).min(1).readonly(),
+  blocks: z.array(reportBlockSchema).min(1),
 })
 
-export type ReportSection = z.infer<typeof reportSectionSchema>
+export type ReportSection = DeepReadonly<z.infer<typeof reportSectionSchema>>
+
+/**
+ * 配列を読み取り専用の型に畳む。`z.array(...).readonly()` は JSON Schema に `readOnly: true` を
+ * 出す（`tool` に渡す `report` の引数がこれで膨らむ）ので、型だけをここで付け直す。
+ */
+type DeepReadonly<T> = T extends readonly (infer U)[]
+  ? readonly DeepReadonly<U>[]
+  : T extends object
+    ? { readonly [K in keyof T]: DeepReadonly<T[K]> }
+    : T
 
 /**
  * 文字列の本文（`sections` に切り替える前の `report` の `body`）を節に畳む。空白だけなら節は無く、それ以外は見出しの無い節1つに
