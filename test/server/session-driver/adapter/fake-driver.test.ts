@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 
 import {
   FAKE_DEFAULT_EFFORT,
@@ -321,7 +321,12 @@ describe("startFakeSession", () => {
       firstViewer: Promise.resolve(),
       onEvent: sink.onEvent,
     })
-    await tick()
+    // この場面だけ手が afterMs: 0, 1, 2, 3 の4段で、実時間の setTimeout を3回跨ぐ。決め打ちの
+    // 時間で待つと、負荷でイベントループが混み合ったときに最後の手を取りこぼす
+    // （driver.close() が残りの手のタイマーを捨てる）ので、最後の手が実際に届くまで待つ。
+    await vi.waitFor(() => {
+      expect(sink.events).toContainEqual(finished("fake-r2", false))
+    })
     driver.close()
 
     // 先頭2件は起こした直後の分（プランと effort の対応。この疑似セッションは opening が空）。
