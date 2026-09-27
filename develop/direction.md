@@ -47,6 +47,3 @@
 - **委譲の前に、作業ツリーが立ち上がっているか（`node_modules` と `dist/browser/`）をメインが確かめる**（振り返り: T-671）
   - 根拠: T-671 の委譲先は、作業ツリーに `vitest` が入っておらず `dist/browser/` も無いのを見つけ、CLAUDE.md が「人がやる」とする `pnpm install` と `pnpm run build` を自分で打って進めた。bun から pnpm へ移したあと、古い作業ツリーでは同じ状態が他でも起き得る。T-759 はホームや共有の環境を扱い、作業ツリーの立ち上げは扱っていない
   - 出し先: `next-task` 手順4と5の間（`node_modules/.bin/vitest` と `dist/browser/` が無ければ委譲せず、人に立ち上げを頼んで `task release` する）。`docs/workflow.md` の上乗せでもよい
-- **`import { type X }`（全指定子が type のインライン形）を lint で `import type { X }` に揃え、Node の型消去で値の import が残らないようにする**（振り返り: T-766）
-  - 根拠: T-766 の原因は `command.ts` の `import { type FRAME_ERROR_REASON }` が Node では `import {} from` として残り、`frame.ts` との輪を作っていたこと（bun は消すので見えなかった）。同じ形の import が `src` に約206ファイルあり、輪ができるかは import を足すたびに変わる。`typescript/consistent-type-imports` は `fixStyle: inline-type-imports` でこの形へ寄せている
-  - 出し先: タスク（`typescript/no-import-type-side-effects` か同等の規則を足して既存の箇所を直し、`consistent-type-imports` の `fixStyle` と食い違わないようにする。`docs/coding-standards.md` に理由を1行）

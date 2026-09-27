@@ -3,6 +3,14 @@
 `develop/direction.md` に書かれたユーザーからの指示を、タスク化した時点で**当時の記述のまま**
 ここへ移す（`docs/workflow.md`「指示メモ」参照）。新しいものを上に足す。**後から書き換えない。**
 
+## 2026-09-27 振り返り（T-766）の型だけの import
+
+（`## エージェントのドラフト` から。出典: T-766 の受け入れの振り返りで積んだ1件。ユーザーの答え「いいよ」で承認した。T-789 になった）
+
+- **`import { type X }`（全指定子が type のインライン形）を lint で `import type { X }` に揃え、Node の型消去で値の import が残らないようにする**（振り返り: T-766）
+  - 根拠: T-766 の原因は `command.ts` の `import { type FRAME_ERROR_REASON }` が Node では `import {} from` として残り、`frame.ts` との輪を作っていたこと（bun は消すので見えなかった）。同じ形の import が `src` に約206ファイルあり、輪ができるかは import を足すたびに変わる。`typescript/consistent-type-imports` は `fixStyle: inline-type-imports` でこの形へ寄せている
+  - 出し先: タスク（`typescript/no-import-type-side-effects` か同等の規則を足して既存の箇所を直し、`consistent-type-imports` の `fixStyle` と食い違わないようにする。`docs/coding-standards.md` に理由を1行）
+
 ## 2026-09-27 振り返り（T-768）のドラフトと、ドラフトが戻ってくる件
 
 （`## エージェントのドラフト` から。出典: T-768 の受け入れの振り返りで積んだ1件。ユーザーの答え「今回は処理済みのものを削除してしまおう」「2件はタスク化して」「ドラフトの管理の仕方を検討して提案してほしい。いま、結構困るよね。」で承認した。T-787 になり、T-769 の依存に足した。ほかの13件は処理済みのものが `merge=union` の付け替えで戻っていたので消した（T-671 の分は T-675 に足し済み）。戻ってくる件は裏取りで見つけたもので、T-788（hold。持ち方を決める）になった）
