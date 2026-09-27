@@ -1,0 +1,4 @@
+# T-688 の完了条件と背景を、`@vitejs/plugin-react` 6 での React Compiler の入れ方に合わせる（作業中: T-736）
+
+- 根拠: T-688 の完了条件は「`babel-plugin-react-compiler` が `@vitejs/plugin-react` の babel プラグインとして組み立てに入っている」だが、入っている `@vitejs/plugin-react` 6.1.1 には babel の口が無い。README「React Compiler」が示す道は2つで、(a) `react({ compiler: true })`（Rust 移植の `oxc-transform-react` を任意の peer として足す。README は experimental と書く）、(b) `@rolldown/plugin-babel` と `@babel/core` と `babel-plugin-react-compiler` を足し、`babel({ presets: [reactCompilerPreset()] })` を並べる。t3code の `apps/web/package.json` は (b)（devDependencies に `@rolldown/plugin-babel` と `babel-plugin-react-compiler` 1.0.0）
+- 出し先: T-688 の `## 完了条件` の1行目を「React Compiler が `vite.config.ts` の組み立てに入っている（(a)・(b) のどちらかを選び、選んだ理由を結果に書く）」に直し、`## 背景` に上の2つの道と README の場所（`node_modules/@vitejs/plugin-react/README.md`「React Compiler」）を1項で足す
