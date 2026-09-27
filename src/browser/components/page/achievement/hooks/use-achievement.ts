@@ -37,7 +37,7 @@ import {
   DEFAULT_CHARACTER_NAME,
   portraitAppearance,
 } from "../../../../domain/portrait-appearance.ts"
-import { rpc } from "../../../../lib/rpc-client.ts"
+import { rpc } from "../../../../domain/rpc.ts"
 import {
   selectAchievementDate,
   selectAchievementToday,

@@ -216,7 +216,7 @@
       "checks": [
         {
           "status": "ok",
-          "label": "bun run check",
+          "label": "pnpm run check",
           "detail": "架空の 1234 件が通った"
         },
         {

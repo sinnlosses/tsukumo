@@ -1,6 +1,5 @@
 // 仕切り1本ぶんのドラッグ配線。新しい依存は足さず、素の `pointerdown` / `pointermove` /
-// `pointerup` で書く（`docs/coding-standards.md`「Bun固有APIに寄せない」と同じ考えで、
-// ブラウザ標準の API に留める）。
+// `pointerup` で書く（ブラウザ標準の API に留める）。
 
 import clsx from "clsx"
 import { useEffectEvent, type PointerEvent, type ReactElement, type RefObject } from "react"

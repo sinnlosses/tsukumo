@@ -109,7 +109,7 @@ describe("sortQuestionOptions", () => {
   })
 
   it("漢字のラベルは ja の並びに揃える（実行環境の既定ロケールに引きずられない）", () => {
-    // 既定ロケールに任せると Bun（en-US）とブラウザ（ja）で並びが食い違う組み合わせ。
+    // 既定ロケールに任せると テストの環境（en-US）とブラウザ（ja）で並びが食い違う組み合わせ。
     const sorted = sortQuestionOptions([
       option("本文だけ（架空）"),
       option("見出しと質問文（架空）"),

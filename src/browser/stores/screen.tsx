@@ -4,7 +4,7 @@
 //
 // Context ではなく `useSyncExternalStore` にしてあるのは、正典が React の外
 // （`location.hash`）にあるため。リロードしても同じ画面に戻り、ブラウザの「戻る」が効き、
-// `bun run dev` の再読み込み（`lib/refresh.ts`）でもキャラクター画面に留まれる。
+// `pnpm run dev` の再読み込み（`domain/refresh.ts`）でもキャラクター画面に留まれる。
 // サーバの経路は増えない（`?token` はそのまま）。
 //
 // hash の書き方はここに無い（`stores/location-hash.ts`）。同じ hash の `turn` は見ている

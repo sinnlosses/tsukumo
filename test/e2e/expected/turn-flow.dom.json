@@ -288,7 +288,7 @@
                           {
                             "tag": "b",
                             "children": [
-                              "bun run check"
+                              "pnpm run check"
                             ]
                           },
                           "架空の 1234 件が通った",

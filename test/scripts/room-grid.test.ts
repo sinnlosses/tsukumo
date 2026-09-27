@@ -26,7 +26,7 @@ const FAKE_GRID_KEY = "fakegridkey0000111122223333444455"
 const RELOAD_HREF = roomGridPath(FAKE_GRID_KEY)
 
 function listener(port: number, pid: number): Listener {
-  return { port, pid, command: "bun run src/cli.ts" }
+  return { port, pid, command: "node src/cli.ts" }
 }
 
 describe("scanPorts", () => {

@@ -8,9 +8,9 @@
 // 使うので、本物の index も作業ツリーも読むだけで済む。
 //
 // 使い方:
-//   bun run scripts/serve-revision.ts HEAD~1                      # 1つ前のコミットを起こす
-//   bun run scripts/serve-revision.ts HEAD~1 --port 7341 --scene notation-figure
-//   bun run scripts/stop.ts --port 7340                           # 止める（必ず打つ）
+//   node scripts/serve-revision.ts HEAD~1                      # 1つ前のコミットを起こす
+//   node scripts/serve-revision.ts HEAD~1 --port 7341 --scene notation-figure
+//   node scripts/stop.ts --port 7340                           # 止める（必ず打つ）
 //
 // 起こしたものは自分では止まらない。撮り終えたら `stop.ts --port` で止める
 // （`pkill` / `killall` は `scripts/deny-broad-kill.ts` が拒否する）。この道具は子が死ぬと一緒に
@@ -21,9 +21,9 @@
 // （覚えたキャラクター・雑談の要約）は読み書きしない。
 //
 // `node_modules` はいま居る作業ツリーのものを symlink で貸す（取り出したツリーで
-// `bun install` はしない）。撮り比べる2点は普通ひと続きのコミットで、依存は同じ。
+// `pnpm install` はしない）。撮り比べる2点は普通ひと続きのコミットで、依存は同じ。
 // `package.json` をまたいで比べるときだけこの前提が崩れるので、そのときは取り出し先で
-// `bun install` を手で打つ。
+// `pnpm install` を手で打つ。
 //
 // `.git` も同じく symlink で貸す。無いと成果の画面が「main が読めない」になる
 // （`src/server/achievement/adapter/main-history.ts`）。取り出し先で打つ `git` は読み取り専用
@@ -51,13 +51,13 @@ const DEFAULT_PORT = 7340
 /** 起こした tsukumo が URL を出すまで待つ上限（ミリ秒）。 */
 const LAUNCH_TIMEOUT_MS = 30_000
 
-const USAGE = `使い方: bun run scripts/serve-revision.ts <コミット> [オプション]
+const USAGE = `使い方: node scripts/serve-revision.ts <コミット> [オプション]
 
   --port <n>      待ち受けるポート（既定 ${String(DEFAULT_PORT)}。明示指定なのでずらさない）
   --scene <name>  起こした直後に流す疑似セッションの場面（既定は流さない）
 
-  例: bun run scripts/serve-revision.ts HEAD~1 --scene notation-figure
-      撮り終えたら bun run scripts/stop.ts --port ${String(DEFAULT_PORT)}
+  例: node scripts/serve-revision.ts HEAD~1 --scene notation-figure
+      撮り終えたら node scripts/stop.ts --port ${String(DEFAULT_PORT)}
 `
 
 type Options = {
@@ -100,7 +100,7 @@ async function main(argv: readonly string[]): Promise<number> {
 
   process.stdout.write(
     `${revision.sha} を配信中\n  ${url}\n` +
-      `止める: bun run scripts/stop.ts --port ${String(options.port)}\n`,
+      `止める: node scripts/stop.ts --port ${String(options.port)}\n`,
   )
   return waitForExit(session)
 }

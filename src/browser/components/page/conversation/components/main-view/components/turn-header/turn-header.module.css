@@ -51,9 +51,9 @@
   min-width: 0;
 }
 /* 見ているターンの依頼の1行目。ページで唯一の本物の h2（レポートの `##` は h4 に落とす）。
+   `Heading`（level=2 size="subheading" tone="inherit" weight="bold"）が段・太さを持つ。
    **中身は1つの `<button>`**（`.turn-title-toggle`）で、見た目は h2 に付けていたときのまま。 */
 .turn-title {
-  margin: 0;
   min-width: 0;
 }
 /* タイトルの文字 + 下向きの矢印を1つにまとめた開く口。**既定の枠・背景は消し**、押せる面だと

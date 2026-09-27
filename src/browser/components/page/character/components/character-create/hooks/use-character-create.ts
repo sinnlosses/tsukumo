@@ -25,9 +25,9 @@ import { useEffect, useState } from "react"
 
 import { isCharacterPackName } from "../../../../../../../shared/character.ts"
 import { readAccentColor } from "../../../../../../domain/appearance-color.ts"
-import { readDataUrl } from "../../../../../../lib/data-url.ts"
 import { selectPack } from "../../../../../../stores/screen.tsx"
 import { useSession } from "../../../../../../stores/session.ts"
+import { readDataUrl } from "../../../../../../utils/data-url.ts"
 import { type AccentSwatchModel } from "../../hooks/use-character-edit.ts"
 
 const NAME_HINT = "画面や吹き出しに出る名前"

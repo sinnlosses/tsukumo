@@ -33,7 +33,7 @@ import { z } from "zod"
 
 import { isCharacterPackName } from "../../../shared/character.ts"
 import { type Expression } from "../../../shared/expression.ts"
-import { byteLength } from "../../../shared/lib/byte-length.ts"
+import { byteLength } from "../../../shared/utils/byte-length.ts"
 import { appendJsonLine, dateFileNames, readJsonLines } from "../../adapter/lib/jsonl.ts"
 import { isoWithOffset, localDateKey } from "../../adapter/local-time.ts"
 import { tsukumoHomeDir } from "../../adapter/tsukumo-home.ts"

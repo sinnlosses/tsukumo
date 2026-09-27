@@ -190,12 +190,11 @@
    足す**のは、モデルが見出しの語を書き忘れても色だけで伝えないため（文字そのものは
    `notation.tsx` が描く。13.1 原則5）。**ラベルは種別の色を持たない**（文字は ink 系・色を
    運ぶのは隣の縦罫の側。13.1 原則1）。 */
+/* 字の段・色は `Text`（size="label" tone="ink-quiet" weight="inherit"）が持つ。 */
 .detail-block .report-note-label {
   display: block;
   margin-bottom: 0.2rem;
-  font-size: var(--font-label);
   letter-spacing: 0.08em;
-  color: var(--ink-quiet);
 }
 /* レポートの見出し（`##` / `###`）。`src/browser/components/page/conversation/components/main-view/markdown/markdown.tsx` が `h4` / `h5` として描く
    （タグは札の頭のタイトル `h2.turn-title` と段が被らないよう一段落としてある）。**タイプスケールはこの4段だけ**
@@ -442,12 +441,11 @@
 /* mermaid の構文エラー（MermaidBlock）。元のコードは通常のコードブロックと同じ見た目
    （`.detail-block pre` に乗る）のまま残し、その下にエラー文を添える。**新しい色は作らない**
    （state-ng は表の report-badge-ng / report-note-ng と同じ「問題」の色。13.1 原則5）。 */
+/* 字の段・色は `Text`（size="secondary" tone="ink-quiet" weight="inherit"）が持つ。 */
 .mermaid-error {
   margin: 0.4rem 0 0;
   padding-left: 0.6rem;
   border-left: 3px solid var(--state-ng);
-  color: var(--ink-quiet);
-  font-size: var(--font-secondary);
   white-space: pre-wrap;
 }
 

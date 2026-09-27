@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { summarizeToolInput, toolInputText } from "../../../src/browser/lib/tool-summary.ts"
+import { summarizeToolInput, toolInputText } from "../../../src/browser/domain/tool-summary.ts"
 
 describe("summarizeToolInput", () => {
   it("Bash はコマンドを出す", () => {

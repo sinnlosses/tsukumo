@@ -1,7 +1,7 @@
 // 手元で並べて動いている部屋（tsukumo のビュー）を、iframe で格子に並べた1枚の HTML にして
 // Orca に開く。並べるのは「ポートで待ち受けていて、かつ Orca のタブがある」部屋だけ。
 //
-// 使い方: bun run scripts/open-room-grid.ts
+// 使い方: node scripts/open-room-grid.ts
 //
 // 格子のタブを開いているあいだ常駐する。127.0.0.1 の空きポート（OS に選ばせるので、tsukumo の
 // 探索範囲には入らない）で格子を配る小さな HTTP サーバになり、格子のページを読み込むたびに

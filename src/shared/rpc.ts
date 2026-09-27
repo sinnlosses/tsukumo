@@ -2,7 +2,7 @@
 // （`rpcContract`。HTTP の `/rpc`）と、コマンドに押し出しの購読を足したもの（`socketContract`。
 // WebSocket の `/ws`）。サーバ
 // （`src/router.ts` が受け手を付け、`server.ts` / `session-socket.ts` が載せる）とブラウザ
-// （`src/browser/lib/rpc-client.ts` と `src/browser/stores/session.ts` が型付きの client を作る）の
+// （`src/browser/domain/rpc.ts` と `src/browser/stores/session.ts` が型付きの client を作る）の
 // 両方が同じ値を見るので shared に置く。
 //
 // 機能ごとの契約は `src/shared/contract/<機能>.ts`（`docs/design.md` 2章「コマンドの受け手と

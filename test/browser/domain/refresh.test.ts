@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest"
 
-import { applyRefresh } from "../../../src/browser/lib/refresh.ts"
+import { applyRefresh } from "../../../src/browser/domain/refresh.ts"
 
 // `page` の側（`window.location.reload()`）は借りている DOM では確かめられないので、
 // ここは `style`（CSS だけを取り直す）の側だけを守る。ページごと読み込み直されることは実機で

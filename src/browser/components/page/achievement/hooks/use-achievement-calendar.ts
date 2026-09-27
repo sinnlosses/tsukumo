@@ -10,7 +10,7 @@
 import { useQuery } from "@tanstack/react-query"
 
 import { type AchievementCalendar } from "../../../../../shared/achievement-calendar.ts"
-import { rpc } from "../../../../lib/rpc-client.ts"
+import { rpc } from "../../../../domain/rpc.ts"
 
 const REFETCH_INTERVAL_MS = 60_000
 

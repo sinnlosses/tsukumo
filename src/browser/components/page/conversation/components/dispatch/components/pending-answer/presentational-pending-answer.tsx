@@ -22,7 +22,13 @@ export function PresentationalPendingAnswer(
     case "permission":
       return (
         <div className={clsx(styles["pending-answer"], styles["pending-permission"])}>
-          <p className={styles["pending-summary"]}>
+          <Text
+            element="p"
+            size="inherit"
+            tone="inherit"
+            weight="inherit"
+            className={styles["pending-summary"]}
+          >
             <Text
               element="span"
               size="inherit"
@@ -33,7 +39,7 @@ export function PresentationalPendingAnswer(
               {props.toolName}
             </Text>
             {props.summaryText}
-          </p>
+          </Text>
           <HStack
             element="div"
             name={{ kind: "none" }}

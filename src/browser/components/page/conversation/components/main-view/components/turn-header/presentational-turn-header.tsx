@@ -22,6 +22,7 @@
 import { type ReactElement } from "react"
 
 import { Button } from "../../../../../../../components/ui/button/button.tsx"
+import { Heading } from "../../../../../../../components/ui/heading/heading.tsx"
 import { Text } from "../../../../../../../components/ui/text/text.tsx"
 import { type TurnHeaderHistoryRow, type TurnHeaderModel } from "./hooks/use-turn-header.ts"
 import styles from "./turn-header.module.css"
@@ -90,7 +91,13 @@ export function PresentationalTurnHeader({
           CSS が省略するので、全文はボタンの `title` で読ませる。一覧はこの枠（`titleGroupRef`）の
           中に置き、そこが `useDismissSignal` の「外側」の基準になる。 */}
       <div className={styles["turn-title-group"]} ref={titleGroupRef}>
-        <h2 className={styles["turn-title"]}>
+        <Heading
+          level={2}
+          size="subheading"
+          tone="inherit"
+          weight="bold"
+          className={styles["turn-title"]}
+        >
           <button
             type="button"
             ref={historyToggleRef}
@@ -111,7 +118,7 @@ export function PresentationalTurnHeader({
             </Text>
             <span className={styles["turn-title-chevron"]} aria-hidden="true" />
           </button>
-        </h2>
+        </Heading>
         {historyOpen && (
           <TurnHistoryList id={historyListId} rows={historyRows} onSelect={onSelectHistoryRow} />
         )}
@@ -210,7 +217,15 @@ function TurnHistoryList(props: {
               </button>
               {/* 選択してコピーするための、ただの文字（ボタンではない）。改行はそのまま
                   `white-space: pre-wrap`（`turn-header.module.css`）で見せる。 */}
-              <span className={styles["turn-history-text"]}>{row.text}</span>
+              <Text
+                element="span"
+                size="inherit"
+                tone="inherit"
+                weight="inherit"
+                className={styles["turn-history-text"]}
+              >
+                {row.text}
+              </Text>
             </div>
           </li>
         ))}

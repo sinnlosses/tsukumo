@@ -2,8 +2,8 @@
 // 「塊の種類 × レポート数」と「逃げ道の中の記法 × レポート数」を割合つきで出す。
 //
 // 使い方:
-//   bun run scripts/report-block-usage.ts             # 直近28日
-//   bun run scripts/report-block-usage.ts --days 14   # 直近14日
+//   node scripts/report-block-usage.ts             # 直近28日
+//   node scripts/report-block-usage.ts --days 14   # 直近14日
 
 import process from "node:process"
 
@@ -16,8 +16,8 @@ import { REPORT_BLOCK_KINDS } from "../src/shared/report-block.ts"
 import { REPORT_USAGE_FORMAT_VERSION } from "../src/shared/report-usage-record.ts"
 
 const USAGE = `使い方:
-  bun run scripts/report-block-usage.ts             # 直近28日
-  bun run scripts/report-block-usage.ts --days <日数>`
+  node scripts/report-block-usage.ts             # 直近28日
+  node scripts/report-block-usage.ts --days <日数>`
 
 const recordSchema = z.object({
   v: z.literal(REPORT_USAGE_FORMAT_VERSION),

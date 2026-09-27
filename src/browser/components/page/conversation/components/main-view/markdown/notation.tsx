@@ -16,6 +16,7 @@ import {
   REPORT_NOTATION_NAMES,
   REPORT_NOTE_KINDS,
 } from "../../../../../../../shared/report-notation.ts"
+import { Text } from "../../../../../ui/text/text.tsx"
 import styles from "./report-notation.module.css"
 
 /**
@@ -54,7 +55,17 @@ export function NotationBlock(props: NotationBlockProps): ReactElement {
 
   return (
     <div {...rest} className={resolveNotationClassName(className)}>
-      {label !== undefined && <span className={styles["report-note-label"]}>{label}</span>}
+      {label !== undefined && (
+        <Text
+          element="span"
+          size="label"
+          tone="ink-quiet"
+          weight="inherit"
+          className={styles["report-note-label"]}
+        >
+          {label}
+        </Text>
+      )}
       {children as ReactNode}
     </div>
   )

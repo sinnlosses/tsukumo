@@ -79,8 +79,8 @@ shared（語彙・イベント・状態・reducer・zod スキーマ）は brows
 | 層               | 置くもの                                                                                                                                                                                                                                                                                        | import してよい先                                       | 実行場所         |
 | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- | ---------------- |
 | `shared`         | 概念の語彙・`SessionEvent`・`SessionState`・`applySessionEvent`・コマンドとフレームの zod・手続きの契約。**`SessionState` から純粋に導けるもの**も含む（ブラウザしか読まないものを含む。`main-view.ts` `turn-step.ts` `turn-speech.ts` `portrait-motion.ts` `room.ts` `command-suggestion.ts`） | `shared` のみ（`zod`・`@orpc/contract`・`remeda` は可） | サーバとブラウザ |
-| `server/core`    | サーバ側の純粋な判断。セッション管理・駆動の契約・イベントの検証・ポートの決定・設定の解釈。**`server/<機能>/core/` と、共有の `server/core/`**                                                                                                                                                 | `shared` / `core`                                       | サーバ（Bun）    |
-| `server/adapter` | 外の世界に触る場所。SDK・WebSocket・HTTP・ホスト・ファイル・子プロセス・fake driver。**`server/<機能>/adapter/` と、共有の `server/adapter/`**                                                                                                                                                  | `shared` / `core` / `adapter`                           | サーバ（Bun）    |
+| `server/core`    | サーバ側の純粋な判断。セッション管理・駆動の契約・イベントの検証・ポートの決定・設定の解釈。**`server/<機能>/core/` と、共有の `server/core/`**                                                                                                                                                 | `shared` / `core`                                       | サーバ（Node）   |
+| `server/adapter` | 外の世界に触る場所。SDK・WebSocket・HTTP・ホスト・ファイル・子プロセス・fake driver。**`server/<機能>/adapter/` と、共有の `server/adapter/`**                                                                                                                                                  | `shared` / `core` / `adapter`                           | サーバ（Node）   |
 | `browser`        | React の部品・hooks・CSS・Markdown の変換                                                                                                                                                                                                                                                       | `shared`（React などの npm は可）                       | ブラウザ         |
 | `src/` 直下      | 配線（composition root。`cli.ts` / `main.ts` と起動の段取り）                                                                                                                                                                                                                                   | すべて                                                  | サーバ           |
 
@@ -279,20 +279,20 @@ components/page/<ページ>/
 **`src/browser/` の箱と、置く基準**（判断に迷ったら「その機能しか読まないなら機能の中」が既定。
 領域も同じ）:
 
-| 箱                     | 置くもの                                                                                                  | import してよい先                                                                                                                   |
-| ---------------------- | --------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| `main.tsx` / `app.tsx` | 入口（`main.tsx` は mount だけ）と `<App>`（`app.tsx`。Provider を重ねて `<Root>` を描く）                | すべて                                                                                                                              |
-| `components/app/`      | **`<Root>` と、出す画面を選ぶ `<Layout>`**。すべての画面を知る composition root                           | `components/page` / `components/domain` / `components/ui` / `features` / `hooks` / `domain` / `lib` / `utils` / `stores` / `shared` |
-| `components/page/`     | **画面**。1つの画面（会話の画面は1つの領域）に閉じた部品・状態・保存                                      | `components/domain` / `components/ui` / `features` / `hooks` / `domain` / `lib` / `utils` / `stores` / `shared`                     |
-| `components/domain/`   | **tsukumo の語彙を持つ部品**。直下は2つ以上の領域が読む部品、サブディレクトリは全画面で共有する枠（領域） | `components/ui` / `features` / `hooks` / `domain` / `lib` / `utils` / `stores` / `shared`                                           |
-| `features/`            | **置かれる機能**（置き場所を持たず、領域に置いてもらう機能の部品・状態）                                  | `components/ui` / `hooks` / `domain` / `lib` / `utils` / `stores` / `shared`                                                        |
-| `components/ui/`       | **語彙を持たない** React の部品（値と呼び先を全部受け取る）                                               | `components/ui` / `hooks` / `lib` / `utils` / `shared`                                                                              |
-| `hooks/`               | **語彙を持たない** React のフック（`use-modal-dialog.ts`）                                                | `lib` / `utils` / `shared`                                                                                                          |
-| `domain/`              | **画面全体の語彙**（tsukumo の語彙を名乗り、複数の領域・機能が読むもの。部品ではないもの）                | `lib` / `utils` / `shared`                                                                                                          |
-| `lib/`                 | **ライブラリを包む**道具（React の部品ではないもの）                                                      | `utils` / `shared`                                                                                                                  |
-| `utils/`               | **ライブラリに依存しない**汎用の道具（下の「`lib/` と `utils/` に置く基準」）                             | —（`utils` の中だけ）                                                                                                               |
-| `stores/`              | **画面全体で共有する状態**の store・Context と、それを読む hook                                           | `lib` / `utils` / `shared`                                                                                                          |
-| `styles/`              | **グローバルな CSS だけ**（`theme.css`。領域・機能の見た目はその中）                                      | —                                                                                                                                   |
+| 箱                     | 置くもの                                                                                                     | import してよい先                                                                                                                   |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `main.tsx` / `app.tsx` | 入口（`main.tsx` は mount だけ）と `<App>`（`app.tsx`。Provider を重ねて `<Root>` を描く）                   | すべて                                                                                                                              |
+| `components/app/`      | **`<Root>` と、出す画面を選ぶ `<Layout>`**。すべての画面を知る composition root                              | `components/page` / `components/domain` / `components/ui` / `features` / `hooks` / `domain` / `lib` / `utils` / `stores` / `shared` |
+| `components/page/`     | **画面**。1つの画面（会話の画面は1つの領域）に閉じた部品・状態・保存                                         | `components/domain` / `components/ui` / `features` / `hooks` / `domain` / `lib` / `utils` / `stores` / `shared`                     |
+| `components/domain/`   | **tsukumo の語彙を持つ部品**。直下は2つ以上の領域が読む部品、サブディレクトリは全画面で共有する枠（領域）    | `components/ui` / `features` / `hooks` / `domain` / `lib` / `utils` / `stores` / `shared`                                           |
+| `features/`            | **置かれる機能**（置き場所を持たず、領域に置いてもらう機能の部品・状態）                                     | `components/ui` / `hooks` / `domain` / `lib` / `utils` / `stores` / `shared`                                                        |
+| `components/ui/`       | **語彙を持たない** React の部品（値と呼び先を全部受け取る）                                                  | `components/ui` / `hooks` / `lib` / `utils` / `shared`                                                                              |
+| `hooks/`               | **語彙を持たない** React のフック（`use-modal-dialog.ts`）                                                   | `lib` / `utils` / `shared`                                                                                                          |
+| `domain/`              | **画面全体の語彙**（tsukumo の語彙を名乗り、複数の領域・機能が読むもの。部品ではないもの）                   | `lib` / `utils` / `shared`                                                                                                          |
+| `lib/`                 | **固有のライブラリ**（`orpc` のように特定用途のパッケージ）を包む道具                                        | `utils` / `shared`                                                                                                                  |
+| `utils/`               | **それ以外**の汎用の道具（実行環境の API・`react` / `remeda` を含む。下の「`lib/` と `utils/` に置く基準」） | —（`utils` の中だけ）                                                                                                               |
+| `stores/`              | **画面全体で共有する状態**の store・Context と、それを読む hook                                              | `domain` / `lib` / `utils` / `shared`                                                                                               |
+| `styles/`              | **グローバルな CSS だけ**（`theme.css`。領域・機能の見た目はその中）                                         | —                                                                                                                                   |
 
 - **部品の箱の向きは `app.tsx` → `components/app` → `components/page` → `components/domain` → `features` →
   `components/ui` の一方通行**。`components/domain` は画面を知らず、`features/` は自分を置く枠も画面も
@@ -311,10 +311,10 @@ components/page/<ページ>/
 - **引き金は逆にも引く。** 読み手が1つの領域だけに戻ったら、その中へ**下ろす**。`browser/lib/` と
   `browser/domain/`、`components/domain/` の直下に「1つの領域（機能）だけが読むファイル」が無いことは
   `test/architecture.test.ts` が見る（どの領域・機能も読まないものは対象外）
-- **`domain/` と `lib/` の線は、包んでいる技術の有無では引かない。** 引くのは「**ファイル名が tsukumo の
-  語彙を名乗るか**」。`domain/appearance-color.ts` は `localStorage` を包むが名前が指すのは**画面の色**なので
-  `domain/`、`lib/tool-summary.ts` は純関数だが名前が指すのは**外部システムの語彙**（Claude Code の
-  ツール）なので `lib/`
+- **`domain/` と `lib/` の線は、tsukumo の語彙を名乗るか、固有のライブラリ（`orpc` のような）を
+  包むかで引く。** `domain/appearance-color.ts` は `localStorage` を包むが名前が指すのは**画面の色**
+  なので `domain/`、`domain/tool-summary.ts` は純関数で `remeda`（用途を問わない汎用ライブラリ）しか
+  使わず、`shared/` の型にも依存する（`utils/` の歯止め3を満たさない）ので、`lib/` ではなく `domain/`
 - 検査は `test/architecture.test.ts`（領域と置かれる機能の一覧が横の辺を、箱の一覧が縦の辺を落とす）
 
 ### `components/ui/` の部品（variant の作法と一覧）
@@ -447,20 +447,22 @@ components/page/<ページ>/
 1. **tsukumo の語彙**（`docs/glossary.md` に載る語）なら、どちらにも置かない。`shared` は層の直下、
    サーバ側は機能の `core/` か `adapter/` の直下、`browser` は `browser/domain/`。領域・機能の中の
    ものは、**その領域（機能）しか読まないならその中に残す**（名前が形式を指していても）
-2. 残ったものを、**言語の標準か、その外か**で分ける:
+2. 残ったものを、**固有のライブラリ（`orpc` のように特定用途のパッケージ）を包むか、
+   それ以外か**で分ける:
 
-| ファイル名が指しているもの                                                             | 箱       | 例                                                                                       |
-| -------------------------------------------------------------------------------------- | -------- | ---------------------------------------------------------------------------------------- |
-| **ライブラリを包む道具**（外部パッケージ・実行環境の API・外部システムとファイル形式） | `lib/`   | `browser/lib/socket.ts`（WebSocket）・`browser/lib/data-url.ts`（`FileReader`）          |
-| **ライブラリに依存しない汎用の道具**（言語の標準だけで書けるもの）                     | `utils/` | `browser/utils/clock.ts`（`Temporal`）・`browser/utils/format-count.ts` / `day-label.ts` |
+| ファイル名が指しているもの                                                                                  | 箱       | 例                                                                                                                                  |
+| ----------------------------------------------------------------------------------------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| **固有のライブラリを包む道具**                                                                              | `lib/`   | `browser/lib/socket.ts` / `browser/lib/rpc-client.ts`（`@orpc/*`）                                                                  |
+| **それ以外の汎用の道具**（実行環境の API・言語の標準・`react` / `remeda` のような用途を問わないライブラリ） | `utils/` | `browser/utils/clock.ts`（`Temporal`）・`browser/utils/data-url.ts`（`FileReader`）・`browser/utils/debounce.ts`（`react` の hook） |
 
-実行環境の API（DOM・`node:fs` など）は**その実行環境でしか動かない**点でライブラリの側。`Temporal` は
-言語の標準なので `utils/` に置ける。React の hook を使う `browser/lib/debounce.ts` は手法の名前でも `lib/`。
+実行環境の API（DOM・`node:fs` など）も、`react`・`remeda` のような用途を問わない汎用ライブラリも
+`utils/` 側。**固有の用途にしか使わないパッケージ**（`orpc` のような）だけが `lib/` に残る。
 **「複数箇所から呼ばれる」はどちらにも置く理由にならない。**
 
 **`utils/` の歯止め**（3つとも満たすものだけ置ける）:
 
-1. **import が同じ `utils/` の中だけ**（外部パッケージ・`node:`・`shared/` の型を引いたら `utils/` ではない）
+1. **import は `utils/` の中と、汎用のライブラリ・実行環境の API だけ**（`shared/` や層の中の他の
+   箱への import があるなら `utils/` ではない）
 2. **ファイル名が動詞か、名前の付いた手法**（`string.ts` `format.ts` のような型・種類の名前と `misc.ts` は置けない）
 3. **別のプロジェクトへ1文字も変えずにコピーして意味が通る**
 
@@ -1045,8 +1047,8 @@ characters/<name>/
   （`channel: "chrome"`、headless）。**新しい外部コマンドは足さない**
 - **置き場所は `test/e2e/<シナリオ>.test.ts`**（1ファイル = 1つの機能のまとまり。E2E は1つのファイルの
   振る舞いではないので、`src/` の写しの構成には従わない）
-- **`bun run check` の中の別の段にする**（`bun run test` は既定の設定が `test/e2e/` を外し、E2E は
-  `bun run test:e2e` が E2E 専用の設定で走らせる）。時間切れの既定を E2E の段だけ延ばし、単体テストを
+- **`pnpm run check` の中の別の段にする**（`pnpm run test` は既定の設定が `test/e2e/` を外し、E2E は
+  `pnpm run test:e2e` が E2E 専用の設定で走らせる）。時間切れの既定を E2E の段だけ延ばし、単体テストを
   1ファイル走らせるときに Chrome を要らないままにするため。E2E の設定はファイルを並べず
   （`fileParallelism: false`。並べると負荷で待ちが揺れる）、単体の `setupFiles` の DOM のグローバルを渡さない
 - **`dist/browser/` は E2E の段が自分で組み立てる**（起動は古い成果物でも止まらずに配る〔11章〕ので、
@@ -1093,7 +1095,7 @@ characters/<name>/
 
 **置き場所と比べ方**: 期待値は `test/e2e/expected/<シナリオ>.*.json` に置いてリポジトリに入れ、走らせた
 結果とスクリーンショットは `/tmp/tsukumo-e2e/<シナリオ>/` に毎回書き直す。比べ方は `toEqual` で、
-**期待値が無ければ落とす**（黙って書かない）。**期待値の更新**は `bun run test:e2e:update` → `git diff
+**期待値が無ければ落とす**（黙って書かない）。**期待値の更新**は `pnpm run test:e2e:update` → `git diff
 test/e2e/expected/` で意図した変化だけであることを確かめる → 直した変更と同じコミットに入れる。
 
 ### E2E のシナリオの一覧
@@ -1142,19 +1144,19 @@ E2E が通るのは**疑似セッションに書いた並びだけ**で、fake d
 ## 11. ビルドと依存
 
 - **成果物は事前に組み立てて `dist/browser/` に置き、起動（`src/main.ts`）は置いてあるものを読む**
-  （`docs/architecture.md`「ブラウザ側は事前に組み立てて置く」）。作るのは `bun run build`
-  （`scripts/build-ui.ts`）だけで、`bun run dev` も起こす前に1回組み立てる（HMR を止めたときに戻る先）
-- `bun run build` が起こすのは `node node_modules/vite/bin/vite.js build src/browser --config vite.config.ts --outDir dist/browser`
+  （`docs/architecture.md`「ブラウザ側は事前に組み立てて置く」）。作るのは `pnpm run build`
+  （`scripts/build-ui.ts`）だけで、`pnpm run dev` も起こす前に1回組み立てる（HMR を止めたときに戻る先）
+- `pnpm run build` が起こすのは `node node_modules/vite/bin/vite.js build src/browser --config vite.config.ts --outDir dist/browser`
   の1本で、`main.js` と `main.css` の対が置かれる（名前をハッシュ付きにせず固定する理由と、JS API ではなく
   CLI を起こす理由は `docs/architecture.md`「組み立ては `vite build` の CLI を子プロセスで起こす」）
-- **`dist/` は `.gitignore` する。** リポジトリを取り直したら `bun install` のあとに `bun run build` を
-  1回打つ（`tsukumo` は `bun link` でこのリポジトリを指しているので、**「配布」の実体はこのリポジトリ
+- **`dist/` は `.gitignore` する。** リポジトリを取り直したら `pnpm install` のあとに `pnpm run build` を
+  1回打つ（`tsukumo` は `pnpm link --global` でこのリポジトリを指しているので、**「配布」の実体はこのリポジトリ
   そのもの**）
-- **成果物が無ければ起動しない**（起動時の前提不足。理由に `bun run build` を添える）。**ソース
+- **成果物が無ければ起動しない**（起動時の前提不足。理由に `pnpm run build` を添える）。**ソース
   （`src/browser/` と `src/shared/`）のほうが新しければ、1行知らせてそのまま配る**（古くても画面は
   動くので止めず、黙って配らないことで事故を防ぐ）。HMR と違い、ここは `src/shared/` も見る
 
-**作り直しを押す仕組み。** 開発中は HMR で差し替える。`bun run dev`（= `bun run build && node src/cli.ts --dev`）で起こすと、
+**作り直しを押す仕組み。** 開発中は HMR で差し替える。`pnpm run dev`（= `pnpm run build && node src/cli.ts --dev`）で起こすと、
 `src/server/view-server/adapter/ui-dev-server.ts` が Vite の開発サーバを **middleware mode** で起こし、
 ビューサーバ（`node:http`）に差し込む。設定は組み立てと同じ `vite.config.ts` で、root は `src/browser/`。
 
@@ -1164,9 +1166,9 @@ E2E が通るのは**疑似セッションに書いた並びだけ**で、fake d
   経路と守り方は変わらない。`/assets/` の対は `dev` のあいだ 404）
 - **HMR の WebSocket は `/vite-hmr`**。`/ws` の受け口は合わない upgrade を閉じるので、Vite が受ける
   upgrade は触らずに譲る（`ownsUpgrade` / `yieldsUpgrade`）
-- **本番（`tsukumo`・`bun run start`）では Vite を読み込まない。** `vite` は `startUiDevServer` の中で
+- **本番（`tsukumo`・`pnpm run start`）では Vite を読み込まない。** `vite` は `startUiDevServer` の中で
   動的に import し、呼ぶのは `--dev` のときだけ（常に入れると仕事中の保存で画面が差し替わりうる）
-- **開発サーバは `dist/browser/` を書き換えない**（次の起動に乗せるには `bun run build` が要る）。
+- **開発サーバは `dist/browser/` を書き換えない**（次の起動に乗せるには `pnpm run build` が要る）。
   **型を見ない**ので、型エラーだけのコードはそのまま当たる。**当たるのはブラウザに配る側だけ**:
 
 | 直した場所                                | どうなるか                                                                                             |
@@ -1199,5 +1201,5 @@ E2E が通るのは**疑似セッションに書いた並びだけ**で、fake d
 | dev     | `playwright-core`                                                                  | 画面の確認（`scripts/capture-*.ts`）と E2E（10章）           |
 | dev     | `vitest` `vite`                                                                    | テストランナーとブラウザ側の組み立て・開発サーバ             |
 
-`zod` と `@anthropic-ai/claude-agent-sdk` はある。`ws` を選ぶのは **`Bun.*` の固有 API に寄せない**ため。
+`zod` と `@anthropic-ai/claude-agent-sdk` はある。`ws` を選ぶのは**ランタイム固有の API に寄せない**ため。
 **`playwright-core` はブラウザを落とさず手元の Google Chrome を動かし**、テストランナー（`@playwright/test`）は足さない。

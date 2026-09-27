@@ -40,7 +40,7 @@ import {
   portraitAppearance,
   type PortraitAppearance,
 } from "../../../../domain/portrait-appearance.ts"
-import { rpc } from "../../../../lib/rpc-client.ts"
+import { rpc } from "../../../../domain/rpc.ts"
 import { useSession, useTurnRunning, type SessionDispatch } from "../../../../stores/session.ts"
 import { dayLabel } from "../../../../utils/day-label.ts"
 import { monthDayLabel } from "../../../../utils/month-day-label.ts"

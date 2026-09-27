@@ -46,7 +46,7 @@ export function Layout(): ReactElement {
 /**
  * 会話の画面を除いた画面の部品を引く表（`stores/location-hash.ts` の画面の一覧が正典）。
  * `satisfies` で `Screen` を尽くしているかを検査するので、画面を1つ足したのに部品の登録を
- * 忘れると `bun run typecheck` が落ちる。会話の画面は `<Conversation>` を常時マウントしたまま
+ * 忘れると `pnpm run typecheck` が落ちる。会話の画面は `<Conversation>` を常時マウントしたまま
  * `<Activity>` の可視/不可視で切り替える別枠（上の {@link Layout} 参照）なのでここには乗らない。
  */
 const OVERLAY_SCREEN = {

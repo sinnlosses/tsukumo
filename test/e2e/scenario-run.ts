@@ -55,7 +55,7 @@ const EVENT_TIMEOUT_MS = 30_000
 const SETTLE_INTERVAL_MS = 100
 const SETTLE_ATTEMPTS = 50
 
-/** 期待値を書き直すか（`bun run test:e2e:update`）。 */
+/** 期待値を書き直すか（`pnpm run test:e2e:update`）。 */
 const UPDATE_EXPECTED = process.env["E2E_UPDATE"] === "1"
 
 /**
@@ -621,7 +621,7 @@ function matchArtifact(
   }
   if (!existsSync(expectedPath)) {
     throw new Error(
-      `期待値が無い: ${path.relative(REPOSITORY_ROOT, expectedPath)}（bun run test:e2e:update で書き、git diff で中身を確かめる）`,
+      `期待値が無い: ${path.relative(REPOSITORY_ROOT, expectedPath)}（pnpm run test:e2e:update で書き、git diff で中身を確かめる）`,
     )
   }
   expect(JSON.parse(text)).toEqual(JSON.parse(readFileSync(expectedPath, "utf8")))

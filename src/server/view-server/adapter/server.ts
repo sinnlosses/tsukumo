@@ -6,8 +6,6 @@
 // 受け口を足す）。
 // Vite の開発サーバを差し込んだ起動では、経路の表に無い要求をそちらへ回す（`ViewUi` の `dev`）。
 //
-// `Bun.serve` は使わない（`node:http`。docs/coding-standards.md「Bun固有APIに寄せない」）。
-//
 // 安全のための決まり（`docs/design.md`「会話内容と安全」）:
 //   - バインド先は `127.0.0.1` だけ（listen するのはここ）
 //   - 起動トークン（起動ごとの乱数。ディスクに書かない）は `/prompt-image` と `/rpc` を守る
@@ -513,7 +511,7 @@ function toFetchRequest(request: IncomingMessage, serverOrigin: string): Request
     }
   }
   const hasBody = request.method !== "GET" && request.method !== "HEAD"
-  // 流れの本文には `duplex: "half"` が要る（Node の fetch）が、Bun の `RequestInit` の型には無いので、
+  // 流れの本文には `duplex: "half"` が要る（Node の fetch）が、DOM の `RequestInit` の型には無いので、
   // 型を広げた入れ物に入れてから渡す。
   const init: RequestInit & { readonly duplex: "half" } = {
     method: request.method,

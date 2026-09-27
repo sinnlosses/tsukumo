@@ -67,13 +67,19 @@ function GraduationCard(props: { readonly graduation: AchievementGraduation }): 
         {graduation.summary}
       </p>
       <p className={styles["achievement-surprise-card-footer"]}>
-        <span>登録から</span>
+        <Text element="span" size="inherit" tone="inherit" weight="inherit" className="">
+          登録から
+        </Text>
         <span className={styles["achievement-surprise-card-number"]}>
           {String(graduation.days)}
         </span>
-        <span>日</span>
+        <Text element="span" size="inherit" tone="inherit" weight="inherit" className="">
+          日
+        </Text>
         <span className={styles["achievement-surprise-card-spacer"]} />
-        <span>{monthDayLabel(graduation.registeredOn)}から、おつかれさまでした</span>
+        <Text element="span" size="inherit" tone="inherit" weight="inherit" className="">
+          {monthDayLabel(graduation.registeredOn)}から、おつかれさまでした
+        </Text>
       </p>
     </article>
   )
@@ -86,9 +92,13 @@ function MilestoneCard(props: { readonly milestone: AchievementMilestone }): Rea
     <article className={styles["achievement-surprise-card"]}>
       <p className={styles["achievement-surprise-card-title"]}>節目</p>
       <p className={styles["achievement-surprise-card-body"]}>
-        <span>通算</span>{" "}
+        <Text element="span" size="inherit" tone="inherit" weight="inherit" className="">
+          通算
+        </Text>{" "}
         <span className={styles["achievement-surprise-card-number"]}>{count}</span>{" "}
-        <span>{milestone.kind === "task" ? "件目のタスク" : "コミット目"}</span>
+        <Text element="span" size="inherit" tone="inherit" weight="inherit" className="">
+          {milestone.kind === "task" ? "件目のタスク" : "コミット目"}
+        </Text>
       </p>
       <p className={styles["achievement-surprise-card-footer"]}>
         {milestone.kind === "task"

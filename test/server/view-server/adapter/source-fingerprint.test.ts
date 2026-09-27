@@ -6,7 +6,7 @@ import { describe, expect, it } from "vitest"
 
 import { sourceFingerprint } from "../../../../src/server/view-server/adapter/source-fingerprint.ts"
 
-// 見張りつきの起動（`bun run dev`）で、画面だけ組み直してよいかを決める指紋。
+// 開発サーバつきの起動（`pnpm run dev`）で、画面へ差分を当ててよいかを決める指紋。
 // 一時ディレクトリに `browser/` と `shared/` を模した木を作って確かめる。
 
 describe("sourceFingerprint", () => {

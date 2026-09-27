@@ -2,14 +2,6 @@
 
 ## ユーザーから
 
-- docs の責務を組み替え、各ファイルの責務・読む時・直す時を明確にする（2026-09-27 のユーザーの指示。案は同日の会話）
-  - `docs/architecture.md` を全体構造の入口にする（層・機能と辺・置き場所の基準・プロトコルの不変条件・動きの順序・安全の境界。いまの design.md 2〜5・9章と、architecture.md「採用アーキテクチャ」「新しいコードを置く場所」を合わせる）。`architecture-proposal` スキルが「採用後の正典は `docs/architecture.md`」と名指ししているのとも合う
-  - 機能・領域ごとの詳細は `docs/architecture/` に置く（chat-mode・display・screen-design と、design.md の 6章 browser・7章 キャラクターパック・10章 テスト（architecture.md「手で確かめること」を合わせる）・11章 ビルド）
-  - architecture.md「設計判断（なぜ今の形なのか）」は **`docs/architecture/adr/`** に1判断1ファイルで移す（ユーザー決定。`domain-modeling` の既定 `docs/adr/` ではなく、設計に関わるものとして architecture の下に置く）
-  - 「既知の制約・注意点」「現在の実装状況」の置き先は、中身を読んでから決める（前者は各機能のファイルへ分ける、後者の経緯は `docs/history/` へ、が見込み）
-  - 各ファイルの冒頭に責務・読む時・直す時を書き、CLAUDE.md の索引も合わせる
-  - 参照は design.md 1544・architecture.md 476 箇所あり、章の句で引かれているので段に分けて1段ずつ main へ送る（段の例: adr を作って設計判断を移す → design.md の機能別の章を移す → 残りを architecture.md に合わせて design.md を消す → chat-mode などを移す）
-
 ## エージェントのドラフト
 
 - **`report` の `inputSchema` を縮める（`.readonly()` が出す `readOnly: true` と、8回繰り返す `fold` の説明）**（振り返り: T-705）
@@ -39,3 +31,12 @@
 - **`components/ui/` の外に残る `<button>`（約26件）を扱う後続を切る。最初の委譲先は `docs/design.md` 2章の「`Button` にしない」ものまで既存の variant に寄せ、見た目を変えていた**（振り返り: T-724）
   - 根拠: T-724 は15箇所で閉じた（9箇所を置き換え、6箇所は同じ節が除くもの）。残りは `ref`・`aria-expanded`/`aria-controls`・`disabled` の専用の見た目・`data-*`・`role` が要るもので、`Button` の props を広げるかどうかの判断が要る。1回目の委譲は受け入れで見た目の差が見つかり、ユーザー決定で opus でやり直した
   - 出し先: 判断の要るタスク（hold。`Button` に受け口を足すか `<button>` のまま残すかを種類ごとに決める）。置き換えのタスクの本文には「元の見た目を変えない」「2章の除外に当たるものは残す」を最初から書く
+- **`test/server/achievement/adapter/main-history.test.ts` が `bun run check` の中でときどき `EPIPE`（`child.stdin.end` への書き込み）を出して落ちるのを直す**（振り返り: T-750）
+  - 根拠: T-750 の受け入れで、2718 件すべて pass のまま「main ブランチが無いリポジトリでは「不明」」の直後に未処理の `EPIPE` が1件出て `bun run check` が落ち、打ち直すと通った。T-750 は `src/browser` だけを触っている。子プロセスが stdin を読む前に終わる経路で書き込みの失敗を拾っていないと見られる。既存の揺れのタスク（T-671・T-739）はこのファイルを扱っていない
+  - 出し先: タスク（stdin の `error` を拾うか書き込みを待つ形にし、`bun run test` を続けて10回流して出ないことを完了条件にする）
+- **`test/architecture.test.ts` が `pnpm run test` の並列実行で既定の5秒を超えて落ちることがある**（振り返り: T-751）
+  - 根拠: T-750・T-751 の委譲先がどちらも、差分と無関係に `architecture.test.ts` の時間切れ（と character まわりのテストの競合）で1回目の検証を落とし、単体か `--no-file-parallelism` で流し直して通した。T-671 は `character-edit.test.tsx` の揺れだけを扱い、このファイルの時間切れを扱うタスクは無い
+  - 出し先: タスク（ソースを全件読む検査の重さを測り、読み込みを1回にまとめるか時間の上限をこのファイルだけ上げ、`pnpm run test` を続けて10回流して落ちないことを完了条件にする）
+- **`test/cli.test.ts` と `test/server/view-server/adapter/bundle.test.ts` が並列実行で `dist/browser/` を取り合い、`task ship` の検証がときどき落ちる**（振り返り: T-751）
+  - 根拠: T-750・T-751 の `task ship` がどちらも `cli.test.ts` の「ブラウザ側の成果物を読めない」で VERIFY_FAILED になり、直前の同じ作業ツリーでの `pnpm run check` は通っていた。`bundle.test.ts` は `buildUiBundle()` で本物の `dist/browser/` を出し直し、`vite.config.ts` の `emptyOutDir: true` で一度空にするので、その間に `cli.test.ts` が起動すると成果物が無く見える
+  - 出し先: タスク（`bundle.test.ts` の組み立てを一時ディレクトリへ向けるか、`dist/browser/` を読むテストを同じファイルに寄せて並列から外し、`pnpm run test` を続けて10回流して落ちないことを完了条件にする）

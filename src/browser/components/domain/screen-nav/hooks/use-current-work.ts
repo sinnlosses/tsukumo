@@ -3,7 +3,7 @@
 // 一覧を、見た目が受け取れる形まで畳んで返す。
 //
 // 範囲は依頼1つ（`src/shared/turn-step.ts` の `currentTurnSteps` が、最後の依頼より後の
-// ツールの記録から導く）。要約は `src/browser/lib/tool-summary.ts`（`summarizeToolInput` /
+// ツールの記録から導く）。要約は `src/browser/domain/tool-summary.ts`（`summarizeToolInput` /
 // `toolInputText`）を使い、どの欄を読むかを2箇所で別に決めない。
 //
 // 札は2箇所に描かれる（広い画面の帯・狭い画面の「≡」の面の中。`ScreenNavRoom` などと同じ
@@ -33,8 +33,8 @@ import {
   type TurnStepStatus,
 } from "../../../../../shared/turn-step.ts"
 import { DEFAULT_CHARACTER_NAME } from "../../../../domain/portrait-appearance.ts"
+import { summarizeToolInput, toolInputText } from "../../../../domain/tool-summary.ts"
 import { useDismissSignal, type DismissCause } from "../../../../hooks/use-dismiss-signal.ts"
-import { summarizeToolInput, toolInputText } from "../../../../lib/tool-summary.ts"
 import { useQuestionScroll } from "../../../../stores/question-scroll.ts"
 import { navigateTo, useScreen } from "../../../../stores/screen.tsx"
 import { useSession, useTurnRunning } from "../../../../stores/session.ts"

@@ -15,6 +15,7 @@ import clsx from "clsx"
 import { type ReactElement } from "react"
 import { identity, sortBy } from "remeda"
 
+import { Text } from "../../../../../../ui/text/text.tsx"
 import styles from "../../dispatch.module.css"
 
 export const MAX_FILE_SUGGESTIONS = 10
@@ -101,7 +102,15 @@ export function FileSuggestions(props: FileSuggestionsProps): ReactElement | nul
             props.onSelect(index)
           }}
         >
-          <span className={styles["dispatch-suggestion-path"]}>{path}</span>
+          <Text
+            element="span"
+            size="inherit"
+            tone="inherit"
+            weight="inherit"
+            className={styles["dispatch-suggestion-path"]}
+          >
+            {path}
+          </Text>
         </li>
       ))}
     </ul>

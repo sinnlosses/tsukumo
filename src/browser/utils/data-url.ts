@@ -5,7 +5,7 @@
 // （`docs/coding-standards.md`「エラーハンドリング」）。呼び出し側はその1枚を諦める。
 //
 // 読み手は2つの機能（キャラクター画面の素材と、入力欄の `components/page/conversation/components/dispatch/components/composer/domain/prompt-image.ts`）。
-// 包んでいるのは `FileReader` で、ファイル名が指すのも data URL という形式なので `lib/`
+// 包んでいるのは `FileReader`（実行環境の API）で、固有のライブラリではないので `utils/`
 // （`docs/design.md` 2章「`lib/` と `utils/` に置く基準」）。
 
 /** 選ばれたファイルを data URL にする。読めなかったときは undefined。 */

@@ -18,7 +18,7 @@ import {
   parsePromptImageThumbnail,
   type PromptImage,
 } from "../../../../../../../../../shared/prompt-image.ts"
-import { readDataUrl } from "../../../../../../../../lib/data-url.ts"
+import { readDataUrl } from "../../../../../../../../utils/data-url.ts"
 
 /**
  * 控えの長いほうの辺（px）。記録に残り続けるものなので小さく持つ

@@ -99,7 +99,6 @@ node scripts/stop.ts           # 動いている tsukumo の一覧（--port <n> 
 - **条件付きの描画は `{条件 && <部品 />}` で書き、`? … : null` にしない。** 左辺は `boolean` に限る
 - **`useEffect` は「React の外と同期する」4類型だけ。** 依存配列を手で間引かない
   （代替は `docs/coding-standards.md`「React」節）
-- **`Bun.*` の固有APIに寄せない**（`node:` の標準API）
 - 可読性が良くなる場合は **remeda** を優先する
 - **2つ以上の class 名をつなぐときは clsx を使う**（`docs/coding-standards.md`「class 名は clsx で組む」）
 - コード・ドキュメントにタスク番号（`T-` + 3桁）を書かない（例外は `docs/requirements.md`

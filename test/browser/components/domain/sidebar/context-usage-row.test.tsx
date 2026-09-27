@@ -3,7 +3,7 @@ import { cleanup, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
 import { ContextUsageRow } from "../../../../../src/browser/components/domain/sidebar/context-usage-row.tsx"
-import { rpc } from "../../../../../src/browser/lib/rpc-client.ts"
+import { rpc } from "../../../../../src/browser/domain/rpc.ts"
 import {
   type ContextUsageReport,
   UNAVAILABLE_CONTEXT_USAGE,

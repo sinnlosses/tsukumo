@@ -1,11 +1,8 @@
-// テストの中で子プロセス（`git`・`bun` など）を起こす口。同期版（`execFileSync` /
+// テストの中で子プロセス（`git`・`node` など）を起こす口。同期版（`execFileSync` /
 // `spawnSync`）は使わない（`.oxlintrc.json` が test/ で止める）。
 //
-// bun の `spawnSync` には、子が終わったのに気づかず待ちが 100% CPU で空回りする不具合がある
-// （docs/coding-standards.md「テスト」節）。空回りの最中は `spawnSync` 自身の `timeout` も効かず、
-// 1回の固まりが `bun run check` 全体を止めうる。非同期の待ちはその経路を通らず、終了の知らせを
-// 取りこぼしてもその1件がテストの時間切れで落ちて次へ進む（時間切れになったテストの子は
-// bun test が止める）。
+// 同期で待つと、子が詰まったときにテストの時間切れが効かず、1件の詰まりが `pnpm run check`
+// 全体を止めうる。非同期で待てば、詰まってもその1件がテストの時間切れで落ちて次へ進む。
 
 import { spawn } from "node:child_process"
 

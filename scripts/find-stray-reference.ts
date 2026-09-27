@@ -1,7 +1,7 @@
 // 正典の節を「ファイル名＋番号＋「句」」で引いている参照のうち、句が参照先に見つからないもの
 // （迷子の参照）を一覧する。`docs/` の節を削る・移したあとに打つ。1件でもあれば終了コード1。
 //
-// 拾う形・照合の強さは `scripts/section-reference.ts` の冒頭。`bun run check` では
+// 拾う形・照合の強さは `scripts/section-reference.ts` の冒頭。`pnpm run check` では
 // `test/section-reference.test.ts` が同じものを0件に保つので、ここは一覧を見るための入口。
 
 import process from "node:process"

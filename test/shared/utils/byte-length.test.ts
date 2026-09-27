@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { byteLength } from "../../../src/shared/lib/byte-length.ts"
+import { byteLength } from "../../../src/shared/utils/byte-length.ts"
 
 describe("byteLength", () => {
   it("ASCII は文字数と同じ", () => {

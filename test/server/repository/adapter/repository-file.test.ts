@@ -18,7 +18,7 @@ describe("listRepositoryFiles", () => {
 
     expect(files).toContain("package.json")
     expect(files).toContain("src/server/view-server/adapter/server.ts")
-    // 管理外（`bun install` が作るもの）は入らない。
+    // 管理外（`pnpm install` が作るもの）は入らない。
     expect(files.some((path) => path.startsWith("node_modules/"))).toBe(false)
   })
 

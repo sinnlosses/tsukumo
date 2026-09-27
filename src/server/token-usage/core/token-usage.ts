@@ -24,7 +24,6 @@
 
 import { groupBy, prop, sortBy, sumBy } from "remeda"
 
-import { byteLength } from "../../../shared/lib/byte-length.ts"
 import { type SessionEvent } from "../../../shared/session-event.ts"
 import { type SessionState } from "../../../shared/session-state.ts"
 import {
@@ -45,6 +44,7 @@ import {
   type TurnUsageBreakdown,
   type TurnUsageScope,
 } from "../../../shared/token-usage.ts"
+import { byteLength } from "../../../shared/utils/byte-length.ts"
 
 /**
  * トークン消費の読み書き口（`chat-archive` と同じ形の契約）。実装は `adapter` 側

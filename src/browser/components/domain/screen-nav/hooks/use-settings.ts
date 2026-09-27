@@ -59,8 +59,8 @@ import {
   type RevealSpeed,
 } from "../../../../domain/reveal-speed.ts"
 import { useDismissSignal, type DismissCause } from "../../../../hooks/use-dismiss-signal.ts"
-import { useDebouncedCallback } from "../../../../lib/debounce.ts"
 import { useSession } from "../../../../stores/session.ts"
+import { useDebouncedCallback } from "../../../../utils/debounce.ts"
 import { resolveEffortSelect, type EffortSelect } from "../domain/effort-label.ts"
 import {
   isVisitToggleValue,

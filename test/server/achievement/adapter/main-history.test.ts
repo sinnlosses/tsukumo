@@ -43,7 +43,7 @@ async function git(cwd: string, ...args: readonly string[]): Promise<void> {
 
 /** `date`（`YYYY-MM-DD`）の `hhmm` を、`readAchievement` が読む `Temporal.Now.timeZoneId()` と
  * 同じゾーンのローカル時刻として絶対時刻（オフセット付き ISO）に直す。固定のオフセット
- * （`+09:00` 決め打ち）は使わない——`bun test` はプロセスの `TZ` を `UTC` にする
+ * （`+09:00` 決め打ち）は使わない——単体テストの設定がプロセスの `TZ` を `UTC` に固定する
  * （ホストが JST でも変わらない）ため、決め打つと `localDateEpochRange` が見る日の境界と
  * ずれ、境界に近い時刻のコミットが意図と違う日に数えられる。 */
 function isoDateAt(date: string, hhmm: string): string {

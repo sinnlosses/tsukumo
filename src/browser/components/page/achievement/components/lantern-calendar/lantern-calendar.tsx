@@ -161,9 +161,16 @@ function Grid(props: GridProps): ReactElement {
         ))}
         {dateKeys.map((date, index) =>
           date > calendar.today ? (
-            <span key={date} className={styles["achievement-calendar-future"]}>
+            <Text
+              key={date}
+              element="span"
+              size="label"
+              tone="ink-quiet"
+              weight="inherit"
+              className={styles["achievement-calendar-future"]}
+            >
               {cellDateLabel(date, index)}
-            </span>
+            </Text>
           ) : (
             <DayCell
               key={date}

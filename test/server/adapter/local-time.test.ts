@@ -19,7 +19,7 @@ describe("localDateEpochRange", () => {
 
 describe("localTimeHHMM", () => {
   // ホストの実際のタイムゾーンを決め打たない（`Temporal.Now.timeZoneId()` を経由する
-  // `localDateEpochRange` からの相対で確かめる。`bun test` はプロセスの `TZ` を `UTC` にする
+  // `localDateEpochRange` からの相対で確かめる。単体テストの設定がプロセスの `TZ` を `UTC` に固定する
   // ため、`+09:00` などを決め打つとホストの実際の TZ とずれる）。
   it("日の始まりは 00:00", () => {
     const range = localDateEpochRange("2026-09-23")

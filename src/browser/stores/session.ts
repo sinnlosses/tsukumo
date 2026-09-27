@@ -8,12 +8,14 @@ import { create } from "zustand"
 
 import { PROTOCOL_VERSION, type ServerFrame } from "../../shared/frame.ts"
 import { type CommandClient } from "../../shared/rpc.ts"
+import { SESSION_SOCKET_PATH } from "../../shared/session-socket.ts"
 import {
   applySessionEvent,
   INITIAL_SESSION_STATE,
   type SessionState,
 } from "../../shared/session-state.ts"
-import { applyRefresh } from "../lib/refresh.ts"
+import { applyRefresh } from "../domain/refresh.ts"
+import { sessionTokenUrl } from "../domain/session-token-url.ts"
 import { type CommandLink, connectSessionSocket, type ConnectionStatus } from "../lib/socket.ts"
 
 /**
@@ -120,7 +122,7 @@ export function useTurnRunning(): boolean {
 export function useSessionConnection(): void {
   useEffect(() => {
     const { receive, setConnection, attachSocket } = useSession.getState()
-    const socket = connectSessionSocket({
+    const socket = connectSessionSocket(sessionTokenUrl(SESSION_SOCKET_PATH), {
       // `refresh` は状態ではなくブラウザへの指示なので、畳み込みに入れず手前で捌く
       // （開発中だけ届く。`docs/design.md`「ビルドと依存」）。
       onFrame: (frame) => {

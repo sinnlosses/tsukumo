@@ -7,14 +7,17 @@
 
 ## 結論
 
-**移す（2026-09-27 ユーザー決定）。** 本文は公開リポジトリの Issue に置き、Project で状態と
-欄を持ち、着手の印は Issue に紐づく枝の作成で取る。
+**3層に分け、錠と履歴の層に Beads（`bd`）を使う（2026-09-27 ユーザー決定）。** トラッカーは
+差し替えられるようにし、GitHub（読む・作る・状態を書く）と Jira（読むだけ。状態は人が変える）の
+2方式を持つ。条件は「今の排他制御と、残したい情報がすべて残ること」（ユーザー）。
 
-- 移す理由は、読み手に分かりやすいこと。自作の `task` コマンドと git の外の台帳（`mkdir` の印）は
-  このリポジトリの外の人には読めない。Issue・Project・紐づく枝は GitHub の標準の約束で、誰でも読める
-- 最初の検討は「移さない」だった（下の「最初の判定と、覆った理由」）。オフライン・認証・外への送信を
-  損と数えていたが、どれもユーザーの判断で損でなくなった
-- 状態名の改名（`hold` → `pending`・`dropped` → `cancel`）は、Project の Status 欄の選択肢の設計に畳む
+- 並列開発の公開事例（下の「並列開発の事例」）は、トラッカー・錠・履歴を別の層に置き、錠は
+  トラッカーの外の原子的な仕組みで取っている。Jira の方式は Jira に書けないので、錠はもともと
+  ローカルにしか置けない
+- 錠を自作の台帳から名前の通った道具へ寄せる。候補のうち、原子的な着手・依存つきの一覧・
+  GitHub と Jira との同期を1つで満たすのは Beads だけだった
+- 最初は GitHub の紐づく枝を錠にする設計だった（下の「採らなかった錠: 紐づく枝」）
+- 状態名の改名（`hold` → `pending`・`dropped` → 見送り）は、Beads の状態の設計に畳む
 
 ## 今の運用の前提（実測、2026-09-27・main a2338ed1）
 
@@ -52,6 +55,8 @@
 | Issue と IssueComment は GraphQL の `userContentEdits`（本文の編集の一覧）を持つ | https://docs.github.com/en/graphql/reference/issues |
 
 ## 解くべき論点
+
+**この節は、GitHub の Issue に本文を置き、紐づく枝を錠にする案で検討したときのもの。** 錠・本文・履歴の置き場は「運用の設計」が正で、ここは GitHub の API の性質の記録として残す。
 
 ### 1. 着手の印を原子的に取れるか
 
@@ -117,104 +122,131 @@
   対象で、タスク本文には直接かからない。ただし本文・コメントに会話の断片を写すと即座に公開される
   ので、「タスク本文に会話を写さない」を運用の規則に書く
 
+## 並列開発の事例
+
+**各事例が、トラッカー・錠・履歴をどこに置いているか**
+
+| 事例                                | トラッカー               | 錠                                                                   | 履歴                        |
+| ----------------------------------- | ------------------------ | -------------------------------------------------------------------- | --------------------------- |
+| Anthropic の C コンパイラ（16並列） | 置かない                 | `current_tasks/*.txt` をコミットして push し、先に push した側が勝つ | 進捗ファイル                |
+| Claude Code の agent teams          | ローカルの共有タスク一覧 | 一覧のファイルロック                                                 | 各セッション                |
+| Beads                               | Dolt の issue DB         | `bd update <id> --claim`                                             | 同じ DB                     |
+| CCPM                                | GitHub Issues を正とする | `/pm:issue-start`                                                    | ローカルの `.claude/epics/` |
+
+出典: https://www.anthropic.com/engineering/building-c-compiler ・
+https://code.claude.com/docs/en/agent-teams ・ https://github.com/gastownhall/beads ・
+https://github.com/Ninegd/ccpm ・ https://www.augmentcode.com/guides/how-to-run-a-multi-agent-coding-workspace
+
+## Beads で確かめたこと（2026-09-27、`bd` 1.3.0・捨てたリポジトリ）
+
+**確かめた挙動**
+
+| 場面                                          | 結果                                                                                                                                                                    |
+| --------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 3つの作業ツリーから同じ課題へ同時に `--claim` | 1つだけ終了コード 0。残りは `issue already claimed by <actor>` で終了コード 1                                                                                           |
+| 6並列 × 8課題の取り合い（組み込みモード）     | 8課題とも勝者は1人。錠待ちの失敗は 0。server モードは要らなかった                                                                                                       |
+| 作業ツリーと `.beads`                         | すべての作業ツリーが本体の `.beads` を自動で共有する                                                                                                                    |
+| 1コマンドの時間                               | 約0.2秒                                                                                                                                                                 |
+| 着手した actor と違う actor で `bd close`     | 拒まれる（`--force` で通る）                                                                                                                                            |
+| `--id t-200` を3つ同時に `bd create`          | 1つだけ作られ、残りは `already exists` で終了コード 1                                                                                                                   |
+| ID の接頭辞                                   | 小文字だけ（`T-` は使えない）。`t-100`・`t-1000` は作れる                                                                                                               |
+| 独自の状態 `pending:frozen`                   | `bd ready` から外れる                                                                                                                                                   |
+| 独自の状態 `cancelled:done`                   | 依存を解決しない（それに依存する課題が `ready` にならない）。`bd close` した課題は解決する                                                                              |
+| 本文の書き換え・note・comment                 | `bd history` に版として残る。`bd export` の JSONL に `description`・`acceptance_criteria`・`notes`・`assignee`・`started_at` が出る                                     |
+| `bd init --stealth`                           | `.git/info/exclude` で `.beads` を外し、コミットも `AGENTS.md`・`CLAUDE.md` への書き足しもしない（`--stealth` なしでは両方を書き足して自動でコミットする）              |
+| `bd github sync --push-only`                  | Issue の作成・着手（label `status::in_progress`）・完了（`COMPLETED` で閉じる）が反映される。label を3つ（`type::task`・`priority::medium`・`status::in_progress`）作る |
+| Project の Status 欄                          | `bd` は触らない（自動追加の既定の `Pending` のまま）                                                                                                                    |
+| 使用状況の送信                                | 既定で有効。`bd metrics off` で止めた（この端末の全体の設定）                                                                                                           |
+| `bd jira sync --pull`                         | 試していない（Jira のサイトとトークンが無い）。`--pull` で取り込みだけにできることはヘルプで確かめた                                                                    |
+
 ## 運用の設計
 
-### GitHub 上で確かめた錠の挙動（2026-09-27）
+### 3層
 
-`sinnlosses/tsukumo` に試しの Issue を1つ作り、GraphQL の `createLinkedBranch` で紐づく枝を作って
-確かめた（Issue と枝は確かめたあと消した）。
+```mermaid
+flowchart LR
+  subgraph tracker["トラッカー（設定で選ぶ）"]
+    GH["GitHub: bd github sync と Status 欄の橋渡し"]
+    JR["Jira: bd jira sync --pull だけ"]
+  end
+  subgraph beads["Beads（.beads、git の外）"]
+    LK["錠: bd update --claim"]
+    HS["本文・履歴: description・acceptance・notes・comments"]
+  end
+  subgraph git["git"]
+    SH["task ship: 付け替え・検証・main へ送る"]
+  end
+  tracker --> beads --> git
+```
 
-**確かめた場面と結果**
+`task` は薄い包みとして残し、Beads とトラッカーと git の間をつなぐ。自前で持つのは送り出し
+（`ship`）と、下の表で「橋渡し」と書いたものだけにする。
 
-| 場面                                       | 結果                                                                                                                              |
-| ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------- |
-| 同じ Issue・同じ枝名で3本を同時に打つ      | 1本だけが `linkedBranch` を返し、残り2本は `linkedBranch: null`。どれもエラーにならず終了コードは 0                               |
-| 枝ができたあとに同じ名前でもう一度打つ     | `linkedBranch: null`                                                                                                              |
-| 紐づく枝を REST で消してから同じ名前で打つ | 紐付けも消えていて、作り直せる（取れる）                                                                                          |
-| 紐づかない同名の枝が先にある               | `linkedBranch: null`（既にある枝は引き取らない）                                                                                  |
-| REST で既にある参照を作る                  | `422 Reference already exists`                                                                                                    |
-| `gh issue develop`                         | 作成後に手元の `git fetch` を打つので、git の外では失敗する。負けたときも `API returned empty branch name` の文言でしか分からない |
+### 今あるものの行き先
 
-**錠は `createLinkedBranch` を直接呼び、`linkedBranch` が `null` でないことで勝ちを判定する。**
-エラーや終了コードでは負けが分からないので、`gh issue develop` は使わない。
+**今の排他制御と情報の、Beads での置き場**（「残る」の条件の突き合わせ）
 
-### 欄と状態
+| 今あるもの                                                                | Beads での置き場                                                                         | 自前で持つもの                                                                                      |
+| ------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| 着手の印（`mkdir`）                                                       | `bd update --claim`（actor は作業ツリー名）                                              | ―                                                                                                   |
+| 採番の錠                                                                  | `bd create --id t-<n>`（同じ番号は1つしか作れない）                                      | 次の番号を出して、負けたら数え直す                                                                  |
+| `NOT_OWNER`（自分の印でないと完了できない）                               | `bd close` の actor の検査                                                               | ―                                                                                                   |
+| 取り残し `STALE:gone`・`shipped`・`no-owner`                              | assignee・`started_at`・状態                                                             | 作業ツリーが消えたかの判定（`git worktree list` と assignee の突き合わせ）。解放は人が `bd unclaim` |
+| `todo`・`hold`                                                            | `open`・独自の状態 `pending:frozen`                                                      | ―                                                                                                   |
+| `done`                                                                    | `bd close`                                                                               | ―                                                                                                   |
+| `dropped`                                                                 | `bd close` と label `cancelled`（独自の状態 `cancelled` は依存を解決しないので使わない） | ―                                                                                                   |
+| `difficulty`・`loopable`                                                  | label `difficulty:<model>`・`loopable:<Y/N>`                                             | ―                                                                                                   |
+| `dependencies`                                                            | `bd dep`（`--deps`）                                                                     | ―                                                                                                   |
+| `## 目的`・`## 背景`・`## 決まっていること`・`## 解くべき論点`・`## 注意` | `description`（見出しのまま）                                                            | ―                                                                                                   |
+| `## 完了条件`                                                             | `acceptance_criteria`                                                                    | ―                                                                                                   |
+| `## やること`                                                             | `notes`                                                                                  | ―                                                                                                   |
+| `## 結果`（`- 振り返り:` を含む）                                         | 閉じるときの comment                                                                     | ―                                                                                                   |
+| 登録から完了までの本文の差（`retrospect` の材料）                         | `bd history`                                                                             | `material.py` の読み元を差し替える                                                                  |
+| git に残る過去の `develop/task/` と `docs/history/`                       | 動かさない                                                                               | ―                                                                                                   |
+| 送り出し（付け替え・検証・`main` へ ff）                                  | ―                                                                                        | `task ship`（今のまま）                                                                             |
+| tsukumo のタスク板と成果                                                  | `bd list --json`・`bd export`                                                            | 読み元の差し替え（ネットワークに出ない）                                                            |
 
-**Issue と Project の欄の対応**（真実の置き場を1つに決め、ほかは表示）
+<div class="note note-warn">`.beads` は git の外（`--stealth`）に置くので、今のように「タスクの記録が git の履歴に残る」ことはなくなる。消えないように、`bd backup`（または `bd export` の JSONL）を git の外の決まった場所へ定期的に取る。`bd export` の JSONL には作成者のメールアドレス（`owner`）が入るので、公開リポジトリにコミットしない。</div>
 
-| 概念                      | 真実の置き場                                                     | 表示                                                |
-| ------------------------- | ---------------------------------------------------------------- | --------------------------------------------------- |
-| タスクID                  | Issue 番号                                                       | 題の前の `#123`                                     |
-| summary                   | Issue の題                                                       | ―                                                   |
-| 人の判断待ち（旧 `hold`） | Status 欄の `Pending`                                            | ボードの列                                          |
-| 着手できる（旧 `todo`）   | Status 欄の `Todo`                                               | ボードの列                                          |
-| 着手中                    | 紐づく枝 `task/<Issue 番号>` があること                          | Status 欄の `In progress`（錠を取ったあとに付ける） |
-| 完了（旧 `done`）         | Issue が閉じていて `stateReason` が `COMPLETED`                  | Status 欄の `Done`                                  |
-| 見送り（旧 `dropped`）    | Issue が閉じていて `stateReason` が `NOT_PLANNED`                | Status 欄の `Cancel`                                |
-| `difficulty`              | Project の単一選択の欄 `Difficulty`（`haiku`・`sonnet`・`opus`） | ボードのカード                                      |
-| `loopable`                | Project の単一選択の欄 `Loopable`（`Y`・`N`）                    | ボードのカード                                      |
-| 依存                      | Issue の依存（blocked by）                                       | Issue の画面                                        |
+### GitHub の方式
 
-- `READY` は「開いている・Status が `Todo`・紐づく枝 `task/<n>` が無い・blocked by がすべて閉じている」
-- 完了と見送りを Status 欄ではなく Issue の閉じ方で持つのは、Project の自動化「Item closed」が
-  閉じた項目の Status を書き換えるため（有効になっている）。Status 欄は後から直せる表示に留める
-- テンプレートの欄 `Priority`・`Size` は使わない
+- 登録は `bd create`、GitHub へは `bd github sync --push-only`（Issue と label）
+- Project の Status 欄は `bd` が書かないので、`task` の橋渡しが `gh project item-edit` で書く
+  （`pending` → `Pending`、`open` → `Todo`、`in_progress` → `In progress`、閉じた → `Done`、label `cancelled` → `Cancel`）
+- Project の自動化「Item closed」はユーザーが無効にした。Status を書くのは橋渡しだけにする
 
-### 着手・完了・取り残し
+### Jira の方式
 
-1. **着手**: `main` の先頭の oid から `createLinkedBranch(name: "task/<n>")`。`null` なら先を越された
-   （`TAKEN`）。勝ったら Issue にコメント `着手: <作業ツリー名>` を付け、Status を `In progress` にする。
-   錠の枝にはコミットを積まない（作業は今までどおり作業ツリーの枝で行い、手元で `main` へ送る）
-2. **着手直後**: `## やること` を Issue へのコメントとして書く
-3. **完了**: `## 結果`（`- 振り返り:` の行を含む）をコメントに書き、Issue を閉じ（見送りなら
-   `NOT_PLANNED`）、Status を `Done`／`Cancel` にし、錠の枝 `task/<n>` を消す。作業のコミットを
-   `main` へ送ってから閉じる（送れなかったら閉じない）
-4. **取り残し**: 今の台帳と同じ区分を、錠の枝と着手のコメントから出す
-
-**取り残しの判定**
-
-| 状態                                             | 表示                                          |
-| ------------------------------------------------ | --------------------------------------------- |
-| 錠の枝があり、着手のコメントの作業ツリー名が自分 | `CLAIMED`（自分。前のセッションが落ちた）     |
-| 着手のコメントの作業ツリーが消えている           | `STALE:gone`                                  |
-| Issue が閉じているのに錠の枝が残っている         | `STALE:shipped`                               |
-| 錠の枝があるのに着手のコメントが無いまま60秒     | `STALE:no-owner`                              |
-| それ以外                                         | `CLAIMED`（着手のコメントからの経過時間つき） |
-
-錠を時間で自動的に壊さない方針は今のまま。片付けは人が錠の枝を消して行う。
-
-### 本文とコメントの書式
-
-- Issue の本文: 今のタスクファイルの `## 目的`・`## 完了条件`・`## 背景`・`## 決まっていること（蒸し返さない）`・
-  `## 解くべき論点`・`## 注意` を、この順・この見出しで書く。移したタスクは本文の1行目に `旧 ID: T-xxx`
-- コメント: 着手のコメント（1行）、`## やること`、`## 結果`。`## 注意` を作業中に足すときは本文を書き換える
-- 本文・コメントに会話の断片を写さない（書いた時点で公開される）
-
-### コミットと Issue の対応
-
-- 件名は `<何をしたか> (#<n>)`。行頭の `#` は git の編集時に注釈として消されうるので、末尾に置く
-- タスクに紐付かないコミットは今までどおり番号を持たない
-- `main` の push はこれまでどおり人が頼んだときだけ。コミットと Issue のつながりは push したときに
-  GitHub の画面に出る
+- `bd jira sync --pull` だけを打ち、Jira には書かない（`--push` と引数なしの `sync` は `task` が使わない）
+- 状態の変更は人が Jira で行う。ローカルで閉じたのに Jira が開いたままのものを、`task status` が
+  「Jira で閉じてほしいもの」として出す
+- Jira の本文は `## 完了条件` の形をしていないので、着手の前に `acceptance_criteria` と
+  `difficulty`・`loopable` を書き起こす（人の確認つき）
 
 ### 規約の改訂（切り替えのときに入れる）
 
-- CLAUDE.md「自分でブランチを切らない」→ 手元では枝を切らない。GitHub 上の錠の枝 `task/<n>` だけは
-  `task` が作り、消す
-- CLAUDE.md「外部への公開・送信は人の承認を得てから」→ 例外として、GitHub Projects の Project 1 と
-  `sinnlosses/tsukumo` の Issue・錠の枝 `task/<n>` への書き込みはエージェントが行ってよい
+- CLAUDE.md「自分でブランチを切らない」は今のまま（紐づく枝を使わなくなったので変えなくてよい）
+- CLAUDE.md「外部への公開・送信は人の承認を得てから」→ 例外として、Project 1 と `sinnlosses/tsukumo` の
+  Issue・label への書き込みはエージェントが行ってよい
+- `orca` 以外の外部コマンド依存に `bd`・`dolt`・`gh` が加わる（ユーザーが承認した）
+
+### 採らなかった錠: 紐づく枝
+
+GraphQL の `createLinkedBranch` は、同じ名前の同時作成で1本だけが `linkedBranch` を返し、負けは
+`null`（終了コード 0）になる。錠としては使えるが、Jira の方式では使えず、錠の仕組みが2つになるので
+採らなかった（2026-09-27）。
 
 ## 移行の段取り
 
-1. **人がやること**: `gh auth login` と `gh auth refresh -s project`。Project を1つ作る
-2. **運用の設計を決める**: 上の「運用の設計」（済み）
-3. **スキルを作り直す**（claude-skills を別の作業ツリーで。`~/.claude/skills` は本体の作業ツリーへの
-   symlink）: `task-workflow`（`WORKFLOW.md`・`scripts/`）、`next-task`・`plan-tasks`・`list-tasks`・
-   `retrospect`（`scan.py`・`material.py` の材料を Issue のコメントへ）・`setup-tasks`
-4. **tsukumo の読み手を移す**: タスク板（作り直すか消すか）、成果（Issue の閉じた時刻）、
-   `src/shared/task-summary.ts` の文法
-5. **移す**: 全作業ツリーの手を止め、`develop/task/` の未完了を Issue へ移し（題に旧 ID）、
-   `develop/task/` を消す。`docs/workflow.md` を追随させる
+1. **人がやること**（済み）: `gh auth login`・`project` スコープ、Project 1 の作成、Status 欄の選択肢、「Item closed」の無効化。`bd` 1.3.0 と Dolt 2.3.5 の導入
+2. **スキルを Beads の上に作り直す**（claude-skills を別の作業ツリーで）: `task-workflow`（`WORKFLOW.md`・`scripts/`）を
+   `bd` の包みにし、トラッカーの方式（GitHub・Jira・なし）を設定で選べるようにする。`next-task`・`plan-tasks`・
+   `list-tasks`・`retrospect`・`setup-tasks` を追随させる
+3. **tsukumo の読み手を移す**: タスク板と成果を `bd list --json`・`bd export` から読む（移す日より前は git の
+   `develop/task/`）
+4. **移す**: 全作業ツリーの手を止め、`bd init --stealth -p t` で `.beads` を作り、`develop/task/` の未完了を
+   `bd create --id t-<旧番号>` で移す。`bd github sync --push-only` で Issue を作り、Status 欄を橋渡しで揃える。
+   `develop/task/` と git の外の台帳を片付け、CLAUDE.md と `docs/workflow.md` を切り替える
 
 ## 最初の判定と、覆った理由
 

@@ -39,7 +39,7 @@ import {
 } from "../../../../../shared/usage-review.ts"
 import { characterFaceInfo, type CharacterFaceInfo } from "../../../../domain/character-face.ts"
 import { formatElapsed } from "../../../../domain/elapsed-time.ts"
-import { rpc } from "../../../../lib/rpc-client.ts"
+import { rpc } from "../../../../domain/rpc.ts"
 import { useSession, useTurnRunning, type SessionDispatch } from "../../../../stores/session.ts"
 import {
   clockTime,
