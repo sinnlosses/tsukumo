@@ -1,11 +1,6 @@
-// 画像を原寸で拡大して見る面（`docs/requirements.md` 4.10「画面での見え方」）。開ける場所は
-// 入力欄の札・メインビューの依頼の見出し・雑談の控えの3つだが、どれも依頼に添えた画像の部品
-// （`prompt-image.tsx`）から開くので、その子部品に置く。領域固有の見た目・意味は持たない。
-//
-// 呼び出し側が開いている状態を持ち、開いている間だけこの部品を描く
-// （`features/task-board/components/task-run-confirm.tsx` と同じ形）。画面より大きい絵は
-// 面の内側に収めて縮め、面の中で横スクロールはしない。閉じ方は Esc・背景のクリック・
-// 閉じるボタンの3つ。
+// 絵を原寸で拡大して見るダイアログ。呼び出し側が開いている状態を持ち、開いている間だけこの
+// 部品を描く。画面より大きい絵は面の内側に収めて縮め、面の中で横スクロールはしない。閉じ方は
+// Esc・背景のクリック・閉じるボタンの3つ。
 //
 // 絵が読めなかったとき（`<img>` の `error`）に何を出すかは呼び出し側が渡す
 // （{@link ImageZoomFallback}）。この部品は代わりの絵と1行を出し分けるだけで、なぜ読めないかは
@@ -13,8 +8,8 @@
 
 import { type ReactElement, useState } from "react"
 
-import { Button } from "../../../../../../../components/ui/button/button.tsx"
-import { Dialog } from "../../../../../../../components/ui/dialog/dialog.tsx"
+import { Button } from "../button/button.tsx"
+import { Dialog } from "../dialog/dialog.tsx"
 import styles from "./image-zoom.module.css"
 
 const HEADING = "画像の拡大"

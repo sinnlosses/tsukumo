@@ -299,7 +299,7 @@ components/page/<ページ>/
   知らず、`components/ui` は tsukumo の語彙を知らない。**画面の組み立てを `components/domain/` へ移さない**
   （枠が画面を import する逆向きの辺になるので、`page` より上の段 `components/app/` に置く）
 - **`components/domain` と `components/ui` の線は、tsukumo の語彙を持つかで引く**（`Portrait` は `domain`、
-  `Select`・`Button` は `ui`）
+  `Select`・`Button`・`ImageZoom` は `ui`）
 - **`stores/` は「状態ライブラリの置き場」ではなく「画面全体で共有する状態の置き場」**（6.2）。置くのは
   **複数の領域が読む**状態で、領域の中に置けず、`app.tsx` に残すと領域が入口を import することになる
   ので箱が要る。**1本の hash の書き方は `stores/location-hash.ts` だけが知る**。領域と機能が触れるのは
