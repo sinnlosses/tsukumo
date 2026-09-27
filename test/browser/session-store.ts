@@ -1,8 +1,6 @@
 // 部品のテストが本物の WebSocket 接続を経由せず、`useSession` の store へ姿を差し込む口。
 // 姿は `hello` フレームで入れる（サーバが繋ぎ直しのたびに押すのと同じ経路）。
 //
-// フィクスチャの中身は各テストが持つ（ここは組み立てだけ。会話の実物は使わない。
-// docs/coding-standards.md「会話内容の扱い」）。
 
 import { act } from "@testing-library/react"
 import { isPlainObject } from "remeda"

@@ -22,7 +22,6 @@ import { type CommandSpy, putSession } from "../../../../../session-store.ts"
 // 立ち絵があるのはこの3つだけ（残りの表情は空の枠として並ぶ。数を見るテストがある）。
 const EXPRESSIONS_WITH_PORTRAIT = ["default", "thinking", "proud"] as const
 
-// 手で書いた架空のキャラクターパック（docs/coding-standards.md「会話内容の扱い」）。
 const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = characterInfo({
   expressions: [
     { name: "default", label: "通常" },
@@ -30,8 +29,7 @@ const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = characterInfo(
     { name: "proud", label: "どや顔" },
   ],
   // ラスタにしてある（`<Portrait>` は SVG のときだけ中身を `fetch` しに行くので、この
-  // テストの関心ではない非同期がまぎれる）。SVG の読み込みは
-  // `test/browser/components/domain/portrait.test.tsx` が見る。
+  // テストの関心ではない非同期がまぎれる）。SVG の読み込みは別のテストが見る。
   ...shownPortraits({
     default: "/character/default.png?v=fictional@1",
     thinking: "/character/thinking.png?v=fictional@1",
@@ -77,18 +75,20 @@ function waitForDebounce(): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, 250))
 }
 
-/** 表情を消す前の確かめ（`portrait-clear-confirm.tsx`）。開いていなければ `null`。 */
+/** 表情を消す前の確かめ（`PortraitClearConfirm`）。開いていなければ `null`。 */
 function clearConfirmDialog(): Element | null {
   return document.querySelector(".character-clear-confirm")
 }
 
-/** キャラクターを消す前の確かめ（`character-delete-confirm.tsx`）。開いていなければ `null`。 */
+/** キャラクターを消す前の確かめ（`CharacterDeleteConfirm`）。開いていなければ `null`。 */
 function deleteConfirmDialog(): Element | null {
   return document.querySelector(".character-delete-dialog")
 }
 
-/** 名前とプロフィールを変えるダイアログ（`character-profile-edit-dialog.tsx`）。開いていなければ
- * `null`。作るダイアログと同じ `.character-create-dialog` を流用しているので `aria-label` で見分ける。 */
+/**
+ * 名前とプロフィールを変えるダイアログ（`CharacterProfileEditDialog`）。開いていなければ
+ * `null`。作るダイアログと同じ `.character-create-dialog` を流用しているので `aria-label` で見分ける。
+ */
 function profileEditDialog(): Element | null {
   return document.querySelector('dialog[aria-label="名前とプロフィールを変える"]')
 }
@@ -114,7 +114,7 @@ describe("CharacterEdit", () => {
     expect(screen.getByLabelText("戦闘配置（opus）")).toBeDefined()
   })
 
-  // 必須の1つ（default）は消せない（`docs/requirements.md` 4.4）。画面にも口を出さない。
+  // 必須の1つ（default）は消せない（`docs/requirements.md`「キャラクター定義」）。画面にも口を出さない。
   it("default には消す口を出さない（立ち絵があっても）", () => {
     renderCharacterEdit(FIXTURE_CHARACTER)
 
@@ -122,14 +122,15 @@ describe("CharacterEdit", () => {
     expect(screen.getByRole("button", { name: "どや顔を消す" })).toBeDefined()
   })
 
-  // 必須から外れたので、thinking は立ち絵があれば消せる（`src/shared/character-pack/expression.ts`）。
+  // 必須から外れたので、thinking は立ち絵があれば消せる（`isRemovableExpression`）。
   it("thinking は立ち絵があれば消す口を出す", () => {
     renderCharacterEdit(FIXTURE_CHARACTER)
 
     expect(screen.getByRole("button", { name: "作業中を消す" })).toBeDefined()
   })
 
-  // 立ち絵が無い表情は、その表情の名前を書いた点線の空欄（docs/screen-design.md 13.6）。
+  // 立ち絵が無い表情は、その表情の名前を書いた点線の空欄
+  // （docs/screen-design.md「立ち絵がまだ無い表情は、その表情の名前を書いた点線の空欄」）。
   it("立ち絵が無い表情は名前つきの空欄で出し、消す口は出さない", () => {
     renderCharacterEdit(FIXTURE_CHARACTER)
 
@@ -209,7 +210,7 @@ describe("CharacterEdit", () => {
     })
   })
 
-  // 消す前の確かめ（docs/screen-design.md 13.6「表情を消す前の確かめ」）。
+  // 消す前の確かめ（docs/screen-design.md「表情を消す前の確かめ」）。
   it("消す口を押しただけでは送らず、確かめの吹き出しを開く", () => {
     const calls: unknown[] = []
     renderCharacterEdit(FIXTURE_CHARACTER, (command) => calls.push(command))
@@ -219,7 +220,8 @@ describe("CharacterEdit", () => {
     expect(calls).toEqual([])
     expect(clearConfirmDialog()?.hasAttribute("open")).toBe(true)
     expect(screen.getByText("「どや顔」を消しますか？")).toBeDefined()
-    // 本文の「代わりに出る表情」の名前もパックのラベル（`resolveExpressionLabel`。原則4）。
+    // 本文の「代わりに出る表情」の名前もパックのラベル
+    // （`resolveExpressionLabel`。CLAUDE.md「キャラクターの中身をコードに書かない」）。
     expect(screen.getByText("この表情を使う場面では「通常」が出ます。")).toBeDefined()
   })
 
@@ -247,8 +249,7 @@ describe("CharacterEdit", () => {
     expect(clearConfirmDialog()).toBeNull()
   })
 
-  // Esc は `<dialog>` を閉じて `close` イベントを出す（ブラウザの既定の振る舞い。
-  // `task-board/task-run.test.tsx` と同じ起こし方）。
+  // Esc は `<dialog>` を閉じて `close` イベントを出す（ブラウザの既定の振る舞い）。
   it("Esc で閉じたときも何も送らない", () => {
     const calls: unknown[] = []
     renderCharacterEdit(FIXTURE_CHARACTER, (command) => calls.push(command))
@@ -309,7 +310,7 @@ describe("CharacterEdit", () => {
     expect(input.value).toBe("")
   })
 
-  // 送信は200msまとめる（`src/browser/lib/debounce.ts`）ので、待ってから確かめる。
+  // 送信は200ms（`ACCENT_DEBOUNCE_MS`）まとめるので、待ってから確かめる。
   it("差し色を変えると、少し待ってから characterPack.setOutfitAccent を dispatch する", async () => {
     const calls: unknown[] = []
     renderCharacterEdit(FIXTURE_CHARACTER, (command) => calls.push(command))
@@ -340,7 +341,7 @@ describe("CharacterEdit", () => {
   })
 
   // 引きずったまま画面を閉じても、まだ送っていない最後の値を落とさない
-  // （`src/browser/lib/debounce.ts` のアンマウント時のフラッシュ）。
+  // （`useDebouncedCallback` のアンマウント時のフラッシュ）。
   it("送信前に画面を閉じても、待っていた最後の値をそのまま送る", () => {
     const calls: unknown[] = []
     renderCharacterEdit(FIXTURE_CHARACTER, (command) => calls.push(command))
@@ -419,8 +420,8 @@ describe("CharacterEdit", () => {
       typedElement(screen.getByLabelText("雑談"), HTMLInputElement, "雑談の入力欄").disabled,
     ).toBe(true)
     const resetButton = screen.getByRole("button", { name: "雑談も仕事と同じにする" })
-    // 押せないは `aria-disabled` の1通り（`Button`。`docs/design.md` 2章）。本物の `disabled`
-    // にはしないので、フォーカスは残る（`button.test.tsx` と同じ確かめ方）。
+    // 押せないは `aria-disabled` の1通り（`Button`。`docs/design.md`「`Button`」）。本物の `disabled`
+    // にはしないので、フォーカスは残る。
     expect(resetButton.getAttribute("aria-disabled")).toBe("true")
     expect(resetButton.hasAttribute("disabled")).toBe(false)
     resetButton.focus()
@@ -489,7 +490,7 @@ describe("CharacterEdit", () => {
     )
   })
 
-  // 背景（`docs/screen-design.md` 13.8）。口は「差し替える」と「消す」の2つだけで、覆いの濃さの
+  // 背景（`docs/screen-design.md`「背景」）。口は「差し替える」と「消す」の2つだけで、覆いの濃さの
   // つまみは出さない。
   it("背景が無いパックでは、点線の枠と「背景なし」を出し、消す口は出さない", () => {
     renderCharacterEdit(FIXTURE_CHARACTER)
@@ -556,7 +557,7 @@ describe("CharacterEdit", () => {
     expect(input.value).toBe("")
   })
 
-  // 顔（`docs/screen-design.md` 13.9「顔」）。口は「差し替える」と「消す」の2つだけで、背景と
+  // 顔（`docs/screen-design.md`「顔」）。口は「差し替える」と「消す」の2つだけで、背景と
   // 同じ形。
   it("顔が無いパックでは、点線の丸と「顔なし」を出し、消す口は出さない", () => {
     renderCharacterEdit(FIXTURE_CHARACTER)
@@ -627,7 +628,7 @@ describe("CharacterEdit", () => {
     expect(document.querySelectorAll(".character-gallery")).toHaveLength(0)
   })
 
-  // 名前とプロフィールを変えるダイアログ（docs/screen-design.md 13.6「名乗り」）。
+  // 名前とプロフィールを変えるダイアログ（docs/screen-design.md「名乗り」）。
   describe("名前とプロフィールを変える", () => {
     it("押すと、いまの名前とひとことを入れたダイアログを開く", () => {
       renderCharacterEdit({ ...FIXTURE_CHARACTER, name: "架空の精霊", tagline: "気ままな相棒" })
@@ -691,7 +692,7 @@ describe("CharacterEdit", () => {
     })
   })
 
-  // このキャラクターを消す帯とその確かめ（docs/screen-design.md 13.6「このキャラクターを消す」）。
+  // このキャラクターを消す帯とその確かめ（docs/screen-design.md「このキャラクターを消す」）。
   describe("このキャラクターを消す", () => {
     it("removal が none なら帯を出さない", () => {
       renderCharacterEdit(FIXTURE_CHARACTER, () => {}, [
@@ -713,8 +714,7 @@ describe("CharacterEdit", () => {
     })
 
     // 使用中以外のパックを詳しい設定に出すには、一覧にもう1件（`other`）を足し、hash でそれを
-    // 選ぶ（`character.test.tsx` と同じ形。`docs/screen-design.md` 13.6
-    // 「選んでいるパックは hash に持つ」）。
+    // 選ぶ（`docs/screen-design.md`「選んでいるパックは hash に持つ」）。
     const OTHER_CHARACTER: NonNullable<SessionState["character"]> = characterInfo({
       pack: "other",
       name: "別の精霊",
@@ -743,7 +743,7 @@ describe("CharacterEdit", () => {
       expect(screen.getByText("別の精霊 を消しますか？")).toBeDefined()
       const okButton = screen.getByRole("button", { name: "消す" })
       // 押せないは `aria-disabled` の1通り（`Button`）。本物の `disabled` にはしないので、
-      // フォーカスは残る（`button.test.tsx` と同じ確かめ方）。
+      // フォーカスは残る。
       expect(okButton.getAttribute("aria-disabled")).toBe("true")
       expect(okButton.hasAttribute("disabled")).toBe(false)
       okButton.focus()

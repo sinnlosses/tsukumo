@@ -16,7 +16,6 @@ import { createTestQueryClient } from "../../../../../../../query-client.tsx"
 import { rpcOutput, stubRpcFetch, type RpcFetchStub } from "../../../../../../../rpc-fetch-stub.ts"
 import { type CommandSpy, putSession } from "../../../../../../../session-store.ts"
 
-// フィクスチャはすべて手で書いた架空のもの（docs/coding-standards.md「会話内容の扱い」）。
 const FIXTURE_CHARACTER: CharacterInfo = characterInfo({
   pack: "架空パック",
   name: "架空の名前",
@@ -65,7 +64,7 @@ function fetchedProcedures(): readonly string[] {
   return (fetchStub?.calls() ?? []).map((call) => call.procedure)
 }
 
-// `@` 補完は `useQuery`（`file-suggestions.tsx`）で一覧を取るので `QueryClientProvider` が要る。
+// `@` 補完は `useQuery`（`FileSuggestions`）で一覧を取るので `QueryClientProvider` が要る。
 // キャッシュはテストをまたがせないので、テストごとに新しい `QueryClient` を作る。
 function renderComposer(
   stateOverrides: Partial<SessionState> = {},

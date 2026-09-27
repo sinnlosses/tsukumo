@@ -12,7 +12,6 @@ import type { SessionEvent } from "../../../../src/shared/session/session-event.
 import { REPORT_TOOL_FULL_NAME, SPEAK_TOOL_FULL_NAME } from "../../../fixture/sdk-message.ts"
 
 // フィクスチャはすべて手で書いた架空のやり取り。実物の会話は使わない
-// （docs/coding-standards.md「会話内容の扱い」）。
 const EXPRESSIONS: readonly Expression[] = ["default", "thinking", "proud"]
 
 function assistantMessage(
@@ -783,8 +782,8 @@ describe("toSessionEvents", () => {
     expect(toSessionEvents(withoutId, EXPRESSIONS)).toEqual([])
   })
 
-  // トークン消費の記録（`docs/requirements.md` 4.1）。運ぶのは累計そのままで、増分に直すのは
-  // `src/server/token-usage/core/token-usage.ts`。
+  // トークン消費の記録（`docs/requirements.md`「Claude Code の駆動」）。運ぶのは累計そのままで、増分に直すのは
+  // `tokenUsageDelta`。
   it("result の modelUsage は累計のイベントにして、ターンの終わりの前に並べる", () => {
     const message = {
       type: "result",

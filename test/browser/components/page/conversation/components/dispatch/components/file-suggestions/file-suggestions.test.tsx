@@ -9,7 +9,6 @@ import {
 } from "../../../../../../../../../src/browser/components/page/conversation/components/dispatch/components/file-suggestions/file-suggestions.tsx"
 import { typedElement } from "../../../../../../../../typed-element.ts"
 
-// フィクスチャはすべて手で書いた架空のパス（docs/coding-standards.md「会話内容の扱い」）。
 const PATHS = [
   "src/browser/features/festival/composer.tsx",
   "src/browser/features/festival/file-suggestions.tsx",

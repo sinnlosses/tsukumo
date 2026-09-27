@@ -13,8 +13,7 @@ import { initGitRepository } from "../../../fixture/git-repository.ts"
 import { useTempDir } from "../../../fixture/temp-dir.ts"
 
 // 本物の `git` を起こす（リポジトリの見分けそのものが検査の対象）。リポジトリとホームは
-// 一時ディレクトリに毎回作り、中身は架空の文面だけにする（docs/coding-standards.md「会話内容の
-// 扱い」）。
+// 一時ディレクトリに毎回作る。
 
 const root = useTempDir("diary")
 let repository: string

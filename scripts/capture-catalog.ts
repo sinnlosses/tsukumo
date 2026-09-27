@@ -6,15 +6,15 @@
 // 依頼を手で送らずに、狙った状態が出る。 場面の名前は疑似セッション（test/fixture/fake-session.json）の
 // `turns[].name` で、`TSUKUMO_FAKE_SCENE` で名指しすると起こした直後に流れる。
 //
-// 手を動かさないと出ない状態は、撮る前に操作を当てて出す（{@link Preparation} の4種）。
+// 手を動かさないと出ない状態は、撮る前に操作を当てて出す（`Preparation` の5種）。
 // 領域の内側は転がってもページ自体は転がらないので、`fullPage` では下の方が1枚も撮れない
 // （図とグラフがそれ）。疑似セッションにもサーバにも手を入れず、開いたページを操作して撮る。
 //
-// 1枚だけ撮る・要素の位置と大きさを数値で読むのは `capture-view.ts`（別の道具）。こちらは
+// 1枚だけ撮る・要素の位置と大きさを数値で読むのは別の道具の仕事。こちらは
 // 「起こす → 撮る → 落とす」を繰り返す側で、測りはしない。
 //
 // 先に `pnpm run build` が要る。 起こす tsukumo は `dist/browser/` に置いた成果物を読むだけで、
-// 自分では組み立てない（`src/server/view-server/adapter/bundle.ts` 冒頭）。無いと1件ずつ
+// 自分では組み立てない（起動は `readUiBundle` が成果物を読むだけ）。無いと1件ずつ
 // 起動に失敗する。
 //
 // 使い方:
@@ -29,7 +29,7 @@
 // フラグ」を一律で使い方の表示に落とすので、他のどの未知の引数を渡しても同じ表示になる
 // （`--only` の名前一覧はそこに含めている）。
 //
-// 撮った画像はリポジトリに置かない（既定の出力先は /tmp。`capture-view.ts` 冒頭の決定を
+// 撮った画像はリポジトリに置かない（既定の出力先は /tmp。他の撮る道具と同じ決定を
 // 引き継ぐ）。疑似セッションは架空の会話なので画像そのものは共有してよい。
 //
 // キャラクターは指定しない。 起こす側が覚えている立ち絵（`~/.tsukumo/state.json`）を
@@ -51,8 +51,8 @@ import { appendDiaryParagraph } from "../src/server/diary/adapter/diary.ts"
 const REPO_DIR = fileURLToPath(new URL("..", import.meta.url))
 
 /**
- * 撮る前に当てる操作。この5種だけにする（もとは4種で、`docs/research/ui-catalog.md` 1.4 が
- * 根拠。`hover` は、触れている間だけ出る状態（質問の箱と、メインビューの
+ * 撮る前に当てる操作。この5種だけにする（もとは4種で、`docs/research/ui-catalog.md`
+ * 「撮れなかった状態は、すべて Playwright で撮れた」が根拠。`hover` は、触れている間だけ出る状態（質問の箱と、メインビューの
  * 比較の札の連動）は押しても出ないため足した）。当てない件は空の並びで表し、「操作が無い」を
  * `undefined` で書かない。
  *
@@ -79,7 +79,7 @@ type Preparation =
  * - `diary`: 架空の日記を1件書いてから起こす（`appendDiaryParagraph`。日記帳の見開きを見る件）
  * - `character`: 同梱の `chou` を別名でコピーしたパックを置いてから起こす（画面から消せる
  *   パックが要る件——ホームにしか無いパックだけが `removal: "delete"` になる。
- *   `src/server/character-pack/adapter/character-pack.ts` の `characterPackRemoval`）
+ *   `characterPackRemoval`）
  */
 type HomeSetup =
   | { readonly kind: "default" }
@@ -92,11 +92,11 @@ type HomeSetup =
  * 場面の名前では足りない）。
  *
  * `skipReveal` は、撮る前に「書き上げていくように見せる演出」
- * （`src/browser/domain/reveal/use-report-reveal.ts`）を着地させておくか。レポートが長い場面
+ * （`useReportReveal`）を着地させておくか。レポートが長い場面
  * （`notation`）は演出が終わるまで約15秒かかり、そのあいだ演出自身の自動送りが筆先を追い続けて
  * 器を送るので、こちらが `scroll` で送った位置をフレームごとに引き戻される（図・グラフは
  * 演出のいちばん最後に出る塊で、演出中はまだ見えていない）。演出はクリックとキー入力で
- * 打ち切れる（`use-report-reveal.ts` の `SKIP_EVENT_NAMES`）ので、`prepare` を当てる前に
+ * 打ち切れる（`SKIP_EVENT_NAMES`）ので、`prepare` を当てる前に
  * キーを1つ打って演出を終わらせてから送る。当てない件は待ち時間が変わらないので既定は
  * `false`。
  */
@@ -143,26 +143,32 @@ const TASK_BOARD_SELECTOR = 'button:has-text("一覧を見る")'
 
 /**
  * 帯の「いまの作業」の外枠（`data-work-state` を持つ div）の中の押す口。広い画面の帯と
- * 狭い画面の「≡」の面の両方に同じ部品が置かれる（`screen-nav-current-work.tsx`）ので、
+ * 狭い画面の「≡」の面の両方に同じ部品が置かれる（`ScreenNavCurrentWorkPill`）ので、
  * 見えているほうだけを `:visible` で絞る。狭い画面では先に {@link MENU_TOGGLE_SELECTOR} を
  * 押さないとこちらは見えない（{@link applyPreparation} が当たらなかった手を飛ばすので、
  * 広い画面ではこの前の「≡」を押す手が黙って空振りする）。
  */
 const WORK_TOGGLE_SELECTOR = "[data-work-state] button[aria-controls]:visible"
 
-/** 狭い画面だけの「≡」（`screen-nav-menu.tsx`）。押すと面の中にもう1つ「いまの作業」の札が
- * 現れる。広い画面では常に `display: none` なので、押す手は空振りしてよい。 */
+/**
+ * 狭い画面だけの「≡」（`ScreenNavMenu`）。押すと面の中にもう1つ「いまの作業」の札が
+ * 現れる。広い画面では常に `display: none` なので、押す手は空振りしてよい。
+ */
 const MENU_TOGGLE_SELECTOR = 'button[aria-label="メニュー"]'
 
-/** 書き終わりの知らせ（`diary-notice.tsx`）の「日記帳で開く」。成果の画面（`#achievement`）
- * だけに出る（`app.tsx` の `<Activity>`）。 */
+/**
+ * 書き終わりの知らせ（`DiaryNotice`）の「日記帳で開く」。成果の画面（`#achievement`）
+ * だけに出る（`App` の `<Activity>`）。
+ */
 const DIARY_NOTICE_OPEN_SELECTOR = 'button:has-text("日記帳で開く")'
 
-/** キャラクター画面、表情のカードの「消す」（`portrait-card.tsx`）。見える字は無くアイコン
- * だけなので `title` で当てる。 */
+/**
+ * キャラクター画面、表情のカードの「消す」（`PortraitCard`）。見える字は無くアイコン
+ * だけなので `title` で当てる。
+ */
 const PORTRAIT_CLEAR_BUTTON_SELECTOR = 'button[title="消す"]'
 
-/** キャラクター画面、最下部の「このキャラクターを消す」帯のボタン（`character-delete.tsx`）。 */
+/** キャラクター画面、最下部の「このキャラクターを消す」帯のボタン（`CharacterDelete`）。 */
 const CHARACTER_DELETE_BAND_BUTTON_SELECTOR = 'button:has-text("を消す")'
 
 /** {@link HomeSetup} の `character` が置くパックのディレクトリ名。同梱の `chou` とは別名にして、
@@ -336,7 +342,7 @@ const CATALOG: readonly CatalogEntry[] = [
     skipReveal: false,
   },
   // 帯の「いまの作業」の3状態（`docs/architecture.md`「手で確かめること」）。どれも
-  // {@link MENU_TOGGLE_SELECTOR} → {@link WORK_TOGGLE_SELECTOR} の順で押して一覧を開く
+  // `MENU_TOGGLE_SELECTOR` → `WORK_TOGGLE_SELECTOR` の順で押して一覧を開く
   // （広い画面では「≡」が無いので前者は空振りしてよい）。
   {
     name: "current-work-running",
@@ -355,7 +361,7 @@ const CATALOG: readonly CatalogEntry[] = [
     name: "current-work-failed",
     // 自分の `request` を持つ場面（`current-work-running` と同じ理由）。`report` 場面には
     // 失敗した手順があっても `request` が無いので「依頼の手順」に一度も現れない
-    // （`src/shared/session/turn-step.ts` の `currentTurnSteps` は最後の `request` より前の手順を
+    // （`currentTurnSteps` は最後の `request` より前の手順を
     // 落とす）。ターンが終わったあとでも「前の依頼での手順」に失敗した1件（`isError: true` の
     // Bash）が残る。
     scene: "current-work-failed",
@@ -417,7 +423,7 @@ const CATALOG: readonly CatalogEntry[] = [
 ]
 
 /**
- * 撮る窓の大きさ。広いほうは `capture-view.ts` の既定と同じで、狭いほうは切り替えの規則
+ * 撮る窓の大きさ。広いほうは1枚だけ撮る道具の既定と同じで、狭いほうは切り替えの規則
  * （各機能の `*.module.css` の `max-width: 760px`）の内側に入る幅にしてある。
  *
  * 狭いほうだけページ全体を撮る。縦に積み替わるので、窓に収まる範囲だけでは下の領域
@@ -452,7 +458,7 @@ const PREPARE_TIMEOUT_MS = 2000
 const PREPARE_SETTLE_MS = 800
 
 /**
- * 演出を打ち切るキー（`entry.skipReveal`。`use-report-reveal.ts` の `SKIP_EVENT_NAMES` は
+ * 演出を打ち切るキー（`entry.skipReveal`。`SKIP_EVENT_NAMES` は
  * `keydown` ならどのキーでも拾うので、押すキーの意味は問わない）。フォーカスがどこにあっても
  * `window` の listener が capture 段階で拾うので、打つ前にどこかへフォーカスを当てる必要も無い。
  */
@@ -555,9 +561,7 @@ async function captureShot(
     // 画面が組み直されて操作が空振りする。
     await page.waitForTimeout(SCENE_TAIL_MS)
     if (entry.skipReveal) {
-      // `prepare` の前に演出を終わらせる。 演出中は自動送りがフレームごとに器を送り直す
-      // ので、あとに続く `scroll` の送り先をそのたびに引き戻される（{@link CatalogEntry}
-      // の `skipReveal` の説明）。
+      // `prepare` の前に演出を終わらせる（理由は `CatalogEntry` の `skipReveal` のコメント）。
       await page.keyboard.press(SKIP_REVEAL_KEY)
     }
     for (const step of entry.prepare) {

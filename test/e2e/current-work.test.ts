@@ -2,7 +2,7 @@ import { describe, it } from "vitest"
 
 import { useScenarioRun } from "./scenario-run.ts"
 
-// ツールの実行といまの作業（docs/design.md 10章「E2E のシナリオの一覧」）。疑似セッションの
+// ツールの実行といまの作業（docs/design.md「E2E のシナリオの一覧」）。疑似セッションの
 // 場面 `long-tool` は 20 秒走るので、`tool-started` を待って撮り、流れ切るのを待たない
 // （同章「E2E の走らせ方」）。撮るのはツールが走っているあいだ、帯の「いまの作業」に
 // 実行中のツールが出ている状態。

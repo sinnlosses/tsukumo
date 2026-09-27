@@ -10,9 +10,8 @@ import {
 import { type CommandSpy, putSession } from "../../../../../../../session-store.ts"
 
 /**
- * 入力欄の上の箱は許可要求だけを持つ（質問の札はメインビューへ移り、その検査は `test/browser/components/page/conversation/components/main-view/components/question-ask/question-ask.test.tsx` と
- * `test/browser/stores/question-answer.test.tsx` にある）。
- * フィクスチャはすべて手で書いた架空の許可要求（docs/coding-standards.md「会話内容の扱い」）。
+ * 入力欄の上の箱は許可要求だけを持つ（質問の札はメインビューへ移り、その検査は別のテストと
+ * store のテストにある）。
  */
 
 afterEach(() => {

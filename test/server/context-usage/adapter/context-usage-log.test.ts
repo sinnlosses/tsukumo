@@ -10,8 +10,6 @@ import { contextUsage } from "../../../fixture/context-usage.ts"
 import { keysOf, readJsonLines } from "../../../fixture/jsonl.ts"
 import { useTempDir } from "../../../fixture/temp-dir.ts"
 
-// 数も名前もすべて手で書いた架空のもの（実物のセッションの内訳は使わない。
-// docs/coding-standards.md「会話内容の扱い」）。
 const dir = useTempDir("context-usage")
 
 /** 書き込み先（本物の `~/.tsukumo/context-usage` の代わり）。 */
@@ -70,7 +68,7 @@ describe("createContextUsageLog", () => {
     expect(JSON.stringify(record)).toMatch(/"at":"2026-09-22T09:00:00[+-]\d{2}:\d{2}"/)
   })
 
-  // ターンごとの記録より広い線（`src/shared/context-usage/context-usage-record.ts`）——分類の表示名・
+  // ターンごとの記録より広い線（`CONTEXT_USAGE_FORMAT_VERSION`）——分類の表示名・
   // MCP ツール名・メモリファイルのパス・スキル名まで入る。広がったのはそこまでで、
   // 会話の文面が混ざる余地が無いことを、行に出てくる文字列を数え上げて固定する。
   it("行に出てくる文字列は、鍵の名前と内訳の名前・セッションID・モード・時刻だけ", () => {

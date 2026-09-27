@@ -21,8 +21,7 @@ import { type CommandSpy, putSession } from "../../../../../session-store.ts"
 
 /**
  * 立ち絵の並び（`<CharacterEdit>`）を描かずに、カード・差し色・背景への畳み方と送り先だけを
- * 測る（docs/design.md 2章「機能の中を分ける」）。画面に出た形は `character-edit.test.tsx`。
- * フィクスチャはすべて手で書いた架空のもの（docs/coding-standards.md「会話内容の扱い」）。
+ * 測る（docs/design.md「機能の中を分ける」）。画面に出た形は別のテストが見る。
  */
 
 const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = characterInfo({
@@ -352,7 +351,7 @@ describe("useCharacterEdit", () => {
     expect(calls).toEqual([{ procedure: "characterPack.clearFace", pack: "fictional" }])
   })
 
-  // このキャラクターを消す／同梱に戻す帯（docs/screen-design.md 13.6「このキャラクターを消す」）。
+  // このキャラクターを消す／同梱に戻す帯（docs/screen-design.md「このキャラクターを消す」）。
   it("removal が none のパックには帯を出さない", () => {
     const { result } = renderHook(() => useCharacterEdit(), {
       wrapper: wrapperWithPacks(
@@ -383,8 +382,7 @@ describe("useCharacterEdit", () => {
   })
 
   // 使用中以外のパックを詳しい設定に出すには、一覧にもう1件（`other`）を足し、hash でそれを
-  // 選ぶ（`character.test.tsx` と同じ形。`docs/screen-design.md` 13.6
-  // 「選んでいるパックは hash に持つ」）。
+  // 選ぶ（`docs/screen-design.md`「選んでいるパックは hash に持つ」）。
   it("使用中以外のパックは帯のボタンが押せ、characterPack.delete を1回送る", () => {
     window.location.hash = "#character?pack=other"
     const calls: unknown[] = []
@@ -417,7 +415,7 @@ describe("useCharacterEdit", () => {
     expect(calls).toEqual([{ procedure: "characterPack.delete", pack: "other" }])
   })
 
-  // 名前とプロフィールを変えるダイアログの種（`components/character-profile-edit.tsx`）。
+  // 名前とプロフィールを変えるダイアログの種（`CharacterProfileEdit`）。
   it("名前とひとことプロフィールを、いまの値を種にした editProfile へ畳み、characterPack.setProfile を送る", () => {
     const calls: unknown[] = []
     const { result } = renderHook(() => useCharacterEdit(), {

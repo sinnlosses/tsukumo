@@ -5,8 +5,7 @@ import { ContextUsageCard } from "../../../../../../../src/browser/components/pa
 import type { UseContextUsageResult } from "../../../../../../../src/browser/domain/context-usage.ts"
 import { contextUsage } from "../../../../../../fixture/context-usage.ts"
 
-// いまのコンテキストの内訳の札（`context-usage-card.tsx`）。フックは素通しなので、畳んだ
-// 形を手で書いて渡す（架空の内訳。docs/coding-standards.md「会話内容の扱い」）。
+// いまのコンテキストの内訳の札（`ContextUsageCard`）。フックは素通しなので、畳んだ形を手で書いて渡す。
 //
 // 見えているかどうかは目視で確かめる（docs/coding-standards.md「DOM の構造と画面の流れは
 // E2E、見た目は目視」）。ここで測るのは、どの行がどの順で出て、数がどう書かれるかまで。
@@ -25,7 +24,7 @@ const TAKEN_AT = Temporal.ZonedDateTime.from({
   timeZone: Temporal.Now.timeZoneId(),
 }).epochMilliseconds
 
-/** 畳んだ札1枚（`browser/domain/context-usage.ts` が返すのと同じ形）。 */
+/** 畳んだ札1枚（`useContextUsage` が返すのと同じ形）。 */
 function readyCard(overrides: Partial<Parameters<typeof contextUsage>[0]> = {}): {
   readonly card: UseContextUsageResult
 } {

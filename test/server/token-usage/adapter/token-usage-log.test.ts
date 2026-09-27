@@ -13,8 +13,6 @@ import {
 import { keysOf, readJsonLines } from "../../../fixture/jsonl.ts"
 import { useTempDir } from "../../../fixture/temp-dir.ts"
 
-// 数はすべて手で書いた架空のもの（実物の使用量も会話も使わない。
-// docs/coding-standards.md「会話内容の扱い」）。
 const MODELS: readonly ModelTokenUsage[] = [
   {
     model: "claude-opus-fictional",

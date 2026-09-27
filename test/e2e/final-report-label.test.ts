@@ -2,7 +2,7 @@ import { describe, it } from "vitest"
 
 import { useScenarioRun } from "./scenario-run.ts"
 
-// 最終レポートの札（`docs/glossary.md`「最終レポート」）。疑似セッションの場面
+// 最終レポートの札。疑似セッションの場面
 // `background-task-interim-report` は、`report` ツールを2回呼んだあとに背景のタスクへ入り、
 // `turn-finished` を挟んで `turn-resumed` する場面（`test/fixture/fake-session.json`）。
 // 2回目の `report`（`fake-report-bg-interim-2`）は、背景のタスクが残っているあいだは

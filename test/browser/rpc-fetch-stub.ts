@@ -1,9 +1,8 @@
-// ブラウザ側の手続きの呼び出し（`src/browser/domain/rpc.ts`）を、`globalThis.fetch` の代役で
+// ブラウザ側の手続きの呼び出し（`rpc`）を、`globalThis.fetch` の代役で
 // 受ける。サーバは起こさない。代役が知っているのは oRPC の RPC の運び方（本文は
 // `{ "json": <値> }`、失敗は状態コードと `{ "json": { defined, code, status, message } }`）だけで、
 // どの手続きに何を返すかは呼ぶテストが決める。
 //
-// 返す値はすべて各テストが手で書いた架空のもの（docs/coding-standards.md「会話内容の扱い」）。
 
 import { RPC_PATH } from "../../src/shared/rpc.ts"
 

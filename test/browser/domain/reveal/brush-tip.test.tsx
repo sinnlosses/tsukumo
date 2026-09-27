@@ -12,7 +12,7 @@ function Probe(): string {
   if (tip === undefined) {
     return "筆先なし"
   }
-  // やり取りの番号も読む（筆先はそれを出したやり取りのものでしかない。`brush-tip.ts`）。
+  // やり取りの番号も読む（筆先はそれを出したやり取りのものでしかない。`BrushTip`）。
   const place = `${String(tip.turnId)}:${String(tip.x)},${String(tip.top)},${String(tip.bottom)}`
   return tip.phase === "writing" ? `${place},${tip.stroke}` : `${place},残っている`
 }

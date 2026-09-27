@@ -1,6 +1,5 @@
 // `src/` / `test/` / `scripts/` / `docs/` / `story/`（`docs/history/` を除く）のファイルを読み、
-// `scripts/task-mention.ts` の純粋関数に渡して迷子のタスク番号を集める、という概念1つを持つ。
-// `test/task-id.test.ts` が使う。
+// `findTaskMentions` に渡して迷子のタスク番号を集める、という概念1つを持つ。
 
 import { readdirSync, readFileSync } from "node:fs"
 import { extname, join, relative } from "node:path"

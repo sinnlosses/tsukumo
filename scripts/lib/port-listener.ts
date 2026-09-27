@@ -1,7 +1,6 @@
 // ポートで listen しているプロセスを lsof で引く、という概念1つを持つ。
-//
-// scripts/stop.ts（動いている tsukumo を数え上げて止める）と scripts/open-room-grid.ts
-// （動いている部屋を格子に並べる）の両方が同じ探し方を要るので、ここに1つだけ置く。
+// 動いている tsukumo を数え上げて止める道具と、動いている部屋を格子に並べる道具の
+// 両方が同じ探し方を要るので、ここに1つだけ置く。
 
 import { execFileSync } from "node:child_process"
 

@@ -17,8 +17,6 @@ import {
   toolRecord,
 } from "../../fixture/session-record.ts"
 
-// フィクスチャはすべて手で書いた架空の依頼・ツール呼び出し（docs/coding-standards.md「会話内容の扱い」）。
-
 /** `{ kind: "turn" }` の前提で `steps` を取り出す（前提が崩れたら分かるように投げる）。 */
 function turnSteps(list: ReturnType<typeof currentTurnSteps>): readonly TurnStep[] {
   if (list.kind !== "turn") {

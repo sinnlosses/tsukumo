@@ -13,7 +13,6 @@ import { typedElement } from "../../../../typed-element.ts"
 import { createTestQueryClient } from "../../../query-client.tsx"
 import { type CommandSpy, putState, putSession } from "../../../session-store.ts"
 
-// 手で書いた架空のキャラクターパック2つ（docs/coding-standards.md「会話内容の扱い」）。
 // 使用中の `fictional` と、使用中ではない `other`。立ち絵はラスタにしてある（`<Portrait>` は
 // SVG のときだけ中身を `fetch` しに行くので、このテストの関心ではない非同期がまぎれる）。
 const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = characterInfo({
@@ -50,7 +49,7 @@ const FIXTURE_PENDING: PendingAsk = {
 let themeStyleElement: HTMLStyleElement | undefined
 
 // 差し色の `<input type="color">` は定義に無い衣装の初期値を `--accent` から読む
-// （`browser/domain/appearance-color.ts` の `readAccentColor`）ので、`:root` を疑似的に用意する。
+// （`readAccentColor`）ので、`:root` を疑似的に用意する。
 beforeEach(() => {
   themeStyleElement = document.createElement("style")
   themeStyleElement.textContent =
@@ -122,7 +121,7 @@ describe("Character", () => {
 
   // 完了条件: 「新しく作る」がダイアログを開き、作れたら閉じて一覧で新しいパックが選ばれる。
   // id・名前・立ち絵・差し色を持つ characterPack.create の組み立てそのものは
-  // `character-create.test.tsx` / `use-character-create.test.tsx` が持つので、ここでは
+  // 別のテストが持つので、ここでは
   // 送られた id（次の選択に効く）だけを見る。
   it("新しく作るはダイアログを開き、作れたら閉じて一覧でそのパックを選ぶ", async () => {
     const calls: unknown[] = []
@@ -236,7 +235,7 @@ describe("Character", () => {
 
     const button = screen.getByRole("button", { name: /このキャラクターに切り替える/ })
     // 押せないは `aria-disabled` の1通り（`Button`）。本物の `disabled` にはしないので、
-    // フォーカスは残る（`button.test.tsx` と同じ確かめ方）。
+    // フォーカスは残る。
     expect(button.getAttribute("aria-disabled")).toBe("true")
     expect(button.hasAttribute("disabled")).toBe(false)
     expect(button.getAttribute("title")).toContain("ターン進行中")
@@ -254,7 +253,7 @@ describe("Character", () => {
     expect(calls).toEqual([])
   })
 
-  // 戻る口と答え待ちの印は帯（`components/domain/screen-nav/`）へ移った（docs/screen-design.md 13.9）。
+  // 戻る口と答え待ちの印は帯（`components/domain/screen-nav/`）へ移った（docs/screen-design.md「画面のナビゲーション」）。
   // 同じ口を2つ置かないので、この画面には残っていない。
   it("会話へ戻る口と答え待ちの印は持たない", () => {
     renderCharacter({ pending: [FIXTURE_PENDING] })

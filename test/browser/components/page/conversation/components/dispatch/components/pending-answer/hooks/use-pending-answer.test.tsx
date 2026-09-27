@@ -9,9 +9,8 @@ import { type CommandSpy, putSession } from "../../../../../../../../session-sto
 
 /**
  * 答え待ちの箱（`<PendingAnswer>`）を描かずに、答え待ちの先頭の畳み方と許可要求の送り先だけを
- * 測る（docs/design.md 2章「機能の中を分ける」）。質問は箱に出ない（札はメインビュー。
- * `test/browser/stores/question-answer.test.tsx`）。
- * フィクスチャはすべて手で書いた架空のもの（docs/coding-standards.md「会話内容の扱い」）。
+ * 測る（docs/design.md「機能の中を分ける」）。質問は箱に出ない（札はメインビュー。
+ * store のテスト）。
  */
 
 afterEach(() => {

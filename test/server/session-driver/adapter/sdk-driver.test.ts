@@ -28,7 +28,7 @@ import type { SessionEvent } from "../../../../src/shared/session/session-event.
 import { fixedChatSummary } from "../../../fixture/chat.ts"
 
 // `startSession` 自体は本物の claude を子プロセスとして起こすので、ここでは呼ばない
-// （docs/requirements.md 4.6 / CLAUDE.md「よく使うコマンド」）。`query()` に渡る `options` の
+// （docs/requirements.md「起動と設定」 / CLAUDE.md「よく使うコマンド」）。`query()` に渡る `options` の
 // うち、クロージャを含まない部分（`buildQuerySeedOptions`）だけを検査する。
 const WORK_MODE: SessionMode = { kind: "work" }
 
@@ -56,7 +56,7 @@ describe("buildQuerySeedOptions", () => {
   })
 
   // 覚えた既定（`~/.tsukumo/state.json`）は配線層が読んで `SessionDriverOptions` に載せる
-  // （`src/session-start.ts`）。ここで見るのは、その値がそのまま `query()` へ渡ること。
+  // （`startSession`）。ここで見るのは、その値がそのまま `query()` へ渡ること。
   it("cwd・permissionMode・model・effort は渡された SessionDriverOptions の値をそのまま使う", () => {
     const seed = buildQuerySeedOptions({
       ...BASE_OPTIONS,
@@ -94,7 +94,7 @@ describe("buildQuerySeedOptions", () => {
 
   it("引き継いだ環境変数に CLAUDE_CODE_TERMINAL_MCP_TOOLS=mcp__tsukumo__speak を足して子プロセスへ渡す", () => {
     // SDK の `env` は `process.env` と混ぜずに丸ごと置き換えるので、引き継ぎが落ちていないことも見る
-    // （`src/server/session-driver/core/visible-output-nudge.ts`）。
+    // （`childProcessEnv`）。
     expect(buildQuerySeedOptions(BASE_OPTIONS).env).toEqual({
       PATH: "/usr/bin",
       HOME: "/tmp/tsukumo-home",
@@ -145,7 +145,6 @@ async function runStop(
 }
 
 describe("stopHooks（report の関所と effort の読み取り）", () => {
-  // 本文は手で書いた架空のもの（docs/coding-standards.md「会話内容の扱い」）。
   const LONG_BODY: SessionEvent = { kind: "utterance", text: "架空の本文の1行目\n架空の2行目" }
 
   it("仕事でも雑談でも Stop だけを登録し、SubagentStop には載せない", () => {

@@ -9,9 +9,6 @@ import type {
 import type { ChatMemoryBudget } from "../../../../src/shared/chat/chat-memory-budget.ts"
 import { NOOP_CHAT_ARCHIVE } from "../../../fixture/chat.ts"
 
-// フィクスチャは手で書いた架空の候補・逐語だけ（実物の会話は使わない。
-// docs/coding-standards.md「会話内容の扱い」）。
-
 const BUDGET: ChatMemoryBudget = {
   recentBytes: 1024,
   synopsisBytes: 1024,

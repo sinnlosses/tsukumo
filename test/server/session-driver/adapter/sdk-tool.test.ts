@@ -15,7 +15,6 @@ import { fixedChatSummary } from "../../../fixture/chat.ts"
 
 // どのツールが載るか・呼ぶと何が返るかを、モデルが見るのと同じ MCP の `tools/list` /
 // `tools/call` で確かめる（サーバの中身を覗かず、公開された口だけを通す）。本物の claude は
-// 起こさない。見直しの引数は手で書いた架空のもの（docs/coding-standards.md「会話内容の扱い」）。
 
 const EXPRESSIONS = [{ name: "default", label: "通常" }] as const
 

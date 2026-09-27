@@ -1,8 +1,8 @@
 // サイドバー全体の組み立て。下端の帯（`.sidebar-footer`。コンテキストの使用量）は区画ではないので、
 // 見出しを名乗らず、区画の枠（`SidebarSection`）も通らない。見出しはタスクの1つだけになる。
-// キャラクターとセッションの切り替えはサイドバーに無い（帯の左上。docs/screen-design.md 13.9）。
+// キャラクターとセッションの切り替えはサイドバーに無い（帯の左上。docs/screen-design.md「画面のナビゲーション」）。
 //
-// 雑談中は4段に差し替わる（docs/screen-design.md 13.7「雑談のときのサイドバー」）: プロフィールの札・
+// 雑談中は4段に差し替わる（docs/screen-design.md「雑談のときのサイドバー」）: プロフィールの札・
 // 最近の話題・覚えていること・下端の帯。タスク一覧は出さない。
 
 import { QueryClientProvider } from "@tanstack/react-query"

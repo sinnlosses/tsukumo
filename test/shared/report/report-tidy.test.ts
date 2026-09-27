@@ -3,7 +3,6 @@ import { describe, expect, it } from "vitest"
 import type { ReportBlock, ReportSection } from "../../../src/shared/report/report-block.ts"
 import { tidyReportSections } from "../../../src/shared/report/report-tidy.ts"
 
-// フィクスチャはすべて手で書いた架空の本文（docs/coding-standards.md「会話内容の扱い」）。
 const CONCLUSION = "架空の結論。"
 
 const markdown = (body: string): ReportBlock => ({ kind: "markdown", markdown: body, fold: "" })

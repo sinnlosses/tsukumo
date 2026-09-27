@@ -11,9 +11,6 @@ import {
 } from "../../../../src/shared/session-driver/prompt-image.ts"
 import type { SessionRecord } from "../../../../src/shared/session/session-state.ts"
 
-// 画像はすべて手で書いた架空の data URL（実物の画像は使わない。
-// docs/coding-standards.md「会話内容の扱い」）。
-
 function image(label: string): PromptImage {
   return {
     full: `data:image/png;base64,full${label}`,

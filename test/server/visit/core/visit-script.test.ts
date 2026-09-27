@@ -19,8 +19,6 @@ import {
 } from "../../../../src/shared/session/session-state.ts"
 import { characterDefinition, portraits } from "../../../fixture/character.ts"
 
-// 人格・依頼・セリフ・台本はすべて手で書いた架空のもの（docs/coding-standards.md「会話内容の扱い」）。
-
 const CAST: VisitCast = {
   host: {
     persona: "架空のあるじの人格",

@@ -12,10 +12,9 @@ import {
 } from "../../../../../src/browser/components/page/achievement/presentational-achievement.tsx"
 
 /**
- * 各区画（`day-switch.tsx` / `diary-section.tsx` / `bookmark-section.tsx` /
- * `surprise-section.tsx` / `lantern-calendar.tsx`）の中身は個別のテストが持つ。ここは
- * 並ぶ順と、main が読めないときに他をすべて隠すことだけを測る（フィクスチャは架空の値。
- * docs/coding-standards.md「会話内容の扱い」）。
+ * 各区画（`DaySwitch` / `DiarySection` / `BookmarkSection` /
+ * `SurpriseSection` / `LanternCalendar`）の中身は個別のテストが持つ。ここは
+ * 並ぶ順と、main が読めないときに他をすべて隠すことだけを測る。
  */
 
 afterEach(() => {
@@ -90,7 +89,7 @@ describe("PresentationalAchievement", () => {
       screen.getByText("このディレクトリでは成果を数えられない（main が読めない）"),
     ).toBeDefined()
     // `.achievement-day-switch` は並べるだけの規則だったので `HStack` に置き換わり、
-    // 消えている（`docs/design.md` 2章）。日の切り替えの中身（`.achievement-day-switch-nav`。
+    // 消えている（`docs/design.md`「`components/ui/` の部品」）。日の切り替えの中身（`.achievement-day-switch-nav`。
     // 置き方だけを持つので残っている）が無いことで、区画そのものが出ていないと分かる。
     expect(document.querySelector(".achievement-day-switch-nav")).toBeNull()
     expect(document.querySelector(".achievement-diary")).toBeNull()

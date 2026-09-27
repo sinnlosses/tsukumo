@@ -13,9 +13,6 @@ import {
 import { setPageUrl } from "../../../../../../dom-environment.ts"
 import { typedElement } from "../../../../../../typed-element.ts"
 
-// フィクスチャはすべて手で書いた架空の data URL（実物の画像は使わない。
-// docs/coding-standards.md「会話内容の扱い」）。
-
 const IMAGE_A: PromptImage = {
   full: "data:image/png;base64,fullA",
   thumbnail: "data:image/png;base64,thumbA",
@@ -92,7 +89,7 @@ describe("PromptImageChips", () => {
 
   // Esc は `<dialog>` を閉じて `close` イベントを出す（ブラウザの既定の振る舞い）。
   // 受けるのは `<dialog onClose={...}>` なので、ここはそのイベントだけを起こす
-  // （`test/browser/features/task-board/task-run.test.tsx` と同じ形）。
+  // （別のテストと同じ形）。
   it("Esc で閉じたときも拡大の面が外れる", () => {
     renderChips([IMAGE_A])
 

@@ -14,9 +14,8 @@ import {
 import type { ChatUnconsolidatedEntry } from "../../../../src/server/session-driver/core/session-driver.ts"
 import { fixedChatSummary } from "../../../fixture/chat.ts"
 
-// 畳む行・あらすじ・エピソードはすべて手で書いた架空のもの（docs/coding-standards.md
-// 「会話内容の扱い」）。`queryChatConsolidation` 自体（本物の `query()` を起こす部分）は
-// claude を子プロセスで起こすので、ここではテストしない（`sdk-diary.test.ts` の先例と同じ扱い）。
+// `queryChatConsolidation` 自体（本物の `query()` を起こす部分）は
+// claude を子プロセスで起こすので、ここではテストしない。
 
 // `<topics>` の組は、組み替える前は `/compact` が返す生の出力（`<analysis>` のあとに
 // `<summary>`）の中に書かせていた。取り出し方（`chatTopics`）は形を変えていないので、

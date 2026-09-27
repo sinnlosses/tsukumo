@@ -1,7 +1,6 @@
 // `src/` / `test/` / `scripts/` / `docs/` / `story/`（`docs/history/` を除く）のコメント・テスト名・本文に
 // 書かれたタスク番号（`develop/task/T-xxx.md` のパスも `T-` + 3桁以上の並びを含むので同じ形で
-// 拾える）を拾う純粋関数。`scripts/lib/task-mention-repository.ts`（リポジトリから集める入口）と
-// `test/task-id.test.ts`（0件を保つテスト）が使う。
+// 拾える）を拾う純粋関数。
 //
 // CLAUDE.md「コード・ドキュメントにタスク番号（`T-` + 3桁）を書かない」をコードの側で裏付ける。
 // 許すのは3つだけ: (1) タスクファイルの形（front matter・ID とファイル名の対応・見出しの集計）を
@@ -9,7 +8,7 @@
 // ただしファイル丸ごとではなく、出現の置き場所が `data`（コメントでもテスト名でもない）のときだけ
 // 許す——同じファイルでもコメント（`//`・`/* */`・JSDoc）とテスト名（`describe`/`it`/`test` の
 // 最初の文字列引数）に書かれた出現は拾う。置き場所の判定は `contextRangesOf` が行う、
-// (2) 既知の例外 `T-225`（`scripts/task-id.ts` と同じ理由でここでも例外にする）、
+// (2) 既知の例外 `T-225`（`KNOWN_DUPLICATE_ALLOWANCE` と同じ理由でここでも例外にする）、
 // (3) `docs/requirements.md`「7. 未決事項」の表の「対応タスク」列（CLAUDE.md が唯一許す docs の
 // 例外）。(3) は `maskAllowedRequirementsPendingTaskColumn` が、拾う前にその列だけ伏せて実現する
 // （伏せた場所は 1列目や節の外まで広げない）。

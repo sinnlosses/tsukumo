@@ -19,7 +19,6 @@ import {
 } from "../../../../src/shared/session/session-state.ts"
 import type { VisitEndReason } from "../../../../src/shared/visit/visit.ts"
 
-// 依頼・セリフ・台本はすべて手で書いた架空のもの（docs/coding-standards.md「会話内容の扱い」）。
 const SCRIPT: VisitScript = [
   { speaker: "guest", expression: "curious", text: "架空の客の一言目" },
   { speaker: "host", expression: "proud", text: "架空のあるじの返事" },

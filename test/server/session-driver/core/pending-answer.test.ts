@@ -12,7 +12,6 @@ function noHandlers(): PendingAnswerHandlers {
   return { onChange: () => {}, onAnswered: () => {} }
 }
 
-// フィクスチャはすべて手で書いた架空のもの（docs/coding-standards.md「会話内容の扱い」）。
 function permissionRequest(overrides: Partial<AskRequest> = {}): AskRequest {
   return {
     id: "toolu_1",

@@ -25,20 +25,14 @@ import { runSubprocess, type SubprocessResult } from "./fixture/subprocess.ts"
 // 起こすわけにはいかないので、起動の前提チェックで終わるところまでをここで守る。
 //
 // 追従・状態ファイル・立ち絵のフォールバック・ビューの中身を端から端まで見ていたテストは、
-// この変更で対象そのものが無くなった。振る舞い自体は次のテストが守っている:
-//   - メインビュー・レポート・ツールの行・質問の記録（React の部品）: test/browser/components/page/conversation/components/main-view/
-//   - Markdown の変換（unified）: test/browser/components/page/conversation/components/main-view/markdown/
-//   - 配信（バインド先・経路・静的アセット・依頼の受け口）と WebSocket の経路
-//     （トークン・Origin・hello・コマンド）: test/server/view-server/adapter/server.test.ts
-//   - キャラクター定義の解釈と立ち絵の選び方: test/shared/character-pack/character.test.ts
-//   - SDK のイベントの変換・答え待ち・畳み込み: test/server/session-driver/core/sdk-message.test.ts /
-//     test/server/session-driver/core/pending-answer.test.ts / test/shared/session/session-state.test.ts
+// この変更で対象そのものが無くなった。振る舞い自体は、メインビューの部品・Markdown の変換・
+// 配信と WebSocket の経路・キャラクター定義の解釈・SDK イベントの変換のそれぞれのテストが守っている。
 // 実際に画面に出ているかは目視で確かめる（docs/architecture.md「手で確かめること」）。
 
 const ENTRY = new URL("../src/cli.ts", import.meta.url).pathname
 
 /**
- * CLI が読む環境変数（名前は `src/server/core/config.ts` が持つ）。引き継がずに落とす
+ * CLI が読む環境変数（名前は `readConfig` が持つ）。引き継がずに落とす
  * ——tsukumo が起こした claude の中でテストを走らせると、その tsukumo 自身の設定が spawn 先へ
  * 漏れて結果が変わる（`TSUKUMO_VIEW_PORT` を渡して起こした環境では、既定ポートを前提にした
  * 下のテストが「明示指定」の経路に落ちて20秒待たされた）。渡すのは各テストが明示した分だけ。

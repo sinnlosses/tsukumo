@@ -9,7 +9,6 @@ import { characterPackEntry } from "../../../../../../fixture/character.ts"
 import { typedElement } from "../../../../../../typed-element.ts"
 import { type CommandSpy, putSession } from "../../../../../session-store.ts"
 
-// 手で書いた架空のキャラクターパック（docs/coding-standards.md「会話内容の扱い」）。
 const FIXTURE_PACKS: readonly CharacterPackEntry[] = [characterPackEntry("fictional", "架空の精霊")]
 
 afterEach(() => {
@@ -27,7 +26,7 @@ function characterCreate(
   return <CharacterCreate open={open} onClose={onClose} />
 }
 
-/** 開いているかどうかは `<dialog>` の `open` 属性で見る（`task-board.test.tsx` と同じ）。 */
+/** 開いているかどうかは `<dialog>` の `open` 属性で見る。 */
 function dialogIsOpen(): boolean {
   return document.querySelector("dialog.character-create-dialog")?.hasAttribute("open") === true
 }
@@ -77,7 +76,7 @@ describe("CharacterCreate", () => {
   it("id・必須の立ち絵がそろうまで「作る」を押せない", async () => {
     render(characterCreate(true, () => {}))
     // 押せないは `aria-disabled` の1通り（`Button`）。本物の `disabled` にはしないので、
-    // フォーカスは残る（`button.test.tsx` と同じ確かめ方）。
+    // フォーカスは残る。
     expect(submitButton().getAttribute("aria-disabled")).toBe("true")
     expect(submitButton().hasAttribute("disabled")).toBe(false)
     submitButton().focus()
@@ -105,7 +104,7 @@ describe("CharacterCreate", () => {
     expect(calls).toEqual([])
   })
 
-  // id はディレクトリ名になるので、送る前に画面で止める（docs/design.md 7.1）。
+  // id はディレクトリ名になるので、送る前に画面で止める（docs/design.md「画面から作るときの置き場と受け取り方」）。
   it("形の合わない id では押せず、理由を id の欄の下に出す", async () => {
     render(characterCreate(true, () => {}))
     fireEvent.change(screen.getByLabelText("id"), { target: { value: "../escape" } })
@@ -179,7 +178,7 @@ describe("CharacterCreate", () => {
     )
 
     // happy-dom はキーの既定の動作を持たないので、その結果の close を直接起こす
-    // （speech-log.test.tsx と同じ）。
+    //
     fireEvent(dialog(), new Event("close"))
 
     expect(closed).toEqual(["closed"])

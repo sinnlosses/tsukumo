@@ -10,7 +10,6 @@ import {
   userMessage,
 } from "../../../fixture/sdk-message.ts"
 
-// フィクスチャはすべて手で書いた架空のやり取り（docs/coding-standards.md「会話内容の扱い」）。
 const EXPRESSIONS: readonly Expression[] = ["default", "proud"]
 
 function reportCall(id: string, input: Readonly<Record<string, unknown>>): unknown {

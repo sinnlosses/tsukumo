@@ -23,7 +23,7 @@ describe("resolveOutfit", () => {
     expect(resolveOutfit("fable")).toBe("heavy")
   })
 
-  // 短い別名か完全なモデルIDかは場合によるため部分一致にしている（src/shared/character-pack/expression.ts の
+  // 短い別名か完全なモデルIDかは場合によるため部分一致にしている（`resolveOutfit` の
   // コメント参照）。完全なモデルIDでも拾えることをここで固定する。
   it("完全なモデルIDに含まれていても拾う", () => {
     expect(resolveOutfit("claude-opus-4-1-20250805")).toBe("heavy")

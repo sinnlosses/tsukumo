@@ -12,9 +12,8 @@ import { type CommandSpy, putState, putSession } from "../../../../../../session
 
 /**
  * ダイアログを描かずに、押せるか・id の欄の下の一言・作る／自動で閉じて選ぶ、の送り先だけを
- * 測る（docs/design.md 2章「機能の中を分ける」）。画面に出た形と「やめる」・Esc・backdrop での
- * 閉じ方は `character-create.test.tsx`。フィクスチャはすべて手で書いた架空のもの
- * （docs/coding-standards.md「会話内容の扱い」）。
+ * 測る（docs/design.md「機能の中を分ける」）。画面に出た形と「やめる」・Esc・backdrop での
+ * 閉じ方は別のテスト。フィクスチャはすべて手で書いた架空のもの
  */
 
 const FIXTURE_PACKS: readonly CharacterPackEntry[] = [characterPackEntry("fictional", "架空の精霊")]

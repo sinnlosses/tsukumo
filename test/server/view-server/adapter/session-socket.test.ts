@@ -185,7 +185,7 @@ function upgradeStatus(origin: string, path: string, headers: Readonly<Record<st
 
 type SocketClient = ContractRouterClient<typeof socketContract>
 
-/** 接続の上に `/ws` の手続きの client を作る（ブラウザの `src/browser/lib/socket.ts` と同じく、接続をそのまま `RPCLink` へ渡す）。 */
+/** 接続の上に `/ws` の手続きの client を作る（ブラウザの `connectSessionSocket` と同じく、接続をそのまま `RPCLink` へ渡す）。 */
 function clientOver(client: WebSocket): SocketClient {
   return createORPCClient(new RPCLink({ websocket: client }))
 }

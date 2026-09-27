@@ -21,15 +21,13 @@ import {
   shownPortraits,
 } from "../../../fixture/character.ts"
 
-// 疑似セッションもセリフも手で書いた架空のもの（docs/coding-standards.md「会話内容の扱い」）。
 // 本物の claude は起こさない（駆動も見張りも下の偽物）。
 type Pack = { readonly name: string }
 
 const INITIAL: Pack = { name: "tsukumo-spirit" }
 const SWITCHED: Pack = { name: "kagami" }
 
-// 切り替え先の一覧（目印・最終更新時刻・見出し。見出しは作り物の文字列
-// docs/coding-standards.md「会話内容の扱い」）。
+// 切り替え先の一覧（目印・最終更新時刻・見出し）。
 const CHOICES = [
   {
     viewPort: 7328,
@@ -47,10 +45,8 @@ const CHOICES = [
   },
 ] as const
 
-// 最近の話題の見出し（作り物の文字列。docs/coding-standards.md「会話内容の扱い」）。
 const CHAT_TOPICS = ["架空の話題その1", "架空の話題その2"] as const
 
-// 覚えたことの一覧（作り物の文字列。docs/coding-standards.md「会話内容の扱い」）。
 const REMEMBERED_LINES = ["架空の覚えたことその1"] as const
 
 /** 起こされたことと閉じられたことだけを覚える fake driver 相当のスタブ。 */
@@ -389,7 +385,7 @@ describe("createSessionLaunch", () => {
   it("いま出しているパックのまま起こし直す（モードの切り替え）ときは覚えない", async () => {
     // `session.setChatMode` の起こし直しがここを通る。同じパックを起こすのは「画面から選ばれた」
     // ことではないので、覚えた値（`~/.tsukumo/state.json`）は書き換わらない
-    // （docs/screen-design.md 13.6）。
+    // （docs/screen-design.md「設定の置き場所」）。
     const harness = createHarness()
 
     await createSessionLaunch(harness.ports)(harness.receive, harness.receiveRestored, {
@@ -525,7 +521,7 @@ describe("createSessionLaunch", () => {
     ])
   })
 
-  // 歯車の「訪問」のオン・オフ（`docs/screen-design.md` 13.6）。覚え方は「新しいセッションの既定」
+  // 歯車の「訪問」のオン・オフ（`docs/screen-design.md`「設定の置き場所」）。覚え方は「新しいセッションの既定」
   // と同じで、読むのも起こすたびに1回（`readSessionDefault` と同じ理由）。
   it("覚えた visitEnabled を、起こした初期値として visit-enabled-changed で流す", async () => {
     const harness = createHarness({ readVisitEnabled: () => false })

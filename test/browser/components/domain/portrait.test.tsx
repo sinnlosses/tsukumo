@@ -9,8 +9,6 @@ import {
 import { typedElement } from "../../../typed-element.ts"
 import { createTestQueryClient } from "../../query-client.tsx"
 
-// フィクスチャはすべて手で書いた架空の SVG・URL（docs/coding-standards.md「会話内容の扱い」）。
-
 const PLAUSIBLE_SVG = '<svg xmlns="http://www.w3.org/2000/svg"><circle r="1"/></svg>'
 
 let originalFetch: typeof globalThis.fetch
@@ -39,7 +37,7 @@ function stubFetch(body: string): void {
   globalThis.fetch = stub as unknown as typeof globalThis.fetch
 }
 
-// `<Portrait>` は `useQuery`（`components/domain/portrait.tsx`）を使うので `QueryClientProvider` が要る
+// `<Portrait>` は `useQuery`（`usePortraitPreload`）を使うので `QueryClientProvider` が要る
 // （`test/browser/` の他の部品テストが Context の Provider で包むのと同じ形）。キャッシュはテストを
 // またがせないので、テストごとに新しい `QueryClient` を作る。
 

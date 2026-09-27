@@ -15,8 +15,6 @@ function byteLength(text: string): number {
   return textEncoder.encode(text).length
 }
 
-// フィクスチャは手で書いた架空の要約だけ（実物の会話は使わない。
-// docs/coding-standards.md「会話内容の扱い」）。
 const SUMMARY = "利用者と最近読んだ本の話をした。次は続きの巻の感想を聞きたがっていた。"
 
 const dir = useTempDir("chat-summary")

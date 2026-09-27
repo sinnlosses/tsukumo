@@ -6,7 +6,6 @@ import type {
   VisitScript,
 } from "../../../../src/shared/character-pack/character-visit.ts"
 
-// 台本と帰りの一言は手で書いた架空のもの（docs/coding-standards.md「会話内容の扱い」）。
 const FIRST_SCRIPT: VisitScript = [
   { speaker: "guest", expression: "curious", text: "架空の台本1の一言目" },
 ]

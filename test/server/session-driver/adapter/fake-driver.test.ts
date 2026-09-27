@@ -10,7 +10,6 @@ import { BUILTIN_SESSION_DEFAULT } from "../../../../src/shared/session/session-
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 
 // 疑似セッションは手で書いた架空の会話（test/fixture/fake-session.json）。実物の transcript は
-// 使わない（docs/coding-standards.md「会話内容の扱い」）。
 const FAKE_SESSION = {
   opening: [{ afterMs: 0, event: { kind: "speech", text: "架空の挨拶", expression: "default" } }],
   turns: [
@@ -122,7 +121,7 @@ describe("startFakeSession", () => {
     await tick()
     driver.close()
 
-    // 送った文面はどのイベントにも乗らない（docs/screen-design.md 13.7）。先頭3件は起こした直後の分
+    // 送った文面はどのイベントにも乗らない（docs/screen-design.md「雑談モードの画面」）。先頭3件は起こした直後の分
     // （プラン・effort の対応・opening の場面）。
     expect(sink.events.slice(3)).toEqual([
       { kind: "turn-started" },
@@ -344,7 +343,7 @@ describe("readFakeSession", () => {
 
     expect(session?.opening.length).toBeGreaterThan(0)
     expect(session?.turns.length).toBeGreaterThan(0)
-    // 場面の名前は、状態のカタログを撮る道具（scripts/capture-catalog.ts）が名指しする鍵。
+    // 場面の名前は、状態のカタログを撮る道具が名指しする鍵。
     expect(session?.turns.map((scene) => scene.name)).toContain("question-multi")
   })
 

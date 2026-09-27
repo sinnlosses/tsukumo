@@ -23,7 +23,7 @@ afterEach(() => {
   cleanup()
 })
 
-// 並びの規則（古い→新しい・交互）は `shared/chat/chat-log.ts` が決めるので、ここでは
+// 並びの規則（古い→新しい・交互）は `chatLogRows` が決めるので、ここでは
 // その順が DOM の順にそのまま出ることだけを見る（`column-reverse` などで
 // 見かけを反転していない）。文面は手で書いた架空のもの。
 
@@ -52,7 +52,7 @@ function portraitExpression(): string | null | undefined {
 
 /**
  * マウスで押す1回ぶん（押し始めから手を離すまで）。`moveX` だけ横に動かすと、
- * 文字をドラッグで選んだことになる（`hooks/use-chat-speech.ts` の `isSelectionDrag`）。
+ * 文字をドラッグで選んだことになる（`isSelectionDrag`）。
  *
  * 文字がほんとうに選べるかはテストでは見られない（DOM の実装では選択が起きない）ので、
  * そちらは目視で確かめる（`docs/architecture.md`「手で確かめること」）。
@@ -67,7 +67,6 @@ function logEntries(): readonly Element[] {
   return [...document.querySelectorAll("[data-speaker]")]
 }
 
-// 手で書いた架空のキャラクター定義（docs/coding-standards.md「会話内容の扱い」）。
 const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = characterInfo({
   ...shownPortraits({ default: "/character/default.png" }),
 })
@@ -89,7 +88,7 @@ describe("ChatView", () => {
     renderChatView({ records: [] })
 
     expect(document.querySelectorAll("[data-speaker]")).toHaveLength(0)
-    // 最初の一言を促すのはこの文面（促す操作子は立ち絵へ移った。docs/screen-design.md 13.7）。
+    // 最初の一言を促すのはこの文面（促す操作子は立ち絵へ移った。docs/screen-design.md「雑談モードの画面」）。
     expect(
       screen.getByText("（まだ何も話していません。立ち絵をつつくと話しかけてくれます）"),
     ).toBeTruthy()
@@ -392,8 +391,8 @@ describe("ChatView のセリフを遡る", () => {
   })
 })
 
-describe("ChatView のセリフが現れる（docs/screen-design.md 13.7）", () => {
-  /** 弾む行（`components/chat-speech.tsx` が出すクラス）。 */
+describe("ChatView のセリフが現れる（docs/screen-design.md「雑談モードの画面」）", () => {
+  /** 弾む行（`ChatSpeech` が出すクラス）。 */
   function popEntries(): readonly Element[] {
     return [...document.querySelectorAll(".chat-entry-pop")]
   }
@@ -487,7 +486,7 @@ describe("ChatView のセリフが現れる（docs/screen-design.md 13.7）", ()
 })
 
 describe("ChatView の「...」（返事を待つ間）", () => {
-  /** 「...」の行（`components/chat-typing.tsx`。docs/screen-design.md 13.7）。 */
+  /** 「...」の行（`ChatTyping`。docs/screen-design.md「雑談モードの画面」）。 */
   function typingEntry(): Element | null {
     return document.querySelector('[data-speaker="typing"]')
   }
@@ -531,7 +530,7 @@ describe("ChatView の「...」（返事を待つ間）", () => {
     })
 
     // 入れ替わりに届いたセリフの行が全文で現れる（最初の1件は前の吹き出しから
-    // 待たせる根拠が無いので、待たずにすぐ出る。`use-speech-reveal.ts`）。
+    // 待たせる根拠が無いので、待たずにすぐ出る。`useRevealedChatLog`）。
     expect(typingEntry()).toBe(null)
     expect(screen.getByText("3つめのセリフ")).toBeTruthy()
   })
@@ -591,7 +590,7 @@ describe("ChatView のホバー", () => {
 })
 
 describe("ChatView の立ち絵をつつく", () => {
-  /** 載せたときに出る案内の字（`components/nudge-portrait.tsx` が持つ。docs/screen-design.md 13.7）。 */
+  /** 載せたときに出る案内の字（`NudgePortrait` が持つ。docs/screen-design.md「雑談モードの画面」）。 */
   const NUDGE_HINT = "話しかけてもらう"
 
   /**
@@ -624,7 +623,7 @@ describe("ChatView の立ち絵をつつく", () => {
 
     fireEvent.click(portraitButton())
 
-    // 送るのは押した事実だけ（文面は `src/server/chat/core/chat-nudge.ts` が持つ）。
+    // 送るのは押した事実だけ（文面は `CHAT_NUDGE_PROMPT` が持つ）。
     expect(sent).toEqual([{ procedure: "session.nudge" }])
   })
 
@@ -634,7 +633,7 @@ describe("ChatView の立ち絵をつつく", () => {
 
     fireEvent.click(portraitButton())
 
-    // ブラウザは自分で echo しない（並ぶのはサーバから戻るセリフだけ。docs/screen-design.md 13.7）。
+    // ブラウザは自分で echo しない（並ぶのはサーバから戻るセリフだけ。docs/screen-design.md「雑談モードの画面」）。
     expect(logEntries()).toHaveLength(before)
   })
 
@@ -666,7 +665,7 @@ describe("ChatView の立ち絵をつつく", () => {
     )
 
     // `disabled` にはしない（キーボードで辿り着ける道ごと消える）。押せないことは
-    // `aria-disabled` で伝え、案内は出さない（`docs/screen-design.md` 13.7）。
+    // `aria-disabled` で伝え、案内は出さない（`docs/screen-design.md`「雑談モードの画面」）。
     const button = blockedPortraitButton()
     expect(button.getAttribute("aria-disabled")).toBe("true")
     expect(screen.queryByText(NUDGE_HINT)).toBe(null)

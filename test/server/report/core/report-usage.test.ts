@@ -4,7 +4,6 @@ import { reportUsageEntryOf } from "../../../../src/server/report/core/report-us
 import type { ReportSection } from "../../../../src/shared/report/report-block.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 
-// 中身はすべて手で書いた架空のもの（docs/coding-standards.md「会話内容の扱い」）。
 function reportEvent(
   sections: readonly ReportSection[],
   unknownBlockCount = 0,

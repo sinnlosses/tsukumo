@@ -6,8 +6,6 @@ import {
   type QuestionOption,
 } from "../../../src/shared/session-driver/question.ts"
 
-// 手で書いた架空の質問。実物の会話は使わない（docs/coding-standards.md「会話内容の扱い」）。
-
 describe("parseQuestions", () => {
   it("質問文・見出し・選択肢を取り出し、preview も運ぶ", () => {
     const input = {

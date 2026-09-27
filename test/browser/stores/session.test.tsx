@@ -1,7 +1,6 @@
 // 姿の store（`useSession` のセレクタ）の購読の粒度を見る。読んでいる値が
 // 動かないフレームで部品が描き直されないことは、目で見ても分からないのでここで押さえる。
 //
-// フィクスチャはすべて手で書いた架空の依頼・許可要求（docs/coding-standards.md「会話内容の扱い」）。
 
 import { act, cleanup, render, screen } from "@testing-library/react"
 import { Profiler, type ReactElement } from "react"

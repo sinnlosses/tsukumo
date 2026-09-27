@@ -9,11 +9,11 @@ import {
 import { typedElement } from "../../../../typed-element.ts"
 import { putSession, type CommandSpy } from "../../../session-store.ts"
 
-// 帯の右端の歯車で開く設定（docs/screen-design.md 13.6 / 13.9）。いまここにある群は「画面の色」・
+// 帯の右端の歯車で開く設定（docs/screen-design.md「設定の置き場所」「画面のナビゲーション」）。
+// いまここにある群は「画面の色」・
 // 「新しいセッションの既定」・「書き上げる演出の速さ」・「訪問」の4つ。
-// 保存の仕方は `browser/domain/appearance-color.ts` のままなので、鍵も検証も
-// `appearance-color.test.ts` と同じものを見ている。演出の速さの保存は
-// `browser/domain/reveal-speed.ts`（`reveal-speed.test.ts` と同じ鍵）。
+// 保存の仕方は `saveAppearanceColorOverride` のままなので、鍵も検証も
+// 同じものを見ている。演出の速さの保存は `saveRevealSpeed`（同じ鍵）。
 
 const COLOR_STORAGE_KEY = "tsukumo-appearance-color:v1"
 const COLOR_TOKENS = ["--ground", "--surface", "--ink"] as const
@@ -115,7 +115,7 @@ describe("設定の歯車（帯の右端）", () => {
     expect(panel()).toBeNull()
   })
 
-  // 閉じ方は「≡」・「いまの作業」と同じ（`browser/hooks/use-dismiss-signal.ts`）。
+  // 閉じ方は「≡」・「いまの作業」と同じ（`useDismissSignal`）。
   it("帯の外側を押すか Esc で閉じる", () => {
     renderScreenNav()
 
@@ -217,7 +217,7 @@ describe("設定の歯車（帯の右端）", () => {
     })
   })
 
-  // 色の検証は `browser/domain/appearance-color.ts` の1箇所のまま（歯車へ移しても変えていない）。
+  // 色の検証は `changeAppearanceColor` の1箇所のまま（歯車へ移しても変えていない）。
   it("ground を ink と同じ色にしようとすると受け取らず、既定のまま", async () => {
     renderScreenNav()
     fireEvent.click(gear())
@@ -244,7 +244,7 @@ describe("設定の歯車（帯の右端）", () => {
     expect(localStorage.getItem(COLOR_STORAGE_KEY)).toBeNull()
   })
 
-  // 保存済みの上書きを `documentElement` へ差すのは入口（`src/browser/main.tsx`）なので、
+  // 保存済みの上書きを `documentElement` へ差すのは入口（`applyAppearanceColorOverride` の起動時の呼び出し）なので、
   // ここではその後の状態（= リロードして戻ってきた形）を作ってから開く。
   it("保存済みの上書きが、開いたときの操作子の値に出る", () => {
     localStorage.setItem(COLOR_STORAGE_KEY, JSON.stringify({ ground: "#0a0a0a" }))
@@ -260,7 +260,7 @@ describe("設定の歯車（帯の右端）", () => {
     renderScreenNav()
     fireEvent.click(gear())
 
-    // `disabled` ではなく `aria-disabled`（`Button` の顔。docs/design.md 2章「`Button`」）——
+    // `disabled` ではなく `aria-disabled`（`Button` の顔。docs/design.md「`Button`」）——
     // native の `disabled` と違いフォーカスは残る。
     expect(resetButton().getAttribute("aria-disabled")).toBe("true")
     expect(resetButton().hasAttribute("disabled")).toBe(false)
@@ -305,7 +305,7 @@ describe("設定の歯車（帯の右端）", () => {
   })
 })
 
-// 新しいセッションの既定（docs/screen-design.md 13.6）。覚えるのはサーバなので、ここが見るのは
+// 新しいセッションの既定（docs/screen-design.md「設定の置き場所」）。覚えるのはサーバなので、ここが見るのは
 // 「届いた値をそのまま出す」「選ぶと `session.setSessionDefault` を送る」「全部許すは並べない」の3つ。
 describe("設定の歯車（新しいセッションの既定）", () => {
   it("届いた既定をそのまま出す", () => {
@@ -368,7 +368,7 @@ describe("設定の歯車（新しいセッションの既定）", () => {
     ])
   })
 
-  // 帯のドロップダウン（セッション限り）は既定を書き換えない（`docs/screen-design.md` 13.6）。
+  // 帯のドロップダウン（セッション限り）は既定を書き換えない（`docs/screen-design.md`「設定の置き場所」）。
   it("帯でモデルを変えても session.setSessionDefault は送らない", () => {
     const sent: unknown[] = []
     renderScreenNav(
@@ -481,7 +481,7 @@ function defaultSelect(label: string): HTMLSelectElement {
   )
 }
 
-// 書き上げる演出の速さ（docs/screen-design.md 13.6。`browser/domain/reveal-speed.ts`）。利用者の設定
+// 書き上げる演出の速さ（docs/screen-design.md「設定の置き場所」。`saveRevealSpeed`）。利用者の設定
 // なので色と同じ `localStorage`（保存先は違う鍵）。
 describe("設定の歯車（書き上げる演出の速さ）", () => {
   it("既定は「標準」", () => {
@@ -529,7 +529,7 @@ describe("設定の歯車（書き上げる演出の速さ）", () => {
   })
 })
 
-// 訪問のオン・オフ（docs/screen-design.md 13.6・13.9）。覚えるのはいま動いているセッションの
+// 訪問のオン・オフ（docs/screen-design.md「設定の置き場所」「画面のナビゲーション」）。覚えるのはいま動いているセッションの
 // 値だけ（ディスクには覚えない）ので、ここが見るのは「届いた値をそのまま出す」「選ぶと
 // `visit.setEnabled` を送る」の2つ。
 describe("設定の歯車（訪問）", () => {

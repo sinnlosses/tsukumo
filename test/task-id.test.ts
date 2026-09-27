@@ -8,8 +8,8 @@ import { findExcessiveTaskIdDuplicates, formatDuplicateTaskId } from "../scripts
 import { formatStrayTaskMention } from "../scripts/task-mention.ts"
 
 // `develop/tasks.json` の `id` と `docs/history/tasks.md` の見出しを合わせたIDが重複していないかを
-// 保つ（T-225 は既知の例外として2件まで許す。理由は `scripts/task-id.ts` の冒頭）。ID は一度
-// 発行したら使い回さない前提で、重複は採番のやり直しなど運用の事故を示す。
+// 保つ（T-225 は既知の例外として2件まで許す。理由は `KNOWN_DUPLICATE_ALLOWANCE` のコメント）。
+// ID は一度発行したら使い回さない前提で、重複は採番のやり直しなど運用の事故を示す。
 
 const REPOSITORY_ROOT = fileURLToPath(new URL("..", import.meta.url))
 
@@ -23,7 +23,7 @@ describe("タスクIDの重複", () => {
 
 // CLAUDE.md「コード・ドキュメントにタスク番号（`T-` + 3桁）を書かない」を、`src/` / `test/` /
 // `scripts/` / `docs/` / `story/`（`docs/history/` を除く）のコメント・テスト名・本文で保つ
-// （拾う形・許す範囲は `scripts/task-mention.ts` の冒頭）。
+// （拾う形・許す範囲は `findTaskMentions` のコメント）。
 describe("タスク番号の書き込み", () => {
   it("src/・test/・scripts/・docs/・story/ のコメント・テスト名・本文に、許した範囲を超えたタスク番号が無い", () => {
     expect(collectStrayTaskMentions(REPOSITORY_ROOT).map(formatStrayTaskMention)).toEqual([])

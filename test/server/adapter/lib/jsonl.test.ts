@@ -10,8 +10,6 @@ import {
 } from "../../../../src/server/adapter/lib/jsonl.ts"
 import { useTempDir } from "../../../fixture/temp-dir.ts"
 
-// 数も文面もすべて手で書いた架空のもの（会話の実物は使わない。
-// docs/coding-standards.md「会話内容の扱い」）。
 const dir = useTempDir("jsonl")
 
 describe("appendJsonLine", () => {

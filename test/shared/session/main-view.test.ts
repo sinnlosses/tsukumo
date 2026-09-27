@@ -519,7 +519,6 @@ describe("mainViewTurns（report の無いターンが進行中のあいだは�
 })
 
 describe("mainViewTurns（report ツールで受け取ったレポート）", () => {
-  // フィクスチャはすべて手で書いた架空の本文（docs/coding-standards.md「会話内容の扱い」）。
   const fold = (events: readonly SessionEvent[]) =>
     events.reduce((current, event) => applySessionEvent(current, event, 0), INITIAL_SESSION_STATE)
   const turnOf = (events: readonly SessionEvent[], unsettled: TurnBodies, closed: boolean) =>

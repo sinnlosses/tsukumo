@@ -3,9 +3,8 @@ import { describe, expect, it } from "vitest"
 import { createDiaryStreamObserver } from "../../../../src/server/diary/adapter/sdk-diary.ts"
 
 // `queryDiary` 自体（本物の `query()` を起こす部分）は claude を子プロセスで起こすので、ここでは
-// テストしない（`docs/requirements.md` 4.6・訪問の台本の `sdk-visit-script.ts` と同じ扱い）。
+// テストしない（`docs/requirements.md`「起動と設定」・訪問の台本の `queryVisitScript` と同じ扱い）。
 // ここで確かめるのは、`includePartialMessages` の断片を3段の合図に変える純粋な観測だけ。
-// メッセージはすべて手で書いた架空の形（docs/coding-standards.md「会話内容の扱い」）。
 
 const DIARY_TOOL_FULL_NAME = "mcp__tsukumo__diary"
 

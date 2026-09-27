@@ -25,7 +25,7 @@ afterEach(() => {
   cleanup()
   // 組み立て中の答えはモジュール単位で残るので、次のテストへ持ち越さない。
   useQuestionDraft.setState(useQuestionDraft.getInitialState(), true)
-  // 過去のターンを選ぶと hash に乗る（`stores/turn-selection.ts`）ので、次のテストへ持ち越さない。
+  // 過去のターンを選ぶと hash に乗る（`useTurnSelection`）ので、次のテストへ持ち越さない。
   window.location.hash = ""
 })
 
@@ -86,7 +86,7 @@ function rerenderMainView(records: readonly SessionRecord[]): void {
 }
 
 describe("MainView（ミニ立ち絵を置く原点）", () => {
-  // 筆先の座標はこの入れ物の左上が原点（`domain/reveal/brush-tip.ts`）。印が外れると、書き終わった
+  // 筆先の座標はこの入れ物の左上が原点（`BRUSH_ORIGIN_ATTRIBUTE`）。印が外れると、書き終わった
   // ミニ立ち絵の置き場所が黙って消えるので、名前が付いていることだけをここで見る
   // （実際にどこに見えるかは目視。`docs/architecture.md`「手で確かめること」）。
   it("ターンを載せる入れ物に、筆先の原点の印が付く", () => {
@@ -116,7 +116,7 @@ function threeTurns(): readonly SessionRecord[] {
 
 /**
  * 見ているターンのタイトル文字だけ（`⌄` は別要素なので textContent には含まれない。
- * `turn-header.tsx` の `.turn-title-text`）。
+ * `TurnHeader` の `.turn-title-text`）。
  */
 function title(): string | null | undefined {
   return document.querySelector('[class*="turn-title-text"]')?.textContent
@@ -135,7 +135,7 @@ function button(name: string): HTMLButtonElement {
 }
 
 /**
- * タイトル + `⌄` の開く口（`turn-header.tsx` の `.turn-title-toggle`）。アクセシブルネームが
+ * タイトル + `⌄` の開く口（`TurnHeader` の `.turn-title-toggle`）。アクセシブルネームが
  * 見ているタイトルそのもの（動く文字列）になったので、`button()` の名前検索ではなく
  * class で直接探す。
  */
@@ -176,7 +176,7 @@ describe("MainView（札の頭）", () => {
     renderMainView(threeTurns())
 
     // 押せないは `aria-disabled` の1通り（`Button`）。本物の `disabled` にはしないので、
-    // フォーカスは残る（`button.test.tsx` と同じ確かめ方）。
+    // フォーカスは残る。
     expect(button(NEWER).getAttribute("aria-disabled")).toBe("true")
     expect(button(NEWER).hasAttribute("disabled")).toBe(false)
     expect(button(OLDER).getAttribute("aria-disabled")).toBe("false")
@@ -527,7 +527,7 @@ describe("MainView（中間レポート）", () => {
 
 describe("MainView（質問の記録）", () => {
   // `QuestionRecord` を直接見る（`MainView` を経由した「記録が積まれてから見えるまで」は
-  // `test/shared/session/session-state.test.ts` の畳み込みと、この部品の組み合わせで足りる）。
+  // `mainViewEntries` の畳み込みと、この部品の組み合わせで足りる）。
   it("選ばれた答えに印が付く", () => {
     const entry: MainViewQuestion = {
       kind: "question",
@@ -730,7 +730,7 @@ describe("MainView（質問の記録に残す preview）", () => {
       openDetails(container)
     })
 
-    // `###` はレポートと同じ段下げで `h5` になる（`markdown.tsx` の SubHeading）。
+    // `###` はレポートと同じ段下げで `h5` になる（`SubHeading`）。
     expect(screen.getByText("案Aの下書き").tagName).toBe("H5")
     expect(screen.getByText("案Bの下書き").tagName).toBe("H5")
   })

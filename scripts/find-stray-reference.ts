@@ -1,8 +1,8 @@
 // 正典の節を「ファイル名＋番号＋「句」」で引いている参照のうち、句が参照先に見つからないもの
 // （迷子の参照）と、無いファイルを指す `docs/` 以下の `.md` のパスを一覧する。`docs/` の節を削る・移したあとに打つ。1件でもあれば終了コード1。
 //
-// 拾う形・照合の強さは `scripts/section-reference.ts` の冒頭。`pnpm run check` では
-// `test/section-reference.test.ts` が同じものを0件に保つので、ここは一覧を見るための入口。
+// 拾う形・照合の強さは `findSectionReferences` に書いてある。同じものを0件に保つ検査は
+// `pnpm run check` にあるので、ここは一覧を見るための入口。
 
 import process from "node:process"
 import { fileURLToPath } from "node:url"

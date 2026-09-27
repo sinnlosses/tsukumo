@@ -23,9 +23,8 @@ import { type CommandSpy, putState, putSession } from "../../../../../session-st
 
 /**
  * `<ChatView>` を丸ごと描かずに、表情の決め方・行への畳み方・「...」と案内の出し分け・
- * つついたときの送り先だけを測る（docs/design.md 2章「機能の中を分ける」）。行が DOM に
- * どう並ぶかは `chat-view.test.tsx`（部品ごと描画する側）が確かめる。文面は手で書いた架空のもの
- * （docs/coding-standards.md「会話内容の扱い」）。
+ * つついたときの送り先だけを測る（docs/design.md「機能の中を分ける」）。行が DOM に
+ * どう並ぶかは別のテスト（部品ごと描画する側）が確かめる。文面は手で書いた架空のもの
  */
 
 afterEach(() => {
@@ -194,7 +193,7 @@ describe("useChatView の弾む行", () => {
 })
 
 describe("useChatView の出すタイミング（docs/screen-design.md 13.7）", () => {
-  /** `Temporal.Now.instant` を差し込み、`use-speech-reveal.ts` が読む「いま」を固定する。 */
+  /** `Temporal.Now.instant` を差し込み、`useRevealedChatLog` が読む「いま」を固定する。 */
   function mockNow(ms: number): ReturnType<typeof vi.spyOn> {
     const clock = vi.spyOn(Temporal.Now, "instant")
     clock.mockReturnValue(Temporal.Instant.fromEpochMilliseconds(ms))
@@ -202,7 +201,7 @@ describe("useChatView の出すタイミング（docs/screen-design.md 13.7）",
   }
 
   /**
-   * 偽の時計を進めたあと、それに `use-speech-reveal.ts` のポーリング（実装の詳細）が
+   * 偽の時計を進めたあと、それに `useRevealedChatLog` のポーリング（実装の詳細）が
    * 気づくまで実時間を少しだけ待つ。2秒は待たない —— 待つのは時計ではなくポーリングの
    * 周期ぶんだけ。
    */

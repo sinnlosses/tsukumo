@@ -94,7 +94,7 @@ describe("unfinishedTaskIds", () => {
 })
 
 // 新形式（develop/task/T-xxx.md の front matter）の読み取り。見本の正典は claude-skills の
-// docs/task-workflow-redesign.md 3.4（読み手ごとの実装が同じ表を写す決まり。Python 側は
+// docs/task-workflow-redesign.md が正典（読み手ごとの実装が同じ表を写す決まり。Python 側は
 // skills/task-workflow/scripts/selftest_task.py）。行の位置で判定するので、他の行は既定で有効な
 // ままにして、表の対象の行だけを差し替える。
 describe("parseNewTaskFile（3.4 の読み取りの見本）", () => {

@@ -12,8 +12,6 @@ import {
   type RpcStubReply,
 } from "../../../../rpc-fetch-stub.ts"
 
-/** 灯りの暦の取得だけを測る（架空の値。docs/coding-standards.md「会話内容の扱い」）。 */
-
 let fetchStub: RpcFetchStub | undefined = undefined
 
 afterEach(() => {

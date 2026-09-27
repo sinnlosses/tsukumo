@@ -9,8 +9,6 @@ import { REPORT_USAGE_FORMAT_VERSION } from "../../../../src/shared/report/repor
 import { keysOf, readJsonLines } from "../../../fixture/jsonl.ts"
 import { useTempDir } from "../../../fixture/temp-dir.ts"
 
-// 数も名前もすべて手で書いた架空のもの（実物のレポートの中身は使わない。
-// docs/coding-standards.md「会話内容の扱い」）。
 const dir = useTempDir("report-usage")
 
 /** 書き込み先（本物の `~/.tsukumo/report-usage` の代わり）。 */

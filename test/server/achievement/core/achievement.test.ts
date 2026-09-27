@@ -19,9 +19,6 @@ import {
   type TaskSnapshotSource,
 } from "../../../../src/server/achievement/core/achievement.ts"
 
-// ここで使うコミット・タスクはすべて手で書いた架空のもの（実物のリポジトリの履歴は使わない。
-// docs/coding-standards.md「会話内容の扱い」）。
-
 const EMPTY_SOURCE: TaskSnapshotSource = {
   newFormatFiles: [],
   oldTasksJson: undefined,

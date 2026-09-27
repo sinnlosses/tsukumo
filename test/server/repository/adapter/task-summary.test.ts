@@ -41,7 +41,7 @@ async function initRepository(branch: string): Promise<string> {
 }
 
 /** 新形式（`develop/task/T-xxx.md`）の1件を front matter で書く（claude-skills の
- * `docs/task-workflow-redesign.md` 3.2）。 */
+ * `docs/task-workflow-redesign.md` が正典）。 */
 function writeNewFormatTask(cwd: string, id: string, summary: string, status: string): void {
   mkdirSync(join(cwd, "develop", "task"), { recursive: true })
   const content = [
@@ -77,7 +77,7 @@ async function commitNewFormatTasks(
   await git(cwd, "commit", "-m", "tasks")
 }
 
-/** 共有の `.git` の下の台帳の置き場（claude-skills の `docs/task-workflow-redesign.md` 4.2）。 */
+/** 共有の `.git` の下の台帳の置き場（claude-skills の `docs/task-workflow-redesign.md` が正典）。 */
 async function ledgerRoot(cwd: string): Promise<string> {
   const stdout = await runSubprocessOrThrow(
     "git",
@@ -302,7 +302,7 @@ describe("watchTaskSummary", () => {
   })
 
   // 台帳（着手の印）は共有の `.git` の中だけで完結し、`main` を動かさない（`task claim` /
-  // `task release`。claude-skills の `docs/task-workflow-redesign.md` 4.2）。先端が同じ
+  // `task release`。claude-skills の `docs/task-workflow-redesign.md` が正典）。先端が同じ
   // 見回りでも印だけ読み直して doing / todo を切り替える（受け入れ時の差し戻し）。
   it("main を動かさずに claim すると、次の見回りで doing になる", async () => {
     const repository = await initRepository("main")
@@ -371,7 +371,7 @@ const BEADS_EMPTY_BODY = [
 ].join("\n")
 
 // Beads 方式（`main` の先端の CLAUDE.md の `- タスクの置き場: beads`）。本物の `bd` を、`HOME` を
-// 一時ディレクトリへ向けて起こす（`test/fixture/beads-repository.ts`）。`bd init` は1回数秒かかる。
+// 一時ディレクトリへ向けて起こす（`useBeadsHome`）。`bd init` は1回数秒かかる。
 describe("watchTaskSummary（Beads 方式）", () => {
   const home = useBeadsHome(() => join(root(), "home"))
 

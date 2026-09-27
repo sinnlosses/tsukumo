@@ -13,10 +13,9 @@ import {
   speechRecord,
 } from "../../fixture/session-record.ts"
 
-// 雑談のログは素直な時系列（docs/screen-design.md 13.7）。`mainViewEntries` のように依頼で
+// 雑談のログは素直な時系列（docs/screen-design.md「雑談モードの画面」）。`mainViewEntries` のように依頼で
 // まとめ直さないことを、並びと落とすものの2点で固定する。
 //
-// 文面は手で書いた架空のもの（docs/coding-standards.md「会話内容の扱い」）。
 
 const RECORDS: readonly SessionRecord[] = [
   requestRecord({ turnId: 0, text: "1つめの依頼" }),

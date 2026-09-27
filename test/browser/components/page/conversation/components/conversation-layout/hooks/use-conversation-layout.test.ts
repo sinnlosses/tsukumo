@@ -10,9 +10,9 @@ import { useConversationLayout } from "../../../../../../../../src/browser/compo
 
 /**
  * `<ConversationLayout>` を丸ごと描かずに、比率の state・ドラッグの読み替え・保存だけを測る
- * （docs/design.md 2章「機能の中を分ける」）。DOM への直接書き込み（`writeFraction`）と
+ * （docs/design.md「機能の中を分ける」）。DOM への直接書き込み（`writeFraction`）と
  * `style` の組み立て（`fractionStyle`）が本物の要素・レンダーで効くかは、`<ConversationLayout>` の
- * `conversation-layout.test.tsx`（部品ごと描画する側）が確かめる。
+ * 別のテスト（部品ごと描画する側）が確かめる。
  */
 
 beforeEach(() => {

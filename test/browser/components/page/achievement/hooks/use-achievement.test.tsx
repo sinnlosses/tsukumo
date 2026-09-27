@@ -24,9 +24,8 @@ import {
 import { type CommandSpy, putSession, stateWith } from "../../../../session-store.ts"
 
 /**
- * 画面（`achievement.tsx`）を丸ごと描かずに、日の切り替えと取得の畳み方・振り返りの
- * ボタン・書いている進み・立ち絵の解決だけを測る（docs/design.md 2章「機能の中を分ける」）。
- * フィクスチャはすべて手で書いた架空の成果・日記（`docs/coding-standards.md`「会話内容の扱い」）。
+ * 画面（`Achievement`）を丸ごと描かずに、日の切り替えと取得の畳み方・振り返りの
+ * ボタン・書いている進み・立ち絵の解決だけを測る（docs/design.md「機能の中を分ける」）。
  */
 
 let fetchStub: RpcFetchStub | undefined = undefined

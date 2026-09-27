@@ -11,8 +11,7 @@ import {
   parsePromptImageThumbnail,
 } from "../../../src/shared/session-driver/prompt-image.ts"
 
-// 中身は見ないので、base64 として読める短い文字列で足りる（実物の画像は使わない。
-// docs/coding-standards.md「会話内容の扱い」）。
+// 中身は見ないので、base64 として読める短い文字列で足りる。
 const IMAGE_BASE64 = "iVBORw0KGgo="
 
 /** 文字列の長さがちょうど `length` になる data URL（中身は読めるが、絵ではない）。 */

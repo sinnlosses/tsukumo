@@ -14,7 +14,6 @@ describe("REPORT_TOOL_DESCRIPTION", () => {
   })
 })
 
-// イベントはすべて手で書いた架空のもの（docs/coding-standards.md「会話内容の扱い」）。
 const INIT: SessionEvent = {
   kind: "session-info",
   sessionId: "fake-session",

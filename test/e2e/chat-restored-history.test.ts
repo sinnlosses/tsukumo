@@ -2,7 +2,7 @@ import { describe, it } from "vitest"
 
 import { useScenarioRun } from "./scenario-run.ts"
 
-// 復元した雑談の履歴（docs/design.md 10章「E2E のシナリオの一覧」）。疑似セッションの場面
+// 復元した雑談の履歴（docs/design.md「E2E のシナリオの一覧」）。疑似セッションの場面
 // `chat-restored-history` は、前のセッションの組み直した1件のやり取りのあとに
 // `history-restored` を流し、続けていまのセッションの2件のやり取りを流す。3回目の
 // `turn-finished` まで待つと、前のセッションといまのやり取りがどちらも履歴に残った状態になる。

@@ -10,8 +10,7 @@ import type {
 } from "../../../../../../../src/browser/components/page/achievement/hooks/use-achievement.ts"
 
 /**
- * 日記の区画の見た目だけを測る（`use-achievement.ts` は素通し）。フィクスチャは架空の日記・
- * タスク（`docs/coding-standards.md`「会話内容の扱い」）。
+ * 日記の区画の見た目だけを測る（`useAchievement` は素通し）。フィクスチャは架空の日記・
  */
 
 afterEach(() => {

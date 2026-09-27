@@ -11,8 +11,6 @@ import {
   type ReportSection,
 } from "../../../../src/shared/report/report-block.ts"
 
-// レポートの文面はどれも作り物（docs/coding-standards.md「会話内容の扱い」）。
-
 const draft = (
   blocks: readonly ReportBlock[],
   conclusion = "架空の結論。",

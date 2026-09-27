@@ -66,7 +66,7 @@ describe("Markdown（unified への置き換えが求める記法）", () => {
       />,
     )
 
-    // class 名は `notation.tsx` が tsukumo の名前に付け替える（notation.test.tsx が対応表を見る）。
+    // class 名は `NotationBlock` / `NotationInline` が tsukumo の名前に付け替える。
     expect(container.querySelector("div.report-note.report-note-warn")).not.toBeNull()
     expect(container.querySelector("span.report-badge.report-badge-ok")).not.toBeNull()
     expect(container.querySelectorAll("div.report-cols > div.report-card")).toHaveLength(2)
@@ -121,7 +121,7 @@ describe("Markdown（unified への置き換えが求める記法）", () => {
   })
 
   it("数のバー（meter / progress）は許可リストに無いので落ちる", () => {
-    // 数の見せ方を stats/stat の1通りに保つための線引き（src/server/report/core/report-notation.ts）。
+    // 数の見せ方を stats/stat の1通りに保つための線引き（`REPORT_NOTATION_PROMPT`）。
     // タグは落ちるが中身の文字は残るので、書いても数そのものは読める。
     const { container } = render(
       <Markdown
@@ -137,7 +137,7 @@ describe("Markdown（unified への置き換えが求める記法）", () => {
   it("チェックリストの `- [ ]` と `- [x]` が、済みと未了の分かる印になる", () => {
     const { container } = render(<Markdown text={"- [ ] まだ\n- [x] 済み"} />)
 
-    // 操作できる要素は許可リストに無い（task-check.ts が静的な印の span に畳む）。
+    // 操作できる要素は許可リストに無い（`rehypeTaskCheck` が静的な印の span に畳む）。
     expect(container.querySelector("input")).toBeNull()
     const marks = container.querySelectorAll("span.report-task-check")
     expect(marks).toHaveLength(2)
@@ -199,7 +199,7 @@ describe("Markdown（unified への置き換えが求める記法）", () => {
 
   it("mark は許可リストに無いので落ちる（強調の道具を増やさない）", () => {
     // 既定の黄地に黒文字はこの配色から浮き、当て直すと strong / badge と並んで3通りになる
-    // （meter / progress を載せない理由と同じ。src/server/report/core/report-notation.ts）。
+    // （meter / progress を載せない理由と同じ。`REPORT_NOTATION_PROMPT`）。
     const { container } = render(<Markdown text="<mark>目立たせたい語</mark>" />)
 
     expect(container.querySelector("mark")).toBeNull()
@@ -208,7 +208,7 @@ describe("Markdown（unified への置き換えが求める記法）", () => {
 
   it("記法に無い class 名と style 属性は、素通しして描かれる", () => {
     // 記法の変換は足し算だけで、規約の表に無い見せ方（モデルの即興）を落とさない
-    // （危ない経路は sanitize-schema.ts が別に見ている）。
+    // （危ない経路は `REPORT_SANITIZE_SCHEMA` が別に見ている）。
     const { container } = render(
       <Markdown
         text={
@@ -314,7 +314,7 @@ describe("Markdown（unified への置き換えが求める記法）", () => {
   })
 
   it("```diff フェンスの足した行・消した行が色分けされる", () => {
-    // 規約が \`\`\`diff を勧めている根拠（src/server/report/core/report-notation.ts のコードの行）。
+    // 規約が \`\`\`diff を勧めている根拠（`REPORT_NOTATION_PROMPT` のコードの行）。
     // rehype-highlight（lowlight の common に diff が入っている）が付ける class と、
     // テーマ（highlight.js の github-dark）の .hljs-addition / .hljs-deletion が対。
     const { container } = render(<Markdown text={"```diff\n-const a = 1\n+const a = 2\n```"} />)
@@ -337,7 +337,7 @@ describe("Markdown（unified への置き換えが求める記法）", () => {
 
   it("フェンスに書いたファイル名がブロックの左上のラベルになる", () => {
     // 言語名のあとのファイル名は mdast では `code` の `data.meta` に入り、rehype-raw が
-    // 木を書き出して読み直す時点で落ちる。属性へ移す `code-file-name.ts` とサニタイザの
+    // 木を書き出して読み直す時点で落ちる。属性へ移す `rehypeCodeFileName` とサニタイザの
     // 許可（`code`）が両方効いていないと、ここでラベルが出ない。
     const { container } = render(<Markdown text={"```diff develop/tasks.json\n-  1\n+  2\n```"} />)
 
@@ -431,7 +431,7 @@ describe("Markdown（remark-cjk-friendly。CJK の強調が記法のまま出る
 
 describe("Markdown（レポートのパスを押して Orca のエディタで開く）", () => {
   /** `<RepositoryFileLinkProvider>` の実データ（`useQuery` / `useSession`）は使わず、
-   * Context だけを直接差し込む（部品のテストを軽くするため。`main-view.tsx` が実データを配る）。 */
+   * Context だけを直接差し込む（部品のテストを軽くするため。`MainView` が実データを配る）。 */
   function withFiles(
     paths: readonly string[],
     open: (path: string) => void,

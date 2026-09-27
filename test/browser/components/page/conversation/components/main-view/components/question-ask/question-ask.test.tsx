@@ -16,8 +16,6 @@ import {
 import { requestRecord } from "../../../../../../../../fixture/session-record.ts"
 import { type CommandSpy, putSession } from "../../../../../../../session-store.ts"
 
-// フィクスチャはすべて手で書いた架空の質問（docs/coding-standards.md「会話内容の扱い」）。
-
 afterEach(() => {
   cleanup()
   // 組み立て中の答えはモジュール単位で残るので、次のテストへ持ち越さない。
@@ -96,7 +94,7 @@ describe("QuestionAsk（メインビューの質問の札）", () => {
 
     const answer = screen.getByRole("button", { name: "これで答える" })
     // 押せないは `aria-disabled` の1通り（`Button`）。本物の `disabled` にはしないので、
-    // フォーカスは残る（`button.test.tsx` と同じ確かめ方）。
+    // フォーカスは残る。
     expect(answer.getAttribute("aria-disabled")).toBe("true")
     expect(answer.hasAttribute("disabled")).toBe(false)
     answer.focus()

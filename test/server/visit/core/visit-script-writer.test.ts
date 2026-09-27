@@ -9,8 +9,6 @@ import type { VisitCast, VisitScriptQuery } from "../../../../src/server/visit/c
 import { UNKNOWN_ACHIEVEMENT } from "../../../../src/shared/achievement/achievement.ts"
 import type { VisitScript } from "../../../../src/shared/character-pack/character-visit.ts"
 
-// 人格・依頼・台本はすべて手で書いた架空のもの（docs/coding-standards.md「会話内容の扱い」）。
-
 const CAST: VisitCast = {
   host: { persona: "架空のあるじの人格", expressions: [{ name: "default", label: "default" }] },
   guest: { persona: "架空の客の人格", expressions: [{ name: "default", label: "default" }] },

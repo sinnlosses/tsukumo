@@ -10,8 +10,6 @@ import type { ReportDraft } from "../../../../src/server/report/core/report-viol
 import type { ReportSection } from "../../../../src/shared/report/report-block.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 
-// レポートの文面はどれも作り物（docs/coding-standards.md「会話内容の扱い」）。
-
 /** 逃げ道の塊1つの節（中身は架空）。 */
 const sectionsOf = (markdown: string): readonly ReportSection[] => [
   { heading: "", blocks: [{ kind: "markdown", markdown, fold: "" }] },

@@ -25,9 +25,9 @@ import {
   userMessage,
 } from "../../../fixture/sdk-message.ts"
 
-// フィクスチャはすべて手で書いた架空のやり取り。実物の transcript は使わない
-// （docs/coding-standards.md「会話内容の扱い」）。本物の claude も起こさない
-// （`listSessions` / `getSessionMessages` を呼ぶのは src/server/session-driver/adapter/sdk-session.ts の側）。
+// 本物の claude も起こさない
+// （`listSessions` / `getSessionMessages` を呼ぶのは1つの境界に閉じ込めた側だけ。
+// docs/architecture.md「1ファイル = 1つの境界」）。
 const EXPRESSIONS: readonly Expression[] = ["default", "thinking", "proud"]
 
 // 印はキャラクターパックごと・雑談かどうか・ビューのポートごとに違う
@@ -326,7 +326,7 @@ describe("listMarkedSessions", () => {
     ])
   })
 
-  // 部屋はビューのポート1つにつき1つ（`docs/glossary.md`「部屋」）。同じパック・同じモードでも
+  // 部屋はビューのポート1つにつき1つ。同じパック・同じモードでも
   // 目印（ポート）が違えば別の部屋なので、一覧には並ばない。
   it("同じ一族でも目印の違うもの（別の部屋）は並ばない", () => {
     const sessions = [
@@ -787,7 +787,7 @@ describe("toRestoredEvents", () => {
   })
 
   // 圧縮（`/compact`）が起きると transcript の鎖が切れ、`includeSystemMessages: true` で読んだ
-  // 並びは区切りの行から始まる（`src/server/session-driver/adapter/sdk-session.ts` の `readRestoredEvents`。
+  // 並びは区切りの行から始まる（`readRestoredEvents`。
   // 実測）。起こし直したあとに区切りがログのいちばん上に来ることをここで示す。
   it("圧縮の区切り（system の compact_boundary）が並びの先頭に来る", () => {
     const messages = [

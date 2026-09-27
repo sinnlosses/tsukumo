@@ -10,7 +10,6 @@ import {
 import type { UsageReviewFindings } from "../../../../src/shared/usage-review/usage-review.ts"
 import { useTempDir } from "../../../fixture/temp-dir.ts"
 
-// 数も文面もすべて手で書いた架空のもの（会話の実物は使わない。docs/coding-standards.md「会話内容の扱い」）。
 const dir = useTempDir("previous-usage-review")
 
 function path(): string {

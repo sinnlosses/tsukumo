@@ -6,12 +6,12 @@ import { describe, expect, it } from "vitest"
 
 import { commentLineIndexes } from "./comment-line.ts"
 
-// 層をディレクトリで表す（docs/design.md 2章「層と依存の向き」）。ここは正規表現と node:fs だけで、
+// 層をディレクトリで表す（docs/design.md「層と依存の向き」）。ここは正規表現と node:fs だけで、
 // 許した辺以外の import を落とす。外部ツールは増やさない。
 //
 // 3層（shared / server / browser）で、サーバ側は機能ごとに判断（`server/<機能>/core/`）と
 // 境界（`server/<機能>/adapter/`）の2段、どの機能にも属さない共有の箱は `server/core/`
-// `server/adapter/` の直下（docs/design.md 2章「サーバの機能と、機能どうしの辺」）。配線は
+// `server/adapter/` の直下（docs/design.md「サーバの機能と、機能どうしの辺」）。配線は
 // `src/` 直下のファイル（`cli.ts` / `main.ts` と、そこから呼ばれる起動の段取り）。
 // `adapter ──▶ core ──▶ shared ◀── browser` で、`core → adapter` は禁止（機能をまたいでも
 // 同じに効く）。機能どうしの辺は `SERVER_FEATURE_IMPORTS` にある組だけで、層ごとに循環させない。
@@ -70,7 +70,7 @@ describe("層と依存の向き", () => {
   })
 })
 
-// サーバの機能（docs/design.md 2章「サーバの機能と、機能どうしの辺」の1つめの表）。機能を足す
+// サーバの機能（docs/design.md「サーバの機能と、機能どうしの辺」の1つめの表）。機能を足す
 // ときは、ここと `SERVER_FEATURE_IMPORTS` に足す（一覧に無いディレクトリを `server/` の下に
 // 作ると `layerOf` が throw する）。まだ移していないファイルは共有の箱（`server/core/`
 // `server/adapter/` の直下）に居るまま動く。
@@ -124,7 +124,7 @@ const SERVER_FEATURE_IMPORTS: Readonly<Record<ServerFeature, ReadonlySet<ServerF
   "view-server": new Set(["session", "achievement"]),
 }
 
-// shared の機能の一覧（docs/design.md 2章「shared の機能」）。`satisfies` で
+// shared の機能の一覧（docs/design.md「shared の機能」）。`satisfies` で
 // `SERVER_FEATURE_IMPORTS` の鍵（サーバの機能の一覧）の部分集合であることを検査する
 // （置く物の無い機能 `system-prompt` `host` は shared には無い）。
 const SHARED_FEATURES = [
@@ -213,7 +213,7 @@ describe("server/ の機能どうしの import", () => {
 })
 
 // 移行が終わり、`server/core/` `server/adapter/` の直下（`lib/` を含む）に残るのは、どの機能にも
-// 属さない共有の箱の6ファイルだけになった（docs/design.md 2章「サーバの機能と、機能どうしの辺」）。
+// 属さない共有の箱の6ファイルだけになった（docs/design.md「サーバの機能と、機能どうしの辺」）。
 // 共有の箱は「どの機能の語彙も名乗らず、読み手が2つ以上ある」ものだけを置く場所なので、
 // 機能を読んではいけない（読むなら、その機能の中か機能どうしの辺の表で表す）し、読み手が
 // 1つの機能だけに絞られたら、その機能の中へ下ろすのが正しい（`browser/domain/` の検査と同じ形）。
@@ -257,11 +257,10 @@ describe("server/ の共有の箱", () => {
   })
 })
 
-// `orca` コマンドを起こすのはアダプタ1つに閉じ込める（docs/architecture.md 原則3、
-// src/server/host/adapter/orca-host.ts 冒頭コメント）。`execFile("orca", …)` のような呼び出しは必ず
-// コマンド名の文字列リテラル "orca" を伴うので、それを orca-host.ts の外から探す。
-// ファイル名（`orca-host.ts`）やバッククォートで囲んだ日本語の説明文はクォートされた文字列
-// リテラルではないので拾わない。
+// `orca` コマンドを起こすのはアダプタ1つに閉じ込める（docs/architecture.md「1ファイル = 1つの境界」）。
+// `execFile("orca", …)` のような呼び出しは必ずコマンド名の文字列リテラル "orca" を伴うので、
+// それをそこ以外のファイルから探す。ファイル名やバッククォートで囲んだ日本語の説明文は
+// クォートされた文字列リテラルではないので拾わない。
 describe("orca コマンドを起こす箇所", () => {
   it("`orca` コマンドを呼ぶのは src/server/host/adapter/orca-host.ts だけ", () => {
     const offenders = listSourceFiles(SRC_ROOT)
@@ -275,7 +274,7 @@ describe("orca コマンドを起こす箇所", () => {
 // ここから、層の辺だけでは表せない限定の検査（`adapter` の中のどのファイルか、まで絞る）。
 
 // SDK（`@anthropic-ai/claude-agent-sdk`）を import するのは機能の `adapter/` 直下
-// （`server/<機能>/adapter/`）の `sdk-` で始まるファイルに閉じ込める（docs/architecture.md 原則3）。
+// （`server/<機能>/adapter/`）の `sdk-` で始まるファイルに閉じ込める（docs/architecture.md「1ファイル = 1つの境界」）。
 // SDK は1つの境界だが1ファイルには収まらないので、許す先を一覧ではなく名前で決める —
 // 足すファイルは名前で SDK の境界を名乗ることになり、名乗らずに import すればここで落ちる。
 // import 文のクォートされた specifier だけを拾うので、バッククォートで囲んだ日本語の説明文は
@@ -296,7 +295,7 @@ describe("Agent SDK を import する箇所", () => {
   })
 })
 
-// 手続き（oRPC）の依存の辺（docs/design.md 2章「コマンドの受け手と手続きの置き方」の「許す依存の
+// 手続き（oRPC）の依存の辺（docs/design.md「コマンドの受け手と手続きの置き方」の「許す依存の
 // 辺」）。受け手を付ける `@orpc/server` は外の世界に触る側（機能の `adapter/` と配線）だけが読み、
 // `core` と共有の箱からは読まない。契約だけを書く `@orpc/contract` は `shared` が読んでよい
 // （ブラウザも読むので、`@orpc/server` と `node:` は読まない）。
@@ -306,7 +305,7 @@ const ORPC_SERVER_FILE = /^(?:server\/[^/]+\/adapter\/.+|[^/]+)\.ts$/
 const SHARED_EXTERNAL_PACKAGES: ReadonlySet<string> = new Set(["zod", "@orpc/contract", "remeda"])
 
 // `shared` の下に置いてよいディレクトリ（直下のファイルのほかに）。`contract/` は機能ごとの契約の
-// 置き場、`lib/` と `utils/` は docs/design.md 2章「`lib/` と `utils/` に置く基準」、残りは
+// 置き場、`lib/` と `utils/` は docs/design.md「`lib/` と `utils/` に置く基準」、残りは
 // shared の機能の一覧（`SHARED_FEATURES`。サーバの機能の一覧の部分集合であることは `satisfies` で
 // 検査してある）。
 const SHARED_DIRECTORIES: ReadonlySet<string> = new Set([
@@ -316,7 +315,7 @@ const SHARED_DIRECTORIES: ReadonlySet<string> = new Set([
   ...SHARED_FEATURES,
 ])
 
-// shared/ の直下に置いてよいファイル（docs/design.md 2章「shared の機能」の「shared の直下」）。
+// shared/ の直下に置いてよいファイル（docs/design.md「shared の機能」の「shared の直下」）。
 // どの機能にも属さないプロトコルの3つだけ。
 const SHARED_ROOT_FILES: ReadonlySet<string> = new Set(["frame.ts", "command.ts", "rpc.ts"])
 
@@ -424,7 +423,7 @@ describe("shared/ の機能どうしの import", () => {
 // `node:child_process` を起こすのはホスト（orca）・ビルド（vite build）・`git` を起こす1つの口
 // （`main` の上のタスク一覧・成果の集計・git 管理下のファイルの列挙のどれもがここを使う）・
 // `bd` を起こす1つの口（Beads 方式のタスク一覧と成果の集計）の4つの境界に閉じ込める
-// （docs/architecture.md 原則3）。
+// （docs/architecture.md「1ファイル = 1つの境界」）。
 describe("子プロセスを起こす箇所", () => {
   it("`node:child_process` を import するのは orca-host.ts・bundle.ts・git.ts・beads.ts だけ", () => {
     const allowed = new Set([
@@ -465,7 +464,7 @@ describe("process.env を読む箇所", () => {
 
 // 「いま」を読む場所を2つに保つ。E2E は時計をこの2箇所で凍らせる（サーバは
 // `TSUKUMO_FIXED_CLOCK`、ブラウザは E2E の側で `clock.ts` が呼ぶ関数を差し替える）ので、ほかで
-// 読まれると固定が黙って効かなくなる（docs/design.md 10章「E2E の成果物と再現」）。
+// 読まれると固定が黙って効かなくなる（docs/design.md「E2E の成果物と再現」）。
 describe("Temporal.Now を読む箇所", () => {
   it("`Temporal.Now` を読むのは src/server/adapter/local-time.ts と src/browser/utils/clock.ts だけ", () => {
     const allowed = new Set(["server/adapter/local-time.ts", "browser/utils/clock.ts"])
@@ -549,7 +548,7 @@ describe("コメント中の強調", () => {
   })
 })
 
-// story（Storybook）の置き場（`docs/design.md` 2章「ディレクトリ」）。
+// story（Storybook）の置き場（`docs/design.md`「ディレクトリ」）。
 // story は `src/` の外の `story/` に、描く部品と同じ相対パスで置く（`src/X.tsx` → `story/X.story.tsx`）。
 // `src/` の中に置くと、上の箱と機能の辺の検査が story を読み手として数えてしまう。
 // story はブラウザで描くので、import してよいのは browser と shared だけ（browser の層と同じ）。
@@ -590,7 +589,7 @@ describe("story の置き場", () => {
   })
 })
 
-// 画面を組み立てる部品のまとまりどうしの import を制限する（`docs/design.md` 2章「領域の機能と、置かれる機能」）。
+// 画面を組み立てる部品のまとまりどうしの import を制限する（`docs/design.md`「領域の機能と、置かれる機能」）。
 // まとまりは3種類あり、辺は「枠・画面 → 置かれる機能」と「画面 → 枠」だけを許す。
 //
 // - 枠（`BROWSER_FRAMES`）: 全画面で共有する枠（`components/domain/<枠>/`）。差し込み口は
@@ -630,7 +629,7 @@ type BrowserFeature = {
   readonly kind: BrowserFeatureKind
 }
 
-/** まとまりの種類ごとに、import してよい先の種類（2章「領域の機能と、置かれる機能」）。 */
+/** まとまりの種類ごとに、import してよい先の種類（docs/design.md「領域の機能と、置かれる機能」）。 */
 const ALLOWED_BROWSER_FEATURE_IMPORTS: Readonly<
   Record<BrowserFeatureKind, ReadonlySet<BrowserFeatureKind>>
 > = {
@@ -657,7 +656,7 @@ describe("browser/ の機能どうしの import", () => {
   })
 })
 
-// `src/browser/` の箱をまたぐ縦の辺（`docs/design.md` 2章「`src/browser/` の箱と、置く基準」の表そのもの）。
+// `src/browser/` の箱をまたぐ縦の辺（`docs/design.md`「`src/browser/` の箱と、置く基準」の表そのもの）。
 // 上の `BROWSER_FRAMES` / `BROWSER_SCREENS` / `BROWSER_PLACED_FEATURES` の検査はまとまりどうしの横の辺を見るのに対し、こちらは
 // `main.tsx` / `features/` / `components/app/` / `components/page/` / `components/domain/` / `components/ui/` /
 // `hooks/` / `domain/` / `lib/` / `utils/` / `stores/` という箱をまたぐ辺を見る
@@ -689,7 +688,7 @@ const BROWSER_BOXES = [
 ] as const
 type BrowserBox = (typeof BROWSER_BOXES)[number]
 
-// 各箱が import してよい先（docs/design.md 2章の表そのもの。`main` は「すべて」なので全箱を許す）。
+// 各箱が import してよい先（docs/design.md「`src/browser/` の箱と、置く基準」の表そのもの。`main` は「すべて」なので全箱を許す）。
 // `utils/` は誰からも引けて、自分は `utils/` の中しか引かない（外部パッケージ・`shared` も
 // 引かないことは、この表では見えないので下の「browser/utils/ の import」が見る）。
 const ALLOWED_BROWSER_BOX_IMPORTS: Readonly<Record<BrowserBox, ReadonlySet<BrowserBox>>> = {
@@ -756,7 +755,7 @@ type BrowserBoxViolation = {
 }
 
 describe("browser/ の箱をまたぐ import", () => {
-  it("src/browser/ の箱どうしの import は、docs/design.md 2章の表にある辺だけで構成されている", () => {
+  it("src/browser/ の箱どうしの import は、docs/design.md「`src/browser/` の箱と、置く基準」の表にある辺だけで構成されている", () => {
     const files = listSourceFiles(SRC_ROOT).filter((relPath) => relPath.startsWith("browser/"))
     expect(files.length).toBeGreaterThan(0)
 
@@ -766,7 +765,7 @@ describe("browser/ の箱をまたぐ import", () => {
   })
 })
 
-// `utils/` の歯止め1（docs/design.md 2章「`lib/` と `utils/` に置く基準」）。箱の辺の検査は相対 import
+// `utils/` の歯止め1（docs/design.md「`lib/` と `utils/` に置く基準」）。箱の辺の検査は相対 import
 // の `browser/` の中しか見ないので、`node:`・`shared/` への import はここで別に落とす。用途を問わない
 // 汎用のライブラリ（`react`・`remeda`）は歯止め1で許しているので落とさない。`utils/` から出る import は、
 // `utils/` の中への相対 import と、この一覧の汎用ライブラリだけ。
@@ -791,10 +790,10 @@ describe("browser/utils/ の import", () => {
 })
 
 // 機能をまたぐ箱に、1つの機能しか読まないファイルが残っていないことを見る
-// （`docs/design.md` 2章「上げる引き金は「2つ目の読み手が出たとき」」。引き金は逆にも引き、
+// （`docs/design.md`「上げる引き金は「2つ目の読み手が出たとき」」。引き金は逆にも引き、
 // 読み手が1つに戻ったものはその機能の中へ下ろす）。`components/domain/` の直下にも
-// 同じ基準を掛ける（2章「引き金は逆にも引く」）。`components/ui/` は汎用の部品の置き場で、
-// 読み手の数を問わないので対象外（2章「`components/ui/` の部品」の「読み手の数は問わない」）。
+// 同じ基準を掛ける（docs/design.md「引き金は逆にも引く」）。`components/ui/` は汎用の部品の置き場で、
+// 読み手の数を問わないので対象外（docs/design.md「読み手の数は問わない」）。
 //
 // 読み手が機能の外だけのものは対象外（`lib/socket.ts` と `domain/refresh.ts` は `stores/` が
 // 読む。下ろす先の機能が無いので、ここに残るのが正しい）。`stores/` はまだ対象にしていない
@@ -803,7 +802,7 @@ describe("browser/utils/ の import", () => {
 // 別の判断が要るため。
 //
 // `components/domain/` は直下のファイルだけを対象にする（サブディレクトリは全画面で共有する
-// 枠（領域）で、1つの領域だけが読むのが正しい形。2章「`components/domain` の直下のファイルは
+// 枠（領域）で、1つの領域だけが読むのが正しい形。docs/design.md「`components/domain/` の直下のファイルは
 // 領域ではなく共有の部品」）。
 const SHARED_BROWSER_BOXES = ["lib", "domain"] as const
 
@@ -827,7 +826,7 @@ describe("browser/ の機能をまたぐ箱", () => {
   })
 })
 
-// `components/ui/` の置き方（2章「1部品1フォルダは真似しない」の例外）を検査で守る。
+// `components/ui/` の置き方（docs/design.md「1部品1フォルダは真似しない」の例外）を検査で守る。
 // 直下にファイルを置かない（部品ごとのディレクトリの中に置く）、`ui/<部品>/` には必ず
 // `<部品>.tsx` がある（ディレクトリ名がそのまま部品のファイル名になる）の2つ。barrel file
 // （`index.tsx`）で束ねていないかは、ここが `<部品>.tsx` の存在を見ることで同時に落ちる
@@ -862,7 +861,7 @@ describe("components/ui/ の置き方", () => {
   })
 })
 
-// ページの形（`docs/design.md` 2章「ページの形」）。`components/page/<ページ>/` の直下は
+// ページの形（`docs/design.md`「ページの形」）。`components/page/<ページ>/` の直下は
 // container / presenter の対（`<ページ>.tsx` / `presentational-<ページ>.tsx`）・`<ページ>.module.css`・
 // `domain/` `hooks/` `components/` だけ。部品（`components/<部品>/`）も同じ作り（`<部品>.tsx` /
 // `presentational-<部品>.tsx` / `<部品>.module.css` / `hooks/` `domain/` `components/`）で、ほかに
@@ -904,7 +903,7 @@ describe("components/page/ の形", () => {
   })
 })
 
-/** ページ・部品1件の直下を検査する（`docs/design.md` 2章「ページの形」）。 */
+/** ページ・部品1件の直下を検査する（`docs/design.md`「ページの形」）。 */
 function pageNodeViolations(
   relPath: string,
   dirName: string,
@@ -1019,7 +1018,7 @@ function componentBoundaryViolations(): readonly string[] {
 }
 
 // `components/ui/` の variant 部品（`Select` 以外）に渡す `className` の作法を検査で守る
-// （`docs/design.md` 2章「`components/ui/` の部品（variant の作法と一覧）」の「呼び出し側からの
+// （`docs/design.md`「`components/ui/` の部品（variant の作法と一覧）」の「呼び出し側からの
 // 上書き（className）」節「検査で守る」）。(1) 呼び出し側が渡す `className` の式が
 // `styles["…"]` の字面（と `??`・テンプレート文字列での組み合わせ）だけでできていること、
 // (2) その class の CSS 規則（呼び出し側の `*.module.css` で、選択子の最後の複合にその class を
@@ -1220,7 +1219,7 @@ function propertiesOfClass(cssContent: string, className: string): readonly stri
  * 自分の CSS を持たない部品（`VStack` / `HStack`）は、レンダーする先の部品名を `.tsx` から辿って
  * その CSS を見る（同じ DOM ノードに乗るため。`visited` は辿りが循環しないための歯止め）。
  * `::backdrop` などの疑似要素の規則は別の持ち物として数え、ここには含めない
- * （`docs/design.md` 2章「`components/ui/` の部品」の検査の注記。別の要素に描くので、呼び出し側の
+ * （`docs/design.md`「`components/ui/` の部品」の検査の注記。別の要素に描くので、呼び出し側の
  * class が同じ property 名を持っていても競らない）。
  */
 function ownExternalProperties(

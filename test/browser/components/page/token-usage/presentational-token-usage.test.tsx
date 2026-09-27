@@ -12,16 +12,14 @@ import {
 } from "../../../../../src/shared/token-usage/token-usage-summary.ts"
 
 /**
- * 見た目だけを測る（`hooks/use-token-usage.ts` は素通しなので、フィクスチャは手で書いた
- * 架空の集計をそのまま渡す。`docs/coding-standards.md`「会話内容の扱い」— 集計に文面は
- * 入らないが、実物は使わない）。
+ * 見た目だけを測る（`useTokenUsage` は素通しなので、フィクスチャは手で書いた
+ * 架空の集計をそのまま渡す）。
  */
 
 afterEach(() => {
   cleanup()
 })
 
-// 架空の合計（`docs/coding-standards.md`「会話内容の扱い」— 実物の記録は使わない）。
 const FIXTURE_TOTALS: TokenUsageTotals = {
   inputTokens: 100,
   outputTokens: 200,
@@ -83,8 +81,10 @@ const DEFAULT_OPTIONS: RenderOptions = {
   onDaysChange: () => {},
 }
 
-/** 「減らし方を見てもらう」区画は別のテスト（`usage-review-card.test.tsx`）で測るので、
- * ここでは「ふだん」の最小の形で描く。 */
+/**
+ * 「減らし方を見てもらう」区画は別のテストで測るので、
+ * ここでは「ふだん」の最小の形で描く。
+ */
 const FIXTURE_USAGE_REVIEW: UseUsageReviewResult = {
   kind: "idle",
   face: { url: undefined, alt: "" },
@@ -93,7 +93,7 @@ const FIXTURE_USAGE_REVIEW: UseUsageReviewResult = {
   previousReview: { kind: "none" },
 }
 
-/** 内訳は別のテスト（`context-usage-card.test.tsx`）で測るので、ここでは取れない側で描く。 */
+/** 内訳は別のテストで測るので、ここでは取れない側で描く。 */
 function renderScreen(options: Partial<RenderOptions> = {}): ReturnType<typeof render> {
   const merged = { ...DEFAULT_OPTIONS, ...options }
   return render(
@@ -201,7 +201,7 @@ describe("PresentationalTokenUsage", () => {
   it("モデル別の表に費用の列を出さない。列名は略さない", () => {
     const { container } = renderScreen()
 
-    // 表は「モデル別」が先、「ツール別」が後（`presentational-token-usage.tsx` の並び）。
+    // 表は「モデル別」が先、「ツール別」が後（`PresentationalTokenUsage` の並び）。
     const modelTable = container.querySelectorAll(".token-usage-table")[0]
     const headers = [...(modelTable?.querySelectorAll("thead th") ?? [])].map(
       (cell) => cell.textContent,

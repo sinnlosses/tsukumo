@@ -8,8 +8,7 @@ import type {
 } from "../../../../../../../src/browser/components/page/achievement/hooks/use-diary-book.ts"
 
 /**
- * 見開きの見た目だけを測る（`use-diary-book.ts` は素通し）。フィクスチャは架空の日記・タスク
- * （`docs/coding-standards.md`「会話内容の扱い」）。
+ * 見開きの見た目だけを測る（`useDiaryBook` は素通し）。フィクスチャは架空の日記・タスク
  */
 
 afterEach(() => {
@@ -68,7 +67,7 @@ const BLANK_PAGE: DiaryBookPage = {
   portrait: NO_PORTRAIT,
 }
 
-/** 描く。開閉・Esc・backdrop のクリックは `<Dialog>`（`components/ui/dialog/dialog.tsx`）が持つ。 */
+/** 描く。開閉・Esc・backdrop のクリックは `<Dialog>`（`Dialog`）が持つ。 */
 function renderBook(model: DiaryBookModel): ReturnType<typeof render> {
   return render(<DiaryBook {...model} />)
 }

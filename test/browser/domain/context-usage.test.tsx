@@ -16,8 +16,7 @@ import {
 } from "../rpc-fetch-stub.ts"
 
 /**
- * 画面を丸ごと描かずに、内訳の取得と畳み方だけを測る（docs/design.md 2章「機能の中を分ける」）。
- * フィクスチャは手で書いた架空の内訳（`docs/coding-standards.md`「会話内容の扱い」）。
+ * 画面を丸ごと描かずに、内訳の取得と畳み方だけを測る（docs/design.md「機能の中を分ける」）。
  *
  * `useContextUsage` は `refetchKey` を受け取る（`browser/domain/` は `stores/` を読めないので、
  * 「いつ取り直すか」は呼び出し側の責務）。ここではテストが直接キーを渡す。
@@ -137,7 +136,7 @@ describe("useContextUsage", () => {
     stubContextUsageFetch(() => rpcOutput(readyContextUsage()))
 
     // `state.lastTurnFinishedAt` から作った key の並び（`contextUsageRefetchKey` を経由）。
-    // `running` に移っても `lastTurnFinishedAt` 自体は戻らない（`shared/session/session-state.ts`）ので、
+    // `running` に移っても `lastTurnFinishedAt` 自体は戻らない（`applySessionEvent`）ので、
     // ここでは同じ 300 が続くことをそのまま key に反映する——`state.turn` から作っていた旧実装が
     // 巻き戻っていた場面（受け入れの確認で見つかった不具合）の再現。
     const { result, rerender } = renderHook(

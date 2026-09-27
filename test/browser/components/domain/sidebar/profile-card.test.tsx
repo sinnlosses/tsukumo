@@ -1,4 +1,4 @@
-// 雑談中のサイドバーの最上段、プロフィールの札（docs/screen-design.md 13.7「雑談のときのサイドバー」）。
+// 雑談中のサイドバーの最上段、プロフィールの札（docs/screen-design.md「雑談のときのサイドバー」）。
 // ここで見るのは、ひとことプロフィールが無いパックで空の行を置かないことだけ。
 
 import { cleanup, render } from "@testing-library/react"

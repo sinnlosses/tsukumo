@@ -18,8 +18,6 @@ import {
   type TurnUsageScope,
 } from "../../../../src/shared/token-usage/token-usage.ts"
 
-// ここで使う数はすべて手で書いた架空のもの（実物の使用量も会話も使わない。
-// docs/coding-standards.md「会話内容の扱い」）。
 function usage(model: string, input: number, output: number, cost: number): ModelTokenUsage {
   return {
     model,
@@ -33,7 +31,7 @@ function usage(model: string, input: number, output: number, cost: number): Mode
 }
 
 // ここから下は summarizeTokenUsage 用のフィクスチャ。壊れた行・版違いの行を落とすのは
-// adapter（token-usage-log.test.ts）の役目なので、ここには渡さない — summarizeTokenUsage は
+// adapter（別のテスト）の役目なので、ここには渡さない — summarizeTokenUsage は
 // 既に検証済みの行だけを受け取る前提の純関数。
 const EMPTY_STEP = {
   inputTokens: 0,

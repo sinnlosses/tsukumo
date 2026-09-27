@@ -4,7 +4,7 @@ import { useScenarioRun } from "./scenario-run.ts"
 
 // ターンの流れ（依頼 → ツール → report → report の closing の締めのセリフ）。疑似セッションの場面 `report-tool` を
 // 名指しして起こし、`turn-finished` が届いたところで画面の構造とメッセージの列を期待値と比べる
-// （docs/design.md 10章「E2E のシナリオの一覧」）。
+// （docs/design.md「E2E のシナリオの一覧」）。
 
 const run = useScenarioRun()
 

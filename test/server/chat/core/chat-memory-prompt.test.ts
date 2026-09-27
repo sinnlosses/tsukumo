@@ -15,8 +15,6 @@ import type {
 import { CHAT_MEMORY_BUDGET } from "../../../../src/shared/chat/chat-memory-budget.ts"
 import { inMemoryChatSummary, NOOP_CHAT_ARCHIVE } from "../../../fixture/chat.ts"
 
-// フィクスチャは手で書いた架空の要約・会話だけ（実物の会話は使わない。
-// docs/coding-standards.md「会話内容の扱い」）。
 const SUMMARY = "利用者と最近読んだ本の話をした。次は続きの巻の感想を聞きたがっていた。"
 const RECENT: readonly ChatArchiveRecentEntry[] = [
   { speaker: "user", text: "ただいま", date: "2026-09-20" },

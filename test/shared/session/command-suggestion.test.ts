@@ -11,7 +11,6 @@ import {
   type SessionState,
 } from "../../../src/shared/session/session-state.ts"
 
-// フィクスチャはすべて手で書いた架空のやり取り（docs/coding-standards.md「会話内容の扱い」）。
 // 候補は時刻に依らないので、畳み込みは固定の 0 で流す。
 function apply(...events: readonly SessionEvent[]): SessionState {
   return events.reduce((view, event) => applySessionEvent(view, event, 0), INITIAL_SESSION_STATE)

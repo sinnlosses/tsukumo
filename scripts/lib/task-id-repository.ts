@@ -1,6 +1,6 @@
 // `develop/task/*.md`（新形式。front matter の `id:`）と `docs/history/tasks.md`
-// （行頭 `## T-<数字>` の見出し）からタスクIDを読み、`scripts/task-id.ts` の純粋関数に渡す、
-// という概念1つを持つ。`test/task-id.test.ts` が使う。読み元は新形式のみ（旧形式の
+// （行頭 `## T-<数字>` の見出し）からタスクIDを読み、`extractHeadingTaskIds` に渡す、
+// という概念1つを持つ。読み元は新形式のみ（旧形式の
 // `develop/tasks.json` は移行済み。経緯は `docs/history/direction.md`「タスク運用の作り直し」）。
 // Beads 方式へ移したあとは `develop/task/` が無く、`docs/history/tasks.md` だけを読む
 // （Beads の中の ID は `bd create --id` が重複を拒む）。

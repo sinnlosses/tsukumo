@@ -8,7 +8,7 @@ import {
 } from "../../../../../../../../src/browser/components/page/conversation/components/conversation-layout/domain/split.ts"
 
 // `localStorage` に持つ比率の読み取り側。読めない・保存が無い・可動域の外のときに
-// DEFAULT_SPLIT へ落ちる契約（docs/display.md 4.2「表示できないものがあっても残りを
+// DEFAULT_SPLIT へ落ちる契約（docs/display.md「表示できないものがあっても残りを
 // 表示して動作を続ける」）を確かめる。書き込みの失敗（プライベートウィンドウ限定）は
 // docs/coding-standards.md「足すかどうか」で埋めないと決めている。
 const STORAGE_KEY = "tsukumo-layout-split:v1"
@@ -84,7 +84,7 @@ describe("loadSplit", () => {
   })
 })
 
-// 「比率を既定に戻す」ピルを出すかどうかの判定（`hooks/use-layout.ts`）。
+// 「比率を既定に戻す」ピルを出すかどうかの判定（`isDefaultSplit`）。
 describe("isDefaultSplit", () => {
   it("DEFAULT_SPLIT そのものは既定", () => {
     expect(isDefaultSplit(DEFAULT_SPLIT)).toBe(true)

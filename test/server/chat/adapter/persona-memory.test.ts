@@ -14,8 +14,6 @@ import {
 import { MAX_REMEMBERED_LINE_LENGTH } from "../../../../src/shared/chat/persona-memory.ts"
 import { useTempDir } from "../../../fixture/temp-dir.ts"
 
-// フィクスチャは手で書いた架空のパックと架空の1行だけ（実物の会話・人格は使わない。
-// docs/coding-standards.md「会話内容の扱い」）。
 const DEFINITION_JSON = JSON.stringify({
   name: "架空の精霊",
   license: "テスト用に手で書いたもの",
@@ -93,7 +91,7 @@ describe("createPersonaMemory", () => {
     const written = homePersona("架空")
     expect(written).toBeDefined()
     expect(rememberedLines(written ?? "")).toEqual([`- ${LINE}`])
-    // 同梱のパックは書き換わらない（書くのはホームだけ。docs/design.md 7.1）。
+    // 同梱のパックは書き換わらない（書くのはホームだけ。docs/design.md「画面から作るときの置き場と受け取り方」）。
     expect(readFileSync(join(pack.dir, "persona.md"), "utf8")).toBe(PERSONA)
   })
 

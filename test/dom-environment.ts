@@ -1,13 +1,13 @@
-// `vitest.config.ts` の `test.setupFiles` から、テストファイルごとに1回読まれる。
+// vitest の設定の `test.setupFiles` から、テストファイルごとに1回読まれる。
 // `src/browser/` の部品テスト（`@testing-library/react`）が要る DOM のグローバルを用意する。
 //
 // `happy-dom` の `Window` が持つ全部を `globalThis` へコピーしない。 `fetch` / `WebSocket` /
 // `setTimeout` / `console` まで happy-dom のものに差し替わると、実際の HTTP・WebSocket を使う
-// 他のテスト（`test/server/view-server/adapter/server.test.ts` など）が巻き添えになる。DOM を組み立てる部品だけを
+// 他のテストが巻き添えになる。DOM を組み立てる部品だけを
 // 借りる（Vitest がテストファイルごとにモジュールの登録を分けるので、この設定はファイルの外へは漏れない）。
 //
 // `@happy-dom/global-registrator`（this 一式を1関数でやってくれる別パッケージ）は使わない
-// （`docs/design.md` 11章の依存一覧に無い。ここは持ってきた `happy-dom` だけで済ませる）。
+// （`docs/design.md`「ビルドと依存」の依存一覧に無い。ここは持ってきた `happy-dom` だけで済ませる）。
 
 import { Window } from "happy-dom"
 
@@ -38,7 +38,7 @@ const BORROWED_DOM_GLOBAL_NAMES = [
   "HTMLInputElement",
   "HTMLTextAreaElement",
   "HTMLFormElement",
-  // `test/typed-element.ts` の `instanceof` でクエリの戻り値を絞り込むテストが要る
+  // `typedElement` の `instanceof` でクエリの戻り値を絞り込むテストが要る
   // （立ち絵・顔・背景の `<img>`、Markdown の表の `<td>`、折りたたみの `<details>`）。
   "HTMLImageElement",
   "HTMLTableCellElement",
@@ -51,10 +51,9 @@ const BORROWED_DOM_GLOBAL_NAMES = [
   "InputEvent",
   "FocusEvent",
   "MutationObserver",
-  // `src/browser/components/page/achievement/components/diary-book/hooks/use-fit-diary-page.ts`
-  // （日記帳の右ページの本文を測って縮める）が、ページの大きさの変化を購読するのに要る。
+  // `useFitDiaryPage`（日記帳の右ページの本文を測って縮める）が、ページの大きさの変化を購読するのに要る。
   "ResizeObserver",
-  // `src/browser/domain/reveal/measure.ts`（筆先の居場所を行から測る）のテストが
+  // `frameOf`（筆先の居場所を行から測る）のテストが
   // 2つセットで要る。`DOMRect` はhappy-dom がレイアウトを持たないので測った値を
   // 名乗らせるのに、`NodeFilter` は文字の節点をたどる `createTreeWalker` に渡すのに使う
   // （借りないと、測る側が例外で落ちたことに気づけないまま「筆先が出ない」だけに見える）。
@@ -63,13 +62,12 @@ const BORROWED_DOM_GLOBAL_NAMES = [
   "getComputedStyle",
   "requestAnimationFrame",
   "cancelAnimationFrame",
-  // `src/browser/components/page/conversation/components/conversation-layout/domain/split.ts` 系
+  // `loadSplit` / `saveSplit` 系
   // （利用者の設定を `localStorage` に持つモジュール）のテストが
   // 要る。DOM を組み立てる部品ではないが、他のテスト（`fetch` / `WebSocket` を使うもの）には
   // 影響しない値の保管場所なので、ここに含めてよい。
   "localStorage",
-  // `src/browser/components/page/character/components/character-edit/character-edit.tsx`
-  // （選んだ立ち絵を data URL にする）のテストが要る。
+  // `CharacterEdit`（選んだ立ち絵を data URL にする）のテストが要る。
   // 2つセットで借りる — 片方だけ差し替えると `FileReader` が相手の `Blob` を受け取れない。
   "File",
   "FileReader",
@@ -89,7 +87,7 @@ Reflect.set(globalThis, "navigator", window.navigator)
 Reflect.set(globalThis, "IS_REACT_ACT_ENVIRONMENT", true)
 
 /**
- * テストの中でページの URL を差し替える（ポートを見る部品のため。`src/shared/view-server/room.ts` の
+ * テストの中でページの URL を差し替える（ポートを見る部品のため。`roomName` が返す
  * 部屋の名前は、このページを配っているポートから決まる）。
  *
  * ここに置くのは、差し替えの口を持っているのが happy-dom の `Window` だけだから

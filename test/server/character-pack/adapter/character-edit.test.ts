@@ -354,7 +354,7 @@ describe("editCharacterPack（名前とプロフィール）", () => {
     expect(edited?.definition?.outfitAccents.default).toBe("#b8c7ff")
 
     // 一覧に読み直しても書き変わった定義が出る（サーバは書いたあと `event()` で一覧を読み直す。
-    // `src/current-character.ts` の `applyEdit`）。
+    // `applyEdit`）。
     const packs = listCharacterPacks(join(dir(), "cwd"), {
       bundled: join(dir(), "bundled"),
       home: home(),
@@ -693,7 +693,7 @@ describe("createCharacterPack", () => {
     const created = createCharacterPack(createCharacter("fictional-2"), [], home())
 
     expect(created?.dir).toBe(join(home(), "fictional-2"))
-    // 名前を空にすると character.json に name を書かない（読む側が id へ落とす。docs/design.md 7.1）。
+    // 名前を空にすると character.json に name を書かない（読む側が id へ落とす。docs/design.md「画面から作るときの置き場と受け取り方」）。
     expect(created?.definition?.name).toBeUndefined()
     // 立ち絵のファイル名は表情と形式から組み立てる（届いた文字列がパスの一部にならない）。
     expect(created?.definition?.portraits.default).toBe("default.svg")

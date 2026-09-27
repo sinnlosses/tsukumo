@@ -1,6 +1,6 @@
 // 変更前の画面を、作業ツリーを1つも動かさずに起こす道具。名指ししたコミットを /tmp へ取り出し、
-// そこで組み立てて、空けたポートと一時ホームで tsukumo を1つ起こして URL を出す。撮るのは
-// `capture-view.ts` / `capture-catalog.ts` の仕事で、こちらは「変更前をどこかに用意する」ところだけを持つ。
+// そこで組み立てて、空けたポートと一時ホームで tsukumo を1つ起こして URL を出す。撮る作業は
+// 別の道具の仕事で、こちらは「変更前をどこかに用意する」ところだけを持つ。
 //
 // 作業ツリーと `dist/browser/` に触らないことが、この道具の存在理由。 `git stash`・
 // `git checkout` で手元を巻き戻す方法は、戻し忘れると書きかけの変更を失うか、`dist/browser/` が
@@ -12,9 +12,9 @@
 //   node scripts/serve-revision.ts HEAD~1 --port 7341 --scene notation-figure
 //   node scripts/stop.ts --port 7340                           # 止める（必ず打つ）
 //
-// 起こしたものは自分では止まらない。撮り終えたら `stop.ts --port` で止める
-// （`pkill` / `killall` は `scripts/deny-broad-kill.ts` が拒否する）。この道具は子が死ぬと一緒に
-// 終わるので、止めるのは `stop.ts` の1回で足りる。
+// 起こしたものは自分では止まらない。撮り終えたら `node scripts/stop.ts --port` で止める
+// （`pkill` / `killall` は広く狙う形を拒否する hook に止められる）。この道具は子が死ぬと一緒に
+// 終わるので、止めるのは `node scripts/stop.ts` の1回で足りる。
 //
 // 駆動は fake 固定（`TSUKUMO_DRIVER=fake`）。変更前を見るために本物の claude を /tmp の複製で
 // 起こす理由が無く、API も使わない。ホームも /tmp に切るので、利用者の `~/.tsukumo/`
@@ -26,8 +26,8 @@
 // `pnpm install` を手で打つ。
 //
 // `.git` も同じく symlink で貸す。無いと成果の画面が「main が読めない」になる
-// （`src/server/achievement/adapter/main-history.ts`）。取り出し先で打つ `git` は読み取り専用
-// だけ（`lendGitDirectory` のコメント）なので、貸した `.git` を書き換える心配はない。
+// （`readCommitCalendar`）。取り出し先で打つ `git` は読み取り専用だけ（`lendGitDirectory` の
+// コメント）なので、貸した `.git` を書き換える心配はない。
 
 import { type ChildProcess, execFileSync, spawn } from "node:child_process"
 import { existsSync, mkdirSync, symlinkSync } from "node:fs"
@@ -42,9 +42,9 @@ import { fileURLToPath } from "node:url"
 const SCRATCH_ROOT = "/tmp/tsukumo-revision"
 
 /**
- * 既定のポート。利用者の tsukumo（7327〜7330 あたり）から離し、かつ `stop.ts` が引数なしで
- * 一覧する範囲（既定ポートから `VIEW_PORT_FALLBACK_ATTEMPTS` 個ぶん）の中に収める
- * — 止め忘れたときに一覧から見つかるようにする。
+ * 既定のポート。利用者の tsukumo（7327〜7330 あたり）から離し、かつ `node scripts/stop.ts` を
+ * 引数なしで打ったときに一覧する範囲（既定ポートから `VIEW_PORT_FALLBACK_ATTEMPTS` 個ぶん）の
+ * 中に収める — 止め忘れたときに一覧から見つかるようにする。
  */
 const DEFAULT_PORT = 7340
 
@@ -148,12 +148,12 @@ function lendNodeModules(treeDir: string): void {
 
 /**
  * いま居る作業ツリーの `.git` を symlink で貸す。成果の画面（`main` の履歴。
- * `src/server/achievement/adapter/main-history.ts`）が `main` を読むのにこれが要る
+ * `readCommitCalendar`）が `main` を読むのにこれが要る
  * （無いと「main が読めない」＝`{ kind: "unknown" }` になる）。
  *
  * `.git` は本体の作業ツリーそのままの形（ディレクトリでも、linked worktree の gitdir
  * ポインタのファイルでも）を symlink で指すだけ——書き換えない。取り出し先で打つ `git` は
- * `src/server/repository/adapter/git.ts` 経由のものだけで、そこはすべて読み取り専用
+ * `runGit` 経由のものだけで、そこはすべて読み取り専用
  * （`rev-parse` / `log` / `ls-tree` / `rev-list` / `cat-file` / `ls-files`）なので、本物の
  * index・ref・working tree の状態を書き換える呼び出しはここを通らない。
  * すでに貸してあれば何もしない（`lendNodeModules` と同じ）。
@@ -228,8 +228,8 @@ function waitForViewUrl(session: ChildProcess): Promise<string | undefined> {
 }
 
 /**
- * 起こしたものが終わるまで居座る。この道具は自分では止めない — `stop.ts --port` が子へ
- * SIGTERM を送ると、それに続いてここも終わる（止め口を1つに保つ）。この道具自身が
+ * 起こしたものが終わるまで居座る。この道具は自分では止めない — `node scripts/stop.ts --port` が
+ * 子へ SIGTERM を送ると、それに続いてここも終わる（止め口を1つに保つ）。この道具自身が
  * SIGINT / SIGTERM を受けたときだけは、子を道連れにしてから終わる。
  */
 function waitForExit(session: ChildProcess): Promise<number> {

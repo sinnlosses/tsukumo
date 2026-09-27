@@ -16,13 +16,13 @@ import { putSession } from "../../../session-store.ts"
 
 /**
  * サイドバー「セッション情報」の使用量の行。出す数は札
- * （`test/browser/components/page/token-usage/components/context-usage-card/context-usage-card.test.tsx`）と同じ出どころ
+ * （成果の使用量の札）と同じ出どころ
  * （`usage.totalTokens` / `usage.maxTokens` / `usage.percentage`）なので、ここでは70%以上の
  * 警告・届く前・取れないときの高さだけを測る。
  *
  * `fetch` は使わず `QueryClient` に直接 `setQueryData` する（`renderRow` の既定の状態
- * — `state.turn` が `idle` — なら `refetchKey` は必ず 0 になる。`browser/domain/context-usage.ts`
- * の `contextUsageRefetchKey`）。取得そのものは `test/browser/domain/context-usage.test.tsx` が
+ * — `state.turn` が `idle` — なら `refetchKey` は必ず 0 になる。
+ * `contextUsageRefetchKey`）。取得そのものは別のテストが
  * 測るので、ここで `fetch` を経由すると非同期の隙間が増えるだけで測るものが増えない
  * ——テストのたびに残る未解決の Promise が、次のテストの act 外の更新として警告を出す
  * 原因にもなっていた。
@@ -38,7 +38,7 @@ function renderRow(report: ContextUsageReport | undefined): void {
   putSession(INITIAL_SESSION_STATE)
   const client = createTestQueryClient()
   if (report !== undefined) {
-    // 鍵は手続きの鍵に取り直しの合図を足したもの（`browser/domain/context-usage.ts`）。
+    // 鍵は手続きの鍵に取り直しの合図を足したもの（`contextUsageRefetchKey`）。
     client.setQueryData([...rpc.contextUsage.report.queryKey(), REFETCH_KEY], report)
   }
   render(

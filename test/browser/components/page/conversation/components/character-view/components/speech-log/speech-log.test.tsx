@@ -10,8 +10,6 @@ import { characterInfo } from "../../../../../../../../fixture/character.ts"
 import { requestRecord, speechRecord } from "../../../../../../../../fixture/session-record.ts"
 import { putSession } from "../../../../../../../session-store.ts"
 
-// フィクスチャはすべて手で書いた架空の依頼・セリフ（docs/coding-standards.md「会話内容の扱い」）。
-
 afterEach(() => {
   cleanup()
 })
@@ -102,7 +100,7 @@ describe("SpeechLog", () => {
     openLog()
 
     // Esc の既定の動作は、ブラウザが `<dialog>` を閉じて close を投げること。happy-dom は
-    // キーの既定の動作を持たないので、その結果の close を直接起こす（task-run.test.tsx と同じ）。
+    // キーの既定の動作を持たないので、その結果の close を直接起こす。
     fireEvent(dialog(), new Event("close"))
     expect(dialogIsOpen()).toBe(false)
     expect(screen.getByRole("button", { name: "ログ" }).getAttribute("aria-expanded")).toBe("false")

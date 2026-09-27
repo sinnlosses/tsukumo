@@ -2,7 +2,7 @@ import { describe, it } from "vitest"
 
 import { useScenarioRun } from "./scenario-run.ts"
 
-// 雑談の切り替えと忘却の区切り（docs/design.md 10章「E2E のシナリオの一覧」）。疑似セッションの
+// 雑談の切り替えと忘却の区切り（docs/design.md「E2E のシナリオの一覧」）。疑似セッションの
 // 場面 `chat-compact-boundary` は、圧縮の区切り（claude 自身の自動の圧縮で起きる
 // `compact-boundary`）をまたいで2つのやり取りを流す。区切りより前後どちらのやり取りも
 // 履歴に残ることを、`turn-finished` まで待ってから撮る。

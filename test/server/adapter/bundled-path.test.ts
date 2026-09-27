@@ -10,7 +10,7 @@ describe("bundledFilePath", () => {
     const path = bundledFilePath("characters", "tsukumo-spirit")
 
     // このテストファイル自身（test/server/adapter/）から見たリポジトリのルートで組み立て、
-    // 一致することを確かめる。src/server/adapter/bundled-path.ts の実装（import.meta.url
+    // 一致することを確かめる。`bundledFilePath` の実装（import.meta.url
     // からの相対）とは別の経路で同じ値を作る。
     const repoRoot = fileURLToPath(new URL("../../..", import.meta.url))
     expect(path).toBe(join(repoRoot, "characters", "tsukumo-spirit"))

@@ -1,7 +1,5 @@
-// `scripts/room-grid.ts` の純粋関数（突き合わせ・HTML の組み立て）を検証する。lsof / orca / git は
-// 一切起こさない（それは scripts/open-room-grid.ts の役目）。
-//
-// フィクスチャの起動トークンはすべて架空の値（docs/coding-standards.md「会話内容の扱い」）。
+// 純粋関数（突き合わせ・HTML の組み立て）を検証する。lsof / orca / git は
+// 一切起こさない（それは別の入口の道具の役目）。
 
 import { describe, expect, test } from "vitest"
 

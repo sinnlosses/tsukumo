@@ -27,7 +27,6 @@ import {
 import { characterChangedEvent } from "../../../fixture/character.ts"
 import { createManualClock } from "../../../fixture/manual-clock.ts"
 
-// 依頼・セリフ・台本はすべて手で書いた架空のもの（docs/coding-standards.md「会話内容の扱い」）。
 // どの行も間の下限（`VISIT_LINE_MIN_INTERVAL_MS`）に収まる短さで揃え、字数で延ばす側は
 // 別のテストで確かめる。
 const SCRIPT: VisitScript = [

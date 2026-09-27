@@ -18,9 +18,8 @@ import {
 } from "../../../../session-store.ts"
 
 /**
- * 画面（`token-usage.tsx`）を丸ごと描かずに、区画のロジックだけを測る
- * （docs/design.md 2章「機能の中を分ける」）。フィクスチャはすべて手で書いた架空の値
- * （`docs/coding-standards.md`「会話内容の扱い」— 実物の会話・記録は使わない）。
+ * 画面（`TokenUsage`）を丸ごと描かずに、区画のロジックだけを測る
+ * （docs/design.md「機能の中を分ける」）。フィクスチャはすべて手で書いた架空の値
  */
 
 let fetchStub: RpcFetchStub | undefined = undefined

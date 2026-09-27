@@ -2,8 +2,6 @@ import { describe, expect, it } from "vitest"
 
 import { DIARY_VERSION, readDiary, type Diary } from "../../../src/shared/diary/diary.ts"
 
-// フィクスチャはすべて手で書いた架空の文面（docs/coding-standards.md「会話内容の扱い」）。
-
 const FIXTURE_DIARY = {
   version: DIARY_VERSION,
   date: "2026-09-23",

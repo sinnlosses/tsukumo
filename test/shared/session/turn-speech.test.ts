@@ -18,8 +18,6 @@ import {
   speechRecord,
 } from "../../fixture/session-record.ts"
 
-// フィクスチャはすべて手で書いた架空の依頼・セリフ（docs/coding-standards.md「会話内容の扱い」）。
-
 describe("turnSpeeches（依頼を境目にセリフを分ける）", () => {
   it("依頼ごとに分かれ、各ターンのセリフだけを古い→新しいの順で返す", () => {
     const turns = turnSpeeches([

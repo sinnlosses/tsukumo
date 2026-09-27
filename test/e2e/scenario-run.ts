@@ -1,6 +1,6 @@
 // E2E の足場。起こす・開く・成果物を書く・比べる・後始末をここに置き、シナリオ
-// （`test/e2e/<シナリオ>.test.ts`）はここを呼ぶだけにする。形の正典は `docs/design.md` 10章
-// 「E2E の走らせ方」「E2E の成果物と再現」。
+// （`test/e2e/<シナリオ>.test.ts`）はここを呼ぶだけにする。形の正典は
+// `docs/design.md`「E2E の走らせ方」「E2E の成果物と再現」。
 //
 // - ブラウザは1ファイルに1つ（`beforeAll`）、tsukumo とブラウザのコンテキストは1件ごとに1つ
 // - 起こした tsukumo は `afterEach` で自分の pid だけに `SIGTERM` を送り、終わるのを待ってから
@@ -8,8 +8,8 @@
 // - 判定は DOM の構造とメッセージの列の2つの JSON だけ。スクリーンショットは目視の添え物
 // - `open` は疑似セッションの予定の最初の静かな区切りまでが届いてから部屋を渡す
 //
-// 成果物に入るのは疑似セッション（`test/fixture/fake-session.json`）の手書きの会話だけ
-// （docs/coding-standards.md「会話内容の扱い」）。起動トークンと絶対パスは置き換えてから書く。
+// 成果物に入るのは疑似セッション（`test/fixture/fake-session.json`）の手書きの会話だけ。
+// 起動トークンと絶対パスは置き換えてから書く。
 
 import { type ChildProcess, spawn } from "node:child_process"
 import {
@@ -81,7 +81,7 @@ const SETTLE_ATTEMPTS = 150
 const UPDATE_EXPECTED = process.env["E2E_UPDATE"] === "1"
 
 /**
- * 窓の大きさ。広いほうは `scripts/capture-catalog.ts` の広い窓と同じ。狭い窓の積み替えを見る
+ * 窓の大きさ。広いほうはカタログを撮る道具の広い窓と同じ。狭い窓の積み替えを見る
  * シナリオだけ `narrow` を使う。
  */
 const VIEWPORTS = {
@@ -108,7 +108,7 @@ export type ScenarioRoom = {
    * タスクの一覧のように、疑似セッションの場面ではなく cwd の中身そのものが元になるシナリオ
    * だけがここへ書き足す（`git init` など）。書き足すのは `open` が部屋を渡したあとにする。
    * 起こす前や繋がる前に用意すると、最初の見回りが `hello` に畳まれてしまい、
-   * 変化を捕まえる `waitForEvent` の的が無くなる（docs/design.md 10章「E2E の走らせ方」）。
+   * 変化を捕まえる `waitForEvent` の的が無くなる（docs/design.md「E2E の走らせ方」）。
    */
   readonly cwd: string
   /**
@@ -359,7 +359,7 @@ function waitForViewUrl(child: ChildProcess): Promise<string> {
  *
  * `page.clock.install` は `Date.now()` を差し替えるが `Temporal.Now` は差し替えないので、
  * `Temporal.Now.instant()` を `Date.now()` に従わせる（ブラウザで「いま」を読むのは
- * `src/browser/utils/clock.ts` の1つだけで、そこが呼ぶのはこれだけ）。差し込む台本は
+ * `nowEpochMilliseconds` の1つだけで、そこが呼ぶのはこれだけ）。差し込む台本は
  * 文字列で渡す——ページの中で動くコードで、このファイルの型と lint の対象にしない。
  */
 async function installFixedClock(page: Page): Promise<void> {
@@ -385,8 +385,8 @@ type MessageRecord = {
 }
 
 /**
- * WebSocket で送ったコマンドと受け取ったフレームを、届いた順に並べる（`docs/design.md` 10章
- * 「E2E の成果物と再現」の畳み方）。
+ * WebSocket で送ったコマンドと受け取ったフレームを、届いた順に並べる
+ * （`docs/design.md`「E2E の成果物と再現」の畳み方）。
  */
 function recordMessages(page: Page): MessageRecord {
   const entries: unknown[] = []
@@ -514,10 +514,10 @@ function recordMessages(page: Page): MessageRecord {
 }
 
 /**
- * 連なる `partial-utterance` を1件に畳む（`event-batch.ts` の `joinPartialUtterances` と同じ
+ * 連なる `partial-utterance` を1件に畳む（`joinPartialUtterances` と同じ
  * 畳み方だが、束の切れ目そのもの——サーバ側の束ねと `test/fixture/fake-session.json` の
  * `afterMs` が同じ時刻に重なると、どちらのタイマーが先に走るかで束の切れ目が走らせるたびに
- * 変わる（`docs/design.md` 10章「E2E の成果物と再現」）——を比べる前に消すためにここでも行う。
+ * 変わる（`docs/design.md`「E2E の成果物と再現」）——を比べる前に消すためにここでも行う。
  * 消えるのは切れ目の位置だけで、他の種別との並びは変えない。
  */
 function collapsePartialUtterances(entries: readonly unknown[]): readonly unknown[] {
@@ -677,7 +677,7 @@ function toLeaves(value: unknown, atPath: string): readonly (readonly [string, s
 
 /**
  * `document.body` から木を組む台本（ページの中で動く）。残すもの・落とすものは
- * `docs/design.md` 10章「E2E の成果物と再現」のとおり。文字列で渡すのは `installFixedClock` と
+ * `docs/design.md`「E2E の成果物と再現」のとおり。文字列で渡すのは `installFixedClock` と
  * 同じ理由（ページの中のコードで、このファイルの型の対象にしない）。
  */
 const DOM_TREE_SCRIPT = `(() => {

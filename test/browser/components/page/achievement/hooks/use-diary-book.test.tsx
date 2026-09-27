@@ -25,8 +25,7 @@ import { type CommandSpy, putSession, stateWith } from "../../../../session-stor
 
 /**
  * 漢数字の純関数と、見開きの開閉・取得・前後の送り・目次・白紙の日の振り返りボタンを測る
- * （`use-achievement.test.tsx` と同じ形）。フィクスチャはすべて手で書いた架空の成果・日記
- * （`docs/coding-standards.md`「会話内容の扱い」）。
+ * （別のテストと同じ形）。フィクスチャはすべて手で書いた架空の成果・日記
  */
 
 let fetchStub: RpcFetchStub | undefined = undefined
@@ -454,7 +453,7 @@ describe("useDiaryBook（前後の送りと目次）", () => {
 })
 
 describe("useDiaryBook（書き終わりの知らせから開く）", () => {
-  // `use-diary-book-open-request.ts` はこの起動のあいだ持ち続けるモジュールの外の store なので、
+  // `useDiaryBookOpenRequest` はこの起動のあいだ持ち続けるモジュールの外の store なので、
   // このテストはファイルの最後に置き、「マウント時に既に無い」ことを見るテストを先に置く
   // （`requestDiaryBookOpen` を呼ぶのはこの2件だけ。呼んだ後の状態が他のテストの初回描画に
   // 混ざらないようにする）。

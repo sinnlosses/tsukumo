@@ -17,8 +17,7 @@ import { runSubprocessOrThrow } from "../../../fixture/subprocess.ts"
 import { useTempDir } from "../../../fixture/temp-dir.ts"
 
 // 本物の `git` を起こす（`main` の上から実際に読むことそのものが検査の対象）。リポジトリは
-// 一時ディレクトリに毎回作り、中身は架空のコミット・タスクだけにする
-// （docs/coding-standards.md「会話内容の扱い」）。コミットの日付は `GIT_COMMITTER_DATE` で
+// 一時ディレクトリに毎回作る。コミットの日付は `GIT_COMMITTER_DATE` で
 // 固定し、実行した日に依らず同じ結果になるようにする。
 
 const root = useTempDir("main-history")
@@ -125,8 +124,10 @@ async function commitManyNewFormatTasks(
   })
 }
 
-/** タスクファイルを1件消す（`task prune` が消すのと同じ操作。`docs/requirements.md` 4.11
- * 「`done` になった日」の「消えたファイル」の検査に使う）。 */
+/**
+ * タスクファイルを1件消す（`task prune` が消すのと同じ操作。`docs/requirements.md`「成果の振り返り」
+ * 「`done` になった日」の「消えたファイル」の検査に使う）。
+ */
 async function deleteTaskFile(cwd: string, date: string, hhmm: string, id: string): Promise<void> {
   await git(cwd, "rm", "--quiet", `develop/task/${id}.md`)
   const isoDate = isoDateAt(date, hhmm)
@@ -615,7 +616,7 @@ describe("readAchievement", () => {
 })
 
 // Beads 方式（`main` の先端の CLAUDE.md の `- タスクの置き場: beads`）。本物の `bd` を、`HOME` を
-// 一時ディレクトリへ向けて起こす（`test/fixture/beads-repository.ts`）。`bd close` の時刻は
+// 一時ディレクトリへ向けて起こす（`useBeadsHome`）。`bd close` の時刻は
 // 変えられないので、Beads の側は今日、git の側は過去の日に置く。
 describe("readAchievement（Beads 方式）", () => {
   const home = useBeadsHome(() => join(root(), "home"))

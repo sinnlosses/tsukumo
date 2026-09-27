@@ -15,8 +15,8 @@ import {
 import { useTempDir } from "../../../fixture/temp-dir.ts"
 
 // 見送った提案の一覧が、ホームのファイル（読み書きは
-// `src/server/usage-review/adapter/usage-proposal-dismissal.ts`）から `createUsageReviewIntake` へ実際に
-// 渡ることを確かめる（`test/server/session-driver/adapter/sdk-tool.test.ts` は同じ口を偽の配列で確かめている）。
+// `readDismissedUsageProposalKeys`）から `createUsageReviewIntake` へ実際に
+// 渡ることを確かめる（別のテストは同じ口を偽の配列で確かめている）。
 
 const dir = useTempDir("usage-review-dismissal-wiring")
 

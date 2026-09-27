@@ -3,8 +3,6 @@ import { describe, expect, it } from "vitest"
 import { withSelfStartedTurns } from "../../../../src/server/session-driver/core/self-started-turn.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 
-// イベントはすべて手で書いた架空のもの（docs/coding-standards.md「会話内容の扱い」）。
-
 const INIT: SessionEvent = {
   kind: "session-info",
   sessionId: "fake-session",

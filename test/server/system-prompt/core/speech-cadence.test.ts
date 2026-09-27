@@ -4,16 +4,15 @@ import { REPORT_NOTATION_PROMPT } from "../../../../src/server/report/core/repor
 import { SPEECH_CADENCE_PROMPT } from "../../../../src/server/system-prompt/core/speech-cadence.ts"
 import { takeSystemPromptAppend } from "../../../../src/server/system-prompt/core/system-prompt.ts"
 
-// この規約はパックによらず同じもの（docs/display.md 4.2）。文面そのものではなく、
+// この規約はパックによらず同じもの（docs/display.md「表示」）。文面そのものではなく、
 // どのパックの append にも載ることを見る（人格が無いパックで落ちると、そのパックだけ
-// 吹き出しが止まる）。並びそのものの正典は `test/server/system-prompt/core/system-prompt.test.ts`
+// 吹き出しが止まる）。並びそのものの正典は `takeSystemPromptAppend`
 // （人格との前後関係と、人格が無いパックで規約だけになることは、そちらが append 全体の文字列
 // として固定している。組み立てをそこへ寄せたときに、同じ分岐の重複としてここから外した）。
 
-/** 人格は手で書いた架空の一文だけ（docs/coding-standards.md「会話内容の扱い」）。 */
 const PERSONA = "# 架空の精霊\n\n語尾に「なのじゃ」と付ける。"
 
-/** 仕事モードの append（人格は文字列で渡す。`src/server/system-prompt/core/system-prompt.ts`）。 */
+/** 仕事モードの append（人格は文字列で渡す。`takeSystemPromptAppend`）。 */
 function workAppend(persona: string): string {
   return takeSystemPromptAppend({ persona, mode: { kind: "work" } })
 }
@@ -27,7 +26,7 @@ describe("SPEECH_CADENCE_PROMPT", () => {
 
   it("締めの1回は speak ではなく report の closing で言う", () => {
     // 通った `report` はそこでターンを閉じるので、あとから `speak` は呼べない
-    // （`report-notation.ts` の終わり方の条と揃える）。
+    // （`REPORT_NOTATION_PROMPT` の終わり方の条と揃える）。
     expect(SPEECH_CADENCE_PROMPT).toContain(
       "締めの1回は `speak` ではなく `report` の `closing` で言う",
     )

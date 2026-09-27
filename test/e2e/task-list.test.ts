@@ -6,9 +6,9 @@ import { describe, it } from "vitest"
 import { git, initGitRepository } from "../fixture/git-repository.ts"
 import { type ScenarioRoom, useScenarioRun } from "./scenario-run.ts"
 
-// タスクの一覧（docs/design.md 10章「E2E のシナリオの一覧」）。この一覧だけは疑似セッションの
+// タスクの一覧（docs/design.md「E2E のシナリオの一覧」）。この一覧だけは疑似セッションの
 // 場面ではなく、cwd の `main` にある `develop/task/*.md` が元になる
-// （読み方は `src/server/repository/adapter/task-summary.ts` の冒頭）。足場として、一時の cwd に `git init` して `develop/task/` を
+// （読み方は `watchTaskSummary` のコメント）。足場として、一時の cwd に `git init` して `develop/task/` を
 // 手書きし、`main` へコミットする。
 //
 // リポジトリを作るのは、`open` が部屋を渡した（ブラウザが繋がった）あとにする。
@@ -23,7 +23,7 @@ const run = useScenarioRun()
 const ELAPSED_MS = 60_000
 
 /** `develop/task/T-xxx.md` を1件、新形式の front matter で書く（claude-skills の
- * `docs/task-workflow-redesign.md` 3.2）。会話の内容ではない架空のタスク。 */
+ * `docs/task-workflow-redesign.md` が正典）。会話の内容ではない架空のタスク。 */
 function writeTask(cwd: string, id: string, summary: string, status: string): void {
   mkdirSync(join(cwd, "develop", "task"), { recursive: true })
   const content = [

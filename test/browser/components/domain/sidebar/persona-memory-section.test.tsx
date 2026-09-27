@@ -1,6 +1,4 @@
-// 雑談中のサイドバーの3段目「覚えていること」（docs/chat-mode.md 4.9・docs/screen-design.md 13.7）。フィクスチャは
-// 手で書いた架空の1行だけ（実物の persona.md・会話は使わない。
-// docs/coding-standards.md「会話内容の扱い」）。
+// 雑談中のサイドバーの3段目「覚えていること」（docs/chat-mode.md「雑談モード」・docs/screen-design.md「雑談モードの画面」）。
 
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"

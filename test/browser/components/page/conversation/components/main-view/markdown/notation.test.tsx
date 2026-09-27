@@ -11,7 +11,7 @@ afterEach(() => {
 })
 
 // 部品を直に描く（`node` は react-markdown が渡す任意の prop なので、無くても同じ道を通る）。
-// 記法が sanitize を抜けて実際にこの部品まで届くことは markdown.test.tsx が見る。
+// 記法が sanitize を抜けて実際にこの部品まで届くことは別のテストが見る。
 
 describe("NotationBlock（レポートの塊の記法）", () => {
   it("知っている class 名を tsukumo の class 名に置き換える", () => {

@@ -2,7 +2,7 @@ import { describe, it } from "vitest"
 
 import { useScenarioRun } from "./scenario-run.ts"
 
-// report → メインビュー（記法・差し戻し・整え。docs/design.md 10章「E2E のシナリオの一覧」）。
+// report → メインビュー（記法・差し戻し・整え。docs/design.md「E2E のシナリオの一覧」）。
 // `report` ツールの呼び出しがメインビューの Markdown へどう出るかを、疑似セッションの3つの場面で
 // 確かめる: `notation`（記法の一覧）、`report-rejected`（差し戻されたレポートは描かれず、
 // 直したレポートだけが残る）、`report-tidied`（整形で落ちる行は描かれず、残りはそのまま出る）。

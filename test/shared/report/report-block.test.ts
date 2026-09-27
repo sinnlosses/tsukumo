@@ -8,8 +8,6 @@ import {
   reportSectionsOfBody,
 } from "../../../src/shared/report/report-block.ts"
 
-// フィクスチャはすべて手で書いた架空の本文（docs/coding-standards.md「会話内容の扱い」）。
-
 const section = (blocks: readonly ReportBlock[], heading = ""): ReportSection => ({
   heading,
   blocks,

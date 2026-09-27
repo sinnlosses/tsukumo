@@ -12,13 +12,13 @@ import {
 } from "../../../../src/server/view-server/adapter/bundle.ts"
 
 // `vite build` を実際に起こす統合的なテスト。src/browser/ が壊れていないことも合わせて確かめる
-// （本物のリポジトリのファイルを対象にする。CLI 起動を最後までしない test/cli.test.ts と
+// （本物のリポジトリのファイルを対象にする。CLI 起動を最後までしない別のテストと
 // 同じ考え方で、ここは「組み立てられるか」「置いたものを読めるか」までを見る）。
 //
 // 出し先は一時ディレクトリに取る（実物の dist/browser/ は書き換えない）。同じ `dist/browser/`
-// を CLI 起動時に読む test/cli.test.ts と並んで走ると、書き直している最中を読んで落ちる。
+// を CLI 起動時に読む別のテストと並んで走ると、書き直している最中を読んで落ちる。
 //
-// 失敗の側は src/browser/ を壊さず、一時ディレクトリに書いた入口（`main.tsx`）で確かめる。
+// 失敗の側は src/browser/ を壊さず、一時ディレクトリに書いた入口ファイルで確かめる。
 
 describe("buildUiBundle", () => {
   it("src/browser/ を JS と CSS の1組にまとめ、指定した出し先に置く", async () => {

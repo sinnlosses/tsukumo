@@ -1,6 +1,6 @@
-// リポジトリのファイルを読み、`scripts/section-reference.ts` の純粋関数に渡して迷子の参照と
-// 無いファイルを指すパスを集める、という概念1つを持つ。`scripts/find-stray-reference.ts`（一覧を出す入口）と
-// `test/section-reference.test.ts`（0件を保つテスト）が同じ読み方を要るので、ここに1つだけ置く。
+// リポジトリのファイルを読み、`findSectionReferences` に渡して迷子の参照と
+// 無いファイルを指すパスを集める、という概念1つを持つ。一覧を出す入口と0件を保つ検査が
+// 同じ読み方を要るので、ここに1つだけ置く。
 
 import { existsSync, readdirSync, readFileSync } from "node:fs"
 import { extname, join, relative } from "node:path"

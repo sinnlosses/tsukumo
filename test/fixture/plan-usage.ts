@@ -1,5 +1,4 @@
-// テストが使う、手で書いた架空の利用枠（`docs/glossary.md`「利用枠」）。コンテキストの内訳の
-// 架空フィクスチャと同じ形で、既定を1つ持ち、呼ぶ側は違うところだけを渡す。
+// テストが使う、手で書いた架空の利用枠。既定を1つ持ち、呼ぶ側は違うところだけを渡す。
 
 import type { PlanUsage, PlanUsageReport } from "../../src/shared/plan-usage/plan-usage.ts"
 

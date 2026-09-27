@@ -58,7 +58,6 @@ function createCharacter(id: string): unknown {
   }
 }
 
-// 文面はすべて手で書いた架空のもの（docs/coding-standards.md「会話内容の扱い」）。
 describe("コマンドの契約の入力（受け付ける形）", () => {
   it("prompt を受け付ける", () => {
     expect(parseInput("session.prompt", { text: "架空の依頼" })).toEqual({
@@ -70,7 +69,7 @@ describe("コマンドの契約の入力（受け付ける形）", () => {
 
   it("nudge・interrupt は入力を持たない（押した事実だけが届く）", () => {
     // 文面の欄が無いのが nudge の形そのもの（送る一言は
-    // `src/server/chat/core/chat-nudge.ts` が持つ。docs/screen-design.md 13.7）。
+    // `CHAT_NUDGE_PROMPT` が持つ。docs/screen-design.md「雑談モードの画面」）。
     expect(INPUT_SCHEMAS.get("session.nudge")).toBeUndefined()
     expect(INPUT_SCHEMAS.get("session.interrupt")).toBeUndefined()
   })
@@ -211,7 +210,7 @@ describe("コマンドの契約の入力（キャラクターの見た目）", (
     })
   })
 
-  // 使用中を暗黙にしない（`docs/design.md` 7.1）。書き込む先のディレクトリ名になる値なので、
+  // 使用中を暗黙にしない（`docs/design.md`「画面から作るときの置き場と受け取り方」）。書き込む先のディレクトリ名になる値なので、
   // 作るときと同じ形の検査を通す。
   it("見た目の編集は書き込む先のパックが無い・パックの名前として通らない形なら undefined", () => {
     expect(parseInput("characterPack.clearBackground", {})).toBeUndefined()
@@ -257,7 +256,7 @@ describe("コマンドの契約の入力（キャラクターの見た目）", (
     ).toBeDefined()
   })
 
-  // 必須の1つ（`docs/requirements.md` 4.4 / characters/README.md）を消す操作は境界で弾く。
+  // 必須の1つ（`docs/requirements.md`「キャラクター定義」 / characters/README.md）を消す操作は境界で弾く。
   it("characterPack.clearPortrait で default を消そうとすると undefined（必須は消せない）", () => {
     expect(
       parseInput("characterPack.clearPortrait", { pack: "fictional", expression: "default" }),
@@ -449,7 +448,7 @@ describe("コマンドの契約の入力（落とす形）", () => {
     ).toBeUndefined()
   })
 
-  // 名前はディレクトリ名になるので、パスの区切りと `..` を通さない（docs/design.md 7.1）。
+  // 名前はディレクトリ名になるので、パスの区切りと `..` を通さない（docs/design.md「画面から作るときの置き場と受け取り方」）。
   it("パックの区切り・`..`・隠しディレクトリになる名前では、新しいパックを作らせない", () => {
     const rejected = [
       "../escape",

@@ -14,7 +14,6 @@ import { characterInfo, characterPackEntry } from "../../../../fixture/character
 import { typedElement } from "../../../../typed-element.ts"
 import { type CommandSpy, putSession, type SentCommand } from "../../../session-store.ts"
 
-// 手で書いた架空の答え待ち（許可の問い合わせ1件。docs/coding-standards.md「会話内容の扱い」）。
 const FIXTURE_PENDING: PendingAsk = {
   kind: "permission",
   id: "ask-1",
@@ -22,7 +21,7 @@ const FIXTURE_PENDING: PendingAsk = {
   input: {},
 }
 
-// 部屋の名前はこのページを配っているポートから決まる（`src/shared/view-server/room.ts`）ので、
+// 部屋の名前はこのページを配っているポートから決まる（`roomName`）ので、
 // ポートを見るテストは URL ごと差し替える。既定へ戻すのは afterEach。
 const DEFAULT_PAGE_URL = "http://127.0.0.1/"
 
@@ -64,7 +63,7 @@ describe("ScreenNav", () => {
     expect(screen.getByRole("link", { name: "成果" }).getAttribute("href")).toBe("#achievement")
   })
 
-  // 色だけで伝えないので、いまの画面の口には地と字の濃さを変える class が付く（13.9）。
+  // 色だけで伝えないので、いまの画面の口には地と字の濃さを変える class が付く（docs/screen-design.md「画面のナビゲーション」）。
   it("いま出している画面の口に is-active が付く", () => {
     window.location.hash = "#token-usage"
     renderScreenNav()
@@ -81,8 +80,8 @@ describe("ScreenNav", () => {
     expect(screen.getByRole("link", { name: "会話" }).className).toContain("is-active")
   })
 
-  // 帯の右端にあった専用の印（screen-nav-pending.tsx）は「いまの作業」の札にまとめた
-  // （13.9「何を外すか」）。
+  // 帯の右端にあった専用の印は「いまの作業」の札にまとめた
+  // （docs/screen-design.md「何を外すか」）。
   it("答え待ちがあるときだけ、いまの作業の札の語が「答え待ち」になる", () => {
     renderScreenNav()
     expect(document.querySelector(".screen-nav-work-word")?.textContent).toBe("依頼待ち")
@@ -93,7 +92,7 @@ describe("ScreenNav", () => {
     expect(document.querySelector(".screen-nav-work-word")?.textContent).toBe("答え待ち")
   })
 
-  // 部屋の名前は帯の左端（13.9）。ポートの並び順に割り当たる（`src/shared/view-server/room.ts`）ので、
+  // 部屋の名前は帯の左端（docs/screen-design.md「画面のナビゲーション」）。ポートの並び順に割り当たる（`roomName`）ので、
   // 出ている名前でどの tsukumo を見ているかが分かる。
   it("帯の左端に、このページのポートの部屋の名前を出す", () => {
     setPageUrl("http://127.0.0.1:7329/")
@@ -265,7 +264,7 @@ describe("ScreenNav", () => {
     expect(document.querySelector(".screen-nav-panel")).toBeNull()
   })
 
-  // 狭い画面は帯の左端が無い（「≡」だけになる）ので、名前は落ちてくる面の先頭に出す（13.9）。
+  // 狭い画面は帯の左端が無い（「≡」だけになる）ので、名前は落ちてくる面の先頭に出す（docs/screen-design.md「画面のナビゲーション」）。
   it("「≡」を開くと、落ちてきた面の先頭にも部屋の名前が出る", () => {
     setPageUrl("http://127.0.0.1:7328/")
     renderScreenNav()
@@ -308,7 +307,7 @@ describe("ScreenNav", () => {
     })
 
     // 帯の操作子が送るコマンドは、いままでサイドバーの <select> が送っていたものと同じ
-    // （`session.setChatMode`。docs/screen-design.md 13.9）。
+    // （`session.setChatMode`。docs/screen-design.md「画面のナビゲーション」）。
     it("反対側を押すと session.setChatMode を送る", () => {
       const calls: unknown[] = []
       renderScreenNav({ chatMode: false }, (command) => {
@@ -471,7 +470,7 @@ describe("ScreenNav", () => {
       expect(screen.getByLabelText("許可モード").className).not.toContain("is-danger")
     })
 
-    // 狭い画面では帯に置く幅が無いので、口と同じく「≡」の中へ入る（13.9）。帯の側にも
+    // 狭い画面では帯に置く幅が無いので、口と同じく「≡」の中へ入る（docs/screen-design.md「画面のナビゲーション」）。帯の側にも
     // 同じ部品が残っているので、`getByLabelText` は使わず落ちてきた面の中だけを見る。
     it("「≡」を開くと、落ちてきた面にもドロップダウンが出る", () => {
       renderScreenNav({ model: "claude-haiku-5" })

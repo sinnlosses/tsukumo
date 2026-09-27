@@ -10,7 +10,7 @@ import {
 
 /**
  * 4領域は中身の判別さえできればよいので、部品名の文字列だけ渡す
- * （`<ConversationLayout>` は他の `features/` を import しない。test/architecture.test.ts）。
+ * （`<ConversationLayout>` は他の `features/` を import しない。層の辺の検査が守る）。
  */
 function renderLayout(collapseCharacter = false, mainAsGround = collapseCharacter): void {
   render(
@@ -166,13 +166,13 @@ describe("ConversationLayout", () => {
 
     expect(rowTopElement().dataset["narrowPane"]).toBe("sidebar")
     expect(sidebarTab.getAttribute("aria-selected")).toBe("true")
-    // 領域そのものは4つとも残る（タブは見せる側を選ぶだけ。docs/requirements.md 4.7）。
+    // 領域そのものは4つとも残る（タブは見せる側を選ぶだけ。docs/requirements.md「画面レイアウト」）。
     expect(document.querySelector('[data-region="main"]')).not.toBeNull()
   })
 
   // 枠と角丸を外して背景を敷く class（`.layout-ground`）は、キャラビューと雑談中のメインビューが
-  // 共有する（docs/screen-design.md 13.8）。見えているかは目視で、ここが見るのは class の付き方だけ
-  // （*.module.css の class 名はテストではそのまま返る。test/css-module-loader.ts）。
+  // 共有する（docs/screen-design.md「背景」）。見えているかは目視で、ここが見るのは class の付き方だけ
+  // （*.module.css の class 名はテストではそのまま返る。`cssModuleIdentityPlugin`）。
   it("枠を持たない領域の class は、既定ではキャラビューにだけ付く", () => {
     renderLayout()
 

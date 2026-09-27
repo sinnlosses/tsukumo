@@ -7,7 +7,6 @@ import {
   withoutDismissedProposals,
 } from "../../../src/shared/usage-review/usage-review.ts"
 
-// 提案は手で書いた架空のもの（docs/coding-standards.md「会話内容の扱い」）。
 const PROPOSAL = {
   kind: "unused-mcp",
   target: "example-server",

@@ -19,8 +19,6 @@ import { requestRecord, speechRecord } from "../../../../../../fixture/session-r
 import { createTestQueryClient } from "../../../../../query-client.tsx"
 import { putSession } from "../../../../../session-store.ts"
 
-// フィクスチャはすべて手で書いた架空のキャラクター定義・セリフ（docs/coding-standards.md「会話内容の扱い」）。
-
 /** `SessionState.speeches` の1件（表情は既定でよいテストのための簡略記法）。 */
 function speech(
   text: string,

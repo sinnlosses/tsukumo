@@ -16,7 +16,7 @@ const REVEAL_SPEED_STORAGE_KEY = "tsukumo-reveal-speed:v1"
 // ここでは確かめない（`docs/architecture.md`「手で確かめること」。目視で確認する）。
 // ここで守るのは隠す・出し切る・止めるの配線だけ。
 
-/** 演出を掛ける相手のやり取り（配る筆先に添う番号。`brush-tip.ts`）。 */
+/** 演出を掛ける相手のやり取り（配る筆先に添う番号。`BrushTip`）。 */
 const TURN_ID = 4
 
 function Probe(props: { readonly reveal: boolean }): ReactElement {
@@ -88,7 +88,7 @@ const ORIGIN_BOX = [0, 50, 400, 600] as const
 /**
  * happy-dom はレイアウトを持たない（どの矩形も 0）ので、筆先の居場所を見る回だけ測れる値に
  * 差し替える。図の塊（`.chart-block`）は行ではなく box をそのまま1行として測られる
- * （`measure.ts` の `lineBoxesOf`）ので、文字の行を作らずに行を並べられる。
+ * （`lineBoxesOf`）ので、文字の行を作らずに行を並べられる。
  */
 function measureBoxes(): () => void {
   const original = Element.prototype.getBoundingClientRect

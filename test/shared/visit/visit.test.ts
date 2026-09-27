@@ -12,7 +12,6 @@ import {
   type VisitState,
 } from "../../../src/shared/visit/visit.ts"
 
-// 台本も帰りの一言も手で書いた架空のもの（docs/coding-standards.md「会話内容の扱い」）。
 const SCRIPT: VisitScript = [
   { speaker: "guest", expression: "curious", text: "架空の客の一言目" },
   { speaker: "host", expression: "proud", text: "架空のあるじの返事" },

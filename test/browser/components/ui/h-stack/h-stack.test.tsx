@@ -10,8 +10,8 @@ afterEach(() => {
   cleanup()
 })
 
-// `HStack` は `direction: "row"` を固定して `Stack` へそのまま渡す薄い部品（`h-stack.tsx`）。
-// gap・align・justify・className の class 対応表は `Stack` 自身の `stack.test.tsx` が測るので、
+// `HStack` は `direction: "row"` を固定して `Stack` へそのまま渡す薄い部品。
+// gap・align・justify・className の class 対応表は `Stack` 自身のテストが測るので、
 // ここで測るのは direction を固定していることだけ。
 
 const BASE_PROPS = {

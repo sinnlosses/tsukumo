@@ -20,12 +20,9 @@ import {
 import { typedElement } from "../../../../typed-element.ts"
 import { putState, putSession } from "../../../session-store.ts"
 
-// フィクスチャはすべて手で書いた架空の依頼・ツール呼び出し・質問（docs/coding-standards.md
-// 「会話内容の扱い」）。
-
 afterEach(() => {
   cleanup()
-  // 「質問へ」は会話の画面（`#`）へ hash を書き換える（`stores/screen.tsx`）ので、次のテストへ
+  // 「質問へ」は会話の画面（`#`）へ hash を書き換える（`navigateTo`）ので、次のテストへ
   // 持ち越さない。
   window.location.hash = ""
   // 押した回数はモジュール単位で残るので、次のテストへ持ち越さない。
@@ -571,7 +568,7 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
   })
 
   // 狭い画面では札そのものが「≡」の面の中にあり、Esc は面ごと閉じる（「≡」も同じ合図で
-  // 閉じる。`browser/hooks/use-dismiss-signal.ts`）ので、戻り先の札は DOM から消える。
+  // 閉じる。`useDismissSignal`）ので、戻り先の札は DOM から消える。
   // 帯の側の札（狭い画面では `display: none`）へフォーカスを飛ばさないことをここで守る。
   it("「≡」の面の中の札でも Esc で閉じ、隠れている帯の側の札へは戻さない", () => {
     renderScreenNav({ records: [requestRecord()] })

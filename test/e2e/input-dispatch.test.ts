@@ -2,7 +2,7 @@ import { describe, it } from "vitest"
 
 import { useScenarioRun } from "./scenario-run.ts"
 
-// 入力欄から送る（docs/design.md 10章「E2E のシナリオの一覧」）。場面は名指しせず
+// 入力欄から送る（docs/design.md「E2E のシナリオの一覧」）。場面は名指しせず
 // （`opening` のまま）、入力欄に文面を書いて ⌘Enter で送る。送った `prompt` コマンドが
 // `request` イベントとして戻り、依頼を受けた疑似セッションの `turns` の先頭（`report`）が
 // 続けて流れることを、DOM の構造とメッセージの列で確かめる。

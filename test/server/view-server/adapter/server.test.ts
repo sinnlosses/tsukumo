@@ -50,7 +50,7 @@ const TEST_STYLE_SHEET = "/* テスト用の CSS */"
 
 /**
  * `/character/<pack>/<file>` を配る係の代役。既定では何も配らない（404）。個々のテストが必要な分だけ
- * 上書きする（`src/server/character-pack/adapter/character-pack.ts` の `readCharacterAsset` の代役）。
+ * 上書きする（`readCharacterAsset` の代役）。
  */
 function noCharacterAsset(): undefined {
   return undefined
@@ -627,7 +627,7 @@ describe("startViewServer", () => {
 })
 
 // 一覧に載せた URL をそのまま引いて、配信の全体（経路の読み分け → 一覧との突き合わせ →
-// パックごとの allowlist）を確かめる（docs/design.md 7.2）。素材は手で書いた
+// パックごとの allowlist）を確かめる（docs/design.md「パックの一覧と素材の URL」）。素材は手で書いた
 // 架空の SVG / PNG の中身で、置き場は一時ディレクトリ（本物の `~/.tsukumo` を読まない）。
 describe("キャラクターの素材（使用中以外のパックも配る）", () => {
   const SVG = '<svg xmlns="http://www.w3.org/2000/svg"><circle r="1"/></svg>'
@@ -644,7 +644,7 @@ describe("キャラクターの素材（使用中以外のパックも配る）"
 
   /**
    * 同梱に使用中の `spirit`、ホームに使用中以外の `other`（立ち絵・背景つき）を置き、
-   * `current-character.ts` と同じ組み方でサーバを起こす。一覧（`packs`）も返す。
+   * `createCurrentCharacter` と同じ組み方でサーバを起こす。一覧（`packs`）も返す。
    */
   async function startWithPacks(): Promise<{
     readonly server: ViewServer

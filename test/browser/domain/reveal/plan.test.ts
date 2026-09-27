@@ -7,7 +7,7 @@ import {
   type RevealBlock,
 } from "../../../../src/browser/domain/reveal/plan.ts"
 
-/** `standard` の物差し（`domain/reveal-speed.ts`）。個々のテストはこれで固定する。 */
+/** `standard` の物差し（`revealTimingOf`）。個々のテストはこれで固定する。 */
 const STANDARD_TIMING = revealTimingOf("standard")
 
 /** テストだけで使う物差し。`standard` からの倍率で組み立て、値の意味は名前で示す。 */
@@ -26,7 +26,7 @@ const MS_PER_CHARACTER = STANDARD_TIMING.msPerCharacter
 const MIN_BLOCK_MS = STANDARD_TIMING.minBlockMs
 const MAX_BLOCK_MS = STANDARD_TIMING.maxBlockMs
 
-/** 節と節の境目の印（`src/shared/report/report-block.ts` の `SECTION_BREAK_MARKDOWN` と同じ class）。 */
+/** 節と節の境目の印（`SECTION_BREAK_MARKDOWN` と同じ class）。 */
 const BREAK = '<div class="report-section-break"></div>'
 
 function rootWith(html: string): HTMLElement {

@@ -14,8 +14,6 @@ import type {
 } from "../../../../src/server/session-driver/core/session-driver.ts"
 import { useTempDir } from "../../../fixture/temp-dir.ts"
 
-// フィクスチャは手で書いた架空の依頼・セリフだけ（実物の会話は使わない。
-// docs/coding-standards.md「会話内容の扱い」）。
 const REQUEST_TEXT = "ただいま"
 const SPEECH_TEXT = "おかえり"
 

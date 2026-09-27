@@ -66,7 +66,7 @@ describe("parseHash", () => {
     })
   })
 
-  // 選んでいるパックはキャラクター画面のときだけ読む（docs/screen-design.md 13.6）。
+  // 選んでいるパックはキャラクター画面のときだけ読む（docs/screen-design.md「設定の置き場所」）。
   it("キャラクター画面の pack は選んでいるパック、ほかの画面では読まない", () => {
     expect(parseHash("#character?pack=other&turn=2")).toEqual({
       screen: "character",
@@ -82,7 +82,7 @@ describe("parseHash", () => {
     })
   })
 
-  // 見ている日は成果の画面のときだけ読む（docs/screen-design.md 13.10）。
+  // 見ている日は成果の画面のときだけ読む（docs/screen-design.md「成果の画面」）。
   it("成果の画面の date は見ている日、ほかの画面では読まない", () => {
     expect(parseHash("#achievement?date=2026-09-20&turn=2")).toEqual({
       screen: "achievement",

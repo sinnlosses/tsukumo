@@ -5,9 +5,6 @@ import {
   type ChatEpisodeRecord,
 } from "../../../../src/server/chat/core/chat-episode-score.ts"
 
-// フィクスチャは手で書いた架空のエピソードだけ（実物の会話は使わない。
-// docs/coding-standards.md「会話内容の扱い」）。
-
 const NOW = Temporal.Instant.from("2026-09-26T00:00:00+09:00")
 
 function episode(

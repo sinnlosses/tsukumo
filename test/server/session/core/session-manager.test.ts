@@ -95,7 +95,6 @@ import { contextUsage, readyContextUsage } from "../../../fixture/context-usage.
 import { createManualClock } from "../../../fixture/manual-clock.ts"
 import { readyPlanUsage } from "../../../fixture/plan-usage.ts"
 
-// 疑似セッションもセリフも手で書いた架空のもの（docs/coding-standards.md「会話内容の扱い」）。
 const BATCH_MS = 5
 
 /** トークン消費の記録を気にしないテストに渡す、何もしない書き込み口。 */
@@ -127,7 +126,10 @@ type StubDriver = {
   readonly driver: SessionDriver
   readonly emit: (event: SessionEvent) => void
   readonly attach: (onEvent: (event: SessionEvent) => void) => void
-  /** 復元の再生（`onRestoredEvent`）を流す。駆動由来（`emit`）とは別の口（`docs/design.md` 7.3）。 */
+  /**
+   * 復元の再生（`onRestoredEvent`）を流す。駆動由来（`emit`）とは別の口
+   * （`docs/design.md`「復元の再生は駆動と別の口」）。
+   */
   readonly emitRestored: (event: SessionEvent) => void
   readonly attachRestored: (onRestoredEvent: (event: SessionEvent) => void) => void
   readonly calls: string[]
@@ -223,7 +225,7 @@ const TEST_ORIGIN = "http://127.0.0.1:0"
 
 /**
  * 平らに並べた口からセッションとコマンドのルータを組む。ルータの束ね方と門は配線と同じ
- * （`src/router.ts` の `createCommandRouter`）なので、`commands` で見るのは断る条件と受け手の
+ * （`createCommandRouter`）なので、`commands` で見るのは断る条件と受け手の
  * 振る舞いまで含めた手続きの結果。結果は `{ ok: true }` か、断った理由の `{ ok: false, reason }`。
  */
 function createSessionManager(options: SessionManagerOptions & FlatCommandPorts) {
@@ -381,7 +383,7 @@ function waitForBatch(): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, BATCH_MS * 4))
 }
 
-/** 駆動が返すセッションの中身（作り物。docs/coding-standards.md「会話内容の扱い」）。 */
+/** 駆動が返すセッションの中身。 */
 const FAKE_SESSION_DIGEST: SessionDigest = {
   kind: "known",
   requestCount: 3,
@@ -561,7 +563,7 @@ describe("createSessionManager", () => {
     })
 
     // 前の駆動は閉じ、新しい駆動が画面から選ばれた名前で起きている（＝覚える側。
-    // docs/screen-design.md 13.6）。
+    // docs/screen-design.md「設定の置き場所」）。
     expect(started[0]?.stub.calls).toContain("close")
     expect(started).toHaveLength(2)
     expect(started[1]?.selection).toEqual({ by: "name", name: "fictional" })
@@ -674,7 +676,7 @@ describe("createSessionManager", () => {
     expect(started).toHaveLength(2)
     // 変わるのは「どの transcript の続きから始めるか」だけ。
     expect(started[1]?.resume).toEqual({ by: "id", sessionId: "架空の別セッション" })
-    // パックは「いま出しているまま」（名前で渡すと覚えた値が書き換わる。docs/screen-design.md 13.6）。
+    // パックは「いま出しているまま」（名前で渡すと覚えた値が書き換わる。docs/screen-design.md「設定の置き場所」）。
     expect(started[1]?.selection).toEqual({ by: "current" })
     expect(started[1]?.chat).toBe(false)
     // 起動の1回目は今までどおり印から探す。
@@ -703,7 +705,7 @@ describe("createSessionManager", () => {
 
   it("session.setChatMode で雑談を指定して起こし直し、いま出しているパックは保つ", async () => {
     // 雑談の切り替えは `systemPrompt` の差し替えなので、`session.switchCharacter` と同じ起こし直しに
-    // なる（docs/chat-mode.md 4.9）。パックは変えないことをここで見る。
+    // なる（docs/chat-mode.md「雑談モード」）。パックは変えないことをここで見る。
     const started: SessionLaunchRequest[] = []
     const manager = createSessionManager({
       now: () => 1_000,
@@ -751,7 +753,7 @@ describe("createSessionManager", () => {
     expect(started[1]?.chat).toBe(true)
     // パックは「いま出しているまま」として渡す（名前では渡さない）。名前で渡すと画面から
     // 選ばれたのと区別がつかず、モードを切り替えただけで覚えた値が書き換わる
-    // （docs/screen-design.md 13.6）。
+    // （docs/screen-design.md「設定の置き場所」）。
     expect(started[1]?.selection).toEqual({ by: "current" })
     // 起動の1回目は初期パック（こちらも覚えない側）。
     expect(started[0]?.selection).toEqual({ by: "initial" })
@@ -957,7 +959,7 @@ describe("createSessionManager", () => {
       })
 
       // 渡るのは `promptWithoutRecord`（記録に残さない口）だけで、`prompt` は呼ばれない
-      // ——ログにも記録にも雑談の会話のアーカイブにも残らない（docs/screen-design.md 13.7）。
+      // ——ログにも記録にも雑談の会話のアーカイブにも残らない（docs/screen-design.md「雑談モードの画面」）。
       expect(stub.calls).toEqual([`promptWithoutRecord:${CHAT_NUDGE_PROMPT}`])
     })
 
@@ -1201,8 +1203,7 @@ describe("createSessionManager", () => {
     }
 
     /**
-     * 呼ばれたパック名と信号を覚え、結果はテストが手で返す書き手（本物の `query()` は
-     * 起こさない。数える・書くのは `chat-consolidation-writer.ts` のテストが見る）。
+     * 呼ばれたパック名と信号を覚え、結果はテストが手で返す書き手（本物の `query()` は起こさない）。
      */
     function createManualConsolidation() {
       const calls: { readonly packName: string; readonly signal: AbortSignal }[] = []
@@ -1348,7 +1349,7 @@ describe("createSessionManager", () => {
     expect(frames.filter((frame) => frame.type === "hello")).toHaveLength(1)
   })
 
-  // どの種類が見た目の編集の行に当たるかは `character-pack-command.ts` の表と型が持ち主。
+  // どの種類が見た目の編集の行に当たるかは `CharacterEdit` の表と型が持ち主。
   // ここで見るのは、その手続きが editCharacter 経由の書き込みへ実際に届くこと（setPortrait・
   // setBackground は前の2つのテストで、駆動へ渡らないことや hello の配り直しまで含めて確かめ済み）。
   it("setOutfitAccent も同じ経路を通る", async () => {
@@ -1717,7 +1718,7 @@ describe("createSessionManager", () => {
 
   describe("雑談の会話のアーカイブ", () => {
     // `chatArchive` の実装（ファイルI/O）は adapter のテストが持つ。ここで見るのは
-    // 「いつ・何を渡すか」（`session-manager.receive` の分岐）だけ（docs/chat-mode.md 4.9）。
+    // 「いつ・何を渡すか」（`session-manager.receive` の分岐）だけ（docs/chat-mode.md「雑談モード」）。
 
     function startArchiveManagerWithStub() {
       const stub = createStubDriver()
@@ -2203,7 +2204,7 @@ describe("createSessionManager", () => {
     })
   })
 
-  // コンテキストの内訳の記録（`src/shared/context-usage/context-usage-record.ts`）。1行 = 1セッションで、
+  // コンテキストの内訳の記録（`ContextUsageRecord`）。1行 = 1セッションで、
   // 取れなかった回は次のターンで取り直すことを、ここで固定する。
   describe("コンテキストの内訳の記録", () => {
     function sessionInfo(sessionId: string): SessionEvent {
@@ -2368,7 +2369,7 @@ describe("createSessionManager", () => {
   })
 
   // `report` の塊の使われ方の記録。描いた（差し戻されなかった）report だけが1行になることを
-  // ここで固定する（docs/research/report-block.md 6章）。
+  // ここで固定する（docs/research/report-block.md「回し方（数えて足す・外す）」）。
   describe("report の塊の使われ方の記録", () => {
     function sessionInfo(sessionId: string): SessionEvent {
       return {
@@ -2491,7 +2492,7 @@ describe("createSessionManager", () => {
   })
 })
 
-// 新しいセッションの既定（docs/screen-design.md 13.6）。覚えるのは配線層（`src/session-start.ts`）で、
+// 新しいセッションの既定（docs/screen-design.md「設定の置き場所」）。覚えるのは配線層で、
 // ここが持つのは「受け取ったら覚えさせて、姿へ流し直す」「いまのセッションは起こし直さない」の2つ。
 describe("createSessionManager（新しいセッションの既定）", () => {
   it("session.setSessionDefault を覚えさせ、姿に載せて配る", async () => {
@@ -2522,7 +2523,7 @@ describe("createSessionManager（新しいセッションの既定）", () => {
     })
   })
 
-  // 帯のドロップダウンはセッション限り（`docs/screen-design.md` 13.6）。既定は書き換わらない。
+  // 帯のドロップダウンはセッション限り（`docs/screen-design.md`「設定の置き場所」）。既定は書き換わらない。
   it("帯の session.setModel / session.setPermissionMode では既定を覚えない", async () => {
     const { manager, stub, remembered } = startManagerWithStub()
 
@@ -2534,7 +2535,7 @@ describe("createSessionManager（新しいセッションの既定）", () => {
   })
 })
 
-// 歯車の「訪問」のオン・オフ（`docs/screen-design.md` 13.6）。覚え方は「新しいセッションの既定」と
+// 歯車の「訪問」のオン・オフ（`docs/screen-design.md`「設定の置き場所」）。覚え方は「新しいセッションの既定」と
 // 同じ（`~/.tsukumo/state.json`）だが、訪問の見張りが即座に読む値でもある（実地での
 // 「訪問中にオフにすると帰る」「オフのままだと来ない」は下の `describe("訪問")` で確かめる）。
 describe("createSessionManager（訪問のオン・オフ）", () => {
@@ -2867,7 +2868,6 @@ describe("createSessionManager（見直し）", () => {
 })
 
 describe("訪問", () => {
-  // 台本は手で書いた架空のもの（docs/coding-standards.md「会話内容の扱い」）。
   const SCRIPT: VisitScript = [
     { speaker: "guest", expression: "curious", text: "架空の客の一言目" },
     { speaker: "host", expression: "sad", text: "架空のあるじの返事" },
@@ -3029,7 +3029,7 @@ describe("訪問", () => {
     expect(run.pendingTimers()).toBe(0)
   })
 
-  // 歯車の「訪問」のオン・オフ（`docs/screen-design.md` 13.6・13.9）。
+  // 歯車の「訪問」のオン・オフ（`docs/screen-design.md`「設定の置き場所」「画面のナビゲーション」）。
   it("歯車をオフにすると訪問中でもその場で帰り、visitEnabled も画面へ流れる", async () => {
     const run = startManagerWithVisit(GUESTS)
     await Promise.resolve()

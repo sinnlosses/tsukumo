@@ -20,7 +20,6 @@ import {
   shownPortraits,
 } from "../../fixture/character.ts"
 
-// フィクスチャはすべて手で書いた架空のやり取り（docs/coding-standards.md「会話内容の扱い」）。
 // 時刻に依らないテストでは `now` を固定の 0 で流す（時刻を見る畳み込みは
 // applySessionEvent を直接呼び、進める時刻を明示する）。
 function apply(...events: readonly SessionEvent[]): SessionState {
@@ -126,7 +125,7 @@ describe("applySessionEvent", () => {
     )
 
     // 空にするとプレースホルダー「（まだ発話がありません）」に切り替わる
-    // （src/browser/components/page/conversation/components/character-view/components/balloon-track/balloon-track.tsx）。
+    // （`BalloonTrack`）。
     expect(nextTurn.speeches).toEqual([])
     expect(nextTurn.speechExpression).toBe("default")
   })
@@ -138,7 +137,7 @@ describe("applySessionEvent", () => {
       { kind: "utterance", text: "ダミーのレポート" },
     )
 
-    // 記録には残す（過去のターンの吹き出しを引き直すため。shared/session/turn-speech.ts）。
+    // 記録には残す（過去のターンの吹き出しを引き直すため。`turnSpeeches`）。
     expect(view.records).toEqual([
       {
         kind: "request",
@@ -150,7 +149,7 @@ describe("applySessionEvent", () => {
       { kind: "speech", text: "いくよ！", expression: "proud", time: { kind: "stamped", at: 0 } },
       { kind: "detail", markdown: "ダミーのレポート" },
     ])
-    // メインビューにはセリフを出さない（吹き出しだけ。docs/display.md 4.2）。
+    // メインビューにはセリフを出さない（吹き出しだけ。docs/display.md「表示」）。
     expect(mainViewEntries(view)).toEqual([
       { kind: "request", turnId: 0, text: "ダミーの依頼", images: [] },
       { kind: "detail", markdown: "ダミーのレポート" },
@@ -166,7 +165,7 @@ describe("applySessionEvent", () => {
       { kind: "request", text: "2つめの依頼", images: [] },
     )
 
-    // 記録には積む（雑談のログ側 shared/chat/chat-log.ts が読む）。
+    // 記録には積む（雑談のログ側 `chatLogRows` が読む）。
     expect(view.records).toEqual([
       {
         kind: "request",
@@ -185,7 +184,7 @@ describe("applySessionEvent", () => {
         time: { kind: "stamped", at: 0 },
       },
     ])
-    // 仕事のメインビューには出さない（docs/chat-mode.md 4.9）。
+    // 仕事のメインビューには出さない（docs/chat-mode.md「雑談モード」）。
     expect(mainViewEntries(view)).toEqual([
       { kind: "request", turnId: 0, text: "ダミーの依頼", images: [] },
       { kind: "request", turnId: 1, text: "2つめの依頼", images: [] },
@@ -234,7 +233,7 @@ describe("applySessionEvent", () => {
   })
 
   it("ツールが動いていても表情は直前の speak のまま変わらない（自動の上書きは 2026-09-17 に撤去）", () => {
-    // 表情の源は `speak` の1つだけ（docs/requirements.md 4.3）。ツールの開始・終了・
+    // 表情の源は `speak` の1つだけ（docs/requirements.md「状態連動」）。ツールの開始・終了・
     // 時間の経過では表情が動かないことを固定する（以前はここで `working` へ自動で
     // 切り替えていた。吹き出しと表情が食い違う唯一の経路だったのでやめた）。
     const spoken = applySessionEvent(
@@ -301,7 +300,7 @@ describe("applySessionEvent", () => {
     )
 
     // ツールの記録そのものは `toolUseId` / `nested` を持つ（サイドバー用途と
-    // 突き合わせ用。docs/display.md 4.2）。
+    // 突き合わせ用。docs/display.md「表示」）。
     expect(view.records).toEqual([
       {
         kind: "tool",
@@ -318,7 +317,7 @@ describe("applySessionEvent", () => {
       },
     ])
     // メインビューへ渡す tool の記録が持つのは名前・入力・結果だけ（描くかどうかは
-    // `src/browser/components/page/conversation/components/main-view/components/turn/turn.tsx` の仕事で、いまはツールを描かない）。
+    // `Turn` の仕事で、いまはツールを描かない）。
     expect(mainViewEntries(view)).toEqual([
       {
         kind: "tool",
@@ -503,7 +502,7 @@ describe("applySessionEvent", () => {
     const started = applySessionEvent(spoken, { kind: "turn-started" }, 700)
 
     // 記録は前のターンのまま（送った文面はどこにも入らないので、雑談のログにも
-    // メインビューにも出ようが無い。docs/screen-design.md 13.7）。
+    // メインビューにも出ようが無い。docs/screen-design.md「雑談モードの画面」）。
     expect(started.records).toEqual(spoken.records)
     // ターンの始まりとしての効き目は `request` と同じ。
     expect(started.turn).toEqual({ kind: "running", startedAt: 700 })
@@ -785,7 +784,6 @@ describe("applySessionEvent", () => {
   it("sessions-changed で切り替え先の一覧を持ち、届くまでは空", () => {
     expect(INITIAL_SESSION_STATE.sessions).toEqual([])
 
-    // 目印・最終更新時刻・見出し（見出しは作り物の文字列。docs/coding-standards.md「会話内容の扱い」）。
     const sessions = [
       {
         viewPort: 7328,
@@ -942,7 +940,7 @@ describe("applySessionEvent", () => {
   it("窓がいっぱいになっても、ターンの通し番号は止まらずに増え続ける", () => {
     // 番号を位置で決めていたころは、窓（20ターン）を超えるといちばん新しいターンの番号が
     // 19 で止まり、描く側が `key` に使っているせいで部品が作り直されず、書き上げる演出が
-    // 二度と起動しなかった（`src/browser/domain/reveal/use-report-reveal.ts`）。
+    // 二度と起動しなかった（`useReportReveal`）。
     const events: SessionEvent[] = []
     for (let turn = 0; turn < 25; turn += 1) {
       events.push({ kind: "request", text: `依頼${String(turn)}`, images: [] })
@@ -980,7 +978,7 @@ describe("applySessionEvent", () => {
 })
 
 describe("applySessionEvent（report を書いている間）", () => {
-  // 立ち絵の「書いている」の材料（`src/shared/session/portrait-motion.ts`）。
+  // 立ち絵の「書いている」の材料（`resolvePortraitMotion`）。
   const REQUEST: SessionEvent = { kind: "request", text: "架空の依頼", images: [] }
   const DRAFTING: SessionEvent = { kind: "report-drafting", toolUseId: "toolu_r1" }
 
@@ -1103,7 +1101,6 @@ describe("applySessionEvent（覚えていること）", () => {
 })
 
 describe("applySessionEvent（質問の記録）", () => {
-  // 架空の質問。実物の会話は使わない（docs/coding-standards.md「会話内容の扱い」）。
   const singleQuestion = {
     header: "確認",
     text: "どちらの案で進める？",

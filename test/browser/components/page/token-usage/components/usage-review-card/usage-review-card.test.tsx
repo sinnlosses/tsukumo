@@ -9,9 +9,8 @@ import type {
 } from "../../../../../../../src/browser/components/page/token-usage/hooks/use-usage-review.ts"
 
 /**
- * 見た目だけを測る（`hooks/use-usage-review.ts` は素通しなので、フィクスチャは手で書いた
- * 架空の値をそのまま渡す。`docs/coding-standards.md`「会話内容の扱い」— 実物の会話・記録は
- * 使わない）。
+ * 見た目だけを測る（`useUsageReview` は素通しなので、フィクスチャは手で書いた
+ * 架空の値をそのまま渡す）。
  */
 
 afterEach(() => {
@@ -79,7 +78,7 @@ describe("UsageReviewCard（ふだん）", () => {
 
     const startButton = getByRole("button", { name: "減らし方を見てもらう" })
     // 押せないは `aria-disabled` の1通り（`Button`）。本物の `disabled` にはしないので、
-    // フォーカスは残る（`button.test.tsx` と同じ確かめ方）。
+    // フォーカスは残る。
     expect(startButton.getAttribute("aria-disabled")).toBe("true")
     expect(startButton.hasAttribute("disabled")).toBe(false)
     startButton.focus()

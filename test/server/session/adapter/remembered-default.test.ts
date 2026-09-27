@@ -38,9 +38,8 @@ describe("readRememberedCharacter", () => {
 })
 
 // 起動時の初期パックの決め方（一覧に無い名前は既定へ落ちる／`TSUKUMO_CHARACTER` が
-// 覚えた値より優先される、など）は `selectInitialCharacterPack`
-// （`src/server/character-pack/core/character-selection.ts`）の契約で、
-// `test/server/character-pack/core/character-selection.test.ts` が持ち主として検査する。
+// 覚えた値より優先される、など）は `selectInitialCharacterPack` の契約で、
+// そちらが持ち主として検査する。
 // ここで確かめるのは `readRememberedCharacter` 自身の読み取りまで（このファイル冒頭の describe）。
 
 describe("writeRememberedCharacter", () => {
@@ -50,7 +49,7 @@ describe("writeRememberedCharacter", () => {
   })
 })
 
-// 新しいセッションの既定（モデル・effort・許可モード。docs/screen-design.md 13.6）。壊れた
+// 新しいセッションの既定（モデル・effort・許可モード。docs/screen-design.md「設定の置き場所」）。壊れた
 // state.json でも起動を止めないので、読めないときは同梱の既定へ畳む。
 describe("readRememberedSessionDefault", () => {
   it("ファイルが無いときは同梱の既定（Opus・medium・auto）", () => {
@@ -104,7 +103,7 @@ describe("readRememberedSessionDefault", () => {
 
   // effort だけ、無い古い state.json でも他の2つを読める（欄が無い＝ effort を足す前に
   // 覚えたファイル）。model / permissionMode は今までどおり1組のまま——effort だけ optional
-  // にしてある（src/server/session/adapter/remembered-default.ts の sessionDefaultStateSchema）。
+  // にしてある（`sessionDefaultStateSchema`）。
   it("effort の無い古い state.json でも、モデル・許可モードは読めて effort だけ同梱の既定に落ちる", () => {
     writeFileSync(
       statePath(),
@@ -159,11 +158,11 @@ describe("writeRememberedSessionDefault", () => {
   })
 
   // ディレクトリが無ければ作って書く／書き込み先が塞がっていても例外を投げないのは
-  // `writeJsonFile`（`test/server/adapter/lib/json-file.test.ts`）の契約で、
+  // `writeJsonFile` の契約で、
   // 3つの覚える口（character・sessionDefault・visitEnabled）はどれもその薄いラッパー。
 
   // 同じファイルを2つの口が書くので、片方の書き込みがもう片方を消さないことを見る
-  // （書き込みはファイル丸ごとの置き換え。src/server/session/adapter/remembered-default.ts）。
+  // （書き込みはファイル丸ごとの置き換え。`writeRememberedSessionDefault`）。
   it("既定を書いても覚えたキャラクターは残る", () => {
     writeRememberedCharacter("tsukumo", statePath())
     writeRememberedSessionDefault(
@@ -220,7 +219,7 @@ describe("writeRememberedSessionDefault", () => {
   })
 })
 
-// 歯車の「訪問」のオン・オフ（docs/screen-design.md 13.6）。覚え方は「新しいセッションの既定」と
+// 歯車の「訪問」のオン・オフ（docs/screen-design.md「設定の置き場所」）。覚え方は「新しいセッションの既定」と
 // 同じ1ファイルだが、値そのものはブール1つだけ。壊れた state.json でも起動を止めないので、
 // 読めないときは同梱の既定（する = true）へ畳む。
 describe("readRememberedVisitEnabled", () => {
@@ -260,7 +259,7 @@ describe("writeRememberedVisitEnabled", () => {
   })
 
   // 3つの欄を同じファイルが持つので、どれか1つを書いてもほかの2つを消さないことを見る
-  // （書き込みはファイル丸ごとの置き換え。src/server/session/adapter/remembered-default.ts）。
+  // （書き込みはファイル丸ごとの置き換え。`writeRememberedVisitEnabled`）。
   it("訪問のオン・オフを書いても、覚えたキャラクターと既定は残る", () => {
     writeRememberedCharacter("tsukumo", statePath())
     writeRememberedSessionDefault(

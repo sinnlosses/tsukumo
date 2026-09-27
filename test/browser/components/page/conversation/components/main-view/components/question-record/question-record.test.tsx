@@ -1,5 +1,5 @@
-// 質問の記録（`question-record.tsx`）の2点だけを測る。既存の振る舞い（並び順・自由入力・
-// preview の折りたたみなど）は main-view.test.tsx の `describe("MainView（質問の記録）")` が
+// 質問の記録（`QuestionRecord`）の2点だけを測る。既存の振る舞い（並び順・自由入力・
+// preview の折りたたみなど）は別のテストの `describe("MainView（質問の記録）")` が
 // 持っているので、ここでは触らない。
 //
 // 色そのものはテストしない（`CLAUDE.md`「見た目（色・崩れ）は目視で確かめる」）。

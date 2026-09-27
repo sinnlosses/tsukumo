@@ -20,9 +20,8 @@ import {
 import { putSession } from "../../../../session-store.ts"
 
 /**
- * 画面（`token-usage.tsx`）を丸ごと描かずに、期間の選択と取得の畳み方だけを測る
- * （docs/design.md 2章「機能の中を分ける」）。フィクスチャはすべて手で書いた架空の集計
- * （`docs/coding-standards.md`「会話内容の扱い」— 集計に文面は入らないが、実物は使わない）。
+ * 画面（`TokenUsage`）を丸ごと描かずに、期間の選択と取得の畳み方だけを測る
+ * （docs/design.md「機能の中を分ける」）。フィクスチャはすべて手で書いた架空の集計
  */
 
 let fetchStub: RpcFetchStub | undefined = undefined

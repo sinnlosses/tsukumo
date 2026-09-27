@@ -2,7 +2,7 @@ import { describe, it } from "vitest"
 
 import { useScenarioRun } from "./scenario-run.ts"
 
-// ターンの履歴（docs/design.md 10章「E2E のシナリオの一覧」）。疑似セッションの場面
+// ターンの履歴（docs/design.md「E2E のシナリオの一覧」）。疑似セッションの場面
 // `turn-history` は4つのやり取りを続けて流す。最後の1つは、札の頭に出る依頼の1行目が
 // 長いときにどう省略されるかを確かめるための依頼。4回目の `turn-finished` まで待ってから撮る。
 

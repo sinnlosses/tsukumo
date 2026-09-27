@@ -1,6 +1,5 @@
 // develop/tasks.json の `id` と docs/history/tasks.md の見出し（行頭 `## T-<数字>`）を合わせた集合で、
-// タスクIDが重複していないかを見る純粋関数。`scripts/lib/task-id-repository.ts`
-// （リポジトリから集める入口）と `test/task-id.test.ts`（0件を保つテスト）が使う。
+// タスクIDが重複していないかを見る純粋関数。
 //
 // T-225 は既知の例外として2件まで許す: 登録した直後にアーカイブが `develop/tasks.json` から
 // 消し、別の採番がその直後に最大+1で行われて衝突したため `docs/history/tasks.md` に2つ残って

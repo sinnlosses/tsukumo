@@ -2,7 +2,7 @@ import { describe, it } from "vitest"
 
 import { useScenarioRun } from "./scenario-run.ts"
 
-// 質問（単数・複数・プレビュー。docs/design.md 10章「E2E のシナリオの一覧」）。疑似セッションの
+// 質問（単数・複数・プレビュー。docs/design.md「E2E のシナリオの一覧」）。疑似セッションの
 // 4つの場面で、答え待ちの質問の札（`<QuestionAsk>`）の出方を確かめる: `question-pair`
 // （単一選択の質問が1問ずつ届く）、`question-multi`（複数選択のチェックボックス）、
 // `question-long`（長いラベルと長い説明の折り返し）、`question-preview`（選択肢ごとの比較を
