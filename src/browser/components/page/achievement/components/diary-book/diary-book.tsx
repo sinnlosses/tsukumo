@@ -84,7 +84,15 @@ export function DiaryBook({
             wrap="wrap"
             className=""
           >
-            <span className={styles["diary-book-title"]}>{TITLE}</span>
+            <Text
+              element="span"
+              size="heading"
+              tone="ink"
+              weight="inherit"
+              className={styles["diary-book-title"]}
+            >
+              {TITLE}
+            </Text>
             <Text element="span" size="label" tone="ink-quiet" weight="inherit" className="">
               {openNote}
             </Text>
@@ -237,13 +245,37 @@ function TaskListing(props: { readonly tasks: DiaryBookTaskList }): ReactElement
   const { tasks } = props
   return (
     <div>
-      <p className={styles["diary-book-tasks-heading"]}>{DONE_HEADING}</p>
+      <Text
+        element="p"
+        size="secondary"
+        tone="ink-quiet"
+        weight="inherit"
+        className={styles["diary-book-tasks-heading"]}
+      >
+        {DONE_HEADING}
+      </Text>
       {tasks.tasksKnown ? (
         <ul className={styles["diary-book-task-list"]}>
           {tasks.items.map((task) => (
             <li key={task.id} className={styles["diary-book-task-row"]}>
-              <span className={styles["diary-book-task-id"]}>{task.id}</span>
-              <span className={styles["diary-book-task-summary"]}>{task.summary}</span>
+              <Text
+                element="span"
+                size="label"
+                tone="ink-quiet"
+                weight="inherit"
+                className={styles["diary-book-task-id"]}
+              >
+                {task.id}
+              </Text>
+              <Text
+                element="span"
+                size="secondary"
+                tone="ink"
+                weight="inherit"
+                className={styles["diary-book-task-summary"]}
+              >
+                {task.summary}
+              </Text>
             </li>
           ))}
         </ul>
@@ -283,13 +315,45 @@ function Badges(props: { readonly badges: readonly DiaryBookBadge[] }): ReactEle
         <div key={badge.key} className={styles["diary-book-badge"]}>
           {badge.kind === "graduation" ? (
             <>
-              <span className={styles["diary-book-badge-title"]}>{GRADUATION_LABEL}</span>
-              <span className={styles["diary-book-badge-sub"]}>{badge.taskId}</span>
+              <Text
+                element="span"
+                size="secondary"
+                tone="inherit"
+                weight="bold"
+                className={styles["diary-book-badge-title"]}
+              >
+                {GRADUATION_LABEL}
+              </Text>
+              <Text
+                element="span"
+                size="label"
+                tone="inherit"
+                weight="inherit"
+                className={styles["diary-book-badge-sub"]}
+              >
+                {badge.taskId}
+              </Text>
             </>
           ) : (
             <>
-              <span className={styles["diary-book-badge-title"]}>{badge.countLabel}</span>
-              <span className={styles["diary-book-badge-sub"]}>{badge.unitLabel}</span>
+              <Text
+                element="span"
+                size="secondary"
+                tone="inherit"
+                weight="bold"
+                className={styles["diary-book-badge-title"]}
+              >
+                {badge.countLabel}
+              </Text>
+              <Text
+                element="span"
+                size="label"
+                tone="inherit"
+                weight="inherit"
+                className={styles["diary-book-badge-sub"]}
+              >
+                {badge.unitLabel}
+              </Text>
             </>
           )}
         </div>
@@ -309,7 +373,15 @@ function RightPage(props: {
     <div ref={pageRef} className={styles["diary-book-right"]}>
       <div className={styles["diary-book-date-head"]}>
         <span className={styles["diary-book-kanji-date"]}>{page.kanjiDate}</span>
-        <span className={styles["diary-book-weekday"]}>{page.weekday}</span>
+        <Text
+          element="span"
+          size="secondary"
+          tone="ink-quiet"
+          weight="inherit"
+          className={styles["diary-book-weekday"]}
+        >
+          {page.weekday}
+        </Text>
         <span className={styles["diary-book-lamp"]}>
           <Lamp level={page.lampLevel} />
           {page.lampLabel}
@@ -320,7 +392,15 @@ function RightPage(props: {
           {page.right.paragraphs.map((paragraph) => (
             <p key={paragraph.key} className={styles["diary-book-paragraph"]}>
               {paragraph.timeLabel !== undefined && (
-                <span className={styles["diary-book-paragraph-time"]}>{paragraph.timeLabel}</span>
+                <Text
+                  element="span"
+                  size="label"
+                  tone="ink-quiet"
+                  weight="inherit"
+                  className={styles["diary-book-paragraph-time"]}
+                >
+                  {paragraph.timeLabel}
+                </Text>
               )}
               {paragraph.body}
             </p>
@@ -356,7 +436,15 @@ function RightPage(props: {
               className={styles["diary-book-signature-image"]}
             />
           )}
-          <span className={styles["diary-book-signature-name"]}>{page.portraitName}</span>
+          <Text
+            element="span"
+            size="subheading"
+            tone="ink-quiet"
+            weight="inherit"
+            className={styles["diary-book-signature-name"]}
+          >
+            {page.portraitName}
+          </Text>
         </div>
       </HStack>
     </div>

@@ -392,17 +392,15 @@
   right: 0;
   text-align: center;
 }
+/* 字の段・色は `Text`（size="label" tone="ink-quiet" weight="inherit"）が持つ。 */
 .achievement-calendar-future {
   height: 3.5rem;
   border-radius: 0.625rem;
   box-sizing: border-box;
   padding: 0.3rem 0.45rem;
-  font-size: var(--font-label);
   font-family: var(--font-mono);
-  color: var(--ink-quiet);
   opacity: 0.4;
 }
-/* 字の段・色は `Text`（size="label" tone="ink-quiet" weight="inherit"）が持つ。 */
 .achievement-calendar-lamp-lit {
   filter: drop-shadow(0 0 3px color-mix(in srgb, var(--accent) 30%, transparent));
 }
@@ -428,11 +426,10 @@
   width: min(92vw, 72rem);
 }
 /* 並べ・間隔（`gap="md"`）・揃え・折り返しは `HStack` が持つ。 */
+/* 字の段・色は `Text`（size="heading" tone="ink" weight="inherit"）が持つ。 */
 .diary-book-title {
   font-family: var(--font-serif);
-  font-size: var(--font-heading);
   letter-spacing: 0.08em;
-  color: var(--ink);
 }
 /* 字の段・色は `Text`（size="label" tone="ink-quiet" weight="inherit"）が持つ。 */
 .diary-book-topbar-spacer {
@@ -562,12 +559,11 @@
 }
 
 /* 左ページ — この日に終えたこと。 */
+/* 字の段・色は `Text`（size="secondary" tone="ink-quiet" weight="inherit"）が持つ。 */
 .diary-book-tasks-heading {
   margin: 0 0 0.25rem;
   font-family: var(--font-serif);
-  font-size: var(--font-secondary);
   letter-spacing: 0.1em;
-  color: var(--ink-quiet);
 }
 .diary-book-task-list {
   list-style: none;
@@ -581,17 +577,15 @@
   padding: 0.4rem 0;
   border-bottom: 1px solid color-mix(in srgb, var(--ink) 8%, transparent);
 }
+/* 字の段・色は `Text`（size="label" tone="ink-quiet" weight="inherit"）が持つ。 */
 .diary-book-task-id {
   width: 3rem;
   flex-shrink: 0;
   font-family: var(--font-mono);
-  font-size: var(--font-label);
-  color: var(--ink-quiet);
 }
+/* 字の段・色は `Text`（size="secondary" tone="ink" weight="inherit"）が持つ。 */
 .diary-book-task-summary {
   font-family: var(--font-serif);
-  font-size: var(--font-secondary);
-  color: var(--ink);
   line-height: 1.6;
 }
 /* 字の段・色は `Text`（size="label" tone="ink-quiet" weight="inherit"）が持つ。padding だけここに
@@ -618,15 +612,16 @@
   transform: rotate(-8deg);
   font-family: var(--font-serif);
 }
+/* 字の段・太さは `Text`（size="secondary" tone="inherit" weight="bold"）が持つ。色は
+   `.diary-book-badge` から継ぐ（画面専用の `--diary-gold`）。 */
 .diary-book-badge-title {
-  font-size: var(--font-secondary);
-  font-weight: 700;
   letter-spacing: 0.05em;
 }
+/* 字の段は `Text`（size="label" tone="inherit" weight="inherit"）が持つ。色は
+   `.diary-book-badge` から継ぐ。 */
 .diary-book-badge-sub {
   margin-top: 0.15rem;
   font-family: var(--font-mono);
-  font-size: var(--font-label);
 }
 
 /* 右ページ — 縦書き。 */
@@ -649,10 +644,9 @@
   color: var(--ink);
   letter-spacing: 0.15em;
 }
+/* 字の段・色は `Text`（size="secondary" tone="ink-quiet" weight="inherit"）が持つ。 */
 .diary-book-weekday {
   font-family: var(--font-serif);
-  font-size: var(--font-secondary);
-  color: var(--ink-quiet);
   letter-spacing: 0.2em;
 }
 /* 字の色は狐火（`--accent`）に寄せた淡い色（見本の値）。 */
@@ -684,10 +678,9 @@
   letter-spacing: 0.08em;
   color: var(--ink);
 }
+/* 字の段・色は `Text`（size="label" tone="ink-quiet" weight="inherit"）が持つ。 */
 .diary-book-paragraph-time {
   display: block;
-  font-size: var(--font-label);
-  color: var(--ink-quiet);
 }
 .diary-book-blank-body {
   writing-mode: vertical-rl;
@@ -717,11 +710,10 @@
 .diary-book-signature-image {
   width: 6rem;
 }
+/* 字の段・色は `Text`（size="subheading" tone="ink-quiet" weight="inherit"）が持つ。 */
 .diary-book-signature-name {
   padding-bottom: 0.5rem;
   font-family: var(--font-serif);
-  font-size: var(--font-subheading);
-  color: var(--ink-quiet);
 }
 .diary-book-review {
   display: flex;
