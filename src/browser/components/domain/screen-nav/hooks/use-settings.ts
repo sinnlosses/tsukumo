@@ -34,7 +34,7 @@
 // `browser/hooks/use-dismiss-signal.ts` で、Esc の戻り先の歯車も同じくコールバック ref で
 // 集める（{@link ScreenNavSettings.toggleRef}）。
 
-import { useCallback, useRef, useState, type RefCallback, type RefObject } from "react"
+import { useRef, useState, type RefCallback, type RefObject } from "react"
 
 import { isEffortLevel, isModelAlias, type ModelAlias } from "../../../../../shared/command.ts"
 import {
@@ -185,12 +185,12 @@ export function useSettings(navRef: RefObject<HTMLElement | null>): ScreenNavSet
   // 選ぶたびに保存する（色のようにドラッグで連続しないので、まとめる必要が無い）。
   const [revealSpeed, setRevealSpeed] = useState<RevealSpeed>(loadRevealSpeed)
 
-  const onToggle = useCallback((): void => {
+  function onToggle(): void {
     setOpen((wasOpen) => !wasOpen)
     setColorNotice(NO_COLOR_NOTICE)
-  }, [])
+  }
 
-  const toggleRef = useCallback<RefCallback<HTMLButtonElement>>((node) => {
+  const toggleRef: RefCallback<HTMLButtonElement> = (node) => {
     // cleanup を返す形なので React 19 は `null` で呼び直さない（外れるのは下の cleanup）。
     if (node === null) {
       return
@@ -200,9 +200,9 @@ export function useSettings(navRef: RefObject<HTMLElement | null>): ScreenNavSet
     return () => {
       nodes.delete(node)
     }
-  }, [])
+  }
 
-  const onDismiss = useCallback((cause: DismissCause): void => {
+  function onDismiss(cause: DismissCause): void {
     setOpen(false)
     setColorNotice(NO_COLOR_NOTICE)
     if (cause === "escape") {
@@ -212,7 +212,7 @@ export function useSettings(navRef: RefObject<HTMLElement | null>): ScreenNavSet
         node.focus()
       }
     }
-  }, [])
+  }
 
   useDismissSignal({ open, rootRef: navRef, onDismiss })
 

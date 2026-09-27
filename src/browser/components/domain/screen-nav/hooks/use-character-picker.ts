@@ -5,7 +5,7 @@
 // 「≡」の面の中）。開閉の状態は1つで、閉じる合図は `useDismissSignal`、Esc の戻り先の顔は
 // 2箇所ぶんをコールバック ref で集める（`useSettings` と同じ手口）。
 
-import { useCallback, useRef, useState, type RefCallback, type RefObject } from "react"
+import { useRef, useState, type RefCallback, type RefObject } from "react"
 
 import { FRAME_ERROR_REASON } from "../../../../../shared/frame.ts"
 import { characterFaceInfo, type CharacterFaceInfo } from "../../../../domain/character-face.ts"
@@ -48,11 +48,11 @@ export function useCharacterPicker(
   const [open, setOpen] = useState(false)
   const toggleNodes = useRef(new Set<HTMLButtonElement>())
 
-  const onToggle = useCallback((): void => {
+  function onToggle(): void {
     setOpen((wasOpen) => !wasOpen)
-  }, [])
+  }
 
-  const toggleRef = useCallback<RefCallback<HTMLButtonElement>>((node) => {
+  const toggleRef: RefCallback<HTMLButtonElement> = (node) => {
     // cleanup を返す形なので React 19 は `null` で呼び直さない（外れるのは下の cleanup）。
     if (node === null) {
       return
@@ -62,9 +62,9 @@ export function useCharacterPicker(
     return () => {
       nodes.delete(node)
     }
-  }, [])
+  }
 
-  const onDismiss = useCallback((cause: DismissCause): void => {
+  function onDismiss(cause: DismissCause): void {
     setOpen(false)
     if (cause === "escape") {
       // 押せる状態にある顔は1つだけ（もう片方は `display: none` で `.focus()` が効かない）。
@@ -72,7 +72,7 @@ export function useCharacterPicker(
         node.focus()
       }
     }
-  }, [])
+  }
 
   useDismissSignal({ open, rootRef: navRef, onDismiss })
 

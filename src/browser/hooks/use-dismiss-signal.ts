@@ -10,8 +10,8 @@
 //
 // どの機能の語彙も持たないので `browser/hooks/`（`docs/design.md` 2章の箱の表）。
 //
-// `onDismiss` は呼び出しのたびに作り直さない（`useCallback` で包んだものを渡す）。購読は
-// `onDismiss` が変わると載せ直すので、毎描画で新しい関数を渡すと毎描画で付け外しが起きる。
+// 購読は `onDismiss` が変わると載せ直す。React Compiler が呼び出し側の関数を自動でメモ化
+// するので、呼び出し側は手で `useCallback` に包まない（`docs/coding-standards.md`「React」）。
 
 import { useEffect, type RefObject } from "react"
 

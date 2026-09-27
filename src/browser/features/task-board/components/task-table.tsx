@@ -6,25 +6,14 @@
 // 依存と着手は1つの列にまとめてある。 分けていたときは同じIDが2列に並んで表を横へ押し広げ、
 // いちばん読みたい要約の列が器の外へ出ていた（実測: 依存7件の行で2列あわせて約100字ぶん）。
 
-import { memo, type ReactElement } from "react"
+import type { ReactElement } from "react"
 
 import { Text } from "../../../components/ui/text/text.tsx"
 import type { BoardRow } from "../hooks/use-task-board.ts"
 import styles from "../task-board.module.css"
 import { TaskRow } from "./task-row.tsx"
 
-/**
- * `rows` の参照が変わらない限り描き直さない。`<TaskBoard>` は閉じている間も `<dialog>` ごと
- * マウントされたままなので、サイドバーの他の区画（進行中のツールなど）が変わるたびにここまで
- * 再描画が届く。`rows` はタスク一覧が実際に変わったときしか作り直さない
- * （`hooks/use-task-board.ts` の `useMemo`）ので、`memo` だけで「閉じている間・無関係な変化では
- * 組み直さない」が満たせる。
- *
- * `memo` で包むときだけ `const`（規約「部品は `function` で書く」の唯一の例外）。
- */
-export const TaskTable = memo(TaskTableView)
-
-function TaskTableView(props: { readonly rows: readonly BoardRow[] | undefined }): ReactElement {
+export function TaskTable(props: { readonly rows: readonly BoardRow[] | undefined }): ReactElement {
   const rows = props.rows
   if (rows === undefined) {
     return (

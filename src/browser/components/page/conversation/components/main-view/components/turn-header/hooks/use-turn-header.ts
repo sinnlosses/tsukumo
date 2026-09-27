@@ -10,7 +10,7 @@
 // 同じ、古いほうを1とする通し番号なので、並びを新しい順にしても数字自体は矛盾しない
 // （最新の行だけは番号の代わりに「最新」を出す）。
 
-import { useCallback, useId, useRef, useState, type RefObject } from "react"
+import { useId, useRef, useState, type RefObject } from "react"
 
 import {
   useDismissSignal,
@@ -84,12 +84,12 @@ export function useTurnHeader(props: TurnHeaderProps): TurnHeaderModel {
   const titleGroupRef = useRef<HTMLDivElement>(null)
   const historyToggleRef = useRef<HTMLButtonElement>(null)
 
-  const onDismissHistory = useCallback((cause: DismissCause): void => {
+  function onDismissHistory(cause: DismissCause): void {
     setHistoryOpen(false)
     if (cause === "escape") {
       historyToggleRef.current?.focus()
     }
-  }, [])
+  }
 
   useDismissSignal({ open: historyOpen, rootRef: titleGroupRef, onDismiss: onDismissHistory })
 

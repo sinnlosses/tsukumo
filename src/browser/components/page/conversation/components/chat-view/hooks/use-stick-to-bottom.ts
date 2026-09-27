@@ -47,7 +47,11 @@ export function useStickToBottom(count: number): RefObject<HTMLDivElement | null
   //
   // 呼ぶのは2か所で、どちらも同じこの規則に従う: 件数が増えたとき（下の effect）と、
   // 件数が変わらないまま中身だけ動いたとき（その下の effect）。
-  const stickToBottom = useCallback(() => {
+  //
+  // `useCallback` を残す例外（`docs/coding-standards.md`「React」節「手でメモ化しない」）。
+  // oxlint の `react-hooks(exhaustive-deps)` は依存配列の関数が毎回作り直されるかを静的に
+  // 見るだけで、Compiler が実行時にメモ化することは検査に映らないので、外すと lint が落ちる。
+  const stickToBottom = useCallback((): void => {
     const log = logRef.current
     if (log === null || !nearBottomRef.current) {
       return

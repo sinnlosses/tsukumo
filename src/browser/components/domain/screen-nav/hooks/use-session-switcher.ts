@@ -5,7 +5,7 @@
 // 一覧（`SessionState.sessions`）は軽いもの（ID・見出し・時刻）だけで、依頼の数・要約・
 // 最後のセリフは選んだ1件ぶんだけ取りに行く（`useSessionDigest`）。
 
-import { useCallback, useState } from "react"
+import { useState } from "react"
 
 import { FRAME_ERROR_REASON } from "../../../../../shared/frame.ts"
 import type { SessionChoice } from "../../../../../shared/session/session-choice.ts"
@@ -93,12 +93,12 @@ export function useSessionSwitcher(room: string): SessionSwitcherView {
   const turnInProgress = useTurnRunning()
   const [open, setOpen] = useState(false)
 
-  const onOpen = useCallback((): void => {
+  function onOpen(): void {
     setOpen(true)
-  }, [])
-  const onClose = useCallback((): void => {
+  }
+  function onClose(): void {
     setOpen(false)
-  }, [])
+  }
 
   const shortIds = shortSessionIds([
     ...(currentSessionId === undefined ? [] : [currentSessionId]),

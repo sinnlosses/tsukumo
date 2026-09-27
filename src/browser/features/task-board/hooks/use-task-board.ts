@@ -9,8 +9,6 @@
 // `components/` は畳んだ `BoardRow` を受け取るだけ。
 // CSS の class 名はここでは決めない（`domain/task-status.ts` と各部品の持ち物）。
 
-import { useMemo } from "react"
-
 import {
   taskReadiness,
   unfinishedTaskIds,
@@ -23,16 +21,9 @@ export type TaskBoardView = {
   readonly rows: readonly BoardRow[] | undefined
 }
 
-/**
- * `open` をそのまま `<Dialog>` へ渡す形にし、畳んだ行を返す。
- *
- * 行は `tasks` の参照が変わったときだけ作り直す（`useMemo`）。表を `memo` で止めているのは
- * この参照が安定していることが前提（`components/task-table.tsx`）。
- */
+/** `open` をそのまま `<Dialog>` へ渡す形にし、畳んだ行を返す。 */
 export function useTaskBoard(tasks: TaskSummaryResult, open: boolean): TaskBoardView {
-  const rows = useMemo(() => boardRows(tasks), [tasks])
-
-  return { open, rows }
+  return { open, rows: boardRows(tasks) }
 }
 
 /** 値が無い列に出す文字。空欄にはしない（列がずれて見えるため）。 */

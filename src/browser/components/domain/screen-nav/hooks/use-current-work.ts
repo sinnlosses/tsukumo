@@ -18,7 +18,7 @@
 // 戻すのはこの札の事情なので、合図の種類を見てここで決める。戻り先の札は
 // コールバック ref で集める（{@link ScreenNavCurrentWork.toggleRef}）。
 
-import { useCallback, useRef, useState, type RefCallback, type RefObject } from "react"
+import { useRef, useState, type RefCallback, type RefObject } from "react"
 
 import type { DiaryWriting } from "../../../../../shared/diary/diary.ts"
 import type {
@@ -229,7 +229,7 @@ export function useCurrentWork(navRef: RefObject<HTMLElement | null>): ScreenNav
   // 持つ可変の入れ物なので ref に置く（書き換えはコールバック ref = 取り付けのときだけ）。
   const toggleNodes = useRef(new Set<HTMLButtonElement>())
 
-  const toggleRef = useCallback<RefCallback<HTMLButtonElement>>((node) => {
+  const toggleRef: RefCallback<HTMLButtonElement> = (node) => {
     // cleanup を返す形なので React 19 は `null` で呼び直さない（外れるのは下の cleanup）。
     // 型の上では `null` が来うるので、そのときは何も預からない。
     if (node === null) {
@@ -240,18 +240,18 @@ export function useCurrentWork(navRef: RefObject<HTMLElement | null>): ScreenNav
     return () => {
       nodes.delete(node)
     }
-  }, [])
+  }
 
-  const onToggle = useCallback((): void => {
+  function onToggle(): void {
     setOpen((wasOpen) => !wasOpen)
     setExpanded(false)
-  }, [])
+  }
 
-  const onToggleExpanded = useCallback((): void => {
+  function onToggleExpanded(): void {
     setExpanded((wasExpanded) => !wasExpanded)
-  }, [])
+  }
 
-  const onDismiss = useCallback((cause: DismissCause): void => {
+  function onDismiss(cause: DismissCause): void {
     setOpen(false)
     setExpanded(false)
     if (cause === "escape") {
@@ -261,14 +261,14 @@ export function useCurrentWork(navRef: RefObject<HTMLElement | null>): ScreenNav
         node.focus()
       }
     }
-  }, [])
+  }
 
   useDismissSignal({ open, rootRef: navRef, onDismiss })
 
   // 質問へ（`docs/screen-design.md` 13.9「いまの作業」）。一覧を閉じ、キャラクター/トークン消費の
   // 画面を見ていれば会話の画面へ戻し、過去のやり取りを見ていれば最新へ戻してから、メインビューの
   // 質問の札までスクロールさせる（`stores/question-scroll.ts`）。
-  const onGoToQuestion = useCallback((): void => {
+  function onGoToQuestion(): void {
     setOpen(false)
     setExpanded(false)
     if (screen !== "conversation") {
@@ -278,7 +278,7 @@ export function useCurrentWork(navRef: RefObject<HTMLElement | null>): ScreenNav
       selectTurn(newestTurnId)
     }
     requestScroll()
-  }, [screen, activeTurnId, newestTurnId, selectTurn, requestScroll])
+  }
 
   const sessionEnded = endedReason !== undefined
   const turnStepList = currentTurnSteps(records, sessionEnded)

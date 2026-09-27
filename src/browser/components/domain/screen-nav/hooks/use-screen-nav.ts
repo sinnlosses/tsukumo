@@ -19,7 +19,7 @@
 // （開いている間だけ `document` を購読する）。「いまの作業」の札と歯車も同じフックを使う
 // ので、3つの面の閉じ方が1箇所で決まる。
 
-import { useCallback, useRef, useState, type RefObject } from "react"
+import { useRef, useState, type RefObject } from "react"
 
 import { isEffortLevel, isModelAlias, isPermissionMode } from "../../../../../shared/command.ts"
 import { FRAME_ERROR_REASON } from "../../../../../shared/frame.ts"
@@ -148,17 +148,17 @@ export function useScreenNav(): ScreenNavView {
   const character = useCharacterPicker(ref)
   const { tag: sessionTag, switcher } = useSessionSwitcher(currentRoomName())
 
-  const onSelect = useCallback((): void => {
+  function onSelect(): void {
     setMenuOpen(false)
-  }, [])
+  }
 
-  const onToggleMenu = useCallback((): void => {
+  function onToggleMenu(): void {
     setMenuOpen((open) => !open)
-  }, [])
+  }
 
-  const onDismissMenu = useCallback((): void => {
+  function onDismissMenu(): void {
     setMenuOpen(false)
-  }, [])
+  }
 
   useDismissSignal({ open: menuOpen, rootRef: ref, onDismiss: onDismissMenu })
 

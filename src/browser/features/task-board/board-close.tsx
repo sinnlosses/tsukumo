@@ -3,7 +3,6 @@
 //
 // props で降ろさない。 確認を組み立てるのは押されたIDのボタン（`components/task-run-button.tsx`）で、
 // そこまでの道に表の都合を知らない部品（`TaskTable`・`TaskRow`・`TaskItem`）が挟まっている。
-// とくに `TaskTable` は `memo` で止めてあり、表を閉じる呼び先を通すとその前提が崩れる。
 //
 // 機能の中だけで配るので `browser/stores/` には上げない（画面全体で共有する状態ではない。
 // docs/design.md 2章の箱の表）。

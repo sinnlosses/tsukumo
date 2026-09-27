@@ -96,7 +96,9 @@ node scripts/stop.ts           # 動いている tsukumo の一覧（--port <n> 
 - **`| undefined` は5つの場所でだけ**書き、`?:` は使わない。2つ以上の `| undefined` が1つの状態なら
   判別可能な合併型。「無い」は入口で畳む（`docs/coding-standards.md`「「無いかもしれない」値」）
 - **`null` を自前の型・戻り値・`shared` に出さない**（外来の `null` は境界で `undefined` に畳む）
-- **`ReactElement` を返す関数は `function` で書く**（`const` は `memo` で包むときだけ）
+- **`ReactElement` を返す関数は `function` で書く**（`const` は `memo` で包むときだけ）。
+  `memo` / `useCallback` / `useMemo` は手で書かず、メモ化は React Compiler に任せる
+  （残してよい理由は `docs/coding-standards.md`「React」節「手でメモ化しない」の2つだけ）
 - **条件付きの描画は `{条件 && <部品 />}` で書き、`? … : null` にしない。** 左辺は `boolean` に限る
 - **`useEffect` は「React の外と同期する」4類型だけ。** 依存配列を手で間引かない
   （代替は `docs/coding-standards.md`「React」節）

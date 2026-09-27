@@ -12,7 +12,7 @@
 // `Anchor` へ props で渡せない。既定値は「何も一致しない・押しても何もしない」にしてあるので、
 // Provider の無い場（`markdown.test.tsx` の既存テストの大半）でもこれまでの見た目のまま描ける。
 
-import { createContext, useContext, useMemo, type ReactElement, type ReactNode } from "react"
+import { createContext, useContext, type ReactElement, type ReactNode } from "react"
 
 import { useSession } from "../../../../../../stores/session.ts"
 import { useRepositoryFilePaths } from "../../hooks/use-repository-file-paths.ts"
@@ -74,7 +74,7 @@ export function RepositoryFileLinkProvider(props: RepositoryFileLinkProviderProp
   // 常に取りに行く（`@` 補完と違い、レポートのどこにパスが出るかは描く前に分からない）。
   const paths = useRepositoryFilePaths(true)
   const dispatch = useSession((session) => session.dispatch)
-  const files = useMemo(() => new Set(paths), [paths])
+  const files = new Set(paths)
   const link: RepositoryFileLink = {
     files,
     open: (path) => {
