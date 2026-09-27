@@ -68,7 +68,11 @@ describe("isDocumentOnlyChange", () => {
   })
 })
 
-describe("collectChangedPaths", () => {
+// 一時リポジトリで git を何回も走らせるので、`pnpm run check` の並列の負荷で既定の 5000ms を
+// 超えることがある。
+const GIT_LOAD_TIMEOUT_MS = 20_000
+
+describe("collectChangedPaths", { timeout: GIT_LOAD_TIMEOUT_MS }, () => {
   async function git(root: string, ...args: string[]): Promise<void> {
     await runSubprocessOrThrow("git", args, { cwd: root })
   }
