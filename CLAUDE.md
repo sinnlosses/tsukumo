@@ -40,7 +40,8 @@ tsukumo は Agent SDK（`@anthropic-ai/claude-agent-sdk`）で Claude Code を�
 全体の一覧は `README.md`「開発」。ここには手が間違えやすいものだけを置く。
 
 ```bash
-pnpm run check                 # typecheck + lint + format:check + test + test:e2e（変更後は必ずこれを通す）
+pnpm run check                 # typecheck + lint + format:check + test + test:e2e（変更後は必ずこれを通す。
+                              #   文書だけの変更は typecheck・lint・test:e2e を省く。--full で強制）
 pnpm run test                  # 単体テスト（Vitest）
 pnpm run build                 # src/browser/ を直したら打つ（起動時には組み立てない）
 node scripts/stop.ts           # 動いている tsukumo の一覧（--port <n> でそれ1つだけ止める）
