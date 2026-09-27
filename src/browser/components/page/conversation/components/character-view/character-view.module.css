@@ -39,7 +39,7 @@
   --balloon-right-gap: 20px;
   /* 列のスクロールバーと吹き出しの間。--balloon-right-gap の外側の余白からこの分を列の内側へ
      移すので、吹き出しの位置は変わらず、スクロールバーだけがこの分右へ寄る。 */
-  --balloon-scrollbar-gap: 8px;
+  --balloon-scrollbar-gap: 12px;
   /* 右上の「ログ」の口（領域の角から 4px、高さ 30px）が占める高さぶんの余白。吹き出しの並びが
      スクロールしてもここまでは伸びない（下の .balloon-track）。 */
   --speech-log-open-space: 26px;
