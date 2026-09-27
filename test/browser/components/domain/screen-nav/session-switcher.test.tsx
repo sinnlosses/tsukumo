@@ -153,6 +153,28 @@ describe("セッションの札と切り替え画面", () => {
     expect(switcherOpen()).toBe(false)
   })
 
+  it("Ctrl+N でも ↓ と同じに下の行を選ぶ", () => {
+    const sent: SentCommand[] = []
+    renderNav({}, (command) => sent.push(command))
+    openByTag()
+
+    fireEvent.keyDown(searchBox(), { key: "n", ctrlKey: true })
+    fireEvent.keyDown(searchBox(), { key: "Enter" })
+
+    expect(sent).toEqual([{ procedure: "session.switchSession", sessionId: "c3000000-0000" }])
+  })
+
+  it("Ctrl+P でも ↑ と同じに上の行（いま出しているセッション）を選ぶ", () => {
+    const sent: SentCommand[] = []
+    renderNav({}, (command) => sent.push(command))
+    openByTag()
+
+    fireEvent.keyDown(searchBox(), { key: "p", ctrlKey: true })
+    fireEvent.keyDown(searchBox(), { key: "Enter" })
+
+    expect(sent).toEqual([])
+  })
+
   it("いま出しているセッションを選んで Enter しても送らない", () => {
     const sent: SentCommand[] = []
     renderNav({}, (command) => sent.push(command))
