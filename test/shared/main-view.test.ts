@@ -535,6 +535,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     favor,
     checks,
     closing: { kind: "none" },
+    unknownBlockCount: 0,
   })
   const toolRun = (id: string): readonly SessionEvent[] => [
     {

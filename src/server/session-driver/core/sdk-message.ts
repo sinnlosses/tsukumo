@@ -532,7 +532,7 @@ function speechEvents(
 }
 
 /**
- * `report` の引数を取り出す。`sections` は塊ごとに検証して崩れた塊を落とし（{@link parseReportSections}）、
+ * `report` の引数を取り出す。`sections` は塊ごとに検証して崩れた塊・知らない種類の塊を落とし（{@link parseReportSections}）、
  * `sections` の無い呼び出し（引数が文字列の `body` だったころの transcript）は `body` を逃げ道の塊1つの節に畳む（{@link reportSectionsOfBody}）。
  * `favor` の「無い」は空の文字列に、`checks` の「無い」は空の配列に畳む（描く側は空の塊を置かないだけで済む）。`closing` の「無い」（引数に
  * `closing` が無かったころの transcript）は `none` に畳む。`conclusion` が文字列でなければ捨てる（引数の検査に落ちた呼び出しで、
@@ -547,18 +547,21 @@ function reportEvents(
     return []
   }
 
+  const parsed =
+    input.sections === undefined
+      ? { sections: reportSectionsOfBody(optionalString(input.body) ?? ""), unknownBlockCount: 0 }
+      : parseReportSections(input.sections)
+
   return [
     {
       kind: "report",
       toolUseId,
       conclusion: input.conclusion,
-      sections:
-        input.sections === undefined
-          ? reportSectionsOfBody(optionalString(input.body) ?? "")
-          : parseReportSections(input.sections),
+      sections: parsed.sections,
       favor: optionalString(input.favor) ?? "",
       checks: parseReportChecks(input.checks),
       closing: speechEvents(input.closing, expressions)[0] ?? { kind: "none" },
+      unknownBlockCount: parsed.unknownBlockCount,
     },
   ]
 }

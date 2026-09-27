@@ -183,26 +183,47 @@ export function reportSectionsOfBody(body: string): readonly ReportSection[] {
     : [{ heading: "", blocks: [{ kind: "markdown", markdown, fold: "" }] }]
 }
 
+/** `reportBlockSchema` が知っている塊の種類。 */
+export const REPORT_BLOCK_KINDS = [
+  "text",
+  "list",
+  "table",
+  "note",
+  "stats",
+  "code",
+  "mermaid",
+  "markdown",
+] as const satisfies readonly ReportBlock["kind"][]
+
+export type ParsedReportSections = {
+  readonly sections: readonly ReportSection[]
+  /** 知らない種類（{@link REPORT_BLOCK_KINDS} に無い `kind`）で落とした塊の数。 */
+  readonly unknownBlockCount: number
+}
+
 /**
  * `report` の引数の `sections` を取り出す。塊ごとに検証し、崩れた塊と知らない種類の塊は落とす
  * （塊1つの読み損ねでレポートを捨てない）。塊が残らない節と、配列でない値は無いものとする。
  */
-export function parseReportSections(value: unknown): readonly ReportSection[] {
+export function parseReportSections(value: unknown): ParsedReportSections {
   const sections = z.array(z.unknown()).safeParse(value)
   if (!sections.success) {
-    return []
+    return { sections: [], unknownBlockCount: 0 }
   }
-  return sections.data.flatMap((candidate) => {
+  const parsed = sections.data.flatMap((candidate) => {
     const section = looseSectionSchema.safeParse(candidate)
-    if (!section.success) {
-      return []
-    }
-    const blocks = section.data.blocks.flatMap((block) => {
-      const parsed = reportBlockSchema.safeParse(block)
-      return parsed.success ? [parsed.data] : []
-    })
-    return blocks.length === 0 ? [] : [{ heading: section.data.heading, blocks }]
+    return section.success ? [section.data] : []
   })
+  return {
+    sections: parsed.flatMap(({ heading, blocks }) => {
+      const valid = blocks.flatMap((block) => {
+        const parsedBlock = reportBlockSchema.safeParse(block)
+        return parsedBlock.success ? [parsedBlock.data] : []
+      })
+      return valid.length === 0 ? [] : [{ heading, blocks: valid }]
+    }),
+    unknownBlockCount: parsed.flatMap(({ blocks }) => blocks).filter(isUnknownKindBlock).length,
+  }
 }
 
 /** 節の並びを1つの Markdown に組む。空の塊・空の節は置かない。 */
@@ -233,6 +254,13 @@ const looseSectionSchema = z.object({
   heading: reportSectionSchema.shape.heading,
   blocks: z.array(z.unknown()),
 })
+
+const blockKindSchema = z.object({ kind: z.string() })
+
+function isUnknownKindBlock(block: unknown): boolean {
+  const kind = blockKindSchema.safeParse(block)
+  return kind.success && !REPORT_BLOCK_KINDS.some((known) => known === kind.data.kind)
+}
 
 /** 表のセルの状態 → バッジの class（記法の `badge-*`）。 */
 const CELL_BADGES = {

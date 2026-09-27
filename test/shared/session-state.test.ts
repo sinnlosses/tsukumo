@@ -901,6 +901,7 @@ describe("applySessionEvent（report を書いている間）", () => {
         favor: "",
         checks: [],
         closing: { kind: "none" },
+        unknownBlockCount: 0,
       }).reportDrafting,
     ).toEqual({ kind: "idle" })
   })

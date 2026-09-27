@@ -167,7 +167,8 @@ export type SessionEvent =
    * ものだけが届く（サブエージェントの呼び出しは変換で捨てる）。`sections`（本文の節）と `checks`（検証結果）は
    * 無ければ空の配列、`favor` は無ければ空の文字列。`toolUseId` は呼び出しの id で、差し戻し（`src/server/report/core/report-review.ts`）が同じ
    * 呼び出しの `tool-finished` と突き合わせるのに使う。`closing`（締めのセリフ）は描いたあとに
-   * 差し戻しが `speech` として出すもので、画面の状態はこの欄を読まない。
+   * 差し戻しが `speech` として出すもので、画面の状態はこの欄を読まない。`unknownBlockCount` は知らない種類で
+   * 境界で落とした塊の数で、画面の状態は読まない。
    */
   | {
       readonly kind: "report"
@@ -177,6 +178,7 @@ export type SessionEvent =
       readonly favor: string
       readonly checks: readonly ReportCheck[]
       readonly closing: ReportClosing
+      readonly unknownBlockCount: number
     }
   | {
       readonly kind: "tool-started"

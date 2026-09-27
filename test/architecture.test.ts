@@ -115,6 +115,7 @@ const SERVER_FEATURE_IMPORTS: Readonly<Record<ServerFeature, ReadonlySet<ServerF
     "token-usage",
     "context-usage",
     "character-pack",
+    "report",
   ]),
   "view-server": new Set(["session", "achievement"]),
 }

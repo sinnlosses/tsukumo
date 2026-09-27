@@ -31,6 +31,7 @@ const REPORT: SessionEvent = {
   favor: "",
   checks: [],
   closing: { kind: "speech", text: "架空の締め", expression: "default" },
+  unknownBlockCount: 0,
 }
 const FINISHED: SessionEvent = { kind: "turn-finished", outcome: { kind: "completed" } }
 const utterance = (text: string): SessionEvent => ({ kind: "utterance", text })

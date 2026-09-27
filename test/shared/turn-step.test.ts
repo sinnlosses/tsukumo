@@ -122,6 +122,7 @@ describe("currentTurnSteps（report ツール）", () => {
         favor: "",
         checks: [],
         closing: { kind: "none" },
+        unknownBlockCount: 0,
       },
     ]
     const state = events.reduce(

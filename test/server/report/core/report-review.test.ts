@@ -48,6 +48,7 @@ const reportEvent = (
   toolUseId,
   ...draft,
   closing,
+  unknownBlockCount: 0,
 })
 const report = (
   toolUseId: string,

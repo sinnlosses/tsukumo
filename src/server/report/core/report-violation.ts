@@ -54,15 +54,25 @@ export type ReportViolation =
       readonly notations: readonly MarkdownNotation[]
     }
 
+/** 逃げ道（`markdown` の塊）の中に出た記法の種類（重複無し）。 */
+export function notationsInSections(
+  sections: readonly ReportSection[],
+): readonly MarkdownNotation[] {
+  const markdowns = sections
+    .flatMap((section) => section.blocks)
+    .flatMap((block) => (block.kind === "markdown" ? [splitFences(block.markdown)] : []))
+  return MARKDOWN_NOTATIONS.filter((notation) =>
+    markdowns.some((markdown) => hasNotation(markdown, notation)),
+  )
+}
+
 /** レポートの規約違反を並べる。空なら違反は無い。 */
 export function reportViolations(report: ReportDraft): readonly ReportViolation[] {
   const blocks = report.sections.flatMap((section) => section.blocks)
   const markdowns = blocks.flatMap((block) =>
     block.kind === "markdown" ? [splitFences(block.markdown)] : [],
   )
-  const notations = MARKDOWN_NOTATIONS.filter((notation) =>
-    markdowns.some((markdown) => hasNotation(markdown, notation)),
-  )
+  const notations = notationsInSections(report.sections)
 
   const counted = [
     { kind: "long-conclusion", count: sentenceCount(report.conclusion) },
@@ -155,7 +165,7 @@ const MARKDOWN_NOTATION_NAMES = {
   mermaid: { written: "mermaid のフェンス", replacement: "`mermaid` の塊" },
 } as const satisfies Record<string, { readonly written: string; readonly replacement: string }>
 
-const MARKDOWN_NOTATIONS = Object.keys(MARKDOWN_NOTATION_NAMES).filter(
+export const MARKDOWN_NOTATIONS = Object.keys(MARKDOWN_NOTATION_NAMES).filter(
   (name): name is MarkdownNotation => name in MARKDOWN_NOTATION_NAMES,
 )
 

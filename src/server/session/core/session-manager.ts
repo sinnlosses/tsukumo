@@ -34,6 +34,7 @@ import {
   createContextUsageRecorder,
 } from "../../context-usage/core/context-usage.ts"
 import { type DispatchResult } from "../../core/command-receiver.ts"
+import { type ReportUsageLog, reportUsageEntryOf } from "../../report/core/report-usage.ts"
 import {
   type PromptImageShelf,
   releasedPromptImageIds,
@@ -82,6 +83,8 @@ export type SessionManagerOptions = {
    * 「どこに・どんな形で書くか」しか持たない。
    */
   readonly contextUsageLog: ContextUsageLog
+  /** 描いた `report` 1回につき1行、塊の使われ方を書く口。 */
+  readonly reportUsageLog: ReportUsageLog
   /**
    * 依頼に添えた画像の原寸の棚（`PromptImageShelf`）。持ち主は
    * 配線 — `/prompt-image/<id>` で配る側も同じ棚を引く。
@@ -295,6 +298,11 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
     // （`docs/requirements.md`「トークン消費の見直し」）が、ほかの書き込みと条件を揃えてある。
     if (origin === "driver" && event.kind === "usage-review-result") {
       options.writePreviousUsageReview(at, event.findings)
+    }
+    // 復元の再生は前のセッションで描いたぶんなので数えない。
+    // セッションIDが決まる前の行は、どのセッションのものか分からなくなるので書かない。
+    if (origin === "driver" && event.kind === "report" && state.session.kind !== "starting") {
+      options.reportUsageLog.append(reportUsageEntryOf(event, state.session.sessionId, at))
     }
     if (origin === "driver" && event.kind === "turn-finished") {
       tally.tokenUsage.finishTurn()

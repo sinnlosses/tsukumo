@@ -88,6 +88,7 @@ describe("mainViewTurnsOf（claude が自分で始めた続きのターン）", 
     favor: "",
     checks: [],
     closing: { kind: "none" },
+    unknownBlockCount: 0,
   })
   const finished: SessionEvent = { kind: "turn-finished", outcome: { kind: "completed" } }
   const resumed: SessionEvent = { kind: "turn-resumed" }
@@ -174,6 +175,7 @@ describe("mainViewTurnsOf（最終レポートの札は、やり取りが閉じ�
     favor: "",
     checks: [],
     closing: { kind: "none" },
+    unknownBlockCount: 0,
   })
   const finished: SessionEvent = { kind: "turn-finished", outcome: { kind: "completed" } }
   const resumed: SessionEvent = { kind: "turn-resumed" }
@@ -209,6 +211,7 @@ describe("mainViewTurnsOf（続きのターンを2回以上含む並びを1件�
     favor: "",
     checks: [],
     closing: { kind: "none" },
+    unknownBlockCount: 0,
   }
   const finished: SessionEvent = { kind: "turn-finished", outcome: { kind: "completed" } }
   const resumed: SessionEvent = { kind: "turn-resumed" }
@@ -230,6 +233,7 @@ describe("mainViewTurnsOf（続きのターンを2回以上含む並びを1件�
     favor: "",
     checks: [],
     closing: { kind: "none" },
+    unknownBlockCount: 0,
   }
 
   // 依頼 → 中間 report → 合図（turn-resumed → speech → ターンの終わり）→ 合図（同じ形）→

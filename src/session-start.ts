@@ -40,6 +40,7 @@ import {
 } from "./server/diary/core/diary-writer.ts"
 import { createOrcaHost } from "./server/host/adapter/orca-host.ts"
 import { openTrackedFile } from "./server/host/core/tracked-file.ts"
+import { createReportUsageLog } from "./server/report/adapter/report-usage-log.ts"
 import { listRepositoryFiles } from "./server/repository/adapter/repository-file.ts"
 import { watchTaskSummary } from "./server/repository/adapter/task-summary.ts"
 import { type FakeSession, startFakeSession } from "./server/session-driver/adapter/fake-driver.ts"
@@ -145,6 +146,7 @@ export function startSession(options: SessionStartOptions): StartedSession {
   // `session-manager` から、セッション1つにつき1行だけで、読むのは tsukumo の外なので、
   // ここで作ってそのまま渡す。
   const contextUsageLog = createContextUsageLog()
+  const reportUsageLog = createReportUsageLog()
   // レポートのパスを開く先（`main.ts` の `openLayoutView` とは別に、ここでも1つ作る。
   // `createOrcaHost()` は状態を持たないので、作り直しても構わない）。
   const host = createOrcaHost()
@@ -183,6 +185,7 @@ export function startSession(options: SessionStartOptions): StartedSession {
     // いつ1行書くか（そのセッションでまだ書いていない最初のターンの終わり）を決めるのも
     // `session-manager` なので、ここも口を渡すだけ。
     contextUsageLog,
+    reportUsageLog,
     // 置く契機（`prompt`）と捨てる契機（記録の窓）を決めるのも `session-manager`。
     promptImageShelf,
     launchSession: createSessionLaunch<CharacterPack>({

@@ -587,6 +587,7 @@ describe("toRestoredEvents", () => {
         favor: "",
         checks: [],
         closing: { kind: "none" },
+        unknownBlockCount: 0,
       },
     ])
   })

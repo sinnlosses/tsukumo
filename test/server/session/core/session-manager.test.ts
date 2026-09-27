@@ -19,6 +19,10 @@ import {
   type DiaryWriterSource,
 } from "../../../../src/server/diary/core/diary-writer.ts"
 import {
+  type ReportUsageEntry,
+  type ReportUsageLog,
+} from "../../../../src/server/report/core/report-usage.ts"
+import {
   createPromptImageShelf,
   type PromptImageShelf,
   recordedPromptImages,
@@ -59,6 +63,7 @@ import {
   type ServerFrame,
 } from "../../../../src/shared/frame.ts"
 import { type PromptImage } from "../../../../src/shared/prompt-image.ts"
+import { type ReportSection } from "../../../../src/shared/report-block.ts"
 import { type SessionDefault } from "../../../../src/shared/session-default.ts"
 import { type SessionEvent } from "../../../../src/shared/session-event.ts"
 import {
@@ -98,6 +103,9 @@ const NOOP_TOKEN_USAGE_LOG: TokenUsageLog = { append: () => {}, readRange: () =>
 
 /** コンテキストの内訳の記録を気にしないテストに渡す、何もしない書き込み口。 */
 const NOOP_CONTEXT_USAGE_LOG: ContextUsageLog = { append: () => {} }
+
+/** `report` の塊の使われ方の記録を気にしないテストに渡す、何もしない書き込み口。 */
+const NOOP_REPORT_USAGE_LOG: ReportUsageLog = { append: () => {} }
 
 /** 訪問を気にしないテストに渡す口（客の候補が居ないので来ない。時計は起こさない）。 */
 const NO_VISIT_PORTS: VisitPorts = {
@@ -307,6 +315,7 @@ function startManagerWithStub(
     chatArchive: NOOP_CHAT_ARCHIVE,
     tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
     contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
+    reportUsageLog: NOOP_REPORT_USAGE_LOG,
     promptImageShelf: createPromptImageShelf(),
     rememberSessionDefault: (sessionDefault) => {
       remembered.push(sessionDefault)
@@ -476,6 +485,7 @@ describe("createSessionManager", () => {
       chatArchive: NOOP_CHAT_ARCHIVE,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
+      reportUsageLog: NOOP_REPORT_USAGE_LOG,
       promptImageShelf: createPromptImageShelf(),
       rememberSessionDefault: (sessionDefault) => ({
         kind: "session-default-changed",
@@ -590,6 +600,7 @@ describe("createSessionManager", () => {
       chatArchive: NOOP_CHAT_ARCHIVE,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
+      reportUsageLog: NOOP_REPORT_USAGE_LOG,
       promptImageShelf: createPromptImageShelf(),
       rememberSessionDefault: (sessionDefault) => ({
         kind: "session-default-changed",
@@ -667,6 +678,7 @@ describe("createSessionManager", () => {
       chatArchive: NOOP_CHAT_ARCHIVE,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
+      reportUsageLog: NOOP_REPORT_USAGE_LOG,
       promptImageShelf: createPromptImageShelf(),
       rememberSessionDefault: (sessionDefault) => ({
         kind: "session-default-changed",
@@ -723,6 +735,7 @@ describe("createSessionManager", () => {
       chatArchive: NOOP_CHAT_ARCHIVE,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
+      reportUsageLog: NOOP_REPORT_USAGE_LOG,
       promptImageShelf: createPromptImageShelf(),
       rememberSessionDefault: (sessionDefault) => ({
         kind: "session-default-changed",
@@ -782,6 +795,7 @@ describe("createSessionManager", () => {
       chatArchive: NOOP_CHAT_ARCHIVE,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
+      reportUsageLog: NOOP_REPORT_USAGE_LOG,
       promptImageShelf: createPromptImageShelf(),
       rememberSessionDefault: (sessionDefault) => ({
         kind: "session-default-changed",
@@ -846,6 +860,7 @@ describe("createSessionManager", () => {
       chatArchive: NOOP_CHAT_ARCHIVE,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
+      reportUsageLog: NOOP_REPORT_USAGE_LOG,
       promptImageShelf: createPromptImageShelf(),
       rememberSessionDefault: (sessionDefault) => ({
         kind: "session-default-changed",
@@ -1119,6 +1134,7 @@ describe("createSessionManager", () => {
         chatArchive: archive,
         tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
         contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
+        reportUsageLog: NOOP_REPORT_USAGE_LOG,
         promptImageShelf: createPromptImageShelf(),
         rememberSessionDefault: (sessionDefault) => ({
           kind: "session-default-changed",
@@ -1500,6 +1516,7 @@ describe("createSessionManager", () => {
       chatArchive: NOOP_CHAT_ARCHIVE,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
+      reportUsageLog: NOOP_REPORT_USAGE_LOG,
       promptImageShelf: createPromptImageShelf(),
       rememberSessionDefault: (sessionDefault) => ({
         kind: "session-default-changed",
@@ -1553,6 +1570,7 @@ describe("createSessionManager", () => {
       chatArchive: NOOP_CHAT_ARCHIVE,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
+      reportUsageLog: NOOP_REPORT_USAGE_LOG,
       promptImageShelf: createPromptImageShelf(),
       rememberSessionDefault: (sessionDefault) => ({
         kind: "session-default-changed",
@@ -1598,6 +1616,7 @@ describe("createSessionManager", () => {
       chatArchive: NOOP_CHAT_ARCHIVE,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
+      reportUsageLog: NOOP_REPORT_USAGE_LOG,
       promptImageShelf: createPromptImageShelf(),
       rememberSessionDefault: (sessionDefault) => ({
         kind: "session-default-changed",
@@ -1685,6 +1704,7 @@ describe("createSessionManager", () => {
         chatArchive,
         tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
         contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
+        reportUsageLog: NOOP_REPORT_USAGE_LOG,
         promptImageShelf: createPromptImageShelf(),
         rememberSessionDefault: (sessionDefault) => ({
           kind: "session-default-changed",
@@ -1896,6 +1916,7 @@ describe("createSessionManager", () => {
           readRange: () => [],
         },
         contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
+        reportUsageLog: NOOP_REPORT_USAGE_LOG,
         promptImageShelf: createPromptImageShelf(),
         rememberSessionDefault: (sessionDefault) => ({
           kind: "session-default-changed",
@@ -2193,6 +2214,7 @@ describe("createSessionManager", () => {
             entries.push(entry)
           },
         },
+        reportUsageLog: NOOP_REPORT_USAGE_LOG,
         promptImageShelf: createPromptImageShelf(),
         rememberSessionDefault: (sessionDefault) => ({
           kind: "session-default-changed",
@@ -2309,6 +2331,124 @@ describe("createSessionManager", () => {
       expect(entries).toEqual([])
     })
   })
+
+  // `report` の塊の使われ方の記録。描いた（差し戻されなかった）report だけが1行になることを
+  // ここで固定する（docs/research/report-block.md 6章）。
+  describe("report の塊の使われ方の記録", () => {
+    function sessionInfo(sessionId: string): SessionEvent {
+      return {
+        kind: "session-info",
+        sessionId,
+        model: "opus",
+        permissionMode: "auto",
+        slashCommands: [],
+        terminalSlashCommands: [],
+      }
+    }
+
+    /** 描いた `report` の `SessionEvent`（中身はすべて手で書いた架空のもの）。 */
+    function reportEvent(sections: readonly ReportSection[], unknownBlockCount = 0): SessionEvent {
+      return {
+        kind: "report",
+        toolUseId: "toolu_r1",
+        conclusion: "架空の結論。",
+        sections,
+        favor: "",
+        checks: [],
+        closing: { kind: "none" },
+        unknownBlockCount,
+      }
+    }
+
+    function startReportUsageManagerWithStub() {
+      const stub = createStubDriver()
+      const entries: ReportUsageEntry[] = []
+      const manager = createSessionManager({
+        now: () => 1_000,
+        openFile: () => Promise.resolve(true),
+        readAchievementDay: () => Promise.resolve(undefined),
+        batchIntervalMs: BATCH_MS,
+        chatConsolidation: NO_CHAT_CONSOLIDATION,
+        visit: NO_VISIT_PORTS,
+        diary: NO_DIARY_WRITER,
+        chatArchive: NOOP_CHAT_ARCHIVE,
+        tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
+        contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
+        reportUsageLog: {
+          append: (entry) => {
+            entries.push(entry)
+          },
+        },
+        promptImageShelf: createPromptImageShelf(),
+        rememberSessionDefault: (sessionDefault) => ({
+          kind: "session-default-changed",
+          sessionDefault,
+        }),
+        rememberVisitEnabled: (visitEnabled) => ({
+          kind: "visit-enabled-changed",
+          visitEnabled,
+        }),
+        launchSession: (onEvent, onRestoredEvent) => {
+          stub.attach(onEvent)
+          stub.attachRestored(onRestoredEvent)
+          return Promise.resolve(stub.driver)
+        },
+        editCharacter: () => Promise.resolve(undefined),
+        createCharacter: () => Promise.resolve(undefined),
+        deleteCharacter: () => Promise.resolve(undefined),
+        forgetRememberedLine: () => Promise.resolve(undefined),
+        readPreviousUsageReview: (): PreviousUsageReview => ({ kind: "none" }),
+        writePreviousUsageReview: () => {},
+        dismissUsageProposal: (dismiss) => ({
+          kind: "usage-proposal-dismissed",
+          key: usageProposalKey(dismiss),
+        }),
+      })
+      return { manager, stub, entries }
+    }
+
+    it("描いた report のたびに、塊の種類と時刻・セッションIDを1行書く", async () => {
+      const { stub, entries } = startReportUsageManagerWithStub()
+      await waitForBatch()
+
+      stub.emit(sessionInfo("claude-session-1"))
+      stub.emit(
+        reportEvent([{ heading: "", blocks: [{ kind: "text", text: "架空の根拠。", fold: "" }] }]),
+      )
+      await waitForBatch()
+
+      expect(entries).toEqual([
+        {
+          at: 1_000,
+          sessionId: "claude-session-1",
+          blockKinds: ["text"],
+          notations: [],
+          unknownBlockCount: 0,
+        },
+      ])
+    })
+
+    it("claude 側のセッションIDが分からないうちは書かない", async () => {
+      const { stub, entries } = startReportUsageManagerWithStub()
+      await waitForBatch()
+
+      stub.emit(reportEvent([]))
+      await waitForBatch()
+
+      expect(entries).toEqual([])
+    })
+
+    it("復元で流し直された report では書かない", async () => {
+      const { stub, entries } = startReportUsageManagerWithStub()
+      await waitForBatch()
+
+      stub.emit(sessionInfo("claude-session-1"))
+      stub.emitRestored(reportEvent([]))
+      await waitForBatch()
+
+      expect(entries).toEqual([])
+    })
+  })
 })
 
 // 新しいセッションの既定（docs/screen-design.md 13.6）。覚えるのは配線層（`src/session-start.ts`）で、
@@ -2408,6 +2548,7 @@ describe("依頼に添えた画像の棚", () => {
       chatArchive: NOOP_CHAT_ARCHIVE,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
+      reportUsageLog: NOOP_REPORT_USAGE_LOG,
       promptImageShelf: shelf,
       rememberSessionDefault: (sessionDefault) => ({
         kind: "session-default-changed",
@@ -2585,6 +2726,7 @@ describe("createSessionManager（見直し）", () => {
       chatArchive: NOOP_CHAT_ARCHIVE,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
+      reportUsageLog: NOOP_REPORT_USAGE_LOG,
       promptImageShelf: createPromptImageShelf(),
       rememberSessionDefault: (sessionDefault) => ({
         kind: "session-default-changed",
@@ -2719,6 +2861,7 @@ describe("訪問", () => {
       chatArchive: NOOP_CHAT_ARCHIVE,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
+      reportUsageLog: NOOP_REPORT_USAGE_LOG,
       promptImageShelf: createPromptImageShelf(),
       rememberSessionDefault: (sessionDefault) => ({
         kind: "session-default-changed",

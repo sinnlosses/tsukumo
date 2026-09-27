@@ -1063,6 +1063,7 @@ describe("toSessionEvents（report ツール）", () => {
         favor: "架空のお願い",
         checks: [{ status: "ok", label: "架空の検査", detail: "架空の件数" }],
         closing: { kind: "speech", text: "架空の締め", expression: "proud" },
+        unknownBlockCount: 0,
       },
     ])
   })
@@ -1105,6 +1106,8 @@ describe("toSessionEvents（report ツール）", () => {
             ],
           },
         ],
+        // 知らない種類（"chart"）だけを数える。既知の種類の値が崩れた「list」「note」は数えない。
+        unknownBlockCount: 1,
       },
     ])
   })
@@ -1128,6 +1131,7 @@ describe("toSessionEvents（report ツール）", () => {
         favor: "",
         checks: [],
         closing: { kind: "none" },
+        unknownBlockCount: 0,
       },
     ])
   })
