@@ -47,12 +47,17 @@ function tagsOf(root: HTMLElement): readonly (readonly string[])[] {
   )
 }
 
-/** 時間帯だけを見る塊（`blockProgress` は位置を見ない）。 */
-function blockBetween(startMs: number, endMs: number): RevealBlock {
+/** 時間帯だけを見る塊（`blockProgress` は位置を見ない）。留めが無ければ第3引数は省く。 */
+function blockBetween(
+  startMs: number,
+  endMs: number,
+  pauses: readonly { readonly atMs: number; readonly durationMs: number }[] = [],
+): RevealBlock {
   return {
     members: [{ element: document.createElement("p"), kind: "text" }],
     startMs,
     endMs,
+    pauses,
   }
 }
 
@@ -193,6 +198,41 @@ describe("planReveal（物差し=timing を変えると速さが変わる）", (
   })
 })
 
+describe("planReveal（留める位置の割り当て）", () => {
+  it("note の注意・異常（印は report-pause-point）は塊の末尾に留めを持ち、留めた分だけ endMs が伸びる", () => {
+    const blocks = planReveal(
+      rootWith('<p>まえがき</p><div class="note note-warn report-pause-point">ちゅうい</div>'),
+      STANDARD_TIMING,
+    )
+
+    // 文字の重みは8（4+4）で下限に張り付くので、内容の持ち時間は MIN_BLOCK_MS。留めは末尾（重みの合計と同じ位置）。
+    expect(blocks[0]?.pauses).toEqual([{ atMs: MIN_BLOCK_MS, durationMs: 400 }])
+    expect(blocks[0]?.endMs).toBe(MIN_BLOCK_MS + 400)
+  })
+
+  it("options の中の「採る」カード（印は report-pause-point）は、直下の子の文字数で位置を按分する", () => {
+    const blocks = planReveal(
+      rootWith(
+        '<div class="options">' +
+          '<div class="option option-reject">A</div>' +
+          '<div class="option option-adopt report-pause-point">BB</div>' +
+          '<div class="option">CCC</div>' +
+          "</div>",
+      ),
+      STANDARD_TIMING,
+    )
+
+    // 直下の子の文字数は A=1・BB=2・CCC=3（合計6）。「採る」までの累計は1+2=3で、ちょうど半分の位置。
+    expect(blocks[0]?.pauses).toEqual([{ atMs: MIN_BLOCK_MS / 2, durationMs: 400 }])
+  })
+
+  it("留める対象が無ければ留めも無い", () => {
+    const blocks = planReveal(rootWith("<p>ただの段落</p>"), STANDARD_TIMING)
+
+    expect(blocks[0]?.pauses).toEqual([])
+  })
+})
+
 describe("blockProgress（塊の中の進み方）", () => {
   /** 位置は見ないので、塊は時間帯だけで区別する。 */
   const block = blockBetween(0, 1000)
@@ -222,5 +262,32 @@ describe("blockProgress（塊の中の進み方）", () => {
     const instant = blockBetween(400, 400)
 
     expect(blockProgress(instant, 400)).toBe(1)
+  })
+})
+
+describe("blockProgress（留めている間は足踏みする）", () => {
+  // 書く時間の軸は1000ms（内容の持ち時間）で、500msの位置に400msの留めを持つ塊
+  // （時間帯そのものは 1000 + 400 = 1400ms に伸びる）。
+  const block = blockBetween(0, 1400, [{ atMs: 500, durationMs: 400 }])
+
+  it("留めの位置と、留めている間は同じ進み具合のまま動かない", () => {
+    const atPauseStart = blockProgress(block, 500)
+
+    expect(blockProgress(block, 700)).toBeCloseTo(atPauseStart, 10)
+    expect(blockProgress(block, 900)).toBeCloseTo(atPauseStart, 10)
+  })
+
+  it("留めを抜けたら、また先へ進む", () => {
+    expect(blockProgress(block, 1400)).toBeGreaterThan(blockProgress(block, 900))
+    expect(blockProgress(block, 1400)).toBe(1)
+  })
+
+  it("留めが無いのと比べて、留めた分だけ同じ経過時間での進みが遅れる", () => {
+    const withoutPause = blockBetween(0, 1000)
+
+    // 留めの前（400ms）はどちらも同じ書く時間の軸の上にいるので、進み具合も同じ。
+    expect(blockProgress(block, 400)).toBeCloseTo(blockProgress(withoutPause, 400), 10)
+    // 留めのあと（900ms経過）は、留めた塊のほうが書く時間の軸で見るとまだ500msぶんしか進んでいない。
+    expect(blockProgress(block, 900)).toBeCloseTo(blockProgress(withoutPause, 500), 10)
   })
 })

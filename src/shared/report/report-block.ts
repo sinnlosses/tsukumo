@@ -328,6 +328,13 @@ function isUnknownKindBlock(block: unknown): boolean {
   return kind.success && !REPORT_BLOCK_KINDS.some((known) => known === kind.data.kind)
 }
 
+/**
+ * 書き上げる演出（`planReveal`）が筆を留める対象の印。
+ * `NotationBlock` は記法の語彙にある class 名だけを CSS Modules のハッシュ名へ置き換えるので、
+ * 語彙に無いこの名前は素通りする（`report-section-break` と同じやり方）。
+ */
+const PAUSE_POINT_CLASS_NAME = "report-pause-point"
+
 /** 表のセルの状態 → バッジの class（記法の `badge-*`）と、書き手の文字に関わらず付ける語。 */
 const CELL_BADGES = {
   ok: { className: "badge-ok", label: "OK" },
@@ -338,9 +345,13 @@ const CELL_BADGES = {
   { readonly className: string; readonly label: string }
 >
 
-/** 候補の判定 → カードとバッジの class と、バッジに出す語。 */
+/** 候補の判定 → カードとバッジの class と、バッジに出す語。「採る」は筆を留める対象。 */
 const OPTION_VERDICTS = {
-  adopt: { cardClass: "option option-adopt", badgeClass: "badge badge-ok", label: "採る" },
+  adopt: {
+    cardClass: `option option-adopt ${PAUSE_POINT_CLASS_NAME}`,
+    badgeClass: "badge badge-ok",
+    label: "採る",
+  },
   consider: { cardClass: "option", badgeClass: "badge", label: "検討" },
   reject: { cardClass: "option option-reject", badgeClass: "badge", label: "採らない" },
 } as const satisfies Record<
@@ -356,11 +367,11 @@ const FILE_CHANGE_LABELS = {
   read: "読んだ",
 } as const satisfies Record<(typeof REPORT_FILE_CHANGES)[number], string>
 
-/** `note` の種別 → 記法の class。ラベルは描く側が class から引く（`REPORT_NOTE_KINDS`）。 */
+/** `note` の種別 → 記法の class。ラベルは描く側が class から引く（`REPORT_NOTE_KINDS`）。注意・異常は筆を留める対象。 */
 const NOTE_CLASSES = {
   info: "note",
-  warn: "note note-warn",
-  ng: "note note-ng",
+  warn: `note note-warn ${PAUSE_POINT_CLASS_NAME}`,
+  ng: `note note-ng ${PAUSE_POINT_CLASS_NAME}`,
   ask: "note note-ask",
   memo: "note note-memo",
 } as const satisfies Record<(typeof REPORT_NOTE_TONES)[number], string>
