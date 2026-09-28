@@ -163,7 +163,7 @@ node scripts/stop.ts           # 動いている tsukumo の一覧（--port <n> 
 | 色・書体・レイアウト                                                                            | `docs/architecture/screen-design.md`                                               |
 | セリフとレポートの分離・レポートの記法・各表示物の仕様                                          | `docs/architecture/display.md`                                                     |
 | 雑談モード                                                                                      | `docs/architecture/chat-mode.md`                                                   |
-| なぜ今の形なのか                                                                                | `docs/architecture.md`                                                             |
+| なぜ今の形なのか                                                                                | `docs/architecture.md`「設計判断」（各判断の本文は `docs/architecture/adr/`）      |
 | ブラウザ側の状態・Markdown・立ち絵の動き・CSS・`components/ui/` の部品の作法                    | `docs/architecture/browser.md`                                                     |
 | キャラクターパックの形・探索順・画面から書くときの境界                                          | `docs/architecture/character-pack.md`                                              |
 | テストの方法・E2E・目視の手順                                                                   | `docs/architecture/testing.md`                                                     |
