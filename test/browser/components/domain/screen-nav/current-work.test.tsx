@@ -275,6 +275,78 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
     })
   })
 
+  describe("レポートを書いている途中", () => {
+    it("作業中にメインが report の引数を書いていると、要約が「レポートを書いています」になる", () => {
+      renderScreenNav({
+        turn: { kind: "running", startedAt: 0 },
+        records: [
+          requestRecord(),
+          toolRecord({ toolUseId: "toolu_1", name: "Bash", input: { command: "echo dummy" } }),
+        ],
+        reportDrafting: { kind: "drafting", toolUseId: "fake-report-1" },
+      })
+
+      expect(document.querySelector(".screen-nav-work-word")?.textContent).toBe("作業中")
+      expect(document.querySelector(".screen-nav-work-summary")?.textContent).toBe(
+        "レポートを書いています",
+      )
+    })
+
+    it("答え待ちが許可要求でも、書いている途中なら要約が「レポートを書いています」になる", () => {
+      renderScreenNav({
+        turn: { kind: "running", startedAt: 0 },
+        pending: [FIXTURE_PENDING],
+        reportDrafting: { kind: "drafting", toolUseId: "fake-report-1" },
+      })
+
+      expect(document.querySelector(".screen-nav-work-word")?.textContent).toBe("答え待ち")
+      expect(document.querySelector(".screen-nav-work-summary")?.textContent).toBe(
+        "レポートを書いています",
+      )
+    })
+
+    it("答え待ちが質問なら、書いている途中でも質問の要約が勝つ", () => {
+      renderScreenNav({
+        turn: { kind: "running", startedAt: 0 },
+        pending: [questionPending(["最初の見出し"])],
+        reportDrafting: { kind: "drafting", toolUseId: "fake-report-1" },
+      })
+
+      expect(document.querySelector(".screen-nav-work-summary")?.textContent).toBe("最初の見出し")
+    })
+
+    it("report が届く（reportDrafting が idle に戻る）と、元の実行中の手順の要約に戻る", () => {
+      renderScreenNav({
+        turn: { kind: "running", startedAt: 0 },
+        records: [
+          requestRecord(),
+          toolRecord({ toolUseId: "toolu_1", name: "Bash", input: { command: "echo dummy" } }),
+        ],
+        reportDrafting: { kind: "drafting", toolUseId: "fake-report-1" },
+      })
+
+      expect(document.querySelector(".screen-nav-work-summary")?.textContent).toBe(
+        "レポートを書いています",
+      )
+
+      act(() => {
+        putState({
+          ...INITIAL_SESSION_STATE,
+          turn: { kind: "running", startedAt: 0 },
+          records: [
+            requestRecord(),
+            toolRecord({ toolUseId: "toolu_1", name: "Bash", input: { command: "echo dummy" } }),
+          ],
+          reportDrafting: { kind: "idle" },
+        })
+      })
+
+      expect(document.querySelector(".screen-nav-work-summary")?.textContent).toBe(
+        "Bash: echo dummy",
+      )
+    })
+  })
+
   it("答え待ちで札の語が「答え待ち」に変わり、要約も出る", () => {
     renderScreenNav({
       turn: { kind: "running", startedAt: 0 },

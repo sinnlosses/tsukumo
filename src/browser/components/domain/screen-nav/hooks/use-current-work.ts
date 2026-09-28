@@ -20,6 +20,7 @@ import type {
   BackgroundTaskKind,
 } from "../../../../../shared/session-driver/background-task.ts"
 import type { PendingAsk } from "../../../../../shared/session-driver/pending-ask.ts"
+import type { ReportDrafting } from "../../../../../shared/session/session-state.ts"
 import {
   currentTurnSteps,
   toolDuration,
@@ -194,6 +195,7 @@ export function useCurrentWork(navRef: RefObject<HTMLElement | null>): ScreenNav
   const records = useSession((session) => session.state.records)
   const backgroundTasks = useSession((session) => session.state.backgroundTasks)
   const diaryWriting = useSession((session) => session.state.diaryWriting)
+  const reportDrafting = useSession((session) => session.state.reportDrafting)
   const chatMode = useSession((session) => session.state.chatMode)
   const characterName = useSession((session) => session.state.character?.name)
   const screen = useScreen()
@@ -283,7 +285,14 @@ export function useCurrentWork(navRef: RefObject<HTMLElement | null>): ScreenNav
     mark: state === "idle" && !chatIdle ? "○" : "●",
     chatIdle,
     pendingHint: toPendingHintView(state, firstPending, onGoToQuestion),
-    summary: toSummaryView(state, firstPending, runningStep, backgroundTasks, diaryWriting),
+    summary: toSummaryView(
+      state,
+      firstPending,
+      runningStep,
+      backgroundTasks,
+      diaryWriting,
+      reportDrafting,
+    ),
     runningStep,
     backgroundList: toBackgroundListView(backgroundTasks),
     stepList: toStepListView(turnStepList, { turnInProgress, expanded, onToggleExpanded }),
@@ -320,6 +329,7 @@ function isRunningStep(step: TurnStep): boolean {
  * {@link ScreenNavCurrentWorkSummary} を組み立てる。
  * 答え待ちの先頭が質問なら、実行中の手順の要約より質問の要約を優先する。
  * 背景で作業中なら背景のタスクの要約、振り返り中は「<日付>の日記を書いています」を出す。
+ * メインが `report` の引数を書いている途中（{@link ReportDrafting}）は、実行中の手順の要約より優先する。
  */
 function toSummaryView(
   state: ScreenNavCurrentWorkState,
@@ -327,6 +337,7 @@ function toSummaryView(
   runningStep: ScreenNavCurrentWorkRunningStep,
   backgroundTasks: readonly BackgroundTask[],
   diaryWriting: DiaryWriting,
+  reportDrafting: ReportDrafting,
 ): ScreenNavCurrentWorkSummary {
   if (state === "diary" && diaryWriting.kind === "writing") {
     return {
@@ -343,6 +354,9 @@ function toSummaryView(
     if (label !== undefined) {
       return { kind: "text", label }
     }
+  }
+  if (reportDrafting.kind === "drafting") {
+    return { kind: "text", label: "レポートを書いています" }
   }
   return runningStep.kind === "shown"
     ? { kind: "text", label: runningStep.summaryLabel }
