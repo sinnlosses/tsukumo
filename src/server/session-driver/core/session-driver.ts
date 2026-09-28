@@ -64,7 +64,7 @@ export type ChatSummaryRecord = {
  */
 export type ChatArchive = {
   /**
-   * 依頼またはセリフを1件、追記する。
+   * 依頼・セリフ・仕事のターンの結論のいずれか1件を追記する。
    * `packName` が `isCharacterPackName` を通らない・書けないときは黙って何もしない。
    */
   readonly append: (packName: string, entry: ChatArchiveEntry) => void
@@ -242,20 +242,52 @@ export type ChatArchiveRecentEntry = {
   readonly date: string
 }
 
-/** {@link ChatArchive.append} に渡す1件。`at` は届いた時刻（エポックミリ秒）。 */
+/**
+ * {@link ChatArchive.append} に渡す1件。`at` は届いた時刻（エポックミリ秒）。
+ * `mode` は書いたときが雑談か仕事か、`kind` は依頼・セリフ・仕事のターンの結論のどれか。
+ * `project` は仕事の行だけが持つ（リポジトリの名前だけ。パスは持たない）。
+ * 話者（利用者か、キャラクターか）は `kind` から決まるので、ここには持たない
+ * （`kind === "request"` なら利用者、それ以外はキャラクター。書き出す形への変換は adapter が持つ）。
+ */
 export type ChatArchiveEntry =
   | {
-      readonly speaker: "user"
+      readonly mode: "chat"
+      readonly kind: "request"
       readonly at: number
       readonly text: string
       /** 添えた画像の枚数。1枚以上あるときだけ値を持つ。 */
       readonly images: number | undefined
     }
   | {
-      readonly speaker: "character"
+      readonly mode: "chat"
+      readonly kind: "speech"
       readonly at: number
       readonly text: string
       readonly expression: Expression
+    }
+  | {
+      readonly mode: "work"
+      readonly kind: "request"
+      readonly at: number
+      readonly text: string
+      readonly project: string
+      /** 添えた画像の枚数。1枚以上あるときだけ値を持つ。 */
+      readonly images: number | undefined
+    }
+  | {
+      readonly mode: "work"
+      readonly kind: "speech"
+      readonly at: number
+      readonly text: string
+      readonly project: string
+      readonly expression: Expression
+    }
+  | {
+      readonly mode: "work"
+      readonly kind: "conclusion"
+      readonly at: number
+      readonly text: string
+      readonly project: string
     }
 
 /** このセッションが仕事か雑談か。 */

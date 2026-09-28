@@ -17,6 +17,7 @@ const BUDGET: ChatMemoryBudget = {
   recallEpisodeBytes: 128,
   recallEpisodesPerTurn: 2,
   consolidateEveryBytes: 1024,
+  workExcerptChars: 300,
 }
 
 const FOUND_LIST: ChatEpisodeRecallListResult = {

@@ -2,6 +2,7 @@
 // どの駆動で起こすか（本物の SDK か疑似セッションの fake driver か）と、続きから始めるセッションをどう探すかをここで決める。
 // 起こす順序そのものは `createSessionLaunch` に任せる（起動時も起こし直しも同じ関数を通る）。
 
+import { basename, dirname } from "node:path"
 import process from "node:process"
 
 import type { CurrentCharacter } from "./current-character.ts"
@@ -38,6 +39,7 @@ import {
 import { createOrcaHost } from "./server/host/adapter/orca-host.ts"
 import { openTrackedFile } from "./server/host/core/tracked-file.ts"
 import { createReportUsageLog } from "./server/report/adapter/report-usage-log.ts"
+import { runGit } from "./server/repository/adapter/git.ts"
 import { listRepositoryFiles } from "./server/repository/adapter/repository-file.ts"
 import { watchTaskSummary } from "./server/repository/adapter/task-summary.ts"
 import { type FakeSession, startFakeSession } from "./server/session-driver/adapter/fake-driver.ts"
@@ -122,11 +124,13 @@ export type StartedSession = {
 }
 
 /** セッションを1つ起こし、開いたタブから触れる窓口を返す。 */
-export function startSession(options: SessionStartOptions): StartedSession {
+export async function startSession(options: SessionStartOptions): Promise<StartedSession> {
   const { config, character, fakeSession, tokenUsageLog, promptImageShelf, viewPort } = options
   // claude の作業先は tsukumo を起こしたディレクトリ（作業ツリーを分けるのは orca の側）。
   const cwd = process.cwd()
-  // 雑談の会話のアーカイブの口は1つを、書く側（セッションの管理）と読む側（起こすとき）で共有する。
+  // 会話のアーカイブに仕事の行として書く `project`。起動時に1回だけ取る。
+  const project = await resolveArchiveProjectName(cwd)
+  // 会話のアーカイブの口は1つを、書く側（セッションの管理）と読む側（起こすとき）で共有する。
   const chatArchive = createChatArchive()
   const contextUsageLog = createContextUsageLog()
   const reportUsageLog = createReportUsageLog()
@@ -148,6 +152,7 @@ export function startSession(options: SessionStartOptions): StartedSession {
     now,
     batchIntervalMs: EVENT_BATCH_INTERVAL_MS,
     chatArchive,
+    project,
     // 疑似セッションでは claude を起こさないので、定着は走らせない。
     chatConsolidation:
       fakeSession === undefined
@@ -262,6 +267,17 @@ export function startSession(options: SessionStartOptions): StartedSession {
     },
     socketRouter,
   }
+}
+
+/**
+ * 会話のアーカイブの `project`（`docs/architecture/chat-mode.md`「雑談の会話のアーカイブ」）を取る。
+ * 共有の `.git` の親ディレクトリの名前で、`git` が無い・リポジトリでないときは `cwd` の最後の名前
+ * （日記の `<リポジトリ>` と同じ取り方だが、ハッシュは付けず、取れないときも諦めずに `cwd` へ落ちる）。
+ */
+async function resolveArchiveProjectName(cwd: string): Promise<string> {
+  const result = await runGit(cwd, ["rev-parse", "--path-format=absolute", "--git-common-dir"])
+  const gitDir = result.kind === "output" ? result.stdout.trim() : ""
+  return gitDir === "" ? basename(cwd) : basename(dirname(gitDir))
 }
 
 /**

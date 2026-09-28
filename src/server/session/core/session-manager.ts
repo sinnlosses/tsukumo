@@ -32,7 +32,10 @@ import type {
   PreviousUsageReview,
   UsageReviewFindings,
 } from "../../../shared/usage-review/usage-review.ts"
-import { appendChatArchiveEntry } from "../../chat/core/chat-archive-entry.ts"
+import {
+  appendChatArchiveConclusion,
+  appendChatArchiveEntry,
+} from "../../chat/core/chat-archive-entry.ts"
 import type { ChatConsolidationSource } from "../../chat/core/chat-consolidation-writer.ts"
 import {
   type ContextUsageLog,
@@ -60,8 +63,13 @@ export type SessionManagerOptions = {
   readonly now: () => number
   /** イベントをまとめる間隔（ミリ秒）。既定は `EVENT_BATCH_INTERVAL_MS`。 */
   readonly batchIntervalMs: number
-  /** 雑談の会話のアーカイブの書き込み口。 */
+  /** 会話のアーカイブの書き込み口（雑談と仕事の両方が書く）。 */
   readonly chatArchive: ChatArchive
+  /**
+   * 仕事の行に付ける `project`（アーカイブの `docs/architecture/chat-mode.md`「雑談の会話のアーカイブ」）。
+   * リポジトリの名前だけで、パスは持たない。起動時に1回だけ配線層が取って渡す。
+   */
+  readonly project: string
   /**
    * 定着の出どころ（`ChatConsolidationSource`）。疑似セッションでは `dont-consolidate`。
    * いつ起こすか（雑談の駆動由来のターンの終わり）と、同時に1本に絞るのはここ。
@@ -168,6 +176,32 @@ type GenerationTally = {
   readonly visit: VisitWatch
   /** 振り返りの書き手を中断する信号。起こし直しで代を閉じたら、書いている最中の問い合わせも中断する。 */
   readonly diarySignal: AbortSignal
+  /** そのターンで最後に届いた `report` の結論を預かる入れ物（仕事のときだけ使う）。 */
+  readonly pendingConclusion: PendingConclusion
+}
+
+/**
+ * そのターンで最後に届いた `report` の結論を代の勘定に預ける入れ物。
+ * 途中の `report` は上書きするだけで、`turn-finished` で読み出して空に戻す
+ * （`report` 無しで終わったターンは預けたものが残らず、次のターンへ持ち越さない）。
+ */
+type PendingConclusion = {
+  readonly hold: (conclusion: string) => void
+  readonly takeAndClear: () => string | undefined
+}
+
+function createPendingConclusion(): PendingConclusion {
+  let current: string | undefined = undefined
+  return {
+    hold: (conclusion) => {
+      current = conclusion
+    },
+    takeAndClear: () => {
+      const conclusion = current
+      current = undefined
+      return conclusion
+    },
+  }
 }
 
 /**
@@ -234,7 +268,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
    * 駆動から届いたものと、見た目の編集で起こした `character-changed` の両方がここを通る（サーバ側の状態とブラウザへ配る内容を1本にする）。
    *
    * 畳み方と配り方は `origin` によらず同じ。
-   * 分かれているのは、雑談の会話のアーカイブへ書くのを駆動由来の依頼とセリフだけに絞るため（復元で流し直されたぶんまで書くと、起こし直すたびに同じ行が二重に積まれる）。
+   * 分かれているのは、会話のアーカイブへ書くのを駆動由来の依頼・セリフ・結論だけに絞るため（復元で流し直されたぶんまで書くと、起こし直すたびに同じ行が二重に積まれる）。
    */
   const receive = (tally: GenerationTally, event: SessionEvent, origin: EventOrigin): void => {
     if (closed) {
@@ -243,9 +277,20 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
     const at = options.now()
     replaceState(applySessionEvent(state, event, at))
     tally.batch.add({ at, event })
-    // 雑談の会話のアーカイブへ1行足す。駆動由来（`"driver"`）・雑談モード・パックが分かっているときだけ。
-    if (origin === "driver" && state.chatMode) {
-      appendChatArchiveEntry(options.chatArchive, state.character?.pack, at, event)
+    // 会話のアーカイブへ1行足す。駆動由来（`"driver"`）・パックが分かっているときだけ。
+    if (origin === "driver") {
+      appendChatArchiveEntry(
+        options.chatArchive,
+        state.character?.pack,
+        state.chatMode ? "chat" : "work",
+        options.project,
+        at,
+        event,
+      )
+    }
+    // 仕事のターンの結論を、代の勘定に預けて上書きする（`turn-finished` で読み出す）。
+    if (origin === "driver" && event.kind === "report") {
+      tally.pendingConclusion.hold(event.conclusion)
     }
     // ターンの中の内訳（ツール別・持ち場別）を積む。駆動由来（`"driver"`）だけ。
     // 復元の再生は前のセッションで使ったぶんなので、いまのターンに数えない。
@@ -275,6 +320,17 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
       const driver = tally.liveDriver()
       if (driver !== undefined) {
         void contextUsage.recordOnce(state, at, driver)
+      }
+      // 仕事のときだけ、預けておいた結論を1行書く。`report` 無しで終わったターンは何も足さない。
+      const conclusion = tally.pendingConclusion.takeAndClear()
+      if (!state.chatMode && conclusion !== undefined) {
+        appendChatArchiveConclusion(
+          options.chatArchive,
+          state.character?.pack,
+          options.project,
+          at,
+          conclusion,
+        )
       }
     }
     // 定着を起こす。雑談の駆動由来のターンの終わりだけで、走っていれば契機を捨てる。待たずに次へ進む。
@@ -346,6 +402,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
         },
       }),
       diarySignal: diaryAbort.signal,
+      pendingConclusion: createPendingConclusion(),
     }
     const receiveIfCurrent = (event: SessionEvent, origin: EventOrigin): void => {
       if (born !== bornCount) {

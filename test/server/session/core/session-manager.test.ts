@@ -46,6 +46,7 @@ import { VISIT_TIMING } from "../../../../src/server/visit/core/visit-timing.ts"
 import type { VisitPorts } from "../../../../src/server/visit/core/visit-watch.ts"
 import type { DailyAchievement } from "../../../../src/shared/achievement/achievement.ts"
 import type { VisitScript } from "../../../../src/shared/character-pack/character-visit.ts"
+import { CHAT_MEMORY_BUDGET } from "../../../../src/shared/chat/chat-memory-budget.ts"
 import {
   type ContextUsageReport,
   UNAVAILABLE_CONTEXT_USAGE,
@@ -96,6 +97,9 @@ import { createManualClock } from "../../../fixture/manual-clock.ts"
 import { readyPlanUsage } from "../../../fixture/plan-usage.ts"
 
 const BATCH_MS = 5
+
+/** 会話のアーカイブに書く仕事の行の `project`（架空のリポジトリの名前）。 */
+const FICTIONAL_PROJECT = "架空プロジェクト"
 
 /** トークン消費の記録を気にしないテストに渡す、何もしない書き込み口。 */
 const NOOP_TOKEN_USAGE_LOG: TokenUsageLog = { append: () => {}, readRange: () => [] }
@@ -323,6 +327,7 @@ function startManagerWithStub(
     visit: NO_VISIT_PORTS,
     diary,
     chatArchive: NOOP_CHAT_ARCHIVE,
+    project: FICTIONAL_PROJECT,
     tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
     contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
     reportUsageLog: NOOP_REPORT_USAGE_LOG,
@@ -523,6 +528,7 @@ describe("createSessionManager", () => {
       visit: NO_VISIT_PORTS,
       diary: NO_DIARY_WRITER,
       chatArchive: NOOP_CHAT_ARCHIVE,
+      project: FICTIONAL_PROJECT,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
       reportUsageLog: NOOP_REPORT_USAGE_LOG,
@@ -638,6 +644,7 @@ describe("createSessionManager", () => {
       visit: NO_VISIT_PORTS,
       diary: NO_DIARY_WRITER,
       chatArchive: NOOP_CHAT_ARCHIVE,
+      project: FICTIONAL_PROJECT,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
       reportUsageLog: NOOP_REPORT_USAGE_LOG,
@@ -716,6 +723,7 @@ describe("createSessionManager", () => {
       visit: NO_VISIT_PORTS,
       diary: NO_DIARY_WRITER,
       chatArchive: NOOP_CHAT_ARCHIVE,
+      project: FICTIONAL_PROJECT,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
       reportUsageLog: NOOP_REPORT_USAGE_LOG,
@@ -773,6 +781,7 @@ describe("createSessionManager", () => {
       visit: NO_VISIT_PORTS,
       diary: NO_DIARY_WRITER,
       chatArchive: NOOP_CHAT_ARCHIVE,
+      project: FICTIONAL_PROJECT,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
       reportUsageLog: NOOP_REPORT_USAGE_LOG,
@@ -833,6 +842,7 @@ describe("createSessionManager", () => {
       visit: NO_VISIT_PORTS,
       diary: NO_DIARY_WRITER,
       chatArchive: NOOP_CHAT_ARCHIVE,
+      project: FICTIONAL_PROJECT,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
       reportUsageLog: NOOP_REPORT_USAGE_LOG,
@@ -898,6 +908,7 @@ describe("createSessionManager", () => {
       visit: NO_VISIT_PORTS,
       diary: NO_DIARY_WRITER,
       chatArchive: NOOP_CHAT_ARCHIVE,
+      project: FICTIONAL_PROJECT,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
       reportUsageLog: NOOP_REPORT_USAGE_LOG,
@@ -1172,6 +1183,7 @@ describe("createSessionManager", () => {
         visit: NO_VISIT_PORTS,
         diary: NO_DIARY_WRITER,
         chatArchive: archive,
+        project: FICTIONAL_PROJECT,
         tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
         contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
         reportUsageLog: NOOP_REPORT_USAGE_LOG,
@@ -1553,6 +1565,7 @@ describe("createSessionManager", () => {
       visit: NO_VISIT_PORTS,
       diary: NO_DIARY_WRITER,
       chatArchive: NOOP_CHAT_ARCHIVE,
+      project: FICTIONAL_PROJECT,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
       reportUsageLog: NOOP_REPORT_USAGE_LOG,
@@ -1607,6 +1620,7 @@ describe("createSessionManager", () => {
       visit: NO_VISIT_PORTS,
       diary: NO_DIARY_WRITER,
       chatArchive: NOOP_CHAT_ARCHIVE,
+      project: FICTIONAL_PROJECT,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
       reportUsageLog: NOOP_REPORT_USAGE_LOG,
@@ -1653,6 +1667,7 @@ describe("createSessionManager", () => {
       visit: NO_VISIT_PORTS,
       diary: NO_DIARY_WRITER,
       chatArchive: NOOP_CHAT_ARCHIVE,
+      project: FICTIONAL_PROJECT,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
       reportUsageLog: NOOP_REPORT_USAGE_LOG,
@@ -1716,9 +1731,27 @@ describe("createSessionManager", () => {
     expect(frames.filter((frame) => frame.type === "events")).toHaveLength(0)
   })
 
-  describe("雑談の会話のアーカイブ", () => {
+  describe("会話のアーカイブ", () => {
     // `chatArchive` の実装（ファイルI/O）は adapter のテストが持つ。ここで見るのは
-    // 「いつ・何を渡すか」（`session-manager.receive` の分岐）だけ（docs/architecture/chat-mode.md「雑談モード」）。
+    // 「いつ・何を渡すか」（`session-manager.receive` の分岐）だけ
+    // （docs/architecture/chat-mode.md「雑談の会話のアーカイブ」）。
+
+    /** `report` の `SessionEvent`（結論だけ差し替えられる。中身はすべて手で書いた架空のもの）。 */
+    function reportEvent(conclusion: string): SessionEvent {
+      return {
+        kind: "report",
+        toolUseId: "toolu_r1",
+        conclusion,
+        sections: [
+          { heading: "", blocks: [{ kind: "text", text: "本文はここに出ない", fold: "" }] },
+        ],
+        favor: "本文はここに出ない",
+        checks: [{ status: "ok", label: "本文はここに出ない", detail: "" }],
+        closing: { kind: "none" },
+        unknownBlockCount: 0,
+        sessionSummary: undefined,
+      }
+    }
 
     function startArchiveManagerWithStub() {
       const stub = createStubDriver()
@@ -1738,6 +1771,7 @@ describe("createSessionManager", () => {
         visit: NO_VISIT_PORTS,
         diary: NO_DIARY_WRITER,
         chatArchive,
+        project: FICTIONAL_PROJECT,
         tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
         contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
         reportUsageLog: NOOP_REPORT_USAGE_LOG,
@@ -1782,11 +1816,23 @@ describe("createSessionManager", () => {
       expect(archiveCalls).toEqual([
         {
           packName: "fictional",
-          entry: { speaker: "user", at: 1_000, text: "架空の依頼", images: undefined },
+          entry: {
+            mode: "chat",
+            kind: "request",
+            at: 1_000,
+            text: "架空の依頼",
+            images: undefined,
+          },
         },
         {
           packName: "fictional",
-          entry: { speaker: "character", at: 1_000, text: "架空のセリフ", expression: "proud" },
+          entry: {
+            mode: "chat",
+            kind: "speech",
+            at: 1_000,
+            text: "架空のセリフ",
+            expression: "proud",
+          },
         },
       ])
     })
@@ -1810,18 +1856,128 @@ describe("createSessionManager", () => {
       expect(archiveCalls).toEqual([
         {
           packName: "fictional",
-          entry: { speaker: "user", at: 1_000, text: "架空の依頼", images: 2 },
+          entry: { mode: "chat", kind: "request", at: 1_000, text: "架空の依頼", images: 2 },
         },
       ])
     })
 
-    it("仕事のとき（雑談に入っていない）は1バイトも書かない", async () => {
+    it("仕事のときも、依頼とセリフが project つきでアーカイブへ渡る", async () => {
       const { stub, archiveCalls } = startArchiveManagerWithStub()
       await waitForBatch()
 
       stub.emit(CHARACTER_EVENT)
       stub.emit({ kind: "request", text: "架空の依頼", images: [] })
       stub.emit({ kind: "speech", text: "架空のセリフ", expression: "default" })
+      await waitForBatch()
+
+      expect(archiveCalls).toEqual([
+        {
+          packName: "fictional",
+          entry: {
+            mode: "work",
+            kind: "request",
+            at: 1_000,
+            text: "架空の依頼",
+            project: FICTIONAL_PROJECT,
+            images: undefined,
+          },
+        },
+        {
+          packName: "fictional",
+          entry: {
+            mode: "work",
+            kind: "speech",
+            at: 1_000,
+            text: "架空のセリフ",
+            project: FICTIONAL_PROJECT,
+            expression: "default",
+          },
+        },
+      ])
+    })
+
+    it("仕事の依頼が workExcerptChars を超えると、先頭で切って「…」を付ける", async () => {
+      const { stub, archiveCalls } = startArchiveManagerWithStub()
+      await waitForBatch()
+
+      const longRequest = "あ".repeat(CHAT_MEMORY_BUDGET.workExcerptChars + 5)
+      stub.emit(CHARACTER_EVENT)
+      stub.emit({ kind: "request", text: longRequest, images: [] })
+      await waitForBatch()
+
+      expect(archiveCalls).toEqual([
+        {
+          packName: "fictional",
+          entry: {
+            mode: "work",
+            kind: "request",
+            at: 1_000,
+            text: `${"あ".repeat(CHAT_MEMORY_BUDGET.workExcerptChars)}…`,
+            project: FICTIONAL_PROJECT,
+            images: undefined,
+          },
+        },
+      ])
+    })
+
+    it("そのターンで最後に届いた report の結論が、turn-finished で1行になる", async () => {
+      const { stub, archiveCalls } = startArchiveManagerWithStub()
+      await waitForBatch()
+
+      stub.emit(CHARACTER_EVENT)
+      stub.emit(reportEvent("途中の結論"))
+      stub.emit(reportEvent("最後の結論"))
+      await waitForBatch()
+      // report だけではまだ書かない（turn-finished でどれを書くか決まる）。
+      expect(archiveCalls).toEqual([])
+
+      stub.emit({ kind: "turn-finished", outcome: { kind: "completed" } })
+      await waitForBatch()
+
+      expect(archiveCalls).toEqual([
+        {
+          packName: "fictional",
+          entry: {
+            mode: "work",
+            kind: "conclusion",
+            at: 1_000,
+            text: "最後の結論",
+            project: FICTIONAL_PROJECT,
+          },
+        },
+      ])
+    })
+
+    it("結論は workExcerptChars を超えると切って「…」を付け、本文（sections・favor・checks）は渡らない", async () => {
+      const { stub, archiveCalls } = startArchiveManagerWithStub()
+      await waitForBatch()
+
+      const longConclusion = "い".repeat(CHAT_MEMORY_BUDGET.workExcerptChars + 5)
+      stub.emit(CHARACTER_EVENT)
+      stub.emit(reportEvent(longConclusion))
+      stub.emit({ kind: "turn-finished", outcome: { kind: "completed" } })
+      await waitForBatch()
+
+      expect(archiveCalls).toEqual([
+        {
+          packName: "fictional",
+          entry: {
+            mode: "work",
+            kind: "conclusion",
+            at: 1_000,
+            text: `${"い".repeat(CHAT_MEMORY_BUDGET.workExcerptChars)}…`,
+            project: FICTIONAL_PROJECT,
+          },
+        },
+      ])
+    })
+
+    it("report 無しで終わったターンは、結論を何も足さない", async () => {
+      const { stub, archiveCalls } = startArchiveManagerWithStub()
+      await waitForBatch()
+
+      stub.emit(CHARACTER_EVENT)
+      stub.emit({ kind: "turn-finished", outcome: { kind: "completed" } })
       await waitForBatch()
 
       expect(archiveCalls).toEqual([])
@@ -1858,9 +2014,27 @@ describe("createSessionManager", () => {
       expect(archiveCalls).toEqual([
         {
           packName: "fictional",
-          entry: { speaker: "user", at: 1_000, text: "新しい依頼", images: undefined },
+          entry: {
+            mode: "chat",
+            kind: "request",
+            at: 1_000,
+            text: "新しい依頼",
+            images: undefined,
+          },
         },
       ])
+    })
+
+    it("復元で流し直された仕事の report・turn-finished は結論を書かない", async () => {
+      const { stub, archiveCalls } = startArchiveManagerWithStub()
+      await waitForBatch()
+
+      stub.emitRestored(CHARACTER_EVENT)
+      stub.emitRestored(reportEvent("前のセッションの結論"))
+      stub.emitRestored({ kind: "turn-finished", outcome: { kind: "completed" } })
+      await waitForBatch()
+
+      expect(archiveCalls).toEqual([])
     })
 
     it("本文（レポート）・ツールの入出力は書かない", async () => {
@@ -1945,6 +2119,7 @@ describe("createSessionManager", () => {
         visit: NO_VISIT_PORTS,
         diary: NO_DIARY_WRITER,
         chatArchive: NOOP_CHAT_ARCHIVE,
+        project: FICTIONAL_PROJECT,
         tokenUsageLog: {
           append: (entry) => {
             entries.push(entry)
@@ -2244,6 +2419,7 @@ describe("createSessionManager", () => {
         visit: NO_VISIT_PORTS,
         diary: NO_DIARY_WRITER,
         chatArchive: NOOP_CHAT_ARCHIVE,
+        project: FICTIONAL_PROJECT,
         tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
         contextUsageLog: {
           append: (entry) => {
@@ -2409,6 +2585,7 @@ describe("createSessionManager", () => {
         visit: NO_VISIT_PORTS,
         diary: NO_DIARY_WRITER,
         chatArchive: NOOP_CHAT_ARCHIVE,
+        project: FICTIONAL_PROJECT,
         tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
         contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
         reportUsageLog: {
@@ -2587,6 +2764,7 @@ describe("依頼に添えた画像の棚", () => {
       visit: NO_VISIT_PORTS,
       diary: NO_DIARY_WRITER,
       chatArchive: NOOP_CHAT_ARCHIVE,
+      project: FICTIONAL_PROJECT,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
       reportUsageLog: NOOP_REPORT_USAGE_LOG,
@@ -2765,6 +2943,7 @@ describe("createSessionManager（見直し）", () => {
       visit: NO_VISIT_PORTS,
       diary: NO_DIARY_WRITER,
       chatArchive: NOOP_CHAT_ARCHIVE,
+      project: FICTIONAL_PROJECT,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
       reportUsageLog: NOOP_REPORT_USAGE_LOG,
@@ -2899,6 +3078,7 @@ describe("訪問", () => {
       },
       diary: NO_DIARY_WRITER,
       chatArchive: NOOP_CHAT_ARCHIVE,
+      project: FICTIONAL_PROJECT,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
       reportUsageLog: NOOP_REPORT_USAGE_LOG,

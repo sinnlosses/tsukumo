@@ -91,7 +91,7 @@ export async function run(config: Config, launch: LaunchOptions): Promise<number
   // セッションの印の目印は、実際に待ち受けているポートから決まる（`sessionTag`）。
   // 同じディレクトリで2つめを起こすとポートがずれるので、目印も分かれる。
   // 設定のポートではなく `view.port` を渡すこと。
-  const session = startSession({
+  const session = await startSession({
     config,
     character,
     fakeSession,

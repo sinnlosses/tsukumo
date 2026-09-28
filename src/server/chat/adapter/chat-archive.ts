@@ -46,8 +46,11 @@ import { scoreChatEpisodes, type ChatEpisodeRecord } from "../core/chat-episode-
 /** 置き場のディレクトリ名（`~/.tsukumo/chat-archive/`）。 */
 const CHAT_ARCHIVE_DIR_NAME = "chat-archive"
 
-/** 行の形の版。形を変えたら上げ、古い行と見分ける。 */
-const ARCHIVE_FORMAT_VERSION = 1 satisfies number
+/** 行の形の版。形を変えたら上げ、古い行と見分ける。書くときは常にこの版。 */
+const ARCHIVE_FORMAT_VERSION = 2 satisfies number
+
+/** 読み戻しがまだ通す旧版（`mode`・`kind`・`project` を持たない雑談の行）。 */
+const ARCHIVE_FORMAT_VERSION_V1 = 1 satisfies number
 
 /**
  * エピソード索引の名前。
@@ -58,7 +61,7 @@ const EPISODE_INDEX_FILE_NAME = "episode.jsonl"
 /** 思い出した記録の名前。 */
 const RECALLED_FILE_NAME = "recalled.jsonl"
 
-/** エピソード索引の行の形の版（アーカイブの `1` とも `index.jsonl` の `1` とも見分ける）。 */
+/** エピソード索引の行の形の版（`episode.jsonl` 自身の版で、アーカイブの行の `v` とは別の数え方）。 */
 const EPISODE_FORMAT_VERSION = 2 satisfies number
 
 /** 思い出した記録の行の形の版。 */
@@ -66,13 +69,18 @@ const RECALLED_FORMAT_VERSION = 1 satisfies number
 
 /**
  * 読み戻すときに要る鍵だけを検査する（`v` が知らない版・鍵が足りない行はここで落ちる）。
+ * `v:1`（`mode` を持たない雑談の行）と `v:2` の両方を通す。
  * `expression` と `images` は読まないので、形も見ない。
+ * `mode` は雑談か仕事かを見分けるためだけに読む（`v:1` の行は無条件で雑談として扱う）。
  */
 const archiveLineSchema = z.object({
-  v: z.literal(ARCHIVE_FORMAT_VERSION),
+  v: z.union([z.literal(ARCHIVE_FORMAT_VERSION_V1), z.literal(ARCHIVE_FORMAT_VERSION)]),
   at: z.string().regex(/^\d{4}-\d{2}-\d{2}T/),
   speaker: z.enum(["user", "character"]),
   text: z.string(),
+  // `v:1` の行はキー自体を持たないので `.optional()`（値が来ても `undefined` になる境界ではなく、
+  // キーの有無そのものが版の違いを表す）。
+  mode: z.enum(["chat", "work"]).optional(),
 })
 
 /** エピソード索引の1行。読めない行・知らない版は飛ばす。 */
@@ -160,12 +168,17 @@ export function createChatArchive(root: string = chatArchiveDir()): ChatArchive 
 
 /**
  * JSONL の1行の形（正典は `docs/architecture/chat-mode.md`「雑談の会話のアーカイブ」の表）。tsukumo の内部の型をそのまま書き出さない。
- * `expression` / `images` のどちらを持つかは `speaker` が決めるので、値を渡すたびにもう片方へ明示的に `undefined` を渡す。
+ * `speaker` は `kind` から決まる（`request` は利用者、`speech`・`conclusion` はキャラクター）。
+ * `expression` / `images` / `project` のどれを持つかは `kind` と `mode` が決めるので、
+ * 値を渡すたびに持たない鍵へ明示的に `undefined` を渡す。
  */
 type ArchiveRecord = {
   readonly v: typeof ARCHIVE_FORMAT_VERSION
   readonly at: string
   readonly pack: string
+  readonly mode: "chat" | "work"
+  readonly project: string | undefined
+  readonly kind: "request" | "speech" | "conclusion"
   readonly speaker: "user" | "character"
   readonly text: string
   readonly expression: Expression | undefined
@@ -174,20 +187,22 @@ type ArchiveRecord = {
 
 /**
  * {@link ChatArchiveEntry} を書き出す形へ変換する。
- * `images` は1枚以上あるときだけ、`expression` はキャラクターの行だけが持つ（`JSON.stringify` は値が `undefined` のキーを落とす）。
+ * `images` は依頼の行だけ、`expression` はセリフの行だけ、`project` は仕事の行だけが持つ
+ * （`JSON.stringify` は値が `undefined` のキーを落とす）。
  */
 function toArchiveRecord(packName: string, entry: ChatArchiveEntry): ArchiveRecord {
-  const base = {
+  return {
     v: ARCHIVE_FORMAT_VERSION,
     at: isoWithOffset(entry.at),
     pack: packName,
-    speaker: entry.speaker,
+    mode: entry.mode,
+    project: entry.mode === "work" ? entry.project : undefined,
+    kind: entry.kind,
+    speaker: entry.kind === "request" ? "user" : "character",
     text: entry.text,
-  } as const
-
-  return entry.speaker === "user"
-    ? { ...base, expression: undefined, images: entry.images }
-    : { ...base, expression: entry.expression, images: undefined }
+    expression: entry.kind === "speech" ? entry.expression : undefined,
+    images: entry.kind === "request" ? entry.images : undefined,
+  }
 }
 
 /** 直近の窓を読む（{@link ChatArchive.readRecent} の実装）。 */
@@ -259,13 +274,15 @@ function newestFirstFileNames(dir: string): readonly string[] {
 
 /**
  * JSONL の1行を、載せる形（話者の別・文面・日付）へ畳む。壊れた JSON・知らない版・鍵が足りない行は undefined。
+ * 仕事の行（`mode === "work"`）もここで undefined にする（読み戻し・定着・recall を仕事へ広げるのは別の変更で、
+ * それまでは書いても雑談の読み戻しには出さない）。
  *
  * `expression` と `images` はここで読まない（読み戻して渡すのは文面と話者の別だけ）。
  * 日付は `at` の頭10文字で、行だけで意味が決まる（ファイル名には頼らない）。
  */
 function toTimedEntry(raw: unknown): TimedEntry | undefined {
   const record = archiveLineSchema.safeParse(raw)
-  if (!record.success) {
+  if (!record.success || record.data.mode === "work") {
     return undefined
   }
   const { at, speaker, text } = record.data

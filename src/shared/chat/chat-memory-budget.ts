@@ -16,6 +16,8 @@ export type ChatMemoryBudget = {
   readonly recallEpisodesPerTurn: number
   /** 定着を起こす契機（畳む行が this 以上たまったら起こす）の上限バイト数。 */
   readonly consolidateEveryBytes: number
+  /** 仕事の依頼の冒頭・`report` の結論をアーカイブへ書くときに切る上限（コードポイント数）。 */
+  readonly workExcerptChars: number
 }
 
 /** 雑談の記憶の容量の表。値の根拠は `docs/architecture/chat-mode.md`「記憶の圧縮と忘却」の容量の表にある。 */
@@ -27,6 +29,7 @@ export const CHAT_MEMORY_BUDGET = {
   recallEpisodeBytes: 8_192,
   recallEpisodesPerTurn: 2,
   consolidateEveryBytes: 8_192,
+  workExcerptChars: 300,
 } satisfies ChatMemoryBudget
 
 export type ChatRecallScore = {

@@ -16,6 +16,7 @@ import { useTempDir } from "../../../fixture/temp-dir.ts"
 
 const REQUEST_TEXT = "ただいま"
 const SPEECH_TEXT = "おかえり"
+const FICTIONAL_PROJECT = "架空プロジェクト"
 
 const dir = useTempDir("chat-archive")
 
@@ -46,12 +47,13 @@ function readLines<T = unknown>(path: string): T[] {
 }
 
 describe("createChatArchive", () => {
-  it("依頼の行は v / at / pack / speaker / text を持ち、images は無いときはキー自体が無い", () => {
+  it("依頼の行は v / at / pack / mode / kind / speaker / text を持ち、images は無いときはキー自体が無い", () => {
     const chatArchive = createChatArchive(root())
     const at = noonOn(2026, 9, 21)
 
     chatArchive.append("fictional-pack", {
-      speaker: "user",
+      mode: "chat",
+      kind: "request",
       at,
       text: REQUEST_TEXT,
       images: undefined,
@@ -59,13 +61,16 @@ describe("createChatArchive", () => {
 
     const [record] = readLines(join(root(), "fictional-pack", "2026-09-21.jsonl"))
     expect(record).toMatchObject({
-      v: 1,
+      v: 2,
       pack: "fictional-pack",
+      mode: "chat",
+      kind: "request",
       speaker: "user",
       text: REQUEST_TEXT,
     })
     expect(record).not.toHaveProperty("images")
     expect(record).not.toHaveProperty("expression")
+    expect(record).not.toHaveProperty("project")
   })
 
   it("セリフの行は表情を持つ", () => {
@@ -73,7 +78,8 @@ describe("createChatArchive", () => {
     const at = noonOn(2026, 9, 21)
 
     chatArchive.append("fictional-pack", {
-      speaker: "character",
+      mode: "chat",
+      kind: "speech",
       at,
       text: SPEECH_TEXT,
       expression: "proud",
@@ -81,8 +87,10 @@ describe("createChatArchive", () => {
 
     const [record] = readLines(join(root(), "fictional-pack", "2026-09-21.jsonl"))
     expect(record).toMatchObject({
-      v: 1,
+      v: 2,
       pack: "fictional-pack",
+      mode: "chat",
+      kind: "speech",
       speaker: "character",
       text: SPEECH_TEXT,
       expression: "proud",
@@ -90,12 +98,71 @@ describe("createChatArchive", () => {
     expect(record).not.toHaveProperty("images")
   })
 
+  it("仕事の行は project を持つ（雑談の行は project のキー自体が無い）", () => {
+    const chatArchive = createChatArchive(root())
+    const at = noonOn(2026, 9, 21)
+
+    chatArchive.append("fictional-pack", {
+      mode: "work",
+      kind: "request",
+      at,
+      text: REQUEST_TEXT,
+      project: FICTIONAL_PROJECT,
+      images: undefined,
+    })
+    chatArchive.append("fictional-pack", {
+      mode: "work",
+      kind: "speech",
+      at,
+      text: SPEECH_TEXT,
+      project: FICTIONAL_PROJECT,
+      expression: "proud",
+    })
+    chatArchive.append("fictional-pack", {
+      mode: "work",
+      kind: "conclusion",
+      at,
+      text: "架空の結論",
+      project: FICTIONAL_PROJECT,
+    })
+
+    const records = readLines(join(root(), "fictional-pack", "2026-09-21.jsonl"))
+    expect(records).toEqual([
+      expect.objectContaining({
+        v: 2,
+        mode: "work",
+        kind: "request",
+        speaker: "user",
+        project: FICTIONAL_PROJECT,
+        text: REQUEST_TEXT,
+      }),
+      expect.objectContaining({
+        v: 2,
+        mode: "work",
+        kind: "speech",
+        speaker: "character",
+        project: FICTIONAL_PROJECT,
+        text: SPEECH_TEXT,
+        expression: "proud",
+      }),
+      expect.objectContaining({
+        v: 2,
+        mode: "work",
+        kind: "conclusion",
+        speaker: "character",
+        project: FICTIONAL_PROJECT,
+        text: "架空の結論",
+      }),
+    ])
+  })
+
   it("`at` は行だけで時刻が決まる ISO 8601（オフセット付き）で、日付部分はローカル時刻と揃う", () => {
     const chatArchive = createChatArchive(root())
     const at = noonOn(2026, 9, 21)
 
     chatArchive.append("fictional-pack", {
-      speaker: "user",
+      mode: "chat",
+      kind: "request",
       at,
       text: REQUEST_TEXT,
       images: undefined,
@@ -110,7 +177,13 @@ describe("createChatArchive", () => {
     const chatArchive = createChatArchive(root())
     const at = noonOn(2026, 9, 21)
 
-    chatArchive.append("fictional-pack", { speaker: "user", at, text: REQUEST_TEXT, images: 2 })
+    chatArchive.append("fictional-pack", {
+      mode: "chat",
+      kind: "request",
+      at,
+      text: REQUEST_TEXT,
+      images: 2,
+    })
 
     const [record] = readLines(join(root(), "fictional-pack", "2026-09-21.jsonl"))
     expect(record).toMatchObject({ images: 2 })
@@ -121,19 +194,22 @@ describe("createChatArchive", () => {
     const at = noonOn(2026, 9, 21)
 
     chatArchive.append("fictional-pack", {
-      speaker: "user",
+      mode: "chat",
+      kind: "request",
       at,
       text: "1回目の依頼",
       images: undefined,
     })
     chatArchive.append("fictional-pack", {
-      speaker: "character",
+      mode: "chat",
+      kind: "speech",
       at,
       text: "1回目のセリフ",
       expression: "proud",
     })
     chatArchive.append("fictional-pack", {
-      speaker: "user",
+      mode: "chat",
+      kind: "request",
       at,
       text: "2回目の依頼",
       images: undefined,
@@ -151,8 +227,20 @@ describe("createChatArchive", () => {
     const chatArchive = createChatArchive(root())
     const at = noonOn(2026, 9, 21)
 
-    chatArchive.append("pack-a", { speaker: "user", at, text: "pack-a の依頼", images: undefined })
-    chatArchive.append("pack-b", { speaker: "user", at, text: "pack-b の依頼", images: undefined })
+    chatArchive.append("pack-a", {
+      mode: "chat",
+      kind: "request",
+      at,
+      text: "pack-a の依頼",
+      images: undefined,
+    })
+    chatArchive.append("pack-b", {
+      mode: "chat",
+      kind: "request",
+      at,
+      text: "pack-b の依頼",
+      images: undefined,
+    })
 
     expect(readLines(join(root(), "pack-a", "2026-09-21.jsonl"))).toHaveLength(1)
     expect(readLines(join(root(), "pack-b", "2026-09-21.jsonl"))).toHaveLength(1)
@@ -162,13 +250,15 @@ describe("createChatArchive", () => {
     const chatArchive = createChatArchive(root())
 
     chatArchive.append("fictional-pack", {
-      speaker: "user",
+      mode: "chat",
+      kind: "request",
       at: noonOn(2026, 9, 21),
       text: "21日の依頼",
       images: undefined,
     })
     chatArchive.append("fictional-pack", {
-      speaker: "user",
+      mode: "chat",
+      kind: "request",
       at: noonOn(2026, 9, 22),
       text: "22日の依頼",
       images: undefined,
@@ -184,7 +274,8 @@ describe("createChatArchive", () => {
     const chatArchive = createChatArchive(root())
 
     chatArchive.append("../evil", {
-      speaker: "user",
+      mode: "chat",
+      kind: "request",
       at: noonOn(2026, 9, 21),
       text: REQUEST_TEXT,
       images: undefined,
@@ -206,7 +297,8 @@ describe("createChatArchive", () => {
 
     expect(() =>
       chatArchive.append("fictional-pack", {
-        speaker: "user",
+        mode: "chat",
+        kind: "request",
         at: noonOn(2026, 9, 21),
         text: REQUEST_TEXT,
         images: undefined,
@@ -235,13 +327,15 @@ describe("createChatArchive の readRecent", () => {
   it("新しい日のファイルから遡り、古い→新しいの順で返す", () => {
     const chatArchive = createChatArchive(root())
     chatArchive.append("fictional-pack", {
-      speaker: "user",
+      mode: "chat",
+      kind: "request",
       at: noonOn(2026, 9, 20),
       text: "20日の依頼",
       images: undefined,
     })
     chatArchive.append("fictional-pack", {
-      speaker: "character",
+      mode: "chat",
+      kind: "speech",
       at: noonOn(2026, 9, 21),
       text: "21日のセリフ",
       expression: "proud",
@@ -258,7 +352,8 @@ describe("createChatArchive の readRecent", () => {
     const texts = ["いちばん古い", "まんなか", "いちばん新しい"]
     for (const [index, text] of texts.entries()) {
       chatArchive.append("fictional-pack", {
-        speaker: "user",
+        mode: "chat",
+        kind: "request",
         at: noonOn(2026, 9, 19 + index),
         text,
         images: undefined,
@@ -276,13 +371,15 @@ describe("createChatArchive の readRecent", () => {
     const chatArchive = createChatArchive(root())
     const at = noonOn(2026, 9, 21)
     chatArchive.append("fictional-pack", {
-      speaker: "user",
+      mode: "chat",
+      kind: "request",
       at,
       text: TWELVE_BYTES,
       images: undefined,
     })
     chatArchive.append("fictional-pack", {
-      speaker: "character",
+      mode: "chat",
+      kind: "speech",
       at,
       text: "かきくけ",
       expression: "proud",
@@ -299,7 +396,8 @@ describe("createChatArchive の readRecent", () => {
   it("1件だけで上限を超えるときは空（行の途中で切らない）", () => {
     const chatArchive = createChatArchive(root())
     chatArchive.append("fictional-pack", {
-      speaker: "user",
+      mode: "chat",
+      kind: "request",
       at: noonOn(2026, 9, 21),
       text: TWELVE_BYTES,
       images: undefined,
@@ -311,9 +409,16 @@ describe("createChatArchive の readRecent", () => {
   it("表情も画像の枚数も返さない（話者の別・文面・日付だけ）", () => {
     const chatArchive = createChatArchive(root())
     const at = noonOn(2026, 9, 21)
-    chatArchive.append("fictional-pack", { speaker: "user", at, text: REQUEST_TEXT, images: 2 })
     chatArchive.append("fictional-pack", {
-      speaker: "character",
+      mode: "chat",
+      kind: "request",
+      at,
+      text: REQUEST_TEXT,
+      images: 2,
+    })
+    chatArchive.append("fictional-pack", {
+      mode: "chat",
+      kind: "speech",
       at,
       text: SPEECH_TEXT,
       expression: "proud",
@@ -348,6 +453,35 @@ describe("createChatArchive の readRecent", () => {
     ])
   })
 
+  it("v:2 の雑談の行も読む（v:1 と同じ扱い）。v:2 の仕事の行はまだ読み戻さない", () => {
+    writeRawLines("2026-09-21.jsonl", [
+      JSON.stringify({
+        v: 2,
+        at: "2026-09-21T12:00:00+09:00",
+        pack: "fictional-pack",
+        mode: "chat",
+        kind: "request",
+        speaker: "user",
+        text: "v2の雑談の行",
+      }),
+      JSON.stringify({
+        v: 2,
+        at: "2026-09-21T12:00:01+09:00",
+        pack: "fictional-pack",
+        mode: "work",
+        project: FICTIONAL_PROJECT,
+        kind: "request",
+        speaker: "user",
+        text: "v2の仕事の行",
+      }),
+    ])
+    const chatArchive = createChatArchive(root())
+
+    expect(chatArchive.readRecent("fictional-pack", LIMIT_ALL)).toEqual([
+      { speaker: "user", text: "v2の雑談の行", date: "2026-09-21" },
+    ])
+  })
+
   it("日付のファイル名でないものは読まない", () => {
     writeRawLines("notes.txt", [
       JSON.stringify({
@@ -372,8 +506,20 @@ describe("createChatArchive の readRecent", () => {
   it("別のパックの会話は混ざらない", () => {
     const chatArchive = createChatArchive(root())
     const at = noonOn(2026, 9, 21)
-    chatArchive.append("pack-a", { speaker: "user", at, text: "pack-a の依頼", images: undefined })
-    chatArchive.append("pack-b", { speaker: "user", at, text: "pack-b の依頼", images: undefined })
+    chatArchive.append("pack-a", {
+      mode: "chat",
+      kind: "request",
+      at,
+      text: "pack-a の依頼",
+      images: undefined,
+    })
+    chatArchive.append("pack-b", {
+      mode: "chat",
+      kind: "request",
+      at,
+      text: "pack-b の依頼",
+      images: undefined,
+    })
 
     expect(chatArchive.readRecent("pack-a", LIMIT_ALL).map((entry) => entry.text)).toEqual([
       "pack-a の依頼",
@@ -388,7 +534,8 @@ describe("createChatArchive の unconsolidated", () => {
 
   function appendRequest(chatArchive: ChatArchive, day: number, text: string): void {
     chatArchive.append("fictional-pack", {
-      speaker: "user",
+      mode: "chat",
+      kind: "request",
       at: noonOn(2026, 9, day),
       text,
       images: undefined,
@@ -662,7 +809,8 @@ describe("createChatArchive の recallEpisode", () => {
     text: string,
   ): void {
     chatArchive.append("fictional-pack", {
-      speaker: "user",
+      mode: "chat",
+      kind: "request",
       at: Temporal.ZonedDateTime.from({
         year: 2026,
         month: 9,
