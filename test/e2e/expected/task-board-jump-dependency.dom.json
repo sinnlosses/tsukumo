@@ -275,7 +275,7 @@
                             },
                             "children": [
                               "進行中",
-                              "1"
+                              "0"
                             ]
                           }
                         ]
@@ -291,7 +291,7 @@
                             },
                             "children": [
                               "未着手",
-                              "2"
+                              "3"
                             ]
                           }
                         ]
@@ -307,30 +307,9 @@
                             },
                             "children": [
                               "完了",
-                              "1"
+                              "0"
                             ]
                           }
-                        ]
-                      }
-                    ]
-                  },
-                  {
-                    "tag": "ul",
-                    "children": [
-                      {
-                        "tag": "li",
-                        "children": [
-                          "進行中",
-                          {
-                            "tag": "button",
-                            "attributes": {
-                              "type": "button"
-                            },
-                            "children": [
-                              "T-003"
-                            ]
-                          },
-                          "架空のタスク（進行中）"
                         ]
                       }
                     ]
@@ -350,7 +329,7 @@
                               "T-001"
                             ]
                           },
-                          "架空のタスク（`code` を含む要約）"
+                          "架空のタスク（つながりの起点）"
                         ]
                       },
                       {
@@ -365,7 +344,22 @@
                               "T-002"
                             ]
                           },
-                          "架空のタスク（完了）"
+                          "架空のタスク（T-001 に依存）"
+                        ]
+                      },
+                      {
+                        "tag": "li",
+                        "children": [
+                          {
+                            "tag": "button",
+                            "attributes": {
+                              "type": "button"
+                            },
+                            "children": [
+                              "T-003"
+                            ]
+                          },
+                          "架空のタスク（T-002 に依存）"
                         ]
                       },
                       {
@@ -380,22 +374,7 @@
                               "T-004"
                             ]
                           },
-                          "架空のタスク（待ち）"
-                        ]
-                      },
-                      {
-                        "tag": "li",
-                        "children": [
-                          {
-                            "tag": "button",
-                            "attributes": {
-                              "type": "button"
-                            },
-                            "children": [
-                              "T-005"
-                            ]
-                          },
-                          "架空のタスク（保留）"
+                          "架空のタスク（保留・本文で T-001 へ言及）"
                         ]
                       }
                     ]
@@ -415,7 +394,7 @@
                       "タスク"
                     ]
                   },
-                  "進行中 1 · 未着手 2 · 完了 1",
+                  "進行中 0 · 未着手 3 · 完了 0",
                   {
                     "tag": "kbd",
                     "children": [
@@ -471,7 +450,7 @@
                         },
                         "children": [
                           "すべて",
-                          "5"
+                          "4"
                         ]
                       },
                       {
@@ -493,7 +472,7 @@
                         },
                         "children": [
                           "待ち",
-                          "1"
+                          "2"
                         ]
                       },
                       {
@@ -515,7 +494,7 @@
                         },
                         "children": [
                           "進行中",
-                          "1"
+                          "0"
                         ]
                       },
                       {
@@ -526,7 +505,7 @@
                         },
                         "children": [
                           "完了",
-                          "1"
+                          "0"
                         ]
                       }
                     ]
@@ -542,7 +521,7 @@
                         "tag": "li",
                         "attributes": {
                           "role": "option",
-                          "aria-selected": "true",
+                          "aria-selected": "false",
                           "data-state": "ready"
                         },
                         "children": [
@@ -572,87 +551,19 @@
                               "aria-hidden": "true"
                             }
                           },
-                          "opus",
-                          "架空のタスク（",
-                          {
-                            "tag": "code",
-                            "children": [
-                              "code"
-                            ]
-                          },
-                          "を含む要約）"
-                        ]
-                      },
-                      {
-                        "tag": "li",
-                        "attributes": {
-                          "role": "option",
-                          "aria-selected": "false",
-                          "data-state": "done"
-                        },
-                        "children": [
-                          "T-002",
-                          {
-                            "tag": "svg"
-                          },
-                          "完了",
-                          {
-                            "tag": "span",
-                            "attributes": {
-                              "aria-hidden": "true"
-                            }
-                          },
-                          "haiku",
-                          "架空のタスク（完了）"
-                        ]
-                      },
-                      {
-                        "tag": "li",
-                        "attributes": {
-                          "role": "option",
-                          "aria-selected": "false",
-                          "data-state": "doing"
-                        },
-                        "children": [
-                          "T-003",
-                          {
-                            "tag": "span",
-                            "attributes": {
-                              "aria-hidden": "true"
-                            }
-                          },
-                          "進行中",
-                          {
-                            "tag": "span",
-                            "attributes": {
-                              "role": "img",
-                              "aria-label": "ループで回せる"
-                            },
-                            "children": [
-                              {
-                                "tag": "svg"
-                              }
-                            ]
-                          },
-                          {
-                            "tag": "span",
-                            "attributes": {
-                              "aria-hidden": "true"
-                            }
-                          },
                           "sonnet",
-                          "架空のタスク（進行中）"
+                          "架空のタスク（つながりの起点）"
                         ]
                       },
                       {
                         "tag": "li",
                         "attributes": {
                           "role": "option",
-                          "aria-selected": "false",
+                          "aria-selected": "true",
                           "data-state": "blocked"
                         },
                         "children": [
-                          "T-004",
+                          "T-002",
                           {
                             "tag": "span",
                             "attributes": {
@@ -679,7 +590,45 @@
                             }
                           },
                           "sonnet",
-                          "架空のタスク（待ち）"
+                          "架空のタスク（T-001 に依存）"
+                        ]
+                      },
+                      {
+                        "tag": "li",
+                        "attributes": {
+                          "role": "option",
+                          "aria-selected": "false",
+                          "data-state": "blocked"
+                        },
+                        "children": [
+                          "T-003",
+                          {
+                            "tag": "span",
+                            "attributes": {
+                              "aria-hidden": "true"
+                            }
+                          },
+                          "待ち T-002",
+                          {
+                            "tag": "span",
+                            "attributes": {
+                              "role": "img",
+                              "aria-label": "ループで回せる"
+                            },
+                            "children": [
+                              {
+                                "tag": "svg"
+                              }
+                            ]
+                          },
+                          {
+                            "tag": "span",
+                            "attributes": {
+                              "aria-hidden": "true"
+                            }
+                          },
+                          "sonnet",
+                          "架空のタスク（T-002 に依存）"
                         ]
                       },
                       {
@@ -690,11 +639,23 @@
                           "data-state": "hold"
                         },
                         "children": [
-                          "T-005",
+                          "T-004",
                           {
                             "tag": "svg"
                           },
-                          "保留 · T-001",
+                          "保留",
+                          {
+                            "tag": "span",
+                            "attributes": {
+                              "role": "img",
+                              "aria-label": "ループで回せる"
+                            },
+                            "children": [
+                              {
+                                "tag": "svg"
+                              }
+                            ]
+                          },
                           {
                             "tag": "span",
                             "attributes": {
@@ -702,7 +663,7 @@
                             }
                           },
                           "sonnet",
-                          "架空のタスク（保留）"
+                          "架空のタスク（保留・本文で T-001 へ言及）"
                         ]
                       }
                     ]
@@ -710,22 +671,38 @@
                   {
                     "tag": "section",
                     "attributes": {
-                      "aria-label": "T-001 の詳細"
+                      "aria-label": "T-002 の詳細"
                     },
                     "children": [
-                      "T-001",
+                      {
+                        "tag": "nav",
+                        "attributes": {
+                          "aria-label": "タスクのつながり"
+                        },
+                        "children": [
+                          {
+                            "tag": "button",
+                            "attributes": {
+                              "type": "button"
+                            },
+                            "children": [
+                              {
+                                "tag": "svg"
+                              },
+                              "T-001",
+                              "に戻る"
+                            ]
+                          },
+                          "›",
+                          "T-002"
+                        ]
+                      },
+                      "T-002",
                       "todo",
                       {
                         "tag": "h3",
                         "children": [
-                          "架空のタスク（",
-                          {
-                            "tag": "code",
-                            "children": [
-                              "code"
-                            ]
-                          },
-                          "を含む要約）"
+                          "架空のタスク（T-001 に依存）"
                         ]
                       },
                       {
@@ -746,7 +723,7 @@
                                   "aria-hidden": "true"
                                 }
                               },
-                              "着手できる"
+                              "待ち T-001"
                             ]
                           },
                           {
@@ -764,7 +741,7 @@
                                   "aria-hidden": "true"
                                 }
                               },
-                              "opus"
+                              "sonnet"
                             ]
                           },
                           {
@@ -794,7 +771,51 @@
                               {
                                 "tag": "svg"
                               },
-                              "develop/task/T-001.md"
+                              "develop/task/T-002.md"
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "tag": "div",
+                        "attributes": {
+                          "role": "group"
+                        },
+                        "children": [
+                          {
+                            "tag": "p",
+                            "children": [
+                              "先に終わっていてほしいもの"
+                            ]
+                          },
+                          {
+                            "tag": "ul",
+                            "children": [
+                              {
+                                "tag": "li",
+                                "children": [
+                                  {
+                                    "tag": "button",
+                                    "attributes": {
+                                      "type": "button"
+                                    },
+                                    "children": [
+                                      "T-001",
+                                      {
+                                        "tag": "span",
+                                        "attributes": {
+                                          "aria-hidden": "true"
+                                        }
+                                      },
+                                      "着手できる",
+                                      "架空のタスク（つながりの起点）",
+                                      {
+                                        "tag": "svg"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
                             ]
                           }
                         ]
@@ -823,37 +844,15 @@
                                       "type": "button"
                                     },
                                     "children": [
-                                      "T-004",
+                                      "T-003",
                                       {
                                         "tag": "span",
                                         "attributes": {
                                           "aria-hidden": "true"
                                         }
                                       },
-                                      "待ち T-001",
-                                      "架空のタスク（待ち）",
-                                      {
-                                        "tag": "svg"
-                                      }
-                                    ]
-                                  }
-                                ]
-                              },
-                              {
-                                "tag": "li",
-                                "children": [
-                                  {
-                                    "tag": "button",
-                                    "attributes": {
-                                      "type": "button"
-                                    },
-                                    "children": [
-                                      "T-005",
-                                      {
-                                        "tag": "svg"
-                                      },
-                                      "保留 · T-001",
-                                      "架空のタスク（保留）",
+                                      "待ち T-002",
+                                      "架空のタスク（T-002 に依存）",
                                       {
                                         "tag": "svg"
                                       }
@@ -874,181 +873,13 @@
                           {
                             "tag": "h4",
                             "children": [
-                              "目的・背景"
+                              "目的"
                             ]
                           },
                           {
                             "tag": "p",
                             "children": [
-                              "架空の本文で、実物のタスクではない。",
-                              {
-                                "tag": "code",
-                                "children": [
-                                  "inline code"
-                                ]
-                              },
-                              "と",
-                              {
-                                "tag": "strong",
-                                "children": [
-                                  "強調"
-                                ]
-                              },
-                              "を含む。"
-                            ]
-                          },
-                          {
-                            "tag": "h4",
-                            "children": [
-                              "やること"
-                            ]
-                          },
-                          {
-                            "tag": "ol",
-                            "children": [
-                              {
-                                "tag": "li",
-                                "children": [
-                                  "一つ目の手順"
-                                ]
-                              },
-                              {
-                                "tag": "li",
-                                "children": [
-                                  "二つ目の手順"
-                                ]
-                              }
-                            ]
-                          },
-                          {
-                            "tag": "h4",
-                            "children": [
-                              "完了条件"
-                            ]
-                          },
-                          {
-                            "tag": "ul",
-                            "children": [
-                              {
-                                "tag": "li",
-                                "children": [
-                                  {
-                                    "tag": "input",
-                                    "attributes": {
-                                      "type": "checkbox",
-                                      "disabled": true,
-                                      "checked": false,
-                                      "value": "on"
-                                    }
-                                  },
-                                  "まだの条件"
-                                ]
-                              },
-                              {
-                                "tag": "li",
-                                "children": [
-                                  {
-                                    "tag": "input",
-                                    "attributes": {
-                                      "type": "checkbox",
-                                      "disabled": true,
-                                      "checked": true,
-                                      "value": "on"
-                                    }
-                                  },
-                                  "済んだ条件"
-                                ]
-                              }
-                            ]
-                          },
-                          {
-                            "tag": "h5",
-                            "children": [
-                              "参考"
-                            ]
-                          },
-                          {
-                            "tag": "table",
-                            "children": [
-                              {
-                                "tag": "thead",
-                                "children": [
-                                  {
-                                    "tag": "tr",
-                                    "children": [
-                                      {
-                                        "tag": "th",
-                                        "children": [
-                                          "項目"
-                                        ]
-                                      },
-                                      {
-                                        "tag": "th",
-                                        "children": [
-                                          "値"
-                                        ]
-                                      }
-                                    ]
-                                  }
-                                ]
-                              },
-                              {
-                                "tag": "tbody",
-                                "children": [
-                                  {
-                                    "tag": "tr",
-                                    "children": [
-                                      {
-                                        "tag": "td",
-                                        "children": [
-                                          "甲"
-                                        ]
-                                      },
-                                      {
-                                        "tag": "td",
-                                        "children": [
-                                          "1"
-                                        ]
-                                      }
-                                    ]
-                                  }
-                                ]
-                              }
-                            ]
-                          },
-                          {
-                            "tag": "pre",
-                            "children": [
-                              {
-                                "tag": "code",
-                                "children": [
-                                  "echo 架空"
-                                ]
-                              }
-                            ]
-                          },
-                          {
-                            "tag": "p",
-                            "children": [
-                              "<b>",
-                              "生の HTML は字のまま出る",
-                              "</b>"
-                            ]
-                          },
-                          {
-                            "tag": "p",
-                            "children": [
-                              {
-                                "tag": "a",
-                                "attributes": {
-                                  "href": "https://example.invalid/foo"
-                                },
-                                "children": [
-                                  "外のリンク"
-                                ]
-                              },
-                              "と",
-                              "相対のリンク"
+                              "架空の本文で、実物のタスクではない。"
                             ]
                           }
                         ]
@@ -1090,7 +921,7 @@
                       {
                         "tag": "button",
                         "attributes": {
-                          "aria-disabled": "false",
+                          "aria-disabled": "true",
                           "aria-haspopup": "dialog",
                           "type": "button"
                         },
@@ -1100,7 +931,8 @@
                           },
                           "tsukumo に頼む"
                         ]
-                      }
+                      },
+                      "待ちが終わると頼めます"
                     ]
                   }
                 ]

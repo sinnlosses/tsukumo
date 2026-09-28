@@ -165,6 +165,57 @@ function boardDialog(room: ScenarioRoom): Locator {
   return room.page.getByRole("dialog", { name: "タスク" })
 }
 
+/**
+ * 一覧の1行（`id` の完全一致）。依存の状態の字（「待ち」に続く ID）が別の行の要約に
+ * 混じるので、`getByRole("option")` の `hasText` では絞り切れない。
+ */
+function boardOption(room: ScenarioRoom, id: string): Locator {
+  return boardDialog(room).locator(`#task-board-option-${id}`)
+}
+
+/**
+ * 「つながりをたどる」の足場。起点のタスクを2件目が依存に持ち、2件目を3件目が依存に持つ
+ * （起点を選ぶと依存元の1件が、2件目を選ぶと依存の起点と依存元の3件目が並ぶ）。
+ * 4件目は保留で起点へ本文から言及するだけの、絞り込みの外への飛び先。
+ */
+async function openTaskBoardJumpRoom(
+  scenario: string,
+  viewport: "wide" | "narrow" = "wide",
+): Promise<ScenarioRoom> {
+  const room = await run.open({ scenario, scene: "none", viewport })
+
+  await initGitRepository(room.cwd)
+  writeTaskFile(room.cwd, {
+    id: "T-001",
+    summary: "架空のタスク（つながりの起点）",
+    status: "todo",
+    difficulty: "sonnet",
+    loopable: "Y",
+    dependencies: [],
+    body: JUMP_BODY_T001,
+  })
+  writeTask(room.cwd, "T-002", "架空のタスク（T-001 に依存）", "todo", ["T-001"])
+  writeTask(room.cwd, "T-003", "架空のタスク（T-002 に依存）", "todo", ["T-002"])
+  writeTaskFile(room.cwd, {
+    id: "T-004",
+    summary: "架空のタスク（保留・本文で T-001 へ言及）",
+    status: "hold",
+    difficulty: "sonnet",
+    loopable: "Y",
+    dependencies: [],
+    body: JUMP_BODY_T004,
+  })
+  await git(room.cwd, "add", "develop/task")
+  await git(room.cwd, "commit", "--quiet", "-m", "架空のタスク一覧（つながり）")
+
+  await room.waitForEvent("tasks-changed")
+  if (viewport === "narrow") {
+    await room.page.getByRole("tab", { name: "サイドバー" }).click()
+  }
+  await room.page.getByRole("button", { name: "一覧を見る" }).click()
+  return room
+}
+
 /** 先頭のタスクの本文。モーダルが描く Markdown の要素を一通り持つ。 */
 const RICH_BODY = [
   "## 目的・背景",
@@ -196,6 +247,27 @@ const RICH_BODY = [
   "[外のリンク](https://example.invalid/foo) と [相対のリンク](foo/bar.md)",
   "",
 ].join("\n")
+
+/**
+ * 起点のタスクの本文。地の文の ID・中身がまるごと同じ ID の inline code は一覧に載っている
+ * ので押せる。語の途中・まるごとでない inline code・フェンスの中・一覧に無い ID はどれも
+ * 押せない字のまま出る。
+ */
+const JUMP_BODY_T001 = [
+  "## 参照",
+  "",
+  "地の文の T-002 は押せる。T-0021 は語の途中なので押せない。T-999 は一覧に無いので押せない。",
+  "",
+  "中身がまるごと `T-002` の inline code は押せる。`T-0025` はまるごとでないので押せない。",
+  "",
+  "```",
+  "T-002",
+  "```",
+  "",
+].join("\n")
+
+/** 保留のタスクの本文。地の文で起点のタスクへ言及するだけ。 */
+const JUMP_BODY_T004 = ["## 参照", "", "先に T-001 を見る。", ""].join("\n")
 
 describe("タスクの一覧", () => {
   it("main の develop/task/ を読み、サイドバーのタスク一覧に並ぶ", async () => {
@@ -303,6 +375,66 @@ describe("タスクのモーダル", () => {
 
   it("狭い画面でも同じ中身を2列を縦に積んで出す", async () => {
     const room = await openTaskBoardRoom("task-board-narrow", "narrow")
+    await room.settleAndMatch(ELAPSED_MS)
+  })
+})
+
+describe("タスクのモーダル（つながりをたどる）", () => {
+  it("本文中の ID を押すと詳細が切り替わり、一覧の選択も追いかける（語の途中・フェンスの中・一覧に無い ID は押せない）", async () => {
+    const room = await openTaskBoardJumpRoom("task-board-jump-body")
+    await boardDialog(room)
+      .locator('article[aria-label="本文"]')
+      .getByRole("link", { name: "T-002", exact: true })
+      .first()
+      .click()
+    await room.settleAndMatch(ELAPSED_MS)
+  })
+
+  it("パンくずの「戻る」を押すと直前のタスクへ戻り、一覧で別の行を選ぶとパンくずが消える", async () => {
+    const room = await openTaskBoardJumpRoom("task-board-jump-back")
+    await boardDialog(room)
+      .locator('article[aria-label="本文"]')
+      .getByRole("link", { name: "T-002", exact: true })
+      .first()
+      .click()
+    await boardDialog(room).getByRole("button", { name: "T-001 に戻る" }).click()
+    await boardOption(room, "T-003").click()
+    await room.settleAndMatch(ELAPSED_MS)
+  })
+
+  it("Alt+← でもパンくずの「戻る」と同じ場所へ戻る", async () => {
+    const room = await openTaskBoardJumpRoom("task-board-jump-back-alt-left")
+    await boardDialog(room)
+      .locator('article[aria-label="本文"]')
+      .getByRole("link", { name: "T-002", exact: true })
+      .first()
+      .click()
+    await room.page.keyboard.press("Alt+ArrowLeft")
+    await room.settleAndMatch(ELAPSED_MS)
+  })
+
+  it("「先に終わっていてほしいもの」「これを待っているもの」の札を押すと行き来できる", async () => {
+    const room = await openTaskBoardJumpRoom("task-board-jump-dependency")
+    await boardOption(room, "T-002").click()
+    await boardDialog(room)
+      .getByRole("group", { name: "先に終わっていてほしいもの" })
+      .getByRole("button", { name: /T-001/ })
+      .click()
+    await boardDialog(room)
+      .getByRole("group", { name: "これを待っているもの" })
+      .getByRole("button", { name: /T-002/ })
+      .click()
+    await room.settleAndMatch(ELAPSED_MS)
+  })
+
+  it("飛んだ先が絞り込みの外にあるときは、一覧にその行だけ「絞り込みの外」を添えて一時的に出す", async () => {
+    const room = await openTaskBoardJumpRoom("task-board-jump-out-of-filter")
+    await boardOption(room, "T-004").click()
+    await boardDialog(room).getByRole("button", { name: "保留 1" }).click()
+    await boardDialog(room)
+      .locator('article[aria-label="本文"]')
+      .getByRole("link", { name: "T-001", exact: true })
+      .click()
     await room.settleAndMatch(ELAPSED_MS)
   })
 })

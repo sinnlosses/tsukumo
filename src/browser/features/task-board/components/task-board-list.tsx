@@ -58,6 +58,9 @@ function TaskBoardOption(props: {
       className={styles["task-board-option"]}
       onClick={() => props.onSelect(row.id)}
     >
+      {row.outOfFilter && (
+        <span className={styles["task-board-option-out-of-filter"]}>絞り込みの外</span>
+      )}
       <span className={styles["task-board-option-head"]}>
         <span className={styles["task-board-option-id"]}>{row.id}</span>
         <TaskState state={row.state} />

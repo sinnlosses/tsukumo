@@ -425,6 +425,11 @@
   font-size: 13px;
   line-height: 1.55;
 }
+/* つながりの札から飛んだ先が絞り込み・検索の外にあるときだけ、一覧に一時的に出す行へ添える。 */
+.task-board-option-out-of-filter {
+  color: var(--ink-quiet);
+  font-size: 11px;
+}
 
 /* 状態の印と言い方。色だけで伝えないよう、印の形（点・輪・一時停止・チェック・横線・「!」）と字を添える。 */
 .task-state {
@@ -534,6 +539,35 @@
   padding: 22px 28px;
   overflow-y: auto;
 }
+/* パンくず（つながりをたどった先にだけ出す。直前の1つだけ）。 */
+.task-detail-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 20px;
+  font-size: 12px;
+}
+.task-detail-breadcrumb-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: none;
+  background: none;
+  padding: 0;
+  color: var(--accent);
+  font: inherit;
+  cursor: pointer;
+}
+.task-detail-breadcrumb-back-chevron {
+  flex: none;
+}
+.task-detail-breadcrumb-separator {
+  color: var(--ink-quiet);
+}
+.task-detail-breadcrumb-current {
+  color: var(--ink);
+  font-family: var(--font-mono);
+}
 .task-detail-head {
   display: flex;
   align-items: center;
@@ -602,6 +636,12 @@
   color: color-mix(in srgb, var(--state-warn) 60%, var(--ink));
   font-size: 12px;
 }
+/* 「これを待っているもの」（逆向きの札）の見出しは弱い字色。 */
+.task-detail-dependents-title {
+  margin: 0;
+  color: var(--ink-quiet);
+  font-size: 12px;
+}
 .task-detail-dependency-list {
   display: flex;
   flex-direction: column;
@@ -610,16 +650,27 @@
   padding: 0;
   list-style: none;
 }
+/* 一覧に無い依存（押せない）は `<li>` に直接、押せる札は中の `<button>` に付く。 */
 .task-detail-dependency {
   box-sizing: border-box;
   display: flex;
   align-items: center;
+  width: 100%;
   gap: 10px;
   min-height: 38px;
   padding: 8px 12px;
   border: 1px solid var(--rule);
   border-radius: 9px;
   background: var(--ground);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+button.task-detail-dependency {
+  cursor: pointer;
+}
+button.task-detail-dependency:hover {
+  background: color-mix(in srgb, var(--ground), var(--ink) 6%);
 }
 .task-detail-dependency-id {
   flex: none;

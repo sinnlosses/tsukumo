@@ -643,35 +643,51 @@
                         ]
                       },
                       {
-                        "tag": "p",
-                        "children": [
-                          "先に終わっていてほしいもの"
-                        ]
-                      },
-                      {
-                        "tag": "ul",
+                        "tag": "div",
+                        "attributes": {
+                          "role": "group"
+                        },
                         "children": [
                           {
-                            "tag": "li",
+                            "tag": "p",
                             "children": [
-                              "T-001",
+                              "先に終わっていてほしいもの"
+                            ]
+                          },
+                          {
+                            "tag": "ul",
+                            "children": [
                               {
-                                "tag": "span",
-                                "attributes": {
-                                  "aria-hidden": "true"
-                                }
-                              },
-                              "着手できる",
-                              "架空のタスク（",
-                              {
-                                "tag": "code",
+                                "tag": "li",
                                 "children": [
-                                  "code"
+                                  {
+                                    "tag": "button",
+                                    "attributes": {
+                                      "type": "button"
+                                    },
+                                    "children": [
+                                      "T-001",
+                                      {
+                                        "tag": "span",
+                                        "attributes": {
+                                          "aria-hidden": "true"
+                                        }
+                                      },
+                                      "着手できる",
+                                      "架空のタスク（",
+                                      {
+                                        "tag": "code",
+                                        "children": [
+                                          "code"
+                                        ]
+                                      },
+                                      "を含む要約）",
+                                      {
+                                        "tag": "svg"
+                                      }
+                                    ]
+                                  }
                                 ]
-                              },
-                              "を含む要約）",
-                              {
-                                "tag": "svg"
                               }
                             ]
                           }

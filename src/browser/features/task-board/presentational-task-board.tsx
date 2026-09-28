@@ -8,8 +8,14 @@
 // 行や本文のような押せない所を押すとフォーカスはこの器に移るので、そのあとも ↑↓ が効く。
 // 詳細は選んだタスクごとに作り直す（前のタスクで転がした位置を持ち越さない）。
 // 確認（`TaskRunConfirm`）は器の外に置く。器の中に置くと、確認の中で打った ↑↓ が React の木を伝って下の一覧の選択を動かす。
+//
+// つながりの札・本文中の ID・パンくずの「戻る」はリンク・ボタン（押せる要素）で、押すと
+// 詳細が作り直り押した要素ごと DOM から消えるので、フォーカスが窓（body）へ落ちて ↑↓・Alt+←
+// が器に届かなくなる。`focusSignal` が増えるたびに器へフォーカスを戻す
+// （0 のままの初回の描画では検索欄の `autoFocus` を奪わないよう、そのときは戻さない）。
 
 import type { ReactElement } from "react"
+import { useEffect, useRef } from "react"
 
 import { Dialog } from "../../components/ui/dialog/dialog.tsx"
 import { Text } from "../../components/ui/text/text.tsx"
@@ -24,6 +30,13 @@ import styles from "./task-board.module.css"
 
 export function PresentationalTaskBoard(props: TaskBoardView): ReactElement {
   const content = props.content
+  const frameRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (props.focusSignal > 0) {
+      frameRef.current?.focus()
+    }
+  }, [props.focusSignal])
 
   return (
     <Dialog
@@ -35,7 +48,12 @@ export function PresentationalTaskBoard(props: TaskBoardView): ReactElement {
       className={styles["task-board"]}
     >
       {props.open && (
-        <div className={styles["task-board-frame"]} tabIndex={-1} onKeyDown={props.onKeyDown}>
+        <div
+          ref={frameRef}
+          className={styles["task-board-frame"]}
+          tabIndex={-1}
+          onKeyDown={props.onKeyDown}
+        >
           <TaskBoardHead countsText={props.countsText} onClose={props.onClose} />
           {content.kind === "unknown" && (
             <Text
@@ -82,6 +100,9 @@ export function PresentationalTaskBoard(props: TaskBoardView): ReactElement {
                     <TaskDetail
                       key={content.selection.detail.id}
                       detail={content.selection.detail}
+                      breadcrumb={content.selection.breadcrumb}
+                      knownIds={content.knownIds}
+                      onJump={content.selection.onJump}
                     />
                     <TaskBoardAction
                       onCopy={content.selection.onCopy}

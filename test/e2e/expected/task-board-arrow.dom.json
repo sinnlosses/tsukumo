@@ -793,43 +793,59 @@
                         ]
                       },
                       {
-                        "tag": "p",
-                        "children": [
-                          "先に終わっていてほしいもの"
-                        ]
-                      },
-                      {
-                        "tag": "ul",
+                        "tag": "div",
+                        "attributes": {
+                          "role": "group"
+                        },
                         "children": [
                           {
-                            "tag": "li",
+                            "tag": "p",
                             "children": [
-                              "T-001",
-                              {
-                                "tag": "span",
-                                "attributes": {
-                                  "aria-hidden": "true"
-                                }
-                              },
-                              "着手できる",
-                              "架空のタスク（",
-                              {
-                                "tag": "code",
-                                "children": [
-                                  "code"
-                                ]
-                              },
-                              "を含む要約）",
-                              {
-                                "tag": "svg"
-                              }
+                              "先に終わっていてほしいもの"
                             ]
                           },
                           {
-                            "tag": "li",
+                            "tag": "ul",
                             "children": [
-                              "T-009",
-                              "一覧に無い"
+                              {
+                                "tag": "li",
+                                "children": [
+                                  {
+                                    "tag": "button",
+                                    "attributes": {
+                                      "type": "button"
+                                    },
+                                    "children": [
+                                      "T-001",
+                                      {
+                                        "tag": "span",
+                                        "attributes": {
+                                          "aria-hidden": "true"
+                                        }
+                                      },
+                                      "着手できる",
+                                      "架空のタスク（",
+                                      {
+                                        "tag": "code",
+                                        "children": [
+                                          "code"
+                                        ]
+                                      },
+                                      "を含む要約）",
+                                      {
+                                        "tag": "svg"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "tag": "li",
+                                "children": [
+                                  "T-009",
+                                  "一覧に無い"
+                                ]
+                              }
                             ]
                           }
                         ]

@@ -612,6 +612,72 @@
                         ]
                       },
                       {
+                        "tag": "div",
+                        "attributes": {
+                          "role": "group"
+                        },
+                        "children": [
+                          {
+                            "tag": "p",
+                            "children": [
+                              "これを待っているもの"
+                            ]
+                          },
+                          {
+                            "tag": "ul",
+                            "children": [
+                              {
+                                "tag": "li",
+                                "children": [
+                                  {
+                                    "tag": "button",
+                                    "attributes": {
+                                      "type": "button"
+                                    },
+                                    "children": [
+                                      "T-004",
+                                      {
+                                        "tag": "span",
+                                        "attributes": {
+                                          "aria-hidden": "true"
+                                        }
+                                      },
+                                      "待ち T-001",
+                                      "架空のタスク（待ち）",
+                                      {
+                                        "tag": "svg"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "tag": "li",
+                                "children": [
+                                  {
+                                    "tag": "button",
+                                    "attributes": {
+                                      "type": "button"
+                                    },
+                                    "children": [
+                                      "T-005",
+                                      {
+                                        "tag": "svg"
+                                      },
+                                      "保留 · T-001",
+                                      "架空のタスク（保留）",
+                                      {
+                                        "tag": "svg"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
                         "tag": "article",
                         "attributes": {
                           "aria-label": "本文"

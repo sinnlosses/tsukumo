@@ -1,10 +1,10 @@
 // `<TaskBoard>`（タスクのモーダル）のロジック。
 // 開いているかは呼び出し側の state で、ここはそれを `<Dialog open={...}>` へ渡す形にするのと、次の2つを持つ。
-// - 表示上の状態（検索の文字・絞り込みの札・選んでいる ID・開いている確認）。閉じると初めに戻す
+// - 表示上の状態（検索の文字・絞り込みの札・選んでいる ID・パンくず・開いている確認）。閉じると初めに戻す
 // - 一覧を、行・絞り込みの札・選んだタスクの詳細・操作の帯へ畳む
 // CSS の class 名はここでは決めない。
 
-import { useState, type KeyboardEvent } from "react"
+import { useCallback, useMemo, useState, type KeyboardEvent } from "react"
 import { isIncludedIn } from "remeda"
 
 import {
@@ -49,6 +49,8 @@ export type TaskBoardRow = {
   readonly loopable: boolean
   readonly difficulty: TaskDifficultyView
   readonly selected: boolean
+  /** 絞り込み・検索には当たらないが、飛んだ先として一時的に出している行なら真。 */
+  readonly outOfFilter: boolean
 }
 
 export type TaskBoardFilter = "all" | "ready" | "blocked" | "hold" | "doing" | "done"
@@ -60,7 +62,7 @@ export type TaskBoardFilterChip = {
   readonly pressed: boolean
 }
 
-/** 「先に終わっていてほしいもの」の札1枚。一覧に無い依存は ID だけ。 */
+/** つながりの札1枚（「先に終わっていてほしいもの」「これを待っているもの」）。一覧に無い依存は ID だけ。 */
 export type TaskDependencyCard =
   | {
       readonly kind: "listed"
@@ -69,6 +71,11 @@ export type TaskDependencyCard =
       readonly summary: readonly SummaryPart[]
     }
   | { readonly kind: "unlisted"; readonly id: string }
+
+/** パンくず。直前の1つだけを持つ（履歴を積まない）。一覧で別の行を選ぶと `none` に戻る。 */
+export type TaskBoardBreadcrumb =
+  | { readonly kind: "none" }
+  | { readonly kind: "some"; readonly previousId: string; readonly onBack: () => void }
 
 export type TaskBoardDetail = {
   readonly id: string
@@ -81,6 +88,8 @@ export type TaskBoardDetail = {
   readonly loop: { readonly on: boolean; readonly text: string }
   readonly location: TaskLocation
   readonly dependencies: readonly TaskDependencyCard[]
+  /** いまの一覧のうち、このタスクを依存に持つもの。 */
+  readonly dependents: readonly TaskDependencyCard[]
   /** 本文の Markdown（空なら空文字列）。 */
   readonly body: string
 }
@@ -105,7 +114,10 @@ export type TaskBoardSelection =
   | {
       readonly kind: "some"
       readonly detail: TaskBoardDetail
+      readonly breadcrumb: TaskBoardBreadcrumb
       readonly onCopy: () => void
+      /** 依存・依存元の札、本文中の ID を押したときに呼ぶ（一覧に無い ID では呼ばれない）。 */
+      readonly onJump: (id: string) => void
       readonly opener: TaskBoardOpener
       readonly run: TaskBoardRun
     }
@@ -124,6 +136,8 @@ export type TaskBoardContent =
       /** 選んでいる行の `optionId`。行が無ければ `undefined`（`aria-activedescendant` を付けない）。 */
       readonly activeOptionId: string | undefined
       readonly selection: TaskBoardSelection
+      /** いまの一覧に載っている ID（絞り込み・検索より前の全体）。本文中の ID の自動リンクが照らす先。 */
+      readonly knownIds: ReadonlySet<string>
     }
 
 export type TaskBoardConfirm =
@@ -140,9 +154,32 @@ export type TaskBoardView = {
   readonly onQueryChange: (query: string) => void
   readonly onFilter: (filter: TaskBoardFilter) => void
   readonly onSelect: (id: string) => void
-  /** モーダルの中身の器で受けるキー（↑↓ で行を移る。Esc は `<dialog>` が閉じる）。 */
+  /** モーダルの中身の器で受けるキー（↑↓ で行を移る。Alt+← は「戻る」。Esc は `<dialog>` が閉じる）。 */
   readonly onKeyDown: (event: KeyboardEvent<HTMLElement>) => void
   readonly onConfirmClose: (outcome: TaskRunConfirmOutcome) => void
+  /**
+   * つながりの札・本文中の ID・パンくずの「戻る」を押すたびに増える。詳細が丸ごと作り直り
+   * 押した要素ごとフォーカスが落ちるので、増えるたびに中身の器へフォーカスを戻す合図にする。
+   */
+  readonly focusSignal: number
+}
+
+/**
+ * 表示上の選択の状態。`selectedId` が選んでいる行、`previousId` はパンくずの「戻る」先
+ * （直前の1つだけ）、`pinnedId` は絞り込み・検索の外でも一覧に一時的に出す ID。
+ * 一覧で別の行を選ぶ（`select`）とどちらも消え、つながりの札・本文の ID を押す（`jumpTo`）と
+ * 両方立つ。戻る（`goBack`）は `pinnedId` だけ `previousId` に付け替える。
+ */
+type Navigation = {
+  readonly selectedId: string | undefined
+  readonly previousId: string | undefined
+  readonly pinnedId: string | undefined
+}
+
+const INITIAL_NAVIGATION: Navigation = {
+  selectedId: undefined,
+  previousId: undefined,
+  pinnedId: undefined,
 }
 
 export function useTaskBoard(
@@ -152,35 +189,80 @@ export function useTaskBoard(
 ): TaskBoardView {
   const [query, setQuery] = useState("")
   const [filter, setFilter] = useState<TaskBoardFilter>("all")
-  const [selectedId, setSelectedId] = useState<string | undefined>(undefined)
+  const [navigation, setNavigation] = useState<Navigation>(INITIAL_NAVIGATION)
   const [confirmingId, setConfirmingId] = useState<string | undefined>(undefined)
+  // つながりの札・本文中の ID・パンくずの「戻る」はリンクやボタンを押して切り替わるので、
+  // 選んだタスクの詳細が丸ごと作り直る（`key={detail.id}`）ときに押した要素ごと消え、
+  // フォーカスが落ちる。変わるたびに増やし、`PresentationalTaskBoard` 側でフォーカスを
+  // 器へ戻す合図にする（一覧の行を選ぶ・↑↓ だけのときはフォーカスは落ちないので増やさない）。
+  const [focusSignal, setFocusSignal] = useState(0)
   const dispatch = useSession((session) => session.dispatch)
   const tracked = useTrackedFileList(open)
+
+  // `tasks` が変わらない限り参照を保つ。本文の Markdown（`TaskBody`）の `useMemo` のキーに
+  // `knownIds`・`jumpTo` を使うので、検索・絞り込みの入力のたびに参照を変えて本文を作り直させない。
+  const items = useMemo(() => (tasks.kind === "known" ? tasks.items : []), [tasks])
+  const entries = boardEntries(items)
+  const byId = new Map(entries.map((entry) => [entry.task.id, entry]))
+  const isVisible = (entry: BoardEntry): boolean =>
+    matchesFilter(entry.state, filter) && matchesQuery(entry.task, query)
+  const rows = entries.filter((entry) => isVisible(entry) || entry.task.id === navigation.pinnedId)
+  const selected = rows.find((entry) => entry.task.id === navigation.selectedId) ?? rows[0]
+
+  // 開いた直後・絞り込みで選んでいた行が消えたときは、一覧の先頭へ落ちる（`selected` の `?? rows[0]`）。
+  // `navigation.selectedId` にも書き戻しておく。書き戻さないと、次に飛んだときのパンくずの
+  // 「戻る」先（`jumpTo` が読む `prev.selectedId`）が実際に出ている行と食い違う。
+  if (selected !== undefined && selected.task.id !== navigation.selectedId) {
+    setNavigation((prev) => ({ ...prev, selectedId: selected.task.id }))
+  }
+
+  const knownIds = useMemo(() => new Set(items.map((item) => item.id)), [items])
+  const jumpTo = useCallback(
+    (id: string): void => {
+      if (!items.some((item) => item.id === id)) {
+        return
+      }
+      setNavigation((prev) => ({ selectedId: id, previousId: prev.selectedId, pinnedId: id }))
+      setFocusSignal((count) => count + 1)
+    },
+    [items],
+  )
 
   const close = (): void => {
     setQuery("")
     setFilter("all")
-    setSelectedId(undefined)
+    setNavigation(INITIAL_NAVIGATION)
     setConfirmingId(undefined)
     onClose()
   }
 
-  const items = tasks.kind === "known" ? tasks.items : []
-  const entries = boardEntries(items)
-  const visible = entries.filter(
-    (entry) => matchesFilter(entry.state, filter) && matchesQuery(entry.task, query),
-  )
-  const selected = visible.find((entry) => entry.task.id === selectedId) ?? visible[0]
+  /** 一覧で行を直に選ぶ（クリック・↑↓）。パンくずと一時的な行は引っ込む。 */
+  const select = (id: string): void => {
+    setNavigation({ selectedId: id, previousId: undefined, pinnedId: undefined })
+  }
+
+  /** パンくずの「戻る」・Alt+←。戻る先が無ければ何もしない。 */
+  const goBack = (): void => {
+    if (navigation.previousId === undefined) {
+      return
+    }
+    setNavigation((prev) => ({
+      selectedId: prev.previousId ?? prev.selectedId,
+      previousId: undefined,
+      pinnedId: prev.previousId,
+    }))
+    setFocusSignal((count) => count + 1)
+  }
 
   const move = (step: number): void => {
-    const index = visible.findIndex((entry) => entry === selected)
-    const next = visible[Math.min(Math.max(index + step, 0), visible.length - 1)]
+    const index = rows.findIndex((entry) => entry === selected)
+    const next = rows[Math.min(Math.max(index + step, 0), rows.length - 1)]
     if (next !== undefined) {
-      setSelectedId(next.task.id)
+      select(next.task.id)
     }
   }
 
-  const content = boardContent(tasks, entries, visible, selected, {
+  const content = boardContent(tasks, entries, byId, rows, selected, isVisible, knownIds, {
     query,
     filter,
     tracked,
@@ -188,6 +270,11 @@ export function useTaskBoard(
       dispatch.host.openFile({ path })
     },
     run: setConfirmingId,
+    onJump: jumpTo,
+    breadcrumb:
+      navigation.previousId === undefined
+        ? { kind: "none" }
+        : { kind: "some", previousId: navigation.previousId, onBack: goBack },
   })
 
   return {
@@ -199,9 +286,16 @@ export function useTaskBoard(
     onClose: close,
     onQueryChange: setQuery,
     onFilter: setFilter,
-    onSelect: setSelectedId,
+    onSelect: select,
     onKeyDown: (event) => {
-      if (event.nativeEvent.isComposing || event.altKey || event.metaKey || event.ctrlKey) {
+      if (event.nativeEvent.isComposing || event.metaKey || event.ctrlKey) {
+        return
+      }
+      if (event.altKey) {
+        if (event.key === "ArrowLeft") {
+          event.preventDefault()
+          goBack()
+        }
         return
       }
       if (event.key === "ArrowDown" || event.key === "ArrowUp") {
@@ -215,6 +309,7 @@ export function useTaskBoard(
         close()
       }
     },
+    focusSignal,
   }
 }
 
@@ -230,6 +325,8 @@ type BoardContentInput = {
   readonly tracked: TrackedFileList
   readonly openFile: (path: string) => void
   readonly run: (taskId: string) => void
+  readonly onJump: (id: string) => void
+  readonly breadcrumb: TaskBoardBreadcrumb
 }
 
 const FILTER_CHIPS = [
@@ -272,8 +369,11 @@ function boardEntries(items: readonly TaskSummaryItem[]): readonly BoardEntry[] 
 function boardContent(
   tasks: TaskSummaryResult,
   entries: readonly BoardEntry[],
-  visible: readonly BoardEntry[],
+  byId: ReadonlyMap<string, BoardEntry>,
+  rows: readonly BoardEntry[],
   selected: BoardEntry | undefined,
+  isVisible: (entry: BoardEntry) => boolean,
+  knownIds: ReadonlySet<string>,
   input: BoardContentInput,
 ): TaskBoardContent {
   if (tasks.kind === "unknown") {
@@ -283,7 +383,6 @@ function boardContent(
     return { kind: "empty" }
   }
 
-  const byId = new Map(entries.map((entry) => [entry.task.id, entry]))
   return {
     kind: "known",
     listId: TASK_BOARD_LIST_ID,
@@ -293,7 +392,7 @@ function boardContent(
       count: entries.filter((entry) => matchesFilter(entry.state, chip.filter)).length,
       pressed: chip.filter === input.filter,
     })),
-    rows: visible.map((entry) => ({
+    rows: rows.map((entry) => ({
       id: entry.task.id,
       optionId: optionIdOf(entry.task.id),
       summary: summaryParts(entry.task.summary),
@@ -301,14 +400,18 @@ function boardContent(
       loopable: entry.task.loopable === "Y",
       difficulty: difficultyOf(entry.task.difficulty),
       selected: entry === selected,
+      outOfFilter: !isVisible(entry),
     })),
     activeOptionId: selected === undefined ? undefined : optionIdOf(selected.task.id),
-    selection: selected === undefined ? { kind: "none" } : selectionOf(selected, byId, input),
+    selection:
+      selected === undefined ? { kind: "none" } : selectionOf(selected, entries, byId, input),
+    knownIds,
   }
 }
 
 function selectionOf(
   entry: BoardEntry,
+  entries: readonly BoardEntry[],
   byId: ReadonlyMap<string, BoardEntry>,
   input: BoardContentInput,
 ): TaskBoardSelection {
@@ -324,12 +427,15 @@ function selectionOf(
       loop: loopOf(task.loopable),
       location: task.location,
       dependencies: task.dependencies.map((id) => dependencyCardOf(id, byId)),
+      dependents: dependentsOf(task.id, entries),
       body: task.body,
     },
+    breadcrumb: input.breadcrumb,
     onCopy: () => {
       // 書けなかったとき（窓にフォーカスが無いなど）は何もしない。押し直せば済む。
       void navigator.clipboard.writeText(task.id).catch(() => {})
     },
+    onJump: input.onJump,
     opener: openerOf(task.location, input),
     run:
       entry.state.kind === "ready"
@@ -366,6 +472,21 @@ function dependencyCardOf(id: string, byId: ReadonlyMap<string, BoardEntry>): Ta
     state: dependency.state,
     summary: summaryParts(dependency.task.summary),
   }
+}
+
+/** いまの一覧のうち、`taskId` を依存に持つものの札（並びは一覧の順のまま）。 */
+function dependentsOf(
+  taskId: string,
+  entries: readonly BoardEntry[],
+): readonly TaskDependencyCard[] {
+  return entries
+    .filter((entry) => entry.task.dependencies.includes(taskId))
+    .map((entry) => ({
+      kind: "listed" as const,
+      id: entry.task.id,
+      state: entry.state,
+      summary: summaryParts(entry.task.summary),
+    }))
 }
 
 /**
