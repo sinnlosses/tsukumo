@@ -621,8 +621,8 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     expect(shownReports(turn)).toEqual([
       "架空の結論。\n\n" +
         '<div class="checks">' +
-        '<div class="check check-ok"><div class="check-head"><span class="check-mark">✓ OK</span><span class="check-figure">12 / 3</span></div><div class="check-body"><b>架空の検査</b> 架空の件数</div></div>' +
-        '<div class="check check-unverified"><div class="check-head"><span class="check-mark">? 未確認</span></div><div class="check-body"><b>架空の目視</b></div></div>' +
+        '<div class="check check-ok"><div class="check-head"><span class="check-label">架空の検査</span><span class="check-mark">✓ OK</span></div><div class="check-numbers"><span class="check-figure">12 / 3</span></div></div>' +
+        '<div class="check check-unverified"><div class="check-head"><span class="check-label">架空の目視</span><span class="check-mark">? 未確認</span></div></div>' +
         "</div>\n\n" +
         '架空の根拠。\n\n<div class="note note-favor">\n\n架空のお願い\n\n</div>',
     ])
@@ -667,10 +667,10 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     const [shown] = shownReports(mainViewTurns(mainViewEntries(state), SETTLED, true).at(-1))
 
     expect(shown).toContain(
-      '<span class="check-mark">✓ OK</span><span class="check-time">1分02秒</span></div><div class="check-body"><b>一致する</b>',
+      '<span class="check-label">一致する</span><span class="check-mark">✓ OK</span></div><div class="check-numbers"><span class="check-time">1分02秒</span></div>',
     )
     expect(shown).toContain(
-      '<span class="check-mark">✓ OK</span></div><div class="check-body"><b>一致しない</b>',
+      '<span class="check-label">一致しない</span><span class="check-mark">✓ OK</span></div></div>',
     )
   })
 

@@ -16,7 +16,7 @@ export const reportCheckSchema = z.object({
   figure: z
     .string()
     .describe(
-      "結果を1つの数で言う短い文字列（例: 2849 / 56、25px、0 件）。カードに大きく描く。数で言えなければ空文字",
+      "結果を1つの数で言う短い文字列（例: 2849 / 56、25px、0 件）。数だけを書き、「が通過」のような述語は付けない。カードの中央に大きく描く。数で言えなければ空文字",
     ),
   command: z
     .string()
@@ -25,7 +25,9 @@ export const reportCheckSchema = z.object({
     ),
   detail: z
     .string()
-    .describe("補足・確かめなかった理由など。figure に書いた数は言い直さない。無ければ空文字"),
+    .describe(
+      "ng なら落ちた理由、unverified なら確かめなかった理由を1文で。ok のカードには描かないので書かない。直した経緯や打ち直した回数は書かない。無ければ空文字",
+    ),
 })
 
 export type ReportCheck = z.infer<typeof reportCheckSchema>
@@ -47,6 +49,8 @@ export function parseReportChecks(value: unknown): readonly ReportCheck[] {
 
 /**
  * 検証結果のカードの並び（1行の HTML）。空なら空文字。
+ * 1枚は「label と状態」の段、「figure と所要時間」の段、「detail」の段の順で、中身の無い段は置かない。
+ * detail は ng / unverified の理由だけで、ok のカードには描かない。
  * 状態はカードの色と文字の両方で見せる（色だけで意味を伝えない）。
  * `commandDuration` は `command` から tsukumo が測った所要時間を引く口で、`command` が空の項目には呼ばない。
  * モデルの文字列は HTML として逃がし、改行は空白に畳む（HTML の塊が空行で切れないように）。
@@ -62,8 +66,7 @@ export function reportChecksMarkdown(
     const mark = REPORT_CHECK_MARKS[check.status]
     const duration: MeasuredTime =
       check.command.trim() === "" ? { kind: "unknown" } : commandDuration(check.command)
-    const head = [
-      `<span class="check-mark">${mark.text}</span>`,
+    const numbers = [
       ...(check.figure.trim() === ""
         ? []
         : [`<span class="check-figure">${htmlInline(check.figure)}</span>`]),
@@ -73,11 +76,14 @@ export function reportChecksMarkdown(
           ]
         : []),
     ]
-    const body = [
-      `<b>${htmlInline(check.label)}</b>`,
-      ...(check.detail.trim() === "" ? [] : [htmlInline(check.detail)]),
+    const rows = [
+      `<div class="check-head"><span class="check-label">${htmlInline(check.label)}</span><span class="check-mark">${mark.text}</span></div>`,
+      ...(numbers.length === 0 ? [] : [`<div class="check-numbers">${numbers.join("")}</div>`]),
+      ...(check.status === "ok" || check.detail.trim() === ""
+        ? []
+        : [`<div class="check-body">${htmlInline(check.detail)}</div>`]),
     ]
-    return `<div class="check ${mark.card}"><div class="check-head">${head.join("")}</div><div class="check-body">${body.join(" ")}</div></div>`
+    return `<div class="check ${mark.card}">${rows.join("")}</div>`
   })
   return `<div class="checks">${cards.join("")}</div>`
 }

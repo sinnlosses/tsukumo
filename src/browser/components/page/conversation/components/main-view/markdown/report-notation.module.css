@@ -227,8 +227,8 @@
   grid-column: 3;
 }
 /* 検証結果のカード（`report` の `checks` から tsukumo が組む）。
-   毎回出る脇役なので、1枚は「状態・数・時間」の行と「ラベル・補足」の行の2段に収め、幅に合わせて横に並べる。
-   状態は縦罫と地の染めの色に加えて、行頭の文字（✓ OK / ✕ NG / ? 未確認）でも読める。 */
+   毎回出る脇役なので段は少なく抑え、「何を確かめて、どうだったか」の段と「数と時間」の段で読ませる（ok は理由の段を持たない）。
+   状態は縦罫と地の染めの色に加えて、見出しの後ろの文字（✓ OK / ✕ NG / ? 未確認）でも読める。 */
 .detail-block .report-checks {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
@@ -238,6 +238,9 @@
   color: var(--ink-quiet);
 }
 .detail-block .report-check {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
   padding: 0.3rem 0.6rem;
   border-left: 3px solid currentColor;
   border-radius: 0.25rem;
@@ -255,11 +258,24 @@
 .detail-block .report-check-head {
   display: flex;
   align-items: baseline;
-  gap: 0.6rem;
-  white-space: nowrap;
+  gap: 0.5rem;
+}
+.detail-block .report-check-label {
+  overflow-wrap: anywhere;
+  font-weight: 700;
+  color: var(--ink);
 }
 .detail-block .report-check-mark {
+  flex-shrink: 0;
   font-weight: 700;
+  white-space: nowrap;
+}
+.detail-block .report-check-numbers {
+  display: flex;
+  justify-content: center;
+  align-items: baseline;
+  gap: 0.9rem;
+  white-space: nowrap;
 }
 .detail-block .report-check-figure {
   overflow: hidden;
@@ -267,20 +283,16 @@
   font-size: var(--font-subheading);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
-  line-height: 1;
+  line-height: 1.2;
   color: var(--ink);
 }
 .detail-block .report-check-time {
-  margin-left: auto;
   font-variant-numeric: tabular-nums;
   color: var(--ink-quiet);
 }
 .detail-block .report-check-body {
   overflow-wrap: anywhere;
   color: var(--ink-quiet);
-}
-.detail-block .report-check-body b {
-  color: var(--ink);
 }
 /* 情報の塊（素の `note`。結論を言う役）。
    いちばん読ませたい印なので、縦罫を ink まで上げ、地を「浮く」段にする（引用と同じ灰色の3px の縦罫で地の差も無いと、いちばん弱く見える）。
