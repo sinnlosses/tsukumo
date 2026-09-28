@@ -277,7 +277,7 @@ pnpm run start                 # セッションを起こし、ページのタ�
                               #   TSUKUMO_OPEN_VIEW=0 で自動オープンを止める。本物の claude を子プロセスで起こす。
                               #   成果物が無ければ前提不足で止まり、ソースのほうが新しければ1行知らせて古いまま配る）
 pnpm run dev                   # pnpm run build のあと、start と同じ経路を Vite の開発サーバつき（--dev）で起こす
-                              #   （src/server/core/ と src/shared/ を直したときは上げ直しが要る。docs/design.md 11章）
+                              #   （src/server/core/ と src/shared/ を直したときは上げ直しが要る。docs/architecture/build.md）
 pnpm run storybook             # 部品を props ごとに並べる Storybook を http://localhost:6006/ に起こす
                               #   （story は story/ の下。本体と同じ vite.config.ts で組み立てる）
 node scripts/open-views.ts <URL>  # プロセスは動いたままタブだけ閉じたときに開き直す
@@ -288,7 +288,7 @@ node scripts/stop.ts           # 動いている tsukumo を一覧する（--por
 ```
 
 **ブラウザに出た絵は自動テストで守りません。** 配信（バインド先・経路・push）まではテストし、
-実際に見えているかは目視で確認します（手順は `docs/architecture.md`「手で確かめること」）。
+実際に見えているかは目視で確認します（手順は `docs/architecture/testing.md`「手で確かめること」）。
 
 ### プロジェクト構成
 
@@ -330,11 +330,15 @@ node scripts/stop.ts           # 動いている tsukumo を一覧する（--por
 ### ドキュメント
 
 - [`docs/requirements.md`](./docs/requirements.md) — 要件定義（やること・**やらないこと**・技術制約・未決事項）
-- [`docs/design.md`](./docs/design.md) — 設計書（`shared` / `server`（`core`・`adapter`）/ `browser` の層・プロトコル・部品・キャラクターパック）
+- [`docs/design.md`](./docs/design.md) — 設計書（`shared` / `server`（`core`・`adapter`）/ `browser` の層・プロトコル）
+- [`docs/architecture/browser.md`](./docs/architecture/browser.md) — ブラウザ側（状態の持ち方・Markdown・重いライブラリ・立ち絵の動き・CSS・`components/ui/` の部品）
+- [`docs/architecture/character-pack.md`](./docs/architecture/character-pack.md) — キャラクターパック（形・探索順・画面から書くときの境界・雑談の記憶の置き場）
+- [`docs/architecture/testing.md`](./docs/architecture/testing.md) — テスト（対象ごとの方法・E2E・目視確認の手順）
+- [`docs/architecture/build.md`](./docs/architecture/build.md) — ビルドと依存（事前の組み立て・HMR・足す依存の一覧）
 - [`docs/screen-design.md`](./docs/screen-design.md) — 画面のデザイン（色・書体・レイアウトの計画とトークン、雑談モードの画面、背景、画面のナビの帯）
 - [`docs/display.md`](./docs/display.md) — 表示（セリフとレポートの出力分離、レポートの記法の規約、立ち絵・吹き出し・メインビュー・入力欄・サイドバーなど各表示物の仕様）
 - [`docs/chat-mode.md`](./docs/chat-mode.md) — 雑談モード（遡れる幅、記憶の圧縮と忘却、残す旗、会話のアーカイブ、人格への書き戻し）
-- [`docs/architecture.md`](./docs/architecture.md) — アーキテクチャ詳細（全体図・設計判断・目視確認の手順・既知の制約）
+- [`docs/architecture.md`](./docs/architecture.md) — アーキテクチャ詳細（全体図・設計判断・既知の制約）
 - [`docs/coding-standards.md`](./docs/coding-standards.md) — コーディング規約（**会話内容の扱い**を含む）
 - [`docs/glossary.md`](./docs/glossary.md) — 用語集（日本語表記とコード上の識別子の対応）
 - [`docs/workflow.md`](./docs/workflow.md) — このリポジトリでの進捗管理の上乗せ

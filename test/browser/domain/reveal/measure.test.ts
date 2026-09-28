@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest"
 import { lineBoxesOf, type MemberShape } from "../../../../src/browser/domain/reveal/measure.ts"
 import type { RevealElement, RevealMember } from "../../../../src/browser/domain/reveal/plan.ts"
 
-// 実際に見えている帯の位置は目視で確かめる（`docs/architecture.md`「手で確かめること」）。
+// 実際に見えている帯の位置は目視で確かめる（`docs/architecture/testing.md`「手で確かめること」）。
 // ここで守るのは、図・グラフの塊で右端をどの box から取るかだけ。
 
 /** 要素の `getBoundingClientRect()` を固定値に差し替える（happy-dom はレイアウトを持たない）。 */

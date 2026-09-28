@@ -4,7 +4,7 @@
 //
 // 作業ツリーと `dist/browser/` に触らないことが、この道具の存在理由。 `git stash`・
 // `git checkout` で手元を巻き戻す方法は、戻し忘れると書きかけの変更を失うか、`dist/browser/` が
-// 変更前のまま残る（`docs/architecture.md`「変更前と撮り比べる」）。ここでは取り出しに一時 index を
+// 変更前のまま残る（`docs/architecture/testing.md`「変更前と撮り比べる」）。ここでは取り出しに一時 index を
 // 使うので、本物の index も作業ツリーも読むだけで済む。
 //
 // 使い方:

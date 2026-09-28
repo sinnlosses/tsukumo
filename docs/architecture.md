@@ -7,7 +7,7 @@
 | 各関数の引数・戻り値・分岐条件                   | **コード側のドキュメンテーションコメントが正典**                                                                           |
 | 何をどこに置くか                                 | 「新しいコードを置く場所」（原則の要約はCLAUDE.mdに）                                                                      |
 | なぜ今の形なのか（別の形に直そうとする前に読む） | 「設計判断（なぜ今の形なのか）」                                                                                           |
-| 描画結果をどう検証するか                         | 「手で確かめること」                                                                                                       |
+| 描画結果をどう検証するか                         | `docs/architecture/testing.md`「手で確かめること」                                                                         |
 | 踏みやすい落とし穴                               | 「既知の制約・注意点」                                                                                                     |
 | 要件そのもの（やること・やらないこと）           | `docs/requirements.md` が正典                                                                                              |
 | コードを1ファイル読んでも分からない構造の規則    | **`docs/design.md` が正典**（層と機能の辺・置き場所の基準・プロトコルの不変条件・動きの順序・安全の境界。2026-09-26 決定） |
@@ -32,7 +32,6 @@ sed -n '/^## 新しいコードを置く場所/,/^#\{2,4\} /p' docs/architecture
 | ## 採用アーキテクチャ           | 全体像の図と、データの流れ3本                                 |
 | ## 新しいコードを置く場所       | 原則1〜5の判断材料                                            |
 | ## 設計判断（なぜ今の形なのか） | 今の形を別の形に直そうとする前に、一覧から該当する ADR を読む |
-| ## 手で確かめること             | 自動チェックで捉えられない見た目の確認手順                    |
 | ## 既知の制約・注意点           | 環境側の前提と、壊しやすいもの                                |
 
 ## 現在の実装状況
@@ -293,142 +292,6 @@ fs から読んだ**文字列**で渡すので、`core → adapter` の辺は増
 | `docs/architecture/adr/0017-serve-from-local-http.md`        | HTML はローカルの HTTP サーバから配る（ファイルに書き出さない）            |
 | `docs/architecture/adr/0018-single-page-view.md`             | ビューは1枚のページにまとめる                                              |
 | `docs/architecture/adr/0019-layer-as-directory.md`           | 層をディレクトリで表し、依存の向きをテストで縛る                           |
-
-## 手で確かめること
-
-**見た目（色・崩れ・間合い）は自動チェックで捉えられない。** 単体テストで守るのは「受け取る」
-「決める」と配信そのもの（バインド先・経路・push）、**E2E で守るのは DOM の構造と画面の流れ**
-（`docs/design.md` 10章「E2E の走らせ方」。`pnpm run check` の最後の段の `pnpm run test:e2e`）
-まで。E2E のスクリーンショットは `/tmp/tsukumo-e2e/` に出るが判定には使わないので、表示に関わる変更をしたら、
-次を確認してその結果を `evidence` に書く（`~/.claude/skills/task-workflow/WORKFLOW.md`
-「良いevidenceの書き方」と `docs/workflow.md`「タスクを書くとき・受け入れるとき」）。
-
-**fake driver（`TSUKUMO_DRIVER=fake`）で起こせる**ので、claude を起こさず（API を使わず）に
-下の手順を回せる（`docs/design.md` 10章）。
-
-**状態ごとの画面を並べて見るときは `node scripts/capture-catalog.ts`。** 疑似セッションの場面
-（`test/fixture/fake-session.json` の `turns[].name`）ごとに tsukumo を1件ずつ空きポートで起こし、
-広い窓（1400x900）と狭い窓（720x900・縦に積み替わるのでページ全体）で撮る。**同じ場面を別の
-操作で何枚も撮る件があるので、名指しは場面の名前ではなく件の名前**（`--only notation-figure`
-のように。`--only` に使える名前の一覧は `--help` で出る。**オプション無しで実行すると
-カタログ全件を広い窓・狭い窓の2枚ずつ撮ってしまい、60秒では終わらないので踏まない**）。
-**件によっては撮る前に操作を当ててから撮る**（領域の内側を送る・ボタンを押す・
-入力欄に打つ・`location.hash` を書く、の4種だけ） — 疑似セッションを流しただけでは出ない
-状態（記法の見本の下側・タスク一覧のモーダル・`/`と`@`の補完・キャラクター画面）をこれで出している。
-`/tmp/tsukumo-catalog/index.html` に並べる（`--out` で置き場を変えられる）。**依頼を手で送らなくても狙った状態が出る**ので、
-答え待ちの箱・レポートの記法を直したら前後で撮り比べる。1枚だけ撮って要素の位置と大きさを
-数値で読むのは `capture-view.ts`（class セレクタで測るときは `[class*="…"]` — CSS Modules が
-`名前_ハッシュ` に焼くため）。**撮った画像はリポジトリに置かない。** 疑似セッションの会話は架空でも、
-**タスク一覧のモーダルを撮る件には実データのタスク一覧（Beads の課題）が写る**ので、
-画像そのものを他所へ共有・複製しない。
-
-**部品1つの状態違いを並べて見るときは Storybook（`pnpm run storybook`、`http://localhost:6006/`）。**
-`capture-catalog.ts` とは見るものを分ける。**Storybook は部品を props で切り替えて見る道**
-（`note` の6種・`badge` の3種・表・図・グラフ・立ち絵の SVG とラスタ・吹き出しの長い文と空のとき）で、
-story は `story/` の下にある。**`capture-catalog.ts` は画面に入れたときの見え方を見る道**
-（領域の内側のスクロール・モーダル・補完・狭い窓での積み替え・実データのタスク一覧）で、
-tsukumo を本当に起こして撮る。崩れの多くは部品単体ではなく領域に入れたときに出るので、
-**描画の変更の `evidence` は引き続き `capture-catalog.ts`（か手で起こした tsukumo）で撮る**。
-Storybook は部品を直している最中に状態を切り替えて見るための補助で、`capture-catalog.ts` を
-Storybook の story を撮る形に寄せることはしない（寄せると疑似セッション・サーバ・領域の
-組み合わせが写らなくなる）。Storybook の class 名は本体の成果物と同じ綴りになる
-（`docs/design.md` 11章）ので、`[class*="…"]` の probe は Storybook の iframe
-（`/iframe.html?id=<story の id>`）でもそのまま使える。**起こした Storybook は撮り終えたら止める。**
-
-**変更前と撮り比べるときは `node scripts/serve-revision.ts <コミット>`。** 名指ししたコミットを
-`/tmp/tsukumo-revision/<sha>/` へ取り出し、そこで組み立てて、空けたポート（既定 7340）と一時ホームで
-tsukumo を1つ起こし、URL を出す（`--scene` で疑似セッションの場面も流せる）。その URL を
-`capture-view.ts` / `capture-catalog.ts` に渡して撮り、いま居る作業ツリーで起こしたほうと並べる。
-**撮り終えたら `node scripts/stop.ts --port 7340` で必ず止める** — 起こしたものは自分では
-止まらない（`stop.ts` が中の tsukumo を止めると、外側の `serve-revision.ts` も続いて終わるので、
-打つのは1回でよい）。**利用者の tsukumo が 7327〜7330 あたりで動いていることがあるので、
-そこは止めない・触らない。**
-
-**変更前を手元に作らない。** `git stash` で退避する方法は採らない——**stash の stack は他の作業ツリーと
-共有**なので、別のセッションの退避を取り違えうる。`git checkout` や手での書き戻しで一時的に変更前へ
-巻き戻す方法も採らない——戻し忘れると書きかけの変更を失うし、`dist/browser/` が変更前のまま残る
-（受け入れ側で `pnpm run build` を打ち直すことになる）。`serve-revision.ts` は取り出しに
-**一時 index**（`GIT_INDEX_FILE`）を使うので、**作業ツリーも index も `dist/browser/` も読むだけ**で
-済む。`node_modules` はいま居る作業ツリーのものを symlink で借りるので `pnpm install` も要らない
-（**`package.json` をまたいで比べるときだけ**この前提が崩れる。そのときは取り出し先で手で打つ）。
-**`.git` も同じく symlink で借りる**ので、取り出し先で起こした tsukumo でも成果の画面が `main`
-の履歴を表示する（`.git` を書き換える呼び出しはここを通らない——読むだけの `git` しか打たない。
-`scripts/serve-revision.ts` の `lendGitDirectory`）。
-手順の前後で `git status --short` が変わっていないことを確かめてから `evidence` を書く。
-
-**配信側が疑わしいときは、ブラウザを開く前に `curl` で切り分ける。** 起動時にビューの URL が
-表示されるので、`curl <URL>` で HTML が返るかを見る。WebSocket 側はブラウザの開発者ツールの
-Network タブで `/ws` の upgrade が101を返し、`hello` フレーム（購読 `frame.subscribe` の封筒の中の `d.json`）が届くかを見る。ここまで出ていれば
-配信はシロで、原因はページの側かホストの側にある。
-
-**目視のために起こす tsukumo は `TSUKUMO_VIEW_PORT` を 39000 番台に固定し**、ふだん使いの既定
-（7327 から始まる帯）と重ねない。`node scripts/stop.ts --port` は自分で起こしたポートにだけ打つ。
-**起こしたままの tsukumo は `pnpm run build` を打ち直しても古い組み立てを配り続ける。** 直しながら
-目視するなら `--dev` で起こす（`pnpm run dev`。HMR で差し替わる）か、組み立てのたびに上げ直す。
-
-1. **`pnpm run build` を打ってから** Orca のターミナルで `pnpm run start` を1つ起動する
-   （Claude Code の TUI は開かない）。成果物が無いと起動は前提不足で止まり、`src/browser/` の
-   ほうが新しいと「古い画面が出る」1行が出る
-2. **tsukumo 自身がレイアウトページのタブを開く**ので、それが**Orca 内のブラウザタブ**に
-   出ること（外部ブラウザに出ないこと）を見る。タブだけ閉じてしまったときは
-   `node scripts/open-views.ts <URL>` で開き直せる
-3. **画面の入力欄から依頼を打つ**。送信できること、実行中に中断できること
-4. **再読み込みなしに**吹き出しにセリフが出て、メインビューにレポートが流れること
-5. ツールを使う依頼で、**帯の「いまの作業」の札に進行が出て、押すと依頼の手順の一覧が開く**こと
-6. 許可の要る操作を頼み、**右下の入力欄の上にボタンが出て、枠の色とタブのタイトルが変わり、押すと
-   作業が続く**こと
-7. ウィンドウの幅を変えて、**折り返しがブラウザ側で追従する**こと
-8. `orca` が使えない状況を作っても、プロセスが落ちずに配信を続けること
-9. レポートに出た git 管理下のパス（inline code・フェンスのファイル名・相対リンク）を押すと、
-   **Orca のエディタでそのファイルが開く**こと（`docs/display.md` 4.2「各表示物」）
-
-`evidence` には「どの環境で何を見たか」を1行で書く。
-
-**claude が自分で始めた続きのターン（`turn-resumed`）の合間を測るときは、疑似セッションの場面
-`resumed-report`（`TSUKUMO_FAKE_SCENE=resumed-report`）を使う。** 中間の `report` のあと、
-`turn-resumed` → `speech` → ターンの終わりを2回はさみ、最後に完了の一言と最終 `report` が続く。
-`turn-resumed` が届いてから次の `speech` / `report` が届くまでのあいだも、メインビューは前の
-`report` を出したままで、吹き出しは「（まだ発話がありません）」に戻らず前のセリフを保っている
-ことを確かめる（`docs/screen-design.md` 13.9「背景のタスク」）。
-
-**書き終わりの知らせ（`docs/screen-design.md` 13.10「書き終わりの知らせ」）を確かめるときは
-疑似セッションの場面 `diary-written`（`TSUKUMO_FAKE_SCENE=diary-written`）を使う。** `diary-requested`
-→ `diary-drafting` → `diary-stage`（`write` → `pick`）→ `diary-written` と流れ、成果の画面
-（`#achievement?date=2026-09-20`）でも会話の画面でも画面の下中央に札が出ることと、「日記帳で開く」で
-その日の見開きが開くこと、× で消えて再読み込みするまで戻らないことを見る。日記の中身（本文・
-しおり）も見るときは、`~/.tsukumo/diary/<リポジトリ>/2026-09-20.json`（`TSUKUMO_HOME` を
-分けていればその下。置き場の形は `src/server/diary/adapter/diary.ts`）に架空の日記を1件置いてから
-起こす——fake driver は `diary` ツールの中身を持たないので、置かなければ手続き `achievement.day` の
-その日は「日記が無い」のまま。**この置く手間ごと `capture-catalog.ts` の `diary-book` 件がやる**
-（次の段落）ので、見開きを撮るだけなら手で置かなくてよい。
-
-**帯の「いまの作業」の実行中・失敗・背景のタスク、表情やキャラクターを消す確認のモーダル、
-日記帳の見開きは、`capture-catalog.ts` に専用の件があるのでそれぞれ手で操作を当てなくてよい**
-（`--only <名前>` で1件だけ撮れる）。`current-work-running` / `current-work-failed` は、
-名指しで直接起こしても状態が出るよう**自分の `request` を持つ場面**
-（`test/fixture/fake-session.json` の同名の場面）を使う——`request` の無い場面は
-`src/shared/session/turn-step.ts` の `currentTurnSteps` が「依頼が一度も無い」に畳んで、途中の
-`tool-started` があっても帯の一覧に出ない。`current-work-background` は既存の `background-task`
-場面をそのまま使う。`portrait-clear-confirm` / `character-delete-confirm` /
-`diary-book` は**件専用の隔離ホーム**（`--out` の下の `home/`）を使う——`HomeSetup`
-（`scripts/capture-catalog.ts`）が、消せるキャラクターパック（同梱の `chou` を別名でコピー）や
-架空の日記を、撮る前にそこへ書く。**既定のホーム（利用者の `~/.tsukumo/`）には触らない。**
-
-**訪問（`docs/requirements.md` 4.13「訪問」）の出入りを確かめるときは、`TSUKUMO_VISIT_QUICK=1`
-を添えて疑似セッションの場面 `visit-long-tool` か `visit-background` を使う**（しきい値が 5 秒に
-縮む。添えないと 90 秒待つ）。画面にはまだ描かないので、見るのは状態だけ——開発者ツールの
-Network タブで `/ws` のフレームを見るか、接続し直して `hello` の `state.visit` を読む。
-`visit-long-tool` はツールが 30 秒走り、5 秒ほどで `visit-started` が届き、2 秒ごとに
-`visit-line-advanced` が進んで、台本を言い終えると `visit-ended`（`script-finished`）になる。同じ
-待ちのあいだに二度は来ない。`visit-background` は背景のタスクだけが動く待ちで来て、9 秒で待ちが
-終わると台本の途中でも `visit-ended`（`wait-over`）になる。訪問中に入力欄から依頼を送ると
-`request` で帰ることも、ここで確かめられる。客は同梱の `chou` で、**ホームに `visit` の無い
-`chou` があると来ない**（ホームのパックが同梱を覆うため）。
-
-**fake driver の質問の場面を Playwright で自動操作すると、`turnInProgress` が解けないまま残る
-ことがある**（再現条件は分かっておらず、手で触ったときには起きていない。操作側の問題の
-可能性もある）。そのときは疑似セッションの `opening` に質問を足して、開いた時点で出す形で
-確かめる。もう一度踏んだら条件を書き足す。
 
 ## 既知の制約・注意点
 

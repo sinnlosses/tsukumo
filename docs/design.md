@@ -34,19 +34,17 @@ sed -n '/^## 4\. shared/,/^## /p' docs/design.md
 **索引の行は本文の `## <番号>.` の章と1対1**（`###` の節は載せない。章を足したり消したりしたら、
 ここも同じ数だけ動かす）。**1章は欠番**（旧「何を変え、何を残すか」。いまも効く決定は
 `docs/architecture.md`「設計判断」へ、移行前後の対照表は `docs/history/decision.md` へ移した）。
+**6・7・10・11章は `docs/architecture/` へ移した**（`browser.md`・`character-pack.md`・`testing.md`・
+`build.md`。2章の「`components/ui/` の部品（variant の作法と一覧）」は `browser.md`）。
 
-| 節                             | 中身                                                                                                                                                                  |
-| ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| ## 2. 全体構成                 | 層（shared / server / browser）の図、依存の向き、サーバの機能と辺、コマンドの受け手、shared の機能、ディレクトリ、`components/ui/` の部品、ブラウザ側の置き場所の基準 |
-| ## 3. 動きの流れ               | 起動・接続・依頼・答え待ち・再接続の順序                                                                                                                              |
-| ## 4. shared                   | **両側が共有する契約**。イベント・状態・コマンド・フレーム・版                                                                                                        |
-| ## 5. core と adapter          | 判断（core）と境界（adapter）の境目、SDK に触るファイルの分け方、代の持ち物、ツールで受け取るものと使い捨ての `query()` の形                                          |
-| ## 6. browser                  | 状態の持ち方、Markdown、重いライブラリ、立ち絵の動き、CSS（6.1 は欠番）                                                                                               |
-| ## 7. キャラクターパック       | パックの形・探索順・`systemPrompt` の append の並び、画面から書くときの安全の境界、一覧と素材の URL、雑談の記憶の置き場（仕様は `docs/chat-mode.md`）                 |
-| ## 8. セッションの復元と複数化 | 復元を新しい形に載せる。複数化をやらないこと                                                                                                                          |
-| ## 9. 会話内容と安全           | `127.0.0.1`・Origin・起動トークン・ディスクに書く3つの例外と読み戻す口・定着・ブラウザ側のメモリ                                                                      |
-| ## 10. テスト                  | 対象ごとの方法、**E2E（走らせ方・成果物・揺れを生まない書き方・シナリオ）**、E2E に任せないもの                                                                       |
-| ## 11. ビルドと依存            | 事前の組み立て、作り直しを押す仕組み、**足す依存の一覧（承認済み）**                                                                                                  |
+| 節                             | 中身                                                                                                                                         |
+| ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| ## 2. 全体構成                 | 層（shared / server / browser）の図、依存の向き、サーバの機能と辺、コマンドの受け手、shared の機能、ディレクトリ、ブラウザ側の置き場所の基準 |
+| ## 3. 動きの流れ               | 起動・接続・依頼・答え待ち・再接続の順序                                                                                                     |
+| ## 4. shared                   | **両側が共有する契約**。イベント・状態・コマンド・フレーム・版                                                                               |
+| ## 5. core と adapter          | 判断（core）と境界（adapter）の境目、SDK に触るファイルの分け方、代の持ち物、ツールで受け取るものと使い捨ての `query()` の形                 |
+| ## 8. セッションの復元と複数化 | 復元を新しい形に載せる。複数化をやらないこと                                                                                                 |
+| ## 9. 会話内容と安全           | `127.0.0.1`・Origin・起動トークン・ディスクに書く3つの例外と読み戻す口・定着・ブラウザ側のメモリ                                             |
 
 ## 2. 全体構成
 
@@ -351,7 +349,7 @@ components/page/<ページ>/
   （枠が画面を import する逆向きの辺になるので、`page` より上の段 `components/app/` に置く）
 - **`components/domain` と `components/ui` の線は、tsukumo の語彙を持つかで引く**（`Portrait` は `domain`、
   `Select`・`Button`・`ImageZoom` は `ui`）
-- **`stores/` は「状態ライブラリの置き場」ではなく「画面全体で共有する状態の置き場」**（6.2）。置くのは
+- **`stores/` は「状態ライブラリの置き場」ではなく「画面全体で共有する状態の置き場」**（`docs/architecture/browser.md`「状態の持ち方」）。置くのは
   **複数の領域が読む**状態で、領域の中に置けず、`app.tsx` に残すと領域が入口を import することになる
   ので箱が要る。**1本の hash の書き方は `stores/location-hash.ts` だけが知る**。領域と機能が触れるのは
   `stores/` が公開する hook までで、`app.tsx` と `stores/` の中身を組み立てる側として import しない
@@ -367,44 +365,6 @@ components/page/<ページ>/
   なので `domain/`、`domain/tool-summary.ts` は純関数で `remeda`（用途を問わない汎用ライブラリ）しか
   使わず、`shared/` の型にも依存する（`utils/` の歯止め3を満たさない）ので、`lib/` ではなく `domain/`
 - 検査は `test/architecture.test.ts`（領域と置かれる機能の一覧が横の辺を、箱の一覧が縦の辺を落とす）
-
-### `components/ui/` の部品（variant の作法と一覧）
-
-**語彙を持たない部品は、見た目の違いを variant（props の文字列リテラルの合併型）で表し**、呼び出しを
-読めば見た目が分かる形にする。**部品が持つ見た目は `theme.css` のトークンと、ここで決めた段だけ。**
-置くかどうかは**tsukumo の語彙を持たないか**だけで決め、読み手の数は問わない（「引き金は逆にも引く」の
-検査は掛けない）。**`components/ui/` はストアを読めない**。
-
-- **variant 部品**（`Text` / `Heading` / `Stack`（と `VStack` / `HStack`）/ `Button` / `Dialog`）は見た目を
-  部品が持つ。**形だけの部品**（`Select`）は寸法・枠・地・字の段を呼び出し側が `className` で渡し、
-  **variant を持たない**（プルダウンは置き場所ごとに寸法がまるで違う）
-- **1つの prop が1つの軸**。1つの property に写る軸は**値の名前をトークン名そのままにする**
-  （`size: "secondary"` → `--font-secondary`）。**複数の property の束（ボタンの顔）は、使っている
-  組み合わせごとに1つの値にする**（軸を掛け合わせると CSS の無い組み合わせが型の上で選べてしまう）
-- 合併型 → class の対応表は **`satisfies Record<合併型, string | undefined>` で全域を検査する**。
-  値 `"inherit"` は class を付けない。**props はすべて必須**（既定値を持たず、呼び出しを読めば見た目が
-  全部分かる）。**値を足すのは使う箇所が出たときだけ**で、トークンに無い値が要るなら先に
-  `docs/screen-design.md` の段を直す
-- **上書きは `className` の1つ**。**部品の CSS で `:where()` の外に書いた property は部品のもの**で、
-  呼び出し側は同じ property を書かない。呼び出し側に譲る既定（`margin: 0` など）は `:where()` の中に書く
-  （詳細度0なので読み込み順に関係なく呼び出し側が勝つ。`theme.css` が要素の選択子で書く property は
-  入れない）。呼び出し側が渡すのは**置き方**と**語彙に無い見た目**だけ。**`className` に渡すのは
-  `styles["…"]` の字面だけ**で、重なりは `test/architecture.test.ts`「components/ui/ の部品の className」が見る
-- **画面固有の値を持つもの（`--usage-*`・`--diary-gold-*`）は部品を使わず、機能の CSS のまま残す**
-  （部品の語彙と画面の語彙が1つの要素の上で競る）。**段に乗らない値も丸めない**——部品に置き換えても
-  画面の見た目は変えないのが既定で、丸めると決めたら変わる画面を目視で確かめる
-- **汎用の `as` は持たない**（`href` のような要素固有の属性が型から外れる）。要素を選ぶのは閉じた合併型の
-  prop（`Heading` の `level`・`Stack` の `element`）だけ。`Stack` は `data-*` とイベントの口を持たない
-- **Text と Heading の境目**: 見出しの意味（`level`）と見た目（`size`）を別の props にする。対応表は
-  `ui/text/` の1つを読む（二重に持たない）。`<h*>` でない「見出しに見える字」は `Heading` にしない
-- **`VStack` / `HStack`** は向きの決まった並べで、向きを値で切り替える箇所だけ `Stack` を直接使う
-- **`Button`**: 押せないは **`aria-disabled` の1通り**。**押せる行・押せる文字**（タスクの ID・件数の
-  チップ・暦の日・吹き出しのように、中身そのものを押すもの）は `Button` にしない
-- **札（Badge / Chip）・`<details>`・地の段を持つ箱（Card / Surface）は部品にしない**（箱の値が置き場所
-  ごとに違い、値を全部 `className` で渡すことになる。1つずつの理由は `docs/history/decision.md`
-  「design.md 2. 全体構成 / `components/ui/` の部品（採らなかった部品）」）
-- テストは `test/browser/components/ui/<部品>/<部品>.test.tsx` で、variant の値 → 付く class・描く要素・
-  振る舞いまで。**色や寸法が効いているか（絵）は守らない**（置き換えのたびに目視で確かめる）
 
 ### 領域の機能と、置かれる機能
 
@@ -445,7 +405,7 @@ components/page/<ページ>/
 | **外と同期**（副作用） | `useEffect`・タイマー・`<dialog>` の DOM・取得（`useQuery`）・DOM の出来事の読み替え | 1秒ごとの刻み・`showModal()`・`git ls-files` の一覧の取得 |
 | **畳む**（算出）       | 受け取った値を**画面に出す形**へ変える                                               | 経過秒 → 「1分05秒」・並びの反転・候補の絞り込み          |
 
-**ストアを読むだけは数えない**（「props で降ろす代わりに自分で読む」だけで、部品の中身は増えない。6.2）。
+**ストアを読むだけは数えない**（「props で降ろす代わりに自分で読む」だけで、部品の中身は増えない。`docs/architecture/browser.md`「状態の持ち方」）。
 **2種類以上そろったら割り、1種類までは1ファイルのままにする**（2種類そろうと、片方を読むためにもう片方を
 読み飛ばすことになる）。**割り方は「余分な種類を外へ出す」方向で決める**:
 
@@ -525,7 +485,7 @@ components/page/<ページ>/
   `server/adapter/lib/`
 - `core/lib/` に入れてよいのは **`node:` を要求しない技術**だけ。`shared/lib/` は**両方の実行環境で動く技術**だけ
 - **`src/browser/utils/` の辺は `test/architecture.test.ts` が見る**（箱の辺と歯止め1）。他の層に `utils/` を
-  作るときも、同じ検査を足す。**ライブラリに依存しない小物は、`utils/` を作る前に remeda（11章）にあるかを見る**
+  作るときも、同じ検査を足す。**ライブラリに依存しない小物は、`utils/` を作る前に remeda（`docs/architecture/build.md`）にあるかを見る**
 
 ## 3. 動きの流れ
 
@@ -533,12 +493,12 @@ components/page/<ページ>/
 
 1. `cli.ts` が `config.ts` で環境変数を読み、`main.ts` の `run(config, launch)` を呼ぶ（`launch` は引数の `--dev`）
 2. `main.ts` が**即時終了する前提**を3つ確かめる — ポート番号として読めるか（`port-resolution.ts`）、
-   組み立て済みの成果物（`dist/browser/`。11章）を読めるか（ソースのほうが新しければ、止めずに1行
+   組み立て済みの成果物（`dist/browser/`。`docs/architecture/build.md`）を読めるか（ソースのほうが新しければ、止めずに1行
    知らせる）、fake driver なら疑似セッションを読めるか
 3. `current-character.ts` が初期パック（指定されたもの・覚えていたもの・既定）を決める。
    **以降このパックの持ち回りはここに閉じる**
 4. `view-delivery.ts` が**起動トークン**を1つ作り、`server.ts` を `127.0.0.1` で listen させる
-   （`--dev` のときは Vite の開発サーバもここで差し込む。11章「作り直しを押す仕組み」）
+   （`--dev` のときは Vite の開発サーバもここで差し込む。`docs/architecture/build.md`「作り直しを押す仕組み」）
 5. `session-start.ts` が `session-manager.ts` にセッションを1つ作る。駆動は `TSUKUMO_DRIVER` が
    `fake` なら fake driver、それ以外は SDK。復元（8章）はここで判定する。起こしたセッションは
    `view-delivery.ts` の `connect` で `/ws` に繋ぐ
@@ -614,7 +574,7 @@ Layout に出す。復帰したときにセッションを続きから起こし�
 
 **`character-changed` は、いま出しているパックの姿と一緒に全パックぶんの一覧（`packs`）を運ぶ。**
 **一覧だけの別のイベントにはしない**（契機が重なり、分けると片方を出し忘れたときに一覧と姿がずれる）。
-ターンの中では流れない。1件の形・配り直す契機・素材の URL は 7.2。
+ターンの中では流れない。1件の形・配り直す契機・素材の URL は `docs/architecture/character-pack.md`「パックの一覧と素材の URL」。
 
 **API の不調は3つのイベントと `turn-finished` の `outcome` で運ぶ**（`api-retry` / `api-error` /
 `rate-limit-changed`、`outcome: completed | interrupted | failed(cause)`。型は `src/shared/session-driver/turn-failure.ts`）。
@@ -700,7 +660,7 @@ Layout に出す。復帰したときにセッションを続きから起こし�
 
 - `protocolVersion` が browser の `PROTOCOL_VERSION` と違えば、browser は会話の画面の代わりに
   「ページを読み込み直してください」を出し、以降の `events` を畳まない（起こし直したプロセスと古いタブの
-  組み合わせで起きる。画面だけ差し替わった道は11章の指紋で塞いだが、塞ぎ損ねたときは上げ直すまで
+  組み合わせで起きる。画面だけ差し替わった道は`docs/architecture/build.md`の指紋で塞いだが、塞ぎ損ねたときは上げ直すまで
   直らないので、知らせにはそれも書く）。版の合う `hello` がまた届けば戻る
 
 ### 4.5 版と互換
@@ -718,7 +678,7 @@ doc コメントが正典で、機能の数え方・契機・上限は `docs/req
 **境目の基準は「`shared` の語彙で書けるか / SDK の語彙を名乗るか」。** 駆動の契約
 （`SessionDriver` と `SessionDriverOptions`）は `session-driver/core/session-driver.ts`、SDK の実装は
 `adapter/` の `sdk-` で始まるファイル。`core` の契約は何がどの順で載るかを決めずに受け取るだけに
-する（`systemPrompt` の append は文字列で受け、組むのは `takeSystemPromptAppend`。7章）。
+する（`systemPrompt` の append は文字列で受け、組むのは `takeSystemPromptAppend`。`docs/architecture/character-pack.md`）。
 疑似セッションを流す `fake-driver.ts` も同じ契約で、`session-manager` はどちらが動いているかを知らない。
 
 **SDK に触るファイルは、SDK のどの口に触るかで分ける**（import してよい先は
@@ -762,273 +722,11 @@ doc コメントが正典で、機能の数え方・契機・上限は `docs/req
   （常駐プロセスは落ちない）。訪問の台本と日記の書き手は代の持ち物で、代を閉じると中断する
 - 渡した文面も受け取ったものもログに書かない（9章）
 
-## 6. browser
-
-**6.1 は欠番**（旧「部品の木」。コードの写しだったので撤去した）。
-
-### 6.2 状態の持ち方
-
-| 状態                                                             | 置き場所                                                                                                                                                                      |
-| ---------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `SessionState`                                                   | `browser/stores/session.ts` の zustand の store `useSession`（`applySessionEvent` で `events` を畳み、`hello` で置き換える）。部品はセレクタで**自分が読む値だけ**を購読する  |
-| 接続中 / 切断中、プロトコルの版違い                              | 同じ store に相乗りさせる（`SessionState` には入れない）。接続は `<Root>` が `useSessionConnection()` で張る                                                                  |
-| 選んでいるターン（`turnId`）、追従中か（いちばん下を見ていたか） | `location.hash` の `turn`（`#?turn=3`。追従中は書かない）。`browser/stores/turn-selection.ts` の `useTurnSelection()` が hash と姿から導く（自分では状態を持たない）          |
-| 入力欄の下書き、候補の開閉と選択位置                             | `<Composer>` のローカル状態                                                                                                                                                   |
-| 質問の選択（送る前）・何問目を見ているか・入力欄に書いた答え     | `browser/stores/question-answer.ts` の zustand の store（**メインビューの札と入力欄の両方が読み書きする**ので機能のローカル状態にしない。どの答え待ちに対する下書きかも持つ） |
-| 経過時間の秒数                                                   | `<TurnStatus>` の1秒タイマー（`turn` の `startedAt` から計算）                                                                                                                |
-| 領域の比率                                                       | `<Layout>`。`localStorage` に**比率だけ**保存（会話は保存しない）                                                                                                             |
-| 出している画面（会話 / キャラクター / 作る）                     | `location.hash` の `?` より前（`stores/screen.tsx` の `useScreen()` が `hashchange` を読む）。保存しない（URL が持つ。13.6）。hash の書き方は `stores/location-hash.ts` だけ  |
-
-画面全体で共有する状態は **zustand の `create()`** で書き、`Context` の `Provider` で配らない
-（書き方と `useShallow` の使いどころは `docs/coding-standards.md`「zustand の store」）。**姿そのものを
-購読しない**（読む値が変わっていない部品まで毎フレーム描き直しになる）ので、部品はセレクタで読む値だけを取る。
-**答え待ち（`pending`）が動くフレームだけ緊急**にし、レポートやツールの進行は `startTransition` に載せる。
-**`location.hash` を正典にする状態は zustand に写さない**（`useHashRoute` が `useSyncExternalStore` で直接
-購読する。写すと hash と store の2か所に持つことになる）。
-
-### 6.3 Markdown（`components/page/conversation/components/main-view/markdown/markdown.tsx`）
-
-```
-react-markdown
-  remarkPlugins: [remark-gfm]
-  rehypePlugins: [rehype-raw, [rehype-sanitize, schema], rehype-highlight]
-  components: { code: フェンスの言語で MermaidBlock / ChartBlock / 通常 に振り分け, a: 許可スキームだけ }
-```
-
-- Markdown 一式は**メインビューの部品の中**に置く（読み手が `<Report>` だけなので共有の箱に上げない）
-- **`schema` は許可リスト**（要素・属性と `class` の語彙 `note` / `badge` / `cols` / `card` など）。`style` 属性は
-  `url(` / `@import` を含むものを落とす規則も `schema` の `attributes` の正規表現で表す。**規約
-  （`report-notation.ts`）・schema・部品（`notation.tsx`）・CSS の4つは同じコミットで揃える**
-- **記法の class 名は部品に解決する**（`notation.tsx`）。モデルが書くのは骨格（`note` / `badge` など）で、
-  **CSS が受ける class 名（`report-` 付き）は tsukumo が付ける**ので、モデルの書いた文字列とセレクタが
-  直接つながらない。**知らない class 名と `style` 属性は素通し**（変換は足し算だけ）
-- 引用 `> `・ネストしたリスト・水平線・列揃え（`:---:`）・コードスパンの中の HTML は GFM の仕様どおりに
-  描ける。`report-notation.ts` は「描けない記法」の迂回を持たない
-- **流れる本文**: 書きかけの Markdown を空行で塊に割り、塊ごとに `memo`（鍵は塊の文字列）。
-  描き直すのは末尾の塊だけ。**コードフェンスと HTML ブロックの中の空行では割らない**
-  （フェンスは表や見出しに化けないため、HTML は `<details>` の中身が外へこぼれないため。
-  HTML は閉じタグが必須の要素だけを深さで数え、閉じタグを省ける `p` / `li` / `td` などは数えない
-  ——省略された閉じタグを待つと以降ずっと割れなくなる）。**閉じていないものは末尾の塊の中に
-  閉じる**ので、書きかけの間だけその塊の `memo` が効かない
-
-### 6.4 重いライブラリ
-
-| もの                                                               | 読み方                                                                                                                      | 置き場所            |
-| ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------- | ------------------- |
-| React・react-markdown 一式・`ws`（ブラウザ側は標準の `WebSocket`） | `vite build` が npm から束ねる                                                                                              | `node_modules`      |
-| highlight.js                                                       | `rehype-highlight`（`lowlight` の common 言語）を束ねる。テーマ CSS だけ `/vendor/` で配る                                  | 束ねる / `/vendor/` |
-| mermaid（5.3MB）・Chart.js                                         | **束ねず `/vendor/` で配り、その記法が出たときだけ `<script>` で読む**。`MermaidBlock` / `ChartBlock` が `useEffect` で描く | `/vendor/`          |
-
-`/vendor/<name>` が返すのは `node_modules` の実ファイル（`src/server/view-server/adapter/vendor-asset.ts`）で、
-**CDN からは読まない**。`vite build` の出力は1本（コード分割はしない。分割するとディスクに
-置かないメモリ配信と噛み合わない）。
-
-### 6.5 立ち絵の動き
-
-**立ち絵は「1枚の矩形」として扱う**（`docs/requirements.md` 4.3）。`<Portrait>` が動かすのは
-**位置・大きさ・傾き・上下・不透明度**だけで、**素材の中身には触らない**（素材は利用者が用意するので、
-作られ方を当てにできない。見返りに SVG でも PNG でも GIF でも同じだけ動く）。
-
-- **まばたき・表情のクロスフェード・部分の動きは作らない**（素材の構造に依存するため）。
-  Lottie / Live2D も同じ理由で採らない
-- **動くのは利用者の注意が空いているときだけ。** `SessionState` から「いま読んでいるか、待っているか」を
-  決め、**読んでいる間は呼吸だけに落とす**
-- 作るのは5つ。**呼吸**（常時のごく小さい上下）/ **待っている間の移動**（ターン進行中に
-  領域の中をゆっくり歩く）/ **書いている**（メインが `report` の引数を書いている間、
-  筆を運ぶように小さく速く横へ揺れる）/ **完了の反応**（小さく跳ねる）/ **失敗でびくっ**（一瞬のけぞる）
-- **ターンが失敗で終わったときも「失敗でびくっ」にし、「完了の反応」は出さない**（材料は `turn` の
-  `finished` の `ending`）。びくっのあとに跳ねると失敗を喜んで見える。**表情は変えない**（表情の源は
-  `speak` だけ。`docs/requirements.md` 4.3）——動きは矩形の位置だけなのでこの原則に触れない
-- **`<Portrait>` の動きは領域の外へ出さない。** **レポートの上に出てよいのはミニ立ち絵だけ**
-  （`docs/requirements.md` 4.3）で、メインビュー側の別の部品が矩形を描く `components/domain/portrait.tsx` を
-  共有する（「1枚の矩形しか動かさない」原則は崩れない）
-- `prefers-reduced-motion: reduce` を尊重する（`src/browser/styles/theme.css`）
-- 動きは CSS の `@keyframes` と `transform` で足りる。**`<canvas>` もアニメーションの
-  ライブラリも要らない**（矩形しか動かさないため）
-
-### 6.6 CSS
-
-**CSS Modules（`*.module.css`）を領域・機能と同居させる。** 置き場は**領域・機能ごとに1枚**
-（`<領域>/<領域>.module.css`・`features/<機能>/<機能>.module.css`）と、**自分の見た目を持つ共有部品の隣**
-（`components/domain/portrait.module.css`）。**グローバルなのは `styles/theme.css` だけ**で、
-トークン（`:root`）・`body`・フォーカスの輪・`prefers-reduced-motion`・リンクを持つ。
-**16進の色を書いてよいのもそこだけ**（13.2）。同居に移した理由は `docs/history/decision.md`
-「design.md 6.6 CSS（機能と同居させる形に移した理由）」。
-
-**機能の中の部品でも、その部品しか使わない class の塊になっているなら部品の隣に `<部品>.module.css` を
-置いてよい**（機能の1枚が原則で、部品の輪郭がはっきりしているときだけの例外）。
-
-class 名は用語集の語（`balloon` / `portrait` / `turn-header` など）を**そのまま**保ち、部品からは
-`styles["balloon-track"]` と引く（キャメルケースへ変換しない）。実際に DOM へ付く名前は
-**組み立てのたびにハッシュ化される**ので、外から要素を指す口が要るところは `data-*` を持つ
-（4領域の `data-region`。`scripts/capture-view.ts` が使う）。
-
-**`styles["..."]` の型は、CSS に書いた class 名ごとに生成した型宣言から来る**（`happy-css-modules` が
-`dist/css-module-type/` に書き、`tsconfig.json` の `rootDirs` で隣にあるものとして解決させる。部品の隣に
-置かないのは、ページと部品の直下に置けるファイルが決まっているため）。CSS に無い名前は型エラーになり、
-ある名前は `string` で届くので `?? ""` で受けない。
-
-**Tailwind には移らない**（`theme.css` のトークンと `docs/screen-design.md` のトークンの節を作り直す
-ことに見合う困りごとが無い）。
-
-**機能をまたいで見た目が要るときは className を渡す**（CSS の選択子で他の機能の class を
-指さない）。`<Portrait>` が例で、立ち絵そのものの中身と動きは `components/domain/portrait.module.css`、
-**どこにどれだけの大きさで置くか**は呼び出し側が `className` で足す。打ち消しは**親の class から**書いて
-（`.character-layout .portrait`）、読み込み順ではなく詳細度で勝たせる。
-
-**テストの中では class 名が CSS に書いた綴りのまま届く**（`test/css-module-loader.ts` が
-単体テストの設定に渡す Vite プラグイン）。Vite の既定の CSS Modules の変換はブラウザに出す
-実際の名前と同じハッシュ付きの名前を生成するので、これが無いと部品テストが綴りで引けない。
-CSS に無い名前は `undefined` のままなので、**綴りを間違えるとテストで落ちる**。
-
-## 7. キャラクターパック
-
-```
-characters/<name>/
-  character.json     name / portraits（表情 → ファイル名）/ outfitAccents / expressions（名前 → 日本語ラベル）/ diaryFont（日記の書体のファイル名）
-  persona.md         人格。tsukumo が systemPrompt.append で足す（口調・セリフと詳細の書き分け。セリフの間合いとレポートの記法は core 側）
-  *.svg / *.png      素材
-  *.woff2 / *.woff / *.ttf / *.otf   日記の書体（任意。`diaryFont` が指す）
-```
-
-- **キャラクターの中身は定義が持つ**（原則4）。`speak` の enum と説明は `expressions` から作る。
-  `diaryFont` はパックに同梱した書体ファイルだけを指せ、素材と同じ経路（7.2）で配る
-- **二重適用を避ける**: `applyFlagSettings({ outputStyle: "default" })`（セッション限り）で
-  グローバルの出力スタイルを中立に戻してから `persona.md` を足す（実測と採らない案は
-  `docs/requirements.md` 4.4）
-- **切り替えは別のパックでセッションを起こし直す**（`speak` の enum も人格も、起こし直せば確実に
-  入れ替わる。`startSdkDriver` が `mcpServers` を毎回組み直すので `setMcpServers` は要らない）
-- **キャラクターごと・モードごとに別のセッションを持つ**（印の形と探し方は `docs/requirements.md`
-  4.8「鍵」）。印の組み立ても読み取りも `session-driver/core/session-restore.ts` の `sessionTag` /
-  `readSessionMark` 1箇所で、`session-start.ts` はそれを探す側と付ける側の両方に渡す
-
-**探索先は3箇所で、同名は後ろが勝つ**（`listCharacterPacks`）:
-
-| 順  | 置き場                            | 中身                                            |
-| --- | --------------------------------- | ----------------------------------------------- |
-| 1   | 同梱の `characters/*`             | `tsukumo` / `tsukumo-spirit`（自作の既定）      |
-| 2   | `~/.tsukumo/characters/*`         | **画面から作ったパック**（全プロジェクト共通）  |
-| 3   | 起動先の `<cwd>/characters/local` | そのプロジェクトで用意した素材（1つ固定のまま） |
-
-**`systemPrompt` の append を組むのは `system-prompt/core/system-prompt.ts` の `takeSystemPromptAppend` 1つだけ**
-（寄せた理由は `docs/architecture.md`「新しいコードを置く場所」）。**`persona.md` の全文を fs から
-読むのは adapter（`character-pack.ts`）で、組み立てには文字列で渡す**ので、`core` はパックの型も fs
-も知らない。並びはモードで入れ替わる:
-
-| 場面                             | append に入る節の並び                           |
-| -------------------------------- | ----------------------------------------------- |
-| 仕事                             | 人格 → セリフの間合い → レポートの記法          |
-| 雑談（記憶が載るとき）           | 人格 → 雑談の作法 → 前回までの要約 → 直近の雑談 |
-| 雑談（続きから・写しが渡し済み） | 人格 → 雑談の作法                               |
-
-- **人格が無いパックは先頭が落ちるだけ**（tsukumo 側の規約だけで起動する）
-- **雑談の記憶の節は、中身が無ければそれぞれ落ちる**（載せる条件は `docs/chat-mode.md` 4.9
-  「載せる条件は2つあり、どちらかに当たれば載せる」）
-- **仕事と雑談は入れ替え**（並べない。理由は `chat/core/chat-manner.ts` の冒頭）
-
-### 7.1 画面から作るときの置き場と受け取り方
-
-**書き込み先は `~/.tsukumo/characters/<name>/` の1箇所だけ。** 同梱の `characters/*` と起動先の
-`characters/local` はどの経路でも書かず、消さない（リポジトリの作業ツリーが汚れず、権利のある素材が
-公開リポジトリに入る経路が生まれない。`cwd` に依存させない理由は `docs/requirements.md` 4.4）。
-
-**画像は data URL を JSON に載せ、いまの WebSocket のコマンドで受け取る。**
-`src/shared/contract/character-pack.ts` に手続きを足すだけで、`src/server/view-server/adapter/server.ts` に新しい
-書き込み経路を作らない。起動トークンと `Origin` の照合・zod の検証・定型文の `REFUSED` がそのまま効く
-（multipart の POST と生バイトの POST を採らない理由は `docs/history/decision.md`「design.md 7.
-キャラクターパック（2026-09-27 に仕様を持ち主へ返したときに落とした経緯と採らない案）」）。
-
-| 何                        | 上限                                                         |
-| ------------------------- | ------------------------------------------------------------ |
-| 画像1枚（デコード後）     | 2 MiB                                                        |
-| 1つのパックが持てる画像   | 表情の数 + 4 枚（ミニ立ち絵・背景・顔・訪問の peek）         |
-| WebSocket の `maxPayload` | 16 MiB（依頼に添える画像の上限で決まる。4.10「上限」と同じ） |
-
-- **受け取った文字列をパスにしない。** パックの名前は shared のスキーマ（`isCharacterPackName`。
-  `[A-Za-z0-9._-]` だけ・`.` で始まらない）で検証し、ファイル名は受け取らず種類と形式から組む
-  （`<表情>.<svg|png|gif>`・`background.<png|jpg|webp>`・`face.<svg|png|gif>`）。同じ表情の差し替えは
-  同じ名前の上書きになる
-- **書き込む先のパックはコマンドが名前（`pack`）で指し、サーバは一覧と突き合わせて引くだけ**
-  （素材を配るのと同じ `findCharacterPack` の規則。使用中のパックで置き換えた一覧）。名前から
-  ディレクトリを組み立てない。無いパック・起動先の `characters/local` と同じ名前のパック
-  （`isEditableCharacterPack` が false）は書かず、理由を分けない定型文の `REFUSED` を返す
-- **初めて変えるときに、書き込む先のパックをホームへ丸ごと写す**（`copyPackOnce`。定義・
-  `persona.md`・素材。人格ごと写さないと次の起動で人格が消える）。ホームに同じ名前があれば写さない
-- **参照が外れた素材は消す**（消すのはホームのそのパックの中の、どの定義からも参照されていない
-  画像だけ）
-- **反映はセッションを起こし直さず、`character-changed` を流し直すだけ**（一覧は 7.2 の契機で
-  読み直される）
-
-**新しく作るときの細部**: **ディレクトリ名になるのは `id` だけ**で、表示名（`name`）は
-`character.json` の値にすぎない。既にある id は画面とサーバの両方で弾く（探索の順で後ろが勝つので、
-作れてしまうと既存のパックが黙って隠れる）。書く順は**素材 → `character.json`** で、途中で失敗した
-書きかけのディレクトリは消す（定義を持たないので一覧にも出ない）。表示名が空なら `name` を書かず、
-読む側が id へ折り返す既存の仕組みに乗る（`definitionWithName`）。
-
-**消すときの細部**: **消せるのはホームの版だけ。** 届いた名前はパスに使わず一覧から引き、**引けた
-パックの場所が `<ホームの置き場>/<名前>` そのものであるときだけ消す**（同名は後ろが勝つので、起動先の
-`local`・一覧の外・同梱だけのパックはここで外れる。シンボリックリンクなら消えるのはリンクだけ）。
-消したあとに何が起きるかの判定は `characterPackRemoval` 1つが持ち、画面に配る値と消す側が断る判断の
-両方がそこを通る。パックの外にある雑談の記録（7.3）を一緒に消すのは配線層（`src/current-character.ts`）で、
-記録が消せなくてもパックを消したことは取り消さない。
-
-### 7.2 パックの一覧と素材の URL
-
-**1件の形は `CharacterPackEntry`**（`src/shared/character-pack/character.ts`。姿は `CharacterInfo` をそのまま入れ子で
-持つ）。**変えられるか（`editable`）・消すと何が起きるか（`removal`）はサーバが決めて持たせ**、画面は
-理由を推し量らない。
-
-**一覧を配り直す契機は `character-changed` を組むたび**（`src/current-character.ts` の `event`）。
-パックの集まりを変える口はどれも「書いたら `event()` を返す」だけで一覧が配り直される（口ごとに
-読み直しを呼ぶ形にしない。1つ呼び忘れると古い一覧が黙って配られる）。素材を配るときに突き合わせる
-一覧も、最後に `event()` で読んだものを使う。
-
-**素材の URL は `/character/<pack>/<file>?v=<版>` の1つの形に揃える**（使用中のパックも同じ）:
-
-- パック名とファイル名は**それぞれ `encodeURIComponent` した1区間**。組み立て（`characterAssetPath`）と
-  読み分け（`readCharacterAssetPath`）は `src/shared/character-pack/character-asset.ts` の1箇所で、区切りの `/` が
-  ちょうど1つでない経路・デコードできない経路は 404
-- **取り直しの印（`?v=`）は素材の版（更新時刻）だけ**（ファイル名が同じまま中身だけ変わるため）。
-  配る側は `?` 以降を見ない
-- **配ってよいのは、一覧にあるパックの、そのパックの定義に載っているファイル名だけ**
-  （`readCharacterAsset` → `readCharacterPackFile`。allowlist はパックごと）
-- **一覧の中の、使用中と同じ名前の1件は使用中のパックに置き換える**（無ければ末尾に足す）。画面に
-  出すもの・配るものが「いま出しているもの」とずれない
-- 素材はトークン無しで配る（9章）
-
-### 7.3 雑談の記憶の置き場
-
-**雑談の記憶は `~/.tsukumo/` の下の、キャラクターパックの外に置く。** 仕様（何を・いつ・どんな形で
-書き、どう読み戻すか・上限）は `docs/chat-mode.md` 4.9 が正典で、ここは置き場と持ち場だけを持つ。
-
-| 何                             | 置き場                                                               | ファイルに触る adapter                    |
-| ------------------------------ | -------------------------------------------------------------------- | ----------------------------------------- |
-| あらすじ（と渡し済みの印）     | `~/.tsukumo/chat-summary/<pack>.md`                                  | `chat/adapter/chat-summary.ts`            |
-| 雑談の会話のアーカイブ         | `~/.tsukumo/chat-archive/<pack>/<YYYY-MM-DD>.jsonl`                  | `chat/adapter/chat-archive.ts`            |
-| エピソード索引・思い出した記録 | `~/.tsukumo/chat-archive/<pack>/episode.jsonl` / `recalled.jsonl`    | `chat/adapter/chat-archive.ts`（同じ1つ） |
-| 覚えたこと                     | `~/.tsukumo/characters/<pack>/persona.md` の末尾の節（7.1 の置き場） | `chat/adapter/persona-memory.ts`          |
-
-- **パックのディレクトリの中に置かない**（覚えたことを除く）。会話に由来する文章を混ぜると**パックを
-  渡すことが会話を渡すことになる**。覚えたことはキャラクターの属性1行で、7.1 の道に乗る
-- **`cwd` に依存させない**。**鍵はパックの名前1つだけ**で、`isCharacterPackName` を通してからパスを
-  組む。日付のファイルとエピソード索引は**名前で見分ける**（窓の側は `YYYY-MM-DD.jsonl` にだけ
-  当たる正規表現でファイルを選ぶ）
-- **口（型）は `session-driver/core/session-driver.ts`、ファイルに触るのは上の adapter、結ぶのは配線層
-  （`src/session-start.ts`）。** 置き場を差し替えられる `root` 引数も同じ手で持つ（テストがホームを
-  汚さない）
-- **アーカイブへ書くのは `session/core/session-manager.ts` の `receive`**（イベントが1件ずつ通る
-  場所）。復元の再生は駆動と別の口（`onRestoredEvent`）で流し、`session-manager` は駆動から新しく
-  届いたぶんだけを書く。読み戻しはセッションを起こすとき1回だけで、配線層が呼ぶ
-- **判断は `chat/core/` の純関数**（載せる判断・定着の指示文と検査・採点。アダプタは読んで渡すだけ）で、
-  **定着の契機（ターンの終わり・同時に1本）は `session-manager` が持つ**。走っているかどうかの1ビットは
-  駆動の代ではなく `session-manager` 自身が持つ（起こし直しで代だけを作り直しても、同じ行を2本で畳まない）。
-  容量の表と採点の係数は複数の機能が読むので `src/shared/chat/chat-memory-budget.ts`
-
 ## 8. セッションの復元と複数化
 
-**復元の決定は `docs/requirements.md` 4.8 のまま**（`cwd` + tsukumo の印（パックごと。7章）、
+**復元の決定は `docs/requirements.md` 4.8 のまま**（`cwd` + tsukumo の印（パックごと。`docs/architecture/character-pack.md`）、
 常に自動で続きから、**復元のためには**会話を保存しない、失敗したら新規で起こす）。**雑談の会話の
-アーカイブ（7.3）は復元の材料ではない** — 画面を組み直すのは transcript からで、アーカイブは読み戻さない。
+アーカイブ（`docs/architecture/character-pack.md`「雑談の記憶の置き場」）は復元の材料ではない** — 画面を組み直すのは transcript からで、アーカイブは読み戻さない。
 
 - 画面の履歴の組み直しは「`getSessionMessages` → `SessionEvent[]`（時刻付き）→ `session-manager` の
   `state` に畳む」だけ。接続したブラウザは `hello` の snapshot でそのまま同じ姿になる
@@ -1059,11 +757,11 @@ characters/<name>/
 | ディスク                                           | 会話を**書く**のは**3つの例外だけ**（下の「あらすじ」「雑談の会話のアーカイブ」「エピソード索引」。「直近の雑談を逐語で読み戻す」と「定着」の行は書かずに**読む・渡す**ほう）。組み立てた成果物（`dist/browser/`）に会話は入らない。`localStorage` に置くのは領域の比率だけ（キャラクターパックへ書くのは**会話ではなくキャラクターの属性1行**だけ。下の行）                                                                                                                                                                                                                                                                 |
 | ブラウザ側のメモリ                                 | `SessionState` として会話の一部を持つ。**同じオリジンの `127.0.0.1` のタブの中に閉じる**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | ログ                                               | 断ったときの理由（`REFUSED`）は定型文。サーバの stderr に会話を出さない                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
-| 定着（雑談の記憶を畳む）                           | 窓から溢れた雑談の逐語を、背景の使い捨て `query()`（同じマシンの claude の子プロセス。`persistSession: false`・ツールなし）に渡してエピソードとあらすじを書かせる。**ユーザーが認めた例外**（`docs/requirements.md` 2.2 の外部送信に当たらない。範囲と形は `docs/chat-mode.md` 4.9「窓から溢れた会話は定着で畳む」、置き場は 7.3）。渡した文面も受け取った出力も**画面にも 手続きの応答にも stderr にも出さない**（画面に出すのは話題の見出しだけ）。tsukumo は `/compact` を投げない                                                                                                                                        |
-| あらすじ                                           | `~/.tsukumo/chat-summary/<pack>.md` に**最新の1つだけ**を上書きで持つ（8 KiB まで。書くのは定着）。**ユーザーが認めた「別の場所に複製しない」の例外の1つ目**（範囲・理由・形・上限は `docs/chat-mode.md` 4.9、置き場は 7.3）。載せ直すのは**雑談のセッションの `systemPrompt`** で、条件は「新規に起こした」か「`/clear` を見たあと」の2つ（1行目の印が持つ）                                                                                                                                                                                                                                                                |
-| 雑談の会話のアーカイブ                             | `~/.tsukumo/chat-archive/<pack>/<日付>.jsonl` に、雑談の依頼とセリフを表情つきで1行ずつ追記する。**ユーザーが認めた「別の場所に複製しない」の例外の2つ目**（範囲・理由・形・上限は `docs/chat-mode.md` 4.9、置き場は 7.3）。**画面の 100 ターンには影響されない。** 画面にも 手続きの応答にも stderr にも出さない                                                                                                                                                                                                                                                                                                            |
-| エピソード索引                                     | `~/.tsukumo/chat-archive/<pack>/episode.jsonl` に、定着が書いた見出し・要旨・手がかり語と、アーカイブの行の範囲を1件ずつ追記する（思い出した記録は `recalled.jsonl`。文面を持たない）。**例外の3つ目**。**逐語は持たず、アーカイブを指す目次**。`recall` の一覧と `recall_episode` の1件（8 KiB・1ターンに2件）だけが雑談の文脈へ戻す（範囲と形は `docs/chat-mode.md` 4.9、置き場は 7.3）                                                                                                                                                                                                                                    |
-| 直近の雑談を逐語で読み戻す                         | アーカイブの**新しいほうから 64 KiB まで**を読み、**雑談のセッションの `systemPrompt`** へ逐語のまま載せる。載せる条件はあらすじと同じ2つ。**渡す先はそこだけ**で、画面にも手続きの応答にも stderr にも出さず、**仕事の側の文脈にも載せない**。逐語が新しいセッションの transcript に書かれることは承認に含まれる（範囲と量は `docs/chat-mode.md` 4.9「直近の会話は逐語のまま読み戻す」、読み口の置き場は 7.3）                                                                                                                                                                                                              |
+| 定着（雑談の記憶を畳む）                           | 窓から溢れた雑談の逐語を、背景の使い捨て `query()`（同じマシンの claude の子プロセス。`persistSession: false`・ツールなし）に渡してエピソードとあらすじを書かせる。**ユーザーが認めた例外**（`docs/requirements.md` 2.2 の外部送信に当たらない。範囲と形は `docs/chat-mode.md` 4.9「窓から溢れた会話は定着で畳む」、置き場は `docs/architecture/character-pack.md`「雑談の記憶の置き場」）。渡した文面も受け取った出力も**画面にも 手続きの応答にも stderr にも出さない**（画面に出すのは話題の見出しだけ）。tsukumo は `/compact` を投げない                                                                                |
+| あらすじ                                           | `~/.tsukumo/chat-summary/<pack>.md` に**最新の1つだけ**を上書きで持つ（8 KiB まで。書くのは定着）。**ユーザーが認めた「別の場所に複製しない」の例外の1つ目**（範囲・理由・形・上限は `docs/chat-mode.md` 4.9、置き場は `docs/architecture/character-pack.md`「雑談の記憶の置き場」）。載せ直すのは**雑談のセッションの `systemPrompt`** で、条件は「新規に起こした」か「`/clear` を見たあと」の2つ（1行目の印が持つ）                                                                                                                                                                                                        |
+| 雑談の会話のアーカイブ                             | `~/.tsukumo/chat-archive/<pack>/<日付>.jsonl` に、雑談の依頼とセリフを表情つきで1行ずつ追記する。**ユーザーが認めた「別の場所に複製しない」の例外の2つ目**（範囲・理由・形・上限は `docs/chat-mode.md` 4.9、置き場は `docs/architecture/character-pack.md`「雑談の記憶の置き場」）。**画面の 100 ターンには影響されない。** 画面にも 手続きの応答にも stderr にも出さない                                                                                                                                                                                                                                                    |
+| エピソード索引                                     | `~/.tsukumo/chat-archive/<pack>/episode.jsonl` に、定着が書いた見出し・要旨・手がかり語と、アーカイブの行の範囲を1件ずつ追記する（思い出した記録は `recalled.jsonl`。文面を持たない）。**例外の3つ目**。**逐語は持たず、アーカイブを指す目次**。`recall` の一覧と `recall_episode` の1件（8 KiB・1ターンに2件）だけが雑談の文脈へ戻す（範囲と形は `docs/chat-mode.md` 4.9、置き場は `docs/architecture/character-pack.md`「雑談の記憶の置き場」）                                                                                                                                                                            |
+| 直近の雑談を逐語で読み戻す                         | アーカイブの**新しいほうから 64 KiB まで**を読み、**雑談のセッションの `systemPrompt`** へ逐語のまま載せる。載せる条件はあらすじと同じ2つ。**渡す先はそこだけ**で、画面にも手続きの応答にも stderr にも出さず、**仕事の側の文脈にも載せない**。逐語が新しいセッションの transcript に書かれることは承認に含まれる（範囲と量は `docs/chat-mode.md` 4.9「直近の会話は逐語のまま読み戻す」、読み口の置き場は `docs/architecture/character-pack.md`「雑談の記憶の置き場」）                                                                                                                                                      |
 | 人格への書き戻し（覚えたこと）                     | 雑談で覚えたことを `~/.tsukumo/characters/<pack>/persona.md` の末尾の節へ1行ずつ足す。**利用者については書かない**（範囲・形・上限は `docs/chat-mode.md` 4.9）。会話の文面はディスクに届かない                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | コンテキストの内訳の記録                           | `~/.tsukumo/context-usage/<日付>.jsonl` に、**セッション1つにつき1行**だけ積む（最初のターンが終わったとき、`detail: "full"` で取った値）。**会話の複製ではない** — 入るのは数と、SDK が内訳として返す名前（分類の表示名・MCP ツール名・メモリファイルのパス・スキル名）だけで、文面の口が型に無い。**ターンごとのトークン消費の記録（`~/.tsukumo/token-usage/`）とは置き場も版も分ける** — 「書いてよいもの」の線が種類ごとに違い、同じファイルに混ぜると広いほうの線が狭いほうにもかかるため（線の正典は `src/shared/context-usage/context-usage-record.ts`）                                                              |
 | 見直しの結果と見送りの記録                         | `~/.tsukumo/usage-review.json`（前回の見直しの結果。直前の1回だけ）と `~/.tsukumo/usage-review-dismissed.json`（見送った提案の識別子）。**会話の複製ではない** — 入るのはスキルが渡した見直しの結果（`UsageReviewFindings`。見出し・根拠・やることの文字列を含むが、これ自体が「見直しの結果」であって会話ではない）と、種類:対象の形の識別子の文字列だけ（線の正典は `src/shared/usage-review/usage-review.ts`）                                                                                                                                                                                                            |
@@ -1071,257 +769,3 @@ characters/<name>/
 | テストのフィクスチャ・fake driver の疑似セッション | 手で書いた架空の会話だけ                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 
 例外を認めた日付と発言は `docs/history/decision.md`「design.md 2〜11章（約1000行へ締めたときに落とした経緯と実測）」。
-
-## 10. テスト
-
-| 対象                           | 方法                                                                                                                                            | 置き場所                                                 |
-| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
-| reducer（`applySessionEvent`） | 純粋関数として単体で                                                                                                                            | `test/shared/session/session-state.test.ts`              |
-| zod スキーマ                   | 受け付ける形・落とす形を1件ずつ                                                                                                                 | `test/shared/command.test.ts` など                       |
-| SDK の型との一致               | `PERMISSION_MODES` / `MODEL_ALIASES` が SDK の型と同じ値であること（型レベルの検査）                                                            | `test/server/session-driver/adapter/sdk-driver.test.ts`  |
-| `session-manager`              | fake driver を差し込み、`hello` → `events` の順序・バッチ・`dispatch` の分岐                                                                    | `test/server/session/core/session-manager.test.ts`       |
-| `server`（ws）                 | 購読 → `hello` が先に届き、押した順に取りこぼさず流れる、切断で購読が外れる、トークン無しは 403、Origin 違いは 403、コマンド → 受け手が呼ばれる | `test/server/view-server/adapter/session-socket.test.ts` |
-| browser の部品                 | Vitest + `happy-dom` + `@testing-library/react`。**役割と文言で当てる**（HTML の文字列一致はしない）                                            | `test/browser/**`                                        |
-| 層の検査                       | 層の辺・機能どうしの辺・browser の箱と領域の辺（2章）。外部ツールは増やさない                                                                   | `test/architecture.test.ts`                              |
-| 画面の見た目                   | **fake driver で起こした tsukumo に Playwright**（`webapp-testing` スキル）。数値で読めるものは CDP で読む。色・間合いは人の目                  | `scripts/`（本体から呼ばれない）                         |
-| 状態のカタログ                 | 疑似セッションの場面を名指しして起こし直し、広い窓と狭い窓で撮って索引 HTML に並べる（`TSUKUMO_FAKE_SCENE`）                                    | `scripts/capture-catalog.ts`                             |
-| E2E                            | **fake driver で起こした tsukumo を手元の Chrome で開き、DOM の構造と WebSocket の流れを期待値と比べる**（下の「E2E」）                         | `test/e2e/`                                              |
-
-**DOM の構造と画面の流れは E2E で守り、見た目（色・崩れ・間合い）は目視で確かめる。** E2E が判定に
-使うのは DOM の構造と WebSocket のメッセージの列だけで、スクリーンショットは目視の添え物（判定しない）。
-目視の手順は `docs/architecture.md`「手で確かめること」。足場（起こす・開く・成果物を書く・比べる）は
-`test/e2e/scenario-run.ts` の1ファイルで、シナリオはそれを呼ぶだけにする。
-
-### E2E の走らせ方
-
-- **ランナーは Vitest**（単体テストとランナーを共有する）。ブラウザは `playwright-core` の `chromium`
-  （`channel: "chrome"`、headless）。**新しい外部コマンドは足さない**
-- **置き場所は `test/e2e/<シナリオ>.test.ts`**（1ファイル = 1つの機能のまとまり。E2E は1つのファイルの
-  振る舞いではないので、`src/` の写しの構成には従わない）
-- **`pnpm run check` の中の別の段にする**（`pnpm run test` は既定の設定が `test/e2e/` を外し、E2E は
-  `pnpm run test:e2e` が E2E 専用の設定で走らせる）。時間切れの既定を E2E の段だけ延ばし、単体テストを
-  1ファイル走らせるときに Chrome を要らないままにするため。E2E の設定は単体テスト（`vitest.config.ts`）
-  と同じ比率の `maxWorkers: "30%"` でファイルを並べる（並行する作業ツリーが重なっても1本あたりの
-  負荷がコア数を超えない本数にする）。単体の `setupFiles` の DOM のグローバルは渡さない
-- **`dist/browser/` は E2E の段が自分で組み立てる**（起動は古い成果物でも止まらずに配る〔11章〕ので、
-  組み立てを前提にすると古い画面を確かめて通ってしまう）。**Chrome が無ければ前提不足で落ちる**
-  （飛ばすと黙って守らなくなる）
-- **ブラウザは1ファイルに1つ、tsukumo は1件ごとに1つ起こす**。後始末は自分の pid だけに `SIGTERM` を
-  送り、終わるのを待ってから一時のディレクトリを消す（広いパターンで止めない）
-- **起こし方**: fake driver・空きポート・自動オープンなし・**`TSUKUMO_HOME` と cwd は1件ごとの
-  一時ディレクトリ**（リポジトリで起こすと `develop/task/` の実データと git の履歴が画面に入る）・
-  `TZ=Asia/Tokyo`・下の固定の時計。**親の環境から `TSUKUMO_` で始まる変数は外してから渡す**
-- **名指しの場面も `opening` も、ページが繋がってから流れ始める**（起こした直後に流すと、繋がる前の
-  ぶんが `hello` に畳まれてメッセージの列が揃わない）。**`open` は、`opening` と名指しの場面の予定の
-  最初の静かな区切り（次の手まで 500ms 以上空く時点。予定が尽きた時点を含む）までの手が届いてから
-  部屋を渡す**（予定は fake driver の `startupSteps` を足場も読む。区切りは予定の時刻だけから決まり、
-  走らせる速さに依らない）。そこから先は**場面が流れ終わるのを時間で待たず**、届いたイベントを待つ。長い場面は途中のイベントで止めて撮る。**場面を速く流す口は足さない**（ブラウザ側の
-  間合いとの比が変わる）。必要な瞬間が遅い場面は、短い場面を疑似セッションに足す
-- 所要時間の目安は E2E の段で 60 秒まで。超えたら件を削らずに `maxWorkers` を上げる（値は単体テストの
-  `vitest.config.ts` と合わせ、コア数に対する比率で決める）
-
-### E2E の成果物と再現
-
-**判定に使うのは2つの JSON だけ**。何を残し・落とし・置き換えるかの実装は `test/e2e/scenario-run.ts`。
-
-- **DOM の構造**（`<シナリオ>.dom.json`）: 残すのは要素の名前・`role`・`aria-*`・`data-*`・入力の状態・
-  `href` と `src` のパス・文字。**落とすのは `class`・`style`・`id`・描かれていない要素・図とグラフの中身・
-  属性を1つも持たない `div` / `span`**（見た目の直しのたびに変わるもの）。**状態が `class` にしか
-  出ていないものは、E2E で見たくなったときに `data-*` か `aria-*` に出す**（意味の契約は `data-*`・
-  `aria-*`・文字に置く）
-- **WebSocket のメッセージの列**（`<シナリオ>.messages.json`）: コマンドとフレームを届いた順に並べる。
-  `events` は束をほどいてイベント1件ずつにし（束の切れ目は走らせるたびに変わる）、`hello` は版だけ、
-  `character-changed` はいまのパックの名前と表情だけを残す
-- **両方に共通の置き換え**: リポジトリ・一時のホーム・一時の cwd・ポートを `<root>` などの印に置き換え、
-  **起動トークンは成果物に書かない**
-
-**時計の固定**:
-
-- **サーバの時計は `TSUKUMO_FIXED_CLOCK` で凍らせる**（進む時計だと `at` と「N 秒」が走らせるたびに
-  ずれる。経過の計算は `shared` の単体テストが守る）
-- **`Temporal.Now` を読むのはサーバの `src/server/adapter/local-time.ts` と、ブラウザの
-  `src/browser/utils/clock.ts` の2つだけ**で、`test/architecture.test.ts` がそれを縛る（固定が黙って
-  効かなくならないように）
-- **ブラウザの時計は E2E の側だけで差し替える**（`page.clock` は `Temporal.Now` を差し替えないので、
-  初期スクリプトで `Temporal.Now.instant()` を `Date.now()` に従わせる。本番のコードに試験用の口を作らない）。
-  止めたあとは DOM の構造が2回続けて同じになるまで読み直してから書く
-- ビューポートは 1400x900（狭い窓の積み替えを見るシナリオだけ 720x900）、`reducedMotion: "reduce"`。
-  **書体は固定しない**（判定は画素を見ない）
-
-**置き場所と比べ方**: 期待値は `test/e2e/expected/<シナリオ>.*.json` に置いてリポジトリに入れ、走らせた
-結果とスクリーンショットは `/tmp/tsukumo-e2e/<シナリオ>/` に毎回書き直す。比べ方は `toEqual` で、
-**期待値が無ければ落とす**（黙って書かない）。**期待値の更新**は `pnpm run test:e2e:update` → `git diff
-test/e2e/expected/` で意図した変化だけであることを確かめる → 直した変更と同じコミットに入れる。
-
-**期待値と食い違った回**は、`matchArtifact`（`test/e2e/scenario-run.ts`）がその回の成果物と期待値との
-行単位の差分を `/tmp/tsukumo-e2e/failures/<シナリオ>/<Temporal の刻んだ名前>/` へ残す（あとで通った回に
-上書きされない。シナリオごとに直近5回まで）。落ちたときのエラー文に残した場所のパスが出る。
-
-### E2E の揺れを生まない書き方
-
-過去の揺れと「揺れずに間違った期待値」から取り出した条。例は `test/e2e/` のシナリオのファイル名で
-言い、会話の実物は例に使わない。外の実践（Playwright・Martin Fowler・Google）との対応は
-`docs/research/e2e-flakiness.md`。
-
-1. **操作（送る・押す）は、場面のタイマーで届く手が途切れた区切りで行う。** `open` が最初の区切り
-   まで待ってから部屋を渡すので、開いてすぐの操作は書き足さずに競わない。操作を最初の区切りより先の
-   時点で行うなら、疑似セッションの場面の手を前後 500ms 以上空けて区切りを作り、その区切りの手まで
-   `waitForEvent` で待つ。場面の手の途中に操作を挟まない（`permission-answer`: 押して流れる
-   `pending-changed` と場面の `speech`（`afterMs` 200）が競って揺れた。`input-dispatch`: `opening` の
-   `speech` と依頼後の `partial-utterance` が同じ時刻に届いて競った）
-2. **非同期の取得（TanStack Query など）が済むまで表示が続く要素は `aria-busy="true"` を出し、
-   `settledDom`（`test/e2e/scenario-run.ts`）は DOM が2回続けて同じでも `aria-busy="true"` が
-   残っていれば撮らずに待つ。** `settledDom` は DOM の中身を見ず「2回続けて同じ文字列」だけで
-   落ち着いたと判定するので、「取得中…」のように取得の途中でも文字が変わらない表示があると、
-   応答が届く前の DOM を2回連続で捉えて安定と誤判定する。回数や経路を数えるシナリオ専用の待ちは
-   書く側の注意に頼るので、表示する側の印1つで機械的に効くこちらを選ぶ（`context-usage-card.tsx`・
-   `usage-review-card.tsx` の先例に揃え、`context-usage-row.tsx` にも足した）。「取得中」の文字や
-   途中の `data-motion` を期待値に入れない（`background-task`: コンテキスト使用量の取得が
-   `turn-finished` の直後にまだ返っておらず、「取得中…」のまま2回連続で捉えられていた）。
-   ブラウザの時計は止めてあるので、取得の結果を画面へ知らせるごく短い `setTimeout` も眠ったままに
-   なる。`settledDom` は `aria-busy="true"` が残るあいだだけ時計を 1ms ずつ進めて起こす
-   （`plan-usage-row.tsx` の利用枠の札: 取り直しが終わらず「取得中…」のまま撮られ、`aria-busy` を
-   付けると今度は 15 秒待っても外れなかった。0ms 進めるだけでは起きない回があった）。
-   `settleAndMatch` は撮る時刻へ進める前にも1回落ち着くまで待つ（取り直しが進める後に済むと、
-   取れた時刻が「10:00 時点」でなく「10:01 時点」になる）
-3. **期待値を撮り直したら `git diff test/e2e/expected/` の中に途中の状態が入っていないかを見る。**
-   揺れずに間違っている期待値は揺れより見つけにくい（立ち絵の反応が `success`/`failure` の
-   まま戻らない期待値11ファイルが、ブラウザの時計を凍らせるまで長く正解として記録されていた）
-4. **揺れを見たら、打ち直す前に落ちた it の名前を控える。** 成果物と期待値との差分は
-   `matchArtifact` が `/tmp/tsukumo-e2e/failures/<シナリオ>/` へ自動で残すので、打ち直しても
-   消えない（`speak-bubble`: 1回だけ落ち、打ち直し3回は通過したが、当時は自動で残らず原因を
-   追えなかった）
-5. **シナリオを足した・待ち方を直したときは、そのファイルを続けて回して（回数を決めて書く）
-   落ちないことを確かめ、回数を `## 結果` に書く。** 揺れは1回流しただけでは出ないことが多い
-   （`permission-answer` の待ちを直したときは、単独で12回続けて回して確かめた）。回すのはシェルの
-   繰り返しで `npx vitest run --config vitest.e2e.config.ts test/e2e/<シナリオ>.test.ts` を N 回呼び、
-   落ちたら止める。Vitest の `it` の `repeats` はコードに残って検証を重くするので使わない
-6. **E2E に自動の再試行を掛けない。** `vitest.e2e.config.ts` にも `it` にも `retry` を置かない。
-   再試行で通すと「落ちた」という事実だけが消え、原因（控え）を見ないまま `pnpm run check` と
-   `task ship` を通ってしまう。1回でも落ちたら揺れとして扱い、条4で控えを見る（`background-task`・
-   `final-report-label`: 打ち直すと通る揺れの控えを見ると、利用枠の行が `aria-busy` を出さずに
-   「取得中…」のまま撮られるという、画面の側の欠けだった）
-7. **テストの外の状態を共有しない。** ポート・ホーム・cwd・一時ファイルは、1件ごとの一時ディレクトリと
-   空きポート（`TSUKUMO_VIEW_PORT=0`）から作る（「E2E の走らせ方」の起こし方）。固定のパス・固定の
-   ポート・リポジトリの中のファイルに書く足場を足さない。例外は `/tmp/tsukumo-e2e/` の成果物で、
-   シナリオ名で分かれる。並行する作業ツリーも同じ機械で同時に E2E を流すので、ファイルの並びでは
-   なく値の作り方で衝突を避ける（単体テストの `cli.test.ts` は、既定のポートの帯を塞ぐ作りのため、
-   別の作業ツリーが同じ帯を使うと結果が揺れた）
-
-### E2E のシナリオの一覧
-
-「載せない」は終わりの構造では捕まえられないもの。
-
-| シナリオ（機能）                                                | 場面（`fake-session.json`）                                                                                                       | ファイル（`test/e2e/`） |
-| --------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | ----------------------- |
-| ターンの流れ（依頼 → ツール → report → 締めのセリフ）           | `report-tool`                                                                                                                     | `turn-flow`             |
-| 入力欄から送る（`prompt` が流れ、`request` が戻る）             | 名指し無し（`opening` → 送ると `report`）                                                                                         | `input-dispatch`        |
-| speak → キャラビューの吹き出し                                  | `closing-narration`・`question-multi`（セリフ3つ）                                                                                | `speak-bubble`          |
-| 会話を遡る（仕事モードの吹き出し・セリフのログ）                | `question-multi`（セリフ3つが表情違いで並ぶ。使い回し）                                                                           | `speech-rewind`         |
-| report → メインビュー（記法・差し戻し・整え）                   | `notation`・`report-rejected`・`report-tidied`                                                                                    | `report-main-view`      |
-| 途中の発話と流れる本文                                          | `narration`・`long-report`                                                                                                        | `narration-flow`        |
-| 許可のモーダル（押すと `answer` が流れ、箱が消える）            | `permission`                                                                                                                      | `permission-answer`     |
-| 質問（単数・複数・プレビュー）                                  | `question-pair`・`question-multi`・`question-long`・`question-preview`                                                            | `question-ask`          |
-| 続きのターン（`turn-resumed`）                                  | `resumed-report`                                                                                                                  | `turn-resumed`          |
-| ツールの実行といまの作業                                        | `long-tool`（`tool-started` の直後で撮る）                                                                                        | `current-work`          |
-| 背景のタスク                                                    | `background-task-short`（再開まで数秒。長い版 `background-task` は再開まで 12 秒超）                                              | `background-task`       |
-| 最終レポートの札                                                | `background-task-interim-report`                                                                                                  | `final-report-label`    |
-| ターンの履歴                                                    | `turn-history`                                                                                                                    | `turn-history`          |
-| タスクの一覧                                                    | 名指し無し（`opening` のみ）。ブラウザが繋がったあと cwd に `git init` して `develop/task/` を手書きし、`main` へコミットする足場 | `task-list`             |
-| 雑談の切り替えと忘却の区切り                                    | `chat-compact-boundary`                                                                                                           | `chat-compact-boundary` |
-| 復元した雑談の履歴                                              | `chat-restored-history`                                                                                                           | `chat-restored-history` |
-| 覚えていること（チップの開閉・編集・消す）                      | `chat-remembered-lines`                                                                                                           | `chat-remembered-lines` |
-| セッションの札と切り替え画面（札・↓ と Enter・狭い画面の「≡」） | `session-list`（作り物の一覧を `sessions-changed` で流す。右の欄は疑似セッションの `sessionDigests`）                             | `session-switch`        |
-| 途中のちらつき・止まって見える発話                              | `interim-flicker`・`narration-stuck`・`narration-flash`                                                                           | 載せない（目視）        |
-
-**まだ無いシナリオ**: `/` の補完（`opening` のコマンド一覧に打つ）・`@` の補完（一時の cwd に手書きの
-ファイルを置く足場が要る）・API の不調（`api-retry`・`api-failure`・`rate-limit`）・書き終わりの知らせ
-（`diary-written`）・訪問の出入り（`visit-long-tool`・`visit-background`。メッセージの列だけ）・確認の
-モーダルと日記帳の見開きといまの作業の失敗（疑似セッションに場面が足りない）。成果の画面・キャラクター
-画面・使用量の画面は、一時の cwd とホームに手書きの材料を置く足場ができてから足す。
-
-### E2E に任せず単体テストに残すもの
-
-E2E が通るのは**疑似セッションに書いた並びだけ**で、fake driver は `SessionEvent` を直に流すので
-**SDK のメッセージから `SessionEvent` への写しは1行も通らない**。次は E2E があっても単体テストに
-残す:
-
-- `sdk-` で始まるファイルの写し（SDK のメッセージ → `SessionEvent`）の全部
-- 畳み込み（`applySessionEvent` など `test/shared`）のうち、**疑似セッションに同じ並びが無い
-  もの**・**未知の `type` / `kind` を無視するもの**・境界の検証（zod スキーマの受け付ける形と
-  落とす形）。消してよいのは、同じ並びをシナリオが流して DOM の構造で結果を固定しているものだけ
-- 時刻に依る計算（経過・日の境目）。E2E は時計を凍らせるので見えない
-- 再接続・版の食い違い・バッチの束ね方・エラー方針の分岐（起動時の即時終了・その回だけ諦める）
-- `docs/coding-standards.md`「消すかどうか」表で「残す」としたもの（書式の固定・回帰テスト）
-
-## 11. ビルドと依存
-
-- **成果物は事前に組み立てて `dist/browser/` に置き、起動（`src/main.ts`）は置いてあるものを読む**
-  （`docs/architecture/adr/0006-prebuild-browser.md`）。作るのは `pnpm run build`
-  （`scripts/build-ui.ts`）だけで、`pnpm run dev` も起こす前に1回組み立てる（HMR を止めたときに戻る先）
-- `pnpm run build` が起こすのは `node node_modules/vite/bin/vite.js build src/browser --config vite.config.ts --outDir dist/browser`
-  の1本で、`main.js` と `main.css` の対が置かれる（名前をハッシュ付きにせず固定する理由と、JS API ではなく
-  CLI を起こす理由は `docs/architecture/adr/0007-vite-build-cli.md`）
-- **`dist/` は `.gitignore` する。** リポジトリを取り直したら `pnpm install` のあとに `pnpm run build` を
-  1回打つ（`tsukumo` は `pnpm link --global` でこのリポジトリを指しているので、**「配布」の実体はこのリポジトリ
-  そのもの**）
-- **成果物が無ければ起動しない**（起動時の前提不足。理由に `pnpm run build` を添える）。**ソース
-  （`src/browser/` と `src/shared/`）のほうが新しければ、1行知らせてそのまま配る**（古くても画面は
-  動くので止めず、黙って配らないことで事故を防ぐ）。HMR と違い、ここは `src/shared/` も見る
-
-**作り直しを押す仕組み。** 開発中は HMR で差し替える。`pnpm run dev`（= `pnpm run build && node src/cli.ts --dev`）で起こすと、
-`src/server/view-server/adapter/ui-dev-server.ts` が Vite の開発サーバを **middleware mode** で起こし、
-ビューサーバ（`node:http`）に差し込む。設定は組み立てと同じ `vite.config.ts` で、root は `src/browser/`。
-
-- **配り方は `server.ts` の `ViewUi` の合併型**（`bundle` / `dev`）。`dev` のとき、ページは
-  `<script type="module" src="/main.tsx">` を開発サーバの `transformIndexHtml` に通したもので、
-  **経路の表に無い要求だけ**を開発サーバへ回す（`/rpc`・`/vendor/`・`/character/`・`/prompt-image/` の
-  経路と守り方は変わらない。`/assets/` の対は `dev` のあいだ 404）
-- **HMR の WebSocket は `/vite-hmr`**。`/ws` の受け口は合わない upgrade を閉じるので、Vite が受ける
-  upgrade は触らずに譲る（`ownsUpgrade` / `yieldsUpgrade`）
-- **本番（`tsukumo`・`pnpm run start`）では Vite を読み込まない。** `vite` は `startUiDevServer` の中で
-  動的に import し、呼ぶのは `--dev` のときだけ（常に入れると仕事中の保存で画面が差し替わりうる）
-- **開発サーバは `dist/browser/` を書き換えない**（次の起動に乗せるには `pnpm run build` が要る）。
-  **型を見ない**ので、型エラーだけのコードはそのまま当たる。**当たるのはブラウザに配る側だけ**:
-
-| 直した場所                                | どうなるか                                                                                             |
-| ----------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| `src/browser/` の部品（`.tsx`）           | 差分が当たり、部品の状態を保つ（React Fast Refresh）                                                   |
-| `src/browser/**/*.module.css`             | 差分が当たる（class 名は開発サーバの中で JS と CSS が揃う）                                            |
-| `src/browser/` の部品以外の `.ts`         | Vite が当てられないと判断すればページごと読み込み直す。状態は繋ぎ直しの `hello` で戻る                 |
-| `src/shared/`・`src/server/`・`src/` 直下 | **プロセスの上げ直しが要る**。そのあと `src/browser/` か `src/shared/` を保存すると HMR が止まる（下） |
-
-- **サーバ側のソースが起動時から変わっていたら、HMR を止める。** `src/shared/` は**畳み込みがサーバ側でも
-  回っている**ので、同じ作業ツリーで両方が変わると新しい契約の画面が古いサーバと話すことになる。開発
-  サーバの始めに**サーバ側のソース（`src/` の下で `browser/` 以外）の中身の指紋**を取り、保存のたびに
-  （プラグインの `hotUpdate`）取り直して比べる（`source-fingerprint.ts`。時刻ではなく中身で比べ、
-  取れなかったときは当てる）。違えば何も当てず、**配り方を起動のときに読んだ対（`bundle`）へ戻して**
-  `refresh` の `page` を押し、理由の1行をペインに出す
-- **`refresh` フレーム**（4.4）は、この戻すときの `page` にだけ使う（`style` は押さない）
-
-**足す依存**（**ユーザーの承認済み**。ここに無いものを足すときは改めて承認を得る。承認の日付は
-`docs/history/decision.md`「design.md 2〜11章（約1000行へ締めたときに落とした経緯と実測）」）:
-
-| 種別    | パッケージ                                                                         | 用途                                                         |
-| ------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------------ |
-| runtime | `react` `react-dom`                                                                | browser                                                      |
-| runtime | `ws`                                                                               | core の WebSocket サーバ                                     |
-| runtime | `react-markdown` `remark-gfm` `rehype-raw` `rehype-sanitize` `rehype-highlight`    | Markdown                                                     |
-| runtime | `remark-cjk-friendly`                                                              | CJK の強調（`**「…」**`）                                    |
-| runtime | `remeda`                                                                           | 型ガードなど一般的な小物（`isPlainObject` / `isObjectType`） |
-| runtime | `mermaid` `chart.js` `highlight.js`                                                | ブラウザへそのまま配る外部ライブラリ（6.4）                  |
-| dev     | `@types/react` `@types/react-dom` `@types/ws` `@testing-library/react` `happy-dom` | 型とテスト                                                   |
-| dev     | `playwright-core`                                                                  | 画面の確認（`scripts/capture-*.ts`）と E2E（10章）           |
-| dev     | `vitest` `vite`                                                                    | テストランナーとブラウザ側の組み立て・開発サーバ             |
-| dev     | `storybook` `@storybook/react-vite`                                                | 部品を props ごとに並べて見る（`pnpm run storybook`）        |
-
-**Storybook は本体と同じ `vite.config.ts` を読む**（`.storybook/main.ts` の `viteConfigPath`。
-`build` の節だけは Storybook が捨てる）。CSS Modules の class 名は Vite が CSS の中身と行から焼く
-（置き場の root に依存しない）ので、`pnpm run build` の成果物と同じ綴りになる。部品が実行時に取りに
-行く `/character/<pack>/<file>` は同梱の `characters/` を、`/vendor/<name>` は `readVendorAsset` の
-対応表をそのまま Storybook の開発サーバが配る。型は `tsconfig.storybook.json` で別に見る——
-Storybook の型定義（`react-docgen-typescript` ほか）が TypeScript 7 の型と噛み合わず、
-ライブラリの `.d.ts` の検査を外す必要があるため（本体の `tsconfig.json` は外さない）。
-
-`zod` と `@anthropic-ai/claude-agent-sdk` はある。`ws` を選ぶのは**ランタイム固有の API に寄せない**ため。
-**`playwright-core` はブラウザを落とさず手元の Google Chrome を動かし**、テストランナー（`@playwright/test`）は足さない。

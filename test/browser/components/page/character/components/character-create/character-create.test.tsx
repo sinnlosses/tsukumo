@@ -104,7 +104,7 @@ describe("CharacterCreate", () => {
     expect(calls).toEqual([])
   })
 
-  // id はディレクトリ名になるので、送る前に画面で止める（docs/design.md「画面から作るときの置き場と受け取り方」）。
+  // id はディレクトリ名になるので、送る前に画面で止める（docs/architecture/character-pack.md「画面から作るときの置き場と受け取り方」）。
   it("形の合わない id では押せず、理由を id の欄の下に出す", async () => {
     render(characterCreate(true, () => {}))
     fireEvent.change(screen.getByLabelText("id"), { target: { value: "../escape" } })

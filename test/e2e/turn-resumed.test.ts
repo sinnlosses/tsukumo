@@ -2,7 +2,7 @@ import { describe, it } from "vitest"
 
 import { useScenarioRun } from "./scenario-run.ts"
 
-// 続きのターン（`turn-resumed`。docs/design.md「E2E のシナリオの一覧」）。疑似セッションの
+// 続きのターン（`turn-resumed`。docs/architecture/testing.md「E2E のシナリオの一覧」）。疑似セッションの
 // 場面 `resumed-report` は、合図（`turn-resumed`）をまたいで3回続くやり取りの中間レポートが
 // 消えず、最後に最終レポートへ差し替わることを見るための場面。`turn-finished` が4回
 // （中間レポート → 合図 → 合図 → 最終レポート）届くまで待ってから撮る。

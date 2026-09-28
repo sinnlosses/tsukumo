@@ -89,7 +89,7 @@ describe("PresentationalAchievement", () => {
       screen.getByText("このディレクトリでは成果を数えられない（main が読めない）"),
     ).toBeDefined()
     // `.achievement-day-switch` は並べるだけの規則だったので `HStack` に置き換わり、
-    // 消えている（`docs/design.md`「`components/ui/` の部品」）。日の切り替えの中身（`.achievement-day-switch-nav`。
+    // 消えている（`docs/architecture/browser.md`「`components/ui/` の部品」）。日の切り替えの中身（`.achievement-day-switch-nav`。
     // 置き方だけを持つので残っている）が無いことで、区画そのものが出ていないと分かる。
     expect(document.querySelector(".achievement-day-switch-nav")).toBeNull()
     expect(document.querySelector(".achievement-diary")).toBeNull()

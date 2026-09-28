@@ -464,7 +464,7 @@ describe("process.env を読む箇所", () => {
 
 // 「いま」を読む場所を2つに保つ。E2E は時計をこの2箇所で凍らせる（サーバは
 // `TSUKUMO_FIXED_CLOCK`、ブラウザは E2E の側で `clock.ts` が呼ぶ関数を差し替える）ので、ほかで
-// 読まれると固定が黙って効かなくなる（docs/design.md「E2E の成果物と再現」）。
+// 読まれると固定が黙って効かなくなる（docs/architecture/testing.md「E2E の成果物と再現」）。
 describe("Temporal.Now を読む箇所", () => {
   it("`Temporal.Now` を読むのは src/server/adapter/local-time.ts と src/browser/utils/clock.ts だけ", () => {
     const allowed = new Set(["server/adapter/local-time.ts", "browser/utils/clock.ts"])
@@ -793,7 +793,7 @@ describe("browser/utils/ の import", () => {
 // （`docs/design.md`「上げる引き金は「2つ目の読み手が出たとき」」。引き金は逆にも引き、
 // 読み手が1つに戻ったものはその機能の中へ下ろす）。`components/domain/` の直下にも
 // 同じ基準を掛ける（docs/design.md「引き金は逆にも引く」）。`components/ui/` は汎用の部品の置き場で、
-// 読み手の数を問わないので対象外（docs/design.md「読み手の数は問わない」）。
+// 読み手の数を問わないので対象外（docs/architecture/browser.md「読み手の数は問わない」）。
 //
 // 読み手が機能の外だけのものは対象外（`lib/socket.ts` と `domain/refresh.ts` は `stores/` が
 // 読む。下ろす先の機能が無いので、ここに残るのが正しい）。`stores/` はまだ対象にしていない
@@ -1018,7 +1018,7 @@ function componentBoundaryViolations(): readonly string[] {
 }
 
 // `components/ui/` の variant 部品（`Select` 以外）に渡す `className` の作法を検査で守る
-// （`docs/design.md`「`components/ui/` の部品（variant の作法と一覧）」の「呼び出し側からの
+// （`docs/architecture/browser.md`「`components/ui/` の部品（variant の作法と一覧）」の「呼び出し側からの
 // 上書き（className）」節「検査で守る」）。(1) 呼び出し側が渡す `className` の式が
 // `styles["…"]` の字面（と `??`・テンプレート文字列での組み合わせ）だけでできていること、
 // (2) その class の CSS 規則（呼び出し側の `*.module.css` で、選択子の最後の複合にその class を
@@ -1219,7 +1219,7 @@ function propertiesOfClass(cssContent: string, className: string): readonly stri
  * 自分の CSS を持たない部品（`VStack` / `HStack`）は、レンダーする先の部品名を `.tsx` から辿って
  * その CSS を見る（同じ DOM ノードに乗るため。`visited` は辿りが循環しないための歯止め）。
  * `::backdrop` などの疑似要素の規則は別の持ち物として数え、ここには含めない
- * （`docs/design.md`「`components/ui/` の部品」の検査の注記。別の要素に描くので、呼び出し側の
+ * （`docs/architecture/browser.md`「`components/ui/` の部品」の検査の注記。別の要素に描くので、呼び出し側の
  * class が同じ property 名を持っていても競らない）。
  */
 function ownExternalProperties(

@@ -67,7 +67,7 @@ node scripts/stop.ts           # 動いている tsukumo の一覧（--port <n> 
 
 配置・モック・消す/足すの判断は `docs/coding-standards.md`「テスト」節。TDD 推奨（`/tdd`）。
 **DOM の構造と画面の流れは E2E で守り、見た目（色・崩れ）は目視で確かめる**（E2E は
-`docs/design.md` 10章「E2E の走らせ方」、目視は `docs/architecture.md`「手で確かめること」）。
+`docs/architecture/testing.md`「E2E の走らせ方」、目視は `docs/architecture/testing.md`「手で確かめること」）。
 
 **IMPORTANT**: 変更後は必ず `pnpm run check` を通してから完了を報告する。テスト件数などの根拠なしに
 「完了しました」と言わない。**描画に関わる変更は、加えて何をどう確かめたか**（何が見えたか）を添える。
@@ -163,7 +163,11 @@ node scripts/stop.ts           # 動いている tsukumo の一覧（--port <n> 
 | 色・書体・レイアウト                                                                            | `docs/screen-design.md`                                                            |
 | セリフとレポートの分離・レポートの記法・各表示物の仕様                                          | `docs/display.md`                                                                  |
 | 雑談モード                                                                                      | `docs/chat-mode.md`                                                                |
-| なぜ今の形なのか・目視の手順・既知の制約                                                        | `docs/architecture.md`                                                             |
+| なぜ今の形なのか・既知の制約                                                                    | `docs/architecture.md`                                                             |
+| ブラウザ側の状態・Markdown・立ち絵の動き・CSS・`components/ui/` の部品の作法                    | `docs/architecture/browser.md`                                                     |
+| キャラクターパックの形・探索順・画面から書くときの境界                                          | `docs/architecture/character-pack.md`                                              |
+| テストの方法・E2E・目視の手順                                                                   | `docs/architecture/testing.md`                                                     |
+| 組み立て・開発サーバ・足す依存                                                                  | `docs/architecture/build.md`                                                       |
 | 規約の理由と例外（`Date` を使わない・層の辺など lint とテストが守るものも）                     | `docs/coding-standards.md`                                                         |
 | 用語と識別子                                                                                    | `docs/glossary.md`                                                                 |
 | タスクを書く・受け入れる・作業ツリーを並行させる・tsukumo を起こす                              | `docs/workflow.md`                                                                 |

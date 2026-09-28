@@ -13,7 +13,7 @@ import { type CommandSpy, putSession } from "../session-store.ts"
 
 /**
  * 答え待ちの質問に対して組み立てる答え（メインビューの札と入力欄の両方が読み書きする1つの
- * 状態。docs/design.md「状態の持ち方」）を、部品を描かずに測る。
+ * 状態。docs/architecture/browser.md「状態の持ち方」）を、部品を描かずに測る。
  */
 
 afterEach(() => {

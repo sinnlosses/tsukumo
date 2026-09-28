@@ -260,7 +260,7 @@ describe("設定の歯車（帯の右端）", () => {
     renderScreenNav()
     fireEvent.click(gear())
 
-    // `disabled` ではなく `aria-disabled`（`Button` の顔。docs/design.md「`Button`」）——
+    // `disabled` ではなく `aria-disabled`（`Button` の顔。docs/architecture/browser.md「`Button`」）——
     // native の `disabled` と違いフォーカスは残る。
     expect(resetButton().getAttribute("aria-disabled")).toBe("true")
     expect(resetButton().hasAttribute("disabled")).toBe(false)

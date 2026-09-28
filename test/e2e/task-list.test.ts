@@ -6,7 +6,7 @@ import { describe, it } from "vitest"
 import { claimTask, git, initGitRepository } from "../fixture/git-repository.ts"
 import { type ScenarioRoom, useScenarioRun } from "./scenario-run.ts"
 
-// タスクの一覧（docs/design.md「E2E のシナリオの一覧」）。この一覧だけは疑似セッションの
+// タスクの一覧（docs/architecture/testing.md「E2E のシナリオの一覧」）。この一覧だけは疑似セッションの
 // 場面ではなく、cwd の `main` にある `develop/task/*.md` が元になる
 // （読み方は `watchTaskSummary` のコメント）。足場として、一時の cwd に `git init` して `develop/task/` を
 // 手書きし、`main` へコミットする。

@@ -210,7 +210,7 @@ describe("コマンドの契約の入力（キャラクターの見た目）", (
     })
   })
 
-  // 使用中を暗黙にしない（`docs/design.md`「画面から作るときの置き場と受け取り方」）。書き込む先のディレクトリ名になる値なので、
+  // 使用中を暗黙にしない（`docs/architecture/character-pack.md`「画面から作るときの置き場と受け取り方」）。書き込む先のディレクトリ名になる値なので、
   // 作るときと同じ形の検査を通す。
   it("見た目の編集は書き込む先のパックが無い・パックの名前として通らない形なら undefined", () => {
     expect(parseInput("characterPack.clearBackground", {})).toBeUndefined()
@@ -448,7 +448,7 @@ describe("コマンドの契約の入力（落とす形）", () => {
     ).toBeUndefined()
   })
 
-  // 名前はディレクトリ名になるので、パスの区切りと `..` を通さない（docs/design.md「画面から作るときの置き場と受け取り方」）。
+  // 名前はディレクトリ名になるので、パスの区切りと `..` を通さない（docs/architecture/character-pack.md「画面から作るときの置き場と受け取り方」）。
   it("パックの区切り・`..`・隠しディレクトリになる名前では、新しいパックを作らせない", () => {
     const rejected = [
       "../escape",

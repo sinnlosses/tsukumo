@@ -693,7 +693,7 @@ describe("createCharacterPack", () => {
     const created = createCharacterPack(createCharacter("fictional-2"), [], home())
 
     expect(created?.dir).toBe(join(home(), "fictional-2"))
-    // 名前を空にすると character.json に name を書かない（読む側が id へ落とす。docs/design.md「画面から作るときの置き場と受け取り方」）。
+    // 名前を空にすると character.json に name を書かない（読む側が id へ落とす。docs/architecture/character-pack.md「画面から作るときの置き場と受け取り方」）。
     expect(created?.definition?.name).toBeUndefined()
     // 立ち絵のファイル名は表情と形式から組み立てる（届いた文字列がパスの一部にならない）。
     expect(created?.definition?.portraits.default).toBe("default.svg")

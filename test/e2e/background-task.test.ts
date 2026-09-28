@@ -2,7 +2,7 @@ import { describe, it } from "vitest"
 
 import { useScenarioRun } from "./scenario-run.ts"
 
-// 背景のタスク（docs/design.md「E2E のシナリオの一覧」）。疑似セッションの場面
+// 背景のタスク（docs/architecture/testing.md「E2E のシナリオの一覧」）。疑似セッションの場面
 // `background-task-short` は、もとの `background-task`（再開まで12秒超）を再開まで数秒に
 // 縮めた版——20秒級の場面を毎回待たずに、開始と再開の両方を1本の E2E の中で確かめられる
 // ようにしてある。

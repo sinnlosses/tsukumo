@@ -8,7 +8,7 @@
 // ここに書いていないキー（`ancestors` 以外）は defaultSchema の値に落ちるので、通すつもりの物は必ずここに書く（img を許可しないのも、tagNames に書かないことで表す）。
 
 // 型は `rehype-sanitize` の `Options` から取る。
-// 実体は hast-util-sanitize の `Schema` だが、あちらは推移的な依存なので直接 import しない（docs/design.md「ビルドと依存」）。
+// 実体は hast-util-sanitize の `Schema` だが、あちらは推移的な依存なので直接 import しない（docs/architecture/build.md「ビルドと依存」）。
 import type { Options as Schema } from "rehype-sanitize"
 
 import { CODE_FILE_NAME_PROPERTY } from "./code-file-name.ts"

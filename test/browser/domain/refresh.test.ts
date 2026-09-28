@@ -4,7 +4,7 @@ import { applyRefresh } from "../../../src/browser/domain/refresh.ts"
 
 // `page` の側（`window.location.reload()`）は借りている DOM では確かめられないので、
 // ここは `style`（CSS だけを取り直す）の側だけを守る。ページごと読み込み直されることは実機で
-// 見る（docs/architecture.md「手で確かめること」）。
+// 見る（docs/architecture/testing.md「手で確かめること」）。
 
 function linkHrefs(): readonly string[] {
   return [...document.querySelectorAll<HTMLLinkElement>('link[rel="stylesheet"]')].map(

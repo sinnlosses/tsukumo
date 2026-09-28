@@ -13,7 +13,7 @@ import { useReportReveal } from "../../../../src/browser/domain/reveal/use-repor
 const REVEAL_SPEED_STORAGE_KEY = "tsukumo-reveal-speed:v1"
 
 // 実際に見えている範囲（`clip-path` のポリゴン）はレイアウトの実測に乗るので、DOM だけの
-// ここでは確かめない（`docs/architecture.md`「手で確かめること」。目視で確認する）。
+// ここでは確かめない（`docs/architecture/testing.md`「手で確かめること」。目視で確認する）。
 // ここで守るのは隠す・出し切る・止めるの配線だけ。
 
 /** 演出を掛ける相手のやり取り（配る筆先に添う番号。`BrushTip`）。 */

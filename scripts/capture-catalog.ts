@@ -1,6 +1,6 @@
 // 画面の状態のカタログを一括で撮る道具。fake driver（`TSUKUMO_DRIVER=fake`）の場面を
 // 名前で名指しして tsukumo を1件ずつ起こし、広い窓と狭い窓の2枚を撮って、並べて見るための
-// 索引 HTML を書き出す。描画に関わる変更の `evidence`（`docs/architecture.md`
+// 索引 HTML を書き出す。描画に関わる変更の `evidence`（`docs/architecture/testing.md`
 // 「手で確かめること」）を作るための道具で、tsukumo 本体からは呼ばれないので scripts/ に置く。
 //
 // 依頼を手で送らずに、狙った状態が出る。 場面の名前は疑似セッション（test/fixture/fake-session.json）の
@@ -123,7 +123,7 @@ const CHART_SELECTOR = `${MAIN_REGION_SELECTOR} canvas`
  * 疑問・メモが1枚に収まる（お願いだけは規約でレポートの末尾に置くので別の1枚になる）。
  * class 名は組み立てのたびにハッシュ化される（`report-note_nkMPPQ`）ので、種別の印
  * （`report-note-warn` など）を巻き込まないよう区切りの `_` まで含めて前方一致で指す
- * （`docs/architecture.md`「手で確かめること」）。
+ * （`docs/architecture/testing.md`「手で確かめること」）。
  */
 const NOTE_KINDS_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="report-note_"]`
 /** お願いの塊（レポートの末尾）。 */
@@ -341,7 +341,7 @@ const CATALOG: readonly CatalogEntry[] = [
     prepare: [{ kind: "hash", hash: "#character/new" }],
     skipReveal: false,
   },
-  // 帯の「いまの作業」の3状態（`docs/architecture.md`「手で確かめること」）。どれも
+  // 帯の「いまの作業」の3状態（`docs/architecture/testing.md`「手で確かめること」）。どれも
   // `MENU_TOGGLE_SELECTOR` → `WORK_TOGGLE_SELECTOR` の順で押して一覧を開く
   // （広い画面では「≡」が無いので前者は空振りしてよい）。
   {

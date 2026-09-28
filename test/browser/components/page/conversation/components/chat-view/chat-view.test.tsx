@@ -55,7 +55,7 @@ function portraitExpression(): string | null | undefined {
  * 文字をドラッグで選んだことになる（`isSelectionDrag`）。
  *
  * 文字がほんとうに選べるかはテストでは見られない（DOM の実装では選択が起きない）ので、
- * そちらは目視で確かめる（`docs/architecture.md`「手で確かめること」）。
+ * そちらは目視で確かめる（`docs/architecture/testing.md`「手で確かめること」）。
  */
 function pressWithMouse(entry: Element, moveX: number): void {
   fireEvent.mouseDown(entry, { clientX: 20, clientY: 30 })
@@ -410,7 +410,7 @@ describe("ChatView のセリフが現れる（docs/screen-design.md「雑談モ�
   }
 
   // 弾む動き自体（CSS のアニメーション）はここでは見ない——見えるかどうかは目視で確かめる
-  // （docs/architecture.md「手で確かめること」）。ここで守るのは、届いたばかりのセリフが
+  // （docs/architecture/testing.md「手で確かめること」）。ここで守るのは、届いたばかりのセリフが
   // 全文でその場に出て、`.chat-entry-pop` が掛かる行の配線。
 
   it("届いたばかりのセリフは全文で出て、弾む行になる", () => {

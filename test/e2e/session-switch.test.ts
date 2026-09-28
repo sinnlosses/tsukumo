@@ -3,7 +3,7 @@ import { describe, it } from "vitest"
 
 import { useScenarioRun } from "./scenario-run.ts"
 
-// セッションの札と切り替え画面（docs/design.md「E2E のシナリオの一覧」）。fake driver は claude を
+// セッションの札と切り替え画面（docs/architecture/testing.md「E2E のシナリオの一覧」）。fake driver は claude を
 // 起こさないので切り替え先の一覧を持たない。疑似セッションの場面 `session-list` が作り物の一覧を
 // `sessions-changed` で流し、右の欄の中身は疑似セッションの `sessionDigests` から返る。
 // 一覧が届くのを待ってから札を押す（場面が流れ終わるのを時間で待たない）。

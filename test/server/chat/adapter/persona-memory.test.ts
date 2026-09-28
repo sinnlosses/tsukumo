@@ -91,7 +91,7 @@ describe("createPersonaMemory", () => {
     const written = homePersona("架空")
     expect(written).toBeDefined()
     expect(rememberedLines(written ?? "")).toEqual([`- ${LINE}`])
-    // 同梱のパックは書き換わらない（書くのはホームだけ。docs/design.md「画面から作るときの置き場と受け取り方」）。
+    // 同梱のパックは書き換わらない（書くのはホームだけ。docs/architecture/character-pack.md「画面から作るときの置き場と受け取り方」）。
     expect(readFileSync(join(pack.dir, "persona.md"), "utf8")).toBe(PERSONA)
   })
 

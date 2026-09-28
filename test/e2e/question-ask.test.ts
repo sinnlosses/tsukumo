@@ -2,13 +2,13 @@ import { describe, it } from "vitest"
 
 import { useScenarioRun } from "./scenario-run.ts"
 
-// 質問（単数・複数・プレビュー。docs/design.md「E2E のシナリオの一覧」）。疑似セッションの
+// 質問（単数・複数・プレビュー。docs/architecture/testing.md「E2E のシナリオの一覧」）。疑似セッションの
 // 4つの場面で、答え待ちの質問の札（`<QuestionAsk>`）の出方を確かめる: `question-pair`
 // （単一選択の質問が1問ずつ届く）、`question-multi`（複数選択のチェックボックス）、
 // `question-long`（長いラベルと長い説明の折り返し）、`question-preview`（選択肢ごとの比較を
 // メインビューに出す）。
 //
-// 選ぶ・答えるところまでは自動操作しない（`docs/architecture.md`「手で確かめること」に、
+// 選ぶ・答えるところまでは自動操作しない（`docs/architecture/testing.md`「手で確かめること」に、
 // 質問の場面を Playwright で自動操作すると `turnInProgress` が解けないまま残ることがある、という
 // 既知の症状がある）。ここで確かめるのは、答え待ちの札が出た時点の DOM の構造だけ。
 

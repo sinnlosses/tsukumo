@@ -1,12 +1,12 @@
 // 配信中のビューをヘッドレスの Chrome で開き、画像に撮って、指定した要素の位置と大きさを
-// 数値で出す。描画に関わる変更の `evidence`（`docs/architecture.md`「手で確かめること」）を
+// 数値で出す。描画に関わる変更の `evidence`（`docs/architecture/testing.md`「手で確かめること」）を
 // 作るための道具で、tsukumo 本体からは呼ばれないので scripts/ に置く。
 //
 // 手元の Google Chrome を使う（`channel: "chrome"`）。Playwright のブラウザは落とさないので、
 // 入っているのは `playwright-core`（driver だけ、13MB）。Chrome が無い環境では起動に失敗する。
 //
 // fake driver（`TSUKUMO_DRIVER=fake`）と組み合わせて使う。 本物の claude を起こさずに画面全体を
-// 出せるので、API を使わずに何度でも撮り直せる（`docs/design.md`「テスト」）。
+// 出せるので、API を使わずに何度でも撮り直せる（`docs/architecture/testing.md`「テスト」）。
 //
 // 使い方:
 //   TSUKUMO_DRIVER=fake TSUKUMO_VIEW_PORT=7398 pnpm run start &

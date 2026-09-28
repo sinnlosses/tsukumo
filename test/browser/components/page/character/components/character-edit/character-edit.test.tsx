@@ -420,7 +420,7 @@ describe("CharacterEdit", () => {
       typedElement(screen.getByLabelText("雑談"), HTMLInputElement, "雑談の入力欄").disabled,
     ).toBe(true)
     const resetButton = screen.getByRole("button", { name: "雑談も仕事と同じにする" })
-    // 押せないは `aria-disabled` の1通り（`Button`。`docs/design.md`「`Button`」）。本物の `disabled`
+    // 押せないは `aria-disabled` の1通り（`Button`。`docs/architecture/browser.md`「`Button`」）。本物の `disabled`
     // にはしないので、フォーカスは残る。
     expect(resetButton.getAttribute("aria-disabled")).toBe("true")
     expect(resetButton.hasAttribute("disabled")).toBe(false)

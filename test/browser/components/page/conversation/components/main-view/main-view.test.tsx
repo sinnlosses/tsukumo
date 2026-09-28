@@ -88,7 +88,7 @@ function rerenderMainView(records: readonly SessionRecord[]): void {
 describe("MainView（ミニ立ち絵を置く原点）", () => {
   // 筆先の座標はこの入れ物の左上が原点（`BRUSH_ORIGIN_ATTRIBUTE`）。印が外れると、書き終わった
   // ミニ立ち絵の置き場所が黙って消えるので、名前が付いていることだけをここで見る
-  // （実際にどこに見えるかは目視。`docs/architecture.md`「手で確かめること」）。
+  // （実際にどこに見えるかは目視。`docs/architecture/testing.md`「手で確かめること」）。
   it("ターンを載せる入れ物に、筆先の原点の印が付く", () => {
     const { container } = renderMainView([
       requestRecord({ text: "1つ目", turnId: 0 }),

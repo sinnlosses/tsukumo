@@ -27,7 +27,7 @@ import { runSubprocess, type SubprocessResult } from "./fixture/subprocess.ts"
 // 追従・状態ファイル・立ち絵のフォールバック・ビューの中身を端から端まで見ていたテストは、
 // この変更で対象そのものが無くなった。振る舞い自体は、メインビューの部品・Markdown の変換・
 // 配信と WebSocket の経路・キャラクター定義の解釈・SDK イベントの変換のそれぞれのテストが守っている。
-// 実際に画面に出ているかは目視で確かめる（docs/architecture.md「手で確かめること」）。
+// 実際に画面に出ているかは目視で確かめる（docs/architecture/testing.md「手で確かめること」）。
 
 const ENTRY = new URL("../src/cli.ts", import.meta.url).pathname
 

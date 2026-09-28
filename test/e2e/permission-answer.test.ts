@@ -2,7 +2,7 @@ import { describe, it } from "vitest"
 
 import { useScenarioRun } from "./scenario-run.ts"
 
-// 許可のモーダル（押すと answer が流れ、箱が消える。docs/design.md「E2E のシナリオの
+// 許可のモーダル（押すと answer が流れ、箱が消える。docs/architecture/testing.md「E2E のシナリオの
 // 一覧」）。疑似セッションの場面 `permission` を名指しして起こし、答え待ちの箱（`pending-changed`
 // で `kind: "permission"` が届く）が出たところで「許可」を押す。押したあとは
 // 2回目の `pending-changed`（箱が消える。答えを消化した `pending-changed`）を待ってから撮る。

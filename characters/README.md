@@ -150,13 +150,13 @@ characters/
   `docs/requirements.md` 4.3）。**書かなくてよい**——無ければ `portraits.default` を縮めて
   出す。本文の行の高さの2倍まで小さくなるので、顔が分かる構図の絵を別に用意したいときだけ
   足す。表情では変わらない1枚
-- **`face` は帯の左端に丸く出す顔の素材**（`docs/design.md` 13.9「顔」）。**書かなくてよい**——
+- **`face` は帯の左端に丸く出す顔の素材**（`docs/screen-design.md` 13.9「顔」）。**書かなくてよい**——
   無ければ帯には何も出ない（`mini` や `portraits.default` からの縮小・切り抜きはしない）。
   正方形を勧める。表情でも衣装でも変わらない1枚で、**キャラクター画面から差し替える口は無い**
   （手でこのファイルと `character.json` を直す）
 - **`outfitAccents` は衣装（実行中のモデル）ごとの差し色。** `light` = haiku /
   `normal` = sonnet / `heavy` = opus（`docs/requirements.md` 4.3）
-- **`background` はキャラビューに敷く背景**（`docs/design.md` 13.8）。**書かなくてよい**——
+- **`background` はキャラビューに敷く背景**（`docs/screen-design.md` 13.8）。**書かなくてよい**——
   無ければ背景は出ない（立ち絵が画面の地の上に直接立つ、いままでの見え方）。効くのは
   キャラビューだけで、メインビュー・サイドバー・入力欄には敷かない。`image` は `.png` /
   `.jpg` / `.webp` のどれか（**`.gif` と `.svg` は受け取らない**）。`veil` は画像の上に

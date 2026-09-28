@@ -7,7 +7,7 @@
 // 借りる（Vitest がテストファイルごとにモジュールの登録を分けるので、この設定はファイルの外へは漏れない）。
 //
 // `@happy-dom/global-registrator`（this 一式を1関数でやってくれる別パッケージ）は使わない
-// （`docs/design.md`「ビルドと依存」の依存一覧に無い。ここは持ってきた `happy-dom` だけで済ませる）。
+// （`docs/architecture/build.md`「ビルドと依存」の依存一覧に無い。ここは持ってきた `happy-dom` だけで済ませる）。
 
 import { Window } from "happy-dom"
 

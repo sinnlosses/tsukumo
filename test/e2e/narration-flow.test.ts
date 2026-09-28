@@ -2,7 +2,7 @@ import { describe, it } from "vitest"
 
 import { useScenarioRun } from "./scenario-run.ts"
 
-// 途中の発話と流れる本文（docs/design.md「E2E のシナリオの一覧」）。疑似セッションの2つの
+// 途中の発話と流れる本文（docs/architecture/testing.md「E2E のシナリオの一覧」）。疑似セッションの2つの
 // 場面で確かめる: `narration`（あとにツールが続いた実況は落ち、最後の本文だけ残る）、
 // `long-report`（長いレポートが `partial-utterance` を重ねて届いても、最終的に全文が1つの
 // 本文として残る）。

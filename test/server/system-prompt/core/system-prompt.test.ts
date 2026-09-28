@@ -20,7 +20,7 @@ import { CHAT_MEMORY_BUDGET } from "../../../../src/shared/chat/chat-memory-budg
 import { inMemoryChatSummary, NOOP_CHAT_ARCHIVE } from "../../../fixture/chat.ts"
 
 // `systemPrompt` に何が・どの順で載るかを、3通り（仕事・雑談・続きから始めるとき）で固定する
-// （docs/design.md「append に入る節の並び」）。本物の駆動を起こして確かめることはできない（`systemPrompt` は
+// （docs/architecture/character-pack.md「append に入る節の並び」）。本物の駆動を起こして確かめることはできない（`systemPrompt` は
 // セッションを起こすときに固定され、あとから覗けない）ので、組み立ての側を見る。
 //
 // 文面そのものは写さない。 節の中身の正典は `REPORT_NOTATION_PROMPT` / `SPEECH_CADENCE_PROMPT` /

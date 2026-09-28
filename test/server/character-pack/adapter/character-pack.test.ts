@@ -125,7 +125,7 @@ describe("characterChangedEvent", () => {
     expect(event).toMatchObject({ face: undefined })
   })
 
-  it("diaryFont があれば素材の URL にする（日記の書体。docs/design.md 7章）", () => {
+  it("diaryFont があれば素材の URL にする（日記の書体。docs/architecture/character-pack.md）", () => {
     writeFileSync(
       join(dir(), "character.json"),
       JSON.stringify({ portraits: { default: "default.svg" }, diaryFont: "shodo.woff2" }),
@@ -148,7 +148,7 @@ describe("characterChangedEvent", () => {
   })
 })
 
-// 一覧の1件（`CharacterPackEntry`）。使用中以外のパックも姿ごと載る（docs/design.md「パックの一覧と素材の URL」）。
+// 一覧の1件（`CharacterPackEntry`）。使用中以外のパックも姿ごと載る（docs/architecture/character-pack.md「パックの一覧と素材の URL」）。
 // 3つの置き場に1つずつ、立ち絵の枚数が違う架空のパックを置く。
 describe("characterChangedEvent の一覧（packs）", () => {
   const cwd = (): string => join(dir(), "cwd")

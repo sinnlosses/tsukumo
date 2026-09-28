@@ -12,7 +12,7 @@ import { detailRecord, requestRecord, speechRecord } from "../../fixture/session
 //
 // 交互に積む並びと圧縮の区切りは、雑談の切り替えと忘却の区切りを撮る E2E のシナリオが守る。
 // 本文・ツール・質問を落とす分岐だけは、疑似セッションに同じ並び（雑談中に本文が出る、規約違反の
-// 場面）が無いのでここに残す（docs/design.md「E2E に任せず単体テストに残すもの」）。
+// 場面）が無いのでここに残す（docs/architecture/testing.md「E2E に任せず単体テストに残すもの」）。
 
 describe("chatLogEntries", () => {
   it("本文・ツール・質問は落とす（雑談中はレポートを出さない）", () => {
