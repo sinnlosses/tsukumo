@@ -1,6 +1,6 @@
 import { QueryClientProvider } from "@tanstack/react-query"
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
-import { afterEach, beforeEach, describe, expect, it } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { CharacterEdit } from "../../../../../../../src/browser/components/page/character/components/character-edit/character-edit.tsx"
 import type { CharacterPackEntry } from "../../../../../../../src/shared/character-pack/character.ts"
@@ -68,11 +68,6 @@ function renderCharacterEdit(
       <CharacterEdit />
     </QueryClientProvider>,
   )
-}
-
-// 差し色の送信は200ms（`ACCENT_DEBOUNCE_MS`）まとめるので、それより長く実時間で待つ。
-function waitForDebounce(): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, 250))
 }
 
 /** 表情を消す前の確かめ（`PortraitClearConfirm`）。開いていなければ `null`。 */
@@ -317,27 +312,33 @@ describe("CharacterEdit", () => {
 
     fireEvent.change(screen.getByLabelText("戦闘配置（opus）"), { target: { value: "#123456" } })
     expect(calls).toEqual([])
-    await waitForDebounce()
 
-    expect(calls).toEqual([
-      {
-        procedure: "characterPack.setOutfitAccent",
-        pack: "fictional",
-        outfit: "heavy",
-        color: "#123456",
-      },
-    ])
+    await waitFor(() => {
+      expect(calls).toEqual([
+        {
+          procedure: "characterPack.setOutfitAccent",
+          pack: "fictional",
+          outfit: "heavy",
+          color: "#123456",
+        },
+      ])
+    })
   })
 
   // 画面を開いただけでは何も送らない（`docs/coding-standards.md`「useEffect は4類型だけ」の
   // タイマーは効かせるが、起こすのは onChange だけ）。
   it("開いただけでは何も送らない", async () => {
-    const calls: unknown[] = []
-    renderCharacterEdit(FIXTURE_CHARACTER, (command) => calls.push(command))
+    vi.useFakeTimers()
+    try {
+      const calls: unknown[] = []
+      renderCharacterEdit(FIXTURE_CHARACTER, (command) => calls.push(command))
 
-    await waitForDebounce()
+      await vi.advanceTimersByTimeAsync(250)
 
-    expect(calls).toEqual([])
+      expect(calls).toEqual([])
+    } finally {
+      vi.useRealTimers()
+    }
   })
 
   // 引きずったまま画面を閉じても、まだ送っていない最後の値を落とさない
@@ -392,11 +393,17 @@ describe("CharacterEdit", () => {
 
     fireEvent.change(screen.getByLabelText("仕事"), { target: { value: "#123456" } })
     expect(calls).toEqual([])
-    await waitForDebounce()
 
-    expect(calls).toEqual([
-      { procedure: "characterPack.setAccent", pack: "fictional", target: "work", color: "#123456" },
-    ])
+    await waitFor(() => {
+      expect(calls).toEqual([
+        {
+          procedure: "characterPack.setAccent",
+          pack: "fictional",
+          target: "work",
+          color: "#123456",
+        },
+      ])
+    })
   })
 
   it("「雑談も仕事と同じにする」を押すと characterPack.clearChatAccent を dispatch する", () => {

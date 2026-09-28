@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 
 import { createVisitClock } from "../../../../src/server/visit/adapter/visit-clock.ts"
 
@@ -10,8 +10,9 @@ describe("createVisitClock", () => {
     clock.after(5, () => woken.push("kept"))
     const cancel = clock.after(5, () => woken.push("cancelled"))
     cancel()
-    await new Promise((resolve) => setTimeout(resolve, 30))
 
-    expect(woken).toEqual(["kept"])
+    await vi.waitFor(() => {
+      expect(woken).toEqual(["kept"])
+    })
   })
 })

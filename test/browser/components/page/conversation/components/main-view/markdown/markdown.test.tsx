@@ -1,5 +1,5 @@
-import { cleanup, fireEvent, render } from "@testing-library/react"
-import { act, type ReactNode } from "react"
+import { cleanup, fireEvent, render, waitFor } from "@testing-library/react"
+import type { ReactNode } from "react"
 import { afterEach, describe, expect, it } from "vitest"
 
 import { Markdown } from "../../../../../../../../src/browser/components/page/conversation/components/main-view/markdown/markdown.tsx"
@@ -10,17 +10,6 @@ import { typedElement } from "../../../../../../../typed-element.ts"
 afterEach(() => {
   cleanup()
 })
-
-/**
- * `MermaidBlock` / `ChartBlock` の `useEffect` は同梱スクリプトの読み込みを試み、この
- * テスト環境（happy-dom。実際のネットワークが無い）では失敗して1回だけ状態を更新する。
- * その1回分を `act()` の中で待ってから DOM を見る（`act` の外で起きる更新の警告を防ぐ）。
- */
-async function flushEffects(): Promise<void> {
-  await act(async () => {
-    await new Promise((resolve) => setTimeout(resolve, 0))
-  })
-}
 
 describe("Markdown（unified への置き換えが求める記法）", () => {
   it("`:---:` が中央揃え、`---:` が右揃えの印を持つ", () => {
@@ -294,13 +283,15 @@ describe("Markdown（unified への置き換えが求める記法）", () => {
   })
 
   it("MermaidBlock は失敗したら mermaid のエラー図を描かず、コードとエラー文を出す", async () => {
-    // この環境（happy-dom。実際のネットワークが無い）では同梱スクリプトの読み込み自体が失敗する
-    // （`flushEffects` の説明と同じ経路）。mermaid のグローバルを差し替えて構文エラーを
-    // 再現する代わりに、この自然に起きる失敗を「壊れたときの経路」として検証する
-    // （読み込み失敗も構文エラーも MermaidBlock は同じ catch で受け止める設計のため）。
+    // この環境（happy-dom。実際のネットワークが無い）では同梱スクリプトの読み込み自体が失敗する。
+    // mermaid のグローバルを差し替えて構文エラーを再現する代わりに、この自然に起きる失敗を
+    // 「壊れたときの経路」として検証する（読み込み失敗も構文エラーも MermaidBlock は同じ catch
+    // で受け止める設計のため）。
     const { container } = render(<Markdown text={"```mermaid\nflowchart TD\nA --> B\n```"} />)
 
-    await flushEffects()
+    await waitFor(() => {
+      expect(container.querySelector(".mermaid-broken")).not.toBeNull()
+    })
 
     // mermaid 自身のエラー図（pre.mermaid の中身が書き換わる形）ではなく、専用の表示に替わる。
     expect(container.querySelector("pre.mermaid")).toBeNull()

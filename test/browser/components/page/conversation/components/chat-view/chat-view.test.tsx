@@ -1,5 +1,5 @@
 import { QueryClientProvider } from "@tanstack/react-query"
-import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { ChatView } from "../../../../../../../src/browser/components/page/conversation/components/chat-view/chat-view.tsx"
@@ -473,11 +473,10 @@ describe("ChatView のセリフが現れる（docs/architecture/screen-design.md
       expect(document.querySelector('[data-speaker="typing"]')).toBeTruthy()
 
       clock.mockReturnValue(Temporal.Instant.fromEpochMilliseconds(2001))
-      await act(async () => {
-        await new Promise((resolve) => setTimeout(resolve, 80))
-      })
 
-      expect(screen.getByText("2つめの架空のセリフ")).toBeTruthy()
+      await waitFor(() => {
+        expect(screen.getByText("2つめの架空のセリフ")).toBeTruthy()
+      })
       expect(document.querySelector('[data-speaker="typing"]')).toBe(null)
     } finally {
       clock.mockRestore()

@@ -1,5 +1,5 @@
 import { cleanup, fireEvent, render } from "@testing-library/react"
-import { afterEach, beforeEach, describe, expect, it } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { ScreenNav } from "../../../../../src/browser/components/domain/screen-nav/screen-nav.tsx"
 import {
@@ -91,11 +91,6 @@ function resetButton(): HTMLButtonElement {
 
 function readToken(name: string): string {
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim()
-}
-
-// 画面の色の書き込みは200ms（`APPEARANCE_COLOR_DEBOUNCE_MS`）まとめるので、それより長く待つ。
-function waitForDebounce(): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, 250))
 }
 
 describe("設定の歯車（帯の右端）", () => {
@@ -191,12 +186,12 @@ describe("設定の歯車（帯の右端）", () => {
     expect(readToken("--ground")).toBe("#101010")
     expect(localStorage.getItem(COLOR_STORAGE_KEY)).toBeNull()
 
-    await waitForDebounce()
-
-    expect(JSON.parse(localStorage.getItem(COLOR_STORAGE_KEY) ?? "{}")).toEqual({
-      ground: "#101010",
-      surface: undefined,
-      ink: undefined,
+    await vi.waitFor(() => {
+      expect(JSON.parse(localStorage.getItem(COLOR_STORAGE_KEY) ?? "{}")).toEqual({
+        ground: "#101010",
+        surface: undefined,
+        ink: undefined,
+      })
     })
   })
 
@@ -208,40 +203,51 @@ describe("設定の歯車（帯の右端）", () => {
     fireEvent.change(input, { target: { value: "#111111" } })
     fireEvent.change(input, { target: { value: "#222222" } })
     fireEvent.change(input, { target: { value: "#333333" } })
-    await waitForDebounce()
 
-    expect(JSON.parse(localStorage.getItem(COLOR_STORAGE_KEY) ?? "{}")).toEqual({
-      ground: undefined,
-      surface: "#333333",
-      ink: undefined,
+    await vi.waitFor(() => {
+      expect(JSON.parse(localStorage.getItem(COLOR_STORAGE_KEY) ?? "{}")).toEqual({
+        ground: undefined,
+        surface: "#333333",
+        ink: undefined,
+      })
     })
   })
 
   // 色の検証は `changeAppearanceColor` の1箇所のまま（歯車へ移しても変えていない）。
   it("ground を ink と同じ色にしようとすると受け取らず、既定のまま", async () => {
-    renderScreenNav()
-    fireEvent.click(gear())
+    vi.useFakeTimers()
+    try {
+      renderScreenNav()
+      fireEvent.click(gear())
 
-    // 疑似 :root の --ink は #e8e3ea。同じ値にしようとする。
-    fireEvent.change(colorInput("画面の地"), { target: { value: "#e8e3ea" } })
+      // 疑似 :root の --ink は #e8e3ea。同じ値にしようとする。
+      fireEvent.change(colorInput("画面の地"), { target: { value: "#e8e3ea" } })
 
-    expect(readToken("--ground")).toBe("#191720")
-    await waitForDebounce()
+      expect(readToken("--ground")).toBe("#191720")
+      await vi.advanceTimersByTimeAsync(250)
 
-    expect(JSON.parse(localStorage.getItem(COLOR_STORAGE_KEY) ?? "{}")).toEqual({
-      ground: undefined,
-      surface: undefined,
-      ink: undefined,
-    })
+      expect(JSON.parse(localStorage.getItem(COLOR_STORAGE_KEY) ?? "{}")).toEqual({
+        ground: undefined,
+        surface: undefined,
+        ink: undefined,
+      })
+    } finally {
+      vi.useRealTimers()
+    }
   })
 
   it("開いただけでは localStorage に書き込まない", async () => {
-    renderScreenNav()
-    fireEvent.click(gear())
+    vi.useFakeTimers()
+    try {
+      renderScreenNav()
+      fireEvent.click(gear())
 
-    await waitForDebounce()
+      await vi.advanceTimersByTimeAsync(250)
 
-    expect(localStorage.getItem(COLOR_STORAGE_KEY)).toBeNull()
+      expect(localStorage.getItem(COLOR_STORAGE_KEY)).toBeNull()
+    } finally {
+      vi.useRealTimers()
+    }
   })
 
   // 保存済みの上書きを `documentElement` へ差すのは入口（`applyAppearanceColorOverride` の起動時の呼び出し）なので、
@@ -284,8 +290,10 @@ describe("設定の歯車（帯の右端）", () => {
 
     expect(readToken("--ground")).toBe("#191720")
     expect(colorInput("画面の地").value).toBe("#191720")
-    await waitForDebounce()
 
+    await vi.waitFor(() => {
+      expect(localStorage.getItem(COLOR_STORAGE_KEY)).not.toBeNull()
+    })
     expect(JSON.parse(localStorage.getItem(COLOR_STORAGE_KEY) ?? "{}")).toEqual({
       ground: undefined,
       surface: undefined,

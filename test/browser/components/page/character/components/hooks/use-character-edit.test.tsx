@@ -1,6 +1,6 @@
 import { act, cleanup, renderHook } from "@testing-library/react"
 import type { ReactElement, ReactNode } from "react"
-import { afterEach, beforeEach, describe, expect, it } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import {
   type CharacterEditModel,
@@ -173,16 +173,17 @@ describe("useCharacterEdit", () => {
     const input = pickedInput("<svg/>")
 
     cardOf(result.current, "proud").onPick(input)
-    await new Promise((resolve) => setTimeout(resolve, 20))
 
-    expect(calls).toEqual([
-      {
-        procedure: "characterPack.setPortrait",
-        pack: "fictional",
-        expression: "proud",
-        image: `data:image/svg+xml;base64,${Buffer.from("<svg/>").toString("base64")}`,
-      },
-    ])
+    await vi.waitFor(() => {
+      expect(calls).toEqual([
+        {
+          procedure: "characterPack.setPortrait",
+          pack: "fictional",
+          expression: "proud",
+          image: `data:image/svg+xml;base64,${Buffer.from("<svg/>").toString("base64")}`,
+        },
+      ])
+    })
     expect(input.value).toBe("")
   })
 
@@ -213,15 +214,16 @@ describe("useCharacterEdit", () => {
     expect(heavy().value).toBe("#123456")
     expect(calls).toEqual([])
 
-    await new Promise((resolve) => setTimeout(resolve, 250))
-    expect(calls).toEqual([
-      {
-        procedure: "characterPack.setOutfitAccent",
-        pack: "fictional",
-        outfit: "heavy",
-        color: "#123456",
-      },
-    ])
+    await vi.waitFor(() => {
+      expect(calls).toEqual([
+        {
+          procedure: "characterPack.setOutfitAccent",
+          pack: "fictional",
+          outfit: "heavy",
+          color: "#123456",
+        },
+      ])
+    })
   })
 
   it("画面の差し色（仕事）は見た目だけ先に進め、送るのは少し待ってから characterPack.setAccent", async () => {
@@ -242,10 +244,16 @@ describe("useCharacterEdit", () => {
     expect(ready(result.current).workAccent.value).toBe("#123456")
     expect(calls).toEqual([])
 
-    await new Promise((resolve) => setTimeout(resolve, 250))
-    expect(calls).toEqual([
-      { procedure: "characterPack.setAccent", pack: "fictional", target: "work", color: "#123456" },
-    ])
+    await vi.waitFor(() => {
+      expect(calls).toEqual([
+        {
+          procedure: "characterPack.setAccent",
+          pack: "fictional",
+          target: "work",
+          color: "#123456",
+        },
+      ])
+    })
   })
 
   it("chatAccent が無いパックでは、雑談の色見本に仕事の差し色を出し、戻す口は出さない", () => {
@@ -291,11 +299,16 @@ describe("useCharacterEdit", () => {
     act(() => {
       ready(result.current).chatAccent.onChange("#f2984a")
     })
-    await new Promise((resolve) => setTimeout(resolve, 250))
-
-    expect(calls).toEqual([
-      { procedure: "characterPack.setAccent", pack: "fictional", target: "chat", color: "#f2984a" },
-    ])
+    await vi.waitFor(() => {
+      expect(calls).toEqual([
+        {
+          procedure: "characterPack.setAccent",
+          pack: "fictional",
+          target: "chat",
+          color: "#f2984a",
+        },
+      ])
+    })
   })
 
   it("背景の有無を字に畳み、消す口は characterPack.clearBackground を送る", () => {

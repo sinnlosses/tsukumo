@@ -200,17 +200,6 @@ describe("useChatView の出すタイミング（docs/architecture/screen-design
     return clock
   }
 
-  /**
-   * 偽の時計を進めたあと、それに `useRevealedChatLog` のポーリング（実装の詳細）が
-   * 気づくまで実時間を少しだけ待つ。2秒は待たない —— 待つのは時計ではなくポーリングの
-   * 周期ぶんだけ。
-   */
-  async function waitForReveal(): Promise<void> {
-    await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 80))
-    })
-  }
-
   it("開いた時点で並んでいたセリフは、待たずに全部出る", () => {
     const clock = mockNow(0)
     try {
@@ -256,9 +245,10 @@ describe("useChatView の出すタイミング（docs/architecture/screen-design
 
       // 偽の時計を2秒より先へ進める。
       clock.mockReturnValue(Temporal.Instant.fromEpochMilliseconds(2001))
-      await waitForReveal()
 
-      expect(speechRows(result.current.rows)).toHaveLength(2)
+      await vi.waitFor(() => {
+        expect(speechRows(result.current.rows)).toHaveLength(2)
+      })
       expect(result.current.showTyping).toBe(false)
     } finally {
       clock.mockRestore()
@@ -332,9 +322,10 @@ describe("useChatView の出すタイミング（docs/architecture/screen-design
       expect(result.current.expression).toBe("proud")
 
       clock.mockReturnValue(Temporal.Instant.fromEpochMilliseconds(2001))
-      await waitForReveal()
 
-      expect(result.current.expression).toBe("curious")
+      await vi.waitFor(() => {
+        expect(result.current.expression).toBe("curious")
+      })
     } finally {
       clock.mockRestore()
     }
