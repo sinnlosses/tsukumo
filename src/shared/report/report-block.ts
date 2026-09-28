@@ -140,7 +140,10 @@ const codeBlockSchema = z
     source: z.string(),
     fold,
   })
-  .describe("コード・コマンド・エラー文")
+  .describe(
+    "コード・コマンド・エラー文・そのまま渡す前提の文章（デザインの依頼文・コミットメッセージの案など）。" +
+      "塊にはクリックでクリップボードへ全文を写せるボタンが付く",
+  )
 
 /**
  * mermaid の種類のうち、tsukumo が配る mermaid で描けると確かめたもの（`package.json` で版を固定しているのはこの実測のため）。

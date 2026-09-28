@@ -435,6 +435,18 @@
                                 ]
                               },
                               {
+                                "tag": "button",
+                                "attributes": {
+                                  "type": "button"
+                                },
+                                "children": [
+                                  {
+                                    "tag": "svg"
+                                  },
+                                  "コピー"
+                                ]
+                              },
+                              {
                                 "tag": "pre",
                                 "children": [
                                   {

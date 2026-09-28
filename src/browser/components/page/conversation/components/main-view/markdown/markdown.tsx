@@ -33,6 +33,7 @@ import { optionalString } from "../../../../../../../shared/utils/optional-strin
 import { ChartBlock } from "./chart-block.tsx"
 import { CODE_FILE_NAME_PROPERTY, rehypeCodeFileName } from "./code-file-name.ts"
 import { colorSwatch, readColorToken } from "./color-swatch.ts"
+import { CopyButton } from "./copy-button.tsx"
 import { MermaidBlock } from "./mermaid-block.tsx"
 import { NotationBlock, NotationInline } from "./notation.tsx"
 import styles from "./report-notation.module.css"
@@ -100,8 +101,9 @@ type PreProps = JSX.IntrinsicElements["pre"] & ExtraProps
  * フェンス付きコードブロックの入れ物。
  * `node`（hast の `pre` 要素。react-markdown が渡す）の中の `code` 要素の `className` を見て、`language-mermaid` / `language-chart` なら {@link MermaidBlock} / {@link ChartBlock} に振り、それ以外は素の `<pre>` のまま描く（色付けは `rehype-highlight` がすでにこの木に当ててある）。
  *
- * フェンスにファイル名が書いてあれば（```diff src/foo.ts）、ブロックの左上にラベルとして出す（差分だけを見てどのファイルか分からない、を防ぐため）。
- * 書いていないフェンスは素の `<pre>` のままで、ラベルの行は出ない。git 管理下の一覧にあるファイル名は押せるボタンにする。
+ * それ以外のフェンスは頭に帯を1本添え、{@link CopyButton} を常に置く。
+ * フェンスにファイル名が書いてあれば（```diff src/foo.ts）、帯の左にラベルとして出す。
+ * git 管理下の一覧にあるファイル名は押せるボタンにする。
  */
 function Pre(props: PreProps): ReactElement {
   const codeNode = findCodeChild(props.node)
@@ -118,19 +120,25 @@ function Pre(props: PreProps): ReactElement {
 
   // eslint 等の警告を避けるため node は展開して渡さない。
   const { node: _node, ...rest } = props
-  const fileName = codeNode === undefined ? undefined : codeFileName(codeNode)
 
-  if (fileName === undefined) {
+  if (codeNode === undefined) {
     return <pre {...rest} />
   }
+  const fileName = codeFileName(codeNode)
   return (
     <div className={styles["code-file"]}>
       <div className={styles["code-file-name"]}>
-        <FileNameLabel fileName={fileName} />
+        {fileName !== undefined && <FileNameLabel fileName={fileName} />}
+        <CopyButton text={codeSourceText(codeNode)} />
       </div>
       <pre {...rest} />
     </div>
   )
+}
+
+/** フェンスの中身そのまま。末尾に付く1つの改行（CommonMark がフェンスの終わりに添えるもの）だけ落とす。 */
+function codeSourceText(codeNode: Element): string {
+  return hastText(codeNode).replace(/\n$/, "")
 }
 
 /** フェンスのファイル名のラベル。一覧にあれば押せるボタン、無ければ素のテキスト。 */

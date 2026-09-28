@@ -584,6 +584,14 @@ CSS の3つを揃える**（レンダラを直したのに規約が古いまま�
   起きない素のテキストにする**）。押す部品・依頼・サーバ側の検証は
   `src/browser/components/page/conversation/components/main-view/markdown/repository-link.tsx` と
   `src/shared/contract/host.ts` の `hostContract.openFile`
+- **フェンス付きコードブロックの頭の帯に、クリックで全文をクリップボードへ写すボタンを常に置く**
+  （2026-09-28 決定。2026-09-27 ユーザーの指示——デザインの依頼文を `code` の塊で出したとき、写すのに
+  ドラッグで選ぶ必要があった）。**塊の種類を分けず、フェンス付きコードブロックすべてに付ける**
+  （mermaid・chart は除く）。書き手が「写してよい文章か」を選び分ける負担を無くし、画面に出る形も
+  1通りに保つため。写す中身はフェンスの中身そのまま（行番号・ファイル名のラベル・ボタンの文字を
+  含まない、書き上げる演出が終わった後の全文）。写すとボタンの文字が短いあいだ「コピーした」に変わる。
+  実装は `src/browser/components/page/conversation/components/main-view/markdown/copy-button.tsx` と
+  `markdown.tsx` の `Pre`
 - **色を指す inline code は、その色を地にして出す。** 中身の文字全体が1つのカラーコード
   （`#bca0ec` など。3・4・6・8桁）か、ページの色のトークン名（`ink-quiet` / `--ink-quiet` /
   `var(--ink-quiet)`）のときだけで、文中に色が混ざったものとフェンスの中は変えない。字は地の

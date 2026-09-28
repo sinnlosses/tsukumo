@@ -454,16 +454,19 @@
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
-/* フェンスに書いたファイル名（```diff src/foo.ts）を、ブロックの左上に出すラベルと、その器。
-   差分だけを見てどのファイルか分からない、を防ぐ。
+/* フェンスの頭に添える帯。ファイル名（```diff src/foo.ts）があれば左のラベルに出し
+   （差分だけを見てどのファイルか分からない、を防ぐ）、右には常にコピーのボタンを置く。
    別の枠を足さず、コードの地（--ground）を上へ伸ばして1つの塊に見せる（箱が2つ並ぶと、差分そのものより境目のほうが目立つ）。
-   文字はパスなので等幅で、寸法は「ID・ツール名・キー」の段。
+   ラベルの文字はパスなので等幅で、寸法は「ID・ツール名・キー」の段。
    器は Markdown のレンダラ側（`Pre`）が作るので、レポートの記法・許可リストは増えていない。 */
 .detail-block .code-file {
   margin: 0.4rem 0 0;
 }
 .detail-block .code-file-name {
-  padding: 0.4rem 0.5rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.2rem 0.5rem 0.2rem 0.5rem;
   background: var(--ground);
   border-radius: 0.4rem 0.4rem 0 0;
   font-family: var(--font-mono);
@@ -471,10 +474,29 @@
   color: var(--ink-quiet);
   overflow-wrap: anywhere;
 }
-/* ラベルが上に乗るぶん、コード側の上マージンと上の角を落とす（.detail-block pre の既定を消す）。 */
+/* 帯が上に乗るぶん、コード側の上マージンと上の角を落とす（.detail-block pre の既定を消す）。 */
 .detail-block .code-file > pre {
   margin-top: 0;
   border-radius: 0 0 0.4rem 0.4rem;
+}
+/* コピーのボタン。ラベルの有無に関わらず帯の右端に置く。 */
+.detail-block .code-copy {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-left: auto;
+  padding: 0.15rem 0.4rem;
+  border: none;
+  border-radius: 0.3rem;
+  background: none;
+  font: inherit;
+  font-size: var(--font-label);
+  color: var(--ink-quiet);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.detail-block .code-copy:hover {
+  color: var(--accent);
 }
 /* git 管理下のパスを押せる部品にしたときの見た目（inline code・フェンスのファイル名・相対リンクの3か所）。
    `<button>` を地の文のリンク（theme.css の `a`）と同じ下線の文字に見せる（色を取り上げるかわりに下線で区別する）。

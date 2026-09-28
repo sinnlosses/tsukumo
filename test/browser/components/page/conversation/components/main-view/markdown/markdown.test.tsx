@@ -1,6 +1,6 @@
-import { cleanup, fireEvent, render, waitFor } from "@testing-library/react"
+import { act, cleanup, fireEvent, render, waitFor } from "@testing-library/react"
 import type { ReactNode } from "react"
-import { afterEach, describe, expect, it } from "vitest"
+import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { Markdown } from "../../../../../../../../src/browser/components/page/conversation/components/main-view/markdown/markdown.tsx"
 import { RepositoryFileLinkContext } from "../../../../../../../../src/browser/components/page/conversation/components/main-view/markdown/repository-link.tsx"
@@ -336,15 +336,17 @@ describe("Markdown（unified への置き換えが求める記法）", () => {
     expect(block).not.toBeNull()
     // ラベルは <pre> より前（左上）に置く。
     expect(block?.firstElementChild?.className).toBe("code-file-name")
-    expect(block?.firstElementChild?.textContent).toBe("develop/tasks.json")
+    expect(block?.firstElementChild?.textContent).toContain("develop/tasks.json")
     expect(block?.querySelector("pre code.language-diff")?.textContent).toContain("+  2")
   })
 
-  it("ファイル名の無いフェンスはラベルの器を作らず素の <pre> のまま", () => {
+  it("ファイル名の無いフェンスもコピーのボタンの帯は出る（ラベルは無い）", () => {
     const { container } = render(<Markdown text={"```diff\n-const a = 1\n+const a = 2\n```"} />)
 
-    expect(container.querySelector("div.code-file")).toBeNull()
-    expect(container.querySelector(".code-file-name")).toBeNull()
+    const label = container.querySelector("div.code-file > .code-file-name")
+    expect(label).not.toBeNull()
+    // ラベルの文字は無く、コピーのボタンだけが帯に出る。
+    expect(label?.textContent).toBe("コピー")
     expect(container.querySelector("pre code.language-diff")).not.toBeNull()
   })
 
@@ -352,8 +354,72 @@ describe("Markdown（unified への置き換えが求める記法）", () => {
     const { container } = render(<Markdown text={"```diff <b>src/foo.ts</b>\n-a\n+b\n```"} />)
 
     const label = container.querySelector(".code-file-name")
-    expect(label?.textContent).toBe("<b>src/foo.ts</b>")
+    expect(label?.textContent).toContain("<b>src/foo.ts</b>")
     expect(label?.querySelector("b")).toBeNull()
+  })
+})
+
+describe("Markdown（フェンス付きコードブロックのコピーのボタン）", () => {
+  /** `navigator.clipboard` は happy-dom に無いので、押した引数だけ拾う偽物に差し替える。 */
+  function stubClipboardWriteText(): { readonly calls: string[] } {
+    const calls: string[] = []
+    Object.defineProperty(navigator, "clipboard", {
+      value: { writeText: (text: string) => Promise.resolve(calls.push(text)).then(() => {}) },
+      configurable: true,
+    })
+    return { calls }
+  }
+
+  it("フェンス付きコードブロックにコピーのボタンが出て、押すと塊の中身そのままを写す（行番号・ラベル・ボタンの文字は含まない）", async () => {
+    const { calls } = stubClipboardWriteText()
+    const { container } = render(
+      <Markdown text={"```diff develop/tasks.json\n-const a = 1\n+const a = 2\n```"} />,
+    )
+
+    const button = typedElement(
+      container.querySelector(".code-copy"),
+      HTMLButtonElement,
+      "コピーのボタン",
+    )
+    await act(async () => {
+      fireEvent.click(button)
+      await Promise.resolve()
+    })
+
+    expect(calls).toEqual(["-const a = 1\n+const a = 2"])
+  })
+
+  it("写すとボタンの文字が短いあいだ「コピーした」に変わり、やがて戻る", async () => {
+    vi.useFakeTimers()
+    try {
+      stubClipboardWriteText()
+      const { container } = render(<Markdown text={"```ts\nconst a = 1\n```"} />)
+      const button = typedElement(
+        container.querySelector(".code-copy"),
+        HTMLButtonElement,
+        "コピーのボタン",
+      )
+
+      expect(button.textContent).toBe("コピー")
+      await act(async () => {
+        fireEvent.click(button)
+        await Promise.resolve()
+      })
+      expect(button.textContent).toBe("コピーした")
+
+      act(() => {
+        vi.advanceTimersByTime(1500)
+      })
+      expect(button.textContent).toBe("コピー")
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it("mermaid / chart のフェンスにはコピーのボタンを付けない（図・グラフの入れ物になるため）", () => {
+    const { container } = render(<Markdown text={"```chart\n{}\n```"} />)
+
+    expect(container.querySelector(".code-copy")).toBeNull()
   })
 })
 
@@ -506,13 +572,15 @@ describe("Markdown（レポートのパスを押して Orca のエディタで�
     expect(opened).toEqual(["develop/tasks.json"])
   })
 
-  it("一覧に無いフェンスのファイル名は素のテキストのまま", () => {
+  it("一覧に無いフェンスのファイル名は素のテキストのまま（別に出るボタンはコピーのボタンだけ）", () => {
     const wrap = withFiles(["develop/tasks.json"], () => {})
     const { container } = render(wrap(<Markdown text={"```diff src/nope.ts\n-a\n+b\n```"} />))
 
     const label = container.querySelector(".code-file-name")
-    expect(label?.querySelector("button")).toBeNull()
-    expect(label?.textContent).toBe("src/nope.ts")
+    expect(
+      [...(label?.querySelectorAll("button") ?? [])].map((button) => button.textContent),
+    ).toEqual(["コピー"])
+    expect(label?.textContent).toContain("src/nope.ts")
   })
 
   it("一覧にある相対リンクが押せるボタンになり、ページは遷移しない", () => {
@@ -549,12 +617,13 @@ describe("Markdown（レポートのパスを押して Orca のエディタで�
     expect(container.querySelector("sup > a")?.getAttribute("href")).toBe("#user-content-fn-1")
   })
 
-  it("Provider が無い場（既存のレポートの多く）では、一致するパスが無いので何も押せない", () => {
+  it("Provider が無い場（既存のレポートの多く）では、一致するパスが無いのでファイルを開くボタンは出ない（コピーのボタンは別に出る）", () => {
     const { container } = render(
       <Markdown text={"`src/foo.ts:1` と [x](src/foo.ts) と ```diff src/foo.ts\n-a\n+b\n```"} />,
     )
 
-    expect(container.querySelector("button")).toBeNull()
+    const buttons = [...container.querySelectorAll("button")]
+    expect(buttons.map((button) => button.textContent)).toEqual(["コピー"])
   })
 })
 
