@@ -294,50 +294,129 @@
                         ]
                       },
                       {
-                        "tag": "section",
+                        "tag": "div",
+                        "attributes": {
+                          "data-outline": "shown"
+                        },
                         "children": [
                           {
-                            "tag": "p",
-                            "children": [
-                              "架空の結論: 整形で落ちる行は描かれず、残りはそのまま出る。"
-                            ]
-                          },
-                          {
-                            "tag": "h4",
-                            "children": [
-                              "残る見出し（架空）"
-                            ]
-                          },
-                          {
-                            "tag": "p",
+                            "tag": "div",
+                            "attributes": {
+                              "data-open": "false"
+                            },
                             "children": [
                               {
-                                "tag": "strong",
+                                "tag": "nav",
+                                "attributes": {
+                                  "aria-label": "目次"
+                                },
                                 "children": [
-                                  "残る表（作り物の値）"
+                                  {
+                                    "tag": "button",
+                                    "attributes": {
+                                      "aria-label": "目次",
+                                      "aria-expanded": "false",
+                                      "type": "button"
+                                    },
+                                    "children": [
+                                      {
+                                        "tag": "svg"
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "tag": "button",
+                                    "attributes": {
+                                      "aria-hidden": "true",
+                                      "data-level": "section",
+                                      "data-active": "true",
+                                      "data-in-section": "true",
+                                      "type": "button"
+                                    }
+                                  },
+                                  {
+                                    "tag": "button",
+                                    "attributes": {
+                                      "aria-hidden": "true",
+                                      "data-level": "section",
+                                      "data-active": "false",
+                                      "data-in-section": "false",
+                                      "type": "button"
+                                    }
+                                  }
                                 ]
                               }
                             ]
                           },
                           {
-                            "tag": "table",
+                            "tag": "section",
                             "children": [
                               {
-                                "tag": "thead",
+                                "tag": "p",
+                                "children": [
+                                  "架空の結論: 整形で落ちる行は描かれず、残りはそのまま出る。"
+                                ]
+                              },
+                              {
+                                "tag": "h4",
+                                "children": [
+                                  "残る見出し（架空）"
+                                ]
+                              },
+                              {
+                                "tag": "p",
                                 "children": [
                                   {
-                                    "tag": "tr",
+                                    "tag": "strong",
+                                    "children": [
+                                      "残る表（作り物の値）"
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "tag": "table",
+                                "children": [
+                                  {
+                                    "tag": "thead",
                                     "children": [
                                       {
-                                        "tag": "th",
+                                        "tag": "tr",
                                         "children": [
-                                          "列"
+                                          {
+                                            "tag": "th",
+                                            "children": [
+                                              "列"
+                                            ]
+                                          },
+                                          {
+                                            "tag": "th",
+                                            "children": [
+                                              "値"
+                                            ]
+                                          }
                                         ]
-                                      },
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "tag": "tbody",
+                                    "children": [
                                       {
-                                        "tag": "th",
+                                        "tag": "tr",
                                         "children": [
-                                          "値"
+                                          {
+                                            "tag": "td",
+                                            "children": [
+                                              "以上です"
+                                            ]
+                                          },
+                                          {
+                                            "tag": "td",
+                                            "children": [
+                                              "1"
+                                            ]
+                                          }
                                         ]
                                       }
                                     ]
@@ -345,61 +424,39 @@
                                 ]
                               },
                               {
-                                "tag": "tbody",
+                                "tag": "blockquote",
                                 "children": [
                                   {
-                                    "tag": "tr",
+                                    "tag": "p",
                                     "children": [
-                                      {
-                                        "tag": "td",
-                                        "children": [
-                                          "以上です"
-                                        ]
-                                      },
-                                      {
-                                        "tag": "td",
-                                        "children": [
-                                          "1"
-                                        ]
-                                      }
+                                      "以上です。（引用の中なので残る）"
                                     ]
                                   }
                                 ]
-                              }
-                            ]
-                          },
-                          {
-                            "tag": "blockquote",
-                            "children": [
+                              },
+                              {
+                                "tag": "pre",
+                                "children": [
+                                  {
+                                    "tag": "code",
+                                    "children": [
+                                      "以上です。（フェンスの中なので残る） ## フェンスの中の見出し（残る）"
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "tag": "h4",
+                                "children": [
+                                  "残る2つめの見出し（架空）"
+                                ]
+                              },
                               {
                                 "tag": "p",
                                 "children": [
-                                  "以上です。（引用の中なので残る）"
+                                  "架空の本文の最後の段落。"
                                 ]
                               }
-                            ]
-                          },
-                          {
-                            "tag": "pre",
-                            "children": [
-                              {
-                                "tag": "code",
-                                "children": [
-                                  "以上です。（フェンスの中なので残る） ## フェンスの中の見出し（残る）"
-                                ]
-                              }
-                            ]
-                          },
-                          {
-                            "tag": "h4",
-                            "children": [
-                              "残る2つめの見出し（架空）"
-                            ]
-                          },
-                          {
-                            "tag": "p",
-                            "children": [
-                              "架空の本文の最後の段落。"
                             ]
                           }
                         ]

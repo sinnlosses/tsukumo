@@ -294,18 +294,26 @@
                         ]
                       },
                       {
-                        "tag": "section",
+                        "tag": "div",
+                        "attributes": {
+                          "data-outline": "hidden"
+                        },
                         "children": [
                           {
-                            "tag": "h4",
+                            "tag": "section",
                             "children": [
-                              "札の頭のタイトル（架空）"
-                            ]
-                          },
-                          {
-                            "tag": "p",
-                            "children": [
-                              "架空の本文。札の頭には依頼の1行目が出て、収まらないぶんは省略される。"
+                              {
+                                "tag": "h4",
+                                "children": [
+                                  "札の頭のタイトル（架空）"
+                                ]
+                              },
+                              {
+                                "tag": "p",
+                                "children": [
+                                  "架空の本文。札の頭には依頼の1行目が出て、収まらないぶんは省略される。"
+                                ]
+                              }
                             ]
                           }
                         ]

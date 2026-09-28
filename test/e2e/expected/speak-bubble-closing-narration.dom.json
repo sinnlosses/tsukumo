@@ -294,12 +294,20 @@
                         ]
                       },
                       {
-                        "tag": "section",
+                        "tag": "div",
+                        "attributes": {
+                          "data-outline": "hidden"
+                        },
                         "children": [
                           {
-                            "tag": "p",
+                            "tag": "section",
                             "children": [
-                              "狐火を落とします。また何かあれば呼んでください。"
+                              {
+                                "tag": "p",
+                                "children": [
+                                  "狐火を落とします。また何かあれば呼んでください。"
+                                ]
+                              }
                             ]
                           }
                         ]

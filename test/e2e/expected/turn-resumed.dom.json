@@ -294,50 +294,58 @@
                         ]
                       },
                       {
-                        "tag": "details",
+                        "tag": "div",
+                        "attributes": {
+                          "data-outline": "hidden"
+                        },
                         "children": [
                           {
-                            "tag": "summary",
+                            "tag": "details",
                             "children": [
-                              "中間レポート: 中間の結論（架空）：ここまでで分かったことをいったんまとめた。"
-                            ]
-                          }
-                        ]
-                      },
-                      {
-                        "tag": "section",
-                        "children": [
-                          {
-                            "tag": "p",
-                            "children": [
-                              "最終レポート"
+                              {
+                                "tag": "summary",
+                                "children": [
+                                  "中間レポート: 中間の結論（架空）：ここまでで分かったことをいったんまとめた。"
+                                ]
+                              }
                             ]
                           },
                           {
-                            "tag": "p",
-                            "children": [
-                              "最終の結論（架空）：合図をまたいでも報告は消えなかった。"
-                            ]
-                          },
-                          {
-                            "tag": "ul",
+                            "tag": "section",
                             "children": [
                               {
-                                "tag": "li",
+                                "tag": "p",
                                 "children": [
-                                  "中間の報告は合図のあいだも出したまま"
+                                  "最終レポート"
                                 ]
                               },
                               {
-                                "tag": "li",
+                                "tag": "p",
                                 "children": [
-                                  "吹き出しも前のセリフを保った"
+                                  "最終の結論（架空）：合図をまたいでも報告は消えなかった。"
                                 ]
                               },
                               {
-                                "tag": "li",
+                                "tag": "ul",
                                 "children": [
-                                  "最後にこの最終報告へ差し替わる"
+                                  {
+                                    "tag": "li",
+                                    "children": [
+                                      "中間の報告は合図のあいだも出したまま"
+                                    ]
+                                  },
+                                  {
+                                    "tag": "li",
+                                    "children": [
+                                      "吹き出しも前のセリフを保った"
+                                    ]
+                                  },
+                                  {
+                                    "tag": "li",
+                                    "children": [
+                                      "最後にこの最終報告へ差し替わる"
+                                    ]
+                                  }
                                 ]
                               }
                             ]

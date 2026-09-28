@@ -17,9 +17,10 @@
   row-gap: 0.4rem;
   /* 頭は字を詰めて潰れない範囲で低く保つ。
      余白は `.detail-block .report-stat` と同じ値。 */
-  padding: 0.5rem 0.75rem;
-  border-bottom: 1px solid var(--rule);
-  border-radius: 0.6rem 0.6rem 0 0;
+  box-sizing: border-box;
+  min-height: var(--turn-header-height);
+  padding: 0.5rem 1.125rem;
+  border-bottom: 1px solid var(--rule-quiet);
   background: var(--surface);
 }
 .turn-nav {
@@ -202,7 +203,7 @@
   white-space: nowrap;
 }
 /* 「最新」の印と「最新へ」の口は同じ形にして、同じ場所で入れ替わる。
-   印は選ばれたものと同じ示し方（accent の枠と surface-accent の地）。
+   印は差し色で塗りつぶし、押せる「最新へ」の口（枠だけ）と形で見分ける。
    `line-height` を 1 に詰めるのは `.turn-position` と同じ理由。
    「最新へ」の顔は `<Button variant="outline">` が持つ。 */
 .turn-newest-badge,
@@ -215,8 +216,8 @@
 }
 .turn-newest-badge {
   border: 1px solid var(--accent);
-  background: var(--surface-accent);
-  color: var(--ink);
+  background: var(--accent);
+  color: var(--ground);
   font-weight: 700;
 }
 

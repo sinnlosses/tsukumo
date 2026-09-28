@@ -294,32 +294,40 @@
                         ]
                       },
                       {
-                        "tag": "section",
+                        "tag": "div",
+                        "attributes": {
+                          "data-outline": "hidden"
+                        },
                         "children": [
                           {
-                            "tag": "h4",
+                            "tag": "section",
                             "children": [
-                              "実況が落ちたあとに残る本文"
-                            ]
-                          },
-                          {
-                            "tag": "p",
-                            "children": [
-                              "これは架空の本文で、実物の会話ではない。",
                               {
-                                "tag": "strong",
+                                "tag": "h4",
                                 "children": [
-                                  "上の「まず疑似セッションのファイルを読むね。」と「次は直すね。」は、あとにツールが続いたので落ちる"
+                                  "実況が落ちたあとに残る本文"
                                 ]
                               },
-                              "（",
                               {
-                                "tag": "code",
+                                "tag": "p",
                                 "children": [
-                                  "docs/architecture/display.md"
+                                  "これは架空の本文で、実物の会話ではない。",
+                                  {
+                                    "tag": "strong",
+                                    "children": [
+                                      "上の「まず疑似セッションのファイルを読むね。」と「次は直すね。」は、あとにツールが続いたので落ちる"
+                                    ]
+                                  },
+                                  "（",
+                                  {
+                                    "tag": "code",
+                                    "children": [
+                                      "docs/architecture/display.md"
+                                    ]
+                                  },
+                                  "4.2）。"
                                 ]
-                              },
-                              "4.2）。"
+                              }
                             ]
                           }
                         ]

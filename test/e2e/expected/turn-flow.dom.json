@@ -294,194 +294,202 @@
                         ]
                       },
                       {
-                        "tag": "details",
+                        "tag": "div",
+                        "attributes": {
+                          "data-outline": "hidden"
+                        },
                         "children": [
                           {
-                            "tag": "summary",
-                            "children": [
-                              "中間レポート: 途中の結論: 目盛りを決めているのは `a.ts` だけだった。"
-                            ]
-                          }
-                        ]
-                      },
-                      {
-                        "tag": "section",
-                        "children": [
-                          {
-                            "tag": "p",
-                            "children": [
-                              "最終レポート"
-                            ]
-                          },
-                          {
-                            "tag": "p",
-                            "children": [
-                              "架空の結論: 目盛りを 24 に直し、",
-                              {
-                                "tag": "code",
-                                "children": [
-                                  "a.ts"
-                                ]
-                              },
-                              "だけで済んだ。"
-                            ]
-                          },
-                          "pnpm run check",
-                          "✓ OK",
-                          "1234 件",
-                          "0秒",
-                          "目盛りの E2E",
-                          "✕ NG",
-                          "1 / 56",
-                          "架空の 1 件が落ちた",
-                          "狭い窓での見た目",
-                          "? 未確認",
-                          "手で確かめていない",
-                          {
-                            "tag": "p",
+                            "tag": "details",
                             "children": [
                               {
-                                "tag": "strong",
+                                "tag": "summary",
                                 "children": [
-                                  "直したファイルと結果（架空の数）"
+                                  "中間レポート: 途中の結論: 目盛りを決めているのは `a.ts` だけだった。"
                                 ]
                               }
                             ]
                           },
                           {
-                            "tag": "table",
+                            "tag": "section",
                             "children": [
                               {
-                                "tag": "thead",
+                                "tag": "p",
+                                "children": [
+                                  "最終レポート"
+                                ]
+                              },
+                              {
+                                "tag": "p",
+                                "children": [
+                                  "架空の結論: 目盛りを 24 に直し、",
+                                  {
+                                    "tag": "code",
+                                    "children": [
+                                      "a.ts"
+                                    ]
+                                  },
+                                  "だけで済んだ。"
+                                ]
+                              },
+                              "pnpm run check",
+                              "✓ OK",
+                              "1234 件",
+                              "0秒",
+                              "目盛りの E2E",
+                              "✕ NG",
+                              "1 / 56",
+                              "架空の 1 件が落ちた",
+                              "狭い窓での見た目",
+                              "? 未確認",
+                              "手で確かめていない",
+                              {
+                                "tag": "p",
                                 "children": [
                                   {
-                                    "tag": "tr",
+                                    "tag": "strong",
                                     "children": [
-                                      {
-                                        "tag": "th",
-                                        "children": [
-                                          "ファイル"
-                                        ]
-                                      },
-                                      {
-                                        "tag": "th",
-                                        "children": [
-                                          "変えたこと"
-                                        ]
-                                      },
-                                      {
-                                        "tag": "th",
-                                        "children": [
-                                          "状態"
-                                        ]
-                                      }
+                                      "直したファイルと結果（架空の数）"
                                     ]
                                   }
                                 ]
                               },
                               {
-                                "tag": "tbody",
+                                "tag": "table",
                                 "children": [
                                   {
-                                    "tag": "tr",
+                                    "tag": "thead",
                                     "children": [
                                       {
-                                        "tag": "td",
+                                        "tag": "tr",
                                         "children": [
                                           {
-                                            "tag": "code",
+                                            "tag": "th",
                                             "children": [
-                                              "a.ts"
+                                              "ファイル"
+                                            ]
+                                          },
+                                          {
+                                            "tag": "th",
+                                            "children": [
+                                              "変えたこと"
+                                            ]
+                                          },
+                                          {
+                                            "tag": "th",
+                                            "children": [
+                                              "状態"
                                             ]
                                           }
-                                        ]
-                                      },
-                                      {
-                                        "tag": "td",
-                                        "children": [
-                                          "目盛りを 12 から 24 へ"
-                                        ]
-                                      },
-                                      {
-                                        "tag": "td",
-                                        "children": [
-                                          "OK"
                                         ]
                                       }
                                     ]
                                   },
                                   {
-                                    "tag": "tr",
+                                    "tag": "tbody",
                                     "children": [
                                       {
-                                        "tag": "td",
+                                        "tag": "tr",
                                         "children": [
                                           {
-                                            "tag": "code",
+                                            "tag": "td",
                                             "children": [
-                                              "b.ts"
+                                              {
+                                                "tag": "code",
+                                                "children": [
+                                                  "a.ts"
+                                                ]
+                                              }
+                                            ]
+                                          },
+                                          {
+                                            "tag": "td",
+                                            "children": [
+                                              "目盛りを 12 から 24 へ"
+                                            ]
+                                          },
+                                          {
+                                            "tag": "td",
+                                            "children": [
+                                              "OK"
                                             ]
                                           }
                                         ]
                                       },
                                       {
-                                        "tag": "td",
+                                        "tag": "tr",
                                         "children": [
-                                          "読むだけなので変えない"
-                                        ]
-                                      },
-                                      {
-                                        "tag": "td",
-                                        "children": [
-                                          "要注意"
+                                          {
+                                            "tag": "td",
+                                            "children": [
+                                              {
+                                                "tag": "code",
+                                                "children": [
+                                                  "b.ts"
+                                                ]
+                                              }
+                                            ]
+                                          },
+                                          {
+                                            "tag": "td",
+                                            "children": [
+                                              "読むだけなので変えない"
+                                            ]
+                                          },
+                                          {
+                                            "tag": "td",
+                                            "children": [
+                                              "要注意"
+                                            ]
+                                          }
                                         ]
                                       }
                                     ]
                                   }
                                 ]
-                              }
-                            ]
-                          },
-                          "src/a.ts",
-                          {
-                            "tag": "pre",
-                            "children": [
+                              },
+                              "src/a.ts",
                               {
-                                "tag": "code",
-                                "attributes": {
-                                  "data-filename": "src/a.ts"
-                                },
+                                "tag": "pre",
                                 "children": [
-                                  "-const TICKS = 12",
-                                  "+const TICKS = 24"
-                                ]
-                              }
-                            ]
-                          },
-                          "注意",
-                          {
-                            "tag": "p",
-                            "children": [
-                              {
-                                "tag": "code",
-                                "children": [
-                                  "b.ts"
+                                  {
+                                    "tag": "code",
+                                    "attributes": {
+                                      "data-filename": "src/a.ts"
+                                    },
+                                    "children": [
+                                      "-const TICKS = 12",
+                                      "+const TICKS = 24"
+                                    ]
+                                  }
                                 ]
                               },
-                              "のキャッシュは古い目盛りを持ったまま残る。"
-                            ]
-                          },
-                          "お願い",
-                          {
-                            "tag": "p",
-                            "children": [
+                              "注意",
                               {
-                                "tag": "code",
+                                "tag": "p",
                                 "children": [
-                                  "b.ts"
+                                  {
+                                    "tag": "code",
+                                    "children": [
+                                      "b.ts"
+                                    ]
+                                  },
+                                  "のキャッシュは古い目盛りを持ったまま残る。"
                                 ]
                               },
-                              "のキャッシュを消してよいか決めてほしい（架空のお願い）。"
+                              "お願い",
+                              {
+                                "tag": "p",
+                                "children": [
+                                  {
+                                    "tag": "code",
+                                    "children": [
+                                      "b.ts"
+                                    ]
+                                  },
+                                  "のキャッシュを消してよいか決めてほしい（架空のお願い）。"
+                                ]
+                              }
                             ]
                           }
                         ]

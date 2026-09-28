@@ -301,12 +301,20 @@
                         ]
                       },
                       {
-                        "tag": "section",
+                        "tag": "div",
+                        "attributes": {
+                          "data-outline": "hidden"
+                        },
                         "children": [
                           {
-                            "tag": "p",
+                            "tag": "section",
                             "children": [
-                              "長いラベルと長い説明の場面（架空）。選択肢の折り返しを見るために置いてある。"
+                              {
+                                "tag": "p",
+                                "children": [
+                                  "長いラベルと長い説明の場面（架空）。選択肢の折り返しを見るために置いてある。"
+                                ]
+                              }
                             ]
                           }
                         ]

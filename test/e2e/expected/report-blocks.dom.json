@@ -294,113 +294,170 @@
                         ]
                       },
                       {
-                        "tag": "section",
+                        "tag": "div",
+                        "attributes": {
+                          "data-outline": "shown"
+                        },
                         "children": [
                           {
-                            "tag": "p",
-                            "children": [
-                              "架空の結論: 目盛りは設定ファイルへ移す案を採る。"
-                            ]
-                          },
-                          {
-                            "tag": "h4",
-                            "children": [
-                              "目盛りの置き場所は設定ファイル（架空）"
-                            ]
-                          },
-                          {
-                            "tag": "p",
+                            "tag": "div",
+                            "attributes": {
+                              "data-open": "false"
+                            },
                             "children": [
                               {
-                                "tag": "strong",
+                                "tag": "nav",
+                                "attributes": {
+                                  "aria-label": "目次"
+                                },
                                 "children": [
-                                  "目盛りをどこに置くか（架空の比較）"
+                                  {
+                                    "tag": "button",
+                                    "attributes": {
+                                      "aria-label": "目次",
+                                      "aria-expanded": "false",
+                                      "type": "button"
+                                    },
+                                    "children": [
+                                      {
+                                        "tag": "svg"
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "tag": "button",
+                                    "attributes": {
+                                      "aria-hidden": "true",
+                                      "data-level": "section",
+                                      "data-active": "true",
+                                      "data-in-section": "true",
+                                      "type": "button"
+                                    }
+                                  },
+                                  {
+                                    "tag": "button",
+                                    "attributes": {
+                                      "aria-hidden": "true",
+                                      "data-level": "section",
+                                      "data-active": "false",
+                                      "data-in-section": "false",
+                                      "type": "button"
+                                    }
+                                  }
                                 ]
                               }
                             ]
                           },
-                          "採らない",
                           {
-                            "tag": "b",
+                            "tag": "section",
                             "children": [
-                              "定数のまま"
+                              {
+                                "tag": "p",
+                                "children": [
+                                  "架空の結論: 目盛りは設定ファイルへ移す案を採る。"
+                                ]
+                              },
+                              {
+                                "tag": "h4",
+                                "children": [
+                                  "目盛りの置き場所は設定ファイル（架空）"
+                                ]
+                              },
+                              {
+                                "tag": "p",
+                                "children": [
+                                  {
+                                    "tag": "strong",
+                                    "children": [
+                                      "目盛りをどこに置くか（架空の比較）"
+                                    ]
+                                  }
+                                ]
+                              },
+                              "採らない",
+                              {
+                                "tag": "b",
+                                "children": [
+                                  "定数のまま"
+                                ]
+                              },
+                              "変えるたびに組み立て直しが要る（架空）。",
+                              "採る",
+                              {
+                                "tag": "b",
+                                "children": [
+                                  "設定ファイル"
+                                ]
+                              },
+                              "起こし直すだけで変わり、",
+                              {
+                                "tag": "code",
+                                "children": [
+                                  "a.ts"
+                                ]
+                              },
+                              "の読み口が1つで済む（架空）。",
+                              "検討",
+                              {
+                                "tag": "b",
+                                "children": [
+                                  "環境変数"
+                                ]
+                              },
+                              "設定ファイルの上書きとしてなら足せる（架空）。",
+                              "注意",
+                              {
+                                "tag": "p",
+                                "children": [
+                                  "設定ファイルを増やすなら、読み込む順番を1箇所に決めておかないと事故る（架空）。"
+                                ]
+                              },
+                              {
+                                "tag": "h4",
+                                "children": [
+                                  "触ったファイルは4つ（架空）"
+                                ]
+                              },
+                              "追加",
+                              {
+                                "tag": "code",
+                                "children": [
+                                  "src/dummy/ticks.ts"
+                                ]
+                              },
+                              "目盛りを読む口（架空）",
+                              "変更",
+                              {
+                                "tag": "code",
+                                "children": [
+                                  "src/dummy/a.ts"
+                                ]
+                              },
+                              "定数を",
+                              {
+                                "tag": "code",
+                                "children": [
+                                  "ticks.ts"
+                                ]
+                              },
+                              "の読みに替えた（架空）",
+                              "削除",
+                              {
+                                "tag": "code",
+                                "children": [
+                                  "src/dummy/old-ticks.ts"
+                                ]
+                              },
+                              "読んだ",
+                              {
+                                "tag": "code",
+                                "children": [
+                                  "notes/dummy/ticks.md"
+                                ]
+                              },
+                              "目盛りの決め方（架空）"
                             ]
-                          },
-                          "変えるたびに組み立て直しが要る（架空）。",
-                          "採る",
-                          {
-                            "tag": "b",
-                            "children": [
-                              "設定ファイル"
-                            ]
-                          },
-                          "起こし直すだけで変わり、",
-                          {
-                            "tag": "code",
-                            "children": [
-                              "a.ts"
-                            ]
-                          },
-                          "の読み口が1つで済む（架空）。",
-                          "検討",
-                          {
-                            "tag": "b",
-                            "children": [
-                              "環境変数"
-                            ]
-                          },
-                          "設定ファイルの上書きとしてなら足せる（架空）。",
-                          "注意",
-                          {
-                            "tag": "p",
-                            "children": [
-                              "設定ファイルを増やすなら、読み込む順番を1箇所に決めておかないと事故る（架空）。"
-                            ]
-                          },
-                          {
-                            "tag": "h4",
-                            "children": [
-                              "触ったファイルは4つ（架空）"
-                            ]
-                          },
-                          "追加",
-                          {
-                            "tag": "code",
-                            "children": [
-                              "src/dummy/ticks.ts"
-                            ]
-                          },
-                          "目盛りを読む口（架空）",
-                          "変更",
-                          {
-                            "tag": "code",
-                            "children": [
-                              "src/dummy/a.ts"
-                            ]
-                          },
-                          "定数を",
-                          {
-                            "tag": "code",
-                            "children": [
-                              "ticks.ts"
-                            ]
-                          },
-                          "の読みに替えた（架空）",
-                          "削除",
-                          {
-                            "tag": "code",
-                            "children": [
-                              "src/dummy/old-ticks.ts"
-                            ]
-                          },
-                          "読んだ",
-                          {
-                            "tag": "code",
-                            "children": [
-                              "notes/dummy/ticks.md"
-                            ]
-                          },
-                          "目盛りの決め方（架空）"
+                          }
                         ]
                       }
                     ]

@@ -13,6 +13,7 @@ import { useTurnSelection } from "../../../../../stores/turn-selection.ts"
 import { Text } from "../../../../ui/text/text.tsx"
 import { MiniPortrait } from "./components/mini-portrait/mini-portrait.tsx"
 import { QuestionAsk } from "./components/question-ask/question-ask.tsx"
+import { ReportOutline } from "./components/report-outline/report-outline.tsx"
 import { TurnHeader } from "./components/turn-header/turn-header.tsx"
 import { Turn } from "./components/turn/turn.tsx"
 import { turnHistoryText, turnTitle } from "./domain/turn-title.ts"
@@ -45,7 +46,8 @@ export function MainView(): ReactElement {
     )
   }
 
-  const activeTurn = turns.find((turn) => turn.id === activeTurnId)
+  const activeIndex = turns.findIndex((turn) => turn.id === activeTurnId)
+  const activeTurn = turns[activeIndex]
 
   return (
     <RepositoryFileLinkProvider>
@@ -65,9 +67,9 @@ export function MainView(): ReactElement {
               activeTurnId={activeTurn.id}
               onSelect={selectTurn}
             />
-            <div className={styles["turn-body"]}>
+            <ReportOutline positionLabel={`${String(activeIndex + 1)} / ${String(turns.length)}`}>
               <Turn turn={activeTurn} newest={activeTurn.id === newestTurnId} key={activeTurn.id} />
-            </div>
+            </ReportOutline>
           </article>
         )}
         {/* 筆先に添うミニ立ち絵。この入れ物の原点を基準に置く（`position: absolute`）ので、書き上げたあと残っているあいだも本文と一緒に転がる。

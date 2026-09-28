@@ -301,12 +301,20 @@
                         ]
                       },
                       {
-                        "tag": "section",
+                        "tag": "div",
+                        "attributes": {
+                          "data-outline": "hidden"
+                        },
                         "children": [
                           {
-                            "tag": "p",
+                            "tag": "section",
                             "children": [
-                              "multiSelect の質問に答える場面（架空）。答えると箱が消える。"
+                              {
+                                "tag": "p",
+                                "children": [
+                                  "multiSelect の質問に答える場面（架空）。答えると箱が消える。"
+                                ]
+                              }
                             ]
                           }
                         ]

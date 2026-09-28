@@ -294,40 +294,48 @@
                         ]
                       },
                       {
-                        "tag": "details",
+                        "tag": "div",
+                        "attributes": {
+                          "data-outline": "hidden"
+                        },
                         "children": [
                           {
-                            "tag": "summary",
+                            "tag": "details",
                             "children": [
-                              "中間レポート: 中間の結論（架空）：ここまでで分かったことをいったんまとめた。"
-                            ]
-                          }
-                        ]
-                      },
-                      {
-                        "tag": "details",
-                        "children": [
-                          {
-                            "tag": "summary",
-                            "children": [
-                              "中間レポート: いまの結論（架空）：ここまでで分かったことをまとめた。"
-                            ]
-                          }
-                        ]
-                      },
-                      {
-                        "tag": "section",
-                        "children": [
-                          {
-                            "tag": "p",
-                            "children": [
-                              "最終レポート"
+                              {
+                                "tag": "summary",
+                                "children": [
+                                  "中間レポート: 中間の結論（架空）：ここまでで分かったことをいったんまとめた。"
+                                ]
+                              }
                             ]
                           },
                           {
-                            "tag": "p",
+                            "tag": "details",
                             "children": [
-                              "最終の結論（架空）：合図をまたいでも最終レポートの札は早まらなかった。"
+                              {
+                                "tag": "summary",
+                                "children": [
+                                  "中間レポート: いまの結論（架空）：ここまでで分かったことをまとめた。"
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "tag": "section",
+                            "children": [
+                              {
+                                "tag": "p",
+                                "children": [
+                                  "最終レポート"
+                                ]
+                              },
+                              {
+                                "tag": "p",
+                                "children": [
+                                  "最終の結論（架空）：合図をまたいでも最終レポートの札は早まらなかった。"
+                                ]
+                              }
                             ]
                           }
                         ]

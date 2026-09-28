@@ -294,56 +294,64 @@
                         ]
                       },
                       {
-                        "tag": "details",
+                        "tag": "div",
                         "attributes": {
-                          "open": true
+                          "data-outline": "hidden"
                         },
                         "children": [
                           {
-                            "tag": "summary",
-                            "children": [
-                              "依頼の続き（",
-                              "1",
-                              "行）"
-                            ]
-                          },
-                          "エディタから送る場面を見たい"
-                        ]
-                      },
-                      {
-                        "tag": "section",
-                        "children": [
-                          {
-                            "tag": "h4",
-                            "children": [
-                              "疑似セッションのレポート"
-                            ]
-                          },
-                          {
-                            "tag": "p",
-                            "children": [
-                              "これは架空の本文で、実物の会話ではない。"
-                            ]
-                          },
-                          {
-                            "tag": "ul",
+                            "tag": "details",
+                            "attributes": {
+                              "open": true
+                            },
                             "children": [
                               {
-                                "tag": "li",
+                                "tag": "summary",
                                 "children": [
-                                  "段2 の配信の経路を確かめるための疑似セッション"
+                                  "依頼の続き（",
+                                  "1",
+                                  "行）"
+                                ]
+                              },
+                              "エディタから送る場面を見たい"
+                            ]
+                          },
+                          {
+                            "tag": "section",
+                            "children": [
+                              {
+                                "tag": "h4",
+                                "children": [
+                                  "疑似セッションのレポート"
                                 ]
                               },
                               {
-                                "tag": "li",
+                                "tag": "p",
                                 "children": [
-                                  "表・コードなどの記法は段6で unified に置き換わる"
+                                  "これは架空の本文で、実物の会話ではない。"
                                 ]
-                              }
+                              },
+                              {
+                                "tag": "ul",
+                                "children": [
+                                  {
+                                    "tag": "li",
+                                    "children": [
+                                      "段2 の配信の経路を確かめるための疑似セッション"
+                                    ]
+                                  },
+                                  {
+                                    "tag": "li",
+                                    "children": [
+                                      "表・コードなどの記法は段6で unified に置き換わる"
+                                    ]
+                                  }
+                                ]
+                              },
+                              "注意",
+                              "注意：この疑似セッションの中身はすべて架空で、実物の会話ではない。"
                             ]
-                          },
-                          "注意",
-                          "注意：この疑似セッションの中身はすべて架空で、実物の会話ではない。"
+                          }
                         ]
                       }
                     ]

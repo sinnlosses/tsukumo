@@ -301,23 +301,31 @@
                         ]
                       },
                       {
-                        "tag": "details",
+                        "tag": "div",
+                        "attributes": {
+                          "data-outline": "hidden"
+                        },
                         "children": [
                           {
-                            "tag": "summary",
+                            "tag": "details",
                             "children": [
-                              "中間レポート: 中間の結論（架空）：ここまでで分かったことをいったんまとめた。"
+                              {
+                                "tag": "summary",
+                                "children": [
+                                  "中間レポート: 中間の結論（架空）：ここまでで分かったことをいったんまとめた。"
+                                ]
+                              }
                             ]
-                          }
-                        ]
-                      },
-                      {
-                        "tag": "section",
-                        "children": [
+                          },
                           {
-                            "tag": "p",
+                            "tag": "section",
                             "children": [
-                              "いまの結論（架空）：ここまでで分かったことをまとめた。"
+                              {
+                                "tag": "p",
+                                "children": [
+                                  "いまの結論（架空）：ここまでで分かったことをまとめた。"
+                                ]
+                              }
                             ]
                           }
                         ]

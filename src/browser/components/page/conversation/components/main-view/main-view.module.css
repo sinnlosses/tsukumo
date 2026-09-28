@@ -17,16 +17,18 @@
   scroll-margin-top: var(--region-padding, 0px);
 }
 /* ターン1件ぶんの札。
-   頭（`.turn-header`）と区切り線の下にレポートを置く。
-   `overflow` を付けない（付けると頭の `position: sticky` が札の中で効かなくなる）。 */
+   頭（`.turn-header`）と区切り線の下に、目次の縁とレポートを置く（`ReportOutline`）。
+   札は枠を持たず、領域の余白を打ち消して領域の縁まで広がる（領域の枠と札の枠が二重に見えないように）。
+   `overflow` を付けない（付けると頭の `position: sticky` が札の中で効かなくなる）。
+   `--turn-header-height` は頭の外寸で、目次の縁が頭の真下に貼り付く位置に使う。
+   頭の中でいちばん高い前後の口（1.5rem）と頭の上下の余白・下の罫線から決まる（`turn-header.module.css`）。 */
 .turn-card {
-  border: 1px solid var(--rule);
-  border-radius: 0.6rem;
-  background: var(--surface);
+  --turn-header-height: calc(2.5rem + 1px);
+  margin: calc(-1 * var(--region-padding, 0px)) calc(-1 * var(--region-padding, 0px)) 0;
 }
-
-.turn-body {
-  padding: 0.9rem 0.75rem 0.75rem;
+/* 目次から飛んだ見出しが、貼り付いた頭の下に隠れないようにする。 */
+.turn-card :is(h4, h5) {
+  scroll-margin-top: calc(var(--turn-header-height) + 0.5rem);
 }
 /* 依頼のうちタイトルに出なかった2行目以降（`RequestRest`）。
    既定で開いていて全行が読め、長いときだけ max-height でスクロールに切り替わる。 */

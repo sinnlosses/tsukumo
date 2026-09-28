@@ -294,72 +294,80 @@
                         ]
                       },
                       {
-                        "tag": "section",
+                        "tag": "div",
+                        "attributes": {
+                          "data-outline": "hidden"
+                        },
                         "children": [
                           {
-                            "tag": "p",
-                            "children": [
-                              "架空の結論: 差し戻しのあとに直したレポートだけが出る。"
-                            ]
-                          },
-                          {
-                            "tag": "h4",
-                            "children": [
-                              "直した見出し（架空）"
-                            ]
-                          },
-                          {
-                            "tag": "p",
+                            "tag": "section",
                             "children": [
                               {
-                                "tag": "strong",
+                                "tag": "p",
                                 "children": [
-                                  "直した表（作り物の値）"
+                                  "架空の結論: 差し戻しのあとに直したレポートだけが出る。"
                                 ]
-                              }
-                            ]
-                          },
-                          {
-                            "tag": "table",
-                            "children": [
+                              },
                               {
-                                "tag": "thead",
+                                "tag": "h4",
+                                "children": [
+                                  "直した見出し（架空）"
+                                ]
+                              },
+                              {
+                                "tag": "p",
                                 "children": [
                                   {
-                                    "tag": "tr",
+                                    "tag": "strong",
                                     "children": [
-                                      {
-                                        "tag": "th",
-                                        "children": [
-                                          "列"
-                                        ]
-                                      },
-                                      {
-                                        "tag": "th",
-                                        "children": [
-                                          "値"
-                                        ]
-                                      }
+                                      "直した表（作り物の値）"
                                     ]
                                   }
                                 ]
                               },
                               {
-                                "tag": "tbody",
+                                "tag": "table",
                                 "children": [
                                   {
-                                    "tag": "tr",
+                                    "tag": "thead",
                                     "children": [
                                       {
-                                        "tag": "td",
+                                        "tag": "tr",
                                         "children": [
-                                          "a"
+                                          {
+                                            "tag": "th",
+                                            "children": [
+                                              "列"
+                                            ]
+                                          },
+                                          {
+                                            "tag": "th",
+                                            "children": [
+                                              "値"
+                                            ]
+                                          }
                                         ]
-                                      },
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "tag": "tbody",
+                                    "children": [
                                       {
-                                        "tag": "td",
+                                        "tag": "tr",
                                         "children": [
-                                          "1"
+                                          {
+                                            "tag": "td",
+                                            "children": [
+                                              "a"
+                                            ]
+                                          },
+                                          {
+                                            "tag": "td",
+                                            "children": [
+                                              "1"
+                                            ]
+                                          }
                                         ]
                                       }
                                     ]

@@ -301,12 +301,20 @@
                         ]
                       },
                       {
-                        "tag": "section",
+                        "tag": "div",
+                        "attributes": {
+                          "data-outline": "hidden"
+                        },
                         "children": [
                           {
-                            "tag": "p",
+                            "tag": "section",
                             "children": [
-                              "1問1答の場面（架空）。最後の1問に答えるとまとめて届く。"
+                              {
+                                "tag": "p",
+                                "children": [
+                                  "1問1答の場面（架空）。最後の1問に答えるとまとめて届く。"
+                                ]
+                              }
                             ]
                           }
                         ]

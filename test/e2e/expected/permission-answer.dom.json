@@ -294,12 +294,20 @@
                         ]
                       },
                       {
-                        "tag": "section",
+                        "tag": "div",
+                        "attributes": {
+                          "data-outline": "hidden"
+                        },
                         "children": [
                           {
-                            "tag": "p",
+                            "tag": "section",
                             "children": [
-                              "答え待ちの箱を出す場面（架空）。答えると箱が消える。"
+                              {
+                                "tag": "p",
+                                "children": [
+                                  "答え待ちの箱を出す場面（架空）。答えると箱が消える。"
+                                ]
+                              }
                             ]
                           }
                         ]
