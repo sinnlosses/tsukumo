@@ -3,6 +3,21 @@
 `develop/direction.md` に書かれたユーザーからの指示を、タスク化した時点で**当時の記述のまま**
 ここへ移す（`docs/workflow.md`「指示メモ」参照）。新しいものを上に足す。**後から書き換えない。**
 
+## 2026-09-29 振り返りを1件ごとだけにする（GH-90）
+
+### ユーザーから
+
+- 振り返りは `/next-task` の中の1件ごとの振り返りだけにし、`/retrospect` を手で呼ぶ「まとめての振り返り」と `develop/retrospective.md` を無くす。
+  - tsukumo 側: `develop/retrospective.md` を消し、`docs/requirements.md` の「振り返り（`develop/retrospective.md`）は数える」の言及を直す
+  - claude-skills 側（本体の作業ツリーで checkout せず、別の git worktree で作業する）: `retrospect/SKILL.md` の説明と「手順（まとめて振り返る）」節を畳み、1件ごとの節が指している物差し・ドラフトの形・`tally.py` での回数の数え方を残す。`retrospect/scripts/scan.py` と、その自己テスト（`retrospect/scripts/selftest.py` の `test_scan_reverted`・`task-workflow/scripts/selftest_beads.py` の scan の検査）を消す。`task-workflow/scripts/task.py` の `prune` から基準点による `retrospect` 判定と `INVALID` を外し、`layout.py` の `RETROSPECTIVE_PATH`・`selftest_task.py` の `test_prune`・`WORKFLOW.md`・`next-task/SKILL.md` の記述を合わせる。検証は claude-skills の `./check.sh`
+  - まとめての振り返りだけが見ていた兆候（複数タスクにまたがる同じ手作業、本文が指した場所と diff のずれ、登録から完了までの前提の変化、`difficulty` の見立て違い、`scan.py` の `reverted`）は失われる。1件ごとの表に移すかは着手時に判断する
+
+### 会話から
+
+- 振り返りはタスクごとに、その実行の中で行う仕組みにしたくて、retrospect のファイルは不要かなと思ったよ。
+- (2)で不都合ないよね?あったら教えてね、よろしく!
+- あ、ごめん、タスク化してくれると嬉しい
+
 ## 2026-09-29 pack-appearance の置き場・表のデザイン案・振り返りのドラフト5件
 
 ### ユーザーから
