@@ -89,7 +89,7 @@
     "sent": "session.prompt",
     "order": 1,
     "input": {
-      "text": "/next-task T-002",
+      "text": "/next-task T-001",
       "images": []
     }
   },
@@ -104,7 +104,7 @@
     "at": 1768438800000,
     "event": {
       "kind": "request",
-      "text": "/next-task T-002",
+      "text": "/next-task T-001",
       "images": []
     }
   },

@@ -2,7 +2,7 @@ import { mkdirSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 
 import type { Locator } from "playwright-core"
-import { describe, it } from "vitest"
+import { describe, expect, it } from "vitest"
 
 import { claimTask, git, initGitRepository } from "../fixture/git-repository.ts"
 import { type ScenarioRoom, useScenarioRun } from "./scenario-run.ts"
@@ -307,9 +307,15 @@ describe("タスクの一覧", () => {
     await room.settleAndMatch(ELAPSED_MS)
   })
 
-  it("確認の「実行する」を押すと /next-task <ID> が送られて確認が閉じる（済んだタスクのIDも押せる）", async () => {
+  it("済んだタスクのIDは押せる部品にしない", async () => {
+    const room = await openTaskListRoom("task-list-run-done")
+    await room.page.getByRole("button", { name: "T-001", exact: true }).waitFor()
+    expect(await room.page.getByRole("button", { name: "T-002", exact: true }).count()).toBe(0)
+  })
+
+  it("確認の「実行する」を押すと /next-task <ID> が送られて確認が閉じる", async () => {
     const room = await openTaskListRoom("task-list-run-executed")
-    await room.page.getByRole("button", { name: "T-002", exact: true }).click()
+    await room.page.getByRole("button", { name: "T-001", exact: true }).click()
     await room.page.getByRole("button", { name: "実行する", exact: true }).click()
     await room.waitForEvent("request")
     await room.waitForEvent("turn-finished")

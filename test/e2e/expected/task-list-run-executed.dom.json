@@ -278,7 +278,7 @@
                                   "type": "button"
                                 },
                                 "children": [
-                                  "/next-task T-002",
+                                  "/next-task T-001",
                                   {
                                     "tag": "span",
                                     "attributes": {
@@ -443,15 +443,7 @@
                       {
                         "tag": "li",
                         "children": [
-                          {
-                            "tag": "button",
-                            "attributes": {
-                              "type": "button"
-                            },
-                            "children": [
-                              "T-002"
-                            ]
-                          },
+                          "T-002",
                           "架空のタスク（完了）"
                         ]
                       }

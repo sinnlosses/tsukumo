@@ -1,5 +1,6 @@
 // 区画の一覧1件分（進行中を除いた「残り」）。
-// 先頭列に status の印（丸・チェック）、2列目に押せるID＋summary を置く2列の grid 行。
+// 先頭列に status の印（丸・チェック）、2列目にID＋summary を置く2列の grid 行。
+// 済んだタスク（`done`）は実行を頼む理由が無いので、IDを押せる部品にせず字のまま出す。
 //
 // 色だけで状態を伝えない: todo は空の丸、done はチェックの印（字も打ち消し線にする）、想定外の値は注意色の「!」にする。
 // summary は1行に収め、入りきらない分は末尾を「…」にする（全文を読みたいときは「一覧を見る」のモーダルを開く）。
@@ -19,7 +20,11 @@ export function TaskItem(props: { readonly task: TaskSummaryItem }): ReactElemen
         <TaskMark status={props.task.status} />
       </span>
       <span className={styles["task-item-body"]}>
-        <TaskRunButton taskId={props.task.id} />
+        {props.task.status === "done" ? (
+          <span className={styles["task-id"]}>{props.task.id}</span>
+        ) : (
+          <TaskRunButton taskId={props.task.id} />
+        )}
         <Text
           element="span"
           size="secondary"

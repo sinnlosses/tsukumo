@@ -384,15 +384,7 @@
                       {
                         "tag": "li",
                         "children": [
-                          {
-                            "tag": "button",
-                            "attributes": {
-                              "type": "button"
-                            },
-                            "children": [
-                              "T-002"
-                            ]
-                          },
+                          "T-002",
                           "架空のタスク（完了）"
                         ]
                       }
