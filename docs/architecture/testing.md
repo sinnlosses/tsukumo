@@ -236,6 +236,19 @@ E2E が通るのは**疑似セッションに書いた並びだけ**で、fake d
 **タスク一覧のモーダルを撮る件には実データのタスク一覧（Beads の課題）が写る**ので、
 画像そのものを他所へ共有・複製しない。
 
+**検証結果の表（`report-checks`）とレポートの記法の「流れ」（`notation-flow`）も
+`capture-catalog.ts` の件にある。** 書き上げていくように見せる演出中の要素は `clip-path` で
+隠すだけで DOM には残る（`useReportReveal`）ので、疑似セッションが場面の最後まで流れ切って
+狙った要素が現れるのを待ってから、演出を打ち切って（`skipReveal`）書き上がった状態を撮る。
+`report-checks` は2件目の `report` が届く約7秒後まで検証結果の表が現れないので、
+`CatalogEntry` の `settle` がその出現まで個別に待つ。
+
+**要素が出るまで待ってから1枚だけ撮るときは `capture-view.ts --wait-for <selector>`。**
+`capture-catalog.ts` と同じ理由（演出中の要素は現れているだけで書き上がっていない）で、
+指定した要素が出たあと `useReportReveal` の演出が終わる（`data-revealing` が消える）のも
+合わせて待つ。生きたタブの演出は打ち切らず受け身に待つだけなので、どちらかが上限を超えたら
+screenshot を撮らずに失敗で終わる（黙って空の画面を撮らない）。
+
 **部品1つの状態違いを並べて見るときは Storybook（`pnpm run storybook`、`http://localhost:6006/`）。**
 `capture-catalog.ts` とは見るものを分ける。**Storybook は部品を props で切り替えて見る道**
 （`note` の6種・`badge` の3種・表・図・グラフ・立ち絵の SVG とラスタ・吹き出しの長い文と空のとき）で、

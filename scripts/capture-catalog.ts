@@ -86,6 +86,11 @@ type HomeSetup =
   | { readonly kind: "diary"; readonly date: string; readonly body: string }
   | { readonly kind: "character"; readonly pack: string }
 
+/** 場面が撮れる状態まで落ち着くのを待つやり方。`tail` は固定の余裕、`selector` は要素が現れるまで。 */
+type Settle = { readonly kind: "tail" } | { readonly kind: "selector"; readonly selector: string }
+
+const TAIL_SETTLE = { kind: "tail" } satisfies Settle
+
 /**
  * カタログの1件。`scene` は疑似セッション（test/fixture/fake-session.json）の場面の名前で、`name` は
  * 画像のファイル名と `--only` の名指しに使う一意の名前（同じ場面を別の操作で何枚も撮るので、
@@ -99,6 +104,9 @@ type HomeSetup =
  * 打ち切れる（`SKIP_EVENT_NAMES`）ので、`prepare` を当てる前に
  * キーを1つ打って演出を終わらせてから送る。当てない件は待ち時間が変わらないので既定は
  * `false`。
+ *
+ * 演出中の要素は `clip-path` で隠すだけで DOM に残るので、`settle` の `selector` は
+ * 書き上がったことまでは確かめない（書き上げるのは `skipReveal`）。
  */
 type CatalogEntry = {
   readonly name: string
@@ -107,6 +115,7 @@ type CatalogEntry = {
   readonly homeSetup: HomeSetup
   readonly prepare: readonly Preparation[]
   readonly skipReveal: boolean
+  readonly settle: Settle
 }
 
 /**
@@ -130,6 +139,14 @@ const NOTE_KINDS_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="report-note_"]`
 /** メモの塊。狭い窓では種別の並びの1枚（`notation-note`）に入りきらない。 */
 const NOTE_MEMO_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="report-note-memo_"]`
 const NOTE_FAVOR_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="report-note-favor_"]`
+/** `list` の `flow`（一本道の手順）。`NOTE_KINDS_SELECTOR` と同じ前方一致の作法。 */
+const FLOW_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="report-flow_"]`
+/**
+ * 検証結果の表（`report` の `checks`）。class 名でなく role・aria-label で指す
+ * （`reportChecksMarkdown` が組む `<div class="checks" role="table" aria-label="検証結果">`
+ * の属性はハッシュ化されない）。
+ */
+const CHECKS_SELECTOR = `${MAIN_REGION_SELECTOR} [role="table"][aria-label="検証結果"]`
 
 /** 入力欄。ページに `<textarea>` は1つしか無い。 */
 const COMPOSER_SELECTOR = "textarea"
@@ -196,6 +213,7 @@ const CATALOG: readonly CatalogEntry[] = [
     homeSetup: { kind: "default" },
     prepare: [],
     skipReveal: false,
+    settle: TAIL_SETTLE,
   },
   {
     name: "question-pair",
@@ -204,6 +222,7 @@ const CATALOG: readonly CatalogEntry[] = [
     homeSetup: { kind: "default" },
     prepare: [],
     skipReveal: false,
+    settle: TAIL_SETTLE,
   },
   {
     name: "question-long",
@@ -212,6 +231,7 @@ const CATALOG: readonly CatalogEntry[] = [
     homeSetup: { kind: "default" },
     prepare: [],
     skipReveal: false,
+    settle: TAIL_SETTLE,
   },
   {
     name: "question-preview",
@@ -220,6 +240,7 @@ const CATALOG: readonly CatalogEntry[] = [
     homeSetup: { kind: "default" },
     prepare: [],
     skipReveal: false,
+    settle: TAIL_SETTLE,
   },
   {
     name: "permission",
@@ -228,6 +249,7 @@ const CATALOG: readonly CatalogEntry[] = [
     homeSetup: { kind: "default" },
     prepare: [],
     skipReveal: false,
+    settle: TAIL_SETTLE,
   },
   {
     name: "report",
@@ -236,6 +258,17 @@ const CATALOG: readonly CatalogEntry[] = [
     homeSetup: { kind: "default" },
     prepare: [],
     skipReveal: false,
+    settle: TAIL_SETTLE,
+  },
+  {
+    name: "report-checks",
+    // 検証結果は2件目の `report`（3状態を混ぜてある）にしか無く、約7秒後まで現れない。
+    scene: "report-tool",
+    label: "検証結果の表（ok・ng・unverified）",
+    homeSetup: { kind: "default" },
+    prepare: [{ kind: "scroll", selector: CHECKS_SELECTOR }],
+    skipReveal: true,
+    settle: { kind: "selector", selector: CHECKS_SELECTOR },
   },
   {
     name: "turn-history",
@@ -244,6 +277,7 @@ const CATALOG: readonly CatalogEntry[] = [
     homeSetup: { kind: "default" },
     prepare: [],
     skipReveal: false,
+    settle: TAIL_SETTLE,
   },
   {
     name: "notation",
@@ -252,6 +286,7 @@ const CATALOG: readonly CatalogEntry[] = [
     homeSetup: { kind: "default" },
     prepare: [],
     skipReveal: false,
+    settle: TAIL_SETTLE,
   },
   // 記法の見本は領域に1枚ぶんが入らない（1400x900 で 1358px のうち 855px が領域の外）。
   // 領域を伸ばして1枚にすると他の領域が重なって本番と別の姿になるので、送って複数枚に分ける。
@@ -262,6 +297,7 @@ const CATALOG: readonly CatalogEntry[] = [
     homeSetup: { kind: "default" },
     prepare: [{ kind: "scroll", selector: NOTE_KINDS_SELECTOR }],
     skipReveal: false,
+    settle: TAIL_SETTLE,
   },
   {
     name: "notation-memo",
@@ -270,6 +306,7 @@ const CATALOG: readonly CatalogEntry[] = [
     homeSetup: { kind: "default" },
     prepare: [{ kind: "scroll", selector: NOTE_MEMO_SELECTOR }],
     skipReveal: true,
+    settle: TAIL_SETTLE,
   },
   {
     name: "notation-favor",
@@ -279,6 +316,7 @@ const CATALOG: readonly CatalogEntry[] = [
     prepare: [{ kind: "scroll", selector: NOTE_FAVOR_SELECTOR }],
     // お願いはレポートの末尾なので、図と同じく演出が終わるまで送り位置を戻され続ける。
     skipReveal: true,
+    settle: TAIL_SETTLE,
   },
   {
     name: "notation-figure",
@@ -289,6 +327,7 @@ const CATALOG: readonly CatalogEntry[] = [
     // 図はレポートの末尾に近く、演出が終わるまで自動送りに送り位置を戻され続ける（冒頭の
     // `skipReveal` の説明）。
     skipReveal: true,
+    settle: TAIL_SETTLE,
   },
   {
     name: "notation-chart",
@@ -297,6 +336,16 @@ const CATALOG: readonly CatalogEntry[] = [
     homeSetup: { kind: "default" },
     prepare: [{ kind: "scroll", selector: CHART_SELECTOR }],
     skipReveal: true,
+    settle: TAIL_SETTLE,
+  },
+  {
+    name: "notation-flow",
+    scene: "notation",
+    label: "レポートの記法（流れ。領域を送った先）",
+    homeSetup: { kind: "default" },
+    prepare: [{ kind: "scroll", selector: FLOW_SELECTOR }],
+    skipReveal: true,
+    settle: TAIL_SETTLE,
   },
   {
     name: "task-board",
@@ -308,6 +357,7 @@ const CATALOG: readonly CatalogEntry[] = [
       { kind: "click", selector: TASK_BOARD_SELECTOR },
     ],
     skipReveal: false,
+    settle: TAIL_SETTLE,
   },
   {
     name: "command-suggestions",
@@ -316,6 +366,7 @@ const CATALOG: readonly CatalogEntry[] = [
     homeSetup: { kind: "default" },
     prepare: [{ kind: "type", selector: COMPOSER_SELECTOR, text: "/c" }],
     skipReveal: false,
+    settle: TAIL_SETTLE,
   },
   {
     name: "file-suggestions",
@@ -324,6 +375,7 @@ const CATALOG: readonly CatalogEntry[] = [
     homeSetup: { kind: "default" },
     prepare: [{ kind: "type", selector: COMPOSER_SELECTOR, text: "@src/browser/" }],
     skipReveal: false,
+    settle: TAIL_SETTLE,
   },
   {
     name: "character-screen",
@@ -332,6 +384,7 @@ const CATALOG: readonly CatalogEntry[] = [
     homeSetup: { kind: "default" },
     prepare: [{ kind: "hash", hash: "#character" }],
     skipReveal: false,
+    settle: TAIL_SETTLE,
   },
   {
     name: "character-create",
@@ -340,6 +393,7 @@ const CATALOG: readonly CatalogEntry[] = [
     homeSetup: { kind: "default" },
     prepare: [{ kind: "hash", hash: "#character/new" }],
     skipReveal: false,
+    settle: TAIL_SETTLE,
   },
   // 帯の「いまの作業」の3状態（`docs/architecture/testing.md`「手で確かめること」）。どれも
   // `MENU_TOGGLE_SELECTOR` → `WORK_TOGGLE_SELECTOR` の順で押して一覧を開く
@@ -356,6 +410,7 @@ const CATALOG: readonly CatalogEntry[] = [
       { kind: "click", selector: WORK_TOGGLE_SELECTOR },
     ],
     skipReveal: false,
+    settle: TAIL_SETTLE,
   },
   {
     name: "current-work-failed",
@@ -372,6 +427,7 @@ const CATALOG: readonly CatalogEntry[] = [
       { kind: "click", selector: WORK_TOGGLE_SELECTOR },
     ],
     skipReveal: false,
+    settle: TAIL_SETTLE,
   },
   {
     name: "current-work-background",
@@ -383,6 +439,7 @@ const CATALOG: readonly CatalogEntry[] = [
       { kind: "click", selector: WORK_TOGGLE_SELECTOR },
     ],
     skipReveal: false,
+    settle: TAIL_SETTLE,
   },
   {
     name: "diary-book",
@@ -396,6 +453,7 @@ const CATALOG: readonly CatalogEntry[] = [
       { kind: "click", selector: DIARY_NOTICE_OPEN_SELECTOR },
     ],
     skipReveal: false,
+    settle: TAIL_SETTLE,
   },
   {
     name: "portrait-clear-confirm",
@@ -408,6 +466,7 @@ const CATALOG: readonly CatalogEntry[] = [
       { kind: "click", selector: PORTRAIT_CLEAR_BUTTON_SELECTOR },
     ],
     skipReveal: false,
+    settle: TAIL_SETTLE,
   },
   {
     name: "character-delete-confirm",
@@ -419,6 +478,7 @@ const CATALOG: readonly CatalogEntry[] = [
       { kind: "click", selector: CHARACTER_DELETE_BAND_BUTTON_SELECTOR },
     ],
     skipReveal: false,
+    settle: TAIL_SETTLE,
   },
 ]
 
@@ -449,6 +509,12 @@ const SETTLE_TIMEOUT_MS = 10_000
  * （`turn-history` の約1.4秒）を足したものより後に撮る。
  */
 const SCENE_TAIL_MS = 2000
+
+/**
+ * `settle.kind === "selector"` の件が、その要素が現れるまで待つ上限（ミリ秒）。
+ * `report-checks` の2件目の `report` が届く約7秒より余裕を持たせる。
+ */
+const SETTLE_SELECTOR_TIMEOUT_MS = 12_000
 
 /**
  * 操作を1つ当てるのに待つ上限（ミリ秒）と、当てたあとに描き直しを待つ余裕（ミリ秒）。
@@ -559,7 +625,7 @@ async function captureShot(
       .catch(() => undefined)
     // 疑似セッションが流れ終わってから操作を当てる。 流れている途中で押すと、狙った状態の手前で
     // 画面が組み直されて操作が空振りする。
-    await page.waitForTimeout(SCENE_TAIL_MS)
+    await settleScene(page, entry.settle)
     if (entry.skipReveal) {
       // `prepare` の前に演出を終わらせる（理由は `CatalogEntry` の `skipReveal` のコメント）。
       await page.keyboard.press(SKIP_REVEAL_KEY)
@@ -574,6 +640,17 @@ async function captureShot(
   } finally {
     await page.close()
   }
+}
+
+/** `selector` の要素が現れなくても、現れなかったことだけ出して撮り続ける。 */
+async function settleScene(page: Page, settle: Settle): Promise<void> {
+  if (settle.kind === "tail") {
+    await page.waitForTimeout(SCENE_TAIL_MS)
+    return
+  }
+  await page
+    .waitForSelector(settle.selector, { timeout: SETTLE_SELECTOR_TIMEOUT_MS })
+    .catch(() => process.stdout.write(`現れなかった: ${settle.selector}\n`))
 }
 
 /**

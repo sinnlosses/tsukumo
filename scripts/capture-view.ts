@@ -13,9 +13,16 @@
 //   node scripts/capture-view.ts 'http://127.0.0.1:7398/?t=<起動時に出るトークン>'
 //   node scripts/capture-view.ts <URL> --out /tmp/view.png --size 1400x900 \
 //     --measure '[data-region="character"]' --measure '[data-region="sidebar"]'
+//   node scripts/capture-view.ts <URL> --wait-for '[role="table"][aria-label="検証結果"]'
 //
-// `--measure` に class セレクタを書くときは `[class*="…"]`。 CSS Modules が `名前_ハッシュ`
-// （`report-note_nkMPPQ`）に焼くので、素の `.report-note` は必ず「無し」になる。
+// `--measure` / `--wait-for` に class セレクタを書くときは `[class*="…"]`。 CSS Modules が
+// `名前_ハッシュ`（`report-note_nkMPPQ`）に焼くので、素の `.report-note` は必ず「無し」になる。
+//
+// `--wait-for <selector>` は、要素が現れるのを待ったあと、`useReportReveal` が書き上げている
+// 最中の要素に付ける `data-revealing` がページから消えるのも待つ。 演出中の要素は `clip-path` で
+// 隠すだけで DOM には残り、大きさも変わらないので、要素が現れたことだけでは筆の途中を撮って
+// しまう。どちらも上限を超えたら screenshot を撮らずに終わる（黙って空の画面を撮らない）。
+// 演出そのものは打ち切らない（生きたタブを操作で進めると、そのタブを見ている人の体験を変えてしまう）。
 //
 // 撮った画像はリポジトリに置かない（既定の出力先は /tmp）。ビューには会話の内容が写るので、
 // 画像もその扱いに従う（`docs/coding-standards.md`「会話内容の扱い」— 別の場所に複製しない。
@@ -23,7 +30,7 @@
 
 import process from "node:process"
 
-import { chromium } from "playwright-core"
+import { chromium, type Page } from "playwright-core"
 
 /** 既定の窓の大きさ。実機の目視で使ってきた値に揃えてある。 */
 const DEFAULT_WIDTH = 1400
@@ -35,17 +42,24 @@ const DEFAULT_OUT = "/tmp/tsukumo-view.png"
 /** ページの中身が落ち着くまで待つ上限（ミリ秒）。SSE が繋ぎっぱなしなので networkidle は待たない。 */
 const SETTLE_TIMEOUT_MS = 10_000
 
+/** `--wait-for` が要素の出現と、演出の終わりをそれぞれ待つ上限（ミリ秒）。 */
+const WAIT_FOR_TIMEOUT_MS = 15_000
+
 /**
  * 本文が入る領域（メインビュー）。class 名は組み立てのたびにハッシュ化される（CSS Modules）
  * ので、領域を指すときは `<Layout>` が付ける `data-region` を使う。
  */
 const MAIN_REGION_SELECTOR = '[data-region="main"]'
 
+/** 書き上げていくように見せる演出が進行中の印（`useReportReveal` の `data-revealing`）。 */
+const REVEALING_SELECTOR = "[data-revealing]"
+
 const USAGE = `使い方: node scripts/capture-view.ts <URL> [オプション]
 
   --out <path>          画像の出力先（既定 ${DEFAULT_OUT}）
   --size <幅>x<高さ>    窓の大きさ（既定 ${String(DEFAULT_WIDTH)}x${String(DEFAULT_HEIGHT)}）
   --measure <selector>  位置と大きさを数値で出す要素（何度でも指定できる）
+  --wait-for <selector> 要素が出て、演出が終わるまで待ってから撮る（出なければ失敗して終わる）
   --full                ページ全体を撮る（既定は窓に収まる範囲だけ）
 `
 
@@ -55,6 +69,7 @@ type Options = {
   readonly width: number
   readonly height: number
   readonly measures: readonly string[]
+  readonly waitFor: string | undefined
   readonly fullPage: boolean
 }
 
@@ -78,6 +93,11 @@ async function main(argv: readonly string[]): Promise<number> {
       .catch(() => undefined)
     await page.waitForTimeout(500)
 
+    if (options.waitFor !== undefined && !(await waitForRevealSettled(page, options.waitFor))) {
+      process.stderr.write(`現れなかった: ${options.waitFor}（${String(WAIT_FOR_TIMEOUT_MS)}ms）\n`)
+      return 1
+    }
+
     await page.screenshot({ path: options.out, fullPage: options.fullPage })
     process.stdout.write(
       `撮った: ${options.out}（${String(options.width)}x${String(options.height)}）\n`,
@@ -94,6 +114,19 @@ async function main(argv: readonly string[]): Promise<number> {
     return 0
   } finally {
     await browser.close()
+  }
+}
+
+async function waitForRevealSettled(page: Page, selector: string): Promise<boolean> {
+  try {
+    await page.waitForSelector(selector, { timeout: WAIT_FOR_TIMEOUT_MS })
+    await page.waitForSelector(REVEALING_SELECTOR, {
+      state: "detached",
+      timeout: WAIT_FOR_TIMEOUT_MS,
+    })
+    return true
+  } catch {
+    return false
   }
 }
 
@@ -148,6 +181,7 @@ function parseOptions(argv: readonly string[]): Options | undefined {
   let out = DEFAULT_OUT
   let width = DEFAULT_WIDTH
   let height = DEFAULT_HEIGHT
+  let waitFor: string | undefined
   let fullPage = false
 
   for (let index = 1; index < argv.length; index += 1) {
@@ -164,6 +198,8 @@ function parseOptions(argv: readonly string[]): Options | undefined {
       out = value
     } else if (flag === "--measure") {
       measures.push(value)
+    } else if (flag === "--wait-for") {
+      waitFor = value
     } else if (flag === "--size") {
       const size = parseSize(value)
       if (size === undefined) {
@@ -177,7 +213,7 @@ function parseOptions(argv: readonly string[]): Options | undefined {
     index += 1
   }
 
-  return { url, out, width, height, measures, fullPage }
+  return { url, out, width, height, measures, waitFor, fullPage }
 }
 
 function parseSize(value: string): { readonly width: number; readonly height: number } | undefined {
