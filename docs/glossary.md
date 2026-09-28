@@ -771,9 +771,10 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 ### 塊
 
 - **英語識別子（予定）**: `ReportBlock`（`src/shared/report/report-block.ts`）/ `kind`（`text` / `list` /
-  `table` / `note` / `stats` / `code` / `mermaid` / `progress` / `markdown`）/ `fold`（畳むときの見出し）/
+  `table` / `note` / `stats` / `code` / `mermaid` / `progress` / `options` / `files` / `markdown`）/ `fold`（畳むときの見出し）/
   欄の `from` / `to`（表のセルの前後）・`before`（`stats` の前の値）・`label`（`list` の項目の名前）・
-  `flow`（`list` の `style` の一本道の流れ）/ `ReportBlockField`（使われ方の記録で数える欄の名前）
+  `flow`（`list` の `style` の一本道の流れ）・`verdict`（`options` の候補の判定）・`change`（`files` の変更の種別）/
+  `ReportBlockField`（使われ方の記録で数える欄の名前）
 - **定義**: **節の中に並ぶ、種類の決まった本文の1単位**。種類ごとに決まった形で Markdown に組んで
   描く（`reportSectionsMarkdown`）。塊の文字は行頭の塊の記法と `<` を逃がし、インラインの記法
   （inline code・太字・リンク）だけが効く。`fold` のある塊は `<details>` に畳む
@@ -783,9 +784,12 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
   差し戻す。崩れた塊・知らない種類の塊は入口で落とす。種類ごとの使いどころは各塊の `describe` が持つ。
   **`progress` は段（フェーズ）の位置**（`steps` と `current`）を、済んだ段・いまの段・残りの段が
   枠と文字（済／今／番号）の両方で見分けられる図として描く（`docs/architecture/display.md` 4.2）。
-  **欄**は事実を言うものだけで（前後の値・名前・流れ）、描き方は tsukumo がその意味から決める。
+  **`options` は候補の比較**（候補ごとの判定〔採る / 検討 / 採らない〕と理由のカード。書き手の順のまま描く）、
+  **`files` は触ったファイルの一覧**（1行に1ファイルで、変更の種別〔追加 / 変更 / 削除 / 読んだ〕とパス）。
+  **欄**は事実か判定を言うものだけで（前後の値・名前・流れ・判定・変更の種別）、描き方は tsukumo がその意味から決める。
   一本道の流れは `list` の `flow`、分岐・合流があれば `mermaid`
-- **避ける言い方**: ブロック（Markdown の block と紛れる）、要素（HTML の要素と紛れる）
+- **避ける言い方**: ブロック（Markdown の block と紛れる）、要素（HTML の要素と紛れる）、`options` を
+  「選択肢の比較」と呼ぶこと（質問の `preview` を並べた面の名前と紛れる。`options` は「候補の比較」）
 
 ### 選択肢の比較
 

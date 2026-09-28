@@ -107,7 +107,7 @@ export const REPORT_NOTATION_PROMPT = `## レポートの記法（tsukumo）
 （全体の量には上限を置かない。段落が続くのを止める上限だけ数で縛る）。
 
 本文（\`sections\`）は節の並びで、節ごとに塊（\`text\` / \`list\` / \`table\` / \`note\` / \`stats\` /
-\`code\` / \`mermaid\` / \`progress\`）を並べる。どの塊をいつ使うかは各塊の説明に従う。
+\`code\` / \`mermaid\` / \`progress\` / \`options\` / \`files\`）を並べる。どの塊をいつ使うかは各塊の説明に従う。
 
 **どの塊にも当てはまらない記法だけを \`markdown\` の塊に書く。** そこに見出し・表・箇条書き・
 \`note\`・\`stats\`・\`progress\`・フェンスを書くと差し戻される（その塊にする）。
@@ -141,6 +141,7 @@ export const REPORT_NOTATION_PROMPT = `## レポートの記法（tsukumo）
 - 表・図・コードの内容を言い直している \`text\` の塊
 - 地の文・表のセルに \`A → B\` と書いた前後と流れ（セルの \`from\` / \`to\`・\`stats\` の \`before\`・\`list\` の \`flow\` にする）
 - 「名前: 説明」と書いた項目（\`list\` の項目の \`label\` に名前を分ける）
+- 表・箇条書きに書いた候補の採否と、パスの箇条書き（\`options\` / \`files\` にする）
 - 根拠の無い「おそらく」「〜かもしれない」
 - 一般論の効能書き
 - 4文以上続く地の文の段落（表・箇条書きへ移すか \`fold\` で畳む）

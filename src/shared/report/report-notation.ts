@@ -25,7 +25,7 @@ export const REPORT_WRITTEN_MARK_NAMES = ["cols", "card"] as const satisfies rea
 
 /**
  * `note` 以外の印のうち、tsukumo が塊から組むもの（表のセルの状態のバッジと変化・`stats` の塊・
- * 名前付きの `list`・`list` の `flow`・`progress` の塊）。モデルには教えない。ラベルは付かず、見た目だけを持つ。
+ * 名前付きの `list`・`list` の `flow`・`progress` / `options` / `files` の塊）。モデルには教えない。ラベルは付かず、見た目だけを持つ。
  */
 export const REPORT_BLOCK_MARK_NAMES = [
   "badge",
@@ -46,6 +46,14 @@ export const REPORT_BLOCK_MARK_NAMES = [
   "progress-step",
   "progress-step-done",
   "progress-step-current",
+  "options",
+  "option",
+  "option-adopt",
+  "option-reject",
+  "files",
+  "file",
+  "file-change",
+  "file-note",
 ] as const satisfies readonly string[]
 
 /** 語彙が挙げる印の名前の全体（`note` の6種 + それ以外）。 */

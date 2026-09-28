@@ -112,8 +112,8 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/architecture/display.md
 **本文は `report` の `sections`（節と塊の並び）で受け取る**（2026-09-27。形の案は
 `docs/research/report-block.md`、用語は `docs/glossary.md`「節」「塊」）。
 
-- 塊は `text` / `list` / `table` / `note` / `stats` / `code` / `mermaid` / `progress` と、逃げ道の
-  `markdown` の9種。**種類ごとの使いどころは各塊の `describe`（`src/shared/report/report-block.ts`）が持ち**、
+- 塊は `text` / `list` / `table` / `note` / `stats` / `code` / `mermaid` / `progress` / `options` / `files` と、逃げ道の
+  `markdown` の11種（`docs/research/report-architecture.md` 4.1 の目安の上限。次に種類を足すときは1種を外す）。**種類ごとの使いどころは各塊の `describe`（`src/shared/report/report-block.ts`）が持ち**、
   `REPORT_NOTATION_PROMPT` の表には逃げ道に残る記法（`cols` / `card`・`chart`・`svg`・引用・
   区切り線・複数の塊をまとめて畳む `<details>`）だけを置く。同じことを両方に書くと毎ターンの文脈に2回載る
 - **「名前: 説明」「A → B」「A → B → C」「12 → 8」は既存の塊の欄で見せる**（2026-09-27。
@@ -132,6 +132,21 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/architecture/display.md
   済んだ段・いまの段・残りの段を枠と `<b>` の文字（済／今／番号）の両方で見分ける。文字列で
   「N のうち M」と書かせる差し戻しは足さない——過去のレポート522件のうち文字で書いたものは10件
   〔1.9%〕で、日付・版番号・分数との誤検出を抑える手間に見合わない。`docs/research/report-block.md` 11章）
+- **候補の比較は `options`、触ったファイルの一覧は `files` の塊で見せる**（2026-09-28。
+  `docs/research/report-block-richness.md` 3章。欄は判定と変更の種別の事実だけ）
+  - `options`: `title` と、候補（`name` / `verdict`〔`adopt` / `consider` / `reject`〕/ `reason`）の並び。
+    候補を1枚ずつのカードにして横に並べ（入らなければ折り返す）、頭に判定のバッジを文字（採る / 検討 /
+    採らない）で置く。**並びは書き手の順のまま**（採る候補を先頭へ動かさない）。「採る」は `badge-ok` の
+    バッジと `state-ok` の縦罫、「採らない」はカードの文字を `ink-quiet` に沈める。キャラクターの色は
+    入れない（`docs/architecture/screen-design.md` 13.2 の3本のまま）
+  - `files`: `path` / `change`〔`added` / `modified` / `deleted` / `read`〕/ `note` の並び。1行に1ファイルで、
+    頭に種別の文字（追加 / 変更 / 削除 / 読んだ）、パスは `code` 要素（git 管理下のパスは下の「レポートに
+    書かれたパスは押すと Orca のエディタで開く」のとおり押せる）、注記があれば続けて置く。種別・パス・注記は
+    列に揃え、760px 以下は注記をパスの下へ回す
+  - 表・箇条書きとの取り違えは差し戻さない（取り違えても表・箇条書きで描かれるだけで、「推奨」の語や
+    パスの形で判定するのはヒューリスティックになる）。代わりに `list` の `bullet` と `table` の説明が
+    `options` / `files` を指し、記法の文面の「送る前に消すもの」に1行置く。取り違えの程度は使われ方の記録の
+    「塊の種類 × レポート数」で `options` と `table` の比を見る
 - **表の描き方は型から決め、書き手は何も選ばない**（2026-09-27。`docs/research/report-block-richness.md`
   2章）。列の全セルが数なら右揃えで `tabular-nums`（桁が縦に揃う）、列の全セルが `status` なら列の
   中央にバッジで揃え、バッジの語（OK / 要注意 / NG）は tsukumo が付ける（書き手の文字が同じ語なら重ねない。行は塗らない。`docs/architecture/screen-design.md` 13.2）。列に `align` は持たせず、
@@ -155,13 +170,13 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/architecture/display.md
 
 **ツールの定義の重さ**（実物の `tools/list` が返す `report` の `inputSchema` を JSON にした字数と、
 `REPORT_NOTATION_PROMPT` の字数。2026-09-27 に切り替えの前後で測った。「後」の列は、その後に足された
-欄と、`readOnly` と繰り返す `fold` の説明を削った分を含めて 2026-09-28 に測り直した）
+欄と塊（`options` / `files`）と、`readOnly` と繰り返す `fold` の説明を削った分を含めて 2026-09-28 に測り直した）
 
 | もの                      | 前（`body`） | 後（`sections`） |    差 |
 | ------------------------- | -----------: | ---------------: | ----: |
-| `report` の `inputSchema` |         1198 |             5814 | +4616 |
-| `REPORT_NOTATION_PROMPT`  |         5334 |             3917 | −1417 |
-| 合計                      |         6532 |             9731 | +3199 |
+| `report` の `inputSchema` |         1198 |             6798 | +5600 |
+| `REPORT_NOTATION_PROMPT`  |         5334 |             3991 | −1343 |
+| 合計                      |         6532 |            10789 | +4257 |
 
 **切り替えの前の差し戻しと逃げ道**（tsukumo の作業ツリーの transcript にある 2026-09-23〜26 のメインの
 `report` の呼び出しを数えた集計値。本文は写していない。1つの呼び出しが違反の2つ以上に当たることがある）

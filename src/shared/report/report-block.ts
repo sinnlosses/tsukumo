@@ -26,7 +26,7 @@ const listBlockSchema = z.object({
   style: z
     .enum(["bullet", "ordered", "check", "flow"])
     .describe(
-      "bullet は発見・候補・ファイルの一覧（項目ごとに言うことが2つ以上なら表）/ ordered は順番に意味がある手順 / check は済み（done）と未了が混じる並び / " +
+      "bullet は発見の一覧（候補の採否は options、ファイルは files。項目ごとに言うことが2つ以上なら表）/ ordered は順番に意味がある手順 / check は済み（done）と未了が混じる並び / " +
         "flow は一本道で3段以上辿る流れ（A → B → C と書かず項目を段にする。分岐・合流・戻りがあるなら mermaid の flowchart）",
     ),
   items: z
@@ -63,7 +63,7 @@ const tableBlockSchema = z
     rows: z.array(z.array(cellSchema)).min(1).describe("行ごとのセル。数は columns と揃える"),
     fold,
   })
-  .describe("比較・対応・件数。同じ形の項目が2つ以上並んだら表")
+  .describe("比較・対応・件数。同じ形の項目が2つ以上並んだら表（候補の採否は options）")
 
 const REPORT_NOTE_TONES = ["info", "warn", "ng", "ask", "memo"] as const
 
@@ -94,6 +94,43 @@ const statsBlockSchema = z
     fold,
   })
   .describe("結論に効く数（件数・前後の差）。数が2〜4個並び、その数自体が結論のとき")
+
+const REPORT_OPTION_VERDICTS = ["adopt", "consider", "reject"] as const
+
+const optionsBlockSchema = z
+  .object({
+    kind: z.literal("options"),
+    title: inlineText.describe("何を決める比較か"),
+    items: z
+      .array(
+        z.object({
+          name: inlineText,
+          verdict: z.enum(REPORT_OPTION_VERDICTS),
+          reason: inlineText.describe("判定の理由。1文"),
+        }),
+      )
+      .min(2),
+    fold,
+  })
+  .describe("候補を比べて採る・検討・採らないを言うとき。書いた順に描く")
+
+const REPORT_FILE_CHANGES = ["added", "modified", "deleted", "read"] as const
+
+const filesBlockSchema = z
+  .object({
+    kind: z.literal("files"),
+    items: z
+      .array(
+        z.object({
+          path: z.string().describe("cwd からの相対パス"),
+          change: z.enum(REPORT_FILE_CHANGES),
+          note: inlineText.default(""),
+        }),
+      )
+      .min(1),
+    fold,
+  })
+  .describe("触った・読んだファイルの一覧")
 
 const codeBlockSchema = z
   .object({
@@ -172,6 +209,8 @@ export const reportBlockSchema = z.discriminatedUnion("kind", [
   codeBlockSchema,
   mermaidBlockSchema,
   progressBlockSchema,
+  optionsBlockSchema,
+  filesBlockSchema,
   markdownBlockSchema,
 ])
 
@@ -299,6 +338,24 @@ const CELL_BADGES = {
   { readonly className: string; readonly label: string }
 >
 
+/** 候補の判定 → カードとバッジの class と、バッジに出す語。 */
+const OPTION_VERDICTS = {
+  adopt: { cardClass: "option option-adopt", badgeClass: "badge badge-ok", label: "採る" },
+  consider: { cardClass: "option", badgeClass: "badge", label: "検討" },
+  reject: { cardClass: "option option-reject", badgeClass: "badge", label: "採らない" },
+} as const satisfies Record<
+  (typeof REPORT_OPTION_VERDICTS)[number],
+  { readonly cardClass: string; readonly badgeClass: string; readonly label: string }
+>
+
+/** ファイルの変更の種別 → 行の頭に出す語。 */
+const FILE_CHANGE_LABELS = {
+  added: "追加",
+  modified: "変更",
+  deleted: "削除",
+  read: "読んだ",
+} as const satisfies Record<(typeof REPORT_FILE_CHANGES)[number], string>
+
 /** `note` の種別 → 記法の class。ラベルは描く側が class から引く（`REPORT_NOTE_KINDS`）。 */
 const NOTE_CLASSES = {
   info: "note",
@@ -350,6 +407,10 @@ function blockMarkdown(block: ReportBlock): string {
       return fencedMarkdown("mermaid", block.source)
     case "progress":
       return progressMarkdown(block)
+    case "options":
+      return optionsMarkdown(block)
+    case "files":
+      return filesMarkdown(block)
     case "markdown":
       return block.markdown
   }
@@ -370,6 +431,31 @@ function progressMarkdown(block: Extract<ReportBlock, { readonly kind: "progress
     return `<div class="${stepClass}"><b>${htmlInlineWithCode(mark)}</b>${htmlInlineWithCode(label)}</div>`
   })
   return `<div class="progress">${steps.join("")}</div>`
+}
+
+/** 候補を書き手の順のままカードにし、頭に判定のバッジを置く（並べ替えは再構成になるのでしない）。 */
+function optionsMarkdown(block: Extract<ReportBlock, { readonly kind: "options" }>): string {
+  const cards = block.items.map(({ name, verdict, reason }) => {
+    const { cardClass, badgeClass, label } = OPTION_VERDICTS[verdict]
+    return `<div class="${cardClass}"><div><span class="${badgeClass}">${label}</span> <b>${htmlInlineWithCode(name)}</b></div>${htmlInlineWithCode(reason)}</div>`
+  })
+  return joinParts([
+    block.title.trim() === "" ? "" : `**${markdownInline(block.title)}**`,
+    `<div class="options">${cards.join("")}</div>`,
+  ])
+}
+
+/**
+ * 1行に1ファイル。パスは `code` 要素にし、git 管理下のパスなら描く側の `Code` が押せるボタンにする
+ * （パスの中の inline code の記法は解かない）。
+ */
+function filesMarkdown(block: Extract<ReportBlock, { readonly kind: "files" }>): string {
+  const rows = block.items.map(({ path, change, note }) => {
+    const noteHtml =
+      note.trim() === "" ? "" : `<span class="file-note">${htmlInlineWithCode(note)}</span>`
+    return `<div class="file"><span class="file-change">${FILE_CHANGE_LABELS[change]}</span><code>${htmlInline(path)}</code>${noteHtml}</div>`
+  })
+  return `<div class="files">${rows.join("")}</div>`
 }
 
 type ListBlock = Extract<ReportBlock, { readonly kind: "list" }>

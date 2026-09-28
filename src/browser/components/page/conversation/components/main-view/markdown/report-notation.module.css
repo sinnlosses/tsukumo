@@ -174,6 +174,57 @@
   background: color-mix(in srgb, var(--surface), var(--accent) 10%);
   color: var(--ink);
 }
+/* 候補の比較（`report` の `options` の塊から tsukumo が組む）。
+   候補を1枚ずつのカードにして横に並べ、入らなければ折り返す。並びは書き手の順のまま。
+   判定は頭のバッジの文字（採る / 検討 / 採らない）が持ち、「採る」の縦罫は state-ok（キャラクターの色は入れない）。 */
+.detail-block .report-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: 0.75rem;
+  margin: 0.5rem 0;
+}
+.detail-block .report-option {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--rule);
+  border-radius: 0.5rem;
+  background: var(--surface-raised);
+}
+/* バッジと名前の行。理由はその下に続く。 */
+.detail-block .report-option > div:first-child {
+  margin-bottom: 0.3rem;
+}
+.detail-block .report-option-adopt {
+  border-left: 3px solid var(--state-ok);
+}
+.detail-block .report-option-reject {
+  color: var(--ink-quiet);
+}
+/* 触ったファイルの一覧（`report` の `files` の塊から tsukumo が組む）。
+   1行に1ファイルで、種別・パス・注記を列に揃える（行を subgrid にする）。狭い画面では注記をパスの下へ回す（末尾の @media）。 */
+.detail-block .report-files {
+  display: grid;
+  grid-template-columns: max-content minmax(0, max-content) minmax(10rem, 1fr);
+  column-gap: 0.75rem;
+  row-gap: 0.3rem;
+  margin: 0.5rem 0;
+}
+.detail-block .report-file {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+  align-items: baseline;
+  justify-items: start;
+}
+.detail-block .report-file code {
+  overflow-wrap: anywhere;
+}
+.detail-block .report-file-change {
+  font-size: var(--font-secondary);
+  color: var(--ink-quiet);
+}
+.detail-block .report-file-note {
+  grid-column: 3;
+}
 /* 検証結果の帯（`report` の `checks` から tsukumo が組む）。
    結論のすぐ下に上下の罫で挟んだ1本の帯として置き、項目は横に並べて入らなければ折り返す。
    状態はバッジの色と文字（OK / NG / 未確認）の両方で読める。 */
@@ -516,5 +567,11 @@
   }
   .detail-block .report-list-text {
     display: block;
+  }
+  .detail-block .report-files {
+    grid-template-columns: max-content minmax(0, 1fr);
+  }
+  .detail-block .report-file-note {
+    grid-column: 2;
   }
 }

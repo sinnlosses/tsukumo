@@ -310,6 +310,52 @@ describe("reportSectionsMarkdown", () => {
     )
   })
 
+  it("options は太字の見出しのあとに候補を書き手の順のままカードにし、頭に判定の語のバッジを置く", () => {
+    const options: ReportBlock = {
+      kind: "options",
+      title: "架空の比較",
+      items: [
+        { name: "架空の案A", verdict: "reject", reason: "架空の<理由>" },
+        { name: "架空の `案B`", verdict: "adopt", reason: "架空の理由" },
+        { name: "架空の案C", verdict: "consider", reason: "" },
+      ],
+      fold: "",
+    }
+
+    // 採る候補を先頭へ動かさない（並べ替えは再構成）。
+    expect(markdownOf(options)).toBe(
+      "**架空の比較**\n\n" +
+        '<div class="options">' +
+        '<div class="option option-reject"><div><span class="badge">採らない</span> <b>架空の案A</b></div>架空の&lt;理由&gt;</div>' +
+        '<div class="option option-adopt"><div><span class="badge badge-ok">採る</span> <b>架空の <code>案B</code></b></div>架空の理由</div>' +
+        '<div class="option"><div><span class="badge">検討</span> <b>架空の案C</b></div></div>' +
+        "</div>",
+    )
+  })
+
+  it("files は1行に1ファイルで、種別の語・code 要素のパス・注記を並べ、注記が空なら置かない", () => {
+    const files: ReportBlock = {
+      kind: "files",
+      items: [
+        { path: "src/架空<a>.ts", change: "modified", note: "架空の `注記`" },
+        { path: "src/架空`b`.ts", change: "added", note: "" },
+        { path: "src/架空c.ts", change: "deleted", note: "" },
+        { path: "docs/架空d.md", change: "read", note: "" },
+      ],
+      fold: "",
+    }
+
+    // パスは inline code の記法として解かず、そのまま code 要素の文字にする（バッククォートを含むパスも崩さない）。
+    expect(markdownOf(files)).toBe(
+      '<div class="files">' +
+        '<div class="file"><span class="file-change">変更</span><code>src/架空&lt;a&gt;.ts</code><span class="file-note">架空の <code>注記</code></span></div>' +
+        '<div class="file"><span class="file-change">追加</span><code>src/架空`b`.ts</code></div>' +
+        '<div class="file"><span class="file-change">削除</span><code>src/架空c.ts</code></div>' +
+        '<div class="file"><span class="file-change">読んだ</span><code>docs/架空d.md</code></div>' +
+        "</div>",
+    )
+  })
+
   it("コードと mermaid はフェンスで囲み、中のバッククォートより長いフェンスにする", () => {
     expect(
       markdownOf({

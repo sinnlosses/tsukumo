@@ -1595,6 +1595,110 @@
       ]
     },
     {
+      "name": "report-blocks",
+      "steps": [
+        {
+          "afterMs": 0,
+          "event": {
+            "kind": "request",
+            "text": "候補の比較とファイルの一覧の見え方を確かめたい（架空の依頼）",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 300,
+          "event": {
+            "kind": "speech",
+            "text": "並べて書くね。",
+            "expression": "default"
+          }
+        },
+        {
+          "afterMs": 1000,
+          "event": {
+            "kind": "report",
+            "closing": { "kind": "speech", "text": "書けたよ！", "expression": "proud" },
+            "toolUseId": "fake-report-blocks-1",
+            "conclusion": "架空の結論: 目盛りは設定ファイルへ移す案を採る。",
+            "sections": [
+              {
+                "heading": "目盛りの置き場所は設定ファイル（架空）",
+                "blocks": [
+                  {
+                    "kind": "options",
+                    "title": "目盛りをどこに置くか（架空の比較）",
+                    "items": [
+                      {
+                        "name": "定数のまま",
+                        "verdict": "reject",
+                        "reason": "変えるたびに組み立て直しが要る（架空）。"
+                      },
+                      {
+                        "name": "設定ファイル",
+                        "verdict": "adopt",
+                        "reason": "起こし直すだけで変わり、`a.ts` の読み口が1つで済む（架空）。"
+                      },
+                      {
+                        "name": "環境変数",
+                        "verdict": "consider",
+                        "reason": "設定ファイルの上書きとしてなら足せる（架空）。"
+                      }
+                    ],
+                    "fold": ""
+                  }
+                ]
+              },
+              {
+                "heading": "触ったファイルは4つ（架空）",
+                "blocks": [
+                  {
+                    "kind": "files",
+                    "items": [
+                      {
+                        "path": "src/dummy/ticks.ts",
+                        "change": "added",
+                        "note": "目盛りを読む口（架空）"
+                      },
+                      {
+                        "path": "src/dummy/a.ts",
+                        "change": "modified",
+                        "note": "定数を `ticks.ts` の読みに替えた（架空）"
+                      },
+                      { "path": "src/dummy/old-ticks.ts", "change": "deleted", "note": "" },
+                      {
+                        "path": "notes/dummy/ticks.md",
+                        "change": "read",
+                        "note": "目盛りの決め方（架空）"
+                      }
+                    ],
+                    "fold": ""
+                  }
+                ]
+              }
+            ],
+            "favor": "",
+            "checks": []
+          }
+        },
+        {
+          "afterMs": 1050,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-report-blocks-1",
+            "content": "ok",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 2300,
+          "event": {
+            "kind": "turn-finished",
+            "outcome": { "kind": "completed" }
+          }
+        }
+      ]
+    },
+    {
       "name": "background-task",
       "steps": [
         {

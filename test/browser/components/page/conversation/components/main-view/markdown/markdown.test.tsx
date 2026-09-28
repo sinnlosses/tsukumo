@@ -458,6 +458,41 @@ describe("Markdown（レポートのパスを押して Orca のエディタで�
     expect(opened).toEqual(["src/foo.ts", "src/foo.ts"])
   })
 
+  it("files の塊のパスは HTML の中の code でも、一覧にあれば押せるボタンになる", () => {
+    const opened: string[] = []
+    const wrap = withFiles(["src/foo.ts"], (path) => opened.push(path))
+    const text = reportSectionsMarkdown([
+      {
+        heading: "",
+        blocks: [
+          {
+            kind: "files",
+            items: [
+              { path: "src/foo.ts", change: "modified", note: "架空の注記" },
+              { path: "src/gone.ts", change: "deleted", note: "" },
+            ],
+            fold: "",
+          },
+        ],
+      },
+    ])
+    const { container } = render(wrap(<Markdown text={text} />))
+
+    // 行の子は種別・パス・注記の順（CSS が行を subgrid にして列を揃える）。
+    const rows = container.querySelectorAll("div.report-files > div.report-file")
+    expect(rows).toHaveLength(2)
+    expect([...(rows[0]?.children ?? [])].map((child) => child.tagName)).toEqual([
+      "SPAN",
+      "BUTTON",
+      "SPAN",
+    ])
+    fireEvent.click(typedElement(rows[0]?.querySelector("button"), HTMLButtonElement, "ボタン"))
+    expect(opened).toEqual(["src/foo.ts"])
+    // 一覧に無いパス（消したファイル）は素の code のまま。
+    expect(rows[1]?.querySelector("button")).toBeNull()
+    expect(rows[1]?.querySelector("code")?.textContent).toBe("src/gone.ts")
+  })
+
   it("一覧に無い inline code はボタンにならない（素の <code> のまま）", () => {
     const wrap = withFiles(["src/foo.ts"], () => {})
     const { container } = render(wrap(<Markdown text="`src/bar.ts:3` は無い" />))
