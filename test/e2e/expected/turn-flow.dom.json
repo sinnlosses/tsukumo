@@ -283,17 +283,53 @@
                                   "だけで済んだ。"
                                 ]
                               },
-                              "pnpm run check",
-                              "✓ OK",
-                              "1234 件",
-                              "0秒",
-                              "目盛りの E2E",
-                              "✕ NG",
-                              "1 / 56",
-                              "架空の 1 件が落ちた",
-                              "狭い窓での見た目",
-                              "? 未確認",
-                              "手で確かめていない",
+                              {
+                                "tag": "div",
+                                "attributes": {
+                                  "role": "table",
+                                  "aria-label": "検証結果"
+                                },
+                                "children": [
+                                  "検証",
+                                  "3",
+                                  "✕ 1 件が落ちた",
+                                  {
+                                    "tag": "div",
+                                    "attributes": {
+                                      "role": "row"
+                                    },
+                                    "children": [
+                                      "✓ OK",
+                                      "pnpm run check",
+                                      "1234 件",
+                                      "0秒"
+                                    ]
+                                  },
+                                  {
+                                    "tag": "div",
+                                    "attributes": {
+                                      "role": "row"
+                                    },
+                                    "children": [
+                                      "✕ NG",
+                                      "目盛りの E2E",
+                                      "1 / 56",
+                                      "架空の 1 件が落ちた"
+                                    ]
+                                  },
+                                  {
+                                    "tag": "div",
+                                    "attributes": {
+                                      "role": "row"
+                                    },
+                                    "children": [
+                                      "？ 未確認",
+                                      "狭い窓での見た目",
+                                      "手で確かめていない"
+                                    ]
+                                  }
+                                ]
+                              },
                               {
                                 "tag": "p",
                                 "children": [

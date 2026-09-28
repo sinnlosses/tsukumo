@@ -226,73 +226,111 @@
 .detail-block .report-file-note {
   grid-column: 3;
 }
-/* 検証結果のカード（`report` の `checks` から tsukumo が組む）。
-   毎回出る脇役なので段は少なく抑え、「何を確かめて、どうだったか」の段と「数と時間」の段で読ませる（ok は理由の段を持たない）。
-   状態は縦罫と地の染めの色に加えて、見出しの後ろの文字（✓ OK / ✕ NG / ? 未確認）でも読める。 */
+/* 検証結果の表（`report` の `checks` から tsukumo が組む）。1項目＝1行の grid で読ませる。
+   通った行は「✓ OK」の文字だけに色を付け、行の地や枠は染めない。
+   ng / unverified の行だけ左に縦罫、状態と label を太字にし、detail を2段目に描く。 */
 .detail-block .report-checks {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
-  gap: 0.4rem;
-  margin: 0.5rem 0;
-  font-size: var(--font-secondary);
-  color: var(--ink-quiet);
-}
-.detail-block .report-check {
   display: flex;
   flex-direction: column;
-  gap: 0.15rem;
-  padding: 0.3rem 0.6rem;
-  border-left: 3px solid currentColor;
-  border-radius: 0.25rem;
-  background: color-mix(in srgb, var(--surface), currentColor 8%);
+  margin: 0.5rem 0;
+  border-bottom: 1px solid var(--rule-quiet);
 }
-.detail-block .report-check-ok {
-  color: var(--state-ok);
-}
-.detail-block .report-check-ng {
-  color: var(--state-ng);
-}
-.detail-block .report-check-unverified {
-  color: var(--state-warn);
-}
-.detail-block .report-check-head {
+.detail-block .report-checks-summary {
   display: flex;
   align-items: baseline;
-  gap: 0.5rem;
+  gap: 0.4rem;
+  padding: 0 0.75rem 0.3rem;
+  font-size: var(--font-action);
+  color: var(--ink-quiet);
+}
+.detail-block .report-checks-summary-count {
+  font-family: var(--font-mono);
+}
+.detail-block .report-checks-summary-ok {
+  color: var(--state-ok);
+}
+.detail-block .report-checks-summary-ng,
+.detail-block .report-checks-summary-warn {
+  font-weight: 700;
+}
+.detail-block .report-checks-summary-ng {
+  color: var(--state-ng);
+}
+.detail-block .report-checks-summary-warn {
+  color: var(--state-warn);
+}
+.detail-block .report-check {
+  display: grid;
+  grid-template-columns: 5.6em minmax(0, 1fr) auto minmax(4.5em, auto);
+  column-gap: 1rem;
+  row-gap: 0.15rem;
+  align-items: baseline;
+  padding: 0.3125rem 0.75rem;
+  border-top: 1px solid var(--rule-quiet);
+}
+.detail-block .report-check-ng {
+  box-shadow: inset 2px 0 0 var(--state-ng);
+}
+.detail-block .report-check-unverified {
+  box-shadow: inset 2px 0 0 var(--state-warn);
+}
+.detail-block .report-check-mark {
+  font-family: var(--font-mono);
+  font-size: var(--font-action);
+  white-space: nowrap;
+}
+.detail-block .report-check-ok .report-check-mark {
+  color: var(--state-ok);
+}
+.detail-block .report-check-ng .report-check-mark {
+  font-weight: 700;
+  color: var(--state-ng);
+}
+.detail-block .report-check-unverified .report-check-mark {
+  font-weight: 700;
+  color: var(--state-warn);
 }
 .detail-block .report-check-label {
   overflow-wrap: anywhere;
-  font-weight: 700;
+  font-size: var(--font-secondary);
   color: var(--ink);
 }
-.detail-block .report-check-mark {
-  flex-shrink: 0;
+.detail-block .report-check-ng .report-check-label,
+.detail-block .report-check-unverified .report-check-label {
   font-weight: 700;
-  white-space: nowrap;
-}
-.detail-block .report-check-numbers {
-  display: flex;
-  justify-content: center;
-  align-items: baseline;
-  gap: 0.9rem;
-  white-space: nowrap;
 }
 .detail-block .report-check-figure {
   overflow: hidden;
   text-overflow: ellipsis;
-  font-size: var(--font-subheading);
-  font-weight: 700;
+  font-family: var(--font-mono);
+  font-size: var(--font-action);
   font-variant-numeric: tabular-nums;
-  line-height: 1.2;
+  text-align: right;
+  white-space: nowrap;
+  color: var(--ink-quiet);
+}
+.detail-block .report-check-ng .report-check-figure,
+.detail-block .report-check-unverified .report-check-figure {
   color: var(--ink);
 }
 .detail-block .report-check-time {
+  font-family: var(--font-mono);
+  font-size: var(--font-action);
   font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
   color: var(--ink-quiet);
 }
 .detail-block .report-check-body {
+  grid-column: 2 / -1;
   overflow-wrap: anywhere;
-  color: var(--ink-quiet);
+  font-size: var(--font-action);
+}
+.detail-block .report-check-ng .report-check-body {
+  color: var(--state-ng);
+}
+.detail-block .report-check-unverified .report-check-body {
+  color: var(--state-warn);
 }
 /* 情報の塊（素の `note`。結論を言う役）。
    いちばん読ませたい印なので、縦罫を ink まで上げ、地を「浮く」段にする（引用と同じ灰色の3px の縦罫で地の差も無いと、いちばん弱く見える）。

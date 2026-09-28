@@ -6,7 +6,43 @@ import type { MeasuredTime } from "../../../src/shared/utils/elapsed-time.ts"
 const UNMEASURED = (): MeasuredTime => ({ kind: "unknown" })
 
 describe("reportChecksMarkdown", () => {
-  it("見出しの段は label → 状態の順で、状態はカードの色の印と文字の両方で描く", () => {
+  it("上に検証の総数と全体の状態の1行を置き、表と行に role を付ける", () => {
+    const markdown = reportChecksMarkdown(
+      [{ status: "ok", label: "架空の一", figure: "", command: "", detail: "" }],
+      UNMEASURED,
+    )
+
+    expect(markdown).toContain('<div class="checks" role="table" aria-label="検証結果">')
+    expect(markdown).toContain(
+      '<div class="checks-summary">検証 <span class="checks-summary-count">1</span> <span class="checks-summary-ok">✓ すべて通った</span></div>',
+    )
+    expect(markdown).toContain('<div class="check check-ok" role="row">')
+  })
+
+  it("全体の状態は ng があれば赤、無く unverified があれば黄、どちらも無ければ緑", () => {
+    const ngMarkdown = reportChecksMarkdown(
+      [
+        { status: "ok", label: "架空の一", figure: "", command: "", detail: "" },
+        { status: "ng", label: "架空の二", figure: "", command: "", detail: "" },
+        { status: "unverified", label: "架空の三", figure: "", command: "", detail: "" },
+      ],
+      UNMEASURED,
+    )
+    expect(ngMarkdown).toContain('<span class="checks-summary-ng">✕ 1 件が落ちた</span>')
+
+    const unverifiedMarkdown = reportChecksMarkdown(
+      [
+        { status: "ok", label: "架空の一", figure: "", command: "", detail: "" },
+        { status: "unverified", label: "架空の三", figure: "", command: "", detail: "" },
+      ],
+      UNMEASURED,
+    )
+    expect(unverifiedMarkdown).toContain(
+      '<span class="checks-summary-warn">？ 1 件を確かめていない</span>',
+    )
+  })
+
+  it("行は状態・label・figure・所要時間の4列で、状態はどれも文字で描く（未確認は全角の？）", () => {
     const markdown = reportChecksMarkdown(
       [
         { status: "ok", label: "架空の一", figure: "", command: "", detail: "" },
@@ -17,17 +53,17 @@ describe("reportChecksMarkdown", () => {
     )
 
     expect(markdown).toContain(
-      '<div class="check check-ok"><div class="check-head"><span class="check-label">架空の一</span><span class="check-mark">✓ OK</span></div></div>',
+      '<div class="check check-ok" role="row"><span class="check-mark">✓ OK</span><span class="check-label">架空の一</span><span class="check-figure"></span><span class="check-time"></span></div>',
     )
     expect(markdown).toContain(
-      '<div class="check check-ng"><div class="check-head"><span class="check-label">架空の二</span><span class="check-mark">✕ NG</span></div></div>',
+      '<div class="check check-ng" role="row"><span class="check-mark">✕ NG</span><span class="check-label">架空の二</span><span class="check-figure"></span><span class="check-time"></span></div>',
     )
     expect(markdown).toContain(
-      '<div class="check check-unverified"><div class="check-head"><span class="check-label">架空の三</span><span class="check-mark">? 未確認</span></div></div>',
+      '<div class="check check-unverified" role="row"><span class="check-mark">？ 未確認</span><span class="check-label">架空の三</span><span class="check-figure"></span><span class="check-time"></span></div>',
     )
   })
 
-  it("detail は ng と未確認のカードにだけ描き、ok のカードには描かない", () => {
+  it("detail は ng と未確認の行にだけ2段目として描き、ok の行には描かない", () => {
     const markdown = reportChecksMarkdown(
       [
         { status: "ok", label: "架空の一", figure: "", command: "", detail: "架空の経緯" },
@@ -38,36 +74,29 @@ describe("reportChecksMarkdown", () => {
     )
 
     expect(markdown).not.toContain("架空の経緯")
-    expect(markdown).toContain('<div class="check-body">架空の落ちた理由</div>')
-    expect(markdown).toContain('<div class="check-body">架空の理由</div>')
+    expect(markdown).toContain('<span class="check-body">架空の落ちた理由</span>')
+    expect(markdown).toContain('<span class="check-body">架空の理由</span>')
   })
 
-  it("figure と所要時間は同じ数の段に並べ、どちらも無ければ段ごと置かない", () => {
+  it("figure と時間はどちらも空なら列だけ残る（列の位置をそろえるため常に描く）", () => {
     const markdown = reportChecksMarkdown(
       [
-        { status: "ok", label: "架空の一", figure: "12 / 3", command: "架空の検査", detail: "" },
+        {
+          status: "ok",
+          label: "架空の一",
+          figure: "56 件中 1 件",
+          command: "架空の検査",
+          detail: "",
+        },
         { status: "ok", label: "架空の二", figure: "", command: "", detail: "" },
       ],
       () => ({ kind: "known", milliseconds: 62_000 }),
     )
 
     expect(markdown).toContain(
-      '<div class="check-numbers"><span class="check-figure">12 / 3</span><span class="check-time">1分02秒</span></div>',
+      '<span class="check-figure">56 件中 1 件</span><span class="check-time">1分02秒</span>',
     )
-    expect(markdown.match(/check-numbers/gu)).toHaveLength(1)
-  })
-
-  it("figure は空でなければ大きな数として描き、空なら描かない", () => {
-    const markdown = reportChecksMarkdown(
-      [
-        { status: "ok", label: "架空の一", figure: "12 / 3", command: "", detail: "" },
-        { status: "ok", label: "架空の二", figure: " ", command: "", detail: "" },
-      ],
-      UNMEASURED,
-    )
-
-    expect(markdown.match(/check-figure/gu)).toHaveLength(1)
-    expect(markdown).toContain('<span class="check-figure">12 / 3</span>')
+    expect(markdown).toContain('<span class="check-figure"></span><span class="check-time"></span>')
   })
 
   it("command の所要時間が測れていれば添え、測れていなければ添えない。空の command は引きに行かない", () => {
@@ -87,11 +116,10 @@ describe("reportChecksMarkdown", () => {
     )
 
     expect(asked).toEqual(["架空の検査", "架空の別"])
-    expect(markdown.match(/check-time/gu)).toHaveLength(1)
-    expect(markdown).toContain('<span class="check-time">59秒</span>')
+    expect(markdown.match(/check-time">59秒/gu)).toHaveLength(1)
   })
 
-  it("モデルの文字列は HTML として逃がし、改行は空白に畳む（カードの並びが1行の塊のまま）", () => {
+  it("モデルの文字列は HTML として逃がし、改行は空白に畳む（表の並びが1行の塊のまま）", () => {
     const markdown = reportChecksMarkdown(
       [
         {
@@ -109,7 +137,7 @@ describe("reportChecksMarkdown", () => {
     expect(markdown).toContain(
       '<span class="check-label">&lt;b&gt;架空&lt;/b&gt; &amp; 検査</span>',
     )
-    expect(markdown).toContain('<div class="check-body">架空の 件数</div>')
+    expect(markdown).toContain('<span class="check-body">架空の 件数</span>')
     expect(markdown).not.toContain("\n")
   })
 

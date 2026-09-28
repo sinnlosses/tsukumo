@@ -598,7 +598,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     expect(shownReports(turn)).toEqual(["架空の答え。\n\n以上です。"])
   })
 
-  it("checks は結論のすぐ下に検証結果のカードの並びとして組む（body・favor より前）", () => {
+  it("checks は結論のすぐ下に検証結果の表として組む（body・favor より前）", () => {
     const turn = turnOf(
       [
         ask,
@@ -620,16 +620,17 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
 
     expect(shownReports(turn)).toEqual([
       "架空の結論。\n\n" +
-        '<div class="checks">' +
-        '<div class="check check-ok"><div class="check-head"><span class="check-label">架空の検査</span><span class="check-mark">✓ OK</span></div><div class="check-numbers"><span class="check-figure">12 / 3</span></div></div>' +
-        '<div class="check check-unverified"><div class="check-head"><span class="check-label">架空の目視</span><span class="check-mark">? 未確認</span></div></div>' +
+        '<div class="checks" role="table" aria-label="検証結果">' +
+        '<div class="checks-summary">検証 <span class="checks-summary-count">2</span> <span class="checks-summary-warn">？ 1 件を確かめていない</span></div>' +
+        '<div class="check check-ok" role="row"><span class="check-mark">✓ OK</span><span class="check-label">架空の検査</span><span class="check-figure">12 / 3</span><span class="check-time"></span></div>' +
+        '<div class="check check-unverified" role="row"><span class="check-mark">？ 未確認</span><span class="check-label">架空の目視</span><span class="check-figure"></span><span class="check-time"></span></div>' +
         "</div>\n\n" +
         '架空の根拠。\n\n<div class="note note-favor">\n\n架空のお願い\n\n</div>',
     ])
     expect(firstLineOf(turn?.steps[0])).toBe("架空の結論。")
   })
 
-  it("command と完全一致した同じやり取りの最後の Bash の所要時間を、カードに添える", () => {
+  it("command と完全一致した同じやり取りの最後の Bash の所要時間を、行に添える", () => {
     const bashStarted = (id: string, command: string): SessionEvent => ({
       kind: "tool-started",
       toolUseId: id,
@@ -667,10 +668,10 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     const [shown] = shownReports(mainViewTurns(mainViewEntries(state), SETTLED, true).at(-1))
 
     expect(shown).toContain(
-      '<span class="check-label">一致する</span><span class="check-mark">✓ OK</span></div><div class="check-numbers"><span class="check-time">1分02秒</span></div>',
+      '<span class="check-mark">✓ OK</span><span class="check-label">一致する</span><span class="check-figure"></span><span class="check-time">1分02秒</span>',
     )
     expect(shown).toContain(
-      '<span class="check-label">一致しない</span><span class="check-mark">✓ OK</span></div></div>',
+      '<span class="check-mark">✓ OK</span><span class="check-label">一致しない</span><span class="check-figure"></span><span class="check-time"></span>',
     )
   })
 

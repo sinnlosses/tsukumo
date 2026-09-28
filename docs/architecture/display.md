@@ -298,6 +298,22 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/architecture/display.md
   - 突き合わせはメインビューの組み立て（`main-view.ts`）で描くたびに行い、所要時間を記録には持たない。
     `figure` / `command` の無い前の形の記録は、2つを空文字として読む（`parseReportChecks`）。
     `report` のイベントの形が変わったので `PROTOCOL_VERSION` を 24 に上げた
+- **検証結果はカードでなく、1項目1行の表で描く**（2026-09-28 ユーザー決定「案A」。毎回出る脇役なのに
+  1項目1枚のカードは箱と段が多く、場所を取っていたため）。入力の形（`status` / `label` / `figure` /
+  `command` / `detail`）は変えない
+  - 上に「検証 N」＋全体の状態の1行を置く。`ng` があれば「✕ k 件が落ちた」（赤・太字）、無くて
+    `unverified` があれば「？ k 件を確かめていない」（黄・太字、`?` は全角）、どちらも無ければ
+    「✓ すべて通った」（緑）
+  - 項目は状態・`label`・`figure`・所要時間の4列の grid で1行に並べる。**通った行は「✓ OK」の
+    文字だけに色を付け、行の地や枠は染めない**。`ng` / `unverified` の行だけ左に縦罫を引き、状態と
+    `label` を太字にし、`figure` を本文色にし、`detail` を2段目（4列の2列目〜末尾）に描く
+    （`ok` の行は `detail` を描かない。既存どおり）
+  - `figure` の書式は「56 件中 1 件」のように何の数かを付けて描かせ、「2849 / 56」のような割り算・
+    分数に見える書き方はさせない（`REPORT_CHECKS_DESCRIPTION` と `reportCheckSchema` の `figure` の
+    `describe`）
+  - HTML は `report-check.ts` の `reportChecksMarkdown` が組み、表は `role="table"`・行は `role="row"`
+    （`REPORT_SANITIZE_SCHEMA` はもとから `role` を通す）。帯の class は変わらず
+    `REPORT_DRAWN_MARK_NAMES` に置く
 
 #### レポートの記法は、TUI と tsukumo で出し分ける
 

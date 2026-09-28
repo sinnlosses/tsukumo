@@ -1,4 +1,4 @@
-// `report` の検証結果の欄 `checks` の形と、カードの並びの HTML の組み立て。形の出どころはここだけ。
+// `report` の検証結果の欄 `checks` の形と、表の HTML の組み立て。形の出どころはここだけ。
 
 import { z } from "zod"
 
@@ -16,7 +16,9 @@ export const reportCheckSchema = z.object({
   figure: z
     .string()
     .describe(
-      "結果を1つの数で言う短い文字列（例: 2849 / 56、25px、0 件）。数だけを書き、「が通過」のような述語は付けない。カードの中央に大きく描く。数で言えなければ空文字",
+      "結果を1つの数で言う短い文字列（例: 単体 2855・E2E 57、56 件中 1 件、ずれ 2px）。" +
+        "数だけを書き、「が通過」のような述語は付けない。「2849 / 56」のような割り算や分数に見える" +
+        "書き方はしない。行の右に描く。数で言えなければ空文字",
     ),
   command: z
     .string()
@@ -26,7 +28,7 @@ export const reportCheckSchema = z.object({
   detail: z
     .string()
     .describe(
-      "ng なら落ちた理由、unverified なら確かめなかった理由を1文で。ok のカードには描かないので書かない。直した経緯や打ち直した回数は書かない。無ければ空文字",
+      "ng なら落ちた理由、unverified なら確かめなかった理由を1文で。ok の行には描かないので書かない。直した経緯や打ち直した回数は書かない。無ければ空文字",
     ),
 })
 
@@ -48,10 +50,10 @@ export function parseReportChecks(value: unknown): readonly ReportCheck[] {
 }
 
 /**
- * 検証結果のカードの並び（1行の HTML）。空なら空文字。
- * 1枚は「label と状態」の段、「figure と所要時間」の段、「detail」の段の順で、中身の無い段は置かない。
- * detail は ng / unverified の理由だけで、ok のカードには描かない。
- * 状態はカードの色と文字の両方で見せる（色だけで意味を伝えない）。
+ * 検証結果の表（1つの HTML の塊）。空なら空文字。
+ * 上に「検証 N」＋全体の状態（すべて通った・k 件が落ちた・k 件を確かめていない）の1行、
+ * 下に1項目1行の並びを描く。行は「状態・label・figure・所要時間」の4列で、
+ * detail は ng / unverified の行だけ2段目に描く。
  * `commandDuration` は `command` から tsukumo が測った所要時間を引く口で、`command` が空の項目には呼ばない。
  * モデルの文字列は HTML として逃がし、改行は空白に畳む（HTML の塊が空行で切れないように）。
  */
@@ -62,35 +64,49 @@ export function reportChecksMarkdown(
   if (checks.length === 0) {
     return ""
   }
-  const cards = checks.map((check) => {
-    const mark = REPORT_CHECK_MARKS[check.status]
-    const duration: MeasuredTime =
-      check.command.trim() === "" ? { kind: "unknown" } : commandDuration(check.command)
-    const numbers = [
-      ...(check.figure.trim() === ""
-        ? []
-        : [`<span class="check-figure">${htmlInline(check.figure)}</span>`]),
-      ...(duration.kind === "known"
-        ? [
-            `<span class="check-time">${formatElapsed(Math.round(duration.milliseconds / 1000))}</span>`,
-          ]
-        : []),
-    ]
-    const rows = [
-      `<div class="check-head"><span class="check-label">${htmlInline(check.label)}</span><span class="check-mark">${mark.text}</span></div>`,
-      ...(numbers.length === 0 ? [] : [`<div class="check-numbers">${numbers.join("")}</div>`]),
-      ...(check.status === "ok" || check.detail.trim() === ""
-        ? []
-        : [`<div class="check-body">${htmlInline(check.detail)}</div>`]),
-    ]
-    return `<div class="check ${mark.card}">${rows.join("")}</div>`
-  })
-  return `<div class="checks">${cards.join("")}</div>`
+  const rows = checks.map((check) => checkRowMarkdown(check, commandDuration)).join("")
+  return `<div class="checks" role="table" aria-label="検証結果">${summaryMarkdown(checks)}${rows}</div>`
 }
 
-/** 状態 → カードの色の印と、色と一緒に出す文字。 */
-const REPORT_CHECK_MARKS = {
-  ok: { card: "check-ok", text: "✓ OK" },
-  ng: { card: "check-ng", text: "✕ NG" },
-  unverified: { card: "check-unverified", text: "? 未確認" },
-} as const satisfies Record<ReportCheckStatus, { readonly card: string; readonly text: string }>
+/** 検証の総数と、全体の状態を伝える1行。ng があれば赤、無く unverified があれば黄、どちらも無ければ緑。 */
+function summaryMarkdown(checks: readonly ReportCheck[]): string {
+  const ngCount = checks.filter((check) => check.status === "ng").length
+  const unverifiedCount = checks.filter((check) => check.status === "unverified").length
+  const verdict =
+    ngCount > 0
+      ? `<span class="checks-summary-ng">✕ ${String(ngCount)} 件が落ちた</span>`
+      : unverifiedCount > 0
+        ? `<span class="checks-summary-warn">？ ${String(unverifiedCount)} 件を確かめていない</span>`
+        : `<span class="checks-summary-ok">✓ すべて通った</span>`
+  return `<div class="checks-summary">検証 <span class="checks-summary-count">${String(checks.length)}</span> ${verdict}</div>`
+}
+
+/** 検証1項目の行。状態・label・figure・所要時間を1行の4列に並べ、detail は ng / unverified だけ2段目に足す。 */
+function checkRowMarkdown(
+  check: ReportCheck,
+  commandDuration: (command: string) => MeasuredTime,
+): string {
+  const duration: MeasuredTime =
+    check.command.trim() === "" ? { kind: "unknown" } : commandDuration(check.command)
+  const time =
+    duration.kind === "known" ? formatElapsed(Math.round(duration.milliseconds / 1000)) : ""
+  const detail =
+    check.status === "ok" || check.detail.trim() === ""
+      ? ""
+      : `<span class="check-body">${htmlInline(check.detail)}</span>`
+  return (
+    `<div class="check check-${check.status}" role="row">` +
+    `<span class="check-mark">${REPORT_CHECK_MARK_TEXTS[check.status]}</span>` +
+    `<span class="check-label">${htmlInline(check.label)}</span>` +
+    `<span class="check-figure">${htmlInline(check.figure)}</span>` +
+    `<span class="check-time">${time}</span>` +
+    `${detail}</div>`
+  )
+}
+
+/** 状態 → 状態の列に出す文字（未確認だけ全角の「？」）。 */
+const REPORT_CHECK_MARK_TEXTS = {
+  ok: "✓ OK",
+  ng: "✕ NG",
+  unverified: "？ 未確認",
+} as const satisfies Record<ReportCheckStatus, string>
