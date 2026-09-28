@@ -1,18 +1,15 @@
-// プラン（`docs/glossary.md`「プラン」）の名前を決める。出どころが2つあるので、どちらを
-// 採るかの判断をここに置く（読むのは `readClaudeAccountTier`、流すのは
-// SDK を起こすアダプタ）。
+// プランの名前を決める。出どころが2つあるので、どちらを採るかの判断をここに置く。
 //
-// 契約の段は Claude Code 自身の控えのほうが正しい。 SDK の `accountInfo()` が返す
-// `subscriptionType` は、Max の契約でも `"Claude Pro"` を返すことがある（実測）。控えには
-// 段（`claude_max`）と枠（`default_claude_max_20x`）が別々に入っているので、そちらから
-// 組み立てられるならそれを使い、組み立てられないときだけ SDK の値へ落ちる。
+// 契約の段は Claude Code 自身の控えのほうが正しい。
+// SDK の `accountInfo()` が返す `subscriptionType` は、Max の契約でも `"Claude Pro"` を返すことがある（実測）。
+// 控えには段（`claude_max`）と枠（`default_claude_max_20x`）が別々に入っているので、そちらから組み立てられるならそれを使い、組み立てられないときだけ SDK の値へ落ちる。
 //
-// 知らない綴りを訳さない。 当てはまる形でなければ何も返さず、呼ぶ側が SDK の値を使う
-// （知らない段に勝手な名前を付けると、画面の値が実態と違っていても気づけない）。
+// 知らない綴りを訳さない。当てはまる形でなければ何も返さず、呼ぶ側が SDK の値を使う。
+// 知らない段に勝手な名前を付けると、画面の値が実態と違っていても気づけない。
 
 /**
- * Claude Code の控えが持つ契約の段。外のファイルを写した直後の形なので、どちらの鍵も
- * 無いことがある（`docs/coding-standards.md`「「無いかもしれない」値」の例外1）。
+ * Claude Code の控えが持つ契約の段。
+ * 外のファイルを写した直後の形なので、どちらの鍵も無いことがある（`docs/coding-standards.md`「「無いかもしれない」値」の例外1）。
  */
 export type ClaudeAccountTier = {
   /** 段（`claude_max` / `claude_pro` など）。 */
@@ -22,8 +19,8 @@ export type ClaudeAccountTier = {
 }
 
 /**
- * 画面に出すプランの名前。控え → SDK の順に見て、どちらからも決まらなければ何も返さない
- * （画面は札を出さない）。
+ * 画面に出すプランの名前。
+ * 控え → SDK の順に見て、どちらからも決まらなければ何も返さない（画面は札を出さない）。
  */
 export function planName(
   tier: ClaudeAccountTier,

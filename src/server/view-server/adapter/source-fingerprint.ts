@@ -1,17 +1,16 @@
-// ソースの置き場の中身から、1つの指紋（ハッシュ）を作る。開発サーバを差し込んだ起動で、
-// 画面にだけ差分を当ててよいかを決めるために使う（`docs/design.md`「ビルドと依存」）。
+// ソースの置き場の中身から、1つの指紋（ハッシュ）を作る。
+// 開発サーバを差し込んだ起動で、画面にだけ差分を当ててよいかを決めるために使う。
 //
-// 時刻ではなく中身で見る。 `git merge` で書き戻されただけのファイルや `touch` で、
-// 差分を当てるのを止めてしまわないため。
+// 時刻ではなく中身で見る。
+// `git merge` で書き戻されただけのファイルや `touch` で、差分を当てるのを止めてしまわないため。
 
 import { createHash } from "node:crypto"
 import { readdir, readFile } from "node:fs/promises"
 import { join, sep } from "node:path"
 
 /**
- * `root` の下のファイルすべて（`excludedTopLevel` に挙げた直下の置き場を除く）の相対パスと中身を
- * 束ねたハッシュを返す。読めなかったときは `undefined`（呼び出し側が「分からない」を
- * 「変わった」に寄せないため）。
+ * `root` の下のファイルすべて（`excludedTopLevel` に挙げた直下の置き場を除く）の相対パスと中身を束ねたハッシュを返す。
+ * 読めなかったときは `undefined`（呼び出し側が「分からない」を「変わった」に寄せないため）。
  */
 export async function sourceFingerprint(
   root: string,

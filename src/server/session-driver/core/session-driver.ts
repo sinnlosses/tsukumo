@@ -1,17 +1,8 @@
-// セッション駆動の契約（docs/glossary.md「セッション駆動」）。ここにあるのは型だけで、
-// 実際に何かを起こすコードは持たない。実装は2つあり、どちらも `src/server/adapter/` にある
-// （Agent SDK を起こすアダプタと、疑似セッションを流す fake driver）。
+// セッション駆動の契約。ここにあるのは型だけで、実際に何かを起こすコードは持たない。
+// 実装は Agent SDK を起こす `startSdkDriver` と、疑似セッションを流す `startFakeSession` の2つ。
+// SDK の語彙を名乗るもの（`query()` の options など）はここに書かず、駆動の adapter の `sdk-` で始まるファイルに置く。
 //
-// 契約をここに置いてあるので、`session-manager` は駆動の実装を import せずに済む
-// （どちらが動いているかを知らない。`docs/design.md`「core と adapter」）。
-//
-// 境目の基準は「shared の語彙で書けるか / SDK の語彙を名乗るか」。shared の語彙だけで
-// 書けるもの（契約の型。`EffortLevel` 自体は共有の契約の語彙）はここに、SDK の語彙を
-// 名乗るもの（`query()` の options、`listSessions` / `getSessionMessages` を使う関数）は
-// `src/server/adapter/` の `sdk-` で始まるファイル（SDK を起こすアダプタなど）に置く。
-//
-// 既定のモデル・effort・許可モードはここに無い（`BUILTIN_SESSION_DEFAULT`）。覚えた値を歯車から書き換えられるようになって、
-// ブラウザも同じ畳み先を読むようになったため（`docs/screen-design.md`「設定の置き場所」）。
+// 既定のモデル・effort・許可モードは、ブラウザと同じ畳み先の `BUILTIN_SESSION_DEFAULT` が持つ。ここに置かない。
 
 import type { ExpressionChoice } from "../../../shared/character-pack/expression-choice.ts"
 import type { Expression } from "../../../shared/character-pack/expression.ts"
@@ -24,11 +15,9 @@ import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import type { ShelvedPromptImage } from "./prompt-image-shelf.ts"
 
 /**
- * 覚えたことを人格に書き足す口と、覚えた1行を忘れる口（`docs/design.md`「画面から作るときの置き場と受け取り方」）。
- * 実装は `adapter` 側（人格に書き足すアダプタ）で、ここにあるのは契約だけ。
- *
- * 上限に当たった回も、消す行が見つからなかった回も何も返さない — 受け付けたかどうかを
- * モデルへ戻さないため（ツールの戻り値は `"ok"` だけ）。
+ * 覚えたことを人格に書き足す口と、覚えた1行を忘れる口。
+ * 上限に当たった回も、消す行が見つからなかった回も何も返さない。
+ * 受け付けたかどうかをモデルへ戻さないため（ツールの戻り値は `"ok"` だけ）。
  */
 export type PersonaMemory = {
   /** 覚えた1行を書き足す（受け付けられない行は黙って捨てる）。 */
@@ -43,20 +32,17 @@ export type PersonaMemory = {
 }
 
 /**
- * 雑談の要約の写しの読み書き口（`docs/chat-mode.md`「記憶の圧縮と忘却」）。
- * 実装は `adapter` 側（あらすじを扱うアダプタ）で、ここにあるのは契約だけ。
- *
- * 中身を読んで判定する口は無い。 載せるかどうかの判断は
- * `takeChatMemoryPromptParts` が持ち、ここは「どこに・どう書き、どう渡すか」の
- * 4つの動きだけを持つ。
+ * 雑談の要約の写しの読み書き口。
+ * 中身を読んで判定する口は持たない。
+ * `systemPrompt` へ載せるかどうかの判断は `takeChatMemoryPromptParts` が持つ。
  */
 export type ChatSummary = {
   /** 写しと印を読む（ファイルが無い・読めないときは undefined）。 */
   readonly read: () => ChatSummaryRecord | undefined
   /**
-   * 定着が書き直したあらすじ（話題の組を含む本文）を上書きする。呼ぶと印は「渡し済み」に
-   * なる——畳んだ会話は、いま動いているこのセッション自身がすでに持っている
-   * （`docs/chat-mode.md`「記憶の圧縮と忘却」）。
+   * 定着が書き直したあらすじ（話題の組を含む本文）を上書きする。
+   * 呼ぶと印は「渡し済み」になる。
+   * 畳んだ会話は、いま動いているこのセッション自身がすでに持っているため。
    */
   readonly write: (summary: string) => void
   /** 印を「未渡し」に戻す（`/clear` を見たとき）。 */
@@ -72,56 +58,43 @@ export type ChatSummaryRecord = {
 }
 
 /**
- * 雑談の会話のアーカイブの読み書き口（`docs/chat-mode.md`「雑談の会話のアーカイブ」）。実装は `adapter` 側（雑談の会話のアーカイブを扱うアダプタ）で、ここにあるのは
- * 契約だけ。
- *
- * 読む口は {@link readRecent} の1つだけ（直近の雑談を逐語のまま
- * `systemPrompt` へ戻す唯一の出どころ。`docs/chat-mode.md`「直近の会話は逐語のまま
- * 読み戻す」）。それ以外の読み戻しは作らない。
+ * 雑談の会話のアーカイブの読み書き口。
+ * 会話の文面を読み戻す口は {@link ChatArchive.readRecent}・{@link ChatArchive.unconsolidated}・{@link ChatArchive.recallEpisode} の3つに限る。
+ * 読み戻しの口を足すにはユーザーの決定が要る（`docs/coding-standards.md`「会話内容の扱い」）。
  */
 export type ChatArchive = {
   /**
-   * 依頼またはセリフを1件、追記する。`packName` が {@link isCharacterPackName} を通らない・
-   * 書けないときは黙って何もしない（常駐プロセスは1回の失敗で落ちない。
-   * `docs/coding-standards.md`「エラーハンドリング」）。
+   * 依頼またはセリフを1件、追記する。
+   * `packName` が `isCharacterPackName` を通らない・書けないときは黙って何もしない。
    */
   readonly append: (packName: string, entry: ChatArchiveEntry) => void
   /**
-   * そのパックの直近の会話を、新しいほうから遡って {@link ChatReadbackLimits} のバイト数まで
-   * 読む。返すのは古い→新しいの順で、呼ぶ側に順序の都合を持たせない。
-   *
-   * 1件を単位にし、途中では切らない（溢れる1件は載せない）。読めない行（壊れた JSON・
-   * 知らない版・鍵が足りない）は1行ずつ落とし、例外は投げない（読めなければ空を返し、
-   * そのセッションは逐語なしで始まる）。
+   * そのパックの直近の会話を、新しいほうから遡って {@link ChatReadbackLimits} のバイト数まで読む。
+   * 返すのは古い→新しいの順。
+   * 1件を単位にし、途中では切らない（溢れる1件は載せない）。
+   * 読めない行（壊れた JSON・知らない版・鍵が足りない）は1行ずつ落とし、例外は投げない。
+   * 読めなければ空を返し、そのセッションは逐語なしで始まる。
    */
   readonly readRecent: (
     packName: string,
     limits: ChatReadbackLimits,
   ) => readonly ChatArchiveRecentEntry[]
   /**
-   * まだどのエピソードにも入っていない行を、古いほうから {@link ChatUnconsolidatedLimits.maxBytes}
-   * まで返す（定着の入力。`docs/chat-mode.md`「窓から溢れた会話は定着で畳む」）。最後のエピソードの
-   * `to` より後で、作業記憶の窓（`recentBytes`）の外にある行だけを対象にする
-   * （エピソードが無ければアーカイブの最初の行から）。行番号はここでは振らない
-   * （振るのは渡す側。`docs/design.md`「キャラクターパック」）。
-   *
-   * 溜まっている量は {@link ChatUnconsolidatedBatch.usedBytes} で分かる——契機
-   * （`consolidateEveryBytes`）に届いたかどうかを比べるのは呼び出し側の役目で、ここでは判定
-   * しない。
+   * まだどのエピソードにも入っていない行を、古いほうから {@link ChatUnconsolidatedLimits.maxBytes} まで返す（定着の入力）。
+   * 最後のエピソードの `to` より後で、作業記憶の窓（`recentBytes`）の外にある行だけを対象にする。
+   * エピソードが無ければアーカイブの最初の行から。
+   * 行番号はここでは振らない（振るのは渡す側）。
+   * 契機（`consolidateEveryBytes`）に届いたかは、呼び出し側が {@link ChatUnconsolidatedBatch.usedBytes} で比べる。
    */
   readonly unconsolidated: (
     packName: string,
     limits: ChatUnconsolidatedLimits,
   ) => ChatUnconsolidatedBatch
-  /**
-   * 定着ができたエピソードを追記する（`id` はここで振る。`docs/design.md`
-   * 「雑談の記憶の置き場」）。書けなくても例外は投げない。
-   */
+  /** 定着ができたエピソードを追記する（`id` はここで振る）。書けなくても例外は投げない。 */
   readonly appendEpisodes: (packName: string, episodes: readonly ChatEpisodeDraft[]) => void
   /**
-   * 索引を引く言葉で採点し、点の高い順に {@link ChatEpisodeCandidate} を返す
-   * （`recall` ツールの実体になる後段が使う）。採点は `scoreChatEpisodes` の
-   * 純関数で、ここは `episode.jsonl` と `recalled.jsonl` を読んで渡すだけ。
+   * 索引を引く言葉で採点し、点の高い順に {@link ChatEpisodeCandidate} を返す。
+   * 採点は `scoreChatEpisodes` の純関数で、ここは `episode.jsonl` と `recalled.jsonl` を読んで渡すだけ。
    */
   readonly recallList: (
     packName: string,
@@ -129,11 +102,7 @@ export type ChatArchive = {
     limitBytes: number,
     now: Temporal.Instant,
   ) => ChatEpisodeRecallListResult
-  /**
-   * 1件のエピソードの範囲を、アーカイブから逐語のまま古いほうから読む
-   * （`recall_episode` ツールの実体になる後段が使う）。開いたことは `recalled.jsonl` に
-   * 残る。
-   */
+  /** 1件のエピソードの範囲を、アーカイブから逐語のまま古いほうから読む。開いたことは `recalled.jsonl` に残る。 */
   readonly recallEpisode: (
     packName: string,
     id: string,
@@ -206,7 +175,7 @@ export type ChatEpisodeRecallListResult =
 export type ChatEpisodeReadResult =
   | {
       readonly kind: "found"
-      /** 古い→新しいの順（形は {@link ChatArchiveRecentEntry} と同じ）。 */
+      /** 古い→新しいの順。 */
       readonly entries: readonly ChatArchiveRecentEntry[]
       /** `limitBytes` に収まらず、続きがあるとき `true`。 */
       readonly overflowed: boolean
@@ -214,15 +183,10 @@ export type ChatEpisodeReadResult =
   | { readonly kind: "not-found" }
 
 /**
- * 古い雑談を索引から思い出す口（`docs/design.md`「キャラクターパック」）。`ChatArchive` を駆動へそのまま
- * 渡さないために分けてある——パックの名前と読む量は配線層（配線の
- * `createChatRecall` の呼び出し）が縛ってから渡す。雑談モードのときだけ渡り、渡ったときだけ
- * `recall` と `recall_episode` のツールが `mcpServers` に載る。
- *
- * 1ターンの回数の上限（`recallListsPerTurn` / `recallEpisodesPerTurn`）を数えるのは実装
- * の側（`createChatRecall`）。{@link finishTurn} は駆動
- * （SDK を起こすアダプタ）が {@link PersonaMemory.finishTurn} と同じ
- * `turn-finished` の分岐から呼ぶ。
+ * 古い雑談を索引から思い出す口。
+ * {@link ChatArchive} を駆動へそのまま渡さないために分けてある。
+ * パックの名前と読む量は、`createChatRecall` を呼ぶ配線が縛ってから渡す。
+ * 1ターンの回数の上限（`recallListsPerTurn` / `recallEpisodesPerTurn`）を数えるのは実装の側（`createChatRecall`）。
  */
 export type ChatRecall = {
   /** 索引を `keyword` で引き、候補の一覧を返す（1ターンに `recallListsPerTurn` 回まで）。 */
@@ -234,10 +198,8 @@ export type ChatRecall = {
 }
 
 /**
- * {@link ChatRecall.recallList} が返すもの。判別可能な合併型にしてあるのは、「当たらなかった」と
- * 「このターンではもう引けない」がモデルへ返す文面の違う別の状態だから
- * （`docs/coding-standards.md`「「無いかもしれない」値」）。文面に変えるのは
- * `takeChatMemoryPromptParts`。
+ * {@link ChatRecall.recallList} が返すもの。
+ * 「当たらなかった」と「このターンではもう引けない」は、モデルへ返す文面が違う。
  */
 export type ChatRecallListResult =
   /** 採点の高い順の候補（{@link ChatEpisodeCandidate}。空の配列にはならない）。 */
@@ -247,9 +209,9 @@ export type ChatRecallListResult =
   /** そのターンではもう一覧を引けない（`recallListsPerTurn` を超えた）。 */
   | { readonly kind: "exhausted" }
 
-/** {@link ChatRecall.recallEpisode} が返すもの。形の理由は {@link ChatRecallListResult} と同じ。 */
+/** {@link ChatRecall.recallEpisode} が返すもの。 */
 export type ChatRecallEpisodeResult =
-  /** 開いた1件の範囲の逐語（形は {@link ChatEpisodeReadResult} の `found` と同じ）。 */
+  /** 開いた1件の範囲の逐語。 */
   | {
       readonly kind: "found"
       readonly entries: readonly ChatArchiveRecentEntry[]
@@ -270,9 +232,8 @@ export type ChatReadbackLimits = {
 }
 
 /**
- * {@link ChatArchive.readRecent} が返す1件。話者の別・文面・その行の日付だけで、
- * `expression` も `images` も持たない（`docs/chat-mode.md`「雑談モード」。読む側が落とすのではなく、
- * 口が最初から渡さない）。
+ * {@link ChatArchive.readRecent} が返す1件。話者の別・文面・その行の日付だけで、`expression` も `images` も持たない。
+ * 読む側が落とすのではなく、口が最初から渡さない。
  */
 export type ChatArchiveRecentEntry = {
   readonly speaker: "user" | "character"
@@ -281,17 +242,13 @@ export type ChatArchiveRecentEntry = {
   readonly date: string
 }
 
-/**
- * {@link ChatArchive.append} に渡す1件。`at` は届いた時刻（エポックミリ秒。`session-manager` の
- * `options.now()` をそのまま渡す）。判別可能な合併型にして、`images` はユーザーの行だけ、
- * `expression` はキャラクターの行だけが持つ形を型で表す。
- */
+/** {@link ChatArchive.append} に渡す1件。`at` は届いた時刻（エポックミリ秒）。 */
 export type ChatArchiveEntry =
   | {
       readonly speaker: "user"
       readonly at: number
       readonly text: string
-      /** 添えた画像の枚数。1枚以上あるときだけ値を持つ（`docs/design.md`「キャラクターパック」）。 */
+      /** 添えた画像の枚数。1枚以上あるときだけ値を持つ。 */
       readonly images: number | undefined
     }
   | {
@@ -301,41 +258,23 @@ export type ChatArchiveEntry =
       readonly expression: Expression
     }
 
-/**
- * このセッションが仕事か雑談か（`docs/design.md`「キャラクターパック」）。雑談のときだけ渡る3つの口を
- * `chat` の側にまとめてあるのは、3つが同時に渡るか同時に渡らないかの2択で、
- * 「片方だけ無い」状態が実在しないから（`docs/coding-standards.md`
- * 「複数の「無い」が1つの状態」）。読む側の分岐も `mode.kind` の1つで済む。
- */
+/** このセッションが仕事か雑談か。 */
 export type SessionMode =
   /** 仕事。雑談の口は1つも渡らない（作業の文脈が人格にもアーカイブにも入らない）。 */
   | { readonly kind: "work" }
   | {
       readonly kind: "chat"
-      /**
-       * 覚えたことの書き足し・忘れる口（`docs/design.md`「画面から作るときの置き場と受け取り方」）。渡るのは雑談のときだけで、
-       * 渡ったときだけ `remember` と `forget` のツールが `mcpServers` に載る。
-       */
+      /** 渡ったときだけ `remember` と `forget` のツールが `mcpServers` に載る。 */
       readonly personaMemory: PersonaMemory
-      /**
-       * 雑談の要約の写しの読み書き口（`docs/design.md`「キャラクターパック」）。駆動は `/clear` を見て印を戻すだけ
-       * （SDK を起こすアダプタ）。書くのは定着（`ChatConsolidationWriter`）。
-       */
       readonly chatSummary: ChatSummary
       /**
-       * 古い雑談を索引から思い出す口（`docs/design.md`「キャラクターパック」）。`recall` と `recall_episode` の
-       * ツールが載る（仕事の会話はそもそもアーカイブに残さないので、引く先が無い）。
+       * 渡ったときだけ `recall` と `recall_episode` のツールが `mcpServers` に載る。
+       * 仕事の会話はそもそもアーカイブに残さないので、仕事では引く先が無い。
        */
       readonly chatRecall: ChatRecall
     }
 
-/**
- * このセッションを新規に起こすか、続きから始めるか（`docs/requirements.md`「セッションの
- * 復元」）。`resume: string | undefined` が「セッションIDが無い」ではなく「新規である」という
- * 意味を運んでいたのを判別可能な合併型にした（`docs/coding-standards.md`「複数の「無い」が
- * 1つの状態」）。続きから始めるIDを選ぶのは SDK を起こすアダプタの
- * `findSessionToResume`。
- */
+/** このセッションを新規に起こすか、続きから始めるか。続きから始める ID は `findSessionToResume` が選ぶ。 */
 export type SessionStart =
   /** 新規に起こす。 */
   | { readonly kind: "new" }
@@ -352,29 +291,19 @@ export type SessionDriverOptions = {
    * 起こしたあと帯から変えた値はここに戻らない（セッション限り）。
    */
   readonly permissionMode: PermissionMode
-  /** このセッションを起こすモデル（覚えた既定。許可モードと同じ扱い）。 */
+  /** このセッションを起こすモデル（覚えた既定）。起こしたあと帯から変えた値はここに戻らない。 */
   readonly model: ModelAlias
-  /**
-   * このセッションを起こす effort（覚えた既定。モデル・許可モードと同じ扱い）。
-   * SDK を起こすアダプタの `buildQuerySeedOptions` がそのまま `query()` へ渡す。
-   */
+  /** このセッションを起こす effort（覚えた既定）。起こしたあと帯から変えた値はここに戻らない。 */
   readonly effort: EffortLevel
-  /**
-   * `systemPrompt` に足す文字列（人格と tsukumo 側の規約と雑談の記憶。組み立ては
-   * `takeSystemPromptAppend`）。中身をこのファイルが
-   * 決めない（`docs/design.md`「core と adapter」）。
-   */
+  /** `systemPrompt` に足す文字列（人格と tsukumo 側の規約と雑談の記憶。組み立ては `takeSystemPromptAppend`）。 */
   readonly systemPromptAppend: string
-  /** 新規に起こすか、続きから始めるか（`docs/requirements.md`「セッションの復元」）。 */
   readonly start: SessionStart
   /**
-   * このセッションに付ける印（組み立ては `sessionTag`。
-   * キャラクターパックごと・雑談かどうかで違う）。ターンが終わるたびに付け直す（次に起こしたときに、これでそのパックの
-   * セッションだけを見分ける。付け直す理由は SDK を起こすアダプタの
-   * `SESSION_TAG_DELAY_MS`）。
+   * このセッションに付ける印（組み立ては `sessionTag`。キャラクターパックごと・雑談かどうかで違う）。
+   * 次に起こしたときに、これでそのパックのセッションだけを見分ける。
+   * ターンが終わるたびに付け直す（理由は `SESSION_TAG_DELAY_MS`）。
    */
   readonly tag: string
-  /** 仕事か雑談か。雑談のときだけ渡る4つの口も、この中にまとまっている。 */
   readonly mode: SessionMode
   /**
    * 子プロセス（claude）へ引き継ぐ環境変数（`Config.inheritedEnv`）。駆動はこれに
@@ -382,9 +311,9 @@ export type SessionDriverOptions = {
    */
   readonly inheritedEnv: Readonly<Record<string, string | undefined>>
   /**
-   * 利用者が見送った提案の識別子（`usageProposalKey`）を読む口。見直しのツールが呼ばれる
-   * たびに読み直す（`createUsageReviewIntake`）。読めないときは空を返し、
-   * 例外を投げない。
+   * 利用者が見送った提案の識別子（`usageProposalKey`）を読む口。
+   * 見直しのツールが呼ばれるたびに読み直す（`createUsageReviewIntake`）。
+   * 読めないときは空を返し、例外を投げない。
    */
   readonly dismissedUsageProposalKeys: () => readonly string[]
   /** 内部イベントの受け取り口。ここで例外を投げないこと（投げるとセッションが終わる）。 */
@@ -394,18 +323,14 @@ export type SessionDriverOptions = {
 export type SessionDriver = {
   /**
    * 依頼を1つ送る（ストリーミング入力への追加）。`request` イベントも同時に流れる。
-   *
-   * `images` は添えた画像の原寸と控えの対に、棚が振った id を添えたもの
-   * （`docs/requirements.md`「画像の添付」。棚に置くのは呼び出し側 = セッションの管理側）。原寸は
-   * モデルへ渡すだけ、控えと id は `request` イベントに載せる——分けるのは駆動の側で
-   * （`recordedPromptImages`）、ここから先の記録へ原寸は出ない。
+   * `images` は呼ぶ側が棚に置いたあとのもの（原寸と控えの対に、棚が振った id を添えたもの）。
+   * 原寸はモデルへ渡すだけで、`request` イベントには控えと id だけを載せる（分けるのは `recordedPromptImages`）。
    */
   readonly prompt: (text: string, images: readonly ShelvedPromptImage[]) => void
   /**
-   * 依頼を1つ送るが、記録に残さない（`docs/screen-design.md`「立ち絵をつつくと話しかけて
-   * くれる」）。流れるのは `request` ではなく `turn-started` なので、送った文面は画面のログにも
-   * 記録にも雑談の会話のアーカイブにも残らない（落とすのは組み立ての側ではなく、この時点）。
-   *
+   * 依頼を1つ送るが、記録に残さない。
+   * 流れるのは `request` ではなく `turn-started` なので、送った文面は画面のログにも記録にも雑談の会話のアーカイブにも残らない。
+   * 落とすのは組み立ての側ではなく、この時点。
    * 画像は添えられない（tsukumo が自分で足す一言のための口で、利用者の持ち物を運ばない）。
    */
   readonly promptWithoutRecord: (text: string) => void
@@ -415,34 +340,28 @@ export type SessionDriver = {
   readonly answer: (id: string, answer: Answer) => boolean
   /** いまの答え待ち（画面を組み直すときに使う）。 */
   readonly pending: () => readonly PendingAsk[]
-  /**
-   * いまのコンテキストの内訳を取る（`docs/glossary.md`「コンテキストの内訳」）。
-   * 取れなかったときは「取れない」を返し、例外を投げない（トークン消費の画面が札を1枚
-   * 出せないだけで、常駐プロセスは落ちない。`docs/coding-standards.md`「エラーハンドリング」）。
-   */
+  /** いまのコンテキストの内訳を取る。取れなかったときは「取れない」を返し、例外を投げない。 */
   readonly readContextUsage: () => Promise<ContextUsageReport>
   /**
-   * いまの利用枠（`docs/glossary.md`「利用枠」）を取る。知らせを待たずに取りに行く口
-   * （SDK の実験中の口）で、取れなかった・claude.ai の契約でないときは例外を投げず
-   * それぞれの結果を返す。
+   * いまの利用枠を、知らせを待たずに取りに行く（SDK の実験中の口）。
+   * 取れなかった・claude.ai の契約でないときは例外を投げず、それぞれの結果を返す。
    */
   readonly readPlanUsage: () => Promise<PlanUsageReport>
   /**
-   * 同じ部屋のセッション1件の中身（依頼の数・要約・最後のセリフ。`docs/glossary.md`「セッションの要約」）を
-   * transcript から読む。どのIDなら読んでよいかは呼ぶ側（`session-manager`）が決める。
+   * 同じ部屋のセッション1件の中身（依頼の数・要約・最後のセリフ）を transcript から読む。
+   * ここは ID を絞らない。呼ぶ側が、読んでよい ID に絞ってから渡す。
    * 読めなかったときは「読めない」を返し、例外を投げない。
    */
   readonly readSessionDigest: (sessionId: string) => Promise<SessionDigest>
-  /** モデルを切り替える（画面からの切り替えは後続タスクで配線する）。 */
+  /** モデルを切り替える。 */
   readonly setModel: (model: string | undefined) => Promise<void>
   /**
-   * effort を切り替える（`docs/screen-design.md`「動き方の操作子」）。モデルと違って
-   * 確認の合図を返さない — 帯に表示する値は次のターンの `Stop` フック入力から読み取った
-   * ものだけで、送った値をここから先回りで流さない（押した値へ先に倒さない。理由は
-   * `docs/screen-design.md`「動き方の操作子」）。
+   * effort を切り替える。確認の合図を返さない。
+   * 帯に表示する値は次のターンの `Stop` フック入力から読み取ったものだけで、送った値をここから先回りで流さない。
+   * 理由は `docs/screen-design.md`「動き方の操作子」。
    */
   readonly setEffort: (effort: EffortLevel) => Promise<void>
-  /** 許可モードを切り替える（画面からの切り替えは後続タスクで配線する）。 */
+  /** 許可モードを切り替える。 */
   readonly setPermissionMode: (mode: PermissionMode) => Promise<void>
   /** 入力を閉じてセッションを終える。子プロセスも止まる。 */
   readonly close: () => void

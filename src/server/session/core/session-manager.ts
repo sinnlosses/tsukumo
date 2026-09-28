@@ -1,19 +1,13 @@
-// セッションを持つ係。駆動から届いたイベントに時刻を打ち、サーバ側でも同じ畳み込みを回し、
-// まとめてフレームで配る（`docs/design.md`「core と adapter」）。
+// セッションを持つ係。駆動から届いたイベントに時刻を打ち、サーバ側でも同じ畳み込みを回し、まとめてフレームで配る。
 //
 // - 状態をサーバ側でも持つのは、接続してきたブラウザへ `hello` の snapshot を返すため
-// - コマンドの分岐はここに無い。どの手続きをどの機能が受け、どの条件で断るかは契約と
-//   機能ごとの表（束ねるのは配線の `createRouter`）が持ち、ここは受け手に見せる口
-//   （`CommandSession`）を作って出すだけ（`docs/design.md`「コマンドの受け手と手続きの置き方」）
-// - 持つセッションは1つだけで、鍵を持たない（`docs/design.md`「セッションの復元と複数化」）。キャラクター・雑談モード・
-//   セッションの切り替えはこの持ち物の中で駆動を起こし直す（`restart`）ので、古い側と新しい側を
-//   並べて持つことが無い
-// - 代のあいだだけ意味のある勘定は `SessionGeneration` に集めてある（配る束・雑談の
-//   圧縮の見張り・トークンの勘定）。起こし直しはそれを丸ごと作り直すことなので、勘定を1つ
-//   足しても `restart` に戻し忘れる場所が生まれない
+// - コマンドの分岐はここに無い。ここは受け手に見せる口（`CommandSession`）を作って出すだけ
+// - 持つセッションは1つだけで、鍵を持たない。
+//   キャラクター・雑談モード・セッションの切り替えはこの持ち物の中で駆動を起こし直す（`restart`）ので、古い側と新しい側を並べて持つことが無い
+// - 代のあいだだけ意味のある勘定は `SessionGeneration` に集める。
+//   起こし直しはそれを丸ごと作り直すことなので、勘定を1つ足しても `restart` に戻し忘れる場所が生まれない
 //
-// 会話の内容がイベントとして通るが、ログにもファイルにも書かない
-// （docs/coding-standards.md「会話内容の扱い」）。配る先は購読しているブラウザだけ。
+// 会話の内容がイベントとして通るが、ログにもファイルにも書かない。配る先は購読しているブラウザだけ。
 
 import {
   type ContextUsageReport,
@@ -66,66 +60,39 @@ export type SessionManagerOptions = {
   readonly now: () => number
   /** イベントをまとめる間隔（ミリ秒）。既定は `EVENT_BATCH_INTERVAL_MS`。 */
   readonly batchIntervalMs: number
-  /**
-   * 雑談の会話のアーカイブの書き込み口（`docs/design.md`「雑談の記憶の置き場」）。本番は `createChatArchive()`、テストは
-   * 呼ばれた引数だけを覚えるスタブを渡す。
-   */
+  /** 雑談の会話のアーカイブの書き込み口。 */
   readonly chatArchive: ChatArchive
   /**
-   * 定着の出どころ（`ChatConsolidationSource`）。いつ起こすか
-   * （雑談の駆動由来のターンの終わり）と、同時に1本に絞るのはここ（`docs/design.md`「キャラクターパック」
-   * 「定着はどこで走るか」）。疑似セッションでは `dont-consolidate`。
+   * 定着の出どころ（`ChatConsolidationSource`）。疑似セッションでは `dont-consolidate`。
+   * いつ起こすか（雑談の駆動由来のターンの終わり）と、同時に1本に絞るのはここ。
    */
   readonly chatConsolidation: ChatConsolidationSource
   /**
-   * トークン消費の書き込み口（`TokenUsageLog` の契約。本番は
-   * `createTokenUsageLog()`、テストは呼ばれた引数だけを覚えるスタブを渡す）。
-   *
-   * 前の `result` からの増分を出すのは {@link TokenUsageRecorder}（駆動1代ぶんの持ち物と
-   * して前回の累計を覚えている）で、渡した先は「どこに・どんな形で書くか」しか持たない。
+   * トークン消費の書き込み口。
+   * 前の `result` からの増分を出すのは {@link TokenUsageRecorder}（駆動1代ぶんの持ち物として前回の累計を覚えている）で、渡した先は「どこに・どんな形で書くか」しか持たない。
    */
   readonly tokenUsageLog: TokenUsageLog
   /**
-   * コンテキストの内訳の書き込み口（`ContextUsageLog` の契約。本番は
-   * `createContextUsageLog()`、テストは呼ばれた引数だけを覚えるスタブを渡す）。
-   *
-   * セッション1つにつき1行で、いつ書くか（＝そのセッションでまだ書いていない最初の
-   * ターンの終わり）を決めるのは `createContextUsageRecorder` が返す係。渡した先は
-   * 「どこに・どんな形で書くか」しか持たない。
+   * コンテキストの内訳の書き込み口。
+   * セッション1つにつき1行で、いつ書くか（＝そのセッションでまだ書いていない最初のターンの終わり）を決めるのは `createContextUsageRecorder` が返す係。
+   * 渡した先は「どこに・どんな形で書くか」しか持たない。
    */
   readonly contextUsageLog: ContextUsageLog
   /** 描いた `report` 1回につき1行、塊の使われ方を書く口。 */
   readonly reportUsageLog: ReportUsageLog
   /**
-   * 依頼に添えた画像の原寸の棚（`PromptImageShelf`）。持ち主は
-   * 配線 — `/prompt-image/<id>` で配る側も同じ棚を引く。
+   * 依頼に添えた画像の原寸の棚。`/prompt-image/<id>` で配る側と同じ棚を渡すこと。
    * 置くのと捨てるのはここで、`prompt` を受けたときに置き、記録から依頼が消えたときに捨てる。
    */
   readonly promptImageShelf: PromptImageShelf
   /**
-   * セッションを1つ起こす（起こし直しも含む）一続き。駆動を起こすだけでなく、パックを決めて
-   * 続きを探し、復元した履歴を流すところまでを1つでやる（`createSessionLaunch` が実体。
-   * 名前が `startDriver` ではなく `launchSession` なのは、
-   * 駆動そのものを起こす低レベルの口（`SessionLaunchPorts.startDriver`）と役割が違うから）。
-   * 渡された `onEvent` / `onRestoredEvent` を駆動に配線するのは呼び出し側の仕事で、ここは
-   * 種類（SDK か fake driver か）を知らない。
+   * セッションを1つ起こす（起こし直しも含む）一続き。
+   * 駆動を起こすだけでなく、パックを決めて続きを探し、復元した履歴を流すところまでを1つでやる（`createSessionLaunch` が実体）。
+   * ここは駆動の種類（SDK か fake driver か）を知らない。
    *
-   * 受け口は2つ。 `onEvent` は駆動（と見張り）から新しく届くイベント、`onRestoredEvent` は
-   * 前のセッションの記録を組み直した再生だけが通る（`docs/design.md`「雑談の記憶の
-   * 置き場」）。畳み方と配り方はどちらも同じ（`receive` が両方を
-   * 同じように畳む）——分かれているのは「どちらから来たか」を呼び出し側が知れるようにする
-   * ためだけ。
+   * 受け口は2つ。`onEvent` は駆動（と見張り）から新しく届くイベント、`onRestoredEvent` は前のセッションの記録を組み直した再生だけが通る。
    *
-   * `request.selection` はこれから起こすパックの決め方で、起動時は「初期パック」、
-   * `session.switchCharacter` は「画面から選ばれた名前」、`session.setChatMode` は「いま出しているパックの
-   * まま」の3つ（`docs/design.md`「キャラクターパック」・`docs/screen-design.md`「設定の置き場所」）。知らない名前のときに何を起こすかも、名前を
-   * 覚えるかどうかも呼び出し側が決める。
-   * `request.chat` は雑談モードで起こすか（`docs/chat-mode.md`「雑談モード」）。
-   * `request.resume` はこれから起こすセッションの決め方で、印から探すか、画面から選ばれた
-   * IDをそのまま続きにするかの2つ（`docs/requirements.md`「セッションの復元」）。
-   *
-   * 待てる形（Promise）で返すのは、そのパックの続きから始めるセッションを探すのに
-   * 外の世界（claude 自身の transcript の一覧）を読むから（`docs/requirements.md`「セッションの復元」）。
+   * 知らない名前のときに何を起こすかも、名前を覚えるかどうかも呼び出し側が決める。
    */
   readonly launchSession: (
     onEvent: (event: SessionEvent) => void,
@@ -133,16 +100,13 @@ export type SessionManagerOptions = {
     request: SessionLaunchRequest,
   ) => Promise<SessionDriver>
   /**
-   * ホームに残っている前回の見直しの結果（`docs/requirements.md`「トークン消費の見直し」）。起こした
-   * ときに1回だけ読み、初期の姿（{@link SessionState.previousUsageReview}）に載せる——
-   * `INITIAL_SESSION_STATE` は静的な定数なので、ここでしか差し込めない。
+   * ホームに残っている前回の見直しの結果。
+   * 起こしたときに1回だけ読み、初期の姿（{@link SessionState.previousUsageReview}）に載せる。
    */
   readonly readPreviousUsageReview: () => PreviousUsageReview
   /**
-   * 見直しの結果を、次の起動でも「前回の提案」として配れるようにホームへ書く
-   * （`writePreviousUsageReview`）。駆動由来（`"driver"`）の
-   * `usage-review-result` を畳んだときだけ呼ぶ（復元の再生には出てこない種類のイベントだが、
-   * ほかの書き込みと条件を揃えてある）。
+   * 見直しの結果を、次の起動でも「前回の提案」として配れるようにホームへ書く。
+   * 駆動由来（`"driver"`）の `usage-review-result` を畳んだときだけ呼ぶ。
    */
   readonly writePreviousUsageReview: (reviewedAt: number, findings: UsageReviewFindings) => void
   /**
@@ -153,31 +117,27 @@ export type SessionManagerOptions = {
 }
 
 /**
- * セッション1つぶんの持ち物（`docs/design.md`「core と adapter」）。起こした時点で駆動も起こし始める
- * （`create` の段は無い。1プロセスが持つセッションは1つで、切り替えは中で起こし直す）。
+ * セッション1つぶんの持ち物。起こした時点で駆動も起こし始める。
+ * `create` の段は無い（1プロセスが持つセッションは1つで、切り替えは中で起こし直す）。
  */
 export type SessionManager = {
-  /**
-   * コマンドの受け手に見せる口（`docs/design.md`「コマンドの受け手と手続きの置き方」）。
-   * `/ws` の手続きの context に載る。代は呼ばれたその時点のものを返す。
-   */
+  /** コマンドの受け手に見せる口。代は呼ばれたその時点のものを返す。 */
   readonly commandSession: CommandSession
   /**
-   * いまのコンテキストの内訳を駆動から取る（トークン消費の画面が引く。
-   * `docs/glossary.md`「コンテキストの内訳」）。押すのではなく引くので、状態にも
-   * フレームにも乗らない。取れなかったときは「取れない」。
+   * いまのコンテキストの内訳を駆動から取る。
+   * 押すのではなく引くので、状態にもフレームにも乗らない。取れなかったときは「取れない」。
    */
   readonly readContextUsage: () => Promise<ContextUsageReport>
   /**
-   * いまの利用枠を駆動から取る（サイドバーの札が引く。`docs/glossary.md`「利用枠」）。押すのでは
-   * なく引くので、状態にもフレームにも乗らない。取れなかったときは「取れない」。
+   * いまの利用枠を駆動から取る。
+   * 押すのではなく引くので、状態にもフレームにも乗らない。取れなかったときは「取れない」。
    */
   readonly readPlanUsage: () => Promise<PlanUsageReport>
   /**
-   * セッション1件の中身を駆動から取る（切り替え画面が選んだ1件ぶんだけ引く。
-   * `docs/glossary.md`「セッションの要約」）。読んでよいのは、いま配っている一覧
-   * （`sessions-changed`）に載ったものと、いま出しているセッションだけ——画面から届いたIDで
-   * よその transcript を読まない。それ以外と、取れなかったときは「読めない」。
+   * セッション1件の中身を駆動から取る。
+   * 読んでよいのは、いま配っている一覧（`sessions-changed`）に載ったものと、いま出しているセッションだけ。
+   * 画面から届いたIDでよその transcript を読まない。
+   * それ以外と、取れなかったときは「読めない」。
    */
   readonly readSessionDigest: (sessionId: string) => Promise<SessionDigest>
   /** 接続を購読に加える。まず `hello` を1つ送ってから加え、外すための関数を返す。 */
@@ -186,15 +146,12 @@ export type SessionManager = {
   readonly close: () => void
 }
 
-/**
- * `receive` に渡るイベントが「駆動から新しく届いたか（`"driver"`）、復元の再生か
- * （`"restored"`）」の印（`docs/design.md`「雑談の記憶の置き場」）。
- */
+/** `receive` に渡るイベントが「駆動から新しく届いたか（`"driver"`）、復元の再生か（`"restored"`）」の印。 */
 type EventOrigin = "driver" | "restored"
 
 /**
- * 駆動1代ぶんの勘定。イベントを受けるときに見るのはここだけなので、届いたイベントは
- * 必ずそれを生んだ代の勘定に積まれる（起こし直しをまたいで混ざらない）。
+ * 駆動1代ぶんの勘定。
+ * イベントを受けるときに見るのはここだけなので、届いたイベントは必ずそれを生んだ代の勘定に積まれる（起こし直しをまたいで混ざらない）。
  */
 type GenerationTally = {
   /** まとめて配る束（代をまたいで積み残しを配らない）。 */
@@ -202,26 +159,20 @@ type GenerationTally = {
   /** トークンの累計と、いま進んでいるターンの内訳。 */
   readonly tokenUsage: TokenUsageRecorder
   /**
-   * 起き上がった駆動。閉じるのを待たないために値でも持つ（プロセスの終了は `process.exit`
-   * ですぐ進むので、待っていると claude の子プロセスが閉じられずに残る）。まだ起き上がって
-   * いない・起こせなかったときは `undefined`。
+   * 起き上がった駆動。閉じるのを待たないために値でも持つ。
+   * プロセスの終了は `process.exit` ですぐ進むので、待っていると claude の子プロセスが閉じられずに残る。
+   * まだ起き上がっていない・起こせなかったときは `undefined`。
    */
   readonly liveDriver: () => SessionDriver | undefined
   /** 訪問の見張り（待ちの勘定と掛けた時計。起こし直すと一緒に捨てる）。 */
   readonly visit: VisitWatch
-  /**
-   * 振り返りの書き手を中断する信号（代の持ち物。`docs/requirements.md`
-   * 「会話から切り離す」）。起こし直しで代を閉じたら、書いている最中の問い合わせも中断する。
-   */
+  /** 振り返りの書き手を中断する信号。起こし直しで代を閉じたら、書いている最中の問い合わせも中断する。 */
   readonly diarySignal: AbortSignal
 }
 
 /**
- * 駆動1代ぶんの持ち物。起こし直しはこれを丸ごと作り直すことで、代のあいだだけ意味のある
- * 勘定を1つずつ手で空へ戻さない（勘定を足すたびに `restart` へ書き足す、を無くす）。
- *
- * 代をまたいで残るもの（購読者・棚・コンテキストの内訳を書いたセッションID）はここに
- * 入れない。
+ * 駆動1代ぶんの持ち物。起こし直しはこれを丸ごと作り直すことで、代のあいだだけ意味のある勘定を1つずつ手で空へ戻さない。
+ * 代をまたいで残るもの（購読者・棚・コンテキストの内訳を書いたセッションID）はここに入れない。
  */
 type SessionGeneration = GenerationTally & {
   /** 駆動が起き上がるのを待つ口（コマンドを渡す側が待つ）。 */
@@ -231,33 +182,31 @@ type SessionGeneration = GenerationTally & {
   /** 新しい `hello` を配り終えたと知らせ、束を配り始める（起こし直しの代だけが待っている）。 */
   readonly announce: () => void
   /**
-   * この代が生きているあいだだけイベントを畳む（駆動由来と同じ扱い）。代を閉じたあとに呼んでも
-   * 黙って捨てる——`reflectAchievement` のような長く続く非同期の処理が、あとから届いた
-   * イベントをこの代に固定して流すために使う。
+   * この代が生きているあいだだけイベントを畳む（駆動由来と同じ扱い）。代を閉じたあとに呼んでも黙って捨てる。
+   * 長く続く非同期の処理が、あとから届いたイベントをこの代に固定して流すための口。
    */
   readonly emit: (event: SessionEvent) => void
 }
 
 export function createSessionManager(options: SessionManagerOptions): SessionManager {
   const subscribers = new Set<(frame: ServerFrame) => void>()
-  // 前回の見直しの結果だけ、起こしたときにホームから読んで載せる——`INITIAL_SESSION_STATE`
-  // は静的な定数なので、実行時の値をここで1回だけ差し込む（`docs/requirements.md`
-  // 「トークン消費の見直し」）。
+  // 前回の見直しの結果だけ、起こしたときにホームから読んで載せる。
+  // `INITIAL_SESSION_STATE` は静的な定数なので、実行時の値をここで1回だけ差し込む。
   let state: SessionState = {
     ...INITIAL_SESSION_STATE,
     previousUsageReview: options.readPreviousUsageReview(),
   }
   // 閉じたあとに駆動が投げてくるイベントは捨てる（配る先がもう無いのにタイマーを立てない）。
   let closed = false
-  // 何代目まで起こしたか。閉じた駆動があとから投げてくるイベントを捨てるための印
-  // （`session.switchCharacter` で起こし直したとき、前の駆動の最後のイベントが新しい状態に混ざらない）。
+  // 何代目まで起こしたか。閉じた駆動があとから投げてくるイベントを捨てるための印。
+  // 起こし直したとき、前の駆動の最後のイベントが新しい状態に混ざらない。
   let bornCount = 0
-  // コンテキストの内訳の記録。代をまたいで持つ — 続きから起こして同じIDになったときは
-  // 同じセッションなので、2行目を書かない（世代の持ち物には入れない）。
+  // コンテキストの内訳の記録。代をまたいで持つ（世代の持ち物には入れない）。
+  // 続きから起こして同じIDになったときは同じセッションなので、2行目を書かない。
   const contextUsage = createContextUsageRecorder(options.contextUsageLog)
-  // 定着が走っているか。代ではなくここに持つ——起こし直しをまたいでも同時に1本のまま
-  // （同じパックへ起こし直した直後に、同じ未定着の行を2本で畳まない）。走っているあいだの
-  // 契機は捨てる（`docs/chat-mode.md`「雑談モード」）。
+  // 定着が走っているか。代ではなくここに持つ。
+  // 起こし直しをまたいでも同時に1本のまま（同じパックへ起こし直した直後に、同じ未定着の行を2本で畳まない）。
+  // 走っているあいだの契機は捨てる。
   let consolidating = false
   // プロセスを終えるときに走っている1本を中断する（待たない。書きかけで止まれば追記済みまでが定着）。
   const consolidationAbort = new AbortController()
@@ -269,9 +218,9 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
   })
 
   /**
-   * 状態を差し替える。記録から消えた依頼の原寸は、ここで棚から捨てる（窓から落ちた・
-   * 起こし直して空に戻った。`releasedPromptImageIds`）。状態を書き換えるのはここだけにして、
-   * 棚の寿命が記録の窓から外れないようにする。
+   * 状態を差し替える。
+   * 記録から消えた依頼の原寸は、ここで棚から捨てる（窓から落ちた・起こし直して空に戻った。`releasedPromptImageIds`）。
+   * 状態を書き換えるのはここだけにして、棚の寿命が記録の窓から外れないようにする。
    */
   const replaceState = (next: SessionState): void => {
     if (next.records !== state.records) {
@@ -281,15 +230,11 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
   }
 
   /**
-   * イベント1件を畳んで、それを生んだ代の勘定に積む。駆動から届いたものと、見た目の編集で
-   * 起こした `character-changed` の両方がここを通る（サーバ側の状態とブラウザへ配る内容を
-   * 1本にする）。
+   * イベント1件を畳んで、それを生んだ代の勘定に積む。
+   * 駆動から届いたものと、見た目の編集で起こした `character-changed` の両方がここを通る（サーバ側の状態とブラウザへ配る内容を1本にする）。
    *
-   * `origin` は「駆動から新しく届いたか（`"driver"`）、復元の再生か（`"restored"`）」の印
-   * （`docs/design.md`「雑談の記憶の置き場」）。畳み方と配り方は
-   * どちらも同じ——分かれているのは、雑談の会話のアーカイブへ書くのを駆動由来の依頼と
-   * セリフだけに絞るため（復元で流し直されたぶんまで書くと、起こし直すたびに同じ行が
-   * 二重に積まれる）。
+   * 畳み方と配り方は `origin` によらず同じ。
+   * 分かれているのは、雑談の会話のアーカイブへ書くのを駆動由来の依頼とセリフだけに絞るため（復元で流し直されたぶんまで書くと、起こし直すたびに同じ行が二重に積まれる）。
    */
   const receive = (tally: GenerationTally, event: SessionEvent, origin: EventOrigin): void => {
     if (closed) {
@@ -298,27 +243,23 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
     const at = options.now()
     replaceState(applySessionEvent(state, event, at))
     tally.batch.add({ at, event })
-    // 雑談の会話のアーカイブへ1行足す。駆動由来（`"driver"`）・雑談モード・パックが
-    // 分かっているときだけ（`docs/chat-mode.md`「雑談の会話のアーカイブ」）。
+    // 雑談の会話のアーカイブへ1行足す。駆動由来（`"driver"`）・雑談モード・パックが分かっているときだけ。
     if (origin === "driver" && state.chatMode) {
       appendChatArchiveEntry(options.chatArchive, state.character?.pack, at, event)
     }
-    // ターンの中の内訳（ツール別・持ち場別）を積む。駆動由来（`"driver"`）だけ —
+    // ターンの中の内訳（ツール別・持ち場別）を積む。駆動由来（`"driver"`）だけ。
     // 復元の再生は前のセッションで使ったぶんなので、いまのターンに数えない。
     if (origin === "driver") {
       tally.tokenUsage.tally(event)
     }
-    // そのターンのトークン消費を1行書く。駆動由来（`"driver"`）だけ（復元の再生には
-    // 使用量が乗らないし、乗せても同じターンを二度数えることになる）。
+    // そのターンのトークン消費を1行書く。駆動由来（`"driver"`）だけ。
+    // 復元の再生には使用量が乗らないし、乗せても同じターンを二度数えることになる。
     if (origin === "driver" && event.kind === "token-usage") {
       tally.tokenUsage.append(event.cumulative, at, state)
     }
-    // トークン消費の内訳を、1ターンぶんだけ持つところから捨てる（次のターンでまた0から
-    // 数える）。`token-usage` は `turn-finished` より先に届く（変換する側が `result`
-    // 1つをこの順に変換する）ので、書き終えたあとに捨てることになる。
-    // 見直しの結果を、次の起動でも「前回の提案」として配れるようにホームへ書く。駆動由来
-    // （`"driver"`）だけ——復元の再生にはこの種類のイベントは出てこない
-    // （`docs/requirements.md`「トークン消費の見直し」）が、ほかの書き込みと条件を揃えてある。
+    // トークン消費の内訳を、1ターンぶんだけ持つところから捨てる（次のターンでまた0から数える）。
+    // `token-usage` は `turn-finished` より先に届く（変換する側が `result` 1つをこの順に変換する）ので、書き終えたあとに捨てることになる。
+    // 見直しの結果を、次の起動でも「前回の提案」として配れるようにホームへ書く。駆動由来（`"driver"`）だけ。
     if (origin === "driver" && event.kind === "usage-review-result") {
       options.writePreviousUsageReview(at, event.findings)
     }
@@ -336,22 +277,21 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
         void contextUsage.recordOnce(state, at, driver)
       }
     }
-    // 定着を起こす。雑談の駆動由来のターンの終わりだけで、走っていれば契機を捨てる。
-    // 待たずに次へ進む（`docs/chat-mode.md`「窓から溢れた会話は定着で畳む」）。
+    // 定着を起こす。雑談の駆動由来のターンの終わりだけで、走っていれば契機を捨てる。待たずに次へ進む。
     if (origin === "driver" && event.kind === "turn-finished" && state.chatMode) {
       startConsolidation(state.character?.pack)
     }
-    // 訪問の出入りを決める。駆動由来だけ（復元の再生は前のセッションの待ち）。見張りが
-    // 出した訪問のイベントもこの受け口へ戻ってくる（`createVisitWatch`）。
+    // 訪問の出入りを決める。駆動由来だけ（復元の再生は前のセッションの待ち）。
+    // 見張りが出した訪問のイベントもこの受け口へ戻ってくる（`createVisitWatch`）。
     if (origin === "driver") {
       tally.visit.observe(event, at)
     }
   }
 
   /**
-   * そのパックの定着を1本起こす（走っていれば何もしない）。書くのは起こした時点のパックの
-   * ファイルで、書けたときの話題の見出しは、そのときの状態が雑談で同じパックのときだけ
-   * 今の代へ流す（起こし直しのあとに遅れて届いた結果が、別のパックの画面に混ざらない）。
+   * そのパックの定着を1本起こす（走っていれば何もしない）。
+   * 書くのは起こした時点のパックのファイルで、書けたときの話題の見出しは、そのときの状態が雑談で同じパックのときだけ今の代へ流す。
+   * 起こし直しのあとに遅れて届いた結果が、別のパックの画面に混ざらないため。
    */
   const startConsolidation = (packName: string | undefined): void => {
     const source = options.chatConsolidation
@@ -372,10 +312,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
     })
   }
 
-  /**
-   * 駆動を1代起こし、その代ぶんの勘定をまとめて作る。起こし直し（`restart`）はこれを丸ごと
-   * 呼び直すことなので、勘定を1つ足しても空へ戻す場所を書き足さなくてよい。
-   */
+  /** 駆動を1代起こし、その代ぶんの勘定をまとめて作る。 */
   const startGeneration = (
     request: SessionLaunchRequest,
     delivery: "immediate" | "after-hello",
@@ -384,12 +321,10 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
     const born = bornCount
     // 起き上がった駆動を入れる可変の入れ物（起き上がるまでは空）。
     let live: SessionDriver | undefined = undefined
-    // 起こし直しの代は、新しい `hello` を配るまで束を配らない。 駆動が起き上がるまでの数秒に
-    // 流れたイベント（`chat-mode-changed` など）を先に配ると、ブラウザは前のセッションの姿の
-    // まま雑談 / 仕事へ切り替わり、前の立ち絵が一瞬出てから `hello` で入れ替わる。その間の
-    // 姿は `hello` に入るので、配らずに捨ててよい。
+    // 起こし直しの代は、新しい `hello` を配るまで束を配らない。
+    // 駆動が起き上がるまでの数秒に流れたイベント（`chat-mode-changed` など）を先に配ると、ブラウザは前のセッションの姿のまま雑談 / 仕事へ切り替わり、前の立ち絵が一瞬出てから `hello` で入れ替わる。
+    // その間の姿は `hello` に入るので、配らずに捨ててよい。
     let held = delivery === "after-hello"
-    // 振り返りの書き手を中断する信号（代の持ち物）。
     const diaryAbort = new AbortController()
     const tally: GenerationTally = {
       batch: createEventBatch({
@@ -460,8 +395,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
     }
   }
 
-  // 起動時は覚えない — その回だけの指定（`TSUKUMO_CHARACTER`）や同梱の既定が次の起動の
-  // 初期値として残らないように（`docs/screen-design.md`「設定の置き場所」）。
+  // 起動時は覚えない。その回だけの指定（`TSUKUMO_CHARACTER`）や同梱の既定が次の起動の初期値として残らないように。
   let generation = startGeneration(
     {
       selection: { by: "initial" },
@@ -472,33 +406,24 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
   )
 
   /**
-   * 駆動を起こし直す（`docs/design.md`「キャラクターパック」。そのパックのセッションの
-   * 続きから始まる — 会話が繋がるかどうかは、起こす側が `resume` に何を渡すかで決まる）。
-   * 契機は3つ: 別のキャラクターパックに切り替えたとき（`session.switchCharacter`）、
-   * 雑談モードを切り替えたとき（`session.setChatMode`。`systemPrompt` を差し替えるため。
-   * `docs/chat-mode.md`「雑談モード」）、画面から別のセッションを選んだとき（`session.switchSession`。
-   * `docs/requirements.md`「セッションの復元」）。
-   * 画面は初期状態に戻す — 吹き出し・立ち絵・メインビューの3つを消して、新しい `hello` を
-   * 配り直す。起こし直しの間に届いたイベント（新しい `character-changed`・組み直した履歴など）は
-   * その `hello` の状態に入っているので、二重に配らない。
-   *
-   * 起こし直しに失敗しても常駐プロセスは落とさない（`askDriver` と同じ扱いで、
-   * 定型文の理由を返すだけ。docs/coding-standards.md「エラーハンドリング」）。
+   * 駆動を起こし直す。会話が繋がるかどうかは、起こす側が `resume` に何を渡すかで決まる。
+   * 画面は初期状態に戻す。吹き出し・立ち絵・メインビューの3つを消して、新しい `hello` を配り直す。
+   * 起こし直しの間に届いたイベント（新しい `character-changed`・組み直した履歴など）はその `hello` の状態に入っているので、二重に配らない。
+   * 起こし直しに失敗しても常駐プロセスは落とさず、定型文の理由を返すだけ。
    */
   const restart = async (request: SessionLaunchRequest): Promise<DispatchResult> => {
     try {
       generation.close()
-      // `previousUsageReview` だけは起こし直しをまたいで残す——ホームのファイルに残る
-      // 記録であって、駆動1代の持ち物ではない（`usageReview` は起こし直すとふだんへ戻る。
-      // `docs/requirements.md`「トークン消費の見直し」）。
+      // `previousUsageReview` だけは起こし直しをまたいで残す。
+      // ホームのファイルに残る記録であって、駆動1代の持ち物ではない（`usageReview` は起こし直すとふだんへ戻る）。
       replaceState({ ...INITIAL_SESSION_STATE, previousUsageReview: state.previousUsageReview })
       generation = startGeneration(request, "after-hello")
       await generation.driver
       announceGeneration()
       return { ok: true }
     } catch {
-      // 起こせなくても、組み直した姿（キャラクター・モード）は `hello` で配り、束も止めたままに
-      // しない（見た目の編集などで積んだイベントが、次の起こし直しまで届かなくなる）。
+      // 起こせなくても、組み直した姿（キャラクター・モード）は `hello` で配り、束も止めたままにしない。
+      // 止めたままだと、見た目の編集などで積んだイベントが次の起こし直しまで届かなくなる。
       announceGeneration()
       return { ok: false, reason: FRAME_ERROR_REASON.driverFailed }
     }
@@ -522,8 +447,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
   return {
     commandSession,
     readContextUsage: async () => {
-      // 起こし直しの最中・起こせなかったときは駆動そのものが無い。画面の札が1枚出ない
-      // だけで、常駐プロセスは落とさない（`askDriver` と同じ扱い）。
+      // 起こし直しの最中・起こせなかったときは駆動そのものが無い。画面の札が1枚出ないだけで、常駐プロセスは落とさない。
       try {
         const started = await generation.driver
         return await started.readContextUsage()
@@ -532,7 +456,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
       }
     },
     readPlanUsage: async () => {
-      // 起こし直しの最中・起こせなかったときは駆動そのものが無い（`readContextUsage` と同じ扱い）。
+      // 起こし直しの最中・起こせなかったときは駆動そのものが無い。
       try {
         const started = await generation.driver
         return await started.readPlanUsage()
@@ -575,7 +499,7 @@ function isReadableSession(state: SessionState, sessionId: string): boolean {
   )
 }
 
-/** 購読者全員に配る。閉じかけている接続を無視するのは送る側（接続を扱うアダプタ）の仕事。 */
+/** 購読者全員に配る。閉じかけている接続を無視するのは送る側の仕事。 */
 function publish(frame: ServerFrame, subscribers: ReadonlySet<(frame: ServerFrame) => void>): void {
   for (const send of subscribers) {
     send(frame)

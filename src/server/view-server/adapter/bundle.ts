@@ -1,11 +1,9 @@
-// ブラウザ側スクリプト（`src/browser/`）と CSS を `vite build` で1本ずつにまとめる。作る口と
-// 読む口を分けてある: 作るのは `pnpm run build` だけで、
-// 起動は置いてある成果物を読むだけ（`readUiBundle`）。
+// ブラウザ側スクリプト（`src/browser/`）と CSS を `vite build` で1本ずつにまとめる。
+// 作る口と読む口を分けてある: 作るのは `pnpm run build` だけで、起動は置いてある成果物を読むだけ（`readUiBundle`）。
 //
-// スクリプトと CSS は1回の `vite build` から出る対。CSS Modules（`*.module.css`）は
-// ハッシュ化した class 名を JS と CSS の両方へ焼き込むので、別々に組み立てると綴りの違う対が
-// できてしまう。入口はブラウザ側の入口ファイル1つだけで、CSS はそこから import で辿れるもの
-// （`styles/theme.css` と各機能の `*.module.css`）が1本にまとまる。
+// スクリプトと CSS は1回の `vite build` から出る対。
+// CSS Modules（`*.module.css`）はハッシュ化した class 名を JS と CSS の両方へ焼き込むので、別々に組み立てると綴りの違う対ができてしまう。
+// 入口はブラウザ側の入口ファイル1つだけで、CSS はそこから import で辿れるもの（`styles/theme.css` と各機能の `*.module.css`）が1本にまとまる。
 //
 // 成果物は `dist/browser/` に置く（`.gitignore` してあるので、各自が `pnpm run build` で作る）。
 // 起動時に `src/browser/` と成果物の新しさを比べ、古ければ知らせる（`readUiBundle` の `outdated`）。
@@ -16,8 +14,7 @@
 // 常駐するサーバの中では呼ばない。
 // 設定はリポジトリ直下の Vite の設定ファイルで、入口の置き場と出し先はここが引数で渡す。
 //
-// 型検査はここではしない（`vite build` はトランスパイルだけで型を見ない）。型は
-// `pnpm run check` の `tsc --noEmit` が見る。
+// 型検査はここではしない（`vite build` はトランスパイルだけで型を見ない）。型は `pnpm run check` の `tsc --noEmit` が見る。
 
 import { execFile } from "node:child_process"
 import { readdir, readFile, stat } from "node:fs/promises"
@@ -90,8 +87,8 @@ export type BundleResult =
   | { readonly ok: false; readonly reason: string }
 
 /**
- * 置いてある成果物を読んだ結果。読めたときは古いかどうかも一緒に返す — 古さは
- * 「配れない理由」ではなく「配るけれど知らせること」なので、失敗の側には寄せない。
+ * 置いてある成果物を読んだ結果。読めたときは古いかどうかも一緒に返す。
+ * 古さは「配れない理由」ではなく「配るけれど知らせること」なので、失敗の側には寄せない。
  */
 export type StoredBundleResult =
   | { readonly ok: true; readonly bundle: UiBundle; readonly outdated: boolean }
@@ -103,9 +100,8 @@ export function builtUiDir(): string {
 }
 
 /**
- * `builtDir` にある成果物を読む。`vite build` は起こさない（起動の経路はここだけを通る。
- * `docs/design.md`「ビルドと依存」）。無ければ起動時の前提不足として扱えるよう、`pnpm run build` を促す理由を
- * 添えて失敗を返す。
+ * `builtDir` にある成果物を読む。`vite build` は起こさない（起動の経路はここだけを通る）。
+ * 無ければ起動時の前提不足として扱えるよう、`pnpm run build` を促す理由を添えて失敗を返す。
  */
 export async function readUiBundle(builtDir: string): Promise<StoredBundleResult> {
   const bundle = await readPair(builtDir)
@@ -121,8 +117,7 @@ export async function readUiBundle(builtDir: string): Promise<StoredBundleResult
 
 /**
  * ブラウザ側（`src/browser/`）を組み立てて `outDir` に置き、置いたものを読んで返す。
- * JSX は `@vitejs/plugin-react` が変換し、CSS Modules は `vite build` が class 名を
- * ハッシュ化して JS 側の対応表に入れる（`docs/design.md`「ビルドと依存」）。
+ * JSX は `@vitejs/plugin-react` が変換し、CSS Modules は `vite build` が class 名をハッシュ化して JS 側の対応表に入れる。
  */
 export function buildUiBundle(outDir: string): Promise<BundleResult> {
   return bundleWithVite(bundledFilePath(...UI_SOURCE_DIR_RELATIVE_PATH), outDir)
@@ -191,7 +186,7 @@ async function readPair(dir: string): Promise<UiBundle | undefined> {
 }
 
 /**
- * ソースのほうが成果物より新しいか。どちらかの時刻を見られなかったときは古いと言わない —
+ * ソースのほうが成果物より新しいか。どちらかの時刻を見られなかったときは古いと言わない。
  * 「分からない」を「古い」に寄せると、出どころの怪しい警告が毎回出て読まれなくなる。
  *
  * 見るのは {@link BUNDLED_SOURCE_DIR_RELATIVE_PATHS} の下だけで、依存（`node_modules`）や

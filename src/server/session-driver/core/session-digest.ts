@@ -1,9 +1,8 @@
-// セッション1件の中身（依頼の数・要約・最後のセリフ）を transcript のメッセージ列から組む
-// （`docs/glossary.md`「セッションの要約」）。SDK を呼ばない純粋な部分で、読むのは SDK を起こすアダプタ。
+// セッション1件の中身（依頼の数・要約・最後のセリフ）を transcript のメッセージ列から組む。SDK を呼ばない純粋な部分。
 //
-// 組み方は復元（`toRestoredEvents`）と同じ変換を通す。差し戻された `report` の要約・締めのセリフを
-// 拾わないためで、画面が復元で見せるものと数が揃う。読んだものはどこにも書き出さない
-// （docs/coding-standards.md「会話内容の扱い」）。
+// 組み方は復元（`toRestoredEvents`）と同じ変換を通す。
+// 差し戻された `report` の要約・締めのセリフを拾わないためで、画面が復元で見せるものと数が揃う。
+// 読んだものはどこにも書き出さない。
 
 import type { Expression } from "../../../shared/character-pack/expression.ts"
 import {

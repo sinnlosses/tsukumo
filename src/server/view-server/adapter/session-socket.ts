@@ -1,17 +1,13 @@
 // 押し出し（フレーム）の購読とコマンドの手続きが通る WebSocket の境界（`GET /ws?t=<起動トークン>`）。
-// ページと素材を配る HTTP は別の境界（HTTP を起こすアダプタ。ここは `listen` 済みのサーバに upgrade の
-// 受け口を足すだけで、自分では listen しない）。
+// ここは `listen` 済みのサーバに upgrade の受け口を足すだけで、自分では listen しない。
 //
-// 1本の接続の上は、すべて oRPC の手続きの要求と応答（`RPCHandler`。束ねたルータは配線の
-// `createSocketRouter`）。押し出しもブラウザが呼ぶ購読の手続き（`frame.subscribe`）
-// の Event Iterator として流れ、購読の元（`subscribe`）は接続の context に載せる。
+// 1本の接続の上は、すべて oRPC の手続きの要求と応答（`RPCHandler`）。
+// 押し出しもブラウザが呼ぶ購読の手続き（`frame.subscribe`）の Event Iterator として流れ、購読の元（`subscribe`）は接続の context に載せる。
 //
-// 安全のための決まり（`docs/design.md`「会話内容と安全」）:
-//   - 起動トークン（`createStartupToken`。起動ごとの乱数で、ディスクに
-//     書かない）が合わないと upgrade をしない
+// 安全のための決まり:
+//   - 起動トークン（`createStartupToken`。起動ごとの乱数で、ディスクに書かない）が合わないと upgrade をしない
 //   - `Origin` があれば自分のオリジンと一致すること（無ければ通す）
-//   - 断るときの理由は定型文だけ（会話の内容を混ぜない）。読めないメッセージは中身をどこにも
-//     出さずに捨てる
+//   - 断るときの理由は定型文だけ（会話の内容を混ぜない）。読めないメッセージは中身をどこにも出さずに捨てる
 
 import type { IncomingMessage, Server } from "node:http"
 import type { Duplex } from "node:stream"
@@ -30,30 +26,29 @@ import type { SubscribeFrames } from "./frame-procedure.ts"
 import { rpcContextOf, type SocketRpcContext } from "./rpc-guard.ts"
 
 /**
- * 受け取るメッセージ1件の上限（バイト）。1件の依頼に添えられる画像（原寸 5 MiB × 2 枚）を
- * data URL で運べる大きさにしてある（内訳: 原寸2枚の base64 ≒ 13.33 MiB ＋ 控え2枚
- * ≒ 0.34 MiB ＋ 文面 20,000 文字で約 13.7 MiB。`docs/requirements.md`「画像の添付」の表）。
+ * 受け取るメッセージ1件の上限（バイト）。1件の依頼に添えられる画像（原寸 5 MiB × 2 枚）を data URL で運べる大きさにしてある。
+ * 内訳: 原寸2枚の base64 ≒ 13.33 MiB ＋ 控え2枚 ≒ 0.34 MiB ＋ 文面 20,000 文字で約 13.7 MiB。
+ * 画像の上限を変えるときはここも直す。
  *
- * 依頼の文面の上限はこれとは別に効いている（zod の `MAX_PROMPT_TEXT_LENGTH`。
- * `MAX_PROMPT_TEXT_LENGTH`）ので、ここを上げても送れる文面は長くならない。
+ * 依頼の文面の上限はこれとは別に効いている（zod の `MAX_PROMPT_TEXT_LENGTH`）ので、ここを上げても送れる文面は長くならない。
  */
 const MAX_MESSAGE_BYTES = 16 * 1024 * 1024
 
 export type SessionSocketOptions = {
-  /** listen 済みの HTTP サーバ（`startViewServer` が立てたもの）。 */
+  /** listen 済みの HTTP サーバ。 */
   readonly httpServer: Server
   readonly token: string
   /** 自分のオリジン（`http://127.0.0.1:<port>`）。`Origin` ヘッダの照合に使う。 */
   readonly origin: string
-  /** 押し出しの購読の元（`session-manager` の `subscribe`）。手続き `frame.subscribe` が読む。 */
+  /** 押し出しの購読の元。手続き `frame.subscribe` が読む。 */
   readonly subscribe: SubscribeFrames
-  /** `/ws` の手続きを束ねたルータ（配線の `createSocketRouter`）。 */
+  /** `/ws` の手続きを束ねたルータ。 */
   readonly socketRouter: SocketRouter
-  /** 手続きの context に載せるセッションの口（`session-manager` の `commandSession`）。 */
+  /** 手続きの context に載せるセッションの口。 */
   readonly commandSession: CommandSession
   /**
-   * 同じサーバに upgrade の受け口を足したほかの持ち主が受ける upgrade か。そうならここは
-   * 断らずに触らない（断りの 403 を書くと、あちらが繋いだ接続を壊す）。
+   * 同じサーバに upgrade の受け口を足したほかの持ち主が受ける upgrade か。
+   * そうならここは断らずに触らない（断りの 403 を書くと、あちらが繋いだ接続を壊す）。
    */
   readonly yieldsUpgrade: (request: IncomingMessage) => boolean
 }
@@ -69,9 +64,9 @@ export type SessionSocket = {
 /**
  * HTTP サーバに WebSocket の受け口を足す。listen はしない（呼び出し側が済ませている）。
  *
- * 接続しただけでは購読に加わらない。ブラウザが `frame.subscribe` を呼ぶと、`hello` が1つ届いてから
- * `events` が流れ始める（順序を決めているのは `session-manager` 側）。接続が切れると oRPC が
- * 手続きの `signal` を中断し、購読が外れる。
+ * 接続しただけでは購読に加わらない。
+ * ブラウザが `frame.subscribe` を呼ぶと、`hello` が1つ届いてから `events` が流れ始める（順序を決めているのは購読の元の側）。
+ * 接続が切れると oRPC が手続きの `signal` を中断し、購読が外れる。
  */
 export function attachSessionSocket(options: SessionSocketOptions): SessionSocket {
   const sockets = new WebSocketServer({ noServer: true, maxPayload: MAX_MESSAGE_BYTES })
@@ -104,9 +99,8 @@ export function attachSessionSocket(options: SessionSocketOptions): SessionSocke
     }
 
     connection.on("message", (data: RawData) => {
-      // 読めないメッセージ（手続きの要求の形でないもの）は黙って捨てる。 受け口の既定
-      // （`upgrade`）は投げたものを `console.error` へ出し、JSON の読み違いの理由には届いた文面の
-      // 断片が入りうる（`docs/coding-standards.md`「会話内容の扱い」）。
+      // 読めないメッセージ（手続きの要求の形でないもの）は黙って捨てる。
+      // 受け口の既定（`upgrade`）は投げたものを `console.error` へ出し、JSON の読み違いの理由には届いた文面（会話の内容）の断片が入りうる。
       procedures.message(connection, messageText(data), { context }).catch(() => {})
     })
     connection.on("close", () => {
@@ -126,8 +120,8 @@ export function attachSessionSocket(options: SessionSocketOptions): SessionSocke
 }
 
 /**
- * upgrade を通してよいか。経路・起動トークン・`Origin` の3つを見る（`docs/design.md`「会話内容と安全」）。
- * `Origin` が無いとき（ブラウザ経由でない呼び出し）を通すのは、旧の POST と同じ規則。
+ * upgrade を通してよいか。経路・起動トークン・`Origin` の3つを見る。
+ * `Origin` が無いとき（ブラウザ経由でない呼び出し）は通す。
  */
 function isAllowedUpgrade(request: IncomingMessage, options: SessionSocketOptions): boolean {
   const url = new URL(request.url ?? "/", options.origin)

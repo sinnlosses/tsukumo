@@ -1,6 +1,5 @@
-// 利用枠（`docs/glossary.md`「利用枠」）を SDK の実験中の口に問い合わせ、画面が要る形
-// （`PlanUsageReport`）へ写す。実験中の名前（`usage_EXPERIMENTAL_MAY_CHANGE_DO_NOT_RELY_ON_THIS_API_YET`）を
-// 呼ぶのはここ1本に閉じる（`docs/research/plan-usage.md`「論点1」）。
+// 利用枠を SDK の実験中の口に問い合わせ、画面が要る形（`PlanUsageReport`）へ写す。
+// 実験中の名前（`usage_EXPERIMENTAL_MAY_CHANGE_DO_NOT_RELY_ON_THIS_API_YET`）を呼ぶのはここ1本に閉じる（`docs/research/plan-usage.md`「論点1」）。
 
 import { z } from "zod"
 
@@ -12,9 +11,8 @@ import {
 } from "../../../shared/plan-usage/plan-usage.ts"
 
 /**
- * {@link readPlanUsage} が要る口だけを写した形。`query()` の戻り値そのものを引数に取らない
- * のは、本物のセッションを起こさずに写しを検査できるようにするため（`ContextUsageSource` と
- * 同じ理由）。
+ * {@link readPlanUsage} が要る口だけを写した形。
+ * `query()` の戻り値そのものを引数に取らないのは、本物のセッションを起こさずに写しを検査できるようにするため。
  */
 type PlanUsageSource = {
   readonly usage_EXPERIMENTAL_MAY_CHANGE_DO_NOT_RELY_ON_THIS_API_YET: (opts: {
@@ -28,9 +26,8 @@ const rateLimitWindowSchema = z
   .optional()
 
 /**
- * SDK が返す形のうち画面が要る鍵だけを見るスキーマ（外の世界の値なので境界で検証する。
- * `docs/coding-standards.md`「型を迂回するキャストを使わない」）。`behaviors` は
- * `skipBehaviors: true` を渡すので運ばれてこない前提で、そもそも読まない。
+ * SDK が返す形のうち画面が要る鍵だけを見るスキーマ。
+ * `behaviors` は `skipBehaviors: true` を渡すので運ばれてこない前提で、そもそも読まない。
  */
 const sdkPlanUsageSchema = z.object({
   rate_limits_available: z.boolean(),
@@ -40,12 +37,11 @@ const sdkPlanUsageSchema = z.object({
 })
 
 /**
- * 利用枠を SDK に問い合わせる（`docs/glossary.md`「利用枠」）。取れなかった回・読めない形は
- * 「取れない」を返すだけで、例外は外へ出さない。
+ * 利用枠を SDK に問い合わせる。取れなかった回・読めない形は「取れない」を返すだけで、例外は外へ出さない。
  *
- * `skipBehaviors: true` を必ず渡す——渡さないと本体が手元の transcript を7日ぶん走査して
- * `behaviors` を作る（`docs/coding-standards.md`「会話内容の扱い」。呼ぶのはこの口だけの
- * 都合で、会話の中身に触る処理を tsukumo の側から起こさない）。
+ * `skipBehaviors: true` を必ず渡す。
+ * 渡さないと本体が手元の transcript を7日ぶん走査して `behaviors` を作る。
+ * 利用枠を読むだけの都合で、会話の中身に触る処理を tsukumo の側から起こさない（`docs/coding-standards.md`「会話内容の扱い」）。
  */
 export async function readPlanUsage(session: PlanUsageSource): Promise<PlanUsageReport> {
   try {
@@ -60,13 +56,11 @@ export async function readPlanUsage(session: PlanUsageSource): Promise<PlanUsage
 }
 
 /**
- * SDK が返した形を tsukumo の形に写す（SDK の語彙を外へ出さない）。読めない形のときは
- * 「取れない」。`rate_limits_available` が `false`（API キーなど）のときは「該当しない」——
- * 再読み込みしても変わらないので、取れないとは別の状態にする
- * （`docs/research/plan-usage.md`「論点1」）。
+ * SDK が返した形を tsukumo の形に写す（SDK の語彙を外へ出さない）。読めない形のときは「取れない」。
+ * `rate_limits_available` が `false`（API キーなど）のときは「該当しない」。
+ * 再読み込みしても変わらないので、取れないとは別の状態にする。
  *
- * 本物の `query()` を呼ばずに写しを検査できるように、`startSdkDriver` の外に出して公開して
- * ある（`toContextUsage` と同じ理由）。
+ * 本物の `query()` を呼ばずに写しを検査できるよう、公開してある。
  */
 export function toPlanUsage(value: unknown): PlanUsageReport {
   const parsed = sdkPlanUsageSchema.safeParse(value)

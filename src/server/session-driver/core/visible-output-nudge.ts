@@ -1,20 +1,12 @@
-// Claude Code 本体が「本文の無い応答」に差し込む催促（`[Your previous response had no visible
-// output. ...]`）への対処。ターンが `speak` のツール呼び出しで終わると、本体はこの固定文を利用者の
-// 発言として差し込み、モデルの呼び出しが1往復増える（`docs/chat-mode.md`「雑談モードで
-// 変わるもの」）。
+// Claude Code 本体が「本文の無い応答」に差し込む催促（`[Your previous response had no visible output. ...]`）への対処。
+// ターンが `speak` のツール呼び出しで終わると、本体はこの固定文を利用者の発言として差し込み、モデルの呼び出しが1往復増える。
 //
-// 塞ぐのはここ（環境変数と見張り）だけ。以前は文面の条（最後の `speak` のあとに「完了」の1行だけ
-// 書かせる）も重ねていたが、`report` を呼ばないターンでその1行が最終レポートとして画面に出たので
-// 外した（経緯は `docs/chat-mode.md`「雑談モード」）。
+// 塞ぐのはここ（環境変数と見張り）だけで、文面の条（最後の `speak` のあとに1行書かせる）は重ねない。
+// `report` を呼ばないターンで、その1行が最終レポートとして画面に出る（`docs/chat-mode.md`「雑談モード」）。
 //
-// 環境変数 `CLAUDE_CODE_TERMINAL_MCP_TOOLS` は公式の文書に無い（同梱の `claude` 2.1.281 を
-// 読んだ判定: `stop_reason` が `end_turn` で応答に空でないテキストが無くても、直前の利用者側の
-// メッセージが `tool_result` だけで、その中に成功した呼び出しがありツール名がこの変数に載って
-// いれば催促しない）。本体の更新で黙って効かなくなりうるので、催促が届いたことに気づく
-// `isVisibleOutputNudge` を一緒に置く。
-//
-// 「決める」内容だけで、外の世界には触らない（`docs/architecture.md`「core → adapter は禁止」）。子プロセスへ渡すのは
-// SDK を起こすアダプタ、環境変数を読むのは配線。
+// 環境変数 `CLAUDE_CODE_TERMINAL_MCP_TOOLS` は公式の文書に無い。
+// 同梱の `claude` 2.1.281 を読んだ判定: `stop_reason` が `end_turn` で応答に空でないテキストが無くても、直前の利用者側のメッセージが `tool_result` だけで、その中に成功した呼び出しがありツール名がこの変数に載っていれば催促しない。
+// 本体の更新で黙って効かなくなりうるので、催促が届いたことに気づく `isVisibleOutputNudge` を一緒に置く。
 
 import { isPlainObject } from "remeda"
 
@@ -23,18 +15,16 @@ import { SPEAK_TOOL_NAME, tsukumoToolFullName } from "./sdk-message.ts"
 /** 本体が「このツールの呼び出しで終わるターンは正常」と扱うツール名の一覧を受け取る環境変数。 */
 export const TERMINAL_MCP_TOOLS_ENV_NAME = "CLAUDE_CODE_TERMINAL_MCP_TOOLS"
 
-/**
- * 本体の催促の固定文の先頭。見分けるのはこの先頭だけで、届いたメッセージの中身は持ち出さない
- * （`docs/coding-standards.md`「会話内容の扱い」）。
- */
+/** 本体の催促の固定文の先頭。見分けるのはこの先頭だけで、届いたメッセージの中身は持ち出さない。 */
 const VISIBLE_OUTPUT_NUDGE_PREFIX = "[Your previous response had no visible output."
 
 /**
- * 子プロセス（claude）に渡す環境変数。引き継いだ環境に足す（SDK の `env` は tsukumo 自身の環境と
- * 混ぜずに丸ごと置き換えるので、`PATH` や `HOME` を落とさないように引き継ぎを先に広げる）。
+ * 子プロセス（claude）に渡す環境変数。引き継いだ環境に足す。
+ * SDK の `env` は tsukumo 自身の環境と混ぜずに丸ごと置き換えるので、`PATH` や `HOME` を落とさないように引き継ぎを先に広げる。
  *
- * 載せるのは `speak` だけ。通った `report` は結果の `claude/endTurn` でそこでターンを閉じ、
- * そのあとにモデルの応答が無いので、催促の判定に掛からない。仕事・雑談の両方で同じ値を渡す。
+ * 載せるのは `speak` だけ。
+ * 通った `report` は結果の `claude/endTurn` でそこでターンを閉じ、そのあとにモデルの応答が無いので、催促の判定に掛からない。
+ * 仕事・雑談の両方で同じ値を渡す。
  */
 export function childProcessEnv(
   inherited: Readonly<Record<string, string | undefined>>,
@@ -43,9 +33,9 @@ export function childProcessEnv(
 }
 
 /**
- * SDK から届いたメッセージが本体の催促か。催促は `type: "user"` で、`content` が固定文の文字列
- * （か、その文字列を1つだけ持つ `text` ブロック）として届く。環境変数が効かなくなったことに
- * 気づくためのもので、中身は読まず先頭だけを見る。
+ * SDK から届いたメッセージが本体の催促か。
+ * 催促は `type: "user"` で、`content` が固定文の文字列（か、その文字列を1つだけ持つ `text` ブロック）として届く。
+ * 環境変数が効かなくなったことに気づくためのもので、中身は読まず先頭だけを見る。
  */
 export function isVisibleOutputNudge(message: unknown): boolean {
   if (!isPlainObject(message) || message.type !== "user" || !isPlainObject(message.message)) {

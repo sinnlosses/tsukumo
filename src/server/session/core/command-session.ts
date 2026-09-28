@@ -1,6 +1,5 @@
-// コマンドの受け手に見せるセッションの口（`docs/design.md`「コマンドの受け手と手続きの置き方」）。
-// セッションの管理側が作り、`/ws` の手続きの context に載って `session` の行
-// （`sessionCommands`）へ渡る。断る条件は契約の `meta` にあり、見るのは `rpcGuard`で、
+// コマンドの受け手に見せるセッションの口。
+// 断る条件は契約の `meta` にあり、見るのは `rpcGuard`。
 // ここは口の形と `session` の行の型、行を呼ぶ `receiveSessionCommand` だけを持つ。
 
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
@@ -14,8 +13,8 @@ import type { SessionDriver } from "../../session-driver/core/session-driver.ts"
 import type { SessionLaunchRequest } from "./session-launch.ts"
 
 /**
- * いまの代に固定した口。長く続く受け手が、起こし直しをまたいで新しい代に混ざらないために
- * 始めたときに1回取って持ち回る（`emit` は代が閉じたら黙って捨てる）。
+ * いまの代に固定した口。
+ * 長く続く受け手は、起こし直しをまたいで新しい代に混ざらないために、始めたときに1回取って持ち回る（`emit` は代が閉じたら黙って捨てる）。
  */
 export type CommandGeneration = {
   readonly emit: (event: SessionEvent) => void
@@ -23,11 +22,7 @@ export type CommandGeneration = {
   readonly diarySignal: AbortSignal
 }
 
-/**
- * 受け手が使うセッションの口。この4つだけで、代・束・購読者は見せない。葉の機能の手続きは
- * このうち `generation` の `emit` だけを型にした `CommandEventSink`で
- * 同じものを受ける。
- */
+/** 受け手が使うセッションの口。この4つだけで、代・束・購読者は見せない。 */
 export type CommandSession = {
   /** いまの姿。 */
   readonly state: () => SessionState
@@ -40,8 +35,8 @@ export type CommandSession = {
 }
 
 /**
- * セッションの口を受け取る行。型がここにあるので、`session` の表にだけ書ける。受け手が
- * 投げても常駐プロセスは落とさず、自分で定型文の理由に畳む。
+ * セッションの口を受け取る行。型がここにあるので、`session` の表にだけ書ける。
+ * 受け手が投げても常駐プロセスは落とさず、自分で定型文の理由に畳む。
  */
 export type SessionReceiver<C> = {
   readonly kind: "session"

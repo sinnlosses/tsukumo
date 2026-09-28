@@ -1,6 +1,6 @@
-// 選んでいるセッションの中身の手続き（`docs/glossary.md`「手続き」）。形は `sessionDigestContract`、
-// 束ねるのは配線。照合は束ねる側のミドルウェアが済ませている。どのIDなら読んでよいかは
-// 読み口の持ち主（`session-manager` の `readSessionDigest`）が決める。
+// 選んでいるセッションの中身の手続き。形は `sessionDigestContract`。
+// 照合は束ねる側のミドルウェアが済ませている。
+// どのIDなら読んでよいかは読み口（`readSessionDigest`）が決めるので、ここでは絞らない。
 
 import { implement } from "@orpc/server"
 
@@ -12,10 +12,7 @@ import {
 
 /** この機能の手続きが使う口（中身は配線が渡す）。 */
 export type SessionDigestProcedurePorts = {
-  /**
-   * セッション1件の中身（持ち主は `session-manager` の `readSessionDigest`。セッションが
-   * 繋がるまでは「読めない」を返すものを配線が置く）。
-   */
+  /** セッション1件の中身。セッションが繋がるまでは「読めない」を返す。 */
   readonly readSessionDigest: (sessionId: string) => Promise<SessionDigest>
 }
 

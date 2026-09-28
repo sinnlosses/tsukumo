@@ -1,12 +1,9 @@
-// 起き上がっている駆動に1件頼むところ（`docs/design.md`「core と adapter」）。受け付けられたかどうかだけを
-// 返し、結果はイベントで戻ってくる（ブラウザはローカルで echo しない。`docs/design.md`「依頼」）。
+// 起き上がっている駆動に1件頼むところ。受け付けられたかどうかだけを返し、結果はイベントで戻ってくる。
 //
-// どのコマンドをどう頼むかを決めるのは `sessionCommands` の表の行（起こし直し・見た目の
-// 編集・覚えるだけの操作はほかの行で捌かれ、ここには来ない）。ここが持つのは「駆動が起き上がるのを
-// 待つこと」と「駆動が投げたときの畳み方」だけ。
+// どのコマンドをどう頼むかを決めるのは `sessionCommands` の表の行。
+// ここが持つのは「駆動が起き上がるのを待つこと」と「駆動が投げたときの畳み方」だけ。
 //
-// 依頼の文面が引数として通るが、ログにもファイルにも書かない
-// （`docs/coding-standards.md`「会話内容の扱い」）。
+// 依頼の文面が引数として通るが、ログにもファイルにも書かない。
 
 import { FRAME_ERROR_REASON } from "../../../shared/frame.ts"
 import { CHAT_NUDGE_PROMPT } from "../../chat/core/chat-nudge.ts"
@@ -20,9 +17,7 @@ export function declined(reason: string): Promise<DispatchResult> {
 
 /**
  * 起き上がった駆動に1件頼む（`ask` が頼み方を持つ。表の行ごとに1つ）。
- *
- * 駆動が例外を投げても常駐プロセスは落とさず、定型文の理由を返す
- * （docs/coding-standards.md「エラーハンドリング」）。
+ * 駆動が例外を投げても常駐プロセスは落とさず、定型文の理由を返す。
  */
 export async function askDriver(
   driver: Promise<SessionDriver>,
@@ -39,11 +34,8 @@ export async function askDriver(
 export const ACCEPTED = { ok: true } satisfies DispatchResult
 
 /**
- * キャラクターから話しかけてもらう（`docs/screen-design.md`「雑談モードの画面」）。文面は core が持ち
- * （{@link CHAT_NUDGE_PROMPT}）、記録に残さない口（`promptWithoutRecord`）で渡すので、
- * 利用者が打っていない一言はログにも記録にも雑談の会話のアーカイブにも並ばない。
- *
- * 駆動が例外を投げても常駐プロセスは落とさず、定型文の理由を返す（{@link askDriver}）。
+ * キャラクターから話しかけてもらう。
+ * 文面（{@link CHAT_NUDGE_PROMPT}）を記録に残さない口（`promptWithoutRecord`）で渡すので、利用者が打っていない一言はログにも記録にも雑談の会話のアーカイブにも並ばない。
  */
 export function nudge(driver: Promise<SessionDriver>): Promise<DispatchResult> {
   return askDriver(driver, (started) => {

@@ -1,31 +1,27 @@
-// ビューサーバの待ち受けポートを決める。環境変数から読んだ値が既定か明示かの区別と、
-// 既定を使ったときだけ EADDRINUSE で次の番号へずらすリトライを1つの概念としてここに閉じる
-// （docs/coding-standards.md「外部の入力を読む場所を1つにする」）。
+// ビューサーバの待ち受けポートを決める。
+// 環境変数から読んだ値が既定か明示かの区別と、既定を使ったときだけ EADDRINUSE で次の番号へずらすリトライを、1つの概念としてここに閉じる。
 //
-// listen そのもの（node:http）は adapter 側の責務のまま。ここは「どのポートで
-// 試すか」の決定と、その決定に沿って `start` を呼び直すことだけを持つ。
+// listen そのもの（node:http）は adapter 側の責務のまま。
+// ここは「どのポートで試すか」の決定と、その決定に沿って `start` を呼び直すことだけを持つ。
 
-// ビューを配るポートを上書きするための環境変数。実際の `process.env` の読み取りは
-// 呼び出し側の配線に残る（docs/coding-standards.md「外部の入力を読む場所を1つにする」）。
+// ビューを配るポートを上書きするための環境変数。実際の `process.env` の読み取りは呼び出し側の配線に残る。
 export const VIEW_PORT_ENV_NAME = "TSUKUMO_VIEW_PORT"
 
-// ビューを配る既定のポート。固定にしてあるのは、開き直したブラウザタブが同じ URL のまま
-// 使えるように（docs/architecture/adr/0017-serve-from-local-http.md）。
+// ビューを配る既定のポート。
+// 固定にしてあるのは、開き直したブラウザタブが同じ URL のまま使えるように（docs/architecture/adr/0017-serve-from-local-http.md）。
 export const DEFAULT_VIEW_PORT = 7327
 
-// ポート番号として読める上限（下限は `0` ＝ OS が空きを選ぶ）。セッションの印の目印も
-// ポート番号なので、読み取りの範囲は `Config` と共通にする。
+// ポート番号として読める上限（下限は `0` ＝ OS が空きを選ぶ）。
+// セッションの印の目印もポート番号なので、読み取りの範囲は `Config` と共通にする。
 export const MAX_PORT_NUMBER = 65535
 
-// 既定ポートから数えて何個先まで試すか（7327〜7346 の20個）。複数の tsukumo を手元で並べて
-// 動かす程度を想定した目安で、無限には伸ばさない
-// （どのポートで待っているか分からない状態を作らないため、上限を持って諦める）。
+// 既定ポートから数えて何個先まで試すか（7327〜7346 の20個）。
+// 複数の tsukumo を手元で並べて動かす程度を想定した目安で、無限には伸ばさない（どのポートで待っているか分からない状態を作らないため、上限を持って諦める）。
 export const VIEW_PORT_FALLBACK_ATTEMPTS = 20
 
 /**
- * 環境変数から読んだビューのポートの読み取り結果。既定を使ったか、明示的に渡されたかを
- * ここで区別する（既定のときだけポートをずらすため。`0`（OS が空きを選ぶ）も明示指定として
- * 扱い、ずらす対象にしない）。
+ * 環境変数から読んだビューのポートの読み取り結果。既定を使ったか、明示的に渡されたかをここで区別する（既定のときだけポートをずらすため）。
+ * `0`（OS が空きを選ぶ）も明示指定として扱い、ずらす対象にしない。
  */
 export type ViewPortResolution =
   | { readonly kind: "invalid" }
@@ -36,12 +32,11 @@ export type ViewPortResolution =
 export type ResolvedViewPort = Exclude<ViewPortResolution, { readonly kind: "invalid" }>
 
 /**
- * 環境変数のポート番号を読む。未設定・空文字は「既定を使う」、整数として読めない・範囲外の値は
- * `invalid`、それ以外（`0` を含む）は「明示的に渡された」として扱う。
+ * 環境変数のポート番号を読む。
+ * 未設定・空文字は「既定を使う」、整数として読めない・範囲外の値は `invalid`、それ以外（`0` を含む）は「明示的に渡された」として扱う。
  *
- * 「既定を使う」ときの起点は既定で {@link DEFAULT_VIEW_PORT} だが、`defaultPort` で差し替えられる
- * （{@link resolveViewPortFallbackBase}。`TSUKUMO_VIEW_PORT` を明示したとき＝`explicit` の
- * 結果には効かない——起点をずらす対象は「既定のときだけずらす」既定の帯そのものだから）。
+ * 「既定を使う」ときの起点は既定で {@link DEFAULT_VIEW_PORT} だが、`defaultPort` で差し替えられる（{@link resolveViewPortFallbackBase}）。
+ * `TSUKUMO_VIEW_PORT` を明示したとき＝`explicit` の結果には効かない。起点をずらす対象は「既定のときだけずらす」既定の帯そのものだから。
  */
 export function resolveViewPort(
   rawPort: string | undefined,
@@ -61,9 +56,8 @@ export function resolveViewPort(
 }
 
 /**
- * `TSUKUMO_VIEW_PORT_FALLBACK_BASE` の生の値を、既定ポートの起点として読む。読めない・
- * 未設定な値は {@link DEFAULT_VIEW_PORT} に倒す（`resolveViewPort` と違い、ここでは起動を
- * 止めない——既定の帯そのものを差し替えるだけの小さな上書きのため）。
+ * `TSUKUMO_VIEW_PORT_FALLBACK_BASE` の生の値を、既定ポートの起点として読む。
+ * 読めない・未設定な値は {@link DEFAULT_VIEW_PORT} に倒し、起動を止めない（既定の帯そのものを差し替えるだけの小さな上書きのため）。
  */
 export function resolveViewPortFallbackBase(raw: string | undefined): number {
   const resolved = resolveViewPort(raw)
@@ -76,14 +70,12 @@ export type ViewPortStartResult<T> =
   | { readonly ok: false; readonly reason: string }
 
 /**
- * 決めたポートで `start` を呼ぶ。明示指定は一度だけ試してそのまま結果を返す
- * （ユーザーの指示——指定したポートで待てないことに気づけなくなるため、ずらさない）。
+ * 決めたポートで `start` を呼ぶ。
+ * 明示指定は一度だけ試してそのまま結果を返す（ずらすと、指定したポートで待てないことに気づけなくなる）。
  * 既定のときだけ、EADDRINUSE が続く限り `VIEW_PORT_FALLBACK_ATTEMPTS` 回まで +1 して試す。
- * EADDRINUSE 以外の失敗（EACCES など）はその場で確定させ、ずらさない
- * （`docs/coding-standards.md`のエラーハンドリング方針どおり、種類で分ける）。
+ * EADDRINUSE 以外の失敗（EACCES など）はその場で確定させ、ずらさない。
  *
- * 全滅したときは、試した範囲（最初と最後のポート番号）を含む理由を返す
- * （黙って0番＝空きポート自動割り当てへは逃げない）。
+ * 全滅したときは、試した範囲（最初と最後のポート番号）を含む理由を返す（黙って0番＝空きポート自動割り当てへは逃げない）。
  */
 export async function startOnResolvedPort<T>(
   resolution: ResolvedViewPort,
@@ -116,8 +108,8 @@ export async function startOnResolvedPort<T>(
   }
 }
 
-// listen の失敗を種類で分ける。Node の listen エラーは Error に `code` が生えた形で届くので、
-// `in` で存在を確かめてから読む（キャストで型を迂回しない。docs/coding-standards.md）。
+// listen の失敗を種類で分ける。
+// Node の listen エラーは Error に `code` が生えた形で届くので、`in` で存在を確かめてから読む。
 function isEaddrInUseError(error: unknown): boolean {
   return error instanceof Error && "code" in error && error.code === "EADDRINUSE"
 }

@@ -1,17 +1,15 @@
-// ビューサーバ。ページ・アセット（`/assets` `/vendor` `/character`）の静的配信と、控えを押した
-// ときに引く依頼の画像の原寸（`GET /prompt-image/<id>?t=<起動トークン>`。`<img src>` で読むので
-// HTTP のまま）を持つ。読み取りの手続きは `/rpc` に載せるだけ
-// で、中身は配線の `createRouter` が束ねたルータ、照合は `rpcGuard` のミドルウェア。
-// フレームとコマンドが通る WebSocket は別の境界（接続を扱うアダプタ。listen 済みのこのサーバに
-// 受け口を足す）。
+// ビューサーバ。
+// ページ・アセット（`/assets` `/vendor` `/character`）の静的配信と、控えを押したときに引く依頼の画像の原寸（`GET /prompt-image/<id>?t=<起動トークン>`。`<img src>` で読むので HTTP のまま）を持つ。
+// 読み取りの手続きは `/rpc` に載せるだけで、照合は `rpcGuard` のミドルウェアが見る。
+// フレームとコマンドが通る WebSocket は別の境界で、listen 済みのこのサーバに受け口を足す。
 // Vite の開発サーバを差し込んだ起動では、経路の表に無い要求をそちらへ回す（`ViewUi` の `dev`）。
 //
-// 安全のための決まり（`docs/design.md`「会話内容と安全」）:
+// 安全のための決まり:
 //   - バインド先は `127.0.0.1` だけ（listen するのはここ）
-//   - 起動トークン（起動ごとの乱数。ディスクに書かない）は `/prompt-image` と `/rpc` を守る
-//     （ページ・同梱物・素材そのものは会話を含まないので、トークンは求めない。いまのまま）。
+//   - 起動トークン（起動ごとの乱数。ディスクに書かない）は `/prompt-image` と `/rpc` を守る。
+//     ページ・同梱物・素材そのものは会話を含まないので、トークンは求めない。
 //     `/prompt-image` はここの経路の表（`requiresToken`）が、`/rpc` は `rpcGuard` が見る。
-//     同じ1つを WebSocket の upgrade も見る（接続を扱うアダプタ）
+//     同じ1つを WebSocket の upgrade も見る
 
 import { randomBytes } from "node:crypto"
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http"
@@ -40,9 +38,9 @@ import type { UiDevServer } from "./ui-dev-server.ts"
 import { readVendorAsset } from "./vendor-asset.ts"
 
 /**
- * 起動トークンを1つ作る。起動ごとに変わり、メモリにしか置かない（ディスクに書かない。
- * `docs/design.md`「会話内容と安全」）。同じマシンの別プロセスが `127.0.0.1` を読めるという割り切りを塞ぐ。
- * 配信（`/prompt-image`・`/rpc`）と WebSocket の upgrade（接続を扱うアダプタ）が同じ1つを見る。
+ * 起動トークンを1つ作る。起動ごとに変わり、メモリにしか置かない（ディスクに書かない）。
+ * 同じマシンの別プロセスが `127.0.0.1` を読めるという割り切りを塞ぐ。
+ * 配信（`/prompt-image`・`/rpc`）と WebSocket の upgrade が同じ1つを見る。
  */
 export function createStartupToken(): string {
   return randomBytes(24).toString("hex")
@@ -53,8 +51,7 @@ export const LAYOUT_PATH = "/"
 
 /**
  * 自前のブラウザ側スクリプト（`src/browser/` を `vite build` でまとめたもの）と CSS を配る経路。
- * 成果物は `dist/browser/` にあり、起動のときに読んでメモリに持つ
- * （束ねるアダプタ）。
+ * 成果物は `dist/browser/` にあり、起動のときに読んでメモリに持つ。
  */
 const ASSET_PATH_PREFIX = "/assets/"
 const UI_SCRIPT_NAME = "ui.js"
@@ -82,9 +79,8 @@ export type CharacterAssetFile = {
 }
 
 /**
- * `/character/<pack>/<file>` の1件を配ってよい形にする。無いパック・allowlist に無い・
- * ディスクに無いときは undefined（呼び出し側が404にする）。キャラクターパックを読むアダプタの
- * `readCharacterAsset` を束ねる。
+ * `/character/<pack>/<file>` の1件を配ってよい形にする（`readCharacterAsset` を束ねる）。
+ * 無いパック・allowlist に無い・ディスクに無いときは undefined（呼び出し側が404にする）。
  */
 export type ServeCharacterAsset = (
   location: CharacterAssetLocation,
@@ -96,10 +92,7 @@ export type ServeCharacterAsset = (
  */
 export type FindPromptImage = (id: string) => string | undefined
 
-/**
- * `/rpc` に載せるルータ（配線の `createRouter` が全機能の手続きを束ね、照合のミドルウェアを
- * 掛けたもの）。ここはどの手続きがあるかを知らない。
- */
+/** `/rpc` に載せるルータ（全機能の手続きを束ね、照合のミドルウェアを掛けたもの）。ここはどの手続きがあるかを知らない。 */
 export type RpcRouter = Router<typeof rpcContract, RpcContext>
 
 /**
@@ -111,34 +104,22 @@ const RPC_MAX_BODY_BYTES = 64 * 1024
 // 外から届かないようにループバックにだけバインドする。ここを 0.0.0.0 に変えない。
 const BIND_HOST = "127.0.0.1"
 
-/** {@link startViewServer} が配るために要るもの一式（渡すのは配線）。 */
+/** {@link startViewServer} が配るために要るもの一式。 */
 export type ViewServerOptions = {
-  /**
-   * いまのブラウザ側の配り方。動作中に `dev` から `bundle` へ替わりうるので、
-   * 要求のたびに引く。
-   */
+  /** いまのブラウザ側の配り方。動作中に `dev` から `bundle` へ替わりうるので、要求のたびに引く。 */
   readonly ui: () => ViewUi
-  /**
-   * `/character/<pack>/<file>` の1件を配ってよい形にする（キャラクターパックを読むアダプタの
-   * `readCharacterAsset` を束ねたもの）。
-   */
+  /** `/character/<pack>/<file>` の1件を配ってよい形にする。 */
   readonly serveCharacterAsset: ServeCharacterAsset
   /** `/prompt-image/<id>` に配る原寸の引き口（棚の `find`）。 */
   readonly findPromptImage: FindPromptImage
   /** `/rpc` に載せるルータ（{@link RpcRouter}）。 */
   readonly rpcRouter: RpcRouter
-  /**
-   * 起動トークン（{@link createStartupToken}）。`/prompt-image` と `/rpc` はこれが合わないと
-   * 配らない（`/ws` と同じ守り方。冒頭の「安全のための決まり」）。
-   */
+  /** 起動トークン（{@link createStartupToken}）。`/prompt-image` と `/rpc` はこれが合わないと配らない（`/ws` と同じ守り方）。 */
   readonly token: string
 }
 
 export type ViewServer = {
-  /**
-   * 待ち受けている HTTP サーバそのもの。{@link attachSessionSocket} を足すためだけに
-   * 外へ出している（配線するのは配線層）。
-   */
+  /** 待ち受けている HTTP サーバそのもの。{@link attachSessionSocket} を足すためだけに外へ出している。 */
   readonly httpServer: Server
   /** ページの URL。利用者が実際に開くのもこれ1つでよい。 */
   readonly layoutUrl: string
@@ -168,7 +149,7 @@ export function startViewServer(port: number, options: ViewServerOptions): Promi
         reject(error)
         return
       }
-      // 動作中の失敗で常駐プロセスを落とさない（docs/coding-standards.md「エラーハンドリング」）。
+      // 動作中の失敗で常駐プロセスを落とさない。
       process.stderr.write(`tsukumo: ビューサーバでエラーが起きた: ${error.message}\n`)
     })
 
@@ -210,11 +191,7 @@ type ViewRouteHandler = (
   runtime: ViewServerRuntime,
 ) => void
 
-/**
- * 経路の表の1行。`respond` はこの表を上から探すだけで、経路名・メソッド・トークン照合の要否は
- * ここに集める（docs/design.md「コマンドの受け手と手続きの置き方」と同じ狙いを HTTP 側に適用した
- * もの。`docs/research/hono-server.md`「入れずに済ませる中間案」）。
- */
+/** 経路の表の1行。`respond` はこの表を上から探すだけで、経路名・メソッド・トークン照合の要否はここに集める。 */
 type ViewRoute = {
   readonly match: RouteMatch
   /** `"ANY"` は、いまの実装でメソッドを見ていない経路（`LAYOUT_PATH` だけ）のためだけにある。 */
@@ -365,11 +342,8 @@ function writeNotFound(response: ServerResponse): void {
 }
 
 /**
- * ページ本体。中身は `<div id="app">` だけ（メインビュー・キャラビュー・サイドバー・
- * 入力欄のすべてが React の部品になり、ブラウザ側の入口が1つの root として mount する。
- * 移行の段6。段の記録は `docs/history/decision.md`「design.md 12. 移行の段階」）。ページを丸ごと再読み込みしない理由は
- * `docs/history/decision.md`「ビューの更新は Server-Sent Events で押す」（更新は今は WebSocket）
- * を参照。
+ * ページ本体。中身は `<div id="app">` だけ。
+ * メインビュー・キャラビュー・サイドバー・入力欄のすべてが React の部品で、ブラウザ側の入口が1つの root として mount する。
  */
 function buildLayoutPage(ownStyleSheets: readonly string[], script: string): string {
   const styleSheetLinks = [vendorAssetPath("highlight-theme.min.css"), ...ownStyleSheets]
@@ -393,9 +367,9 @@ ${styleSheetLinks}
 }
 
 /**
- * 外部ライブラリ（`readVendorAsset` が `node_modules` から読む）を配る。名前が指す
- * 中身の判断はそちらに任せ、ここは結果をそのまま配るか404にするだけ。依存が入っていなくても
- * 配信は続ける（表示物が1つ欠けても起動失敗にしない）。
+ * 外部ライブラリ（`readVendorAsset` が `node_modules` から読む）を配る。
+ * 名前が指す中身の判断はそちらに任せ、ここは結果をそのまま配るか404にするだけ。
+ * 依存が入っていなくても配信は続ける（表示物が1つ欠けても起動失敗にしない）。
  */
 function writeVendorAsset(response: ServerResponse, name: string): void {
   const asset = readVendorAsset(name)
@@ -410,9 +384,9 @@ function writeVendorAsset(response: ServerResponse, name: string): void {
 }
 
 /**
- * `/character/<pack>/<file>` を配る。経路をパック名とファイル名に読み分けるのは
- * `readCharacterAssetPath`（形が崩れていれば404）、名前が指す中身の判断（一覧・allowlist・
- * ファイルの読み取り）は `serveCharacterAsset` に任せ、ここは結果をそのまま配るか404にするだけ。
+ * `/character/<pack>/<file>` を配る。
+ * 経路をパック名とファイル名に読み分けるのは `readCharacterAssetPath`（形が崩れていれば404）、名前が指す中身の判断（一覧・allowlist・ファイルの読み取り）は `serveCharacterAsset` に任せる。
+ * ここは結果をそのまま配るか404にするだけ。
  */
 function writeCharacterAsset(
   response: ServerResponse,
@@ -432,14 +406,12 @@ function writeCharacterAsset(
 }
 
 /**
- * 依頼に添えた画像の原寸を1枚配る。起動トークンの照合は `respond` が済ませている
- * （配るのは会話の内容）。id の形が違う・棚に無い（記録の窓から落ちた・枚数の上限で押し出された）
- * ときは 404 で、どちらかは区別しない（ブラウザは 404 を受けてから控えに倒す。
- * 控えに倒す画面側の部品）。
+ * 依頼に添えた画像の原寸を1枚配る。起動トークンの照合は `respond` が済ませている（配るのは会話の内容）。
+ * id の形が違う・棚に無い（記録の窓から落ちた・棚の上限で押し出された）ときは 404 で、どちらかは区別しない（ブラウザは 404 を受けてから控えに倒す）。
  *
- * data URL はここでデコードする（棚は受け取った data URL のまま持つ）。`Content-Type` は
- * 受け取ったときのメディアタイプ（`PROMPT_IMAGE_MEDIA_TYPES` の4つ）。ブラウザのディスクの
- * キャッシュにも残さない（`no-store`）。
+ * data URL はここでデコードする（棚は受け取った data URL のまま持つ）。
+ * `Content-Type` は受け取ったときのメディアタイプ（`PROMPT_IMAGE_MEDIA_TYPES` の4つ）。
+ * ブラウザのディスクのキャッシュにも残さない（`no-store`）。
  */
 function writePromptImage(
   response: ServerResponse,
@@ -460,14 +432,12 @@ function writePromptImage(
 }
 
 /**
- * `/rpc` の要求を手続きへ渡す。照合（起動トークン・`Origin`）は手続きの前のミドルウェア
- * （`rpcGuard`）が見るので、ここは要求を写して渡し、応答を書き戻すだけ。どの手続きにも
- * 当たらなければ 404。
+ * `/rpc` の要求を手続きへ渡す。
+ * 照合（起動トークン・`Origin`）は手続きの前のミドルウェア（`rpcGuard`）が見るので、ここは要求を写して渡し、応答を書き戻すだけ。
+ * どの手続きにも当たらなければ 404。
  *
- * `@orpc/server/node` ではなく `@orpc/server/fetch` の受け口を使い、`node:http` との橋渡しを
- * ここで書く。 node の受け口の型宣言が壊れた型宣言（`@orpc/interop` の compression が公開物の
- * 中から CI の絶対パスを指す）を辿り、`tsc` が型宣言の中で落ちるため
- * （`docs/research/external-dependency.md` の表1の oRPC の行）。
+ * `@orpc/server/node` ではなく `@orpc/server/fetch` の受け口を使い、`node:http` との橋渡しをここで書く。
+ * node の受け口の型宣言が壊れた型宣言（`@orpc/interop` の compression が公開物の中から CI の絶対パスを指す）を辿り、`tsc` が型宣言の中で落ちるため（`docs/research/external-dependency.md` の表1の oRPC の行）。
  */
 function serveRpc(
   request: IncomingMessage,
@@ -523,9 +493,9 @@ function toFetchRequest(request: IncomingMessage, serverOrigin: string): Request
 }
 
 /**
- * 要求の本文を fetch の流れにする。溜めずに流すので、上限（{@link RPC_MAX_BODY_BYTES}）を
- * 超えた本文は `BodyLimitPlugin` が読みながら断る。`Readable.toWeb` を使わないのは、戻り値の型が
- * `node:stream/web` の `ReadableStream` で、fetch の `BodyInit` に型の上で渡せないため。
+ * 要求の本文を fetch の流れにする。
+ * 溜めずに流すので、上限（{@link RPC_MAX_BODY_BYTES}）を超えた本文は `BodyLimitPlugin` が読みながら断る。
+ * `Readable.toWeb` を使わないのは、戻り値の型が `node:stream/web` の `ReadableStream` で、fetch の `BodyInit` に型の上で渡せないため。
  */
 function bodyStreamOf(request: IncomingMessage): ReadableStream<Uint8Array> {
   return new ReadableStream<Uint8Array>({
@@ -542,10 +512,7 @@ function hasStartupToken(request: IncomingMessage, token: string): boolean {
   return queryValue(request, SESSION_TOKEN_QUERY_NAME) === token
 }
 
-/**
- * クエリ1つの値（無ければ undefined）。外来の `null` はここで畳む
- * （`docs/coding-standards.md`「null は自前の型に出さない」）。
- */
+/** クエリ1つの値（無ければ undefined）。外来の `null` はここで畳む。 */
 function queryValue(request: IncomingMessage, name: string): string | undefined {
   const url = new URL(request.url ?? "/", `http://${BIND_HOST}`)
   return url.searchParams.get(name) ?? undefined
