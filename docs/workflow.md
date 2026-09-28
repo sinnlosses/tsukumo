@@ -66,7 +66,7 @@
   `conversation-layout/` へ」のように置き場所だけ書くと、直下に置くか `components/` や
   `hooks/`・`domain/` の下に置くかが不明で、`test/architecture.test.ts`「components/page/ の形」の検査に
   落ちる。対象ファイルを `components/<部品>/`・`domain/`・`hooks/` の層ごとに分けて書き、タスク本文で
-  各層の対応を明示する（ページの形は `docs/design.md` 2章「ページの形」）。置き場所だけの指示では
+  各層の対応を明示する（ページの形は `docs/architecture.md`「ページの形」）。置き場所だけの指示では
   直下に置かれ、この検査に落とされて同じファイルを何度も直すことになった
 
 ## 参考に示された画像・ディレクトリを残す（2026-09-23 決定）

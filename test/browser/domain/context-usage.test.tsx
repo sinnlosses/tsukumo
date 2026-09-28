@@ -16,7 +16,7 @@ import {
 } from "../rpc-fetch-stub.ts"
 
 /**
- * 画面を丸ごと描かずに、内訳の取得と畳み方だけを測る（docs/design.md「機能の中を分ける」）。
+ * 画面を丸ごと描かずに、内訳の取得と畳み方だけを測る（docs/architecture.md「機能の中を分ける」）。
  *
  * `useContextUsage` は `refetchKey` を受け取る（`browser/domain/` は `stores/` を読めないので、
  * 「いつ取り直すか」は呼び出し側の責務）。ここではテストが直接キーを渡す。

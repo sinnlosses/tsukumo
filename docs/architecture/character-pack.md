@@ -123,7 +123,7 @@ characters/<name>/
   （`readCharacterAsset` → `readCharacterPackFile`。allowlist はパックごと）
 - **一覧の中の、使用中と同じ名前の1件は使用中のパックに置き換える**（無ければ末尾に足す）。画面に
   出すもの・配るものが「いま出しているもの」とずれない
-- 素材はトークン無しで配る（`docs/design.md` 9章「会話内容と安全」）
+- 素材はトークン無しで配る（`docs/architecture.md`「会話内容と安全」）
 
 ### 雑談の記憶の置き場
 

@@ -19,7 +19,7 @@ import {
 
 /**
  * 画面（`TokenUsage`）を丸ごと描かずに、区画のロジックだけを測る
- * （docs/design.md「機能の中を分ける」）。フィクスチャはすべて手で書いた架空の値
+ * （docs/architecture.md「機能の中を分ける」）。フィクスチャはすべて手で書いた架空の値
  */
 
 let fetchStub: RpcFetchStub | undefined = undefined

@@ -325,12 +325,12 @@ node scripts/stop.ts           # 動いている tsukumo を一覧する（--por
 ```
 
 **層はディレクトリで表し、許した依存の辺以外は `test/architecture.test.ts` が落とします。**
-各ファイルの責務は [`docs/design.md`](./docs/design.md)「サーバの機能と、機能どうしの辺」「ディレクトリ」が正典です。
+各ファイルの責務は [`docs/architecture.md`](./docs/architecture.md)「サーバの機能と、機能どうしの辺」「ディレクトリ」が正典です。
 
 ### ドキュメント
 
 - [`docs/requirements.md`](./docs/requirements.md) — 要件定義（やること・**やらないこと**・技術制約・未決事項）
-- [`docs/design.md`](./docs/design.md) — 設計書（`shared` / `server`（`core`・`adapter`）/ `browser` の層・プロトコル）
+- [`docs/architecture.md`](./docs/architecture.md) — アーキテクチャ詳細（全体図、`shared` / `server`（`core`・`adapter`）/ `browser` の層・プロトコル・置き場所、設計判断）
 - [`docs/architecture/browser.md`](./docs/architecture/browser.md) — ブラウザ側（状態の持ち方・Markdown・重いライブラリ・立ち絵の動き・CSS・`components/ui/` の部品）
 - [`docs/architecture/character-pack.md`](./docs/architecture/character-pack.md) — キャラクターパック（形・探索順・画面から書くときの境界・雑談の記憶の置き場）
 - [`docs/architecture/testing.md`](./docs/architecture/testing.md) — テスト（対象ごとの方法・E2E・目視確認の手順）
@@ -338,7 +338,6 @@ node scripts/stop.ts           # 動いている tsukumo を一覧する（--por
 - [`docs/screen-design.md`](./docs/screen-design.md) — 画面のデザイン（色・書体・レイアウトの計画とトークン、雑談モードの画面、背景、画面のナビの帯）
 - [`docs/display.md`](./docs/display.md) — 表示（セリフとレポートの出力分離、レポートの記法の規約、立ち絵・吹き出し・メインビュー・入力欄・サイドバーなど各表示物の仕様）
 - [`docs/chat-mode.md`](./docs/chat-mode.md) — 雑談モード（遡れる幅、記憶の圧縮と忘却、残す旗、会話のアーカイブ、人格への書き戻し）
-- [`docs/architecture.md`](./docs/architecture.md) — アーキテクチャ詳細（全体図・設計判断）
 - [`docs/coding-standards.md`](./docs/coding-standards.md) — コーディング規約（**会話内容の扱い**を含む）
 - [`docs/glossary.md`](./docs/glossary.md) — 用語集（日本語表記とコード上の識別子の対応）
 - [`docs/workflow.md`](./docs/workflow.md) — このリポジトリでの進捗管理の上乗せ

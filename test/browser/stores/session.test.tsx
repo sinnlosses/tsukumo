@@ -116,7 +116,7 @@ describe("姿の store の購読", () => {
   })
 })
 
-describe("サーバと版が合わないとき（docs/design.md 4.4）", () => {
+describe("サーバと版が合わないとき（docs/architecture.md「ServerFrame」）", () => {
   const REQUEST_EVENTS = {
     type: "events",
     events: [{ at: 0, event: { kind: "request", text: "架空の依頼", images: [] } }],

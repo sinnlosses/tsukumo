@@ -174,7 +174,7 @@ describe("isScannedSource", () => {
   })
 
   test("それ以外の docs/・src/・CLAUDE.md は対象にする", () => {
-    expect(isScannedSource("docs/design.md")).toBe(true)
+    expect(isScannedSource("docs/architecture.md")).toBe(true)
     expect(isScannedSource("src/shared/session/main-view.ts")).toBe(true)
     expect(isScannedSource("CLAUDE.md")).toBe(true)
   })

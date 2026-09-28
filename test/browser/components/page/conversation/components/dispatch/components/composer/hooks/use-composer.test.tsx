@@ -21,7 +21,7 @@ import { type CommandSpy, putSession } from "../../../../../../../../session-sto
 
 /**
  * `<Composer>` を描かずに、下書き・候補の出し分けと選択位置・キーの読み替え・送り先だけを測る
- * （docs/design.md「機能の中を分ける」）。`<textarea>` にどう並ぶかは別のテスト
+ * （docs/architecture.md「機能の中を分ける」）。`<textarea>` にどう並ぶかは別のテスト
  * （部品ごと描画する側）が確かめる。フィクスチャはすべて手で書いた架空のもの
  */
 

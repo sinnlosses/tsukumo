@@ -23,7 +23,7 @@ import { type CommandSpy, putState, putSession } from "../../../../../session-st
 
 /**
  * `<ChatView>` を丸ごと描かずに、表情の決め方・行への畳み方・「...」と案内の出し分け・
- * つついたときの送り先だけを測る（docs/design.md「機能の中を分ける」）。行が DOM に
+ * つついたときの送り先だけを測る（docs/architecture.md「機能の中を分ける」）。行が DOM に
  * どう並ぶかは別のテスト（部品ごと描画する側）が確かめる。文面は手で書いた架空のもの
  */
 

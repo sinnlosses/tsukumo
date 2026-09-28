@@ -60,7 +60,7 @@
   （プラグインの `hotUpdate`）取り直して比べる（`source-fingerprint.ts`。時刻ではなく中身で比べ、
   取れなかったときは当てる）。違えば何も当てず、**配り方を起動のときに読んだ対（`bundle`）へ戻して**
   `refresh` の `page` を押し、理由の1行をペインに出す
-- **`refresh` フレーム**（`docs/design.md` 4.4「ServerFrame」）は、この戻すときの `page` にだけ使う（`style` は押さない）
+- **`refresh` フレーム**（`docs/architecture.md`「ServerFrame」）は、この戻すときの `page` にだけ使う（`style` は押さない）
 
 **足す依存**（**ユーザーの承認済み**。ここに無いものを足すときは改めて承認を得る。承認の日付は
 `docs/history/decision.md`「design.md 2〜11章（約1000行へ締めたときに落とした経緯と実測）」）:

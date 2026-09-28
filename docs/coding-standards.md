@@ -165,7 +165,7 @@ components/domain/portrait.test.tsx` の `fetch` のスタブ（`fetch` の実�
   返す `groupBy`・`countBy` に置き換える、など。呼び出し側の型まで連鎖して直す羽目になる
   置き換えは、「置き換えのための置き換え」になっていないかを疑う
 
-**`utils/` を作る前に remeda にあるかを見る**という**置き場所**の判断は、`docs/design.md`
+**`utils/` を作る前に remeda にあるかを見る**という**置き場所**の判断は、`docs/architecture.md`
 「`lib/` と `utils/` に置く基準」が正典（ここでは重複させない）。この節が扱うのは、
 `utils/` に切り出すかどうかに関係なく、その場で書く `reduce`・比較関数などのインラインの
 書き方の基準。
@@ -293,11 +293,11 @@ class 名を手で組むと、条件で落とす class を空文字に畳む三�
   参照は理由の置き場として添える。参照だけで制約を言っていないコメントは書かない。
   規約・方針への参照、関連を示すだけの参照、用語の出典は置かない
 - 呼ぶ側・使う側の一覧は、使い手が増減するたびに古くなる。今の使い手はエディタの参照検索が
-  常に正しく出す。この一覧を持つ正典も作らない（置き場所の設計は `docs/design.md` が持つ）
+  常に正しく出す。この一覧を持つ正典も作らない（置き場所の設計は `docs/architecture.md` が持つ）
 
 ```ts
 // 避ける: パスで指し、節を番号で指し、使い手を並べ、行コメントに {@link} を書いている
-// 環境変数の解釈は src/server/core/config.ts（docs/design.md 3章「起動」）。
+// 環境変数の解釈は src/server/core/config.ts（docs/architecture.md「起動」）。
 // `scripts/open-room-grid.ts` と {@link startSession} が使う。
 
 // こうする
@@ -553,21 +553,21 @@ tsukumo から外へは出ない。
 **ブラウザ側で会話の状態を持つこと（移行後の `SessionState`）は、外へ出すことにあたらない。**
 同じマシンの同じオリジン（`127.0.0.1`）のタブのメモリに閉じるためで、いまも DOM として同じものを
 持っている。**`localStorage` などブラウザ側の永続化に会話を置かない**（置いてよいのは領域の比率の
-ような画面の都合だけ。`docs/design.md` 9章）。
+ような画面の都合だけ。`docs/architecture.md`「会話内容と安全」）。
 
 ## 層と依存の向き
 
-**2026-09-13 の移行後、`src/` は層をディレクトリで表す**（設計は `docs/design.md` 2章）。
+**2026-09-13 の移行後、`src/` は層をディレクトリで表す**（設計は `docs/architecture.md`「全体構成」）。
 **2026-09-16 にサーバ側を `core`（判断）と `adapter`（境界）に割り、2026-09-20 に層の名前を
 実行環境に合わせて `shared`（サーバとブラウザ）/ `browser`（ブラウザ）へ改名し、サーバ側の
 2つを `src/server/` の下へ入れ子にした。** **2026-09-25 に、サーバ側の `core` と `adapter` を
 機能の中へ入れると決めた**（`src/server/<機能>/{core,adapter}/`。機能の一覧・機能どうしの辺・
-共有の箱は `docs/design.md` 2章「サーバの機能と、機能どうしの辺」が正典）。
+共有の箱は `docs/architecture.md`「サーバの機能と、機能どうしの辺」が正典）。
 **新しいファイルは、まずどの層かを決めてから置く**（サーバ側は、どの機能かも決める）。
 
 **4つの層（`shared` / `server/core` / `server/adapter` / `browser`）が何を置き、どこへ import して
 よいかの表は
-二重に書かず `docs/design.md` 2章「層と依存の向き」を正典とする**（`src/browser/` の箱の表と
+二重に書かず `docs/architecture.md`「層と依存の向き」を正典とする**（`src/browser/` の箱の表と
 同じ扱い）。ここには、その表だけでは読み取れない決まりを書く。
 
 `src/` 直下（`cli.ts` / `main.ts` と起動の段取り）は配線なので全部を import してよい。**`core` と `browser` は互いを import しない。**
@@ -575,15 +575,15 @@ tsukumo から外へは出ない。
 （外の世界へ出る道が無い）。両者を結ぶのは `src/` 直下だけ。`adapter` は**1ファイル = 1つの境界**で、
 インターフェースは切らない（実装が2つあるもの — 駆動とホスト — だけ契約の型を `core` に置く）。
 `shared` は `node:` にも `document` にも触らない（両方の実行場所で動くため）。**許した辺以外は
-`test/architecture.test.ts` が落とす**ので、向きを変えたくなったら先にこのテストと `docs/design.md`
-2章を直す。
+`test/architecture.test.ts` が落とす**ので、向きを変えたくなったら先にこのテストと `docs/architecture.md`
+「全体構成」を直す。
 
 **型だけの import は文全体の `import type` で書く**（`import { type X }` ではなく）。Node の
 型消去は `import { type X }` を `import {} from` として残し、読み込み先を値として評価するので、
 import の輪ができると初期化前参照で落ちる。`typescript/no-import-type-side-effects` が落とす。
 
 **`browser` 層の中も、箱（`main.tsx` / `app.tsx` / `features/` / `components/` / `lib/` / `stores/`）ごとに
-import してよい先が決まっている**（表は二重に書かず `docs/design.md` 2章「`src/browser/` の箱と、
+import してよい先が決まっている**（表は二重に書かず `docs/architecture.md`「`src/browser/` の箱と、
 置く基準」を正典とする）。この縦の辺も `test/architecture.test.ts` が落とす。
 
 **ファイルは単数形にする。** 複数は「複数返す」関数名の側で表す（`task-summary.ts` の
@@ -595,7 +595,7 @@ bullet-proof-react の名前（`features/` `components/` `lib/` `stores/` `style
 機能・領域のディレクトリは `components/page/conversation/components/main-view/markdown/` のように
 **概念の名前**を付ける。**置き場所を名前にしたディレクトリのうち、`lib/` と `utils/` はどの層の中にも作ってよく、
 `helpers/` と `common/` は作らない**（2026-09-21 決定。どちらの箱に置くかの判定手順・`utils/` を
-受け皿にしないための歯止め・層ごとの読み方は二重に書かず `docs/design.md` 2章
+受け皿にしないための歯止め・層ごとの読み方は二重に書かず `docs/architecture.md`「全体構成」
 「`lib/` と `utils/` に置く基準」を正典とする）。**ファイル名としての `utils.ts` / `helpers.ts` /
 `common.ts` は引き続き作らない**（許したのはディレクトリの名前だけで、ファイル名は概念のまま）。
 
@@ -608,7 +608,7 @@ bullet-proof-react の名前（`features/` `components/` `lib/` `stores/` `style
 「design.md 12. 移行の段階」の段3）で bulletproof-react の実例と突き合わせて決めた。
 
 **`components/ui/` の部品は `ui/<部品>/<部品>.tsx` に置き、`index.tsx` は作らない。検査が
-落とす。** 部品ごとのディレクトリに分けるのは `docs/design.md` 2章の「1部品1フォルダは
+落とす。** 部品ごとのディレクトリに分けるのは `docs/architecture.md`「1部品1フォルダは
 真似しない」の例外で、barrel file を作らない理由はここと二重に書かない。
 
 ## React
@@ -857,7 +857,7 @@ E2E を通らない**ので、この行には当たらない（範囲は `docs/a
   書き込みの失敗はプライベートウィンドウ限定）
 - **同じ方針を別の入口で既に守っている分岐**: 同じガードを別の経路（鍵盤とマウス、複数ある
   仕切りのうち別の1本など）で既に通しているとき、二重に固定しない
-- **要件に無い振る舞い**: `docs/design.md` やコードのコメントにはあっても
+- **要件に無い振る舞い**: `docs/architecture.md` やコードのコメントにはあっても
   `docs/requirements.md` に無い取り決めは、足すなら先に要件側へ書くのが順序
 - **自分たちのモジュールをモックしないと届かない分岐**: 「モックするのはシステム境界だけ」
   （「置き場所とモック」節）に反するので、畳み込み自体を直に使うテストで守る

@@ -6,7 +6,7 @@ import { useStickToBottom } from "../../../../../../../src/browser/components/pa
 
 /**
  * ログ（`ChatLog`）を描かずに、下端へ寄せる規則だけを測る
- * （docs/design.md「機能の中を分ける」）。フックは入れ物の要素が要るので、ref を付けるだけの
+ * （docs/architecture.md「機能の中を分ける」）。フックは入れ物の要素が要るので、ref を付けるだけの
  * 入れ物を置く。DOM の実装はレイアウトをしないので、高さとスクロール位置は手で与える。
  */
 

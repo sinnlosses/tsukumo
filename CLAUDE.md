@@ -49,19 +49,19 @@ node scripts/stop.ts           # 動いている tsukumo の一覧（--port <n> 
 
 ## アーキテクチャ概要
 
-**3層・プロトコル・部品の設計は `docs/design.md`、実装の全体図・設計判断は
-`docs/architecture.md` が正典。** 原則の見出しだけを置く。
+**3層・プロトコル・置き場所・実装の全体図・設計判断は `docs/architecture.md` が正典。**
+原則の見出しだけを置く。
 
 - **原則1**: **Claude Code の TUI を使わない**（上の IMPORTANT）
 - **原則2**: `shared` / `server` / `browser` の3層。サーバは機能ごとに
-  `src/server/<機能>/{core,adapter}/` で、**`core → adapter` は禁止**（`docs/design.md` 2章
+  `src/server/<機能>/{core,adapter}/` で、**`core → adapter` は禁止**（`docs/architecture.md`
   「サーバの機能と、機能どうしの辺」。許した辺以外は `test/architecture.test.ts` が落とす）
 - **原則3**: ホスト・外部コマンド・OS に触るものは **`adapter/` の1ファイルに閉じ込める**。
   Agent SDK だけは機能の `adapter/` の `sdk-` で始まるファイル群に閉じ込める
 - **原則4**: **キャラクターの中身をコードに書かない**（素材・表情・衣装の対応は定義ファイル側）
 - **原則5**: 「**ファイル名が概念になっているか**」で分ける。`helpers.ts` / `utils.ts` /
   `common.ts` のような置き場所を名前にしたファイルは作らない。**ファイルは単数形**
-  （置き場所のディレクトリの名前と、`src/browser/` の置き場所の基準は `docs/design.md` 2章）
+  （置き場所のディレクトリの名前と、`src/browser/` の置き場所の基準は `docs/architecture.md`「全体構成」）
 
 ## テスト方針
 
@@ -159,7 +159,7 @@ node scripts/stop.ts           # 動いている tsukumo の一覧（--port <n> 
 | こういうとき                                                                                    | 読むもの                                                                           |
 | ----------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
 | 要件・やらないこと・技術制約・未決事項を知りたい                                                | `docs/requirements.md`                                                             |
-| 3層・プロトコル・部品・置き場所を決める                                                         | `docs/design.md`（置き場所は2章）                                                  |
+| 3層・プロトコル・部品・置き場所を決める                                                         | `docs/architecture.md`（置き場所は「全体構成」）                                   |
 | 色・書体・レイアウト                                                                            | `docs/screen-design.md`                                                            |
 | セリフとレポートの分離・レポートの記法・各表示物の仕様                                          | `docs/display.md`                                                                  |
 | 雑談モード                                                                                      | `docs/chat-mode.md`                                                                |

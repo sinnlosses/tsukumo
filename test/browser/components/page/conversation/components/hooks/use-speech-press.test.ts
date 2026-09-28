@@ -6,7 +6,7 @@ import { useSpeechPress } from "../../../../../../../src/browser/components/page
 /**
  * セリフの行（雑談の `ChatSpeech`・仕事モードの `Balloon` と `speech-log` の行）を
  * 描かずに、押し方の読み替え——ドラッグとの見分け・遡るキー——だけを測る
- * （docs/design.md「機能の中を分ける」）。
+ * （docs/architecture.md「機能の中を分ける」）。
  */
 
 afterEach(() => {

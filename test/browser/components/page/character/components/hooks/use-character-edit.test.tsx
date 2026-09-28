@@ -21,7 +21,7 @@ import { type CommandSpy, putSession } from "../../../../../session-store.ts"
 
 /**
  * 立ち絵の並び（`<CharacterEdit>`）を描かずに、カード・差し色・背景への畳み方と送り先だけを
- * 測る（docs/design.md「機能の中を分ける」）。画面に出た形は別のテストが見る。
+ * 測る（docs/architecture.md「機能の中を分ける」）。画面に出た形は別のテストが見る。
  */
 
 const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = characterInfo({

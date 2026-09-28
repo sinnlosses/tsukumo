@@ -25,7 +25,7 @@ import { type CommandSpy, putSession, stateWith } from "../../../../session-stor
 
 /**
  * 画面（`Achievement`）を丸ごと描かずに、日の切り替えと取得の畳み方・振り返りの
- * ボタン・書いている進み・立ち絵の解決だけを測る（docs/design.md「機能の中を分ける」）。
+ * ボタン・書いている進み・立ち絵の解決だけを測る（docs/architecture.md「機能の中を分ける」）。
  */
 
 let fetchStub: RpcFetchStub | undefined = undefined

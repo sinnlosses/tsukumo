@@ -1,6 +1,6 @@
 # 雑談モード
 
-最終更新: 2026-09-27（雑談の記憶のファイルの形・上限・書き方を当時の `docs/design.md` 7章（いまの `docs/architecture/character-pack.md`）から移した。
+最終更新: 2026-09-27（雑談の記憶のファイルの形・上限・書き方を当時の設計書の7章（いまの `docs/architecture/character-pack.md`）から移した。
 2026-09-26 に、`/compact` の要約と「残す」旗から定着・あらすじ・エピソード索引の形へ組み替えた。
 提案は `docs/research/chat-memory-index.md`）
 ステータス: **正典**。レポートを出さない場としての雑談モードの仕様（遡れる幅、記憶の層と忘却、

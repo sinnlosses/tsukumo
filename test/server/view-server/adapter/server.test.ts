@@ -312,11 +312,11 @@ describe("startViewServer", () => {
   describe("/rpc（読み取りの手続き）", () => {
     it("repository.listFiles は、候補のパスを並びで返す。一覧を作れなかった回は空", async () => {
       const found = await startViewWithRpc({
-        listRepositoryFiles: () => Promise.resolve(["src/cli.ts", "docs/design.md"]),
+        listRepositoryFiles: () => Promise.resolve(["src/cli.ts", "docs/architecture.md"]),
       })
       expect(await rpcClientOf(found, TOKEN).repository.listFiles()).toEqual([
         "src/cli.ts",
-        "docs/design.md",
+        "docs/architecture.md",
       ])
       await found.close()
 

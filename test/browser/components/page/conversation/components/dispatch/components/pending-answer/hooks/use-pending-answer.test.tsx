@@ -9,7 +9,7 @@ import { type CommandSpy, putSession } from "../../../../../../../../session-sto
 
 /**
  * 答え待ちの箱（`<PendingAnswer>`）を描かずに、答え待ちの先頭の畳み方と許可要求の送り先だけを
- * 測る（docs/design.md「機能の中を分ける」）。質問は箱に出ない（札はメインビュー。
+ * 測る（docs/architecture.md「機能の中を分ける」）。質問は箱に出ない（札はメインビュー。
  * store のテスト）。
  */
 

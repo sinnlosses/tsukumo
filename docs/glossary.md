@@ -590,7 +590,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
   本文をメモリに持ち、更新を Server-Sent Events で push する。**依頼・回答・中断は同じサーバへの
   POST で受ける**（2026-09-11）
 - **注記**: **移行後（2026-09-13 決定）は本文を持たず、ページ・束ねた JS と CSS・同梱物・立ち絵を配り、
-  イベントとコマンドを WebSocket 1本でやり取りする**（`docs/design.md` 3章）。識別子は `server`
+  イベントとコマンドを WebSocket 1本でやり取りする**（`docs/architecture.md`「動きの流れ」）。識別子は `server`
 - **注記**: **本文をファイルに書き出さない。** 会話の一部を含むため
   （`docs/coding-standards.md`「会話内容の扱い」）
 - **避ける言い方**: プレビューサーバ、開発サーバ
@@ -1005,7 +1005,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ## 通信（移行後）
 
-2026-09-13 に決めた移行（`docs/design.md`）で加わった語。
+2026-09-13 に決めた移行（`docs/architecture.md`）で加わった語。
 
 ### プロトコル
 
@@ -1047,7 +1047,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
   断られたら契約のエラー `REFUSED`（理由は定型文）が応答で返る
 - **注記**: **スラッシュコマンド（`/model` など）とは別物。** あちらは `session.prompt` の `text` に
   書く。**どの機能が受け、どの条件で断るかは契約**（断る条件は `meta`）**と機能ごとの表**
-  （`src/server/<機能>/core/<機能>-command.ts`。`docs/design.md` 2章「コマンドの受け手と手続きの
+  （`src/server/<機能>/core/<機能>-command.ts`。`docs/architecture.md`「コマンドの受け手と手続きの
   置き方」）。2026-09-26 まではコマンドの和 `ClientCommand`（`src/shared/command.ts`）だった
 - **避ける言い方**: リクエスト、アクション
 
@@ -1058,7 +1058,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
   機能ごとに `src/shared/contract/<機能>.ts` に置き、zod と `@orpc/contract` で書く
 - **注記**: 上の「プロトコル」（`shared` 全体。イベント・状態・reducer も含む）の一部で、そのうち
   **手続きの形だけ**を指す。受け手は含まない（受け手を付けたものが「手続き」）。
-  `docs/design.md` 2章「コマンドの受け手と手続きの置き方」
+  `docs/architecture.md`「コマンドの受け手と手続きの置き方」
 - **避ける言い方**: スキーマ（zod の1つを指すときと紛れる）、インターフェース、API
 
 ### 手続き
