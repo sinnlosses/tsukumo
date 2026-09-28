@@ -3,6 +3,10 @@
 //
 // `data-screen` でいま出している画面を名乗るのは、狭い画面で帯の置き方が変わるため。
 // 会話の画面だけは、いまあるタブ帯の右端に重ねる。
+//
+// 会話の画面の広い帯には、いまの作業の札とモデル・effort・許可モードを置かない。
+// 札はメインビューに浮かぶ札（`CurrentWorkCapsule`）、3つの操作子はサイドバーの下端の帯が持つ。
+// 「≡」の面はどの画面でも全部を持つ（狭い画面ではサイドバーとメインビューが同時に見えないため）。
 
 import type { ReactElement } from "react"
 
@@ -45,8 +49,12 @@ export function PresentationalScreenNav({
           <ScreenNavGate key={gate.screen} gate={gate} onSelect={parts.onSelect} />
         ))}
       </div>
-      <ScreenNavCurrentWorkPill work={parts.work} />
-      <ScreenNavModelPermissionSelect modelPermission={parts.modelPermission} />
+      {current !== "conversation" && (
+        <>
+          <ScreenNavCurrentWorkPill work={parts.work} variant="band" />
+          <ScreenNavModelPermissionSelect modelPermission={parts.modelPermission} />
+        </>
+      )}
       <ScreenNavSettingsGear settings={parts.settings} />
       <ScreenNavMenu parts={parts} menu={menu} />
       <SessionSwitcher switcher={switcher} character={parts.character.face} />

@@ -76,7 +76,7 @@ export function ScreenNavMenu(props: ScreenNavMenuProps): ReactElement {
           {parts.gates.map((gate) => (
             <ScreenNavGate key={gate.screen} gate={gate} onSelect={parts.onSelect} />
           ))}
-          <ScreenNavCurrentWorkPill work={parts.work} />
+          <ScreenNavCurrentWorkPill work={parts.work} variant="band" />
           <ScreenNavModelPermissionSelect modelPermission={parts.modelPermission} />
           <ScreenNavSettingsGear settings={parts.settings} />
         </div>

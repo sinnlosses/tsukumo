@@ -1,8 +1,10 @@
 import { QueryClientProvider } from "@tanstack/react-query"
 import { cleanup, render, screen } from "@testing-library/react"
+import type { ReactElement } from "react"
 import { afterEach, describe, expect, it } from "vitest"
 
 import { ContextUsageRow } from "../../../../../src/browser/components/domain/sidebar/context-usage-row.tsx"
+import { useContextUsage } from "../../../../../src/browser/domain/context-usage.ts"
 import { rpc } from "../../../../../src/browser/domain/rpc.ts"
 import {
   type ContextUsageReport,
@@ -43,9 +45,14 @@ function renderRow(report: ContextUsageReport | undefined): void {
   }
   render(
     <QueryClientProvider client={client}>
-      <ContextUsageRow />
+      <ContextUsageRowFromQuery />
     </QueryClientProvider>,
   )
+}
+
+/** 札が受け取る値は `SidebarFooter` が取る。ここでは同じ取り方で1枚だけ描く。 */
+function ContextUsageRowFromQuery(): ReactElement {
+  return <ContextUsageRow usage={useContextUsage(REFETCH_KEY)} />
 }
 
 describe("ContextUsageRow", () => {

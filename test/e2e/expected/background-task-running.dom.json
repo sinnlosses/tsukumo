@@ -82,13 +82,13 @@
             "attributes": {
               "aria-pressed": "false",
               "aria-disabled": "false",
+              "aria-label": "雑談",
               "type": "button"
             },
             "children": [
               {
                 "tag": "svg"
-              },
-              "雑談"
+              }
             ]
           }
         ]
@@ -135,62 +135,6 @@
         "children": [
           "成果"
         ]
-      },
-      {
-        "tag": "div",
-        "attributes": {
-          "data-work-state": "background",
-          "data-chat-idle": "false"
-        },
-        "children": [
-          {
-            "tag": "button",
-            "attributes": {
-              "aria-expanded": "false",
-              "type": "button"
-            },
-            "children": [
-              {
-                "tag": "span",
-                "attributes": {
-                  "aria-hidden": "true"
-                },
-                "children": [
-                  "●"
-                ]
-              },
-              "背景で作業中",
-              {
-                "tag": "span",
-                "attributes": {
-                  "aria-hidden": "true"
-                }
-              },
-              "架空の短い待ち（2秒）"
-            ]
-          }
-        ]
-      },
-      {
-        "tag": "select",
-        "attributes": {
-          "aria-label": "モデル",
-          "value": "opus"
-        }
-      },
-      {
-        "tag": "select",
-        "attributes": {
-          "aria-label": "effort",
-          "value": "medium"
-        }
-      },
-      {
-        "tag": "select",
-        "attributes": {
-          "aria-label": "許可モード",
-          "value": "auto"
-        }
       },
       {
         "tag": "button",
@@ -307,6 +251,36 @@
                         }
                       }
                     ]
+                  },
+                  {
+                    "tag": "div",
+                    "attributes": {
+                      "data-work-state": "background",
+                      "data-chat-idle": "false",
+                      "data-variant": "capsule"
+                    },
+                    "children": [
+                      {
+                        "tag": "button",
+                        "attributes": {
+                          "aria-expanded": "false",
+                          "type": "button"
+                        },
+                        "children": [
+                          {
+                            "tag": "svg"
+                          },
+                          "背景で作業中",
+                          {
+                            "tag": "span",
+                            "attributes": {
+                              "aria-hidden": "true"
+                            }
+                          },
+                          "架空の短い待ち（2秒）"
+                        ]
+                      }
+                    ]
                   }
                 ]
               }
@@ -354,39 +328,73 @@
                   }
                 ]
               },
-              "コンテキスト",
-              "61%",
-              "122k / 200k",
               {
-                "tag": "span",
+                "tag": "div",
                 "attributes": {
-                  "aria-hidden": "true"
-                }
-              },
-              {
-                "tag": "a",
-                "attributes": {
-                  "aria-label": "コンテキスト 61% 使用。トークン消費の画面で詳しく見る",
-                  "href": "/?t=<token>#token-usage"
+                  "role": "group",
+                  "aria-label": "実行の設定"
                 },
                 "children": [
+                  "O",
                   {
-                    "tag": "span",
+                    "tag": "select",
                     "attributes": {
-                      "aria-hidden": "true"
-                    },
-                    "children": [
-                      "詳しく"
-                    ]
+                      "aria-label": "モデル Opus",
+                      "value": "opus"
+                    }
                   },
                   {
                     "tag": "span",
                     "attributes": {
                       "aria-hidden": "true"
-                    },
-                    "children": [
-                      "›"
-                    ]
+                    }
+                  },
+                  {
+                    "tag": "span",
+                    "attributes": {
+                      "aria-hidden": "true"
+                    }
+                  },
+                  {
+                    "tag": "select",
+                    "attributes": {
+                      "aria-label": "effort Medium",
+                      "value": "medium"
+                    }
+                  },
+                  {
+                    "tag": "span",
+                    "attributes": {
+                      "aria-hidden": "true"
+                    }
+                  },
+                  {
+                    "tag": "svg"
+                  },
+                  {
+                    "tag": "select",
+                    "attributes": {
+                      "aria-label": "許可モード 自動判定",
+                      "value": "auto"
+                    }
+                  }
+                ]
+              },
+              {
+                "tag": "button",
+                "attributes": {
+                  "aria-label": "コンテキスト 61%（122k / 200k）",
+                  "aria-expanded": "false",
+                  "type": "button"
+                },
+                "children": [
+                  "文脈",
+                  "61%",
+                  {
+                    "tag": "span",
+                    "attributes": {
+                      "aria-hidden": "true"
+                    }
                   }
                 ]
               },
@@ -396,46 +404,26 @@
                   "aria-hidden": "true"
                 }
               },
-              "自動圧縮まで あと 33.5k",
-              "利用枠",
-              {
-                "tag": "span",
-                "attributes": {
-                  "aria-hidden": "true"
-                }
-              },
-              "10:00 時点",
               {
                 "tag": "button",
                 "attributes": {
-                  "aria-disabled": "false",
-                  "aria-label": "利用枠を取り直す",
+                  "aria-label": "利用枠 5時間 34%・7日間 61%",
+                  "aria-expanded": "false",
                   "type": "button"
                 },
                 "children": [
                   {
                     "tag": "svg"
-                  }
+                  },
+                  "5h",
+                  "34%",
+                  {
+                    "tag": "svg"
+                  },
+                  "7d",
+                  "61%"
                 ]
-              },
-              "5時間",
-              {
-                "tag": "span",
-                "attributes": {
-                  "aria-hidden": "true"
-                }
-              },
-              "34%",
-              "1/15 20:00に戻る",
-              "7日間",
-              {
-                "tag": "span",
-                "attributes": {
-                  "aria-hidden": "true"
-                }
-              },
-              "61%",
-              "1/18 20:00に戻る"
+              }
             ]
           }
         ]

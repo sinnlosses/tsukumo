@@ -1,7 +1,7 @@
 // Claude Code の許可モード（`PERMISSION_MODES`）を、画面に出す日本語ラベルにする。
 
-import { isPermissionMode, type PermissionMode } from "../../../../../shared/command.ts"
-import { BUILTIN_SESSION_DEFAULT } from "../../../../../shared/session/session-default.ts"
+import { isPermissionMode, type PermissionMode } from "../../shared/command.ts"
+import { BUILTIN_SESSION_DEFAULT } from "../../shared/session/session-default.ts"
 
 /** 許可モードの値と、日本語ラベル。並びは `<select>` に出す順（緩い側が下）。 */
 export const PERMISSION_MODE_LABELS = [

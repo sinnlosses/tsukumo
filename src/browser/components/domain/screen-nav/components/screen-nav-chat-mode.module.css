@@ -13,13 +13,20 @@
   border-radius: 11px;
   background: var(--ground);
 }
-/* 箱だけ（高さ・余白・角丸・並べ方）。顔は `<Button variant="ghost">` が持つ。 */
+/* 箱だけ（高さ・余白・角丸・並べ方）。顔は `<Button variant="ghost">` が持つ。
+   いまの側は絵と字、反対側は絵だけの正方形に近い箱にする。 */
 .screen-nav-chat-mode-button {
   display: flex;
   align-items: center;
-  gap: 7px;
+  justify-content: center;
+  gap: 6px;
   height: 30px;
-  padding: 0 16px;
+  padding: 0 12px 0 10px;
   border-radius: 8px;
   white-space: nowrap;
+}
+/* 反対側（絵だけ）。`aria-pressed` は `<Button>` が付ける。 */
+.screen-nav-chat-mode-button[aria-pressed="false"] {
+  width: 36px;
+  padding: 0;
 }

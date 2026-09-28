@@ -55,18 +55,248 @@
   flex: 0 0 auto;
 }
 /* サイドバーの下端に敷く帯。区画ではないので `.sidebar-block` の枠も内側スクロールも借りない。
-   見本の footer は `border-top` + 一段沈んだ地 + `padding: 12px 18px 14px` で、領域の左右いっぱいに広がる。
+   1行に、左の操作子の組（`.run-setting-group`）と、右寄せのコンテキストの目盛り・利用枠の円を並べる。
+   地は帯（`screen-nav.module.css`）と同じ、`--ground` と `--surface` を半々に混ぜた色。
 
    左右と下の負のマージンは `.layout-region` の内側の余白（`--region-padding`）を消し切るちょうどの値で、帯の縁は領域の枠の内側にぴたりと着く（角の丸めは領域の `overflow` が切る）。
-   伸び縮みしない（`flex: 0 0 auto`）ので、余った高さはすべてタスクの区画へ行く。 */
+   伸び縮みしない（`flex: 0 0 auto`）ので、余った高さはすべてタスクの区画へ行く。
+   `position: relative` は、押すと開く詳しい面（`.sidebar-footer-detail`）を帯の真上に重ねる基準。 */
 .sidebar-footer {
+  position: relative;
+  display: flex;
   flex: 0 0 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem;
   margin: 0 calc(-1 * var(--region-padding)) calc(-1 * var(--region-padding));
-  padding: 0.75rem 1.125rem 0.875rem;
+  padding: 0.625rem 0.75rem;
   border-top: 1px solid var(--rule);
+  background: color-mix(in srgb, var(--ground), var(--surface) 50%);
+}
+.sidebar-footer-usage {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 0.25rem;
+  margin-left: auto;
+}
+/* 目盛りと円の間の縦の仕切り（飾りなので読み上げない）。 */
+.sidebar-footer-divider {
+  flex: none;
+  width: 1px;
+  height: 26px;
+  background: var(--rule-quiet);
+}
+/* 目盛りか円を押すと、帯の真上に重ねて開く詳しい面。タスクの区画を押し下げない。
+   利用枠の札が280px未満で棒を畳むための基準（`@container`）もここ。 */
+.sidebar-footer-detail {
+  position: absolute;
+  right: 0.75rem;
+  bottom: calc(100% + 0.4rem);
+  left: 0.75rem;
+  z-index: 2;
+  padding: 0.625rem 0.875rem 0.75rem;
+  border: 1px solid var(--rule);
+  border-radius: 0.75rem;
   background: var(--ground);
-  /* 利用枠の札が280px未満で棒を畳むための基準（`@container`）。帯の幅はサイドバーの幅と同じ。 */
+  box-shadow: 0 18px 44px color-mix(in srgb, var(--ground) 80%, transparent);
   container-type: inline-size;
+}
+
+/* モデル・effort・許可モードの操作子の組。3つの絵の口を1つの枠に並べ、細い仕切りで分ける。 */
+.run-setting-group {
+  display: flex;
+  flex: none;
+  align-items: center;
+  padding: 0 2px;
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  background: var(--ground);
+}
+.run-setting-divider {
+  flex: none;
+  width: 1px;
+  height: 18px;
+  background: var(--rule);
+}
+/* 絵1つぶんの口。上に透明の `<select>` がぴったり重なる（`.run-setting-frame`）。 */
+.run-setting {
+  position: relative;
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 30px;
+  border-radius: 8px;
+  color: var(--ink);
+}
+.run-setting:hover {
+  background: var(--surface-raised);
+}
+.run-setting:has(select:focus-visible) {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+.run-setting.is-disabled {
+  color: var(--ink-quiet);
+}
+.run-setting.is-danger {
+  color: var(--state-ng);
+}
+/* 透明の `<select>` の枠。部品（`select.module.css`）の枠は `position: relative` なので、2つの class で強さを上げて上書きする。
+   矢印は描かない（絵が口の印になる）。 */
+.run-setting > .run-setting-frame {
+  --select-chevron-size: 0;
+  position: absolute;
+  inset: 0;
+}
+.run-setting-select {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: none;
+  opacity: 0;
+  font-size: var(--font-secondary);
+}
+.run-setting-select:disabled {
+  cursor: not-allowed;
+}
+/* 開いた一覧の地はブラウザが描くので、選択肢の地と字は明示する。 */
+.run-setting-select option {
+  background: var(--surface);
+  color: var(--ink);
+}
+/* モデルの頭文字を丸で囲んだ印。 */
+.run-setting-model {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  box-sizing: border-box;
+  border: 1.5px solid currentColor;
+  border-radius: 50%;
+  font-family: var(--font-serif);
+  font-size: var(--font-label);
+  font-weight: 700;
+  line-height: 1;
+}
+/* effort の段の棒。いまの段までを字の色で塗り、その上の段は `--rule` のまま残す。 */
+.run-setting-effort {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 14px;
+}
+.run-setting-effort-bar {
+  width: 3px;
+  border-radius: 1px;
+  background: var(--rule);
+}
+.run-setting-effort-bar.is-lit {
+  background: currentColor;
+}
+
+/* コンテキストの目盛りと利用枠の円の口。枠も地も無く、hover で地だけ敷く。 */
+.usage-gauge {
+  display: flex;
+  flex: none;
+  height: 40px;
+  padding: 0 6px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+}
+.usage-gauge:hover,
+.usage-gauge[aria-expanded="true"] {
+  background: var(--surface-raised);
+}
+.usage-gauge-label {
+  color: var(--ink-quiet);
+  font-size: var(--font-label);
+}
+/* 割合は数字が主。等幅で桁が動いても読みやすくする。 */
+.usage-gauge-value {
+  font-family: var(--font-mono);
+  font-size: var(--font-action);
+  font-variant-numeric: tabular-nums;
+}
+.context-gauge {
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+}
+.context-gauge-figure {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+/* 目盛り。縦の線（`.context-gauge-compact`）は自動圧縮が始まる位置で、棒の上下へ少しはみ出す。 */
+.context-gauge-track {
+  position: relative;
+  display: block;
+  width: 56px;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--rule-quiet);
+}
+.context-gauge-fill {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+  background: var(--accent);
+}
+.context-gauge-compact {
+  position: absolute;
+  top: -2px;
+  width: 1.5px;
+  height: 10px;
+  background: var(--ink-quiet);
+}
+.context-gauge.is-warn .usage-gauge-value {
+  color: var(--state-warn);
+}
+.context-gauge.is-warn .context-gauge-fill {
+  background: var(--state-warn);
+}
+.plan-gauge {
+  align-items: center;
+  gap: 8px;
+}
+.plan-gauge-window {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.plan-gauge-figure {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+.plan-gauge-pie {
+  flex: none;
+}
+.plan-gauge-pie-track {
+  fill: var(--rule-quiet);
+  stroke: var(--rule);
+  stroke-width: 1;
+}
+.plan-gauge-pie-fill {
+  fill: var(--accent);
+}
+.plan-gauge-pie-hub {
+  fill: var(--ground);
+}
+.plan-gauge-window.is-warn .plan-gauge-pie-fill {
+  fill: var(--state-warn);
+}
+.plan-gauge-window.is-warn .usage-gauge-value {
+  color: var(--state-warn);
 }
 /* いまのコンテキストの使用量。押せるのは右端の `›` だけで、外枠は `<a>` ではなく `<div>`。
 

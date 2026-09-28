@@ -1,7 +1,7 @@
-// サイドバーの下端の帯。いまのコンテキストの使用量を1枚の札で出す。
+// サイドバーの下端の帯の詳しい面の中で、いまのコンテキストの使用量を1枚の札で出す。
 // 押せるのは右端の `›`（ホバー中は「詳しく ›」）だけで、押すとトークン消費の画面（`#token-usage`）へ移る。
 //
-// 取得と畳み込みは `useContextUsage` で、トークン消費の画面の札と同じ `refetchKey` を渡すので、`useQuery` の cache 1本に相乗りし、取り直しは1回で済む。
+// 取得と畳み込みは `SidebarFooter` が `useContextUsage` で1回だけ行い、帯の目盛り（`ContextUsageGauge`）とこの札に同じ値を配る。
 //
 // 出す数は札の「使っている量」と同じ（`usage.totalTokens` / `usage.maxTokens` / `usage.percentage`。自動圧縮バッファ・窓の外の分類は含めない）。
 //
@@ -11,12 +11,7 @@
 import clsx from "clsx"
 import type { ReactElement } from "react"
 
-import {
-  contextUsageRefetchKey,
-  type UseContextUsageResult,
-  useContextUsage,
-} from "../../../domain/context-usage.ts"
-import { useSession } from "../../../stores/session.ts"
+import type { UseContextUsageResult } from "../../../domain/context-usage.ts"
 import { formatCount } from "../../../utils/format-count.ts"
 import { HStack } from "../../ui/h-stack/h-stack.tsx"
 import { Text } from "../../ui/text/text.tsx"
@@ -32,12 +27,9 @@ const UNTIL_PLACEHOLDER = "\u00a0"
 /** 警告にする境目（%）。見本の説明文から取った値。 */
 const WARN_THRESHOLD_PERCENTAGE = 70
 
-export function ContextUsageRow(): ReactElement {
-  const refetchKey = useSession((session) =>
-    contextUsageRefetchKey(session.state.lastTurnFinishedAt),
-  )
-  const usage = useContextUsage(refetchKey)
-  const warn = isWarn(usage)
+export function ContextUsageRow(props: { readonly usage: UseContextUsageResult }): ReactElement {
+  const { usage } = props
+  const warn = isContextUsageWarn(usage)
 
   return (
     <div
@@ -120,11 +112,11 @@ function untilText(usage: UseContextUsageResult): string {
     return UNTIL_PLACEHOLDER
   }
   const rest = `自動圧縮まで あと ${formatCount(usage.untilCompactTokens)}`
-  return isWarn(usage) ? `そろそろ区切りどき。${rest}` : rest
+  return isContextUsageWarn(usage) ? `そろそろ区切りどき。${rest}` : rest
 }
 
-/** まだ数が無いときは警告にしない。 */
-function isWarn(usage: UseContextUsageResult): boolean {
+/** 警告の色にするか。まだ数が無いときは警告にしない。帯の目盛りも同じ境目を使う。 */
+export function isContextUsageWarn(usage: UseContextUsageResult): boolean {
   return usage.kind === "ready" && usage.percentage >= WARN_THRESHOLD_PERCENTAGE
 }
 

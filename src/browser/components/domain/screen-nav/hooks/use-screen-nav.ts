@@ -9,19 +9,16 @@
 
 import { useRef, useState, type RefObject } from "react"
 
-import { isEffortLevel, isModelAlias, isPermissionMode } from "../../../../../shared/command.ts"
 import { FRAME_ERROR_REASON } from "../../../../../shared/frame.ts"
 import { roomName } from "../../../../../shared/view-server/room.ts"
 import { useDismissSignal } from "../../../../hooks/use-dismiss-signal.ts"
 import { SCREEN_NAV_ITEMS, type Screen } from "../../../../stores/location-hash.ts"
+import {
+  useModelPermission,
+  type ModelPermissionControl,
+} from "../../../../stores/model-permission.ts"
 import { useScreen, useScreenHref } from "../../../../stores/screen.tsx"
 import { useSession, useTurnRunning } from "../../../../stores/session.ts"
-import { resolveEffortSelect, type EffortSelect } from "../domain/effort-label.ts"
-import { resolveModelAlias } from "../domain/model-label.ts"
-import {
-  isDangerousPermissionMode,
-  resolvePermissionMode,
-} from "../domain/permission-mode-label.ts"
 import { useCharacterPicker, type ScreenNavCharacterPicker } from "./use-character-picker.ts"
 import { useCurrentWork, type ScreenNavCurrentWork } from "./use-current-work.ts"
 import {
@@ -55,19 +52,6 @@ export type ScreenNavChatMode = {
   readonly onChange: (chat: boolean) => void
 }
 
-/** モデル・effort・許可モードの操作子が受け取れる形。ターン進行中も変えられる（起こし直さない）。 */
-export type ScreenNavModelPermission = {
-  readonly model: string
-  readonly onSetModel: (value: string) => void
-  /** 押した値へ先に倒さない。選べる段・いまの値はサーバから届いた値（`model-effort-support` / `effort-changed`）だけに従う。 */
-  readonly effort: EffortSelect
-  readonly onSetEffort: (value: string) => void
-  readonly permissionMode: string
-  /** 「全部許す」のときだけ字に意味の色を載せる。 */
-  readonly permissionModeDangerous: boolean
-  readonly onSetPermissionMode: (value: string) => void
-}
-
 /**
  * 帯に並ぶ部品の値ひとそろい。
  * 広い画面の帯と狭い画面の「≡」の面が、この束をそのまま受け取ってそれぞれの並びで置く。
@@ -78,7 +62,7 @@ export type ScreenNavParts = {
   readonly sessionTag: ScreenNavSessionTag
   readonly gates: readonly ScreenNavGate[]
   readonly chatMode: ScreenNavChatMode
-  readonly modelPermission: ScreenNavModelPermission
+  readonly modelPermission: ModelPermissionControl
   readonly work: ScreenNavCurrentWork
   readonly settings: ScreenNavSettings
   /** 口を押したあとに「≡」を閉じる呼び先（広い画面では開いていないので何も起きない）。 */
@@ -111,18 +95,10 @@ export function useScreenNav(): ScreenNavView {
   const pendingActive = useSession((session) => session.state.pending.length > 0)
   const chatMode = useSession((session) => session.state.chatMode)
   const turnInProgress = useTurnRunning()
-  const model = useSession((session) => session.state.model)
-  const modelEffortSupport = useSession((session) => session.state.modelEffortSupport)
-  const effort = useSession((session) => session.state.effort)
-  const permissionMode = useSession((session) =>
-    session.state.session.kind === "running" ? session.state.session.permissionMode : undefined,
-  )
-  // `init`（`session-info`）が届くまでの畳み先は、このセッションを起こした既定。
-  // 同梱の既定に倒すと、歯車で Sonnet にして起こし直した直後の帯だけが Opus を名乗る。
-  const sessionDefault = useSession((session) => session.state.sessionDefault)
   const [menuOpen, setMenuOpen] = useState(false)
   const ref = useRef<HTMLElement>(null)
   const work = useCurrentWork(ref)
+  const modelPermission = useModelPermission()
   const settings = useSettings(ref)
   const character = useCharacterPicker(ref)
   const { tag: sessionTag, switcher } = useSessionSwitcher(currentRoomName())
@@ -140,13 +116,6 @@ export function useScreenNav(): ScreenNavView {
   }
 
   useDismissSignal({ open: menuOpen, rootRef: ref, onDismiss: onDismissMenu })
-
-  const shownPermissionMode =
-    permissionMode === undefined
-      ? sessionDefault.permissionMode
-      : resolvePermissionMode(permissionMode)
-  // effort の選べる段は「いま帯に出しているモデル」で決まるので、model の畳み込みと同じ値を使う。
-  const shownModel = model === undefined ? sessionDefault.model : resolveModelAlias(model)
 
   return {
     current,
@@ -170,27 +139,7 @@ export function useScreenNav(): ScreenNavView {
           dispatch.session.setChatMode({ chat })
         },
       },
-      modelPermission: {
-        model: shownModel,
-        onSetModel: (value) => {
-          if (isModelAlias(value)) {
-            dispatch.session.setModel({ model: value })
-          }
-        },
-        effort: resolveEffortSelect(shownModel, modelEffortSupport, effort),
-        onSetEffort: (value) => {
-          if (isEffortLevel(value)) {
-            dispatch.session.setEffort({ effort: value })
-          }
-        },
-        permissionMode: shownPermissionMode,
-        permissionModeDangerous: isDangerousPermissionMode(shownPermissionMode),
-        onSetPermissionMode: (value) => {
-          if (isPermissionMode(value)) {
-            dispatch.session.setPermissionMode({ mode: value })
-          }
-        },
-      },
+      modelPermission,
       work,
       settings,
       onSelect,

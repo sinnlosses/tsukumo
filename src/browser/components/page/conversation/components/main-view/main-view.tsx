@@ -10,6 +10,7 @@ import type { ReactElement } from "react"
 
 import { useMainViewTurns } from "../../../../../stores/main-view-turn.ts"
 import { useTurnSelection } from "../../../../../stores/turn-selection.ts"
+import { CurrentWorkCapsule } from "../../../../domain/screen-nav/current-work-capsule.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
 import { MiniPortrait } from "./components/mini-portrait/mini-portrait.tsx"
 import { QuestionAsk } from "./components/question-ask/question-ask.tsx"
@@ -42,6 +43,7 @@ export function MainView(): ReactElement {
           {EMPTY_MESSAGE}
         </Text>
         <QuestionAsk />
+        <CurrentWorkCapsule />
       </RepositoryFileLinkProvider>
     )
   }
@@ -78,6 +80,8 @@ export function MainView(): ReactElement {
         {/* 答え待ちの質問の札。いまのやり取りのレポートの下に出す（読み終わった先に質問が来る並び）。
             答え待ちが無ければ何も描かない。 */}
         <QuestionAsk />
+        {/* 動いている間だけ、領域の下端に浮かぶいまの作業の札。末尾に置いて、本文が短くても下端に来るようにする。 */}
+        <CurrentWorkCapsule />
       </div>
     </RepositoryFileLinkProvider>
   )

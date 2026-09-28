@@ -1,7 +1,7 @@
 // Claude Code のモデルのエイリアス（`MODEL_ALIASES`）を、画面に出す日本語ラベルにする。
 
-import type { ModelAlias } from "../../../../../shared/command.ts"
-import { BUILTIN_SESSION_DEFAULT } from "../../../../../shared/session/session-default.ts"
+import type { ModelAlias } from "../../shared/command.ts"
+import { BUILTIN_SESSION_DEFAULT } from "../../shared/session/session-default.ts"
 
 /**
  * モデルのエイリアスと、日本語ラベル。

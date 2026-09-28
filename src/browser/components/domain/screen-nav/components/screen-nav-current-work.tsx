@@ -20,9 +20,24 @@ import type {
 import shellStyles from "../screen-nav.module.css"
 import styles from "./screen-nav-current-work.module.css"
 
+/**
+ * 札の置き場所。
+ * `band` は帯のまん中（と「≡」の面の中）、`capsule` は会話の画面のメインビューの下に浮かぶ札（`CurrentWorkCapsule`）。
+ * `capsule` は一覧を札の上へ開き、動いている間は印を回る輪にする。
+ */
+export type ScreenNavCurrentWorkVariant = "band" | "capsule"
+
 export type ScreenNavCurrentWorkProps = {
   readonly work: ScreenNavCurrentWork
+  readonly variant: ScreenNavCurrentWorkVariant
 }
+
+/** 回る輪を印にする状態（何かが動いている間）。 */
+const SPINNING_STATES: ReadonlySet<ScreenNavCurrentWork["state"]> = new Set([
+  "running",
+  "diary",
+  "background",
+])
 
 // 入力・出力を読める形の文字列にしてから切り詰める上限。表示を壊さないためであって秘匿のためではない。
 const MAX_TOOL_TEXT_LENGTH = 8000
@@ -43,6 +58,7 @@ export function ScreenNavCurrentWorkPill(props: ScreenNavCurrentWorkProps): Reac
       className={clsx(styles["screen-nav-work"], shellStyles["screen-nav-work"])}
       data-work-state={work.state}
       data-chat-idle={work.chatIdle}
+      data-variant={props.variant}
     >
       <button
         type="button"
@@ -52,9 +68,13 @@ export function ScreenNavCurrentWorkPill(props: ScreenNavCurrentWorkProps): Reac
         aria-controls={listId}
         onClick={work.onToggle}
       >
-        <span className={styles["screen-nav-work-mark"]} aria-hidden="true">
-          {work.mark}
-        </span>
+        {props.variant === "capsule" && SPINNING_STATES.has(work.state) ? (
+          <SpinnerMark />
+        ) : (
+          <span className={styles["screen-nav-work-mark"]} aria-hidden="true">
+            {work.mark}
+          </span>
+        )}
         <span className={styles["screen-nav-work-word"]}>{work.wordLabel}</span>
         {work.summary.kind === "text" && (
           <>
@@ -73,6 +93,22 @@ export function ScreenNavCurrentWorkPill(props: ScreenNavCurrentWorkProps): Reac
       </button>
       {work.open && <CurrentWorkList id={listId} work={work} />}
     </div>
+  )
+}
+
+/** 動いている間の印。輪の一部だけを差し色にして回す（`prefers-reduced-motion: reduce` では `theme.css` の全体の規則が止める）。 */
+function SpinnerMark(): ReactElement {
+  return (
+    <svg
+      className={styles["screen-nav-work-spinner"]}
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+    >
+      <circle className={styles["screen-nav-work-spinner-track"]} cx="12" cy="12" r="9" />
+      <path className={styles["screen-nav-work-spinner-arc"]} d="M12 3a9 9 0 0 1 9 9" />
+    </svg>
   )
 }
 

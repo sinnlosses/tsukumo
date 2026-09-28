@@ -1,5 +1,5 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
-import { afterEach, describe, expect, it } from "vitest"
+import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import { ScreenNav } from "../../../../../src/browser/components/domain/screen-nav/screen-nav.tsx"
 import { MODEL_ALIASES } from "../../../../../src/shared/command.ts"
@@ -83,6 +83,8 @@ describe("ScreenNav", () => {
   // 帯の右端にあった専用の印は「いまの作業」の札にまとめた
   // （docs/architecture/screen-design.md「何を外すか」）。
   it("答え待ちがあるときだけ、いまの作業の札の語が「答え待ち」になる", () => {
+    // 会話の画面の帯には札が無い（メインビューに浮かぶ札が代わる）ので、ほかの画面で見る。
+    window.location.hash = "#character"
     renderScreenNav()
     expect(document.querySelector(".screen-nav-work-word")?.textContent).toBe("依頼待ち")
 
@@ -94,6 +96,14 @@ describe("ScreenNav", () => {
 
   // 部屋の名前は帯の左端（docs/architecture/screen-design.md「画面のナビゲーション」）。ポートの並び順に割り当たる（`roomName`）ので、
   // 出ている名前でどの tsukumo を見ているかが分かる。
+  it("会話の画面の帯には、いまの作業の札とモデル・effort・許可モードを置かない", () => {
+    renderScreenNav()
+
+    expect(document.querySelector(".screen-nav > .screen-nav-work")).toBeNull()
+    expect(document.querySelector(".screen-nav > .screen-nav-model-permission")).toBeNull()
+    expect(document.querySelector(".screen-nav > .screen-nav-settings")).not.toBeNull()
+  })
+
   it("帯の左端に、このページのポートの部屋の名前を出す", () => {
     setPageUrl("http://127.0.0.1:7329/")
     renderScreenNav()
@@ -308,6 +318,18 @@ describe("ScreenNav", () => {
 
     // 帯の操作子が送るコマンドは、いままでサイドバーの <select> が送っていたものと同じ
     // （`session.setChatMode`。docs/architecture/screen-design.md「画面のナビゲーション」）。
+    it("いまの側だけ字を添え、反対側は絵だけにして名前を aria-label と title に渡す", () => {
+      renderScreenNav({ chatMode: false })
+
+      const group = screen.getByRole("group", { name: "モード" })
+      const [work, chat] = [...group.querySelectorAll("button")]
+      expect(work?.textContent).toBe("仕事")
+      expect(work?.getAttribute("aria-label")).toBeNull()
+      expect(chat?.textContent).toBe("")
+      expect(chat?.getAttribute("aria-label")).toBe("雑談")
+      expect(chat?.getAttribute("title")).toBe("雑談")
+    })
+
     it("反対側を押すと session.setChatMode を送る", () => {
       const calls: unknown[] = []
       renderScreenNav({ chatMode: false }, (command) => {
@@ -354,6 +376,11 @@ describe("ScreenNav", () => {
   })
 
   describe("モデル・許可モードのドロップダウン", () => {
+    // 会話の画面の帯にはドロップダウンが無い（サイドバーの下端の帯が持つ）ので、ほかの画面で見る。
+    beforeEach(() => {
+      window.location.hash = "#character"
+    })
+
     it("状態の model / permissionMode の値を選択する", () => {
       renderScreenNav({
         model: "claude-sonnet-5",
@@ -488,6 +515,11 @@ describe("ScreenNav", () => {
 
   // モデルの隣、モデル → effort → 許可モードの並び（13.9「動き方の操作子」）。
   describe("effort のドロップダウン", () => {
+    // 会話の画面の帯にはドロップダウンが無い（サイドバーの下端の帯が持つ）ので、ほかの画面で見る。
+    beforeEach(() => {
+      window.location.hash = "#character"
+    })
+
     const OPUS_SUPPORT = {
       model: "opus",
       supportsEffort: true,

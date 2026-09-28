@@ -2,7 +2,7 @@
 // 何を送るか（いまの側を押したとき・ターン進行中は送らない）は `onChange` が決め、ここは押した事実を渡すだけ。
 //
 // 絵（かばん・湯のみ）は帯の道具の絵で、キャラクターの中身ではないのでコードに置く。
-// 字（「仕事」「雑談」）は必ず残す。
+// 字（「仕事」「雑談」）はいまの側にだけ添え、反対側は絵だけにして名前を `aria-label` に渡す。
 
 import clsx from "clsx"
 import { Briefcase, Coffee } from "lucide-react"
@@ -18,7 +18,7 @@ export type ScreenNavChatModeProps = {
 }
 
 export function ScreenNavChatModeToggle(props: ScreenNavChatModeProps): ReactElement {
-  const { chat, disabled, title, onChange } = props.chatMode
+  const { chat } = props.chatMode
 
   // `shellStyles` の class は見た目を持たず、`screen-nav.module.css` の `@media` の選択子を当てるためだけに重ねる。
   return (
@@ -27,36 +27,43 @@ export function ScreenNavChatModeToggle(props: ScreenNavChatModeProps): ReactEle
       role="group"
       aria-label="モード"
     >
-      <Button
-        type="button"
-        variant="ghost"
-        size="subheading"
-        pressed={chat ? "off" : "on"}
-        disabled={disabled}
-        ariaLabel={undefined}
-        ariaHasPopup={undefined}
-        title={disabled ? title : undefined}
-        className={styles["screen-nav-chat-mode-button"]}
-        onClick={() => onChange(false)}
-      >
-        <Briefcase size={15} strokeWidth={1.8} />
-        仕事
-      </Button>
-      <Button
-        type="button"
-        variant="ghost"
-        size="subheading"
-        pressed={chat ? "on" : "off"}
-        disabled={disabled}
-        ariaLabel={undefined}
-        ariaHasPopup={undefined}
-        title={disabled ? title : undefined}
-        className={styles["screen-nav-chat-mode-button"]}
-        onClick={() => onChange(true)}
-      >
-        <Coffee size={15} strokeWidth={1.8} />
-        雑談
-      </Button>
+      <ChatModeButton chatMode={props.chatMode} chat={false} pressed={!chat} label="仕事">
+        <Briefcase size={16} strokeWidth={1.9} />
+      </ChatModeButton>
+      <ChatModeButton chatMode={props.chatMode} chat={true} pressed={chat} label="雑談">
+        <Coffee size={16} strokeWidth={1.9} />
+      </ChatModeButton>
     </div>
+  )
+}
+
+/**
+ * トグルの片側。いまの側だけ字を添え、反対側は絵だけにする（名前は `aria-label` と `title` で渡す）。
+ * 押せないときの `title` は、名前ではなく押せない理由。
+ */
+function ChatModeButton(props: {
+  readonly chatMode: ScreenNavChatMode
+  readonly chat: boolean
+  readonly pressed: boolean
+  readonly label: string
+  readonly children: ReactElement
+}): ReactElement {
+  const { disabled, title, onChange } = props.chatMode
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      size="secondary"
+      pressed={props.pressed ? "on" : "off"}
+      disabled={disabled}
+      ariaLabel={props.pressed ? undefined : props.label}
+      ariaHasPopup={undefined}
+      title={disabled ? title : props.pressed ? undefined : props.label}
+      className={styles["screen-nav-chat-mode-button"]}
+      onClick={() => onChange(props.chat)}
+    >
+      {props.children}
+      {props.pressed && props.label}
+    </Button>
   )
 }

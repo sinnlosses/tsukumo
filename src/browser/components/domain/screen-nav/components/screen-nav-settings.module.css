@@ -2,11 +2,13 @@
    広い画面で帯から消す規則と、狭い画面の「≡」の面の中で縦に積む規則は `screen-nav.module.css` の @media が持つ。 */
 
 /* 設定の歯車。帯のいちばん右端で、モデル・許可モードの右に付く。
+   会話の画面では左隣のいまの作業の札もモデル・許可モードも帯に無いので、自分で右端へ寄る（`margin-left: auto`）。
    `position: relative` はポップオーバー（.screen-nav-settings-panel）を歯車の真下に重ねるための基準。 */
 .screen-nav-settings {
   position: relative;
   display: flex;
   flex: none;
+  margin-left: auto;
 }
 /* 枠も地も無い 36px の四角に線画の歯車だけを置く。開いているときは字の濃さに加えて地も敷く（色だけで伝えない）。 */
 .screen-nav-settings-toggle {

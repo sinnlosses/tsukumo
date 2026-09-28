@@ -1,4 +1,4 @@
-// サイドバー全体の組み立て。下端の帯（`.sidebar-footer`。コンテキストの使用量）は区画ではないので、
+// サイドバー全体の組み立て。下端の帯（`.sidebar-footer`。モデル・effort・許可モードの口と、コンテキスト・利用枠の目盛り）は区画ではないので、
 // 見出しを名乗らず、区画の枠（`SidebarSection`）も通らない。見出しはタスクの1つだけになる。
 // キャラクターとセッションの切り替えはサイドバーに無い（帯の左上。docs/architecture/screen-design.md「画面のナビゲーション」）。
 //
@@ -6,7 +6,7 @@
 // 最近の話題・覚えていること・下端の帯。タスク一覧は出さない。
 
 import { QueryClientProvider } from "@tanstack/react-query"
-import { cleanup, render, screen } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
 import { Sidebar } from "../../../../../src/browser/components/domain/sidebar/sidebar.tsx"
@@ -70,9 +70,55 @@ describe("Sidebar", () => {
     // 帯は区画の枠（`SidebarSection`）を通らないので、`.sidebar-block` の中には入らない。
     const footer = document.querySelector(".sidebar-footer")
     expect(footer?.closest(".sidebar-block")).toBeNull()
-    expect(footer?.textContent).toContain("コンテキスト")
+    expect(footer?.querySelector('button[title="コンテキスト"]')).not.toBeNull()
     expect(screen.queryByLabelText("キャラクター")).toBeNull()
     expect(screen.queryByLabelText("セッション")).toBeNull()
+  })
+})
+
+describe("Sidebar の下端の帯", () => {
+  it("モデル・effort・許可モードの口に、何の値かを aria-label で名乗らせる", () => {
+    renderSidebar({ model: "claude-opus-4-1", session: RUNNING_SESSION })
+
+    const group = screen.getByRole("group", { name: "実行の設定" })
+    expect(
+      [...group.querySelectorAll("select")].map((select) => select.getAttribute("aria-label")),
+    ).toEqual([
+      "モデル Opus",
+      "effort まだ effort を読み取れていない（ターンが終わると分かる）",
+      "許可モード 毎回聞く",
+    ])
+  })
+
+  it("モデルの口で選ぶと session.setModel を送る", () => {
+    const sent: unknown[] = []
+    stubContextUsageUnavailable()
+    putSession({ ...INITIAL_SESSION_STATE, session: RUNNING_SESSION }, (command) => {
+      sent.push(command)
+    })
+    render(
+      <QueryClientProvider client={createTestQueryClient()}>
+        <Sidebar />
+      </QueryClientProvider>,
+    )
+
+    fireEvent.change(screen.getByRole("combobox", { name: /^モデル / }), {
+      target: { value: "haiku" },
+    })
+
+    expect(sent).toEqual([{ procedure: "session.setModel", model: "haiku" }])
+  })
+
+  it("コンテキストの目盛りを押すと詳しい面が開き、もう一度押すと閉じる", () => {
+    renderSidebar({})
+
+    const gauge = screen.getByRole("button", { name: /^コンテキスト/ })
+    expect(gauge.getAttribute("aria-expanded")).toBe("false")
+    fireEvent.click(gauge)
+    expect(gauge.getAttribute("aria-expanded")).toBe("true")
+    expect(screen.getByRole("region", { name: "使用量の詳しい面" }).textContent).toContain("利用枠")
+    fireEvent.click(gauge)
+    expect(screen.queryByRole("region", { name: "使用量の詳しい面" })).toBeNull()
   })
 })
 

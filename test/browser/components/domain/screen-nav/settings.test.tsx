@@ -36,6 +36,7 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup()
+  window.location.hash = ""
   localStorage.removeItem(COLOR_STORAGE_KEY)
   localStorage.removeItem(REVEAL_SPEED_STORAGE_KEY)
   for (const token of COLOR_TOKENS) {
@@ -378,6 +379,8 @@ describe("設定の歯車（新しいセッションの既定）", () => {
 
   // 帯のドロップダウン（セッション限り）は既定を書き換えない（`docs/architecture/screen-design.md`「設定の置き場所」）。
   it("帯でモデルを変えても session.setSessionDefault は送らない", () => {
+    // 会話の画面の帯にはモデルのドロップダウンが無いので、ほかの画面で見る。
+    window.location.hash = "#character"
     const sent: unknown[] = []
     renderScreenNav(
       { sessionDefault: { model: "opus", effort: "medium", permissionMode: "auto" } },

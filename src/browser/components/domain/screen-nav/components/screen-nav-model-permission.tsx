@@ -12,16 +12,16 @@
 import clsx from "clsx"
 import { useId, type ReactElement } from "react"
 
+import { EFFORT_PLACEHOLDER_VALUE, effortLabel } from "../../../../domain/effort-label.ts"
+import { MODEL_LABELS } from "../../../../domain/model-label.ts"
+import { PERMISSION_MODE_LABELS } from "../../../../domain/permission-mode-label.ts"
+import type { ModelPermissionControl } from "../../../../stores/model-permission.ts"
 import { Select } from "../../../ui/select/select.tsx"
-import { EFFORT_PLACEHOLDER_VALUE, effortLabel } from "../domain/effort-label.ts"
-import { MODEL_LABELS } from "../domain/model-label.ts"
-import { PERMISSION_MODE_LABELS } from "../domain/permission-mode-label.ts"
-import type { ScreenNavModelPermission } from "../hooks/use-screen-nav.ts"
 import shellStyles from "../screen-nav.module.css"
 import styles from "./screen-nav-model-permission.module.css"
 
 export type ScreenNavModelPermissionProps = {
-  readonly modelPermission: ScreenNavModelPermission
+  readonly modelPermission: ModelPermissionControl
 }
 
 export function ScreenNavModelPermissionSelect(props: ScreenNavModelPermissionProps): ReactElement {

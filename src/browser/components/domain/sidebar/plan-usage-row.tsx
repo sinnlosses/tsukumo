@@ -1,5 +1,5 @@
-// サイドバーの下端の帯のうち、コンテキストの札の下に5時間枠と7日間枠の使用状況を出す札。
-// 取り直すのは開いたとき・ターンが終わるたび・右上の ↻ を押したとき（`usePlanUsage`）。
+// サイドバーの下端の帯の詳しい面の中で、コンテキストの札の下に5時間枠と7日間枠の使用状況を出す札。
+// 取り直すのは開いたとき・ターンが終わるたび・右上の ↻ を押したとき（`usePlanUsage`。呼ぶのは `SidebarFooter` で、帯の目盛りと同じ値を受け取る）。
 //
 // claude.ai の契約でないとき（`not-applicable`）は、再読み込みしても変わらないので ↻ を出さない。
 // 取れなかったとき（`unavailable`）は ↻ で取り直せる一言に置き換わる。
@@ -7,14 +7,12 @@
 //
 // 取得中に前の値があれば、2段の枠の行を薄く残したまま「取得中…」を出す（`fetching` が `true` のとき）。
 //
-// 取り直しのあいだは札に `aria-busy` を立てる。
-// E2E の「DOM が落ち着くまで待つ」判定はこれを見て、ターンの終わりに始まった取り直しが終わるまで撮らない。
+// 取り直しのあいだは札に `aria-busy` を立てる（帯の目盛りにも立つ）。
 
 import clsx from "clsx"
 import { CircleX, TriangleAlert } from "lucide-react"
 import type { ReactElement } from "react"
 
-import { useSession } from "../../../stores/session.ts"
 import {
   clockTime,
   dayAwareClockTime,
@@ -24,7 +22,7 @@ import {
 } from "../../../utils/clock.ts"
 import { Button } from "../../ui/button/button.tsx"
 import { RefreshIcon } from "../../ui/icon/icon.tsx"
-import { planUsageRefetchKey, type PlanUsageState, usePlanUsage } from "./plan-usage.ts"
+import type { PlanUsageState, UsePlanUsageResult } from "./plan-usage.ts"
 import styles from "./sidebar.module.css"
 
 const ROW_LABEL = "利用枠"
@@ -35,14 +33,13 @@ const UNAVAILABLE_TEXT = "利用枠を取れませんでした。↻ で取り�
 /** 高いときの境目（%）。見本（`QUOTA-Sidebar.dc.html`「2 高いとき」）の値。 */
 const WARN_THRESHOLD_PERCENTAGE = 80
 
-type WindowDisplay = {
+export type WindowDisplay = {
   readonly utilization: number | undefined
   readonly resetsAt: number | undefined
 }
 
-export function PlanUsageRow(): ReactElement {
-  const lastTurnFinishedAt = useSession((session) => session.state.lastTurnFinishedAt)
-  const { state, fetching, retry } = usePlanUsage(planUsageRefetchKey(lastTurnFinishedAt))
+export function PlanUsageRow(props: { readonly planUsage: UsePlanUsageResult }): ReactElement {
+  const { state, fetching, retry } = props.planUsage
   const windows = windowsOf(state)
 
   return (
@@ -118,7 +115,7 @@ function PlanUsageWindowRow(props: {
   readonly label: string
   readonly window: WindowDisplay
 }): ReactElement {
-  const warn = isWarn(props.window)
+  const warn = isPlanWindowWarn(props.window)
   return (
     <div className={styles["plan-usage-window-row"]}>
       <span className={styles["plan-usage-window-label"]}>{props.label}</span>
@@ -149,8 +146,8 @@ function PlanUsageWindowRow(props: {
   )
 }
 
-/** 描く2つの枠。取れない・該当しないときは `undefined`（一言に置き換える）。 */
-function windowsOf(
+/** 描く2つの枠。取れない・該当しないときは `undefined`（一言に置き換える）。帯の目盛りも同じ畳み方を使う。 */
+export function windowsOf(
   state: PlanUsageState,
 ): { readonly fiveHour: WindowDisplay; readonly sevenDay: WindowDisplay } | undefined {
   if (state.kind === "ready") {
@@ -177,8 +174,8 @@ function headerText(state: PlanUsageState, fetching: boolean): string {
   return TIME_PLACEHOLDER
 }
 
-/** 取れていないときは警告にしない。 */
-function isWarn(window: WindowDisplay): boolean {
+/** 警告の色にするか。取れていないときは警告にしない。帯の目盛りも同じ境目を使う。 */
+export function isPlanWindowWarn(window: WindowDisplay): boolean {
   return window.utilization !== undefined && window.utilization >= WARN_THRESHOLD_PERCENTAGE
 }
 

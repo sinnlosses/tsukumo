@@ -4,8 +4,8 @@
 // effort だけ「まだ届いていない値」を見た目上の既定へ倒さない。
 // 読める口が `Stop` フック入力だけで、起こした直後はまだ1件も読めていないため、「対応するモデルだが、まだ読めていない」を独立した状態として持つ（`EffortSelect` の `unknown`）。
 
-import type { EffortLevel, ModelAlias } from "../../../../../shared/command.ts"
-import type { ModelEffortSupport } from "../../../../../shared/session/session-event.ts"
+import type { EffortLevel, ModelAlias } from "../../shared/command.ts"
+import type { ModelEffortSupport } from "../../shared/session/session-event.ts"
 
 /** effort の値と、画面に出すラベル。値そのものは SDK の語彙で、人が選ぶ言葉に言い換えていない。 */
 export const EFFORT_LABELS = [

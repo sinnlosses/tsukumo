@@ -44,7 +44,14 @@ function questionPending(headers: readonly string[]): PendingAsk {
   return { kind: "question", id: "ask-1", questions: headers.map(fixtureQuestion) }
 }
 
+/**
+ * 帯の札を描く。会話の画面の帯には札が無い（メインビューに浮かぶ札が代わる）ので、hash が空ならキャラクター画面で見る。
+ * 画面を自分で決めたいテストは、呼ぶ前に hash を書く。
+ */
 function renderScreenNav(state: Partial<SessionState> = {}): void {
+  if (window.location.hash === "") {
+    window.location.hash = "#character"
+  }
   putSession({ ...INITIAL_SESSION_STATE, ...state })
   render(<ScreenNav />)
 }
