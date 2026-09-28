@@ -1,9 +1,5 @@
-// 成果の手続きの契約（`docs/glossary.md`「契約」）。受け手は
-// `src/server/achievement/adapter/achievement-procedure.ts`。形そのもの（応答の型と zod）は
-// `src/shared/achievement/achievement.ts`（1日ぶん）と `src/shared/achievement/achievement-calendar.ts`（灯りの暦）。
-//
-// 運ぶのはコミットの数・タスクの ID と要約・日記で、コミットの件名も会話の文面も入らない
-// （`docs/coding-standards.md`「会話内容の扱い」）。
+// 成果の手続きの契約。
+// 運ぶのはコミットの数・タスクの ID と要約・日記で、コミットの件名も会話の文面も入らない。
 
 import { oc } from "@orpc/contract"
 
@@ -14,9 +10,8 @@ import {
 } from "../achievement/achievement.ts"
 
 /**
- * `git` のタイムアウト・失敗（部分的な数を出さない）。`main` が読めないだけなら失敗にせず
- * `{ kind: "unknown" }` を返す（`src/server/achievement/adapter/main-history.ts` の
- * `ReadAchievementResult`）。
+ * `git` のタイムアウト・失敗（部分的な数を出さない）。
+ * `main` が読めないだけなら失敗にせず `{ kind: "unknown" }` を返す。
  */
 const achievementErrors = oc.errors({ UNAVAILABLE: { status: 503 } })
 

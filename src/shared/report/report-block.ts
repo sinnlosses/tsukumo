@@ -1,4 +1,4 @@
-// `report` の本文の節と塊（docs/glossary.md「節」「塊」）の形と、節の並びから Markdown を組む決まり。
+// `report` の本文の節と塊の形と、節の並びから Markdown を組む決まり。
 // 形の出どころはここだけ。
 //
 // 塊の文字は、描くときに Markdown か HTML の中へ埋める。

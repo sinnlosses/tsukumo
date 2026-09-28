@@ -1,9 +1,6 @@
-// ビューの配信。ブラウザ側の配り方（組み立て済みの対か、Vite の開発サーバか）と、開いているタブを持ち、
-// `127.0.0.1` のサーバ・`/ws`・開発サーバを1つに束ねる。可変なのは「いまの配り方」
-// 「開いているタブ」「コンテキストの内訳と利用枠の読み口」の3つで、どれもこのファイルの外へ
-// 出ない。
-//
-// ここは配線層（`src/` 直下。docs/design.md 2章「層と依存の向き」）。
+// ビューの配信。
+// ブラウザ側の配り方（組み立て済みの対か、Vite の開発サーバか）と、開いているタブを持ち、`127.0.0.1` のサーバ・`/ws`・開発サーバを1つに束ねる。
+// 可変なのは「いまの配り方」「開いているタブ」「セッションが繋がるまで差し替えを待つ読み口」の3つで、どれもこのファイルの外へ出ない。
 
 import process from "node:process"
 
@@ -45,23 +42,23 @@ import { type PlanUsageReport, UNAVAILABLE_PLAN_USAGE } from "./shared/plan-usag
 import { type SessionDigest, UNAVAILABLE_SESSION_DIGEST } from "./shared/session/session-digest.ts"
 
 export type ViewDeliveryOptions = {
-  /** どのポートで試すか（決めるのは `src/server/view-server/core/port-resolution.ts`）。 */
+  /** どのポートで試すか（決めるのは `resolveViewPort`）。 */
   readonly portResolution: ResolvedViewPort
   /**
-   * 起動のときに読んだブラウザ側の1組（`dist/browser/` に置いてあるもの）。開発サーバを
-   * 起こしたときも、サーバ側のソースが変わったらこれへ戻る。
+   * 起動のときに読んだブラウザ側の1組（`dist/browser/` に置いてあるもの）。
+   * 開発サーバを起こしたときも、サーバ側のソースが変わったらこれへ戻る。
    */
   readonly bundle: UiBundle
   /** `/character/<pack>/<file>` に配る1件の出どころ。 */
   readonly character: CurrentCharacter
   /**
-   * トークン消費の記録の読み口（手続き `tokenUsage.summary` が配る集計の出どころ。持ち主は `src/main.ts`）。
+   * トークン消費の記録の読み口（手続き `tokenUsage.summary` が配る集計の出どころ）。
    * ここで読むのは要求が来たときだけで、配信を始める時点ではファイルに触らない。
    */
   readonly tokenUsageLog: TokenUsageLog
   /**
-   * 依頼に添えた画像の原寸の棚（`/prompt-image/<id>` に配る原寸の出どころ。持ち主は
-   * `src/main.ts`）。ここは引くだけで、置くのと捨てるのはセッションの側。
+   * 依頼に添えた画像の原寸の棚（`/prompt-image/<id>` に配る原寸の出どころ）。
+   * ここは引くだけで、置くのと捨てるのはセッションの側。
    */
   readonly promptImageShelf: PromptImageShelf
   /** Vite の開発サーバを差し込み、`src/browser/` の保存を HMR で当てるか（`--dev`）。 */
@@ -74,10 +71,7 @@ export type ViewDeliveryResult =
       readonly ok: true
       /** 利用者が開く URL（起動トークン付き）。タブを開き直すときもこれをそのまま使う。 */
       readonly url: string
-      /**
-       * 実際に待ち受けているポート。セッションの印の目印がここから決まるので返す
-       * （`src/server/session-driver/core/session-restore.ts` の `sessionTag`。docs/requirements.md 4.8「鍵」）。
-       */
+      /** 実際に待ち受けているポート。セッションの印の目印（`sessionTag`）がここから決まるので返す。 */
       readonly port: number
       /** 開いたタブとセッションを繋ぐ（`/ws` の受け口を足し、コマンドの手続きを載せる）。 */
       readonly connect: (session: StartedSession) => void
@@ -85,46 +79,38 @@ export type ViewDeliveryResult =
   | { readonly ok: false; readonly reason: string }
 
 /**
- * ビューを配り始める。セッションはまだ繋がない — 先に配れることを確かめてから起こすので、
- * ポートが取れずに終わるときに claude の子プロセスを残さない。
+ * ビューを配り始める。
+ * セッションはまだ繋がない。
+ * 先に配れることを確かめてから起こすので、ポートが取れずに終わるときに claude の子プロセスを残さない。
  */
 export async function startViewDelivery(options: ViewDeliveryOptions): Promise<ViewDeliveryResult> {
-  // 起動トークンはこのプロセスのメモリにだけ置く（ディスクに書かない。docs/design.md 9章）。
   // ビューサーバ（`/prompt-image`・`/rpc`）と WebSocket が同じ1つを見る。
   const token = createStartupToken()
-  // 開発サーバを起こしたときと、そこから組み立て済みの対へ戻ったときに替わるので、
-  // サーバには取り出し口だけを渡す。
+  // 開発サーバを起こしたときと、そこから組み立て済みの対へ戻ったときに替わるので、サーバには取り出し口だけを渡す。
   let ui: ViewUi = { kind: "bundle", bundle: options.bundle }
-  // 開いているタブ。セッションのイベントとは別に押したいもの（いまは `refresh` だけ）が
-  // あるので、購読をセッションに渡すついでにここでも持つ。
+  // 開いているタブ。
+  // セッションのイベントとは別に押したいもの（`refresh`）があるので、購読をセッションに渡すついでにここでも持つ。
   const viewers = new Set<(frame: ServerFrame) => void>()
-  // コンテキストの内訳の読み口。セッションは配り始めたあとに繋がるので、繋がるまでは
-  // 「取れない」を返すものを置いておき、`connect` で本物に差し替える（`ui` と同じ持ち方）。
+  // セッションから引く読み口の3つ。
+  // セッションは配り始めたあとに繋がるので、繋がるまでは「取れない」を返すものを置いておき、`connect` で本物に差し替える。
   let readContextUsage: () => Promise<ContextUsageReport> = () =>
     Promise.resolve(UNAVAILABLE_CONTEXT_USAGE)
-  // 利用枠の読み口も同じ持ち方（繋がるまでは「取れない」）。
   let readPlanUsage: () => Promise<PlanUsageReport> = () => Promise.resolve(UNAVAILABLE_PLAN_USAGE)
-  // セッション1件の中身の読み口も同じ持ち方（繋がるまでは「読めない」）。
   let readSessionDigest: (sessionId: string) => Promise<SessionDigest> = () =>
     Promise.resolve(UNAVAILABLE_SESSION_DIGEST)
-  // 成果の画面（1日ぶん・暦）が今日以外の日の数を覚える入れ物。両方の口が同じ1つを見る
-  // （`docs/requirements.md`「灯りの段階」）。
+  // 成果の画面（1日ぶん・暦）が今日以外の日の数を覚える入れ物。両方の口が同じ1つを見る。
   const achievementCommitCache = createAchievementCommitCache()
 
-  // 読み取りの手続き（`/rpc`）。口の中身を選んで渡すのはここ（配線）で、束ねるのは `src/router.ts`。
   const rpcRouter = createRpcRouter({
     listRepositoryFiles: () => listRepositoryFiles(process.cwd()),
-    // 「今日」を決めるのは配線層（core は今日が何日かを知らない。OS のタイムゾーンに
-    // 依るので、ローカル日付を作るのは `adapter/local-time.ts` の仕事）。
+    // 「今日」はここで決めて渡す（OS のタイムゾーンに依るので、core は今日が何日かを知らない）。
     readTokenUsageSummary: (days) =>
       summarizeRecentTokenUsage(options.tokenUsageLog, todayLocalDateKey(), days),
     readContextUsage: () => readContextUsage(),
     readPlanUsage: () => readPlanUsage(),
     readSessionDigest: (sessionId) => readSessionDigest(sessionId),
-    // 「今日」を決めるのは配線層（`readTokenUsageSummary` と同じ理由）。見る日の検証・今日への
-    // 丸め込みも呼ぶたびにここで済ませ、`main-history.ts` には検証済みの日付キーだけを渡す。
-    // 日記（`diary.ts`）はここで合わせる（`main-history.ts` は数だけを持ち、日記の置き場を
-    // 知らない。`docs/requirements.md`「成果の振り返り」）。
+    // 見る日の検証・今日への丸め込みも呼ぶたびにここで済ませ、`readAchievement` には検証済みの日付キーだけを渡す。
+    // 日記はここで合わせる（`readAchievement` は数だけを持ち、日記の置き場を知らない）。
     readAchievementDay: async (selection) => {
       const today = todayLocalDateKey()
       const dateKey = resolveAchievementDateKey(selection, today)
@@ -136,8 +122,7 @@ export async function startViewDelivery(options: ViewDeliveryOptions): Promise<V
         ? { kind: "ok", achievement: { ...result.achievement, diary } }
         : result
     },
-    // 灯りの暦（直近5週ぶん）。「今日」を決めるのは配線層（`readAchievementDay` と同じ理由）。
-    // 日記のある日の一覧もここで合わせる（`readAchievementDay` と同じ理由）。
+    // 灯りの暦（直近5週ぶん）。日記のある日の一覧もここで合わせる。
     readAchievementCalendar: async () => {
       const [result, diaryDates] = await Promise.all([
         readCommitCalendar(process.cwd(), todayLocalDateKey(), achievementCommitCache),
@@ -149,9 +134,6 @@ export async function startViewDelivery(options: ViewDeliveryOptions): Promise<V
     },
   })
 
-  // ポートが塞がっているのは、既定を使っているときに限り「起動時の前提不足」として即時終了せず
-  // ずらして再挑戦する（src/server/view-server/core/port-resolution.ts）。明示的に渡されたときは一度だけ
-  // 試してそのまま失敗する。
   const started = await startOnResolvedPort(options.portResolution, (port) =>
     startViewServer(port, {
       ui: () => ui,
@@ -169,8 +151,8 @@ export async function startViewDelivery(options: ViewDeliveryOptions): Promise<V
   const devServer = options.devServer
     ? await startUiDevServer({
         httpServer: server.httpServer,
-        // 差分を当て続けると新しいブラウザ側が古いサーバと話すことになるので、起動のときの対へ
-        // 戻してページごと読み込み直させる。上げ直すまでは保存しても何も当たらない。
+        // 差分を当て続けると新しいブラウザ側が古いサーバと話すことになるので、起動のときの対へ戻してページごと読み込み直させる。
+        // 上げ直すまでは保存しても何も当たらない。
         onServerSourceChanged: () => {
           ui = { kind: "bundle", bundle: options.bundle }
           process.stderr.write(
@@ -212,10 +194,7 @@ export async function startViewDelivery(options: ViewDeliveryOptions): Promise<V
   }
 }
 
-/**
- * 開いているタブに取り直しを押す。セッションの状態は動かないので `session-manager` を
- * 通さない（docs/design.md 11章）。
- */
+/** 開いているタブに取り直しを押す。セッションの状態は動かないので、セッションの管理を通さない。 */
 function pushRefresh(
   viewers: ReadonlySet<(frame: ServerFrame) => void>,
   target: RefreshTarget,

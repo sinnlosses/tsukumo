@@ -1,9 +1,6 @@
-// いま出しているキャラクターパックと、切り替えの選択肢の持ち主。`session.switchCharacter` と
-// 画面からの編集で入れ替わるので、可変なのはこのファイルの中だけにする（呼ぶ側は
-// 「いま出しているもの」を関数越しに引くだけで、いつ入れ替わったかを知らなくてよい）。
-//
-// ここは配線層（`src/` 直下。`shared` / `core` / `adapter` のすべてを import してよい。
-// docs/design.md 2章「層と依存の向き」）。
+// いま出しているキャラクターパックと、切り替えの選択肢の持ち主。
+// 切り替えと画面からの編集で入れ替わるので、可変なのはこのファイルの中だけにする。
+// 呼ぶ側は「いま出しているもの」を関数越しに引くだけで、いつ入れ替わったかを知らなくてよい。
 
 import process from "node:process"
 
@@ -46,10 +43,8 @@ import type { SessionEvent } from "./shared/session/session-event.ts"
 /** いま出しているキャラクターパックへの窓口。持っているパックそのものは外へ出さない。 */
 export type CurrentCharacter = {
   /**
-   * いま出しているパックと全パックの一覧を画面へ流す形（`character-changed`）。呼ぶたびに
-   * パックの一覧を読み直すので、パックを変えた・作った・消したあとはこれを返せば一覧も
-   * 配り直される（`docs/design.md` 7.2）。起こしたとき・起こし直したとき・
-   * 見た目を変えたとき・作ったとき・消したときのすべてがここを通る。
+   * いま出しているパックと全パックの一覧を画面へ流す形（`character-changed`）。
+   * 呼ぶたびにパックの一覧を読み直すので、パックを変えた・作った・消したあとはこれを返せば一覧も配り直される。
    */
   readonly event: () => SessionEvent
   /**
@@ -60,44 +55,41 @@ export type CurrentCharacter = {
   /** 画面から選んだパックを覚える（次の起動の初期値になる）。 */
   readonly remember: (pack: CharacterPack) => void
   /**
-   * 画面から届いた立ち絵・差し色・背景を `edit.pack` のパックへ書き込み、一覧ごと流し直す
-   * `character-changed` を返す（受け付けられなければ undefined）。使用中のパックなら書けた
-   * パックにそのまま持ち替えるので、そのパックの素材もこのあと書いた先から配る。使用中以外は
-   * 持ち替えない（一覧を読み直すだけで、使用中の姿は変わらない）。
+   * 画面から届いた立ち絵・差し色・背景を `edit.pack` のパックへ書き込み、一覧ごと流し直す `character-changed` を返す（受け付けられなければ undefined）。
+   * 使用中のパックなら書けたパックにそのまま持ち替えるので、そのパックの素材もこのあと書いた先から配る。
+   * 使用中以外は持ち替えない（一覧を読み直すだけで、使用中の姿は変わらない）。
    */
   readonly applyEdit: (edit: CharacterEdit) => SessionEvent | undefined
   /**
-   * 画面から届いた新しいパックを作り、選択肢の増えた `character-changed` を返す
-   * （作れなければ undefined）。いま出しているパックは持ち替えない — 作るだけでは
-   * 切り替えず、`<select>` から選んだときに起こし直す（docs/requirements.md 4.4）。
+   * 画面から届いた新しいパックを作り、選択肢の増えた `character-changed` を返す（作れなければ undefined）。
+   * いま出しているパックは持ち替えない。
+   * 作るだけでは切り替えず、`<select>` から選んだときに起こし直す。
    */
   readonly applyCreate: (create: CharacterCreate) => SessionEvent | undefined
   /**
-   * 画面から指されたパックのホームの版を消し、選択肢の減った（同梱に戻ったものは同梱の姿の）
-   * `character-changed` を返す（消せなければ undefined。使用中は消さないので、いま出している
-   * パックは持ち替えない）。一覧から名前ごと消えたときだけ、そのパックの雑談の要約と
-   * アーカイブも消す（同じ名前で作り直したパックが古い記録を拾わないため。同梱に戻っただけなら
-   * 同じキャラクターが続くので残す。`docs/requirements.md` 4.4 の「消す」）。
+   * 画面から指されたパックのホームの版を消し、選択肢の減った（同梱に戻ったものは同梱の姿の）`character-changed` を返す。
+   * 消せなければ undefined。使用中は消さないので、いま出しているパックは持ち替えない。
+   * 一覧から名前ごと消えたときだけ、そのパックの雑談の要約とアーカイブも消す（同じ名前で作り直したパックが古い記録を拾わないため）。
+   * 同梱に戻っただけなら同じキャラクターが続くので残す。
    */
   readonly applyDelete: (remove: CharacterDelete) => SessionEvent | undefined
   /**
-   * 雑談のサイドバー「覚えていること」の「編集」から1行消し、流し直す
-   * `remembered-lines-changed` を返す（一致する行が無い・書けない・そのパックが編集できない
-   * ときは undefined。`docs/chat-mode.md`「プロフィールの書き戻し」）。
+   * 雑談のサイドバー「覚えていること」の「編集」から1行消し、流し直す `remembered-lines-changed` を返す。
+   * 一致する行が無い・書けない・そのパックが編集できないときは undefined。
    */
   readonly forgetRememberedLine: (line: string) => SessionEvent | undefined
   /**
-   * `/character/<pack>/<file>` に配ってよい1件（無いパック・allowlist に無い・ディスクに無い
-   * ときは undefined）。使用中以外のパックの素材も配る（キャラクター画面の一覧と詳しい設定）。
+   * `/character/<pack>/<file>` に配ってよい1件（無いパック・allowlist に無い・ディスクに無いときは undefined）。
+   * 使用中以外のパックの素材も配る。
    * 突き合わせる一覧は、最後に {@link event} で配ったときに読んだもの。
    */
   readonly serveAsset: (location: CharacterAssetLocation) => CharacterAssetFile | undefined
 }
 
 /**
- * 起動時の初期パックを決め、以降の持ち回りを引き受ける。一覧は読み直せる形で持つ —
- * 画面から立ち絵を変えるとホーム（`~/.tsukumo/characters/`）にパックが現れるので、
- * `character-changed` を組むたびに引き直す（docs/design.md 7.2）。
+ * 起動時の初期パックを決め、以降の持ち回りを引き受ける。
+ * 一覧は読み直せる形で持つ。
+ * 画面から立ち絵を変えるとホーム（`~/.tsukumo/characters/`）にパックが現れるので、`character-changed` を組むたびに引き直す。
  */
 export function createCurrentCharacter(config: Config): CurrentCharacter {
   const defaultPack = readCharacterPack(
@@ -111,8 +103,6 @@ export function createCurrentCharacter(config: Config): CurrentCharacter {
   }
   let packs = findPacks()
 
-  // 起動時の初期パック（順位も知らない名前の落とし方も
-  // src/server/character-pack/core/character-selection.ts）。
   // TSUKUMO_CHARACTER があるときはすでに defaultPack に反映されている。
   const initialPack = selectInitialCharacterPack({
     packs,
@@ -129,9 +119,8 @@ export function createCurrentCharacter(config: Config): CurrentCharacter {
     return characterChangedEvent(current, packs, process.cwd())
   }
 
-  // これから起こすパックを決め方から引く。「画面から選ばれた名前」と「いま出しているパックの
-  // まま」を分けて受けるので、モードを切り替えただけの起こし直しが名前として届かない
-  // （docs/screen-design.md 13.6）。
+  // 「画面から選ばれた名前」と「いま出しているパックのまま」を分けて受ける。
+  // 分けないと、モードを切り替えただけの起こし直しが名前として届く。
   const chosen = (selection: CharacterSelection): CharacterPack => {
     switch (selection.by) {
       case "initial":

@@ -1,18 +1,12 @@
-// 日記（`docs/glossary.md`「日記」）の型と、保存の形の読み手。サーバ（`src/server/adapter/
-// diary.ts` が読み書きする JSON）とブラウザ（成果の画面・日記帳が読む手続き `achievement.day` の
-// `diary` 区画）の両方が同じ型を見るので shared に置く。書き足しの規則は
-// `docs/requirements.md`「日記」、置き場と書き方は `appendDiaryParagraph` で、ここは型と読み取りだけを持つ。
-//
-// 運ぶのは日記の本文・しおり・表情・書いた時刻とパックだけ（会話の文面そのものではない。
-// `docs/coding-standards.md`「会話内容の扱い」。日記はモデルが書いた成果物で、逐語の会話とは
-// 別に扱う）。
+// 日記の型と、保存の形の読み手。置き場と書き方は `appendDiaryParagraph` が持ち、ここは型と読み取りだけを持つ。
+// 運ぶのは日記の本文・しおり・表情・書いた時刻とパックだけ（日記はモデルが書いた成果物で、逐語の会話とは別に扱う）。
 
 import { z } from "zod"
 
 /** 保存の形の版。読めた版はこれだけで、違えば「読めなかった」に倒す（読み手の {@link readDiary}）。 */
 export const DIARY_VERSION = 1
 
-/** 日記に挟む「この日のいちばん」（`docs/glossary.md`「しおり」）。終えたタスクが無い日は `none`。 */
+/** 日記に挟む「この日のいちばん」。終えたタスクが無い日は `none`。 */
 export type DiaryBookmark =
   | { readonly kind: "none" }
   | {
@@ -25,7 +19,7 @@ export type DiaryBookmark =
 
 /** 日記の1段落（1回の振り返りぶん）。 */
 export type DiaryParagraph = {
-  /** 書いた時刻（ローカル時刻のオフセット付き ISO。`src/server/adapter/local-time.ts` の `isoWithOffset`）。 */
+  /** 書いた時刻（ローカル時刻のオフセット付き ISO）。 */
   readonly writtenAt: string
   readonly body: string
   /** 書いたときの表情名。パックを替えても読めるよう、`speak` と同じ列挙ではなく文字列で持つ。 */
@@ -44,25 +38,21 @@ export type Diary = {
 }
 
 /**
- * 1日ぶんの成果の応答（`DailyAchievement.diary`）に載る、その日の日記の状態。読めなくても
- * 「無い」と決めない（`unreadable`。ファイルが壊れていても成果そのものは見える）。
+ * 1日ぶんの成果の応答（`DailyAchievement.diary`）に載る、その日の日記の状態。
+ * 読めなくても「無い」と決めない（`unreadable`。ファイルが壊れていても成果そのものは見える）。
  */
 export type DailyDiaryStatus =
   | { readonly kind: "written"; readonly diary: Diary }
   | { readonly kind: "none" }
   | { readonly kind: "unreadable" }
 
-/**
- * 振り返りの3段の並び（`docs/requirements.md`「進みは3段で見せる」）。
- * この並びが段の順で、いまの段より前は済、後は未着手と読む（段は戻らない）。
- */
+/** 振り返りの3段の並び。この並びが段の順で、いまの段より前は済、後は未着手と読む（段は戻らない）。 */
 export const DIARY_STAGES = ["read", "write", "pick"] as const
 
 export type DiaryStage = (typeof DIARY_STAGES)[number]
 
 /**
- * 振り返りの進み（`SessionState.diaryWriting`。`docs/requirements.md`
- * 「進みは3段で見せる」）。
+ * 振り返りの進み（`SessionState.diaryWriting`）。
  *
  * - `idle`: ふだん。一度も振り返っていない
  * - `writing`: 振り返り中。`startedAt` はそのターンが始まった時刻、`stage` はいまの段
@@ -111,11 +101,7 @@ export const dailyDiaryStatusSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("unreadable") }),
 ])
 
-/**
- * 届いた値を {@link Diary} として読む。版が違う・形が崩れていれば `undefined`
- * （`src/server/diary/adapter/diary.ts` はこれを「読めない」として扱う。手続き `achievement.day` の
- * 応答は同じ zod（`dailyDiaryStatusSchema`）で検証する）。
- */
+/** 届いた値を {@link Diary} として読む。版が違う・形が崩れていれば `undefined`。 */
 export function readDiary(value: unknown): Diary | undefined {
   const parsed = diarySchema.safeParse(value)
   return parsed.success ? parsed.data : undefined

@@ -1,22 +1,10 @@
-// タスク一覧の要約（id・summary・status・difficulty・loopable・依存・着手した作業ツリー）の形と、
-// ファイル方式の develop/task/T-xxx.md の front matter の読み方。「読む」層。
-// Beads 方式の課題からの写しは beads-issue.ts。
-//
-// タスク一覧は Claude Code とサイドカーの進捗管理ファイルで、利用者との会話内容とは別物。
-// ここは会話の内容を一切扱わない。
-//
-// ここはファイルI/Oを持たない。`main` の上のファイルを読み、`main` の先端が変わったら読み直すのは
-// src/server/repository/adapter/task-summary.ts。
+// タスク一覧の要約（id・summary・status・difficulty・loopable・依存・着手した作業ツリー）の形と、ファイル方式の develop/task/T-xxx.md の front matter の読み方。
+// タスク一覧は進捗管理のファイルで、利用者との会話内容とは別物。ここは会話の内容を一切扱わない。
+// ここはファイルI/Oを持たない。
 
 import { isIncludedIn } from "remeda"
 
-/**
- * サイドバーのタスク一覧1件分。ファイルに出てくる順のまま持つ（status ごとにまとめない）。
- *
- * `difficulty`・`loopable`・`dependencies`・`body`・`location` は一覧の表
- * （`src/browser/features/task-board/task-board.tsx`）が使う。サイドバーの区画には出さないが、
- * 同じ読み取りから採れるものをここで揃えておく（読み取りを2本に分けない）。
- */
+/** タスク一覧1件分。ファイルに出てくる順のまま持つ（status ごとにまとめない）。 */
 export type TaskSummaryItem = {
   readonly id: string
   readonly summary: string
@@ -30,10 +18,9 @@ export type TaskSummaryItem = {
    */
   readonly assignee: string | undefined
   /**
-   * タスクの本文（Markdown）。ファイル方式は `develop/task/<ID>.md` の front matter より後ろ、
-   * Beads 方式は課題の `description`・`acceptance_criteria`・`notes` を `task show` と同じ順に
-   * 組んだもの（`composeBeadsBody`。`## 結果` は Beads の comment にあり `bd list` に載らないので
-   * 持たない）。本文が無い課題・ファイルでも空文字列で持つ（`undefined` にしない）。
+   * タスクの本文（Markdown）。
+   * ファイル方式は `develop/task/<ID>.md` の front matter より後ろ、Beads 方式は `composeBeadsBody` が組んだもの。
+   * 本文が無い課題・ファイルでも空文字列で持つ（`undefined` にしない）。
    */
   readonly body: string
   readonly location: TaskLocation
@@ -49,13 +36,9 @@ export type TaskLocation =
   | { readonly kind: "none" }
 
 /**
- * タスクの一覧が読めているかどうか。「まだ届いていない」（session-state.ts の
- * 初期値）と「読めない」（`develop/task/` が無い・`bd` が読めない・方式の行が読めない）を
- * ここでは区別しない——`watchTaskSummary`（`src/server/repository/adapter/task-summary.ts`）は
- * `main` が最初から読めないときは初回の通知そのものを送らないので、その口だけでは
- * 「まだ確認していない」と「確認して無かった」を型で分けられない。画面側もどちらも同じ
- * 「不明」表示にしていて対処が変わらないため、分けても情報が増えない
- * （`docs/coding-standards.md`「「無いかもしれない」値」）。
+ * タスクの一覧が読めているかどうか。
+ * 「まだ届いていない」（状態の初期値）と「読めない」（`develop/task/` が無い・`bd` が読めない・方式の行が読めない）をここでは区別しない。
+ * `watchTaskSummary` は `main` が最初から読めないときは初回の通知そのものを送らないので、その口だけでは2つを型で分けられず、画面の対処も変わらない。
  */
 export type TaskSummaryResult =
   | { readonly kind: "unknown" }
@@ -70,12 +53,11 @@ export type TaskReadiness =
   | { readonly kind: "blocked"; readonly blockedBy: readonly string[] }
 
 /**
- * 1件の着手可否。`task-workflow` の `status.py` と同じ規則にする: `todo` 以外は判定せず、
- * 止めているのは「一覧に存在していて、まだ `done` でない依存」だけ。
+ * 1件の着手可否。`task-workflow` の `status.py` と同じ規則に揃える。
+ * `todo` 以外は判定せず、止めているのは「一覧に存在していて、まだ `done` でない依存」だけ。
  * 一覧に無いIDは止めない（アーカイブ済み＝完了扱い）。
  *
- * 第2引数には一覧全体から一度だけ作った「まだ `done` でないタスクのID」の集合
- * （{@link unfinishedTaskIds}）を渡す（行ごとに呼ぶ側で毎回作り直さない）。
+ * 第2引数には一覧全体から一度だけ作った集合（{@link unfinishedTaskIds}）を渡す（行ごとに作り直さない）。
  */
 export function taskReadiness(
   task: TaskSummaryItem,
@@ -90,9 +72,8 @@ export function taskReadiness(
 }
 
 /**
- * 一覧のうち、まだ完了していないタスクのID集合。`taskReadiness` へ渡す前に一覧全体から1回だけ作る。
- * `done` と `dropped` はどちらも閉じたタスクとして依存を止めない（task-workflow の `task.py`
- * `_is_resolved` と同じ規則: `t.status in ("done", "dropped")`）。
+ * 一覧のうち、まだ完了していないタスクのID集合。
+ * `done` と `dropped` はどちらも閉じたタスクとして依存を止めない（task-workflow の `task.py` の `_is_resolved` と同じ規則に揃える）。
  */
 export function unfinishedTaskIds(tasks: readonly TaskSummaryItem[]): ReadonlySet<string> {
   return new Set(
@@ -103,11 +84,9 @@ export function unfinishedTaskIds(tasks: readonly TaskSummaryItem[]): ReadonlySe
 }
 
 /**
- * `develop/task/T-xxx.md` の front matter（新形式）。文法は claude-skills の
- * `docs/task-workflow-redesign.md` 3.2 が正典で YAML ではない（`id` / `summary` / `status` /
- * `difficulty` / `loopable` / `dependencies` の6行、この順・この綴り）。着手中（旧 `doing`）は
- * ファイルに書かない（台帳の印が表す。3.2「着手中はファイルに書かない」）ので、この型の
- * `status` に `doing` は無い。
+ * `develop/task/T-xxx.md` の front matter。
+ * 文法は claude-skills の task-workflow-redesign.md「front matter の文法」が正典で、YAML ではない（`id` / `summary` / `status` / `difficulty` / `loopable` / `dependencies` の6行、この順・この綴り）。
+ * 着手中はファイルに書かない（台帳の印が表す）ので、この型の `status` に `doing` は無い。
  */
 export type NewTaskFile = {
   readonly id: string
@@ -120,8 +99,10 @@ export type NewTaskFile = {
   readonly body: string
 }
 
-/** ファイル方式のタスクファイルの置き場所。`main` からの相対パス。末尾の `/` を付けて `git ls-tree`
- * に渡すと、そのディレクトリ自身の1行ではなく直下の一覧になる。 */
+/**
+ * ファイル方式のタスクファイルの置き場所。`main` からの相対パス。
+ * 末尾の `/` を付けて `git ls-tree` に渡すと、そのディレクトリ自身の1行ではなく直下の一覧になる。
+ */
 export const TASK_DIR_PATH = "develop/task/"
 
 const NEW_TASK_ID_PATTERN = /^T-\d{3,}$/
@@ -133,13 +114,10 @@ const NEW_TASK_LOOPABLE_VALUES = ["Y", "N"] as const
 const NEW_TASK_HEADER_LINE_COUNT = 8
 
 /**
- * 1件の `develop/task/T-xxx.md` を読む。壊れていれば `undefined`（呼び出し側はその1件だけ
- * 読み飛ばす）。行の位置で判定する（3.2 の文法は6行・この順・この綴りと決まっているので、
- * 欠け・重複・順の違い・知らないキーはどれも「その行が期待した接頭辞で始まらない」という
- * 1種類の失敗に落ちる。Python 側の読み手 `taskfile.py` の `parse` と同じ形）。
+ * 1件の `develop/task/T-xxx.md` を読む。壊れていれば `undefined`（呼び出し側はその1件だけ読み飛ばす）。
+ * 行の位置で判定する（文法は6行・この順・この綴りと決まっているので、欠け・重複・順の違い・知らないキーはどれも「その行が期待した接頭辞で始まらない」という1種類の失敗に落ちる）。
  *
- * `fileName` はファイル名（`T-xxx.md` の形。パスの区切りは呼び出し側が落とす）。front matter の
- * `id` と語幹が一致しないものは INVALID にする（3.4 の見本）。
+ * `fileName` はファイル名（`T-xxx.md` の形。パスの区切りは呼び出し側が落とす）。front matter の `id` と語幹が一致しないものは INVALID にする。
  */
 export function parseNewTaskFile(fileName: string, content: string): NewTaskFile | undefined {
   if (content.includes("\r")) {
@@ -200,15 +178,11 @@ export function parseNewTaskFile(fileName: string, content: string): NewTaskFile
 }
 
 /**
- * 前段の `parseNewTaskFile` で読み終えた {@link NewTaskFile} の並びと、台帳の着手の印から
- * 一覧に出す要約を作る。着手中（台帳に印がある `todo`）は表示用の `status` を `"doing"` に
- * 読み替える（ファイルには書かれていないので、ここで初めて出てくる）。並びは ID の数字順
- * （claude-skills の `docs/task-workflow-redesign.md` 3.4 が正典）。
+ * 読み終えた {@link NewTaskFile} の並びと、台帳の着手の印から一覧に出す要約を作る。
+ * 着手中（台帳に印がある `todo`）は表示用の `status` を `"doing"` に読み替える。並びは ID の数字順。
  *
- * ファイルを読み直さずに済む形で分けてある——`main` の先端が動いていなくても、共有の
- * `.git` の台帳（着手の印）だけは動く（`task claim` / `task release` は `main` を動かさない）ので、
- * `src/server/repository/adapter/task-summary.ts` は先端が同じ見回りでも `claimedIds` だけ読み直して
- * ここへ通す（`git cat-file --batch` はしない）。
+ * ファイルを読み直さずに済む形で分けてある。
+ * `main` の先端が動いていなくても共有の `.git` の台帳（着手の印）だけは動く（`task claim` / `task release` は `main` を動かさない）ので、先端が同じ見回りでも `claimedIds` だけ読み直してここへ通せる。
  */
 export function taskSummaryItemsOfNewTaskFiles(
   files: readonly NewTaskFile[],
@@ -235,8 +209,7 @@ function taskSummaryItemOfNewTaskFile(
   }
 }
 
-/** `dependencies: [...]` の `[` の次から渡す。区切りは `", "` 固定で、閉じの `]` が無ければ
- * `undefined`（3.2）。 */
+/** `dependencies: [...]` の `[` の次から渡す。区切りは `", "` 固定で、閉じの `]` が無ければ `undefined`。 */
 function newTaskDependenciesOf(depsField: string | undefined): readonly string[] | undefined {
   if (depsField === undefined || !depsField.endsWith("]")) {
     return undefined

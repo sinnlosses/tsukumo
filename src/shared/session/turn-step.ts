@@ -1,16 +1,11 @@
-// 「依頼の手順」（帯の「いまの作業」の札を押すと開く一覧。docs/glossary.md「依頼の手順」）を、
-// 確定した記録（`SessionRecord`）から導く純粋関数だけを置く（姿から導くだけのものなので
-// `session-state.ts` には置かない。`shared/session/turn-speech.ts` と同じ置き方。docs/screen-design.md 13.9）。
-//
-// `node:` にも `document` にも触らない（他の shared と同じ制約）。
+// 「依頼の手順」（帯の「いまの作業」の札を押すと開く一覧）を、確定した記録（`SessionRecord`）から導く。
 
 import type { RecordTime, SessionRecord } from "./session-state.ts"
 import { splitIntoTurns } from "./turn.ts"
 
 /**
- * 依頼の手順1件の進み具合。`failed` の `output` は失敗の中身
- * （`<details>` で開いて読む。docs/screen-design.md 13.9）。`done` / `failed` が持つ
- * `finishedAt` は所要時間の計算に使う（{@link toolDuration}）。
+ * 依頼の手順1件の進み具合。`failed` の `output` は失敗の中身（`<details>` で開いて読む）。
+ * `done` / `failed` が持つ `finishedAt` は所要時間の計算に使う（{@link toolDuration}）。
  */
 export type TurnStepStatus =
   | { readonly kind: "running" }
@@ -18,10 +13,8 @@ export type TurnStepStatus =
   | { readonly kind: "failed"; readonly output: string; readonly finishedAt: RecordTime }
 
 /**
- * いちばん新しい依頼（ターン）の中で claude が呼んだツール1回ぶん（docs/glossary.md
- * 「依頼の手順」）。引数はここまで持ち込む（要約は表示側 `src/browser/domain/tool-summary.ts` の
- * 仕事。`docs/coding-standards.md`「会話内容の扱い」のとおり、要約に断片が入りうることは
- * 呼び出し側が承知した上で使う）。
+ * いちばん新しい依頼（ターン）の中で claude が呼んだツール1回ぶん。
+ * 引数はここまで持ち込み、要約は表示側が作る（要約に会話の断片が入りうることは、呼び出し側が承知した上で使う）。
  */
 export type TurnStep = {
   readonly toolUseId: string
@@ -38,10 +31,7 @@ export type ToolDuration =
   | { readonly kind: "known"; readonly milliseconds: number }
   | { readonly kind: "unknown" }
 
-/**
- * {@link TurnStep} 1件の所要時間。実行中、または開始・終了のどちらかが `restored`
- * （前のセッションから読み戻した手順。`session-state.ts` の `withRestoredTime`）なら `unknown`。
- */
+/** {@link TurnStep} 1件の所要時間。実行中、または開始・終了のどちらかが `restored`（前のセッションから読み戻した手順）なら `unknown`。 */
 export function toolDuration(step: TurnStep): ToolDuration {
   if (step.status.kind === "running") {
     return { kind: "unknown" }
@@ -62,15 +52,12 @@ export type TurnStepList =
   | { readonly kind: "turn"; readonly steps: readonly TurnStep[] }
 
 /**
- * 記録から、最後の `request` より後の `tool` の記録を拾って、依頼の手順を古い→新しいの順で
- * 返す（docs/screen-design.md 13.9「いまの作業」）。範囲は依頼1つ——「直近の何件」ではない。
+ * 記録から、最後の `request` より後の `tool` の記録を拾って、依頼の手順を古い→新しいの順で返す。
+ * 範囲は依頼1つで、「直近の何件」ではない。
  *
- * - 依頼が一度も無ければ `{ kind: "no-request" }`。0件の配列（依頼はあったが
- *   まだツールを使っていない）とは型で区別する
- * - 結果の届いていない手順は running のまま返す（ターンが終わっても、依頼が終わっても。
- *   背景で走り続けるものがあるため）。ただし `sessionEnded` が true のときは running の手順を
- *   落とす（セッションが終わったあとは実行中の印を出さない。以前の `runningTools` が
- *   `session-ended` で空になっていたのと同じ）
+ * - 依頼が一度も無ければ `{ kind: "no-request" }`。0件の配列（依頼はあったがまだツールを使っていない）とは型で区別する
+ * - 結果の届いていない手順は running のまま返す（ターンが終わっても、依頼が終わっても。背景で走り続けるものがあるため）。
+ *   ただし `sessionEnded` が true のときは running の手順を落とす（セッションが終わったあとは実行中の印を出さない）
  */
 export function currentTurnSteps(
   records: readonly SessionRecord[],

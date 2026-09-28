@@ -1,12 +1,6 @@
-// 客として訪ねてくるときにパックが持つもの（`character.json` の `visit` の節。
-// `docs/research/character-visit.md` 論点4・論点7）。`visit` は丸ごと省略できる任意の節で、
-// 持たないパックは客にならない。character.json は利用者が用意する外部由来のファイルなので、
-// ここでも構造を信用せず unknown で受けて検証する（docs/coding-standards.md「型を迂回する
-// キャストを使わない」）。
-//
-// `src/shared/character-pack/character-definition.ts` への差し込みは `CharacterDefinition.visit` の1フィールドと
-// `toCharacterVisit` の呼び出しだけにとどめ、`visit` そのものの型・検証はここに閉じる
-// （このファイル1つを revert すれば `visit` の読み取りごと戻る）。
+// 客として訪ねてくるときにパックが持つもの（`character.json` の `visit` の節）の型と検証。
+// `visit` は丸ごと省略できる任意の節で、持たないパックは客にならない。
+// 定義への差し込みは `CharacterDefinition.visit` の1フィールドと `toCharacterVisit` の呼び出しだけにとどめ、`visit` そのものの型・検証はここに閉じる。
 
 import { isPlainObject } from "remeda"
 
@@ -18,7 +12,7 @@ export const VISIT_SPEAKERS = ["host", "guest"] as const
 
 export type VisitSpeaker = (typeof VISIT_SPEAKERS)[number]
 
-/** 台本1行（話し手・表情・セリフ）。表情は9つの enum の中でパックが持つものを使う（論点7）。 */
+/** 台本1行（話し手・表情・セリフ）。表情は `EXPRESSIONS` の中でパックが持つものを使う。 */
 export type VisitScriptLine = {
   readonly speaker: VisitSpeaker
   readonly expression: Expression
@@ -35,17 +29,16 @@ export type VisitScript = readonly VisitScriptLine[]
 export type CharacterVisit = {
   /** 棚の陰から「ひょこっ」と覗く絵のファイル名。無ければ `default` を不透明度で出し入れする。 */
   readonly peek: string | undefined
-  /** 帰るときに言う短いセリフ（生成しない定型。論点5）。 */
+  /** 帰るときに言う短いセリフ（生成しない定型）。 */
   readonly farewell: readonly string[]
   /** 台本を作り損ねたときに1本選んで使う、あらかじめ書かれた掛け合い。無ければ来ない。 */
   readonly scripts: readonly VisitScript[]
 }
 
 /**
- * `character.json` の `visit` を読む。オブジェクトでない・`farewell` が無い/空/文字列でない
- * 要素を含むときは `visit` ごと undefined（客にならない）。`scripts` は配列でなければ空の一覧に
- * 畳み、形の崩れた台本1本だけを一覧から落とす（`visit` 自体は生かす。`farewell` と違い
- * 任意の節なので、崩れた1本のために他の台本まで捨てない）。
+ * `character.json` の `visit` を読む。
+ * オブジェクトでない・`farewell` が無い/空/文字列でない要素を含むときは `visit` ごと undefined（客にならない）。
+ * `scripts` は配列でなければ空の一覧に畳み、形の崩れた台本1本だけを一覧から落とす（崩れた1本のために他の台本まで捨てない）。
  */
 export function toCharacterVisit(value: unknown): CharacterVisit | undefined {
   if (!isPlainObject(value)) {

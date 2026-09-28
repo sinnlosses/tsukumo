@@ -1,6 +1,5 @@
 // `report` の塊の使われ方の記録の行の形。1行 = 描いた `report` 1回。
-// 書いてよいのは時刻・セッションID・塊と記法の名前・数だけで、塊の中身・逃げ道の文字は入れない
-// （`docs/coding-standards.md`「会話内容の扱い」）。
+// 書いてよいのは時刻・セッションID・塊と記法の名前・数だけで、塊の中身・逃げ道の文字は入れない。
 
 /** 行の形の版。形を変えたら上げ、古い行と見分ける。 */
 export const REPORT_USAGE_FORMAT_VERSION = 3 satisfies number

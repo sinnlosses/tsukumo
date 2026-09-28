@@ -1,11 +1,5 @@
-// 灯りの暦（`docs/glossary.md`「灯りの暦」）が取りに行く応答の型。`src/shared/achievement/achievement.ts` の
-// 1日ぶんとは別の手続き（`src/shared/contract/achievement.ts` の `calendar`）。
-// 数え方・範囲・灯りの段階の規則は `docs/requirements.md`「灯りの段階」が正典で、ここは
-// 受け渡しの形と、暦の範囲・灯りの段階の判定だけを持つ
-// （`docs/requirements.md`「成果の振り返り」）。
-//
-// 運ぶのは日付とコミットの数だけ（コミットの件名も会話の文面も入らない。
-// `docs/coding-standards.md`「会話内容の扱い」）。
+// 灯りの暦が取りに行く応答の型と、暦の範囲・灯りの段階の判定。
+// 運ぶのは日付とコミットの数だけで、コミットの件名も会話の文面も入れない。
 
 import { z } from "zod"
 
@@ -16,8 +10,8 @@ export type AchievementCalendarDay = {
 }
 
 /**
- * 暦の手続きの応答（見る範囲は常に「今日を含む直近5週」で、日付は選べない）。`main` が読めない
- * （git リポジトリでない・`main` ブランチが無い・`git` が無い）ときは画面ごと `unknown`。
+ * 暦の手続きの応答（見る範囲は常に「今日を含む直近5週」で、日付は選べない）。
+ * `main` が読めない（git リポジトリでない・`main` ブランチが無い・`git` が無い）ときは画面ごと `unknown`。
  */
 export type AchievementCalendar =
   | { readonly kind: "unknown" }
@@ -48,9 +42,8 @@ export const achievementCalendarSchema = z.discriminatedUnion("kind", [
 ])
 
 /**
- * 暦の範囲（`docs/requirements.md`「灯りの段階」・`docs/requirements.md`「成果の振り返り」）。
- * 「今日を含む週の月曜から4週前の月曜」〜今日を、日付キーの古い順で返す（今日より後は含まない
- * ——ブラウザが並べるだけで数は無い）。
+ * 暦の範囲。「今日を含む週の月曜から4週前の月曜」〜今日を、日付キーの古い順で返す。
+ * 今日より後は含まない（ブラウザが並べるだけで数は無い）。
  */
 export function achievementCalendarDateKeys(today: string): readonly string[] {
   const todayDate = Temporal.PlainDate.from(today)
@@ -68,11 +61,9 @@ export function achievementCalendarDateKeys(today: string): readonly string[] {
   return dateKeys
 }
 
-/** 灯りの段階（`docs/requirements.md`「灯りの段階」）。 */
 export type LampLevel = "none" | "faint" | "lit" | "bright"
 
-/** 段階の区切り（`docs/requirements.md`「灯りの段階」の表。多いほうから並べ、
- * 最初に当てはまったものを採る）。 */
+/** 段階の区切り。多いほうから並べ、最初に当てはまったものを採る。 */
 const LAMP_LEVEL_THRESHOLDS = [
   { min: 40, level: "bright" },
   { min: 10, level: "lit" },
@@ -80,7 +71,7 @@ const LAMP_LEVEL_THRESHOLDS = [
   { min: 0, level: "none" },
 ] as const satisfies readonly { readonly min: number; readonly level: LampLevel }[]
 
-/** その日のコミットの数から灯りの段階を決める（`docs/requirements.md`「灯りの段階」）。 */
+/** その日のコミットの数から灯りの段階を決める。 */
 export function lampLevel(commitCount: number): LampLevel {
   const matched = LAMP_LEVEL_THRESHOLDS.find((threshold) => commitCount >= threshold.min)
   return matched === undefined ? "none" : matched.level

@@ -1,25 +1,15 @@
-// 日記の本文に効かせる書体（`character.json` の `diaryFont`。`docs/screen-design.md` 13.3
-// 「例外は日記の本文だけ」）。キャラクターパックに同梱した書体ファイルだけを配ってよい
-// （外部フォントは足さない、という決定は変わらない。`docs/design.md` 7章）。
-//
-// ここが持つのはファイル名として受け付けてよい形の検証と、配るときの MIME タイプだけ
-// （立ち絵・背景と同じ役割の分け方。`src/shared/character-pack/character-background.ts`）。書体そのものの
-// 読み書きは `src/server/character-pack/adapter/character-pack.ts`、ブラウザで `font-family` に
-// 効かせるのは `src/browser/components/app/pack-appearance.ts`（FontFace API）。
-//
-// 画面から差し替える口は無い（`docs/requirements.md` 4.4。手で `character.json` と書体ファイルを
-// パックに置く）ので、立ち絵・背景と違って data URL の受け取りやファイル名の組み立てを持たない
-// ——読む側の検証だけがここにある。
+// 日記の本文に効かせる書体（`character.json` の `diaryFont`）。
+// キャラクターパックに同梱した書体ファイルだけを配ってよい。
+// ここが持つのはファイル名として受け付けてよい形の検証と、配るときの MIME タイプだけ。
+// 画面から差し替える口は無い（手で `character.json` と書体ファイルをパックに置く）ので、data URL の受け取りやファイル名の組み立ては持たない。
 
 /** 受け付ける書体の形式。ファイル名の拡張子にもそのまま使う。 */
 export type DiaryFontFormat = "woff2" | "woff" | "ttf" | "otf"
 
 /**
- * 日記の書体として扱ってよいファイル名か。背景・立ち絵と同じ考え方
- * （`src/shared/character-pack/character-background.ts` の `isBackgroundFileName`）:
+ * 日記の書体として扱ってよいファイル名か。
  *
- * - 使えるのは半角英数字と `.` `_` `-` だけ（パスの区切り・空白・引用符が入らないので、
- *   ディレクトリを跨ぐ名前にも、CSS の `url()` を抜け出す名前にもならない）
+ * - 使えるのは半角英数字と `.` `_` `-` だけ（パスの区切り・空白・引用符が入らないので、ディレクトリを跨ぐ名前にも、CSS の `url()` を抜け出す名前にもならない）
  * - 拡張子は `.woff2` / `.woff` / `.ttf` / `.otf` のどれか
  */
 export function isDiaryFontFileName(name: string): boolean {
@@ -30,9 +20,8 @@ export function isDiaryFontFileName(name: string): boolean {
 }
 
 /**
- * 配るときの `Content-Type`。拡張子だけで仕分ける（立ち絵・背景と同じ。
- * `src/shared/character-pack/character-asset.ts` の `rasterMimeType`）。知らない拡張子は undefined
- * （`isDiaryFontFileName` を通っていないファイル名を渡さない前提）。
+ * 配るときの `Content-Type`。拡張子だけで仕分ける。
+ * 知らない拡張子は undefined（{@link isDiaryFontFileName} を通っていないファイル名を渡さない前提）。
  */
 export function diaryFontMimeType(name: string): string | undefined {
   const extension = DIARY_FONT_FILE_EXTENSIONS.find((candidate) =>

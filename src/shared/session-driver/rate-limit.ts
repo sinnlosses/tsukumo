@@ -1,5 +1,4 @@
-// 利用上限（docs/glossary.md「利用上限」）の語彙。サーバとブラウザの両方が読む契約なので
-// shared に置く（docs/design.md 4.1・4.2）。
+// 利用上限の語彙。
 
 /**
  * どの枠の上限か。SDK の `rateLimitType` を畳んだもの（`seven_day_overage_included` は
@@ -20,12 +19,10 @@ export type RateLimitBucket =
  * - `clear`: 上限に余裕がある（`allowed`）・まだ知らせが届いていない・近い（`allowed_warning`）
  * - `rejected`: 上限に達して、戻るまで使えない
  *
- * 「近い」（`allowed_warning`）は `clear` に畳む——枠の残り具合はサイドバーの利用枠が
- * 出すので、入力欄の読み手がいなくなった（`docs/research/plan-usage.md`「論点3」）。
+ * 「近い」（`allowed_warning`）は `clear` に畳む（枠の残り具合はサイドバーの利用枠が出す）。
  *
- * `resetsAt` は戻る時刻（エポックミリ秒。SDK は秒で送ってくるので境界で直す）。知らせに
- * 無ければ undefined（画面は時刻を添えずに出す）。使用率（`utilization`）は運ばない——
- * 単位（0〜1 か 0〜100 か）が型定義に書かれておらず、読み違えた数を出すより出さないほうを採る。
+ * `resetsAt` は戻る時刻（エポックミリ秒。SDK は秒で送ってくるので境界で直す）。知らせに無ければ undefined（画面は時刻を添えずに出す）。
+ * 使用率（`utilization`）は運ばない（単位が 0〜1 か 0〜100 かが型定義に書かれておらず、読み違えた数を出すより出さないほうを採る）。
  */
 export type RateLimit =
   | { readonly kind: "clear" }

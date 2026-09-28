@@ -1,9 +1,5 @@
-// `speak` が選べる表情と、そのラベル。名前はコード側の語彙（`expression.ts`）、ラベルは
-// キャラクター定義ファイル側の言葉（docs/architecture.md 原則4「キャラクターの中身をコードに
-// 書かない」、docs/design.md 7章）。
-//
-// 読むのは `speak` ツールの enum を組み立てる側（`src/server/session-driver/adapter/sdk-tool.ts`）と、
-// 表情のラベルを出す画面。`node:` にも `document` にも触らない（他の shared と同じ制約）。
+// `speak` が選べる表情と、そのラベル。
+// 名前はコード側の語彙、ラベルはキャラクター定義ファイル側の言葉。
 
 import type { CharacterDefinition } from "./character-definition.ts"
 import { type Expression, EXPRESSIONS } from "./expression.ts"
@@ -15,13 +11,10 @@ export type ExpressionChoice = {
 }
 
 /**
- * `speak` ツールが受け付ける表情と、そのラベル。出どころは定義ファイル
- * （docs/architecture.md 原則4「キャラクターの中身をコードに書かない」）。
+ * `speak` ツールが受け付ける表情と、そのラベル。出どころは定義ファイル。
  *
- * - 選べるのは立ち絵かラベルのどちらかが定義にある表情（立ち絵が無い表情は `default` の
- *   絵に落ちるので、ラベルだけでも選ばせてよい。docs/requirements.md 4.4）
- * - `default` は定義に無くても必ず含む（未知の表情の落とし先なので、これが無いと
- *   受け付けられる名前が1つも無くなる）
+ * - 選べるのは立ち絵かラベルのどちらかが定義にある表情（立ち絵が無い表情は `default` の絵に落ちるので、ラベルだけでも選ばせてよい）
+ * - `default` は定義に無くても必ず含む（未知の表情の落とし先なので、これが無いと受け付けられる名前が1つも無くなる）
  * - ラベルが定義に無ければ表情名そのものをラベルにする（既定の日本語をコードに持たない）
  */
 export function expressionChoices(
@@ -47,10 +40,7 @@ export function expressionNames(choices: readonly ExpressionChoice[]): readonly 
   return choices.map((choice) => choice.name)
 }
 
-/**
- * 表情に対応するラベルを解く。一覧に無い表情（定義から消えたあとに残った状態など）は
- * 表情名をそのまま返す。
- */
+/** 表情に対応するラベルを解く。一覧に無い表情（定義から消えたあとに残った状態など）は表情名をそのまま返す。 */
 export function resolveExpressionLabel(
   choices: readonly ExpressionChoice[],
   expression: Expression,

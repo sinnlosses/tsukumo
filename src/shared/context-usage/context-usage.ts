@@ -1,23 +1,12 @@
-// いまのセッションのコンテキストの内訳（`docs/glossary.md`「コンテキストの内訳」）。サーバ（手続き
-// `src/server/context-usage/adapter/context-usage-procedure.ts` が配る）とブラウザ（トークン消費の
-// 画面が取りに行く）の両方が同じ値を見るので shared に置く（`token-usage-summary.ts` と同じ
-// 考え方。ここは値と型だけで `node:` にも `document` にも触らない）。手続きの形は
-// `src/shared/contract/context-usage.ts`。
-//
-// SDK の形をそのまま運ばない。 画面が要る数と名前だけに写したのがここの型で、SDK の戻り値
-// （`getContextUsage()`）からの写しと検証は `src/server/session-driver/adapter/sdk-context-usage.ts` が1箇所で行う。
-//
-// 運ぶのは数と名前だけ — メモリファイルのパス・スキル名・MCP ツール名・分類の表示名で、
-// 会話の文面は入らない（メッセージは分類1行の数として出るだけ。
-// `docs/coding-standards.md`「会話内容の扱い」）。
+// いまのセッションのコンテキストの内訳。
+// SDK の形をそのまま運ばず、画面が要る数と名前だけに写したのがここの型（SDK の戻り値 `getContextUsage()` からの写しと検証は駆動の側が1箇所で行う）。
+// 運ぶのは数と名前（メモリファイルのパス・スキル名・MCP ツール名・分類の表示名）だけで、会話の文面は入らない（メッセージは分類1行の数として出るだけ）。
 
 import { z } from "zod"
 
 /**
- * 分類1行の種別。分類の判定はこれで行い、`name`（英語の表示名）では判定しない
- * （SDK の型の説明に明記されている）。`used` は窓を占める中身、`free` は残り、`buffer` は
- * 自動圧縮のために空けてある分、`deferred` は窓の外にあるツールの定義
- * （数えはするが使用量には入らない）。
+ * 分類1行の種別。分類の判定はこれで行い、`name`（英語の表示名）では判定しない（SDK の型の説明に明記されている）。
+ * `used` は窓を占める中身、`free` は残り、`buffer` は自動圧縮のために空けてある分、`deferred` は窓の外にあるツールの定義（数えはするが使用量には入らない）。
  */
 export const CONTEXT_CATEGORY_KINDS = ["used", "free", "buffer", "deferred"] as const
 
@@ -31,10 +20,8 @@ export type ContextUsageCategory = {
 }
 
 /**
- * 内訳の表に並ぶ1件（MCP ツール・メモリファイル・スキル）。3つを同じ形にしてあるのは、
- * 出どころの呼び名が違うだけで、画面が要るのが「名前・どこから来たか・トークン数」の3つで
- * 同じだから（MCP はサーバ名、メモリファイルは種別（`Project` など）、スキルは
- * 出どころ（`userSettings` など）が `source` に入る）。
+ * 内訳の表に並ぶ1件（MCP ツール・メモリファイル・スキル）。
+ * `source` には、MCP はサーバ名、メモリファイルは種別（`Project` など）、スキルは出どころ（`userSettings` など）が入る。
  */
 export type ContextUsageItem = {
   readonly name: string
@@ -61,11 +48,8 @@ export type ContextUsage = {
 }
 
 /**
- * 内訳の問い合わせの結果。判別可能な合併型にしてあるのは、「取れた」と「取れない」が
- * 画面の別の見せ方（札を出す / 一言だけ出す）に対応する別の状態だから
- * （`docs/coding-standards.md`「「無いかもしれない」値」）。「まだ起きていない」と
- * 「取れなかった」は分けない — どちらも画面ですることが同じ（待って取り直す）で、
- * 分けても利用者の手が変わらない。
+ * 内訳の問い合わせの結果。
+ * 「まだ起きていない」と「取れなかった」は分けない（どちらも画面ですることが同じで、待って取り直す）。
  */
 export type ContextUsageReport =
   | { readonly kind: "ready"; readonly usage: ContextUsage }

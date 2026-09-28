@@ -1,9 +1,6 @@
-// セッションを1つ起こす配線。どの駆動で起こすか（本物の SDK か疑似セッションの fake driver
-// か）と、続きから始めるセッションをどう探すかをここで決め、起こす順序そのものは
-// `src/server/session/core/session-launch.ts` に任せる（起動時も起こし直し（`session.switchCharacter` /
-// `session.setChatMode`）も同じ関数を通る）。
-//
-// ここは配線層（`src/` 直下。docs/design.md 2章「層と依存の向き」）。
+// セッションを1つ起こす配線。
+// どの駆動で起こすか（本物の SDK か疑似セッションの fake driver か）と、続きから始めるセッションをどう探すかをここで決める。
+// 起こす順序そのものは `createSessionLaunch` に任せる（起動時も起こし直しも同じ関数を通る）。
 
 import process from "node:process"
 
@@ -105,23 +102,14 @@ export type SessionStartOptions = {
   readonly config: Config
   /** いま出しているキャラクター。起こすパックを決めるのも覚えるのもこれ越し。 */
   readonly character: CurrentCharacter
-  /** fake driver の疑似セッション（`TSUKUMO_DRIVER=fake` のときだけ）。あるときは claude を
-   * 起こさない。 */
+  /** fake driver の疑似セッション（`TSUKUMO_DRIVER=fake` のときだけ）。あるときは claude を起こさない。 */
   readonly fakeSession: FakeSession | undefined
-  /**
-   * トークン消費の記録の口。持ち主は `src/main.ts` — 分析の画面へ配る側（`view-delivery.ts`）も
-   * 同じ口から読むので、置き場を知っているファイルを1つに保つ。
-   */
   readonly tokenUsageLog: TokenUsageLog
-  /**
-   * 依頼に添えた画像の原寸の棚。持ち主は `src/main.ts`（`tokenUsageLog` と同じ形で、
-   * 置く・捨てるのはセッション、配るのは `view-delivery.ts`）。
-   */
+  /** 依頼に添えた画像の原寸の棚。ビューの配信が引く棚と同じ1つを渡す。 */
   readonly promptImageShelf: PromptImageShelf
   /**
-   * ビューが実際に待ち受けているポート。セッションの印の目印がここから決まる
-   * （`sessionTag`。docs/requirements.md 4.8「鍵」）。同じディレクトリで2つめを起こすと
-   * ポートがずれ、目印も分かれるので、互いのセッションを取り合わない。
+   * ビューが実際に待ち受けているポート。セッションの印の目印がここから決まる（`sessionTag`）。
+   * 同じディレクトリで2つめを起こすとポートがずれ、目印も分かれるので、互いのセッションを取り合わない。
    */
   readonly viewPort: number
 }
@@ -129,7 +117,7 @@ export type SessionStartOptions = {
 /** 起こしたセッションと、開いたタブがそれを触るコマンドの手続き。 */
 export type StartedSession = {
   readonly manager: SessionManager
-  /** `/ws` に載せるルータ（`src/router.ts`）。書き込み口の中身はここで選んで渡す。 */
+  /** `/ws` に載せるルータ。書き込み口の中身はここで選んで渡す。 */
   readonly socketRouter: SocketRouter
 }
 
@@ -138,74 +126,48 @@ export function startSession(options: SessionStartOptions): StartedSession {
   const { config, character, fakeSession, tokenUsageLog, promptImageShelf, viewPort } = options
   // claude の作業先は tsukumo を起こしたディレクトリ（作業ツリーを分けるのは orca の側）。
   const cwd = process.cwd()
-  // 雑談の会話のアーカイブの口は1つ（`docs/design.md` 7.3）。書くのは `session-manager` から
-  // 1件ずつ、読むのはセッションを起こすとき1回だけと持ち場が違うが、触るファイルは同じなので
-  // 境界は増やさない（原則3）。
+  // 雑談の会話のアーカイブの口は1つを、書く側（セッションの管理）と読む側（起こすとき）で共有する。
   const chatArchive = createChatArchive()
-  // コンテキストの内訳の記録の口も1つ（`~/.tsukumo/context-usage/`）。書くのは
-  // `session-manager` から、セッション1つにつき1行だけで、読むのは tsukumo の外なので、
-  // ここで作ってそのまま渡す。
   const contextUsageLog = createContextUsageLog()
   const reportUsageLog = createReportUsageLog()
-  // レポートのパスを開く先（`main.ts` の `openLayoutView` とは別に、ここでも1つ作る。
-  // `createOrcaHost()` は状態を持たないので、作り直しても構わない）。
+  // レポートのパスを開く先。`createOrcaHost()` は状態を持たないので、起動の段取りとは別にここでも1つ作ってよい。
   const host = createOrcaHost()
-  // 成果の振り返り（`session.reflectAchievement`）がその日の成果を数え直すための入れ物。配線層
-  // （`view-delivery.ts`）が手続き `achievement.day` で配るのと別に1つ持つ——両者は別の層（`src/`
-  // 直下）で、依存し合わせない。同じ日を両方から数えても、今日以外の日はどちらかが先に
-  // 覚えた数を使うだけで結果は変わらない（`src/server/achievement/adapter/main-history.ts`）。
+  // 成果の振り返り（`session.reflectAchievement`）と訪問の台本がその日の成果を数え直すための入れ物。
+  // ビューの配信が持つものとは別の1つで、同じ日を両方から数えても結果は変わらない。
   const achievementCommitCache = createAchievementCommitCache()
-  // 振り返りの書き手が読む、直近に起こした代のパック情報（`docs/requirements.md`
-  // 「書き手のモデルは会話のいまのモデル」）。`startDriver` を呼ぶたびに更新する——書いた時点の
-  // パックで書かせるため（キャラクターを切り替えたあとの振り返りは、切り替えたあとのパックで
-  // 書く）。
+  // 振り返りの書き手が読む、直近に起こした代のパック情報。
+  // `startDriver` を呼ぶたびに更新する（キャラクターを切り替えたあとの振り返りは、切り替えたあとのパックで書く）。
   let diaryContext: DiaryWriterContext | undefined = undefined
   // サーバの時計は1つ（`TSUKUMO_FIXED_CLOCK` なら止まった時計）。
   const now = createServerClock(config.fixedClock)
-  // 最初のタブが繋がったら解ける約束。fake driver は疑似セッションをここから流し始める
-  // （`FakeDriverOptions.firstViewer`）。本物の駆動は待たない。
+  // 最初のタブが繋がったら解ける約束。fake driver は疑似セッションをここから流し始める。本物の駆動は待たない。
   const firstViewer = Promise.withResolvers<void>()
   const manager = createSessionManager({
-    // 時刻はエポックミリ秒の数のまま渡す（`Temporal.Instant` にしない）。両側で回す
-    // 畳み込み（`src/shared/`）が比較と引き算にしか使わず、数なら偽の時計も数で済む。
+    // 時刻はエポックミリ秒の数のまま渡す（`Temporal.Instant` にしない）。
+    // 両側で回す畳み込みが比較と引き算にしか使わず、数なら偽の時計も数で済む。
     now,
     batchIntervalMs: EVENT_BATCH_INTERVAL_MS,
-    // 書き先の判定（雑談かどうか）は `session-manager` の `receive` が持つので、ここは口を
-    // 渡すだけ。
     chatArchive,
-    // 定着の出どころ。いつ起こすかは `session-manager` が決める。疑似セッションでは claude を
-    // 起こさないので走らせない（`docs/chat-mode.md` 4.9）。
+    // 疑似セッションでは claude を起こさないので、定着は走らせない。
     chatConsolidation:
       fakeSession === undefined
         ? chatConsolidationSource(chatArchive, cwd, config.inheritedEnv)
         : { kind: "dont-consolidate" },
-    // トークン消費の記録の口。書くかどうか・何を書くかを決めるのは `session-manager` なので、
-    // ここも受け取った口を渡すだけ。
     tokenUsageLog,
-    // いつ1行書くか（そのセッションでまだ書いていない最初のターンの終わり）を決めるのも
-    // `session-manager` なので、ここも口を渡すだけ。
     contextUsageLog,
     reportUsageLog,
-    // 置く契機（`prompt`）と捨てる契機（記録の窓）を決めるのも `session-manager`。
     promptImageShelf,
     launchSession: createSessionLaunch<CharacterPack>({
       choosePack: (selection) => character.choose(selection),
       rememberPack: (pack) => character.remember(pack),
       // 覚えた既定は起こすたびに読む（歯車で書き換えたあと、起こし直しで効く）。
       readSessionDefault: () => readRememberedSessionDefault(),
-      // 覚えた「訪問」のオン・オフも起こすたびに読む。`visit.setEnabled` はこれとは別に
-      // いま動いているセッションにも即座に効くので、ここで読むのは「起こした直後の初期値」だけ
-      // （`docs/screen-design.md` 13.6）。
+      // 覚えた「訪問」のオン・オフも起こすたびに読む。
+      // ここで読むのは「起こした直後の初期値」だけで、`visit.setEnabled` はこれとは別にいま動いているセッションにも即座に効く。
       readVisitEnabled: () => readRememberedVisitEnabled(),
       characterEvent: () => character.event(),
-      // 雑談で起こすときだけ呼ばれる（`createSessionLaunch`）。写しを読む口は駆動へ渡すものと
-      // 同じ作り方で、取り出し方は core（`readChatTopics`）。
       readChatTopics: (pack) => readChatTopics(createChatSummary(pack.name)),
-      // 覚えたことの一覧も、雑談で起こすときだけ呼ばれる。読むのは adapter
-      // （`persona-memory.ts` の `readRememberedLines`）。
       readRememberedLines: (pack) => readRememberedLines(pack),
-      // `main` の develop/tasks.json の見張り。サイドバーの React の部品が `tasks-changed` を状態に
-      // 畳んで読む（読み方は `task-summary.ts` の冒頭）。
       watchTasks: (onEvent) =>
         watchTaskSummary(cwd, (tasks) => onEvent({ kind: "tasks-changed", tasks })),
       findResumeSession: (pack, chat) =>
@@ -236,15 +198,11 @@ export function startSession(options: SessionStartOptions): StartedSession {
       restoreEvents: (resumed, pack) =>
         readRestoredEvents(resumed, expressionChoices(pack.definition)),
     }),
-    // 前回の見直しの結果は、起こしたときにホームから読んで初期の姿へ差し込む
-    // （`docs/requirements.md`「トークン消費の見直し」）。書くのは結果が届くたびで、
-    // どちらも既定の置き場（`~/.tsukumo/usage-review.json`）をそのまま使う。読むときに
-    // 見送った提案を除く（見送りは前回の結果のファイルを書き換えないため）。
+    // 前回の見直しの結果は、読むときに見送った提案を除く（見送りは前回の結果のファイルを書き換えないため）。
     readPreviousUsageReview: () =>
       withoutDismissedProposals(readPreviousUsageReview(), readDismissedUsageProposalKeys()),
     writePreviousUsageReview,
-    // 訪問の見張りの口。客の候補は来るときにパックの一覧を読み直して拾う（画面から作った・
-    // 直したパックもその場で効く）。しきい値を縮めるのは `TSUKUMO_VISIT_QUICK=1` のときだけ。
+    // 客の候補は来るときにパックの一覧を読み直して拾う（画面から作った・直したパックもその場で効く）。
     visit: {
       timing: config.quickVisit ? QUICK_VISIT_TIMING : VISIT_TIMING,
       clock: createVisitClock(),
@@ -257,22 +215,17 @@ export function startSession(options: SessionStartOptions): StartedSession {
           : { kind: "pack-only" },
     },
   })
-  // コマンドの手続き（`src/router.ts`）。書き込みの中身はここで選んで渡す。
   const socketRouter = createSocketRouter({
     session: {
-      // 置く契機（`prompt`）は表の行、捨てる契機（記録の窓）は `session-manager`。
       promptImageShelf,
       // 歯車から届いた既定は、覚えてから画面へ流し直すだけ（いまのセッションには効かない）。
       rememberSessionDefault: (sessionDefault) => rememberSessionDefault(sessionDefault),
-      // 手続き `achievement.day`（`src/view-delivery.ts`）と同じ数え方（`readAchievement`）。「今日」を
-      // 決めるのもそちらと同じくここ（配線層）の仕事。読めなかった・`main` が読めない日は
-      // `undefined` に畳み、断る理由は表の行（`session-command.ts`）が決める。
+      // 読めなかった・`main` が読めない日は `undefined` に畳み、断る理由はコマンドの受け手が決める。
       readAchievementDay: async (date) => {
         const result = await readAchievement(cwd, date, todayLocalDateKey(), achievementCommitCache)
         return result.kind === "ok" ? result.achievement : undefined
       },
-      // 振り返りの書き手の出どころ。疑似セッションでは起こさない
-      // （`docs/requirements.md`「会話から切り離す」）。
+      // 疑似セッションでは振り返りの書き手を起こさない。
       diary:
         fakeSession === undefined
           ? diaryWriterSource(cwd, () => diaryContext, now)
@@ -286,8 +239,7 @@ export function startSession(options: SessionStartOptions): StartedSession {
     chat: {
       forgetRememberedLine: (line) => Promise.resolve(character.forgetRememberedLine(line)),
     },
-    // 歯車から届いた「訪問」のオン・オフは、覚えてから画面へ流し直す。こちらは
-    // いま動いているセッションにも即座に効く（`visit-command.ts`）。
+    // 歯車から届いた「訪問」のオン・オフは、覚えてから画面へ流し直す。こちらはいま動いているセッションにも即座に効く。
     visit: { rememberVisitEnabled: (visitEnabled) => rememberVisitEnabled(visitEnabled) },
     usageReview: { dismissUsageProposal: (dismiss) => dismissUsageProposal(dismiss) },
     host: {
@@ -313,9 +265,9 @@ export function startSession(options: SessionStartOptions): StartedSession {
 }
 
 /**
- * 振り返りの書き手の出どころ（`docs/requirements.md`「日記」）。書く時点のパックは
- * `readContext` で毎回読み直す——`session-command.ts` が数え直した材料と組み合わせて
- * {@link createDiaryWriter} へ渡す。`cwd` はリポジトリの見分けに使う（`appendDiaryParagraph`）。
+ * 振り返りの書き手の出どころ。
+ * 書く時点のパックは `readContext` で毎回読み直す。
+ * `cwd` はリポジトリの見分けに使う（{@link appendDiaryParagraph}）。
  */
 function diaryWriterSource(
   cwd: string,
@@ -334,9 +286,9 @@ function diaryWriterSource(
 }
 
 /**
- * 定着の出どころ（`docs/chat-mode.md`「窓から溢れた会話は定着で畳む」）。書く先は会話のアーカイブと
- * 同じ口と、パックごとのあらすじのファイル。`query()` は雑談のセッションと同じ作業先・
- * 引き継いだ環境で起こす。
+ * 定着の出どころ。
+ * 書く先は会話のアーカイブと同じ口と、パックごとのあらすじのファイル。
+ * `query()` は雑談のセッションと同じ作業先・引き継いだ環境で起こす。
  */
 function chatConsolidationSource(
   chatArchive: ChatArchive,
@@ -355,9 +307,9 @@ function chatConsolidationSource(
 }
 
 /**
- * 訪問の台本をその場で作る口（`docs/requirements.md`「訪問」）。人格と表情は作るときに
- * パックの一覧を読み直し、今日の成果は `readAchievementDay` と同じ数え方で読む（読めなければ
- * 「分からない」）。`query()` は仕事のセッションと同じ作業先・引き継いだ環境で起こす。
+ * 訪問の台本をその場で作る口。
+ * 人格と表情は作るときにパックの一覧を読み直し、今日の成果は読めなければ「分からない」にする。
+ * `query()` は仕事のセッションと同じ作業先・引き継いだ環境で起こす。
  */
 function visitScriptSource(
   cwd: string,
@@ -381,9 +333,8 @@ function visitScriptSource(
 }
 
 /**
- * 提案を1件見送る。識別子（種類と対象の組）で書き、同じ識別子を返す（画面はこの識別子で
- * 札を消す）。書き込みは失敗しても例外を投げないので、返すイベントは常に1つ
- * （`rememberSessionDefault` と同じ立場）。
+ * 提案を1件見送る。識別子（種類と対象の組）で書き、同じ識別子を返す（画面はこの識別子で札を消す）。
+ * 書き込みは失敗しても例外を投げないので、返すイベントは常に1つ。
  */
 function dismissUsageProposal(dismiss: UsageProposalDismissal): SessionEvent {
   const key = usageProposalKey(dismiss)
@@ -392,9 +343,9 @@ function dismissUsageProposal(dismiss: UsageProposalDismissal): SessionEvent {
 }
 
 /**
- * セッション駆動を1つ起こす。疑似セッションがあれば fake driver（claude を起こさない。
- * `TSUKUMO_DRIVER=fake`）、無ければ Agent SDK の駆動。`scene` は fake driver のときだけ効く
- * （名指しした場面を最初のタブが繋がったら流す。`TSUKUMO_FAKE_SCENE`）。
+ * セッション駆動を1つ起こす。
+ * 疑似セッションがあれば fake driver（claude を起こさない）、無ければ Agent SDK の駆動。
+ * `scene` は fake driver のときだけ効く（名指しした場面を最初のタブが繋がったら流す。`TSUKUMO_FAKE_SCENE`）。
  */
 function startDriver(options: {
   readonly seed: SessionLaunchSeed<CharacterPack>
@@ -422,21 +373,15 @@ function startDriver(options: {
     })
   }
 
-  // 雑談のときだけ渡る3つの口は、1回の分岐でまとめて作る（`SessionMode`。3つは同時に
-  // 渡るか同時に渡らないかの2択で、片方だけ無い状態は実在しない）。
   const mode = sessionMode(seed, chatArchive, cwd, onEvent, options.now)
 
   return startSdkDriver({
     cwd,
     expressions: expressionChoices(seed.pack.definition),
-    // 覚えた既定で起こす（`docs/screen-design.md` 13.6）。起こしたあと帯から変えた値は
-    // そのセッション限りで、ここには戻らない。
+    // 覚えた既定で起こす。起こしたあと帯から変えた値はそのセッション限りで、ここには戻らない。
     permissionMode: seed.sessionDefault.permissionMode,
     model: seed.sessionDefault.model,
     effort: seed.sessionDefault.effort,
-    // 何がどの順で載るかは core（`system-prompt.ts`）が持つので、ここは人格の文面と口を
-    // 渡すだけ（`docs/design.md` 7章）。人格の「無い」はここで畳む（core へ
-    // `| undefined` を運ばない）。
     systemPromptAppend: takeSystemPromptAppend({
       persona: seed.pack.persona ?? "",
       mode: toSystemPromptMode(mode, chatArchive, seed.start, seed.pack.name),
@@ -445,17 +390,15 @@ function startDriver(options: {
     tag: sessionTag(seed.pack.name, seed.chat, options.viewPort),
     mode,
     inheritedEnv,
-    // 段に入るたびに読み直す（見直しの途中で見送りが増えても効く。
-    // `docs/requirements.md`「トークン消費の見直し」）。
+    // 段に入るたびに読み直す（見直しの途中で見送りが増えても効く）。
     dismissedUsageProposalKeys: () => readDismissedUsageProposalKeys(),
     onEvent,
   })
 }
 
 /**
- * 歯車から届いた「新しいセッションの既定」を覚え、画面へ流すイベントを返す
- * （`docs/screen-design.md` 13.6）。書き込みは失敗しても例外を投げないので、返すイベントは
- * 常に1つ（`writeRememberedSessionDefault`）。
+ * 歯車から届いた「新しいセッションの既定」を覚え、画面へ流すイベントを返す。
+ * 書き込みは失敗しても例外を投げないので、返すイベントは常に1つ。
  */
 function rememberSessionDefault(sessionDefault: SessionDefault): SessionEvent {
   writeRememberedSessionDefault(sessionDefault)
@@ -463,10 +406,9 @@ function rememberSessionDefault(sessionDefault: SessionDefault): SessionEvent {
 }
 
 /**
- * 歯車から届いた「訪問」のオン・オフを覚え、画面へ流すイベントを返す（`docs/screen-design.md`
- * 13.6）。覚え方は {@link rememberSessionDefault} と同じ（書き込みは失敗しても例外を
- * 投げないので、返すイベントは常に1つ）。このイベントは駆動由来のイベントと同じ `receive` を
- * 通るので、いま動いているセッションの訪問の見張りにも即座に届く（`session-manager.ts`）。
+ * 歯車から届いた「訪問」のオン・オフを覚え、画面へ流すイベントを返す。
+ * 書き込みは失敗しても例外を投げないので、返すイベントは常に1つ。
+ * このイベントは駆動由来のイベントと同じ `receive` を通るので、いま動いているセッションの訪問の見張りにも即座に届く。
  */
 function rememberVisitEnabled(visitEnabled: boolean): SessionEvent {
   writeRememberedVisitEnabled(visitEnabled)
@@ -474,12 +416,9 @@ function rememberVisitEnabled(visitEnabled: boolean): SessionEvent {
 }
 
 /**
- * そのモードのときだけ渡る口を1回の分岐でまとめる（`docs/chat-mode.md` 4.9）。雑談の3つは
- * 仕事のときに1つも渡らないので、`remember` / `forget` / `recall` / `recall_episode` のツールが
- * 載らず、作業の文脈が人格にもアーカイブにも入らない。
- *
- * `chatRecall` はパックの名前と読む量（`docs/chat-mode.md` 4.9 の容量の表）をここで縛ってから
- * 渡す（`createChatRecall`。`src/server/chat/core/chat-recall.ts`）。
+ * そのモードのときだけ渡る口を1回の分岐でまとめる。
+ * 雑談の3つは仕事のときに1つも渡らないので、`remember` / `forget` / `recall` / `recall_episode` のツールが載らず、作業の文脈が人格にもアーカイブにも入らない。
+ * 3つは同時に渡るか同時に渡らないかの2択で、片方だけ無い状態を作らない。
  */
 function sessionMode(
   seed: SessionLaunchSeed<CharacterPack>,
@@ -494,8 +433,7 @@ function sessionMode(
 
   return {
     kind: "chat",
-    // 書けた・消せたときだけ、更新後の一覧を画面へ流し直す（`persona-memory.ts` の
-    // `createPersonaMemory` の `onChange`。`docs/design.md` 7.1・`docs/screen-design.md` 13.7）。
+    // 書けた・消せたときだけ、更新後の一覧を画面へ流し直す。
     personaMemory: createPersonaMemory(seed.pack, cwd, undefined, (lines) =>
       onEvent({ kind: "remembered-lines-changed", lines }),
     ),
@@ -505,12 +443,9 @@ function sessionMode(
 }
 
 /**
- * 切り替え画面に出す、切り替え先のセッションの一覧（`docs/requirements.md` 4.8）。
- * いまの部屋の印を持つものだけが並ぶ（絞り込みの理由は
- * `src/server/session-driver/core/session-restore.ts` の `listMarkedSessions`）。
- *
- * 続きを探さない起こし方のときは一覧も出さない（{@link canResume}。
- * 続きから始めない約束で起こしているのに、切り替え先だけ出ると辻褄が合わない）。
+ * 切り替え画面に出す、切り替え先のセッションの一覧。いまの部屋の印を持つものだけが並ぶ。
+ * 続きを探さない起こし方（{@link canResume}）のときは一覧も出さない。
+ * 続きから始めない約束で起こしているのに、切り替え先だけ出ると辻褄が合わない。
  */
 async function listPackSessions(
   config: Config,
@@ -525,25 +460,14 @@ async function listPackSessions(
 }
 
 /**
- * これから起こすキャラクターパックの、そのモードの続きから始めるセッションを探す
- * （docs/requirements.md 4.8）。見つからなければ `{ kind: "new" }`（新規に起こす）。
+ * これから起こすキャラクターパックの、そのモードの続きから始めるセッションを探す。
+ * 見つからないときと、探さない起こし方（{@link canResume}）のときは `{ kind: "new" }`（新規に起こす）。
  *
- * 雑談と仕事で引く印が違う（docs/chat-mode.md 4.9）。雑談へ入っても仕事の会話が続きに
- * ならないのはここで、代わりにそのパックで一度も雑談のターンを終えていなければ新規から
- * 始まる。
+ * 雑談と仕事で引く印が違う（`sessionTag` の `chat`）。
+ * 雑談へ入っても仕事の会話は続きにならず、そのパックで一度も雑談のターンを終えていなければ新規から始まる。
+ * 同じディレクトリで2つめの tsukumo を起こしたときも目印が違うので、先に起きている側のセッションは引かない。
  *
- * 同じディレクトリで2つめの tsukumo を起こしたときは目印が違うので（ポートから決まる。
- * `sessionTag`）、先に起きている側のセッションは引かない。
- *
- * 印はターンが終わって3秒後に付くので、ターンを1つも終えずに離れたセッションは
- * 次に来たときに見つからず、新規から始まる（`SESSION_TAG_DELAY_MS`。4.8「復元できなかったとき
- * どうするか」の範囲）。fake driver は claude を起こさないので、そもそも探さない。
- *
- * `findSessionToResume` の「見つからない」（`string | undefined`）をここで `SessionStart` へ
- * 畳む——見つかったかどうかという外の世界の事実と、それが運ぶ「新規か続きか」という
- * 意味とを、この入口で1つの合併型に変える（`docs/coding-standards.md`「「無い」を層をまたいで
- * 運ばない」）。探さない起こし方（{@link canResume}）のときも同じ合併型で `{ kind: "new" }`
- * に畳む（探した結果の「無い」と、探さないと決めていることを呼び出し側が区別しなくて済む）。
+ * 印はターンが終わってから少し遅れて付く（`SESSION_TAG_DELAY_MS`）ので、ターンを1つも終えずに離れたセッションは次に来たときに見つからず、新規から始まる。
  */
 async function findPackSessionToResume(
   config: Config,

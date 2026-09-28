@@ -1,5 +1,4 @@
-// 雑談のコマンドの契約（`docs/glossary.md`「契約」）。受け手は
-// `src/server/chat/adapter/chat-procedure.ts`、委ね先の行は `src/server/chat/core/chat-command.ts`。
+// 雑談のコマンドの契約。
 
 import { z } from "zod"
 
@@ -9,12 +8,10 @@ import { FRAME_ERROR_REASON } from "../frame.ts"
 
 export const chatContract = {
   /**
-   * 雑談のサイドバー「覚えていること」の「編集」から1行消す（`docs/chat-mode.md`「プロフィールの
-   * 書き戻し」）。指し方はキャラクター自身の `forget` ツールと同じ完全一致——チップに出した
-   * 文面（`- ` を外した1行）をそのまま送る。書き込みは
-   * `src/server/chat/adapter/persona-memory.ts` の `forgetRememberedLineFromScreen` を通し、
-   * 1ターン1行の上限（モデルの `forget` の上限）は掛からない。サイドバーの「覚えていること」
-   * 自体が雑談中にしか出ないので、雑談の外なら断る。
+   * 雑談のサイドバー「覚えていること」の「編集」から1行消す。
+   * 指し方は完全一致で、チップに出した文面（`- ` を外した1行）をそのまま送る。
+   * 1ターン1行の上限（モデルの `forget` の上限）は掛からない。
+   * サイドバーの「覚えていること」自体が雑談中にしか出ないので、雑談の外なら断る。
    */
   forgetRememberedLine: commandBase
     .meta({ chatOnly: FRAME_ERROR_REASON.forgetRememberedLineOutsideChat, idleTurn: false })

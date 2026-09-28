@@ -1,23 +1,16 @@
-// 表情・衣装の名前と、モデルから衣装を決める規則。「決める」層。純粋関数で、fs/process には
-// 触らない。
+// 表情・衣装の名前と、モデルから衣装を決める規則。
 //
-// 表情は `speak(text, expression)` の引数だけから決まる（キャラ自身が選ぶ。
-// docs/requirements.md「4.3 状態連動」）。表情の源が1つしか無いので、
-// ここには「いま出す表情」を決める関数が無い（`SessionState.speechExpression` がそのまま
-// 答えになる）。ツールの実行中に自動で「作業中」へ上書きする経路は撤去した
-// （吹き出しと表情が食い違う唯一の経路だった。理由は docs/requirements.md 4.3）。
+// 表情は `speak(text, expression)` の引数だけから決まる（キャラ自身が選ぶ）。
+// 表情の源が1つしか無いので、ここには「いま出す表情」を決める関数が無い（`SessionState.speechExpression` がそのまま答えになる）。
+// ツールの実行中に自動で「作業中」へ上書きする経路は持たない（吹き出しと表情が食い違う。理由は docs/requirements.md「状態連動」）。
 //
-// 表情の日本語ラベルはここに持たない。 キャラクターごとの言葉なので定義ファイル側
-// （`character.json` の `expressions`）にあり、解くのは src/shared/character-pack/expression-choice.ts
-// （docs/architecture.md 原則4「キャラクターの中身をコードに書かない」、docs/design.md 7章）。
-// モデル名と衣装の対応だけは、どのキャラクターでも同じ「装備の重さ」の規則なのでここに残す。
+// 表情の日本語ラベルはここに持たない（定義ファイルの `expressions` にあり、解くのは `expressionChoices`）。
+// モデル名と衣装の対応だけは、どのキャラクターでも同じ「装備の重さ」の規則なのでここに置く。
 
 /**
- * 表情名の全体。`default` が先頭で、キャラクター定義に立ち絵があるものだけを選ぶときの
- * 元になる（src/shared/character-pack/expression-choice.ts の `expressionChoices`）。足すものは末尾に積む
- * （既存の並びを動かさず、パック作者から見える順を変えないため。docs/requirements.md 4.3）。
- * 型 {@link Expression} も表（`fromKeys(EXPRESSIONS, …)`）もこの並びから導くので、表情を1つ
- * 足すときはここに1行積むだけでよい。
+ * 表情名の全体。`default` が先頭。
+ * 足すものは末尾に積む（既存の並びを動かさず、パック作者から見える順を変えないため）。
+ * 型 {@link Expression} も表（`fromKeys(EXPRESSIONS, …)`）もこの並びから導くので、表情を1つ足すときはここに1行積むだけでよい。
  */
 export const EXPRESSIONS = [
   "default",
@@ -34,12 +27,10 @@ export const EXPRESSIONS = [
 export type Expression = (typeof EXPRESSIONS)[number]
 
 /**
- * 立ち絵が必ず要る表情（`characters/README.md`）。`default` は表情の指定が無いときの
- * 落とし先で、コードが名前で直接参照するので「あるものだけ」で済ませられない。画面から
- * これを消せないのも同じ理由（消せる表情は {@link RemovableExpression} のほうだけ）。
- *
- * 必須はこの1つだけ。 他の表情は立ち絵が無くてよく、`default` に落ちる
- * （畳むのは `src/shared/character-pack/character.ts` の `toCharacterInfo`）。
+ * 立ち絵が必ず要る表情（`characters/README.md`）。
+ * `default` は表情の指定が無いときの落とし先で、コードが名前で直接参照するので「あるものだけ」で済ませられない。
+ * 画面からこれを消せないのも同じ理由（消せる表情は {@link RemovableExpression} のほうだけ）。
+ * 必須はこの1つだけで、他の表情は立ち絵が無くてよく、`default` に落ちる。
  */
 export const REQUIRED_EXPRESSIONS = ["default"] as const
 
@@ -69,13 +60,11 @@ export function isOutfit(value: string): value is Outfit {
 }
 
 /**
- * モデル名から衣装を決める。`haiku` = 軽装 / `sonnet` = 通常装備 / `opus` / `fable` = 戦闘配置
- * （docs/requirements.md「4.3 状態連動」、`~/.claude/output-styles/asuna.md` のモデル分岐と対応）。
- * `fable` は `opus` と同じ戦闘配置に割り当てる（衣装は「装備の重さ」の3段の
- * ままとし、`OUTFITS` を増やさない）。
+ * モデル名から衣装を決める。`haiku` = 軽装 / `sonnet` = 通常装備 / `opus` / `fable` = 戦闘配置。
+ * `~/.claude/output-styles/asuna.md` のモデル分岐と対応する。
+ * `fable` は `opus` と同じ戦闘配置に割り当てる（衣装は「装備の重さ」の3段のままとし、`OUTFITS` を増やさない）。
  *
- * 渡ってくる `model` が短い別名（"opus" など）か解決済みの完全なモデルIDかは場合による
- * （SDK の `init` は完全なモデルIDを返す）ため、部分一致で両方を拾う。
+ * 渡ってくる `model` が短い別名（"opus" など）か解決済みの完全なモデルIDかは場合による（SDK の `init` は完全なモデルIDを返す）ため、部分一致で両方を拾う。
  */
 export function resolveOutfit(model: string | undefined): Outfit {
   if (model === undefined) {

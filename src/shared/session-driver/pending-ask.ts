@@ -1,11 +1,6 @@
 // 答え待ち（許可要求とキャラクターからの質問）の語彙と、画面から返ってくる答えの形。
-// サーバとブラウザの両方が読む契約なので shared に置く（docs/design.md 2章）。
-//
-// 列そのもの（Promise を保留する仕掛け）は core（src/server/session-driver/core/pending-answer.ts）にある
-// （SDK の `canUseTool` に結び付くため）。ここは型と、外から届いた答えの検証だけ。
-//
-// 許可要求の入力と質問文は会話の内容そのものなので、ログにもファイルにも書かない
-// （docs/coding-standards.md「会話内容の扱い」）。
+// ここは型と、外から届いた答えの検証だけ（列そのものは SDK の `canUseTool` に結び付くので駆動の側が持つ）。
+// 許可要求の入力と質問文は会話の内容そのものなので、ログにもファイルにも書かない。
 
 import { z } from "zod"
 
@@ -28,19 +23,14 @@ export type Answer =
   /** 拒否する（許可要求・質問のどちらにも使える）。 */
   | { readonly kind: "deny" }
   /**
-   * 質問に答える。`labels[i]` が `questions[i]` に対して選んだ答えの並び
-   * （{@link QuestionAnswer}。複数選択は選んだぶんだけ、自由入力はその文字列が入る）。
-   *
-   * 1つの文字列に畳まない（以前は画面側が「、」でつないだ1つの文字列を
-   * 入れていたが、それだと記録（`question-answered`）の側で選択肢と突き合わせられなくなる。
-   * SDK へ渡す形へ畳むのは src/server/session-driver/core/pending-answer.ts の役目）。
+   * 質問に答える。`labels[i]` が `questions[i]` に対して選んだ答えの並び（{@link QuestionAnswer}。複数選択は選んだぶんだけ、自由入力はその文字列が入る）。
+   * 1つの文字列に畳まない（畳むと記録 `question-answered` の側で選択肢と突き合わせられなくなる。SDK へ渡す形へ畳むのは駆動の側）。
    */
   | { readonly kind: "answers"; readonly labels: readonly QuestionAnswer[] }
 
 /**
- * 画面から届いた答えのスキーマ。書き込みの経路なので zod で厳密に見る
- * （docs/design.md 4.3。`labels` は自由入力の文字列も受け取れる — 選択肢との一致は要求しない）。
- * コマンド（src/shared/command.ts）の `answer` もこれを使う。
+ * 画面から届いた答えのスキーマ。書き込みの経路なので zod で厳密に見る。
+ * `labels` は自由入力の文字列も受け取れる（選択肢との一致は要求しない）。
  */
 export const answerSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("allow") }),

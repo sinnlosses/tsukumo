@@ -1,21 +1,19 @@
-// Beads（`bd`）の課題1件を、タスクの一覧と成果が読む形に写す。「読む」層。
+// Beads（`bd`）の課題1件を、タスクの一覧と成果が読む形に写す。
 // 対応は task-workflow の WORKFLOW.md「Beads 方式」の表が正典
 // （`open` → `todo`・`pending`／`deferred` → `hold`・`in_progress` → 着手中・`closed` → `done`、
 // label `cancelled` があれば `dropped`）。ID は `issue_prefix` が `t` なら `t-<n>` → `T-<n>`、
 // `gh` なら `gh-<n>` → `GH-<n>`（`taskIdOfBeadsId`）。
 //
-// ここはファイルI/Oも `bd` も持たない。`bd` を起こして JSON を検証するのは `readBeadsIssues`。
+// ここはファイルI/Oも `bd` も持たない。
 
 import { isIncludedIn, sortBy } from "remeda"
 
 import type { TaskLocation, TaskSummaryItem } from "./task-summary.ts"
 
 /**
- * `bd list --json` の1件のうち、この読み手が使う欄だけ。作成者（owner）は持たない。`assignee` は
- * 着手した作業ツリーの名前で、`closedAt` は閉じた時刻（エポックミリ秒）。どちらも Beads の側で
- * 無ければ `undefined`（外の世界の「無い」をそのまま写したもの）。`description`・
- * `acceptanceCriteria`・`notes` は本文の枠の節（`composeBeadsBody` が組む）、`externalRef` は
- * 置き場所（`TaskLocation`）に使う生の値で、無ければ空文字列／`undefined`。
+ * `bd list --json` の1件のうち、この読み手が使う欄だけ。
+ * `assignee` は着手した作業ツリーの名前で、`closedAt` は閉じた時刻（エポックミリ秒）。どちらも Beads の側で無ければ `undefined`（外の世界の「無い」をそのまま写したもの）。
+ * `description`・`acceptanceCriteria`・`notes` は本文の枠の節（{@link composeBeadsBody} が組む）、`externalRef` は置き場所に使う生の値で、無ければ空文字列／`undefined`。
  */
 export type BeadsIssue = {
   readonly id: string
@@ -82,9 +80,8 @@ function statusOfBeadsIssue(issue: BeadsIssue): string {
 }
 
 /**
- * `beforeEpochMilliseconds` より前に閉じた課題のうち `dropped`（label `cancelled`）でないものを、
- * タスクID → summary で返す（成果の「`done` になった日」の Beads の側）。並びはタスク一覧と同じ
- * 番号の順（`bd` が返す順は作った順の逆で、画面に出す順として意味が無い）。
+ * `beforeEpochMilliseconds` より前に閉じた課題のうち `dropped`（label `cancelled`）でないものを、タスクID → summary で返す。
+ * 並びはタスク一覧と同じ番号の順（`bd` が返す順は作った順の逆で、画面に出す順として意味が無い）。
  */
 export function closedBeadsTaskSummariesBefore(
   issues: readonly BeadsIssue[],
@@ -118,9 +115,9 @@ export function taskIdOfBeadsId(beadsId: string): string {
 
 /**
  * 課題の `description`・`acceptanceCriteria`・`notes` を `task show` と同じ並びに組む。
- * task-workflow の `beads.py` の `compose_body`・`_sections`（`taskfile.SECTION_HEADINGS`）の写しで、
- * 枠の7節をこの順に必ず置き（中身が空でも見出しだけ出す）、枠の外の見出しはそのあと。`## 結果`
- * （Beads の comment）は `bd list` に載らないので持たない。
+ * task-workflow の `beads.py` の `compose_body`・`_sections`（`taskfile.SECTION_HEADINGS`）の写しで、あちらを変えたら揃える。
+ * 枠の7節をこの順に必ず置き（中身が空でも見出しだけ出す）、枠の外の見出しはそのあと。
+ * `## 結果`（Beads の comment）は `bd list` に載らないので持たない。
  */
 export function composeBeadsBody(description: string, acceptance: string, notes: string): string {
   const { preamble, sections } = sectionsOf(description)
@@ -142,7 +139,7 @@ export function composeBeadsBody(description: string, acceptance: string, notes:
   return text === "" ? "" : `${text}\n`
 }
 
-/** 本文の枠の7節（`docs/display.md`「タスクのモーダル」が指す `taskfile.SECTION_HEADINGS` の写し）。 */
+/** 本文の枠の7節（task-workflow の `taskfile.SECTION_HEADINGS` の写し）。 */
 const PLAN_HEADING = "## やること"
 const ACCEPTANCE_HEADING = "## 完了条件"
 const SECTION_HEADINGS = [
@@ -193,8 +190,7 @@ const BEADS_NUMBERED_GH_ID_PATTERN = /^gh-(\d+)$/
 
 /**
  * 閉じていない状態の読み替え。表に無い状態（`blocked` など）は Beads の語のまま出す。
- * `deferred` は組み込みの保留状態、`pending` は切り替え前の独自の状態（WORKFLOW.md
- * 「Beads 方式」）で、どちらも「保留」として出す。
+ * `deferred` は組み込みの保留状態、`pending` は切り替え前の独自の状態で、どちらも「保留」として出す。
  */
 const TASK_STATUS_OF_BEADS_STATUS = new Map<string, string>([
   ["open", "todo"],

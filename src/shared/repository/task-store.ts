@@ -47,8 +47,10 @@ function taskSectionsOf(content: string): readonly (readonly string[])[] {
   return [end === -1 ? rest : rest.slice(0, end)]
 }
 
-/** 値の先頭語。`` `x` `` で囲めば中身、囲まなければ最初の語を括弧・句読点の前で切る
- * （`layout.setting_word` と同じ）。 */
+/**
+ * 値の先頭語。`` `x` `` で囲めば中身、囲まなければ最初の語を括弧・句読点の前で切る。
+ * task-workflow の `layout.setting_word` と同じ規則に揃える。
+ */
 function settingWordOf(value: string): string {
   const quoted = /`([^`]+)`/.exec(value)?.[1]
   const word = quoted === undefined ? (value.split(/\s+/)[0] ?? "") : quoted.trim()

@@ -1,13 +1,8 @@
-// 全機能の手続きを束ねる（配線。`docs/design.md` 2章「コマンドの受け手と手続きの置き方」）。
-// 「どの手続きをどの機能が受けるか」の答えはこのファイルで、手続きの中身も照合・断る条件の
-// 判定も書かない（名前と手続きの対応と、全部の前に掛けるミドルウェアだけ）。束は載せる先ごとに
-// 2つ——読み取り（HTTP の `/rpc`）と、コマンドに押し出しの購読を足したもの（`/ws`）。
-//
-// 束ねるのを配線に置くのは、機能どうしの辺の表を増やさないため（`session` の受け手の表が
-// `usage-review` や `host` を読むと、`session` がまた全部を知る場所に戻る。葉の機能の手続きが
-// 読むのは `shared` と共有の `core` と自分の機能だけ）。形（名前と入出力と断る条件）は
-// `src/shared/rpc.ts` の `rpcContract` / `commandContract` / `socketContract` が正典で、ここはそれに
-// 受け手を付ける。
+// 全機能の手続きを束ねる。
+// 持つのは「どの手続きをどの機能が受けるか」の対応と、全部の前に掛けるミドルウェアだけ。
+// 手続きの中身も、照合・断る条件の判定も書かない。
+// 束は載せる先ごとに2つで、読み取り（HTTP の `/rpc`）と、コマンドに押し出しの購読を足したもの（`/ws`）。
+// 形（名前と入出力と断る条件）は `rpcContract` / `commandContract` / `socketContract` が持ち、ここはそれに受け手を付ける。
 
 import { implement } from "@orpc/server"
 
@@ -58,7 +53,6 @@ import type { VisitCommandPorts } from "./server/visit/core/visit-command.ts"
 import { frameContract } from "./shared/contract/frame.ts"
 import { commandContract, rpcContract } from "./shared/rpc.ts"
 
-/** 読み取りの手続きが使う口（機能ごとの口を並べただけ。中身は `src/view-delivery.ts` が渡す）。 */
 export type RpcRouterPorts = RepositoryProcedurePorts &
   TokenUsageProcedurePorts &
   ContextUsageProcedurePorts &
@@ -81,7 +75,6 @@ export function createRpcRouter(ports: RpcRouterPorts) {
     })
 }
 
-/** コマンドの手続きが使う機能ごとの書き込み口（中身は `src/session-start.ts` が選んで渡す）。 */
 export type CommandRouterPorts = {
   readonly session: SessionCommandPorts
   readonly characterPack: CharacterPackCommandPorts
@@ -91,10 +84,7 @@ export type CommandRouterPorts = {
   readonly host: HostCommandPorts
 }
 
-/**
- * コマンドの手続きを束ね、照合と断る条件のミドルウェアを全部の前に掛ける（`/ws` に載る）。
- * 29種の網羅は契約（`commandContract`）が型で見る。
- */
+/** コマンドの手続きを束ね、照合と断る条件のミドルウェアを全部の前に掛ける（`/ws` に載る）。 */
 export function createCommandRouter(ports: CommandRouterPorts) {
   return implement(commandContract)
     .$context<CommandRpcContext>()
@@ -111,9 +101,9 @@ export function createCommandRouter(ports: CommandRouterPorts) {
 }
 
 /**
- * `/ws` に載せるルータ。コマンドの手続きに、押し出しの購読（`frame.subscribe`）を足したもの
- * （形は `src/shared/rpc.ts` の `socketContract`）。購読には照合だけを掛ける——コマンドでは
- * ないので、断る条件（`commandGuard`）は見ない。
+ * `/ws` に載せるルータ。
+ * コマンドの手続きに、押し出しの購読（`frame.subscribe`）を足したもの。
+ * 購読はコマンドではないので、照合だけを掛けて断る条件（{@link commandGuard}）は見ない。
  */
 export function createSocketRouter(ports: CommandRouterPorts) {
   return {

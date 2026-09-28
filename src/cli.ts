@@ -1,5 +1,5 @@
-// tsukumo のエントリポイント。引数の受け取り・環境変数の読み出し・終了コードの返し方だけを
-// 持ち、起動の段取りは `src/main.ts` が進める（docs/design.md 2章「ディレクトリ」）。
+// tsukumo のエントリポイント。
+// 引数の受け取り・環境変数の読み出し・終了コードの返し方だけを持ち、起動の段取りは `run` が進める。
 
 import process from "node:process"
 
@@ -62,7 +62,7 @@ async function main(args: readonly string[]): Promise<number> {
     return 0
   }
 
-  // 環境変数を読むのはここだけ（解釈は src/server/core/config.ts）。
+  // 環境変数を読むのはここだけで、解釈は `readConfig` が持つ。
   // 写しを渡すのは、Vite の開発サーバ（`startUiDevServer`）があとで `process.env.NODE_ENV` を
   // 書き換えても、claude の子プロセスへ渡す環境に混ざらないようにするため。
   return run(readConfig({ ...process.env }), { devServer: args.includes("--dev") })

@@ -1,13 +1,6 @@
-// 雑談の記憶の容量を1つに集めた表（`docs/design.md` 7.3「雑談の記憶の置き場」）。
-// 値を書き換えるだけで上げ下げできるようにする（ユーザーの指示）。設定ファイル・
-// 環境変数から上書きする口は作らない。値の根拠は書かず、`docs/chat-mode.md` 4.9「記憶の圧縮と
-// 忘却」の容量の表を指すだけにする（正典を2つにしない）。
-//
-// サーバの複数の機能（`session`・`system-prompt`・`chat`）と配線（`src/session-start.ts`）が読むので
-// `shared` に置く（ブラウザは読まない）。`node:` にも `document` にも触らない（他の shared と
-// 同じ制約）。
+// 雑談の記憶の容量を1つに集めた表。値を書き換えるだけで上げ下げできる。
+// 設定ファイル・環境変数から上書きする口は作らない。
 
-/** {@link CHAT_MEMORY_BUDGET} の形。値そのものはここではなく `docs/chat-mode.md` 4.9 を見る。 */
 export type ChatMemoryBudget = {
   /** 作業記憶（逐語のまま読み戻す窓）の上限バイト数。 */
   readonly recentBytes: number
@@ -25,7 +18,7 @@ export type ChatMemoryBudget = {
   readonly consolidateEveryBytes: number
 }
 
-/** 雑談の記憶の容量の表。値の根拠は `docs/chat-mode.md` 4.9「記憶の圧縮と忘却」。 */
+/** 雑談の記憶の容量の表。値の根拠は `docs/chat-mode.md`「記憶の圧縮と忘却」の容量の表にある。 */
 export const CHAT_MEMORY_BUDGET = {
   recentBytes: 65_536,
   synopsisBytes: 8_192,
@@ -36,10 +29,6 @@ export const CHAT_MEMORY_BUDGET = {
   consolidateEveryBytes: 8_192,
 } satisfies ChatMemoryBudget
 
-/**
- * {@link CHAT_RECALL_SCORE} の形。式と値の扱いは `docs/chat-mode.md` 4.9
- * 「古い雑談は索引を引いて思い出す」の採点の式を見る。
- */
 export type ChatRecallScore = {
   /** 手がかり語への当たりに掛ける重み。 */
   readonly cueWeight: number
@@ -57,7 +46,7 @@ export type ChatRecallScore = {
   readonly recencyFloor: number
 }
 
-/** エピソード索引の採点の係数。式は `docs/chat-mode.md` 4.9「古い雑談は索引を引いて思い出す」。 */
+/** エピソード索引の採点の係数。式は `docs/chat-mode.md`「古い雑談は索引を引いて思い出す」にある。 */
 export const CHAT_RECALL_SCORE = {
   cueWeight: 1,
   titleWeight: 1,
