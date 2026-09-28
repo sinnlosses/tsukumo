@@ -1,19 +1,10 @@
-// メインビュー本体（`<MainView>`。docs/design.md 6.1）。レポートだけを出す。そこに
-// 質問の記録が挟まる（`docs/display.md` 4.2。ツールの実行は描かない。
-// 作業の進行はサイドバーが別に持つ）。
+// メインビュー本体。レポートだけを出し、そこに質問の記録が挟まる（ツールの実行は描かない。作業の進行はサイドバーが別に持つ）。
 //
-// 1ターン＝1枚の札。直近 `MAX_MAIN_VIEW_TURNS` 件を札の頭の `‹` `›` で行き来する
-// （`turn-header.tsx`）。新しいターンで最新へ移すが、利用者が過去のターンを見ている間は
-// 動かさない（規則は `useTurnSelection` にある。docs/design.md 6.2）。
+// 1ターン＝1枚の札。直近 `MAX_MAIN_VIEW_TURNS` 件を札の頭の `‹` `›` で行き来する。
+// 選んでいるターン（`turnId`）は `useTurnSelection` から読む（キャラビューの吹き出しも同じ選択に従うため、領域のローカル状態にしない）。
 //
-// 選んでいるターン（`turnId`）は `useTurnSelection` から読む
-// （キャラビューの吹き出しも同じ選択に従うため、領域のローカル状態にしない）。見ているターンが
-// 替わったときにレポートの先頭へスクロールを戻す配線は `hooks/use-active-turn-scroll.ts`
-// へ出した（外の世界に触るフックだけが余分。docs/design.md 2章「機能の中を分ける」）。
-//
-// レポートに書かれたパスを押せる部品にする一覧・依頼は `<RepositoryFileLinkProvider>` が
-// 配る（`markdown/repository-link.tsx`）。この機能（`main-view`）の中でしか描かないので、
-// ここで1回だけ mount する。
+// レポートに書かれたパスを押せる部品にする一覧・依頼は `<RepositoryFileLinkProvider>` が配る。
+// メインビューの中でしか描かないので、ここで1回だけ mount する。
 
 import type { ReactElement } from "react"
 
@@ -33,8 +24,7 @@ const EMPTY_MESSAGE = "（まだ作業がありません）"
 
 export function MainView(): ReactElement {
   const { activeTurnId, newestTurnId, selectTurn } = useTurnSelection()
-  // 畳んだ結果は `stores/main-view-turn.ts` が姿ごとに1回だけ作る（昇順。追従を決める
-  // `stores/turn-selection.ts` と同じものを読む）。
+  // 畳んだ結果は姿ごとに1回だけ作られる（昇順。追従を決める `useTurnSelection` と同じものを読む）。
   const turns = useMainViewTurns()
   const scrollerRef = useActiveTurnScroll(activeTurnId)
 
@@ -59,13 +49,11 @@ export function MainView(): ReactElement {
 
   return (
     <RepositoryFileLinkProvider>
-      {/* `data-brush-origin`: ミニ立ち絵を置く座標の原点（印の名前は `domain/reveal/brush-tip.ts` の
-          `BRUSH_ORIGIN_ATTRIBUTE`。JSX の属性名に定数を書けないので直に置き、ずれていないことは
-          テストが見る）。 */}
+      {/* `data-brush-origin`: ミニ立ち絵を置く座標の原点。
+          印の名前は `BRUSH_ORIGIN_ATTRIBUTE` と揃える（JSX の属性名に定数を書けないので直に置き、ずれていないことはテストが見る）。 */}
       <div className={styles["main-turns"]} ref={scrollerRef} data-brush-origin="">
-        {/* **`key` にターンの番号を渡す。** 前後へ移っても同じ位置の `<Turn>` を使い回すと、
-            「このターンを出し始めた時点で既にあった本文」（演出の対象を決める材料。`turn.tsx`）が
-            最初のターンのものに留まってしまう。 */}
+        {/* `key` にターンの番号を渡す。
+            前後へ移っても同じ位置の `<Turn>` を使い回すと、「このターンを出し始めた時点で既にあった本文」（演出の対象を決める材料）が最初のターンのものに留まってしまう。 */}
         {activeTurn !== undefined && (
           <article className={styles["turn-card"]}>
             <TurnHeader
@@ -82,13 +70,11 @@ export function MainView(): ReactElement {
             </div>
           </article>
         )}
-        {/* 筆先に添うミニ立ち絵。**この入れ物の原点を基準に置く**（`position: absolute`）ので、
-            書き上げたあと残っているあいだも本文と一緒に転がる。**出ているやり取りを渡す**のは、
-            残った筆先が別のやり取りのものなら引っ込ませるため（`mini-portrait.tsx`）。 */}
+        {/* 筆先に添うミニ立ち絵。この入れ物の原点を基準に置く（`position: absolute`）ので、書き上げたあと残っているあいだも本文と一緒に転がる。
+            出ているやり取りを渡すのは、残った筆先が別のやり取りのものなら引っ込ませるため。 */}
         {activeTurn !== undefined && <MiniPortrait shownTurnId={activeTurn.id} />}
-        {/* 答え待ちの質問の札。**いまのやり取りのレポートの下**に出す（札の頭はレポートの上に
-            来たので、読み終わった先に質問が来る並びになる）。答え待ちが
-            無ければ何も描かない。 */}
+        {/* 答え待ちの質問の札。いまのやり取りのレポートの下に出す（読み終わった先に質問が来る並び）。
+            答え待ちが無ければ何も描かない。 */}
         <QuestionAsk />
       </div>
     </RepositoryFileLinkProvider>

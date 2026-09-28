@@ -1,5 +1,4 @@
-// 灯りの暦（`docs/screen-design.md` 13.10「灯りの暦」）。直近5週の日ごとの成果を、狐火の灯りで
-// 並べる。マスを押すと見ている日が変わる（見開きを開く口はまだ無い。別タスクで足す）。
+// 灯りの暦。直近5週の日ごとの成果を、狐火の灯りで並べる。
 
 import clsx from "clsx"
 import type { ReactElement } from "react"
@@ -134,10 +133,9 @@ type GridProps = {
 
 function Grid(props: GridProps): ReactElement {
   const { calendar } = props
-  // マスの並びは月曜はじまりの7列×5段の固定枠（13.10「灯りの暦」）。データを配る
-  // `achievementCalendarDateKeys` は今日までしか返さない（サーバは今日より後を数えない）ので、
-  // 表示ぶんの35日は同じ開始日（4週前の月曜）から自分で数える——今日を含む週の残りの曜日も
-  // マス自体は出す（薄く・押せない日付だけ）。
+  // マスの並びは月曜はじまりの7列×5段の固定枠。
+  // データを配る `achievementCalendarDateKeys` は今日までしか返さない（サーバは今日より後を数えない）ので、表示ぶんの35日は同じ開始日（4週前の月曜）から自分で数える。
+  // 今日を含む週の残りの曜日もマス自体は出す（薄く・押せない日付だけ）。
   const dateKeys = fullCalendarDateKeys(calendar.today)
   const dayOf = new Map(calendar.days.map((day) => [day.date, day] as const))
   const diaryDates = new Set(calendar.diaryDates)
@@ -258,7 +256,7 @@ function DayCell(props: DayCellProps): ReactElement {
   )
 }
 
-/** 灯りの段階の狐火（13.10「灯りの暦」）。日記帳の見開き（`diary-book.tsx`）の日付の横も同じ火を使う。 */
+/** 灯りの段階の狐火。 */
 export function Lamp(props: { readonly level: LampLevel }): ReactElement {
   const size = LAMP_SIZE_PX[props.level]
   if (props.level === "none") {
@@ -292,8 +290,7 @@ export function Lamp(props: { readonly level: LampLevel }): ReactElement {
   )
 }
 
-/** 「日記あり」の鈴（13.10「灯りの暦」）。書き終わりの知らせ（`diary-notice.tsx`）も同じ鈴を使う
- * （`size` は知らせのぶんだけ大きく出すため。既定は暦のマスの大きさ）。 */
+/** 「日記あり」の鈴。`size` の既定は暦のマスの大きさ。 */
 export function Bell(props: { readonly size?: number } = {}): ReactElement {
   const size = props.size ?? 12
   return (
@@ -304,7 +301,7 @@ export function Bell(props: { readonly size?: number } = {}): ReactElement {
   )
 }
 
-/** マスの左上の日付。月の初日と最初のマスだけ「9/1」の形、ほかは日だけ（13.10「灯りの暦」）。 */
+/** マスの左上の日付。月の初日と最初のマスだけ「9/1」の形、ほかは日だけ。 */
 function cellDateLabel(date: string, index: number): string {
   const parsed = Temporal.PlainDate.from(date)
   return parsed.day === 1 || index === 0
@@ -312,17 +309,16 @@ function cellDateLabel(date: string, index: number): string {
     : String(parsed.day)
 }
 
-/** 「8月24日」の形（曜日は付けない。`day-switch.tsx` の `dayLabel` は曜日つきで別物）。 */
+/** 「8月24日」の形（曜日は付けない）。 */
 function monthDayLabel(dateKey: string): string {
   const date = Temporal.PlainDate.from(dateKey)
   return `${String(date.month)}月${String(date.day)}日`
 }
 
 /**
- * マスの並びぶん（月曜はじまりの7列×5段＝35日）の日付キー、古い順。開始日は
- * `achievementCalendarDateKeys`（`src/shared/achievement/achievement-calendar.ts`）と同じ「今日を含む週の
- * 月曜から4週前の月曜」——そちらは今日より後を返さないので、表示の枠を埋める残りの曜日は
- * ここで別に数える。
+ * マスの並びぶん（月曜はじまりの7列×5段＝35日）の日付キー、古い順。
+ * 開始日は `achievementCalendarDateKeys` と揃えて「今日を含む週の月曜から4週前の月曜」にする。
+ * そちらは今日より後を返さないので、表示の枠を埋める残りの曜日はここで別に数える。
  */
 function fullCalendarDateKeys(today: string): readonly string[] {
   const todayDate = Temporal.PlainDate.from(today)

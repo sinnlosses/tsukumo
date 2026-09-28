@@ -1,11 +1,9 @@
-// キャラクターのセリフ1件（docs/screen-design.md 13.7）。押すとその時の表情へ立ち絵が遡り、
-// 現れたばかりの1件はここで短く弾む。押し方の読み替え（ドラッグとの見分け・キー）は
-// `components/hooks/use-speech-press.ts`（仕事モードの吹き出し・セリフのログと共有）が持つ。
+// 雑談のキャラクターのセリフ1件。押すとその時の表情へ立ち絵が遡り、現れたばかりの1件はここで短く弾む。
+// 押し方の読み替え（ドラッグとの見分け・キー）は `useSpeechPress` が持つ。
 //
-// `<button>` ではなく `role="button"` の `<div>`。ブラウザは `<button>` の中の文字を
-// ドラッグで掴ませず（`user-select` を何にしても選べないことを実機の Chrome で確認した）、
-// セリフをコピーできなかった。押せることは role と `aria-pressed` で表し、キーの受けだけ
-// 自前で足す。
+// `<button>` ではなく `role="button"` の `<div>`。
+// ブラウザは `<button>` の中の文字をドラッグで掴ませず（`user-select` を何にしても選べないことを実機の Chrome で確認した）、セリフをコピーできない。
+// 押せることは role と `aria-pressed` で表し、キーの受けだけ自前で足す。
 
 import clsx from "clsx"
 import type { ReactElement } from "react"

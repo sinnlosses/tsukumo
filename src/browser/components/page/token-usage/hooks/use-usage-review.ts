@@ -1,20 +1,15 @@
-// トークン消費の画面の「減らし方を見てもらう」区画（ふだん・見直し中・結果）のロジック
-// （docs/design.md 2章「機能の中を分ける」）。見た目は `../components/usage-review-card/usage-review-card.tsx` へ渡す。
+// トークン消費の画面の「減らし方を見てもらう」区画（ふだん・見直し中・結果）のロジック。
 //
-// 見直し中かどうか・段の進み・結果・前回の提案はサーバの状態が持つ
-// （`SessionState.usageReview` / `previousUsageReview`。`docs/requirements.md`「トークン消費の見直し」）。
+// 見直し中かどうか・段の進み・結果・前回の提案はサーバの状態（`SessionState.usageReview` / `previousUsageReview`）が持つ。
 // ここが畳むのは:
-// - 経過時間の刻み（`dispatch/hooks/use-turn-status.ts` と同じ、ローカルなタイマー。
-//   `../../../../domain/elapsed-time.ts` を共有する）
-// - 段の右に添える数（モデルの数・キャッシュ読み・ツールの種類）。スキルからは受け取らず、
-//   既存の集計（手続き `tokenUsage.summary` に見直しの期間を渡す）から引く（design.md 決定）。
-//   見直しの期間が選べる日数（1/7/30）でなければ数を出さない——手続きの入力は選べる日数
-//   だけなので、それ以外の値では引けない
-// - ボタンを押せない理由（ターンが進行中・雑談中。「解くべき論点」への回答。結果の場面の
-//   主ボタン・「もう一度見てもらう」にも同じ理由を使う——どちらも会話へ依頼を送る点は同じ）
-// - 「前回の提案」を開いた・閉じたの1つの真偽値（`viewingPrevious`）。サーバの状態には無い
-//   ——`usageReview` は起こし直すとふだんへ戻る決まりのままにし、「前回の結果を見ている」は
-//   この区画だけのローカルな見た目の話にする（docs/screen-design.md 13.2「前回の提案」）
+// - 経過時間の刻み（ローカルなタイマー）
+// - 段の右に添える数（モデルの数・キャッシュ読み・ツールの種類）。
+//   スキルからは受け取らず、既存の集計（手続き `tokenUsage.summary` に見直しの期間を渡す）から引く。
+//   手続きの入力は選べる日数（1/7/30）だけなので、見直しの期間がそれ以外なら数を出さない
+// - ボタンを押せない理由（ターンが進行中・雑談中）。
+//   結果の場面の主ボタン・「もう一度見てもらう」にも同じ理由を使う（どちらも会話へ依頼を送る点は同じ）
+// - 「前回の提案」を開いた・閉じたの1つの真偽値（`viewingPrevious`）。
+//   `usageReview` は起こし直すとふだんへ戻るので、「前回の結果を見ている」はサーバの状態に持たず、この区画だけのローカルな見た目にする
 
 import { skipToken, useQuery } from "@tanstack/react-query"
 import { useEffect, useState } from "react"
@@ -55,7 +50,7 @@ const CHAT_MODE_BLOCKED_REASON = "雑談中は使えない。仕事に切り替�
 const TURN_RUNNING_BLOCKED_REASON = "いまターンが動いているので送れない。終わってからもう一度押す。"
 const TICK_INTERVAL_MS = 1000
 
-/** ボタンを押せるか（押せないときは理由を添える。「解くべき論点」への回答）。 */
+/** ボタンを押せるか（押せないときは理由を添える）。 */
 export type UsageReviewStartAvailability =
   | { readonly kind: "available" }
   | { readonly kind: "blocked"; readonly reason: string }
@@ -75,7 +70,7 @@ export type UsageReviewStageView = {
   readonly count: UsageReviewStageCount
 }
 
-/** 直近のセリフ（吹き出しと同じ最新の `speak`。「解くべき論点」への回答）。まだ無ければ `none`。 */
+/** 直近のセリフ（吹き出しと同じ最新の `speak`）。まだ無ければ `none`。 */
 export type UsageReviewSpeechView =
   | { readonly kind: "none" }
   | { readonly kind: "said"; readonly text: string }
@@ -85,13 +80,15 @@ export type PreviousUsageReviewView =
   | { readonly kind: "none" }
   | { readonly kind: "found"; readonly dateLabel: string; readonly onOpen: () => void }
 
-/** 結果の場面を閉じて「前回の提案」を開く前の画面へ戻る口。実際の結果（`usageReview.kind
- * === "result"`）には出さない——戻る先の「ふだん」が無いため。 */
+/**
+ * 結果の場面を閉じて「前回の提案」を開く前の画面へ戻る口。
+ * 実際の結果（`usageReview.kind === "result"`）には、戻る先の「ふだん」が無いので出さない。
+ */
 export type UsageReviewResultClose =
   | { readonly kind: "none" }
   | { readonly kind: "shown"; readonly onClose: () => void }
 
-/** 結果の札1枚ぶんの見た目（`docs/glossary.md`「提案」）。 */
+/** 結果の札1枚ぶんの見た目。 */
 export type UsageReviewResultProposalView = {
   /** `usageProposalKey`。React の `key` と `usageReview.dismissProposal` の的の両方に使う。 */
   readonly key: string
@@ -99,7 +96,7 @@ export type UsageReviewResultProposalView = {
   readonly title: string
   readonly basis: string
   readonly action: string
-  /** 主ボタンの押す口（`delegate` / `task`）。文言は見た目の側（`usage-review-card.tsx`）が持つ。 */
+  /** 主ボタンの押す口（`delegate` / `task`）。文言は見た目の側が持つ。 */
   readonly followUp: UsageProposalFollowUp
   /** 主ボタンを押すと会話へ依頼を1回送る。 */
   readonly onPrimary: () => void
@@ -133,9 +130,10 @@ export type UseUsageReviewResult = {
       readonly headline: string
       /** 空なら「いま出せる提案は無い」の一言を出す（見送りきった・スキルが挙げなかったの両方）。 */
       readonly proposals: readonly UsageReviewResultProposalView[]
-      /** 「もう一度見てもらう」を押せるか（ふだんの「減らし方を見てもらう」と同じ理由）。
-       * 押せないときは各提案の主ボタンも押せない——どちらも会話へ依頼を送る点は同じなので、
-       * 「ターンが動いている」を主ボタンの数だけ繰り返さずここに1つだけ出す。 */
+      /**
+       * 「もう一度見てもらう」を押せるか。押せないときは各提案の主ボタンも押せない。
+       * 「ターンが動いている」を主ボタンの数だけ繰り返さずここに1つだけ出す。
+       */
       readonly retry: UsageReviewStartAvailability
       readonly onRetry: () => void
       /** 「前回の提案」から開いたときだけ「閉じる」を出す。 */
@@ -242,10 +240,8 @@ function previousReviewView(
 }
 
 /**
- * 結果の場面の中身（頭の日時・期間・一言・提案の並び）。今回の結果（`usageReview.kind ===
- * "result"`）と「前回の提案」を開いたとき（`previousUsageReview`）の両方から呼ぶ——同じ札の
- * 形で出す決まり（「解くべき論点」への回答。docs/screen-design.md 13.2）なので組み立ても1つに
- * 揃える。
+ * 結果の場面の中身（頭の日時・期間・一言・提案の並び）。
+ * 今回の結果（`usageReview.kind === "result"`）と「前回の提案」を開いたとき（`previousUsageReview`）の両方を同じ札の形で出すので、組み立てをここ1つに揃える。
  */
 function resultView(
   reviewedAt: number,
@@ -294,7 +290,7 @@ function stageViews(
   }))
 }
 
-/** モデル・キャッシュ・ツールの3段だけ数を持つ（`docs/requirements.md`「トークン消費の見直し」決定）。 */
+/** モデル・キャッシュ・ツールの3段だけ数を持つ。 */
 function stageCount(
   stage: UsageReviewStage,
   summary: TokenUsageSummary | undefined,
@@ -321,8 +317,8 @@ function asTokenUsageDays(days: number): TokenUsageDays | undefined {
 }
 
 /**
- * 見直し中の段の右の数を引く集計。見直しの画面が使う集計と同じ手続き
- * （`tokenUsage.summary`）を、いまの期間の選択とは別に引く（同じ日数ならキャッシュを分け合う）。
+ * 見直し中の段の右の数を引く集計。
+ * 画面が使う集計と同じ手続き（`tokenUsage.summary`）を、いまの期間の選択とは別に引く（同じ日数ならキャッシュを分け合う）。
  */
 function useReviewStageSummary(days: TokenUsageDays | undefined): TokenUsageSummary | undefined {
   const query = useQuery(
@@ -346,8 +342,7 @@ function reviewedAtLabel(epochMilliseconds: number): string {
   return `${monthDayLabel(epochMilliseconds)} ${clockTime(zoned)}`
 }
 
-/** 見た期間の一言。1日だけは「今日」（`presentational-token-usage.tsx` の期間の
- * 切り替えと同じ言い換え）、それ以外は「直近 N 日」。 */
+/** 見た期間の一言。1日だけは「今日」、それ以外は「直近 N 日」。 */
 function periodLabel(days: number): string {
   return days === 1 ? "今日" : `直近 ${String(days)} 日`
 }

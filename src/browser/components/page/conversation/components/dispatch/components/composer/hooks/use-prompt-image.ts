@@ -1,9 +1,5 @@
-// `<Composer>` に添える画像（`docs/requirements.md` 4.10）の持ち方と、貼り付け・ドロップ・
-// ファイルを選ぶ窓からの取り込み。保つ（`images` の state）と外と同期（非同期の読み込み・
-// ファイルを選ぶ `<input>` の入れ物）の2種類がそろうので、container と対になっていないフック
-// として `use-composer.ts` から切り出した（docs/design.md 2章「機能の中を分ける」。読み込み
-// そのもの（原寸と控えを作る・添えられる種類か見分ける）は `../prompt-image.ts` の純関数のまま
-// 残し、ここは state とイベントの読み替えだけを持つ）。
+// `<Composer>` に添える画像の持ち方と、貼り付け・ドロップ・ファイルを選ぶ窓からの取り込み。
+// ここは state とイベントの読み替えだけを持ち、読み込みそのもの（原寸と控えを作る・添えられる種類か見分ける）は `readPromptImage` などの純関数が持つ。
 
 import { useRef, useState, type ClipboardEvent, type DragEvent, type RefObject } from "react"
 
@@ -45,8 +41,8 @@ export function usePromptImage(args: UsePromptImageArgs): PromptImageModel {
   const imageInputRef = useRef<HTMLInputElement | null>(null)
 
   /**
-   * 貼られた・落ちてきたファイルを札に足す。枚数の上限（{@link MAX_PROMPT_IMAGES}）で頭を
-   * 打ち、読めなかった1枚は黙って落ちる（画面は1回の失敗で落ちない）。
+   * 貼られた・落ちてきたファイルを札に足す。
+   * 枚数の上限（{@link MAX_PROMPT_IMAGES}）で頭を打ち、読めなかった1枚は黙って落ちる。
    */
   const attachFiles = (files: readonly File[]): void => {
     void (async () => {
@@ -75,8 +71,7 @@ export function usePromptImage(args: UsePromptImageArgs): PromptImageModel {
       attachFiles(files)
     },
     onDragOver: (event) => {
-      // ファイルを掴んできたときだけ落とせるようにする（文字のドラッグは `<textarea>` の
-      // 既定の振る舞いのまま）。
+      // ファイルを掴んできたときだけ落とせるようにする（文字のドラッグは `<textarea>` の既定の振る舞いのまま）。
       if (carriesFiles(event.dataTransfer)) {
         event.preventDefault()
       }
@@ -94,8 +89,7 @@ export function usePromptImage(args: UsePromptImageArgs): PromptImageModel {
     },
     onImagesChosen: (event) => {
       attachFiles(chosenPromptImageFiles(event.target.files))
-      // 同じファイルを続けて選び直しても `change` が届くように、選んだものを空に戻す
-      // （React の外にある入力の状態。札のほうは state が持っている）。
+      // 同じファイルを続けて選び直しても `change` が届くように、選んだものを空に戻す（札のほうは state が持っている）。
       event.target.value = ""
       args.focusTextArea()
     },

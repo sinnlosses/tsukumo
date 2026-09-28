@@ -1,7 +1,5 @@
-// キャラクター画面の顔の行（`docs/screen-design.md` 13.9「顔」）。帯の左端・一覧の丸・名乗りの
-// 大きな丸に出す1枚の縮図と、口は「差し替える」と「消す」の2つだけ（背景の行と同じ形。
-// `background-field.tsx`）。有無の字と出し分けは `hooks/use-character-edit.ts` が畳んだ値の
-// とおりで、判定を持たない。
+// キャラクター画面の顔の行。
+// 帯の左端・一覧の丸・名乗りの大きな丸に出す1枚の縮図と、口は「差し替える」と「消す」の2つだけ。
 
 import clsx from "clsx"
 import type { ReactElement } from "react"
@@ -13,10 +11,7 @@ import { VStack } from "../../../../../../ui/v-stack/v-stack.tsx"
 import styles from "../../../../character.module.css"
 import type { FaceFieldModel } from "../../../hooks/use-character-edit.ts"
 
-/**
- * 顔に選べる種類。立ち絵と同じ（`docs/screen-design.md` 13.9「顔」・`src/shared/character-pack/character-face.ts`）。
- * 中身の検証はサーバ側。
- */
+/** 顔に選べる種類。中身の検証はサーバ側で、ここは選ぶときの絞り込みだけ。 */
 const FACE_FILE_ACCEPT = ".svg,.png,.gif"
 
 export function FaceField(props: {

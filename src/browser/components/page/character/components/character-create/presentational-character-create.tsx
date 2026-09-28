@@ -1,13 +1,7 @@
-// 新しいキャラクターパックを作るダイアログ（`docs/design.md` 7.1 / `docs/screen-design.md` 13.6）の
-// 器だけ（<PresentationalCharacterCreate>）。見出し・立ち絵の口（`components/portrait-drop.tsx`）・
-// 名前と id と画面の差し色2つ（`components/accent-swatch.tsx`）・「やめる」「作る」を置く。
-// フックも算出も持たず、`hooks/use-character-create.ts` が畳んだ値をそのまま置く
-// （docs/design.md 2章「機能の中を分ける」）。
+// 新しいキャラクターパックを作るダイアログの器。
+// 見出し・立ち絵の口・名前と id と画面の差し色2つ・「やめる」「作る」を置く。
 //
 // `<dialog>` は top layer に出るので、キャラクター画面の `overflow` には切り取られない。
-// 開閉・Esc・backdrop のクリックは `components/ui/dialog/dialog.tsx` が持つ。閉じたときの後始末
-// （下書きを空へ戻す）は `onClose` を通す（`onClose` はフックを介さず呼び出し側から直接渡る。
-// `character-create.tsx`）。
 
 import clsx from "clsx"
 import type { ReactElement } from "react"

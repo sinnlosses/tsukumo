@@ -1,22 +1,14 @@
-/* メインビューに残す質問の記録（`question-record.tsx`）と、その入れ物（`.tool-block`）。
-   この部品しか使わない class の塊なので main-view.module.css から隣へ分けた
-   （docs/design.md 6.6）。`.detail-block`（preview の Markdown）は
-   `markdown/report-notation.module.css` 側の class をそのまま使うだけで、打ち消しは無い。 */
+/* メインビューに残す質問の記録と、その入れ物（`.tool-block`）。
+   `.detail-block`（preview の Markdown）は report-notation.module.css 側の class をそのまま使うだけで、打ち消しは無い。 */
 
-/* メインビューに残す質問の記録。字の段・太さは `Heading`（size="body" weight="bold"——UA 既定の
-   h4 の太字のまま）が持つ。margin だけここに残す（既定の 0 と違うため）。 */
+/* メインビューに残す質問の記録。字の段・太さは `Heading` が持つ。margin だけここに置く。 */
 .question-record-heading {
   margin: 0 0 0.3rem;
 }
-/* 問と答えの塊（`.question-record`）どうしの区切り。塊の中（問と答えの間 0.3rem・答えと
-   preview の間 0.5rem）より広い間隔と罫線を、2つ目以降の塊にだけ足す（最初の塊の上には
-   要らない。`.tool-block` 自体の枠がすでに境目を作っている）。罫線は `rule` のままにし、
-   `accent` を混ぜない — `accent` は同じ画面の中で「選んだ答え」の印（`.question-mark`）に
-   使っていて、区切り線まで染めると同じ色が2つの意味（選んだ・区切り）を指すことになる
-   （13.1 原則5、重ねがけを避ける）。地の段差（13.2）も採らない —
-   `.question-record` は `.tool-block` の地（`surface`）をそのまま使う本文の並びで、塊ごとに
-   `ground` / `surface-raised` を挟むと「沈む・基準・浮く」の意味（13.2）が
-   問答の順序ではなく塊の境目を指すことになり、他の場所の地の段差と意味がぶつかる。 */
+/* 問と答えの塊（`.question-record`）どうしの区切り。
+   塊の中（問と答えの間 0.3rem・答えと preview の間 0.5rem）より広い間隔と罫線を、2つ目以降の塊にだけ足す（最初の塊の上には要らない。`.tool-block` 自体の枠がすでに境目を作っている）。
+   罫線は `rule` のままにし、`accent` を混ぜない。`accent` は同じ画面の中で「選んだ答え」の印（`.question-mark`）に使っていて、区切り線まで染めると同じ色が2つの意味（選んだ・区切り）を指すことになる（重ねがけを避ける）。
+   地の段差も採らない。`.question-record` は `.tool-block` の地（`surface`）をそのまま使う本文の並びで、塊ごとに `ground` / `surface-raised` を挟むと「沈む・基準・浮く」の意味が問答の順序ではなく塊の境目を指すことになり、他の場所の地の段差と意味がぶつかる。 */
 .question-record + .question-record {
   margin-top: 1rem;
   padding-top: 0.75rem;
@@ -38,13 +30,12 @@
 .question-option.is-free-text {
   font-style: italic;
 }
-/* 選んだ印（`●`/`○`）。`question-record.tsx` の `QuestionMark` が文字を包む。選んだ側だけ
-   `accent` を当て、選ばなかった `○` は親（`.question-option` / `.question-preview-label`）の
-   色をそのまま継ぐ。`●`/`○` の形の違いがすでに選択を運んでいる（13.1 原則5）ので、色は
-   その上への重ねがけになる。 */
-/* 色は `Text`（tone={chosen ? "accent" : "inherit"}）が持つ。 */
-/* 比べた内容の折りたたみ（`question-record.tsx`）。`.detail-block details` と同じ見た目だが、
-   こちらは `.detail-block` の外側にいるので、そのセレクタが届かない。 */
+/* 選んだ印（`●`/`○`）。
+   `QuestionMark` が文字を包む。
+   選んだ側だけ `accent` を当て、選ばなかった `○` は親（`.question-option` / `.question-preview-label`）の色をそのまま継ぐ。
+   `●`/`○` の形の違いがすでに選択を運んでいるので、色はその上への重ねがけになる。 */
+/* 比べた内容の折りたたみ。
+   `.detail-block details` と同じ見た目だが、こちらは `.detail-block` の外側にいるので、そのセレクタが届かない。 */
 .question-previews {
   margin: 0.5rem 0 0;
   padding: 0.5rem 0.75rem;
@@ -52,8 +43,7 @@
   border-radius: 0.5rem;
   background: var(--ground);
 }
-/* 字の段・色は `Text`（element="summary" size="secondary" tone="ink-quiet" weight="inherit"）が
-   描く `<summary>` に、この要素選択子で開閉のカーソルだけ残す。 */
+/* 字の段・色は `Text` が描く `<summary>` に、この要素選択子で開閉のカーソルだけ残す。 */
 .question-previews > summary {
   cursor: pointer;
 }
@@ -61,8 +51,7 @@
   margin-bottom: 0.5rem;
 }
 /* preview の持ち主の札。答え待ちの面のカードの見出しと同じ役割。 */
-/* 太さは `Text`（size="inherit" tone="inherit" weight="semibold"）が持つ。margin だけここに残す
-   （既定の 0 と違うため）。 */
+/* 太さは `Text` が持つ。margin だけここに置く。 */
 .question-preview-label {
   margin: 0.75rem 0 0.25rem;
 }

@@ -1,9 +1,7 @@
-/* キャラクター画面と、その上に重なる新しく作るダイアログ（`src/browser/components/page/character/`。
-   docs/screen-design.md 13.6）。**会話の画面と入れ替わる**（重ねない）ので、ここは1枚のページとして
-   流す — 4領域の grid も仕切りも持たない。キャラクター画面は**左に一覧（260px）、右に選んでいる
-   パックの詳しい設定**の2段組で、760px 以下では一覧を上に積む（このファイル末尾の @media）。
-   **16進の色は書かない**（見本の色は theme.css のトークンに当てた。13.6「キャラクター画面の中身」）。
-   書体も2本のまま（13.3。見本の明朝は使わない）。 */
+/* キャラクター画面と、その上に重なる新しく作るダイアログ。
+   会話の画面と入れ替わる（重ねない）ので、ここは1枚のページとして流す。4領域の grid も仕切りも持たない。
+   キャラクター画面は左に一覧（260px）、右に選んでいるパックの詳しい設定の2段組で、760px 以下では一覧を上に積む（このファイル末尾の @media）。
+   16進の色は書かない（見本の色は theme.css のトークンに当てる）。 */
 
 /* ---- 2段組 ---- */
 .character-screen-columns {
@@ -29,7 +27,6 @@
   justify-content: space-between;
   padding: 0 0.25rem 0.25rem;
 }
-/* 字の段・色は `Text`（size="action" tone="ink-quiet" weight="inherit"）が持つ。 */
 .character-list-row {
   display: flex;
   align-items: center;
@@ -65,26 +62,22 @@
 .character-list-row[aria-current="page"] .character-list-face {
   box-shadow: 0 0 0 1.5px var(--accent);
 }
-/* 顔を持たないパックは点線の丸（立ち絵や `mini` から切り抜いて代わりにしない。13.9「顔」）。 */
+/* 顔を持たないパックは点線の丸（立ち絵や `mini` から切り抜いて代わりにしない）。 */
 .character-list-face-blank {
   box-sizing: border-box;
   background: var(--surface);
   border: 1px dashed var(--rule);
 }
-/* 並べ（`gap="none"`）は `VStack` が持つ。 */
 .character-list-text {
   min-width: 0;
 }
-/* 字の段・太さは `Text`（size="subheading" tone="inherit"。太さは選んでいる行だけ "bold"、ほかは
-   "normal"）が持つ。1行で切る組みだけここに残す（語彙に無い見た目）。 */
+/* 字の段・太さは `Text` が持つ。1行で切る組みだけここに置く。 */
 .character-list-name {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-/* 字の段・色は `Text`（size="label" tone="ink-quiet" weight="inherit"）が持つ。 */
-/* 枠・地・字の色・hover は `<Button variant="outline-dashed">`（`ui/button/button.tsx`）が持つ。ここは
-   箱（並べ・高さ・余白・角丸・字の大きさ）だけ。 */
+/* 顔は `<Button variant="outline-dashed">` が持つ。箱（並べ・高さ・余白・角丸・字の大きさ）だけここに置く。 */
 .character-list-new {
   display: flex;
   align-items: center;
@@ -97,8 +90,9 @@
 }
 
 /* ---- 右: 詳しい設定 ---- */
-/* 札1枚。中の表情のカード・色見本は札より沈めた `ground` の地に置く。
-   **container にしてあるのは、詳しい設定の幅で格子の列数を決めるため**（一覧の幅を除いた残り）。 */
+/* 札1枚。
+   中の表情のカード・色見本は札より沈めた `ground` の地に置く。
+   container にしてあるのは、詳しい設定の幅で格子の列数を決めるため（一覧の幅を除いた残り）。 */
 .character-detail {
   container-type: inline-size;
   display: flex;
@@ -134,7 +128,6 @@
   background: var(--ground);
   border: 1px dashed var(--rule);
 }
-/* 並べ・間隔（`gap="xs"`）は `VStack` が持つ。 */
 .character-profile-text {
   flex: 1 1 14rem;
   min-width: 0;
@@ -145,14 +138,12 @@
   align-items: baseline;
   gap: 0.4rem 0.75rem;
 }
-/* 字の段・色・太さは `Heading`（size="heading" tone="inherit" weight="bold"）が持つ。字間だけ
-   ここに残す（語彙に無い見た目）。 */
+/* 字の段・色・太さは `Heading` が持つ。字間だけここに置く。 */
 .character-profile-name {
   letter-spacing: 0.06em;
 }
-/* パックの名前はディレクトリ名なので等幅（13.1 原則3）。 */
-/* 字の段・色は `Text`（size="action" tone="ink-quiet" weight="inherit"）が持つ。書体だけここに
-   残す（語彙に無い見た目）。 */
+/* パックの名前はディレクトリ名なので等幅。 */
+/* 字の段・色は `Text` が持つ。書体だけここに置く。 */
 .character-profile-id {
   font-family: var(--font-mono);
 }
@@ -164,23 +155,19 @@
   font-size: var(--font-label);
   font-weight: bold;
 }
-/* 字の段・色は `Text`（size="secondary" tone="ink-quiet" weight="inherit"）が持つ。 */
 /* 「名前とプロフィールを変える」と「このキャラクターに切り替える」の並び（右端に寄せる）。 */
-/* 並べ・間隔（`gap="sm"`）・揃え・折り返しは `HStack` が持つ。 */
 .character-profile-actions {
   margin-left: auto;
 }
 
-/* 節（表情・差し色・背景）。並べ・間隔（`gap="md"`）は `VStack` が持つ。 */
+/* 節（表情・差し色・背景）。 */
 .character-section {
   min-width: 0;
 }
-/* 並べ・間隔（`gap="sm"`）・揃えは `HStack` が持つ。 */
 .character-section-bar > :last-child {
   margin-left: auto;
 }
-/* 字の段・色・太さは `Text`（size="action" tone="ink-quiet" weight="normal"）が持つ。margin だけ
-   ここに残す（既定の 0 と違うため）。 */
+/* 字の段・色・太さは `Text` が持つ。margin だけここに置く。 */
 .character-section-note {
   margin-left: 0.6rem;
 }
@@ -188,7 +175,7 @@
   margin-left: auto;
 }
 
-/* 表情の格子。**広いときは5列**（見本）、詳しい設定が狭いときは入るだけの列で折り返す。 */
+/* 表情の格子。広いときは5列（見本）、詳しい設定が狭いときは入るだけの列で折り返す。 */
 .character-gallery {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -221,9 +208,8 @@
   height: 10.5rem;
   padding-top: 0.5rem;
 }
-/* **立ち絵は枠も地も持たない**（13.1 原則2。カードの地の上に直接置く）。大きさはここで決める
-   （`<Portrait>` に className で渡す置き方。キャラビュー側の割合指定は `.character-region` が持つ
-   変数なので、この画面では解決されない）。 */
+/* 立ち絵は枠も地も持たない（カードの地の上に直接置く）。
+   大きさはここで決める（`<Portrait>` に className で渡す置き方。キャラビュー側の割合指定は `.character-region` が持つ変数なので、この画面では解決されない）。 */
 .character-card-stage .character-card-portrait {
   height: 10rem;
   max-width: 100%;
@@ -246,9 +232,8 @@
   font-size: var(--font-label);
   font-weight: bold;
 }
-/* 乗せたとき・カードの中にフォーカスがあるときだけ出る2つの口（13.6）。**消さずに透明にする**
-   （`display: none` だと Tab で口に入れず、キーボードから出せなくなる）。 */
-/* 並べ・間隔（`gap="xs"`）は `HStack` が持つ。 */
+/* 乗せたとき・カードの中にフォーカスがあるときだけ出る2つの口。
+   消さずに透明にする（`display: none` だと Tab で口に入れず、キーボードから出せなくなる）。 */
 .character-card-actions {
   position: absolute;
   top: 0.5rem;
@@ -297,8 +282,8 @@
   outline: 2px solid var(--accent);
   outline-offset: 1px;
 }
-/* 変えられないパック（`editable: false`）。`<label>` 自体は disabled にできないので、
-   中の `<input>` の状態を見て見た目を合わせる。 */
+/* 変えられないパック（`editable: false`）。
+   `<label>` 自体は disabled にできないので、中の `<input>` の状態を見て見た目を合わせる。 */
 .character-card-action:has(.character-card-file:disabled),
 .character-card-action:disabled,
 .character-button:has(.character-card-file:disabled),
@@ -307,7 +292,7 @@
   border-color: var(--rule-quiet);
   cursor: default;
 }
-/* 立ち絵がまだ無い表情。**その表情の名前を書いた点線の空欄**で、枠そのものが選ぶ口。 */
+/* 立ち絵がまだ無い表情。その表情の名前を書いた点線の空欄で、枠そのものが選ぶ口。 */
 .character-card-blank {
   align-items: center;
   justify-content: center;
@@ -338,10 +323,7 @@
   color: var(--accent);
   border-radius: 50%;
 }
-/* 字の段・色は `Text`（size="secondary" tone="ink" weight="inherit"）が持つ。 */
-/* 字の段は `Text`（size="label" tone="inherit" weight="inherit"）が持つ。 */
-/* 見えないが読み上げとクリック・フォーカスの対象には残す（`display: none` にすると `<label>` から
-   たどれなくなる）。 */
+/* 見えないが読み上げとクリック・フォーカスの対象には残す（`display: none` にすると `<label>` からたどれなくなる）。 */
 .character-card-file {
   position: absolute;
   width: 1px;
@@ -354,10 +336,9 @@
   white-space: nowrap;
 }
 
-/* 表情を消す前の確かめ（`components/portrait-clear-confirm.tsx`）。**画面全体は覆わない**——
-   UA 既定の中央寄せ（`inset: 0; margin: auto;`）を外し、押したカードの位置から自前で置く
-   （`top` / `left` は部品側の inline style）。`showModal()` なので top layer に出て
-   `.character-card` の `overflow: hidden` には切り取られない。 */
+/* 表情を消す前の確かめ。画面全体は覆わない。
+   UA 既定の中央寄せ（`inset: 0; margin: auto;`）を外し、押したカードの位置から置く（`top` / `left` は部品側の inline style）。
+   `showModal()` なので top layer に出て `.character-card` の `overflow: hidden` には切り取られない。 */
 .character-clear-confirm {
   position: fixed;
   inset: auto;
@@ -375,9 +356,7 @@
   border-radius: 0.875rem;
   box-shadow: 0 16px 40px color-mix(in srgb, var(--ground) 70%, transparent);
 }
-/* 画面を暗く覆わない（`<Dialog backdrop="clear">` が既定の暗いベールを消し、外側クリックの
-   読み替えだけ使う）。 */
-/* 並べ・間隔（`gap="md"`）・揃えは `HStack` が持つ。 */
+/* 画面を暗く覆わない（`<Dialog backdrop="clear">` が既定の暗いベールを消し、外側クリックの読み替えだけ使う）。 */
 .character-clear-confirm-portrait {
   flex-shrink: 0;
   width: 48px;
@@ -386,22 +365,18 @@
   background: var(--ground);
   border-radius: 0.5rem;
 }
-/* 字の段・太さは `Text`（size="secondary" tone="inherit" weight="bold"）が持つ。 */
-/* 字の段・色は `Text`（size="action" tone="ink-quiet" weight="inherit"）が持つ。行の高さだけここに
-   残す（語彙に無い見た目）。 */
+/* 字の段・色は `Text` が持つ。行の高さだけここに置く。 */
 .character-clear-confirm-note {
   line-height: 1.7;
 }
-/* 並べ・間隔（`gap="sm"`）・揃えは `HStack` が持つ。 */
-/* 顔（枠・地・字の色・hover・太さ700）は `<Button variant="solid-danger">` が持つ（太さは
-   `Text`〔weight="bold"〕が持つ）。箱だけここに残す。 */
+/* 顔は `<Button variant="solid-danger">` が持つ。箱だけここに置く。 */
 .character-clear-confirm-ok {
   height: 34px;
   padding: 0 0.875rem;
   border-radius: 0.5rem;
 }
 
-/* 差し色。**画面の差し色（2つ）と立ち絵の差し色（4つ）を横に並べる**（見本の 2 : 4）。 */
+/* 差し色。画面の差し色（2つ）と立ち絵の差し色（4つ）を横に並べる（見本の 2 : 4）。 */
 .character-accents {
   display: grid;
   grid-template-columns: minmax(0, 2fr) minmax(0, 4fr);
@@ -470,25 +445,19 @@
   border: none;
   border-radius: 7px;
 }
-/* 並べ（`gap="none"`）は `VStack` が持つ。 */
-/* 字の段は `Text`（size="secondary" tone="inherit" weight="inherit"）が持つ。幅だけここに残す
-   （語彙に無い見た目）。 */
+/* 字の段は `Text` が持つ。幅だけここに置く。 */
 .character-swatch-name {
   min-width: 0;
 }
-/* 字の段・色は `Text`（size="label" tone="ink-quiet" weight="inherit"）が持つ。 */
-/* 字の段・色は `Text`（size="label" tone="ink-quiet" weight="inherit"）が持つ。margin・1行で
-   切る組み・書体だけここに残す（語彙に無い見た目）。 */
+/* 字の段・色は `Text` が持つ。margin・1行で切る組み・書体だけここに置く。 */
 .character-swatch-hex {
   margin-left: auto;
   white-space: nowrap;
   font-family: var(--font-mono);
 }
-/* 「雑談も仕事と同じにする」。字だけの口（差し色の字。13.1 原則1 の「差し色は指さす1箇所」）。
-   顔（枠・地・字の色・hover の下線・押せないとき）は `<Button variant="link">` が持つ。 */
+/* 「雑談も仕事と同じにする」。字だけの口。顔は `<Button variant="link">` が持つ。 */
 
-/* 顔（13.9「顔」）。帯・一覧・名乗りの丸と同じ丸い縮図と、字と2つの口。 */
-/* 並べ・間隔（`gap="lg"`）・揃え・折り返しは `HStack` が持つ。 */
+/* 顔の行。帯・一覧・名乗りの丸と同じ丸い縮図と、字と2つの口。 */
 .character-face-field-preview,
 .character-face-field-blank {
   box-sizing: border-box;
@@ -505,11 +474,8 @@
 .character-face-field-blank {
   border: 1.5px dashed var(--rule);
 }
-/* 並べ・間隔（`gap="sm"`）は `VStack` が持つ。字の段は中の `Text`（size="secondary"）が持つ。 */
-/* 並べ・間隔（`gap="sm"`）・折り返しは `HStack` が持つ。 */
 
-/* 背景（13.8）。**敷いたときと同じ切り取り方**（cover・下端合わせ）の縮図と、字と2つの口。 */
-/* 並べ・間隔（`gap="lg"`）・揃え・折り返しは `HStack` が持つ。 */
+/* 背景の行。敷いたときと同じ切り取り方（cover・下端合わせ）の縮図と、字と2つの口。 */
 .character-background-preview,
 .character-background-blank {
   box-sizing: border-box;
@@ -527,8 +493,6 @@
 .character-background-blank {
   border: 1.5px dashed var(--rule);
 }
-/* 並べ・間隔（`gap="sm"`）は `VStack` が持つ。字の段は中の `Text`（size="secondary"）が持つ。 */
-/* 並べ・間隔（`gap="sm"`）・折り返しは `HStack` が持つ。 */
 
 /* 字つきの口（背景の差し替える・消す、このキャラクターに切り替える、名前とプロフィールを変える）。 */
 .character-button {
@@ -555,10 +519,9 @@
 .character-button-danger:hover {
   border-color: var(--state-ng);
 }
-/* `<Button variant="outline-dashed">` に置き換えた「やめる」「名前とプロフィールを変える」
-   「このキャラクターに切り替える」の箱だけ（顔は Button が持つ）。`.character-button` と
-   同じ寸法——**`.character-button` 自体はここでは変えない**（`<label>` の差し替える・
-   `.character-button-danger` と組む消すボタンなど、Button 化していない箇所がまだ使うため）。 */
+/* `<Button variant="outline-dashed">` で描く「やめる」「名前とプロフィールを変える」「このキャラクターに切り替える」の箱だけ（顔は Button が持つ）。
+   寸法は `.character-button` と揃える。
+   `.character-button` 自体は、`<label>` の差し替える・`.character-button-danger` と組む消すボタンなど Button を使わない箇所が使う。 */
 .character-button-outline {
   display: inline-flex;
   align-items: center;
@@ -570,8 +533,7 @@
 }
 
 /* 変えられないパックのとき・名前が使えないときの一言。 */
-/* 字の段・色は `Text`（size="label" tone="ink-quiet" weight="inherit"）が持つ。並べ・間隔・margin
-   だけここに残す（語彙に無い見た目）。 */
+/* 字の段・色は `Text` が持つ。並べ・間隔・margin だけここに置く。 */
 .character-screen-note {
   display: flex;
   align-items: center;
@@ -579,9 +541,8 @@
   margin: 0;
 }
 
-/* このキャラクターを消す／同梱に戻す帯（`components/character-delete.tsx`。13.6「このキャラクターを
-   消す」）。**赤みがかった枠**（`state-ng` を混ぜた地と縁）で、口は `.character-button-danger` を
-   流用する。 */
+/* このキャラクターを消す／同梱に戻す帯。
+   赤みがかった枠（`state-ng` を混ぜた地と縁）で、口は `.character-button-danger` を流用する。 */
 .character-delete-band {
   display: flex;
   flex-wrap: wrap;
@@ -599,11 +560,8 @@
   gap: 0.15rem;
   min-width: 0;
 }
-/* 字の段・色・太さは `Text`（size="secondary" tone="state-ng" weight="bold"）が持つ。 */
-/* 字の段・色は `Text`（size="action" tone="ink-quiet" weight="inherit"）が持つ。 */
 
-/* 消す／同梱に戻す前の確かめ（`components/character-delete-confirm.tsx`）。作るダイアログと同じ
-   UA 既定の中央寄せで、画面全体を覆う。 */
+/* 消す／同梱に戻す前の確かめ。UA 既定の中央寄せで、画面全体を覆う。 */
 .character-delete-dialog {
   box-sizing: border-box;
   width: min(32.5rem, calc(100vw - 2rem));
@@ -616,8 +574,6 @@
   border-radius: 0.875rem;
   overflow: auto;
 }
-/* 背景（backdrop）は `<Dialog backdrop="dim">` が持つ（`dialog.module.css`）。 */
-/* 並べ・間隔（`gap="lg"`）は `VStack` が持つ。 */
 .character-delete-head {
   display: flex;
   align-items: center;
@@ -639,8 +595,7 @@
   background: var(--ground);
   border: 1px dashed var(--rule);
 }
-/* 字の段・色は `Text`（size="secondary" tone="ink-quiet" weight="inherit"）が持つ。行の高さ・
-   改行の扱いだけここに残す（語彙に無い見た目）。 */
+/* 字の段・色は `Text` が持つ。行の高さ・改行の扱いだけここに置く。 */
 .character-delete-note {
   line-height: 1.8;
   white-space: pre-line;
@@ -669,15 +624,14 @@
   justify-content: flex-end;
   gap: 0.625rem;
 }
-/* 顔（枠・地・字の色・hover・押せないとき・太さ700）は `<Button variant="solid-danger">` が持つ
-   （太さは `Text`〔weight="bold"〕が持つ）。箱だけここに残す。 */
+/* 顔は `<Button variant="solid-danger">` が持つ。箱だけここに置く。 */
 .character-delete-ok {
   height: 2.5rem;
   padding: 0 1.125rem;
   border-radius: 0.5625rem;
 }
 
-/* ---- 作るダイアログ（`character-create.tsx`。キャラクター画面の上に重なる。13.6） ---- */
+/* ---- 作るダイアログ（キャラクター画面の上に重なる） ---- */
 .character-create-dialog {
   box-sizing: border-box;
   width: min(45rem, calc(100vw - 2rem));
@@ -690,10 +644,7 @@
   border-radius: 0.875rem;
   overflow: auto;
 }
-/* 背景（backdrop）は `<Dialog backdrop="dim">` が持つ（`dialog.module.css`）。 */
-/* 並べ・間隔（`gap="xl"`）は `VStack` が持つ。 */
-/* 字の段・色・太さは `Heading`（size="heading" tone="inherit" weight="bold"）が持つ。字間だけ
-   ここに残す（語彙に無い見た目）。 */
+/* 字の段・色・太さは `Heading` が持つ。字間だけここに置く。 */
 .character-create-heading {
   letter-spacing: 0.06em;
 }
@@ -702,8 +653,7 @@
   grid-template-columns: 15rem minmax(0, 1fr);
   gap: 1.5rem;
 }
-/* 立ち絵の口は character-card / character-card-blank を流用し、大きさだけ変える
-   （このファイルの中で見た目の語彙を増やさない）。 */
+/* 立ち絵の口は character-card / character-card-blank を流用し、大きさだけ変える（このファイルの中で見た目の語彙を増やさない）。 */
 .character-create-portrait {
   min-height: 18rem;
 }
@@ -739,7 +689,6 @@
 .character-create-input-mono {
   font-family: var(--font-mono);
 }
-/* 字の段・色は `Text`（size="label" tone="ink-quiet" weight="inherit"）が持つ。 */
 .character-create-footer {
   display: flex;
   flex-wrap: wrap;
@@ -748,15 +697,11 @@
   padding-top: 1rem;
   border-top: 1px solid var(--rule-quiet);
 }
-/* 字の段・色は `Text`（size="label" tone="ink-quiet" weight="inherit"）が持つ。 */
 .character-create-footer-spacer {
   flex: 1 1 auto;
 }
-/* 「作る」だけは埋めた差し色の口（`.dispatch-send` と同じ考え方。押せる操作の中心を強める）。
-   「やめる」は縁だけの `.character-button` を流用する。 */
-/* 顔（枠・地・字の色・hover・押せないとき・太さ700）は `<Button variant="solid-accent">` が持つ
-   （太さは `Text`〔weight="bold"〕が持つ）。箱だけここに残す。id が形に合わない・もう使われて
-   いる・立ち絵がまだ無い間は押せない（理由は id の欄の下の `.character-screen-note`）。 */
+/* 「作る」だけは埋めた差し色の口（押せる操作の中心を強める）。
+   顔は `<Button variant="solid-accent">` が持つ。箱だけここに置く。 */
 .character-create-submit {
   height: 2.5rem;
   padding: 0 1.25rem;
@@ -768,8 +713,7 @@
   }
 }
 
-/* 狭い画面（760px 以下）: 一覧を上に積み、詳しい設定の余白を詰める（格子と差し色の列数は
-   詳しい設定の幅を見る @container が決める）。 */
+/* 狭い画面（760px 以下）: 一覧を上に積み、詳しい設定の余白を詰める（格子と差し色の列数は詳しい設定の幅を見る @container が決める）。 */
 @media (max-width: 760px) {
   .character-screen-columns {
     grid-template-columns: minmax(0, 1fr);

@@ -1,9 +1,6 @@
-// 1つのやり取り（依頼の続き → ステップの並び）。`<RequestRest>` + ステップの並び
-// （レポート・質問の記録）を縦に1本で積む（`docs/display.md` 4.2
-// 「ステップをカードにして縦に1本で積み」。番号は振らない）。ツールの実行は描かない
-// （`docs/display.md` 4.2「メインビュー」。進行は帯の「いまの作業」が持つ。
-// `docs/screen-design.md` 13.9）。失敗で終わったやり取りは、末尾に「失敗で終わった」と理由を
-// 出す（`docs/display.md` 4.2「メインビュー」。色だけでなく字で成功と見分ける）。
+// 1つのやり取り。`<RequestRest>` + ステップの並び（レポート・質問の記録）を縦に1本で積む（番号は振らない）。
+// ツールの実行は描かない（進行は帯の「いまの作業」が持つ）。
+// 失敗で終わったやり取りは、末尾に「失敗で終わった」と理由を出す（色だけでなく字で成功と見分ける）。
 
 import clsx from "clsx"
 import { Fragment, useState, type ReactElement } from "react"
@@ -27,20 +24,16 @@ import { Report } from "../report/report.tsx"
 
 export type TurnProps = {
   readonly turn: MainViewTurn
-  /**
-   * 今回（いちばん新しい）のやり取りか。演出（`domain/reveal/use-report-reveal.ts`）を掛けてよいのは
-   * 今回だけで、過去のターンでは本文が最初から全部出ている（`docs/requirements.md` 4.3）。
-   */
+  /** 今回（いちばん新しい）のやり取りか。演出を掛けてよいのは今回だけで、過去のターンでは本文が最初から全部出ている。 */
   readonly newest: boolean
 }
 
 export function Turn(props: TurnProps): ReactElement {
   const { turn } = props
   const writingStepId = finalReportStepId(turn)
-  // このやり取りを出し始めた時点で既にあった本文は演出しない。 過去のターンを開いたとき・
-  // ページを読み込み直したときは「確定済みの本文が一度も書かれない」ので、あとから現れた
-  // 本文だけが対象になる（`<MainView>` がやり取りの番号を `key` に渡すので、この初期値は
-  // やり取りごとに取り直される）。
+  // このやり取りを出し始めた時点で既にあった本文は演出しない。
+  // 過去のターンを開いたとき・ページを読み込み直したときは「確定済みの本文が一度も書かれない」ので、あとから現れた本文だけが対象になる。
+  // この初期値がやり取りごとに取り直されるのは、`<MainView>` がやり取りの番号を `key` に渡すため。
   const [stepIdAtMount] = useState(writingStepId)
   const revealStepId = props.newest && writingStepId !== stepIdAtMount ? writingStepId : undefined
 
@@ -69,11 +62,8 @@ export function Turn(props: TurnProps): ReactElement {
           wrap="nowrap"
           className=""
         >
-          {/* `key` は配列の添字ではなく `step.id`（`limitTurnEntries` が古いステップを落とす前に
-              振った通し番号）を使う。添字だと、古いステップが落ちて残りの添字が1つずつ前へ
-              ずれた瞬間に React が別のステップの DOM を使い回してしまい、`<details>` の `open`
-              のような制御されていない DOM の状態が別のステップへ乗り移って見える
-              （`src/shared/session/main-view.ts` の `MainViewStep.id` を参照）。 */}
+          {/* `key` は配列の添字ではなく `step.id`（`MainViewStep.id`。古いステップを落とす前に振った通し番号）を使う。
+              添字だと、古いステップが落ちて残りの添字が1つずつ前へずれた瞬間に React が別のステップの DOM を使い回してしまい、`<details>` の `open` のような制御されていない DOM の状態が別のステップへ乗り移って見える。 */}
           {turn.steps.map((step) => (
             <Step
               step={step}
@@ -91,8 +81,8 @@ export function Turn(props: TurnProps): ReactElement {
 }
 
 /**
- * やり取りの末尾に出す「失敗で終わった」の札。見出しの字が失敗を言い、理由は型の決まった語だけ
- * （会話の画面の `domain/api-error-label.ts`。SDK の自由文は出さない）。枠は `--state-ng`（色だけに頼らない）。
+ * やり取りの末尾に出す「失敗で終わった」の札。
+ * 見出しの字が失敗を言い、理由は型の決まった語だけ（`turnFailureLabel`。SDK の自由文は出さない）。
  */
 function TurnFailureNotice(props: { readonly failure: TurnFailure }): ReactElement {
   return (
@@ -122,29 +112,20 @@ function TurnFailureNotice(props: { readonly failure: TurnFailure }): ReactEleme
 /**
  * 1ステップ分。レポートも質問の記録も無いステップは何も描かない（`null`）。
  *
- * ツールの実行（`action.kind === "tool"`）は描かない。 `actions` にはツールの記録も
- * 残っているが、メインビューに出すのは質問の記録だけ。
+ * ツールの実行（`action.kind === "tool"`）は描かない。
+ * `actions` にはツールの記録も残っているが、メインビューに出すのは質問の記録だけ。
  *
- * 中間レポート（`step.interim`）は見分けが付く形で描く。 話が途中の本文なので、
- * 小さなラベルを載せて地と枠を変える（`.main-step.is-interim`。判定そのものは
- * `src/shared/session/main-view.ts` が済ませてある）。
+ * 中間レポート（`step.interim`）は話が途中の本文なので、小さなラベルを載せて地と枠を変える（`.main-step.is-interim`）。
  *
- * 最終レポート（`step.final`）は地を中間レポートと同じ ground にし（`.main-step.is-final`）、
- * ラベルを載せる。 ラベルを出すのは `finalLabel` が立っているとき——中間レポートの
- * あるやり取りだけで、本文が1つしか無いやり取りでは「最終」が何も区別しない（条件は
- * `src/shared/session/main-view.ts` の `markFinalReport` が畳んである）。
+ * 最終レポート（`step.final`）は地を中間レポートと同じ ground にし（`.main-step.is-final`）、ラベルを載せる。
+ * ラベルを出すのは `finalLabel` が立っているとき（中間レポートのあるやり取りだけ。本文が1つしか無いやり取りでは「最終」が何も区別しない）。
  *
- * 後ろに別のレポートが現れた中間レポート（`step.superseded`）は畳む。 何件も開いたまま
- * 積まれると見通しが悪いため。畳んだ分は `<details>` にするだけで
- * 中身は DOM に残す（記録からは消さない）。まだ追い越されていない最後の中間レポートは
- * 今までどおり開いた `<section>` のまま。
+ * 後ろに別のレポートが現れた中間レポート（`step.superseded`）は、何件も開いたまま積まれると見通しが悪いので畳む。
+ * 畳んだ分は `<details>` にするだけで中身は DOM に残す。まだ追い越されていない最後の中間レポートは開いた `<section>` のまま。
  */
 function Step(props: {
   readonly step: MainViewStep
-  /**
-   * このステップが載っているやり取り（`<Report>` から筆先へ渡る。
-   * `domain/reveal/use-report-reveal.ts`）。
-   */
+  /** このステップが載っているやり取り（`<Report>` から筆先へ渡る）。 */
   readonly turnId: number
   readonly reveal: boolean
   /** 「最終レポート」のラベルを載せるか（`MainViewTurn.hasInterimReport` と `step.final` の組）。 */
@@ -225,9 +206,8 @@ function stepClassName(step: MainViewStep): string {
 
 /**
  * 演出を掛ける候補のステップ（最終レポート＝確定したレポートを持つ最後のステップ）。
- * 中間レポートは流れている最中に少しずつ出る本文なので、ここでは選ばない（演出は中間レポートにも
- * 既に出し切った本文にも掛けない）。
- * 選び方そのものは `src/shared/session/main-view.ts` の `markFinalReport` が済ませてある。
+ * 中間レポートは流れている最中に少しずつ出る本文なので、ここでは選ばない。
+ * 選び方そのものは `markFinalReport` が済ませてある。
  */
 function finalReportStepId(turn: MainViewTurn): number | undefined {
   return turn.steps.find((step) => step.final)?.id
@@ -247,12 +227,10 @@ function isQuestion(
 }
 
 /**
- * 依頼のうち札の頭のタイトル（`turn-header.tsx`）に出なかったぶんと、添えた画像の控え
- * （`docs/requirements.md` 4.10。控えはその下に並び、添えていなければ何も出ない）。
+ * 依頼のうち札の頭のタイトルに出なかったぶんと、添えた画像の控え（添えていなければ何も出ない）。
  *
- * - 1行の依頼は何も出さない。 タイトルと同じ行を二度出さない
- * - 複数行の依頼は2行目以降を `<details open>` で出す。 既定で開いているので全行が読め、
- *   読み終わったら閉じられる。どの行がタイトルに取られたかは `domain/turn-title.ts` と同じ規則
+ * - 1行の依頼は何も出さない（タイトルと同じ行を二度出さない）
+ * - 複数行の依頼は2行目以降（`requestLinesAfterTitle`）を `<details open>` で出す。既定で開いているので全行が読め、読み終わったら閉じられる
  */
 function RequestRest(props: { readonly request: MainViewRequest }): ReactElement {
   const rest = requestLinesAfterTitle(truncateRequestText(props.request.text))

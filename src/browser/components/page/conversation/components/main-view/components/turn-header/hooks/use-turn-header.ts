@@ -1,14 +1,12 @@
-// `<TurnHeader>` のロジック（docs/design.md 2章「機能の中を分ける」の container / presenter）。
+// `<TurnHeader>` のロジック。
 // 前後のターンの id・見ているターンのタイトル・一覧の開閉と並びを、画面に出す形へ畳んで返す。
 //
-// 開閉は帯に前例がある `browser/hooks/use-dismiss-signal.ts` の `useDismissSignal`
-// （もう一度押す・外側・Esc で閉じる。Esc は開く口へフォーカスを戻す）。行を選ぶとその場で
-// 閉じてターンを移す——最新の行を選べば `onSelect` の先（`stores/turn-selection.ts` の
-// `selectTurn`）がそのまま追従に戻す規則を持っているので、ここで特別扱いはしない。
+// 開閉は `useDismissSignal`（もう一度押す・外側・Esc で閉じる。Esc は開く口へフォーカスを戻す）。
+// 行を選ぶとその場で閉じてターンを移す。
+// 最新の行を選べば `onSelect` の先（`selectTurn`）がそのまま追従に戻す規則を持っているので、ここで特別扱いはしない。
 //
-// 一覧の並びは新しいものを上にする。行の番号（n / N）は `‹` `›` の脇に出す「n / N」と
-// 同じ、古いほうを1とする通し番号なので、並びを新しい順にしても数字自体は矛盾しない
-// （最新の行だけは番号の代わりに「最新」を出す）。
+// 一覧の並びは新しいものを上にする。
+// 行の番号（n / N）は `‹` `›` の脇に出す「n / N」と同じ、古いほうを1とする通し番号（最新の行だけは番号の代わりに「最新」を出す）。
 
 import { useId, useRef, useState, type RefObject } from "react"
 
@@ -18,10 +16,8 @@ import {
 } from "../../../../../../../../hooks/use-dismiss-signal.ts"
 
 /**
- * 一覧の1行ぶんの見出しと全文（`main-view.tsx` が `domain/turn-title.ts` の `turnTitle` /
- * `turnHistoryText` で作る）。`title` は札の頭とアクセシブルネームに使う1行、
- * `historyText` は一覧の行に出す、選択してコピーできる依頼の全文（複数行を含む）で、
- * 別のもの。
+ * 一覧の1行ぶんの見出しと全文。
+ * `title` は札の頭とアクセシブルネームに使う1行、`historyText` は一覧の行に出す、選択してコピーできる依頼の全文（複数行を含む）で、別のもの。
  */
 export type TurnHeaderEntry = {
   readonly id: number
@@ -38,8 +34,7 @@ export type TurnHeaderProps = {
 
 /**
  * 開いた一覧の1行。番号は古いほうを1とする通し番号のまま、並びだけ新しい順（`toReversed`）。
- * `title` は飛ぶ口のアクセシブルネームに使う1行、`text` は行に出す選択できる依頼の全文
- * （`presentational-turn-header.tsx` の `TurnHistoryList`）。
+ * `title` は飛ぶ口のアクセシブルネームに使う1行、`text` は行に出す選択できる依頼の全文。
  */
 export type TurnHeaderHistoryRow = {
   readonly id: number
@@ -75,8 +70,8 @@ export function useTurnHeader(props: TurnHeaderProps): TurnHeaderModel {
   const older = props.turns[index - 1]?.id
   const newer = props.turns[index + 1]?.id
   const newest = props.turns.at(-1)?.id
-  // `noUncheckedIndexedAccess` が生む `| undefined`（`docs/coding-standards.md`「「無いかもしれない」
-  // 値」）。呼び出し側は必ず `turns` に含まれる id を渡す契約だが、畳まずそのまま使う。
+  // `noUncheckedIndexedAccess` が生む `| undefined`（docs/coding-standards.md「「無いかもしれない」値」）。
+  // 呼び出し側は必ず `turns` に含まれる id を渡す契約だが、畳まずそのまま使う。
   const activeTitle = props.turns[index]?.title
 
   const [historyOpen, setHistoryOpen] = useState(false)

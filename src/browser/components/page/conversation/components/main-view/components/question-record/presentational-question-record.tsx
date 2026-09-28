@@ -1,9 +1,6 @@
-// メインビューに残す質問の記録の器だけ（`<PresentationalQuestionRecord>`）。フックも算出も
-// 持たず、`hooks/use-question-record.ts` が畳んだ値と呼び先をそのまま置く（docs/design.md 2章
-// 「機能の中を分ける」）。
-//
-// 「何を聞いて、どう答えたか」を1つの塊で出す。選ばれた答えには印を付ける。自由入力の答えは
-// 選択肢の並びの下に別の行として出す（`docs/display.md` 4.2「許可と質問」）。
+// メインビューに残す質問の記録の器。
+// 「何を聞いて、どう答えたか」を1つの塊で出す。選ばれた答えには印を付ける。
+// 自由入力の答えは選択肢の並びの下に別の行として出す。
 
 import clsx from "clsx"
 import type { ReactElement } from "react"
@@ -57,8 +54,7 @@ function QuestionBlock(props: { readonly question: QuestionRecordQuestionModel }
         ))}
       </ul>
       {question.previews.length > 0 && (
-        // 開くまで中身を描かない。一度開いたあとは閉じても外さない
-        // （`hooks/use-question-record.ts`）。
+        // 開くまで中身を描かない。一度開いたあとは閉じても外さない（`useQuestionRecord`）。
         <details className={styles["question-previews"]} onToggle={question.onTogglePreviews}>
           <Text element="summary" size="secondary" tone="ink-quiet" weight="inherit" className="">
             {PREVIEWS_SUMMARY}
@@ -104,8 +100,7 @@ function PreviewBlock(props: {
   const { preview, multiSelect } = props
 
   return (
-    // レポートと同じ見た目の語彙（`.detail-block` の子のセレクタ。
-    // `markdown/report-notation.module.css`）に乗せる。
+    // レポートと同じ見た目（report-notation.module.css の `.detail-block` の子のセレクタ）に乗せる。
     <div className={notationStyles["detail-block"]}>
       <Text
         element="p"
@@ -122,16 +117,11 @@ function PreviewBlock(props: {
 }
 
 /**
- * 選んだ印（単一選択は `●`/`○`、複数選択は `■`/`□`）を包む要素。文字そのものは常に DOM に
- * 残す（`::before` に移すと支援技術とコピーで拾えなくなるため）。色は文字の上への重ねがけで
- * 付け、選んだ側（`chosen`）だけに `accent` を当てる。選ばなかった側は親の `.question-option` の
- * 色をそのまま継ぎ、素の `accent` を当てない（`docs/screen-design.md` 13.1 原則1が許すのは
- * 「選んだ選択肢」で、選ばなかった側ではない）。答え待ちの札
- * （`question-ask.module.css` の `.question-ask-option.is-selected`）と同じ、
- * 「選んだ＝accent」という意味を記録の側にも揃える。折りたたみの中の preview の札
- * （`question-preview-label`）も同じ印を使うので、ここで共有する。形の違い（丸か四角か）が
- * 単一選択か複数選択かを運び、色は選んだかどうかだけを運ぶ（2つの意味を1つの見た目要素に
- * 重ねない）。
+ * 選んだ印（単一選択は `●`/`○`、複数選択は `■`/`□`）を包む要素。
+ * 文字そのものは常に DOM に残す（`::before` に移すと支援技術とコピーで拾えなくなるため）。
+ * 色は選んだ側（`chosen`）だけに `accent` を当て、選ばなかった側は親の `.question-option` の色をそのまま継ぐ。
+ * 形の違い（丸か四角か）が単一選択か複数選択かを運び、色は選んだかどうかだけを運ぶ。
+ * 折りたたみの中の preview の札（`question-preview-label`）も同じ印を使う。
  */
 function QuestionMark(props: {
   readonly chosen: boolean

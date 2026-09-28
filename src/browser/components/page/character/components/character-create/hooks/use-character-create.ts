@@ -1,25 +1,15 @@
-// `<CharacterCreate>`（新しく作るダイアログ）のロジック（docs/design.md 2章「機能の中を分ける」の
-// container / presenter）。名前・id・立ち絵1枚・画面の差し色2つ（仕事・雑談）の作りかけの値を持ち、
-// 押せるか・id の欄の下に出す一言・作る先を presenter がそのまま置ける形へ畳んで返す。
+// 新しく作るダイアログのロジック。
+// 名前・id・立ち絵1枚・画面の差し色2つ（仕事・雑談）の作りかけの値を持ち、押せるか・id の欄の下に出す一言・作る先を畳んで返す。
+// 表情を足す・衣装ごとに差し色を分ける・背景を敷くのは、作ったあと `<CharacterEdit>` の側で行う。
 //
-// 受け取るのは名前・id・必須の立ち絵1枚・画面の差し色2つだけで、表情を足す・衣装ごとに
-// 差し色を分ける・背景を敷くのは作ったあと `<CharacterEdit>` の側で行う（作る口は最低限にする。
-// `docs/requirements.md` 4.4）。
+// 作れたら一覧で作ったパックを選んだ状態にして、呼び出し元へ閉じたことを知らせる。
+// `session.switchCharacter` は送らない（切り替えは `<CharacterEdit>` の「このキャラクターに切り替える」の仕事）。
 //
-// `<Dialog>` は常にマウントし、`open` に開閉だけを追随させる（`components/ui/dialog/dialog.tsx`。
-// `features/task-board/hooks/use-task-board.ts` と同じ形）。作れたら一覧で作ったパックを選んだ
-// 状態にして、呼び出し元へ閉じたことを知らせる（`session.switchCharacter` は送らない。切り替えは
-// `<CharacterEdit>` の「このキャラクターに切り替える」の仕事。`docs/screen-design.md` 13.6）。
+// 下書きの掃除はこのフックでは行わない。
+// 閉じるたびに呼び出し元が `<CharacterCreate>` を `key` で作り直すので、次に開いたときは自然に空へ戻る。
 //
-// 下書きの掃除はこのフックでは行わない。 閉じるたびに呼び出し元（`hooks/use-character.ts`）が
-// `<CharacterCreate>` を `key` で作り直すので、次に開いたときは自然に空へ戻る
-// （`docs/coding-standards.md`「useEffect の代わりに使うもの」の「props が変わったら state を
-// 捨てる」）。`onClose` はこのフックの戻り値に含めない（`features/task-board/task-board.tsx`
-// と同じ形で、素通りする prop は呼び出し側〔`character-create.tsx`〕が直接つなぐ）。
-//
-// id の形はサーバと同じ規則で先に見る（`src/shared/character-pack/character.ts` の `isCharacterPackName`）。
-// 送ってから黙って落ちるのではなく、押せない理由を id の欄の下に出す（断られたこと〔手続きの
-// `REFUSED`〕は画面にまだ出していない）。
+// id の形はサーバと同じ規則（`isCharacterPackName`）で先に見て、送ってから黙って落ちるのではなく、押せない理由を id の欄の下に出す。
+// 断られたこと（手続きの `REFUSED`）は画面にまだ出していない。
 
 import { useEffect, useState } from "react"
 
@@ -66,10 +56,7 @@ export type CharacterCreateModel = {
   }
 }
 
-/**
- * `open` と、作れたら閉じて呼び出し元へ返す `onClose` は呼び出し側（`hooks/use-character.ts`）の
- * state。表示上の状態なので URL には持たせない（`stores/location-hash.ts`）。
- */
+/** `open` と、作れたら閉じて呼び出し元へ返す `onClose` は呼び出し側の state。 */
 export function useCharacterCreate(open: boolean, onClose: () => void): CharacterCreateModel {
   const dispatch = useSession((session) => session.dispatch)
   const characterPacks = useSession((session) => session.state.characterPacks)
@@ -84,11 +71,8 @@ export function useCharacterCreate(open: boolean, onClose: () => void): Characte
   // 成否の手がかりはこれだけ）。
   const [sentId, setSentId] = useState<string | undefined>(undefined)
 
-  // 送った id が一覧に出たら作れている。一覧でそのパックを選んだ状態にして、呼び出し元へ
-  // 閉じたことを知らせる（切り替えはしない。`docs/screen-design.md` 13.6）。下書きの掃除は
-  // ここでは行わない（上の注記）。`selectPack`（URL）と `onClose`（呼び出し元の開閉）という
-  // React の外にある状態への書き込みなので `useEffect`
-  // （`docs/coding-standards.md`「React」の4類型の2つ目）。
+  // 送った id が一覧に出たら作れている。
+  // 一覧でそのパックを選んだ状態にして、呼び出し元へ閉じたことを知らせる。
   useEffect(() => {
     if (sentId !== undefined && characterPacks.some((pack) => pack.name === sentId)) {
       selectPack(sentId)

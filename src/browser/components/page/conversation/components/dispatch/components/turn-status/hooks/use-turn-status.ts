@@ -1,19 +1,15 @@
-// `<TurnStatus>` のロジック（docs/design.md 2章「機能の中を分ける」の container / presenter）。
-// 経過時間の刻みと、送信⇄中断のどちらを出すかを畳んだ値にして返す。
+// `<TurnStatus>` のロジック。経過時間の刻みと、送信⇄中断のどちらを出すかを畳んだ値にして返す。
 //
-// 経過時間は `state.turn` が持つ始まった時刻から数える。ターンが終わっていても
-// `backgroundTasks` が残っている間は「経過」のまま数え続け、残っていないターンの終わりで
-// 初めてその時刻に止まる（1秒の刻みはここのローカルなタイマー。`SessionState` に秒数は持たない。docs/design.md
-// 4.2 / 6.2）。
+// 経過時間は `state.turn` が持つ始まった時刻から数える。
+// ターンが終わっていても `backgroundTasks` が残っている間は「経過」のまま数え続け、残っていないターンの終わりで初めてその時刻に止まる。
+// 1秒の刻みはここのローカルなタイマーで、`SessionState` に秒数は持たない。
 //
-// 押す先を決めるのもここ。 進行中でなければ `type="submit"` で、押すと `<Composer>` の
-// `onSubmit` がそのまま依頼を送る（この部品は `<form>` の中に置かれることを前提にする）。
-// 進行中は `interrupt` を dispatch する `type="button"` にして、送信と中断が同時に押せる状態を
-// 作らない。
+// 押す先を決めるのもここ。
+// 進行中でなければ `type="submit"` で、押すと `<Composer>` の `onSubmit` がそのまま依頼を送る（この部品は `<form>` の中に置かれることを前提にする）。
+// 進行中は `interrupt` を dispatch する `type="button"` にして、送信と中断が同時に押せる状態を作らない。
 //
-// API の知らせ（再試行中・利用上限・失敗の理由）もこの行に出す（docs/display.md 4.2「入力欄」）。
-// 出すのは1つだけで、強いほうを選ぶ（{@link turnStatusNotice}）。失敗で終わったターンは経過時間の
-// 字も「所要」から「失敗」に変える（色だけで伝えない）。
+// API の知らせ（再試行中・利用上限・失敗の理由）もこの行に出す。出すのは1つだけで、強いほうを選ぶ（`turnStatusNotice`）。
+// 失敗で終わったターンは経過時間の字も「所要」から「失敗」に変える（色だけで伝えない）。
 
 import { useEffect, useState } from "react"
 
@@ -36,22 +32,19 @@ const NEXT_LABEL = "次へ"
 const INTERRUPT_LABEL = "中断"
 const ELAPSED_LABEL = "経過"
 const FINISHED_LABEL = "所要"
-/** 失敗で終わったターンの経過時間に添える字（「所要」の代わり。docs/display.md 4.2「入力欄」）。 */
+/** 失敗で終わったターンの経過時間に添える字（「所要」の代わり）。 */
 const FAILED_LABEL = "失敗"
 const TICK_INTERVAL_MS = 1000
 
-/**
- * 押せる口。送信と中断は同時に出さないので、どちらか1つに畳んでから presenter へ渡す
- * （presenter は `kind` で出し分けて置くだけ）。
- */
+/** 押せる口。送信と中断は同時に出さないので、どちらか1つに畳んでから presenter へ渡す。 */
 export type TurnStatusAction =
   | { readonly kind: "send"; readonly label: string }
   | { readonly kind: "interrupt"; readonly label: string; readonly onInterrupt: () => void }
 
 /**
- * 経過時間の行に添える API の知らせ（再試行中・利用上限・失敗の理由）。`label` は行に出す短い
- * 字、`detail` は `title` で読ませる全文。`tone` は枠と字の色（`warn` は続く・まだ使える、`ng` は
- * 止まった・使えない）で、色だけでは伝えない（`label` が字で言う）。
+ * 経過時間の行に添える API の知らせ（再試行中・利用上限・失敗の理由）。
+ * `label` は行に出す短い字、`detail` は `title` で読ませる全文。
+ * `tone` は枠と字の色（`warn` は続く・まだ使える、`ng` は止まった・使えない）。
  */
 export type TurnStatusNotice =
   | { readonly kind: "none" }
@@ -84,11 +77,9 @@ const RATE_LIMIT_BUCKET_LABEL = {
 
 export function useTurnStatus(): TurnStatusModel {
   const dispatch = useSession((session) => session.dispatch)
-  // 質問に答えている間は、ターンが進行中でも「中断」ではなく答えるボタンを出す
-  // （SDK は答えを待って止まっているので、押す先は中断ではなく送信）。
+  // 質問に答えている間は、ターンが進行中でも「中断」ではなく答えるボタンを出す（SDK は答えを待って止まっているので、押す先は中断ではなく送信）。
   const question = useQuestionAnswer()
-  // 姿の `turn` は進み具合が変わったときだけ入れ替わるので、そのまま依存にしてよい
-  // （畳み込みは変わらないフィールドの参照を持ち回る。`stores/session.ts`）。
+  // 姿の `turn` は進み具合が変わったときだけ入れ替わるので、そのまま依存にしてよい。
   const turn = useSession((session) => session.state.turn)
   const apiTrouble = useSession((session) => session.state.apiTrouble)
   const rateLimit = useSession((session) => session.state.rateLimit)
@@ -96,8 +87,7 @@ export function useTurnStatus(): TurnStatusModel {
   const [now, setNow] = useState(() => nowEpochMilliseconds())
   const counting = isCounting(turn, backgroundTaskCount)
 
-  // 数えている間だけ1秒ごとに刻む。終わったら止める（終わった時刻で経過時間が固定されるので、
-  // タイマーは要らない）。
+  // 数えている間だけ1秒ごとに刻む。終わったら止める（終わった時刻で経過時間が固定されるので、タイマーは要らない）。
   useEffect(() => {
     if (!counting) {
       return undefined
@@ -125,11 +115,9 @@ export function useTurnStatus(): TurnStatusModel {
 }
 
 /**
- * 行に出す API の知らせ。強い順に1つだけ: 進行中の再試行 → 利用上限に達した → 失敗で
- * 終わったターンの理由。「利用上限が近い」は出さない——枠の残り具合はサイドバーの利用枠が
- * 出す（`docs/research/plan-usage.md`「論点3」）。利用上限に達した知らせは戻る時刻を過ぎても
- * 次の知らせが来るまで出し続ける（戻ったかどうかは tsukumo からは分からず、次に API を
- * 呼んだときの知らせで消える）。
+ * 行に出す API の知らせ。強い順に1つだけ: 進行中の再試行 → 利用上限に達した → 失敗で終わったターンの理由。
+ * 「利用上限が近い」は出さない（枠の残り具合はサイドバーの利用枠が出す）。
+ * 利用上限に達した知らせは戻る時刻を過ぎても次の知らせが来るまで出し続ける（戻ったかどうかは tsukumo からは分からず、次に API を呼んだときの知らせで消える）。
  */
 function turnStatusNotice(
   turn: TurnProgress,
@@ -175,10 +163,7 @@ function rateLimitNotice(
   }
 }
 
-/**
- * 送るボタンの字。答え待ちの質問が無ければ「送信」、あれば最後の1問だけ「答える」で手前は
- * 「次へ」。
- */
+/** 送るボタンの字。答え待ちの質問が無ければ「送信」、あれば最後の1問だけ「答える」で手前は「次へ」。 */
 function sendLabel(lastQuestion: boolean | undefined): string {
   if (lastQuestion === undefined) {
     return SEND_LABEL

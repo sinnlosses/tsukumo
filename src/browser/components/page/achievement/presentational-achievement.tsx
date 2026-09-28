@@ -1,6 +1,4 @@
-// 成果の画面の器（docs/design.md 2章「機能の中を分ける」）。フックも算出も持たず、受け取った値を
-// そのまま各区画へ配るだけ。並べる順は `docs/screen-design.md` 13.10「並べるもの」のとおり
-// （日の切り替え → 日記の区画 → しおり → 小さな驚き → 灯りの暦）。
+// 成果の画面の器。
 
 import type { ReactElement } from "react"
 
@@ -21,7 +19,7 @@ const UNAVAILABLE_NOTE = "このディレクトリでは成果を数えられな
 
 export type PresentationalAchievementProps = UseAchievementResult & {
   readonly calendar: AchievementCalendarView
-  /** 日記の区画の「日記帳で読む」（13.10「並べるもの」2）。 */
+  /** 日記の区画の「日記帳で読む」。 */
   readonly onOpenDiaryBook: () => void
   readonly diaryBook: DiaryBookModel
 }

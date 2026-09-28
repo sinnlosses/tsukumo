@@ -1,11 +1,6 @@
-// 名乗りの右に置く「名前とプロフィールを変える」（見本の鉛筆のボタン。`docs/screen-design.md`
-// 13.6）。押しても即座には送らない——押すとダイアログ（`character-profile-edit-dialog.tsx`）を
-// 開き、そこで保存して初めて `edit.onSubmit` を呼ぶ。開いているかどうかだけをここで持つ
-// （「保つ」の1種類。`components/character-delete.tsx` と同じ形。docs/design.md 2章
-// 「機能の中を分ける」）。
-//
-// 変えられないパックでは `edit.kind` が `"hidden"` なので何も出さない（出し分けは
-// `hooks/use-character-edit.ts` が畳んだ値のとおりで、ここは判定を持たない）。
+// 名乗りの右に置く「名前とプロフィールを変える」（鉛筆のボタン）。
+// 押しても即座には送らない。
+// 押すとダイアログ（`CharacterProfileEditDialog`）を開き、そこで保存して初めて `edit.onSubmit` を呼ぶ。
 
 import { useState, type ReactElement } from "react"
 

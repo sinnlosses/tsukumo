@@ -1,21 +1,14 @@
-// いまのコンテキストの内訳の札（`docs/glossary.md`「コンテキストの内訳」）。トークン消費の
-// 画面のいちばん上に1枚だけ置く。取得と畳み込みは `browser/domain/context-usage.ts`
-// （サイドバーの使用量の行と2つの機能が読むので `browser/domain/` に置いてある）で、
-// ここは受け取った行をそのまま並べる。
+// いまのコンテキストの内訳の札。トークン消費の画面のいちばん上に1枚だけ置く。
 //
-// 出すのはいまのセッションの内訳だけ（過去の推移は出さない）。横棒は中身の分類を積み、
-// 続けて空き、最後に自動圧縮バッファ。凡例は横棒と同じ並びを見るので、色と分類名が必ず
-// 対になる（13.1 原則5）。窓の外のツールの定義（`deferred`）は横棒に積まず、畳んだ内訳の中に
-// 入れる。
+// 出すのはいまのセッションの内訳だけ（過去の推移は出さない）。
+// 横棒は中身の分類を積み、続けて空き、最後に自動圧縮バッファ。
+// 凡例は横棒と同じ並びを見るので、色と分類名が必ず対になる。
+// 窓の外のツールの定義（`deferred`）は横棒に積まず、畳んだ内訳の中に入れる。
 //
-// 画面に会話の文面は出ない — メッセージは分類1行の数としてだけ出る
-// （`src/shared/context-usage/context-usage.ts`）。
+// 画面に会話の文面は出ない。メッセージは分類1行の数としてだけ出る（`ContextUsage`）。
 //
-// 届く前は「骨組み」を出す（`ContextUsageCardSkeleton`）。届いた札と同じ外形
-// （同じ `section`・見出しと添え書き・数の行・横棒・凡例・畳んだ内訳の見出し）で、中身の
-// 値だけを灰色の塊にする。分類の名前と色は毎回同じ6+2種類なので、骨組みでも実物と同じ文字・
-// 同じ塗りを出せる（値（トークン数・割合・時刻）だけが届くまで分からない）。骨組みと届いた
-// 札の高さを揃え、レイアウトシフトを防ぐのが目的。
+// 届く前は「骨組み」（`ContextUsageCardSkeleton`）を出し、届いた札と高さを揃えてレイアウトシフトを防ぐ。
+// 分類の名前と色は毎回同じ6+2種類なので、骨組みでも実物と同じ文字・同じ塗りを出し、値（トークン数・割合・時刻）だけを灰色の塊にする。
 
 import clsx from "clsx"
 import type { ReactElement } from "react"
@@ -140,10 +133,9 @@ export function ContextUsageCard(props: ContextUsageCardProps): ReactElement {
 }
 
 /**
- * 届く前の骨組み。届いた札（上の `ContextUsageCard` の `ready` 分岐）と同じ `section`・
- * クラス名を使うので、余白・罫線・高さの取り方はそのまま揃う。`aria-busy` は `section` に
- * 付け、値の塊（`SkeletonBlock`）は `aria-hidden` で読み上げに出さない。凡例は
- * `SKELETON_ROW_NAMES` の8行（中身6分類 + 空き + 自動圧縮バッファ。窓の外は数えない）。
+ * 届く前の骨組み。
+ * 届いた札（{@link ContextUsageCard} の `ready` 分岐）と同じ `section`・クラス名を使うので、余白・罫線・高さの取り方はそのまま揃う。
+ * 札の外形を変えるときは両方を揃える。
  */
 function ContextUsageCardSkeleton(): ReactElement {
   return (
@@ -199,8 +191,7 @@ function ContextUsageCardSkeleton(): ReactElement {
       </Text>
 
       <div className={styles["context-bar"]}>
-        {/* 横棒だけは他と違い、中身の文字（`&nbsp;`）ではなく親（`.context-bar`）の
-            高さに合わせて伸ばす（`flex` の既定の `stretch`）ので `SkeletonBlock` は使わない。 */}
+        {/* 横棒は中身の文字（`&nbsp;`）ではなく親（`.context-bar`）の高さに合わせて伸ばす（`flex` の既定の `stretch`）ので `SkeletonBlock` は使わない。 */}
         <span
           className={clsx(styles["context-skeleton-block"], styles["context-skeleton-bar"])}
           aria-hidden="true"
@@ -236,12 +227,9 @@ type SkeletonBlockProps = {
 }
 
 /**
- * 骨組みの値1つぶんの塊。読み上げには出さない（`aria-hidden`）。明滅は
- * `token-usage.module.css` の `.context-skeleton-block` が持つ。中身に `&nbsp;` を1つ
- * 持たせる——高さを持たない空の `span` だと、届いた札の実物の文字（同じ場所・同じ
- * `font-size`）が乗せる行の高さ（本文の行間 `--line-height-body` ぶん）より低くなり、
- * 骨組みと届いた札の高さがずれる（実測）。読み上げに出ないよう見た目は透明にする
- * （`.context-skeleton-block` の `color: transparent`）。
+ * 骨組みの値1つぶんの塊。読み上げには出さない（`aria-hidden`）。
+ * 中身に `&nbsp;` を1つ持たせる。
+ * 空の `span` だと、届いた札の実物の文字が乗せる行の高さ（`--line-height-body` ぶん）より低くなり、骨組みと届いた札の高さがずれる（実測）。
  */
 function SkeletonBlock(props: SkeletonBlockProps): ReactElement {
   return (
@@ -258,8 +246,8 @@ type ItemTableProps = {
 }
 
 /**
- * 内訳の表1つ（MCP ツール・メモリファイル・スキルで同じ形）。1件も無いときは見出しごと
- * 出さない（空の表が3つ並ぶと、何が載る場所なのか読み取りにくい）。
+ * 内訳の表1つ（MCP ツール・メモリファイル・スキルで同じ形）。
+ * 1件も無いときは見出しごと出さない（空の表が3つ並ぶと、何が載る場所なのか読み取りにくい）。
  */
 function ItemTable(props: ItemTableProps): ReactElement | null {
   if (props.items.length === 0) {
@@ -297,10 +285,7 @@ type DeferredTableProps = {
   readonly rows: readonly ContextUsageRow[]
 }
 
-/**
- * 窓の外にあるツールの定義（`deferred`）。使用量には入らないので横棒とは別に、数だけを
- * 並べる。
- */
+/** 窓の外にあるツールの定義（`deferred`）。使用量には入らないので横棒とは別に、数だけを並べる。 */
 function DeferredTable(props: DeferredTableProps): ReactElement | null {
   if (props.rows.length === 0) {
     return null
@@ -325,9 +310,10 @@ function DeferredTable(props: DeferredTableProps): ReactElement | null {
   )
 }
 
-/** 横棒の一区間と凡例の四角に付ける色の綴り（`token-usage.module.css`）。分類の表示名から
- * 引く（骨組みは `ContextUsageRow` を持たず名前だけ知っているので、届いた札の行
- * （`row.name`）と骨組みの分類名（`SKELETON_ROW_NAMES` の要素）の両方から呼べる形にしてある）。 */
+/**
+ * 横棒の一区間と凡例の四角に付ける色の綴り（`token-usage.module.css`）。
+ * 骨組みは `ContextUsageRow` を持たず名前だけ知っているので、分類の表示名から引く。
+ */
 function toneClassName(name: string): string {
   return styles[`context-tone-${categoryLook(name).tone}`]
 }

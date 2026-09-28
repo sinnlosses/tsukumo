@@ -1,8 +1,5 @@
-// 入力欄本体の器だけ（<PresentationalComposer>。docs/design.md 6.1）。`<textarea>` と補完の
-// 候補一覧（`/` の <CommandSuggestions>・`@` の <FileSuggestions>）を内包し、その下に道具の行
-// （画像・`/`・`@` のボタン、経過時間と送信⇄中断の <TurnStatus>）を置いた
-// `<form>` を置く。フックも算出も持たず、`hooks/use-composer.ts` が
-// 組み立てた値と呼び先をそのまま置く（docs/design.md 2章「機能の中を分ける」）。
+// 入力欄本体の器。
+// `<textarea>` と補完の候補一覧を内包し、その下に道具の行（画像・`/`・`@` のボタン、経過時間と送信⇄中断の <TurnStatus>）を置いた `<form>` を置く。
 
 import clsx from "clsx"
 import { AtSign, ImageIcon, Slash } from "lucide-react"
@@ -22,9 +19,8 @@ import type { ComposerModel } from "./hooks/use-composer.ts"
 export type PresentationalComposerProps = ComposerModel
 
 /**
- * props はここだけ分解して受ける。ref を持つ入れ物を `props.textAreaRef` の形で描画中に
- * 読むと `react(refs)`（規約「レンダー中に ref を読み書きしない」）が落ちるため
- * （`layout/presentational-layout.tsx` と同じ理由）。
+ * props はここだけ分解して受ける。
+ * ref を持つ入れ物を `props.textAreaRef` の形で描画中に読むと、lint の `react(refs)` が落ちるため。
  */
 export function PresentationalComposer({
   textAreaRef,
@@ -53,7 +49,7 @@ export function PresentationalComposer({
       className={clsx(styles["dispatch-form"], answering && styles["is-answering"])}
       onSubmit={onSubmit}
     >
-      {/* 質問に答えている間だけ出る帯（誰が聞いているか。`hooks/use-composer.ts`）。 */}
+      {/* 質問に答えている間だけ出る帯（誰が聞いているか）。 */}
       {band.kind === "question" && (
         <Text
           element="p"

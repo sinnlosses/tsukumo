@@ -1,15 +1,10 @@
-// 入力欄の `@` ファイル補完の絞り方と一覧（`/` 補完の `command-suggestions.tsx` と対）。
-// キャレットの直前の語が「行頭または空白の直後の `@`」で始まり、まだ空白を含まないときだけ
-// 候補を出す（docs/display.md 4.2「入力欄」）。
+// 入力欄の `@` ファイル補完の絞り込みの純粋関数と、一覧を描くだけの部品。
+// 候補の元（git 管理下のパス）は `useRepositoryFilePaths` が取る。
 //
-// 候補の元を取るのは `conversation/components/hooks/use-repository-file-paths.ts`（git 管理下のパス。外の世界に
-// 触るのはあちらだけ）。ここは純粋な絞り込みと、一覧を描くだけの部品を持つ。
+// 前方一致を先に、続けて部分一致を出す。各グループの中は辞書順で、合計最大 `MAX_FILE_SUGGESTIONS` 件。
+// 大文字小文字は区別せず、打った綴りのまま `README.md` のようなパスに当てられるようにしてある。
 //
-// 絞り方は `/` 補完と同じ（前方一致を先に、続けて部分一致。各グループの中は辞書順で、合計
-// 最大 {@link MAX_FILE_SUGGESTIONS} 件）。違うのは大文字小文字を区別しないことだけで、
-// 打った綴りのまま `README.md` のようなパスに当てられるようにしてある。
-//
-// キー操作（上下・Tab・Enter・Esc）と確定は呼び出し側（`hooks/use-composer.ts`）が持つ（`/` 補完と同じ）。
+// キー操作（上下・Tab・Enter・Esc）と確定は呼び出し側が持つ。
 
 import clsx from "clsx"
 import type { ReactElement } from "react"
@@ -77,10 +72,7 @@ export type FileSuggestionsProps = {
   readonly onSelect: (index: number) => void
 }
 
-/**
- * `@` 補完の候補一覧。`matches` が空のときは何も出さない（`/` 補完と同じ重ねポップアップの
- * 見た目を使う。dispatch.module.css）。
- */
+/** `@` 補完の候補一覧。`matches` が空のときは何も出さない。 */
 export function FileSuggestions(props: FileSuggestionsProps): ReactElement | null {
   if (props.matches.length === 0) {
     return null
@@ -96,8 +88,7 @@ export function FileSuggestions(props: FileSuggestionsProps): ReactElement | nul
             index === props.selectedIndex && styles["is-selected"],
           )}
           onMouseDown={(event) => {
-            // mousedown の既定動作（フォーカス移動）を止め、textarea にフォーカスを残す
-            // （`/` 補完の候補一覧と同じ理由）。
+            // mousedown の既定動作（フォーカス移動）を止め、textarea にフォーカスを残す。
             event.preventDefault()
             props.onSelect(index)
           }}

@@ -1,12 +1,9 @@
-// `<ConversationLayout>` のロジック（docs/design.md 2章「機能の中を分ける」）。3本の仕切りの比率
-// （`Split`）を state に持ち、狭い画面のタブの選択と合わせて、見た目
-// （`presentational-conversation-layout.tsx`）が読むだけでよい形（CSS カスタムプロパティの `style`
-// と、仕切りに渡す呼び先）へ畳む。
+// `<ConversationLayout>` のロジック。
+// 3本の仕切りの比率（`Split`）を state に持ち、狭い画面のタブの選択と合わせて、CSS カスタムプロパティの `style` と仕切りに渡す呼び先へ畳む。
 //
-// 仕切りの位置が state に入るのはドラッグを離した1回だけ。 動かしている間の位置は
-// 過渡的な値で、効くのは CSS カスタムプロパティだけなので、pointermove の間は DOM へ直接書く
-// （`onTopLeftChange` などの `on*Change`）。離した瞬間に呼ばれる `on*Commit` だけが state を
-// 更新し、`saveSplit` で保存する。
+// 仕切りの位置が state に入るのはドラッグを離した1回だけ。
+// 動かしている間の位置は過渡的な値で、効くのは CSS カスタムプロパティだけなので、pointermove の間は DOM へ直接書く（`on*Change`）。
+// 離した瞬間に呼ばれる `on*Commit` だけが state を更新し、`saveSplit` で保存する。
 
 import { useRef, useState, type CSSProperties, type RefObject } from "react"
 
@@ -39,9 +36,8 @@ export type UseConversationLayoutResult = {
 }
 
 /**
- * `collapseCharacter`（雑談モードでキャラビューを畳んでいるか）は呼び出すたびに渡し直す
- * （`<ConversationLayout>` の props そのままで、state には持たない）。畳んでいる間の上下比は別の項
- * （`collapsedRowTop`）に覚えるので、どちらでドラッグしても相手の比率は動かない。
+ * `collapseCharacter`（雑談モードでキャラビューを畳んでいるか）は呼び出すたびに渡し直す（state には持たない）。
+ * 畳んでいる間の上下比は別の項（`collapsedRowTop`）に覚えるので、どちらでドラッグしても相手の比率は動かない。
  */
 export function useConversationLayout(collapseCharacter: boolean): UseConversationLayoutResult {
   const [split, setSplit] = useState<Split>(loadSplit)
@@ -50,16 +46,15 @@ export function useConversationLayout(collapseCharacter: boolean): UseConversati
   const rowTopRef = useRef<HTMLDivElement>(null)
   const rowBottomRef = useRef<HTMLDivElement>(null)
 
-  // 仕切りを離したとき・既定に戻すときだけ通る、比率の唯一の更新点。ドラッグ中は state を
-  // 触らないので、ここの `split` は最後に確定した比率そのもの。
+  // 仕切りを離したとき・既定に戻すときだけ通る、比率の唯一の更新点。
+  // ドラッグ中は state を触らないので、ここの `split` は最後に確定した比率そのもの。
   function commitSplit(update: (current: Split) => Split): void {
     const next = update(split)
     setSplit(next)
     saveSplit(next)
   }
 
-  // 畳んでいて雑談の比率がまだ無いときは、仕事の比率をそのまま使う
-  // （`collapsedRowTop` に既定値は持たせない。split.ts）。
+  // 畳んでいて雑談の比率がまだ無いときは、仕事の比率をそのまま使う（`collapsedRowTop` に既定値は持たせない）。
   const rowTopKey = collapseCharacter ? "collapsedRowTop" : "rowTop"
   const rowTopPercent = collapseCharacter ? (split.collapsedRowTop ?? split.rowTop) : split.rowTop
 
@@ -101,9 +96,9 @@ export function useConversationLayout(collapseCharacter: boolean): UseConversati
   }
 }
 
-// 仕切り1本が動かす CSS カスタムプロパティの組（手前の領域・奥の領域）。レンダー時の `style` と
-// ドラッグ中の直接書き込みが同じ名前を見るように、名前はここにだけ書く。
-// CSS 側のフォールバック値（conversation-layout.module.css）は DEFAULT_SPLIT と一致させること。
+// 仕切り1本が動かす CSS カスタムプロパティの組（手前の領域・奥の領域）。
+// レンダー時の `style` とドラッグ中の直接書き込みが同じ名前を見るように、名前はここにだけ書く。
+// CSS 側のフォールバック値（conversation-layout.module.css）は `DEFAULT_SPLIT` と一致させること。
 const SPLIT_VARIABLES = {
   rowTop: ["--layout-row-top", "--layout-row-bottom"],
   // 畳んでいる間の上下比は、同じ仕切りが同じ2つの名前を動かす（覚える先だけが別）。
@@ -112,16 +107,14 @@ const SPLIT_VARIABLES = {
   bottomLeft: ["--layout-bottom-left", "--layout-bottom-right"],
 } satisfies Record<keyof Split, readonly [`--${string}`, `--${string}`]>
 
-// 確定済みの比率を描くときの `style`。CSS カスタムプロパティの index signature は
-// `src/browser/types/css-variable.d.ts` が足している。
+// 確定済みの比率を描くときの `style`。CSS カスタムプロパティの index signature は `css-variable.d.ts` が足している。
 function fractionStyle(key: keyof Split, percent: number): CSSProperties {
   const [near, far] = SPLIT_VARIABLES[key]
   return { [near]: `${String(percent)}fr`, [far]: `${String(100 - percent)}fr` }
 }
 
-// ドラッグ中の書き込み。state を更新せず DOM へ直接書くので、pointermove のたびに
-// `<ConversationLayout>` を描き直さない。離した瞬間に `commitSplit` が同じ値を state へ戻すので、
-// 次のレンダーの `style` と食い違わない。
+// ドラッグ中の書き込み。state を更新せず DOM へ直接書くので、pointermove のたびに `<ConversationLayout>` を描き直さない。
+// 離した瞬間に `commitSplit` が同じ値を state へ戻すので、次のレンダーの `style` と食い違わない。
 function writeFraction(element: HTMLElement | null, key: keyof Split, percent: number): void {
   if (element === null) {
     return

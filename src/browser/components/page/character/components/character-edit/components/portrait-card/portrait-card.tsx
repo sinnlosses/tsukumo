@@ -1,17 +1,12 @@
-// キャラクター画面の表情のカード1枚（docs/screen-design.md 13.6）。
+// キャラクター画面の表情のカード1枚。
 //
-// - 立ち絵がある表情: 立ち絵と名前。右上の「差し替える」「消す」のアイコンは、カードに乗せた
-//   とき・カードの中にフォーカスがあるときだけ出す（`:hover` / `:focus-within`。キーボードでも
-//   Tab で口に入ると出る）。`default` には「いつもの顔」の札を添える
+// - 立ち絵がある表情: 立ち絵と名前。右上の「差し替える」「消す」のアイコンは、カードに乗せたとき・カードの中にフォーカスがあるときだけ出す（`:hover` / `:focus-within`。キーボードでも Tab で口に入ると出る）
 // - 立ち絵がまだ無い表情: その表情の名前を書いた点線の空欄。枠そのものが選ぶ口になる
 //
-// どちらのカードにも画像を落とせる（落とすと差し替え・足す）。出し分けは
-// `hooks/use-character-edit.ts` が畳んだ値のとおりで、判定を持たない。
+// どちらのカードにも画像を落とせる（落とすと差し替え・足す）。
 //
-// 「消す」は押しただけでは送らない。 押すとカードの位置を測って確かめの吹き出し
-// （`components/portrait-clear-confirm.tsx`）を開き、その中の「消す」で初めて `card.clear.onClear`
-// を呼ぶ。開いているかどうかと、開いた瞬間に測った位置だけをここで持つ（`保つ」の1種類。
-// docs/design.md 2章「機能の中を分ける」）。
+// 「消す」は押しただけでは送らない。
+// 押すとカードの位置を測って確かめの吹き出し（`PortraitClearConfirm`）を開き、その中の「消す」で初めて `card.clear.onClear` を呼ぶ。
 
 import clsx from "clsx"
 import { type DragEvent, type ReactElement, useRef, useState } from "react"
@@ -24,10 +19,7 @@ import styles from "../../../../character.module.css"
 import type { PortraitCardModel } from "../../../hooks/use-character-edit.ts"
 import { PortraitClearConfirm } from "../portrait-clear-confirm/portrait-clear-confirm.tsx"
 
-/**
- * `<input type="file">` に出す受け付ける種類。中身の検証はサーバ側
- * （`src/shared/character-pack/portrait-image.ts`）で、ここは選ぶときの絞り込みだけ。
- */
+/** `<input type="file">` に出す受け付ける種類。中身の検証はサーバ側で、ここは選ぶときの絞り込みだけ。 */
 const PORTRAIT_FILE_ACCEPT = ".svg,.png,.gif"
 
 /** 空欄のカードの名前の下に添える字。 */
@@ -38,8 +30,7 @@ export function PortraitCard(props: {
   readonly disabled: boolean
 }): ReactElement {
   const { card, disabled } = props
-  // 消す前の確かめの吹き出し。開いているかと、開いた瞬間に測った位置を一緒に持つ
-  // （どちらも「保つ」の1種類。`components/task-board/task-run-button.tsx` と同じ形）。
+  // 消す前の確かめの吹き出し。開いているかと、開いた瞬間に測った位置を一緒に持つ。
   const cardRef = useRef<HTMLElement>(null)
   const [confirmClear, setConfirmClear] = useState<{ readonly anchor: DOMRect } | undefined>(
     undefined,
@@ -130,7 +121,7 @@ export function PortraitCard(props: {
           wrap="nowrap"
           className={styles["character-card-actions"]}
         >
-          {/* 見える字は無い（アイコンだけ）。**どの表情のことかは読み上げに残す**ので、
+          {/* 見える字は無い（アイコンだけ）。どの表情のことかは読み上げに残すので、
               `<input>` 側に aria-label を置き、`title` で乗せたときの名前を出す。 */}
           <label className={styles["character-card-action"]} title="差し替える">
             <UploadIcon />

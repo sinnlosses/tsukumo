@@ -1,18 +1,8 @@
-// 吹き出しの並び（<BalloonTrack>。docs/design.md 6.1）。吹き出しはセリフ1件につき1つ、
-// DOM は新しい順（先頭が最新）に並べる。CSS の `.balloon-track`（`column-reverse`。
-// `character-view.module.css`）が視覚上は最新を下端に置き、過去のセリフを上へ押し上げる
-// （旧・サーバ側で HTML を組み立てていた頃と同じ並びの規約。docs/display.md 4.2「吹き出し」）。
+// 吹き出しの並び。吹き出しはセリフ1件につき1つ、DOM は新しい順（先頭が最新）に並べる。
+// CSS の `.balloon-track`（`column-reverse`。`character-view.module.css`）が視覚上は最新を下端に置き、過去のセリフを上へ押し上げる。
 //
-// セリフが1件も無いときは、プレースホルダを吹き出し1件として出す（案内文に差し替える案を
-// 見送った経緯は docs/history/tasks.md
-// 「セリフが1件も無いときのキャラビューを、吹き出しではない案内にする」）。
-//
-// 吹き出しに出るのは `speak` で来たセリフだけ。 ツールの実行中に「作業中」の一言を重ねる
-// 経路は、表情の自動の上書きごと撤去した（docs/display.md 4.2）。
-//
-// 吹き出しを押すとそのセリフの表情へ立ち絵が遡る（docs/screen-design.md 13.7「会話を遡る」の
-// 仕事モードの対応物）。印・押し方の組み立ては `hooks/use-character-view.ts` が持ち、ここは
-// 受け取った値をそのまま `<Balloon>` へ渡すだけ。
+// セリフが1件も無いときは、プレースホルダを吹き出し1件として出す。
+// 吹き出しに出るのは `speak` で来たセリフだけ。
 
 import type { ReactElement } from "react"
 
@@ -26,9 +16,9 @@ export type BalloonTrackProps = {
   /** 古い→新しいの順（`SessionState.speeches` と同じ並び）。 */
   readonly speeches: readonly CharacterViewSpeech[]
   /**
-   * セリフが1件も無いときに出す文言。undefined なら今のターン向けの既定文
-   * （「まだ」＝これから来る、の言い方）。過去のターンには合わないので、呼び出し側が
-   * そのターン向けの文言を渡す（`src/browser/components/page/conversation/components/character-view/hooks/use-character-view.ts`）。
+   * セリフが1件も無いときに出す文言。
+   * undefined なら今のターン向けの既定文（「まだ」＝これから来る、の言い方）。
+   * 過去のターンには合わないので、呼び出し側がそのターン向けの文言を渡す。
    */
   readonly emptyMessage: string | undefined
   /**
@@ -52,15 +42,10 @@ export function BalloonTrack(props: BalloonTrackProps): ReactElement {
     )
   }
 
-  // DOM は新しい順（先頭が最新）。`.balloon-track` の column-reverse で視覚上は下端に出る。
   // key は props.speeches の古い側から数えた位置（＝配列に足される前からの通し番号）。
-  // speeches はターンの中で末尾へ積むだけ（src/shared/session/session-state.ts）なので、この番号は
-  // セリフが増えても既存のセリフでは変わらない。位置（newestFirst の index）を key にすると、
-  // 増えるたびに既存のセリフの key がずれて、別のセリフの内容が同じ DOM ノードへ上書きされる
-  // （React がノードを再利用してしまい、`data-latest` が外れる瞬間が起きないので
-  // balloon-push-up が再生されない）。古い側からの通し番号なら、増えても自分のノードのまま
-  // 位置だけ動く（＝`data-latest` が外れる瞬間が起きるので押し上げが再生される。
-  // character-view.module.css の `.balloon[data-latest="false"]` のコメント参照）。
+  // speeches はターンの中で末尾へ積むだけ（`applySessionEvent`）なので、この番号はセリフが増えても既存のセリフでは変わらない。
+  // 位置（newestFirst の index）を key にすると、増えるたびに既存のセリフの key がずれて、別のセリフの内容が同じ DOM ノードへ上書きされる。
+  // すると `data-latest` が外れる瞬間が起きず、押し上げ（`character-view.module.css` の `.balloon[data-latest="false"]`）が再生されない。
   const newestFirst = [...props.speeches].reverse()
   const oldestIndexOf = (indexFromNewest: number): number =>
     props.speeches.length - 1 - indexFromNewest

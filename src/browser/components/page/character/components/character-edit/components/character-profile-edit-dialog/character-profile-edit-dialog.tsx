@@ -1,13 +1,8 @@
-// 名前とひとことプロフィールを変えるダイアログ本体（「名前とプロフィールを変える」を押すと開く。
-// `components/character-profile-edit.tsx` の「開いているか」を受けて、開いている間だけ組み立てる
-// （`character-delete-confirm.tsx` と同じ形。閉じたら呼び出し側がこの部品ごと外すので、次に開いた
-// ときは渡された初期値から下書きが始まる）。
+// 名前とひとことプロフィールを変えるダイアログ本体。
+// 開いている間だけ組み立てる。閉じたら呼び出し側がこの部品ごと外すので、次に開いたときは渡された初期値から下書きが始まる。
 //
-// 形は作るダイアログ（`character-create.tsx`）と同じ枠・同じ欄の書き方
-// （`docs/screen-design.md` 13.6）。id は作ったあと変えない欄なので出さない
-// （作ったあとは変えない、と決めている）。枠・見出し・欄・footer の CSS は
-// 作るダイアログのクラスをそのまま流用する（`.character-create-*`。見た目が同じなので、
-// このためだけの見た目違いのクラスを増やさない）。
+// id は作ったあと変えない欄なので出さない。
+// 枠・見出し・欄・footer の CSS は作るダイアログのクラス（`.character-create-*`）をそのまま流用する。
 
 import { useState, type ReactElement } from "react"
 
@@ -21,13 +16,12 @@ import { Heading } from "../../../../../../ui/heading/heading.tsx"
 import { Text } from "../../../../../../ui/text/text.tsx"
 import styles from "../../../../character.module.css"
 
-/** ひとことプロフィールの説明（雑談のサイドバーの札にも出ることを添える。`docs/screen-design.md`
- * 13.7「プロフィールの札」）。 */
+/** ひとことプロフィールの説明（雑談のサイドバーの札にも出ることを添える）。 */
 const TAGLINE_HINT = "画面や雑談のサイドバーのプロフィールの札に出るひとこと"
 const NAME_HINT = "画面や吹き出しに出る名前。空にすると id をそのまま使います"
 
 export type CharacterProfileEditDialogProps = {
-  /** 開いた時点の値（呼び出し側〔`character-profile-edit.tsx`〕が畳んだ現在値）。 */
+  /** 開いた時点の値。 */
   readonly name: string
   readonly tagline: string
   /** 「保存する」を押したとき。押すとそのまま閉じる（呼び出し側が `onClose` も呼ぶ）。 */

@@ -1,7 +1,4 @@
-/* 書き終わりの知らせ（`diary-notice.tsx`。13.10「書き終わりの知らせ」）。画面の下の中央に浮く札。
-   値は見本（`docs/history/mockup/achievement-diary-2026-09-25/SEIKA-4c-Written.dc.html`）から
-   取り、色は既存のトークンに寄せた（地は `--surface`、枠は `--rule`、字は `--ink`、
-   「日記帳で開く」は見開きの主ボタンと同じ `--accent` 地・`--ground` 字、鈴は `--diary-gold`）。
+/* 書き終わりの知らせ。画面の下の中央に浮く札。
    `--screen-nav` の帯（z-index 20）より上に出す。 */
 
 .diary-notice {
@@ -24,24 +21,19 @@
   max-width: calc(100vw - 32px);
 }
 
-/* 並べ（`gap="none"`）は `HStack` が持つ。 */
 .diary-notice-icon {
   flex-shrink: 0;
 }
 
-/* 字の段・色は `Text`（size="subheading" tone="ink" weight="inherit"）が持つ（14px は
-   --font-subheading と同じ値）。 */
-
-/* 顔（枠・地・字の色・押せないとき・太さ700）は `<Button variant="solid-accent">` が持つ
-   （太さは `Text`〔weight="bold"〕が持つ）。箱だけここに残す。 */
+/* 顔は `<Button variant="solid-accent">` が持つ。箱だけここに置く。 */
 .diary-notice-open {
   height: 36px;
   padding: 0 14px;
   border-radius: 9px;
 }
 
-/* 顔（地も枠も無い・字の色）は `<Button variant="ghost">` が持つ。箱・行の高さだけここに残す。
-   **見本の16pxは Button の `size` の段に無いので `body`（15px）に寄せた**（1px小さくなる）。 */
+/* 顔は `<Button variant="ghost">` が持つ。箱・行の高さだけここに置く。
+   見本の16pxは Button の `size` の段に無いので `body`（15px）に寄せている。 */
 .diary-notice-dismiss {
   width: 32px;
   height: 32px;

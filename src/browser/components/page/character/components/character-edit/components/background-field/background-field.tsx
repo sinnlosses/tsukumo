@@ -1,7 +1,5 @@
-// キャラクター画面の背景の行（docs/screen-design.md 13.8）。いまの背景の縮図と、口は「差し替える」と
-// 「消す」の2つだけで、覆いの濃さは画面から変えない（定義ファイルを手で直す）。敷かれるのは
-// キャラビューだけ。有無の字と出し分けは `hooks/use-character-edit.ts` が畳んだ値のとおりで、
-// 判定を持たない。
+// キャラクター画面の背景の行。いまの背景の縮図と、口は「差し替える」と「消す」の2つだけ。
+// 覆いの濃さは画面から変えない（定義ファイルを手で直す）。
 
 import clsx from "clsx"
 import type { ReactElement } from "react"
@@ -14,8 +12,8 @@ import styles from "../../../../character.module.css"
 import type { BackgroundFieldModel } from "../../../hooks/use-character-edit.ts"
 
 /**
- * 背景に選べる種類（`docs/design.md` 7.1 / `docs/screen-design.md` 13.8）。`.gif` は入れない（動く背景は読む面の
- * 隣で気が散る）。中身の検証はサーバ側（`src/shared/character-pack/character-background.ts`）。
+ * 背景に選べる種類。`.gif` は入れない（動く背景は読む面の隣で気が散る）。
+ * 中身の検証はサーバ側で、ここは選ぶときの絞り込みだけ。
  */
 const BACKGROUND_FILE_ACCEPT = ".png,.jpg,.jpeg,.webp"
 

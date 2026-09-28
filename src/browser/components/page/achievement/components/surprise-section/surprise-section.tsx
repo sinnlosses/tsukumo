@@ -1,5 +1,4 @@
-// 小さな驚き（卒業・節目。`docs/screen-design.md` 13.10「並べるもの」4）。どちらも無い日は
-// 見出しごと出さない。
+// 小さな驚き（卒業・節目）。どちらも無い日は見出しごと出さない。
 
 import type { ReactElement } from "react"
 
@@ -113,13 +112,13 @@ function milestoneKey(milestone: AchievementMilestone): string {
   return milestone.kind === "task" ? `task-${milestone.taskId}` : `commit-${milestone.time}`
 }
 
-/** 「9月12日」の形（曜日は付けない。`day-switch.tsx` の「今日」「昨日」は要らないので別に持つ）。 */
+/** 「9月12日」の形（曜日は付けない）。 */
 function monthDayLabel(dateKey: string): string {
   const date = Temporal.PlainDate.from(dateKey)
   return `${String(date.month)}月${String(date.day)}日`
 }
 
-/** 3桁ごとに区切る（`docs/screen-design.md` 13.10「並べるもの」4「節目」）。 */
+/** 3桁ごとに区切る。 */
 function groupedNumber(value: number): string {
   return new Intl.NumberFormat("en-US").format(value)
 }

@@ -1,11 +1,4 @@
-// ターンの札の頭（`<TurnHeader>`。`docs/display.md` 4.2）の入口。
-//
-// 開閉・一覧の並び・前後の押す先は `hooks/use-turn-header.ts` が持ち、見た目は
-// `presentational-turn-header.tsx` が持つ（docs/design.md 2章「機能の中を分ける」の
-// container / presenter）。
-//
-// ここに残すのは「フックを呼んで、受け取ったものを渡す」だけ。条件分岐も算出もここには
-// 置かない（増えたらフックか見た目のどちらかに寄せる）。
+// ターンの札の頭の入口。
 
 import type { ReactElement } from "react"
 

@@ -1,10 +1,5 @@
-// つくもの日記帳の見開き（`<DiaryBook>`。`docs/screen-design.md` 13.10「日記帳の見開き」）。
-// `hooks/use-diary-book.ts` が畳んだ値をそのまま並べるだけの部品。呼ぶフックは、右ページの本文を
-// 測って縮める `hooks/use-fit-diary-page.ts` だけ（外の世界に触るフックだけを外へ出す形。
-// `docs/design.md` 2章「機能の中を分ける」）。
-//
-// `<Dialog>` は開閉に関わらず常に描画し、中身だけ `open` で出し分ける（`speech-log.tsx` と
-// 同じ形）。開閉・Esc・backdrop のクリックは `components/ui/dialog/dialog.tsx` が持つ。
+// つくもの日記帳の見開き。
+// `<Dialog>` は開閉に関わらず常に描画し、中身だけ `open` で出し分ける。
 
 import { useRef, type ReactElement } from "react"
 

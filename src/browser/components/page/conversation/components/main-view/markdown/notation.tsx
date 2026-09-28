@@ -1,12 +1,9 @@
-// レポートの記法（`src/server/report/core/report-notation.ts` がモデルに指示している class 名）を、tsukumo 側の
-// 部品に解決する層。骨格を決めるのはモデル、装飾に使う class 名を決めるのは tsukumoという
-// 分担にして、モデルが書いた文字列と CSS のセレクタが直接つながらないようにする
-// （つながっていると、片方だけ足したときに黙って崩れる）。
+// レポートの記法（`REPORT_NOTATION_PROMPT` がモデルに指示している class 名）を、tsukumo 側の部品に解決する層。
+// 骨格を決めるのはモデル、装飾に使う class 名を決めるのは tsukumo という分担にして、モデルが書いた文字列と CSS のセレクタが直接つながらないようにする（つながっていると、片方だけ足したときに黙って崩れる）。
 //
-// 受け持つのは規約が挙げている5系統だけ（`note` / `badge` / `cols` / `card` / `stats` / `stat`）。
-// 知らない class 名と `style` 属性はそのまま残す（この層は足し算だけで、モデルの即興
-// ——規約の表に無い見せ方——を落とさない）。class 名そのものは無害で、危ない経路
-// （`script` の除去・`href` のスキーム・`style` の値）は `sanitize-schema.ts` が別に見る。
+// 受け持つのは記法が挙げている5系統だけ（`note` / `badge` / `cols` / `card` / `stats` / `stat`）。
+// 知らない class 名と `style` 属性はそのまま残す（この層は足し算だけで、記法の表に無いモデルの即興を落とさない）。
+// class 名そのものは無害で、危ない経路（`script` の除去・`href` のスキーム・`style` の値）は `REPORT_SANITIZE_SCHEMA` が別に見る。
 
 import type { JSX, ReactElement, ReactNode } from "react"
 import type { ExtraProps } from "react-markdown"
@@ -20,10 +17,10 @@ import { Text } from "../../../../../ui/text/text.tsx"
 import styles from "./report-notation.module.css"
 
 /**
- * モデルが書く class 名 → tsukumo が装飾に使う class 名（`report-notation.module.css` のもの。
- * 組み立て時にハッシュ化される）。ここに無い名前は素通しする。印の名前の集合は
- * `src/shared/report/report-notation.ts` が正典（`report-<名前>` が CSS 側の綴りの規則）。tsukumo が
- * 組む印（検証結果の帯）も同じ表で解決する。
+ * モデルが書く class 名 → tsukumo が装飾に使う class 名（report-notation.module.css のもの。組み立て時にハッシュ化される）。
+ * ここに無い名前は素通しする。
+ * 印の名前の集合は `REPORT_NOTATION_NAMES` が持つ（`report-<名前>` が CSS 側の綴りの規則）。
+ * tsukumo が組む印（検証結果の帯）も同じ表で解決する。
  */
 const NOTATION_CLASS_NAMES: ReadonlyMap<string, string> = new Map(
   [...REPORT_NOTATION_NAMES, ...REPORT_DRAWN_MARK_NAMES].map((name) => [
@@ -33,8 +30,8 @@ const NOTATION_CLASS_NAMES: ReadonlyMap<string, string> = new Map(
 )
 
 /**
- * `note` の種別（モデルが書く class 名）→ tsukumo が文字として描くラベル。上から順に見て
- * 最初に当たったものを使う（並びの理由は `src/shared/report/report-notation.ts` の `REPORT_NOTE_KINDS`）。
+ * `note` の種別（モデルが書く class 名）→ tsukumo が文字として描くラベル。
+ * 上から順に見て最初に当たったものを使う（並びの理由は `REPORT_NOTE_KINDS`）。
  */
 const NOTE_LABELS = REPORT_NOTE_KINDS
 
@@ -43,11 +40,9 @@ type NotationBlockProps = JSX.IntrinsicElements["div"] & ExtraProps
 /**
  * レポートの `div`。5系統のうち塊の側（`note` / `cols` / `card` / `stats` / `stat`）を受け持つ。
  *
- * `note` の種別のラベルは部品が文字として描く（CSS の `::before` ではない）。モデルは
- * 見出しの語を書かない規約（`report-notation.ts`）なので、何の塊なのかが分かる文字を
- * 保証できるのは tsukumo 側だけで、生成した内容ではなく器の一部として DOM に出したほうが、
- * 選択・コピー・読み上げのどれでも本文と同じに扱える。色だけで種別を伝えないための
- * 文字でもある（`docs/screen-design.md` 13.1 原則5）。
+ * `note` の種別のラベルは部品が文字として描く（CSS の `::before` ではない）。
+ * モデルは見出しの語を書かない記法なので、何の塊なのかが分かる文字を保証できるのは tsukumo 側だけ。
+ * 器の一部として DOM に出したほうが、選択・コピー・読み上げのどれでも本文と同じに扱える。
  */
 export function NotationBlock(props: NotationBlockProps): ReactElement {
   const { node: _node, className, children, ...rest } = props

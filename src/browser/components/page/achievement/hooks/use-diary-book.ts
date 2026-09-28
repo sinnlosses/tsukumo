@@ -1,25 +1,10 @@
-// つくもの日記帳の見開き（`docs/screen-design.md` 13.10「日記帳の見開き」）。開閉・見ている日・
-// 目次の開閉という「保つ」、`<dialog>` の DOM 同期と手続き `achievement.day` の取得という
-// 「外と同期」、漢数字・しおり・終えたこと・卒業と節目の畳み込みという「畳む」の3種がそろうので
-// フックを切る（docs/design.md 2章「機能の中を分ける」）。
+// つくもの日記帳の見開きのロジック。
+// 開閉・開いている日・目次の開閉を保ち、開いている日の `achievement.day` を取り、見開きに並べる形へ畳む。
 //
-// container / presentational の3分割は採らない。 開く口が暦のマス（`lantern-calendar.tsx`）と
-// 日記の区画（`diary-section.tsx`）の2箇所にまたがり、どちらも `achievement.tsx`
-// （成果の画面の container）から配る値が要るので、`useDiaryBook` は `achievement.tsx` から
-// 直接呼び、戻り値をそのまま渡す部品を `../components/diary-book/diary-book.tsx`
-// （`DiarySection` / `LanternCalendar` と同じ、フックを持たない受け取るだけの部品）に置く。
-//
-// 1日ぶんの取得は `use-achievement.ts` と同じ手続き・同じ応答形（`achievement.day`）を、
-// 開いている日だけ別に引く（同じ日ならキャッシュを分け合う）。前後の日・目次に並べる日は `use-achievement-calendar.ts` が既に
-// 持っている `diaryDates`（すべての日記のある日、新しい順）をそのまま受け取る（新しい経路は
-// 増やさない）。
-//
-// 正典と実物・仮決めのすり合わせ:
-// 1. 目次にしおりのタスク ID は載せない（`diaryDates` はファイル名の一覧だけで中身を読まない
-//    設計のため。`src/server/diary/adapter/diary.ts` の `listDiaryDates`）
-// 2. 「日記帳で読む」から開いたときの添え書きは「この日の日記から開きました」と仮に決めた
-// 3. 書かれた日記でしおりが無い日は、しおりの区画ごと省く（成果の画面本体と同じ扱い）
-// 4. 縦書き本文のオーバーフローは `overflow: auto`（`achievement.module.css`）で両軸に任せる
+// 1日ぶんの取得は `useAchievement` と同じ手続きを、開いている日だけ別に引く（同じ日ならキャッシュを分け合う）。
+// 前後の日・目次に並べる日は、暦の `diaryDates`（すべての日記のある日、新しい順）をそのまま使う。
+// `diaryDates` は `listDiaryDates` がファイル名の一覧だけから作り中身を読まないので、目次にしおりのタスク ID は載せられない。
+// 「日記帳で読む」から開いたときの添え書き「この日の日記から開きました」は正典に無い仮の文言。
 
 import { skipToken, useQuery } from "@tanstack/react-query"
 import { useState } from "react"
@@ -64,8 +49,7 @@ const EMPTY_DAY_REASON = "振り返る成果が無い"
 const TURN_RUNNING_REASON = "いまターンが動いているので送れない"
 const BLANK_REVIEW_LABEL = "この日を振り返る"
 
-/** 見開きを開いた口（13.10「日記帳の見開き」頭の行の添え書き）。`notice` は書き終わりの知らせの
- * 「日記帳で開く」（`diary-notice.tsx`。13.10「書き終わりの知らせ」）。 */
+/** 見開きを開いた口（頭の行の添え書きに出す）。`notice` は書き終わりの知らせの「日記帳で開く」。 */
 export type DiaryBookOpenSource = "calendar" | "diary-section" | "notice"
 
 const OPEN_NOTE: Readonly<Record<DiaryBookOpenSource, string>> = {
@@ -90,7 +74,7 @@ type BookState =
       readonly tocOpen: boolean
     }
 
-/** 左下に並べる丸い印（卒業・節目。13.10「日記帳の見開き」左ページ）。 */
+/** 左下に並べる丸い印（卒業・節目）。 */
 export type DiaryBookBadge =
   | { readonly kind: "graduation"; readonly key: string; readonly taskId: string }
   | {
@@ -100,7 +84,7 @@ export type DiaryBookBadge =
       readonly unitLabel: string
     }
 
-/** 「この日に終えたこと」（13.10「日記帳の見開き」左ページ）。 */
+/** 「この日に終えたこと」。 */
 export type DiaryBookTaskList = {
   readonly items: readonly AchievementTask[]
   readonly moreCount: number
@@ -108,7 +92,7 @@ export type DiaryBookTaskList = {
   readonly tasksKnown: boolean
 }
 
-/** しおりの区画の状態。`none` は区画ごと省く（成果の画面本体と同じ扱い）。 */
+/** しおりの区画の状態。`none` は区画ごと省く。 */
 export type DiaryBookBookmark =
   | { readonly kind: "none" }
   | { readonly kind: "pending" }
@@ -119,7 +103,7 @@ export type DiaryBookBookmark =
       readonly reason: string
     }
 
-/** 右ページの1段落。2つ目以降だけ書いた時刻を持つ（13.10「書き足したときの段落の区切り」）。 */
+/** 右ページの1段落。2つ目以降だけ書いた時刻を持つ。 */
 export type DiaryBookParagraph = {
   readonly key: string
   readonly body: string
@@ -161,7 +145,7 @@ export type DiaryBookModel = {
   readonly previous: { readonly date: string; readonly label: string } | undefined
   readonly next: { readonly date: string; readonly label: string } | undefined
   readonly toc: { readonly open: boolean; readonly months: readonly DiaryBookTocMonth[] }
-  /** 灯りの暦のマスから開く（見ている日も一緒に切り替える。13.10「灯りの暦」「押すと」）。 */
+  /** 灯りの暦のマスから開く（見ている日も一緒に切り替える）。 */
   readonly onOpenFromCalendar: (date: string) => void
   /** 日記の区画の「日記帳で読む」から、いま見ている日で開く。日が分からなければ何もしない。 */
   readonly onOpenFromDiarySection: () => void
@@ -173,11 +157,11 @@ export type DiaryBookModel = {
 }
 
 export function useDiaryBook(params: {
-  /** `use-achievement-calendar.ts` の戻り値をそのまま渡す（`diaryDates` をここで取り出す）。 */
+  /** `useAchievementCalendar` の戻り値をそのまま渡す（`diaryDates` をここで取り出す）。 */
   readonly calendar: AchievementCalendarView
-  /** `use-achievement.ts` の `daySwitch` をそのまま渡す（見ている日をここで取り出す）。 */
+  /** `useAchievement` の `daySwitch` をそのまま渡す（見ている日をここで取り出す）。 */
   readonly daySwitch: AchievementDaySwitch
-  /** 見ている日を切り替える（`use-achievement.ts` の `onSelectDate` をそのまま渡す）。 */
+  /** 見ている日を切り替える（`useAchievement` の `onSelectDate` をそのまま渡す）。 */
   readonly onDateSelected: (date: string) => void
 }): DiaryBookModel {
   const diaryDates = params.calendar.kind === "known" ? params.calendar.diaryDates : []
@@ -189,10 +173,8 @@ export function useDiaryBook(params: {
   const character = useSession((session) => session.state.character)
   const characterPacks = useSession((session) => session.state.characterPacks)
 
-  // 書き終わりの知らせの「日記帳で開く」（`diary-notice.tsx`）を拾って開く。`useEffect` は
-  // 使わない——4類型のどれにも当たらない（`docs/coding-standards.md`「React」）。合図は
-  // `useDiaryBookOpenRequest` で拾い、拾ったかどうかは
-  // `takeDiaryBookOpenRequest` が部品の外に持つ（画面を開き直しても同じ合図で開き直さない）。
+  // 書き終わりの知らせの「日記帳で開く」を拾って開く。
+  // 拾ったかどうかは `takeDiaryBookOpenRequest` が部品の外に持つ（画面を開き直しても同じ合図で開き直さない）。
   const pendingRequest = takeDiaryBookOpenRequest(useDiaryBookOpenRequest())
   if (pendingRequest !== undefined) {
     setState({ kind: "open", source: "notice", date: pendingRequest.date, tocOpen: false })
@@ -350,9 +332,7 @@ function pageOf(
   }
 }
 
-/** 書いたパックの立ち絵と名前。白紙の日はいまのパックを `default` の表情で
- * （`use-achievement.ts` の `diaryPortraitOf` と同じ組み立て。13.10「並べるもの」2
- * 「書いたパックが無いとき」）。 */
+/** 書いたパックの立ち絵と名前。白紙の日はいまのパックを `default` の表情で。 */
 function bookPortraitOf(
   diary: DailyDiaryStatus,
   character: CharacterInfo | undefined,
@@ -378,15 +358,13 @@ function paragraphsOf(diary: Diary): readonly DiaryBookParagraph[] {
   }))
 }
 
-/** 「〔22:10〕」の形（`diary-section.tsx` の `timeLabel` と同じ切り出し方）。 */
+/** 「〔22:10〕」の形。`writtenAt` はオフセット付き ISO で、その場のローカル時刻を文字のまま持つので `Temporal` へ通さず切り出す。 */
 function paragraphTimeLabel(writtenAt: string): string | undefined {
   const match = /T(\d{2}:\d{2})/.exec(writtenAt)
   return match?.[1] === undefined ? undefined : `〔${match[1]}〕`
 }
 
-/** 白紙の日の主ボタン（13.10「日記帳の見開き」白紙の日（e））。押せない条件は成果の画面本体の
- * 振り返りのボタン（`use-achievement.ts` の `reviewButtonOf`）と同じ判定を、この見開きの日付で
- * 別に組む（`view`/`daySwitch` の形に依存しないぶんだけ簡単になる）。 */
+/** 白紙の日の主ボタン。押せないのは空の日と、ターンが動いている間。 */
 function blankReviewOf(
   commitCount: number,
   doneTasks: AchievementDoneTasks,

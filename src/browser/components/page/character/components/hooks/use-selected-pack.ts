@@ -1,7 +1,5 @@
-// キャラクター画面でいま右側に出しているパック（`docs/screen-design.md` 13.6）。hash の
-// `pack`（`stores/screen.tsx` の `usePackSelection`）を、届いているパックの姿へ引き当てる。
-// 一覧（`character-list.tsx`）と詳しい設定（`hooks/use-character-edit.ts`）の両方が読むので、
-// container と対にならない概念のフックとしてここに置く（docs/design.md 2章「機能の中を分ける」）。
+// キャラクター画面でいま右側に出しているパック。
+// hash の `pack`（`usePackSelection`）を、届いているパックの姿へ引き当てる。
 //
 // 引き当て方:
 //
@@ -26,7 +24,7 @@ export type SelectedPack =
       readonly character: CharacterInfo
       /** 使用中のパックか。使用中以外なら「このキャラクターに切り替える」を出す。 */
       readonly inUse: boolean
-      /** 画面から消すと何が起きるか（一覧の同じ名前の1件から引く。7.1「消すときの細部」）。 */
+      /** 画面から消すと何が起きるか（一覧の同じ名前の1件から引く）。 */
       readonly removal: CharacterPackRemoval
     }
 

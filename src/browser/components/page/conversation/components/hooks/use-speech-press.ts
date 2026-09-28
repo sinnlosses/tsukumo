@@ -1,17 +1,11 @@
-// キャラクターのセリフ1件を押す読み替え。押すとその時の表情へ立ち絵が遡る
-// （docs/screen-design.md「会話を遡る」）。雑談のログの行（`chat-view/components/chat-speech/`）と
-// 仕事モードの吹き出し・セリフのログの行（`character-view/components/balloon/`・
-// `character-view/components/speech-log/`）の3箇所が読むので、会話の画面の `components/hooks/`
-// に置く（docs/design.md「ページの形」）。
-//
-// セリフをドラッグで選んでコピーできるので、押したのか文字を選び終えて手を離したのかを
-// 見分ける必要がある——それがこのフックの役目。
+// キャラクターのセリフ1件を押す読み替え。押すとその時の表情へ立ち絵が遡る。
+// セリフはドラッグで選んでコピーできるので、押したのか文字を選び終えて手を離したのかを見分ける。
 
 import { useRef, type KeyboardEvent, type MouseEvent } from "react"
 
 /**
- * 「押した」ではなく「ドラッグで文字を選んだ」とみなす、押し始めからの距離（px）。文字を1つ
- * 選ぶだけでも1文字ぶん（本文の大きさなら十数px）は動くので、手のぶれ（数px）と混ざらない。
+ * 「押した」ではなく「ドラッグで文字を選んだ」とみなす、押し始めからの距離（px）。
+ * 文字を1つ選ぶだけでも1文字ぶん（本文の大きさなら十数px）は動くので、手のぶれ（数px）と混ざらない。
  */
 const DRAG_THRESHOLD_PX = 4
 
@@ -31,8 +25,7 @@ export type SpeechPressView = {
 }
 
 export function useSpeechPress(onToggle: () => void): SpeechPressView {
-  // 押し始めた場所。セリフの行は文字をドラッグで選べるので、選び終えて手を離したときの
-  // click と、押した click を、動いた距離で見分ける（下の `isSelectionDrag`）。
+  // 押し始めた場所。選び終えて手を離したときの click と、押した click を、動いた距離で見分ける（`isSelectionDrag`）。
   const pressOriginRef = useRef<PressOrigin | undefined>(undefined)
 
   return {
@@ -60,16 +53,14 @@ export function useSpeechPress(onToggle: () => void): SpeechPressView {
 }
 
 /**
- * その click が「押した」ではなく「文字をドラッグで選び終えた」ものか。選び終えて手を離した
- * 瞬間にも click は飛ぶので、見分けないとコピーしようとするたびに立ち絵が遡ってしまう。
+ * その click が「押した」ではなく「文字をドラッグで選び終えた」ものか。
+ * 選び終えて手を離した瞬間にも click は飛ぶので、見分けないとコピーしようとするたびに立ち絵が遡ってしまう。
  *
  * 見るのは押し始めてから動いた距離だけ（{@link DRAG_THRESHOLD_PX}）。
- * いま選ばれている文字（`window.getSelection()`）は見ない — 選んだ直後にその行を押すと、
- * 選択が消えるのは手を離したあと（ブラウザが「選択を掴んで運ぶ」動きを待つため）なので、
- * その回の click が丸ごと落ちて押せなくなる（実機の Chrome で確認）。
+ * いま選ばれている文字（`window.getSelection()`）は見ない。
+ * 選んだ直後にその行を押すと、選択が消えるのは手を離したあと（ブラウザが「選択を掴んで運ぶ」動きを待つため）なので、その回の click が丸ごと落ちて押せなくなる（実機の Chrome で確認）。
  *
- * `detail === 0` はマウスから来ていない click（支援技術が送るもの）で、押し始めの場所を
- * 持たないので、押したものとして扱う。
+ * `detail === 0` はマウスから来ていない click（支援技術が送るもの）で、押し始めの場所を持たないので、押したものとして扱う。
  */
 function isSelectionDrag(origin: PressOrigin | undefined, event: PointerAt): boolean {
   if (origin === undefined || event.detail === 0) {
@@ -80,8 +71,7 @@ function isSelectionDrag(origin: PressOrigin | undefined, event: PointerAt): boo
 
 /**
  * 押したことにするキー（WAI-ARIA の button パターンと同じ Enter と Space）。
- * `<button>` と違って `role="button"` の要素にはブラウザが click を送らないので、
- * キーボードで遡る道はここで自分で開ける。
+ * `<button>` と違って `role="button"` の要素にはブラウザが click を送らないので、キーボードで遡る道はここで自分で開ける。
  */
 function isActivationKey(key: string): boolean {
   return key === "Enter" || key === " "

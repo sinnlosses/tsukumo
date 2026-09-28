@@ -1,10 +1,8 @@
-// 作るダイアログの必須の立ち絵（`default`）を選ぶ大きな枠（docs/screen-design.md 13.6）。
-// 見た目は表情のカード（`portrait-card.tsx`）の空欄と同じ語彙を大きさだけ変えて流用する
-// （`character-card` / `character-card-blank`。CSS に新しい語彙を増やさない）。
+// 作るダイアログの必須の立ち絵（`default`）を選ぶ大きな枠。
+// 見た目は表情のカードの空欄の class（`character-card` / `character-card-blank`）を大きさだけ変えて流用する。
 //
 // 立ち絵がまだ無い間は点線の枠に「いつもの顔の立ち絵」の案内、選んだあとはその画像を出す。
-// どちらの状態でも画像を落とせる（落とすと差し替え）。判定は持たず、`hooks/use-character-create.ts`
-// が畳んだ `PortraitDropModel` をそのまま置く。
+// どちらの状態でも画像を落とせる（落とすと差し替え）。
 
 import clsx from "clsx"
 import type { DragEvent, ReactElement } from "react"

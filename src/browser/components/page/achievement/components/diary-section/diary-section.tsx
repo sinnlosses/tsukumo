@@ -1,6 +1,5 @@
-// 日記の区画（`docs/screen-design.md` 13.10「並べるもの」2、「ボタンを押せないとき・押したあと」、
-// 「空の日・数えられないとき」）。立ち絵・頭の行・吹き出し・数の札2枚・振り返りのボタン（または
-// 3段の進み）を持つ。
+// 日記の区画。
+// 立ち絵・頭の行・吹き出し・数の札2枚・振り返りのボタン（または3段の進み）を持つ。
 
 import clsx from "clsx"
 import type { ReactElement } from "react"
@@ -40,7 +39,7 @@ export type DiarySectionProps = {
   readonly portrait: DiaryWriterPortrait
   readonly reveal: boolean
   readonly review: AchievementReviewButton
-  /** 頭の行の「日記帳で読む」（13.10「並べるもの」2）。押すとこの日の見開きが開く。 */
+  /** 頭の行の「日記帳で読む」。押すとこの日の見開きが開く。 */
   readonly onOpenDiaryBook: () => void
 }
 
@@ -308,9 +307,11 @@ function Card(props: {
   )
 }
 
-/** 振り返りのボタン、または進行中の「振り返り中…」（呼ぶのは `view.kind === "ready"` のときだけ。
- * `DiarySection` 参照）。会話の画面へ移る口は置かない（振り返りは会話の画面に何も出さない。
- * 13.10「ボタンを押せないとき・押したあと」）。 */
+/**
+ * 振り返りのボタン、または進行中の「振り返り中…」。
+ * 呼ぶのは `view.kind === "ready"` のときだけ。
+ * 振り返りは会話の画面に何も出さないので、会話の画面へ移る口は置かない。
+ */
 function Controls(props: {
   readonly writing: AchievementWriting
   readonly review: AchievementReviewButton
@@ -371,8 +372,10 @@ function isEmptyDay(commitCount: number, doneTasks: AchievementDoneTasks): boole
   return commitCount === 0 && doneTasks.kind === "known" && doneTasks.items.length === 0
 }
 
-/** 「21:40」の形。`writtenAt` は `local-time.ts` の `isoWithOffset`（オフセット付き ISO）で、
- * その場のローカル時刻を文字のまま持つので `Temporal` へ通さず素直に切り出す。 */
+/**
+ * 「21:40」の形。
+ * `writtenAt` は `isoWithOffset` が書いたオフセット付き ISO で、その場のローカル時刻を文字のまま持つので `Temporal` へ通さず素直に切り出す。
+ */
 function timeLabel(writtenAt: string): string {
   const match = /T(\d{2}:\d{2})/.exec(writtenAt)
   return match?.[1] ?? ""

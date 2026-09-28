@@ -1,17 +1,12 @@
-// `<ConversationLayout>` の器（docs/design.md 2章「機能の中を分ける」）。フックも算出も持たず、
-// 受け取った値と呼び先をそのまま置く。ロジック（比率の state・ドラッグの読み替え）は
-// `hooks/use-conversation-layout.ts`。
+// `<ConversationLayout>` の器。
 //
-// 4領域は `data-region` でも名乗る。class 名は組み立てのたびにハッシュ化される（CSS Modules）
-// ので、外から領域を指す口——画面を撮って位置と大きさを測る `scripts/capture-view.ts` や、
-// 開発者ツールで測るとき——はこちらを使う。
+// 4領域は `data-region` でも名乗る。
+// class 名は組み立てのたびにハッシュ化される（CSS Modules）ので、外から領域を指す口（画面を撮って位置と大きさを測る `node scripts/capture-view.ts` や、開発者ツール）はこちらを使う。
 //
-// 枠を持たない領域（`.layout-ground`）は、キャラビューと雑談中のメインビューで同じ class を
-// 共有する（覆いの式を1箇所にしか書かないため。docs/screen-design.md 13.8）。
+// 枠を持たない領域（`.layout-ground`）は、キャラビューと雑談中のメインビューで同じ class を共有する（覆いの式を1箇所にしか書かないため）。
 //
-// 狭い画面では上段の2領域をタブで切り替える（docs/requirements.md 4.7）。どちらを隠すかは
-// CSS（`.layout-row-top[data-narrow-pane]` の `@media`）が決めるので、ここは幅を測らない
-// — 広い画面ではタブ自身が `display: none` で、選んでいる側の値は何にも効かない。
+// 狭い画面では上段の2領域をタブで切り替える。
+// どちらを隠すかは CSS（`.layout-row-top[data-narrow-pane]` の `@media`）が決めるので、ここは幅を測らない。
 
 import clsx from "clsx"
 import { RotateCw } from "lucide-react"
@@ -27,24 +22,14 @@ export type PresentationalConversationLayoutProps = UseConversationLayoutResult 
   readonly sidebar: ReactNode
   readonly character: ReactNode
   readonly dispatch: ReactNode
-  /**
-   * キャラビューの領域を畳み、下段を入力欄だけにするか。立ち絵が上段へ移ったときに使う
-   * （雑談モード。docs/screen-design.md 13.7）。ここは「なぜ畳むか」を知らない — 領域の数が
-   * 変わることだけを受け取る。
-   */
+  /** キャラビューの領域を畳み、下段を入力欄だけにするか。立ち絵が上段へ移ったとき（雑談モード）に使う。 */
   readonly collapseCharacter: boolean
-  /**
-   * メインの領域を、枠を持つウィジェットではなく地そのものとして描くか（枠と角丸を外し、
-   * 背景があればそこへ敷く。docs/screen-design.md 13.8）。ここも「なぜそうするか」を知らない —
-   * キャラビューと同じ立場になることだけを受け取る（立てるのは雑談モードの入口。13.7）。
-   */
+  /** メインの領域を、枠を持つウィジェットではなく地そのものとして描くか（枠と角丸を外し、背景があればそこへ敷く）。 */
   readonly mainAsGround: boolean
 }
 
-// 狭い画面のタブ。名前は用語集の語のまま（docs/glossary.md）。
 /**
- * 比率を戻す口の字。字そのものが見えているピルなので、`aria-label` / `title` は持たない
- * （見える字がそのままアクセシブルネームになる）。
+ * 比率を戻す口の字。字そのものが見えているピルなので、`aria-label` / `title` は持たない。
  */
 const RESET_SPLIT_LABEL = "比率を既定に戻す"
 
@@ -54,9 +39,8 @@ const NARROW_PANES = [
 ] satisfies readonly { readonly pane: NarrowPane; readonly label: string }[]
 
 /**
- * props はここだけ分解して受ける（他の部品は `props.x` のまま）。ref を持つ入れ物を
- * `props.gridRef` の形で描画中に読むと `react(refs)`（規約「レンダー中に ref を読み書きしない」）
- * が落ちるため（`task-board/presentational-task-board.tsx` と同じ理由）。
+ * props はここだけ分解して受ける。
+ * ref を持つ入れ物を `props.gridRef` の形で描画中に読むと、lint の `react(refs)` が落ちるため。
  */
 export function PresentationalConversationLayout({
   gridRef,
@@ -135,8 +119,8 @@ export function PresentationalConversationLayout({
           {sidebar}
         </section>
       </div>
-      {/* **畳んでいる間もこの仕切りは出す**（雑談中でも入力欄の高さを変えられる）。
-            覚える先は `hooks/use-conversation-layout.ts` の中で切り替わるだけで、仕切りそのものは1本。 */}
+      {/* 畳んでいる間もこの仕切りは出す（雑談中でも入力欄の高さを変えられる）。
+            覚える先は `useConversationLayout` の中で切り替わるだけで、仕切りそのものは1本。 */}
       <div className={styles["layout-divider"]}>
         <LayoutResizer
           orientation="horizontal"
@@ -145,8 +129,8 @@ export function PresentationalConversationLayout({
           onChange={onRowTopChange}
           onCommit={onRowTopCommit}
         />
-        {/* 押して消えたあとのフォーカスは動かさない（仕切り `role="separator"` はキー操作を
-              持たないので、そこへ移すと押せないものにフォーカスが残る。body へ落ちるのに任せる） */}
+        {/* 押して消えたあとのフォーカスは動かさず、body へ落ちるのに任せる。
+              仕切り `role="separator"` はキー操作を持たないので、そこへ移すと押せないものにフォーカスが残る。 */}
         {isSplitChanged && (
           <Button
             type="button"
@@ -171,8 +155,8 @@ export function PresentationalConversationLayout({
         data-collapse-character={collapseCharacter}
         style={rowBottomStyle}
       >
-        {/* **畳むときは仕切りごと出さない。** 比率は state に残っているので、戻したときに
-              使う人が決めた幅がそのまま戻る。 */}
+        {/* 畳むときは仕切りごと出さない。
+              比率は state に残っているので、戻したときに使う人が決めた幅がそのまま戻る。 */}
         {!collapseCharacter && (
           <>
             <section

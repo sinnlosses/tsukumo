@@ -1,11 +1,7 @@
-// 灯りの暦（`docs/screen-design.md` 13.10「灯りの暦」）の取得。手続き `achievement.calendar` は
-// 常に「今日を含む直近5週」を配るので、見ている日（`use-achievement.ts`）とは独立に1回だけ
-// 取りに行く。
+// 灯りの暦の取得。
+// 手続き `achievement.calendar` は常に「今日を含む直近5週」を配るので、見ている日とは独立に1回だけ取りに行く。
 //
-// 取り直す契機（`docs/requirements.md`「成果の振り返り」）: 開いたとき・窓にフォーカスが
-// 戻ったとき（`staleTime: 0` と React Query の既定の `refetchOnWindowFocus`）・60秒ごと（常に
-// 今日が範囲に入るため、`use-achievement.ts` の「今日を見ているあいだだけ」と違って無条件）・
-// 日記が書き上がったとき（`use-achievement.ts` が `queryClient.invalidateQueries` で無効化する）。
+// 取り直す契機は、開いたとき・窓にフォーカスが戻ったとき（`staleTime: 0` と React Query の既定の `refetchOnWindowFocus`）・60秒ごと（常に今日が範囲に入るので無条件）・日記が書き上がったとき（`useAchievement` が無効化する）。
 
 import { useQuery } from "@tanstack/react-query"
 
@@ -14,10 +10,11 @@ import { rpc } from "../../../../domain/rpc.ts"
 
 const REFETCH_INTERVAL_MS = 60_000
 
-/** まだ一度も届いていない間は `loading`（13.10 の表には無いが、初回だけ「取れなかった」と
- * 誤読させないための区別。届けば `AchievementCalendar` の中身がそのまま「取れなかった」も
- * 兼ねる——`unknown` は「main が読めない」と「取りに行って失敗した」の両方をここで畳む。同節
- * 「取れなかったとき」はどちらも同じ1行でよいと決めている）。 */
+/**
+ * まだ一度も届いていない間は `loading`（初回だけ「取れなかった」と誤読させないための区別）。
+ * 届けば `AchievementCalendar` の中身がそのまま「取れなかった」も兼ねる。
+ * `unknown` は「main が読めない」と「取りに行って失敗した」の両方をここで畳む。
+ */
 export type AchievementCalendarView = { readonly kind: "loading" } | AchievementCalendar
 
 export function useAchievementCalendar(): AchievementCalendarView {
@@ -25,7 +22,7 @@ export function useAchievementCalendar(): AchievementCalendarView {
     rpc.achievement.calendar.queryOptions({
       staleTime: 0,
       refetchInterval: REFETCH_INTERVAL_MS,
-      // 落ちた応答は再試行せず、すぐ「取れなかった」に倒す（手続きにする前と同じ）。
+      // 落ちた応答は再試行せず、すぐ「取れなかった」に倒す。
       retry: false,
     }),
   )
@@ -33,7 +30,6 @@ export function useAchievementCalendar(): AchievementCalendarView {
   if (query.isPending) {
     return { kind: "loading" }
   }
-  // 落ちた応答（503・403）も「取れなかった」に倒す（呼び出し側は同じ扱いで足りるので、
-  // `use-achievement.ts` のように `isError` を別に持ち出さない）。
+  // 落ちた応答（503・403）も「取れなかった」に倒す。
   return query.data ?? { kind: "unknown" }
 }

@@ -1,18 +1,14 @@
-// 依頼に添えた画像の見せ方（`docs/requirements.md` 4.10「画面での見え方」）。送る前は入力欄の
-// 中の小さな札、送ったあとは依頼に付く控えで、出す場所が3つ（入力欄・メインビューの依頼の
-// 見出しの下・雑談の利用者の吹き出しの中）にまたがるので、会話の画面の `components/` に置く。
+// 依頼に添えた画像の見せ方。送る前は入力欄の中の小さな札、送ったあとは依頼に付く控え。
 //
-// 札も控えも、押すと原寸を拡大して見られる（`components/ui/image-zoom/image-zoom.tsx`）。押せる場所は絵
-// （ホバー・フォーカスで虫眼鏡が重なる。タッチ端末で虫眼鏡が見えていなくても、押せば同じに開く）
-// で、札にはもう1つ `×`（外す）がある。原寸の出どころは2つで、
+// 札も控えも、押すと原寸を拡大して見られる。
+// 押せる場所は絵（タッチ端末で虫眼鏡が見えていなくても、押せば同じに開く）で、札にはもう1つ `×`（外す）がある。
+// 原寸の出どころは2つで、
 //
 // - 札: 送る前なので原寸はブラウザのメモリにある（サーバへは取りに行かない）
-// - 控え: 記録に載っているのは控えと id だけなので、押したときに id でサーバの棚から
-//   取りに行く（`/prompt-image/<id>`。WebSocket のフレームには原寸を載せない）。棚は直近の
-//   数枚しか持たないので、取れなかったら（404）控えを拡大の面に出し、原寸はもう手放したと
-//   1行添える（ブラウザは棚の中身を知らないので、取りに行ってから決める）
+// - 控え: 記録に載っているのは控えと id だけなので、押したときに id でサーバの棚から取りに行く（`/prompt-image/<id>`。WebSocket のフレームには原寸を載せない）。
+//   棚は直近の数枚しか持たないので、取れなかったら（404）控えを拡大の面に出し、原寸はもう手放したと1行添える（ブラウザは棚の中身を知らないので、取りに行ってから決める）
 //
-// 1枚も無いときは何も描かないので、常設の枠にならない（`docs/screen-design.md` 13.1 原則2）。
+// 1枚も無いときは何も描かないので、常設の枠にならない。
 
 import { Search } from "lucide-react"
 import { useState, type ReactElement } from "react"
@@ -60,8 +56,7 @@ export function PromptImageChips(props: PromptImageChipsProps): ReactElement | n
         {props.images.map((image, index) => (
           // 並びは末尾に積むか途中を外すかだけで、並べ替えは無い。
           <li className={styles["prompt-image-chip"]} key={index}>
-            {/* ボタンの中にボタンを入れないので、絵を押すボタンと外す `×` は兄弟にして、
-                `×` を絵の右上に重ねる（CSS 側）。 */}
+            {/* ボタンの中にボタンを入れないので、絵を押すボタンと外す `×` は兄弟にして、`×` を絵の右上に重ねる（CSS 側）。 */}
             <Button
               type="button"
               variant="ghost"
@@ -108,12 +103,12 @@ export type PromptImageThumbnailsProps = {
 }
 
 /**
- * 送ったあとの控え（依頼の見出しの下・雑談の吹き出しの中）。押すと棚の原寸を拡大の面で開き、
- * 棚に残っていなければ控えを代わりに出す。
+ * 送ったあとの控え（依頼の見出しの下・雑談の吹き出しの中）。
+ * 押すと棚の原寸を拡大の面で開き、棚に残っていなければ控えを代わりに出す。
  */
 export function PromptImageThumbnails(props: PromptImageThumbnailsProps): ReactElement | null {
-  // 開いている控えが何枚目か（札と同じ持ち方）。id では持たない——「開いていない」の
-  // undefined が、形の崩れた記録の id（undefined）と一致して、閉じられない面が開くため。
+  // 開いている控えが何枚目か。id では持たない。
+  // 「開いていない」の undefined が、形の崩れた記録の id（undefined）と一致して、閉じられない面が開くため。
   const [zoomedIndex, setZoomedIndex] = useState<number | undefined>(undefined)
 
   if (props.images.length === 0) {
@@ -158,10 +153,7 @@ export function PromptImageThumbnails(props: PromptImageThumbnailsProps): ReactE
   )
 }
 
-/**
- * 棚の原寸を取りに行く URL。起動トークンはこのページの URL から引き継ぐ
- * （`/ws`・`/rpc` と同じ形）。
- */
+/** 棚の原寸を取りに行く URL。起動トークンはこのページの URL から引き継ぐ。 */
 function shelvedImageUrl(id: string): string {
   return sessionTokenUrl(promptImagePath(id))
 }

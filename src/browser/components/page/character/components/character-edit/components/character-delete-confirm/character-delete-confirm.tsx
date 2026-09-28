@@ -1,19 +1,9 @@
-// キャラクターを消す／同梱に戻す前の確かめ（`components/character-delete.tsx` の帯のボタンを
-// 押すと開く。docs/screen-design.md 13.6「このキャラクターを消す」に見本がある）。表情1枚を消す前の
-// 確かめ（`portrait-clear-confirm.tsx`）のパック全体版で、画面全体を覆う——作るダイアログと同じ
-// UA 既定の中央寄せ（`showModal()` + `margin: auto`）を使う（`portrait-clear-confirm.tsx` は
-// 押した位置に自分で置くが、こちらは帯のどこから開いても同じ場所でよい）。
+// キャラクターを消す／同梱に戻す前の確かめ。画面全体を覆い、中央に置く。
 //
-// 打った id がパックの id と完全に一致するまで実行ボタンは押せない（`docs/screen-design.md`
-// 13.6「決まっていること」）。入力の下書きだけをここで持ち（「保つ」の1種類）、一致の判定は
-// 描画のたびに引き直す軽い比較なので、これだけのために別ファイル・別フックへは出さない
-// （`portrait-clear-confirm.tsx` の `anchoredStyle` と同じ扱い。docs/design.md 2章
-// 「機能の中を分ける」）。
+// 打った id がパックの id と完全に一致するまで実行ボタンは押せない。
 //
-// `<dialog>` は開くときにだけ組み立て、閉じたら呼び出し側（`character-delete.tsx`）がこの部品ごと
-// 外す（`portrait-clear-confirm.tsx` と同じ形。常にマウントして `open` を追随させる
-// `character-create.tsx` とは違う——こちらは常設の入力欄を持たないので、開くたびに空から始まる
-// ほうが「打ちかけの id が残る」事故を避けられる）。
+// 開くときにだけ組み立て、閉じたら呼び出し側がこの部品ごと外す。
+// 常にマウントして `open` を追随させると、打ちかけの id が次に開いたときに残る。
 
 import { useState, type ReactElement } from "react"
 

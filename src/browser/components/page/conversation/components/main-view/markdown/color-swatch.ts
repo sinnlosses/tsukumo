@@ -1,6 +1,4 @@
-// レポートの inline code に書かれた色（`#bca0ec` のようなカラーコードと、`ink-quiet` /
-// `--state-memo` のような色のトークン名）を、その色を地にして見せるための判定
-// （docs/display.md 4.2「各表示物」）。
+// レポートの inline code に書かれた色（`#bca0ec` のようなカラーコードと、`ink-quiet` / `--state-memo` のような色のトークン名）を、その色を地にして見せるための判定。
 
 /** 地の色と、その上に載せる文字の側（明るい地には暗い字、暗い地には明るい字）。 */
 export type ColorSwatch = {
@@ -9,8 +7,8 @@ export type ColorSwatch = {
 }
 
 /**
- * 実効の色（sRGB の 0〜1 と不透明度）。トークンは `color-mix(...)` の式で持っているので、
- * 字の明暗を決めるには一度ブラウザに解決させた値が要る（{@link readColorToken}）。
+ * 実効の色（sRGB の 0〜1 と不透明度）。
+ * トークンは `color-mix(...)` の式で持っているので、字の明暗を決めるには一度ブラウザに解決させた値が要る（{@link readColorToken}）。
  */
 export type ResolvedColor = {
   readonly r: number
@@ -23,9 +21,9 @@ export type ResolvedColor = {
 export type ColorTokenReader = (name: string) => ResolvedColor | undefined
 
 /**
- * inline code の文字列が色を指していれば、見せ方を返す。文字列全体が1つの色のときだけ
- * （文中に色が混ざっているものは地にしない）。トークンの地は `var(--…)` のまま渡すので、
- * キャラクターパックで `accent` が変わっても地は追いかける。
+ * inline code の文字列が色を指していれば、見せ方を返す。
+ * 文字列全体が1つの色のときだけ（文中に色が混ざっているものは地にしない）。
+ * トークンの地は `var(--…)` のまま渡すので、キャラクターパックで `accent` が変わっても地は追いかける。
  */
 export function colorSwatch(text: string, readToken: ColorTokenReader): ColorSwatch | undefined {
   const hex = parseHexColor(text)
@@ -43,10 +41,9 @@ export function colorSwatch(text: string, readToken: ColorTokenReader): ColorSwa
 }
 
 /**
- * ページのトークンを実効の色に解決する（ブラウザの中でだけ動く）。`getComputedStyle` で
- * カスタムプロパティを直接読むと式のまま返るので、いったん要素の `color` に載せてから読み戻す。
- * 色でないトークン（`font-body` など）は `color` に載せると無効になって親の色を継ぐので、
- * 親に置いた見張りの色がそのまま返ってきたら色ではないと見なす。
+ * ページのトークンを実効の色に解決する（ブラウザの中でだけ動く）。
+ * `getComputedStyle` でカスタムプロパティを直接読むと式のまま返るので、いったん要素の `color` に載せてから読み戻す。
+ * 色でないトークン（`font-body` など）は `color` に載せると無効になって親の色を継ぐので、親に置いた見張りの色がそのまま返ってきたら色ではないと見なす。
  */
 export function readColorToken(name: string): ResolvedColor | undefined {
   const root = document.documentElement
@@ -113,8 +110,8 @@ function parseComputedColor(css: string): ResolvedColor | undefined {
 }
 
 /**
- * 地に載せる字の明暗。透ける色は `surface`（本文の地）に重ねた姿で測る。`surface` が
- * 読めないときは黒に重ねたものとして測る。
+ * 地に載せる字の明暗。透ける色は `surface`（本文の地）に重ねた姿で測る。
+ * `surface` が読めないときは黒に重ねたものとして測る。
  */
 function inkOver(color: ResolvedColor, surface: ResolvedColor | undefined): "dark" | "light" {
   const under = surface ?? { r: 0, g: 0, b: 0, alpha: 1 }

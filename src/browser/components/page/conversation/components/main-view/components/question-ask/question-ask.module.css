@@ -1,24 +1,18 @@
-/* 答え待ちの質問の札（`question-ask.tsx`）。この部品しか使わない class の塊なので
-   main-view.module.css から隣へ分けた（docs/design.md 6.6）。
-   `.question-ask-option .detail-block` の打ち消しは、`.detail-block` 自体の見た目
-   （`markdown/report-notation.module.css`）とは別ファイルなので、`question-ask.tsx` が
-   その両方の class を同じ要素に重ねて付ける（`components/domain/portrait.module.css` の
-   `.character-layout .portrait` と同じ手口。docs/design.md 6.6）。
+/* 答え待ちの質問の札。
+   `.question-ask-option .detail-block` の打ち消しは、`.detail-block` 自体の見た目（report-notation.module.css）とは別ファイルなので、`QuestionOption` がその両方の class を同じ要素に重ねて付ける。
 
-   **いまのやり取りのレポートの下に出る一時的な塊**
-   なので、地も枠も答え待ちの色（--state-warn）の系統にして、いま答えるものだと分かるように
-   する（モックは `docs/history/mockup/`）。答えると消える。 */
+   いまのやり取りのレポートの下に出る一時的な塊なので、地も枠も答え待ちの色（--state-warn）の系統にして、いま答えるものだと分かるようにする。
+   答えると消える。 */
 .question-ask {
   margin: 0.75rem 0 0;
   padding: 0.75rem 0.9rem;
   border: 1px solid var(--state-warn);
   border-radius: 0.75rem;
-  /* 地は塗りつぶさず、面の色に警告色をごく薄く混ぜる（13.2「染めてよいのは…」の形）。 */
+  /* 地は塗りつぶさず、面の色に警告色をごく薄く混ぜる。 */
   background: color-mix(in srgb, var(--surface), var(--state-warn) 6%);
 }
 /* 頭の行：「質問」のチップ・header・（過去のターンを見ているときの戻る口と）「戻る」・「n / N」。
-   狭い画面では折り返す（横スクロールを出さない）。並べ・間隔（`gap="sm"`）・揃え・折り返しは
-   `HStack` が持つ。 */
+   狭い画面では折り返す（横スクロールを出さない）。 */
 .question-ask-head {
   margin-bottom: 0.5rem;
 }
@@ -31,19 +25,18 @@
   font-size: var(--font-label);
   font-weight: 700;
 }
-/* 字の段・色は `Text`（size="secondary" tone="ink-quiet" weight="inherit"）が持つ。伸び縮みだけ
-   ここに残す（語彙に無い見た目）。 */
+/* 字の段・色は `Text` が持つ。伸び縮みだけここに置く。 */
 .question-ask-header {
   flex: 1 1 auto;
   min-width: 0;
 }
-/* 「n / N」は行の右端へ寄せる（チップと header のあとに残った幅の端）。字の段・色は
-   `Text`（size="label" tone="ink-quiet" weight="inherit"）が持つ。伸び縮みだけここに残す。 */
+/* 「n / N」は行の右端へ寄せる（チップと header のあとに残った幅の端）。
+   字の段・色は `Text` が持つ。
+   伸び縮みだけここに置く。 */
 .question-ask-progress {
   flex: 0 0 auto;
 }
-/* 枠・地・字の色・hover は `<Button variant="outline-hover-warn">`（`ui/button/button.tsx`）が持つ。ここは
-   箱（伸び縮み・余白・角丸・字の大きさ）だけ。 */
+/* 顔は `<Button variant="outline-hover-warn">` が持つ。箱（伸び縮み・余白・角丸・字の大きさ）だけここに置く。 */
 .question-ask-back,
 .question-ask-to-newest {
   flex: 0 0 auto;
@@ -51,13 +44,11 @@
   border-radius: 0.4rem;
   font-size: var(--font-label);
 }
-/* 太さは `Text`（size="inherit" tone="inherit" weight="bold"）が持つ。margin だけここに残す
-   （既定の 0 と違うため）。 */
+/* 太さは `Text` が持つ。margin だけここに置く。 */
 .question-ask-text {
   margin: 0 0 0.75rem;
 }
-/* 選択肢は横に並べ、**入り切らなければ折り返す**（狭い画面・選択肢が4つのときは1〜2列に
-   落ちる。列の幅を先に決めるので、ラベルは自分の列の中で折り返すだけになり横へ溢れない）。 */
+/* 選択肢は横に並べ、入り切らなければ折り返す（狭い画面・選択肢が4つのときは1〜2列に落ちる。列の幅を先に決めるので、ラベルは自分の列の中で折り返すだけになり横へ溢れない）。 */
 .question-ask-options {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
@@ -73,13 +64,12 @@
   border-radius: 0.5rem;
   background: var(--surface);
 }
-/* 選んだカード。**枠の色と太さ**で示す（色だけに頼らない。13.1 原則5）。 */
+/* 選んだカード。枠の色と太さで示す（色だけに頼らない）。 */
 .question-ask-option.is-selected {
   border-color: var(--state-warn);
   box-shadow: 0 0 0 1px var(--state-warn) inset;
 }
-/* 押す口（印とラベルとバッジ）。ラベルが折り返すので、印は行の中央ではなく1行目の文字に
-   揃える（baseline）。並べ・間隔（`gap="sm"`）・揃えは `HStack` が持つ。 */
+/* 押す口（印とラベルとバッジ）。ラベルが折り返すので、印は行の中央ではなく1行目の文字に揃える（baseline）。 */
 .question-ask-option-choose {
   min-width: 0;
   cursor: pointer;
@@ -88,23 +78,20 @@
   flex: 0 0 auto;
   accent-color: var(--state-warn);
 }
-/* 太さは `Text`（size="inherit" tone="inherit" weight="bold"）が持つ。伸び縮みだけここに残す
-   （語彙に無い見た目）。 */
+/* 太さは `Text` が持つ。伸び縮みだけここに置く。 */
 .question-ask-option-label {
   flex: 0 1 auto;
   min-width: 0;
 }
-/* ラベル末尾の `(Recommended)` を字から外して載せるバッジ（`stores/question-answer.ts`）。 */
-/* 字の段・色は `Text`（size="label" tone="state-warn" weight="inherit"）が持つ。箱（枠・角丸・
-   余白）だけここに残す（語彙に無い見た目）。 */
+/* ラベル末尾の `(Recommended)` を字から外して載せるバッジ。 */
+/* 字の段・色は `Text` が持つ。箱（枠・角丸・余白）だけここに置く。 */
 .question-ask-option-badge {
   flex: 0 0 auto;
   padding: 0.05rem 0.4rem;
   border: 1px solid var(--state-warn);
   border-radius: 0.3rem;
 }
-/* 字の段・色は `Text`（size="secondary" tone="ink-quiet" weight="inherit"）が持つ。margin だけ
-   ここに残す（既定の 0 と違うため）。 */
+/* 字の段・色は `Text` が持つ。margin だけここに置く。 */
 .question-ask-option-description {
   margin: 0.35rem 0 0 1.4rem;
 }
@@ -113,25 +100,22 @@
   margin-top: 0.5rem;
 }
 /* 入力欄に書いて記録した答え（まだ送っていない問のぶん）。 */
-/* 字の段・色は `Text`（size="secondary" tone="state-warn" weight="inherit"）が持つ。margin だけ
-   ここに残す（既定の 0 と違うため）。 */
+/* 字の段・色は `Text` が持つ。margin だけここに置く。 */
 .question-ask-written {
   margin: 0.6rem 0 0;
 }
-/* 下端の行：左に案内、右に「これで答える」。狭い画面では折り返す。並べ・間隔（`gap="sm"`）・
-   揃え・折り返しは `HStack` が持つ。 */
+/* 下端の行：左に案内、右に「これで答える」。狭い画面では折り返す。 */
 .question-ask-foot {
   margin-top: 0.75rem;
 }
-/* 字の段・色は `Text`（size="label" tone="ink-quiet" weight="inherit"）が持つ。伸び縮みだけここに
-   残す（語彙に無い見た目）。 */
+/* 字の段・色は `Text` が持つ。伸び縮みだけここに置く。 */
 .question-ask-hint {
   flex: 1 1 12rem;
   min-width: 0;
 }
-/* 札の主目的の口なので、答え待ちの色で塗りつぶす（入力欄の「答える」と対になる）。顔（枠・地・
-   字の色・hover・押せないとき・太さ700）は `<Button variant="solid-warn">` が持つ（太さは
-   `Text`〔weight="bold"〕が持つ）。箱だけここに残す。 */
+/* 札の主目的の口なので、答え待ちの色で塗りつぶす（入力欄の「答える」と対になる）。
+   顔は `<Button variant="solid-warn">` が持つ。
+   箱だけここに置く。 */
 .question-ask-answer {
   flex: 0 0 auto;
   padding: 0.5rem 1.125rem;

@@ -1,9 +1,8 @@
-// 1ステップぶんのレポート本文（Markdown）。書きかけの本文を空行で塊に割り、塊ごとに
-// `memo`（`docs/design.md` 6.3）。描き直すのは変わった塊（たいてい末尾の1つ）だけで、
-// 確定済みの塊は Markdown の変換をやり直さない。
+// 1ステップぶんのレポート本文（Markdown）。
+// 書きかけの本文を空行で塊に割り、塊ごとに `memo`。描き直すのは変わった塊（たいてい末尾の1つ）だけで、確定済みの塊は Markdown の変換をやり直さない。
 //
-// 書き上げていくように見せる演出（`domain/reveal/use-report-reveal.ts`）はここに掛ける。
-// 完成した DOM の根を渡すだけで、塊の中身（`memo` の効く `ReportBlock`）には触らない。
+// 書き上げていくように見せる演出（`useReportReveal`）はここに掛ける。
+// 完成した DOM の根を渡すだけで、塊の中身には触らない。
 
 import clsx from "clsx"
 import { memo, type ReactElement } from "react"
@@ -16,16 +15,9 @@ import { splitReportBlocks } from "../../markdown/split-blocks.ts"
 
 export type ReportProps = {
   readonly markdown: string
-  /**
-   * 書き上げていくように見せるか（`docs/requirements.md` 4.3。演出そのものは
-   * `domain/reveal/use-report-reveal.ts`）。見るのはマウントした時点の値だけで、対象を選ぶのは
-   * `turn.tsx`。
-   */
+  /** 書き上げていくように見せるか。見るのはマウントした時点の値だけ。 */
   readonly reveal: boolean
-  /**
-   * この本文が載っているやり取り（`MainViewTurn.id`）。配る筆先に添える
-   * （`domain/reveal/use-report-reveal.ts`）。
-   */
+  /** この本文が載っているやり取り（`MainViewTurn.id`）。配る筆先に添える。 */
   readonly turnId: number
 }
 
@@ -35,11 +27,9 @@ export function Report(props: ReportProps): ReactElement {
   const rootRef = useReportReveal(props.reveal, props.turnId)
 
   return (
-    // `.detail-block` を2つ重ねる。 見た目の本体は `markdown/report-notation.module.css`
-    // にあり、ステップの末尾の余白の打ち消し（`.main-step > .detail-block:last-child`）は
-    // `main-view.module.css` にある。CSS Modules は class 名をファイルごとにハッシュ化するので、
-    // 片方だけでは打ち消しが当たらない（`components/domain/portrait.module.css` の `.portrait` と
-    // 同じ手口。docs/design.md 6.6）。
+    // `.detail-block` を2つ重ねる。
+    // 見た目の本体は report-notation.module.css にあり、ステップの末尾の余白の打ち消し（`.main-step > .detail-block:last-child`）は main-view.module.css にある。
+    // CSS Modules は class 名をファイルごとにハッシュ化するので、片方だけでは打ち消しが当たらない。
     <div className={clsx(notationStyles["detail-block"], styles["detail-block"])} ref={rootRef}>
       {blocks.map((block) => (
         <ReportBlock key={block} text={block} />
@@ -49,15 +39,11 @@ export function Report(props: ReportProps): ReactElement {
 }
 
 /**
- * 塊1つぶんの Markdown。鍵（`key`）も props もその塊の文字列そのものなので、塊の内容が
- * 変わらない限り React はこの部品を再描画しない。
+ * 塊1つぶんの Markdown。鍵（`key`）も props もその塊の文字列そのものなので、塊の内容が変わらない限り React はこの部品を再描画しない。
  *
- * `memo` を残す例外（`docs/coding-standards.md`「React」節「手でメモ化しない」）。Compiler の
- * babel 版は `applyToEnvironmentHook` でクライアント環境だけに絞ってあり、Vitest の実行
- * （SSR 相当）には掛からないので、`memo` を外すと「変わらない塊は描き直さない」（この下の
- * `report.test.tsx`）が Vitest では確かめられなくなる。
- *
- * `memo` で包むときだけ `const`（規約「部品は `function` で書く」の唯一の例外）。
+ * `memo` を残す例外（docs/coding-standards.md「手でメモ化しない」）。
+ * Compiler の babel 版は `applyToEnvironmentHook` でクライアント環境だけに絞ってあり、Vitest の実行（SSR 相当）には掛からない。
+ * `memo` を外すと「変わらない塊は描き直さない」がテストで確かめられなくなる。
  */
 const ReportBlock = memo(ReportBlockView)
 

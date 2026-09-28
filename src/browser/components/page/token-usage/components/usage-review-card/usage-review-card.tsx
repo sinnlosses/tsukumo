@@ -1,15 +1,6 @@
-// 「減らし方を見てもらう」区画（ふだん・見直し中・結果）。トークン消費の画面の、題の帯といまの
-// コンテキストの札のあいだに置く（見本は `docs/history/mockup/` の
-// `token-advice-idle-*.html` / `token-advice-running-*.html` / `token-advice-result-*.html`）。
-// 取得・畳み込みは `hooks/use-usage-review.ts`、ここは受け取った形をそのまま置く器
-// （docs/design.md 2章「機能の中を分ける」）。
+// 「減らし方を見てもらう」区画（ふだん・見直し中・結果）の器。
 //
-// 段の印は `screen-nav-current-work.tsx` と同じ文字（済 = ✓、進行中は回る「…」、未着手は
-// ○）。SVG を増やさず、帯の「いまの作業」の一覧と同じ読み方に揃える。
-//
-// 結果の場面（`kind === "result"`）は、今回の結果でも「前回の提案」を開いたときでも同じ形
-// （`use-usage-review.ts` の `resultView` が組み立てを1つに揃えている）。効きめの札の色・主
-// ボタンの文言は `docs/screen-design.md` 13.2「結果の場面」の決定どおり。
+// 段の印（済 = ✓、進行中は回る「…」、未着手は ○）は、帯の「いまの作業」の一覧と同じ文字に揃える。
 
 import clsx from "clsx"
 import type { ReactElement } from "react"
@@ -47,14 +38,14 @@ const DISMISS_LABEL = "見送る"
 const EMPTY_PROPOSALS_NOTE = "いま出せる提案は無い。"
 const IMPACT_BADGE_LABEL = "効きめ"
 
-/** 効きめの見出し文字（`docs/glossary.md`「提案」）。 */
+/** 効きめの見出し文字。 */
 const IMPACT_LABELS = {
   large: "大",
   medium: "中",
   small: "小",
 } as const satisfies Record<UsageProposalImpact, string>
 
-/** 主ボタンの文言（`docs/requirements.md`「トークン消費の見直し」——押す口は2つに固定）。 */
+/** 主ボタンの文言（押す口は2つに固定）。 */
 const FOLLOW_UP_LABELS = {
   delegate: "tsukumo に頼む",
   task: "タスクにする",

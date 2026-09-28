@@ -1,5 +1,4 @@
-// 仕切り1本ぶんのドラッグ配線。新しい依存は足さず、素の `pointerdown` / `pointermove` /
-// `pointerup` で書く（ブラウザ標準の API に留める）。
+// 仕切り1本ぶんのドラッグ配線。素の `pointerdown` / `pointermove` / `pointerup` で書く。
 
 import clsx from "clsx"
 import { useEffectEvent, type PointerEvent, type ReactElement, type RefObject } from "react"
@@ -16,16 +15,14 @@ export type LayoutResizerProps = {
   readonly onChange: (percent: number) => void
   /**
    * ドラッグが終わったら、最後に渡した位置（%）で1回だけ呼ばれる（保存のタイミング）。
-   * 一度も動かさずに離したときは呼ばない（保存する変化が無く、仕切りを掴んだだけで
-   * 位置が動いて見えるのを防ぐ）。
+   * 一度も動かさずに離したときは呼ばない（仕切りを掴んだだけで位置が動いて見えるのを防ぐ）。
    */
   readonly onCommit: (percent: number) => void
 }
 
 export function LayoutResizer(props: LayoutResizerProps): ReactElement {
-  // `pointerdown` で登録するリスナはドラッグが終わるまで生き続けるので、素のクロージャだと
-  // `pointerdown` の時点の props を握ったままになる。`useEffectEvent` で包むと、呼ぶのは
-  // いつも最新のハンドラになる（`docs/coding-standards.md`「React」節）。
+  // `pointerdown` で登録するリスナはドラッグが終わるまで生き続けるので、素のクロージャだと `pointerdown` の時点の props を握ったままになる。
+  // `useEffectEvent` で包むと、呼ぶのはいつも最新のハンドラになる。
   const change = useEffectEvent((percent: number): void => {
     props.onChange(percent)
   })

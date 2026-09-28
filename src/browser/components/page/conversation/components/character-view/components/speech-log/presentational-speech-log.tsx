@@ -1,14 +1,10 @@
-// セリフのログの器だけ（<PresentationalSpeechLog>）。開く口（右上の「ログ」）と、その中身の
-// `<dialog>` を置く。フックも算出も持たず、`hooks/use-speech-log.ts` が畳んだ値と呼び先を
-// そのまま置く（docs/design.md 2章「機能の中を分ける」）。
+// セリフのログの器。開く口（右上の「ログ」）と、その中身の `<dialog>` を置く。
 //
-// 中身はキャラビューの舞台をそのまま上へ伸ばした形（docs/display.md 4.2）。立ち絵は
-// キャラビューのものと同じ `<Portrait>` を受け取って床（`.speech-log-floor`）に置き、吹き出しは
-// キャラビューと同じ `<Balloon>` で描く。どこに重ねるかは CSS（`character-view.module.css` の
-// anchor positioning）が決める。
+// 中身はキャラビューの舞台をそのまま上へ伸ばした形。
+// 立ち絵はキャラビューのものと同じ `<Portrait>` を受け取って床（`.speech-log-floor`）に置き、吹き出しはキャラビューと同じ `<Balloon>` で描く。
+// どこに重ねるかは CSS（`character-view.module.css` の anchor positioning）が決める。
 //
-// `<dialog>` は top layer に出るので、キャラビューの `overflow` には切り取られない。開閉・Esc・
-// backdrop のクリックは `components/ui/dialog/dialog.tsx` が持つ。
+// `<dialog>` は top layer に出るので、キャラビューの `overflow` には切り取られない。
 
 import { History, X } from "lucide-react"
 import type { ReactElement, ReactNode } from "react"
@@ -64,11 +60,11 @@ export function PresentationalSpeechLog({
         onClose={onClose}
         className={styles["speech-log"]}
       >
-        {/* 枠の中を丸ごと覆う。空いたところを押しても target が `<dialog>` にならない
-            （＝枠の外を押したときだけ閉じる）。 */}
+        {/* 枠の中を丸ごと覆う。
+            空いたところを押しても target が `<dialog>` にならない（＝枠の外を押したときだけ閉じる）。 */}
         <div className={styles["speech-log-stage"]}>
-          {/* 閉じる口を列より先に置く。`showModal()` は中の最初のフォーカスできる要素へ
-              フォーカスを移すので、後ろに置くと転がる列（溢れると Tab で届く）が先に選ばれる。 */}
+          {/* 閉じる口を列より先に置く。
+              `showModal()` は中の最初のフォーカスできる要素へフォーカスを移すので、後ろに置くと転がる列（溢れると Tab で届く）が先に選ばれる。 */}
           <Button
             type="button"
             variant="outline-accent-tinted"

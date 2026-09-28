@@ -1,55 +1,44 @@
-/* 成果の画面（`src/browser/components/page/achievement/`。docs/screen-design.md 13.10）。**会話の画面と
-   入れ替わる**ので、トークン消費・キャラクターの画面と同じく1枚のページとして縦に流す
-   （4領域の grid も仕切りも持たない）。**キャラクターの色（--accent）は日記の区画の枠と
-   吹き出し・ボタン・灯りにだけ載せる**（13.1 原則1）。しおり・小さな驚き・灯りの暦の
-   「日記あり」の鈴は `--diary-gold-*`（`theme.css`）。 */
+/* 成果の画面。会話の画面と入れ替わるので、1枚のページとして縦に流す（4領域の grid も仕切りも持たない）。
+   キャラクターの色（--accent）は日記の区画の枠と吹き出し・ボタン・灯りにだけ載せる。
+   しおり・小さな驚き・灯りの暦の「日記あり」の鈴は `--diary-gold-*`（`theme.css`）。 */
 .achievement {
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
-  /* 日記の吹き出しが縦に伸びないよう広く取る。しおり・小さな驚き・灯りの暦も同じ列幅で並ぶので、
-     区画だけでなく画面全体の幅で決める。60rem はトークン消費の画面（token-usage.module.css の
-     `.token-usage`）と同じ値（docs/screen-design.md 13.10）。 */
+  /* 日記の吹き出しが縦に伸びないよう広く取る。
+     しおり・小さな驚き・灯りの暦も同じ列幅で並ぶので、区画だけでなく画面全体の幅で決める。 */
   max-width: 60rem;
   margin: 0 auto;
   padding: 0 0.25rem 2rem;
 }
-/* どれも読むだけの1行のお知らせ（空の日・main が読めない・取れなかった。13.10
-   「空の日・数えられないとき」）。字の段・色・太さは `Text`（size="body" tone="ink-quiet"
-   weight="inherit"）が持つ。 */
-
-/* 日の切り替え（13.10「並べるもの」1）。題「成果」と同じ行に置く。並べ・間隔（`gap="lg"`）・
-   揃え・折り返しは `HStack` が持つ。 */
+/* 日の切り替え。題「成果」と同じ行に置く。 */
 .achievement-day-switch-nav {
   display: flex;
   align-items: center;
   gap: 0.6rem;
 }
-/* 顔（枠・地・字の色・押せないとき）は `<Button variant="outline">` が持つ。箱だけここに残す。 */
+/* 顔は `<Button variant="outline">` が持つ。箱だけここに置く。 */
 .achievement-day-switch-button {
   height: 2.25rem;
   min-width: 2.25rem;
   padding: 0 0.6rem;
   border-radius: 0.5625rem;
 }
-/* 並べ・間隔（`gap="none"`）・揃えは `VStack` が持つ。 */
 .achievement-day-switch-label {
   min-width: 9rem;
 }
-/* 字の段・色・太さは `Text`（size="label" tone="accent" weight="bold"）が持つ。字間だけここに
-   残す（語彙に無い見た目）。 */
+/* 字の段・色は `Text` が持つ。字間だけここに置く。 */
 .achievement-day-switch-relative {
   letter-spacing: 0.05em;
 }
-/* 顔（枠・地・字の色）は `<Button variant="outline">` が持つ。箱だけここに残す。 */
+/* 顔は `<Button variant="outline">` が持つ。箱だけここに置く。 */
 .achievement-day-switch-today {
   height: 2.25rem;
   padding: 0 0.75rem;
   border-radius: 0.5625rem;
 }
 
-/* 日記の区画（13.10「並べるもの」2）。地・枠にキャラクターの色をわずかに載せる（--surface-accent
-   と、accent を混ぜた枠）。 */
+/* 日記の区画。地・枠にキャラクターの色をわずかに載せる（--surface-accent と、accent を混ぜた枠）。 */
 .achievement-diary {
   display: grid;
   grid-template-columns: minmax(7rem, 9.5rem) minmax(0, 1fr);
@@ -80,23 +69,18 @@
   gap: 0.6rem;
   flex-wrap: wrap;
 }
-/* 字の段・色・太さは `Text`（size="label" tone="accent" weight="bold"）が持つ。字間だけここに
-   残す（語彙に無い見た目）。 */
+/* 字の段・色は `Text` が持つ。字間だけここに置く。 */
 .achievement-diary-name {
   letter-spacing: 0.05em;
 }
-/* 字の段・色は `Text`（size="label" tone="ink-quiet" weight="inherit"）が持つ。 */
-/* 「日記帳で読む」（13.10「並べるもの」2）。頭の行の右端へ押しやる。 */
-/* 顔（枠・地・字の色・下線）は `<Button variant="link">` が持つ。**もとは常時下線だったが、
-   Button の link は hover のときだけ下線**（`character-link-button` などと同じ振る舞いに揃えた。
-   見た目が変わる——結果に書く）。置き方・下線の余白だけここに残す。 */
+/* 「日記帳で読む」。頭の行の右端へ押しやる。
+   顔は `<Button variant="link">` が持つ。置き方・下線の余白だけここに置く。 */
 .achievement-diary-open-book {
   margin-left: auto;
   text-underline-offset: 0.2em;
 }
 
-/* 吹き出し（明朝体。13.3「例外は日記の本文だけ」。パックが書体を同梱すれば `--font-diary` が
-   それに差し替わる）。 */
+/* 吹き出し（明朝体。パックが書体を同梱すれば `--font-diary` がそれに差し替わる）。 */
 .achievement-diary-bubble {
   position: relative;
   padding: 0.9rem 1.25rem;
@@ -104,23 +88,20 @@
   border: 1.5px solid var(--accent);
   background: var(--surface-accent);
 }
-/* 本文は `Text`（element="p" size="body" tone="ink" weight="inherit"）が描く `<p>` に、書体
-   （`--font-diary`）・行の高さだけをこの要素選択子で残す（`Text` はクラスを持たずに描かれる
-   ので、タグの選択子のまま効き続ける）。 */
+/* 本文は `Text` が描く `<p>` に、書体（`--font-diary`）・行の高さだけをこの要素選択子で足す。
+   `Text` はクラスを持たずに描かれるので、タグの選択子のまま効き続ける。 */
 .achievement-diary-bubble p {
   font-family: var(--font-diary);
   line-height: 2;
 }
-/* 日記がまだ無い・書いている・書けなかった、どれも点線の枠（13.10「並べるもの」2「日記がまだ
-   無い日」・「ボタンを押せないとき・押したあと」）。 */
+/* 日記がまだ無い・書いている・書けなかった、どれも点線の枠。 */
 .achievement-diary-bubble-empty {
   padding: 0.9rem 1.25rem;
   border-radius: 1rem;
   border: 1.5px dashed var(--rule);
   min-height: 1.5rem;
 }
-/* 本文は `Text`（element="p" size="body" tone="ink-quiet" weight="inherit"）。書体・行の高さだけ
-   ここに残す（上の `.achievement-diary-bubble p` と同じ理由）。 */
+/* 本文は `Text` が描く `<p>`。書体・行の高さだけをタグの選択子で足す。 */
 .achievement-diary-bubble-empty p {
   font-family: var(--font-diary);
   line-height: 1.8;
@@ -130,7 +111,7 @@
   color: var(--ink);
 }
 
-/* 3段の進み（13.10「ボタンを押せないとき・押したあと」）。 */
+/* 3段の進み。 */
 .achievement-diary-progress {
   display: flex;
   flex-wrap: wrap;
@@ -175,7 +156,7 @@
   }
 }
 
-/* 数の札2枚（13.10「並べるもの」2。終えたタスク → コミットの順）。 */
+/* 数の札2枚（終えたタスク → コミットの順）。 */
 .achievement-cards {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -191,34 +172,30 @@
   background: var(--surface);
   min-width: 0;
 }
-/* 字の段・色は `Text`（size="heading" tone="ink" weight="inherit"）が持つ。書体・桁揃えだけここに
-   残す（語彙に無い見た目）。 */
+/* 字の段・色は `Text` が持つ。書体・桁揃えだけここに置く。 */
 .achievement-card-value {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
 }
-/* 字の段・色は `Text`（size="secondary" tone="ink-quiet" weight="inherit"）が持つ。margin だけ
-   ここに残す（既定の 0 と違うため）。 */
+/* 字の段・色は `Text` が持つ。margin だけここに置く。 */
 .achievement-card-note {
   margin: 0.2rem 0 0;
 }
 
-/* 振り返りのボタン（13.10「並べるもの」4）。 */
+/* 振り返りのボタン。 */
 .achievement-review {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 0.4rem;
 }
-/* 顔（枠・地・字の色・hover・押せないとき）は `<Button variant="outline-accent">` が持つ。太さは
-   `Text`（weight="bold"）が持つ。箱だけここに残す。 */
+/* 顔は `<Button variant="outline-accent">`、太さは `Text` が持つ。箱だけここに置く。 */
 .achievement-review-button {
   height: 2.5rem;
   padding: 0 1.125rem;
   border-radius: 0.5625rem;
 }
-/* 字の段・色は `Text`（size="secondary" tone="ink-quiet" weight="inherit"）が持つ。 */
-/* しおり（13.10「並べるもの」3）。 */
+/* しおり。 */
 .achievement-bookmark {
   display: flex;
   flex-direction: column;
@@ -254,9 +231,7 @@
   line-height: 1.7;
 }
 
-/* 小さな驚き（13.10「並べるもの」4）。並べ・間隔（`gap="md"`）は `VStack` が持つ。 */
-/* 字の段・色・太さは `Text`（size="secondary" tone="ink-quiet" weight="normal"）が持つ。margin だけ
-   ここに残す（既定の 0 と違うため）。 */
+/* 小さな驚き。margin だけここに置く。 */
 .achievement-surprise-note {
   margin-left: 0.6rem;
 }
@@ -313,7 +288,7 @@
   flex-grow: 1;
 }
 
-/* 灯りの暦（13.10「灯りの暦」）。 */
+/* 灯りの暦。 */
 .achievement-calendar {
   display: flex;
   flex-direction: column;
@@ -323,18 +298,14 @@
   border-radius: 1rem;
   background: var(--surface);
 }
-/* 並べ・間隔（`gap="md"`）・揃え・折り返しは `HStack` が持つ。字の段・色・太さは `Heading` が持つ。 */
-/* 字の段・色・太さは `Text`（size="secondary" tone="ink-quiet" weight="normal"）が持つ。margin だけ
-   ここに残す（既定の 0 と違うため）。 */
+/* 字の段・色は `Text` が持つ。margin だけここに置く。 */
 .achievement-calendar-note {
   margin-left: 0.6rem;
 }
-/* 並べ・間隔（`gap="md"`）・折り返しは `HStack` が持つ。 */
 .achievement-calendar-legend {
   margin-left: auto;
 }
-/* 字の段・色は `Text`（size="label" tone="ink-quiet" weight="inherit"）が持つ。並べ・間隔だけ
-   ここに残す（語彙に無い見た目）。 */
+/* 字の段・色は `Text` が持つ。並べ・間隔だけここに置く。 */
 .achievement-calendar-legend-item {
   display: inline-flex;
   align-items: center;
@@ -345,8 +316,7 @@
   grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 0.375rem;
 }
-/* 字の段・色は `Text`（size="label" tone="ink-quiet" weight="inherit"）が持つ。字揃えだけここに
-   残す（語彙に無い見た目）。 */
+/* 字の段・色は `Text` が持つ。字揃えだけここに置く。 */
 .achievement-calendar-head {
   text-align: center;
 }
@@ -369,22 +339,19 @@
   border-color: var(--accent);
   background: var(--surface-accent);
 }
-/* 字の段・色は `Text`（size="label" tone="ink-quiet" weight="inherit"）が持つ。置き方・書体だけ
-   ここに残す（語彙に無い見た目）。 */
+/* 字の段・色は `Text` が持つ。置き方・書体だけここに置く。 */
 .achievement-calendar-day-date {
   position: absolute;
   top: 0.3rem;
   left: 0.45rem;
   font-family: var(--font-mono);
 }
-/* 並べ（`gap="none"`）は `HStack` が持つ。 */
 .achievement-calendar-day-bell {
   position: absolute;
   top: 0.3rem;
   right: 0.4rem;
 }
-/* 字の段・色・太さは `Text`（size="label" tone="accent" weight="bold"）が持つ。置き方・字揃えだけ
-   ここに残す（語彙に無い見た目）。 */
+/* 字の段・色は `Text` が持つ。置き方・字揃えだけここに置く。 */
 .achievement-calendar-day-today {
   position: absolute;
   bottom: 0.25rem;
@@ -392,7 +359,6 @@
   right: 0;
   text-align: center;
 }
-/* 字の段・色は `Text`（size="label" tone="ink-quiet" weight="inherit"）が持つ。 */
 .achievement-calendar-future {
   height: 3.5rem;
   border-radius: 0.625rem;
@@ -408,9 +374,8 @@
   filter: drop-shadow(0 0 7px color-mix(in srgb, var(--accent) 60%, transparent));
 }
 
-/* つくもの日記帳の見開き（13.10「日記帳の見開き」）。`<dialog>` は既定の中央寄せに任せ、
-   `speech-log.tsx` のようなアンカー位置決めは使わない（キャラビューの舞台の上に重ねる
-   speech-log と違い、日記帳は成果の画面のどこからでも開くため）。 */
+/* つくもの日記帳の見開き。
+   `<dialog>` は既定の中央寄せに任せ、アンカー位置決めは使わない（日記帳は成果の画面のどこからでも開くため）。 */
 .diary-book {
   border: none;
   padding: 0;
@@ -419,23 +384,18 @@
   max-width: none;
   max-height: none;
 }
-/* 背景（backdrop）は `<Dialog backdrop="deep">` が持つ（`dialog.module.css`）。 */
-/* 並べ・間隔（`gap="lg"`）は `VStack` が持つ。 */
 .diary-book-stage {
   position: relative;
   width: min(92vw, 72rem);
 }
-/* 並べ・間隔（`gap="md"`）・揃え・折り返しは `HStack` が持つ。 */
-/* 字の段・色は `Text`（size="heading" tone="ink" weight="inherit"）が持つ。 */
 .diary-book-title {
   font-family: var(--font-serif);
   letter-spacing: 0.08em;
 }
-/* 字の段・色は `Text`（size="label" tone="ink-quiet" weight="inherit"）が持つ。 */
 .diary-book-topbar-spacer {
   flex-grow: 1;
 }
-/* 顔（枠・地・字の色・押せないとき）は `<Button variant="outline">` が持つ。箱だけここに残す。 */
+/* 顔は `<Button variant="outline">` が持つ。箱だけここに置く。 */
 .diary-book-topbar-button {
   height: 2.25rem;
   padding: 0 0.75rem;
@@ -443,8 +403,8 @@
   white-space: nowrap;
 }
 
-/* **高さを固定する**（`max-height` だけだと中の縦書き本文（`flex: 1`）が配る先の高さを
-   持てず、実測でつぶれて見えなくなった）。 */
+/* 高さを固定する。
+   `max-height` だけだと中の縦書き本文（`flex: 1`）が配る先の高さを持てず、つぶれて見えなくなる。 */
 .diary-book-spread {
   display: flex;
   min-width: 0;
@@ -481,14 +441,14 @@
 }
 .diary-book-right {
   /* 罫の間隔。本文の `line-height` と同じ値にして、1列が罫と罫のあいだに収まるようにする。
-     `--diary-scale` は本文がページに収まるまで縮める倍率で、`hooks/use-fit-diary-page.ts` が
-     測って書く。字の大きさも罫もこの倍率を掛けるので、縮めても列は罫に揃ったまま。 */
+     `--diary-scale` は本文がページに収まるまで縮める倍率で、`useFitDiaryPage` が測って書く。
+     字の大きさも罫もこの倍率を掛けるので、縮めても列は罫に揃ったまま。 */
   --diary-line: calc(2.625rem * var(--diary-scale, 1));
   --diary-text: calc(1.1875rem * var(--diary-scale, 1));
   position: relative;
-  /* 日付の列と本文を右から左へ横に並べる。罫は右端から数えるので（`270deg`）、右の余白・
-     日付の列・あいだを罫の間隔の倍数にしておけば、本文の列が罫に揃う。**本文が溢れて横に
-     送ったときは揃わない**（罫はページに引いてあり、本文と一緒には動かない）。 */
+  /* 日付の列と本文を右から左へ横に並べる。
+     罫は右端から数えるので（`270deg`）、右の余白・日付の列・あいだを罫の間隔の倍数にしておけば、本文の列が罫に揃う。
+     本文が溢れて横に送ったときは揃わない（罫はページに引いてあり、本文と一緒には動かない）。 */
   flex-direction: row-reverse;
   gap: var(--diary-line);
   padding: 2.75rem var(--diary-line) 2.5rem 2.25rem;
@@ -500,12 +460,11 @@
   );
 }
 
-/* 左ページ — しおり（成果の画面本体の `.achievement-bookmark` と同じ色。金色のしおりの帯だけ
-   ここに足す）。 */
+/* 左ページ — しおり。 */
 .diary-book-bookmark {
   position: relative;
-  /* 帯（`right` + `width` = 4.875rem）の下に字を潜らせない。見出しだけでなく要約・理由の
-     行も折り返させるため、区画ごと空ける。 */
+  /* 帯（`right` + `width` = 4.875rem）の下に字を潜らせない。
+     見出しだけでなく要約・理由の行も折り返させるため、区画ごと空ける。 */
   padding-right: 5.5rem;
 }
 .diary-book-ribbon {
@@ -559,7 +518,6 @@
 }
 
 /* 左ページ — この日に終えたこと。 */
-/* 字の段・色は `Text`（size="secondary" tone="ink-quiet" weight="inherit"）が持つ。 */
 .diary-book-tasks-heading {
   margin: 0 0 0.25rem;
   font-family: var(--font-serif);
@@ -577,24 +535,21 @@
   padding: 0.4rem 0;
   border-bottom: 1px solid color-mix(in srgb, var(--ink) 8%, transparent);
 }
-/* 字の段・色は `Text`（size="label" tone="ink-quiet" weight="inherit"）が持つ。 */
 .diary-book-task-id {
   width: 3rem;
   flex-shrink: 0;
   font-family: var(--font-mono);
 }
-/* 字の段・色は `Text`（size="secondary" tone="ink" weight="inherit"）が持つ。 */
 .diary-book-task-summary {
   font-family: var(--font-serif);
   line-height: 1.6;
 }
-/* 字の段・色は `Text`（size="label" tone="ink-quiet" weight="inherit"）が持つ。padding だけここに
-   残す（語彙に無い見た目）。 */
+/* 字の段・色は `Text` が持つ。padding だけここに置く。 */
 .diary-book-tasks-footer {
   padding-top: 0.4rem;
 }
 
-/* 左ページ — 卒業・節目の丸い印。並べ・間隔（`gap="md"`）・折り返しは `HStack` が持つ。 */
+/* 左ページ — 卒業・節目の丸い印。 */
 .diary-book-badges {
   margin-top: auto;
 }
@@ -612,21 +567,19 @@
   transform: rotate(-8deg);
   font-family: var(--font-serif);
 }
-/* 字の段・太さは `Text`（size="secondary" tone="inherit" weight="bold"）が持つ。色は
-   `.diary-book-badge` から継ぐ（画面専用の `--diary-gold`）。 */
+/* 字の段は `Text` が持つ。色は `.diary-book-badge` から継ぐ。 */
 .diary-book-badge-title {
   letter-spacing: 0.05em;
 }
-/* 字の段は `Text`（size="label" tone="inherit" weight="inherit"）が持つ。色は
-   `.diary-book-badge` から継ぐ。 */
+/* 字の段は `Text` が持つ。色は `.diary-book-badge` から継ぐ。 */
 .diary-book-badge-sub {
   margin-top: 0.15rem;
   font-family: var(--font-mono);
 }
 
 /* 右ページ — 縦書き。 */
-/* 日付・曜日・灯りを**右端の1列に上から縦に積む**（見本の形）。縦書き（`writing-mode:
-   vertical-rl`）では flex の既定の `row` が書字方向（縦）に付くので、並べ替えは要らない。
+/* 日付・曜日・灯りを右端の1列に上から縦に積む。
+   縦書き（`writing-mode: vertical-rl`）では flex の既定の `row` が書字方向（縦）に付くので、並べ替えは要らない。
    幅を罫の1列ぶんに固定して、本文の列が罫に揃うようにする。 */
 .diary-book-date-head {
   writing-mode: vertical-rl;
@@ -644,7 +597,6 @@
   color: var(--ink);
   letter-spacing: 0.15em;
 }
-/* 字の段・色は `Text`（size="secondary" tone="ink-quiet" weight="inherit"）が持つ。 */
 .diary-book-weekday {
   font-family: var(--font-serif);
   letter-spacing: 0.2em;
@@ -658,8 +610,7 @@
   font-size: var(--font-action);
   color: color-mix(in srgb, var(--accent) 45%, var(--ink-quiet));
 }
-/* 本文。ふだんは `hooks/use-fit-diary-page.ts` が収まるまで縮めるので、`overflow: auto` が
-   効くのは縮めきっても収まらないときだけ（縦書きなので左へ送る）。
+/* 本文。ふだんは `useFitDiaryPage` が収まるまで縮めるので、`overflow: auto` が効くのは縮めきっても収まらないときだけ（縦書きなので左へ送る）。
    下は署名（`.diary-book-signature`）のぶん空ける。段落のあいだは1列ぶん（罫に揃えるため）。 */
 .diary-book-body {
   writing-mode: vertical-rl;
@@ -678,7 +629,6 @@
   letter-spacing: 0.08em;
   color: var(--ink);
 }
-/* 字の段・色は `Text`（size="label" tone="ink-quiet" weight="inherit"）が持つ。 */
 .diary-book-paragraph-time {
   display: block;
 }
@@ -695,8 +645,7 @@
   color: var(--ink-quiet);
 }
 
-/* 右ページ — 署名と、白紙の日の「この日を振り返る」。左下に置く（本文の列は右から伸びる）。
-   並べ・間隔（`gap="lg"`）・揃えは `HStack` が持つ。 */
+/* 右ページ — 署名と、白紙の日の「この日を振り返る」。左下に置く（本文の列は右から伸びる）。 */
 .diary-book-signature {
   position: absolute;
   left: 1.875rem;
@@ -710,7 +659,6 @@
 .diary-book-signature-image {
   width: 6rem;
 }
-/* 字の段・色は `Text`（size="subheading" tone="ink-quiet" weight="inherit"）が持つ。 */
 .diary-book-signature-name {
   padding-bottom: 0.5rem;
   font-family: var(--font-serif);
@@ -720,20 +668,18 @@
   flex-direction: column;
   gap: 0.4rem;
 }
-/* 顔（枠・地・字の色・押せないとき・太さ700）は `<Button variant="solid-accent">` が持つ（太さは
-   `Text`〔weight="bold"〕が持つ）。箱だけここに残す。 */
+/* 顔は `<Button variant="solid-accent">` が持つ。箱だけここに置く。 */
 .diary-book-review-button {
   height: 2.75rem;
   padding: 0 1.25rem;
   border-radius: 0.875rem;
 }
-/* 字の段・色は `Text`（size="label" tone="ink-quiet" weight="inherit"）が持つ。幅だけここに
-   残す（語彙に無い見た目）。 */
+/* 字の段・色は `Text` が持つ。幅だけここに置く。 */
 .diary-book-review-note {
   max-width: 14rem;
 }
 
-/* 目次（13.10「日記帳の見開き」目次）。見開きの上に重ねる。 */
+/* 目次。見開きの上に重ねる。 */
 .diary-book-toc {
   position: absolute;
   inset: 0;
@@ -751,8 +697,7 @@
 .diary-book-toc-month {
   margin-bottom: 1rem;
 }
-/* 字の段・色・太さは `Heading`（size="subheading" tone="ink" weight="bold"）が持つ。margin だけ
-   ここに残す（既定の 0 と違うため）。 */
+/* 字の段・色は `Heading` が持つ。margin だけここに置く。 */
 .diary-book-toc-heading {
   margin: 0 0 0.4rem;
 }
@@ -780,7 +725,7 @@
   background: var(--rule-quiet);
 }
 
-/* 狭い画面では左右のページを縦に積む（右ページが上。13.10「日記帳の見開き」）。 */
+/* 狭い画面では左右のページを縦に積む（右ページが上）。 */
 @media (max-width: 760px) {
   .diary-book-stage {
     width: min(96vw, 40rem);
@@ -802,8 +747,8 @@
   .diary-book-right {
     padding: 1.25rem var(--diary-line) 1.25rem 1.25rem;
   }
-  /* ページが低く、左下に重ねると本文の列にかぶる。署名は本文の左の列として並べ、本文は
-     下まで使う。 */
+  /* ページが低く、左下に重ねると本文の列にかぶる。
+     署名は本文の左の列として並べ、本文は下まで使う。 */
   .diary-book-signature {
     position: static;
     align-self: flex-end;

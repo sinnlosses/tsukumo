@@ -1,15 +1,5 @@
-// セリフのログ（<SpeechLog>）の入口。キャラビューの右上の「ログ」から開くモーダルで、
-// キャラビューの舞台をそのまま上へ伸ばし、このセッションで言ったセリフを吹き出しのまま遡って
-// 読む。吹き出しは今のターンのぶんしか出さない
-// （前のターンの最後の1件だけ残す。docs/display.md 4.2）ので、流れていったセリフを読み返す
-// 口はここになる。
-//
-// 開閉と並びの組み立ては `hooks/use-speech-log.ts` が持ち、見た目は
-// `presentational-speech-log.tsx` が持つ（docs/design.md 2章「機能の中を分ける」の
-// container / presenter）。
-//
-// ここに残すのは「フックを呼んで、受け取ったものを渡す」だけ。条件分岐も算出もここには
-// 置かない（増えたらフックか見た目のどちらかに寄せる）。
+// セリフのログの入口。キャラビューの右上の「ログ」から開くモーダル。
+// キャラビューの舞台をそのまま上へ伸ばし、このセッションで言ったセリフを吹き出しのまま遡って読む。
 
 import type { ReactElement, ReactNode } from "react"
 
@@ -25,10 +15,7 @@ export type SpeechLogProps = {
   readonly portrait: ReactNode
   /** 最新の吹き出しに添える話し手の名前。キャラビューの最新の吹き出しと同じもの。 */
   readonly speakerName: string | undefined
-  /**
-   * いま留めている行（キャラビューと状態を共有する。`character-view/domain/pinned-speech.ts`）。
-   * 何も留めていなければ undefined。
-   */
+  /** いま留めている行（キャラビューと状態を共有する）。何も留めていなければ undefined。 */
   readonly pinnedSpeech: PinnedSpeech | undefined
   /** ログの行を押したとき。キャラビューの吹き出しと同じ状態を動かす。 */
   readonly onToggleSpeech: (turnId: number, index: number) => void

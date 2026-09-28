@@ -1,13 +1,8 @@
-// 表情を消す前の確かめ（「消す」アイコンを押した直後だけ組み立てる。`portrait-card.tsx` の
-// 「開いているか」を受けて、押したカードに添う小さな吹き出しとして出す。
-// docs/screen-design.md 13.6「表情を消す前の確かめ」）。
+// 表情を消す前の確かめ。「消す」アイコンを押した直後だけ組み立て、押したカードに添う小さな吹き出しとして出す。
 //
-// 画面全体は覆わない——`task-run-confirm.tsx` / `image-zoom.tsx` の中央寄せの確認とは違い、
-// `<dialog>` の UA 既定の中央寄せ（`inset: 0; margin: auto;`）を外し、押した口の位置（`anchor`。
-// `getBoundingClientRect()` を押した瞬間の1回だけ測ったもの）から自分で置き場所を決める。
-// `showModal()` で top layer に出す点は同じなので、`.character-card` の `overflow: hidden` には
-// 切り取られない。`::backdrop` は透明にして、画面を暗く覆わずに「外側クリックで閉じる」の
-// 読み替えだけ borrow する（`task-run-confirm.tsx` と同じ `event.target === dialogRef.current`）。
+// 画面全体は覆わず、押した口の位置（`anchor`）から自分で置き場所を決める。
+// top layer に出すので、`.character-card` の `overflow: hidden` には切り取られない。
+// backdrop は透明にして、画面を暗く覆わずに「外側クリックで閉じる」だけを借りる。
 
 import type { ReactElement } from "react"
 
@@ -17,7 +12,7 @@ import { HStack } from "../../../../../../ui/h-stack/h-stack.tsx"
 import { Text } from "../../../../../../ui/text/text.tsx"
 import styles from "../../../../character.module.css"
 
-/** 吹き出しの幅（見本の実測。`docs/screen-design.md` 13.6「表情を消す前の確かめ」）。 */
+/** 吹き出しの幅（見本の実測）。 */
 const CONFIRM_WIDTH = 300
 /** ビューポートの端から確保する余白。右端の列・下端に近いカードでも横スクロールを出さない。 */
 const VIEWPORT_MARGIN = 16
@@ -38,8 +33,7 @@ export type PortraitClearConfirmProps = {
   readonly onClose: () => void
 }
 
-/** 開いた状態で組み立てられる部品。閉じるときは呼び出し側がこの部品ごと外す
- * （`task-run-confirm.tsx` と同じ形）。 */
+/** 開いた状態で組み立てられる部品。閉じるときは呼び出し側がこの部品ごと外す。 */
 export function PortraitClearConfirm(props: PortraitClearConfirmProps): ReactElement {
   return (
     <Dialog

@@ -1,20 +1,13 @@
-// 吹き出し1件（<Balloon>。docs/design.md 6.1）。中身は React が自動でエスケープするので、
-// セリフの文字列をそのまま子要素として渡せば安全に描ける（旧の `escapeHtml` は不要になった）。
+// 吹き出し1件。
 //
-// 最新かどうかの見た目の強弱は `data-latest` を読む CSS が担う（`character-view.module.css` の
-// `.balloon[data-latest="true"]`）。キャラビューの吹き出しの並びとセリフのログの両方がこの部品を
-// 使い、最新の1件の見た目を共有する（並びの中の位置では決めない。ログでは吹き出しが1件ずつ
-// 行に包まれている）。
+// 最新かどうかの見た目の強弱は `data-latest` を読む CSS（`character-view.module.css` の `.balloon[data-latest="true"]`）が担う。
+// 並びの中の位置では決めない（セリフのログでは吹き出しが1件ずつ行に包まれている）。
 //
-// 話し手の名前は最新の1件にだけ添える（どれを誰が言ったかは尻尾が結ぶので、過去の分に
-// 繰り返さない）。本文は `.balloon-text` に分けてあり、名前と混ざらずに読める。
+// 話し手の名前は最新の1件にだけ添える（どれを誰が言ったかは尻尾が結ぶので、過去の分に繰り返さない）。
 //
-// `interaction` が `toggleable` のときは押せる（押すとそのセリフの表情へ立ち絵が遡る。
-// docs/screen-design.md 13.7「会話を遡る」）。セリフが1件も無いときのプレースホルダは
-// 遡る先の表情を持たないので `static` で渡す。押し方の読み替え（ドラッグとの見分け・キー）は
-// `chat-speech.tsx` と共有する `components/hooks/use-speech-press.ts` が持つ。
-// `<button>` ではなく `role="button"` の `<div>` にする理由も同じ（ブラウザは `<button>` の
-// 中の文字をドラッグで掴ませない）。
+// `interaction` が `toggleable` のときは押せる（押すとそのセリフの表情へ立ち絵が遡る）。
+// 押し方の読み替え（ドラッグとの見分け・キー）は `useSpeechPress` が持つ。
+// `<button>` ではなく `role="button"` の `<div>` にするのは、ブラウザが `<button>` の中の文字をドラッグで掴ませないため。
 
 import type { ReactElement } from "react"
 

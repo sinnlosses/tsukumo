@@ -1,18 +1,14 @@
-// `<SpeechLog>` のロジック（docs/design.md 2章「機能の中を分ける」の container / presenter）。
-// 開いているかどうかを持ち、それを `<dialog>` の DOM へ写し、確定した記録（`SessionRecord`）を
-// 並べるだけの形に畳む。
+// `<SpeechLog>` のロジック。
+// 開いているかどうかを持ち、確定した記録（`SessionRecord`）を並べるだけの形に畳む。
 //
-// 並びは `turnSpeeches` で引き直す — 過去のターンのタブを選んだときに吹き出しを遡らせるのと
-// 同じ材料で、別に溜めない。古い→新しいを上→下に、依頼の区切りとセリフを1本に並べる
-// （キャラビューの吹き出しの並びをそのまま上へ伸ばした形。docs/display.md 4.2）。
+// 並びは `turnSpeeches` で引き直し、別に溜めない。
+// 古い→新しいを上→下に、依頼の区切りとセリフを1本に並べる。
 // 開いた直後は並びの下端（最新）へ転がしておく。
 //
 // 並びを組み立てるのは開いている間だけ（閉じているときに記録が伸びるたびに作り直さない）。
 //
-// セリフの行を押すとそのセリフの表情へ立ち絵が遡る（docs/screen-design.md 13.7「会話を遡る」の
-// 仕事モードの対応物）。留めた状態そのものは `<CharacterView>`（`hooks/use-character-view.ts`）が
-// 持ち、ここは `pinnedSpeech` / `onToggleSpeech` として受け取って印と押す口へ写すだけ
-// （床の立ち絵と状態を共有するため。`character-view/domain/pinned-speech.ts`）。
+// セリフの行を押すとそのセリフの表情へ立ち絵が遡る。
+// 留めた状態そのものは `useCharacterView` が持ち（床の立ち絵と状態を共有するため）、ここは `pinnedSpeech` / `onToggleSpeech` として受け取って印と押す口へ写すだけ。
 
 import { useEffect, useRef, useState, type RefObject } from "react"
 import { sumBy } from "remeda"
@@ -36,8 +32,8 @@ import {
 import { isSpeechSelected, type PinnedSpeech } from "../../../domain/pinned-speech.ts"
 
 /**
- * セリフの古さの段。最新からいくつ前かで決め、`recent`（1つ前）→ `older`（2つ前）→
- * `oldest`（3つ前から先は全部）の順に薄くなる。薄さの値は CSS が持つ（`character-view.module.css`）。
+ * セリフの古さの段。最新からいくつ前かで決める。
+ * `recent`（1つ前）→ `older`（2つ前）→ `oldest`（3つ前から先は全部）の順に薄くなる。薄さの値は `character-view.module.css` が持つ。
  */
 export type SpeechAge = "latest" | "recent" | "older" | "oldest"
 
@@ -94,10 +90,9 @@ export function useSpeechLog(
   const [open, setOpen] = useState(false)
   const scrollerRef = useRef<HTMLElement>(null)
 
-  // 開いた直後に下端（最新）を見せる（`scrollTop` は React の外にある状態への書き込み）。
-  // `<Dialog>`（`components/ui/dialog/dialog.tsx`）の中の `useModalDialog` の effect より後に
-  // 走る — `<Dialog>` はこの部品の子なので、React は子の effect を親より先に実行する。閉じた
-  // `<dialog>` は描かれておらず（`display: none`）、`showModal()` の前に測ると高さが 0 で転がらない。
+  // 開いた直後に下端（最新）を見せる。
+  // この effect は `<Dialog>` の中の `useModalDialog` の effect より後に走る（`<Dialog>` はこの部品の子なので、React は子の effect を親より先に実行する）。
+  // 閉じた `<dialog>` は描かれておらず（`display: none`）、`showModal()` の前に測ると高さが 0 で転がらないので、この順が要る。
   useEffect(() => {
     const scroller = scrollerRef.current
     if (open && scroller !== null) {
@@ -128,8 +123,7 @@ function logEntries(
   const requestTimes = requestTimesByTurn(records)
   const speechCount = sumBy(turns, (turn) => turn.speeches.length)
   const lastTurnId = turns.at(-1)?.id
-  // 何も留めていないとき、印が付くのは「いま表示しているターン」の最後の行
-  // （docs/screen-design.md「何も押していないときは最新のセリフに印が付き」）。
+  // 何も留めていないとき、印が付くのは「いま表示しているターン」の最後の行。
   const activeSpeechCount = turns.find((turn) => turn.id === activeTurnId)?.speeches.length
   const defaultIndex = activeSpeechCount === undefined ? undefined : activeSpeechCount - 1
 

@@ -1,9 +1,7 @@
-// トークン消費の画面のロジック（docs/design.md 2章「機能の中を分ける」）。期間の選択（`days`）と
-// 集計の取得（TanStack Query）を持ち、見た目（`presentational-token-usage.tsx`）が
-// 算出せずにそのまま描ける形（合計込みの集計と、取れなかったかどうか）へ畳む。
+// トークン消費の画面のロジック。
+// 期間の選択（`days`）と集計の取得を持ち、合計込みの集計と取れなかったかどうかへ畳む。
 //
-// 「まだ届いていない」も「取れなかった」も、描く側から見れば空の集計（`| undefined` を
-// 内側へ運ばない）。取れなかったことは `isError` で区別する。
+// 「まだ届いていない」も「取れなかった」も、描く側から見れば空の集計。取れなかったことは `isError` で区別する。
 
 import { useQuery } from "@tanstack/react-query"
 import { useState } from "react"
@@ -25,7 +23,7 @@ export type UseTokenUsageResult = {
   readonly summary: TokenUsageSummary
   readonly total: TokenUsageTotals
   readonly isError: boolean
-  /** プラン（`docs/glossary.md`「プラン」）。まだ届いていない・取れなかったときは undefined。 */
+  /** プラン。まだ届いていない・取れなかったときは undefined。 */
   readonly plan: string | undefined
 }
 

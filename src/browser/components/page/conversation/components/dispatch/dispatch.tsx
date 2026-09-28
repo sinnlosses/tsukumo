@@ -1,7 +1,5 @@
-// 入力欄一式（<Dispatch> = <PendingAnswer> + <Composer>（<TurnStatus> を内包）。
-// docs/design.md 6.1）。答え待ちの印（タブのタイトルの先頭の「● 」・枠の色）は
-// `state.pending` からここが出す（移行の段4。段の記録は
-// `docs/history/decision.md`「design.md 12. 移行の段階」）。
+// 入力欄一式（<PendingAnswer> + <Composer>）。
+// 答え待ちの印（タブのタイトルの先頭の「● 」・枠の色）は `state.pending` からここが出す。
 
 import { useEffect, useRef, type ReactElement } from "react"
 

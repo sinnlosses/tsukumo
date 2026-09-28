@@ -1,9 +1,6 @@
-// API のエラーの種類と、ターンの失敗の理由を、画面に出す日本語にする（docs/glossary.md
-// 「ターンの失敗」）。読むのは入力欄の経過時間の行（`components/page/conversation/components/dispatch/`）と、メインビューの
-// やり取りの末尾（`components/page/conversation/components/main-view/`）の2つ。
+// API のエラーの種類と、ターンの失敗の理由を、画面に出す日本語にする。
 //
-// 綴り（`rate_limit` など）も一緒に出すのは描く側の仕事で、ここは語だけを持つ。語は
-// 「何が起きたか」を言い、直し方までは言わない（直し方は種類ごとに違い、tsukumo からは確かめられない）。
+// 語は「何が起きたか」を言い、直し方までは言わない（直し方は種類ごとに違い、tsukumo からは確かめられない）。
 
 import type { ApiErrorKind } from "../../../../../shared/session-driver/api-trouble.ts"
 import type { TurnFailure } from "../../../../../shared/session-driver/turn-failure.ts"

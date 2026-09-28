@@ -1,4 +1,4 @@
-// 日記帳の見開きに出す漢数字の日付・曜日（docs/screen-design.md 13.10「日記帳の見開き」）。
+// 日記帳の見開きに出す漢数字の日付・曜日。
 
 const KANJI_DIGITS = ["〇", "一", "二", "三", "四", "五", "六", "七", "八", "九"] as const
 
@@ -17,9 +17,10 @@ function kanjiGroup(value: number): string {
   return `${thousandsPart}${hundredsPart}${tensPart}${onesPart}`
 }
 
-/** 漢数字（13.10「日記帳の見開き」右ページの日付・左ページの節目の数。0〜9999万台まで）。
- * 「万」は1でも頭に数字を置く（一万）が、「千」「百」「十」は1のとき数字を置かない（千・百・十）
- * のが日本語の慣例で、そのとおりに書き分けている。 */
+/**
+ * 漢数字（0〜9999万台まで）。
+ * 「万」は1でも頭に数字を置く（一万）が、「千」「百」「十」は1のとき数字を置かない（千・百・十）のが日本語の慣例で、そのとおりに書き分けている。
+ */
 export function kanjiNumeral(value: number): string {
   if (value === 0) {
     return KANJI_DIGITS[0]
@@ -30,7 +31,7 @@ export function kanjiNumeral(value: number): string {
   return `${manPart}${kanjiGroup(rest)}`
 }
 
-/** 「九月十六日」の形（13.10「日記帳の見開き」右ページ）。 */
+/** 「九月十六日」の形。 */
 export function kanjiDateLabel(date: Temporal.PlainDate): string {
   return `${kanjiNumeral(date.month)}月${kanjiNumeral(date.day)}日`
 }
