@@ -192,7 +192,7 @@ describe("useChatView の弾む行", () => {
   })
 })
 
-describe("useChatView の出すタイミング（docs/screen-design.md 13.7）", () => {
+describe("useChatView の出すタイミング（docs/architecture/screen-design.md 13.7）", () => {
   /** `Temporal.Now.instant` を差し込み、`useRevealedChatLog` が読む「いま」を固定する。 */
   function mockNow(ms: number): ReturnType<typeof vi.spyOn> {
     const clock = vi.spyOn(Temporal.Now, "instant")

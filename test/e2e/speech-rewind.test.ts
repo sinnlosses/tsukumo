@@ -3,7 +3,7 @@ import { describe, it } from "vitest"
 import { useScenarioRun } from "./scenario-run.ts"
 
 // 仕事モードで、吹き出し・セリフのログの行を押すと立ち絵がその表情へ遡る
-// （docs/architecture/testing.md「E2E のシナリオの一覧」・docs/screen-design.md「会話を遡る」）。
+// （docs/architecture/testing.md「E2E のシナリオの一覧」・docs/architecture/screen-design.md「会話を遡る」）。
 // `question-multi`（3つのセリフが表情違いで並ぶ場面）を借り、いちばん新しくない行を押す。
 
 const run = useScenarioRun()

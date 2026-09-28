@@ -335,9 +335,9 @@ node scripts/stop.ts           # 動いている tsukumo を一覧する（--por
 - [`docs/architecture/character-pack.md`](./docs/architecture/character-pack.md) — キャラクターパック（形・探索順・画面から書くときの境界・雑談の記憶の置き場）
 - [`docs/architecture/testing.md`](./docs/architecture/testing.md) — テスト（対象ごとの方法・E2E・目視確認の手順）
 - [`docs/architecture/build.md`](./docs/architecture/build.md) — ビルドと依存（事前の組み立て・HMR・足す依存の一覧）
-- [`docs/screen-design.md`](./docs/screen-design.md) — 画面のデザイン（色・書体・レイアウトの計画とトークン、雑談モードの画面、背景、画面のナビの帯）
-- [`docs/display.md`](./docs/display.md) — 表示（セリフとレポートの出力分離、レポートの記法の規約、立ち絵・吹き出し・メインビュー・入力欄・サイドバーなど各表示物の仕様）
-- [`docs/chat-mode.md`](./docs/chat-mode.md) — 雑談モード（遡れる幅、記憶の圧縮と忘却、残す旗、会話のアーカイブ、人格への書き戻し）
+- [`docs/architecture/screen-design.md`](./docs/architecture/screen-design.md) — 画面のデザイン（色・書体・レイアウトの計画とトークン、雑談モードの画面、背景、画面のナビの帯）
+- [`docs/architecture/display.md`](./docs/architecture/display.md) — 表示（セリフとレポートの出力分離、レポートの記法の規約、立ち絵・吹き出し・メインビュー・入力欄・サイドバーなど各表示物の仕様）
+- [`docs/architecture/chat-mode.md`](./docs/architecture/chat-mode.md) — 雑談モード（遡れる幅、記憶の圧縮と忘却、残す旗、会話のアーカイブ、人格への書き戻し）
 - [`docs/coding-standards.md`](./docs/coding-standards.md) — コーディング規約（**会話内容の扱い**を含む）
 - [`docs/glossary.md`](./docs/glossary.md) — 用語集（日本語表記とコード上の識別子の対応）
 - [`docs/workflow.md`](./docs/workflow.md) — このリポジトリでの進捗管理の上乗せ

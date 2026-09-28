@@ -88,7 +88,7 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
     expect(within(workList()).getByText("まだ依頼が無い")).not.toBeNull()
   })
 
-  it("雑談中の依頼待ちは「<名前> とおしゃべり中」になり、印が埋まる（docs/screen-design.md 13.9）", () => {
+  it("雑談中の依頼待ちは「<名前> とおしゃべり中」になり、印が埋まる（docs/architecture/screen-design.md 13.9）", () => {
     renderScreenNav({ chatMode: true, character: characterInfo({ name: "架空の精霊" }) })
 
     expect(document.querySelector(".screen-nav-work-word")?.textContent).toBe(
@@ -122,7 +122,7 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
     expect(document.querySelector(".screen-nav-work-summary")?.textContent).toBe("Bash: echo dummy")
   })
 
-  describe("背景のタスク（docs/screen-design.md 13.9「背景のタスク」）", () => {
+  describe("背景のタスク（docs/architecture/screen-design.md 13.9「背景のタスク」）", () => {
     const FINISHED_TURN = {
       kind: "finished",
       startedAt: 0,
@@ -215,7 +215,7 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
     })
   })
 
-  describe("振り返り中（成果の振り返り。docs/screen-design.md 13.9「いまの作業」）", () => {
+  describe("振り返り中（成果の振り返り。docs/architecture/screen-design.md 13.9「いまの作業」）", () => {
     it("diaryWriting が writing なら「振り返り中」で、要約は「<日付>の日記を書いています」", () => {
       renderScreenNav({
         diaryWriting: { kind: "writing", date: "2026-09-23", startedAt: 0, stage: "read" },

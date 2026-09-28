@@ -1,6 +1,6 @@
-// 訪問の台本の1行（と帰りの一言）を出しておく間（`docs/screen-design.md`「間は字数で延ばす」）。
+// 訪問の台本の1行（と帰りの一言）を出しておく間（`docs/architecture/screen-design.md`「間は字数で延ばす」）。
 
-/** 間の下限（`docs/screen-design.md`「吹き出しどうしは最低2秒空ける」）。 */
+/** 間の下限（`docs/architecture/screen-design.md`「吹き出しどうしは最低2秒空ける」）。 */
 export const VISIT_LINE_MIN_INTERVAL_MS = 2_000
 
 /** 字数1つが延ばす間。 */

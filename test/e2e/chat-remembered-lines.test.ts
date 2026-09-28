@@ -2,7 +2,7 @@ import { describe, it } from "vitest"
 
 import { useScenarioRun } from "./scenario-run.ts"
 
-// 雑談のサイドバー3段目「覚えていること」（docs/screen-design.md「雑談のときのサイドバー」）。
+// 雑談のサイドバー3段目「覚えていること」（docs/architecture/screen-design.md「雑談のときのサイドバー」）。
 // 場面 `chat-remembered-lines` は、短い1行とチップの表示幅（20字）を超える長い1行を載せる。
 //
 // チップの開閉は「編集」を押すと `openLine` ごと初期化されるので（`PersonaMemorySection`）、

@@ -21,12 +21,12 @@ afterEach(() => {
   cleanup()
 })
 
-// この規約はレンダラが描けるものの一覧でもある（docs/display.md「表示」）。文面だけが先に
+// この規約はレンダラが描けるものの一覧でもある（docs/architecture/display.md「表示」）。文面だけが先に
 // 進んで「勧めた記法が描かれない」が起きないよう、名乗った要素と class を両側に突き合わせる。
 
 /**
  * tsukumo が配る mermaid（package.json で 12.0.0 に固定）で実際に描けることを目視で確かめた種類
- * （11.15.0 と 12.0.0 の両方で確かめた。docs/display.md「表示」）。`mermaid` の塊の説明が勧めてよいのはこの並びだけで、増やすときは
+ * （11.15.0 と 12.0.0 の両方で確かめた。docs/architecture/display.md「表示」）。`mermaid` の塊の説明が勧めてよいのはこの並びだけで、増やすときは
  * 先にメインビューへ出して描けることを確かめる。
  */
 const DRAWN_MERMAID_KINDS = [
@@ -134,7 +134,7 @@ describe("REPORT_NOTATION_PROMPT", () => {
 
   it("note の6種は、どれも部品がラベルを出し、その先に見た目が付いている", () => {
     // 部品（ラベルの文字）→ CSS の鎖を6種ぶん見る。種別の文字を
-    // 出すのは tsukumo 側（docs/screen-design.md「意味を固定した色は誰が来ても変わらず、
+    // 出すのは tsukumo 側（docs/architecture/screen-design.md「意味を固定した色は誰が来ても変わらず、
     // 文字と対でだけ増やす」）なので、印だけ足してラベルを足し忘れる
     // と、素の note と同じ「何の塊か読み取れない」状態に戻る。種別の並びは
     // `REPORT_NOTE_KINDS` が正典（並びの理由もそこにある）。
@@ -159,13 +159,13 @@ describe("REPORT_NOTATION_PROMPT", () => {
 
   it("レポートの文体は中立と決めている（キャラクターの口調はセリフが担う）", () => {
     // どのパックに切り替えても本文の読みやすさが変わらないようにするための決定
-    // （docs/display.md「レポートの文体は tsukumo が決める」）。文体を persona.md 側に持たせない。
+    // （docs/architecture/display.md「レポートの文体は tsukumo が決める」）。文体を persona.md 側に持たせない。
     expect(REPORT_NOTATION_PROMPT).toContain("レポートは中立の文体で書く")
   })
 
   it("レポートは日本語で書くと決め、送る前の検算にも入れている", () => {
     // 読んだコードや英語の文面に引きずられて本文が英語で出たことがある
-    // （docs/display.md「レポートは必ず日本語で書かせる」）。
+    // （docs/architecture/display.md「レポートは必ず日本語で書かせる」）。
     expect(REPORT_NOTATION_PROMPT).toContain("レポートは必ず日本語で書く")
     const beforeSend = REPORT_NOTATION_PROMPT.split("### 送る前に消すもの").at(1) ?? ""
     expect(beforeSend).toContain("日本語でない地の文")
@@ -211,7 +211,7 @@ describe("REPORT_NOTATION_PROMPT", () => {
   })
 
   it("検証の結果は checks に分けさせ、結論は読み手から見た変化で、文字より視覚情報を選ばせる", () => {
-    // 結論の括弧に検証の結果が混ざって読みにくかった（docs/display.md「表示」）。
+    // 結論の括弧に検証の結果が混ざって読みにくかった（docs/architecture/display.md「表示」）。
     expect(REPORT_NOTATION_PROMPT).toContain("検証の結果を `conclusion` と `sections` に書かない")
     expect(REPORT_NOTATION_PROMPT).toContain("読み手から見た変化")
     expect(REPORT_NOTATION_PROMPT).toContain("8. **残ったものは、文字より視覚情報で見せる。**")
@@ -232,7 +232,7 @@ describe("REPORT_NOTATION_PROMPT", () => {
   })
 
   it("印の使いどころは「文へ倒す条件」ではなく用途で書く", () => {
-    // 3列目を「迷ったときの判断」から「使う目安」へ反転させた決定（docs/display.md「表示」）。
+    // 3列目を「迷ったときの判断」から「使う目安」へ反転させた決定（docs/architecture/display.md「表示」）。
     // 下限（「3行以上あるときだけ」）を各行に並べると、印を使える内容まで文のまま残る。
     expect(REPORT_NOTATION_PROMPT).toContain("| 内容 | 使う印 | 使う目安 |")
     expect(REPORT_NOTATION_PROMPT).not.toContain("迷ったときの判断")
@@ -258,7 +258,7 @@ describe("REPORT_NOTATION_PROMPT", () => {
 
   it("地の文の段落は3文までとし、4文目の逃がし先に表・箇条書き・fold を挙げる", () => {
     // 全体の量は数で縛らないが、段落の単位にだけは数で縛る決定
-    // （docs/display.md「読む時間を減らすために足すのは、規約の側」）。
+    // （docs/architecture/display.md「読む時間を減らすために足すのは、規約の側」）。
     expect(REPORT_NOTATION_PROMPT).toContain("地の文の段落は3文まで")
     expect(REPORT_NOTATION_PROMPT).toContain("4文目が要るなら、表・箇条書きへ移すか `fold` で畳む")
   })

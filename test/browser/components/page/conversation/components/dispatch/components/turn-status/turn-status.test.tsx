@@ -153,7 +153,7 @@ describe("TurnStatus", () => {
 
     expect(calls).toEqual([])
   })
-  describe("API の知らせ（docs/display.md 4.2「入力欄」）", () => {
+  describe("API の知らせ（docs/architecture/display.md 4.2「入力欄」）", () => {
     it("失敗で終わったターンは「所要」ではなく「失敗」と理由の字を出す（色だけに頼らない）", () => {
       renderTurnStatus({
         turn: {

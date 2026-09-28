@@ -49,7 +49,7 @@ describe("writeRememberedCharacter", () => {
   })
 })
 
-// 新しいセッションの既定（モデル・effort・許可モード。docs/screen-design.md「設定の置き場所」）。壊れた
+// 新しいセッションの既定（モデル・effort・許可モード。docs/architecture/screen-design.md「設定の置き場所」）。壊れた
 // state.json でも起動を止めないので、読めないときは同梱の既定へ畳む。
 describe("readRememberedSessionDefault", () => {
   it("ファイルが無いときは同梱の既定（Opus・medium・auto）", () => {
@@ -219,7 +219,7 @@ describe("writeRememberedSessionDefault", () => {
   })
 })
 
-// 歯車の「訪問」のオン・オフ（docs/screen-design.md「設定の置き場所」）。覚え方は「新しいセッションの既定」と
+// 歯車の「訪問」のオン・オフ（docs/architecture/screen-design.md「設定の置き場所」）。覚え方は「新しいセッションの既定」と
 // 同じ1ファイルだが、値そのものはブール1つだけ。壊れた state.json でも起動を止めないので、
 // 読めないときは同梱の既定（する = true）へ畳む。
 describe("readRememberedVisitEnabled", () => {

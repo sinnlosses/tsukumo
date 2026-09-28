@@ -7,7 +7,7 @@ import type { SessionState } from "../../../../../../../src/shared/session/sessi
 import { putSession, putState, stateWith } from "../../../../../session-store.ts"
 
 /**
- * 書き終わりの知らせ（`docs/screen-design.md`「書き終わりの知らせ」）。フィクスチャの日付は
+ * 書き終わりの知らせ（`docs/architecture/screen-design.md`「書き終わりの知らせ」）。フィクスチャの日付は
  */
 
 afterEach(() => {

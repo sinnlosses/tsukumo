@@ -62,7 +62,7 @@
   background: color-mix(in srgb, var(--rule), var(--accent) 25%);
 }
 /* 実行中の手順の要約だけを縮める（要約の末尾が「…」になる）。
-   見本は12pxの等幅だが、`docs/screen-design.md`「Type」の段を増やさず、既存の13px（`.screen-nav-work-toggle` の `font-size` を継ぐ）に宛てる。 */
+   見本は12pxの等幅だが、`docs/architecture/screen-design.md`「Type」の段を増やさず、既存の13px（`.screen-nav-work-toggle` の `font-size` を継ぐ）に宛てる。 */
 .screen-nav-work-summary {
   flex: 1 1 auto;
   min-width: 0;

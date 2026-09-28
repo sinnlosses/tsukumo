@@ -160,9 +160,9 @@ node scripts/stop.ts           # 動いている tsukumo の一覧（--port <n> 
 | ----------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
 | 要件・やらないこと・技術制約・未決事項を知りたい                                                | `docs/requirements.md`                                                             |
 | 3層・プロトコル・部品・置き場所を決める                                                         | `docs/architecture.md`（置き場所は「全体構成」）                                   |
-| 色・書体・レイアウト                                                                            | `docs/screen-design.md`                                                            |
-| セリフとレポートの分離・レポートの記法・各表示物の仕様                                          | `docs/display.md`                                                                  |
-| 雑談モード                                                                                      | `docs/chat-mode.md`                                                                |
+| 色・書体・レイアウト                                                                            | `docs/architecture/screen-design.md`                                               |
+| セリフとレポートの分離・レポートの記法・各表示物の仕様                                          | `docs/architecture/display.md`                                                     |
+| 雑談モード                                                                                      | `docs/architecture/chat-mode.md`                                                   |
 | なぜ今の形なのか                                                                                | `docs/architecture.md`                                                             |
 | ブラウザ側の状態・Markdown・立ち絵の動き・CSS・`components/ui/` の部品の作法                    | `docs/architecture/browser.md`                                                     |
 | キャラクターパックの形・探索順・画面から書くときの境界                                          | `docs/architecture/character-pack.md`                                              |

@@ -171,7 +171,7 @@ describe("ConversationLayout", () => {
   })
 
   // 枠と角丸を外して背景を敷く class（`.layout-ground`）は、キャラビューと雑談中のメインビューが
-  // 共有する（docs/screen-design.md「背景」）。見えているかは目視で、ここが見るのは class の付き方だけ
+  // 共有する（docs/architecture/screen-design.md「背景」）。見えているかは目視で、ここが見るのは class の付き方だけ
   // （*.module.css の class 名はテストではそのまま返る。`cssModuleIdentityPlugin`）。
   it("枠を持たない領域の class は、既定ではキャラビューにだけ付く", () => {
     renderLayout()

@@ -563,7 +563,7 @@ describe("createSessionManager", () => {
     })
 
     // 前の駆動は閉じ、新しい駆動が画面から選ばれた名前で起きている（＝覚える側。
-    // docs/screen-design.md「設定の置き場所」）。
+    // docs/architecture/screen-design.md「設定の置き場所」）。
     expect(started[0]?.stub.calls).toContain("close")
     expect(started).toHaveLength(2)
     expect(started[1]?.selection).toEqual({ by: "name", name: "fictional" })
@@ -676,7 +676,7 @@ describe("createSessionManager", () => {
     expect(started).toHaveLength(2)
     // 変わるのは「どの transcript の続きから始めるか」だけ。
     expect(started[1]?.resume).toEqual({ by: "id", sessionId: "架空の別セッション" })
-    // パックは「いま出しているまま」（名前で渡すと覚えた値が書き換わる。docs/screen-design.md「設定の置き場所」）。
+    // パックは「いま出しているまま」（名前で渡すと覚えた値が書き換わる。docs/architecture/screen-design.md「設定の置き場所」）。
     expect(started[1]?.selection).toEqual({ by: "current" })
     expect(started[1]?.chat).toBe(false)
     // 起動の1回目は今までどおり印から探す。
@@ -705,7 +705,7 @@ describe("createSessionManager", () => {
 
   it("session.setChatMode で雑談を指定して起こし直し、いま出しているパックは保つ", async () => {
     // 雑談の切り替えは `systemPrompt` の差し替えなので、`session.switchCharacter` と同じ起こし直しに
-    // なる（docs/chat-mode.md「雑談モード」）。パックは変えないことをここで見る。
+    // なる（docs/architecture/chat-mode.md「雑談モード」）。パックは変えないことをここで見る。
     const started: SessionLaunchRequest[] = []
     const manager = createSessionManager({
       now: () => 1_000,
@@ -753,7 +753,7 @@ describe("createSessionManager", () => {
     expect(started[1]?.chat).toBe(true)
     // パックは「いま出しているまま」として渡す（名前では渡さない）。名前で渡すと画面から
     // 選ばれたのと区別がつかず、モードを切り替えただけで覚えた値が書き換わる
-    // （docs/screen-design.md「設定の置き場所」）。
+    // （docs/architecture/screen-design.md「設定の置き場所」）。
     expect(started[1]?.selection).toEqual({ by: "current" })
     // 起動の1回目は初期パック（こちらも覚えない側）。
     expect(started[0]?.selection).toEqual({ by: "initial" })
@@ -959,7 +959,7 @@ describe("createSessionManager", () => {
       })
 
       // 渡るのは `promptWithoutRecord`（記録に残さない口）だけで、`prompt` は呼ばれない
-      // ——ログにも記録にも雑談の会話のアーカイブにも残らない（docs/screen-design.md「雑談モードの画面」）。
+      // ——ログにも記録にも雑談の会話のアーカイブにも残らない（docs/architecture/screen-design.md「雑談モードの画面」）。
       expect(stub.calls).toEqual([`promptWithoutRecord:${CHAT_NUDGE_PROMPT}`])
     })
 
@@ -1718,7 +1718,7 @@ describe("createSessionManager", () => {
 
   describe("雑談の会話のアーカイブ", () => {
     // `chatArchive` の実装（ファイルI/O）は adapter のテストが持つ。ここで見るのは
-    // 「いつ・何を渡すか」（`session-manager.receive` の分岐）だけ（docs/chat-mode.md「雑談モード」）。
+    // 「いつ・何を渡すか」（`session-manager.receive` の分岐）だけ（docs/architecture/chat-mode.md「雑談モード」）。
 
     function startArchiveManagerWithStub() {
       const stub = createStubDriver()
@@ -2492,7 +2492,7 @@ describe("createSessionManager", () => {
   })
 })
 
-// 新しいセッションの既定（docs/screen-design.md「設定の置き場所」）。覚えるのは配線層で、
+// 新しいセッションの既定（docs/architecture/screen-design.md「設定の置き場所」）。覚えるのは配線層で、
 // ここが持つのは「受け取ったら覚えさせて、姿へ流し直す」「いまのセッションは起こし直さない」の2つ。
 describe("createSessionManager（新しいセッションの既定）", () => {
   it("session.setSessionDefault を覚えさせ、姿に載せて配る", async () => {
@@ -2523,7 +2523,7 @@ describe("createSessionManager（新しいセッションの既定）", () => {
     })
   })
 
-  // 帯のドロップダウンはセッション限り（`docs/screen-design.md`「設定の置き場所」）。既定は書き換わらない。
+  // 帯のドロップダウンはセッション限り（`docs/architecture/screen-design.md`「設定の置き場所」）。既定は書き換わらない。
   it("帯の session.setModel / session.setPermissionMode では既定を覚えない", async () => {
     const { manager, stub, remembered } = startManagerWithStub()
 
@@ -2535,7 +2535,7 @@ describe("createSessionManager（新しいセッションの既定）", () => {
   })
 })
 
-// 歯車の「訪問」のオン・オフ（`docs/screen-design.md`「設定の置き場所」）。覚え方は「新しいセッションの既定」と
+// 歯車の「訪問」のオン・オフ（`docs/architecture/screen-design.md`「設定の置き場所」）。覚え方は「新しいセッションの既定」と
 // 同じ（`~/.tsukumo/state.json`）だが、訪問の見張りが即座に読む値でもある（実地での
 // 「訪問中にオフにすると帰る」「オフのままだと来ない」は下の `describe("訪問")` で確かめる）。
 describe("createSessionManager（訪問のオン・オフ）", () => {
@@ -3029,7 +3029,7 @@ describe("訪問", () => {
     expect(run.pendingTimers()).toBe(0)
   })
 
-  // 歯車の「訪問」のオン・オフ（`docs/screen-design.md`「設定の置き場所」「画面のナビゲーション」）。
+  // 歯車の「訪問」のオン・オフ（`docs/architecture/screen-design.md`「設定の置き場所」「画面のナビゲーション」）。
   it("歯車をオフにすると訪問中でもその場で帰り、visitEnabled も画面へ流れる", async () => {
     const run = startManagerWithVisit(GUESTS)
     await Promise.resolve()

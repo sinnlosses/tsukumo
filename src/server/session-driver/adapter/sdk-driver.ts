@@ -145,7 +145,7 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
       }
     },
     // 確認の合図をここで流さない。
-    // 帯に表示する値は次のターンの `Stop` フック入力から読み取ったものだけで、送った値を先回りで流すと「押した値へ先に倒さない」に反する（`docs/screen-design.md`「動き方の操作子」）。
+    // 帯に表示する値は次のターンの `Stop` フック入力から読み取ったものだけで、送った値を先回りで流すと「押した値へ先に倒さない」に反する（`docs/architecture/screen-design.md`「動き方の操作子」）。
     setEffort: (effort) => session.applyFlagSettings({ effortLevel: effort }),
     setPermissionMode: (mode) => session.setPermissionMode(mode),
     close: () => {

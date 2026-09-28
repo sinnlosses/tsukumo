@@ -35,7 +35,7 @@ export const CHAT_CONSOLIDATION_MODEL = "haiku"
 export const CHAT_CONSOLIDATION_TIMEOUT_MS = 120_000
 
 /**
- * 出力の形の文字数・件数の上限（正典は `docs/chat-mode.md`「窓から溢れた会話は定着で畳む」の「受け取る形」の表）。
+ * 出力の形の文字数・件数の上限（正典は `docs/architecture/chat-mode.md`「窓から溢れた会話は定着で畳む」の「受け取る形」の表）。
  * 足りなければここだけ直す。
  */
 export const CHAT_CONSOLIDATION_LIMITS = {

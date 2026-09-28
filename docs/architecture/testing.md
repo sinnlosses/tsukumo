@@ -283,7 +283,7 @@ Network タブで `/ws` の upgrade が101を返し、`hello` フレーム（購
 7. ウィンドウの幅を変えて、**折り返しがブラウザ側で追従する**こと
 8. `orca` が使えない状況を作っても、プロセスが落ちずに配信を続けること
 9. レポートに出た git 管理下のパス（inline code・フェンスのファイル名・相対リンク）を押すと、
-   **Orca のエディタでそのファイルが開く**こと（`docs/display.md` 4.2「各表示物」）
+   **Orca のエディタでそのファイルが開く**こと（`docs/architecture/display.md` 4.2「各表示物」）
 
 `evidence` には「どの環境で何を見たか」を1行で書く。
 
@@ -292,9 +292,9 @@ Network タブで `/ws` の upgrade が101を返し、`hello` フレーム（購
 `turn-resumed` → `speech` → ターンの終わりを2回はさみ、最後に完了の一言と最終 `report` が続く。
 `turn-resumed` が届いてから次の `speech` / `report` が届くまでのあいだも、メインビューは前の
 `report` を出したままで、吹き出しは「（まだ発話がありません）」に戻らず前のセリフを保っている
-ことを確かめる（`docs/screen-design.md` 13.9「背景のタスク」）。
+ことを確かめる（`docs/architecture/screen-design.md` 13.9「背景のタスク」）。
 
-**書き終わりの知らせ（`docs/screen-design.md` 13.10「書き終わりの知らせ」）を確かめるときは
+**書き終わりの知らせ（`docs/architecture/screen-design.md` 13.10「書き終わりの知らせ」）を確かめるときは
 疑似セッションの場面 `diary-written`（`TSUKUMO_FAKE_SCENE=diary-written`）を使う。** `diary-requested`
 → `diary-drafting` → `diary-stage`（`write` → `pick`）→ `diary-written` と流れ、成果の画面
 （`#achievement?date=2026-09-20`）でも会話の画面でも画面の下中央に札が出ることと、「日記帳で開く」で

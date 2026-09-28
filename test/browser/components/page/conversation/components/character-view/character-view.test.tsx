@@ -153,7 +153,7 @@ describe("CharacterView", () => {
   })
 })
 
-describe("CharacterView（吹き出し・セリフのログを押すと遡る。docs/screen-design.md 13.7）", () => {
+describe("CharacterView（吹き出し・セリフのログを押すと遡る。docs/architecture/screen-design.md 13.7）", () => {
   const CHARACTER_WITH_PROUD: NonNullable<SessionState["character"]> = {
     ...FIXTURE_CHARACTER,
     expressions: [
@@ -209,7 +209,7 @@ describe("CharacterView（吹き出し・セリフのログを押すと遡る。
     expect(
       document.querySelector(".speech-log-floor .portrait")?.getAttribute("data-expression"),
     ).toBe("default")
-    // 状態は1つ（吹き出しとログで共有する。docs/display.md「吹き出し」）。
+    // 状態は1つ（吹き出しとログで共有する。docs/architecture/display.md「吹き出し」）。
     expect(
       document.querySelector(".character-layout .portrait")?.getAttribute("data-expression"),
     ).toBe("default")

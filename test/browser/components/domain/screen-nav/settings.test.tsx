@@ -9,7 +9,7 @@ import {
 import { typedElement } from "../../../../typed-element.ts"
 import { putSession, type CommandSpy } from "../../../session-store.ts"
 
-// 帯の右端の歯車で開く設定（docs/screen-design.md「設定の置き場所」「画面のナビゲーション」）。
+// 帯の右端の歯車で開く設定（docs/architecture/screen-design.md「設定の置き場所」「画面のナビゲーション」）。
 // いまここにある群は「画面の色」・
 // 「新しいセッションの既定」・「書き上げる演出の速さ」・「訪問」の4つ。
 // 保存の仕方は `saveAppearanceColorOverride` のままなので、鍵も検証も
@@ -305,7 +305,7 @@ describe("設定の歯車（帯の右端）", () => {
   })
 })
 
-// 新しいセッションの既定（docs/screen-design.md「設定の置き場所」）。覚えるのはサーバなので、ここが見るのは
+// 新しいセッションの既定（docs/architecture/screen-design.md「設定の置き場所」）。覚えるのはサーバなので、ここが見るのは
 // 「届いた値をそのまま出す」「選ぶと `session.setSessionDefault` を送る」「全部許すは並べない」の3つ。
 describe("設定の歯車（新しいセッションの既定）", () => {
   it("届いた既定をそのまま出す", () => {
@@ -368,7 +368,7 @@ describe("設定の歯車（新しいセッションの既定）", () => {
     ])
   })
 
-  // 帯のドロップダウン（セッション限り）は既定を書き換えない（`docs/screen-design.md`「設定の置き場所」）。
+  // 帯のドロップダウン（セッション限り）は既定を書き換えない（`docs/architecture/screen-design.md`「設定の置き場所」）。
   it("帯でモデルを変えても session.setSessionDefault は送らない", () => {
     const sent: unknown[] = []
     renderScreenNav(
@@ -389,7 +389,7 @@ describe("設定の歯車（新しいセッションの既定）", () => {
   })
 })
 
-// effort の欄（帯の判定 `resolveEffortSelect` をそのまま再利用する。`docs/screen-design.md`
+// effort の欄（帯の判定 `resolveEffortSelect` をそのまま再利用する。`docs/architecture/screen-design.md`
 // 13.6）。帯のドロップダウンと同じ対応表（`modelEffortSupport`）から、既定のモデルの対応を
 // 引くので、帯といま出しているモデルが違っても既定のモデルの対応がそのまま出る。
 describe("設定の歯車（新しいセッションの既定の effort）", () => {
@@ -481,7 +481,7 @@ function defaultSelect(label: string): HTMLSelectElement {
   )
 }
 
-// 書き上げる演出の速さ（docs/screen-design.md「設定の置き場所」。`saveRevealSpeed`）。利用者の設定
+// 書き上げる演出の速さ（docs/architecture/screen-design.md「設定の置き場所」。`saveRevealSpeed`）。利用者の設定
 // なので色と同じ `localStorage`（保存先は違う鍵）。
 describe("設定の歯車（書き上げる演出の速さ）", () => {
   it("既定は「標準」", () => {
@@ -529,7 +529,7 @@ describe("設定の歯車（書き上げる演出の速さ）", () => {
   })
 })
 
-// 訪問のオン・オフ（docs/screen-design.md「設定の置き場所」「画面のナビゲーション」）。覚えるのはいま動いているセッションの
+// 訪問のオン・オフ（docs/architecture/screen-design.md「設定の置き場所」「画面のナビゲーション」）。覚えるのはいま動いているセッションの
 // 値だけ（ディスクには覚えない）ので、ここが見るのは「届いた値をそのまま出す」「選ぶと
 // `visit.setEnabled` を送る」の2つ。
 describe("設定の歯車（訪問）", () => {

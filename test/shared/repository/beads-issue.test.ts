@@ -175,7 +175,7 @@ describe("taskIdOfBeadsId", () => {
   })
 })
 
-// タスクファイルの枠の7節（`docs/display.md`「タスクのモーダル」が指す `taskfile.SECTION_HEADINGS`）。
+// タスクファイルの枠の7節（`docs/architecture/display.md`「タスクのモーダル」が指す `taskfile.SECTION_HEADINGS`）。
 // `task show` と同じ順にこの7つを必ず出す（中身が空でも見出しだけ）。
 const FRAME_HEADINGS = [
   "## 目的・背景",

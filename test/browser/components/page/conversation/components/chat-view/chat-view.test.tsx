@@ -88,7 +88,7 @@ describe("ChatView", () => {
     renderChatView({ records: [] })
 
     expect(document.querySelectorAll("[data-speaker]")).toHaveLength(0)
-    // 最初の一言を促すのはこの文面（促す操作子は立ち絵へ移った。docs/screen-design.md「雑談モードの画面」）。
+    // 最初の一言を促すのはこの文面（促す操作子は立ち絵へ移った。docs/architecture/screen-design.md「雑談モードの画面」）。
     expect(
       screen.getByText("（まだ何も話していません。立ち絵をつつくと話しかけてくれます）"),
     ).toBeTruthy()
@@ -391,7 +391,7 @@ describe("ChatView のセリフを遡る", () => {
   })
 })
 
-describe("ChatView のセリフが現れる（docs/screen-design.md「雑談モードの画面」）", () => {
+describe("ChatView のセリフが現れる（docs/architecture/screen-design.md「雑談モードの画面」）", () => {
   /** 弾む行（`ChatSpeech` が出すクラス）。 */
   function popEntries(): readonly Element[] {
     return [...document.querySelectorAll(".chat-entry-pop")]
@@ -486,7 +486,7 @@ describe("ChatView のセリフが現れる（docs/screen-design.md「雑談モ�
 })
 
 describe("ChatView の「...」（返事を待つ間）", () => {
-  /** 「...」の行（`ChatTyping`。docs/screen-design.md「雑談モードの画面」）。 */
+  /** 「...」の行（`ChatTyping`。docs/architecture/screen-design.md「雑談モードの画面」）。 */
   function typingEntry(): Element | null {
     return document.querySelector('[data-speaker="typing"]')
   }
@@ -590,7 +590,7 @@ describe("ChatView のホバー", () => {
 })
 
 describe("ChatView の立ち絵をつつく", () => {
-  /** 載せたときに出る案内の字（`NudgePortrait` が持つ。docs/screen-design.md「雑談モードの画面」）。 */
+  /** 載せたときに出る案内の字（`NudgePortrait` が持つ。docs/architecture/screen-design.md「雑談モードの画面」）。 */
   const NUDGE_HINT = "話しかけてもらう"
 
   /**
@@ -633,7 +633,7 @@ describe("ChatView の立ち絵をつつく", () => {
 
     fireEvent.click(portraitButton())
 
-    // ブラウザは自分で echo しない（並ぶのはサーバから戻るセリフだけ。docs/screen-design.md「雑談モードの画面」）。
+    // ブラウザは自分で echo しない（並ぶのはサーバから戻るセリフだけ。docs/architecture/screen-design.md「雑談モードの画面」）。
     expect(logEntries()).toHaveLength(before)
   })
 
@@ -665,7 +665,7 @@ describe("ChatView の立ち絵をつつく", () => {
     )
 
     // `disabled` にはしない（キーボードで辿り着ける道ごと消える）。押せないことは
-    // `aria-disabled` で伝え、案内は出さない（`docs/screen-design.md`「雑談モードの画面」）。
+    // `aria-disabled` で伝え、案内は出さない（`docs/architecture/screen-design.md`「雑談モードの画面」）。
     const button = blockedPortraitButton()
     expect(button.getAttribute("aria-disabled")).toBe("true")
     expect(screen.queryByText(NUDGE_HINT)).toBe(null)

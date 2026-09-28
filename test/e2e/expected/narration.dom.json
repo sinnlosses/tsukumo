@@ -316,7 +316,7 @@
                               {
                                 "tag": "code",
                                 "children": [
-                                  "docs/display.md"
+                                  "docs/architecture/display.md"
                                 ]
                               },
                               "4.2）。"

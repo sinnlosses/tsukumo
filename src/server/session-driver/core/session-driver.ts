@@ -358,7 +358,7 @@ export type SessionDriver = {
   /**
    * effort を切り替える。確認の合図を返さない。
    * 帯に表示する値は次のターンの `Stop` フック入力から読み取ったものだけで、送った値をここから先回りで流さない。
-   * 理由は `docs/screen-design.md`「動き方の操作子」。
+   * 理由は `docs/architecture/screen-design.md`「動き方の操作子」。
    */
   readonly setEffort: (effort: EffortLevel) => Promise<void>
   /** 許可モードを切り替える。 */

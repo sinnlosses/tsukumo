@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest"
 import type { HostResult } from "../../../../src/server/host/core/host.ts"
 import { openTrackedFile } from "../../../../src/server/host/core/tracked-file.ts"
 
-const TRACKED = ["docs/display.md", "src/cli.ts"]
+const TRACKED = ["docs/architecture/display.md", "src/cli.ts"]
 
 function recordingOpen(result: HostResult): {
   readonly open: (path: string) => Promise<HostResult>
@@ -23,8 +23,10 @@ describe("openTrackedFile", () => {
   it("一覧にあるパスはホストへ1回渡し、開けたら true", async () => {
     const host = recordingOpen({ ok: true })
 
-    expect(await openTrackedFile("docs/display.md", async () => TRACKED, host.open)).toBe(true)
-    expect(host.calls).toEqual(["docs/display.md"])
+    expect(
+      await openTrackedFile("docs/architecture/display.md", async () => TRACKED, host.open),
+    ).toBe(true)
+    expect(host.calls).toEqual(["docs/architecture/display.md"])
   })
 
   it("一覧に無いパスではホストを呼ばず false", async () => {

@@ -63,7 +63,7 @@ describe("ScreenNav", () => {
     expect(screen.getByRole("link", { name: "成果" }).getAttribute("href")).toBe("#achievement")
   })
 
-  // 色だけで伝えないので、いまの画面の口には地と字の濃さを変える class が付く（docs/screen-design.md「画面のナビゲーション」）。
+  // 色だけで伝えないので、いまの画面の口には地と字の濃さを変える class が付く（docs/architecture/screen-design.md「画面のナビゲーション」）。
   it("いま出している画面の口に is-active が付く", () => {
     window.location.hash = "#token-usage"
     renderScreenNav()
@@ -81,7 +81,7 @@ describe("ScreenNav", () => {
   })
 
   // 帯の右端にあった専用の印は「いまの作業」の札にまとめた
-  // （docs/screen-design.md「何を外すか」）。
+  // （docs/architecture/screen-design.md「何を外すか」）。
   it("答え待ちがあるときだけ、いまの作業の札の語が「答え待ち」になる", () => {
     renderScreenNav()
     expect(document.querySelector(".screen-nav-work-word")?.textContent).toBe("依頼待ち")
@@ -92,7 +92,7 @@ describe("ScreenNav", () => {
     expect(document.querySelector(".screen-nav-work-word")?.textContent).toBe("答え待ち")
   })
 
-  // 部屋の名前は帯の左端（docs/screen-design.md「画面のナビゲーション」）。ポートの並び順に割り当たる（`roomName`）ので、
+  // 部屋の名前は帯の左端（docs/architecture/screen-design.md「画面のナビゲーション」）。ポートの並び順に割り当たる（`roomName`）ので、
   // 出ている名前でどの tsukumo を見ているかが分かる。
   it("帯の左端に、このページのポートの部屋の名前を出す", () => {
     setPageUrl("http://127.0.0.1:7329/")
@@ -264,7 +264,7 @@ describe("ScreenNav", () => {
     expect(document.querySelector(".screen-nav-panel")).toBeNull()
   })
 
-  // 狭い画面は帯の左端が無い（「≡」だけになる）ので、名前は落ちてくる面の先頭に出す（docs/screen-design.md「画面のナビゲーション」）。
+  // 狭い画面は帯の左端が無い（「≡」だけになる）ので、名前は落ちてくる面の先頭に出す（docs/architecture/screen-design.md「画面のナビゲーション」）。
   it("「≡」を開くと、落ちてきた面の先頭にも部屋の名前が出る", () => {
     setPageUrl("http://127.0.0.1:7328/")
     renderScreenNav()
@@ -307,7 +307,7 @@ describe("ScreenNav", () => {
     })
 
     // 帯の操作子が送るコマンドは、いままでサイドバーの <select> が送っていたものと同じ
-    // （`session.setChatMode`。docs/screen-design.md「画面のナビゲーション」）。
+    // （`session.setChatMode`。docs/architecture/screen-design.md「画面のナビゲーション」）。
     it("反対側を押すと session.setChatMode を送る", () => {
       const calls: unknown[] = []
       renderScreenNav({ chatMode: false }, (command) => {
@@ -470,7 +470,7 @@ describe("ScreenNav", () => {
       expect(screen.getByLabelText("許可モード").className).not.toContain("is-danger")
     })
 
-    // 狭い画面では帯に置く幅が無いので、口と同じく「≡」の中へ入る（docs/screen-design.md「画面のナビゲーション」）。帯の側にも
+    // 狭い画面では帯に置く幅が無いので、口と同じく「≡」の中へ入る（docs/architecture/screen-design.md「画面のナビゲーション」）。帯の側にも
     // 同じ部品が残っているので、`getByLabelText` は使わず落ちてきた面の中だけを見る。
     it("「≡」を開くと、落ちてきた面にもドロップダウンが出る", () => {
       renderScreenNav({ model: "claude-haiku-5" })

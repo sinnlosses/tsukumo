@@ -17,7 +17,7 @@ import {
   isScannedSource,
 } from "../../scripts/section-reference.ts"
 
-const DISPLAY = "docs/display.md"
+const DISPLAY = "docs/architecture/display.md"
 const RESEARCH = "docs/research/topic.md"
 const HISTORY = "docs/history/tasks.md"
 const CLAUDE = "CLAUDE.md"

@@ -1,4 +1,4 @@
-// 雑談中のサイドバーの3段目「覚えていること」（docs/chat-mode.md「雑談モード」・docs/screen-design.md「雑談モードの画面」）。
+// 雑談中のサイドバーの3段目「覚えていること」（docs/architecture/chat-mode.md「雑談モード」・docs/architecture/screen-design.md「雑談モードの画面」）。
 // チップの開閉・編集・消す操作は E2E が DOM の写しとメッセージの列で守るので、ここに残すのは
 // 書式の固定（docs/coding-standards.md「消すかどうか」）だけ。
 

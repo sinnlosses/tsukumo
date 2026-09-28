@@ -253,7 +253,7 @@ describe("Character", () => {
     expect(calls).toEqual([])
   })
 
-  // 戻る口と答え待ちの印は帯（`components/domain/screen-nav/`）へ移った（docs/screen-design.md「画面のナビゲーション」）。
+  // 戻る口と答え待ちの印は帯（`components/domain/screen-nav/`）へ移った（docs/architecture/screen-design.md「画面のナビゲーション」）。
   // 同じ口を2つ置かないので、この画面には残っていない。
   it("会話へ戻る口と答え待ちの印は持たない", () => {
     renderCharacter({ pending: [FIXTURE_PENDING] })

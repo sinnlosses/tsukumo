@@ -149,7 +149,7 @@ describe("applySessionEvent", () => {
       { kind: "speech", text: "いくよ！", expression: "proud", time: { kind: "stamped", at: 0 } },
       { kind: "detail", markdown: "ダミーのレポート" },
     ])
-    // メインビューにはセリフを出さない（吹き出しだけ。docs/display.md「表示」）。
+    // メインビューにはセリフを出さない（吹き出しだけ。docs/architecture/display.md「表示」）。
     expect(mainViewEntries(view)).toEqual([
       { kind: "request", turnId: 0, text: "ダミーの依頼", images: [] },
       { kind: "detail", markdown: "ダミーのレポート" },
@@ -184,7 +184,7 @@ describe("applySessionEvent", () => {
         time: { kind: "stamped", at: 0 },
       },
     ])
-    // 仕事のメインビューには出さない（docs/chat-mode.md「雑談モード」）。
+    // 仕事のメインビューには出さない（docs/architecture/chat-mode.md「雑談モード」）。
     expect(mainViewEntries(view)).toEqual([
       { kind: "request", turnId: 0, text: "ダミーの依頼", images: [] },
       { kind: "request", turnId: 1, text: "2つめの依頼", images: [] },
@@ -300,7 +300,7 @@ describe("applySessionEvent", () => {
     )
 
     // ツールの記録そのものは `toolUseId` / `nested` を持つ（サイドバー用途と
-    // 突き合わせ用。docs/display.md「表示」）。
+    // 突き合わせ用。docs/architecture/display.md「表示」）。
     expect(view.records).toEqual([
       {
         kind: "tool",
@@ -502,7 +502,7 @@ describe("applySessionEvent", () => {
     const started = applySessionEvent(spoken, { kind: "turn-started" }, 700)
 
     // 記録は前のターンのまま（送った文面はどこにも入らないので、雑談のログにも
-    // メインビューにも出ようが無い。docs/screen-design.md「雑談モードの画面」）。
+    // メインビューにも出ようが無い。docs/architecture/screen-design.md「雑談モードの画面」）。
     expect(started.records).toEqual(spoken.records)
     // ターンの始まりとしての効き目は `request` と同じ。
     expect(started.turn).toEqual({ kind: "running", startedAt: 700 })

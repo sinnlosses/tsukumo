@@ -12,16 +12,16 @@
 
 ### 状態の持ち方
 
-| 状態                                                             | 置き場所                                                                                                                                                                                             |
-| ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `SessionState`                                                   | `browser/stores/session.ts` の zustand の store `useSession`（`applySessionEvent` で `events` を畳み、`hello` で置き換える）。部品はセレクタで**自分が読む値だけ**を購読する                         |
-| 接続中 / 切断中、プロトコルの版違い                              | 同じ store に相乗りさせる（`SessionState` には入れない）。接続は `<Root>` が `useSessionConnection()` で張る                                                                                         |
-| 選んでいるターン（`turnId`）、追従中か（いちばん下を見ていたか） | `location.hash` の `turn`（`#?turn=3`。追従中は書かない）。`browser/stores/turn-selection.ts` の `useTurnSelection()` が hash と姿から導く（自分では状態を持たない）                                 |
-| 入力欄の下書き、候補の開閉と選択位置                             | `<Composer>` のローカル状態                                                                                                                                                                          |
-| 質問の選択（送る前）・何問目を見ているか・入力欄に書いた答え     | `browser/stores/question-answer.ts` の zustand の store（**メインビューの札と入力欄の両方が読み書きする**ので機能のローカル状態にしない。どの答え待ちに対する下書きかも持つ）                        |
-| 経過時間の秒数                                                   | `<TurnStatus>` の1秒タイマー（`turn` の `startedAt` から計算）                                                                                                                                       |
-| 領域の比率                                                       | `<Layout>`。`localStorage` に**比率だけ**保存（会話は保存しない）                                                                                                                                    |
-| 出している画面（会話 / キャラクター / 作る）                     | `location.hash` の `?` より前（`stores/screen.tsx` の `useScreen()` が `hashchange` を読む）。保存しない（URL が持つ。`docs/screen-design.md` 13.6）。hash の書き方は `stores/location-hash.ts` だけ |
+| 状態                                                             | 置き場所                                                                                                                                                                                                          |
+| ---------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `SessionState`                                                   | `browser/stores/session.ts` の zustand の store `useSession`（`applySessionEvent` で `events` を畳み、`hello` で置き換える）。部品はセレクタで**自分が読む値だけ**を購読する                                      |
+| 接続中 / 切断中、プロトコルの版違い                              | 同じ store に相乗りさせる（`SessionState` には入れない）。接続は `<Root>` が `useSessionConnection()` で張る                                                                                                      |
+| 選んでいるターン（`turnId`）、追従中か（いちばん下を見ていたか） | `location.hash` の `turn`（`#?turn=3`。追従中は書かない）。`browser/stores/turn-selection.ts` の `useTurnSelection()` が hash と姿から導く（自分では状態を持たない）                                              |
+| 入力欄の下書き、候補の開閉と選択位置                             | `<Composer>` のローカル状態                                                                                                                                                                                       |
+| 質問の選択（送る前）・何問目を見ているか・入力欄に書いた答え     | `browser/stores/question-answer.ts` の zustand の store（**メインビューの札と入力欄の両方が読み書きする**ので機能のローカル状態にしない。どの答え待ちに対する下書きかも持つ）                                     |
+| 経過時間の秒数                                                   | `<TurnStatus>` の1秒タイマー（`turn` の `startedAt` から計算）                                                                                                                                                    |
+| 領域の比率                                                       | `<Layout>`。`localStorage` に**比率だけ**保存（会話は保存しない）                                                                                                                                                 |
+| 出している画面（会話 / キャラクター / 作る）                     | `location.hash` の `?` より前（`stores/screen.tsx` の `useScreen()` が `hashchange` を読む）。保存しない（URL が持つ。`docs/architecture/screen-design.md` 13.6）。hash の書き方は `stores/location-hash.ts` だけ |
 
 画面全体で共有する状態は **zustand の `create()`** で書き、`Context` の `Provider` で配らない
 （書き方と `useShallow` の使いどころは `docs/coding-standards.md`「zustand の store」）。**姿そのものを
@@ -96,7 +96,7 @@ react-markdown
 （`<領域>/<領域>.module.css`・`features/<機能>/<機能>.module.css`）と、**自分の見た目を持つ共有部品の隣**
 （`components/domain/portrait.module.css`）。**グローバルなのは `styles/theme.css` だけ**で、
 トークン（`:root`）・`body`・フォーカスの輪・`prefers-reduced-motion`・リンクを持つ。
-**16進の色を書いてよいのもそこだけ**（`docs/screen-design.md` 13.2）。同居に移した理由は `docs/history/decision.md`
+**16進の色を書いてよいのもそこだけ**（`docs/architecture/screen-design.md` 13.2）。同居に移した理由は `docs/history/decision.md`
 「design.md 6.6 CSS（機能と同居させる形に移した理由）」。
 
 **機能の中の部品でも、その部品しか使わない class の塊になっているなら部品の隣に `<部品>.module.css` を
@@ -112,7 +112,7 @@ class 名は用語集の語（`balloon` / `portrait` / `turn-header` など）�
 置かないのは、ページと部品の直下に置けるファイルが決まっているため）。CSS に無い名前は型エラーになり、
 ある名前は `string` で届くので `?? ""` で受けない。
 
-**Tailwind には移らない**（`theme.css` のトークンと `docs/screen-design.md` のトークンの節を作り直す
+**Tailwind には移らない**（`theme.css` のトークンと `docs/architecture/screen-design.md` のトークンの節を作り直す
 ことに見合う困りごとが無い）。
 
 **機能をまたいで見た目が要るときは className を渡す**（CSS の選択子で他の機能の class を
@@ -141,7 +141,7 @@ CSS に無い名前は `undefined` のままなので、**綴りを間違える�
 - 合併型 → class の対応表は **`satisfies Record<合併型, string | undefined>` で全域を検査する**。
   値 `"inherit"` は class を付けない。**props はすべて必須**（既定値を持たず、呼び出しを読めば見た目が
   全部分かる）。**値を足すのは使う箇所が出たときだけ**で、トークンに無い値が要るなら先に
-  `docs/screen-design.md` の段を直す
+  `docs/architecture/screen-design.md` の段を直す
 - **上書きは `className` の1つ**。**部品の CSS で `:where()` の外に書いた property は部品のもの**で、
   呼び出し側は同じ property を書かない。呼び出し側に譲る既定（`margin: 0` など）は `:where()` の中に書く
   （詳細度0なので読み込み順に関係なく呼び出し側が勝つ。`theme.css` が要素の選択子で書く property は

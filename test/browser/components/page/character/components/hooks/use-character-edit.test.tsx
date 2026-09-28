@@ -351,7 +351,7 @@ describe("useCharacterEdit", () => {
     expect(calls).toEqual([{ procedure: "characterPack.clearFace", pack: "fictional" }])
   })
 
-  // このキャラクターを消す／同梱に戻す帯（docs/screen-design.md「このキャラクターを消す」）。
+  // このキャラクターを消す／同梱に戻す帯（docs/architecture/screen-design.md「このキャラクターを消す」）。
   it("removal が none のパックには帯を出さない", () => {
     const { result } = renderHook(() => useCharacterEdit(), {
       wrapper: wrapperWithPacks(
@@ -382,7 +382,7 @@ describe("useCharacterEdit", () => {
   })
 
   // 使用中以外のパックを詳しい設定に出すには、一覧にもう1件（`other`）を足し、hash でそれを
-  // 選ぶ（`docs/screen-design.md`「選んでいるパックは hash に持つ」）。
+  // 選ぶ（`docs/architecture/screen-design.md`「選んでいるパックは hash に持つ」）。
   it("使用中以外のパックは帯のボタンが押せ、characterPack.delete を1回送る", () => {
     window.location.hash = "#character?pack=other"
     const calls: unknown[] = []

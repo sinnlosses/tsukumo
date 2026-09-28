@@ -121,7 +121,7 @@ describe("startFakeSession", () => {
     await tick()
     driver.close()
 
-    // 送った文面はどのイベントにも乗らない（docs/screen-design.md「雑談モードの画面」）。先頭3件は起こした直後の分
+    // 送った文面はどのイベントにも乗らない（docs/architecture/screen-design.md「雑談モードの画面」）。先頭3件は起こした直後の分
     // （プラン・effort の対応・opening の場面）。
     expect(sink.events.slice(3)).toEqual([
       { kind: "turn-started" },

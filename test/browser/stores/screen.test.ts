@@ -136,7 +136,7 @@ describe("usePackHref", () => {
 
 describe("selectPack", () => {
   // 作るダイアログで作れたパックを、閉じたあと一覧で選んだ状態にするために呼ぶ
-  // （docs/screen-design.md「設定の置き場所」）。
+  // （docs/architecture/screen-design.md「設定の置き場所」）。
   it("キャラクター画面でそのパックを選んだ状態に書き換える", () => {
     window.location.hash = "#character?turn=3"
 

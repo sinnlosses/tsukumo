@@ -181,7 +181,7 @@
 }
 
 /* 利用枠の札（コンテキストの札の下）。
-   寸法・色・ふるまいの出どころは見本 `QUOTA-Sidebar.dc.html` で、値は `docs/screen-design.md`「使用量の行」に写した。
+   寸法・色・ふるまいの出どころは見本 `QUOTA-Sidebar.dc.html` で、値は `docs/architecture/screen-design.md`「使用量の行」に写した。
    見本の色トークン名（`--surface` / `--rule` / `--accent` / `--state-warn` / `--state-ng`）は `theme.css` にそのままあるので、その名前で参照する。
    見本の `--surface-sunken` にあたるのは、この帯の `--ground`（`.sidebar-footer`）。
    見本の `--text` / `--text-2` / `--text-3`（3段の弱さ）は、既存のトークンに2段しかないので `--ink-quiet` に集約する。 */

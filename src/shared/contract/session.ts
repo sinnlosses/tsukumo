@@ -56,7 +56,7 @@ export const sessionContract = {
   /**
    * effort を切り替える。セッション限りで、サーバは `applyFlagSettings({ effortLevel })` で SDK へ渡すだけ。
    * 帯に表示する値はこのコマンドで送った値ではなく、hook 入力から読み取った値（`effort-changed`）。
-   * 押した値へ先に倒さない（理由は `docs/screen-design.md`「動き方の操作子」）。
+   * 押した値へ先に倒さない（理由は `docs/architecture/screen-design.md`「動き方の操作子」）。
    */
   setEffort: commandBase.input(z.object({ effort: z.enum(EFFORT_LEVELS) })),
   setPermissionMode: commandBase.input(z.object({ mode: z.enum(PERMISSION_MODES) })),

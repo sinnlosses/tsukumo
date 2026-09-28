@@ -69,7 +69,7 @@ describe("コマンドの契約の入力（受け付ける形）", () => {
 
   it("nudge・interrupt は入力を持たない（押した事実だけが届く）", () => {
     // 文面の欄が無いのが nudge の形そのもの（送る一言は
-    // `CHAT_NUDGE_PROMPT` が持つ。docs/screen-design.md「雑談モードの画面」）。
+    // `CHAT_NUDGE_PROMPT` が持つ。docs/architecture/screen-design.md「雑談モードの画面」）。
     expect(INPUT_SCHEMAS.get("session.nudge")).toBeUndefined()
     expect(INPUT_SCHEMAS.get("session.interrupt")).toBeUndefined()
   })

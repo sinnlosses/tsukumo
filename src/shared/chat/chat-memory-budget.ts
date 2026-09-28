@@ -18,7 +18,7 @@ export type ChatMemoryBudget = {
   readonly consolidateEveryBytes: number
 }
 
-/** 雑談の記憶の容量の表。値の根拠は `docs/chat-mode.md`「記憶の圧縮と忘却」の容量の表にある。 */
+/** 雑談の記憶の容量の表。値の根拠は `docs/architecture/chat-mode.md`「記憶の圧縮と忘却」の容量の表にある。 */
 export const CHAT_MEMORY_BUDGET = {
   recentBytes: 65_536,
   synopsisBytes: 8_192,
@@ -46,7 +46,7 @@ export type ChatRecallScore = {
   readonly recencyFloor: number
 }
 
-/** エピソード索引の採点の係数。式は `docs/chat-mode.md`「古い雑談は索引を引いて思い出す」にある。 */
+/** エピソード索引の採点の係数。式は `docs/architecture/chat-mode.md`「古い雑談は索引を引いて思い出す」にある。 */
 export const CHAT_RECALL_SCORE = {
   cueWeight: 1,
   titleWeight: 1,

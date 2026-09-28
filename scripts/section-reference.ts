@@ -1,4 +1,4 @@
-// 正典の節を「ファイル名＋番号＋「句」」の形で引いている参照（`docs/display.md`「吹き出し」の
+// 正典の節を「ファイル名＋番号＋「句」」の形で引いている参照（`docs/architecture/display.md`「吹き出し」の
 // ように、句の前に番号を挟むこともある形）を拾い、句が参照先のファイルに文字として残っているかを
 // 照らす純粋関数。
 //
@@ -24,7 +24,7 @@ export type SectionReference = {
   readonly sourcePath: string
   /** 参照が始まる行（1始まり）。 */
   readonly line: number
-  /** 引いている先（`docs/display.md` / `CLAUDE.md` の形）。 */
+  /** 引いている先（`docs/architecture/display.md` / `CLAUDE.md` の形）。 */
   readonly targetPath: string
   /** 「」の中身（行をまたいでいたら、継続行のコメント記号と字下げを除いて繋いだもの）。 */
   readonly phrase: string
@@ -36,7 +36,7 @@ export type FileReference = {
   readonly sourcePath: string
   /** パスのある行（1始まり）。 */
   readonly line: number
-  /** 指している先（`docs/display.md` の形）。 */
+  /** 指している先（`docs/architecture/display.md` の形）。 */
   readonly targetPath: string
 }
 

@@ -159,7 +159,7 @@ export function createChatArchive(root: string = chatArchiveDir()): ChatArchive 
 }
 
 /**
- * JSONL の1行の形（正典は `docs/chat-mode.md`「雑談の会話のアーカイブ」の表）。tsukumo の内部の型をそのまま書き出さない。
+ * JSONL の1行の形（正典は `docs/architecture/chat-mode.md`「雑談の会話のアーカイブ」の表）。tsukumo の内部の型をそのまま書き出さない。
  * `expression` / `images` のどちらを持つかは `speaker` が決めるので、値を渡すたびにもう片方へ明示的に `undefined` を渡す。
  */
 type ArchiveRecord = {
