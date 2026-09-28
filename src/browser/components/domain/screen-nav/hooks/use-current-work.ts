@@ -28,6 +28,7 @@ import {
   type TurnStepList,
   type TurnStepStatus,
 } from "../../../../../shared/session/turn-step.ts"
+import { currentPhaseOf, type WorkPhase } from "../../../../../shared/session/work-plan.ts"
 import { formatElapsed } from "../../../../../shared/utils/elapsed-time.ts"
 import { DEFAULT_CHARACTER_NAME } from "../../../../domain/portrait-appearance.ts"
 import { summarizeToolInput, toolInputText } from "../../../../domain/tool-summary.ts"
@@ -77,6 +78,42 @@ export type ScreenNavCurrentWorkStep = {
   readonly status: TurnStepStatus
   readonly input: unknown
 }
+
+/**
+ * 手順を始まったときの段で区切った1まとまり。
+ * 小見出しは「2/4 段の名前」で、段取りより前・全部の段を終えたあとの手順は小見出しを持たない。
+ */
+export type ScreenNavCurrentWorkStepGroup = {
+  readonly key: string
+  readonly heading: { readonly kind: "none" } | { readonly kind: "phase"; readonly label: string }
+  readonly steps: readonly ScreenNavCurrentWorkStep[]
+}
+
+/**
+ * 札に出す今の段（`.screen-nav-work-phase`）。作業中・答え待ちで、その依頼に段取りがあるときだけ `shown`。
+ * 字は「2/4 段の名前」、全部の段を終えていれば「4/4 済」。
+ */
+export type ScreenNavCurrentWorkPhase =
+  | { readonly kind: "none" }
+  | { readonly kind: "shown"; readonly label: string }
+
+/** 一覧の頭の段の並び1つ。印は済んだ段が「済」、今の段が「今」、残りは番号。 */
+export type ScreenNavCurrentWorkPlanPhase = {
+  readonly key: string
+  readonly mark: string
+  readonly name: string
+  readonly state: "done" | "current" | "upcoming"
+}
+
+/** 一覧の頭の段取り。その依頼に段取りがあれば、状態の語に関わらず出す。 */
+export type ScreenNavCurrentWorkPlan =
+  | { readonly kind: "none" }
+  | {
+      readonly kind: "planned"
+      /** 「この依頼の段取り」（ターンが走っていなければ「前の依頼の段取り」）。 */
+      readonly headingLabel: string
+      readonly phases: readonly ScreenNavCurrentWorkPlanPhase[]
+    }
 
 /**
  * 実行中の手順があるかどうかと、札の要約にも出すか（`pending` / `running` のときだけ）。
@@ -140,8 +177,8 @@ export type ScreenNavCurrentWorkStepList =
       readonly kind: "steps"
       /** 「この依頼での手順」（ターンが走っていなければ「前の依頼での手順」）。 */
       readonly headingLabel: string
-      /** 閉じている間は新しい5件、開いていれば全件（{@link expanded}）。 */
-      readonly steps: readonly ScreenNavCurrentWorkStep[]
+      /** 閉じている間は新しい5件、開いていれば全件（{@link expanded}）を、段で区切ったもの。 */
+      readonly groups: readonly ScreenNavCurrentWorkStepGroup[]
       readonly expanded: boolean
       readonly onToggleExpanded: () => void
       readonly toggleAll: ScreenNavCurrentWorkToggleAll
@@ -171,10 +208,13 @@ export type ScreenNavCurrentWork = {
    */
   readonly chatIdle: boolean
   readonly pendingHint: ScreenNavCurrentWorkPendingHint
+  /** 札の今の段（{@link ScreenNavCurrentWorkPhase}）。要約とは別の欄で、要約の判定には関わらない。 */
+  readonly phase: ScreenNavCurrentWorkPhase
   /** 札の要約（{@link ScreenNavCurrentWorkSummary}）。答え待ちの質問はこれで実行中の手順を覆う。 */
   readonly summary: ScreenNavCurrentWorkSummary
   readonly runningStep: ScreenNavCurrentWorkRunningStep
   readonly backgroundList: ScreenNavCurrentWorkBackgroundList
+  readonly plan: ScreenNavCurrentWorkPlan
   readonly stepList: ScreenNavCurrentWorkStepList
   readonly open: boolean
   readonly onToggle: () => void
@@ -285,6 +325,7 @@ export function useCurrentWork(navRef: RefObject<HTMLElement | null>): ScreenNav
     mark: state === "idle" && !chatIdle ? "○" : "●",
     chatIdle,
     pendingHint: toPendingHintView(state, firstPending, onGoToQuestion),
+    phase: toPhaseView(turnStepList, state),
     summary: toSummaryView(
       state,
       firstPending,
@@ -295,6 +336,7 @@ export function useCurrentWork(navRef: RefObject<HTMLElement | null>): ScreenNav
     ),
     runningStep,
     backgroundList: toBackgroundListView(backgroundTasks),
+    plan: toPlanView(turnStepList, turnInProgress),
     stepList: toStepListView(turnStepList, { turnInProgress, expanded, onToggleExpanded }),
     open,
     onToggle,
@@ -323,6 +365,52 @@ function toRunningStepView(
 
 function isRunningStep(step: TurnStep): boolean {
   return step.status.kind === "running"
+}
+
+function toPhaseView(
+  turnStepList: TurnStepList,
+  state: ScreenNavCurrentWorkState,
+): ScreenNavCurrentWorkPhase {
+  if (turnStepList.kind !== "turn" || (state !== "running" && state !== "pending")) {
+    return { kind: "none" }
+  }
+  const { plan } = turnStepList
+  if (plan.kind === "none") {
+    return { kind: "none" }
+  }
+  const phase = currentPhaseOf(plan)
+  return {
+    kind: "shown",
+    label:
+      phase.kind === "phase"
+        ? phaseLabel(phase)
+        : `${String(plan.phases.length)}/${String(plan.phases.length)} 済`,
+  }
+}
+
+function toPlanView(turnStepList: TurnStepList, turnInProgress: boolean): ScreenNavCurrentWorkPlan {
+  if (turnStepList.kind !== "turn" || turnStepList.plan.kind === "none") {
+    return { kind: "none" }
+  }
+  const { phases, current } = turnStepList.plan
+  return {
+    kind: "planned",
+    headingLabel: turnInProgress ? "この依頼の段取り" : "前の依頼の段取り",
+    phases: phases.map((name, index) => {
+      const state = index < current ? "done" : index === current ? "current" : "upcoming"
+      return {
+        key: String(index),
+        mark: state === "done" ? "済" : state === "current" ? "今" : String(index + 1),
+        name,
+        state,
+      }
+    }),
+  }
+}
+
+/** 段の見出し「2/4 段の名前」（札と一覧の区切りで同じ字）。 */
+function phaseLabel(phase: Extract<WorkPhase, { readonly kind: "phase" }>): string {
+  return `${String(phase.index + 1)}/${String(phase.count)} ${phase.name}`
 }
 
 /**
@@ -445,11 +533,33 @@ function toStepListView(
   return {
     kind: "steps",
     headingLabel: turnInProgress ? "この依頼での手順" : "前の依頼での手順",
-    steps: visibleSteps.map(toStepView),
+    groups: groupByPhase(visibleSteps),
     expanded,
     onToggleExpanded,
     toggleAll: toToggleAllView(steps, expanded),
   }
+}
+
+/** 並びの隣どうしで段が同じ手順を1まとまりにする（段を戻る段取りの変更があっても、並びの順は崩さない）。 */
+function groupByPhase(steps: readonly TurnStep[]): readonly ScreenNavCurrentWorkStepGroup[] {
+  return steps.reduce<readonly ScreenNavCurrentWorkStepGroup[]>((groups, step) => {
+    const heading = stepGroupHeading(step.phase)
+    const last = groups.at(-1)
+    return last !== undefined && sameHeading(last.heading, heading)
+      ? [...groups.slice(0, -1), { ...last, steps: [...last.steps, toStepView(step)] }]
+      : [...groups, { key: step.toolUseId, heading, steps: [toStepView(step)] }]
+  }, [])
+}
+
+function stepGroupHeading(phase: WorkPhase): ScreenNavCurrentWorkStepGroup["heading"] {
+  return phase.kind === "phase" ? { kind: "phase", label: phaseLabel(phase) } : { kind: "none" }
+}
+
+function sameHeading(
+  a: ScreenNavCurrentWorkStepGroup["heading"],
+  b: ScreenNavCurrentWorkStepGroup["heading"],
+): boolean {
+  return a.kind === "phase" && b.kind === "phase" ? a.label === b.label : a.kind === b.kind
 }
 
 function toToggleAllView(

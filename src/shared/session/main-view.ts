@@ -19,6 +19,7 @@ import {
 } from "./session-state.ts"
 import { bashCommandDuration } from "./turn-step.ts"
 import { splitIntoTurns, type TurnRest, turnIdOf } from "./turn.ts"
+import { latestWorkPlan, type LatestWorkPlan } from "./work-plan.ts"
 
 /**
  * 出すやり取りの数。
@@ -208,13 +209,19 @@ export function mainViewTurns(
  *
  * `compact-boundary` も落とす（圧縮の区切りは雑談のログだけに出す）。
  *
+ * `work-plan` も落とす（段取りはレポートの本文の中に組む。{@link reportMarkdown}）。
+ *
  * `tool` は `toolUseId` / `nested`（突き合わせにしか使わない内部の付随情報）を落とす（メインビューの部品が見てよいのは名前・入力・結果だけ）。
  */
 function toMainViewEntries(
   record: SessionRecord,
   earlierInTurn: () => readonly SessionRecord[],
 ): readonly MainViewEntry[] {
-  if (record.kind === "speech" || record.kind === "compact-boundary") {
+  if (
+    record.kind === "speech" ||
+    record.kind === "compact-boundary" ||
+    record.kind === "work-plan"
+  ) {
     return []
   }
   // `request` は時刻（雑談のログだけが読む）を落として通す。仕事のメインビューには時刻を出さない。
@@ -232,7 +239,8 @@ function toMainViewEntries(
 }
 
 /**
- * `report` の引数を、`conclusion` → `checks` → `sections` → `favor` の順に1つの本文へ組む。
+ * `report` の引数を、`conclusion` →（段取り）→ `checks` → `sections` → `favor` の順に1つの本文へ組む。
+ * 段取りは同じやり取りの中でその `report` より前に届いた最後のもので、`progress` の塊と同じ組み方で描く。
  * `checks` は検証結果の表（{@link reportChecksMarkdown}。所要時間は同じやり取りの中の `tool` の記録から引く）、`favor` はレポートの記法の「お願い」の塊で包むので、サニタイズも記法の解釈もテキストの本文と同じ経路を通る。
  * `favor` は HTML の中に Markdown を入れるので、塊の内側の前後に空行を空ける。
  * 空の `checks` / `sections` / `favor` は塊ごと置かない。
@@ -245,12 +253,24 @@ function reportMarkdown(
 ): string {
   return [
     report.conclusion,
+    workPlanMarkdown(latestWorkPlan(earlierInTurn)),
     reportChecksMarkdown(report.checks, (command) => bashCommandDuration(earlierInTurn, command)),
     reportSectionsMarkdown(tidyReportSections(report)),
     isBlankText(report.favor) ? "" : `<div class="note note-favor">\n\n${report.favor}\n\n</div>`,
   ]
     .filter((part) => !isBlankText(part))
     .join("\n\n")
+}
+
+function workPlanMarkdown(plan: LatestWorkPlan): string {
+  return plan.kind === "none"
+    ? ""
+    : reportSectionsMarkdown([
+        {
+          heading: "",
+          blocks: [{ kind: "progress", steps: plan.phases, current: plan.current, fold: "" }],
+        },
+      ])
 }
 
 /** `index` の記録より前で、同じやり取り（最後の `request` より後）に入る記録。 */

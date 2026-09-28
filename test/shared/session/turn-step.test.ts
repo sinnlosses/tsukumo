@@ -15,6 +15,7 @@ import {
   requestRecord,
   speechRecord,
   toolRecord,
+  workPlanRecord,
 } from "../../fixture/session-record.ts"
 
 /** `{ kind: "turn" }` の前提で `steps` を取り出す（前提が崩れたら分かるように投げる）。 */
@@ -32,7 +33,11 @@ describe("currentTurnSteps（依頼の手順を最後の依頼から導く）", 
   })
 
   it("依頼はあるがツールを使っていなければ steps が空配列（no-request とは区別する）", () => {
-    expect(currentTurnSteps([requestRecord()], false)).toEqual({ kind: "turn", steps: [] })
+    expect(currentTurnSteps([requestRecord()], false)).toEqual({
+      kind: "turn",
+      steps: [],
+      plan: { kind: "none" },
+    })
   })
 
   it("最後の依頼より後のツールだけを拾う（前の依頼のツールは含めない）", () => {
@@ -73,6 +78,7 @@ describe("currentTurnSteps（依頼の手順を最後の依頼から導く）", 
         nested: false,
         startedAt: stamped,
         status: { kind: "done", finishedAt: stamped },
+        phase: { kind: "none" },
       },
       {
         toolUseId: "toolu_failed",
@@ -81,6 +87,7 @@ describe("currentTurnSteps（依頼の手順を最後の依頼から導く）", 
         nested: false,
         startedAt: stamped,
         status: { kind: "failed", output: "架空のエラー出力", finishedAt: stamped },
+        phase: { kind: "none" },
       },
       {
         toolUseId: "toolu_running",
@@ -89,6 +96,7 @@ describe("currentTurnSteps（依頼の手順を最後の依頼から導く）", 
         nested: false,
         startedAt: stamped,
         status: { kind: "running" },
+        phase: { kind: "none" },
       },
     ])
   })
@@ -178,6 +186,53 @@ describe("currentTurnSteps（report ツール）", () => {
       INITIAL_SESSION_STATE,
     )
 
-    expect(currentTurnSteps(state.records, false)).toEqual({ kind: "turn", steps: [] })
+    expect(currentTurnSteps(state.records, false)).toEqual({
+      kind: "turn",
+      steps: [],
+      plan: { kind: "none" },
+    })
+  })
+})
+
+describe("currentTurnSteps（段取り）", () => {
+  it("手順はそれより前で最後の段取りの今の段を持ち、plan はその依頼で最後の段取り", () => {
+    const list = currentTurnSteps(
+      [
+        requestRecord(),
+        toolRecord({ toolUseId: "toolu_before" }),
+        workPlanRecord({ phases: ["架空の段A", "架空の段B"], current: 0 }),
+        toolRecord({ toolUseId: "toolu_a" }),
+        workPlanRecord({ phases: ["架空の段A", "架空の段B"], current: 1 }),
+        toolRecord({ toolUseId: "toolu_b" }),
+        workPlanRecord({ phases: ["架空の段A", "架空の段B"], current: 2 }),
+        toolRecord({ toolUseId: "toolu_after" }),
+      ],
+      false,
+    )
+
+    expect(turnSteps(list).map((step) => step.phase)).toEqual([
+      { kind: "none" },
+      { kind: "phase", index: 0, count: 2, name: "架空の段A" },
+      { kind: "phase", index: 1, count: 2, name: "架空の段B" },
+      { kind: "none" },
+    ])
+    expect(list).toMatchObject({
+      plan: { kind: "planned", phases: ["架空の段A", "架空の段B"], current: 2 },
+    })
+  })
+
+  it("前の依頼の段取りは持ち越さない", () => {
+    const list = currentTurnSteps(
+      [
+        requestRecord({ turnId: 0 }),
+        workPlanRecord({ phases: ["架空の段A", "架空の段B"], current: 1 }),
+        requestRecord({ turnId: 1 }),
+        toolRecord({ toolUseId: "toolu_new" }),
+      ],
+      false,
+    )
+
+    expect(list).toMatchObject({ plan: { kind: "none" } })
+    expect(turnSteps(list)[0]?.phase).toEqual({ kind: "none" })
   })
 })

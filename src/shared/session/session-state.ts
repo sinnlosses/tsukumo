@@ -111,6 +111,14 @@ export type SessionRecord =
       readonly checks: readonly ReportCheck[]
     }
   /**
+   * `work_plan` ツールで受け取った段取り。届いた位置に積むだけで、今の段取りは `latestWorkPlan`、手順ごとの段は `currentTurnSteps` が記録から導く。
+   */
+  | {
+      readonly kind: "work-plan"
+      readonly phases: readonly string[]
+      readonly current: number
+    }
+  /**
    * 答え終わった質問（`question-answered`）。積むのは答えが確定した1回だけで、あとから書き換えない。
    * 形は `MainViewEntry` の `question` と同じに揃える（メインビューはそのまま通す）。
    */
@@ -441,6 +449,7 @@ const MODEL_OUTPUT_EVENT_KINDS: ReadonlySet<SessionEvent["kind"]> = new Set([
   "speech",
   "report-drafting",
   "report",
+  "work-plan",
   "tool-started",
   "step-usage",
 ] satisfies SessionEvent["kind"][])
@@ -556,6 +565,14 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
             favor: event.favor,
             checks: event.checks,
           },
+        ],
+      }
+    case "work-plan":
+      return {
+        ...state,
+        records: [
+          ...state.records,
+          { kind: "work-plan", phases: event.phases, current: event.current },
         ],
       }
     case "tool-started": {

@@ -2,7 +2,7 @@
 // 人格・tsukumo 側の規約・雑談の記憶が、どのモードのときに、どの順で入るかは、このファイルだけを読めば分かる（並べ方を他のファイルへ散らさない）。
 //
 // 文面そのものは持たない。
-// 規約は `SPEECH_CADENCE_PROMPT` / `REPORT_NOTATION_PROMPT` / `CHAT_MANNER_PROMPT` が、雑談の記憶の読み戻しは `takeChatMemoryPromptParts` が持ち、ここが決めるのはどれを・どの順で並べるかだけ。
+// 規約は `SPEECH_CADENCE_PROMPT` / `WORK_PLAN_PROMPT` / `REPORT_NOTATION_PROMPT` / `CHAT_MANNER_PROMPT` が、雑談の記憶の読み戻しは `takeChatMemoryPromptParts` が持ち、ここが決めるのはどれを・どの順で並べるかだけ。
 //
 // 人格（`persona.md` の全文）は文字列で受け取り、パックの型も fs も知らない。
 
@@ -18,6 +18,7 @@ import type {
   SessionMode,
   SessionStart,
 } from "../../session-driver/core/session-driver.ts"
+import { WORK_PLAN_PROMPT } from "../../session-driver/core/work-plan-tool.ts"
 import { SPEECH_CADENCE_PROMPT } from "./speech-cadence.ts"
 
 /** {@link takeSystemPromptAppend} に渡すもの。 */
@@ -76,7 +77,7 @@ export function toSystemPromptMode(
  *
  * | 場面                     | 節の並び                                          |
  * | ------------------------ | -------------------------------------------------- |
- * | 仕事                     | 人格 → セリフの間合い → レポートの記法             |
+ * | 仕事                     | 人格 → セリフの間合い → 段取り → レポートの記法    |
  * | 雑談（記憶が載るとき）   | 人格 → 雑談の作法 → 前回までの要約 → 直近の雑談    |
  * | 雑談（続きから・渡し済） | 人格 → 雑談の作法                                  |
  *
@@ -94,7 +95,7 @@ export function takeSystemPromptAppend(seed: SystemPromptSeed): string {
  */
 function modeParts(mode: SystemPromptMode): readonly string[] {
   if (mode.kind === "work") {
-    return [SPEECH_CADENCE_PROMPT, REPORT_NOTATION_PROMPT]
+    return [SPEECH_CADENCE_PROMPT, WORK_PLAN_PROMPT, REPORT_NOTATION_PROMPT]
   }
   return [CHAT_MANNER_PROMPT, ...takeChatMemoryPromptParts(mode.memory)]
 }

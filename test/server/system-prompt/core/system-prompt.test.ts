@@ -10,6 +10,7 @@ import type {
   SessionMode,
   SessionStart,
 } from "../../../../src/server/session-driver/core/session-driver.ts"
+import { WORK_PLAN_PROMPT } from "../../../../src/server/session-driver/core/work-plan-tool.ts"
 import { SPEECH_CADENCE_PROMPT } from "../../../../src/server/system-prompt/core/speech-cadence.ts"
 import {
   type SystemPromptMode,
@@ -40,10 +41,12 @@ const RECENT: readonly ChatArchiveRecentEntry[] = [
 const RECENT_CHAT_ARCHIVE = { ...NOOP_CHAT_ARCHIVE, readRecent: () => RECENT } satisfies ChatArchive
 
 describe("takeSystemPromptAppend", () => {
-  it("仕事のときは 人格 → セリフの間合い → レポートの記法 の順でつながる", () => {
+  it("仕事のときは 人格 → セリフの間合い → 段取り → レポートの記法 の順でつながる", () => {
     const append = takeSystemPromptAppend({ persona: PERSONA, mode: { kind: "work" } })
 
-    expect(append).toBe(`${PERSONA}\n\n${SPEECH_CADENCE_PROMPT}\n\n${REPORT_NOTATION_PROMPT}`)
+    expect(append).toBe(
+      `${PERSONA}\n\n${SPEECH_CADENCE_PROMPT}\n\n${WORK_PLAN_PROMPT}\n\n${REPORT_NOTATION_PROMPT}`,
+    )
   })
 
   it("雑談のときは 人格 → 雑談の作法 → 雑談の記憶 の順でつながる（仕事の2つは載らない）", () => {
@@ -65,6 +68,7 @@ describe("takeSystemPromptAppend", () => {
     expect(append).toBe([PERSONA, CHAT_MANNER_PROMPT, ...expectedMemory].join("\n\n"))
     expect(append).not.toContain(REPORT_NOTATION_PROMPT)
     expect(append).not.toContain(SPEECH_CADENCE_PROMPT)
+    expect(append).not.toContain(WORK_PLAN_PROMPT)
   })
 
   it("続きから始めて写しが渡し済みなら、雑談の記憶は載らない（人格 → 雑談の作法 だけ）", () => {
@@ -100,6 +104,7 @@ describe("takeSystemPromptAppend", () => {
     expect(headings(work)).toEqual([
       ...headings(PERSONA),
       ...headings(SPEECH_CADENCE_PROMPT),
+      ...headings(WORK_PLAN_PROMPT),
       ...headings(REPORT_NOTATION_PROMPT),
     ])
     expect(headings(chat)).toEqual([
@@ -114,7 +119,9 @@ describe("takeSystemPromptAppend", () => {
   it("人格が無いパック（空文字列）でも規約は載る（どのパックでも黙りっぱなしにしない）", () => {
     const append = takeSystemPromptAppend({ persona: "", mode: { kind: "work" } })
 
-    expect(append).toBe(`${SPEECH_CADENCE_PROMPT}\n\n${REPORT_NOTATION_PROMPT}`)
+    expect(append).toBe(
+      `${SPEECH_CADENCE_PROMPT}\n\n${WORK_PLAN_PROMPT}\n\n${REPORT_NOTATION_PROMPT}`,
+    )
   })
 
   it("どちらのモードでも人格は載る（パックの口調は雑談でも変わらない）", () => {

@@ -9,7 +9,11 @@ import {
 } from "../../../../src/server/session-driver/core/sdk-message.ts"
 import type { Expression } from "../../../../src/shared/character-pack/expression.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
-import { REPORT_TOOL_FULL_NAME, SPEAK_TOOL_FULL_NAME } from "../../../fixture/sdk-message.ts"
+import {
+  REPORT_TOOL_FULL_NAME,
+  SPEAK_TOOL_FULL_NAME,
+  WORK_PLAN_TOOL_FULL_NAME,
+} from "../../../fixture/sdk-message.ts"
 
 // フィクスチャはすべて手で書いた架空のやり取り。実物の会話は使わない
 const EXPRESSIONS: readonly Expression[] = ["default", "thinking", "proud"]
@@ -290,6 +294,34 @@ describe("toSessionEvents", () => {
     ])
 
     expect(toSessionEvents(message, EXPRESSIONS)).toEqual([])
+  })
+
+  it("メインの work_plan の呼び出しは段取りにする（ツールの開始にはしない）", () => {
+    const message = assistantMessage([
+      {
+        type: "tool_use",
+        id: "toolu_3",
+        name: WORK_PLAN_TOOL_FULL_NAME,
+        input: { phases: ["架空の段A", "架空の段B"], current: 1 },
+      },
+    ])
+
+    expect(toSessionEvents(message, EXPRESSIONS)).toEqual([
+      { kind: "work-plan", phases: ["架空の段A", "架空の段B"], current: 1 },
+    ])
+  })
+
+  it("サブエージェントの中の work_plan と、位置が段の数を超えた work_plan は捨てる", () => {
+    const block = {
+      type: "tool_use",
+      id: "toolu_3",
+      name: WORK_PLAN_TOOL_FULL_NAME,
+      input: { phases: ["架空の段A", "架空の段B"], current: 0 },
+    }
+    const overflow = { ...block, input: { phases: ["架空の段A", "架空の段B"], current: 3 } }
+
+    expect(toSessionEvents(assistantMessage([block], "toolu_sub_1"), EXPRESSIONS)).toEqual([])
+    expect(toSessionEvents(assistantMessage([overflow]), EXPRESSIONS)).toEqual([])
   })
 
   it("system の init からセッション情報を取り出す", () => {

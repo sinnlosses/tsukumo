@@ -32,10 +32,16 @@ const CHAT_MODE: SessionMode = {
 }
 
 describe("tsukumoServer", () => {
-  it("仕事のときは report と見直しの2つが常に載る（speak と並ぶ）", async () => {
+  it("仕事のときは report と work_plan と見直しの2つが常に載る（speak と並ぶ）", async () => {
     const names = await listedToolNames(workServer())
 
-    expect(names).toEqual(["speak", "report", "usage_review_stage", "usage_review_result"])
+    expect(names).toEqual([
+      "speak",
+      "report",
+      "work_plan",
+      "usage_review_stage",
+      "usage_review_result",
+    ])
   })
 
   it("雑談のときは report も見直しの2つも載らない。diary も載らない（会話とは別の使い捨ての問い合わせ）", async () => {
@@ -44,6 +50,7 @@ describe("tsukumoServer", () => {
     )
 
     expect(names).not.toContain("report")
+    expect(names).not.toContain("work_plan")
     expect(names).not.toContain("usage_review_result")
     expect(names).not.toContain("diary")
     expect(names).toContain("speak")
@@ -144,6 +151,38 @@ describe("report でターンを閉じる", () => {
     const reply = await callTool(workServer(), "speak", CLOSING)
 
     expect(reply).toEqual({ text: "ok", isError: false, endsTurn: false })
+  })
+})
+
+describe("work_plan（段取り）", () => {
+  it("段の並びと位置を渡すと ok が返り、ターンは閉じない", async () => {
+    const reply = await callTool(workServer(), "work_plan", {
+      phases: ["架空の段A", "架空の段B"],
+      current: 2,
+    })
+
+    expect(reply).toEqual({ text: "ok", isError: false, endsTurn: false })
+  })
+
+  it("位置が段の数を超えた呼び出しは差し戻す", async () => {
+    const reply = await callTool(workServer(), "work_plan", {
+      phases: ["架空の段A", "架空の段B"],
+      current: 3,
+    })
+
+    expect(reply.isError).toBe(true)
+    expect(reply.endsTurn).toBe(false)
+  })
+
+  it("段が1つだけ・空白だけの名前の段取りは形の検査で落ちる", async () => {
+    const single = await callTool(workServer(), "work_plan", { phases: ["架空の段A"], current: 0 })
+    const blank = await callTool(workServer(), "work_plan", {
+      phases: ["架空の段A", "  "],
+      current: 0,
+    })
+
+    expect(single.isError).toBe(true)
+    expect(blank.isError).toBe(true)
   })
 })
 

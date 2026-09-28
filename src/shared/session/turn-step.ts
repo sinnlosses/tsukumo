@@ -5,6 +5,7 @@ import { isPlainObject } from "remeda"
 import type { MeasuredTime } from "../utils/elapsed-time.ts"
 import type { RecordTime, SessionRecord } from "./session-state.ts"
 import { splitIntoTurns } from "./turn.ts"
+import { currentPhaseOf, latestWorkPlan, type LatestWorkPlan, type WorkPhase } from "./work-plan.ts"
 
 /**
  * 依頼の手順1件の進み具合。`failed` の `output` は失敗の中身（`<details>` で開いて読む）。
@@ -27,6 +28,8 @@ export type TurnStep = {
   readonly nested: boolean
   readonly startedAt: RecordTime
   readonly status: TurnStepStatus
+  /** 始まったときの段取りの段（{@link WorkPhase}）。 */
+  readonly phase: WorkPhase
 }
 
 /** ツール1件の所要時間（{@link toolDuration}）。復元した手順は `unknown`（`RecordTime` を参照）。 */
@@ -55,16 +58,22 @@ export function bashCommandDuration(
   const matched = records
     .filter(isToolRecord)
     .findLast((record) => record.name === "Bash" && bashCommandOf(record.input) === command)
-  return matched === undefined ? { kind: "unknown" } : toolDuration(toTurnStep(matched))
+  return matched === undefined
+    ? { kind: "unknown" }
+    : toolDuration(toTurnStep(matched, { kind: "none" }))
 }
 
 /**
  * {@link currentTurnSteps} の戻り値。「依頼が一度も無い」と「依頼はあるが手順が0件」を
- * 分ける（帯の一覧では出す文面が違う）。
+ * 分ける（帯の一覧では出す文面が違う）。`plan` はその依頼で最後に渡された段取り。
  */
 export type TurnStepList =
   | { readonly kind: "no-request" }
-  | { readonly kind: "turn"; readonly steps: readonly TurnStep[] }
+  | {
+      readonly kind: "turn"
+      readonly steps: readonly TurnStep[]
+      readonly plan: LatestWorkPlan
+    }
 
 /**
  * 記録から、最後の `request` より後の `tool` の記録を拾って、依頼の手順を古い→新しいの順で返す。
@@ -73,6 +82,7 @@ export type TurnStepList =
  * - 依頼が一度も無ければ `{ kind: "no-request" }`。0件の配列（依頼はあったがまだツールを使っていない）とは型で区別する
  * - 結果の届いていない手順は running のまま返す（ターンが終わっても、依頼が終わっても。背景で走り続けるものがあるため）。
  *   ただし `sessionEnded` が true のときは running の手順を落とす（セッションが終わったあとは実行中の印を出さない）
+ * - 手順の段は、その手順より前で最後の `work-plan` の記録の今の段
  */
 export function currentTurnSteps(
   records: readonly SessionRecord[],
@@ -85,10 +95,13 @@ export function currentTurnSteps(
   }
 
   const steps = currentTurn.records
-    .filter(isToolRecord)
-    .map(toTurnStep)
+    .flatMap((record, index) =>
+      isToolRecord(record)
+        ? [toTurnStep(record, currentPhaseOf(latestWorkPlan(currentTurn.records.slice(0, index))))]
+        : [],
+    )
     .filter((step) => !(sessionEnded && step.status.kind === "running"))
-  return { kind: "turn", steps }
+  return { kind: "turn", steps, plan: latestWorkPlan(currentTurn.records) }
 }
 
 /** Bash の入力（外来の値）から、打ったコマンドの文字列を取り出す。読めなければ空文字。 */
@@ -102,8 +115,12 @@ function isToolRecord(
   return record.kind === "tool"
 }
 
-function toTurnStep(record: Extract<SessionRecord, { readonly kind: "tool" }>): TurnStep {
+function toTurnStep(
+  record: Extract<SessionRecord, { readonly kind: "tool" }>,
+  phase: WorkPhase,
+): TurnStep {
   return {
+    phase,
     toolUseId: record.toolUseId,
     name: record.name,
     input: record.input,

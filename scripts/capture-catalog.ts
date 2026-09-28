@@ -148,6 +148,9 @@ const FLOW_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="report-flow_"]`
  */
 const CHECKS_SELECTOR = `${MAIN_REGION_SELECTOR} [role="table"][aria-label="検証結果"]`
 
+/** レポートの結論の下に組む段取りの図（`progress` の塊と同じ組み方）。 */
+const WORK_PLAN_REPORT_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="report-progress_"]`
+
 /** 入力欄。ページに `<textarea>` は1つしか無い。 */
 const COMPOSER_SELECTOR = "textarea"
 
@@ -440,6 +443,29 @@ const CATALOG: readonly CatalogEntry[] = [
     ],
     skipReveal: false,
     settle: TAIL_SETTLE,
+  },
+  {
+    name: "work-plan-running",
+    // 段の2つ目で長い Bash が約7秒走るあいだに、札の段と一覧の頭の段取りを撮る。
+    scene: "work-plan",
+    label: "いまの作業の段取り（作業中）",
+    homeSetup: { kind: "default" },
+    prepare: [
+      { kind: "click", selector: MENU_TOGGLE_SELECTOR },
+      { kind: "click", selector: WORK_TOGGLE_SELECTOR },
+    ],
+    skipReveal: false,
+    settle: TAIL_SETTLE,
+  },
+  {
+    name: "work-plan-report",
+    // 最終 `report` は約10秒後に届き、結論の下に段取りの図が出る。
+    scene: "work-plan",
+    label: "レポートの段取り（全部の段を終えた）",
+    homeSetup: { kind: "default" },
+    prepare: [],
+    skipReveal: true,
+    settle: { kind: "selector", selector: WORK_PLAN_REPORT_SELECTOR },
   },
   {
     name: "diary-book",

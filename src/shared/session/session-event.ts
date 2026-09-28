@@ -149,6 +149,15 @@ export type SessionEvent =
       readonly unknownBlockCount: number
       readonly sessionSummary: string | undefined
     }
+  /**
+   * `work_plan` ツールの呼び出し（段取り）。メインが呼んだもので、`parseWorkPlan` を通ったものだけが届く（サブエージェントの呼び出しは変換で捨てる）。
+   * 毎回、段の並びごと届く。`current` は0始まりで、全部の段が済んだら `phases.length`。
+   */
+  | {
+      readonly kind: "work-plan"
+      readonly phases: readonly string[]
+      readonly current: number
+    }
   | {
       readonly kind: "tool-started"
       readonly toolUseId: string

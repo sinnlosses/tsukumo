@@ -15,7 +15,9 @@ import { Text } from "../../../ui/text/text.tsx"
 import type {
   ScreenNavCurrentWork,
   ScreenNavCurrentWorkBackgroundTask,
+  ScreenNavCurrentWorkPlanPhase,
   ScreenNavCurrentWorkStep,
+  ScreenNavCurrentWorkStepGroup,
 } from "../hooks/use-current-work.ts"
 import shellStyles from "../screen-nav.module.css"
 import styles from "./screen-nav-current-work.module.css"
@@ -76,6 +78,20 @@ export function ScreenNavCurrentWorkPill(props: ScreenNavCurrentWorkProps): Reac
           </span>
         )}
         <span className={styles["screen-nav-work-word"]}>{work.wordLabel}</span>
+        {work.phase.kind === "shown" && (
+          <>
+            <span className={styles["screen-nav-work-sep"]} aria-hidden="true" />
+            <Text
+              element="span"
+              size="inherit"
+              tone="ink"
+              weight="inherit"
+              className={styles["screen-nav-work-phase"]}
+            >
+              {work.phase.label}
+            </Text>
+          </>
+        )}
         {work.summary.kind === "text" && (
           <>
             <span className={styles["screen-nav-work-sep"]} aria-hidden="true" />
@@ -150,6 +166,24 @@ function CurrentWorkList(props: {
           {GO_TO_QUESTION_LABEL}
         </Button>
       )}
+      {work.plan.kind === "planned" && (
+        <>
+          <Text
+            element="p"
+            size="inherit"
+            tone="ink-quiet"
+            weight="inherit"
+            className={styles["screen-nav-work-plan-heading"]}
+          >
+            {work.plan.headingLabel}
+          </Text>
+          <ol className={styles["screen-nav-work-plan"]}>
+            {work.plan.phases.map((phase) => (
+              <CurrentWorkPlanPhase key={phase.key} phase={phase} />
+            ))}
+          </ol>
+        </>
+      )}
       {work.runningStep.kind !== "none" && (
         <div className={styles["screen-nav-work-full"]}>
           <Text
@@ -195,11 +229,9 @@ function CurrentWorkList(props: {
           >
             {work.stepList.headingLabel}
           </Text>
-          <ul className={styles["screen-nav-work-steps"]}>
-            {work.stepList.steps.map((step) => (
-              <CurrentWorkStepRow key={step.key} step={step} />
-            ))}
-          </ul>
+          {work.stepList.groups.map((group) => (
+            <CurrentWorkStepGroup key={group.key} group={group} />
+          ))}
           {work.stepList.toggleAll.kind === "expandable" && (
             <Button
               type="button"
@@ -225,6 +257,52 @@ function CurrentWorkList(props: {
         </Text>
       )}
     </div>
+  )
+}
+
+/** 段取りの段1つ。済んだ・今・残りの見分けは頭の字（済 / 今 / 番号）が持ち、枠と地は補助。 */
+function CurrentWorkPlanPhase(props: {
+  readonly phase: ScreenNavCurrentWorkPlanPhase
+}): ReactElement {
+  const { phase } = props
+  return (
+    <li
+      className={clsx(
+        styles["screen-nav-work-plan-phase"],
+        phase.state === "done" && styles["screen-nav-work-plan-phase-done"],
+        phase.state === "current" && styles["screen-nav-work-plan-phase-current"],
+      )}
+    >
+      <b>{phase.mark}</b>
+      {phase.name}
+    </li>
+  )
+}
+
+/** 段で区切った手順のまとまり。段の小見出しがあれば手順の上に置く。 */
+function CurrentWorkStepGroup(props: {
+  readonly group: ScreenNavCurrentWorkStepGroup
+}): ReactElement {
+  const { group } = props
+  return (
+    <>
+      {group.heading.kind === "phase" && (
+        <Text
+          element="p"
+          size="inherit"
+          tone="inherit"
+          weight="semibold"
+          className={styles["screen-nav-work-phase-heading"]}
+        >
+          {group.heading.label}
+        </Text>
+      )}
+      <ul className={styles["screen-nav-work-steps"]}>
+        {group.steps.map((step) => (
+          <CurrentWorkStepRow key={step.key} step={step} />
+        ))}
+      </ul>
+    </>
   )
 }
 

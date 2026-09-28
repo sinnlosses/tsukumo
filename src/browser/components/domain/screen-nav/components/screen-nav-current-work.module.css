@@ -71,6 +71,15 @@
   white-space: nowrap;
   font-family: var(--font-mono);
 }
+/* 今の段。要約より先に縮まないよう上限だけを持ち、入りきらなければ末尾を「…」にする。 */
+.screen-nav-work-phase {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 40%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 /* 状態の語ごとの色。語そのものが状態を言うので、色だけで伝えてはいない。 */
 .screen-nav-work[data-work-state="stopped"] .screen-nav-work-mark,
 .screen-nav-work[data-work-state="stopped"] .screen-nav-work-word {
@@ -133,6 +142,44 @@
   display: block;
   margin: 0 0 0.5rem;
 }
+/* 段取り。見た目はレポートの `progress` の塊に揃える。 */
+.screen-nav-work-plan-heading {
+  margin: 0.4rem 0 0.2rem;
+}
+.screen-nav-work-plan {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem 0.4rem;
+  margin: 0 0 0.5rem;
+  padding: 0;
+  list-style: none;
+}
+.screen-nav-work-plan-phase {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.3rem;
+  padding: 0.2rem 0.6rem;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  color: var(--ink-quiet);
+}
+.screen-nav-work-plan-phase:not(:last-child)::after {
+  content: "→";
+  margin-left: 0.4rem;
+  color: var(--ink-quiet);
+}
+.screen-nav-work-plan-phase b {
+  font-weight: 700;
+}
+.screen-nav-work-plan-phase-done {
+  background: var(--surface-raised);
+}
+.screen-nav-work-plan-phase-current {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--surface), var(--accent) 10%);
+  color: var(--ink);
+}
 .screen-nav-work-full {
   margin: 0 0 0.5rem;
 }
@@ -174,6 +221,10 @@
 /* 色は `Text` が持つ。margin だけ残す。 */
 .screen-nav-work-steps-heading {
   margin: 0.4rem 0 0.2rem;
+}
+/* 手順を段で区切る小見出し。字の太さは `Text` が持つ。 */
+.screen-nav-work-phase-heading {
+  margin: 0.4rem 0 0.15rem;
 }
 .screen-nav-work-steps {
   display: flex;

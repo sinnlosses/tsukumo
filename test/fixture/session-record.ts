@@ -52,6 +52,13 @@ export function reportRecord(conclusion = "架空の結論"): SessionRecord {
   return { kind: "report", conclusion, sections: [], favor: "", checks: [] }
 }
 
+/** `work_plan` で受け取った段取り1件。 */
+export function workPlanRecord(
+  overrides: Partial<Omit<Extract<SessionRecord, { readonly kind: "work-plan" }>, "kind">> = {},
+): SessionRecord {
+  return { kind: "work-plan", phases: ["架空の段A", "架空の段B"], current: 0, ...overrides }
+}
+
 /** 圧縮の区切り。中身を持たない。 */
 export function compactBoundaryRecord(): SessionRecord {
   return { kind: "compact-boundary" }

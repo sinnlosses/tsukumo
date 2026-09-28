@@ -24,6 +24,7 @@ import type {
   ModelEffortSupport,
   SessionEvent,
 } from "../../../shared/session/session-event.ts"
+import { parseWorkPlan } from "../../../shared/session/work-plan.ts"
 import type { ModelTokenUsage } from "../../../shared/token-usage/token-usage.ts"
 import { isBlankText } from "../../../shared/utils/blank-text.ts"
 import { optionalString } from "../../../shared/utils/optional-string.ts"
@@ -36,6 +37,8 @@ export const SPEAK_TOOL_NAME = "speak"
  * 雑談では呼ばれないので、見分ける側は仕事か雑談かを問わず見ている。
  */
 export const REPORT_TOOL_NAME = "report"
+/** 段取りを受け取るツールの名前。載るのは仕事のときだけ。 */
+export const WORK_PLAN_TOOL_NAME = "work_plan"
 
 /**
  * SDK のメッセージ1つを内部イベントの並びに変換する。
@@ -47,6 +50,7 @@ export const REPORT_TOOL_NAME = "report"
  * - `report` の呼び出しも `tool-started` にしない。`report` として別に出す（メインビュー行き）。
  *   `parent_tool_use_id` のある呼び出し（サブエージェントの中）は捨てる。
  *   ターンのレポートはメインが書くもので、委譲先の報告はメインの手元に届くだけにする
+ * - `work_plan` の呼び出しも `tool-started` にしない。メインのものだけを `work-plan` にし、`parseWorkPlan` を通らない引数は捨てる（handler が差し戻した呼び出しと同じ判定）
  * - `includePartialMessages` の断片で `report` の呼び出しの塊が開いたら `report-drafting` を出す（立ち絵の「書いている」の材料。メインのものだけ）。
  *   引数の断片（`input_json_delta`）は運ばない。
  *   描くのは確定した `report` だけで、書きかけの引数は JSON としても読めない
@@ -479,6 +483,10 @@ function assistantBlockEvents(
       : []
   }
 
+  if (block.name === tsukumoToolFullName(WORK_PLAN_TOOL_NAME)) {
+    return parentToolUseId === undefined ? workPlanEvents(block.input) : []
+  }
+
   return typeof block.id === "string"
     ? [
         {
@@ -490,6 +498,11 @@ function assistantBlockEvents(
         },
       ]
     : []
+}
+
+function workPlanEvents(input: unknown): readonly SessionEvent[] {
+  const plan = parseWorkPlan(input)
+  return plan === undefined ? [] : [{ kind: "work-plan", ...plan }]
 }
 
 function speechEvents(

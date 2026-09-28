@@ -1,5 +1,5 @@
 // tsukumo がプロセス内の MCP サーバとして提供するツール。
-// `speak`、雑談のときの `remember` / `forget` / `recall` / `recall_episode`、仕事のときの `report` / `usage_review_stage` / `usage_review_result`。
+// `speak`、雑談のときの `remember` / `forget` / `recall` / `recall_episode`、仕事のときの `report` / `work_plan` / `usage_review_stage` / `usage_review_result`。
 // `diary` はここには載らない（会話とは別の使い捨ての問い合わせ。`queryDiary`）。
 //
 // サーバの名前と `speak` の名前は `TSUKUMO_MCP_SERVER_NAME` / `SPEAK_TOOL_NAME` が持つ。
@@ -15,6 +15,7 @@ import {
 import type { Expression } from "../../../shared/character-pack/expression.ts"
 import { reportSectionSchema } from "../../../shared/report/report-block.ts"
 import { reportCheckSchema } from "../../../shared/report/report-check.ts"
+import { MIN_WORK_PLAN_PHASES, parseWorkPlan } from "../../../shared/session/work-plan.ts"
 import {
   USAGE_PROPOSAL_FOLLOW_UPS,
   USAGE_PROPOSAL_IMPACTS,
@@ -40,8 +41,19 @@ import {
   usageProposalKindGuide,
   usageReviewStageGuide,
 } from "../../usage-review/core/usage-review-tool.ts"
-import { REPORT_TOOL_NAME, SPEAK_TOOL_NAME, TSUKUMO_MCP_SERVER_NAME } from "../core/sdk-message.ts"
+import {
+  REPORT_TOOL_NAME,
+  SPEAK_TOOL_NAME,
+  TSUKUMO_MCP_SERVER_NAME,
+  WORK_PLAN_TOOL_NAME,
+} from "../core/sdk-message.ts"
 import type { ChatRecall, PersonaMemory, SessionMode } from "../core/session-driver.ts"
+import {
+  WORK_PLAN_CURRENT_DESCRIPTION,
+  WORK_PLAN_PHASES_DESCRIPTION,
+  WORK_PLAN_REJECTION,
+  WORK_PLAN_TOOL_DESCRIPTION,
+} from "../core/work-plan-tool.ts"
 
 /** モデルに見せる `speak` ツールの説明。セリフと本文の境目はここだけで説明する。 */
 const SPEAK_TOOL_DESCRIPTION =
@@ -93,20 +105,21 @@ const RECALL_EPISODE_TOOL_DESCRIPTION =
 /**
  * プロセス内の MCP サーバ。
  * 戻り値は既定が "ok" だけで、tsukumo の内部の状態や画面の事情がモデルへ戻る経路を作らない（`docs/architecture/adr/0009-speech-via-tool.md`）。
- * 例外は `recall` / `recall_episode` と `report` と見直しの2つ。
+ * 例外は `recall` / `recall_episode` と `report` と `work_plan` と見直しの2つ。
  * `recall` / `recall_episode` が返すのは、そのセッションが自分で読める外の事実（自分の過去の雑談の目次と1件の逐語）だけ。
- * `report` が返すのは差し戻すときの規約違反だけ。
+ * `report` が返すのは差し戻すときの規約違反だけ、`work_plan` が返すのは位置が段の数を超えたときの直し方だけ。
  * 見直しの2つが返すのは、利用者が見送った提案の識別子と差し戻しの理由だけ。
  *
  * 常に載るのは `speak` だけで、`remember` / `forget` / `recall` / `recall_episode` は雑談モードのときだけ載る。
  * 仕事のときに出すと、作業の文脈が人格に入り込む経路や、仕事の会話をアーカイブに残す経路になる。
  *
  * `report` は仕事のときだけ載る（仕事ではレポートを常にこれで受け取る。雑談は本文を書かない決まりなので載せない）。
+ * `work_plan` も仕事のときだけ。
  * 見直しの2つも仕事のときだけ（トークン消費の画面から頼むのは仕事の会話への依頼）。
  *
  * セリフそのものは、この handler ではなく `assistant` メッセージの変換から取り出す（`toSessionEvents`）。
  * 受け取り口を1つにしておくと、イベントの流れが1本で済む。
- * `report` の引数も同じで、handler が引数を読むのは差し戻すかを決めるためだけ。
+ * `report` と `work_plan` の引数も同じで、handler が引数を読むのは差し戻すかを決めるためだけ。
  * 見直しの2つだけは逆に handler がイベントを流す（検査を通したものだけを状態に入れるため。`createUsageReviewIntake`）。
  */
 export function tsukumoServer(
@@ -124,7 +137,11 @@ export function tsukumoServer(
         content: [{ type: "text" as const, text: "ok" }],
       })),
       ...(mode.kind === "work"
-        ? [reportTool(expressions, reportReview, onReportTitle), ...usageReviewTools(usageReview)]
+        ? [
+            reportTool(expressions, reportReview, onReportTitle),
+            workPlanTool(),
+            ...usageReviewTools(usageReview),
+          ]
         : []),
       ...(mode.kind === "chat"
         ? [
@@ -196,6 +213,25 @@ function reportTool(
         _meta: { [END_TURN_META_KEY]: true },
       }
     },
+  )
+}
+
+/** 段取りを受け取るツール。差し戻すかは `parseWorkPlan` で決め、形の検査はここの zod の形。 */
+function workPlanTool() {
+  return tool(
+    WORK_PLAN_TOOL_NAME,
+    WORK_PLAN_TOOL_DESCRIPTION,
+    {
+      phases: z
+        .array(z.string().trim().min(1))
+        .min(MIN_WORK_PLAN_PHASES)
+        .describe(WORK_PLAN_PHASES_DESCRIPTION),
+      current: z.number().int().min(0).describe(WORK_PLAN_CURRENT_DESCRIPTION),
+    },
+    async (plan) =>
+      parseWorkPlan(plan) === undefined
+        ? { content: [{ type: "text" as const, text: WORK_PLAN_REJECTION }], isError: true }
+        : { content: [{ type: "text" as const, text: "ok" }] },
   )
 }
 

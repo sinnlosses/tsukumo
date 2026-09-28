@@ -3031,6 +3031,239 @@
           }
         }
       ]
+    },
+    {
+      "name": "work-plan",
+      "steps": [
+        {
+          "afterMs": 0,
+          "event": {
+            "kind": "request",
+            "text": "ID の変換を両方の形に対応させたい（架空の依頼）",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 100,
+          "event": {
+            "kind": "speech",
+            "text": "まず今の形を見てくるね。",
+            "expression": "default"
+          }
+        },
+        {
+          "afterMs": 200,
+          "event": {
+            "kind": "work-plan",
+            "phases": ["今の形を調べる", "ID の変換を両方の形に対応させる", "文書と検証を揃える"],
+            "current": 0
+          }
+        },
+        {
+          "afterMs": 300,
+          "event": {
+            "kind": "tool-started",
+            "toolUseId": "fake-work-plan-1",
+            "name": "Read",
+            "input": {
+              "file_path": "/tmp/dummy/id.ts"
+            }
+          }
+        },
+        {
+          "afterMs": 700,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-work-plan-1",
+            "content": "ダミーの読み取り結果（3行）",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 800,
+          "event": {
+            "kind": "tool-started",
+            "toolUseId": "fake-work-plan-2",
+            "name": "Grep",
+            "input": {
+              "pattern": "toId"
+            }
+          }
+        },
+        {
+          "afterMs": 1100,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-work-plan-2",
+            "content": "ダミーの検索結果（2件）",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 1300,
+          "event": {
+            "kind": "work-plan",
+            "phases": ["今の形を調べる", "ID の変換を両方の形に対応させる", "文書と検証を揃える"],
+            "current": 1
+          }
+        },
+        {
+          "afterMs": 1300,
+          "event": {
+            "kind": "speech",
+            "text": "形が分かったから、変換に入るよ。",
+            "expression": "default"
+          }
+        },
+        {
+          "afterMs": 1400,
+          "event": {
+            "kind": "tool-started",
+            "toolUseId": "fake-work-plan-3",
+            "name": "Edit",
+            "input": {
+              "file_path": "/tmp/dummy/id.ts"
+            }
+          }
+        },
+        {
+          "afterMs": 1700,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-work-plan-3",
+            "content": "ダミーの書き換え結果",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 1800,
+          "event": {
+            "kind": "tool-started",
+            "toolUseId": "fake-work-plan-4",
+            "name": "Bash",
+            "input": {
+              "command": "pnpm run test"
+            }
+          }
+        },
+        {
+          "afterMs": 9000,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-work-plan-4",
+            "content": "ダミーのテスト結果（すべて通過）",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 9200,
+          "event": {
+            "kind": "work-plan",
+            "phases": ["今の形を調べる", "ID の変換を両方の形に対応させる", "文書と検証を揃える"],
+            "current": 2
+          }
+        },
+        {
+          "afterMs": 9300,
+          "event": {
+            "kind": "tool-started",
+            "toolUseId": "fake-work-plan-5",
+            "name": "Edit",
+            "input": {
+              "file_path": "/tmp/dummy/notes.md"
+            }
+          }
+        },
+        {
+          "afterMs": 9700,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-work-plan-5",
+            "content": "ダミーの書き換え結果",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 9900,
+          "event": {
+            "kind": "work-plan",
+            "phases": ["今の形を調べる", "ID の変換を両方の形に対応させる", "文書と検証を揃える"],
+            "current": 3
+          }
+        },
+        {
+          "afterMs": 9900,
+          "event": {
+            "kind": "report-drafting",
+            "toolUseId": "fake-work-plan-report"
+          }
+        },
+        {
+          "afterMs": 10300,
+          "event": {
+            "kind": "report",
+            "closing": {
+              "kind": "speech",
+              "text": "3つの段を終えたよ。",
+              "expression": "proud"
+            },
+            "toolUseId": "fake-work-plan-report",
+            "conclusion": "架空の結論: ID の変換が新旧どちらの形も受け付けるようになった。",
+            "sections": [
+              {
+                "heading": "",
+                "blocks": [
+                  {
+                    "kind": "list",
+                    "style": "bullet",
+                    "items": [
+                      {
+                        "label": "",
+                        "text": "`toId` が新旧2つの形を読み分ける（架空）",
+                        "done": false
+                      },
+                      {
+                        "label": "",
+                        "text": "メモに2つの形の例を足した（架空）",
+                        "done": false
+                      }
+                    ],
+                    "fold": ""
+                  }
+                ]
+              }
+            ],
+            "favor": "",
+            "checks": [
+              {
+                "status": "ok",
+                "label": "pnpm run test",
+                "figure": "12 / 12",
+                "command": "pnpm run test",
+                "detail": ""
+              }
+            ]
+          }
+        },
+        {
+          "afterMs": 10350,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-work-plan-report",
+            "content": "ok",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 10800,
+          "event": {
+            "kind": "turn-finished",
+            "outcome": {
+              "kind": "completed"
+            }
+          }
+        }
+      ]
     }
   ],
   "sessionDigests": {

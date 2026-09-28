@@ -16,6 +16,7 @@ import {
   finishedToolStatus,
   requestRecord,
   toolRecord,
+  workPlanRecord,
 } from "../../../../fixture/session-record.ts"
 import { typedElement } from "../../../../typed-element.ts"
 import { putState, putSession } from "../../../session-store.ts"
@@ -493,6 +494,74 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
       "✓ Read: /tmp/old.txt（12秒）",
       "… Bash: echo new",
     ])
+  })
+
+  describe("段取り（work_plan）", () => {
+    const PLANNED_RECORDS = [
+      requestRecord(),
+      workPlanRecord({ phases: ["架空の段A", "架空の段B", "架空の段C"], current: 0 }),
+      toolRecord({
+        toolUseId: "toolu_a",
+        name: "Read",
+        input: { file_path: "/tmp/a.txt" },
+        status: finishedToolStatus(),
+      }),
+      workPlanRecord({ phases: ["架空の段A", "架空の段B", "架空の段C"], current: 1 }),
+      toolRecord({ toolUseId: "toolu_b", name: "Bash", input: { command: "echo b" } }),
+    ]
+
+    it("作業中は札に今の段を「位置/段の数 名前」で出し、要約は実行中の手順のまま", () => {
+      renderScreenNav({ turn: { kind: "running", startedAt: 0 }, records: PLANNED_RECORDS })
+
+      expect(document.querySelector(".screen-nav-work-phase")?.textContent).toBe("2/3 架空の段B")
+      expect(document.querySelector(".screen-nav-work-summary")?.textContent).toBe("Bash: echo b")
+    })
+
+    it("レポートを書いている途中も段は残り、要約だけが差し替わる", () => {
+      renderScreenNav({
+        turn: { kind: "running", startedAt: 0 },
+        records: PLANNED_RECORDS,
+        reportDrafting: { kind: "drafting", toolUseId: "toolu_r1" },
+      })
+
+      expect(document.querySelector(".screen-nav-work-phase")?.textContent).toBe("2/3 架空の段B")
+      expect(document.querySelector(".screen-nav-work-summary")?.textContent).toBe(
+        "レポートを書いています",
+      )
+    })
+
+    it("一覧の頭に全部の段が済・今・番号で並び、手順は始まったときの段ごとに区切られる", () => {
+      renderScreenNav({ turn: { kind: "running", startedAt: 0 }, records: PLANNED_RECORDS })
+
+      fireEvent.click(workToggle())
+
+      const list = workList()
+      expect(within(list).getByText("この依頼の段取り")).not.toBeNull()
+      expect(
+        [...list.querySelectorAll(".screen-nav-work-plan li")].map((phase) => phase.textContent),
+      ).toEqual(["済架空の段A", "今架空の段B", "3架空の段C"])
+      expect(
+        [...list.querySelectorAll(".screen-nav-work-phase-heading, .screen-nav-work-steps li")].map(
+          (node) => node.textContent,
+        ),
+      ).toEqual(["1/3 架空の段A", "✓ Read: /tmp/a.txt（0秒）", "2/3 架空の段B", "… Bash: echo b"])
+    })
+
+    it("ターンが終わると札から段は消え、一覧には前の依頼の段取りが残る", () => {
+      renderScreenNav({
+        turn: { kind: "finished", startedAt: 0, finishedAt: 1, ending: { kind: "ended" } },
+        records: [
+          ...PLANNED_RECORDS,
+          workPlanRecord({ phases: ["架空の段A", "架空の段B", "架空の段C"], current: 3 }),
+        ],
+      })
+
+      expect(document.querySelector(".screen-nav-work-phase")).toBeNull()
+
+      fireEvent.click(workToggle())
+
+      expect(within(workList()).getByText("前の依頼の段取り")).not.toBeNull()
+    })
   })
 
   it("復元した手順（開始・終了が restored）は所要時間を出さない", () => {
