@@ -568,23 +568,50 @@
   width: 100%;
   margin: 0.5rem 0;
 }
-/* 列の揃えは `columnAlign` の GFM の記法から style 属性で届き、ここの left に勝つ。
+/* 横の線だけの表（縦の罫線・見出し行の地は持たない）。
+   列の揃えは `columnAlign` の GFM の記法から style 属性で届き、ここの left に勝つ。
    数だけの列で桁が縦に揃うよう、数字は等幅にする。 */
 .detail-block th,
 .detail-block td {
-  border: 1px solid var(--rule);
   padding: 0.3rem 0.5rem;
+  border-bottom: 1px solid var(--rule);
   text-align: left;
   font-variant-numeric: tabular-nums;
 }
-/* 見出し行は表の中の「浮く」塊。
-   太字は Markdown の th の既定で付くが、行そのものが見出しだと分かるのは地の段のほう。
-   見出し行と中身の境目の1本にだけ、見出し（上の h4 / h5）と同じ割合でキャラクターの色を混ぜる。
-   太さが 2px なのは `border-collapse` の解決で下の行の 1px に勝たせるため（同じ太さだと、どちらの色が残るかが文書順まかせになる）。
-   残りの罫線・セルの地・文字はそのまま。 */
+/* 見出し行の下だけ、見出し（上の h4 / h5）と同じ割合でキャラクターの色を混ぜる。 */
 .detail-block th {
-  background: var(--surface-raised);
-  border-bottom: 2px solid color-mix(in srgb, var(--rule), var(--accent) 60%);
+  border-bottom: 1px solid color-mix(in srgb, var(--rule), var(--accent) 60%);
+}
+/* GFM の表の tr は class を持てないので、行の印はセルの中の状態から :has で拾う。 */
+.detail-block tr:has(.report-cell-status-ng) td:first-child {
+  box-shadow: inset 2px 0 0 var(--state-ng);
+}
+.detail-block tr:has(.report-cell-status-warn) td:first-child {
+  box-shadow: inset 2px 0 0 var(--state-warn);
+}
+/* 表の状態のセル。上の段に記号付きの印、下の段に状態の文。 */
+.detail-block .report-cell-status {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+.detail-block .report-cell-status-mark {
+  font-family: var(--font-mono);
+  font-size: var(--font-label);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+.detail-block .report-cell-status-ok .report-cell-status-mark {
+  color: var(--state-ok);
+}
+.detail-block .report-cell-status-warn .report-cell-status-mark {
+  color: var(--state-warn);
+}
+.detail-block .report-cell-status-ng .report-cell-status-mark {
+  color: var(--state-ng);
+}
+.detail-block .report-cell-status-text {
+  color: var(--ink);
 }
 /* どのセルも最低4全角は1行で出す。
    これが無いと `width: 100%` の表は列の数だけ詰まってセルが1〜2字ずつの折り返しになり（実測: 12列で最小41px）、上の `overflow-x` も働かない（表が縮んで器に収まってしまうため）。

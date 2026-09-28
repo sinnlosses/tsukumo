@@ -49,7 +49,7 @@ const cellSchema = z.union([
   inlineText,
   z
     .object({ status: z.enum(REPORT_CELL_STATUSES), text: inlineText })
-    .describe("状態のセル。色のバッジで描くので、状態を言う文字も text に書く"),
+    .describe("状態のセル。記号付きの印で描くので、状態を言う文字も text に書く"),
   z
     .object({ from: inlineText, to: inlineText })
     .describe("変わったセル（A → B と書かず前と後に分ける。状態は隣の列に置く）"),
@@ -338,14 +338,14 @@ function isUnknownKindBlock(block: unknown): boolean {
  */
 const PAUSE_POINT_CLASS_NAME = "report-pause-point"
 
-/** 表のセルの状態 → バッジの class（記法の `badge-*`）と、書き手の文字に関わらず付ける語。 */
-const CELL_BADGES = {
-  ok: { className: "badge-ok", label: "OK" },
-  warn: { className: "badge-warn", label: "要注意" },
-  ng: { className: "badge-ng", label: "NG" },
+/** 表のセルの状態 → 記号付きの印の class（記法の `cell-status-*`）・記号・書き手の文字に関わらず付ける語。 */
+const CELL_STATUS_MARKS = {
+  ok: { className: "cell-status-ok", symbol: "✓", label: "OK" },
+  warn: { className: "cell-status-warn", symbol: "！", label: "要注意" },
+  ng: { className: "cell-status-ng", symbol: "✕", label: "NG" },
 } as const satisfies Record<
   (typeof REPORT_CELL_STATUSES)[number],
-  { readonly className: string; readonly label: string }
+  { readonly className: string; readonly symbol: string; readonly label: string }
 >
 
 /** 候補の判定 → カードとバッジの class と、バッジに出す語。「採る」は筆を留める対象。 */
@@ -530,22 +530,19 @@ function tableMarkdown(table: Extract<ReportBlock, { readonly kind: "table" }>):
   ])
 }
 
-type ColumnAlign = "left" | "right" | "center"
+type ColumnAlign = "left" | "right"
 
 /** 見た目だけの数字（符号・桁区切り・小数点・末尾の % を許す）。単位付きの数字は左揃えのまま。 */
 const NUMERIC_CELL_PATTERN = /^-?\d[\d,]*(?:\.\d+)?%?$/
 
 type ReportCell = z.infer<typeof cellSchema>
 
-/** 列の全セルが状態なら中央、全セルが数（前と後がどちらも数の変化を含む）なら右に揃える。 */
+/** 列の全セルが数（前と後がどちらも数の変化を含む）なら右に揃える。それ以外は左。 */
 function columnAlign(
   rows: Extract<ReportBlock, { readonly kind: "table" }>["rows"],
   index: number,
 ): ColumnAlign {
   const cells = rows.map((row) => row[index])
-  if (cells.every((cell) => typeof cell === "object" && "status" in cell)) {
-    return "center"
-  }
   if (cells.every((cell) => cell !== undefined && isNumericCell(cell))) {
     return "right"
   }
@@ -561,15 +558,13 @@ function isNumericCell(cell: ReportCell): boolean {
   )
 }
 
-/** GFM の列揃えの記法（`:---:` / `---:`）。 */
+/** GFM の列揃えの記法（`---:`）。 */
 function alignMarker(align: ColumnAlign): string {
   switch (align) {
     case "left":
       return "---"
     case "right":
       return "---:"
-    case "center":
-      return ":---:"
   }
 }
 
@@ -583,12 +578,14 @@ function cellMarkdown(cell: ReportCell): string {
       "\\|",
     )
   }
-  const badge = CELL_BADGES[cell.status]
-  const mark = `<span class="badge ${badge.className}">${badge.label}</span>`
+  const status = CELL_STATUS_MARKS[cell.status]
+  const mark = `<span class="cell-status-mark">${status.symbol} ${status.label}</span>`
   const text = cell.text.trim()
-  return text === "" || text === badge.label
-    ? mark
-    : `${mark} ${markdownInline(text).replaceAll("|", "\\|")}`
+  const body =
+    text === "" || text === status.label
+      ? mark
+      : `${mark}<span class="cell-status-text">${markdownInline(text)}</span>`
+  return `<span class="cell-status ${status.className}">${body}</span>`.replaceAll("|", "\\|")
 }
 
 /**

@@ -102,7 +102,7 @@ describe("reportSectionsMarkdown", () => {
     )
   })
 
-  it("表は太字1行の見出しのあとに GFM の表で組み、状態のセルは列の中央に揃えたバッジに状態の語を付ける（書き手の文字と同じなら重ねない）", () => {
+  it("表は太字1行の見出しのあとに GFM の表で組み、状態のセルは上下2段（記号付きの印／状態の文）で左に揃える（書き手の文字と同じなら文の段を重ねない）", () => {
     const table: ReportBlock = {
       kind: "table",
       title: "架空の表",
@@ -119,9 +119,9 @@ describe("reportSectionsMarkdown", () => {
         "**架空の表**",
         "",
         "| 項目 | 結果 |",
-        "| --- | :---: |",
-        '| 架空の a\\|b | <span class="badge badge-ok">OK</span> 通過 |',
-        '| 架空の c | <span class="badge badge-ng">NG</span> |',
+        "| --- | --- |",
+        '| 架空の a\\|b | <span class="cell-status cell-status-ok"><span class="cell-status-mark">✓ OK</span><span class="cell-status-text">通過</span></span> |',
+        '| 架空の c | <span class="cell-status cell-status-ng"><span class="cell-status-mark">✕ NG</span></span> |',
       ].join("\n"),
     )
   })

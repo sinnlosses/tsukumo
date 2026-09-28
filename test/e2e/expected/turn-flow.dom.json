@@ -398,7 +398,7 @@
                                           {
                                             "tag": "td",
                                             "children": [
-                                              "OK"
+                                              "✓ OK"
                                             ]
                                           }
                                         ]
@@ -426,7 +426,131 @@
                                           {
                                             "tag": "td",
                                             "children": [
-                                              "要注意"
+                                              "！ 要注意",
+                                              "キャッシュが古いまま"
+                                            ]
+                                          }
+                                        ]
+                                      },
+                                      {
+                                        "tag": "tr",
+                                        "children": [
+                                          {
+                                            "tag": "td",
+                                            "children": [
+                                              {
+                                                "tag": "code",
+                                                "children": [
+                                                  "c.ts"
+                                                ]
+                                              }
+                                            ]
+                                          },
+                                          {
+                                            "tag": "td",
+                                            "children": [
+                                              "型の食い違いが残る"
+                                            ]
+                                          },
+                                          {
+                                            "tag": "td",
+                                            "children": [
+                                              "✕ NG"
+                                            ]
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "tag": "p",
+                                "children": [
+                                  {
+                                    "tag": "strong",
+                                    "children": [
+                                      "目盛りの数（架空の数）"
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "tag": "table",
+                                "children": [
+                                  {
+                                    "tag": "thead",
+                                    "children": [
+                                      {
+                                        "tag": "tr",
+                                        "children": [
+                                          {
+                                            "tag": "th",
+                                            "children": [
+                                              "場所"
+                                            ]
+                                          },
+                                          {
+                                            "tag": "th",
+                                            "children": [
+                                              "前"
+                                            ]
+                                          },
+                                          {
+                                            "tag": "th",
+                                            "children": [
+                                              "後"
+                                            ]
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "tag": "tbody",
+                                    "children": [
+                                      {
+                                        "tag": "tr",
+                                        "children": [
+                                          {
+                                            "tag": "td",
+                                            "children": [
+                                              "帯"
+                                            ]
+                                          },
+                                          {
+                                            "tag": "td",
+                                            "children": [
+                                              "12"
+                                            ]
+                                          },
+                                          {
+                                            "tag": "td",
+                                            "children": [
+                                              "24"
+                                            ]
+                                          }
+                                        ]
+                                      },
+                                      {
+                                        "tag": "tr",
+                                        "children": [
+                                          {
+                                            "tag": "td",
+                                            "children": [
+                                              "札"
+                                            ]
+                                          },
+                                          {
+                                            "tag": "td",
+                                            "children": [
+                                              "6"
+                                            ]
+                                          },
+                                          {
+                                            "tag": "td",
+                                            "children": [
+                                              "12"
                                             ]
                                           }
                                         ]
