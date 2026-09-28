@@ -1,7 +1,7 @@
 [
   {
     "received": "hello",
-    "protocolVersion": 23
+    "protocolVersion": 24
   },
   {
     "received": "event",
@@ -163,6 +163,28 @@
     "at": 1768438800000,
     "event": {
       "kind": "tool-started",
+      "toolUseId": "fake-tool-report-check",
+      "name": "Bash",
+      "input": {
+        "command": "pnpm run check"
+      }
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "tool-finished",
+      "toolUseId": "fake-tool-report-check",
+      "content": "ok",
+      "isError": false
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "tool-started",
       "toolUseId": "fake-tool-report-2",
       "name": "Edit",
       "input": {
@@ -217,16 +239,22 @@
         {
           "status": "ok",
           "label": "pnpm run check",
-          "detail": "架空の 1234 件が通った"
+          "figure": "1234 件",
+          "command": "pnpm run check",
+          "detail": "架空の単体テストがすべて通った"
         },
         {
           "status": "ng",
           "label": "目盛りの E2E",
+          "figure": "1 / 56",
+          "command": "",
           "detail": "架空の 1 件が落ちた"
         },
         {
           "status": "unverified",
           "label": "狭い窓での見た目",
+          "figure": "",
+          "command": "",
           "detail": "手で確かめていない"
         }
       ]

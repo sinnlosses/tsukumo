@@ -33,8 +33,8 @@ import {
   type UsageReviewFindings,
   type UsageReviewStage,
 } from "../../../../../shared/usage-review/usage-review.ts"
+import { formatElapsed } from "../../../../../shared/utils/elapsed-time.ts"
 import { characterFaceInfo, type CharacterFaceInfo } from "../../../../domain/character-face.ts"
-import { formatElapsed } from "../../../../domain/elapsed-time.ts"
 import { rpc } from "../../../../domain/rpc.ts"
 import { useSession, useTurnRunning, type SessionDispatch } from "../../../../stores/session.ts"
 import {

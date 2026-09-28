@@ -1034,7 +1034,7 @@ describe("toSessionEvents（report ツール）", () => {
           conclusion: "架空の結論。",
           body: "## 架空の見出し",
           favor: "架空のお願い",
-          checks: [{ status: "ok", label: "架空の検査", detail: "架空の件数" }],
+          checks: [{ status: "ok", label: "架空の検査", detail: "架空の件数" }], // figure と command の無い前の形
           closing: { text: "架空の締め", expression: "proud" },
           sessionSummary: "架空の要約",
         },
@@ -1053,7 +1053,9 @@ describe("toSessionEvents（report ツール）", () => {
           },
         ],
         favor: "架空のお願い",
-        checks: [{ status: "ok", label: "架空の検査", detail: "架空の件数" }],
+        checks: [
+          { status: "ok", label: "架空の検査", figure: "", command: "", detail: "架空の件数" },
+        ],
         closing: { kind: "speech", text: "架空の締め", expression: "proud" },
         unknownBlockCount: 0,
         sessionSummary: "架空の要約",

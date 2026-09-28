@@ -17,6 +17,7 @@ import {
   type ToolRunStatus,
   type TurnBodies,
 } from "./session-state.ts"
+import { bashCommandDuration } from "./turn-step.ts"
 import { splitIntoTurns, type TurnRest, turnIdOf } from "./turn.ts"
 
 /**
@@ -158,7 +159,9 @@ export type MainViewTurn = {
  * `tool` の記録も渡す（ステップの `actions` に入る）が、描く側はそこから描かない。
  */
 export function mainViewEntries(state: SessionState): readonly MainViewEntry[] {
-  const settled = state.records.flatMap(toMainViewEntries)
+  const settled = state.records.flatMap((record, index) =>
+    toMainViewEntries(record, () => turnRecordsBefore(state.records, index)),
+  )
   return isBlankText(state.partialUtterance)
     ? settled
     : [...settled, { kind: "detail", markdown: state.partialUtterance }]
@@ -207,7 +210,10 @@ export function mainViewTurns(
  *
  * `tool` は `toolUseId` / `nested`（突き合わせにしか使わない内部の付随情報）を落とす（メインビューの部品が見てよいのは名前・入力・結果だけ）。
  */
-function toMainViewEntries(record: SessionRecord): readonly MainViewEntry[] {
+function toMainViewEntries(
+  record: SessionRecord,
+  earlierInTurn: () => readonly SessionRecord[],
+): readonly MainViewEntry[] {
   if (record.kind === "speech" || record.kind === "compact-boundary") {
     return []
   }
@@ -216,7 +222,7 @@ function toMainViewEntries(record: SessionRecord): readonly MainViewEntry[] {
     return [{ kind: "request", turnId: record.turnId, text: record.text, images: record.images }]
   }
   if (record.kind === "report") {
-    return [{ kind: "report", markdown: reportMarkdown(record) }]
+    return [{ kind: "report", markdown: reportMarkdown(record, earlierInTurn()) }]
   }
   // `detail` / `question` / `turn-failure` は `MainViewEntry` と同じ形なのでそのまま通す。
   if (record.kind !== "tool") {
@@ -227,21 +233,33 @@ function toMainViewEntries(record: SessionRecord): readonly MainViewEntry[] {
 
 /**
  * `report` の引数を、`conclusion` → `checks` → `sections` → `favor` の順に1つの本文へ組む。
- * `checks` は検証結果の帯（{@link reportChecksMarkdown}）、`favor` はレポートの記法の「お願い」の塊で包むので、サニタイズも記法の解釈もテキストの本文と同じ経路を通る。
+ * `checks` は検証結果のカードの並び（{@link reportChecksMarkdown}。所要時間は同じやり取りの中の `tool` の記録から引く）、`favor` はレポートの記法の「お願い」の塊で包むので、サニタイズも記法の解釈もテキストの本文と同じ経路を通る。
  * `favor` は HTML の中に Markdown を入れるので、塊の内側の前後に空行を空ける。
  * 空の `checks` / `sections` / `favor` は塊ごと置かない。
  *
  * 節の並びはここで整形する（{@link tidyReportSections}。記録は引数のまま持ち、描くたびに導く）。
  */
-function reportMarkdown(report: Extract<SessionRecord, { readonly kind: "report" }>): string {
+function reportMarkdown(
+  report: Extract<SessionRecord, { readonly kind: "report" }>,
+  earlierInTurn: readonly SessionRecord[],
+): string {
   return [
     report.conclusion,
-    reportChecksMarkdown(report.checks),
+    reportChecksMarkdown(report.checks, (command) => bashCommandDuration(earlierInTurn, command)),
     reportSectionsMarkdown(tidyReportSections(report)),
     isBlankText(report.favor) ? "" : `<div class="note note-favor">\n\n${report.favor}\n\n</div>`,
   ]
     .filter((part) => !isBlankText(part))
     .join("\n\n")
+}
+
+/** `index` の記録より前で、同じやり取り（最後の `request` より後）に入る記録。 */
+function turnRecordsBefore(
+  records: readonly SessionRecord[],
+  index: number,
+): readonly SessionRecord[] {
+  const earlier = records.slice(0, index)
+  return earlier.slice(earlier.findLastIndex((record) => record.kind === "request") + 1)
 }
 
 /**

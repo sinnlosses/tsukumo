@@ -1761,7 +1761,9 @@ describe("createSessionManager", () => {
           { heading: "", blocks: [{ kind: "text", text: "本文はここに出ない", fold: "" }] },
         ],
         favor: "本文はここに出ない",
-        checks: [{ status: "ok", label: "本文はここに出ない", detail: "" }],
+        checks: [
+          { status: "ok", label: "本文はここに出ない", figure: "", command: "", detail: "" },
+        ],
         closing: { kind: "none" },
         unknownBlockCount: 0,
         sessionSummary: undefined,

@@ -19,7 +19,7 @@ import type {
   RateLimitBucket,
 } from "../../../../../../../../../shared/session-driver/rate-limit.ts"
 import type { TurnProgress } from "../../../../../../../../../shared/session/session-state.ts"
-import { formatElapsed } from "../../../../../../../../domain/elapsed-time.ts"
+import { formatElapsed } from "../../../../../../../../../shared/utils/elapsed-time.ts"
 import { useQuestionAnswer } from "../../../../../../../../stores/question-answer.ts"
 import { useSession } from "../../../../../../../../stores/session.ts"
 import { dayAwareClockTime, nowEpochMilliseconds } from "../../../../../../../../utils/clock.ts"

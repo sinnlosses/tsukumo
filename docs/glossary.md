@@ -254,7 +254,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
   `conclusion`（結論。必須）・`checks`（検証結果。任意）・`sections`（本文。節と塊の並び。任意）・`favor`（お願い。
   任意）・`closing`（締めのセリフ。必須。`speak` と同じ `text` と `expression`）・`title`（セッション一覧の
   見出し。任意）・`sessionSummary`（セッションの要約。任意。描かない）で、**戻り値は `"ok"` か、
-  差し戻すときの規約違反だけ**。メインビューには `conclusion` → `checks`（検証結果の帯）→ `sections` →
+  差し戻すときの規約違反だけ**。メインビューには `conclusion` → `checks`（検証結果のカード）→ `sections` →
   `favor`（お願いの塊）の順に描き、そのあと `closing` を吹き出しに出す。**通った呼び出しはそこで
   ターンを閉じる**（結果の `_meta["claude/endTurn"]`。差し戻しでは閉じない）
 - **注記**: **仕事のセッションには常に載り、雑談には載らない**（2026-09-24 に試行から採用へ）。

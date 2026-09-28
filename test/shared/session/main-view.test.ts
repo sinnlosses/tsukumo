@@ -598,13 +598,19 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     expect(shownReports(turn)).toEqual(["架空の答え。\n\n以上です。"])
   })
 
-  it("checks は結論のすぐ下に検証結果の帯として組む（body・favor より前）", () => {
+  it("checks は結論のすぐ下に検証結果のカードの並びとして組む（body・favor より前）", () => {
     const turn = turnOf(
       [
         ask,
         report("架空の結論。", "架空の根拠。", "架空のお願い", [
-          { status: "ok", label: "架空の検査", detail: "架空の件数" },
-          { status: "unverified", label: "架空の目視", detail: "" },
+          {
+            status: "ok",
+            label: "架空の検査",
+            figure: "12 / 3",
+            command: "",
+            detail: "架空の件数",
+          },
+          { status: "unverified", label: "架空の目視", figure: "", command: "", detail: "" },
         ]),
         finished,
       ],
@@ -615,12 +621,57 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     expect(shownReports(turn)).toEqual([
       "架空の結論。\n\n" +
         '<div class="checks">' +
-        '<div class="check"><span class="badge badge-ok">OK</span> <b>架空の検査</b> 架空の件数</div>' +
-        '<div class="check"><span class="badge badge-warn">未確認</span> <b>架空の目視</b></div>' +
+        '<div class="check check-ok"><div class="check-head"><span class="check-mark">✓ OK</span><span class="check-figure">12 / 3</span></div><div class="check-body"><b>架空の検査</b> 架空の件数</div></div>' +
+        '<div class="check check-unverified"><div class="check-head"><span class="check-mark">? 未確認</span></div><div class="check-body"><b>架空の目視</b></div></div>' +
         "</div>\n\n" +
         '架空の根拠。\n\n<div class="note note-favor">\n\n架空のお願い\n\n</div>',
     ])
     expect(firstLineOf(turn?.steps[0])).toBe("架空の結論。")
+  })
+
+  it("command と完全一致した同じやり取りの最後の Bash の所要時間を、カードに添える", () => {
+    const bashStarted = (id: string, command: string): SessionEvent => ({
+      kind: "tool-started",
+      toolUseId: id,
+      name: "Bash",
+      input: { command },
+      parentToolUseId: undefined,
+    })
+    const bashFinished = (id: string): SessionEvent => ({
+      kind: "tool-finished",
+      toolUseId: id,
+      content: "ok",
+      isError: false,
+    })
+    const timed: readonly (readonly [SessionEvent, number])[] = [
+      [ask, 0],
+      [bashStarted("toolu_b1", "架空の検査"), 1_000],
+      [bashFinished("toolu_b1"), 5_000],
+      [bashStarted("toolu_b2", "架空の検査"), 6_000],
+      [bashFinished("toolu_b2"), 68_000],
+      [bashStarted("toolu_b3", "架空の検査 --別"), 69_000],
+      [bashFinished("toolu_b3"), 70_000],
+      [
+        report("架空の結論。", "", "", [
+          { status: "ok", label: "一致する", figure: "", command: "架空の検査", detail: "" },
+          { status: "ok", label: "一致しない", figure: "", command: "架空の検", detail: "" },
+        ]),
+        71_000,
+      ],
+      [finished, 72_000],
+    ]
+    const state = timed.reduce(
+      (current, [event, at]) => applySessionEvent(current, event, at),
+      INITIAL_SESSION_STATE,
+    )
+    const [shown] = shownReports(mainViewTurns(mainViewEntries(state), SETTLED, true).at(-1))
+
+    expect(shown).toContain(
+      '<span class="check-mark">✓ OK</span><span class="check-time">1分02秒</span></div><div class="check-body"><b>一致する</b>',
+    )
+    expect(shown).toContain(
+      '<span class="check-mark">✓ OK</span></div><div class="check-body"><b>一致しない</b>',
+    )
   })
 
   it("checks・body・favor が空ならその塊を置かない（帯も出ない）", () => {

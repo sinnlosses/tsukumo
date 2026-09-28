@@ -120,7 +120,7 @@ describe("REPORT_NOTATION_PROMPT", () => {
     }
   })
 
-  it("tsukumo が組む印（検証結果の帯）は文面に載せず、部品で解決され、CSS まで届く", () => {
+  it("tsukumo が組む印（検証結果のカード）は文面に載せず、部品で解決され、CSS まで届く", () => {
     for (const name of REPORT_DRAWN_MARK_NAMES) {
       expect(REPORT_NOTATION_PROMPT).not.toContain(`class="${name}"`)
 

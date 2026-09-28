@@ -7,7 +7,7 @@
 
 **きっかけ**: `report` の `body`（Markdown の文字列）を、型の付いた塊の配列として受け取り、塊の種類ごとに
 決まった部品で描けないか（利用者は方向に同意し、「もっと考えないといけない」としている）。
-前例は検証結果の欄 `checks`（`src/shared/report/report-check.ts`。型で受けて帯で描く）。
+前例は検証結果の欄 `checks`（`src/shared/report/report-check.ts`。型で受けてカードで描く）。
 
 **対象**: `main` の `1ed67333`。
 

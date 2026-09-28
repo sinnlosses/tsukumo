@@ -228,7 +228,10 @@ describe("createReportReview の judge（送り直し）", () => {
     expect(review.judge(OTHER)).toEqual({ kind: "accepted" })
     expect(review.judge({ ...VALID, favor: "架空のお願い。" })).toEqual({ kind: "accepted" })
     expect(
-      review.judge({ ...VALID, checks: [{ status: "ng", label: "架空の検査", detail: "" }] }),
+      review.judge({
+        ...VALID,
+        checks: [{ status: "ng", label: "架空の検査", figure: "", command: "", detail: "" }],
+      }),
     ).toEqual({ kind: "accepted" })
   })
 

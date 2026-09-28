@@ -65,6 +65,18 @@ export const REPORT_NOTATION_NAMES = [
 
 /**
  * tsukumo が `report` の欄から組む印（モデルには教えないので、文面に書き足す決まりの外）。
- * `checks` は検証結果の帯、`check` はその1項目。見た目は語彙と同じく `report-notation.module.css` の `report-<名前>`。
+ * `checks` は検証結果のカードの並び、`check` はその1枚で、残りはカードの中の部位と状態の色。
+ * 見た目は語彙と同じく `report-notation.module.css` の `report-<名前>`。
  */
-export const REPORT_DRAWN_MARK_NAMES = ["checks", "check"] as const satisfies readonly string[]
+export const REPORT_DRAWN_MARK_NAMES = [
+  "checks",
+  "check",
+  "check-ok",
+  "check-ng",
+  "check-unverified",
+  "check-head",
+  "check-mark",
+  "check-figure",
+  "check-time",
+  "check-body",
+] as const satisfies readonly string[]

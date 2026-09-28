@@ -20,7 +20,7 @@ import styles from "./report-notation.module.css"
  * モデルが書く class 名 → tsukumo が装飾に使う class 名（report-notation.module.css のもの。組み立て時にハッシュ化される）。
  * ここに無い名前は素通しする。
  * 印の名前の集合は `REPORT_NOTATION_NAMES` が持つ（`report-<名前>` が CSS 側の綴りの規則）。
- * tsukumo が組む印（検証結果の帯）も同じ表で解決する。
+ * tsukumo が組む印（検証結果のカード）も同じ表で解決する。
  */
 const NOTATION_CLASS_NAMES: ReadonlyMap<string, string> = new Map(
   [...REPORT_NOTATION_NAMES, ...REPORT_DRAWN_MARK_NAMES].map((name) => [

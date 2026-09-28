@@ -1,7 +1,8 @@
-// `report` の検証結果の欄 `checks` の形と、帯の HTML の組み立て。形の出どころはここだけ。
+// `report` の検証結果の欄 `checks` の形と、カードの並びの HTML の組み立て。形の出どころはここだけ。
 
 import { z } from "zod"
 
+import { formatElapsed, type MeasuredTime } from "../utils/elapsed-time.ts"
 import { htmlInline } from "./report-block.ts"
 
 /** 検証1項目の状態。確かめなかった・飛ばしたものは `unverified` にまとめ、理由は `detail` に書かせる。 */
@@ -12,43 +13,78 @@ export type ReportCheckStatus = (typeof REPORT_CHECK_STATUSES)[number]
 export const reportCheckSchema = z.object({
   status: z.enum(REPORT_CHECK_STATUSES),
   label: z.string().describe("何で確かめたか（コマンド・テスト・手で見た場面）"),
-  detail: z.string().describe("件数・差分・確かめなかった理由など。無ければ空文字"),
+  figure: z
+    .string()
+    .describe(
+      "結果を1つの数で言う短い文字列（例: 2849 / 56、25px、0 件）。カードに大きく描く。数で言えなければ空文字",
+    ),
+  command: z
+    .string()
+    .describe(
+      "確かめるのに打った Bash のコマンドを、打った文字列のまま（tsukumo が同じターンの呼び出しと完全一致で突き合わせ、測った所要時間を添える）。コマンドでない確認は空文字",
+    ),
+  detail: z
+    .string()
+    .describe("補足・確かめなかった理由など。figure に書いた数は言い直さない。無ければ空文字"),
 })
 
 export type ReportCheck = z.infer<typeof reportCheckSchema>
 
 /**
- * `report` の引数の `checks` を取り出す。「無い」と形の崩れは空の配列に畳む（形の崩れた
- * 呼び出しは handler に届く前に SDK が差し戻すので、描かれない）。
+ * `figure` と `command` を足す前の記録（transcript からの復元）も読めるように、2つは欠けていたら空文字に畳む。
+ * 状態・ラベル・補足が崩れた呼び出しは handler に届く前に SDK が差し戻すので、ここで欠けるのは古い記録だけ。
  */
+const storedReportCheckSchema = reportCheckSchema.extend({
+  figure: z.string().catch(""),
+  command: z.string().catch(""),
+})
+
+/** `report` の引数の `checks` を取り出す。「無い」と形の崩れは空の配列に畳む。 */
 export function parseReportChecks(value: unknown): readonly ReportCheck[] {
-  const parsed = z.array(reportCheckSchema).safeParse(value)
+  const parsed = z.array(storedReportCheckSchema).safeParse(value)
   return parsed.success ? parsed.data : []
 }
 
 /**
- * 検証結果の帯（1行の HTML）。空なら空文字。状態はバッジの色と文字の両方で見せる（色だけで意味を伝えない）。
- * `label` / `detail` はモデルが書いた文字列なので HTML として逃がし、改行は空白に畳む（HTML の塊が空行で切れないように）。
+ * 検証結果のカードの並び（1行の HTML）。空なら空文字。
+ * 状態はカードの色と文字の両方で見せる（色だけで意味を伝えない）。
+ * `commandDuration` は `command` から tsukumo が測った所要時間を引く口で、`command` が空の項目には呼ばない。
+ * モデルの文字列は HTML として逃がし、改行は空白に畳む（HTML の塊が空行で切れないように）。
  */
-export function reportChecksMarkdown(checks: readonly ReportCheck[]): string {
+export function reportChecksMarkdown(
+  checks: readonly ReportCheck[],
+  commandDuration: (command: string) => MeasuredTime,
+): string {
   if (checks.length === 0) {
     return ""
   }
-  const items = checks.map(({ status, label, detail }) => {
-    const mark = REPORT_CHECK_MARKS[status]
-    const parts = [
-      `<span class="badge ${mark.badge}">${mark.text}</span>`,
-      `<b>${htmlInline(label)}</b>`,
-      ...(detail.trim() === "" ? [] : [htmlInline(detail)]),
+  const cards = checks.map((check) => {
+    const mark = REPORT_CHECK_MARKS[check.status]
+    const duration: MeasuredTime =
+      check.command.trim() === "" ? { kind: "unknown" } : commandDuration(check.command)
+    const head = [
+      `<span class="check-mark">${mark.text}</span>`,
+      ...(check.figure.trim() === ""
+        ? []
+        : [`<span class="check-figure">${htmlInline(check.figure)}</span>`]),
+      ...(duration.kind === "known"
+        ? [
+            `<span class="check-time">${formatElapsed(Math.round(duration.milliseconds / 1000))}</span>`,
+          ]
+        : []),
     ]
-    return `<div class="check">${parts.join(" ")}</div>`
+    const body = [
+      `<b>${htmlInline(check.label)}</b>`,
+      ...(check.detail.trim() === "" ? [] : [htmlInline(check.detail)]),
+    ]
+    return `<div class="check ${mark.card}"><div class="check-head">${head.join("")}</div><div class="check-body">${body.join(" ")}</div></div>`
   })
-  return `<div class="checks">${items.join("")}</div>`
+  return `<div class="checks">${cards.join("")}</div>`
 }
 
-/** 状態 → 帯に描くバッジ（記法の `badge-*`）と文字。 */
+/** 状態 → カードの色の印と、色と一緒に出す文字。 */
 const REPORT_CHECK_MARKS = {
-  ok: { badge: "badge-ok", text: "OK" },
-  ng: { badge: "badge-ng", text: "NG" },
-  unverified: { badge: "badge-warn", text: "未確認" },
-} as const satisfies Record<ReportCheckStatus, { readonly badge: string; readonly text: string }>
+  ok: { card: "check-ok", text: "✓ OK" },
+  ng: { card: "check-ng", text: "✕ NG" },
+  unverified: { card: "check-unverified", text: "? 未確認" },
+} as const satisfies Record<ReportCheckStatus, { readonly card: string; readonly text: string }>

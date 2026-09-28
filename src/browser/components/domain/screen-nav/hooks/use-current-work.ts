@@ -27,7 +27,7 @@ import {
   type TurnStepList,
   type TurnStepStatus,
 } from "../../../../../shared/session/turn-step.ts"
-import { formatElapsed } from "../../../../domain/elapsed-time.ts"
+import { formatElapsed } from "../../../../../shared/utils/elapsed-time.ts"
 import { DEFAULT_CHARACTER_NAME } from "../../../../domain/portrait-appearance.ts"
 import { summarizeToolInput, toolInputText } from "../../../../domain/tool-summary.ts"
 import { useDismissSignal, type DismissCause } from "../../../../hooks/use-dismiss-signal.ts"

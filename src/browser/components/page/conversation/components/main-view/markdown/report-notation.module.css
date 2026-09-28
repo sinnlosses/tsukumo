@@ -226,26 +226,60 @@
 .detail-block .report-file-note {
   grid-column: 3;
 }
-/* 検証結果の帯（`report` の `checks` から tsukumo が組む）。
-   結論のすぐ下に上下の罫で挟んだ1本の帯として置き、項目は横に並べて入らなければ折り返す。
-   状態はバッジの色と文字（OK / NG / 未確認）の両方で読める。 */
+/* 検証結果のカード（`report` の `checks` から tsukumo が組む）。
+   毎回出る脇役なので、1枚は「状態・数・時間」の行と「ラベル・補足」の行の2段に収め、幅に合わせて横に並べる。
+   状態は縦罫と地の染めの色に加えて、行頭の文字（✓ OK / ✕ NG / ? 未確認）でも読める。 */
 .detail-block .report-checks {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem 1.25rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  gap: 0.4rem;
   margin: 0.5rem 0;
-  padding: 0.4rem 0;
-  border-top: 1px solid var(--rule);
-  border-bottom: 1px solid var(--rule);
   font-size: var(--font-secondary);
   color: var(--ink-quiet);
 }
 .detail-block .report-check {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 0.4rem;
+  padding: 0.3rem 0.6rem;
+  border-left: 3px solid currentColor;
+  border-radius: 0.25rem;
+  background: color-mix(in srgb, var(--surface), currentColor 8%);
 }
-.detail-block .report-check b {
+.detail-block .report-check-ok {
+  color: var(--state-ok);
+}
+.detail-block .report-check-ng {
+  color: var(--state-ng);
+}
+.detail-block .report-check-unverified {
+  color: var(--state-warn);
+}
+.detail-block .report-check-head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  white-space: nowrap;
+}
+.detail-block .report-check-mark {
+  font-weight: 700;
+}
+.detail-block .report-check-figure {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: var(--font-subheading);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  color: var(--ink);
+}
+.detail-block .report-check-time {
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-quiet);
+}
+.detail-block .report-check-body {
+  overflow-wrap: anywhere;
+  color: var(--ink-quiet);
+}
+.detail-block .report-check-body b {
   color: var(--ink);
 }
 /* 情報の塊（素の `note`。結論を言う役）。

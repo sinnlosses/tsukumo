@@ -1355,6 +1355,26 @@
           }
         },
         {
+          "afterMs": 3550,
+          "event": {
+            "kind": "tool-started",
+            "toolUseId": "fake-tool-report-check",
+            "name": "Bash",
+            "input": {
+              "command": "pnpm run check"
+            }
+          }
+        },
+        {
+          "afterMs": 3950,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-tool-report-check",
+            "content": "ok",
+            "isError": false
+          }
+        },
+        {
           "afterMs": 4000,
           "event": {
             "kind": "tool-started",
@@ -1402,11 +1422,25 @@
             ],
             "favor": "`b.ts` のキャッシュを消してよいか決めてほしい（架空のお願い）。",
             "checks": [
-              { "status": "ok", "label": "pnpm run check", "detail": "架空の 1234 件が通った" },
-              { "status": "ng", "label": "目盛りの E2E", "detail": "架空の 1 件が落ちた" },
+              {
+                "status": "ok",
+                "label": "pnpm run check",
+                "figure": "1234 件",
+                "command": "pnpm run check",
+                "detail": "架空の単体テストがすべて通った"
+              },
+              {
+                "status": "ng",
+                "label": "目盛りの E2E",
+                "figure": "1 / 56",
+                "command": "",
+                "detail": "架空の 1 件が落ちた"
+              },
               {
                 "status": "unverified",
                 "label": "狭い窓での見た目",
+                "figure": "",
+                "command": "",
                 "detail": "手で確かめていない"
               }
             ]
