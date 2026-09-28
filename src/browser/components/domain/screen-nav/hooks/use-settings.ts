@@ -1,38 +1,27 @@
-// 帯の右端の歯車で開く設定のロジック（docs/screen-design.md 13.6「設定の置き場所」/ 13.9「設定の
-// 歯車」）。いまここにあるのは地・領域・字の色・新しいセッションの既定・書き上げる
-// 演出の速さ・訪問のオン・オフの4群。
+// 帯の右端の歯車で開く設定のロジック。
+// 群は画面の色・新しいセッションの既定・書き上げる演出の速さ・訪問のオン・オフの4つで、持ち先が違う。
 //
-// 4群は持ち先が違う。 色と演出の速さは利用者の端末の設定（`localStorage`。演出の速さは
-// `browser/domain/reveal-speed.ts`）、既定はサーバが覚える値（`~/.tsukumo/state.json`。
-// `session.setSessionDefault` で送り、`SessionState.sessionDefault` を読む）。既定は次に起こすときから
-// 効くので、送ってもいまのセッションのモデル・許可モードは変わらない（帯のドロップダウンは
-// セッション限りの別物）。演出の速さは `domain/reveal/use-report-reveal.ts` がマウント時に読むだけなので、
-// 変えても書いている最中の演出には効かない（次に書き始めたときから）。訪問のオン・オフは
-// 上のどちらでもない——サーバの `SessionState.visitEnabled` だが、ディスクには覚えず
-// いま動いているセッションに即座に効く（`visit.setEnabled`。オフにすると訪問中でもその場で
-// 帰る。`docs/requirements.md`「訪問」）。
+// - 色と演出の速さは利用者の端末の設定（`localStorage`）
+// - 既定はサーバが覚える値（`~/.tsukumo/state.json`。`session.setSessionDefault` で送り、`SessionState.sessionDefault` を読む）
+// - 訪問のオン・オフはサーバの `SessionState.visitEnabled` だが、ディスクには覚えず、いま動いているセッションに即座に効く（`visit.setEnabled`。オフにすると訪問中でもその場で帰る）
 //
-// 色の持ち方は `browser/domain/appearance-color.ts` のまま（`localStorage` の鍵も検証も変えて
-// いない。キャラクター画面から移したのは操作子だけ）。見た目（`documentElement`）
-// は `onChange` のたびそのまま反映し、`localStorage` への書き込みだけ `useDebouncedCallback` で
-// 200ms まとめる。鍵は1つ——保存は3色まとめて1つの入れ物を書くので、色ごとにタイマーを
-// 分けても最後の1回しか効かない。1つにしておくと「既定に戻す」が引きずり中の書き込みを
-// 必ず追い越す。
+// 既定は次に起こすときから効くので、送ってもいまのセッションのモデル・許可モードは変わらない（帯のドロップダウンはセッション限りの別物）。
+// 演出の速さは `useReportReveal` がマウント時に読むだけなので、変えても書いている最中の演出には効かない。
 //
-// `ground` と `ink` の差が足りずに受け取らなかった色は、その理由を面の中に1行出す
-// （{@link ScreenNavSettings.colorNotice}）。出さないと操作子が黙って元の色へ戻り、選んだ色が
-// 効かないように見える。次に受け取られたとき・既定に戻したとき・面を閉じたときに消す。
+// 色の見た目（`documentElement`）は `onChange` のたびそのまま反映し、`localStorage` への書き込みだけ `useDebouncedCallback` で 200ms まとめる。
+// 保存は3色まとめて1つの入れ物を書くので、鍵は1つにする。
+// 色ごとにタイマーを分けると最後の1回しか効かず、1つにしておくと「既定に戻す」が引きずり中の書き込みを必ず追い越す。
 //
-// `<input type="color">` に出す表示値は `displayColor` に持つ。マウント時に一度だけ
-// `readCurrentColor`（`getComputedStyle`）で読み、以降は書いた値をそのまま state へ流す
-// （書く → 描画中に読み直す、を避ける）。反映済みの状態で読めるのは、保存済みの上書きを
-// `documentElement` へ差す1回を入口（`src/browser/main.tsx`）が済ませているため。
+// `ground` と `ink` の差が足りずに受け取らなかった色は、その理由を面の中に1行出す（`ScreenNavSettings.colorNotice`）。
+// 出さないと操作子が黙って元の色へ戻り、選んだ色が効かないように見える。
+// 次に受け取られたとき・既定に戻したとき・面を閉じたときに消す。
 //
-// ポップオーバーは2箇所に描かれる（広い画面の帯・狭い画面の「≡」の面の中。「いまの作業」の
-// 札と同じ畳み方で、どちらを出すかは CSS が決める）。開閉の状態は1つなので、押した先の
-// DOM がどちらでも同じ面が開く。閉じる合図は「≡」・「いまの作業」と同じ
-// `browser/hooks/use-dismiss-signal.ts` で、Esc の戻り先の歯車も同じくコールバック ref で
-// 集める（{@link ScreenNavSettings.toggleRef}）。
+// `<input type="color">` に出す表示値は `displayColor` に持つ。
+// マウント時に一度だけ `readCurrentColor`（`getComputedStyle`）で読み、以降は書いた値をそのまま state へ流す（書く → 描画中に読み直す、を避ける）。
+// 反映済みの状態で読めるのは、保存済みの上書きを `documentElement` へ差す1回を入口が済ませているため。
+//
+// ポップオーバーは2箇所に描かれる（広い画面の帯・狭い画面の「≡」の面の中）。
+// 開閉の状態は1つで、閉じる合図は `useDismissSignal`、Esc の戻り先の歯車はコールバック ref で集める（`ScreenNavSettings.toggleRef`）。
 
 import { useRef, useState, type RefCallback, type RefObject } from "react"
 
@@ -68,7 +57,6 @@ import {
   type VisitToggleValue,
 } from "../domain/visit-toggle-label.ts"
 
-/** 色の操作子1つ（見た目が受け取れる形まで畳んだもの）。 */
 export type ScreenNavSettingsColor = {
   readonly key: AppearanceColorKey
   readonly label: string
@@ -76,23 +64,18 @@ export type ScreenNavSettingsColor = {
   readonly onChange: (value: string) => void
 }
 
-/** 色を受け取らなかった理由の1行（`docs/screen-design.md` 13.9「設定の歯車」）。 */
+/** 色を受け取らなかった理由の1行。 */
 export type ScreenNavSettingsColorNotice =
   | { readonly kind: "none" }
   | { readonly kind: "shown"; readonly text: string }
 
-/**
- * 新しいセッションの既定の操作子（`docs/screen-design.md` 13.6）。表示はサーバから届いた値だけに
- * 従う（押した側へ先に倒さない。帯の操作子と同じ作法）。
- */
+/** 新しいセッションの既定の操作子。表示はサーバから届いた値だけに従い、押した側へ先に倒さない。 */
 export type ScreenNavSettingsSessionDefault = {
   readonly model: ModelAlias
   readonly onChangeModel: (value: string) => void
   /**
-   * effort（{@link EffortSelect}）。帯の判定をそのまま再利用する
-   * （`resolveEffortSelect`。`domain/effort-label.ts`）——対応表（`modelEffortSupport`）は
-   * 駆動が起動直後に届けるモデル横断の一覧なので、いま帯に出しているモデルと無関係に、
-   * ここで選んでいる既定のモデルの対応も同じ関数で引ける。
+   * effort。帯の判定（`resolveEffortSelect`）をそのまま使う。
+   * 対応表（`modelEffortSupport`）は駆動が起動直後に届けるモデル横断の一覧なので、ここで選んでいる既定のモデルの対応も同じ関数で引ける。
    */
   readonly effort: EffortSelect
   readonly onChangeEffort: (value: string) => void
@@ -100,19 +83,15 @@ export type ScreenNavSettingsSessionDefault = {
   readonly onChangePermissionMode: (value: string) => void
 }
 
-/**
- * 書き上げる演出の速さの操作子（`docs/screen-design.md` 13.6。`domain/reveal-speed.ts`）。色と同じ
- * 利用者の設定なので、書いた値をそのまま表示値にする（読み直さない）。
- */
+/** 書き上げる演出の速さの操作子。色と同じ利用者の設定なので、書いた値をそのまま表示値にする（読み直さない）。 */
 export type ScreenNavSettingsRevealSpeed = {
   readonly value: RevealSpeed
   readonly onChange: (value: string) => void
 }
 
 /**
- * 訪問のオン・オフの操作子（`docs/screen-design.md` 13.6・13.9）。表示はサーバから届いた値だけに
- * 従う（`sessionDefault` と同じ作法）——`SessionState.visitEnabled` はディスクに覚えないので、
- * 起こし直すたびに既定の「する」へ戻る。
+ * 訪問のオン・オフの操作子。表示はサーバから届いた値だけに従う。
+ * `SessionState.visitEnabled` はディスクに覚えないので、起こし直すたびに既定の「する」へ戻る。
  */
 export type ScreenNavSettingsVisit = {
   readonly value: VisitToggleValue
@@ -131,9 +110,8 @@ export type ScreenNavSettings = {
   readonly resetDisabled: boolean
   readonly onReset: () => void
   /**
-   * 歯車の `<button>` を預ける口（Esc で閉じたときのフォーカスの戻り先）。2箇所に描かれる
-   * ので入れ物は1つにできず、付いている歯車を全部集めるコールバック ref にする
-   * （理由は `hooks/use-current-work.ts` の {@link ScreenNavCurrentWork.toggleRef} と同じ）。
+   * 歯車の `<button>` を預ける口（Esc で閉じたときのフォーカスの戻り先）。
+   * 2箇所に描かれるので入れ物は1つにできず、付いている歯車を全部集めるコールバック ref にする。
    */
   readonly toggleRef: RefCallback<HTMLButtonElement>
 }
@@ -145,8 +123,8 @@ const COLOR_FIELDS = [
 ] as const satisfies readonly { readonly key: AppearanceColorKey; readonly label: string }[]
 
 /**
- * 差が足りずに受け取らなかったときの1行。変えようとした側の色を主語にする（相手の色を
- * 先に動かせば通ることが読み取れるように、相手の名前も出す）。
+ * 差が足りずに受け取らなかったときの1行。変えようとした側の色を主語にする。
+ * 相手の色を先に動かせば通ることが読み取れるように、相手の名前も出す。
  */
 const LOW_CONTRAST_NOTICE = {
   ground: "字の色との差が足りず本文が読めなくなるため、この地の色は使えません。",
@@ -155,20 +133,18 @@ const LOW_CONTRAST_NOTICE = {
 
 const NO_COLOR_NOTICE = { kind: "none" } as const satisfies ScreenNavSettingsColorNotice
 
-/** 画面の色の書き込みをまとめる間隔。 */
 const APPEARANCE_COLOR_DEBOUNCE_MS = 200
 
-/** 書き込みをまとめる鍵。3色を1つの入れ物で保存するので、色ごとには分けない（冒頭の注記）。 */
+/** 書き込みをまとめる鍵。3色を1つの入れ物で保存するので、色ごとには分けない。 */
 const APPEARANCE_COLOR_SAVE_KEY = "appearance-color"
 
-/** `navRef` は帯全体（`<nav>`）。外側を押したかの判定に使う（「≡」・「いまの作業」と同じ `ref`）。 */
+/** `navRef` は帯全体（`<nav>`）。外側を押したかの判定に使う。 */
 export function useSettings(navRef: RefObject<HTMLElement | null>): ScreenNavSettings {
   const dispatch = useSession((session) => session.dispatch)
   const sessionDefault = useSession((session) => session.state.sessionDefault)
   const modelEffortSupport = useSession((session) => session.state.modelEffortSupport)
   const visitEnabled = useSession((session) => session.state.visitEnabled)
   const [open, setOpen] = useState(false)
-  // いま DOM に付いている歯車。React の外にある資源を持つ可変の入れ物なので ref に置く。
   const toggleNodes = useRef(new Set<HTMLButtonElement>())
   // 上書きの正典は `localStorage`。反映（`documentElement`）は入口が済ませているので、
   // ここは「次の1色を足すための下地」として読むだけ。
@@ -206,8 +182,7 @@ export function useSettings(navRef: RefObject<HTMLElement | null>): ScreenNavSet
     setOpen(false)
     setColorNotice(NO_COLOR_NOTICE)
     if (cause === "escape") {
-      // 押せる状態にある歯車は1つだけ（もう片方は `display: none` で `.focus()` が効かない）
-      // なので、付いているものへ順に呼んで構わない。
+      // 押せる状態にある歯車は1つだけ（もう片方は `display: none` で `.focus()` が効かない）なので、付いているものへ順に呼んで構わない。
       for (const node of toggleNodes.current) {
         node.focus()
       }
@@ -225,8 +200,7 @@ export function useSettings(navRef: RefObject<HTMLElement | null>): ScreenNavSet
     applyAppearanceColorOverride(change.override)
     setOverride(change.override)
     saveOverride(APPEARANCE_COLOR_SAVE_KEY, change.override)
-    // 書いた値がそのまま documentElement に反映されるので、書き戻しを読み直さず
-    // その値をそのまま表示値にできる。
+    // 書いた値がそのまま documentElement に反映されるので、読み直さずにその値を表示値にする。
     setDisplayColor((current) => ({ ...current, [key]: value }))
   }
 
@@ -289,7 +263,7 @@ export function useSettings(navRef: RefObject<HTMLElement | null>): ScreenNavSet
       },
       permissionMode: sessionDefault.permissionMode,
       onChangePermissionMode: (value) => {
-        // 「全部許す」はここを通らない（選択肢にも無い。`docs/requirements.md` 4.1）。
+        // 「全部許す」はここを通らない（選択肢にも無い）。
         if (isSessionDefaultPermissionMode(value)) {
           dispatch.session.setSessionDefault({
             model: sessionDefault.model,

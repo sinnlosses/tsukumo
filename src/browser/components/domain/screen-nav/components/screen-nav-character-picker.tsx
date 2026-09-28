@@ -1,9 +1,6 @@
-// 帯の左端のキャラクターの顔と、押すと開くキャラクターの選び口（`docs/screen-design.md`
-// 「キャラクターの選び口」）。顔の右下に小さな「⌄」を添え、押すとパックの一覧が顔の真下に
-// 重なる。ロジックは `useCharacterPicker`、ここは受け取った値をそのまま置く器。
+// 帯の左端のキャラクターの顔と、押すと開くキャラクターの選び口。
 //
-// 同じ部品を広い画面の帯と狭い画面の「≡」の面の両方に置くので、id は `useId()` でこの器ごとに
-// 振る（`aria-controls` が指す先が重ならない）。
+// 同じ部品を広い画面の帯と狭い画面の「≡」の面の両方に置くので、id は `useId()` でこの器ごとに振る（`aria-controls` が指す先が重ならない）。
 
 import clsx from "clsx"
 import { ChevronDown } from "lucide-react"
@@ -27,8 +24,7 @@ export function ScreenNavCharacterPicker(props: ScreenNavCharacterPickerProps): 
   const { toggleRef } = picker
   const panelId = useId()
 
-  // `shellStyles` は見た目を持たない（「≡」の面の中で並べ直す規則のためだけの参照。CSS Modules は
-  // class 名をファイルごとにハッシュ化するので、帯全体の CSS の選択子を当てるにはそちらの class も要る）。
+  // `shellStyles` の class は見た目を持たず、`screen-nav.module.css` の `@media` の選択子を当てるためだけに重ねる。
   return (
     <div
       className={clsx(

@@ -1,15 +1,11 @@
-// 帯のまん中の札「いまの作業」と、押すと開く依頼の手順の一覧（docs/screen-design.md 13.9
-// 「いまの作業」）。ロジックは `hooks/use-current-work.ts`、ここは受け取った値をそのまま置く器
-// （2章「機能の中を分ける」）。
+// 帯のまん中の札「いまの作業」と、押すと開く依頼の手順の一覧。
 //
-// 同じ部品を広い画面の帯と狭い画面の「≡」の面の両方に置く（`ScreenNavRoom` などと同じ
-// 畳み方。どちらを出すかは CSS の `@media` が決める）。開閉の状態は1つの hook が持つので、
-// どちらから押しても同じ一覧が開く——id は `useId()` でこの器ごとに振る（2箇所に描くため、
-// `aria-controls` が指す一覧の id が重ならないようにする）。Esc の戻り先として札の DOM を
-// 預ける口（`work.toggleRef`）も、2箇所ぶんを集めるコールバック ref（`use-current-work.ts`）。
+// 同じ部品を広い画面の帯と狭い画面の「≡」の面の両方に置く（どちらを出すかは CSS の `@media` が決める）。
+// 開閉の状態は1つの hook が持つので、どちらから押しても同じ一覧が開く。
+// id は `useId()` でこの器ごとに振る（`aria-controls` が指す一覧の id が重ならないようにする）。
+// Esc の戻り先として札の DOM を預ける口（`work.toggleRef`）も、2箇所ぶんを集めるコールバック ref。
 //
-// 失敗した手順の `<details>` は、もとサイドバーにあった `activity.tsx` の `FailureDetail` を
-// そのまま移した（引数と出力を読める場所はここだけ。docs/screen-design.md 13.9）。
+// 失敗した手順の引数と出力を読める場所はここだけ。
 
 import clsx from "clsx"
 import { useId, type ReactElement } from "react"
@@ -28,26 +24,20 @@ export type ScreenNavCurrentWorkProps = {
   readonly work: ScreenNavCurrentWork
 }
 
-// 入力・出力を読める形の文字列にしてから切り詰める上限。表示を壊さないためであって秘匿の
-// ためではない（元は `sidebar/activity.tsx`）。
+// 入力・出力を読める形の文字列にしてから切り詰める上限。表示を壊さないためであって秘匿のためではない。
 const MAX_TOOL_TEXT_LENGTH = 8000
 
-/** 答え待ちが質問のときに一覧へ出す口（docs/screen-design.md 13.9「いまの作業」）。 */
+/** 答え待ちが質問のときに一覧へ出す口。 */
 const GO_TO_QUESTION_LABEL = "質問へ"
 
 export function ScreenNavCurrentWorkPill(props: ScreenNavCurrentWorkProps): ReactElement {
   const { work } = props
-  // 預け先はここで分解して受ける（`work.toggleRef` の形のまま `ref` に渡すと、
-  // `react(refs)`（規約「レンダー中に ref を読み書きしない」）が `work` への参照ごと
-  // レンダー中の ref の読み書きとみなして落ちる。`presentational-screen-nav.tsx` と同じ事情）。
+  // 預け先はここで分解して受ける。
+  // `work.toggleRef` の形のまま `ref` に渡すと、`react(refs)` が `work` への参照ごとレンダー中の ref の読み書きとみなして落ちる。
   const { toggleRef } = work
   const listId = useId()
 
-  // `shellStyles` は見た目を持たない（広い画面から隠す規則
-  // `.screen-nav > .screen-nav-work` と「≡」の面の中で縦に積む規則
-  // `.screen-nav-panel .screen-nav-work*` のためだけの参照）。CSS Modules は class 名を
-  // ファイルごとにハッシュ化するので、`screen-nav.module.css` 側の選択子を当てるにはこのファイル
-  // 自身の class も要る（docs/design.md 6.6）。
+  // `shellStyles` の class は見た目を持たず、`screen-nav.module.css` の `@media` の選択子を当てるためだけに重ねる。
   return (
     <div
       className={clsx(styles["screen-nav-work"], shellStyles["screen-nav-work"])}
@@ -203,8 +193,8 @@ function CurrentWorkList(props: {
 }
 
 /**
- * 背景のタスク1件（docs/screen-design.md 13.9「背景のタスク」）。印は実行中の手順と同じ回る
- * 「…」（動いているものの印を2種類にしない）。種類の語は手順のツール名と同じ等幅の列に置く。
+ * 背景のタスク1件。印は実行中の手順と同じ回る「…」（動いているものの印を2種類にしない）。
+ * 種類の語は手順のツール名と同じ等幅の列に置く。
  */
 function CurrentWorkBackgroundRow(props: {
   readonly task: ScreenNavCurrentWorkBackgroundTask
@@ -255,10 +245,7 @@ function CurrentWorkStepRow(props: { readonly step: ScreenNavCurrentWorkStep }):
   )
 }
 
-/**
- * 失敗した手順の中身（引数と出力）。「失敗」の文字を印にする（色だけで意味を伝えない。
- * docs/screen-design.md 13.1 原則5）。開くと出力、引数の順に出る（`sidebar/activity.tsx` から移した）。
- */
+/** 失敗した手順の中身（引数と出力）。「失敗」の文字を印にする（色だけで意味を伝えない）。 */
 function FailureDetail(props: {
   readonly label: string
   readonly input: unknown
@@ -283,7 +270,7 @@ function FailureDetail(props: {
   )
 }
 
-/** ツールの入力（`unknown`。SDK のイベントから来た JSON 値）を、読める形の文字列にする。 */
+/** ツールの入力（SDK のイベントから来た JSON 値）を、読める形の文字列にする。 */
 function stringifyToolInput(input: unknown): string {
   if (input === undefined) {
     return ""

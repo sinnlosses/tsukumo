@@ -1,8 +1,7 @@
-// セッション1件の中身（依頼の数・要約・最後のセリフ）を手続き `sessionDigest.read` で取りに行く
-// （`docs/glossary.md`「セッションの要約」）。
+// セッション1件の中身（依頼の数・要約・最後のセリフ）を手続き `sessionDigest.read` で取りに行く。
 //
-// 取るのは頼まれた1件だけで、IDが無いあいだは取りに行かない（`skipToken`）。transcript は
-// 動いているセッションでは毎ターン伸びるので、開くたびに取り直す（`staleTime: 0`）。
+// 取るのは頼まれた1件だけで、IDが無いあいだは取りに行かない（`skipToken`）。
+// transcript は動いているセッションでは毎ターン伸びるので、開くたびに取り直す（`staleTime: 0`）。
 
 import { skipToken, useQuery } from "@tanstack/react-query"
 

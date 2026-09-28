@@ -1,14 +1,8 @@
-// 画面のナビの帯の器だけ（docs/design.md 2章「機能の中を分ける」/ docs/screen-design.md 13.9）。フックも算出も
-// 持たず、受け取った値と呼び先をそのまま置く。
+// 画面のナビの帯の器だけ。フックも算出も持たず、受け取った値と呼び先をそのまま置く。
+// 狭い画面では `<ScreenNavMenu>` の「≡」に畳む（どちらを出すかは `screen-nav.module.css` の `@media` が決める）。
 //
-// 全画面の最上部に出る1本の帯で、顔（押すとキャラクターを選ぶ）と部屋の名前とセッションの札
-// （押すと切り替え画面）の名乗りの塊が左端、その右に仕事/雑談の
-// トグル、縦の仕切り、3つの口（会話 / キャラクター / トークン消費）、その右に「いまの作業」の札、
-// その右にモデル・許可モードのドロップダウン、いちばん右端に設定の歯車。狭い画面では
-// `<ScreenNavMenu>` の「≡」に畳む（どちらを出すかは `screen-nav.module.css` の `@media` が決める）。
-//
-// `data-screen` でいま出している画面を名乗るのは、狭い画面で帯の置き方が変わるため
-// （会話の画面だけは、いまあるタブ帯の右端に重ねる。13.9）。
+// `data-screen` でいま出している画面を名乗るのは、狭い画面で帯の置き方が変わるため。
+// 会話の画面だけは、いまあるタブ帯の右端に重ねる。
 
 import type { ReactElement } from "react"
 
@@ -27,12 +21,9 @@ import styles from "./screen-nav.module.css"
 export type PresentationalScreenNavProps = ScreenNavView
 
 /**
- * props はここだけ分解して受ける（`ref` を `props.ref` の形で描画中に読むと
- * `react(refs)` が落ちるため。`presentational-task-board.tsx` と同じ）。
+ * props はここだけ分解して受ける（`ref` を `props.ref` の形で描画中に読むと `react(refs)` が落ちるため）。
  *
- * 部品の値は束（`parts`）のまま `<ScreenNavMenu>` へ渡す（項目ごとに配り直さない。
- * `hooks/use-screen-nav.ts` の `ScreenNavParts`）。ここが持つのは広い画面の並び
- * だけで、「≡」の面の並びは `components/screen-nav-menu.tsx` の側にある。
+ * ここが持つのは広い画面の並びだけで、「≡」の面の並びは {@link ScreenNavMenu} の側にある。
  */
 export function PresentationalScreenNav({
   current,

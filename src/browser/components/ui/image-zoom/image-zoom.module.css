@@ -1,6 +1,5 @@
-/* 絵を原寸で拡大して見る面（`image-zoom.tsx`）。一時的に重なるものなので
-   常設の枠を増やさない（`docs/screen-design.md`「原則2」）。**面も絵も画面の内側に収める**——横に
-   はみ出す絵は幅で頭打ちにして縮め、面の中で横スクロールを起こさない（狭い画面 390x844 でも）。 */
+/* 絵を原寸で拡大して見る面。
+   面も絵も画面の内側に収める。横にはみ出す絵は幅で頭打ちにして縮め、面の中で横スクロールを起こさない（狭い画面 390x844 でも）。 */
 .image-zoom {
   box-sizing: border-box;
   display: flex;
@@ -17,7 +16,6 @@
   border-radius: 0.75rem;
   overflow: hidden;
 }
-/* 背景（backdrop）は `<Dialog backdrop="dim">` が持つ（`dialog.module.css`）。 */
 /* 絵そのもの。器（.image-zoom）の内側に収まるところまでしか広がらない。 */
 .image-zoom-image {
   display: block;

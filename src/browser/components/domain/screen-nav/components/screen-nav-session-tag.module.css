@@ -1,10 +1,9 @@
-/* 帯の左端の部屋の名前とセッションの短縮IDの札。値は見本
-   `docs/history/mockup/session-switch-2026-09-27/HD-4-IdTag.dc.html` の inline style を
-   `theme.css` のトークンに写したもの。「≡」の面の中の見た目
-   （`.screen-nav-panel .screen-nav-session-tag`）は `screen-nav.module.css` の @media が持つ。 */
+/* 帯の左端の部屋の名前とセッションの短縮IDの札。
+   値は見本 `docs/history/mockup/session-switch-2026-09-27/HD-4-IdTag.dc.html` の inline style を `theme.css` のトークンに写したもの。
+   「≡」の面の中の見た目は `screen-nav.module.css` の @media が持つ。 */
 
-/* 部屋の名前・「-」・短縮IDのボタンを字の並びで揃える。ホバーの一行
-   （.screen-nav-session-tag-tooltip）を札の真下に重ねる基準も兼ねる。 */
+/* 部屋の名前・「-」・短縮IDのボタンを字の並びで揃える。
+   ホバーの一行（.screen-nav-session-tag-tooltip）を札の真下に重ねる基準も兼ねる。 */
 .screen-nav-session-tag {
   position: relative;
   display: flex;
@@ -12,8 +11,7 @@
   align-items: baseline;
   gap: 0.5rem;
 }
-/* 押せるのは短縮IDだけ。ふだんは枠も地も無く字だけに見せ、ホバー・開いているときに枠と地で
-   押せることを示す（色だけで伝えない。13.1 原則1）。 */
+/* 押せるのは短縮IDだけ。ふだんは枠も地も無く字だけに見せ、ホバー・開いているときに枠と地で押せることを示す（色だけで伝えない）。 */
 .screen-nav-session-tag-button {
   display: inline-flex;
   align-items: baseline;
@@ -29,7 +27,7 @@
   border-color: var(--accent);
   background: var(--surface-accent);
 }
-/* 部屋の名前。帯の左端で「どの部屋か」を名乗るので、明るい字の太字（見本は明朝 18px）。 */
+/* 部屋の名前。帯の左端で「どの部屋か」を名乗るので、明るい字の太字。 */
 .screen-nav-room {
   font-family: var(--font-serif);
   letter-spacing: 0.08em;
@@ -38,8 +36,7 @@
 .screen-nav-session-tag-dash {
   color: var(--ink-quiet);
 }
-/* 短縮ID。等幅で差し色寄りの字にし、下に点線を引いて押せる札だと分かるようにする
-   （見本の `border-bottom: 1px dashed`）。 */
+/* 短縮ID。等幅で差し色寄りの字にし、下に点線を引いて押せる札だと分かるようにする。 */
 .screen-nav-session-tag-id {
   border-bottom: 1px dashed color-mix(in srgb, var(--accent) 45%, transparent);
   color: color-mix(in srgb, var(--accent) 55%, var(--ink));
@@ -49,7 +46,7 @@
   letter-spacing: 0.08em;
   line-height: 1.4;
 }
-/* 短縮IDへのホバーの一行。見本どおり明るい地に暗い字で、帯の下の領域に重ねる（押し下げない）。 */
+/* 短縮IDへのホバーの一行。明るい地に暗い字で、帯の下の領域に重ねる（押し下げない）。 */
 .screen-nav-session-tag-tooltip {
   position: absolute;
   top: calc(100% + 0.5rem);

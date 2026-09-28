@@ -1,19 +1,8 @@
-// 使う人が変えられる3色（`ground` / `surface` / `ink`。docs/screen-design.md 13.2 / 13.5 / 13.6）を
-// `localStorage` に持つ。既定値は `src/browser/styles/theme.css` の `:root` にしかない
-// （コーディング規約「`theme.css` 以外に16進の色を書かない」）ので、ここでは「上書きしない」を
-// `undefined` で表す。上書きが無いときの実際の色は `readCurrentColor` が
-// `getComputedStyle(document.documentElement)` から読む（`:root` の値がそのまま返る。
-// 上書き中ならその値が返る）。JS 側に既定の16進を持たない。
+// 使う人が変えられる3色（`ground` / `surface` / `ink`）を `localStorage` に持つ。
+// 既定値は `theme.css` の `:root` にしかないので、ここでは「上書きしない」を `undefined` で表し、JS 側に既定の16進を持たない。
+// 上書きが無いときの実際の色は `readCurrentColor` が `getComputedStyle(document.documentElement)` から読む。
 //
-// 検証は1箇所（このモジュール）に封じ込める（`docs/coding-standards.md`「型を迂回する
-// キャストを使わない」の境界の考え方）。`localStorage` から読み戻す値・`<input type="color">`
-// が渡す値のどちらも、ここでしか型を確定させない。
-//
-// `components/page/character/` から `browser/domain/` へ上げてある（3色の操作子が帯の歯車へ移り、
-// 読み手が2つの機能——歯車の `components/domain/screen-nav/` と、差し色を読む
-// `components/page/character/`——にまたがったため。2章「上げる引き金は2つ目の読み手が出たとき」）。
-// 包んでいるのは `localStorage` と `getComputedStyle` だが、ファイル名が指すのは「画面の色」という
-// tsukumo の語彙なので `lib/` ではなく `domain/`（2章「`lib/` と `utils/` に置く基準」の手順1）。
+// `localStorage` から読み戻す値・`<input type="color">` が渡す値のどちらも、型を確定させるのはここだけ。
 
 import { isPlainObject } from "remeda"
 
@@ -36,8 +25,7 @@ export const DEFAULT_APPEARANCE_COLOR_OVERRIDE: AppearanceColorOverride = {
   ink: undefined,
 }
 
-// `ground` と `ink` の組が本文を読める下限（docs/screen-design.md 13.2「コントラストの下限を守る」）。
-// WCAG 2.1 SC 1.4.3（AA、通常テキスト）と同じ 4.5:1 を採る。
+// `ground` と `ink` の組が本文を読める下限。WCAG 2.1 SC 1.4.3（AA、通常テキスト）と同じ 4.5:1 を採る。
 export const MIN_CONTRAST = 4.5
 
 const STORAGE_KEY = "tsukumo-appearance-color:v1"
@@ -49,11 +37,8 @@ const TOKEN_NAME: Readonly<Record<AppearanceColorKey, string>> = {
 }
 const ACCENT_TOKEN_NAME = "--accent"
 /**
- * 背景の覆いの不透明度の下限を渡す先（`docs/screen-design.md` 13.8）。敷くのは枠を持たない領域
- * （キャラビューと雑談中のメインビュー）だけで、読むのは
- * `src/browser/components/page/conversation/components/conversation-layout/
- * conversation-layout.module.css` の `.layout-ground` 1箇所
- * （2つの領域が同じ class を共有する）。パックが書いた `veil` とこの下限の大きいほうが効く。
+ * 背景の覆いの不透明度の下限を渡す先。
+ * 読むのは `conversation-layout.module.css` の `.layout-ground` 1箇所で、パックが書いた `veil` とこの下限の大きいほうが効く。
  */
 const BACKGROUND_VEIL_FLOOR_TOKEN_NAME = "--character-background-veil-floor"
 
@@ -94,9 +79,8 @@ export function saveAppearanceColorOverride(value: AppearanceColorOverride): voi
 /**
  * `document.documentElement` に反映する。`undefined` は「上書きしない」＝ 既定に戻す。
  *
- * 背景の覆いの下限（{@link backgroundVeilFloor}）も一緒に差し直す。 下限はいまの
- * `ground` と `ink` から決まるので、色を変えるたびに計算し直さないと、字を変えたあとに
- * 背景の上の本文が読めなくなる（docs/screen-design.md 13.8）。
+ * 背景の覆いの下限（{@link backgroundVeilFloor}）も一緒に差し直す。
+ * 下限はいまの `ground` と `ink` から決まるので、色を変えるたびに計算し直さないと、字を変えたあとに背景の上の本文が読めなくなる。
  */
 export function applyAppearanceColorOverride(value: AppearanceColorOverride): void {
   setOrRemoveToken("ground", value.ground)
@@ -114,17 +98,15 @@ export function readCurrentColor(key: AppearanceColorKey): string {
 }
 
 /**
- * 今のキャラクターの色（`--accent`）。差し色（`outfitAccents`）が定義に無い衣装の
- * `<input type="color">` の初期値に使う。パックが差した値、無ければ `theme.css` の `:root` の
- * 既定値が返る（JS 側に既定の16進を持たないための読み取り。13.2 / 13.5）。
+ * 今のキャラクターの色（`--accent`）。差し色（`outfitAccents`）が定義に無い衣装の `<input type="color">` の初期値に使う。
+ * パックが差した値、無ければ `theme.css` の `:root` の既定値が返る。
  */
 export function readAccentColor(): string {
   return readToken(ACCENT_TOKEN_NAME)
 }
 
 /**
- * 1色を変えようとした結果。受け取らなかったときは理由を持つので、画面は黙って元の色に
- * 戻すのではなく、なぜ効かなかったかを出せる（docs/screen-design.md 13.9「設定の歯車」）。
+ * 1色を変えようとした結果。受け取らなかったときは理由を持つので、画面は黙って元の色に戻すのではなく、なぜ効かなかったかを出せる。
  * `low-contrast` の `key` は変えようとした側（`ground` か `ink`）。
  */
 export type AppearanceColorChange =
@@ -133,13 +115,12 @@ export type AppearanceColorChange =
   | { readonly kind: "low-contrast"; readonly key: "ground" | "ink" }
 
 /**
- * 使う人が1色を変えようとしたときの境界。`ground` / `ink` は組で検証し、下回ったら
- * その1色を受け取らない（docs/screen-design.md 13.2 / 13.6）。`surface` はコントラストの対象外
- * （13.2 は `ground` と `ink` の組しか挙げていない）。
+ * 使う人が1色を変えようとしたときの境界。
+ * `ground` / `ink` は組で検証し、下回ったらその1色を受け取らない。`surface` はコントラストの対象外。
  *
- * 受け取らないだけで、それまでの上書きは消さない。 消すと「地を決めたあとに字で
- * 読めない色を試したら、地の設定まで失われる」ことになる。`current` は設定時に
- * 検証を通っているので、そのまま残しても読める組であることは保たれる。
+ * 受け取らないだけで、それまでの上書きは消さない。
+ * 消すと「地を決めたあとに字で読めない色を試したら、地の設定まで失われる」ことになる。
+ * `current` は設定時に検証を通っているので、そのまま残しても読める組であることは保たれる。
  */
 export function changeAppearanceColor(
   current: AppearanceColorOverride,
@@ -162,13 +143,11 @@ export function changeAppearanceColor(
 }
 
 /**
- * 背景（docs/screen-design.md 13.8）の覆いの不透明度の下限。画像の中身を1ピクセルも読まずに
- * 決める: 覆いの下の色は必ず `ground` と画像の色を結ぶ線分の上に来るので、線分の端
- * （真っ白・真っ黒）で {@link MIN_CONTRAST} を満たせば、どんな画像でも満たす。
+ * 背景の覆いの不透明度の下限。画像の中身を1ピクセルも読まずに決める。
+ * 覆いの下の色は必ず `ground` と画像の色を結ぶ線分の上に来るので、線分の端（真っ白・真っ黒）で {@link MIN_CONTRAST} を満たせば、どんな画像でも満たす。
  *
  * 定義の側の下限（`MIN_BACKGROUND_VEIL`）から 0.01 ずつ上げ、両端とも満たす最初の値を返す。
- * `ground` と `ink` の組は 13.2 の境界が 4.5 以上に保っているので、覆いが不透明になる端
- * （`MAX_BACKGROUND_VEIL`）まで上げれば必ず満たせる（＝引き上げが行き止まらない）。
+ * `ground` と `ink` の組は境界が 4.5 以上に保っているので、覆いが不透明になる端（`MAX_BACKGROUND_VEIL`）まで上げれば必ず満たせる（引き上げが行き止まらない）。
  */
 export function backgroundVeilFloor(ground: string, ink: string): number {
   const inkLuminance = relativeLuminance(ink)
@@ -249,11 +228,7 @@ function channelByte(hex: string, start: number): number {
 
 const [RED_AT, GREEN_AT, BLUE_AT] = [1, 3, 5]
 
-/**
- * 覆いの下でいちばん危ない画像の色（真っ白と真っ黒）を、チャンネル値で持つ。16進では
- * 書かない（16進を書いてよいのは `src/browser/styles/theme.css` だけ）。
- */
+/** 覆いの下でいちばん危ない画像の色（真っ白と真っ黒）を、チャンネル値で持つ（16進を書いてよいのは `theme.css` だけ）。 */
 const WORST_IMAGE_CHANNELS = [0, 255] as const
 
-/** 覆いの不透明度を刻む細かさ（1/100 刻みで探す）。 */
 const VEIL_STEPS = 100

@@ -1,30 +1,23 @@
-/* サイドバー（`src/browser/components/domain/sidebar/`）。伸び縮みする区画（タスク一覧）の**枠**と、
-   下端に固定する帯（コンテキストの使用量）を持つ。**区画の中身（タスク一覧）と、そこから開く表の
-   見た目はここには無い** — 置かれる機能の側に1枚でまとまっている（docs/design.md 2章
-   「領域の機能と、置かれる機能」）。サイドバーは置き場所を貸しているだけ。
+/* サイドバー。伸び縮みする区画（タスク一覧）の枠と、下端に固定する帯（コンテキストの使用量）を持つ。
+   区画の中身（タスク一覧）と、そこから開く表の見た目はここには無く、置かれる機能の側にまとまっている。
 
-   **寸法の出どころは `docs/history/mockup/sidebar-tasks-2026-09-23.html`**（見本の
-   inline style の px を、`theme.css` のトークンに写した値で持つ。px をそのまま書かない）。 */
+   寸法の出どころは `docs/history/mockup/sidebar-tasks-2026-09-23.html`。
+   見本の inline style の px を、`theme.css` のトークンに写した値で持つ（px をそのまま書かない）。 */
 
-/* サイドバーの区画1つ。見出し（h2、伸縮しない）と .sidebar-block-scroll（残りを埋めて
-   内側でスクロールする）の縦積みにする。区画自身は伸縮できないと内側の overflow-y: auto が
-   効かないので min-height: 0 が要る。 */
+/* サイドバーの区画1つ。見出し（h2、伸縮しない）と .sidebar-block-scroll（残りを埋めて内側でスクロールする）の縦積みにする。
+   区画自身は伸縮できないと内側の overflow-y: auto が効かないので min-height: 0 が要る。 */
 .sidebar-block {
   display: flex;
   flex-direction: column;
   min-height: 0;
-  /* 区画の間の余白は3区画ぶん効くので、ここを詰めた分がそのまま一覧に見える件数になる
-     （1rem のときは上下で 80px を使っていた）。罫線があるので詰めても区画の境目は読める。
-     左右 1.125rem（18px）はモック（docs/history/mockup/sidebar-tasks-2026-09-23.html）の
-     区画の内側 padding。ここに置くのは見出し（h2）と中身（.sidebar-block-scroll）の両方が
-     同じ横位置で揃うようにするため——中身側だけに付けると見出しだけ左に飛び出す。 */
+  /* 区画の間の余白は3区画ぶん効くので、ここを詰めた分がそのまま一覧に見える件数になる。
+     左右 1.125rem（18px）は見本の区画の内側 padding。
+     見出し（h2）と中身（.sidebar-block-scroll）の両方が同じ横位置で揃うようにここに置く（中身側だけに付けると見出しだけ左に飛び出す）。 */
   margin: 0 0 0.5rem;
   padding: 0 1.125rem;
   font-size: var(--font-secondary);
 }
-/* 区画の見出し（`Heading`。size="subheading" tone="ink" weight="bold"——本文（--font-body）と
-   カードの summary（--font-subheading）の間に埋もれない強さにする。13.1 原則1「見出しやツール名も
-   文字の側」）。ここに残すのは置き方だけ（横並び・間隔・margin）。 */
+/* 区画の見出し。字は `Heading` が持ち、ここに残すのは置き方だけ（横並び・間隔・margin）。 */
 .sidebar-block-heading {
   display: flex;
   align-items: baseline;
@@ -35,76 +28,50 @@
 .sidebar-block p {
   margin: 0.2rem 0;
 }
-/* 区画の中身。親（.sidebar-block）に定まった高さが無い文脈（狭い画面での1列の畳み）
-   では flex-grow は働かず、中身なりの高さに広がるだけになる（中で無理に
-   スクロールさせない）。**flex-basis は 0 ではなく auto にすること**：親の高さが auto の
-   ときに flex-basis: 0 だと、内容サイズの見積もりに使う基準そのものが 0 になり、
-   overflow-y: auto と min-height: 0 の効果で中身が高さ 0 に潰れる（サイドバーの
-   スクロール範囲の回帰として発覚）。flex-basis: auto なら親の高さが定まっている（.layout-sidebar
-   配下）ときは今まで通り内側でスクロールし、定まっていない（狭い画面）ときは
-   中身なりの高さに自然に広がる。 */
-/* 上下の padding は `theme.css` の `:focus-visible`（outline 2px + outline-offset 2px = 要素の
-   外側 4px）とちょうど合わせている。overflow の scrollport は padding box の内側までを含むので、
-   この 4px の中に収まる outline は上端・下端とも切られない。**左右は付けない**——横位置は
-   親（.sidebar-block）の 1.125rem が揃えるので、ここに付けると見出しより中身が内側へ二重に
-   寄ってしまう。 */
+/* 区画の中身。親（.sidebar-block）に定まった高さが無い文脈（狭い画面での1列の畳み）では flex-grow は働かず、中身なりの高さに広がるだけになる。
+   flex-basis は 0 ではなく auto にすること。
+   親の高さが auto のときに flex-basis: 0 だと、内容サイズの見積もりの基準そのものが 0 になり、overflow-y: auto と min-height: 0 の効果で中身が高さ 0 に潰れる。 */
+/* 上下の padding は `theme.css` の `:focus-visible`（outline 2px + outline-offset 2px = 要素の外側 4px）とちょうど合わせている。
+   overflow の scrollport は padding box の内側までを含むので、この 4px の中に収まる outline は上端・下端とも切られない。
+   左右は付けない。横位置は親（.sidebar-block）の 1.125rem が揃えるので、ここに付けると見出しより中身が内側へ二重に寄る。 */
 .sidebar-block-scroll {
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
   padding: 4px 0;
 }
-/* 「タスク一覧」は中身の量が変わるので、残りの高さをここへ割り当てる（下端の帯は
-   `.sidebar-footer` が伸縮しないので、余りはすべてここへ来る）。**一覧を見渡すのは区画ではなく
-   画面いっぱいの表（モーダル）**なので、ここは一覧の全長に合わせて高さを取りに行かない。
-   入りきらない分は .sidebar-block-scroll が内側でスクロールする。 */
+/* 「タスク一覧」は中身の量が変わるので、残りの高さをここへ割り当てる（下端の帯は伸縮しないので、余りはすべてここへ来る）。
+   一覧を見渡すのは画面いっぱいの表（モーダル）なので、ここは一覧の全長に合わせて高さを取りに行かない。 */
 .sidebar-block-tasks {
   flex: 1 1 0;
 }
-/* 見出しの右端に並ぶ押せる口（タスク一覧の「一覧を見る」）。**枠なしのリンク風**にする
-   （docs/history/mockup/sidebar-tasks-2026-09-23.html）。押せることを色だけで示さない
-   （docs/screen-design.md 13.1 原則1）ので、ボタンの `cursor: pointer` と、ホバー時の下線・
-   キーボードで来たときの `:focus-visible`（theme.css の既定）を色の変化に添える。 */
+/* 見出しの右端に並ぶ押せる口（タスク一覧の「一覧を見る」）。枠なしのリンク風にする。 */
 .sidebar-block-title {
   flex: 1 1 auto;
   min-width: 0;
 }
-/* 箱だけ（置き方）。顔は `<Button variant="link">` が持つ（既定の余白0・hover の色と下線も
-   含む。もとの hover の配合——`dispatch.module.css` の `.dispatch-send:hover` と同じ——は
-   `button.module.css` の `.button-variant-link:hover` に写した）。 */
+/* 箱だけ（置き方）。顔は `<Button variant="link">` が持つ。 */
 .sidebar-block-action {
   flex: 0 0 auto;
 }
-/* サイドバーの下端に敷く帯（コンテキストの使用量）。**区画ではない**ので `.sidebar-block` の枠も
-   内側スクロールも借りず、`sidebar.tsx` が直に置く。見本
-   （docs/history/mockup/sidebar-tasks-2026-09-23.html）の footer は
-   `border-top` + 一段沈んだ地 + `padding: 12px 18px 14px` で、**領域の左右いっぱい**に広がる。
+/* サイドバーの下端に敷く帯。区画ではないので `.sidebar-block` の枠も内側スクロールも借りない。
+   見本の footer は `border-top` + 一段沈んだ地 + `padding: 12px 18px 14px` で、領域の左右いっぱいに広がる。
 
-   左右と下の負のマージンは `.layout-region` の内側の余白（`--region-padding`）を打ち消すため。
-   **消し切るちょうどの値**なので、帯の縁は領域の枠の内側にぴたりと着く（領域は
-   `overflow` を切ってあり、角の丸めもそちらが担う）。伸び縮みしない（`flex: 0 0 auto`）ので、
-   余った高さはすべてタスクの区画へ行く。 */
+   左右と下の負のマージンは `.layout-region` の内側の余白（`--region-padding`）を消し切るちょうどの値で、帯の縁は領域の枠の内側にぴたりと着く（角の丸めは領域の `overflow` が切る）。
+   伸び縮みしない（`flex: 0 0 auto`）ので、余った高さはすべてタスクの区画へ行く。 */
 .sidebar-footer {
   flex: 0 0 auto;
   margin: 0 calc(-1 * var(--region-padding)) calc(-1 * var(--region-padding));
   padding: 0.75rem 1.125rem 0.875rem;
   border-top: 1px solid var(--rule);
   background: var(--ground);
-  /* 利用枠の札（下の「利用枠の札」）が280px未満で棒を畳むための基準（`@container`。
-     見本 `QUOTA-Sidebar.dc.html`「5 狭いとき」）。帯の幅そのものがサイドバーの幅と同じなので、
-     ここに置けば利用枠の行がそのまま読める。 */
+  /* 利用枠の札が280px未満で棒を畳むための基準（`@container`）。帯の幅はサイドバーの幅と同じ。 */
   container-type: inline-size;
 }
-/* いまのコンテキストの使用量（下端の帯の中身。docs/screen-design.md「使用量の行」）。**押せるのは
-   右端の `›` だけ**（外枠は `<a>` ではなく `<div>`。行全体を押せる札にはしない）。
-   帯の左右いっぱいに1枚の札で敷く。
+/* いまのコンテキストの使用量。押せるのは右端の `›` だけで、外枠は `<a>` ではなく `<div>`。
 
-   **札として浮かせる**：左右は `.sidebar-footer` の内側 padding（1.125rem。footer 自身の値で
-   `--region-padding` とは別物）ぶん外へ張り出し（負のマージン 10px）、自分の padding（10px）で
-   中身は元の位置（footer の 18px の内側）へ戻す（見本の「margin 0 -10px・padding 8px 10px」と
-   同じ手口——警告時の地はこの張り出したぶん footer の縁に 8px まで近づく）。**札の地と枠は
-   ホバーで変えない**（押せるのは `›` だけなので、札が浮くと全体を押せるように見える。
-   ユーザーの指示）。 */
+   札として浮かせる。左右は `.sidebar-footer` の内側 padding ぶん外へ張り出し（負のマージン 10px）、自分の padding（10px）で中身を元の位置へ戻す。
+   札の地と枠はホバーで変えない（押せるのは `›` だけなので、札が浮くと全体を押せるように見える）。 */
 .context-usage-row {
   display: flex;
   flex-direction: column;
@@ -115,19 +82,17 @@
   border-radius: 0.625rem;
   font-size: var(--font-secondary);
 }
-/* 70%以上は警告にする（`context-usage-row.tsx` の `isWarn`）。**16進を写さず `--state-warn`
-   からの導出で表す**（`.profile-card` が `--accent` を同じ手口で導出しているのと同じ考え方）。 */
+/* 70%以上は警告にする。16進を写さず `--state-warn` からの導出で表す。 */
 .context-usage-row-warn {
   background: color-mix(in srgb, var(--surface), var(--state-warn) 8%);
   border-color: color-mix(in srgb, var(--surface), var(--state-warn) 35%);
 }
 
-/* 1段目：ラベル・割合・量・右端の `›`。並べ・間隔・揃え（baseline）は `HStack`
-   （`gap="sm"` `align="baseline"`）が持つ。字の段・色は `Text` が持つ。 */
+/* 1段目：ラベル・割合・量・右端の `›`。並べは `HStack`、字の段・色は `Text` が持つ。 */
 .context-usage-row-label {
   flex: none;
 }
-/* 割合は数字が主（見本 15px = --font-body）。等幅で桁が動いても読みやすくする。 */
+/* 割合は数字が主。等幅で桁が動いても読みやすくする。 */
 .context-usage-row-percentage {
   flex: none;
   color: var(--ink);
@@ -136,7 +101,6 @@
   font-weight: 500;
   font-variant-numeric: tabular-nums;
 }
-/* 色・字の段は `Text` が持つ。 */
 .context-usage-row-value {
   flex: none;
   font-family: var(--font-mono);
@@ -149,9 +113,8 @@
 .context-usage-row-spacer {
   flex: 1 1 auto;
 }
-/* 押せるのはここだけ。**下線をホバーで足さない**（枠のない部品なので、色とホバー時の
-   「詳しく」表示で押せると示す。docs/screen-design.md 13.1 原則1）。ホバーとフォーカスの
-   起点は `›` 自身で、札のどこに乗っても変わらない。 */
+/* 押せるのはここだけ。下線をホバーで足さず、色とホバー時の「詳しく」表示で押せると示す。
+   ホバーとフォーカスの起点は `›` 自身で、札のどこに乗っても変わらない。 */
 .context-usage-row-link {
   display: flex;
   flex: none;
@@ -169,9 +132,8 @@
   color: var(--state-warn);
 }
 /* 「詳しく」は幅 0 に畳んでおき、`›` のホバー・フォーカスで左へ伸ばしながら浮かべる。
-   `›` との間は gap ではなく自分の padding で取り、畳むときは padding も 0 にする（間だけが
-   残らないように）。
-   動きを減らす設定では `styles/theme.css` の全体規則が transition を潰す。 */
+   `›` との間は gap ではなく自分の padding で取り、畳むときは padding も 0 にする（間だけが残らないように）。
+   動きを減らす設定では `theme.css` の全体規則が transition を潰す。 */
 .context-usage-row-link-text {
   display: inline-block;
   max-width: 0;
@@ -191,8 +153,7 @@
   opacity: 1;
 }
 
-/* 2段目：細い棒。取れない・届く前は 0% のまま出す（`context-usage-row.tsx` の
-   `barPercentage`）ので、ここでは幅の割合だけを気にすればよい。 */
+/* 2段目：細い棒。取れない・届く前は 0% のまま出るので、ここでは幅の割合だけを気にすればよい。 */
 .context-usage-row-bar {
   display: block;
   height: 0.5rem;
@@ -209,8 +170,7 @@
   background: var(--state-warn);
 }
 
-/* 3段目：自動圧縮までの残り。取れない・届く前は ` ` で高さだけ保つ
-   （`context-usage-row.tsx` の `untilText`）。 */
+/* 3段目：自動圧縮までの残り。取れない・届く前は空白で高さだけ保つ。 */
 .context-usage-row-until {
   display: block;
   color: var(--ink-quiet);
@@ -220,15 +180,11 @@
   color: var(--state-warn);
 }
 
-/* 利用枠の札（コンテキストの札の下。docs/screen-design.md「使用量の行」「利用枠の札」）。
-   **寸法・色・ふるまいの出どころは見本
-   `/Users/sinnlos/Downloads/サイドバーの「利用枠」の札 — 5つの状態と寸法-html/QUOTA-Sidebar.dc.html`**
-   の inline style と `<helmet><style>`（値は screen-design.md「使用量の行」に写した）。
-   見本の色トークン名（`--surface` / `--rule` / `--accent` / `--state-warn` / `--state-ng`）が
-   `theme.css` にそのままあるので、16進の値ではなくその名前で参照する。見本の `--surface-sunken`
-   （コンテキストと利用枠を囲む沈む地）にあたるのは、この帯の `--ground`（`.sidebar-footer`）。
-   見本の `--text` / `--text-2` / `--text-3`（3段の弱さ）は、既存のトークンに2段（`--ink` /
-   `--ink-quiet`）しかないので、`--ink-quiet` に集約する（`.context-usage-row` も同じ簡略化）。 */
+/* 利用枠の札（コンテキストの札の下）。
+   寸法・色・ふるまいの出どころは見本 `QUOTA-Sidebar.dc.html` で、値は `docs/screen-design.md`「使用量の行」に写した。
+   見本の色トークン名（`--surface` / `--rule` / `--accent` / `--state-warn` / `--state-ng`）は `theme.css` にそのままあるので、その名前で参照する。
+   見本の `--surface-sunken` にあたるのは、この帯の `--ground`（`.sidebar-footer`）。
+   見本の `--text` / `--text-2` / `--text-3`（3段の弱さ）は、既存のトークンに2段しかないので `--ink-quiet` に集約する。 */
 .plan-usage-row {
   margin-top: 0.375rem;
   padding-top: 0.375rem;
@@ -281,8 +237,7 @@
     transform: rotate(360deg);
   }
 }
-/* 取れない・該当しないときの一言（2段の枠の行と同じ高さぶん。見本の46px相当——ここは
-   行の高さで揃うので固定しない）。 */
+/* 取れない・該当しないときの一言。2段の枠の行と同じ高さぶんで、行の高さで揃うので固定しない。 */
 .plan-usage-row-note {
   display: flex;
   align-items: center;
@@ -359,17 +314,14 @@
   }
 }
 
-/* ── 雑談中の4段（docs/screen-design.md 13.7「雑談のときのサイドバー」） ──────────────────────
-   **寸法の出どころは「雑談モードのサイドバー案」の見本**（見本の inline style の px を
-   `theme.css` のトークンと rem に写した値。色は16進を書かず、パックの `--accent` からの導出で
-   表す——見本の橙は雑談中の `--accent`〔パックの `chatAccent`〕にあたる）。 */
+/* ── 雑談中の4段 ──────────────────────
+   寸法の出どころは「雑談モードのサイドバー案」の見本（inline style の px を `theme.css` のトークンと rem に写した値）。
+   色は16進を書かず、パックの `--accent` からの導出で表す（見本の橙は雑談中の `--accent` にあたる）。 */
 
-/* 1段目。プロフィールの札。**領域の左右と上の縁までぴたりと広げる**（下端の帯と同じ負の
-   マージン。角の丸めは領域の `overflow` が切る）。伸び縮みしないので、余った高さはすべて
-   2段目・3段目の入れ物へ行く。地は `surface` を差し色で**5%だけ**染める（見本の「橙を薄く
-   混ぜた地」。`--surface-accent` の12%は選ばれたものの地なので使わない）。名前という文字の
-   ラベルがある塊なので、差し色で地を染めてよい（13.2「意味を持つ塊の地」）。下の罫線は
-   `rule` のまま（差し色の仕切り線はレポートの3本に絞ってある。13.2）。 */
+/* 1段目。プロフィールの札。領域の左右と上の縁までぴたりと広げる（下端の帯と同じ負のマージン）。
+   伸び縮みしないので、余った高さはすべて2段目・3段目の入れ物へ行く。
+   地は `surface` を差し色で5%だけ染める（`--surface-accent` の12%は選ばれたものの地なので使わない）。
+   下の罫線は `rule` のまま。 */
 .profile-card {
   display: flex;
   flex: 0 0 auto;
@@ -380,7 +332,7 @@
   border-bottom: 1px solid var(--rule);
   background: color-mix(in srgb, var(--surface), var(--accent) 5%);
 }
-/* 顔は帯の顔（13.9「顔」）と同じ丸・同じ差し色の輪で、大きさだけ見本の 64px にする。 */
+/* 顔は帯の顔と同じ丸・同じ差し色の輪で、大きさだけ見本の 64px にする。 */
 .profile-card-face {
   flex: none;
   width: 4rem;
@@ -390,14 +342,11 @@
   box-shadow: 0 0 0 2px var(--accent);
   object-fit: cover;
 }
-/* 並べ・間隔（`gap="xs"`）は `VStack` が持つ。 */
 .profile-card-text {
   flex: 1 1 auto;
   min-width: 0;
 }
-/* 名前とひとことは**読む面の文字**なので差し色を受け取らない（13.1 原則1。見本の淡い橙の
-   字は `ink` / `ink-quiet` に写す）。書体も見本の明朝ではなく本文の1本（13.3）。字の段・色・
-   太さは `Text` が持つ。 */
+/* 名前とひとことは読む面の文字なので差し色を受け取らない。字の段・色・太さは `Text` が持つ。 */
 .profile-card-name {
   margin: 0;
   line-height: 1.3;
@@ -406,10 +355,9 @@
   margin: 0;
   line-height: 1.5;
 }
-/* 「変える ⌄」。見た目のボタン（.profile-card-change-face）の上に、本物の <select> を透明にして
-   同じ大きさで重ねる（押すのは <select>。`profile-card.tsx`）。⌄ は共有の枠（`select.module.css`
-   の `::after`）が描き、既定の右 10px・12px がそのまま見本の値になる。枠は `rule`、字は `ink` で、
-   差し色は `:hover` の縁とフォーカスの輪にだけ出す（13.1 原則1「機械が指し示す場所」）。 */
+/* 「変える ⌄」。見た目のボタン（.profile-card-change-face）の上に、本物の <select> を透明にして同じ大きさで重ねる。
+   ⌄ は共有の枠（`select.module.css` の `::after`）が描き、既定の右 10px・12px がそのまま見本の値になる。
+   差し色は `:hover` の縁とフォーカスの輪にだけ出す。 */
 .profile-card-change {
   position: relative;
   display: inline-flex;
@@ -441,8 +389,8 @@
   padding: 0 1.625rem 0 0.625rem;
   white-space: nowrap;
 }
-/* 共有の枠を口いっぱいに広げる。**`.select-frame` の `position: relative` と同じ強さにしない**
-   （読み込み順で負けうる。`select.module.css` 冒頭）ので、親の class を重ねて1段強くする。 */
+/* 共有の枠を口いっぱいに広げる。
+   `.select-frame` の `position: relative` と同じ強さだと読み込み順で負けうるので、親の class を重ねて1段強くする。 */
 .profile-card-change > .profile-card-change-frame {
   position: absolute;
   inset: 0;
@@ -458,9 +406,9 @@
   cursor: not-allowed;
 }
 
-/* 2段目（最近の話題）と3段目（覚えていること）の入れ物。**ここだけが伸び縮みし、入りきらない
-   ぶんはこの中で転がる**（札と下端の帯は動かない。狭い画面でも同じ配分）。左右は領域の縁まで
-   広げ、区画（.sidebar-block）の 1.125rem で札・帯と字の位置を揃える。 */
+/* 2段目（最近の話題）と3段目（覚えていること）の入れ物。
+   ここだけが伸び縮みし、入りきらないぶんはこの中で転がる（札と下端の帯は動かない）。
+   左右は領域の縁まで広げ、区画（.sidebar-block）の 1.125rem で札・帯と字の位置を揃える。 */
 .sidebar-chat-body {
   display: flex;
   flex: 1 1 auto;
@@ -476,12 +424,10 @@
   flex: none;
   margin: 0;
 }
-/* 区画が空のときの一言（`Text`。tone="ink-quiet"。区画の中〔`.sidebar-block p`〕なので
-   margin はそちらが持つ）。 */
-/* 最近の話題の見出しの並び（docs/history/mockup/chat-sidebar-2026-09-23.png）。各行の上に
-   `rule` の細い線を引き（見本では見出しの直下にも1本ある）、印は付けない。**見出しは読む面の
-   文字**なので `ink`（13.1 原則1）。長い見出しは折り返す（区切りの無い長い語でも横に
-   はみ出させない）。 */
+/* 区画が空のときの一言。margin は `.sidebar-block p` が持つ。 */
+/* 最近の話題の見出しの並び（見本 `docs/history/mockup/chat-sidebar-2026-09-23.png`）。
+   各行の上に `rule` の細い線を引き、印は付けない。
+   見出しは読む面の文字なので `ink`。長い見出しは折り返す（区切りの無い長い語でも横にはみ出させない）。 */
 .sidebar-topic-list {
   margin: 0;
   padding: 0;
@@ -494,8 +440,7 @@
   overflow-wrap: anywhere;
 }
 
-/* 「覚えていること」（persona-memory-section.tsx）。**1行＝チップ1つ**（docs/screen-design.md 13.7）で、
-   .sidebar-topic-list と同じく上に rule の細い線、印は付けない。チップと × は横並び。 */
+/* 「覚えていること」。1行＝チップ1つで、上に rule の細い線、印は付けない。チップと × は横並び。 */
 .sidebar-persona-memory-list {
   margin: 0;
   padding: 0;
@@ -508,9 +453,8 @@
   padding: 0.5rem 0;
   border-top: 1px solid var(--rule);
 }
-/* チップ本体。押すと全文に開く（.sidebar-persona-memory-chip[aria-expanded="true"]）ので、
-   枠なしのボタンにして押せることだけを示す（13.1 原則1。ホバーの下線で押せると分かる）。
-   **読む面の文字**なので ink。 */
+/* チップ本体。押すと全文に開くので、枠なしのボタンにしてホバーの下線で押せることだけを示す。
+   読む面の文字なので ink。 */
 .sidebar-persona-memory-chip {
   flex: 1 1 auto;
   min-width: 0;
@@ -527,19 +471,14 @@
 .sidebar-persona-memory-chip:hover {
   text-decoration: underline;
 }
-/* 「編集」の状態でだけ出る × ボタン。押しやすさより場所を取らないことを優先する
-   （行の右端に小さく置く）。箱だけ（置き方・余白・行の高さ）。顔は `<Button variant="ghost">` が
-   持つ。**hover は `--state-warn` から ghost の既定（`--ink`）に変わる**（ghost の顔は
-   `button.module.css` が持ち、呼び出し側から色を上書きできないため）。 */
+/* 「編集」の状態でだけ出る × ボタン。行の右端に小さく置く。箱だけで、顔は `<Button variant="ghost">` が持つ。 */
 .sidebar-persona-memory-remove {
   flex: none;
   padding: 0 0.25rem;
   line-height: 1.5;
 }
 
-/* 消す前の確認（`PersonaMemoryForgetConfirm`）。**サイドバーの上に重ねて開く**——`showModal()` は
-   top layer に積むので必ず上に出る。`task-run-confirm.tsx` と同じ形（枠は常設しない。
-   docs/screen-design.md 13.1 原則2）。 */
+/* 消す前の確認。`showModal()` は top layer に積むので、サイドバーの上に必ず重なる。 */
 .sidebar-persona-memory-confirm {
   box-sizing: border-box;
   width: min(24rem, calc(100vw - 2rem));
@@ -551,24 +490,18 @@
   border-radius: 0.75rem;
   font-size: var(--font-secondary);
 }
-/* 背景（backdrop）は `<Dialog backdrop="dim">` が持つ（`dialog.module.css`）。 */
-/* 字の段・太さは `Text`（size="heading" weight="semibold"）が持つ。 */
 .sidebar-persona-memory-confirm-question {
   margin: 0;
   overflow-wrap: anywhere;
 }
-/* 色は `Text`（tone="ink-quiet"）が持つ。 */
 .sidebar-persona-memory-confirm-note {
   margin: 0.5rem 0 0;
 }
-/* 並べ・間隔（`gap="sm"`）・右寄せ（`justify="end"`）は `HStack` が持つ。 */
 .sidebar-persona-memory-confirm-actions {
   margin-top: 0.9rem;
 }
-/* 箱だけ（高さ・余白・角丸）。顔は `<Button>` が持つ（キャンセルは `variant="outline"`。
-   消すほうは差し色ではなく警告色にして既定の行き先ではないと分かるよう
-   `variant="outline-warn"`——`task-run-ok` は既定の実行なので `outline-accent` だが、こちらは
-   戻せない操作なので分ける）。 */
+/* 箱だけ（高さ・余白・角丸）。顔は `<Button>` が持つ。
+   消すほうは戻せない操作なので、差し色ではなく警告色（`variant="outline-warn"`）にして既定の行き先ではないと分かるようにする。 */
 .sidebar-persona-memory-confirm-cancel,
 .sidebar-persona-memory-confirm-ok {
   padding: 0.2rem 0.8rem;

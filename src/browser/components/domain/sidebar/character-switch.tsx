@@ -1,10 +1,8 @@
-// キャラクターの切り替えの `<select>`（`session.switchCharacter`。docs/design.md 7章）。雑談のときの
-// プロフィールの札の「変える」（`profile-card.tsx`。見た目のボタンの上に透明にして重ねる。
-// docs/screen-design.md 13.7「雑談のときのサイドバー」）が置く。見た目（`frameClassName` /
-// `className`）と名前（`ariaLabel`）は置く側が渡す。
+// キャラクターの切り替えの `<select>`（`session.switchCharacter`）。
+// 見た目（`frameClassName` / `className`）と名前（`ariaLabel`）は置く側が渡す。
 //
-// 次に届く `session-info` で選択が上書きされる（サーバ側の値が正になる）。選択肢が1つでも
-// 出す（docs/requirements.md 4.4）。パックの一覧がまだ届いていなければ何も出さない。
+// 次に届く `session-info` で選択が上書きされる（サーバ側の値が正になる）。
+// パックの一覧がまだ届いていなければ何も出さない。
 
 import type { ReactElement } from "react"
 
@@ -13,8 +11,8 @@ import { FRAME_ERROR_REASON } from "../../../../shared/frame.ts"
 import { useSession, useTurnRunning } from "../../../stores/session.ts"
 import { Select } from "../../ui/select/select.tsx"
 
-// 切り替えは起こし直し（会話が消える）なので、ターン進行中だけ塞ぐ。理由の文面はサーバが
-// 断るときと同じ1つ（`shared` の定型文）を使う。
+// 切り替えは起こし直し（会話が消える）なので、ターン進行中だけ塞ぐ。
+// 理由の文面はサーバが断るときと同じ `shared` の定型文を使う。
 const CHARACTER_SWITCH_BLOCKED_TITLE = FRAME_ERROR_REASON.switchDuringTurn
 
 export type CharacterSwitchProps = {
@@ -52,9 +50,8 @@ export function CharacterSwitch(props: CharacterSwitchProps): ReactElement | nul
 }
 
 /**
- * `<select>` に選択済みで出すキャラクターパックの名前。素材が1体ぶんしか無くても
- * `<select>` は出す（無いように見えるほうが分かりにくい。docs/requirements.md 4.4）ので、
- * いま出しているパックが分からないときは一覧の先頭に倒す。
+ * `<select>` に選択済みで出すキャラクターパックの名前。
+ * 選択肢が1つでも `<select>` は出すので、いま出しているパックが分からないときは一覧の先頭に倒す。
  */
 function resolveCharacterPack(
   packs: readonly CharacterPackChoice[],

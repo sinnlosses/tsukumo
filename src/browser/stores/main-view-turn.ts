@@ -1,12 +1,9 @@
-// メインビューに出すターン（`shared/session/main-view.ts` の導出）を、姿1つにつき1回だけ畳む場所。
+// メインビューに出すターン（`mainViewTurns` の導出）を、姿1つにつき1回だけ畳む場所。
 //
-// 畳みは `groupIntoTurns` → `selectLastText` / `selectToolReports` → `markSupersededSteps` → `markFinalReport` →
-// `limitTurnEntries` の5パスで、記録は最大20ターン分ある。同じ導出を読むのは `stores/turn-selection.ts`（選んで
-// いるターンの追従）と `components/page/conversation/components/main-view/`（中身）の2箇所で、以前はそれぞれが毎フレーム
-// 別々に計算していた（1本化した）。
+// 畳みは5パスで、記録は最大20ターン分ある。
+// 同じ導出を選んでいるターンの追従とメインビューの中身の2箇所が読むので、ここで1回だけ計算する。
 //
-// `useSession` のセレクタは同じ姿なら同じものを返す必要があるので、姿そのものを
-// キーにして結果を覚える（`WeakMap` なので、古い姿と一緒に落ちる）。
+// `useSession` のセレクタは同じ姿なら同じものを返す必要があるので、姿そのものをキーにして結果を覚える（`WeakMap` なので、古い姿と一緒に落ちる）。
 
 import {
   mainViewEntries,
@@ -38,23 +35,19 @@ export function mainViewTurnsOf(state: SessionState): readonly MainViewTurn[] {
  * いちばん新しいやり取りでまだ伸びうる本文の種類（`mainViewTurns` の2つめの引数）。
  *
  * 伸びうるのは、いま走っている SDK ターンで届いた本文だけ（`SessionState.bodiesInTurn`）。
- * サブエージェントの `SendMessage` や背景のタスクの通知で claude が自分で続きのターンを始めると
- * `running` に戻るが、前の SDK ターンで確定した `report` まで伏せると、合図が届くたびに
- * 出ていた中間レポートが消えて、ターンが終わると同じものが出直す（画面で出た）。
+ * サブエージェントの `SendMessage` や背景のタスクの通知で claude が自分で続きのターンを始めると `running` に戻る。
+ * そこで前の SDK ターンで確定した `report` まで伏せると、合図が届くたびに出ていた中間レポートが消えて、ターンが終わると同じものが出直す（画面で出た）。
  *
- * ターンが `running` かどうかだけでは足りない。 背景の仕事（サブエージェント・背景の
- * コマンド）を待って黙ると SDK が `result` を出すので `turn-finished` が届き、`finished` に落ちる。
- * 通知で再開したぶんは新しい依頼ではないので二度と立たず、そこから伸びる本文が「確定済み」
- * として1文字目から出てしまう。書き上げる演出はマウントした時点の DOM しか相手にしない
- * （`domain/reveal/use-report-reveal.ts`）ので、筆は数十文字ぶんで終わり、残りは
- * 隠されないまま流れ込み、筆先に添うミニ立ち絵が本文の途中に立ったまま残る（画面で出た）。
+ * ターンが `running` かどうかだけでは足りない。
+ * 背景の仕事（サブエージェント・背景のコマンド）を待って黙ると SDK が `result` を出すので `turn-finished` が届き、`finished` に落ちる。
+ * 通知で再開したぶんは新しい依頼ではないので二度と立たず、そこから伸びる本文が「確定済み」として1文字目から出てしまう。
+ * 書き上げる演出はマウントした時点の DOM しか相手にしないので、筆は数十文字ぶんで終わり、残りは隠されないまま流れ込み、ミニ立ち絵が本文の途中に立ったまま残る（画面で出た）。
  *
  * 書きかけがあるあいだ（`partialUtterance` が空でない）は伸びる途中とみなす。
  *
- * `report` の外の本文だけは、前の SDK ターンのものも伏せる。 ターンが動いているあいだと、
- * 背景のタスクが残っているあいだ（続きのターンが来うる）は出さない。`report` の無いやり取りで
- * 出るのは `report` を呼ぶまでのつなぎの一言が多く、`report` が来た時点でどのみち消える
- * （`shared/session/main-view.ts` の `selectToolReports`）ので、出したものが消える往復も起きない。
+ * `report` の外の本文だけは、前の SDK ターンのものも伏せる。
+ * ターンが動いているあいだと、背景のタスクが残っているあいだ（続きのターンが来うる）は出さない。
+ * `report` の無いやり取りで出るのは `report` を呼ぶまでのつなぎの一言が多く、`report` が来た時点でどのみち消える（`selectToolReports`）ので、出したものが消える往復も起きない。
  */
 function unsettledBodies(state: SessionState): TurnBodies {
   const running = state.turn.kind === "running"
@@ -65,15 +58,13 @@ function unsettledBodies(state: SessionState): TurnBodies {
 }
 
 /**
- * セッション全体が閉じているか（`mainViewTurns` の `closed` 引数）。ターンが `running` でなく、
- * 背景のタスクも残っていないときだけ true——このどちらかが残っているあいだは、いちばん新しい
- * やり取りの本文がまだ最終レポートに確定していない（次の合図で続きのターンが始まり、いま最後の
- * `report` が中間レポートへ回るかもしれない）。
+ * セッション全体が閉じているか（`mainViewTurns` の `closed` 引数）。
+ * ターンが `running` でなく、背景のタスクも残っていないときだけ true。
+ * どちらかが残っているあいだは、次の合図で続きのターンが始まり、いま最後の `report` が中間レポートへ回るかもしれない。
  *
- * `unsettledBodies` と役目が違う。背景のタスクを待って `turn-finished` が届くと `running` は
- * false に戻るので、`unsettledBodies` の `report` はそこで確定扱いに変わり本文は出るが、
- * 背景のタスクが残っているあいだはこの関数は false のままで、最終レポートの札（ラベル・地の段上げ）
- * だけを `markFinalReport` に立てさせない。
+ * `unsettledBodies` と役目が違う。
+ * 背景のタスクを待って `turn-finished` が届くと、`unsettledBodies` の `report` は確定扱いに変わり本文は出る。
+ * それでも背景のタスクが残っているあいだはこの関数は false のままで、最終レポートの札（ラベル・地の段上げ）だけを `markFinalReport` に立てさせない。
  */
 function isClosed(state: SessionState): boolean {
   return state.turn.kind !== "running" && state.backgroundTasks.length === 0

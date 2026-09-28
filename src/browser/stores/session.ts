@@ -1,5 +1,5 @@
 // サーバから届く姿（`SessionState`）と、サーバへコマンドを送る口を持つ store。
-// 部品は `useSession((session) => session.state.turn)` のように自分が読む値だけを購読する——
+// 部品は `useSession((session) => session.state.turn)` のように自分が読む値だけを購読する。
 // サーバは 100ms ごとにフレームを押すので、姿ごと読むとターンが流れている間は毎秒10回描き直しになる。
 
 import { createORPCClient } from "@orpc/client"
@@ -19,13 +19,11 @@ import { sessionTokenUrl } from "../domain/session-token-url.ts"
 import { type CommandLink, connectSessionSocket, type ConnectionStatus } from "../lib/socket.ts"
 
 /**
- * コマンドを送る口。契約（`commandContract`）から導いた型付きの client
- * で、`dispatch.session.prompt({ text, images })` のように手続きの名前を辿って呼ぶ。参照が
- * 変わらないので、これしか読まない部品は姿の変化で描き直されない。
+ * コマンドを送る口。契約（`commandContract`）から導いた型付きの client で、`dispatch.session.prompt({ text, images })` のように手続きの名前を辿って呼ぶ。
+ * 参照が変わらないので、これしか読まない部品は姿の変化で描き直されない。
  *
- * 送りっぱなしで、失敗しても投げない（戻り値の Promise は待たなくてよい）。断られたこと
- * （契約の `REFUSED`）は画面に出さない——画面は同じ条件で先に操作子を塞いでいて、結果はイベントで
- * 戻ってくる。
+ * 送りっぱなしで、失敗しても投げない（戻り値の Promise は待たなくてよい）。
+ * 断られたこと（契約の `REFUSED`）は画面に出さない（画面は同じ条件で先に操作子を塞いでいて、結果はイベントで戻ってくる）。
  */
 export type SessionDispatch = CommandClient
 
@@ -35,16 +33,15 @@ export type CommandSocket = {
 }
 
 /**
- * サーバの `hello` が名乗った版が、このページの {@link PROTOCOL_VERSION} と合っているか
- * （`docs/design.md`「ServerFrame」）。`mismatched` の間は `events` を畳まない——形の違う記録を読むと、
- * 部品が無いはずのフィールドを読んで壊れる（起こし直さずに画面だけ組み直したときに起きる）。
+ * サーバの `hello` が名乗った版が、このページの {@link PROTOCOL_VERSION} と合っているか。
+ * `mismatched` の間は `events` を畳まない（形の違う記録を読むと、部品が無いはずのフィールドを読んで壊れる）。
  * 次の `hello` で合えば `compatible` に戻る。
  */
 export type ProtocolAgreement = "compatible" | "mismatched"
 
 /**
- * store の中身。接続の状態（`connection`）と版の一致（`protocol`）はブラウザだけが持つので
- * `SessionState` には入れず、同じ store に相乗りさせる。`connection` はまだ画面には出していない。
+ * store の中身。接続の状態（`connection`）と版の一致（`protocol`）はブラウザだけが持つので、`SessionState` には入れず同じ store に相乗りさせる。
+ * `connection` はまだ画面には出していない。
  */
 export type SessionStoreState = {
   readonly state: SessionState
@@ -89,11 +86,10 @@ export const useSession = create<SessionStoreState>()((set, get) => {
       if (state === current.state) {
         return
       }
-      // 答え待ち（許可要求・質問）が動いたフレームだけ緊急にする。人が待っている箱なので
-      // 遅らせない。レポートやツールの進行は毎秒10回届くので、入力欄の操作を優先できるよう
-      // トランジションに載せる。React は外部の store（zustand も `useSyncExternalStore`）の描き直しを
-      // 同期レーンで走らせる（`forceStoreRerender`）ので、入力欄との競合にいま効いているのは
-      // 購読の絞り込み（セレクタ）のほう。緊急かどうかの境目はここ1箇所に置く。
+      // 答え待ち（許可要求・質問）が動いたフレームだけ緊急にする。人が待っている箱なので遅らせない。
+      // レポートやツールの進行は毎秒10回届くので、入力欄の操作を優先できるようトランジションに載せる。
+      // React は外部の store（zustand も `useSyncExternalStore`）の描き直しを同期レーンで走らせる（`forceStoreRerender`）ので、入力欄との競合にいま効いているのは購読の絞り込み（セレクタ）のほう。
+      // 緊急かどうかの境目はここ1箇所に置く。
       if (state.pending !== current.state.pending) {
         set({ state })
         return
@@ -123,8 +119,7 @@ export function useSessionConnection(): void {
   useEffect(() => {
     const { receive, setConnection, attachSocket } = useSession.getState()
     const socket = connectSessionSocket(sessionTokenUrl(SESSION_SOCKET_PATH), {
-      // `refresh` は状態ではなくブラウザへの指示なので、畳み込みに入れず手前で捌く
-      // （開発中だけ届く。`docs/design.md`「ビルドと依存」）。
+      // `refresh` は状態ではなくブラウザへの指示なので、畳み込みに入れず手前で捌く（開発中だけ届く）。
       onFrame: (frame) => {
         if (frame.type === "refresh") {
           applyRefresh(frame.target)

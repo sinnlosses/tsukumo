@@ -1,59 +1,46 @@
-/* 色・書体のトークンの定義先と、ページ全体の下地（docs/screen-design.md 13章が正典。ここはそれを
-   写したもの）。**このファイルだけがグローバル**で、機能ごとの見た目は各機能の `*.module.css`
-   にある（docs/design.md 6.6）。16進の色を書いてよいのもここだけで、各機能は
-   カスタムプロパティを参照する（font-size / font-family も同じ）。 */
+/* 色・書体のトークンの定義先と、ページ全体の下地。値は `docs/screen-design.md`「画面のデザイン」を写したもの。
+   このファイルだけがグローバルで、機能ごとの見た目は各機能の `*.module.css` にある。
+   16進の色を書いてよいのもここだけで、各機能はカスタムプロパティを参照する（font-size / font-family も同じ）。 */
 :root {
   color-scheme: dark;
 
-  /* 差せる4つのつまみ（13.2）。ground / surface / ink は使う人が差す経路をまだ持たない
-     （13.5。受け渡しの経路は未決）。accent だけ character.json から流し込む
-     （`src/shared/character.ts` の `accent` → `src/browser/components/app/pack-appearance.ts` が
-     `document.documentElement` にこの変数を差し替える）。ここに書く値は
-     tsukumo-spirit（`characters/tsukumo-spirit/character.json`）と同じ、パックが
-     届く前・パックに `accent` が無いときの既定値。 */
+  /* 差せる4つのつまみ。
+     accent はパックの `accent` を `usePackAppearance` が `document.documentElement` に差し替える。
+     ground / surface / ink は使う人が歯車から差す（`applyAppearanceColorOverride`）。
+     ここに書く値は tsukumo-spirit（`characters/tsukumo-spirit/character.json`）と同じ、パックが届く前・パックに `accent` が無いときの既定値。 */
   --ground: #191720;
   --surface: #221f2b;
   --ink: #e8e3ea;
   --accent: #f2b0a0;
 
-  /* 固定の導出（使う人にもパックにも差せない。13.2）。 */
+  /* 固定の導出（使う人にもパックにも差せない）。 */
   --ink-quiet: color-mix(in srgb, var(--ink) 60%, transparent);
   --rule: color-mix(in srgb, var(--surface), var(--ink) 32%);
-  /* 読む面の**静かな罫線**。カードの枠や表の行のように、線そのものは意味を持たず「ここで
-     切れている」とだけ言えばよい場所に使う（`--rule` は押せる部品の縁のように、線が輪郭を
-     担う場所）。新しいつまみではなく ink の混ぜ方を変えただけの導出値。 */
+  /* 読む面の静かな罫線。カードの枠や表の行のように、線そのものは意味を持たず「ここで切れている」とだけ言えばよい場所に使う。
+     `--rule` は押せる部品の縁のように、線が輪郭を担う場所。 */
   --rule-quiet: color-mix(in srgb, var(--surface), var(--ink) 6%);
-  /* surface を accent でわずかに染めた地。**新しいつまみではない**（accent 1つから
-     計算するだけの導出値）。「選ばれたタブ」と同じ扱いでよい場所
-     （最新の吹き出し・選ばれた選択肢・送信ボタン）にだけ使う。13.1 原則1。 */
+  /* surface を accent でわずかに染めた地。「選ばれたタブ」と同じ扱いでよい場所（最新の吹き出し・選ばれた選択肢・送信ボタン）にだけ使う。 */
   --surface-accent: color-mix(in srgb, var(--surface), var(--accent) 12%);
-  /* 本文の地の上に**浮く**塊の地（機械の名前・表の見出し行・カード・最終レポート）。これも
-     **新しいつまみではない**（ink を1割重ねるだけの導出値）。読む面の地はこれで
-     ground（沈む＝途中のもの・畳んだもの）・surface（基準＝本文）・surface-raised（浮く）の
-     3段になり、段そのものが意味を持つ。13.2。
-     **敷いた地に重ねる（透ける）形で持つ。** surface と混ぜた不透明な色にすると、**浮く塊が
-     浮く塊の中に入ったとき**（最終レポートの中のインラインコード・表の見出し行・カード）に
-     親と同じ色になって消える（実測）。重ねる形なら、どの段の上でも必ず1段上がる。
-     surface の上に置いたときの色は不透明に混ぜたときと同じ（13.2 の実測値はそのまま）。 */
+  /* 本文の地の上に浮く塊の地（機械の名前・表の見出し行・カード・最終レポート）。
+     読む面の地は ground（沈む＝途中のもの・畳んだもの）・surface（基準＝本文）・surface-raised（浮く）の3段になり、段そのものが意味を持つ。
+     敷いた地に重ねる（透ける）形で持つ。
+     surface と混ぜた不透明な色にすると、浮く塊が浮く塊の中に入ったとき（最終レポートの中のインラインコード・表の見出し行・カード）に親と同じ色になって消える（実測）。
+     重ねる形なら、どの段の上でも必ず1段上がる。 */
   --surface-raised: color-mix(in srgb, var(--ink) 10%, transparent);
 
-  /* 意味を固定した5色。誰が来ても変わらない（13.1 原則5）。**文字のラベルと対で使うものだけ**が
-     ここに入る（色だけで意味を伝えない）。state-ask はレポートの「疑問」の印
-     （`main-view.module.css` の .report-note-ask）のために足した4つ目で、明るさは他の3つに
-     揃えてある（surface の上で 8.2:1）。 */
+  /* 意味を固定した色。誰が来ても変わらない。文字のラベルと対で使うものだけがここに入る（色だけで意味を伝えない）。
+     state-ask はレポートの「疑問」の印で、明るさは他の3つに揃えてある（surface の上で 8.2:1）。 */
   --state-ok: #7ee081;
   --state-warn: #e3c766;
   --state-ng: #e88b8b;
   --state-ask: #8ab4e8;
-  /* レポートの「メモ」の印（.report-note-memo）。ラベルが必ず添うので足してよい5つ目で、
-     紫は ok / warn / ng / ask と accent のどれとも色相が離れている。 */
+  /* レポートの「メモ」の印。ラベルが必ず添う。紫は ok / warn / ng / ask と accent のどれとも色相が離れている。 */
   --state-memo: #bca0ec;
 
-  /* コンテキストの内訳（13.2）の分類の色。**誰が来ても変わらない固定の色**で、横棒の区間と
-     凡例の四角が同じ1つを読む。**凡例に分類名が必ず並ぶ**ので、色だけで意味を伝えることには
-     ならない（13.1 原則5）。知らない分類は `context-other` に落ちる。`other` だけは見本に無く、
-     **色相を持たない灰**にしてある（「分類できなかった」ことを言う色で、6色のどれとも色相で
-     張り合わない。明るさは6色より少し上げて、色覚の型を問わず6色・空きと見分けられる）。 */
+  /* コンテキストの内訳の分類の色。誰が来ても変わらない固定の色で、横棒の区間と凡例の四角が同じ1つを読む。
+     凡例に分類名が必ず並ぶので、色だけで意味を伝えることにはならない。知らない分類は `context-other` に落ちる。
+     `other` だけは見本に無く、色相を持たない灰にしてある（「分類できなかった」ことを言う色で、6色のどれとも色相で張り合わない）。
+     明るさは6色より少し上げて、色覚の型を問わず6色・空きと見分けられる。 */
   --context-system-prompt: #3987e5;
   --context-system-tools: #d95926;
   --context-mcp-tools: #199e70;
@@ -61,26 +48,23 @@
   --context-skills: #d55181;
   --context-messages: #008300;
   --context-other: #a6a2b0;
-  /* 空きと自動圧縮バッファは**色ではなく地と柄**で分ける（どちらも「使っていない」側なので、
-     分類の色と同じ強さで主張させない）。四角だけを見たときに地と見分けがつくよう、凡例の
-     四角にはこの縁を付ける。 */
+  /* 空きと自動圧縮バッファは色ではなく地と柄で分ける（どちらも「使っていない」側なので、分類の色と同じ強さで主張させない）。
+     四角だけを見たときに地と見分けがつくよう、凡例の四角にはこの縁を付ける。 */
   --context-free: #2a2933;
   --context-buffer: #211f29;
   --context-buffer-stripe: #3a3946;
   --context-outline: #4a4955;
 
-  /* 消費の棒（期間の札の縦棒・モデル別／ツール別の横棒）。**分類の色ではない**ので、
-     凡例にも表にも名前が必ず並ぶ（13.1 原則5）。`zero` は記録の無い刻みの印で、
-     「その刻みはあったが空だった」ことだけを言う。 */
+  /* 消費の棒（期間の札の縦棒・モデル別／ツール別の横棒）。分類の色ではないので、凡例にも表にも名前が必ず並ぶ。
+     `zero` は記録の無い刻みの印で、「その刻みはあったが空だった」ことだけを言う。 */
   --usage-bar: #3987e5;
   --usage-bar-track: #26252f;
   --usage-bar-zero: #3a3946;
   --usage-bar-baseline: #34333f;
 
-  /* トークン消費の画面の中身の地・罫・字（13.2）。見本（2026-09-23 のユーザーの指示）の値を
-     そのまま写した**固定の色で、この画面の中でだけ使う**。`--surface-raised` / `--rule` /
-     `--ink-quiet` の導出では、見本の字の6段と罫の2段を作れない。つまみではない（使う人にも
-     パックにも差せない）ので、`--ink` などを差し替えてもここは動かない。 */
+  /* トークン消費の画面の中身の地・罫・字。見本の値をそのまま写した固定の色で、この画面の中でだけ使う。
+     `--surface-raised` / `--rule` / `--ink-quiet` の導出では、見本の字の6段と罫の2段を作れない。
+     つまみではない（使う人にもパックにも差せない）ので、`--ink` などを差し替えてもここは動かない。 */
   --usage-card: #1d1c26; /* 札の地 */
   --usage-well: #15141b; /* 札の中に沈む箱（自動圧縮まで・期間の切り替えの外枠） */
   --usage-chosen: #33323e; /* 期間の切り替えの選ばれているもの */
@@ -93,12 +77,9 @@
   --usage-ink-note: #8a8896; /* 見出しの横の添え書き・表の見出し行・凡例の割合・「最大 n」 */
   --usage-ink-faint: #6f6d7a; /* モデル名と更新時刻・期間の両端の目盛り */
 
-  /* 成果の画面（13.10）のしおり・小さな驚き・灯りの暦の「日記あり」の鈴に使う金色。**この画面の
-     中でだけ使う固定の色**で、`--state-warn`（答え待ち・注意の意味の色）は流用しない
-     （`--usage-*` と同じ考え方）。値は見本（`docs/history/mockup/achievement-diary-2026-09-25/
-     SEIKA-4a-Base.dc.html`）から取った。しおり・小さな驚きの卒業の札・節目の札はどれも
-     「小さな驚き」1つの概念の下なので、見本で微妙に違う色相を使い分けているところを
-     1系統に簡略化してある。 */
+  /* 成果の画面のしおり・小さな驚き・灯りの暦の「日記あり」の鈴に使う金色。この画面の中でだけ使う固定の色で、`--state-warn`（答え待ち・注意の意味の色）は流用しない。
+     値は見本（`docs/history/mockup/achievement-diary-2026-09-25/SEIKA-4a-Base.dc.html`）から取った。
+     見本で微妙に違う色相を使い分けているところは、どれも「小さな驚き」1つの概念の下なので1系統に簡略化してある。 */
   --diary-gold: #e3b95c; /* 金色そのもの。アイコン・節目の地・灯りの暦の「日記あり」の鈴 */
   --diary-gold-strong: #f3ecdc; /* いちばん明るい字。しおりの要約・節目の数 */
   --diary-gold-ink: #d9c79c; /* 見出し・ラベルの字。しおりの見出しと理由・「通算」「件目のタスク」 */
@@ -106,7 +87,7 @@
   --diary-gold-surface: #221f19; /* しおり・節目・卒業の札の地 */
   --diary-gold-border: #5a4b25; /* しおり・節目・卒業の札の枠 */
 
-  /* タイプスケール。段はこの6つだけ（13.3）。 */
+  /* タイプスケール。段はこの6つだけ。 */
   --font-label: 0.6875rem;
   --font-action: 0.75rem;
   --font-secondary: 0.8125rem;
@@ -115,35 +96,30 @@
   --font-heading: 1.125rem;
   --line-height-body: 1.75;
 
-  /* 書体は system-ui と等幅の2本のまま（13.3）。 */
+  /* 書体は system-ui と等幅の2本のまま。 */
   --font-sans: system-ui, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, monospace;
-  /* 唯一の例外（13.3）: 成果の画面（13.10）の日記の本文だけ、端末に入っている明朝体の名前を
-     並べ、最後を `serif` に落とす。外部フォントは足さない。 */
+  /* 唯一の例外: 成果の画面の日記の本文だけ、端末に入っている明朝体の名前を並べ、最後を `serif` に落とす。外部フォントは足さない。 */
   --font-serif: "Hiragino Mincho ProN", "Yu Mincho", "YuMincho", "Noto Serif JP", serif;
-  /* 日記の本文が実際に使う書体（13.3）。**既定は `--font-serif` そのもの**で、キャラクターパックが
-     書体を同梱していれば `src/browser/components/app/pack-appearance.ts` がここだけを上書きする
-     （FontFace で読み込めた登録名 → `--font-serif` の順に並べたフォールバック）。書体を持たない
-     パックはこの変数を触らないので、既定のまま端末の明朝体になる。 */
+  /* 日記の本文が実際に使う書体。既定は `--font-serif` そのもの。
+     キャラクターパックが書体を同梱していれば `usePackAppearance` がここだけを上書きする（FontFace で読み込めた登録名 → `--font-serif` の順に並べたフォールバック）。 */
   --font-diary: var(--font-serif);
 
-  /* 画面の縁の余白（body の padding）。**帯（13.9）はこの余白の外へはみ出して画面の端から端まで
-     出る**ので、帯（screen-nav.module.css）と会話の画面の grid（layout.module.css）も読む。 */
+  /* 画面の縁の余白（body の padding）。
+     帯はこの余白の外へはみ出して画面の端から端まで出るので、帯（screen-nav.module.css）と会話の画面の grid（layout.module.css）も読む。 */
   --page-padding: 1rem;
 
-  /* 画面のナビの帯（13.9）が最上部で奪う高さ。帯の外寸は **帯の地 + 下の罫線** の2つの和。
-     **帯（screen-nav.module.css）と、そのぶん縮む会話の画面の grid（layout.module.css）の
-     両方が読む**ので、値はここに1つだけ置く（狭い画面では帯がタブ帯へ畳まれるので、grid は縮まない）。
+  /* 画面のナビの帯が最上部で奪う高さ。帯の外寸は帯の地 + 下の罫線の2つの和。
+     帯（screen-nav.module.css）と、そのぶん縮む会話の画面の grid（layout.module.css）の両方が読むので、値はここに1つだけ置く（狭い画面では帯がタブ帯へ畳まれるので、grid は縮まない）。
      `--screen-nav-height` は罫線を含まない帯の地の高さで、口の下線はこの下端に重なる。
      帯の下の隙間は画面の縁と同じだけ空ける。 */
   --screen-nav-height: 52px;
   --screen-nav-rule: 1px;
   --screen-nav-gap: var(--page-padding);
 
-  /* 下向きの矢印の形（プルダウンの右端と、開閉するタイトルの右）。**mask で使う**ので、塗りは
-     読み手の `currentColor` が決める（この中の `stroke='black'` は形を出すためだけのもの）。
-     16進の色と同じく、形もここに1つだけ置いて各機能はこれを参照する
-     （`components/ui/select/select.module.css` と `main-view.module.css`）。 */
+  /* 下向きの矢印の形（プルダウンの右端と、開閉するタイトルの右）。
+     mask で使うので、塗りは読み手の `currentColor` が決める（この中の `stroke='black'` は形を出すためだけのもの）。
+     形もここに1つだけ置いて、各機能はこれを参照する。 */
   --icon-chevron-down: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
 }
 
@@ -158,10 +134,9 @@ body {
   overflow-wrap: anywhere;
 }
 
-/* フォーム部品（button/input/select/textarea）はブラウザの既定では親の書体を継がないので、
-   ここで1回だけ継がせる。**大きさ・行の高さ・太さも一緒に継ぐ**（`font-family` だけにすると、
-   大きさを上書きしていない部品で行の高さが本文の 1.75 から UA 既定に戻る）。機能の CSS には
-   書かず、ここから変える値（`font-size` など）だけを書く（docs/screen-design.md 13.3）。 */
+/* フォーム部品（button/input/select/textarea）はブラウザの既定では親の書体を継がないので、ここで1回だけ継がせる。
+   大きさ・行の高さ・太さも一緒に継ぐ（`font-family` だけにすると、大きさを上書きしていない部品で行の高さが本文の 1.75 から UA 既定に戻る）。
+   機能の CSS には書かず、ここから変える値（`font-size` など）だけを書く。 */
 button,
 input,
 select,
@@ -169,7 +144,7 @@ textarea {
   font: inherit;
 }
 
-/* フォーカスの輪は、キャラクターの色（accent）を出してよい場所の1つ（13.1 原則1）。 */
+/* フォーカスの輪は、キャラクターの色（accent）を出してよい場所の1つ。 */
 :focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
@@ -185,9 +160,8 @@ textarea {
   }
 }
 
-/* リンクは本文と同じ色のまま（読む面はキャラクターの色を受け取らない。docs/screen-design.md 13.1）。
-   **色を取り上げるかわりに下線で区別する。** 色だけに頼らないので、どのパックの accent が来ても
-   リンクだと分かる。 */
+/* リンクは本文と同じ色のまま（読む面はキャラクターの色を受け取らない）。
+   色を取り上げるかわりに下線で区別するので、どのパックの accent が来てもリンクだと分かる。 */
 a {
   color: var(--ink);
   text-decoration: underline;

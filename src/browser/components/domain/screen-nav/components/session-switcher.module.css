@@ -1,10 +1,8 @@
-/* セッションの切り替え画面。値は見本 `docs/history/mockup/session-switch-2026-09-27/HD-5-Switcher.dc.html`
-   の inline style を `theme.css` のトークンに写したもの（見本の #66d1be は --accent、#1f1e28 は
-   --surface、#3a3946 は --rule、#15141b は --ground に当たる）。背景は `<Dialog backdrop="dim">` が持つ。
+/* セッションの切り替え画面。
+   値は見本 `docs/history/mockup/session-switch-2026-09-27/HD-5-Switcher.dc.html` の inline style を `theme.css` のトークンに写したもの（見本の #66d1be は --accent、#1f1e28 は --surface、#3a3946 は --rule、#15141b は --ground に当たる）。
+   背景は `<Dialog backdrop="dim">` が持つ。 */
 
-   狭い画面（760px 以下）では2列を縦に積む（一覧が上、要約が下。末尾の @media）。 */
-
-/* 箱。見本は 1040x600 で、帯の下に少し空けて横の中央に置く。**窓より大きくしない**。 */
+/* 箱。見本は 1040x600 で、帯の下に少し空けて横の中央に置く。窓より大きくしない。 */
 .session-switcher {
   box-sizing: border-box;
   width: min(65rem, calc(100vw - 2rem));
@@ -260,8 +258,8 @@
   font-size: var(--font-label);
 }
 @media (max-width: 760px) {
-  /* 狭い画面では2列を縦に積む。一覧は上に高さを決めて置き、残りを要約に渡す。キーの案内は
-     指で触る画面では読まないので畳む。 */
+  /* 狭い画面では2列を縦に積む。一覧は上に高さを決めて置き、残りを要約に渡す。
+     キーの案内は指で触る画面では読まないので畳む。 */
   .session-switcher {
     height: calc(100dvh - 2rem);
     margin: 1rem auto auto;

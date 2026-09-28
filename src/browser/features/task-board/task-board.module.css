@@ -1,24 +1,17 @@
-/* タスク一覧の機能（`src/browser/features/task-board/`）。サイドバーの区画に置く一覧
-   （`task-list.tsx`）と、そこから開く画面いっぱいの表（`task-board.tsx` の `<dialog>`）を
-   **この1枚**に持つ — 一覧と表は「終わったタスクは薄い（.task-done）」「IDは等幅（.task-id）」
-   という語彙を共有していて、分けると同じ名前が2つになるため。**status の色分け
-   （.task-status-*）は表だけの見た目**（一覧は印の形 `.task-mark-*` で区別する。
-   2026-09-23 決定）。**枠（区画そのもの）の見た目はサイドバーの側**（`sidebar.module.css` の
-   .sidebar-block）にあり、ここには持ち込まない。 */
+/* タスク一覧の機能。サイドバーの区画に置く一覧と、そこから開く画面いっぱいの表（`<dialog>`）をこの1枚に持つ。
+   一覧と表は「終わったタスクは薄い（.task-done）」「IDは等幅（.task-id）」という語彙を共有していて、分けると同じ名前が2つになるため。
+   status の色分け（.task-status-*）は表だけの見た目で、一覧は印の形（.task-mark-*）で区別する。
+   枠（区画そのもの）の見た目はサイドバーの側（.sidebar-block）にあり、ここには持ち込まない。 */
 
-/* 中身が無いときの一言。字の段・色は `Text`（tone="ink-quiet"）が持つ。**margin だけ残す**——
-   区画の中に置いたときは .sidebar-block p の 0.2rem 0 が勝つが、表の中に置いたときはそれが
-   無く、ブラウザ既定の <p> の margin（1em 0。実測: font-size 13px の <p> で上下とも 13px）に
-   頼っていた。`Text` の既定 margin は 0 なので、ここへ明示しないと表の中の見た目が変わる。 */
+/* 中身が無いときの一言。字の段・色は `Text` が持つ。margin だけ残す。
+   区画の中に置いたときは .sidebar-block p の 0.2rem 0 が勝つが、表の中に置いたときはそれが無い。
+   `Text` の既定 margin は 0 なので、ここへ明示しないと表の中でブラウザ既定の <p> の margin が失われる。 */
 .task-empty {
   margin: 1em 0;
 }
-/* 件数のチップ（サイドバーの見出し「タスク」の下に1行。`components/task-count-chip-list.tsx`）。
-   **押すとその状態だけに絞る**（1つだけ選べ、もう一度押すと全件に戻る。2026-09-23 決定。
-   それまでは押せず、絞り込みは見出しの「一覧を見る」から開く表の仕事だった
-   〔2026-09-16 決定〕）。進行中 → 未着手 → 完了の順で、0件でも出す（並びが動かないよう常に
-   3枚。見出しの下との間・進行中カードとの間はどちらも 12px = 区画の中の要素どうしの間隔。
-   docs/history/mockup/sidebar-tasks-2026-09-23.html）。 */
+/* 件数のチップ（サイドバーの見出し「タスク」の下に1行）。押すとその状態だけに絞る。
+   進行中 → 未着手 → 完了の順で、並びが動かないよう0件でも常に3枚出す。
+   見出しの下との間・進行中カードとの間はどちらも 12px = 区画の中の要素どうしの間隔（見本 `docs/history/mockup/sidebar-tasks-2026-09-23.html`）。 */
 .task-count-chips {
   display: flex;
   flex-wrap: wrap;
@@ -38,15 +31,13 @@
   font-size: var(--font-label);
   white-space: nowrap;
 }
-/* 進行中のチップだけ差し色（`.task-running-card` と同じ `--surface-accent`）の地に明るい
-   差し色の字にする。 */
+/* 進行中のチップだけ差し色（`.task-running-card` と同じ `--surface-accent`）の地に明るい差し色の字にする。 */
 .task-count-chip-doing {
   background: var(--surface-accent);
   color: color-mix(in srgb, var(--accent) 85%, var(--ink));
 }
 /* チップを押す口。地は `.task-count-chip` に任せ、ここはボタンとしての振る舞いだけを足す。
-   **選んでいることを色だけで示さない**（docs/screen-design.md 13.1 原則1）ので、選んだときは枠線と
-   太字を足す——進行中のチップは元から差し色の地なので、色の変化だけでは選択と区別できない。 */
+   進行中のチップは元から差し色の地で、色の変化だけでは選択と区別できないので、選んだときは枠線と太字を足す。 */
 .task-count-chip-button {
   display: inline-flex;
   align-items: center;
@@ -67,8 +58,7 @@
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
-/* 進行中（doing）のタスクのカード（一覧の先頭。`components/task-running-card.tsx`）。
-   2件以上あれば（並行した作業ツリーなど）、この枚数ぶんカードが並ぶ。 */
+/* 進行中（doing）のタスクのカード（一覧の先頭）。2件以上あれば、この枚数ぶんカードが並ぶ。 */
 .task-running-list {
   margin: 0 0 0.75rem;
   padding: 0;
@@ -83,17 +73,14 @@
   padding: 0.75rem 0.875rem;
   border-radius: 0.625rem;
   background: var(--surface-accent);
-  /* 差し色寄りの枠。`main-view.module.css` の見出しの罫線と同じ配合（docs/screen-design.md 13.2
-     「素の accent ではなく rule に6割混ぜる」）。 */
+  /* 差し色寄りの枠（素の accent ではなく rule に6割混ぜる）。 */
   border: 1px solid color-mix(in srgb, var(--rule), var(--accent) 60%);
 }
 .task-running-card:last-child {
   margin-bottom: 0;
 }
-/* 1行目（札＋ID）。並べ・間隔（`gap="sm"`）・揃えは `HStack` が持つ（置き方は無いので
-   `className` は渡さない）。 */
-/* 「進行中」の札。色だけでなく字でも状態を伝える（docs/screen-design.md 13.1 原則1）。高さ・角丸は
-   件数のチップと揃える（角丸 11px = 高さ 22px の半分でカプセル型になる）。 */
+/* 「進行中」の札。色だけでなく字でも状態を伝える。
+   高さ・角丸は件数のチップと揃える（角丸 11px = 高さ 22px の半分でカプセル型になる）。 */
 .task-running-badge {
   display: inline-flex;
   align-items: center;
@@ -105,10 +92,9 @@
   font-size: var(--font-label);
   font-weight: 600;
 }
-/* カードの中のIDは、一覧の行の等幅ID（`.task-item .task-id`）と同じ 11px にしつつ、字は
-   差し色寄りに薄くする（一覧の行の「薄く」は opacity、こちらは色を ink-quiet から
-   accent へ寄せる——地が差し色なので、同じ opacity のままだと沈んで読めない）。押せる見た目
-   （点線の下線・ホバーで実線）は `.task-id-button` のまま変えない。 */
+/* カードの中のIDは、一覧の行の等幅ID（`.task-item .task-id`）と同じ 11px にしつつ、字を差し色寄りにする。
+   一覧の行の「薄く」は opacity だが、地が差し色なので同じ opacity のままだと沈んで読めない。
+   押せる見た目（点線の下線・ホバーで実線）は `.task-id-button` のまま変えない。 */
 .task-running-head .task-id-button {
   font-size: var(--font-label);
   color: color-mix(in srgb, var(--ink-quiet), var(--accent) 40%);
@@ -122,26 +108,21 @@
   font-size: var(--font-label);
   color: color-mix(in srgb, var(--ink-quiet), var(--accent) 40%);
 }
-/* 2行目（summary）。進行中は他の行と違い折り返して全文出す（1行に切り詰めない）。字の段は
-   `Text`（size="subheading"）が持つ。 */
+/* 2行目（summary）。進行中は他の行と違い折り返して全文出す。字の段は `Text` が持つ。 */
 .task-running-body {
   white-space: normal;
   line-height: 1.5;
 }
 .task-list {
-  /* 区画の一覧。ul の既定の余白と行頭の印を落とす（サイドバーの他の一覧は
-     .sidebar-list が持つが、こちらは印を出さないのでここで完結させる）。上のマージンは
-     0——直前の要素（`.task-count-chips` か `.task-running-list`）の margin-bottom
-     （0.75rem = 12px）が隣接マージンの畳み込みでそのまま間隔になる。各行の頭の罫線
-     （`.task-item` の border-top）は別枠なので、ここでは重ねない。 */
+  /* 区画の一覧。ul の既定の余白と行頭の印を落とす。
+     上のマージンは 0 で、直前の要素（`.task-count-chips` か `.task-running-list`）の margin-bottom（12px）が隣接マージンの畳み込みでそのまま間隔になる。 */
   margin: 0;
   list-style: none;
   padding-left: 0;
 }
-/* **各行の上に罫線を引く**（`:not(:first-child)` にしない）——最初の行も、直前の要素
-   （件数のチップ・進行中のカード）との間に線が出るのがモックの形（docs/display.md 4.2）。
-   色は `--rule` より
-   薄め（他の「淡い枠」と同じ配合。`character-view.module.css` / `dispatch.module.css`）。 */
+/* 各行の上に罫線を引く（`:not(:first-child)` にしない）。
+   最初の行も、直前の要素（件数のチップ・進行中のカード）との間に線が出るのが見本の形。
+   色は `--rule` より薄め。 */
 .task-item {
   display: grid;
   grid-template-columns: auto 1fr;
@@ -150,37 +131,31 @@
   padding: 0.5rem 0;
   border-top: 1px solid color-mix(in srgb, var(--rule) 70%, transparent);
 }
-/* done は色を薄くし、打ち消し線を引く。テキスト装飾は子（IDのボタン・summary）にも
-   見た目上つながって出る（CSS の text-decoration は子孫の描画にまたがる）。 */
+/* done は色を薄くし、打ち消し線を引く。
+   テキスト装飾は子（IDのボタン・summary）にも見た目上つながって出る（CSS の text-decoration は子孫の描画にまたがる）。 */
 .task-item.task-done {
   color: var(--ink-quiet);
   text-decoration: line-through;
 }
 /* ID＋summary を1行に並べ、summary だけを切り詰める側（`.task-item-summary`）。
-   grid の列は既定で子の内容ぶんの幅を確保しようとする（min-width: auto）ので、
-   ここで 0 に落とさないと summary の text-overflow が働かない。 */
+   grid の列は既定で子の内容ぶんの幅を確保しようとする（min-width: auto）ので、ここで 0 に落とさないと summary の text-overflow が働かない。 */
 .task-item-body {
   display: flex;
   align-items: baseline;
   gap: 0.625rem;
   min-width: 0;
 }
-/* 未着手・完了の行の summary は1行に収め、入りきらない分は「…」にする（全文は
-   「一覧を見る」の表で読む。docs/display.md 4.2）。**字の段を明示する**（`Text`
-   `size="secondary"`）——親（`.sidebar-block`）の `--font-secondary` に頼ると、`.task-item` が
-   サイドバー以外の文脈に置かれたときに黙って崩れる。 */
+/* 未着手・完了の行の summary は1行に収め、入りきらない分は「…」にする（全文は「一覧を見る」の表で読む）。
+   字の段は `Text` で明示する。親（`.sidebar-block`）の `--font-secondary` に頼ると、`.task-item` がサイドバー以外の文脈に置かれたときに黙って崩れる。 */
 .task-item-summary {
   overflow: hidden;
   min-width: 0;
   white-space: nowrap;
   text-overflow: ellipsis;
 }
-/* タスクのIDは機械が付けた名前なので等幅（docs/screen-design.md 13.1 原則3）。書体そのものの定義は
-   `src/browser/styles/theme.css` のトークンにあり、ここは宛てるだけ。summary（13px）より
-   一段小さい 11px にして、印・チップ・札と同じ段に揃える。
-   **`flex: none` と `white-space: nowrap` が要る**——body の `overflow-wrap: anywhere`
-   （`styles/theme.css`）でIDの min-content が1文字になり、幅の狭いサイドバーだと
-   「T-」「332」の2行に割れるため。 */
+/* タスクのIDは機械が付けた名前なので等幅。summary（13px）より一段小さい 11px にして、印・チップ・札と同じ段に揃える。
+   `flex: none` と `white-space: nowrap` が要る。
+   body の `overflow-wrap: anywhere`（`theme.css`）でIDの min-content が1文字になり、幅の狭いサイドバーだとIDが2行に割れるため。 */
 .task-item .task-id {
   flex: none;
   opacity: 0.8;
@@ -188,9 +163,8 @@
   font-size: var(--font-label);
   white-space: nowrap;
 }
-/* status の印（区画の一覧の先頭列。`components/task-item.tsx` の `TaskMark`）。
-   **色だけで状態を伝えない**——todo は空の丸、done はチェック（.task-done の打ち消し線と
-   対）、想定外の値は注意色の「!」にする。 */
+/* status の印（区画の一覧の先頭列）。色だけで状態を伝えない。
+   todo は空の丸、done はチェック（.task-done の打ち消し線と対）、想定外の値は注意色の「!」にする。 */
 .task-mark-todo {
   display: inline-block;
   /* 固定 px にする（em だと行の summary の font-size を変えるたびに印の大きさも動く）。 */
@@ -209,10 +183,8 @@
   color: var(--state-warn);
   font-weight: 700;
 }
-/* 押せるID（`components/task-run-button.tsx`。一覧と表の両方が同じ形で置く）。ボタンの既定の
-   見た目（背景・枠・余白）を落として、周りの文字の並びに割り込まないようにする。
-   **押せることを色だけで示さない**ので、常に点線の下線を敷き、ホバーで実線にする
-   （下線があれば、差し色を見分けられなくても押す口だと分かる）。 */
+/* 押せるID（一覧と表の両方が同じ形で置く）。ボタンの既定の見た目（背景・枠・余白）を落として、周りの文字の並びに割り込まないようにする。
+   押せることを色だけで示さないので、常に点線の下線を敷き、ホバーで実線にする。 */
 .task-id-button {
   padding: 0;
   border: none;
@@ -232,11 +204,9 @@
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
-/* 表の status 列の文字色（`components/task-row.tsx` が `taskStatusClass` で選ぶ）。--state-* は
-   ここでは使わない（意味が固定されている色なので、todo / doing に宛てると ok / warn / ng / ask
-   の意味が動く。docs/screen-design.md 13.1 原則5）。**区画の一覧はこの色クラスを使わず、印の形
-   （`.task-mark-*`）で区別する**（2026-09-23 決定。バッジは表だけの見た目になった）。
-   todo は既定の文字色のまま。**class は状態の印**として付ける（下の doing / done / other と対）。 */
+/* 表の status 列の文字色。
+   --state-* はここでは使わない（意味が固定されている色なので、todo / doing に宛てると ok / warn / ng / ask の意味が動く）。
+   todo は既定の文字色のまま。class は状態の印として付ける（下の doing / done / other と対）。 */
 .task-status-todo {
   color: inherit;
 }
@@ -250,10 +220,8 @@
   color: var(--state-warn);
 }
 
-/* タスク一覧の表（`src/browser/features/task-board/task-board.tsx`。`<dialog>` を `showModal()` で開く）。
-   一時的に重なるものなので常設の枠を増やさない（docs/screen-design.md 13.1 原則2）。
-   `showModal()` で開いている間はブラウザが top layer に載せるので、サイドバー領域の
-   overflow には切り取られない。 */
+/* タスク一覧の表。
+   `showModal()` で開いている間はブラウザが top layer に載せるので、サイドバー領域の overflow には切り取られない。 */
 .task-board {
   box-sizing: border-box;
   width: min(64rem, calc(100vw - 2rem));
@@ -267,9 +235,7 @@
   font-size: var(--font-secondary);
   overflow: hidden;
 }
-/* 背景（backdrop）は `<Dialog backdrop="dim">` が持つ（`dialog.module.css`）。 */
-/* 見出しと閉じる口は動かさず、表だけが内側でスクロールする（件数が増えても閉じる口を探しに
-   スクロールしなくて済む）。 */
+/* 見出しと閉じる口は動かさず、表だけが内側でスクロールする（件数が増えても閉じる口を探しにスクロールしなくて済む）。 */
 .task-board-body {
   display: flex;
   flex-direction: column;
@@ -282,7 +248,7 @@
   justify-content: space-between;
   gap: 0.6rem;
 }
-/* 箱だけ（高さ・余白・角丸）。顔（枠・地・字の色と hover）は `<Button variant="outline">` が持つ。 */
+/* 箱だけ（高さ・余白・角丸）。顔は `<Button variant="outline">` が持つ。 */
 .task-board-close {
   padding: 0.2rem 0.6rem;
   border-radius: 0.4rem;
@@ -292,9 +258,8 @@
   overflow: auto;
 }
 .task-board-table {
-  /* 狭い画面では器のほうが足りなくなるので、**表は器より広がってよい**（.task-board-scroll が
-     その表だけ横スクロールさせる。docs/screen-design.md 13.3）。width: 100% にすると要約の列が
-     1〜2字ずつの折り返しにつぶれ、表が器に収まってしまって横スクロールも働かない。 */
+  /* 狭い画面では器のほうが足りなくなるので、表は器より広がってよい（.task-board-scroll がその表だけ横スクロールさせる）。
+     width: 100% にすると要約の列が1〜2字ずつの折り返しにつぶれ、表が器に収まってしまって横スクロールも働かない。 */
   min-width: 100%;
   border-collapse: collapse;
   text-align: left;
@@ -323,35 +288,30 @@
   font-weight: normal;
   vertical-align: top;
 }
-/* ID・status・難易度・loopable は機械が付けた名前なので、折り返さず1行に置く
-   （docs/screen-design.md 13.1 原則3）。 */
+/* ID・status・難易度・loopable は機械が付けた名前なので、折り返さず1行に置く。 */
 .task-board-table tbody th,
 .task-board-table td:nth-child(2),
 .task-board-table td:nth-child(3),
 .task-board-table td:nth-child(4) {
   white-space: nowrap;
 }
-/* 着手（依存のID が並ぶ列）。**ここだけは折り返させる**——1行に置くと依存が多い行で表が器を
-   超え、最後にある要約の列が可視領域の外へ押し出される（実測: 依存7件で約26em）。上限は
-   「器（64rem）から他の5列と要約の min-width: 24em を引いた残り」から採った。 */
+/* 着手（依存のID が並ぶ列）。ここだけは折り返させる。
+   1行に置くと依存が多い行で表が器を超え、最後にある要約の列が可視領域の外へ押し出される（実測: 依存7件で約26em）。
+   上限は「器（64rem）から他の5列と要約の min-width: 24em を引いた残り」から採った。 */
 .task-board-table td:nth-child(5) {
   max-width: 16em;
   white-space: normal;
 }
-/* IDそのものは折らない（`T-xxx` が `-` で改行されると読めなくなる）。折り返せるのは
-   task-board.tsx が区切りに置く `, ` だけになる。 */
+/* IDそのものは折らない（IDが `-` で改行されると読めなくなる）。折り返せるのは区切りに置く `, ` だけになる。 */
 .task-dep-id {
   white-space: nowrap;
 }
 .task-board-row.task-done {
   color: var(--ink-quiet);
 }
-/* 着手可否。**意味を固定した色**（docs/screen-design.md 13.1 原則5）を使うが、色だけで伝えないよう
-   文字（READY / 待ち: …）も出す。色は `Text`（tone="state-ok" / "state-warn"）が持つ。 */
+/* 着手可否。意味を固定した色を使うが、色だけで伝えないよう文字（READY / 待ち: …）も出す。色は `Text` が持つ。 */
 
-/* タスクを実行する確認（`components/task-run-confirm.tsx`）。**表の上に重ねて開く**——
-   `showModal()` は top layer に積むので、下の表より必ず上に出る。常設の枠ではないので
-   ここでも枠を増やさない（docs/screen-design.md 13.1 原則2）。 */
+/* タスクを実行する確認。`showModal()` は top layer に積むので、下の表より必ず上に出る。 */
 .task-run-confirm {
   box-sizing: border-box;
   width: min(28rem, calc(100vw - 2rem));
@@ -363,56 +323,46 @@
   border-radius: 0.75rem;
   font-size: var(--font-secondary);
 }
-/* 背景（backdrop）は `<Dialog backdrop="dim">` が持つ（`dialog.module.css`）。 */
-/* 問い（`Text`。size="heading" tone="inherit" weight="semibold"。margin: 0 は既定と同じなので
-   ここには残さない）。 */
-/* 送る文面（または送れない理由）。問いより弱い濃さで、問いの下に1行だけ置く。色は
-   `Text`（tone="ink-quiet"）が持つ。 */
+/* 送る文面（または送れない理由）。問いより弱い濃さで、問いの下に1行だけ置く。色は `Text` が持つ。 */
 .task-run-note {
   margin: 0.5rem 0 0;
 }
 .task-run-prompt {
   font-family: var(--font-mono);
 }
-/* 押す口は右寄せで、**実行するほうを端に置く**（キャンセルが先に来る）。 */
+/* 押す口は右寄せで、実行するほうを端に置く（キャンセルが先に来る）。 */
 .task-run-actions {
   display: flex;
   justify-content: flex-end;
   gap: 0.5rem;
   margin-top: 0.9rem;
 }
-/* 箱だけ（高さ・余白・角丸）。顔は `<Button>` が持つ（`task-run-cancel` は
-   `variant="outline"`、実行するほうの `task-run-ok` は既定の行き先だと分かるよう
-   `variant="outline-accent"`）。 */
+/* 箱だけ（高さ・余白・角丸）。顔は `<Button>` が持つ。 */
 .task-run-cancel,
 .task-run-ok {
   padding: 0.2rem 0.8rem;
   border-radius: 0.4rem;
 }
 
-/* 狭い画面では、タスク一覧の表を**1タスク＝1枚のカード**に組み替える
-   （docs/requirements.md 4.7）。390px の器に7列の表を入れると 691px に広がり、いちばん
-   知りたい要約の列が丸ごと画面の外へ出てしまう（実測）。組み替えるのは
-   ここだけで、`task-board.tsx` は幅を測らず表のまま書く。
-   **レポートの中の表（.table-scroll。docs/screen-design.md 13.3「領域の内幅に入りきらない
-   表は、その表だけ横スクロールさせる」）は
-   この対象ではない。** あちらは中身が何列になるか分からない一般の表で、こちらは列と
-   意味が分かっている一覧なので、狭いときの形をこちらで決められる。 */
+/* 狭い画面では、タスク一覧の表を1タスク＝1枚のカードに組み替える。
+   390px の器に7列の表を入れると 691px に広がり、いちばん知りたい要約の列が丸ごと画面の外へ出てしまう（実測）。
+   組み替えるのはここだけで、tsx は幅を測らず表のまま書く。
+   レポートの中の表（.table-scroll）はこの対象ではない。
+   あちらは中身が何列になるか分からない一般の表で、こちらは列と意味が分かっている一覧なので、狭いときの形をこちらで決められる。 */
 @media (max-width: 760px) {
   .task-board-table,
   .task-board-table tbody {
     display: block;
     min-width: 0;
   }
-  /* 見出しの行はカードでは置き場所が無いので隠す。読み取れなくなるセルには下で
-     ラベルを出す（ID・status・難易度・要約は値そのもので分かる）。 */
+  /* 見出しの行はカードでは置き場所が無いので隠す。
+     読み取れなくなるセルには下でラベルを出す（ID・status・難易度・要約は値そのもので分かる）。 */
   .task-board-table thead {
     display: none;
   }
   /* 1行目に ID・status・難易度・loopable、2行目に要約、3行目に依存・着手。
-     **DOM の並び（要約が最後）とは違う順に置く**——要約が読み手の主で、metadata を
-     読んでから意味にたどり着く形にしたくないため。押せる口はIDだけで、そのIDは DOM でも
-     見た目でもカードの先頭に来るので、並べ替えてもキーボードで回る順は見た目の順のまま。 */
+     DOM の並び（要約が最後）とは違う順に置く（要約が読み手の主で、metadata を読んでから意味にたどり着く形にしたくないため）。
+     押せる口はIDだけで、そのIDは DOM でも見た目でもカードの先頭に来るので、並べ替えてもキーボードで回る順は見た目の順のまま。 */
   .task-board-row {
     display: grid;
     grid-template-columns: auto auto auto 1fr;
@@ -441,8 +391,7 @@
     grid-row: 1;
     grid-column: 4;
   }
-  /* 要約。カードの主なので、行いっぱいを使って折り返す（min-width: 24em は器より広い
-     指定なのでここでは効かせない）。 */
+  /* 要約。カードの主なので、行いっぱいを使って折り返す（min-width: 24em は器より広い指定なのでここでは効かせない）。 */
   .task-board-table td:last-child {
     grid-row: 2;
     grid-column: 1 / -1;
@@ -455,15 +404,13 @@
     grid-column: 1 / -1;
     max-width: none;
   }
-  /* 見出しの行が消えたぶんのラベル。**値と同じ行に、値より弱い濃さで置く**
-     （行の上にラベルだけの段を作らない）。 */
+  /* 見出しの行が消えたぶんのラベル。値と同じ行に、値より弱い濃さで置く（行の上にラベルだけの段を作らない）。 */
   .task-board-table td[data-label]::before {
     content: attr(data-label) " ";
     color: var(--ink-quiet);
     font-size: var(--font-label);
   }
-  /* loopable は N のとき空になる（task-board.tsx）。空のセルにラベルだけが残らないよう
-     セルごと畳む。 */
+  /* loopable は N のとき空になる（`loopableMark`）。空のセルにラベルだけが残らないようセルごと畳む。 */
   .task-board-table td:empty {
     display: none;
   }

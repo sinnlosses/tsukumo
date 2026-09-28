@@ -1,9 +1,8 @@
-// セッションの切り替え画面（`docs/screen-design.md`「切り替え画面」）。帯の札を押すと開く
-// モーダルで、左に探す欄と日付で区切った一覧、右に選んでいるセッションの要約と切り替えのボタン。
+// セッションの切り替え画面。帯の札を押すと開くモーダル。
 // ↑↓ で選び、Enter で切り替え、Esc で閉じる（Esc と外側のクリックは `<Dialog>` が持つ）。
 //
-// 中身（`SessionSwitcherBody`）は開いている間だけ描く。閉じて開き直すと探す欄と選びが初めに戻り、
-// 選んだ1件の中身も取り直す。
+// 中身（`SessionSwitcherBody`）は開いている間だけ描く。
+// 閉じて開き直すと探す欄と選びが初めに戻り、選んだ1件の中身も取り直す。
 
 import { Search } from "lucide-react"
 import { useId, type ReactElement } from "react"

@@ -1,16 +1,12 @@
-// 雑談中のサイドバーの3段目「覚えていること」（docs/screen-design.md 13.7「雑談のときのサイドバー」）。
-// 中身は `persona.md` の `## 覚えたこと`（`docs/glossary.md`「覚えたこと」・`SessionState.rememberedLines`）。
+// 雑談中のサイドバーの3段目「覚えていること」。
+// 中身は `persona.md` の `## 覚えたこと`（`SessionState.rememberedLines`）で、1行＝チップ1つ。
 //
-// 1行＝チップ1つ（docs/chat-mode.md「プロフィールの書き戻し」）。チップは先頭を短く切って出し、
-// 押すとその場で全文に開く（もう一度押すと閉じる）。`title` の hover では出さない
-// ——キーボードでもタッチでも開ける手を選んだ。
+// チップは先頭を短く切って出し、押すとその場で全文に開く（もう一度押すと閉じる）。
+// `title` の hover では出さない（キーボードでもタッチでも開けるように）。
 //
-// 「編集」は消せる行があるときだけ置く（区画の見出しの `action`。空のときに押せても
-// 何もできない）。押すと各チップに × が付く「編集の状態」になり（一覧を別に開かない）、
-// × を押すと消す前の確認（`PersonaMemoryForgetConfirm`）を挟んでから
-// `chat.forgetRememberedLine` を送る。消し方はキャラクター自身の `forget` と同じ完全一致だが、
-// 1ターン1行の上限は掛からない（その上限はモデルの暴走を防ぐためのもので、画面から
-// 名指しした削除には要らない）。
+// 「編集」は消せる行があるときだけ置く（空のときに押せても何もできない）。
+// 押すと各チップに × が付く「編集の状態」になり、× を押すと消す前の確認を挟んでから `chat.forgetRememberedLine` を送る。
+// 消し方はキャラクター自身の `forget` と同じ完全一致だが、1ターン1行の上限は掛からない（その上限はモデルの暴走を防ぐためのもので、画面から名指しした削除には要らない）。
 
 import { useState, type ReactElement } from "react"
 
@@ -28,10 +24,8 @@ const REMEMBERED_LINE_CHIP_LENGTH = 20
 export function PersonaMemorySection(): ReactElement {
   const lines = useSession((session) => session.state.rememberedLines)
   const [editing, setEditing] = useState(false)
-  // 押して開いた1行（文面そのもので指す。同じ文面が2行あっても、どちらを開いても見え方は
-  // 同じなので困らない）。
+  // 押して開いた1行。文面そのもので指す（同じ文面が2行あっても、どちらを開いても見え方は同じなので困らない）。
   const [openLine, setOpenLine] = useState<string | undefined>(undefined)
-  // 消す前の確認を出している1行（無ければ確認は閉じている）。
   const [confirmLine, setConfirmLine] = useState<string | undefined>(undefined)
 
   return (
@@ -57,8 +51,7 @@ export function PersonaMemorySection(): ReactElement {
       ) : (
         <ul className={styles["sidebar-persona-memory-list"]} aria-label="覚えていること">
           {lines.map((line, index) => (
-            // 並びは届くたびに丸ごと置き換わり、同じ文面が2行あることもあるので位置で引く
-            // （`recent-topic-section.tsx` の話題の一覧と同じ考え方）。
+            // 並びは届くたびに丸ごと置き換わり、同じ文面が2行あることもあるので位置で引く。
             <li key={index} className={styles["sidebar-persona-memory-item"]}>
               <button
                 type="button"
@@ -119,12 +112,10 @@ type PersonaMemoryForgetConfirmProps = {
 }
 
 /**
- * 「この1行を消しますか」の確認（`× を押したときだけ開く。docs/chat-mode.md「プロフィールの
- * 書き戻し」——消した行は戻せない）。OK を押したら即座に閉じる（楽観的。サーバの結果は
- * 待たない）。もし押している間にキャラクター自身の `forget` / `remember` で一覧がすでに
- * 変わっていても、`chat.forgetRememberedLine` は完全一致でしか消さない安全な操作なので、
- * 二重に消しても・行がもう無くても壊れない（一致しなければ何もしないだけ）。一覧はどのみち
- * 次に届く `remembered-lines-changed` で必ず最新になる。
+ * 「この1行を消しますか」の確認。消した行は戻せないので挟む。
+ * OK を押したら即座に閉じ、サーバの結果は待たない。
+ * 押している間にキャラクター自身の `forget` / `remember` で一覧が変わっていても、`chat.forgetRememberedLine` は完全一致でしか消さないので、二重に消しても・行がもう無くても壊れない。
+ * 一覧は次に届く `remembered-lines-changed` で最新になる。
  */
 function PersonaMemoryForgetConfirm(props: PersonaMemoryForgetConfirmProps): ReactElement {
   const dispatch = useSession((session) => session.dispatch)

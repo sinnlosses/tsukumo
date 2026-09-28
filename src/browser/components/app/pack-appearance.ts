@@ -15,12 +15,11 @@ export function usePackAppearance(): void {
 }
 
 /**
- * FontFace API に登録する名前。常に「いまのパック」の1件しか登録しないので固定の1つでよい
- * （切り替えたときは古い方を `document.fonts.delete` してから差し替える）。
+ * FontFace API に登録する名前。
+ * 常に「いまのパック」の1件しか登録しない（切り替えたときは古い方を `document.fonts.delete` する）ので、固定の1つでよい。
  */
 const DIARY_FONT_FAMILY_NAME = "tsukumo-diary"
 
-/** 雑談中はパックが `chatAccent` を持てばそちらに切り替わる（`effectiveAccent`）。 */
 function useAccent(): void {
   const accent = useSession((session) =>
     effectiveAccent(session.state.character, session.state.chatMode),
@@ -36,8 +35,7 @@ function useAccent(): void {
 
 /**
  * どこにどう敷くかは CSS の `.layout-ground` が持ち、ここは素材の URL と覆いの濃さを渡すだけ。
- * 素材の名前は `character.json` 由来の外部の値だが、`url()` を抜け出せない形であることは境界の
- * `isBackgroundFileName` で見てある。
+ * 素材の名前は `character.json` 由来の外部の値だが、`url()` を抜け出せない形であることは境界の `isBackgroundFileName` で見てある。
  */
 function useCharacterBackground(): void {
   const backgroundImage = useSession((session) => session.state.character?.background?.image)
@@ -78,8 +76,7 @@ function useDiaryFont(): void {
         }
       })
       .catch(() => {
-        // 壊れている・見つからない書体ファイルは既定の明朝体のまま（常駐プロセスは描画1回の
-        // 失敗で落ちない）。
+        // 壊れている・見つからない書体ファイルは既定の明朝体のまま。
       })
     return () => {
       cancelled = true

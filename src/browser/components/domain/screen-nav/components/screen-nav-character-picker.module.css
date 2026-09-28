@@ -1,7 +1,6 @@
-/* 帯の左端のキャラクターの顔と、押すと開く選び口。値は見本
-   `docs/history/mockup/session-switch-2026-09-27/HD-4-IdTag.dc.html` の inline style を
-   `theme.css` のトークンに写したもの。「≡」の面の中での並べ直しは `screen-nav.module.css` の
-   @media が持つ。 */
+/* 帯の左端のキャラクターの顔と、押すと開く選び口。
+   値は見本 `docs/history/mockup/session-switch-2026-09-27/HD-4-IdTag.dc.html` の inline style を `theme.css` のトークンに写したもの。
+   「≡」の面の中での並べ直しは `screen-nav.module.css` の @media が持つ。 */
 
 /* 選び口（.screen-nav-character-picker-panel）を顔の真下に重ねる基準。 */
 .screen-nav-character-picker {
@@ -23,8 +22,7 @@
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
-/* いまのパックの顔。**丸く切り抜き**、透過の縁が帯に溶けないように丸の地を
-   --surface-accent で塗り、外側に差し色の輪を掛ける（輪は 2026-09-23 に 1px へ細くした）。 */
+/* いまのパックの顔。丸く切り抜き、透過の縁が帯に溶けないように丸の地を --surface-accent で塗り、外側に差し色の輪を掛ける。 */
 .screen-nav-face {
   flex: none;
   width: 2.25rem;
@@ -54,7 +52,7 @@
 .screen-nav-character-picker-toggle:hover .screen-nav-character-picker-mark {
   border-color: var(--accent);
 }
-/* 選び口。**顔の真下に、左端を揃えて重ねる**（下の領域を押し下げない。歯車の設定と同じ作り）。 */
+/* 選び口。顔の真下に、左端を揃えて重ねる（下の領域を押し下げない）。 */
 .screen-nav-character-picker-panel {
   position: absolute;
   top: calc(100% + 0.4rem);

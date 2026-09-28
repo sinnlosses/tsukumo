@@ -1,13 +1,8 @@
-// サイドバーの区画1つぶんの枠。見出し（`h2`）は固定し、中身だけ `.sidebar-block-scroll` で
-// 包んで内側にスクロールさせる（区画ごとの内側スクロールをここで共通に持たせる。
-// `sidebar.module.css`）。
-//
-// 見出しを名乗らないものはここを通さない。 下端の帯（コンテキストの使用量）は区画ではなく
-// （`sidebar.tsx` の `.sidebar-footer`）で、枠も余白もスクロールも別に持つ。
+// サイドバーの区画1つぶんの枠。見出し（`h2`）は固定し、中身だけ `.sidebar-block-scroll` で包んで内側にスクロールさせる。
 //
 // `action` を渡した区画は、見出しの右端に押せる口が並ぶ（タスク一覧の「一覧を見る」）。
-// 見出しそのものは押せるようにしない — 区画ごと開閉するのではなく、別の場所（モーダル）を
-// 開く操作なので、押せる範囲は見出しの文字と分けておく。
+// 見出しそのものは押せるようにしない。
+// 区画ごと開閉するのではなく別の場所（モーダル）を開く操作なので、押せる範囲は見出しの文字と分けておく。
 
 import clsx from "clsx"
 import type { ReactElement, ReactNode } from "react"
@@ -24,7 +19,7 @@ export type SidebarSectionAction = {
 
 export type SidebarSectionProps = {
   readonly title: string
-  /** 区画ごとの高さの取り方を足す class 名（`sidebar.module.css` のもの）。呼び出し側が渡す。 */
+  /** 区画ごとの高さの取り方を足す class 名。 */
   readonly extraClass: string
   readonly action: SidebarSectionAction | undefined
   readonly children: ReactNode

@@ -1,10 +1,7 @@
-// 並べるための規則（`display: flex` + 向き・間隔・揃え・折り返し）を寄せる variant 部品
-// （`docs/design.md` 2章「`components/ui/` の部品（variant の作法と一覧）」）。持つのは並べる
-// ことだけ——寸法・枠・地・置き方（margin・flex・align-self など）は呼び出し側が `className`
-// で渡す（`docs/design.md` 同節「呼び出し側からの上書き（className）」）。
+// 並べるための規則（`display: flex` + 向き・間隔・揃え・折り返し）を寄せる variant 部品。
+// 寸法・枠・地・置き方（margin・flex・align-self など）は呼び出し側が `className` で渡す。
 //
-// 向きの決まった並べは `VStack`（縦）・`HStack`（横）で書く（`ui/v-stack/` `ui/h-stack/`）。
-// `Stack` を直に使うのは、向きを値で切り替える箇所だけ。
+// `Stack` を直に使うのは、向きを値で切り替える箇所だけ。向きの決まった並べは `VStack`・`HStack` で書く。
 
 import clsx from "clsx"
 import { createElement, type ReactElement, type ReactNode, type Ref } from "react"
@@ -83,9 +80,8 @@ export function Stack(props: StackProps): ReactElement {
     props.className,
   )
 
-  // JSX（`<Element ref={…}>`）で書くと、要素の合併型のぶん ref の型が交差になり
-  // （`HTMLDivElement` と `HTMLLabelElement` と…の ref を同時に満たす）、`HTMLElement` の ref を
-  // 渡せない。`createElement` は要素を `HTMLElement` として受ける。
+  // JSX（`<Element ref={…}>`）で書くと、要素の合併型のぶん ref の型が交差になり、`HTMLElement` の ref を渡せない。
+  // `createElement` は要素を `HTMLElement` として受ける。
   return createElement(
     props.element,
     {

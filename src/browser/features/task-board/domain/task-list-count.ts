@@ -1,7 +1,4 @@
-// サイドバーの「タスク一覧」区画の見出し下に出す件数のチップ。文言だけをここから渡す
-// （`components/domain/sidebar/task-section.tsx`）。見出しの文言そのものは固定の「タスク」になった
-// ので、この機能はもう持たない（以前は `taskListTitle` が「タスク一覧 todo N / doing N /
-// done N」を組み立てていた。経緯は docs/display.md 4.2）。
+// サイドバーの「タスク一覧」区画の見出し下に出す件数のチップの文言。
 
 import type { TaskSummaryItem } from "../../../../shared/repository/task-summary.ts"
 
@@ -11,7 +8,7 @@ export type TaskListCountItem = {
   readonly count: number
 }
 
-/** チップの絞り込みで選べる値。3チップの `status` と同じ3つだけ（`domain/task-sidebar-filter.ts` が読む）。 */
+/** チップの絞り込みで選べる値。3チップの `status` と同じ3つだけ。 */
 export type TaskListFilterStatus = TaskListCountItem["status"]
 
 /** チップの並び（進行中 → 未着手 → 完了）と文言。件数はここでは持たない（`taskListCounts` が足す）。 */
@@ -22,22 +19,17 @@ const CHIP_ORDER = [
 ] satisfies readonly { readonly status: TaskListFilterStatus; readonly label: string }[]
 
 /**
- * サイドバーの「タスク一覧」のチップ。進行中 → 未着手 → 完了の順で、0件でも出す
- * （モックの3チップが常に並ぶ形に合わせる。`taskListTitle` 時代の「0件は足さない」は
- * 採らない。経緯は docs/display.md 4.2）。
+ * サイドバーの「タスク一覧」のチップ。進行中 → 未着手 → 完了の順で、0件でも出す。
  *
- * tasks が読めていない（`kind: "unknown"`）ときはチップを出さない。その判定は呼ぶ側
- * （`components/domain/sidebar/task-section.tsx`）が持ち、ここは件数を数えられる並びだけを受ける。
+ * tasks が読めていない（`kind: "unknown"`）ときはチップを出さない。
+ * その判定は呼ぶ側が持ち、ここは件数を数えられる並びだけを受ける。
  */
 export function taskListCounts(items: readonly TaskSummaryItem[]): readonly TaskListCountItem[] {
   const counts = taskStatusCounts(items)
   return CHIP_ORDER.map((chip) => ({ ...chip, count: counts[chip.status] }))
 }
 
-/**
- * 絞り込んだ状態が0件になったときの一言（`task-list.tsx`）に添える、チップと同じ文言。
- * 3チップ以外の値は渡らない（呼ぶ側が選んだ状態だけを渡す）。
- */
+/** 絞り込んだ状態が0件になったときの一言に添える、チップと同じ文言。 */
 export function taskListFilterLabel(status: TaskListFilterStatus): string {
   return CHIP_ORDER.find((chip) => chip.status === status)?.label ?? status
 }

@@ -1,7 +1,4 @@
 // キャラクター・表情・衣装から、立ち絵の見た目（URL・差し色・代替テキスト）を導く。
-// 置き場の基準は `docs/design.md` 2章「`lib/` と `utils/` に置く基準」— 名乗るのが tsukumo の
-// 語彙（立ち絵・キャラクター・表情・衣装）で、読み手が2つ以上の機能（`character-view` /
-// `chat-view`）なので `browser/domain/`。
 import type { CharacterInfo } from "../../shared/character-pack/character.ts"
 import { resolveExpressionLabel } from "../../shared/character-pack/expression-choice.ts"
 import type { Expression, Outfit } from "../../shared/character-pack/expression.ts"
@@ -9,7 +6,6 @@ import type { Expression, Outfit } from "../../shared/character-pack/expression.
 /** character.json に `name` が無い・定義自体が無いときの、キャラクターの既定の呼び名。 */
 export const DEFAULT_CHARACTER_NAME = "キャラクター"
 
-/** キャラクター・表情・衣装から導く、立ち絵の見た目。 */
 export type PortraitAppearance = {
   /** 立ち絵の素材 URL。character が届いていなければ undefined（吹き出しだけで成立させる）。 */
   readonly portraitUrl: string | undefined
@@ -18,9 +14,8 @@ export type PortraitAppearance = {
 }
 
 /**
- * 表情・衣装から立ち絵の見た目を組み立てる。表情のラベルはキャラクターパックの定義から
- * 来る（docs/design.md 7章）。定義が届く前・ラベルが無い表情では、表情名そのものが
- * ラベルになる。
+ * 表情・衣装から立ち絵の見た目を組み立てる。表情のラベルはキャラクターパックの定義から来る。
+ * 定義が届く前・ラベルが無い表情では、表情名そのものがラベルになる。
  */
 export function portraitAppearance(
   character: CharacterInfo | undefined,

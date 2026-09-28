@@ -1,9 +1,8 @@
-// 帯の左上のキャラクターの顔と、押すと開くキャラクターの選び口のロジック（`docs/screen-design.md`
-// 「キャラクターの選び口」）。送るのは `session.switchCharacter`（起こし直し）。
+// 帯の左上のキャラクターの顔と、押すと開くキャラクターの選び口のロジック。
+// 送るのは `session.switchCharacter`（起こし直し）。
 //
-// 選び口は歯車の設定と同じ形のポップオーバーで、2箇所に描かれる（広い画面の帯・狭い画面の
-// 「≡」の面の中）。開閉の状態は1つで、閉じる合図は `useDismissSignal`、Esc の戻り先の顔は
-// 2箇所ぶんをコールバック ref で集める（`useSettings` と同じ手口）。
+// 選び口は2箇所に描かれる（広い画面の帯・狭い画面の「≡」の面の中）。
+// 開閉の状態は1つで、閉じる合図は `useDismissSignal`、Esc の戻り先の顔は2箇所ぶんをコールバック ref で集める。
 
 import { useRef, useState, type RefCallback, type RefObject } from "react"
 
@@ -12,7 +11,6 @@ import { characterFaceInfo, type CharacterFaceInfo } from "../../../../domain/ch
 import { useDismissSignal, type DismissCause } from "../../../../hooks/use-dismiss-signal.ts"
 import { useSession, useTurnRunning } from "../../../../stores/session.ts"
 
-/** 選び口に並ぶキャラクター1体。 */
 export type CharacterPickerOption = {
   readonly name: string
   readonly label: string

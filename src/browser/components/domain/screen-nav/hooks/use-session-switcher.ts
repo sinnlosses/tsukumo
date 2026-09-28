@@ -1,9 +1,7 @@
-// 帯の左上の部屋の名前の札と、押すと開く切り替え画面のロジック（`docs/screen-design.md`
-// 「セッションの札」「切り替え画面」）。札と切り替え画面が同じ開閉の状態を
-// 読むので、状態はここに1つだけ持つ。
+// 帯の左上の部屋の名前の札と、押すと開く切り替え画面のロジック。
+// 札と切り替え画面が同じ開閉の状態を読むので、状態はここに1つだけ持つ。
 //
-// 一覧（`SessionState.sessions`）は軽いもの（ID・見出し・時刻）だけで、依頼の数・要約・
-// 最後のセリフは選んだ1件ぶんだけ取りに行く（`useSessionDigest`）。
+// 一覧（`SessionState.sessions`）は軽いもの（ID・見出し・時刻）だけで、依頼の数・要約・最後のセリフは選んだ1件ぶんだけ取りに行く（`useSessionDigest`）。
 
 import { useState } from "react"
 
@@ -27,7 +25,6 @@ export const SESSION_SWITCHER_GROUP_LABELS = {
   earlier: "それより前",
 } as const satisfies Record<SessionSwitcherGroup, string>
 
-/** 切り替え画面の一覧の1行（見た目が受け取れる形まで畳んだもの）。 */
 export type SessionSwitcherRow = {
   readonly sessionId: string
   readonly shortId: string
@@ -41,10 +38,7 @@ export type SessionSwitcherRow = {
   readonly current: boolean
 }
 
-/**
- * 帯の札に出す、いまのセッションの名乗り。ID が分かる前（新規に起こして最初の依頼を送る前）は
- * 短縮IDを出せない。
- */
+/** 帯の札に出す、いまのセッションの名乗り。ID が分かる前（新規に起こして最初の依頼を送る前）は短縮IDを出せない。 */
 export type ScreenNavSessionIdentity =
   | {
       readonly kind: "known"
@@ -55,7 +49,6 @@ export type ScreenNavSessionIdentity =
     }
   | { readonly kind: "unknown" }
 
-/** 帯の左上の札（部屋の名前 + 短縮ID）。 */
 export type ScreenNavSessionTag = {
   readonly room: string
   readonly identity: ScreenNavSessionIdentity
@@ -63,7 +56,6 @@ export type ScreenNavSessionTag = {
   readonly onOpen: () => void
 }
 
-/** 切り替え画面が受け取れる形。 */
 export type ScreenNavSessionSwitcher = {
   readonly open: boolean
   readonly onClose: () => void

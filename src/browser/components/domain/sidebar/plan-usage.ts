@@ -1,17 +1,12 @@
-// 利用枠（`docs/glossary.md`「利用枠」）を取りに行き、サイドバーの札（`PlanUsageRow`）が
-// 算出せずにそのまま描ける形へ畳む。読み手はサイドバーの札1つだけなので `browser/domain/` へは
-// 上げず、この機能の中に置く（`docs/design.md`「上げる引き金は「2つ目の読み手が
-// 出たとき」」）。取り直す契機は開いたとき・ターンが終わるたび・再読み込みのボタン
-// （`docs/screen-design.md`「使用量の行」）。「いつ取り直すか」を自分では決めないのは
-// `useContextUsage` と同じ理由——`refetchKey` を呼び出し側から受け取り、値が
-// 変われば取り直す。ボタンからの取り直しだけは鍵を変えずに `retry()`（`query.refetch()`）で行う。
+// 利用枠を取りに行き、サイドバーの札（`PlanUsageRow`）が算出せずにそのまま描ける形へ畳む。
+// 取り直す契機は開いたとき・ターンが終わるたび・再読み込みのボタン。
+// 「いつ取り直すか」は自分では決めず、`refetchKey` を呼び出し側から受け取り、値が変われば取り直す。
+// ボタンからの取り直しだけは鍵を変えずに `retry()`（`query.refetch()`）で行う。
 //
-// 前の値を残したまま取り直す（`placeholderData: keepPreviousData`）。コンテキストの内訳は
-// 取り直すたびに骨組みへ戻すが、利用枠の札は見本（`QUOTA-Sidebar.dc.html`「3a 取得中
-// （前の値あり）」）が前の値を薄く残すことを求めている——`refetchKey` が変わっても（鍵が変わる
-// クエリは既定では骨組みに戻る）前の成功結果をプレースホルダとして持ち越すことで、ボタンでの
-// 取り直しと同じ見え方に揃えられる。「まだ一度も取れていない」（`query.isPending`）だけが
-// プレースホルダの無い骨組み。
+// 前の値を残したまま取り直す（`placeholderData: keepPreviousData`）。
+// 見本（`QUOTA-Sidebar.dc.html`「3a 取得中（前の値あり）」）が前の値を薄く残すことを求めている。
+// 鍵が変わるクエリは既定では骨組みに戻るので、前の成功結果をプレースホルダとして持ち越して、ボタンでの取り直しと同じ見え方に揃える。
+// 「まだ一度も取れていない」（`query.isPending`）だけがプレースホルダの無い骨組み。
 
 import { keepPreviousData, useQuery } from "@tanstack/react-query"
 
@@ -23,9 +18,8 @@ import {
 import { rpc } from "../../../domain/rpc.ts"
 
 /**
- * 描くために要る形。`pending` はまだ一度も取れていないときだけの骨組み用
- * （`fetching` は常に `true`）。`unavailable` の `takenAt` は「最後に失敗した時刻」で、
- * まだ一度も応答が届いていなければ `undefined`。
+ * 描くために要る形。`pending` はまだ一度も取れていないときだけの骨組み用（`fetching` は常に `true`）。
+ * `unavailable` の `takenAt` は「最後に失敗した時刻」で、まだ一度も応答が届いていなければ `undefined`。
  */
 export type PlanUsageState =
   | { readonly kind: "pending" }
@@ -41,21 +35,16 @@ export type UsePlanUsageResult = {
   readonly retry: () => void
 }
 
-/**
- * `state.lastTurnFinishedAt` から、利用枠を取り直す合図を作る。ターンが終わるたびに違う値に
- * なる（コンテキストの内訳が同じ値から作る合図と同じ考え方——「無い」はここで `0` に畳む）。
- */
+/** `state.lastTurnFinishedAt` から、利用枠を取り直す合図を作る。ターンが終わるたびに違う値になる（「無い」はここで `0` に畳む）。 */
 export function planUsageRefetchKey(lastTurnFinishedAt: number | undefined): number {
   return lastTurnFinishedAt ?? 0
 }
 
-/**
- * `refetchKey` が変わるたびに取り直す。マウント時にも1回引く（`staleTime: 0`）。
- */
+/** `refetchKey` が変わるたびに取り直す。マウント時にも1回引く（`staleTime: 0`）。 */
 export function usePlanUsage(refetchKey: number): UsePlanUsageResult {
   const query = useQuery(
     rpc.planUsage.report.queryOptions({
-      // 合図を鍵に足す（値が変われば別のクエリとして引き直す。コンテキストの内訳の取得と同じ形）。
+      // 合図を鍵に足す（値が変われば別のクエリとして引き直す）。
       queryKey: [...rpc.planUsage.report.queryKey(), refetchKey],
       staleTime: 0,
       // 落ちた応答は再試行せず、すぐ「取れない」に倒す。

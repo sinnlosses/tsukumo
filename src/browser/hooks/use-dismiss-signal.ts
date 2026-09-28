@@ -1,17 +1,10 @@
-// 開いている面（ポップオーバー・落ちてくる面）を閉じる合図を、開いている間だけ `document`
-// から取る1つだけの仕事を持つフック。合図は2つ——`root` の外での `pointerdown` と、Esc。
+// 開いている面（ポップオーバー・落ちてくる面）を閉じる合図を、開いている間だけ `document` から取るフック。
+// 合図は2つで、`root` の外での `pointerdown` と、Esc。閉じている間はハンドラを1つも載せない。
 //
-// `document` の購読は React の外との同期なので `useEffect` で取る（`docs/coding-standards.md`
-// 「React」の4類型のうち「外部システムの購読」）。閉じている間はハンドラを1つも載せない。
+// 何を閉じるか・閉じたあとどこへフォーカスを戻すかは持たない（呼び出し側が `onDismiss` で決める）。
+// 合図の種類を引数で渡すのは、Esc のときだけフォーカスを押した口へ戻す呼び出し側があるため。
 //
-// 何を閉じるか・閉じたあとどこへフォーカスを戻すかは持たない（呼び出し側が `onDismiss` で
-// 決める）。合図の種類を引数で渡すのは、Esc のときだけフォーカスを押した口へ戻す呼び出し側が
-// あるため（`components/domain/screen-nav/hooks/use-current-work.ts`）。
-//
-// どの機能の語彙も持たないので `browser/hooks/`（`docs/design.md` 2章の箱の表）。
-//
-// 購読は `onDismiss` が変わると載せ直す。React Compiler が呼び出し側の関数を自動でメモ化
-// するので、呼び出し側は手で `useCallback` に包まない（`docs/coding-standards.md`「React」）。
+// 購読は `onDismiss` が変わると載せ直す。
 
 import { useEffect, type RefObject } from "react"
 

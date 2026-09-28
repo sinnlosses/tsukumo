@@ -1,18 +1,14 @@
-// サイドバーの下端の帯——コンテキストの札の下に、5時間枠と7日間枠の使用状況を1枚の札で出す
-// （`docs/screen-design.md`「使用量の行」「利用枠の札」）。取り直すのは開いたとき・ターンが
-// 終わるたび・右上の ↻ を押したとき（`usePlanUsage`）。
+// サイドバーの下端の帯のうち、コンテキストの札の下に5時間枠と7日間枠の使用状況を出す札。
+// 取り直すのは開いたとき・ターンが終わるたび・右上の ↻ を押したとき（`usePlanUsage`）。
 //
-// claude.ai の契約でないとき（`not-applicable`）は ↻ を出さない——再読み込みしても変わらない
-// ため。取れなかったとき（`unavailable`）は ↻ で取り直せる一言に置き換わる。どちらも2段の
-// 枠の行の代わりに1行の高さを保つ（コンテキストの札の「取れないときも高さを変えない」と
-// 同じ考え方）。
+// claude.ai の契約でないとき（`not-applicable`）は、再読み込みしても変わらないので ↻ を出さない。
+// 取れなかったとき（`unavailable`）は ↻ で取り直せる一言に置き換わる。
+// どちらも2段の枠の行の代わりに1行の高さを保つ。
 //
-// 取得中に前の値があれば、2段の枠の行を薄く残したまま「取得中…」を出す（`fetching` が
-// `true` のとき）。
+// 取得中に前の値があれば、2段の枠の行を薄く残したまま「取得中…」を出す（`fetching` が `true` のとき）。
 //
 // 取り直しのあいだは札に `aria-busy` を立てる。
-// E2E の「DOM が落ち着くまで待つ」判定はこれを見て、ターンの終わりに始まった取り直しが
-// 終わるまで撮らない。
+// E2E の「DOM が落ち着くまで待つ」判定はこれを見て、ターンの終わりに始まった取り直しが終わるまで撮らない。
 
 import clsx from "clsx"
 import { CircleX, TriangleAlert } from "lucide-react"
@@ -114,8 +110,10 @@ function PlanUsageNote(props: { readonly state: PlanUsageState }): ReactElement 
   )
 }
 
-/** 1つの枠の行（ラベル・棒・割合・戻る時刻）。狭いサイドバー（280px 未満）は棒を畳む
- * （`sidebar.module.css`「利用枠の札」の `@container`）。 */
+/**
+ * 1つの枠の行（ラベル・棒・割合・戻る時刻）。
+ * 狭いサイドバー（280px 未満）は棒を畳む（`sidebar.module.css` の `@container`）。
+ */
 function PlanUsageWindowRow(props: {
   readonly label: string
   readonly window: WindowDisplay
@@ -179,7 +177,7 @@ function headerText(state: PlanUsageState, fetching: boolean): string {
   return TIME_PLACEHOLDER
 }
 
-/** `80%` 以上を「高い」にする（`取れていない` ときは警告にしない）。 */
+/** 取れていないときは警告にしない。 */
 function isWarn(window: WindowDisplay): boolean {
   return window.utilization !== undefined && window.utilization >= WARN_THRESHOLD_PERCENTAGE
 }

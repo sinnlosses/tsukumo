@@ -1,9 +1,4 @@
-// タスク一覧の表（サイドバーの区画の見出しから開くモーダル）の入口。ロジックは
-// `hooks/use-task-board.ts` が持ち、見た目は `presentational-task-board.tsx` が持つ
-// （docs/design.md 2章「機能の中を分ける」の container / presenter）。
-//
-// ここに残すのは「フックを呼んで、受け取ったものを渡す」だけ。条件分岐も算出もここには
-// 置かない（増えたらフックか見た目のどちらかに寄せる）。
+// タスク一覧の表（サイドバーの区画の見出しから開くモーダル）の入口。
 
 import type { ReactElement } from "react"
 
@@ -19,7 +14,7 @@ export type TaskBoardProps = {
 }
 
 export function TaskBoard(props: TaskBoardProps): ReactElement {
-  // 表の中で開く確認が、送ったあとにこの表も閉じられるようにする（`board-close.tsx`）。
+  // 表の中で開く確認が、送ったあとにこの表も閉じられるようにする。
   return (
     <BoardCloseContext.Provider value={props.onClose}>
       <PresentationalTaskBoard {...useTaskBoard(props.tasks, props.open)} onClose={props.onClose} />

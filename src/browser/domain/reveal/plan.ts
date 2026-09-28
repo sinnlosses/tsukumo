@@ -1,25 +1,16 @@
-// レポートを「書き上げていくように見せる」演出で、どの塊をいつ出すかを決める（純粋な割り当て。
-// DOM は読むだけで書き換えない）。進める側は `use-report-reveal.ts`。
+// レポートを「書き上げていくように見せる」演出で、どの塊をいつ出すかを決める（純粋な割り当て。DOM は読むだけで書き換えない）。
 //
-// 文字を足していく実装にしない（`docs/requirements.md` 4.3）。DOM は完成品のまま置き、
-// 見せる範囲だけを進めるので、ここが返すのは「塊ごとの出し始めと出し終わりの時刻」だけになる。
+// DOM は完成品のまま置き、見せる範囲だけを進めるので、ここが返すのは「塊ごとの出し始めと出し終わりの時刻」だけになる。
 //
 // 塊は「トピック」。`report` の節1つが1トピックで、境目は `reportSectionsMarkdown` が節の間に挟む印で知る。
-// 段落や表の1つ1つではない——細かく割ると筆が何度も折り返して落ち着かず、目で追えなくなる。
-// 1つのトピックを大きく1回のZ字で書く。
+// 段落や表の1つ1つではない（細かく割ると筆が何度も折り返して落ち着かず、目で追えなくなる）。
 //
-// 塊1つぶんの時間を決める物差し（{@link RevealTiming}）は呼び出し側から受け取る
-// （`src/browser/domain/reveal-speed.ts`。利用者が歯車で選ぶ「書き上げる演出の速さ」）。ここは
-// 値を持たず、渡された物差しで計算するだけ（純粋な割り当てのまま）。
+// 塊1つぶんの時間を決める物差し（`RevealTiming`）は呼び出し側から受け取り、ここは値を持たない。
 //
 // トピックの中の要素は、見せ方が2種類ある:
 //
-// - 文字の要素（`text`）: `paint.ts` が `clip-path` で見せる範囲を進める
-// - 図・グラフの要素（`figure`）: 文字の位置が取れない・取っても意味が無いので `opacity` で
-//   出す（`docs/requirements.md` 4.3「文字を持たない図・グラフの塊は塊ごと出し」）。mermaid と
-//   Chart.js は非同期に描いたあとで中身が入れ替わるので、中身ではなく入れ物の class
-//   （`mermaid` / `chart-block`。`markdown/mermaid-block.tsx` / `markdown/chart-block.tsx` が付ける）
-//   で見分ける——描き終わる前でも後でも同じ判定になる
+// - 文字の要素（`text`）: `clip-path` で見せる範囲を進める
+// - 図・グラフの要素（`figure`）: 文字の位置が取れない・取っても意味が無いので `opacity` で出す。mermaid と Chart.js は非同期に描いたあとで中身が入れ替わるので、中身ではなく入れ物の class（`mermaid` / `chart-block`）で見分ける（描き終わる前でも後でも同じ判定になる）
 
 import { sumBy } from "remeda"
 
@@ -44,8 +35,8 @@ export type RevealBlock = {
 }
 
 /**
- * 図・グラフに与える重み（文字数に換算した値）。図は文字数を持たないので、文字と同じ
- * 物差しに載せるために決め打ちの重みを置く。段落1つぶんに相当させる。
+ * 図・グラフに与える重み（文字数に換算した値）。
+ * 図は文字数を持たないので、文字と同じ物差しに載せるために決め打ちの重みを置く。段落1つぶんに相当させる。
  */
 const FIGURE_WEIGHT = 100
 
@@ -55,9 +46,8 @@ const FIGURE_SELECTOR = ".mermaid, .mermaid-broken, .chart-block, canvas, svg, i
 const SECTION_BREAK_SELECTOR = ".report-section-break"
 
 /**
- * 根の直下の要素をトピックへまとめ、書く順（文書の順）に時間を割り当てる。1つぶんの時間は
- * そのトピックの大きさで決まる（レポート全体の長さに左右されない）。`timing` は利用者が
- * 選んだ「書き上げる演出の速さ」の物差し（`src/browser/domain/reveal-speed.ts`）。
+ * 根の直下の要素をトピックへまとめ、書く順（文書の順）に時間を割り当てる。
+ * 1つぶんの時間はそのトピックの大きさで決まる（レポート全体の長さに左右されない）。
  *
  * 塊の間に隙間は空けない（前の塊が終わった時刻が次の塊の始まり）。
  */
@@ -78,14 +68,10 @@ export function planReveal(root: Element, timing: RevealTiming): readonly Reveal
 }
 
 /**
- * 塊1つの中の進み具合（0〜1）。書き始めと書き終わりをゆっくり、途中を速くする
- * （3次のイーズインアウト。真ん中の速さは等速の3倍）。
+ * 塊1つの中の進み具合（0〜1）。書き始めと書き終わりをゆっくり、途中を速くする（3次のイーズインアウト。真ん中の速さは等速の3倍）。
  *
- * ミニ立ち絵が「そこで書いている」ように見えるのは筆が遅いところだけなので、出だしと締めで
- * 見せて、読み手が待つだけの真ん中を速く抜ける。塊の持ち時間は変えない
- * （`planReveal` が {@link RevealTiming} から決めたまま）ので、レポート全体の長さは前と同じ。
- *
- * 進み具合をどこの位置に直すかは `band.ts`（空間の話）。ここは時間の話だけを持つ。
+ * ミニ立ち絵が「そこで書いている」ように見えるのは筆が遅いところだけなので、出だしと締めで見せて、読み手が待つだけの真ん中を速く抜ける。
+ * 塊の持ち時間は変えないので、レポート全体の長さは変わらない。
  */
 export function blockProgress(block: RevealBlock, elapsedMs: number): number {
   const span = block.endMs - block.startMs
@@ -137,9 +123,9 @@ function memberWeight(member: RevealMember): number {
 }
 
 /**
- * `clip-path` で進めるか、`opacity` で出すか。入れ物の class で見分ける（mermaid は描き
- * 終わると `<svg>` に中身が入れ替わり、そこに文字（ラベル）が現れるので、文字の有無だけでは
- * 足りない）。文字を1つも持たない要素（画像だけの段落など）も `opacity` で出す。
+ * `clip-path` で進めるか、`opacity` で出すか。入れ物の class で見分ける。
+ * mermaid は描き終わると `<svg>` に中身が入れ替わり、そこに文字（ラベル）が現れるので、文字の有無だけでは足りない。
+ * 文字を1つも持たない要素（画像だけの段落など）も `opacity` で出す。
  */
 function blockKind(element: RevealElement): RevealBlockKind {
   if (element.matches(FIGURE_SELECTOR) || element.querySelector(FIGURE_SELECTOR) !== null) {

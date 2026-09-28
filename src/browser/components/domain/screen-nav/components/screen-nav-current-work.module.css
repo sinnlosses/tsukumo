@@ -1,12 +1,8 @@
-/* 帯のまん中の札「いまの作業」と、押すと開く依頼の手順の一覧（`screen-nav-current-work.tsx`）。
-   もとは screen-nav.module.css の一部だったが、この部品しか使わない class の塊なので隣へ分けた
-   （docs/design.md 6.6）。**広い画面で帯から消す規則と、狭い画面の「≡」の面の中で縦に積む規則**
-   （`.screen-nav > .screen-nav-work` / `.screen-nav-panel .screen-nav-work*`）は
-   `screen-nav.module.css` の @media が持つ（`screen-nav-current-work.tsx` がそちらの
-   ハッシュを自分の要素に重ねて渡す。docs/design.md 6.6）。 */
+/* 帯のまん中の札「いまの作業」と、押すと開く依頼の手順の一覧。
+   広い画面で帯から消す規則と、狭い画面の「≡」の面の中で縦に積む規則は `screen-nav.module.css` の @media が持つ。 */
 
-/* いまの作業の札（13.9「いまの作業」）。**5（3つの口）の右に置き、幅が足りないときに
-   最初に縮む**——モデル・許可モードは `margin-left: auto` で右端へ寄せるだけで縮めない。
+/* いまの作業の札。口の右に置き、幅が足りないときに最初に縮む。
+   モデル・許可モードは `margin-left: auto` で右端へ寄せるだけで縮めない。
    `position: relative` は一覧（.screen-nav-work-list）をこの札の真下に重ねるための基準。 */
 .screen-nav-work {
   position: relative;
@@ -15,12 +11,10 @@
   justify-content: center;
   min-width: 0;
 }
-/* **幅は帯の空きをつねに埋めつつ、最大 600px で頭打ちにする**（見本の値）。`width: 100%` は
-   残り幅より広い帯でも中身の幅にならず、要約（コマンドなど）が変わるたびに札そのものが
-   伸び縮みしてチカチカしないため。600px を超える空きは `.screen-nav-work` の
-   `justify-content: center` が中央へ寄せる。要約が無い状態（依頼待ちなど）でも幅は保つ。
-   `box-sizing: border-box` は padding・border のぶんが `.screen-nav-work` からはみ出さないため
-   （既定の content-box のままだと `width: 100%` で約24px あふれる）。 */
+/* 幅は帯の空きをつねに埋めつつ、最大 600px で頭打ちにする（見本の値）。
+   `width: 100%` にするのは、中身の幅にすると要約（コマンドなど）が変わるたびに札そのものが伸び縮みしてチカチカするため。
+   600px を超える空きは `.screen-nav-work` の `justify-content: center` が中央へ寄せる。
+   `box-sizing: border-box` は padding・border のぶんが `.screen-nav-work` からはみ出さないため（content-box のままだと約24px あふれる）。 */
 .screen-nav-work-toggle {
   display: flex;
   align-items: center;
@@ -35,15 +29,12 @@
   background: var(--surface-accent);
   color: var(--ink-quiet);
   font-size: var(--font-secondary);
-  /* `<button>` の既定の中央揃えを外す。残すと、幅を揃えた状態の語と残り幅いっぱいに伸びた
-     要約の字がそれぞれの箱の中央に寄り、仕切りから離れて浮く。 */
+  /* `<button>` の既定の中央揃えを外す。
+   残すと、幅を揃えた状態の語と残り幅いっぱいに伸びた要約の字がそれぞれの箱の中央に寄り、仕切りから離れて浮く。 */
   text-align: left;
   cursor: pointer;
 }
-/* 丸は 7px。周りの薄い輪は `currentColor` を20%だけ透かして重ねるだけなので、マークの色が
-   状態ごとに変わればそのまま輪の色も追従する（下の `data-work-state` の色分け）。答え待ち・
-   止まった・依頼待ちも含めて同じ作りで出す——輪は色分けの上に足す飾りであって新しい意味を
-   運ばないので、状態によって出したり消したりする理由が無い（13.1 原則5）。 */
+/* 丸は 7px。周りの薄い輪は `currentColor` を20%だけ透かして重ねるので、マークの色が状態ごとに変わればそのまま輪の色も追従する。 */
 .screen-nav-work-mark {
   display: inline-flex;
   flex: none;
@@ -54,9 +45,8 @@
   border-radius: 50%;
   box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 20%, transparent);
 }
-/* **いちばん長い状態語「止まっている」（6字）に幅を合わせる**——状態が変わるたびに区切り
-   （|）と要約の始まりの位置がずれるのを抑える。雑談中の呼びかけ（「<名前> とおしゃべり中」）は
-   名前の長さが決まらないのでここでは揃えない。 */
+/* いちばん長い状態語「止まっている」（6字）に幅を合わせ、状態が変わるたびに区切り（|）と要約の始まりの位置がずれるのを抑える。
+   雑談中の呼びかけ（「<名前> とおしゃべり中」）は名前の長さが決まらないので揃えない。 */
 .screen-nav-work-word {
   flex: none;
   min-width: 6em;
@@ -64,18 +54,15 @@
   font-weight: 700;
   white-space: nowrap;
 }
-/* 縦の仕切り（見本の値: 高さ14px・幅1px）。字の「|」では幅が1pxに揃わないので、中身の無い
-   要素の地で描く（飾りなので読み上げない。`aria-hidden`）。 */
+/* 縦の仕切り（見本の値: 高さ14px・幅1px）。字の「|」では幅が1pxに揃わないので、中身の無い要素の地で描く。 */
 .screen-nav-work-sep {
   flex: none;
   width: 1px;
   height: 14px;
   background: color-mix(in srgb, var(--rule), var(--accent) 25%);
 }
-/* 実行中の手順の要約だけを縮める（**要約の末尾が「…」になる**。13.9「帯の要素」）。
-   見本は12pxの等幅だが、13.3 の段は13pxの等幅（ID・ツール名・キー）までしか無い——段を
-   増やさない決定（13.3）に沿って新しい段は足さず、既存の13px（`.screen-nav-work-toggle` の
-   `font-size` を継ぐ）にそのまま宛てる。14pxの見本を13pxへ寄せた `dispatch-send` と同じ判断。 */
+/* 実行中の手順の要約だけを縮める（要約の末尾が「…」になる）。
+   見本は12pxの等幅だが、`docs/screen-design.md`「Type」の段を増やさず、既存の13px（`.screen-nav-work-toggle` の `font-size` を継ぐ）に宛てる。 */
 .screen-nav-work-summary {
   flex: 1 1 auto;
   min-width: 0;
@@ -84,7 +71,7 @@
   white-space: nowrap;
   font-family: var(--font-mono);
 }
-/* 状態の語ごとの色（13.9「いまの作業」の表。**色だけで伝えない**——語そのものが状態を言う）。 */
+/* 状態の語ごとの色。語そのものが状態を言うので、色だけで伝えてはいない。 */
 .screen-nav-work[data-work-state="stopped"] .screen-nav-work-mark,
 .screen-nav-work[data-work-state="stopped"] .screen-nav-work-word {
   color: var(--state-ng);
@@ -101,8 +88,8 @@
 .screen-nav-work[data-work-state="diary"] .screen-nav-work-mark {
   color: var(--accent);
 }
-/* 背景で作業中は、ターンが終わっていても動いていると分かるように印だけ差し色にする。枠は
-   作業中（ターンが走っている）だけのものにして、2つを見分けられるように残す（13.9「背景のタスク」）。 */
+/* 背景で作業中は、ターンが終わっていても動いていると分かるように印だけ差し色にする。
+   枠は作業中（ターンが走っている）だけのものにして、2つを見分けられるように残す。 */
 .screen-nav-work[data-work-state="background"] .screen-nav-work-mark {
   color: var(--accent);
 }
@@ -111,9 +98,8 @@
 .screen-nav-work[data-work-state="idle"] .screen-nav-work-word {
   color: var(--ink-quiet);
 }
-/* **雑談中の依頼待ちだけ**差し色にする（13.9「いまの作業」/ 13.7。字が「<名前> とおしゃべり中」に
-   変わるのと対にする——色だけで伝えない。13.1 原則5）。答え待ち・作業中・止まっているは
-   雑談中でも変えない（すでに意味を持つ色のため）。 */
+/* 雑談中の依頼待ちだけ差し色にする（字が「<名前> とおしゃべり中」に変わるのと対にする）。
+   答え待ち・作業中・止まっているは、すでに意味を持つ色なので雑談中でも変えない。 */
 .screen-nav-work[data-work-state="idle"][data-chat-idle="true"] .screen-nav-work-toggle {
   border-color: var(--accent);
 }
@@ -121,7 +107,7 @@
 .screen-nav-work[data-work-state="idle"][data-chat-idle="true"] .screen-nav-work-word {
   color: var(--accent);
 }
-/* 依頼の手順の一覧。**札の真下に重ねる**（下の領域を押し下げない。13.9）。
+/* 依頼の手順の一覧。札の真下に重ねる（下の領域を押し下げない）。
    幅の上限 36rem・高さの上限は画面の 70% で、超えたら内側でスクロールする。 */
 .screen-nav-work-list {
   position: absolute;
@@ -138,14 +124,11 @@
   background: var(--surface);
   font-size: var(--font-secondary);
 }
-/* 字の太さ・色（`Text`。weight="semibold" tone="inherit"）は `Text` が持つ。margin だけ残す
-   （ここを肩代わりする親からの要素選択子が無いため）。 */
+/* 字の太さ・色は `Text` が持つ。margin だけ残す。 */
 .screen-nav-work-heading {
   margin: 0 0 0.4rem;
 }
-/* 答え待ちが質問のときだけ出す「質問へ」（13.9「いまの作業」）。`.screen-nav-work-toggle-all` と
-   同じ見た目（枠の無い、差し色の文字だけの押せる字）——どちらも `<Button variant="link">` が
-   顔を持つ。箱だけ（置き方・margin）。 */
+/* 答え待ちが質問のときだけ出す「質問へ」。顔は `<Button variant="link">` が持ち、ここは箱だけ（置き方・margin）。 */
 .screen-nav-work-go-to-question {
   display: block;
   margin: 0 0 0.5rem;
@@ -153,7 +136,7 @@
 .screen-nav-work-full {
   margin: 0 0 0.5rem;
 }
-/* 色（`Text`。tone="ink-quiet"）は `Text` が持つ。margin だけ残す。 */
+/* 色は `Text` が持つ。margin だけ残す。 */
 .screen-nav-work-full-heading {
   margin: 0 0 0.2rem;
 }
@@ -169,8 +152,7 @@
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
-/* 背景で動いているもの（13.9「背景のタスク」）。見出しと行の形は依頼の手順に揃える。
-   色（`Text`。tone="ink-quiet"）は `Text` が持つ。margin だけ残す。 */
+/* 背景で動いているもの。見出しと行の形は依頼の手順に揃える。色は `Text` が持つ。 */
 .screen-nav-work-background-heading {
   margin: 0.4rem 0 0.2rem;
 }
@@ -189,7 +171,7 @@
 .screen-nav-work-background-task .screen-nav-work-step-mark {
   animation: screen-nav-work-spin 1s linear infinite;
 }
-/* 色（`Text`。tone="ink-quiet"）は `Text` が持つ。margin だけ残す。 */
+/* 色は `Text` が持つ。margin だけ残す。 */
 .screen-nav-work-steps-heading {
   margin: 0.4rem 0 0.2rem;
 }
@@ -202,11 +184,11 @@
   list-style: none;
   font-family: var(--font-mono);
 }
-/* サブエージェントの中は1段下げる（もと `sidebar/activity.tsx` の `.activity-nested`）。 */
+/* サブエージェントの中は1段下げる。 */
 .screen-nav-work-step-nested {
   margin-left: 1rem;
 }
-/* 済みは薄く、実行中は普通の濃さ（いまのサイドバーと同じ。13.9「依頼の手順の一覧」）。 */
+/* 済みは薄く、実行中は普通の濃さ。 */
 .screen-nav-work-step-done {
   color: var(--ink-quiet);
 }
@@ -216,7 +198,7 @@
 .screen-nav-work-step-mark {
   display: inline-block;
 }
-/* 実行中の印だけ回す（`prefers-reduced-motion: reduce` では止める。13.9）。 */
+/* 実行中の印だけ回す（`prefers-reduced-motion: reduce` では `theme.css` の全体の規則が止める）。 */
 .screen-nav-work-step-running .screen-nav-work-step-mark {
   animation: screen-nav-work-spin 1s linear infinite;
 }
@@ -228,17 +210,14 @@
     transform: rotate(360deg);
   }
 }
-/* 空のとき（`Text`。tone="ink-quiet"。margin: 0 は既定と同じなのでここには残さない）。
-   顔は `<Button variant="link">` が持つ。箱だけ（margin）。 */
+/* 手順の一覧を畳む・広げる口。顔は `<Button variant="link">` が持ち、ここは箱だけ（margin）。 */
 .screen-nav-work-toggle-all {
   margin-top: 0.4rem;
 }
-/* 失敗した手順の中身（もと `sidebar/activity.tsx` の `.activity-failure*`）。印は文字
-   （「失敗」）で、色はその補助（13.1 原則5）。 */
+/* 失敗した手順の中身。印は文字（「失敗」）で、色はその補助。 */
 .screen-nav-work-failure > summary {
   cursor: pointer;
 }
-/* 「失敗」の印（`Text`。tone="state-ng" weight="semibold"）。 */
 .screen-nav-work-failure-output {
   border: 1px solid var(--state-ng);
 }

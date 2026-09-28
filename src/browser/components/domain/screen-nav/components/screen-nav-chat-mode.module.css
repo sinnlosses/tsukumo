@@ -1,14 +1,9 @@
-/* 帯の仕事 / 雑談のトグル（`screen-nav-chat-mode.tsx`）。もとは screen-nav.module.css の一部
-   だったが、この部品しか使わない class の塊なので隣へ分けた（docs/design.md 6.6）。**広い画面で
-   帯から消す規則**（`.screen-nav > .screen-nav-chat-mode`）は `screen-nav.module.css` の @media が
-   持つ（`screen-nav-chat-mode.tsx` がそちらのハッシュを自分の要素に重ねて渡す。docs/design.md
-   6.6）。狭い画面の「≡」の面の中では、専用の見た目の上書きが無く広い画面と同じ見た目のまま出る。 */
+/* 帯の仕事 / 雑談のトグル。
+   狭い画面で帯から消す規則（`.screen-nav > .screen-nav-chat-mode`）は `screen-nav.module.css` の @media が持つ。 */
 
-/* 仕事 / 雑談のトグル（13.9「動き方の操作子」）。**2つの `<button>` を1つの枠に並べる**。
-   外枠は帯の地（`color-mix(ground, surface 50%)`）より暗い `--ground` を敷き、4px の余白で
-   ボタンを枠から浮かせる。外寸は 4px + 30px + 4px + 枠2px = 40px で、帯の地 52px
-   （`--screen-nav-height`）の上下に 6px ずつ空く。見本（ボタン 36px・余白 3px）は帯の地 60px に
-   合わせた値で、52px の帯にそのまま載せると上下が 4px しか空かず詰まって見える。 */
+/* 外枠は帯の地より暗い `--ground` を敷き、4px の余白でボタンを枠から浮かせる。
+   外寸は 4px + 30px + 4px + 枠2px = 40px で、帯の地（`--screen-nav-height`）の上下に 6px ずつ空く。
+   見本（ボタン 36px・余白 3px）は帯の地 60px に合わせた値で、52px の帯にそのまま載せると上下が 4px しか空かず詰まって見える。 */
 .screen-nav-chat-mode {
   display: flex;
   flex: none;
@@ -18,12 +13,7 @@
   border-radius: 11px;
   background: var(--ground);
 }
-/* 箱だけ（高さ・余白・角丸・並べ方）。顔（地・字の色・hover・押されたとき・押せないとき）は
-   `<Button variant="ghost">` が持つ——押されたときの地 accent・字 ground・太さ700
-   （**字に `--ground` を使うのは `dispatch-send`〔送信ボタン〕と同じ組み合わせ**——地の色は
-   使う人が差すもので、パックの `accent` は歯車で変わっても淡い色に寄るぶん、暗い `--ground` の
-   字なら濃さが保たれる）も、押せないとき（`aria-disabled` で伝える。13.9「動き方の操作子」。
-   `disabled` だとフォーカスも理由の title も届かなくなる）も、`button.module.css` に写した。 */
+/* 箱だけ（高さ・余白・角丸・並べ方）。顔は `<Button variant="ghost">` が持つ。 */
 .screen-nav-chat-mode-button {
   display: flex;
   align-items: center;

@@ -1,12 +1,7 @@
-// 字の段・色・太さだけを表す variant 部品（`docs/design.md` 2章「`components/ui/` の部品
-// （variant の作法と一覧）」）。持つのは文字の見た目だけ——文字の組み（1行で切る・字間・
-// 桁揃え・書体）と margin は呼び出し側が `className` で渡す（同節「呼び出し側からの上書き
-// （className）」）。
+// 字の段・色・太さだけを表す variant 部品。
+// 文字の組み（1行で切る・字間・桁揃え・書体）と margin は呼び出し側が `className` で渡す。
 //
-// 見出しの部品（`Heading`）とこの対応表を共有する（同節「Text と Heading の境目」:
-// 見出しの意味〔level〕と見た目〔size〕は別の props で、対応表は `ui/text/` に1つだけ置く）。
-// `Heading` はこのファイルの `TEXT_SIZE_CLASS` / `TEXT_TONE_CLASS` / `TEXT_WEIGHT_CLASS` を
-// そのまま import する。
+// 対応表は `Heading` と共有し、ここに1つだけ置く（`Heading` は `TEXT_SIZE_CLASS` / `TEXT_TONE_CLASS` / `TEXT_WEIGHT_CLASS` をそのまま import する）。
 
 import clsx from "clsx"
 import type { ReactElement, ReactNode } from "react"

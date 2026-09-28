@@ -1,15 +1,12 @@
-// 答え待ちの質問に対する答えの組み立て。質問の札はメインビューに出て、自由入力は入力欄が担うので、
-// 1つの状態を2つの領域が読み書きする。
+// 答え待ちの質問に対する答えの組み立て。
+// 質問の札はメインビューに出て、自由入力は入力欄が担うので、1つの状態を2つの領域が読み書きする。
 //
-// store が持つのは組み立て中の答えだけ（何問目を見ているか・質問ごとに選んだラベル・
-// 入力欄に書いて記録した答え）。質問そのものは `SessionState` から来るので、それを読んで
-// 画面に出す形へ畳むのは `useQuestionAnswer`。
+// store が持つのは組み立て中の答えだけ（何問目を見ているか・質問ごとに選んだラベル・入力欄に書いて記録した答え）。
+// 質問そのものは `SessionState` から来るので、それを読んで画面に出す形へ畳むのは `useQuestionAnswer`。
 //
-// `answer.labels[i]` は `questions[i]` に対して選んだ答えの並び（`PendingAsk` の
-// 契約）。複数選択で2つ以上選んだときはそのまま複数の要素として送り、入力欄に書いた文字列は
-// 同じ並びの末尾に足す。1つの文字列に畳むのはここではない（SDK が求める
-// 「質問1件に対して1つの文字列」へ畳むのはサーバの役目。ここで畳むと、
-// メインビューに残す記録の側で選択肢と突き合わせられなくなる）。
+// `answer.labels[i]` は `questions[i]` に対して選んだ答えの並び（`PendingAsk` の契約）。
+// 複数選択で2つ以上選んだときはそのまま複数の要素として送り、入力欄に書いた文字列は同じ並びの末尾に足す。
+// SDK が求める「質問1件に対して1つの文字列」へ畳むのはサーバの役目で、ここで畳むとメインビューに残す記録の側で選択肢と突き合わせられなくなる。
 
 import { create } from "zustand"
 
@@ -22,8 +19,8 @@ import {
 import { useSession, type SessionDispatch } from "./session.ts"
 
 /**
- * 選択肢1つぶんの札。`label` は SDK へ返す元のラベルで、`text` は画面に出す字
- * （末尾の `(Recommended)` を外したもの。外した印は {@link QuestionOptionRow.recommended}）。
+ * 選択肢1つぶんの札。`label` は SDK へ返す元のラベルで、`text` は画面に出す字。
+ * `text` は末尾の `(Recommended)` を外したもので、外した印は {@link QuestionOptionRow.recommended}。
  */
 export type QuestionOptionRow = {
   readonly label: string
@@ -87,9 +84,8 @@ export type QuestionDraftState = {
 export const useQuestionDraft = create<QuestionDraftState>()(() => ({ draft: undefined }))
 
 /**
- * 組み立て中の答え。質問ごとに持ち続ける（「戻る」で前の質問に戻ったとき、選んだものが
- * 残っているように）。`selections[i]` / `writtenAnswers[i]` は `questions[i]` に対応し、
- * まだ触っていない問の位置は空のまま（読む側が `?? []` / `?? ""` で受ける）。
+ * 組み立て中の答え。質問ごとに持ち続ける（「戻る」で前の質問に戻ったとき、選んだものが残っているように）。
+ * `selections[i]` / `writtenAnswers[i]` は `questions[i]` に対応し、まだ触っていない問の位置は空のまま（読む側が `?? []` / `?? ""` で受ける）。
  */
 type DraftAnswer = {
   readonly index: number
@@ -160,8 +156,8 @@ function askingModel(
     writtenAnswer,
     canAnswer: selected.length > 0 || writtenAnswer !== "",
     onToggle: (label) => {
-      // 単一選択は選び直しで置き換え、複数選択は押すたびに入り切りする。どちらも
-      // 選んだ時点で送らない（送るのは「これで答える」と入力欄の「答える」だけ）。
+      // 単一選択は選び直しで置き換え、複数選択は押すたびに入り切りする。
+      // どちらも選んだ時点で送らない（送るのは「これで答える」と入力欄の「答える」だけ）。
       const next = question.multiSelect
         ? selected.includes(label)
           ? selected.filter((candidate) => candidate !== label)
@@ -170,7 +166,7 @@ function askingModel(
       draft.setAnswer({
         index,
         selections: replaced(draft.answer.selections, index, next, []),
-        // 選択肢を選び直したら、入力欄に書いて記録した答えは捨てる（単一選択の排他と同じ）。
+        // 選択肢を選び直したら、入力欄に書いて記録した答えは捨てる。
         writtenAnswers: question.multiSelect
           ? draft.answer.writtenAnswers
           : replaced(draft.answer.writtenAnswers, index, "", ""),
@@ -201,8 +197,8 @@ function answerFor(answer: DraftAnswer, target: number): readonly string[] {
 }
 
 /**
- * 並びの `target` 番目だけ差し替える。まだ届いていない位置は `filler` で埋める
- * （質問ごとの答えは触った問だけ入るので、後ろの問から先に触られることがある）。
+ * 並びの `target` 番目だけ差し替える。まだ届いていない位置は `filler` で埋める。
+ * 質問ごとの答えは触った問だけ入るので、後ろの問から先に触られることがある。
  */
 function replaced<T>(values: readonly T[], target: number, value: T, filler: T): readonly T[] {
   const length = Math.max(values.length, target + 1)
@@ -212,9 +208,8 @@ function replaced<T>(values: readonly T[], target: number, value: T, filler: T):
 /**
  * 選択肢を札の行へ畳む。並びはラベルの辞書順（`sortQuestionOptions`）。
  *
- * 自由入力（「その他」）の選択肢は札に出さない（自由入力は入力欄が担うので、押しても
- * 意味のない札になる）。`sortQuestionOptions` は今までどおり通すので、モデルが
- * 「その他」を含めてきたかどうかで残りの並びは変わらない。
+ * 自由入力（「その他」）の選択肢は札に出さない（自由入力は入力欄が担うので、押しても意味のない札になる）。
+ * `sortQuestionOptions` はそれでも通すので、モデルが「その他」を含めてきたかどうかで残りの並びは変わらない。
  */
 function optionRows(question: Question, selected: readonly string[]): readonly QuestionOptionRow[] {
   return sortQuestionOptions(question.options)
@@ -230,7 +225,7 @@ function optionRows(question: Question, selected: readonly string[]): readonly Q
 }
 
 /**
- * ラベル末尾の「おすすめ」の印（`AskUserQuestion` のモデルが自分で書く）。字からは外して
- * バッジにするが、SDK へ返す答えは元のラベルのまま（`QuestionOptionRow.label`）。
+ * ラベル末尾の「おすすめ」の印（`AskUserQuestion` のモデルが自分で書く）。
+ * 字からは外してバッジにするが、SDK へ返す答えは元のラベルのまま（`QuestionOptionRow.label`）。
  */
 const RECOMMENDED_SUFFIX = /\s*\(Recommended\)\s*$/i

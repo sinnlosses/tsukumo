@@ -1,17 +1,12 @@
-// サーバの WebSocket（`/ws?t=<token>`）へつなぎ、届いたフレームを封筒だけ検証してから渡す
-// （docs/design.md 6.1 / 6.2「接続・再接続・フレームの zod 検証」）。core を import しない
-// （原則2/3。`browser` が触れる契約は `shared` だけ）。`/ws` の経路名・トークンのクエリ名の値は
-// `shared/view-server/session-socket.ts` が正典で、`adapter/session-socket.ts` と両方から import する（値の再掲は
-// しない）。経路とクエリは呼ぶ側から受け取り、ここは `ws:` / `wss:` とホストの組み立てだけを持つ。
+// サーバの WebSocket（`/ws?t=<token>`）へつなぎ、届いたフレームを封筒だけ検証してから渡す。
+// 経路とクエリは呼ぶ側から受け取り、ここは `ws:` / `wss:` とホストの組み立てだけを持つ。
 //
-// 接続が切れたら、間隔を指数的に伸ばしながら再接続する。読めないフレームは黙って捨てて
-// 次のフレームを待つ（`docs/coding-standards.md`「常駐プロセスは描画1回の失敗で落ちない」と
-// 同じ考え方をブラウザ側でも取る）。
+// 接続が切れたら、間隔を指数的に伸ばしながら再接続する。読めないフレームは黙って捨てて次のフレームを待つ。
 //
-// 1本の接続の上は、すべて oRPC の手続き（`src/server/view-server/adapter/session-socket.ts`）。
+// 1本の接続の上は、すべて oRPC の手続き。
 // 押し出しも、接続ごとに1回呼ぶ購読の手続き `frame.subscribe` の Event Iterator として届く。
-// 購読が終わったら（投げても）接続を閉じて繋ぎ直す——つなぎ直した購読の最初の `hello` で
-// 状態を置き換えるので、途中の取りこぼしを気にしない（docs/design.md 3章「再接続」）。
+// 購読が終わったら（投げても）接続を閉じて繋ぎ直す。
+// つなぎ直した購読の最初の `hello` で状態を置き換えるので、途中の取りこぼしを気にしない。
 
 import { type ClientContext, type ClientLink, createORPCClient } from "@orpc/client"
 import { RPCLink } from "@orpc/client/websocket"
@@ -25,16 +20,15 @@ const RECONNECT_MAX_DELAY_MS = 8000
 
 export type ConnectionStatus = "connecting" | "open" | "closed"
 
-/** コマンドの手続きを送る口（oRPC の link。型付きの client は `stores/session.ts` が作る）。 */
+/** コマンドの手続きを送る口（oRPC の link）。 */
 export type CommandLink = ClientLink<ClientContext>
 
 export type SessionSocket = {
   /**
-   * コマンドの手続きを送る口。繋ぎ直しても同じもので、その時点の接続へ送る。接続していない
-   * 間は送らずに捨てる（呼び出し側は状態を見て判断する）。
+   * コマンドの手続きを送る口。繋ぎ直しても同じもので、その時点の接続へ送る。
+   * 接続していない間は送らずに捨てる（呼び出し側は状態を見て判断する）。
    */
   readonly commandLink: CommandLink
-  /** 再接続をやめて閉じる。 */
   readonly close: () => void
 }
 
@@ -107,8 +101,8 @@ function socketUrl(path: string): string {
 }
 
 /**
- * 接続の上で `frame.subscribe` を購読し、読めたフレームを渡し続ける。購読が終わるか投げたら
- * 戻る（接続が切れた・サーバが購読を閉じた）。読めないフレームはその1つだけ捨てる。
+ * 接続の上で `frame.subscribe` を購読し、読めたフレームを渡し続ける。
+ * 購読が終わるか投げたら戻る（接続が切れた・サーバが購読を閉じた）。読めないフレームはその1つだけ捨てる。
  */
 async function receiveFrames(
   link: CommandLink,

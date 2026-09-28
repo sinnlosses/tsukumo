@@ -1,14 +1,10 @@
-/* ボタンの顔（枠・地・字の色と hover・focus-visible・押せないとき・押されたとき）の対応表
-   （`button.tsx`。`docs/design.md` 2章「`components/ui/` の部品（variant の作法と一覧）」）。
-   **箱（高さ・余白・角丸）はここに持たない**——呼び出し側が `className` で渡す。
-   focus-visible は `theme.css` の `:focus-visible { outline: 2px solid var(--accent); … }` に
-   任せる（部品固有の輪は持たない）。 */
+/* ボタンの顔の対応表。箱（高さ・余白・角丸）はここに持たず、呼び出し側が `className` で渡す。
+   focus-visible は `theme.css` の `:focus-visible` に任せる（部品固有の輪は持たない）。 */
 
 .button {
   cursor: pointer;
 }
-/* 押せないときの既定（押されても `onClick` を呼ばない側の見た目。`button.tsx`）。
-   `link` はここを打ち消して字の色だけで伝える（下の `.button-variant-link[aria-disabled="true"]`）。 */
+/* 押せないときの既定。`link` はここを打ち消して字の色だけで伝える（下の `.button-variant-link[aria-disabled="true"]`）。 */
 .button[aria-disabled="true"] {
   cursor: default;
   opacity: 0.6;

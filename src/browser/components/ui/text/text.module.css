@@ -1,7 +1,6 @@
-/* 字の段・色・太さの対応表（`text.tsx`）。値の名前はトークン名そのまま
-   （`docs/design.md` 2章「`components/ui/` の部品（variant の作法と一覧）」「variant の表し方」）。 */
+/* 字の段・色・太さの対応表。値の名前はトークン名そのまま。 */
 
-/* 既定の margin: 0。**呼び出し側の class（margin を持つもの）が常に勝つ**よう :where() に書く。 */
+/* 既定の margin: 0。呼び出し側の class（margin を持つもの）が常に勝つよう :where() に書く。 */
 :where(.text) {
   margin: 0;
 }

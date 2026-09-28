@@ -1,21 +1,14 @@
-/* 帯の右端の歯車と、押すと開く設定のポップオーバー（`screen-nav-settings.tsx`）。もとは
-   screen-nav.module.css の一部だったが、この部品しか使わない class の塊なので隣へ分けた
-   （docs/design.md 6.6）。**広い画面で帯から消す規則と、狭い画面の「≡」の面の中で縦に積む規則**
-   （`.screen-nav > .screen-nav-settings` / `.screen-nav-panel .screen-nav-settings*`）は
-   `screen-nav.module.css` の @media が持つ（`screen-nav-settings.tsx` がそちらの
-   ハッシュを自分の要素に重ねて渡す。docs/design.md 6.6）。 */
+/* 帯の右端の歯車と、押すと開く設定のポップオーバー。
+   広い画面で帯から消す規則と、狭い画面の「≡」の面の中で縦に積む規則は `screen-nav.module.css` の @media が持つ。 */
 
-/* 設定の歯車（13.9「設定の歯車」）。**帯のいちばん右端**で、モデル・許可モードの右に付く
-   （`.screen-nav-model-permission` の `margin-left: auto` が左側を押し切ったあとの並び）。
-   `position: relative` はポップオーバー（.screen-nav-settings-panel）を歯車の真下に重ねる
-   ための基準。 */
+/* 設定の歯車。帯のいちばん右端で、モデル・許可モードの右に付く。
+   `position: relative` はポップオーバー（.screen-nav-settings-panel）を歯車の真下に重ねるための基準。 */
 .screen-nav-settings {
   position: relative;
   display: flex;
   flex: none;
 }
-/* 見本どおり枠も地も無い 36px の四角に線画の歯車だけを置く（lucide の `Settings`）。開いているときは
-   字の濃さに加えて地も敷く（色だけで伝えない。13.1 原則1）。 */
+/* 枠も地も無い 36px の四角に線画の歯車だけを置く。開いているときは字の濃さに加えて地も敷く（色だけで伝えない）。 */
 .screen-nav-settings-toggle {
   display: flex;
   align-items: center;
@@ -36,8 +29,7 @@
   background: var(--surface-raised);
   color: var(--ink);
 }
-/* ポップオーバー。**歯車の真下に、右端を揃えて重ねる**（下の領域を押し下げない。
-   「いまの作業」の一覧と同じ作り）。 */
+/* ポップオーバー。歯車の真下に、右端を揃えて重ねる（下の領域を押し下げない）。 */
 .screen-nav-settings-panel {
   position: absolute;
   top: calc(100% + 0.3rem);
@@ -54,29 +46,25 @@
   background: var(--surface);
   font-size: var(--font-secondary);
 }
-/* 群の区切りの見出し（モックの小さな字）。**後続の群（新しいセッションの既定・書き上げる
-   演出の速さ）も同じ見出しで足す**ので、2つ目からは上に余白を置く。字の大きさ・色
-   （`Text`。size="label" tone="ink-quiet"）は `Text` が持つ。margin だけ残す。 */
+/* 群の区切りの見出し。2つ目からは上に余白を置く。字の大きさ・色は `Text` が持つ。 */
 .screen-nav-settings-heading {
   margin: 0 0 0.4rem;
 }
 .screen-nav-settings-heading ~ .screen-nav-settings-heading {
   margin-top: 0.8rem;
 }
-/* ラベルと操作子の2列（モックの形）。並べ・間隔（`gap="lg"`）・揃えは `HStack` が持つ。 */
+/* ラベルと操作子の2列。並べ・間隔・揃えは `HStack` が持つ。 */
 .screen-nav-settings-row {
   min-height: 1.9rem;
 }
-/* 色を受け取らなかった理由の1行（`use-settings.ts` の `colorNotice`）。**面の幅を押し広げない**
-   ように、幅は行の並びに任せて折り返す。 */
+/* 色を受け取らなかった理由の1行。面の幅を押し広げないように、幅は行の並びに任せて折り返す。 */
 .screen-nav-settings-notice {
   width: 0;
   min-width: 100%;
   margin: 0.2rem 0 0;
 }
-/* 設定パネルの `<select>`（新しいセッションの既定・演出の速さ）。**帯のドロップダウンと同じ
-   見た目**にして、同じ値を選ぶ操作だと分かるようにする（違いは見出しと寿命だけ）。字が一段
-   小さいぶん、矢印も小さくして内側へ寄せる（枠と矢印は `components/ui/select/select.module.css`）。 */
+/* 設定パネルの `<select>`。帯のドロップダウンと同じ見た目にして、同じ値を選ぶ操作だと分かるようにする。
+   字が一段小さいぶん、矢印も小さくして内側へ寄せる（枠と矢印は `select.module.css`）。 */
 .screen-nav-settings-select-frame {
   --select-chevron-inset: 0.3rem;
   --select-chevron-size: 10px;
@@ -91,8 +79,7 @@
   color: inherit;
   font-size: var(--font-label);
 }
-/* 箱だけ（置き方）。顔（上書きが1つも無いときの押せない見た目も含む）は
-   `<Button variant="link">` が持つ。 */
+/* 箱だけ（置き方）。顔は `<Button variant="link">` が持つ。 */
 .screen-nav-settings-reset {
   margin-left: auto;
 }

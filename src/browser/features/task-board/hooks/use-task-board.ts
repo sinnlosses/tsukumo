@@ -1,13 +1,6 @@
-// `<TaskBoard>` のロジック。表を開いているかどうかは呼び出し側（サイドバーの区画）の state
-// で、ここはそれをそのまま `<Dialog open={...}>` へ渡す形に畳むのと、一覧を表の行へ畳むのを持つ
-// （docs/design.md 2章「機能の中を分ける」）。
-//
-// `<dialog>` の開閉・Esc・backdrop のクリックは `components/ui/dialog/dialog.tsx` が持つので、
-// ここは呼ばない。この機能に固有のもの（行への畳み方）だけを足す。
-//
-// 行への畳み方（`boardRows`）もこのファイルに同居させる。 呼ぶのはこのフック1つで、
-// `components/` は畳んだ `BoardRow` を受け取るだけ。
-// CSS の class 名はここでは決めない（`domain/task-status.ts` と各部品の持ち物）。
+// `<TaskBoard>` のロジック。
+// 表を開いているかどうかは呼び出し側の state で、ここはそれをそのまま `<Dialog open={...}>` へ渡す形に畳むのと、一覧を表の行へ畳むのを持つ。
+// CSS の class 名はここでは決めない。
 
 import {
   taskReadiness,
@@ -21,7 +14,6 @@ export type TaskBoardView = {
   readonly rows: readonly BoardRow[] | undefined
 }
 
-/** `open` をそのまま `<Dialog>` へ渡す形にし、畳んだ行を返す。 */
 export function useTaskBoard(tasks: TaskSummaryResult, open: boolean): TaskBoardView {
   return { open, rows: boardRows(tasks) }
 }
@@ -46,11 +38,9 @@ export type BoardRow = {
 }
 
 /**
- * 一覧を表の行へ畳む。読めていないときは `undefined` のまま返す（「読めない」と「0件」は
- * 出す文言が違うので、ここでは畳まない）。
+ * 一覧を表の行へ畳む。読めていないときは `undefined` のまま返す（「読めない」と「0件」は出す文言が違うので、ここでは畳まない）。
  *
- * 「まだ done でないタスクのID」は一覧全体から1回だけ作り、行ごとの `taskReadiness` へ
- * 使い回す（`src/shared/repository/task-summary.ts` 参照。以前は行ごとに作り直していた）。
+ * 「まだ done でないタスクのID」は一覧全体から1回だけ作り、行ごとの `taskReadiness` へ使い回す。
  */
 export function boardRows(tasks: TaskSummaryResult): readonly BoardRow[] | undefined {
   if (tasks.kind === "unknown") {
@@ -80,8 +70,8 @@ function statusTextOf(status: string | undefined, assignee: string | undefined):
 
 /**
  * `loopable`。`N` は空欄にし、`Y` だけ文字を出す。
- * 全行に文字が並ぶと、自動進行に載る `Y` が埋もれるため。消すのは `N` だけで、値が無いときは
- * 他の列と同じ「—」、想定外の値はそのまま出す（読み手が気づけるようにする）。
+ * 全行に文字が並ぶと、自動進行に載る `Y` が埋もれるため。
+ * 消すのは `N` だけで、値が無いときは他の列と同じ「—」、想定外の値はそのまま出す（読み手が気づけるようにする）。
  */
 function loopableMark(loopable: string | undefined): string {
   if (loopable === undefined) {

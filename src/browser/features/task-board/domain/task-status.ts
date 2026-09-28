@@ -1,6 +1,4 @@
-// status（`todo` / `doing` / `done`）を色に対応させる1つだけの仕事。区画の一覧
-// （`task-list.tsx`）と表の行（`components/task-row.tsx`）の両方が読むので、どちらの部品にも
-// 属さない場所に置く（機能の語彙の純関数は `domain/`。docs/design.md 2章）。
+// status（`todo` / `doing` / `done`）を色に対応させる。
 
 import styles from "../task-board.module.css"
 

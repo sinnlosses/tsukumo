@@ -1,4 +1,4 @@
-// 帯の左端の部屋の名前と、いまのセッションの短縮IDの札（`docs/screen-design.md`「セッションの札」）。
+// 帯の左端の部屋の名前と、いまのセッションの短縮IDの札。
 // 「浅葱の間 - FA」のうち短縮IDだけがボタンで、押すと切り替え画面が開く（プルダウンにはしない）。
 // ボタンへのホバーかフォーカスで、いまのセッションの一行（ID・始まった時刻・依頼の数・「押して切り替え」）を下に出す。
 //
@@ -31,8 +31,7 @@ export function ScreenNavSessionTag(props: ScreenNavSessionTagProps): ReactEleme
   const { tag } = props
   const [peeking, setPeeking] = useState(false)
 
-  // `shellStyles["screen-nav-session-tag"]` は見た目を持たない（「≡」の面の中の見た目の打ち消し
-  // `.screen-nav-panel .screen-nav-session-tag` のためだけの参照）。
+  // `shellStyles` の class は見た目を持たず、`screen-nav.module.css` の `@media` の選択子を当てるためだけに重ねる。
   return (
     <span
       className={clsx(styles["screen-nav-session-tag"], shellStyles["screen-nav-session-tag"])}
@@ -96,7 +95,7 @@ function SessionTagTooltip(props: SessionTagTooltipProps): ReactElement {
   )
 }
 
-/** 読み上げの名前。部屋の名前は見える字で読めるので、名前には入れない（見本の `aria-label` と同じ）。 */
+/** 読み上げの名前。部屋の名前は見える字で読めるので、名前には入れない。 */
 function accessibleName(identity: ScreenNavSessionIdentity): string {
   const session = identity.kind === "known" ? `セッション ${identity.shortId}` : UNKNOWN_SESSION
   return `${session}。押すとセッションを切り替える画面を開く`
