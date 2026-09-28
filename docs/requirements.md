@@ -956,8 +956,8 @@ API 側で決まっている**。
 - 外れるのは旧形式の `doing` にするだけのコミット・アーカイブのコミット・`progress.md` の並びを
   直すだけのコミット・新形式の `hold` ↔ `todo` の1語を直すコミット。**仕事と一緒に `done` を
   書いた完了のコミットは数える**（帳面の外のファイルも触っているため）
-- タスクの登録（`develop/direction.md` と `docs/history/direction.md` も触る）と振り返り
-  （`develop/retrospective.md`）は数える。方針を決めて書いたことも仕事のうちとする
+- タスクの登録（`develop/direction.md` と `docs/history/direction.md` も触る）は数える。
+  方針を決めて書いたことも仕事のうちとする
 - **merge commit を外す**のは、旧形式の `git merge main` による取り込みがどの作業ツリーでも
   繰り返し起こり、1日に数十件になるため（取り込んだ先のコミットはそれぞれ1回ずつ数えている）。
   新形式では取り込みが `git rebase main` に変わり、merge commit 自体が出なくなる
