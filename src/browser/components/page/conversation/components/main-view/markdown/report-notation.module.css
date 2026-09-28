@@ -68,6 +68,7 @@
   border: 1px solid currentColor;
   border-radius: 999px;
   font-size: var(--font-secondary);
+  white-space: nowrap;
 }
 .detail-block .report-badge-ok {
   color: var(--state-ok);
