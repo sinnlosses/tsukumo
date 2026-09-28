@@ -1,4 +1,4 @@
-// 雑談の要約の写し。ファイルに触るのはここだけ。
+// あらすじ（雑談と仕事で1つ）の写し。ファイルに触るのはここだけ。
 // 置き場は `~/.tsukumo/chat-summary/<パック名>.md` で、パックごとに1ファイル、`cwd` には依存させない。
 // 書き出してよい範囲は `docs/coding-standards.md`「会話内容の扱い」の例外の表が決めている。
 //
@@ -57,7 +57,11 @@ export function createChatSummary(packName: string, root: string = chatSummaryDi
   const path = join(root, `${packName}.md`)
   return {
     read: () => readRecord(path),
-    write: (summary) => writeRecord(path, { summary: truncatedSummary(summary), delivered: true }),
+    write: (summary) =>
+      writeRecord(path, {
+        summary: truncatedSummary(summary),
+        delivered: readRecord(path)?.delivered ?? false,
+      }),
     markUndelivered: () => rewriteMark(path, false),
     markDelivered: () => rewriteMark(path, true),
   }

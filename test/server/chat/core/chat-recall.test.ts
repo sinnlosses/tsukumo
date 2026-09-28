@@ -11,6 +11,7 @@ import { NOOP_CHAT_ARCHIVE } from "../../../fixture/chat.ts"
 
 const BUDGET: ChatMemoryBudget = {
   recentBytes: 1024,
+  workRecentBytes: 1024,
   synopsisBytes: 1024,
   recallListBytes: 64,
   recallListsPerTurn: 2,
@@ -27,7 +28,9 @@ const FOUND_LIST: ChatEpisodeRecallListResult = {
 
 const FOUND_EPISODE: ChatEpisodeReadResult = {
   kind: "found",
-  entries: [{ speaker: "user", text: "架空のやり取り", date: "2026-09-25" }],
+  entries: [
+    { kind: "request", origin: { mode: "chat" }, text: "架空のやり取り", date: "2026-09-25" },
+  ],
   overflowed: false,
 }
 

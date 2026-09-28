@@ -1,6 +1,7 @@
 // 定着を1回走らせて書く口。
 // 未定着の行を数え、契機に届いていれば使い捨ての `query()` に畳ませ、検査を通ったものをエピソード → あらすじの順で書く。
-// ここは1回ぶんだけを持ち、同時に1本に絞るのは呼び出し側。
+// ここは1回ぶんだけを持つ。
+// プロセスをまたいで1本に絞るのはアーカイブの錠で、プロセスの中で1本に絞るのは呼び出し側。
 //
 // 書く口は決して reject しない（起こせない・中断・時間切れ・形の崩れはどれも `failed`）。
 // 行は未定着のまま残り、次の契機で拾い直される。
@@ -26,11 +27,13 @@ import {
  * 1回ぶんの結果。
  *
  * - `not-due`: 未定着の行が契機（`consolidateEveryBytes`）に届いていないので起こさなかった
+ * - `locked`: ほかのプロセスが錠を持っているので起こさなかった（その契機は捨てる）
  * - `written`: 書けた。`topics` は書いたあとのファイルから読み直した最近の話題の見出し
  * - `failed`: 起こせない・中断・時間切れ・形の崩れ（理由は問わない。次の契機で拾い直す）
  */
 export type ChatConsolidationOutcome =
   | { readonly kind: "not-due" }
+  | { readonly kind: "locked" }
   | { readonly kind: "written"; readonly topics: readonly string[] }
   | { readonly kind: "failed" }
 
@@ -44,7 +47,7 @@ export type ChatConsolidationWriter = (
  * 定着の出どころ。
  *
  * - `dont-consolidate`: 走らせない（疑似セッション。claude を起こさない）
- * - `consolidate`: 雑談のターンの終わりに走らせる
+ * - `consolidate`: 雑談・仕事のターンの終わりに走らせる
  */
 export type ChatConsolidationSource =
   | { readonly kind: "dont-consolidate" }
@@ -52,16 +55,22 @@ export type ChatConsolidationSource =
 
 /** 書く口に外の世界から渡すもの（配線が渡す）。 */
 export type ChatConsolidationWriterPorts = {
-  /** 未定着の行の取り出しとエピソードの追記。 */
-  readonly archive: Pick<ChatArchive, "unconsolidated" | "appendEpisodes">
+  /** 未定着の行の取り出しとエピソードの追記と、定着の錠。 */
+  readonly archive: Pick<ChatArchive, "unconsolidated" | "appendEpisodes" | "lockConsolidation">
   /** パック1つぶんのあらすじの読み書き口（書くのは起こした時点のパックのファイル）。 */
   readonly chatSummary: (packName: string) => ChatSummary
   /** 使い捨ての `query()`。返すのは `structured_output` のまま（検査はここでする）。 */
   readonly query: (request: ChatConsolidationQuery, signal: AbortSignal) => Promise<unknown>
+  /** いまの時刻（エポックミリ秒）。錠の古さを測るのに使う。 */
+  readonly now: () => number
 }
 
 const FAILED = { kind: "failed" } as const satisfies ChatConsolidationOutcome
 const NOT_DUE = { kind: "not-due" } as const satisfies ChatConsolidationOutcome
+const LOCKED = { kind: "locked" } as const satisfies ChatConsolidationOutcome
+
+/** 書いてからこれを過ぎた錠は、落ちたプロセスの残りとして取り直す。 */
+const CHAT_CONSOLIDATION_LOCK_STALE_MS = CHAT_CONSOLIDATION_TIMEOUT_MS * 2
 
 export function createChatConsolidationWriter(
   ports: ChatConsolidationWriterPorts,
@@ -77,10 +86,30 @@ async function consolidate(
   packName: string,
   signal: AbortSignal,
 ): Promise<ChatConsolidationOutcome> {
+  const lock = ports.archive.lockConsolidation(
+    packName,
+    CHAT_CONSOLIDATION_LOCK_STALE_MS,
+    Temporal.Instant.fromEpochMilliseconds(ports.now()),
+  )
+  if (lock === undefined) {
+    return LOCKED
+  }
+  try {
+    return await consolidateLocked(ports, packName, signal)
+  } finally {
+    lock.release()
+  }
+}
+
+async function consolidateLocked(
+  ports: ChatConsolidationWriterPorts,
+  packName: string,
+  signal: AbortSignal,
+): Promise<ChatConsolidationOutcome> {
   try {
     // 1回に畳むのは契機の2倍まで。溜まった量もこの読みで分かる。
     const batch = ports.archive.unconsolidated(packName, {
-      recentBytes: CHAT_MEMORY_BUDGET.recentBytes,
+      recentBytes: CHAT_MEMORY_BUDGET.workRecentBytes,
       maxBytes: CHAT_MEMORY_BUDGET.consolidateEveryBytes * 2,
     })
     // maxBytes に届いて打ち切ったとき（先頭の1件だけで超えるときを含む）は、契機に届いていなくてもここまでを渡す。

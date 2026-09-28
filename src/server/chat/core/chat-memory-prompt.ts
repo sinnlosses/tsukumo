@@ -1,10 +1,11 @@
-// 雑談の記憶（それより前の要約と直近の逐語）を `systemPrompt` に載せるかどうかを決め、載せるときに添える前置きを組み立てる。
-// 雑談のときだけ呼ばれる前提で、仕事かどうかは見ない。
+// 記憶（それより前のあらすじと直近の逐語）を `systemPrompt` に載せるときの文面を組み立てる。
+// 雑談のセッションには載せるかどうかの判断ごと（`takeChatMemoryPromptParts`）、仕事のセッションには起こすたびに（`workMemoryPromptParts`）載せる。
+// 前置きと1行の並べ方は両方のモードで同じ1つ。
 //
 // ターンの途中で `recall` / `recall_episode` が返す文面もここが組み立てる。
 // 載る場所は違う（`systemPrompt` か、ツールの戻り値か）が、`recall_episode` が開いた1件の逐語の並べ方（話者の印・日付の見出し）は `systemPrompt` の節と同じ1つで、読む側が2通りを覚えずに済む。
 //
-// 判断は1箇所にまとめる。載せる条件は2つの記憶に共通で、載せたら写しの印を「渡し済み」に戻す。
+// 雑談の判断は1箇所にまとめる。載せる条件は2つの記憶に共通で、載せたら写しの印を「渡し済み」に戻す。
 // 2つの口に分けると、先に呼ばれたほうが印を戻してあとの1つが黙って載らない。
 //
 // 中身を読んで判定しない。
@@ -13,6 +14,7 @@
 
 import type {
   ChatArchive,
+  ChatArchiveLine,
   ChatArchiveRecentEntry,
   ChatEpisodeCandidate,
   ChatReadbackLimits,
@@ -27,20 +29,30 @@ import type {
  * 印の行はここに含めない（{@link ChatSummary.read} が返す `summary` はすでに印の行を含まない）。
  */
 const CHAT_SUMMARY_PREFACE =
-  "## 前回までの雑談の要約\n\n" +
-  "以下は claude 自身が `/compact` で作った、前回までの雑談の要約。会話そのものではなく、" +
+  "## これまでのあらすじ\n\n" +
+  "以下は前回までの会話のあらすじ。会話そのものではなく、" +
   "そのままの引用でもない。踏まえてよいが、文面を読み上げたり引用したりしない。"
+
+/**
+ * 1行の印の読み方。直近の逐語と `recall_episode` の戻り値で同じ文面を使う。
+ * 見出しは会話の発言ではないことをここで断る。
+ */
+const LINE_LABEL_GUIDE =
+  "`利用者:` が利用者の発言、`あなた:` があなた自身の過去のセリフ、" +
+  "`したこと:` は仕事のターンであなたがしたことの結論。" +
+  "`[仕事: <プロジェクト名>]` で始まる行は仕事のときのやり取りで、印の無い行は雑談。" +
+  "`### ` で始まる行は日付の見出しで、会話の発言ではない。"
 
 /**
  * 逐語の前置き。要約と違って会話の文面そのものであることと、話者の見分け方を添える。
  * いつごろの話かは日付が変わるところに挟む `### <日付>` の見出しで足りる（表情も画像の枚数も載せない）。
- * 見出しは会話の発言ではないことをここで断る。
  */
 const CHAT_RECENT_PREFACE =
-  "## 直近の雑談（そのままの文面）\n\n" +
-  "以下は直近の雑談のやり取りそのもの（要約ではない）。`利用者:` が利用者の発言、" +
-  "`あなた:` があなた自身の過去のセリフ。`### ` で始まる行は日付の見出しで、会話の発言ではない。" +
-  "続きとして踏まえてよいが、読み上げたり引用したりしない。"
+  "## 直近の会話（そのままの文面）\n\n" +
+  "以下は直近のやり取りそのもの（要約ではない）。" +
+  LINE_LABEL_GUIDE +
+  "続きとして踏まえてよいが、読み上げたり引用したりしない。" +
+  "ここより前の話を思い出せないときは、`recall` で索引を引ける。"
 
 /**
  * `recall` が当たったときの前置き。
@@ -63,10 +75,10 @@ const CHAT_RECALL_LIST_EXHAUSTED =
  * これはツールの戻り値としてターンの途中で入るので、いまの話の続きではないことをここで断る。
  */
 const CHAT_RECALL_EPISODE_PREFACE =
-  "候補の1件を開いた、その範囲の雑談そのもの（要約ではない）。" +
+  "候補の1件を開いた、その範囲の会話そのもの（要約ではない）。" +
   "**いま話していることの続きではなく、そのエピソードのやり取りをそのまま抜いたもの**で、" +
-  "前後には残っていない会話がある。`利用者:` が利用者の発言、`あなた:` があなた自身の過去のセリフ。" +
-  "`### ` で始まる行は日付の見出しで、会話の発言ではない。" +
+  "前後には残っていない会話がある。" +
+  LINE_LABEL_GUIDE +
   "思い出した内容として踏まえてよいが、読み上げたり引用したりしない。"
 
 /** `recall_episode` が `overflowed: true` を返したときに、逐語のあとへ足す一言。 */
@@ -80,19 +92,20 @@ const CHAT_RECALL_EPISODE_NOT_FOUND =
 const CHAT_RECALL_EPISODE_EXHAUSTED =
   "このターンではもうエピソードを開けない（開けるのは1ターンに2件）。次のターンで開き直す。"
 
-/** 逐語の1行の頭に置く話者の印。 */
-const SPEAKER_LABEL = {
-  user: "利用者",
-  character: "あなた",
-} as const satisfies Record<ChatArchiveRecentEntry["speaker"], string>
+/** 逐語の1行の頭に置く話者の印（行の種類ごと）。 */
+const LINE_KIND_LABEL = {
+  request: "利用者",
+  speech: "あなた",
+  conclusion: "したこと",
+} as const satisfies Record<ChatArchiveLine["kind"], string>
 
 /** {@link takeChatMemoryPromptParts} に渡す口と条件。 */
 export type ChatMemorySources = {
   /** 新規に起こすか、続きから始めるか。 */
   readonly start: SessionStart
-  /** 雑談の要約の写しの口。 */
+  /** あらすじの写しの口。 */
   readonly chatSummary: ChatSummary
-  /** 雑談の会話のアーカイブの口（読むのはここから起こすパックのぶんだけ）。 */
+  /** 会話のアーカイブの口（読むのはここから起こすパックのぶんだけ）。 */
   readonly chatArchive: ChatArchive
   /** これから起こすキャラクターパックの名前。 */
   readonly packName: string
@@ -100,8 +113,16 @@ export type ChatMemorySources = {
   readonly readbackLimits: ChatReadbackLimits
 }
 
+/** {@link workMemoryPromptParts} に渡す口。あらすじの印は書き換えない（読む口しか渡さない）。 */
+export type WorkMemorySources = {
+  readonly chatSummary: Pick<ChatSummary, "read">
+  readonly chatArchive: ChatArchive
+  readonly packName: string
+  readonly readbackLimits: ChatReadbackLimits
+}
+
 /**
- * `systemPrompt` に足す、雑談の記憶ぶんの文面（載せないときは空。古い→新しいの順で、要約・直近の逐語の2つ）。
+ * `systemPrompt` に足す、雑談のセッションの記憶ぶんの文面（載せないときは空。古い→新しいの順で、要約・直近の逐語の2つ）。
  *
  * 載せる条件は2つで、どちらかに当たれば載せる（要約と逐語に共通）:
  *
@@ -124,19 +145,36 @@ export function takeChatMemoryPromptParts(sources: ChatMemorySources): readonly 
     return []
   }
 
-  const summary = record === undefined || record.summary === "" ? undefined : record.summary
-  const entries = sources.chatArchive.readRecent(sources.packName, sources.readbackLimits)
-  const recent = verbatimPart(CHAT_RECENT_PREFACE, entries)
-  const parts = [
-    ...(summary === undefined ? [] : [`${CHAT_SUMMARY_PREFACE}\n\n${summary}`]),
-    ...(recent === undefined ? [] : [recent]),
-  ]
+  const parts = memoryParts(
+    record?.summary ?? "",
+    sources.chatArchive.readRecent(sources.packName, sources.readbackLimits),
+  )
   if (parts.length === 0) {
     return []
   }
 
   chatSummary.markDelivered()
   return parts
+}
+
+/**
+ * `systemPrompt` に足す、仕事のセッションの記憶ぶんの文面（あらすじ・直近の逐語の順。どちらも無ければ空）。
+ * 載せる条件は持たず、起こすたびに載せる。あらすじの印は読みも書きもしない。
+ */
+export function workMemoryPromptParts(sources: WorkMemorySources): readonly string[] {
+  return memoryParts(
+    sources.chatSummary.read()?.summary ?? "",
+    sources.chatArchive.readRecent(sources.packName, sources.readbackLimits),
+  )
+}
+
+/**
+ * 逐語の1行を「印 話者: 文面」にする。
+ * 仕事の行には `[仕事: <プロジェクト名>]` を前に添え、`conclusion` の行は話者の印を「したこと」に分ける。
+ */
+export function chatLineText(line: ChatArchiveLine): string {
+  const origin = line.origin.mode === "work" ? `[仕事: ${line.origin.project}] ` : ""
+  return `${origin}${LINE_KIND_LABEL[line.kind]}: ${line.text}`
 }
 
 /**
@@ -176,6 +214,18 @@ export function chatRecallEpisodeText(result: ChatRecallEpisodeResult): string {
   return result.overflowed ? `${verbatim}\n\n${CHAT_RECALL_EPISODE_OVERFLOW_NOTE}` : verbatim
 }
 
+/** あらすじと直近の逐語を、並び順のまま節にする（空の節は落とす）。 */
+function memoryParts(
+  summary: string,
+  entries: readonly ChatArchiveRecentEntry[],
+): readonly string[] {
+  const recent = verbatimPart(CHAT_RECENT_PREFACE, entries)
+  return [
+    ...(summary === "" ? [] : [`${CHAT_SUMMARY_PREFACE}\n\n${summary}`]),
+    ...(recent === undefined ? [] : [recent]),
+  ]
+}
+
 /** 候補の一覧ぶんの文面（点の高い順のまま、`id` ・見出し・要旨を1行ずつ並べる）。 */
 function candidateListPart(candidates: readonly ChatEpisodeCandidate[]): string {
   const lines = candidates.map(
@@ -204,7 +254,7 @@ function verbatimPart(
       lines.push(`### ${entry.date}`)
       lastDate = entry.date
     }
-    lines.push(`${SPEAKER_LABEL[entry.speaker]}: ${entry.text}`)
+    lines.push(chatLineText(entry))
   }
   return `${preface}\n\n${lines.join("\n")}`
 }

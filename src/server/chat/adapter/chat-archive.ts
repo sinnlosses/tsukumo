@@ -1,4 +1,4 @@
-// 雑談の会話のアーカイブ。ファイルに触るのはここだけ。
+// 雑談と仕事の会話のアーカイブ。ファイルに触るのはここだけ。
 // 置き場は `~/.tsukumo/chat-archive/<パック名>/<YYYY-MM-DD>.jsonl` で、パックごと・日ごとに分け、`cwd` には依存させない。
 // 書き出してよい範囲・読み戻して渡してよい範囲は `docs/coding-standards.md`「会話内容の扱い」の例外の表が決めている。
 //
@@ -8,17 +8,19 @@
 // 書けなくても例外を投げない。
 //
 // 直近の窓を読む口は `readRecent` の1つだけ。
-// 読んだものの行き先は雑談のセッションの `systemPrompt` だけで、画面にも手続きの応答にも stderr にも出さない。
+// 読んだものの行き先は雑談と仕事のセッションの `systemPrompt` だけで、画面にも手続きの応答にも stderr にも出さない。
 // どこまで読むかは呼ぶ側が渡すバイト数で、ここは遡って集めることと並べ替えだけをする（文面を読んで載せる・載せないを決めない）。
 //
-// 古い雑談は、エピソード索引（`episode.jsonl`）を引いてから、当たった範囲のファイルだけを開く。
+// 古い会話は、エピソード索引（`episode.jsonl`）を引いてから、当たった範囲のファイルだけを開く。
 // 索引を書くのは定着で、ここが持つのは置き場と形、`recallList` / `recallEpisode` での読み方だけ。
+//
+// 定着をプロセスをまたいで1本にする錠（`consolidation.lock`）の置き場と取り方もここが持つ。
 //
 // `kept.jsonl`（「残す」旗の索引）は書きも読みもしない。
 // 過去に書かれたファイルが残っていても消さず、単に読まない。
 
-import { rmSync } from "node:fs"
-import { join } from "node:path"
+import { mkdirSync, rmSync, statSync, writeFileSync } from "node:fs"
+import { dirname, join } from "node:path"
 
 import { z } from "zod"
 
@@ -31,7 +33,9 @@ import { tsukumoHomeDir } from "../../adapter/tsukumo-home.ts"
 import type {
   ChatArchive,
   ChatArchiveEntry,
+  ChatArchiveLine,
   ChatArchiveRecentEntry,
+  ChatConsolidationLock,
   ChatEpisodeCandidate,
   ChatEpisodeDraft,
   ChatEpisodeReadResult,
@@ -61,6 +65,9 @@ const EPISODE_INDEX_FILE_NAME = "episode.jsonl"
 /** 思い出した記録の名前。 */
 const RECALLED_FILE_NAME = "recalled.jsonl"
 
+/** 定着の錠の名前。 */
+const CONSOLIDATION_LOCK_FILE_NAME = "consolidation.lock"
+
 /** エピソード索引の行の形の版（`episode.jsonl` 自身の版で、アーカイブの行の `v` とは別の数え方）。 */
 const EPISODE_FORMAT_VERSION = 2 satisfies number
 
@@ -69,9 +76,9 @@ const RECALLED_FORMAT_VERSION = 1 satisfies number
 
 /**
  * 読み戻すときに要る鍵だけを検査する（`v` が知らない版・鍵が足りない行はここで落ちる）。
- * `v:1`（`mode` を持たない雑談の行）と `v:2` の両方を通す。
+ * `v:1`（`mode`・`kind`・`project` を持たない雑談の行）と `v:2` の両方を通す。
  * `expression` と `images` は読まないので、形も見ない。
- * `mode` は雑談か仕事かを見分けるためだけに読む（`v:1` の行は無条件で雑談として扱う）。
+ * `v:1` の行は雑談として扱い、行の種類は `speaker` から決める。
  */
 const archiveLineSchema = z.object({
   v: z.union([z.literal(ARCHIVE_FORMAT_VERSION_V1), z.literal(ARCHIVE_FORMAT_VERSION)]),
@@ -79,8 +86,10 @@ const archiveLineSchema = z.object({
   speaker: z.enum(["user", "character"]),
   text: z.string(),
   // `v:1` の行はキー自体を持たないので `.optional()`（値が来ても `undefined` になる境界ではなく、
-  // キーの有無そのものが版の違いを表す）。
+  // キーの有無そのものが版の違いを表す）。`project` は `v:2` でも仕事の行だけが持つ。
   mode: z.enum(["chat", "work"]).optional(),
+  kind: z.enum(["request", "speech", "conclusion"]).optional(),
+  project: z.string().optional(),
 })
 
 /** エピソード索引の1行。読めない行・知らない版は飛ばす。 */
@@ -163,6 +172,8 @@ export function createChatArchive(root: string = chatArchiveDir()): ChatArchive 
       readEpisodeCandidates(root, packName, keyword, limitBytes, now),
     recallEpisode: (packName, id, limitBytes, now) =>
       readEpisode(root, packName, id, limitBytes, now),
+    lockConsolidation: (packName, staleAfterMs, now) =>
+      lockConsolidation(root, packName, staleAfterMs, now),
   }
 }
 
@@ -216,7 +227,7 @@ function readReadback(
   }
 
   const dir = join(root, packName)
-  return readRecentEntries(dir, limits.recentBytes).map((timed) => timed.entry)
+  return readRecentEntries(dir, limits.recentBytes).map(recentEntryOf)
 }
 
 /**
@@ -251,7 +262,7 @@ function readEntriesBackward(
       if (timed === undefined) {
         continue
       }
-      const bytes = byteLength(timed.entry.text)
+      const bytes = byteLength(timed.line.text)
       if (usedBytes + bytes > limitBytes) {
         reachedLimit = true
         break
@@ -273,20 +284,28 @@ function newestFirstFileNames(dir: string): readonly string[] {
 }
 
 /**
- * JSONL の1行を、載せる形（話者の別・文面・日付）へ畳む。壊れた JSON・知らない版・鍵が足りない行は undefined。
- * 仕事の行（`mode === "work"`）もここで undefined にする（読み戻し・定着・recall を仕事へ広げるのは別の変更で、
- * それまでは書いても雑談の読み戻しには出さない）。
+ * JSONL の1行を、載せる形（行の種類・文面・雑談か仕事か）へ畳む。
+ * 壊れた JSON・知らない版・鍵が足りない行と、`project` を持たない仕事の行は undefined。
  *
  * `expression` と `images` はここで読まない（読み戻して渡すのは文面と話者の別だけ）。
- * 日付は `at` の頭10文字で、行だけで意味が決まる（ファイル名には頼らない）。
  */
 function toTimedEntry(raw: unknown): TimedEntry | undefined {
   const record = archiveLineSchema.safeParse(raw)
-  if (!record.success || record.data.mode === "work") {
+  if (!record.success) {
     return undefined
   }
-  const { at, speaker, text } = record.data
-  return { at, entry: { speaker, text, date: at.slice(0, 10) } }
+  const { at, speaker, text, mode, kind, project } = record.data
+  if (mode === "work" && project === undefined) {
+    return undefined
+  }
+  return {
+    at,
+    line: {
+      kind: kind ?? (speaker === "user" ? "request" : "speech"),
+      text,
+      origin: mode === "work" && project !== undefined ? { mode, project } : { mode: "chat" },
+    },
+  }
 }
 
 /**
@@ -295,7 +314,12 @@ function toTimedEntry(raw: unknown): TimedEntry | undefined {
  */
 type TimedEntry = {
   readonly at: string
-  readonly entry: ChatArchiveRecentEntry
+  readonly line: ChatArchiveLine
+}
+
+/** 読み戻す1件にする。日付は `at` の頭10文字で、行だけで意味が決まる（ファイル名には頼らない）。 */
+function recentEntryOf(timed: TimedEntry): ChatArchiveRecentEntry {
+  return { ...timed.line, date: timed.at.slice(0, 10) }
 }
 
 /**
@@ -334,18 +358,18 @@ function readUnconsolidated(
     if (windowStartAt !== undefined && !isBeforeAt(timed.at, windowStartAt)) {
       break
     }
-    const bytes = byteLength(timed.entry.text)
+    const bytes = byteLength(timed.line.text)
     if (usedBytes + bytes > limits.maxBytes) {
       overflowed = true
       // 先頭の1件だけで maxBytes を超えるときは、切らずにその1件だけを単独で渡す。
       // 行の途中では切らないまま、その回で必ず前へ進めるため。
       if (entries.length === 0) {
-        entries.push({ at: timed.at, speaker: timed.entry.speaker, text: timed.entry.text })
+        entries.push({ ...timed.line, at: timed.at })
         usedBytes += bytes
       }
       break
     }
-    entries.push({ at: timed.at, speaker: timed.entry.speaker, text: timed.entry.text })
+    entries.push({ ...timed.line, at: timed.at })
     usedBytes += bytes
   }
   return { entries, usedBytes, previousEpisodeTitle: previousEpisode?.title ?? "", overflowed }
@@ -454,6 +478,67 @@ function episodeIndexPath(root: string, packName: string): string {
   return join(root, packName, EPISODE_INDEX_FILE_NAME)
 }
 
+/**
+ * 定着の錠を取る（{@link ChatArchive.lockConsolidation} の実装）。
+ * 錠のファイルを排他で作れたときだけ取れる。中身は書いた時刻だけで、古さはファイルの更新時刻で測る。
+ */
+function lockConsolidation(
+  root: string,
+  packName: string,
+  staleAfterMs: number,
+  now: Temporal.Instant,
+): ChatConsolidationLock | undefined {
+  if (!isCharacterPackName(packName)) {
+    return undefined
+  }
+
+  const path = join(root, packName, CONSOLIDATION_LOCK_FILE_NAME)
+  if (createLockFile(path, now)) {
+    return releasableLock(path)
+  }
+  if (!isStaleLock(path, staleAfterMs, now)) {
+    return undefined
+  }
+  removeLockFile(path)
+  return createLockFile(path, now) ? releasableLock(path) : undefined
+}
+
+/** 錠のファイルを排他（`wx`）で作る。既にある・作れないときは `false`。 */
+function createLockFile(path: string, now: Temporal.Instant): boolean {
+  try {
+    mkdirSync(dirname(path), { recursive: true })
+    writeFileSync(path, isoWithOffset(now.epochMilliseconds), { flag: "wx" })
+    return true
+  } catch {
+    return false
+  }
+}
+
+/** 錠が書いてから `staleAfterMs` を過ぎているか。読めない（消えた）錠も取り直してよい側に倒す。 */
+function isStaleLock(path: string, staleAfterMs: number, now: Temporal.Instant): boolean {
+  try {
+    return now.epochMilliseconds - statSync(path).mtimeMs > staleAfterMs
+  } catch {
+    return true
+  }
+}
+
+function releasableLock(path: string): ChatConsolidationLock {
+  return {
+    release: () => {
+      removeLockFile(path)
+    },
+  }
+}
+
+function removeLockFile(path: string): void {
+  try {
+    rmSync(path, { force: true })
+  } catch {
+    // 消せなかった錠は、古さの閾値を過ぎたところで次の誰かが取り直す。
+  }
+}
+
 /** `~/.tsukumo/chat-archive/<パック名>/recalled.jsonl` のパス。 */
 function recalledPath(root: string, packName: string): string {
   return join(root, packName, RECALLED_FILE_NAME)
@@ -560,12 +645,12 @@ function readEpisodeEntries(
       if (timed === undefined || isBeforeAt(timed.at, from) || isAfterAt(timed.at, to)) {
         continue
       }
-      const bytes = byteLength(timed.entry.text)
+      const bytes = byteLength(timed.line.text)
       if (usedBytes + bytes > limitBytes) {
         overflowed = true
         break
       }
-      entries.push(timed.entry)
+      entries.push(recentEntryOf(timed))
       usedBytes += bytes
     }
   }

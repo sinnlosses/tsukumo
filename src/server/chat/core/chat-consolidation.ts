@@ -14,6 +14,7 @@ import type {
   ChatSummary,
   ChatUnconsolidatedEntry,
 } from "../../session-driver/core/session-driver.ts"
+import { chatLineText } from "./chat-memory-prompt.ts"
 
 /** サイドバーの「最近の話題」に出す見出しの件数の上限。 */
 export const CHAT_TOPIC_LIMIT = 3
@@ -54,12 +55,6 @@ export const CHAT_CONSOLIDATION_LIMITS = {
   topicChars: 40,
 } satisfies Readonly<Record<string, number>>
 
-/** 逐語の1行の頭に置く話者の印。 */
-const SPEAKER_LABEL = {
-  user: "利用者",
-  character: "あなた",
-} as const satisfies Record<ChatUnconsolidatedEntry["speaker"], string>
-
 /** 前のあらすじ・直前のエピソードの見出しが無い（空文字の）ときに置く文面。 */
 const NONE = "（なし）"
 
@@ -67,8 +62,12 @@ const NONE = "（なし）"
  * `query()` の `systemPrompt` をそのまま置き換える指示文。
  * 会話の中のキャラクターの口調は持たず、要約する役目だけを持つ。
  */
-export const CHAT_CONSOLIDATION_INSTRUCTION = `あなたは、窓から溢れた雑談の会話を畳んで記憶にする役目だけを持つ。
+export const CHAT_CONSOLIDATION_INSTRUCTION = `あなたは、窓から溢れた会話を畳んで記憶にする役目だけを持つ。
 ここでの「あなた」は畳む側であり、渡された会話の中のキャラクター本人ではない。
+
+渡された行の \`利用者:\` は利用者の発言、\`あなた:\` はキャラクターのセリフ、\`したこと:\` は
+仕事のターンでキャラクターがしたことの結論。\`[仕事: <プロジェクト名>]\` で始まる行は仕事のときの
+やり取りで、印の無い行は雑談。
 
 渡された行（1始まりの行番号つき）を、話題のまとまり（エピソード）に区切り、それぞれの
 見出し・要旨・手がかり語・大事さを書く。そのうえで、あらすじを書き直し、最近の話題の見出しを書く。
@@ -242,7 +241,7 @@ function chatConsolidationPrompt(material: ChatConsolidationMaterial): string {
 }
 
 /**
- * 畳む行を「n. 話者: 文面」の並びにする（1始まりの行番号）。
+ * 畳む行を「n. 印 話者: 文面」の並びにする（1始まりの行番号。印と話者は {@link chatLineText}）。
  * 日付が変わるところに `### <日付>` の見出しを挟む。表情・画像の枚数・時刻は載せない。
  */
 function numberedLines(entries: readonly ChatUnconsolidatedEntry[]): string {
@@ -254,7 +253,7 @@ function numberedLines(entries: readonly ChatUnconsolidatedEntry[]): string {
       lines.push(`### ${date}`)
       lastDate = date
     }
-    lines.push(`${String(index + 1)}. ${SPEAKER_LABEL[entry.speaker]}: ${entry.text}`)
+    lines.push(`${String(index + 1)}. ${chatLineText(entry)}`)
   })
   return lines.join("\n")
 }

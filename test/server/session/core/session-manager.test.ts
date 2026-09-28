@@ -1319,14 +1319,21 @@ describe("createSessionManager", () => {
       expect(topicEvents(frames)).toEqual([])
     })
 
-    it("仕事のターンの終わりでは起こさない", async () => {
+    it("仕事のターンの終わりにも起こし、書けても話題の見出しは流さない", async () => {
       const consolidation = createManualConsolidation()
-      const { stub } = startChatManagerWithStub(NOOP_CHAT_ARCHIVE, consolidation.source)
+      const { manager, stub } = startChatManagerWithStub(NOOP_CHAT_ARCHIVE, consolidation.source)
+      const frames: ServerFrame[] = []
+      manager.subscribe((frame) => frames.push(frame))
       await waitForBatch()
       stub.emit(CHARACTER_EVENT)
       stub.emit(TURN_FINISHED)
 
-      expect(consolidation.calls).toEqual([])
+      expect(consolidation.calls.map((call) => call.packName)).toEqual(["fictional"])
+
+      consolidation.finish({ kind: "written", topics: ["架空の話題"] })
+      await waitForBatch()
+
+      expect(topicEvents(frames)).toEqual([])
     })
   })
 

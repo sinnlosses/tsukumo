@@ -1,5 +1,5 @@
 // tsukumo がプロセス内の MCP サーバとして提供するツール。
-// `speak`、雑談のときの `remember` / `forget` / `recall` / `recall_episode`、仕事のときの `report` / `work_plan` / `usage_review_stage` / `usage_review_result`。
+// `speak` と `recall` / `recall_episode`、雑談のときの `remember` / `forget`、仕事のときの `report` / `work_plan` / `usage_review_stage` / `usage_review_result`。
 // `diary` はここには載らない（会話とは別の使い捨ての問い合わせ。`queryDiary`）。
 //
 // サーバの名前と `speak` の名前は `TSUKUMO_MCP_SERVER_NAME` / `SPEAK_TOOL_NAME` が持つ。
@@ -85,33 +85,32 @@ const RECALL_TOOL_NAME = "recall"
 
 /**
  * モデルに見せる `recall` ツールの説明。
- * いつ引くかの条は `CHAT_MANNER_PROMPT` が持つので、ここには何が返るかと引ける回数だけを書く（二重に書かない）。
+ * 雑談でいつ引くかの条は `CHAT_MANNER_PROMPT` が持つので、ここには何が返るかと引ける回数だけを書く（二重に書かない）。
  */
 const RECALL_TOOL_DESCRIPTION =
-  "言葉でエピソード索引を引き、当たった候補の一覧（id・見出し・要旨）を返す。逐語は返らない。" +
-  "1件を開くには recall_episode を使う。当たらなければ候補は無い。引けるのは1ターンに2回まで。" +
-  "呼ぶ条件は雑談モードの規約に従う。"
+  "前の話を思い出せないときに、言葉でエピソード索引を引き、当たった候補の一覧（id・見出し・要旨）を返す。逐語は返らない。" +
+  "1件を開くには recall_episode を使う。当たらなければ候補は無い。引けるのは1ターンに2回まで。"
 
 const RECALL_EPISODE_TOOL_NAME = "recall_episode"
 
 /**
  * モデルに見せる `recall_episode` ツールの説明。
- * いつ開くかの条は `CHAT_MANNER_PROMPT` が持つので、ここには何が返るかと開ける回数だけを書く（二重に書かない）。
+ * 雑談でいつ開くかの条は `CHAT_MANNER_PROMPT` が持つので、ここには何が返るかと開ける回数だけを書く（二重に書かない）。
  */
 const RECALL_EPISODE_TOOL_DESCRIPTION =
-  "recall で見た候補の id を渡し、その1件の範囲の雑談をそのままの文面で開く。" +
-  "知らない id なら何も返らない。開けるのは1ターンに2件まで。呼ぶ条件は雑談モードの規約に従う。"
+  "recall で見た候補の id を渡し、その1件の範囲の会話をそのままの文面で開く。" +
+  "知らない id なら何も返らない。開けるのは1ターンに2件まで。"
 
 /**
  * プロセス内の MCP サーバ。
  * 戻り値は既定が "ok" だけで、tsukumo の内部の状態や画面の事情がモデルへ戻る経路を作らない（`docs/architecture/adr/0009-speech-via-tool.md`）。
  * 例外は `recall` / `recall_episode` と `report` と `work_plan` と見直しの2つ。
- * `recall` / `recall_episode` が返すのは、そのセッションが自分で読める外の事実（自分の過去の雑談の目次と1件の逐語）だけ。
+ * `recall` / `recall_episode` が返すのは、そのセッションが自分で読める外の事実（自分の過去の会話の目次と1件の逐語）だけ。
  * `report` が返すのは差し戻すときの規約違反だけ、`work_plan` が返すのは位置が段の数を超えたときの直し方だけ。
  * 見直しの2つが返すのは、利用者が見送った提案の識別子と差し戻しの理由だけ。
  *
- * 常に載るのは `speak` だけで、`remember` / `forget` / `recall` / `recall_episode` は雑談モードのときだけ載る。
- * 仕事のときに出すと、作業の文脈が人格に入り込む経路や、仕事の会話をアーカイブに残す経路になる。
+ * 常に載るのは `speak` と `recall` / `recall_episode` で、`remember` / `forget` は雑談モードのときだけ載る。
+ * 仕事のときに `remember` / `forget` を出すと、作業の文脈が人格に入り込む経路になる。
  *
  * `report` は仕事のときだけ載る（仕事ではレポートを常にこれで受け取る。雑談は本文を書かない決まりなので載せない）。
  * `work_plan` も仕事のときだけ。
@@ -136,6 +135,8 @@ export function tsukumoServer(
       tool(SPEAK_TOOL_NAME, SPEAK_TOOL_DESCRIPTION, speechShape(expressions), async () => ({
         content: [{ type: "text" as const, text: "ok" }],
       })),
+      recallTool(mode.chatRecall),
+      recallEpisodeTool(mode.chatRecall),
       ...(mode.kind === "work"
         ? [
             reportTool(expressions, reportReview, onReportTitle),
@@ -144,12 +145,7 @@ export function tsukumoServer(
           ]
         : []),
       ...(mode.kind === "chat"
-        ? [
-            rememberTool(mode.personaMemory),
-            forgetTool(mode.personaMemory),
-            recallTool(mode.chatRecall),
-            recallEpisodeTool(mode.chatRecall),
-          ]
+        ? [rememberTool(mode.personaMemory), forgetTool(mode.personaMemory)]
         : []),
     ],
   })
@@ -323,7 +319,7 @@ function forgetTool(memory: PersonaMemory) {
 }
 
 /**
- * 索引を引いて古い雑談の候補を見るツール。
+ * 索引を引いて古い会話の候補を見るツール。
  * 返すのはその会話自身の過去の目次（`id`・見出し・要旨）だけで、tsukumo の状態も画面の事情も載せない。
  * 文面に組み立てるのは core（`chatRecallListText`）で、採点・1ターンの回数の縛りは `createChatRecall`。
  */

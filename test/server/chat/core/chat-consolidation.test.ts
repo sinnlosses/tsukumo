@@ -38,10 +38,30 @@ const SUMMARY_WITH_TOPICS = [
 ].join("\n")
 
 const ENTRIES: readonly ChatUnconsolidatedEntry[] = [
-  { at: "2026-09-20T10:00:00+09:00", speaker: "user", text: "架空の発言1" },
-  { at: "2026-09-20T10:01:00+09:00", speaker: "character", text: "架空の返事1" },
-  { at: "2026-09-21T09:00:00+09:00", speaker: "user", text: "架空の発言2" },
-  { at: "2026-09-21T09:01:00+09:00", speaker: "character", text: "架空の返事2" },
+  {
+    at: "2026-09-20T10:00:00+09:00",
+    kind: "request",
+    origin: { mode: "chat" },
+    text: "架空の発言1",
+  },
+  {
+    at: "2026-09-20T10:01:00+09:00",
+    kind: "speech",
+    origin: { mode: "chat" },
+    text: "架空の返事1",
+  },
+  {
+    at: "2026-09-21T09:00:00+09:00",
+    kind: "request",
+    origin: { mode: "chat" },
+    text: "架空の発言2",
+  },
+  {
+    at: "2026-09-21T09:01:00+09:00",
+    kind: "speech",
+    origin: { mode: "chat" },
+    text: "架空の返事2",
+  },
 ]
 
 const VALID_OUTPUT = {
@@ -74,6 +94,33 @@ describe("chatConsolidationQuery", () => {
     ]) {
       expect(query.prompt).toContain(fragment)
     }
+  })
+
+  it("仕事の行には印とプロジェクトの名前を添え、結論の行は「したこと」として渡す", () => {
+    const origin = { mode: "work", project: "架空プロジェクト" } as const
+    const query = chatConsolidationQuery({
+      entries: [
+        { at: "2026-09-22T10:00:00+09:00", kind: "request", origin, text: "架空の依頼" },
+        { at: "2026-09-22T10:05:00+09:00", kind: "conclusion", origin, text: "架空の結論" },
+      ],
+      previousSynopsis: "",
+      previousEpisodeTitle: "",
+    })
+
+    expect(query.prompt).toContain("1. [仕事: 架空プロジェクト] 利用者: 架空の依頼")
+    expect(query.prompt).toContain("2. [仕事: 架空プロジェクト] したこと: 架空の結論")
+  })
+
+  it("指示文は「雑談の会話」と言わず、印の読み方を添える", () => {
+    const query = chatConsolidationQuery({
+      entries: ENTRIES,
+      previousSynopsis: "",
+      previousEpisodeTitle: "",
+    })
+
+    expect(query.systemPrompt).not.toContain("雑談の会話")
+    expect(query.systemPrompt).toContain("したこと:")
+    expect(query.systemPrompt).toContain("[仕事: <プロジェクト名>]")
   })
 
   it("前のあらすじ・直前の見出しが空文字なら「（なし）」を載せる", () => {
@@ -251,7 +298,12 @@ describe("chatEpisodeDrafts", () => {
 
   it("1件のエピソードが1行だけを覆うとき、from と to は同じ行を指す", () => {
     const single: readonly ChatUnconsolidatedEntry[] = [
-      { at: "2026-09-20T10:00:00+09:00", speaker: "user", text: "架空の発言1" },
+      {
+        at: "2026-09-20T10:00:00+09:00",
+        kind: "request",
+        origin: { mode: "chat" },
+        text: "架空の発言1",
+      },
     ]
     const episode = { end: 1, title: "架空", gist: "架空", cues: ["架空"], weight: 1 as const }
 

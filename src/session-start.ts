@@ -164,7 +164,7 @@ export async function startSession(options: SessionStartOptions): Promise<Starte
     // 疑似セッションでは claude を起こさないので、定着は走らせない。
     chatConsolidation:
       fakeSession === undefined
-        ? chatConsolidationSource(chatArchive, cwd, config.inheritedEnv)
+        ? chatConsolidationSource(chatArchive, cwd, config.inheritedEnv, now)
         : { kind: "dont-consolidate" },
     tokenUsageLog,
     contextUsageLog,
@@ -321,6 +321,7 @@ function chatConsolidationSource(
   chatArchive: ChatArchive,
   cwd: string,
   inheritedEnv: Readonly<Record<string, string | undefined>>,
+  now: () => number,
 ): ChatConsolidationSource {
   return {
     kind: "consolidate",
@@ -329,6 +330,7 @@ function chatConsolidationSource(
       chatSummary: (packName) => createChatSummary(packName),
       query: (request, signal) =>
         queryChatConsolidation(request, { cwd, env: inheritedEnv }, signal),
+      now,
     }),
   }
 }
@@ -414,7 +416,13 @@ function startDriver(options: {
     effort: seed.sessionDefault.effort,
     systemPromptAppend: takeSystemPromptAppend({
       persona: seed.pack.persona ?? "",
-      mode: toSystemPromptMode(mode, chatArchive, seed.start, seed.pack.name),
+      mode: toSystemPromptMode(
+        mode,
+        chatArchive,
+        createChatSummary(seed.pack.name).read,
+        seed.start,
+        seed.pack.name,
+      ),
     }),
     start: seed.start,
     tag,
@@ -448,8 +456,8 @@ function rememberVisitEnabled(visitEnabled: boolean): SessionEvent {
 
 /**
  * そのモードのときだけ渡る口を1回の分岐でまとめる。
- * 雑談の3つは仕事のときに1つも渡らないので、`remember` / `forget` / `recall` / `recall_episode` のツールが載らず、作業の文脈が人格にもアーカイブにも入らない。
- * 3つは同時に渡るか同時に渡らないかの2択で、片方だけ無い状態を作らない。
+ * 思い出す口（`recall` / `recall_episode`）は両方のモードに渡る。
+ * 覚えたことを書き換える口とあらすじの印の口は雑談だけで、仕事では `remember` / `forget` のツールが載らず、作業の文脈が人格に入らない。
  */
 function sessionMode(
   seed: SessionLaunchSeed<CharacterPack>,
@@ -458,8 +466,9 @@ function sessionMode(
   onEvent: (event: SessionEvent) => void,
   now: () => number,
 ): SessionMode {
+  const chatRecall = createChatRecall(chatArchive, seed.pack.name, now)
   if (!seed.chat) {
-    return { kind: "work" }
+    return { kind: "work", chatRecall }
   }
 
   return {
@@ -469,7 +478,7 @@ function sessionMode(
       onEvent({ kind: "remembered-lines-changed", lines }),
     ),
     chatSummary: createChatSummary(seed.pack.name),
-    chatRecall: createChatRecall(chatArchive, seed.pack.name, now),
+    chatRecall,
   }
 }
 

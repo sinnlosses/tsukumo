@@ -4,6 +4,7 @@ import {
   chatRecallEpisodeText,
   chatRecallListText,
   takeChatMemoryPromptParts,
+  workMemoryPromptParts,
 } from "../../../../src/server/chat/core/chat-memory-prompt.ts"
 import type {
   ChatArchive,
@@ -17,8 +18,23 @@ import { inMemoryChatSummary, NOOP_CHAT_ARCHIVE } from "../../../fixture/chat.ts
 
 const SUMMARY = "利用者と最近読んだ本の話をした。次は続きの巻の感想を聞きたがっていた。"
 const RECENT: readonly ChatArchiveRecentEntry[] = [
-  { speaker: "user", text: "ただいま", date: "2026-09-20" },
-  { speaker: "character", text: "おかえり", date: "2026-09-21" },
+  { kind: "request", origin: { mode: "chat" }, text: "ただいま", date: "2026-09-20" },
+  { kind: "speech", origin: { mode: "chat" }, text: "おかえり", date: "2026-09-21" },
+]
+
+const WORK_RECENT: readonly ChatArchiveRecentEntry[] = [
+  {
+    kind: "request",
+    origin: { mode: "work", project: "架空プロジェクト" },
+    text: "架空の依頼",
+    date: "2026-09-21",
+  },
+  {
+    kind: "conclusion",
+    origin: { mode: "work", project: "架空プロジェクト" },
+    text: "架空の結論",
+    date: "2026-09-21",
+  },
 ]
 
 const PACK_NAME = "fictional-pack"
@@ -187,9 +203,19 @@ describe("takeChatMemoryPromptParts", () => {
 
   it("2日ぶんの逐語を渡すと、日付ごとに見出しが1つずつ入る（並べ替えない）", () => {
     const twoDays: readonly ChatArchiveRecentEntry[] = [
-      { speaker: "user", text: "きょうは晴れの話をした", date: "2026-09-20" },
-      { speaker: "character", text: "そうだねと返した", date: "2026-09-20" },
-      { speaker: "user", text: "つぎの日にまた話しかけた", date: "2026-09-21" },
+      {
+        kind: "request",
+        origin: { mode: "chat" },
+        text: "きょうは晴れの話をした",
+        date: "2026-09-20",
+      },
+      { kind: "speech", origin: { mode: "chat" }, text: "そうだねと返した", date: "2026-09-20" },
+      {
+        kind: "request",
+        origin: { mode: "chat" },
+        text: "つぎの日にまた話しかけた",
+        date: "2026-09-21",
+      },
     ]
 
     const parts = take(undefined, fakeChatSummary(undefined), fakeChatArchive(twoDays))
@@ -208,8 +234,8 @@ describe("takeChatMemoryPromptParts", () => {
       undefined,
       fakeChatSummary(undefined),
       fakeChatArchive([
-        { speaker: "user", text: "ただいま", date: "2026-09-21" },
-        { speaker: "character", text: "おかえり", date: "2026-09-21" },
+        { kind: "request", origin: { mode: "chat" }, text: "ただいま", date: "2026-09-21" },
+        { kind: "speech", origin: { mode: "chat" }, text: "おかえり", date: "2026-09-21" },
       ]),
     )
     const text = oneDay[0] ?? ""
@@ -233,6 +259,74 @@ describe("takeChatMemoryPromptParts", () => {
 
     expect(parts.join("\n")).not.toContain("delivered")
     expect(parts.join("\n")).not.toContain("undelivered")
+  })
+})
+
+describe("workMemoryPromptParts", () => {
+  function takeWork(chatSummary: ChatSummary, chatArchive: ChatArchive): readonly string[] {
+    return workMemoryPromptParts({
+      chatSummary,
+      chatArchive,
+      packName: PACK_NAME,
+      readbackLimits: { recentBytes: CHAT_MEMORY_BUDGET.workRecentBytes },
+    })
+  }
+
+  it("印が「渡し済み」でも、あらすじ → 直近の逐語の順で載り、印は書き換えない", () => {
+    const chatSummary = fakeChatSummary({ summary: SUMMARY, delivered: true })
+
+    const parts = takeWork(chatSummary, fakeChatArchive(RECENT))
+
+    expect(parts).toHaveLength(2)
+    expect(parts[0]).toContain(SUMMARY)
+    expect(parts[1]).toContain("利用者: ただいま")
+    expect(chatSummary.markDeliveredCalls()).toBe(0)
+    expect(chatSummary.read()).toEqual({ summary: SUMMARY, delivered: true })
+  })
+
+  it("印が「未渡し」でも印を書き換えない（/clear した雑談の記憶を奪わない）", () => {
+    const chatSummary = fakeChatSummary({ summary: SUMMARY, delivered: false })
+
+    takeWork(chatSummary, fakeChatArchive(RECENT))
+
+    expect(chatSummary.read()).toEqual({ summary: SUMMARY, delivered: false })
+  })
+
+  it("前置きは雑談と同じ1つで、「雑談の」と言わず、recall で引けることを添える", () => {
+    const work = takeWork(
+      fakeChatSummary({ summary: SUMMARY, delivered: false }),
+      fakeChatArchive(RECENT),
+    )
+    const chat = take(
+      undefined,
+      fakeChatSummary({ summary: SUMMARY, delivered: false }),
+      fakeChatArchive(RECENT),
+    )
+
+    expect(work).toEqual(chat)
+    expect(work.join("\n")).not.toContain("雑談の")
+    expect(work.join("\n")).toContain("`recall`")
+  })
+
+  it("読み戻しには渡された上限がそのまま渡る", () => {
+    const chatArchive = fakeChatArchive([])
+
+    takeWork(fakeChatSummary(undefined), chatArchive)
+
+    expect(chatArchive.readRecentArgs()).toEqual([
+      { packName: PACK_NAME, limits: { recentBytes: CHAT_MEMORY_BUDGET.workRecentBytes } },
+    ])
+  })
+
+  it("仕事の行には印とプロジェクトの名前が付き、結論の行は「したこと」になる", () => {
+    const parts = takeWork(fakeChatSummary(undefined), fakeChatArchive(WORK_RECENT))
+
+    expect(parts[0]).toContain("[仕事: 架空プロジェクト] 利用者: 架空の依頼")
+    expect(parts[0]).toContain("[仕事: 架空プロジェクト] したこと: 架空の結論")
+  })
+
+  it("あらすじも逐語も無いときは何も載らない", () => {
+    expect(takeWork(fakeChatSummary(undefined), fakeChatArchive([]))).toEqual([])
   })
 })
 
@@ -277,6 +371,13 @@ describe("chatRecallEpisodeText", () => {
     // いまの話の続きではないことを前置きで断る。
     expect(text).toContain("続きではなく")
     expect(text).not.toContain("続きがあるが")
+  })
+
+  it("仕事の行は systemPrompt の逐語と同じ印で並ぶ", () => {
+    const text = chatRecallEpisodeText({ kind: "found", entries: WORK_RECENT, overflowed: false })
+
+    expect(text).toContain("[仕事: 架空プロジェクト] 利用者: 架空の依頼")
+    expect(text).toContain("[仕事: 架空プロジェクト] したこと: 架空の結論")
   })
 
   it("overflowed のときは、逐語のあとに続きがあることだけを一言添える", () => {

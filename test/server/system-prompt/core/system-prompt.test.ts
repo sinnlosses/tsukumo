@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest"
 
 import { CHAT_MANNER_PROMPT } from "../../../../src/server/chat/core/chat-manner.ts"
-import { takeChatMemoryPromptParts } from "../../../../src/server/chat/core/chat-memory-prompt.ts"
+import {
+  takeChatMemoryPromptParts,
+  workMemoryPromptParts,
+} from "../../../../src/server/chat/core/chat-memory-prompt.ts"
 import { REPORT_NOTATION_PROMPT } from "../../../../src/server/report/core/report-notation.ts"
 import type {
   ChatArchive,
@@ -18,7 +21,7 @@ import {
   toSystemPromptMode,
 } from "../../../../src/server/system-prompt/core/system-prompt.ts"
 import { CHAT_MEMORY_BUDGET } from "../../../../src/shared/chat/chat-memory-budget.ts"
-import { inMemoryChatSummary, NOOP_CHAT_ARCHIVE } from "../../../fixture/chat.ts"
+import { fixedChatSummary, inMemoryChatSummary, NOOP_CHAT_ARCHIVE } from "../../../fixture/chat.ts"
 
 // `systemPrompt` に何が・どの順で載るかを、3通り（仕事・雑談・続きから始めるとき）で固定する
 // （docs/architecture/character-pack.md「append に入る節の並び」）。本物の駆動を起こして確かめることはできない（`systemPrompt` は
@@ -26,15 +29,15 @@ import { inMemoryChatSummary, NOOP_CHAT_ARCHIVE } from "../../../fixture/chat.ts
 //
 // 文面そのものは写さない。 節の中身の正典は `REPORT_NOTATION_PROMPT` / `SPEECH_CADENCE_PROMPT` /
 // `CHAT_MANNER_PROMPT` / `takeChatMemoryPromptParts` で、ここが見るのは並びとつなぎ方だけ。
-// 期待値の見出しは定数から取り出す（文面を直してもここは二重にならない）。雑談の記憶の2節だけ
+// 期待値の見出しは定数から取り出す（文面を直してもここは二重にならない）。記憶の2節だけ
 // 見出しを直に書く——前置きは `takeChatMemoryPromptParts` の外に出ておらず、ここで見たいのが
 // 「どのモードで、どの順に載るか」の表そのものだから。
 
 const PERSONA = "# 架空の精霊\n\n語尾に「なのじゃ」と付ける。"
 const SUMMARY = "架空の精霊と読んだ本の話をした。"
 const RECENT: readonly ChatArchiveRecentEntry[] = [
-  { speaker: "user", text: "ただいま", date: "2026-09-21" },
-  { speaker: "character", text: "おかえりなのじゃ", date: "2026-09-21" },
+  { kind: "request", origin: { mode: "chat" }, text: "ただいま", date: "2026-09-21" },
+  { kind: "speech", origin: { mode: "chat" }, text: "おかえりなのじゃ", date: "2026-09-21" },
 ]
 
 /** 読み戻すと `RECENT` を返す `ChatArchive`。 */
@@ -42,11 +45,39 @@ const RECENT_CHAT_ARCHIVE = { ...NOOP_CHAT_ARCHIVE, readRecent: () => RECENT } s
 
 describe("takeSystemPromptAppend", () => {
   it("仕事のときは 人格 → セリフの間合い → 段取り → レポートの記法 の順でつながる", () => {
-    const append = takeSystemPromptAppend({ persona: PERSONA, mode: { kind: "work" } })
+    const append = takeSystemPromptAppend({ persona: PERSONA, mode: workMode() })
 
     expect(append).toBe(
       `${PERSONA}\n\n${SPEECH_CADENCE_PROMPT}\n\n${WORK_PLAN_PROMPT}\n\n${REPORT_NOTATION_PROMPT}`,
     )
+  })
+
+  it("仕事のときも記憶があれば、レポートの記法のあとに あらすじ → 直近の会話 が載る（雑談の作法は載らない）", () => {
+    const summary = inMemoryChatSummary({ summary: SUMMARY, delivered: true })
+    const expectedMemory = workMemoryPromptParts({
+      chatSummary: summary,
+      chatArchive: RECENT_CHAT_ARCHIVE,
+      packName: "架空",
+      readbackLimits: { recentBytes: CHAT_MEMORY_BUDGET.workRecentBytes },
+    })
+
+    const append = takeSystemPromptAppend({
+      persona: PERSONA,
+      mode: workMode(summary, RECENT_CHAT_ARCHIVE),
+    })
+
+    expect(expectedMemory).toHaveLength(2)
+    expect(append).toBe(
+      [
+        PERSONA,
+        SPEECH_CADENCE_PROMPT,
+        WORK_PLAN_PROMPT,
+        REPORT_NOTATION_PROMPT,
+        ...expectedMemory,
+      ].join("\n\n"),
+    )
+    expect(append).not.toContain(CHAT_MANNER_PROMPT)
+    expect(summary.read()?.delivered).toBe(true)
   })
 
   it("雑談のときは 人格 → 雑談の作法 → 雑談の記憶 の順でつながる（仕事の2つは載らない）", () => {
@@ -83,7 +114,13 @@ describe("takeSystemPromptAppend", () => {
   })
 
   it("3通りの節の並びは、仕事・雑談・続きからで入れ替わる", () => {
-    const work = takeSystemPromptAppend({ persona: PERSONA, mode: { kind: "work" } })
+    const work = takeSystemPromptAppend({
+      persona: PERSONA,
+      mode: workMode(
+        inMemoryChatSummary({ summary: SUMMARY, delivered: true }),
+        RECENT_CHAT_ARCHIVE,
+      ),
+    })
     const chat = takeSystemPromptAppend({
       persona: PERSONA,
       mode: chatMode(
@@ -106,18 +143,20 @@ describe("takeSystemPromptAppend", () => {
       ...headings(SPEECH_CADENCE_PROMPT),
       ...headings(WORK_PLAN_PROMPT),
       ...headings(REPORT_NOTATION_PROMPT),
+      "## これまでのあらすじ",
+      "## 直近の会話（そのままの文面）",
     ])
     expect(headings(chat)).toEqual([
       ...headings(PERSONA),
       ...headings(CHAT_MANNER_PROMPT),
-      "## 前回までの雑談の要約",
-      "## 直近の雑談（そのままの文面）",
+      "## これまでのあらすじ",
+      "## 直近の会話（そのままの文面）",
     ])
     expect(headings(resumed)).toEqual([...headings(PERSONA), ...headings(CHAT_MANNER_PROMPT)])
   })
 
   it("人格が無いパック（空文字列）でも規約は載る（どのパックでも黙りっぱなしにしない）", () => {
-    const append = takeSystemPromptAppend({ persona: "", mode: { kind: "work" } })
+    const append = takeSystemPromptAppend({ persona: "", mode: workMode() })
 
     expect(append).toBe(
       `${SPEECH_CADENCE_PROMPT}\n\n${WORK_PLAN_PROMPT}\n\n${REPORT_NOTATION_PROMPT}`,
@@ -134,7 +173,7 @@ describe("takeSystemPromptAppend", () => {
       ),
     })
 
-    expect(takeSystemPromptAppend({ persona: PERSONA, mode: { kind: "work" } })).toContain(PERSONA)
+    expect(takeSystemPromptAppend({ persona: PERSONA, mode: workMode() })).toContain(PERSONA)
     expect(chat).toContain(PERSONA)
   })
 
@@ -150,16 +189,20 @@ describe("takeSystemPromptAppend", () => {
   })
 
   it("雑談のときだけ載る条（覚える・忘れる・思い出す）は、仕事の append に入らない", () => {
-    // 4つのツールは雑談のときだけ載るので、呼ぶ条件もこの文面だけが持つ
-    // （docs/architecture/chat-mode.md「雑談モード」）。
-    const work = takeSystemPromptAppend({ persona: PERSONA, mode: { kind: "work" } })
+    const work = takeSystemPromptAppend({
+      persona: PERSONA,
+      mode: workMode(
+        inMemoryChatSummary({ summary: SUMMARY, delivered: true }),
+        RECENT_CHAT_ARCHIVE,
+      ),
+    })
 
     expect(CHAT_MANNER_PROMPT).toContain("remember")
     expect(CHAT_MANNER_PROMPT).toContain("forget")
-    expect(CHAT_MANNER_PROMPT).toContain("recall")
     expect(CHAT_MANNER_PROMPT).toContain("recall_episode")
+    expect(work).not.toContain("remember")
     expect(work).not.toContain("forget")
-    expect(work).not.toContain("recall")
+    expect(work).not.toContain("recall_episode")
   })
 
   it("雑談の作法に「完了」の1行の条は無い（催促は環境変数で塞ぐ。docs/architecture/chat-mode.md 4.9）", () => {
@@ -188,7 +231,13 @@ describe("toSystemPromptMode", () => {
       },
     }
 
-    const mode = toSystemPromptMode(sessionMode, chatArchive, { kind: "new" }, "架空")
+    const mode = toSystemPromptMode(
+      sessionMode,
+      chatArchive,
+      () => undefined,
+      { kind: "new" },
+      "架空",
+    )
 
     expect(mode).toEqual({
       kind: "chat",
@@ -201,7 +250,53 @@ describe("toSystemPromptMode", () => {
       },
     })
   })
+
+  it("仕事のときはあらすじを読む口だけを渡し、読む量は workRecentBytes", () => {
+    const readChatSummary = (): undefined => undefined
+    const sessionMode: SessionMode = {
+      kind: "work",
+      chatRecall: {
+        recallList: () => ({ kind: "not-found" }),
+        recallEpisode: () => ({ kind: "not-found" }),
+        finishTurn: () => {},
+      },
+    }
+
+    const mode = toSystemPromptMode(
+      sessionMode,
+      RECENT_CHAT_ARCHIVE,
+      readChatSummary,
+      { kind: "resume", sessionId: "fictional" },
+      "架空",
+    )
+
+    expect(mode).toEqual({
+      kind: "work",
+      memory: {
+        chatSummary: { read: readChatSummary },
+        chatArchive: RECENT_CHAT_ARCHIVE,
+        packName: "架空",
+        readbackLimits: { recentBytes: CHAT_MEMORY_BUDGET.workRecentBytes },
+      },
+    })
+  })
 })
+
+/** 仕事のモード（既定は記憶が空。読む量は本物の配線と同じ値）。 */
+function workMode(
+  chatSummary: Pick<ChatSummary, "read"> = fixedChatSummary(undefined),
+  chatArchive: ChatArchive = NOOP_CHAT_ARCHIVE,
+): SystemPromptMode {
+  return {
+    kind: "work",
+    memory: {
+      chatSummary,
+      chatArchive,
+      packName: "架空",
+      readbackLimits: { recentBytes: CHAT_MEMORY_BUDGET.workRecentBytes },
+    },
+  }
+}
 
 /** 雑談のモード（記憶の口は呼ぶたびに作る。読む量は本物の配線と同じ値）。 */
 function chatMode(

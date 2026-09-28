@@ -31,12 +31,26 @@ describe("createChatSummary", () => {
     expect(chatSummary.read()).toBeUndefined()
   })
 
-  it("write すると読める。印は「渡し済み」になる", () => {
+  it("write すると読める。写しが無かったときの印は「未渡し」", () => {
     const chatSummary = createChatSummary("fictional-pack", root())
 
     chatSummary.write(SUMMARY)
 
+    expect(chatSummary.read()).toEqual({ summary: SUMMARY, delivered: false })
+  })
+
+  it("write は印を変えない（「渡し済み」も「未渡し」もそのまま）", () => {
+    const chatSummary = createChatSummary("fictional-pack", root())
+    chatSummary.markDelivered()
+
+    chatSummary.write(SUMMARY)
+
     expect(chatSummary.read()).toEqual({ summary: SUMMARY, delivered: true })
+
+    chatSummary.markUndelivered()
+    chatSummary.write("書き直したあらすじ")
+
+    expect(chatSummary.read()).toEqual({ summary: "書き直したあらすじ", delivered: false })
   })
 
   it("write は上書きする（継ぎ足さない）", () => {
@@ -47,7 +61,7 @@ describe("createChatSummary", () => {
 
     expect(chatSummary.read()).toEqual({
       summary: "差し替えたあとの短い要約",
-      delivered: true,
+      delivered: false,
     })
   })
 
@@ -68,7 +82,7 @@ describe("createChatSummary", () => {
     const path = join(root(), "fictional-pack.md")
     const raw = readFileSync(path, "utf8")
 
-    expect(raw.split("\n")[0]).toBe("delivered")
+    expect(raw.split("\n")[0]).toBe("undelivered")
     expect(chatSummary.read()?.summary).not.toContain("delivered")
     expect(chatSummary.read()?.summary).toBe(SUMMARY)
   })

@@ -4,7 +4,10 @@ import { z } from "zod"
 
 import { createReportReview } from "../../../../src/server/report/core/report-review.ts"
 import { tsukumoServer } from "../../../../src/server/session-driver/adapter/sdk-tool.ts"
-import type { SessionMode } from "../../../../src/server/session-driver/core/session-driver.ts"
+import type {
+  ChatRecall,
+  SessionMode,
+} from "../../../../src/server/session-driver/core/session-driver.ts"
 import { createUsageReviewIntake } from "../../../../src/server/usage-review/core/usage-review-tool.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import {
@@ -18,25 +21,29 @@ import { fixedChatSummary } from "../../../fixture/chat.ts"
 
 const EXPRESSIONS = [{ name: "default", label: "通常" }] as const
 
-const WORK_MODE: SessionMode = { kind: "work" }
+const NOT_FOUND_RECALL = {
+  recallList: () => ({ kind: "not-found" }),
+  recallEpisode: () => ({ kind: "not-found" }),
+  finishTurn: () => {},
+} satisfies ChatRecall
+
+const WORK_MODE: SessionMode = { kind: "work", chatRecall: NOT_FOUND_RECALL }
 
 const CHAT_MODE: SessionMode = {
   kind: "chat",
   personaMemory: { remember: () => {}, forget: () => {}, finishTurn: () => {} },
   chatSummary: fixedChatSummary(undefined),
-  chatRecall: {
-    recallList: () => ({ kind: "not-found" }),
-    recallEpisode: () => ({ kind: "not-found" }),
-    finishTurn: () => {},
-  },
+  chatRecall: NOT_FOUND_RECALL,
 }
 
 describe("tsukumoServer", () => {
-  it("仕事のときは report と work_plan と見直しの2つが常に載る（speak と並ぶ）", async () => {
+  it("仕事のときは report と work_plan と見直しの2つと recall / recall_episode が載り、remember / forget は載らない", async () => {
     const names = await listedToolNames(workServer())
 
     expect(names).toEqual([
       "speak",
+      "recall",
+      "recall_episode",
       "report",
       "work_plan",
       "usage_review_stage",
@@ -62,7 +69,7 @@ describe("tsukumoServer", () => {
       tsukumoServer(EXPRESSIONS, CHAT_MODE, createReportReview(), noopIntake(), () => {}),
     )
 
-    expect(names).toEqual(["speak", "remember", "forget", "recall", "recall_episode"])
+    expect(names).toEqual(["speak", "recall", "recall_episode", "remember", "forget"])
   })
 })
 
@@ -77,7 +84,14 @@ describe("recall / recall_episode ツール", () => {
         }),
         recallEpisode: (id) => ({
           kind: "found",
-          entries: [{ speaker: "user", text: `${id} の架空のやり取り`, date: "2026-09-25" }],
+          entries: [
+            {
+              kind: "request",
+              origin: { mode: "chat" },
+              text: `${id} の架空のやり取り`,
+              date: "2026-09-25",
+            },
+          ],
           overflowed: false,
         }),
         finishTurn: () => {},
@@ -94,6 +108,36 @@ describe("recall / recall_episode ツール", () => {
     expect(listReply.text).toContain("id-for-散歩")
     expect(listReply.text).toContain("架空の見出し")
     expect(episodeReply.text).toContain("2026-09-25-1 の架空のやり取り")
+  })
+
+  it("仕事のときも recall / recall_episode が引け、仕事の行が印つきで返る", async () => {
+    const workMode: SessionMode = {
+      kind: "work",
+      chatRecall: {
+        recallList: () => ({ kind: "not-found" }),
+        recallEpisode: (id) => ({
+          kind: "found",
+          entries: [
+            {
+              kind: "conclusion",
+              origin: { mode: "work", project: "架空プロジェクト" },
+              text: `${id} の架空の結論`,
+              date: "2026-09-25",
+            },
+          ],
+          overflowed: false,
+        }),
+        finishTurn: () => {},
+      },
+    }
+
+    const reply = await callTool(
+      tsukumoServer(EXPRESSIONS, workMode, createReportReview(), noopIntake(), () => {}),
+      "recall_episode",
+      { id: "2026-09-25-1" },
+    )
+
+    expect(reply.text).toContain("[仕事: 架空プロジェクト] したこと: 2026-09-25-1 の架空の結論")
   })
 
   it("当たらない・知らない id のときは短い一言だけで、会話の文面は入らない", async () => {

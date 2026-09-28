@@ -72,7 +72,7 @@ export type SessionManagerOptions = {
   readonly project: string
   /**
    * 定着の出どころ（`ChatConsolidationSource`）。疑似セッションでは `dont-consolidate`。
-   * いつ起こすか（雑談の駆動由来のターンの終わり）と、同時に1本に絞るのはここ。
+   * いつ起こすか（駆動由来のターンの終わり。雑談・仕事とも）と、プロセスの中で1本に絞るのはここ。
    */
   readonly chatConsolidation: ChatConsolidationSource
   /**
@@ -341,8 +341,8 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
         )
       }
     }
-    // 定着を起こす。雑談の駆動由来のターンの終わりだけで、走っていれば契機を捨てる。待たずに次へ進む。
-    if (origin === "driver" && event.kind === "turn-finished" && state.chatMode) {
+    // 定着を起こす。駆動由来のターンの終わり（雑談・仕事）だけで、走っていれば契機を捨てる。待たずに次へ進む。
+    if (origin === "driver" && event.kind === "turn-finished") {
       startConsolidation(state.character?.pack)
     }
     // 訪問の出入りを決める。駆動由来だけ（復元の再生は前のセッションの待ち）。

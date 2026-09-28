@@ -41,8 +41,8 @@ export type ChatSummary = {
   readonly read: () => ChatSummaryRecord | undefined
   /**
    * 定着が書き直したあらすじ（話題の組を含む本文）を上書きする。
-   * 呼ぶと印は「渡し済み」になる。
-   * 畳んだ会話は、いま動いているこのセッション自身がすでに持っているため。
+   * 印は変えない（ファイルが無ければ「未渡し」で書く）。
+   * 定着はどのプロセスのどちらのモードのターンからも走り、畳んだ会話を文脈に持っているセッションが決まらないため。
    */
   readonly write: (summary: string) => void
   /** 印を「未渡し」に戻す（`/clear` を見たとき）。 */
@@ -58,7 +58,7 @@ export type ChatSummaryRecord = {
 }
 
 /**
- * 雑談の会話のアーカイブの読み書き口。
+ * 雑談と仕事の会話のアーカイブの読み書き口。
  * 会話の文面を読み戻す口は {@link ChatArchive.readRecent}・{@link ChatArchive.unconsolidated}・{@link ChatArchive.recallEpisode} の3つに限る。
  * 読み戻しの口を足すにはユーザーの決定が要る（`docs/coding-standards.md`「会話内容の扱い」）。
  */
@@ -81,7 +81,7 @@ export type ChatArchive = {
   ) => readonly ChatArchiveRecentEntry[]
   /**
    * まだどのエピソードにも入っていない行を、古いほうから {@link ChatUnconsolidatedLimits.maxBytes} まで返す（定着の入力）。
-   * 最後のエピソードの `to` より後で、作業記憶の窓（`recentBytes`）の外にある行だけを対象にする。
+   * 最後のエピソードの `to` より後で、{@link ChatUnconsolidatedLimits.recentBytes} の窓の外にある行だけを対象にする。
    * エピソードが無ければアーカイブの最初の行から。
    * 行番号はここでは振らない（振るのは渡す側）。
    * 契機（`consolidateEveryBytes`）に届いたかは、呼び出し側が {@link ChatUnconsolidatedBatch.usedBytes} で比べる。
@@ -109,6 +109,22 @@ export type ChatArchive = {
     limitBytes: number,
     now: Temporal.Instant,
   ) => ChatEpisodeReadResult
+  /**
+   * そのパックの定着の錠を取る。プロセスをまたいで1本だけが取れる。
+   * 取れなければ undefined（ほかの誰かが走らせている）。
+   * 書いてから `staleAfterMs` を過ぎた錠は、落ちたプロセスの残りとして消して取り直す。
+   */
+  readonly lockConsolidation: (
+    packName: string,
+    staleAfterMs: number,
+    now: Temporal.Instant,
+  ) => ChatConsolidationLock | undefined
+}
+
+/** {@link ChatArchive.lockConsolidation} が取れたときの錠。 */
+export type ChatConsolidationLock = {
+  /** 錠を外す。外せなくても例外は投げない。 */
+  readonly release: () => void
 }
 
 /**
@@ -122,10 +138,8 @@ export type ChatUnconsolidatedLimits = {
 }
 
 /** {@link ChatArchive.unconsolidated} が返す1件。定着へ渡す行番号はここでは持たない。 */
-export type ChatUnconsolidatedEntry = {
+export type ChatUnconsolidatedEntry = ChatArchiveLine & {
   readonly at: string
-  readonly speaker: "user" | "character"
-  readonly text: string
 }
 
 /** {@link ChatArchive.unconsolidated} が返すもの。 */
@@ -183,7 +197,7 @@ export type ChatEpisodeReadResult =
   | { readonly kind: "not-found" }
 
 /**
- * 古い雑談を索引から思い出す口。
+ * 古い会話を索引から思い出す口。
  * {@link ChatArchive} を駆動へそのまま渡さないために分けてある。
  * パックの名前と読む量は、`createChatRecall` を呼ぶ配線が縛ってから渡す。
  * 1ターンの回数の上限（`recallListsPerTurn` / `recallEpisodesPerTurn`）を数えるのは実装の側（`createChatRecall`）。
@@ -224,7 +238,7 @@ export type ChatRecallEpisodeResult =
 
 /**
  * {@link ChatArchive.readRecent} に渡す上限（文面の UTF-8 バイト数。
- * `CHAT_MEMORY_BUDGET.recentBytes`）。
+ * 雑談は `CHAT_MEMORY_BUDGET.recentBytes`、仕事は `workRecentBytes`）。
  */
 export type ChatReadbackLimits = {
   /** 直近の窓（古い順に落ちる側）。 */
@@ -232,15 +246,28 @@ export type ChatReadbackLimits = {
 }
 
 /**
- * {@link ChatArchive.readRecent} が返す1件。話者の別・文面・その行の日付だけで、`expression` も `images` も持たない。
+ * {@link ChatArchive.readRecent} が返す1件。行の種類・文面・その行の日付だけで、`expression` も `images` も持たない。
  * 読む側が落とすのではなく、口が最初から渡さない。
  */
-export type ChatArchiveRecentEntry = {
-  readonly speaker: "user" | "character"
-  readonly text: string
+export type ChatArchiveRecentEntry = ChatArchiveLine & {
   /** その行のローカル日付（`YYYY-MM-DD`）。日付が変わるところに挟む見出しに使う。 */
   readonly date: string
 }
+
+/**
+ * 読み戻す1行の、時刻を除いた部分。
+ * 話者は `kind` から決まる（`request` は利用者、`speech` はキャラクター、`conclusion` はキャラクターがしたこと）。
+ */
+export type ChatArchiveLine = {
+  readonly kind: "request" | "speech" | "conclusion"
+  readonly text: string
+  readonly origin: ChatArchiveLineOrigin
+}
+
+/** その行を書いたのが雑談か仕事か。仕事の行だけがプロジェクトの名前（リポジトリの名前だけ）を持つ。 */
+export type ChatArchiveLineOrigin =
+  | { readonly mode: "chat" }
+  | { readonly mode: "work"; readonly project: string }
 
 /**
  * {@link ChatArchive.append} に渡す1件。`at` は届いた時刻（エポックミリ秒）。
@@ -290,19 +317,18 @@ export type ChatArchiveEntry =
       readonly project: string
     }
 
-/** このセッションが仕事か雑談か。 */
+/**
+ * このセッションが仕事か雑談か。
+ * `recall` と `recall_episode` のツールは両方のモードで載る（`chatRecall`）。
+ */
 export type SessionMode =
-  /** 仕事。雑談の口は1つも渡らない（作業の文脈が人格にもアーカイブにも入らない）。 */
-  | { readonly kind: "work" }
+  /** 仕事。覚えたことを書き換える口とあらすじの印の口は渡らない。 */
+  | { readonly kind: "work"; readonly chatRecall: ChatRecall }
   | {
       readonly kind: "chat"
       /** 渡ったときだけ `remember` と `forget` のツールが `mcpServers` に載る。 */
       readonly personaMemory: PersonaMemory
       readonly chatSummary: ChatSummary
-      /**
-       * 渡ったときだけ `recall` と `recall_episode` のツールが `mcpServers` に載る。
-       * 仕事の会話はそもそもアーカイブに残さないので、仕事では引く先が無い。
-       */
       readonly chatRecall: ChatRecall
     }
 
@@ -327,7 +353,7 @@ export type SessionDriverOptions = {
   readonly model: ModelAlias
   /** このセッションを起こす effort（覚えた既定）。起こしたあと帯から変えた値はここに戻らない。 */
   readonly effort: EffortLevel
-  /** `systemPrompt` に足す文字列（人格と tsukumo 側の規約と雑談の記憶。組み立ては `takeSystemPromptAppend`）。 */
+  /** `systemPrompt` に足す文字列（人格と tsukumo 側の規約と記憶。組み立ては `takeSystemPromptAppend`）。 */
   readonly systemPromptAppend: string
   readonly start: SessionStart
   /**

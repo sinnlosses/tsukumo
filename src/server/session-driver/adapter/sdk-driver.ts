@@ -187,9 +187,9 @@ async function relayMessages(
         if (event.kind === "turn-finished") {
           // 1ターンに書けるのは1行、引けるのは recall / recall_episode それぞれ決めた回数まで。
           // ターンの区切りを知っているのはここだけなので、終わるたびに次の1行・次の回数を受け付けさせる。
+          options.mode.chatRecall.finishTurn()
           if (options.mode.kind === "chat") {
             options.mode.personaMemory.finishTurn()
-            options.mode.chatRecall.finishTurn()
           }
           if (sessionId !== undefined) {
             scheduleMarkSession(sessionId, options)

@@ -21,7 +21,14 @@ import { fixedChatSummary } from "../../../fixture/chat.ts"
 // `startSdkDriver` 自体は本物の claude を子プロセスとして起こすので、ここでは呼ばない
 // （docs/requirements.md「起動と設定」 / CLAUDE.md「よく使うコマンド」）。`query()` に渡る `options` の
 // うち、クロージャを含まない部分（`buildQuerySeedOptions`）だけを検査する。
-const WORK_MODE: SessionMode = { kind: "work" }
+const WORK_MODE: SessionMode = {
+  kind: "work",
+  chatRecall: {
+    recallList: () => ({ kind: "not-found" }),
+    recallEpisode: () => ({ kind: "not-found" }),
+    finishTurn: () => {},
+  },
+}
 
 const BASE_OPTIONS: SessionDriverOptions = {
   cwd: "/tmp/tsukumo-test",

@@ -18,9 +18,24 @@ import { CHAT_MEMORY_BUDGET } from "../../../../src/shared/chat/chat-memory-budg
 /** 契機にちょうど届いた量の、架空の未定着の行。 */
 const DUE_BATCH: ChatUnconsolidatedBatch = {
   entries: [
-    { at: "2026-09-20T10:00:00+09:00", speaker: "user", text: "架空の発言1" },
-    { at: "2026-09-20T10:01:00+09:00", speaker: "character", text: "架空の返事1" },
-    { at: "2026-09-20T10:02:00+09:00", speaker: "user", text: "架空の発言2" },
+    {
+      at: "2026-09-20T10:00:00+09:00",
+      kind: "request",
+      origin: { mode: "chat" },
+      text: "架空の発言1",
+    },
+    {
+      at: "2026-09-20T10:01:00+09:00",
+      kind: "speech",
+      origin: { mode: "chat" },
+      text: "架空の返事1",
+    },
+    {
+      at: "2026-09-20T10:02:00+09:00",
+      kind: "request",
+      origin: { mode: "chat" },
+      text: "架空の発言2",
+    },
   ],
   usedBytes: CHAT_MEMORY_BUDGET.consolidateEveryBytes,
   previousEpisodeTitle: "架空の直前の見出し",
@@ -43,8 +58,10 @@ const PREVIOUS_SUMMARY = "架空の前のあらすじ\n<topics>\n- 架空の古�
 function createPorts(
   batch: ChatUnconsolidatedBatch,
   query: (request: ChatConsolidationQuery, signal: AbortSignal) => Promise<unknown>,
+  lockAvailable: boolean = true,
 ) {
   const order: string[] = []
+  const lockEvents: string[] = []
   const limits: ChatUnconsolidatedLimits[] = []
   const episodes: ChatEpisodeDraft[] = []
   const queries: ChatConsolidationQuery[] = []
@@ -69,6 +86,17 @@ function createPorts(
         order.push("append-episodes")
         episodes.push(...drafts)
       },
+      lockConsolidation: (packName, staleAfterMs, now) => {
+        lockEvents.push(`lock ${packName} ${String(staleAfterMs)} ${now.toString()}`)
+        if (!lockAvailable) {
+          return undefined
+        }
+        return {
+          release: () => {
+            lockEvents.push("release")
+          },
+        }
+      },
     },
     chatSummary: (packName) => {
       summaryPacks.push(packName)
@@ -78,11 +106,23 @@ function createPorts(
       queries.push(request)
       return query(request, signal)
     },
+    now: () => LOCKED_AT.epochMilliseconds,
   })
-  return { write, order, limits, episodes, queries, summaryPacks, summary: () => summary }
+  return {
+    write,
+    order,
+    lockEvents,
+    limits,
+    episodes,
+    queries,
+    summaryPacks,
+    summary: () => summary,
+  }
 }
 
 const NEVER_ABORTED = new AbortController().signal
+
+const LOCKED_AT = Temporal.Instant.from("2026-09-26T00:00:00Z")
 
 describe("createChatConsolidationWriter", () => {
   it("未定着の行が契機に届かなければ query() を起こさず not-due（窓の外を契機の2倍まで読む）", async () => {
@@ -95,10 +135,31 @@ describe("createChatConsolidationWriter", () => {
     expect(ports.queries).toEqual([])
     expect(ports.limits).toEqual([
       {
-        recentBytes: CHAT_MEMORY_BUDGET.recentBytes,
+        recentBytes: CHAT_MEMORY_BUDGET.workRecentBytes,
         maxBytes: CHAT_MEMORY_BUDGET.consolidateEveryBytes * 2,
       },
     ])
+  })
+
+  it("錠を取れなければ行も読まず query() も起こさず locked", async () => {
+    const ports = createPorts(DUE_BATCH, () => Promise.resolve(VALID_OUTPUT), false)
+
+    expect(await ports.write("fictional", NEVER_ABORTED)).toEqual({ kind: "locked" })
+    expect(ports.limits).toEqual([])
+    expect(ports.queries).toEqual([])
+    expect(ports.lockEvents).toEqual([`lock fictional 240000 ${LOCKED_AT.toString()}`])
+  })
+
+  it.each([
+    ["書けたとき", () => Promise.resolve(VALID_OUTPUT), "written"],
+    ["契機に届かないとき", () => Promise.resolve(VALID_OUTPUT), "not-due"],
+    ["query() が失敗したとき", () => Promise.reject(new Error("架空の失敗")), "failed"],
+  ] as const)("%s も、終われば錠を外す", async (_name, query, kind) => {
+    const batch = kind === "not-due" ? { ...DUE_BATCH, usedBytes: 0 } : DUE_BATCH
+    const ports = createPorts(batch, query)
+
+    expect((await ports.write("fictional", NEVER_ABORTED)).kind).toBe(kind)
+    expect(ports.lockEvents).toEqual([`lock fictional 240000 ${LOCKED_AT.toString()}`, "release"])
   })
 
   it.each([
@@ -106,7 +167,12 @@ describe("createChatConsolidationWriter", () => {
       "先頭1件だけで上限（契機の2倍）を超えるとき",
       {
         entries: [
-          { at: "2026-09-20T10:00:00+09:00", speaker: "user" as const, text: "架空の発言" },
+          {
+            at: "2026-09-20T10:00:00+09:00",
+            kind: "request" as const,
+            origin: { mode: "chat" as const },
+            text: "架空の発言",
+          },
         ],
         usedBytes: CHAT_MEMORY_BUDGET.consolidateEveryBytes * 2 + 1,
         previousEpisodeTitle: "",
@@ -117,7 +183,12 @@ describe("createChatConsolidationWriter", () => {
       "溢れる前の合計が契機に届かないとき（例: 先頭 5 KiB＋次 12 KiB）",
       {
         entries: [
-          { at: "2026-09-20T10:00:00+09:00", speaker: "user" as const, text: "架空の発言" },
+          {
+            at: "2026-09-20T10:00:00+09:00",
+            kind: "request" as const,
+            origin: { mode: "chat" as const },
+            text: "架空の発言",
+          },
         ],
         usedBytes: CHAT_MEMORY_BUDGET.consolidateEveryBytes - 1,
         previousEpisodeTitle: "",

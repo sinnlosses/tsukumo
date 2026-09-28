@@ -342,8 +342,8 @@ describe("createChatArchive の readRecent", () => {
     })
 
     expect(chatArchive.readRecent("fictional-pack", LIMIT_ALL)).toEqual([
-      { speaker: "user", text: "20日の依頼", date: "2026-09-20" },
-      { speaker: "character", text: "21日のセリフ", date: "2026-09-21" },
+      { kind: "request", origin: { mode: "chat" }, text: "20日の依頼", date: "2026-09-20" },
+      { kind: "speech", origin: { mode: "chat" }, text: "21日のセリフ", date: "2026-09-21" },
     ])
   })
 
@@ -427,8 +427,8 @@ describe("createChatArchive の readRecent", () => {
     const recent = chatArchive.readRecent("fictional-pack", LIMIT_ALL)
 
     expect(recent).toEqual([
-      { speaker: "user", text: REQUEST_TEXT, date: "2026-09-21" },
-      { speaker: "character", text: SPEECH_TEXT, date: "2026-09-21" },
+      { kind: "request", origin: { mode: "chat" }, text: REQUEST_TEXT, date: "2026-09-21" },
+      { kind: "speech", origin: { mode: "chat" }, text: SPEECH_TEXT, date: "2026-09-21" },
     ])
   })
 
@@ -449,11 +449,11 @@ describe("createChatArchive の readRecent", () => {
     const chatArchive = createChatArchive(root())
 
     expect(chatArchive.readRecent("fictional-pack", LIMIT_ALL)).toEqual([
-      { speaker: "user", text: "読める行", date: "2026-09-21" },
+      { kind: "request", origin: { mode: "chat" }, text: "読める行", date: "2026-09-21" },
     ])
   })
 
-  it("v:2 の雑談の行も読む（v:1 と同じ扱い）。v:2 の仕事の行はまだ読み戻さない", () => {
+  it("v:2 の雑談の行も仕事の行も読み、仕事の行には印とプロジェクトの名前が付く", () => {
     writeRawLines("2026-09-21.jsonl", [
       JSON.stringify({
         v: 2,
@@ -478,8 +478,67 @@ describe("createChatArchive の readRecent", () => {
     const chatArchive = createChatArchive(root())
 
     expect(chatArchive.readRecent("fictional-pack", LIMIT_ALL)).toEqual([
-      { speaker: "user", text: "v2の雑談の行", date: "2026-09-21" },
+      { kind: "request", origin: { mode: "chat" }, text: "v2の雑談の行", date: "2026-09-21" },
+      {
+        kind: "request",
+        origin: { mode: "work", project: FICTIONAL_PROJECT },
+        text: "v2の仕事の行",
+        date: "2026-09-21",
+      },
     ])
+  })
+
+  it("仕事の依頼・セリフ・結論を書いた順に、行の種類つきで読み戻す", () => {
+    const chatArchive = createChatArchive(root())
+    const at = noonOn(2026, 9, 21)
+    const project = FICTIONAL_PROJECT
+    chatArchive.append("fictional-pack", {
+      mode: "work",
+      kind: "request",
+      at,
+      text: "架空の依頼",
+      project,
+      images: undefined,
+    })
+    chatArchive.append("fictional-pack", {
+      mode: "work",
+      kind: "speech",
+      at: at + 1000,
+      text: "架空のセリフ",
+      project,
+      expression: "proud",
+    })
+    chatArchive.append("fictional-pack", {
+      mode: "work",
+      kind: "conclusion",
+      at: at + 2000,
+      text: "架空の結論",
+      project,
+    })
+
+    const origin = { mode: "work", project }
+    expect(chatArchive.readRecent("fictional-pack", LIMIT_ALL)).toEqual([
+      { kind: "request", origin, text: "架空の依頼", date: "2026-09-21" },
+      { kind: "speech", origin, text: "架空のセリフ", date: "2026-09-21" },
+      { kind: "conclusion", origin, text: "架空の結論", date: "2026-09-21" },
+    ])
+  })
+
+  it("project を持たない仕事の行は読まない", () => {
+    writeRawLines("2026-09-21.jsonl", [
+      JSON.stringify({
+        v: 2,
+        at: "2026-09-21T12:00:00+09:00",
+        pack: "fictional-pack",
+        mode: "work",
+        kind: "request",
+        speaker: "user",
+        text: "プロジェクトの無い仕事の行",
+      }),
+    ])
+    const chatArchive = createChatArchive(root())
+
+    expect(chatArchive.readRecent("fictional-pack", LIMIT_ALL)).toEqual([])
   })
 
   it("日付のファイル名でないものは読まない", () => {
@@ -570,7 +629,7 @@ describe("createChatArchive の unconsolidated", () => {
     )
 
     expect(entries.map((entry) => entry.text)).toEqual(["19日の依頼", "20日の依頼"])
-    expect(entries.map((entry) => entry.speaker)).toEqual(["user", "user"])
+    expect(entries.map((entry) => entry.kind)).toEqual(["request", "request"])
     expect(previousEpisodeTitle).toBe("")
     expect(usedBytes).toBe(Buffer.byteLength("19日の依頼") + Buffer.byteLength("20日の依頼"))
   })
@@ -655,6 +714,32 @@ describe("createChatArchive の unconsolidated", () => {
     expect(entries.map((entry) => entry.text)).toEqual([TWELVE_BYTES])
     expect(usedBytes).toBe(Buffer.byteLength(TWELVE_BYTES))
     expect(overflowed).toBe(true)
+  })
+
+  it("仕事の行も雑談の行と区別せずに返し、印とプロジェクトの名前が付く", () => {
+    const chatArchive = createChatArchive(root())
+    appendRequest(chatArchive, 19, "19日の雑談")
+    chatArchive.append("fictional-pack", {
+      mode: "work",
+      kind: "conclusion",
+      at: noonOn(2026, 9, 20),
+      text: "20日の結論",
+      project: FICTIONAL_PROJECT,
+    })
+
+    const { entries } = chatArchive.unconsolidated("fictional-pack", {
+      recentBytes: 0,
+      maxBytes: 1024,
+    })
+
+    expect(entries.map(({ kind, origin, text }) => ({ kind, origin, text }))).toEqual([
+      { kind: "request", origin: { mode: "chat" }, text: "19日の雑談" },
+      {
+        kind: "conclusion",
+        origin: { mode: "work", project: FICTIONAL_PROJECT },
+        text: "20日の結論",
+      },
+    ])
   })
 
   it("パック名が名前として通らないときは空", () => {
@@ -861,8 +946,8 @@ describe("createChatArchive の recallEpisode", () => {
     expect(result).toEqual({
       kind: "found",
       entries: [
-        { speaker: "user", text: "1件目の依頼", date: "2026-09-25" },
-        { speaker: "user", text: "2件目の依頼", date: "2026-09-25" },
+        { kind: "request", origin: { mode: "chat" }, text: "1件目の依頼", date: "2026-09-25" },
+        { kind: "request", origin: { mode: "chat" }, text: "2件目の依頼", date: "2026-09-25" },
       ],
       overflowed: false,
     })
@@ -893,8 +978,48 @@ describe("createChatArchive の recallEpisode", () => {
 
     expect(result).toEqual({
       kind: "found",
-      entries: [{ speaker: "user", text: "1件目の依頼", date: "2026-09-25" }],
+      entries: [
+        { kind: "request", origin: { mode: "chat" }, text: "1件目の依頼", date: "2026-09-25" },
+      ],
       overflowed: true,
+    })
+  })
+
+  it("範囲の中の仕事の行も、印とプロジェクトの名前つきで開く", () => {
+    const chatArchive = createChatArchive(root())
+    appendRequest(chatArchive, 25, 0, "1件目の依頼")
+    const workAt = Temporal.Instant.from(writtenAt(25, 0)).epochMilliseconds + 1000
+    chatArchive.append("fictional-pack", {
+      mode: "work",
+      kind: "request",
+      at: workAt,
+      text: "仕事の架空の依頼",
+      project: FICTIONAL_PROJECT,
+      images: undefined,
+    })
+    chatArchive.appendEpisodes("fictional-pack", [
+      {
+        from: writtenAt(25, 0),
+        to: writtenAt(25, 1),
+        title: "架空の見出し",
+        gist: "架空の要旨。",
+        cues: [],
+        weight: 2,
+      },
+    ])
+
+    expect(chatArchive.recallEpisode("fictional-pack", "2026-09-25-1", 1024, OPENED_AT)).toEqual({
+      kind: "found",
+      entries: [
+        { kind: "request", origin: { mode: "chat" }, text: "1件目の依頼", date: "2026-09-25" },
+        {
+          kind: "request",
+          origin: { mode: "work", project: FICTIONAL_PROJECT },
+          text: "仕事の架空の依頼",
+          date: "2026-09-25",
+        },
+      ],
+      overflowed: false,
     })
   })
 
@@ -919,6 +1044,50 @@ describe("createChatArchive の recallEpisode", () => {
       kind: "not-found",
     })
     expect(existsSync(join(root(), "fictional-pack", "recalled.jsonl"))).toBe(false)
+  })
+})
+
+describe("createChatArchive の lockConsolidation", () => {
+  const STALE_MS = 240_000
+  const LOCKED_AT = Temporal.Instant.from("2026-09-26T00:00:00+09:00")
+
+  function lockPath(): string {
+    return join(root(), "fictional-pack", "consolidation.lock")
+  }
+
+  it("取れるのは1本だけで、外すとまた取れる", () => {
+    const first = createChatArchive(root())
+    const second = createChatArchive(root())
+
+    const lock = first.lockConsolidation("fictional-pack", STALE_MS, LOCKED_AT)
+
+    expect(lock).toBeDefined()
+    expect(existsSync(lockPath())).toBe(true)
+    expect(second.lockConsolidation("fictional-pack", STALE_MS, LOCKED_AT)).toBeUndefined()
+
+    lock?.release()
+
+    expect(existsSync(lockPath())).toBe(false)
+    expect(second.lockConsolidation("fictional-pack", STALE_MS, LOCKED_AT)).toBeDefined()
+  })
+
+  it("書いてから閾値を過ぎた錠は取り直す（過ぎる前は取れない）", () => {
+    const chatArchive = createChatArchive(root())
+    const now = Temporal.Now.instant()
+    expect(chatArchive.lockConsolidation("fictional-pack", STALE_MS, now)).toBeDefined()
+
+    const justBefore = now.add({ milliseconds: STALE_MS - 1000 })
+    expect(chatArchive.lockConsolidation("fictional-pack", STALE_MS, justBefore)).toBeUndefined()
+
+    const after = now.add({ milliseconds: STALE_MS + 1000 })
+    expect(chatArchive.lockConsolidation("fictional-pack", STALE_MS, after)).toBeDefined()
+  })
+
+  it("パック名が名前として通らないときは取れず、ファイルも作らない", () => {
+    const chatArchive = createChatArchive(root())
+
+    expect(chatArchive.lockConsolidation("../evil", STALE_MS, LOCKED_AT)).toBeUndefined()
+    expect(existsSync(root())).toBe(false)
   })
 })
 

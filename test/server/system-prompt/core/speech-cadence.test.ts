@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest"
 import { REPORT_NOTATION_PROMPT } from "../../../../src/server/report/core/report-notation.ts"
 import { SPEECH_CADENCE_PROMPT } from "../../../../src/server/system-prompt/core/speech-cadence.ts"
 import { takeSystemPromptAppend } from "../../../../src/server/system-prompt/core/system-prompt.ts"
+import { CHAT_MEMORY_BUDGET } from "../../../../src/shared/chat/chat-memory-budget.ts"
+import { fixedChatSummary, NOOP_CHAT_ARCHIVE } from "../../../fixture/chat.ts"
 
 // この規約はパックによらず同じもの（docs/architecture/display.md「表示」）。文面そのものではなく、
 // どのパックの append にも載ることを見る（人格が無いパックで落ちると、そのパックだけ
@@ -14,7 +16,18 @@ const PERSONA = "# 架空の精霊\n\n語尾に「なのじゃ」と付ける。
 
 /** 仕事モードの append（人格は文字列で渡す。`takeSystemPromptAppend`）。 */
 function workAppend(persona: string): string {
-  return takeSystemPromptAppend({ persona, mode: { kind: "work" } })
+  return takeSystemPromptAppend({
+    persona,
+    mode: {
+      kind: "work",
+      memory: {
+        chatSummary: fixedChatSummary(undefined),
+        chatArchive: NOOP_CHAT_ARCHIVE,
+        packName: "架空",
+        readbackLimits: { recentBytes: CHAT_MEMORY_BUDGET.workRecentBytes },
+      },
+    },
+  })
 }
 
 describe("SPEECH_CADENCE_PROMPT", () => {
