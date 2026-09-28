@@ -1,3 +1,4 @@
+import { QueryClientProvider } from "@tanstack/react-query"
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import type { ReactNode } from "react"
 import { afterEach, describe, expect, it } from "vitest"
@@ -12,12 +13,18 @@ import {
   INITIAL_SESSION_STATE,
   type SessionState,
 } from "../../../../src/shared/session/session-state.ts"
+import { createTestQueryClient } from "../../query-client.tsx"
+import { rpcOutput, stubRpcFetch, type RpcFetchStub } from "../../rpc-fetch-stub.ts"
 import { type CommandSpy, putSession } from "../../session-store.ts"
 
 // フィクスチャはすべて手で書いた架空のタスク（実物の develop/tasks.json は使わない）。
 
+let fetchStub: RpcFetchStub | undefined = undefined
+
 afterEach(() => {
   cleanup()
+  fetchStub?.restore()
+  fetchStub = undefined
 })
 
 function known(items: readonly TaskSummaryItem[]): TaskSummaryResult {
@@ -56,16 +63,22 @@ function renderList(spy: CommandSpy = () => {}, overrides: Partial<SessionState>
   renderWithStore(<TaskList tasks={known(TASKS)} selectedStatus={undefined} />, spy, overrides)
 }
 
-/** 見出しの「一覧を見る」で開く表（開いた状態で描く）。閉じる要求は `closed` に溜まる。 */
+/**
+ * 見出しの「一覧を見る」で開くタスクのモーダル（開いた状態で描く）。閉じる要求は `closed` に溜まる。
+ * 「エディタで開く」が引くファイル一覧の手続きは空の一覧を返す代役にする。
+ */
 function renderBoard(spy: CommandSpy = () => {}, closed: string[] = []): void {
+  fetchStub = stubRpcFetch(() => rpcOutput([]))
   renderWithStore(
-    <TaskBoard
-      tasks={known(TASKS)}
-      open={true}
-      onClose={() => {
-        closed.push("表")
-      }}
-    />,
+    <QueryClientProvider client={createTestQueryClient()}>
+      <TaskBoard
+        tasks={known(TASKS)}
+        open={true}
+        onClose={() => {
+          closed.push("モーダル")
+        }}
+      />
+    </QueryClientProvider>,
     spy,
   )
 }
@@ -103,33 +116,11 @@ describe("タスクIDから実行を頼む", () => {
     expect(sent).toEqual([])
   })
 
-  it("表のIDからも同じ確認を開いて送れる", () => {
-    const sent: unknown[] = []
-    renderBoard(collectInto(sent))
-
-    fireEvent.click(screen.getByRole("button", { name: "X-002" }))
-    fireEvent.click(screen.getByRole("button", { name: "実行する" }))
-
-    expect(sent).toEqual([{ procedure: "session.prompt", text: "/next-task X-002", images: [] }])
-  })
-
-  // 送ったあとに表が残っていると、メインビューに並んだ依頼が画面いっぱいの表に隠れる。
-  it("表から送ったときは、確認と表の両方が閉じる", () => {
+  it("モーダルから断ったときは確認だけ閉じ、一覧へ戻れる", () => {
     const closed: string[] = []
     renderBoard(() => {}, closed)
 
-    fireEvent.click(screen.getByRole("button", { name: "X-002" }))
-    fireEvent.click(screen.getByRole("button", { name: "実行する" }))
-
-    expect(closed).toEqual(["表"])
-    expect(confirmDialog()).toBeNull()
-  })
-
-  it("表から断ったときは確認だけ閉じ、一覧へ戻れる", () => {
-    const closed: string[] = []
-    renderBoard(() => {}, closed)
-
-    fireEvent.click(screen.getByRole("button", { name: "X-002" }))
+    openRunConfirm("X-002")
     fireEvent.click(screen.getByRole("button", { name: "キャンセル" }))
 
     expect(closed).toEqual([])
@@ -137,22 +128,13 @@ describe("タスクIDから実行を頼む", () => {
     expect(document.querySelector("dialog.task-board")?.hasAttribute("open")).toBe(true)
   })
 
-  // 確認は表の `<dialog>` の中に組み立てられるので、その backdrop のクリックが表まで
-  // 届くと一覧ごと消える（表を閉じる判定は `event.target` が表自身のときだけ）。
-  it("確認を開いても表は開いたまま", () => {
+  // 確認はモーダルの `<dialog>` の中に組み立てられるので、その backdrop のクリックがモーダルまで
+  // 届くと一覧ごと消える（モーダルを閉じる判定は `event.target` がモーダル自身のときだけ）。
+  it("確認を開いてもモーダルは開いたまま", () => {
     const closed: string[] = []
-    putSession(INITIAL_SESSION_STATE)
-    render(
-      <TaskBoard
-        tasks={known(TASKS)}
-        open={true}
-        onClose={() => {
-          closed.push("表")
-        }}
-      />,
-    )
+    renderBoard(() => {}, closed)
 
-    fireEvent.click(screen.getByRole("button", { name: "X-002" }))
+    openRunConfirm("X-002")
     const dialog = confirmDialog()
     if (dialog === null) {
       throw new Error("確認が開いていない")
@@ -163,3 +145,9 @@ describe("タスクIDから実行を頼む", () => {
     expect(document.querySelector("dialog.task-board")?.hasAttribute("open")).toBe(true)
   })
 })
+
+/** モーダルの一覧で `taskId` の行を選び、操作の帯の「tsukumo に頼む」を押す。 */
+function openRunConfirm(taskId: string): void {
+  fireEvent.click(screen.getByRole("option", { name: new RegExp(taskId) }))
+  fireEvent.click(screen.getByRole("button", { name: "tsukumo に頼む" }))
+}

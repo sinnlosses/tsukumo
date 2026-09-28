@@ -1,254 +1,71 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react"
+import { QueryClientProvider } from "@tanstack/react-query"
+import { cleanup, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
 import { TaskBoard } from "../../../../src/browser/features/task-board/task-board.tsx"
-import type {
-  TaskSummaryItem,
-  TaskSummaryResult,
-} from "../../../../src/shared/repository/task-summary.ts"
+import type { TaskSummaryItem } from "../../../../src/shared/repository/task-summary.ts"
+import { INITIAL_SESSION_STATE } from "../../../../src/shared/session/session-state.ts"
+import { createTestQueryClient } from "../../query-client.tsx"
+import { rpcOutput, stubRpcFetch, type RpcFetchStub } from "../../rpc-fetch-stub.ts"
+import { putSession } from "../../session-store.ts"
 
-// フィクスチャはすべて手で書いた架空のタスク（実物の develop/tasks.json は使わない）。
+// タスクのモーダルのうち、Beads 方式の置き場所（Issue）と置き場所の無い課題。
+// E2E の足場は一時の cwd に develop/task/ を手書きするファイル方式しか作れない（`bd` を起こさない）ので、ここで持つ。
+// フィクスチャはすべて手で書いた架空の課題。
+
+let fetchStub: RpcFetchStub | undefined = undefined
 
 afterEach(() => {
   cleanup()
+  fetchStub?.restore()
+  fetchStub = undefined
 })
 
-function known(items: readonly TaskSummaryItem[]): TaskSummaryResult {
-  return { kind: "known", items }
-}
+const ISSUE_URL = "https://example.invalid/foo/bar/issues/12"
 
-const TASKS: readonly TaskSummaryItem[] = [
-  {
-    id: "X-001",
-    summary: "架空の1件目",
-    status: "done",
-    difficulty: "haiku",
+function beadsTask(location: TaskSummaryItem["location"]): TaskSummaryItem {
+  return {
+    id: "X-012",
+    summary: "架空の課題",
+    status: "todo",
+    difficulty: "sonnet",
     loopable: "Y",
     dependencies: [],
     assignee: undefined,
-    body: "",
-    location: { kind: "none" },
-  },
-  {
-    id: "X-002",
-    summary: "架空の2件目",
-    status: "todo",
-    difficulty: "opus",
-    loopable: undefined,
-    dependencies: [],
-    assignee: undefined,
-    body: "",
-    location: { kind: "none" },
-  },
-  {
-    id: "X-003",
-    summary: "架空の3件目",
-    status: "todo",
-    difficulty: "sonnet",
-    loopable: "N",
-    dependencies: ["X-002"],
-    assignee: undefined,
-    body: "",
-    location: { kind: "none" },
-  },
-]
-
-/** 開いているかどうかは `<dialog>` の `open` 属性で見る（happy-dom も showModal() で付ける）。 */
-function dialogIsOpen(): boolean {
-  return document.querySelector("dialog.task-board")?.hasAttribute("open") === true
+    body: "## 目的・背景\n\n架空の本文。\n",
+    location,
+  }
 }
 
-describe("TaskBoard", () => {
-  it("open が false のときは開かない", () => {
-    render(<TaskBoard tasks={known(TASKS)} open={false} onClose={() => {}} />)
+function renderBoard(task: TaskSummaryItem): void {
+  putSession(INITIAL_SESSION_STATE)
+  fetchStub = stubRpcFetch(() => rpcOutput([]))
+  render(
+    <QueryClientProvider client={createTestQueryClient()}>
+      <TaskBoard tasks={{ kind: "known", items: [task] }} open={true} onClose={() => {}} />
+    </QueryClientProvider>,
+  )
+}
 
-    expect(dialogIsOpen()).toBe(false)
+describe("タスクのモーダルの置き場所（Beads 方式）", () => {
+  it("external_ref の URL を情報の表の Issue の行に出し、操作の帯の「Issue を開く」で新しいタブに開く", () => {
+    renderBoard(beadsTask({ kind: "issue", url: ISSUE_URL }))
+
+    expect(screen.getByText("Issue", { selector: "dt" })).toBeDefined()
+    expect(screen.getByRole("link", { name: ISSUE_URL }).getAttribute("href")).toBe(ISSUE_URL)
+    const open = screen.getByRole("link", { name: "Issue を開く" })
+    expect(open.getAttribute("href")).toBe(ISSUE_URL)
+    expect(open.getAttribute("target")).toBe("_blank")
+    expect(screen.queryByText("ファイル")).toBeNull()
+    expect(screen.queryByRole("button", { name: "エディタで開く" })).toBeNull()
   })
 
-  it("open が true になると開く", () => {
-    const { rerender } = render(<TaskBoard tasks={known(TASKS)} open={false} onClose={() => {}} />)
-    rerender(<TaskBoard tasks={known(TASKS)} open={true} onClose={() => {}} />)
+  it("置き場所の無い課題は、置き場所の行も開く口も出さない", () => {
+    renderBoard(beadsTask({ kind: "none" }))
 
-    expect(dialogIsOpen()).toBe(true)
-  })
-
-  it("doing の status は差し色の class を持つ（一覧のバッジと同じ判定）", () => {
-    const doing: TaskSummaryItem = {
-      id: "X-004",
-      summary: "架空の着手中",
-      status: "doing",
-      difficulty: "haiku",
-      loopable: "Y",
-      dependencies: [],
-      assignee: undefined,
-      body: "",
-      location: { kind: "none" },
-    }
-    render(<TaskBoard tasks={known([...TASKS, doing])} open={true} onClose={() => {}} />)
-
-    const cell = screen.getByText("doing")
-    expect(cell.className).toContain("task-status-doing")
-    // todo は別の class（状態ごとに分かれていることを押さえる）。
-    expect(screen.getAllByText("todo")[0]?.className).toContain("task-status-todo")
-  })
-
-  it("着手した作業ツリーが分かれば status に括弧で添える（色分けは status のまま）", () => {
-    const doing: TaskSummaryItem = {
-      id: "X-004",
-      summary: "架空の着手中",
-      status: "doing",
-      difficulty: "haiku",
-      loopable: "Y",
-      dependencies: [],
-      assignee: "wt-架空",
-      body: "",
-      location: { kind: "none" },
-    }
-    render(<TaskBoard tasks={known([...TASKS, doing])} open={true} onClose={() => {}} />)
-
-    expect(screen.getByText("doing（wt-架空）").className).toContain("task-status-doing")
-  })
-
-  it("列は ID・status・難易度・loopable・着手・要約（依存は着手の列に入る）", () => {
-    render(<TaskBoard tasks={known(TASKS)} open={true} onClose={() => {}} />)
-
-    expect(screen.getAllByRole("columnheader").map((cell) => cell.textContent)).toEqual([
-      "ID",
-      "status",
-      "難易度",
-      "loopable",
-      "着手",
-      "要約",
-    ])
-  })
-
-  // 狭い画面では見出しの行が隠れてカードになる（task-board.module.css の @media）。そのとき
-  // 値だけでは意味が取れないセルのラベルは `data-label` から出すので、ここが消えると
-  // カードの「loopable」「着手」が名無しの値になる。
-  it("見出しが隠れても読めるよう、意味が取れないセルは data-label を持つ", () => {
-    render(<TaskBoard tasks={known(TASKS)} open={true} onClose={() => {}} />)
-
-    const cells = document.querySelectorAll(".task-board-row")[1]?.querySelectorAll("td")
-    expect(Array.from(cells ?? []).map((cell) => cell.getAttribute("data-label"))).toEqual([
-      null,
-      null,
-      "loopable",
-      "着手",
-      null,
-    ])
-  })
-
-  it("全件をファイルの順で出し、done も薄く出すクラス付きで残す", () => {
-    render(<TaskBoard tasks={known(TASKS)} open={true} onClose={() => {}} />)
-
-    const rows = document.querySelectorAll(".task-board-row")
-    expect(rows).toHaveLength(3)
-    expect(rows[0]?.textContent).toContain("X-001")
-    expect(rows[0]?.className).toContain("task-done")
-    expect(rows[1]?.className).not.toContain("task-done")
-  })
-
-  it("着手可否を文字で出す（done は判定しない、依存待ちは止めている ID を並べる）", () => {
-    render(<TaskBoard tasks={known(TASKS)} open={true} onClose={() => {}} />)
-
-    const rows = document.querySelectorAll(".task-board-row")
-    const readinessOf = (row: Element | undefined): string | null | undefined =>
-      row?.querySelector('[data-label="着手"]')?.textContent
-    expect(readinessOf(rows[0])).toBe("—")
-    expect(readinessOf(rows[1])).toBe("READY")
-    expect(readinessOf(rows[2])).toBe("待ち: X-002")
-  })
-
-  // 着手の列は todo 以外では依存をそのまま並べる（済んだ依存も記録として残す）。この行が
-  // 消えると、2列に分けていた頃の「依存」の情報が黙って落ちていても気づけない。
-  it("判定しない status は依存をそのまま並べ、依存が無ければ「—」にする", () => {
-    const doing: TaskSummaryItem = {
-      id: "X-004",
-      summary: "架空の着手中",
-      status: "doing",
-      difficulty: "haiku",
-      loopable: "Y",
-      dependencies: ["X-001", "X-002"],
-      assignee: undefined,
-      body: "",
-      location: { kind: "none" },
-    }
-    render(<TaskBoard tasks={known([...TASKS, doing])} open={true} onClose={() => {}} />)
-
-    const rows = document.querySelectorAll(".task-board-row")
-    expect(rows[0]?.querySelectorAll("td")[3]?.textContent).toBe("—")
-    expect(rows[3]?.querySelectorAll("td")[3]?.textContent).toBe("X-001, X-002")
-    // IDは1つずつ包んで出す（折り返せるのは区切りの `, ` だけ。task-board.module.css の .task-dep-id）。
-    expect(rows[3]?.querySelectorAll(".task-dep-id")).toHaveLength(2)
-  })
-
-  it("難易度・loopable が無いときは「—」で埋める", () => {
-    render(<TaskBoard tasks={known(TASKS)} open={true} onClose={() => {}} />)
-
-    const cells = document.querySelectorAll(".task-board-row")[1]?.querySelectorAll("td")
-    expect(cells?.[1]?.textContent).toBe("opus")
-    expect(cells?.[2]?.textContent).toBe("—")
-  })
-
-  it("loopable は Y だけ出し、N は空欄にする", () => {
-    render(<TaskBoard tasks={known(TASKS)} open={true} onClose={() => {}} />)
-
-    const rows = document.querySelectorAll(".task-board-row")
-    expect(rows[0]?.querySelectorAll("td")[2]?.textContent).toBe("Y")
-    expect(rows[2]?.querySelectorAll("td")[2]?.textContent).toBe("")
-  })
-
-  it("閉じるボタンで閉じる", () => {
-    const closed: string[] = []
-    render(
-      <TaskBoard
-        tasks={known(TASKS)}
-        open={true}
-        onClose={() => {
-          closed.push("閉じる")
-        }}
-      />,
-    )
-
-    fireEvent.click(screen.getByRole("button", { name: "閉じる" }))
-
-    expect(closed).toEqual(["閉じる"])
-  })
-
-  it("外側（backdrop）のクリックで閉じ、中身のクリックでは閉じない", () => {
-    const closed: string[] = []
-    render(
-      <TaskBoard
-        tasks={known(TASKS)}
-        open={true}
-        onClose={() => {
-          closed.push("外側")
-        }}
-      />,
-    )
-
-    const dialog = document.querySelector("dialog.task-board")
-    const body = document.querySelector(".task-board-body")
-    if (dialog === null || body === null) {
-      throw new Error("モーダルが描かれていない")
-    }
-
-    fireEvent.click(body)
-    expect(closed).toEqual([])
-
-    fireEvent.click(dialog)
-    expect(closed).toEqual(["外側"])
-  })
-
-  it("tasks が読めないときは表の代わりにその旨を出す", () => {
-    render(<TaskBoard tasks={{ kind: "unknown" }} open={true} onClose={() => {}} />)
-
-    expect(screen.getByText("タスクの一覧が読めない")).toBeDefined()
-  })
-
-  it("タスクが0件のときは「タスクが無い」を出す", () => {
-    render(<TaskBoard tasks={known([])} open={true} onClose={() => {}} />)
-
-    expect(screen.getByText("タスクが無い")).toBeDefined()
+    expect(screen.queryByText("Issue")).toBeNull()
+    expect(screen.queryByText("ファイル")).toBeNull()
+    expect(screen.queryByRole("link", { name: "Issue を開く" })).toBeNull()
+    expect(screen.queryByRole("button", { name: "エディタで開く" })).toBeNull()
   })
 })

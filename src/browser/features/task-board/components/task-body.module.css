@@ -1,0 +1,112 @@
+/* タスクの本文（Markdown）の字の組み。
+   値は見本 `docs/history/mockup/task-board-2026-09-28/TASK-1-List.dc.html` の本文（14px・行間 1.85、見出し 16px 太字＋下線、コード 12px 等幅）を `theme.css` のトークンに写したもの。
+   本文は読み物なので、レポートの字の段とは別の値を持つ。 */
+
+.task-body {
+  color: var(--ink);
+  font-size: 14px;
+  line-height: 1.85;
+}
+.task-body > :first-child {
+  margin-top: 0;
+}
+.task-body p {
+  margin: 0 0 10px;
+}
+.task-body-section {
+  margin: 22px 0 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--rule-quiet);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+.task-body-sub {
+  margin: 16px 0 6px;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+.task-body ul {
+  margin: 0 0 10px;
+  padding-left: 20px;
+}
+.task-body ol {
+  margin: 0 0 10px;
+  padding-left: 22px;
+}
+.task-body li > ul,
+.task-body li > ol {
+  margin-bottom: 0;
+}
+/* チェックの並び（`remark-gfm` が `input[type="checkbox"]` を行頭に置く）は、行頭の点を消して印だけにする。 */
+.task-body ul:has(> li > input[type="checkbox"]) {
+  padding-left: 0;
+  list-style: none;
+}
+.task-body input[type="checkbox"] {
+  margin: 0 8px 0 0;
+  accent-color: var(--accent);
+  transform: translateY(2px);
+}
+.task-body code {
+  padding: 0 5px;
+  border-radius: 4px;
+  background: var(--surface-raised);
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+/* フェンスは色付けせず、長い行は折り返す（詳細の欄を横に広げない）。 */
+.task-body pre {
+  margin: 0 0 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--rule-quiet);
+  border-radius: 8px;
+  background: var(--ground);
+  color: color-mix(in srgb, var(--ink) 85%, transparent);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.task-body pre code {
+  padding: 0;
+  background: none;
+}
+.task-body a {
+  color: var(--accent);
+}
+.task-body blockquote {
+  margin: 0 0 10px;
+  padding-left: 12px;
+  border-left: 3px solid var(--rule);
+  color: var(--ink-quiet);
+}
+.task-body hr {
+  margin: 16px 0;
+  border: none;
+  border-top: 1px solid var(--rule-quiet);
+}
+/* 表は横に溢れたら表だけを転がす。 */
+.task-body-table-scroll {
+  margin: 0 0 12px;
+  overflow-x: auto;
+}
+.task-body-table-scroll table {
+  border-collapse: collapse;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.task-body-table-scroll th,
+.task-body-table-scroll td {
+  padding: 4px 10px;
+  border: 1px solid var(--rule-quiet);
+  text-align: left;
+  vertical-align: top;
+}
+.task-body-table-scroll th {
+  background: var(--surface-raised);
+  font-weight: 700;
+  white-space: nowrap;
+}

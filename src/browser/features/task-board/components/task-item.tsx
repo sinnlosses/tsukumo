@@ -2,7 +2,7 @@
 // 先頭列に status の印（丸・チェック）、2列目に押せるID＋summary を置く2列の grid 行。
 //
 // 色だけで状態を伝えない: todo は空の丸、done はチェックの印（字も打ち消し線にする）、想定外の値は注意色の「!」にする。
-// summary は1行に収め、入りきらない分は末尾を「…」にする（全文を読みたいときは「一覧を見る」の表を開く）。
+// summary は1行に収め、入りきらない分は末尾を「…」にする（全文を読みたいときは「一覧を見る」のモーダルを開く）。
 
 import clsx from "clsx"
 import type { ReactElement } from "react"
@@ -36,7 +36,7 @@ export function TaskItem(props: { readonly task: TaskSummaryItem }): ReactElemen
 
 /**
  * status ごとの印。status が無い要素（一覧の要素そのものは壊れていないが status だけ読めない）は印を出さない。
- * todo / done 以外（想定外の値）は、詳しい文字列を持ち込まず注意色の印だけにする（「一覧を見る」の表に status の文字がそのまま出る）。
+ * todo / done 以外（想定外の値）は、詳しい文字列を持ち込まず注意色の印だけにする（「一覧を見る」のモーダルに status の値がそのまま出る）。
  */
 function TaskMark(props: { readonly status: string | undefined }): ReactElement | null {
   if (props.status === undefined) {

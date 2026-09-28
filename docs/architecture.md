@@ -451,7 +451,7 @@ components/page/<ページ>/
 | ------------------------------------------------------ | --------------------------------------------------------------------- | ------------------------------------------------------------- |
 | 3種類そろっている                                      | container / `hooks/use-<名前>.ts` / `presentational-<名前>.tsx` の3つ | `task-board` / `chat-view`                                    |
 | **外の世界に触るフックだけ**が余分                     | そのフックだけを `hooks/use-<概念>.ts` へ出し、残りは1ファイルのまま  | `main-view.tsx` → `main-view/hooks/use-active-turn-scroll.ts` |
-| **純関数だけ**が余分で、**フックを呼ばない相手**が読む | `domain/<概念>.ts` へ出す                                             | `task-board/domain/task-status.ts`                            |
+| **純関数だけ**が余分で、**フックを呼ばない相手**が読む | `domain/<概念>.ts` へ出す                                             | `task-board/domain/task-list-count.ts`                        |
 
 3つに割るときの分担:
 

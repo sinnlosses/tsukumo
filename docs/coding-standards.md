@@ -687,7 +687,7 @@ layout-resizer.tsx` の、ドラッグの間だけ生きる `pointermove`）。
 しない」）。
 
 この規約は**部品（`ReactElement` を返す関数）とフック**にかかる。JSX を値として持つだけの定数
-（`task-table.tsx` の `TASK_TABLE_HEAD` のような静的な見出し行）は関数ではないので `const` のまま。
+（中身が完全に静的な見出し行など）は関数ではないので `const` のまま。
 
 ### 手でメモ化しない
 

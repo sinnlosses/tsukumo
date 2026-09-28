@@ -1,11 +1,9 @@
-/* タスク一覧の機能。サイドバーの区画に置く一覧と、そこから開く画面いっぱいの表（`<dialog>`）をこの1枚に持つ。
-   一覧と表は「終わったタスクは薄い（.task-done）」「IDは等幅（.task-id）」という語彙を共有していて、分けると同じ名前が2つになるため。
-   status の色分け（.task-status-*）は表だけの見た目で、一覧は印の形（.task-mark-*）で区別する。
+/* タスク一覧の機能。サイドバーの区画に置く一覧と、そこから開くタスクのモーダル（`<dialog>`）をこの1枚に持つ。
+   一覧とモーダルは「押せる ID」「実行の確認」という語彙を共有していて、分けると同じ名前が2つになるため。
+   モーダルの本文（Markdown）の字の組みだけは、それを描く部品の CSS（`task-body.module.css`）にある。
    枠（区画そのもの）の見た目はサイドバーの側（.sidebar-block）にあり、ここには持ち込まない。 */
 
-/* 中身が無いときの一言。字の段・色は `Text` が持つ。margin だけ残す。
-   区画の中に置いたときは .sidebar-block p の 0.2rem 0 が勝つが、表の中に置いたときはそれが無い。
-   `Text` の既定 margin は 0 なので、ここへ明示しないと表の中でブラウザ既定の <p> の margin が失われる。 */
+/* 区画の一覧が空のときの一言。字の段・色は `Text` が持つ。margin だけ残す。 */
 .task-empty {
   margin: 1em 0;
 }
@@ -145,7 +143,7 @@
   gap: 0.625rem;
   min-width: 0;
 }
-/* 未着手・完了の行の summary は1行に収め、入りきらない分は「…」にする（全文は「一覧を見る」の表で読む）。
+/* 未着手・完了の行の summary は1行に収め、入りきらない分は「…」にする（全文は「一覧を見る」のモーダルで読む）。
    字の段は `Text` で明示する。親（`.sidebar-block`）の `--font-secondary` に頼ると、`.task-item` がサイドバー以外の文脈に置かれたときに黙って崩れる。 */
 .task-item-summary {
   overflow: hidden;
@@ -183,7 +181,7 @@
   color: var(--state-warn);
   font-weight: 700;
 }
-/* 押せるID（一覧と表の両方が同じ形で置く）。ボタンの既定の見た目（背景・枠・余白）を落として、周りの文字の並びに割り込まないようにする。
+/* 区画の一覧の押せるID。ボタンの既定の見た目（背景・枠・余白）を落として、周りの文字の並びに割り込まないようにする。
    押せることを色だけで示さないので、常に点線の下線を敷き、ホバーで実線にする。 */
 .task-id-button {
   padding: 0;
@@ -204,114 +202,506 @@
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
-/* 表の status 列の文字色。
-   --state-* はここでは使わない（意味が固定されている色なので、todo / doing に宛てると ok / warn / ng / ask の意味が動く）。
-   todo は既定の文字色のまま。class は状態の印として付ける（下の doing / done / other と対）。 */
-.task-status-todo {
-  color: inherit;
-}
-.task-status-doing {
-  color: var(--accent);
-}
-.task-status-done {
-  color: var(--ink-quiet);
-}
-.task-status-other {
-  color: var(--state-warn);
-}
+/* タスクのモーダル。左に一覧、右に選んだタスクの詳細。
+   値は見本 `docs/history/mockup/task-board-2026-09-28/TASK-1-List.dc.html` の inline style を `theme.css` のトークンに写したもの（見本の #1f1e28 は --surface、#3a3946 は --rule、#2e2d38・#26252f は --rule-quiet、#15141b・#1a1921 は --ground、#1f2e2e は --surface-accent、#33323e は --surface-raised に当たる）。
+   字の大きさは見本のまま（このモーダルの中だけの値で、字の段に丸めない）。
+   背景は `<Dialog backdrop="dim">` が持つ。 */
 
-/* タスク一覧の表。
-   `showModal()` で開いている間はブラウザが top layer に載せるので、サイドバー領域の overflow には切り取られない。 */
+/* 箱。見本は 1320x780 で、帯の下に少し空けて横の中央に置く。窓より大きくしない。 */
 .task-board {
   box-sizing: border-box;
-  width: min(64rem, calc(100vw - 2rem));
-  max-height: calc(100vh - 4rem);
-  margin: auto;
-  padding: 1rem;
-  background: var(--surface);
-  color: var(--ink);
-  border: 1px solid var(--rule);
-  border-radius: 0.75rem;
-  font-size: var(--font-secondary);
+  width: min(1320px, calc(100vw - 2rem));
+  height: min(780px, calc(100dvh - 84px - 1rem));
+  margin: 84px auto auto;
+  padding: 0;
   overflow: hidden;
+  border: 1px solid var(--rule);
+  border-radius: 18px;
+  background: var(--surface);
+  box-shadow: 0 30px 80px rgb(0 0 0 / 0.6);
+  color: var(--ink);
 }
-/* 見出しと閉じる口は動かさず、表だけが内側でスクロールする（件数が増えても閉じる口を探しにスクロールしなくて済む）。 */
-.task-board-body {
+/* ↑↓ を受ける器。押せない所を押したときにフォーカスを受けるだけなので輪は出さない。 */
+.task-board-frame {
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
-  max-height: calc(100vh - 6rem);
+  height: 100%;
+}
+.task-board-frame:focus {
+  outline: none;
 }
 .task-board-head {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 0.6rem;
+  flex: none;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--rule-quiet);
 }
-/* 箱だけ（高さ・余白・角丸）。顔は `<Button variant="outline">` が持つ。 */
+.task-board-title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+}
+.task-board-counts {
+  color: var(--ink-quiet);
+  font-size: 12px;
+  white-space: nowrap;
+}
+.task-board-hints {
+  margin-left: auto;
+  color: var(--ink-quiet);
+  font-size: 11px;
+  white-space: nowrap;
+}
+.task-board-hints kbd {
+  padding: 0 5px;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  font-family: var(--font-mono);
+}
+/* 箱だけ（大きさ・角丸）。顔は `<Button variant="outline">` が持つ。 */
 .task-board-close {
-  padding: 0.2rem 0.6rem;
-  border-radius: 0.4rem;
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border-radius: 9px;
 }
-.task-board-scroll {
+/* 一覧が読めない・0件・絞った結果が0件のときの一言。字の段・色は `Text` が持つ。 */
+.task-board-message {
+  margin: 20px;
+}
+.task-board-columns {
+  display: flex;
+  flex: 1 1 auto;
   min-height: 0;
-  overflow: auto;
 }
-.task-board-table {
-  /* 狭い画面では器のほうが足りなくなるので、表は器より広がってよい（.task-board-scroll がその表だけ横スクロールさせる）。
-     width: 100% にすると要約の列が1〜2字ずつの折り返しにつぶれ、表が器に収まってしまって横スクロールも働かない。 */
-  min-width: 100%;
-  border-collapse: collapse;
-  text-align: left;
-}
-/* 要約の列の下限。ここを割ると上のつぶれ方になる。 */
-.task-board-table td:last-child {
-  min-width: 24em;
-}
-/* 見出しの行は、縦にスクロールしても列の意味が分かるよう上に貼り付ける。 */
-.task-board-table thead th {
-  position: sticky;
-  top: 0;
-  z-index: 1;
-  padding: 0.3rem 0.5rem;
-  background: var(--surface);
-  border-bottom: 1px solid var(--rule);
-  color: var(--ink-quiet);
-  font-size: var(--font-label);
-  font-weight: 600;
-  white-space: nowrap;
-}
-.task-board-table td,
-.task-board-table tbody th {
-  padding: 0.3rem 0.5rem;
-  border-bottom: 1px solid var(--rule);
-  font-weight: normal;
-  vertical-align: top;
-}
-/* ID・status・難易度・loopable は機械が付けた名前なので、折り返さず1行に置く。 */
-.task-board-table tbody th,
-.task-board-table td:nth-child(2),
-.task-board-table td:nth-child(3),
-.task-board-table td:nth-child(4) {
-  white-space: nowrap;
-}
-/* 着手（依存のID が並ぶ列）。ここだけは折り返させる。
-   1行に置くと依存が多い行で表が器を超え、最後にある要約の列が可視領域の外へ押し出される（実測: 依存7件で約26em）。
-   上限は「器（64rem）から他の5列と要約の min-width: 24em を引いた残り」から採った。 */
-.task-board-table td:nth-child(5) {
-  max-width: 16em;
-  white-space: normal;
-}
-/* IDそのものは折らない（IDが `-` で改行されると読めなくなる）。折り返せるのは区切りに置く `, ` だけになる。 */
-.task-dep-id {
-  white-space: nowrap;
-}
-.task-board-row.task-done {
-  color: var(--ink-quiet);
-}
-/* 着手可否。意味を固定した色を使うが、色だけで伝えないよう文字（READY / 待ち: …）も出す。色は `Text` が持つ。 */
 
-/* タスクを実行する確認。`showModal()` は top layer に積むので、下の表より必ず上に出る。 */
+/* 左の一覧。幅は固定で、詳細が残りの幅を取る。 */
+.task-board-list-column {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  width: 470px;
+  min-height: 0;
+  border-right: 1px solid var(--rule-quiet);
+}
+.task-board-filter {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--rule-quiet);
+}
+.task-board-search {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--rule);
+  border-radius: 9px;
+  background: var(--ground);
+  color: var(--ink-quiet);
+}
+.task-board-search-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+}
+/* 探す欄は開いている間ずっとフォーカスを持つ（↑↓ を受ける口）ので、輪は出さない。 */
+.task-board-search-input:focus-visible {
+  outline: none;
+}
+.task-board-search-input::placeholder {
+  color: var(--ink-quiet);
+}
+.task-board-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.task-board-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 12px;
+  border: 1px solid var(--rule);
+  border-radius: 15px;
+  background: transparent;
+  color: var(--ink-quiet);
+  font: inherit;
+  font-size: 12px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.task-board-chip:hover {
+  color: var(--ink);
+}
+/* 選んでいる札は一段明るい地と字。色だけに頼らないよう枠も一段明るくする。 */
+.task-board-chip[aria-pressed="true"] {
+  border-color: color-mix(in srgb, var(--rule), var(--ink) 20%);
+  background: var(--surface-raised);
+  color: var(--ink);
+}
+.task-board-chip-count {
+  color: var(--ink-quiet);
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+.task-board-list-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+.task-board-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.task-board-option {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 10px 14px 10px 16px;
+  border-bottom: 1px solid var(--rule-quiet);
+  cursor: pointer;
+}
+.task-board-option:hover {
+  background: color-mix(in srgb, var(--surface), var(--ink) 4%);
+}
+/* 選んでいる行は差し色の地と左端の帯（色だけで伝えないため、帯の形も添える）。 */
+.task-board-option[aria-selected="true"] {
+  background: var(--surface-accent);
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+/* 済んだ行（完了・取り下げ）は薄く出す。 */
+.task-board-option[data-state="done"],
+.task-board-option[data-state="dropped"] {
+  opacity: 0.6;
+}
+.task-board-option-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+/* 状態のあとを空けて、ループの印と難易度を右端に寄せる。 */
+.task-board-option-head .task-state {
+  margin-right: auto;
+}
+.task-board-option-id {
+  flex: none;
+  color: var(--ink-quiet);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  white-space: nowrap;
+}
+.task-board-option[aria-selected="true"] .task-board-option-id {
+  color: var(--ink);
+}
+.task-board-loop {
+  display: flex;
+  flex: none;
+  color: var(--ink-quiet);
+}
+/* 要約は2行で省略する。 */
+.task-board-option-summary {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+/* 状態の印と言い方。色だけで伝えないよう、印の形（点・輪・一時停止・チェック・横線・「!」）と字を添える。 */
+.task-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  font-size: 11px;
+  white-space: nowrap;
+}
+.task-state-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.task-state-mark {
+  box-sizing: border-box;
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+.task-state-ready {
+  color: color-mix(in srgb, var(--accent) 45%, var(--ink));
+}
+.task-state-ready .task-state-mark {
+  background: var(--accent);
+}
+.task-state-blocked {
+  color: color-mix(in srgb, var(--state-warn) 60%, var(--ink));
+}
+.task-state-blocked .task-state-mark {
+  border: 1.5px solid var(--state-warn);
+}
+.task-state-hold,
+.task-state-done,
+.task-state-dropped {
+  color: var(--ink-quiet);
+}
+.task-state-doing {
+  color: var(--accent);
+}
+.task-state-doing .task-state-mark {
+  background: var(--accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 35%, transparent);
+}
+.task-state-other {
+  color: var(--state-warn);
+}
+.task-state-other .task-state-mark {
+  width: auto;
+  height: auto;
+  border-radius: 0;
+}
+.task-state-other .task-state-mark::before {
+  content: "!";
+  font-weight: 700;
+}
+
+/* 難易度。点3つのうち段の数だけ塗る。 */
+.task-difficulty {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 5px;
+  color: var(--ink-quiet);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  white-space: nowrap;
+}
+.task-difficulty-dots {
+  display: inline-flex;
+  gap: 2px;
+}
+.task-difficulty-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--rule);
+}
+.task-difficulty-dot-filled {
+  background: color-mix(in srgb, var(--ink) 80%, transparent);
+}
+/* 要約の中の `code`。 */
+.task-summary-code {
+  padding: 0 5px;
+  border-radius: 4px;
+  background: var(--surface-raised);
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+/* 右の詳細。詳細だけが内側で縦に転がり、下の操作の帯は動かない。 */
+.task-board-detail-column {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+.task-detail {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 0;
+  padding: 22px 28px;
+  overflow-y: auto;
+}
+.task-detail-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.task-detail-id {
+  color: var(--ink-quiet);
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+.task-detail-status {
+  padding: 1px 7px;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  color: color-mix(in srgb, var(--ink) 85%, transparent);
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+.task-detail-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+.task-detail-info {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 8px 18px;
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--rule-quiet);
+  border-radius: 10px;
+  background: var(--ground);
+  color: var(--ink-quiet);
+  font-size: 12px;
+}
+.task-detail-info dt,
+.task-detail-info dd {
+  margin: 0;
+}
+.task-detail-info dd {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+.task-detail-loop {
+  gap: 5px;
+  color: color-mix(in srgb, var(--ink) 85%, transparent);
+}
+.task-detail-location {
+  gap: 5px;
+  color: var(--accent);
+  font-family: var(--font-mono);
+  overflow-wrap: anywhere;
+}
+.task-detail-location a {
+  color: inherit;
+}
+.task-detail-dependencies {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.task-detail-dependencies-title {
+  margin: 0;
+  color: color-mix(in srgb, var(--state-warn) 60%, var(--ink));
+  font-size: 12px;
+}
+.task-detail-dependency-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.task-detail-dependency {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 38px;
+  padding: 8px 12px;
+  border: 1px solid var(--rule);
+  border-radius: 9px;
+  background: var(--ground);
+}
+.task-detail-dependency-id {
+  flex: none;
+  color: color-mix(in srgb, var(--accent) 45%, var(--ink));
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+.task-detail-dependency .task-state {
+  flex: none;
+}
+.task-detail-dependency-summary {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.task-detail-dependency-chevron {
+  flex: none;
+  color: var(--ink-quiet);
+}
+.task-detail-dependency-unlisted {
+  color: var(--ink-quiet);
+  font-size: 11px;
+}
+
+/* 下の操作の帯。 */
+.task-board-action {
+  box-sizing: border-box;
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  min-height: 64px;
+  padding: 12px 28px;
+  border-top: 1px solid var(--rule-quiet);
+  background: color-mix(in srgb, var(--surface), var(--ground) 40%);
+}
+/* 箱だけ（高さ・余白・角丸と、印と字の並べ方）。顔は `<Button variant="outline">` が持つ。 */
+.task-board-action-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 9px;
+}
+/* 「Issue を開く」はページを移る口なのでリンクのまま、ボタンと同じ箱と顔にする。 */
+.task-board-action-link {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--rule);
+  border-radius: 9px;
+  color: inherit;
+  font-size: var(--font-secondary);
+  text-decoration: none;
+}
+.task-board-action-link:hover {
+  border-color: var(--accent);
+}
+/* 箱だけ。顔は `<Button variant="solid-accent">` が持つ。 */
+.task-board-run {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  margin-left: auto;
+  padding: 0 18px;
+  border-radius: 10px;
+}
+.task-board-run-reason {
+  color: var(--ink-quiet);
+  font-size: 11px;
+}
+
+/* タスクを実行する確認。`showModal()` は top layer に積むので、下のモーダルより必ず上に出る。 */
 .task-run-confirm {
   box-sizing: border-box;
   width: min(28rem, calc(100vw - 2rem));
@@ -344,74 +734,34 @@
   border-radius: 0.4rem;
 }
 
-/* 狭い画面では、タスク一覧の表を1タスク＝1枚のカードに組み替える。
-   390px の器に7列の表を入れると 691px に広がり、いちばん知りたい要約の列が丸ごと画面の外へ出てしまう（実測）。
-   組み替えるのはここだけで、tsx は幅を測らず表のまま書く。
-   レポートの中の表（.table-scroll）はこの対象ではない。
-   あちらは中身が何列になるか分からない一般の表で、こちらは列と意味が分かっている一覧なので、狭いときの形をこちらで決められる。 */
+/* 狭い画面では、タスクのモーダルの2列を縦に積む。
+   一覧は上に高さを区切って置き（内側で転がす）、残りを詳細に渡す。下の操作の帯は箱の下端に残す。
+   組み替えるのはここだけで、tsx は幅を測らず広い画面のまま書く。
+   キーの案内は指で触る画面では読まないので畳む。 */
 @media (max-width: 760px) {
-  .task-board-table,
-  .task-board-table tbody {
-    display: block;
-    min-width: 0;
+  .task-board {
+    height: calc(100dvh - 2rem);
+    margin: 1rem auto auto;
   }
-  /* 見出しの行はカードでは置き場所が無いので隠す。
-     読み取れなくなるセルには下でラベルを出す（ID・status・難易度・要約は値そのもので分かる）。 */
-  .task-board-table thead {
+  .task-board-hints {
     display: none;
   }
-  /* 1行目に ID・status・難易度・loopable、2行目に要約、3行目に依存・着手。
-     DOM の並び（要約が最後）とは違う順に置く（要約が読み手の主で、metadata を読んでから意味にたどり着く形にしたくないため）。
-     押せる口はIDだけで、そのIDは DOM でも見た目でもカードの先頭に来るので、並べ替えてもキーボードで回る順は見た目の順のまま。 */
-  .task-board-row {
-    display: grid;
-    grid-template-columns: auto auto auto 1fr;
-    gap: 0.15rem 0.5rem;
-    padding: 0.55rem 0;
-    border-bottom: 1px solid var(--rule);
+  .task-board-close {
+    margin-left: auto;
   }
-  .task-board-table tbody th,
-  .task-board-table td {
-    padding: 0;
-    border-bottom: none;
+  .task-board-columns {
+    flex-direction: column;
   }
-  .task-board-table tbody th {
-    grid-row: 1;
-    grid-column: 1;
+  .task-board-list-column {
+    width: auto;
+    max-height: 40%;
+    border-right: none;
+    border-bottom: 1px solid var(--rule-quiet);
   }
-  .task-board-table td:nth-child(2) {
-    grid-row: 1;
-    grid-column: 2;
+  .task-detail {
+    padding: 16px;
   }
-  .task-board-table td:nth-child(3) {
-    grid-row: 1;
-    grid-column: 3;
-  }
-  .task-board-table td:nth-child(4) {
-    grid-row: 1;
-    grid-column: 4;
-  }
-  /* 要約。カードの主なので、行いっぱいを使って折り返す（min-width: 24em は器より広い指定なのでここでは効かせない）。 */
-  .task-board-table td:last-child {
-    grid-row: 2;
-    grid-column: 1 / -1;
-    min-width: 0;
-    white-space: normal;
-  }
-  /* 着手。カードでは行いっぱいを使えるので、広い画面向けの上限（max-width: 16em）は外す。 */
-  .task-board-table td:nth-child(5) {
-    grid-row: 3;
-    grid-column: 1 / -1;
-    max-width: none;
-  }
-  /* 見出しの行が消えたぶんのラベル。値と同じ行に、値より弱い濃さで置く（行の上にラベルだけの段を作らない）。 */
-  .task-board-table td[data-label]::before {
-    content: attr(data-label) " ";
-    color: var(--ink-quiet);
-    font-size: var(--font-label);
-  }
-  /* loopable は N のとき空になる（`loopableMark`）。空のセルにラベルだけが残らないようセルごと畳む。 */
-  .task-board-table td:empty {
-    display: none;
+  .task-board-action {
+    padding: 10px 16px;
   }
 }

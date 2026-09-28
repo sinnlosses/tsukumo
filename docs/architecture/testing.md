@@ -174,7 +174,7 @@ test/e2e/expected/` で意図した変化だけであることを確かめる �
 | 背景のタスク                                                      | `background-task-short`（再開まで数秒。長い版 `background-task` は再開まで 12 秒超）                                              | `background-task`       |
 | 最終レポートの札                                                  | `background-task-interim-report`                                                                                                  | `final-report-label`    |
 | ターンの履歴                                                      | `turn-history`                                                                                                                    | `turn-history`          |
-| タスクの一覧                                                      | 名指し無し（`opening` のみ）。ブラウザが繋がったあと cwd に `git init` して `develop/task/` を手書きし、`main` へコミットする足場 | `task-list`             |
+| タスクの一覧とタスクのモーダル（開く・選ぶ・絞る・頼む）          | 名指し無し（`opening` のみ）。ブラウザが繋がったあと cwd に `git init` して `develop/task/` を手書きし、`main` へコミットする足場 | `task-list`             |
 | 雑談の切り替えと忘却の区切り                                      | `chat-compact-boundary`                                                                                                           | `chat-compact-boundary` |
 | 復元した雑談の履歴                                                | `chat-restored-history`                                                                                                           | `chat-restored-history` |
 | 覚えていること（チップの開閉・編集・消す）                        | `chat-remembered-lines`                                                                                                           | `chat-remembered-lines` |

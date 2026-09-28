@@ -1,0 +1,132 @@
+[
+  {
+    "received": "hello",
+    "protocolVersion": 23
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "session-info",
+      "sessionId": "fake-session",
+      "model": "opus",
+      "permissionMode": "auto",
+      "slashCommands": [
+        "clear",
+        "compact",
+        "doctor"
+      ],
+      "terminalSlashCommands": [
+        "doctor"
+      ]
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "command-descriptions",
+      "descriptions": [
+        {
+          "name": "clear",
+          "description": "会話を消して始め直す（架空の説明）"
+        },
+        {
+          "name": "compact",
+          "description": "会話を要約してまとめる（架空の説明）"
+        }
+      ]
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "speech",
+      "text": "疑似セッションの駆動で立ち上がったよ。ここはぜんぶ作り物の会話。",
+      "expression": "default"
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "tasks-changed",
+      "tasks": {
+        "kind": "known",
+        "items": [
+          {
+            "id": "T-001",
+            "summary": "架空のタスク（`code` を含む要約）",
+            "status": "todo",
+            "difficulty": "opus",
+            "loopable": "Y",
+            "dependencies": [],
+            "body": "\n## 目的・背景\n\n架空の本文で、実物のタスクではない。`inline code` と **強調** を含む。\n\n## やること\n\n1. 一つ目の手順\n2. 二つ目の手順\n\n## 完了条件\n\n- [ ] まだの条件\n- [x] 済んだ条件\n\n### 参考\n\n| 項目 | 値 |\n| --- | --- |\n| 甲 | 1 |\n\n```sh\necho 架空\n```\n\n<b>生の HTML は字のまま出る</b>\n\n[外のリンク](https://example.invalid/foo) と [相対のリンク](foo/bar.md)\n",
+            "location": {
+              "kind": "file",
+              "path": "develop/task/T-001.md"
+            }
+          },
+          {
+            "id": "T-002",
+            "summary": "架空のタスク（完了）",
+            "status": "done",
+            "difficulty": "haiku",
+            "loopable": "N",
+            "dependencies": [],
+            "body": "\n## 目的\n\n架空の本文で、実物のタスクではない。\n",
+            "location": {
+              "kind": "file",
+              "path": "develop/task/T-002.md"
+            }
+          },
+          {
+            "id": "T-003",
+            "summary": "架空のタスク（進行中）",
+            "status": "doing",
+            "difficulty": "sonnet",
+            "loopable": "Y",
+            "dependencies": [],
+            "body": "\n## 目的\n\n架空の本文で、実物のタスクではない。\n",
+            "location": {
+              "kind": "file",
+              "path": "develop/task/T-003.md"
+            }
+          },
+          {
+            "id": "T-004",
+            "summary": "架空のタスク（待ち）",
+            "status": "todo",
+            "difficulty": "sonnet",
+            "loopable": "Y",
+            "dependencies": [
+              "T-001",
+              "T-009"
+            ],
+            "body": "\n## 目的\n\n架空の本文で、実物のタスクではない。\n",
+            "location": {
+              "kind": "file",
+              "path": "develop/task/T-004.md"
+            }
+          },
+          {
+            "id": "T-005",
+            "summary": "架空のタスク（保留）",
+            "status": "hold",
+            "difficulty": "sonnet",
+            "loopable": "N",
+            "dependencies": [
+              "T-001"
+            ],
+            "body": "\n## 目的\n\n架空の保留の理由を本文にだけ書く。\n",
+            "location": {
+              "kind": "file",
+              "path": "develop/task/T-005.md"
+            }
+          }
+        ]
+      }
+    }
+  }
+]
