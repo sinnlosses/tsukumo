@@ -7,8 +7,8 @@ import type { ReactElement } from "react"
 import { useSession, useSessionConnection } from "../../stores/session.ts"
 import { usePortraitPreload } from "../domain/portrait.tsx"
 import { ProtocolMismatch } from "../domain/protocol-mismatch.tsx"
+import { usePackAppearance } from "./hooks/use-pack-appearance.ts"
 import { Layout } from "./layout.tsx"
-import { usePackAppearance } from "./pack-appearance.ts"
 
 export function Root(): ReactElement {
   useSessionConnection()

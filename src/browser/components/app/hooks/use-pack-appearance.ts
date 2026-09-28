@@ -4,8 +4,8 @@
 
 import { useEffect } from "react"
 
-import { effectiveAccent } from "../../../shared/character-pack/character.ts"
-import { useSession } from "../../stores/session.ts"
+import { effectiveAccent } from "../../../../shared/character-pack/character.ts"
+import { useSession } from "../../../stores/session.ts"
 
 /** 画面の根で1回だけ呼ぶ。 */
 export function usePackAppearance(): void {
