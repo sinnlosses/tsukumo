@@ -59,10 +59,8 @@ export async function readPlanUsage(session: PlanUsageSource): Promise<PlanUsage
  * SDK が返した形を tsukumo の形に写す（SDK の語彙を外へ出さない）。読めない形のときは「取れない」。
  * `rate_limits_available` が `false`（API キーなど）のときは「該当しない」。
  * 再読み込みしても変わらないので、取れないとは別の状態にする。
- *
- * 本物の `query()` を呼ばずに写しを検査できるよう、公開してある。
  */
-export function toPlanUsage(value: unknown): PlanUsageReport {
+function toPlanUsage(value: unknown): PlanUsageReport {
   const parsed = sdkPlanUsageSchema.safeParse(value)
   if (!parsed.success) {
     return UNAVAILABLE_PLAN_USAGE

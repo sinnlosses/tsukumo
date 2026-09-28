@@ -67,10 +67,8 @@ export async function readContextUsage(session: ContextUsageSource): Promise<Con
  *
  * `skills` は1件ずつの並びではなく、まとめの中の `skillFrontmatter` に入っているので、そこから取り出して他の2つと同じ形に揃える。
  * `rawMaxTokens` のほうを窓の大きさに使うのは、使用量を測る相手がそれだと SDK の型の説明にあるため。
- *
- * 本物の `query()` を呼ばずに写しを検査できるよう、公開してある。
  */
-export function toContextUsage(value: unknown): ContextUsageReport {
+function toContextUsage(value: unknown): ContextUsageReport {
   const parsed = sdkContextUsageSchema.safeParse(value)
   if (!parsed.success) {
     return UNAVAILABLE_CONTEXT_USAGE

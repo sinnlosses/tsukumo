@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { toContextUsage } from "../../../../src/server/session-driver/adapter/sdk-context-usage.ts"
+import { readContextUsage } from "../../../../src/server/session-driver/adapter/sdk-context-usage.ts"
 import { UNAVAILABLE_CONTEXT_USAGE } from "../../../../src/shared/context-usage/context-usage.ts"
 
 /**
@@ -30,9 +30,16 @@ const SDK_CONTEXT_USAGE = {
   isAutoCompactEnabled: true,
 }
 
-describe("toContextUsage", () => {
-  it("SDK の形を画面が要る数と名前だけに写す（窓の大きさは rawMaxTokens）", () => {
-    const report = toContextUsage(SDK_CONTEXT_USAGE)
+/** `readContextUsage` が要る口だけを持つ偽のセッション。 */
+function fakeSession(value: unknown): {
+  getContextUsage: (opts: { detail: "full" }) => Promise<unknown>
+} {
+  return { getContextUsage: () => Promise.resolve(value) }
+}
+
+describe("readContextUsage", () => {
+  it("SDK の形を画面が要る数と名前だけに写す（窓の大きさは rawMaxTokens）", async () => {
+    const report = await readContextUsage(fakeSession(SDK_CONTEXT_USAGE))
 
     expect(report).toEqual({
       kind: "ready",
@@ -53,14 +60,22 @@ describe("toContextUsage", () => {
     })
   })
 
-  it("スキルが1つも無い回（skills が省かれる）でも空の並びとして写す", () => {
-    const report = toContextUsage({ ...SDK_CONTEXT_USAGE, skills: undefined })
+  it("スキルが1つも無い回（skills が省かれる）でも空の並びとして写す", async () => {
+    const report = await readContextUsage(fakeSession({ ...SDK_CONTEXT_USAGE, skills: undefined }))
 
     expect(report.kind === "ready" ? report.usage.skills : undefined).toEqual([])
   })
 
-  it("読めない形が届いたら「取れない」（例外を投げない）", () => {
-    expect(toContextUsage({ totalTokens: "たくさん" })).toEqual(UNAVAILABLE_CONTEXT_USAGE)
-    expect(toContextUsage(undefined)).toEqual(UNAVAILABLE_CONTEXT_USAGE)
+  it("読めない形が届いたら「取れない」（例外を投げない）", async () => {
+    expect(await readContextUsage(fakeSession({ totalTokens: "たくさん" }))).toEqual(
+      UNAVAILABLE_CONTEXT_USAGE,
+    )
+    expect(await readContextUsage(fakeSession(undefined))).toEqual(UNAVAILABLE_CONTEXT_USAGE)
+  })
+
+  it("SDK への問い合わせ自体が失敗しても「取れない」（例外を投げない）", async () => {
+    const failing = { getContextUsage: () => Promise.reject(new Error("架空の失敗")) }
+
+    expect(await readContextUsage(failing)).toEqual(UNAVAILABLE_CONTEXT_USAGE)
   })
 })

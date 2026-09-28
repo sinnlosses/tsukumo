@@ -7,18 +7,9 @@
 // 会話の内容（本文・ツールの入出力・セリフ）がここを通るが、ログにもファイルにも書かない。
 // stderr に出すのは SDK 自身のエラー文と、本体の催促が届いたという事実の1行（`isVisibleOutputNudge`。中身は写さない）だけ。
 
-import { setImmediate } from "node:timers/promises"
-
-import {
-  type HookCallbackMatcher,
-  type HookEvent,
-  type PermissionResult,
-  query,
-  type SDKUserMessage,
-} from "@anthropic-ai/claude-agent-sdk"
+import { type PermissionResult, query, type SDKUserMessage } from "@anthropic-ai/claude-agent-sdk"
 
 import { expressionNames as toExpressionNames } from "../../../shared/character-pack/expression-choice.ts"
-import { type EffortLevel, isEffortLevel, type PermissionMode } from "../../../shared/command.ts"
 import { parsePromptImage, type PromptImage } from "../../../shared/session-driver/prompt-image.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import { createReportReview, type ReportReview } from "../../report/core/report-review.ts"
@@ -36,12 +27,13 @@ import {
   TSUKUMO_MCP_SERVER_NAME,
 } from "../core/sdk-message.ts"
 import { withSelfStartedTurns } from "../core/self-started-turn.ts"
-import type { SessionDriver, SessionDriverOptions, SessionMode } from "../core/session-driver.ts"
+import type { SessionDriver, SessionDriverOptions } from "../core/session-driver.ts"
 import { createSessionTitleIntake, type SessionTitleIntake } from "../core/session-title.ts"
-import { childProcessEnv, isVisibleOutputNudge } from "../core/visible-output-nudge.ts"
+import { isVisibleOutputNudge } from "../core/visible-output-nudge.ts"
 import { readClaudeAccountTier } from "./claude-account.ts"
 import { readContextUsage } from "./sdk-context-usage.ts"
 import { readPlanUsage } from "./sdk-plan-usage.ts"
+import { buildQuerySeedOptions, stopHooks } from "./sdk-query-seed.ts"
 import {
   createSessionTitleWriter,
   readSessionDigest,
@@ -151,106 +143,6 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
     close: () => {
       input.end()
     },
-  }
-}
-
-/** `query()` の `options` のうち、`mcpServers` / `canUseTool`（クロージャが要る）を除いた部分。 */
-export type QuerySeedOptions = {
-  readonly cwd: string
-  readonly includePartialMessages: true
-  readonly systemPrompt: {
-    readonly type: "preset"
-    readonly preset: "claude_code"
-    readonly append: string
-  }
-  readonly permissionMode: PermissionMode
-  readonly model: string
-  readonly effort: EffortLevel
-  /**
-   * 続きから始めるセッションのID。新規に起こすときは undefined（SDK 側は省略と同じ扱い）。
-   * `SessionDriverOptions.start` を `query()` 自身の語彙（`resume?: string`）へ畳んだ値で、外の世界（SDK）の形をそのまま写す。
-   * `docs/coding-standards.md`「「無いかもしれない」値」の例外1。
-   */
-  readonly resume: string | undefined
-  /**
-   * ターンの最後の応答が空だと本体が差し込む催促（`[Your previous response had no visible output. ...]`）への返事が、指定なしだと日本語の依頼でも英語に滑るための保険。
-   * 値は固定で、キャラクターパックや利用者から変える口は作らない。
-   */
-  readonly settings: { readonly language: "japanese" }
-  /**
-   * 子プロセスの環境変数。
-   * 渡すと tsukumo 自身の環境と混ざらず丸ごと置き換わるので、引き継いだ環境に `CLAUDE_CODE_TERMINAL_MCP_TOOLS` を足したもの（`childProcessEnv`）を渡す。
-   * `speak` で終えたターンに本体が催促を差し込むのを止めるため。
-   */
-  readonly env: Readonly<Record<string, string | undefined>>
-}
-
-/**
- * `query()` に渡す `options` のうち、クロージャを含まない部分を組み立てる。
- * 本物の `query()` を呼ばずに渡る形を検査できるよう、`startSdkDriver` から切り出してある。
- *
- * モデル・effort・許可モードは呼び出し側から来る（覚えた既定）。
- * ここで定数に倒すと、歯車で変えた既定が起こし直しても効かない。
- * effort は対応しないモデル（`haiku` など）でも渡す。
- * `query()` 自身が対応の有無で読み分けるので、渡すかどうかをここでモデルごとに出し分けない。
- */
-export function buildQuerySeedOptions(options: SessionDriverOptions): QuerySeedOptions {
-  return {
-    cwd: options.cwd,
-    includePartialMessages: true,
-    systemPrompt: { type: "preset", preset: "claude_code", append: options.systemPromptAppend },
-    permissionMode: options.permissionMode,
-    model: options.model,
-    effort: options.effort,
-    resume: options.start.kind === "resume" ? options.start.sessionId : undefined,
-    settings: { language: "japanese" },
-    env: childProcessEnv(options.inheritedEnv),
-  }
-}
-
-/**
- * `Stop` フックを1つ登録する。
- * モードによらず常に登録する。effort を読む口は仕事でも雑談でも要るが、`report` の関所（{@link createReportGate}）で止めるのは仕事のときだけ。
- * `SubagentStop` には載せない（サブエージェントの `report` は捨てるので、渡し直させても画面に出ない。effort もメインの手元の値だけを読めばよい）。
- *
- * effort はブロック判定より先に読む。
- * `input.effort?.level` が {@link isEffortLevel} を通れば `effort-changed` を流す。
- * 帯に表示する値の源はここだけ（実測は `docs/history/decision.md`「effort の途中変更と読み取りが成り立った実測」）。
- *
- * 関所の判定の前に1回だけ macrotask を待つ。
- * SDK はフックの呼び出し（制御リクエスト）を読んだその場で処理し、それより前に届いたメッセージは列に積んで {@link relayMessages} の反復へ渡す。
- * 待たないと、止まる直前の本文が関所に届く前に判定しうる。
- * 列を空けるのは microtask だけなので、macrotask を1回待てば足りる（雑談のときはこの待ちも関所の判定も行わない）。
- *
- * 本物の `query()` を呼ばずにフックの中身を検査できるよう、`startSdkDriver` から切り出してある。
- */
-export function stopHooks(
-  mode: SessionMode,
-  gate: ReportGate,
-  onEvent: (event: SessionEvent) => void,
-): Partial<Record<HookEvent, HookCallbackMatcher[]>> {
-  return {
-    Stop: [
-      {
-        hooks: [
-          async (input) => {
-            if (input.hook_event_name !== "Stop") {
-              return {}
-            }
-            const level = input.effort?.level
-            if (level !== undefined && isEffortLevel(level)) {
-              onEvent({ kind: "effort-changed", effort: level })
-            }
-            if (mode.kind !== "work") {
-              return {}
-            }
-            await setImmediate()
-            const verdict = gate.verdict(input.stop_hook_active)
-            return verdict.kind === "block" ? { decision: "block", reason: verdict.reason } : {}
-          },
-        ],
-      },
-    ],
   }
 }
 
