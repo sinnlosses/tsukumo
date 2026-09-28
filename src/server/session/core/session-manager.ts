@@ -122,7 +122,15 @@ export type SessionManagerOptions = {
    * 見張りは代ごとに1つ作る（{@link GenerationTally.visit}）。
    */
   readonly visit: VisitPorts
+  /**
+   * 作業ディレクトリのタスク一覧の見張りを起こす。起こし直しをまたいで1つだけ動き、閉じるまで続く。
+   * 流すイベントは、そのときの代の駆動のイベントと同じ扱いで畳む。
+   */
+  readonly watchTasks: (onEvent: (event: SessionEvent) => void) => SessionWatcher
 }
+
+/** 閉じるまで動く見張り。 */
+export type SessionWatcher = { readonly close: () => void }
 
 /**
  * セッション1つぶんの持ち物。起こした時点で駆動も起こし始める。
@@ -461,6 +469,9 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
     },
     "immediate",
   )
+  const taskWatcher = options.watchTasks((event) => {
+    generation.emit(event)
+  })
 
   /**
    * 駆動を起こし直す。会話が繋がるかどうかは、起こす側が `resume` に何を渡すかで決まる。
@@ -471,9 +482,13 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
   const restart = async (request: SessionLaunchRequest): Promise<DispatchResult> => {
     try {
       generation.close()
-      // `previousUsageReview` だけは起こし直しをまたいで残す。
-      // ホームのファイルに残る記録であって、駆動1代の持ち物ではない（`usageReview` は起こし直すとふだんへ戻る）。
-      replaceState({ ...INITIAL_SESSION_STATE, previousUsageReview: state.previousUsageReview })
+      // `previousUsageReview` とタスク一覧は起こし直しをまたいで残す。
+      // どちらも駆動1代の持ち物ではない（`usageReview` は起こし直すとふだんへ戻る）。
+      replaceState({
+        ...INITIAL_SESSION_STATE,
+        previousUsageReview: state.previousUsageReview,
+        tasks: state.tasks,
+      })
       generation = startGeneration(request, "after-hello")
       await generation.driver
       announceGeneration()
@@ -543,6 +558,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
       closed = true
       subscribers.clear()
       generation.close()
+      taskWatcher.close()
       consolidationAbort.abort()
     },
   }

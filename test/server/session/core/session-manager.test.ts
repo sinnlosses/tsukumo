@@ -36,6 +36,7 @@ import type { SessionLaunchRequest } from "../../../../src/server/session/core/s
 import {
   createSessionManager as createSessionManagerWithoutCommands,
   type SessionManagerOptions,
+  type SessionWatcher,
 } from "../../../../src/server/session/core/session-manager.ts"
 import type {
   TokenUsageEntry,
@@ -118,6 +119,9 @@ const NO_VISIT_PORTS: VisitPorts = {
   random: () => 0,
   scriptSource: { kind: "pack-only" },
 }
+
+/** タスク一覧を気にしないテストに渡す見張り（何も流さない）。 */
+const NO_TASK_WATCH = (): SessionWatcher => ({ close: () => {} })
 
 /** 定着を気にしないテストに渡す出どころ（起こさない）。 */
 const NO_CHAT_CONSOLIDATION: ChatConsolidationSource = { kind: "dont-consolidate" }
@@ -324,6 +328,7 @@ function startManagerWithStub(
     readAchievementDay,
     batchIntervalMs: BATCH_MS,
     chatConsolidation: NO_CHAT_CONSOLIDATION,
+    watchTasks: NO_TASK_WATCH,
     visit: NO_VISIT_PORTS,
     diary,
     chatArchive: NOOP_CHAT_ARCHIVE,
@@ -525,6 +530,7 @@ describe("createSessionManager", () => {
       readAchievementDay: () => Promise.resolve(undefined),
       batchIntervalMs: BATCH_MS,
       chatConsolidation: NO_CHAT_CONSOLIDATION,
+      watchTasks: NO_TASK_WATCH,
       visit: NO_VISIT_PORTS,
       diary: NO_DIARY_WRITER,
       chatArchive: NOOP_CHAT_ARCHIVE,
@@ -641,6 +647,7 @@ describe("createSessionManager", () => {
       readAchievementDay: () => Promise.resolve(undefined),
       batchIntervalMs: BATCH_MS,
       chatConsolidation: NO_CHAT_CONSOLIDATION,
+      watchTasks: NO_TASK_WATCH,
       visit: NO_VISIT_PORTS,
       diary: NO_DIARY_WRITER,
       chatArchive: NOOP_CHAT_ARCHIVE,
@@ -720,6 +727,7 @@ describe("createSessionManager", () => {
       readAchievementDay: () => Promise.resolve(undefined),
       batchIntervalMs: BATCH_MS,
       chatConsolidation: NO_CHAT_CONSOLIDATION,
+      watchTasks: NO_TASK_WATCH,
       visit: NO_VISIT_PORTS,
       diary: NO_DIARY_WRITER,
       chatArchive: NOOP_CHAT_ARCHIVE,
@@ -778,6 +786,7 @@ describe("createSessionManager", () => {
       readAchievementDay: () => Promise.resolve(undefined),
       batchIntervalMs: BATCH_MS,
       chatConsolidation: NO_CHAT_CONSOLIDATION,
+      watchTasks: NO_TASK_WATCH,
       visit: NO_VISIT_PORTS,
       diary: NO_DIARY_WRITER,
       chatArchive: NOOP_CHAT_ARCHIVE,
@@ -839,6 +848,7 @@ describe("createSessionManager", () => {
       readAchievementDay: () => Promise.resolve(undefined),
       batchIntervalMs: BATCH_MS,
       chatConsolidation: NO_CHAT_CONSOLIDATION,
+      watchTasks: NO_TASK_WATCH,
       visit: NO_VISIT_PORTS,
       diary: NO_DIARY_WRITER,
       chatArchive: NOOP_CHAT_ARCHIVE,
@@ -905,6 +915,7 @@ describe("createSessionManager", () => {
       readAchievementDay: () => Promise.resolve(undefined),
       batchIntervalMs: BATCH_MS,
       chatConsolidation: NO_CHAT_CONSOLIDATION,
+      watchTasks: NO_TASK_WATCH,
       visit: NO_VISIT_PORTS,
       diary: NO_DIARY_WRITER,
       chatArchive: NOOP_CHAT_ARCHIVE,
@@ -1180,6 +1191,7 @@ describe("createSessionManager", () => {
         readAchievementDay: () => Promise.resolve(undefined),
         batchIntervalMs: BATCH_MS,
         chatConsolidation,
+        watchTasks: NO_TASK_WATCH,
         visit: NO_VISIT_PORTS,
         diary: NO_DIARY_WRITER,
         chatArchive: archive,
@@ -1562,6 +1574,7 @@ describe("createSessionManager", () => {
       readAchievementDay: () => Promise.resolve(undefined),
       batchIntervalMs: BATCH_MS,
       chatConsolidation: NO_CHAT_CONSOLIDATION,
+      watchTasks: NO_TASK_WATCH,
       visit: NO_VISIT_PORTS,
       diary: NO_DIARY_WRITER,
       chatArchive: NOOP_CHAT_ARCHIVE,
@@ -1617,6 +1630,7 @@ describe("createSessionManager", () => {
       readAchievementDay: () => Promise.resolve(undefined),
       batchIntervalMs: BATCH_MS,
       chatConsolidation: NO_CHAT_CONSOLIDATION,
+      watchTasks: NO_TASK_WATCH,
       visit: NO_VISIT_PORTS,
       diary: NO_DIARY_WRITER,
       chatArchive: NOOP_CHAT_ARCHIVE,
@@ -1664,6 +1678,7 @@ describe("createSessionManager", () => {
       readAchievementDay: () => Promise.resolve(undefined),
       batchIntervalMs: BATCH_MS,
       chatConsolidation: NO_CHAT_CONSOLIDATION,
+      watchTasks: NO_TASK_WATCH,
       visit: NO_VISIT_PORTS,
       diary: NO_DIARY_WRITER,
       chatArchive: NOOP_CHAT_ARCHIVE,
@@ -1768,6 +1783,7 @@ describe("createSessionManager", () => {
         readAchievementDay: () => Promise.resolve(undefined),
         batchIntervalMs: BATCH_MS,
         chatConsolidation: NO_CHAT_CONSOLIDATION,
+        watchTasks: NO_TASK_WATCH,
         visit: NO_VISIT_PORTS,
         diary: NO_DIARY_WRITER,
         chatArchive,
@@ -2116,6 +2132,7 @@ describe("createSessionManager", () => {
         readAchievementDay: () => Promise.resolve(undefined),
         batchIntervalMs: BATCH_MS,
         chatConsolidation: NO_CHAT_CONSOLIDATION,
+        watchTasks: NO_TASK_WATCH,
         visit: NO_VISIT_PORTS,
         diary: NO_DIARY_WRITER,
         chatArchive: NOOP_CHAT_ARCHIVE,
@@ -2416,6 +2433,7 @@ describe("createSessionManager", () => {
         readAchievementDay: () => Promise.resolve(undefined),
         batchIntervalMs: BATCH_MS,
         chatConsolidation: NO_CHAT_CONSOLIDATION,
+        watchTasks: NO_TASK_WATCH,
         visit: NO_VISIT_PORTS,
         diary: NO_DIARY_WRITER,
         chatArchive: NOOP_CHAT_ARCHIVE,
@@ -2582,6 +2600,7 @@ describe("createSessionManager", () => {
         readAchievementDay: () => Promise.resolve(undefined),
         batchIntervalMs: BATCH_MS,
         chatConsolidation: NO_CHAT_CONSOLIDATION,
+        watchTasks: NO_TASK_WATCH,
         visit: NO_VISIT_PORTS,
         diary: NO_DIARY_WRITER,
         chatArchive: NOOP_CHAT_ARCHIVE,
@@ -2761,6 +2780,7 @@ describe("依頼に添えた画像の棚", () => {
       readAchievementDay: () => Promise.resolve(undefined),
       batchIntervalMs: BATCH_MS,
       chatConsolidation: NO_CHAT_CONSOLIDATION,
+      watchTasks: NO_TASK_WATCH,
       visit: NO_VISIT_PORTS,
       diary: NO_DIARY_WRITER,
       chatArchive: NOOP_CHAT_ARCHIVE,
@@ -2940,6 +2960,7 @@ describe("createSessionManager（見直し）", () => {
       readAchievementDay: () => Promise.resolve(undefined),
       batchIntervalMs: BATCH_MS,
       chatConsolidation: NO_CHAT_CONSOLIDATION,
+      watchTasks: NO_TASK_WATCH,
       visit: NO_VISIT_PORTS,
       diary: NO_DIARY_WRITER,
       chatArchive: NOOP_CHAT_ARCHIVE,
@@ -3046,6 +3067,90 @@ describe("createSessionManager（見直し）", () => {
   })
 })
 
+describe("タスク一覧の見張り", () => {
+  const KNOWN_TASKS = { kind: "known", items: [] } as const
+
+  /** 見張りの起こす・閉じるを数え、流す口を手で握る session-manager。 */
+  function startManagerWithTaskWatch() {
+    const watch = { started: 0, closed: 0, emit: (_event: SessionEvent): void => {} }
+    const manager = createSessionManager({
+      now: () => 1_000,
+      openFile: () => Promise.resolve(true),
+      readAchievementDay: () => Promise.resolve(undefined),
+      batchIntervalMs: BATCH_MS,
+      chatConsolidation: NO_CHAT_CONSOLIDATION,
+      watchTasks: (onEvent) => {
+        watch.started += 1
+        watch.emit = onEvent
+        return {
+          close: () => {
+            watch.closed += 1
+          },
+        }
+      },
+      visit: NO_VISIT_PORTS,
+      diary: NO_DIARY_WRITER,
+      chatArchive: NOOP_CHAT_ARCHIVE,
+      project: FICTIONAL_PROJECT,
+      tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
+      contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
+      reportUsageLog: NOOP_REPORT_USAGE_LOG,
+      promptImageShelf: createPromptImageShelf(),
+      rememberSessionDefault: (sessionDefault) => ({
+        kind: "session-default-changed",
+        sessionDefault,
+      }),
+      rememberVisitEnabled: (visitEnabled) => ({
+        kind: "visit-enabled-changed",
+        visitEnabled,
+      }),
+      launchSession: () => Promise.resolve(createStubDriver().driver),
+      editCharacter: () => Promise.resolve(undefined),
+      createCharacter: () => Promise.resolve(undefined),
+      deleteCharacter: () => Promise.resolve(undefined),
+      forgetRememberedLine: () => Promise.resolve(undefined),
+      readPreviousUsageReview: (): PreviousUsageReview => ({ kind: "none" }),
+      writePreviousUsageReview: () => {},
+      dismissUsageProposal: (dismiss) => ({
+        kind: "usage-proposal-dismissed",
+        key: usageProposalKey(dismiss),
+      }),
+    })
+    return { manager, watch }
+  }
+
+  it("見張りは起こし直しをまたいで1つだけ動き、セッションを閉じたときに閉じる", async () => {
+    const { manager, watch } = startManagerWithTaskWatch()
+
+    await manager.commands.session.setChatMode({ chat: true })
+    await manager.commands.session.setChatMode({ chat: false })
+    expect(watch).toMatchObject({ started: 1, closed: 0 })
+
+    manager.close()
+    expect(watch).toMatchObject({ started: 1, closed: 1 })
+  })
+
+  it("起こし直しの hello にそれまでのタスク一覧が残り、そのあと届いた一覧も新しい代に入る", async () => {
+    const { manager, watch } = startManagerWithTaskWatch()
+    watch.emit({ kind: "tasks-changed", tasks: KNOWN_TASKS })
+
+    await manager.commands.session.setChatMode({ chat: true })
+    const afterRestart: ServerFrame[] = []
+    manager.subscribe((frame) => afterRestart.push(frame))
+    const [hello] = afterRestart
+    expect(hello?.type === "hello" ? hello.state.tasks : undefined).toEqual(KNOWN_TASKS)
+
+    watch.emit({ kind: "tasks-changed", tasks: { kind: "unknown" } })
+    await waitForBatch()
+    const later: ServerFrame[] = []
+    manager.subscribe((frame) => later.push(frame))
+    const [laterHello] = later
+    expect(laterHello?.type === "hello" ? laterHello.state.tasks : undefined).toEqual({
+      kind: "unknown",
+    })
+  })
+})
+
 describe("訪問", () => {
   const SCRIPT: VisitScript = [
     { speaker: "guest", expression: "curious", text: "架空の客の一言目" },
@@ -3069,6 +3174,7 @@ describe("訪問", () => {
       readAchievementDay: () => Promise.resolve(undefined),
       batchIntervalMs: BATCH_MS,
       chatConsolidation: NO_CHAT_CONSOLIDATION,
+      watchTasks: NO_TASK_WATCH,
       visit: {
         timing: VISIT_TIMING,
         clock: manual.clock,

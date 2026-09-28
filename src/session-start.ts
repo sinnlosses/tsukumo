@@ -181,8 +181,6 @@ export async function startSession(options: SessionStartOptions): Promise<Starte
       characterEvent: () => character.event(),
       readChatTopics: (pack) => readChatTopics(createChatSummary(pack.name)),
       readRememberedLines: (pack) => readRememberedLines(pack),
-      watchTasks: (onEvent) =>
-        watchTaskSummary(cwd, (tasks) => onEvent({ kind: "tasks-changed", tasks })),
       findResumeSession: (pack, chat) =>
         findPackSessionToResume(sessionCatalog, pack.name, chat, viewPort),
       listSessions: (pack, chat) =>
@@ -218,6 +216,8 @@ export async function startSession(options: SessionStartOptions): Promise<Starte
     readPreviousUsageReview: () =>
       withoutDismissedProposals(readPreviousUsageReview(), readDismissedUsageProposalKeys()),
     writePreviousUsageReview,
+    watchTasks: (onEvent) =>
+      watchTaskSummary(cwd, (tasks) => onEvent({ kind: "tasks-changed", tasks })),
     // 客の候補は来るときにパックの一覧を読み直して拾う（画面から作った・直したパックもその場で効く）。
     visit: {
       timing: config.quickVisit ? QUICK_VISIT_TIMING : VISIT_TIMING,

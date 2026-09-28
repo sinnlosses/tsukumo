@@ -4,7 +4,7 @@
 //
 // 画面を初期状態に戻すかどうかは持たない（起こし直しだけの判断なので、起こし直す側が持つ）。ここは「どちらから来ても同じ順序」だけ。
 //
-// 外の世界（パックの読み込み・覚えた値・claude の transcript・見張り）には触らず、すべて渡された関数（`SessionLaunchPorts`）越しに頼む。
+// 外の世界（パックの読み込み・覚えた値・claude の transcript）には触らず、すべて渡された関数（`SessionLaunchPorts`）越しに頼む。
 
 import type { SessionChoice } from "../../../shared/session/session-choice.ts"
 import type { SessionDefault } from "../../../shared/session/session-default.ts"
@@ -15,9 +15,6 @@ import type {
 } from "../../character-pack/core/character-selection.ts"
 import type { SessionCatalogRefresh } from "../../session-driver/core/session-catalog.ts"
 import type { SessionDriver, SessionStart } from "../../session-driver/core/session-driver.ts"
-
-/** 駆動と同じ間だけ動く見張り。駆動を閉じると一緒に閉じる。 */
-export type SessionWatcher = { readonly close: () => void }
 
 /** これから起こす駆動の種。 */
 export type SessionLaunchSeed<Pack extends NamedCharacterPack> = {
@@ -92,8 +89,6 @@ export type SessionLaunchPorts<Pack extends NamedCharacterPack> = {
    * 雑談で起こすときだけ呼ばれる。
    */
   readonly readRememberedLines: (pack: Pack) => readonly string[]
-  /** 駆動と同じ間だけ動く見張りを起こす。流すイベントは駆動のものと同じ受け口へ。 */
-  readonly watchTasks: (onEvent: (event: SessionEvent) => void) => SessionWatcher
   /**
    * そのパックの、そのモードの続きから始めるセッションを探す（見つからなければ `{ kind: "new" }`）。
    * 雑談と仕事は別のセッションなので、引く印も分かれる。
@@ -124,12 +119,12 @@ export type SessionLaunchPorts<Pack extends NamedCharacterPack> = {
  * 順序は起動時も起こし直しも同じ:
  * パックを決める → 画面から名前が届いたときだけ覚える → `character-changed`・`chat-mode-changed`・
  * （雑談のときだけ `chat-topics-changed` と `remembered-lines-changed`）・
- * `session-default-changed`・`visit-enabled-changed` を流す → 見張りを起こす →
+ * `session-default-changed`・`visit-enabled-changed` を流す →
  * 続きのセッションを決める → 切り替え先の一覧を流す → 駆動を起こす →
  * 続きから始まったなら履歴を組み直して流し終える → 一覧の読み直しを始める → 駆動を返す。
  * 読み直した一覧を採ったときだけ、切り替え先の一覧をもう一度流す。
  *
- * 受け口は2つ。`onEvent` は駆動（と見張り）から新しく届くイベント、`onRestoredEvent` は前のセッションの記録を組み直した再生だけを流す。
+ * 受け口は2つ。`onEvent` は駆動から新しく届くイベント、`onRestoredEvent` は前のセッションの記録を組み直した再生だけを流す。
  * 分けるのは「どちらの口から来たか」を呼び出し側が知れるようにするためだけ。
  */
 export function createSessionLaunch<Pack extends NamedCharacterPack>(
@@ -167,7 +162,6 @@ export function createSessionLaunch<Pack extends NamedCharacterPack>(
     // 読むのはここ1回だけ。`visit.setEnabled` で書き換えたあとは、この起動の駆動が続くかぎりその値のまま（次に起こすまで読み直さない）。
     onEvent({ kind: "visit-enabled-changed", visitEnabled: ports.readVisitEnabled() })
 
-    const watcher = ports.watchTasks(onEvent)
     // キャラクターごと・モードごとに別のセッションを持つ。起動時も切り替え時も、これから起こす側の続きを探す。
     // 画面から選ばれたときだけは探さない（選ばれたIDがそのまま続きになる）。
     const start = await sessionStartOf(ports, request.resume, pack, chat)
@@ -191,13 +185,7 @@ export function createSessionLaunch<Pack extends NamedCharacterPack>(
     }
     void announceRefreshedSessions(ports, pack, chat, announceSessions)
 
-    return {
-      ...driver,
-      close: () => {
-        watcher.close()
-        driver.close()
-      },
-    }
+    return driver
   }
 }
 

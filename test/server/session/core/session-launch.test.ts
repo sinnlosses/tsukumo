@@ -23,7 +23,7 @@ import {
   shownPortraits,
 } from "../../../fixture/character.ts"
 
-// 本物の claude は起こさない（駆動も見張りも下の偽物）。
+// 本物の claude は起こさない（駆動は下の偽物）。
 type Pack = { readonly name: string }
 
 const INITIAL: Pack = { name: "tsukumo-spirit" }
@@ -75,7 +75,7 @@ function createStubDriver(): { readonly driver: SessionDriver; readonly calls: s
 
 type Harness = {
   readonly ports: SessionLaunchPorts<Pack>
-  /** 駆動（と見張り）から新しく届いたイベントと、復元の再生の両方を時系列に混ぜたもの。 */
+  /** 駆動から新しく届いたイベントと、復元の再生の両方を時系列に混ぜたもの。 */
   readonly events: SessionEvent[]
   /** `onEvent` を通ったイベントだけ（復元の再生は入らない）。 */
   readonly driverEvents: SessionEvent[]
@@ -126,7 +126,6 @@ function createHarness(overrides: Partial<SessionLaunchPorts<Pack>> = {}): Harne
       calls.push(`readRememberedLines:${pack.name}`)
       return REMEMBERED_LINES
     },
-    watchTasks: () => ({ close: () => calls.push("watchTasks:close") }),
     findResumeSession: (pack, chat) => {
       calls.push(`findResumeSession:${pack.name}:${modeOf(chat)}`)
       const sessionId = `prev-${modeOf(chat)}-session`
@@ -563,42 +562,6 @@ describe("createSessionLaunch", () => {
     expect(harness.driverEvents.filter((event) => event.kind === "sessions-changed")).toHaveLength(
       1,
     )
-  })
-
-  it("駆動を閉じると、駆動と同じ間だけ動く見張りも閉じる", async () => {
-    const harness = createHarness()
-
-    const driver = await createSessionLaunch(harness.ports)(
-      harness.receive,
-      harness.receiveRestored,
-      {
-        selection: { by: "initial" },
-        chat: undefined,
-        resume: { by: "latest" },
-      },
-    )
-    driver.close()
-
-    expect(harness.calls).toContain("watchTasks:close")
-    expect(harness.stub.calls).toContain("close")
-  })
-
-  it("見張りが流すイベントは、駆動のイベントと同じ受け口へ流れる", async () => {
-    const harness = createHarness({
-      watchTasks: (onEvent) => {
-        onEvent({ kind: "tasks-changed", tasks: { kind: "known", items: [] } })
-        return { close: () => {} }
-      },
-    })
-
-    await createSessionLaunch(harness.ports)(harness.receive, harness.receiveRestored, {
-      selection: { by: "initial" },
-      chat: undefined,
-      resume: { by: "latest" },
-    })
-    await settle()
-
-    expect(harness.events.map((event) => event.kind)).toContain("tasks-changed")
   })
 
   it("復元は別の口（onRestoredEvent）へ流れ、駆動のイベントと区別できる", async () => {
