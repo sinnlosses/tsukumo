@@ -117,12 +117,12 @@
   grid-column: 3;
   min-width: 0;
 }
-/* 一本道の流れ（`list` の `flow`）。札を矢印の文字でつなぎ、入りきらなければ折り返す。 */
+/* 一本道の流れ（`list` の `flow`）。札を上から下へ積み、下向きの矢印でつなぐ。 */
 .detail-block .report-flow {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.3rem 0.4rem;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.3rem;
   margin: 0.5rem 0;
 }
 .detail-block .report-flow-step {
@@ -137,6 +137,7 @@
   color: var(--ink);
 }
 .detail-block .report-flow-arrow {
+  margin-left: 0.3rem;
   color: var(--ink-quiet);
 }
 /* 段の図（`report` の `progress` の塊から tsukumo が組む）。

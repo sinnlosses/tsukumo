@@ -219,7 +219,7 @@ describe("reportSectionsMarkdown", () => {
     )
   })
 
-  it("flow は項目を札にして札の間に矢印の文字を置き、名前があれば札の頭に太字で添える", () => {
+  it("flow は項目を札にして札の間に下向きの矢印を置き、名前があれば札の頭に太字で添える", () => {
     const items = [
       { label: "", text: "架空の `入口`", done: false },
       { label: "架空の段", text: "架空の<中>", done: true },
@@ -228,8 +228,8 @@ describe("reportSectionsMarkdown", () => {
 
     expect(markdownOf({ kind: "list", style: "flow", items, fold: "" })).toBe(
       '<div class="flow"><span class="flow-step">架空の <code>入口</code></span>' +
-        '<span class="flow-arrow">→</span><span class="flow-step"><b>架空の段</b>架空の&lt;中&gt;</span>' +
-        '<span class="flow-arrow">→</span><span class="flow-step">架空の出口</span></div>',
+        '<span class="flow-arrow">↓</span><span class="flow-step"><b>架空の段</b>架空の&lt;中&gt;</span>' +
+        '<span class="flow-arrow">↓</span><span class="flow-step">架空の出口</span></div>',
     )
   })
 

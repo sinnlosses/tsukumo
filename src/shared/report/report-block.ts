@@ -493,13 +493,13 @@ function listMarkdown(block: ListBlock): string {
   return labeled ? `<div class="labeled-list">\n\n${lines.join("\n")}\n\n</div>` : lines.join("\n")
 }
 
-/** 項目を札にし、札の間に矢印の文字を置く。名前があれば札の頭に太字で添える。 */
+/** 項目を札にして上から下へ積み、札の間に下向きの矢印の文字を置く。名前があれば札の頭に太字で添える。 */
 function flowMarkdown(block: ListBlock): string {
   const steps = block.items.map(({ label, text }) => {
     const name = label.trim() === "" ? "" : `<b>${htmlInlineWithCode(label)}</b>`
     return `<span class="flow-step">${name}${htmlInlineWithCode(text)}</span>`
   })
-  return `<div class="flow">${steps.join('<span class="flow-arrow">→</span>')}</div>`
+  return `<div class="flow">${steps.join('<span class="flow-arrow">↓</span>')}</div>`
 }
 
 function listMarker(
