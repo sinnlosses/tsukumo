@@ -11,6 +11,7 @@ import { useState } from "react"
 import { commandSuggestions } from "../../../../../../../../../shared/session/command-suggestion.ts"
 import type { CommandDescription } from "../../../../../../../../../shared/session/session-event.ts"
 import { useRepositoryFilePaths } from "../../../../hooks/use-repository-file-paths.ts"
+import type { ComposerKey, Draft } from "../../../domain/composer-surface.ts"
 import {
   matchingCommands,
   shouldShowCommandSuggestions,
@@ -20,7 +21,6 @@ import {
   filePathQuery,
   matchingFilePaths,
 } from "../../file-suggestions/file-suggestions.tsx"
-import type { ComposerKey, Draft } from "./use-composer.ts"
 
 /** 入力欄の下のボタンが打つ、補完の合図の文字。 */
 export type CompletionTrigger = "/" | "@"

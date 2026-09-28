@@ -738,9 +738,20 @@ const DOM_TREE_SCRIPT = `(() => {
     }
     return children;
   };
+  // マークダウンエディタ（CodeMirror）は中の行の分け方と自動の class を写さず、文面だけを textarea の value のように残す。
+  const editorNodeOf = (element) => {
+    const lines = Array.from(element.querySelectorAll(".cm-line"), (line) =>
+      Array.from(line.childNodes)
+        .filter((node) => !(node.nodeType === Node.ELEMENT_NODE && node.classList.contains("cm-placeholder")))
+        .map((node) => node.textContent ?? "")
+        .join(""),
+    );
+    return [{ tag: element.localName, attributes: { editor: "codemirror", value: lines.join("\\n") } }];
+  };
   const nodeOf = (element) => {
     const tag = element.localName;
     if (SKIPPED.has(tag) || !visible(element)) return [];
+    if (element.classList.contains("cm-editor")) return editorNodeOf(element);
     const attributes = attributesOf(element, tag);
     const children = OPAQUE.has(tag) || tag === "textarea" ? [] : childrenOf(element);
     if ((tag === "div" || tag === "span") && Object.keys(attributes).length === 0) {

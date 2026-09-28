@@ -1,10 +1,8 @@
 import { act, cleanup, renderHook, waitFor } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
-import {
-  useComposer,
-  type ComposerKey,
-} from "../../../../../../../../../../src/browser/components/page/conversation/components/dispatch/components/composer/hooks/use-composer.ts"
+import { useComposer } from "../../../../../../../../../../src/browser/components/page/conversation/components/dispatch/components/composer/hooks/use-composer.ts"
+import type { ComposerKey } from "../../../../../../../../../../src/browser/components/page/conversation/components/dispatch/domain/composer-surface.ts"
 import { useQuestionDraft } from "../../../../../../../../../../src/browser/stores/question-answer.ts"
 import {
   INITIAL_SESSION_STATE,
@@ -65,7 +63,7 @@ function type(
   caret = value.length,
 ): void {
   act(() => {
-    result.current.onChange({ target: { value, selectionStart: caret } })
+    result.current.onChange({ text: value, caret })
   })
 }
 
@@ -86,7 +84,7 @@ function key(
     ctrlKey: modifiers.ctrl ?? false,
     metaKey: modifiers.meta ?? false,
     keyCode,
-    nativeEvent: { isComposing: modifiers.composing ?? false },
+    isComposing: modifiers.composing ?? false,
     preventDefault: () => {
       prevented = true
     },
@@ -160,7 +158,7 @@ describe("useComposer の `/` 補完", () => {
 
     expect(press(result, key("Tab")).prevented()).toBe(true)
 
-    expect(result.current.text).toBe("/unclear ")
+    expect(result.current.draft.text).toBe("/unclear ")
     expect(result.current.suggestions.kind).toBe("none")
     expect(calls).toEqual([])
   })
@@ -205,7 +203,7 @@ describe("useComposer の `@` 補完", () => {
       result.current.onSelectSuggestion(0)
     })
 
-    expect(result.current.text).toBe("見て @src/cli.ts のところ")
+    expect(result.current.draft.text).toBe("見て @src/cli.ts のところ")
   })
 })
 
@@ -218,7 +216,7 @@ describe("useComposer の送信", () => {
     expect(press(result, key("Enter", { meta: true })).prevented()).toBe(true)
 
     expect(calls).toEqual([{ procedure: "session.prompt", text: "架空の依頼", images: [] }])
-    expect(result.current.text).toBe("")
+    expect(result.current.draft.text).toBe("")
   })
 
   it("Enter 単独・IME の変換確定（isComposing / keyCode 229）では送らない", () => {
@@ -231,7 +229,7 @@ describe("useComposer の送信", () => {
     press(result, key("Enter", { meta: true }, 229))
 
     expect(calls).toEqual([])
-    expect(result.current.text).toBe("架空の依頼")
+    expect(result.current.draft.text).toBe("架空の依頼")
   })
 
   it("空白だけの下書きは送らない", () => {
@@ -263,6 +261,6 @@ describe("useComposer の送信", () => {
 
     expect(submitPrevented).toBe(true)
     expect(calls).toEqual([])
-    expect(result.current.text).toBe("架空の依頼")
+    expect(result.current.draft.text).toBe("架空の依頼")
   })
 })

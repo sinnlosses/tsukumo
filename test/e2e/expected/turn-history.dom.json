@@ -565,6 +565,20 @@
                       }
                     ]
                   },
+                  {
+                    "tag": "button",
+                    "attributes": {
+                      "aria-pressed": "false",
+                      "aria-disabled": "false",
+                      "aria-label": "マークダウンエディタで書く",
+                      "type": "button"
+                    },
+                    "children": [
+                      {
+                        "tag": "svg"
+                      }
+                    ]
+                  },
                   "所要",
                   "0秒",
                   {

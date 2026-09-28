@@ -1,7 +1,7 @@
 // `<Composer>` に添える画像の持ち方と、貼り付け・ドロップ・ファイルを選ぶ窓からの取り込み。
 // ここは state とイベントの読み替えだけを持ち、読み込みそのもの（原寸と控えを作る・添えられる種類か見分ける）は `readPromptImage` などの純関数が持つ。
 
-import { useRef, useState, type ClipboardEvent, type DragEvent, type RefObject } from "react"
+import { useRef, useState, type RefObject } from "react"
 
 import {
   MAX_PROMPT_IMAGES,
@@ -15,8 +15,8 @@ import {
 } from "../domain/prompt-image.ts"
 
 export type UsePromptImageArgs = {
-  /** 画像を選び終えたあと、入力欄へフォーカスを戻す（実体は呼び出し側の `textAreaRef`）。 */
-  readonly focusTextArea: () => void
+  /** 画像を選び終えたあと、入力欄へフォーカスを戻す。 */
+  readonly focusSurface: () => void
 }
 
 export type PromptImageModel = {
@@ -71,7 +71,7 @@ export function usePromptImage(args: UsePromptImageArgs): PromptImageModel {
       attachFiles(files)
     },
     onDragOver: (event) => {
-      // ファイルを掴んできたときだけ落とせるようにする（文字のドラッグは `<textarea>` の既定の振る舞いのまま）。
+      // ファイルを掴んできたときだけ落とせるようにする（文字のドラッグは入力欄の面の既定の振る舞いのまま）。
       if (carriesFiles(event.dataTransfer)) {
         event.preventDefault()
       }
@@ -91,7 +91,7 @@ export function usePromptImage(args: UsePromptImageArgs): PromptImageModel {
       attachFiles(chosenPromptImageFiles(event.target.files))
       // 同じファイルを続けて選び直しても `change` が届くように、選んだものを空に戻す（札のほうは state が持っている）。
       event.target.value = ""
-      args.focusTextArea()
+      args.focusSurface()
     },
     reset: () => {
       setImages([])
