@@ -23,6 +23,8 @@ characters/<name>/
 - **二重適用を避ける**: `applyFlagSettings({ outputStyle: "default" })`（セッション限り）で
   グローバルの出力スタイルを中立に戻してから `persona.md` を足す（実測と採らない案は
   `docs/requirements.md` 4.4）
+- **出力スタイル（`~/.claude/output-styles/`）はセッションを起こしたときにしか読まれない。**
+  `/clear` では読み直されない（2026-09-10 実測）。書き換えを効かせるには tsukumo を起こし直す
 - **切り替えは別のパックでセッションを起こし直す**（`speak` の enum も人格も、起こし直せば確実に
   入れ替わる。`startSdkDriver` が `mcpServers` を毎回組み直すので `setMcpServers` は要らない）
 - **キャラクターごと・モードごとに別のセッションを持つ**（印の形と探し方は `docs/requirements.md`

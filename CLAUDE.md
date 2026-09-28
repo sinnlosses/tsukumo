@@ -49,7 +49,7 @@ node scripts/stop.ts           # 動いている tsukumo の一覧（--port <n> 
 
 ## アーキテクチャ概要
 
-**3層・プロトコル・部品の設計は `docs/design.md`、実装の全体図・設計判断・既知の制約は
+**3層・プロトコル・部品の設計は `docs/design.md`、実装の全体図・設計判断は
 `docs/architecture.md` が正典。** 原則の見出しだけを置く。
 
 - **原則1**: **Claude Code の TUI を使わない**（上の IMPORTANT）
@@ -163,7 +163,7 @@ node scripts/stop.ts           # 動いている tsukumo の一覧（--port <n> 
 | 色・書体・レイアウト                                                                            | `docs/screen-design.md`                                                            |
 | セリフとレポートの分離・レポートの記法・各表示物の仕様                                          | `docs/display.md`                                                                  |
 | 雑談モード                                                                                      | `docs/chat-mode.md`                                                                |
-| なぜ今の形なのか・既知の制約                                                                    | `docs/architecture.md`                                                             |
+| なぜ今の形なのか                                                                                | `docs/architecture.md`                                                             |
 | ブラウザ側の状態・Markdown・立ち絵の動き・CSS・`components/ui/` の部品の作法                    | `docs/architecture/browser.md`                                                     |
 | キャラクターパックの形・探索順・画面から書くときの境界                                          | `docs/architecture/character-pack.md`                                              |
 | テストの方法・E2E・目視の手順                                                                   | `docs/architecture/testing.md`                                                     |

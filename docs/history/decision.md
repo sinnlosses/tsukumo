@@ -7,6 +7,46 @@
 節は `## <出典のファイル> <節番号> <節の見出し>` の形で並べ、各節の先頭に**移した日付と
 出典の節**を1行で書く。探すときは出典の節名で `grep` する。
 
+## architecture.md 現在の実装状況
+
+2026-09-28 に `docs/architecture.md`「現在の実装状況」冒頭の2段落と「拾うもの・捨てるもの・
+足すもの」の表を、当時の記述のまま移した（いまの形は `docs/design.md` 2章が持つ。末尾の
+「実装スタックは Node + TypeScript、チェックコマンドは `pnpm run check`。規約は
+`docs/coding-standards.md` が正典。」は README.md と CLAUDE.md が持つので移さず削除した）。
+
+**2026-09-13 に「描く」層をブラウザ側へ移すと決め、同日中に段7まで終えた。** 移行後の形
+（`shared` / `server` / `browser` の3層、WebSocket 1本のプロトコル、React の部品、unified の
+Markdown、キャラクターパック）の正典は **`docs/design.md`**。**`src/` は `shared` / `server` /
+`browser` の3層と配線（`src/` 直下）だけになった**（旧の `usecase` / `presentation` /
+`infrastructure` は消えた）。**2026-09-16 にサーバ側だけをもう一段割り、外の世界に触る
+ファイルを `src/server/adapter/` に出した**（2026-09-20 に `core` と `adapter` を `src/server/` の
+下へ入れ子にした。`core` は純粋な判断だけになり、`node:` / SDK / `ws` を
+import しない。辺は `adapter ──▶ core ──▶ shared ◀── browser` で **`core → adapter` は禁止**。
+経緯は `docs/research/architecture-proposal.md`）。**2026-09-25 に、`core` と `adapter` の割りを
+機能の中へ入れると決めた**（`src/server/<機能>/{core,adapter}/`。形は `docs/design.md` 2章
+「サーバの機能と、機能どうしの辺」、移す段は同「いまの `src/server/` から移す先」。移し終える
+までは、まだ移していないファイルが `src/server/core/` `src/server/adapter/` の直下に居る）。
+以下「採用アーキテクチャ」はこの新しい経路（WebSocket 1本・
+React の部品）を書いている。残るのは段8（キャラクターパック本体の移動・切り替え）と段9
+（セッションの復元）で、これは独立した機能追加として別タスクである。
+段階と完了条件は `docs/history/decision.md`「design.md 12. 移行の段階」
+（`docs/design.md` からは 2026-09-21 に移した。章番号は詰めていない）。
+
+**2026-09-11 に方針を全面的に見直した**（`docs/requirements.md` 3章）。新方針（Agent SDK で
+Claude Code を動かす）の核（セッション駆動・イベントの変換・`speak` ツール・答え待ちの列）は
+入っていて、`pnpm run start` はセッションを起こし、WebSocket 1本でフレームを組み立てて
+3つのビューへ配る。**旧方針（transcript の追従・hook の状態ファイル・Orca 経由の入力送信）は
+2026-09-12 に撤去した。** 残るホスト依存はビューを開く `showView` 1つだけ。最初に着手すべき
+タスクは Beads が正典（`task status` で見る）。
+
+**拾うもの・捨てるもの・足すもの**（2026-09-11 の決定。「作り直し前提で始め、使えるものだけ拾う」）:
+
+| 扱い       | もの                                                                                                                                                                                                                                                                                                     |
+| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **拾う**   | キャラクター定義（`src/shared/character-pack/character.ts`）・表情と衣装の対応（`src/shared/character-pack/expression.ts`）・レポートの Markdown 化（`src/browser/components/page/conversation/components/main-view/markdown/markdown.tsx`）・ページと配信（`src/server/view-server/adapter/server.ts`） |
+| **捨てる** | transcript の追従と乗り換え（`src/transcript.ts` / `src/transcript-target.ts`）・hook と状態ファイル（`hooks/state.sh` / `src/state.ts`）・Orca 経由の入力送信とキー送信（**2026-09-12 に撤去済み**）                                                                                                    |
+| **足す**   | セッション駆動（SDK を起こし、イベントを内部の型に変える）・`speak` の MCP サーバ・入力と回答を受ける WebSocket                                                                                                                                                                                          |
+
 ## architecture.md 設計判断（なぜ今の形なのか）（役目を終えた6件）
 
 2026-09-27 に `docs/architecture.md`「設計判断（なぜ今の形なのか）」を `docs/architecture/adr/` へ1判断1ファイルで移したとき、

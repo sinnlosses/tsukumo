@@ -19,6 +19,15 @@
 - **`dist/` は `.gitignore` する。** リポジトリを取り直したら `pnpm install` のあとに `pnpm run build` を
   1回打つ（`tsukumo` は `pnpm link --global` でこのリポジトリを指しているので、**「配布」の実体はこのリポジトリ
   そのもの**）
+- **cwd に依存してよいのは起動先プロジェクトのものだけ。** 作業ディレクトリ・
+  `develop/task/`・相対指定で渡した素材（`TSUKUMO_CHARACTER` に相対パスを渡した場合）
+  はそこに当たる。**自分で持ち歩くもの（既定の立ち絵・`node_modules` の外部ライブラリ）は
+  tsukumo 自身の場所から読む**（`src/server/adapter/bundled-path.ts`）。`tsukumo` コマンドをどの
+  プロジェクトのディレクトリで起こしても見つかるようにするための区別
+- **リポジトリの外に置いたのは `pnpm link --global` の2つだけ**（2026-09-12。2026-09-27 に
+  `bun link` から移した）。`~/Library/pnpm/tsukumo`（`bin/tsukumo` へのシンボリックリンク）と
+  `~/Library/pnpm/global/` 配下（pnpm が管理する登録簿）。**シェルの設定ファイルは書き換えていない。**
+  消すときはリポジトリの直下で `pnpm unlink --global`
 - **成果物が無ければ起動しない**（起動時の前提不足。理由に `pnpm run build` を添える）。**ソース
   （`src/browser/` と `src/shared/`）のほうが新しければ、1行知らせてそのまま配る**（古くても画面は
   動くので止めず、黙って配らないことで事故を防ぐ）。HMR と違い、ここは `src/shared/` も見る

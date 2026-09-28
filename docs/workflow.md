@@ -19,7 +19,7 @@
   下の「`loopable` の判定」で決める**（描画の確認そのものは自動でできるので、それだけを理由に
   `"N"` にしない）
 - **`~/.claude/settings.json` を触るタスクには、既存の hooks / statusLine を壊さないことを
-  必ず書く**（orca が専有している。`CLAUDE.md` の IMPORTANT と `docs/architecture.md`「既知の制約・注意点」）
+  必ず書く**（orca が専有している。`CLAUDE.md` の IMPORTANT）
 - **環境側の前提はその場で確かめる。** ターミナルの画像プロトコル対応、外部コマンドの有無、
   常駐プロセスの生死は時間とともに変わる。docs やタスク本文に書かれた実測を鵜呑みにしない
 - **spec の出典**は `docs/requirements.md` と各タスクの本文（`task show GH-<n>`。GitHub の Issue は
