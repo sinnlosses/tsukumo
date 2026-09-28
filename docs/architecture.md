@@ -112,6 +112,10 @@ shared（語彙・イベント・状態・reducer・zod スキーマ）は brows
 `docs/history/architecture-placement.md` / `docs/history/decision.md`「design.md 2. 全体構成 /
 ディレクトリ（`src/server/` を機能で割った）」。
 
+**層はパッケージ（pnpm workspace）には割らない。** `package.json` は1つのまま、層をディレクトリで表す。
+パッケージの境界が足す検査は「宣言していない依存を解決できない」ことだけで、辺の検査は割っても
+`test/architecture.test.ts` が要るため。比べた案と、割る目安は `docs/research/package-split.md`。
+
 | 層               | 置くもの                                                                                                                                                                                                                                                                                        | import してよい先                                       | 実行場所         |
 | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- | ---------------- |
 | `shared`         | 概念の語彙・`SessionEvent`・`SessionState`・`applySessionEvent`・コマンドとフレームの zod・手続きの契約。**`SessionState` から純粋に導けるもの**も含む（ブラウザしか読まないものを含む。`main-view.ts` `turn-step.ts` `turn-speech.ts` `portrait-motion.ts` `room.ts` `command-suggestion.ts`） | `shared` のみ（`zod`・`@orpc/contract`・`remeda` は可） | サーバとブラウザ |
