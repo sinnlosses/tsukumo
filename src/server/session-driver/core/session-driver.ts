@@ -306,7 +306,7 @@ export type SessionMode =
       readonly chatRecall: ChatRecall
     }
 
-/** このセッションを新規に起こすか、続きから始めるか。続きから始める ID は `findSessionToResume` が選ぶ。 */
+/** このセッションを新規に起こすか、続きから始めるか。続きから始める ID は `SessionCatalog.findToResume` が選ぶ。 */
 export type SessionStart =
   /** 新規に起こす。 */
   | { readonly kind: "new" }
@@ -336,6 +336,8 @@ export type SessionDriverOptions = {
    * ターンが終わるたびに付け直す（理由は `SESSION_TAG_DELAY_MS`）。
    */
   readonly tag: string
+  /** {@link SessionDriverOptions.tag} の印が付いたセッションのID を受け取る口。ここで例外を投げないこと。 */
+  readonly onSessionMarked: (sessionId: string) => void
   readonly mode: SessionMode
   /**
    * 子プロセス（claude）へ引き継ぐ環境変数（`Config.inheritedEnv`）。駆動はこれに

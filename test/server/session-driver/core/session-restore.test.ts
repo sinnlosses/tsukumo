@@ -5,6 +5,7 @@ import {
   canResume,
   listMarkedSessions,
   readSessionMark,
+  readTaggedSessions,
   selectSessionToResume,
   sessionTag,
   toRestoredEvents,
@@ -176,7 +177,7 @@ describe("selectSessionToResume", () => {
       sessionInfo({ sessionId: "s-mid", lastModified: 200, tag: TAG }),
     ]
 
-    expect(selectSessionToResume(sessions, TAG)).toBe("s-new")
+    expect(selectSessionToResume(readTaggedSessions(sessions), TAG)).toBe("s-new")
   })
 
   it("印が無いセッション（同じ cwd の素の claude）は選ばない", () => {
@@ -186,13 +187,16 @@ describe("selectSessionToResume", () => {
       sessionInfo({ sessionId: "s-tsukumo", lastModified: 100, tag: TAG }),
     ]
 
-    expect(selectSessionToResume(sessions, TAG)).toBe("s-tsukumo")
+    expect(selectSessionToResume(readTaggedSessions(sessions), TAG)).toBe("s-tsukumo")
   })
 
   it("一覧が空・印が1つも無いときは復元しない（新規に起こす）", () => {
-    expect(selectSessionToResume([], TAG)).toBeUndefined()
+    expect(selectSessionToResume(readTaggedSessions([]), TAG)).toBeUndefined()
     expect(
-      selectSessionToResume([sessionInfo({ sessionId: "s-bare", lastModified: 900 })], TAG),
+      selectSessionToResume(
+        readTaggedSessions([sessionInfo({ sessionId: "s-bare", lastModified: 900 })]),
+        TAG,
+      ),
     ).toBeUndefined()
   })
 
@@ -202,7 +206,7 @@ describe("selectSessionToResume", () => {
       sessionInfo({ sessionId: "s-this-pack", lastModified: 100, tag: TAG }),
     ]
 
-    expect(selectSessionToResume(sessions, TAG)).toBe("s-this-pack")
+    expect(selectSessionToResume(readTaggedSessions(sessions), TAG)).toBe("s-this-pack")
   })
 
   it("そのパックの印を持つセッションが無ければ復元しない（新規に起こす）", () => {
@@ -213,7 +217,7 @@ describe("selectSessionToResume", () => {
 
     expect(
       selectSessionToResume(
-        sessions,
+        readTaggedSessions(sessions),
         sessionTag("まだ起こしていないパック", false, DEFAULT_VIEW_PORT),
       ),
     ).toBeUndefined()
@@ -225,25 +229,31 @@ describe("selectSessionToResume", () => {
       sessionInfo({ sessionId: "s-chat", lastModified: 100, tag: CHAT_TAG }),
     ]
 
-    expect(selectSessionToResume(sessions, TAG)).toBe("s-work")
-    expect(selectSessionToResume(sessions, CHAT_TAG)).toBe("s-chat")
+    expect(selectSessionToResume(readTaggedSessions(sessions), TAG)).toBe("s-work")
+    expect(selectSessionToResume(readTaggedSessions(sessions), CHAT_TAG)).toBe("s-chat")
   })
 
   it("仕事のセッションしか無ければ、雑談は新規に起こす（仕事の続きを拾わない）", () => {
     const sessions = [sessionInfo({ sessionId: "s-work", lastModified: 900, tag: TAG })]
 
-    expect(selectSessionToResume(sessions, CHAT_TAG)).toBeUndefined()
+    expect(selectSessionToResume(readTaggedSessions(sessions), CHAT_TAG)).toBeUndefined()
   })
 
   it("形が壊れているときは復元しない（落ちない）", () => {
-    expect(selectSessionToResume(undefined, TAG)).toBeUndefined()
-    expect(selectSessionToResume({ sessions: [] }, TAG)).toBeUndefined()
-    expect(selectSessionToResume([null, 42, "s-1"], TAG)).toBeUndefined()
+    expect(selectSessionToResume(readTaggedSessions(undefined), TAG)).toBeUndefined()
+    expect(selectSessionToResume(readTaggedSessions({ sessions: [] }), TAG)).toBeUndefined()
+    expect(selectSessionToResume(readTaggedSessions([null, 42, "s-1"]), TAG)).toBeUndefined()
     expect(
-      selectSessionToResume([{ sessionId: 1, lastModified: 100, tag: TAG }], TAG),
+      selectSessionToResume(
+        readTaggedSessions([{ sessionId: 1, lastModified: 100, tag: TAG }]),
+        TAG,
+      ),
     ).toBeUndefined()
     expect(
-      selectSessionToResume([{ sessionId: "s-1", lastModified: "きのう", tag: TAG }], TAG),
+      selectSessionToResume(
+        readTaggedSessions([{ sessionId: "s-1", lastModified: "きのう", tag: TAG }]),
+        TAG,
+      ),
     ).toBeUndefined()
   })
 
@@ -254,7 +264,7 @@ describe("selectSessionToResume", () => {
       sessionInfo({ sessionId: "s-ok", lastModified: 500, tag: TAG }),
     ]
 
-    expect(selectSessionToResume(sessions, TAG)).toBe("s-ok")
+    expect(selectSessionToResume(readTaggedSessions(sessions), TAG)).toBe("s-ok")
   })
 
   it("目印の違うセッションは選ばない（同じディレクトリの2つめの tsukumo）", () => {
@@ -263,8 +273,8 @@ describe("selectSessionToResume", () => {
       sessionInfo({ sessionId: "s-second", lastModified: 100, tag: SECOND_TAG }),
     ]
 
-    expect(selectSessionToResume(sessions, TAG)).toBe("s-first")
-    expect(selectSessionToResume(sessions, SECOND_TAG)).toBe("s-second")
+    expect(selectSessionToResume(readTaggedSessions(sessions), TAG)).toBe("s-first")
+    expect(selectSessionToResume(readTaggedSessions(sessions), SECOND_TAG)).toBe("s-second")
   })
 
   it("目印の無い昔の印は、既定のポートの続きとして選ぶ（互換）", () => {
@@ -277,9 +287,9 @@ describe("selectSessionToResume", () => {
       }),
     ]
 
-    expect(selectSessionToResume(sessions, TAG)).toBe("s-legacy")
-    expect(selectSessionToResume(sessions, CHAT_TAG)).toBe("s-legacy-chat")
-    expect(selectSessionToResume(sessions, SECOND_TAG)).toBeUndefined()
+    expect(selectSessionToResume(readTaggedSessions(sessions), TAG)).toBe("s-legacy")
+    expect(selectSessionToResume(readTaggedSessions(sessions), CHAT_TAG)).toBe("s-legacy-chat")
+    expect(selectSessionToResume(readTaggedSessions(sessions), SECOND_TAG)).toBeUndefined()
   })
 
   // かつて目印は1文字だった（`A` が既定のポート、+1 ごとに次の文字）。
@@ -295,9 +305,9 @@ describe("selectSessionToResume", () => {
       }),
     ]
 
-    expect(selectSessionToResume(sessions, TAG)).toBe("s-legacy-a")
-    expect(selectSessionToResume(sessions, SECOND_TAG)).toBe("s-legacy-b")
-    expect(selectSessionToResume(sessions, CHAT_TAG)).toBe("s-legacy-chat-a")
+    expect(selectSessionToResume(readTaggedSessions(sessions), TAG)).toBe("s-legacy-a")
+    expect(selectSessionToResume(readTaggedSessions(sessions), SECOND_TAG)).toBe("s-legacy-b")
+    expect(selectSessionToResume(readTaggedSessions(sessions), CHAT_TAG)).toBe("s-legacy-chat-a")
   })
 })
 
@@ -308,7 +318,7 @@ describe("listMarkedSessions", () => {
       sessionInfo({ sessionId: "s-third", lastModified: 200, tag: TAG }),
     ]
 
-    expect(listMarkedSessions(sessions, TAG)).toEqual([
+    expect(listMarkedSessions(readTaggedSessions(sessions), TAG)).toEqual([
       {
         viewPort: DEFAULT_VIEW_PORT,
         sessionId: "s-third",
@@ -334,7 +344,7 @@ describe("listMarkedSessions", () => {
       sessionInfo({ sessionId: "s-other-room", lastModified: 300, tag: SECOND_TAG }),
     ]
 
-    expect(listMarkedSessions(sessions, TAG)).toEqual([
+    expect(listMarkedSessions(readTaggedSessions(sessions), TAG)).toEqual([
       {
         viewPort: DEFAULT_VIEW_PORT,
         sessionId: "s-here",
@@ -343,7 +353,7 @@ describe("listMarkedSessions", () => {
         heading: "架空のセッション",
       },
     ])
-    expect(listMarkedSessions(sessions, SECOND_TAG)).toEqual([
+    expect(listMarkedSessions(readTaggedSessions(sessions), SECOND_TAG)).toEqual([
       {
         viewPort: DEFAULT_VIEW_PORT + 1,
         sessionId: "s-other-room",
@@ -363,7 +373,7 @@ describe("listMarkedSessions", () => {
       sessionInfo({ sessionId: "s-other-pack", lastModified: 400, tag: OTHER_PACK_TAG }),
     ]
 
-    expect(listMarkedSessions(sessions, TAG)).toEqual([
+    expect(listMarkedSessions(readTaggedSessions(sessions), TAG)).toEqual([
       {
         viewPort: DEFAULT_VIEW_PORT,
         sessionId: "s-work",
@@ -372,7 +382,7 @@ describe("listMarkedSessions", () => {
         heading: "架空のセッション",
       },
     ])
-    expect(listMarkedSessions(sessions, CHAT_TAG)).toEqual([
+    expect(listMarkedSessions(readTaggedSessions(sessions), CHAT_TAG)).toEqual([
       {
         viewPort: DEFAULT_VIEW_PORT,
         sessionId: "s-chat",
@@ -392,7 +402,7 @@ describe("listMarkedSessions", () => {
       sessionInfo({ sessionId: "s-legacy", lastModified: 500, tag: "tsukumo:架空のパック" }),
     ]
 
-    expect(listMarkedSessions(sessions, TAG)).toEqual([
+    expect(listMarkedSessions(readTaggedSessions(sessions), TAG)).toEqual([
       {
         viewPort: DEFAULT_VIEW_PORT,
         sessionId: "s-legacy",
@@ -411,7 +421,7 @@ describe("listMarkedSessions", () => {
       sessionInfo({ sessionId: "s-legacy-b", lastModified: 800, tag: "tsukumo:架空のパック@B" }),
     ]
 
-    expect(listMarkedSessions(sessions, TAG)).toEqual([
+    expect(listMarkedSessions(readTaggedSessions(sessions), TAG)).toEqual([
       {
         viewPort: DEFAULT_VIEW_PORT,
         sessionId: "s-legacy-a",
@@ -420,7 +430,7 @@ describe("listMarkedSessions", () => {
         heading: "架空のセッション",
       },
     ])
-    expect(listMarkedSessions(sessions, SECOND_TAG)).toEqual([
+    expect(listMarkedSessions(readTaggedSessions(sessions), SECOND_TAG)).toEqual([
       {
         viewPort: DEFAULT_VIEW_PORT + 1,
         sessionId: "s-legacy-b",
@@ -437,15 +447,15 @@ describe("listMarkedSessions", () => {
       sessionInfo({ sessionId: `s-${String(index)}`, lastModified: index, tag: TAG }),
     )
 
-    const listed = listMarkedSessions(many, TAG)
+    const listed = listMarkedSessions(readTaggedSessions(many), TAG)
     expect(listed).toHaveLength(MAX_SESSION_CHOICES)
     expect(listed[0]?.sessionId).toBe(`s-${String(MAX_SESSION_CHOICES + 4)}`)
   })
 
   it("一覧が空・形が壊れているときは空（落ちない）", () => {
-    expect(listMarkedSessions([], TAG)).toEqual([])
-    expect(listMarkedSessions(undefined, TAG)).toEqual([])
-    expect(listMarkedSessions({ sessions: [] }, TAG)).toEqual([])
+    expect(listMarkedSessions(readTaggedSessions([]), TAG)).toEqual([])
+    expect(listMarkedSessions(readTaggedSessions(undefined), TAG)).toEqual([])
+    expect(listMarkedSessions(readTaggedSessions({ sessions: [] }), TAG)).toEqual([])
   })
 
   // SDK の `summary` は行の見出しになる外来の値なので、境界（taggedSession）で検証する。
@@ -464,7 +474,7 @@ describe("listMarkedSessions", () => {
       sessionInfo({ sessionId: "s-blank", lastModified: 100, tag: TAG, summary: "   " }),
     ]
 
-    expect(listMarkedSessions(sessions, TAG)).toEqual([
+    expect(listMarkedSessions(readTaggedSessions(sessions), TAG)).toEqual([
       {
         viewPort: DEFAULT_VIEW_PORT,
         sessionId: "s-titled",
@@ -503,7 +513,7 @@ describe("listMarkedSessions", () => {
     ]
 
     expect(
-      listMarkedSessions(sessions, TAG).map(({ sessionId, startedAt }) => ({
+      listMarkedSessions(readTaggedSessions(sessions), TAG).map(({ sessionId, startedAt }) => ({
         sessionId,
         startedAt,
       })),

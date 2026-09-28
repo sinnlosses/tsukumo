@@ -45,11 +45,15 @@ import { watchTaskSummary } from "./server/repository/adapter/task-summary.ts"
 import { type FakeSession, startFakeSession } from "./server/session-driver/adapter/fake-driver.ts"
 import { startSdkDriver } from "./server/session-driver/adapter/sdk-driver.ts"
 import {
-  findSessionToResume,
-  listSwitchableSessions,
+  listRepositorySessions,
   readRestoredEvents,
 } from "./server/session-driver/adapter/sdk-session.ts"
 import type { PromptImageShelf } from "./server/session-driver/core/prompt-image-shelf.ts"
+import {
+  createSessionCatalog,
+  EMPTY_SESSION_CATALOG,
+  type SessionCatalog,
+} from "./server/session-driver/core/session-catalog.ts"
 import type {
   ChatArchive,
   SessionDriver,
@@ -95,7 +99,6 @@ import { QUICK_VISIT_TIMING, VISIT_TIMING } from "./server/visit/core/visit-timi
 import { UNKNOWN_ACHIEVEMENT } from "./shared/achievement/achievement.ts"
 import { expressionChoices } from "./shared/character-pack/expression-choice.ts"
 import type { UsageProposalDismissal } from "./shared/contract/usage-review.ts"
-import type { SessionChoice } from "./shared/session/session-choice.ts"
 import type { SessionDefault } from "./shared/session/session-default.ts"
 import type { SessionEvent } from "./shared/session/session-event.ts"
 import { usageProposalKey, withoutDismissedProposals } from "./shared/usage-review/usage-review.ts"
@@ -144,6 +147,11 @@ export async function startSession(options: SessionStartOptions): Promise<Starte
   let diaryContext: DiaryWriterContext | undefined = undefined
   // サーバの時計は1つ（`TSUKUMO_FIXED_CLOCK` なら止まった時計）。
   const now = createServerClock(config.fixedClock)
+  // 印の付いたセッションの一覧。ここで1回読み始め、起こし直しはメモリの一覧から続きを選ぶ。
+  // 続きを探さない起こし方なら何も読まない。
+  const sessionCatalog = canResume(config)
+    ? createSessionCatalog({ read: () => listRepositorySessions(cwd), now })
+    : EMPTY_SESSION_CATALOG
   // 最初のタブが繋がったら解ける約束。fake driver は疑似セッションをここから流し始める。本物の駆動は待たない。
   const firstViewer = Promise.withResolvers<void>()
   const manager = createSessionManager({
@@ -176,8 +184,10 @@ export async function startSession(options: SessionStartOptions): Promise<Starte
       watchTasks: (onEvent) =>
         watchTaskSummary(cwd, (tasks) => onEvent({ kind: "tasks-changed", tasks })),
       findResumeSession: (pack, chat) =>
-        findPackSessionToResume(config, cwd, pack.name, chat, viewPort),
-      listSessions: (pack, chat) => listPackSessions(config, cwd, pack.name, chat, viewPort),
+        findPackSessionToResume(sessionCatalog, pack.name, chat, viewPort),
+      listSessions: (pack, chat) =>
+        sessionCatalog.listChoices(sessionTag(pack.name, chat, viewPort)),
+      refreshSessions: () => sessionCatalog.refresh(),
       startDriver: (seed, onEvent) => {
         // 書いた時点のパックとして、振り返りの書き手が読む直近の姿を更新する。
         diaryContext = {
@@ -196,6 +206,7 @@ export async function startSession(options: SessionStartOptions): Promise<Starte
           viewPort,
           cwd,
           inheritedEnv: config.inheritedEnv,
+          onSessionMarked: (sessionId, tag) => sessionCatalog.noteMarked(sessionId, tag),
           onEvent,
           now,
         })
@@ -374,6 +385,8 @@ function startDriver(options: {
   readonly cwd: string
   /** claude の子プロセスへ引き継ぐ環境変数（`Config.inheritedEnv`）。 */
   readonly inheritedEnv: Readonly<Record<string, string | undefined>>
+  /** 印が付いたセッションのIDと、付けた印を受け取る口。 */
+  readonly onSessionMarked: (sessionId: string, tag: string) => void
   readonly onEvent: (event: SessionEvent) => void
   /** サーバの時計（エポックミリ秒）。`recall` / `recall_episode` の採点が読む「いま」に使う。 */
   readonly now: () => number
@@ -390,6 +403,7 @@ function startDriver(options: {
   }
 
   const mode = sessionMode(seed, chatArchive, cwd, onEvent, options.now)
+  const tag = sessionTag(seed.pack.name, seed.chat, options.viewPort)
 
   return startSdkDriver({
     cwd,
@@ -403,7 +417,8 @@ function startDriver(options: {
       mode: toSystemPromptMode(mode, chatArchive, seed.start, seed.pack.name),
     }),
     start: seed.start,
-    tag: sessionTag(seed.pack.name, seed.chat, options.viewPort),
+    tag,
+    onSessionMarked: (sessionId) => options.onSessionMarked(sessionId, tag),
     mode,
     inheritedEnv,
     // 段に入るたびに読み直す（見直しの途中で見送りが増えても効く）。
@@ -459,25 +474,8 @@ function sessionMode(
 }
 
 /**
- * 切り替え画面に出す、切り替え先のセッションの一覧。いまの部屋の印を持つものだけが並ぶ。
- * 続きを探さない起こし方（{@link canResume}）のときは一覧も出さない。
- * 続きから始めない約束で起こしているのに、切り替え先だけ出ると辻褄が合わない。
- */
-async function listPackSessions(
-  config: Config,
-  cwd: string,
-  characterName: string,
-  chat: boolean,
-  viewPort: number,
-): Promise<readonly SessionChoice[]> {
-  return canResume(config)
-    ? listSwitchableSessions(cwd, sessionTag(characterName, chat, viewPort))
-    : []
-}
-
-/**
  * これから起こすキャラクターパックの、そのモードの続きから始めるセッションを探す。
- * 見つからないときと、探さない起こし方（{@link canResume}）のときは `{ kind: "new" }`（新規に起こす）。
+ * 見つからないときと、探さない起こし方（`canResume` が偽で、一覧が空）のときは `{ kind: "new" }`（新規に起こす）。
  *
  * 雑談と仕事で引く印が違う（`sessionTag` の `chat`）。
  * 雑談へ入っても仕事の会話は続きにならず、そのパックで一度も雑談のターンを終えていなければ新規から始まる。
@@ -486,16 +484,11 @@ async function listPackSessions(
  * 印はターンが終わってから少し遅れて付く（`SESSION_TAG_DELAY_MS`）ので、ターンを1つも終えずに離れたセッションは次に来たときに見つからず、新規から始まる。
  */
 async function findPackSessionToResume(
-  config: Config,
-  cwd: string,
+  sessionCatalog: SessionCatalog,
   characterName: string,
   chat: boolean,
   viewPort: number,
 ): Promise<SessionStart> {
-  if (!canResume(config)) {
-    return { kind: "new" }
-  }
-
-  const sessionId = await findSessionToResume(cwd, sessionTag(characterName, chat, viewPort))
+  const sessionId = await sessionCatalog.findToResume(sessionTag(characterName, chat, viewPort))
   return sessionId === undefined ? { kind: "new" } : { kind: "resume", sessionId }
 }

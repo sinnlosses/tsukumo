@@ -41,6 +41,7 @@ const BASE_OPTIONS: SessionDriverOptions = {
   systemPromptAppend: "（テスト用の追記。会話の内容は含まない）",
   start: { kind: "new" },
   tag: "tsukumo-test",
+  onSessionMarked: () => {},
   mode: WORK_MODE,
   inheritedEnv: { PATH: "/usr/bin", HOME: "/tmp/tsukumo-home" },
   dismissedUsageProposalKeys: () => [],

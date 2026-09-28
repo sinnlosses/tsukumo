@@ -13,6 +13,7 @@ import type {
   CharacterSelection,
   NamedCharacterPack,
 } from "../../character-pack/core/character-selection.ts"
+import type { SessionCatalogRefresh } from "../../session-driver/core/session-catalog.ts"
 import type { SessionDriver, SessionStart } from "../../session-driver/core/session-driver.ts"
 
 /** 駆動と同じ間だけ動く見張り。駆動を閉じると一緒に閉じる。 */
@@ -105,9 +106,14 @@ export type SessionLaunchPorts<Pack extends NamedCharacterPack> = {
   ) => SessionDriver
   /**
    * いま切り替え先として選べるセッションを一覧にする（同じパックの、同じモードのものだけ）。読めなかったときは空。
-   * {@link SessionLaunchPorts.findResumeSession} と同じ transcript の一覧を読むが、起こすのは起動と起こし直しのときだけなので、読む回数を惜しまない。
+   * {@link SessionLaunchPorts.findResumeSession} と同じく、メモリに持っている一覧から出す（transcript の一覧は読まない）。
    */
   readonly listSessions: (pack: Pack, chat: boolean) => Promise<readonly SessionChoice[]>
+  /**
+   * メモリに持っている一覧を transcript の一覧から読み直す（`SessionCatalog.refresh`）。例外を投げない。
+   * 駆動を返したあとで終わるので、起こし直しの `hello` を待たせない。
+   */
+  readonly refreshSessions: () => Promise<SessionCatalogRefresh>
   /** 前のセッションの記録を、画面に出す形のイベントに組み直す。 */
   readonly restoreEvents: (sessionId: string, pack: Pack) => Promise<readonly SessionEvent[]>
 }
@@ -120,7 +126,8 @@ export type SessionLaunchPorts<Pack extends NamedCharacterPack> = {
  * （雑談のときだけ `chat-topics-changed` と `remembered-lines-changed`）・
  * `session-default-changed`・`visit-enabled-changed` を流す → 見張りを起こす →
  * 続きのセッションを決める → 切り替え先の一覧を流す → 駆動を起こす →
- * 続きから始まったなら履歴を組み直して流し終える → 駆動を返す。
+ * 続きから始まったなら履歴を組み直して流し終える → 一覧の読み直しを始める → 駆動を返す。
+ * 読み直した一覧を採ったときだけ、切り替え先の一覧をもう一度流す。
  *
  * 受け口は2つ。`onEvent` は駆動（と見張り）から新しく届くイベント、`onRestoredEvent` は前のセッションの記録を組み直した再生だけを流す。
  * 分けるのは「どちらの口から来たか」を呼び出し側が知れるようにするためだけ。
@@ -164,14 +171,17 @@ export function createSessionLaunch<Pack extends NamedCharacterPack>(
     // キャラクターごと・モードごとに別のセッションを持つ。起動時も切り替え時も、これから起こす側の続きを探す。
     // 画面から選ばれたときだけは探さない（選ばれたIDがそのまま続きになる）。
     const start = await sessionStartOf(ports, request.resume, pack, chat)
-    // 切り替え先の一覧も、起こすたびに引き直す（画面はこのイベントでしか一覧を知れず、起こし直すと状態が初期値へ戻る）。
+    // 切り替え先の一覧も、起こすたびに流し直す（画面はこのイベントでしか一覧を知れず、起こし直すと状態が初期値へ戻る）。
     // どれを出しているかも一緒に流すので、最初の依頼を送る前でも画面は居場所を指せる。
     // 画面へ渡す形（`current: string | undefined`）はここで畳む。`SessionStart` は core と adapter の間の語彙で、画面へ運ぶ語彙ではない。
-    onEvent({
-      kind: "sessions-changed",
-      sessions: await ports.listSessions(pack, chat),
-      current: start.kind === "resume" ? start.sessionId : undefined,
-    })
+    const announceSessions = (sessions: readonly SessionChoice[]): void => {
+      onEvent({
+        kind: "sessions-changed",
+        sessions,
+        current: start.kind === "resume" ? start.sessionId : undefined,
+      })
+    }
+    announceSessions(await ports.listSessions(pack, chat))
     const driver = ports.startDriver({ pack, start, chat, sessionDefault }, onEvent)
 
     // 流し終えてから駆動を返す。
@@ -179,6 +189,7 @@ export function createSessionLaunch<Pack extends NamedCharacterPack>(
     if (start.kind === "resume") {
       await replayRestoredSession(ports, start.sessionId, pack, onRestoredEvent)
     }
+    void announceRefreshedSessions(ports, pack, chat, announceSessions)
 
     return {
       ...driver,
@@ -204,6 +215,18 @@ async function sessionStartOf<Pack extends NamedCharacterPack>(
       return { kind: "new" }
     case "latest":
       return ports.findResumeSession(pack, chat)
+  }
+}
+
+/** 一覧を読み直し、読み直した一覧を採ったときだけ切り替え先の一覧を流す。 */
+async function announceRefreshedSessions<Pack extends NamedCharacterPack>(
+  ports: SessionLaunchPorts<Pack>,
+  pack: Pack,
+  chat: boolean,
+  announceSessions: (sessions: readonly SessionChoice[]) => void,
+): Promise<void> {
+  if ((await ports.refreshSessions()) === "refreshed") {
+    announceSessions(await ports.listSessions(pack, chat))
   }
 }
 

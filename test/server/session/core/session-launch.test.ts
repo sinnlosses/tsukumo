@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest"
 
 import type { CharacterSelection } from "../../../../src/server/character-pack/core/character-selection.ts"
+import { createSessionCatalog } from "../../../../src/server/session-driver/core/session-catalog.ts"
 import type {
   SessionDriver,
   SessionStart,
 } from "../../../../src/server/session-driver/core/session-driver.ts"
+import { sessionTag } from "../../../../src/server/session-driver/core/session-restore.ts"
 import {
   createSessionLaunch,
   type SessionLaunchPorts,
@@ -139,6 +141,11 @@ function createHarness(overrides: Partial<SessionLaunchPorts<Pack>> = {}): Harne
       calls.push(`startDriver:${seed.pack.name}:${modeOf(seed.chat)}:${resumeId}`)
       return stub.driver
     },
+    refreshSessions: () => {
+      calls.push("refreshSessions")
+      // 読み直しが終わらないまま（読み直したあとの一覧は、それを見るテストだけが差し替えて流す）。
+      return new Promise(() => {})
+    },
     restoreEvents: (sessionId) => {
       calls.push(`restoreEvents:${sessionId}`)
       return Promise.resolve([{ kind: "utterance", text: "架空のターンの本文" }])
@@ -198,6 +205,7 @@ describe("createSessionLaunch", () => {
       "listSessions:tsukumo-spirit:work",
       "startDriver:tsukumo-spirit:work:prev-work-session",
       "restoreEvents:prev-work-session",
+      "refreshSessions",
     ])
     expect(harness.events.map((event) => event.kind)).toEqual([
       "character-changed",
@@ -314,6 +322,7 @@ describe("createSessionLaunch", () => {
       "listSessions:tsukumo-spirit:chat",
       "startDriver:tsukumo-spirit:chat:prev-chat-session",
       "restoreEvents:prev-chat-session",
+      "refreshSessions",
     ])
   })
 
@@ -405,6 +414,7 @@ describe("createSessionLaunch", () => {
       "listSessions:tsukumo-spirit:chat",
       "startDriver:tsukumo-spirit:chat:prev-chat-session",
       "restoreEvents:prev-chat-session",
+      "refreshSessions",
     ])
     expect(harness.calls.some((call) => call.startsWith("rememberPack:"))).toBe(false)
   })
@@ -427,6 +437,7 @@ describe("createSessionLaunch", () => {
       "listSessions:tsukumo-spirit:work",
       "startDriver:tsukumo-spirit:work:other-session",
       "restoreEvents:other-session",
+      "refreshSessions",
     ])
     expect(harness.driverEvents).toContainEqual({
       kind: "sessions-changed",
@@ -452,6 +463,106 @@ describe("createSessionLaunch", () => {
       sessions: CHOICES,
       current: "prev-work-session",
     })
+  })
+
+  it("起こし直しは transcript の一覧を読まずに続きを選び、読み直しを待たずに駆動を返す", async () => {
+    const calls: string[] = []
+    // 最初の1回だけ読み終わり、読み直しはいつまでも終わらない。
+    let reads = 0
+    const catalog = createSessionCatalog({
+      read: () => {
+        reads += 1
+        calls.push("read")
+        return reads === 1
+          ? Promise.resolve([
+              {
+                sessionId: "s-work",
+                lastModified: 200,
+                tag: sessionTag("tsukumo-spirit", false, 7327),
+              },
+              {
+                sessionId: "s-chat",
+                lastModified: 100,
+                tag: sessionTag("tsukumo-spirit", true, 7327),
+              },
+            ])
+          : new Promise(() => {})
+      },
+      now: () => 1_000,
+    })
+    const harness = createHarness({
+      findResumeSession: async (pack, chat) => {
+        const sessionId = await catalog.findToResume(sessionTag(pack.name, chat, 7327))
+        return sessionId === undefined ? { kind: "new" } : { kind: "resume", sessionId }
+      },
+      listSessions: (pack, chat) => catalog.listChoices(sessionTag(pack.name, chat, 7327)),
+      refreshSessions: () => catalog.refresh(),
+      startDriver: (seed) => {
+        const resumeId = seed.start.kind === "resume" ? seed.start.sessionId : ""
+        calls.push(`startDriver:${modeOf(seed.chat)}:${resumeId}`)
+        return harness.stub.driver
+      },
+    })
+    const launch = createSessionLaunch(harness.ports)
+    await launch(harness.receive, harness.receiveRestored, {
+      selection: { by: "initial" },
+      chat: undefined,
+      resume: { by: "latest" },
+    })
+    calls.length = 0
+
+    await launch(harness.receive, harness.receiveRestored, {
+      selection: { by: "current" },
+      chat: true,
+      resume: { by: "latest" },
+    })
+    await launch(harness.receive, harness.receiveRestored, {
+      selection: { by: "current" },
+      chat: false,
+      resume: { by: "latest" },
+    })
+
+    // 読むのは駆動を起こしたあとの読み直しだけで、どちらの起こし直しもそれを待たずに返っている。
+    expect(calls).toEqual(["startDriver:chat:s-chat", "read", "startDriver:work:s-work", "read"])
+  })
+
+  it("読み直しが終わったら、読み直した切り替え先の一覧をもう一度流す", async () => {
+    const refreshed = [{ ...CHOICES[0], heading: "架空の見出しその3" }]
+    let refreshedYet = false
+    const harness = createHarness({
+      refreshSessions: () => {
+        refreshedYet = true
+        return Promise.resolve("refreshed")
+      },
+      listSessions: () => Promise.resolve(refreshedYet ? refreshed : CHOICES),
+    })
+
+    await createSessionLaunch(harness.ports)(harness.receive, harness.receiveRestored, {
+      selection: { by: "initial" },
+      chat: undefined,
+      resume: { by: "latest" },
+    })
+    await settle()
+
+    expect(harness.driverEvents.filter((event) => event.kind === "sessions-changed")).toEqual([
+      { kind: "sessions-changed", sessions: CHOICES, current: "prev-work-session" },
+      { kind: "sessions-changed", sessions: refreshed, current: "prev-work-session" },
+    ])
+  })
+
+  it("読み直した一覧を採らなかったときは、切り替え先の一覧を流し直さない", async () => {
+    const harness = createHarness({ refreshSessions: () => Promise.resolve("kept") })
+
+    await createSessionLaunch(harness.ports)(harness.receive, harness.receiveRestored, {
+      selection: { by: "initial" },
+      chat: undefined,
+      resume: { by: "latest" },
+    })
+    await settle()
+
+    expect(harness.driverEvents.filter((event) => event.kind === "sessions-changed")).toHaveLength(
+      1,
+    )
   })
 
   it("駆動を閉じると、駆動と同じ間だけ動く見張りも閉じる", async () => {

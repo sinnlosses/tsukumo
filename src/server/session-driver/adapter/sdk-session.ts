@@ -1,5 +1,5 @@
 // Claude Code が手元に持つセッションの一覧・transcript・印（`listSessions` / `getSessionMessages` / `tagSession`）。
-// 続きから始めるセッションを探す・切り替え先を並べる・履歴を読み直す・ターンの終わりに印を付け直す。
+// セッションの一覧を読む・履歴を読み直す・ターンの終わりに印を付け直す。
 // 選ぶ計算と履歴への変換は core 側が持ち、ここは SDK を呼ぶだけ。
 //
 // 読んだ transcript の内容はイベントの流れに渡すだけで、どこにも書き出さない。
@@ -16,7 +16,6 @@ import {
   type ExpressionChoice,
   expressionNames as toExpressionNames,
 } from "../../../shared/character-pack/expression-choice.ts"
-import type { SessionChoice } from "../../../shared/session/session-choice.ts"
 import {
   type SessionDigest,
   UNAVAILABLE_SESSION_DIGEST,
@@ -24,11 +23,7 @@ import {
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import { toSessionDigest } from "../core/session-digest.ts"
 import type { SessionDriverOptions } from "../core/session-driver.ts"
-import {
-  listMarkedSessions,
-  selectSessionToResume,
-  toRestoredEvents,
-} from "../core/session-restore.ts"
+import { toRestoredEvents } from "../core/session-restore.ts"
 import {
   decideSessionTitle,
   INITIAL_SESSION_TITLE_STATE,
@@ -45,37 +40,15 @@ import {
 const SESSION_TAG_DELAY_MS = 3_000
 
 /**
- * 続きから始めるセッションを探す。
- * 同じ作業ディレクトリで、渡された印を持つもののうち最新の1つを返し、無ければ undefined（新規に起こす）。
+ * 同じリポジトリのセッションの一覧を SDK から読む（印で絞るのと、続きを選ぶのは core 側）。
+ * 読めなかったときは投げる。
  *
  * `includeWorktrees` を入れてあるのは、セッションごとに別の worktree で起こされうるため（作業ツリーを用意するのは orca の側）。
  * 起こすたびに違うディレクトリなら、作業ディレクトリだけで絞ると前の続きが一度も見つからなくなる。
  * 同じリポジトリの worktree を全部見たうえで、印（`tsukumo:<パック>@<ポート>`）で絞る。
- *
- * 一覧が読めなくても落とさず、新規に起こす。
  */
-export async function findSessionToResume(cwd: string, tag: string): Promise<string | undefined> {
-  try {
-    return selectSessionToResume(await listSessions({ dir: cwd, includeWorktrees: true }), tag)
-  } catch {
-    return undefined
-  }
-}
-
-/**
- * 切り替え先として選べるセッションを一覧にする。絞り込みと並びは `listMarkedSessions` が決める。
- * `includeWorktrees` を入れる理由は {@link findSessionToResume}。
- * 一覧が読めなくても落とさない（切り替えの選択肢が出ないだけ）。
- */
-export async function listSwitchableSessions(
-  cwd: string,
-  tag: string,
-): Promise<readonly SessionChoice[]> {
-  try {
-    return listMarkedSessions(await listSessions({ dir: cwd, includeWorktrees: true }), tag)
-  } catch {
-    return []
-  }
+export async function listRepositorySessions(cwd: string): Promise<unknown> {
+  return listSessions({ dir: cwd, includeWorktrees: true })
 }
 
 /**
@@ -135,12 +108,13 @@ export function scheduleMarkSession(sessionId: string, options: SessionDriverOpt
 }
 
 /**
- * セッションに tsukumo の印を付ける。失敗しても続行する。
+ * セッションに tsukumo の印を付け、付いたら `onSessionMarked` で知らせる。失敗しても続行する。
  * 付かなかったときに起きるのは「次回は新規から始まる」ことだけで、いま動いているセッションには影響しない。
  */
 async function markSession(sessionId: string, options: SessionDriverOptions): Promise<void> {
   try {
     await tagSession(sessionId, options.tag, { dir: options.cwd })
+    options.onSessionMarked(sessionId)
   } catch {
     // 印が付かないだけなので、何も流さずに諦める。
   }

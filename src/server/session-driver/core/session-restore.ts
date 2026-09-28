@@ -144,11 +144,14 @@ const HISTORY_RESTORED: SessionEvent = { kind: "history-restored" }
  * 続きから始めるセッションを選ぶ。印（`tagSession` で付けたもの）のあるもののうち、`lastModified` が最新の1つ。
  *
  * `cwd` での絞り込みは呼び出し側（`listSessions({ dir })`）が済ませている前提で、ここは印だけを見る。
- * 目印まで揃えてから比べるので（{@link readSessionMark}）、昔の印（目印の無いもの・1文字の `@A`）は同じポートの印と一致する。
- * 一覧が空・印が1つも無い・要素の形が壊れているときは undefined（＝新規に起こす）を返す。
+ * 印は目印まで揃えてあるので（{@link readTaggedSessions}）、昔の印（目印の無いもの・1文字の `@A`）は同じポートの印と一致する。
+ * 渡した印のものが1つも無ければ undefined（＝新規に起こす）を返す。
  */
-export function selectSessionToResume(sessions: unknown, tag: string): string | undefined {
-  const matched = markedSessions(sessions).filter((session) => session.tag === tag)
+export function selectSessionToResume(
+  sessions: readonly TaggedSession[],
+  tag: string,
+): string | undefined {
+  const matched = sessions.filter((session) => session.tag === tag)
   return matched.reduce<TaggedSession | undefined>(
     (latest, session) =>
       latest === undefined || session.lastModified > latest.lastModified ? session : latest,
@@ -162,12 +165,15 @@ export function selectSessionToResume(sessions: unknown, tag: string): string | 
  *
  * `cwd` での絞り込みは呼び出し側（`listSessions({ dir })`）が済ませている前提。
  * 渡す `tag` は、目印まで揃えた印（{@link sessionTag}）。部屋はビューのポート1つにつき1つなので、切り替え先も自分の部屋のものだけに絞る。
- * 目印まで揃えてから比べるので、昔の印（目印の無いもの・1文字の `@A`）も対応するポートの部屋の一覧に並ぶ。
+ * 印は目印まで揃えてあるので、昔の印（目印の無いもの・1文字の `@A`）も対応するポートの部屋の一覧に並ぶ。
  *
  * 返すのは新しいほうから {@link MAX_SESSION_CHOICES} 件まで（印は使うほど増え続ける）。
  */
-export function listMarkedSessions(sessions: unknown, tag: string): readonly SessionChoice[] {
-  return markedSessions(sessions)
+export function listMarkedSessions(
+  sessions: readonly TaggedSession[],
+  tag: string,
+): readonly SessionChoice[] {
+  return sessions
     .filter((session) => session.tag === tag)
     .map(({ viewPort, sessionId, lastModified, startedAt, heading }) => ({
       viewPort,
@@ -213,18 +219,52 @@ export function toRestoredEvents(
 }
 
 /** 印の付いたセッション1件（目印まで揃えた印つき）。 */
-type TaggedSession = SessionChoice & {
+export type TaggedSession = SessionChoice & {
   /** 目印まで揃えた印。{@link SessionMark.tag} と同じ意味で使う（{@link readSessionMark}）。 */
   readonly tag: string
 }
 
 /**
- * 一覧を、印の付いたセッションの並びにする。
+ * SDK の `listSessions` が返した一覧（外来の値）を、印の付いたセッションの並びにする。
  * tsukumo の印を持たないもの・形が壊れているものは落とす（同じ cwd の素の `claude` のセッションはここで消える）。
  * 一覧そのものが配列でなければ空。
  */
-function markedSessions(sessions: unknown): readonly TaggedSession[] {
+export function readTaggedSessions(sessions: unknown): readonly TaggedSession[] {
   return Array.isArray(sessions) ? sessions.flatMap((session) => taggedSession(session)) : []
+}
+
+/**
+ * 印を付けたことを並びへ写す。一覧に無いセッションなら足す（見出しは次に読み直すまで無い）。
+ * `lastModified` は新しいほうを採る。
+ * tsukumo の印として読めない `tag` なら並びをそのまま返す。
+ */
+export function withSessionMark(
+  sessions: readonly TaggedSession[],
+  marked: { readonly sessionId: string; readonly tag: string; readonly at: number },
+): readonly TaggedSession[] {
+  const mark = readSessionMark(marked.tag)
+  if (mark === undefined) {
+    return sessions
+  }
+
+  const existing = sessions.find((session) => session.sessionId === marked.sessionId)
+  const updated: TaggedSession =
+    existing === undefined
+      ? {
+          viewPort: mark.viewPort,
+          tag: mark.tag,
+          sessionId: marked.sessionId,
+          lastModified: marked.at,
+          startedAt: marked.at,
+          heading: undefined,
+        }
+      : {
+          ...existing,
+          viewPort: mark.viewPort,
+          tag: mark.tag,
+          lastModified: Math.max(existing.lastModified, marked.at),
+        }
+  return [...sessions.filter((session) => session.sessionId !== marked.sessionId), updated]
 }
 
 /**
