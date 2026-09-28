@@ -11,11 +11,13 @@
   height: 0;
   margin-top: auto;
 }
+/* 幅は中身に合わせず 520px に固定する（要約が変わるたびに札が伸び縮みしないように）。
+   メインビューがそれより狭いときは、左右に 1rem ずつ空けた幅に縮む。 */
 .current-work-capsule {
   position: absolute;
   bottom: 0;
   left: 50%;
-  max-width: calc(100% - 2rem);
+  width: min(520px, calc(100% - 2rem));
   transform: translateX(-50%);
 }
 

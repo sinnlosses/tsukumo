@@ -228,12 +228,13 @@
 /* メインビューの下に浮かぶ札（`data-variant="capsule"`。`CurrentWorkCapsule`）。
    帯の札より背を詰めて影を落とし、本文の上に重ねても縁が読めるようにする。
    地は差し色を混ぜた `--surface-accent` を少しだけ透かす（下の本文が完全には消えない）。 */
+/* 幅は置き場（`.current-work-capsule`）が決めた幅いっぱい。要約は残りの幅で末尾を「…」にする。 */
 .screen-nav-work[data-variant="capsule"] {
   flex: none;
+  width: 100%;
 }
 .screen-nav-work[data-variant="capsule"] .screen-nav-work-toggle {
-  width: auto;
-  max-width: 520px;
+  max-width: none;
   height: 36px;
   padding: 0 16px 0 12px;
   border-radius: 18px;
