@@ -4,7 +4,6 @@
     "module": "Preserve",
     "moduleResolution": "bundler",
     "strict": true,
-    "skipLibCheck": true,
     "noUncheckedIndexedAccess": true,
     "verbatimModuleSyntax": true,
     "noEmit": true,
