@@ -1,23 +1,13 @@
-// `~/.tsukumo/` に積む JSONL の「いつ」の書き方。日の境目も時差もそのマシンのローカル時刻
-// で決める（`docs/design.md`「キャラクターパック」）。
+// `~/.tsukumo/` に積む JSONL の「いつ」の書き方。日の境目も時差もそのマシンのローカル時刻で決める。
 //
-// ここが `adapter` にあるのは、読んでいるのが引数のエポックミリ秒だけに見えて、実際にはOS の
-// タイムゾーンという外の世界の設定に依っているから（`Temporal.Now.timeZoneId()`）。
-// 置き場を日付で分けるファイルが複数あり、同じ日の境目で切れていないと後から突き合わせられない
-// ので、書き方は1箇所に置く。
-//
-// 素通しに見えても畳まない。 `Temporal` なら日付キーもオフセット付きの ISO も1行で出るが、
-// OS のタイムゾーンを読む場所を1つに保つほうを採る（呼び出し側に `Temporal.Now` が散ると、
-// 日の境目の決め方が複数箇所に分かれる）。
-//
-// 受け取るのはエポックミリ秒の数。畳み込みが持つ時刻がその形（`StampedEvent.at`）で、
-// ここで `Temporal.Instant` に変えても境界をまたぐ型が増えるだけになる。
+// 引数のエポックミリ秒だけを読むように見えて、OS のタイムゾーン（`Temporal.Now.timeZoneId()`）に依っている。
+// 置き場を日付で分けるファイルが複数あり、同じ日の境目で切れていないと後から突き合わせられないので、書き方はここに1つだけ置く。
+// 素通しに見えても呼び出し側へ畳まない。`Temporal.Now` が散ると、日の境目の決め方が複数箇所に分かれる。
 
 /**
- * サーバの時計（いまのエポックミリ秒を返す関数）。サーバで「いま」を読むのはここだけ
- * （検査が縛る）。`fixed` があれば、その瞬間で止まった進まない時計を
- * 返す（`TSUKUMO_FIXED_CLOCK`。E2E が走らせるたびに同じ `at` を得るため。`docs/design.md`
- * 「E2E の成果物と再現」）。日付キー（{@link todayLocalDateKey}）は凍らせない。
+ * サーバの時計（いまのエポックミリ秒を返す関数）。サーバで「いま」を読むのはここだけ（検査が縛る）。
+ * `fixed`（`TSUKUMO_FIXED_CLOCK`）があれば、その瞬間で止まった進まない時計を返す。
+ * 日付キー（{@link todayLocalDateKey}）は凍らせない。
  */
 export function createServerClock(fixed: Temporal.Instant | undefined): () => number {
   if (fixed !== undefined) {
@@ -38,10 +28,9 @@ export function todayLocalDateKey(): string {
 }
 
 /**
- * 日付キー（`YYYY-MM-DD`）が指すローカルの日の、始まりと終わり（エポックミリ秒。終わりは
- * 次の日の始まりで、含まない）。時計は読まない——OS のタイムゾーンだけを読むので
- * `adapter` に置く（冒頭のコメント）。呼ぶ側が既に検証した日付キーを渡す契約
- * （`resolveAchievementDateKey` で決めた値をそのまま渡す）。
+ * 日付キー（`YYYY-MM-DD`）が指すローカルの日の、始まりと終わり（エポックミリ秒。終わりは次の日の始まりで、含まない）。
+ * 時計は読まない。
+ * 呼ぶ側は検証済みの日付キーを渡す（壊れた値だと投げる）。
  */
 export function localDateEpochRange(dateKey: string): {
   readonly startEpochMilliseconds: number
@@ -55,16 +44,15 @@ export function localDateEpochRange(dateKey: string): {
   }
 }
 
-/** ローカル時刻の `HH:MM`（節目のコミットの時刻。`docs/requirements.md`「成果の振り返り」「節目」。
- * 件名は出さず時刻だけ出す決まりなので、日付は含めない）。 */
+/** ローカル時刻の `HH:MM`（日付は含めない）。 */
 export function localTimeHHMM(epochMilliseconds: number): string {
   return localTimeAt(epochMilliseconds).toPlainTime().toString({ smallestUnit: "minute" })
 }
 
 /** ISO 8601（オフセット付き）。行だけで時刻が決まる。 */
 export function isoWithOffset(epochMilliseconds: number): string {
-  // 秒より下は書かない（既に積んだ行と同じ書式を保つ。`fractionalSecondDigits` の既定は
-  // ミリ秒が残るとそれを書いてしまう）。
+  // 秒より下は書かない（既に積んだ行と同じ書式を保つ）。
+  // `fractionalSecondDigits` の既定は、ミリ秒が残るとそれを書いてしまう。
   return localTimeAt(epochMilliseconds).toString({
     timeZoneName: "never",
     fractionalSecondDigits: 0,

@@ -1,15 +1,10 @@
-// 日記の読み書き（`docs/requirements.md`「日記」）。ファイルに触るのは
-// ここだけ（`docs/architecture.md`「1ファイル = 1つの境界」）。置き場は
-// `~/.tsukumo/diary/<リポジトリ>/<YYYY-MM-DD>.json`（`TSUKUMO_HOME` を分けていればその下）。
+// 日記の読み書き。ファイルに触るのはここだけ。
+// 置き場は `~/.tsukumo/diary/<リポジトリ>/<YYYY-MM-DD>.json`（`TSUKUMO_HOME` を分けていればその下）。
 //
-// `<リポジトリ>` は共有の `.git`（`git rev-parse --path-format=absolute --git-common-dir`）の
-// 親ディレクトリの名前と、`.git` の絶対パスの SHA-256 の先頭12桁を `-` でつないだもの
-// （作業ツリーではなく共有の `.git` で見分けるので、同じリポジトリのどの作業ツリーから書いても
-// 同じ日記帳に入る）。`git` を起こすのは `runGit`。
+// `<リポジトリ>` は共有の `.git`（`git rev-parse --path-format=absolute --git-common-dir`）の親ディレクトリの名前と、`.git` の絶対パスの SHA-256 の先頭12桁を `-` でつないだもの。
+// 作業ツリーではなく共有の `.git` で見分けるので、同じリポジトリのどの作業ツリーから書いても同じ日記帳に入る。
 //
-// 書けなくても・読めなくても例外を投げない（常駐プロセスは1回の失敗で落ちない。
-// `docs/coding-standards.md`「エラーハンドリング」）。日記の文面はログに出さない
-// （`docs/coding-standards.md`「会話内容の扱い」）。
+// 書けなくても・読めなくても例外を投げない。日記の文面はログに出さない。
 
 import { createHash, randomBytes } from "node:crypto"
 import { mkdirSync, readdirSync, renameSync, writeFileSync } from "node:fs"
@@ -54,13 +49,11 @@ export type DiaryParagraphInput = {
 }
 
 /**
- * その日の日記に1段落を書き足す（無ければ新しく作る）。しおりは渡した値に差し替える
- * （前の段落のしおりは残らない）。読めない・版の違う既存ファイルは、新しい1段落だけの
- * ファイルで置き換える（壊れたファイルのために書けなくしない）。一時ファイルに書いてから
- * 置き換えるので、途中で落ちても前の版が残る。
+ * その日の日記に1段落を書き足す（無ければ新しく作る）。しおりは渡した値に差し替える（前の段落のしおりは残らない）。
+ * 読めない・版の違う既存ファイルは、新しい1段落だけのファイルで置き換える（壊れたファイルのために書けなくしない）。
+ * 一時ファイルに書いてから置き換えるので、途中で落ちても前の版が残る。
  *
- * リポジトリが見分けられない（`git` が無い・共有の `.git` が取れない）ときと、書き込みが
- * 失敗したときは `false`。
+ * リポジトリが見分けられない（`git` が無い・共有の `.git` が取れない）ときと、書き込みが失敗したときは `false`。
  */
 export async function appendDiaryParagraph(
   cwd: string,
@@ -96,9 +89,8 @@ export async function appendDiaryParagraph(
 }
 
 /**
- * その日の日記の状態を読む（`DailyAchievement.diary` に載せる形）。ファイルが無い・
- * リポジトリが見分けられないときは `none`、ファイルはあるのに読めない（JSON が壊れている・
- * 版が違う）ときだけ `unreadable`（成果そのものは配る。`docs/requirements.md`「日記」）。
+ * その日の日記の状態を読む（`DailyAchievement.diary` に載せる形）。
+ * ファイルが無い・リポジトリが見分けられないときは `none`、ファイルはあるのに読めない（JSON が壊れている・版が違う）ときだけ `unreadable`。
  */
 export async function readDiaryDay(
   cwd: string,
@@ -120,9 +112,8 @@ export async function readDiaryDay(
 }
 
 /**
- * 日記のある日の一覧（新しい順）。中身は読まず、置き場の `readdir` 1回でファイル名だけを見る
- * （`docs/requirements.md`「日記」）。リポジトリが見分けられない・置き場が無いときは
- * 空の並び。
+ * 日記のある日の一覧（新しい順）。中身は読まず、置き場の `readdir` 1回でファイル名だけを見る。
+ * リポジトリが見分けられない・置き場が無いときは空の並び。
  */
 export async function listDiaryDates(
   cwd: string,
@@ -145,10 +136,7 @@ function diaryFilePath(root: string, repositoryId: string, date: string): string
   return join(diaryDir(root), repositoryId, `${date}.json`)
 }
 
-/**
- * 共有の `.git` から `<リポジトリ>` を組み立てる（冒頭のコメント）。`git` が無い・リポジトリでない
- * ときは `undefined`。
- */
+/** 共有の `.git` から `<リポジトリ>` を組み立てる。`git` が無い・リポジトリでないときは `undefined`。 */
 async function repositoryDiaryId(cwd: string): Promise<string | undefined> {
   const result = await runGit(cwd, ["rev-parse", "--path-format=absolute", "--git-common-dir"])
   if (result.kind !== "output") {

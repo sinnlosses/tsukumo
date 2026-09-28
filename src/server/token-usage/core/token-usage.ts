@@ -1,26 +1,15 @@
-// トークン消費を記録するときの判断（何を1行にするか）と、書き口の契約。実際に書くのは
-// `createTokenUsageLog` で、ここは「累計から増分を作る」
-// 「ターンの中の内訳を積んで畳む」「期間で切って軸ごとに畳む（集計）」ところまでを持つ。
+// トークン消費を記録するときの判断（何を1行にするか）と、書き口の契約。
+// ここは「累計から増分を作る」「ターンの中の内訳を積んで畳む」「期間で切って軸ごとに畳む（集計）」ところまでを持つ。
 //
-// 集計は純関数（`summarizeTokenUsage`）で、ファイルに触らない。期間で切ったあとの
-// 行を渡されて畳むだけなので、どの行を読むか（日付の範囲からファイルを選ぶ）は
-// adapter の仕事のまま（`core → adapter` は禁止。
-// 検査が見張る）。分析の画面が引く口は
-// `summarizeRecentTokenUsage` で、こちらは読み口（`TokenUsageLog`）を受け取って
-// 「今日を含む直近 n 日」に切る——今日が何日かは呼ぶ側が渡す。
+// 集計（`summarizeTokenUsage`）はファイルに触らず、期間で切ったあとの行を渡されて畳むだけ。
+// `summarizeRecentTokenUsage` は読み口（`TokenUsageLog`）を受け取って「今日を含む直近 n 日」に切る（今日が何日かは呼ぶ側が渡す）。
 //
-// 集計の形（`TokenUsageSummary`）は shared 側（ブラウザも
-// 同じ形を読むので shared に置いてある。配る経路の名前もそちら）。
+// SDK の `result` に乗る `modelUsage` は `query()` の中の累計（サブエージェントと内部の呼び出しも含む）。
+// `usage` のほうはメインループだけなので集計に使わない。
+// ターンごとの消費を出すには前の `result` との差を取る必要があり、前回の累計を覚えているのは `TokenUsageRecorder`（駆動1代ぶんの持ち物）。
 //
-// SDK の `result` に乗る `modelUsage` は `query()` の中の累計（サブエージェントと内部の
-// 呼び出しも含む。`usage` のほうはメインループだけなので集計に使わない）。ターンごとの消費を
-// 出すには前の `result` との差を取る必要があり、前回の累計を覚えているのは
-// `TokenUsageRecorder`（駆動1代ぶんの持ち物としてセッションの管理側が持つ。
-// 変換だけのイベント変換側に前回値を置くとあのファイルの性格が変わる）。
-//
-// 数以外は通らない。 ツールの結果はここで長さ（UTF-8 のバイト数）に畳んでから積み、
-// 本文は捨てる。依頼の文面もセリフもツールの引数もここには残らない
-// （`docs/coding-standards.md`「会話内容の扱い」）。
+// 数以外は通らない。ツールの結果はここで長さ（UTF-8 のバイト数）に畳んでから積み、本文は捨てる。
+// 依頼の文面もセリフもツールの引数もここには残らない。
 
 import { groupBy, prop, sortBy, sumBy } from "remeda"
 
@@ -46,27 +35,20 @@ import type {
 } from "../../../shared/token-usage/token-usage.ts"
 import { byteLength } from "../../../shared/utils/byte-length.ts"
 
-/**
- * トークン消費の読み書き口（`chat-archive` と同じ形の契約）。実装は `adapter` 側
- * （`createTokenUsageLog`）で、ここにあるのは契約だけ。
- *
- * 書けなくても例外を投げない（常駐プロセスは1回の失敗で落ちない。
- * `docs/coding-standards.md`「エラーハンドリング」）ので、受け付けたかどうかは返さない。
- */
+/** トークン消費の読み書き口。書けなくても例外を投げず、受け付けたかどうかは返さない。 */
 export type TokenUsageLog = {
   readonly append: (entry: TokenUsageEntry) => void
   /**
-   * 期間に入る行を、日付の範囲からファイルを選んで古い→新しい順に返す。壊れた行・版が
-   * 記録の形の版と違う行は読まずに落とす（黙って飛ばして続ける。まだ開発中で、旧い版の行を
-   * 残す価値が無いとユーザーが判断した）。
+   * 期間に入る行を、日付の範囲からファイルを選んで古い→新しい順に返す。
+   * 壊れた行・版が記録の形の版と違う行は読まずに落とす（黙って飛ばして続ける）。
    */
   readonly readRange: (period: TokenUsagePeriod) => readonly TokenUsageRecord[]
 }
 
 /**
- * 集計の対象にする期間。両端を含み、ローカル日付（`YYYY-MM-DD`）で表す — 記録の `at` は
- * 書いた時点のローカル日付をそのまま持つ（`isoWithOffset`）ので、UTC へ変換し直さずに
- * 文字列のまま比較できる。「今日」「今週」をここが決めるのではなく、呼ぶ側が渡す。
+ * 集計の対象にする期間。両端を含み、ローカル日付（`YYYY-MM-DD`）で表す。
+ * 記録の `at` は書いた時点のローカル日付をそのまま持つ（`isoWithOffset`）ので、UTC へ変換し直さずに文字列のまま比較できる。
+ * 「今日」「今週」をここが決めるのではなく、呼ぶ側が渡す。
  */
 export type TokenUsagePeriod = {
   readonly startDate: string
@@ -74,8 +56,8 @@ export type TokenUsagePeriod = {
 }
 
 /**
- * 1ターンぶんの記録（書き出す行そのものではない）。`at` はエポックミリ秒で、ISO 8601 への
- * 変換と日付ごとのファイルの選択は `adapter` 側の仕事（`ChatArchiveEntry` と同じ切り分け）。
+ * 1ターンぶんの記録（書き出す行そのものではない）。
+ * `at` はエポックミリ秒で、ISO 8601 への変換と日付ごとのファイルの選択は `adapter` 側の仕事。
  */
 export type TokenUsageEntry = {
   readonly at: number
@@ -88,10 +70,10 @@ export type TokenUsageEntry = {
 }
 
 /**
- * ターンの途中で積み上げる内訳の入れ物。ターンの終わりに {@link turnUsageBreakdown} で畳んで
- * 書き出し、{@link EMPTY_TURN_USAGE_TALLY} に戻す（持ち主は {@link TokenUsageRecorder}）。
+ * ターンの途中で積み上げる内訳の入れ物。
+ * ターンの終わりに {@link turnUsageBreakdown} で畳んで書き出し、{@link EMPTY_TURN_USAGE_TALLY} に戻す（持ち主は {@link TokenUsageRecorder}）。
  *
- * ここに文面は入らない — ツールの結果は受け取った時点で長さに畳む。
+ * ここに文面は入らない（ツールの結果は受け取った時点で長さに畳む）。
  */
 export type TurnUsageTally = {
   /** 始まったツールの呼び出し1件ずつ（結果の長さを足す先を `toolUseId` で引くため）。 */
@@ -136,31 +118,26 @@ const EMPTY_TOTALS = {
 export const EMPTY_TURN_USAGE_TALLY = { calls: [], steps: [] } satisfies TurnUsageTally
 
 /**
- * 1代ぶんのトークン消費の勘定（駆動1代ぶんの持ち物で、起こし直すと作り直す）。前の
- * `result` が運んできた累計と、いま進んでいるターンの内訳を持ち、ターンごとに記録へ1行渡す。
+ * 1代ぶんのトークン消費の勘定（駆動1代ぶんの持ち物で、起こし直すと作り直す）。
+ * 前の `result` が運んできた累計と、いま進んでいるターンの内訳を持ち、ターンごとに記録へ1行渡す。
  *
- * 起こし直すと `query()` が変わって累計も振り出しに戻るので、作り直すことがそのまま
- * 「前の累計を忘れる」になる（前の累計を引くと増分が足りなくなる）。
+ * 起こし直すと `query()` が変わって累計も振り出しに戻るので、作り直すことがそのまま「前の累計を忘れる」になる（前の累計を引くと増分が足りなくなる）。
  */
 export type TokenUsageRecorder = {
   /** ターンの中の内訳（ツール別・持ち場別）を1件積む。駆動由来のイベントだけを渡す。 */
   readonly tally: (event: SessionEvent) => void
   /**
-   * そのターンのトークン消費を記録に1行足す。1行 = 1ターンで、モデルが複数出たターン
-   * （サブエージェントが別のモデルで動いたとき）は同じ行の `models` に並ぶ——ターンが読む人に
-   * とっての単位なので、モデルごとに行を割ると「このターンでいくら使ったか」を出すのに行を
-   * 組み直すことになる。
+   * そのターンのトークン消費を記録に1行足す。
+   * 1行 = 1ターンで、モデルが複数出たターン（サブエージェントが別のモデルで動いたとき）は同じ行の `models` に並ぶ。
+   * モデルごとに行を割ると「このターンでいくら使ったか」を出すのに行を組み直すことになる。
    *
-   * 届く `cumulative` は `query()` の中の累計なので、前回との差を書く。増分が無いターン
-   * （`/clear` の直後など、何も呼んでいない `result`）は行を書かないが、累計は行を書かなくても
-   * 必ず覚え直す（次のターンの差が合わなくなるため）。
+   * 届く `cumulative` は `query()` の中の累計なので、前回との差を書く。
+   * 増分が無いターン（`/clear` の直後など、何も呼んでいない `result`）は行を書かないが、累計は行を書かなくても必ず覚え直す（次のターンの差が合わなくなるため）。
    *
-   * 内訳はそのターンのあいだ積んできたものを畳んで、合計の `models` と同じ1行に入れる
-   * （割り方の理由は `TurnUsageBreakdown`）。
+   * 内訳はそのターンのあいだ積んできたものを畳んで、合計の `models` と同じ1行に入れる。
    *
-   * claude 側のセッションIDが分からないうちは書かない（`system/init` より前に `result` は
-   * 来ないので実際には起きない）。行だけで「どのセッションのターンか」が決まらない記録を
-   * 積まないため。
+   * claude 側のセッションIDが分からないうちは書かない（行だけで「どのセッションのターンか」が決まらない記録を積まないため）。
+   * `system/init` より前に `result` は来ないので、実際には起きない。
    */
   readonly append: (cumulative: readonly ModelTokenUsage[], at: number, state: SessionState) => void
   /** ターンの終わりに内訳を捨てる（1ターンぶんだけ持つ）。 */
@@ -202,16 +179,12 @@ export function createTokenUsageRecorder(log: TokenUsageLog): TokenUsageRecorder
 /**
  * 前の `result` の累計と今の累計から、そのターンの増分を作る。
  *
- * - 増えていないモデルは返さない（0 だけの行を積まない）。すべてのモデルが増えていなければ
- *   空の並びになり、呼ぶ側は行を書かない
- * - 累計が振り出しに戻ったモデルは、いまの累計をそのまま増分にする（負を書かない）。
- *   起こし直し（resume）とターンの途中の `/clear` で走行合計がリセットされると SDK の型定義が
- *   言っている。1つでも数が減っていたらリセットとみなす（一部だけ引くと、残りの数が実際より
- *   大きい増分になる）
+ * - 増えていないモデルは返さない（0 だけの行を積まない）。すべてのモデルが増えていなければ空の並びになり、呼ぶ側は行を書かない
+ * - 累計が振り出しに戻ったモデルは、いまの累計をそのまま増分にする（負を書かない）。起こし直し（resume）とターンの途中の `/clear` で走行合計がリセットされると SDK の型定義が言っている。1つでも数が減っていたらリセットとみなす（一部だけ引くと、残りの数が実際より大きい増分になる）
  * - 前の累計にしか無いモデルは落とす（そのターンで使われていない）
  *
- * `costUsd` は引き算で浮動小数の誤差が出る（`0.7 - 0.5` が `0.19999999999999996` になる）ので、
- * 小数10桁で丸めてから返す。これより細かい桁は SDK 側の値にも無い。
+ * `costUsd` は引き算で浮動小数の誤差が出る（`0.7 - 0.5` が `0.19999999999999996` になる）ので、小数10桁で丸めてから返す。
+ * これより細かい桁は SDK 側の値にも無い。
  */
 export function tokenUsageDelta(
   previous: readonly ModelTokenUsage[],
@@ -227,12 +200,9 @@ export function tokenUsageDelta(
 /**
  * イベント1件を内訳に積む。見るのは3種類だけで、他のイベントはそのまま返す。
  *
- * - `tool-started`: 呼び出しを1件足す（始まった時点で数える — 結果が返らずにターンが
- *   終わった呼び出しも「使った」ことは変わらない）。持ち場は `parentToolUseId` で決まる
+ * - `tool-started`: 呼び出しを1件足す（始まった時点で数える。結果が返らずにターンが終わった呼び出しも「使った」ことは変わらない）。持ち場は `parentToolUseId` で決まる
  * - `tool-finished`: 結果の長さだけを、同じ `toolUseId` の呼び出しに足す。本文は捨てる
- * - `step-usage`: 同じ `messageId` の古いぶんを捨てて置き換える。返答が流れている間は同じ
- *   `message.id` の `assistant` が何度も届き、途中の `usage` は確定値ではないので
- *   （`sdk.d.ts`）、最後に届いたものだけを残す
+ * - `step-usage`: 同じ `messageId` の古いぶんを捨てて置き換える。返答が流れている間は同じ `message.id` の `assistant` が何度も届き、途中の `usage` は確定値ではないので（`sdk.d.ts`）、最後に届いたものだけを残す
  */
 export function tallyTurnUsage(tally: TurnUsageTally, event: SessionEvent): TurnUsageTally {
   switch (event.kind) {
@@ -274,27 +244,21 @@ export function tallyTurnUsage(tally: TurnUsageTally, event: SessionEvent): Turn
 }
 
 /**
- * 積み上げた内訳を、記録に書く形に畳む。メインループとサブエージェントを別立てにする
- * （割り方の理由は {@link TurnUsageBreakdown}）。
- *
- * ツールを1つも使わなかったターンでも両方の持ち場が 0 で並ぶ — 「無い」を型に持ち込まずに
- * 済み、あとから数える側が欄の有無を気にしなくてよい。
+ * 積み上げた内訳を、記録に書く形に畳む。メインループとサブエージェントを別立てにする。
+ * ツールを1つも使わなかったターンでも両方の持ち場が 0 で並ぶ（あとから数える側が欄の有無を気にしなくてよい）。
  */
 export function turnUsageBreakdown(tally: TurnUsageTally): TurnUsageBreakdown {
   return { main: scopeUsage(tally, "main"), subagent: scopeUsage(tally, "subagent") }
 }
 
 /**
- * 期間に入る行を、推移・モデル別・ツール別の3つの軸で畳む（分析画面が要る軸だけ。
- * 使わない軸＝モード別・1ターンあたりの中央値は作らない）。
+ * 期間に入る行を、推移・モデル別・ツール別の3つの軸で畳む（分析画面が要る軸だけ）。
  *
- * 期間の判定は行の `at` の頭10文字（ローカル日付）で行う — 記録は書いた時点のローカル日付を
- * 持つので（`isoWithOffset`）、ここで改めてタイムゾーンを変換し直さない。`readRange` が渡す
- * 行が既に期間の外を含んでいても、ここで確定的に切り直す。
+ * 期間の判定は行の `at` の頭10文字（ローカル日付）で行う（記録は書いた時点のローカル日付を持つので、タイムゾーンを変換し直さない）。
+ * 渡された行が期間の外を含んでいても、ここで切り直す。
  *
- * 推移の刻みは期間の長さが決める — 1日なら時間ごと（0〜23時の24点）、それより長ければ
- * 日ごと。穴は0で埋める（棒の数と両端が期間から決まるので、描く側は点の数を数えるだけで
- * 済み、「今日が何日か」を知らずに端のラベルを出せる）。
+ * 推移の刻みは期間の長さが決める。1日なら時間ごと（0〜23時の24点）、それより長ければ日ごと。
+ * 穴は0で埋める（描く側は「今日が何日か」を知らずに端のラベルを出せる）。
  */
 export function summarizeTokenUsage(
   records: readonly TokenUsageRecord[],
@@ -309,11 +273,9 @@ export function summarizeTokenUsage(
 }
 
 /**
- * 「今日を含む直近 `days` 日」を期間にして、記録を読んで畳む（分析の画面が引く口）。
- *
- * 今日が何日かはここが決めない（`endDate` を受け取る。OS のタイムゾーンに依るので、
- * 今日のローカル日付を作るのは `todayLocalDateKey` の仕事）。期間の両端を含むので、
- * 7日なら `endDate` の6日前から。
+ * 「今日を含む直近 `days` 日」を期間にして、記録を読んで畳む。
+ * 今日が何日かはここが決めない（`endDate` を受け取る。OS のタイムゾーンに依る）。
+ * 期間の両端を含むので、7日なら `endDate` の6日前から。
  */
 export function summarizeRecentTokenUsage(
   log: TokenUsageLog,
@@ -325,8 +287,8 @@ export function summarizeRecentTokenUsage(
 }
 
 /**
- * ローカル日付（`YYYY-MM-DD`）を日数ぶんずらす。時刻もタイムゾーンも持ち込まずに日付だけで
- * 数える（`Temporal.PlainDate`）ので、夏時間のある地域でも同じ入力なら同じ境目になる。
+ * ローカル日付（`YYYY-MM-DD`）を日数ぶんずらす。
+ * 時刻もタイムゾーンも持ち込まずに日付だけで数えるので、夏時間のある地域でも同じ入力なら同じ境目になる。
  */
 function shiftDate(date: string, days: number): string {
   return Temporal.PlainDate.from(date).add({ days }).toString()
@@ -390,8 +352,8 @@ function addStepUsage(total: StepTokenUsage, usage: StepTokenUsage): StepTokenUs
 }
 
 /**
- * ツールの名前ごとに畳む。並びは結果の長さの大きい順（同じなら名前順）——行を読む人が
- * 「何が文脈を膨らませたか」を上から見て取れるようにする。
+ * ツールの名前ごとに畳む。並びは結果の長さの大きい順（同じなら名前順）。
+ * 行を読む人が「何が文脈を膨らませたか」を上から見て取れるようにする。
  */
 function foldToolCalls(calls: readonly ToolCallTally[]): readonly ToolUsageCount[] {
   const byName = groupBy(calls, prop("name"))
@@ -418,8 +380,8 @@ function localDateOf(record: TokenUsageRecord): string {
 }
 
 /**
- * 行の `at` の11〜13文字目（ローカル時刻の時。`YYYY-MM-DDTHH:...` の `HH`）。日付と同じく
- * 書いた時点のローカル時刻をそのまま読むので、ここでもタイムゾーンを変換し直さない。
+ * 行の `at` の12〜13文字目（ローカル時刻の時。`YYYY-MM-DDTHH:...` の `HH`）。
+ * 書いた時点のローカル時刻をそのまま読むので、タイムゾーンを変換し直さない。
  */
 function localHourOf(record: TokenUsageRecord): string {
   return record.at.slice(11, 13)
@@ -463,10 +425,7 @@ function datesInPeriod(period: TokenUsagePeriod): readonly string[] {
   return Array.from({ length }, (_, offset) => start.add({ days: offset }).toString())
 }
 
-/**
- * モデルごとに畳む。並びは出力の多い順（同じならモデル名順）——「どのモデルが出力を
- * いちばん使ったか」が上から読める。
- */
+/** モデルごとに畳む。並びは出力の多い順（同じならモデル名順）。 */
 function summarizeByModel(records: readonly TokenUsageRecord[]): readonly ModelUsageTotal[] {
   const allUsages = records.flatMap((record) => record.models)
   const byModel = groupBy(allUsages, prop("model"))
@@ -478,9 +437,8 @@ function summarizeByModel(records: readonly TokenUsageRecord[]): readonly ModelU
 }
 
 /**
- * ツールごとに畳む。メインループとサブエージェントの内訳を足し合わせる（どちらが重いかは
- * 1行の中の `breakdown` を見れば分かるので、この軸では「何にいちばん使ったか」だけを見る）。
- * 並びは {@link foldToolCalls} と同じ「結果の長さの降順、同じなら名前順」。
+ * ツールごとに畳む。メインループとサブエージェントの内訳を足し合わせる（この軸では「何にいちばん使ったか」だけを見る）。
+ * 並びは「結果の長さの降順、同じなら名前順」。
  */
 function summarizeByTool(records: readonly TokenUsageRecord[]): readonly ToolUsageCount[] {
   const calls = records.flatMap((record) => [

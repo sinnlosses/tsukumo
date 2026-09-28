@@ -1,10 +1,8 @@
-// コマンドの受け手の行の型と、葉の機能の行を呼ぶところ（`docs/design.md`「コマンドの受け手と
-// 手続きの置き方」）。機能ごとの表（各機能の core に置く `<機能>-command` の形）が書く行の形と、
-// 手続き（各機能の adapter に置く `<機能>-procedure` の形）が行を呼ぶ `receiveFeatureCommand` を持つ。
+// コマンドの受け手の行の型と、葉の機能の行を呼ぶ `receiveFeatureCommand`。
 //
-// 行の種類のうち `session`（セッションの口を受け取るもの）はここに無い——型が
-// `CommandSession` にあるので、葉の機能の表からは書けない。断る条件は行ではなく
-// 契約の `meta`（`CommandContract` にある）にあり、見るのは `rpcGuard`。
+// 行の種類のうち `session`（セッションの口を受け取るもの）はここに無い。
+// 型が `CommandSession` にあるので、葉の機能の表からは書けない。
+// 断る条件は行ではなく契約の `meta` にあり、見るのは `rpcGuard`。
 
 import type { CommandContract, CommandInputs, CommandRefusalReason } from "../../shared/command.ts"
 import type { SessionEvent } from "../../shared/session/session-event.ts"
@@ -38,9 +36,8 @@ export type FeatureCommandTable<T extends CommandContract> = {
 }
 
 /**
- * 葉の機能の手続きが受ける口（手続きの context の `session`）。セッションの口
- * （`CommandSession`）のうちイベントを流す1つだけを型にしてあるので、葉の機能は `session` の
- * 型を読まずに済む（機能どうしの辺を増やさない）。
+ * 葉の機能の手続きが受ける口（手続きの context の `session`）。
+ * セッションの口（`CommandSession`）のうちイベントを流す1つだけを型にしてあるので、葉の機能は `session` の型を読まずに済む（機能どうしの辺を増やさない）。
  */
 export type CommandEventSink = {
   /** いまの代に固定した口（呼んだ時点の代の `emit`）。 */
@@ -48,7 +45,7 @@ export type CommandEventSink = {
 }
 
 /**
- * 葉の機能の行を1件呼ぶ。受け手が投げても常駐プロセスは落とさず、行の定型文の理由を返す。
+ * 葉の機能の行を1件呼ぶ。受け手が投げても落とさず、行の定型文の理由を返す。
  * `write` の行が返したイベントは、返った時点の代へ流す。
  */
 export async function receiveFeatureCommand<C>(

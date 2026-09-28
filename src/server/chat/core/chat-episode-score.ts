@@ -1,18 +1,16 @@
-// エピソード索引の採点（純粋関数。`docs/chat-mode.md`「古い雑談は索引を引いて思い出す」の
-// 採点の式）。ファイルには一切触らない——`episode.jsonl` と `recalled.jsonl` を読むのは
-// 雑談の会話のアーカイブを扱うアダプタで、ここは渡された行を並べ替えるだけ（`docs/architecture.md`「1ファイル = 1つの境界」）。
+// エピソード索引の採点。ファイルには触らず、渡された行を並べ替えるだけ。
+// 採点の式の正典は `docs/chat-mode.md`「古い雑談は索引を引いて思い出す」。
 //
-// 採点は4段（`docs/chat-mode.md`「古い雑談は索引を引いて思い出す」の採点の式）: 一致（手がかり語・見出し・要旨への当たり、日本語は
-// 2文字ずつの重なりでも拾う）→ 足切り（一致が `minMatch` 未満は候補にしない）→ 新しさ
-// （`to` から経った日数で減衰し、思い出した回数が多いほど緩む）→ 点（一致 × `weight` × 新しさ）。
+// 採点は4段:
+// 一致（手がかり語・見出し・要旨への当たり。日本語は2文字ずつの重なりでも拾う）
+// → 足切り（一致が `minMatch` 未満は候補にしない）
+// → 新しさ（`to` から経った日数で減衰し、思い出した回数が多いほど緩む）
+// → 点（一致 × `weight` × 新しさ）。
 
 import { CHAT_RECALL_SCORE, type ChatRecallScore } from "../../../shared/chat/chat-memory-budget.ts"
 import type { ChatEpisodeCandidate } from "../../session-driver/core/session-driver.ts"
 
-/**
- * `episode.jsonl` の1行のうち、採点に要る部分だけ（版・`from` は読まない。読んで検証するのは
- * 雑談の会話のアーカイブを扱うアダプタ）。
- */
+/** `episode.jsonl` の1行のうち、採点に要る部分だけ（版・`from` は読まない）。 */
 export type ChatEpisodeRecord = {
   readonly id: string
   readonly to: string
@@ -23,8 +21,8 @@ export type ChatEpisodeRecord = {
 }
 
 /**
- * 引く言葉でエピソードを採点し、足切りを通ったものだけを点の高い順（同点は `to` の新しい順）に
- * 返す。`recallCounts` は `id` → `recall_episode` で開いた回数（無ければ0扱い）。
+ * 引く言葉でエピソードを採点し、足切りを通ったものだけを点の高い順（同点は `to` の新しい順）に返す。
+ * `recallCounts` は `id` → `recall_episode` で開いた回数（無ければ0扱い）。
  *
  * 引く言葉が空白だけ・空のときは何も当たらない（空配列）。
  */
@@ -95,8 +93,7 @@ function fieldMatch(term: string, texts: readonly string[]): number {
 
 /**
  * 1語と1つの文面の当たり（含まれれば1、でなければ語の2文字ずつの組のうち文面に含まれる割合）。
- * 1文字の語は2文字の組が作れないので、含まれるかどうかだけで見る（`docs/chat-mode.md`
- * 「古い雑談は索引を引いて思い出す」）。
+ * 1文字の語は2文字の組が作れないので、含まれるかどうかだけで見る。
  */
 function matchValue(term: string, text: string): number {
   const field = text.toLowerCase()
@@ -118,8 +115,8 @@ function bigramsOf(term: string): readonly string[] {
 }
 
 /**
- * 新しさ（`to` から経った日数で減衰し、下限 `recencyFloor` を割らない。思い出した回数が
- * 多いほど半減期が伸びて下がり方が緩む）。
+ * 新しさ（`to` から経った日数で減衰し、下限 `recencyFloor` を割らない）。
+ * 思い出した回数が多いほど半減期が伸びて下がり方が緩む。
  */
 function recencyOf(
   to: string,

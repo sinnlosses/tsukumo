@@ -1,7 +1,5 @@
-// `character-pack` が受けるコマンドの表（`docs/design.md`「コマンドの受け手と手続きの置き方」）。
-// 見た目の編集10種と、作る・消すの2種。手続き（`characterPackProcedure`）が
-// ここの行へ委ねる。どれも駆動には渡らず、セッションも起こし直さない
-// （書いて、`character-changed` を流し直すだけ。`docs/design.md`「画面から作るときの置き場と受け取り方」）。
+// `character-pack` が受けるコマンドの表。見た目の編集10種と、作る・消すの2種。
+// どれも駆動には渡らず、セッションも起こし直さない（書いて、`character-changed` を流し直すだけ）。
 
 import type {
   CharacterCreate,
@@ -15,22 +13,20 @@ import type { FeatureCommandTable, WriteReceiver } from "../../core/command-rece
 
 export type CharacterPackCommandPorts = {
   /**
-   * `edit.pack` で指されたパック（使用中に限らない）の立ち絵・差し色・背景・顔・プロフィールを変え、
-   * 画面へ流す `character-changed` を返す（書き込み先と受け付けない条件は
-   * `editCharacterPack`）。受け付けられなかったときは undefined。
+   * `edit.pack` で指されたパック（使用中に限らない）の立ち絵・差し色・背景・顔・プロフィールを変え、画面へ流す `character-changed` を返す。
+   * 受け付けられなかったときは undefined。
    *
-   * `speak` が受け付ける表情の一覧は起こしたときのままなので、立ち絵を足した表情を
-   * キャラクター自身が選べるのは次の起動から。
+   * `speak` が受け付ける表情の一覧は起こしたときのままなので、立ち絵を足した表情をキャラクター自身が選べるのは次の起動から。
    */
   readonly editCharacter: (edit: CharacterEdit) => Promise<SessionEvent | undefined>
   /**
-   * 新しいパックを作り、選択肢の増えた `character-changed` を返す。作ったパックへ切り替えはしない
-   * （切り替えは駆動の起こし直しで画面が初期化されるので、作る操作の副作用にしない）。
+   * 新しいパックを作り、選択肢の増えた `character-changed` を返す。
+   * 作ったパックへ切り替えはしない（切り替えは駆動の起こし直しで画面が初期化されるので、作る操作の副作用にしない）。
    */
   readonly createCharacter: (create: CharacterCreate) => Promise<SessionEvent | undefined>
   /**
-   * パックを消し、選択肢の減った `character-changed` を返す（使用中・ホームに版の無いパックは
-   * 消さない）。ターン中も受け付ける（使用中のパックは消せないので、いまの会話には触らない）。
+   * パックを消し、選択肢の減った `character-changed` を返す（使用中・ホームに版の無いパックは消さない）。
+   * ターン中も受け付ける（使用中のパックは消せないので、いまの会話には触らない）。
    */
   readonly deleteCharacter: (remove: CharacterDelete) => Promise<SessionEvent | undefined>
 }

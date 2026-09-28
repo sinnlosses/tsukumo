@@ -1,21 +1,13 @@
-// `main` の履歴を読み、成果（`docs/glossary.md`「成果」）を数える境界
-// （`docs/requirements.md`「成果の振り返り」）。`git` を起こすのは `runGit` / `runGitCatFileBatch`、
-// 数える判断は `countAchievementCommits` などの純関数、日付キーから始まり・終わりを出すのは
-// `localDateEpochRange`。
+// `main` の履歴を読み、成果を数える境界。数える判断は core の純関数が持つ。
 //
-// 読むのは作業ツリーのファイルではなく `main` の上のもの（正典は `main` のもので、
-// 作業ツリーのものは `git merge main` するまで別の作業ツリーの分を知らない）。
+// 読むのは作業ツリーのファイルではなく `main` の上のもの。
+// 作業ツリーのものは `git merge main` するまで別の作業ツリーの分を知らない。
 //
-// Beads 方式（`main` の先端の設定ファイルの `- タスクの置き場: beads`）では、終えたタスクを
-// git の切り口と Beads の閉じた課題（`closed_at`）の両方から読み、ID で和をとる。移す前は Beads に
-// 閉じた課題が無く、移したあとは `main` に `develop/task/` が無いので、境を数で持たなくても
-// 欠けず、同じ ID が両方にあっても1件にしかならない（`docs/requirements.md`「`done` になった日」）。
+// Beads 方式（`main` の先端の設定ファイルの `- タスクの置き場: beads`）では、終えたタスクを git の切り口と Beads の閉じた課題（`closed_at`）の両方から読み、ID で和をとる。
+// 移す前は Beads に閉じた課題が無く、移したあとは `main` に `develop/task/` が無いので、境を数で持たなくても欠けず、同じ ID が両方にあっても1件にしかならない。
 //
-// `main` が読めない（git リポジトリでない・`main` ブランチが無い・`git` が無い）ときは
-// `DailyAchievement` の `{ kind: "unknown" }`（呼び出し側は 200 のまま配ってよい）。
-// それ以外の `git` の呼び出し（コミットの列挙・切り口・タスクの記録の読み取り）がタイムアウト・
-// 失敗したときは `ReadAchievementResult` の `{ kind: "unavailable" }`——こちらは
-// 呼び出し側が 503 にする（部分的な数を出さない。`docs/requirements.md`「成果の振り返り」）。
+// `main` が読めない（git リポジトリでない・`main` ブランチが無い・`git` が無い）ときは `DailyAchievement` の `{ kind: "unknown" }`（200 のまま配ってよい）。
+// それ以外の `git` の呼び出しがタイムアウト・失敗したときは `{ kind: "unavailable" }` で、呼び出し側が 503 にする（部分的な数を出さない）。
 
 import { basename } from "node:path"
 
@@ -59,18 +51,13 @@ import {
 } from "../core/achievement.ts"
 
 /**
- * 今日以外の日の数を覚える入れ物（`docs/requirements.md`「灯りの段階」）。
- * 持ち主は配線（1つ作り、{@link readAchievement} と
- * {@link readCommitCalendar} の両方に渡す。モジュールのトップレベルに可変の入れ物を置かない）。
- * 中身の `Map` は外へ出さず、覚える・引く口だけを持たせる（渡した入れ物を呼び出し先が直接
- * 書き換える形にしない。`docs/coding-standards.md`「変数は基本イミュータブル」）。
+ * 今日以外の日の数を覚える入れ物。配線が1つ作り、{@link readAchievement} と {@link readCommitCalendar} の両方に渡す。
  *
  * - 日ごとの数: 暦の日ごとのコミット数（鍵は日付キー）
  * - 通算の数: 節目に使う、その日の始まりまでの通算のコミット数（鍵は見ている日の日付キー）
  *
- * どちらも今日の分は覚えない（毎回取り直す）。覚えた数が後で変わりうるのは、旧形式で
- * 過去の日付のコミットが後から `main` に入ったときだけで、そのずれは受け入れる
- * （プロセスを起こし直せば取り直す）。
+ * どちらも今日の分は覚えない（毎回取り直す）。
+ * 覚えた数が後で変わりうるのは、旧形式で過去の日付のコミットが後から `main` に入ったときだけで、そのずれは受け入れる（プロセスを起こし直せば取り直す）。
  */
 export type AchievementCommitCache = {
   readonly dailyCountOf: (dateKey: string) => number | undefined
@@ -79,7 +66,7 @@ export type AchievementCommitCache = {
   readonly rememberTotalBeforeDay: (dateKey: string, total: number) => void
 }
 
-/** {@link AchievementCommitCache} を1つ作る（呼び出しは配線）。 */
+/** {@link AchievementCommitCache} を1つ作る。 */
 export function createAchievementCommitCache(): AchievementCommitCache {
   const dailyCounts = new Map<string, number>()
   const totalsBeforeDay = new Map<string, number>()
@@ -105,34 +92,34 @@ const ARCHIVE_FILE_PATH = "docs/history/tasks.md"
 const TASK_DIR_PATH = "develop/task/"
 
 /**
- * `git log --since` に持たせる余裕。`--since` はコミットの日付の古いものに続けて当たると辿るのを
- * 打ち切るので、日付が前後する履歴（旧形式では作業ツリーで積んだ時刻のままのコミットが後から
- * `main` に入る）でも取りこぼさないように、数える日より7日前から辿って core が範囲で絞る。
+ * `git log --since` に持たせる余裕。
+ * `--since` はコミットの日付の古いものに続けて当たると辿るのを打ち切る。
+ * 日付が前後する履歴（旧形式では作業ツリーで積んだ時刻のままのコミットが後から `main` に入る）でも取りこぼさないように、数える日より7日前から辿って core が範囲で絞る。
  */
 const SINCE_MARGIN_DAYS = 7
 const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000
 
-/** `git log` の1件を区切る印（ファイル名に出てこない前提）。NUL（`\x00`）は使えない——
- * `node:child_process` の `execFile` は引数に NUL を含む文字列を渡すと例外を投げる。代わりに
- * ASCII の record separator（`\x1e`）を使う。 */
+/**
+ * `git log` の1件を区切る印（ファイル名に出てこない前提）。
+ * NUL（`\x00`）は使えない。`node:child_process` の `execFile` は引数に NUL を含む文字列を渡すと例外を投げる。
+ */
 const COMMIT_RECORD_SEPARATOR = "\x1e"
 
-/** {@link readAchievement} の結果。`unavailable` は一時的な失敗（`git` のタイムアウト・失敗）で、
- * 呼び出し側が 503 にする。「`main` が読めない」は `unavailable` ではなく
- * `{ kind: "ok", achievement: { kind: "unknown" } }`（冒頭のコメント）。 */
+/**
+ * {@link readAchievement} の結果。`unavailable` は一時的な失敗（`git` のタイムアウト・失敗）で、呼び出し側が 503 にする。
+ * 「`main` が読めない」は `unavailable` ではなく `{ kind: "ok", achievement: { kind: "unknown" } }`。
+ */
 export type ReadAchievementResult =
   | { readonly kind: "ok"; readonly achievement: DailyAchievement }
   | { readonly kind: "unavailable" }
 
-/** {@link readCommitCalendar} の結果。{@link ReadAchievementResult} と同じ割り切り。 */
+/** {@link readCommitCalendar} の結果。`unavailable` は呼び出し側が 503 にする。 */
 export type ReadCommitCalendarResult =
   | { readonly kind: "ok"; readonly calendar: AchievementCalendar }
   | { readonly kind: "unavailable" }
 
 /**
- * 成果を1日ぶん読む。`dateKey` は見る日、`today` はサーバのローカル時刻の今日
- * （どちらも呼び出し側が検証済みの `YYYY-MM-DD`。`resolveAchievementDateKey` の戻り値）。
- * `cache` は今日以外の日の数を覚える入れ物（持ち主は配線）。
+ * 成果を1日ぶん読む。`dateKey` は見る日、`today` はサーバのローカル時刻の今日で、どちらも検証済みの `YYYY-MM-DD`。
  */
 export async function readAchievement(
   cwd: string,
@@ -159,9 +146,7 @@ export async function readAchievement(
   }
   const commitCount = countAchievementCommits(commits, startEpochSeconds, endEpochSeconds)
 
-  // 節目（コミットの節目）は、タスクの記録の有無に関わらず出す（`docs/requirements.md`
-  // `docs/requirements.md`「成果の振り返り」「タスクの記録が無いリポジトリでは、卒業とタスクの節目は出さない（コミットの節目は
-  // 出す）」）。通算の数（その日の始まりまでの数）は、今日以外なら `cache` に覚えて取り直さない。
+  // コミットの節目は、タスクの記録の有無に関わらず出す。
   const totalCommitsBeforeToday = await totalAchievementCommitsBeforeDay(
     cwd,
     head,
@@ -199,8 +184,7 @@ export async function readAchievement(
         doneTasks: { kind: "unknown" },
         graduations: [],
         milestones: commitMilestone === undefined ? [] : [commitMilestone],
-        // 日記は日記が持つ一覧なので、ここでは常に「まだ振り返っていない」を返し、
-        // 実際の値は配線層が差し替える（`diaryDates` と同じ形）。
+        // 日記は日記が持つ一覧なので、ここでは常に「まだ振り返っていない」を返し、実際の値は配線層が差し替える。
         diary: { kind: "none" },
       },
     }
@@ -222,7 +206,6 @@ export async function readAchievement(
     return { kind: "unavailable" }
   }
 
-  // タスクファイルの出入り（登録日・消えたファイル）。
   const history = await readTaskFileHistory(cwd, head)
   if (history === undefined) {
     return { kind: "unavailable" }
@@ -271,9 +254,9 @@ export async function readAchievement(
 }
 
 /**
- * `main` の先端の設定ファイルで方式を決め、Beads 方式なら `bd` の全件を読む。ファイル方式なら
- * `"files"`、方式の行が読めなければ `"invalid"`（終えたタスクを「数えられない」にする）。
- * `git`・`bd` が失敗・タイムアウトしたら `"unavailable"`（部分的な数を出さない）。
+ * `main` の先端の設定ファイルで方式を決め、Beads 方式なら `bd` の全件を読む。
+ * ファイル方式なら `"files"`、方式の行が読めなければ `"invalid"`（終えたタスクを「数えられない」にする）。
+ * `git`・`bd` が失敗・タイムアウトしたら `"unavailable"`。
  */
 async function readBeadsIssuesOfStore(
   cwd: string,
@@ -300,8 +283,7 @@ function beadsCreatedOn(issues: readonly BeadsIssue[]): ReadonlyMap<string, stri
   )
 }
 
-/** {@link commitMilestoneOf} の結果を {@link AchievementMilestone} の形にする（時刻は
- * `localTimeHHMM` で組み立てる）。 */
+/** {@link commitMilestoneOf} の結果を {@link AchievementMilestone} の形にする。 */
 function commitMilestoneOfDay(
   todaysCommitEpochSeconds: readonly number[],
   totalCommitsBeforeToday: number,
@@ -317,10 +299,9 @@ function commitMilestoneOfDay(
 }
 
 /**
- * その日の始まりまでの通算のコミットの数（節目。`docs/requirements.md`「卒業と節目」）。
+ * その日の始まりまでの通算のコミットの数（節目に使う）。
  * `dateKey` が今日以外なら `cache` の通算の数を先に見て、あれば `git` を起こさず返す。
- * 無ければ履歴の頭から `range.endEpochMilliseconds` までの全コミットを1回読み、`range` の始まり
- * より前のものだけを数えて（今日以外なら）覚える。
+ * 無ければ履歴の頭から `range.endEpochMilliseconds` までの全コミットを1回読み、`range` の始まりより前のものだけを数えて（今日以外なら）覚える。
  */
 async function totalAchievementCommitsBeforeDay(
   cwd: string,
@@ -352,10 +333,7 @@ async function totalAchievementCommitsBeforeDay(
   return total
 }
 
-/**
- * 履歴の頭から `untilEpochMs` までの全コミット（`--no-merges`、`git log --until`）。
- * {@link totalAchievementCommitsBeforeDay} が通算のコミットの数（節目）を数えるのに使う。
- */
+/** 履歴の頭から `untilEpochMs` までの全コミット（`--no-merges`、`git log --until`）。 */
 async function readAllCommitsUntil(
   cwd: string,
   head: string,
@@ -373,13 +351,11 @@ async function readAllCommitsUntil(
 }
 
 /**
- * 灯りの暦（直近5週ぶん）の日ごとのコミット数を読む（`docs/requirements.md`「灯りの段階」）。
- * `git log` は1回で、今日以外の日は `cache` に覚えて取り直さない。`today` はサーバのローカル時刻の今日。`cache` は今日以外の日の数を覚える
- * 入れ物（持ち主は配線）。
+ * 灯りの暦（直近5週ぶん）の日ごとのコミット数を読む。`today` はサーバのローカル時刻の今日。
  *
- * 範囲の日が1日でも覚えていなければ、`git log` を1回だけ起こして範囲全体を数え直し、今日以外を
- * 覚える。すべて覚えていれば、今日の分だけを取り直す。`diaryDates` は日記が持つ
- * 一覧なので、ここでは常に空を返し、実際の値は配線層が差し替える。
+ * 範囲の日が1日でも覚えていなければ、`git log` を1回だけ起こして範囲全体を数え直し、今日以外を覚える。
+ * すべて覚えていれば、今日の分だけを取り直す。
+ * `diaryDates` は日記が持つ一覧なので、ここでは常に空を返し、実際の値は配線層が差し替える。
  */
 export async function readCommitCalendar(
   cwd: string,
@@ -457,7 +433,7 @@ export async function readCommitCalendar(
   }
 }
 
-/** `main` の先端。取れなければ `undefined`（「`main` が読めない」。冒頭のコメント）。 */
+/** `main` の先端。取れなければ `undefined`（「`main` が読めない」）。 */
 async function mainHeadCommit(cwd: string): Promise<string | undefined> {
   const result = await runGit(cwd, [
     "rev-parse",
@@ -469,8 +445,8 @@ async function mainHeadCommit(cwd: string): Promise<string | undefined> {
 }
 
 /**
- * `sinceEpochMs` 以降のコミット（`--no-merges`）を、ハッシュ・committer date・変更したファイルの
- * 組で読む。`git` が失敗・タイムアウトしたら `undefined`。
+ * `sinceEpochMs` 以降のコミット（`--no-merges`）を、ハッシュ・committer date・変更したファイルの組で読む。
+ * `git` が失敗・タイムアウトしたら `undefined`。
  */
 async function readCommitsSince(
   cwd: string,
@@ -518,9 +494,8 @@ type CutoffOutcome =
   | { readonly kind: "unavailable" }
 
 /**
- * `epochMs` より前の最新のコミット（`--first-parent`。`docs/requirements.md`「`done` になった日」の切り口）。
- * 空の出力（そのリポジトリの最初の日）は `empty`——`git` の失敗とは区別する
- * （前者は「空の集合として比べる」、後者は 503）。
+ * `epochMs` より前の最新のコミット（`--first-parent`）。
+ * 空の出力（そのリポジトリの最初の日）は `empty` で、`git` の失敗とは区別する（前者は「空の集合として比べる」、後者は 503）。
  */
 async function cutoffCommitBefore(
   cwd: string,
@@ -547,10 +522,9 @@ function cutoffCommitOf(outcome: CutoffOutcome): string | undefined {
 }
 
 /**
- * 1つの切り口ぶんのタスクの記録を読む。`cutoff` が `undefined`（切り口が無い＝リポジトリの
- * 最初の日）なら `git` を起こさずに空の読み元を返す。新形式の列挙は1回の `git ls-tree`、
- * 中身（新形式のファイル・旧形式・アーカイブ）は1回の `git cat-file --batch` にまとめる
- * （`readTasksAtHead` と同じやり方）。
+ * 1つの切り口ぶんのタスクの記録を読む。
+ * `cutoff` が `undefined`（切り口が無い＝リポジトリの最初の日）なら `git` を起こさずに空の読み元を返す。
+ * 新形式の列挙は1回の `git ls-tree`、中身（新形式のファイル・旧形式・アーカイブ）は1回の `git cat-file --batch` にまとめる。
  */
 async function readTaskSnapshotSource(
   cwd: string,
@@ -594,23 +568,29 @@ function taskFilePathsOf(output: string): readonly string[] {
 
 // --- タスクファイルの出入り（登録日・消えたファイル） ---
 
-/** {@link readTaskFileHistory} の結果。`commits` は登録日の表（`taskRegistrationDates`）が使う形、
- * `deletions` は {@link readDeletedTaskFiles} が消える直前の版を読むのに使う一覧。 */
+/**
+ * {@link readTaskFileHistory} の結果。
+ * `commits` は登録日の表（`taskRegistrationDates`）に渡す形、`deletions` は消える直前の版を読むための一覧。
+ */
 type TaskFileHistory = {
   readonly commits: readonly TaskFileHistoryCommit[]
   readonly deletions: readonly TaskFileDeletion[]
 }
 
-/** 消えた（`D`）タスクファイル1件。`request` は `git cat-file --batch` に渡す `<コミット>^:<パス>`
- * （消したコミットの親の版＝消える直前の版）。 */
+/**
+ * 消えた（`D`）タスクファイル1件。
+ * `request` は `git cat-file --batch` に渡す `<コミット>^:<パス>`（消したコミットの親の版＝消える直前の版）。
+ */
 type TaskFileDeletion = {
   readonly id: string
   readonly committedAtEpochSeconds: number
   readonly request: string
 }
 
-/** {@link parseTaskFileHistoryLog} の1コミット分。`hash` は消えたファイルの一覧を組み立てる
- * ためだけに要り、core へは渡さない（core の {@link TaskFileHistoryCommit} は持たない）。 */
+/**
+ * {@link parseTaskFileHistoryLog} の1コミット分。
+ * `hash` は消えたファイルの一覧を組み立てるためだけに要り、core へは渡さない（{@link TaskFileHistoryCommit} は持たない）。
+ */
 type RawTaskFileHistoryCommit = {
   readonly hash: string
   readonly committedAtEpochSeconds: number
@@ -618,8 +598,8 @@ type RawTaskFileHistoryCommit = {
 }
 
 /**
- * `develop/task/` と `develop/tasks.json` の出入りを、`git log --name-status` 1回で読む
- * （`docs/requirements.md`「卒業と節目」）。`git` が失敗・タイムアウトしたら `undefined`。
+ * `develop/task/` と `develop/tasks.json` の出入りを、`git log --name-status` 1回で読む。
+ * `git` が失敗・タイムアウトしたら `undefined`。
  */
 async function readTaskFileHistory(
   cwd: string,
@@ -665,8 +645,7 @@ async function readTaskFileHistory(
   return { commits, deletions }
 }
 
-/** {@link readTaskFileHistory} の出力を割る。壊れた1件（見出し行が読めない）はその1件だけ捨てる
- * （{@link parseCommitLog} と同じ形）。 */
+/** {@link readTaskFileHistory} の出力を割る。壊れた1件（見出し行が読めない）はその1件だけ捨てる。 */
 function parseTaskFileHistoryLog(output: string): readonly RawTaskFileHistoryCommit[] {
   return output.split(COMMIT_RECORD_SEPARATOR).flatMap((record) => {
     if (record === "") {
@@ -683,8 +662,10 @@ function parseTaskFileHistoryLog(output: string): readonly RawTaskFileHistoryCom
   })
 }
 
-/** `--name-status` の1行（`A\tpath` の形）。リネーム（`R100\told\tnew`）は拾わない——タスク
- * ファイルはリネームしない運用で、`old` 側のパスだけ拾っても登録日にも消えたファイルにも使えない。 */
+/**
+ * `--name-status` の1行（`A\tpath` の形）。リネーム（`R100\told\tnew`）は拾わない。
+ * タスクファイルはリネームしない運用で、`old` 側のパスだけ拾っても登録日にも消えたファイルにも使えない。
+ */
 function taskFileChangeOf(line: string): readonly TaskFileChange[] {
   if (line === "") {
     return []
@@ -697,9 +678,8 @@ function taskFileChangeOf(line: string): readonly TaskFileChange[] {
 
 /**
  * 消えたファイルの、消える直前の版を1回の `git cat-file --batch` で読む。
- * `git` そのものが失敗・タイムアウトしたときだけ `undefined`——個々のファイルが読めない
- * （blob が既に無い）だけなら {@link DeletedTaskFile} の `content` が `undefined` になり、
- * 呼び出し側（`deletedDoneTaskSummariesBefore`）がその1件だけ読み飛ばす。
+ * `git` そのものが失敗・タイムアウトしたときだけ `undefined`。
+ * 個々のファイルが読めない（blob が既に無い）だけなら {@link DeletedTaskFile} の `content` が `undefined` になる。
  */
 async function readDeletedTaskFiles(
   cwd: string,
@@ -719,8 +699,10 @@ async function readDeletedTaskFiles(
   }))
 }
 
-/** エポックミリ秒を `git` の `--since` / `--before` に渡す ISO 8601（UTC）にする。絶対時刻なので
- * サーバのタイムゾーンに関わらず `git` 側で正しく解釈される。 */
+/**
+ * エポックミリ秒を `git` の `--since` / `--before` に渡す ISO 8601（UTC）にする。
+ * 絶対時刻なので、サーバのタイムゾーンに関わらず `git` 側で正しく解釈される。
+ */
 function instantOf(epochMs: number): string {
   return Temporal.Instant.fromEpochMilliseconds(epochMs).toString()
 }

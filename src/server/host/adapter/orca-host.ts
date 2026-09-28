@@ -1,23 +1,19 @@
 // ホスト依存の操作（`Host`）を Orca の CLI で実装するアダプタ。
 //
-// `orca` コマンドを呼ぶのはこのファイルだけ（`docs/architecture.md`「1ファイル = 1つの境界」）。
-// この境界は検査が落とす。
-// 実際に Orca が動いていないと showView などの挙動そのものは確かめられないので、
-// ここは（境界のテストを除き）自動テストの対象にしない。
+// `orca` コマンドを呼ぶのはこのファイルだけ（この境界は検査が落とす）。
+// 実際に Orca が動いていないと showView などの挙動そのものは確かめられないので、ここは（境界のテストを除き）自動テストの対象にしない。
 //
 // Orca CLI の対応関係（v1.4.x で実測。`orca tab goto` は無い）:
 //   showView → orca tab list --json でオリジンとパスが同じタブを探し、
 //              あれば orca goto --url <新しい URL> --page <pageId> --json、
 //              無ければ orca tab create --url <url> --json
-//   openFile → orca file open <path> --json（行番号を渡す引数は無い。`--worktree` は省く
-//              — cwd から作業ツリーを推してもらう。tsukumo は起こしたディレクトリでそのまま
-//              動くので、この execFile の cwd（既定は tsukumo 自身の process.cwd()）がそのまま
-//              合う。`orca agent-context --json` で実測）
+//   openFile → orca file open <path> --json（行番号を渡す引数は無い）。
+//              `--worktree` は省き、cwd から作業ツリーを推してもらう。
+//              tsukumo は起こしたディレクトリでそのまま動くので、この execFile の cwd（既定は tsukumo 自身の process.cwd()）がそのまま合う（`orca agent-context --json` で実測）。
 //
-// URL のクエリを見比べないのは、起動ごとにトークンが変わるため（`?t=<起動トークン>`。
-// `docs/design.md`「会話内容と安全」）。同じ場所を指すタブは貼り直して1つに保つ。
-// `goto` が `ok: false` を返しても `tab create` に倒さない（読み込みに失敗しても遷移自体は
-// 起きており、倒すとタブが増える）。開き直すのは一覧にそのタブが無かったときだけ。
+// URL のクエリを見比べないのは、起動ごとにトークンが変わるため（`?t=<起動トークン>`）。同じ場所を指すタブは貼り直して1つに保つ。
+// `goto` が `ok: false` を返しても `tab create` に倒さない（読み込みに失敗しても遷移自体は起きており、倒すとタブが増える）。
+// 開き直すのは一覧にそのタブが無かったときだけ。
 
 import { execFile } from "node:child_process"
 
@@ -40,12 +36,12 @@ export type OrcaTab = {
 }
 
 /**
- * タブを一覧する。`"all"` はすべての作業ツリーのタブ（`--worktree` を付けないと今の作業ツリーの
- * タブしか返らない）、`{ worktreePath }` はその作業ツリーのタブだけ。
+ * タブを一覧する。
+ * `"all"` はすべての作業ツリーのタブ（`--worktree` を付けないと今の作業ツリーのタブしか返らない）、`{ worktreePath }` はその作業ツリーのタブだけ。
  *
- * `"all"` は、しばらく表示していない作業ツリーのタブを落とすことがある（止まっているページは
- * 一覧に出ないか、`url` が空で出る）。作業ツリーを名指しして聞くとそのページが起き、何度か聞き直す
- * うちに `url` が埋まる。一覧が取れない・形が想定と違う要素は境界で弾き、キャストしない。
+ * `"all"` は、しばらく表示していない作業ツリーのタブを落とすことがある（止まっているページは一覧に出ないか、`url` が空で出る）。
+ * 作業ツリーを名指しして聞くとそのページが起き、何度か聞き直すうちに `url` が埋まる。
+ * 一覧が取れない・形が想定と違う要素は境界で弾く。
  */
 export async function listTabs(
   scope: "all" | { readonly worktreePath: string },
@@ -145,9 +141,8 @@ async function showView(url: string): Promise<HostResult> {
 }
 
 /**
- * ファイルを1つ、Orca のエディタで開く。`--worktree` は省く（cwd から作業ツリーを推してもらう。
- * このプロセスの cwd は tsukumo を起こしたディレクトリと同じ）。渡す前に `path` が
- * git 管理下にあるかどうかを確かめるのは呼び出し側の役目で、ここでは検証しない。
+ * ファイルを1つ、Orca のエディタで開く。`--worktree` は省く（cwd から作業ツリーを推してもらう）。
+ * `path` が git 管理下にあるかどうかはここでは検証しない（呼び出し側が確かめてから渡す）。
  */
 async function openFile(path: string): Promise<HostResult> {
   const opened = await runOrca(["file", "open", path, "--json"], "ファイルを開く")
@@ -155,9 +150,8 @@ async function openFile(path: string): Promise<HostResult> {
 }
 
 /**
- * 同じビューを開いているタブのページIDを探す。比べるのはオリジンとパスだけで、クエリ
- * （`?t=<起動トークン>`）は見ない。一覧が取れない・形が想定と違うときは undefined を返し、
- * 呼び出し側で新しく開く側に倒す（推測で壊れた ID を渡さない）。
+ * 同じビューを開いているタブのページIDを探す。比べるのはオリジンとパスだけで、クエリ（`?t=<起動トークン>`）は見ない。
+ * 一覧が取れない・形が想定と違うときは undefined を返し、新しく開く側に倒す（推測で壊れた ID を渡さない）。
  */
 async function findViewPageId(url: string): Promise<string | undefined> {
   const listed = await runOrca(["tab", "list", "--json"], "タブ一覧を取得する")
@@ -199,8 +193,8 @@ function findPageIdInTabList(value: unknown, url: string): string | undefined {
 }
 
 /**
- * タブが同じビューを指しているかを比べるための鍵（オリジン + パス）。URL として読めない値は
- * そのまま返し、文字列一致に倒す（比べられない値で他のタブを掴まない）。
+ * タブが同じビューを指しているかを比べるための鍵（オリジン + パス）。
+ * URL として読めない値はそのまま返し、文字列一致に倒す（比べられない値で他のタブを掴まない）。
  */
 function viewLocation(url: string): string {
   try {
@@ -216,8 +210,8 @@ type CommandOutput =
   | { readonly ok: false; readonly reason: string }
 
 /**
- * `orca` を1回呼ぶ。`label` は失敗したときの理由に使う、値を含まない固定の日本語（「ターミナルへ
- * 送信する」など）。`args` 自体は理由の組み立てに使わない（{@link describeFailure} 参照）。
+ * `orca` を1回呼ぶ。`label` は失敗したときの理由に使う、値を含まない固定の日本語。
+ * `args` 自体は理由の組み立てに使わない（{@link describeFailure}）。
  */
 function runOrca(args: readonly string[], label: string): Promise<CommandOutput> {
   return new Promise((resolve) => {
@@ -233,24 +227,21 @@ function runOrca(args: readonly string[], label: string): Promise<CommandOutput>
 }
 
 /**
- * `orca` が返す既知の失敗の印と、その日本語の説明。この表に載っているものだけを理由に
- * 出す（出力にも会話の内容が混ざりうるので、素通しにしない。`docs/coding-standards.md`
- * 「会話内容の扱い」）。表に無い出力は、これまでどおり終了コードだけを伝える。
- */
-/**
- * orca が返すエラーコードだけを取り出す。`terminal_handle_stale` のような
- * 小文字・数字・アンダースコアだけの短い1語という形に限る。
+ * orca が返すエラーコードだけを取り出す。`terminal_handle_stale` のような小文字・数字・アンダースコアだけの短い1語という形に限る。
  *
- * 形で許可しているのは、会話の内容と形が違うから（日本語・空白・記号・改行を含むものは
- * 通らない）。`docs/coding-standards.md`「会話内容の扱い」を守りつつ、まだ表に無い失敗でも
- * 利用者が検索できる手掛かりを残すための折衷。表（{@link KNOWN_ORCA_FAILURES}）に載ったものは
- * 日本語の説明が優先される。
+ * 形で許可しているのは、会話の内容と形が違うから（日本語・空白・記号・改行を含むものは通らない）。
+ * 出力を素通しにせずに、まだ表に無い失敗でも利用者が検索できる手掛かりを残すため。
+ * 表（{@link KNOWN_ORCA_FAILURES}）に載ったものは日本語の説明が優先される。
  */
 function orcaErrorCode(output: string): string | undefined {
   const trimmed = output.trim()
   return /^[a-z][a-z0-9_]{2,40}$/.test(trimmed) ? trimmed : undefined
 }
 
+/**
+ * `orca` が返す既知の失敗の印と、その日本語の説明。この表に載っているものだけを理由に出す。
+ * 出力にも会話の内容が混ざりうるので、素通しにしない。
+ */
 const KNOWN_ORCA_FAILURES: readonly { readonly marker: string; readonly reason: string }[] = [
   {
     marker: "terminal_handle_stale",
@@ -268,19 +259,15 @@ const KNOWN_ORCA_FAILURES: readonly { readonly marker: string; readonly reason: 
  * 失敗の理由を、呼び出し側が渡した固定の `label` と、失敗した事実だけで組み立てる。
  *
  * `error.message` / `error.cmd`（Node の `execFile` が作る失敗メッセージ）は参照しない。
- * これらには実行したコマンドライン全体が引数の値ごとそのまま入っており、`sendText` の
- * `--text`（依頼の文面。会話の内容）や `--terminal`（ID）が失敗の理由に紛れ込む経路になっていた
- * （`docs/coding-standards.md`「会話内容の扱い」— 修正前の実装で、送った依頼の文面が
- * エラー応答にそのまま返っていた不具合）。安全に使えるのは終了コード（数値）だけなので、
- * 取れるときだけ添える。
+ * これらには実行したコマンドライン全体が引数の値ごとそのまま入っており、引数に載せた値（URL の起動トークン・パス・文面）が失敗の理由に紛れ込む。
+ * 安全に使えるのは終了コード（数値）だけなので、取れるときだけ添える。
  *
- * 例外は {@link KNOWN_ORCA_FAILURES} に載せた印だけで、これは orca 自身が返す固定の文言
- * （会話の内容ではない）と分かっているものに限る。利用者が自力で直せる失敗（一覧が古い等）を
- * 「終了コード 1」とだけ伝えても手の打ちようがないため。
+ * 例外は {@link KNOWN_ORCA_FAILURES} に載せた印だけで、これは orca 自身が返す固定の文言（会話の内容ではない）と分かっているものに限る。
+ * 利用者が自力で直せる失敗（一覧が古い等）を「終了コード 1」とだけ伝えても手の打ちようがないため。
  */
 function describeFailure(label: string, error: unknown, output: string): string {
-  // 捕まえた例外は Error の実体（`node:child_process` が投げる）なので、`isPlainObject` では
-  // 弾かれる。prototype を問わない `isObjectType` で見て、`code` があるときだけ読む。
+  // 捕まえた例外は Error の実体（`node:child_process` が投げる）なので、`isPlainObject` では弾かれる。
+  // prototype を問わない `isObjectType` で見て、`code` があるときだけ読む。
   if (isObjectType(error) && "code" in error && error.code === "ENOENT") {
     return `${ORCA_COMMAND} コマンドが見つからない`
   }

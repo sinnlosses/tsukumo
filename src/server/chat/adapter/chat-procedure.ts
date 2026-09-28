@@ -1,7 +1,5 @@
-// 雑談のコマンドの手続き（`docs/glossary.md`「手続き」）。形と断る条件は
-// `chatContract`、束ねるのは配線。照合と断る条件は束ねる側の
-// ミドルウェア（`rpcGuard`）が済ませているので、ここは表の行
-// （`chatCommands`）へ委ね、受け付けなかったことを契約のエラーに訳すだけ。
+// 雑談のコマンドの手続き。形と断る条件は `chatContract`。
+// 照合と断る条件は束ねる側のミドルウェア（`rpcGuard`）が済ませているので、ここは表の行（`chatCommands`）へ委ね、受け付けなかったことを契約のエラーに訳すだけ。
 
 import { implement, type ORPCErrorConstructorMap } from "@orpc/server"
 

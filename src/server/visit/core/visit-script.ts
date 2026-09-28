@@ -1,14 +1,10 @@
-// 訪問の台本を使い捨ての `query()` に書かせるための材料・指示文・形の検査（`docs/requirements.md`
-// 「訪問」、提案は `docs/research/character-visit.md` 論点2）。純関数と定数だけで、
-// `query()` を呼ぶのは `queryVisitScript`、材料を集めて呼ぶ順序は
-// `createVisitScriptWriter`。
+// 訪問の台本を使い捨ての `query()` に書かせるための材料・指示文・形の検査。純関数と定数だけで、`query()` は呼ばない。
 //
-// 渡すのは2つの人格・いまの仕事の抜き書き（依頼・直近のセリフ・待っているもの）・経過時間・
-// 時刻・今日の成果。どれも会話の内容に当たるので、ここで組んだ文面も受け取った台本も
-// メモリにだけ持ち、ログにもファイルにも書かない（docs/coding-standards.md「会話内容の扱い」）。
+// 渡すのは2つの人格・いまの仕事の抜き書き（依頼・直近のセリフ・待っているもの）・経過時間・時刻・今日の成果。
+// どれも会話の内容に当たるので、ここで組んだ文面も受け取った台本もメモリにだけ持ち、ログにもファイルにも書かない。
 //
-// 指示文は「どういう場面の・どれくらいの掛け合いか」だけを書く。誰がどう話すかは人格
-// （`persona.md`）の側で、キャラクターの名前もセリフもここには書かない（`docs/architecture.md`「キャラクターの中身をコードに書かない」）。
+// 指示文は「どういう場面の・どれくらいの掛け合いか」だけを書く。
+// 誰がどう話すかは人格（`persona.md`）の側で、キャラクターの名前もセリフもここには書かない。
 
 import { isPlainObject } from "remeda"
 
@@ -35,8 +31,8 @@ export const VISIT_SCRIPT_MODEL = "haiku"
 export const VISIT_SCRIPT_TIMEOUT_MS = 30_000
 
 /**
- * 台本の形と、抜き書きの量。抜き書きは「いま何を待っているか」が伝わるところまでに絞る
- * （長い文脈はトークンを食うだけ）。足りなければここだけ直す。
+ * 台本の形と、抜き書きの量。抜き書きは「いま何を待っているか」が伝わるところまでに絞る（長い文脈はトークンを食うだけ）。
+ * 足りなければここだけ直す。
  */
 export const VISIT_SCRIPT_LIMITS = {
   /** 台本の行数の下限と上限。 */
@@ -56,9 +52,7 @@ export const VISIT_SCRIPT_LIMITS = {
   doneTaskCount: 5,
 } satisfies Readonly<Record<string, number>>
 
-/**
- * `query()` の `systemPrompt` に渡す指示文。場面と台本の決まりだけで、口調は人格に任せる。
- */
+/** `query()` の `systemPrompt` に渡す指示文。場面と台本の決まりだけで、口調は人格に任せる。 */
 export const VISIT_SCRIPT_INSTRUCTION = `あなたは2人のキャラクターの短い掛け合いの台本を書く。
 
 場面: あるじ（host）は利用者と一緒に仕事をしていて、いまはテストやビルドなど時間の掛かる処理が
@@ -92,7 +86,7 @@ export type VisitCastLookup =
   | { readonly kind: "found"; readonly cast: VisitCast }
   | { readonly kind: "missing" }
 
-/** 2人を探す元のパック（adapter の `CharacterPack` のうち、ここが読む部分だけ）。 */
+/** 2人を探す元のパック（`CharacterPack` のうち、ここが読む部分だけ）。 */
 export type VisitCastSource = {
   readonly name: string
   readonly persona: string | undefined
@@ -119,8 +113,8 @@ export type VisitScriptQuery = {
 }
 
 /**
- * いまの姿から仕事の抜き書きを作る。依頼は最後の1件、セリフは最後の数件、待っているものは
- * 走っているトップレベルのツール（無ければ背景のタスク）。
+ * いまの姿から仕事の抜き書きを作る。
+ * 依頼は最後の1件、セリフは最後の数件、待っているものは走っているトップレベルのツール（無ければ背景のタスク）。
  */
 export function visitWorkExcerpt(state: SessionState): VisitWorkExcerpt {
   const { records } = state
@@ -148,11 +142,10 @@ export function visitWaitedMs(wait: VisitWait, now: number): number {
 }
 
 /**
- * 台本を作っている最中に、そのイベントで作るのをやめるか。帰る合図（
- * `visitDeparture`）と同じ顔ぶれ——依頼・本物の `speak`・セッションの終わり・待ちの終わり
- * （答え待ちが積まれたときも待ちでなくなる）。歯車の「訪問」をオフにしたときも中断する
- * （`visit-started` がまだ流れていないので `visitDeparture` は関与しない——ここで止めないと、
- * オフにした直後でも作りかけの客がそのまま来てしまう）。
+ * 台本を作っている最中に、そのイベントで作るのをやめるか。
+ * 帰る合図（`visitDeparture`）と揃える: 依頼・本物の `speak`・セッションの終わり・待ちの終わり（答え待ちが積まれたときも待ちでなくなる）。
+ * 歯車の「訪問」をオフにしたときも中断する。
+ * `visit-started` がまだ流れていないので `visitDeparture` は関与せず、ここで止めないとオフにした直後でも作りかけの客がそのまま来てしまう。
  */
 export function interruptsVisitScript(state: SessionState, event: SessionEvent): boolean {
   switch (event.kind) {
@@ -192,8 +185,8 @@ export function visitScriptQuery(material: VisitScriptMaterial): VisitScriptQuer
 }
 
 /**
- * 受け取った台本（`structured_output`）を検査する。どこか1つでも崩れていたら丸ごと
- * undefined（1行だけ直して使うことはしない。落とし先へ回す）。
+ * 受け取った台本（`structured_output`）を検査する。
+ * どこか1つでも崩れていたら丸ごと undefined（1行だけ直して使うことはしない。落とし先へ回す）。
  *
  * - 形: `lines` が {@link VISIT_SCRIPT_LIMITS} の行数の並びで、各行のセリフが空でなく長すぎない
  * - 話し手: `host` か `guest` のどちらか。1行目は客で、2人とも1回以上話す
@@ -241,10 +234,7 @@ function isVisitSpeaker(value: unknown): value is VisitSpeaker {
   return typeof value === "string" && VISIT_SPEAKERS.some((speaker) => speaker === value)
 }
 
-/**
- * 出力の形。表情は2人の選択肢を合わせた enum にし、話し手ごとの照合は受け取ってから
- * （{@link parseVisitScript}）行う。
- */
+/** 出力の形。表情は2人の選択肢を合わせた enum にし、話し手ごとの照合は受け取ってから（{@link parseVisitScript}）行う。 */
 function visitScriptSchema(cast: VisitCast): Readonly<Record<string, unknown>> {
   const expressions = [
     ...new Set([...cast.host.expressions, ...cast.guest.expressions].map((choice) => choice.name)),

@@ -1,20 +1,14 @@
-// 定着を1回走らせる使い捨ての `query()`（`docs/chat-mode.md`「窓から溢れた会話は定着で畳む」）。SDK に
-// 触るので `sdk-` で始まる（`docs/architecture.md`「1ファイル = 1つの境界」）。何を渡し、受け取ったものをどう検査するかは core
-// （`parseChatConsolidationResult`）が持ち、ここは起こして `structured_output` を
-// 返すだけ。形は `queryVisitScript` に揃える。
+// 定着を1回走らせる使い捨ての `query()`。
+// 何を渡し、受け取ったものをどう検査するかは core が持ち、ここは起こして `structured_output` を返すだけ。
 //
 // 雑談のセッションとは別の子プロセスで、定着1回ぶんを返したら終わる。
-// 考える段（extended thinking）は切る。組み込みのツールも MCP も持たせず
-// （`tools: []`・`mcpServers: {}`）、設定ファイルも読まず（`settingSources: []`。フックも
-// CLAUDE.md も載らない）、transcript も書かない（`persistSession: false`）。
+// 考える段（extended thinking）は切る。
+// 組み込みのツールも MCP も持たせず（`tools: []`・`mcpServers: {}`）、設定ファイルも読まず（`settingSources: []`。フックも CLAUDE.md も載らない）、transcript も書かない（`persistSession: false`）。
+// この子プロセスの形が `docs/coding-standards.md`「会話内容の扱い」の、定着の `query()` へ渡してよい条件になっている。
 //
-// 渡す文面（畳む行・前のあらすじ・直前のエピソードの見出し）も受け取る出力も会話の内容に
-// 当たるので、ログにもファイルにも書かない（docs/coding-standards.md「会話内容の扱い」）。
+// 渡す文面（畳む行・前のあらすじ・直前のエピソードの見出し）も受け取る出力も会話の内容に当たるので、ログにもファイルにも書かない。
 //
-// 時間切れの適用（`AbortSignal.timeout` との合成）はここでは持たない——渡された `signal` を
-// そのまま使うだけで、`CHAT_CONSOLIDATION_TIMEOUT_MS` を組み合わせるのは
-// 呼び出し側（背景で1本だけ走らせる後段）の役目（`queryVisitScript` が
-// `VISIT_SCRIPT_TIMEOUT_MS` を持たないのと同じ切り分け）。
+// 時間切れの適用はここでは持たない（渡された `signal` をそのまま使う）。
 
 import { query } from "@anthropic-ai/claude-agent-sdk"
 
@@ -27,9 +21,8 @@ export type ChatConsolidationProcess = {
 }
 
 /**
- * 定着を1回走らせ、`structured_output` をそのまま返す（検査は呼び出し側の
- * `parseChatConsolidationResult`）。起こせない・形の出力に失敗した・中断されたときは reject
- * する（理由の文には会話の中身を入れない）。
+ * 定着を1回走らせ、`structured_output` をそのまま返す（検査は `parseChatConsolidationResult`）。
+ * 起こせない・形の出力に失敗した・中断されたときは reject する（理由の文には会話の中身を入れない）。
  */
 export async function queryChatConsolidation(
   request: ChatConsolidationQuery,

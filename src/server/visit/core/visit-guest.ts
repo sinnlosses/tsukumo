@@ -1,10 +1,8 @@
-// 誰が訪ねてくるか・どの台本で話すか（`docs/requirements.md`「訪問」）。純関数だけで、
-// パックの一覧を読むのも乱数を振るのも呼び出し側。
+// 誰が訪ねてくるか・どの台本で話すか。純関数だけで、パックの一覧を読むのも乱数を振るのも呼び出し側。
 //
-// 客になれるのは`character.json` に `visit` を持つパックだけ。台本はその場で作り
-// （`createVisitScriptWriter`）、作れなかったときは `visit.scripts` から1本選んで使う。それも無ければ
-// 来ない（`docs/research/character-visit.md` 論点2）。あるじと同じパックは来ない。候補が複数なら
-// 来るたびに等しい確率で1つ選ぶ。
+// 客になれるのは `character.json` に `visit` を持つパックだけ。
+// 台本はその場で作り、作れなかったときは `visit.scripts` から1本選んで使う。それも無ければ来ない。
+// あるじと同じパックは来ない。候補が複数なら来るたびに等しい確率で1つ選ぶ。
 
 import type { CharacterVisit, VisitScript } from "../../../shared/character-pack/character-visit.ts"
 
@@ -12,7 +10,7 @@ import type { CharacterVisit, VisitScript } from "../../../shared/character-pack
 export type VisitGuest = { readonly pack: string; readonly visit: CharacterVisit }
 
 /**
- * 客の候補を探す元のパック（adapter の `CharacterPack` のうち、ここが読む部分だけ）。
+ * 客の候補を探す元のパック（`CharacterPack` のうち、ここが読む部分だけ）。
  * `definition` が無い（`character.json` が読めない）パックもそのまま渡してよい。
  */
 export type VisitGuestSource = {

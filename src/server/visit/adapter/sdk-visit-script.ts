@@ -1,13 +1,10 @@
-// 訪問の台本を書かせる使い捨ての `query()`（`docs/requirements.md`「訪問」）。SDK に触るので
-// `sdk-` で始まる（`docs/architecture.md`「1ファイル = 1つの境界」）。何を渡し、受け取ったものをどう検査するかは core
-// （`parseVisitScript` と `createVisitScriptWriter`）が持ち、ここは起こして
-// `structured_output` を返すだけ。
+// 訪問の台本を書かせる使い捨ての `query()`。
+// 何を渡し、受け取ったものをどう検査するかは core が持ち、ここは起こして `structured_output` を返すだけ。
 //
 // 仕事のセッションとは別の子プロセスで、訪問1回ぶんの台本を返したら終わる。
-// 考える段（extended thinking）は切る。組み込みのツールも MCP も持たせず（`tools: []`・`mcpServers: {}`）、設定ファイルも読まず
-// （`settingSources: []`。フックも CLAUDE.md も載らない）、transcript も書かない
-// （`persistSession: false`）。渡す文面と受け取る台本は会話の内容に当たるので、ログにも
-// ファイルにも書かない（docs/coding-standards.md「会話内容の扱い」）。
+// 考える段（extended thinking）は切る。
+// 組み込みのツールも MCP も持たせず（`tools: []`・`mcpServers: {}`）、設定ファイルも読まず（`settingSources: []`。フックも CLAUDE.md も載らない）、transcript も書かない（`persistSession: false`）。
+// 渡す文面と受け取る台本は会話の内容に当たるので、ログにもファイルにも書かない。
 
 import { query } from "@anthropic-ai/claude-agent-sdk"
 
@@ -20,8 +17,8 @@ export type VisitScriptProcess = {
 }
 
 /**
- * 台本を1本書かせ、`structured_output` をそのまま返す（検査は呼び出し側）。起こせない・
- * 形の出力に失敗した・中断されたときは reject する（理由の文には会話の中身を入れない）。
+ * 台本を1本書かせ、`structured_output` をそのまま返す（検査は呼び出し側）。
+ * 起こせない・形の出力に失敗した・中断されたときは reject する（理由の文には会話の中身を入れない）。
  */
 export async function queryVisitScript(
   request: VisitScriptQuery,

@@ -1,19 +1,14 @@
-// 雑談の要約の写し（`docs/chat-mode.md`「記憶の圧縮と忘却」、置き場は `docs/design.md`「雑談の記憶の置き場」）。ファイルに触るのは
-// ここだけ（`docs/architecture.md`「1ファイル = 1つの境界」）。置き場は `~/.tsukumo/chat-summary/<パック名>.md`、
-// パックごとに1ファイルで `cwd` には依存させない。
+// 雑談の要約の写し。ファイルに触るのはここだけ。
+// 置き場は `~/.tsukumo/chat-summary/<パック名>.md` で、パックごとに1ファイル、`cwd` には依存させない。
+// 書き出してよい範囲は `docs/coding-standards.md`「会話内容の扱い」の例外の表が決めている。
 //
-// 何を載せるかの判断はここが決めない。 判断は `takeChatMemoryPromptParts` が
-// 持ち、ここが持つのは「どこに・どう書き、どう渡すか」——写しと印の読み書きだけ
-// （`docs/coding-standards.md`「会話内容の扱い」とぶつからないための切り分け。
-// 人格に書き足すアダプタと同じ形）。
+// 何を載せるかの判断はここが決めない。ここが持つのは写しと印の読み書きだけ。
 //
-// 中身は1行目が印、2行目から要約の本文。 印は「次に起こすセッションへ渡す必要があるか」の
-// 1ビットで、`DELIVERED_MARK` の1行だけを「渡し済み」と読み、それ以外（別の文字列・無い・
-// 読めない）はすべて「未渡し」として扱う——倒れる方向を「同じ要約が2度載る」側にする
-// （`docs/chat-mode.md`「雑談モード」）。
+// 中身は1行目が印、2行目から要約の本文。
+// 印は「次に起こすセッションへ渡す必要があるか」の1ビットで、`DELIVERED_MARK` の1行だけを「渡し済み」と読む。
+// それ以外（別の文字列・無い・読めない）はすべて「未渡し」として扱い、倒れる方向を「同じ要約が2度載る」側にする。
 //
-// 書けなくても例外を投げない（常駐プロセスは1回の失敗で落ちない。
-// `docs/coding-standards.md`「エラーハンドリング」）。
+// 書けなくても例外を投げない。
 
 import { mkdirSync, rmSync, writeFileSync } from "node:fs"
 import { dirname, join } from "node:path"
@@ -33,27 +28,21 @@ const DELIVERED_MARK = "delivered"
 const UNDELIVERED_MARK = "undelivered"
 
 /**
- * 1ファイルの上限（`docs/chat-mode.md`「記憶の圧縮と忘却」の縛りの表。容量の表の `synopsisBytes`）。印の行を含めて
- * 数える——写しと印は同じ書き込みで揃う1つのファイルなので、上限も分けない。
+ * 1ファイルの上限。印の行を含めて数える。
+ * 写しと印は同じ書き込みで揃う1つのファイルなので、上限も分けない。
  */
 export const CHAT_SUMMARY_LIMIT_BYTES = CHAT_MEMORY_BUDGET.synopsisBytes
 
-/**
- * 画面から作ったキャラクターパックと同じ親（`~/.tsukumo/chat-summary`）。書き込んでよいのは
- * この下だけ。
- */
+/** 置き場の親（`~/.tsukumo/chat-summary`）。書き込んでよいのはこの下だけ。 */
 export function chatSummaryDir(): string {
   return join(tsukumoHomeDir(), CHAT_SUMMARY_DIR_NAME)
 }
 
 /**
- * パック1つぶんの写しの読み書き口を作る（雑談モードのときだけ呼ばれる。
- * 配線が呼ぶ）。`packName` は {@link isCharacterPackName} を通ったものだけ受け付け、
- * 通らない名前はパスを組み立てず、読み書きとも何もしない口を返す（`..` や区切り文字が名前として
- * 通らない。`docs/design.md`「画面から作るときの置き場と受け取り方」と同じ規則）。
+ * パック1つぶんの写しの読み書き口を作る。
+ * `packName` は {@link isCharacterPackName} を通ったものだけ受け付け、通らない名前はパスを組み立てず、読み書きとも何もしない口を返す。
  *
- * `root` は書き込み先の親（既定は {@link chatSummaryDir}）。差し替えられるのはテストがホームを
- * 汚さないためにある（`createPersonaMemory` の `root` と同じ手）。
+ * `root` は書き込み先の親（既定は {@link chatSummaryDir}）。
  */
 export function createChatSummary(packName: string, root: string = chatSummaryDir()): ChatSummary {
   if (!isCharacterPackName(packName)) {
@@ -75,10 +64,8 @@ export function createChatSummary(packName: string, root: string = chatSummaryDi
 }
 
 /**
- * パック1つぶんの写しを消す（キャラクターパックを消したときだけ呼ばれる。
- * `docs/design.md`「消すときの細部」）。同じ名前で作り直したパックが、消したパックの要約を
- * 黙って拾わないため。無い・消せないときも何もせず続ける。名前が {@link isCharacterPackName} を
- * 通らなければパスを組み立てない（{@link createChatSummary} と同じ規則）。
+ * パック1つぶんの写しを消す。同じ名前で作り直したパックが、消したパックの要約を黙って拾わないため。
+ * 無い・消せないときも何もせず続ける。名前が {@link isCharacterPackName} を通らなければパスを組み立てない。
  */
 export function discardChatSummary(packName: string, root: string = chatSummaryDir()): void {
   if (!isCharacterPackName(packName)) {
@@ -123,21 +110,18 @@ function writeRecord(path: string, record: ChatSummaryRecord): void {
 }
 
 /**
- * 8 KiB（印の行を含む）に収まるよう、要約の本文を行単位で切り詰める。古いほうの行から
- * 落とし、行の途中では切らない。
+ * {@link CHAT_SUMMARY_LIMIT_BYTES}（印の行を含む）に収まるよう、要約の本文を行単位で切り詰める。
+ * 古いほうの行から落とし、行の途中では切らない。
  *
- * 本文の行は「新しい→古い」の順に積み、収まらなくなったところで古い行を落とす（要約の文面が
- * 「前の要約 + 新しい会話」を毎回まとめ直したものなので、末尾に近いほうが新しい話題という前提。
- * `docs/chat-mode.md`「雑談モード」）。
+ * 本文の行は「新しい→古い」の順に積み、収まらなくなったところで古い行を落とす。
+ * 要約の文面は「前の要約 + 新しい会話」を毎回まとめ直したものなので、末尾に近いほうが新しい話題という前提。
  *
  * 1行だけで印を除いた残りの上限を超えるとき（改行が無い）は、その1行をそのまま残す。
- * 空にする（＝要約ごと消える）よりも、上限を少し超えるほうを選ぶ——「行の途中では切らない」を
- * 「8 KiB を必ず守る」より優先する。
+ * 空にする（＝要約ごと消える）よりも、上限を少し超えるほうを選ぶ。
  */
 function truncatedSummary(summary: string): string {
-  // 印の行の分（マークの長さ + 改行1つ）を引いた残りが本文の予算。渡し済み・未渡しのどちらで
-  // 書かれるかは呼び出し側が決めるが、印の2つの文字列の長さの差は数バイトなので、長いほう
-  // （`UNDELIVERED_MARK`）で見積もっておけば、あとで印だけ書き換えても超えない。
+  // 印の行の分（マークの長さ + 改行1つ）を引いた残りが本文の予算。
+  // 渡し済み・未渡しのどちらで書かれるかは呼び出し側が決めるので、長いほう（`UNDELIVERED_MARK`）で見積もっておけば、あとで印だけ書き換えても超えない。
   const markBudget = byteLength(UNDELIVERED_MARK) + 1
   const budget = CHAT_SUMMARY_LIMIT_BYTES - markBudget
   if (budget <= 0) {

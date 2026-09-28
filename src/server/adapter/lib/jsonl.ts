@@ -1,15 +1,10 @@
-// `~/.tsukumo/` に積む日付ごとの JSONL を各所が同じ手で書き写していた読み書きをここに1つにする。
-// 境界（どこに・何のために書くか）は名乗らず、JSONL という形式の扱い方だけを知っている
-// （`docs/design.md`「`lib/` と `utils/` に置く基準」——「adapter/lib/ はその下の段で、境界を
-// 名乗らず、技術の扱い方だけを知っている道具（『JSONL を1行ずつ読む』）が入る」の例そのもの）。
+// 日付ごとの JSONL の読み書き。
+// 境界（どこに・何のために書くか）は名乗らず、JSONL という形式の扱い方だけを知っている。
 //
-// スキーマの検証・索引ファイルの扱い・後ろから読む読み戻しは呼び出し元が持つ。 ここが持つのは
-// 「1行を追記する」「日付のファイル名を並べる」「行を JSON として読む」だけで、行の形が正しいかは
-// 見ない（`unknown` のまま返し、検証は呼び出し元の zod スキーマに委ねる）。
+// ここが持つのは「1行を追記する」「日付のファイル名を並べる」「行を JSON として読む」だけ。
+// スキーマの検証・索引ファイルの扱い・後ろから読む読み戻しは呼び出し元が持ち、行の形が正しいかはここでは見ない（`unknown` のまま返す）。
 //
-// 書けなくても・読めなくても例外を投げない（常駐プロセスは1回の失敗で落ちない。
-// `docs/coding-standards.md`「エラーハンドリング」）。壊れた行は1行ずつ読み飛ばす（JSONL は
-// 壊れても被害が1行に収まる）。
+// 書けなくても・読めなくても例外を投げない。壊れた行は1行ずつ読み飛ばす。
 
 import { appendFileSync, mkdirSync, readdirSync, readFileSync } from "node:fs"
 import { dirname } from "node:path"
@@ -28,8 +23,8 @@ export function appendJsonLine(path: string, record: unknown): void {
 }
 
 /**
- * 1ファイルの行を JSON として読む（書いた順のまま）。壊れた JSON・空行・読めないファイルは
- * 読み飛ばす。 鍵が揃っているか・版が合っているかは見ない——呼び出し元のスキーマが検証する。
+ * 1ファイルの行を JSON として読む（書いた順のまま）。壊れた JSON・空行・読めないファイルは読み飛ばす。
+ * 鍵が揃っているか・版が合っているかは見ない。
  */
 export function readJsonLines(path: string): readonly unknown[] {
   return readRawLines(path).flatMap((line) => {
@@ -40,8 +35,7 @@ export function readJsonLines(path: string): readonly unknown[] {
 
 /**
  * 日付のファイル名（`YYYY-MM-DD.jsonl`）だけを古い→新しい順に並べる（読めないディレクトリは空）。
- * 範囲で絞る・新しい順にする判断は呼び出し元が行う（期間で絞る側と絞らずに新しい順へ
- * 並べ替える側がいるが、並べ方の元は同じ1つ）。
+ * 範囲で絞る・新しい順にする判断は呼び出し元が行う。
  */
 export function dateFileNames(dir: string): readonly string[] {
   try {
@@ -64,7 +58,7 @@ function readRawLines(path: string): readonly string[] {
   }
 }
 
-/** JSON として読む（壊れていれば undefined。JSONL は壊れても被害が1行）。 */
+/** JSON として読む（壊れていれば undefined）。 */
 function parseJson(line: string): unknown {
   try {
     return JSON.parse(line)

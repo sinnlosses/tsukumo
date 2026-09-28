@@ -1,20 +1,16 @@
-// `diary` ツールまわりの決まりごと（docs/glossary.md「diary ツール」）。書けるのは会話とは別の
-// 使い捨ての問い合わせ（`queryDiary`）だけで、形の外れた呼び出しは
-// 状態を変えずに断り、理由を添えて呼び直させる（`report` / 見直しの2つと同じ線）。保存は
-// `appendDiaryParagraph`、決定の理由は `docs/requirements.md`「日記」。
+// `diary` ツールまわりの決まりごと。書けるのは会話とは別の使い捨ての問い合わせだけ。
+// 形の外れた呼び出しは状態を変えずに断り、理由を添えて呼び直させる。
 //
-// 引数の形（文字列・列挙）は zod の形で SDK が先に検査する（崩れていれば handler は
-// 呼ばれない）。ここで見るのは形の外の条（1問い合わせに1回・本文やしおりの中身・保存の失敗）だけ。
+// 引数の形（文字列・列挙）は zod の形で SDK が先に検査する（崩れていれば handler は呼ばれない）。
+// ここで見るのは形の外の条（1問い合わせに1回・本文やしおりの中身・保存の失敗）だけ。
 //
-// 3段目の合図（引数の断片から最上位の鍵 `bookmark` を見つける純関数）もここに持つ
-// （`docs/requirements.md`「進みは3段で見せる」）。断片をつないで観測する
-// 状態機械は `createDiaryStreamObserver`（問い合わせ1回ぶんの持ち物なのでそちらに置く）。
+// 3段目の合図（引数の断片から最上位の鍵 `bookmark` を見つける純関数）もここに持つ。
 
 import type { Expression } from "../../../shared/character-pack/expression.ts"
 import type { DiaryBookmark } from "../../../shared/diary/diary.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 
-/** ツールの名前（docs/glossary.md「diary ツール」）。 */
+/** ツールの名前。 */
 export const DIARY_TOOL_NAME = "diary"
 
 /** `body` の上限（仮。文字はコードポイントで数える）。 */
@@ -35,10 +31,7 @@ export const DIARY_BOOKMARK_DESCRIPTION =
 /** 依頼に並んだ、その日の終えたタスク1件（しおりの検査に使う）。 */
 export type DiaryDayTask = { readonly id: string; readonly summary: string }
 
-/**
- * 書く日（`session.reflectAchievement` を受けたときに session-manager が数え直した結果。窓口
- * （{@link createDiaryIntake}）は問い合わせ1回ごとにこれを受け取って作る）。
- */
+/** 書く日（`session.reflectAchievement` を受けたときに数え直した結果）。 */
 export type DiaryDay = {
   readonly date: string
   readonly doneTasks: readonly DiaryDayTask[]
@@ -57,7 +50,7 @@ export type DiaryVerdict =
   | { readonly kind: "accepted" }
   | { readonly kind: "rejected"; readonly text: string }
 
-/** 1段落を保存する口（実体は `appendDiaryParagraph`）。 */
+/** 1段落を保存する口。 */
 export type SaveDiaryParagraph = (params: {
   readonly date: string
   readonly writtenAtEpochMilliseconds: number
@@ -75,10 +68,8 @@ export type DiaryIntake = {
 }
 
 /**
- * {@link DiaryIntake} を1つ作る。問い合わせ1回ごとに呼び出し側（`createDiaryWriter`）が
- * 新しく作る——窓口が「いま書く日」を覚えたり忘れたりしない。`day` は書く日、`writer` は
- * 書いた時点のパック、`now` は書いた時刻（エポックミリ秒）、`save` は保存の口、`onEvent` は
- * イベントの流れ（ここで例外を投げない）。
+ * {@link DiaryIntake} を1つ作る。問い合わせ1回ごとに新しく作る（窓口が「いま書く日」を覚えたり忘れたりしない）。
+ * `now` は書いた時刻（エポックミリ秒）。
  */
 export function createDiaryIntake(
   day: DiaryDay,
@@ -188,10 +179,9 @@ function diaryBookmarkOf(
 const DIARY_BOOKMARK_KEY = "bookmark"
 
 /**
- * 引数の断片（累積した JSON の途中経過）の最上位に、しおりの鍵 `bookmark` が現れたかどうかを
- * 判定する純関数（`docs/requirements.md`「進みは3段で見せる」）。文字列の
- * 中かどうかと入れ子の深さを数えながら読み、閉じていない断片でも渡し直せば拾える——
- * 鍵の名前が断片の切れ目をまたいでいても、累積したものを毎回渡し直す前提で作ってある。
+ * 引数の断片（累積した JSON の途中経過）の最上位に、しおりの鍵 `bookmark` が現れたかどうか。
+ * 文字列の中かどうかと入れ子の深さを数えながら読む。
+ * 呼ぶ側は累積したものを毎回渡し直す（鍵の名前が断片の切れ目をまたいでも拾えるのはそのため）。
  */
 export function diaryArgumentHasBookmarkKey(accumulatedPartialJson: string): boolean {
   let depth = 0

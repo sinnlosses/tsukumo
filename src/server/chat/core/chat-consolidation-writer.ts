@@ -1,16 +1,13 @@
-// 定着を1回走らせて書く口（`docs/chat-mode.md`
-// 「窓から溢れた会話は定着で畳む」）。未定着の行を数え、契機に届いていれば使い捨ての `query()`
-// （`queryChatConsolidation`）に畳ませ、検査を通ったものを
-// エピソード → あらすじの順で書く。形は `createVisitScriptWriter` に揃える。
-//
-// いつ呼ぶか（雑談のターンの終わり）と、同時に1本に絞るのは呼び出し側
-// （`startConsolidation`）。ここは1回ぶんだけを持つ。
+// 定着を1回走らせて書く口。
+// 未定着の行を数え、契機に届いていれば使い捨ての `query()` に畳ませ、検査を通ったものをエピソード → あらすじの順で書く。
+// ここは1回ぶんだけを持ち、同時に1本に絞るのは呼び出し側。
 //
 // 書く口は決して reject しない（起こせない・中断・時間切れ・形の崩れはどれも `failed`）。
-// 行は未定着のまま残り、次の契機で拾い直される。常駐プロセスは定着1回の失敗で落ちない。
+// 行は未定着のまま残り、次の契機で拾い直される。
 //
-// 渡す行も前のあらすじも受け取る出力も会話の内容に当たる。メモリにだけ持ち、書くのは索引と
-// あらすじのファイルだけで、ログには出さない（docs/coding-standards.md「会話内容の扱い」）。
+// 渡す行も前のあらすじも受け取る出力も会話の内容に当たる。
+// メモリにだけ持ち、書くのは索引とあらすじのファイルだけで、ログには出さない。
+// 書いてよい範囲と定着の `query()` へ渡してよい範囲は `docs/coding-standards.md`「会話内容の扱い」の例外の表が決めている。
 
 import { CHAT_MEMORY_BUDGET } from "../../../shared/chat/chat-memory-budget.ts"
 import type { ChatArchive, ChatSummary } from "../../session-driver/core/session-driver.ts"
@@ -81,13 +78,13 @@ async function consolidate(
   signal: AbortSignal,
 ): Promise<ChatConsolidationOutcome> {
   try {
-    // 1回に畳むのは契機の2倍まで（`docs/chat-mode.md`「雑談モード」）。溜まった量もこの読みで分かる。
+    // 1回に畳むのは契機の2倍まで。溜まった量もこの読みで分かる。
     const batch = ports.archive.unconsolidated(packName, {
       recentBytes: CHAT_MEMORY_BUDGET.recentBytes,
       maxBytes: CHAT_MEMORY_BUDGET.consolidateEveryBytes * 2,
     })
-    // maxBytes に届いて打ち切ったとき（先頭の1件だけで超えるときを含む）は、契機に
-    // 届いていなくてもここまでを渡す。待つと、残りの行がずっと畳まれなくなるため。
+    // maxBytes に届いて打ち切ったとき（先頭の1件だけで超えるときを含む）は、契機に届いていなくてもここまでを渡す。
+    // 待つと、残りの行がずっと畳まれなくなる。
     if (!batch.overflowed && batch.usedBytes < CHAT_MEMORY_BUDGET.consolidateEveryBytes) {
       return NOT_DUE
     }

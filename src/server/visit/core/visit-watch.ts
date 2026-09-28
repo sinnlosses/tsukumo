@@ -1,19 +1,16 @@
-// 訪問の見張り（`docs/requirements.md`「訪問」）。駆動1代ぶんの持ち物として
-// セッションの管理側が代ごとに1つ作り、駆動由来のイベントを畳むたびに `VisitWatch.observe`
-// へ渡す。起こし直すと代ごと捨てられるので、掛けていた時計も待ちの勘定も一緒に消える。
+// 訪問の見張り。駆動1代ぶんの持ち物で、駆動由来のイベントを畳むたびに `VisitWatch.observe` へ渡す。
+// 起こし直すと代ごと捨てられるので、掛けていた時計も待ちの勘定も一緒に消える。
 //
-// 判断は `visitArrival` / `visitDeparture`（来る・帰る・次の行）と `chooseVisit`（誰がどの台本で）の純関数で、
+// 判断は `visitArrival` / `visitDeparture`（来る・帰る・次の行）と `chooseVisit`（誰がどの台本で）の純関数が持つ。
 // ここが持つのはイベントをまたぐ勘定と、掛けた時計と、作っている最中の台本の中断だけ。
-// 台本は来ると決めた時点で作り始め（`createVisitScriptWriter`）、できたら `visit-started` を出す。
-// 作れなかった（時間切れも）らパックの台本へ落とし、それも無ければ来ない。作っている最中に
-// 帰る合図が来たら中断して来ない（`interruptsVisitScript`）。時計そのものは渡される
-// （`VisitClock`。本番は時計を読むアダプタ）。
+// 台本は来ると決めた時点で作り始め、できたら `visit-started` を出す。
+// 作れなかった（時間切れも）らパックの台本へ落とし、それも無ければ来ない。
+// 作っている最中に帰る合図が来たら中断して来ない（`interruptsVisitScript`）。
 //
-// 出したイベント（`visit-started` / `visit-line-advanced` / `visit-ended`）は `emit` で
-// session-manager の受け口へ戻し、ほかのイベントと同じく畳んで配る。そのイベントも見張りの
-// `observe` に戻ってくるので、行の時計と待ちの勘定はそこで進める（出したその場では進めない）。
+// 出したイベント（`visit-started` / `visit-line-advanced` / `visit-ended`）は `emit` でセッションの受け口へ戻し、ほかのイベントと同じく畳んで配る。
+// そのイベントも見張りの `observe` に戻ってくるので、行の時計と待ちの勘定はそこで進める（出したその場では進めない）。
 //
-// 台本は会話の内容に当たる。ログにもファイルにも書かない（docs/coding-standards.md「会話内容の扱い」）。
+// 台本は会話の内容に当たる。ログにもファイルにも書かない。
 
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import type { SessionState } from "../../../shared/session/session-state.ts"
@@ -66,11 +63,11 @@ export type VisitPorts = {
 }
 
 export type VisitWatchOptions = VisitPorts & {
-  /** いまの時刻（エポックミリ秒。session-manager が時刻を打つのと同じ時計）。 */
+  /** いまの時刻（エポックミリ秒。イベントに時刻を打つのと同じ時計を渡す）。 */
   readonly now: () => number
-  /** いまの姿（session-manager が畳んだもの）。 */
+  /** いまの姿（セッションが畳んだもの）。 */
   readonly readState: () => SessionState
-  /** 訪問のイベントを session-manager の受け口へ戻す。 */
+  /** 訪問のイベントをセッションの受け口へ戻す。 */
   readonly emit: (event: VisitEvent) => void
 }
 
@@ -114,8 +111,8 @@ export function createVisitWatch(options: VisitWatchOptions): VisitWatch {
   }
 
   /**
-   * 客を選び、台本を用意して迎える。来ようとした時点でこの待ちは使い切る（あるじが
-   * 分からない・候補が居ない・台本が無いときも、この待ちでは聞き直さない）。
+   * 客を選び、台本を用意して迎える。
+   * 来ようとした時点でこの待ちは使い切る（あるじが分からない・候補が居ない・台本が無いときも、この待ちでは聞き直さない）。
    */
   const arrive = (now: number): void => {
     const state = options.readState()
@@ -146,7 +143,7 @@ export function createVisitWatch(options: VisitWatchOptions): VisitWatch {
 
   /**
    * 台本を作らせる。できたらそれで、作れなかった・時間切れならパックの台本で迎える。
-   * {@link cancelScript}（帰る合図・代を閉じる）で中断したときは来ない。
+   * `cancelScript`（帰る合図・代を閉じる）で中断したときは来ない。
    */
   const writeScript = (write: VisitScriptWriter, choice: Chosen, draft: VisitScriptDraft): void => {
     const controller = new AbortController()

@@ -1,33 +1,26 @@
-// `main` のタスク一覧を見張る。`main` の先端のコミットが変わったとき、台帳の着手の印が
-// 変わったとき、または Beads の課題が変わったときに読み直し、`onChange` を呼ぶ。
-// 呼び出し側（配線）がこれを `tasks-changed` イベントに変えて、他のセッションの
-// イベントと同じ経路へ流す。
+// `main` のタスク一覧を見張る。
+// `main` の先端のコミットが変わったとき、台帳の着手の印が変わったとき、または Beads の課題が変わったときに読み直し、`onChange` を呼ぶ。
 //
-// どこから読むかは `main` の先端の設定ファイル（AGENTS.md → CLAUDE.md）の `- タスクの置き場:` 行で
-// 決める（`readTaskStoreAt`）。作業ツリーの設定ファイルは見ない（`main` へ送るまで方式が変わらない）。
+// どこから読むかは `main` の先端の設定ファイル（AGENTS.md → CLAUDE.md）の `- タスクの置き場:` 行で決める。
+// 作業ツリーの設定ファイルは見ない（`main` へ送るまで方式が変わらない）。
 //
 // ファイル方式: 読むのは作業ツリーのファイルではなく `main` の上の `develop/task/*.md` の front matter。
-// タスクの正典は `main` のもので、作業ツリーのものは `git merge main` するまで別の作業ツリーで
-// 足したタスクを知らない。`git ls-tree` で列挙し、`git cat-file --batch` で1回の子プロセスで
-// まとめて読む。着手中はファイルに書かれない。台帳の着手の印（`task claim` / `task release`）は
-// 共有の `.git` の下だけで完結し、`main` を動かさないので、`main` の先端が同じ見回りでも
-// `task-workflow/claim/` の一覧だけは毎回読み直し、前回と変わっていれば `onChange` する。
-// このときファイルは読み直さず、前回読んだ front matter（`NewTaskFile[]`）に新しい印の集合を
-// 当て直すだけにする（`taskSummaryItemsOfNewTaskFiles`）。
+// 作業ツリーのものは `git merge main` するまで別の作業ツリーで足したタスクを知らない。
+// `git ls-tree` で列挙し、`git cat-file --batch` で1回の子プロセスでまとめて読む。
+// 着手中はファイルに書かれない。台帳の着手の印（`task claim` / `task release`）は共有の `.git` の下だけで完結し、`main` を動かさない。
+// そのため `main` の先端が同じ見回りでも `task-workflow/claim/` の一覧だけは毎回読み直し、前回と変わっていれば `onChange` する。
+// このときファイルは読み直さず、前回読んだ front matter に新しい印の集合を当て直すだけにする。
 //
-// Beads 方式: `bd list`（`readBeadsIssues`）を見回りのたびに打ち、要約が前回と変わっていれば
-// `onChange` する。着手・完了は `main` を動かさないので、先端が同じでも読み直す。`bd` は1回が
-// `git rev-parse` より2桁重いので、見回りの間隔を長くする（`TASK_SUMMARY_POLL_INTERVALS`）。
+// Beads 方式: `bd list` を見回りのたびに打ち、要約が前回と変わっていれば `onChange` する。
+// 着手・完了は `main` を動かさないので、先端が同じでも読み直す。
+// `bd` は1回が `git rev-parse` より2桁重いので、見回りの間隔を長くする（`TASK_SUMMARY_POLL_INTERVALS`）。
 //
-// `main` が読めないとき（git リポジトリでない・`main` ブランチが無い・`git` が無い）、
-// ファイル方式で `develop/task/` が無いとき、Beads 方式で `bd` が読めないとき、方式の行が
-// 読めないときは「不明」にする。作業ツリーのファイルへは落とさない。落とすと読み元が2つになり、
-// `main` の名前が違うリポジトリで一覧が黙って古いほうへ戻る（「不明」なら画面で気付ける）。
-// `git`・`bd` がタイムアウトしたときだけはその回を諦め、覚えている状態も変えない（一時的な失敗
-// なので次の回で読み直す。「不明」にすると一覧が一瞬消えて戻る）。
+// `main` が読めないとき（git リポジトリでない・`main` ブランチが無い・`git` が無い）、ファイル方式で `develop/task/` が無いとき、Beads 方式で `bd` が読めないとき、方式の行が読めないときは「不明」にする。
+// 作業ツリーのファイルへは落とさない。落とすと読み元が2つになり、`main` の名前が違うリポジトリで一覧が黙って古いほうへ戻る（「不明」なら画面で気付ける）。
+// `git`・`bd` がタイムアウトしたときだけはその回を諦め、覚えている状態も変えない（「不明」にすると一覧が一瞬消えて戻る）。
 //
-// 中身の解釈（front matter の文法・台帳の印から `doing` を作る・Beads の状態の読み替え）は
-// 契約側の仕事で、ここは読み直すかどうかの判断と `git`・`bd`・台帳の読み出しだけを持つ。
+// 中身の解釈（front matter の文法・台帳の印から `doing` を作る・Beads の状態の読み替え）は契約側の仕事。
+// ここは読み直すかどうかの判断と `git`・`bd`・台帳の読み出しだけを持つ。
 
 import { readdir } from "node:fs/promises"
 import { basename, join } from "node:path"
@@ -48,9 +41,8 @@ import { readTaskStoreAt } from "./task-store.ts"
 
 /**
  * 見回りの間隔。`git` は `git rev-parse` 1回が手元で約10msなので、毎回起こしても負荷は無視できる。
- * `bd list` は1回が約0.2秒（CPU）かかるので、Beads 方式のときは間を空ける。タスク一覧はタスクの
- * 着手・完了で書き換わるだけなので、秒単位の反映で十分（`docs/requirements.md`「5. 実行環境・
- * 非機能要件」の1秒目安とは別枠）。
+ * `bd list` は1回が約0.2秒（CPU）かかるので、Beads 方式のときは間を空ける。
+ * タスク一覧はタスクの着手・完了で書き換わるだけなので、秒単位の反映で十分。
  */
 export const TASK_SUMMARY_POLL_INTERVALS = {
   git: 1500,
@@ -67,8 +59,10 @@ export type TaskSummaryPollIntervals = {
 /** 完全な参照名で指す（`main` だけだと同名のタグやファイルと曖昧になりうる）。 */
 const MAIN_BRANCH_REF = "refs/heads/main"
 
-/** 台帳の置き場（`$(git rev-parse --path-format=absolute --git-common-dir)` の下）の中の、
- * 着手の印（claude-skills の `docs/task-workflow-redesign.md`）。 */
+/**
+ * 台帳の置き場（`$(git rev-parse --path-format=absolute --git-common-dir)` の下）の中の、着手の印。
+ * 形の正典は task-workflow スキルの `WORKFLOW.md`。
+ */
 const LEDGER_CLAIM_DIR_SEGMENTS = ["task-workflow", "claim"]
 
 export type TaskSummaryWatcher = {
@@ -77,15 +71,12 @@ export type TaskSummaryWatcher = {
 }
 
 /**
- * `main` のタスク一覧を見張り始める。呼んだ時点で1回見に行き、以後はポーリングで
- * `main` の先端と台帳の着手の印（Beads 方式なら `bd` の一覧）を見る。 1回の見回りが終わってから次の
- * 見回りを予約するので、`git`・`bd` が遅くても見回りは重ならない。
- * `main` が最初から読めない（先端が取れない）ときは `onChange` を呼ばない（先端が「無い→無い」で
- * 変わっていないため。`INITIAL_SESSION_STATE.tasks` の既定値 `{ kind: "unknown" }` と一致するので、
- * 呼ばなくても見た目は変わらない）。
+ * `main` のタスク一覧を見張り始める。
+ * 呼んだ時点で1回見に行き、以後はポーリングで `main` の先端と台帳の着手の印（Beads 方式なら `bd` の一覧）を見る。
+ * 1回の見回りが終わってから次の見回りを予約するので、`git`・`bd` が遅くても見回りは重ならない。
+ * `main` が最初から読めない（先端が取れない）ときは `onChange` を呼ばない（初期の姿の `{ kind: "unknown" }` のままでよい）。
  *
- * `pollIntervals` は既定 {@link TASK_SUMMARY_POLL_INTERVALS}。テストが実際の間隔を待たずに
- * 済むよう、`batchIntervalMs` と同じ形で差し替えられるようにしてある。
+ * `pollIntervals` は既定 {@link TASK_SUMMARY_POLL_INTERVALS}。
  */
 export function watchTaskSummary(
   cwd: string,
@@ -127,11 +118,9 @@ export function watchTaskSummary(
 
 /**
  * 見回りのあいだ覚えておく状態。`head` は前回見た `main` の先端。
- * - `task-dir`: ファイル方式で `develop/task/` がある。`git cat-file --batch` で読んだ front matter と
- *   そのときの台帳の印を持つ（先端が動かないあいだ、印だけの変化をファイルを読み直さずに拾うため）
+ * - `task-dir`: ファイル方式で `develop/task/` がある。読んだ front matter とそのときの台帳の印を持つ（先端が動かないあいだ、印だけの変化をファイルを読み直さずに拾うため）
  * - `beads`: Beads 方式。前回知らせた要約を持つ（`bd` の読み直しで変わったかを比べるため）
- * - `other`: それ以外（`develop/task/` が無い・方式の行が読めない・不明）。先端だけ
- *   （`main` が読めなければ `undefined`）
+ * - `other`: それ以外（`develop/task/` が無い・方式の行が読めない・不明）。先端だけ（`main` が読めなければ `undefined`）
  */
 type WatcherCache =
   | {
@@ -157,9 +146,8 @@ type MainTasksRead =
     }
 
 /**
- * `main` の先端を取る。先端が変わっていれば {@link readAtHead} で中身から読み直す。先端が前回と
- * 同じでも、ファイル方式なら台帳の着手の印だけ、Beads 方式なら `bd` の一覧を読み直す
- * （着手・解除・完了は `main` を動かさないため）。
+ * `main` の先端を取る。先端が変わっていれば {@link readAtHead} で中身から読み直す。
+ * 先端が前回と同じでも、ファイル方式なら台帳の着手の印だけ、Beads 方式なら `bd` の一覧を読み直す（着手・解除・完了は `main` を動かさないため）。
  */
 async function pollOnce(cwd: string, cache: WatcherCache): Promise<MainTasksRead> {
   const revParse = await runGit(cwd, [
@@ -220,8 +208,8 @@ async function rereadBeads(
 }
 
 /**
- * 先端（`head`）が変わったときの読み直し。中身は先端を取ったコミットから読む（`main` という
- * 名前で読むと、2回の `git` の間に `main` が進んだとき、覚える先端と読んだ中身がずれる）。
+ * 先端（`head`）が変わったときの読み直し。
+ * 中身は先端を取ったコミットから読む（`main` という名前で読むと、2回の `git` の間に `main` が進んだとき、覚える先端と読んだ中身がずれる）。
  * 先に設定ファイルから方式を決め、その方式の読み元だけを読む。
  */
 async function readAtHead(cwd: string, head: string | undefined): Promise<MainTasksRead> {
@@ -320,9 +308,11 @@ async function readTasksAtHead(
   }
 }
 
-/** 共有の `.git` の下の台帳から、着手の印がある ID の集合を作る。台帳が無い・読めないときは
- * 「印なし」に倒す（この一覧は表示だけで、台帳が正典の取り合いの判定には使わない。台帳が
- * 一時的に読めないだけで一覧全体を「不明」にはしない）。 */
+/**
+ * 共有の `.git` の下の台帳から、着手の印がある ID の集合を作る。
+ * 台帳が無い・読めないときは「印なし」に倒す（この一覧は表示だけで、取り合いの判定には使わない）。
+ * 台帳が一時的に読めないだけで一覧全体を「不明」にはしない。
+ */
 async function readClaimedTaskIds(cwd: string): Promise<ReadonlySet<string>> {
   const commonDir = await runGit(cwd, ["rev-parse", "--path-format=absolute", "--git-common-dir"])
   if (commonDir.kind !== "output") {

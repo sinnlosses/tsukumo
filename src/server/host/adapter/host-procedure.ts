@@ -1,6 +1,5 @@
-// ホストへ頼むコマンドの手続き（`docs/glossary.md`「手続き」）。形は `hostContract`、
-// 束ねるのは配線。ここは表の行（`hostCommands`）へ委ね、
-// 受け付けなかったことを契約のエラーに訳すだけ。
+// ホストへ頼むコマンドの手続き。形は `hostContract`。
+// ここは表の行（`hostCommands`）へ委ね、受け付けなかったことを契約のエラーに訳すだけ。
 
 import { implement, type ORPCErrorConstructorMap } from "@orpc/server"
 

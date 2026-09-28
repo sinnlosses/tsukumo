@@ -1,22 +1,16 @@
-// トークン消費の記録（何にどれだけ使ったかを残す）。ファイルに触るのはここだけ
-// （`docs/architecture.md`「1ファイル = 1つの境界」）。置き場は `~/.tsukumo/token-usage/<YYYY-MM-DD>.jsonl` で、
-// 日付だけで分ける — 使用量はキャラクターパックに依らないので、パックごとに分けると
-// 「その日いくら使ったか」を出すのに全部のディレクトリを混ぜ直すことになる。`cwd` にも
-// 依存させない（どのプロジェクトから起こしても同じ場所に積む）。
+// トークン消費の記録（何にどれだけ使ったかを残す）。ファイルに触るのはここだけ。
+// 置き場は `~/.tsukumo/token-usage/<YYYY-MM-DD>.jsonl` で、日付だけで分ける。
+// 使用量はキャラクターパックに依らないので、パックごとに分けると「その日いくら使ったか」を出すのに全部のディレクトリを混ぜ直すことになる。
+// `cwd` にも依存させない（どのプロジェクトから起こしても同じ場所に積む）。
 //
-// 何をいつ書くかの判断はここが決めない。 判断（累計から増分を取る・増分が無い回は書かない・
-// 期間で切って軸ごとに畳む）は `receive` と
-// `summarizeTokenUsage` が持ち、ここが持つのは「どこに・どんな形で書くか」と
-// 「日付の範囲からどのファイルを開くか」だけ（雑談の会話のアーカイブを扱うアダプタと同じ切り分け）。
+// 何をいつ書くかの判断はここが決めない。
+// ここが持つのは「どこに・どんな形で書くか」と「日付の範囲からどのファイルを開くか」だけ。
 //
-// 1行に文字列で入るのは時刻・セッションID・モード・モデルの名前・ツールの名前だけ。 依頼の
-// 文面・セリフ・ツールの引数と結果は通らない（渡される `TokenUsageEntry` にそもそも口が
-// 無く、ツールの結果は長さ（数）に畳まれてから届く。`docs/coding-standards.md`「会話内容の扱い」）。
-// 読むときも同じ — 検証して素通しするだけで、ログにも呼び出し元にも文面を足さない。
+// 1行に文字列で入るのは時刻・セッションID・モード・モデルの名前・ツールの名前だけ。
+// 依頼の文面・セリフ・ツールの引数と結果は通らない（渡される `TokenUsageEntry` にそもそも口が無く、ツールの結果は長さ（数）に畳まれてから届く）。
+// 読むときも検証して素通しするだけで、ログにも呼び出し元にも文面を足さない。
 //
-// 書けなくても・読めなくても例外を投げない（常駐プロセスは1回の失敗で落ちない。
-// `docs/coding-standards.md`「エラーハンドリング」）。壊れた行・版が違う行は読まずに落とす
-// （雑談の会話のアーカイブを扱うアダプタの `archiveLineSchema` と同じ手。1行ずつ検証するので被害が1行に収まる）。
+// 書けなくても・読めなくても例外を投げない。壊れた行・版が違う行は読まずに1行ずつ落とす。
 
 import { join } from "node:path"
 
@@ -68,9 +62,8 @@ const scopeUsageSchema = z.object({
 })
 
 /**
- * 記録の1行の形（{@link TokenUsageRecord} と同じ鍵）。`v` が
- * {@link TOKEN_USAGE_FORMAT_VERSION} と違う行はここで落ちる（版1の行を残す価値が無いという
- * 判断。「内訳を空として読む」ことはしない）。
+ * 記録の1行の形（{@link TokenUsageRecord} と同じ鍵）。
+ * `v` が {@link TOKEN_USAGE_FORMAT_VERSION} と違う行はここで落ちる（古い版の行を「内訳を空として読む」ことはしない）。
  */
 const tokenUsageRecordSchema = z.object({
   v: z.literal(TOKEN_USAGE_FORMAT_VERSION),
@@ -81,17 +74,14 @@ const tokenUsageRecordSchema = z.object({
   breakdown: z.object({ main: scopeUsageSchema, subagent: scopeUsageSchema }),
 })
 
-/** 書き込んでよいのはこの下だけ（`chatArchiveDir` と同じ親）。 */
+/** 書き込んでよいのはこの下だけ。 */
 export function tokenUsageDir(): string {
   return join(tsukumoHomeDir(), TOKEN_USAGE_DIR_NAME)
 }
 
 /**
- * 記録の読み書き口を作る。`root` は置き場（既定は {@link tokenUsageDir}）で、差し替えられるのは
- * テストがホームを汚さないためにある（`createChatArchive` の `root` と同じ手）。
- *
- * 1つの口を日をまたいで使い回せる——`append` のたびに `entry.at` から行き先を組み立てるので、
- * 日付が変われば次の行から新しいファイルに積む。
+ * 記録の読み書き口を作る。`root` は置き場（既定は {@link tokenUsageDir}）。
+ * 1つの口を日をまたいで使い回せる（`append` のたびに `entry.at` から行き先を組み立てる）。
  */
 export function createTokenUsageLog(root: string = tokenUsageDir()): TokenUsageLog {
   return {
@@ -115,10 +105,8 @@ function toRecord(entry: TokenUsageEntry): TokenUsageRecord {
 }
 
 /**
- * 期間に入る日付のファイルだけを開き、古い→新しい順に行を集める（`TokenUsageLog.readRange` の
- * 実装）。期間の外のファイルは開かない — ファイル名が `YYYY-MM-DD.jsonl` で日付そのものを
- * 表すので、開く前に範囲で絞り込める（雑談の会話のアーカイブを扱うアダプタの走査と同じく、要らないファイルを
- * 開かないのがこの口の要点）。
+ * 期間に入る日付のファイルだけを開き、古い→新しい順に行を集める（`TokenUsageLog.readRange` の実装）。
+ * 期間の外のファイルは開かない（ファイル名が日付そのものを表すので、開く前に範囲で絞り込める）。
  */
 function readRecordsInRange(root: string, period: TokenUsagePeriod): readonly TokenUsageRecord[] {
   return fileNamesInRange(root, period).flatMap((fileName) =>
@@ -134,10 +122,7 @@ function fileNamesInRange(root: string, period: TokenUsagePeriod): readonly stri
   })
 }
 
-/**
- * 1ファイルの行を検証して返す（{@link tokenUsageRecordSchema} を通らない行——壊れた JSON・
- * 版が違う・鍵が足りない——は1行ずつ落とす。JSONL は壊れても被害が1行）。
- */
+/** 1ファイルの行を検証して返す（{@link tokenUsageRecordSchema} を通らない行は1行ずつ落とす）。 */
 function readValidRecords(path: string): readonly TokenUsageRecord[] {
   return readJsonLines(path).flatMap((raw) => {
     const record = tokenUsageRecordSchema.safeParse(raw)

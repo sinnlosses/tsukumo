@@ -1,9 +1,6 @@
-// 訪問の出入りと台本の進みの判断（`docs/requirements.md`「訪問」）。純関数だけで、
-// 時計は持たない。時刻は呼び出し側（見張る側）が渡し、時計を回すのは adapter
-// （時計を読むアダプタ）。
+// 訪問の出入りと台本の進みの判断。純関数だけで、時計は持たない（時刻は呼び出し側が渡す）。
 //
-// 待っている、と言える信号は2つ（`docs/requirements.md`「対象外とすること（スコープ外）」「状態連動」、提案は
-// `docs/research/character-visit.md` 論点1）:
+// 待っている、と言える信号は2つ:
 //
 // - A. 背景のタスクだけが動いている: ターンが終わっていて、`backgroundTasks` が1件以上
 // - B. ツールが走りっぱなし: ターンの中で、いまのやり取りのトップレベルのツールに結果がまだ無い
@@ -29,9 +26,8 @@ export const VISIT_TIMING = {
 } satisfies VisitTiming
 
 /**
- * 疑似セッションや手元で出入りを確かめるための縮めたしきい値（`TSUKUMO_VISIT_QUICK=1`。
- * `docs/architecture.md`「手で確かめること」）。「1回の待ちに1度」は縮めないので、同じ待ちの
- * あいだに2度は来ない。
+ * 疑似セッションや手元で出入りを確かめるための縮めたしきい値（`TSUKUMO_VISIT_QUICK=1`）。
+ * 「1回の待ちに1度」は縮めないので、同じ待ちのあいだに2度は来ない。
  */
 export const QUICK_VISIT_TIMING = {
   waitMs: 5_000,
@@ -91,8 +87,8 @@ export function isWaiting(state: SessionState): boolean {
 }
 
 /**
- * イベント1件を畳んだあとの姿（`state`）から、待ちの勘定を進める。`visit-started` でこの待ちを
- * 使い切り、`visit-ended` で帰った時刻を覚える。待ちが途切れたら数え直す。
+ * イベント1件を畳んだあとの姿（`state`）から、待ちの勘定を進める。
+ * `visit-started` でこの待ちを使い切り、`visit-ended` で帰った時刻を覚える。待ちが途切れたら数え直す。
  */
 export function tallyVisit(
   tally: VisitTally,
@@ -112,9 +108,9 @@ export function spendWait(tally: VisitTally): VisitTally {
 }
 
 /**
- * 来るか・まだか（何時に）・来ないか。待ちが続けて {@link VisitTiming.waitMs} に届き、かつ前の
- * 訪問から {@link VisitTiming.cooldownMs} 空いていれば来る。歯車の「訪問」がオフ
- * （`state.visitEnabled === false`）のあいだは来ない（`docs/screen-design.md`「設定の置き場所」）。
+ * 来るか・まだか（何時に）・来ないか。
+ * 待ちが続けて {@link VisitTiming.waitMs} に届き、かつ前の訪問から {@link VisitTiming.cooldownMs} 空いていれば来る。
+ * 歯車の「訪問」がオフ（`state.visitEnabled === false`）のあいだは来ない。
  */
 export function visitArrival(
   tally: VisitTally,
@@ -139,9 +135,8 @@ export function visitArrival(
 }
 
 /**
- * イベント1件を畳んだあとの姿（`state`）で、客が帰るか。帰る合図はここに集める
- * （ブラウザ側で別々に判定しない。`docs/requirements.md`「状態連動」の例外の条件3）。台本の終わりは
- * 時計から来るので {@link nextVisitLine} が決める。
+ * イベント1件を畳んだあとの姿（`state`）で、客が帰るか。帰る合図はここに集める（ブラウザ側で別々に判定しない）。
+ * 台本の終わりは時計から来るので {@link nextVisitLine} が決める。
  */
 export function visitDeparture(state: SessionState, event: SessionEvent): VisitDeparture {
   if (state.visit.kind !== "visiting") {
@@ -185,8 +180,7 @@ function departureReason(state: SessionState, event: SessionEvent): VisitEndReas
         return "pending"
       }
       break
-    // `isWaiting` を見ない（オフにしたら、走っているツールや背景のタスクが終わって
-    // いなくても帰る）。
+    // `isWaiting` を見ない（オフにしたら、走っているツールや背景のタスクが終わっていなくても帰る）。
     case "visit-enabled-changed":
       return event.visitEnabled ? "stay" : "disabled"
     default:

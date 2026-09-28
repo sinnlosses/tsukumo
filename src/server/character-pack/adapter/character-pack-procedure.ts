@@ -1,7 +1,5 @@
-// キャラクターパックのコマンドの手続き（`docs/glossary.md`「手続き」）。形は
-// `characterPackContract`、束ねるのは配線。ここは表の行
-// （`characterPackCommands`）へ委ね、受け付けなかったことを契約のエラーに
-// 訳すだけ。
+// キャラクターパックのコマンドの手続き。形は `characterPackContract`。
+// ここは表の行（`characterPackCommands`）へ委ね、受け付けなかったことを契約のエラーに訳すだけ。
 
 import { implement, type ORPCErrorConstructorMap } from "@orpc/server"
 

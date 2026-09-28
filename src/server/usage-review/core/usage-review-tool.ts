@@ -1,11 +1,8 @@
-// 見直し（docs/glossary.md「見直し」）を受け取る2つのツールの決まりごと。ツールを載せるのは
-// MCP ツールを組み立てるアダプタで、ここにあるのはツールの名前・説明文と、受け付けるかを
-// 決めて受け付けた呼び出しをイベントにする窓口（`createUsageReviewIntake`）。
-// 決定の理由は `docs/requirements.md`「トークン消費の見直し」。
+// 見直しを受け取る2つのツールの決まりごと。
+// ここにあるのはツールの名前・説明文と、受け付けるかを決めて受け付けた呼び出しをイベントにする窓口（`createUsageReviewIntake`）。
 //
-// 引数の形（型・列挙・整数）は zod の形で SDK が先に検査する（崩れていれば handler は
-// 呼ばれず、SDK が理由を `isError` 付きで返す）。ここで見るのは形の外の条（空の欄・件数・
-// 識別子の重なり・見送った提案）だけ。
+// 引数の形（型・列挙・整数）は zod の形で SDK が先に検査する（崩れていれば handler は呼ばれず、SDK が理由を `isError` 付きで返す）。
+// ここで見るのは形の外の条（空の欄・件数・識別子の重なり・見送った提案）だけ。
 
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import {
@@ -18,19 +15,16 @@ import {
   usageProposalKey,
 } from "../../../shared/usage-review/usage-review.ts"
 
-/** 段の進みを受け取るツールの名前（docs/glossary.md「usage_review_stage ツール」）。 */
+/** 段の進みを受け取るツールの名前。 */
 export const USAGE_REVIEW_STAGE_TOOL_NAME = "usage_review_stage"
 
-/** 結果を受け取るツールの名前（docs/glossary.md「usage_review_result ツール」）。 */
+/** 結果を受け取るツールの名前。 */
 export const USAGE_REVIEW_RESULT_TOOL_NAME = "usage_review_result"
 
 /** 1回の見直しで渡せる提案の上限（スキルの「効きの大きい順に3〜5件」に揃える）。 */
 export const MAX_USAGE_PROPOSALS = 5
 
-/**
- * モデルに見せる `usage_review_stage` の説明。いつ呼ぶかをここに書く（スキルの手順は
- * これを前提にする）。
- */
+/** モデルに見せる `usage_review_stage` の説明。いつ呼ぶかをここに書く（スキルの手順はこれを前提にする）。 */
 export const USAGE_REVIEW_STAGE_TOOL_DESCRIPTION =
   "トークン消費の減らし方の見直し（スキル token-usage-diet）で、段に入るたびに呼ぶ。" +
   "最初の段に入るときに必ず呼ぶ（この呼び出しで画面が「見直し中」になる）。" +
@@ -74,9 +68,8 @@ export type UsageReviewIntake = {
 }
 
 /**
- * {@link UsageReviewIntake} を1つ作る。`dismissedKeys` は利用者が見送った提案の識別子
- * （`usageProposalKey`）を呼ぶたびに読み直す口（見直しの途中で見送りが増えても効く）。
- * `onEvent` は駆動のイベントの流れ（ここで例外を投げない）。
+ * {@link UsageReviewIntake} を1つ作る。
+ * `dismissedKeys` は利用者が見送った提案の識別子（`usageProposalKey`）を呼ぶたびに読み直す口（見直しの途中で見送りが増えても効く）。
  */
 export function createUsageReviewIntake(
   dismissedKeys: () => readonly string[],
@@ -98,10 +91,7 @@ export function createUsageReviewIntake(
   }
 }
 
-/**
- * 形の外の条の違反1つ。`count` は違反の数で、モデルが書いた文面は持たない（差し戻しの
- * 文面に写さない。`reportViolations` と同じ線）。
- */
+/** 形の外の条の違反1つ。`count` は違反の数で、モデルが書いた文面は持たない（差し戻しの文面に写さない）。 */
 type UsageReviewViolation =
   | { readonly kind: "blank-headline" }
   | { readonly kind: "too-many-proposals"; readonly count: number }
@@ -163,8 +153,8 @@ function violationLine(violation: UsageReviewViolation): string {
 }
 
 /**
- * `usage_review_stage` の戻り値。見送った提案が無ければ `"ok"` だけ。並べるのは tsukumo が
- * 記録した識別子だけで、画面の状態は載せない。
+ * `usage_review_stage` の戻り値。見送った提案が無ければ `"ok"` だけ。
+ * 並べるのは tsukumo が記録した識別子だけで、画面の状態は載せない。
  */
 function usageReviewStageReply(dismissed: readonly string[]): string {
   return dismissed.length === 0

@@ -1,12 +1,10 @@
-// Beads（`bd`）を起こす口。タスクの一覧と成果の集計が両方使うので、`bd` を起こすのはここだけに
-// 閉じ込める（検査の「子プロセスを起こしてよい箇所」の許可はこのファイル）。
+// Beads（`bd`）を起こす口。`bd` を起こすのはここだけ（検査の「子プロセスを起こしてよい箇所」の許可はこのファイル）。
 // 起こすのは読むだけの `bd list` で、ネットワークにも出ない。
 //
 // `bd list --json` には作成者（owner）も入るが、境界で落とす（`BeadsIssue` の欄だけを運ぶ）。
-// 本文（description・acceptance_criteria・notes）と `external_ref` はタスクのモーダルの詳細が
-// 使うので運ぶ（会話内容ではないが、ログには出さない）。
+// 本文（description・acceptance_criteria・notes）と `external_ref` はタスクのモーダルの詳細が使うので運ぶ（会話内容ではないが、ログには出さない）。
 //
-// 例外を投げない（常駐プロセスは1回の失敗で落ちない）。`.beads` が無い・`bd` が無いときも `failed`。
+// 例外を投げない。`.beads` が無い・`bd` が無いときも `failed`。
 
 import { execFile } from "node:child_process"
 
@@ -15,7 +13,7 @@ import { z } from "zod"
 import type { BeadsIssue } from "../../../shared/repository/beads-issue.ts"
 import { GIT_TIMEOUT_MS, MAX_OUTPUT_BYTES } from "./git.ts"
 
-/** `bd` 1回の結果。タイムアウトだけを分けるのは `GitOutcome` と同じ理由。 */
+/** `bd` 1回の結果。タイムアウトだけを分けるのは、その回を諦めるか「不明」にするかが呼び出し側で変わるため。 */
 export type BeadsOutcome =
   | { readonly kind: "issues"; readonly issues: readonly BeadsIssue[] }
   | { readonly kind: "failed" }

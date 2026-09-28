@@ -1,16 +1,14 @@
-// 日記を書かせる使い捨ての `query()`（`docs/requirements.md`「日記」）。SDK に触るので
-// `sdk-` で始まる（`docs/architecture.md`「1ファイル = 1つの境界」）。持たせるのは `diary` ツール1つだけの、プロセス内の MCP サーバ。
+// 日記を書かせる使い捨ての `query()`。持たせるのは `diary` ツール1つだけの、プロセス内の MCP サーバ。
 // `includePartialMessages` の断片を3段の合図（`diary-drafting` / `diary-stage`）へ変えて流す。
 //
 // 会話のセッションとは別の子プロセスで、日記を1つ書き終えたら終わる。
-// 考える段（extended thinking）は切る。組み込みのツールは持たせず（`tools: []`）、MCP は
-// `diary` だけ（`strictMcpConfig: true` / `allowedTools` に `mcp__tsukumo__diary` だけ）、
-// `permissionMode: "dontAsk"`（ほかは聞かずに断る。許可を尋ねる先が無い）。設定ファイルも読まず
-// （`settingSources: []`）、transcript も書かない（`persistSession: false`）。
+// 考える段（extended thinking）は切る。
+// 組み込みのツールは持たせず（`tools: []`）、MCP は `diary` だけ（`strictMcpConfig: true` / `allowedTools` に `mcp__tsukumo__diary` だけ）。
+// `permissionMode: "dontAsk"`（ほかは聞かずに断る。許可を尋ねる先が無い）。
+// 設定ファイルも読まず（`settingSources: []`）、transcript も書かない（`persistSession: false`）。
 //
-// 渡す文面と受け取る日記は会話の内容に当たるので、ログにもファイルにも書かない
-// （docs/coding-standards.md「会話内容の扱い」）。検査・保存・「書けた／書けなかった」の判定は
-// core（`createDiaryWriter` / `createDiaryIntake`）。
+// 渡す文面と受け取る日記は会話の内容に当たるので、ここではログにもファイルにも書かない。
+// 検査・保存・「書けた／書けなかった」の判定は core が持つ。
 
 import { createSdkMcpServer, query, tool } from "@anthropic-ai/claude-agent-sdk"
 import { isPlainObject } from "remeda"
@@ -35,7 +33,7 @@ import {
   type DiaryIntake,
 } from "../core/diary-tool.ts"
 
-/** 呼び直す余地（仮。`docs/requirements.md`「会話から切り離す」）。 */
+/** 呼び直す余地（仮）。 */
 const DIARY_QUERY_MAX_TURNS = 4
 
 const DIARY_TOOL_FULL_NAME = tsukumoToolFullName(DIARY_TOOL_NAME)
@@ -51,10 +49,9 @@ export type DiaryQueryRequest = {
 }
 
 /**
- * `diary` を1回書かせる。reject しない——起こせない・API の失敗は for-await の反復が
- * 例外で終わるだけで、呼び出し側（`createDiaryWriter`）が拾って「書けなかった」に畳む。
- * `intake.submit` が受け付けたかどうかは `onEvent` に流れる `diary-written` で呼び出し側が見る
- * （ここでは判定しない）。
+ * `diary` を1回書かせる。
+ * 起こせない・API の失敗は for-await の反復が例外で終わるので、呼び出し側が拾って「書けなかった」に畳む。
+ * `intake.submit` が受け付けたかどうかは `onEvent` に流れる `diary-written` で呼び出し側が見る（ここでは判定しない）。
  */
 export async function queryDiary(
   request: DiaryQueryRequest,
@@ -96,8 +93,7 @@ export async function queryDiary(
     },
   })
 
-  // `diary` の呼び出しの塊を追いかけ、断片を3段の合図に変える（`docs/requirements.md`
-  // 「進みは3段で見せる」）。
+  // `diary` の呼び出しの塊を追いかけ、断片を3段の合図に変える。
   const observer = createDiaryStreamObserver()
   for await (const message of session) {
     for (const event of observer.observe(message)) {
@@ -109,18 +105,17 @@ export async function queryDiary(
 /** {@link createDiaryStreamObserver} が返す窓口。 */
 export type DiaryStreamObserver = {
   /**
-   * 生のメッセージ1件を渡す。`diary` ツールの塊が開いたら `diary-drafting` を、引数の断片を
-   * つないで `bookmark` の鍵を見つけたら `diary-stage { stage: "pick" }` を返す（同じ塊では
-   * `pick` を二度と返さない）。塊が閉じたら追いかけるのをやめる。それ以外は常に空の並び。
+   * 生のメッセージ1件を渡す。
+   * `diary` ツールの塊が開いたら `diary-drafting` を、引数の断片をつないで `bookmark` の鍵を見つけたら `diary-stage { stage: "pick" }` を返す（同じ塊では `pick` を二度と返さない）。
+   * 塊が閉じたら追いかけるのをやめる。それ以外は常に空の並び。
    */
   readonly observe: (message: unknown) => readonly SessionEvent[]
 }
 
 /**
- * {@link DiaryStreamObserver} を1つ作る（問い合わせ1回に1つ）。`index` で塊を見分け、
- * サブエージェントの中（`parent_tool_use_id` あり）は見ない。SDK の型は import しない——
- * `stream_event` の生の形は `isPlainObject` で構造だけを見る（SDK の型を import しない
- * のと同じやり方）。
+ * {@link DiaryStreamObserver} を1つ作る（問い合わせ1回に1つ）。
+ * `index` で塊を見分け、サブエージェントの中（`parent_tool_use_id` あり）は見ない。
+ * `stream_event` の生の形は `isPlainObject` で構造だけを見る。
  */
 export function createDiaryStreamObserver(): DiaryStreamObserver {
   let tracking: { readonly index: number; readonly buffer: string } | undefined
@@ -217,10 +212,7 @@ function diaryServer(intake: DiaryIntake, expressions: readonly ExpressionChoice
   })
 }
 
-/**
- * zod の `enum` に渡す表情名。空にならないことが型の要求なので、`default` を必ず先頭に置く
- * （他のツールの enum の組み方と同じ考え方）。
- */
+/** zod の `enum` に渡す表情名。空にならないことが型の要求なので、`default` を必ず先頭に置く。 */
 function diaryExpressionEnum(
   expressions: readonly ExpressionChoice[],
 ): [Expression, ...Expression[]] {

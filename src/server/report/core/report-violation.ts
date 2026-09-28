@@ -1,13 +1,12 @@
-// `report` ツールで受け取ったレポートの検査（「検査 → 整形 → 描画」の検査の段。
-// `docs/display.md`「出力の分離（セリフと詳細）」）。
+// `report` ツールで受け取ったレポートの検査（「検査 → 整形 → 描画」の検査の段）。
 //
 // 検査するのは「レポートの記法」（`REPORT_NOTATION_PROMPT`）の条のうち、機械で判定できるものだけ。
-// 読み手によって結論が変わる条（効能書き・根拠の量・前置きと締めの行など）は入れない
-// ——誤って差し戻すと、直しようのない指摘でモデルを1往復させることになる。
+// 読み手によって結論が変わる条（効能書き・根拠の量・前置きと締めの行など）は入れない。
+// 誤って差し戻すと、直しようのない指摘でモデルを1往復させることになる。
 //
-// 本文は節と塊の並びで届くので、塊の種類ごとに数える。逃げ道（`markdown` の塊）の中だけは
-// Markdown として構文解析せず、行で見る（フェンスの中だけは飛ばす）。描く側の
-// パーサ（`src/browser/`）とは層が違って使えず、判定に要るのは行頭の形と数えられる印だけなので。
+// 本文は節と塊の並びで届くので、塊の種類ごとに数える。
+// 逃げ道（`markdown` の塊）の中だけは Markdown として構文解析せず、行で見る（フェンスの中だけは飛ばす）。
+// 描く側のパーサはブラウザの層にあって使えず、判定に要るのは行頭の形と数えられる印だけなので。
 
 import {
   type ReportBlock,
@@ -28,15 +27,15 @@ export type ReportDraft = {
 export type MarkdownNotation = keyof typeof MARKDOWN_NOTATION_NAMES
 
 /**
- * 規約違反1つ。`count` は違反の数（文の数・塊の数）で、モデルが書いた文面は持たない
- * （差し戻しの文面に写さないため。会話の中身をモデルの文脈へ戻す経路を作らない）。
+ * 規約違反1つ。`count` は違反の数（文の数・塊の数）で、モデルが書いた文面は持たない。
+ * 差し戻しの文面に写さないため（会話の中身をモデルの文脈へ戻す経路を作らない）。
  */
 export type ReportViolation =
   /** `conclusion` が3文以上ある（条1「冒頭の1〜2文で結論」）。 */
   | { readonly kind: "long-conclusion"; readonly count: number }
   /** 4文以上の地の文がある（「地の文の段落は3文まで」）。`count` は `text` の塊と逃げ道の段落の数。 */
   | { readonly kind: "long-paragraph"; readonly count: number }
-  /** `mermaid` の塊に、規約が挙げる10種の外の種類がある。 */
+  /** `mermaid` の塊に、規約が挙げる種類（`REPORT_MERMAID_KINDS`）の外の種類がある。 */
   | { readonly kind: "unknown-mermaid"; readonly count: number }
   /** `note` の塊が3つ以上ある（「1つのレポートに1〜2個まで」）。 */
   | { readonly kind: "too-many-notes"; readonly count: number }
@@ -157,8 +156,8 @@ export function reportViolations(report: ReportDraft): readonly ReportViolation[
 }
 
 /**
- * 差し戻すときの `report` の戻り値。違反した条と直し方だけを1行ずつ並べ、画面の状態
- * （描けたか・どこに出たか）は載せない（`docs/display.md`「出力の分離（セリフと詳細）」）。モデルの文脈に戻るので短くする。
+ * 差し戻すときの `report` の戻り値。
+ * 違反した条と直し方だけを1行ずつ並べ、画面の状態（描けたか・どこに出たか）は載せない。モデルの文脈に戻るので短くする。
  */
 export function reportRejectionText(violations: readonly ReportViolation[]): string {
   return [
@@ -255,8 +254,8 @@ type Fence = { readonly info: string; readonly content: readonly string[]; reado
 type SplitMarkdown = { readonly outside: readonly string[]; readonly fences: readonly Fence[] }
 
 /**
- * 逃げ道の中身を、フェンスの外の行とフェンスの並びに分ける。`outside` は行の並びを保つため、
- * フェンスの行（開き・中身・閉じ）を空行に置き換えて残す。閉じの無いフェンスは末尾まで続く。
+ * 逃げ道の中身を、フェンスの外の行とフェンスの並びに分ける。
+ * `outside` は行の並びを保つため、フェンスの行（開き・中身・閉じ）を空行に置き換えて残す。閉じの無いフェンスは末尾まで続く。
  */
 function splitFences(markdown: string): SplitMarkdown {
   type Open = Fence & { readonly marker: string }
@@ -318,9 +317,9 @@ function closesFence(line: string, marker: string): boolean {
 }
 
 /**
- * その記法が、逃げ道の HTML の容れ物〔`<details>` / `<div>`〕の中と外のどちらにあるか。
- * `inContainer` が `false` なら外側だけ（差し戻しの判定はここ）、`true` なら中だけを見る
- * （複数の塊を1つに畳む・`cols` に並べるのは逃げ道の役目なので、中は差し戻さない）。
+ * その記法が、逃げ道の HTML の容れ物（`<details>` / `<div>`）の中と外のどちらにあるか。
+ * `inContainer` が `false` なら外側だけ（差し戻しの判定はここ）、`true` なら中だけを見る。
+ * 複数の塊を1つに畳む・`cols` に並べるのは逃げ道の役目なので、中は差し戻さない。
  */
 function hasNotation(
   { outside, fences }: SplitMarkdown,
@@ -389,8 +388,8 @@ function topLevelFlags(lines: readonly string[]): readonly boolean[] {
 }
 
 /**
- * 地の文の段落。HTML の塊（`<details>` / `<div>`）の中は数えない（4文以上の段落の逃げ先が
- * `<details>` なので）。段落は空行か、地の文でない行で切れる。
+ * 地の文の段落。HTML の塊（`<details>` / `<div>`）の中は数えない（4文以上の段落の逃げ先が `<details>` なので）。
+ * 段落は空行か、地の文でない行で切れる。
  */
 function paragraphs(lines: readonly string[]): readonly string[] {
   const initial: {
@@ -418,8 +417,8 @@ function paragraphs(lines: readonly string[]): readonly string[] {
 }
 
 /**
- * 文の数。句点（`。` `！` `？`）で数え、句点で終わらない末尾も1文と数える。inline code と
- * 全角の丸括弧の中は数えない（括弧の中の句点で文を割らない）。
+ * 文の数。句点（`。` `！` `？`）で数え、句点で終わらない末尾も1文と数える。
+ * inline code と全角の丸括弧の中は数えない（括弧の中の句点で文を割らない）。
  */
 function sentenceCount(text: string): number {
   const plain = text
@@ -439,8 +438,8 @@ function isRaggedTable(block: ReportBlock): boolean {
 }
 
 /**
- * mermaid の図の種類（ソースの最初の語）。空行・`%%` の行（コメントと init の指定）と、先頭の
- * `---` で囲んだ設定は飛ばす。中身が空なら空文字（10種に無いので違反になる）。
+ * mermaid の図の種類（ソースの最初の語）。空行・`%%` の行（コメントと init の指定）と、先頭の `---` で囲んだ設定は飛ばす。
+ * 中身が空なら空文字（規約の種類に無いので違反になる）。
  */
 function mermaidKind(source: string): string {
   const lines = source.split("\n").map((line) => line.trim())

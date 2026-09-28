@@ -1,10 +1,6 @@
-// `git` を起こす口（`docs/requirements.md`「成果の振り返り」）。`main` の上のものを読む
-// 2つの境界が両方使うので、`node:child_process` を
-// 直に触るのはここだけに閉じ込める（`docs/architecture.md`「1ファイル = 1つの境界」。
-// 検査の「子プロセスを起こしてよい箇所」の許可はこのファイル）。
+// `git` を起こす口。`git` のために `node:child_process` を直に触るのはここだけ（検査の「子プロセスを起こしてよい箇所」の許可はこのファイル）。
 //
-// 例外を投げない（常駐プロセスは1回の失敗で落ちない。`docs/coding-standards.md`
-// 「エラーハンドリング」）。呼び出し側が「不明」にするか、その回を諦めるかを決める。
+// 例外を投げない。呼び出し側が「不明」にするか、その回を諦めるかを決める。
 
 import { execFile, spawn } from "node:child_process"
 
@@ -14,15 +10,16 @@ export const GIT_TIMEOUT_MS = 5000
 /** 受け取る標準出力の上限。超えると `git` の呼び出しごと失敗する。 */
 export const MAX_OUTPUT_BYTES = 16 * 1024 * 1024
 
-/** `git` 1回の結果。タイムアウトだけを分けるのは、その回を諦めるか「不明」にするかが
- * 呼び出し側で変わるため。 */
+/** `git` 1回の結果。タイムアウトだけを分けるのは、その回を諦めるか「不明」にするかが呼び出し側で変わるため。 */
 export type GitOutcome =
   | { readonly kind: "output"; readonly stdout: string }
   | { readonly kind: "failed" }
   | { readonly kind: "timed-out" }
 
-/** `git cat-file --batch` 1回の結果。`contents` は渡した順（`requests` と同じ長さ）で、読めなかった
- * 対象（存在しない blob）は `undefined`。 */
+/**
+ * `git cat-file --batch` 1回の結果。
+ * `contents` は渡した順（`requests` と同じ長さ）で、読めなかった対象（存在しない blob）は `undefined`。
+ */
 export type BatchOutcome =
   | { readonly kind: "output"; readonly contents: readonly (string | undefined)[] }
   | { readonly kind: "failed" }
@@ -48,11 +45,9 @@ export function runGit(cwd: string, args: readonly string[]): Promise<GitOutcome
 }
 
 /**
- * `git cat-file --batch` を1回起こし、`requests`（`<コミット>:<パス>` または blob の
- * sha そのものの並び）を渡した順に読む。バイト列として切り出す（`--batch` の1件は
- * `<sha> <type> <size>\n` の見出し行の次にちょうど `<size>` バイトの中身、そのあとに区切りの
- * 改行が1つ続く形なので、UTF-8 の文字数ではなくバイト数で進める）。例外を投げない
- * （失敗は `failed` / `timed-out`）。
+ * `git cat-file --batch` を1回起こし、`requests`（`<コミット>:<パス>` または blob の sha そのものの並び）を渡した順に読む。
+ * バイト列として切り出す。`--batch` の1件は `<sha> <type> <size>\n` の見出し行の次にちょうど `<size>` バイトの中身、そのあとに区切りの改行が1つ続く形なので、UTF-8 の文字数ではなくバイト数で進める。
+ * 例外を投げない（失敗は `failed` / `timed-out`）。
  */
 export function runGitCatFileBatch(
   cwd: string,

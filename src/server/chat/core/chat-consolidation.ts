@@ -1,20 +1,11 @@
-// 定着（`docs/chat-mode.md`「窓から溢れた会話は
-// 定着で畳む」）の指示文・依頼の文面の組み立て・出力の形（JSON Schema）・出力の検査・モデルと
-// 時間切れ。純関数と定数だけで、外の世界には触らない（`docs/architecture.md`「core → adapter は禁止」）。`query()` を起こすのは
-// `queryChatConsolidation`（`docs/architecture.md`「1ファイル = 1つの境界」）。
+// 定着の指示文・依頼の文面の組み立て・出力の形（JSON Schema）・出力の検査・モデルと時間切れ。
+// 純関数と定数だけで、`query()` は起こさない。
 //
-// 渡す文面（畳む行・前のあらすじ・直前のエピソードの見出し）も受け取る出力（エピソード・
-// あらすじ・話題の見出し）もすべて会話の内容に当たる。ここで組んだ文面も検査の結果も
-// ログにもファイルにも書かない（docs/coding-standards.md「会話内容の扱い」）。
+// 渡す文面（畳む行・前のあらすじ・直前のエピソードの見出し）も受け取る出力（エピソード・あらすじ・話題の見出し）もすべて会話の内容に当たる。
+// ここで組んだ文面も検査の結果もログにもファイルにも書かない。
 //
-// `<topics>` の組の書き方と取り出し方もここが持つ（組み替える前は `/compact` の文面と同じ
-// 「/compact」の文面と同じファイルにあったが、`/compact` をやめたのでこちらへ移した。
-// `docs/chat-mode.md`「記憶の圧縮と忘却」）。定着の出力からあらすじの本文へ組む側
-// （`chatSummaryWithTopics`）と、写しの本文から読み出す側（`chatTopics`）を
-// 同じファイルに置くのは、印の形（`<topics>` の組）を両側で1つに保つため。
-//
-// 呼び出し順と書く先は `ChatConsolidationWriter`、書く契機（雑談のターンの終わり・同時に1本）は
-// `startConsolidation` が持つ（ここでは決めない）。
+// `<topics>` の組の書き方と取り出し方もここが持つ。
+// あらすじの本文へ組む側（`chatSummaryWithTopics`）と読み出す側（`chatTopics`）を同じファイルに置くのは、印の形（`<topics>` の組）を両側で1つに保つため。
 
 import { isPlainObject } from "remeda"
 
@@ -24,7 +15,7 @@ import type {
   ChatUnconsolidatedEntry,
 } from "../../session-driver/core/session-driver.ts"
 
-/** サイドバーの「最近の話題」に出す見出しの件数の上限（`docs/screen-design.md`「雑談モードの画面」）。 */
+/** サイドバーの「最近の話題」に出す見出しの件数の上限。 */
 export const CHAT_TOPIC_LIMIT = 3
 
 /** 話題の見出しを挟む印。あらすじの本文の中で1行を占める前提で、行の中の位置は問わない。 */
@@ -37,14 +28,14 @@ const TOPICS_BLOCK = new RegExp(`${CHAT_TOPICS_OPEN}[\\s\\S]*?${CHAT_TOPICS_CLOS
 /** 見出しの行の頭に付いた箇条の印（`- ` `* ` `・` `1. `）。 */
 const LIST_MARKER = /^(?:[-*・•]|\d+[.)])\s*/u
 
-/** 定着を起こすモデル（軽いもの。値の根拠は `docs/chat-mode.md`「雑談モード」）。 */
+/** 定着を起こすモデル（軽いもの）。 */
 export const CHAT_CONSOLIDATION_MODEL = "haiku"
 
-/** 定着1回の時間切れ（ミリ秒。日記の問い合わせと同じ120秒。値の根拠は `docs/chat-mode.md`「雑談モード」）。 */
+/** 定着1回の時間切れ（ミリ秒）。 */
 export const CHAT_CONSOLIDATION_TIMEOUT_MS = 120_000
 
 /**
- * 出力の形の文字数・件数の上限（`docs/chat-mode.md`「窓から溢れた会話は定着で畳む」の「受け取る形」の表）。
+ * 出力の形の文字数・件数の上限（正典は `docs/chat-mode.md`「窓から溢れた会話は定着で畳む」の「受け取る形」の表）。
  * 足りなければここだけ直す。
  */
 export const CHAT_CONSOLIDATION_LIMITS = {
@@ -63,18 +54,18 @@ export const CHAT_CONSOLIDATION_LIMITS = {
   topicChars: 40,
 } satisfies Readonly<Record<string, number>>
 
-/** 逐語の1行の頭に置く話者の印（話者を短い日本語1語に置き換えるのは他所と同じ考え方）。 */
+/** 逐語の1行の頭に置く話者の印。 */
 const SPEAKER_LABEL = {
   user: "利用者",
   character: "あなた",
 } as const satisfies Record<ChatUnconsolidatedEntry["speaker"], string>
 
-/** 前のあらすじ・直前のエピソードの見出しが無いときの文面（空文字。`visitCast` の `toSide` と同じ）。 */
+/** 前のあらすじ・直前のエピソードの見出しが無い（空文字の）ときに置く文面。 */
 const NONE = "（なし）"
 
 /**
- * `query()` の `systemPrompt` をそのまま置き換える指示文。会話の中のキャラクターの口調は持たず、
- * 要約する役目だけを持つ（`docs/design.md`「起こし方」）。
+ * `query()` の `systemPrompt` をそのまま置き換える指示文。
+ * 会話の中のキャラクターの口調は持たず、要約する役目だけを持つ。
  */
 export const CHAT_CONSOLIDATION_INSTRUCTION = `あなたは、窓から溢れた雑談の会話を畳んで記憶にする役目だけを持つ。
 ここでの「あなた」は畳む側であり、渡された会話の中のキャラクター本人ではない。
@@ -165,15 +156,12 @@ export function chatConsolidationQuery(
 }
 
 /**
- * 受け取った `structured_output` を検査する（{@link parseVisitScript} と同じ形。丸ごと——
- * 1か所でも崩れていたら `undefined` で、行は未定着のまま残る側に倒す）。
+ * 受け取った `structured_output` を丸ごと検査する。
+ * 1か所でも崩れていたら `undefined` で、行は未定着のまま残る側に倒す。
  *
- * - 形: `episodes` が1件以上の配列で、各要素の `title` / `gist` / `cues` / `weight` が
- *   {@link CHAT_CONSOLIDATION_LIMITS} に収まる
- * - 区切り: `end` が前のエピソードより大きく、最後のエピソードの `end` が `lineCount` と一致
- *   （渡した行をすべて、切れ目なくどれかのエピソードに含めている）
- * - `synopsis` は文字列（空文字も許す）。`topics` は0〜{@link CHAT_CONSOLIDATION_LIMITS.topicsMax}件、
- *   各{@link CHAT_CONSOLIDATION_LIMITS.topicChars}字まで
+ * - 形: `episodes` が1件以上の配列で、各要素の `title` / `gist` / `cues` / `weight` が {@link CHAT_CONSOLIDATION_LIMITS} に収まる
+ * - 区切り: `end` が前のエピソードより大きく、最後のエピソードの `end` が `lineCount` と一致（渡した行をすべて、切れ目なくどれかのエピソードに含めている）
+ * - `synopsis` は文字列（空文字も許す）。`topics` は0〜{@link CHAT_CONSOLIDATION_LIMITS.topicsMax}件、各{@link CHAT_CONSOLIDATION_LIMITS.topicChars}字まで
  */
 export function parseChatConsolidationResult(
   value: unknown,
@@ -208,14 +196,10 @@ export function parseChatConsolidationResult(
 }
 
 /**
- * 行番号の区切り（{@link ChatConsolidationEpisode.end}）を、渡した行の {@link ChatUnconsolidatedEntry.at}
- * を使って {@link ChatEpisodeDraft.from} / `.to` に直す純関数（`docs/chat-mode.md`
- * 「区切りを行番号で返させる」）。
+ * 行番号の区切り（{@link ChatConsolidationEpisode.end}）を、渡した行の {@link ChatUnconsolidatedEntry.at} を使って {@link ChatEpisodeDraft.from} / `.to` に直す。
  *
- * {@link parseChatConsolidationResult} が `entries.length` を `lineCount` として検査を通した
- * `episodes` を渡す前提（区切りが切れ目なく `entries` を覆っている）。前提が崩れているときは
- * 変換できないエピソードを飛ばす（例外を投げない。`docs/architecture.md`「core → adapter は禁止」の純関数でも「壊れていたら作らない」の
- * 倒れ方は揃える）。
+ * {@link parseChatConsolidationResult} が `entries.length` を `lineCount` として検査を通した `episodes` を渡す前提（区切りが切れ目なく `entries` を覆っている）。
+ * 前提が崩れているときは、変換できないエピソードを飛ばす（例外を投げない）。
  */
 export function chatEpisodeDrafts(
   entries: readonly ChatUnconsolidatedEntry[],
@@ -243,8 +227,8 @@ export function chatEpisodeDrafts(
 }
 
 /**
- * 依頼の文面。畳む行を1始まりの行番号つきで並べ（日付が変わるところに見出しを挟む）、前のあらすじと
- * 直前のエピソードの見出しを続ける。
+ * 依頼の文面。
+ * 畳む行を1始まりの行番号つきで並べ（日付が変わるところに見出しを挟む）、前のあらすじと直前のエピソードの見出しを続ける。
  */
 function chatConsolidationPrompt(material: ChatConsolidationMaterial): string {
   return [
@@ -258,9 +242,8 @@ function chatConsolidationPrompt(material: ChatConsolidationMaterial): string {
 }
 
 /**
- * 畳む行を「n. 話者: 文面」の並びにする（1始まりの行番号）。日付が変わるところに
- * `### <日付>` の見出しを挟む（逐語を並べる側と同じ考え方。
- * 表情・画像の枚数・時刻は載せない）。
+ * 畳む行を「n. 話者: 文面」の並びにする（1始まりの行番号）。
+ * 日付が変わるところに `### <日付>` の見出しを挟む。表情・画像の枚数・時刻は載せない。
  */
 function numberedLines(entries: readonly ChatUnconsolidatedEntry[]): string {
   const lines: string[] = []
@@ -380,10 +363,7 @@ function toText(value: unknown, maxChars: number): string | undefined {
   return trimmed === "" || [...trimmed].length > maxChars ? undefined : trimmed
 }
 
-/**
- * `episodes` が `lineCount` 行を切れ目なく覆っているか（`end` が前のエピソードより大きく、
- * 最後の `end` が `lineCount` と一致）。
- */
+/** `episodes` が `lineCount` 行を切れ目なく覆っているか（`end` が前のエピソードより大きく、最後の `end` が `lineCount` と一致）。 */
 function coversLinesContiguously(
   episodes: readonly ChatConsolidationEpisode[],
   lineCount: number,
@@ -402,11 +382,10 @@ function coversLinesContiguously(
 }
 
 /**
- * あらすじの本文から最近の話題の見出しを取り出す（書かれた順＝新しい順のまま、
- * {@link CHAT_TOPIC_LIMIT} 件まで）。
+ * あらすじの本文から最近の話題の見出しを取り出す（書かれた順＝新しい順のまま、{@link CHAT_TOPIC_LIMIT} 件まで）。
  *
- * 最後の `<topics>` から、その後ろの最初の `</topics>` までを読む。 閉じが無い・印が無い
- * ときは何も出さない（途中で切れた節や、見出しを書かなかったあらすじから推し量って出さない）。
+ * 最後の `<topics>` から、その後ろの最初の `</topics>` までを読む。
+ * 閉じが無い・印が無いときは何も出さない（途中で切れた節や、見出しを書かなかったあらすじから推し量って出さない）。
  *
  * 中身の良し悪しは判定しない。箇条の印を落とし、空行を飛ばすだけ。
  */
@@ -431,9 +410,7 @@ export function chatTopics(summary: string): readonly string[] {
 }
 
 /**
- * パック1つぶんの写しを読み、最近の話題の見出しにして返す（写しがまだ無い・読めないときは
- * 空）。起こしたとき（配線）と、定着があらすじを書いたあと
- * （{@link chatConsolidationQuery} を使う `ChatConsolidationWriter`）の2か所から呼ばれる。
+ * パック1つぶんの写しを読み、最近の話題の見出しにして返す（写しがまだ無い・読めないときは空）。
  * 書いたあとの写しを読み直すので、画面に出る見出しは次に起こしたときと同じものになる。
  */
 export function readChatTopics(chatSummary: ChatSummary): readonly string[] {
@@ -441,10 +418,9 @@ export function readChatTopics(chatSummary: ChatSummary): readonly string[] {
 }
 
 /**
- * あらすじの本文のいちばん最後に、話題の見出しを {@link CHAT_TOPICS_OPEN} と
- * {@link CHAT_TOPICS_CLOSE} の行で挟んで置く（1行1件、`- ` で始める。`docs/design.md`
- * 「雑談の記憶の置き場」）。末尾に置くのは、上限で古いほう（先頭側）の行から
- * 落ちても組が先に落ちないため。見出しが0件でも組は置く（{@link chatTopics} が空を読む）。
+ * あらすじの本文のいちばん最後に、話題の見出しを {@link CHAT_TOPICS_OPEN} と {@link CHAT_TOPICS_CLOSE} の行で挟んで置く（1行1件、`- ` で始める）。
+ * 末尾に置くのは、上限で古いほう（先頭側）の行から落ちても組が先に落ちないため。
+ * 見出しが0件でも組は置く（{@link chatTopics} が空を読む）。
  */
 export function chatSummaryWithTopics(synopsis: string, topics: readonly string[]): string {
   const block = [CHAT_TOPICS_OPEN, ...topics.map((topic) => `- ${topic}`), CHAT_TOPICS_CLOSE]
@@ -453,9 +429,8 @@ export function chatSummaryWithTopics(synopsis: string, topics: readonly string[
 }
 
 /**
- * 写しの本文から話題の組（{@link CHAT_TOPICS_OPEN} から次の {@link CHAT_TOPICS_CLOSE} まで）を
- * すべて除いた、あらすじの地の文を返す（定着へ「前のあらすじ」として渡す。閉じの無い組は
- * 組と見なさず残す）。
+ * 写しの本文から話題の組（{@link CHAT_TOPICS_OPEN} から次の {@link CHAT_TOPICS_CLOSE} まで）をすべて除いた、あらすじの地の文を返す。
+ * 閉じの無い組は組と見なさず残す。
  */
 export function chatSynopsis(summary: string): string {
   return summary.replaceAll(TOPICS_BLOCK, "").trim()

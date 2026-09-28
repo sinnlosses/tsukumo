@@ -1,11 +1,8 @@
-// 見送った提案の識別子（`usageProposalKey`。`docs/glossary.md`「提案」）の一覧。見直しが
-// 次の段に入るたびにここを読み直し（`usage_review_stage` の戻り値に混ぜる）、結果の検査も
-// 同じ一覧を見る（`dismissedKeys`）。
+// 見送った提案の識別子（`usageProposalKey`）の一覧。
 //
-// 取り消す口は作らない（見本に無い）。取り消したくなったら、このファイルの `keys` から
-// 手で1件消す。
+// 取り消す口は作らない。取り消したくなったら、`~/.tsukumo/usage-review-dismissed.json` の `keys` から手で1件消す。
 //
-// ファイルに触るのはここだけ（`docs/architecture.md`「1ファイル = 1つの境界」）。置き場は `~/.tsukumo/usage-review-dismissed.json`。
+// ファイルに触るのはここだけ。置き場は `~/.tsukumo/usage-review-dismissed.json`。
 
 import { join } from "node:path"
 
@@ -30,11 +27,9 @@ export function dismissedUsageProposalPath(): string {
 }
 
 /**
- * 見送った識別子を読む。ファイルが無い・壊れている・版や形が違うときは空——一度も
- * 見送っていないのと同じ扱いになる（呼び出し側はこれをそのまま
- * `dismissedKeys()` として使う）。
+ * 見送った識別子を読む。ファイルが無い・壊れている・版や形が違うときは空（一度も見送っていないのと同じ扱い）。
  *
- * `path` は差し替えられる（既定は {@link dismissedUsageProposalPath}）。
+ * `path` の既定は {@link dismissedUsageProposalPath}。
  */
 export function readDismissedUsageProposalKeys(
   path: string = dismissedUsageProposalPath(),
@@ -44,8 +39,8 @@ export function readDismissedUsageProposalKeys(
 }
 
 /**
- * 識別子を1つ見送りに足す。すでに入っていれば増やさない（同じ札を重ねて見送っても
- * 1件のまま）。失敗しても例外を投げない。
+ * 識別子を1つ見送りに足す。すでに入っていれば増やさない（同じ札を重ねて見送っても1件のまま）。
+ * 失敗しても例外を投げない。
  */
 export function writeDismissedUsageProposalKey(
   key: string,

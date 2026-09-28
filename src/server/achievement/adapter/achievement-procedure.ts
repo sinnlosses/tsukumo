@@ -1,9 +1,7 @@
-// 成果の手続き（`docs/glossary.md`「手続き」）。形は `achievementContract`、束ねるのは配線。
-// 照合は束ねる側のミドルウェアが済ませている。
+// 成果の手続き。形は `achievementContract`。照合は束ねる側のミドルウェアが済ませている。
 //
-// `git` のタイムアウト・失敗を契約のエラー（`UNAVAILABLE`、503）に訳すのはここだけ（部分的な
-// 数を出さない）。`main` が読めないだけなら失敗にせず `{ kind: "unknown" }` をそのまま配る
-// （`ReadAchievementResult`）。
+// `git` のタイムアウト・失敗を契約のエラー（`UNAVAILABLE`、503）に訳すのはここだけで、部分的な数を出さない。
+// `main` が読めないだけなら失敗にせず `{ kind: "unknown" }` をそのまま配る。
 
 import { implement } from "@orpc/server"
 
@@ -14,8 +12,8 @@ import type { ReadAchievementResult, ReadCommitCalendarResult } from "./main-his
 /** この機能の手続きが使う口（中身は配線が渡す）。 */
 export type AchievementProcedurePorts = {
   /**
-   * 1日ぶんの成果（`readAchievement` と日記を束ねたもの）。「今日」を決めて
-   * 見る日を検証するのは配線で、ここは選び方をそのまま渡す。
+   * 1日ぶんの成果（`readAchievement` と日記を束ねたもの）。
+   * 「今日」を決めて見る日を検証するのは配線で、ここは選び方をそのまま渡す。
    */
   readonly readAchievementDay: (
     selection: AchievementDaySelection,

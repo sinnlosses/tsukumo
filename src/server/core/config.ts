@@ -1,32 +1,24 @@
-// 環境変数の解釈と、環境変数の名前の一覧（`docs/coding-standards.md`「外部の入力を読む場所を
-// 1つにする」。モジュールのトップレベルでは触らず、`readConfig` を
-// 呼んだときだけ読む）。値を読むのは呼び出し側の配線。
-//
-// 値の意味と既定は各名前の doc コメントが正典（利用者向けの一覧は `README.md`「環境変数」）。
-//
-// セッションの印（`sessionTag` / `readSessionMark`）は環境変数ではないので、目印を読み書きする
-// 持ち主に置く（続きから始めるセッションを選ぶ計算と
-// 同じ場所）。
+// 環境変数の解釈と、環境変数の名前の一覧。
+// 値の意味と既定は各名前の doc コメントが正典で、利用者向けの一覧は `README.md`「環境変数」。
+// セッションの印（`sessionTag` / `readSessionMark`）は環境変数ではないので、ここには置かない。
 
 /**
- * ビューを配るポート（既定は `DEFAULT_VIEW_PORT`）。既定のまま塞がっていれば +1 ずつ20個まで試し、
- * 明示したときはずらさない（`resolveViewPort`）。
+ * ビューを配るポート（既定は `DEFAULT_VIEW_PORT`）。
+ * 既定のまま塞がっていれば +1 ずつ20個まで試し、明示したときはずらさない（`resolveViewPort`）。
  */
 export const VIEW_PORT_ENV_NAME = "TSUKUMO_VIEW_PORT"
 /**
- * `TSUKUMO_VIEW_PORT` が未設定のときに使う既定ポートの起点を差し替える（既定は
- * {@link DEFAULT_VIEW_PORT}。読めない値は無視してそのまま {@link DEFAULT_VIEW_PORT} を使う
- * ——`TSUKUMO_VIEW_PORT` と違い、ここでは起動を止めない。{@link resolveViewPortFallbackBase}）。
- * `TSUKUMO_VIEW_PORT` を明示したときは効かない（既定を使うときだけの上書きのため）。
+ * `TSUKUMO_VIEW_PORT` が未設定のときに使う既定ポートの起点を差し替える（既定は `DEFAULT_VIEW_PORT`）。
+ * 読めない値は無視して既定を使い、`TSUKUMO_VIEW_PORT` と違って起動を止めない。
+ * `TSUKUMO_VIEW_PORT` を明示したときは効かない。
  *
- * 実際の既定ポート帯（`DEFAULT_VIEW_PORT`〜+19）はほかの tsukumo が普段使っているので、
- * そこを丸ごと塞いで「全部塞がっている」経路を確かめるテストはそこを
- * 使えない。この口で起点をテストごとの私的な帯へ逃がす。
+ * 実際の既定ポート帯（`DEFAULT_VIEW_PORT`〜+19）はほかの tsukumo が普段使っているので、そこを丸ごと塞いで「全部塞がっている」経路を確かめるテストはそこを使えない。
+ * この口で起点をテストごとの私的な帯へ逃がす。
  */
 export const VIEW_PORT_FALLBACK_BASE_ENV_NAME = "TSUKUMO_VIEW_PORT_FALLBACK_BASE"
 /**
- * キャラクターパック定義ディレクトリのパス（相対は cwd 相対、絶対はそのまま。既定は同梱の
- * `tsukumo-spirit`）。パスとしてだけ解き、パックの名前では指せない（`local` は `<cwd>/local`）。
+ * キャラクターパック定義ディレクトリのパス（相対は cwd 相対、絶対はそのまま。既定は同梱の `tsukumo-spirit`）。
+ * パスとしてだけ解き、パックの名前では指せない（`local` は `<cwd>/local`）。
  * 一覧は同梱・ホーム・起動先の `characters/local` を常に返すので、要るのはその外に置いたときだけ。
  */
 export const CHARACTER_ENV_NAME = "TSUKUMO_CHARACTER"
@@ -44,36 +36,27 @@ export const NEW_SESSION_ENV_NAME = "TSUKUMO_NEW_SESSION"
  */
 export const VISIT_QUICK_ENV_NAME = "TSUKUMO_VISIT_QUICK"
 /**
- * サーバの時計を凍らせる瞬間（ISO 8601 の瞬間。末尾に `Z` かオフセットが要る）。E2E が走らせる
- * たびに同じ成果物を得るための口（`docs/design.md`「E2E の成果物と再現」）。進まない
- * 時計になる。読むのは {@link readConfig} で、時計を作るのは `createServerClock`。
+ * サーバの時計を凍らせる瞬間（ISO 8601 の瞬間。末尾に `Z` かオフセットが要る）。
+ * E2E が走らせるたびに同じ成果物を得るための口で、進まない時計になる。
  */
 export const FIXED_CLOCK_ENV_NAME = "TSUKUMO_FIXED_CLOCK"
 /**
- * tsukumo が自分の持ち物を置くホームのパス（相対は cwd 相対、絶対はそのまま。`~` は展開しない。
- * 既定は `~/.tsukumo`）。渡すのは tsukumo を2つ並行させる人が明示するときだけで、
- * `TSUKUMO_VIEW_PORT` と揃えて分けないとホームは共有されたまま。名前はここに
- * 置くが、読むのは {@link readConfig} ではなく `tsukumoHomeDir`（理由は
- * そのファイルの冒頭。配線層から配る道が無い）。
+ * tsukumo が自分の持ち物を置くホームのパス（相対は cwd 相対、絶対はそのまま。`~` は展開しない。既定は `~/.tsukumo`）。
+ * 渡すのは tsukumo を2つ並行させる人が明示するときだけで、`TSUKUMO_VIEW_PORT` と揃えて分けないとホームは共有されたまま。
+ * 読むのは {@link readConfig} ではなく `tsukumoHomeDir`（配線層から配る道が無い）。
  */
 export const HOME_ENV_NAME = "TSUKUMO_HOME"
 
 /**
- * セッションの駆動の種類。`fake` は本物の claude を起こさず、疑似セッションどおりにイベントを
- * 流す（`readFakeSession`）。目視確認・Playwright 用（`docs/design.md`「テスト」）。
+ * セッションの駆動の種類。
+ * `fake` は本物の claude を起こさず、疑似セッションどおりにイベントを流す（`readFakeSession`）。
  */
 export type DriverKind = "sdk" | "fake"
 
 export type Config = {
-  /**
-   * `TSUKUMO_VIEW_PORT` の生の値。ここでは数として解釈しない（既定か明示かの区別と
-   * ずらす判断は `resolveViewPort` が持つ）。
-   */
+  /** `TSUKUMO_VIEW_PORT` の生の値。既定か明示かの区別とずらす判断は `resolveViewPort` が持つ。 */
   readonly rawViewPort: string | undefined
-  /**
-   * `TSUKUMO_VIEW_PORT_FALLBACK_BASE` の生の値。ここでは数として解釈しない
-   * （{@link resolveViewPortFallbackBase} が読み解く）。
-   */
+  /** `TSUKUMO_VIEW_PORT_FALLBACK_BASE` の生の値。読み解くのは `resolveViewPortFallbackBase`。 */
   readonly rawViewPortFallbackBase: string | undefined
   /** キャラクターの指定（未設定なら undefined ＝ 同梱の既定を使う）。 */
   readonly character: string | undefined
@@ -81,29 +64,23 @@ export type Config = {
   readonly driver: DriverKind
   /**
    * fake driver で名指しする場面（未設定なら undefined ＝ 依頼を受けるまで `opening` だけ）。
-   * 依頼を送らずに特定の画面を出すための口で、状態のカタログを撮るときに使う
-   * （`docs/architecture.md`「手で確かめること」）。`driver` が `sdk` のときは効かない。
+   * `driver` が `sdk` のときは効かない。
    */
   readonly fakeScene: string | undefined
   readonly newSession: boolean
-  /** 訪問のしきい値を縮めるか（{@link VISIT_QUICK_ENV_NAME}。既定は縮めない）。 */
   readonly quickVisit: boolean
-  /**
-   * 凍らせる瞬間（{@link FIXED_CLOCK_ENV_NAME}）。未設定・読めない値なら undefined ＝ 本物の時計。
-   */
+  /** 凍らせる瞬間。未設定・読めない値なら undefined ＝ 本物の時計。 */
   readonly fixedClock: Temporal.Instant | undefined
   /**
-   * 起こした環境変数の全部。claude の子プロセスへそのまま引き継ぐためのもので、tsukumo 自身は
-   * ここから読まない（読むのは上の各フィールド）。SDK の `env` は tsukumo 自身の環境と混ぜずに丸ごと
-   * 置き換えるので、足したい変数（`childProcessEnv` が足すもの）と一緒に渡す必要が
-   * あり、環境変数を読む場所を配線以外に増やさずに済ませるためにここで運ぶ。
+   * 起こした環境変数の全部。claude の子プロセスへそのまま引き継ぐためのもので、tsukumo 自身はここから読まない。
+   * SDK の `env` は tsukumo 自身の環境と混ぜずに丸ごと置き換えるので、足したい変数（`childProcessEnv` が足すもの）と一緒に渡す必要がある。
    */
   readonly inheritedEnv: Readonly<Record<string, string | undefined>>
 }
 
 /**
- * 環境変数を1回だけ読んで設定にする。不正な値でここでは落とさない（読めない値は既定へ
- * 倒し、ポート番号のように起動を止めるべきものだけを呼び出し側が判断する）。
+ * 環境変数を1回だけ読んで設定にする。不正な値でここでは落とさない。
+ * 読めない値は既定へ倒し、ポート番号のように起動を止めるべきものだけを呼び出し側が判断する。
  */
 export function readConfig(env: Readonly<Record<string, string | undefined>>): Config {
   return {

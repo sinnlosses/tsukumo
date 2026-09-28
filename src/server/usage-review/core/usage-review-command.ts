@@ -1,5 +1,4 @@
-// `usage-review` が受けるコマンドの表（`docs/design.md`「コマンドの受け手と手続きの置き方」）。
-// 手続き（`usageReviewProcedure`）がここの行へ委ねる。
+// `usage-review` が受けるコマンドの表。
 
 import type {
   UsageProposalDismissal,
@@ -11,9 +10,8 @@ import type { FeatureCommandTable } from "../../core/command-receiver.ts"
 
 export type UsageReviewCommandPorts = {
   /**
-   * トークン消費の画面の札から提案を1件見送り、流し直す `usage-proposal-dismissed` を返す
-   * （書き込み先は `writeDismissedUsageProposalKey`）。書き込みは
-   * 失敗しても投げない口なので、返すイベントは常に1つ。
+   * トークン消費の画面の札から提案を1件見送り、流し直す `usage-proposal-dismissed` を返す。
+   * 書き込みは失敗しても投げない口なので、返すイベントは常に1つ。
    */
   readonly dismissUsageProposal: (dismissal: UsageProposalDismissal) => SessionEvent
 }

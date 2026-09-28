@@ -7,7 +7,7 @@ import { runGitCatFileBatch } from "./git.ts"
 /** 方式の行を探す設定ファイル。この順で探す（`taskStoreOf`）。 */
 const CONFIG_FILE_PATHS = ["AGENTS.md", "CLAUDE.md"]
 
-/** {@link readTaskStoreAt} の結果。タイムアウトだけを分けるのは `GitOutcome` と同じ理由。 */
+/** {@link readTaskStoreAt} の結果。タイムアウトだけを分けるのは、その回を諦めるか「不明」にするかが呼び出し側で変わるため。 */
 export type TaskStoreOutcome =
   | { readonly kind: "read"; readonly store: TaskStore }
   | { readonly kind: "failed" }

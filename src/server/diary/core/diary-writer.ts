@@ -1,14 +1,10 @@
-// 振り返り1回ぶんの書き手（`docs/requirements.md`「日記」）。`createVisitScriptWriter` と
-// 同じ形: 材料を集め、会話とは別の使い捨ての `query()`（`queryDiary`）に
-// 書かせ、受け取ったものを「書けた／書けなかった」に畳む。
+// 振り返り1回ぶんの書き手。
+// 材料を集め、会話とは別の使い捨ての `query()` に書かせ、受け取ったものを「書けた／書けなかった」に畳む。
 //
-// 決して reject しない（起こせない・中断・時間切れはどれも「書けなかった」に落ちる。常駐
-// プロセスは振り返り1回の失敗で落ちない）。書けたときの `diary-written` は窓口
-// （`createDiaryIntake`）が流す——ここは、それが流れなかったときだけ `diary-failed` を
-// 流す（二重に流さない）。
+// 決して reject しない（起こせない・中断・時間切れはどれも「書けなかった」に落ちる）。
+// 書けたときの `diary-written` は窓口（`createDiaryIntake`）が流すので、ここはそれが流れなかったときだけ `diary-failed` を流す（二重に流さない）。
 //
-// 材料も日記も会話の内容に当たる。メモリにだけ持ち、ログにもファイルにも書かない
-// （docs/coding-standards.md「会話内容の扱い」）。
+// 材料も日記も会話の内容に当たる。ログには出さず、日記の段落を保存する口のほかへは書かない。
 
 import type { ExpressionChoice } from "../../../shared/character-pack/expression-choice.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
@@ -19,27 +15,26 @@ import {
   type SaveDiaryParagraph,
 } from "./diary-tool.ts"
 
-/** 120 秒で諦める（仮。`docs/requirements.md`「会話から切り離す」）。 */
+/** 120 秒で諦める（仮）。 */
 const DIARY_WRITE_TIMEOUT_MS = 120_000
 
 /** 日記を書く役目の短い指示（人格のあとに続ける）。 */
 const DIARY_WRITER_INSTRUCTION =
   "あなたはいま、成果の振り返りの日記を書く役目だけを持つ。diary ツールを1回呼んだら終わり。ほかの文は書かない。"
 
-/** 振り返り1回ぶんの材料（`session-manager` が数え直した結果から組む）。 */
+/** 振り返り1回ぶんの材料。 */
 export type DiaryWriteRequest = {
   readonly date: string
   readonly doneTasks: readonly DiaryDayTask[]
-  /** 依頼文（`achievementReflectionRequestText`）。 */
+  /** 依頼文。 */
   readonly requestText: string
-  /** 会話のいまのモデル（`SessionState.model`。分からなければ呼び出し側が既定へ畳む）。 */
+  /** 会話のいまのモデル（分からなければ呼び出し側が既定へ畳んで渡す）。 */
   readonly model: string
 }
 
 /**
- * 書く時点のパックと環境（`docs/requirements.md`「会話から切り離す」）。
- * 呼ぶたびに読み直す——キャラクターを切り替えたあとの振り返りは、切り替えたあとのパックで
- * 書く。
+ * 書く時点のパックと環境。
+ * 呼ぶたびに読み直す（キャラクターを切り替えたあとの振り返りは、切り替えたあとのパックで書く）。
  */
 export type DiaryWriterContext = {
   /** 人格（`persona.md` の全文。雑談で覚えたことの節も含む）。無ければ空文字列。 */
@@ -74,14 +69,11 @@ export type DiaryWriterSource =
 export type DiaryWriterPorts = {
   /** 書いた時刻（エポックミリ秒）。 */
   readonly now: () => number
-  /** 1段落を保存する口（`appendDiaryParagraph`）。 */
+  /** 1段落を保存する口。 */
   readonly save: SaveDiaryParagraph
-  /**
-   * 書く時点のパックと環境。まだ1回もパックが決まっていなければ undefined（起こったことが
-   * 無い想定だが、念のため「書けなかった」に畳む）。
-   */
+  /** 書く時点のパックと環境。まだ1回もパックが決まっていなければ undefined（「書けなかった」に畳む）。 */
   readonly readContext: () => DiaryWriterContext | undefined
-  /** 使い捨ての `query()`（`queryDiary`）。 */
+  /** 使い捨ての `query()`。 */
   readonly query: (
     request: {
       readonly systemPrompt: string
@@ -97,11 +89,7 @@ export type DiaryWriterPorts = {
   ) => Promise<void>
 }
 
-/**
- * {@link DiaryWriter} を1つ作る。呼ぶたびに窓口（`DiaryIntake`）を1つ作る——窓口が
- * 「いま書く日」を覚えたり忘れたりしない（`docs/requirements.md`
- * 「振り返りの依頼」）。
- */
+/** {@link DiaryWriter} を1つ作る。呼ぶたびに窓口（`DiaryIntake`）を1つ作る（窓口が「いま書く日」を覚えたり忘れたりしない）。 */
 export function createDiaryWriter(ports: DiaryWriterPorts): DiaryWriter {
   return async (request, onEvent, callerSignal) => {
     const context = ports.readContext()
@@ -152,9 +140,8 @@ export function createDiaryWriter(ports: DiaryWriterPorts): DiaryWriter {
 }
 
 /**
- * `systemPrompt` を文字列で丸ごと置き換える（Claude Code の既定の指示文も CLAUDE.md も
- * 載らない。`docs/requirements.md`「会話から切り離す」）。人格が空の
- * パックは、書く役目の指示だけで起こす。
+ * `systemPrompt` を文字列で丸ごと置き換える（Claude Code の既定の指示文も CLAUDE.md も載らない）。
+ * 人格が空のパックは、書く役目の指示だけで起こす。
  */
 function diarySystemPrompt(persona: string): string {
   return [persona, DIARY_WRITER_INSTRUCTION].filter((part) => part.trim() !== "").join("\n\n")

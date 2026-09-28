@@ -1,14 +1,10 @@
-// コンテキストの内訳を記録に残すときの書き口の契約（トークン使用量の記録と
-// 同じ切り分け）と、セッション1つにつき1行だけ書く係（`ContextUsageRecorder`）。
-// 実際に書くのは `createContextUsageLog`、
-// いつ呼ぶか（ターンが終わるたび）を決めるのは `receive`。
+// コンテキストの内訳を記録に残すときの書き口の契約と、セッション1つにつき1行だけ書く係（`ContextUsageRecorder`）。
 //
-// この係は駆動の世代をまたいで持つ — 続きから起こして同じセッションIDになったときは同じ
-// セッションなので、2行目を書かない（世代ごとの持ち物には入れない）。
+// この係は駆動の世代をまたいで持つ（世代ごとの持ち物には入れない）。
+// 続きから起こして同じセッションIDになったときは同じセッションなので、2行目を書かない。
 //
-// 数と名前しか通らない。 会話の文面・ツールの引数と結果は `ContextUsageEntry` に口が
-// 無く、書いてよいものの線は `ContextUsageRecord` が引いている
-// （`docs/coding-standards.md`「会話内容の扱い」）。
+// 数と名前しか通らない。
+// 会話の文面・ツールの引数と結果は `ContextUsageEntry` に口が無く、書いてよいものの線は `ContextUsageRecord` が引いている。
 
 import {
   type ContextUsage,
@@ -20,9 +16,8 @@ import type { TokenUsageMode } from "../../../shared/token-usage/token-usage.ts"
 import type { SessionDriver } from "../../session-driver/core/session-driver.ts"
 
 /**
- * 1セッションぶんの記録（書き出す行そのものではない）。`at` はエポックミリ秒で、
- * ISO 8601 への変換と日付ごとのファイルの選択は `adapter` 側の仕事（`TokenUsageEntry` と
- * 同じ切り分け）。
+ * 1セッションぶんの記録（書き出す行そのものではない）。
+ * `at` はエポックミリ秒で、ISO 8601 への変換と日付ごとのファイルの選択は `adapter` 側の仕事。
  */
 export type ContextUsageEntry = {
   readonly at: number
@@ -33,11 +28,9 @@ export type ContextUsageEntry = {
 }
 
 /**
- * コンテキストの内訳の書き込み口。読み口は持たない — この記録を読むのは tsukumo の外
- * （過去にさかのぼる分析）で、プロセスの中で読み戻す相手がいない。
- *
- * 書けなくても例外を投げない（常駐プロセスは1回の失敗で落ちない。
- * `docs/coding-standards.md`「エラーハンドリング」）ので、受け付けたかどうかは返さない。
+ * コンテキストの内訳の書き込み口。
+ * 読み口は持たない（この記録を読むのは tsukumo の外で、プロセスの中で読み戻す相手がいない）。
+ * 書けなくても例外を投げず、受け付けたかどうかは返さない。
  */
 export type ContextUsageLog = {
   readonly append: (entry: ContextUsageEntry) => void
@@ -45,28 +38,23 @@ export type ContextUsageLog = {
 
 /**
  * そのセッションのコンテキストの内訳を記録に残す係（セッション1つにつき1回だけ）。
- * ターンごとに残さないのは、内訳のうちメッセージ以外がセッションの中でほぼ変わらないから
- * （書いてよいものの線を引く側と同じ切り分け）。
+ * ターンごとに残さないのは、内訳のうちメッセージ以外がセッションの中でほぼ変わらないから。
  */
 export type ContextUsageRecorder = {
   /**
    * ターンが終わるたびに呼ばれ、まだ書いていないセッションIDのときだけ問い合わせる。
-   * 取れなかったら印を戻して次のターンでまた試す（諦めない——1回の取りこぼしでその
-   * セッションぶんが永久に欠けるのに対し、あとのターンで取ってもほぼ同じ値になる）。
-   * 問い合わせは待たされる口なので、先に印を立てて二重に走らせない（同じセッションで
-   * 次のターンが先に終わっても、問い合わせは1本だけ）。
+   * 取れなかったら印を戻して次のターンでまた試す（あとのターンで取ってもほぼ同じ値になる）。
+   * 問い合わせは待たされる口なので、先に印を立てて二重に走らせない（同じセッションで次のターンが先に終わっても、問い合わせは1本だけ）。
    *
-   * claude 側のセッションIDが分からないうちは何もしない（行だけで「どのセッションか」が
-   * 決まらない記録を積まないため。次のターンで揃う）。駆動がまだ無いときに呼ばないのは
-   * 呼ぶ側の仕事。
+   * claude 側のセッションIDが分からないうちは何もしない（行だけで「どのセッションか」が決まらない記録を積まないため）。
+   * 呼ぶ側は起き上がっている駆動を渡す。
    */
   readonly recordOnce: (state: SessionState, at: number, driver: SessionDriver) => Promise<void>
 }
 
 /** {@link ContextUsageRecorder} を1つ起こす（世代をまたいで持ち回る）。 */
 export function createContextUsageRecorder(log: ContextUsageLog): ContextUsageRecorder {
-  // 内訳を記録に残した claude 側のセッションID。このIDのあいだは二度と書かない
-  // （1行 = 1セッション）。IDが変われば比較で弾かれる。
+  // 内訳を記録に残した claude 側のセッションID。このIDのあいだは二度と書かない（1行 = 1セッション）。
   let recordedSessionId: string | undefined = undefined
 
   return {
@@ -90,11 +78,8 @@ export function createContextUsageRecorder(log: ContextUsageLog): ContextUsageRe
 }
 
 /**
- * 起き上がっている駆動に、いまのコンテキストの内訳を問い合わせる。投げてきた回は「取れない」に
- * 畳む（常駐プロセスは落とさない）。
- *
- * `SessionManager.readContextUsage` のほうは駆動が起き上がるのを待つところから面倒を見るので、
- * こちらとは畳む範囲が違う（記録を残す側は、起き上がっている駆動しか相手にしない）。
+ * 起き上がっている駆動に、いまのコンテキストの内訳を問い合わせる。投げてきた回は「取れない」に畳む。
+ * 駆動が起き上がるのを待たない（記録を残す側は、起き上がっている駆動しか相手にしない）。
  */
 async function readDriverContextUsage(driver: SessionDriver): Promise<ContextUsageReport> {
   try {
