@@ -33,7 +33,7 @@ describe("PendingAnswer", () => {
     expect(renderPendingAnswer([]).innerHTML).toBe("")
   })
 
-  it("(7) 許可要求で「許可」「拒否」が answer を dispatch する", () => {
+  it("許可要求のツール名を出し、「許可」「拒否」のボタンがそれぞれ answer を送る", () => {
     const calls: unknown[] = []
     renderPendingAnswer(
       [{ kind: "permission", id: "ask-1", toolName: "Bash", input: { command: "echo dummy" } }],
@@ -42,19 +42,11 @@ describe("PendingAnswer", () => {
 
     expect(screen.getByText("Bash")).toBeDefined()
     fireEvent.click(screen.getByText("許可"))
-
-    expect(calls).toEqual([{ procedure: "session.answer", id: "ask-1", answer: { kind: "allow" } }])
-  })
-
-  it("拒否ボタンも同じ経路で answer を dispatch する", () => {
-    const calls: unknown[] = []
-    renderPendingAnswer(
-      [{ kind: "permission", id: "ask-1", toolName: "Bash", input: {} }],
-      (command) => calls.push(command),
-    )
-
     fireEvent.click(screen.getByText("拒否"))
 
-    expect(calls).toEqual([{ procedure: "session.answer", id: "ask-1", answer: { kind: "deny" } }])
+    expect(calls).toEqual([
+      { procedure: "session.answer", id: "ask-1", answer: { kind: "allow" } },
+      { procedure: "session.answer", id: "ask-1", answer: { kind: "deny" } },
+    ])
   })
 })

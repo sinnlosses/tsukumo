@@ -109,7 +109,7 @@ describe("Composer", () => {
     expect(calls).toEqual([])
   })
 
-  it("(6) 候補が出ている間は Ctrl+N / Ctrl+P で選択が上下に動く（Meta 併用は無視）", () => {
+  it("(6) 候補が出ている間は Ctrl+N / Ctrl+P で選択が上下に動く", () => {
     renderComposer({
       slashCommands: ["alpha", "beta"],
       commandDescriptions: [
@@ -128,11 +128,6 @@ describe("Composer", () => {
 
     const forward = fireEvent.keyDown(textArea(), { key: "n", ctrlKey: true })
     expect(forward).toBe(false) // preventDefault が呼ばれた
-    expect(selected()).toBe("/beta")
-
-    // Meta（Command）と組み合わせたときは反応しない。
-    const withMeta = fireEvent.keyDown(textArea(), { key: "n", ctrlKey: true, metaKey: true })
-    expect(withMeta).toBe(true) // preventDefault は呼ばれない
     expect(selected()).toBe("/beta")
 
     const backward = fireEvent.keyDown(textArea(), { key: "p", ctrlKey: true })

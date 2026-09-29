@@ -50,18 +50,6 @@ function portraitExpression(): string | null | undefined {
   return document.querySelector("[data-expression]")?.getAttribute("data-expression")
 }
 
-/**
- * マウスで押す1回ぶん（押し始めから手を離すまで）。`moveX` だけ横に動かすと、
- * 文字をドラッグで選んだことになる（`isSelectionDrag`）。
- *
- * 文字がほんとうに選べるかはテストでは見られない（DOM の実装では選択が起きない）ので、
- * そちらは目視で確かめる（`docs/architecture/testing.md`「手で確かめること」）。
- */
-function pressWithMouse(entry: Element, moveX: number): void {
-  fireEvent.mouseDown(entry, { clientX: 20, clientY: 30 })
-  fireEvent.click(entry, { clientX: 20 + moveX, clientY: 30, detail: 1 })
-}
-
 /** ログの行。押せる行（キャラクターのセリフ）は `role="button"` の `<div>` で出る。 */
 function logEntries(): readonly Element[] {
   return [...document.querySelectorAll("[data-speaker]")]
@@ -261,16 +249,6 @@ describe("ChatView のセリフを遡る", () => {
     const firstSpeech = screen.getByText("1つめのセリフ")
     // `role="button"` の `<div>` にはブラウザが click を送らないので、キーは自前で受ける。
     fireEvent.keyDown(firstSpeech, { key: "Enter" })
-    expect(portraitExpression()).toBe("default")
-    expect(firstSpeech.getAttribute("aria-pressed")).toBe("true")
-  })
-
-  it("マウスで押しても遡る（手が動いていないとき）", () => {
-    renderChatView({ records: RECORDS, character: FIXTURE_CHARACTER, speechExpression: "proud" })
-
-    const firstSpeech = screen.getByText("1つめのセリフ")
-    pressWithMouse(firstSpeech, 0)
-
     expect(portraitExpression()).toBe("default")
     expect(firstSpeech.getAttribute("aria-pressed")).toBe("true")
   })

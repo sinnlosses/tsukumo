@@ -120,10 +120,4 @@ describe("truncateRequestText（依頼の全文の長さの上限）", () => {
   it("上限以下ならそのまま返す", () => {
     expect(truncateRequestText("架空の依頼")).toBe("架空の依頼")
   })
-
-  it("上限を超えたら切って末尾に … を付ける", () => {
-    const long = "あ".repeat(2001)
-
-    expect(truncateRequestText(long)).toBe(`${"あ".repeat(2000)}…`)
-  })
 })

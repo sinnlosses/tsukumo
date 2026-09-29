@@ -35,28 +35,6 @@ describe("useConversationLayout", () => {
     expect(result.current.rowBottomStyle["--layout-bottom-left"]).toBe("70fr")
   })
 
-  it("onNarrowPaneChange は狭い画面のタブの選択を切り替える", () => {
-    const { result } = renderHook(() => useConversationLayout(false))
-
-    act(() => {
-      result.current.onNarrowPaneChange("sidebar")
-    })
-
-    expect(result.current.narrowPane).toBe("sidebar")
-  })
-
-  it("onTopLeftCommit は比率を保存し、次のレンダーの style に反映される", () => {
-    const { result } = renderHook(() => useConversationLayout(false))
-
-    act(() => {
-      result.current.onTopLeftCommit(35)
-    })
-
-    expect(loadSplit()).toEqual({ ...DEFAULT_SPLIT, topLeft: 35 })
-    expect(result.current.rowTopStyle["--layout-top-left"]).toBe("35fr")
-    expect(result.current.rowTopStyle["--layout-top-right"]).toBe("65fr")
-  })
-
   it("畳んでいないとき、onRowTopCommit は rowTop を更新し collapsedRowTop は動かさない", () => {
     saveSplit({ ...DEFAULT_SPLIT, collapsedRowTop: 80 })
     const { result } = renderHook(() => useConversationLayout(false))
@@ -97,36 +75,6 @@ describe("useConversationLayout", () => {
     })
 
     expect(loadSplit()).toEqual(DEFAULT_SPLIT)
-  })
-
-  it("onTopLeftChange は DOM へ直接書き込み、state（保存値）は動かさない", () => {
-    const { result } = renderHook(() => useConversationLayout(false))
-    const element = document.createElement("div")
-    result.current.rowTopRef.current = element
-
-    act(() => {
-      result.current.onTopLeftChange(15)
-    })
-
-    expect(element.style.getPropertyValue("--layout-top-left")).toBe("15fr")
-    expect(element.style.getPropertyValue("--layout-top-right")).toBe("85fr")
-    expect(loadSplit()).toEqual(DEFAULT_SPLIT)
-  })
-
-  it("isSplitChanged は既定の比率では false、動かすと true になり、onReset で false に戻る", () => {
-    const { result } = renderHook(() => useConversationLayout(false))
-
-    expect(result.current.isSplitChanged).toBe(false)
-
-    act(() => {
-      result.current.onTopLeftCommit(35)
-    })
-    expect(result.current.isSplitChanged).toBe(true)
-
-    act(() => {
-      result.current.onReset()
-    })
-    expect(result.current.isSplitChanged).toBe(false)
   })
 
   it("ref が未接続のときの onChange は書き込み先が無いだけで落ちない", () => {

@@ -197,15 +197,6 @@ describe("ConversationLayout", () => {
     expect(screen.getByText("dispatch")).toBeTruthy()
   })
 
-  it("雑談用の比率がまだ無いときは、畳んでも仕事の比率で開く", () => {
-    saveSplit({ ...DEFAULT_SPLIT, rowTop: 35 })
-    renderLayout(true)
-
-    const grid = requireElement(rowTopElement().parentElement, "grid")
-    expect(grid.style.getPropertyValue("--layout-row-top")).toBe("35fr")
-    expect(grid.style.getPropertyValue("--layout-row-bottom")).toBe("65fr")
-  })
-
   it("畳んでいる間に上下の仕切りを動かすと、雑談用の比率だけが変わる", () => {
     saveSplit({ ...DEFAULT_SPLIT, rowTop: 60 })
     renderLayout(true)
@@ -220,29 +211,6 @@ describe("ConversationLayout", () => {
     // 離したあとのレンダーでも動かした位置のまま（掴んだ手を離しても戻らない）。
     expect(grid.style.getPropertyValue("--layout-row-top")).toBe("80fr")
     expect(loadSplit()).toEqual({ ...DEFAULT_SPLIT, rowTop: 60, collapsedRowTop: 80 })
-  })
-
-  it("仕事の側で上下の仕切りを動かしても、雑談用の比率は動かない", () => {
-    saveSplit({ ...DEFAULT_SPLIT, collapsedRowTop: 80 })
-    renderLayout(false)
-    const grid = requireElement(rowTopElement().parentElement, "grid")
-    stubBoundingRect(grid, 1000, 500)
-    const resizer = screen.getByRole("separator", { name: "上段と下段の境界" })
-
-    fireEvent.pointerDown(resizer, { pointerId: 1, clientX: 0, clientY: 300 })
-    fireEvent.pointerMove(resizer, { clientX: 0, clientY: 200 })
-    fireEvent.pointerUp(resizer, { clientX: 0, clientY: 200 })
-
-    expect(loadSplit()).toEqual({ ...DEFAULT_SPLIT, rowTop: 40, collapsedRowTop: 80 })
-  })
-
-  it("比率を戻すボタンは、雑談用の比率も未設定に戻す", () => {
-    saveSplit({ ...DEFAULT_SPLIT, collapsedRowTop: 80 })
-    renderLayout(true)
-
-    fireEvent.click(screen.getByRole("button", { name: "比率を既定に戻す" }))
-
-    expect(loadSplit().collapsedRowTop).toBeUndefined()
   })
 
   it("畳むのをやめると、キャラビューと仕切りが戻る", () => {

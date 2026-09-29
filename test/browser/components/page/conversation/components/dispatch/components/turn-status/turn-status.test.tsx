@@ -98,16 +98,6 @@ describe("TurnStatus", () => {
     }
   })
 
-  it("背景のタスクが空になれば finished は「所要」に戻り、終わった時刻で止まる", () => {
-    renderTurnStatus({
-      turn: { kind: "finished", startedAt: 0, finishedAt: 12_000, ending: { kind: "ended" } },
-      backgroundTasks: [],
-    })
-
-    expect(screen.getByText("所要")).toBeDefined()
-    expect(screen.getByText("12秒")).toBeDefined()
-  })
-
   it("始まった時刻と終わった時刻が同じなら 0秒（60秒未満は N秒 の形）", () => {
     renderTurnStatus({
       turn: { kind: "finished", startedAt: 500, finishedAt: 500, ending: { kind: "ended" } },

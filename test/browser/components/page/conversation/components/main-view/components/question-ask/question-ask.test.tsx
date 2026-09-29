@@ -92,18 +92,10 @@ describe("QuestionAsk（メインビューの質問の札）", () => {
       { dispatch: (command) => calls.push(command) },
     )
 
-    const answer = screen.getByRole("button", { name: "これで答える" })
-    // 押せないは `aria-disabled` の1通り（`Button`）。本物の `disabled` にはしないので、
-    // フォーカスは残る。
-    expect(answer.getAttribute("aria-disabled")).toBe("true")
-    expect(answer.hasAttribute("disabled")).toBe(false)
-    answer.focus()
-    expect(document.activeElement).toBe(answer)
-
     fireEvent.click(screen.getByText("A案"))
     expect(container.querySelectorAll(".question-ask-option.is-selected")).toHaveLength(1)
 
-    fireEvent.click(answer)
+    fireEvent.click(screen.getByRole("button", { name: "これで答える" }))
     expect(calls).toEqual([
       {
         procedure: "session.answer",

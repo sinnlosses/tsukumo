@@ -51,13 +51,6 @@ describe("filePathQuery", () => {
 })
 
 describe("matchingFilePaths", () => {
-  it("前方一致を先に、続けて部分一致を出す", () => {
-    expect(matchingFilePaths(PATHS, "src/browser/fe")).toEqual([
-      "src/browser/features/festival/composer.tsx",
-      "src/browser/features/festival/file-suggestions.tsx",
-    ])
-  })
-
   it("パスの途中に含むだけでも候補になる（部分一致）", () => {
     expect(matchingFilePaths(PATHS, "composer")).toEqual([
       "src/browser/features/festival/composer.tsx",

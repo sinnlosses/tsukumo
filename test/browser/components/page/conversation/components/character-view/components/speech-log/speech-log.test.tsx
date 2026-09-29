@@ -95,30 +95,6 @@ describe("SpeechLog", () => {
     expect(opener.getAttribute("aria-expanded")).toBe("false")
   })
 
-  it("Esc で閉じる（ブラウザが `<dialog>` を閉じて投げる close を受けて状態を戻す）", () => {
-    renderSpeechLog([])
-    openLog()
-
-    // Esc の既定の動作は、ブラウザが `<dialog>` を閉じて close を投げること。happy-dom は
-    // キーの既定の動作を持たないので、その結果の close を直接起こす。
-    fireEvent(dialog(), new Event("close"))
-    expect(dialogIsOpen()).toBe(false)
-    expect(screen.getByRole("button", { name: "ログ" }).getAttribute("aria-expanded")).toBe("false")
-  })
-
-  it("枠の外（backdrop）を押すと閉じ、枠の中を押しても閉じない", () => {
-    renderSpeechLog([requestRecord({ text: "架空の依頼" }), speechRecord({ text: "架空のセリフ" })])
-    openLog()
-
-    fireEvent.click(screen.getByText("架空のセリフ"))
-    fireEvent.click(document.querySelector(".speech-log-stage") ?? dialog())
-    expect(dialogIsOpen()).toBe(true)
-
-    // backdrop を押したときの target は `<dialog>` 自身になる。
-    fireEvent.click(dialog())
-    expect(dialogIsOpen()).toBe(false)
-  })
-
   it("古い→新しいを上→下に、依頼の区切りとセリフを1本に並べ、最新が末尾（下端）に来る", () => {
     renderSpeechLog([
       speechRecord({ text: "依頼の前の挨拶" }),

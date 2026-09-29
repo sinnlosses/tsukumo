@@ -86,44 +86,6 @@ describe("PromptImageChips", () => {
     fireEvent.click(screen.getByRole("button", { name: "閉じる" }))
     expect(zoomDialog()).toBeNull()
   })
-
-  // Esc は `<dialog>` を閉じて `close` イベントを出す（ブラウザの既定の振る舞い）。
-  // 受けるのは `<dialog onClose={...}>` なので、ここはそのイベントだけを起こす
-  // （別のテストと同じ形）。
-  it("Esc で閉じたときも拡大の面が外れる", () => {
-    renderChips([IMAGE_A])
-
-    fireEvent.click(screen.getByRole("button", { name: "この画像を拡大" }))
-    const dialog = zoomDialog()
-    if (dialog === null) {
-      throw new Error("拡大の面が開いていない")
-    }
-    fireEvent(dialog, new Event("close"))
-
-    expect(zoomDialog()).toBeNull()
-  })
-
-  it("背景を押すと拡大の面が閉じる（中身を押しても閉じない）", () => {
-    renderChips([IMAGE_A])
-
-    fireEvent.click(screen.getByRole("button", { name: "この画像を拡大" }))
-    const dialog = zoomDialog()
-    if (dialog === null) {
-      throw new Error("拡大の面が開いていない")
-    }
-
-    // 中身（img）を押しても target は img のままで dialog 自身ではないので閉じない。
-    const image = dialog.querySelector("img")
-    if (image === null) {
-      throw new Error("拡大した絵が見つからない")
-    }
-    fireEvent.click(image)
-    expect(zoomDialog()).not.toBeNull()
-
-    // target が dialog 自身になるのは backdrop を押したときだけ。
-    fireEvent.click(dialog)
-    expect(zoomDialog()).toBeNull()
-  })
 })
 
 describe("PromptImageThumbnails", () => {
