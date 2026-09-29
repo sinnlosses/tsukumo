@@ -14,6 +14,8 @@ export default defineConfig({
     setupFiles: ["./test/dom-environment.ts"],
     exclude: ["**/node_modules/**", "test/e2e/**"],
     env: { TZ: "UTC" },
-    maxWorkers: "30%",
+    maxWorkers: "40%",
+    // E2E の段と並べて走らせるので、bundle の組み立てを含むテストが5秒の既定に収まらない。
+    testTimeout: 15_000,
   },
 })
