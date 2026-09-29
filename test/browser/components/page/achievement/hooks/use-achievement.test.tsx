@@ -200,28 +200,30 @@ describe("useAchievement（振り返りのボタン）", () => {
     expect(window.location.hash.startsWith("#achievement")).toBe(false)
   })
 
-  it("会話のターンが進行中でも押せる（振り返りは会話とは別の使い捨ての問い合わせ）", async () => {
-    stubAchievementFetch(() => rpcOutput(KNOWN_TODAY))
-    const spy: CommandSpy = (command) => sent.push(command)
-    const sent: unknown[] = []
-    const { result } = renderHook(() => useAchievement(), {
-      wrapper: achievementWrapper(
-        createTestQueryClient(),
-        stateWith({ turn: { kind: "running", startedAt: 0 } }),
-        spy,
-      ),
-    })
-    await waitFor(() => {
-      expect(result.current.view.kind).toBe("ready")
-    })
-    expect(result.current.review.availability).toEqual({ kind: "available" })
+  it.each([
+    ["会話のターンが進行中", { turn: { kind: "running", startedAt: 0 } }],
+    ["雑談中", { chatMode: true }],
+  ] satisfies readonly (readonly [string, Partial<SessionState>])[])(
+    "%sでも押せる（振り返りは会話とは別の使い捨ての問い合わせ）",
+    async (_name, state) => {
+      stubAchievementFetch(() => rpcOutput(KNOWN_TODAY))
+      const spy: CommandSpy = (command) => sent.push(command)
+      const sent: unknown[] = []
+      const { result } = renderHook(() => useAchievement(), {
+        wrapper: achievementWrapper(createTestQueryClient(), stateWith(state), spy),
+      })
+      await waitFor(() => {
+        expect(result.current.view.kind).toBe("ready")
+      })
+      expect(result.current.review.availability).toEqual({ kind: "available" })
 
-    act(() => {
-      result.current.review.onReview()
-    })
+      act(() => {
+        result.current.review.onReview()
+      })
 
-    expect(sent).toEqual([{ procedure: "session.reflectAchievement", date: "2026-09-24" }])
-  })
+      expect(sent).toEqual([{ procedure: "session.reflectAchievement", date: "2026-09-24" }])
+    },
+  )
 
   it("ほかの日の日記を書いている最中は押せず、押しても送らない", async () => {
     stubAchievementFetch(() => rpcOutput(KNOWN_TODAY))
@@ -284,18 +286,6 @@ describe("useAchievement（振り返りのボタン）", () => {
     })
 
     expect(sent).toHaveLength(0)
-  })
-
-  it("雑談中でも押せる", async () => {
-    stubAchievementFetch(() => rpcOutput(KNOWN_TODAY))
-    const { result } = renderHook(() => useAchievement(), {
-      wrapper: achievementWrapper(createTestQueryClient(), stateWith({ chatMode: true })),
-    })
-    await waitFor(() => {
-      expect(result.current.view.kind).toBe("ready")
-    })
-
-    expect(result.current.review.availability).toEqual({ kind: "available" })
   })
 
   it("キャラクターの名前を持たないときは既定の名前でボタンの文言を組む", async () => {

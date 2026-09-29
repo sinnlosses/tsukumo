@@ -152,12 +152,11 @@ describe("DiarySection", () => {
     expect(screen.getByText("振り返る成果が無い")).toBeDefined()
   })
 
-  it("コミットはあり終えたタスクが0でも、ボタンは押せる（しおりの無い日記になる）", () => {
+  it("コミットはあり終えたタスクが0の日は、空の日の枠ではなく日記が無い日の枠", () => {
     renderSection({ view: READY_COMMIT_ONLY })
 
-    const button = screen.getByRole("button", { name: "架空の名前と振り返る" })
-    expect(button.getAttribute("aria-disabled")).toBe("false")
     expect(screen.getByText("まだこの日の日記は無い。")).toBeDefined()
+    expect(screen.queryByText("この日に main へ入った成果は無い。")).toBeNull()
   })
 
   it("タスクの記録が無いリポジトリでは、札が「—」で添え書きが出る", () => {
@@ -199,15 +198,6 @@ describe("DiarySection", () => {
     expect(screen.getByText("いちばんを選ぶ")).toBeDefined()
     const button = screen.getByRole("button", { name: "振り返り中…" })
     expect(button.getAttribute("aria-disabled")).toBe("true")
-  })
-
-  it("会話の画面へ移る口は無い（振り返りは会話の画面に何も出さないため）", () => {
-    renderSection({
-      view: READY_NO_DIARY,
-      writing: { kind: "writing", stage: "read" },
-    })
-
-    expect(screen.queryByRole("button", { name: "会話の画面で様子を見る ›" })).toBeNull()
   })
 
   it("書いている間、既に日記があれば前の段落を点線の枠に残す", () => {

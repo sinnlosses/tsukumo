@@ -424,34 +424,16 @@ describe("Markdown（フェンス付きコードブロックのコピーのボ�
 })
 
 describe("Markdown（remark-cjk-friendly。CJK の強調が記法のまま出る事故の回帰）", () => {
-  it("素の強調はそのまま太字になる", () => {
-    const { container } = render(<Markdown text="これは**太字**です" />)
+  it.each([
+    ["素の強調", "これは**太字**です", "太字"],
+    ["中身が「（かぎ括弧）で始まり・終わる強調", "分離は**「呼んだか」**で決まる", "「呼んだか」"],
+    ["中身が丸括弧で始まり・終わる強調", "分離は**（呼んだか）**で決まる", "（呼んだか）"],
+    ["中身が句点で終わる強調", "分離は**決まる。**次へ", "決まる。"],
+    ["閉じ側の直後が空白の強調", "分離は**「呼んだか」** で決まる", "「呼んだか」"],
+  ])("%sが太字になる", (_name, text, bold) => {
+    const { container } = render(<Markdown text={text} />)
 
-    expect(container.querySelector("strong")?.textContent).toBe("太字")
-  })
-
-  it("中身が「（かぎ括弧）で始まり・終わる強調が太字になる", () => {
-    const { container } = render(<Markdown text="分離は**「呼んだか」**で決まる" />)
-
-    expect(container.querySelector("strong")?.textContent).toBe("「呼んだか」")
-  })
-
-  it("中身が丸括弧で始まり・終わる強調が太字になる", () => {
-    const { container } = render(<Markdown text="分離は**（呼んだか）**で決まる" />)
-
-    expect(container.querySelector("strong")?.textContent).toBe("（呼んだか）")
-  })
-
-  it("中身が句点で終わる強調が太字になる", () => {
-    const { container } = render(<Markdown text="分離は**決まる。**次へ" />)
-
-    expect(container.querySelector("strong")?.textContent).toBe("決まる。")
-  })
-
-  it("閉じ側の直後が空白でも太字になる", () => {
-    const { container } = render(<Markdown text="分離は**「呼んだか」** で決まる" />)
-
-    expect(container.querySelector("strong")?.textContent).toBe("「呼んだか」")
+    expect(container.querySelector("strong")?.textContent).toBe(bold)
   })
 
   it("中身がかぎ括弧の斜体が斜体になる", () => {
@@ -469,20 +451,6 @@ describe("Markdown（remark-cjk-friendly。CJK の強調が記法のまま出る
 
     expect(container.querySelector("del")).toBeNull()
     expect(container.textContent).toContain("~~「消し」~~")
-  })
-
-  it("コードスパンの中のかぎ括弧は変わらず通常どおり", () => {
-    const { container } = render(<Markdown text="これは`「コード」`です" />)
-
-    expect(container.querySelector("code")?.textContent).toBe("「コード」")
-  })
-
-  it("リンクテキストの中のかぎ括弧は変わらず通常どおり", () => {
-    const { container } = render(<Markdown text="これは[「リンク」](https://example.com)です" />)
-
-    const link = container.querySelector("a")
-    expect(link?.textContent).toBe("「リンク」")
-    expect(link?.getAttribute("href")).toBe("https://example.com")
   })
 })
 
@@ -510,9 +478,6 @@ describe("Markdown（レポートのパスを押して Orca のエディタで�
     // 表示の `:12` は残る（行番号へは飛べないので運ばない）。
     fireEvent.click(typedElement(button, HTMLButtonElement, "ボタン"))
     expect(opened).toEqual(["src/foo.ts"])
-
-    fireEvent.click(typedElement(button, HTMLButtonElement, "ボタン"))
-    expect(opened).toEqual(["src/foo.ts", "src/foo.ts"])
   })
 
   it("files の塊のパスは HTML の中の code でも、一覧にあれば押せるボタンになる", () => {

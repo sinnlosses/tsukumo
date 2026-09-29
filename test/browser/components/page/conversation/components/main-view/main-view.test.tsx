@@ -2,11 +2,9 @@ import { QueryClientProvider } from "@tanstack/react-query"
 import { act, cleanup, fireEvent, render, screen, type RenderResult } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
-import { QuestionRecord } from "../../../../../../../src/browser/components/page/conversation/components/main-view/components/question-record/question-record.tsx"
 import { MainView } from "../../../../../../../src/browser/components/page/conversation/components/main-view/main-view.tsx"
 import { BRUSH_ORIGIN_ATTRIBUTE } from "../../../../../../../src/browser/domain/reveal/brush-tip.ts"
 import { useQuestionDraft } from "../../../../../../../src/browser/stores/question-answer.ts"
-import type { MainViewQuestion } from "../../../../../../../src/shared/session/main-view.ts"
 import {
   INITIAL_SESSION_STATE,
   type SessionRecord,
@@ -415,23 +413,7 @@ describe("MainView（ツールの行はレポートに出ない）", () => {
 })
 
 describe("MainView（中間レポート）", () => {
-  it("最後でない report は、中間レポートの印が付いた枠で出る", () => {
-    const { container } = renderMainView(
-      [
-        requestRecord({ text: "依頼", turnId: 0 }),
-        reportRecord("## 調べた結果\n\n- 1つ目の発見\n- 2つ目の発見"),
-        tool({ toolUseId: "t1", name: "Write", input: { file_path: "src/b.ts" } }),
-        reportRecord("書きかけの結論"),
-      ],
-      { kind: "running", startedAt: 0 },
-    )
-
-    expect(screen.getByText("中間レポート")).toBeDefined()
-    expect(screen.getByText("1つ目の発見")).toBeDefined()
-    expect(container.querySelectorAll(".main-step.is-interim")).toHaveLength(1)
-  })
-
-  it("まだ追い越されていない最後の中間レポートは畳まず開いたまま（<section> のまま）", () => {
+  it("最後でない report は中間レポートの印が付いた枠で出て、まだ追い越されていなければ畳まず開いたまま（<section> のまま）", () => {
     // 動いているあいだ、いちばん新しい report は出ないので、手前の中間レポートを追い越すものが無い。
     const { container } = renderMainView(
       [
@@ -446,6 +428,7 @@ describe("MainView（中間レポート）", () => {
     const interimSteps = container.querySelectorAll(".main-step.is-interim")
     expect(interimSteps).toHaveLength(1)
     expect(interimSteps[0]?.tagName).toBe("SECTION")
+    expect(screen.getByText("中間レポート")).toBeDefined()
     expect(screen.getByText("1つ目の発見")).toBeDefined()
   })
 
@@ -522,229 +505,5 @@ describe("MainView（中間レポート）", () => {
 
     // 触っていない別の1件も、化けて開いたままにならない。
     expect(findBySummary(untouchedText).open).toBe(false)
-  })
-})
-
-describe("MainView（質問の記録）", () => {
-  // `QuestionRecord` を直接見る（`MainView` を経由した「記録が積まれてから見えるまで」は
-  // `mainViewEntries` の畳み込みと、この部品の組み合わせで足りる）。
-  it("選ばれた答えに印が付く", () => {
-    const entry: MainViewQuestion = {
-      kind: "question",
-      questions: [
-        {
-          header: "確認",
-          text: "どちらにする？",
-          multiSelect: false,
-          options: [
-            { label: "案A", description: "", preview: undefined },
-            { label: "案B", description: "", preview: undefined },
-          ],
-        },
-      ],
-      answers: [["案B"]],
-    }
-
-    const { container } = render(<QuestionRecord entry={entry} />)
-
-    const options = [...container.querySelectorAll(".question-option")]
-    const optionA = options.find((option) => option.textContent?.includes("案A"))
-    const optionB = options.find((option) => option.textContent?.includes("案B"))
-
-    expect(optionB?.className).toContain("is-chosen")
-    expect(optionA?.className).not.toContain("is-chosen")
-  })
-
-  it("複数選択の答えは、選んだ選択肢すべてに印が付く", () => {
-    const entry: MainViewQuestion = {
-      kind: "question",
-      questions: [
-        {
-          header: "確認",
-          text: "どれを試す？",
-          multiSelect: true,
-          options: [
-            { label: "案A", description: "", preview: undefined },
-            { label: "案B", description: "", preview: undefined },
-            { label: "案C", description: "", preview: undefined },
-          ],
-        },
-      ],
-      answers: [["案A", "案C"]],
-    }
-
-    const { container } = render(<QuestionRecord entry={entry} />)
-
-    const chosen = [...container.querySelectorAll(".question-option.is-chosen")].map(
-      (option) => option.textContent,
-    )
-    expect(chosen).toEqual(["■ 案A", "■ 案C"])
-  })
-
-  it("自由入力の答えは、選択肢の下に別の行で出る", () => {
-    const entry: MainViewQuestion = {
-      kind: "question",
-      questions: [
-        {
-          header: "確認",
-          text: "どちらにする？",
-          multiSelect: false,
-          options: [
-            { label: "案A", description: "", preview: undefined },
-            { label: "案B", description: "", preview: undefined },
-          ],
-        },
-      ],
-      answers: [["どちらでもない架空の答え"]],
-    }
-
-    const { container } = render(<QuestionRecord entry={entry} />)
-
-    const options = [...container.querySelectorAll(".question-option")].map(
-      (option) => option.textContent,
-    )
-    expect(options).toEqual(["○ 案A", "○ 案B", "● どちらでもない架空の答え（自由入力）"])
-    expect(container.querySelector(".question-option.is-free-text")).not.toBeNull()
-  })
-
-  it("選択肢は送られた順ではなくラベルの辞書順で出す（並べ替えても答えの印は崩れない）", () => {
-    const entry: MainViewQuestion = {
-      kind: "question",
-      questions: [
-        {
-          header: "確認",
-          text: "どれにする？",
-          multiSelect: false,
-          options: [
-            { label: "案C", description: "", preview: undefined },
-            { label: "案A", description: "", preview: undefined },
-            { label: "案B", description: "", preview: undefined },
-          ],
-        },
-      ],
-      answers: [["案B"]],
-    }
-
-    const { container } = render(<QuestionRecord entry={entry} />)
-
-    const options = [...container.querySelectorAll(".question-option")]
-    expect(options.map((option) => option.textContent)).toEqual(["○ 案A", "● 案B", "○ 案C"])
-  })
-
-  it("質問が2件あると、答えは質問ごとに突き合わせる", () => {
-    const entry: MainViewQuestion = {
-      kind: "question",
-      questions: [
-        {
-          header: "確認1",
-          text: "1つ目は？",
-          multiSelect: false,
-          options: [
-            { label: "案A", description: "", preview: undefined },
-            { label: "案B", description: "", preview: undefined },
-          ],
-        },
-        {
-          header: "確認2",
-          text: "2つ目は？",
-          multiSelect: false,
-          options: [
-            { label: "案A", description: "", preview: undefined },
-            { label: "案C", description: "", preview: undefined },
-          ],
-        },
-      ],
-      answers: [["案B"], ["案A"]],
-    }
-
-    const { container } = render(<QuestionRecord entry={entry} />)
-
-    const records = [...container.querySelectorAll(".question-record")]
-    expect(
-      records.map((record) => record.querySelector(".question-option.is-chosen")?.textContent),
-    ).toEqual(["● 案B", "● 案A"])
-  })
-})
-
-describe("MainView（質問の記録に残す preview）", () => {
-  function entryWithPreview(): MainViewQuestion {
-    return {
-      kind: "question",
-      questions: [
-        {
-          header: "確認",
-          text: "どちらにする？",
-          multiSelect: false,
-          options: [
-            { label: "案A", description: "", preview: "### 案Aの下書き" },
-            { label: "案B", description: "", preview: "### 案Bの下書き" },
-          ],
-        },
-      ],
-      answers: [["案B"]],
-    }
-  }
-
-  function openDetails(container: HTMLElement): void {
-    const details = container.querySelector("details")
-    if (details === null) {
-      throw new Error("折りたたみが無い")
-    }
-    details.open = true
-    fireEvent(details, new Event("toggle"))
-  }
-
-  it("preview を持つ選択肢が無ければ、折りたたみを作らない", () => {
-    const entry: MainViewQuestion = {
-      kind: "question",
-      questions: [
-        {
-          header: "確認",
-          text: "どちらにする？",
-          multiSelect: false,
-          options: [
-            { label: "案A", description: "", preview: undefined },
-            { label: "案B", description: "", preview: undefined },
-          ],
-        },
-      ],
-      answers: [["案B"]],
-    }
-
-    const { container } = render(<QuestionRecord entry={entry} />)
-
-    expect(container.querySelector("details")).toBeNull()
-  })
-
-  it("preview は折りたたまれていて、開くまで描かない", () => {
-    const { container } = render(<QuestionRecord entry={entryWithPreview()} />)
-
-    expect(container.querySelector("details")?.open).toBe(false)
-    expect(screen.queryByText("案Aの下書き")).toBeNull()
-  })
-
-  it("開くと、選択肢ごとの preview が Markdown として出る", () => {
-    const { container } = render(<QuestionRecord entry={entryWithPreview()} />)
-
-    act(() => {
-      openDetails(container)
-    })
-
-    // `###` はレポートと同じ段下げで `h5` になる（`SubHeading`）。
-    expect(screen.getByText("案Aの下書き").tagName).toBe("H5")
-    expect(screen.getByText("案Bの下書き").tagName).toBe("H5")
-  })
-
-  it("開いた preview にも、選ばれた答えの印が付く", () => {
-    const { container } = render(<QuestionRecord entry={entryWithPreview()} />)
-
-    act(() => {
-      openDetails(container)
-    })
-
-    const labels = [...container.querySelectorAll(".question-preview-label")].map(
-      (label) => label.textContent,
-    )
-    expect(labels).toEqual(["○ 案A", "● 案B"])
   })
 })

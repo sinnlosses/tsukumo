@@ -140,7 +140,11 @@ describe("PresentationalAchievement", () => {
       },
     })
 
-    expect(screen.getByText("架空の名前が選んだ この日のいちばん")).toBeDefined()
+    const bookmark = screen.getByText("架空の名前が選んだ この日のいちばん")
+    const diary = document.querySelector(".achievement-diary")
+    const calendar = document.querySelector(".achievement-calendar")
+    expect(diary?.compareDocumentPosition(bookmark)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
+    expect(calendar?.compareDocumentPosition(bookmark)).toBe(Node.DOCUMENT_POSITION_PRECEDING)
   })
 
   it("灯りの暦は main が読める限り、1日ぶんが取れていなくても出る", () => {
