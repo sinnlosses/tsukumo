@@ -13,7 +13,6 @@ describe("parseServerFrame（受け付ける形）", () => {
       state: INITIAL_SESSION_STATE,
     })
 
-    expect(frame?.type).toBe("hello")
     expect(frame).toEqual({
       type: "hello",
       protocolVersion: PROTOCOL_VERSION,

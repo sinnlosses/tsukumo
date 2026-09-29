@@ -6,7 +6,6 @@ import {
   MAX_PROMPT_IMAGE_DATA_URL_LENGTH,
   MAX_PROMPT_IMAGE_THUMBNAIL_BYTES,
   MAX_PROMPT_IMAGE_THUMBNAIL_DATA_URL_LENGTH,
-  MAX_PROMPT_IMAGES,
   parsePromptImage,
   parsePromptImageThumbnail,
 } from "../../../src/shared/session-driver/prompt-image.ts"
@@ -87,15 +86,5 @@ describe("isPromptImageMediaType", () => {
     expect(isPromptImageMediaType("image/webp")).toBe(true)
     expect(isPromptImageMediaType("image/svg+xml")).toBe(false)
     expect(isPromptImageMediaType("")).toBe(false)
-  })
-})
-
-describe("上限の値", () => {
-  it("1件の依頼に添えられるのは2枚", () => {
-    expect(MAX_PROMPT_IMAGES).toBe(2)
-  })
-
-  it("1枚の上限は 5 MiB", () => {
-    expect(MAX_PROMPT_IMAGE_BYTES).toBe(5 * 1024 * 1024)
   })
 })

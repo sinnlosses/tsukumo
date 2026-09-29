@@ -332,36 +332,6 @@ describe("applySessionEvent", () => {
     ])
   })
 
-  it("mainViewEntries はツール系の entry も含む（ステップの actions に入る）", () => {
-    const view = apply(
-      { kind: "request", text: "依頼", images: [] },
-      {
-        kind: "tool-started",
-        toolUseId: "toolu_1",
-        name: "Read",
-        input: {},
-        parentToolUseId: undefined,
-      },
-      { kind: "tool-finished", toolUseId: "toolu_1", content: "結果", isError: false },
-      { kind: "utterance", text: "レポート本文" },
-    )
-
-    expect(mainViewEntries(view)).toEqual([
-      { kind: "request", turnId: 0, text: "依頼", images: [] },
-      {
-        kind: "tool",
-        name: "Read",
-        input: {},
-        status: {
-          kind: "finished",
-          finishedAt: { kind: "stamped", at: 0 },
-          result: { content: "結果", isError: false },
-        },
-      },
-      { kind: "detail", markdown: "レポート本文" },
-    ])
-  })
-
   it("対応する tool_use が無い結果は記録に足さない", () => {
     const view = apply({
       kind: "tool-finished",

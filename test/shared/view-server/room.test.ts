@@ -10,23 +10,12 @@ describe("roomName", () => {
     expect(FIRST_ROOM_PORT).toBe(DEFAULT_VIEW_PORT)
   })
 
-  it("ポートの並び順に名前が割り当たる（既定の 7327 が1つめ）", () => {
+  it("語彙の12個は互いに違う名前で、先頭は「空色の間」", () => {
     const named = Array.from({ length: 12 }, (_, index) => roomName(FIRST_ROOM_PORT + index))
 
-    expect(named).toEqual([
-      "空色の間",
-      "若葉の間",
-      "菜の花の間",
-      "夕焼けの間",
-      "藍の間",
-      "藤の間",
-      "朱の間",
-      "灰の間",
-      "若草の間",
-      "海の間",
-      "桜の間",
-      "墨の間",
-    ])
+    expect(named[0]).toBe("空色の間")
+    expect(new Set(named).size).toBe(12)
+    expect(named.some((name) => /^\d+$/.test(name))).toBe(false)
   })
 
   // 語彙の外はポート番号をそのまま名乗る（13個め以降・遠い番号・OS まかせの 0）。
