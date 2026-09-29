@@ -70,6 +70,13 @@
 .main-step > .detail-block:last-child {
   margin-bottom: 0;
 }
+/* 本文の最初と最後の塊の margin は器の padding に足されるので落とす（padding がそのまま器の内側のあきになる）。 */
+.main-step > .detail-block > :first-child {
+  margin-top: 0;
+}
+.main-step > .detail-block > :last-child {
+  margin-bottom: 0;
+}
 /* 中間レポート（`report` ツールの最後でない呼び出し）。
    新しい色は作らない（theme.css のトークンだけ）。
    本文は読む面なので `ink` のまま置き、地を ground に落とす・枠を破線にする・小さなラベルを載せるの3つで本体のレポートと見分ける（色だけに頼らない）。 */
@@ -81,6 +88,7 @@
    地は中間レポートと同じ ground にする。
    中間レポートとの差は枠（中間だけ破線）とラベルの2つだけ。 */
 .main-step.is-final {
+  padding: 1.75rem 2rem 1.875rem;
   background: var(--ground);
 }
 /* 追い越された中間レポートは `<details>` で畳む。

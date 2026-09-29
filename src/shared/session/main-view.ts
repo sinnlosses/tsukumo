@@ -253,13 +253,24 @@ function reportMarkdown(
 ): string {
   return [
     report.conclusion,
-    workPlanMarkdown(latestWorkPlan(earlierInTurn)),
-    reportChecksMarkdown(report.checks, (command) => bashCommandDuration(earlierInTurn, command)),
+    statusMarkdown(
+      workPlanMarkdown(latestWorkPlan(earlierInTurn)),
+      reportChecksMarkdown(report.checks, (command) => bashCommandDuration(earlierInTurn, command)),
+    ),
     reportSectionsMarkdown(tidyReportSections(report)),
     isBlankText(report.favor) ? "" : `<div class="note note-favor">\n\n${report.favor}\n\n</div>`,
   ]
     .filter((part) => !isBlankText(part))
     .join("\n\n")
+}
+
+/** 段取りと検証結果を、結論と本文のあいだの1つのまとまりに包む。どちらも無ければ包みごと置かない。 */
+function statusMarkdown(workPlan: string, checks: string): string {
+  const parts = [
+    isBlankText(workPlan) ? "" : `<div class="status-caption">進み具合</div>\n\n${workPlan}`,
+    checks,
+  ].filter((part) => !isBlankText(part))
+  return parts.length === 0 ? "" : `<div class="status">\n\n${parts.join("\n\n")}\n\n</div>`
 }
 
 function workPlanMarkdown(plan: LatestWorkPlan): string {

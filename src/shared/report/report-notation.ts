@@ -58,6 +58,8 @@ export const REPORT_BLOCK_MARK_NAMES = [
   "progress-status",
   "progress-line",
   "progress-line-done",
+  "status",
+  "status-caption",
   "options",
   "option",
   "option-adopt",

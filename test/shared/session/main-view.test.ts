@@ -620,11 +620,12 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
 
     expect(shownReports(turn)).toEqual([
       "架空の結論。\n\n" +
+        '<div class="status">\n\n' +
         '<div class="checks" role="table" aria-label="検証結果">' +
         '<div class="checks-summary">検証 <span class="checks-summary-count">2</span> <span class="checks-summary-warn">？ 1 件を確かめていない</span></div>' +
         '<div class="check check-ok" role="row"><span class="check-mark">✓ OK</span><span class="check-label">架空の検査</span><span class="check-figure">12 / 3</span><span class="check-time"></span></div>' +
         '<div class="check check-unverified" role="row"><span class="check-mark">？ 未確認</span><span class="check-label">架空の目視</span><span class="check-figure"></span><span class="check-time"></span></div>' +
-        "</div>\n\n" +
+        "</div>\n\n</div>\n\n" +
         '架空の根拠。\n\n<div class="note note-favor">\n\n架空のお願い\n\n</div>',
     ])
     expect(firstLineOf(turn?.steps[0])).toBe("架空の結論。")
@@ -689,6 +690,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
 
     expect(shownReports(turn)).toEqual([
       "架空の結論。\n\n" +
+        '<div class="status">\n\n<div class="status-caption">進み具合</div>\n\n' +
         '<ol class="progress" aria-label="進み具合">' +
         '<li class="progress-step progress-step-done" aria-label="架空の段A：済">' +
         '<span class="progress-dot" aria-hidden="true">✓</span>' +
@@ -697,7 +699,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
         '<li class="progress-step progress-step-current" aria-current="step" aria-label="架空の段B：進行中">' +
         '<span class="progress-dot" aria-hidden="true"><span class="progress-dot-mark"></span></span>' +
         '<span class="progress-name">架空の段B</span><span class="progress-status">進行中</span></li>' +
-        "</ol>\n\n" +
+        "</ol>\n\n</div>\n\n" +
         "架空の根拠。",
     ])
   })
@@ -712,11 +714,12 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
 
     expect(shownReports(turn)).toEqual([
       "架空の結論。\n\n" +
+        '<div class="status">\n\n<div class="status-caption">進み具合</div>\n\n' +
         '<ol class="progress" aria-label="進み具合">' +
         '<li class="progress-step progress-step-done" aria-label="架空の段A：済">' +
         '<span class="progress-dot" aria-hidden="true">✓</span>' +
         '<span class="progress-name">架空の段A</span></li>' +
-        "</ol>\n\n" +
+        "</ol>\n\n</div>\n\n" +
         "架空の根拠。",
     ])
   })
