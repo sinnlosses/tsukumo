@@ -101,7 +101,7 @@ export type SessionLaunchPorts<Pack extends NamedCharacterPack> = {
   ) => SessionDriver
   /**
    * いま切り替え先として選べるセッションを一覧にする（同じパックの、同じモードのものだけ）。読めなかったときは空。
-   * {@link SessionLaunchPorts.findResumeSession} と同じく、メモリに持っている一覧から出す（transcript の一覧は読まない）。
+   * メモリに持っている一覧から出す（transcript の一覧は読まない）。
    */
   readonly listSessions: (pack: Pack, chat: boolean) => Promise<readonly SessionChoice[]>
   /**

@@ -78,7 +78,7 @@ export function SidebarFooter(): ReactElement {
 
 /**
  * 「文脈 7%」と細い目盛り。目盛りの縦の線は自動圧縮が始まる位置。
- * 70%以上は字と目盛りを `--state-warn` にする（詳しい面の札と同じ境目）。
+ * 70%以上は字と目盛りを `--state-warn` にする。
  */
 function ContextUsageGauge(props: {
   readonly usage: UseContextUsageResult

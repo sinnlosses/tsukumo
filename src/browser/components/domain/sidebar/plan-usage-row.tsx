@@ -1,5 +1,5 @@
 // サイドバーの下端の帯の詳しい面の中で、コンテキストの札の下に5時間枠と7日間枠の使用状況を出す札。
-// 取り直すのは開いたとき・ターンが終わるたび・右上の ↻ を押したとき（`usePlanUsage`。呼ぶのは `SidebarFooter` で、帯の目盛りと同じ値を受け取る）。
+// 取り直すのは開いたとき・ターンが終わるたび・右上の ↻ を押したとき（`usePlanUsage`）。
 //
 // claude.ai の契約でないとき（`not-applicable`）は、再読み込みしても変わらないので ↻ を出さない。
 // 取れなかったとき（`unavailable`）は ↻ で取り直せる一言に置き換わる。
@@ -7,7 +7,7 @@
 //
 // 取得中に前の値があれば、2段の枠の行を薄く残したまま「取得中…」を出す（`fetching` が `true` のとき）。
 //
-// 取り直しのあいだは札に `aria-busy` を立てる（帯の目盛りにも立つ）。
+// 取り直しのあいだは札に `aria-busy` を立てる。
 
 import clsx from "clsx"
 import { CircleX, TriangleAlert } from "lucide-react"
@@ -146,7 +146,7 @@ function PlanUsageWindowRow(props: {
   )
 }
 
-/** 描く2つの枠。取れない・該当しないときは `undefined`（一言に置き換える）。帯の目盛りも同じ畳み方を使う。 */
+/** 描く2つの枠。取れない・該当しないときは `undefined`（一言に置き換える）。 */
 export function windowsOf(
   state: PlanUsageState,
 ): { readonly fiveHour: WindowDisplay; readonly sevenDay: WindowDisplay } | undefined {
@@ -174,7 +174,7 @@ function headerText(state: PlanUsageState, fetching: boolean): string {
   return TIME_PLACEHOLDER
 }
 
-/** 警告の色にするか。取れていないときは警告にしない。帯の目盛りも同じ境目を使う。 */
+/** 警告の色にするか。取れていないときは警告にしない。 */
 export function isPlanWindowWarn(window: WindowDisplay): boolean {
   return window.utilization !== undefined && window.utilization >= WARN_THRESHOLD_PERCENTAGE
 }

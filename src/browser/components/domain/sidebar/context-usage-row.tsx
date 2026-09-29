@@ -1,8 +1,6 @@
 // サイドバーの下端の帯の詳しい面の中で、いまのコンテキストの使用量を1枚の札で出す。
 // 押せるのは右端の `›`（ホバー中は「詳しく ›」）だけで、押すとトークン消費の画面（`#token-usage`）へ移る。
 //
-// 取得と畳み込みは `SidebarFooter` が `useContextUsage` で1回だけ行い、帯の目盛り（`ContextUsageGauge`）とこの札に同じ値を配る。
-//
 // 出す数は札の「使っている量」と同じ（`usage.totalTokens` / `usage.maxTokens` / `usage.percentage`。自動圧縮バッファ・窓の外の分類は含めない）。
 //
 // 取れないとき・まだ届いていないときも札の高さは変わらない。
@@ -115,7 +113,7 @@ function untilText(usage: UseContextUsageResult): string {
   return isContextUsageWarn(usage) ? `そろそろ区切りどき。${rest}` : rest
 }
 
-/** 警告の色にするか。まだ数が無いときは警告にしない。帯の目盛りも同じ境目を使う。 */
+/** 警告の色にするか。まだ数が無いときは警告にしない。 */
 export function isContextUsageWarn(usage: UseContextUsageResult): boolean {
   return usage.kind === "ready" && usage.percentage >= WARN_THRESHOLD_PERCENTAGE
 }

@@ -232,7 +232,6 @@ describe("REPORT_NOTATION_PROMPT", () => {
   })
 
   it("印の使いどころは「文へ倒す条件」ではなく用途で書く", () => {
-    // 3列目を「迷ったときの判断」から「使う目安」へ反転させた決定（docs/architecture/display.md「表示」）。
     // 下限（「3行以上あるときだけ」）を各行に並べると、印を使える内容まで文のまま残る。
     expect(REPORT_NOTATION_PROMPT).toContain("| 内容 | 使う印 | 使う目安 |")
     expect(REPORT_NOTATION_PROMPT).not.toContain("迷ったときの判断")

@@ -15,8 +15,7 @@ import type { ScenarioRoom, ScenarioRun } from "./scenario-run.ts"
 // リポジトリを作るのは、`open` が部屋を渡した（ブラウザが繋がった）あとにする。
 // 起こす前や繋がる前に用意すると、tsukumo の最初の見回り（起こした時点で1回走る）が
 // ブラウザの `hello` に畳まれてしまい、`tasks-changed` が `events` として届かず
-// `waitForEvent` の的が無くなる（10章「E2E の走らせ方」の「場面が流れ終わるのを時間で
-// 待たない」と同じ理由で、待つ先は必ずイベントに置く）。
+// `waitForEvent` の的が無くなる。
 
 /** タスクファイル1件の中身。会話の内容ではない架空のタスク。 */
 type TaskFixture = {

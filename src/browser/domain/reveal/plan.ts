@@ -62,7 +62,7 @@ const SECTION_BREAK_SELECTOR = ".report-section-break"
 /**
  * 筆を留める対象の印（`PAUSE_POINT_CLASS_NAME` と同じ class 名。`NOTE_CLASSES` の注意・異常と
  * `OPTION_VERDICTS` の「採る」に付く）。記法の語彙に無い名前なので `NotationBlock` の置き換えを
- * 受けず、レンダー後も素の class 名のまま残る（{@link SECTION_BREAK_SELECTOR} と同じやり方）。
+ * 受けず、レンダー後も素の class 名のまま残る。
  */
 const PAUSE_POINT_SELECTOR = ".report-pause-point"
 

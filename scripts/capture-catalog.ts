@@ -139,7 +139,7 @@ const NOTE_KINDS_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="report-note_"]`
 /** メモの塊。狭い窓では種別の並びの1枚（`notation-note`）に入りきらない。 */
 const NOTE_MEMO_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="report-note-memo_"]`
 const NOTE_FAVOR_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="report-note-favor_"]`
-/** `list` の `flow`（一本道の手順）。`NOTE_KINDS_SELECTOR` と同じ前方一致の作法。 */
+/** `list` の `flow`（一本道の手順）。 */
 const FLOW_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="report-flow_"]`
 /**
  * 検証結果の表（`report` の `checks`）。class 名でなく role・aria-label で指す
@@ -148,7 +148,7 @@ const FLOW_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="report-flow_"]`
  */
 const CHECKS_SELECTOR = `${MAIN_REGION_SELECTOR} [role="table"][aria-label="検証結果"]`
 
-/** レポートの結論の下に組む段取りの図（`progress` の塊と同じ組み方）。 */
+/** レポートの結論の下に組む段取りの図。 */
 const WORK_PLAN_REPORT_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="report-progress_"]`
 
 /** 入力欄。ページに `<textarea>` は1つしか無い。 */

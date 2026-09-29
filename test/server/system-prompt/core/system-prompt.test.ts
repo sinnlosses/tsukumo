@@ -210,7 +210,7 @@ describe("takeSystemPromptAppend", () => {
   })
 
   it("雑談の作法は口調を決めない（口調はキャラクターパックの persona.md の担当）", () => {
-    // 正典を2つにしない（`REPORT_NOTATION_PROMPT` と同じ切り分け。docs/architecture/chat-mode.md「雑談モード」）。
+    // 口調は persona.md 側が決める（docs/architecture/chat-mode.md「雑談モード」）。
     expect(CHAT_MANNER_PROMPT).toContain("speak")
     expect(CHAT_MANNER_PROMPT).not.toContain("一人称")
   })

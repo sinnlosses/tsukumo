@@ -240,7 +240,7 @@ function toMainViewEntries(
 
 /**
  * `report` の引数を、`conclusion` →（段取り）→ `checks` → `sections` → `favor` の順に1つの本文へ組む。
- * 段取りは同じやり取りの中でその `report` より前に届いた最後のもので、`progress` の塊と同じ組み方で描く。
+ * 段取りは同じやり取りの中でその `report` より前に届いた最後のもの。
  * `checks` は検証結果の表（{@link reportChecksMarkdown}。所要時間は同じやり取りの中の `tool` の記録から引く）、`favor` はレポートの記法の「お願い」の塊で包むので、サニタイズも記法の解釈もテキストの本文と同じ経路を通る。
  * `favor` は HTML の中に Markdown を入れるので、塊の内側の前後に空行を空ける。
  * 空の `checks` / `sections` / `favor` は塊ごと置かない。

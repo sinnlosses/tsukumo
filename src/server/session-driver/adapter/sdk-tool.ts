@@ -85,7 +85,7 @@ const RECALL_TOOL_NAME = "recall"
 
 /**
  * モデルに見せる `recall` ツールの説明。
- * 雑談でいつ引くかの条は `CHAT_MANNER_PROMPT` が持つので、ここには何が返るかと引ける回数だけを書く（二重に書かない）。
+ * 雑談でいつ引くかの条は `CHAT_MANNER_PROMPT` が持つので、ここには何が返るかと引ける回数だけを書く。
  */
 const RECALL_TOOL_DESCRIPTION =
   "前の話を思い出せないときに、言葉でエピソード索引を引き、当たった候補の一覧（id・見出し・要旨）を返す。逐語は返らない。" +
@@ -95,7 +95,7 @@ const RECALL_EPISODE_TOOL_NAME = "recall_episode"
 
 /**
  * モデルに見せる `recall_episode` ツールの説明。
- * 雑談でいつ開くかの条は `CHAT_MANNER_PROMPT` が持つので、ここには何が返るかと開ける回数だけを書く（二重に書かない）。
+ * 雑談でいつ開くかの条は `CHAT_MANNER_PROMPT` が持つので、ここには何が返るかと開ける回数だけを書く。
  */
 const RECALL_EPISODE_TOOL_DESCRIPTION =
   "recall で見た候補の id を渡し、その1件の範囲の会話をそのままの文面で開く。" +

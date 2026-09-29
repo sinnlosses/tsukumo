@@ -283,7 +283,7 @@ export async function startSession(options: SessionStartOptions): Promise<Starte
 /**
  * 会話のアーカイブの `project`（`docs/architecture/chat-mode.md`「雑談の会話のアーカイブ」）を取る。
  * 共有の `.git` の親ディレクトリの名前で、`git` が無い・リポジトリでないときは `cwd` の最後の名前
- * （日記の `<リポジトリ>` と同じ取り方だが、ハッシュは付けず、取れないときも諦めずに `cwd` へ落ちる）。
+ * （ハッシュは付けず、取れないときも諦めずに `cwd` へ落ちる）。
  */
 async function resolveArchiveProjectName(cwd: string): Promise<string> {
   const result = await runGit(cwd, ["rev-parse", "--path-format=absolute", "--git-common-dir"])
