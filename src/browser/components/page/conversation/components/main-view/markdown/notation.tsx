@@ -5,7 +5,7 @@
 // 知らない class 名と `style` 属性はそのまま残す（この層は足し算だけで、記法の表に無いモデルの即興を落とさない）。
 // class 名そのものは無害で、危ない経路（`script` の除去・`href` のスキーム・`style` の値）は `REPORT_SANITIZE_SCHEMA` が別に見る。
 
-import type { JSX, ReactElement, ReactNode } from "react"
+import type { JSX, ReactElement } from "react"
 import type { ExtraProps } from "react-markdown"
 
 import {
@@ -61,7 +61,7 @@ export function NotationBlock(props: NotationBlockProps): ReactElement {
           {label}
         </Text>
       )}
-      {children as ReactNode}
+      {children}
     </div>
   )
 }
@@ -74,7 +74,7 @@ export function NotationInline(props: NotationInlineProps): ReactElement {
 
   return (
     <span {...rest} className={resolveNotationClassName(className)}>
-      {children as ReactNode}
+      {children}
     </span>
   )
 }

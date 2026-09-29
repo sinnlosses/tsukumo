@@ -21,7 +21,7 @@
 
 import clsx from "clsx"
 import type { Element } from "hast"
-import type { JSX, ReactElement, ReactNode } from "react"
+import type { JSX, ReactElement } from "react"
 import ReactMarkdown, { type Components, type ExtraProps, type Options } from "react-markdown"
 import rehypeHighlight from "rehype-highlight"
 import rehypeRaw from "rehype-raw"
@@ -202,7 +202,7 @@ type SectionHeadingProps = JSX.IntrinsicElements["h2"] & ExtraProps
  */
 function SectionHeading(props: SectionHeadingProps): ReactElement {
   const { node: _node, children, ...rest } = props
-  return <h4 {...rest}>{children as ReactNode}</h4>
+  return <h4 {...rest}>{children}</h4>
 }
 
 type SubHeadingProps = JSX.IntrinsicElements["h3"] & ExtraProps
@@ -210,7 +210,7 @@ type SubHeadingProps = JSX.IntrinsicElements["h3"] & ExtraProps
 /** レポートの見出し `###`（hast では `h3`）を `h5` として描く。{@link SectionHeading} と同じ理由。 */
 function SubHeading(props: SubHeadingProps): ReactElement {
   const { node: _node, children, ...rest } = props
-  return <h5 {...rest}>{children as ReactNode}</h5>
+  return <h5 {...rest}>{children}</h5>
 }
 
 type CodeProps = JSX.IntrinsicElements["code"] & ExtraProps
@@ -232,7 +232,7 @@ function Code(props: CodeProps): ReactElement {
     const swatch = node === undefined ? undefined : colorSwatch(text, readColorToken)
     return swatch === undefined ? (
       <code className={className} {...rest}>
-        {children as ReactNode}
+        {children}
       </code>
     ) : (
       <code
@@ -244,13 +244,13 @@ function Code(props: CodeProps): ReactElement {
         )}
         style={{ background: swatch.background }}
       >
-        {children as ReactNode}
+        {children}
       </code>
     )
   }
   const code = (
     <code className={className} {...rest}>
-      {children as ReactNode}
+      {children}
     </code>
   )
   return (
@@ -284,7 +284,7 @@ function Anchor(props: AnchorProps): ReactElement {
   if (href === undefined || href.startsWith("#") || hasUrlScheme(href)) {
     return (
       <a href={href} title={title} className={className} rel="noopener noreferrer">
-        {children as ReactNode}
+        {children}
       </a>
     )
   }
@@ -293,7 +293,7 @@ function Anchor(props: AnchorProps): ReactElement {
   if (path === undefined) {
     return (
       <span title={title} className={className}>
-        {children as ReactNode}
+        {children}
       </span>
     )
   }
@@ -306,7 +306,7 @@ function Anchor(props: AnchorProps): ReactElement {
         link.open(path)
       }}
     >
-      {children as ReactNode}
+      {children}
     </button>
   )
 }
@@ -326,7 +326,7 @@ function Table(props: TableProps): ReactElement {
   const { node: _node, children, ...rest } = props
   return (
     <div className={styles["table-scroll"]}>
-      <table {...rest}>{children as ReactNode}</table>
+      <table {...rest}>{children}</table>
     </div>
   )
 }
