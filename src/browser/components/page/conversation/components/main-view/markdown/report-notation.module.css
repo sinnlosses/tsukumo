@@ -140,41 +140,76 @@
   margin-left: 0.3rem;
   color: var(--ink-quiet);
 }
-/* 段の図（`report` の `progress` の塊から tsukumo が組む）。
-   済んだ・いま・残りの見分けは `<b>` の文字が持ち、枠と地は補助。 */
+/* 段の図（`report` の `progress` の塊と `work_plan` の段取りから tsukumo が組む）。
+   節（丸）と線でつないだ1本の道。済んだ・いま・まだの見分けは丸の中身（✓／輪と点／空の輪）が持ち、
+   名前の字の色と線の色は補助。 */
 .detail-block .report-progress {
+  list-style: none;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.3rem 0.4rem;
   margin: 0.5rem 0;
+  padding: 0;
+  row-gap: 8px;
+  column-gap: 10px;
 }
 .detail-block .report-progress-step {
   display: inline-flex;
-  align-items: baseline;
-  gap: 0.3rem;
-  padding: 0.2rem 0.6rem;
-  border: 1px solid var(--rule);
-  border-radius: 999px;
-  font-size: var(--font-secondary);
-  color: var(--ink-quiet);
+  align-items: center;
+  gap: 7px;
 }
-.detail-block .report-progress-step:not(:last-child)::after {
-  content: "→";
-  margin-left: 0.4rem;
+.detail-block .report-progress-name {
+  font-size: 12.5px;
+  font-weight: 400;
   color: var(--ink-quiet);
+  white-space: nowrap;
 }
-.detail-block .report-progress-step b {
+.detail-block .report-progress-dot {
+  box-sizing: border-box;
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  border: 1.5px solid var(--rule);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
   font-weight: 700;
 }
-.detail-block .report-progress-step-done {
-  background: var(--surface-raised);
-  color: var(--ink-quiet);
+.detail-block .report-progress-step-done .report-progress-dot {
+  border: none;
+  background: var(--surface-accent);
+  color: var(--accent);
 }
-.detail-block .report-progress-step-current {
-  border-color: var(--accent);
-  background: color-mix(in srgb, var(--surface), var(--accent) 10%);
+.detail-block .report-progress-step-current .report-progress-dot {
+  border: 2px solid var(--accent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 16%, transparent);
+}
+.detail-block .report-progress-dot-mark {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+.detail-block .report-progress-step-current .report-progress-name {
   color: var(--ink);
+  font-weight: 700;
+}
+.detail-block .report-progress-status {
+  font-size: 11px;
+  color: var(--accent);
+  white-space: nowrap;
+}
+.detail-block .report-progress-line {
+  flex-shrink: 0;
+  width: 28px;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--rule);
+}
+.detail-block .report-progress-line-done {
+  background: var(--surface-accent);
 }
 /* 候補の比較（`report` の `options` の塊から tsukumo が組む）。
    候補を1枚ずつのカードにして横に並べ、入らなければ折り返す。並びは書き手の順のまま。

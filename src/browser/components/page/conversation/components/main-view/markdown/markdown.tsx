@@ -12,7 +12,8 @@
 // ```mermaid / ```chart のフェンスは「コード」ではなく図・グラフの入れ物にする（`MermaidBlock` / `ChartBlock`）。
 // `pre` を上書きし、中の `code` 要素の `className`（`language-mermaid` / `language-chart`）を見て振り分ける。
 //
-// レポートの記法の class 名は `div` / `span` の上書きで部品に解決する（`NotationBlock` / `NotationInline`）。
+// レポートの記法の class 名は `div` / `span` / `ol` / `li` の上書きで部品に解決する
+// （`NotationBlock` / `NotationInline` / `NotationOrderedList` / `NotationListItem`）。
 //
 // 表は横スクロールの器で包む（`Table`）。
 // 器をここで作るのは、`rehype-raw` が生の HTML も同じ hast の木に入れるので、`table` の上書き1つで Markdown の表とレポートが直接書いた `<table>` の両方に効くため。
@@ -35,7 +36,12 @@ import { CODE_FILE_NAME_PROPERTY, rehypeCodeFileName } from "./code-file-name.ts
 import { colorSwatch, readColorToken } from "./color-swatch.ts"
 import { CopyButton } from "./copy-button.tsx"
 import { MermaidBlock } from "./mermaid-block.tsx"
-import { NotationBlock, NotationInline } from "./notation.tsx"
+import {
+  NotationBlock,
+  NotationInline,
+  NotationListItem,
+  NotationOrderedList,
+} from "./notation.tsx"
 import styles from "./report-notation.module.css"
 import { repositoryFilePath, useRepositoryFileLink } from "./repository-link.tsx"
 import { REPORT_SANITIZE_SCHEMA } from "./sanitize-schema.ts"
@@ -51,6 +57,8 @@ const REPORT_COMPONENTS = {
   h3: SubHeading,
   div: NotationBlock,
   span: NotationInline,
+  ol: NotationOrderedList,
+  li: NotationListItem,
 } satisfies Components
 
 /**

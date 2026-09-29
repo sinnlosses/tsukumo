@@ -318,6 +318,11 @@ function escapeHtml(text: string): string {
   return text.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;")
 }
 
+/** 二重引用符で囲む HTML 属性の値に埋める1行の文字。`htmlInline` に加えて `"` も逃がす。 */
+function htmlAttribute(text: string): string {
+  return htmlInline(text).replaceAll('"', "&quot;")
+}
+
 /** 塊を1つずつ検証するために、節の見出しだけを先に読む形。 */
 const looseSectionSchema = z.object({
   heading: reportSectionSchema.shape.heading,
@@ -430,21 +435,52 @@ function blockMarkdown(block: ReportBlock): string {
   }
 }
 
+type ProgressStepState = "done" | "current" | "upcoming"
+
+const PROGRESS_STATE_LABELS = {
+  done: "済",
+  current: "進行中",
+  upcoming: "まだ",
+} satisfies Record<ProgressStepState, string>
+
 /**
- * 済んだ段は `済`、いまの段は `今`、残りの段は番号を前置きし、class だけでなく文字でも見分けられるようにする。
- * 名前が空文字の段は1始まりの番号を名前にする（残りの段は前置きがすでに番号なので名前を出さない）。
+ * 節（丸）と線でつないだ1本の道。段の名前が空文字なら1始まりの番号を名前にする。
+ * 見分けは丸の中身（✓／輪と点／空の輪）と `aria-current`・`aria-label` が持ち、名前の字の色は補助。
  */
 function progressMarkdown(block: Extract<ReportBlock, { readonly kind: "progress" }>): string {
-  const steps = block.steps.map((step, index) => {
+  const items = block.steps.flatMap((step, index) => {
     const ordinal = index + 1
-    const state = index < block.current ? "done" : index === block.current ? "current" : "upcoming"
-    const mark = state === "done" ? "済" : state === "current" ? "今" : String(ordinal)
-    const stepClass =
-      state === "upcoming" ? "progress-step" : `progress-step progress-step-${state}`
-    const label = step.trim() !== "" ? step : state === "upcoming" ? "" : String(ordinal)
-    return `<div class="${stepClass}"><b>${htmlInlineWithCode(mark)}</b>${htmlInlineWithCode(label)}</div>`
+    const state: ProgressStepState =
+      index < block.current ? "done" : index === block.current ? "current" : "upcoming"
+    const label = step.trim() !== "" ? step : String(ordinal)
+    const stepHtml = progressStepMarkdown(state, label)
+    return index === 0 ? [stepHtml] : [progressLineMarkdown(index - 1 < block.current), stepHtml]
   })
-  return `<div class="progress">${steps.join("")}</div>`
+  return `<ol class="progress" aria-label="進み具合">${items.join("")}</ol>`
+}
+
+function progressLineMarkdown(done: boolean): string {
+  const lineClass = done ? "progress-line progress-line-done" : "progress-line"
+  return `<li class="${lineClass}" aria-hidden="true"></li>`
+}
+
+function progressStepMarkdown(state: ProgressStepState, label: string): string {
+  const stepClass = state === "upcoming" ? "progress-step" : `progress-step progress-step-${state}`
+  const current = state === "current" ? ' aria-current="step"' : ""
+  const dot =
+    state === "done"
+      ? '<span class="progress-dot" aria-hidden="true">✓</span>'
+      : state === "current"
+        ? '<span class="progress-dot" aria-hidden="true"><span class="progress-dot-mark"></span></span>'
+        : '<span class="progress-dot" aria-hidden="true"></span>'
+  const status =
+    state === "current"
+      ? `<span class="progress-status">${PROGRESS_STATE_LABELS[state]}</span>`
+      : ""
+  return (
+    `<li class="${stepClass}"${current} aria-label="${htmlAttribute(label)}：${PROGRESS_STATE_LABELS[state]}">` +
+    `${dot}<span class="progress-name">${htmlInlineWithCode(label)}</span>${status}</li>`
+  )
 }
 
 /** 候補を書き手の順のままカードにし、頭に判定のバッジを置く（並べ替えは再構成になるのでしない）。 */

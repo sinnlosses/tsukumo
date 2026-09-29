@@ -1,7 +1,8 @@
 // レポートの記法（`REPORT_NOTATION_PROMPT` がモデルに指示している class 名）を、tsukumo 側の部品に解決する層。
 // 骨格を決めるのはモデル、装飾に使う class 名を決めるのは tsukumo という分担にして、モデルが書いた文字列と CSS のセレクタが直接つながらないようにする（つながっていると、片方だけ足したときに黙って崩れる）。
 //
-// 受け持つのは記法が挙げている5系統だけ（`note` / `badge` / `cols` / `card` / `stats` / `stat`）。
+// 受け持つのは記法が挙げている5系統（`note` / `badge` / `cols` / `card` / `stats` / `stat`）と、
+// tsukumo が組む `ol` / `li`（`progress` の段の並び）。
 // 知らない class 名と `style` 属性はそのまま残す（この層は足し算だけで、記法の表に無いモデルの即興を落とさない）。
 // class 名そのものは無害で、危ない経路（`script` の除去・`href` のスキーム・`style` の値）は `REPORT_SANITIZE_SCHEMA` が別に見る。
 
@@ -76,6 +77,32 @@ export function NotationInline(props: NotationInlineProps): ReactElement {
     <span {...rest} className={resolveNotationClassName(className)}>
       {children}
     </span>
+  )
+}
+
+type NotationOrderedListProps = JSX.IntrinsicElements["ol"] & ExtraProps
+
+/** レポートの `ol`（`progress` の段の並び）。 */
+export function NotationOrderedList(props: NotationOrderedListProps): ReactElement {
+  const { node: _node, className, children, ...rest } = props
+
+  return (
+    <ol {...rest} className={resolveNotationClassName(className)}>
+      {children}
+    </ol>
+  )
+}
+
+type NotationListItemProps = JSX.IntrinsicElements["li"] & ExtraProps
+
+/** レポートの `li`（`progress` の段・段の間の線）。 */
+export function NotationListItem(props: NotationListItemProps): ReactElement {
+  const { node: _node, className, children, ...rest } = props
+
+  return (
+    <li {...rest} className={resolveNotationClassName(className)}>
+      {children}
+    </li>
   )
 }
 

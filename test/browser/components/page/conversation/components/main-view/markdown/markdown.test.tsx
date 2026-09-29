@@ -109,6 +109,35 @@ describe("Markdown（unified への置き換えが求める記法）", () => {
     expect(items[0]?.querySelector("span.report-list-text > strong")?.textContent).toBe("説明")
   })
 
+  it("段の図（progress）は ol[aria-label] の下に段と線の li が交互に並び、いまの段にだけ aria-current が付く", () => {
+    const text = reportSectionsMarkdown([
+      {
+        heading: "",
+        blocks: [
+          { kind: "progress", steps: ["架空の一", "架空の二", "架空の三"], current: 1, fold: "" },
+        ],
+      },
+    ])
+    const { container } = render(<Markdown text={text} />)
+
+    const list = container.querySelector('ol[aria-label="進み具合"]')
+    expect(list).not.toBeNull()
+
+    const items = [...(list?.children ?? [])]
+    expect(items.map((item) => item.tagName)).toEqual(["LI", "LI", "LI", "LI", "LI"])
+    expect(items.map((item) => item.className.split(" ")[0])).toEqual([
+      "report-progress-step",
+      "report-progress-line",
+      "report-progress-step",
+      "report-progress-line",
+      "report-progress-step",
+    ])
+
+    const current = list?.querySelectorAll('[aria-current="step"]')
+    expect(current).toHaveLength(1)
+    expect(current?.[0]?.textContent).toContain("架空の二")
+  })
+
   it("数のバー（meter / progress）は許可リストに無いので落ちる", () => {
     // 数の見せ方を stats/stat の1通りに保つための線引き（`REPORT_NOTATION_PROMPT`）。
     // タグは落ちるが中身の文字は残るので、書いても数そのものは読める。

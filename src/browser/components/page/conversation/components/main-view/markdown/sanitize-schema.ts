@@ -113,7 +113,7 @@ const STRIPPED_TAG_NAMES: readonly string[] = [
 ]
 
 /**
- * 要素を問わず通してよい属性（class・id・title・table のセル結合・details の open・datetime・aria・role・SVG の座標や描画の属性。42個）。
+ * 要素を問わず通してよい属性（class・id・title・table のセル結合・details の open・datetime・aria・role・SVG の座標や描画の属性。43個）。
  * `href` は `<a>` だけ、`style` / `marker-end` / `marker-start` は値を検査するので別に定義する。
  *
  * 名前は hast のプロパティ名（DOM プロパティ名に合わせた camelCase。`property-information` の変換規則）で書く。
@@ -129,6 +129,7 @@ const GLOBAL_ATTRIBUTES: readonly string[] = [
   "dateTime", // datetime
   "ariaLabel", // aria-label
   "ariaHidden", // aria-hidden
+  "ariaCurrent", // aria-current
   "role",
   // SVG の描画に要るもの。
   "viewBox", // viewbox
@@ -187,7 +188,7 @@ const ALLOWED_STYLE_PATTERN = /^(?:(?!url\(|@import|expression\(|javascript:|<).
 const ALLOWED_MARKER_REFERENCE_PATTERN = /^url\(#[A-Za-z0-9_-]+\)$/
 
 /**
- * レポートの HTML を削ぎ落とす rehype-sanitize の schema（59要素・42属性）。
+ * レポートの HTML を削ぎ落とす rehype-sanitize の schema（59要素・43属性）。
  *
  * - `clobber: []`。defaultSchema の既定は `id` 等に `user-content-` を前置して DOM クロバー対策をするが、それをやると SVG の `marker-end="url(#foo)"` が指す `id="foo"` と値がズレて参照が壊れる
  * - `strip` に script 等7要素を指定し、中身ごと捨てる（既定の `strip` は `script` だけなので明示する必要がある）
@@ -214,7 +215,7 @@ export const REPORT_SANITIZE_SCHEMA: Schema = {
     th: ["align"],
     td: ["align"],
     // フェンスの info 文字列に書いたファイル名（```diff src/foo.ts）を `rehypeCodeFileName` が移してくる属性。
-    // `code` だけに許す（`*` に足すと、どの要素にも書ける属性が1つ増える。上の42個の数もこの属性を含まない）。
+    // `code` だけに許す（`*` に足すと、どの要素にも書ける属性が1つ増える。上の43個の数もこの属性を含まない）。
     // 読むのは `Pre` で、hast の段階でラベルに変える（属性そのものは `data-filename` として DOM にも残るが、CSS も JS も引いていない）。
     code: [CODE_FILE_NAME_PROPERTY],
     "*": [

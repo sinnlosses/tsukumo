@@ -280,7 +280,7 @@ describe("reportSectionsMarkdown", () => {
     )
   })
 
-  it("progress は段の図で、済んだ段・いまの段・残りの段を class と文字（済/今/番号）で見分ける", () => {
+  it("progress は節（丸）と線でつないだ1本の道で、済んだ段・いまの段・まだの段を class と aria-current・aria-label で見分ける", () => {
     const progress: ReportBlock = {
       kind: "progress",
       steps: ["架空の一", "架空の二", "架空の三"],
@@ -289,15 +289,23 @@ describe("reportSectionsMarkdown", () => {
     }
 
     expect(markdownOf(progress)).toBe(
-      '<div class="progress">' +
-        '<div class="progress-step progress-step-done"><b>済</b>架空の一</div>' +
-        '<div class="progress-step progress-step-current"><b>今</b>架空の二</div>' +
-        '<div class="progress-step"><b>3</b>架空の三</div>' +
-        "</div>",
+      '<ol class="progress" aria-label="進み具合">' +
+        '<li class="progress-step progress-step-done" aria-label="架空の一：済">' +
+        '<span class="progress-dot" aria-hidden="true">✓</span>' +
+        '<span class="progress-name">架空の一</span></li>' +
+        '<li class="progress-line progress-line-done" aria-hidden="true"></li>' +
+        '<li class="progress-step progress-step-current" aria-current="step" aria-label="架空の二：進行中">' +
+        '<span class="progress-dot" aria-hidden="true"><span class="progress-dot-mark"></span></span>' +
+        '<span class="progress-name">架空の二</span><span class="progress-status">進行中</span></li>' +
+        '<li class="progress-line" aria-hidden="true"></li>' +
+        '<li class="progress-step" aria-label="架空の三：まだ">' +
+        '<span class="progress-dot" aria-hidden="true"></span>' +
+        '<span class="progress-name">架空の三</span></li>' +
+        "</ol>",
     )
   })
 
-  it("progress の名前の無い段は1始まりの番号で出し、残りの段では番号を二重に出さない", () => {
+  it("progress の名前の無い段は1始まりの番号を名前にする", () => {
     const progress: ReportBlock = {
       kind: "progress",
       steps: ["", ""],
@@ -306,13 +314,20 @@ describe("reportSectionsMarkdown", () => {
     }
 
     expect(markdownOf(progress)).toBe(
-      '<div class="progress">' +
-        '<div class="progress-step progress-step-done"><b>済</b>1</div>' +
-        '<div class="progress-step progress-step-current"><b>今</b>2</div>' +
-        "</div>",
+      '<ol class="progress" aria-label="進み具合">' +
+        '<li class="progress-step progress-step-done" aria-label="1：済">' +
+        '<span class="progress-dot" aria-hidden="true">✓</span>' +
+        '<span class="progress-name">1</span></li>' +
+        '<li class="progress-line progress-line-done" aria-hidden="true"></li>' +
+        '<li class="progress-step progress-step-current" aria-current="step" aria-label="2：進行中">' +
+        '<span class="progress-dot" aria-hidden="true"><span class="progress-dot-mark"></span></span>' +
+        '<span class="progress-name">2</span><span class="progress-status">進行中</span></li>' +
+        "</ol>",
     )
     expect(markdownOf({ ...progress, current: 0 })).toContain(
-      '<div class="progress-step"><b>2</b></div>',
+      '<li class="progress-step" aria-label="2：まだ">' +
+        '<span class="progress-dot" aria-hidden="true"></span>' +
+        '<span class="progress-name">2</span></li>',
     )
   })
 

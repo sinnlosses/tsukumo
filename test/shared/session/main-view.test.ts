@@ -689,8 +689,15 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
 
     expect(shownReports(turn)).toEqual([
       "架空の結論。\n\n" +
-        '<div class="progress"><div class="progress-step progress-step-done"><b>済</b>架空の段A</div>' +
-        '<div class="progress-step progress-step-current"><b>今</b>架空の段B</div></div>\n\n' +
+        '<ol class="progress" aria-label="進み具合">' +
+        '<li class="progress-step progress-step-done" aria-label="架空の段A：済">' +
+        '<span class="progress-dot" aria-hidden="true">✓</span>' +
+        '<span class="progress-name">架空の段A</span></li>' +
+        '<li class="progress-line progress-line-done" aria-hidden="true"></li>' +
+        '<li class="progress-step progress-step-current" aria-current="step" aria-label="架空の段B：進行中">' +
+        '<span class="progress-dot" aria-hidden="true"><span class="progress-dot-mark"></span></span>' +
+        '<span class="progress-name">架空の段B</span><span class="progress-status">進行中</span></li>' +
+        "</ol>\n\n" +
         "架空の根拠。",
     ])
   })
@@ -705,7 +712,11 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
 
     expect(shownReports(turn)).toEqual([
       "架空の結論。\n\n" +
-        '<div class="progress"><div class="progress-step progress-step-done"><b>済</b>架空の段A</div></div>\n\n' +
+        '<ol class="progress" aria-label="進み具合">' +
+        '<li class="progress-step progress-step-done" aria-label="架空の段A：済">' +
+        '<span class="progress-dot" aria-hidden="true">✓</span>' +
+        '<span class="progress-name">架空の段A</span></li>' +
+        "</ol>\n\n" +
         "架空の根拠。",
     ])
   })
