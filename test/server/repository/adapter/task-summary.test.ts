@@ -27,8 +27,8 @@ const QUIET_PERIOD_MS = 300
 const root = useTempDir("task-summary")
 let watcher: TaskSummaryWatcher | undefined
 
-afterEach(() => {
-  watcher?.close()
+afterEach(async () => {
+  await watcher?.close()
   watcher = undefined
 })
 
@@ -213,7 +213,7 @@ describe("watchTaskSummary", () => {
     const changes: unknown[] = []
     watch(repository, changes)
     await waitForChanges(changes, 1)
-    watcher?.close()
+    await watcher?.close()
 
     await commitNewFormatTasks(repository, [{ id: "T-002", summary: "2つめ", status: "todo" }])
     await sleep(QUIET_PERIOD_MS)

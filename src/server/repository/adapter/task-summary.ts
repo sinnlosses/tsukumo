@@ -66,8 +66,8 @@ const MAIN_BRANCH_REF = "refs/heads/main"
 const LEDGER_CLAIM_DIR_SEGMENTS = ["task-workflow", "claim"]
 
 export type TaskSummaryWatcher = {
-  /** ポーリングを止める。 */
-  readonly close: () => void
+  /** ポーリングを止める。実行中の見回り（`git`・`bd` の子プロセス）の終わりまで待つ。 */
+  readonly close: () => Promise<void>
 }
 
 /**
@@ -86,6 +86,7 @@ export function watchTaskSummary(
   let cache: WatcherCache = { kind: "other", head: undefined }
   let timer: ReturnType<typeof setTimeout> | undefined = undefined
   let closed = false
+  let runningPoll: Promise<void> = Promise.resolve()
 
   const poll = async (): Promise<void> => {
     const read = await pollOnce(cwd, cache)
@@ -97,7 +98,8 @@ export function watchTaskSummary(
   }
 
   const loop = (): void => {
-    void poll().then(() => {
+    runningPoll = poll()
+    void runningPoll.then(() => {
       if (closed) {
         return
       }
@@ -112,6 +114,7 @@ export function watchTaskSummary(
     close: () => {
       closed = true
       clearTimeout(timer)
+      return runningPoll
     },
   }
 }
