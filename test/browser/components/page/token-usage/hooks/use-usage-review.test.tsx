@@ -76,38 +76,23 @@ describe("useUsageReview（ふだん）", () => {
     expect(result.current.kind === "idle" && result.current.start).toEqual({ kind: "available" })
   })
 
-  it("雑談中は押せず、理由に「雑談」を含む", () => {
-    const { result } = renderUsageReview(stateWith({ chatMode: true }))
+  it.each([
+    ["雑談中", { chatMode: true }, "雑談"],
+    ["ターンが進行中", { turn: { kind: "running", startedAt: 0 } }, "ターン"],
+    [
+      "雑談中かつターンが進行中（雑談を優先）",
+      { chatMode: true, turn: { kind: "running", startedAt: 0 } },
+      "雑談",
+    ],
+  ] as const)("%sは押せず、理由に「%s」を含む", (_name, overrides, keyword) => {
+    const { result } = renderUsageReview(stateWith(overrides))
 
     expect(result.current.kind === "idle" && result.current.start.kind).toBe("blocked")
     expect(
       result.current.kind === "idle" && result.current.start.kind === "blocked"
         ? result.current.start.reason
         : "",
-    ).toContain("雑談")
-  })
-
-  it("ターンが進行中なら押せず、理由に「ターン」を含む", () => {
-    const state = stateWith({ turn: { kind: "running", startedAt: 0 } })
-    const { result } = renderUsageReview(state)
-
-    expect(result.current.kind === "idle" && result.current.start.kind).toBe("blocked")
-    expect(
-      result.current.kind === "idle" && result.current.start.kind === "blocked"
-        ? result.current.start.reason
-        : "",
-    ).toContain("ターン")
-  })
-
-  it("雑談中かつターンが進行中でも、理由は1つだけ（雑談を優先）", () => {
-    const state = stateWith({ chatMode: true, turn: { kind: "running", startedAt: 0 } })
-    const { result } = renderUsageReview(state)
-
-    expect(
-      result.current.kind === "idle" && result.current.start.kind === "blocked"
-        ? result.current.start.reason
-        : "",
-    ).toContain("雑談")
+    ).toContain(keyword)
   })
 
   it("前回の提案が無ければ previousReview は none", () => {

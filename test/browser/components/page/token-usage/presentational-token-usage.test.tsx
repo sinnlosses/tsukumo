@@ -206,7 +206,6 @@ describe("PresentationalTokenUsage", () => {
     const headers = [...(modelTable?.querySelectorAll("thead th") ?? [])].map(
       (cell) => cell.textContent,
     )
-    expect(headers).not.toContain("費用")
     expect(headers).toEqual(["モデル", "入力", "出力", "キャッシュ読み", "キャッシュ作成"])
   })
 
@@ -220,7 +219,7 @@ describe("PresentationalTokenUsage", () => {
     ])
   })
 
-  it("モデル別は出力の多い順に並び、同じ出力ならモデル名の昇順になる", () => {
+  it("モデル別は届いた順のまま行にする（並べ替えはしない）", () => {
     const summary: TokenUsageSummary = {
       ...FIXTURE_SUMMARY,
       byModel: [
@@ -235,7 +234,6 @@ describe("PresentationalTokenUsage", () => {
     const names = [...(modelTable?.querySelectorAll("tbody th") ?? [])].map(
       (cell) => cell.textContent,
     )
-    // 並べ替えは表示側の責務ではなく届いた順のまま描くので、渡した順がそのまま表になる。
     expect(names).toEqual(["少ない出力", "多い出力", "zeta-同点"])
   })
 
