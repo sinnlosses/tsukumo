@@ -34,6 +34,7 @@ import type {
   ChatArchive,
   ChatArchiveEntry,
   ChatArchiveLine,
+  ChatArchiveLineOrigin,
   ChatArchiveRecentEntry,
   ChatConsolidationLock,
   ChatEpisodeCandidate,
@@ -295,16 +296,14 @@ function toTimedEntry(raw: unknown): TimedEntry | undefined {
     return undefined
   }
   const { at, speaker, text, mode, kind, project } = record.data
-  if (mode === "work" && project === undefined) {
+  const origin: ChatArchiveLineOrigin | undefined =
+    mode !== "work" ? { mode: "chat" } : project === undefined ? undefined : { mode, project }
+  if (origin === undefined) {
     return undefined
   }
   return {
     at,
-    line: {
-      kind: kind ?? (speaker === "user" ? "request" : "speech"),
-      text,
-      origin: mode === "work" && project !== undefined ? { mode, project } : { mode: "chat" },
-    },
+    line: { kind: kind ?? (speaker === "user" ? "request" : "speech"), text, origin },
   }
 }
 

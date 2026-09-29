@@ -75,7 +75,7 @@ export function currentPhaseOf(plan: LatestWorkPlan): WorkPhase {
     : { kind: "phase", index: plan.current, count: plan.phases.length, name }
 }
 
-export function isWorkPlanRecord(
+function isWorkPlanRecord(
   record: SessionRecord,
 ): record is Extract<SessionRecord, { readonly kind: "work-plan" }> {
   return record.kind === "work-plan"
