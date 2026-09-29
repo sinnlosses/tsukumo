@@ -83,9 +83,8 @@ export async function openTaskListRoom(run: ScenarioRun, scenario: string): Prom
 }
 
 /**
- * 上と同じ2件に、着手の印（`task claim` 相当）を立てた `todo` を1件加える。台帳は
- * `main` を動かさないので、コミットのあとに claim しても1回の `tasks-changed` に乗る
- * （`readTasksAtHead` が先端を読み直すたびに台帳も読むため）。
+ * 上と同じ2件に、着手の印（`task claim` 相当）を立てた `todo` を1件加える。印はコミットの前に立てる
+ * （あとに立てると、間に入った見回りの1回目の `tasks-changed` に印が乗らない）。
  */
 export async function openTaskListRoomWithRunningTask(
   run: ScenarioRun,
@@ -97,9 +96,9 @@ export async function openTaskListRoomWithRunningTask(
   writeTask(room.cwd, "T-001", "架空のタスク（未着手）", "todo")
   writeTask(room.cwd, "T-002", "架空のタスク（完了）", "done")
   writeTask(room.cwd, "T-003", "架空のタスク（進行中）", "todo")
+  await claimTask(room.cwd, "T-003")
   await git(room.cwd, "add", "develop/task")
   await git(room.cwd, "commit", "--quiet", "-m", "架空のタスク一覧")
-  await claimTask(room.cwd, "T-003")
 
   await room.waitForEvent("tasks-changed")
   return room
@@ -146,9 +145,9 @@ export async function openTaskBoardRoom(
     dependencies: ["T-001"],
     body: ["## 目的", "", "架空の保留の理由を本文にだけ書く。", ""].join("\n"),
   })
+  await claimTask(room.cwd, "T-003")
   await git(room.cwd, "add", "develop/task")
   await git(room.cwd, "commit", "--quiet", "-m", "架空のタスク一覧")
-  await claimTask(room.cwd, "T-003")
 
   await room.waitForEvent("tasks-changed")
   if (viewport === "narrow") {
