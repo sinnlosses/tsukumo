@@ -11,8 +11,8 @@ export type WorkPlan = {
   readonly current: number
 }
 
-/** 段取りが持つ段の数の下限。1つだけの段取りは位置を言う意味が無いので受け付けない。 */
-export const MIN_WORK_PLAN_PHASES = 2
+/** 段取りが持つ段の数の下限。段が無い段取りは位置を言う意味が無いので受け付けない。 */
+export const MIN_WORK_PLAN_PHASES = 1
 
 /** 記録の範囲で最後に渡された段取り。1度も渡されていなければ `none`。 */
 export type LatestWorkPlan = { readonly kind: "none" } | ({ readonly kind: "planned" } & WorkPlan)

@@ -695,6 +695,21 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     ])
   })
 
+  it("段が1つの段取りでも図が崩れず、済んだ段1つだけで組む", () => {
+    const plan: SessionEvent = { kind: "work-plan", phases: ["架空の段A"], current: 1 }
+    const turn = turnOf(
+      [ask, plan, report("架空の結論。", "架空の根拠。"), finished],
+      SETTLED,
+      true,
+    )
+
+    expect(shownReports(turn)).toEqual([
+      "架空の結論。\n\n" +
+        '<div class="progress"><div class="progress-step progress-step-done"><b>済</b>架空の段A</div></div>\n\n' +
+        "架空の根拠。",
+    ])
+  })
+
   it("checks・body・favor が空ならその塊を置かない（帯も出ない）", () => {
     const turn = turnOf([ask, report("架空の結論だけ。"), finished], SETTLED, true)
 

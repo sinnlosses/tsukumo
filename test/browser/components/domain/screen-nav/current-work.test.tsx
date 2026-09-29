@@ -533,6 +533,24 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
 
       expect(within(workList()).getByText("前の依頼の段取り")).not.toBeNull()
     })
+
+    it("段が1つの段取りでも札に「1/1 名前」を出す", () => {
+      renderScreenNav({
+        turn: { kind: "running", startedAt: 0 },
+        records: [requestRecord(), workPlanRecord({ phases: ["架空の段A"], current: 0 })],
+      })
+
+      expect(document.querySelector(".screen-nav-work-phase")?.textContent).toBe("1/1 架空の段A")
+    })
+
+    it("段が1つの段取りを済ませると札は「1/1 済」になる", () => {
+      renderScreenNav({
+        turn: { kind: "running", startedAt: 0 },
+        records: [requestRecord(), workPlanRecord({ phases: ["架空の段A"], current: 1 })],
+      })
+
+      expect(document.querySelector(".screen-nav-work-phase")?.textContent).toBe("1/1 済")
+    })
   })
 
   it("復元した手順（開始・終了が restored）は所要時間を出さない", () => {
