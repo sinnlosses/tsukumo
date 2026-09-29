@@ -18,6 +18,7 @@ describe("speak → キャラビューの吹き出し", () => {
       scenario: "speak-bubble-closing-narration",
       scene: "closing-narration-quick",
       viewport: "wide",
+      domRoots: ["character"],
     })
 
     await room.waitForEvent("turn-finished")
@@ -29,6 +30,7 @@ describe("speak → キャラビューの吹き出し", () => {
       scenario: "speak-bubble-question-multi",
       scene: "question-multi",
       viewport: "wide",
+      domRoots: ["character"],
     })
 
     await room.waitForEvent("turn-finished")

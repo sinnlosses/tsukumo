@@ -14,7 +14,12 @@ const ELAPSED_MS = 60_000
 
 describe("途中の発話と流れる本文", () => {
   it("あとにツールが続いた実況は落ち、最後の本文だけが残る", async () => {
-    const room = await run.open({ scenario: "narration", scene: "narration", viewport: "wide" })
+    const room = await run.open({
+      scenario: "narration",
+      scene: "narration",
+      viewport: "wide",
+      domRoots: ["main"],
+    })
 
     await room.waitForEvent("turn-finished")
     await room.settleAndMatch(ELAPSED_MS)
@@ -25,6 +30,7 @@ describe("途中の発話と流れる本文", () => {
       scenario: "long-report",
       scene: "long-report-quick",
       viewport: "wide",
+      domRoots: ["main"],
     })
 
     await room.waitForEvent("turn-finished")

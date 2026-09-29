@@ -18,6 +18,7 @@ describe("許可のモーダル", () => {
       scenario: "permission-answer",
       scene: "permission",
       viewport: "wide",
+      domRoots: ["dispatch"],
     })
 
     // exact: true — セリフの吹き出しも押せる行になり、その文面がたまたま「許可」を含むため

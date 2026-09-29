@@ -1,776 +1,359 @@
-[
-  {
-    "tag": "nav",
-    "attributes": {
-      "aria-label": "画面",
-      "data-screen": "conversation"
-    },
-    "children": [
-      {
-        "tag": "button",
-        "attributes": {
-          "aria-expanded": "false",
-          "aria-label": "キャラクターを選ぶ（いまは つくもの精霊）",
-          "type": "button"
-        },
-        "children": [
-          {
-            "tag": "img",
-            "attributes": {
-              "alt": "つくもの精霊",
-              "src": "/character/tsukumo-spirit/face.svg"
-            }
+{
+  "main": [
+    {
+      "tag": "section",
+      "attributes": {
+        "data-region": "main"
+      },
+      "children": [
+        {
+          "tag": "div",
+          "attributes": {
+            "data-brush-origin": ""
           },
-          {
-            "tag": "span",
-            "attributes": {
-              "aria-hidden": "true"
-            },
-            "children": [
-              {
-                "tag": "svg"
-              }
-            ]
-          }
-        ]
-      },
-      "<port>",
-      {
-        "tag": "span",
-        "attributes": {
-          "aria-hidden": "true"
-        },
-        "children": [
-          "-"
-        ]
-      },
-      {
-        "tag": "button",
-        "attributes": {
-          "aria-haspopup": "dialog",
-          "aria-expanded": "false",
-          "aria-label": "セッション FA。押すとセッションを切り替える画面を開く",
-          "type": "button"
-        },
-        "children": [
-          "FA"
-        ]
-      },
-      {
-        "tag": "div",
-        "attributes": {
-          "role": "group",
-          "aria-label": "モード"
-        },
-        "children": [
-          {
-            "tag": "button",
-            "attributes": {
-              "aria-pressed": "true",
-              "aria-disabled": "false",
-              "type": "button"
-            },
-            "children": [
-              {
-                "tag": "svg"
-              },
-              "仕事"
-            ]
-          },
-          {
-            "tag": "button",
-            "attributes": {
-              "aria-pressed": "false",
-              "aria-disabled": "false",
-              "aria-label": "雑談",
-              "type": "button"
-            },
-            "children": [
-              {
-                "tag": "svg"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "tag": "span",
-        "attributes": {
-          "aria-hidden": "true"
-        }
-      },
-      {
-        "tag": "a",
-        "attributes": {
-          "aria-current": "page",
-          "href": "/?t=<token>"
-        },
-        "children": [
-          "会話"
-        ]
-      },
-      {
-        "tag": "a",
-        "attributes": {
-          "href": "/?t=<token>#character"
-        },
-        "children": [
-          "キャラ"
-        ]
-      },
-      {
-        "tag": "a",
-        "attributes": {
-          "href": "/?t=<token>#token-usage"
-        },
-        "children": [
-          "トークン"
-        ]
-      },
-      {
-        "tag": "a",
-        "attributes": {
-          "href": "/?t=<token>#achievement"
-        },
-        "children": [
-          "成果"
-        ]
-      },
-      {
-        "tag": "button",
-        "attributes": {
-          "aria-expanded": "false",
-          "aria-label": "設定",
-          "type": "button"
-        },
-        "children": [
-          {
-            "tag": "svg"
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "tag": "div",
-    "attributes": {
-      "data-collapse-character": "false"
-    },
-    "children": [
-      {
-        "tag": "div",
-        "attributes": {
-          "data-narrow-pane": "main"
-        },
-        "children": [
-          {
-            "tag": "section",
-            "attributes": {
-              "data-region": "main"
-            },
-            "children": [
-              {
-                "tag": "div",
-                "attributes": {
-                  "data-brush-origin": ""
-                },
-                "children": [
-                  {
-                    "tag": "article",
-                    "children": [
-                      {
-                        "tag": "header",
-                        "children": [
-                          {
-                            "tag": "button",
-                            "attributes": {
-                              "aria-disabled": "true",
-                              "aria-label": "1つ古いターンへ",
-                              "type": "button"
-                            },
-                            "children": [
-                              {
-                                "tag": "span",
-                                "attributes": {
-                                  "aria-hidden": "true"
-                                },
-                                "children": [
-                                  "‹"
-                                ]
-                              }
-                            ]
-                          },
-                          {
-                            "tag": "button",
-                            "attributes": {
-                              "aria-disabled": "true",
-                              "aria-label": "1つ新しいターンへ",
-                              "type": "button"
-                            },
-                            "children": [
-                              {
-                                "tag": "span",
-                                "attributes": {
-                                  "aria-hidden": "true"
-                                },
-                                "children": [
-                                  "›"
-                                ]
-                              }
-                            ]
-                          },
-                          {
-                            "tag": "h2",
-                            "children": [
-                              {
-                                "tag": "button",
-                                "attributes": {
-                                  "aria-expanded": "false",
-                                  "type": "button"
-                                },
-                                "children": [
-                                  "multiSelect の質問に答える場面（架空）。答えると箱が消える。",
-                                  {
-                                    "tag": "span",
-                                    "attributes": {
-                                      "aria-hidden": "true"
-                                    }
-                                  }
-                                ]
-                              }
-                            ]
-                          },
-                          "1 / 1",
-                          "最新"
-                        ]
+          "children": [
+            {
+              "tag": "article",
+              "children": [
+                {
+                  "tag": "header",
+                  "children": [
+                    {
+                      "tag": "button",
+                      "attributes": {
+                        "aria-disabled": "true",
+                        "aria-label": "1つ古いターンへ",
+                        "type": "button"
                       },
-                      {
-                        "tag": "div",
-                        "attributes": {
-                          "data-outline": "hidden"
-                        },
-                        "children": [
-                          {
-                            "tag": "section",
-                            "children": [
-                              {
-                                "tag": "p",
-                                "children": [
-                                  "multiSelect の質問に答える場面（架空）。答えると箱が消える。"
-                                ]
-                              }
-                            ]
-                          }
-                        ]
-                      }
-                    ]
-                  },
-                  {
-                    "tag": "section",
-                    "children": [
-                      {
-                        "tag": "header",
-                        "children": [
-                          "質問",
-                          "架空の選択",
-                          "1 / 1"
-                        ]
-                      },
-                      {
-                        "tag": "p",
-                        "children": [
-                          "架空の質問：どの案を試す？"
-                        ]
-                      },
-                      {
-                        "tag": "ul",
-                        "children": [
-                          {
-                            "tag": "li",
-                            "children": [
-                              {
-                                "tag": "label",
-                                "children": [
-                                  {
-                                    "tag": "input",
-                                    "attributes": {
-                                      "type": "checkbox",
-                                      "checked": false,
-                                      "value": "on"
-                                    }
-                                  },
-                                  "A案"
-                                ]
-                              },
-                              {
-                                "tag": "p",
-                                "children": [
-                                  "架空の説明A"
-                                ]
-                              }
-                            ]
+                      "children": [
+                        {
+                          "tag": "span",
+                          "attributes": {
+                            "aria-hidden": "true"
                           },
-                          {
-                            "tag": "li",
-                            "children": [
-                              {
-                                "tag": "label",
-                                "children": [
-                                  {
-                                    "tag": "input",
-                                    "attributes": {
-                                      "type": "checkbox",
-                                      "checked": false,
-                                      "value": "on"
-                                    }
-                                  },
-                                  "B案"
-                                ]
-                              },
-                              {
-                                "tag": "p",
-                                "children": [
-                                  "架空の説明B"
-                                ]
-                              }
-                            ]
-                          },
-                          {
-                            "tag": "li",
-                            "children": [
-                              {
-                                "tag": "label",
-                                "children": [
-                                  {
-                                    "tag": "input",
-                                    "attributes": {
-                                      "type": "checkbox",
-                                      "checked": false,
-                                      "value": "on"
-                                    }
-                                  },
-                                  "C案"
-                                ]
-                              },
-                              {
-                                "tag": "p",
-                                "children": [
-                                  "架空の説明C"
-                                ]
-                              }
-                            ]
-                          }
-                        ]
-                      },
-                      {
-                        "tag": "footer",
-                        "children": [
-                          "選択肢にない答えは、下の入力欄に書いて送れます",
-                          {
-                            "tag": "button",
-                            "attributes": {
-                              "aria-disabled": "true",
-                              "type": "button"
-                            },
-                            "children": [
-                              "これで答える"
-                            ]
-                          }
-                        ]
-                      }
-                    ]
-                  },
-                  {
-                    "tag": "div",
-                    "attributes": {
-                      "data-work-state": "pending",
-                      "data-chat-idle": "false",
-                      "data-variant": "capsule"
+                          "children": [
+                            "‹"
+                          ]
+                        }
+                      ]
                     },
-                    "children": [
-                      {
-                        "tag": "button",
-                        "attributes": {
-                          "aria-expanded": "false",
-                          "type": "button"
-                        },
-                        "children": [
-                          {
-                            "tag": "span",
-                            "attributes": {
-                              "aria-hidden": "true"
-                            },
-                            "children": [
-                              "●"
-                            ]
+                    {
+                      "tag": "button",
+                      "attributes": {
+                        "aria-disabled": "true",
+                        "aria-label": "1つ新しいターンへ",
+                        "type": "button"
+                      },
+                      "children": [
+                        {
+                          "tag": "span",
+                          "attributes": {
+                            "aria-hidden": "true"
                           },
-                          "答え待ち",
-                          {
-                            "tag": "span",
-                            "attributes": {
-                              "aria-hidden": "true"
+                          "children": [
+                            "›"
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "tag": "h2",
+                      "children": [
+                        {
+                          "tag": "button",
+                          "attributes": {
+                            "aria-expanded": "false",
+                            "type": "button"
+                          },
+                          "children": [
+                            "multiSelect の質問に答える場面（架空）。答えると箱が消える。",
+                            {
+                              "tag": "span",
+                              "attributes": {
+                                "aria-hidden": "true"
+                              }
                             }
-                          },
-                          "架空の選択"
-                        ]
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "tag": "div",
-            "attributes": {
-              "role": "separator",
-              "aria-orientation": "vertical",
-              "aria-label": "メインビューとサイドバーの境界"
-            }
-          },
-          {
-            "tag": "section",
-            "attributes": {
-              "data-region": "sidebar"
+                          ]
+                        }
+                      ]
+                    },
+                    "1 / 1",
+                    "最新"
+                  ]
+                },
+                {
+                  "tag": "div",
+                  "attributes": {
+                    "data-outline": "hidden"
+                  },
+                  "children": [
+                    {
+                      "tag": "section",
+                      "children": [
+                        {
+                          "tag": "p",
+                          "children": [
+                            "multiSelect の質問に答える場面（架空）。答えると箱が消える。"
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
             },
-            "children": [
-              {
-                "tag": "section",
-                "children": [
-                  {
-                    "tag": "h2",
-                    "children": [
-                      "タスク",
-                      {
-                        "tag": "button",
-                        "attributes": {
-                          "aria-disabled": "false",
-                          "aria-haspopup": "dialog",
-                          "type": "button"
+            {
+              "tag": "section",
+              "children": [
+                {
+                  "tag": "header",
+                  "children": [
+                    "質問",
+                    "架空の選択",
+                    "1 / 1"
+                  ]
+                },
+                {
+                  "tag": "p",
+                  "children": [
+                    "架空の質問：どの案を試す？"
+                  ]
+                },
+                {
+                  "tag": "ul",
+                  "children": [
+                    {
+                      "tag": "li",
+                      "children": [
+                        {
+                          "tag": "label",
+                          "children": [
+                            {
+                              "tag": "input",
+                              "attributes": {
+                                "type": "checkbox",
+                                "checked": false,
+                                "value": "on"
+                              }
+                            },
+                            "A案"
+                          ]
                         },
-                        "children": [
-                          "一覧を見る"
-                        ]
-                      }
-                    ]
-                  },
-                  {
-                    "tag": "p",
-                    "children": [
-                      "不明"
-                    ]
-                  }
-                ]
-              },
-              {
-                "tag": "div",
-                "attributes": {
-                  "role": "group",
-                  "aria-label": "実行の設定"
+                        {
+                          "tag": "p",
+                          "children": [
+                            "架空の説明A"
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "tag": "li",
+                      "children": [
+                        {
+                          "tag": "label",
+                          "children": [
+                            {
+                              "tag": "input",
+                              "attributes": {
+                                "type": "checkbox",
+                                "checked": false,
+                                "value": "on"
+                              }
+                            },
+                            "B案"
+                          ]
+                        },
+                        {
+                          "tag": "p",
+                          "children": [
+                            "架空の説明B"
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "tag": "li",
+                      "children": [
+                        {
+                          "tag": "label",
+                          "children": [
+                            {
+                              "tag": "input",
+                              "attributes": {
+                                "type": "checkbox",
+                                "checked": false,
+                                "value": "on"
+                              }
+                            },
+                            "C案"
+                          ]
+                        },
+                        {
+                          "tag": "p",
+                          "children": [
+                            "架空の説明C"
+                          ]
+                        }
+                      ]
+                    }
+                  ]
                 },
-                "children": [
-                  "O",
-                  {
-                    "tag": "select",
-                    "attributes": {
-                      "aria-label": "モデル Opus",
-                      "value": "opus"
+                {
+                  "tag": "footer",
+                  "children": [
+                    "選択肢にない答えは、下の入力欄に書いて送れます",
+                    {
+                      "tag": "button",
+                      "attributes": {
+                        "aria-disabled": "true",
+                        "type": "button"
+                      },
+                      "children": [
+                        "これで答える"
+                      ]
                     }
-                  },
-                  {
-                    "tag": "span",
-                    "attributes": {
-                      "aria-hidden": "true"
-                    }
-                  },
-                  {
-                    "tag": "span",
-                    "attributes": {
-                      "aria-hidden": "true"
-                    }
-                  },
-                  {
-                    "tag": "select",
-                    "attributes": {
-                      "aria-label": "effort Medium",
-                      "value": "medium"
-                    }
-                  },
-                  {
-                    "tag": "span",
-                    "attributes": {
-                      "aria-hidden": "true"
-                    }
-                  },
-                  {
-                    "tag": "svg"
-                  },
-                  {
-                    "tag": "select",
-                    "attributes": {
-                      "aria-label": "許可モード 自動判定",
-                      "value": "auto"
-                    }
-                  }
-                ]
-              },
-              {
-                "tag": "button",
-                "attributes": {
-                  "aria-label": "コンテキスト 61%（122k / 200k）",
-                  "aria-expanded": "false",
-                  "type": "button"
-                },
-                "children": [
-                  "文脈",
-                  "61%",
-                  {
-                    "tag": "span",
-                    "attributes": {
-                      "aria-hidden": "true"
-                    }
-                  }
-                ]
-              },
-              {
-                "tag": "span",
-                "attributes": {
-                  "aria-hidden": "true"
+                  ]
                 }
-              },
-              {
-                "tag": "button",
-                "attributes": {
-                  "aria-label": "利用枠 5時間 34%・7日間 61%",
-                  "aria-expanded": "false",
-                  "type": "button"
-                },
-                "children": [
-                  {
-                    "tag": "svg"
-                  },
-                  "5h",
-                  "34%",
-                  {
-                    "tag": "svg"
-                  },
-                  "7d",
-                  "61%"
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "tag": "div",
-        "attributes": {
-          "role": "separator",
-          "aria-orientation": "horizontal",
-          "aria-label": "上段と下段の境界"
-        }
-      },
-      {
-        "tag": "div",
-        "attributes": {
-          "data-collapse-character": "false"
-        },
-        "children": [
-          {
-            "tag": "section",
-            "attributes": {
-              "data-region": "character"
+              ]
             },
-            "children": [
-              {
-                "tag": "button",
-                "attributes": {
-                  "aria-expanded": "false",
-                  "type": "button"
-                },
-                "children": [
-                  {
-                    "tag": "svg"
+            {
+              "tag": "div",
+              "attributes": {
+                "data-work-state": "pending",
+                "data-chat-idle": "false",
+                "data-variant": "capsule"
+              },
+              "children": [
+                {
+                  "tag": "button",
+                  "attributes": {
+                    "aria-expanded": "false",
+                    "type": "button"
                   },
-                  "ログ"
-                ]
-              },
-              {
-                "tag": "div",
-                "attributes": {
-                  "role": "img",
-                  "aria-label": "つくもの精霊（どや顔）",
-                  "data-expression": "proud",
-                  "data-outfit": "heavy",
-                  "data-motion": "reading"
-                },
-                "children": [
-                  {
-                    "tag": "svg"
-                  }
-                ]
-              },
-              {
-                "tag": "div",
-                "attributes": {
-                  "data-latest": "true",
-                  "data-interactive": "true",
-                  "data-selected": "true",
-                  "role": "button",
-                  "aria-pressed": "true"
-                },
-                "children": [
-                  "つくもの精霊",
-                  "吹き出しが3つ並ぶ場面（架空）。"
-                ]
-              },
-              {
-                "tag": "div",
-                "attributes": {
-                  "data-latest": "false",
-                  "data-interactive": "true",
-                  "data-selected": "false",
-                  "role": "button",
-                  "aria-pressed": "false"
-                },
-                "children": [
-                  "選ぶのを待っている間の、架空のひとこと。"
-                ]
-              },
-              {
-                "tag": "div",
-                "attributes": {
-                  "data-latest": "false",
-                  "data-interactive": "true",
-                  "data-selected": "false",
-                  "role": "button",
-                  "aria-pressed": "false"
-                },
-                "children": [
-                  "複数選べる質問を出したよ。チェックボックスで選んでみて。"
-                ]
-              },
-              {
-                "tag": "div",
-                "attributes": {
-                  "data-latest": "false",
-                  "data-interactive": "true",
-                  "data-selected": "false",
-                  "role": "button",
-                  "aria-pressed": "false"
-                },
-                "children": [
-                  "疑似セッションの駆動で立ち上がったよ。ここはぜんぶ作り物の会話。"
-                ]
-              }
-            ]
-          },
-          {
-            "tag": "div",
-            "attributes": {
-              "role": "separator",
-              "aria-orientation": "vertical",
-              "aria-label": "キャラビューと入力欄の境界"
+                  "children": [
+                    {
+                      "tag": "span",
+                      "attributes": {
+                        "aria-hidden": "true"
+                      },
+                      "children": [
+                        "●"
+                      ]
+                    },
+                    "答え待ち",
+                    {
+                      "tag": "span",
+                      "attributes": {
+                        "aria-hidden": "true"
+                      }
+                    },
+                    "架空の選択"
+                  ]
+                }
+              ]
             }
-          },
-          {
-            "tag": "section",
-            "attributes": {
-              "data-region": "dispatch"
-            },
-            "children": [
-              {
-                "tag": "div",
-                "attributes": {
-                  "aria-hidden": "true"
-                }
-              },
-              {
-                "tag": "form",
-                "children": [
-                  {
-                    "tag": "p",
-                    "children": [
-                      "↑ つくもの精霊 が質問しています。上の選択肢から選ぶか、ここに書いて答えてください"
-                    ]
-                  },
-                  {
-                    "tag": "textarea",
-                    "attributes": {
-                      "value": ""
-                    }
-                  },
-                  {
-                    "tag": "button",
-                    "attributes": {
-                      "aria-disabled": "false",
-                      "aria-label": "画像を添える",
-                      "type": "button"
-                    },
-                    "children": [
-                      {
-                        "tag": "svg"
-                      }
-                    ]
-                  },
-                  {
-                    "tag": "button",
-                    "attributes": {
-                      "aria-disabled": "false",
-                      "aria-label": "コマンドを補完する",
-                      "type": "button"
-                    },
-                    "children": [
-                      {
-                        "tag": "svg"
-                      }
-                    ]
-                  },
-                  {
-                    "tag": "button",
-                    "attributes": {
-                      "aria-disabled": "false",
-                      "aria-label": "ファイルを補完する",
-                      "type": "button"
-                    },
-                    "children": [
-                      {
-                        "tag": "svg"
-                      }
-                    ]
-                  },
-                  {
-                    "tag": "button",
-                    "attributes": {
-                      "aria-pressed": "false",
-                      "aria-disabled": "false",
-                      "aria-label": "マークダウンエディタで書く",
-                      "type": "button"
-                    },
-                    "children": [
-                      {
-                        "tag": "svg"
-                      }
-                    ]
-                  },
-                  "経過",
-                  "-",
-                  {
-                    "tag": "button",
-                    "attributes": {
-                      "data-shortcut": "⌘⏎",
-                      "type": "submit"
-                    },
-                    "children": [
-                      "答える"
-                    ]
-                  }
-                ]
-              }
-            ]
+          ]
+        }
+      ]
+    }
+  ],
+  "dispatch": [
+    {
+      "tag": "section",
+      "attributes": {
+        "data-region": "dispatch"
+      },
+      "children": [
+        {
+          "tag": "div",
+          "attributes": {
+            "aria-hidden": "true"
           }
-        ]
-      }
-    ]
-  }
-]
+        },
+        {
+          "tag": "form",
+          "children": [
+            {
+              "tag": "p",
+              "children": [
+                "↑ つくもの精霊 が質問しています。上の選択肢から選ぶか、ここに書いて答えてください"
+              ]
+            },
+            {
+              "tag": "textarea",
+              "attributes": {
+                "value": ""
+              }
+            },
+            {
+              "tag": "button",
+              "attributes": {
+                "aria-disabled": "false",
+                "aria-label": "画像を添える",
+                "type": "button"
+              },
+              "children": [
+                {
+                  "tag": "svg"
+                }
+              ]
+            },
+            {
+              "tag": "button",
+              "attributes": {
+                "aria-disabled": "false",
+                "aria-label": "コマンドを補完する",
+                "type": "button"
+              },
+              "children": [
+                {
+                  "tag": "svg"
+                }
+              ]
+            },
+            {
+              "tag": "button",
+              "attributes": {
+                "aria-disabled": "false",
+                "aria-label": "ファイルを補完する",
+                "type": "button"
+              },
+              "children": [
+                {
+                  "tag": "svg"
+                }
+              ]
+            },
+            {
+              "tag": "button",
+              "attributes": {
+                "aria-pressed": "false",
+                "aria-disabled": "false",
+                "aria-label": "マークダウンエディタで書く",
+                "type": "button"
+              },
+              "children": [
+                {
+                  "tag": "svg"
+                }
+              ]
+            },
+            "経過",
+            "-",
+            {
+              "tag": "button",
+              "attributes": {
+                "data-shortcut": "⌘⏎",
+                "type": "submit"
+              },
+              "children": [
+                "答える"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

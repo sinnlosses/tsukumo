@@ -27,7 +27,7 @@ export type SidebarSectionProps = {
 
 export function SidebarSection(props: SidebarSectionProps): ReactElement {
   return (
-    <section className={clsx(styles["sidebar-block"], props.extraClass)}>
+    <section className={clsx(styles["sidebar-block"], props.extraClass)} aria-label={props.title}>
       <Heading
         level={2}
         size="subheading"

@@ -14,7 +14,12 @@ const ELAPSED_MS = 60_000
 
 describe("入力欄から送る", () => {
   it("入力欄に書いて ⌘Enter で送ると prompt が流れ、request が戻って続きの場面が流れる", async () => {
-    const room = await run.open({ scenario: "input-dispatch", scene: "none", viewport: "wide" })
+    const room = await run.open({
+      scenario: "input-dispatch",
+      scene: "none",
+      viewport: "wide",
+      domRoots: ["main", "dispatch"],
+    })
 
     const textArea = room.page.locator("textarea")
     await textArea.fill("入力欄から送る場面を見たい（架空の依頼）")

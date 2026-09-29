@@ -29,6 +29,7 @@ describe("雑談のサイドバーの「覚えていること」", () => {
       scenario: "chat-remembered-lines-open",
       scene: "chat-remembered-lines",
       viewport: "wide",
+      domRoots: ["sidebar"],
     })
 
     await room.page.getByRole("button", { name: LONG_CHIP_NAME }).click()
@@ -40,6 +41,7 @@ describe("雑談のサイドバーの「覚えていること」", () => {
       scenario: "chat-remembered-lines-closed",
       scene: "chat-remembered-lines",
       viewport: "wide",
+      domRoots: ["sidebar"],
     })
 
     await room.page.getByRole("button", { name: LONG_CHIP_NAME }).click()
@@ -52,6 +54,7 @@ describe("雑談のサイドバーの「覚えていること」", () => {
       scenario: "chat-remembered-lines-edit",
       scene: "chat-remembered-lines",
       viewport: "wide",
+      domRoots: ["sidebar"],
     })
 
     await room.page.getByRole("button", { name: "編集", exact: true }).click()

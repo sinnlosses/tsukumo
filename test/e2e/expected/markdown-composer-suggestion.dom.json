@@ -1,484 +1,89 @@
-[
-  {
-    "tag": "nav",
-    "attributes": {
-      "aria-label": "画面",
-      "data-screen": "conversation"
-    },
-    "children": [
-      {
-        "tag": "button",
-        "attributes": {
-          "aria-expanded": "false",
-          "aria-label": "キャラクターを選ぶ（いまは つくもの精霊）",
-          "type": "button"
-        },
-        "children": [
-          {
-            "tag": "img",
-            "attributes": {
-              "alt": "つくもの精霊",
-              "src": "/character/tsukumo-spirit/face.svg"
-            }
-          },
-          {
-            "tag": "span",
-            "attributes": {
-              "aria-hidden": "true"
-            },
-            "children": [
-              {
-                "tag": "svg"
+{
+  "dispatch": [
+    {
+      "tag": "section",
+      "attributes": {
+        "data-region": "dispatch"
+      },
+      "children": [
+        {
+          "tag": "form",
+          "children": [
+            {
+              "tag": "div",
+              "attributes": {
+                "editor": "codemirror",
+                "value": "/compact "
               }
-            ]
-          }
-        ]
-      },
-      "<port>",
-      {
-        "tag": "span",
-        "attributes": {
-          "aria-hidden": "true"
-        },
-        "children": [
-          "-"
-        ]
-      },
-      {
-        "tag": "button",
-        "attributes": {
-          "aria-haspopup": "dialog",
-          "aria-expanded": "false",
-          "aria-label": "セッション FA。押すとセッションを切り替える画面を開く",
-          "type": "button"
-        },
-        "children": [
-          "FA"
-        ]
-      },
-      {
-        "tag": "div",
-        "attributes": {
-          "role": "group",
-          "aria-label": "モード"
-        },
-        "children": [
-          {
-            "tag": "button",
-            "attributes": {
-              "aria-pressed": "true",
-              "aria-disabled": "false",
-              "type": "button"
             },
-            "children": [
-              {
-                "tag": "svg"
+            {
+              "tag": "button",
+              "attributes": {
+                "aria-disabled": "false",
+                "aria-label": "画像を添える",
+                "type": "button"
               },
-              "仕事"
-            ]
-          },
-          {
-            "tag": "button",
-            "attributes": {
-              "aria-pressed": "false",
-              "aria-disabled": "false",
-              "aria-label": "雑談",
-              "type": "button"
-            },
-            "children": [
-              {
-                "tag": "svg"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "tag": "span",
-        "attributes": {
-          "aria-hidden": "true"
-        }
-      },
-      {
-        "tag": "a",
-        "attributes": {
-          "aria-current": "page",
-          "href": "/?t=<token>"
-        },
-        "children": [
-          "会話"
-        ]
-      },
-      {
-        "tag": "a",
-        "attributes": {
-          "href": "/?t=<token>#character"
-        },
-        "children": [
-          "キャラ"
-        ]
-      },
-      {
-        "tag": "a",
-        "attributes": {
-          "href": "/?t=<token>#token-usage"
-        },
-        "children": [
-          "トークン"
-        ]
-      },
-      {
-        "tag": "a",
-        "attributes": {
-          "href": "/?t=<token>#achievement"
-        },
-        "children": [
-          "成果"
-        ]
-      },
-      {
-        "tag": "button",
-        "attributes": {
-          "aria-expanded": "false",
-          "aria-label": "設定",
-          "type": "button"
-        },
-        "children": [
-          {
-            "tag": "svg"
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "tag": "div",
-    "attributes": {
-      "data-collapse-character": "false"
-    },
-    "children": [
-      {
-        "tag": "div",
-        "attributes": {
-          "data-narrow-pane": "main"
-        },
-        "children": [
-          {
-            "tag": "section",
-            "attributes": {
-              "data-region": "main"
-            },
-            "children": [
-              {
-                "tag": "p",
-                "children": [
-                  "（まだ作業がありません）"
-                ]
-              }
-            ]
-          },
-          {
-            "tag": "div",
-            "attributes": {
-              "role": "separator",
-              "aria-orientation": "vertical",
-              "aria-label": "メインビューとサイドバーの境界"
-            }
-          },
-          {
-            "tag": "section",
-            "attributes": {
-              "data-region": "sidebar"
-            },
-            "children": [
-              {
-                "tag": "section",
-                "children": [
-                  {
-                    "tag": "h2",
-                    "children": [
-                      "タスク",
-                      {
-                        "tag": "button",
-                        "attributes": {
-                          "aria-disabled": "false",
-                          "aria-haspopup": "dialog",
-                          "type": "button"
-                        },
-                        "children": [
-                          "一覧を見る"
-                        ]
-                      }
-                    ]
-                  },
-                  {
-                    "tag": "p",
-                    "children": [
-                      "不明"
-                    ]
-                  }
-                ]
-              },
-              {
-                "tag": "div",
-                "attributes": {
-                  "role": "group",
-                  "aria-label": "実行の設定"
-                },
-                "children": [
-                  "O",
-                  {
-                    "tag": "select",
-                    "attributes": {
-                      "aria-label": "モデル Opus",
-                      "value": "opus"
-                    }
-                  },
-                  {
-                    "tag": "span",
-                    "attributes": {
-                      "aria-hidden": "true"
-                    }
-                  },
-                  {
-                    "tag": "span",
-                    "attributes": {
-                      "aria-hidden": "true"
-                    }
-                  },
-                  {
-                    "tag": "select",
-                    "attributes": {
-                      "aria-label": "effort まだ effort を読み取れていない（ターンが終わると分かる）",
-                      "disabled": true,
-                      "value": ""
-                    }
-                  },
-                  {
-                    "tag": "span",
-                    "attributes": {
-                      "aria-hidden": "true"
-                    }
-                  },
-                  {
-                    "tag": "svg"
-                  },
-                  {
-                    "tag": "select",
-                    "attributes": {
-                      "aria-label": "許可モード 自動判定",
-                      "value": "auto"
-                    }
-                  }
-                ]
-              },
-              {
-                "tag": "button",
-                "attributes": {
-                  "aria-label": "コンテキスト 61%（122k / 200k）",
-                  "aria-expanded": "false",
-                  "type": "button"
-                },
-                "children": [
-                  "文脈",
-                  "61%",
-                  {
-                    "tag": "span",
-                    "attributes": {
-                      "aria-hidden": "true"
-                    }
-                  }
-                ]
-              },
-              {
-                "tag": "span",
-                "attributes": {
-                  "aria-hidden": "true"
+              "children": [
+                {
+                  "tag": "svg"
                 }
-              },
-              {
-                "tag": "button",
-                "attributes": {
-                  "aria-label": "利用枠 5時間 34%・7日間 61%",
-                  "aria-expanded": "false",
-                  "type": "button"
-                },
-                "children": [
-                  {
-                    "tag": "svg"
-                  },
-                  "5h",
-                  "34%",
-                  {
-                    "tag": "svg"
-                  },
-                  "7d",
-                  "61%"
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "tag": "div",
-        "attributes": {
-          "role": "separator",
-          "aria-orientation": "horizontal",
-          "aria-label": "上段と下段の境界"
-        }
-      },
-      {
-        "tag": "div",
-        "attributes": {
-          "data-collapse-character": "false"
-        },
-        "children": [
-          {
-            "tag": "section",
-            "attributes": {
-              "data-region": "character"
+              ]
             },
-            "children": [
-              {
-                "tag": "button",
-                "attributes": {
-                  "aria-expanded": "false",
-                  "type": "button"
-                },
-                "children": [
-                  {
-                    "tag": "svg"
-                  },
-                  "ログ"
-                ]
+            {
+              "tag": "button",
+              "attributes": {
+                "aria-disabled": "false",
+                "aria-label": "コマンドを補完する",
+                "type": "button"
               },
-              {
-                "tag": "div",
-                "attributes": {
-                  "role": "img",
-                  "aria-label": "つくもの精霊（通常）",
-                  "data-expression": "default",
-                  "data-outfit": "heavy",
-                  "data-motion": "reading"
-                },
-                "children": [
-                  {
-                    "tag": "svg"
-                  }
-                ]
+              "children": [
+                {
+                  "tag": "svg"
+                }
+              ]
+            },
+            {
+              "tag": "button",
+              "attributes": {
+                "aria-disabled": "false",
+                "aria-label": "ファイルを補完する",
+                "type": "button"
               },
-              {
-                "tag": "div",
-                "attributes": {
-                  "data-latest": "true",
-                  "data-interactive": "true",
-                  "data-selected": "false",
-                  "role": "button",
-                  "aria-pressed": "false"
-                },
-                "children": [
-                  "つくもの精霊",
-                  "疑似セッションの駆動で立ち上がったよ。ここはぜんぶ作り物の会話。"
-                ]
-              }
-            ]
-          },
-          {
-            "tag": "div",
-            "attributes": {
-              "role": "separator",
-              "aria-orientation": "vertical",
-              "aria-label": "キャラビューと入力欄の境界"
+              "children": [
+                {
+                  "tag": "svg"
+                }
+              ]
+            },
+            {
+              "tag": "button",
+              "attributes": {
+                "aria-pressed": "true",
+                "aria-disabled": "false",
+                "aria-label": "マークダウンエディタで書く",
+                "type": "button"
+              },
+              "children": [
+                {
+                  "tag": "svg"
+                }
+              ]
+            },
+            "経過",
+            "-",
+            {
+              "tag": "button",
+              "attributes": {
+                "data-shortcut": "⌘⏎",
+                "type": "submit"
+              },
+              "children": [
+                "送信"
+              ]
             }
-          },
-          {
-            "tag": "section",
-            "attributes": {
-              "data-region": "dispatch"
-            },
-            "children": [
-              {
-                "tag": "form",
-                "children": [
-                  {
-                    "tag": "div",
-                    "attributes": {
-                      "editor": "codemirror",
-                      "value": "/compact "
-                    }
-                  },
-                  {
-                    "tag": "button",
-                    "attributes": {
-                      "aria-disabled": "false",
-                      "aria-label": "画像を添える",
-                      "type": "button"
-                    },
-                    "children": [
-                      {
-                        "tag": "svg"
-                      }
-                    ]
-                  },
-                  {
-                    "tag": "button",
-                    "attributes": {
-                      "aria-disabled": "false",
-                      "aria-label": "コマンドを補完する",
-                      "type": "button"
-                    },
-                    "children": [
-                      {
-                        "tag": "svg"
-                      }
-                    ]
-                  },
-                  {
-                    "tag": "button",
-                    "attributes": {
-                      "aria-disabled": "false",
-                      "aria-label": "ファイルを補完する",
-                      "type": "button"
-                    },
-                    "children": [
-                      {
-                        "tag": "svg"
-                      }
-                    ]
-                  },
-                  {
-                    "tag": "button",
-                    "attributes": {
-                      "aria-pressed": "true",
-                      "aria-disabled": "false",
-                      "aria-label": "マークダウンエディタで書く",
-                      "type": "button"
-                    },
-                    "children": [
-                      {
-                        "tag": "svg"
-                      }
-                    ]
-                  },
-                  "経過",
-                  "-",
-                  {
-                    "tag": "button",
-                    "attributes": {
-                      "data-shortcut": "⌘⏎",
-                      "type": "submit"
-                    },
-                    "children": [
-                      "送信"
-                    ]
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      }
-    ]
-  }
-]
+          ]
+        }
+      ]
+    }
+  ]
+}

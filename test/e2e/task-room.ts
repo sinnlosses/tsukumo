@@ -4,7 +4,7 @@ import { join } from "node:path"
 import type { Locator } from "playwright-core"
 
 import { claimTask, git, initGitRepository } from "../fixture/git-repository.ts"
-import type { ScenarioRoom, ScenarioRun } from "./scenario-run.ts"
+import type { DomRootName, ScenarioRoom, ScenarioRun } from "./scenario-run.ts"
 
 // タスクの一覧とタスクのモーダルの E2E の足場（docs/architecture/testing.md「E2E のシナリオの一覧」）。
 // この一覧だけは疑似セッションの
@@ -69,8 +69,12 @@ function writeTask(
   })
 }
 
-export async function openTaskListRoom(run: ScenarioRun, scenario: string): Promise<ScenarioRoom> {
-  const room = await run.open({ scenario, scene: "none", viewport: "wide" })
+export async function openTaskListRoom(
+  run: ScenarioRun,
+  scenario: string,
+  domRoots: readonly DomRootName[],
+): Promise<ScenarioRoom> {
+  const room = await run.open({ scenario, scene: "none", viewport: "wide", domRoots })
 
   await initGitRepository(room.cwd)
   writeTask(room.cwd, "T-001", "架空のタスク（未着手）", "todo")
@@ -89,8 +93,9 @@ export async function openTaskListRoom(run: ScenarioRun, scenario: string): Prom
 export async function openTaskListRoomWithRunningTask(
   run: ScenarioRun,
   scenario: string,
+  domRoots: readonly DomRootName[],
 ): Promise<ScenarioRoom> {
-  const room = await run.open({ scenario, scene: "none", viewport: "wide" })
+  const room = await run.open({ scenario, scene: "none", viewport: "wide", domRoots })
 
   await initGitRepository(room.cwd)
   writeTask(room.cwd, "T-001", "架空のタスク（未着手）", "todo")
@@ -111,9 +116,10 @@ export async function openTaskListRoomWithRunningTask(
 export async function openTaskBoardRoom(
   run: ScenarioRun,
   scenario: string,
+  domRoots: readonly DomRootName[],
   viewport: "wide" | "narrow" = "wide",
 ): Promise<ScenarioRoom> {
-  const room = await run.open({ scenario, scene: "none", viewport })
+  const room = await run.open({ scenario, scene: "none", viewport, domRoots })
 
   await initGitRepository(room.cwd)
   writeTaskFile(room.cwd, {
@@ -180,7 +186,7 @@ export async function openTaskBoardJumpRoom(
   scenario: string,
   viewport: "wide" | "narrow" = "wide",
 ): Promise<ScenarioRoom> {
-  const room = await run.open({ scenario, scene: "none", viewport })
+  const room = await run.open({ scenario, scene: "none", viewport, domRoots: ["task-board"] })
 
   await initGitRepository(room.cwd)
   writeTaskFile(room.cwd, {

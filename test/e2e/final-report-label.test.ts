@@ -23,6 +23,7 @@ describe("最終レポートの札", () => {
       scenario: "final-report-label-waiting",
       scene: "background-task-interim-report",
       viewport: "wide",
+      domRoots: ["main"],
     })
 
     await room.waitForEvent("turn-finished")
@@ -34,6 +35,7 @@ describe("最終レポートの札", () => {
       scenario: "final-report-label-closed",
       scene: "background-task-interim-report-quick",
       viewport: "wide",
+      domRoots: ["main"],
     })
 
     await room.waitForEvent("turn-finished", FINAL_TURN_FINISHED_OCCURRENCE)

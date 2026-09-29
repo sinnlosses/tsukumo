@@ -22,6 +22,7 @@ describe("ツールの実行といまの作業", () => {
       scenario: "current-work-long-tool",
       scene: "long-tool",
       viewport: "wide",
+      domRoots: ["main"],
     })
 
     await room.waitForEvent("tool-started")
@@ -33,6 +34,7 @@ describe("ツールの実行といまの作業", () => {
       scenario: "current-work-report-drafting",
       scene: "long-report-drafting",
       viewport: "wide",
+      domRoots: ["main"],
     })
 
     await room.waitForEvent("report-drafting")

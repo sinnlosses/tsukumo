@@ -20,6 +20,7 @@ describe("会話を遡る（仕事モード）", () => {
       scenario: "speech-rewind-balloon",
       scene: "question-multi",
       viewport: "wide",
+      domRoots: ["character"],
     })
 
     await room.waitForEvent("turn-finished")
@@ -32,6 +33,7 @@ describe("会話を遡る（仕事モード）", () => {
       scenario: "speech-rewind-log",
       scene: "question-multi",
       viewport: "wide",
+      domRoots: ["character", "speech-log"],
     })
 
     await room.waitForEvent("turn-finished")

@@ -20,6 +20,7 @@ describe("ターンの履歴", () => {
       scenario: "turn-history",
       scene: "turn-history",
       viewport: "wide",
+      domRoots: ["main"],
     })
 
     await room.waitForEvent("turn-finished", LAST_TURN_FINISHED_OCCURRENCE)

@@ -23,6 +23,7 @@ describe("質問", () => {
       scenario: "question-ask-pair",
       scene: "question-pair",
       viewport: "wide",
+      domRoots: ["main", "dispatch"],
     })
 
     await room.waitForEvent("turn-finished")
@@ -34,6 +35,7 @@ describe("質問", () => {
       scenario: "question-ask-multi",
       scene: "question-multi",
       viewport: "wide",
+      domRoots: ["main", "dispatch"],
     })
 
     await room.waitForEvent("turn-finished")
@@ -45,6 +47,7 @@ describe("質問", () => {
       scenario: "question-ask-long",
       scene: "question-long",
       viewport: "wide",
+      domRoots: ["main", "dispatch"],
     })
 
     await room.waitForEvent("turn-finished")
@@ -56,6 +59,7 @@ describe("質問", () => {
       scenario: "question-ask-preview",
       scene: "question-preview",
       viewport: "wide",
+      domRoots: ["main", "dispatch"],
     })
 
     // turn-finished を流さない場面で、`open` が渡した時点で場面の手はすべて届いている。

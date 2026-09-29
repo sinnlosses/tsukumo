@@ -17,6 +17,7 @@ describe("ターンの流れ", () => {
       scenario: "turn-flow",
       scene: "report-tool-quick",
       viewport: "wide",
+      domRoots: ["page"],
     })
 
     await room.waitForEvent("turn-finished")

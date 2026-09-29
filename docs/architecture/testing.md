@@ -115,8 +115,7 @@ test/e2e/expected/` で意図した変化だけであることを確かめる �
 **`*.dom.json` は、場面が選んだ部分木だけを写す。** ページ全体を写すと、場面と関係のない部品を1つ
 直しただけで全場面の期待値が書き換わる。そうなると `git diff test/e2e/expected/` を人も受け入れの
 エージェントも読み切れず、「E2E の揺れを生まない書き方」の条3が見る途中の状態を見落とす。
-範囲は次の3つの決まりで絞る。いまの期待値はまだ全場面がページ全体の写しで、比べる処理
-（`settleAndMatch`）もこの形へ移っていない。
+範囲は次の3つの決まりで絞る。
 
 1. **部分木は名前で選ぶ。** 名前から根のセレクタへの表は `test/e2e/scenario-run.ts` に1つだけ置き、
    場面はセレクタを書かずに名前の並びを選ぶ。根は `role`・`aria-*`・`data-*` で当て、`class` では
@@ -127,7 +126,7 @@ test/e2e/expected/` で意図した変化だけであることを確かめる �
    | `page`                                     | ページ全体（`body` の子。いまの写しと同じ）                            |
    | `screen-nav`                               | 帯（`nav[aria-label="画面"]`。中に開くセッションの切り替え画面を含む） |
    | `main`・`sidebar`・`character`・`dispatch` | 会話の画面の4領域（`[data-region="…"]`）                               |
-   | `task-section`                             | サイドバーのタスクの区画（根に当てる印がまだ無いので足す）             |
+   | `task-section`                             | サイドバーのタスクの区画（`section[aria-label="タスク"]`）             |
    | `task-board`・`task-run-confirm`           | タスクのモーダル・実行の確認                                           |
    | `session-switcher`・`speech-log`           | セッションの切り替え画面・セリフのログ                                 |
 

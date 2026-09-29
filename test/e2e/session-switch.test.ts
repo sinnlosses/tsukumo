@@ -41,6 +41,7 @@ describe("セッションの切り替え", () => {
       scenario: "session-switch-open",
       scene: "session-list",
       viewport: "wide",
+      domRoots: ["screen-nav", "session-switcher"],
     })
 
     await room.waitForEvent("sessions-changed")
@@ -54,6 +55,7 @@ describe("セッションの切り替え", () => {
       scenario: "session-switch-enter",
       scene: "session-list",
       viewport: "wide",
+      domRoots: ["screen-nav", "session-switcher"],
     })
 
     await room.waitForEvent("sessions-changed")
@@ -72,6 +74,7 @@ describe("セッションの切り替え", () => {
       scenario: "session-switch-narrow",
       scene: "session-list",
       viewport: "narrow",
+      domRoots: ["page"],
     })
 
     await room.waitForEvent("sessions-changed")

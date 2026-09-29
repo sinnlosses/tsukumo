@@ -26,6 +26,7 @@ describe("雑談の切り替えと忘却の区切り", () => {
       scenario: "chat-compact-boundary",
       scene: "chat-compact-boundary",
       viewport: "wide",
+      domRoots: ["page"],
     })
 
     await room.waitForEvent("turn-finished")

@@ -21,6 +21,7 @@ describe("復元した雑談の履歴", () => {
       scenario: "chat-restored-history",
       scene: "chat-restored-history",
       viewport: "wide",
+      domRoots: ["main"],
     })
 
     await room.waitForEvent("turn-finished", LAST_TURN_FINISHED_OCCURRENCE)

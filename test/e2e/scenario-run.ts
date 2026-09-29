@@ -96,7 +96,26 @@ export type ScenarioOptions = {
   /** 疑似セッションの場面の名前（`TSUKUMO_FAKE_SCENE`）。名指ししないときは `none`。 */
   readonly scene: string
   readonly viewport: keyof typeof VIEWPORTS
+  /** `*.dom.json` に写す部分木の名前の並び（`docs/architecture/testing.md`「E2E の期待値の範囲」）。 */
+  readonly domRoots: readonly DomRootName[]
 }
+
+/** `page` はページ全体（`body` の子）。それ以外は `DOM_ROOT_SELECTORS` の根に当たる要素ごとの写し。 */
+export type DomRootName = "page" | keyof typeof DOM_ROOT_SELECTORS
+
+/** 部分木の名前から根のセレクタへの表。`class` では当てない（見た目の直しで外れる）。 */
+const DOM_ROOT_SELECTORS = {
+  "screen-nav": 'nav[aria-label="画面"]',
+  main: '[data-region="main"]',
+  sidebar: '[data-region="sidebar"]',
+  character: '[data-region="character"]',
+  dispatch: '[data-region="dispatch"]',
+  "task-section": 'section[aria-label="タスク"]',
+  "task-board": 'dialog[aria-label="タスク"]',
+  "task-run-confirm": 'dialog[aria-label="タスクの実行"]',
+  "session-switcher": 'dialog[aria-label="セッションを切り替える"]',
+  "speech-log": 'dialog[aria-label="セリフのログ"]',
+} as const satisfies Record<string, string>
 
 /**
  * 起こして開いた1件。シナリオはこれに対して待ち・操作・判定を行う。
@@ -232,7 +251,8 @@ async function openRoom(
       // 済むのが進める前か後かで、取れた時刻（利用枠の「10:00 時点」など）が揺れる。
       await settledDom(page, options.scenario, outDir)
       await page.clock.pauseAt(Temporal.Instant.from(FIXED_INSTANT).epochMilliseconds + elapsedMs)
-      const dom = await settledDom(page, options.scenario, outDir)
+      await settledDom(page, options.scenario, outDir)
+      const dom = await page.evaluate(namedDomTreeScript(options.domRoots))
       await page.screenshot({ path: path.join(outDir, `${options.scenario}.png`) })
       // 両方を書いてから比べる（先の比べで落ちると、控えに前の回の成果物が混ざる）。
       const texts = {
@@ -578,7 +598,7 @@ function asRecord(value: unknown): Readonly<Record<string, unknown>> {
  * 2回同じでも `aria-busy="true"` の要素が残っている間は落ち着いたと見なさない（取得中の表示は文字が変わらない）。
  * 落ち着かずに投げるときは、最後の2回の読みの差分を `outDir/<scenario>.settle-diff.txt` に残す。
  */
-async function settledDom(page: Page, scenario: string, outDir: string): Promise<unknown> {
+async function settledDom(page: Page, scenario: string, outDir: string): Promise<void> {
   let previous = JSON.stringify(await page.evaluate(DOM_TREE_SCRIPT))
   for (let attempt = 0; attempt < SETTLE_ATTEMPTS; attempt += 1) {
     await page.waitForTimeout(SETTLE_INTERVAL_MS)
@@ -590,7 +610,7 @@ async function settledDom(page: Page, scenario: string, outDir: string): Promise
     }
     const current = JSON.stringify(await page.evaluate(DOM_TREE_SCRIPT))
     if (current === previous && !(await page.evaluate(HAS_BUSY_ELEMENT_SCRIPT))) {
-      return JSON.parse(current)
+      return
     }
     if (attempt === SETTLE_ATTEMPTS - 1) {
       const diff = diffDomTrees(JSON.parse(previous), JSON.parse(current))
@@ -678,11 +698,12 @@ function toLeaves(value: unknown, atPath: string): readonly (readonly [string, s
 }
 
 /**
- * `document.body` から木を組む台本（ページの中で動く）。残すもの・落とすものは
+ * DOM の木を組む台本の共通部分（ページの中で動く）。残すもの・落とすものは
  * `docs/architecture/testing.md`「E2E の成果物と再現」のとおり。文字列で渡すのは `installFixedClock` と
- * 同じ理由（ページの中のコードで、このファイルの型の対象にしない）。
+ * 同じ理由（ページの中のコードで、このファイルの型と lint の対象にしない）。`nodeOf(element)` が
+ * 1要素を写す（隠れていれば空の並び）、`childrenOf(element)` がその子を並べる。
  */
-const DOM_TREE_SCRIPT = `(() => {
+const DOM_TREE_HELPERS_SCRIPT = `
   const ID_REFERENCE = new Set([
     "aria-controls", "aria-labelledby", "aria-describedby", "aria-owns",
     "aria-activedescendant", "aria-details", "aria-errormessage", "aria-flowto",
@@ -764,8 +785,33 @@ const DOM_TREE_SCRIPT = `(() => {
     if (children.length > 0) node.children = children;
     return [node];
   };
+`
+
+/** ページ全体（`document.body` の子）を写す台本。落ち着いたかどうかの判定にも使う（範囲を絞らない）。 */
+const DOM_TREE_SCRIPT = `(() => {
+${DOM_TREE_HELPERS_SCRIPT}
   return childrenOf(document.body);
 })()`
+
+/**
+ * `options.domRoots` が選んだ名前ごとに、`DOM_ROOT_SELECTORS` の根に当たる要素（文書順）を写す台本。
+ * `page` は `document.body` の子、それ以外は当たった要素ごとの `nodeOf` の結果を並べる
+ * （当たらない・隠れていれば空の並び）。
+ */
+function namedDomTreeScript(domRoots: readonly DomRootName[]): string {
+  return `(() => {
+${DOM_TREE_HELPERS_SCRIPT}
+  const rootSelectors = ${JSON.stringify(DOM_ROOT_SELECTORS)};
+  const domRoots = ${JSON.stringify(domRoots)};
+  const result = {};
+  for (const name of domRoots) {
+    result[name] = name === "page"
+      ? childrenOf(document.body)
+      : Array.from(document.querySelectorAll(rootSelectors[name])).flatMap((element) => nodeOf(element));
+  }
+  return result;
+})()`
+}
 
 type ArtifactKind = "dom" | "messages"
 

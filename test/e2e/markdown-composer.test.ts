@@ -20,6 +20,7 @@ describe("入力欄のマークダウンエディタ", () => {
       scenario: "markdown-composer-switch",
       scene: "none",
       viewport: "wide",
+      domRoots: ["dispatch"],
     })
     const toggle = room.page.getByRole("button", { name: TOGGLE_NAME })
 
@@ -43,6 +44,7 @@ describe("入力欄のマークダウンエディタ", () => {
       scenario: "markdown-composer-send",
       scene: "none",
       viewport: "wide",
+      domRoots: ["dispatch"],
     })
 
     await room.page.getByRole("button", { name: TOGGLE_NAME }).click()
@@ -62,6 +64,7 @@ describe("入力欄のマークダウンエディタ", () => {
       scenario: "markdown-composer-suggestion",
       scene: "none",
       viewport: "wide",
+      domRoots: ["dispatch"],
     })
 
     await room.page.getByRole("button", { name: TOGGLE_NAME }).click()

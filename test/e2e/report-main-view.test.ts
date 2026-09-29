@@ -19,6 +19,7 @@ describe("report → メインビュー", () => {
       scenario: "report-notation",
       scene: "notation",
       viewport: "wide",
+      domRoots: ["main"],
     })
 
     await room.waitForEvent("turn-finished")
@@ -30,6 +31,7 @@ describe("report → メインビュー", () => {
       scenario: "report-rejected",
       scene: "report-rejected-quick",
       viewport: "wide",
+      domRoots: ["main"],
     })
 
     await room.waitForEvent("turn-finished")
@@ -41,6 +43,7 @@ describe("report → メインビュー", () => {
       scenario: "report-tidied",
       scene: "report-tidied",
       viewport: "wide",
+      domRoots: ["main"],
     })
 
     await room.waitForEvent("turn-finished")
@@ -52,6 +55,7 @@ describe("report → メインビュー", () => {
       scenario: "report-blocks",
       scene: "report-blocks",
       viewport: "wide",
+      domRoots: ["main"],
     })
 
     await room.waitForEvent("turn-finished")

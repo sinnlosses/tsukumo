@@ -21,6 +21,7 @@ describe("背景のタスク", () => {
       scenario: "background-task-running",
       scene: "background-task-short",
       viewport: "wide",
+      domRoots: ["main", "dispatch"],
     })
 
     await room.waitForEvent("turn-finished")
@@ -32,6 +33,7 @@ describe("背景のタスク", () => {
       scenario: "background-task-resumed",
       scene: "background-task-short-quick",
       viewport: "wide",
+      domRoots: ["main", "dispatch"],
     })
 
     await room.waitForEvent("turn-finished", RESUMED_TURN_FINISHED_OCCURRENCE)

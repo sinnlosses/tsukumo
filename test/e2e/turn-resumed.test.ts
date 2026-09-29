@@ -21,6 +21,7 @@ describe("続きのターン", () => {
       scenario: "turn-resumed",
       scene: "resumed-report-quick",
       viewport: "wide",
+      domRoots: ["main", "character"],
     })
 
     await room.waitForEvent("turn-finished", FINAL_TURN_FINISHED_OCCURRENCE)
