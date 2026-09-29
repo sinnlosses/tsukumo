@@ -181,7 +181,7 @@ const ALLOWED_LINK_SCHEMES: readonly string[] = ["http", "https", "mailto"]
  * 外部を読みに行く記法（`url(` / `@import` / `expression(`）・`javascript:`・タグの混入（`<`）を含むものは丸ごと落とす（値が正規表現にマッチしなければ属性ごと落ちる）。
  * 大文字小文字を区別しない（`i` フラグ）。改行を含む値も1つの文字列として見る（`s` フラグ）。
  */
-export const ALLOWED_STYLE_PATTERN = /^(?:(?!url\(|@import|expression\(|javascript:|<).)*$/is
+const ALLOWED_STYLE_PATTERN = /^(?:(?!url\(|@import|expression\(|javascript:|<).)*$/is
 
 /** `marker-end` / `marker-start` は、ページ内の定義（`url(#id)`）だけを許す（外部を指す形は落とす）。 */
 const ALLOWED_MARKER_REFERENCE_PATTERN = /^url\(#[A-Za-z0-9_-]+\)$/

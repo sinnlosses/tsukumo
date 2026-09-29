@@ -22,10 +22,10 @@ export function effortLabel(value: EffortLevel): string {
 }
 
 /** モデルが effort に対応しないときの `title`（disabled の理由）。 */
-export const EFFORT_UNSUPPORTED_REASON = "このモデルは effort に対応していない"
+const EFFORT_UNSUPPORTED_REASON = "このモデルは effort に対応していない"
 
 /** モデルは対応するが、まだ読めていないときの `title`。 */
-export const EFFORT_UNKNOWN_REASON = "まだ effort を読み取れていない（ターンが終わると分かる）"
+const EFFORT_UNKNOWN_REASON = "まだ effort を読み取れていない（ターンが終わると分かる）"
 
 /** effort が選べないとき（`EffortSelect` の `unsupported` / `unknown`）に `<select>` へ置く唯一の選択肢の値。 */
 export const EFFORT_PLACEHOLDER_VALUE = ""

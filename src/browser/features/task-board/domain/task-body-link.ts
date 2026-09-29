@@ -12,10 +12,6 @@ import { visit } from "unist-util-visit"
 /** 本文中の ID を指すリンクの URL に付ける印（実際のナビゲーションはしない目印）。 */
 const TASK_LINK_SCHEME = "task:"
 
-export function taskLinkUrl(id: string): string {
-  return `${TASK_LINK_SCHEME}${id}`
-}
-
 /** {@link taskLinkUrl} の逆。指す ID でなければ `undefined`。 */
 export function taskLinkId(url: string): string | undefined {
   return url.startsWith(TASK_LINK_SCHEME) ? url.slice(TASK_LINK_SCHEME.length) : undefined
@@ -64,4 +60,8 @@ function taskIdPattern(knownIds: ReadonlySet<string>): RegExp | undefined {
 
 function escapeRegExp(text: string): string {
   return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+}
+
+function taskLinkUrl(id: string): string {
+  return `${TASK_LINK_SCHEME}${id}`
 }
