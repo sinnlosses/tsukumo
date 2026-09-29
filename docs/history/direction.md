@@ -3,6 +3,42 @@
 `develop/direction.md` に書かれたユーザーからの指示を、タスク化した時点で**当時の記述のまま**
 ここへ移す（`docs/workflow.md`「指示メモ」参照）。新しいものを上に足す。**後から書き換えない。**
 
+## 2026-09-29 振り返り（GH-93・GH-95・GH-100・GH-101）のドラフト4件
+
+（`develop/draft/` から。GH-92〜GH-101 の `/loop /next-task` の受け入れの振り返りで積んだもの。/plan-tasks で選ばれて承認され、GH-102〜GH-105 になった。同じ回に積んだ claude-skills 向けの2件は claude-skills の `develop/draft/` へ送った）
+
+（出典: GH-93 の受け入れの振り返り → GH-102）
+
+### 進行中カードの ID の見た目（字の大きさと差し色寄りの色）が T-607 から効いていないのを直す（振り返り: GH-93）
+
+- 札: 黄 実装の誤り（3回目）
+- 根拠: `task-board.module.css` の `.task-running-head .task-id-button` は、T-607（39418f6a）で `task-running-card.tsx` の `task-running-head` の span を HStack（`className=""`）に置き換えたときに、祖先の class を失って当たらなくなった。GH-93 の委譲先はこれを未使用の規則として消そうとしたが、受け入れで戻した（見た目の退行の手がかりなので、消さずに残す）
+- 出し先: 仕組みで塞ぐ。CSS モジュールの class 名がどの tsx からも参照されていなければ落ちる検査を `test/architecture.test.ts` に足す（rehype や CodeMirror が付ける class は許可リストで除く）。そのうえで、進行中カードの ID に規則が再び当たるようにする（HStack に class を渡すか、規則を `.task-running-card .task-id-button` に付け替える）。目視で差し色寄りの ID を確かめる
+
+（出典: GH-95 の受け入れの振り返り → GH-103）
+
+### test/browser の components/domain と components/page を test-audit の監査モードで刈り込む（振り返り: GH-95）
+
+- 札: 黄 正典の不備（1回目）
+- 根拠: GH-95 は test/browser（109 ファイル）が1コミットで説明の付く量を超えたので、`## 決まっていること` に従い `features/task-board`・`components/ui`・`stores` で打ち切った（`domain`・`utils` は一覧で見て候補なし）。`components/domain`・`components/page` は未監査で、登録時の1件が範囲を見積もれていなかった
+- 出し先: タスク1件（sonnet）。`components/domain`・`components/page` のテストを、`screen-nav`・`character-edit`・`main-view` など大きいファイルから E2E との重なりを見て刈り込む。大きければさらにまとまりで2件に分ける
+
+（出典: GH-100 の受け入れの振り返り → GH-104）
+
+### 単体と E2E を並べた check で task-board の E2E が揺れる原因を確かめ、落ち着き待ちをイベントに寄せる（振り返り: GH-100）
+
+- 札: 黄 揺れ（4回目）
+- 根拠: GH-100 の委譲先の1回目の `task verify` で、E2E の task-board.test.ts（検索と絞り込み）の期待値比較が落ち、打ち直すと通った。GH-100 は task-board に触れていない。直前の GH-99 で check が単体と E2E を並べて走らせるようになり（maxWorkers 単体 40%・E2E 60%）、CPU の取り合いで時間に頼った待ちが外れた疑いがある。同じ GH-99 で bundle.test.ts も5秒で切れ、testTimeout を15秒に上げている
+- 出し先: 仕組みで塞ぐ。task-board.test.ts（と足場の `task-room.ts`）の撮る前の待ちを見直し、時間や描画の落ち着きではなく届くイベント・DOM の条件で待つ形に直す。直せなければ、check の並べ方（GH-99）を E2E 優先の本数に戻すかを判断する
+
+（出典: GH-101 の受け入れの振り返り → GH-105）
+
+### Bash の `sed -i` を hook で止め、Edit へ寄せる（振り返り: GH-101）
+
+- 札: 黄 自己申告の不正確さ（3回目）
+- 根拠: GH-101 の委譲先は「`testTimeout` を `hookTimeout: 15_000` に置き換えた」と報告したが、実物は `testTimeout: 5_000` で古いコメントが残っていた（受け入れで直した）。この1行は `sed -i.bak` で書き換えていた。依頼文で BSD の `sed -i` を避けるよう書いていたのに、GH-97・GH-101 の2回とも委譲先が使っている。書いたつもりと実物のずれは、差分を読まない限り見えない
+- 出し先: 仕組みで塞ぐ。広域 kill を止める hook（`scripts/deny-broad-kill.ts`）と同じ形で、Bash の `sed -i`（`-i.bak` を含む）を止めて Edit を促す hook を足す
+
 ## 2026-09-29 振り返り（GH-83）のドラフト1件
 
 （`develop/draft/` から。出典: GH-83 の受け入れの振り返りで積んだ1件。掃除とメンテの計画（GH-92〜GH-97）を立てたときに「ドラフトはタスク化していいよ」で承認され、GH-98 になった）
