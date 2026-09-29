@@ -18,7 +18,7 @@
 | 対象                           | 方法                                                                                                                                            | 置き場所                                                 |
 | ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
 | reducer（`applySessionEvent`） | 純粋関数として単体で                                                                                                                            | `test/shared/session/session-state.test.ts`              |
-| zod スキーマ                   | 受け付ける形・落とす形を1件ずつ                                                                                                                 | `test/shared/command.test.ts` など                       |
+| zod スキーマ                   | 受け付ける形・落とす形を1件ずつ                                                                                                                 | `test/shared/contract/command-input.test.ts` など        |
 | SDK の型との一致               | `PERMISSION_MODES` / `MODEL_ALIASES` が SDK の型と同じ値であること（型レベルの検査）                                                            | `test/server/session-driver/adapter/sdk-driver.test.ts`  |
 | `session-manager`              | fake driver を差し込み、`hello` → `events` の順序・バッチ・`dispatch` の分岐                                                                    | `test/server/session/core/session-manager.test.ts`       |
 | `server`（ws）                 | 購読 → `hello` が先に届き、押した順に取りこぼさず流れる、切断で購読が外れる、トークン無しは 403、Origin 違いは 403、コマンド → 受け手が呼ばれる | `test/server/view-server/adapter/session-socket.test.ts` |
