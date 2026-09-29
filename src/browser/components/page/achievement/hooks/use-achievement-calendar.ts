@@ -21,6 +21,8 @@ export function useAchievementCalendar(): AchievementCalendarView {
   const query = useQuery(
     rpc.achievement.calendar.queryOptions({
       staleTime: 0,
+      // 画面を離れている間も前回の結果を捨てない（既定の `gcTime` では5分で捨てる）。
+      gcTime: Infinity,
       refetchInterval: REFETCH_INTERVAL_MS,
       // 落ちた応答は再試行せず、すぐ「取れなかった」に倒す。
       retry: false,

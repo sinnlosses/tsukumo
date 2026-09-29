@@ -142,6 +142,8 @@ export function useAchievement(): UseAchievementResult {
     ...rpc.achievement.day.queryOptions({ input: selection }),
     // 開くたびに・日を切り替えるたびに取り直す（前の日の分もあとから main に入った分で変わりうる）。
     staleTime: 0,
+    // 画面を離れている間も前回の結果を捨てない（既定の `gcTime` では5分で捨てる）。
+    gcTime: Infinity,
     // 日を切り替えた直後は、前の日の中身を薄く残したまま新しい日を待つ。
     // 新しく開いた日には無関係な値なので、呼ぶ側は `isFetching` と組んで使う。
     placeholderData: (previous: DailyAchievement | undefined) => previous,

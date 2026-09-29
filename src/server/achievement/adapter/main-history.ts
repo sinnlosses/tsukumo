@@ -136,25 +136,22 @@ export async function readAchievement(
   const startEpochSeconds = epochSecondsOf(range.startEpochMilliseconds)
   const endEpochSeconds = epochSecondsOf(range.endEpochMilliseconds)
 
-  const commits = await readCommitsSince(
-    cwd,
-    head,
-    range.startEpochMilliseconds - SINCE_MARGIN_DAYS * MILLISECONDS_PER_DAY,
-  )
+  const [commits, totalCommitsBeforeToday, headSource, beads] = await Promise.all([
+    readCommitsSince(
+      cwd,
+      head,
+      range.startEpochMilliseconds - SINCE_MARGIN_DAYS * MILLISECONDS_PER_DAY,
+    ),
+    totalAchievementCommitsBeforeDay(cwd, head, dateKey, today, range, cache),
+    readTaskSnapshotSource(cwd, head),
+    readBeadsIssuesOfStore(cwd, head),
+  ])
   if (commits === undefined) {
     return { kind: "unavailable" }
   }
   const commitCount = countAchievementCommits(commits, startEpochSeconds, endEpochSeconds)
 
   // コミットの節目は、タスクの記録の有無に関わらず出す。
-  const totalCommitsBeforeToday = await totalAchievementCommitsBeforeDay(
-    cwd,
-    head,
-    dateKey,
-    today,
-    range,
-    cache,
-  )
   if (totalCommitsBeforeToday === undefined) {
     return { kind: "unavailable" }
   }
@@ -165,11 +162,9 @@ export async function readAchievement(
   ).map((commit) => commit.committedAtEpochSeconds)
   const commitMilestone = commitMilestoneOfDay(todaysCommitEpochSeconds, totalCommitsBeforeToday)
 
-  const headSource = await readTaskSnapshotSource(cwd, head)
   if (headSource === "unavailable") {
     return { kind: "unavailable" }
   }
-  const beads = await readBeadsIssuesOfStore(cwd, head)
   if (beads === "unavailable") {
     return { kind: "unavailable" }
   }

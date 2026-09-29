@@ -1,7 +1,7 @@
 import type { QueryClient } from "@tanstack/react-query"
 import { act, cleanup, renderHook, waitFor } from "@testing-library/react"
 import type { ReactElement, ReactNode } from "react"
-import { afterEach, describe, expect, it } from "vitest"
+import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { useAchievement } from "../../../../../../src/browser/components/page/achievement/hooks/use-achievement.ts"
 import type { DailyAchievement } from "../../../../../../src/shared/achievement/achievement.ts"
@@ -176,6 +176,39 @@ describe("useAchievement", () => {
     })
 
     expect(window.location.hash).toBe("#achievement?date=2026-09-10")
+  })
+
+  it("5分以上離れて開き直しても前回の中身がすぐ描かれ、取り直しのあとで替わる", async () => {
+    const client = createTestQueryClient()
+    stubAchievementFetch(() => rpcOutput(KNOWN_TODAY))
+    const { result, unmount } = renderHook(() => useAchievement(), {
+      wrapper: achievementWrapper(client),
+    })
+    await waitFor(() => {
+      expect(result.current.view.kind).toBe("ready")
+    })
+    unmount()
+    fetchStub?.restore()
+    fetchStub = undefined
+
+    vi.useFakeTimers()
+    try {
+      await vi.advanceTimersByTimeAsync(6 * 60_000)
+    } finally {
+      vi.useRealTimers()
+    }
+
+    const REFRESHED_TODAY: DailyAchievement = { ...KNOWN_TODAY, commitCount: 9 }
+    stubAchievementFetch(() => rpcOutput(REFRESHED_TODAY))
+    const reopened = renderHook(() => useAchievement(), {
+      wrapper: achievementWrapper(client),
+    })
+
+    expect(reopened.result.current.view).toMatchObject({ kind: "ready", commitCount: 3 })
+
+    await waitFor(() => {
+      expect(reopened.result.current.view).toMatchObject({ kind: "ready", commitCount: 9 })
+    })
   })
 })
 
