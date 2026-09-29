@@ -3,6 +3,7 @@
 import clsx from "clsx"
 import type { ReactElement } from "react"
 
+import { Button } from "../../../../../../ui/button/button.tsx"
 import { HStack } from "../../../../../../ui/h-stack/h-stack.tsx"
 import { Text } from "../../../../../../ui/text/text.tsx"
 import styles from "../../dispatch.module.css"
@@ -47,20 +48,34 @@ export function PresentationalPendingAnswer(
             wrap="nowrap"
             className={styles["pending-actions"]}
           >
-            <button
+            <Button
               type="button"
-              className={clsx(styles["pending-action"], styles["pending-allow"])}
+              variant="outline-ok-surface"
+              size="body"
+              pressed="none"
+              disabled={false}
+              ariaLabel={undefined}
+              ariaHasPopup={undefined}
+              title={undefined}
+              className={styles["pending-action"]}
               onClick={props.onAllow}
             >
               許可
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
-              className={clsx(styles["pending-action"], styles["pending-deny"])}
+              variant="outline-danger-surface"
+              size="body"
+              pressed="none"
+              disabled={false}
+              ariaLabel={undefined}
+              ariaHasPopup={undefined}
+              title={undefined}
+              className={styles["pending-action"]}
               onClick={props.onDeny}
             >
               拒否
-            </button>
+            </Button>
           </HStack>
         </div>
       )

@@ -72,16 +72,22 @@ export function PromptImageChips(props: PromptImageChipsProps): ReactElement | n
               <img className={styles["prompt-image"]} src={image.thumbnail} alt={IMAGE_ALT} />
               <Search className={styles["prompt-image-zoom-icon"]} size={16} />
             </Button>
-            <button
+            <Button
               type="button"
+              variant="outline-ground"
+              size="secondary"
+              pressed="none"
+              disabled={false}
+              ariaLabel={REMOVE_LABEL}
+              ariaHasPopup={undefined}
+              title={undefined}
               className={styles["prompt-image-remove"]}
-              aria-label={REMOVE_LABEL}
               onClick={() => {
                 props.onRemove(index)
               }}
             >
               ×
-            </button>
+            </Button>
           </li>
         ))}
       </ul>

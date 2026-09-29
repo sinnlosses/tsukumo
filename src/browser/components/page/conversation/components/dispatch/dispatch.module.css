@@ -49,26 +49,7 @@
 }
 .pending-action {
   padding: 0.35rem 0.9rem;
-  border: 1px solid var(--rule);
   border-radius: 0.5rem;
-  background: var(--surface);
-  color: var(--ink);
-  cursor: pointer;
-}
-.pending-action:hover:not(:disabled) {
-  border-color: var(--accent);
-}
-.pending-action:disabled {
-  opacity: 0.5;
-  cursor: default;
-}
-.pending-allow {
-  border-color: var(--state-ok);
-  color: var(--state-ok);
-}
-.pending-deny {
-  border-color: var(--state-ng);
-  color: var(--state-ng);
 }
 /* 右下の入力ペイン。キャラクターへの依頼を送るフォームを持つ。 */
 .dispatch-form {

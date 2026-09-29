@@ -80,14 +80,6 @@
   width: 1.15rem;
   height: 1.15rem;
   padding: 0;
-  border: 1px solid var(--rule);
   border-radius: 50%;
-  background: var(--ground);
-  color: var(--ink);
-  font-size: var(--font-secondary);
   line-height: 1;
-  cursor: pointer;
-}
-.prompt-image-remove:hover {
-  border-color: var(--accent);
 }

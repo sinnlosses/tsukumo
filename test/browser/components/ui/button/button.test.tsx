@@ -38,11 +38,16 @@ describe("Button", () => {
     ["outline-accent-tinted", "button-variant-outline-accent-tinted"],
     ["tinted-accent", "button-variant-tinted-accent"],
     ["outline-warn", "button-variant-outline-warn"],
+    ["outline-ground", "button-variant-outline-ground"],
+    ["outline-ok-surface", "button-variant-outline-ok-surface"],
+    ["outline-danger-surface", "button-variant-outline-danger-surface"],
     ["solid-accent", "button-variant-solid-accent"],
     ["solid-danger", "button-variant-solid-danger"],
     ["solid-warn", "button-variant-solid-warn"],
     ["ghost", "button-variant-ghost"],
+    ["ghost-hover-accent", "button-variant-ghost-hover-accent"],
     ["link", "button-variant-link"],
+    ["text-accent", "button-variant-text-accent"],
   ] as const)("variant: %s は class %s を付ける", (variant, expectedClass) => {
     const element = renderButton({ ...BASE_PROPS, variant })
     expect(element.className.split(" ")).toContain(expectedClass)

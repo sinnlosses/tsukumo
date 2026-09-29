@@ -525,17 +525,8 @@
   gap: 0.25rem;
   margin-left: auto;
   padding: 0.15rem 0.4rem;
-  border: none;
   border-radius: 0.3rem;
-  background: none;
-  font: inherit;
-  font-size: var(--font-label);
-  color: var(--ink-quiet);
-  cursor: pointer;
   flex-shrink: 0;
-}
-.detail-block .code-copy:hover {
-  color: var(--accent);
 }
 /* git 管理下のパスを押せる部品にしたときの見た目（inline code・フェンスのファイル名・相対リンクの3か所）。
    `<button>` を地の文のリンク（theme.css の `a`）と同じ下線の文字に見せる（色を取り上げるかわりに下線で区別する）。

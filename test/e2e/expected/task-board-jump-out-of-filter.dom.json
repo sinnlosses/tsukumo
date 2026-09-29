@@ -534,6 +534,7 @@
                           {
                             "tag": "button",
                             "attributes": {
+                              "aria-disabled": "false",
                               "type": "button"
                             },
                             "children": [

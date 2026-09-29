@@ -7,6 +7,7 @@
 import { ChevronLeft, ChevronRight, FileText, Repeat } from "lucide-react"
 import type { ReactElement } from "react"
 
+import { Button } from "../../../components/ui/button/button.tsx"
 import type {
   TaskBoardBreadcrumb,
   TaskBoardDetail,
@@ -102,8 +103,15 @@ function TaskDetailBreadcrumb(props: {
 }): ReactElement {
   return (
     <nav aria-label="タスクのつながり" className={styles["task-detail-breadcrumb"]}>
-      <button
+      <Button
         type="button"
+        variant="text-accent"
+        size="action"
+        pressed="none"
+        disabled={false}
+        ariaLabel={undefined}
+        ariaHasPopup={undefined}
+        title={undefined}
         className={styles["task-detail-breadcrumb-back"]}
         onClick={props.breadcrumb.onBack}
       >
@@ -114,7 +122,7 @@ function TaskDetailBreadcrumb(props: {
           className={styles["task-detail-breadcrumb-back-chevron"]}
         />
         {props.breadcrumb.previousId} に戻る
-      </button>
+      </Button>
       <span className={styles["task-detail-breadcrumb-separator"]}>›</span>
       <span className={styles["task-detail-breadcrumb-current"]}>{props.currentId}</span>
     </nav>

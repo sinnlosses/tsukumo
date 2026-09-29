@@ -4,6 +4,7 @@
 import { Check, Copy } from "lucide-react"
 import { useState, type ReactElement } from "react"
 
+import { Button } from "../../../../../ui/button/button.tsx"
 import styles from "./report-notation.module.css"
 
 /** 「コピーした」の文字を保つ長さ（ミリ秒）。 */
@@ -13,8 +14,15 @@ export function CopyButton(props: { readonly text: string }): ReactElement {
   const [copied, setCopied] = useState(false)
 
   return (
-    <button
+    <Button
       type="button"
+      variant="ghost-hover-accent"
+      size="label"
+      pressed="none"
+      disabled={false}
+      ariaLabel={undefined}
+      ariaHasPopup={undefined}
+      title={undefined}
       className={styles["code-copy"]}
       onClick={() => {
         void navigator.clipboard
@@ -39,6 +47,6 @@ export function CopyButton(props: { readonly text: string }): ReactElement {
           コピー
         </>
       )}
-    </button>
+    </Button>
   )
 }

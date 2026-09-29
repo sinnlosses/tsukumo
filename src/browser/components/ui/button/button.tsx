@@ -19,11 +19,16 @@ export type ButtonVariant =
   | "outline-accent-tinted"
   | "tinted-accent"
   | "outline-warn"
+  | "outline-ground"
+  | "outline-ok-surface"
+  | "outline-danger-surface"
   | "solid-accent"
   | "solid-danger"
   | "solid-warn"
   | "ghost"
+  | "ghost-hover-accent"
   | "link"
+  | "text-accent"
 export type ButtonSize = Exclude<TextSize, "heading" | "inherit">
 /** トグルボタンの押された状態。`"none"` は `aria-pressed` を付けない（トグルボタンではない）。 */
 export type ButtonPressed = "none" | "on" | "off"
@@ -55,11 +60,16 @@ export const BUTTON_VARIANT_CLASS = {
   "outline-accent-tinted": styles["button-variant-outline-accent-tinted"],
   "tinted-accent": styles["button-variant-tinted-accent"],
   "outline-warn": styles["button-variant-outline-warn"],
+  "outline-ground": styles["button-variant-outline-ground"],
+  "outline-ok-surface": styles["button-variant-outline-ok-surface"],
+  "outline-danger-surface": styles["button-variant-outline-danger-surface"],
   "solid-accent": styles["button-variant-solid-accent"],
   "solid-danger": styles["button-variant-solid-danger"],
   "solid-warn": styles["button-variant-solid-warn"],
   ghost: styles["button-variant-ghost"],
+  "ghost-hover-accent": styles["button-variant-ghost-hover-accent"],
   link: styles["button-variant-link"],
+  "text-accent": styles["button-variant-text-accent"],
 } satisfies Record<ButtonVariant, string>
 
 const BUTTON_PRESSED_ARIA = {

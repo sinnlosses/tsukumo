@@ -71,6 +71,36 @@
   background: color-mix(in srgb, var(--state-warn) 12%, transparent);
 }
 
+/* 枠だけ（`--rule`）で、地は `--ground`。hover で枠が accent になる。 */
+.button-variant-outline-ground {
+  border: 1px solid var(--rule);
+  background: var(--ground);
+  color: var(--ink);
+}
+.button-variant-outline-ground:hover {
+  border-color: var(--accent);
+}
+
+/* `--state-ok` の枠と字、`--surface` の地。hover で枠が accent になる。 */
+.button-variant-outline-ok-surface {
+  border: 1px solid var(--state-ok);
+  background: var(--surface);
+  color: var(--state-ok);
+}
+.button-variant-outline-ok-surface:hover {
+  border-color: var(--accent);
+}
+
+/* `--state-ng` の枠と字、`--surface` の地。hover で枠が accent になる。 */
+.button-variant-outline-danger-surface {
+  border: 1px solid var(--state-ng);
+  background: var(--surface);
+  color: var(--state-ng);
+}
+.button-variant-outline-danger-surface:hover {
+  border-color: var(--accent);
+}
+
 /* accent の枠と不透明な `--surface-accent` の地。字は accent 寄りで、hover で ink になる。 */
 .button-variant-outline-accent-tinted {
   border: 1px solid var(--accent);
@@ -137,6 +167,23 @@
   background: var(--accent);
   color: var(--ground);
   font-weight: 700;
+}
+
+/* 地も枠も無い静かな字。hover で字が accent になる。 */
+.button-variant-ghost-hover-accent {
+  border: none;
+  background: none;
+  color: var(--ink-quiet);
+}
+.button-variant-ghost-hover-accent:hover {
+  color: var(--accent);
+}
+
+/* 地も枠も無い accent の字。hover で変わらない。 */
+.button-variant-text-accent {
+  border: none;
+  background: none;
+  color: var(--accent);
 }
 
 /* accent の字・余白0（既定の余白0だけ `:where()` に置き、呼び出し側の余白指定に譲る）。 */

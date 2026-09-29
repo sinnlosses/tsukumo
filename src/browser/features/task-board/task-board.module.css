@@ -550,12 +550,7 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  border: none;
-  background: none;
   padding: 0;
-  color: var(--accent);
-  font: inherit;
-  cursor: pointer;
 }
 .task-detail-breadcrumb-back-chevron {
   flex: none;
