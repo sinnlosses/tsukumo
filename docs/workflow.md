@@ -86,9 +86,10 @@
 | 動いている tsukumo の画面のスクリーンショット | モックと同じく `docs/history/mockup/` に写してコミットする（会話が写っているが、ユーザーが 2026-09-23 に許した。`docs/coding-standards.md`「会話内容の扱い」）。見て分かったこと（どの要素がどこでどうなっているか）もタスク本文に書く                                               |
 | よそのリポジトリ・ディレクトリ                | 写さない。タスク本文に `<パス> @ <コミットハッシュ>` の形で書き、参考にした中身（名前の付け方・構成など）を本文に書き写す                                                                                                                                                            |
 
-- **入力欄に貼った画像は、エージェントからファイルにできない**（原寸は
-  `src/server/session-driver/core/prompt-image-shelf.ts` のメモリにしか無く、ディスクにも書かない）。
-  モックとして残したいときは、利用者がファイルに保存してパスで示す
+- **入力欄に貼った画像は、Claude Code が一時ファイルに書き出している。** 会話に届く画像の
+  見出し（`[Image: source: /private/tmp/claude-<uid>/…/images/<n>.png …]`）のパスから、消える前に
+  `docs/history/mockup/` へ写す（tsukumo 側は `src/server/session-driver/core/prompt-image-shelf.ts` の
+  メモリにしか持たない）。パスが消えていたら、利用者がファイルに保存してパスで示す
 - 写したことは `docs/history/direction.md` の該当項目に1行で添える（「モックを `…` に保存」）
 
 ## `loopable` の判定（2026-09-15 決定）
