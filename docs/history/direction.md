@@ -3,6 +3,16 @@
 `develop/direction.md` に書かれたユーザーからの指示を、タスク化した時点で**当時の記述のまま**
 ここへ移す（`docs/workflow.md`「指示メモ」参照）。新しいものを上に足す。**後から書き換えない。**
 
+## 2026-09-29 振り返り（GH-83）のドラフト1件
+
+（`develop/draft/` から。出典: GH-83 の受け入れの振り返りで積んだ1件。掃除とメンテの計画（GH-92〜GH-97）を立てたときに「ドラフトはタスク化していいよ」で承認され、GH-98 になった）
+
+### E2E の成果物で `protocolVersion` を印に置き換え、版を上げるたびに期待値が全件書き変わらないようにする（振り返り: GH-83）
+
+- 札: 黄 道具（4回目）
+- 根拠: GH-83 で `PROTOCOL_VERSION` を 24→25 に上げたら、`test/e2e/expected/*.messages.json` の57ファイルが `protocolVersion` の直書きで全部落ち、委譲先が sed で置き換えた。T-834 でも版を上げたときに同じ全件の書き換えが起きている（`git log -S'"protocolVersion": 24' -- test/e2e/expected`）
+- 出し先: タスク。`test/e2e/scenario-run.ts` の「両方に共通の置き換え」（`docs/architecture/testing.md`「E2E の成果物と再現」）に `hello` の版を `<protocol-version>` のような印へ置き換える規則を足し、期待値を作り直す。版の一致は単体テスト側で守る
+
 ## 2026-09-29 レポートを書いていることを札に出す（GH-91）
 
 ### ユーザーから
