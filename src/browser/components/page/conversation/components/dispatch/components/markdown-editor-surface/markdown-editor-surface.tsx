@@ -189,7 +189,9 @@ const EDITOR_KEYMAP = defaultKeymap.filter((binding) => binding.key !== "Mod-Ent
 
 /** 構文木の節に class だけを付ける。見た目は CSS に書く。 */
 const MARKDOWN_HIGHLIGHT = HighlightStyle.define([
-  { tag: [tags.heading1, tags.heading2, tags.heading3], class: styles["markdown-heading-large"] },
+  { tag: tags.heading1, class: styles["markdown-heading-1"] },
+  { tag: tags.heading2, class: styles["markdown-heading-2"] },
+  { tag: tags.heading3, class: styles["markdown-heading-3"] },
   { tag: [tags.heading4, tags.heading5, tags.heading6], class: styles["markdown-heading"] },
   { tag: tags.strong, class: styles["markdown-strong"] },
   { tag: tags.emphasis, class: styles["markdown-emphasis"] },

@@ -35,9 +35,17 @@
 
 /* 装飾。
    字の大きさ・太さ・色・等幅だけで、行の高さを大きく変えない（書いている行が押し出される）。
-   見出しは 1〜3 を一段大きく太く、4 以降は太字だけにする。 */
-.markdown-heading-large {
-  font-size: var(--font-heading);
+   見出しは 1〜3 を段ごとに大きさを分けて太くし、4 以降は太字だけにする。 */
+.markdown-heading-1 {
+  font-size: var(--font-heading-1);
+  font-weight: 700;
+}
+.markdown-heading-2 {
+  font-size: var(--font-heading-2);
+  font-weight: 700;
+}
+.markdown-heading-3 {
+  font-size: var(--font-heading-3);
   font-weight: 700;
 }
 .markdown-heading {

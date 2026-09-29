@@ -87,13 +87,16 @@
   --diary-gold-surface: #221f19; /* しおり・節目・卒業の札の地 */
   --diary-gold-border: #5a4b25; /* しおり・節目・卒業の札の枠 */
 
-  /* タイプスケール。段はこの6つだけ。 */
+  /* タイプスケール。段はこの9つだけ。 */
   --font-label: 0.6875rem;
   --font-action: 0.75rem;
   --font-secondary: 0.8125rem;
   --font-subheading: 0.875rem;
   --font-body: 0.9375rem;
   --font-heading: 1.125rem;
+  --font-heading-3: 1.0625rem;
+  --font-heading-2: 1.1875rem;
+  --font-heading-1: 1.3125rem;
   --line-height-body: 1.75;
 
   /* 書体は system-ui と等幅の2本のまま。 */
