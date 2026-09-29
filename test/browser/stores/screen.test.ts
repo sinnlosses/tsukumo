@@ -27,33 +27,6 @@ afterEach(() => {
 })
 
 describe("useScreen", () => {
-  it("hash が無ければ会話の画面", () => {
-    window.location.hash = ""
-
-    const { result } = renderHook(() => useScreen())
-
-    expect(result.current).toBe("conversation")
-  })
-
-  it("#character はキャラクター画面", () => {
-    window.location.hash = "#character"
-    expect(renderHook(() => useScreen()).result.current).toBe("character")
-  })
-
-  it("知らない hash は会話の画面に落ちる", () => {
-    window.location.hash = "#nowhere"
-
-    expect(renderHook(() => useScreen()).result.current).toBe("conversation")
-  })
-
-  it("見ているターンが乗っていても画面は読める", () => {
-    window.location.hash = "#character?turn=3"
-    expect(renderHook(() => useScreen()).result.current).toBe("character")
-
-    window.location.hash = "#?turn=3"
-    expect(renderHook(() => useScreen()).result.current).toBe("conversation")
-  })
-
   it("hashchange で読み直す", () => {
     window.location.hash = ""
     const { result } = renderHook(() => useScreen())

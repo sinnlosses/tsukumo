@@ -48,15 +48,9 @@ describe("Button", () => {
     expect(element.className.split(" ")).toContain(expectedClass)
   })
 
-  it.each([
-    ["label", "text-size-label"],
-    ["action", "text-size-action"],
-    ["secondary", "text-size-secondary"],
-    ["subheading", "text-size-subheading"],
-    ["body", "text-size-body"],
-  ] as const)("size: %s は class %s を付ける", (size, expectedClass) => {
-    const element = renderButton({ ...BASE_PROPS, size })
-    expect(element.className.split(" ")).toContain(expectedClass)
+  it("size は Text と同じ表の class を付ける", () => {
+    const element = renderButton({ ...BASE_PROPS, size: "action" })
+    expect(element.className.split(" ")).toContain("text-size-action")
   })
 
   it.each([

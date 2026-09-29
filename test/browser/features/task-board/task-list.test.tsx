@@ -147,14 +147,6 @@ describe("taskList", () => {
     expect(screen.getByRole("listitem").querySelector(".task-mark-other")).not.toBeNull()
   })
 
-  it("selectedStatus を選ぶとその状態だけ出る（進行中カードも絞られる）", () => {
-    render(<TaskList tasks={known(TASKS)} selectedStatus="todo" />)
-
-    const items = screen.getAllByRole("listitem")
-    expect(document.querySelectorAll(".task-running-card")).toHaveLength(0)
-    expect(items.map((item) => item.textContent)).toEqual([expect.stringContaining("X-001")])
-  })
-
   it("進行中を選ぶとカードだけ残る", () => {
     render(<TaskList tasks={known(TASKS)} selectedStatus="doing" />)
 

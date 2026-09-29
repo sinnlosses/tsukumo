@@ -36,43 +36,16 @@ describe("Heading", () => {
     expect(element.tagName).toBe(tagName)
   })
 
-  it.each([
-    ["label", "text-size-label"],
-    ["action", "text-size-action"],
-    ["secondary", "text-size-secondary"],
-    ["subheading", "text-size-subheading"],
-    ["body", "text-size-body"],
-    ["heading", "text-size-heading"],
-  ] as const)("size: %s は class %s を付ける", (size, expectedClass) => {
-    const element = renderedElement({ ...BASE_PROPS, size })
-    expect(element.className.split(" ")).toContain(expectedClass)
-  })
-
-  it.each([
-    ["ink", "text-tone-ink"],
-    ["ink-quiet", "text-tone-ink-quiet"],
-    ["accent", "text-tone-accent"],
-    ["state-ok", "text-tone-state-ok"],
-    ["state-warn", "text-tone-state-warn"],
-    ["state-ng", "text-tone-state-ng"],
-    ["state-ask", "text-tone-state-ask"],
-  ] as const)("tone: %s は class %s を付ける", (tone, expectedClass) => {
-    const element = renderedElement({ ...BASE_PROPS, tone })
-    expect(element.className.split(" ")).toContain(expectedClass)
-  })
-
-  it.each([
-    ["normal", "text-weight-normal"],
-    ["semibold", "text-weight-semibold"],
-    ["bold", "text-weight-bold"],
-  ] as const)("weight: %s は class %s を付ける", (weight, expectedClass) => {
-    const element = renderedElement({ ...BASE_PROPS, weight })
-    expect(element.className.split(" ")).toContain(expectedClass)
-  })
-
-  it("tone: inherit は class を付けない", () => {
-    const element = renderedElement({ ...BASE_PROPS, tone: "inherit" })
-    expect(element.className.split(" ").some((name) => name.includes("text-tone"))).toBe(false)
+  it("size・tone・weight は Text と同じ表の class を付ける", () => {
+    const element = renderedElement({
+      ...BASE_PROPS,
+      size: "heading",
+      tone: "accent",
+      weight: "bold",
+    })
+    expect(element.className.split(" ")).toEqual(
+      expect.arrayContaining(["text-size-heading", "text-tone-accent", "text-weight-bold"]),
+    )
   })
 
   it("className が足される", () => {
