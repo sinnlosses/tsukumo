@@ -1,6 +1,6 @@
 // 区画の一覧1件分（進行中を除いた「残り」）。
 // 先頭列に status の印（丸・チェック）、2列目にID＋summary を置く2列の grid 行。
-// 済んだタスク（`done`）は実行を頼む理由が無いので、IDを押せる部品にせず字のまま出す。
+// IDを押せる部品にするのは着手できるタスク（`runnable`）だけで、それ以外は字のまま出す。
 //
 // 色だけで状態を伝えない: todo は空の丸、done はチェックの印（字も打ち消し線にする）、想定外の値は注意色の「!」にする。
 // summary は1行に収め、入りきらない分は末尾を「…」にする（全文を読みたいときは「一覧を見る」のモーダルを開く）。
@@ -13,17 +13,20 @@ import { Text } from "../../../components/ui/text/text.tsx"
 import styles from "../task-board.module.css"
 import { TaskRunButton } from "./task-run-button.tsx"
 
-export function TaskItem(props: { readonly task: TaskSummaryItem }): ReactElement {
+export function TaskItem(props: {
+  readonly task: TaskSummaryItem
+  readonly runnable: boolean
+}): ReactElement {
   return (
     <li className={clsx(styles["task-item"], props.task.status === "done" && styles["task-done"])}>
       <span>
         <TaskMark status={props.task.status} />
       </span>
       <span className={styles["task-item-body"]}>
-        {props.task.status === "done" ? (
-          <span className={styles["task-id"]}>{props.task.id}</span>
-        ) : (
+        {props.runnable ? (
           <TaskRunButton taskId={props.task.id} />
+        ) : (
+          <span className={styles["task-id"]}>{props.task.id}</span>
         )}
         <Text
           element="span"

@@ -1,5 +1,7 @@
 // サイドバーの「タスク一覧」。進行中（doing）だけ先頭のカードにまとめ、残りはファイルの順で出す（todo と done は混ざったまま）。
-// `done` は薄く打ち消し線で出す。読めない・まだ届いていないときは undefined。
+// `done` は薄く打ち消し線で出す。IDを押して実行を頼めるのは、依存が済んだ `todo` だけ。
+// 絞り込みで隠れた依存も止めるので、着手できるかは絞る前の全件で判定する。
+// 読めない・まだ届いていないときは undefined。
 //
 // 区画には全件を並べ、入りきらない分は区画の内側でスクロールする。
 // 一覧を見渡すのは見出しの「一覧を見る」から開くモーダルの仕事で、ここは直近の並びを視界の端に置いておくだけ。
@@ -11,7 +13,11 @@
 
 import type { ReactElement } from "react"
 
-import type { TaskSummaryResult } from "../../../shared/repository/task-summary.ts"
+import {
+  taskReadiness,
+  unfinishedTaskIds,
+  type TaskSummaryResult,
+} from "../../../shared/repository/task-summary.ts"
 import { Text } from "../../components/ui/text/text.tsx"
 import { TaskItem } from "./components/task-item.tsx"
 import { TaskRunningCard } from "./components/task-running-card.tsx"
@@ -69,6 +75,7 @@ export function TaskList(props: TaskListProps): ReactElement {
   }
 
   const { running, rest } = orderTasksForSidebar(filtered)
+  const unfinished = unfinishedTaskIds(props.tasks.items)
 
   return (
     <>
@@ -81,7 +88,11 @@ export function TaskList(props: TaskListProps): ReactElement {
       )}
       <ul className={styles["task-list"]}>
         {rest.map((task) => (
-          <TaskItem key={task.id} task={task} />
+          <TaskItem
+            key={task.id}
+            task={task}
+            runnable={taskReadiness(task, unfinished)?.kind === "ready"}
+          />
         ))}
       </ul>
     </>

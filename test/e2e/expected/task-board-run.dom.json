@@ -388,15 +388,7 @@
                         "tag": "li",
                         "children": [
                           "進行中",
-                          {
-                            "tag": "button",
-                            "attributes": {
-                              "type": "button"
-                            },
-                            "children": [
-                              "T-003"
-                            ]
-                          },
+                          "T-003",
                           "架空のタスク（進行中）"
                         ]
                       }
@@ -430,30 +422,14 @@
                       {
                         "tag": "li",
                         "children": [
-                          {
-                            "tag": "button",
-                            "attributes": {
-                              "type": "button"
-                            },
-                            "children": [
-                              "T-004"
-                            ]
-                          },
+                          "T-004",
                           "架空のタスク（待ち）"
                         ]
                       },
                       {
                         "tag": "li",
                         "children": [
-                          {
-                            "tag": "button",
-                            "attributes": {
-                              "type": "button"
-                            },
-                            "children": [
-                              "T-005"
-                            ]
-                          },
+                          "T-005",
                           "架空のタスク（保留）"
                         ]
                       }

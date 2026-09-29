@@ -144,6 +144,38 @@ describe("タスクIDから実行を頼む", () => {
     expect(closed).toEqual([])
     expect(document.querySelector("dialog.task-board")?.hasAttribute("open")).toBe(true)
   })
+
+  it("区画の一覧で押せるIDは着手できる todo だけ", () => {
+    const task = (
+      id: string,
+      status: string,
+      dependencies: readonly string[],
+    ): TaskSummaryItem => ({
+      id,
+      summary: `架空のタスク ${id}`,
+      status,
+      difficulty: "sonnet",
+      loopable: "Y",
+      dependencies,
+      assignee: undefined,
+      body: "",
+      location: { kind: "none" },
+    })
+    putSession(INITIAL_SESSION_STATE, () => {})
+    render(
+      <TaskList
+        tasks={known([
+          task("Y-001", "doing", []),
+          task("Y-002", "todo", ["Y-001"]),
+          task("Y-003", "todo", []),
+          task("Y-004", "hold", []),
+        ])}
+        selectedStatus={undefined}
+      />,
+    )
+
+    expect(screen.getAllByRole("button").map((button) => button.textContent)).toEqual(["Y-003"])
+  })
 })
 
 /** モーダルの一覧で `taskId` の行を選び、操作の帯の「tsukumo に頼む」を押す。 */
