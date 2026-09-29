@@ -1362,6 +1362,76 @@ describe("components/ui/ の部品の className", () => {
   })
 })
 
+describe("CSS Modules の class", () => {
+  it("CSS Modules のセレクタに書いた class は、tsx から styles で参照されているか、許可リストにある", () => {
+    const cssFiles = listFiles(SRC_ROOT).filter((relPath) => relPath.endsWith(".module.css"))
+    expect(cssFiles.length).toBeGreaterThan(0)
+
+    const readersByCss = new Map<string, readonly string[]>()
+    for (const relPath of listSourceFiles(SRC_ROOT)) {
+      const content = readFileSync(`${SRC_ROOT}/${relPath}`, "utf8")
+      for (const importMatch of content.matchAll(
+        /import\s+\w+\s+from\s+["'](\.[^"']+\.module\.css)["']/g,
+      )) {
+        const cssRelPath = resolveRelativeImport(relPath, importMatch[1] ?? "")
+        readersByCss.set(cssRelPath, [...(readersByCss.get(cssRelPath) ?? []), content])
+      }
+    }
+
+    const offenders = cssFiles.flatMap((cssRelPath) => {
+      const readers = readersByCss.get(cssRelPath) ?? []
+      return cssClassNames(readFileSync(`${SRC_ROOT}/${cssRelPath}`, "utf8"))
+        .filter(
+          (className) =>
+            !readers.some((content) => isCssClassReferenced(content, className)) &&
+            !FOREIGN_CSS_CLASS_PREFIXES.some((prefix) => className.startsWith(prefix)),
+        )
+        .map((className) => `src/${cssRelPath}: .${className} がどの tsx からも参照されていない`)
+    })
+
+    expect(offenders.join("\n")).toBe("")
+  })
+})
+
+/**
+ * 読み手のソースに、class 名が文字列として現れるか。`styles[\`prefix-${x}\`]` のように
+ * 後ろを組み立てる綴りは、接頭辞までの一致で参照とみなす。
+ */
+function isCssClassReferenced(content: string, className: string): boolean {
+  if (content.includes(`"${className}"`) || content.includes(`.${className}`)) {
+    return true
+  }
+  return [...content.matchAll(/`([\w-]+)\$\{/g)].some((match) =>
+    className.startsWith(match[1] ?? "\0"),
+  )
+}
+
+// tsx 以外（rehype・CodeMirror）が付ける class の接頭辞。
+const FOREIGN_CSS_CLASS_PREFIXES = ["report-", "cm-"] as const
+
+/** CSS のセレクタ部分（`{` の前）に現れる class 名。コメントと宣言の中身は見ない。 */
+function cssClassNames(content: string): readonly string[] {
+  const withoutComments = content.replace(/\/\*[\s\S]*?\*\//g, "")
+  const preludes = [...withoutComments.matchAll(/([^{};]+)\{/g)].map((match) => match[1] ?? "")
+  return [
+    ...new Set(
+      preludes.flatMap((prelude) =>
+        [...prelude.matchAll(/\.([A-Za-z_][\w-]*)/g)].map((match) => match[1] ?? ""),
+      ),
+    ),
+  ]
+}
+
+/** `src/` の下のファイルすべて（拡張子を問わない）。 */
+function listFiles(root: string, dir = root): readonly string[] {
+  return readdirSync(dir).flatMap((name) => {
+    const fullPath = `${dir}/${name}`
+    return statSync(fullPath).isDirectory()
+      ? listFiles(root, fullPath)
+      : [fullPath.slice(root.length + 1)]
+  })
+}
+
 /** `browser/components/domain/` の直下（サブディレクトリの中ではない）ファイルか。 */
 function isDirectBrowserComponentsDomainFile(relPath: string): boolean {
   const segments = relPath.split("/")

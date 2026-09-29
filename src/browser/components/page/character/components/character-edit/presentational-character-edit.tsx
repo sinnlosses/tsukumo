@@ -82,7 +82,7 @@ export function PresentationalCharacterEdit(
             align="center"
             justify="start"
             wrap="nowrap"
-            className=""
+            className={styles["character-section-bar"]}
           >
             <Heading level={2} size="body" tone="inherit" weight="bold" className="">
               <span id="character-screen-accent">画面の差し色</span>

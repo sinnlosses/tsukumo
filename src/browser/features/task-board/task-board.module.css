@@ -93,7 +93,7 @@
 /* カードの中のIDは、一覧の行の等幅ID（`.task-item .task-id`）と同じ 11px にしつつ、字を差し色寄りにする。
    一覧の行の「薄く」は opacity だが、地が差し色なので同じ opacity のままだと沈んで読めない。
    押せる見た目（点線の下線・ホバーで実線）は `.task-id-button` のまま変えない。 */
-.task-running-head .task-id-button {
+.task-running-card .task-id-button {
   font-size: var(--font-label);
   color: color-mix(in srgb, var(--ink-quiet), var(--accent) 40%);
 }
