@@ -33,7 +33,7 @@ export function TaskRunningCard(props: { readonly task: TaskSummaryItem }): Reac
       </HStack>
       <Text
         element="span"
-        size="subheading"
+        size="secondary"
         tone="inherit"
         weight="inherit"
         className={styles["task-running-body"]}
