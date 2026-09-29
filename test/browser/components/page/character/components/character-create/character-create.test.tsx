@@ -84,6 +84,8 @@ describe("CharacterCreate", () => {
 
     fireEvent.change(screen.getByLabelText("id"), { target: { value: "fictional-2" } })
     expect(submitButton().getAttribute("aria-disabled")).toBe("true")
+    expect(document.querySelector(".character-screen-note")).toBeNull()
+    expect(screen.getByText(/保存するフォルダの名前になります/u)).toBeDefined()
 
     await pickPortrait()
     expect(submitButton().getAttribute("aria-disabled")).toBe("false")
