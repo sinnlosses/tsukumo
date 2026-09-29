@@ -3264,6 +3264,997 @@
           }
         }
       ]
+    },
+    {
+      "name": "resumed-report-quick",
+      "steps": [
+        {
+          "afterMs": 0,
+          "event": {
+            "kind": "request",
+            "text": "合図をまたいでも報告が消えないか確かめたい（架空の依頼）",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 40,
+          "event": {
+            "kind": "speech",
+            "text": "分かった、区切りごとに知らせながら進めるね。",
+            "expression": "default"
+          }
+        },
+        {
+          "afterMs": 100,
+          "event": {
+            "kind": "tool-started",
+            "toolUseId": "fake-tool-resume-1",
+            "name": "Bash",
+            "input": {
+              "command": "dummy-scan --targets /tmp/dummy",
+              "run_in_background": false,
+              "description": "架空の下調べ"
+            }
+          }
+        },
+        {
+          "afterMs": 220,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-tool-resume-1",
+            "content": "ダミーの下調べ結果（架空・3件）",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 250,
+          "event": {
+            "kind": "report-drafting",
+            "toolUseId": "fake-report-call-resume-1"
+          }
+        },
+        {
+          "afterMs": 300,
+          "event": {
+            "kind": "report",
+            "closing": {
+              "kind": "speech",
+              "text": "いったんまとめたよ。",
+              "expression": "default"
+            },
+            "toolUseId": "fake-report-call-resume-1",
+            "conclusion": "中間の結論（架空）：ここまでで分かったことをいったんまとめた。",
+            "sections": [
+              {
+                "heading": "",
+                "blocks": [
+                  {
+                    "kind": "markdown",
+                    "markdown": "- 下調べは終わった（架空の結果）\n- 続きは合図を待って進める",
+                    "fold": ""
+                  }
+                ]
+              }
+            ],
+            "favor": "",
+            "checks": []
+          }
+        },
+        {
+          "afterMs": 310,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-report-call-resume-1",
+            "content": "ok",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 370,
+          "event": {
+            "kind": "turn-finished",
+            "outcome": { "kind": "completed" }
+          }
+        },
+        {
+          "afterMs": 530,
+          "event": {
+            "kind": "turn-resumed"
+          }
+        },
+        {
+          "afterMs": 630,
+          "event": {
+            "kind": "speech",
+            "text": "1つ目の合図が届いた。まだ続けてるよ。",
+            "expression": "default"
+          }
+        },
+        {
+          "afterMs": 680,
+          "event": {
+            "kind": "turn-finished",
+            "outcome": { "kind": "completed" }
+          }
+        },
+        {
+          "afterMs": 850,
+          "event": {
+            "kind": "turn-resumed"
+          }
+        },
+        {
+          "afterMs": 950,
+          "event": {
+            "kind": "speech",
+            "text": "2つ目の合図。もう少しで終わりそう。",
+            "expression": "default"
+          }
+        },
+        {
+          "afterMs": 1000,
+          "event": {
+            "kind": "turn-finished",
+            "outcome": { "kind": "completed" }
+          }
+        },
+        {
+          "afterMs": 1170,
+          "event": {
+            "kind": "turn-resumed"
+          }
+        },
+        {
+          "afterMs": 1270,
+          "event": {
+            "kind": "speech",
+            "text": "終わったよ。まとめを届けるね。",
+            "expression": "proud"
+          }
+        },
+        {
+          "afterMs": 1320,
+          "event": {
+            "kind": "report-drafting",
+            "toolUseId": "fake-report-call-resume-2"
+          }
+        },
+        {
+          "afterMs": 1370,
+          "event": {
+            "kind": "report",
+            "closing": { "kind": "speech", "text": "まとめたよ。", "expression": "default" },
+            "toolUseId": "fake-report-call-resume-2",
+            "conclusion": "最終の結論（架空）：合図をまたいでも報告は消えなかった。",
+            "sections": [
+              {
+                "heading": "",
+                "blocks": [
+                  {
+                    "kind": "markdown",
+                    "markdown": "- 中間の報告は合図のあいだも出したまま\n- 吹き出しも前のセリフを保った\n- 最後にこの最終報告へ差し替わる",
+                    "fold": ""
+                  }
+                ]
+              }
+            ],
+            "favor": "",
+            "checks": []
+          }
+        },
+        {
+          "afterMs": 1380,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-report-call-resume-2",
+            "content": "ok",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 1430,
+          "event": {
+            "kind": "turn-finished",
+            "outcome": { "kind": "completed" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "report-tool-quick",
+      "steps": [
+        {
+          "afterMs": 0,
+          "event": {
+            "kind": "request",
+            "text": "report ツールの描き方を確かめたい（架空の依頼）",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 50,
+          "event": {
+            "kind": "speech",
+            "text": "見てくるね。",
+            "expression": "default"
+          }
+        },
+        {
+          "afterMs": 130,
+          "event": {
+            "kind": "utterance",
+            "text": "まず `a.ts` を読むね。"
+          }
+        },
+        {
+          "afterMs": 200,
+          "event": {
+            "kind": "tool-started",
+            "toolUseId": "fake-tool-report-1",
+            "name": "Read",
+            "input": {
+              "file_path": "/tmp/dummy/a.ts"
+            }
+          }
+        },
+        {
+          "afterMs": 420,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-tool-report-1",
+            "content": "ダミーの読み取り結果（3行）",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 450,
+          "event": {
+            "kind": "report-drafting",
+            "toolUseId": "fake-report-call-1"
+          }
+        },
+        {
+          "afterMs": 500,
+          "event": {
+            "kind": "report",
+            "closing": { "kind": "speech", "text": "途中まで書いたよ。", "expression": "default" },
+            "toolUseId": "fake-report-call-1",
+            "conclusion": "途中の結論: 目盛りを決めているのは `a.ts` だけだった。",
+            "sections": [
+              {
+                "heading": "",
+                "blocks": [
+                  {
+                    "kind": "markdown",
+                    "markdown": "- 読んだのは `/tmp/dummy/a.ts` と `/tmp/dummy/b.ts` の2つ\n- 目盛りを決めているのは `a.ts` のほう\n- `b.ts` は目盛りを読むだけ",
+                    "fold": ""
+                  }
+                ]
+              }
+            ],
+            "favor": "",
+            "checks": []
+          }
+        },
+        {
+          "afterMs": 510,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-report-call-1",
+            "content": "ok",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 580,
+          "event": {
+            "kind": "utterance",
+            "text": "## テキストで書いた資料（出ないはず）\n\n- report を呼んだターンでは\n- ツールの外に書いた本文は\n- 画面に出ない"
+          }
+        },
+        {
+          "afterMs": 590,
+          "event": {
+            "kind": "tool-started",
+            "toolUseId": "fake-tool-report-check",
+            "name": "Bash",
+            "input": {
+              "command": "pnpm run check"
+            }
+          }
+        },
+        {
+          "afterMs": 660,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-tool-report-check",
+            "content": "ok",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 670,
+          "event": {
+            "kind": "tool-started",
+            "toolUseId": "fake-tool-report-2",
+            "name": "Edit",
+            "input": {
+              "file_path": "/tmp/dummy/a.ts"
+            }
+          }
+        },
+        {
+          "afterMs": 1000,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-tool-report-2",
+            "content": "ダミーの書き換え結果",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 1050,
+          "event": {
+            "kind": "report-drafting",
+            "toolUseId": "fake-report-call-2"
+          }
+        },
+        {
+          "afterMs": 1170,
+          "event": {
+            "kind": "report",
+            "closing": { "kind": "speech", "text": "書けたよ！", "expression": "proud" },
+            "toolUseId": "fake-report-call-2",
+            "conclusion": "架空の結論: 目盛りを 24 に直し、`a.ts` だけで済んだ。",
+            "sections": [
+              {
+                "heading": "",
+                "blocks": [
+                  {
+                    "kind": "table",
+                    "title": "直したファイルと結果（架空の数）",
+                    "columns": ["ファイル", "変えたこと", "状態"],
+                    "rows": [
+                      ["`a.ts`", "目盛りを 12 から 24 へ", { "status": "ok", "text": "OK" }],
+                      [
+                        "`b.ts`",
+                        "読むだけなので変えない",
+                        { "status": "warn", "text": "キャッシュが古いまま" }
+                      ],
+                      ["`c.ts`", "型の食い違いが残る", { "status": "ng", "text": "NG" }]
+                    ],
+                    "fold": ""
+                  },
+                  {
+                    "kind": "table",
+                    "title": "目盛りの数（架空の数）",
+                    "columns": ["場所", "前", "後"],
+                    "rows": [
+                      ["帯", "12", "24"],
+                      ["札", "6", "12"]
+                    ],
+                    "fold": ""
+                  },
+                  {
+                    "kind": "markdown",
+                    "markdown": "```diff src/a.ts\n-const TICKS = 12\n+const TICKS = 24\n```\n\n<div class=\"note note-warn\">\n\n`b.ts` のキャッシュは古い目盛りを持ったまま残る。\n\n</div>",
+                    "fold": ""
+                  }
+                ]
+              }
+            ],
+            "favor": "`b.ts` のキャッシュを消してよいか決めてほしい（架空のお願い）。",
+            "checks": [
+              {
+                "status": "ok",
+                "label": "pnpm run check",
+                "figure": "1234 件",
+                "command": "pnpm run check",
+                "detail": "架空の単体テストがすべて通った"
+              },
+              {
+                "status": "ng",
+                "label": "目盛りの E2E",
+                "figure": "1 / 56",
+                "command": "",
+                "detail": "架空の 1 件が落ちた"
+              },
+              {
+                "status": "unverified",
+                "label": "狭い窓での見た目",
+                "figure": "",
+                "command": "",
+                "detail": "手で確かめていない"
+              }
+            ]
+          }
+        },
+        {
+          "afterMs": 1180,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-report-call-2",
+            "content": "ok",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 1400,
+          "event": {
+            "kind": "turn-finished",
+            "outcome": { "kind": "completed" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "long-report-quick",
+      "steps": [
+        {
+          "afterMs": 0,
+          "event": {
+            "kind": "request",
+            "text": "長いレポートが出るターンを見たい（架空の依頼）",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 30,
+          "event": {
+            "kind": "partial-utterance",
+            "text": "## 長いレポートの疑似セッション（架空）\n\n- これは架空の本文で、実物の会話ではない\n- 書き上げる演出が本文の全体に掛かるかどうかを測る\n"
+          }
+        },
+        {
+          "afterMs": 150,
+          "event": {
+            "kind": "partial-utterance",
+            "text": "\n### 1. 何を置いてあるか\n\n見出しを4つ持たせて、塊が1つにならないようにしてある。表と箇条書きと段落を混ぜてあるので、\n行の高さも幅も揃わない。文字の塊だけで組むと筆が同じ速さで最後まで滑ってしまい、途中で\n止まったのかどうかが目で分からなくなる。\n\n| 塊 | 中身 | ねらい |\n| --- | --- | --- |\n| 1 | 見出しと箇条書き | 最初に出る塊 |\n| 2 | 段落と表 | 行の高さが変わる |\n| 3 | 箇条書き | 右に余白が残る |\n| 4 | 締めの段落 | 最後まで筆が届くか |\n"
+          }
+        },
+        {
+          "afterMs": 270,
+          "event": {
+            "kind": "partial-utterance",
+            "text": "\n### 2. どう測るか\n\n演出が始まった瞬間の本文の文字数と、ターンが終わったあとの文字数を並べる。書きかけのまま\n出していたころは、始まった時点の本文が最終の一部しかなく、残りには筆が一度も通らなかった。\n確定してから出すようにすると、2つの数は同じになるはずである。\n\n- 測るのは本文の文字数だけで、撮った画像はどこにも残さない\n- 疑似セッションは架空なので、何度流しても同じ本文・同じ数になる\n- 窓の大きさを変えても文字数は変わらない（変わるのは折り返しだけ）\n"
+          }
+        },
+        {
+          "afterMs": 380,
+          "event": {
+            "kind": "partial-utterance",
+            "text": "\n### 3. 途中で足される分\n\nこの段落は、演出が始まったあとに届く分として書いてある。書きかけを先に出していたころは、\nここから下は画面に出てはいても筆が通っていなかった。つまり「書いているように見える」のは\n本文の頭のほうだけで、残りは音も無く現れていたことになる。長いレポートほどその割合は増える。\n\n1. 最初の塊が出る\n2. 筆がその塊をZ字でなぞる\n3. なぞり終わったころには、本文はもっと伸びている\n"
+          }
+        },
+        {
+          "afterMs": 500,
+          "event": {
+            "kind": "partial-utterance",
+            "text": "\n### 4. 読み手から見て何が変わるか\n\n出るまでの間は、サイドバーの進行と吹き出しのセリフが「いま何をしているか」を受け持つ。\n本文が一度に出るようになっても、待っているあいだ画面が黙るわけではない。出たあとは頭から\n順に筆が通るので、**どこまで書けたか**は本文そのものが示す。\n\n| 見るところ | 出る前 | 出たあと |\n| --- | --- | --- |\n| 吹き出し | セリフが出る | そのまま残る |\n| サイドバー | ツールの進行 | 終わった印 |\n| 本文 | まだ出ない | 頭から筆が通る |\n"
+          }
+        },
+        {
+          "afterMs": 620,
+          "event": {
+            "kind": "partial-utterance",
+            "text": "\n### 5. 何が変わらないか\n\n吹き出しのセリフは演出の対象ではないし、中間レポートの囲いは破線のままである。過去のタブを\n開き直したときに演出が掛からないのも、これまでと同じ。**変わるのは本文が画面に出る時刻だけ**\nで、出たあとの見え方はどちらも「書き上げていくように見せる」1本の仕組みに乗っている。\n\nこれで疑似セッションはおしまい。実物の会話は1文字も含んでいない。\n"
+          }
+        },
+        {
+          "afterMs": 730,
+          "event": {
+            "kind": "speech",
+            "text": "長いのを書いてみたよ。全部に筆が通るかな。",
+            "expression": "default"
+          }
+        },
+        {
+          "afterMs": 780,
+          "event": {
+            "kind": "utterance",
+            "text": "## 長いレポートの疑似セッション（架空）\n\n- これは架空の本文で、実物の会話ではない\n- 書き上げる演出が本文の全体に掛かるかどうかを測る\n\n### 1. 何を置いてあるか\n\n見出しを4つ持たせて、塊が1つにならないようにしてある。表と箇条書きと段落を混ぜてあるので、\n行の高さも幅も揃わない。文字の塊だけで組むと筆が同じ速さで最後まで滑ってしまい、途中で\n止まったのかどうかが目で分からなくなる。\n\n| 塊 | 中身 | ねらい |\n| --- | --- | --- |\n| 1 | 見出しと箇条書き | 最初に出る塊 |\n| 2 | 段落と表 | 行の高さが変わる |\n| 3 | 箇条書き | 右に余白が残る |\n| 4 | 締めの段落 | 最後まで筆が届くか |\n\n### 2. どう測るか\n\n演出が始まった瞬間の本文の文字数と、ターンが終わったあとの文字数を並べる。書きかけのまま\n出していたころは、始まった時点の本文が最終の一部しかなく、残りには筆が一度も通らなかった。\n確定してから出すようにすると、2つの数は同じになるはずである。\n\n- 測るのは本文の文字数だけで、撮った画像はどこにも残さない\n- 疑似セッションは架空なので、何度流しても同じ本文・同じ数になる\n- 窓の大きさを変えても文字数は変わらない（変わるのは折り返しだけ）\n\n### 3. 途中で足される分\n\nこの段落は、演出が始まったあとに届く分として書いてある。書きかけを先に出していたころは、\nここから下は画面に出てはいても筆が通っていなかった。つまり「書いているように見える」のは\n本文の頭のほうだけで、残りは音も無く現れていたことになる。長いレポートほどその割合は増える。\n\n1. 最初の塊が出る\n2. 筆がその塊をZ字でなぞる\n3. なぞり終わったころには、本文はもっと伸びている\n\n### 4. 読み手から見て何が変わるか\n\n出るまでの間は、サイドバーの進行と吹き出しのセリフが「いま何をしているか」を受け持つ。\n本文が一度に出るようになっても、待っているあいだ画面が黙るわけではない。出たあとは頭から\n順に筆が通るので、**どこまで書けたか**は本文そのものが示す。\n\n| 見るところ | 出る前 | 出たあと |\n| --- | --- | --- |\n| 吹き出し | セリフが出る | そのまま残る |\n| サイドバー | ツールの進行 | 終わった印 |\n| 本文 | まだ出ない | 頭から筆が通る |\n\n### 5. 何が変わらないか\n\n吹き出しのセリフは演出の対象ではないし、中間レポートの囲いは破線のままである。過去のタブを\n開き直したときに演出が掛からないのも、これまでと同じ。**変わるのは本文が画面に出る時刻だけ**\nで、出たあとの見え方はどちらも「書き上げていくように見せる」1本の仕組みに乗っている。\n\nこれで疑似セッションはおしまい。実物の会話は1文字も含んでいない。\n"
+          }
+        },
+        {
+          "afterMs": 800,
+          "event": {
+            "kind": "turn-finished",
+            "outcome": { "kind": "completed" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "report-rejected-quick",
+      "steps": [
+        {
+          "afterMs": 0,
+          "event": {
+            "kind": "request",
+            "text": "差し戻しの見え方を確かめたい（架空の依頼）",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 50,
+          "event": {
+            "kind": "speech",
+            "text": "まとめてみるね。",
+            "expression": "default"
+          }
+        },
+        {
+          "afterMs": 600,
+          "event": {
+            "kind": "report",
+            "closing": {
+              "kind": "speech",
+              "text": "出ないはずの締め（架空）",
+              "expression": "default"
+            },
+            "toolUseId": "fake-report-rejected-1",
+            "conclusion": "架空の結論その1（差し戻されるはず）。架空の結論その2。架空の結論その3。",
+            "sections": [
+              {
+                "heading": "",
+                "blocks": [
+                  {
+                    "kind": "markdown",
+                    "markdown": "# 架空の大見出し（出ないはず）\n\n| 列 | 値 |\n| --- | --- |\n| a | 1 |",
+                    "fold": ""
+                  }
+                ]
+              }
+            ],
+            "favor": "",
+            "checks": []
+          }
+        },
+        {
+          "afterMs": 610,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-report-rejected-1",
+            "content": "レポートの記法の規約に次の違反がある。直して `report` を呼び直すこと:\n- `conclusion` が3文ある。2文以内にし、残りは `sections` へ移す\n- `markdown` の塊に塊で書ける記法（`#` / `##` の見出し・表）がある。代わりに節の `heading`・`table` の塊を使う",
+            "isError": true
+          }
+        },
+        {
+          "afterMs": 650,
+          "event": {
+            "kind": "speech",
+            "text": "差し戻されたから直すね。",
+            "expression": "default"
+          }
+        },
+        {
+          "afterMs": 720,
+          "event": {
+            "kind": "report",
+            "closing": { "kind": "speech", "text": "書けたよ！", "expression": "proud" },
+            "toolUseId": "fake-report-rejected-2",
+            "conclusion": "架空の結論: 差し戻しのあとに直したレポートだけが出る。",
+            "sections": [
+              {
+                "heading": "",
+                "blocks": [
+                  {
+                    "kind": "markdown",
+                    "markdown": "## 直した見出し（架空）\n\n**直した表（作り物の値）**\n\n| 列 | 値 |\n| --- | --- |\n| a | 1 |",
+                    "fold": ""
+                  }
+                ]
+              }
+            ],
+            "favor": "",
+            "checks": []
+          }
+        },
+        {
+          "afterMs": 730,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-report-rejected-2",
+            "content": "ok",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 830,
+          "event": {
+            "kind": "turn-finished",
+            "outcome": { "kind": "completed" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "closing-narration-quick",
+      "steps": [
+        {
+          "afterMs": 0,
+          "event": {
+            "kind": "request",
+            "text": "締めの一言が最終レポートを押しのける並びを見たい（架空の依頼）",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 70,
+          "event": {
+            "kind": "speech",
+            "text": "見てくるぞ。",
+            "expression": "thinking"
+          }
+        },
+        {
+          "afterMs": 120,
+          "event": {
+            "kind": "tool-started",
+            "toolUseId": "fake-tool-closing-1",
+            "name": "Edit",
+            "input": {
+              "file_path": "/tmp/dummy/a.ts"
+            }
+          }
+        },
+        {
+          "afterMs": 250,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-tool-closing-1",
+            "content": "ダミーの書き換え結果",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 330,
+          "event": {
+            "kind": "utterance",
+            "text": "## 背景の差し替えが弾かれていた\n\nこれは架空の本文で、実物の会話ではない。**この塊が最終レポートとして出る**こと（＝下の締めの一言に席を取られないこと）を見るための場面。\n\n| 何 | 結果 |\n| --- | --- |\n| 架空の検証1 | 通った |\n| 架空の検証2 | 通った |\n\n- 架空の変更1\n- 架空の変更2\n"
+          }
+        },
+        {
+          "afterMs": 380,
+          "event": {
+            "kind": "speech",
+            "text": "ほら、片付いたぞ。",
+            "expression": "proud"
+          }
+        },
+        {
+          "afterMs": 430,
+          "event": {
+            "kind": "utterance",
+            "text": "狐火を落とします。また何かあれば呼んでください。"
+          }
+        },
+        {
+          "afterMs": 500,
+          "event": {
+            "kind": "turn-finished",
+            "outcome": { "kind": "completed" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "background-task-short-quick",
+      "steps": [
+        {
+          "afterMs": 0,
+          "event": {
+            "kind": "request",
+            "text": "背景で待つあいだの帯を、再開まで数秒の短い版で見たい（架空の依頼）",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 50,
+          "event": {
+            "kind": "speech",
+            "text": "背景で少しだけ走らせておくね。",
+            "expression": "default"
+          }
+        },
+        {
+          "afterMs": 100,
+          "event": {
+            "kind": "tool-started",
+            "toolUseId": "fake-tool-background-short-1",
+            "name": "Bash",
+            "input": {
+              "command": "sleep 2",
+              "run_in_background": true,
+              "description": "架空の短い待ち（2秒）"
+            }
+          }
+        },
+        {
+          "afterMs": 120,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-tool-background-short-1",
+            "content": "架空の背景実行の受付（ID: fake-bg-short-1）",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 120,
+          "event": {
+            "kind": "background-tasks-changed",
+            "tasks": [
+              {
+                "taskId": "fake-bg-short-1",
+                "kind": "shell",
+                "description": "架空の短い待ち（2秒）"
+              }
+            ]
+          }
+        },
+        {
+          "afterMs": 200,
+          "event": {
+            "kind": "utterance",
+            "text": "## 背景で1件、短く走らせた\n\nこれは架空の本文で、実物の会話ではない。**`background-task` の長い版（再開まで12秒超）とは別に、E2E で繰り返し撮れるように再開まで数秒に縮めた版**。帯の「いまの作業」が「背景で作業中」になり、終わると「依頼待ち」に戻る。"
+          }
+        },
+        {
+          "afterMs": 250,
+          "event": {
+            "kind": "turn-finished",
+            "outcome": { "kind": "completed" }
+          }
+        },
+        {
+          "afterMs": 420,
+          "event": {
+            "kind": "background-tasks-changed",
+            "tasks": []
+          }
+        },
+        {
+          "afterMs": 430,
+          "event": {
+            "kind": "turn-resumed"
+          }
+        },
+        {
+          "afterMs": 480,
+          "event": {
+            "kind": "speech",
+            "text": "短い背景の待ちが終わったよ。",
+            "expression": "proud"
+          }
+        },
+        {
+          "afterMs": 530,
+          "event": {
+            "kind": "utterance",
+            "text": "## 短い背景の待ちが終わった\n\nこれは架空の本文で、実物の会話ではない。**依頼なしで始めた続きのターン**の報告で、前の本文は中間レポートに回る。"
+          }
+        },
+        {
+          "afterMs": 580,
+          "event": {
+            "kind": "turn-finished",
+            "outcome": { "kind": "completed" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "background-task-interim-report-quick",
+      "steps": [
+        {
+          "afterMs": 0,
+          "event": {
+            "kind": "request",
+            "text": "report を2回呼んだあと背景で待っても、最終レポートの札を早く立てないか確かめたい（架空の依頼）",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 30,
+          "event": {
+            "kind": "speech",
+            "text": "まず少し調べるね。",
+            "expression": "default"
+          }
+        },
+        {
+          "afterMs": 50,
+          "event": {
+            "kind": "tool-started",
+            "toolUseId": "fake-tool-bg-interim-1",
+            "name": "Bash",
+            "input": {
+              "command": "echo ready",
+              "run_in_background": false,
+              "description": "架空の下調べ"
+            }
+          }
+        },
+        {
+          "afterMs": 60,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-tool-bg-interim-1",
+            "content": "ready",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 80,
+          "event": {
+            "kind": "report-drafting",
+            "toolUseId": "fake-report-bg-interim-1"
+          }
+        },
+        {
+          "afterMs": 120,
+          "event": {
+            "kind": "report",
+            "closing": {
+              "kind": "speech",
+              "text": "いったんまとめたよ。",
+              "expression": "default"
+            },
+            "toolUseId": "fake-report-bg-interim-1",
+            "conclusion": "中間の結論（架空）：ここまでで分かったことをいったんまとめた。",
+            "sections": [],
+            "favor": "",
+            "checks": []
+          }
+        },
+        {
+          "afterMs": 120,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-report-bg-interim-1",
+            "content": "ok",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 140,
+          "event": {
+            "kind": "speech",
+            "text": "続けて背景で少しだけ走らせておくね。",
+            "expression": "default"
+          }
+        },
+        {
+          "afterMs": 160,
+          "event": {
+            "kind": "tool-started",
+            "toolUseId": "fake-tool-bg-interim-2",
+            "name": "Bash",
+            "input": {
+              "command": "sleep 2",
+              "run_in_background": true,
+              "description": "架空の短い待ち（2秒）"
+            }
+          }
+        },
+        {
+          "afterMs": 170,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-tool-bg-interim-2",
+            "content": "架空の背景実行の受付（ID: fake-bg-interim-1）",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 170,
+          "event": {
+            "kind": "background-tasks-changed",
+            "tasks": [
+              {
+                "taskId": "fake-bg-interim-1",
+                "kind": "shell",
+                "description": "架空の短い待ち（2秒）"
+              }
+            ]
+          }
+        },
+        {
+          "afterMs": 180,
+          "event": {
+            "kind": "report-drafting",
+            "toolUseId": "fake-report-bg-interim-2"
+          }
+        },
+        {
+          "afterMs": 220,
+          "event": {
+            "kind": "report",
+            "closing": {
+              "kind": "speech",
+              "text": "ここまでまとめたよ。",
+              "expression": "default"
+            },
+            "toolUseId": "fake-report-bg-interim-2",
+            "conclusion": "いまの結論（架空）：ここまでで分かったことをまとめた。",
+            "sections": [],
+            "favor": "",
+            "checks": []
+          }
+        },
+        {
+          "afterMs": 220,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-report-bg-interim-2",
+            "content": "ok",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 250,
+          "event": {
+            "kind": "turn-finished",
+            "outcome": { "kind": "completed" }
+          }
+        },
+        {
+          "afterMs": 430,
+          "event": {
+            "kind": "background-tasks-changed",
+            "tasks": []
+          }
+        },
+        {
+          "afterMs": 450,
+          "event": {
+            "kind": "turn-resumed"
+          }
+        },
+        {
+          "afterMs": 480,
+          "event": {
+            "kind": "speech",
+            "text": "終わったよ。まとめを届けるね。",
+            "expression": "proud"
+          }
+        },
+        {
+          "afterMs": 500,
+          "event": {
+            "kind": "report-drafting",
+            "toolUseId": "fake-report-bg-interim-3"
+          }
+        },
+        {
+          "afterMs": 530,
+          "event": {
+            "kind": "report",
+            "closing": { "kind": "speech", "text": "まとめたよ。", "expression": "default" },
+            "toolUseId": "fake-report-bg-interim-3",
+            "conclusion": "最終の結論（架空）：合図をまたいでも最終レポートの札は早まらなかった。",
+            "sections": [],
+            "favor": "",
+            "checks": []
+          }
+        },
+        {
+          "afterMs": 540,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-report-bg-interim-3",
+            "content": "ok",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 580,
+          "event": {
+            "kind": "turn-finished",
+            "outcome": { "kind": "completed" }
+          }
+        }
+      ]
     }
   ],
   "sessionDigests": {

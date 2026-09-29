@@ -19,7 +19,7 @@ describe("続きのターン", () => {
   it("turn-resumed をまたいでも中間レポートが残り、最後に最終レポートへ差し替わる", async () => {
     const room = await run.open({
       scenario: "turn-resumed",
-      scene: "resumed-report",
+      scene: "resumed-report-quick",
       viewport: "wide",
     })
 

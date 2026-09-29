@@ -32,7 +32,7 @@ describe("最終レポートの札", () => {
   it("背景のタスクが片付き、続きのターンも終われば札が立つ", async () => {
     const room = await run.open({
       scenario: "final-report-label-closed",
-      scene: "background-task-interim-report",
+      scene: "background-task-interim-report-quick",
       viewport: "wide",
     })
 

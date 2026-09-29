@@ -21,7 +21,11 @@ describe("途中の発話と流れる本文", () => {
   })
 
   it("partial-utterance を重ねて届いた長いレポートが、最終的に全文として残る", async () => {
-    const room = await run.open({ scenario: "long-report", scene: "long-report", viewport: "wide" })
+    const room = await run.open({
+      scenario: "long-report",
+      scene: "long-report-quick",
+      viewport: "wide",
+    })
 
     await room.waitForEvent("turn-finished")
     await room.settleAndMatch(ELAPSED_MS)

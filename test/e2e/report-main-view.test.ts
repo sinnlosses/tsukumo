@@ -28,7 +28,7 @@ describe("report → メインビュー", () => {
   it("差し戻されたレポートは描かれず、直したレポートだけが残る", async () => {
     const room = await run.open({
       scenario: "report-rejected",
-      scene: "report-rejected",
+      scene: "report-rejected-quick",
       viewport: "wide",
     })
 

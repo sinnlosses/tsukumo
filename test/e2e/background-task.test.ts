@@ -30,7 +30,7 @@ describe("背景のタスク", () => {
   it("背景の待ちが終わると turn-resumed で続きのターンが流れ、背景のタスクが消える", async () => {
     const room = await run.open({
       scenario: "background-task-resumed",
-      scene: "background-task-short",
+      scene: "background-task-short-quick",
       viewport: "wide",
     })
 

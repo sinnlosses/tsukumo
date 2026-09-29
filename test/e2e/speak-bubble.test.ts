@@ -16,7 +16,7 @@ describe("speak → キャラビューの吹き出し", () => {
   it("締めの speak が最終レポートのあとに続く吹き出しとして残る", async () => {
     const room = await run.open({
       scenario: "speak-bubble-closing-narration",
-      scene: "closing-narration",
+      scene: "closing-narration-quick",
       viewport: "wide",
     })
 

@@ -13,7 +13,11 @@ const ELAPSED_MS = 60_000
 
 describe("ターンの流れ", () => {
   it("依頼からツール・report・closing の締めのセリフまで流れ、メインビューとキャラビューに出る", async () => {
-    const room = await run.open({ scenario: "turn-flow", scene: "report-tool", viewport: "wide" })
+    const room = await run.open({
+      scenario: "turn-flow",
+      scene: "report-tool-quick",
+      viewport: "wide",
+    })
 
     await room.waitForEvent("turn-finished")
     await room.settleAndMatch(ELAPSED_MS)
