@@ -14,7 +14,7 @@ export default defineConfig({
     setupFiles: ["./test/dom-environment.ts"],
     exclude: ["**/node_modules/**", "test/e2e/**"],
     env: { TZ: "UTC" },
-    maxWorkers: "40%",
+    maxWorkers: "30%",
     // E2E の段と並べて走らせるので、bd init と bundle の組み立てを済ませる beforeAll が10秒の既定に収まらないことがある。
     hookTimeout: 15_000,
   },

@@ -7,7 +7,7 @@ export default defineConfig({
     testTimeout: 60_000,
     hookTimeout: 60_000,
     env: { TZ: "UTC" },
-    // `scripts/check.ts` は単体テストと並べて走らせるので、vitest.config.ts の 40% と合わせてコア数に収める。
-    maxWorkers: "60%",
+    // `scripts/check.ts` は単体テストと並べて走らせるので、vitest.config.ts の 30% と合わせてコア数の 60% に収める。
+    maxWorkers: "30%",
   },
 })
