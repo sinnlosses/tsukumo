@@ -8,10 +8,11 @@
 // 失敗した手順の引数と出力を読める場所はここだけ。
 
 import clsx from "clsx"
-import { useId, type ReactElement } from "react"
+import { useId, useRef, type ReactElement } from "react"
 
 import { Button } from "../../../ui/button/button.tsx"
 import { Text } from "../../../ui/text/text.tsx"
+import { useCurrentWorkListMaxHeight } from "../hooks/use-current-work-list-max-height.ts"
 import type {
   ScreenNavCurrentWork,
   ScreenNavCurrentWorkBackgroundTask,
@@ -107,7 +108,7 @@ export function ScreenNavCurrentWorkPill(props: ScreenNavCurrentWorkProps): Reac
           </>
         )}
       </button>
-      {work.open && <CurrentWorkList id={listId} work={work} />}
+      {work.open && <CurrentWorkList id={listId} work={work} variant={props.variant} />}
     </div>
   )
 }
@@ -131,12 +132,16 @@ function SpinnerMark(): ReactElement {
 function CurrentWorkList(props: {
   readonly id: string
   readonly work: ScreenNavCurrentWork
+  readonly variant: ScreenNavCurrentWorkVariant
 }): ReactElement {
   const { work } = props
+  const listRef = useRef<HTMLDivElement>(null)
+  useCurrentWorkListMaxHeight(listRef, props.variant === "capsule")
 
   return (
     <div
       id={props.id}
+      ref={listRef}
       className={clsx(styles["screen-nav-work-list"], shellStyles["screen-nav-work-list"])}
       role="region"
     >

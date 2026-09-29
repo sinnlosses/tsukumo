@@ -296,12 +296,15 @@
 .screen-nav-work[data-variant="capsule"] .screen-nav-work-word {
   min-width: 0;
 }
-/* 一覧は札の上へ開き、札の真ん中にそろえる（札はメインビューの下端に居るので、下へ開く余地が無い）。 */
+/* 一覧は札の上へ開き、札の真ん中にそろえる（札はメインビューの下端に居るので、下へ開く余地が無い）。
+   `--current-work-list-max-height` は `useCurrentWorkListMaxHeight` が枠の外寸で測って書くので、
+   `box-sizing: border-box` を外すと上端がメインビューの頭に食い込む。 */
 .screen-nav-work[data-variant="capsule"] .screen-nav-work-list {
   top: auto;
   bottom: calc(100% + 0.4rem);
   left: 50%;
-  max-height: 60dvh;
+  box-sizing: border-box;
+  max-height: var(--current-work-list-max-height, 60dvh);
   transform: translateX(-50%);
 }
 .screen-nav-work-spinner {
