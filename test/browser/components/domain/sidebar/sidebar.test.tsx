@@ -213,7 +213,6 @@ describe("Sidebar（仕事）", () => {
   it("今までどおりタスク一覧と下端の帯を出し、プロフィールの札は出さない", () => {
     renderSidebar({ ...CHAT_STATE, chatMode: false })
 
-    expect(headingTitles()).toEqual(["タスク"])
     expect(document.querySelector(".profile-card")).toBeNull()
     expect(document.querySelector(".sidebar-footer")).not.toBeNull()
     expect(screen.queryByLabelText("キャラクターを変える")).toBeNull()

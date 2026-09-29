@@ -1,9 +1,11 @@
-import { QueryClientProvider } from "@tanstack/react-query"
+import { type QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { cleanup, render, waitFor } from "@testing-library/react"
+import type { ReactElement } from "react"
 import { afterEach, describe, expect, it } from "vitest"
 
 import {
   Portrait,
+  type PortraitProps,
   usePortraitPreload,
 } from "../../../../src/browser/components/domain/portrait.tsx"
 import { typedElement } from "../../../typed-element.ts"
@@ -37,85 +39,56 @@ function stubFetch(body: string): void {
   globalThis.fetch = stub as unknown as typeof globalThis.fetch
 }
 
-// `<Portrait>` は `useQuery`（`usePortraitPreload`）を使うので `QueryClientProvider` が要る
-// （`test/browser/` の他の部品テストが Context の Provider で包むのと同じ形）。キャッシュはテストを
-// またがせないので、テストごとに新しい `QueryClient` を作る。
+const DEFAULT_PORTRAIT: PortraitProps = {
+  url: "/character/default.png",
+  accent: undefined,
+  altText: "架空の精霊（通常）",
+  expression: "default",
+  outfit: "default",
+  motion: "reading",
+  className: undefined,
+}
+
+// `<Portrait>` は `useQuery`（`usePortraitPreload`）を使うので `QueryClientProvider` が要る。
+// キャッシュはテストをまたがせないので、テストごとに新しい `QueryClient` を作る。
+function portraitTree(client: QueryClient, overrides: Partial<PortraitProps>): ReactElement {
+  return (
+    <QueryClientProvider client={client}>
+      <Portrait {...DEFAULT_PORTRAIT} {...overrides} />
+    </QueryClientProvider>
+  )
+}
+
+function renderPortrait(overrides: Partial<PortraitProps>): void {
+  render(portraitTree(createTestQueryClient(), overrides))
+}
+
+function portraitWrapper(): HTMLElement {
+  return typedElement(document.querySelector(".portrait"), HTMLElement, "立ち絵の枠")
+}
 
 describe("Portrait", () => {
-  it("SVG の URL は fetch して中身をそのままインラインにする", async () => {
+  it("SVG の URL は fetch して中身をインラインにし、同じ URL の立ち絵に戻っても fetch をやり直さない（表情の往復）", async () => {
     stubFetch(PLAUSIBLE_SVG)
     const client = createTestQueryClient()
+    const defaultSvg = { url: "/character/default.svg" }
+    const thinkingSvg = {
+      url: "/character/thinking.svg",
+      altText: "架空の精霊（作業中）",
+      expression: "thinking",
+    } as const
 
-    render(
-      <QueryClientProvider client={client}>
-        <Portrait
-          url="/character/default.svg"
-          accent={undefined}
-          altText="架空の精霊（通常）"
-          expression="default"
-          outfit="default"
-          motion="reading"
-          className={undefined}
-        />
-      </QueryClientProvider>,
-    )
-
-    await waitFor(() => {
-      expect(document.querySelector(".portrait svg")).not.toBeNull()
-    })
-  })
-
-  it("同じ URL の立ち絵に戻っても fetch をやり直さない（表情の往復）", async () => {
-    stubFetch(PLAUSIBLE_SVG)
-    const client = createTestQueryClient()
-
-    const { rerender } = render(
-      <QueryClientProvider client={client}>
-        <Portrait
-          url="/character/default.svg"
-          accent={undefined}
-          altText="架空の精霊（通常）"
-          expression="default"
-          outfit="default"
-          motion="reading"
-          className={undefined}
-        />
-      </QueryClientProvider>,
-    )
+    const { rerender } = render(portraitTree(client, defaultSvg))
     await waitFor(() => {
       expect(document.querySelector(".portrait svg")).not.toBeNull()
     })
 
-    rerender(
-      <QueryClientProvider client={client}>
-        <Portrait
-          url="/character/thinking.svg"
-          accent={undefined}
-          altText="架空の精霊（作業中）"
-          expression="thinking"
-          outfit="default"
-          motion="reading"
-          className={undefined}
-        />
-      </QueryClientProvider>,
-    )
+    rerender(portraitTree(client, thinkingSvg))
     await waitFor(() => {
       expect(fetchCalls).toContain("/character/thinking.svg")
     })
 
-    rerender(
-      <QueryClientProvider client={client}>
-        <Portrait
-          url="/character/default.svg"
-          accent={undefined}
-          altText="架空の精霊（通常）"
-          expression="default"
-          outfit="default"
-          motion="reading"
-          className={undefined}
-        />
-      </QueryClientProvider>,
-    )
+    rerender(portraitTree(client, defaultSvg))
     await waitFor(() => {
       expect(document.querySelector(".portrait svg")).not.toBeNull()
     })
@@ -125,20 +98,7 @@ describe("Portrait", () => {
   })
 
   it("ラスタ画像の URL は <img> で出す（fetch しない）", () => {
-    const client = createTestQueryClient()
-    render(
-      <QueryClientProvider client={client}>
-        <Portrait
-          url="/character/default.png"
-          accent={undefined}
-          altText="架空の精霊（通常）"
-          expression="default"
-          outfit="default"
-          motion="reading"
-          className={undefined}
-        />
-      </QueryClientProvider>,
-    )
+    renderPortrait({})
 
     // `.portrait` 自身も role="img" を持つので、内側の <img class="portrait-image"> を直接見る。
     const image = document.querySelector(".portrait-image")
@@ -148,64 +108,22 @@ describe("Portrait", () => {
     expect(fetchCalls).toEqual([])
   })
 
-  it("(5) 差し色を CSS 変数 --outfit-accent として当てる", () => {
-    const client = createTestQueryClient()
-    render(
-      <QueryClientProvider client={client}>
-        <Portrait
-          url="/character/default.png"
-          accent="#b8c7ff"
-          altText="架空の精霊（通常）"
-          expression="default"
-          outfit="normal"
-          motion="reading"
-          className={undefined}
-        />
-      </QueryClientProvider>,
-    )
+  it("差し色を CSS 変数 --outfit-accent として当てる", () => {
+    renderPortrait({ accent: "#b8c7ff", outfit: "normal" })
 
-    const wrapper = typedElement(document.querySelector(".portrait"), HTMLElement, "立ち絵の枠")
-    expect(wrapper.style.getPropertyValue("--outfit-accent")).toBe("#b8c7ff")
+    expect(portraitWrapper().style.getPropertyValue("--outfit-accent")).toBe("#b8c7ff")
   })
 
   it("差し色が無いときは style 属性ごと省略する", () => {
-    const client = createTestQueryClient()
-    render(
-      <QueryClientProvider client={client}>
-        <Portrait
-          url="/character/default.png"
-          accent={undefined}
-          altText="架空の精霊（通常）"
-          expression="default"
-          outfit="default"
-          motion="reading"
-          className={undefined}
-        />
-      </QueryClientProvider>,
-    )
+    renderPortrait({})
 
-    const wrapper = typedElement(document.querySelector(".portrait"), HTMLElement, "立ち絵の枠")
-    expect(wrapper.getAttribute("style")).toBeNull()
+    expect(portraitWrapper().getAttribute("style")).toBeNull()
   })
 
   it("motion をそのまま data-motion 属性へ渡す（CSS 側が動きを選ぶ手がかり）", () => {
-    const client = createTestQueryClient()
-    render(
-      <QueryClientProvider client={client}>
-        <Portrait
-          url="/character/default.png"
-          accent={undefined}
-          altText="架空の精霊（通常）"
-          expression="default"
-          outfit="default"
-          motion="waiting"
-          className={undefined}
-        />
-      </QueryClientProvider>,
-    )
+    renderPortrait({ motion: "waiting" })
 
-    const wrapper = typedElement(document.querySelector(".portrait"), HTMLElement, "立ち絵の枠")
-    expect(wrapper.getAttribute("data-motion")).toBe("waiting")
+    expect(portraitWrapper().getAttribute("data-motion")).toBe("waiting")
   })
 })
 
@@ -236,17 +154,11 @@ describe("usePortraitPreload", () => {
 
     // 仕事 / 雑談を切り替えたときの新しいマウント。最初の描画から絵がある（空かない）。
     render(
-      <QueryClientProvider client={client}>
-        <Portrait
-          url="/character/proud.svg"
-          accent={undefined}
-          altText="架空の精霊（得意げ）"
-          expression="proud"
-          outfit="default"
-          motion="reading"
-          className={undefined}
-        />
-      </QueryClientProvider>,
+      portraitTree(client, {
+        url: "/character/proud.svg",
+        altText: "架空の精霊（得意げ）",
+        expression: "proud",
+      }),
     )
     expect(document.querySelector(".portrait svg")).not.toBeNull()
     expect(fetchCalls.toSorted()).toEqual(["/character/default.svg", "/character/proud.svg"])

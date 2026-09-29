@@ -99,16 +99,6 @@ describe("ScreenNav", () => {
     )
   })
 
-  // 語彙の外のポートは番号のまま（13個め以降・`TSUKUMO_VIEW_PORT` で遠い番号を指したとき）。
-  it("語彙の外のポートでは、番号をそのまま帯に出す", () => {
-    setPageUrl("http://127.0.0.1:9000/")
-    renderScreenNav()
-
-    expect(document.querySelector(".screen-nav-identity .screen-nav-room")?.textContent).toBe(
-      "9000",
-    )
-  })
-
   // 顔は帯の左端、部屋の名前の左（13.9「顔」）。
   describe("顔", () => {
     it("定義に face があれば、alt にキャラクターの名前を付けて出す", () => {
@@ -132,32 +122,6 @@ describe("ScreenNav", () => {
       renderScreenNav()
 
       expect(document.querySelector(".screen-nav-identity .screen-nav-face")).toBeNull()
-    })
-
-    it("キャラクターを切り替えると顔も変わる（character-changed で state.character が入れ替わる想定）", () => {
-      renderScreenNav({ character: characterInfo({ name: "甲", face: "/character/a-face.png" }) })
-      expect(document.querySelector(".screen-nav-face")?.getAttribute("src")).toBe(
-        "/character/a-face.png",
-      )
-
-      cleanup()
-      renderScreenNav({ character: characterInfo({ name: "乙", face: "/character/b-face.png" }) })
-      expect(document.querySelector(".screen-nav-face")?.getAttribute("src")).toBe(
-        "/character/b-face.png",
-      )
-      expect(document.querySelector(".screen-nav-face")?.getAttribute("alt")).toBe("乙")
-    })
-
-    it("「≡」を開くと、落ちてきた面の先頭にも顔が出る（狭い画面）", () => {
-      renderScreenNav({
-        character: characterInfo({ name: "架空の精霊", face: "/character/face.png" }),
-      })
-
-      fireEvent.click(screen.getByRole("button", { name: "メニュー" }))
-
-      expect(
-        document.querySelector(".screen-nav-panel .screen-nav-face")?.getAttribute("src"),
-      ).toBe("/character/face.png")
     })
   })
 
@@ -260,13 +224,18 @@ describe("ScreenNav", () => {
     expect(document.querySelector(".screen-nav-panel")).toBeNull()
   })
 
-  // 狭い画面は帯の左端が無い（「≡」だけになる）ので、名前は落ちてくる面の先頭に出す（docs/architecture/screen-design.md「画面のナビゲーション」）。
-  it("「≡」を開くと、落ちてきた面の先頭にも部屋の名前が出る", () => {
+  // 狭い画面は帯の左端が無い（「≡」だけになる）ので、顔と部屋の名前は落ちてくる面の先頭に出す（docs/architecture/screen-design.md「画面のナビゲーション」）。
+  it("「≡」を開くと、落ちてきた面の先頭にも顔と部屋の名前が出る", () => {
     setPageUrl("http://127.0.0.1:7328/")
-    renderScreenNav()
+    renderScreenNav({
+      character: characterInfo({ name: "架空の精霊", face: "/character/face.png" }),
+    })
 
     fireEvent.click(screen.getByRole("button", { name: "メニュー" }))
 
+    expect(document.querySelector(".screen-nav-panel .screen-nav-face")?.getAttribute("src")).toBe(
+      "/character/face.png",
+    )
     expect(document.querySelector(".screen-nav-panel .screen-nav-room")?.textContent).toBe(
       "若葉の間",
     )

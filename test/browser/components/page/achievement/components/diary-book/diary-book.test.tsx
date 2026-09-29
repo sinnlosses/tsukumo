@@ -144,7 +144,7 @@ describe("DiaryBook", () => {
     expect(calls).toBe(1)
   })
 
-  it("書かれた日は段落を書いた順に並べ、2つ目以降だけ時刻が付く", () => {
+  it("書かれた日は段落の本文と、届いた時刻の札を出す", () => {
     renderBook(openModel())
     expect(screen.getByText("架空の日記の本文1。")).toBeDefined()
     expect(screen.getByText("架空の日記の本文2。")).toBeDefined()
@@ -177,14 +177,7 @@ describe("DiaryBook", () => {
     expect(screen.getByText("コミット目")).toBeDefined()
   })
 
-  it("白紙の日は「このページは、まだ白紙。」と「この日を振り返る」を出す", () => {
-    renderBook(openModel({ page: BLANK_PAGE }))
-    expect(screen.getByText("このページは、まだ白紙。")).toBeDefined()
-    const button = screen.getByRole("button", { name: "この日を振り返る" })
-    expect(button.getAttribute("aria-disabled")).toBe("false")
-  })
-
-  it("白紙の日の「この日を振り返る」を押すと onReview が呼ばれる", () => {
+  it("白紙の日は「このページは、まだ白紙。」と押せる「この日を振り返る」を出し、押すと onReview が呼ばれる", () => {
     let calls = 0
     const pressable: DiaryBookPage = {
       ...BLANK_PAGE,
@@ -198,7 +191,10 @@ describe("DiaryBook", () => {
       },
     }
     renderBook(openModel({ page: pressable }))
-    fireEvent.click(screen.getByRole("button", { name: "この日を振り返る" }))
+    expect(screen.getByText("このページは、まだ白紙。")).toBeDefined()
+    const button = screen.getByRole("button", { name: "この日を振り返る" })
+    expect(button.getAttribute("aria-disabled")).toBe("false")
+    fireEvent.click(button)
     expect(calls).toBe(1)
   })
 

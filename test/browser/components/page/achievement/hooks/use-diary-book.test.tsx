@@ -174,7 +174,7 @@ describe("useDiaryBook（開閉）", () => {
     expect(result.current.open).toBe(false)
   })
 
-  it("閉じると取得も止まり、次に開くと取り直す", async () => {
+  it("開いたあとに閉じると open が false に戻る", async () => {
     stubFetch(() => rpcOutput(WRITTEN_DAY))
     const { result } = renderHook(
       () => useDiaryBook({ calendar: CALENDAR, daySwitch: KNOWN_TODAY, onDateSelected: () => {} }),
@@ -454,8 +454,8 @@ describe("useDiaryBook（前後の送りと目次）", () => {
 
 describe("useDiaryBook（書き終わりの知らせから開く）", () => {
   // `useDiaryBookOpenRequest` はこの起動のあいだ持ち続けるモジュールの外の store なので、
-  // このテストはファイルの最後に置き、「マウント時に既に無い」ことを見るテストを先に置く
-  // （`requestDiaryBookOpen` を呼ぶのはこの2件だけ。呼んだ後の状態が他のテストの初回描画に
+  // 以下の3件はファイルの最後に置き、「マウント時に既に無い」ことを見るテストを先に置く
+  // （`requestDiaryBookOpen` を呼ぶのはこの3件だけ。呼んだ後の状態が他のテストの初回描画に
   // 混ざらないようにする）。
   it("マウント中に来た新しい合図も拾って開き直す", async () => {
     stubFetch(() => rpcOutput(WRITTEN_DAY))

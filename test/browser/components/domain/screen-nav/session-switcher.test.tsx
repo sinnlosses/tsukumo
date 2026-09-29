@@ -141,46 +141,30 @@ describe("セッションの札と切り替え画面", () => {
     expect(screen.getByText(/依頼 4/u)).toBeDefined()
   })
 
-  it("↓ で選び Enter で switchSession を送り、閉じる", () => {
+  it.each([
+    ["↓", { key: "ArrowDown" }],
+    ["Ctrl+N", { key: "n", ctrlKey: true }],
+  ])("%s で下の行を選び Enter で switchSession を送り、閉じる", (_name, key) => {
     const sent: SentCommand[] = []
     renderNav({}, (command) => sent.push(command))
     openByTag()
 
-    fireEvent.keyDown(searchBox(), { key: "ArrowDown" })
+    fireEvent.keyDown(searchBox(), key)
     fireEvent.keyDown(searchBox(), { key: "Enter" })
 
     expect(sent).toEqual([{ procedure: "session.switchSession", sessionId: "c3000000-0000" }])
     expect(switcherOpen()).toBe(false)
   })
 
-  it("Ctrl+N でも ↓ と同じに下の行を選ぶ", () => {
+  it.each([
+    ["↑", { key: "ArrowUp" }],
+    ["Ctrl+P", { key: "p", ctrlKey: true }],
+  ])("%s でいま出しているセッションを選んで Enter しても送らない", (_name, key) => {
     const sent: SentCommand[] = []
     renderNav({}, (command) => sent.push(command))
     openByTag()
 
-    fireEvent.keyDown(searchBox(), { key: "n", ctrlKey: true })
-    fireEvent.keyDown(searchBox(), { key: "Enter" })
-
-    expect(sent).toEqual([{ procedure: "session.switchSession", sessionId: "c3000000-0000" }])
-  })
-
-  it("Ctrl+P でも ↑ と同じに上の行（いま出しているセッション）を選ぶ", () => {
-    const sent: SentCommand[] = []
-    renderNav({}, (command) => sent.push(command))
-    openByTag()
-
-    fireEvent.keyDown(searchBox(), { key: "p", ctrlKey: true })
-    fireEvent.keyDown(searchBox(), { key: "Enter" })
-
-    expect(sent).toEqual([])
-  })
-
-  it("いま出しているセッションを選んで Enter しても送らない", () => {
-    const sent: SentCommand[] = []
-    renderNav({}, (command) => sent.push(command))
-    openByTag()
-
-    fireEvent.keyDown(searchBox(), { key: "ArrowUp" })
+    fireEvent.keyDown(searchBox(), key)
     fireEvent.keyDown(searchBox(), { key: "Enter" })
 
     expect(sent).toEqual([])
