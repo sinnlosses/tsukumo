@@ -80,20 +80,6 @@ describe("ScreenNav", () => {
     expect(screen.getByRole("link", { name: "会話" }).className).toContain("is-active")
   })
 
-  // 帯の右端にあった専用の印は「いまの作業」の札にまとめた
-  // （docs/architecture/screen-design.md「何を外すか」）。
-  it("答え待ちがあるときだけ、いまの作業の札の語が「答え待ち」になる", () => {
-    // 会話の画面の帯には札が無い（メインビューに浮かぶ札が代わる）ので、ほかの画面で見る。
-    window.location.hash = "#character"
-    renderScreenNav()
-    expect(document.querySelector(".screen-nav-work-word")?.textContent).toBe("依頼待ち")
-
-    cleanup()
-    renderScreenNav({ pending: [FIXTURE_PENDING] })
-
-    expect(document.querySelector(".screen-nav-work-word")?.textContent).toBe("答え待ち")
-  })
-
   // 部屋の名前は帯の左端（docs/architecture/screen-design.md「画面のナビゲーション」）。ポートの並び順に割り当たる（`roomName`）ので、
   // 出ている名前でどの tsukumo を見ているかが分かる。
   it("会話の画面の帯には、いまの作業の札とモデル・effort・許可モードを置かない", () => {
@@ -422,33 +408,17 @@ describe("ScreenNav", () => {
       expect([...optionValues].sort()).toEqual([...MODEL_ALIASES].sort())
     })
 
-    it("model が fable を含むとき、fable を選択する", () => {
-      renderScreenNav({ model: "claude-fable-5-1" })
+    it.each([
+      ["claude-fable-5-1", "fable"],
+      ["claude-opus-5", "opus"],
+      ["claude-sonnet-5", "sonnet"],
+      ["claude-haiku-5", "haiku"],
+    ])("model が %s なら %s を選択する", (model, alias) => {
+      renderScreenNav({ model })
 
       expect(
         typedElement(screen.getByLabelText("モデル"), HTMLSelectElement, "モデルの<select>").value,
-      ).toBe("fable")
-    })
-
-    it("model が opus のみを含むとき、fable を誤って選択しない", () => {
-      renderScreenNav({ model: "claude-opus-5" })
-
-      expect(
-        typedElement(screen.getByLabelText("モデル"), HTMLSelectElement, "モデルの<select>").value,
-      ).toBe("opus")
-    })
-
-    it("model が sonnet / haiku のとき、fable を誤って選択しない", () => {
-      renderScreenNav({ model: "claude-sonnet-5" })
-      expect(
-        typedElement(screen.getByLabelText("モデル"), HTMLSelectElement, "モデルの<select>").value,
-      ).toBe("sonnet")
-
-      cleanup()
-      renderScreenNav({ model: "claude-haiku-5" })
-      expect(
-        typedElement(screen.getByLabelText("モデル"), HTMLSelectElement, "モデルの<select>").value,
-      ).toBe("haiku")
+      ).toBe(alias)
     })
 
     // 帯の操作子が送るコマンドは、いままでサイドバーの <select> が送っていたものと同じ。

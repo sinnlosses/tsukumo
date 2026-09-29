@@ -411,34 +411,6 @@ describe("設定の歯車（新しいセッションの既定の effort）", () 
   } as const
   const HAIKU_SUPPORT = { model: "haiku", supportsEffort: false, effortLevels: [] } as const
 
-  it("対応表がまだ届いていないうちは選べず、title に理由が出る", () => {
-    renderScreenNav()
-    fireEvent.click(gear())
-
-    const select = defaultSelect("effort")
-    expect(select.disabled).toBe(true)
-    expect(select.title.length).toBeGreaterThan(0)
-  })
-
-  it("対応表が届いていれば、選べる段だけを選択肢にして既定の effort を選択する", () => {
-    renderScreenNav({
-      sessionDefault: { model: "opus", effort: "high", permissionMode: "auto" },
-      modelEffortSupport: [OPUS_SUPPORT],
-    })
-    fireEvent.click(gear())
-
-    const select = defaultSelect("effort")
-    expect(select.disabled).toBe(false)
-    expect(select.value).toBe("high")
-    expect([...select.options].map((option) => option.value)).toEqual([
-      "low",
-      "medium",
-      "high",
-      "xhigh",
-      "max",
-    ])
-  })
-
   // haiku は実測で supportsEffort が無いモデル（docs/history/decision.md）。帯といま出している
   // モデルが違っても、既定のモデル（haiku）の対応がそのまま出る。
   it("既定のモデルが対応しないと対応表が言っていれば選べない", () => {

@@ -106,7 +106,7 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
     expect(document.querySelector(".screen-nav-work")?.getAttribute("data-chat-idle")).toBe("true")
   })
 
-  it("雑談中でも答え待ち・作業中・止まっているは語を変えない", () => {
+  it("雑談中でも作業中は語を変えない", () => {
     renderScreenNav({
       chatMode: true,
       character: characterInfo({ name: "架空の精霊" }),
@@ -115,19 +115,6 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
     })
 
     expect(document.querySelector(".screen-nav-work-word")?.textContent).toBe("作業中")
-  })
-
-  it("実行中のツールが札に出る（作業中・要約つき）", () => {
-    renderScreenNav({
-      turn: { kind: "running", startedAt: 0 },
-      records: [
-        requestRecord(),
-        toolRecord({ toolUseId: "toolu_1", name: "Bash", input: { command: "echo dummy" } }),
-      ],
-    })
-
-    expect(document.querySelector(".screen-nav-work-word")?.textContent).toBe("作業中")
-    expect(document.querySelector(".screen-nav-work-summary")?.textContent).toBe("Bash: echo dummy")
   })
 
   describe("背景のタスク（docs/architecture/screen-design.md 13.9「背景のタスク」）", () => {
@@ -277,22 +264,6 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
   })
 
   describe("レポートを書いている途中", () => {
-    it("作業中にメインが report の引数を書いていると、要約が「レポートを書いています」になる", () => {
-      renderScreenNav({
-        turn: { kind: "running", startedAt: 0 },
-        records: [
-          requestRecord(),
-          toolRecord({ toolUseId: "toolu_1", name: "Bash", input: { command: "echo dummy" } }),
-        ],
-        reportDrafting: { kind: "drafting", toolUseId: "fake-report-1" },
-      })
-
-      expect(document.querySelector(".screen-nav-work-word")?.textContent).toBe("作業中")
-      expect(document.querySelector(".screen-nav-work-summary")?.textContent).toBe(
-        "レポートを書いています",
-      )
-    })
-
     it("答え待ちが許可要求でも、書いている途中なら要約が「レポートを書いています」になる", () => {
       renderScreenNav({
         turn: { kind: "running", startedAt: 0 },

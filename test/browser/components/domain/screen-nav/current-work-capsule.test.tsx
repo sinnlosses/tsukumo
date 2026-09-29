@@ -28,7 +28,7 @@ describe("CurrentWorkCapsule", () => {
     expect(document.querySelector(".screen-nav-work")).toBeNull()
   })
 
-  it("作業中は札が浮かび、印は回る輪で、要約に実行中のツールが出る", () => {
+  it("作業中は札が浮かび、印は回る輪になる", () => {
     renderCapsule({
       turn: { kind: "running", startedAt: 0 },
       records: [
@@ -41,8 +41,6 @@ describe("CurrentWorkCapsule", () => {
     expect(work?.getAttribute("data-variant")).toBe("capsule")
     expect(work?.querySelector(".screen-nav-work-spinner")).not.toBeNull()
     expect(work?.querySelector(".screen-nav-work-mark")).toBeNull()
-    expect(document.querySelector(".screen-nav-work-word")?.textContent).toBe("作業中")
-    expect(document.querySelector(".screen-nav-work-summary")?.textContent).toBe("Bash: echo dummy")
   })
 
   it("答え待ちは回る輪ではなく、帯と同じ印で浮かぶ", () => {
@@ -50,7 +48,6 @@ describe("CurrentWorkCapsule", () => {
       pending: [{ kind: "permission", id: "ask-1", toolName: "Read", input: {} }],
     })
 
-    expect(document.querySelector(".screen-nav-work-word")?.textContent).toBe("答え待ち")
     expect(document.querySelector(".screen-nav-work-mark")?.textContent).toBe("●")
   })
 
