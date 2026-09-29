@@ -1,5 +1,5 @@
 // `<TaskBoard>`（タスクのモーダル）のロジック。
-// 開いているかは呼び出し側の state で、ここはそれを `<Dialog open={...}>` へ渡す形にするのと、次の2つを持つ。
+// 開いているか（と、開いたときに選ぶ行）は呼び出し側の `TaskBoardRequest` で、ここはそれを `<Dialog open={...}>` へ渡す形にするのと、次の2つを持つ。
 // - 表示上の状態（検索の文字・絞り込みの札・選んでいる ID・パンくず・開いている確認）。閉じると初めに戻す
 // - 一覧を、行・絞り込みの札・選んだタスクの詳細・操作の帯へ畳む
 // CSS の class 名はここでは決めない。
@@ -14,7 +14,9 @@ import {
   type TaskSummaryItem,
   type TaskSummaryResult,
 } from "../../../../shared/repository/task-summary.ts"
+import { type CodeSpanPart, codeSpanParts } from "../../../domain/code-span.ts"
 import { useSession } from "../../../stores/session.ts"
+import type { TaskBoardRequest } from "../../../stores/task-board-request.ts"
 import type { TaskRunConfirmOutcome } from "../components/task-run-confirm.tsx"
 import { taskListCounts, type TaskListCountItem } from "../domain/task-list-count.ts"
 import { useTrackedFileList, type TrackedFileList } from "./use-tracked-file-list.ts"
@@ -33,17 +35,11 @@ export type TaskDifficultyView = {
   readonly text: string
 }
 
-/** 要約の1片。`code` はバッククォートで囲まれていた部分（囲みの記号は含まない）。 */
-export type SummaryPart = {
-  readonly kind: "text" | "code"
-  readonly text: string
-}
-
 export type TaskBoardRow = {
   readonly id: string
   /** 一覧の行の DOM の id（検索欄の `aria-activedescendant` が指す）。 */
   readonly optionId: string
-  readonly summary: readonly SummaryPart[]
+  readonly summary: readonly CodeSpanPart[]
   readonly state: TaskStateView
   /** `loopable` が `Y` のときだけ真（印を出す）。 */
   readonly loopable: boolean
@@ -68,7 +64,7 @@ export type TaskDependencyCard =
       readonly kind: "listed"
       readonly id: string
       readonly state: TaskStateView
-      readonly summary: readonly SummaryPart[]
+      readonly summary: readonly CodeSpanPart[]
     }
   | { readonly kind: "unlisted"; readonly id: string }
 
@@ -81,7 +77,7 @@ export type TaskBoardDetail = {
   readonly id: string
   /** status の生の値。無ければ「—」。 */
   readonly status: string
-  readonly title: readonly SummaryPart[]
+  readonly title: readonly CodeSpanPart[]
   readonly state: TaskStateView
   readonly difficulty: TaskDifficultyView
   /** `on` は `loopable` が `Y` のとき（印を添える）。 */
@@ -182,14 +178,27 @@ const INITIAL_NAVIGATION: Navigation = {
   pinnedId: undefined,
 }
 
+/** 開くよう頼まれたときの選択。タスクを選んで開くなら、絞り込み・検索の外でも一覧にその行を出す。 */
+function navigationOf(request: TaskBoardRequest): Navigation {
+  return request.kind === "open" && request.focus.kind === "task"
+    ? { selectedId: request.focus.id, previousId: undefined, pinnedId: request.focus.id }
+    : INITIAL_NAVIGATION
+}
+
 export function useTaskBoard(
   tasks: TaskSummaryResult,
-  open: boolean,
+  request: TaskBoardRequest,
   onClose: () => void,
 ): TaskBoardView {
+  const open = request.kind === "open"
   const [query, setQuery] = useState("")
   const [filter, setFilter] = useState<TaskBoardFilter>("all")
-  const [navigation, setNavigation] = useState<Navigation>(INITIAL_NAVIGATION)
+  const [navigation, setNavigation] = useState<Navigation>(() => navigationOf(request))
+  const [requestShown, setRequestShown] = useState(request)
+  if (request !== requestShown) {
+    setRequestShown(request)
+    setNavigation(navigationOf(request))
+  }
   const [confirmingId, setConfirmingId] = useState<string | undefined>(undefined)
   // つながりの札・本文中の ID・パンくずの「戻る」はリンクやボタンを押して切り替わるので、
   // 選んだタスクの詳細が丸ごと作り直る（`key={detail.id}`）ときに押した要素ごと消え、
@@ -395,7 +404,7 @@ function boardContent(
     rows: rows.map((entry) => ({
       id: entry.task.id,
       optionId: optionIdOf(entry.task.id),
-      summary: summaryParts(entry.task.summary),
+      summary: codeSpanParts(entry.task.summary),
       state: entry.state,
       loopable: entry.task.loopable === "Y",
       difficulty: difficultyOf(entry.task.difficulty),
@@ -421,7 +430,7 @@ function selectionOf(
     detail: {
       id: task.id,
       status: task.status ?? MISSING,
-      title: summaryParts(task.summary),
+      title: codeSpanParts(task.summary),
       state: entry.state,
       difficulty: difficultyOf(task.difficulty),
       loop: loopOf(task.loopable),
@@ -470,7 +479,7 @@ function dependencyCardOf(id: string, byId: ReadonlyMap<string, BoardEntry>): Ta
     kind: "listed",
     id,
     state: dependency.state,
-    summary: summaryParts(dependency.task.summary),
+    summary: codeSpanParts(dependency.task.summary),
   }
 }
 
@@ -485,7 +494,7 @@ function dependentsOf(
       kind: "listed" as const,
       id: entry.task.id,
       state: entry.state,
-      summary: summaryParts(entry.task.summary),
+      summary: codeSpanParts(entry.task.summary),
     }))
 }
 
@@ -554,20 +563,6 @@ function loopOf(loopable: string | undefined): TaskBoardDetail["loop"] {
     return { on: false, text: "回さない" }
   }
   return { on: false, text: loopable ?? MISSING }
-}
-
-/**
- * 要約をバッククォートの囲みで割る（`code` を等幅で出すため）。
- * 囲みが閉じていない（バッククォートが奇数個）ときは割らずに字のまま出す。
- */
-function summaryParts(summary: string): readonly SummaryPart[] {
-  const pieces = summary.split("`")
-  if (pieces.length % 2 === 0) {
-    return [{ kind: "text", text: summary }]
-  }
-  return pieces
-    .map((text, index): SummaryPart => ({ kind: index % 2 === 1 ? "code" : "text", text }))
-    .filter((part) => part.text !== "")
 }
 
 function countsTextOf(counts: readonly TaskListCountItem[]): string {

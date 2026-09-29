@@ -392,6 +392,22 @@
 .detail-block .report-check-unverified .report-check-body {
   color: var(--state-warn);
 }
+/* `task` のあるレポートの結論の一文。見出し（`report-head.module.css`）のすぐ下に描く。 */
+.detail-block .report-conclusion {
+  font-size: var(--font-subheading);
+  line-height: 1.85;
+  color: var(--report-conclusion-ink);
+}
+.detail-block .report-conclusion p {
+  margin: 0;
+}
+.detail-block .report-conclusion :not(pre) > code {
+  font-size: 0.86em;
+  color: var(--report-conclusion-ink);
+  background: var(--report-code-surface);
+  padding: 1px 5px;
+  border-radius: 4px;
+}
 /* 情報の塊（素の `note`。結論を言う役）。
    いちばん読ませたい印なので、縦罫を ink まで上げ、地を「浮く」段にする（引用と同じ灰色の3px の縦罫で地の差も無いと、いちばん弱く見える）。
    6種（情報・注意・異常・疑問・メモ・お願い）に共通の余白と縦罫もここが持つ。

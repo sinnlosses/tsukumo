@@ -15,6 +15,7 @@ import {
 import type { Expression } from "../../../shared/character-pack/expression.ts"
 import { reportSectionSchema } from "../../../shared/report/report-block.ts"
 import { reportCheckSchema } from "../../../shared/report/report-check.ts"
+import { reportTaskSchema } from "../../../shared/report/report-task.ts"
 import { MIN_WORK_PLAN_PHASES, parseWorkPlan } from "../../../shared/session/work-plan.ts"
 import {
   USAGE_PROPOSAL_FOLLOW_UPS,
@@ -29,6 +30,7 @@ import {
   REPORT_CLOSING_DESCRIPTION,
   REPORT_SECTIONS_DESCRIPTION,
   REPORT_SESSION_SUMMARY_DESCRIPTION,
+  REPORT_TASK_DESCRIPTION,
   REPORT_TITLE_DESCRIPTION,
   REPORT_TOOL_DESCRIPTION,
 } from "../../report/core/report-tool.ts"
@@ -174,6 +176,7 @@ function reportTool(
     REPORT_TOOL_NAME,
     REPORT_TOOL_DESCRIPTION,
     {
+      task: reportTaskSchema.optional().describe(REPORT_TASK_DESCRIPTION),
       conclusion: z.string().describe("結論。レポートの冒頭の1〜2文"),
       sections: z
         .array(reportSectionSchema)

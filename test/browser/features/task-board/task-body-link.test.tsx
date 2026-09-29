@@ -58,7 +58,7 @@ function renderBoard(): void {
           kind: "known",
           items: [task("X-201", BODY), task("X-202", "## 目的\n\n架空。\n")],
         }}
-        open={true}
+        request={{ kind: "open", focus: { kind: "first" } }}
         onClose={() => {}}
       />
     </QueryClientProvider>,

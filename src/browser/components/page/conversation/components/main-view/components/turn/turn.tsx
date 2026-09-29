@@ -5,6 +5,7 @@
 import clsx from "clsx"
 import { Fragment, useState, type ReactElement } from "react"
 
+import type { ReportTask } from "../../../../../../../../shared/report/report-task.ts"
 import type { TurnFailure } from "../../../../../../../../shared/session-driver/turn-failure.ts"
 import type {
   MainViewAction,
@@ -20,6 +21,7 @@ import { PromptImageThumbnails } from "../../../prompt-image/prompt-image.tsx"
 import { requestLinesAfterTitle, truncateRequestText } from "../../domain/turn-title.ts"
 import styles from "../../main-view.module.css"
 import { QuestionRecord } from "../question-record/question-record.tsx"
+import { ReportHead, type ReportLabel } from "../report-head/report-head.tsx"
 import { Report } from "../report/report.tsx"
 
 export type TurnProps = {
@@ -69,7 +71,7 @@ export function Turn(props: TurnProps): ReactElement {
               step={step}
               turnId={turn.id}
               reveal={step.id === revealStepId}
-              finalLabel={step.final && turn.hasInterimReport}
+              hasInterimReport={turn.hasInterimReport}
               key={step.id}
             />
           ))}
@@ -115,10 +117,10 @@ function TurnFailureNotice(props: { readonly failure: TurnFailure }): ReactEleme
  * ツールの実行（`action.kind === "tool"`）は描かない。
  * `actions` にはツールの記録も残っているが、メインビューに出すのは質問の記録だけ。
  *
- * 中間レポート（`step.interim`）は話が途中の本文なので、小さなラベルを載せて地と枠を変える（`.main-step.is-interim`）。
+ * 中間レポート（`step.interim`）は話が途中の本文なので、目録の1行にラベルを載せて地と枠を変える（`.main-step.is-interim`）。
  *
- * 最終レポート（`step.final`）は地を中間レポートと同じ ground にし（`.main-step.is-final`）、ラベルを載せる。
- * ラベルを出すのは `finalLabel` が立っているとき（中間レポートのあるやり取りだけ。本文が1つしか無いやり取りでは「最終」が何も区別しない）。
+ * 最終レポート（`step.final`）は地を中間レポートと同じ ground にし（`.main-step.is-final`）、目録の1行にラベルを載せる。
+ * ラベルを出すのは `finalLabel` が立っているとき（中間レポートのあるやり取りか、本文に `task` があるときだけ。どちらも無ければ「最終」が何も区別しない）。
  *
  * 後ろに別のレポートが現れた中間レポート（`step.superseded`）は、何件も開いたまま積まれると見通しが悪いので畳む。
  * 畳んだ分は `<details>` にするだけで中身は DOM に残す。まだ追い越されていない最後の中間レポートは開いた `<section>` のまま。
@@ -128,8 +130,8 @@ function Step(props: {
   /** このステップが載っているやり取り（`<Report>` から筆先へ渡る）。 */
   readonly turnId: number
   readonly reveal: boolean
-  /** 「最終レポート」のラベルを載せるか（`MainViewTurn.hasInterimReport` と `step.final` の組）。 */
-  readonly finalLabel: boolean
+  /** このステップが載っているやり取りに中間レポートがあるか（`MainViewTurn.hasInterimReport`）。 */
+  readonly hasInterimReport: boolean
 }): ReactElement | null {
   const { step } = props
   const questions = props.step.actions.filter(isQuestion)
@@ -138,10 +140,17 @@ function Step(props: {
     return null
   }
 
+  const folded = step.interim && step.superseded
   const content = (
     <>
       {step.body.kind === "text" && (
-        <Report markdown={step.body.report} reveal={props.reveal} turnId={props.turnId} />
+        <>
+          <ReportHead
+            label={reportLabel(step, step.body.task, props.hasInterimReport, folded)}
+            task={step.body.task}
+          />
+          <Report markdown={step.body.report} reveal={props.reveal} turnId={props.turnId} />
+        </>
       )}
       {questions.map((question, index) => (
         <QuestionRecord entry={question} key={index} />
@@ -149,7 +158,7 @@ function Step(props: {
     </>
   )
 
-  if (step.interim && step.superseded) {
+  if (folded) {
     return (
       <details className={clsx(styles["main-step"], styles["is-interim"])}>
         <Text
@@ -166,33 +175,24 @@ function Step(props: {
     )
   }
 
-  return (
-    <section className={stepClassName(step)}>
-      {step.interim && (
-        <Text
-          element="p"
-          size="label"
-          tone="ink-quiet"
-          weight="inherit"
-          className={styles["step-heading"]}
-        >
-          中間レポート
-        </Text>
-      )}
-      {props.finalLabel && (
-        <Text
-          element="p"
-          size="label"
-          tone="ink-quiet"
-          weight="inherit"
-          className={styles["step-heading"]}
-        >
-          最終レポート
-        </Text>
-      )}
-      {content}
-    </section>
-  )
+  return <section className={stepClassName(step)}>{content}</section>
+}
+
+/**
+ * 目録の1行の頭に置くラベル。
+ * 畳んだ中間レポートは `<summary>` がラベルを持つので置かない。
+ * 最終レポートのラベルは、中間レポートのあるやり取りか、`task` があるときだけ。
+ */
+function reportLabel(
+  step: MainViewStep,
+  task: ReportTask,
+  hasInterimReport: boolean,
+  folded: boolean,
+): ReportLabel {
+  if (step.interim) {
+    return folded ? "none" : "interim"
+  }
+  return step.final && (hasInterimReport || task.kind === "task") ? "final" : "none"
 }
 
 /** ステップの器に付ける class。地の段（`is-interim` / `is-final`）は互いに立たない。 */

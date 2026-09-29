@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 
 import { reportSectionsOfBody } from "../../../src/shared/report/report-block.ts"
 import type { ReportCheck } from "../../../src/shared/report/report-check.ts"
+import type { ReportTask } from "../../../src/shared/report/report-task.ts"
 import {
   MAX_MAIN_VIEW_TURNS,
   type MainViewEntry,
@@ -45,7 +46,11 @@ const edit = (path: string): MainViewEntry => ({
   },
 })
 /** `report` ツールで受け取ったレポート（引数を組んだあとの形）。中間レポートはここからしか生まれない。 */
-const toolReport = (markdown: string): MainViewEntry => ({ kind: "report", markdown })
+const toolReport = (markdown: string): MainViewEntry => ({
+  kind: "report",
+  markdown,
+  task: { kind: "none" },
+})
 /** 見出しと箇条書きを持つ本文。資料らしい形でも `report` の外なら出ないことを確かめるのに使う。 */
 const materialReport = (label: string): string => `## ${label}\n\n- 1つ目の発見\n- 2つ目の発見`
 
@@ -530,6 +535,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     body = "",
     favor = "",
     checks: readonly ReportCheck[] = [],
+    task: ReportTask = { kind: "none" },
   ): SessionEvent => ({
     kind: "report",
     toolUseId: "toolu_r1",
@@ -540,6 +546,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     closing: { kind: "none" },
     unknownBlockCount: 0,
     sessionSummary: undefined,
+    task,
   })
   const toolRun = (id: string): readonly SessionEvent[] => [
     {
@@ -704,6 +711,22 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     ])
   })
 
+  it("task のあるレポートは、結論を一文の印で包み、task を本文に組まずに運ぶ（畳んだときの先頭行は作業の名前）", () => {
+    const task = { kind: "task", id: "X-7", name: "架空の作業", outcome: "stopped" } as const
+    const turn = turnOf(
+      [ask, report("架空の結論。", "架空の根拠。", "", [], task), finished],
+      SETTLED,
+      true,
+    )
+
+    expect(turn?.steps.find((step) => step.final)?.body).toEqual({
+      kind: "text",
+      report: '<div class="conclusion">\n\n架空の結論。\n\n</div>\n\n架空の根拠。',
+      firstLine: "架空の作業",
+      task,
+    })
+  })
+
   it("段が1つの段取りでも図が崩れず、済んだ段1つだけで組む", () => {
     const plan: SessionEvent = { kind: "work-plan", phases: ["架空の段A"], current: 1 }
     const turn = turnOf(
@@ -750,6 +773,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
       kind: "text",
       report: "架空の結論。",
       firstLine: "架空の結論。",
+      task: { kind: "none" },
     })
   })
 
@@ -778,6 +802,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
       kind: "text",
       report: "唯一の結論。",
       firstLine: "唯一の結論。",
+      task: { kind: "none" },
     })
   })
 

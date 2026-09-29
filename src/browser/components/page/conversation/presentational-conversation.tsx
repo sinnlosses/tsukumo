@@ -12,6 +12,7 @@ import { ChatView } from "./components/chat-view/chat-view.tsx"
 import { ConversationLayout } from "./components/conversation-layout/conversation-layout.tsx"
 import { Dispatch } from "./components/dispatch/dispatch.tsx"
 import { MainView } from "./components/main-view/main-view.tsx"
+import { RequestedTaskBoard } from "./components/requested-task-board/requested-task-board.tsx"
 
 export type PresentationalConversationProps = {
   readonly chatMode: boolean
@@ -19,13 +20,16 @@ export type PresentationalConversationProps = {
 
 export function PresentationalConversation(props: PresentationalConversationProps): ReactElement {
   return (
-    <ConversationLayout
-      main={props.chatMode ? <ChatView /> : <MainView />}
-      sidebar={<Sidebar />}
-      character={<CharacterView />}
-      dispatch={<Dispatch />}
-      collapseCharacter={props.chatMode}
-      mainAsGround={props.chatMode}
-    />
+    <>
+      <ConversationLayout
+        main={props.chatMode ? <ChatView /> : <MainView />}
+        sidebar={<Sidebar />}
+        character={<CharacterView />}
+        dispatch={<Dispatch />}
+        collapseCharacter={props.chatMode}
+        mainAsGround={props.chatMode}
+      />
+      {!props.chatMode && <RequestedTaskBoard />}
+    </>
   )
 }

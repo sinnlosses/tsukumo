@@ -102,9 +102,14 @@
                       "tag": "section",
                       "children": [
                         {
-                          "tag": "p",
+                          "tag": "header",
                           "children": [
-                            "最終レポート"
+                            {
+                              "tag": "p",
+                              "children": [
+                                "最終レポート"
+                              ]
+                            }
                           ]
                         },
                         {

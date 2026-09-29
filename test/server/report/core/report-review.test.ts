@@ -48,6 +48,7 @@ const reportEvent = (
   closing,
   unknownBlockCount: 0,
   sessionSummary: undefined,
+  task: { kind: "none" },
 })
 const report = (
   toolUseId: string,

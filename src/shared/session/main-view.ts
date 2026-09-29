@@ -5,6 +5,7 @@ import { sum } from "remeda"
 
 import { reportSectionsMarkdown } from "../report/report-block.ts"
 import { reportChecksMarkdown } from "../report/report-check.ts"
+import { NO_REPORT_TASK, type ReportTask } from "../report/report-task.ts"
 import { tidyReportSections } from "../report/report-tidy.ts"
 import type { RecordedPromptImage } from "../session-driver/prompt-image.ts"
 import type { Question, QuestionAnswer } from "../session-driver/question.ts"
@@ -67,8 +68,9 @@ export type MainViewEntry =
   /**
    * `report` ツールで受け取ったレポート。引数はここで1つの本文に組んである（{@link reportMarkdown}）。
    * `detail` と分けてあるのは、このレポートがあるやり取りでは本文（`detail`）を出さないため（{@link selectToolReports}）。
+   * `task` は本文に組まず、描く側が目録の1行と見出しに出す。
    */
-  | { readonly kind: "report"; readonly markdown: string }
+  | { readonly kind: "report"; readonly markdown: string; readonly task: ReportTask }
   /**
    * 失敗で終わったターンの理由（`SessionRecord` の `turn-failure` をそのまま通す）。
    * ステップには入れない（やり取りの末尾に1つだけ出す印なので、{@link groupIntoTurns} がステップから外して `MainViewTurn.failure` に移す）。
@@ -101,7 +103,7 @@ export type MainViewTurnFailure =
  *
  * `final` は、その本文が最終レポート（そのやり取りで最後の、中間でない本文）かどうか（{@link markFinalReport}）。
  * ラベルを載せる印（`.main-step.is-final`）で、書き上げる演出を掛ける相手を選ぶのにも使う。
- * ラベルを出すかどうかはこれだけでは決まらない（`MainViewTurn.hasInterimReport` と組み合わせる）。
+ * ラベルを出すかどうかはこれだけでは決まらない（`MainViewTurn.hasInterimReport` と本文の `task` と組み合わせる）。
  * いちばん新しいやり取りでは、やり取りが閉じているときだけ立つ（{@link mainViewTurns} の `closed` 引数）。
  *
  * `id` は、そのやり取りの中で作られた順に先頭から数えた通し番号。
@@ -120,11 +122,17 @@ export type MainViewStep = {
 
 /**
  * ステップの本文。本文が無い（レポートより前に起きたことをまとめたステップか、出さないと決めた本文）なら `none`。
- * `firstLine` は `report` の先頭行で、畳んだときの `<summary>` に出す（{@link extractFirstLine}）。
+ * `firstLine` は畳んだときの `<summary>` に出す1行で、`task` があれば作業の名前、無ければ `report` の先頭行（{@link extractFirstLine}）。
+ * `task` は目録の1行と見出しに出すタスクで、`report` ツールの外の本文では常に `none`。
  */
 export type MainViewStepBody =
   | { readonly kind: "none" }
-  | { readonly kind: "text"; readonly report: string; readonly firstLine: string }
+  | {
+      readonly kind: "text"
+      readonly report: string
+      readonly firstLine: string
+      readonly task: ReportTask
+    }
 
 const NO_BODY = { kind: "none" } as const satisfies MainViewStepBody
 
@@ -145,7 +153,7 @@ export type MainViewTurn = {
   readonly steps: readonly MainViewStep[]
   /**
    * このやり取りに中間レポートが1つ以上あるか（{@link markFinalReport}）。
-   * 最終レポートのラベルを出す条件で、本文が1つしか無いやり取りでは「最終」が何も区別しないので出さない。
+   * 最終レポートのラベルを出す条件の1つ（もう1つは本文の `task`）。本文が1つしか無く `task` も無いやり取りでは「最終」が何も区別しないので出さない。
    */
   readonly hasInterimReport: boolean
   /** 上限を超えて落とした画面に出す記録の件数。0 のときは何も落としていない。 */
@@ -229,7 +237,9 @@ function toMainViewEntries(
     return [{ kind: "request", turnId: record.turnId, text: record.text, images: record.images }]
   }
   if (record.kind === "report") {
-    return [{ kind: "report", markdown: reportMarkdown(record, earlierInTurn()) }]
+    return [
+      { kind: "report", markdown: reportMarkdown(record, earlierInTurn()), task: record.task },
+    ]
   }
   // `detail` / `question` / `turn-failure` は `MainViewEntry` と同じ形なのでそのまま通す。
   if (record.kind !== "tool") {
@@ -244,6 +254,7 @@ function toMainViewEntries(
  * `checks` は検証結果の表（{@link reportChecksMarkdown}。所要時間は同じやり取りの中の `tool` の記録から引く）、`favor` はレポートの記法の「お願い」の塊で包むので、サニタイズも記法の解釈もテキストの本文と同じ経路を通る。
  * `favor` は HTML の中に Markdown を入れるので、塊の内側の前後に空行を空ける。
  * 空の `checks` / `sections` / `favor` は塊ごと置かない。
+ * `task` のあるレポートの `conclusion` は見出しの下の一文として描くので、`conclusion` の印で包む（`task` そのものは本文に組まない）。
  *
  * 節の並びはここで整形する（{@link tidyReportSections}。記録は引数のまま持ち、描くたびに導く）。
  */
@@ -252,7 +263,9 @@ function reportMarkdown(
   earlierInTurn: readonly SessionRecord[],
 ): string {
   return [
-    report.conclusion,
+    report.task.kind === "task" && !isBlankText(report.conclusion)
+      ? `<div class="conclusion">\n\n${report.conclusion}\n\n</div>`
+      : report.conclusion,
     statusMarkdown(
       workPlanMarkdown(latestWorkPlan(earlierInTurn)),
       reportChecksMarkdown(report.checks, (command) => bashCommandDuration(earlierInTurn, command)),
@@ -356,10 +369,12 @@ function groupIntoSteps(entries: readonly StepEntry[]): GroupedSteps {
     ({ steps, toolReportIds }, entry) => {
       const id = steps.length
       if (entry.kind === "detail" || entry.kind === "report") {
+        const task = entry.kind === "report" ? entry.task : NO_REPORT_TASK
         const body = {
           kind: "text",
           report: entry.markdown,
-          firstLine: extractFirstLine(entry.markdown),
+          firstLine: extractFirstLine(task.kind === "task" ? task.name : entry.markdown),
+          task,
         } as const satisfies MainViewStepBody
         return {
           steps: [...steps, newStep(id, body, [])],
@@ -487,7 +502,7 @@ function extractFirstLine(markdown: string): string {
  * 引くのは1箇所だけにして、描く側が「最後の、中間でない本文」の条件を持たずに済むようにする。
  *
  * 2つに分かれているのは、地の段とラベルで条件が違うため。
- * 地は最終レポートなら常に1段上げ、ラベル（「最終レポート」）は中間レポートのあるやり取りだけに出す。
+ * 地は最終レポートなら常に1段上げ、ラベル（「最終レポート」）は中間レポートのあるやり取りか、本文に `task` があるときだけ出す。
  *
  * `closed` が false のとき（{@link mainViewTurns} の同名の引数）は `final` を1つも立てない。
  * やり取りがまだ閉じていないあいだは、次の `report` が来てこの本文が中間レポートへ回るかもしれないので、確定していないものに最終レポートの札（ラベルも地の段上げも）を立てない。

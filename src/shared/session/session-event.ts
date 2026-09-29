@@ -11,6 +11,7 @@ import type { EffortLevel } from "../command.ts"
 import type { DiaryStage } from "../diary/diary.ts"
 import type { ReportSection } from "../report/report-block.ts"
 import type { ReportCheck } from "../report/report-check.ts"
+import type { ReportTask } from "../report/report-task.ts"
 import type { TaskSummaryResult } from "../repository/task-summary.ts"
 import type { ApiErrorKind, ApiRetry } from "../session-driver/api-trouble.ts"
 import type { BackgroundTask } from "../session-driver/background-task.ts"
@@ -132,7 +133,7 @@ export type SessionEvent =
   | { readonly kind: "report-drafting"; readonly toolUseId: string }
   /**
    * `report` ツールの呼び出し。メインが呼んだものだけが届く（サブエージェントの呼び出しは変換で捨てる）。
-   * `sections`（本文の節）と `checks`（検証結果）は無ければ空の配列、`favor` は無ければ空の文字列。
+   * `sections`（本文の節）と `checks`（検証結果）は無ければ空の配列、`favor` は無ければ空の文字列、`task` は無ければ `none`。
    * `toolUseId` は呼び出しの id で、差し戻しが同じ呼び出しの `tool-finished` と突き合わせるのに使う。
    * `closing`（締めのセリフ）は描いたあとに差し戻しが `speech` として出すもので、画面の状態はこの欄を読まない。
    * `unknownBlockCount` は知らない種類で境界で落とした塊の数で、画面の状態は読まない。
@@ -145,6 +146,7 @@ export type SessionEvent =
       readonly sections: readonly ReportSection[]
       readonly favor: string
       readonly checks: readonly ReportCheck[]
+      readonly task: ReportTask
       readonly closing: ReportClosing
       readonly unknownBlockCount: number
       readonly sessionSummary: string | undefined

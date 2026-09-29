@@ -1319,6 +1319,7 @@
           "afterMs": 3000,
           "event": {
             "kind": "report",
+            "task": { "kind": "none" },
             "closing": { "kind": "speech", "text": "途中まで書いたよ。", "expression": "default" },
             "toolUseId": "fake-report-call-1",
             "conclusion": "途中の結論: 目盛りを決めているのは `a.ts` だけだった。",
@@ -1405,6 +1406,7 @@
           "afterMs": 7000,
           "event": {
             "kind": "report",
+            "task": { "kind": "none" },
             "closing": { "kind": "speech", "text": "書けたよ！", "expression": "proud" },
             "toolUseId": "fake-report-call-2",
             "conclusion": "架空の結論: 目盛りを 24 に直し、`a.ts` だけで済んだ。",
@@ -1512,6 +1514,7 @@
           "afterMs": 20000,
           "event": {
             "kind": "report",
+            "task": { "kind": "none" },
             "closing": { "kind": "speech", "text": "書けたよ。", "expression": "default" },
             "toolUseId": "fake-report-call-long",
             "conclusion": "架空の結論（長め）",
@@ -1566,6 +1569,7 @@
           "afterMs": 1000,
           "event": {
             "kind": "report",
+            "task": { "kind": "none" },
             "closing": {
               "kind": "speech",
               "text": "出ないはずの締め（架空）",
@@ -1610,6 +1614,7 @@
           "afterMs": 2500,
           "event": {
             "kind": "report",
+            "task": { "kind": "none" },
             "closing": { "kind": "speech", "text": "書けたよ！", "expression": "proud" },
             "toolUseId": "fake-report-rejected-2",
             "conclusion": "架空の結論: 差し戻しのあとに直したレポートだけが出る。",
@@ -1670,6 +1675,7 @@
           "afterMs": 1000,
           "event": {
             "kind": "report",
+            "task": { "kind": "none" },
             "closing": { "kind": "speech", "text": "書けたよ！", "expression": "proud" },
             "toolUseId": "fake-report-tidied-1",
             "conclusion": "架空の結論: 整形で落ちる行は描かれず、残りはそのまま出る。",
@@ -1730,6 +1736,7 @@
           "afterMs": 1000,
           "event": {
             "kind": "report",
+            "task": { "kind": "none" },
             "closing": { "kind": "speech", "text": "書けたよ！", "expression": "proud" },
             "toolUseId": "fake-report-blocks-1",
             "conclusion": "架空の結論: 目盛りは設定ファイルへ移す案を採る。",
@@ -2149,6 +2156,7 @@
           "afterMs": 700,
           "event": {
             "kind": "report",
+            "task": { "kind": "none" },
             "closing": {
               "kind": "speech",
               "text": "いったんまとめたよ。",
@@ -2224,6 +2232,7 @@
           "afterMs": 1300,
           "event": {
             "kind": "report",
+            "task": { "kind": "none" },
             "closing": {
               "kind": "speech",
               "text": "ここまでまとめたよ。",
@@ -2284,6 +2293,7 @@
           "afterMs": 3200,
           "event": {
             "kind": "report",
+            "task": { "kind": "none" },
             "closing": { "kind": "speech", "text": "まとめたよ。", "expression": "default" },
             "toolUseId": "fake-report-bg-interim-3",
             "conclusion": "最終の結論（架空）：合図をまたいでも最終レポートの札は早まらなかった。",
@@ -2362,6 +2372,7 @@
           "afterMs": 700,
           "event": {
             "kind": "report",
+            "task": { "kind": "none" },
             "closing": {
               "kind": "speech",
               "text": "いったんまとめたよ。",
@@ -2437,6 +2448,7 @@
           "afterMs": 1300,
           "event": {
             "kind": "report",
+            "task": { "kind": "none" },
             "closing": {
               "kind": "speech",
               "text": "ここまでまとめたよ。",
@@ -2638,6 +2650,7 @@
           "afterMs": 1800,
           "event": {
             "kind": "report",
+            "task": { "kind": "none" },
             "closing": {
               "kind": "speech",
               "text": "いったんまとめたよ。",
@@ -2744,6 +2757,7 @@
           "afterMs": 8200,
           "event": {
             "kind": "report",
+            "task": { "kind": "none" },
             "closing": { "kind": "speech", "text": "まとめたよ。", "expression": "default" },
             "toolUseId": "fake-report-call-resume-2",
             "conclusion": "最終の結論（架空）：合図をまたいでも報告は消えなかった。",
@@ -3429,6 +3443,7 @@
           "afterMs": 10300,
           "event": {
             "kind": "report",
+            "task": { "kind": "none" },
             "closing": {
               "kind": "speech",
               "text": "3つの段を終えたよ。",
@@ -3544,6 +3559,7 @@
           "afterMs": 300,
           "event": {
             "kind": "report",
+            "task": { "kind": "none" },
             "closing": {
               "kind": "speech",
               "text": "いったんまとめたよ。",
@@ -3650,6 +3666,7 @@
           "afterMs": 1370,
           "event": {
             "kind": "report",
+            "task": { "kind": "none" },
             "closing": { "kind": "speech", "text": "まとめたよ。", "expression": "default" },
             "toolUseId": "fake-report-call-resume-2",
             "conclusion": "最終の結論（架空）：合図をまたいでも報告は消えなかった。",
@@ -3744,6 +3761,7 @@
           "afterMs": 500,
           "event": {
             "kind": "report",
+            "task": { "kind": "none" },
             "closing": { "kind": "speech", "text": "途中まで書いたよ。", "expression": "default" },
             "toolUseId": "fake-report-call-1",
             "conclusion": "途中の結論: 目盛りを決めているのは `a.ts` だけだった。",
@@ -3830,6 +3848,7 @@
           "afterMs": 1170,
           "event": {
             "kind": "report",
+            "task": { "kind": "none" },
             "closing": { "kind": "speech", "text": "書けたよ！", "expression": "proud" },
             "toolUseId": "fake-report-call-2",
             "conclusion": "架空の結論: 目盛りを 24 に直し、`a.ts` だけで済んだ。",
@@ -4014,6 +4033,7 @@
           "afterMs": 600,
           "event": {
             "kind": "report",
+            "task": { "kind": "none" },
             "closing": {
               "kind": "speech",
               "text": "出ないはずの締め（架空）",
@@ -4058,6 +4078,7 @@
           "afterMs": 720,
           "event": {
             "kind": "report",
+            "task": { "kind": "none" },
             "closing": { "kind": "speech", "text": "書けたよ！", "expression": "proud" },
             "toolUseId": "fake-report-rejected-2",
             "conclusion": "架空の結論: 差し戻しのあとに直したレポートだけが出る。",
@@ -4322,6 +4343,7 @@
           "afterMs": 120,
           "event": {
             "kind": "report",
+            "task": { "kind": "none" },
             "closing": {
               "kind": "speech",
               "text": "いったんまとめたよ。",
@@ -4397,6 +4419,7 @@
           "afterMs": 220,
           "event": {
             "kind": "report",
+            "task": { "kind": "none" },
             "closing": {
               "kind": "speech",
               "text": "ここまでまとめたよ。",
@@ -4457,6 +4480,7 @@
           "afterMs": 530,
           "event": {
             "kind": "report",
+            "task": { "kind": "none" },
             "closing": { "kind": "speech", "text": "まとめたよ。", "expression": "default" },
             "toolUseId": "fake-report-bg-interim-3",
             "conclusion": "最終の結論（架空）：合図をまたいでも最終レポートの札は早まらなかった。",
@@ -4476,6 +4500,166 @@
         },
         {
           "afterMs": 580,
+          "event": {
+            "kind": "turn-finished",
+            "outcome": { "kind": "completed" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "report-task-shipped",
+      "steps": [
+        {
+          "afterMs": 0,
+          "event": {
+            "kind": "request",
+            "text": "/next-task T-002（架空の依頼）",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 1000,
+          "event": {
+            "kind": "report",
+            "task": {
+              "kind": "task",
+              "id": "T-002",
+              "name": "架空の札に段が1つでも `1/1` のように位置を出す",
+              "outcome": "shipped"
+            },
+            "closing": { "kind": "speech", "text": "送ったよ！", "expression": "proud" },
+            "toolUseId": "fake-report-task-shipped",
+            "conclusion": "次に起こす架空の画面から、段が1つでも札に `1/1` と位置が出ます。",
+            "sections": [
+              {
+                "heading": "変えたところ（架空）",
+                "blocks": [
+                  {
+                    "kind": "text",
+                    "text": "架空の札の組み立てを1箇所にまとめた。",
+                    "fold": ""
+                  }
+                ]
+              }
+            ],
+            "favor": "",
+            "checks": []
+          }
+        },
+        {
+          "afterMs": 1050,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-report-task-shipped",
+            "content": "ok",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 2300,
+          "event": {
+            "kind": "turn-finished",
+            "outcome": { "kind": "completed" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "report-task-stopped",
+      "steps": [
+        {
+          "afterMs": 0,
+          "event": {
+            "kind": "request",
+            "text": "/next-task T-002（架空の依頼）",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 1000,
+          "event": {
+            "kind": "report",
+            "task": {
+              "kind": "task",
+              "id": "T-002",
+              "name": "架空の札に段が1つでも `1/1` のように位置を出す",
+              "outcome": "stopped"
+            },
+            "closing": { "kind": "speech", "text": "止めたよ。", "expression": "default" },
+            "toolUseId": "fake-report-task-stopped",
+            "conclusion": "架空の E2E が1件落ちています。直し方を決めてから続けます。",
+            "sections": [],
+            "favor": "",
+            "checks": [
+              {
+                "status": "ng",
+                "label": "架空の E2E",
+                "figure": "12 件中 1 件",
+                "command": "",
+                "detail": "架空の札の位置がずれた"
+              }
+            ]
+          }
+        },
+        {
+          "afterMs": 1050,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-report-task-stopped",
+            "content": "ok",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 2300,
+          "event": {
+            "kind": "turn-finished",
+            "outcome": { "kind": "completed" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "report-task-awaiting-answer",
+      "steps": [
+        {
+          "afterMs": 0,
+          "event": {
+            "kind": "request",
+            "text": "/next-task T-002（架空の依頼）",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 1000,
+          "event": {
+            "kind": "report",
+            "task": {
+              "kind": "task",
+              "id": "T-002",
+              "name": "架空の札に段が1つでも `1/1` のように位置を出す",
+              "outcome": "awaiting-answer"
+            },
+            "closing": { "kind": "speech", "text": "答えを待ってるね。", "expression": "default" },
+            "toolUseId": "fake-report-task-awaiting-answer",
+            "conclusion": "段が1つだけのときも `1/1` を出すかどうか、答えを待っています。答えが来たら受け入れに戻ります。",
+            "sections": [],
+            "favor": "段が1つだけのときも `1/1` を出すかどうかを決めてください（架空）。",
+            "checks": []
+          }
+        },
+        {
+          "afterMs": 1050,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-report-task-awaiting-answer",
+            "content": "ok",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 2300,
           "event": {
             "kind": "turn-finished",
             "outcome": { "kind": "completed" }

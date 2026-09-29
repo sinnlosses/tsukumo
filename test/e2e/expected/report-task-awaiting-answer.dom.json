@@ -66,7 +66,7 @@
                             "type": "button"
                           },
                           "children": [
-                            "report を2回呼んだあと背景で待っても、最終レポートの札を早く立てないか確かめたい（架空の依頼）",
+                            "/next-task T-002（架空の依頼）",
                             {
                               "tag": "span",
                               "attributes": {
@@ -88,28 +88,6 @@
                   },
                   "children": [
                     {
-                      "tag": "details",
-                      "children": [
-                        {
-                          "tag": "summary",
-                          "children": [
-                            "中間レポート: 中間の結論（架空）：ここまでで分かったことをいったんまとめた。"
-                          ]
-                        }
-                      ]
-                    },
-                    {
-                      "tag": "details",
-                      "children": [
-                        {
-                          "tag": "summary",
-                          "children": [
-                            "中間レポート: いまの結論（架空）：ここまでで分かったことをまとめた。"
-                          ]
-                        }
-                      ]
-                    },
-                    {
                       "tag": "section",
                       "children": [
                         {
@@ -118,7 +96,50 @@
                             {
                               "tag": "p",
                               "children": [
-                                "最終レポート"
+                                "最終レポート",
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  },
+                                  "children": [
+                                    "·"
+                                  ]
+                                },
+                                {
+                                  "tag": "button",
+                                  "attributes": {
+                                    "aria-haspopup": "dialog",
+                                    "type": "button"
+                                  },
+                                  "children": [
+                                    "T-002"
+                                  ]
+                                },
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  },
+                                  "children": [
+                                    "·"
+                                  ]
+                                },
+                                "？",
+                                "答え待ち"
+                              ]
+                            },
+                            {
+                              "tag": "h3",
+                              "children": [
+                                "架空の札に段が1つでも",
+                                {
+                                  "tag": "code",
+                                  "children": [
+                                    "1/1"
+                                  ]
+                                },
+                                "のように位置を出す"
                               ]
                             }
                           ]
@@ -126,7 +147,28 @@
                         {
                           "tag": "p",
                           "children": [
-                            "最終の結論（架空）：合図をまたいでも最終レポートの札は早まらなかった。"
+                            "段が1つだけのときも",
+                            {
+                              "tag": "code",
+                              "children": [
+                                "1/1"
+                              ]
+                            },
+                            "を出すかどうか、答えを待っています。答えが来たら受け入れに戻ります。"
+                          ]
+                        },
+                        "お願い",
+                        {
+                          "tag": "p",
+                          "children": [
+                            "段が1つだけのときも",
+                            {
+                              "tag": "code",
+                              "children": [
+                                "1/1"
+                              ]
+                            },
+                            "を出すかどうかを決めてください（架空）。"
                           ]
                         }
                       ]

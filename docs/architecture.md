@@ -430,7 +430,10 @@ components/page/<ページ>/
 - **区画ひとまとまりは領域の側に置く。** 枠・見出しの文言・押せる口・購読・state を1ファイルにまとめて
   領域の中に置き（`components/domain/sidebar/task-section.tsx`）、置かれる機能からは「何を描くか」だけを
   import する。**購読と state を区画が持つ**ので、描き直しはその区画で止まる（`<Root>` へ上げると
-  タスクが変わるたびに全領域が描き直される）
+  タスクが変わるたびに全領域が描き直される）。例外はタスクのモーダルで、開く口がサイドバーの外（レポートの
+  目録の1行のタスクID）にもあり、狭い画面ではサイドバーが隠れるので、開いているかは store
+  （`stores/task-board-request.ts`）が持ち、`<dialog>` は会話の画面に1つだけ置く
+  （`conversation/components/requested-task-board/`）
 
 ### 機能の中を分ける（container / presenter と `hooks/`）
 

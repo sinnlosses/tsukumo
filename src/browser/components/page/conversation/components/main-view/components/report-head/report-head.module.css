@@ -1,0 +1,67 @@
+/* レポートの結論部の頭。値は見本（`docs/history/mockup/report-conclusion-2026-09-30.html`）の寸法と色。
+   見出しと結論の一文のあいだの 12px は `.report-head` の下の余白が持つ。 */
+.report-head {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0 0 12px;
+}
+
+.report-catalog {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 10px;
+  margin: 0;
+  font-size: var(--font-action);
+  color: var(--report-catalog-ink);
+}
+.report-catalog-separator {
+  color: var(--report-catalog-separator);
+}
+
+.report-task-id {
+  font-family: var(--font-mono);
+  font-size: var(--font-action);
+  color: var(--report-task-id);
+}
+.report-task-id-link {
+  padding: 0;
+  border: 0;
+  border-bottom: 1px dashed var(--report-task-id-rule);
+  background: none;
+  cursor: pointer;
+}
+.report-task-id-link:hover {
+  border-bottom-style: solid;
+}
+
+.report-outcome {
+  font-weight: 700;
+}
+.report-outcome-shipped {
+  color: var(--report-outcome-shipped);
+}
+.report-outcome-stopped {
+  color: var(--report-outcome-stopped);
+}
+.report-outcome-awaiting-answer {
+  color: var(--report-outcome-awaiting-answer);
+}
+
+.report-headline {
+  margin: 2px 0 0;
+  font-size: var(--font-heading);
+  line-height: 1.6;
+  font-weight: 700;
+  color: var(--report-headline-ink);
+  overflow-wrap: anywhere;
+}
+.report-headline-code {
+  font-family: var(--font-mono);
+  font-size: 0.86em;
+  background: var(--report-code-surface);
+  color: var(--report-conclusion-ink);
+  padding: 1px 5px;
+  border-radius: 4px;
+}

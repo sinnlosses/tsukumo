@@ -73,7 +73,7 @@ function renderBoard(spy: CommandSpy = () => {}, closed: string[] = []): void {
     <QueryClientProvider client={createTestQueryClient()}>
       <TaskBoard
         tasks={known(TASKS)}
-        open={true}
+        request={{ kind: "open", focus: { kind: "first" } }}
         onClose={() => {
           closed.push("モーダル")
         }}

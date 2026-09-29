@@ -2,10 +2,10 @@
 
 import { Fragment, type ReactElement } from "react"
 
-import type { SummaryPart } from "../hooks/use-task-board.ts"
+import type { CodeSpanPart } from "../../../domain/code-span.ts"
 import styles from "../task-board.module.css"
 
-export function TaskSummaryText(props: { readonly parts: readonly SummaryPart[] }): ReactElement {
+export function TaskSummaryText(props: { readonly parts: readonly CodeSpanPart[] }): ReactElement {
   return (
     <>
       {props.parts.map((part, index) =>

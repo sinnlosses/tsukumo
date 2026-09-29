@@ -11,6 +11,7 @@ import { type EffortLevel, isModelAlias } from "../command.ts"
 import { DIARY_STAGES, type DiaryStage, type DiaryWriting } from "../diary/diary.ts"
 import type { ReportSection } from "../report/report-block.ts"
 import type { ReportCheck } from "../report/report-check.ts"
+import type { ReportTask } from "../report/report-task.ts"
 import type { TaskSummaryResult } from "../repository/task-summary.ts"
 import type { ApiTrouble } from "../session-driver/api-trouble.ts"
 import type { BackgroundTask } from "../session-driver/background-task.ts"
@@ -109,6 +110,7 @@ export type SessionRecord =
       readonly sections: readonly ReportSection[]
       readonly favor: string
       readonly checks: readonly ReportCheck[]
+      readonly task: ReportTask
     }
   /**
    * `work_plan` ツールで受け取った段取り。届いた位置に積むだけで、今の段取りは `latestWorkPlan`、手順ごとの段は `currentTurnSteps` が記録から導く。
@@ -564,6 +566,7 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
             sections: event.sections,
             favor: event.favor,
             checks: event.checks,
+            task: event.task,
           },
         ],
       }

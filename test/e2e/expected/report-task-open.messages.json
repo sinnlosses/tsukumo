@@ -52,36 +52,8 @@
     "at": 1768438800000,
     "event": {
       "kind": "request",
-      "text": "差し戻しの見え方を確かめたい（架空の依頼）",
+      "text": "/next-task T-002（架空の依頼）",
       "images": []
-    }
-  },
-  {
-    "received": "event",
-    "at": 1768438800000,
-    "event": {
-      "kind": "speech",
-      "text": "まとめてみるね。",
-      "expression": "default"
-    }
-  },
-  {
-    "received": "event",
-    "at": 1768438800000,
-    "event": {
-      "kind": "tool-finished",
-      "toolUseId": "fake-report-rejected-1",
-      "content": "レポートの記法の規約に次の違反がある。直して `report` を呼び直すこと:\n- `conclusion` が3文ある。2文以内にし、残りは `sections` へ移す\n- `markdown` の塊に塊で書ける記法（`#` / `##` の見出し・表）がある。代わりに節の `heading`・`table` の塊を使う",
-      "isError": true
-    }
-  },
-  {
-    "received": "event",
-    "at": 1768438800000,
-    "event": {
-      "kind": "speech",
-      "text": "差し戻されたから直すね。",
-      "expression": "default"
     }
   },
   {
@@ -90,22 +62,25 @@
     "event": {
       "kind": "report",
       "task": {
-        "kind": "none"
+        "kind": "task",
+        "id": "T-002",
+        "name": "架空の札に段が1つでも `1/1` のように位置を出す",
+        "outcome": "shipped"
       },
       "closing": {
         "kind": "speech",
-        "text": "書けたよ！",
+        "text": "送ったよ！",
         "expression": "proud"
       },
-      "toolUseId": "fake-report-rejected-2",
-      "conclusion": "架空の結論: 差し戻しのあとに直したレポートだけが出る。",
+      "toolUseId": "fake-report-task-shipped",
+      "conclusion": "次に起こす架空の画面から、段が1つでも札に `1/1` と位置が出ます。",
       "sections": [
         {
-          "heading": "",
+          "heading": "変えたところ（架空）",
           "blocks": [
             {
-              "kind": "markdown",
-              "markdown": "## 直した見出し（架空）\n\n**直した表（作り物の値）**\n\n| 列 | 値 |\n| --- | --- |\n| a | 1 |",
+              "kind": "text",
+              "text": "架空の札の組み立てを1箇所にまとめた。",
               "fold": ""
             }
           ]
@@ -120,7 +95,7 @@
     "at": 1768438800000,
     "event": {
       "kind": "tool-finished",
-      "toolUseId": "fake-report-rejected-2",
+      "toolUseId": "fake-report-task-shipped",
       "content": "ok",
       "isError": false
     }
@@ -130,7 +105,7 @@
     "at": 1768438800000,
     "event": {
       "kind": "speech",
-      "text": "書けたよ！",
+      "text": "送ったよ！",
       "expression": "proud"
     }
   },
@@ -150,6 +125,44 @@
     "event": {
       "kind": "effort-changed",
       "effort": "medium"
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "tasks-changed",
+      "tasks": {
+        "kind": "known",
+        "items": [
+          {
+            "id": "T-001",
+            "summary": "架空のタスク（一覧の先頭）",
+            "status": "todo",
+            "difficulty": "sonnet",
+            "loopable": "Y",
+            "dependencies": [],
+            "body": "\n## 目的\n\n架空の本文で、実物のタスクではない。\n",
+            "location": {
+              "kind": "file",
+              "path": "develop/task/T-001.md"
+            }
+          },
+          {
+            "id": "T-002",
+            "summary": "架空のタスク（レポートが指すもの）",
+            "status": "todo",
+            "difficulty": "sonnet",
+            "loopable": "Y",
+            "dependencies": [],
+            "body": "\n## 目的\n\n架空の本文で、実物のタスクではない。\n",
+            "location": {
+              "kind": "file",
+              "path": "develop/task/T-002.md"
+            }
+          }
+        ]
+      }
     }
   }
 ]

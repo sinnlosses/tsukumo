@@ -42,7 +42,11 @@ function renderBoard(task: TaskSummaryItem): void {
   fetchStub = stubRpcFetch(() => rpcOutput([]))
   render(
     <QueryClientProvider client={createTestQueryClient()}>
-      <TaskBoard tasks={{ kind: "known", items: [task] }} open={true} onClose={() => {}} />
+      <TaskBoard
+        tasks={{ kind: "known", items: [task] }}
+        request={{ kind: "open", focus: { kind: "first" } }}
+        onClose={() => {}}
+      />
     </QueryClientProvider>,
   )
 }

@@ -18,6 +18,7 @@ function reportEvent(
     closing: { kind: "none" },
     unknownBlockCount,
     sessionSummary: undefined,
+    task: { kind: "none" },
   }
 }
 

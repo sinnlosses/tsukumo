@@ -58,6 +58,7 @@ describe("mainViewTurnsOf", () => {
       kind: "text",
       report: "架空のレポート",
       firstLine: "架空のレポート",
+      task: { kind: "none" },
     })
   })
 
@@ -89,6 +90,7 @@ describe("mainViewTurnsOf（claude が自分で始めた続きのターン）", 
     closing: { kind: "none" },
     unknownBlockCount: 0,
     sessionSummary: undefined,
+    task: { kind: "none" },
   })
   const finished: SessionEvent = { kind: "turn-finished", outcome: { kind: "completed" } }
   const resumed: SessionEvent = { kind: "turn-resumed" }
@@ -177,6 +179,7 @@ describe("mainViewTurnsOf（最終レポートの札は、やり取りが閉じ�
     closing: { kind: "none" },
     unknownBlockCount: 0,
     sessionSummary: undefined,
+    task: { kind: "none" },
   })
   const finished: SessionEvent = { kind: "turn-finished", outcome: { kind: "completed" } }
   const resumed: SessionEvent = { kind: "turn-resumed" }
@@ -214,6 +217,7 @@ describe("mainViewTurnsOf（続きのターンを2回以上含む並びを1件�
     closing: { kind: "none" },
     unknownBlockCount: 0,
     sessionSummary: undefined,
+    task: { kind: "none" },
   }
   const finished: SessionEvent = { kind: "turn-finished", outcome: { kind: "completed" } }
   const resumed: SessionEvent = { kind: "turn-resumed" }
@@ -237,6 +241,7 @@ describe("mainViewTurnsOf（続きのターンを2回以上含む並びを1件�
     closing: { kind: "none" },
     unknownBlockCount: 0,
     sessionSummary: undefined,
+    task: { kind: "none" },
   }
 
   // 依頼 → 中間 report → 合図（turn-resumed → speech → ターンの終わり）→ 合図（同じ形）→

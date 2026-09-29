@@ -968,6 +968,7 @@ describe("applySessionEvent（report を書いている間）", () => {
         closing: { kind: "none" },
         unknownBlockCount: 0,
         sessionSummary: undefined,
+        task: { kind: "none" },
       }).reportDrafting,
     ).toEqual({ kind: "idle" })
   })

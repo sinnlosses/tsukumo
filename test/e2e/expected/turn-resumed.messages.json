@@ -102,6 +102,9 @@
     "at": 1768438800000,
     "event": {
       "kind": "report",
+      "task": {
+        "kind": "none"
+      },
       "closing": {
         "kind": "speech",
         "text": "いったんまとめたよ。",
@@ -259,6 +262,9 @@
     "at": 1768438800000,
     "event": {
       "kind": "report",
+      "task": {
+        "kind": "none"
+      },
       "closing": {
         "kind": "speech",
         "text": "まとめたよ。",

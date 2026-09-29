@@ -1088,6 +1088,7 @@ describe("toSessionEvents（report ツール）", () => {
         checks: [
           { status: "ok", label: "架空の検査", figure: "", command: "", detail: "架空の件数" },
         ],
+        task: { kind: "none" },
         closing: { kind: "speech", text: "架空の締め", expression: "proud" },
         unknownBlockCount: 0,
         sessionSummary: "架空の要約",
@@ -1158,7 +1159,7 @@ describe("toSessionEvents（report ツール）", () => {
     ])
   })
 
-  it("sections も body も無いときは節を空に、favor が無いときは空の文字列に、checks が無いときは空の配列に、closing が無いときは none に畳む", () => {
+  it("sections も body も無いときは節を空に、favor が無いときは空の文字列に、checks が無いときは空の配列に、closing と task が無いときは none に畳む", () => {
     const message = assistantMessage([
       {
         type: "tool_use",
@@ -1176,9 +1177,37 @@ describe("toSessionEvents（report ツール）", () => {
         sections: [],
         favor: "",
         checks: [],
+        task: { kind: "none" },
         closing: { kind: "none" },
         unknownBlockCount: 0,
       },
+    ])
+  })
+
+  it("report の task は ID・作業の名前・終わり方が揃っていれば運び、崩れていれば none に畳む", () => {
+    const tasks = [
+      { id: "X-7", name: "架空の作業", outcome: "stopped" },
+      { id: "X-7", name: "架空の作業", outcome: "架空の終わり方" },
+      { id: "X-7", outcome: "shipped" },
+    ].map((task) => {
+      const [event] = toSessionEvents(
+        assistantMessage([
+          {
+            type: "tool_use",
+            id: "toolu_r1",
+            name: REPORT_TOOL_FULL_NAME,
+            input: { conclusion: "架空の結論。", task },
+          },
+        ]),
+        EXPRESSIONS,
+      )
+      return event?.kind === "report" ? event.task : undefined
+    })
+
+    expect(tasks).toEqual([
+      { kind: "task", id: "X-7", name: "架空の作業", outcome: "stopped" },
+      { kind: "none" },
+      { kind: "none" },
     ])
   })
 

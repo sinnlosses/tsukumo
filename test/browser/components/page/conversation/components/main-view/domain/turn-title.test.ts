@@ -16,7 +16,7 @@ import type {
 function reportStep(id: number, firstLine: string): MainViewStep {
   return {
     id,
-    body: { kind: "text", report: firstLine, firstLine },
+    body: { kind: "text", report: firstLine, firstLine, task: { kind: "none" } },
     interim: false,
     superseded: false,
     final: false,

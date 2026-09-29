@@ -616,6 +616,7 @@ describe("toRestoredEvents", () => {
         sections: [],
         favor: "",
         checks: [],
+        task: { kind: "none" },
         closing: { kind: "none" },
         unknownBlockCount: 0,
       },
@@ -676,7 +677,7 @@ describe("toRestoredEvents", () => {
     )
 
     expect(mainViewEntries(state).filter((entry) => entry.kind === "report")).toEqual([
-      { kind: "report", markdown: "架空の結論。\n\n架空の根拠。" },
+      { kind: "report", markdown: "架空の結論。\n\n架空の根拠。", task: { kind: "none" } },
     ])
   })
 

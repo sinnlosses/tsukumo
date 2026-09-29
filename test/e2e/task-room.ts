@@ -110,6 +110,29 @@ export async function openTaskListRoomWithRunningTask(
 }
 
 /**
+ * タスクの作業のレポート（`report` の `task` が一覧の2件目を指す場面）の足場。場面が終わってから、
+ * その2件目と、一覧でその前に並ぶ1件を書く（レポートのタスクID は、一覧にあるタスクのときだけ押せる）。
+ */
+export async function openReportTaskRoom(
+  run: ScenarioRun,
+  scenario: string,
+  scene: string,
+  domRoots: readonly DomRootName[],
+): Promise<ScenarioRoom> {
+  const room = await run.open({ scenario, scene, viewport: "wide", domRoots })
+  await room.waitForEvent("turn-finished")
+
+  await initGitRepository(room.cwd)
+  writeTask(room.cwd, "T-001", "架空のタスク（一覧の先頭）", "todo")
+  writeTask(room.cwd, "T-002", "架空のタスク（レポートが指すもの）", "todo")
+  await git(room.cwd, "add", "develop/task")
+  await git(room.cwd, "commit", "--quiet", "-m", "架空のタスク一覧")
+
+  await room.waitForEvent("tasks-changed")
+  return room
+}
+
+/**
  * タスクのモーダルの足場。状態の言い方が一通りそろう5件（着手できる・完了・進行中・待ち・保留）で、
  * 先頭の1件は本文に見出し・番号・チェック・表・フェンス・生の HTML・2種類のリンクを持つ。
  */

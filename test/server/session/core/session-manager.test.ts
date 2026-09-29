@@ -1774,6 +1774,7 @@ describe("createSessionManager", () => {
         closing: { kind: "none" },
         unknownBlockCount: 0,
         sessionSummary: undefined,
+        task: { kind: "none" },
       }
     }
 
@@ -2597,6 +2598,7 @@ describe("createSessionManager", () => {
         closing: { kind: "none" },
         unknownBlockCount,
         sessionSummary: undefined,
+        task: { kind: "none" },
       }
     }
 

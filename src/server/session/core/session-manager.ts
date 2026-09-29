@@ -18,6 +18,7 @@ import {
   type PlanUsageReport,
   UNAVAILABLE_PLAN_USAGE,
 } from "../../../shared/plan-usage/plan-usage.ts"
+import { conclusionWithTaskName } from "../../../shared/report/report-task.ts"
 import {
   type SessionDigest,
   UNAVAILABLE_SESSION_DIGEST,
@@ -298,7 +299,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
     }
     // 仕事のターンの結論を、代の勘定に預けて上書きする（`turn-finished` で読み出す）。
     if (origin === "driver" && event.kind === "report") {
-      tally.pendingConclusion.hold(event.conclusion)
+      tally.pendingConclusion.hold(conclusionWithTaskName(event.conclusion, event.task))
     }
     // ターンの中の内訳（ツール別・持ち場別）を積む。駆動由来（`"driver"`）だけ。
     // 復元の再生は前のセッションで使ったぶんなので、いまのターンに数えない。

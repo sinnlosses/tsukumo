@@ -179,6 +179,7 @@ describe("currentTurnSteps（report ツール）", () => {
         closing: { kind: "none" },
         unknownBlockCount: 0,
         sessionSummary: undefined,
+        task: { kind: "none" },
       },
     ]
     const state = events.reduce(

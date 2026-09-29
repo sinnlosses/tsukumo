@@ -62,6 +62,7 @@ const ALLOWED_DATA_FILES = [
   "test/e2e/task-board.test.ts",
   "test/e2e/task-board-jump.test.ts",
   "test/e2e/task-room.ts",
+  "test/e2e/report-task.test.ts",
 ] as const satisfies readonly string[]
 
 /**
