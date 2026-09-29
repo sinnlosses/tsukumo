@@ -2,7 +2,7 @@ import { mkdtemp, writeFile } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
-import { describe, expect, it } from "vitest"
+import { beforeAll, describe, expect, it } from "vitest"
 
 import {
   buildUiBundle,
@@ -20,17 +20,26 @@ import {
 //
 // 失敗の側は src/browser/ を壊さず、一時ディレクトリに書いた入口ファイルで確かめる。
 
+// 組み立てに数秒かかるので、読むだけの4件で1回の成果物を使う。
+let builtDir: string
+let built: Awaited<ReturnType<typeof buildUiBundle>>
+
+beforeAll(async () => {
+  builtDir = await temporaryDir()
+  built = await buildUiBundle(builtDir)
+})
+
 describe("buildUiBundle", () => {
-  it("src/browser/ を JS と CSS の1組にまとめ、指定した出し先に置く", async () => {
-    const result = await buildUiBundle(await temporaryDir())
+  it("src/browser/ を JS と CSS の1組にまとめ、指定した出し先に置く", () => {
+    const result = built
 
     expect(result.ok).toBe(true)
     expect(result.ok ? result.bundle.uiScript.length : 0).toBeGreaterThan(0)
     expect(result.ok ? result.bundle.styleSheet.length : 0).toBeGreaterThan(0)
   })
 
-  it("CSS Modules の class 名が、CSS の選択子と JS の対応表に同じ綴りで入っている", async () => {
-    const result = await buildUiBundle(await temporaryDir())
+  it("CSS Modules の class 名が、CSS の選択子と JS の対応表に同じ綴りで入っている", () => {
+    const result = built
 
     // `layout-grid` は
     // `components/page/conversation/components/conversation-layout/conversation-layout.module.css`
@@ -43,9 +52,7 @@ describe("buildUiBundle", () => {
 
 describe("readUiBundle", () => {
   it("置いてある成果物を、組み立て直さずにそのまま読む", async () => {
-    const outDir = await temporaryDir()
-    const built = await buildUiBundle(outDir)
-    const read = await readUiBundle(outDir)
+    const read = await readUiBundle(builtDir)
 
     expect(read.ok).toBe(true)
     expect(read.ok ? read.bundle.uiScript : "").toBe(built.ok ? built.bundle.uiScript : "")
@@ -53,10 +60,7 @@ describe("readUiBundle", () => {
   })
 
   it("組み立てた直後は古くないと言う", async () => {
-    const outDir = await temporaryDir()
-    await buildUiBundle(outDir)
-
-    const read = await readUiBundle(outDir)
+    const read = await readUiBundle(builtDir)
 
     expect(read.ok ? read.outdated : true).toBe(false)
   })

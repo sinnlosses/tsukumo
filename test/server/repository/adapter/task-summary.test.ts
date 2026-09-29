@@ -346,7 +346,7 @@ const BEADS_EMPTY_BODY = [
 ].join("\n")
 
 // Beads 方式（`main` の先端の CLAUDE.md の `- タスクの置き場: beads`）。本物の `bd` を、`HOME` を
-// 一時ディレクトリへ向けて起こす（`useBeadsHome`）。`bd init` は1回数秒かかる。
+// 一時ディレクトリへ向けて起こす（`useBeadsHome`）。
 describe("watchTaskSummary（Beads 方式）", () => {
   const home = useBeadsHome(() => join(root(), "home"))
 
@@ -362,7 +362,7 @@ describe("watchTaskSummary（Beads 方式）", () => {
     )
     await git(repository, "add", "CLAUDE.md")
     await git(repository, "commit", "-m", "config")
-    await initBeads(repository, home())
+    initBeads(repository)
     return repository
   }
 

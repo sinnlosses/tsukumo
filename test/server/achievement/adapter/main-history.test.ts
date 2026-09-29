@@ -636,7 +636,7 @@ describe("readAchievement（Beads 方式）", () => {
       "develop/task/T-001.md",
       newFormatTaskContent("T-001", "git で済んだ", "done"),
     )
-    await initBeads(repository, home())
+    initBeads(repository)
     await bd(repository, home(), "create", "--id", "t-002", "移した")
     await git(repository, "rm", "--quiet", "-r", "develop/task")
     await commitAt(
