@@ -126,6 +126,9 @@ SIGTERM が行く）。`pkill` / `killall` で名前やパターンから止め�
 enum・キャラクターパックの読み込み）は起こし直さないと変わらない。** 既定のまま起こすと
 同じ作業ツリーの直近セッションを resume するので、確かめ直すには `TSUKUMO_NEW_SESSION=1` を足す。
 
+同じ形で、Bash の `sed -i`（`-i.bak`・`--in-place` を含む）も PreToolUse hook
+（`scripts/deny-sed-in-place.ts`）が拒否する。ファイルの書き換えは Edit で行う。
+
 **自分が直したコードを画面で確かめるときは、直した作業ツリーで起こす**（tsukumo は起こした
 ディレクトリでそのまま動く）。ブラウザ側を直したなら、起こす前に `pnpm run build` を1回打つ
 （成果物は作業ツリーごとに別）。
