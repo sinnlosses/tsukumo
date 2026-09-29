@@ -78,6 +78,12 @@ const QUIET_GAP_MS = 500
 const SETTLE_INTERVAL_MS = 100
 const SETTLE_ATTEMPTS = 150
 
+/**
+ * `waitForEvent` で待った手から、疑似セッションの予定の次の手までに要る最小の間合い（ミリ秒）。
+ * 次の手が撮り終える前に届くと、messages に1件多く載って食い違う。
+ */
+const MIN_NEXT_STEP_GAP_MS = 3000
+
 /** 期待値を書き直すか（`pnpm run test:e2e:update`）。 */
 const UPDATE_EXPECTED = process.env["E2E_UPDATE"] === "1"
 
@@ -225,6 +231,8 @@ async function openRoom(
   await page.goto(viewUrl, { waitUntil: "domcontentloaded" })
   await waitForQuietPoint(messages, options.scene)
 
+  let lastAwaited: { readonly kind: string; readonly occurrence: number } | undefined
+
   const replacements: readonly (readonly [string, string])[] = [
     // 長いものから置き換える（一時のディレクトリは互いの前置きにならないが、根は短い）。
     ...[home, cwd].flatMap((dir) => [
@@ -243,8 +251,14 @@ async function openRoom(
   return {
     page,
     cwd: cwd.real,
-    waitForEvent: (kind, occurrence) => messages.waitForEvent(kind, occurrence),
+    waitForEvent: async (kind, occurrence = 1) => {
+      await messages.waitForEvent(kind, occurrence)
+      lastAwaited = { kind, occurrence }
+    },
     settleAndMatch: async (elapsedMs) => {
+      if (lastAwaited !== undefined) {
+        assertNextStepGap(options.scenario, options.scene, lastAwaited)
+      }
       const outDir = path.join(OUTPUT_ROOT, options.scenario)
       mkdirSync(outDir, { recursive: true })
       // 撮る時刻へ進める前に、ターンの終わりに始まった取り直しを済ませる。
@@ -286,6 +300,48 @@ async function waitForQuietPoint(messages: MessageRecord, scene: string): Promis
   )
   for (const [kind, count] of Object.entries(counts)) {
     await messages.waitForEvent(kind, count)
+  }
+}
+
+/**
+ * `waitForEvent(kind, occurrence)` が待った手から、疑似セッションの予定の次の手までの間合いを検査する。
+ * `scene: "none"` は依頼のたびに `turns[]` から動的に選ばれる場面なので、ここでは検査しない
+ * （fake driver の `playNextTurn`）。待った手が予定に見当たらないとき（UI の操作で生まれる手を
+ * 待った場合など）も検査しない。
+ */
+function assertNextStepGap(
+  scenario: string,
+  scene: string,
+  waited: { readonly kind: string; readonly occurrence: number },
+): void {
+  if (scene === "none") {
+    return
+  }
+  const session = readFakeSession()
+  if (session === undefined) {
+    throw new Error("疑似セッション（test/fixture/fake-session.json）が読めない")
+  }
+  const ordered = sortBy(startupSteps(session, scene), (step) => step.afterMs)
+  let seen = 0
+  for (const [index, step] of ordered.entries()) {
+    if (step.event.kind !== waited.kind) {
+      continue
+    }
+    seen += 1
+    if (seen !== waited.occurrence) {
+      continue
+    }
+    const next = ordered[index + 1]
+    if (next === undefined) {
+      return
+    }
+    const gap = next.afterMs - step.afterMs
+    if (gap < MIN_NEXT_STEP_GAP_MS) {
+      throw new Error(
+        `${scenario}（場面 ${scene}）は ${waited.kind} の${String(waited.occurrence)}回目から次の手（${next.event.kind}）まで ${String(gap)}ms しかない（${String(MIN_NEXT_STEP_GAP_MS)}ms 要る）。場面を分けて、撮り終えるまで次の手が来ない形にする`,
+      )
+    }
+    return
   }
 }
 

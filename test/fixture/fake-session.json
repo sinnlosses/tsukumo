@@ -2028,6 +2028,76 @@
       ]
     },
     {
+      "name": "background-task-short-hold",
+      "steps": [
+        {
+          "afterMs": 0,
+          "event": {
+            "kind": "request",
+            "text": "背景で待つあいだの帯を、再開まで数秒の短い版で見たい（架空の依頼）",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 300,
+          "event": {
+            "kind": "speech",
+            "text": "背景で少しだけ走らせておくね。",
+            "expression": "default"
+          }
+        },
+        {
+          "afterMs": 600,
+          "event": {
+            "kind": "tool-started",
+            "toolUseId": "fake-tool-background-short-hold-1",
+            "name": "Bash",
+            "input": {
+              "command": "sleep 2",
+              "run_in_background": true,
+              "description": "架空の短い待ち（2秒）"
+            }
+          }
+        },
+        {
+          "afterMs": 700,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-tool-background-short-hold-1",
+            "content": "架空の背景実行の受付（ID: fake-bg-short-hold-1）",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 700,
+          "event": {
+            "kind": "background-tasks-changed",
+            "tasks": [
+              {
+                "taskId": "fake-bg-short-hold-1",
+                "kind": "shell",
+                "description": "架空の短い待ち（2秒）"
+              }
+            ]
+          }
+        },
+        {
+          "afterMs": 1200,
+          "event": {
+            "kind": "utterance",
+            "text": "## 背景で1件、短く走らせた\n\nこれは架空の本文で、実物の会話ではない。**`background-task` の長い版（再開まで12秒超）とは別に、E2E で繰り返し撮れるように再開まで数秒に縮めた版**。帯の「いまの作業」が「背景で作業中」になり、終わると「依頼待ち」に戻る。"
+          }
+        },
+        {
+          "afterMs": 1500,
+          "event": {
+            "kind": "turn-finished",
+            "outcome": { "kind": "completed" }
+          }
+        }
+      ]
+    },
+    {
       "name": "background-task-interim-report",
       "steps": [
         {
@@ -2233,6 +2303,163 @@
         },
         {
           "afterMs": 3500,
+          "event": {
+            "kind": "turn-finished",
+            "outcome": { "kind": "completed" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "background-task-interim-report-hold",
+      "steps": [
+        {
+          "afterMs": 0,
+          "event": {
+            "kind": "request",
+            "text": "report を2回呼んだあと背景で待っても、最終レポートの札を早く立てないか確かめたい（架空の依頼）",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 200,
+          "event": {
+            "kind": "speech",
+            "text": "まず少し調べるね。",
+            "expression": "default"
+          }
+        },
+        {
+          "afterMs": 300,
+          "event": {
+            "kind": "tool-started",
+            "toolUseId": "fake-tool-bg-interim-hold-1",
+            "name": "Bash",
+            "input": {
+              "command": "echo ready",
+              "run_in_background": false,
+              "description": "架空の下調べ"
+            }
+          }
+        },
+        {
+          "afterMs": 350,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-tool-bg-interim-hold-1",
+            "content": "ready",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 450,
+          "event": {
+            "kind": "report-drafting",
+            "toolUseId": "fake-report-bg-interim-hold-1"
+          }
+        },
+        {
+          "afterMs": 700,
+          "event": {
+            "kind": "report",
+            "closing": {
+              "kind": "speech",
+              "text": "いったんまとめたよ。",
+              "expression": "default"
+            },
+            "toolUseId": "fake-report-bg-interim-hold-1",
+            "conclusion": "中間の結論（架空）：ここまでで分かったことをいったんまとめた。",
+            "sections": [],
+            "favor": "",
+            "checks": []
+          }
+        },
+        {
+          "afterMs": 750,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-report-bg-interim-hold-1",
+            "content": "ok",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 850,
+          "event": {
+            "kind": "speech",
+            "text": "続けて背景で少しだけ走らせておくね。",
+            "expression": "default"
+          }
+        },
+        {
+          "afterMs": 950,
+          "event": {
+            "kind": "tool-started",
+            "toolUseId": "fake-tool-bg-interim-hold-2",
+            "name": "Bash",
+            "input": {
+              "command": "sleep 2",
+              "run_in_background": true,
+              "description": "架空の短い待ち（2秒）"
+            }
+          }
+        },
+        {
+          "afterMs": 1000,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-tool-bg-interim-hold-2",
+            "content": "架空の背景実行の受付（ID: fake-bg-interim-hold-1）",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 1000,
+          "event": {
+            "kind": "background-tasks-changed",
+            "tasks": [
+              {
+                "taskId": "fake-bg-interim-hold-1",
+                "kind": "shell",
+                "description": "架空の短い待ち（2秒）"
+              }
+            ]
+          }
+        },
+        {
+          "afterMs": 1100,
+          "event": {
+            "kind": "report-drafting",
+            "toolUseId": "fake-report-bg-interim-hold-2"
+          }
+        },
+        {
+          "afterMs": 1300,
+          "event": {
+            "kind": "report",
+            "closing": {
+              "kind": "speech",
+              "text": "ここまでまとめたよ。",
+              "expression": "default"
+            },
+            "toolUseId": "fake-report-bg-interim-hold-2",
+            "conclusion": "いまの結論（架空）：ここまでで分かったことをまとめた。",
+            "sections": [],
+            "favor": "",
+            "checks": []
+          }
+        },
+        {
+          "afterMs": 1350,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-report-bg-interim-hold-2",
+            "content": "ok",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 1500,
           "event": {
             "kind": "turn-finished",
             "outcome": { "kind": "completed" }

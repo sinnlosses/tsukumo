@@ -70,7 +70,7 @@
     "at": 1768438800000,
     "event": {
       "kind": "tool-started",
-      "toolUseId": "fake-tool-bg-interim-1",
+      "toolUseId": "fake-tool-bg-interim-hold-1",
       "name": "Bash",
       "input": {
         "command": "echo ready",
@@ -84,7 +84,7 @@
     "at": 1768438800000,
     "event": {
       "kind": "tool-finished",
-      "toolUseId": "fake-tool-bg-interim-1",
+      "toolUseId": "fake-tool-bg-interim-hold-1",
       "content": "ready",
       "isError": false
     }
@@ -94,7 +94,7 @@
     "at": 1768438800000,
     "event": {
       "kind": "report-drafting",
-      "toolUseId": "fake-report-bg-interim-1"
+      "toolUseId": "fake-report-bg-interim-hold-1"
     }
   },
   {
@@ -107,7 +107,7 @@
         "text": "いったんまとめたよ。",
         "expression": "default"
       },
-      "toolUseId": "fake-report-bg-interim-1",
+      "toolUseId": "fake-report-bg-interim-hold-1",
       "conclusion": "中間の結論（架空）：ここまでで分かったことをいったんまとめた。",
       "sections": [],
       "favor": "",
@@ -119,7 +119,7 @@
     "at": 1768438800000,
     "event": {
       "kind": "tool-finished",
-      "toolUseId": "fake-report-bg-interim-1",
+      "toolUseId": "fake-report-bg-interim-hold-1",
       "content": "ok",
       "isError": false
     }
@@ -147,7 +147,7 @@
     "at": 1768438800000,
     "event": {
       "kind": "tool-started",
-      "toolUseId": "fake-tool-bg-interim-2",
+      "toolUseId": "fake-tool-bg-interim-hold-2",
       "name": "Bash",
       "input": {
         "command": "sleep 2",
@@ -161,8 +161,8 @@
     "at": 1768438800000,
     "event": {
       "kind": "tool-finished",
-      "toolUseId": "fake-tool-bg-interim-2",
-      "content": "架空の背景実行の受付（ID: fake-bg-interim-1）",
+      "toolUseId": "fake-tool-bg-interim-hold-2",
+      "content": "架空の背景実行の受付（ID: fake-bg-interim-hold-1）",
       "isError": false
     }
   },
@@ -173,7 +173,7 @@
       "kind": "background-tasks-changed",
       "tasks": [
         {
-          "taskId": "fake-bg-interim-1",
+          "taskId": "fake-bg-interim-hold-1",
           "kind": "shell",
           "description": "架空の短い待ち（2秒）"
         }
@@ -185,7 +185,7 @@
     "at": 1768438800000,
     "event": {
       "kind": "report-drafting",
-      "toolUseId": "fake-report-bg-interim-2"
+      "toolUseId": "fake-report-bg-interim-hold-2"
     }
   },
   {
@@ -198,7 +198,7 @@
         "text": "ここまでまとめたよ。",
         "expression": "default"
       },
-      "toolUseId": "fake-report-bg-interim-2",
+      "toolUseId": "fake-report-bg-interim-hold-2",
       "conclusion": "いまの結論（架空）：ここまでで分かったことをまとめた。",
       "sections": [],
       "favor": "",
@@ -210,7 +210,7 @@
     "at": 1768438800000,
     "event": {
       "kind": "tool-finished",
-      "toolUseId": "fake-report-bg-interim-2",
+      "toolUseId": "fake-report-bg-interim-hold-2",
       "content": "ok",
       "isError": false
     }

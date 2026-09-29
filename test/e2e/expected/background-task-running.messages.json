@@ -70,7 +70,7 @@
     "at": 1768438800000,
     "event": {
       "kind": "tool-started",
-      "toolUseId": "fake-tool-background-short-1",
+      "toolUseId": "fake-tool-background-short-hold-1",
       "name": "Bash",
       "input": {
         "command": "sleep 2",
@@ -84,8 +84,8 @@
     "at": 1768438800000,
     "event": {
       "kind": "tool-finished",
-      "toolUseId": "fake-tool-background-short-1",
-      "content": "架空の背景実行の受付（ID: fake-bg-short-1）",
+      "toolUseId": "fake-tool-background-short-hold-1",
+      "content": "架空の背景実行の受付（ID: fake-bg-short-hold-1）",
       "isError": false
     }
   },
@@ -96,7 +96,7 @@
       "kind": "background-tasks-changed",
       "tasks": [
         {
-          "taskId": "fake-bg-short-1",
+          "taskId": "fake-bg-short-hold-1",
           "kind": "shell",
           "description": "架空の短い待ち（2秒）"
         }

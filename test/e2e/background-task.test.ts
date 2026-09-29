@@ -5,7 +5,8 @@ import { useScenarioRun } from "./scenario-run.ts"
 // 背景のタスク（docs/architecture/testing.md「E2E のシナリオの一覧」）。疑似セッションの場面
 // `background-task-short` は、もとの `background-task`（再開まで12秒超）を再開まで数秒に
 // 縮めた版——20秒級の場面を毎回待たずに、開始と再開の両方を1本の E2E の中で確かめられる
-// ようにしてある。
+// ようにしてある。`background-task-short-hold` は同じ流れを最初の `turn-finished` で打ち切った版で、
+// 背景のタスクが残ったまま撮り終える（次の手が来ない）。
 
 const run = useScenarioRun()
 
@@ -19,7 +20,7 @@ describe("背景のタスク", () => {
   it("背景で走らせた直後は、ターンが終わっても背景のタスクが残る", async () => {
     const room = await run.open({
       scenario: "background-task-running",
-      scene: "background-task-short",
+      scene: "background-task-short-hold",
       viewport: "wide",
       domRoots: ["main", "dispatch"],
     })

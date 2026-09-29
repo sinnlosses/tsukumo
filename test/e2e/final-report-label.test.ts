@@ -8,6 +8,8 @@ import { useScenarioRun } from "./scenario-run.ts"
 // 2回目の `report`（`fake-report-bg-interim-2`）は、背景のタスクが残っているあいだは
 // 「いちばん新しい・中間でない本文」ではあるが、次の `report` でまだ中間レポートへ回るかもしれない
 // ——背景のタスクが片付き、3回目の `report` が来て初めてラベルが確定する。
+// `background-task-interim-report-hold` は同じ流れを最初の `turn-finished` で打ち切った版で、
+// 背景のタスクが残ったまま撮り終える（次の手が来ない）。
 
 const run = useScenarioRun()
 
@@ -21,7 +23,7 @@ describe("最終レポートの札", () => {
   it("背景のタスクが残っているあいだは、あとから来た report にも札を立てない", async () => {
     const room = await run.open({
       scenario: "final-report-label-waiting",
-      scene: "background-task-interim-report",
+      scene: "background-task-interim-report-hold",
       viewport: "wide",
       domRoots: ["main"],
     })
