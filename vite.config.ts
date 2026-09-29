@@ -5,24 +5,14 @@
 // 出す名前は `main.js` と `main.css` に固定する。
 // `readPair` はこの2つの名前で読み、ハッシュ付きの名前は読まない。
 //
-// React Compiler を通す。最適化を諦めた部品は組み立てのログへ出す（ビルドは止めない）。
-// Vitest の実行には掛からない（`reactCompilerPreset` がブラウザ向けの環境にだけ効く）。
-import babel from "@rolldown/plugin-babel"
-import react, { reactCompilerPreset } from "@vitejs/plugin-react"
-import type { LoggerEvent } from "babel-plugin-react-compiler"
+// React Compiler（`oxc-transform-react`）を通し、最適化を諦める部品があれば組み立てを落とす。
+// 既定の `panicThreshold` では諦めた部品を黙って素通しし、診断も返さない。
+// Vitest の実行には掛からない（`compiler` はブラウザ向けの環境にだけ効く）。
+import react from "@vitejs/plugin-react"
 import { defineConfig } from "vite"
 
 export default defineConfig({
-  plugins: [
-    react(),
-    babel({
-      presets: [
-        reactCompilerPreset({
-          logger: { logEvent: logReactCompilerEvent },
-        }),
-      ],
-    }),
-  ],
+  plugins: [react({ compiler: { panicThreshold: "all_errors" } })],
   publicDir: false,
   logLevel: "warn",
   // 型だけを取り出す import（`import { type Element } from "hast"`）を、読み込みごと消す。
@@ -49,14 +39,3 @@ export default defineConfig({
     },
   },
 })
-
-/** Compiler が最適化を諦めた部品（ルール違反の検出）だけ、組み立てのログへ出す。 */
-function logReactCompilerEvent(filename: string | null, event: LoggerEvent): void {
-  if (event.kind === "CompileSkip") {
-    console.warn(`[react-compiler] skip ${filename ?? "?"}: ${event.reason}`)
-    return
-  }
-  if (event.kind === "CompileError" || event.kind === "CompileDiagnostic") {
-    console.warn(`[react-compiler] ${event.kind} ${filename ?? "?"}: ${event.detail.reason}`)
-  }
-}

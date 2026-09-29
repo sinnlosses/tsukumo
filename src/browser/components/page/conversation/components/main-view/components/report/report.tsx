@@ -42,7 +42,7 @@ export function Report(props: ReportProps): ReactElement {
  * 塊1つぶんの Markdown。鍵（`key`）も props もその塊の文字列そのものなので、塊の内容が変わらない限り React はこの部品を再描画しない。
  *
  * `memo` を残す例外（docs/coding-standards.md「手でメモ化しない」）。
- * Compiler の babel 版は `applyToEnvironmentHook` でクライアント環境だけに絞ってあり、Vitest の実行（SSR 相当）には掛からない。
+ * Compiler はクライアント環境にだけ掛かり、Vitest の実行（SSR 相当）には掛からない。
  * `memo` を外すと「変わらない塊は描き直さない」がテストで確かめられなくなる。
  */
 const ReportBlock = memo(ReportBlockView)

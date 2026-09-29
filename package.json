@@ -58,11 +58,8 @@
     "zustand": "^5.0.15"
   },
   "devDependencies": {
-    "@babel/core": "^7.29.7",
-    "@rolldown/plugin-babel": "^0.2.4",
     "@storybook/react-vite": "^10.6.0",
     "@testing-library/react": "^16.3.3",
-    "@types/babel__core": "^7.20.5",
     "@types/hast": "^3.0.5",
     "@types/mdast": "^4.0.4",
     "@types/node": "^26.0.0",
@@ -70,9 +67,9 @@
     "@types/react-dom": "^19.3.0",
     "@types/ws": "^8.18.1",
     "@vitejs/plugin-react": "^6.1.1",
-    "babel-plugin-react-compiler": "^1.0.0",
     "happy-css-modules": "^5.0.2",
     "happy-dom": "^20.14.5",
+    "oxc-transform-react": "~0.145.0",
     "oxfmt": "^0.70.0",
     "oxlint": "^1.85.0",
     "playwright-core": "^1.63.0",

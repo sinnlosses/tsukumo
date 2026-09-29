@@ -69,18 +69,19 @@
 **足す依存**（**ユーザーの承認済み**。ここに無いものを足すときは改めて承認を得る。承認の日付は
 `docs/history/decision.md`「design.md 2〜11章（約1000行へ締めたときに落とした経緯と実測）」）:
 
-| 種別    | パッケージ                                                                         | 用途                                                                                     |
-| ------- | ---------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| runtime | `react` `react-dom`                                                                | browser                                                                                  |
-| runtime | `ws`                                                                               | core の WebSocket サーバ                                                                 |
-| runtime | `react-markdown` `remark-gfm` `rehype-raw` `rehype-sanitize` `rehype-highlight`    | Markdown                                                                                 |
-| runtime | `remark-cjk-friendly`                                                              | CJK の強調（`**「…」**`）                                                                |
-| runtime | `remeda`                                                                           | 型ガードなど一般的な小物（`isPlainObject` / `isObjectType`）                             |
-| runtime | `mermaid` `chart.js` `highlight.js`                                                | ブラウザへそのまま配る外部ライブラリ（`docs/architecture/browser.md`「重いライブラリ」） |
-| dev     | `@types/react` `@types/react-dom` `@types/ws` `@testing-library/react` `happy-dom` | 型とテスト                                                                               |
-| dev     | `playwright-core`                                                                  | 画面の確認（`scripts/capture-*.ts`）と E2E（`docs/architecture/testing.md`）             |
-| dev     | `vitest` `vite`                                                                    | テストランナーとブラウザ側の組み立て・開発サーバ                                         |
-| dev     | `storybook` `@storybook/react-vite`                                                | 部品を props ごとに並べて見る（`pnpm run storybook`）                                    |
+| 種別    | パッケージ                                                                         | 用途                                                                                           |
+| ------- | ---------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| runtime | `react` `react-dom`                                                                | browser                                                                                        |
+| runtime | `ws`                                                                               | core の WebSocket サーバ                                                                       |
+| runtime | `react-markdown` `remark-gfm` `rehype-raw` `rehype-sanitize` `rehype-highlight`    | Markdown                                                                                       |
+| runtime | `remark-cjk-friendly`                                                              | CJK の強調（`**「…」**`）                                                                      |
+| runtime | `remeda`                                                                           | 型ガードなど一般的な小物（`isPlainObject` / `isObjectType`）                                   |
+| runtime | `mermaid` `chart.js` `highlight.js`                                                | ブラウザへそのまま配る外部ライブラリ（`docs/architecture/browser.md`「重いライブラリ」）       |
+| dev     | `@types/react` `@types/react-dom` `@types/ws` `@testing-library/react` `happy-dom` | 型とテスト                                                                                     |
+| dev     | `playwright-core`                                                                  | 画面の確認（`scripts/capture-*.ts`）と E2E（`docs/architecture/testing.md`）                   |
+| dev     | `vitest` `vite`                                                                    | テストランナーとブラウザ側の組み立て・開発サーバ                                               |
+| dev     | `@vitejs/plugin-react` `oxc-transform-react`                                       | JSX の変換と React Compiler（`docs/coding-standards.md`「手でメモ化しない」）。2026-09-29 承認 |
+| dev     | `storybook` `@storybook/react-vite`                                                | 部品を props ごとに並べて見る（`pnpm run storybook`）                                          |
 
 **Storybook は本体と同じ `vite.config.ts` を読む**（`.storybook/main.ts` の `viteConfigPath`。
 `build` の節だけは Storybook が捨てる）。CSS Modules の class 名は Vite が CSS の中身と行から焼く

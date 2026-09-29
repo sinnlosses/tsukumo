@@ -696,17 +696,19 @@ layout-resizer.tsx` の、ドラッグの間だけ生きる `pointermove`）。
 ### 手でメモ化しない
 
 `memo` / `useCallback` / `useMemo` を手で書かない。メモ化は `vite.config.ts` に入れた
-React Compiler（`babel-plugin-react-compiler`。`@vitejs/plugin-react` の babel 版）に任せる——
+React Compiler（`@vitejs/plugin-react` の `compiler`。中身は `oxc-transform-react`）に任せる——
 組み立てがコンポーネント・フックの中身を見て、値・関数・部品の描き直しを自動で減らす。
-どの部品を諦めたかはビルドのログ（`vite.config.ts` の `logReactCompilerEvent`）に出る。
+Compiler が最適化を諦める部品（描画中に ref を読み書きする、フックを条件の中で呼ぶなど）を
+書くと `pnpm run build` が落ち、どこの何が理由かがエラーに出る（`panicThreshold: "all_errors"`）。
+諦めた部品を黙って素通しさせないため。Compiler が対応していない書き方（オブジェクトリテラルの getter など、エラーが
+`Todo` や `BuildHIR` を名乗るもの）でも落ちるので、書き方を変えて避ける。
 
 残してよいのは、Compiler だけでは足りない理由が具体的にあるときだけで、その理由を
 使う側に1行のコメントで書く。今のところの2つの理由:
 
-- **その部品の描き直し回数を数える単体テストが、Vitest の実行を通る。** babel 版の
-  `reactCompilerPreset` は `applyToEnvironmentHook` でクライアント環境だけに絞ってあり、
-  Vitest の実行（SSR 相当。`server.transformRequest` を `ssr: true` で呼ぶ）には掛からない
-  ので、`memo` を外すとテストの前提が崩れる（`report.tsx` の `ReportBlock`）
+- **その部品の描き直し回数を数える単体テストが、Vitest の実行を通る。** Compiler は
+  consumer が `client` の環境にだけ掛かり、Vitest の実行（SSR 相当。
+  `server.transformRequest` を `ssr: true` で呼ぶ）には掛からないので、`memo` を外すとテストの前提が崩れる（`report.tsx` の `ReportBlock`）
 - **oxlint の `react-hooks(exhaustive-deps)` が、依存配列に置いた値の再生成を理由に落ちる。**
   この lint は静的解析で Compiler の自動メモ化を知らないので、`useCallback` を外すと
   lint が落ちる（`chat-view/hooks/use-stick-to-bottom.ts` の `stickToBottom`）

@@ -88,7 +88,7 @@ describe("bundleWithVite", () => {
 
     expect(result.ok).toBe(false)
     const reason = result.ok ? "" : result.reason
-    expect(reason).toContain("main.tsx:1:")
+    expect(reason).toMatch(/main\.tsx:\d+:\d+/)
     expect(reason).not.toContain("\u001b[")
     expect(reason).not.toMatch(/^\s+at /m)
   })
