@@ -80,14 +80,13 @@
   color: var(--state-ng);
 }
 /* 名前付きの並び（`list` の `label`）。
-   名前と説明を2列に組み、説明の左端を揃える（dl と同じ組み方）。
-   項目の印（点・番号・チェック）を1列目に置くため、li を subgrid にし、点と番号は ::before の文字で描く（grid にした li は list-item でなくなり、既定の印が消える）。
+   ラベルと本文を2列に組み、項目の間を細い横線で区切る。
+   1列目は `ordered` の番号と `check` のチェックの置き場で、印の無い `bullet` では幅0に縮む。
    狭い画面では1列に戻す（末尾の @media）。 */
 .detail-block .report-labeled-list > :is(ul, ol) {
   display: grid;
-  grid-template-columns: auto max-content minmax(0, 1fr);
-  column-gap: 0.6rem;
-  row-gap: 0.4rem;
+  grid-template-columns: auto 7.5em minmax(0, 1fr);
+  column-gap: 20px;
   margin: 0.5rem 0;
   padding-left: 0;
   list-style: none;
@@ -97,11 +96,13 @@
   display: grid;
   grid-column: 1 / -1;
   grid-template-columns: subgrid;
+  align-items: start;
+  padding: 12px 0;
+  border-top: 1px solid var(--rule-quiet);
   counter-increment: report-labeled-item;
 }
-.detail-block .report-labeled-list ul > li:not(.report-task-item)::before {
-  content: "•";
-  color: var(--ink-quiet);
+.detail-block .report-labeled-list li:first-child {
+  border-top: none;
 }
 .detail-block .report-labeled-list ol > li::before {
   content: counter(report-labeled-item) ".";
@@ -109,13 +110,21 @@
 }
 .detail-block .report-list-label {
   grid-column: 2;
-  margin-right: 0.4rem;
-  color: var(--ink);
-  font-weight: 600;
+  color: var(--ink-quiet);
+  font-size: var(--font-secondary);
+  font-weight: 700;
+  line-height: 1.85;
 }
 .detail-block .report-list-text {
   grid-column: 3;
   min-width: 0;
+  color: color-mix(in srgb, var(--ink) 90%, transparent);
+  font-size: var(--font-subheading);
+  line-height: 1.85;
+  overflow-wrap: anywhere;
+}
+.detail-block .report-labeled-list code {
+  font-size: 0.86em;
 }
 /* 一本道の流れ（`list` の `flow`）。札を上から下へ積み、下向きの矢印でつなぐ。 */
 .detail-block .report-flow {
@@ -753,21 +762,18 @@
   .detail-block dd {
     margin: 0 0 0.5rem;
   }
-  /* 名前付きの並びも同じ理由で1列に積み、項目の印は既定のものに戻す。 */
+  /* 名前付きの並びも同じ理由で1列に積み、ラベル（と番号・チェック）を本文の上の行に置く。 */
   .detail-block .report-labeled-list > :is(ul, ol) {
     display: block;
-    padding-left: 1.5em;
-    list-style: revert;
+    padding-left: 0;
+    list-style: none;
   }
   .detail-block .report-labeled-list li {
-    display: list-item;
-  }
-  .detail-block .report-labeled-list ul > li:not(.report-task-item)::before,
-  .detail-block .report-labeled-list ol > li::before {
-    content: none;
+    display: block;
   }
   .detail-block .report-list-text {
     display: block;
+    margin-top: 2px;
   }
   .detail-block .report-files {
     grid-template-columns: max-content minmax(0, 1fr);
