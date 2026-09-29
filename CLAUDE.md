@@ -25,7 +25,7 @@ tsukumo は Agent SDK（`@anthropic-ai/claude-agent-sdk`）で Claude Code を�
 
 ## セットアップ / 環境構築
 
-- mise で Node 26・pnpm 10 を入れる（`mise.toml` がバージョンを固定。TS は node でそのまま
+- mise で Node 26・pnpm 12 を入れる（`mise.toml` がバージョンを固定。TS は node でそのまま
   実行し、pnpm はパッケージ管理と `pnpm link --global` に使う）。`pnpm install` のあと
   **`pnpm run build` でブラウザ側を1回組み立てる**（`dist/browser/` は `.gitignore`。無いと起動が
   前提不足で止まる）

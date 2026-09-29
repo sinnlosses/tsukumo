@@ -74,7 +74,7 @@
 
 **前提条件**
 
-- [mise](https://mise.jdx.dev/) で入れた Node 26 と pnpm 10（TS をそのまま node で実行する。
+- [mise](https://mise.jdx.dev/) で入れた Node 26 と pnpm 12（TS をそのまま node で実行する。
   pnpm はパッケージ管理と `pnpm link --global` に使う）。リポジトリの `mise.toml` がバージョンを
   固定している
 - Claude Code が使える状態になっていること（Agent SDK が `claude` を子プロセスとして起こす）
@@ -85,7 +85,7 @@
 # 1. インストール
 git clone https://github.com/sinnlosses/tsukumo.git
 cd tsukumo
-mise install    # mise.toml が指す node@26 と pnpm@10 を入れる
+mise install    # mise.toml が指す node@26 と pnpm@12 を入れる
 pnpm install
 
 # 2. ブラウザ側を組み立てる（成果物は dist/browser/。起動時には組み立てないので、無いと起動が止まる）
