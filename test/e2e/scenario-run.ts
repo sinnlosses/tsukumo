@@ -37,6 +37,7 @@ import {
   readFakeSession,
   startupSteps,
 } from "../../src/server/session-driver/adapter/fake-driver.ts"
+import { PROTOCOL_VERSION } from "../../src/shared/frame.ts"
 
 /** サーバとブラウザの時計を凍らせる瞬間（走らせる日に依らない固定の値）。 */
 const FIXED_INSTANT = "2026-01-15T01:00:00Z"
@@ -217,6 +218,7 @@ async function openRoom(
     // （数字だけで当てると本文の数に当たりうる）。
     [url.host, `${url.hostname}:<port>`],
     [`"${url.port}"`, '"<port>"'],
+    [`"protocolVersion": ${PROTOCOL_VERSION}`, '"protocolVersion": "<protocol-version>"'],
   ]
 
   return {
