@@ -3,6 +3,25 @@
 `develop/direction.md` に書かれたユーザーからの指示を、タスク化した時点で**当時の記述のまま**
 ここへ移す（`docs/workflow.md`「指示メモ」参照）。新しいものを上に足す。**後から書き換えない。**
 
+## 2026-09-29 ドラフト2件（GH-120 の振り返り・GH-113 の副産物）
+
+（`develop/draft/` から。/plan-tasks で2件とも選ばれて承認され、GH-125・GH-126 になった）
+
+（出典: GH-120 の受け入れの振り返り → GH-125）
+
+### 名前やパターンで止める hook（`scripts/deny-broad-kill.ts`）の対象に vitest を足し、引用符の中身は判定から外す（振り返り: GH-120）
+
+- 札: 赤 制約違反（6回目）
+- 根拠: GH-120 の委譲先が、再現用に起こした vitest を片付けるときに `pkill -9 -f "vitest run --reporter=dot"` を打った。同じマシンの別の作業ツリー（tsukumo-task）の vitest まで止めた可能性があり、利用者に確認を頼んだ。`docs/workflow.md`「起こすときの作法」はパターンで止めることを禁じているが、hook の `SHARED_PROCESS`（`pnpm|node|tsukumo|claude|cli\.ts|vite`）は `\bvite\b` なので `vitest` に当たらず、通ってしまった。逆に、受け入れでメインが打った `grep -rn 'pkill\|killall' .claude/ …` は、引用符の中の `\|killall` をコマンドの位置と読まれて止められた（GH-111 で `deny-sed-in-place.ts` から外したのと同じ形の誤検知）
+- 出し先: 仕組みで塞ぐタスク1件。`scripts/deny-broad-kill.ts` の取り合う対象に `vitest`（と `playwright`・`chrome` など検証で並ぶもの）を足す。GH-111 で `deny-sed-in-place.ts` に入れた引用符・heredoc の除外を、2つの hook で共有して使う形にする。テストは `test/scripts/` に足す
+
+（出典: GH-113 の作業中に見つけたもの → GH-126）
+
+### E2E の current-work-long-tool が、題の「実行中のツールが出る」を一度も写していないのを直す
+
+- 根拠: `test/e2e/expected/current-work-long-tool.dom.json` は、作られたコミット（`7c3a61e0`）から今まで8回書き換わったが、どの版も `data-work-state="idle"`・「依頼待ち」で、いまの版には実行中のツールもいまの作業の札も出ていない。場面 `long-tool`（`test/fixture/fake-session.json`）は `request` を流さないので、`currentTurnSteps` が「依頼が一度も無い」に畳む（`docs/architecture/testing.md`「手で確かめること」が撮影の道具の側で同じ理由を書いている）。`it` の題は「ツールが走っているあいだ、帯の「いまの作業」に実行中のツールが出る」で、ページ全体の写しの書き換えに紛れて「揺れずに間違った期待値」になっていた。期待値の範囲を絞る設計を調べていて見つけた
+- 出し先: E2E を直すタスク1件。撮影の道具の `current-work-running` と同じく自分の `request` を持つ場面を使う（か `long-tool` に `request` を足す）。いまの作業の札はメインビューの下に浮かぶ位置へ移ったので、`it` の題も直す。期待値の範囲を絞る実装と同じ枝でやるなら、この場面の範囲に `main` を選んで札が写ることを確かめる
+
 ## 2026-09-29 テスト中のマシンの重さ（会話から）
 
 （会話の指示。エージェントが check を走らせながら負荷とメモリを測り、E2E の Chrome を1つに寄せる案と、並べる本数を 3＋3 に下げる案を勧めた返事。GH-121・GH-122 になった。取り残されていた headless の Chrome も同じ返事で止めた）
