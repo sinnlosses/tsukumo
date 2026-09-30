@@ -35,6 +35,7 @@ const AVAILABLE_REVIEW: AchievementReviewButton = {
 const CLOSED_DIARY_BOOK: DiaryBookModel = {
   open: false,
   openNote: "",
+  dialogLabel: "つくもの日記帳",
   page: { kind: "loading" },
   previous: undefined,
   next: undefined,

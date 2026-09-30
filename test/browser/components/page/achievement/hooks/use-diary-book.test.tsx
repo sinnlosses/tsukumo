@@ -122,6 +122,7 @@ describe("useDiaryBook（開閉）", () => {
     )
 
     expect(result.current.open).toBe(false)
+    expect(result.current.dialogLabel).toBe("つくもの日記帳")
 
     act(() => {
       result.current.onOpenFromCalendar("2026-09-16")
@@ -223,6 +224,7 @@ describe("useDiaryBook（書かれた日）", () => {
     expect(page.right.paragraphs[0]?.timeLabel).toBeUndefined()
     expect(page.right.paragraphs[1]?.timeLabel).toBe("〔22:10〕")
     expect(page.kanjiDate).toBe("九月十六日")
+    expect(result.current.dialogLabel).toBe("九月十六日の日記")
     expect(page.weekday).toBe("水曜日")
     expect(page.bookmark).toEqual({
       kind: "placed",
@@ -298,6 +300,7 @@ describe("useDiaryBook（白紙の日）", () => {
 
     const page = result.current.page
     expect(page.kind === "ready" ? page.bookmark.kind : undefined).toBe("pending")
+    expect(result.current.dialogLabel).toBe("九月二十三日のページ（まだ白紙）")
     if (page.kind !== "ready" || page.right.kind !== "blank") {
       throw new Error("blank のはず")
     }

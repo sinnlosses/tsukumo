@@ -31,6 +31,7 @@ import { rpc } from "../../../../domain/rpc.ts"
 import { useSession, useTurnRunning, type SessionDispatch } from "../../../../stores/session.ts"
 import { dayLabel } from "../../../../utils/day-label.ts"
 import { monthDayLabel } from "../../../../utils/month-day-label.ts"
+import { DIARY_BOOK_TITLE } from "../domain/diary-book-title.ts"
 import { currentWriterPortraitOf } from "../domain/diary-writer.ts"
 import { kanjiDateLabel, kanjiNumeral, kanjiWeekdayLabel } from "../domain/kanji-date.ts"
 import { LAMP_LABEL } from "../domain/lamp-label.ts"
@@ -132,6 +133,7 @@ export type DiaryBookTocMonth = {
 export type DiaryBookModel = {
   readonly open: boolean
   readonly openNote: string
+  readonly dialogLabel: string
   readonly page: DiaryBookPage
   readonly previous: { readonly date: string; readonly label: string } | undefined
   readonly next: { readonly date: string; readonly label: string } | undefined
@@ -197,6 +199,7 @@ export function useDiaryBook(params: {
     return {
       open: false,
       openNote: "",
+      dialogLabel: DIARY_BOOK_TITLE,
       page: { kind: "loading" },
       previous: undefined,
       next: undefined,
@@ -229,6 +232,7 @@ export function useDiaryBook(params: {
   return {
     open: true,
     openNote: OPEN_NOTE[state.source],
+    dialogLabel: dialogLabelOf(page),
     page,
     previous:
       previousDate === undefined
@@ -362,6 +366,15 @@ function blankReviewOf(
       onClose()
     },
   }
+}
+
+function dialogLabelOf(page: DiaryBookPage): string {
+  if (page.kind !== "ready") {
+    return DIARY_BOOK_TITLE
+  }
+  return page.right.kind === "written"
+    ? `${page.kanjiDate}の日記`
+    : `${page.kanjiDate}のページ（まだ白紙）`
 }
 
 function taskListOf(commitCount: number, doneTasks: AchievementDoneTasks): DiaryBookTaskList {

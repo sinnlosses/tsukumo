@@ -76,6 +76,7 @@ function openModel(overrides: Partial<DiaryBookModel> = {}): DiaryBookModel {
   return {
     open: true,
     openNote: "灯りの暦から開きました",
+    dialogLabel: "九月十六日の日記",
     page: WRITTEN_PAGE,
     previous: { date: "2026-08-30", label: "8月30日" },
     next: { date: "2026-09-24", label: "9月24日" },
