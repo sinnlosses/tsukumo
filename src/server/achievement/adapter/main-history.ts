@@ -15,33 +15,17 @@ import {
   achievementCalendarDateKeys,
   type AchievementCalendar,
 } from "../../../shared/achievement/achievement-calendar.ts"
-import type {
-  AchievementMilestone,
-  DailyAchievement,
-} from "../../../shared/achievement/achievement.ts"
-import {
-  closedBeadsTaskSummariesBefore,
-  taskIdOfBeadsId,
-  type BeadsIssue,
-} from "../../../shared/repository/beads-issue.ts"
+import type { DailyAchievement } from "../../../shared/achievement/achievement.ts"
+import { taskIdOfBeadsId, type BeadsIssue } from "../../../shared/repository/beads-issue.ts"
 import { localDateEpochRange, localDateKey, localTimeHHMM } from "../../adapter/local-time.ts"
 import { readBeadsIssues } from "../../repository/adapter/beads.ts"
 import { runGit, runGitCatFileBatch } from "../../repository/adapter/git.ts"
 import { readTaskStoreAt } from "../../repository/adapter/task-store.ts"
 import {
   achievementCommitCountsByDate,
-  achievementCommitsInRange,
-  commitMilestoneOf,
   countAchievementCommits,
-  deletedDoneTaskSummariesBefore,
-  doneTasksSince,
-  doneTaskSummaries,
-  graduationsOf,
   hasTaskTracking,
   taskFileIdOfPath,
-  taskMilestoneOf,
-  taskRegistrationDates,
-  unionDoneTaskSummaries,
   type AchievementCommit,
   type AchievementCommitWithDate,
   type DeletedTaskFile,
@@ -49,6 +33,7 @@ import {
   type TaskFileHistoryCommit,
   type TaskSnapshotSource,
 } from "../core/achievement.ts"
+import { dailyAchievementOf, epochSecondsOf } from "../core/daily-achievement.ts"
 
 /**
  * 今日以外の日の数を覚える入れ物。配線が1つ作り、{@link readAchievement} と {@link readCommitCalendar} の両方に渡す。
@@ -133,8 +118,6 @@ export async function readAchievement(
   }
 
   const range = localDateEpochRange(dateKey)
-  const startEpochSeconds = epochSecondsOf(range.startEpochMilliseconds)
-  const endEpochSeconds = epochSecondsOf(range.endEpochMilliseconds)
 
   const [commits, totalCommitsBeforeToday, headSource, beads] = await Promise.all([
     readCommitsSince(
@@ -149,18 +132,9 @@ export async function readAchievement(
   if (commits === undefined) {
     return { kind: "unavailable" }
   }
-  const commitCount = countAchievementCommits(commits, startEpochSeconds, endEpochSeconds)
-
-  // コミットの節目は、タスクの記録の有無に関わらず出す。
   if (totalCommitsBeforeToday === undefined) {
     return { kind: "unavailable" }
   }
-  const todaysCommitEpochSeconds = achievementCommitsInRange(
-    commits,
-    startEpochSeconds,
-    endEpochSeconds,
-  ).map((commit) => commit.committedAtEpochSeconds)
-  const commitMilestone = commitMilestoneOfDay(todaysCommitEpochSeconds, totalCommitsBeforeToday)
 
   if (headSource === "unavailable") {
     return { kind: "unavailable" }
@@ -171,17 +145,15 @@ export async function readAchievement(
   if (beads === "invalid" || (beads === "files" && !hasTaskTracking(headSource))) {
     return {
       kind: "ok",
-      achievement: {
-        kind: "known",
+      achievement: dailyAchievementOf({
         date: dateKey,
         today,
-        commitCount,
-        doneTasks: { kind: "unknown" },
-        graduations: [],
-        milestones: commitMilestone === undefined ? [] : [commitMilestone],
-        // 日記は日記が持つ一覧なので、ここでは常に「まだ振り返っていない」を返し、実際の値は配線層が差し替える。
-        diary: { kind: "none" },
-      },
+        range,
+        commits,
+        totalCommitsBeforeToday,
+        tasks: { kind: "untracked" },
+        timeOf: localTimeHHMM,
+      }),
     }
   }
 
@@ -210,41 +182,26 @@ export async function readAchievement(
     return { kind: "unavailable" }
   }
   const issues = beads === "files" ? [] : beads
-  const registeredOnById = taskRegistrationDates(history.commits, beadsCreatedOn(issues))
-
-  const endUnion = unionDoneTaskSummaries(
-    unionDoneTaskSummaries(
-      doneTaskSummaries(todaySource),
-      deletedDoneTaskSummariesBefore(deletedFiles, endEpochSeconds),
-    ),
-    closedBeadsTaskSummariesBefore(issues, range.endEpochMilliseconds),
-  )
-  const startUnion = unionDoneTaskSummaries(
-    unionDoneTaskSummaries(
-      doneTaskSummaries(yesterdaySource),
-      deletedDoneTaskSummariesBefore(deletedFiles, startEpochSeconds),
-    ),
-    closedBeadsTaskSummariesBefore(issues, range.startEpochMilliseconds),
-  )
-  const items = doneTasksSince(endUnion, startUnion)
-  const graduations = graduationsOf(items, registeredOnById, dateKey)
-  const taskMilestone = taskMilestoneOf(items, startUnion.size)
-  const milestones = [taskMilestone, commitMilestone].filter(
-    (milestone): milestone is AchievementMilestone => milestone !== undefined,
-  )
 
   return {
     kind: "ok",
-    achievement: {
-      kind: "known",
+    achievement: dailyAchievementOf({
       date: dateKey,
       today,
-      commitCount,
-      doneTasks: { kind: "known", items },
-      graduations,
-      milestones,
-      diary: { kind: "none" },
-    },
+      range,
+      commits,
+      totalCommitsBeforeToday,
+      tasks: {
+        kind: "tracked",
+        endSource: todaySource,
+        startSource: yesterdaySource,
+        deletedFiles,
+        issues,
+        historyCommits: history.commits,
+        beadsCreatedOn: beadsCreatedOn(issues),
+      },
+      timeOf: localTimeHHMM,
+    }),
   }
 }
 
@@ -276,21 +233,6 @@ function beadsCreatedOn(issues: readonly BeadsIssue[]): ReadonlyMap<string, stri
       localDateKey(issue.createdAtEpochMilliseconds),
     ]),
   )
-}
-
-/** {@link commitMilestoneOf} の結果を {@link AchievementMilestone} の形にする。 */
-function commitMilestoneOfDay(
-  todaysCommitEpochSeconds: readonly number[],
-  totalCommitsBeforeToday: number,
-): AchievementMilestone | undefined {
-  const crossed = commitMilestoneOf(todaysCommitEpochSeconds, totalCommitsBeforeToday)
-  return crossed === undefined
-    ? undefined
-    : {
-        kind: "commit",
-        count: crossed.count,
-        time: localTimeHHMM(crossed.committedAtEpochSeconds * 1000),
-      }
 }
 
 /**
@@ -385,18 +327,9 @@ export async function readCommitCalendar(
       epochSecondsOf(todayRange.startEpochMilliseconds),
       epochSecondsOf(todayRange.endEpochMilliseconds),
     )
-    return {
-      kind: "ok",
-      calendar: {
-        kind: "known",
-        today,
-        days: dateKeys.map((date) => ({
-          date,
-          commitCount: date === today ? todayCount : (cache.dailyCountOf(date) ?? 0),
-        })),
-        diaryDates: [],
-      },
-    }
+    return calendarOf(today, dateKeys, (date) =>
+      date === today ? todayCount : (cache.dailyCountOf(date) ?? 0),
+    )
   }
 
   const rangeStartRange = localDateEpochRange(rangeStart)
@@ -417,12 +350,20 @@ export async function readCommitCalendar(
     cache.rememberDailyCount(date, countsByDate.get(date) ?? 0)
   }
 
+  return calendarOf(today, dateKeys, (date) => countsByDate.get(date) ?? 0)
+}
+
+function calendarOf(
+  today: string,
+  dateKeys: readonly string[],
+  commitCountOf: (date: string) => number,
+): ReadCommitCalendarResult {
   return {
     kind: "ok",
     calendar: {
       kind: "known",
       today,
-      days: dateKeys.map((date) => ({ date, commitCount: countsByDate.get(date) ?? 0 })),
+      days: dateKeys.map((date) => ({ date, commitCount: commitCountOf(date) })),
       diaryDates: [],
     },
   }
@@ -461,6 +402,19 @@ async function readCommitsSince(
 
 /** {@link readCommitsSince} の出力を割る。壊れた1件（見出し行が読めない）はその1件だけ捨てる。 */
 function parseCommitLog(output: string): readonly AchievementCommit[] {
+  return parseCommitRecords(output, (bodyLines) => ({
+    changedFiles: bodyLines.filter((line) => line !== ""),
+  }))
+}
+
+/**
+ * `%H %ct` の見出し行で始まる、{@link COMMIT_RECORD_SEPARATOR} 区切りの記録を割る。
+ * 見出し行が読めない1件は捨て、読めた1件には見出し行より後の行から `bodyOf` が作った値を足す。
+ */
+function parseCommitRecords<Body extends object>(
+  output: string,
+  bodyOf: (bodyLines: readonly string[]) => Body,
+): readonly (Body & { readonly hash: string; readonly committedAtEpochSeconds: number })[] {
   return output.split(COMMIT_RECORD_SEPARATOR).flatMap((record) => {
     if (record === "") {
       return []
@@ -472,13 +426,7 @@ function parseCommitLog(output: string): readonly AchievementCommit[] {
     if (hash === undefined || hash === "" || !Number.isInteger(committedAtEpochSeconds)) {
       return []
     }
-    return [
-      {
-        hash,
-        committedAtEpochSeconds,
-        changedFiles: lines.slice(1).filter((line) => line !== ""),
-      },
-    ]
+    return [{ hash, committedAtEpochSeconds, ...bodyOf(lines.slice(1)) }]
   })
 }
 
@@ -642,19 +590,9 @@ async function readTaskFileHistory(
 
 /** {@link readTaskFileHistory} の出力を割る。壊れた1件（見出し行が読めない）はその1件だけ捨てる。 */
 function parseTaskFileHistoryLog(output: string): readonly RawTaskFileHistoryCommit[] {
-  return output.split(COMMIT_RECORD_SEPARATOR).flatMap((record) => {
-    if (record === "") {
-      return []
-    }
-    const lines = record.split("\n")
-    const header = lines[0]
-    const [hash, committedAt] = header === undefined ? [] : header.split(" ")
-    const committedAtEpochSeconds = committedAt === undefined ? NaN : Number(committedAt)
-    if (hash === undefined || hash === "" || !Number.isInteger(committedAtEpochSeconds)) {
-      return []
-    }
-    return [{ hash, committedAtEpochSeconds, changes: lines.slice(1).flatMap(taskFileChangeOf) }]
-  })
+  return parseCommitRecords(output, (bodyLines) => ({
+    changes: bodyLines.flatMap(taskFileChangeOf),
+  }))
 }
 
 /**
@@ -700,8 +638,4 @@ async function readDeletedTaskFiles(
  */
 function instantOf(epochMs: number): string {
   return Temporal.Instant.fromEpochMilliseconds(epochMs).toString()
-}
-
-function epochSecondsOf(epochMs: number): number {
-  return Math.floor(epochMs / 1000)
 }
