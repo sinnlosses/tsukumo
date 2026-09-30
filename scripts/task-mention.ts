@@ -52,7 +52,9 @@ const TABLE_SEPARATOR_ROW_PATTERN = /^\|[\s|:-]+\|$/u
 const ALLOWED_DATA_FILES = [
   "test/task-id.test.ts",
   "test/scripts/task-id.test.ts",
-  "test/server/achievement/core/achievement.test.ts",
+  "test/server/achievement/core/achievement-commit.test.ts",
+  "test/server/achievement/core/done-task-source.test.ts",
+  "test/server/achievement/core/task-file-history.test.ts",
   "test/server/achievement/core/daily-achievement.test.ts",
   "test/server/repository/adapter/task-summary.test.ts",
   "test/server/achievement/adapter/main-history.test.ts",

@@ -24,16 +24,17 @@ import { readTaskStoreAt } from "../../repository/adapter/task-store.ts"
 import {
   achievementCommitCountsByDate,
   countAchievementCommits,
-  hasTaskTracking,
-  taskFileIdOfPath,
   type AchievementCommit,
   type AchievementCommitWithDate,
+} from "../core/achievement-commit.ts"
+import { dailyAchievementOf, epochSecondsOf } from "../core/daily-achievement.ts"
+import { hasTaskTracking, type TaskSnapshotSource } from "../core/done-task-source.ts"
+import {
+  taskFileIdOfPath,
   type DeletedTaskFile,
   type TaskFileChange,
   type TaskFileHistoryCommit,
-  type TaskSnapshotSource,
-} from "../core/achievement.ts"
-import { dailyAchievementOf, epochSecondsOf } from "../core/daily-achievement.ts"
+} from "../core/task-file-history.ts"
 
 /**
  * 今日以外の日の数を覚える入れ物。配線が1つ作り、{@link readAchievement} と {@link readCommitCalendar} の両方に渡す。

@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest"
 
-import type { TaskSnapshotSource } from "../../../../src/server/achievement/core/achievement.ts"
 import {
   dailyAchievementOf,
   type DailyAchievementInput,
 } from "../../../../src/server/achievement/core/daily-achievement.ts"
+import type { TaskSnapshotSource } from "../../../../src/server/achievement/core/done-task-source.ts"
 import type { BeadsIssue } from "../../../../src/shared/repository/beads-issue.ts"
 
 const EMPTY_SOURCE: TaskSnapshotSource = {

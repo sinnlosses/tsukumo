@@ -13,18 +13,22 @@ import {
   achievementCommitsInRange,
   commitMilestoneOf,
   countAchievementCommits,
-  deletedDoneTaskSummariesBefore,
+  type AchievementCommit,
+} from "./achievement-commit.ts"
+import {
   doneTasksSince,
   doneTaskSummaries,
-  graduationsOf,
   taskMilestoneOf,
-  taskRegistrationDates,
   unionDoneTaskSummaries,
-  type AchievementCommit,
+  type TaskSnapshotSource,
+} from "./done-task-source.ts"
+import {
+  deletedDoneTaskSummariesBefore,
+  graduationsOf,
+  taskRegistrationDates,
   type DeletedTaskFile,
   type TaskFileHistoryCommit,
-  type TaskSnapshotSource,
-} from "./achievement.ts"
+} from "./task-file-history.ts"
 
 export function epochSecondsOf(epochMs: number): number {
   return Math.floor(epochMs / 1000)
