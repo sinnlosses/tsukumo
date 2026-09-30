@@ -1,0 +1,226 @@
+// セッションを起こす配線。
+// どの駆動で起こすか（本物の SDK か疑似セッションの fake driver か）と、続きから始めるセッションをどう探すかをここで決める。
+// 起こす順序そのものは `createSessionLaunch` に任せる（起動時も起こし直しも同じ関数を通る）。
+
+import type { CurrentCharacter } from "../current-character.ts"
+import type { CharacterPack } from "../server/character-pack/adapter/character-pack.ts"
+import { createChatSummary } from "../server/chat/adapter/chat-summary.ts"
+import { createPersonaMemory, readRememberedLines } from "../server/chat/adapter/persona-memory.ts"
+import { readChatTopics } from "../server/chat/core/chat-consolidation.ts"
+import { createChatRecall } from "../server/chat/core/chat-recall.ts"
+import type { Config } from "../server/core/config.ts"
+import { startFakeSession } from "../server/session-driver/adapter/fake-driver.ts"
+import { startSdkDriver } from "../server/session-driver/adapter/sdk-driver.ts"
+import {
+  listRepositorySessions,
+  readRestoredEvents,
+} from "../server/session-driver/adapter/sdk-session.ts"
+import {
+  createSessionCatalog,
+  EMPTY_SESSION_CATALOG,
+  type SessionCatalog,
+} from "../server/session-driver/core/session-catalog.ts"
+import type {
+  SessionDriver,
+  SessionMode,
+  SessionStart,
+} from "../server/session-driver/core/session-driver.ts"
+import { canResume, sessionTag } from "../server/session-driver/core/session-restore.ts"
+import {
+  readRememberedSessionDefault,
+  readRememberedVisitEnabled,
+  writeRememberedSessionDefault,
+} from "../server/session/adapter/remembered-default.ts"
+import type { SessionCommandPorts } from "../server/session/core/session-command.ts"
+import {
+  createSessionLaunch,
+  type SessionLaunchSeed,
+} from "../server/session/core/session-launch.ts"
+import type { SessionManagerOptions } from "../server/session/core/session-manager.ts"
+import {
+  takeSystemPromptAppend,
+  toSystemPromptMode,
+} from "../server/system-prompt/core/system-prompt.ts"
+import { readDismissedUsageProposalKeys } from "../server/usage-review/adapter/usage-proposal-dismissal.ts"
+import { expressionChoices } from "../shared/character-pack/expression-choice.ts"
+import type { SessionDefault } from "../shared/session/session-default.ts"
+import type { SessionEvent } from "../shared/session/session-event.ts"
+import type { WiringContext } from "./wiring-context.ts"
+
+export function wireSessionLaunch(options: {
+  readonly context: WiringContext
+  readonly config: Config
+  /** いま出しているキャラクター。起こすパックを決めるのも覚えるのもこれ越し。 */
+  readonly character: CurrentCharacter
+  /**
+   * ビューが実際に待ち受けているポート。セッションの印の目印がここから決まる（`sessionTag`）。
+   * 同じディレクトリで2つめを起こすとポートがずれ、目印も分かれるので、互いのセッションを取り合わない。
+   */
+  readonly viewPort: number
+  /** 最初のタブが繋がったら解ける約束。fake driver は疑似セッションをここから流し始める。本物の駆動は待たない。 */
+  readonly firstViewer: Promise<void>
+  /** 駆動を起こす直前に、起こす代の種を受け取る口。 */
+  readonly onLaunch: (seed: SessionLaunchSeed<CharacterPack>) => void
+}): {
+  readonly manager: Pick<SessionManagerOptions, "launchSession">
+  readonly sessionCommands: Pick<SessionCommandPorts, "rememberSessionDefault">
+} {
+  const { context, config, character, viewPort } = options
+  // 印の付いたセッションの一覧。ここで1回読み始め、起こし直しはメモリの一覧から続きを選ぶ。
+  // 続きを探さない起こし方なら何も読まない。
+  const sessionCatalog = canResume(config)
+    ? createSessionCatalog({ read: () => listRepositorySessions(context.cwd), now: context.now })
+    : EMPTY_SESSION_CATALOG
+  return {
+    manager: {
+      launchSession: createSessionLaunch<CharacterPack>({
+        choosePack: (selection) => character.choose(selection),
+        rememberPack: (pack) => character.remember(pack),
+        // 覚えた既定は起こすたびに読む（歯車で書き換えたあと、起こし直しで効く）。
+        readSessionDefault: () => readRememberedSessionDefault(),
+        // 覚えた「訪問」のオン・オフも起こすたびに読む。
+        // ここで読むのは「起こした直後の初期値」だけで、`visit.setEnabled` はこれとは別にいま動いているセッションにも即座に効く。
+        readVisitEnabled: () => readRememberedVisitEnabled(),
+        characterEvent: () => character.event(),
+        readChatTopics: (pack) => readChatTopics(createChatSummary(pack.name)),
+        readRememberedLines: (pack) => readRememberedLines(pack),
+        findResumeSession: (pack, chat) =>
+          findPackSessionToResume(sessionCatalog, pack.name, chat, viewPort),
+        listSessions: (pack, chat) =>
+          sessionCatalog.listChoices(sessionTag(pack.name, chat, viewPort)),
+        refreshSessions: () => sessionCatalog.refresh(),
+        startDriver: (seed, onEvent) => {
+          options.onLaunch(seed)
+          return startDriver({
+            seed,
+            context,
+            scene: config.fakeScene,
+            firstViewer: options.firstViewer,
+            viewPort,
+            onSessionMarked: (sessionId, tag) => sessionCatalog.noteMarked(sessionId, tag),
+            onEvent,
+          })
+        },
+        restoreEvents: (resumed, pack) =>
+          readRestoredEvents(resumed, expressionChoices(pack.definition)),
+      }),
+    },
+    sessionCommands: {
+      // 歯車から届いた既定は、覚えてから画面へ流し直すだけ（いまのセッションには効かない）。
+      rememberSessionDefault: (sessionDefault) => rememberSessionDefault(sessionDefault),
+    },
+  }
+}
+
+/**
+ * セッション駆動を1つ起こす。
+ * 疑似セッションがあれば fake driver（claude を起こさない）、無ければ Agent SDK の駆動。
+ * `scene` は fake driver のときだけ効く（名指しした場面を最初のタブが繋がったら流す。`TSUKUMO_FAKE_SCENE`）。
+ */
+function startDriver(options: {
+  readonly seed: SessionLaunchSeed<CharacterPack>
+  readonly context: WiringContext
+  readonly scene: string | undefined
+  readonly firstViewer: Promise<void>
+  readonly viewPort: number
+  /** 印が付いたセッションのIDと、付けた印を受け取る口。 */
+  readonly onSessionMarked: (sessionId: string, tag: string) => void
+  readonly onEvent: (event: SessionEvent) => void
+}): SessionDriver {
+  const { seed, context, onEvent } = options
+  const { chatArchive, cwd, inheritedEnv, fakeSession } = context
+  if (fakeSession !== undefined) {
+    return startFakeSession({
+      session: fakeSession,
+      scene: options.scene,
+      sessionDefault: seed.sessionDefault,
+      firstViewer: options.firstViewer,
+      onEvent,
+    })
+  }
+
+  const mode = sessionMode(seed, context, onEvent)
+  const tag = sessionTag(seed.pack.name, seed.chat, options.viewPort)
+
+  return startSdkDriver({
+    cwd,
+    expressions: expressionChoices(seed.pack.definition),
+    // 覚えた既定で起こす。起こしたあと帯から変えた値はそのセッション限りで、ここには戻らない。
+    permissionMode: seed.sessionDefault.permissionMode,
+    model: seed.sessionDefault.model,
+    effort: seed.sessionDefault.effort,
+    systemPromptAppend: takeSystemPromptAppend({
+      persona: seed.pack.persona ?? "",
+      mode: toSystemPromptMode(
+        mode,
+        chatArchive,
+        createChatSummary(seed.pack.name).read,
+        seed.start,
+        seed.pack.name,
+      ),
+    }),
+    start: seed.start,
+    tag,
+    onSessionMarked: (sessionId) => options.onSessionMarked(sessionId, tag),
+    mode,
+    inheritedEnv,
+    // 段に入るたびに読み直す（見直しの途中で見送りが増えても効く）。
+    dismissedUsageProposalKeys: () => readDismissedUsageProposalKeys(),
+    onEvent,
+  })
+}
+
+/**
+ * 歯車から届いた「新しいセッションの既定」を覚え、画面へ流すイベントを返す。
+ * 書き込みは失敗しても例外を投げないので、返すイベントは常に1つ。
+ */
+function rememberSessionDefault(sessionDefault: SessionDefault): SessionEvent {
+  writeRememberedSessionDefault(sessionDefault)
+  return { kind: "session-default-changed", sessionDefault }
+}
+
+/**
+ * そのモードのときだけ渡る口を1回の分岐でまとめる。
+ * 思い出す口（`recall` / `recall_episode`）は両方のモードに渡る。
+ * 覚えたことを書き換える口とあらすじの印の口は雑談だけで、仕事では `remember` / `forget` のツールが載らず、作業の文脈が人格に入らない。
+ */
+function sessionMode(
+  seed: SessionLaunchSeed<CharacterPack>,
+  context: WiringContext,
+  onEvent: (event: SessionEvent) => void,
+): SessionMode {
+  const chatRecall = createChatRecall(context.chatArchive, seed.pack.name, context.now)
+  if (!seed.chat) {
+    return { kind: "work", chatRecall }
+  }
+
+  return {
+    kind: "chat",
+    // 書けた・消せたときだけ、更新後の一覧を画面へ流し直す。
+    personaMemory: createPersonaMemory(seed.pack, context.cwd, undefined, (lines) =>
+      onEvent({ kind: "remembered-lines-changed", lines }),
+    ),
+    chatSummary: createChatSummary(seed.pack.name),
+    chatRecall,
+  }
+}
+
+/**
+ * これから起こすキャラクターパックの、そのモードの続きから始めるセッションを探す。
+ * 見つからないときと、探さない起こし方（`canResume` が偽で、一覧が空）のときは `{ kind: "new" }`（新規に起こす）。
+ *
+ * 雑談と仕事で引く印が違う（`sessionTag` の `chat`）。
+ * 雑談へ入っても仕事の会話は続きにならず、そのパックで一度も雑談のターンを終えていなければ新規から始まる。
+ * 同じディレクトリで2つめの tsukumo を起こしたときも目印が違うので、先に起きている側のセッションは引かない。
+ *
+ * 印はターンが終わってから少し遅れて付く（`SESSION_TAG_DELAY_MS`）ので、ターンを1つも終えずに離れたセッションは次に来たときに見つからず、新規から始まる。
+ */
+async function findPackSessionToResume(
+  sessionCatalog: SessionCatalog,
+  characterName: string,
+  chat: boolean,
+  viewPort: number,
+): Promise<SessionStart> {
+  const sessionId = await sessionCatalog.findToResume(sessionTag(characterName, chat, viewPort))
+  return sessionId === undefined ? { kind: "new" } : { kind: "resume", sessionId }
+}

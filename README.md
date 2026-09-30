@@ -312,8 +312,9 @@ node scripts/stop.ts           # 動いている tsukumo を一覧する（--por
 │   ├── main.ts             # 起動の段取り（前提チェック → キャラクター → 配信 → セッション）
 │   ├── current-character.ts  # いま出しているパックと選択肢の持ち主
 │   ├── view-delivery.ts    # ビューの配信（起動トークン・組み立てたもの・開いているタブ）
-│   └── session-start.ts    # セッションを1つ起こす（駆動の選択・続きの探索・配線）
-│                           #   ※ src/ 直下は配線層。全層を import してよい唯一の場所
+│   ├── session-start.ts    # セッションを1つ起こす（機能ごとの組み立てを結ぶ）
+│   └── wiring/             # 機能ごとの組み立て（駆動の選択・続きの探索は session-launch.ts）
+│                           #   ※ src/ 直下と wiring/ は配線層。全層を import してよい唯一の場所
 ├── test/                   # テスト（src/ と同じディレクトリ構成 ＋ architecture.test.ts）
 ├── story/                  # Storybook の story（src/ と同じディレクトリ構成。設定は .storybook/）
 ├── characters/             # キャラクター定義と素材（tsukumo-spirit が既定、local/ は .gitignore）

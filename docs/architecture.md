@@ -97,7 +97,7 @@ server/<機能>/adapter（外の世界に触る場所。1ファイル = 1境界�
 Claude Code（SDK が起こす子プロセス）
 
 shared（語彙・イベント・状態・reducer・zod スキーマ）は browser と core の両方が import する。
-辺は adapter ──▶ core ──▶ shared ◀── browser（core → adapter は禁止。結ぶのは src/ 直下の配線だけ）
+辺は adapter ──▶ core ──▶ shared ◀── browser（core → adapter は禁止。結ぶのは src/ 直下と src/wiring/ の配線だけ）
 ```
 
 ### 層と依存の向き
@@ -122,11 +122,11 @@ shared（語彙・イベント・状態・reducer・zod スキーマ）は brows
 | `server/core`    | サーバ側の純粋な判断。セッション管理・駆動の契約・イベントの検証・ポートの決定・設定の解釈。**`server/<機能>/core/` と、共有の `server/core/`**                                                                                                                                                 | `shared` / `core`                                       | サーバ（Node）   |
 | `server/adapter` | 外の世界に触る場所。SDK・WebSocket・HTTP・ホスト・ファイル・子プロセス・fake driver。**`server/<機能>/adapter/` と、共有の `server/adapter/`**                                                                                                                                                  | `shared` / `core` / `adapter`                           | サーバ（Node）   |
 | `browser`        | React の部品・hooks・CSS・Markdown の変換                                                                                                                                                                                                                                                       | `shared`（React などの npm は可）                       | ブラウザ         |
-| `src/` 直下      | 配線（composition root。`cli.ts` / `main.ts` と起動の段取り）                                                                                                                                                                                                                                   | すべて                                                  | サーバ           |
+| `src/` 直下      | 配線（composition root。`cli.ts` / `main.ts` と起動の段取り。機能ごとの組み立ての `src/wiring/` を含む）                                                                                                                                                                                        | すべて                                                  | サーバ           |
 
 - **`core` と `browser` は互いを import しない。** 両者が知っているのは `shared` だけ
 - **`core → adapter` は禁止。** 辺は `adapter ──▶ core ──▶ shared ◀── browser` の一方通行で、
-  `core` と `adapter` を結ぶのは `src/` 直下の配線だけ。**機能をまたいでも同じ**で、どの機能の
+  `core` と `adapter` を結ぶのは `src/` 直下と `src/wiring/` の配線だけ。**機能をまたいでも同じ**で、どの機能の
   `core/` もどの機能の `adapter/` も import しない（層は機能より先に効く）。**`core` は `node:` / SDK（`@anthropic-ai/*`）/
   `ws` を import しない**ので、`core` から外の世界へ出る道は無い
 - **`adapter` は1ファイル = 1つの境界。** インターフェースは切らない（実装が2つあるもの —
@@ -178,8 +178,19 @@ shared（語彙・イベント・状態・reducer・zod スキーマ）は brows
   `adapter → 別の機能の core` で層の辺と同じ向きなので、ファイルの単位では輪にならない
 - **束ねる機能は `session/` の1つ。** `session-manager.ts` は外の世界に触らないので `core` だが、
   各機能の判断（訪問の見張り・日記・トークン消費・雑談のアーカイブ）を読んで1つのセッションに
-  まとめる。**外の世界の実装を選んで渡すのは配線（`src/` 直下の `session-start.ts` など）**、
+  まとめる。**外の世界の実装を選んで渡すのは配線（`src/` 直下の `session-start.ts` と `src/wiring/`）**、
   渡されたものを使って順序と状態を持つのが `session/`、という境目
+- **セッションの配線は機能ごとに組み立てる。** `src/wiring/<機能>.ts` の `wire<機能>` が、その機能の
+  「`createSessionManager` へ渡す口」（`manager`）と「`createSocketRouter` へ渡す口」（`commands`、
+  `session` の口の一部なら `sessionCommands`）を返し、`startSession` はそれを spread で結ぶだけにする。
+  機能を足すときに触るのは、その機能の組み立てと、結ぶ行だけ。口の揃いは結ぶ側の型検査が見る。
+  2つ以上の組み立てが読む値（作業先・時計・引き継ぐ環境・疑似セッション・会話のアーカイブ・成果の
+  入れ物）だけを `WiringContext`（`src/wiring/wiring-context.ts`）にまとめて渡し、1つの組み立てしか
+  読まないものはその中で作る。組み立てどうしの受け渡しは口で渡す（起こす組み立てが代を起こすたびに
+  日記の組み立ての `noteLaunched` を呼ぶ）。`createSessionManager` の引数を機能ごとの束に変える案は
+  採らない（`session-manager.ts` は割らない。`docs/architecture/adr/0021-feature-state-fold-in-feature.md`）。
+  配線には単体テストを持たない（守る振る舞いは E2E が本物のプロセスで、口の揃いは型検査が守り、
+  単体で書くには adapter を差し替える本番に要らない口が要る）
 - **Agent SDK を import してよいのは、機能の `adapter/` の直下の `sdk-` で始まるファイルだけ**
   （原則3）。1つの箱にはまとめず、**その境界が属する機能に置く**（「core と adapter」）
 - **機能を足すときは、検査の機能の一覧と下の表に足す**（知らない機能のディレクトリと、
@@ -221,7 +232,7 @@ shared（語彙・イベント・状態・reducer・zod スキーマ）は brows
 - **受け手は3種**（`write` / `call` / `session` の判別可能な合併型。`command-receiver.ts`）。`session` の
   受け手は `CommandSession`（`command-session.ts`）を受け取り、**`session` の表にだけ書ける**（型が
   `session/core/` にあるので、葉の機能からは物理的に書けない）。書き込み口は各機能の `ports` にあり、
-  中身を選ぶのは `src/session-start.ts`
+  中身を選ぶのはその機能の組み立て（`src/wiring/<機能>.ts`）
 - **束ねるのを配線に置く理由**: 表を `session/core/` で束ねると、`session` が `usage-review` と
   `host` を読む辺（いまの表に無い）が要り、`session` がまた全部を知る場所に戻る。配線なら
   **機能どうしの辺の表は増えない**。葉の機能の表と手続きが読むのは `shared` と共有の `core`
@@ -291,6 +302,7 @@ import する。**`browser/features/` の「機能」は置かれる機能（「
 ```
 src/                          配線（composition root）。cli.ts（入口）・main.ts（起動の段取り）・
                               router.ts（全機能の手続きを束ねる）ほか、起動と接続を進める数ファイル
+  wiring/<機能>.ts            セッションの配線を機能ごとに組み立てる（上の「サーバの機能と、機能どうしの辺」）
   types/                      どの層にも属さない ambient 宣言（import されない *.d.ts）だけを置く
   shared/                     契約・イベント・状態・reducer・zod スキーマ（両側が読む語彙）。直下はプロトコルだけ
     <機能>/                   機能の語彙。名前はサーバの機能と同じ（上の「shared の機能」）
@@ -569,8 +581,8 @@ HTTP/WebSocket・ホスト・ファイル・子プロセス）に触るならそ
   「全体構成」）。サーバ側は機能ごとのディレクトリ（`src/server/<機能>/`）の中で
   `core` と `adapter` に割り、機能どうしの辺は「全体構成」の表にある組だけにする。`shared` に置くのは両側の契約と、`SessionState` から純粋に導ける
   ものだけで、「受け取る／決める／描く」という役割の分割ではない。**サーバ側は判断（`core`）と
-  外の世界に触る境界（`adapter`）に割れていて、`core → adapter` は禁止**（結ぶのは `src/` 直下の
-  配線だけ）。**許した依存の辺以外は `test/architecture.test.ts` が落とす**
+  外の世界に触る境界（`adapter`）に割れていて、`core → adapter` は禁止**（結ぶのは `src/` 直下と
+  `src/wiring/` の配線だけ）。**許した依存の辺以外は `test/architecture.test.ts` が落とす**
 - **原則3**: ホスト（ターミナル環境）・外部コマンド・OSに依存するものは
   **`adapter/`（機能の中か共有の箱）の1ファイルに閉じ込める**（1ファイル = 1つの境界）。ホストが Orca から
   別のものに変わっても、差し替えがここだけで済むようにする
@@ -613,7 +625,8 @@ HTTP/WebSocket・ホスト・ファイル・子プロセス）に触るならそ
 4. `view-delivery.ts` が**起動トークン**を1つ作り、`server.ts` を `127.0.0.1` で listen させる
    （`--dev` のときは Vite の開発サーバもここで差し込む。`docs/architecture/build.md`「作り直しを押す仕組み」）
 5. `session-start.ts` が `session-manager.ts` にセッションを1つ作る。駆動は `TSUKUMO_DRIVER` が
-   `fake` なら fake driver、それ以外は SDK。復元（「セッションの復元と複数化」）はここで判定する。起こしたセッションは
+   `fake` なら fake driver、それ以外は SDK。復元（「セッションの復元と複数化」）はここで判定する
+   （どちらも起こす組み立ての `src/wiring/session-launch.ts`）。起こしたセッションは
    `view-delivery.ts` の `connect` で `/ws` に繋ぐ
 6. ホストのポートで `http://127.0.0.1:<port>/?t=<token>` を開く（失敗しても続行）
 

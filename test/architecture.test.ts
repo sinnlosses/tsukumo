@@ -12,7 +12,8 @@ import { commentLineIndexes } from "./comment-line.ts"
 // 3層（shared / server / browser）で、サーバ側は機能ごとに判断（`server/<機能>/core/`）と
 // 境界（`server/<機能>/adapter/`）の2段、どの機能にも属さない共有の箱は `server/core/`
 // `server/adapter/` の直下（docs/architecture.md「サーバの機能と、機能どうしの辺」）。配線は
-// `src/` 直下のファイル（`cli.ts` / `main.ts` と、そこから呼ばれる起動の段取り）。
+// `src/` 直下のファイル（`cli.ts` / `main.ts` と、そこから呼ばれる起動の段取り）と、機能ごとの
+// 組み立ての `src/wiring/`。
 // `adapter ──▶ core ──▶ shared ◀── browser` で、`core → adapter` は禁止（機能をまたいでも
 // 同じに効く）。機能どうしの辺は `SERVER_FEATURE_IMPORTS` にある組だけで、層ごとに循環させない。
 
@@ -1705,6 +1706,9 @@ function layerOf(relPath: string): Layer {
     return "cli"
   }
   const [top] = relPath.split("/")
+  if (top === "wiring") {
+    return "cli"
+  }
   if (top === "types" && relPath.endsWith(".d.ts")) {
     return "ambient"
   }

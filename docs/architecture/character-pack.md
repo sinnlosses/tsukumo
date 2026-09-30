@@ -34,7 +34,7 @@ characters/<name>/
   入れ替わる。`startSdkDriver` が `mcpServers` を毎回組み直すので `setMcpServers` は要らない）
 - **キャラクターごと・モードごとに別のセッションを持つ**（印の形と探し方は `docs/requirements.md`
   4.8「鍵」）。印の組み立ても読み取りも `session-driver/core/session-restore.ts` の `sessionTag` /
-  `readSessionMark` 1箇所で、`session-start.ts` はそれを探す側と付ける側の両方に渡す
+  `readSessionMark` 1箇所で、配線（`src/wiring/session-launch.ts`）はそれを探す側と付ける側の両方に渡す
 
 **探索先は3箇所で、同名は後ろが勝つ**（`listCharacterPacks`）:
 
@@ -151,7 +151,7 @@ characters/<name>/
   組む。日付のファイルとエピソード索引は**名前で見分ける**（窓の側は `YYYY-MM-DD.jsonl` にだけ
   当たる正規表現でファイルを選ぶ）
 - **口（型）は `session-driver/core/session-driver.ts`、ファイルに触るのは上の adapter、結ぶのは配線層
-  （`src/session-start.ts`）。** 置き場を差し替えられる `root` 引数も同じ手で持つ（テストがホームを
+  （`src/session-start.ts` と `src/wiring/`）。** 置き場を差し替えられる `root` 引数も同じ手で持つ（テストがホームを
   汚さない）
 - **アーカイブへ書くのは `session/core/session-manager.ts` の `receive`**（イベントが1件ずつ通る
   場所）。雑談でも仕事でも書き、行にそのときのモードを持たせる。復元の再生は駆動と別の口
