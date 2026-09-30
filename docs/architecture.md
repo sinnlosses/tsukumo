@@ -1,6 +1,6 @@
 # アーキテクチャ詳細
 
-最終更新: 2026-09-28。ステータス: **正典**。
+最終更新: 2026-09-30。ステータス: **正典**。
 
 責務: 層と機能の辺・置き場所の基準・プロトコルの不変条件・動きの順序・安全の境界など、コードを
 1ファイル読んでも分からない構造の規則だけを持つ、全体構造の入口。ブラウザ側・キャラクターパック・
@@ -253,7 +253,7 @@ shared（語彙・イベント・状態・reducer・zod スキーマ）は brows
 
 | 置き場                      | 置くもの                                                                                                                                                                                                                                                     |
 | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `shared/<機能>/`            | その機能の語彙（型・検証・純粋な導出）                                                                                                                                                                                                                       |
+| `shared/<機能>/`            | その機能の語彙（型・検証・純粋な導出）と、その機能だけが動かす `SessionState` の欄の畳み方（「SessionState」）                                                                                                                                               |
 | `shared/session/`           | `SessionEvent` / `SessionState` / `applySessionEvent` と、**`SessionState` から純粋に導くだけのもの**（`main-view.ts` `turn-step.ts` `portrait-motion.ts` など）。サーバの `session/` と同じく**各機能の語彙を束ねる**ので、ほかの機能を読む向きの辺が集まる |
 | `shared/` の直下            | **どの機能にも属さないプロトコル**だけ: フレームの封筒（`frame.ts`）・コマンドの共通の形（`command.ts`）・手続きの束（`rpc.ts`）                                                                                                                             |
 | `shared/contract/<名前>.ts` | 手続きの契約。**名前は手続きの名前**（`rpc.ts` の鍵と `<名前>-procedure.ts`）で、機能の名前とは1対1でないので機能のディレクトリへは寄せない                                                                                                                  |
@@ -761,6 +761,20 @@ Layout に出す。復帰したときにセッションを続きから起こし�
 補完の候補）は `main-view.ts` / `command-suggestion.ts` に分けてある。状態を持つのはサーバ側の `session-manager` と
 ブラウザ側（`browser/stores/session.ts` の zustand の store）だけで、「イベント1件でどう変わるか」はすべてここのテストで守れる。
 
+**1つの機能だけが動かす欄の畳み方は、その機能の `shared/<機能>/` に置く**（訪問の `applyVisitEvent` の形）。
+当てるのは、その機能のイベントだけで動き、値の置き換えより多い判断を持つ欄の組だけで、値を写すだけの
+イベントと、記録・ターン・セリフ・API の不調の芯は `session-state.ts` に残す。
+
+- **`SessionState` の形は平らなまま変えない。** 部分の reducer は自分の欄だけを受けて返し、`SessionState` を
+  受け取らない（別の部分の状態が要るときは入口が値にして渡す）
+- **またがるイベント**（`turn-finished`・`session-ended`・`conversation-cleared`・`history-restored`）は
+  `applySessionEvent` の1つの `case` で畳み、各部分は名前の付いた関数で反応を出す
+- **テスト**は部分の reducer を直に呼ぶものを `test/shared/<機能>/` に置き、`session-state.test.ts` には芯と、
+  委ねていること・またがるイベントの効き方だけを残す
+
+理由・分けないと決めたもの（`sdk-message.ts`・`session-manager.ts`）・採らなかった案は
+`docs/architecture/adr/0021-feature-state-fold-in-feature.md`。
+
 ### ClientCommand
 
 **節の名前は移す前のまま**（コマンドの和 `ClientCommand` は手続きへ移して消えた）。コマンドの一覧と
@@ -926,25 +940,26 @@ doc コメントが正典で、機能の数え方・契機・上限は `docs/req
 
 ## 設計判断（なぜ今の形なのか）
 
-| ファイル                                                     | 判断                                                                         |
-| ------------------------------------------------------------ | ---------------------------------------------------------------------------- |
-| `docs/architecture/adr/0001-render-in-browser.md`            | 描く層をブラウザ側へ移す（2026-09-13）                                       |
-| `docs/architecture/adr/0002-render-migration-tech-choice.md` | 描く層の移行で決めた技術選択（2026-09-13〜17）                               |
-| `docs/architecture/adr/0003-orca-owns-worktree.md`           | worktree を用意するのは orca で、tsukumo はやらない（2026-09-23）            |
-| `docs/architecture/adr/0004-turn-number-from-record.md`      | ターンの通し番号は記録が持ち、位置では決めない（2026-09-22）                 |
-| `docs/architecture/adr/0005-css-module-output-in-temp.md`    | CSS Modules の成果物は一時ディレクトリへ出して読み、すぐ消す（2026-09-20）   |
-| `docs/architecture/adr/0006-prebuild-browser.md`             | ブラウザ側は事前に組み立てて置く（2026-09-21）                               |
-| `docs/architecture/adr/0007-vite-build-cli.md`               | 組み立ては `vite build` の CLI を子プロセスで起こす（2026-09-27）            |
-| `docs/architecture/adr/0008-sdk-instead-of-tui.md`           | Claude Code の TUI を捨て、SDK で動かす                                      |
-| `docs/architecture/adr/0009-speech-via-tool.md`              | セリフはテキストの規約ではなく、ツール呼び出しで受け取る                     |
-| `docs/architecture/adr/0010-report-via-tool.md`              | レポートはテキストではなく `report` ツールで受け取る                         |
-| `docs/architecture/adr/0011-separate-shell-and-app.md`       | 箱（Orca のタブ）と中身（Web アプリ）を分ける                                |
-| `docs/architecture/adr/0012-bundle-vendor-library.md`        | 外部ライブラリは CDN から読まず、同梱して自分で配る                          |
-| `docs/architecture/adr/0013-tolerate-missing-display.md`     | 表示物が1つ欠けても起動失敗にしない                                          |
-| `docs/architecture/adr/0014-no-bundled-character-asset.md`   | キャラクター素材はリポジトリに同梱しない                                     |
-| `docs/architecture/adr/0015-single-host-port.md`             | ホスト依存の操作は1つのポートにまとめる                                      |
-| `docs/architecture/adr/0016-html-instead-of-terminal.md`     | 表示はターミナル描画をやめて、すべて HTML にした                             |
-| `docs/architecture/adr/0017-serve-from-local-http.md`        | HTML はローカルの HTTP サーバから配る（ファイルに書き出さない）              |
-| `docs/architecture/adr/0018-single-page-view.md`             | ビューは1枚のページにまとめる                                                |
-| `docs/architecture/adr/0019-layer-as-directory.md`           | 層をディレクトリで表し、依存の向きをテストで縛る                             |
-| `docs/architecture/adr/0020-mixed-purity-in-adapter-file.md` | 境界のファイルの中に、外の世界に触らない関数が混じっていてよい（2026-09-16） |
+| ファイル                                                      | 判断                                                                         |
+| ------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `docs/architecture/adr/0001-render-in-browser.md`             | 描く層をブラウザ側へ移す（2026-09-13）                                       |
+| `docs/architecture/adr/0002-render-migration-tech-choice.md`  | 描く層の移行で決めた技術選択（2026-09-13〜17）                               |
+| `docs/architecture/adr/0003-orca-owns-worktree.md`            | worktree を用意するのは orca で、tsukumo はやらない（2026-09-23）            |
+| `docs/architecture/adr/0004-turn-number-from-record.md`       | ターンの通し番号は記録が持ち、位置では決めない（2026-09-22）                 |
+| `docs/architecture/adr/0005-css-module-output-in-temp.md`     | CSS Modules の成果物は一時ディレクトリへ出して読み、すぐ消す（2026-09-20）   |
+| `docs/architecture/adr/0006-prebuild-browser.md`              | ブラウザ側は事前に組み立てて置く（2026-09-21）                               |
+| `docs/architecture/adr/0007-vite-build-cli.md`                | 組み立ては `vite build` の CLI を子プロセスで起こす（2026-09-27）            |
+| `docs/architecture/adr/0008-sdk-instead-of-tui.md`            | Claude Code の TUI を捨て、SDK で動かす                                      |
+| `docs/architecture/adr/0009-speech-via-tool.md`               | セリフはテキストの規約ではなく、ツール呼び出しで受け取る                     |
+| `docs/architecture/adr/0010-report-via-tool.md`               | レポートはテキストではなく `report` ツールで受け取る                         |
+| `docs/architecture/adr/0011-separate-shell-and-app.md`        | 箱（Orca のタブ）と中身（Web アプリ）を分ける                                |
+| `docs/architecture/adr/0012-bundle-vendor-library.md`         | 外部ライブラリは CDN から読まず、同梱して自分で配る                          |
+| `docs/architecture/adr/0013-tolerate-missing-display.md`      | 表示物が1つ欠けても起動失敗にしない                                          |
+| `docs/architecture/adr/0014-no-bundled-character-asset.md`    | キャラクター素材はリポジトリに同梱しない                                     |
+| `docs/architecture/adr/0015-single-host-port.md`              | ホスト依存の操作は1つのポートにまとめる                                      |
+| `docs/architecture/adr/0016-html-instead-of-terminal.md`      | 表示はターミナル描画をやめて、すべて HTML にした                             |
+| `docs/architecture/adr/0017-serve-from-local-http.md`         | HTML はローカルの HTTP サーバから配る（ファイルに書き出さない）              |
+| `docs/architecture/adr/0018-single-page-view.md`              | ビューは1枚のページにまとめる                                                |
+| `docs/architecture/adr/0019-layer-as-directory.md`            | 層をディレクトリで表し、依存の向きをテストで縛る                             |
+| `docs/architecture/adr/0020-mixed-purity-in-adapter-file.md`  | 境界のファイルの中に、外の世界に触らない関数が混じっていてよい（2026-09-16） |
+| `docs/architecture/adr/0021-feature-state-fold-in-feature.md` | 機能だけが動かす状態の畳み方は、その機能の shared に置く（2026-09-30）       |
