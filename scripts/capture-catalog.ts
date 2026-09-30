@@ -164,7 +164,7 @@ const TASK_BOARD_SELECTOR = 'button:has-text("一覧を見る")'
 
 /**
  * 帯の「いまの作業」の外枠（`data-work-state` を持つ div）の中の押す口。広い画面の帯と
- * 狭い画面の「≡」の面の両方に同じ部品が置かれる（`ScreenNavCurrentWorkPill`）ので、
+ * 狭い画面の「≡」の面の両方に同じ部品が置かれる（`CurrentWorkPill`）ので、
  * 見えているほうだけを `:visible` で絞る。狭い画面では先に {@link MENU_TOGGLE_SELECTOR} を
  * 押さないとこちらは見えない（{@link applyPreparation} が当たらなかった手を飛ばすので、
  * 広い画面ではこの前の「≡」を押す手が黙って空振りする）。

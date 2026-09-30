@@ -93,7 +93,7 @@
   mask: var(--icon-chevron-down) center / contain no-repeat;
 }
 /* 窓の中のやり取りの一覧。
-   DOM は `.turn-title-group` の中だが、`position` を持たないその枠を飛ばして`.turn-header`（position: sticky）を基準にヘッダーいっぱいの幅で重ねる（`.screen-nav-work-list` と同じ「押し下げない」手口だが、`.turn-title-group` は狭い画面でタイトルの下に折り返して幅が読めないので、一覧側は常にヘッダー全幅を使う）。
+   DOM は `.turn-title-group` の中だが、`position` を持たないその枠を飛ばして`.turn-header`（position: sticky）を基準にヘッダーいっぱいの幅で重ねる（`.current-work-list` と同じ「押し下げない」手口だが、`.turn-title-group` は狭い画面でタイトルの下に折り返して幅が読めないので、一覧側は常にヘッダー全幅を使う）。
    `left: 0; right: 0` は `.turn-header` の padding box 基準になるので、`.turn-card` の内側にきっちり収まり、どの幅でも横スクロールを出さない。 */
 .turn-history {
   position: absolute;

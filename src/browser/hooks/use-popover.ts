@@ -1,11 +1,11 @@
-// 帯の札を押すと開くポップオーバーの開閉。
-// 札は広い画面の帯と「≡」の面の2箇所に描かれるので、押した口はコールバック ref で集める。
+// 押すと開くポップオーバーの開閉。
+// 押す口を2つ以上持てるので、押した口はコールバック ref で集める。
 
 import { useRef, useState, type RefCallback, type RefObject } from "react"
 
-import { useDismissSignal, type DismissCause } from "../../../../hooks/use-dismiss-signal.ts"
+import { useDismissSignal, type DismissCause } from "./use-dismiss-signal.ts"
 
-export type NavPopover = {
+export type Popover = {
   readonly open: boolean
   readonly onToggle: () => void
   /** フォーカスは動かさずに閉じる。 */
@@ -13,15 +13,15 @@ export type NavPopover = {
   readonly toggleRef: RefCallback<HTMLButtonElement>
 }
 
-export type NavPopoverOptions = {
-  /** 帯全体（`<nav>`）。外側を押したかの判定に使う。 */
-  readonly navRef: RefObject<HTMLElement | null>
+export type PopoverOptions = {
+  /** この箱の外を押すと閉じる。 */
+  readonly rootRef: RefObject<HTMLElement | null>
   /** 開閉が変わるたびに、開閉の直後に呼ぶ。 */
   readonly onReset: () => void
 }
 
-export function useNavPopover(options: NavPopoverOptions): NavPopover {
-  const { navRef, onReset } = options
+export function usePopover(options: PopoverOptions): Popover {
+  const { rootRef, onReset } = options
   const [open, setOpen] = useState(false)
   const toggleNodes = useRef(new Set<HTMLButtonElement>())
 
@@ -50,14 +50,14 @@ export function useNavPopover(options: NavPopoverOptions): NavPopover {
   function onDismiss(cause: DismissCause): void {
     close()
     if (cause === "escape") {
-      // 押せる状態にある札は1つだけ（もう片方は `display: none` で `.focus()` が効かない）。
+      // 押せる状態にある口は1つだけ（もう片方は `display: none` で `.focus()` が効かない）。
       for (const node of toggleNodes.current) {
         node.focus()
       }
     }
   }
 
-  useDismissSignal({ open, rootRef: navRef, onDismiss })
+  useDismissSignal({ open, rootRef, onDismiss })
 
   return { open, onToggle, close, toggleRef }
 }

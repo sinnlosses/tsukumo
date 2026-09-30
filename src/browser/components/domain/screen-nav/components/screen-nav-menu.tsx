@@ -12,13 +12,13 @@
 import clsx from "clsx"
 import type { ReactElement } from "react"
 
+import { CurrentWorkPill } from "../../../../features/current-work/components/current-work-pill.tsx"
 import { Button } from "../../../ui/button/button.tsx"
 import { Text } from "../../../ui/text/text.tsx"
 import type { ScreenNavMenu as Menu, ScreenNavParts } from "../hooks/use-screen-nav.ts"
 import shellStyles from "../screen-nav.module.css"
 import { ScreenNavCharacterPicker } from "./screen-nav-character-picker.tsx"
 import { ScreenNavChatModeToggle } from "./screen-nav-chat-mode.tsx"
-import { ScreenNavCurrentWorkPill } from "./screen-nav-current-work.tsx"
 import { ScreenNavGate } from "./screen-nav-gate.tsx"
 import styles from "./screen-nav-menu.module.css"
 import { ScreenNavModelPermissionSelect } from "./screen-nav-model-permission.tsx"
@@ -83,7 +83,7 @@ export function ScreenNavMenu(props: ScreenNavMenuProps): ReactElement {
           {parts.gates.map((gate) => (
             <ScreenNavGate key={gate.screen} gate={gate} onSelect={parts.onSelect} />
           ))}
-          <ScreenNavCurrentWorkPill work={parts.work} variant="band" />
+          <CurrentWorkPill work={parts.work} variant="inline" />
           <ScreenNavModelPermissionSelect modelPermission={parts.modelPermission} />
           <ScreenNavSettingsGear settings={parts.settings} />
         </div>

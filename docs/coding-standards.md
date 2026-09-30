@@ -769,7 +769,7 @@ store には値だけでなく、React に属さない口も同じく持たせ�
 `setState()` は React の外からも呼べるので、`afterEach` で初期値に戻す（`getInitialState()` を
 `setState(..., true)` で丸ごと入れ直す。会話の姿は `test/browser/session-store.ts` の `putSession` が
 戻してから入れる）
-（`test/browser/components/domain/screen-nav/current-work.test.tsx`）。
+（`test/browser/features/current-work/current-work.test.tsx`）。
 
 ### TanStack Query と queryOptions
 

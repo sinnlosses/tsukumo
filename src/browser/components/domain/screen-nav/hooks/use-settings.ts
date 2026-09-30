@@ -20,7 +20,7 @@
 // マウント時に一度だけ `readCurrentColor`（`getComputedStyle`）で読み、以降は書いた値をそのまま state へ流す（書く → 描画中に読み直す、を避ける）。
 // 反映済みの状態で読めるのは、保存済みの上書きを `documentElement` へ差す1回を入口が済ませているため。
 //
-// 開閉は `useNavPopover` に任せ、開閉のたびに色の注意書きを消す。
+// 開閉は `usePopover` に任せ、開閉のたびに色の注意書きを消す。
 
 import { useState, type RefCallback, type RefObject } from "react"
 
@@ -47,6 +47,7 @@ import {
   saveRevealSpeed,
   type RevealSpeed,
 } from "../../../../domain/reveal-speed.ts"
+import { usePopover } from "../../../../hooks/use-popover.ts"
 import { useSession } from "../../../../stores/session.ts"
 import { useDebouncedCallback } from "../../../../utils/debounce.ts"
 import {
@@ -54,7 +55,6 @@ import {
   visitToggleValueOf,
   type VisitToggleValue,
 } from "../domain/visit-toggle-label.ts"
-import { useNavPopover } from "./use-nav-popover.ts"
 
 export type ScreenNavSettingsColor = {
   readonly key: AppearanceColorKey
@@ -152,8 +152,8 @@ export function useSettings(navRef: RefObject<HTMLElement | null>): ScreenNavSet
     ink: readCurrentColor("ink"),
   }))
   const [colorNotice, setColorNotice] = useState<ScreenNavSettingsColorNotice>(NO_COLOR_NOTICE)
-  const { open, onToggle, toggleRef } = useNavPopover({
-    navRef,
+  const { open, onToggle, toggleRef } = usePopover({
+    rootRef: navRef,
     onReset: () => setColorNotice(NO_COLOR_NOTICE),
   })
   const saveOverride = useDebouncedCallback<string, AppearanceColorOverride>((_key, value) => {

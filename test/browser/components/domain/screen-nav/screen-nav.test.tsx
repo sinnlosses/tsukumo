@@ -85,7 +85,7 @@ describe("ScreenNav", () => {
   it("会話の画面の帯には、いまの作業の札とモデル・effort・許可モードを置かない", () => {
     renderScreenNav()
 
-    expect(document.querySelector(".screen-nav > .screen-nav-work")).toBeNull()
+    expect(document.querySelector(".screen-nav > .screen-nav-work-slot")).toBeNull()
     expect(document.querySelector(".screen-nav > .screen-nav-model-permission")).toBeNull()
     expect(document.querySelector(".screen-nav > .screen-nav-settings")).not.toBeNull()
   })
@@ -250,7 +250,7 @@ describe("ScreenNav", () => {
 
     fireEvent.click(toggle)
 
-    expect(document.querySelector(".screen-nav-panel .screen-nav-work-word")?.textContent).toBe(
+    expect(document.querySelector(".screen-nav-panel .current-work-word")?.textContent).toBe(
       "答え待ち",
     )
   })

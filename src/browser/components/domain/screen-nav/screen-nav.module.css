@@ -7,7 +7,7 @@
    部品ごとの見た目は `screen-nav-*.module.css` に分かれている。
    ここに残すのは、どの部品も単独では持てない帯全体の組み立てと、狭い画面（760px 以下）の `@media` 一式。
 
-   `@media` の中で他の部品の class を指す規則（`.screen-nav > .screen-nav-chat-mode` のように広い画面で隠す・`.screen-nav-panel .screen-nav-work` のように「≡」の面の中で並べ直す）もここに置く。
+   `@media` の中で他の部品の class を指す規則（`.screen-nav > .screen-nav-chat-mode` のように広い画面で隠す・`.screen-nav-panel .screen-nav-model-permission` のように「≡」の面の中で並べ直す）もここに置く。
    CSS Modules は class 名をファイルごとにハッシュ化するので、ここで参照する class 名はこのファイル自身のハッシュになり、部品側のファイルのものとは一致しない。
    そのため各部品の tsx がこのファイルも import し、このファイルのハッシュを自分の要素にも重ねて渡す。 */
 .screen-nav {
@@ -44,6 +44,14 @@
   gap: 2px;
   min-width: 0;
 }
+/* いまの作業の札を置く箱。口の右に置き、幅が足りないときに最初に縮む。
+   モデル・許可モードは `margin-left: auto` で右端へ寄せるだけで縮めない。 */
+.screen-nav-work-slot {
+  display: flex;
+  flex: 1 1 auto;
+  justify-content: center;
+  min-width: 0;
+}
 
 @media (max-width: 760px) {
   /* 段を増やさない。会話の画面はいまあるタブ帯（.layout-tabs）の右端 44px に重ねる。
@@ -70,7 +78,7 @@
   .screen-nav > .screen-nav-identity,
   .screen-nav > .screen-nav-divider,
   .screen-nav > .screen-nav-chat-mode,
-  .screen-nav > .screen-nav-work,
+  .screen-nav > .screen-nav-work-slot,
   .screen-nav > .screen-nav-model-permission,
   .screen-nav > .screen-nav-settings {
     display: none;
@@ -130,22 +138,6 @@
   .screen-nav-panel .screen-nav-model-permission {
     flex-direction: column;
     margin-left: 0;
-  }
-  /* いまの作業の札は面いっぱいの幅にし、押すと重ねずにその場で下に広がる。
-     `.screen-nav-work` は既定で横並びの flex なので、一覧を `position: static` にするここでは `flex-direction: column` にしないと札の右に並んでしまう。 */
-  .screen-nav-panel .screen-nav-work {
-    width: 100%;
-    flex-direction: column;
-  }
-  .screen-nav-panel .screen-nav-work-toggle {
-    width: 100%;
-    justify-content: center;
-  }
-  .screen-nav-panel .screen-nav-work-list {
-    position: static;
-    width: 100%;
-    max-width: none;
-    margin-top: 0.3rem;
   }
   /* 設定の歯車も面いっぱいの幅にし、押すと重ねずにその場で下に広がる。
      歯車の丸のままでは面の幅が余るので、ここだけ角丸の長方形にして横に伸ばす。 */

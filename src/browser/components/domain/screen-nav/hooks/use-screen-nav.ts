@@ -11,6 +11,10 @@ import { useRef, useState, type RefObject } from "react"
 
 import { FRAME_ERROR_REASON } from "../../../../../shared/frame.ts"
 import { roomName } from "../../../../../shared/view-server/room.ts"
+import {
+  useCurrentWork,
+  type CurrentWork,
+} from "../../../../features/current-work/hooks/use-current-work.ts"
 import { useDismissSignal } from "../../../../hooks/use-dismiss-signal.ts"
 import { SCREEN_NAV_ITEMS, type Screen } from "../../../../stores/location-hash.ts"
 import {
@@ -20,7 +24,6 @@ import {
 import { useScreen, useScreenHref } from "../../../../stores/screen.tsx"
 import { useSession, useTurnRunning } from "../../../../stores/session.ts"
 import { useCharacterPicker, type ScreenNavCharacterPicker } from "./use-character-picker.ts"
-import { useCurrentWork, type ScreenNavCurrentWork } from "./use-current-work.ts"
 import {
   useSessionSwitcher,
   type ScreenNavSessionSwitcher,
@@ -63,7 +66,7 @@ export type ScreenNavParts = {
   readonly gates: readonly ScreenNavGate[]
   readonly chatMode: ScreenNavChatMode
   readonly modelPermission: ModelPermissionControl
-  readonly work: ScreenNavCurrentWork
+  readonly work: CurrentWork
   readonly settings: ScreenNavSettings
   /** 口を押したあとに「≡」を閉じる呼び先（広い画面では開いていないので何も起きない）。 */
   readonly onSelect: () => void

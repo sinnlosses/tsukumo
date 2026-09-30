@@ -1,7 +1,6 @@
-// 帯のまん中の札「いまの作業」と、押すと開く依頼の手順の一覧。
+// 札「いまの作業」と、押すと開く依頼の手順の一覧。
 //
-// 同じ部品を広い画面の帯と狭い画面の「≡」の面の両方に置く（どちらを出すかは CSS の `@media` が決める）。
-// 開閉の状態は1つの hook が持つので、どちらから押しても同じ一覧が開く。
+// 同じ部品を2箇所に置いてよい。開閉の状態は1つの hook が持つので、どちらから押しても同じ一覧が開く。
 // id は `useId()` でこの器ごとに振る（`aria-controls` が指す一覧の id が重ならないようにする）。
 // Esc の戻り先として札の DOM を預ける口（`work.toggleRef`）も、2箇所ぶんを集めるコールバック ref。
 //
@@ -10,33 +9,32 @@
 import clsx from "clsx"
 import { useId, useRef, type ReactElement } from "react"
 
-import { Button } from "../../../ui/button/button.tsx"
-import { Text } from "../../../ui/text/text.tsx"
+import { Button } from "../../../components/ui/button/button.tsx"
+import { Text } from "../../../components/ui/text/text.tsx"
 import { useCurrentWorkListMaxHeight } from "../hooks/use-current-work-list-max-height.ts"
 import type {
-  ScreenNavCurrentWork,
-  ScreenNavCurrentWorkBackgroundTask,
-  ScreenNavCurrentWorkPlanPhase,
-  ScreenNavCurrentWorkStep,
-  ScreenNavCurrentWorkStepGroup,
+  CurrentWork,
+  CurrentWorkBackgroundTask,
+  CurrentWorkPlanPhase,
+  CurrentWorkStep,
+  CurrentWorkStepGroup,
 } from "../hooks/use-current-work.ts"
-import shellStyles from "../screen-nav.module.css"
-import styles from "./screen-nav-current-work.module.css"
+import styles from "./current-work-pill.module.css"
 
 /**
- * 札の置き場所。
- * `band` は帯のまん中（と「≡」の面の中）、`capsule` は会話の画面のメインビューの下に浮かぶ札（`CurrentWorkCapsule`）。
+ * 札の形。
+ * `dropdown` は一覧が札の真下に重なって開く。`inline` は札が幅いっぱいで、一覧がその場で下に広がる。
  * `capsule` は一覧を札の上へ開き、動いている間は印を回る輪にする。
  */
-export type ScreenNavCurrentWorkVariant = "band" | "capsule"
+export type CurrentWorkVariant = "dropdown" | "inline" | "capsule"
 
-export type ScreenNavCurrentWorkProps = {
-  readonly work: ScreenNavCurrentWork
-  readonly variant: ScreenNavCurrentWorkVariant
+export type CurrentWorkPillProps = {
+  readonly work: CurrentWork
+  readonly variant: CurrentWorkVariant
 }
 
 /** 回る輪を印にする状態（何かが動いている間）。 */
-const SPINNING_STATES: ReadonlySet<ScreenNavCurrentWork["state"]> = new Set([
+const SPINNING_STATES: ReadonlySet<CurrentWork["state"]> = new Set([
   "running",
   "diary",
   "background",
@@ -48,17 +46,16 @@ const MAX_TOOL_TEXT_LENGTH = 8000
 /** 答え待ちが質問のときに一覧へ出す口。 */
 const GO_TO_QUESTION_LABEL = "質問へ"
 
-export function ScreenNavCurrentWorkPill(props: ScreenNavCurrentWorkProps): ReactElement {
+export function CurrentWorkPill(props: CurrentWorkPillProps): ReactElement {
   const { work } = props
   // 預け先はここで分解して受ける。
   // `work.toggleRef` の形のまま `ref` に渡すと、`react(refs)` が `work` への参照ごとレンダー中の ref の読み書きとみなして落ちる。
   const { toggleRef } = work
   const listId = useId()
 
-  // `shellStyles` の class は見た目を持たず、`screen-nav.module.css` の `@media` の選択子を当てるためだけに重ねる。
   return (
     <div
-      className={clsx(styles["screen-nav-work"], shellStyles["screen-nav-work"])}
+      className={styles["current-work"]}
       data-work-state={work.state}
       data-chat-idle={work.chatIdle}
       data-variant={props.variant}
@@ -66,7 +63,7 @@ export function ScreenNavCurrentWorkPill(props: ScreenNavCurrentWorkProps): Reac
       <button
         type="button"
         ref={toggleRef}
-        className={clsx(styles["screen-nav-work-toggle"], shellStyles["screen-nav-work-toggle"])}
+        className={styles["current-work-toggle"]}
         aria-expanded={work.open}
         aria-controls={listId}
         onClick={work.onToggle}
@@ -74,20 +71,20 @@ export function ScreenNavCurrentWorkPill(props: ScreenNavCurrentWorkProps): Reac
         {props.variant === "capsule" && SPINNING_STATES.has(work.state) ? (
           <SpinnerMark />
         ) : (
-          <span className={styles["screen-nav-work-mark"]} aria-hidden="true">
+          <span className={styles["current-work-mark"]} aria-hidden="true">
             {work.mark}
           </span>
         )}
-        <span className={styles["screen-nav-work-word"]}>{work.wordLabel}</span>
+        <span className={styles["current-work-word"]}>{work.wordLabel}</span>
         {work.phase.kind === "shown" && (
           <>
-            <span className={styles["screen-nav-work-sep"]} aria-hidden="true" />
+            <span className={styles["current-work-sep"]} aria-hidden="true" />
             <Text
               element="span"
               size="inherit"
               tone="ink"
               weight="inherit"
-              className={styles["screen-nav-work-phase"]}
+              className={styles["current-work-phase"]}
             >
               {work.phase.label}
             </Text>
@@ -95,13 +92,13 @@ export function ScreenNavCurrentWorkPill(props: ScreenNavCurrentWorkProps): Reac
         )}
         {work.summary.kind === "text" && (
           <>
-            <span className={styles["screen-nav-work-sep"]} aria-hidden="true" />
+            <span className={styles["current-work-sep"]} aria-hidden="true" />
             <Text
               element="span"
               size="inherit"
               tone="inherit"
               weight="inherit"
-              className={styles["screen-nav-work-summary"]}
+              className={styles["current-work-summary"]}
             >
               {work.summary.label}
             </Text>
@@ -117,40 +114,35 @@ export function ScreenNavCurrentWorkPill(props: ScreenNavCurrentWorkProps): Reac
 function SpinnerMark(): ReactElement {
   return (
     <svg
-      className={styles["screen-nav-work-spinner"]}
+      className={styles["current-work-spinner"]}
       width="14"
       height="14"
       viewBox="0 0 24 24"
       aria-hidden="true"
     >
-      <circle className={styles["screen-nav-work-spinner-track"]} cx="12" cy="12" r="9" />
-      <path className={styles["screen-nav-work-spinner-arc"]} d="M12 3a9 9 0 0 1 9 9" />
+      <circle className={styles["current-work-spinner-track"]} cx="12" cy="12" r="9" />
+      <path className={styles["current-work-spinner-arc"]} d="M12 3a9 9 0 0 1 9 9" />
     </svg>
   )
 }
 
 function CurrentWorkList(props: {
   readonly id: string
-  readonly work: ScreenNavCurrentWork
-  readonly variant: ScreenNavCurrentWorkVariant
+  readonly work: CurrentWork
+  readonly variant: CurrentWorkVariant
 }): ReactElement {
   const { work } = props
   const listRef = useRef<HTMLDivElement>(null)
   useCurrentWorkListMaxHeight(listRef, props.variant === "capsule")
 
   return (
-    <div
-      id={props.id}
-      ref={listRef}
-      className={clsx(styles["screen-nav-work-list"], shellStyles["screen-nav-work-list"])}
-      role="region"
-    >
+    <div id={props.id} ref={listRef} className={styles["current-work-list"]} role="region">
       <Text
         element="p"
         size="inherit"
         tone="inherit"
         weight="semibold"
-        className={styles["screen-nav-work-heading"]}
+        className={styles["current-work-heading"]}
       >
         {work.wordLabel}
         {work.pendingHint.kind === "input" ? "。入力欄の上で答えられる" : ""}
@@ -166,7 +158,7 @@ function CurrentWorkList(props: {
           disclosure={{ kind: "none" }}
           ariaHasPopup={undefined}
           title={undefined}
-          className={styles["screen-nav-work-go-to-question"]}
+          className={styles["current-work-go-to-question"]}
           onClick={work.pendingHint.onGoToQuestion}
         >
           {GO_TO_QUESTION_LABEL}
@@ -179,11 +171,11 @@ function CurrentWorkList(props: {
             size="inherit"
             tone="ink-quiet"
             weight="inherit"
-            className={styles["screen-nav-work-plan-heading"]}
+            className={styles["current-work-plan-heading"]}
           >
             {work.plan.headingLabel}
           </Text>
-          <ol className={styles["screen-nav-work-plan"]}>
+          <ol className={styles["current-work-plan"]}>
             {work.plan.phases.map((phase) => (
               <CurrentWorkPlanPhase key={phase.key} phase={phase} />
             ))}
@@ -191,17 +183,17 @@ function CurrentWorkList(props: {
         </>
       )}
       {work.runningStep.kind !== "none" && (
-        <div className={styles["screen-nav-work-full"]}>
+        <div className={styles["current-work-full"]}>
           <Text
             element="p"
             size="inherit"
             tone="ink-quiet"
             weight="inherit"
-            className={styles["screen-nav-work-full-heading"]}
+            className={styles["current-work-full-heading"]}
           >
             実行中の {work.runningStep.toolName}
           </Text>
-          <pre className={styles["screen-nav-work-full-text"]}>
+          <pre className={styles["current-work-full-text"]}>
             <code>{truncateForDisplay(work.runningStep.fullText)}</code>
           </pre>
         </div>
@@ -213,11 +205,11 @@ function CurrentWorkList(props: {
             size="inherit"
             tone="ink-quiet"
             weight="inherit"
-            className={styles["screen-nav-work-background-heading"]}
+            className={styles["current-work-background-heading"]}
           >
             {work.backgroundList.headingLabel}
           </Text>
-          <ul className={styles["screen-nav-work-background"]}>
+          <ul className={styles["current-work-background"]}>
             {work.backgroundList.tasks.map((task) => (
               <CurrentWorkBackgroundRow key={task.key} task={task} />
             ))}
@@ -231,7 +223,7 @@ function CurrentWorkList(props: {
             size="inherit"
             tone="ink-quiet"
             weight="inherit"
-            className={styles["screen-nav-work-steps-heading"]}
+            className={styles["current-work-steps-heading"]}
           >
             {work.stepList.headingLabel}
           </Text>
@@ -249,7 +241,7 @@ function CurrentWorkList(props: {
               disclosure={{ kind: "none" }}
               ariaHasPopup={undefined}
               title={undefined}
-              className={styles["screen-nav-work-toggle-all"]}
+              className={styles["current-work-toggle-all"]}
               onClick={work.stepList.onToggleExpanded}
             >
               {work.stepList.toggleAll.label}
@@ -268,16 +260,14 @@ function CurrentWorkList(props: {
 }
 
 /** 段取りの段1つ。済んだ・今・残りの見分けは頭の字（済 / 今 / 番号）が持ち、枠と地は補助。 */
-function CurrentWorkPlanPhase(props: {
-  readonly phase: ScreenNavCurrentWorkPlanPhase
-}): ReactElement {
+function CurrentWorkPlanPhase(props: { readonly phase: CurrentWorkPlanPhase }): ReactElement {
   const { phase } = props
   return (
     <li
       className={clsx(
-        styles["screen-nav-work-plan-phase"],
-        phase.state === "done" && styles["screen-nav-work-plan-phase-done"],
-        phase.state === "current" && styles["screen-nav-work-plan-phase-current"],
+        styles["current-work-plan-phase"],
+        phase.state === "done" && styles["current-work-plan-phase-done"],
+        phase.state === "current" && styles["current-work-plan-phase-current"],
       )}
     >
       <b>{phase.mark}</b>
@@ -287,9 +277,7 @@ function CurrentWorkPlanPhase(props: {
 }
 
 /** 段で区切った手順のまとまり。段の小見出しがあれば手順の上に置く。 */
-function CurrentWorkStepGroup(props: {
-  readonly group: ScreenNavCurrentWorkStepGroup
-}): ReactElement {
+function CurrentWorkStepGroup(props: { readonly group: CurrentWorkStepGroup }): ReactElement {
   const { group } = props
   return (
     <>
@@ -299,12 +287,12 @@ function CurrentWorkStepGroup(props: {
           size="inherit"
           tone="inherit"
           weight="semibold"
-          className={styles["screen-nav-work-phase-heading"]}
+          className={styles["current-work-phase-heading"]}
         >
           {group.heading.label}
         </Text>
       )}
-      <ul className={styles["screen-nav-work-steps"]}>
+      <ul className={styles["current-work-steps"]}>
         {group.steps.map((step) => (
           <CurrentWorkStepRow key={step.key} step={step} />
         ))}
@@ -318,12 +306,12 @@ function CurrentWorkStepGroup(props: {
  * 種類の語は手順のツール名と同じ等幅の列に置く。
  */
 function CurrentWorkBackgroundRow(props: {
-  readonly task: ScreenNavCurrentWorkBackgroundTask
+  readonly task: CurrentWorkBackgroundTask
 }): ReactElement {
   const { task } = props
   return (
-    <li className={styles["screen-nav-work-background-task"]}>
-      <span className={styles["screen-nav-work-step-mark"]} aria-hidden="true">
+    <li className={styles["current-work-background-task"]}>
+      <span className={styles["current-work-step-mark"]} aria-hidden="true">
         …
       </span>{" "}
       <Text
@@ -331,7 +319,7 @@ function CurrentWorkBackgroundRow(props: {
         size="inherit"
         tone="inherit"
         weight="inherit"
-        className={styles["screen-nav-work-background-kind"]}
+        className={styles["current-work-background-kind"]}
       >
         {task.kindLabel}
       </Text>
@@ -341,13 +329,13 @@ function CurrentWorkBackgroundRow(props: {
 }
 
 /** 手順1件。サブエージェントの中（nested）は1段下げる。失敗は `<details>` で開いて読める。 */
-function CurrentWorkStepRow(props: { readonly step: ScreenNavCurrentWorkStep }): ReactElement {
+function CurrentWorkStepRow(props: { readonly step: CurrentWorkStep }): ReactElement {
   const { step } = props
   const classes = clsx(
-    step.nested && styles["screen-nav-work-step-nested"],
-    step.status.kind === "done" && styles["screen-nav-work-step-done"],
-    step.status.kind === "running" && styles["screen-nav-work-step-running"],
-    step.status.kind === "failed" && styles["screen-nav-work-step-failed"],
+    step.nested && styles["current-work-step-nested"],
+    step.status.kind === "done" && styles["current-work-step-done"],
+    step.status.kind === "running" && styles["current-work-step-running"],
+    step.status.kind === "failed" && styles["current-work-step-failed"],
   )
 
   return (
@@ -356,7 +344,7 @@ function CurrentWorkStepRow(props: { readonly step: ScreenNavCurrentWorkStep }):
         <FailureDetail label={step.label} input={step.input} output={step.status.output} />
       ) : (
         <>
-          <span className={styles["screen-nav-work-step-mark"]} aria-hidden="true">
+          <span className={styles["current-work-step-mark"]} aria-hidden="true">
             {step.status.kind === "running" ? "…" : "✓"}
           </span>{" "}
           {step.label}
@@ -373,7 +361,7 @@ function FailureDetail(props: {
   readonly output: string
 }): ReactElement {
   return (
-    <details className={styles["screen-nav-work-failure"]}>
+    <details className={styles["current-work-failure"]}>
       <summary>
         <Text element="span" size="inherit" tone="state-ng" weight="semibold" className="">
           失敗
@@ -381,10 +369,10 @@ function FailureDetail(props: {
         {props.label}
       </summary>
       {/* 出力が先。開いてまず読みたいのは「何が起きたか」で、引数はその裏取りに使う。 */}
-      <pre className={styles["screen-nav-work-failure-output"]}>
+      <pre className={styles["current-work-failure-output"]}>
         <code>{truncateForDisplay(props.output)}</code>
       </pre>
-      <pre className={styles["screen-nav-work-failure-input"]}>
+      <pre className={styles["current-work-failure-input"]}>
         <code>{truncateForDisplay(stringifyToolInput(props.input))}</code>
       </pre>
     </details>

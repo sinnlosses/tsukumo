@@ -10,9 +10,9 @@
 
 import type { ReactElement } from "react"
 
+import { CurrentWorkPill } from "../../../features/current-work/components/current-work-pill.tsx"
 import { ScreenNavCharacterPicker } from "./components/screen-nav-character-picker.tsx"
 import { ScreenNavChatModeToggle } from "./components/screen-nav-chat-mode.tsx"
-import { ScreenNavCurrentWorkPill } from "./components/screen-nav-current-work.tsx"
 import { ScreenNavGate } from "./components/screen-nav-gate.tsx"
 import { ScreenNavMenu } from "./components/screen-nav-menu.tsx"
 import { ScreenNavModelPermissionSelect } from "./components/screen-nav-model-permission.tsx"
@@ -51,7 +51,9 @@ export function PresentationalScreenNav({
       </div>
       {current !== "conversation" && (
         <>
-          <ScreenNavCurrentWorkPill work={parts.work} variant="band" />
+          <div className={styles["screen-nav-work-slot"]}>
+            <CurrentWorkPill work={parts.work} variant="dropdown" />
+          </div>
           <ScreenNavModelPermissionSelect modelPermission={parts.modelPermission} />
         </>
       )}

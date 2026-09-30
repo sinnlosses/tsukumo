@@ -2,15 +2,15 @@
 // 送るのは `session.switchCharacter`（起こし直し）。
 //
 // 選び口は2箇所に描かれる（広い画面の帯・狭い画面の「≡」の面の中）。
-// 開閉は `useNavPopover` に任せる。
+// 開閉は `usePopover` に任せる。
 
 import type { RefCallback, RefObject } from "react"
 import { doNothing } from "remeda"
 
 import { FRAME_ERROR_REASON } from "../../../../../shared/frame.ts"
 import { characterFaceInfo, type CharacterFaceInfo } from "../../../../domain/character-face.ts"
+import { usePopover } from "../../../../hooks/use-popover.ts"
 import { useSession, useTurnRunning } from "../../../../stores/session.ts"
-import { useNavPopover } from "./use-nav-popover.ts"
 
 export type CharacterPickerOption = {
   readonly name: string
@@ -44,7 +44,7 @@ export function useCharacterPicker(
   const character = useSession((session) => session.state.character)
   const packs = useSession((session) => session.state.characterPacks)
   const turnInProgress = useTurnRunning()
-  const { open, onToggle, close, toggleRef } = useNavPopover({ navRef, onReset: doNothing })
+  const { open, onToggle, close, toggleRef } = usePopover({ rootRef: navRef, onReset: doNothing })
 
   const face = characterFaceInfo(character)
   return {

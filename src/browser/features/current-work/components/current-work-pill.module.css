@@ -1,10 +1,8 @@
-/* 帯のまん中の札「いまの作業」と、押すと開く依頼の手順の一覧。
-   広い画面で帯から消す規則と、狭い画面の「≡」の面の中で縦に積む規則は `screen-nav.module.css` の @media が持つ。 */
+/* 札「いまの作業」と、押すと開く依頼の手順の一覧。 */
 
-/* いまの作業の札。口の右に置き、幅が足りないときに最初に縮む。
-   モデル・許可モードは `margin-left: auto` で右端へ寄せるだけで縮めない。
-   `position: relative` は一覧（.screen-nav-work-list）をこの札の真下に重ねるための基準。 */
-.screen-nav-work {
+/* いまの作業の札。置かれた箱の空きを埋め、幅が足りないときに最初に縮む。
+   `position: relative` は一覧（.current-work-list）をこの札の真下に重ねるための基準。 */
+.current-work {
   position: relative;
   display: flex;
   flex: 1 1 auto;
@@ -13,9 +11,9 @@
 }
 /* 幅は帯の空きをつねに埋めつつ、最大 600px で頭打ちにする（見本の値）。
    `width: 100%` にするのは、中身の幅にすると要約（コマンドなど）が変わるたびに札そのものが伸び縮みしてチカチカするため。
-   600px を超える空きは `.screen-nav-work` の `justify-content: center` が中央へ寄せる。
-   `box-sizing: border-box` は padding・border のぶんが `.screen-nav-work` からはみ出さないため（content-box のままだと約24px あふれる）。 */
-.screen-nav-work-toggle {
+   600px を超える空きは `.current-work` の `justify-content: center` が中央へ寄せる。
+   `box-sizing: border-box` は padding・border のぶんが `.current-work` からはみ出さないため（content-box のままだと約24px あふれる）。 */
+.current-work-toggle {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -35,7 +33,7 @@
   cursor: pointer;
 }
 /* 丸は 7px。周りの薄い輪は `currentColor` を20%だけ透かして重ねるので、マークの色が状態ごとに変わればそのまま輪の色も追従する。 */
-.screen-nav-work-mark {
+.current-work-mark {
   display: inline-flex;
   flex: none;
   align-items: center;
@@ -47,7 +45,7 @@
 }
 /* いちばん長い状態語「止まっている」（6字）に幅を合わせ、状態が変わるたびに区切り（|）と要約の始まりの位置がずれるのを抑える。
    雑談中の呼びかけ（「<名前> とおしゃべり中」）は名前の長さが決まらないので揃えない。 */
-.screen-nav-work-word {
+.current-work-word {
   flex: none;
   min-width: 6em;
   color: var(--ink);
@@ -55,15 +53,15 @@
   white-space: nowrap;
 }
 /* 縦の仕切り（見本の値: 高さ14px・幅1px）。字の「|」では幅が1pxに揃わないので、中身の無い要素の地で描く。 */
-.screen-nav-work-sep {
+.current-work-sep {
   flex: none;
   width: 1px;
   height: 14px;
   background: color-mix(in srgb, var(--rule), var(--accent) 25%);
 }
 /* 実行中の手順の要約だけを縮める（要約の末尾が「…」になる）。
-   見本は12pxの等幅だが、`docs/architecture/screen-design.md`「Type」の段を増やさず、既存の13px（`.screen-nav-work-toggle` の `font-size` を継ぐ）に宛てる。 */
-.screen-nav-work-summary {
+   見本は12pxの等幅だが、`docs/architecture/screen-design.md`「Type」の段を増やさず、既存の13px（`.current-work-toggle` の `font-size` を継ぐ）に宛てる。 */
+.current-work-summary {
   flex: 1 1 auto;
   min-width: 0;
   overflow: hidden;
@@ -72,7 +70,7 @@
   font-family: var(--font-mono);
 }
 /* 今の段。要約より先に縮まないよう上限だけを持ち、入りきらなければ末尾を「…」にする。 */
-.screen-nav-work-phase {
+.current-work-phase {
   flex: 0 1 auto;
   min-width: 0;
   max-width: 40%;
@@ -81,44 +79,44 @@
   white-space: nowrap;
 }
 /* 状態の語ごとの色。語そのものが状態を言うので、色だけで伝えてはいない。 */
-.screen-nav-work[data-work-state="stopped"] .screen-nav-work-mark,
-.screen-nav-work[data-work-state="stopped"] .screen-nav-work-word {
+.current-work[data-work-state="stopped"] .current-work-mark,
+.current-work[data-work-state="stopped"] .current-work-word {
   color: var(--state-ng);
 }
-.screen-nav-work[data-work-state="pending"] .screen-nav-work-mark,
-.screen-nav-work[data-work-state="pending"] .screen-nav-work-word {
+.current-work[data-work-state="pending"] .current-work-mark,
+.current-work[data-work-state="pending"] .current-work-word {
   color: var(--state-warn);
 }
-.screen-nav-work[data-work-state="running"] .screen-nav-work-toggle,
-.screen-nav-work[data-work-state="diary"] .screen-nav-work-toggle {
+.current-work[data-work-state="running"] .current-work-toggle,
+.current-work[data-work-state="diary"] .current-work-toggle {
   border-color: var(--accent);
 }
-.screen-nav-work[data-work-state="running"] .screen-nav-work-mark,
-.screen-nav-work[data-work-state="diary"] .screen-nav-work-mark {
+.current-work[data-work-state="running"] .current-work-mark,
+.current-work[data-work-state="diary"] .current-work-mark {
   color: var(--accent);
 }
 /* 背景で作業中は、ターンが終わっていても動いていると分かるように印だけ差し色にする。
    枠は作業中（ターンが走っている）だけのものにして、2つを見分けられるように残す。 */
-.screen-nav-work[data-work-state="background"] .screen-nav-work-mark {
+.current-work[data-work-state="background"] .current-work-mark {
   color: var(--accent);
 }
 /* 依頼待ちは印を中抜き（○）にした上で、字も控えめにする。 */
-.screen-nav-work[data-work-state="idle"] .screen-nav-work-mark,
-.screen-nav-work[data-work-state="idle"] .screen-nav-work-word {
+.current-work[data-work-state="idle"] .current-work-mark,
+.current-work[data-work-state="idle"] .current-work-word {
   color: var(--ink-quiet);
 }
 /* 雑談中の依頼待ちだけ差し色にする（字が「<名前> とおしゃべり中」に変わるのと対にする）。
    答え待ち・作業中・止まっているは、すでに意味を持つ色なので雑談中でも変えない。 */
-.screen-nav-work[data-work-state="idle"][data-chat-idle="true"] .screen-nav-work-toggle {
+.current-work[data-work-state="idle"][data-chat-idle="true"] .current-work-toggle {
   border-color: var(--accent);
 }
-.screen-nav-work[data-work-state="idle"][data-chat-idle="true"] .screen-nav-work-mark,
-.screen-nav-work[data-work-state="idle"][data-chat-idle="true"] .screen-nav-work-word {
+.current-work[data-work-state="idle"][data-chat-idle="true"] .current-work-mark,
+.current-work[data-work-state="idle"][data-chat-idle="true"] .current-work-word {
   color: var(--accent);
 }
 /* 依頼の手順の一覧。札の真下に重ねる（下の領域を押し下げない）。
    幅の上限 36rem・高さの上限は画面の 70% で、超えたら内側でスクロールする。 */
-.screen-nav-work-list {
+.current-work-list {
   position: absolute;
   top: calc(100% + 0.3rem);
   left: 0;
@@ -134,19 +132,19 @@
   font-size: var(--font-secondary);
 }
 /* 字の太さ・色は `Text` が持つ。margin だけ残す。 */
-.screen-nav-work-heading {
+.current-work-heading {
   margin: 0 0 0.4rem;
 }
 /* 答え待ちが質問のときだけ出す「質問へ」。顔は `<Button variant="link">` が持ち、ここは箱だけ（置き方・margin）。 */
-.screen-nav-work-go-to-question {
+.current-work-go-to-question {
   display: block;
   margin: 0 0 0.5rem;
 }
 /* 段取り。 */
-.screen-nav-work-plan-heading {
+.current-work-plan-heading {
   margin: 0.4rem 0 0.2rem;
 }
-.screen-nav-work-plan {
+.current-work-plan {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -155,7 +153,7 @@
   padding: 0;
   list-style: none;
 }
-.screen-nav-work-plan-phase {
+.current-work-plan-phase {
   display: inline-flex;
   align-items: baseline;
   gap: 0.3rem;
@@ -164,31 +162,31 @@
   border-radius: 999px;
   color: var(--ink-quiet);
 }
-.screen-nav-work-plan-phase:not(:last-child)::after {
+.current-work-plan-phase:not(:last-child)::after {
   content: "→";
   margin-left: 0.4rem;
   color: var(--ink-quiet);
 }
-.screen-nav-work-plan-phase b {
+.current-work-plan-phase b {
   font-weight: 700;
 }
-.screen-nav-work-plan-phase-done {
+.current-work-plan-phase-done {
   background: var(--surface-raised);
 }
-.screen-nav-work-plan-phase-current {
+.current-work-plan-phase-current {
   border-color: var(--accent);
   background: color-mix(in srgb, var(--surface), var(--accent) 10%);
   color: var(--ink);
 }
-.screen-nav-work-full {
+.current-work-full {
   margin: 0 0 0.5rem;
 }
 /* 色は `Text` が持つ。margin だけ残す。 */
-.screen-nav-work-full-heading {
+.current-work-full-heading {
   margin: 0 0 0.2rem;
 }
-.screen-nav-work-full-text,
-.screen-nav-work-failure pre {
+.current-work-full-text,
+.current-work-failure pre {
   margin: 0;
   padding: 0.4rem;
   max-height: 12rem;
@@ -200,10 +198,10 @@
   overflow-wrap: anywhere;
 }
 /* 背景で動いているもの。見出しと行の形は依頼の手順に揃える。色は `Text` が持つ。 */
-.screen-nav-work-background-heading {
+.current-work-background-heading {
   margin: 0.4rem 0 0.2rem;
 }
-.screen-nav-work-background {
+.current-work-background {
   display: flex;
   flex-direction: column;
   gap: 0.15rem;
@@ -211,22 +209,22 @@
   padding: 0;
   list-style: none;
 }
-.screen-nav-work-background-kind {
+.current-work-background-kind {
   font-family: var(--font-mono);
 }
 /* 回る印は実行中の手順と同じ（`prefers-reduced-motion: reduce` では `theme.css` の全体の規則が止める）。 */
-.screen-nav-work-background-task .screen-nav-work-step-mark {
-  animation: screen-nav-work-spin 1s linear infinite;
+.current-work-background-task .current-work-step-mark {
+  animation: current-work-spin 1s linear infinite;
 }
 /* 色は `Text` が持つ。margin だけ残す。 */
-.screen-nav-work-steps-heading {
+.current-work-steps-heading {
   margin: 0.4rem 0 0.2rem;
 }
 /* 手順を段で区切る小見出し。字の太さは `Text` が持つ。 */
-.screen-nav-work-phase-heading {
+.current-work-phase-heading {
   margin: 0.4rem 0 0.15rem;
 }
-.screen-nav-work-steps {
+.current-work-steps {
   display: flex;
   flex-direction: column;
   gap: 0.15rem;
@@ -236,24 +234,24 @@
   font-family: var(--font-mono);
 }
 /* サブエージェントの中は1段下げる。 */
-.screen-nav-work-step-nested {
+.current-work-step-nested {
   margin-left: 1rem;
 }
 /* 済みは薄く、実行中は普通の濃さ。 */
-.screen-nav-work-step-done {
+.current-work-step-done {
   color: var(--ink-quiet);
 }
-.screen-nav-work-step-failed {
+.current-work-step-failed {
   color: var(--ink);
 }
-.screen-nav-work-step-mark {
+.current-work-step-mark {
   display: inline-block;
 }
 /* 実行中の印だけ回す（`prefers-reduced-motion: reduce` では `theme.css` の全体の規則が止める）。 */
-.screen-nav-work-step-running .screen-nav-work-step-mark {
-  animation: screen-nav-work-spin 1s linear infinite;
+.current-work-step-running .current-work-step-mark {
+  animation: current-work-spin 1s linear infinite;
 }
-@keyframes screen-nav-work-spin {
+@keyframes current-work-spin {
   from {
     transform: rotate(0deg);
   }
@@ -262,29 +260,46 @@
   }
 }
 /* 手順の一覧を畳む・広げる口。顔は `<Button variant="link">` が持ち、ここは箱だけ（margin）。 */
-.screen-nav-work-toggle-all {
+.current-work-toggle-all {
   margin-top: 0.4rem;
 }
 /* 失敗した手順の中身。印は文字（「失敗」）で、色はその補助。 */
-.screen-nav-work-failure > summary {
+.current-work-failure > summary {
   cursor: pointer;
 }
-.screen-nav-work-failure-output {
+.current-work-failure-output {
   border: 1px solid var(--state-ng);
 }
-.screen-nav-work-failure-input {
+.current-work-failure-input {
   border: none;
 }
 
-/* メインビューの下に浮かぶ札（`data-variant="capsule"`。`CurrentWorkCapsule`）。
+/* 面いっぱいの幅で、押すと重ねずにその場で下に広がる札（`data-variant="inline"`）。
+   `.current-work` は既定で横並びの flex なので、一覧を `position: static` にするここでは `flex-direction: column` にしないと札の右に並んでしまう。 */
+.current-work[data-variant="inline"] {
+  width: 100%;
+  flex-direction: column;
+}
+.current-work[data-variant="inline"] .current-work-toggle {
+  width: 100%;
+  justify-content: center;
+}
+.current-work[data-variant="inline"] .current-work-list {
+  position: static;
+  width: 100%;
+  max-width: none;
+  margin-top: 0.3rem;
+}
+
+/* 本文の上に浮かぶ札（`data-variant="capsule"`）。
    帯の札より背を詰めて影を落とし、本文の上に重ねても縁が読めるようにする。
    地は差し色を混ぜた `--surface-accent` を少しだけ透かす（下の本文が完全には消えない）。 */
-/* 幅は置き場（`.current-work-capsule`）が決めた幅いっぱい。要約は残りの幅で末尾を「…」にする。 */
-.screen-nav-work[data-variant="capsule"] {
+/* 幅は置き場が決めた幅いっぱい。要約は残りの幅で末尾を「…」にする。 */
+.current-work[data-variant="capsule"] {
   flex: none;
   width: 100%;
 }
-.screen-nav-work[data-variant="capsule"] .screen-nav-work-toggle {
+.current-work[data-variant="capsule"] .current-work-toggle {
   max-width: none;
   height: 36px;
   padding: 0 16px 0 12px;
@@ -293,13 +308,13 @@
   box-shadow: 0 10px 30px color-mix(in srgb, var(--ground) 60%, transparent);
 }
 /* 帯では状態が変わっても区切りの位置がずれないよう語の幅を揃えるが、浮かぶ札は中身の幅なので揃えない。 */
-.screen-nav-work[data-variant="capsule"] .screen-nav-work-word {
+.current-work[data-variant="capsule"] .current-work-word {
   min-width: 0;
 }
 /* 一覧は札の上へ開き、札の真ん中にそろえる（札はメインビューの下端に居るので、下へ開く余地が無い）。
    `--current-work-list-max-height` は `useCurrentWorkListMaxHeight` が枠の外寸で測って書くので、
    `box-sizing: border-box` を外すと上端がメインビューの頭に食い込む。 */
-.screen-nav-work[data-variant="capsule"] .screen-nav-work-list {
+.current-work[data-variant="capsule"] .current-work-list {
   top: auto;
   bottom: calc(100% + 0.4rem);
   left: 50%;
@@ -307,16 +322,16 @@
   max-height: var(--current-work-list-max-height, 60dvh);
   transform: translateX(-50%);
 }
-.screen-nav-work-spinner {
+.current-work-spinner {
   flex: none;
-  animation: screen-nav-work-spin 1s linear infinite;
+  animation: current-work-spin 1s linear infinite;
 }
-.screen-nav-work-spinner-track {
+.current-work-spinner-track {
   fill: none;
   stroke: color-mix(in srgb, var(--rule), var(--accent) 25%);
   stroke-width: 3;
 }
-.screen-nav-work-spinner-arc {
+.current-work-spinner-arc {
   fill: none;
   stroke: var(--accent);
   stroke-width: 3;

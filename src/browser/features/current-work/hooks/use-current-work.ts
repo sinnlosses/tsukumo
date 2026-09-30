@@ -1,46 +1,38 @@
-// 帯のまん中の札「いまの作業」のロジック。
+// 札「いまの作業」のロジック。
 // tsukumo がいま何をしているかの語と、押すと開く依頼の手順の一覧を、見た目が受け取れる形まで畳んで返す。
 //
 // 範囲は依頼1つ（`currentTurnSteps` が、最後の依頼より後のツールの記録から導く）。
 // 要約は `summarizeToolInput` / `toolInputText` を使い、どの欄を読むかを2箇所で別に決めない。
 //
-// 札は2箇所に描かれる（広い画面の帯・狭い画面の「≡」の面の中。どちらを出すかは CSS が決める）。
-// 開閉の状態はこの hook が1つだけ持ち、押した先の DOM がどちらでも同じ一覧が開く。
-// 「≡」とは同時に開かない。
-// 広い画面には「≡」が無く、狭い画面ではこの札そのものが「≡」の面の中にしか無いので、状態の突き合わせは要らない。
-//
-// 開閉は `useNavPopover` に任せ、閉じるたびに「すべて見る」を畳む。
+// 開閉の状態はこの hook が1つだけ持つので、札が2箇所に描かれても押した先の DOM によらず同じ一覧が開く。
+// 開閉は `usePopover` に任せ、閉じるたびに「すべて見る」を畳む。
 
 import { useState, type RefCallback, type RefObject } from "react"
 
-import type { DiaryWriting } from "../../../../../shared/diary/diary.ts"
+import type { DiaryWriting } from "../../../../shared/diary/diary.ts"
 import type {
   BackgroundTask,
   BackgroundTaskKind,
-} from "../../../../../shared/session-driver/background-task.ts"
-import type { PendingAsk } from "../../../../../shared/session-driver/pending-ask.ts"
-import type { ReportDrafting } from "../../../../../shared/session/session-state.ts"
+} from "../../../../shared/session-driver/background-task.ts"
+import type { PendingAsk } from "../../../../shared/session-driver/pending-ask.ts"
+import type { ReportDrafting } from "../../../../shared/session/session-state.ts"
 import {
   currentTurnSteps,
   toolDuration,
   type TurnStep,
   type TurnStepList,
   type TurnStepStatus,
-} from "../../../../../shared/session/turn-step.ts"
-import {
-  currentPhaseOf,
-  phaseLabel,
-  type WorkPhase,
-} from "../../../../../shared/session/work-plan.ts"
-import { formatElapsed } from "../../../../../shared/utils/elapsed-time.ts"
-import { DEFAULT_CHARACTER_NAME } from "../../../../domain/portrait-appearance.ts"
-import { summarizeToolInput, toolInputText } from "../../../../domain/tool-summary.ts"
-import { useQuestionScroll } from "../../../../stores/question-scroll.ts"
-import { navigateTo, useScreen } from "../../../../stores/screen.tsx"
-import { useSession, useTurnRunning } from "../../../../stores/session.ts"
-import { useTurnSelection } from "../../../../stores/turn-selection.ts"
-import { monthDayLabel } from "../../../../utils/month-day-label.ts"
-import { useNavPopover } from "./use-nav-popover.ts"
+} from "../../../../shared/session/turn-step.ts"
+import { currentPhaseOf, phaseLabel, type WorkPhase } from "../../../../shared/session/work-plan.ts"
+import { formatElapsed } from "../../../../shared/utils/elapsed-time.ts"
+import { DEFAULT_CHARACTER_NAME } from "../../../domain/portrait-appearance.ts"
+import { summarizeToolInput, toolInputText } from "../../../domain/tool-summary.ts"
+import { usePopover } from "../../../hooks/use-popover.ts"
+import { useQuestionScroll } from "../../../stores/question-scroll.ts"
+import { navigateTo, useScreen } from "../../../stores/screen.tsx"
+import { useSession, useTurnRunning } from "../../../stores/session.ts"
+import { useTurnSelection } from "../../../stores/turn-selection.ts"
+import { monthDayLabel } from "../../../utils/month-day-label.ts"
 
 /** 閉じている間に出す手順の件数（これより多いと「すべて見る」の口が出る）。 */
 const MAX_COLLAPSED_STEPS = 5
@@ -51,13 +43,7 @@ const MAX_COLLAPSED_STEPS = 5
  * `diary` は成果の振り返りで日記を書いているとき（`state.diaryWriting.kind === "writing"`）。
  * 会話のターンと並んで書いているので作業中より弱い（作業中が動いていれば作業中を出す）。
  */
-export type ScreenNavCurrentWorkState =
-  | "stopped"
-  | "pending"
-  | "running"
-  | "diary"
-  | "background"
-  | "idle"
+export type CurrentWorkState = "stopped" | "pending" | "running" | "diary" | "background" | "idle"
 
 const WORK_WORD_LABEL = {
   stopped: "止まっている",
@@ -66,7 +52,7 @@ const WORK_WORD_LABEL = {
   diary: "振り返り中",
   background: "背景で作業中",
   idle: "依頼待ち",
-} satisfies Record<ScreenNavCurrentWorkState, string>
+} satisfies Record<CurrentWorkState, string>
 
 const BACKGROUND_TASK_KIND_LABEL = {
   shell: "シェル",
@@ -74,7 +60,7 @@ const BACKGROUND_TASK_KIND_LABEL = {
   other: "その他",
 } satisfies Record<BackgroundTaskKind, string>
 
-export type ScreenNavCurrentWorkStep = {
+export type CurrentWorkStep = {
   readonly key: string
   readonly label: string
   readonly nested: boolean
@@ -86,22 +72,22 @@ export type ScreenNavCurrentWorkStep = {
  * 手順を始まったときの段で区切った1まとまり。
  * 小見出しは「2/4 段の名前」で、段取りより前・全部の段を終えたあとの手順は小見出しを持たない。
  */
-export type ScreenNavCurrentWorkStepGroup = {
+export type CurrentWorkStepGroup = {
   readonly key: string
   readonly heading: { readonly kind: "none" } | { readonly kind: "phase"; readonly label: string }
-  readonly steps: readonly ScreenNavCurrentWorkStep[]
+  readonly steps: readonly CurrentWorkStep[]
 }
 
 /**
- * 札に出す今の段（`.screen-nav-work-phase`）。作業中・答え待ちで、その依頼に段取りがあるときだけ `shown`。
+ * 札に出す今の段（`.current-work-phase`）。作業中・答え待ちで、その依頼に段取りがあるときだけ `shown`。
  * 字は「2/4 段の名前」、全部の段を終えていれば「4/4 済」。
  */
-export type ScreenNavCurrentWorkPhase =
+export type CurrentWorkPhase =
   | { readonly kind: "none" }
   | { readonly kind: "shown"; readonly label: string }
 
 /** 一覧の頭の段の並び1つ。印は済んだ段が「済」、今の段が「今」、残りは番号。 */
-export type ScreenNavCurrentWorkPlanPhase = {
+export type CurrentWorkPlanPhase = {
   readonly key: string
   readonly mark: string
   readonly name: string
@@ -109,13 +95,13 @@ export type ScreenNavCurrentWorkPlanPhase = {
 }
 
 /** 一覧の頭の段取り。その依頼に段取りがあれば、状態の語に関わらず出す。 */
-export type ScreenNavCurrentWorkPlan =
+export type CurrentWorkPlan =
   | { readonly kind: "none" }
   | {
       readonly kind: "planned"
       /** 「この依頼の段取り」（ターンが走っていなければ「前の依頼の段取り」）。 */
       readonly headingLabel: string
-      readonly phases: readonly ScreenNavCurrentWorkPlanPhase[]
+      readonly phases: readonly CurrentWorkPlanPhase[]
     }
 
 /**
@@ -125,7 +111,7 @@ export type ScreenNavCurrentWorkPlan =
  * - `silent`: 実行中の手順はあるが、いまの状態の語では札に要約を出さない（`idle` / `background` / `stopped`。一覧を開けば出る）
  * - `shown`: 実行中の手順があり、札にも要約を出す（`pending` / `running`）
  */
-export type ScreenNavCurrentWorkRunningStep =
+export type CurrentWorkRunningStep =
   | { readonly kind: "none" }
   | { readonly kind: "silent"; readonly toolName: string; readonly fullText: string }
   | {
@@ -136,15 +122,15 @@ export type ScreenNavCurrentWorkRunningStep =
     }
 
 /**
- * 札に出す要約（`.screen-nav-work-summary`）。
+ * 札に出す要約（`.current-work-summary`）。
  * 答え待ちで先頭の答え待ちが質問なら、実行中の手順の要約より質問の要約を優先する。
  * 許可要求の答え待ちは実行中の手順の要約に従う。
  */
-export type ScreenNavCurrentWorkSummary =
+export type CurrentWorkSummary =
   | { readonly kind: "none" }
   | { readonly kind: "text"; readonly label: string }
 
-export type ScreenNavCurrentWorkBackgroundTask = {
+export type CurrentWorkBackgroundTask = {
   readonly key: string
   /** 種類の語（「シェル」「サブエージェント」「その他」）。 */
   readonly kindLabel: string
@@ -153,16 +139,16 @@ export type ScreenNavCurrentWorkBackgroundTask = {
 }
 
 /** 一覧の「背景で動いているもの」の区画。状態の語に関わらず、動いているものがあれば出す。 */
-export type ScreenNavCurrentWorkBackgroundList =
+export type CurrentWorkBackgroundList =
   | { readonly kind: "none" }
   | {
       readonly kind: "tasks"
       readonly headingLabel: string
-      readonly tasks: readonly ScreenNavCurrentWorkBackgroundTask[]
+      readonly tasks: readonly CurrentWorkBackgroundTask[]
     }
 
 /** 「手順をすべて見る」の口。{@link MAX_COLLAPSED_STEPS} 件以下なら出さない（`fixed`）。 */
-export type ScreenNavCurrentWorkToggleAll =
+export type CurrentWorkToggleAll =
   | { readonly kind: "fixed" }
   | { readonly kind: "expandable"; readonly label: string }
 
@@ -173,7 +159,7 @@ export type ScreenNavCurrentWorkToggleAll =
  * - `empty`: 依頼はあるが、この依頼ではまだツールを使っていない
  * - `steps`: 手順が1件以上ある
  */
-export type ScreenNavCurrentWorkStepList =
+export type CurrentWorkStepList =
   | { readonly kind: "no-request" }
   | { readonly kind: "empty" }
   | {
@@ -181,10 +167,10 @@ export type ScreenNavCurrentWorkStepList =
       /** 「この依頼での手順」（ターンが走っていなければ「前の依頼での手順」）。 */
       readonly headingLabel: string
       /** 閉じている間は新しい5件、開いていれば全件（{@link expanded}）を、段で区切ったもの。 */
-      readonly groups: readonly ScreenNavCurrentWorkStepGroup[]
+      readonly groups: readonly CurrentWorkStepGroup[]
       readonly expanded: boolean
       readonly onToggleExpanded: () => void
-      readonly toggleAll: ScreenNavCurrentWorkToggleAll
+      readonly toggleAll: CurrentWorkToggleAll
     }
 
 /**
@@ -195,13 +181,13 @@ export type ScreenNavCurrentWorkStepList =
  * - `input`: 許可要求。「。入力欄の上で答えられる」を添える
  * - `question`: 質問（メインビューの札で答える）。見出しの文面は変えず、一覧に「質問へ」の口を出す
  */
-export type ScreenNavCurrentWorkPendingHint =
+export type CurrentWorkPendingHint =
   | { readonly kind: "none" }
   | { readonly kind: "input" }
   | { readonly kind: "question"; readonly onGoToQuestion: () => void }
 
-export type ScreenNavCurrentWork = {
-  readonly state: ScreenNavCurrentWorkState
+export type CurrentWork = {
+  readonly state: CurrentWorkState
   readonly wordLabel: string
   /** 印（○ / ●）。依頼待ちは中抜きだが、雑談中の依頼待ちだけ埋める（{@link chatIdle}）。 */
   readonly mark: "○" | "●"
@@ -210,28 +196,28 @@ export type ScreenNavCurrentWork = {
    * true のときだけ `wordLabel` が「<名前> とおしゃべり中」になり、印と字の色が `--accent` に変わる（CSS の `[data-chat-idle="true"]`）。
    */
   readonly chatIdle: boolean
-  readonly pendingHint: ScreenNavCurrentWorkPendingHint
-  /** 札の今の段（{@link ScreenNavCurrentWorkPhase}）。要約とは別の欄で、要約の判定には関わらない。 */
-  readonly phase: ScreenNavCurrentWorkPhase
-  /** 札の要約（{@link ScreenNavCurrentWorkSummary}）。答え待ちの質問はこれで実行中の手順を覆う。 */
-  readonly summary: ScreenNavCurrentWorkSummary
-  readonly runningStep: ScreenNavCurrentWorkRunningStep
-  readonly backgroundList: ScreenNavCurrentWorkBackgroundList
-  readonly plan: ScreenNavCurrentWorkPlan
-  readonly stepList: ScreenNavCurrentWorkStepList
+  readonly pendingHint: CurrentWorkPendingHint
+  /** 札の今の段（{@link CurrentWorkPhase}）。要約とは別の欄で、要約の判定には関わらない。 */
+  readonly phase: CurrentWorkPhase
+  /** 札の要約（{@link CurrentWorkSummary}）。答え待ちの質問はこれで実行中の手順を覆う。 */
+  readonly summary: CurrentWorkSummary
+  readonly runningStep: CurrentWorkRunningStep
+  readonly backgroundList: CurrentWorkBackgroundList
+  readonly plan: CurrentWorkPlan
+  readonly stepList: CurrentWorkStepList
   readonly open: boolean
   readonly onToggle: () => void
   /**
    * 札の `<button>` を預ける口（Esc で閉じたときのフォーカスの戻り先）。
-   * `RefObject` ではなくコールバック ref なのは、同じ札が広い画面の帯と「≡」の面の2箇所に描かれるため。
+   * `RefObject` ではなくコールバック ref なのは、同じ札が2箇所に描かれるため。
    * 入れ物を1つにすると後から付いたほうで上書きされ、面を閉じた時点で戻り先が空になる。
    * 付いている札を全部集めておき、Esc のときはその全部へ `.focus()` を呼ぶ（見えていないほうは `display: none` で効かない）。
    */
   readonly toggleRef: RefCallback<HTMLButtonElement>
 }
 
-/** `navRef` は帯全体（`<nav>`）。外側を押したかの判定に使う（「≡」と同じ `ref`）。 */
-export function useCurrentWork(navRef: RefObject<HTMLElement | null>): ScreenNavCurrentWork {
+/** `boundaryRef` の箱の外を押すと一覧を閉じる。 */
+export function useCurrentWork(boundaryRef: RefObject<HTMLElement | null>): CurrentWork {
   const endedReason = useSession((session) => session.state.endedReason)
   const pending = useSession((session) => session.state.pending)
   const turnInProgress = useTurnRunning()
@@ -246,8 +232,8 @@ export function useCurrentWork(navRef: RefObject<HTMLElement | null>): ScreenNav
   const requestScroll = useQuestionScroll((state) => state.requestScroll)
 
   const [expanded, setExpanded] = useState(false)
-  const { open, onToggle, close, toggleRef } = useNavPopover({
-    navRef,
+  const { open, onToggle, close, toggleRef } = usePopover({
+    rootRef: boundaryRef,
     onReset: () => setExpanded(false),
   })
 
@@ -271,7 +257,7 @@ export function useCurrentWork(navRef: RefObject<HTMLElement | null>): ScreenNav
   const turnStepList = currentTurnSteps(records, sessionEnded)
   const firstPending = pending[0]
 
-  const state: ScreenNavCurrentWorkState = sessionEnded
+  const state: CurrentWorkState = sessionEnded
     ? "stopped"
     : firstPending !== undefined
       ? "pending"
@@ -316,11 +302,11 @@ export function useCurrentWork(navRef: RefObject<HTMLElement | null>): ScreenNav
   }
 }
 
-/** {@link ScreenNavCurrentWorkRunningStep} を組み立てる。「札に要約も出すか」はここで決める。 */
+/** {@link CurrentWorkRunningStep} を組み立てる。「札に要約も出すか」はここで決める。 */
 function toRunningStepView(
   turnStepList: TurnStepList,
-  state: ScreenNavCurrentWorkState,
-): ScreenNavCurrentWorkRunningStep {
+  state: CurrentWorkState,
+): CurrentWorkRunningStep {
   const latestRunning =
     turnStepList.kind === "turn" ? turnStepList.steps.findLast(isRunningStep) : undefined
   if (latestRunning === undefined) {
@@ -339,10 +325,7 @@ function isRunningStep(step: TurnStep): boolean {
   return step.status.kind === "running"
 }
 
-function toPhaseView(
-  turnStepList: TurnStepList,
-  state: ScreenNavCurrentWorkState,
-): ScreenNavCurrentWorkPhase {
+function toPhaseView(turnStepList: TurnStepList, state: CurrentWorkState): CurrentWorkPhase {
   if (turnStepList.kind !== "turn" || (state !== "running" && state !== "pending")) {
     return { kind: "none" }
   }
@@ -360,7 +343,7 @@ function toPhaseView(
   }
 }
 
-function toPlanView(turnStepList: TurnStepList, turnInProgress: boolean): ScreenNavCurrentWorkPlan {
+function toPlanView(turnStepList: TurnStepList, turnInProgress: boolean): CurrentWorkPlan {
   if (turnStepList.kind !== "turn" || turnStepList.plan.kind === "none") {
     return { kind: "none" }
   }
@@ -381,19 +364,19 @@ function toPlanView(turnStepList: TurnStepList, turnInProgress: boolean): Screen
 }
 
 /**
- * {@link ScreenNavCurrentWorkSummary} を組み立てる。
+ * {@link CurrentWorkSummary} を組み立てる。
  * 答え待ちの先頭が質問なら、実行中の手順の要約より質問の要約を優先する。
  * 背景で作業中なら背景のタスクの要約、振り返り中は「<日付>の日記を書いています」を出す。
  * メインが `report` の引数を書いている途中（{@link ReportDrafting}）は、実行中の手順の要約より優先する。
  */
 function toSummaryView(
-  state: ScreenNavCurrentWorkState,
+  state: CurrentWorkState,
   firstPending: PendingAsk | undefined,
-  runningStep: ScreenNavCurrentWorkRunningStep,
+  runningStep: CurrentWorkRunningStep,
   backgroundTasks: readonly BackgroundTask[],
   diaryWriting: DiaryWriting,
   reportDrafting: ReportDrafting,
-): ScreenNavCurrentWorkSummary {
+): CurrentWorkSummary {
   if (state === "diary" && diaryWriting.kind === "writing") {
     return {
       kind: "text",
@@ -450,9 +433,7 @@ function backgroundTaskLabel(task: BackgroundTask): string {
   return task.description === "" ? BACKGROUND_TASK_KIND_LABEL[task.kind] : task.description
 }
 
-function toBackgroundListView(
-  tasks: readonly BackgroundTask[],
-): ScreenNavCurrentWorkBackgroundList {
+function toBackgroundListView(tasks: readonly BackgroundTask[]): CurrentWorkBackgroundList {
   if (tasks.length === 0) {
     return { kind: "none" }
   }
@@ -468,10 +449,10 @@ function toBackgroundListView(
 }
 
 function toPendingHintView(
-  state: ScreenNavCurrentWorkState,
+  state: CurrentWorkState,
   firstPending: PendingAsk | undefined,
   onGoToQuestion: () => void,
-): ScreenNavCurrentWorkPendingHint {
+): CurrentWorkPendingHint {
   if (state !== "pending" || firstPending === undefined) {
     return { kind: "none" }
   }
@@ -485,7 +466,7 @@ function toStepListView(
     readonly expanded: boolean
     readonly onToggleExpanded: () => void
   },
-): ScreenNavCurrentWorkStepList {
+): CurrentWorkStepList {
   if (turnStepList.kind === "no-request") {
     return { kind: "no-request" }
   }
@@ -508,8 +489,8 @@ function toStepListView(
 }
 
 /** 並びの隣どうしで段が同じ手順を1まとまりにする（段を戻る段取りの変更があっても、並びの順は崩さない）。 */
-function groupByPhase(steps: readonly TurnStep[]): readonly ScreenNavCurrentWorkStepGroup[] {
-  return steps.reduce<readonly ScreenNavCurrentWorkStepGroup[]>((groups, step) => {
+function groupByPhase(steps: readonly TurnStep[]): readonly CurrentWorkStepGroup[] {
+  return steps.reduce<readonly CurrentWorkStepGroup[]>((groups, step) => {
     const heading = stepGroupHeading(step.phase)
     const last = groups.at(-1)
     return last !== undefined && sameHeading(last.heading, heading)
@@ -518,21 +499,18 @@ function groupByPhase(steps: readonly TurnStep[]): readonly ScreenNavCurrentWork
   }, [])
 }
 
-function stepGroupHeading(phase: WorkPhase): ScreenNavCurrentWorkStepGroup["heading"] {
+function stepGroupHeading(phase: WorkPhase): CurrentWorkStepGroup["heading"] {
   return phase.kind === "phase" ? { kind: "phase", label: phaseLabel(phase) } : { kind: "none" }
 }
 
 function sameHeading(
-  a: ScreenNavCurrentWorkStepGroup["heading"],
-  b: ScreenNavCurrentWorkStepGroup["heading"],
+  a: CurrentWorkStepGroup["heading"],
+  b: CurrentWorkStepGroup["heading"],
 ): boolean {
   return a.kind === "phase" && b.kind === "phase" ? a.label === b.label : a.kind === b.kind
 }
 
-function toToggleAllView(
-  steps: readonly TurnStep[],
-  expanded: boolean,
-): ScreenNavCurrentWorkToggleAll {
+function toToggleAllView(steps: readonly TurnStep[], expanded: boolean): CurrentWorkToggleAll {
   if (steps.length <= MAX_COLLAPSED_STEPS) {
     return { kind: "fixed" }
   }
@@ -562,7 +540,7 @@ function stepLabel(step: TurnStep): string {
     : base
 }
 
-function toStepView(step: TurnStep): ScreenNavCurrentWorkStep {
+function toStepView(step: TurnStep): CurrentWorkStep {
   return {
     key: step.toolUseId,
     label: stepLabel(step),

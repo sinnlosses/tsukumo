@@ -4,13 +4,13 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
-import { CurrentWorkCapsule } from "../../../../../src/browser/components/domain/screen-nav/current-work-capsule.tsx"
+import { CurrentWorkCapsule } from "../../../../../../../../../src/browser/components/page/conversation/components/main-view/components/current-work-capsule/current-work-capsule.tsx"
 import {
   INITIAL_SESSION_STATE,
   type SessionState,
-} from "../../../../../src/shared/session/session-state.ts"
-import { requestRecord, toolRecord } from "../../../../fixture/session-record.ts"
-import { putSession } from "../../../session-store.ts"
+} from "../../../../../../../../../src/shared/session/session-state.ts"
+import { requestRecord, toolRecord } from "../../../../../../../../fixture/session-record.ts"
+import { putSession } from "../../../../../../../session-store.ts"
 
 afterEach(() => {
   cleanup()
@@ -25,7 +25,7 @@ describe("CurrentWorkCapsule", () => {
   it("依頼待ちのあいだは札を描かない", () => {
     renderCapsule({ records: [requestRecord()] })
 
-    expect(document.querySelector(".screen-nav-work")).toBeNull()
+    expect(document.querySelector(".current-work")).toBeNull()
   })
 
   it("作業中は札が浮かび、印は回る輪になる", () => {
@@ -37,10 +37,10 @@ describe("CurrentWorkCapsule", () => {
       ],
     })
 
-    const work = document.querySelector(".screen-nav-work")
+    const work = document.querySelector(".current-work")
     expect(work?.getAttribute("data-variant")).toBe("capsule")
-    expect(work?.querySelector(".screen-nav-work-spinner")).not.toBeNull()
-    expect(work?.querySelector(".screen-nav-work-mark")).toBeNull()
+    expect(work?.querySelector(".current-work-spinner")).not.toBeNull()
+    expect(work?.querySelector(".current-work-mark")).toBeNull()
   })
 
   it("答え待ちは回る輪ではなく、帯と同じ印で浮かぶ", () => {
@@ -48,7 +48,7 @@ describe("CurrentWorkCapsule", () => {
       pending: [{ kind: "permission", id: "ask-1", toolName: "Read", input: {} }],
     })
 
-    expect(document.querySelector(".screen-nav-work-mark")?.textContent).toBe("●")
+    expect(document.querySelector(".current-work-mark")?.textContent).toBe("●")
   })
 
   it("押すと依頼の手順の一覧が開く", () => {
@@ -56,6 +56,6 @@ describe("CurrentWorkCapsule", () => {
 
     fireEvent.click(screen.getByRole("button", { expanded: false }))
 
-    expect(document.querySelector(".screen-nav-work-list")).not.toBeNull()
+    expect(document.querySelector(".current-work-list")).not.toBeNull()
   })
 })
