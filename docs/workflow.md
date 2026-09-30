@@ -130,6 +130,14 @@ enum・キャラクターパックの読み込み）は起こし直さないと�
 同じ形で、Bash の `sed -i`（`-i.bak`・`--in-place` を含む）も PreToolUse hook
 （`scripts/deny-sed-in-place.ts`）が拒否する。ファイルの書き換えは Edit で行う。
 
+**コミットメッセージの Claude の署名は git の `commit-msg` フックが止める**
+（`.githooks/commit-msg` → `scripts/deny-claude-signature.ts`。`Co-Authored-By: Claude …` と
+`Generated with [Claude Code]` の行が入っていると、該当行を出してコミットを拒否する。
+`-m`・`-F`・heredoc・エディタのどの経路でも効く）。フックは `core.hooksPath` が
+`.githooks` を指しているときだけ効く。**この設定は共有の `.git/config` に入る**ので、
+同じリポジトリの作業ツリーは全部で効く（相対パスは各作業ツリーの直下の `.githooks` を指す）。
+新しく clone したときは1回 `git config core.hooksPath .githooks` を打つ。
+
 **自分が直したコードを画面で確かめるときは、直した作業ツリーで起こす**（tsukumo は起こした
 ディレクトリでそのまま動く）。ブラウザ側を直したなら、起こす前に `pnpm run build` を1回打つ
 （成果物は作業ツリーごとに別）。

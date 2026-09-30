@@ -87,6 +87,7 @@ git clone https://github.com/sinnlosses/tsukumo.git
 cd tsukumo
 mise install    # mise.toml が指す node@26 と pnpm@12 を入れる
 pnpm install
+git config core.hooksPath .githooks   # コミットメッセージの Claude の署名を止める commit-msg フック
 
 # 2. ブラウザ側を組み立てる（成果物は dist/browser/。起動時には組み立てないので、無いと起動が止まる）
 pnpm run build
