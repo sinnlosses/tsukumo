@@ -11,12 +11,12 @@
 import type { ReactElement } from "react"
 
 import { useSession } from "../../../stores/session.ts"
-import { PersonaMemorySection } from "./persona-memory-section.tsx"
-import { ProfileCard } from "./profile-card.tsx"
-import { RecentTopicSection } from "./recent-topic-section.tsx"
-import { SidebarFooter } from "./sidebar-footer.tsx"
+import { PersonaMemorySection } from "./components/persona-memory-section.tsx"
+import { ProfileCard } from "./components/profile-card.tsx"
+import { RecentTopicSection } from "./components/recent-topic-section.tsx"
+import { SidebarFooter } from "./components/sidebar-footer.tsx"
+import { TaskSection } from "./components/task-section.tsx"
 import styles from "./sidebar.module.css"
-import { TaskSection } from "./task-section.tsx"
 
 export function Sidebar(): ReactElement {
   const chatMode = useSession((session) => session.state.chatMode)

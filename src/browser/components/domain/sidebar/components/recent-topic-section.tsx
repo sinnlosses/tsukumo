@@ -7,10 +7,10 @@
 
 import type { ReactElement } from "react"
 
-import { useSession } from "../../../stores/session.ts"
-import { Text } from "../../ui/text/text.tsx"
+import { useSession } from "../../../../stores/session.ts"
+import { Text } from "../../../ui/text/text.tsx"
+import styles from "../sidebar.module.css"
 import { SidebarSection } from "./section.tsx"
-import styles from "./sidebar.module.css"
 
 export function RecentTopicSection(): ReactElement {
   const topics = useSession((session) => session.state.chatTopics)

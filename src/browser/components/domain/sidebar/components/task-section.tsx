@@ -11,16 +11,16 @@
 
 import { useState, type ReactElement } from "react"
 
-import { TaskCountChipList } from "../../../features/task-board/components/task-count-chip-list.tsx"
+import { TaskCountChipList } from "../../../../features/task-board/components/task-count-chip-list.tsx"
 import {
   taskListCounts,
   type TaskListFilterStatus,
-} from "../../../features/task-board/domain/task-list-count.ts"
-import { TaskList } from "../../../features/task-board/task-list.tsx"
-import { useSession } from "../../../stores/session.ts"
-import { useTaskBoardRequest } from "../../../stores/task-board-request.ts"
+} from "../../../../features/task-board/domain/task-list-count.ts"
+import { TaskList } from "../../../../features/task-board/task-list.tsx"
+import { useSession } from "../../../../stores/session.ts"
+import { useTaskBoardRequest } from "../../../../stores/task-board-request.ts"
+import styles from "../sidebar.module.css"
 import { SidebarSection } from "./section.tsx"
-import styles from "./sidebar.module.css"
 
 export function TaskSection(): ReactElement {
   const tasks = useSession((session) => session.state.tasks)

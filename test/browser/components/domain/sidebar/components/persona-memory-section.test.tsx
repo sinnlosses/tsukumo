@@ -5,12 +5,12 @@
 import { cleanup, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
-import { PersonaMemorySection } from "../../../../../src/browser/components/domain/sidebar/persona-memory-section.tsx"
+import { PersonaMemorySection } from "../../../../../../src/browser/components/domain/sidebar/components/persona-memory-section.tsx"
 import {
   INITIAL_SESSION_STATE,
   type SessionState,
-} from "../../../../../src/shared/session/session-state.ts"
-import { putSession } from "../../../session-store.ts"
+} from "../../../../../../src/shared/session/session-state.ts"
+import { putSession } from "../../../../session-store.ts"
 
 afterEach(() => {
   cleanup()

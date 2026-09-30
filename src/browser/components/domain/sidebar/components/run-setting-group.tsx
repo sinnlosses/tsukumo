@@ -16,17 +16,17 @@ import {
 } from "lucide-react"
 import { useId, type ReactElement, type ReactNode } from "react"
 
-import type { PermissionMode } from "../../../../shared/command.ts"
+import type { PermissionMode } from "../../../../../shared/command.ts"
 import {
   EFFORT_LABELS,
   EFFORT_PLACEHOLDER_VALUE,
   effortLabel,
-} from "../../../domain/effort-label.ts"
-import { MODEL_LABELS } from "../../../domain/model-label.ts"
-import { PERMISSION_MODE_LABELS } from "../../../domain/permission-mode-label.ts"
-import { useModelPermission } from "../../../stores/model-permission.ts"
-import { Select } from "../../ui/select/select.tsx"
-import styles from "./sidebar.module.css"
+} from "../../../../domain/effort-label.ts"
+import { MODEL_LABELS } from "../../../../domain/model-label.ts"
+import { PERMISSION_MODE_LABELS } from "../../../../domain/permission-mode-label.ts"
+import { useModelPermission } from "../../../../stores/model-permission.ts"
+import { Select } from "../../../ui/select/select.tsx"
+import styles from "../sidebar.module.css"
 
 const PERMISSION_MODE_ICON = {
   default: ShieldQuestionMark,

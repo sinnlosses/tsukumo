@@ -1,7 +1,7 @@
 import { cleanup, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
-import { SidebarSection } from "../../../../../src/browser/components/domain/sidebar/section.tsx"
+import { SidebarSection } from "../../../../../../src/browser/components/domain/sidebar/components/section.tsx"
 
 afterEach(() => {
   cleanup()

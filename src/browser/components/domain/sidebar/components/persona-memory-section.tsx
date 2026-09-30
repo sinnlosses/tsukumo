@@ -10,13 +10,13 @@
 
 import { useState, type ReactElement } from "react"
 
-import { useSession } from "../../../stores/session.ts"
-import { Button } from "../../ui/button/button.tsx"
-import { Dialog } from "../../ui/dialog/dialog.tsx"
-import { HStack } from "../../ui/h-stack/h-stack.tsx"
-import { Text } from "../../ui/text/text.tsx"
+import { useSession } from "../../../../stores/session.ts"
+import { Button } from "../../../ui/button/button.tsx"
+import { Dialog } from "../../../ui/dialog/dialog.tsx"
+import { HStack } from "../../../ui/h-stack/h-stack.tsx"
+import { Text } from "../../../ui/text/text.tsx"
+import styles from "../sidebar.module.css"
 import { SidebarSection } from "./section.tsx"
-import styles from "./sidebar.module.css"
 
 /** チップに出す先頭の長さ（文字数）。超えた分は `…` に畳む。 */
 const REMEMBERED_LINE_CHIP_LENGTH = 20

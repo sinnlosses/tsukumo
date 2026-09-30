@@ -5,14 +5,14 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
-import { CharacterSwitch } from "../../../../../src/browser/components/domain/sidebar/character-switch.tsx"
-import { FRAME_ERROR_REASON } from "../../../../../src/shared/frame.ts"
+import { CharacterSwitch } from "../../../../../../src/browser/components/domain/sidebar/components/character-switch.tsx"
+import { FRAME_ERROR_REASON } from "../../../../../../src/shared/frame.ts"
 import {
   INITIAL_SESSION_STATE,
   type SessionState,
-} from "../../../../../src/shared/session/session-state.ts"
-import { characterInfo, characterPackEntry } from "../../../../fixture/character.ts"
-import { type CommandSpy, putSession } from "../../../session-store.ts"
+} from "../../../../../../src/shared/session/session-state.ts"
+import { characterInfo, characterPackEntry } from "../../../../../fixture/character.ts"
+import { type CommandSpy, putSession } from "../../../../session-store.ts"
 
 afterEach(() => {
   cleanup()

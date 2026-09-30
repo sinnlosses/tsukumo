@@ -19,25 +19,23 @@ import {
   localTimeZoneId,
   nowEpochMilliseconds,
   zonedDateTime,
-} from "../../../utils/clock.ts"
-import { Button } from "../../ui/button/button.tsx"
-import { RefreshIcon } from "../../ui/icon/icon.tsx"
-import type { PlanUsageState, UsePlanUsageResult } from "./plan-usage.ts"
-import styles from "./sidebar.module.css"
+} from "../../../../utils/clock.ts"
+import { Button } from "../../../ui/button/button.tsx"
+import { RefreshIcon } from "../../../ui/icon/icon.tsx"
+import {
+  isPlanWindowWarn,
+  windowsOf,
+  type PlanUsageState,
+  type WindowDisplay,
+} from "../domain/plan-window.ts"
+import type { UsePlanUsageResult } from "../hooks/use-plan-usage.ts"
+import styles from "../sidebar.module.css"
 
 const ROW_LABEL = "利用枠"
 const FETCHING_TEXT = "取得中…"
 const TIME_PLACEHOLDER = "—"
 const NOT_APPLICABLE_TEXT = "API キーで使っているため、利用枠はありません"
 const UNAVAILABLE_TEXT = "利用枠を取れませんでした。↻ で取り直せます"
-/** 高いときの境目（%）。見本（`QUOTA-Sidebar.dc.html`「2 高いとき」）の値。 */
-const WARN_THRESHOLD_PERCENTAGE = 80
-
-export type WindowDisplay = {
-  readonly utilization: number | undefined
-  readonly resetsAt: number | undefined
-}
-
 export function PlanUsageRow(props: { readonly planUsage: UsePlanUsageResult }): ReactElement {
   const { state, fetching, retry } = props.planUsage
   const windows = windowsOf(state)
@@ -147,20 +145,6 @@ function PlanUsageWindowRow(props: {
   )
 }
 
-/** 描く2つの枠。取れない・該当しないときは `undefined`（一言に置き換える）。 */
-export function windowsOf(
-  state: PlanUsageState,
-): { readonly fiveHour: WindowDisplay; readonly sevenDay: WindowDisplay } | undefined {
-  if (state.kind === "ready") {
-    return state.usage
-  }
-  if (state.kind === "pending") {
-    const empty: WindowDisplay = { utilization: undefined, resetsAt: undefined }
-    return { fiveHour: empty, sevenDay: empty }
-  }
-  return undefined
-}
-
 /** 見出しの右に出す時刻・状態の字。 */
 function headerText(state: PlanUsageState, fetching: boolean): string {
   if (fetching) {
@@ -173,11 +157,6 @@ function headerText(state: PlanUsageState, fetching: boolean): string {
     return `${clockTime(zonedDateTime(state.takenAt, localTimeZoneId()))} に失敗`
   }
   return TIME_PLACEHOLDER
-}
-
-/** 警告の色にするか。取れていないときは警告にしない。 */
-export function isPlanWindowWarn(window: WindowDisplay): boolean {
-  return window.utilization !== undefined && window.utilization >= WARN_THRESHOLD_PERCENTAGE
 }
 
 function percentageText(window: WindowDisplay): string {

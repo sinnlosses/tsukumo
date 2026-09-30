@@ -11,21 +11,11 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query"
 
 import {
-  type PlanUsage,
   type PlanUsageReport,
   UNAVAILABLE_PLAN_USAGE,
-} from "../../../../shared/plan-usage/plan-usage.ts"
-import { rpc } from "../../../domain/rpc.ts"
-
-/**
- * 描くために要る形。`pending` はまだ一度も取れていないときだけの骨組み用（`fetching` は常に `true`）。
- * `unavailable` の `takenAt` は「最後に失敗した時刻」で、まだ一度も応答が届いていなければ `undefined`。
- */
-export type PlanUsageState =
-  | { readonly kind: "pending" }
-  | { readonly kind: "ready"; readonly usage: PlanUsage; readonly takenAt: number }
-  | { readonly kind: "unavailable"; readonly takenAt: number | undefined }
-  | { readonly kind: "not-applicable" }
+} from "../../../../../shared/plan-usage/plan-usage.ts"
+import { rpc } from "../../../../domain/rpc.ts"
+import type { PlanUsageState } from "../domain/plan-window.ts"
 
 export type UsePlanUsageResult = {
   readonly state: PlanUsageState

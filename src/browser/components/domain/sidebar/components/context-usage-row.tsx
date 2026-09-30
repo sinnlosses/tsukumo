@@ -9,11 +9,12 @@
 import clsx from "clsx"
 import type { ReactElement } from "react"
 
-import type { UseContextUsageResult } from "../../../domain/context-usage.ts"
-import { formatCount } from "../../../utils/format-count.ts"
-import { HStack } from "../../ui/h-stack/h-stack.tsx"
-import { Text } from "../../ui/text/text.tsx"
-import styles from "./sidebar.module.css"
+import type { UseContextUsageResult } from "../../../../domain/context-usage.ts"
+import { formatCount } from "../../../../utils/format-count.ts"
+import { HStack } from "../../../ui/h-stack/h-stack.tsx"
+import { Text } from "../../../ui/text/text.tsx"
+import { isContextUsageWarn } from "../domain/context-usage-warn.ts"
+import styles from "../sidebar.module.css"
 
 const ROW_LABEL = "コンテキスト"
 const PENDING_TEXT = "取得中…"
@@ -21,9 +22,6 @@ const UNAVAILABLE_TEXT = "いまのコンテキストは取れていない"
 const PERCENTAGE_PLACEHOLDER = "—"
 const LINK_HOVER_TEXT = "詳しく"
 const UNTIL_PLACEHOLDER = "\u00a0"
-
-/** 警告にする境目（%）。見本の説明文から取った値。 */
-const WARN_THRESHOLD_PERCENTAGE = 70
 
 export function ContextUsageRow(props: { readonly usage: UseContextUsageResult }): ReactElement {
   const { usage } = props
@@ -111,11 +109,6 @@ function untilText(usage: UseContextUsageResult): string {
   }
   const rest = `自動圧縮まで あと ${formatCount(usage.untilCompactTokens)}`
   return isContextUsageWarn(usage) ? `そろそろ区切りどき。${rest}` : rest
-}
-
-/** 警告の色にするか。まだ数が無いときは警告にしない。 */
-export function isContextUsageWarn(usage: UseContextUsageResult): boolean {
-  return usage.kind === "ready" && usage.percentage >= WARN_THRESHOLD_PERCENTAGE
 }
 
 /** `›` の `aria-label`。数がある ready だけ割合を読む。 */

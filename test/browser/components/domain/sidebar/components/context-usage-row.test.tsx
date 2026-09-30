@@ -3,18 +3,18 @@ import { cleanup, render, screen } from "@testing-library/react"
 import type { ReactElement } from "react"
 import { afterEach, describe, expect, it } from "vitest"
 
-import { ContextUsageRow } from "../../../../../src/browser/components/domain/sidebar/context-usage-row.tsx"
-import { useContextUsage } from "../../../../../src/browser/domain/context-usage.ts"
-import { rpc } from "../../../../../src/browser/domain/rpc.ts"
+import { ContextUsageRow } from "../../../../../../src/browser/components/domain/sidebar/components/context-usage-row.tsx"
+import { useContextUsage } from "../../../../../../src/browser/domain/context-usage.ts"
+import { rpc } from "../../../../../../src/browser/domain/rpc.ts"
 import {
   type ContextUsageReport,
   UNAVAILABLE_CONTEXT_USAGE,
-} from "../../../../../src/shared/context-usage/context-usage.ts"
-import { INITIAL_SESSION_STATE } from "../../../../../src/shared/session/session-state.ts"
-import { readyContextUsage } from "../../../../fixture/context-usage.ts"
-import { createTestQueryClient } from "../../../query-client.tsx"
-import { stubRpcFetch } from "../../../rpc-fetch-stub.ts"
-import { putSession } from "../../../session-store.ts"
+} from "../../../../../../src/shared/context-usage/context-usage.ts"
+import { INITIAL_SESSION_STATE } from "../../../../../../src/shared/session/session-state.ts"
+import { readyContextUsage } from "../../../../../fixture/context-usage.ts"
+import { createTestQueryClient } from "../../../../query-client.tsx"
+import { stubRpcFetch } from "../../../../rpc-fetch-stub.ts"
+import { putSession } from "../../../../session-store.ts"
 
 /**
  * サイドバー「セッション情報」の使用量の行。出す数は札

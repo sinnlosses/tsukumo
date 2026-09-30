@@ -976,7 +976,7 @@ IBM Plex Mono）と字の大きさ、「ほか n 件を見る」の色（見本�
 └────────────────────────────────┘
 ```
 
-1. **プロフィールの札**（`components/domain/sidebar/profile-card.tsx`）: 顔（13.9「顔」と同じ素材・丸・
+1. **プロフィールの札**（`components/domain/sidebar/components/profile-card.tsx`）: 顔（13.9「顔」と同じ素材・丸・
    差し色の輪で、大きさだけ 64px）・名前（パックの `name`）・**ひとことプロフィール**
    （`character.json` の新しい欄 `tagline`。検証は `src/shared/character-pack/character-definition.ts`。
    **無いパックは名前だけ**で、空の行を置かない）・右端の「変える ⌄」。領域の左右と上の縁まで
@@ -1004,13 +1004,13 @@ IBM Plex Mono）と字の大きさ、「ほか n 件を見る」の色（見本�
 **別の領域の機能**だからで、サイドバーは1つの領域の中で段の並びが変わるだけ。`<Layout>` に渡す
 旗も増えない。
 
-**どの機能に置くか: `components/domain/sidebar/` の中**（`profile-card.tsx` / `recent-topic-section.tsx` /
+**どの機能に置くか: `components/domain/sidebar/components/` の中**（`profile-card.tsx` / `recent-topic-section.tsx` /
 `persona-memory-section.tsx`）。雑談の側（`components/page/conversation/components/chat-view/`）に置くと、下端の帯を読むために
 領域の機能どうしの import が要る（`docs/architecture.md`「全体構成」）。中身を入れたあと、話題や覚えたことがタスクの
 `task-board` のようにサイドバーの外でも使う語彙になったら、そのとき「置かれる機能」に切り出す。
 
 **「変える ⌄」は、見た目のボタンの上に本物の `<select>` を透明にして同じ大きさで重ねる**
-（`components/domain/sidebar/character-switch.tsx`。選択肢・塞ぐ条件・送る `session.switchCharacter` を
+（`components/domain/sidebar/components/character-switch.tsx`。選択肢・塞ぐ条件・送る `session.switchCharacter` を
 1箇所に持ち、見た目と名前だけを置く側が渡す）。押すと
 ブラウザの選択肢の一覧が開き、キーボードも読み上げもブラウザが持つ。名前（`aria-label`）は
 「キャラクターを変える」で、見える字「変える」を含む。**フォーカスの輪は透明な `<select>` では
