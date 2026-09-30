@@ -268,16 +268,6 @@
   border-color: var(--rule);
 }
 
-/* 地も枠も無い ink の字。hover で下線が付く。 */
-.button-variant-text-ink-hover-underline {
-  border: none;
-  background: none;
-  color: var(--ink);
-}
-.button-variant-text-ink-hover-underline:hover {
-  text-decoration: underline;
-}
-
 /* 地も枠も無い accent の字。hover で変わらない。 */
 .button-variant-text-accent {
   border: none;

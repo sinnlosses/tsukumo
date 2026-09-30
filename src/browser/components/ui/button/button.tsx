@@ -36,7 +36,6 @@ export type ButtonVariant =
   | "ghost-hover-outline"
   | "link"
   | "text-accent"
-  | "text-ink-hover-underline"
 export type ButtonSize = Exclude<TextSize, "heading" | "inherit">
 /** トグルボタンの押された状態。`"none"` は `aria-pressed` を付けない（トグルボタンではない）。 */
 export type ButtonPressed = "none" | "on" | "off"
@@ -99,7 +98,6 @@ export const BUTTON_VARIANT_CLASS = {
   "ghost-hover-outline": styles["button-variant-ghost-hover-outline"],
   link: styles["button-variant-link"],
   "text-accent": styles["button-variant-text-accent"],
-  "text-ink-hover-underline": styles["button-variant-text-ink-hover-underline"],
 } satisfies Record<ButtonVariant, string>
 
 const BUTTON_PRESSED_ARIA = {

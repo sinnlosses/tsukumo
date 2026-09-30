@@ -57,7 +57,6 @@ describe("Button", () => {
     ["ghost-hover-outline", "button-variant-ghost-hover-outline"],
     ["link", "button-variant-link"],
     ["text-accent", "button-variant-text-accent"],
-    ["text-ink-hover-underline", "button-variant-text-ink-hover-underline"],
   ] as const)("variant: %s は class %s を付ける", (variant, expectedClass) => {
     const element = renderButton({ ...BASE_PROPS, variant })
     expect(element.className.split(" ")).toContain(expectedClass)

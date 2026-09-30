@@ -53,23 +53,16 @@ export function PersonaMemorySection(): ReactElement {
           {lines.map((line, index) => (
             // 並びは届くたびに丸ごと置き換わり、同じ文面が2行あることもあるので位置で引く。
             <li key={index} className={styles["sidebar-persona-memory-item"]}>
-              <Button
+              <button
                 type="button"
-                variant="text-ink-hover-underline"
-                size="secondary"
-                pressed="none"
-                disabled={false}
-                ariaLabel={undefined}
-                ariaHasPopup={undefined}
-                disclosure={{ kind: "expander", expanded: openLine === line }}
-                title={undefined}
                 className={styles["sidebar-persona-memory-chip"]}
+                aria-expanded={openLine === line}
                 onClick={() => {
                   setOpenLine((current) => (current === line ? undefined : line))
                 }}
               >
                 {openLine === line ? line : truncatedRememberedLine(line)}
-              </Button>
+              </button>
               {editing && (
                 <Button
                   type="button"
