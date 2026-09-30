@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { Markdown } from "../../../../../../../../src/browser/components/page/conversation/components/main-view/markdown/markdown.tsx"
 import { RepositoryFileLinkContext } from "../../../../../../../../src/browser/components/page/conversation/components/main-view/markdown/repository-link.tsx"
-import { reportSectionsMarkdown } from "../../../../../../../../src/shared/report/report-block.ts"
+import { reportSectionsMarkdown } from "../../../../../../../../src/shared/report/report-markdown.ts"
 import { typedElement } from "../../../../../../../typed-element.ts"
 
 afterEach(() => {

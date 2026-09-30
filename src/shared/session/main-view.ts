@@ -3,8 +3,8 @@
 
 import { sum } from "remeda"
 
-import { reportSectionsMarkdown } from "../report/report-block.ts"
 import { reportChecksMarkdown } from "../report/report-check.ts"
+import { reportSectionsMarkdown } from "../report/report-markdown.ts"
 import { NO_REPORT_TASK, type ReportTask } from "../report/report-task.ts"
 import { tidyReportSections } from "../report/report-tidy.ts"
 import type { RecordedPromptImage } from "../session-driver/prompt-image.ts"

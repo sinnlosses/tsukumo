@@ -424,7 +424,7 @@ Orca は「ページを表示する箱」として第一級であり、VS Code �
     文字数に比例した書く速さそのものは変わらない。留める位置は DOM の実測ではなく文字数の重みの
     比例で決める（`src/browser/domain/reveal/plan.ts` の `pausesOf`）。対象の印
     （`report-pause-point`）は記法の語彙に無い class 名で、`NotationBlock` の置き換えを受けない
-    （`report-section-break` と同じやり方。`src/shared/report/report-block.ts`）
+    （`report-section-break` と同じやり方。`src/shared/report/report-markdown.ts`）
   - **書いているあいだは画面が筆先に付いていく**（2026-09-20 決定）。**追うのは帯ぜんたいでは
     なくミニ立ち絵の立つ位置**（帯の下端から立ち絵の高さぶん上まで。2026-09-23）。そこが器の
     上下の縁から 96px 以内に入ったら、その差だけ器を送る。**器がその範囲と上下の余白を両方とも

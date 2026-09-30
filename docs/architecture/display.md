@@ -167,7 +167,7 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/architecture/display.md
 - **表の描き方は型から決め、書き手は何も選ばない**（2026-09-27。`docs/research/report-block-richness.md`
   2章）。列の全セルが数なら右揃えで `tabular-nums`（桁が縦に揃う）、列の全セルが `status` なら列の
   中央にバッジで揃え、バッジの語（OK / 要注意 / NG）は tsukumo が付ける（書き手の文字が同じ語なら重ねない。行は塗らない。`docs/architecture/screen-design.md` 13.2）。列に `align` は持たせず、
-  `reportSectionsMarkdown`（`src/shared/report/report-block.ts`）が組み立てるときに1箇所で判定する
+  `reportSectionsMarkdown`（`src/shared/report/report-markdown.ts`）が組み立てるときに1箇所で判定する
 - **節を書き上げる演出の塊（トピック）の単位にする**（2026-09-27。`docs/research/report-block-richness.md`
   2章）。見出しのタグや水平線を DOM から探して境目を当てるのはやめ（見出しのレベルは節の中の
   副見出しにも、水平線は節の中の軽い区切り〔`---`〕にも使われるので、タグの一致だけでは節の境目と

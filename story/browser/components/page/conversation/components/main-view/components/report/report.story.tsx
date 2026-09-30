@@ -4,10 +4,8 @@
 import type { Meta, StoryObj } from "@storybook/react-vite"
 
 import { Report } from "../../../../../../../../../src/browser/components/page/conversation/components/main-view/components/report/report.tsx"
-import {
-  reportSectionsMarkdown,
-  type ReportSection,
-} from "../../../../../../../../../src/shared/report/report-block.ts"
+import type { ReportSection } from "../../../../../../../../../src/shared/report/report-block.ts"
+import { reportSectionsMarkdown } from "../../../../../../../../../src/shared/report/report-markdown.ts"
 
 const meta = {
   component: Report,
