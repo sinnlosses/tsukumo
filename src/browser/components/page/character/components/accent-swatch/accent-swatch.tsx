@@ -7,7 +7,18 @@ import type { ReactElement } from "react"
 import { Text } from "../../../../ui/text/text.tsx"
 import { VStack } from "../../../../ui/v-stack/v-stack.tsx"
 import styles from "../../character.module.css"
-import type { AccentSwatchModel } from "../hooks/use-character-edit.ts"
+
+/** 色見本1つ（画面の差し色・衣装ごとの差し色の両方）。`value` は16進のまま字にも出す。 */
+export type AccentSwatchModel = {
+  readonly inputId: string
+  readonly label: string
+  /** ラベルの下に小さく添える字（衣装のモデル名）。 */
+  readonly sublabel: { readonly kind: "none" } | { readonly kind: "shown"; readonly text: string }
+  /** 読み上げの名前（ラベルと添え字をつないだもの）。 */
+  readonly ariaLabel: string
+  readonly value: string
+  readonly onChange: (color: string) => void
+}
 
 export function AccentSwatch(props: {
   readonly swatch: AccentSwatchModel

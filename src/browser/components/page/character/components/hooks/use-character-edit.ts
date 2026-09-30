@@ -10,8 +10,7 @@
 // 16進の色をここに書かない。定義に無い衣装の初期値は `--accent` から読む（`readAccentColor`）。
 // `--accent` はキャラクターを切り替えたとき（起こし直しで作り直る）しか変わらないので、マウント時に1回だけ読んで `accentFallback` に持つ。
 //
-// 差し色を引きずっている間は、見た目（立ち絵の `accent` と `<input>` の表示）だけその場で更新し、送信は `useDebouncedCallback` で `ACCENT_DEBOUNCE_MS` まとめる。
-// サーバが送信のたびに `character.json` を書き直すため。
+// 差し色の引きずり中の上書きと送信のまとめは `useHeldAccent`（衣装ごと・画面の差し色の2系統で1回ずつ呼ぶ）。
 
 import { useState } from "react"
 
@@ -33,7 +32,8 @@ import { FRAME_ERROR_REASON } from "../../../../../../shared/frame.ts"
 import { readAccentColor } from "../../../../../domain/appearance-color.ts"
 import { type SessionDispatch, useSession, useTurnRunning } from "../../../../../stores/session.ts"
 import { readDataUrl } from "../../../../../utils/data-url.ts"
-import { useDebouncedCallback } from "../../../../../utils/debounce.ts"
+import type { AccentSwatchModel } from "../accent-swatch/accent-swatch.tsx"
+import { useHeldAccent } from "./use-held-accent.ts"
 import { useSelectedPack } from "./use-selected-pack.ts"
 
 /** 背景の行の、いまの状態を表す字（印だけにしない）。 */
@@ -109,28 +109,6 @@ const DELETE_COPY = {
   }
 >
 
-/**
- * 差し色の送信をまとめる間隔。ドラッグ中の1回1回を送らず、離れてから1回にする。
- * 衣装の差し色と画面の差し色（仕事 / 雑談）の両方が使う。
- */
-const ACCENT_DEBOUNCE_MS = 200
-
-/**
- * まとめて送る差し色1つ。
- * 書き込む先のパックは引きずった時点のものを値と一緒に持つ（まとめている間に一覧で別のパックを選んでも、別のパックへ書かない）。
- */
-type PendingAccent<Target> = {
-  readonly pack: string
-  readonly target: Target
-  readonly color: string
-}
-
-/**
- * 引きずっている間だけ見た目を先に進める上書き。
- * パックごとに分けて持つ（一覧で別のパックへ移ったとき、前のパックで引きずった色を持ち込まない）。
- */
-type HeldColors<Target extends string> = Readonly<Record<string, Partial<Record<Target, string>>>>
-
 /** 名乗り（大きな顔・名前・id・使用中の札・ひとこと）と、その右の口。 */
 export type CharacterProfileModel = {
   readonly name: string
@@ -200,18 +178,6 @@ export type PortraitCardModel = {
         readonly fallbackLabel: string
         readonly onClear: () => void
       }
-}
-
-/** 色見本1つ（画面の差し色・衣装ごとの差し色の両方）。`value` は16進のまま字にも出す。 */
-export type AccentSwatchModel = {
-  readonly inputId: string
-  readonly label: string
-  /** ラベルの下に小さく添える字（衣装のモデル名）。 */
-  readonly sublabel: { readonly kind: "none" } | { readonly kind: "shown"; readonly text: string }
-  /** 読み上げの名前（ラベルと添え字をつないだもの）。 */
-  readonly ariaLabel: string
-  readonly value: string
-  readonly onChange: (color: string) => void
 }
 
 /** 衣装ごとの差し色の欄1つ。 */
@@ -292,26 +258,14 @@ export function useCharacterEdit(): CharacterEditModel {
   const dispatch = useSession((session) => session.dispatch)
   const selected = useSelectedPack()
   const turnInProgress = useTurnRunning()
-  // 引きずっている間だけ見た目を先に進める上書き（パック → 衣装）。
-  // サーバへ送るのは `sendOutfitAccent` 側でまとめるので、ここは表示専用。
-  const [heldOutfitAccents, setHeldOutfitAccents] = useState<HeldColors<Outfit>>({})
-  // 画面の差し色（仕事 / 雑談）の上書き（衣装とは別の最上位の欄なので別の状態）。
-  const [heldScreenAccents, setHeldScreenAccents] = useState<HeldColors<AccentTarget>>({})
+  const outfitAccent = useHeldAccent<Outfit>(({ pack, target, color }) => {
+    dispatch.characterPack.setOutfitAccent({ pack, outfit: target, color })
+  })
+  const screenAccent = useHeldAccent<AccentTarget>(({ pack, target, color }) => {
+    dispatch.characterPack.setAccent({ pack, target, color })
+  })
   // 差し色が定義に無い衣装・パックの初期値（`--accent`）。読みは描画の外（マウント時の1回）に置く。
   const [accentFallback] = useState(readAccentColor)
-  // 鍵は「パックと欄」の組（別のパックの同じ欄を続けて動かしても、前の値を落とさない）。
-  const sendOutfitAccent = useDebouncedCallback<string, PendingAccent<Outfit>>(
-    (_key, { pack, target, color }) => {
-      dispatch.characterPack.setOutfitAccent({ pack, outfit: target, color })
-    },
-    ACCENT_DEBOUNCE_MS,
-  )
-  const sendAccent = useDebouncedCallback<string, PendingAccent<AccentTarget>>(
-    (_key, { pack, target, color }) => {
-      dispatch.characterPack.setAccent({ pack, target, color })
-    },
-    ACCENT_DEBOUNCE_MS,
-  )
 
   if (selected.kind === "waiting") {
     return { kind: "waiting" }
@@ -319,28 +273,10 @@ export function useCharacterEdit(): CharacterEditModel {
 
   const character = selected.character
   const pack = character.pack
-  const heldOutfit = heldOutfitAccents[pack] ?? {}
-  const heldScreen = heldScreenAccents[pack] ?? {}
+  const heldOutfit = outfitAccent.heldOf(pack)
+  const heldScreen = screenAccent.heldOf(pack)
   const accentOf = (outfit: Outfit): string =>
     heldOutfit[outfit] ?? character.outfitAccents[outfit] ?? accentFallback
-
-  function holdOutfitAccent(outfit: Outfit, color: string): void {
-    setHeldOutfitAccents((current) => ({
-      ...current,
-      [pack]: { ...current[pack], [outfit]: color },
-    }))
-    sendOutfitAccent(`${pack}/${outfit}`, { pack, target: outfit, color })
-  }
-
-  function holdScreenAccent(target: AccentTarget, color: string | undefined): void {
-    setHeldScreenAccents((current) => ({
-      ...current,
-      [pack]: { ...current[pack], [target]: color },
-    }))
-    if (color !== undefined) {
-      sendAccent(`${pack}/${target}`, { pack, target, color })
-    }
-  }
 
   const disabled = !character.editable
   const cards = portraitCards(character, accentOf(GALLERY_OUTFIT), {
@@ -362,7 +298,7 @@ export function useCharacterEdit(): CharacterEditModel {
       ariaLabel: sublabel.kind === "shown" ? `${label}（${sublabel.text}）` : label,
       value: accentOf(outfit),
       onChange: (color) => {
-        holdOutfitAccent(outfit, color)
+        outfitAccent.hold(pack, outfit, { kind: "set", color })
       },
     }
   })
@@ -376,7 +312,7 @@ export function useCharacterEdit(): CharacterEditModel {
     ariaLabel: "仕事",
     value: workAccentValue,
     onChange: (color) => {
-      holdScreenAccent("work", color)
+      screenAccent.hold(pack, "work", { kind: "set", color })
     },
   }
 
@@ -390,14 +326,14 @@ export function useCharacterEdit(): CharacterEditModel {
     ariaLabel: "雑談",
     value: heldScreen.chat ?? character.chatAccent ?? workAccentValue,
     onChange: (color) => {
-      holdScreenAccent("chat", color)
+      screenAccent.hold(pack, "chat", { kind: "set", color })
     },
   }
   const resetChatAccent: ChatAccentResetModel = hasChatAccent
     ? {
         kind: "shown",
         onClick: () => {
-          holdScreenAccent("chat", undefined)
+          screenAccent.hold(pack, "chat", { kind: "reset" })
           dispatch.characterPack.clearChatAccent({ pack })
         },
       }
