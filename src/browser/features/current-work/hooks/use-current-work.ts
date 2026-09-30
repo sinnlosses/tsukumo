@@ -37,6 +37,8 @@ import { monthDayLabel } from "../../../utils/month-day-label.ts"
 /** 閉じている間に出す手順の件数（これより多いと「すべて見る」の口が出る）。 */
 const MAX_COLLAPSED_STEPS = 5
 
+const MAX_TOOL_TEXT_LENGTH = 8000
+
 /**
  * 状態の語（上ほど強い）。
  * `background` はターンは終わっているが背景のタスクが動いているとき。
@@ -65,8 +67,12 @@ export type CurrentWorkStep = {
   readonly label: string
   readonly nested: boolean
   readonly status: TurnStepStatus
-  readonly input: unknown
+  readonly failure: CurrentWorkStepFailure
 }
+
+export type CurrentWorkStepFailure =
+  | { readonly kind: "none" }
+  | { readonly kind: "failed"; readonly outputText: string; readonly inputText: string }
 
 /**
  * 手順を始まったときの段で区切った1まとまり。
@@ -314,7 +320,7 @@ function toRunningStepView(
   }
 
   const toolName = latestRunning.name
-  const fullText = toolInputText(latestRunning.name, latestRunning.input)
+  const fullText = truncateForDisplay(toolInputText(latestRunning.name, latestRunning.input))
 
   return state === "pending" || state === "running"
     ? { kind: "shown", toolName, fullText, summaryLabel: stepLabel(latestRunning) }
@@ -546,6 +552,32 @@ function toStepView(step: TurnStep): CurrentWorkStep {
     label: stepLabel(step),
     nested: step.nested,
     status: step.status,
-    input: step.input,
+    failure:
+      step.status.kind === "failed"
+        ? {
+            kind: "failed",
+            outputText: truncateForDisplay(step.status.output),
+            inputText: truncateForDisplay(stringifyToolInput(step.input)),
+          }
+        : { kind: "none" },
   }
+}
+
+function stringifyToolInput(input: unknown): string {
+  if (input === undefined) {
+    return ""
+  }
+
+  const json = JSON.stringify(input, null, 2)
+  return json ?? String(input)
+}
+
+/** 上限を超えた分は捨てて、落とした文字数だけを添える。 */
+function truncateForDisplay(text: string): string {
+  if (text.length <= MAX_TOOL_TEXT_LENGTH) {
+    return text
+  }
+
+  const omitted = text.length - MAX_TOOL_TEXT_LENGTH
+  return `${text.slice(0, MAX_TOOL_TEXT_LENGTH)}\n…（以下 ${String(omitted)} 文字を省略）`
 }

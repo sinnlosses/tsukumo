@@ -4,10 +4,6 @@
 import clsx from "clsx"
 import type { ReactElement } from "react"
 
-import {
-  isEmptyAchievementDay,
-  type AchievementDoneTasks,
-} from "../../../../../../shared/achievement/achievement.ts"
 import { DIARY_STAGES, type DiaryStage } from "../../../../../../shared/diary/diary.ts"
 import { useReportReveal } from "../../../../../domain/reveal/use-report-reveal.ts"
 import { Portrait } from "../../../../domain/portrait.tsx"
@@ -16,19 +12,13 @@ import { Heading } from "../../../../ui/heading/heading.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
 import styles from "../../achievement.module.css"
 import type { DiaryWriterPortrait } from "../../domain/diary-writer.ts"
-import { UNKNOWN_TASKS_NOTE } from "../../domain/review-note.ts"
-import { writtenTimeOf } from "../../domain/written-time.ts"
 import type {
   AchievementReviewButton,
-  AchievementView,
   AchievementWriting,
+  DiarySectionBubble,
+  DiarySectionCard,
+  DiarySectionModel,
 } from "../../hooks/use-achievement.ts"
-
-const EMPTY_DAY_NOTE = "この日に main へ入った成果は無い。"
-const NO_DIARY_NOTE = "まだこの日の日記は無い。"
-const WRITE_FAILED_NOTE = "日記を書けなかった。もう一度押すと書き直す。"
-const LOADING_VALUE = "…"
-const UNKNOWN_VALUE = "—"
 
 const STAGE_LABEL: Readonly<Record<DiaryStage, string>> = {
   read: "この日のタスクを読む",
@@ -37,7 +27,7 @@ const STAGE_LABEL: Readonly<Record<DiaryStage, string>> = {
 }
 
 export type DiarySectionProps = {
-  readonly view: Exclude<AchievementView, { readonly kind: "unavailable" }>
+  readonly diary: DiarySectionModel
   readonly isFetching: boolean
   readonly writing: AchievementWriting
   readonly portrait: DiaryWriterPortrait
@@ -48,7 +38,8 @@ export type DiarySectionProps = {
 }
 
 export function DiarySection(props: DiarySectionProps): ReactElement {
-  if (props.view.kind === "failed") {
+  const { diary } = props
+  if (diary.kind === "failed") {
     return (
       <Text element="p" size="body" tone="ink-quiet" weight="inherit" className="">
         成果を取れなかった。
@@ -75,18 +66,14 @@ export function DiarySection(props: DiarySectionProps): ReactElement {
       <div className={styles["achievement-diary-body"]}>
         <Header
           portrait={props.portrait}
-          view={props.view}
+          diary={diary}
           writing={props.writing}
           onOpenDiaryBook={props.onOpenDiaryBook}
         />
-        <Bubble view={props.view} writing={props.writing} reveal={props.reveal} />
+        <Bubble bubble={diary.bubble} reveal={props.reveal} />
         {props.writing.kind === "writing" && <Progress stage={props.writing.stage} />}
-        {props.view.kind === "ready" ? (
-          <Cards doneTasks={props.view.doneTasks} commitCount={props.view.commitCount} />
-        ) : (
-          <Cards doneTasks={undefined} commitCount={undefined} />
-        )}
-        {props.view.kind === "ready" && <Controls writing={props.writing} review={props.review} />}
+        <Cards cards={diary.cards} />
+        {diary.ready && <Controls writing={props.writing} review={props.review} />}
       </div>
     </section>
   )
@@ -94,14 +81,11 @@ export function DiarySection(props: DiarySectionProps): ReactElement {
 
 function Header(props: {
   readonly portrait: DiaryWriterPortrait
-  readonly view: Exclude<AchievementView, { readonly kind: "unavailable" }>
+  readonly diary: Extract<DiarySectionModel, { readonly kind: "shown" }>
   readonly writing: AchievementWriting
   readonly onOpenDiaryBook: () => void
 }): ReactElement {
-  const { view, writing } = props
-  const written =
-    view.kind === "ready" && view.diary.kind === "written" ? view.diary.diary : undefined
-  const latest = written?.paragraphs.at(-1)
+  const { diary, writing } = props
 
   return (
     <div className={styles["achievement-diary-header"]}>
@@ -119,13 +103,13 @@ function Header(props: {
           いま書いています…
         </Text>
       ) : (
-        latest !== undefined && (
+        diary.reviewedLabel.kind === "shown" && (
           <Text element="span" size="label" tone="ink-quiet" weight="inherit" className="">
-            振り返り [{writtenTimeOf(latest.writtenAt) ?? ""}]
+            {diary.reviewedLabel.label}
           </Text>
         )
       )}
-      {latest !== undefined && (
+      {diary.canOpenBook && (
         <Button
           type="button"
           variant="link"
@@ -147,72 +131,33 @@ function Header(props: {
 }
 
 function Bubble(props: {
-  readonly view: Exclude<AchievementView, { readonly kind: "unavailable" }>
-  readonly writing: AchievementWriting
+  readonly bubble: DiarySectionBubble
   readonly reveal: boolean
 }): ReactElement {
-  const { view, writing } = props
+  const { bubble } = props
 
-  if (view.kind !== "ready") {
+  if (bubble.kind === "blank") {
     return <div className={styles["achievement-diary-bubble-empty"]} />
   }
 
-  const written = view.diary.kind === "written" ? view.diary.diary : undefined
-  const latest = written?.paragraphs.at(-1)
-
-  if (writing.kind === "writing") {
+  if (bubble.kind === "notes") {
     return (
       <div className={styles["achievement-diary-bubble-empty"]}>
-        {latest !== undefined && (
-          <Text element="p" size="body" tone="ink-quiet" weight="inherit" className="">
-            {latest.body}
+        {bubble.notes.map((note) => (
+          <Text key={note} element="p" size="body" tone="ink-quiet" weight="inherit" className="">
+            {note}
           </Text>
-        )}
-      </div>
-    )
-  }
-
-  if (writing.kind === "failed") {
-    return (
-      <div className={styles["achievement-diary-bubble-empty"]}>
-        <Text element="p" size="body" tone="ink-quiet" weight="inherit" className="">
-          {WRITE_FAILED_NOTE}
-        </Text>
-        {latest !== undefined && (
-          <Text element="p" size="body" tone="ink-quiet" weight="inherit" className="">
-            {latest.body}
-          </Text>
-        )}
-      </div>
-    )
-  }
-
-  if (isEmptyAchievementDay(view.commitCount, view.doneTasks)) {
-    return (
-      <div className={styles["achievement-diary-bubble-empty"]}>
-        <Text element="p" size="body" tone="ink-quiet" weight="inherit" className="">
-          {EMPTY_DAY_NOTE}
-        </Text>
-      </div>
-    )
-  }
-
-  if (latest === undefined) {
-    return (
-      <div className={styles["achievement-diary-bubble-empty"]}>
-        <Text element="p" size="body" tone="ink-quiet" weight="inherit" className="">
-          {NO_DIARY_NOTE}
-        </Text>
+        ))}
       </div>
     )
   }
 
   return (
     <WrittenBubble
-      key={`${written?.date ?? ""}-${latest.writtenAt}`}
-      body={latest.body}
+      key={bubble.key}
+      body={bubble.body}
       reveal={props.reveal}
-      revisionId={written?.paragraphs.length ?? 0}
+      revisionId={bubble.revisionId}
     />
   )
 }
@@ -251,29 +196,12 @@ function Progress(props: { readonly stage: DiaryStage }): ReactElement {
   )
 }
 
-function Cards(props: {
-  readonly doneTasks: AchievementDoneTasks | undefined
-  readonly commitCount: number | undefined
-}): ReactElement {
-  const { doneTasks, commitCount } = props
+function Cards(props: { readonly cards: readonly DiarySectionCard[] }): ReactElement {
   return (
     <div className={styles["achievement-cards"]}>
-      <Card
-        label="終えたタスク"
-        value={
-          doneTasks === undefined
-            ? LOADING_VALUE
-            : doneTasks.kind === "unknown"
-              ? UNKNOWN_VALUE
-              : String(doneTasks.items.length)
-        }
-        note={doneTasks?.kind === "unknown" ? UNKNOWN_TASKS_NOTE : ""}
-      />
-      <Card
-        label="コミット"
-        value={commitCount === undefined ? LOADING_VALUE : String(commitCount)}
-        note=""
-      />
+      {props.cards.map((card) => (
+        <Card key={card.key} label={card.label} value={card.value} note={card.note} />
+      ))}
     </div>
   )
 }

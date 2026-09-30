@@ -2,10 +2,11 @@ import { cleanup, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
 import { LanternCalendar } from "../../../../../../../src/browser/components/page/achievement/components/lantern-calendar/lantern-calendar.tsx"
-import {
-  achievementCalendarDateKeys,
-  type AchievementCalendar,
-} from "../../../../../../../src/shared/achievement/achievement-calendar.ts"
+import type {
+  AchievementCalendarView,
+  CalendarCell,
+} from "../../../../../../../src/browser/components/page/achievement/hooks/use-achievement-calendar.ts"
+import { achievementCalendarDateKeys } from "../../../../../../../src/shared/achievement/achievement-calendar.ts"
 
 afterEach(() => {
   cleanup()
@@ -14,14 +15,31 @@ afterEach(() => {
 const TODAY = "2026-09-24"
 const DATE_KEYS = achievementCalendarDateKeys(TODAY)
 
-const KNOWN: AchievementCalendar = {
+const DAY_CELLS: readonly CalendarCell[] = DATE_KEYS.map((date): CalendarCell => {
+  const day = Number(date.slice(8))
+  return {
+    kind: "day",
+    key: date,
+    date,
+    dateLabel: String(day),
+    level: date === TODAY ? "bright" : "none",
+    hasDiary: date === TODAY,
+    isToday: date === TODAY,
+    ariaLabel: `${String(Number(date.slice(5, 7)))}月${String(day)}日 灯り ${date === TODAY ? "明るい・日記あり" : "灯りなし"}`,
+  }
+})
+
+const KNOWN: AchievementCalendarView = {
   kind: "known",
   today: TODAY,
-  days: [
-    { date: DATE_KEYS[DATE_KEYS.length - 1] ?? TODAY, commitCount: 42 },
-    { date: DATE_KEYS[0] ?? TODAY, commitCount: 0 },
-  ],
+  days: [],
   diaryDates: [TODAY],
+  cells: [
+    ...DAY_CELLS,
+    { kind: "future", key: "2026-09-25", dateLabel: "25" },
+    { kind: "future", key: "2026-09-26", dateLabel: "26" },
+  ],
+  rangeLabel: "8月24日〜9月26日",
 }
 
 describe("LanternCalendar", () => {

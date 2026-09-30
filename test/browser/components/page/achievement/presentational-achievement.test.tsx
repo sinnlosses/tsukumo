@@ -58,6 +58,17 @@ const DEFAULT_PROPS: PresentationalAchievementProps = {
     diary: { kind: "none" },
   },
   daySwitch: KNOWN_TODAY,
+  diarySection: {
+    kind: "shown",
+    ready: true,
+    reviewedLabel: { kind: "none" },
+    canOpenBook: false,
+    bubble: { kind: "notes", notes: ["まだこの日の日記は無い。"] },
+    cards: [
+      { key: "done-tasks", label: "終えたタスク", value: "0", note: "" },
+      { key: "commits", label: "コミット", value: "0", note: "" },
+    ],
+  },
   isFetching: false,
   onPreviousDay: NOOP,
   onNextDay: NOOP,
@@ -148,7 +159,11 @@ describe("PresentationalAchievement", () => {
   })
 
   it("灯りの暦は main が読める限り、1日ぶんが取れていなくても出る", () => {
-    renderScreen({ view: { kind: "failed" }, calendar: { kind: "loading" } })
+    renderScreen({
+      view: { kind: "failed" },
+      diarySection: { kind: "failed" },
+      calendar: { kind: "loading" },
+    })
 
     expect(document.querySelector(".achievement-calendar")).not.toBeNull()
     expect(screen.getByText("成果を取れなかった。")).toBeDefined()

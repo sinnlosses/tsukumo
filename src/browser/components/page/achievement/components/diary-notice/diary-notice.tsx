@@ -6,7 +6,7 @@ import type { ReactElement } from "react"
 import { Button } from "../../../../ui/button/button.tsx"
 import { HStack } from "../../../../ui/h-stack/h-stack.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
-import { Bell } from "../lantern-calendar/lantern-calendar.tsx"
+import { Bell } from "../bell/bell.tsx"
 import styles from "./diary-notice.module.css"
 import { useDiaryNotice } from "./hooks/use-diary-notice.ts"
 

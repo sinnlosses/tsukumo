@@ -53,7 +53,7 @@ export function PresentationalAchievement(props: PresentationalAchievementProps)
           onToday={props.onToday}
         />
         <DiarySection
-          view={props.view}
+          diary={props.diarySection}
           isFetching={props.isFetching}
           writing={props.writing}
           portrait={props.diaryPortrait}

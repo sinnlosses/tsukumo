@@ -40,9 +40,6 @@ const SPINNING_STATES: ReadonlySet<CurrentWork["state"]> = new Set([
   "background",
 ])
 
-// 入力・出力を読める形の文字列にしてから切り詰める上限。表示を壊さないためであって秘匿のためではない。
-const MAX_TOOL_TEXT_LENGTH = 8000
-
 /** 答え待ちが質問のときに一覧へ出す口。 */
 const GO_TO_QUESTION_LABEL = "質問へ"
 
@@ -194,7 +191,7 @@ function CurrentWorkList(props: {
             実行中の {work.runningStep.toolName}
           </Text>
           <pre className={styles["current-work-full-text"]}>
-            <code>{truncateForDisplay(work.runningStep.fullText)}</code>
+            <code>{work.runningStep.fullText}</code>
           </pre>
         </div>
       )}
@@ -340,8 +337,12 @@ function CurrentWorkStepRow(props: { readonly step: CurrentWorkStep }): ReactEle
 
   return (
     <li className={classes}>
-      {step.status.kind === "failed" ? (
-        <FailureDetail label={step.label} input={step.input} output={step.status.output} />
+      {step.failure.kind === "failed" ? (
+        <FailureDetail
+          label={step.label}
+          inputText={step.failure.inputText}
+          outputText={step.failure.outputText}
+        />
       ) : (
         <>
           <span className={styles["current-work-step-mark"]} aria-hidden="true">
@@ -357,8 +358,8 @@ function CurrentWorkStepRow(props: { readonly step: CurrentWorkStep }): ReactEle
 /** 失敗した手順の中身（引数と出力）。「失敗」の文字を印にする（色だけで意味を伝えない）。 */
 function FailureDetail(props: {
   readonly label: string
-  readonly input: unknown
-  readonly output: string
+  readonly inputText: string
+  readonly outputText: string
 }): ReactElement {
   return (
     <details className={styles["current-work-failure"]}>
@@ -370,31 +371,11 @@ function FailureDetail(props: {
       </summary>
       {/* 出力が先。開いてまず読みたいのは「何が起きたか」で、引数はその裏取りに使う。 */}
       <pre className={styles["current-work-failure-output"]}>
-        <code>{truncateForDisplay(props.output)}</code>
+        <code>{props.outputText}</code>
       </pre>
       <pre className={styles["current-work-failure-input"]}>
-        <code>{truncateForDisplay(stringifyToolInput(props.input))}</code>
+        <code>{props.inputText}</code>
       </pre>
     </details>
   )
-}
-
-/** ツールの入力（SDK のイベントから来た JSON 値）を、読める形の文字列にする。 */
-function stringifyToolInput(input: unknown): string {
-  if (input === undefined) {
-    return ""
-  }
-
-  const json = JSON.stringify(input, null, 2)
-  return json ?? String(input)
-}
-
-/** 表示を壊さない程度に文字列を切り詰める。上限を超えた分は捨てて、落とした文字数だけを添える。 */
-function truncateForDisplay(text: string): string {
-  if (text.length <= MAX_TOOL_TEXT_LENGTH) {
-    return text
-  }
-
-  const omitted = text.length - MAX_TOOL_TEXT_LENGTH
-  return `${text.slice(0, MAX_TOOL_TEXT_LENGTH)}\n…（以下 ${String(omitted)} 文字を省略）`
 }

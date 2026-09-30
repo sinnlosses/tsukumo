@@ -21,7 +21,7 @@ import type {
   DiaryBookTaskList,
   DiaryBookTocMonth,
 } from "../../hooks/use-diary-book.ts"
-import { Lamp } from "../lantern-calendar/lantern-calendar.tsx"
+import { Lamp } from "../lamp/lamp.tsx"
 import { useFitDiaryPage } from "./hooks/use-fit-diary-page.ts"
 
 const TITLE = "つくもの日記帳"

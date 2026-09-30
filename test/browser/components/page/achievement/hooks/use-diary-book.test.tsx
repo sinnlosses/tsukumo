@@ -57,6 +57,8 @@ const CALENDAR: AchievementCalendarView = {
   today: "2026-09-24",
   days: [],
   diaryDates: ["2026-09-24", "2026-09-16", "2026-08-30", "2026-08-20"],
+  cells: [],
+  rangeLabel: "",
 }
 
 const EMPTY_CALENDAR: AchievementCalendarView = { kind: "loading" }

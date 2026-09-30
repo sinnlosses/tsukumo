@@ -36,7 +36,16 @@ import {
 import { useSession, type SessionDispatch } from "../../../../stores/session.ts"
 import { monthDayLabel } from "../../../../utils/month-day-label.ts"
 import { currentWriterPortraitOf, type DiaryWriterPortrait } from "../domain/diary-writer.ts"
-import { EMPTY_DAY_REASON } from "../domain/review-note.ts"
+import {
+  EMPTY_DAY_NOTE,
+  EMPTY_DAY_REASON,
+  LOADING_VALUE,
+  NO_DIARY_NOTE,
+  UNKNOWN_TASKS_NOTE,
+  UNKNOWN_VALUE,
+  WRITE_FAILED_NOTE,
+} from "../domain/review-note.ts"
+import { writtenTimeOf } from "../domain/written-time.ts"
 
 /** 今日を見ているあいだだけ取り直す間隔。 */
 const TODAY_REFETCH_INTERVAL_MS = 60_000
@@ -89,8 +98,43 @@ export type AchievementWriting =
   | { readonly kind: "writing"; readonly stage: DiaryStage }
   | { readonly kind: "failed" }
 
+/** 日記の区画の吹き出し。 */
+export type DiarySectionBubble =
+  | { readonly kind: "blank" }
+  | { readonly kind: "notes"; readonly notes: readonly string[] }
+  | {
+      readonly kind: "written"
+      readonly key: string
+      readonly body: string
+      readonly revisionId: number
+    }
+
+export type DiarySectionCard = {
+  readonly key: string
+  readonly label: string
+  readonly value: string
+  readonly note: string
+}
+
+/** 日記の区画が置く値。`view` から畳んだもの。 */
+export type DiarySectionModel =
+  | { readonly kind: "failed" }
+  | {
+      readonly kind: "shown"
+      /** 取れていて、振り返りのボタンを出してよいか。 */
+      readonly ready: boolean
+      /** 見出しの「振り返り [21:40]」。最後の段落が無ければ `none`。 */
+      readonly reviewedLabel:
+        | { readonly kind: "none" }
+        | { readonly kind: "shown"; readonly label: string }
+      readonly canOpenBook: boolean
+      readonly bubble: DiarySectionBubble
+      readonly cards: readonly DiarySectionCard[]
+    }
+
 export type UseAchievementResult = {
   readonly view: AchievementView
+  readonly diarySection: DiarySectionModel
   readonly daySwitch: AchievementDaySwitch
   /** 日を切り替えている間、前の日の中身を薄く残す判定に使う。 */
   readonly isFetching: boolean
@@ -183,6 +227,7 @@ export function useAchievement(): UseAchievementResult {
 
   return {
     view,
+    diarySection: diarySectionOf(view, writing),
     daySwitch,
     isFetching: query.isFetching,
     onPreviousDay: () => {
@@ -210,6 +255,82 @@ export function useAchievement(): UseAchievementResult {
     ),
     diaryReveal,
   }
+}
+
+function diarySectionOf(view: AchievementView, writing: AchievementWriting): DiarySectionModel {
+  if (view.kind === "failed") {
+    return { kind: "failed" }
+  }
+
+  const written =
+    view.kind === "ready" && view.diary.kind === "written" ? view.diary.diary : undefined
+  const latest = written?.paragraphs.at(-1)
+
+  return {
+    kind: "shown",
+    ready: view.kind === "ready",
+    reviewedLabel:
+      latest === undefined
+        ? { kind: "none" }
+        : { kind: "shown", label: `振り返り [${writtenTimeOf(latest.writtenAt) ?? ""}]` },
+    canOpenBook: latest !== undefined,
+    bubble: bubbleOf(view, writing, written, latest),
+    cards: cardsOf(view),
+  }
+}
+
+function bubbleOf(
+  view: AchievementView,
+  writing: AchievementWriting,
+  written: Extract<DailyDiaryStatus, { readonly kind: "written" }>["diary"] | undefined,
+  latest: { readonly writtenAt: string; readonly body: string } | undefined,
+): DiarySectionBubble {
+  if (view.kind !== "ready") {
+    return { kind: "blank" }
+  }
+  const latestBodies = latest === undefined ? [] : [latest.body]
+  if (writing.kind === "writing") {
+    return { kind: "notes", notes: latestBodies }
+  }
+  if (writing.kind === "failed") {
+    return { kind: "notes", notes: [WRITE_FAILED_NOTE, ...latestBodies] }
+  }
+  if (isEmptyAchievementDay(view.commitCount, view.doneTasks)) {
+    return { kind: "notes", notes: [EMPTY_DAY_NOTE] }
+  }
+  if (latest === undefined) {
+    return { kind: "notes", notes: [NO_DIARY_NOTE] }
+  }
+  return {
+    kind: "written",
+    key: `${written?.date ?? ""}-${latest.writtenAt}`,
+    body: latest.body,
+    revisionId: written?.paragraphs.length ?? 0,
+  }
+}
+
+function cardsOf(view: AchievementView): readonly DiarySectionCard[] {
+  const ready = view.kind === "ready" ? view : undefined
+  const doneTasks = ready?.doneTasks
+  return [
+    {
+      key: "done-tasks",
+      label: "終えたタスク",
+      value:
+        doneTasks === undefined
+          ? LOADING_VALUE
+          : doneTasks.kind === "unknown"
+            ? UNKNOWN_VALUE
+            : String(doneTasks.items.length),
+      note: doneTasks?.kind === "unknown" ? UNKNOWN_TASKS_NOTE : "",
+    },
+    {
+      key: "commits",
+      label: "コミット",
+      value: ready === undefined ? LOADING_VALUE : String(ready.commitCount),
+      note: "",
+    },
+  ]
 }
 
 /**

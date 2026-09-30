@@ -385,6 +385,138 @@ describe("useAchievement（書いている進み）", () => {
   })
 })
 
+describe("useAchievement（日記の区画）", () => {
+  it("日記が書き上がっていれば、最後の段落と時刻の字・数の札を畳む", async () => {
+    stubAchievementFetch(() => rpcOutput(WRITTEN_TODAY))
+    const { result } = renderHook(() => useAchievement(), {
+      wrapper: achievementWrapper(createTestQueryClient()),
+    })
+    await waitFor(() => {
+      expect(result.current.view.kind).toBe("ready")
+    })
+
+    expect(result.current.diarySection).toEqual({
+      kind: "shown",
+      ready: true,
+      reviewedLabel: { kind: "shown", label: "振り返り [21:40]" },
+      canOpenBook: true,
+      bubble: {
+        kind: "written",
+        key: "2026-09-24-2026-09-24T21:40:00+09:00",
+        body: "架空の日記の本文。",
+        revisionId: 1,
+      },
+      cards: [
+        { key: "done-tasks", label: "終えたタスク", value: "1", note: "" },
+        { key: "commits", label: "コミット", value: "3", note: "" },
+      ],
+    })
+  })
+
+  it("日記が無い日は「まだこの日の日記は無い。」、空の日は成果が無い旨", async () => {
+    stubAchievementFetch(() => rpcOutput(KNOWN_TODAY))
+    const { result } = renderHook(() => useAchievement(), {
+      wrapper: achievementWrapper(createTestQueryClient()),
+    })
+    await waitFor(() => {
+      expect(result.current.view.kind).toBe("ready")
+    })
+    expect(result.current.diarySection).toMatchObject({
+      reviewedLabel: { kind: "none" },
+      canOpenBook: false,
+      bubble: { kind: "notes", notes: ["まだこの日の日記は無い。"] },
+    })
+
+    fetchStub?.restore()
+    stubAchievementFetch(() =>
+      rpcOutput({ ...KNOWN_TODAY, commitCount: 0, doneTasks: { kind: "known", items: [] } }),
+    )
+    const empty = renderHook(() => useAchievement(), {
+      wrapper: achievementWrapper(createTestQueryClient()),
+    })
+    await waitFor(() => {
+      expect(empty.result.current.view.kind).toBe("ready")
+    })
+    expect(empty.result.current.diarySection).toMatchObject({
+      bubble: { kind: "notes", notes: ["この日に main へ入った成果は無い。"] },
+    })
+  })
+
+  it("タスクの記録が読めなければ札が「—」と添え書きになる", async () => {
+    stubAchievementFetch(() => rpcOutput({ ...KNOWN_TODAY, doneTasks: { kind: "unknown" } }))
+    const { result } = renderHook(() => useAchievement(), {
+      wrapper: achievementWrapper(createTestQueryClient()),
+    })
+    await waitFor(() => {
+      expect(result.current.view.kind).toBe("ready")
+    })
+
+    expect(result.current.diarySection).toMatchObject({
+      cards: [
+        { label: "終えたタスク", value: "—", note: "タスクの記録が無い" },
+        { label: "コミット", value: "3", note: "" },
+      ],
+    })
+  })
+
+  it("読み込み中は札が「…」で吹き出しは空", () => {
+    stubAchievementFetch(() => rpcOutput(KNOWN_TODAY))
+    const { result } = renderHook(() => useAchievement(), {
+      wrapper: achievementWrapper(createTestQueryClient()),
+    })
+
+    expect(result.current.diarySection).toMatchObject({
+      ready: false,
+      bubble: { kind: "blank" },
+      cards: [{ value: "…" }, { value: "…" }],
+    })
+  })
+
+  it("書いている間は最後の段落の本文を残し、書けなかったときは書き直しの文言を先に置く", async () => {
+    stubAchievementFetch(() => rpcOutput(WRITTEN_TODAY))
+    const writing = renderHook(() => useAchievement(), {
+      wrapper: achievementWrapper(
+        createTestQueryClient(),
+        stateWith({
+          diaryWriting: { kind: "writing", date: "2026-09-24", startedAt: 0, stage: "write" },
+        }),
+      ),
+    })
+    await waitFor(() => {
+      expect(writing.result.current.view.kind).toBe("ready")
+    })
+    expect(writing.result.current.diarySection).toMatchObject({
+      bubble: { kind: "notes", notes: ["架空の日記の本文。"] },
+    })
+
+    const failed = renderHook(() => useAchievement(), {
+      wrapper: achievementWrapper(
+        createTestQueryClient(),
+        stateWith({ diaryWriting: { kind: "failed", date: "2026-09-24" } }),
+      ),
+    })
+    await waitFor(() => {
+      expect(failed.result.current.view.kind).toBe("ready")
+    })
+    expect(failed.result.current.diarySection).toMatchObject({
+      bubble: {
+        kind: "notes",
+        notes: ["日記を書けなかった。もう一度押すと書き直す。", "架空の日記の本文。"],
+      },
+    })
+  })
+
+  it("取れなかったときは failed", async () => {
+    stubAchievementFetch(() => rpcError(503, "UNAVAILABLE"))
+    const { result } = renderHook(() => useAchievement(), {
+      wrapper: achievementWrapper(createTestQueryClient()),
+    })
+    await waitFor(() => {
+      expect(result.current.diarySection).toEqual({ kind: "failed" })
+    })
+  })
+})
+
 describe("useAchievement（日記の立ち絵）", () => {
   it("日記が無い日は、いまのパックの名前を default の表情で出す", async () => {
     stubAchievementFetch(() => rpcOutput(KNOWN_TODAY))

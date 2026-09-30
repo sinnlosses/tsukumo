@@ -5,8 +5,9 @@ import { DiarySection } from "../../../../../../../src/browser/components/page/a
 import type { DiaryWriterPortrait } from "../../../../../../../src/browser/components/page/achievement/domain/diary-writer.ts"
 import type {
   AchievementReviewButton,
-  AchievementView,
   AchievementWriting,
+  DiarySectionCard,
+  DiarySectionModel,
 } from "../../../../../../../src/browser/components/page/achievement/hooks/use-achievement.ts"
 
 /**
@@ -32,68 +33,78 @@ const AVAILABLE_REVIEW: AchievementReviewButton = {
 
 const NOT_WRITING: AchievementWriting = { kind: "none" }
 
+const LOADING_CARDS: readonly DiarySectionCard[] = [
+  { key: "done-tasks", label: "終えたタスク", value: "…", note: "" },
+  { key: "commits", label: "コミット", value: "…", note: "" },
+]
+
+function cardsOf(doneTasks: string, commits: string, note = ""): readonly DiarySectionCard[] {
+  return [
+    { key: "done-tasks", label: "終えたタスク", value: doneTasks, note },
+    { key: "commits", label: "コミット", value: commits, note: "" },
+  ]
+}
+
+const LOADING = {
+  kind: "shown",
+  ready: false,
+  reviewedLabel: { kind: "none" },
+  canOpenBook: false,
+  bubble: { kind: "blank" },
+  cards: LOADING_CARDS,
+} satisfies DiarySectionModel
+
 const READY_WITH_DIARY = {
-  kind: "ready",
-  commitCount: 4,
-  doneTasks: { kind: "known", items: [{ id: "T-1", summary: "架空のタスク" }] },
-  graduations: [],
-  milestones: [],
-  diary: {
+  kind: "shown",
+  ready: true,
+  reviewedLabel: { kind: "shown", label: "振り返り [21:40]" },
+  canOpenBook: true,
+  bubble: {
     kind: "written",
-    diary: {
-      version: 1,
-      date: "2026-09-24",
-      paragraphs: [
-        {
-          writtenAt: "2026-09-24T21:40:00+09:00",
-          body: "架空の日記の本文。",
-          expression: "proud",
-          writer: { pack: "fixture", name: "架空の名前" },
-        },
-      ],
-      bookmark: { kind: "none" },
-    },
+    key: "2026-09-24-2026-09-24T21:40:00+09:00",
+    body: "架空の日記の本文。",
+    revisionId: 1,
   },
-} satisfies AchievementView
+  cards: cardsOf("1", "4"),
+} satisfies DiarySectionModel
 
 const READY_NO_DIARY = {
-  kind: "ready",
-  commitCount: 4,
-  doneTasks: { kind: "known", items: [{ id: "T-1", summary: "架空のタスク" }] },
-  graduations: [],
-  milestones: [],
-  diary: { kind: "none" },
-} satisfies AchievementView
+  kind: "shown",
+  ready: true,
+  reviewedLabel: { kind: "none" },
+  canOpenBook: false,
+  bubble: { kind: "notes", notes: ["まだこの日の日記は無い。"] },
+  cards: cardsOf("1", "4"),
+} satisfies DiarySectionModel
 
 const READY_EMPTY_DAY = {
-  kind: "ready",
-  commitCount: 0,
-  doneTasks: { kind: "known", items: [] },
-  graduations: [],
-  milestones: [],
-  diary: { kind: "none" },
-} satisfies AchievementView
+  ...READY_NO_DIARY,
+  bubble: { kind: "notes", notes: ["この日に main へ入った成果は無い。"] },
+  cards: cardsOf("0", "0"),
+} satisfies DiarySectionModel
 
 const READY_COMMIT_ONLY = {
-  kind: "ready",
-  commitCount: 3,
-  doneTasks: { kind: "known", items: [] },
-  graduations: [],
-  milestones: [],
-  diary: { kind: "none" },
-} satisfies AchievementView
+  ...READY_NO_DIARY,
+  cards: cardsOf("0", "3"),
+} satisfies DiarySectionModel
 
 const READY_UNKNOWN_TASKS = {
-  kind: "ready",
-  commitCount: 2,
-  doneTasks: { kind: "unknown" },
-  graduations: [],
-  milestones: [],
-  diary: { kind: "none" },
-} satisfies AchievementView
+  ...READY_NO_DIARY,
+  cards: cardsOf("—", "2", "タスクの記録が無い"),
+} satisfies DiarySectionModel
+
+const WRITING_OVER_DIARY = {
+  ...READY_WITH_DIARY,
+  bubble: { kind: "notes", notes: ["架空の日記の本文。"] },
+} satisfies DiarySectionModel
+
+const WRITE_FAILED = {
+  ...READY_NO_DIARY,
+  bubble: { kind: "notes", notes: ["日記を書けなかった。もう一度押すと書き直す。"] },
+} satisfies DiarySectionModel
 
 function renderSection(overrides: {
-  readonly view?: Exclude<AchievementView, { readonly kind: "unavailable" }>
+  readonly diary?: DiarySectionModel
   readonly writing?: AchievementWriting
   readonly review?: AchievementReviewButton
   readonly reveal?: boolean
@@ -102,7 +113,7 @@ function renderSection(overrides: {
 }): ReturnType<typeof render> {
   return render(
     <DiarySection
-      view={overrides.view ?? READY_NO_DIARY}
+      diary={overrides.diary ?? READY_NO_DIARY}
       isFetching={overrides.isFetching ?? false}
       writing={overrides.writing ?? NOT_WRITING}
       portrait={NO_PORTRAIT}
@@ -115,13 +126,13 @@ function renderSection(overrides: {
 
 describe("DiarySection", () => {
   it("取れなかったときは1行だけ", () => {
-    renderSection({ view: { kind: "failed" } })
+    renderSection({ diary: { kind: "failed" } })
     expect(screen.getByText("成果を取れなかった。")).toBeDefined()
     expect(document.querySelector(".achievement-card")).toBeNull()
   })
 
   it("読み込み中は札が「…」で、ボタンは出ない", () => {
-    renderSection({ view: { kind: "loading" } })
+    renderSection({ diary: LOADING })
 
     const values = [...document.querySelectorAll(".achievement-card-value")].map(
       (node) => node.textContent,
@@ -131,14 +142,14 @@ describe("DiarySection", () => {
   })
 
   it("日記が無い日は、点線の枠に「まだこの日の日記は無い。」", () => {
-    renderSection({ view: READY_NO_DIARY })
+    renderSection({ diary: READY_NO_DIARY })
     expect(screen.getByText("まだこの日の日記は無い。")).toBeDefined()
     expect(document.querySelector(".achievement-diary-bubble")).toBeNull()
   })
 
   it("空の日は、吹き出しの場所に成果が無い旨、ボタンは押せない", () => {
     renderSection({
-      view: READY_EMPTY_DAY,
+      diary: READY_EMPTY_DAY,
       review: {
         label: "架空の名前と振り返る",
         availability: { kind: "blocked", reason: "振り返る成果が無い" },
@@ -153,14 +164,14 @@ describe("DiarySection", () => {
   })
 
   it("コミットはあり終えたタスクが0の日は、空の日の枠ではなく日記が無い日の枠", () => {
-    renderSection({ view: READY_COMMIT_ONLY })
+    renderSection({ diary: READY_COMMIT_ONLY })
 
     expect(screen.getByText("まだこの日の日記は無い。")).toBeDefined()
     expect(screen.queryByText("この日に main へ入った成果は無い。")).toBeNull()
   })
 
   it("タスクの記録が無いリポジトリでは、札が「—」で添え書きが出る", () => {
-    renderSection({ view: READY_UNKNOWN_TASKS })
+    renderSection({ diary: READY_UNKNOWN_TASKS })
 
     const values = [...document.querySelectorAll(".achievement-card-value")].map(
       (node) => node.textContent,
@@ -170,7 +181,7 @@ describe("DiarySection", () => {
   })
 
   it("日記が書き上がっていれば、いちばん新しい段落と時刻を出す", () => {
-    renderSection({ view: READY_WITH_DIARY })
+    renderSection({ diary: READY_WITH_DIARY })
 
     expect(screen.getByText("架空の日記の本文。")).toBeDefined()
     expect(screen.getByText("振り返り [21:40]")).toBeDefined()
@@ -178,7 +189,7 @@ describe("DiarySection", () => {
   })
 
   it("数の札は「終えたタスク」→「コミット」の順で並ぶ", () => {
-    renderSection({ view: READY_WITH_DIARY })
+    renderSection({ diary: READY_WITH_DIARY })
 
     const labels = [...document.querySelectorAll(".achievement-card h3")].map(
       (node) => node.textContent,
@@ -188,7 +199,7 @@ describe("DiarySection", () => {
 
   it("書いている間は進みと「いま書いています…」を出し、ボタンは「振り返り中…」になる", () => {
     renderSection({
-      view: READY_NO_DIARY,
+      diary: { ...READY_NO_DIARY, bubble: { kind: "notes", notes: [] } },
       writing: { kind: "writing", stage: "write" },
     })
 
@@ -202,7 +213,7 @@ describe("DiarySection", () => {
 
   it("書いている間、既に日記があれば前の段落を点線の枠に残す", () => {
     renderSection({
-      view: READY_WITH_DIARY,
+      diary: WRITING_OVER_DIARY,
       writing: { kind: "writing", stage: "read" },
     })
 
@@ -213,7 +224,7 @@ describe("DiarySection", () => {
 
   it("書けなかったときは、書き直しの文言が出てボタンは通常どおり", () => {
     renderSection({
-      view: READY_NO_DIARY,
+      diary: WRITE_FAILED,
       writing: { kind: "failed" },
     })
 
@@ -223,14 +234,14 @@ describe("DiarySection", () => {
   })
 
   it("日を切り替えている間は薄く残す", () => {
-    renderSection({ view: READY_WITH_DIARY, isFetching: true })
+    renderSection({ diary: READY_WITH_DIARY, isFetching: true })
     expect(document.querySelector(".achievement-diary")?.className).toContain("is-fetching")
   })
 
   it("押せるときはボタンが出て、押すと onReview が1回呼ばれる", () => {
     let calls = 0
     renderSection({
-      view: READY_WITH_DIARY,
+      diary: READY_WITH_DIARY,
       review: { ...AVAILABLE_REVIEW, onReview: () => (calls += 1) },
     })
 
@@ -240,14 +251,14 @@ describe("DiarySection", () => {
 
   it("日記があれば「日記帳で読む」が出て、押すと onOpenDiaryBook が呼ばれる", () => {
     let calls = 0
-    renderSection({ view: READY_WITH_DIARY, onOpenDiaryBook: () => (calls += 1) })
+    renderSection({ diary: READY_WITH_DIARY, onOpenDiaryBook: () => (calls += 1) })
 
     screen.getByRole("button", { name: "日記帳で読む" }).click()
     expect(calls).toBe(1)
   })
 
   it("日記が無い日は「日記帳で読む」を出さない", () => {
-    renderSection({ view: READY_NO_DIARY })
+    renderSection({ diary: READY_NO_DIARY })
     expect(screen.queryByRole("button", { name: "日記帳で読む" })).toBeNull()
   })
 })
