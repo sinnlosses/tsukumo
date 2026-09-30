@@ -697,6 +697,12 @@
 .detail-block .table-scroll td {
   min-width: 4em;
 }
+/* 見出しのセルでは英単語を途中で割らない（body の overflow-wrap: anywhere を戻す）。
+   日本語の見出しは字の間で今までどおり折り返す。
+   1語が器より長い見出しは、上の器が横に転がす。 */
+.detail-block .table-scroll th {
+  overflow-wrap: normal;
+}
 /* 「用語 → 説明」の対。
    用語と説明を2列に組み、説明の左端を揃える（対応が一目で分かる）。
    1列目は max-content なので用語は折り返さない。
