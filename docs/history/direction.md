@@ -3,6 +3,34 @@
 `develop/direction.md` に書かれたユーザーからの指示を、タスク化した時点で**当時の記述のまま**
 ここへ移す（`docs/workflow.md`「指示メモ」参照）。新しいものを上に足す。**後から書き換えない。**
 
+## 2026-09-30 振り返りのドラフト4件
+
+（出典: `develop/draft/` から。/plan-tasks で4件とも承認され、GH-174〜GH-177 になった）
+
+### check の重い段が落ちたとき、落ちた段の名前と終了コードを最後に出す（振り返り: GH-138）（GH-174）
+
+- 札: 黄 揺れ（7回目）
+- 根拠: GH-138 の委譲先の `tw verify` が1回 exit 2 で終わり、ログの末尾には単体 2951 件・E2E 62 件の通過しか出ていなかった。打ち直すと exit 0。`scripts/check.ts` は重い段の結果を並べて書いたあと `process.exitCode = failed.status` とするだけで、どの段が落ちたかを出さないので、揺れの出どころ（vitest か E2E の後片付けか）を追えない
+- 出し先: `scripts/check.ts` の重い段の後で、status が 0 でない段ごとに `<段の名前> が終了コード <n> で落ちた` を最後の行に書く（仕組みで塞ぐ側。揺れの出どころを次の1回で特定できるようにする）
+
+### ソースのコメントに日付（YYYY-MM-DD）を書いたら検査で落とす（振り返り: GH-132）（GH-175）
+
+- 札: 黄 制約違反（7回目）
+- 根拠: GH-132 の委譲先が `report-notation.module.css` の `progress` のコメントに「（2026-09-30 デザイン「進み具合 案A」）」と経緯を書き、受け入れでメインが削った。同じ回に `notation.tsx` の docstring にも `...rest` の働きを言い直す句（「`aria-label` はそのまま通す」）があった。CLAUDE.md は「経緯・採らなかった案は正典へ」と定めているが、依頼文で念を押しても出る。いま `src/` のコメントの日付は見本のパスの中の1か所だけで、日付を経緯の目印として機械的に拾える
+- 出し先: 仕組みで塞ぐタスク1件。`src/` の `.ts` / `.tsx` / `.css` のコメントに `\d{4}-\d{2}-\d{2}` があれば `pnpm run check` で落とす検査（`test/architecture.test.ts` か `scripts/` の検査）を足す。`docs/history/mockup/` のパスの中の日付は除く
+
+### `python3 <スクリプトのファイル>` での作業ツリーの書き換えも `deny-sed-in-place` で止める（振り返り: GH-149）（GH-176）
+
+- 札: 黄 制約違反（7回目）
+- 根拠: GH-149 の委譲先が、`cat >` でスクラッチに `split.py` を書き、`python3 split.py` で `src/server/session-driver/core/session-driver.ts` を `open(p, 'w')` で書き換えた。hook は heredoc と `-c` の中しか見ないので通った（委譲先の friction log に「黄 制約違反: hook をすり抜けた」と自己申告）。同じ回の heredoc の `open(p, 'w')` は GH-137 の判定で止まっており、ファイルに逃がす形だけが穴として残っている
+- 出し先: 仕組みで塞ぐタスク1件。`scripts/deny-sed-in-place.ts` で、実行される `python3 <path>.py` の `<path>` が読めるファイルなら中身を読み、heredoc・`-c` と同じ `isDeniedPythonCode` にかける（読めなければ今までどおり通す）。`test/scripts/deny-sed-in-place.test.ts` に、作業ツリーの中へ書くスクリプトのファイルを止める行と、外へのリテラルの絶対パスなら通す行を足す
+
+### 作業ツリーの中で打った `tsukumo` が、link 元の別の checkout を起こさないようにする（振り返り: GH-143）（GH-177）
+
+- 札: 黄 道具（8回目）
+- 根拠: GH-143 の実物の確認で、委譲先が作業ツリー（tsukumo-2）の中で `tsukumo` を打ったところ、`pnpm link --global` の先の `~/ghq/github.com/sinnlosses/tsukumo` が起き、作業ツリーの変更が載らない画面（版が合わないエラー）になった。`ps aux` で実体を突き止め、`node ./bin/tsukumo` で起こし直して解決した（委譲先の friction log）。`docs/workflow.md`「`loopable` の判定」の「直した作業ツリーで起こす」は、`tsukumo` コマンドがどこを指すかまでは書いていない
+- 出し先: `bin/tsukumo` の起動の頭で、cwd が tsukumo のリポジトリ（の作業ツリー）で、かつ自分の置き場所と違うときは、cwd の作業ツリーの `bin/tsukumo` に委ねる（無ければ食い違いを出して止める）仕組みにするタスク。同じ札が8回目なので、正典への追記ではなく起動側で塞ぐ
+
 ## 2026-09-30 日記帳の振り返りをターン中でも押せるようにする（会話から）
 
 （会話の指示。GH-173 になった。日記帳の白紙のページだけがターン中に「振り返る」を塞いでいて、日記の区画・サーバ・正典はターン中でも押せる形だと示したのを受けて）
