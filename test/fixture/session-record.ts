@@ -56,7 +56,13 @@ export function reportRecord(conclusion = "架空の結論"): SessionRecord {
 export function workPlanRecord(
   overrides: Partial<Omit<Extract<SessionRecord, { readonly kind: "work-plan" }>, "kind">> = {},
 ): SessionRecord {
-  return { kind: "work-plan", phases: ["架空の段A", "架空の段B"], current: 0, ...overrides }
+  return {
+    kind: "work-plan",
+    phases: ["架空の段A", "架空の段B"],
+    current: 0,
+    phaseSummary: "",
+    ...overrides,
+  }
 }
 
 /** 圧縮の区切り。中身を持たない。 */

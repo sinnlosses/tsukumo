@@ -219,6 +219,22 @@ describe("work_plan（段取り）", () => {
     expect(reply.endsTurn).toBe(false)
   })
 
+  it("途中の位置の呼び出しは、段のまとめがあれば通し、無ければ差し戻す", async () => {
+    const withSummary = await callTool(workServer(), "work_plan", {
+      phases: ["架空の段A", "架空の段B"],
+      current: 1,
+      phaseSummary: "架空のまとめ。",
+    })
+    const withoutSummary = await callTool(workServer(), "work_plan", {
+      phases: ["架空の段A", "架空の段B"],
+      current: 1,
+    })
+
+    expect(withSummary).toEqual({ text: "ok", isError: false, endsTurn: false })
+    expect(withoutSummary.isError).toBe(true)
+    expect(withoutSummary.endsTurn).toBe(false)
+  })
+
   it("段が1つだけの段取りは受け付ける", async () => {
     const single = await callTool(workServer(), "work_plan", { phases: ["架空の段A"], current: 0 })
 

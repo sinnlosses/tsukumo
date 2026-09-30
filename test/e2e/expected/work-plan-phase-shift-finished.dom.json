@@ -1,0 +1,280 @@
+{
+  "main": [
+    {
+      "tag": "section",
+      "attributes": {
+        "data-region": "main"
+      },
+      "children": [
+        {
+          "tag": "div",
+          "attributes": {
+            "data-brush-origin": ""
+          },
+          "children": [
+            {
+              "tag": "article",
+              "children": [
+                {
+                  "tag": "header",
+                  "children": [
+                    {
+                      "tag": "button",
+                      "attributes": {
+                        "aria-disabled": "true",
+                        "aria-label": "1つ古いターンへ",
+                        "type": "button"
+                      },
+                      "children": [
+                        {
+                          "tag": "span",
+                          "attributes": {
+                            "aria-hidden": "true"
+                          },
+                          "children": [
+                            "‹"
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "tag": "button",
+                      "attributes": {
+                        "aria-disabled": "true",
+                        "aria-label": "1つ新しいターンへ",
+                        "type": "button"
+                      },
+                      "children": [
+                        {
+                          "tag": "span",
+                          "attributes": {
+                            "aria-hidden": "true"
+                          },
+                          "children": [
+                            "›"
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "tag": "h2",
+                      "children": [
+                        {
+                          "tag": "button",
+                          "attributes": {
+                            "aria-disabled": "false",
+                            "aria-expanded": "false",
+                            "type": "button"
+                          },
+                          "children": [
+                            "ID の変換を両方の形に対応させたい（架空の依頼）",
+                            {
+                              "tag": "span",
+                              "attributes": {
+                                "aria-hidden": "true"
+                              }
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    "1 / 1",
+                    "最新"
+                  ]
+                },
+                {
+                  "tag": "div",
+                  "attributes": {
+                    "data-outline": "hidden"
+                  },
+                  "children": [
+                    {
+                      "tag": "details",
+                      "children": [
+                        {
+                          "tag": "summary",
+                          "children": [
+                            "中間レポート: 1/3 今の形を調べる"
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "tag": "p",
+                      "children": [
+                        "ここから",
+                        "2/3 ID の変換を両方の形に対応させる"
+                      ]
+                    },
+                    {
+                      "tag": "details",
+                      "children": [
+                        {
+                          "tag": "summary",
+                          "children": [
+                            "中間レポート: 2/3 ID の変換を両方の形に対応させる"
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "tag": "p",
+                      "children": [
+                        "ここから",
+                        "3/3 文書と検証を揃える"
+                      ]
+                    },
+                    {
+                      "tag": "section",
+                      "children": [
+                        {
+                          "tag": "header",
+                          "children": [
+                            {
+                              "tag": "p",
+                              "children": [
+                                "最終レポート"
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "tag": "p",
+                          "children": [
+                            "架空の結論: ID の変換が新旧どちらの形も受け付けるようになった。"
+                          ]
+                        },
+                        "進み具合",
+                        {
+                          "tag": "ol",
+                          "attributes": {
+                            "aria-label": "進み具合"
+                          },
+                          "children": [
+                            {
+                              "tag": "li",
+                              "attributes": {
+                                "aria-label": "今の形を調べる：済"
+                              },
+                              "children": [
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  },
+                                  "children": [
+                                    "✓"
+                                  ]
+                                },
+                                "今の形を調べる"
+                              ]
+                            },
+                            {
+                              "tag": "li",
+                              "attributes": {
+                                "aria-hidden": "true"
+                              }
+                            },
+                            {
+                              "tag": "li",
+                              "attributes": {
+                                "aria-label": "ID の変換を両方の形に対応させる：済"
+                              },
+                              "children": [
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  },
+                                  "children": [
+                                    "✓"
+                                  ]
+                                },
+                                "ID の変換を両方の形に対応させる"
+                              ]
+                            },
+                            {
+                              "tag": "li",
+                              "attributes": {
+                                "aria-hidden": "true"
+                              }
+                            },
+                            {
+                              "tag": "li",
+                              "attributes": {
+                                "aria-label": "文書と検証を揃える：済"
+                              },
+                              "children": [
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  },
+                                  "children": [
+                                    "✓"
+                                  ]
+                                },
+                                "文書と検証を揃える"
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "tag": "div",
+                          "attributes": {
+                            "role": "table",
+                            "aria-label": "検証結果"
+                          },
+                          "children": [
+                            "検証",
+                            "1",
+                            "✓ すべて通った",
+                            {
+                              "tag": "div",
+                              "attributes": {
+                                "role": "row"
+                              },
+                              "children": [
+                                "✓ OK",
+                                "pnpm run test",
+                                "12 / 12",
+                                "0秒"
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "tag": "ul",
+                          "children": [
+                            {
+                              "tag": "li",
+                              "children": [
+                                {
+                                  "tag": "code",
+                                  "children": [
+                                    "toId"
+                                  ]
+                                },
+                                "が新旧2つの形を読み分ける（架空）"
+                              ]
+                            },
+                            {
+                              "tag": "li",
+                              "children": [
+                                "メモに2つの形の例を足した（架空）"
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

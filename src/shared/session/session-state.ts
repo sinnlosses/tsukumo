@@ -119,6 +119,7 @@ export type SessionRecord =
       readonly kind: "work-plan"
       readonly phases: readonly string[]
       readonly current: number
+      readonly phaseSummary: string
     }
   /**
    * 答え終わった質問（`question-answered`）。積むのは答えが確定した1回だけで、あとから書き換えない。
@@ -575,7 +576,12 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
         ...state,
         records: [
           ...state.records,
-          { kind: "work-plan", phases: event.phases, current: event.current },
+          {
+            kind: "work-plan",
+            phases: event.phases,
+            current: event.current,
+            phaseSummary: event.phaseSummary,
+          },
         ],
       }
     case "tool-started": {

@@ -1,0 +1,5 @@
+/* 左端はステップの枠の内側の字に揃える（`.main-step` の padding と枠の幅の和）。 */
+.phase-notice {
+  margin: 0 calc(0.9rem + 1px);
+  letter-spacing: 0.08em;
+}

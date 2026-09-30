@@ -59,6 +59,7 @@ describe("mainViewTurnsOf", () => {
       report: "架空のレポート",
       firstLine: "架空のレポート",
       task: { kind: "none" },
+      finishedPhase: { kind: "none" },
     })
   })
 

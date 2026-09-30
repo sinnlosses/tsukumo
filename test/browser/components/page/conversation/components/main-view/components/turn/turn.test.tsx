@@ -39,7 +39,13 @@ afterEach(() => {
 
 /** 本文を持つステップの `body`。先頭行は本文そのもの（1行の本文しか使わないため）。 */
 function text(report: string): MainViewStepBody {
-  return { kind: "text", report, firstLine: report, task: { kind: "none" } }
+  return {
+    kind: "text",
+    report,
+    firstLine: report,
+    task: { kind: "none" },
+    finishedPhase: { kind: "none" },
+  }
 }
 
 function step(overrides: Partial<MainViewStep> & { readonly id: number }): MainViewStep {
@@ -48,6 +54,7 @@ function step(overrides: Partial<MainViewStep> & { readonly id: number }): MainV
     interim: false,
     superseded: false,
     final: false,
+    phaseNotice: { kind: "none" },
     actions: [],
     ...overrides,
   }
@@ -214,7 +221,7 @@ describe("Turn（目録の1行と見出し）", () => {
   } as const
 
   function taskBody(report: string): MainViewStepBody {
-    return { kind: "text", report, firstLine: report, task: TASK }
+    return { kind: "text", report, firstLine: report, task: TASK, finishedPhase: { kind: "none" } }
   }
 
   function catalogText(container: HTMLElement): string | undefined {

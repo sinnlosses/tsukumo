@@ -1,0 +1,183 @@
+[
+  {
+    "received": "hello",
+    "protocolVersion": "<protocol-version>"
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "session-info",
+      "sessionId": "fake-session",
+      "model": "opus",
+      "permissionMode": "auto",
+      "slashCommands": [
+        "clear",
+        "compact",
+        "doctor"
+      ],
+      "terminalSlashCommands": [
+        "doctor"
+      ]
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "command-descriptions",
+      "descriptions": [
+        {
+          "name": "clear",
+          "description": "会話を消して始め直す（架空の説明）"
+        },
+        {
+          "name": "compact",
+          "description": "会話を要約してまとめる（架空の説明）"
+        }
+      ]
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "speech",
+      "text": "疑似セッションの駆動で立ち上がったよ。ここはぜんぶ作り物の会話。",
+      "expression": "default"
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "request",
+      "text": "ID の変換を両方の形に対応させたい（架空の依頼）",
+      "images": []
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "speech",
+      "text": "まず今の形を見てくるね。",
+      "expression": "default"
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "work-plan",
+      "phases": [
+        "今の形を調べる",
+        "ID の変換を両方の形に対応させる",
+        "文書と検証を揃える"
+      ],
+      "current": 0,
+      "phaseSummary": ""
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "tool-started",
+      "toolUseId": "fake-work-plan-1",
+      "name": "Read",
+      "input": {
+        "file_path": "/tmp/dummy/id.ts"
+      }
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "tool-finished",
+      "toolUseId": "fake-work-plan-1",
+      "content": "ダミーの読み取り結果（3行）",
+      "isError": false
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "tool-started",
+      "toolUseId": "fake-work-plan-2",
+      "name": "Grep",
+      "input": {
+        "pattern": "toId"
+      }
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "tool-finished",
+      "toolUseId": "fake-work-plan-2",
+      "content": "ダミーの検索結果（2件）",
+      "isError": false
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "work-plan",
+      "phases": [
+        "今の形を調べる",
+        "ID の変換を両方の形に対応させる",
+        "文書と検証を揃える"
+      ],
+      "current": 1,
+      "phaseSummary": "架空の ID は `toId` の1か所で変換していて、呼ぶ側は2か所だった。"
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "speech",
+      "text": "形が分かったから、変換に入るよ。",
+      "expression": "default"
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "tool-started",
+      "toolUseId": "fake-work-plan-3",
+      "name": "Edit",
+      "input": {
+        "file_path": "/tmp/dummy/id.ts"
+      }
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "tool-finished",
+      "toolUseId": "fake-work-plan-3",
+      "content": "ダミーの書き換え結果",
+      "isError": false
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "tool-started",
+      "toolUseId": "fake-work-plan-4",
+      "name": "Bash",
+      "input": {
+        "command": "pnpm run test"
+      }
+    }
+  }
+]

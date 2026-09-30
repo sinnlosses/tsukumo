@@ -20,7 +20,7 @@ import {
 } from "./session-state.ts"
 import { bashCommandDuration } from "./turn-step.ts"
 import { splitIntoTurns, type TurnRest, turnIdOf } from "./turn.ts"
-import { latestWorkPlan, type LatestWorkPlan } from "./work-plan.ts"
+import { latestWorkPlan, type LatestWorkPlan, type PhaseShift, phaseShiftOf } from "./work-plan.ts"
 
 /**
  * 出すやり取りの数。
@@ -31,7 +31,7 @@ export const MAX_MAIN_VIEW_TURNS = MAX_SESSION_STATE_TURNS.work
 /**
  * 1つのやり取りの中で画面に出す記録の上限。超えた分は古いほうから落とし、件数だけを残す（やり取りの境界を優先する）。
  *
- * 数えるのは実際に画面へ出るもの（レポートと質問の記録）だけ（{@link shownEntryCount}）。
+ * 数えるのは実際に画面へ出るもの（レポート・段の知らせ・質問の記録）だけ（{@link shownEntryCount}）。
  * 画面に出るものだけを数えると1つのやり取りの最大は6件（中位数1・p99で4件。実測）で、この値には当たらない。
  * 落とすための値ではなく、1つのやり取りが際限なく伸びたときの止め。
  */
@@ -72,6 +72,11 @@ export type MainViewEntry =
    */
   | { readonly kind: "report"; readonly markdown: string; readonly task: ReportTask }
   /**
+   * `work_plan` の呼び出しで段が移ったこと（{@link phaseShiftOf}）。出すものが1つも無い呼び出しからは作らない。
+   * 終えた段のまとめは中間レポートに、入った段は段の知らせになる（{@link groupIntoSteps}）。
+   */
+  | { readonly kind: "phase-shift"; readonly shift: PhaseShift }
+  /**
    * 失敗で終わったターンの理由（`SessionRecord` の `turn-failure` をそのまま通す）。
    * ステップには入れない（やり取りの末尾に1つだけ出す印なので、{@link groupIntoTurns} がステップから外して `MainViewTurn.failure` に移す）。
    */
@@ -96,7 +101,7 @@ export type MainViewTurnFailure =
  *
  * `body` は画面に出す本文（{@link MainViewStepBody}）。
  *
- * `interim` は、その本文が中間レポート（`report` ツールの最後でない呼び出し。{@link selectToolReports}）かどうか。`body` が `none` のときは常に false。
+ * `interim` は、その本文が中間レポート（`report` ツールの最後でない呼び出し〔{@link selectToolReports}〕か、段のまとめ〔{@link groupIntoSteps}〕）かどうか。`body` が `none` のときは常に false。
  *
  * `superseded` は、自分より後ろに本文を持つステップがあるか（{@link markSupersededSteps}）。
  * `interim && superseded` のときだけ描く側が畳む。本文を持たないステップでも立つ。
@@ -110,6 +115,8 @@ export type MainViewTurnFailure =
  * {@link limitTurnEntries} が上限を超えた分を古いほうから落としても、残ったステップの `id` は変わらない（{@link groupIntoSteps} で、落とす前に振る）。
  * 描く側はこれをステップの `key` に使う。
  * 配列の添字を `key` にすると、古いステップが落ちて添字が前へずれた瞬間に、React が別のステップの DOM を使い回す（`<details>` の `open` のような制御されていない DOM の状態が別のステップへ乗り移って見える）。
+ *
+ * `phaseNotice` は、本文の後ろに出す段の知らせ（入った段の見出しの字）。段が移った `work_plan` から作ったステップだけが持つ。
  */
 export type MainViewStep = {
   readonly id: number
@@ -117,13 +124,22 @@ export type MainViewStep = {
   readonly interim: boolean
   readonly superseded: boolean
   readonly final: boolean
+  readonly phaseNotice: MainViewPhaseLabel
   readonly actions: readonly MainViewAction[]
 }
 
+/** 段の見出しの字（「2/4 段の名前」）。無ければ `none`。 */
+export type MainViewPhaseLabel =
+  | { readonly kind: "none" }
+  | { readonly kind: "phase"; readonly label: string }
+
+const NO_PHASE_LABEL = { kind: "none" } as const satisfies MainViewPhaseLabel
+
 /**
  * ステップの本文。本文が無い（レポートより前に起きたことをまとめたステップか、出さないと決めた本文）なら `none`。
- * `firstLine` は畳んだときの `<summary>` に出す1行で、`task` があれば作業の名前、無ければ `report` の先頭行（{@link extractFirstLine}）。
+ * `firstLine` は畳んだときの `<summary>` に出す1行で、段のまとめなら終えた段の見出し、`task` があれば作業の名前、どちらも無ければ本文の先頭行（{@link extractFirstLine}）。
  * `task` は目録の1行と見出しに出すタスクで、`report` ツールの外の本文では常に `none`。
+ * `finishedPhase` は目録の1行に添える終えた段の見出しで、段のまとめだけが持つ。
  */
 export type MainViewStepBody =
   | { readonly kind: "none" }
@@ -132,6 +148,7 @@ export type MainViewStepBody =
       readonly report: string
       readonly firstLine: string
       readonly task: ReportTask
+      readonly finishedPhase: MainViewPhaseLabel
     }
 
 const NO_BODY = { kind: "none" } as const satisfies MainViewStepBody
@@ -217,7 +234,7 @@ export function mainViewTurns(
  *
  * `compact-boundary` も落とす（圧縮の区切りは雑談のログだけに出す）。
  *
- * `work-plan` も落とす（段取りはレポートの本文の中に組む。{@link reportMarkdown}）。
+ * `work-plan` は、段が移ったときだけ `phase-shift` にする（段取りそのものはレポートの本文の中に組む。{@link reportMarkdown}）。
  *
  * `tool` は `toolUseId` / `nested`（突き合わせにしか使わない内部の付随情報）を落とす（メインビューの部品が見てよいのは名前・入力・結果だけ）。
  */
@@ -225,12 +242,14 @@ function toMainViewEntries(
   record: SessionRecord,
   earlierInTurn: () => readonly SessionRecord[],
 ): readonly MainViewEntry[] {
-  if (
-    record.kind === "speech" ||
-    record.kind === "compact-boundary" ||
-    record.kind === "work-plan"
-  ) {
+  if (record.kind === "speech" || record.kind === "compact-boundary") {
     return []
+  }
+  if (record.kind === "work-plan") {
+    const shift = phaseShiftOf(latestWorkPlan(earlierInTurn()), record)
+    return shift.finished.kind === "none" && shift.entered.kind === "none"
+      ? []
+      : [{ kind: "phase-shift", shift }]
   }
   // `request` は時刻（雑談のログだけが読む）を落として通す。仕事のメインビューには時刻を出さない。
   if (record.kind === "request") {
@@ -375,11 +394,15 @@ function groupIntoSteps(entries: readonly StepEntry[]): GroupedSteps {
           report: entry.markdown,
           firstLine: extractFirstLine(task.kind === "task" ? task.name : entry.markdown),
           task,
+          finishedPhase: NO_PHASE_LABEL,
         } as const satisfies MainViewStepBody
         return {
           steps: [...steps, newStep(id, body, [])],
           toolReportIds: entry.kind === "report" ? [...toolReportIds, id] : toolReportIds,
         }
+      }
+      if (entry.kind === "phase-shift") {
+        return { steps: [...steps, phaseShiftStep(id, entry.shift)], toolReportIds }
       }
 
       const step = steps.at(-1)
@@ -402,13 +425,50 @@ function newStep(
   body: MainViewStepBody,
   actions: readonly MainViewAction[],
 ): MainViewStep {
-  return { id, body, interim: false, superseded: false, final: false, actions }
+  return {
+    id,
+    body,
+    interim: false,
+    superseded: false,
+    final: false,
+    phaseNotice: NO_PHASE_LABEL,
+    actions,
+  }
+}
+
+/**
+ * 段が移った `work_plan` のステップ。終えた段のまとめがあれば本文にし、届いた時点で中間レポートと決める
+ * （あとから最終レポートへ回ることが無いので、`interim` をここで立てる）。
+ */
+function phaseShiftStep(id: number, shift: PhaseShift): MainViewStep {
+  const step = newStep(
+    id,
+    shift.finished.kind === "none"
+      ? NO_BODY
+      : {
+          kind: "text",
+          report: shift.finished.summary,
+          firstLine: extractFirstLine(shift.finished.label),
+          task: NO_REPORT_TASK,
+          finishedPhase: { kind: "phase", label: shift.finished.label },
+        },
+    [],
+  )
+  return {
+    ...step,
+    interim: shift.finished.kind === "finished",
+    phaseNotice:
+      shift.entered.kind === "none"
+        ? NO_PHASE_LABEL
+        : { kind: "phase", label: shift.entered.label },
+  }
 }
 
 /**
  * `report` ツールが1回も呼ばれなかったやり取りの本文を選ぶ。
  * 出すのは最後の本文（空白だけのものは除く）1つだけで、それが最終レポートになる。
- * それより前の本文は、資料らしい形をしていても出さない（中間レポートは `report` ツールからしか生まれない）。
+ * それより前の本文は、資料らしい形をしていても出さない（中間レポートは `report` ツールと段のまとめからしか生まれない）。
+ * 段のまとめ（{@link isDecidedStep}）はそのまま出す。
  *
  * `settled` でないあいだは何も出さない。
  * 書きかけは最後のステップへ積まれるので、最後の本文はまだ伸びる途中か、次の本文に席を譲るかもしれない。
@@ -416,19 +476,29 @@ function newStep(
  */
 function selectLastText(turn: MainViewTurn, settled: boolean): MainViewTurn {
   const lastId = settled
-    ? turn.steps.findLast((step) => step.body.kind === "text" && !isBlankText(step.body.report))?.id
+    ? turn.steps.findLast(
+        (step) => !step.interim && step.body.kind === "text" && !isBlankText(step.body.report),
+      )?.id
     : undefined
   return {
     ...turn,
     steps: turn.steps.map((step) =>
-      step.id === lastId || step.body.kind === "none" ? step : { ...step, body: NO_BODY },
+      step.id === lastId || isDecidedStep(step) ? step : { ...step, body: NO_BODY },
     ),
   }
 }
 
 /**
+ * 選ぶ前から出し方が決まっているステップ（本文が無いか、段のまとめ）。
+ * 段のまとめは届いた時点で中間レポートと決まるので、ターンが動いているあいだも伏せず、最後の本文・最後の `report` の候補にもしない。
+ */
+function isDecidedStep(step: MainViewStep): boolean {
+  return step.body.kind === "none" || step.interim
+}
+
+/**
  * `report` ツールが呼ばれたやり取りの本文を選ぶ。
- * 出すのは `report` から来たステップだけで、ツールの外に書いた本文は1つも出さない（推測の {@link selectLastText} は通さない）。
+ * 出すのは `report` から来たステップと段のまとめ（{@link isDecidedStep}）だけで、ツールの外に書いた本文は1つも出さない（推測の {@link selectLastText} は通さない）。
  * 最後の呼び出しが最終レポート、それより前は中間レポートで、あとに作業が続いたかどうかは見ない。
  *
  * `settled` でないあいだ、いちばん新しい `report` は出さない（次の `report` が来れば中間レポートに、来なければ最終レポートになるので、まだ決まっていない）。
@@ -444,7 +514,7 @@ function selectToolReports(
     ...turn,
     steps: turn.steps.map((step) => {
       if (!toolReportIds.includes(step.id)) {
-        return step.body.kind === "none" ? step : { ...step, body: NO_BODY }
+        return isDecidedStep(step) ? step : { ...step, body: NO_BODY }
       }
       if (step.id !== lastId) {
         return { ...step, interim: true }
@@ -548,12 +618,13 @@ function limitTurnEntries(turn: MainViewTurn): MainViewTurn {
 
 /**
  * そのステップが画面に出す記録の件数。
- * 描く側が描くもの（レポートと質問の記録）だけを数え、ツールの実行は数えない（メインビューに出ないため）。
+ * 描く側が描くもの（レポート・段の知らせ・質問の記録）だけを数え、ツールの実行は数えない（メインビューに出ないため）。
  * 描く側が出すものを変えたら、ここも揃える。
  */
 function shownEntryCount(step: MainViewStep): number {
   return (
     (step.body.kind === "none" ? 0 : 1) +
+    (step.phaseNotice.kind === "none" ? 0 : 1) +
     step.actions.filter((action) => action.kind === "question").length
   )
 }

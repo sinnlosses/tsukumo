@@ -28,7 +28,11 @@ import {
   type TurnStepList,
   type TurnStepStatus,
 } from "../../../../../shared/session/turn-step.ts"
-import { currentPhaseOf, type WorkPhase } from "../../../../../shared/session/work-plan.ts"
+import {
+  currentPhaseOf,
+  phaseLabel,
+  type WorkPhase,
+} from "../../../../../shared/session/work-plan.ts"
 import { formatElapsed } from "../../../../../shared/utils/elapsed-time.ts"
 import { DEFAULT_CHARACTER_NAME } from "../../../../domain/portrait-appearance.ts"
 import { summarizeToolInput, toolInputText } from "../../../../domain/tool-summary.ts"
@@ -406,11 +410,6 @@ function toPlanView(turnStepList: TurnStepList, turnInProgress: boolean): Screen
       }
     }),
   }
-}
-
-/** 段の見出し「2/4 段の名前」（札と一覧の区切りで同じ字）。 */
-function phaseLabel(phase: Extract<WorkPhase, { readonly kind: "phase" }>): string {
-  return `${String(phase.index + 1)}/${String(phase.count)} ${phase.name}`
 }
 
 /**

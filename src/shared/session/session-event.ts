@@ -154,11 +154,13 @@ export type SessionEvent =
   /**
    * `work_plan` ツールの呼び出し（段取り）。メインが呼んだもので、`parseWorkPlan` を通ったものだけが届く（サブエージェントの呼び出しは変換で捨てる）。
    * 毎回、段の並びごと届く。`current` は0始まりで、全部の段が済んだら `phases.length`。
+   * `phaseSummary` は終えた段のまとめで、無ければ空の文字列。
    */
   | {
       readonly kind: "work-plan"
       readonly phases: readonly string[]
       readonly current: number
+      readonly phaseSummary: string
     }
   | {
       readonly kind: "tool-started"

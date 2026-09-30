@@ -16,10 +16,17 @@ import type {
 function reportStep(id: number, firstLine: string): MainViewStep {
   return {
     id,
-    body: { kind: "text", report: firstLine, firstLine, task: { kind: "none" } },
+    body: {
+      kind: "text",
+      report: firstLine,
+      firstLine,
+      task: { kind: "none" },
+      finishedPhase: { kind: "none" },
+    },
     interim: false,
     superseded: false,
     final: false,
+    phaseNotice: { kind: "none" },
     actions: [],
   }
 }

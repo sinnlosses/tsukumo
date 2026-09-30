@@ -1,5 +1,5 @@
 // レポートの結論部の頭（目録の1行と見出し）。結論の一文はこの下のレポート本文の先頭にある。
-// 目録の1行はラベル・タスクID・終わり方のうちあるものだけを `·` でつなぎ、1つも無ければ何も描かない。
+// 目録の1行はラベル・終えた段・タスクID・終わり方のうちあるものだけを `·` でつなぎ、1つも無ければ何も描かない。
 
 import clsx from "clsx"
 import { Fragment, type ReactElement } from "react"
@@ -8,6 +8,7 @@ import type {
   ReportTask,
   ReportTaskOutcome,
 } from "../../../../../../../../shared/report/report-task.ts"
+import type { MainViewPhaseLabel } from "../../../../../../../../shared/session/main-view.ts"
 import { codeSpanParts } from "../../../../../../../domain/code-span.ts"
 import { useSession } from "../../../../../../../stores/session.ts"
 import { useTaskBoardRequest } from "../../../../../../../stores/task-board-request.ts"
@@ -19,16 +20,19 @@ export type ReportLabel = "none" | "interim" | "final"
 export type ReportHeadProps = {
   readonly label: ReportLabel
   readonly task: ReportTask
+  /** 段のまとめなら、終えた段の見出し。 */
+  readonly phase: MainViewPhaseLabel
 }
 
 export function ReportHead(props: ReportHeadProps): ReactElement | null {
-  const { label, task } = props
-  if (label === "none" && task.kind === "none") {
+  const { label, task, phase } = props
+  if (label === "none" && task.kind === "none" && phase.kind === "none") {
     return null
   }
 
   const items = [
     ...(label === "none" ? [] : [<span key="label">{LABEL_TEXT[label]}</span>]),
+    ...(phase.kind === "none" ? [] : [<span key="phase">{phase.label}</span>]),
     ...(task.kind === "none"
       ? []
       : [<TaskId id={task.id} key="id" />, <Outcome outcome={task.outcome} key="outcome" />]),

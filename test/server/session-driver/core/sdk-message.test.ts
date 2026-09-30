@@ -299,13 +299,31 @@ describe("toSessionEvents", () => {
         type: "tool_use",
         id: "toolu_3",
         name: WORK_PLAN_TOOL_FULL_NAME,
-        input: { phases: ["架空の段A", "架空の段B"], current: 1 },
+        input: { phases: ["架空の段A", "架空の段B"], current: 1, phaseSummary: "架空のまとめ。" },
       },
     ])
 
     expect(toSessionEvents(message, EXPRESSIONS)).toEqual([
-      { kind: "work-plan", phases: ["架空の段A", "架空の段B"], current: 1 },
+      {
+        kind: "work-plan",
+        phases: ["架空の段A", "架空の段B"],
+        current: 1,
+        phaseSummary: "架空のまとめ。",
+      },
     ])
+  })
+
+  it("段が途中の位置なのに段のまとめの無い work_plan は、差し戻す呼び出しと同じく段取りにしない", () => {
+    const message = assistantMessage([
+      {
+        type: "tool_use",
+        id: "toolu_3",
+        name: WORK_PLAN_TOOL_FULL_NAME,
+        input: { phases: ["架空の段A", "架空の段B"], current: 1 },
+      },
+    ])
+
+    expect(toSessionEvents(message, EXPRESSIONS)).toEqual([])
   })
 
   it("サブエージェントの中の work_plan と、位置が段の数を超えた work_plan は捨てる", () => {

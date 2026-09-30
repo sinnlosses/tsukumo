@@ -56,6 +56,7 @@ import {
 } from "../core/tsukumo-tool-name.ts"
 import {
   WORK_PLAN_CURRENT_DESCRIPTION,
+  WORK_PLAN_PHASE_SUMMARY_DESCRIPTION,
   WORK_PLAN_PHASES_DESCRIPTION,
   WORK_PLAN_REJECTION,
   WORK_PLAN_TOOL_DESCRIPTION,
@@ -104,7 +105,7 @@ const RECALL_EPISODE_TOOL_DESCRIPTION =
  * 戻り値は既定が "ok" だけで、tsukumo の内部の状態や画面の事情がモデルへ戻る経路を作らない（`docs/architecture/adr/0009-speech-via-tool.md`）。
  * 例外は `recall` / `recall_episode` と `report` と `work_plan` と見直しの2つ。
  * `recall` / `recall_episode` が返すのは、そのセッションが自分で読める外の事実（自分の過去の会話の目次と1件の逐語）だけ。
- * `report` が返すのは差し戻すときの規約違反だけ、`work_plan` が返すのは位置が段の数を超えたときの直し方だけ。
+ * `report` が返すのは差し戻すときの規約違反だけ、`work_plan` が返すのは `parseWorkPlan` が受け付けなかったときの直し方だけ。
  * 見直しの2つが返すのは、利用者が見送った提案の識別子と差し戻しの理由だけ。
  *
  * 常に載るのは `speak` と `recall` / `recall_episode` で、`remember` / `forget` は雑談モードのときだけ載る。
@@ -226,6 +227,7 @@ function workPlanTool() {
         .min(MIN_WORK_PLAN_PHASES)
         .describe(WORK_PLAN_PHASES_DESCRIPTION),
       current: z.number().int().min(0).describe(WORK_PLAN_CURRENT_DESCRIPTION),
+      phaseSummary: z.string().optional().describe(WORK_PLAN_PHASE_SUMMARY_DESCRIPTION),
     },
     async (plan) =>
       parseWorkPlan(plan) === undefined

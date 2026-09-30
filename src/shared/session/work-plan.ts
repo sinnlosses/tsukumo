@@ -3,16 +3,25 @@
 
 import { isPlainObject } from "remeda"
 
+import { sentenceCount } from "../report/sentence-count.ts"
+import { isBlankText } from "../utils/blank-text.ts"
 import type { SessionRecord } from "./session-state.ts"
 
-/** 段の並びと今の位置。`current` は0始まりで、全部の段が済んだら `phases.length`。 */
+/**
+ * 段の並びと今の位置。`current` は0始まりで、全部の段が済んだら `phases.length`。
+ * `phaseSummary` は終えた段のまとめ（段のまとめ）で、無ければ空の文字列。
+ */
 export type WorkPlan = {
   readonly phases: readonly string[]
   readonly current: number
+  readonly phaseSummary: string
 }
 
 /** 段取りが持つ段の数の下限。段が無い段取りは位置を言う意味が無いので受け付けない。 */
 export const MIN_WORK_PLAN_PHASES = 1
+
+/** 段のまとめの文の数の上限。 */
+export const MAX_PHASE_SUMMARY_SENTENCES = 2
 
 /** 記録の範囲で最後に渡された段取り。1度も渡されていなければ `none`。 */
 export type LatestWorkPlan = { readonly kind: "none" } | ({ readonly kind: "planned" } & WorkPlan)
@@ -31,8 +40,21 @@ export type WorkPhase =
     }
 
 /**
+ * `work_plan` の呼び出し1つで段が移ったか。メインビューに出す2つを持つ。
+ * `finished` は終えた段（見出しの字）とそのまとめで、中間レポートになる。`entered` は入った段の字で、段の知らせになる。
+ */
+export type PhaseShift = {
+  readonly finished:
+    | { readonly kind: "none" }
+    | { readonly kind: "finished"; readonly label: string; readonly summary: string }
+  readonly entered: { readonly kind: "none" } | { readonly kind: "entered"; readonly label: string }
+}
+
+/**
  * 外来の値（ツールの引数・transcript）を段取りとして読む。
- * 段が {@link MIN_WORK_PLAN_PHASES} 個より少ない・空白だけの名前がある・位置が0から段の数までの整数でないときは undefined。
+ * 次のどれかなら undefined:
+ * 段が {@link MIN_WORK_PLAN_PHASES} 個より少ない・空白だけの名前がある・位置が0から段の数までの整数でない・
+ * 位置が途中（0より大きく段の数より小さい）なのに段のまとめが無い・段のまとめが {@link MAX_PHASE_SUMMARY_SENTENCES} 文を超える。
  * ツールの handler が差し戻すかどうかと、変換がイベントにするかどうかは、この1つで決まる。
  */
 export function parseWorkPlan(value: unknown): WorkPlan | undefined {
@@ -53,7 +75,15 @@ export function parseWorkPlan(value: unknown): WorkPlan | undefined {
   ) {
     return undefined
   }
-  return { phases, current }
+  const phaseSummary = parsePhaseSummary(value.phaseSummary)
+  if (
+    phaseSummary === undefined ||
+    (current > 0 && current < phases.length && phaseSummary === "") ||
+    sentenceCount(phaseSummary) > MAX_PHASE_SUMMARY_SENTENCES
+  ) {
+    return undefined
+  }
+  return { phases, current, phaseSummary }
 }
 
 /** 記録の範囲で最後の `work-plan` の記録（{@link LatestWorkPlan}）。範囲を依頼1つに絞るのは呼ぶ側。 */
@@ -61,7 +91,12 @@ export function latestWorkPlan(records: readonly SessionRecord[]): LatestWorkPla
   const found = records.findLast(isWorkPlanRecord)
   return found === undefined
     ? { kind: "none" }
-    : { kind: "planned", phases: found.phases, current: found.current }
+    : {
+        kind: "planned",
+        phases: found.phases,
+        current: found.current,
+        phaseSummary: found.phaseSummary,
+      }
 }
 
 /** 段取りの今の段（{@link WorkPhase}）。 */
@@ -73,6 +108,69 @@ export function currentPhaseOf(plan: LatestWorkPlan): WorkPhase {
   return name === undefined
     ? { kind: "none" }
     : { kind: "phase", index: plan.current, count: plan.phases.length, name }
+}
+
+/**
+ * 同じ依頼の中の前の段取り `previous` から `next` へ移ったときに、メインビューに出すもの（{@link PhaseShift}）。
+ *
+ * - 依頼で最初の段取りと、全部の段を終えた段取りでは何も出さない（最後の段のまとめは最終レポートが担う）
+ * - 段の知らせは、今の段の名前か位置が前と変わったときに出す（段が戻ったときも出す）
+ * - 中間レポートは、前の今の段が新しい並びで今の段より前にあるときだけ出す。
+ *   段の名前で探すので、段を進めながら後ろの段を組み替えても終えた段を見失わない。
+ *   戻った・組み替えただけで前の今の段が済んでいない（今の段以降にある・並びから消えた）ときは出さない
+ */
+export function phaseShiftOf(previous: LatestWorkPlan, next: WorkPlan): PhaseShift {
+  const nextPhase = currentPhaseOf({ kind: "planned", ...next })
+  if (previous.kind === "none" || nextPhase.kind === "none") {
+    return NO_PHASE_SHIFT
+  }
+  const previousPhase = currentPhaseOf(previous)
+  const moved =
+    previousPhase.kind === "none" ||
+    previousPhase.name !== nextPhase.name ||
+    previousPhase.index !== nextPhase.index
+  if (!moved) {
+    return NO_PHASE_SHIFT
+  }
+  const finishedIndex = previousPhase.kind === "none" ? -1 : next.phases.indexOf(previousPhase.name)
+  const finished =
+    previousPhase.kind === "phase" &&
+    finishedIndex >= 0 &&
+    finishedIndex < next.current &&
+    !isBlankText(next.phaseSummary)
+      ? ({
+          kind: "finished",
+          label: phaseLabel({
+            kind: "phase",
+            index: finishedIndex,
+            count: next.phases.length,
+            name: previousPhase.name,
+          }),
+          summary: next.phaseSummary,
+        } as const)
+      : ({ kind: "none" } as const)
+  return { finished, entered: { kind: "entered", label: phaseLabel(nextPhase) } }
+}
+
+/** 段の見出し「2/4 段の名前」（いまの作業の札・依頼の手順の一覧・メインビューで同じ字）。 */
+export function phaseLabel(phase: Extract<WorkPhase, { readonly kind: "phase" }>): string {
+  return `${String(phase.index + 1)}/${String(phase.count)} ${phase.name}`
+}
+
+const NO_PHASE_SHIFT = {
+  finished: { kind: "none" },
+  entered: { kind: "none" },
+} as const satisfies PhaseShift
+
+/** 段のまとめを読む。無い・空白だけなら空の文字列、文字列でなければ undefined。 */
+function parsePhaseSummary(value: unknown): string | undefined {
+  if (value === undefined) {
+    return ""
+  }
+  if (typeof value !== "string") {
+    return undefined
+  }
+  return isBlankText(value) ? "" : value
 }
 
 function isWorkPlanRecord(

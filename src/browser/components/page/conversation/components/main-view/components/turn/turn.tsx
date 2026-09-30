@@ -1,4 +1,4 @@
-// 1つのやり取り。`<RequestRest>` + ステップの並び（レポート・質問の記録）を縦に1本で積む（番号は振らない）。
+// 1つのやり取り。`<RequestRest>` + ステップの並び（レポート・質問の記録・段の知らせ）を縦に1本で積む（番号は振らない）。
 // ツールの実行は描かない（進行は帯の「いまの作業」が持つ）。
 // 失敗で終わったやり取りは、末尾に「失敗で終わった」と理由を出す（色だけでなく字で成功と見分ける）。
 
@@ -20,6 +20,7 @@ import { turnFailureLabel } from "../../../../domain/api-error-label.ts"
 import { PromptImageThumbnails } from "../../../prompt-image/prompt-image.tsx"
 import { requestLinesAfterTitle, truncateRequestText } from "../../domain/turn-title.ts"
 import styles from "../../main-view.module.css"
+import { PhaseNotice } from "../phase-notice/phase-notice.tsx"
 import { QuestionRecord } from "../question-record/question-record.tsx"
 import { ReportHead, type ReportLabel } from "../report-head/report-head.tsx"
 import { Report } from "../report/report.tsx"
@@ -111,11 +112,39 @@ function TurnFailureNotice(props: { readonly failure: TurnFailure }): ReactEleme
   )
 }
 
+type StepProps = {
+  readonly step: MainViewStep
+  /** このステップが載っているやり取り（`<Report>` から筆先へ渡る）。 */
+  readonly turnId: number
+  readonly reveal: boolean
+  /** このステップが載っているやり取りに中間レポートがあるか（`MainViewTurn.hasInterimReport`）。 */
+  readonly hasInterimReport: boolean
+}
+
 /**
- * 1ステップ分。レポートも質問の記録も無いステップは何も描かない（`null`）。
+ * 1ステップ分。札（レポートと質問の記録）と、その後ろの段の知らせ（`step.phaseNotice`）。どちらも無いステップは何も描かない（`null`）。
  *
  * ツールの実行（`action.kind === "tool"`）は描かない。
  * `actions` にはツールの記録も残っているが、メインビューに出すのは質問の記録だけ。
+ */
+function Step(props: StepProps): ReactElement | null {
+  const { step } = props
+  const hasCard = step.body.kind === "text" || step.actions.some(isQuestion)
+
+  if (!hasCard && step.phaseNotice.kind === "none") {
+    return null
+  }
+
+  return (
+    <>
+      {hasCard && <StepCard {...props} />}
+      {step.phaseNotice.kind === "phase" && <PhaseNotice label={step.phaseNotice.label} />}
+    </>
+  )
+}
+
+/**
+ * ステップの本文と質問の記録の札。
  *
  * 中間レポート（`step.interim`）は話が途中の本文なので、目録の1行にラベルを載せて地と枠を変える（`.main-step.is-interim`）。
  *
@@ -125,21 +154,9 @@ function TurnFailureNotice(props: { readonly failure: TurnFailure }): ReactEleme
  * 後ろに別のレポートが現れた中間レポート（`step.superseded`）は、何件も開いたまま積まれると見通しが悪いので畳む。
  * 畳んだ分は `<details>` にするだけで中身は DOM に残す。まだ追い越されていない最後の中間レポートは開いた `<section>` のまま。
  */
-function Step(props: {
-  readonly step: MainViewStep
-  /** このステップが載っているやり取り（`<Report>` から筆先へ渡る）。 */
-  readonly turnId: number
-  readonly reveal: boolean
-  /** このステップが載っているやり取りに中間レポートがあるか（`MainViewTurn.hasInterimReport`）。 */
-  readonly hasInterimReport: boolean
-}): ReactElement | null {
+function StepCard(props: StepProps): ReactElement {
   const { step } = props
-  const questions = props.step.actions.filter(isQuestion)
-
-  if (step.body.kind === "none" && questions.length === 0) {
-    return null
-  }
-
+  const questions = step.actions.filter(isQuestion)
   const folded = step.interim && step.superseded
   const content = (
     <>
@@ -148,6 +165,7 @@ function Step(props: {
           <ReportHead
             label={reportLabel(step, step.body.task, props.hasInterimReport, folded)}
             task={step.body.task}
+            phase={step.body.finishedPhase}
           />
           <Report markdown={step.body.report} reveal={props.reveal} turnId={props.turnId} />
         </>

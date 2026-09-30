@@ -684,18 +684,26 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
   })
 
   it("同じやり取りで report より前に届いた最後の段取りを、結論の下に段の図として組む", () => {
-    const plan = (current: number): SessionEvent => ({
+    const plan = (current: number, phaseSummary: string): SessionEvent => ({
       kind: "work-plan",
       phases: ["架空の段A", "架空の段B"],
       current,
+      phaseSummary,
     })
     const turn = turnOf(
-      [ask, plan(0), plan(1), report("架空の結論。", "架空の根拠。"), finished],
+      [
+        ask,
+        plan(0, ""),
+        plan(1, "架空のまとめ。"),
+        report("架空の結論。", "架空の根拠。"),
+        finished,
+      ],
       SETTLED,
       true,
     )
 
     expect(shownReports(turn)).toEqual([
+      "架空のまとめ。",
       "架空の結論。\n\n" +
         '<div class="status">\n\n<div class="status-caption">進み具合</div>\n\n' +
         '<ol class="progress" aria-label="進み具合">' +
@@ -724,11 +732,17 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
       report: '<div class="conclusion">\n\n架空の結論。\n\n</div>\n\n架空の根拠。',
       firstLine: "架空の作業",
       task,
+      finishedPhase: { kind: "none" },
     })
   })
 
   it("段が1つの段取りでも図が崩れず、済んだ段1つだけで組む", () => {
-    const plan: SessionEvent = { kind: "work-plan", phases: ["架空の段A"], current: 1 }
+    const plan: SessionEvent = {
+      kind: "work-plan",
+      phases: ["架空の段A"],
+      current: 1,
+      phaseSummary: "",
+    }
     const turn = turnOf(
       [ask, plan, report("架空の結論。", "架空の根拠。"), finished],
       SETTLED,
@@ -774,6 +788,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
       report: "架空の結論。",
       firstLine: "架空の結論。",
       task: { kind: "none" },
+      finishedPhase: { kind: "none" },
     })
   })
 
@@ -803,6 +818,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
       report: "唯一の結論。",
       firstLine: "唯一の結論。",
       task: { kind: "none" },
+      finishedPhase: { kind: "none" },
     })
   })
 
@@ -837,5 +853,119 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
       ["前のターンの結論。"],
       ["テキストで書いた答え"],
     ])
+  })
+})
+
+describe("mainViewTurns（段が移ったときの中間レポートと段の知らせ）", () => {
+  const fold = (events: readonly SessionEvent[]) =>
+    events.reduce((current, event) => applySessionEvent(current, event, 0), INITIAL_SESSION_STATE)
+  const turnOf = (events: readonly SessionEvent[], unsettled: TurnBodies, closed: boolean) =>
+    mainViewTurns(mainViewEntries(fold(events)), unsettled, closed).at(-1)
+  const ask: SessionEvent = { kind: "request", text: "架空の依頼", images: [] }
+  const phases = ["架空の段A", "架空の段B"]
+  const plan = (current: number, phaseSummary = "", names = phases): SessionEvent => ({
+    kind: "work-plan",
+    phases: names,
+    current,
+    phaseSummary,
+  })
+  const report: SessionEvent = {
+    kind: "report",
+    toolUseId: "toolu_r1",
+    conclusion: "架空の結論。",
+    sections: [],
+    favor: "",
+    checks: [],
+    closing: { kind: "none" },
+    unknownBlockCount: 0,
+    sessionSummary: undefined,
+    task: { kind: "none" },
+  }
+  const finished: SessionEvent = { kind: "turn-finished", outcome: { kind: "completed" } }
+
+  it("段を進めると、ターンが動いているあいだも終えた段の中間レポートと次の段の知らせを出す", () => {
+    const turn = turnOf([ask, plan(0), plan(1, "架空のまとめ。")], WRITING, false)
+    const step = turn?.steps.at(-1)
+
+    expect(step?.interim).toBe(true)
+    expect(step?.superseded).toBe(false)
+    expect(step?.body).toEqual({
+      kind: "text",
+      report: "架空のまとめ。",
+      firstLine: "1/2 架空の段A",
+      task: { kind: "none" },
+      finishedPhase: { kind: "phase", label: "1/2 架空の段A" },
+    })
+    expect(step?.phaseNotice).toEqual({ kind: "phase", label: "2/2 架空の段B" })
+  })
+
+  it("最終レポートが出ると段のまとめは畳まれ、最終レポートのラベルの条件（中間レポートがある）が立つ", () => {
+    const turn = turnOf(
+      [ask, plan(0), plan(1, "架空のまとめ。"), plan(2), report, finished],
+      SETTLED,
+      true,
+    )
+    const [summary, final] = (turn?.steps ?? []).filter((step) => step.body.kind === "text")
+
+    expect(summary?.interim && summary.superseded).toBe(true)
+    expect(final?.final).toBe(true)
+    expect(reportOf(final)?.startsWith("架空の結論。")).toBe(true)
+    expect(turn?.hasInterimReport).toBe(true)
+  })
+
+  it("report の無いターンでも、段のまとめは最終レポートにならない", () => {
+    const turn = turnOf(
+      [
+        ask,
+        plan(0),
+        plan(1, "架空のまとめ。"),
+        { kind: "utterance", text: "架空の答え" },
+        finished,
+      ],
+      SETTLED,
+      true,
+    )
+
+    expect(turn?.steps.filter((step) => step.interim).map(reportOf)).toEqual(["架空のまとめ。"])
+    expect(reportOf(turn?.steps.find((step) => step.final))).toBe("架空の答え")
+  })
+
+  it("段が戻ったときは、本文の無い段の知らせだけのステップになる", () => {
+    const turn = turnOf([ask, plan(0), plan(1, "架空のまとめ。"), plan(0)], WRITING, false)
+    const step = turn?.steps.at(-1)
+
+    expect(step?.body).toEqual({ kind: "none" })
+    expect(step?.phaseNotice).toEqual({ kind: "phase", label: "1/2 架空の段A" })
+  })
+
+  it("1段だけの段取りでは、中間レポートも知らせも出ない", () => {
+    const single = ["架空の段A"]
+    const turn = turnOf(
+      [ask, plan(0, "", single), plan(1, "", single), report, finished],
+      SETTLED,
+      true,
+    )
+
+    const shown = turn?.steps.filter((step) => step.body.kind === "text") ?? []
+
+    expect(shown.map((step) => step.final)).toEqual([true])
+    expect(turn?.steps.every((step) => step.phaseNotice.kind === "none")).toBe(true)
+    expect(turn?.hasInterimReport).toBe(false)
+  })
+
+  it("段の知らせも、1つのやり取りで画面に出す記録の上限に数える", () => {
+    const many = Array.from({ length: 30 }, (_, index) => `架空の段${String(index)}`)
+    const turn = turnOf(
+      [
+        ask,
+        plan(0, "", many),
+        ...many.slice(1).map((_, index) => plan(index + 1, "架空のまとめ。", many)),
+      ],
+      SETTLED,
+      true,
+    )
+
+    // 29 の段の移り × （まとめ + 知らせ）= 58 件のうち、上限の 40 件を残す。
+    expect(turn?.droppedCount).toBe(18)
   })
 })
