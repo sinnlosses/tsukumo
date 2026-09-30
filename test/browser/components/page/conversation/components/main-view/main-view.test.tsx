@@ -346,18 +346,65 @@ describe("MainView（一覧: 窓の中のやり取りへ飛ぶ）", () => {
 })
 
 describe("MainView（依頼の続き）", () => {
-  it("複数行の依頼は、2行目以降が開いた <details> で全部読める（1行目は二度出さない）", () => {
+  const MORE_BUTTON = /^ほか \d+ 行$/
+
+  it("2行の依頼は、続きが札の頭の中に出て、ボタンは出ない（1行目は二度出さない）", () => {
     renderMainView([
-      requestRecord({ text: "架空の依頼の1行目\n1. 起こす\n2. 落ちる", turnId: 0 }),
+      requestRecord({ text: "架空の依頼の1行目\n1. 起こす", turnId: 0 }),
       detailRecord("本文"),
     ])
 
-    const details = document.querySelector("details")
-    expect(details?.open).toBe(true)
-    expect(details?.textContent).toContain("1. 起こす")
-    expect(details?.textContent).toContain("2. 落ちる")
-    expect(details?.textContent).not.toContain("架空の依頼の1行目")
+    const header = document.querySelector("header")
+    expect(header?.textContent).toContain("1. 起こす")
+    expect(document.querySelector("details")).toBeNull()
+    expect(screen.queryByRole("button", { name: MORE_BUTTON })).toBeNull()
     expect(screen.getAllByText("架空の依頼の1行目")).toHaveLength(1)
+  })
+
+  it("1行の依頼は、札の頭に続きの箱を出さない", () => {
+    renderMainView([requestRecord({ text: "架空の依頼", turnId: 0 }), detailRecord("本文")])
+
+    expect(document.querySelector("header p")).toBeNull()
+  })
+
+  it("6行の依頼は続きを2行だけ出し、「ほか 3 行」を押すとすべて出てボタンが消える", () => {
+    renderMainView([
+      requestRecord({ text: "見出し\n続き1\n続き2\n続き3\n続き4\n続き5", turnId: 0 }),
+      detailRecord("本文"),
+    ])
+    const header = document.querySelector("header")
+
+    expect(header?.textContent).toContain("続き2")
+    expect(header?.textContent).not.toContain("続き3")
+
+    press("ほか 3 行")
+
+    expect(header?.textContent).toContain("続き5")
+    expect(screen.queryByRole("button", { name: MORE_BUTTON })).toBeNull()
+  })
+
+  it("別のターンへ移ると、開いた状態は持ち越されない", () => {
+    renderMainView([
+      requestRecord({ text: "見出し\n続き1\n続き2\n続き3", turnId: 0 }),
+      detailRecord("本文"),
+      requestRecord({ text: "2つ目\nA\nB\nC", turnId: 1 }),
+      detailRecord("2つ目の本文"),
+    ])
+
+    press("ほか 1 行")
+    press(OLDER)
+    press(NEWER)
+
+    expect(screen.queryByRole("button", { name: MORE_BUTTON })).not.toBeNull()
+  })
+
+  it("引用の記号で始まる依頼は、見出しに「>」が出ない", () => {
+    renderMainView([
+      requestRecord({ text: "> 架空の依頼\n> 続きの行", turnId: 0 }),
+      detailRecord("本文"),
+    ])
+
+    expect(screen.getByRole("heading", { level: 2 }).textContent).toBe("架空の依頼")
   })
 })
 

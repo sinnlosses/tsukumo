@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest"
 
 import {
-  requestLinesAfterTitle,
   truncateRequestText,
   turnHistoryText,
+  turnRequestRest,
   turnTitle,
 } from "../../../../../../../../src/browser/components/page/conversation/components/main-view/domain/turn-title.ts"
 import type {
@@ -60,6 +60,25 @@ describe("turnTitle（札の頭のタイトル）", () => {
     )
   })
 
+  it("行頭の引用の記号（重ねてあっても全部）はタイトルに出さない", () => {
+    expect(turnTitle(turn({ request: { text: "> 架空の依頼", images: [] } }))).toBe("架空の依頼")
+    expect(turnTitle(turn({ request: { text: "> > 二重の引用", images: [] } }))).toBe("二重の引用")
+  })
+
+  it("記号だけの行はタイトルにならず、次の行がタイトルになる", () => {
+    expect(turnTitle(turn({ request: { text: ">\n> 架空の依頼", images: [] } }))).toBe("架空の依頼")
+  })
+
+  it("記号のあとに空白が無い行（>foo）は落とさない", () => {
+    expect(turnTitle(turn({ request: { text: ">foo", images: [] } }))).toBe(">foo")
+  })
+
+  it("レポートの先頭行へ下りたときは、引用の記号を落とさない", () => {
+    const steps = [reportStep(0, "> 架空の引用")]
+
+    expect(turnTitle(turn({ request: undefined, steps }))).toBe("> 架空の引用")
+  })
+
   it("依頼が無い・文面が空のときは、最初のレポートの先頭行へ下りる", () => {
     const steps = [reportStep(0, ""), reportStep(1, "架空のレポートの見出し")]
 
@@ -78,25 +97,36 @@ describe("turnTitle（札の頭のタイトル）", () => {
   })
 })
 
-describe("requestLinesAfterTitle（タイトルに取られなかった依頼の行）", () => {
+describe("turnRequestRest（タイトルの下に出す依頼の続き）", () => {
+  function rest(text: string): readonly string[] {
+    return turnRequestRest(turn({ request: { text, images: [] } }))
+  }
+
   it("1行の依頼では何も残らない", () => {
-    expect(requestLinesAfterTitle("架空の依頼")).toEqual([])
+    expect(rest("架空の依頼")).toEqual([])
   })
 
   it("複数行の依頼では、タイトルの行より後ろを前後の空行を落として返す", () => {
-    expect(requestLinesAfterTitle("架空の依頼\n\n1. 起こす\n\n2. 落ちる\n\n")).toEqual([
-      "1. 起こす",
-      "",
-      "2. 落ちる",
-    ])
+    expect(rest("架空の依頼\n\n1. 起こす\n\n2. 落ちる\n\n")).toEqual(["1. 起こす", "", "2. 落ちる"])
   })
 
   it("先頭の空行は、タイトルの行と一緒に読み飛ばす（タイトルと同じ行を二度出さない）", () => {
-    expect(requestLinesAfterTitle("\n\n架空の依頼\n続きの行")).toEqual(["続きの行"])
+    expect(rest("\n\n架空の依頼\n続きの行")).toEqual(["続きの行"])
   })
 
-  it("文面が空なら何も残らない", () => {
-    expect(requestLinesAfterTitle("")).toEqual([])
+  it("続きの行の頭の引用の記号も落とし、字下げは残す", () => {
+    expect(rest("> 架空の依頼\n> 続きの行\n>   - 字下げ")).toEqual(["続きの行", "  - 字下げ"])
+  })
+
+  it("文面が空・依頼が無いときは何も残らない", () => {
+    expect(rest("")).toEqual([])
+    expect(turnRequestRest(turn({ request: undefined }))).toEqual([])
+  })
+
+  it("長い依頼は上限で切った続きになる", () => {
+    const long = `見出し\n${"あ".repeat(2001)}`
+
+    expect(rest(long)).toEqual([`${"あ".repeat(1996)}…`])
   })
 })
 
@@ -105,6 +135,12 @@ describe("turnHistoryText（一覧の行に出す依頼の全文）", () => {
     expect(
       turnHistoryText(turn({ request: { text: "1行目\n\n2行目  にも空白", images: [] } })),
     ).toBe("1行目\n\n2行目  にも空白")
+  })
+
+  it("引用の記号も落とさずそのまま返す（コピーして使うため）", () => {
+    expect(turnHistoryText(turn({ request: { text: "> 架空の依頼\n> 2行目", images: [] } }))).toBe(
+      "> 架空の依頼\n> 2行目",
+    )
   })
 
   it("依頼が無いターンは turnTitle と同じ表示にする", () => {

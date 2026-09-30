@@ -2,7 +2,7 @@
 // 左に `‹` `›`（`‹` が1つ古いターン、`›` が1つ新しいターン。端ではその側を押せなくする）、続けて見ているターンのタイトル（押すと窓の中のやり取りへ一度で飛べる一覧が開く）、右端に「n / N」と、最新を見ているときは「最新」の印・過去を見ているときは「最新へ」の口。
 //
 // ターンが1件しか無くても出す。
-// 依頼の1行目はここにしか出ない（`RequestRest` は2行目以降だけを持つ）ので、省くと依頼が画面から消える。
+// 依頼はここにしか出ない（タイトルが1行目、続きが2行目以降）ので、省くと依頼が画面から消える。
 //
 // キー操作は付けない。
 // ページでは入力欄にほぼ常にフォーカスがあるので素のキーは使えず、修飾キー付きはブラウザの戻る / 進む（Cmd+[ / Alt+←）とぶつかる。
@@ -13,6 +13,7 @@ import type { ReactElement } from "react"
 import { Button } from "../../../../../../ui/button/button.tsx"
 import { Heading } from "../../../../../../ui/heading/heading.tsx"
 import { Text } from "../../../../../../ui/text/text.tsx"
+import { RequestContinuation } from "../request-continuation/request-continuation.tsx"
 import type { TurnHeaderHistoryRow, TurnHeaderModel } from "./hooks/use-turn-header.ts"
 import styles from "./turn-header.module.css"
 
@@ -27,11 +28,14 @@ const HISTORY_OTHER_MARK = "○"
 export type PresentationalTurnHeaderProps = TurnHeaderModel
 
 export function PresentationalTurnHeader({
+  headerRef,
   olderDisabled,
   onOlder,
   isNewest,
   onNewer,
   activeTitle,
+  activeTurnId,
+  activeRequestRest,
   positionLabel,
   onToNewest,
   historyOpen,
@@ -43,7 +47,7 @@ export function PresentationalTurnHeader({
   onSelectHistoryRow,
 }: PresentationalTurnHeaderProps): ReactElement {
   return (
-    <header className={styles["turn-header"]}>
+    <header className={styles["turn-header"]} ref={headerRef}>
       <div className={styles["turn-nav"]}>
         <Button
           type="button"
@@ -153,6 +157,11 @@ export function PresentationalTurnHeader({
           </Button>
         )}
       </div>
+      {activeRequestRest.length > 0 && (
+        <div className={styles["turn-request-rest"]}>
+          <RequestContinuation key={activeTurnId} lines={activeRequestRest} />
+        </div>
+      )}
     </header>
   )
 }

@@ -1263,6 +1263,62 @@
       ]
     },
     {
+      "name": "request-heading",
+      "steps": [
+        {
+          "afterMs": 0,
+          "event": {
+            "kind": "request",
+            "text": "起動の手順を見直したい（架空の依頼）",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 100,
+          "event": { "kind": "utterance", "text": "## 起動の手順（架空）\n\n架空の本文。" }
+        },
+        {
+          "afterMs": 200,
+          "event": { "kind": "turn-finished", "outcome": { "kind": "completed" } }
+        },
+        {
+          "afterMs": 400,
+          "event": {
+            "kind": "request",
+            "text": "> 設定ファイルの読み込みで落ちる件を直して（架空の依頼）\n> 再現手順は1つだけ",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 500,
+          "event": { "kind": "utterance", "text": "## 設定の読み込み（架空）\n\n架空の本文。" }
+        },
+        {
+          "afterMs": 600,
+          "event": { "kind": "turn-finished", "outcome": { "kind": "completed" } }
+        },
+        {
+          "afterMs": 800,
+          "event": {
+            "kind": "request",
+            "text": "成果ページの日記を、日を選んだら見開きで開くようにしたい（架空の依頼）\n縦書きで、右ページに今日のいちばん、左ページに終えたタスクの一覧\nカレンダーの灯りの段階は今のまま\n日を選ぶ前の状態は、いまの一覧のまま残して、選んだ日だけを見開きにする\n狭い窓でも横に転がらないこと。長い行は折り返して、見出しの下にきちんと収まるかを確かめたい（架空の依頼の長い行）\n最後の行（架空）",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 900,
+          "event": {
+            "kind": "utterance",
+            "text": "## 日記の見開き（架空）\n\n架空の本文。\n\n### 右ページ（架空）\n\n架空の本文。\n\n### 左ページ（架空）\n\n架空の本文。"
+          }
+        },
+        {
+          "afterMs": 1000,
+          "event": { "kind": "turn-finished", "outcome": { "kind": "completed" } }
+        }
+      ]
+    },
+    {
       "name": "report-tool",
       "steps": [
         {

@@ -17,7 +17,7 @@ import { QuestionAsk } from "./components/question-ask/question-ask.tsx"
 import { ReportOutline } from "./components/report-outline/report-outline.tsx"
 import { TurnHeader } from "./components/turn-header/turn-header.tsx"
 import { Turn } from "./components/turn/turn.tsx"
-import { turnHistoryText, turnTitle } from "./domain/turn-title.ts"
+import { turnHistoryText, turnRequestRest, turnTitle } from "./domain/turn-title.ts"
 import { useActiveTurnScroll } from "./hooks/use-active-turn-scroll.ts"
 import styles from "./main-view.module.css"
 import { RepositoryFileLinkProvider } from "./markdown/repository-link.tsx"
@@ -64,6 +64,7 @@ export function MainView(): ReactElement {
               turns={turns.map((turn) => ({
                 id: turn.id,
                 title: turnTitle(turn),
+                requestRest: turnRequestRest(turn),
                 historyText: turnHistoryText(turn),
               }))}
               activeTurnId={activeTurn.id}

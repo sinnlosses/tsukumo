@@ -6,19 +6,22 @@
    貼り付く位置は領域の余白ぶん上（`--region-padding`。`layout.module.css`）。
    sticky は転がる器の余白の内側を基準にするので、0 のままだと頭の上の余白の帯を本文が流れて見える（実測）。 */
 .turn-header {
+  --turn-header-min-height: calc(2.5rem + 1px);
   position: sticky;
   top: calc(-1 * var(--region-padding, 0px));
   z-index: 1;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
-  grid-template-areas: "nav title meta";
+  grid-template-areas:
+    "nav title meta"
+    ". rest .";
   align-items: center;
   column-gap: 0.75rem;
-  row-gap: 0.4rem;
+  row-gap: 0;
   /* 頭は字を詰めて潰れない範囲で低く保つ。
      余白は `.detail-block .report-stat` と同じ値。 */
   box-sizing: border-box;
-  min-height: var(--turn-header-height);
+  min-height: var(--turn-header-min-height);
   padding: 0.5rem 1.125rem;
   border-bottom: 1px solid var(--rule-quiet);
   background: var(--surface);
@@ -48,6 +51,13 @@
 .turn-title-group {
   grid-area: title;
   min-width: 0;
+}
+/* 依頼の続きの置き場。中身の見た目は `RequestContinuation` が持つ。
+   左の 1px は、タイトルのボタンの枠（透明）の幅で、タイトルの文字の頭に揃える。 */
+.turn-request-rest {
+  grid-area: rest;
+  min-width: 0;
+  margin: 4px 0 0 1px;
 }
 /* 見ているターンの依頼の1行目。
    ページで唯一の本物の h2（レポートの `##` は h4 に落とす）。
@@ -220,6 +230,10 @@
     grid-template-columns: auto minmax(0, 1fr);
     grid-template-areas:
       "nav meta"
-      "title title";
+      "title title"
+      "rest rest";
+  }
+  .turn-title-group {
+    margin-top: 0.4rem;
   }
 }

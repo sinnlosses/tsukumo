@@ -23,7 +23,7 @@
    札は枠を持たず、領域の余白を打ち消して領域の縁まで広がる（領域の枠と札の枠が二重に見えないように）。
    `overflow` を付けない（付けると頭の `position: sticky` が札の中で効かなくなる）。
    `--turn-header-height` は頭の外寸で、目次の縁が頭の真下に貼り付く位置に使う。
-   頭の中でいちばん高い前後の口（1.5rem）と頭の上下の余白・下の罫線から決まる（`turn-header.module.css`）。 */
+   ここの値は測る前の1行ぶんで、頭が実測した高さを同じ名前で書き込む（`useTurnHeaderHeight`）。 */
 .turn-card {
   --turn-header-height: calc(2.5rem + 1px);
   margin: calc(-1 * var(--region-padding, 0px)) calc(-1 * var(--region-padding, 0px)) 0;
@@ -31,26 +31,6 @@
 /* 目次から飛んだ見出しが、貼り付いた頭の下に隠れないようにする。 */
 .turn-card :is(h4, h5) {
   scroll-margin-top: calc(var(--turn-header-height) + 0.5rem);
-}
-/* 依頼のうちタイトルに出なかった2行目以降（`RequestRest`）。
-   既定で開いていて全行が読め、長いときだけ max-height でスクロールに切り替わる。 */
-.turn-request {
-  margin: 0 0 0.75rem;
-  /* 依頼の縦罫は、キャラクターの色を出してよい場所の1つ。
-     本文の文字色は「読む面」なので ink のまま（下の .turn-request-full）。 */
-  border-left: 3px solid var(--accent);
-  padding-left: 0.6rem;
-}
-/* 字の段・色は `Text` が描く `<summary>` に、この要素選択子で開閉のカーソルだけ残す。 */
-.turn-request > summary {
-  cursor: pointer;
-}
-.turn-request-full {
-  margin-top: 0.4rem;
-  max-height: 40vh;
-  overflow-y: auto;
-  color: var(--ink);
-  font-size: var(--font-body);
 }
 /* 字の段・色は `Text` が持つ。margin だけここに置く。 */
 .turn-dropped {

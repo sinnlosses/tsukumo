@@ -13,10 +13,14 @@ import type { MainViewTurn } from "../../../../../../../shared/session/main-view
 const TURN_TITLE_FALLBACK = "（依頼なし）"
 
 export function turnTitle(turn: MainViewTurn): string {
-  return firstLineOf(turn.request?.text ?? "")?.line ?? firstReportLine(turn) ?? TURN_TITLE_FALLBACK
+  return (
+    firstLineOf(withoutQuoteMarkers(turn.request?.text ?? ""))?.line ??
+    firstReportLine(turn) ??
+    TURN_TITLE_FALLBACK
+  )
 }
 
-// 依頼の全文（`RequestRest` と `turnHistoryText`）の長さの上限。無いと際限なく長い依頼で DOM が育ち続ける。
+// 依頼の全文（札の頭の続きと `turnHistoryText`）の長さの上限。無いと際限なく長い依頼で DOM が育ち続ける。
 const MAX_REQUEST_HEADING_TEXT_LENGTH = 2000
 
 export function truncateRequestText(request: string): string {
@@ -35,19 +39,38 @@ export function turnHistoryText(turn: MainViewTurn): string {
 }
 
 /**
+ * 札の頭のタイトルの下に出す、依頼の続き。
+ * 依頼が無い・画像だけのときは空の配列。
+ */
+export function turnRequestRest(turn: MainViewTurn): readonly string[] {
+  return turn.request === undefined
+    ? []
+    : requestLinesAfterTitle(truncateRequestText(turn.request.text))
+}
+
+/**
  * 依頼の文面のうち、タイトルに取られた行（最初の空でない行）より後ろの行。
- * タイトルと同じ行を二度出さないために、札の本文側（`RequestRest`）はこちらだけを出す。
+ * 行頭の引用の記号は落とす（タイトルと同じ）。
  * 前後の空行は落とし、残りが無ければ空の配列。
  */
-export function requestLinesAfterTitle(text: string): readonly string[] {
-  const found = firstLineOf(text)
+function requestLinesAfterTitle(text: string): readonly string[] {
+  const unquoted = withoutQuoteMarkers(text)
+  const found = firstLineOf(unquoted)
   if (found === undefined) {
     return []
   }
-  const rest = text.split("\n").slice(found.lineIndex + 1)
+  const rest = unquoted.split("\n").slice(found.lineIndex + 1)
   const first = rest.findIndex((line) => line.trim() !== "")
   const last = rest.findLastIndex((line) => line.trim() !== "")
   return first === -1 ? [] : rest.slice(first, last + 1)
+}
+
+/** 各行の頭の引用の記号（`>` のあとが空白か行末のもの）を、重ねてあっても全部落とす。 */
+function withoutQuoteMarkers(text: string): string {
+  return text
+    .split("\n")
+    .map((line) => line.replace(/^\s*(?:>(?:[ \t]|$))+/, ""))
+    .join("\n")
 }
 
 function firstReportLine(turn: MainViewTurn): string | undefined {

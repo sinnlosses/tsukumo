@@ -804,12 +804,12 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
   （判断・作業・情報）を、`report` の `favor` に1つだけ入れる。レポートの最後に印を付けた塊で描かれ、
   「お願い」のラベルは tsukumo 側（`src/browser/components/page/conversation/components/main-view/markdown/notation.tsx`）が
   文字として付ける
-- **注記**: **向きが「依頼」と逆。** 依頼は利用者からキャラクターへ（`turn-request`）、お願いは
-  キャラクターから利用者へ。画面でも、依頼の見出しの縦罫とお願いの縦罫が同じ `accent` で対になる
+- **注記**: **向きが「依頼」と逆。** 依頼は利用者からキャラクターへ、お願いは
+  キャラクターから利用者へ向く
 - **注記**: **レポートが正典**で、`speak` の側では「お願いがある」ことだけを言う（中身を二重に
   書かない）。**無いターンでは置かない**。規約は `src/server/report/core/report-notation.ts` と
   各パックの `persona.md`
-- **避ける言い方**: 依頼（逆向き。`turn-request` が使っている）、質問（選択肢を出して答えを待つ
+- **避ける言い方**: 依頼（逆向き）、質問（選択肢を出して答えを待つ
   `AskUserQuestion` は別物で、そちらは `PendingAsk`）、宿題・TODO（やり残しと読める）
 
 ### 検証結果

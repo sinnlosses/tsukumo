@@ -14,15 +14,18 @@ import {
   useDismissSignal,
   type DismissCause,
 } from "../../../../../../../../hooks/use-dismiss-signal.ts"
+import { useTurnHeaderHeight } from "./use-turn-header-height.ts"
 
 /**
  * 一覧の1行ぶんの見出しと全文。
  * `title` は札の頭とアクセシブルネームに使う1行、`historyText` は一覧の行に出す、選択してコピーできる依頼の全文（複数行を含む）で、別のもの。
+ * `requestRest` はタイトルに取られた行より後ろの依頼の行で、札の頭のタイトルの下に出す。
  */
 export type TurnHeaderEntry = {
   readonly id: number
   readonly title: string
   readonly historyText: string
+  readonly requestRest: readonly string[]
 }
 
 export type TurnHeaderProps = {
@@ -46,11 +49,15 @@ export type TurnHeaderHistoryRow = {
 
 /** `<TurnHeader>` が画面に出す形。 */
 export type TurnHeaderModel = {
+  /** 頭の高さを測る対象（`useTurnHeaderHeight`）。 */
+  readonly headerRef: RefObject<HTMLElement | null>
   readonly olderDisabled: boolean
   readonly onOlder: () => void
   readonly isNewest: boolean
   readonly onNewer: () => void
   readonly activeTitle: string | undefined
+  readonly activeTurnId: number
+  readonly activeRequestRest: readonly string[]
   readonly positionLabel: string
   readonly onToNewest: () => void
   readonly historyOpen: boolean
@@ -73,6 +80,10 @@ export function useTurnHeader(props: TurnHeaderProps): TurnHeaderModel {
   // `noUncheckedIndexedAccess` が生む `| undefined`（docs/coding-standards.md「「無いかもしれない」値」）。
   // 呼び出し側は必ず `turns` に含まれる id を渡す契約だが、畳まずそのまま使う。
   const activeTitle = props.turns[index]?.title
+  const activeRequestRest = props.turns[index]?.requestRest ?? []
+
+  const headerRef = useRef<HTMLElement>(null)
+  useTurnHeaderHeight(headerRef)
 
   const [historyOpen, setHistoryOpen] = useState(false)
   const historyListId = useId()
@@ -89,6 +100,7 @@ export function useTurnHeader(props: TurnHeaderProps): TurnHeaderModel {
   useDismissSignal({ open: historyOpen, rootRef: titleGroupRef, onDismiss: onDismissHistory })
 
   return {
+    headerRef,
     olderDisabled: older === undefined,
     onOlder: () => {
       if (older !== undefined) {
@@ -102,6 +114,8 @@ export function useTurnHeader(props: TurnHeaderProps): TurnHeaderModel {
       }
     },
     activeTitle,
+    activeTurnId: props.activeTurnId,
+    activeRequestRest,
     positionLabel: `${String(index + 1)} / ${String(props.turns.length)}`,
     onToNewest: () => {
       if (newest !== undefined) {

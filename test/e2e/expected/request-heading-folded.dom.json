@@ -1,0 +1,229 @@
+{
+  "main": [
+    {
+      "tag": "section",
+      "attributes": {
+        "data-region": "main"
+      },
+      "children": [
+        {
+          "tag": "div",
+          "attributes": {
+            "data-brush-origin": ""
+          },
+          "children": [
+            {
+              "tag": "article",
+              "children": [
+                {
+                  "tag": "header",
+                  "children": [
+                    {
+                      "tag": "button",
+                      "attributes": {
+                        "aria-disabled": "false",
+                        "aria-label": "1つ古いターンへ",
+                        "type": "button"
+                      },
+                      "children": [
+                        {
+                          "tag": "span",
+                          "attributes": {
+                            "aria-hidden": "true"
+                          },
+                          "children": [
+                            "‹"
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "tag": "button",
+                      "attributes": {
+                        "aria-disabled": "true",
+                        "aria-label": "1つ新しいターンへ",
+                        "type": "button"
+                      },
+                      "children": [
+                        {
+                          "tag": "span",
+                          "attributes": {
+                            "aria-hidden": "true"
+                          },
+                          "children": [
+                            "›"
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "tag": "h2",
+                      "children": [
+                        {
+                          "tag": "button",
+                          "attributes": {
+                            "aria-disabled": "false",
+                            "aria-expanded": "false",
+                            "type": "button"
+                          },
+                          "children": [
+                            "成果ページの日記を、日を選んだら見開きで開くようにしたい（架空の依頼）",
+                            {
+                              "tag": "span",
+                              "attributes": {
+                                "aria-hidden": "true"
+                              }
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    "3 / 3",
+                    "最新",
+                    {
+                      "tag": "p",
+                      "children": [
+                        "縦書きで、右ページに今日のいちばん、左ページに終えたタスクの一覧",
+                        {
+                          "tag": "br"
+                        },
+                        "カレンダーの灯りの段階は今のまま",
+                        {
+                          "tag": "button",
+                          "attributes": {
+                            "aria-disabled": "false",
+                            "aria-expanded": "false",
+                            "type": "button"
+                          },
+                          "children": [
+                            "ほか",
+                            "3",
+                            "行",
+                            {
+                              "tag": "span",
+                              "attributes": {
+                                "aria-hidden": "true"
+                              }
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "tag": "div",
+                  "attributes": {
+                    "data-outline": "shown"
+                  },
+                  "children": [
+                    {
+                      "tag": "div",
+                      "attributes": {
+                        "data-open": "false"
+                      },
+                      "children": [
+                        {
+                          "tag": "nav",
+                          "attributes": {
+                            "aria-label": "目次"
+                          },
+                          "children": [
+                            {
+                              "tag": "button",
+                              "attributes": {
+                                "aria-label": "目次",
+                                "aria-expanded": "false",
+                                "type": "button"
+                              },
+                              "children": [
+                                {
+                                  "tag": "svg"
+                                }
+                              ]
+                            },
+                            {
+                              "tag": "button",
+                              "attributes": {
+                                "aria-hidden": "true",
+                                "data-level": "section",
+                                "data-active": "true",
+                                "data-in-section": "true",
+                                "type": "button"
+                              }
+                            },
+                            {
+                              "tag": "button",
+                              "attributes": {
+                                "aria-hidden": "true",
+                                "data-level": "sub",
+                                "data-active": "false",
+                                "data-in-section": "true",
+                                "type": "button"
+                              }
+                            },
+                            {
+                              "tag": "button",
+                              "attributes": {
+                                "aria-hidden": "true",
+                                "data-level": "sub",
+                                "data-active": "false",
+                                "data-in-section": "true",
+                                "type": "button"
+                              }
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "tag": "section",
+                      "children": [
+                        {
+                          "tag": "h4",
+                          "children": [
+                            "日記の見開き（架空）"
+                          ]
+                        },
+                        {
+                          "tag": "p",
+                          "children": [
+                            "架空の本文。"
+                          ]
+                        },
+                        {
+                          "tag": "h5",
+                          "children": [
+                            "右ページ（架空）"
+                          ]
+                        },
+                        {
+                          "tag": "p",
+                          "children": [
+                            "架空の本文。"
+                          ]
+                        },
+                        {
+                          "tag": "h5",
+                          "children": [
+                            "左ページ（架空）"
+                          ]
+                        },
+                        {
+                          "tag": "p",
+                          "children": [
+                            "架空の本文。"
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

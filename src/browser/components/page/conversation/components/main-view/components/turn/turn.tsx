@@ -1,9 +1,9 @@
-// 1つのやり取り。`<RequestRest>` + ステップの並び（レポート・質問の記録・段の知らせ）を縦に1本で積む（番号は振らない）。
+// 1つのやり取り。`<RequestImages>` + ステップの並び（レポート・質問の記録・段の知らせ）を縦に1本で積む（番号は振らない）。
 // ツールの実行は描かない（進行は帯の「いまの作業」が持つ）。
 // 失敗で終わったやり取りは、末尾に「失敗で終わった」と理由を出す（色だけでなく字で成功と見分ける）。
 
 import clsx from "clsx"
-import { Fragment, useState, type ReactElement } from "react"
+import { useState, type ReactElement } from "react"
 
 import type { ReportTask } from "../../../../../../../../shared/report/report-task.ts"
 import type { TurnFailure } from "../../../../../../../../shared/session-driver/turn-failure.ts"
@@ -18,7 +18,6 @@ import { Text } from "../../../../../../ui/text/text.tsx"
 import { VStack } from "../../../../../../ui/v-stack/v-stack.tsx"
 import { turnFailureLabel } from "../../../../domain/api-error-label.ts"
 import { PromptImageThumbnails } from "../../../prompt-image/prompt-image.tsx"
-import { requestLinesAfterTitle, truncateRequestText } from "../../domain/turn-title.ts"
 import styles from "../../main-view.module.css"
 import { PhaseNotice } from "../phase-notice/phase-notice.tsx"
 import { QuestionRecord } from "../question-record/question-record.tsx"
@@ -42,7 +41,7 @@ export function Turn(props: TurnProps): ReactElement {
 
   return (
     <div>
-      {turn.request !== undefined && <RequestRest request={turn.request} />}
+      {turn.request !== undefined && <RequestImages request={turn.request} />}
       {turn.droppedCount > 0 && (
         <Text
           element="p"
@@ -244,33 +243,7 @@ function isQuestion(
   return action.kind === "question"
 }
 
-/**
- * 依頼のうち札の頭のタイトルに出なかったぶんと、添えた画像の控え（添えていなければ何も出ない）。
- *
- * - 1行の依頼は何も出さない（タイトルと同じ行を二度出さない）
- * - 複数行の依頼は2行目以降（`requestLinesAfterTitle`）を `<details open>` で出す。既定で開いているので全行が読め、読み終わったら閉じられる
- */
-function RequestRest(props: { readonly request: MainViewRequest }): ReactElement {
-  const rest = requestLinesAfterTitle(truncateRequestText(props.request.text))
-
-  return (
-    <>
-      {rest.length > 0 && (
-        <details className={styles["turn-request"]} open>
-          <Text element="summary" size="secondary" tone="ink-quiet" weight="inherit" className="">
-            依頼の続き（{String(rest.length)} 行）
-          </Text>
-          <div className={styles["turn-request-full"]}>
-            {rest.map((line, index) => (
-              <Fragment key={index}>
-                {index > 0 && <br />}
-                {line}
-              </Fragment>
-            ))}
-          </div>
-        </details>
-      )}
-      <PromptImageThumbnails images={props.request.images} />
-    </>
-  )
+/** 添えた画像の控え（添えていなければ何も出ない）。依頼の文面は札の頭が出す。 */
+function RequestImages(props: { readonly request: MainViewRequest }): ReactElement {
+  return <PromptImageThumbnails images={props.request.images} />
 }
