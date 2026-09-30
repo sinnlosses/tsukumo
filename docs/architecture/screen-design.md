@@ -1823,7 +1823,7 @@ scrollable overflow は end 方向にしか伸びない**ので、上へ出た�
   部屋の名前が紐づいているのだから、別の部屋に行けるのはおかしい」）。絞り込みの鍵は続きから
   始めるときと同じ、目印まで揃えた印（`sessionTag`）——一族（パック・モードだけを揃えた印）
   ではなく部屋（目印まで揃えた印）で絞るので、並ぶ行はすべて同じ部屋になる
-  （`src/server/session-driver/core/session-restore.ts` の `listMarkedSessions`）。**並ぶ行の部屋の名前は
+  （`src/server/session-driver/core/session-catalog.ts` の `listMarkedSessions`）。**並ぶ行の部屋の名前は
   全行で同じになり見分けの役に立たない**ので、行は部屋の名前ではなく短縮IDと見出し（SDK の
   `summary`）で見分ける（2026-09-23 決定。ユーザーの指摘「`/clear` するとセッションIDが変わり、
   行が増えていくので、どこで何をしていたかを辿れない」）。行の形は下の「切り替え画面」

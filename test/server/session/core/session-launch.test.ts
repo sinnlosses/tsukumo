@@ -6,7 +6,7 @@ import type {
   SessionDriver,
   SessionStart,
 } from "../../../../src/server/session-driver/core/session-driver.ts"
-import { sessionTag } from "../../../../src/server/session-driver/core/session-restore.ts"
+import { sessionTag } from "../../../../src/server/session-driver/core/session-mark.ts"
 import {
   createSessionLaunch,
   type SessionLaunchPorts,

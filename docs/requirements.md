@@ -743,7 +743,7 @@ tsukumo 側のキャッシュ・スナップショットは作らない。
 **2026-09-22 決定: 印の末尾に「目印」を足し、同じディレクトリで何個 tsukumo を起こしても
 セッションを取り合わないようにする**（`tsukumo:<パック名>@7327` /
 `tsukumo:<パック名>:chat@7327`）。鍵は「ディレクトリ×キャラクター×モード×目印」の4つになる。
-組み立ても読み取りも `src/server/session-driver/core/session-restore.ts`（`sessionTag` / `readSessionMark`）だけで、
+組み立ても読み取りも `src/server/session-driver/core/session-mark.ts`（`sessionTag` / `readSessionMark`）だけで、
 文字列を他所で作らない。
 
 - **区切りは `@`。** `:` を使わないのは、後置きの `chat` と読み違えないため。**目印は

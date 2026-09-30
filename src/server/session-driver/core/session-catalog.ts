@@ -2,14 +2,17 @@
 // 続きの選択と切り替え先の一覧は持っている一覧から出し、SDK の一覧を読み直すのは作ったときと `refresh` のときだけ。
 // 持つのは印・ID・時刻・見出しだけで、会話の内容は持たない。
 
-import type { SessionChoice } from "../../../shared/session/session-choice.ts"
-import {
-  listMarkedSessions,
-  readTaggedSessions,
-  selectSessionToResume,
-  type TaggedSession,
-  withSessionMark,
-} from "./session-restore.ts"
+import { isPlainObject } from "remeda"
+
+import { MAX_SESSION_CHOICES, type SessionChoice } from "../../../shared/session/session-choice.ts"
+import type { Config } from "../../core/config.ts"
+import { readSessionMark } from "./session-mark.ts"
+
+/** 印の付いたセッション1件（目印まで揃えた印つき）。 */
+export type TaggedSession = SessionChoice & {
+  /** 目印まで揃えた印（{@link readSessionMark} が返す `tag`）。 */
+  readonly tag: string
+}
 
 export type SessionCatalog = {
   /** その印の続きから始めるセッション（無ければ undefined）。最初に読み終わるまでは待つ。 */
@@ -27,6 +30,15 @@ export type SessionCatalog = {
 
 /** 読み直した一覧を採ったか（`refreshed`）、持っている一覧のままか（`kept`）。 */
 export type SessionCatalogRefresh = "refreshed" | "kept"
+
+/**
+ * 続きを探す起こし方かどうか。探さないときは、切り替え先の一覧も空、続きも `{ kind: "new" }` にする。
+ * `TSUKUMO_NEW_SESSION=1` と fake driver は探さない。
+ * 新規に起こすと決めているときに続きを探しても無駄で、fake driver は claude を起こさないのでそもそも探す先が無い。
+ */
+export function canResume(config: Pick<Config, "newSession" | "driver">): boolean {
+  return !config.newSession && config.driver !== "fake"
+}
 
 /** 何も読まず、続きも切り替え先も無い一覧（続きを探さない起こし方のとき）。 */
 export const EMPTY_SESSION_CATALOG: SessionCatalog = {
@@ -88,4 +100,130 @@ export function createSessionCatalog(options: {
       marks = [...marks, { sessionId, tag, at: options.now() }]
     },
   }
+}
+
+/**
+ * 続きから始めるセッションを選ぶ。印（`tagSession` で付けたもの）のあるもののうち、`lastModified` が最新の1つ。
+ *
+ * `cwd` での絞り込みは呼び出し側（`listSessions({ dir })`）が済ませている前提で、ここは印だけを見る。
+ * 印は目印まで揃えてあるので（{@link readTaggedSessions}）、昔の印（目印の無いもの・1文字の `@A`）は同じポートの印と一致する。
+ * 渡した印のものが1つも無ければ undefined（＝新規に起こす）を返す。
+ */
+export function selectSessionToResume(
+  sessions: readonly TaggedSession[],
+  tag: string,
+): string | undefined {
+  const matched = sessions.filter((session) => session.tag === tag)
+  return matched.reduce<TaggedSession | undefined>(
+    (latest, session) =>
+      latest === undefined || session.lastModified > latest.lastModified ? session : latest,
+    undefined,
+  )?.sessionId
+}
+
+/**
+ * 切り替え先として選べるセッションを一覧にする（印そのものがセッションの一覧。別の保存先は作らない）。
+ * 新しい順に並べ、tsukumo の印を持たないものと、いまの部屋（渡した `tag`）と違う印のものは落とす。
+ *
+ * `cwd` での絞り込みは呼び出し側（`listSessions({ dir })`）が済ませている前提。
+ * 渡す `tag` は、目印まで揃えた印（`sessionTag`）。部屋はビューのポート1つにつき1つなので、切り替え先も自分の部屋のものだけに絞る。
+ * 印は目印まで揃えてあるので、昔の印（目印の無いもの・1文字の `@A`）も対応するポートの部屋の一覧に並ぶ。
+ *
+ * 返すのは新しいほうから {@link MAX_SESSION_CHOICES} 件まで（印は使うほど増え続ける）。
+ */
+export function listMarkedSessions(
+  sessions: readonly TaggedSession[],
+  tag: string,
+): readonly SessionChoice[] {
+  return sessions
+    .filter((session) => session.tag === tag)
+    .map(({ viewPort, sessionId, lastModified, startedAt, heading }) => ({
+      viewPort,
+      sessionId,
+      lastModified,
+      startedAt,
+      heading,
+    }))
+    .sort((left, right) => right.lastModified - left.lastModified)
+    .slice(0, MAX_SESSION_CHOICES)
+}
+
+/**
+ * SDK の `listSessions` が返した一覧（外来の値）を、印の付いたセッションの並びにする。
+ * tsukumo の印を持たないもの・形が壊れているものは落とす（同じ cwd の素の `claude` のセッションはここで消える）。
+ * 一覧そのものが配列でなければ空。
+ */
+export function readTaggedSessions(sessions: unknown): readonly TaggedSession[] {
+  return Array.isArray(sessions) ? sessions.flatMap((session) => taggedSession(session)) : []
+}
+
+/**
+ * 印を付けたことを並びへ写す。一覧に無いセッションなら足す（見出しは次に読み直すまで無い）。
+ * `lastModified` は新しいほうを採る。
+ * tsukumo の印として読めない `tag` なら並びをそのまま返す。
+ */
+export function withSessionMark(
+  sessions: readonly TaggedSession[],
+  marked: { readonly sessionId: string; readonly tag: string; readonly at: number },
+): readonly TaggedSession[] {
+  const mark = readSessionMark(marked.tag)
+  if (mark === undefined) {
+    return sessions
+  }
+
+  const existing = sessions.find((session) => session.sessionId === marked.sessionId)
+  const updated: TaggedSession =
+    existing === undefined
+      ? {
+          viewPort: mark.viewPort,
+          tag: mark.tag,
+          sessionId: marked.sessionId,
+          lastModified: marked.at,
+          startedAt: marked.at,
+          heading: undefined,
+        }
+      : {
+          ...existing,
+          viewPort: mark.viewPort,
+          tag: mark.tag,
+          lastModified: Math.max(existing.lastModified, marked.at),
+        }
+  return [...sessions.filter((session) => session.sessionId !== marked.sessionId), updated]
+}
+
+/**
+ * 一覧の要素1つを、印の付いたセッションとして受け取る。読めないものは空の並びにして落とす。
+ */
+function taggedSession(value: unknown): readonly TaggedSession[] {
+  if (!isPlainObject(value) || typeof value.tag !== "string") {
+    return []
+  }
+
+  const mark = readSessionMark(value.tag)
+  const sessionId = value.sessionId
+  const lastModified = value.lastModified
+  return mark !== undefined &&
+    typeof sessionId === "string" &&
+    sessionId !== "" &&
+    typeof lastModified === "number" &&
+    Number.isFinite(lastModified)
+    ? [
+        {
+          viewPort: mark.viewPort,
+          tag: mark.tag,
+          sessionId,
+          lastModified,
+          startedAt:
+            typeof value.createdAt === "number" && Number.isFinite(value.createdAt)
+              ? value.createdAt
+              : lastModified,
+          heading: headingFrom(value.summary),
+        },
+      ]
+    : []
+}
+
+/** SDK の `summary`（外来の値）を行の見出しへ畳む。文字列でない・空・空白だけなら無いものとして扱う（`SessionChoice.heading`）。 */
+function headingFrom(summary: unknown): string | undefined {
+  return typeof summary === "string" && summary.trim() !== "" ? summary : undefined
 }

@@ -1,132 +1,14 @@
-// 前のセッションの続きから始めるための計算。SDK を呼ばない純粋な部分だけをここに置く。
-//
-// 戻すのは (1) どのセッションの続きから始めるか（印と `lastModified` で選ぶ）と
-// (2) 画面の履歴（transcript のメッセージ列 → 内部イベント）の2つ。
+// transcript のメッセージ列から、画面の履歴（内部イベント）を組み直す。SDK を呼ばない純粋な部分だけをここに置く。
 //
 // 読み直す先は claude 自身が書いた transcript（正典）で、tsukumo 側にキャッシュもスナップショットも作らない。
 // ここを通るのは会話の内容そのものなので、ログにもファイルにも出さない。
-//
-// セッションの印（`sessionTag` / `readSessionMark`）の組み立てと読み取りもここに置く。
-// 外の世界（claude の transcript）に書かれる値なので、組み立てと読み取りを1箇所に集める。
 
 import { isPlainObject } from "remeda"
 
 import type { Expression } from "../../../shared/character-pack/expression.ts"
-import { MAX_SESSION_CHOICES, type SessionChoice } from "../../../shared/session/session-choice.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
-import type { Config } from "../../core/config.ts"
 import { createReportReview } from "../../report/core/report-review.ts"
-import { DEFAULT_VIEW_PORT, MAX_PORT_NUMBER } from "../../view-server/core/port-resolution.ts"
 import { toSessionEvents } from "./sdk-message.ts"
-
-/** セッションの印の前置き。組み立ては {@link sessionTag} だけ（文字列を他所で作らない）。 */
-const SESSION_TAG_PREFIX = "tsukumo"
-/** 雑談のセッションの印に足す後置き。仕事のときは足さない（{@link sessionTag}）。 */
-const SESSION_TAG_CHAT_SUFFIX = "chat"
-/**
- * 目印の区切り。`:` を使わないのは、後置きの `chat` と読み違えないため。
- * `tsukumo:<パック>:chat@7328` の最後の `@` から後ろが目印だと、区切りだけで分かる。
- */
-const SESSION_MARK_SEPARATOR = "@"
-/**
- * 昔の印が目印に使っていた文字（`A` / `B` / …）。transcript に残っているので、読むときだけ使う。
- * `A` が {@link DEFAULT_VIEW_PORT}、+1 ごとに次の文字なので、同じ式で元のポートへ戻せる（{@link readSessionMark}）。
- */
-const LEGACY_SESSION_MARK_LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-/** ポート番号として読める目印の形（`@0`〜`@65535`）。 */
-const SESSION_MARK_PORT = /^[0-9]{1,5}$/
-
-/**
- * キャラクターパック1つぶんの、そのモードのセッションの印（SDK の `tagSession`）。
- * 続きから始めるセッションを選ぶ鍵の片方で、もう片方は起動した作業ディレクトリ。
- *
- * 印にパックの名前を混ぜるのは、キャラクターごとに別のセッションを持つため。
- * 印の無いセッション（同じディレクトリで使った素の `claude`）も、別のパックのセッションも、これで外れる。
- *
- * 雑談のときだけ `:chat` を足すのは、雑談と仕事で claude 側の文脈ごと分けるため。
- *
- * 末尾の目印（`@7327` / `@7328` …）は、同じディレクトリで tsukumo を何個も起こしたときに別々のセッションを持たせるためのもの。
- * 目印はビューが実際に待ち受けているポートの番号そのもので、畳まない。セッションを指す ID が「キャラクターパック × ポート番号」だから。
- *
- * ポートを使うのは、「その目印がいま使われているか」を知っているものが他に無いため。
- * 印は transcript に残るだけなので、落ちた tsukumo の印と動いている tsukumo の印は見分けられない（実測）。
- * ポートは OS が握っていて、既定のときは塞がっていれば +1 へずれ（`resolveViewPort`）、プロセスが落ちれば空くので、起こし直せば同じ番号＝同じセッションへ戻る。
- *
- * 昔の印（目印の無いもの・1文字の `@A`）も同じセッションを指す（{@link readSessionMark} がポートへ戻す）。
- *
- * 印は会話の内容ではないので、claude 自身の transcript に付けても `docs/coding-standards.md`「会話内容の扱い」には触れない。
- */
-export function sessionTag(characterName: string, chat: boolean, viewPort: number): string {
-  return `${sessionTagFamily(characterName, chat)}${SESSION_MARK_SEPARATOR}${String(viewPort)}`
-}
-
-/**
- * 目印を外した印（`tsukumo:<パック>` / `tsukumo:<パック>:chat`）。
- * {@link sessionTag} が目印（ポート番号）を足すための下ごしらえで、外へは出さない。
- * 切り替え先の一覧も続きから始めるセッションを選ぶのも、目印まで揃えた {@link sessionTag} の値で絞る。
- */
-function sessionTagFamily(characterName: string, chat: boolean): string {
-  const packTag = `${SESSION_TAG_PREFIX}:${characterName}`
-  return chat ? `${packTag}:${SESSION_TAG_CHAT_SUFFIX}` : packTag
-}
-
-/** 印を読み解いた姿（{@link readSessionMark}）。 */
-export type SessionMark = {
-  /**
-   * 目印（印を付けた tsukumo のビューのポート番号）。
-   * 昔の印は既定のポートへ戻してある（目印が無いもの＝`DEFAULT_VIEW_PORT`、1文字の `A` / `B` / …＝そこから並び順に +1）。
-   */
-  readonly viewPort: number
-  /**
-   * 目印まで揃えた印。続きから始めるセッションを選ぶときも、切り替え先の一覧をいまの部屋に絞るときも、これ同士を比べる。
-   * `tsukumo:<パック>` と `tsukumo:<パック>@A` と `tsukumo:<パック>@7327` は同じセッションを指す。
-   */
-  readonly tag: string
-}
-
-/**
- * transcript に付いていた印を読み解く。
- * tsukumo の印でなければ undefined（同じディレクトリで使った素の `claude` のセッションはここで落ちる）。
- *
- * 読めた目印は必ずポート番号に戻し、印も `@<ポート>` の形へ揃えてから返すので、昔の印と今の印が同じセッションを指す:
- *
- * - `@7328` のような数字 → そのポート
- * - `@A` / `@B` … の1文字 → 並び順から戻したポート（`A` が `DEFAULT_VIEW_PORT`）
- * - それ以外（目印が無い・名前に `@` を含むパックの尻尾）→ `DEFAULT_VIEW_PORT`
- *
- * 最後の行のおかげで、`tsukumo:<パック>` は `tsukumo:<パック>@7327` と同じセッションを指す。
- */
-export function readSessionMark(tag: string): SessionMark | undefined {
-  if (!tag.startsWith(`${SESSION_TAG_PREFIX}:`)) {
-    return undefined
-  }
-
-  const separator = tag.lastIndexOf(SESSION_MARK_SEPARATOR)
-  const marked = separator === -1 ? undefined : markedViewPort(tag.slice(separator + 1))
-  const family = marked === undefined ? tag : tag.slice(0, separator)
-  const viewPort = marked ?? DEFAULT_VIEW_PORT
-  return { viewPort, tag: `${family}${SESSION_MARK_SEPARATOR}${String(viewPort)}` }
-}
-
-/** 印の末尾を目印として読む。目印として読めなければ undefined（パック名に `@` が入っているときの尻尾がここで落ちる）。 */
-function markedViewPort(mark: string): number | undefined {
-  if (SESSION_MARK_PORT.test(mark)) {
-    const port = Number(mark)
-    return port <= MAX_PORT_NUMBER ? port : undefined
-  }
-
-  const legacyIndex = mark.length === 1 ? LEGACY_SESSION_MARK_LETTERS.indexOf(mark) : -1
-  return legacyIndex === -1 ? undefined : DEFAULT_VIEW_PORT + legacyIndex
-}
-
-/**
- * 続きを探す起こし方かどうか。探さないときは、切り替え先の一覧も空、続きも `{ kind: "new" }` にする。
- * `TSUKUMO_NEW_SESSION=1` と fake driver は探さない。
- * 新規に起こすと決めているときに続きを探しても無駄で、fake driver は claude を起こさないのでそもそも探す先が無い。
- */
-export function canResume(config: Pick<Config, "newSession" | "driver">): boolean {
-  return !config.newSession && config.driver !== "fake"
-}
 
 /**
  * 組み直した履歴のターンの終わり。transcript には `result`（ターンの終わり）が残らないので、終わり方は分からない。
@@ -139,52 +21,6 @@ const RESTORED_TURN_FINISHED: SessionEvent = {
 
 /** 組み直した再生の終わりの印（{@link toRestoredEvents}）。 */
 const HISTORY_RESTORED: SessionEvent = { kind: "history-restored" }
-
-/**
- * 続きから始めるセッションを選ぶ。印（`tagSession` で付けたもの）のあるもののうち、`lastModified` が最新の1つ。
- *
- * `cwd` での絞り込みは呼び出し側（`listSessions({ dir })`）が済ませている前提で、ここは印だけを見る。
- * 印は目印まで揃えてあるので（{@link readTaggedSessions}）、昔の印（目印の無いもの・1文字の `@A`）は同じポートの印と一致する。
- * 渡した印のものが1つも無ければ undefined（＝新規に起こす）を返す。
- */
-export function selectSessionToResume(
-  sessions: readonly TaggedSession[],
-  tag: string,
-): string | undefined {
-  const matched = sessions.filter((session) => session.tag === tag)
-  return matched.reduce<TaggedSession | undefined>(
-    (latest, session) =>
-      latest === undefined || session.lastModified > latest.lastModified ? session : latest,
-    undefined,
-  )?.sessionId
-}
-
-/**
- * 切り替え先として選べるセッションを一覧にする（印そのものがセッションの一覧。別の保存先は作らない）。
- * 新しい順に並べ、tsukumo の印を持たないものと、いまの部屋（渡した `tag`）と違う印のものは落とす。
- *
- * `cwd` での絞り込みは呼び出し側（`listSessions({ dir })`）が済ませている前提。
- * 渡す `tag` は、目印まで揃えた印（{@link sessionTag}）。部屋はビューのポート1つにつき1つなので、切り替え先も自分の部屋のものだけに絞る。
- * 印は目印まで揃えてあるので、昔の印（目印の無いもの・1文字の `@A`）も対応するポートの部屋の一覧に並ぶ。
- *
- * 返すのは新しいほうから {@link MAX_SESSION_CHOICES} 件まで（印は使うほど増え続ける）。
- */
-export function listMarkedSessions(
-  sessions: readonly TaggedSession[],
-  tag: string,
-): readonly SessionChoice[] {
-  return sessions
-    .filter((session) => session.tag === tag)
-    .map(({ viewPort, sessionId, lastModified, startedAt, heading }) => ({
-      viewPort,
-      sessionId,
-      lastModified,
-      startedAt,
-      heading,
-    }))
-    .sort((left, right) => right.lastModified - left.lastModified)
-    .slice(0, MAX_SESSION_CHOICES)
-}
 
 /**
  * transcript のメッセージ列を内部イベントに変える（メインビューのやり取りと吹き出しのセリフを組み直すため）。
@@ -216,92 +52,6 @@ export function toRestoredEvents(
   const events = closed.flatMap((event) => review.pass(event))
   // 組み直せたものが無ければ、書き換える記録も無いので `history-restored` を足さない。
   return events.length === 0 ? events : [...events, HISTORY_RESTORED]
-}
-
-/** 印の付いたセッション1件（目印まで揃えた印つき）。 */
-export type TaggedSession = SessionChoice & {
-  /** 目印まで揃えた印。{@link SessionMark.tag} と同じ意味で使う（{@link readSessionMark}）。 */
-  readonly tag: string
-}
-
-/**
- * SDK の `listSessions` が返した一覧（外来の値）を、印の付いたセッションの並びにする。
- * tsukumo の印を持たないもの・形が壊れているものは落とす（同じ cwd の素の `claude` のセッションはここで消える）。
- * 一覧そのものが配列でなければ空。
- */
-export function readTaggedSessions(sessions: unknown): readonly TaggedSession[] {
-  return Array.isArray(sessions) ? sessions.flatMap((session) => taggedSession(session)) : []
-}
-
-/**
- * 印を付けたことを並びへ写す。一覧に無いセッションなら足す（見出しは次に読み直すまで無い）。
- * `lastModified` は新しいほうを採る。
- * tsukumo の印として読めない `tag` なら並びをそのまま返す。
- */
-export function withSessionMark(
-  sessions: readonly TaggedSession[],
-  marked: { readonly sessionId: string; readonly tag: string; readonly at: number },
-): readonly TaggedSession[] {
-  const mark = readSessionMark(marked.tag)
-  if (mark === undefined) {
-    return sessions
-  }
-
-  const existing = sessions.find((session) => session.sessionId === marked.sessionId)
-  const updated: TaggedSession =
-    existing === undefined
-      ? {
-          viewPort: mark.viewPort,
-          tag: mark.tag,
-          sessionId: marked.sessionId,
-          lastModified: marked.at,
-          startedAt: marked.at,
-          heading: undefined,
-        }
-      : {
-          ...existing,
-          viewPort: mark.viewPort,
-          tag: mark.tag,
-          lastModified: Math.max(existing.lastModified, marked.at),
-        }
-  return [...sessions.filter((session) => session.sessionId !== marked.sessionId), updated]
-}
-
-/**
- * 一覧の要素1つを、印の付いたセッションとして受け取る。読めないものは空の並びにして落とす。
- */
-function taggedSession(value: unknown): readonly TaggedSession[] {
-  if (!isPlainObject(value) || typeof value.tag !== "string") {
-    return []
-  }
-
-  const mark = readSessionMark(value.tag)
-  const sessionId = value.sessionId
-  const lastModified = value.lastModified
-  return mark !== undefined &&
-    typeof sessionId === "string" &&
-    sessionId !== "" &&
-    typeof lastModified === "number" &&
-    Number.isFinite(lastModified)
-    ? [
-        {
-          viewPort: mark.viewPort,
-          tag: mark.tag,
-          sessionId,
-          lastModified,
-          startedAt:
-            typeof value.createdAt === "number" && Number.isFinite(value.createdAt)
-              ? value.createdAt
-              : lastModified,
-          heading: headingFrom(value.summary),
-        },
-      ]
-    : []
-}
-
-/** SDK の `summary`（外来の値）を行の見出しへ畳む。文字列でない・空・空白だけなら無いものとして扱う（`SessionChoice.heading`）。 */
-function headingFrom(summary: unknown): string | undefined {
-  return typeof summary === "string" && summary.trim() !== "" ? summary : undefined
 }
 
 /** 組み直しの途中の姿（今のターンが開いたままかどうかを持ち回る）。 */

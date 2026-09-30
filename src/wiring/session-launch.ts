@@ -16,6 +16,7 @@ import {
   readRestoredEvents,
 } from "../server/session-driver/adapter/sdk-session.ts"
 import {
+  canResume,
   createSessionCatalog,
   EMPTY_SESSION_CATALOG,
   type SessionCatalog,
@@ -25,7 +26,7 @@ import type {
   SessionMode,
   SessionStart,
 } from "../server/session-driver/core/session-driver.ts"
-import { canResume, sessionTag } from "../server/session-driver/core/session-restore.ts"
+import { sessionTag } from "../server/session-driver/core/session-mark.ts"
 import {
   readRememberedSessionDefault,
   readRememberedVisitEnabled,
