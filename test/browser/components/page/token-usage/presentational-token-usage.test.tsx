@@ -1,19 +1,23 @@
 import { cleanup, fireEvent, render } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
+import type {
+  ModelRowView,
+  PeriodChoiceView,
+  ToolRowView,
+  TokenUsageReport,
+} from "../../../../../src/browser/components/page/token-usage/hooks/use-token-usage.ts"
 import type { UseUsageReviewResult } from "../../../../../src/browser/components/page/token-usage/hooks/use-usage-review.ts"
 import { PresentationalTokenUsage } from "../../../../../src/browser/components/page/token-usage/presentational-token-usage.tsx"
-import {
-  EMPTY_TOKEN_USAGE_SUMMARY,
-  type ModelUsageTotal,
-  type TokenUsageDays,
-  type TokenUsageSummary,
-  type TokenUsageTotals,
+import type {
+  TokenUsageDays,
+  TokenUsageTotals,
+  TokenUsageTrend,
 } from "../../../../../src/shared/token-usage/token-usage-summary.ts"
 
 /**
- * 見た目だけを測る（`useTokenUsage` は素通しなので、フィクスチャは手で書いた
- * 架空の集計をそのまま渡す）。
+ * 見た目だけを測る（文字・割合への畳みは `useTokenUsage` が持つので、フィクスチャは手で書いた
+ * 架空の値をそのまま渡す）。
  */
 
 afterEach(() => {
@@ -39,46 +43,78 @@ const EMPTY_TOTALS: TokenUsageTotals = {
   costUsd: 0,
 }
 
-const FIXTURE_MODEL: ModelUsageTotal = { model: "架空モデル", totals: FIXTURE_TOTALS }
-
-const FIXTURE_SUMMARY: TokenUsageSummary = {
-  trend: {
-    unit: "day",
-    points: [
-      { key: "2001-02-03", totals: EMPTY_TOTALS },
-      { key: "2001-02-04", totals: FIXTURE_TOTALS },
-      { key: "2001-02-05", totals: FIXTURE_TOTALS },
-    ],
-  },
-  byModel: [FIXTURE_MODEL],
-  byTool: [],
+const FIXTURE_TREND: TokenUsageTrend = {
+  unit: "day",
+  points: [
+    { key: "2001-02-03", totals: EMPTY_TOTALS },
+    { key: "2001-02-04", totals: FIXTURE_TOTALS },
+    { key: "2001-02-05", totals: FIXTURE_TOTALS },
+  ],
 }
 
 /** 今日を時間ごとに割った推移（24点。記録があるのは9時だけ）。 */
-const TODAY_SUMMARY: TokenUsageSummary = {
-  trend: {
-    unit: "hour",
-    points: Array.from({ length: 24 }, (_, hour) => ({
-      key: String(hour).padStart(2, "0"),
-      totals: hour === 9 ? FIXTURE_TOTALS : EMPTY_TOTALS,
-    })),
-  },
-  byModel: [FIXTURE_MODEL],
-  byTool: [],
+const TODAY_TREND: TokenUsageTrend = {
+  unit: "hour",
+  points: Array.from({ length: 24 }, (_, hour) => ({
+    key: String(hour).padStart(2, "0"),
+    totals: hour === 9 ? FIXTURE_TOTALS : EMPTY_TOTALS,
+  })),
+}
+
+const FIXTURE_MODEL: ModelRowView = {
+  model: "架空モデル",
+  input: "100",
+  output: "200",
+  outputShare: "100%",
+  cacheRead: "5.00k",
+  cacheCreation: "10",
+}
+
+type ReadyReport = Extract<TokenUsageReport, { kind: "ready" }>
+
+const FIXTURE_REPORT: ReadyReport = {
+  kind: "ready",
+  periodCards: [
+    { label: "入力", value: "100", pick: (totals) => totals.inputTokens },
+    { label: "出力", value: "200", pick: (totals) => totals.outputTokens },
+    { label: "キャッシュ読み", value: "5.00k", pick: (totals) => totals.cacheReadInputTokens },
+    { label: "キャッシュ作成", value: "10", pick: (totals) => totals.cacheCreationInputTokens },
+  ],
+  trend: FIXTURE_TREND,
+  models: [FIXTURE_MODEL],
+  tools: { rows: [], more: { kind: "none" } },
 }
 
 type RenderOptions = {
   readonly plan: string | undefined
   readonly days: TokenUsageDays
-  readonly summary: TokenUsageSummary
+  readonly report: TokenUsageReport
   readonly onDaysChange: (days: TokenUsageDays) => void
 }
 
 const DEFAULT_OPTIONS: RenderOptions = {
   plan: undefined,
   days: 7,
-  summary: FIXTURE_SUMMARY,
+  report: FIXTURE_REPORT,
   onDaysChange: () => {},
+}
+
+function periodChoicesOf(days: TokenUsageDays): readonly PeriodChoiceView[] {
+  return [
+    { days: 1, label: "今日", pressed: days === 1 },
+    { days: 7, label: "7日", pressed: days === 7 },
+    { days: 30, label: "30日", pressed: days === 30 },
+  ]
+}
+
+/** 手で書いたツールの行（結果の大きさの字と割合は架空）。 */
+function toolRowsOf(count: number): readonly ToolRowView[] {
+  return Array.from({ length: count }, (_, index) => ({
+    name: `ツール${index}`,
+    calls: 1,
+    size: `${9 - index} B`,
+    share: "100%",
+  }))
 }
 
 /**
@@ -100,9 +136,8 @@ function renderScreen(options: Partial<RenderOptions> = {}): ReturnType<typeof r
     <PresentationalTokenUsage
       days={merged.days}
       onDaysChange={merged.onDaysChange}
-      summary={merged.summary}
-      total={FIXTURE_TOTALS}
-      isError={false}
+      periodChoices={periodChoicesOf(merged.days)}
+      report={merged.report}
       plan={merged.plan}
       contextUsage={{ kind: "unavailable" }}
       usageReview={FIXTURE_USAGE_REVIEW}
@@ -157,7 +192,10 @@ describe("PresentationalTokenUsage", () => {
   })
 
   it("今日を選んだときは棒が24本になり、両端は 0時 と 23時", () => {
-    const { container } = renderScreen({ days: 1, summary: TODAY_SUMMARY })
+    const { container } = renderScreen({
+      days: 1,
+      report: { ...FIXTURE_REPORT, trend: TODAY_TREND },
+    })
 
     const bars = container
       .querySelectorAll(".usage-card-row .usage-card")[0]
@@ -189,13 +227,21 @@ describe("PresentationalTokenUsage", () => {
   })
 
   it("記録が無い期間は一言だけを出す（札も表も出さない）", () => {
-    const { container, getByText } = renderScreen({ summary: EMPTY_TOKEN_USAGE_SUMMARY })
+    const { container, getByText } = renderScreen({ report: { kind: "empty" } })
 
     expect(getByText("この期間の記録はまだ無い")).not.toBeNull()
     expect(container.querySelectorAll(".usage-card")).toHaveLength(0)
     expect(container.querySelectorAll(".token-usage-table")).toHaveLength(0)
     // 期間の切り替えだけは残る（切り替えられないと記録のある期間へ戻れない）。
     expect(getByText("30日")).not.toBeNull()
+  })
+
+  it("取れなかったときは一言だけを出す（札も表も出さない）", () => {
+    const { container, getByText } = renderScreen({ report: { kind: "failed" } })
+
+    expect(getByText("集計を取れなかった")).not.toBeNull()
+    expect(container.querySelectorAll(".usage-card")).toHaveLength(0)
+    expect(container.querySelectorAll(".token-usage-table")).toHaveLength(0)
   })
 
   it("モデル別の表に費用の列を出さない。列名は略さない", () => {
@@ -220,15 +266,12 @@ describe("PresentationalTokenUsage", () => {
   })
 
   it("モデル別は届いた順のまま行にする（並べ替えはしない）", () => {
-    const summary: TokenUsageSummary = {
-      ...FIXTURE_SUMMARY,
-      byModel: [
-        { model: "少ない出力", totals: { ...FIXTURE_TOTALS, outputTokens: 10 } },
-        { model: "多い出力", totals: { ...FIXTURE_TOTALS, outputTokens: 900 } },
-        { model: "zeta-同点", totals: { ...FIXTURE_TOTALS, outputTokens: 10 } },
-      ],
-    }
-    const { container } = renderScreen({ summary })
+    const models: readonly ModelRowView[] = [
+      { ...FIXTURE_MODEL, model: "少ない出力" },
+      { ...FIXTURE_MODEL, model: "多い出力" },
+      { ...FIXTURE_MODEL, model: "zeta-同点" },
+    ]
+    const { container } = renderScreen({ report: { ...FIXTURE_REPORT, models } })
 
     const modelTable = container.querySelectorAll(".token-usage-table")[0]
     const names = [...(modelTable?.querySelectorAll("tbody th") ?? [])].map(
@@ -252,38 +295,60 @@ describe("PresentationalTokenUsage", () => {
     ])
   })
 
-  it("ツール別は上から6件だけ出し、残りは「ほか n 件を見る」で開く", () => {
-    const byTool = Array.from({ length: 9 }, (_, index) => ({
-      name: `ツール${index}`,
-      calls: 1,
-      resultBytes: 9 - index,
-    }))
-    const { container, getByText, queryByText } = renderScreen({
-      summary: { ...FIXTURE_SUMMARY, byTool },
+  it("ツール別は渡された行だけを出し、残りがあれば「ほか n 件を見る」を置いて、押すと切り替えを伝える", () => {
+    let toggled = 0
+    const { container, getByText } = renderScreen({
+      report: {
+        ...FIXTURE_REPORT,
+        tools: {
+          rows: toolRowsOf(6),
+          more: {
+            kind: "some",
+            label: "ほか 3 件を見る",
+            onToggle: () => {
+              toggled += 1
+            },
+          },
+        },
+      },
     })
 
     const toolTable = container.querySelectorAll(".token-usage-table")[1]
     expect(toolTable?.querySelectorAll("tbody tr")).toHaveLength(6)
-    expect(getByText("ほか 3 件を見る")).not.toBeNull()
 
     fireEvent.click(getByText("ほか 3 件を見る"))
 
+    expect(toggled).toBe(1)
+  })
+
+  it("ツール別は開いたあと、全行と「閉じる」を出す", () => {
+    const { container, getByText, queryByText } = renderScreen({
+      report: {
+        ...FIXTURE_REPORT,
+        tools: {
+          rows: toolRowsOf(9),
+          more: { kind: "some", label: "閉じる", onToggle: () => {} },
+        },
+      },
+    })
+
+    const toolTable = container.querySelectorAll(".token-usage-table")[1]
     expect(toolTable?.querySelectorAll("tbody tr")).toHaveLength(9)
-    // 開いたあとは閉じる口も置く（毎回スクロールで6件目より下を探さずに戻せるように）。
     expect(queryByText("ほか 3 件を見る")).toBeNull()
     expect(getByText("閉じる")).not.toBeNull()
+  })
 
-    fireEvent.click(getByText("閉じる"))
+  it("ツール別は残りが無ければ開閉の口を置かない", () => {
+    const { queryByText } = renderScreen({
+      report: { ...FIXTURE_REPORT, tools: { rows: toolRowsOf(2), more: { kind: "none" } } },
+    })
 
-    expect(toolTable?.querySelectorAll("tbody tr")).toHaveLength(6)
+    expect(queryByText("閉じる")).toBeNull()
   })
 
   it("ツール別は結果の大きさの列だけに横棒を添える", () => {
     const { container } = renderScreen({
-      summary: {
-        ...FIXTURE_SUMMARY,
-        byTool: [{ name: "Bash", calls: 5, resultBytes: 1000 }],
-      },
+      report: { ...FIXTURE_REPORT, tools: { rows: toolRowsOf(1), more: { kind: "none" } } },
     })
 
     const toolTable = container.querySelectorAll(".token-usage-table")[1]
