@@ -5,7 +5,7 @@ import {
   SPEAK_TOOL_NAME,
   TSUKUMO_MCP_SERVER_NAME,
   WORK_PLAN_TOOL_NAME,
-} from "../../src/server/session-driver/core/sdk-message.ts"
+} from "../../src/server/session-driver/core/tsukumo-tool-name.ts"
 
 /** SDK から見た `speak` / `report` / `work_plan` の名前（MCP のサーバ名が前に付く）。 */
 export const SPEAK_TOOL_FULL_NAME = `mcp__${TSUKUMO_MCP_SERVER_NAME}__${SPEAK_TOOL_NAME}`

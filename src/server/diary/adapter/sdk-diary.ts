@@ -24,7 +24,7 @@ import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import {
   TSUKUMO_MCP_SERVER_NAME,
   tsukumoToolFullName,
-} from "../../session-driver/core/sdk-message.ts"
+} from "../../session-driver/core/tsukumo-tool-name.ts"
 import {
   DIARY_BOOKMARK_DESCRIPTION,
   DIARY_TOOL_DESCRIPTION,

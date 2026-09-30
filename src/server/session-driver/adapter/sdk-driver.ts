@@ -18,17 +18,12 @@ import { createUsageReviewIntake } from "../../usage-review/core/usage-review-to
 import { createPendingAnswerQueue, type PendingAnswerQueue } from "../core/pending-answer.ts"
 import { type ClaudeAccountTier, planName } from "../core/plan.ts"
 import { recordedPromptImages } from "../core/prompt-image-shelf.ts"
-import {
-  isSubagentMessage,
-  toCommandDescriptions,
-  toModelEffortSupport,
-  toPlan,
-  toSessionEvents,
-  TSUKUMO_MCP_SERVER_NAME,
-} from "../core/sdk-message.ts"
+import { isSubagentMessage, toSessionEvents } from "../core/sdk-message.ts"
+import { toCommandDescriptions, toModelEffortSupport, toPlan } from "../core/sdk-query-reply.ts"
 import { withSelfStartedTurns } from "../core/self-started-turn.ts"
 import type { SessionDriver, SessionDriverOptions } from "../core/session-driver.ts"
 import { createSessionTitleIntake, type SessionTitleIntake } from "../core/session-title.ts"
+import { TSUKUMO_MCP_SERVER_NAME } from "../core/tsukumo-tool-name.ts"
 import { isVisibleOutputNudge } from "../core/visible-output-nudge.ts"
 import { readClaudeAccountTier } from "./claude-account.ts"
 import { readContextUsage } from "./sdk-context-usage.ts"

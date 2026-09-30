@@ -10,7 +10,7 @@
 
 import { isPlainObject } from "remeda"
 
-import { SPEAK_TOOL_NAME, tsukumoToolFullName } from "./sdk-message.ts"
+import { SPEAK_TOOL_NAME, tsukumoToolFullName } from "./tsukumo-tool-name.ts"
 
 /** 本体が「このツールの呼び出しで終わるターンは正常」と扱うツール名の一覧を受け取る環境変数。 */
 export const TERMINAL_MCP_TOOLS_ENV_NAME = "CLAUDE_CODE_TERMINAL_MCP_TOOLS"

@@ -9,7 +9,6 @@
 import { isPlainObject } from "remeda"
 
 import type { Expression } from "../../../shared/character-pack/expression.ts"
-import { type EffortLevel, isEffortLevel } from "../../../shared/command.ts"
 import { parseReportSections, reportSectionsOfBody } from "../../../shared/report/report-block.ts"
 import { parseReportChecks } from "../../../shared/report/report-check.ts"
 import { parseReportTask } from "../../../shared/report/report-task.ts"
@@ -20,26 +19,18 @@ import type {
 } from "../../../shared/session-driver/background-task.ts"
 import type { RateLimit, RateLimitBucket } from "../../../shared/session-driver/rate-limit.ts"
 import type { TurnOutcome } from "../../../shared/session-driver/turn-failure.ts"
-import type {
-  CommandDescription,
-  ModelEffortSupport,
-  SessionEvent,
-} from "../../../shared/session/session-event.ts"
+import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import { parseWorkPlan } from "../../../shared/session/work-plan.ts"
 import type { ModelTokenUsage } from "../../../shared/token-usage/token-usage.ts"
 import { isBlankText } from "../../../shared/utils/blank-text.ts"
 import { optionalString } from "../../../shared/utils/optional-string.ts"
-
-/** プロセス内の MCP サーバの名前。モデルからは `mcp__<サーバ名>__<ツール名>` として見える。 */
-export const TSUKUMO_MCP_SERVER_NAME = "tsukumo"
-export const SPEAK_TOOL_NAME = "speak"
-/**
- * レポートを受け取るツールの名前。載るのは仕事のときだけ。
- * 雑談では呼ばれないので、見分ける側は仕事か雑談かを問わず見ている。
- */
-export const REPORT_TOOL_NAME = "report"
-/** 段取りを受け取るツールの名前。載るのは仕事のときだけ。 */
-export const WORK_PLAN_TOOL_NAME = "work_plan"
+import { toCommandDescriptions } from "./sdk-query-reply.ts"
+import {
+  REPORT_TOOL_NAME,
+  SPEAK_TOOL_NAME,
+  tsukumoToolFullName,
+  WORK_PLAN_TOOL_NAME,
+} from "./tsukumo-tool-name.ts"
 
 /**
  * SDK のメッセージ1つを内部イベントの並びに変換する。
@@ -130,67 +121,6 @@ export function toSessionEvents(
     default:
       return []
   }
-}
-
-/**
- * SDK が返すコマンド一覧（`supportedCommands()` の戻り値と `commands_changed` の `commands`）を検証して内部の型に変える。
- * 名前が文字列でない要素は捨て、説明が空文字のものは `undefined` にする。
- */
-export function toCommandDescriptions(value: unknown): readonly CommandDescription[] {
-  if (!Array.isArray(value)) {
-    return []
-  }
-
-  return value.flatMap((item) => {
-    if (!isPlainObject(item) || typeof item.name !== "string" || item.name === "") {
-      return []
-    }
-    const description = optionalString(item.description)
-    return [{ name: item.name, description: description === "" ? undefined : description }]
-  })
-}
-
-/**
- * `accountInfo()` の戻り値からプランを取り出す。
- * `email` / `organization` はここで捨て、駆動の外へ出さない（戻り値に載せないので、他のフィールドに触れる経路が無い）。
- * 空文字は「無い」に畳む。
- */
-export function toPlan(value: unknown): string | undefined {
-  if (!isPlainObject(value)) {
-    return undefined
-  }
-  const plan = optionalString(value.subscriptionType)
-  return plan === "" ? undefined : plan
-}
-
-/**
- * `supportedModels()` の戻り値から、effort に関わる部分だけを取り出す（`ModelEffortSupport`）。
- * 運ぶのは「いま効いている値」ではなく「対応の有無・選べる段」だけ（実測は `docs/history/decision.md`「effort の途中変更と読み取りが成り立った実測」）。
- *
- * `value` が文字列でない要素は捨てる。`supportsEffort` は真偽値でなければ `false` に倒す。
- * `supportedEffortLevels` は配列でない・{@link isEffortLevel} を通らない要素を捨て、最終的に空になれば `[]` に畳む。
- * 未知の段が増えても、知っている段だけを選べる一覧として出すため。
- */
-export function toModelEffortSupport(value: unknown): readonly ModelEffortSupport[] {
-  if (!Array.isArray(value)) {
-    return []
-  }
-
-  return value.flatMap((item) => {
-    if (!isPlainObject(item) || typeof item.value !== "string") {
-      return []
-    }
-    const levels = Array.isArray(item.supportedEffortLevels) ? item.supportedEffortLevels : []
-    return [
-      {
-        model: item.value,
-        supportsEffort: item.supportsEffort === true,
-        effortLevels: levels.filter(
-          (level): level is EffortLevel => typeof level === "string" && isEffortLevel(level),
-        ),
-      },
-    ]
-  })
 }
 
 /** サブエージェントの中から届いたメッセージか（`parent_tool_use_id` が文字列）。 */
@@ -567,11 +497,6 @@ function nonBlankString(value: unknown): string | undefined {
 /** モデルから見えるツールのフルネーム。MCP サーバ名とツール名から決まる。 */
 function speakToolFullName(): string {
   return tsukumoToolFullName(SPEAK_TOOL_NAME)
-}
-
-/** tsukumo のツールのフルネーム（`mcp__tsukumo__<ツール名>`）。 */
-export function tsukumoToolFullName(toolName: string): string {
-  return `mcp__${TSUKUMO_MCP_SERVER_NAME}__${toolName}`
 }
 
 function toExpression(value: unknown, expressions: readonly Expression[]): Expression {

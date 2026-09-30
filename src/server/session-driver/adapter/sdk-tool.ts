@@ -2,8 +2,7 @@
 // `speak` と `recall` / `recall_episode`、雑談のときの `remember` / `forget`、仕事のときの `report` / `work_plan` / `usage_review_stage` / `usage_review_result`。
 // `diary` はここには載らない（会話とは別の使い捨ての問い合わせ。`queryDiary`）。
 //
-// サーバの名前と `speak` の名前は `TSUKUMO_MCP_SERVER_NAME` / `SPEAK_TOOL_NAME` が持つ。
-// 届いた `assistant` メッセージから `speak` の呼び出しを見分ける側が core にあるため。
+// サーバの名前とツールの名前は `TSUKUMO_MCP_SERVER_NAME` と `*_TOOL_NAME` が持つ（`usage_review_*` だけは見直しの機能が持つ）。
 
 import { createSdkMcpServer, tool } from "@anthropic-ai/claude-agent-sdk"
 import { z } from "zod"
@@ -44,13 +43,17 @@ import {
   usageProposalKindGuide,
   usageReviewStageGuide,
 } from "../../usage-review/core/usage-review-tool.ts"
+import type { ChatRecall, PersonaMemory, SessionMode } from "../core/session-driver.ts"
 import {
+  FORGET_TOOL_NAME,
+  RECALL_EPISODE_TOOL_NAME,
+  RECALL_TOOL_NAME,
+  REMEMBER_TOOL_NAME,
   REPORT_TOOL_NAME,
   SPEAK_TOOL_NAME,
   TSUKUMO_MCP_SERVER_NAME,
   WORK_PLAN_TOOL_NAME,
-} from "../core/sdk-message.ts"
-import type { ChatRecall, PersonaMemory, SessionMode } from "../core/session-driver.ts"
+} from "../core/tsukumo-tool-name.ts"
 import {
   WORK_PLAN_CURRENT_DESCRIPTION,
   WORK_PLAN_PHASES_DESCRIPTION,
@@ -64,8 +67,6 @@ const SPEAK_TOOL_DESCRIPTION =
   "`report` を呼ぶターンの締めの一言はここではなく `report` の closing に入れる。" +
   "手順・コード・表・判断とその理由は本文に書き、ここには入れない。"
 
-const REMEMBER_TOOL_NAME = "remember"
-
 /**
  * モデルに見せる `remember` ツールの説明。
  * 何を書いてよいかの条は `CHAT_MANNER_PROMPT` が持つので、ここには置き場所と形だけを書く（二重に書かない）。
@@ -73,8 +74,6 @@ const REMEMBER_TOOL_NAME = "remember"
 const REMEMBER_TOOL_DESCRIPTION =
   "キャラクター自身について決まったことを1行だけ覚える（好み・口調・呼び方・来歴）。" +
   "ユーザーについて知ったことは覚えない。呼ぶ条件は雑談モードの規約に従う。"
-
-const FORGET_TOOL_NAME = "forget"
 
 /**
  * モデルに見せる `forget` ツールの説明。
@@ -84,8 +83,6 @@ const FORGET_TOOL_DESCRIPTION =
   "「覚えたこと」に並んでいる1行を忘れる。消したい行の文面をそのまま渡す（完全一致。番号では指せない）。" +
   "消せるのは自分で覚えた行だけで、それ以外の人格の文面は消せない。呼ぶ条件は雑談モードの規約に従う。"
 
-const RECALL_TOOL_NAME = "recall"
-
 /**
  * モデルに見せる `recall` ツールの説明。
  * 雑談でいつ引くかの条は `CHAT_MANNER_PROMPT` が持つので、ここには何が返るかと引ける回数だけを書く。
@@ -93,8 +90,6 @@ const RECALL_TOOL_NAME = "recall"
 const RECALL_TOOL_DESCRIPTION =
   "前の話を思い出せないときに、言葉でエピソード索引を引き、当たった候補の一覧（id・見出し・要旨）を返す。逐語は返らない。" +
   "1件を開くには recall_episode を使う。当たらなければ候補は無い。引けるのは1ターンに2回まで。"
-
-const RECALL_EPISODE_TOOL_NAME = "recall_episode"
 
 /**
  * モデルに見せる `recall_episode` ツールの説明。
