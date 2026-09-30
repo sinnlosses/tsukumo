@@ -13,7 +13,7 @@ import process from "node:process"
 import { fileURLToPath } from "node:url"
 
 import { collectChangedPaths, resolvePrimaryBranch } from "./lib/changed-path-repository.ts"
-import { acquireCheckLock } from "./lib/check-lock-repository.ts"
+import { acquireCheckLock, withCheckLockOwner } from "./lib/check-lock-repository.ts"
 import { isDocumentOnlyChange } from "./lib/document-change.ts"
 
 type Stage = {
@@ -80,7 +80,11 @@ type BufferedResult = { readonly status: number; readonly output: string }
 
 function runBuffered(name: string): Promise<BufferedResult> {
   return new Promise((resolve) => {
-    const child = spawn("pnpm", ["run", name], { cwd: ROOT, stdio: ["ignore", "pipe", "pipe"] })
+    const child = spawn("pnpm", ["run", name], {
+      cwd: ROOT,
+      env: withCheckLockOwner(process.env),
+      stdio: ["ignore", "pipe", "pipe"],
+    })
     const chunks: Buffer[] = []
     child.stdout.on("data", (chunk: Buffer) => chunks.push(chunk))
     child.stderr.on("data", (chunk: Buffer) => chunks.push(chunk))

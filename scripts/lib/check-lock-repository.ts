@@ -9,6 +9,7 @@ import process from "node:process"
 import { setTimeout as sleep } from "node:timers/promises"
 
 const LOCK_DIRECTORY_NAME = "tsukumo-check.lock"
+const LOCK_OWNER_VARIABLE = "TSUKUMO_CHECK_LOCK_OWNER"
 const POLL_INTERVAL_MS = 1000
 const PID_FILE_GRACE_MS = 10_000
 
@@ -26,6 +27,26 @@ export async function acquireCheckLock(root: string): Promise<() => void> {
   return () => {
     rmSync(lockPath, { recursive: true, force: true })
   }
+}
+
+/** 子プロセスへ、この錠の持ち主が自分だと知らせる環境を作る。 */
+export function withCheckLockOwner(
+  environment: Readonly<Record<string, string | undefined>>,
+): Record<string, string | undefined> {
+  return { ...environment, [LOCK_OWNER_VARIABLE]: String(process.pid) }
+}
+
+/** 持ち主が環境で知らされた錠の中なら何も取らず、そうでなければ `acquireCheckLock` で取る。 */
+export async function acquireCheckLockUnlessHeld(
+  root: string,
+  environment: Readonly<Record<string, string | undefined>>,
+): Promise<() => void> {
+  const lockPath = join(resolveCommonDirectory(root), LOCK_DIRECTORY_NAME)
+  const owner = Number(environment[LOCK_OWNER_VARIABLE])
+  if (Number.isInteger(owner) && owner === readLockPid(lockPath)) {
+    return () => {}
+  }
+  return acquireCheckLock(root)
 }
 
 function resolveCommonDirectory(root: string): string {

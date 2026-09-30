@@ -10,6 +10,7 @@ export default defineConfig({
   plugins: [cssModuleIdentityPlugin()],
   test: {
     globals: false,
+    globalSetup: ["./test/check-lock-setup.ts"],
     environment: "node",
     setupFiles: ["./test/dom-environment.ts"],
     exclude: ["**/node_modules/**", "test/e2e/**"],
