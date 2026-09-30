@@ -129,6 +129,7 @@ function Header(props: {
           pressed="none"
           disabled={false}
           ariaLabel={undefined}
+          disclosure={{ kind: "none" }}
           ariaHasPopup={undefined}
           title={undefined}
           className={styles["achievement-diary-open-book"]}
@@ -326,6 +327,7 @@ function Controls(props: {
           pressed="none"
           disabled={true}
           ariaLabel={undefined}
+          disclosure={{ kind: "none" }}
           ariaHasPopup={undefined}
           title={undefined}
           className={styles["achievement-review-button"]}
@@ -350,6 +352,7 @@ function Controls(props: {
         pressed="none"
         disabled={review.availability.kind === "blocked"}
         ariaLabel={undefined}
+        disclosure={{ kind: "none" }}
         ariaHasPopup={undefined}
         title={undefined}
         className={styles["achievement-review-button"]}

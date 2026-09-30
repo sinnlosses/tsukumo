@@ -10,8 +10,9 @@
         {
           "tag": "button",
           "attributes": {
-            "aria-expanded": "false",
+            "aria-disabled": "false",
             "aria-label": "メニュー",
+            "aria-expanded": "false",
             "type": "button"
           },
           "children": [
@@ -305,6 +306,7 @@
                 {
                   "tag": "button",
                   "attributes": {
+                    "aria-disabled": "false",
                     "aria-expanded": "false",
                     "type": "button"
                   },

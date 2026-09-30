@@ -53,16 +53,23 @@ export function PersonaMemorySection(): ReactElement {
           {lines.map((line, index) => (
             // 並びは届くたびに丸ごと置き換わり、同じ文面が2行あることもあるので位置で引く。
             <li key={index} className={styles["sidebar-persona-memory-item"]}>
-              <button
+              <Button
                 type="button"
+                variant="text-ink-hover-underline"
+                size="secondary"
+                pressed="none"
+                disabled={false}
+                ariaLabel={undefined}
+                ariaHasPopup={undefined}
+                disclosure={{ kind: "expander", expanded: openLine === line }}
+                title={undefined}
                 className={styles["sidebar-persona-memory-chip"]}
-                aria-expanded={openLine === line}
                 onClick={() => {
                   setOpenLine((current) => (current === line ? undefined : line))
                 }}
               >
                 {openLine === line ? line : truncatedRememberedLine(line)}
-              </button>
+              </Button>
               {editing && (
                 <Button
                   type="button"
@@ -71,6 +78,7 @@ export function PersonaMemorySection(): ReactElement {
                   pressed="none"
                   disabled={false}
                   ariaLabel={`「${line}」を消す`}
+                  disclosure={{ kind: "none" }}
                   ariaHasPopup={undefined}
                   title={undefined}
                   className={styles["sidebar-persona-memory-remove"]}
@@ -169,6 +177,7 @@ function PersonaMemoryForgetConfirm(props: PersonaMemoryForgetConfirmProps): Rea
           pressed="none"
           disabled={false}
           ariaLabel={undefined}
+          disclosure={{ kind: "none" }}
           ariaHasPopup={undefined}
           title={undefined}
           className={styles["sidebar-persona-memory-confirm-cancel"]}
@@ -183,6 +192,7 @@ function PersonaMemoryForgetConfirm(props: PersonaMemoryForgetConfirmProps): Rea
           pressed="none"
           disabled={false}
           ariaLabel={undefined}
+          disclosure={{ kind: "none" }}
           ariaHasPopup={undefined}
           title={undefined}
           className={styles["sidebar-persona-memory-confirm-ok"]}

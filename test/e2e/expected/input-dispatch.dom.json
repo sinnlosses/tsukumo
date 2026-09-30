@@ -62,6 +62,7 @@
                         {
                           "tag": "button",
                           "attributes": {
+                            "aria-disabled": "false",
                             "aria-expanded": "false",
                             "type": "button"
                           },

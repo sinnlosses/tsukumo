@@ -6,6 +6,7 @@ import clsx from "clsx"
 import { ChevronDown } from "lucide-react"
 import { useId, type ReactElement } from "react"
 
+import { Button } from "../../../ui/button/button.tsx"
 import { Text } from "../../../ui/text/text.tsx"
 import { CharacterFace } from "../../character-face.tsx"
 import type { ScreenNavCharacterPicker as Picker } from "../hooks/use-character-picker.ts"
@@ -32,14 +33,17 @@ export function ScreenNavCharacterPicker(props: ScreenNavCharacterPickerProps): 
         shellStyles["screen-nav-character-picker"],
       )}
     >
-      <button
+      <Button
         type="button"
-        ref={toggleRef}
-        className={styles["screen-nav-character-picker-toggle"]}
-        aria-expanded={picker.open}
-        aria-controls={panelId}
-        aria-label={picker.label}
+        variant="ghost"
+        size="body"
+        pressed="none"
+        disabled={false}
+        ariaLabel={picker.label}
+        ariaHasPopup={undefined}
+        disclosure={{ kind: "popover", ref: toggleRef, expanded: picker.open, controls: panelId }}
         title={picker.label}
+        className={styles["screen-nav-character-picker-toggle"]}
         onClick={picker.onToggle}
       >
         <CharacterFace
@@ -50,7 +54,7 @@ export function ScreenNavCharacterPicker(props: ScreenNavCharacterPickerProps): 
         <span className={styles["screen-nav-character-picker-mark"]} aria-hidden="true">
           <ChevronDown size={10} strokeWidth={2.2} />
         </span>
-      </button>
+      </Button>
       {picker.open && (
         <ul
           id={panelId}

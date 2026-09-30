@@ -43,15 +43,22 @@ export function PresentationalSpeechLog({
 }: PresentationalSpeechLogProps): ReactElement {
   return (
     <>
-      <button
+      <Button
         type="button"
+        variant="outline-faint-ground"
+        size="secondary"
+        pressed="none"
+        disabled={false}
+        ariaLabel={undefined}
+        ariaHasPopup={undefined}
+        disclosure={{ kind: "expander", expanded: open }}
+        title={undefined}
         className={styles["speech-log-open"]}
-        aria-expanded={open}
         onClick={onOpen}
       >
         <History size={16} />
         {OPEN_LABEL}
-      </button>
+      </Button>
       <Dialog
         open={open}
         name={{ kind: "label", label: DIALOG_LABEL }}
@@ -72,6 +79,7 @@ export function PresentationalSpeechLog({
             pressed="none"
             disabled={false}
             ariaLabel={undefined}
+            disclosure={{ kind: "none" }}
             ariaHasPopup={undefined}
             title={undefined}
             className={styles["speech-log-close"]}

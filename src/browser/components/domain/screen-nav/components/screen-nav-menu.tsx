@@ -12,6 +12,7 @@
 import clsx from "clsx"
 import type { ReactElement } from "react"
 
+import { Button } from "../../../ui/button/button.tsx"
 import { Text } from "../../../ui/text/text.tsx"
 import type { ScreenNavMenu as Menu, ScreenNavParts } from "../hooks/use-screen-nav.ts"
 import shellStyles from "../screen-nav.module.css"
@@ -44,11 +45,17 @@ export function ScreenNavMenu(props: ScreenNavMenuProps): ReactElement {
 
   return (
     <div className={styles["screen-nav-menu"]}>
-      <button
+      <Button
         type="button"
+        variant="outline-surface"
+        size="secondary"
+        pressed="none"
+        disabled={false}
+        ariaLabel={menu.pendingActive ? `${MENU_LABEL}（${PENDING_NOTE}）` : MENU_LABEL}
+        ariaHasPopup={undefined}
+        disclosure={{ kind: "expander", expanded: menu.open }}
+        title={undefined}
         className={styles["screen-nav-toggle"]}
-        aria-expanded={menu.open}
-        aria-label={menu.pendingActive ? `${MENU_LABEL}（${PENDING_NOTE}）` : MENU_LABEL}
         onClick={menu.onToggle}
       >
         {MENU_MARK}
@@ -63,7 +70,7 @@ export function ScreenNavMenu(props: ScreenNavMenuProps): ReactElement {
             {PENDING_MARK}
           </Text>
         )}
-      </button>
+      </Button>
       {menu.open && (
         // `shellStyles` の class は見た目を持たず、`screen-nav.module.css` の `@media` の選択子を当てるためだけに重ねる。
         // 実物の見た目（位置・枠・地）は `styles["screen-nav-panel"]` が持つ。

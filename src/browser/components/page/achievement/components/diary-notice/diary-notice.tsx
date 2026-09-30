@@ -44,6 +44,7 @@ export function DiaryNotice(): ReactElement | null {
         pressed="none"
         disabled={false}
         ariaLabel={undefined}
+        disclosure={{ kind: "none" }}
         ariaHasPopup={undefined}
         title={undefined}
         className={styles["diary-notice-open"]}
@@ -60,6 +61,7 @@ export function DiaryNotice(): ReactElement | null {
         pressed="none"
         disabled={false}
         ariaLabel={DISMISS_SR_LABEL}
+        disclosure={{ kind: "none" }}
         ariaHasPopup={undefined}
         title={undefined}
         className={styles["diary-notice-dismiss"]}

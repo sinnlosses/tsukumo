@@ -52,6 +52,7 @@ export function PresentationalTurnHeader({
           pressed="none"
           disabled={olderDisabled}
           ariaLabel={OLDER_LABEL}
+          disclosure={{ kind: "none" }}
           ariaHasPopup={undefined}
           title={OLDER_LABEL}
           className={styles["turn-nav-button"]}
@@ -66,6 +67,7 @@ export function PresentationalTurnHeader({
           pressed="none"
           disabled={isNewest}
           ariaLabel={NEWER_LABEL}
+          disclosure={{ kind: "none" }}
           ariaHasPopup={undefined}
           title={NEWER_LABEL}
           className={styles["turn-nav-button"]}
@@ -87,13 +89,22 @@ export function PresentationalTurnHeader({
           weight="bold"
           className={styles["turn-title"]}
         >
-          <button
+          <Button
             type="button"
-            ref={historyToggleRef}
-            className={styles["turn-title-toggle"]}
+            variant="ghost-hover-outline"
+            size="subheading"
+            pressed="none"
+            disabled={false}
+            ariaLabel={undefined}
+            ariaHasPopup={undefined}
+            disclosure={{
+              kind: "popover",
+              ref: historyToggleRef,
+              expanded: historyOpen,
+              controls: historyListId,
+            }}
             title={activeTitle}
-            aria-expanded={historyOpen}
-            aria-controls={historyListId}
+            className={styles["turn-title-toggle"]}
             onClick={onToggleHistory}
           >
             <Text
@@ -106,7 +117,7 @@ export function PresentationalTurnHeader({
               {activeTitle}
             </Text>
             <span className={styles["turn-title-chevron"]} aria-hidden="true" />
-          </button>
+          </Button>
         </Heading>
         {historyOpen && (
           <TurnHistoryList id={historyListId} rows={historyRows} onSelect={onSelectHistoryRow} />
@@ -132,6 +143,7 @@ export function PresentationalTurnHeader({
             pressed="none"
             disabled={false}
             ariaLabel={undefined}
+            disclosure={{ kind: "none" }}
             ariaHasPopup={undefined}
             title={undefined}
             className={styles["turn-to-newest"]}

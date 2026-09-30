@@ -241,8 +241,7 @@
    基準の `.character-region` は領域の padding の内側なので、`--region-padding`（`layout.module.css` の `.layout-region`）を打ち消して角からの距離を直に書く。
    はみ出した先は `.layout-region` の padding の中で、overflow の切り取りは padding box の縁なので切れない。
    行を1段足すと、立ち絵の高さ（--portrait-height は .character-layout の高さの割合）がそのぶん縮むため、行を増やさず重ねにしてある。
-   キャラビューは枠を持たない領域なので、口は地（ground）の不透明な色で塗って背景の絵の上でも読めるようにする。
-   字は見本の 12px ではなく `--font-secondary`（13px。字の段を増やさない）。 */
+   箱だけで、顔は `<Button variant="outline-faint-ground">` が持つ。 */
 .speech-log-open {
   position: absolute;
   top: calc(4px - var(--region-padding));
@@ -253,22 +252,7 @@
   gap: 6px;
   height: 30px;
   padding: 0 10px;
-  border: 1px solid color-mix(in srgb, var(--rule) 70%, transparent);
   border-radius: 8px;
-  background: var(--ground);
-  color: var(--ink-quiet);
-  font-size: var(--font-secondary);
-  cursor: pointer;
-}
-.speech-log-open:hover,
-.speech-log-open[aria-expanded="true"] {
-  border-color: var(--accent);
-  color: var(--ink);
-}
-/* 開いているあいだは押された見た目（地を accent で染める）。
-   枠はログに覆われて見えないことが多いが、狭い画面・ログの枠より口が外にある配置でも状態が読めるように付けておく。 */
-.speech-log-open[aria-expanded="true"] {
-  background: var(--surface-accent);
 }
 
 /* セリフのログ。

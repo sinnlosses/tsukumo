@@ -123,6 +123,7 @@ export function PresentationalComposer({
           pressed="none"
           disabled={false}
           ariaLabel="画像を添える"
+          disclosure={{ kind: "none" }}
           ariaHasPopup={undefined}
           title="画像を添える"
           className={styles["dispatch-tool"]}
@@ -137,6 +138,7 @@ export function PresentationalComposer({
           pressed="none"
           disabled={false}
           ariaLabel="コマンドを補完する"
+          disclosure={{ kind: "none" }}
           ariaHasPopup={undefined}
           title="コマンドを補完する"
           className={styles["dispatch-tool"]}
@@ -151,6 +153,7 @@ export function PresentationalComposer({
           pressed="none"
           disabled={false}
           ariaLabel="ファイルを補完する"
+          disclosure={{ kind: "none" }}
           ariaHasPopup={undefined}
           title="ファイルを補完する"
           className={styles["dispatch-tool"]}
@@ -165,6 +168,7 @@ export function PresentationalComposer({
           pressed={mode === "markdown" ? "on" : "off"}
           disabled={false}
           ariaLabel="マークダウンエディタで書く"
+          disclosure={{ kind: "none" }}
           ariaHasPopup={undefined}
           title="マークダウンエディタで書く"
           className={styles["dispatch-tool"]}

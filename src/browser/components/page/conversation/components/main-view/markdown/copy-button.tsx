@@ -21,6 +21,7 @@ export function CopyButton(props: { readonly text: string }): ReactElement {
       pressed="none"
       disabled={false}
       ariaLabel={undefined}
+      disclosure={{ kind: "none" }}
       ariaHasPopup={undefined}
       title={undefined}
       className={styles["code-copy"]}

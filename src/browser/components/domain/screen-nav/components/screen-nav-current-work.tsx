@@ -163,6 +163,7 @@ function CurrentWorkList(props: {
           pressed="none"
           disabled={false}
           ariaLabel={undefined}
+          disclosure={{ kind: "none" }}
           ariaHasPopup={undefined}
           title={undefined}
           className={styles["screen-nav-work-go-to-question"]}
@@ -245,6 +246,7 @@ function CurrentWorkList(props: {
               pressed="none"
               disabled={false}
               ariaLabel={undefined}
+              disclosure={{ kind: "none" }}
               ariaHasPopup={undefined}
               title={undefined}
               className={styles["screen-nav-work-toggle-all"]}

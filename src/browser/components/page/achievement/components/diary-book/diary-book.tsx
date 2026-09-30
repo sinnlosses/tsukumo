@@ -101,6 +101,7 @@ export function DiaryBook({
               pressed="none"
               disabled={false}
               ariaLabel={undefined}
+              disclosure={{ kind: "none" }}
               ariaHasPopup={undefined}
               title={undefined}
               className={styles["diary-book-topbar-button"]}
@@ -115,6 +116,7 @@ export function DiaryBook({
               pressed="none"
               disabled={false}
               ariaLabel={undefined}
+              disclosure={{ kind: "none" }}
               ariaHasPopup={undefined}
               title={undefined}
               className={styles["diary-book-topbar-button"]}
@@ -149,6 +151,7 @@ function NavButton(props: {
       pressed="none"
       disabled={disabled}
       ariaLabel={undefined}
+      disclosure={{ kind: "none" }}
       ariaHasPopup={undefined}
       title={undefined}
       className={styles["diary-book-topbar-button"]}
@@ -460,6 +463,7 @@ function BlankReview(props: {
         pressed="none"
         disabled={review.availability.kind === "blocked"}
         ariaLabel={undefined}
+        disclosure={{ kind: "none" }}
         ariaHasPopup={undefined}
         title={undefined}
         className={styles["diary-book-review-button"]}

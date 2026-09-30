@@ -56,8 +56,7 @@
 .turn-title {
   min-width: 0;
 }
-/* タイトルの文字 + 下向きの矢印を1つにまとめた開く口。
-   既定の枠・背景は消し、押せる面だと分かるのはホバーと `aria-expanded` のときの枠だけにする（フォーカスの輪は theme.css の `:focus-visible` にまかせ、ここでは打ち消さない）。
+/* タイトルの文字 + 下向きの矢印を1つにまとめた開く口の箱だけ。顔は `<Button variant="ghost-hover-outline">` が持つ。
    幅いっぱいに広げて `.turn-title-text` 側で省略するので、タイトルの縮み方は前と変わらない。
    `line-height` は本文の 1.75（`theme.css` の既定）を継がず、ここだけ 1.3 に詰める（`.detail-block .report-stat b` と同じ値。1.75 は長文を読むための余白で、1行の見出しでは頭を押し上げる）。 */
 .turn-title-toggle {
@@ -68,17 +67,9 @@
   min-width: 0;
   padding: 0.15rem 0.3rem;
   margin: -0.15rem -0.3rem;
-  border: 1px solid transparent;
   border-radius: 0.3rem;
-  background: transparent;
-  color: var(--ink);
   line-height: 1.3;
   text-align: left;
-  cursor: pointer;
-}
-.turn-title-toggle:hover,
-.turn-title-toggle[aria-expanded="true"] {
-  border-color: var(--rule);
 }
 /* 1行に収まらないぶんは省略し、全文はボタンの `title` で読ませる（`turnTitle` は切らない）。
    字の段は「区画の見出し・強調した要約」（理由はそちらに書く）で、太字で本文と区別する。 */

@@ -91,6 +91,32 @@
   border-color: var(--accent);
 }
 
+/* 枠だけ（`--rule`）で、地は `--surface`。hover で枠が accent になる。 */
+.button-variant-outline-surface {
+  border: 1px solid var(--rule);
+  background: var(--surface);
+  color: var(--ink);
+}
+.button-variant-outline-surface:hover {
+  border-color: var(--accent);
+}
+
+/* 薄い枠（`--rule` を 70% に透かす）と `--ground` の地に、静かな字。
+   hover と開いている間は枠が accent・字が ink になり、開いている間は地が `--surface-accent` になる。 */
+.button-variant-outline-faint-ground {
+  border: 1px solid color-mix(in srgb, var(--rule) 70%, transparent);
+  background: var(--ground);
+  color: var(--ink-quiet);
+}
+.button-variant-outline-faint-ground:hover,
+.button-variant-outline-faint-ground[aria-expanded="true"] {
+  border-color: var(--accent);
+  color: var(--ink);
+}
+.button-variant-outline-faint-ground[aria-expanded="true"] {
+  background: var(--surface-accent);
+}
+
 /* `--state-ng` の枠と字、`--surface` の地。hover で枠が accent になる。 */
 .button-variant-outline-danger-surface {
   border: 1px solid var(--state-ng);
@@ -177,6 +203,27 @@
 }
 .button-variant-ghost-hover-accent:hover {
   color: var(--accent);
+}
+
+/* 地が無く、枠は透明な ink の字。hover と開いている間だけ枠が `--rule` で見える。 */
+.button-variant-ghost-hover-outline {
+  border: 1px solid transparent;
+  background: none;
+  color: var(--ink);
+}
+.button-variant-ghost-hover-outline:hover,
+.button-variant-ghost-hover-outline[aria-expanded="true"] {
+  border-color: var(--rule);
+}
+
+/* 地も枠も無い ink の字。hover で下線が付く。 */
+.button-variant-text-ink-hover-underline {
+  border: none;
+  background: none;
+  color: var(--ink);
+}
+.button-variant-text-ink-hover-underline:hover {
+  text-decoration: underline;
 }
 
 /* 地も枠も無い accent の字。hover で変わらない。 */

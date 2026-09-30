@@ -1,4 +1,5 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
+import { createRef } from "react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
 import {
@@ -18,6 +19,7 @@ const BASE_PROPS = {
   disabled: false,
   ariaLabel: undefined,
   ariaHasPopup: undefined,
+  disclosure: { kind: "none" },
   title: undefined,
   className: "",
   onClick: () => {},
@@ -39,6 +41,8 @@ describe("Button", () => {
     ["tinted-accent", "button-variant-tinted-accent"],
     ["outline-warn", "button-variant-outline-warn"],
     ["outline-ground", "button-variant-outline-ground"],
+    ["outline-surface", "button-variant-outline-surface"],
+    ["outline-faint-ground", "button-variant-outline-faint-ground"],
     ["outline-ok-surface", "button-variant-outline-ok-surface"],
     ["outline-danger-surface", "button-variant-outline-danger-surface"],
     ["solid-accent", "button-variant-solid-accent"],
@@ -46,8 +50,10 @@ describe("Button", () => {
     ["solid-warn", "button-variant-solid-warn"],
     ["ghost", "button-variant-ghost"],
     ["ghost-hover-accent", "button-variant-ghost-hover-accent"],
+    ["ghost-hover-outline", "button-variant-ghost-hover-outline"],
     ["link", "button-variant-link"],
     ["text-accent", "button-variant-text-accent"],
+    ["text-ink-hover-underline", "button-variant-text-ink-hover-underline"],
   ] as const)("variant: %s は class %s を付ける", (variant, expectedClass) => {
     const element = renderButton({ ...BASE_PROPS, variant })
     expect(element.className.split(" ")).toContain(expectedClass)
@@ -111,6 +117,35 @@ describe("Button", () => {
   it("ariaHasPopup が付く", () => {
     const element = renderButton({ ...BASE_PROPS, ariaHasPopup: "dialog" })
     expect(element.getAttribute("aria-haspopup")).toBe("dialog")
+  })
+
+  it("disclosure: none は aria-expanded と aria-controls を付けない", () => {
+    const element = renderButton({ ...BASE_PROPS, disclosure: { kind: "none" } })
+    expect(element.hasAttribute("aria-expanded")).toBe(false)
+    expect(element.hasAttribute("aria-controls")).toBe(false)
+  })
+
+  it.each([
+    [true, "true"],
+    [false, "false"],
+  ] as const)(
+    "disclosure: expander（expanded=%s）は aria-expanded=%s だけを付ける",
+    (expanded, expected) => {
+      const element = renderButton({ ...BASE_PROPS, disclosure: { kind: "expander", expanded } })
+      expect(element.getAttribute("aria-expanded")).toBe(expected)
+      expect(element.hasAttribute("aria-controls")).toBe(false)
+    },
+  )
+
+  it("disclosure: popover は aria-expanded と aria-controls を付け、ref に button 要素を渡す", () => {
+    const ref = createRef<HTMLButtonElement>()
+    const element = renderButton({
+      ...BASE_PROPS,
+      disclosure: { kind: "popover", ref, expanded: true, controls: "dummy-panel" },
+    })
+    expect(element.getAttribute("aria-expanded")).toBe("true")
+    expect(element.getAttribute("aria-controls")).toBe("dummy-panel")
+    expect(ref.current).toBe(element)
   })
 
   it("title が付く", () => {

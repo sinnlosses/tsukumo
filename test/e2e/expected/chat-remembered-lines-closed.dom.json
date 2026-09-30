@@ -104,6 +104,7 @@
                     {
                       "tag": "button",
                       "attributes": {
+                        "aria-disabled": "false",
                         "aria-expanded": "false",
                         "type": "button"
                       },
@@ -119,6 +120,7 @@
                     {
                       "tag": "button",
                       "attributes": {
+                        "aria-disabled": "false",
                         "aria-expanded": "false",
                         "type": "button"
                       },

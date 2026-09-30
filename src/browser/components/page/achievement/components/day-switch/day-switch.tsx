@@ -50,6 +50,7 @@ export function DaySwitch(props: DaySwitchProps): ReactElement {
           pressed="none"
           disabled={!known}
           ariaLabel="前の日"
+          disclosure={{ kind: "none" }}
           ariaHasPopup={undefined}
           title={undefined}
           className={styles["achievement-day-switch-button"]}
@@ -93,6 +94,7 @@ export function DaySwitch(props: DaySwitchProps): ReactElement {
           pressed="none"
           disabled={!known || isToday}
           ariaLabel="次の日"
+          disclosure={{ kind: "none" }}
           ariaHasPopup={undefined}
           title={undefined}
           className={styles["achievement-day-switch-button"]}
@@ -108,6 +110,7 @@ export function DaySwitch(props: DaySwitchProps): ReactElement {
             pressed="none"
             disabled={false}
             ariaLabel={undefined}
+            disclosure={{ kind: "none" }}
             ariaHasPopup={undefined}
             title={undefined}
             className={styles["achievement-day-switch-today"]}

@@ -10,8 +10,9 @@
         {
           "tag": "button",
           "attributes": {
-            "aria-expanded": "false",
+            "aria-disabled": "false",
             "aria-label": "キャラクターを選ぶ（いまは つくもの精霊）",
+            "aria-expanded": "false",
             "type": "button"
           },
           "children": [
@@ -226,6 +227,7 @@
                                 {
                                   "tag": "button",
                                   "attributes": {
+                                    "aria-disabled": "false",
                                     "aria-expanded": "false",
                                     "type": "button"
                                   },
@@ -798,6 +800,7 @@
                 {
                   "tag": "button",
                   "attributes": {
+                    "aria-disabled": "false",
                     "aria-expanded": "false",
                     "type": "button"
                   },

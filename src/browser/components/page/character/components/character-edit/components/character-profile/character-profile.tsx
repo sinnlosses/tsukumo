@@ -92,6 +92,7 @@ export function CharacterProfile(props: { readonly profile: CharacterProfileMode
               pressed="none"
               disabled={profile.switchTo.disabled}
               ariaLabel={undefined}
+              disclosure={{ kind: "none" }}
               ariaHasPopup={undefined}
               title={profile.switchTo.title}
               className={styles["character-button-outline"]}

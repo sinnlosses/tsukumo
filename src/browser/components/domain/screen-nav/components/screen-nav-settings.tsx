@@ -297,6 +297,7 @@ export function ScreenNavSettingsGear(props: ScreenNavSettingsProps): ReactEleme
               pressed="none"
               disabled={settings.resetDisabled}
               ariaLabel={undefined}
+              disclosure={{ kind: "none" }}
               ariaHasPopup={undefined}
               title={undefined}
               className={styles["screen-nav-settings-reset"]}

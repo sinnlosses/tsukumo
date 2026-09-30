@@ -57,6 +57,7 @@ function ChatModeButton(props: {
       pressed={props.pressed ? "on" : "off"}
       disabled={disabled}
       ariaLabel={props.pressed ? undefined : props.label}
+      disclosure={{ kind: "none" }}
       ariaHasPopup={undefined}
       title={disabled ? title : props.pressed ? undefined : props.label}
       className={styles["screen-nav-chat-mode-button"]}

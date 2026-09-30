@@ -139,6 +139,7 @@ export function PresentationalConversationLayout({
             pressed="none"
             disabled={false}
             ariaLabel={undefined}
+            disclosure={{ kind: "none" }}
             ariaHasPopup={undefined}
             title={undefined}
             className={styles["layout-reset-split"]}

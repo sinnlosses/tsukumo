@@ -62,6 +62,7 @@ export function ImageZoom(props: ImageZoomProps): ReactElement {
         pressed="none"
         disabled={false}
         ariaLabel={undefined}
+        disclosure={{ kind: "none" }}
         ariaHasPopup={undefined}
         title={undefined}
         className={styles["image-zoom-close"]}

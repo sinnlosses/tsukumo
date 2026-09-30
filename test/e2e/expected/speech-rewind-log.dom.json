@@ -9,6 +9,7 @@
         {
           "tag": "button",
           "attributes": {
+            "aria-disabled": "false",
             "aria-expanded": "true",
             "type": "button"
           },

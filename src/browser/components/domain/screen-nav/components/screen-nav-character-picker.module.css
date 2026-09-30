@@ -8,15 +8,12 @@
   display: flex;
   flex: none;
 }
-/* 顔そのものが押す口（枠も地も無い丸）。右下の「⌄」が選べることを示す。 */
+/* 顔そのものが押す口の箱だけ（顔は `<Button variant="ghost">` が持つ）。右下の「⌄」が選べることを示す。 */
 .screen-nav-character-picker-toggle {
   position: relative;
   display: flex;
   padding: 0;
-  border: none;
   border-radius: 50%;
-  background: transparent;
-  cursor: pointer;
 }
 .screen-nav-character-picker-toggle:focus-visible {
   outline: 2px solid var(--accent);

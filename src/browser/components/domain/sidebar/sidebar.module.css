@@ -683,23 +683,13 @@
   padding: 0.5rem 0;
   border-top: 1px solid var(--rule);
 }
-/* チップ本体。押すと全文に開くので、枠なしのボタンにしてホバーの下線で押せることだけを示す。
-   読む面の文字なので ink。 */
+/* チップ本体の箱だけ。顔は `<Button variant="text-ink-hover-underline">` が持つ。 */
 .sidebar-persona-memory-chip {
   flex: 1 1 auto;
   min-width: 0;
   padding: 0;
-  border: none;
-  background: none;
-  color: var(--ink);
-  font-size: inherit;
-  font-family: inherit;
   text-align: left;
   overflow-wrap: anywhere;
-  cursor: pointer;
-}
-.sidebar-persona-memory-chip:hover {
-  text-decoration: underline;
 }
 /* 「編集」の状態でだけ出る × ボタン。行の右端に小さく置く。箱だけで、顔は `<Button variant="ghost">` が持つ。 */
 .sidebar-persona-memory-remove {

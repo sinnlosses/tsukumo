@@ -10,21 +10,14 @@
   .screen-nav-menu {
     display: block;
   }
-  /* 指で押す口。上下の余白と字の大きさをタブ（.layout-tab）に合わせるので、同じ高さに揃う。 */
+  /* 指で押す口の箱だけ。顔は `<Button variant="outline-surface">`、字の大きさは `size` が持つ。
+     上下の余白と字の大きさをタブ（.layout-tab）に合わせるので、同じ高さに揃う。
+     `line-height` は `theme.css` の既定（本文の 1.75）を継いだままにしておくと、上下の余白と合わせてタブ帯とぴったり同じ高さ（39.1px）に揃う（実測）。
+     ここで上書きしない。 */
   .screen-nav-toggle {
     width: 2.75rem;
     padding: 0.45rem 0;
-    border: 1px solid var(--rule);
     border-radius: 999px;
-    background: var(--surface);
-    color: var(--ink);
-    /* `line-height` は `theme.css` の既定（本文の 1.75）を継いだままにしておくと、上下の余白と合わせてタブ帯とぴったり同じ高さ（39.1px）に揃う（実測）。
-       ここで上書きしない。 */
-    font-size: var(--font-secondary);
-    cursor: pointer;
-  }
-  .screen-nav-toggle:hover {
-    border-color: var(--accent);
   }
   /* 閉じている間の答え待ちの印（印が出ているかどうかで分かるので、色だけに頼らない）。 */
   .screen-nav-toggle-mark {

@@ -85,6 +85,7 @@ export function CharacterList(props: { readonly onCreate: () => void }): ReactEl
         pressed="none"
         disabled={false}
         ariaLabel={undefined}
+        disclosure={{ kind: "none" }}
         ariaHasPopup={undefined}
         title={undefined}
         className={styles["character-list-new"]}

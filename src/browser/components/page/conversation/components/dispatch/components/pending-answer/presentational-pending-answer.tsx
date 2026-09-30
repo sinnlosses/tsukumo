@@ -55,6 +55,7 @@ export function PresentationalPendingAnswer(
               pressed="none"
               disabled={false}
               ariaLabel={undefined}
+              disclosure={{ kind: "none" }}
               ariaHasPopup={undefined}
               title={undefined}
               className={styles["pending-action"]}
@@ -69,6 +70,7 @@ export function PresentationalPendingAnswer(
               pressed="none"
               disabled={false}
               ariaLabel={undefined}
+              disclosure={{ kind: "none" }}
               ariaHasPopup={undefined}
               title={undefined}
               className={styles["pending-action"]}

@@ -89,6 +89,7 @@ export function CharacterDeleteConfirm(props: CharacterDeleteConfirmProps): Reac
             pressed="none"
             disabled={false}
             ariaLabel={undefined}
+            disclosure={{ kind: "none" }}
             ariaHasPopup={undefined}
             title={undefined}
             className={styles["character-button-outline"]}
@@ -103,6 +104,7 @@ export function CharacterDeleteConfirm(props: CharacterDeleteConfirmProps): Reac
             pressed="none"
             disabled={!canSubmit}
             ariaLabel={undefined}
+            disclosure={{ kind: "none" }}
             ariaHasPopup={undefined}
             title={undefined}
             className={styles["character-delete-ok"]}

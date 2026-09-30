@@ -103,6 +103,7 @@ function IdleReviewCard(props: {
           pressed="none"
           disabled={review.start.kind === "blocked"}
           ariaLabel={undefined}
+          disclosure={{ kind: "none" }}
           ariaHasPopup={undefined}
           title={undefined}
           className={styles["usage-review-start"]}
@@ -123,6 +124,7 @@ function IdleReviewCard(props: {
             pressed="none"
             disabled={false}
             ariaLabel={undefined}
+            disclosure={{ kind: "none" }}
             ariaHasPopup={undefined}
             title={undefined}
             className=""
@@ -271,6 +273,7 @@ function ResultReviewCard(props: {
               pressed="none"
               disabled={false}
               ariaLabel={undefined}
+              disclosure={{ kind: "none" }}
               ariaHasPopup={undefined}
               title={undefined}
               className=""

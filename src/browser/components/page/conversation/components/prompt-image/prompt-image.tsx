@@ -64,6 +64,7 @@ export function PromptImageChips(props: PromptImageChipsProps): ReactElement | n
               pressed="none"
               disabled={false}
               ariaLabel={ZOOM_LABEL}
+              disclosure={{ kind: "none" }}
               ariaHasPopup={undefined}
               title={undefined}
               className={styles["prompt-image-zoom"]}
@@ -79,6 +80,7 @@ export function PromptImageChips(props: PromptImageChipsProps): ReactElement | n
               pressed="none"
               disabled={false}
               ariaLabel={REMOVE_LABEL}
+              disclosure={{ kind: "none" }}
               ariaHasPopup={undefined}
               title={undefined}
               className={styles["prompt-image-remove"]}
@@ -135,6 +137,7 @@ export function PromptImageThumbnails(props: PromptImageThumbnailsProps): ReactE
               pressed="none"
               disabled={false}
               ariaLabel={ZOOM_LABEL}
+              disclosure={{ kind: "none" }}
               ariaHasPopup={undefined}
               title={undefined}
               className={styles["prompt-image-zoom"]}

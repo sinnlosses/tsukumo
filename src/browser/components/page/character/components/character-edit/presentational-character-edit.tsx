@@ -95,6 +95,7 @@ export function PresentationalCharacterEdit(
                 pressed="none"
                 disabled={props.disabled}
                 ariaLabel={undefined}
+                disclosure={{ kind: "none" }}
                 ariaHasPopup={undefined}
                 title={undefined}
                 className=""

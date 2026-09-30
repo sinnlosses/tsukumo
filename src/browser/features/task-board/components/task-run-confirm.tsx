@@ -86,6 +86,7 @@ export function TaskRunConfirm(props: TaskRunConfirmProps): ReactElement {
           pressed="none"
           disabled={false}
           ariaLabel={undefined}
+          disclosure={{ kind: "none" }}
           ariaHasPopup={undefined}
           title={undefined}
           className={styles["task-run-cancel"]}
@@ -101,6 +102,7 @@ export function TaskRunConfirm(props: TaskRunConfirmProps): ReactElement {
             pressed="none"
             disabled={false}
             ariaLabel={undefined}
+            disclosure={{ kind: "none" }}
             ariaHasPopup={undefined}
             title={undefined}
             className={styles["task-run-ok"]}

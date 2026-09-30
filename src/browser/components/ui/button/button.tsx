@@ -4,7 +4,7 @@
 // 押されても `onClick` を呼ばない。
 
 import clsx from "clsx"
-import type { ReactElement, ReactNode } from "react"
+import type { ReactElement, ReactNode, Ref } from "react"
 
 import { TEXT_SIZE_CLASS, type TextSize } from "../text/text.tsx"
 import styles from "./button.module.css"
@@ -20,6 +20,8 @@ export type ButtonVariant =
   | "tinted-accent"
   | "outline-warn"
   | "outline-ground"
+  | "outline-surface"
+  | "outline-faint-ground"
   | "outline-ok-surface"
   | "outline-danger-surface"
   | "solid-accent"
@@ -27,11 +29,26 @@ export type ButtonVariant =
   | "solid-warn"
   | "ghost"
   | "ghost-hover-accent"
+  | "ghost-hover-outline"
   | "link"
   | "text-accent"
+  | "text-ink-hover-underline"
 export type ButtonSize = Exclude<TextSize, "heading" | "inherit">
 /** トグルボタンの押された状態。`"none"` は `aria-pressed` を付けない（トグルボタンではない）。 */
 export type ButtonPressed = "none" | "on" | "off"
+/**
+ * 押すと開く面との関係。
+ * `expander` は `aria-expanded` だけを付け、`popover` は開く面の id（`aria-controls`）と、Esc で戻る先として DOM を預ける `ref` も付ける。
+ */
+export type ButtonDisclosure =
+  | { readonly kind: "none" }
+  | { readonly kind: "expander"; readonly expanded: boolean }
+  | {
+      readonly kind: "popover"
+      readonly ref: Ref<HTMLButtonElement>
+      readonly expanded: boolean
+      readonly controls: string
+    }
 
 export type ButtonProps = {
   readonly type: ButtonType
@@ -43,6 +60,7 @@ export type ButtonProps = {
   readonly ariaLabel: string | undefined
   /** 押すと開く面の種類（サイドバーの区画の見出しの「一覧を見る」など）。無ければ `undefined`。 */
   readonly ariaHasPopup: "dialog" | undefined
+  readonly disclosure: ButtonDisclosure
   /** `disabled` の理由など、hover で読ませたい1行。無ければ `undefined`。 */
   readonly title: string | undefined
   /** 置き方（margin など）と箱（高さ・余白・角丸）だけを渡す。 */
@@ -61,6 +79,8 @@ export const BUTTON_VARIANT_CLASS = {
   "tinted-accent": styles["button-variant-tinted-accent"],
   "outline-warn": styles["button-variant-outline-warn"],
   "outline-ground": styles["button-variant-outline-ground"],
+  "outline-surface": styles["button-variant-outline-surface"],
+  "outline-faint-ground": styles["button-variant-outline-faint-ground"],
   "outline-ok-surface": styles["button-variant-outline-ok-surface"],
   "outline-danger-surface": styles["button-variant-outline-danger-surface"],
   "solid-accent": styles["button-variant-solid-accent"],
@@ -68,8 +88,10 @@ export const BUTTON_VARIANT_CLASS = {
   "solid-warn": styles["button-variant-solid-warn"],
   ghost: styles["button-variant-ghost"],
   "ghost-hover-accent": styles["button-variant-ghost-hover-accent"],
+  "ghost-hover-outline": styles["button-variant-ghost-hover-outline"],
   link: styles["button-variant-link"],
   "text-accent": styles["button-variant-text-accent"],
+  "text-ink-hover-underline": styles["button-variant-text-ink-hover-underline"],
 } satisfies Record<ButtonVariant, string>
 
 const BUTTON_PRESSED_ARIA = {
@@ -94,14 +116,19 @@ export function Button(props: ButtonProps): ReactElement {
     props.onClick()
   }
 
+  const { disclosure } = props
+
   return (
     <button
       type={props.type}
+      ref={disclosure.kind === "popover" ? disclosure.ref : undefined}
       className={className}
       aria-pressed={BUTTON_PRESSED_ARIA[props.pressed]}
       aria-disabled={props.disabled}
       aria-label={props.ariaLabel}
       aria-haspopup={props.ariaHasPopup}
+      aria-expanded={disclosure.kind === "none" ? undefined : disclosure.expanded}
+      aria-controls={disclosure.kind === "popover" ? disclosure.controls : undefined}
       title={props.title}
       onClick={handleClick}
     >

@@ -63,6 +63,7 @@ export function PlanUsageRow(props: { readonly planUsage: UsePlanUsageResult }):
             pressed="none"
             disabled={fetching}
             ariaLabel="利用枠を取り直す"
+            disclosure={{ kind: "none" }}
             ariaHasPopup={undefined}
             title="取り直す"
             className={styles["plan-usage-row-refresh"]}

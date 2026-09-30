@@ -81,6 +81,7 @@ export function QuestionAsk(): ReactElement | null {
             pressed="none"
             disabled={false}
             ariaLabel={undefined}
+            disclosure={{ kind: "none" }}
             ariaHasPopup={undefined}
             title={undefined}
             className={styles["question-ask-to-newest"]}
@@ -97,6 +98,7 @@ export function QuestionAsk(): ReactElement | null {
             pressed="none"
             disabled={false}
             ariaLabel={undefined}
+            disclosure={{ kind: "none" }}
             ariaHasPopup={undefined}
             title={undefined}
             className={styles["question-ask-back"]}
@@ -172,6 +174,7 @@ export function QuestionAsk(): ReactElement | null {
           pressed="none"
           disabled={!question.canAnswer}
           ariaLabel={undefined}
+          disclosure={{ kind: "none" }}
           ariaHasPopup={undefined}
           title={undefined}
           className={styles["question-ask-answer"]}

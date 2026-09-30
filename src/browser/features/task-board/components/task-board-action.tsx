@@ -27,6 +27,7 @@ export function TaskBoardAction(props: {
         pressed="none"
         disabled={false}
         ariaLabel={undefined}
+        disclosure={{ kind: "none" }}
         ariaHasPopup={undefined}
         title={undefined}
         className={styles["task-board-action-button"]}
@@ -43,6 +44,7 @@ export function TaskBoardAction(props: {
           pressed="none"
           disabled={opener.availability !== "tracked"}
           ariaLabel={undefined}
+          disclosure={{ kind: "none" }}
           ariaHasPopup={undefined}
           title={
             opener.availability === "untracked"
@@ -75,6 +77,7 @@ export function TaskBoardAction(props: {
         disabled={run.kind === "unavailable"}
         ariaLabel={undefined}
         ariaHasPopup="dialog"
+        disclosure={{ kind: "none" }}
         title={run.kind === "unavailable" ? run.reason : undefined}
         className={styles["task-board-run"]}
         onClick={run.kind === "available" ? run.onRun : ignoreClick}
