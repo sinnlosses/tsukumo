@@ -42,6 +42,12 @@ const BACKGROUND_LABEL = { present: "いまの背景", absent: "背景なし" } 
 /** 顔の行の、いまの状態を表す字（印だけにしない）。 */
 const FACE_LABEL = { present: "いまの顔", absent: "顔なし" } as const
 
+/** 顔に選べる種類。中身の検証はサーバ側で、ここは選ぶときの絞り込みだけ。 */
+const FACE_FILE_ACCEPT = ".svg,.png,.gif"
+
+/** 背景に選べる種類。`.gif` は入れない（動く背景は読む面の隣で気が散る）。 */
+const BACKGROUND_FILE_ACCEPT = ".png,.jpg,.jpeg,.webp"
+
 /**
  * 衣装のラベル。モデルの重さ（装備の重さ）の言い方はどのキャラクターでも同じなので画面側が持つ。
  * 見える字は装備の名前とモデルの2段に分け、読み上げには1つにつないで渡す。
@@ -219,16 +225,14 @@ export type ChatAccentResetModel =
   | { readonly kind: "hidden" }
   | { readonly kind: "shown"; readonly onClick: () => void }
 
-/** 背景の行。字（`label`）は有無どちらでも出す。 */
-export type BackgroundFieldModel = {
-  readonly image: { readonly kind: "absent" } | { readonly kind: "present"; readonly url: string }
-  readonly label: string
-  readonly onPick: (input: HTMLInputElement) => void
-  readonly onClear: () => void
-}
-
-/** 顔の行。 */
-export type FaceFieldModel = {
+/**
+ * 画像1枚の行（顔・背景）。字（`label`）は有無どちらでも出す。
+ * `kind` は縮図と空の枠の見た目を選び、`subject` は読み上げの名前の頭になる。
+ */
+export type ImageFieldModel = {
+  readonly kind: "face" | "background"
+  readonly subject: string
+  readonly accept: string
   readonly image: { readonly kind: "absent" } | { readonly kind: "present"; readonly url: string }
   readonly label: string
   readonly onPick: (input: HTMLInputElement) => void
@@ -279,8 +283,8 @@ export type CharacterEditModel =
       readonly chatAccent: AccentSwatchModel
       readonly resetChatAccent: ChatAccentResetModel
       readonly outfitAccents: readonly OutfitAccentFieldModel[]
-      readonly face: FaceFieldModel
-      readonly background: BackgroundFieldModel
+      readonly face: ImageFieldModel
+      readonly background: ImageFieldModel
       readonly deleteBand: CharacterDeleteBandModel
     }
 
@@ -399,7 +403,10 @@ export function useCharacterEdit(): CharacterEditModel {
       }
     : { kind: "hidden" }
 
-  const face: FaceFieldModel = {
+  const face: ImageFieldModel = {
+    kind: "face",
+    subject: "顔",
+    accept: FACE_FILE_ACCEPT,
     image:
       character.face === undefined ? { kind: "absent" } : { kind: "present", url: character.face },
     label: character.face === undefined ? FACE_LABEL.absent : FACE_LABEL.present,
@@ -413,7 +420,10 @@ export function useCharacterEdit(): CharacterEditModel {
     },
   }
 
-  const background: BackgroundFieldModel = {
+  const background: ImageFieldModel = {
+    kind: "background",
+    subject: "背景",
+    accept: BACKGROUND_FILE_ACCEPT,
     image:
       character.background === undefined
         ? { kind: "absent" }

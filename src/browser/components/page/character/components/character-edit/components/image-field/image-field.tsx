@@ -1,5 +1,5 @@
-// キャラクター画面の顔の行。
-// 帯の左端・一覧の丸・名乗りの大きな丸に出す1枚の縮図と、口は「差し替える」と「消す」の2つだけ。
+// キャラクター画面の画像1枚の行（顔・背景）。
+// 縮図（または空の枠）と、口は「差し替える」と「消す」の2つだけ。
 
 import type { ReactElement } from "react"
 
@@ -9,16 +9,22 @@ import { TrashIcon, UploadIcon } from "../../../../../../ui/icon/icon.tsx"
 import { Text } from "../../../../../../ui/text/text.tsx"
 import { VStack } from "../../../../../../ui/v-stack/v-stack.tsx"
 import styles from "../../../../character.module.css"
-import type { FaceFieldModel } from "../../../hooks/use-character-edit.ts"
+import type { ImageFieldModel } from "../../../hooks/use-character-edit.ts"
 
-/** 顔に選べる種類。中身の検証はサーバ側で、ここは選ぶときの絞り込みだけ。 */
-const FACE_FILE_ACCEPT = ".svg,.png,.gif"
+const THUMBNAIL_CLASS = {
+  face: { preview: "character-face-field-preview", blank: "character-face-field-blank" },
+  background: { preview: "character-background-preview", blank: "character-background-blank" },
+} as const satisfies Record<
+  ImageFieldModel["kind"],
+  { readonly preview: string; readonly blank: string }
+>
 
-export function FaceField(props: {
-  readonly face: FaceFieldModel
+export function ImageField(props: {
+  readonly field: ImageFieldModel
   readonly disabled: boolean
 }): ReactElement {
-  const { face, disabled } = props
+  const { field, disabled } = props
+  const thumbnail = THUMBNAIL_CLASS[field.kind]
 
   return (
     <HStack
@@ -31,14 +37,10 @@ export function FaceField(props: {
       wrap="wrap"
       className=""
     >
-      {face.image.kind === "absent" ? (
-        <span className={styles["character-face-field-blank"]} />
+      {field.image.kind === "absent" ? (
+        <span className={styles[thumbnail.blank]} />
       ) : (
-        <img
-          className={styles["character-face-field-preview"]}
-          src={face.image.url}
-          alt={face.label}
-        />
+        <img className={styles[thumbnail.preview]} src={field.image.url} alt={field.label} />
       )}
       <VStack
         element="div"
@@ -51,7 +53,7 @@ export function FaceField(props: {
         className=""
       >
         <Text element="span" size="secondary" tone="inherit" weight="inherit" className="">
-          {face.label}
+          {field.label}
         </Text>
         <HStack
           element="div"
@@ -69,27 +71,27 @@ export function FaceField(props: {
             <input
               type="file"
               className={styles["character-card-file"]}
-              aria-label="顔を差し替える"
-              accept={FACE_FILE_ACCEPT}
+              aria-label={`${field.subject}を差し替える`}
+              accept={field.accept}
               disabled={disabled}
               onChange={(event) => {
-                face.onPick(event.currentTarget)
+                field.onPick(event.currentTarget)
               }}
             />
           </label>
-          {face.image.kind !== "absent" && (
+          {field.image.kind !== "absent" && (
             <Button
               type="button"
               variant="outline-soft-danger"
               size="secondary"
               pressed="none"
               disabled={disabled}
-              ariaLabel="顔を消す"
+              ariaLabel={`${field.subject}を消す`}
               ariaHasPopup={undefined}
               disclosure={{ kind: "none" }}
               title={undefined}
               className={styles["character-button-outline"]}
-              onClick={face.onClear}
+              onClick={field.onClear}
             >
               <TrashIcon />
               消す

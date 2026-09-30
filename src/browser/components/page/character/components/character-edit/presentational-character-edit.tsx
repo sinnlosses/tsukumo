@@ -11,10 +11,9 @@ import { VStack } from "../../../../ui/v-stack/v-stack.tsx"
 import styles from "../../character.module.css"
 import { AccentSwatch } from "../accent-swatch/accent-swatch.tsx"
 import type { CharacterEditModel } from "../hooks/use-character-edit.ts"
-import { BackgroundField } from "./components/background-field/background-field.tsx"
 import { CharacterDelete } from "./components/character-delete/character-delete.tsx"
 import { CharacterProfile } from "./components/character-profile/character-profile.tsx"
-import { FaceField } from "./components/face-field/face-field.tsx"
+import { ImageField } from "./components/image-field/image-field.tsx"
 import { PortraitCard } from "./components/portrait-card/portrait-card.tsx"
 
 export type PresentationalCharacterEditProps = CharacterEditModel
@@ -42,7 +41,7 @@ export function PresentationalCharacterEdit(
         <Heading level={2} size="body" tone="inherit" weight="bold" className="">
           <span id="character-face">顔</span>
         </Heading>
-        <FaceField face={props.face} disabled={props.disabled} />
+        <ImageField field={props.face} disabled={props.disabled} />
       </VStack>
       <VStack
         element="section"
@@ -153,7 +152,7 @@ export function PresentationalCharacterEdit(
         <Heading level={2} size="body" tone="inherit" weight="bold" className="">
           <span id="character-background">背景</span>
         </Heading>
-        <BackgroundField background={props.background} disabled={props.disabled} />
+        <ImageField field={props.background} disabled={props.disabled} />
       </VStack>
       <CharacterDelete band={props.deleteBand} />
     </div>
