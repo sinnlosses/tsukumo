@@ -173,7 +173,12 @@ describe("toRestoredEvents", () => {
     )
 
     expect(mainViewEntries(state).filter((entry) => entry.kind === "report")).toEqual([
-      { kind: "report", markdown: "架空の結論。\n\n架空の根拠。", task: { kind: "none" } },
+      {
+        kind: "report",
+        markdown: "架空の結論。\n\n架空の根拠。",
+        conclusion: "架空の結論。",
+        task: { kind: "none" },
+      },
     ])
   })
 

@@ -69,8 +69,14 @@ export type MainViewEntry =
    * `report` ツールで受け取ったレポート。引数はここで1つの本文に組んである（{@link reportMarkdown}）。
    * `detail` と分けてあるのは、このレポートがあるやり取りでは本文（`detail`）を出さないため（{@link selectToolReports}）。
    * `task` は本文に組まず、描く側が目録の1行と見出しに出す。
+   * `conclusion` は組む前の結論で、畳んだときの先頭行に使う（{@link groupIntoSteps}）。
    */
-  | { readonly kind: "report"; readonly markdown: string; readonly task: ReportTask }
+  | {
+      readonly kind: "report"
+      readonly markdown: string
+      readonly conclusion: string
+      readonly task: ReportTask
+    }
   /**
    * `work_plan` の呼び出しで段が移ったこと（{@link phaseShiftOf}）。出すものが1つも無い呼び出しからは作らない。
    * 終えた段のまとめは中間レポートに、入った段は段の知らせになる（{@link groupIntoSteps}）。
@@ -137,7 +143,7 @@ const NO_PHASE_LABEL = { kind: "none" } as const satisfies MainViewPhaseLabel
 
 /**
  * ステップの本文。本文が無い（レポートより前に起きたことをまとめたステップか、出さないと決めた本文）なら `none`。
- * `firstLine` は畳んだときの `<summary>` に出す1行で、段のまとめなら終えた段の見出し、`task` があれば作業の名前、どちらも無ければ本文の先頭行（{@link extractFirstLine}）。
+ * `firstLine` は畳んだときの `<summary>` に出す1行で、段のまとめなら終えた段の見出し、`task` があれば結論（空なら作業の名前）、どちらも無ければ本文の先頭行（{@link extractFirstLine}）。
  * `task` は目録の1行と見出しに出すタスクで、`report` ツールの外の本文では常に `none`。
  * `finishedPhase` は目録の1行に添える終えた段の見出しで、段のまとめだけが持つ。
  */
@@ -257,7 +263,12 @@ function toMainViewEntries(
   }
   if (record.kind === "report") {
     return [
-      { kind: "report", markdown: reportMarkdown(record, earlierInTurn()), task: record.task },
+      {
+        kind: "report",
+        markdown: reportMarkdown(record, earlierInTurn()),
+        conclusion: record.conclusion,
+        task: record.task,
+      },
     ]
   }
   // `detail` / `question` / `turn-failure` は `MainViewEntry` と同じ形なのでそのまま通す。
@@ -392,7 +403,7 @@ function groupIntoSteps(entries: readonly StepEntry[]): GroupedSteps {
         const body = {
           kind: "text",
           report: entry.markdown,
-          firstLine: extractFirstLine(task.kind === "task" ? task.name : entry.markdown),
+          firstLine: extractFirstLine(firstLineSource(entry)),
           task,
           finishedPhase: NO_PHASE_LABEL,
         } as const satisfies MainViewStepBody
@@ -545,6 +556,20 @@ function markSupersededSteps(turn: MainViewTurn): MainViewTurn {
 
 // 畳んだ `<summary>` に出す先頭行の長さの上限。「中間レポート」のラベルと並べる短い添え書きなので短く抑える。
 const MAX_STEP_SUMMARY_LENGTH = 40
+
+/**
+ * 畳んだときの先頭行を取り出す元の文。
+ * `task` のあるレポートは本文の頭が結論を包む HTML なので、組む前の結論から取る。
+ * 作業の名前は同じ作業の中間レポートで全部同じになり見分けが付かないので、結論が空のときだけ使う。
+ */
+function firstLineSource(
+  entry: Extract<StepEntry, { readonly kind: "detail" | "report" }>,
+): string {
+  if (entry.kind === "detail" || entry.task.kind !== "task") {
+    return entry.markdown
+  }
+  return isBlankText(entry.conclusion) ? entry.task.name : entry.conclusion
+}
 
 /**
  * 本文の先頭行。空行は読み飛ばす。

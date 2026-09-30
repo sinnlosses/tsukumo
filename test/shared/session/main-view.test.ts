@@ -49,6 +49,7 @@ const edit = (path: string): MainViewEntry => ({
 const toolReport = (markdown: string): MainViewEntry => ({
   kind: "report",
   markdown,
+  conclusion: "",
   task: { kind: "none" },
 })
 /** 見出しと箇条書きを持つ本文。資料らしい形でも `report` の外なら出ないことを確かめるのに使う。 */
@@ -719,7 +720,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     ])
   })
 
-  it("task のあるレポートは、結論を一文の印で包み、task を本文に組まずに運ぶ（畳んだときの先頭行は作業の名前）", () => {
+  it("task のあるレポートは、結論を一文の印で包み、task を本文に組まずに運ぶ（畳んだときの先頭行は結論）", () => {
     const task = { kind: "task", id: "X-7", name: "架空の作業", outcome: "stopped" } as const
     const turn = turnOf(
       [ask, report("架空の結論。", "架空の根拠。", "", [], task), finished],
@@ -730,10 +731,17 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     expect(turn?.steps.find((step) => step.final)?.body).toEqual({
       kind: "text",
       report: '<div class="conclusion">\n\n架空の結論。\n\n</div>\n\n架空の根拠。',
-      firstLine: "架空の作業",
+      firstLine: "架空の結論。",
       task,
       finishedPhase: { kind: "none" },
     })
+  })
+
+  it("task のあるレポートの結論が空なら、畳んだときの先頭行は作業の名前", () => {
+    const task = { kind: "task", id: "X-7", name: "架空の作業", outcome: "stopped" } as const
+    const turn = turnOf([ask, report("", "架空の根拠。", "", [], task), finished], SETTLED, true)
+
+    expect(firstLineOf(turn?.steps.find((step) => step.final))).toBe("架空の作業")
   })
 
   it("段が1つの段取りでも図が崩れず、済んだ段1つだけで組む", () => {
