@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest"
 
+import type {
+  ChatArchive,
+  ChatReadbackLimits,
+} from "../../../../src/server/chat/core/chat-archive-port.ts"
 import {
   chatRecallEpisodeText,
   chatRecallListText,
@@ -7,9 +11,7 @@ import {
   workMemoryPromptParts,
 } from "../../../../src/server/chat/core/chat-memory-prompt.ts"
 import type {
-  ChatArchive,
   ChatArchiveRecentEntry,
-  ChatReadbackLimits,
   ChatSummary,
   ChatSummaryRecord,
 } from "../../../../src/server/session-driver/core/session-driver.ts"

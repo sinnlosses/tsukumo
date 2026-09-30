@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest"
 
-import { createChatRecall } from "../../../../src/server/chat/core/chat-recall.ts"
 import type {
   ChatArchive,
   ChatEpisodeRecallListResult,
   ChatEpisodeReadResult,
-} from "../../../../src/server/session-driver/core/session-driver.ts"
+} from "../../../../src/server/chat/core/chat-archive-port.ts"
+import { createChatRecall } from "../../../../src/server/chat/core/chat-recall.ts"
 import type { ChatMemoryBudget } from "../../../../src/shared/chat/chat-memory-budget.ts"
 import { NOOP_CHAT_ARCHIVE } from "../../../fixture/chat.ts"
 

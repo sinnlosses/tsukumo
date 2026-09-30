@@ -8,7 +8,8 @@ import {
   CHAT_MEMORY_BUDGET,
   type ChatMemoryBudget,
 } from "../../../shared/chat/chat-memory-budget.ts"
-import type { ChatArchive, ChatRecall } from "../../session-driver/core/session-driver.ts"
+import type { ChatRecall } from "../../session-driver/core/session-driver.ts"
+import type { ChatArchive } from "./chat-archive-port.ts"
 
 /**
  * `ChatRecall` を1つ作る。`packName` と読む量（`budget`）はここで縛ってから {@link ChatArchive} へ渡す。

@@ -8,7 +8,7 @@
 
 import { CHAT_MEMORY_BUDGET } from "../../../shared/chat/chat-memory-budget.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
-import type { ChatArchive } from "../../session-driver/core/session-driver.ts"
+import type { ChatArchive } from "./chat-archive-port.ts"
 
 /**
  * イベント1件を会話のアーカイブへ渡す。拾うのは依頼とセリフの2種類だけ。

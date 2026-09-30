@@ -9,11 +9,8 @@
 
 import { isPlainObject } from "remeda"
 
-import type {
-  ChatEpisodeDraft,
-  ChatSummary,
-  ChatUnconsolidatedEntry,
-} from "../../session-driver/core/session-driver.ts"
+import type { ChatSummary } from "../../session-driver/core/session-driver.ts"
+import type { ChatEpisodeDraft, ChatUnconsolidatedEntry } from "./chat-archive-port.ts"
 import { chatLineText } from "./chat-memory-prompt.ts"
 
 /** サイドバーの「最近の話題」に出す見出しの件数の上限。 */

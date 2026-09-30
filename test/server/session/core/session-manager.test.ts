@@ -5,6 +5,10 @@ import { describe, expect, it } from "vitest"
 import { type CommandRouterPorts, createCommandRouter } from "../../../../src/router.ts"
 import type { CharacterSelection } from "../../../../src/server/character-pack/core/character-selection.ts"
 import type {
+  ChatArchive,
+  ChatArchiveEntry,
+} from "../../../../src/server/chat/core/chat-archive-port.ts"
+import type {
   ChatConsolidationOutcome,
   ChatConsolidationSource,
 } from "../../../../src/server/chat/core/chat-consolidation-writer.ts"
@@ -27,11 +31,7 @@ import {
   recordedPromptImages,
   type ShelvedPromptImage,
 } from "../../../../src/server/session-driver/core/prompt-image-shelf.ts"
-import type {
-  ChatArchive,
-  ChatArchiveEntry,
-  SessionDriver,
-} from "../../../../src/server/session-driver/core/session-driver.ts"
+import type { SessionDriver } from "../../../../src/server/session-driver/core/session-driver.ts"
 import type { SessionLaunchRequest } from "../../../../src/server/session/core/session-launch.ts"
 import {
   createSessionManager as createSessionManagerWithoutCommands,

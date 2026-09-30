@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
 
+import type { ChatUnconsolidatedEntry } from "../../../../src/server/chat/core/chat-archive-port.ts"
 import {
   CHAT_CONSOLIDATION_LIMITS,
   CHAT_CONSOLIDATION_MODEL,
@@ -11,7 +12,6 @@ import {
   parseChatConsolidationResult,
   readChatTopics,
 } from "../../../../src/server/chat/core/chat-consolidation.ts"
-import type { ChatUnconsolidatedEntry } from "../../../../src/server/session-driver/core/session-driver.ts"
 import { fixedChatSummary } from "../../../fixture/chat.ts"
 
 // `queryChatConsolidation` 自体（本物の `query()` を起こす部分）は

@@ -2,8 +2,8 @@
 // 2つ以上の組み立てが読むものだけを置き、1つの組み立てしか読まないものはその組み立ての中で作る。
 
 import type { AchievementCommitCache } from "../server/achievement/adapter/main-history.ts"
+import type { ChatArchive } from "../server/chat/core/chat-archive-port.ts"
 import type { FakeSession } from "../server/session-driver/adapter/fake-driver.ts"
-import type { ChatArchive } from "../server/session-driver/core/session-driver.ts"
 
 export type WiringContext = {
   /** claude の作業先（tsukumo を起こしたディレクトリ）。 */

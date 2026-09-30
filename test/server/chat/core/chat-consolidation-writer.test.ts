@@ -1,16 +1,16 @@
 import { describe, expect, it } from "vitest"
 
+import type {
+  ChatEpisodeDraft,
+  ChatUnconsolidatedBatch,
+  ChatUnconsolidatedLimits,
+} from "../../../../src/server/chat/core/chat-archive-port.ts"
 import { createChatConsolidationWriter } from "../../../../src/server/chat/core/chat-consolidation-writer.ts"
 import {
   type ChatConsolidationQuery,
   chatTopics,
 } from "../../../../src/server/chat/core/chat-consolidation.ts"
-import type {
-  ChatEpisodeDraft,
-  ChatSummary,
-  ChatUnconsolidatedBatch,
-  ChatUnconsolidatedLimits,
-} from "../../../../src/server/session-driver/core/session-driver.ts"
+import type { ChatSummary } from "../../../../src/server/session-driver/core/session-driver.ts"
 import { CHAT_MEMORY_BUDGET } from "../../../../src/shared/chat/chat-memory-budget.ts"
 
 // `query()` は差し替え、本物の claude は起こさない。

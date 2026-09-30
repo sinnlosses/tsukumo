@@ -11,7 +11,7 @@ import type {
   ChatArchive,
   ChatEpisodeDraft,
   ChatReadbackLimits,
-} from "../../../../src/server/session-driver/core/session-driver.ts"
+} from "../../../../src/server/chat/core/chat-archive-port.ts"
 import { useTempDir } from "../../../fixture/temp-dir.ts"
 
 const REQUEST_TEXT = "ただいま"

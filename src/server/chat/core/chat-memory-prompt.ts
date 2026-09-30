@@ -13,16 +13,15 @@
 // 読み戻した中身で判定する経路は作らない。
 
 import type {
-  ChatArchive,
   ChatArchiveLine,
   ChatArchiveRecentEntry,
   ChatEpisodeCandidate,
-  ChatReadbackLimits,
   ChatRecallEpisodeResult,
   ChatRecallListResult,
   ChatSummary,
   SessionStart,
 } from "../../session-driver/core/session-driver.ts"
+import type { ChatArchive, ChatReadbackLimits } from "./chat-archive-port.ts"
 
 /**
  * 要約の前置き。要約であって会話ではないことと引用しないことを短く添える。

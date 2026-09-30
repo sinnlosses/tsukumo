@@ -7,6 +7,7 @@
 // 人格（`persona.md` の全文）は文字列で受け取り、パックの型も fs も知らない。
 
 import { CHAT_MEMORY_BUDGET } from "../../../shared/chat/chat-memory-budget.ts"
+import type { ChatArchive } from "../../chat/core/chat-archive-port.ts"
 import { CHAT_MANNER_PROMPT } from "../../chat/core/chat-manner.ts"
 import {
   type ChatMemorySources,
@@ -16,7 +17,6 @@ import {
 } from "../../chat/core/chat-memory-prompt.ts"
 import { REPORT_NOTATION_PROMPT } from "../../report/core/report-notation.ts"
 import type {
-  ChatArchive,
   ChatSummary,
   SessionMode,
   SessionStart,

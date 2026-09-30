@@ -11,7 +11,8 @@
 // 書いてよい範囲と定着の `query()` へ渡してよい範囲は `docs/coding-standards.md`「会話内容の扱い」の例外の表が決めている。
 
 import { CHAT_MEMORY_BUDGET } from "../../../shared/chat/chat-memory-budget.ts"
-import type { ChatArchive, ChatSummary } from "../../session-driver/core/session-driver.ts"
+import type { ChatSummary } from "../../session-driver/core/session-driver.ts"
+import type { ChatArchive } from "./chat-archive-port.ts"
 import {
   CHAT_CONSOLIDATION_TIMEOUT_MS,
   chatConsolidationQuery,

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
 
+import type { ChatArchive } from "../../../../src/server/chat/core/chat-archive-port.ts"
 import { CHAT_MANNER_PROMPT } from "../../../../src/server/chat/core/chat-manner.ts"
 import {
   takeChatMemoryPromptParts,
@@ -7,7 +8,6 @@ import {
 } from "../../../../src/server/chat/core/chat-memory-prompt.ts"
 import { REPORT_NOTATION_PROMPT } from "../../../../src/server/report/core/report-notation.ts"
 import type {
-  ChatArchive,
   ChatArchiveRecentEntry,
   ChatSummary,
   SessionMode,

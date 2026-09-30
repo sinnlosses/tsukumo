@@ -7,7 +7,7 @@ import {
 import type {
   ChatArchive,
   ChatArchiveEntry,
-} from "../../../../src/server/session-driver/core/session-driver.ts"
+} from "../../../../src/server/chat/core/chat-archive-port.ts"
 import { CHAT_MEMORY_BUDGET } from "../../../../src/shared/chat/chat-memory-budget.ts"
 import { NOOP_CHAT_ARCHIVE } from "../../../fixture/chat.ts"
 

@@ -31,13 +31,15 @@ import { appendJsonLine, dateFileNames, readJsonLines } from "../../adapter/lib/
 import { isoWithOffset, localDateKey } from "../../adapter/local-time.ts"
 import { tsukumoHomeDir } from "../../adapter/tsukumo-home.ts"
 import type {
-  ChatArchive,
-  ChatArchiveEntry,
   ChatArchiveLine,
   ChatArchiveLineOrigin,
   ChatArchiveRecentEntry,
-  ChatConsolidationLock,
   ChatEpisodeCandidate,
+} from "../../session-driver/core/session-driver.ts"
+import type {
+  ChatArchive,
+  ChatArchiveEntry,
+  ChatConsolidationLock,
   ChatEpisodeDraft,
   ChatEpisodeReadResult,
   ChatEpisodeRecallListResult,
@@ -45,7 +47,7 @@ import type {
   ChatUnconsolidatedBatch,
   ChatUnconsolidatedEntry,
   ChatUnconsolidatedLimits,
-} from "../../session-driver/core/session-driver.ts"
+} from "../core/chat-archive-port.ts"
 import { scoreChatEpisodes, type ChatEpisodeRecord } from "../core/chat-episode-score.ts"
 
 /** 置き場のディレクトリ名（`~/.tsukumo/chat-archive/`）。 */

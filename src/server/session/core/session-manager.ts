@@ -37,6 +37,7 @@ import {
   appendChatArchiveConclusion,
   appendChatArchiveEntry,
 } from "../../chat/core/chat-archive-entry.ts"
+import type { ChatArchive } from "../../chat/core/chat-archive-port.ts"
 import type { ChatConsolidationSource } from "../../chat/core/chat-consolidation-writer.ts"
 import {
   type ContextUsageLog,
@@ -48,7 +49,7 @@ import {
   type PromptImageShelf,
   releasedPromptImageIds,
 } from "../../session-driver/core/prompt-image-shelf.ts"
-import type { ChatArchive, SessionDriver } from "../../session-driver/core/session-driver.ts"
+import type { SessionDriver } from "../../session-driver/core/session-driver.ts"
 import {
   createTokenUsageRecorder,
   type TokenUsageLog,

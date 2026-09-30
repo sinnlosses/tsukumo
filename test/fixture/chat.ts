@@ -1,8 +1,8 @@
 // 雑談の記憶の口（`ChatSummary` / `ChatArchive`）の代役。
 // 呼ばれ方を覚えたいテストは、ここの代役を広げて覚えたい口だけを差し替える。
 
+import type { ChatArchive } from "../../src/server/chat/core/chat-archive-port.ts"
 import type {
-  ChatArchive,
   ChatSummary,
   ChatSummaryRecord,
 } from "../../src/server/session-driver/core/session-driver.ts"
