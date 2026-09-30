@@ -5,7 +5,8 @@
 // 終了コード 2 で Bash の実行を止め、stderr の中身がモデルへ返る。
 // それ以外の終了コードでは実行を止めない（判定に失敗したときは通す）。
 
-import { isAbsolute, relative } from "node:path"
+import { readFileSync, statSync } from "node:fs"
+import { isAbsolute, relative, resolve } from "node:path"
 import process from "node:process"
 
 import { findQuotedSpans, withSpansBlanked, type QuotedSpan } from "./lib/quoted-span.ts"
@@ -37,11 +38,22 @@ const PYTHON_HEREDOC_SCRIPT = /(?:^|[\s;&|(])(?:\S+=\S+\s+)*python3?(\s+-)?\s*$/
 /** 引用符の直前が `python3 ... -c` である形。この引用符の中身はコードとして実行される。 */
 const PYTHON_DASH_C_SCRIPT = /(?:^|[\s;&|(])(?:\S+=\S+\s+)*python3?\s+(?:-\S+\s+)*-c\s*$/
 
+/**
+ * コマンドの位置の `python` にスクリプトのファイルが続く形。
+ * 1つ目の捕獲が前置き（`python` の位置を出すため）、2つ目が引用符、3つ目がパス。
+ */
+const PYTHON_SCRIPT_FILE =
+  /((?:^|[;&|(]\s*|\n)\s*(?:\S+=\S+\s+)*)(?:\S*\/)?python3?(?:\.\d+)?(?:\s+-[abBdEhiIOPqsSuvVxX]+)*\s+(["']?)([^\s"'$`;&|<>()~*?]+\.py)\2(?=\s|$|[;&|)])/g
+
+/** 読んで判定にかけるスクリプトのファイルの大きさの上限（バイト）。 */
+const SCRIPT_SIZE_LIMIT = 1024 * 1024
+
 const REFUSAL = `Bash の \`sed -i\`・\`perl -pi\` / \`perl -i\`・Python の書き込みでファイルを書き換えない。
 BSD と GNU で引数が違い、置換の当たりも確かめられない。
 ファイルの書き換えは Edit ツール（複数箇所なら replace_all）か Write ツールで行うこと。
 作業ツリーの外の下書き（\`tw edit --body-file\` に渡す本文など）は Write ツールでスクラッチに書くか、heredoc を標準入力へ直接渡す。
 Python で書くなら、書き込み先を \`open("/絶対パス", "w")\` のリテラルにして作業ツリーの外に置けば通る。
+スクリプトをファイルに書いて \`python3 <file>.py\` で走らせても、中身が同じ判定にかかる。
 読むだけなら \`sed -n '1,5p' <file>\` は使える。`
 
 /** Bash ツールの入力のうち、この hook が見るところ。 */
@@ -58,18 +70,30 @@ type BashInput = {
 
 const raw = await readStdin()
 const bashInput = readBashInput(raw)
-if (bashInput !== undefined && isDeniedCommand(bashInput.command, readWorkRoot(bashInput.cwd))) {
+if (
+  bashInput !== undefined &&
+  isDeniedCommand(
+    bashInput.command,
+    readWorkRoot(bashInput.cwd),
+    readPythonScripts(bashInput.command, bashInput.cwd),
+  )
+) {
   process.stderr.write(`${REFUSAL}\n`)
   process.exit(2)
 }
 
-/** コマンドが `sed -i`・`perl -pi` 等の構造に当たるか、引用符・heredoc の中で Python がファイルへ書き戻すコードを持つかを見る。 */
-function isDeniedCommand(command: string, workRoot: string | undefined): boolean {
+/** コマンドが `sed -i`・`perl -pi` 等の構造に当たるか、引用符・heredoc・スクリプトのファイルの中で Python がファイルへ書き戻すコードを持つかを見る。 */
+function isDeniedCommand(
+  command: string,
+  workRoot: string | undefined,
+  scriptTexts: readonly string[],
+): boolean {
   const spans = findQuotedSpans(command)
   if (
     spans.some(
       (span) => isExecutedPythonCode(command, span) && isDeniedPythonCode(span.content, workRoot),
-    )
+    ) ||
+    scriptTexts.some((text) => isDeniedPythonCode(text, workRoot))
   ) {
     return true
   }
@@ -109,6 +133,45 @@ function isLiteralOutsideWorkTree(target: string, workRoot: string | undefined):
 function readWorkRoot(cwd: string | undefined): string | undefined {
   const candidate = process.env["CLAUDE_PROJECT_DIR"] || cwd
   return candidate !== undefined && isAbsolute(candidate) ? candidate : undefined
+}
+
+/** コマンドが走らせる `python3 <path>.py` のうち、読めるファイルの中身。読めないものは含めない。 */
+function readPythonScripts(command: string, cwd: string | undefined): readonly string[] {
+  return findPythonScriptPaths(command, findQuotedSpans(command)).flatMap((path) => {
+    const text = readScriptFile(path, cwd)
+    return text === undefined ? [] : [text]
+  })
+}
+
+function readScriptFile(path: string, cwd: string | undefined): string | undefined {
+  const absolute = isAbsolute(path)
+    ? path
+    : cwd !== undefined && isAbsolute(cwd)
+      ? resolve(cwd, path)
+      : undefined
+  if (absolute === undefined) {
+    return undefined
+  }
+
+  try {
+    const stat = statSync(absolute)
+    return stat.isFile() && stat.size <= SCRIPT_SIZE_LIMIT
+      ? readFileSync(absolute, "utf8")
+      : undefined
+  } catch {
+    return undefined
+  }
+}
+
+/** 引用符・heredoc の外に現れた `python3 <path>.py` のパス（重複なし）。 */
+function findPythonScriptPaths(command: string, spans: readonly QuotedSpan[]): readonly string[] {
+  const paths = [...command.matchAll(PYTHON_SCRIPT_FILE)]
+    .filter((match) => {
+      const pythonStart = match.index + (match[1] ?? "").length
+      return !spans.some((span) => span.start <= pythonStart && pythonStart < span.end)
+    })
+    .map((match) => match[3] ?? "")
+  return [...new Set(paths)]
 }
 
 /** 引用符・heredoc の範囲のうち、データではなくコードとして実行されるもの（`python3` の heredoc・`python3 -c` の引用符）。 */

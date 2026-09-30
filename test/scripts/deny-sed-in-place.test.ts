@@ -1,11 +1,14 @@
 // ファイルを書き換える `sed -i`・`perl -pi` / `perl -i`・Python の書き込みを止める PreToolUse hook の
 // 契約（終了コード 2 で実行を止め、stderr で Edit を促す）を、スクリプトを実際に起こして確かめる。
 
+import { writeFileSync } from "node:fs"
+import { join } from "node:path"
 import process from "node:process"
 
 import { describe, expect, test } from "vitest"
 
 import { runSubprocess } from "../fixture/subprocess.ts"
+import { useTempDir } from "../fixture/temp-dir.ts"
 
 const HOOK_PATH = "scripts/deny-sed-in-place.ts"
 const WORK_ROOT = "/work/tree"
@@ -127,6 +130,69 @@ describe("ファイルを書き換えるコマンドを拒否する hook", () =>
 
   test("形が違う入力では実行を止めない", async () => {
     expect((await runRaw("これは JSON ではない")).exitCode).toBe(0)
+  })
+})
+
+describe("python3 で走らせるスクリプトのファイル", () => {
+  const dir = useTempDir("deny-sed")
+  const WRITES_INSIDE = "open('/work/tree/f.txt', 'w').write('x')\n"
+  const WRITES_OUTSIDE = "open('/private/tmp/x/draft.md', 'w').write('x')\n"
+
+  function scriptPath(source: string, name = "split.py"): string {
+    const path = join(dir(), name)
+    writeFileSync(path, source)
+    return path
+  }
+
+  test.each([
+    ["python3 の絶対パス", (path: string) => `python3 ${path}`],
+    ["前置きの環境変数とフラグ", (path: string) => `PYTHONUTF8=1 python3 -u ${path}`],
+    ["&& の後ろで引数付き", (path: string) => `cd x && python ${path} --flag`],
+    ["引用符つきのパス", (path: string) => `python3 "${path}"`],
+  ])("作業ツリーの中へ書くスクリプト（%s）は止める", async (_name, toCommand) => {
+    const result = await runHook(toCommand(scriptPath(WRITES_INSIDE)))
+    expect(result.exitCode).toBe(2)
+  })
+
+  test("相対パスは入力の cwd から解いて止める", async () => {
+    scriptPath(WRITES_INSIDE)
+    const result = await runRaw(
+      JSON.stringify({
+        tool_name: "Bash",
+        tool_input: { command: "python3 split.py" },
+        cwd: dir(),
+      }),
+    )
+    expect(result.exitCode).toBe(2)
+  })
+
+  test("書き先が読めないスクリプトも止める", async () => {
+    const result = await runHook(`python3 ${scriptPath("open(path, 'w').write('x')\n")}`)
+    expect(result.exitCode).toBe(2)
+  })
+
+  test("書き先が作業ツリーの外のリテラルなら通す", async () => {
+    const result = await runHook(`python3 ${scriptPath(WRITES_OUTSIDE)}`)
+    expect(result.exitCode).toBe(0)
+  })
+
+  test("読めないパスなら通す", async () => {
+    expect((await runHook(`python3 ${join(dir(), "missing.py")}`)).exitCode).toBe(0)
+  })
+
+  test("cwd が無いときの相対パスは読まずに通す", async () => {
+    scriptPath(WRITES_INSIDE)
+    expect((await runHook("python3 split.py")).exitCode).toBe(0)
+  })
+
+  test("引用符の中にデータとして書いただけの語は通す", async () => {
+    const path = scriptPath(WRITES_INSIDE)
+    expect((await runHook(`echo "python3 ${path}"`)).exitCode).toBe(0)
+  })
+
+  test("-m はスクリプトのファイルを取らないので通す", async () => {
+    scriptPath(WRITES_INSIDE, "pytest.py")
+    expect((await runHook(`python3 -m ${join(dir(), "pytest.py")}`)).exitCode).toBe(0)
   })
 })
 
