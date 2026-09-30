@@ -9,10 +9,9 @@
 // 「≡」とは同時に開かない。
 // 広い画面には「≡」が無く、狭い画面ではこの札そのものが「≡」の面の中にしか無いので、状態の突き合わせは要らない。
 //
-// 閉じる合図（外側を押した・Esc）は `useDismissSignal` で取る。
-// Esc のときだけ押した口へフォーカスを戻すのはこの札の事情なので、合図の種類を見てここで決める。
+// 開閉は `useNavPopover` に任せ、閉じるたびに「すべて見る」を畳む。
 
-import { useRef, useState, type RefCallback, type RefObject } from "react"
+import { useState, type RefCallback, type RefObject } from "react"
 
 import type { DiaryWriting } from "../../../../../shared/diary/diary.ts"
 import type {
@@ -36,12 +35,12 @@ import {
 import { formatElapsed } from "../../../../../shared/utils/elapsed-time.ts"
 import { DEFAULT_CHARACTER_NAME } from "../../../../domain/portrait-appearance.ts"
 import { summarizeToolInput, toolInputText } from "../../../../domain/tool-summary.ts"
-import { useDismissSignal, type DismissCause } from "../../../../hooks/use-dismiss-signal.ts"
 import { useQuestionScroll } from "../../../../stores/question-scroll.ts"
 import { navigateTo, useScreen } from "../../../../stores/screen.tsx"
 import { useSession, useTurnRunning } from "../../../../stores/session.ts"
 import { useTurnSelection } from "../../../../stores/turn-selection.ts"
 import { monthDayLabel } from "../../../../utils/month-day-label.ts"
+import { useNavPopover } from "./use-nav-popover.ts"
 
 /** 閉じている間に出す手順の件数（これより多いと「すべて見る」の口が出る）。 */
 const MAX_COLLAPSED_STEPS = 5
@@ -246,50 +245,19 @@ export function useCurrentWork(navRef: RefObject<HTMLElement | null>): ScreenNav
   const { activeTurnId, newestTurnId, selectTurn } = useTurnSelection()
   const requestScroll = useQuestionScroll((state) => state.requestScroll)
 
-  const [open, setOpen] = useState(false)
   const [expanded, setExpanded] = useState(false)
-  // いま DOM に付いている札。書き換えはコールバック ref の取り付けのときだけ。
-  const toggleNodes = useRef(new Set<HTMLButtonElement>())
-
-  const toggleRef: RefCallback<HTMLButtonElement> = (node) => {
-    // cleanup を返す形なので React 19 は `null` で呼び直さない（外れるのは下の cleanup）。
-    // 型の上では `null` が来うるので、そのときは何も預からない。
-    if (node === null) {
-      return
-    }
-    const nodes = toggleNodes.current
-    nodes.add(node)
-    return () => {
-      nodes.delete(node)
-    }
-  }
-
-  function onToggle(): void {
-    setOpen((wasOpen) => !wasOpen)
-    setExpanded(false)
-  }
+  const { open, onToggle, close, toggleRef } = useNavPopover({
+    navRef,
+    onReset: () => setExpanded(false),
+  })
 
   function onToggleExpanded(): void {
     setExpanded((wasExpanded) => !wasExpanded)
   }
 
-  function onDismiss(cause: DismissCause): void {
-    setOpen(false)
-    setExpanded(false)
-    if (cause === "escape") {
-      // 押せる状態にある札は1つだけ（もう片方は `display: none` で `.focus()` が効かない）なので、付いているものへ順に呼んで構わない。
-      for (const node of toggleNodes.current) {
-        node.focus()
-      }
-    }
-  }
-
-  useDismissSignal({ open, rootRef: navRef, onDismiss })
-
   // 質問へ。一覧を閉じ、ほかの画面を見ていれば会話の画面へ戻し、過去のやり取りを見ていれば最新へ戻してから、メインビューの質問の札までスクロールさせる。
   function onGoToQuestion(): void {
-    setOpen(false)
-    setExpanded(false)
+    close()
     if (screen !== "conversation") {
       navigateTo("conversation")
     }

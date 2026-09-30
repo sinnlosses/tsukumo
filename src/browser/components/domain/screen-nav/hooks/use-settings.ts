@@ -20,10 +20,9 @@
 // マウント時に一度だけ `readCurrentColor`（`getComputedStyle`）で読み、以降は書いた値をそのまま state へ流す（書く → 描画中に読み直す、を避ける）。
 // 反映済みの状態で読めるのは、保存済みの上書きを `documentElement` へ差す1回を入口が済ませているため。
 //
-// ポップオーバーは2箇所に描かれる（広い画面の帯・狭い画面の「≡」の面の中）。
-// 開閉の状態は1つで、閉じる合図は `useDismissSignal`、Esc の戻り先の歯車はコールバック ref で集める（`ScreenNavSettings.toggleRef`）。
+// 開閉は `useNavPopover` に任せ、開閉のたびに色の注意書きを消す。
 
-import { useRef, useState, type RefCallback, type RefObject } from "react"
+import { useState, type RefCallback, type RefObject } from "react"
 
 import { isEffortLevel, isModelAlias, type ModelAlias } from "../../../../../shared/command.ts"
 import {
@@ -48,7 +47,6 @@ import {
   saveRevealSpeed,
   type RevealSpeed,
 } from "../../../../domain/reveal-speed.ts"
-import { useDismissSignal, type DismissCause } from "../../../../hooks/use-dismiss-signal.ts"
 import { useSession } from "../../../../stores/session.ts"
 import { useDebouncedCallback } from "../../../../utils/debounce.ts"
 import {
@@ -56,6 +54,7 @@ import {
   visitToggleValueOf,
   type VisitToggleValue,
 } from "../domain/visit-toggle-label.ts"
+import { useNavPopover } from "./use-nav-popover.ts"
 
 export type ScreenNavSettingsColor = {
   readonly key: AppearanceColorKey
@@ -144,8 +143,6 @@ export function useSettings(navRef: RefObject<HTMLElement | null>): ScreenNavSet
   const sessionDefault = useSession((session) => session.state.sessionDefault)
   const modelEffortSupport = useSession((session) => session.state.modelEffortSupport)
   const visitEnabled = useSession((session) => session.state.visitEnabled)
-  const [open, setOpen] = useState(false)
-  const toggleNodes = useRef(new Set<HTMLButtonElement>())
   // 上書きの正典は `localStorage`。反映（`documentElement`）は入口が済ませているので、
   // ここは「次の1色を足すための下地」として読むだけ。
   const [override, setOverride] = useState<AppearanceColorOverride>(loadAppearanceColorOverride)
@@ -155,41 +152,15 @@ export function useSettings(navRef: RefObject<HTMLElement | null>): ScreenNavSet
     ink: readCurrentColor("ink"),
   }))
   const [colorNotice, setColorNotice] = useState<ScreenNavSettingsColorNotice>(NO_COLOR_NOTICE)
+  const { open, onToggle, toggleRef } = useNavPopover({
+    navRef,
+    onReset: () => setColorNotice(NO_COLOR_NOTICE),
+  })
   const saveOverride = useDebouncedCallback<string, AppearanceColorOverride>((_key, value) => {
     saveAppearanceColorOverride(value)
   }, APPEARANCE_COLOR_DEBOUNCE_MS)
   // 選ぶたびに保存する（色のようにドラッグで連続しないので、まとめる必要が無い）。
   const [revealSpeed, setRevealSpeed] = useState<RevealSpeed>(loadRevealSpeed)
-
-  function onToggle(): void {
-    setOpen((wasOpen) => !wasOpen)
-    setColorNotice(NO_COLOR_NOTICE)
-  }
-
-  const toggleRef: RefCallback<HTMLButtonElement> = (node) => {
-    // cleanup を返す形なので React 19 は `null` で呼び直さない（外れるのは下の cleanup）。
-    if (node === null) {
-      return
-    }
-    const nodes = toggleNodes.current
-    nodes.add(node)
-    return () => {
-      nodes.delete(node)
-    }
-  }
-
-  function onDismiss(cause: DismissCause): void {
-    setOpen(false)
-    setColorNotice(NO_COLOR_NOTICE)
-    if (cause === "escape") {
-      // 押せる状態にある歯車は1つだけ（もう片方は `display: none` で `.focus()` が効かない）なので、付いているものへ順に呼んで構わない。
-      for (const node of toggleNodes.current) {
-        node.focus()
-      }
-    }
-  }
-
-  useDismissSignal({ open, rootRef: navRef, onDismiss })
 
   function changeColor(key: AppearanceColorKey, value: string): void {
     const change = changeAppearanceColor(override, key, value)
