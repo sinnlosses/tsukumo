@@ -87,6 +87,7 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
           reportReview,
           usageReview,
           titleIntake.note,
+          options.cwd,
         ),
       },
       canUseTool: (toolName, toolInput, { signal, toolUseID }) =>

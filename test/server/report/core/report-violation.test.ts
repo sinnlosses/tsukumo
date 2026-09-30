@@ -21,12 +21,20 @@ const draft = (
     blocks.length === 0 ? sections.filter((section) => section.blocks.length > 0) : sections,
   favor: "",
   checks: [],
+  fileContents: new Map(),
 })
 
 const text = (value: string, fold = ""): ReportBlock => ({ kind: "text", text: value, fold })
 const markdown = (value: string): ReportBlock => ({ kind: "markdown", markdown: value, fold: "" })
 const mermaid = (source: string): ReportBlock => ({ kind: "mermaid", source, fold: "" })
 const note = (): ReportBlock => ({ kind: "note", tone: "warn", text: "架空の一文。", fold: "" })
+const code = (path: string, source: string, language = "text"): ReportBlock => ({
+  kind: "code",
+  language,
+  path,
+  source,
+  fold: "",
+})
 
 const kinds = (report: ReportDraft) => reportViolations(report).map((violation) => violation.kind)
 
@@ -222,6 +230,66 @@ describe("reportViolations", () => {
       expect(notationsOf("```chart\n# 架空\n- 架空\n```")).toEqual([])
     })
   })
+
+  describe("path 付きの code の塊はファイルと照合する", () => {
+    const withFile = (
+      blocks: readonly ReportBlock[],
+      fileContents: ReadonlyMap<string, string>,
+    ): ReportDraft => ({ ...draft(blocks), fileContents })
+
+    it("中身がファイルの連続した一部と一致すれば違反にしない", () => {
+      const report = withFile(
+        [code("src/fixture-a.ts", "架空の1行目\n架空の2行目")],
+        new Map([["src/fixture-a.ts", "先頭\n架空の1行目\n架空の2行目\n末尾"]]),
+      )
+      expect(kinds(report)).toEqual([])
+    })
+
+    it("1行でもファイルと違えば違反", () => {
+      const report = withFile(
+        [code("src/fixture-b.ts", "架空の1行目\n架空の2行目・改変")],
+        new Map([["src/fixture-b.ts", "架空の1行目\n架空の2行目"]]),
+      )
+      expect(kinds(report)).toEqual(["code-mismatch"])
+    })
+
+    it("省略の行（// ...）で区切った断片が順に現れれば違反にしない", () => {
+      const report = withFile(
+        [code("src/fixture-c.ts", "架空の1行目\n// ...\n架空の4行目")],
+        new Map([["src/fixture-c.ts", "架空の1行目\n架空の2行目\n架空の3行目\n架空の4行目"]]),
+      )
+      expect(kinds(report)).toEqual([])
+    })
+
+    it("diff の - 行は無視し、+ と文脈の行だけ照合する", () => {
+      const report = withFile(
+        [code("src/fixture-d.ts", "@@ -1,2 +1,2 @@\n-古い行\n+架空の1行目\n 架空の2行目", "diff")],
+        new Map([["src/fixture-d.ts", "架空の1行目\n架空の2行目"]]),
+      )
+      expect(kinds(report)).toEqual([])
+    })
+
+    it("読めなかったファイル（fileContents に無い path）は違反", () => {
+      const report = withFile([code("src/fixture-not-found.ts", "架空の行")], new Map())
+      expect(kinds(report)).toEqual(["code-mismatch"])
+    })
+
+    it("path が空文字なら照合しない", () => {
+      const report = withFile(
+        [code("", "架空の案の行")],
+        new Map([["src/fixture-a.ts", "無関係な中身"]]),
+      )
+      expect(kinds(report)).toEqual([])
+    })
+
+    it("他の規約違反と同じ report にあれば、1回の差し戻しで両方返る", () => {
+      const report = withFile(
+        [note(), note(), note(), code("src/fixture-e.ts", "架空の行")],
+        new Map(),
+      )
+      expect(kinds(report)).toEqual(["too-many-notes", "code-mismatch"])
+    })
+  })
 })
 
 describe("reportRejectionText", () => {
@@ -241,5 +309,14 @@ describe("reportRejectionText", () => {
     const rejection = reportRejectionText(reportViolations(draft([markdown("# 架空")])))
     expect(rejection).not.toContain("画面")
     expect(rejection).not.toContain("メインビュー")
+  })
+
+  it("code-mismatch は食い違った path を載せる", () => {
+    const report: ReportDraft = {
+      ...draft([code("src/fixture-f.ts", "架空の行")]),
+      fileContents: new Map(),
+    }
+    const rejection = reportRejectionText(reportViolations(report))
+    expect(rejection).toContain("src/fixture-f.ts")
   })
 })

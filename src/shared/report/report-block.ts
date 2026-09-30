@@ -136,7 +136,13 @@ const codeBlockSchema = z
   .object({
     kind: z.literal("code"),
     language: z.string().describe("言語名。変更の前後は diff"),
-    path: z.string().default("").describe("どのファイルか（要るときだけ。1つの塊に1ファイル）"),
+    path: z
+      .string()
+      .default("")
+      .describe(
+        "実物の一部を引くときだけ付ける（cwd からの相対パスか絶対パス。`~` は使わない）。" +
+          "中身がそのファイルの連続した一部と一致しないと差し戻される。案には付けない",
+      ),
     source: z.string(),
     fold,
   })

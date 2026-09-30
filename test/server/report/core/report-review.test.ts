@@ -15,12 +15,19 @@ const sectionsOf = (markdown: string): readonly ReportSection[] => [
   { heading: "", blocks: [{ kind: "markdown", markdown, fold: "" }] },
 ]
 
-const VALID: ReportDraft = { conclusion: "架空の結論。", sections: [], favor: "", checks: [] }
+const VALID: ReportDraft = {
+  conclusion: "架空の結論。",
+  sections: [],
+  favor: "",
+  checks: [],
+  fileContents: new Map(),
+}
 const INVALID: ReportDraft = {
   conclusion: "架空の結論。",
   sections: sectionsOf("# 架空の見出し"),
   favor: "",
   checks: [],
+  fileContents: new Map(),
 }
 
 const SESSION_INFO: SessionEvent = {
@@ -198,6 +205,7 @@ describe("createReportReview の judge（送り直し）", () => {
     sections: sectionsOf("架空の根拠。"),
     favor: "",
     checks: [],
+    fileContents: new Map(),
   }
 
   it("このターンで描いた report と同じ引数の呼び出しは、固定の文面で差し戻す", () => {
@@ -217,6 +225,7 @@ describe("createReportReview の judge（送り直し）", () => {
       sections: sectionsOf("架空の根拠。"),
       favor: " ",
       checks: [],
+      fileContents: new Map(),
     }
     expect(review.judge(padded).kind).toBe("rejected")
   })
@@ -300,7 +309,13 @@ describe("createReportReview の judge（送り直し）", () => {
 })
 
 describe("createReportReview の judge（新しい事実の無い report）", () => {
-  const OTHER: ReportDraft = { conclusion: "別の架空の結論。", sections: [], favor: "", checks: [] }
+  const OTHER: ReportDraft = {
+    conclusion: "別の架空の結論。",
+    sections: [],
+    favor: "",
+    checks: [],
+    fileContents: new Map(),
+  }
   const REQUEST: SessionEvent = { kind: "request", text: "架空の依頼", images: [] }
   const TURN_STARTED: SessionEvent = { kind: "turn-started" }
   const SPEAK_FINISHED = finished("toolu_s1", false)

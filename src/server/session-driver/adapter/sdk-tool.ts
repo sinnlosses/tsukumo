@@ -24,6 +24,7 @@ import {
   USAGE_REVIEW_STAGES,
 } from "../../../shared/usage-review/usage-review.ts"
 import { chatRecallEpisodeText, chatRecallListText } from "../../chat/core/chat-memory-prompt.ts"
+import { readReportBlockFiles } from "../../report/adapter/report-file.ts"
 import type { ReportReview } from "../../report/core/report-review.ts"
 import {
   REPORT_CHECKS_DESCRIPTION,
@@ -129,6 +130,7 @@ export function tsukumoServer(
   reportReview: ReportReview,
   usageReview: UsageReviewIntake,
   onReportTitle: (title: string) => void,
+  cwd: string,
 ) {
   return createSdkMcpServer({
     name: TSUKUMO_MCP_SERVER_NAME,
@@ -141,7 +143,7 @@ export function tsukumoServer(
       recallEpisodeTool(mode.chatRecall),
       ...(mode.kind === "work"
         ? [
-            reportTool(expressions, reportReview, onReportTitle),
+            reportTool(expressions, reportReview, onReportTitle, cwd),
             workPlanTool(),
             ...usageReviewTools(usageReview),
           ]
@@ -171,6 +173,7 @@ function reportTool(
   expressions: readonly ExpressionChoice[],
   review: ReportReview,
   onReportTitle: (title: string) => void,
+  cwd: string,
 ) {
   return tool(
     REPORT_TOOL_NAME,
@@ -195,11 +198,13 @@ function reportTool(
       closing: z.object(speechShape(expressions)).describe(REPORT_CLOSING_DESCRIPTION),
     },
     async ({ conclusion, sections, favor, checks, title }) => {
+      const fileContents = await readReportBlockFiles(cwd, sections ?? [])
       const verdict = review.judge({
         conclusion,
         sections: sections ?? [],
         favor: favor ?? "",
         checks: checks ?? [],
+        fileContents,
       })
       if (verdict.kind === "rejected") {
         return { content: [{ type: "text" as const, text: verdict.text }], isError: true }

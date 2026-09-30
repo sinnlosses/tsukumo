@@ -20,6 +20,7 @@ import { fixedChatSummary } from "../../../fixture/chat.ts"
 // `tools/call` で確かめる（サーバの中身を覗かず、公開された口だけを通す）。本物の claude は
 
 const EXPRESSIONS = [{ name: "default", label: "通常" }] as const
+const FAKE_CWD = "/tmp/tsukumo-架空のcwd"
 
 const NOT_FOUND_RECALL = {
   recallList: () => ({ kind: "not-found" }),
@@ -53,7 +54,7 @@ describe("tsukumoServer", () => {
 
   it("雑談のときは report も見直しの2つも載らない。diary も載らない（会話とは別の使い捨ての問い合わせ）", async () => {
     const names = await listedToolNames(
-      tsukumoServer(EXPRESSIONS, CHAT_MODE, createReportReview(), noopIntake(), () => {}),
+      tsukumoServer(EXPRESSIONS, CHAT_MODE, createReportReview(), noopIntake(), () => {}, FAKE_CWD),
     )
 
     expect(names).not.toContain("report")
@@ -66,7 +67,7 @@ describe("tsukumoServer", () => {
 
   it("雑談のときは recall と recall_episode の2段階が載り、keep と index はもう載らない", async () => {
     const names = await listedToolNames(
-      tsukumoServer(EXPRESSIONS, CHAT_MODE, createReportReview(), noopIntake(), () => {}),
+      tsukumoServer(EXPRESSIONS, CHAT_MODE, createReportReview(), noopIntake(), () => {}, FAKE_CWD),
     )
 
     expect(names).toEqual(["speak", "recall", "recall_episode", "remember", "forget"])
@@ -100,7 +101,7 @@ describe("recall / recall_episode ツール", () => {
     // `McpSdkServerConfigWithInstance` は同時に1本の transport しか繋げないので、
     // 呼び出しごとにサーバを作り直す（`callTool` が繋いで閉じる。他のテストと同じ手）。
     const server = (): McpSdkServerConfigWithInstance =>
-      tsukumoServer(EXPRESSIONS, chatMode, createReportReview(), noopIntake(), () => {})
+      tsukumoServer(EXPRESSIONS, chatMode, createReportReview(), noopIntake(), () => {}, FAKE_CWD)
 
     const listReply = await callTool(server(), "recall", { keyword: "散歩" })
     const episodeReply = await callTool(server(), "recall_episode", { id: "2026-09-25-1" })
@@ -132,7 +133,7 @@ describe("recall / recall_episode ツール", () => {
     }
 
     const reply = await callTool(
-      tsukumoServer(EXPRESSIONS, workMode, createReportReview(), noopIntake(), () => {}),
+      tsukumoServer(EXPRESSIONS, workMode, createReportReview(), noopIntake(), () => {}, FAKE_CWD),
       "recall_episode",
       { id: "2026-09-25-1" },
     )
@@ -150,7 +151,7 @@ describe("recall / recall_episode ツール", () => {
       },
     }
     const server = (): McpSdkServerConfigWithInstance =>
-      tsukumoServer(EXPRESSIONS, chatMode, createReportReview(), noopIntake(), () => {})
+      tsukumoServer(EXPRESSIONS, chatMode, createReportReview(), noopIntake(), () => {}, FAKE_CWD)
 
     const listReply = await callTool(server(), "recall", { keyword: "架空" })
     const episodeReply = await callTool(server(), "recall_episode", { id: "no-such-id" })
@@ -432,6 +433,7 @@ function workServer(
     (title) => {
       titles.push(title)
     },
+    FAKE_CWD,
   )
 }
 

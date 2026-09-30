@@ -14,6 +14,7 @@ import {
   type ReportSection,
 } from "../../../shared/report/report-block.ts"
 import type { ReportCheck } from "../../../shared/report/report-check.ts"
+import { codeBlockMatchesFile } from "./code-block-match.ts"
 
 /** 検査にかけるレポート。`sections` と `checks` の「無い」は空の配列、`favor` の「無い」は空の文字列。 */
 export type ReportDraft = {
@@ -21,14 +22,17 @@ export type ReportDraft = {
   readonly sections: readonly ReportSection[]
   readonly favor: string
   readonly checks: readonly ReportCheck[]
+  /** `code` の塊の `path` → 読めたファイルの中身。読めなかった `path` は入らない。 */
+  readonly fileContents: ReadonlyMap<string, string>
 }
 
 /** 逃げ道の中に書くと差し戻す記法（塊の種類か節の見出しで書けるもの）。 */
 export type MarkdownNotation = keyof typeof MARKDOWN_NOTATION_NAMES
 
 /**
- * 規約違反1つ。`count` は違反の数（文の数・塊の数）で、モデルが書いた文面は持たない。
- * 差し戻しの文面に写さないため（会話の中身をモデルの文脈へ戻す経路を作らない）。
+ * 規約違反1つ。`count` は違反の数（文の数・塊の数）で、モデルが書いた文面は持たない
+ * （差し戻しの文面に写さないため。会話の中身をモデルの文脈へ戻す経路を作らない）。
+ * `code-mismatch` の `paths` は `code` の塊の `path`（schema が決めた識別子で、書いた自由文ではない）。
  */
 export type ReportViolation =
   /** `conclusion` が3文以上ある（条1「冒頭の1〜2文で結論」）。 */
@@ -52,6 +56,8 @@ export type ReportViolation =
       readonly count: number
       readonly notations: readonly MarkdownNotation[]
     }
+  /** `path` を付けた `code` の塊が、そのファイルの中身と一致しない。`paths` は一致しなかった `path`（重複無し）。 */
+  | { readonly kind: "code-mismatch"; readonly count: number; readonly paths: readonly string[] }
 
 /** 逃げ道の外側（HTML の容れ物の中でないところ）に出た記法の種類（重複無し）。 */
 export function notationsInSections(
@@ -120,6 +126,12 @@ export function reportViolations(report: ReportDraft): readonly ReportViolation[
     block.kind === "markdown" ? [splitFences(block.markdown)] : [],
   )
   const notations = notationsInSections(report.sections)
+  const mismatchedCodeBlocks = blocks
+    .filter(
+      (block): block is Extract<ReportBlock, { readonly kind: "code" }> =>
+        block.kind === "code" && block.path.trim() !== "",
+    )
+    .filter((block) => !codeBlockMatchesFile(block, report.fileContents.get(block.path)))
 
   const counted = [
     { kind: "long-conclusion", count: sentenceCount(report.conclusion) },
@@ -150,6 +162,11 @@ export function reportViolations(report: ReportDraft): readonly ReportViolation[
           : report.sections.filter((section) => section.heading.trim() === "").length,
     },
     { kind: "markdown-notation", count: notations.length, notations },
+    {
+      kind: "code-mismatch",
+      count: mismatchedCodeBlocks.length,
+      paths: [...new Set(mismatchedCodeBlocks.map((block) => block.path))],
+    },
   ] as const satisfies readonly ReportViolation[]
 
   return counted.filter((violation) => violation.count > VIOLATION_THRESHOLDS[violation.kind])
@@ -175,6 +192,7 @@ const VIOLATION_THRESHOLDS = {
   "ragged-table": 0,
   "untitled-section": 0,
   "markdown-notation": 0,
+  "code-mismatch": 0,
 } as const satisfies Record<ReportViolation["kind"], number>
 
 function violationLine(violation: ReportViolation): string {
@@ -197,6 +215,8 @@ function violationLine(violation: ReportViolation): string {
         .join("・")}）がある。代わりに${violation.notations
         .map((notation) => MARKDOWN_NOTATION_NAMES[notation].replacement)
         .join("・")}を使う`
+    case "code-mismatch":
+      return `\`path\` 付きの \`code\` の塊が${violation.count}個、ファイルの中身と一致しない（${violation.paths.join("・")}）。実物を読み直して直すか \`path\` を外す`
   }
 }
 
