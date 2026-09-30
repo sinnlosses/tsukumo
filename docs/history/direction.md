@@ -3,6 +3,46 @@
 `develop/direction.md` に書かれたユーザーからの指示を、タスク化した時点で**当時の記述のまま**
 ここへ移す（`docs/workflow.md`「指示メモ」参照）。新しいものを上に足す。**後から書き換えない。**
 
+## 2026-09-30 振り返りのドラフト6件
+
+（出典: `develop/draft/` から。/plan-tasks で7件のうち6件が承認され、GH-137〜GH-142 になった。「押せる行」の件はどちらに寄せるかを委譲先に決めさせると利用者が決めた。コメントの日付の検査のドラフトは未承認で残した）
+
+### deny-sed-in-place の python の書き込み判定が、作業ツリーの外（スクラッチ）への書き込みまで止めないようにする（振り返り: GH-116）（GH-137）
+
+- 札: 黄 道具（5回目）
+- 根拠: 2026-09-30 の `/loop /next-task` で委譲した5件（GH-127・GH-126・GH-125・GH-136・GH-116）のうち4件の friction log に「`python3` の heredoc での書き込みが `deny-sed-in-place` に止められ、Write ツールへ切り替えた」がある。GH-116 は依頼文で「書き換えは Edit / Write で」と念押ししていても、`tw edit` に渡す本文の下書き（作業ツリーの外）で止められた。念押しでは減っていない
+- 出し先: `scripts/deny-sed-in-place.ts` の `PYTHON_WRITE_CALL` の判定。書き込み先が作業ツリーの外（スクラッチ・`/tmp`）と読めるときは通すか、拒否の理由の文に「本文の下書きは Write ツールで」と具体の代わりを出す。どちらにするかは検査を足す側で決め、`test/scripts/deny-sed-in-place.test.ts` で守る
+
+### 「押せる行は Button にしない」の正典と、覚えていることの行を Button にした決定の食い違いを片方に寄せる（振り返り: GH-123）（GH-138）
+
+- 札: 黄 正典の不備（4回目）
+- 根拠: GH-123 の対象（GH-18 の 2026-09-29 のユーザー決定）に `persona-memory-section.tsx` の覚えていることの行が入っていたが、`docs/architecture/browser.md`「`components/ui/` の部品」は「押せる行・押せる文字（中身そのものを押すもの）は `Button` にしない」としている。委譲先は「蒸し返さない」に従って `Button`（variant `text-ink-hover-underline`）へ置き換え、食い違いを friction log に残した
+- 出し先: `docs/architecture/browser.md` の `Button` の項を正典として、どちらかに寄せる。開く口を兼ねる行は `Button` にしてよいと例外を書くか、覚えていることの行を `<button>` に戻すかを人が決める
+
+### Beads 方式で、作業より先に `tw edit` で書いた `## やること` を `tw plan-check` が `unrecorded` と出す（振り返り: GH-134）（GH-139）
+
+- 札: 黄 道具（5回目）
+- 根拠: GH-119 と GH-134 の委譲先はどちらも「コードを変える前に `tw edit` で1回書き、`WORK_BEFORE_PLAN` は出なかった」と報告したが、受け入れの `tw plan-check` はどちらも `PLAN_NOT_FIRST unrecorded`（`tw edit` を通さずに書いた）を返した。一方、GH-131 で `WORK_BEFORE_PLAN` のあと `--after-work` で書き直した分は `after-work` と正しく記録された。`--after-work` を付けない初回の記入が、Beads 方式では書き込みの順の記録に残っていない疑いがある（未確認: `tw edit` の実装と記録の置き場は読んでいない）
+- 出し先: 仕組みで塞ぐ。claude-skills の `task-workflow`（`tw edit` と `tw plan-check`）を直すタスク1件。Beads 方式で、作業前の `tw edit` が記録を残し、`plan-check` が `PLAN_FIRST` を返すことを自己テストで確かめる
+
+### スキルの「attribution はセッションの指示に従う」を、利用者の CLAUDE.md を先に見る文面に直す（振り返り: GH-136）（GH-140）
+
+- 札: 黄 正典の不備（4回目）
+- 根拠: GH-136 で commit-msg フックが `Co-Authored-By: Claude …` を拒むようになった。一方で `~/.claude/skills/next-task/SKILL.md` 手順7は「末尾はセッションの attribution の指示に従う」、`~/.claude/skills/task-workflow/WORKFLOW.md` は「末尾の attribution はセッションの指示に従う」のままで、スキルに従うとフックに拒まれる。委譲先も申し送りでこの2か所を挙げた
+- 出し先: claude-skills の正典そのものを書き換える（`skills/next-task/SKILL.md` 手順7と `skills/task-workflow/WORKFLOW.md` の該当の文を「利用者の CLAUDE.md に署名の定めがあればそれに従い、無ければセッションの attribution の指示に従う」に）。claude-skills の枝は別の作業ツリーで切る
+
+### `pnpm run test`・`test:e2e` を直に打っても、作業ツリーをまたぐ錠を通るようにする（振り返り: GH-122）（GH-141）
+
+- 札: 赤 道具（5回目）
+- 根拠: GH-122 の測定中、tsukumo-2・tsukumo-task が `pnpm run test`・`test:e2e` を直に打って vitest を走らせ続け、1分平均の負荷が 22〜41 から下がらなかった。錠を取るのは `scripts/check.ts` の重い段だけなので、直に打つと錠をすり抜けて check と重なる。利用者にほかの作業ツリーを止めてもらうまで測定を始められず、`maxWorkers` を 30%＋30% に下げても、すり抜けた分が重なれば手元は重いままになる
+- 出し先: 錠を取る処理を vitest の `globalSetup`（`vitest.config.ts`・`vitest.e2e.config.ts`）へ移し、どの入口から走らせても同じ錠を通るようにするタスク（`scripts/check.ts` が単体と E2E を並べて走らせる形は変えず、check が取った錠の中で走るときは取り直さない）
+
+### `session-manager.test.ts` に集まったほかの機能のコマンドの受け手のテストを、受け手の側へ移すか決める（作業中: GH-115）（GH-142）
+
+- 根拠: `test/server/session/core/session-manager.test.ts` は 3,359 行・99 件で、`manager.commands.*`（`createCommandRouter` 越しの呼び出し）が 69 箇所ある（`session.reflectAchievement` 9・`session.switchCharacter` 9・`session.setChatMode` 8・`characterPack.*` 10・`host.openFile` 3・`chat.forgetRememberedLine` 3 など）。`session-manager.ts` 自身は代の寿命と反応の順だけを持つので割らないと決めた（`docs/architecture/adr/0021-feature-state-fold-in-feature.md`「同じ設計で分けないと決めたもの」）が、テストの大きさはこの受け手のテストから来ていて、設計の決定では減らない
+- 出し先: タスク1件。`test-audit` の4つの問いで、受け手のテストを `src/router.ts` の受け手ごとのテスト（またはその機能の `core` のテスト）へ移すか、`createSessionManager` の入口で守るまま残すかを決める。`startSession` の配線を分けるタスク（GH-128）と同じ時期なら、配線の単体テストを持つかの結論と揃える
+
+
 ## 2026-09-30 Co-Authored-By の再発防止（会話から）
 
 （会話の指示。GH-136 になった。GH-132 のコミットに Co-Authored-By が付いたまま main に入ったことを受けて。過去のコミットは書き換えないと読んだ）
