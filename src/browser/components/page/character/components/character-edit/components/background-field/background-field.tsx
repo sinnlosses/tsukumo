@@ -1,9 +1,9 @@
 // キャラクター画面の背景の行。いまの背景の縮図と、口は「差し替える」と「消す」の2つだけ。
 // 覆いの濃さは画面から変えない（定義ファイルを手で直す）。
 
-import clsx from "clsx"
 import type { ReactElement } from "react"
 
+import { Button } from "../../../../../../ui/button/button.tsx"
 import { HStack } from "../../../../../../ui/h-stack/h-stack.tsx"
 import { TrashIcon, UploadIcon } from "../../../../../../ui/icon/icon.tsx"
 import { Text } from "../../../../../../ui/text/text.tsx"
@@ -81,16 +81,22 @@ export function BackgroundField(props: {
             />
           </label>
           {background.image.kind !== "absent" && (
-            <button
+            <Button
               type="button"
-              className={clsx(styles["character-button"], styles["character-button-danger"])}
-              aria-label="背景を消す"
+              variant="outline-soft-danger"
+              size="secondary"
+              pressed="none"
               disabled={disabled}
+              ariaLabel="背景を消す"
+              ariaHasPopup={undefined}
+              disclosure={{ kind: "none" }}
+              title={undefined}
+              className={styles["character-button-outline"]}
               onClick={background.onClear}
             >
               <TrashIcon />
               消す
-            </button>
+            </Button>
           )}
         </HStack>
       </VStack>

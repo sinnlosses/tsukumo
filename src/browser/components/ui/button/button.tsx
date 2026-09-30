@@ -24,7 +24,11 @@ export type ButtonVariant =
   | "outline-faint-ground"
   | "outline-ok-surface"
   | "outline-danger-surface"
+  | "outline-soft-danger"
+  | "outline-soft-danger-veil"
+  | "outline-dashed-accent-ink"
   | "solid-accent"
+  | "solid-accent-static"
   | "solid-danger"
   | "solid-warn"
   | "ghost"
@@ -83,7 +87,11 @@ export const BUTTON_VARIANT_CLASS = {
   "outline-faint-ground": styles["button-variant-outline-faint-ground"],
   "outline-ok-surface": styles["button-variant-outline-ok-surface"],
   "outline-danger-surface": styles["button-variant-outline-danger-surface"],
+  "outline-soft-danger": styles["button-variant-outline-soft-danger"],
+  "outline-soft-danger-veil": styles["button-variant-outline-soft-danger-veil"],
+  "outline-dashed-accent-ink": styles["button-variant-outline-dashed-accent-ink"],
   "solid-accent": styles["button-variant-solid-accent"],
+  "solid-accent-static": styles["button-variant-solid-accent-static"],
   "solid-danger": styles["button-variant-solid-danger"],
   "solid-warn": styles["button-variant-solid-warn"],
   ghost: styles["button-variant-ghost"],

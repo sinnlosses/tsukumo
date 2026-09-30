@@ -8,6 +8,7 @@ import { Search } from "lucide-react"
 import { useId, type ReactElement } from "react"
 
 import type { CharacterFaceInfo } from "../../../../domain/character-face.ts"
+import { Button } from "../../../ui/button/button.tsx"
 import { Dialog } from "../../../ui/dialog/dialog.tsx"
 import { Heading } from "../../../ui/heading/heading.tsx"
 import { Text } from "../../../ui/text/text.tsx"
@@ -90,15 +91,21 @@ function SessionSwitcherBody(props: SessionSwitcherProps): ReactElement {
           onChange={(event) => selection.onQueryChange(event.target.value)}
           onKeyDown={selection.onKeyDown}
         />
-        <button
+        <Button
           type="button"
-          className={styles["session-switcher-new"]}
+          variant="outline-dashed-accent-ink"
+          size="secondary"
+          pressed="none"
           disabled={switcher.blocked}
+          ariaLabel={undefined}
+          ariaHasPopup={undefined}
+          disclosure={{ kind: "none" }}
           title={switcher.blockedTitle}
+          className={styles["session-switcher-new"]}
           onClick={switcher.onStartNew}
         >
           {NEW_SESSION_LABEL}
-        </button>
+        </Button>
       </div>
       <div className={styles["session-switcher-columns"]}>
         <div
@@ -258,15 +265,23 @@ function SessionSwitcherDetail(props: SessionSwitcherDetailProps): ReactElement 
         <DigestBody digest={digest} characterName={character.alt} />
       </div>
       <div className={styles["session-switcher-detail-foot"]}>
-        <button
+        <Button
           type="button"
-          className={styles["session-switcher-switch"]}
+          variant="solid-accent-static"
+          size="subheading"
+          pressed="none"
           disabled={props.blocked || row.current}
+          ariaLabel={undefined}
+          ariaHasPopup={undefined}
+          disclosure={{ kind: "none" }}
           title={row.current ? undefined : props.blockedTitle}
+          className={styles["session-switcher-switch"]}
           onClick={() => props.onSwitch(row.sessionId)}
         >
-          {row.current ? CURRENT_BUTTON : `${row.shortId} に切り替える`}
-        </button>
+          <Text element="span" size="inherit" tone="inherit" weight="bold" className="">
+            {row.current ? CURRENT_BUTTON : `${row.shortId} に切り替える`}
+          </Text>
+        </Button>
       </div>
     </section>
   )

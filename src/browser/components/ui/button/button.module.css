@@ -4,7 +4,7 @@
 .button {
   cursor: pointer;
 }
-/* 押せないときの既定。`link` はここを打ち消して字の色だけで伝える（下の `.button-variant-link[aria-disabled="true"]`）。 */
+/* 押せないときの既定。variant の `[aria-disabled="true"]` が打ち消して、独自の顔で伝えることがある。 */
 .button[aria-disabled="true"] {
   cursor: default;
   opacity: 0.6;
@@ -147,6 +147,58 @@
 .button-variant-tinted-accent:hover {
   border-color: var(--accent);
   background: color-mix(in srgb, var(--surface), var(--accent) 24%);
+}
+
+/* `--state-ng` を `--surface` に混ぜた淡い枠と `--state-ng` の字。hover で枠が `--state-ng` になる。 */
+.button-variant-outline-soft-danger,
+.button-variant-outline-soft-danger-veil {
+  border: 1px solid color-mix(in srgb, var(--surface), var(--state-ng) 45%);
+  color: var(--state-ng);
+}
+.button-variant-outline-soft-danger {
+  background: none;
+}
+/* 画像の上に重ねる口。地は `--ground` を 90% に透かす。 */
+.button-variant-outline-soft-danger-veil {
+  background: color-mix(in srgb, var(--ground) 90%, transparent);
+}
+.button-variant-outline-soft-danger:hover,
+.button-variant-outline-soft-danger-veil:hover {
+  border-color: var(--state-ng);
+}
+.button-variant-outline-soft-danger[aria-disabled="true"],
+.button-variant-outline-soft-danger-veil[aria-disabled="true"] {
+  border-color: var(--rule-quiet);
+  color: var(--ink-quiet);
+  opacity: 1;
+}
+
+/* 点線の枠（`--rule`）と、accent を ink に 55% 混ぜた字。hover で枠が accent になる。 */
+.button-variant-outline-dashed-accent-ink {
+  border: 1px dashed var(--rule);
+  background: none;
+  color: color-mix(in srgb, var(--accent) 55%, var(--ink));
+}
+.button-variant-outline-dashed-accent-ink:hover:not([aria-disabled="true"]) {
+  border-color: var(--accent);
+}
+.button-variant-outline-dashed-accent-ink[aria-disabled="true"] {
+  color: var(--ink-quiet);
+  cursor: not-allowed;
+  opacity: 1;
+}
+
+/* accent の塗り。hover で変わらない。 */
+.button-variant-solid-accent-static {
+  border: none;
+  background: var(--accent);
+  color: var(--ground);
+}
+.button-variant-solid-accent-static[aria-disabled="true"] {
+  background: var(--surface-raised);
+  color: var(--ink-quiet);
+  cursor: not-allowed;
+  opacity: 1;
 }
 
 /* accent の塗り。 */

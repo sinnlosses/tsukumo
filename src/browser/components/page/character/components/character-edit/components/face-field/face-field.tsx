@@ -1,9 +1,9 @@
 // キャラクター画面の顔の行。
 // 帯の左端・一覧の丸・名乗りの大きな丸に出す1枚の縮図と、口は「差し替える」と「消す」の2つだけ。
 
-import clsx from "clsx"
 import type { ReactElement } from "react"
 
+import { Button } from "../../../../../../ui/button/button.tsx"
 import { HStack } from "../../../../../../ui/h-stack/h-stack.tsx"
 import { TrashIcon, UploadIcon } from "../../../../../../ui/icon/icon.tsx"
 import { Text } from "../../../../../../ui/text/text.tsx"
@@ -78,16 +78,22 @@ export function FaceField(props: {
             />
           </label>
           {face.image.kind !== "absent" && (
-            <button
+            <Button
               type="button"
-              className={clsx(styles["character-button"], styles["character-button-danger"])}
-              aria-label="顔を消す"
+              variant="outline-soft-danger"
+              size="secondary"
+              pressed="none"
               disabled={disabled}
+              ariaLabel="顔を消す"
+              ariaHasPopup={undefined}
+              disclosure={{ kind: "none" }}
+              title={undefined}
+              className={styles["character-button-outline"]}
               onClick={face.onClear}
             >
               <TrashIcon />
               消す
-            </button>
+            </Button>
           )}
         </HStack>
       </VStack>

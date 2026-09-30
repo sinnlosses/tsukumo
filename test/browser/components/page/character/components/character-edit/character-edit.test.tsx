@@ -714,10 +714,9 @@ describe("CharacterEdit", () => {
         characterPackEntry("fictional", "架空の精霊", { inUse: true, removal: "delete" }),
       ])
 
-      expect(screen.getByRole("button", { name: /架空の精霊 を消す/ })).toHaveProperty(
-        "disabled",
-        true,
-      )
+      expect(
+        screen.getByRole("button", { name: /架空の精霊 を消す/ }).getAttribute("aria-disabled"),
+      ).toBe("true")
     })
 
     // 使用中以外のパックを詳しい設定に出すには、一覧にもう1件（`other`）を足し、hash でそれを

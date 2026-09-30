@@ -12,6 +12,7 @@ import clsx from "clsx"
 import { type DragEvent, type ReactElement, useRef, useState } from "react"
 
 import { Portrait } from "../../../../../../domain/portrait.tsx"
+import { Button } from "../../../../../../ui/button/button.tsx"
 import { HStack } from "../../../../../../ui/h-stack/h-stack.tsx"
 import { PlusIcon, TrashIcon, UploadIcon } from "../../../../../../ui/icon/icon.tsx"
 import { Text } from "../../../../../../ui/text/text.tsx"
@@ -128,15 +129,17 @@ export function PortraitCard(props: {
             {fileInput}
           </label>
           {clear.kind === "shown" && (
-            <button
+            <Button
               type="button"
-              className={clsx(
-                styles["character-card-action"],
-                styles["character-card-action-danger"],
-              )}
-              aria-label={clear.ariaLabel}
-              title="消す"
+              variant="outline-soft-danger-veil"
+              size="body"
+              pressed="none"
               disabled={disabled}
+              ariaLabel={clear.ariaLabel}
+              ariaHasPopup={undefined}
+              disclosure={{ kind: "none" }}
+              title="消す"
+              className={styles["character-card-clear"]}
               onClick={() => {
                 const anchor = cardRef.current?.getBoundingClientRect()
                 if (anchor !== undefined) {
@@ -145,7 +148,7 @@ export function PortraitCard(props: {
               }}
             >
               <TrashIcon />
-            </button>
+            </Button>
           )}
         </HStack>
       </figure>

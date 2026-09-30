@@ -267,17 +267,19 @@
 .character-card-action:hover {
   border-color: var(--accent);
 }
-.character-card-action-danger {
-  color: var(--state-ng);
-  border-color: color-mix(in srgb, var(--surface), var(--state-ng) 45%);
-}
-.character-card-action-danger:hover {
-  border-color: var(--state-ng);
+/* `<Button>` で描く消す口の箱だけ（顔は Button が持つ）。寸法は `.character-card-action` と揃える。 */
+.character-card-clear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border-radius: 0.5rem;
 }
 .character-card-action:has(.character-card-file:focus-visible),
-.character-card-action:focus-visible,
+.character-card-clear:focus-visible,
 .character-button:has(.character-card-file:focus-visible),
-.character-button:focus-visible,
 .character-button-outline:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 1px;
@@ -285,9 +287,7 @@
 /* 変えられないパック（`editable: false`）。
    `<label>` 自体は disabled にできないので、中の `<input>` の状態を見て見た目を合わせる。 */
 .character-card-action:has(.character-card-file:disabled),
-.character-card-action:disabled,
-.character-button:has(.character-card-file:disabled),
-.character-button:disabled {
+.character-button:has(.character-card-file:disabled) {
   color: var(--ink-quiet);
   border-color: var(--rule-quiet);
   cursor: default;
@@ -494,7 +494,7 @@
   border: 1.5px dashed var(--rule);
 }
 
-/* 字つきの口（背景の差し替える・消す、このキャラクターに切り替える、名前とプロフィールを変える）。 */
+/* 字つきの口のうち `<label>` で描くもの。 */
 .character-button {
   display: inline-flex;
   align-items: center;
@@ -512,16 +512,7 @@
 .character-button:hover {
   border-color: var(--accent);
 }
-.character-button-danger {
-  color: var(--state-ng);
-  border-color: color-mix(in srgb, var(--surface), var(--state-ng) 45%);
-}
-.character-button-danger:hover {
-  border-color: var(--state-ng);
-}
-/* `<Button variant="outline-dashed">` で描く「やめる」「名前とプロフィールを変える」「このキャラクターに切り替える」の箱だけ（顔は Button が持つ）。
-   寸法は `.character-button` と揃える。
-   `.character-button` 自体は、`<label>` の差し替える・`.character-button-danger` と組む消すボタンなど Button を使わない箇所が使う。 */
+/* `<Button>` で描く字つきの口の箱だけ（顔は Button が持つ）。寸法は `.character-button` と揃える。 */
 .character-button-outline {
   display: inline-flex;
   align-items: center;
@@ -542,7 +533,7 @@
 }
 
 /* このキャラクターを消す／同梱に戻す帯。
-   赤みがかった枠（`state-ng` を混ぜた地と縁）で、口は `.character-button-danger` を流用する。 */
+   赤みがかった枠（`state-ng` を混ぜた地と縁）。 */
 .character-delete-band {
   display: flex;
   flex-wrap: wrap;

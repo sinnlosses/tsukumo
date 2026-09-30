@@ -3,9 +3,9 @@
 // 押しても即座には送らない。
 // 押すと確かめのダイアログ（`CharacterDeleteConfirm`）を開き、そこで id を打って一致して初めて `band.onSubmit` を呼ぶ。
 
-import clsx from "clsx"
 import { useState, type ReactElement } from "react"
 
+import { Button } from "../../../../../../ui/button/button.tsx"
 import { TrashIcon } from "../../../../../../ui/icon/icon.tsx"
 import { Text } from "../../../../../../ui/text/text.tsx"
 import styles from "../../../../character.module.css"
@@ -36,18 +36,24 @@ export function CharacterDelete(props: {
             {band.note}
           </Text>
         </div>
-        <button
+        <Button
           type="button"
-          className={clsx(styles["character-button"], styles["character-button-danger"])}
+          variant="outline-soft-danger"
+          size="secondary"
+          pressed="none"
           disabled={band.disabled}
+          ariaLabel={undefined}
+          ariaHasPopup={undefined}
+          disclosure={{ kind: "none" }}
           title={band.title}
+          className={styles["character-button-outline"]}
           onClick={() => {
             setOpen(true)
           }}
         >
           <TrashIcon />
           {band.buttonLabel}
-        </button>
+        </Button>
       </section>
       {open && (
         <CharacterDeleteConfirm

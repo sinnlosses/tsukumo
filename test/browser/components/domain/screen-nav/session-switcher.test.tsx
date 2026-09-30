@@ -200,7 +200,7 @@ describe("セッションの札と切り替え画面", () => {
     renderNav({ turn: { kind: "running", startedAt: 0 } })
     openByTag()
     expect(
-      screen.getByRole("button", { name: "＋ 新しいセッション" }).hasAttribute("disabled"),
-    ).toBe(true)
+      screen.getByRole("button", { name: "＋ 新しいセッション" }).getAttribute("aria-disabled"),
+    ).toBe("true")
   })
 })
