@@ -227,7 +227,7 @@ type FlatCommandPorts = Omit<
   "promptImageShelf"
 >
 
-/** 手続きの照合に使う架空の起動トークンとオリジン（照合そのものは `rpc-guard` のテストが見る）。 */
+/** 手続きの照合に使う架空の起動トークンとオリジン（照合そのものは `connection-grant` のテストが見る）。 */
 const TEST_TOKEN = "架空のトークン"
 const TEST_ORIGIN = "http://127.0.0.1:0"
 

@@ -2,7 +2,7 @@
 // 起動トークンと `Origin` を全部の手続きの前に1つのミドルウェアで見て（`/rpc` と `/ws` の両方）、コマンドはさらに契約の `meta` の断る条件を見る。
 // 手続きの側は照合も断る条件も知らない。
 //
-// 照合の規則は `/ws` の upgrade（`isAllowedUpgrade`）と揃える: トークンが合うこと、`Origin` があれば自分のオリジンと一致すること（無ければ通す。ブラウザ経由でない呼び出し）。
+// 照合の規則は `isConnectionGranted` にあり、`/ws` の upgrade も同じ関数を呼ぶ。
 // 経路名は RPCHandler が照らし合わせるので、ここでは見ない。
 
 import type { IncomingMessage } from "node:http"
@@ -13,6 +13,7 @@ import { COMMAND_ERRORS, type CommandMeta, NO_COMMAND_REFUSAL } from "../../../s
 import type { SessionState } from "../../../shared/session/session-state.ts"
 import { SESSION_TOKEN_QUERY_NAME } from "../../../shared/view-server/session-socket.ts"
 import type { CommandSession } from "../../session/core/command-session.ts"
+import { isConnectionGranted } from "../core/connection-grant.ts"
 import type { SubscribeFrames } from "./frame-procedure.ts"
 
 /**
@@ -55,18 +56,11 @@ export function rpcContextOf(
  * 理由（どちらが合わなかったか）は返さない。
  */
 export const rpcGuard = os.$context<RpcContext>().middleware(({ context, next }) => {
-  if (!isAllowedRpcRequest(context)) {
+  if (!isConnectionGranted(context)) {
     throw new ORPCError("FORBIDDEN")
   }
   return next()
 })
-
-function isAllowedRpcRequest(context: RpcContext): boolean {
-  if (context.presentedToken !== context.startupToken) {
-    return false
-  }
-  return context.requestOrigin === undefined || context.requestOrigin === context.serverOrigin
-}
 
 /**
  * 断る条件のミドルウェア。

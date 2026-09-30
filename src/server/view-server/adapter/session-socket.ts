@@ -17,11 +17,9 @@ import { RPCHandler } from "@orpc/server/websocket"
 import { type RawData, WebSocketServer } from "ws"
 
 import type { socketContract } from "../../../shared/rpc.ts"
-import {
-  SESSION_SOCKET_PATH,
-  SESSION_TOKEN_QUERY_NAME,
-} from "../../../shared/view-server/session-socket.ts"
+import { SESSION_SOCKET_PATH } from "../../../shared/view-server/session-socket.ts"
 import type { CommandSession } from "../../session/core/command-session.ts"
+import { isConnectionGranted } from "../core/connection-grant.ts"
 import type { SubscribeFrames } from "./frame-procedure.ts"
 import { rpcContextOf, type SocketRpcContext } from "./rpc-guard.ts"
 
@@ -128,12 +126,9 @@ function isAllowedUpgrade(request: IncomingMessage, options: SessionSocketOption
   if (url.pathname !== SESSION_SOCKET_PATH) {
     return false
   }
-  if (url.searchParams.get(SESSION_TOKEN_QUERY_NAME) !== options.token) {
-    return false
-  }
-
-  const origin = request.headers.origin
-  return origin === undefined || origin === options.origin
+  return isConnectionGranted(
+    rpcContextOf(request, { startupToken: options.token, serverOrigin: options.origin }),
+  )
 }
 
 /** `ws` が渡してくる3つの形（Buffer / Buffer の並び / ArrayBuffer）を文字列にする。 */
