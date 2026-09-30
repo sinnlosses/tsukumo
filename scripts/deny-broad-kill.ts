@@ -16,6 +16,8 @@
 
 import process from "node:process"
 
+import { findQuotedSpans, withSpansBlanked } from "./lib/quoted-span.ts"
+
 /** 名前やパターンでまとめて薙ぎ払うコマンド。コマンドの位置に現れたときだけ拾う。 */
 const BROAD_KILL_COMMAND = /(?:^|[;&|(]\s*|\n)\s*(?:sudo\s+)?(?:pkill|killall)\b/
 
@@ -26,7 +28,7 @@ const PGREP_PIPED_TO_KILL = /(?:^|[;&|(]\s*|\n)\s*(?:sudo\s+)?pgrep\b[^\n]*\|[^\
  * 他のセッションと取り合う対象。この語のどれかを狙っているときだけ拒否するので、
  * 無関係なプロセス（自分で起こした python など）を名前で止めるのは妨げない。
  */
-const SHARED_PROCESS = /\b(?:pnpm|node|tsukumo|claude|cli\.ts|vite)\b/
+const SHARED_PROCESS = /\b(?:pnpm|node|tsukumo|claude|cli\.ts|vite|vitest|playwright|chrome)\b/i
 
 const REFUSAL = `この作業ツリーでは複数の tsukumo が同時に動いている。どれも \`node src/cli.ts\` として見えるので、
 名前やパターンで止めると利用者が使っている本体まで落ちる（docs/workflow.md「起こすときの作法」）。
@@ -54,14 +56,15 @@ if (command !== undefined && isBroadKill(command)) {
 
 /**
  * 他のセッションを巻き込む形の `kill` か。コマンドの位置に `pkill` / `killall` が
- * 現れ、かつ取り合う対象を狙っているときだけ真になる
- * （`grep pkill docs/workflow.md` のように語として書いただけのものは通す）。
+ * 現れ、かつ取り合う対象を狙っているときだけ真になる。
+ * コマンドの位置は引用符・heredoc を除いて探し、狙う対象は引用符の中（`-f "vitest run"`）も含めて探す。
  */
 function isBroadKill(bashCommand: string): boolean {
   if (!SHARED_PROCESS.test(bashCommand)) {
     return false
   }
-  return BROAD_KILL_COMMAND.test(bashCommand) || PGREP_PIPED_TO_KILL.test(bashCommand)
+  const skeleton = withSpansBlanked(bashCommand, findQuotedSpans(bashCommand))
+  return BROAD_KILL_COMMAND.test(skeleton) || PGREP_PIPED_TO_KILL.test(skeleton)
 }
 
 /** hook が stdin へ流す JSON から Bash のコマンド文字列を取り出す。形が違えば `undefined`。 */

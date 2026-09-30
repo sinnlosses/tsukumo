@@ -17,6 +17,10 @@ describe("広い kill を拒否する hook", () => {
     ["名前で薙ぐ killall", "killall node"],
     ["pgrep から kill へ流す形", "pgrep -f pnpm | xargs kill"],
     ["前段のコマンドに続けて書いた pkill", "echo stopping && pkill -f tsukumo"],
+    ["vitest を名前で狙う pkill", "pkill -f vitest"],
+    ["引用符の中に vitest を書いた pkill", 'pkill -9 -f "vitest run --reporter=dot"'],
+    ["chrome を名前で狙う killall", "killall chrome"],
+    ["playwright を狙う pkill", "pkill -f playwright"],
   ])("%s は止める", async (_name, command) => {
     expect(await runHook(command)).toBe(2)
   })
@@ -26,6 +30,12 @@ describe("広い kill を拒否する hook", () => {
     ["ポートから引いた pid を渡す kill", "kill $(lsof -ti tcp:7398 -sTCP:LISTEN)"],
     ["語として書いただけの grep", 'grep -rn "pkill" docs/workflow.md'],
     ["取り合わない相手を狙う pkill", "pkill -f my-python-worker"],
+    ["引用符の中に語を書いた grep", "grep -rn 'pkill\\|killall' .claude/"],
+    ["コミットメッセージに語を書いた git commit", 'git commit -m "node の pkill を止める hook"'],
+    [
+      "heredoc の本文に語を書いた tw new",
+      "tw new --body-file - <<'EOF'\npkill -f vitest\nkillall node\nEOF",
+    ],
   ])("%s は通す", async (_name, command) => {
     expect(await runHook(command)).toBe(0)
   })
