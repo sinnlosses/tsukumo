@@ -11,7 +11,7 @@
 // 成果物に入るのは疑似セッション（`test/fixture/fake-session.json`）の手書きの会話だけ。
 // 起動トークンと絶対パスは置き換えてから書く。
 
-import { type ChildProcess, spawn } from "node:child_process"
+import type { ChildProcess } from "node:child_process"
 import {
   cpSync,
   existsSync,
@@ -32,6 +32,7 @@ import { type Browser, chromium, type Page } from "playwright-core"
 import { countBy, sortBy } from "remeda"
 import { afterAll, afterEach, beforeAll, expect } from "vitest"
 
+import { spawnFakeTsukumo, waitForViewUrl } from "../../scripts/lib/fake-tsukumo-process.ts"
 import {
   type FakeSessionStep,
   readFakeSession,
@@ -213,7 +214,7 @@ async function openRoom(
 
   const child = spawnTsukumo(options.scene, home.real, cwd.real)
   addCleanup(() => stopTsukumo(child))
-  const viewUrl = await waitForViewUrl(child)
+  const viewUrl = await waitForViewUrl(child, LAUNCH_TIMEOUT_MS)
   const url = new URL(viewUrl)
 
   const context = await browser.newContext({
@@ -372,22 +373,15 @@ function makeTempDirectory(prefix: string): TempDirectory {
  * 既定を使う。
  */
 function spawnTsukumo(scene: string, home: string, cwd: string): ChildProcess {
-  const inherited = Object.fromEntries(
-    Object.entries(process.env).filter(([name]) => !name.startsWith("TSUKUMO_")),
-  )
-  return spawn("node", [path.join(REPOSITORY_ROOT, "src", "cli.ts")], {
+  return spawnFakeTsukumo({
+    entry: path.join(REPOSITORY_ROOT, "src", "cli.ts"),
     cwd,
-    env: {
-      ...inherited,
-      TSUKUMO_DRIVER: "fake",
-      ...(scene === "none" ? {} : { TSUKUMO_FAKE_SCENE: scene }),
-      TSUKUMO_VIEW_PORT: "0",
-      TSUKUMO_OPEN_VIEW: "0",
-      TSUKUMO_HOME: home,
-      TSUKUMO_FIXED_CLOCK: FIXED_INSTANT,
-      TZ: TIME_ZONE,
-    },
-    stdio: ["ignore", "pipe", "pipe"],
+    scene: scene === "none" ? undefined : scene,
+    port: 0,
+    home,
+    extraEnv: { TSUKUMO_FIXED_CLOCK: FIXED_INSTANT, TZ: TIME_ZONE },
+    dropInheritedTsukumoEnv: true,
+    stderr: "pipe",
   })
 }
 
@@ -401,32 +395,6 @@ function stopTsukumo(child: ChildProcess): Promise<void> {
       resolve()
     })
     child.kill("SIGTERM")
-  })
-}
-
-/** 起こした tsukumo が出す配信 URL を待つ。出ないまま終わったら、標準エラーを添えて落とす。 */
-function waitForViewUrl(child: ChildProcess): Promise<string> {
-  return new Promise((resolve, reject) => {
-    let stdout = ""
-    let stderr = ""
-    const timer = setTimeout(() => {
-      reject(new Error(`tsukumo が URL を出さない（${String(LAUNCH_TIMEOUT_MS)}ms）\n${stderr}`))
-    }, LAUNCH_TIMEOUT_MS)
-    child.stderr?.on("data", (chunk: Buffer) => {
-      stderr += chunk.toString("utf8")
-    })
-    child.stdout?.on("data", (chunk: Buffer) => {
-      stdout += chunk.toString("utf8")
-      const url = /https?:\/\/\S+/.exec(stdout)?.[0]
-      if (url !== undefined) {
-        clearTimeout(timer)
-        resolve(url)
-      }
-    })
-    child.once("exit", (code) => {
-      clearTimeout(timer)
-      reject(new Error(`tsukumo が終了した（コード ${String(code)}）\n${stderr}`))
-    })
   })
 }
 

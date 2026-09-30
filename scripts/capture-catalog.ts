@@ -36,7 +36,6 @@
 // そのまま使う — ここで `TSUKUMO_CHARACTER` を渡すと、利用者が最後に選んだ立ち絵を
 // 上書きしてしまうため。
 
-import { type ChildProcess, spawn } from "node:child_process"
 import { cpSync, mkdirSync, writeFileSync } from "node:fs"
 import path from "node:path"
 import process from "node:process"
@@ -45,6 +44,8 @@ import { fileURLToPath } from "node:url"
 import { type Browser, chromium, type Page } from "playwright-core"
 
 import { appendDiaryParagraph } from "../src/server/diary/adapter/diary.ts"
+import { spawnFakeTsukumo, waitForViewUrl } from "./lib/fake-tsukumo-process.ts"
+import { escapeHtml } from "./lib/html-escape.ts"
 
 /** tsukumo 自身の場所（このスクリプトの1つ上）。spawn の cwd にも、架空の日記・パックを
  * 置く先を組み立てるのにも使う。 */
@@ -619,9 +620,18 @@ async function captureEntry(
   if (home !== undefined) {
     await applyHomeSetup(entry.homeSetup, home)
   }
-  const session = spawnTsukumo(entry.scene, home)
+  const session = spawnFakeTsukumo({
+    entry: path.join(REPO_DIR, "src", "cli.ts"),
+    cwd: REPO_DIR,
+    scene: entry.scene,
+    port: 0,
+    home,
+    extraEnv: {},
+    dropInheritedTsukumoEnv: false,
+    stderr: "inherit",
+  })
   try {
-    const url = await waitForViewUrl(session)
+    const url = await waitForViewUrl(session, LAUNCH_TIMEOUT_MS)
     const shots: Shot[] = []
     for (const size of SIZES) {
       const file = path.join(outDir, `${entry.name}-${size.name}.png`)
@@ -782,52 +792,6 @@ function diaryEpochMilliseconds(date: string): number {
 }
 
 /**
- * tsukumo を1つ起こす。空きポート（`TSUKUMO_VIEW_PORT=0`）なので、常駐している tsukumo と
- * ぶつからない。タブは開かず（`TSUKUMO_OPEN_VIEW=0`）、駆動は fake driver だけ。`home` は
- * {@link HomeSetup} が件専用のホームを立てたときだけ渡り、既定のホームを `TSUKUMO_HOME` で
- * 上書きする（無ければ既定のまま）。
- */
-function spawnTsukumo(scene: string, home: string | undefined): ChildProcess {
-  return spawn("node", [path.join(REPO_DIR, "src", "cli.ts")], {
-    cwd: REPO_DIR,
-    env: {
-      ...process.env,
-      ...(home === undefined ? {} : { TSUKUMO_HOME: home }),
-      TSUKUMO_DRIVER: "fake",
-      TSUKUMO_FAKE_SCENE: scene,
-      TSUKUMO_VIEW_PORT: "0",
-      TSUKUMO_OPEN_VIEW: "0",
-    },
-    stdio: ["ignore", "pipe", "inherit"],
-  })
-}
-
-/** 起こした tsukumo が出す配信 URL（`announce`）を待つ。出ないまま終わったら諦める。 */
-function waitForViewUrl(session: ChildProcess): Promise<string> {
-  return new Promise((resolve, reject) => {
-    let seen = ""
-    const timer = setTimeout(() => {
-      reject(new Error(`tsukumo が URL を出さない（${String(LAUNCH_TIMEOUT_MS)}ms）`))
-    }, LAUNCH_TIMEOUT_MS)
-    const finish = (settle: () => void): void => {
-      clearTimeout(timer)
-      settle()
-    }
-
-    session.stdout?.on("data", (chunk: Buffer) => {
-      seen += chunk.toString("utf8")
-      const url = /https?:\/\/\S+/.exec(seen)?.[0]
-      if (url !== undefined) {
-        finish(() => resolve(url))
-      }
-    })
-    session.on("exit", (code) => {
-      finish(() => reject(new Error(`tsukumo が終了した（コード ${String(code)}）`)))
-    })
-  })
-}
-
-/**
  * 並べて見るための索引。画像を1枚ずつ開かずに済ませるのが目的なので、飾りは付けず
  * 見出しと画像だけを縦に並べる（外の CSS も JS も読まない）。
  *
@@ -875,14 +839,6 @@ function catalogEntriesOf(shots: readonly Shot[]): readonly CatalogEntry[] {
   return shots
     .map((shot) => shot.entry)
     .filter((entry, index, all) => all.findIndex((other) => other.name === entry.name) === index)
-}
-
-function escapeHtml(value: string): string {
-  return value
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
 }
 
 /** 引数を読む。読めない指定は undefined（呼び出し側が使い方を出す）。 */

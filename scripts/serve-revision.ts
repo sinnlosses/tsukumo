@@ -29,11 +29,13 @@
 // （`readCommitCalendar`）。取り出し先で打つ `git` は読み取り専用だけ（`lendGitDirectory` の
 // コメント）なので、貸した `.git` を書き換える心配はない。
 
-import { type ChildProcess, execFileSync, spawn } from "node:child_process"
+import { type ChildProcess, execFileSync } from "node:child_process"
 import { existsSync, mkdirSync, symlinkSync } from "node:fs"
 import path from "node:path"
 import process from "node:process"
 import { fileURLToPath } from "node:url"
+
+import { spawnFakeTsukumo, waitForViewUrl } from "./lib/fake-tsukumo-process.ts"
 
 /**
  * 取り出し先の親（リポジトリの外）。コミットごとに下に掘るので、同じコミットを何度起こしても
@@ -91,9 +93,21 @@ async function main(argv: readonly string[]): Promise<number> {
     return 1
   }
 
-  const session = spawnTsukumo(revision, options)
-  const url = await waitForViewUrl(session)
-  if (url === undefined) {
+  const session = spawnFakeTsukumo({
+    entry: path.join(revision.treeDir, "src", "cli.ts"),
+    cwd: revision.treeDir,
+    scene: options.scene,
+    port: options.port,
+    home: revision.homeDir,
+    extraEnv: {},
+    dropInheritedTsukumoEnv: false,
+    stderr: "inherit",
+  })
+  let url: string
+  try {
+    url = await waitForViewUrl(session, LAUNCH_TIMEOUT_MS)
+  } catch (error) {
+    process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`)
     session.kill("SIGTERM")
     return 1
   }
@@ -184,50 +198,6 @@ function buildUi(revision: Revision): boolean {
 }
 
 /**
- * 取り出したツリーで tsukumo を1つ起こす。タブは開かず（`TSUKUMO_OPEN_VIEW=0`）、駆動は fake、
- * ホームは /tmp の下 — 利用者が使っている tsukumo とポートもホームも重ならない。
- */
-function spawnTsukumo(revision: Revision, options: Options): ChildProcess {
-  return spawn("node", [path.join(revision.treeDir, "src", "cli.ts")], {
-    cwd: revision.treeDir,
-    env: {
-      ...process.env,
-      TSUKUMO_DRIVER: "fake",
-      ...(options.scene === undefined ? {} : { TSUKUMO_FAKE_SCENE: options.scene }),
-      TSUKUMO_VIEW_PORT: String(options.port),
-      TSUKUMO_HOME: revision.homeDir,
-      TSUKUMO_OPEN_VIEW: "0",
-    },
-    stdio: ["ignore", "pipe", "inherit"],
-  })
-}
-
-/** 起こした tsukumo が出す配信 URL を待つ。出ないまま終わったら undefined。 */
-function waitForViewUrl(session: ChildProcess): Promise<string | undefined> {
-  return new Promise((resolve) => {
-    let seen = ""
-    const timer = setTimeout(() => {
-      process.stderr.write(`tsukumo が URL を出さない（${String(LAUNCH_TIMEOUT_MS)}ms）\n`)
-      resolve(undefined)
-    }, LAUNCH_TIMEOUT_MS)
-
-    session.stdout?.on("data", (chunk: Buffer) => {
-      seen += chunk.toString("utf8")
-      const url = /https?:\/\/\S+/.exec(seen)?.[0]
-      if (url !== undefined) {
-        clearTimeout(timer)
-        resolve(url)
-      }
-    })
-    session.on("exit", (code) => {
-      clearTimeout(timer)
-      process.stderr.write(`tsukumo が終了した（コード ${String(code)}）\n`)
-      resolve(undefined)
-    })
-  })
-}
-
-/**
  * 起こしたものが終わるまで居座る。この道具は自分では止めない — `node scripts/stop.ts --port` が
  * 子へ SIGTERM を送ると、それに続いてここも終わる（止め口を1つに保つ）。この道具自身が
  * SIGINT / SIGTERM を受けたときだけは、子を道連れにしてから終わる。
@@ -240,6 +210,7 @@ function waitForExit(session: ChildProcess): Promise<number> {
       })
     }
     session.on("exit", (code) => {
+      process.stderr.write(`tsukumo が終了した（コード ${String(code)}）\n`)
       resolve(code ?? 0)
     })
   })
