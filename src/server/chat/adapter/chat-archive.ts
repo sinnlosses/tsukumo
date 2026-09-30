@@ -14,13 +14,11 @@
 // 古い会話は、エピソード索引（`episode.jsonl`）を引いてから、当たった範囲のファイルだけを開く。
 // 索引を書くのは定着で、ここが持つのは置き場と形、`recallList` / `recallEpisode` での読み方だけ。
 //
-// 定着をプロセスをまたいで1本にする錠（`consolidation.lock`）の置き場と取り方もここが持つ。
-//
 // `kept.jsonl`（「残す」旗の索引）は書きも読みもしない。
 // 過去に書かれたファイルが残っていても消さず、単に読まない。
 
-import { mkdirSync, rmSync, statSync, writeFileSync } from "node:fs"
-import { dirname, join } from "node:path"
+import { rmSync } from "node:fs"
+import { join } from "node:path"
 
 import { z } from "zod"
 
@@ -34,12 +32,10 @@ import type {
   ChatArchiveLine,
   ChatArchiveLineOrigin,
   ChatArchiveRecentEntry,
-  ChatEpisodeCandidate,
 } from "../../session-driver/core/session-driver.ts"
 import type {
   ChatArchive,
   ChatArchiveEntry,
-  ChatConsolidationLock,
   ChatEpisodeDraft,
   ChatEpisodeReadResult,
   ChatEpisodeRecallListResult,
@@ -48,7 +44,10 @@ import type {
   ChatUnconsolidatedEntry,
   ChatUnconsolidatedLimits,
 } from "../core/chat-archive-port.ts"
+import { takeWithinBytes } from "../core/chat-byte-budget.ts"
+import { episodeIdCounters } from "../core/chat-episode-id.ts"
 import { scoreChatEpisodes, type ChatEpisodeRecord } from "../core/chat-episode-score.ts"
+import { isAfterAt, isBeforeAt } from "../core/chat-instant-order.ts"
 
 /** 置き場のディレクトリ名（`~/.tsukumo/chat-archive/`）。 */
 const CHAT_ARCHIVE_DIR_NAME = "chat-archive"
@@ -67,9 +66,6 @@ const EPISODE_INDEX_FILE_NAME = "episode.jsonl"
 
 /** 思い出した記録の名前。 */
 const RECALLED_FILE_NAME = "recalled.jsonl"
-
-/** 定着の錠の名前。 */
-const CONSOLIDATION_LOCK_FILE_NAME = "consolidation.lock"
 
 /** エピソード索引の行の形の版（`episode.jsonl` 自身の版で、アーカイブの行の `v` とは別の数え方）。 */
 const EPISODE_FORMAT_VERSION = 2 satisfies number
@@ -175,8 +171,6 @@ export function createChatArchive(root: string = chatArchiveDir()): ChatArchive 
       readEpisodeCandidates(root, packName, keyword, limitBytes, now),
     recallEpisode: (packName, id, limitBytes, now) =>
       readEpisode(root, packName, id, limitBytes, now),
-    lockConsolidation: (packName, staleAfterMs, now) =>
-      lockConsolidation(root, packName, staleAfterMs, now),
   }
 }
 
@@ -255,30 +249,27 @@ function readEntriesBackward(
   fileNames: readonly string[],
   limitBytes: number,
 ): readonly TimedEntry[] {
-  // 新しい→古いの順に集め、最後にひっくり返して「古い→新しい」で返す。
-  const collected: TimedEntry[] = []
-  let usedBytes = 0
-  for (const fileName of fileNames) {
-    let reachedLimit = false
-    for (const raw of [...readJsonLines(join(dir, fileName))].reverse()) {
-      const timed = toTimedEntry(raw)
-      if (timed === undefined) {
-        continue
+  function* newestFirst(): Generator<TimedEntry> {
+    for (const fileName of fileNames) {
+      for (const raw of [...readJsonLines(join(dir, fileName))].reverse()) {
+        const timed = toTimedEntry(raw)
+        if (timed !== undefined) {
+          yield timed
+        }
       }
-      const bytes = byteLength(timed.line.text)
-      if (usedBytes + bytes > limitBytes) {
-        reachedLimit = true
-        break
-      }
-      collected.push(timed)
-      usedBytes += bytes
-    }
-    if (reachedLimit) {
-      break
     }
   }
 
-  return [...collected].reverse()
+  const { taken } = takeWithinBytes(newestFirst(), {
+    limitBytes,
+    sizeOf: timedEntryBytes,
+    whenFirstExceeds: "stop",
+  })
+  return [...taken].reverse()
+}
+
+function timedEntryBytes(timed: TimedEntry): number {
+  return byteLength(timed.line.text)
 }
 
 /** 日付のファイル名だけを新しい順に並べる（読めないディレクトリは空）。 */
@@ -349,30 +340,29 @@ function readUnconsolidated(
     return timed
   })
 
-  const entries: ChatUnconsolidatedEntry[] = []
-  let usedBytes = 0
-  let overflowed = false
-  for (const timed of all) {
-    if (afterAt !== undefined && !isAfterAt(timed.at, afterAt)) {
-      continue
-    }
-    if (windowStartAt !== undefined && !isBeforeAt(timed.at, windowStartAt)) {
-      break
-    }
-    const bytes = byteLength(timed.line.text)
-    if (usedBytes + bytes > limits.maxBytes) {
-      overflowed = true
-      // 先頭の1件だけで maxBytes を超えるときは、切らずにその1件だけを単独で渡す。
-      // 行の途中では切らないまま、その回で必ず前へ進めるため。
-      if (entries.length === 0) {
-        entries.push({ ...timed.line, at: timed.at })
-        usedBytes += bytes
+  function* untilWindow(): Generator<TimedEntry> {
+    for (const timed of all) {
+      if (afterAt !== undefined && !isAfterAt(timed.at, afterAt)) {
+        continue
       }
-      break
+      if (windowStartAt !== undefined && !isBeforeAt(timed.at, windowStartAt)) {
+        return
+      }
+      yield timed
     }
-    entries.push({ ...timed.line, at: timed.at })
-    usedBytes += bytes
   }
+
+  // 先頭の1件だけで maxBytes を超えるときは、切らずにその1件だけを単独で渡す。
+  // 行の途中では切らないまま、その回で必ず前へ進めるため。
+  const { taken, usedBytes, overflowed } = takeWithinBytes(untilWindow(), {
+    limitBytes: limits.maxBytes,
+    sizeOf: timedEntryBytes,
+    whenFirstExceeds: "take",
+  })
+  const entries: readonly ChatUnconsolidatedEntry[] = taken.map((timed) => ({
+    ...timed.line,
+    at: timed.at,
+  }))
   return { entries, usedBytes, previousEpisodeTitle: previousEpisode?.title ?? "", overflowed }
 }
 
@@ -435,7 +425,11 @@ function readEpisodeCandidates(
     now,
     counts,
   )
-  const candidates = trimCandidatesToBytes(scored, limitBytes)
+  const { taken: candidates } = takeWithinBytes(scored, {
+    limitBytes,
+    sizeOf: (candidate) => byteLength(candidate.title) + byteLength(candidate.gist),
+    whenFirstExceeds: "stop",
+  })
   return candidates.length === 0 ? { kind: "not-found" } : { kind: "found", candidates }
 }
 
@@ -479,67 +473,6 @@ function episodeIndexPath(root: string, packName: string): string {
   return join(root, packName, EPISODE_INDEX_FILE_NAME)
 }
 
-/**
- * 定着の錠を取る（{@link ChatArchive.lockConsolidation} の実装）。
- * 錠のファイルを排他で作れたときだけ取れる。中身は書いた時刻だけで、古さはファイルの更新時刻で測る。
- */
-function lockConsolidation(
-  root: string,
-  packName: string,
-  staleAfterMs: number,
-  now: Temporal.Instant,
-): ChatConsolidationLock | undefined {
-  if (!isCharacterPackName(packName)) {
-    return undefined
-  }
-
-  const path = join(root, packName, CONSOLIDATION_LOCK_FILE_NAME)
-  if (createLockFile(path, now)) {
-    return releasableLock(path)
-  }
-  if (!isStaleLock(path, staleAfterMs, now)) {
-    return undefined
-  }
-  removeLockFile(path)
-  return createLockFile(path, now) ? releasableLock(path) : undefined
-}
-
-/** 錠のファイルを排他（`wx`）で作る。既にある・作れないときは `false`。 */
-function createLockFile(path: string, now: Temporal.Instant): boolean {
-  try {
-    mkdirSync(dirname(path), { recursive: true })
-    writeFileSync(path, isoWithOffset(now.epochMilliseconds), { flag: "wx" })
-    return true
-  } catch {
-    return false
-  }
-}
-
-/** 錠が書いてから `staleAfterMs` を過ぎているか。読めない（消えた）錠も取り直してよい側に倒す。 */
-function isStaleLock(path: string, staleAfterMs: number, now: Temporal.Instant): boolean {
-  try {
-    return now.epochMilliseconds - statSync(path).mtimeMs > staleAfterMs
-  } catch {
-    return true
-  }
-}
-
-function releasableLock(path: string): ChatConsolidationLock {
-  return {
-    release: () => {
-      removeLockFile(path)
-    },
-  }
-}
-
-function removeLockFile(path: string): void {
-  try {
-    rmSync(path, { force: true })
-  } catch {
-    // 消せなかった錠は、古さの閾値を過ぎたところで次の誰かが取り直す。
-  }
-}
-
 /** `~/.tsukumo/chat-archive/<パック名>/recalled.jsonl` のパス。 */
 function recalledPath(root: string, packName: string): string {
   return join(root, packName, RECALLED_FILE_NAME)
@@ -566,58 +499,6 @@ function readRecalledCounts(root: string, packName: string): ReadonlyMap<string,
 }
 
 /**
- * 日付ごとの、次に振る通し番号の元になるカウンタ。
- * 既にある行の続きから振るので、1回の定着で複数のエピソードが同じ日に落ちても重ならない。
- */
-function episodeIdCounters(existing: readonly EpisodeLine[]): Map<string, number> {
-  const counters = new Map<string, number>()
-  for (const record of existing) {
-    const parsed = parseEpisodeId(record.id)
-    if (parsed === undefined) {
-      continue
-    }
-    counters.set(parsed.dateKey, Math.max(counters.get(parsed.dateKey) ?? 0, parsed.number))
-  }
-  return counters
-}
-
-const EPISODE_ID_PATTERN = /^(\d{4}-\d{2}-\d{2})-(\d+)$/
-
-/** 既存の `id` を日付と通し番号に割る（形が合わない `id` は undefined）。 */
-function parseEpisodeId(
-  id: string,
-): { readonly dateKey: string; readonly number: number } | undefined {
-  const match = EPISODE_ID_PATTERN.exec(id)
-  if (match === null) {
-    return undefined
-  }
-  const dateKey = match[1]
-  const numberText = match[2]
-  if (dateKey === undefined || numberText === undefined) {
-    return undefined
-  }
-  return { dateKey, number: Number(numberText) }
-}
-
-/** 候補を先頭から `limitBytes` に収まるところまで切る（溢れる1件は載せない）。 */
-function trimCandidatesToBytes(
-  candidates: readonly ChatEpisodeCandidate[],
-  limitBytes: number,
-): readonly ChatEpisodeCandidate[] {
-  const trimmed: ChatEpisodeCandidate[] = []
-  let usedBytes = 0
-  for (const candidate of candidates) {
-    const bytes = byteLength(candidate.title) + byteLength(candidate.gist)
-    if (usedBytes + bytes > limitBytes) {
-      break
-    }
-    trimmed.push(candidate)
-    usedBytes += bytes
-  }
-  return trimmed
-}
-
-/**
  * `from`〜`to`（両端含む）の逐語を古いほうから `limitBytes` まで読む。
  * 当たる日のファイルだけ開くので、アーカイブが何年ぶん増えても開くファイルの数は範囲の日数で頭打ちになる。
  */
@@ -634,36 +515,21 @@ function readEpisodeEntries(
     return date >= fromDate && date <= toDate
   })
 
-  const entries: ChatArchiveRecentEntry[] = []
-  let usedBytes = 0
-  let overflowed = false
-  for (const fileName of fileNames) {
-    if (overflowed) {
-      break
-    }
-    for (const raw of readJsonLines(join(dir, fileName))) {
-      const timed = toTimedEntry(raw)
-      if (timed === undefined || isBeforeAt(timed.at, from) || isAfterAt(timed.at, to)) {
-        continue
+  function* inRange(): Generator<TimedEntry> {
+    for (const fileName of fileNames) {
+      for (const raw of readJsonLines(join(dir, fileName))) {
+        const timed = toTimedEntry(raw)
+        if (timed !== undefined && !isBeforeAt(timed.at, from) && !isAfterAt(timed.at, to)) {
+          yield timed
+        }
       }
-      const bytes = byteLength(timed.line.text)
-      if (usedBytes + bytes > limitBytes) {
-        overflowed = true
-        break
-      }
-      entries.push(recentEntryOf(timed))
-      usedBytes += bytes
     }
   }
-  return { entries, overflowed }
-}
 
-/** `at` が `boundary` より後か（`Temporal.Instant` で比べる。オフセットが違っても正しく比べる）。 */
-function isAfterAt(at: string, boundary: string): boolean {
-  return Temporal.Instant.compare(Temporal.Instant.from(at), Temporal.Instant.from(boundary)) > 0
-}
-
-/** `at` が `boundary` より前か。 */
-function isBeforeAt(at: string, boundary: string): boolean {
-  return Temporal.Instant.compare(Temporal.Instant.from(at), Temporal.Instant.from(boundary)) < 0
+  const { taken, overflowed } = takeWithinBytes(inRange(), {
+    limitBytes,
+    sizeOf: timedEntryBytes,
+    whenFirstExceeds: "stop",
+  })
+  return { entries: taken.map(recentEntryOf), overflowed }
 }

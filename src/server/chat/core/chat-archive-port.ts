@@ -61,22 +61,6 @@ export type ChatArchive = {
     limitBytes: number,
     now: Temporal.Instant,
   ) => ChatEpisodeReadResult
-  /**
-   * そのパックの定着の錠を取る。プロセスをまたいで1本だけが取れる。
-   * 取れなければ undefined（ほかの誰かが走らせている）。
-   * 書いてから `staleAfterMs` を過ぎた錠は、落ちたプロセスの残りとして消して取り直す。
-   */
-  readonly lockConsolidation: (
-    packName: string,
-    staleAfterMs: number,
-    now: Temporal.Instant,
-  ) => ChatConsolidationLock | undefined
-}
-
-/** {@link ChatArchive.lockConsolidation} が取れたときの錠。 */
-export type ChatConsolidationLock = {
-  /** 錠を外す。外せなくても例外は投げない。 */
-  readonly release: () => void
 }
 
 /**

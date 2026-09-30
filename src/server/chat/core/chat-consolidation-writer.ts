@@ -1,7 +1,7 @@
 // 定着を1回走らせて書く口。
 // 未定着の行を数え、契機に届いていれば使い捨ての `query()` に畳ませ、検査を通ったものをエピソード → あらすじの順で書く。
 // ここは1回ぶんだけを持つ。
-// プロセスをまたいで1本に絞るのはアーカイブの錠で、プロセスの中で1本に絞るのは呼び出し側。
+// プロセスをまたいで1本に絞るのは定着の錠で、プロセスの中で1本に絞るのは呼び出し側。
 //
 // 書く口は決して reject しない（起こせない・中断・時間切れ・形の崩れはどれも `failed`）。
 // 行は未定着のまま残り、次の契機で拾い直される。
@@ -54,10 +54,26 @@ export type ChatConsolidationSource =
   | { readonly kind: "dont-consolidate" }
   | { readonly kind: "consolidate"; readonly consolidate: ChatConsolidationWriter }
 
+/** {@link ChatConsolidationWriterPorts.lockConsolidation} が取れたときの錠。 */
+export type ChatConsolidationLock = {
+  /** 錠を外す。外せなくても例外は投げない。 */
+  readonly release: () => void
+}
+
 /** 書く口に外の世界から渡すもの（配線が渡す）。 */
 export type ChatConsolidationWriterPorts = {
-  /** 未定着の行の取り出しとエピソードの追記と、定着の錠。 */
-  readonly archive: Pick<ChatArchive, "unconsolidated" | "appendEpisodes" | "lockConsolidation">
+  /** 未定着の行の取り出しとエピソードの追記。 */
+  readonly archive: Pick<ChatArchive, "unconsolidated" | "appendEpisodes">
+  /**
+   * そのパックの定着の錠を取る。プロセスをまたいで1本だけが取れる。
+   * 取れなければ undefined（ほかの誰かが走らせている）。
+   * 書いてから `staleAfterMs` を過ぎた錠は、落ちたプロセスの残りとして消して取り直す。
+   */
+  readonly lockConsolidation: (
+    packName: string,
+    staleAfterMs: number,
+    now: Temporal.Instant,
+  ) => ChatConsolidationLock | undefined
   /** パック1つぶんのあらすじの読み書き口（書くのは起こした時点のパックのファイル）。 */
   readonly chatSummary: (packName: string) => ChatSummary
   /** 使い捨ての `query()`。返すのは `structured_output` のまま（検査はここでする）。 */
@@ -87,7 +103,7 @@ async function consolidate(
   packName: string,
   signal: AbortSignal,
 ): Promise<ChatConsolidationOutcome> {
-  const lock = ports.archive.lockConsolidation(
+  const lock = ports.lockConsolidation(
     packName,
     CHAT_CONSOLIDATION_LOCK_STALE_MS,
     Temporal.Instant.fromEpochMilliseconds(ports.now()),

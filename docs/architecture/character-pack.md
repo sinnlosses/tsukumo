@@ -142,7 +142,7 @@ characters/<name>/
 | あらすじ（と渡し済みの印）     | `~/.tsukumo/chat-summary/<pack>.md`                                                                      | `chat/adapter/chat-summary.ts`            |
 | 雑談の会話のアーカイブ         | `~/.tsukumo/chat-archive/<pack>/<YYYY-MM-DD>.jsonl`                                                      | `chat/adapter/chat-archive.ts`            |
 | エピソード索引・思い出した記録 | `~/.tsukumo/chat-archive/<pack>/episode.jsonl` / `recalled.jsonl`                                        | `chat/adapter/chat-archive.ts`（同じ1つ） |
-| 定着の錠                       | `~/.tsukumo/chat-archive/<pack>/consolidation.lock`                                                      | `chat/adapter/chat-archive.ts`（同じ1つ） |
+| 定着の錠                       | `~/.tsukumo/chat-archive/<pack>/consolidation.lock`                                                      | `chat/adapter/chat-consolidation-lock.ts` |
 | 覚えたこと                     | `~/.tsukumo/characters/<pack>/persona.md` の末尾の節（「画面から作るときの置き場と受け取り方」の置き場） | `chat/adapter/persona-memory.ts`          |
 
 - **パックのディレクトリの中に置かない**（覚えたことを除く）。会話に由来する文章を混ぜると**パックを

@@ -86,17 +86,17 @@ function createPorts(
         order.push("append-episodes")
         episodes.push(...drafts)
       },
-      lockConsolidation: (packName, staleAfterMs, now) => {
-        lockEvents.push(`lock ${packName} ${String(staleAfterMs)} ${now.toString()}`)
-        if (!lockAvailable) {
-          return undefined
-        }
-        return {
-          release: () => {
-            lockEvents.push("release")
-          },
-        }
-      },
+    },
+    lockConsolidation: (packName, staleAfterMs, now) => {
+      lockEvents.push(`lock ${packName} ${String(staleAfterMs)} ${now.toString()}`)
+      if (!lockAvailable) {
+        return undefined
+      }
+      return {
+        release: () => {
+          lockEvents.push("release")
+        },
+      }
     },
     chatSummary: (packName) => {
       summaryPacks.push(packName)

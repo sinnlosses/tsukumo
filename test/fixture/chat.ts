@@ -20,7 +20,6 @@ export const NOOP_CHAT_ARCHIVE = {
   appendEpisodes: () => {},
   recallList: () => ({ kind: "not-found" }),
   recallEpisode: () => ({ kind: "not-found" }),
-  lockConsolidation: () => ({ release: () => {} }),
 } satisfies ChatArchive
 
 /** 読むと `record` を返し続け、書き込みは捨てる `ChatSummary`。 */

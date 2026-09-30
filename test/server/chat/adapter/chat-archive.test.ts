@@ -1047,50 +1047,6 @@ describe("createChatArchive の recallEpisode", () => {
   })
 })
 
-describe("createChatArchive の lockConsolidation", () => {
-  const STALE_MS = 240_000
-  const LOCKED_AT = Temporal.Instant.from("2026-09-26T00:00:00+09:00")
-
-  function lockPath(): string {
-    return join(root(), "fictional-pack", "consolidation.lock")
-  }
-
-  it("取れるのは1本だけで、外すとまた取れる", () => {
-    const first = createChatArchive(root())
-    const second = createChatArchive(root())
-
-    const lock = first.lockConsolidation("fictional-pack", STALE_MS, LOCKED_AT)
-
-    expect(lock).toBeDefined()
-    expect(existsSync(lockPath())).toBe(true)
-    expect(second.lockConsolidation("fictional-pack", STALE_MS, LOCKED_AT)).toBeUndefined()
-
-    lock?.release()
-
-    expect(existsSync(lockPath())).toBe(false)
-    expect(second.lockConsolidation("fictional-pack", STALE_MS, LOCKED_AT)).toBeDefined()
-  })
-
-  it("書いてから閾値を過ぎた錠は取り直す（過ぎる前は取れない）", () => {
-    const chatArchive = createChatArchive(root())
-    const now = Temporal.Now.instant()
-    expect(chatArchive.lockConsolidation("fictional-pack", STALE_MS, now)).toBeDefined()
-
-    const justBefore = now.add({ milliseconds: STALE_MS - 1000 })
-    expect(chatArchive.lockConsolidation("fictional-pack", STALE_MS, justBefore)).toBeUndefined()
-
-    const after = now.add({ milliseconds: STALE_MS + 1000 })
-    expect(chatArchive.lockConsolidation("fictional-pack", STALE_MS, after)).toBeDefined()
-  })
-
-  it("パック名が名前として通らないときは取れず、ファイルも作らない", () => {
-    const chatArchive = createChatArchive(root())
-
-    expect(chatArchive.lockConsolidation("../evil", STALE_MS, LOCKED_AT)).toBeUndefined()
-    expect(existsSync(root())).toBe(false)
-  })
-})
-
 describe("discardChatArchive", () => {
   /** パック1つぶんの置き場に、日ごとの会話と索引と旗の3種を置く（中身は形だけ）。 */
   function writeArchiveOf(packName: string): string {
