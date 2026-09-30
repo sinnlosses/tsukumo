@@ -562,12 +562,15 @@ function listMarker(
 function tableMarkdown(table: Extract<ReportBlock, { readonly kind: "table" }>): string {
   const row = (cells: readonly string[]): string => `| ${cells.join(" | ")} |`
   const aligns = table.columns.map((_, index) => columnAlign(table.rows, index))
+  const bars = table.columns.map((_, index) => columnBar(table.rows, index))
   return joinParts([
     table.title.trim() === "" ? "" : `**${markdownInline(table.title)}**`,
     [
-      row(table.columns.map((column) => cellMarkdown(column))),
+      row(table.columns.map((column) => cellMarkdown(column, NO_BAR))),
       row(aligns.map(alignMarker)),
-      ...table.rows.map((cells) => row(cells.map((cell) => cellMarkdown(cell)))),
+      ...table.rows.map((cells) =>
+        row(cells.map((cell, index) => cellMarkdown(cell, bars[index] ?? NO_BAR))),
+      ),
     ].join("\n"),
   ])
 }
@@ -610,9 +613,38 @@ function alignMarker(align: ColumnAlign): string {
   }
 }
 
-function cellMarkdown(cell: ReportCell): string {
+type ColumnBar = { readonly kind: "none" } | { readonly kind: "bar"; readonly max: number }
+
+const NO_BAR: ColumnBar = { kind: "none" }
+
+/**
+ * 列の全セルが素の文字列で数（`from`/`to` の変化セルを含まない）・行が2つ以上・列に負の数が無い・
+ * 最大値が0より大きいときだけ、行の値を最大値に照らす棒を描く。
+ */
+function columnBar(
+  rows: Extract<ReportBlock, { readonly kind: "table" }>["rows"],
+  index: number,
+): ColumnBar {
+  if (rows.length < 2 || columnAlign(rows, index) !== "right") {
+    return NO_BAR
+  }
+  const cells = rows.map((row) => row[index])
+  if (!cells.every((cell): cell is string => typeof cell === "string")) {
+    return NO_BAR
+  }
+  const magnitudes = cells.map(numericCellMagnitude)
+  const max = Math.max(...magnitudes)
+  return magnitudes.some((magnitude) => magnitude < 0) || max <= 0 ? NO_BAR : { kind: "bar", max }
+}
+
+/** `NUMERIC_CELL_PATTERN` に合う文字列を数値にする（桁区切りの `,` を除き、`%` は数値のまま読む）。 */
+function numericCellMagnitude(text: string): number {
+  return Number.parseFloat(text.replaceAll(",", ""))
+}
+
+function cellMarkdown(cell: ReportCell, bar: ColumnBar): string {
   if (typeof cell === "string") {
-    return markdownInline(cell).replaceAll("|", "\\|")
+    return bar.kind === "bar" ? numericBarMarkdown(cell, bar.max) : cellTextMarkdown(cell)
   }
   if ("from" in cell) {
     return `<span class="change-from">${markdownInline(cell.from)} →</span> ${markdownInline(cell.to)}`.replaceAll(
@@ -628,6 +660,19 @@ function cellMarkdown(cell: ReportCell): string {
       ? mark
       : `${mark}<span class="cell-status-text">${markdownInline(text)}</span>`
   return `<span class="cell-status ${status.className}">${body}</span>`.replaceAll("|", "\\|")
+}
+
+function cellTextMarkdown(cell: string): string {
+  return markdownInline(cell).replaceAll("|", "\\|")
+}
+
+/** 数だけの列のセルを、列の最大値に対する幅の棒と数字を重ねた印にする。 */
+function numericBarMarkdown(cell: string, max: number): string {
+  const width = Math.round((numericCellMagnitude(cell) / max) * 100)
+  return `<span class="cell-numeric"><span class="cell-bar" style="width: ${String(width)}%"></span><span class="cell-numeric-value">${markdownInline(cell)}</span></span>`.replaceAll(
+    "|",
+    "\\|",
+  )
 }
 
 /**

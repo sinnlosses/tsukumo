@@ -185,6 +185,98 @@ describe("reportSectionsMarkdown", () => {
     expect(markdownOf(table)).toContain("| --- | --- |")
   })
 
+  it("数だけの列（行が2つ以上・負の数なし）は、列の最大値に対する幅の棒を数字に重ねる", () => {
+    const table: ReportBlock = {
+      kind: "table",
+      title: "",
+      columns: ["項目", "件数"],
+      rows: [
+        ["架空の a", "40"],
+        ["架空の b", "10"],
+      ],
+      fold: "",
+    }
+
+    expect(markdownOf(table)).toBe(
+      [
+        "| 項目 | 件数 |",
+        "| --- | ---: |",
+        '| 架空の a | <span class="cell-numeric"><span class="cell-bar" style="width: 100%"></span><span class="cell-numeric-value">40</span></span> |',
+        '| 架空の b | <span class="cell-numeric"><span class="cell-bar" style="width: 25%"></span><span class="cell-numeric-value">10</span></span> |',
+      ].join("\n"),
+    )
+  })
+
+  it("行が1つの表には棒を出さない", () => {
+    const table: ReportBlock = {
+      kind: "table",
+      title: "",
+      columns: ["項目", "件数"],
+      rows: [["架空の a", "40"]],
+      fold: "",
+    }
+
+    expect(markdownOf(table)).toBe(
+      ["| 項目 | 件数 |", "| --- | ---: |", "| 架空の a | 40 |"].join("\n"),
+    )
+  })
+
+  it("負の数を含む列には棒を出さない", () => {
+    const table: ReportBlock = {
+      kind: "table",
+      title: "",
+      columns: ["項目", "件数"],
+      rows: [
+        ["架空の a", "312"],
+        ["架空の b", "-8"],
+      ],
+      fold: "",
+    }
+
+    expect(markdownOf(table)).toBe(
+      ["| 項目 | 件数 |", "| --- | ---: |", "| 架空の a | 312 |", "| 架空の b | -8 |"].join("\n"),
+    )
+  })
+
+  it("最大値が0（全セル0）の列には棒を出さない", () => {
+    const table: ReportBlock = {
+      kind: "table",
+      title: "",
+      columns: ["項目", "件数"],
+      rows: [
+        ["架空の a", "0"],
+        ["架空の b", "0"],
+      ],
+      fold: "",
+    }
+
+    expect(markdownOf(table)).toBe(
+      ["| 項目 | 件数 |", "| --- | ---: |", "| 架空の a | 0 |", "| 架空の b | 0 |"].join("\n"),
+    )
+  })
+
+  it("前後がどちらも数の変化セルを含む列には棒を出さない", () => {
+    const table: ReportBlock = {
+      kind: "table",
+      title: "",
+      columns: ["項目", "件数"],
+      rows: [
+        ["架空の a", { from: "12", to: "8" }],
+        ["架空の b", "3"],
+      ],
+      fold: "",
+    }
+
+    expect(markdownOf(table)).toBe(
+      [
+        "| 項目 | 件数 |",
+        "| --- | ---: |",
+        '| 架空の a | <span class="change-from">12 →</span> 8 |',
+        "| 架空の b | 3 |",
+      ].join("\n"),
+    )
+  })
+
   it("stats の before は数の上に矢印の文字を添えて出し、差は出さない", () => {
     const stats: ReportBlock = {
       kind: "stats",

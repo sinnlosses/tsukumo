@@ -24,7 +24,7 @@ export const REPORT_NOTE_KINDS = [
 export const REPORT_WRITTEN_MARK_NAMES = ["cols", "card"] as const satisfies readonly string[]
 
 /**
- * `note` 以外の印のうち、tsukumo が塊から組むもの（表のセルの状態の印と変化・`stats` の塊・
+ * `note` 以外の印のうち、tsukumo が塊から組むもの（表のセルの状態の印と変化・数の棒・`stats` の塊・
  * 名前付きの `list`・`list` の `flow`・`progress` / `options` / `files` の塊）。モデルには教えない。ラベルは付かず、見た目だけを持つ。
  */
 export const REPORT_BLOCK_MARK_NAMES = [
@@ -39,6 +39,9 @@ export const REPORT_BLOCK_MARK_NAMES = [
   "cell-status-ng",
   "cell-status-mark",
   "cell-status-text",
+  "cell-numeric",
+  "cell-bar",
+  "cell-numeric-value",
   "stats",
   "stat",
   "stat-before",
