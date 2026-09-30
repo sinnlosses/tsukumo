@@ -20,19 +20,13 @@ import {
   type AchievementMilestone,
   type DailyAchievement,
 } from "../../../../../shared/achievement/achievement.ts"
-import type {
-  CharacterInfo,
-  CharacterPackEntry,
-} from "../../../../../shared/character-pack/character.ts"
+import type { CharacterInfo } from "../../../../../shared/character-pack/character.ts"
 import type {
   DailyDiaryStatus,
   DiaryStage,
   DiaryWriting,
 } from "../../../../../shared/diary/diary.ts"
-import {
-  DEFAULT_CHARACTER_NAME,
-  portraitAppearance,
-} from "../../../../domain/portrait-appearance.ts"
+import { DEFAULT_CHARACTER_NAME } from "../../../../domain/portrait-appearance.ts"
 import { rpc } from "../../../../domain/rpc.ts"
 import {
   selectAchievementDate,
@@ -41,7 +35,8 @@ import {
 } from "../../../../stores/screen.tsx"
 import { useSession, type SessionDispatch } from "../../../../stores/session.ts"
 import { monthDayLabel } from "../../../../utils/month-day-label.ts"
-import { diaryWriterPortraitOf, type DiaryWriterPortrait } from "../domain/diary-writer.ts"
+import { currentWriterPortraitOf, type DiaryWriterPortrait } from "../domain/diary-writer.ts"
+import { EMPTY_DAY_REASON } from "../domain/review-note.ts"
 
 /** 今日を見ているあいだだけ取り直す間隔。 */
 const TODAY_REFETCH_INTERVAL_MS = 60_000
@@ -119,7 +114,6 @@ export type UseAchievementResult = {
 function busyOnAnotherDayReason(date: string): string {
   return `いま${monthDayLabel(Temporal.PlainDate.from(date))}の日記を書いているので送れない`
 }
-const EMPTY_DAY_BLOCKED_REASON = "振り返る成果が無い"
 
 /**
  * 書き上がった日記の演出を、この起動のあいだ1回だけ見せたことを覚える（React の外の値）。
@@ -209,7 +203,11 @@ export function useAchievement(): UseAchievementResult {
     },
     review: reviewButtonOf(view, daySwitch, diaryWriting, character, dispatch),
     writing,
-    diaryPortrait: diaryPortraitOf(view, character, characterPacks),
+    diaryPortrait: currentWriterPortraitOf(
+      view.kind === "ready" ? view.diary : { kind: "none" },
+      character,
+      characterPacks,
+    ),
     diaryReveal,
   }
 }
@@ -239,7 +237,7 @@ function reviewButtonOf(
     view.commitCount,
     view.doneTasks,
   )
-    ? { kind: "blocked", reason: EMPTY_DAY_BLOCKED_REASON }
+    ? { kind: "blocked", reason: EMPTY_DAY_REASON }
     : diaryWriting.kind === "writing"
       ? { kind: "blocked", reason: busyOnAnotherDayReason(diaryWriting.date) }
       : { kind: "available" }
@@ -273,27 +271,6 @@ function writingViewOf(
     return { kind: "failed" }
   }
   return { kind: "none" }
-}
-
-/**
- * 日記の区画の立ち絵と名前。
- * その日の日記が書き上がっていれば書いたパック、そうでなければいまのパックを `default` の表情で。
- */
-function diaryPortraitOf(
-  view: AchievementView,
-  character: CharacterInfo | undefined,
-  characterPacks: readonly CharacterPackEntry[],
-): DiaryWriterPortrait {
-  if (view.kind === "ready" && view.diary.kind === "written") {
-    const latest = view.diary.diary.paragraphs.at(-1)
-    if (latest !== undefined) {
-      return diaryWriterPortraitOf(latest, characterPacks)
-    }
-  }
-  return {
-    name: character?.name ?? DEFAULT_CHARACTER_NAME,
-    portrait: portraitAppearance(character, "default", "default"),
-  }
 }
 
 /** 今日を見ているかどうか（`refetchInterval` の判定。まだ分からなければ今日でないとみなす）。 */

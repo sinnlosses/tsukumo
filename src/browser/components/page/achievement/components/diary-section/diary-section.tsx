@@ -4,7 +4,10 @@
 import clsx from "clsx"
 import type { ReactElement } from "react"
 
-import type { AchievementDoneTasks } from "../../../../../../shared/achievement/achievement.ts"
+import {
+  isEmptyAchievementDay,
+  type AchievementDoneTasks,
+} from "../../../../../../shared/achievement/achievement.ts"
 import { DIARY_STAGES, type DiaryStage } from "../../../../../../shared/diary/diary.ts"
 import { useReportReveal } from "../../../../../domain/reveal/use-report-reveal.ts"
 import { Portrait } from "../../../../domain/portrait.tsx"
@@ -13,6 +16,8 @@ import { Heading } from "../../../../ui/heading/heading.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
 import styles from "../../achievement.module.css"
 import type { DiaryWriterPortrait } from "../../domain/diary-writer.ts"
+import { UNKNOWN_TASKS_NOTE } from "../../domain/review-note.ts"
+import { writtenTimeOf } from "../../domain/written-time.ts"
 import type {
   AchievementReviewButton,
   AchievementView,
@@ -22,7 +27,6 @@ import type {
 const EMPTY_DAY_NOTE = "この日に main へ入った成果は無い。"
 const NO_DIARY_NOTE = "まだこの日の日記は無い。"
 const WRITE_FAILED_NOTE = "日記を書けなかった。もう一度押すと書き直す。"
-const UNKNOWN_TASKS_NOTE = "タスクの記録が無い"
 const LOADING_VALUE = "…"
 const UNKNOWN_VALUE = "—"
 
@@ -117,7 +121,7 @@ function Header(props: {
       ) : (
         latest !== undefined && (
           <Text element="span" size="label" tone="ink-quiet" weight="inherit" className="">
-            振り返り [{timeLabel(latest.writtenAt)}]
+            振り返り [{writtenTimeOf(latest.writtenAt) ?? ""}]
           </Text>
         )
       )}
@@ -183,7 +187,7 @@ function Bubble(props: {
     )
   }
 
-  if (isEmptyDay(view.commitCount, view.doneTasks)) {
+  if (isEmptyAchievementDay(view.commitCount, view.doneTasks)) {
     return (
       <div className={styles["achievement-diary-bubble-empty"]}>
         <Text element="p" size="body" tone="ink-quiet" weight="inherit" className="">
@@ -369,17 +373,4 @@ function Controls(props: {
       )}
     </div>
   )
-}
-
-function isEmptyDay(commitCount: number, doneTasks: AchievementDoneTasks): boolean {
-  return commitCount === 0 && doneTasks.kind === "known" && doneTasks.items.length === 0
-}
-
-/**
- * 「21:40」の形。
- * `writtenAt` は `isoWithOffset` が書いたオフセット付き ISO で、その場のローカル時刻を文字のまま持つので `Temporal` へ通さず素直に切り出す。
- */
-function timeLabel(writtenAt: string): string {
-  const match = /T(\d{2}:\d{2})/.exec(writtenAt)
-  return match?.[1] ?? ""
 }

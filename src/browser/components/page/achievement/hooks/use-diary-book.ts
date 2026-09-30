@@ -25,18 +25,17 @@ import type {
   CharacterInfo,
   CharacterPackEntry,
 } from "../../../../../shared/character-pack/character.ts"
-import type { DailyDiaryStatus, Diary } from "../../../../../shared/diary/diary.ts"
-import {
-  DEFAULT_CHARACTER_NAME,
-  portraitAppearance,
-  type PortraitAppearance,
-} from "../../../../domain/portrait-appearance.ts"
+import type { Diary } from "../../../../../shared/diary/diary.ts"
+import type { PortraitAppearance } from "../../../../domain/portrait-appearance.ts"
 import { rpc } from "../../../../domain/rpc.ts"
 import { useSession, useTurnRunning, type SessionDispatch } from "../../../../stores/session.ts"
 import { dayLabel } from "../../../../utils/day-label.ts"
 import { monthDayLabel } from "../../../../utils/month-day-label.ts"
-import { diaryWriterPortraitOf } from "../domain/diary-writer.ts"
+import { currentWriterPortraitOf } from "../domain/diary-writer.ts"
 import { kanjiDateLabel, kanjiNumeral, kanjiWeekdayLabel } from "../domain/kanji-date.ts"
+import { LAMP_LABEL } from "../domain/lamp-label.ts"
+import { EMPTY_DAY_REASON } from "../domain/review-note.ts"
+import { writtenTimeOf } from "../domain/written-time.ts"
 import type { AchievementCalendarView } from "./use-achievement-calendar.ts"
 import type {
   AchievementDaySwitch,
@@ -45,7 +44,6 @@ import type {
 } from "./use-achievement.ts"
 import { takeDiaryBookOpenRequest, useDiaryBookOpenRequest } from "./use-diary-book-open-request.ts"
 
-const EMPTY_DAY_REASON = "振り返る成果が無い"
 const TURN_RUNNING_REASON = "いまターンが動いているので送れない"
 const BLANK_REVIEW_LABEL = "この日を振り返る"
 
@@ -56,13 +54,6 @@ const OPEN_NOTE: Readonly<Record<DiaryBookOpenSource, string>> = {
   calendar: "灯りの暦から開きました",
   "diary-section": "この日の日記から開きました",
   notice: "書き終わりの知らせから開きました",
-}
-
-const LAMP_LABEL: Readonly<Record<LampLevel, string>> = {
-  none: "灯りなし",
-  faint: "ほのか",
-  lit: "ともる",
-  bright: "明るい",
 }
 
 type BookState =
@@ -290,7 +281,7 @@ function pageOf(
   }
 
   const written = data.diary.kind === "written" ? data.diary.diary : undefined
-  const portrait = bookPortraitOf(data.diary, character, characterPacks)
+  const portrait = currentWriterPortraitOf(data.diary, character, characterPacks)
   const parsed = Temporal.PlainDate.from(date)
 
   const right: DiaryBookRight =
@@ -332,36 +323,15 @@ function pageOf(
   }
 }
 
-/** 書いたパックの立ち絵と名前。白紙の日はいまのパックを `default` の表情で。 */
-function bookPortraitOf(
-  diary: DailyDiaryStatus,
-  character: CharacterInfo | undefined,
-  characterPacks: readonly CharacterPackEntry[],
-): { readonly name: string; readonly portrait: PortraitAppearance } {
-  if (diary.kind === "written") {
-    const latest = diary.diary.paragraphs.at(-1)
-    if (latest !== undefined) {
-      return diaryWriterPortraitOf(latest, characterPacks)
-    }
-  }
-  return {
-    name: character?.name ?? DEFAULT_CHARACTER_NAME,
-    portrait: portraitAppearance(character, "default", "default"),
-  }
-}
-
 function paragraphsOf(diary: Diary): readonly DiaryBookParagraph[] {
-  return diary.paragraphs.map((paragraph, index) => ({
-    key: `${diary.date}-${String(index)}`,
-    body: paragraph.body,
-    timeLabel: index === 0 ? undefined : paragraphTimeLabel(paragraph.writtenAt),
-  }))
-}
-
-/** 「〔22:10〕」の形。`writtenAt` はオフセット付き ISO で、その場のローカル時刻を文字のまま持つので `Temporal` へ通さず切り出す。 */
-function paragraphTimeLabel(writtenAt: string): string | undefined {
-  const match = /T(\d{2}:\d{2})/.exec(writtenAt)
-  return match?.[1] === undefined ? undefined : `〔${match[1]}〕`
+  return diary.paragraphs.map((paragraph, index) => {
+    const time = writtenTimeOf(paragraph.writtenAt)
+    return {
+      key: `${diary.date}-${String(index)}`,
+      body: paragraph.body,
+      timeLabel: index === 0 || time === undefined ? undefined : `〔${time}〕`,
+    }
+  })
 }
 
 /** 白紙の日の主ボタン。押せないのは空の日と、ターンが動いている間。 */

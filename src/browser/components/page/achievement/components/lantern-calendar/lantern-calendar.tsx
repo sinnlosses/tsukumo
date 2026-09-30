@@ -9,20 +9,15 @@ import {
   type AchievementCalendarDay,
   type LampLevel,
 } from "../../../../../../shared/achievement/achievement-calendar.ts"
+import { monthDayLabel } from "../../../../../utils/month-day-label.ts"
 import { HStack } from "../../../../ui/h-stack/h-stack.tsx"
 import { Heading } from "../../../../ui/heading/heading.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
 import styles from "../../achievement.module.css"
+import { LAMP_LABEL } from "../../domain/lamp-label.ts"
 import type { AchievementCalendarView } from "../../hooks/use-achievement-calendar.ts"
 
 const WEEKDAY_HEADS = ["月", "火", "水", "木", "金", "土", "日"] satisfies readonly string[]
-
-const LAMP_LABEL: Readonly<Record<LampLevel, string>> = {
-  none: "灯りなし",
-  faint: "ほのか",
-  lit: "ともる",
-  bright: "明るい",
-}
 
 /** 段階ごとの見た目の大きさ（見本の px 値）。段階が上がるほど大きく・強く光らせる。 */
 const LAMP_SIZE_PX: Readonly<Record<LampLevel, number>> = {
@@ -185,7 +180,8 @@ function Grid(props: GridProps): ReactElement {
       </div>
       {first !== undefined && last !== undefined && (
         <Text element="p" size="label" tone="ink-quiet" weight="inherit" className="">
-          {monthDayLabel(first)}〜{monthDayLabel(last)}
+          {monthDayLabel(Temporal.PlainDate.from(first))}〜
+          {monthDayLabel(Temporal.PlainDate.from(last))}
         </Text>
       )}
     </>
@@ -204,7 +200,7 @@ type DayCellProps = {
 
 function DayCell(props: DayCellProps): ReactElement {
   const level = lampLevel(props.day?.commitCount ?? 0)
-  const label = `${monthDayLabel(props.date)} 灯り ${LAMP_LABEL[level]}${props.hasDiary ? "・日記あり" : ""}`
+  const label = `${monthDayLabel(Temporal.PlainDate.from(props.date))} 灯り ${LAMP_LABEL[level]}${props.hasDiary ? "・日記あり" : ""}`
 
   return (
     <button
@@ -307,12 +303,6 @@ function cellDateLabel(date: string, index: number): string {
   return parsed.day === 1 || index === 0
     ? `${String(parsed.month)}/${String(parsed.day)}`
     : String(parsed.day)
-}
-
-/** 「8月24日」の形（曜日は付けない）。 */
-function monthDayLabel(dateKey: string): string {
-  const date = Temporal.PlainDate.from(dateKey)
-  return `${String(date.month)}月${String(date.day)}日`
 }
 
 /**

@@ -6,11 +6,15 @@
 // パックを消した・名前を変えたなど引けないときは、名前だけを残し立ち絵は出さない。
 // いまのパックの絵で代えると、別の誰かが書いたように見えるため。
 
-import type { CharacterPackEntry } from "../../../../../shared/character-pack/character.ts"
+import type {
+  CharacterInfo,
+  CharacterPackEntry,
+} from "../../../../../shared/character-pack/character.ts"
 import { resolveExpressionLabel } from "../../../../../shared/character-pack/expression-choice.ts"
 import { isExpression } from "../../../../../shared/character-pack/expression.ts"
-import type { DiaryParagraph } from "../../../../../shared/diary/diary.ts"
+import type { DailyDiaryStatus, DiaryParagraph } from "../../../../../shared/diary/diary.ts"
 import {
+  DEFAULT_CHARACTER_NAME,
   portraitAppearance,
   type PortraitAppearance,
 } from "../../../../domain/portrait-appearance.ts"
@@ -41,5 +45,26 @@ export function diaryWriterPortraitOf(
             ...portraitAppearance(pack.character, expression, "default"),
             altText: `${paragraph.writer.name}（${resolveExpressionLabel(pack.character.expressions, expression)}）`,
           },
+  }
+}
+
+/**
+ * 日記の区画と日記帳に出す立ち絵と名前。
+ * 書き上がった日記があれば最後の段落を書いたパック、そうでなければいまのパックを `default` の表情で。
+ */
+export function currentWriterPortraitOf(
+  diary: DailyDiaryStatus,
+  character: CharacterInfo | undefined,
+  packs: readonly CharacterPackEntry[],
+): DiaryWriterPortrait {
+  if (diary.kind === "written") {
+    const latest = diary.diary.paragraphs.at(-1)
+    if (latest !== undefined) {
+      return diaryWriterPortraitOf(latest, packs)
+    }
+  }
+  return {
+    name: character?.name ?? DEFAULT_CHARACTER_NAME,
+    portrait: portraitAppearance(character, "default", "default"),
   }
 }

@@ -6,6 +6,7 @@ import type {
   AchievementGraduation,
   AchievementMilestone,
 } from "../../../../../../shared/achievement/achievement.ts"
+import { monthDayLabel } from "../../../../../utils/month-day-label.ts"
 import { Heading } from "../../../../ui/heading/heading.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
 import { VStack } from "../../../../ui/v-stack/v-stack.tsx"
@@ -77,7 +78,7 @@ function GraduationCard(props: { readonly graduation: AchievementGraduation }): 
         </Text>
         <span className={styles["achievement-surprise-card-spacer"]} />
         <Text element="span" size="inherit" tone="inherit" weight="inherit" className="">
-          {monthDayLabel(graduation.registeredOn)}から、おつかれさまでした
+          {monthDayLabel(Temporal.PlainDate.from(graduation.registeredOn))}から、おつかれさまでした
         </Text>
       </p>
     </article>
@@ -110,12 +111,6 @@ function MilestoneCard(props: { readonly milestone: AchievementMilestone }): Rea
 
 function milestoneKey(milestone: AchievementMilestone): string {
   return milestone.kind === "task" ? `task-${milestone.taskId}` : `commit-${milestone.time}`
-}
-
-/** 「9月12日」の形（曜日は付けない）。 */
-function monthDayLabel(dateKey: string): string {
-  const date = Temporal.PlainDate.from(dateKey)
-  return `${String(date.month)}月${String(date.day)}日`
 }
 
 /** 3桁ごとに区切る。 */
