@@ -2,7 +2,7 @@
 // `test:e2e` と `typecheck`・`lint` を省いて待ち時間を減らす。`format:check` と単体テスト
 // （タスク番号や節の参照の検査が文書を見ている）は省かない。
 // 重い段（`test`・`test:e2e`）は作業ツリーをまたぐ錠を取って、単体と E2E を並べて走らせる。
-// 並べた2段の出力は段ごとに溜め、両方が終わってから段の順に出す。
+// 並べた2段の出力は段ごとに溜め、両方が終わってから段の順に出し、落ちた段は最後の行で名指しする。
 //
 // 使い方:
 //   node scripts/check.ts         # 変えたファイルを見て、文書だけなら重い段を省く
@@ -13,6 +13,7 @@ import process from "node:process"
 import { fileURLToPath } from "node:url"
 
 import { collectChangedPaths, resolvePrimaryBranch } from "./lib/changed-path-repository.ts"
+import { describeFailedStages, type StageOutcome } from "./lib/check-failure.ts"
 import { acquireCheckLock, withCheckLockOwner } from "./lib/check-lock-repository.ts"
 import { isDocumentOnlyChange } from "./lib/document-change.ts"
 
@@ -67,6 +68,9 @@ if (heavyStages.length > 0) {
     for (const result of results) {
       process.stdout.write(result.output)
     }
+    for (const line of describeFailedStages(results)) {
+      process.stdout.write(`${line}\n`)
+    }
     const failed = results.find((result) => result.status !== 0)
     if (failed !== undefined) {
       process.exitCode = failed.status
@@ -76,7 +80,7 @@ if (heavyStages.length > 0) {
   }
 }
 
-type BufferedResult = { readonly status: number; readonly output: string }
+type BufferedResult = StageOutcome & { readonly output: string }
 
 function runBuffered(name: string): Promise<BufferedResult> {
   return new Promise((resolve) => {
@@ -89,7 +93,7 @@ function runBuffered(name: string): Promise<BufferedResult> {
     child.stdout.on("data", (chunk: Buffer) => chunks.push(chunk))
     child.stderr.on("data", (chunk: Buffer) => chunks.push(chunk))
     child.on("close", (code) => {
-      resolve({ status: code ?? 1, output: Buffer.concat(chunks).toString("utf8") })
+      resolve({ name, status: code ?? 1, output: Buffer.concat(chunks).toString("utf8") })
     })
   })
 }
