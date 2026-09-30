@@ -1407,8 +1407,9 @@ function isCssClassReferenced(content: string, className: string): boolean {
   )
 }
 
-// tsx 以外（rehype・CodeMirror）が付ける class の接頭辞。
-const FOREIGN_CSS_CLASS_PREFIXES = ["report-", "cm-"] as const
+// tsx 以外（rehype・CodeMirror）が付ける class と、domain/reveal が生の class 名で選ぶために
+// styles を介さず literal で付ける class の接頭辞。
+const FOREIGN_CSS_CLASS_PREFIXES = ["report-", "cm-", "chart-block"] as const
 
 /** CSS のセレクタ部分（`{` の前）に現れる class 名。コメントと宣言の中身は見ない。 */
 function cssClassNames(content: string): readonly string[] {

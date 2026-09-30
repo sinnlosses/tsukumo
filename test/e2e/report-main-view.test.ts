@@ -3,10 +3,11 @@ import { describe, it } from "vitest"
 import { useScenarioRun } from "./scenario-run.ts"
 
 // report → メインビュー（記法・差し戻し・整え。docs/architecture/testing.md「E2E のシナリオの一覧」）。
-// `report` ツールの呼び出しがメインビューの Markdown へどう出るかを、疑似セッションの3つの場面で
+// `report` ツールの呼び出しがメインビューの Markdown へどう出るかを、疑似セッションの5つの場面で
 // 確かめる: `notation`（記法の一覧）、`report-rejected`（差し戻されたレポートは描かれず、
 // 直したレポートだけが残る）、`report-tidied`（整形で落ちる行は描かれず、残りはそのまま出る）、
-// `report-blocks`（候補の比較と触ったファイルの一覧の塊）。
+// `report-blocks`（候補の比較と触ったファイルの一覧の塊）、`report-chart`（棒・折れ線・円の
+// グラフの塊）。
 
 const run = useScenarioRun()
 
@@ -54,6 +55,18 @@ describe("report → メインビュー", () => {
     const room = await run.open({
       scenario: "report-blocks",
       scene: "report-blocks",
+      viewport: "wide",
+      domRoots: ["main"],
+    })
+
+    await room.waitForEvent("turn-finished")
+    await room.settleAndMatch(ELAPSED_MS)
+  })
+
+  it("chart の塊が種類ごとにグラフとして描かれる", async () => {
+    const room = await run.open({
+      scenario: "report-chart",
+      scene: "report-chart",
       viewport: "wide",
       domRoots: ["main"],
     })

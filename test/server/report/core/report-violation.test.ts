@@ -116,6 +116,32 @@ describe("reportViolations", () => {
     })
   })
 
+  describe("chart の series の値の数は labels と揃える", () => {
+    it("values の数が labels と揃わない系列があれば違反", () => {
+      const chart: ReportBlock = {
+        kind: "chart",
+        chartKind: "bar",
+        labels: ["架空A", "架空B"],
+        series: [{ name: "架空系列", values: [1] }],
+        horizontal: false,
+        fold: "",
+      }
+      expect(reportViolations(draft([chart]))).toEqual([{ kind: "ragged-chart", count: 1 }])
+    })
+
+    it("揃っていれば違反にしない", () => {
+      const chart: ReportBlock = {
+        kind: "chart",
+        chartKind: "bar",
+        labels: ["架空A", "架空B"],
+        series: [{ name: "架空系列", values: [1, 2] }],
+        horizontal: false,
+        fold: "",
+      }
+      expect(kinds(draft([chart]))).toEqual([])
+    })
+  })
+
   describe("節が2つ以上なら全部に見出し", () => {
     it("見出しの無い節があれば違反", () => {
       const sections = [
@@ -169,7 +195,7 @@ describe("reportViolations", () => {
         violation.kind === "markdown-notation" ? violation.notations : [],
       )
 
-    it("見出し・表・箇条書き・note・stats・フェンス・mermaid はそれぞれ違反", () => {
+    it("見出し・表・箇条書き・note・stats・フェンス・mermaid・chart はそれぞれ違反", () => {
       expect(notationsOf("# 架空")).toEqual(["heading"])
       expect(notationsOf("## 架空")).toEqual(["heading"])
       expect(notationsOf("| 列 | 値 |\n| --- | --- |\n| a | 1 |")).toEqual(["table"])
@@ -185,6 +211,7 @@ describe("reportViolations", () => {
       ).toEqual(["progress"])
       expect(notationsOf("```diff src/a.ts\n-a\n+b\n```")).toEqual(["code"])
       expect(notationsOf("```mermaid\nflowchart LR\n```")).toEqual(["mermaid"])
+      expect(notationsOf("```chart\n{}\n```")).toEqual(["chart"])
     })
 
     it("数は記法の種類の数で、種類はまとめて1つの違反にする", () => {
@@ -193,7 +220,7 @@ describe("reportViolations", () => {
       ])
     })
 
-    it("塊の種類が無い記法・### の見出し・chart のフェンスは違反にしない", () => {
+    it("塊の種類が無い記法・### の見出しは違反にしない", () => {
       const body = [
         '<div class="cols"><div class="card">架空の案A</div><div class="card">架空の案B</div></div>',
         "",
@@ -202,10 +229,6 @@ describe("reportViolations", () => {
         "---",
         "",
         "### 架空の小見出し",
-        "",
-        "```chart",
-        "{}",
-        "```",
       ].join("\n")
       expect(kinds(draft([markdown(body)]))).toEqual([])
     })
@@ -227,7 +250,7 @@ describe("reportViolations", () => {
     })
 
     it("フェンスの中の記法は見ない", () => {
-      expect(notationsOf("```chart\n# 架空\n- 架空\n```")).toEqual([])
+      expect(notationsOf("```text\n# 架空\n- 架空\n```")).toEqual(["code"])
     })
   })
 

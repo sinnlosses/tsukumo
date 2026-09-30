@@ -815,9 +815,11 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 ### 塊
 
 - **英語識別子（予定）**: `ReportBlock`（`src/shared/report/report-block.ts`）/ `kind`（`text` / `list` /
-  `table` / `note` / `stats` / `code` / `mermaid` / `progress` / `options` / `files` / `markdown`）/ `fold`（畳むときの見出し）/
+  `table` / `note` / `stats` / `code` / `mermaid` / `chart` / `progress` / `options` / `files` / `markdown`）/ `fold`（畳むときの見出し）/
   欄の `from` / `to`（表のセルの前後）・`before`（`stats` の前の値）・`label`（`list` の項目の名前）・
-  `flow`（`list` の `style` の一本道の流れ）・`verdict`（`options` の候補の判定）・`change`（`files` の変更の種別）/
+  `flow`（`list` の `style` の一本道の流れ）・`verdict`（`options` の候補の判定）・`change`（`files` の変更の種別）・
+  `chartKind`（`chart` の種類。`bar` / `line` / `pie`）・`labels`（`chart` の横軸・扇形の名前）・
+  `series`（`chart` の系列。`name` と `values`）・`horizontal`（`chart` の `bar` を横棒にする真偽値）/
   `ReportBlockField`（使われ方の記録で数える欄の名前）
 - **定義**: **節の中に並ぶ、種類の決まった本文の1単位**。種類ごとに決まった形で Markdown に組んで
   描く（`reportSectionsMarkdown`）。塊の文字は行頭の塊の記法と `<` を逃がし、インラインの記法

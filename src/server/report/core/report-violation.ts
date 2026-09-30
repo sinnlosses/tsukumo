@@ -45,6 +45,8 @@ export type ReportViolation =
   | { readonly kind: "too-many-notes"; readonly count: number }
   /** 行のセルの数が `columns` と揃わない表がある。`count` は表の数。 */
   | { readonly kind: "ragged-table"; readonly count: number }
+  /** `series` の `values` の数が `labels` と揃わない `chart` の塊がある。`count` は塊の数。 */
+  | { readonly kind: "ragged-chart"; readonly count: number }
   /** 節が2つ以上あるのに見出しの無い節がある。`count` は見出しの無い節の数。 */
   | { readonly kind: "untitled-section"; readonly count: number }
   /**
@@ -101,7 +103,6 @@ export type EscapeNotation = (typeof ESCAPE_NOTATIONS)[number]
 
 export const ESCAPE_NOTATIONS = [
   "colsCard",
-  "chart",
   "svg",
   "dl",
   "quote",
@@ -154,6 +155,7 @@ export function reportViolations(report: ReportDraft): readonly ReportViolation[
     },
     { kind: "too-many-notes", count: blocks.filter((block) => block.kind === "note").length },
     { kind: "ragged-table", count: blocks.filter((block) => isRaggedTable(block)).length },
+    { kind: "ragged-chart", count: blocks.filter((block) => isRaggedChart(block)).length },
     {
       kind: "untitled-section",
       count:
@@ -190,6 +192,7 @@ const VIOLATION_THRESHOLDS = {
   "unknown-mermaid": 0,
   "too-many-notes": 2,
   "ragged-table": 0,
+  "ragged-chart": 0,
   "untitled-section": 0,
   "markdown-notation": 0,
   "code-mismatch": 0,
@@ -207,6 +210,8 @@ function violationLine(violation: ReportViolation): string {
       return `\`note\` の塊が${violation.count}個ある。1〜2個まで減らす`
     case "ragged-table":
       return `行のセルの数が \`columns\` と揃わない表が${violation.count}個ある。セルの数を揃える`
+    case "ragged-chart":
+      return `\`series\` の \`values\` の数が \`labels\` と揃わない \`chart\` の塊が${violation.count}個ある。数を揃える`
     case "untitled-section":
       return `見出しの無い節が${violation.count}個ある。節が2つ以上なら全部に \`heading\` を付ける`
     case "markdown-notation":
@@ -230,6 +235,7 @@ const MARKDOWN_NOTATION_NAMES = {
   progress: { written: "`progress` の塊", replacement: "`progress` の塊" },
   code: { written: "フェンス", replacement: "`code` の塊" },
   mermaid: { written: "mermaid のフェンス", replacement: "`mermaid` の塊" },
+  chart: { written: "`chart` のフェンス", replacement: "`chart` の塊" },
 } as const satisfies Record<string, { readonly written: string; readonly replacement: string }>
 
 export const MARKDOWN_NOTATIONS = Object.keys(MARKDOWN_NOTATION_NAMES).filter(
@@ -368,18 +374,18 @@ function hasNotation(
       return levelFences.some((fence) => fence.info !== "mermaid" && fence.info !== "chart")
     case "mermaid":
       return levelFences.some((fence) => fence.info === "mermaid")
+    case "chart":
+      return levelFences.some((fence) => fence.info === "chart")
   }
 }
 
-/** 塊の無い記法があるか。フェンスの中は見ない（`chart` だけはフェンスの info で判定する）。 */
-function hasEscapeNotation({ outside, fences }: SplitMarkdown, notation: EscapeNotation): boolean {
+/** 塊の無い記法があるか。フェンスの中は見ない。 */
+function hasEscapeNotation({ outside }: SplitMarkdown, notation: EscapeNotation): boolean {
   switch (notation) {
     case "colsCard":
       return outside.some((line) =>
         classLists(line).some((classes) => classes.includes("cols") || classes.includes("card")),
       )
-    case "chart":
-      return fences.some((fence) => fence.info === "chart")
     case "svg":
       return outside.some((line) => SVG_TAG.test(line))
     case "dl":
@@ -455,6 +461,14 @@ function sentenceCount(text: string): number {
 /** 行のセルの数が列の数と揃わない表か。 */
 function isRaggedTable(block: ReportBlock): boolean {
   return block.kind === "table" && block.rows.some((row) => row.length !== block.columns.length)
+}
+
+/** 系列の値の数が labels の数と揃わない chart の塊か。 */
+function isRaggedChart(block: ReportBlock): boolean {
+  return (
+    block.kind === "chart" &&
+    block.series.some((series) => series.values.length !== block.labels.length)
+  )
 }
 
 /**

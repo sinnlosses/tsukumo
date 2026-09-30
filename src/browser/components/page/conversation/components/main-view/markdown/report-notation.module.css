@@ -764,6 +764,13 @@
 .detail-block .report-color-ink-dark {
   color: var(--ground);
 }
+/* Chart.js の入れ物（ChartBlock）。maintainAspectRatio を切っているので、グラフの高さはここだけが決める。 */
+.detail-block .chart-block {
+  position: relative;
+  width: 100%;
+  height: 320px;
+  margin: 0.5rem 0;
+}
 /* mermaid の構文エラー（MermaidBlock）。
    元のコードは通常のコードブロックと同じ見た目（`.detail-block pre` に乗る）のまま残し、その下にエラー文を添える。
    新しい色は作らない（state-ng は表の report-badge-ng / report-note-ng と同じ「問題」の色）。 */

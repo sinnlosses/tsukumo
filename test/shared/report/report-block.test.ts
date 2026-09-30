@@ -487,6 +487,96 @@ describe("reportSectionsMarkdown", () => {
     )
   })
 
+  it("chart は Chart.js の設定を組んで chart フェンスに JSON で書く。pie は先頭の系列だけを使う", () => {
+    expect(
+      markdownOf({
+        kind: "chart",
+        chartKind: "bar",
+        labels: ["架空A", "架空B"],
+        series: [{ name: "架空系列", values: [1, 2] }],
+        horizontal: false,
+        fold: "",
+      }),
+    ).toBe(
+      "```chart\n" +
+        JSON.stringify({
+          type: "bar",
+          data: { labels: ["架空A", "架空B"], datasets: [{ label: "架空系列", data: [1, 2] }] },
+          options: {},
+        }) +
+        "\n```",
+    )
+    expect(
+      markdownOf({
+        kind: "chart",
+        chartKind: "bar",
+        labels: ["架空A", "架空B"],
+        series: [{ name: "架空系列", values: [1, 2] }],
+        horizontal: true,
+        fold: "",
+      }),
+    ).toBe(
+      "```chart\n" +
+        JSON.stringify({
+          type: "bar",
+          data: { labels: ["架空A", "架空B"], datasets: [{ label: "架空系列", data: [1, 2] }] },
+          options: { indexAxis: "y" },
+        }) +
+        "\n```",
+    )
+    expect(
+      markdownOf({
+        kind: "chart",
+        chartKind: "line",
+        labels: ["架空A", "架空B"],
+        series: [
+          { name: "架空系列1", values: [1, 2] },
+          { name: "架空系列2", values: [3, 4] },
+        ],
+        horizontal: false,
+        fold: "",
+      }),
+    ).toBe(
+      "```chart\n" +
+        JSON.stringify({
+          type: "line",
+          data: {
+            labels: ["架空A", "架空B"],
+            datasets: [
+              { label: "架空系列1", data: [1, 2] },
+              { label: "架空系列2", data: [3, 4] },
+            ],
+          },
+          options: {},
+        }) +
+        "\n```",
+    )
+    expect(
+      markdownOf({
+        kind: "chart",
+        chartKind: "pie",
+        labels: ["架空A", "架空B"],
+        series: [
+          { name: "架空系列1", values: [1, 2] },
+          { name: "架空系列2", values: [3, 4] },
+        ],
+        horizontal: false,
+        fold: "",
+      }),
+    ).toBe(
+      "```chart\n" +
+        JSON.stringify({
+          type: "pie",
+          data: {
+            labels: ["架空A", "架空B"],
+            datasets: [{ label: "架空系列1", data: [1, 2] }],
+          },
+          options: {},
+        }) +
+        "\n```",
+    )
+  })
+
   it("fold のある塊は details に畳む", () => {
     expect(markdownOf({ kind: "text", text: "架空の脇道。", fold: "架空の<見出し>" })).toBe(
       "<details><summary>架空の&lt;見出し&gt;</summary>\n\n架空の脇道。\n\n</details>",

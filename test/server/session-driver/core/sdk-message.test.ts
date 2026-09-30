@@ -1128,7 +1128,7 @@ describe("toSessionEvents（report ツール）", () => {
               heading: "架空の節",
               blocks: [
                 { kind: "text", text: "架空の根拠。" },
-                { kind: "chart", source: "{}" },
+                { kind: "架空の種類", source: "{}" },
                 { kind: "list", style: "bullet", items: [] },
                 { kind: "code", language: "diff", source: "-a" },
               ],
@@ -1153,7 +1153,7 @@ describe("toSessionEvents（report ツール）", () => {
             ],
           },
         ],
-        // 知らない種類（"chart"）だけを数える。既知の種類の値が崩れた「list」「note」は数えない。
+        // 知らない種類（"架空の種類"）だけを数える。既知の種類の値が崩れた「list」「note」は数えない。
         unknownBlockCount: 1,
       },
     ])

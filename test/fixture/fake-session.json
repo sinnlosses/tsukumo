@@ -1825,6 +1825,97 @@
       ]
     },
     {
+      "name": "report-chart",
+      "steps": [
+        {
+          "afterMs": 0,
+          "event": {
+            "kind": "request",
+            "text": "グラフの見え方を確かめたい（架空の依頼）",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 300,
+          "event": {
+            "kind": "speech",
+            "text": "3種を並べて書くね。",
+            "expression": "default"
+          }
+        },
+        {
+          "afterMs": 1000,
+          "event": {
+            "kind": "report",
+            "task": { "kind": "none" },
+            "closing": { "kind": "speech", "text": "書けたよ！", "expression": "proud" },
+            "toolUseId": "fake-report-chart-1",
+            "conclusion": "架空の結論: 3種のグラフの見え方を確かめた。",
+            "sections": [
+              {
+                "heading": "架空の件数の推移",
+                "blocks": [
+                  {
+                    "kind": "chart",
+                    "chartKind": "bar",
+                    "labels": ["架空1月", "架空2月", "架空3月"],
+                    "series": [{ "name": "架空系列A", "values": [12, 18, 9] }],
+                    "horizontal": false,
+                    "fold": ""
+                  },
+                  {
+                    "kind": "chart",
+                    "chartKind": "bar",
+                    "labels": ["架空案A", "架空案B", "架空案C"],
+                    "series": [{ "name": "架空の横棒", "values": [30, 55, 15] }],
+                    "horizontal": true,
+                    "fold": ""
+                  },
+                  {
+                    "kind": "chart",
+                    "chartKind": "line",
+                    "labels": ["架空1週", "架空2週", "架空3週", "架空4週"],
+                    "series": [
+                      { "name": "架空系列A", "values": [4, 7, 5, 9] },
+                      { "name": "架空系列B", "values": [2, 3, 6, 4] }
+                    ],
+                    "horizontal": false,
+                    "fold": ""
+                  },
+                  {
+                    "kind": "chart",
+                    "chartKind": "pie",
+                    "labels": ["架空内訳A", "架空内訳B", "架空内訳C"],
+                    "series": [{ "name": "架空系列A", "values": [50, 30, 20] }],
+                    "horizontal": false,
+                    "fold": ""
+                  }
+                ]
+              }
+            ],
+            "favor": "",
+            "checks": []
+          }
+        },
+        {
+          "afterMs": 1050,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-report-chart-1",
+            "content": "ok",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 2300,
+          "event": {
+            "kind": "turn-finished",
+            "outcome": { "kind": "completed" }
+          }
+        }
+      ]
+    },
+    {
       "name": "background-task",
       "steps": [
         {

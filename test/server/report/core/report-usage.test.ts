@@ -125,7 +125,7 @@ describe("reportUsageEntryOf", () => {
     expect(entry.containedNotations).toEqual(["list"])
   })
 
-  it("塊の無い記法（cols/card・chart・svg・dl・引用・区切り線・details）の種類を数える", () => {
+  it("塊の無い記法（cols/card・svg・dl・引用・区切り線・details）の種類を数える", () => {
     const event = reportEvent([
       {
         heading: "架空の節",
@@ -144,10 +144,6 @@ describe("reportUsageEntryOf", () => {
               "<dl><dt>架空の用語</dt><dd>架空の説明</dd></dl>",
               "",
               "<details><summary>架空の見出し</summary>中身</details>",
-              "",
-              "```chart",
-              "{}",
-              "```",
             ].join("\n"),
             fold: "",
           },
@@ -157,15 +153,21 @@ describe("reportUsageEntryOf", () => {
 
     const entry = reportUsageEntryOf(event, "claude-session-1", 1_000)
 
-    expect(entry.escapeNotations).toEqual([
-      "colsCard",
-      "chart",
-      "svg",
-      "dl",
-      "quote",
-      "hr",
-      "details",
+    expect(entry.escapeNotations).toEqual(["colsCard", "svg", "dl", "quote", "hr", "details"])
+  })
+
+  it("逃げ道に書いた chart のフェンスは塊のある記法として数える", () => {
+    const event = reportEvent([
+      {
+        heading: "架空の節",
+        blocks: [{ kind: "markdown", markdown: "```chart\n{}\n```", fold: "" }],
+      },
     ])
+
+    const entry = reportUsageEntryOf(event, "claude-session-1", 1_000)
+
+    expect(entry.notations).toEqual(["chart"])
+    expect(entry.escapeNotations).toEqual([])
   })
 
   it("知らない種類で境界で落とした塊の数と、渡した時刻・セッションIDをそのまま運ぶ", () => {

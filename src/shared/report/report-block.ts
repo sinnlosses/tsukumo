@@ -183,6 +183,31 @@ const mermaidBlockSchema = z
     "名前が3つ以上出てきて、その間を渡す・呼ぶ・分かれるでつなぐとき（一本道なら list の flow）",
   )
 
+export const REPORT_CHART_KINDS = ["bar", "line", "pie"] as const
+
+const chartSeriesSchema = z.object({
+  name: inlineText.describe("凡例に出す系列名"),
+  values: z.array(z.number()).min(1),
+})
+
+const chartBlockSchema = z
+  .object({
+    kind: z.literal("chart"),
+    chartKind: z
+      .enum(REPORT_CHART_KINDS)
+      .describe("bar は棒・line は折れ線・pie は円。pie は series の先頭だけを描く"),
+    labels: inlineText.array().min(1).describe("横軸・扇形の名前の並び"),
+    series: z
+      .array(chartSeriesSchema)
+      .min(1)
+      .describe("系列ごとの数の並び。各 values の数は labels と揃える"),
+    horizontal: z.boolean().default(false).describe("bar のときだけ効く。true で横棒にする"),
+    fold,
+  })
+  .describe(
+    "数の推移・割合。数が3つ以上で大小や傾きそのものを見せるとき（正確な値を読ませたいなら表）。色は書けない",
+  )
+
 const progressBlockSchema = z
   .object({
     kind: z.literal("progress"),
@@ -203,9 +228,7 @@ const progressBlockSchema = z
 
 const markdownBlockSchema = z.object({
   kind: z.literal("markdown"),
-  markdown: z
-    .string()
-    .describe("どの塊にも当てはまらない記法（cols・chart・svg・引用・区切り線）だけ"),
+  markdown: z.string().describe("どの塊にも当てはまらない記法（cols・svg・引用・区切り線）だけ"),
   fold,
 })
 
@@ -217,6 +240,7 @@ export const reportBlockSchema = z.discriminatedUnion("kind", [
   statsBlockSchema,
   codeBlockSchema,
   mermaidBlockSchema,
+  chartBlockSchema,
   progressBlockSchema,
   optionsBlockSchema,
   filesBlockSchema,
@@ -430,6 +454,8 @@ function blockMarkdown(block: ReportBlock): string {
       return fencedMarkdown([block.language, block.path].join(" ").trim(), block.source)
     case "mermaid":
       return fencedMarkdown("mermaid", block.source)
+    case "chart":
+      return fencedMarkdown("chart", JSON.stringify(chartConfigOf(block)))
     case "progress":
       return progressMarkdown(block)
     case "options":
@@ -438,6 +464,28 @@ function blockMarkdown(block: ReportBlock): string {
       return filesMarkdown(block)
     case "markdown":
       return block.markdown
+  }
+}
+
+type ChartConfig = {
+  readonly type: string
+  readonly data: {
+    readonly labels: readonly string[]
+    readonly datasets: readonly { readonly label: string; readonly data: readonly number[] }[]
+  }
+  readonly options: { readonly indexAxis: "y" } | Record<string, never>
+}
+
+/** `chart` の塊から Chart.js の設定を組む。色は書かない。`pie` は `series` の先頭だけを描く。 */
+function chartConfigOf(block: Extract<ReportBlock, { readonly kind: "chart" }>): ChartConfig {
+  const series = block.chartKind === "pie" ? block.series.slice(0, 1) : block.series
+  return {
+    type: block.chartKind,
+    data: {
+      labels: [...block.labels],
+      datasets: series.map(({ name, values }) => ({ label: name, data: [...values] })),
+    },
+    options: block.chartKind === "bar" && block.horizontal ? { indexAxis: "y" } : {},
   }
 }
 

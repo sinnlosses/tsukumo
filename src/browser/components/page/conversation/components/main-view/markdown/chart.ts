@@ -26,6 +26,9 @@ export function loadChart(element: HTMLElement): Promise<void> {
     Chart.defaults.color = resolveColor(element, "--ink-quiet")
     Chart.defaults.scale.grid.color = rule
     Chart.defaults.scale.border.color = rule
+    // アスペクト比を保つ既定だと、pie は入れ物の全幅を高さにも使おうとして縦に伸びすぎる。
+    // `.chart-block` の高さ（CSS）に合わせるだけにする。
+    Chart.defaults.maintainAspectRatio = false
   })
 }
 

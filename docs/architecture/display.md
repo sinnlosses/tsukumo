@@ -113,10 +113,19 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/architecture/display.md
 **本文は `report` の `sections`（節と塊の並び）で受け取る**（2026-09-27。形の案は
 `docs/research/report-block.md`、用語は `docs/glossary.md`「節」「塊」）。
 
-- 塊は `text` / `list` / `table` / `note` / `stats` / `code` / `mermaid` / `progress` / `options` / `files` と、逃げ道の
-  `markdown` の11種（`docs/research/report-architecture.md` 4.1 の目安の上限。次に種類を足すときは1種を外す）。**種類ごとの使いどころは各塊の `describe`（`src/shared/report/report-block.ts`）が持ち**、
-  `REPORT_NOTATION_PROMPT` の表には逃げ道に残る記法（`cols` / `card`・`chart`・`svg`・引用・
-  区切り線・複数の塊をまとめて畳む `<details>`）だけを置く。同じことを両方に書くと毎ターンの文脈に2回載る
+- 塊は `text` / `list` / `table` / `note` / `stats` / `code` / `mermaid` / `chart` / `progress` / `options` / `files` と、逃げ道の
+  `markdown` の12種。**種類ごとの使いどころは各塊の `describe`（`src/shared/report/report-block.ts`）が持ち**、
+  `REPORT_NOTATION_PROMPT` の表には逃げ道に残る記法（`cols` / `card`・`svg`・引用・
+  区切り線・複数の塊をまとめて畳む `<details>`）だけを置く。同じことを両方に書くと毎ターンの文脈に2回載る。
+  **種類の数に上限は置かない**（2026-09-30 改訂。足すかは下の「読む時間を減らす物差しと線引き」、
+  外すかは「塊を足す・外す基準」の外す基準〔28日0回〕で決める）
+- **数の推移・割合は `chart` の塊で見せる**（2026-09-30。`chartKind`〔`bar` / `line` / `pie`〕・`labels`・
+  `series`〔`{ name, values }` の並び〕・`horizontal`〔`bar` の横棒〕を受け、Chart.js の設定は
+  tsukumo が組む。色は書き手が指定しない（`loadChart` が配色のトークンから入れる）。`pie` は
+  `series` の先頭だけを描く。逃げ道の ```chart フェンス（生の Chart.js 設定を JSON で書く形）は
+  この塊に一本化し、記法の表から外した。表の数の列に付く横棒（下の「表の描き方は型から決め、
+  書き手は何も選ばない」）と役割が重なるので、数が3つ以上並ぶ表を `chart` へ差し戻す検査は
+  足さない（正確な値を読ませたい場面は表のままでよい）
 - **「名前: 説明」「A → B」「A → B → C」「12 → 8」は既存の塊の欄で見せる**（2026-09-27。
   `docs/research/report-block-richness.md` 2章）。欄は事実を言うものだけで、差や増減の割合は tsukumo が計算しない
   - 表のセルの `{ from, to }`: 前の値と矢印の文字を `ink-quiet`、後の値を `ink` で描く。状態（`status`）と
@@ -243,7 +252,7 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/architecture/display.md
   塊の形（`src/shared/report/report-block.ts`）で決める**（正典は
   下の「レポートの記法は、TUI と tsukumo で出し分ける」。グローバルの `asuna.md` は TUI 向けに
   保ち、HTML の記法と mermaid / chart のフェンスは外してある）。内容の種類ごとに使う構造は
-  塊の種類と各塊の説明が持ち、塊に無い記法（chart・`cols` / `card` の HTML など）だけを規約の表で示す。
+  塊の種類と各塊の説明が持ち、塊に無い記法（`cols` / `card` の HTML など）だけを規約の表で示す。
   結論は `report` の `conclusion` に、1ターンのレポートは最後に1つ、とした。**図とグラフは同梱した
   mermaid / Chart.js で描く**（2026-09-10 の決定どおり。tsukumo 側で構造を推測・整形しない）。
   **引用 `> ` は Markdown のまま描ける**
@@ -466,7 +475,7 @@ CSS の3つを揃える**（レンダラを直したのに規約が古いまま�
 逃げ道に出た記法は3つに分けて持つ: **塊のある記法**（表・箇条書き・`note` など、逃げ道の外側
 〔HTML の容れ物の中でないところ〕に出たもの）・**同じ塊のある記法が HTML の容れ物
 （`<details>` / `<div>`）の中に出たもの**（複数の塊を畳む・`cols` に並べるのは逃げ道の役目なので、
-差し戻しではなく別に数える）・**塊の無い記法**（`cols` / `card`・`chart`・`svg`・`dl`・引用・
+差し戻しではなく別に数える）・**塊の無い記法**（`cols` / `card`・`svg`・`dl`・引用・
 区切り線・`<details>` そのもの。塊に当てはまらないので昇格のきっかけになる）。知らない種類で境界で
 落とした塊の数（`parseReportSections` の `unknownBlockCount`）も同じ行に足す。中身は一切持たない
 ——数と名前だけ（`docs/coding-standards.md`「会話内容の扱い」）。書くのは
