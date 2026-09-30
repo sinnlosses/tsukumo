@@ -257,7 +257,7 @@ describe("REPORT_NOTATION_PROMPT", () => {
 
   it("地の文の段落は3文までとし、4文目の逃がし先に表・箇条書き・fold を挙げる", () => {
     // 全体の量は数で縛らないが、段落の単位にだけは数で縛る決定
-    // （docs/architecture/display.md「読む時間を減らすために足すのは、規約の側」）。
+    // （docs/architecture/display.md「読む時間を減らす物差しと線引き」）。
     expect(REPORT_NOTATION_PROMPT).toContain("地の文の段落は3文まで")
     expect(REPORT_NOTATION_PROMPT).toContain("4文目が要るなら、表・箇条書きへ移すか `fold` で畳む")
   })
