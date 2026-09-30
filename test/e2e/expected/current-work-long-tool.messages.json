@@ -51,9 +51,18 @@
     "received": "event",
     "at": 1768438800000,
     "event": {
+      "kind": "request",
+      "text": "帯の「作業中」を確かめたい（架空の依頼）",
+      "images": []
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
       "kind": "speech",
-      "text": "さっきの分は上手くいったよ。えへん。",
-      "expression": "proud"
+      "text": "長く走る手順を1つやってみるね。",
+      "expression": "default"
     }
   },
   {
@@ -61,10 +70,11 @@
     "at": 1768438800000,
     "event": {
       "kind": "tool-started",
-      "toolUseId": "fake-tool-long-1",
+      "toolUseId": "fake-tool-current-work-running-1",
       "name": "Bash",
       "input": {
-        "command": "dummy-long-command"
+        "command": "dummy-long-wait --seconds 20",
+        "description": "架空の長い実行"
       }
     }
   }

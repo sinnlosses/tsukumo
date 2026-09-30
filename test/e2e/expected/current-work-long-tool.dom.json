@@ -66,7 +66,7 @@
                             "type": "button"
                           },
                           "children": [
-                            "（依頼なし）",
+                            "帯の「作業中」を確かめたい（架空の依頼）",
                             {
                               "tag": "span",
                               "attributes": {
@@ -86,6 +86,36 @@
                   "attributes": {
                     "data-outline": "hidden"
                   }
+                }
+              ]
+            },
+            {
+              "tag": "div",
+              "attributes": {
+                "data-work-state": "running",
+                "data-chat-idle": "false",
+                "data-variant": "capsule"
+              },
+              "children": [
+                {
+                  "tag": "button",
+                  "attributes": {
+                    "aria-expanded": "false",
+                    "type": "button"
+                  },
+                  "children": [
+                    {
+                      "tag": "svg"
+                    },
+                    "作業中",
+                    {
+                      "tag": "span",
+                      "attributes": {
+                        "aria-hidden": "true"
+                      }
+                    },
+                    "Bash: dummy-long-wait --seconds 20"
+                  ]
                 }
               ]
             }

@@ -3,13 +3,13 @@ import { describe, it } from "vitest"
 import { useScenarioRun } from "./scenario-run.ts"
 
 // ツールの実行といまの作業（docs/architecture/testing.md「E2E のシナリオの一覧」）。疑似セッションの
-// 場面 `long-tool` は 20 秒走るので、`tool-started` を待って撮り、流れ切るのを待たない
-// （同章「E2E の走らせ方」）。撮るのはツールが走っているあいだ、帯の「いまの作業」に
-// 実行中のツールが出ている状態。
+// 場面 `current-work-running` は自分の `request` を持ち、ツールが 20 秒走るので、`tool-started` を
+// 待って撮り、流れ切るのを待たない（同章「E2E の走らせ方」）。撮るのはツールが走っているあいだ、
+// メインビューのいまの作業の札に実行中のツールが出ている状態。
 //
 // 場面 `long-report-drafting` は `report-drafting` のあと 20 秒近く `report` が届かないので、
 // `report-drafting` を待って撮り、流れ切るのを待たない。撮るのはメインが report の引数を
-// 書いている途中、帯の「いまの作業」に「レポートを書いています」が出ている状態。
+// 書いている途中、メインビューのいまの作業の札に「レポートを書いています」が出ている状態。
 
 const run = useScenarioRun()
 
@@ -17,10 +17,10 @@ const run = useScenarioRun()
 const ELAPSED_MS = 60_000
 
 describe("ツールの実行といまの作業", () => {
-  it("ツールが走っているあいだ、帯の「いまの作業」に実行中のツールが出る", async () => {
+  it("ツールが走っているあいだ、メインビューのいまの作業の札に実行中のツールが出る", async () => {
     const room = await run.open({
       scenario: "current-work-long-tool",
-      scene: "long-tool",
+      scene: "current-work-running",
       viewport: "wide",
       domRoots: ["main"],
     })
@@ -29,7 +29,7 @@ describe("ツールの実行といまの作業", () => {
     await room.settleAndMatch(ELAPSED_MS)
   })
 
-  it("メインが report の引数を書いているあいだ、帯の「いまの作業」に「レポートを書いています」が出る", async () => {
+  it("メインが report の引数を書いているあいだ、メインビューのいまの作業の札に「レポートを書いています」が出る", async () => {
     const room = await run.open({
       scenario: "current-work-report-drafting",
       scene: "long-report-drafting",
