@@ -13,39 +13,33 @@ import {
   lampLevel,
   type LampLevel,
 } from "../../../../../shared/achievement/achievement-calendar.ts"
-import {
-  isEmptyAchievementDay,
-  type AchievementDoneTasks,
-  type AchievementGraduation,
-  type AchievementMilestone,
-  type AchievementTask,
-  type DailyAchievement,
+import type {
+  AchievementDoneTasks,
+  AchievementGraduation,
+  AchievementMilestone,
+  AchievementTask,
+  DailyAchievement,
 } from "../../../../../shared/achievement/achievement.ts"
 import type {
   CharacterInfo,
   CharacterPackEntry,
 } from "../../../../../shared/character-pack/character.ts"
-import type { Diary } from "../../../../../shared/diary/diary.ts"
+import type { Diary, DiaryWriting } from "../../../../../shared/diary/diary.ts"
 import type { PortraitAppearance } from "../../../../domain/portrait-appearance.ts"
 import { rpc } from "../../../../domain/rpc.ts"
-import { useSession, useTurnRunning, type SessionDispatch } from "../../../../stores/session.ts"
+import { useSession, type SessionDispatch } from "../../../../stores/session.ts"
 import { dayLabel } from "../../../../utils/day-label.ts"
 import { monthDayLabel } from "../../../../utils/month-day-label.ts"
 import { DIARY_BOOK_TITLE } from "../domain/diary-book-title.ts"
 import { currentWriterPortraitOf } from "../domain/diary-writer.ts"
 import { kanjiDateLabel, kanjiNumeral, kanjiWeekdayLabel } from "../domain/kanji-date.ts"
 import { LAMP_LABEL } from "../domain/lamp-label.ts"
-import { EMPTY_DAY_REASON } from "../domain/review-note.ts"
+import { reviewAvailabilityOf } from "../domain/review-availability.ts"
 import { writtenTimeOf } from "../domain/written-time.ts"
 import type { AchievementCalendarView } from "./use-achievement-calendar.ts"
-import type {
-  AchievementDaySwitch,
-  AchievementReviewAvailability,
-  AchievementReviewButton,
-} from "./use-achievement.ts"
+import type { AchievementDaySwitch, AchievementReviewButton } from "./use-achievement.ts"
 import { takeDiaryBookOpenRequest, useDiaryBookOpenRequest } from "./use-diary-book-open-request.ts"
 
-const TURN_RUNNING_REASON = "いまターンが動いているので送れない"
 const BLANK_REVIEW_LABEL = "この日を振り返る"
 
 /** 見開きを開いた口（頭の行の添え書きに出す）。`notice` は書き終わりの知らせの「日記帳で開く」。 */
@@ -162,7 +156,7 @@ export function useDiaryBook(params: {
 
   const [state, setState] = useState<BookState>({ kind: "closed" })
   const dispatch = useSession((session) => session.dispatch)
-  const turnRunning = useTurnRunning()
+  const diaryWriting = useSession((session) => session.state.diaryWriting)
   const character = useSession((session) => session.state.character)
   const characterPacks = useSession((session) => session.state.characterPacks)
 
@@ -223,7 +217,7 @@ export function useDiaryBook(params: {
     query.isError,
     character,
     characterPacks,
-    turnRunning,
+    diaryWriting,
     params.onDateSelected,
     dispatch,
     onClose,
@@ -272,7 +266,7 @@ function pageOf(
   isError: boolean,
   character: CharacterInfo | undefined,
   characterPacks: readonly CharacterPackEntry[],
-  turnRunning: boolean,
+  diaryWriting: DiaryWriting,
   onDateSelected: (date: string) => void,
   dispatch: SessionDispatch,
   onClose: () => void,
@@ -295,7 +289,7 @@ function pageOf(
           review: blankReviewOf(
             data.commitCount,
             data.doneTasks,
-            turnRunning,
+            diaryWriting,
             date,
             onDateSelected,
             dispatch,
@@ -338,21 +332,17 @@ function paragraphsOf(diary: Diary): readonly DiaryBookParagraph[] {
   })
 }
 
-/** 白紙の日の主ボタン。押せないのは空の日と、ターンが動いている間。 */
+/** 白紙の日の主ボタン。押せないのは空の日と、日記を書いている間。 */
 function blankReviewOf(
   commitCount: number,
   doneTasks: AchievementDoneTasks,
-  turnRunning: boolean,
+  diaryWriting: DiaryWriting,
   date: string,
   onDateSelected: (date: string) => void,
   dispatch: SessionDispatch,
   onClose: () => void,
 ): AchievementReviewButton {
-  const availability: AchievementReviewAvailability = isEmptyAchievementDay(commitCount, doneTasks)
-    ? { kind: "blocked", reason: EMPTY_DAY_REASON }
-    : turnRunning
-      ? { kind: "blocked", reason: TURN_RUNNING_REASON }
-      : { kind: "available" }
+  const availability = reviewAvailabilityOf(commitCount, doneTasks, diaryWriting)
 
   return {
     label: BLANK_REVIEW_LABEL,

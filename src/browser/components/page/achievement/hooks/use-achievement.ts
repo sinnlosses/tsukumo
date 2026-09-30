@@ -34,11 +34,13 @@ import {
   useAchievementDateSelection,
 } from "../../../../stores/screen.tsx"
 import { useSession, type SessionDispatch } from "../../../../stores/session.ts"
-import { monthDayLabel } from "../../../../utils/month-day-label.ts"
 import { currentWriterPortraitOf, type DiaryWriterPortrait } from "../domain/diary-writer.ts"
 import {
+  reviewAvailabilityOf,
+  type AchievementReviewAvailability,
+} from "../domain/review-availability.ts"
+import {
   EMPTY_DAY_NOTE,
-  EMPTY_DAY_REASON,
   LOADING_VALUE,
   NO_DIARY_NOTE,
   UNKNOWN_TASKS_NOTE,
@@ -74,11 +76,6 @@ export type AchievementView =
       readonly milestones: readonly AchievementMilestone[]
       readonly diary: DailyDiaryStatus
     }
-
-/** 振り返りのボタンを押せるか。 */
-export type AchievementReviewAvailability =
-  | { readonly kind: "available" }
-  | { readonly kind: "blocked"; readonly reason: string }
 
 /** 振り返りのボタン1つぶんの見た目と押す口。 */
 export type AchievementReviewButton = {
@@ -152,11 +149,6 @@ export type UseAchievementResult = {
    * この起動で1回だけ `true` になり、同じ段落を日を開き直して見たときは `false`。
    */
   readonly diaryReveal: boolean
-}
-
-/** ほかの日の日記を書いている最中に出す理由。 */
-function busyOnAnotherDayReason(date: string): string {
-  return `いま${monthDayLabel(Temporal.PlainDate.from(date))}の日記を書いているので送れない`
 }
 
 /**
@@ -354,14 +346,7 @@ function reviewButtonOf(
     return { label, availability: { kind: "blocked", reason: "" }, onReview: () => {} }
   }
 
-  const availability: AchievementReviewAvailability = isEmptyAchievementDay(
-    view.commitCount,
-    view.doneTasks,
-  )
-    ? { kind: "blocked", reason: EMPTY_DAY_REASON }
-    : diaryWriting.kind === "writing"
-      ? { kind: "blocked", reason: busyOnAnotherDayReason(diaryWriting.date) }
-      : { kind: "available" }
+  const availability = reviewAvailabilityOf(view.commitCount, view.doneTasks, diaryWriting)
 
   return {
     label,
