@@ -106,3 +106,62 @@ export function readDiary(value: unknown): Diary | undefined {
   const parsed = diarySchema.safeParse(value)
   return parsed.success ? parsed.data : undefined
 }
+
+/** 振り返りの進み（{@link DiaryWriting}）を動かすイベント。 */
+export type DiaryEvent =
+  /**
+   * `diary` ツールが振り返りの日記を1段落受け付けた（保存も済んだ。出し手はツールの handler で、検査を通して保存できたものだけ流す）。
+   * `date` は振り返りの対象の日（`YYYY-MM-DD`）。
+   */
+  | { readonly kind: "diary-written"; readonly date: string }
+  /**
+   * 成果の画面から振り返りを頼まれた（`session.reflectAchievement` コマンド）。
+   * その日の成果を数え直し、書き手にその日ぶんを渡した直後に流す。会話とは別の使い捨ての問い合わせなので、会話の `prompt` は通らない。
+   * `date` は振り返りの対象の日（`YYYY-MM-DD`）。段は「この日のタスクを読む」（`read`）。
+   */
+  | { readonly kind: "diary-requested"; readonly date: string }
+  /**
+   * 会話とは別の使い捨ての問い合わせの `includePartialMessages` の断片で、`diary` の呼び出しの塊が開いた（成果の画面の進みの材料）。
+   * 段は「日記を書く」（`write`）。
+   */
+  | { readonly kind: "diary-drafting"; readonly toolUseId: string }
+  /**
+   * 振り返りの段が進んだ。同じ塊の引数の断片（`input_json_delta`）に、最上位の鍵 `bookmark` が現れた回だけ流す。
+   * 運ぶのは段だけで、引数の中身はイベントに載せない。
+   */
+  | { readonly kind: "diary-stage"; readonly stage: DiaryStage }
+  /** 振り返りの使い捨ての問い合わせが `diary` を受け付けられずに終わった（時間切れ・失敗・中断のどれでも）。`date` は振り返りの対象の日。 */
+  | { readonly kind: "diary-failed"; readonly date: string }
+
+/** 振り返りのイベント1件を畳む。 */
+export function applyDiaryEvent(
+  writing: DiaryWriting,
+  event: DiaryEvent,
+  at: number,
+): DiaryWriting {
+  switch (event.kind) {
+    case "diary-requested":
+      return { kind: "writing", date: event.date, startedAt: at, stage: "read" }
+    case "diary-drafting":
+      return withDiaryStage(writing, "write")
+    case "diary-stage":
+      return withDiaryStage(writing, event.stage)
+    case "diary-written":
+      return { kind: "written", date: event.date, writtenAt: at }
+    case "diary-failed":
+      return { kind: "failed", date: event.date }
+  }
+}
+
+/**
+ * `diary-drafting` / `diary-stage` で段を進める。`writing` でなければ何もしない。
+ * 段は戻らない（`DIARY_STAGES` の並びでいまの段より前へは動かさない）。
+ */
+function withDiaryStage(writing: DiaryWriting, stage: DiaryStage): DiaryWriting {
+  if (writing.kind !== "writing") {
+    return writing
+  }
+  return DIARY_STAGES.indexOf(stage) < DIARY_STAGES.indexOf(writing.stage)
+    ? writing
+    : { ...writing, stage }
+}

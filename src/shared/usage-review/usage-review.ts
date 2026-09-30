@@ -155,3 +155,82 @@ const FOLLOW_UP_REQUESTS = {
   delegate: "やってほしい。",
   task: "あとでやるタスクとして登録してほしい（いまは手を付けない）。",
 } as const satisfies Record<UsageProposalFollowUp, string>
+
+/** 見直しの2つの欄（`SessionState.usageReview` と `SessionState.previousUsageReview`）。 */
+export type UsageReviewFields = {
+  readonly usageReview: UsageReview
+  readonly previousUsageReview: PreviousUsageReview
+}
+
+/** 見直しの欄を動かすイベント。 */
+export type UsageReviewEvent =
+  /**
+   * 見直しが段に入った（`usage_review_stage` ツールが受け付けた呼び出し）。
+   * 出すのはツールの handler で、`assistant` メッセージの変換からは出ない（引数を検査して通したものだけを流すため）。
+   */
+  | { readonly kind: "usage-review-stage"; readonly stage: UsageReviewStage; readonly days: number }
+  /** 見直しの結果が届いた（`usage_review_result` ツールが受け付けた呼び出し。出し手は上と同じ）。 */
+  | { readonly kind: "usage-review-result"; readonly findings: UsageReviewFindings }
+  /** 提案を1件見送った（画面の `usageReview.dismissProposal` コマンド）。`key` は `usageProposalKey` と同じ形（`kind:target`）。 */
+  | { readonly kind: "usage-proposal-dismissed"; readonly key: string }
+
+/**
+ * 見直しのイベント1件を畳む。
+ * `beginAt` は見直しが始まる場合に始まりとして使う時刻で、走っているターンがあればその始まり（ボタンを押してから最初の段が届くまでも経過に数える）、無ければ `at`。
+ * すでに見直し中なら始まりは動かさない。
+ */
+export function applyUsageReviewEvent(
+  fields: UsageReviewFields,
+  event: UsageReviewEvent,
+  at: number,
+  beginAt: number,
+): UsageReviewFields {
+  switch (event.kind) {
+    case "usage-review-stage":
+      return {
+        ...fields,
+        usageReview: {
+          kind: "running",
+          startedAt: fields.usageReview.kind === "running" ? fields.usageReview.startedAt : beginAt,
+          days: event.days,
+          stage: event.stage,
+        },
+      }
+    case "usage-review-result":
+      return {
+        usageReview: { kind: "result", reviewedAt: at, findings: event.findings },
+        // 両方いっぺんに更新する（結果が届いたその場で「前回の提案」も最新になる）。
+        previousUsageReview: { kind: "found", reviewedAt: at, findings: event.findings },
+      }
+    case "usage-proposal-dismissed":
+      return {
+        usageReview:
+          fields.usageReview.kind === "result"
+            ? {
+                ...fields.usageReview,
+                findings: withoutProposal(fields.usageReview.findings, event.key),
+              }
+            : fields.usageReview,
+        previousUsageReview:
+          fields.previousUsageReview.kind === "found"
+            ? {
+                ...fields.previousUsageReview,
+                findings: withoutProposal(fields.previousUsageReview.findings, event.key),
+              }
+            : fields.previousUsageReview,
+      }
+  }
+}
+
+/** ターンの終わりで、結果を渡さずに終わった見直しをふだんへ戻す（結果・ふだんはそのまま）。 */
+export function settleUsageReview(review: UsageReview): UsageReview {
+  return review.kind === "running" ? { kind: "idle" } : review
+}
+
+/** 提案の並びから、識別子（{@link usageProposalKey}）が一致する1件を除く。 */
+function withoutProposal(findings: UsageReviewFindings, key: string): UsageReviewFindings {
+  return {
+    ...findings,
+    proposals: findings.proposals.filter((proposal) => usageProposalKey(proposal) !== key),
+  }
+}

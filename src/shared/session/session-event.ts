@@ -8,7 +8,7 @@ import { z } from "zod"
 import type { CharacterInfo, CharacterPackEntry } from "../character-pack/character.ts"
 import type { Expression } from "../character-pack/expression.ts"
 import type { EffortLevel } from "../command.ts"
-import type { DiaryStage } from "../diary/diary.ts"
+import type { DiaryEvent } from "../diary/diary.ts"
 import type { ReportSection } from "../report/report-block.ts"
 import type { ReportCheck } from "../report/report-check.ts"
 import type { ReportTask } from "../report/report-task.ts"
@@ -21,7 +21,7 @@ import type { Question, QuestionAnswer } from "../session-driver/question.ts"
 import type { RateLimit } from "../session-driver/rate-limit.ts"
 import type { TurnOutcome } from "../session-driver/turn-failure.ts"
 import type { ModelTokenUsage, StepTokenUsage, TurnUsageScope } from "../token-usage/token-usage.ts"
-import type { UsageReviewFindings, UsageReviewStage } from "../usage-review/usage-review.ts"
+import type { UsageReviewEvent } from "../usage-review/usage-review.ts"
 import type { VisitEvent } from "../visit/visit.ts"
 import type { SessionChoice } from "./session-choice.ts"
 import type { SessionDefault } from "./session-default.ts"
@@ -355,38 +355,10 @@ export type SessionEvent =
    * 活動でないもの（SDK の `ambient`。見張り役など）は変換で落としてある。
    */
   | { readonly kind: "background-tasks-changed"; readonly tasks: readonly BackgroundTask[] }
-  /**
-   * 見直しが段に入った（`usage_review_stage` ツールが受け付けた呼び出し）。
-   * 出すのはツールの handler で、`assistant` メッセージの変換からは出ない（引数を検査して通したものだけを流すため）。
-   */
-  | { readonly kind: "usage-review-stage"; readonly stage: UsageReviewStage; readonly days: number }
-  /** 見直しの結果が届いた（`usage_review_result` ツールが受け付けた呼び出し。出し手は上と同じ）。 */
-  | { readonly kind: "usage-review-result"; readonly findings: UsageReviewFindings }
-  /** 提案を1件見送った（画面の `usageReview.dismissProposal` コマンド）。`key` は `usageProposalKey` と同じ形（`kind:target`）。 */
-  | { readonly kind: "usage-proposal-dismissed"; readonly key: string }
-  /**
-   * `diary` ツールが振り返りの日記を1段落受け付けた（保存も済んだ。出し手はツールの handler で、検査を通して保存できたものだけ流す）。
-   * `date` は振り返りの対象の日（`YYYY-MM-DD`）。
-   */
-  | { readonly kind: "diary-written"; readonly date: string }
-  /**
-   * 成果の画面から振り返りを頼まれた（`session.reflectAchievement` コマンド）。
-   * その日の成果を数え直し、書き手にその日ぶんを渡した直後に流す。会話とは別の使い捨ての問い合わせなので、会話の `prompt` は通らない。
-   * `date` は振り返りの対象の日（`YYYY-MM-DD`）。段は「この日のタスクを読む」（`read`）。
-   */
-  | { readonly kind: "diary-requested"; readonly date: string }
-  /**
-   * 会話とは別の使い捨ての問い合わせの `includePartialMessages` の断片で、`diary` の呼び出しの塊が開いた（成果の画面の進みの材料）。
-   * 段は「日記を書く」（`write`）。
-   */
-  | { readonly kind: "diary-drafting"; readonly toolUseId: string }
-  /**
-   * 振り返りの段が進んだ。同じ塊の引数の断片（`input_json_delta`）に、最上位の鍵 `bookmark` が現れた回だけ流す。
-   * 運ぶのは段だけで、引数の中身はイベントに載せない。
-   */
-  | { readonly kind: "diary-stage"; readonly stage: DiaryStage }
-  /** 振り返りの使い捨ての問い合わせが `diary` を受け付けられずに終わった（時間切れ・失敗・中断のどれでも）。`date` は振り返りの対象の日。 */
-  | { readonly kind: "diary-failed"; readonly date: string }
+  /** 見直しの欄を動かすイベント。 */
+  | UsageReviewEvent
+  /** 振り返りの進みを動かすイベント。 */
+  | DiaryEvent
   /** 訪問の出入りと台本の進み（出し手はサーバの訪問の見張り）。 */
   | VisitEvent
 

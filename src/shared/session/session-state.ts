@@ -8,7 +8,7 @@
 import type { CharacterInfo, CharacterPackEntry } from "../character-pack/character.ts"
 import type { Expression } from "../character-pack/expression.ts"
 import { type EffortLevel, isModelAlias } from "../command.ts"
-import { DIARY_STAGES, type DiaryStage, type DiaryWriting } from "../diary/diary.ts"
+import { applyDiaryEvent, type DiaryWriting } from "../diary/diary.ts"
 import type { ReportSection } from "../report/report-block.ts"
 import type { ReportCheck } from "../report/report-check.ts"
 import type { ReportTask } from "../report/report-task.ts"
@@ -26,10 +26,10 @@ import type {
   TurnOutcome,
 } from "../session-driver/turn-failure.ts"
 import {
+  applyUsageReviewEvent,
   type PreviousUsageReview,
+  settleUsageReview,
   type UsageReview,
-  type UsageReviewFindings,
-  usageProposalKey,
 } from "../usage-review/usage-review.ts"
 import { isBlankText } from "../utils/blank-text.ts"
 import {
@@ -701,47 +701,23 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
     case "background-tasks-changed":
       return { ...state, backgroundTasks: event.tasks }
     case "usage-review-stage":
-      return {
-        ...state,
-        usageReview: {
-          kind: "running",
-          startedAt: usageReviewStartedAt(state, at),
-          days: event.days,
-          stage: event.stage,
-        },
-      }
     case "usage-review-result":
-      return {
-        ...state,
-        usageReview: { kind: "result", reviewedAt: at, findings: event.findings },
-        // `usageReview` と両方いっぺんに更新する（結果が届いたその場で「前回の提案」も最新になる）。
-        previousUsageReview: { kind: "found", reviewedAt: at, findings: event.findings },
-      }
     case "usage-proposal-dismissed":
       return {
         ...state,
-        usageReview: withoutDismissedProposal(state.usageReview, event.key),
-        previousUsageReview: withoutDismissedProposalFromPrevious(
-          state.previousUsageReview,
-          event.key,
+        ...applyUsageReviewEvent(
+          { usageReview: state.usageReview, previousUsageReview: state.previousUsageReview },
+          event,
+          at,
+          state.turn.kind === "running" ? state.turn.startedAt : at,
         ),
       }
     case "diary-requested":
-      return {
-        ...state,
-        diaryWriting: { kind: "writing", date: event.date, startedAt: at, stage: "read" },
-      }
     case "diary-drafting":
-      return { ...state, diaryWriting: withDiaryStage(state.diaryWriting, "write") }
     case "diary-stage":
-      return { ...state, diaryWriting: withDiaryStage(state.diaryWriting, event.stage) }
     case "diary-written":
-      return {
-        ...state,
-        diaryWriting: { kind: "written", date: event.date, writtenAt: at },
-      }
     case "diary-failed":
-      return { ...state, diaryWriting: { kind: "failed", date: event.date } }
+      return { ...state, diaryWriting: applyDiaryEvent(state.diaryWriting, event, at) }
     case "visit-started":
     case "visit-line-advanced":
     case "visit-ended":
@@ -773,60 +749,6 @@ function withRestoredTime(record: SessionRecord): SessionRecord {
     }
   }
   return record
-}
-
-/**
- * 見直しが始まった時刻。すでに見直し中なら動かさず、始まったところならそのターンの始まり（ボタンを押してから最初の段が届くまでも経過に数える）。
- * ターンの外で届いたときだけ `at`。
- */
-function usageReviewStartedAt(state: SessionState, at: number): number {
-  if (state.usageReview.kind === "running") {
-    return state.usageReview.startedAt
-  }
-  return state.turn.kind === "running" ? state.turn.startedAt : at
-}
-
-/** 見送った提案を結果から取り除く。`result` でなければ何もしない（`idle` / `running` はそのまま）。 */
-function withoutDismissedProposal(review: UsageReview, key: string): UsageReview {
-  return review.kind === "result"
-    ? { ...review, findings: withoutProposal(review.findings, key) }
-    : review
-}
-
-/** 見送った提案を「前回の提案」から取り除く。`found` でなければ何もしない。 */
-function withoutDismissedProposalFromPrevious(
-  previous: PreviousUsageReview,
-  key: string,
-): PreviousUsageReview {
-  return previous.kind === "found"
-    ? { ...previous, findings: withoutProposal(previous.findings, key) }
-    : previous
-}
-
-/** 提案の並びから、識別子（{@link usageProposalKey}）が一致する1件を除く。 */
-function withoutProposal(findings: UsageReviewFindings, key: string): UsageReviewFindings {
-  return {
-    ...findings,
-    proposals: findings.proposals.filter((proposal) => usageProposalKey(proposal) !== key),
-  }
-}
-
-/** ターンの終わりで、結果を渡さずに終わった見直しをふだんへ戻す（結果・ふだんはそのまま）。 */
-function settleUsageReview(review: UsageReview): UsageReview {
-  return review.kind === "running" ? { kind: "idle" } : review
-}
-
-/**
- * `diary-drafting` / `diary-stage` で段を進める。`writing` でなければ何もしない。
- * 段は戻らない（`DIARY_STAGES` の並びでいまの段より前へは動かさない）。
- */
-function withDiaryStage(writing: DiaryWriting, stage: DiaryStage): DiaryWriting {
-  if (writing.kind !== "writing") {
-    return writing
-  }
-  return DIARY_STAGES.indexOf(stage) < DIARY_STAGES.indexOf(writing.stage)
-    ? writing
-    : { ...writing, stage }
 }
 
 /**

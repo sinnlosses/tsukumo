@@ -1182,28 +1182,29 @@ describe("applySessionEvent（見直し）", () => {
     )
   }
 
-  it("段が届くと見直し中になり、始まりはそのターンの始まり・段はいまの段", () => {
+  it("見直しのイベントは見直しの2つの欄だけを動かし、始まりはそのターンの始まりになる", () => {
+    const before = applySessionEvent(
+      INITIAL_SESSION_STATE,
+      { kind: "request", text: "架空の依頼", images: [] },
+      100,
+    )
+    const after = applySessionEvent(
+      before,
+      { kind: "usage-review-result", findings: FINDINGS },
+      700,
+    )
+
     expect(running().usageReview).toEqual({
       kind: "running",
       startedAt: 100,
       days: 7,
       stage: "cache",
     })
-  })
-
-  it("結果が届くと結果になり、そのあとターンが終わっても結果のまま", () => {
-    const result = applySessionEvent(
-      running(),
-      { kind: "usage-review-result", findings: FINDINGS },
-      700,
-    )
-    const finished = applySessionEvent(
-      result,
-      { kind: "turn-finished", outcome: { kind: "completed" } },
-      800,
-    )
-
-    expect(finished.usageReview).toEqual({ kind: "result", reviewedAt: 700, findings: FINDINGS })
+    expect({
+      ...after,
+      usageReview: before.usageReview,
+      previousUsageReview: before.previousUsageReview,
+    }).toEqual(before)
   })
 
   it("結果を渡さずにターンが終わるとふだんへ戻る", () => {
@@ -1224,139 +1225,26 @@ describe("applySessionEvent（見直し）", () => {
 })
 
 describe("applySessionEvent（成果の振り返り）", () => {
-  it("diary-requested で writing になり、段は read", () => {
-    const state = applySessionEvent(
+  it("振り返りのイベントは diaryWriting だけを動かし、会話のターンが終わっても動かさない", () => {
+    const before = applySessionEvent(
       INITIAL_SESSION_STATE,
-      { kind: "diary-requested", date: "2026-09-23" },
-      100,
+      { kind: "speech", text: "架空のセリフ", expression: "proud" },
+      50,
     )
-    expect(state.diaryWriting).toEqual({
-      kind: "writing",
-      date: "2026-09-23",
-      startedAt: 100,
-      stage: "read",
-    })
-  })
-
-  it("diary-drafting で段が write に進む", () => {
     const requested = applySessionEvent(
-      INITIAL_SESSION_STATE,
-      { kind: "diary-requested", date: "2026-09-23" },
-      100,
-    )
-    const drafting = applySessionEvent(requested, { kind: "diary-drafting", toolUseId: "t1" }, 200)
-    expect(drafting.diaryWriting).toEqual({
-      kind: "writing",
-      date: "2026-09-23",
-      startedAt: 100,
-      stage: "write",
-    })
-  })
-
-  it("diary-stage で段が pick に進む", () => {
-    const requested = applySessionEvent(
-      INITIAL_SESSION_STATE,
-      { kind: "diary-requested", date: "2026-09-23" },
-      100,
-    )
-    const drafting = applySessionEvent(requested, { kind: "diary-drafting", toolUseId: "t1" }, 200)
-    const picked = applySessionEvent(drafting, { kind: "diary-stage", stage: "pick" }, 300)
-    expect(picked.diaryWriting).toEqual({
-      kind: "writing",
-      date: "2026-09-23",
-      startedAt: 100,
-      stage: "pick",
-    })
-  })
-
-  it("前の段への diary-stage は段を戻さない", () => {
-    const requested = applySessionEvent(
-      INITIAL_SESSION_STATE,
-      { kind: "diary-requested", date: "2026-09-23" },
-      100,
-    )
-    const drafting = applySessionEvent(requested, { kind: "diary-drafting", toolUseId: "t1" }, 200)
-    const picked = applySessionEvent(drafting, { kind: "diary-stage", stage: "pick" }, 300)
-    const backward = applySessionEvent(picked, { kind: "diary-stage", stage: "read" }, 400)
-    expect(backward.diaryWriting).toEqual(picked.diaryWriting)
-  })
-
-  it("writing でなければ diary-drafting / diary-stage は姿を変えない", () => {
-    const idleDrafting = applySessionEvent(
-      INITIAL_SESSION_STATE,
-      { kind: "diary-drafting", toolUseId: "t1" },
-      100,
-    )
-    expect(idleDrafting.diaryWriting).toEqual({ kind: "idle" })
-  })
-
-  it("diary-written で written になる", () => {
-    const requested = applySessionEvent(
-      INITIAL_SESSION_STATE,
-      { kind: "diary-requested", date: "2026-09-23" },
-      100,
-    )
-    const written = applySessionEvent(requested, { kind: "diary-written", date: "2026-09-23" }, 400)
-    expect(written.diaryWriting).toEqual({ kind: "written", date: "2026-09-23", writtenAt: 400 })
-  })
-
-  it("diary-failed で failed になる", () => {
-    const requested = applySessionEvent(
-      INITIAL_SESSION_STATE,
-      { kind: "diary-requested", date: "2026-09-23" },
-      100,
-    )
-    const failed = applySessionEvent(requested, { kind: "diary-failed", date: "2026-09-23" }, 500)
-    expect(failed.diaryWriting).toEqual({ kind: "failed", date: "2026-09-23" })
-  })
-
-  it("writing のまま会話のターンが終わっても姿は変わらない（会話と並んで書いているため）", () => {
-    const requested = applySessionEvent(
-      INITIAL_SESSION_STATE,
+      before,
       { kind: "diary-requested", date: "2026-09-23" },
       100,
     )
     const finished = applySessionEvent(
       requested,
-      { kind: "turn-finished", outcome: { kind: "interrupted" } },
-      500,
-    )
-    expect(finished.diaryWriting).toEqual({
-      kind: "writing",
-      date: "2026-09-23",
-      startedAt: 100,
-      stage: "read",
-    })
-  })
-
-  it("written / failed のままターンが終わっても姿は変わらない", () => {
-    const requested = applySessionEvent(
-      INITIAL_SESSION_STATE,
-      { kind: "diary-requested", date: "2026-09-23" },
-      100,
-    )
-    const written = applySessionEvent(requested, { kind: "diary-written", date: "2026-09-23" }, 400)
-    const finished = applySessionEvent(
-      written,
       { kind: "turn-finished", outcome: { kind: "completed" } },
       500,
     )
-    expect(finished.diaryWriting).toEqual({ kind: "written", date: "2026-09-23", writtenAt: 400 })
-  })
 
-  it("セッションが終わっても writing のまま変わらない（会話と並んで書いているため）", () => {
-    const requested = applySessionEvent(
-      INITIAL_SESSION_STATE,
-      { kind: "diary-requested", date: "2026-09-23" },
-      100,
-    )
-    const ended = applySessionEvent(requested, { kind: "session-ended", reason: "架空" }, 500)
-    expect(ended.diaryWriting).toEqual({
-      kind: "writing",
-      date: "2026-09-23",
-      startedAt: 100,
-      stage: "read",
-    })
+    expect(requested.diaryWriting.kind).toBe("writing")
+    expect({ ...requested, diaryWriting: before.diaryWriting }).toEqual(before)
+    expect(finished.diaryWriting).toEqual(requested.diaryWriting)
   })
 })
 

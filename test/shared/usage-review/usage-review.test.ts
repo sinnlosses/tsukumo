@@ -1,7 +1,12 @@
 import { describe, expect, it } from "vitest"
 
 import {
+  applyUsageReviewEvent,
+  settleUsageReview,
   type UsageProposal,
+  type UsageReview,
+  type UsageReviewFields,
+  type UsageReviewFindings,
   usageProposalKey,
   usageProposalRequestText,
   withoutDismissedProposals,
@@ -59,5 +64,96 @@ describe("withoutDismissedProposals", () => {
     expect(withoutDismissedProposals({ kind: "none" }, ["unused-mcp:example-server"])).toEqual({
       kind: "none",
     })
+  })
+})
+
+describe("applyUsageReviewEvent", () => {
+  const FINDINGS = {
+    days: 7,
+    headline: "架空の冒頭の一言。",
+    proposals: [PROPOSAL, { ...PROPOSAL, target: "another-server" }],
+  } as const satisfies UsageReviewFindings
+
+  const IDLE: UsageReviewFields = {
+    usageReview: { kind: "idle" },
+    previousUsageReview: { kind: "none" },
+  }
+
+  const STAGE_EVENT = { kind: "usage-review-stage", stage: "model", days: 7 } as const
+
+  const RESULT: UsageReviewFields = {
+    usageReview: { kind: "result", reviewedAt: 700, findings: FINDINGS },
+    previousUsageReview: { kind: "found", reviewedAt: 700, findings: FINDINGS },
+  }
+
+  it("段が届くと見直し中になり、始まりは渡された時刻・段は届いた段", () => {
+    expect(applyUsageReviewEvent(IDLE, STAGE_EVENT, 300, 100)).toEqual({
+      usageReview: { kind: "running", startedAt: 100, days: 7, stage: "model" },
+      previousUsageReview: { kind: "none" },
+    })
+  })
+
+  it("見直し中に次の段が届いても始まりは動かさない", () => {
+    const running = applyUsageReviewEvent(IDLE, STAGE_EVENT, 300, 100)
+    const next = applyUsageReviewEvent(
+      running,
+      { kind: "usage-review-stage", stage: "cache", days: 7 },
+      500,
+      500,
+    )
+
+    expect(next.usageReview).toEqual({ kind: "running", startedAt: 100, days: 7, stage: "cache" })
+  })
+
+  it("結果が届くと、見直しと前回の結果が同じ結果に揃う", () => {
+    const running = applyUsageReviewEvent(IDLE, STAGE_EVENT, 300, 100)
+
+    expect(
+      applyUsageReviewEvent(running, { kind: "usage-review-result", findings: FINDINGS }, 700, 700),
+    ).toEqual(RESULT)
+  })
+
+  it("見送った提案は、見直しと前回の結果の両方から除かれる", () => {
+    const dismissed = applyUsageReviewEvent(
+      RESULT,
+      { kind: "usage-proposal-dismissed", key: usageProposalKey(PROPOSAL) },
+      800,
+      800,
+    )
+    const remaining = { ...FINDINGS, proposals: [FINDINGS.proposals[1]] }
+
+    expect(dismissed).toEqual({
+      usageReview: { kind: "result", reviewedAt: 700, findings: remaining },
+      previousUsageReview: { kind: "found", reviewedAt: 700, findings: remaining },
+    })
+  })
+
+  it("結果でも前回の結果でもなければ、見送りは何も変えない", () => {
+    const running = applyUsageReviewEvent(IDLE, STAGE_EVENT, 300, 100)
+
+    expect(
+      applyUsageReviewEvent(
+        running,
+        { kind: "usage-proposal-dismissed", key: usageProposalKey(PROPOSAL) },
+        800,
+        800,
+      ),
+    ).toEqual(running)
+  })
+})
+
+describe("settleUsageReview", () => {
+  it("見直し中はふだんへ戻し、結果とふだんはそのままにする", () => {
+    const result = {
+      kind: "result",
+      reviewedAt: 700,
+      findings: { days: 7, headline: "架空の冒頭の一言。", proposals: [] },
+    } as const satisfies UsageReview
+
+    expect(settleUsageReview({ kind: "running", startedAt: 100, days: 7, stage: "model" })).toEqual(
+      { kind: "idle" },
+    )
+    expect(settleUsageReview(result)).toEqual(result)
+    expect(settleUsageReview({ kind: "idle" })).toEqual({ kind: "idle" })
   })
 })

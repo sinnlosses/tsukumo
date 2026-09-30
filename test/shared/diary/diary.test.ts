@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest"
 
-import { DIARY_VERSION, readDiary, type Diary } from "../../../src/shared/diary/diary.ts"
+import {
+  applyDiaryEvent,
+  DIARY_VERSION,
+  readDiary,
+  type Diary,
+  type DiaryWriting,
+} from "../../../src/shared/diary/diary.ts"
 
 const FIXTURE_DIARY = {
   version: DIARY_VERSION,
@@ -37,5 +43,63 @@ describe("readDiary", () => {
     expect(readDiary({ kind: "びっくり" })).toBeUndefined()
     expect(readDiary("日記ではない")).toBeUndefined()
     expect(readDiary(undefined)).toBeUndefined()
+  })
+})
+
+describe("applyDiaryEvent", () => {
+  const IDLE: DiaryWriting = { kind: "idle" }
+  const requested = applyDiaryEvent(IDLE, { kind: "diary-requested", date: "2026-09-23" }, 100)
+
+  it("diary-requested で writing になり、段は read", () => {
+    expect(requested).toEqual({
+      kind: "writing",
+      date: "2026-09-23",
+      startedAt: 100,
+      stage: "read",
+    })
+  })
+
+  it("diary-drafting で段が write に進む", () => {
+    expect(applyDiaryEvent(requested, { kind: "diary-drafting", toolUseId: "t1" }, 200)).toEqual({
+      kind: "writing",
+      date: "2026-09-23",
+      startedAt: 100,
+      stage: "write",
+    })
+  })
+
+  it("diary-stage で段が pick に進む", () => {
+    expect(applyDiaryEvent(requested, { kind: "diary-stage", stage: "pick" }, 300)).toEqual({
+      kind: "writing",
+      date: "2026-09-23",
+      startedAt: 100,
+      stage: "pick",
+    })
+  })
+
+  it("前の段への diary-stage は段を戻さない", () => {
+    const picked = applyDiaryEvent(requested, { kind: "diary-stage", stage: "pick" }, 300)
+
+    expect(applyDiaryEvent(picked, { kind: "diary-stage", stage: "read" }, 400)).toEqual(picked)
+  })
+
+  it("writing でなければ diary-drafting / diary-stage は姿を変えない", () => {
+    expect(applyDiaryEvent(IDLE, { kind: "diary-drafting", toolUseId: "t1" }, 100)).toEqual(IDLE)
+    expect(applyDiaryEvent(IDLE, { kind: "diary-stage", stage: "pick" }, 100)).toEqual(IDLE)
+  })
+
+  it("diary-written で written になる", () => {
+    expect(applyDiaryEvent(requested, { kind: "diary-written", date: "2026-09-23" }, 400)).toEqual({
+      kind: "written",
+      date: "2026-09-23",
+      writtenAt: 400,
+    })
+  })
+
+  it("diary-failed で failed になる", () => {
+    expect(applyDiaryEvent(requested, { kind: "diary-failed", date: "2026-09-23" }, 500)).toEqual({
+      kind: "failed",
+      date: "2026-09-23",
+    })
   })
 })
