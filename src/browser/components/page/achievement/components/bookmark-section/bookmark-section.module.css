@@ -1,0 +1,35 @@
+/* しおり。 */
+.achievement-bookmark {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--diary-gold-border);
+  border-radius: 1rem;
+  background: var(--diary-gold-surface);
+}
+.achievement-bookmark-heading {
+  margin: 0;
+  font-size: var(--font-label);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--diary-gold-ink);
+}
+.achievement-bookmark-task {
+  margin: 0;
+  font-size: var(--font-subheading);
+  color: var(--diary-gold-strong);
+  line-height: 1.6;
+}
+.achievement-bookmark-task-id {
+  margin-right: 0.6rem;
+  font-family: var(--font-mono);
+  font-size: var(--font-secondary);
+  color: var(--diary-gold-ink-quiet);
+}
+.achievement-bookmark-reason {
+  margin: 0;
+  font-size: var(--font-secondary);
+  color: var(--diary-gold-ink);
+  line-height: 1.7;
+}

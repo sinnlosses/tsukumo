@@ -3,7 +3,7 @@
 // 書体・窓の幅・段落の数で1列に入る字の数が変わるので、見積もりは黙って外れる。
 //
 // 縮める量はページの `--diary-scale` に書く。
-// 字の大きさ・罫の間隔・右の余白はどれもこの値を掛けているので（`achievement.module.css` の `.diary-book-right`）、縮めても本文の列は罫に揃ったまま。
+// 字の大きさ・罫の間隔・右の余白はどれもこの値を掛けているので（`right-page.module.css` の `.diary-book-right`）、縮めても本文の列は罫に揃ったまま。
 // `MIN_SCALE` まで縮めても収まらないときは、そこで止めて本文を横に送らせる。
 
 import { useLayoutEffect, type RefObject } from "react"

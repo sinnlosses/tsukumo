@@ -4,7 +4,8 @@ import clsx from "clsx"
 import type { ReactElement } from "react"
 
 import type { PlanGauge } from "../hooks/use-sidebar-footer.ts"
-import styles from "../sidebar.module.css"
+import sidebarStyles from "../sidebar.module.css"
+import styles from "./plan-usage-gauge.module.css"
 import { PlanWindowPie } from "./plan-window-pie.tsx"
 
 export function PlanUsageGauge(props: {
@@ -18,7 +19,7 @@ export function PlanUsageGauge(props: {
   return (
     <button
       type="button"
-      className={clsx(styles["usage-gauge"], styles["plan-gauge"])}
+      className={clsx(sidebarStyles["usage-gauge"], styles["plan-gauge"])}
       aria-label={gauge.label}
       aria-expanded={props.open}
       aria-controls={props.detailId}

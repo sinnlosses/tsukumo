@@ -11,8 +11,9 @@ import { Dialog } from "../../../../ui/dialog/dialog.tsx"
 import { Heading } from "../../../../ui/heading/heading.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
 import { VStack } from "../../../../ui/v-stack/v-stack.tsx"
-import styles from "../../character.module.css"
+import characterStyles from "../../character.module.css"
 import { AccentSwatch } from "../accent-swatch/accent-swatch.tsx"
+import styles from "./character-create.module.css"
 import { PortraitDrop } from "./components/portrait-drop/portrait-drop.tsx"
 import type { CharacterCreateModel } from "./hooks/use-character-create.ts"
 
@@ -32,7 +33,7 @@ export function PresentationalCharacterCreate({
       backdrop="dim"
       placement={{ kind: "auto" }}
       onClose={onClose}
-      className={styles["character-create-dialog"]}
+      className={characterStyles["character-create-dialog"]}
     >
       <VStack
         element="div"
@@ -49,21 +50,24 @@ export function PresentationalCharacterCreate({
           size="heading"
           tone="inherit"
           weight="bold"
-          className={styles["character-create-heading"]}
+          className={characterStyles["character-create-heading"]}
         >
           新しいキャラクター
         </Heading>
         <div className={styles["character-create-grid"]}>
           <PortraitDrop drop={form.portrait} />
           <div className={styles["character-create-fields"]}>
-            <div className={styles["character-create-field"]}>
-              <label className={styles["character-create-label"]} htmlFor="character-create-name">
+            <div className={characterStyles["character-create-field"]}>
+              <label
+                className={characterStyles["character-create-label"]}
+                htmlFor="character-create-name"
+              >
                 名前
               </label>
               <input
                 id="character-create-name"
                 type="text"
-                className={styles["character-create-input"]}
+                className={characterStyles["character-create-input"]}
                 value={form.name}
                 onChange={(event) => form.onNameChange(event.target.value)}
               />
@@ -71,15 +75,18 @@ export function PresentationalCharacterCreate({
                 {form.nameHint}
               </Text>
             </div>
-            <div className={styles["character-create-field"]}>
-              <label className={styles["character-create-label"]} htmlFor="character-create-id">
+            <div className={characterStyles["character-create-field"]}>
+              <label
+                className={characterStyles["character-create-label"]}
+                htmlFor="character-create-id"
+              >
                 id
               </label>
               <input
                 id="character-create-id"
                 type="text"
                 className={clsx(
-                  styles["character-create-input"],
+                  characterStyles["character-create-input"],
                   styles["character-create-input-mono"],
                 )}
                 value={form.id}
@@ -95,26 +102,26 @@ export function PresentationalCharacterCreate({
                   size="label"
                   tone="ink-quiet"
                   weight="inherit"
-                  className={styles["character-screen-note"]}
+                  className={characterStyles["character-screen-note"]}
                 >
                   {form.idNote.text}
                 </Text>
               )}
             </div>
-            <div className={styles["character-create-field"]}>
-              <span className={styles["character-create-label"]}>画面の差し色</span>
-              <div className={styles["character-swatches-screen"]}>
+            <div className={characterStyles["character-create-field"]}>
+              <span className={characterStyles["character-create-label"]}>画面の差し色</span>
+              <div className={characterStyles["character-swatches-screen"]}>
                 <AccentSwatch swatch={form.workAccent} disabled={false} />
                 <AccentSwatch swatch={form.chatAccent} disabled={false} />
               </div>
             </div>
           </div>
         </div>
-        <div className={styles["character-create-footer"]}>
+        <div className={characterStyles["character-create-footer"]}>
           <Text element="span" size="label" tone="ink-quiet" weight="inherit" className="">
             背景と立ち絵の差し色は、作ったあとに設定できます
           </Text>
-          <div className={styles["character-create-footer-spacer"]} />
+          <div className={characterStyles["character-create-footer-spacer"]} />
           <Button
             type="button"
             variant="outline"
@@ -125,7 +132,7 @@ export function PresentationalCharacterCreate({
             disclosure={{ kind: "none" }}
             ariaHasPopup={undefined}
             title={undefined}
-            className={styles["character-button-outline"]}
+            className={characterStyles["character-button-outline"]}
             onClick={onClose}
           >
             やめる
@@ -140,7 +147,7 @@ export function PresentationalCharacterCreate({
             disclosure={{ kind: "none" }}
             ariaHasPopup={undefined}
             title={undefined}
-            className={styles["character-create-submit"]}
+            className={characterStyles["character-create-submit"]}
             onClick={form.onSubmit}
           >
             <Text element="span" size="inherit" tone="inherit" weight="bold" className="">

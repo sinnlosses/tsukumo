@@ -1,0 +1,18 @@
+/* モデル別・ツール別で列の幅を変える（`table-layout: fixed` は列幅を自分で決めないと均等割りになる）。
+   横棒を添える列だけ広く取る。 */
+.model-usage-table th:nth-child(1),
+.model-usage-table td:nth-child(1) {
+  width: 32%;
+}
+.model-usage-table th:nth-child(2),
+.model-usage-table td:nth-child(2),
+.model-usage-table th:nth-child(4),
+.model-usage-table td:nth-child(4),
+.model-usage-table th:nth-child(5),
+.model-usage-table td:nth-child(5) {
+  width: 14%;
+}
+.model-usage-table th:nth-child(3),
+.model-usage-table td:nth-child(3) {
+  width: 26%;
+}

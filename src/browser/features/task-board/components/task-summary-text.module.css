@@ -1,0 +1,8 @@
+/* 要約の中の `code`。 */
+.task-summary-code {
+  padding: 0 5px;
+  border-radius: 4px;
+  background: var(--surface-raised);
+  font-family: var(--font-mono);
+  font-size: 12px;
+}

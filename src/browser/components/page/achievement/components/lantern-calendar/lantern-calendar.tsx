@@ -6,11 +6,11 @@ import { keys } from "remeda"
 import { HStack } from "../../../../ui/h-stack/h-stack.tsx"
 import { Heading } from "../../../../ui/heading/heading.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
-import styles from "../../achievement.module.css"
 import { LAMP_LABEL } from "../../domain/lamp-label.ts"
 import type { AchievementCalendarView, CalendarCell } from "../../hooks/use-achievement-calendar.ts"
 import { Bell } from "../bell/bell.tsx"
 import { Lamp } from "../lamp/lamp.tsx"
+import styles from "./lantern-calendar.module.css"
 
 const WEEKDAY_HEADS = ["月", "火", "水", "木", "金", "土", "日"] satisfies readonly string[]
 

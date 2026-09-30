@@ -2,7 +2,7 @@ import type { ReactElement } from "react"
 
 import type { TokenUsageDays } from "../../../../../../shared/token-usage/token-usage-summary.ts"
 import type { PeriodChoiceView } from "../../hooks/use-token-usage.ts"
-import styles from "../../token-usage.module.css"
+import styles from "./period-choices.module.css"
 
 type PeriodChoicesProps = {
   readonly choices: readonly PeriodChoiceView[]

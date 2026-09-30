@@ -1,0 +1,111 @@
+/* いまのコンテキストの使用量。押せるのは右端の `›` だけで、外枠は `<a>` ではなく `<div>`。
+
+   札として浮かせる。左右は `.sidebar-footer` の内側 padding ぶん外へ張り出し（負のマージン 10px）、自分の padding（10px）で中身を元の位置へ戻す。
+   札の地と枠はホバーで変えない（押せるのは `›` だけなので、札が浮くと全体を押せるように見える）。 */
+.context-usage-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  margin: 0 -0.625rem;
+  padding: 0.5rem 0.625rem;
+  border: 1px solid transparent;
+  border-radius: 0.625rem;
+  font-size: var(--font-secondary);
+}
+/* 70%以上は警告にする。16進を写さず `--state-warn` からの導出で表す。 */
+.context-usage-row-warn {
+  background: color-mix(in srgb, var(--surface), var(--state-warn) 8%);
+  border-color: color-mix(in srgb, var(--surface), var(--state-warn) 35%);
+}
+
+/* 1段目：ラベル・割合・量・右端の `›`。並べは `HStack`、字の段・色は `Text` が持つ。 */
+.context-usage-row-label {
+  flex: none;
+}
+/* 割合は数字が主。等幅で桁が動いても読みやすくする。 */
+.context-usage-row-percentage {
+  flex: none;
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: var(--font-body);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+.context-usage-row-value {
+  flex: none;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.context-usage-row-warn .context-usage-row-percentage {
+  color: var(--state-warn);
+}
+.context-usage-row-spacer {
+  flex: 1 1 auto;
+}
+/* 押せるのはここだけ。下線をホバーで足さず、色とホバー時の「詳しく」表示で押せると示す。
+   ホバーとフォーカスの起点は `›` 自身で、札のどこに乗っても変わらない。 */
+.context-usage-row-link {
+  display: flex;
+  flex: none;
+  align-items: center;
+  color: var(--ink-quiet);
+  text-decoration: none;
+  font-size: var(--font-label);
+}
+.context-usage-row-link:hover,
+.context-usage-row-link:focus-visible {
+  color: var(--accent);
+}
+.context-usage-row-warn .context-usage-row-link:hover,
+.context-usage-row-warn .context-usage-row-link:focus-visible {
+  color: var(--state-warn);
+}
+/* 「詳しく」は幅 0 に畳んでおき、`›` のホバー・フォーカスで左へ伸ばしながら浮かべる。
+   `›` との間は gap ではなく自分の padding で取り、畳むときは padding も 0 にする（間だけが残らないように）。
+   動きを減らす設定では `theme.css` の全体規則が transition を潰す。 */
+.context-usage-row-link-text {
+  display: inline-block;
+  max-width: 0;
+  padding-right: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  opacity: 0;
+  transition:
+    max-width 0.18s ease-out,
+    padding-right 0.18s ease-out,
+    opacity 0.18s ease-out;
+}
+.context-usage-row-link:hover .context-usage-row-link-text,
+.context-usage-row-link:focus-visible .context-usage-row-link-text {
+  max-width: 3.5em;
+  padding-right: 0.125rem;
+  opacity: 1;
+}
+
+/* 2段目：細い棒。取れない・届く前は 0% のまま出るので、ここでは幅の割合だけを気にすればよい。 */
+.context-usage-row-bar {
+  display: block;
+  height: 0.5rem;
+  border-radius: 0.25rem;
+  background: var(--rule);
+  overflow: hidden;
+}
+.context-usage-row-bar-fill {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+}
+.context-usage-row-warn .context-usage-row-bar-fill {
+  background: var(--state-warn);
+}
+
+/* 3段目：自動圧縮までの残り。取れない・届く前は空白で高さだけ保つ。 */
+.context-usage-row-until {
+  display: block;
+  color: var(--ink-quiet);
+  font-size: var(--font-label);
+}
+.context-usage-row-warn .context-usage-row-until {
+  color: var(--state-warn);
+}

@@ -1,0 +1,74 @@
+/* ---- 左: 一覧 ---- */
+.character-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  min-width: 0;
+}
+.character-list-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 0.25rem 0.25rem;
+}
+.character-list-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid transparent;
+  border-radius: 0.625rem;
+  color: var(--ink);
+  text-decoration: none;
+}
+.character-list-row:hover {
+  background: var(--surface);
+}
+/* 選んでいる行は地を差し色で薄く染め、縁も差し色寄りにする（`aria-current`。字の重さでも示す）。 */
+.character-list-row[aria-current="page"] {
+  background: var(--surface-accent);
+  border-color: color-mix(in srgb, var(--surface), var(--accent) 35%);
+}
+.character-list-row:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+.character-list-face,
+.character-list-face-blank {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+}
+.character-list-face {
+  object-fit: cover;
+}
+.character-list-row[aria-current="page"] .character-list-face {
+  box-shadow: 0 0 0 1.5px var(--accent);
+}
+/* 顔を持たないパックは点線の丸（立ち絵や `mini` から切り抜いて代わりにしない）。 */
+.character-list-face-blank {
+  box-sizing: border-box;
+  background: var(--surface);
+  border: 1px dashed var(--rule);
+}
+.character-list-text {
+  min-width: 0;
+}
+/* 字の段・太さは `Text` が持つ。1行で切る組みだけここに置く。 */
+.character-list-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* 顔は `<Button variant="outline-dashed">` が持つ。箱（並べ・高さ・余白・角丸・字の大きさ）だけここに置く。 */
+.character-list-new {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  height: 2.75rem;
+  margin-top: 0.4rem;
+  border-radius: 0.625rem;
+  font-size: var(--font-subheading);
+}

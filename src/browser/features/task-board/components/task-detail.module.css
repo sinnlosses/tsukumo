@@ -1,0 +1,142 @@
+.task-detail {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 0;
+  padding: 22px 28px;
+  overflow-y: auto;
+}
+/* パンくず（つながりをたどった先にだけ出す。直前の1つだけ）。 */
+.task-detail-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 20px;
+  font-size: 12px;
+}
+.task-detail-breadcrumb-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+}
+.task-detail-breadcrumb-back-chevron {
+  flex: none;
+}
+.task-detail-breadcrumb-separator {
+  color: var(--ink-quiet);
+}
+.task-detail-breadcrumb-current {
+  color: var(--ink);
+  font-family: var(--font-mono);
+}
+.task-detail-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.task-detail-id {
+  color: var(--ink-quiet);
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+.task-detail-status {
+  padding: 1px 7px;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  color: color-mix(in srgb, var(--ink) 85%, transparent);
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+.task-detail-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+.task-detail-info {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 8px 18px;
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--rule-quiet);
+  border-radius: 10px;
+  background: var(--ground);
+  color: var(--ink-quiet);
+  font-size: 12px;
+}
+.task-detail-info dt,
+.task-detail-info dd {
+  margin: 0;
+}
+.task-detail-info dd {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+.task-detail-loop {
+  gap: 5px;
+  color: color-mix(in srgb, var(--ink) 85%, transparent);
+}
+.task-detail-location {
+  gap: 5px;
+  color: var(--accent);
+  font-family: var(--font-mono);
+  overflow-wrap: anywhere;
+}
+.task-detail-location a {
+  color: inherit;
+}
+.task-detail-dependencies {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.task-detail-dependencies-title {
+  margin: 0;
+  color: color-mix(in srgb, var(--state-warn) 60%, var(--ink));
+  font-size: 12px;
+}
+/* 「これを待っているもの」（逆向きの札）の見出しは弱い字色。 */
+.task-detail-dependents-title {
+  margin: 0;
+  color: var(--ink-quiet);
+  font-size: 12px;
+}
+.task-detail-dependency-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.task-detail-dependency-id {
+  flex: none;
+  color: color-mix(in srgb, var(--accent) 45%, var(--ink));
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+.task-detail-dependency-summary {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.task-detail-dependency-chevron {
+  flex: none;
+  color: var(--ink-quiet);
+}
+.task-detail-dependency-unlisted {
+  color: var(--ink-quiet);
+  font-size: 11px;
+}
+@media (max-width: 760px) {
+  .task-detail {
+    padding: 16px;
+  }
+}

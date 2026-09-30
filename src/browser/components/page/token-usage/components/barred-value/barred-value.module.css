@@ -1,0 +1,23 @@
+/* 数の右に添える横棒（並べ順を決めている列だけ。`usage-table-bar-cell` が1つのセルの中身）。 */
+.usage-table-bar-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+}
+.usage-table-bar {
+  flex: 1 1 auto;
+  overflow: hidden;
+  min-width: 1.5rem;
+  height: 0.5rem;
+  border-radius: 0.25rem;
+  background: var(--usage-bar-track);
+}
+/* 塗りは期間の合計の棒（`.usage-card-bar`）と同じ `--usage-bar`（どちらも「その列の最大に対する長さ」を言う棒で、分類の色ではない）。 */
+.usage-table-bar-fill {
+  display: block;
+  width: var(--usage-bar-share);
+  height: 100%;
+  border-radius: 0.25rem;
+  background: var(--usage-bar);
+}

@@ -1,0 +1,32 @@
+/* タスクを実行する確認。`showModal()` は top layer に積むので、下のモーダルより必ず上に出る。 */
+.task-run-confirm {
+  box-sizing: border-box;
+  width: min(28rem, calc(100vw - 2rem));
+  margin: auto;
+  padding: 1rem;
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--rule);
+  border-radius: 0.75rem;
+  font-size: var(--font-secondary);
+}
+/* 送る文面（または送れない理由）。問いより弱い濃さで、問いの下に1行だけ置く。色は `Text` が持つ。 */
+.task-run-note {
+  margin: 0.5rem 0 0;
+}
+.task-run-prompt {
+  font-family: var(--font-mono);
+}
+/* 押す口は右寄せで、実行するほうを端に置く（キャンセルが先に来る）。 */
+.task-run-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.9rem;
+}
+/* 箱だけ（高さ・余白・角丸）。顔は `<Button>` が持つ。 */
+.task-run-cancel,
+.task-run-ok {
+  padding: 0.2rem 0.8rem;
+  border-radius: 0.4rem;
+}

@@ -1,7 +1,7 @@
 import type { ReactElement } from "react"
 
 import { HStack } from "../../../../ui/h-stack/h-stack.tsx"
-import styles from "../../token-usage.module.css"
+import styles from "./table-card-head.module.css"
 
 type TableCardHeadProps = {
   readonly title: string

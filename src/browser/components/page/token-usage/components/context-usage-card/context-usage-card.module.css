@@ -1,0 +1,248 @@
+/* いまのコンテキストの内訳の札。
+   期間の消費の札（`.usage-card`）と同じ枠・同じ地で、出どころが違うことは見出しの言葉のほうが持つ。 */
+.context-card {
+  display: flex;
+  flex-direction: column;
+  gap: 1.125rem;
+  padding: 1.5rem 1.75rem;
+  border: 1px solid var(--usage-rule);
+  border-radius: 0.875rem;
+  background: var(--usage-card);
+}
+/* 見出しの行。右の2つは `margin-left: auto` で押しやる（狭い画面では下へ折り返す）。 */
+.context-title {
+  margin: 0;
+  color: var(--usage-ink);
+  font-size: var(--font-subheading);
+  font-weight: normal;
+}
+.context-note {
+  color: var(--usage-ink-note);
+  font-size: var(--font-label);
+}
+.context-aside {
+  margin-left: auto;
+}
+/* 自動圧縮までの残り。
+   札より沈んだ枠のある小さな箱（期間の切り替えの外枠と同じ地）。
+   数のほうを明るく、「自動圧縮まで」を一段落とす。 */
+.context-until {
+  padding: 0.1rem 0.5rem;
+  border: 1px solid var(--usage-rule);
+  border-radius: 0.625rem;
+  background: var(--usage-well);
+  color: var(--usage-ink);
+  font-size: var(--font-label);
+  line-height: 1.4;
+}
+.context-until-label {
+  color: var(--usage-ink-label);
+}
+/* 内訳のモデルと取った時刻（機械の側の名前なので等幅）。 */
+.context-taken {
+  color: var(--usage-ink-faint);
+  font-family: var(--font-mono);
+  font-size: var(--font-label);
+}
+/* 使っている量・窓の大きさ・割合。数が主で、右の2つは小さく静かに。 */
+.context-total {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  margin: 0;
+}
+.context-total-value {
+  color: var(--usage-ink);
+  font-family: var(--font-mono);
+  font-size: var(--font-heading);
+  font-variant-numeric: tabular-nums;
+}
+/* 窓の大きさ（`/ 200k`）より割合を1段明るく（割合のほうが読みたい数）。 */
+.context-total-max,
+.context-total-share {
+  color: var(--usage-ink-note);
+  font-family: var(--font-mono);
+  font-size: var(--font-secondary);
+  font-variant-numeric: tabular-nums;
+}
+.context-total-share {
+  color: var(--usage-ink-soft);
+}
+
+/* 横棒1本。
+   区間の幅は行ごとの `--context-share`（割合をそのまま幅にする）。
+   窓を超えた回は合計が100%を超えるので、はみ出しはここで切る。 */
+/* 区間どうしは隙間で切る（見本。塗りが隣り合うと、色の違いが境目の見分けを1つだけで担うことになる）。両端だけ丸める。 */
+.context-bar {
+  display: flex;
+  overflow: hidden;
+  gap: 2px;
+  width: 100%;
+  height: 1.75rem;
+}
+.context-span {
+  width: var(--context-share);
+}
+.context-span:first-child {
+  border-radius: 0.375rem 0 0 0.375rem;
+}
+.context-span:last-child {
+  border-radius: 0 0.375rem 0.375rem 0;
+}
+
+/* 凡例。3列の格子（狭い画面では列が減る。1列の下限は、いちばん長い分類名と数が1行に収まる幅）。 */
+.context-legend {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  column-gap: 2rem;
+  margin: 0;
+}
+/* 1行が1分類。上の罫線で区切る（3列のどの列でも行の高さが揃うので、横にも読める）。 */
+.context-legend-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  padding: 0.5rem 0;
+  border-top: 1px solid var(--usage-rule-quiet);
+  font-size: var(--font-secondary);
+  white-space: nowrap;
+}
+.context-legend-name {
+  display: flex;
+  color: var(--usage-ink-soft);
+  align-items: baseline;
+  gap: 0.35rem;
+}
+/* 数（トークン数）を明るく、割合を静かに。 */
+.context-legend-value {
+  margin-left: auto;
+  color: var(--usage-ink-note);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+.context-legend-tokens {
+  color: var(--usage-ink);
+}
+/* 凡例の四角。横棒と同じ塗り（同じ `.context-tone-*` を重ねる）。 */
+.context-swatch {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 0.1875rem;
+}
+/* 空き・自動圧縮バッファの四角だけは縁を足す（地に近い塗りなので、縁が無いと四角が消える）。 */
+.context-swatch.context-tone-free,
+.context-swatch.context-tone-buffer {
+  border: 1px solid var(--context-outline);
+}
+
+/* 畳んだ内訳（`details`）。開くと表が縦に並ぶ。凡例の行と同じ罫で上を区切る。 */
+.context-detail {
+  padding-top: 0.625rem;
+  border-top: 1px solid var(--usage-rule-quiet);
+  font-size: var(--font-label);
+}
+.context-detail-summary {
+  color: var(--usage-ink-label);
+  cursor: pointer;
+}
+.context-detail[open] .context-detail-summary {
+  margin-bottom: 0.4rem;
+}
+
+/* 読み込み中の骨組み（`ContextUsageCardSkeleton`）が出す塊。
+   中身の値だけを灰色にする（見出し・添え書き・分類名は実物と同じ文字を出す）。
+   うっすら明滅させる。
+   `prefers-reduced-motion: reduce` では `theme.css` の全体規則（`*, *::before, *::after { animation-duration: 0.01ms !important; }`）がこの `animation` も止めるので、ここに専用の対応は要らない。
+   `height` を自分では持たない。
+   `SkeletonBlock` の中身の `&nbsp;` が、届いた実物の文字と同じ `font-size` で本文の行間（`--line-height-body`）ぶんの行の高さを作る。
+   固定の `1em` などを指定すると、行間を含む実物の文字の高さより低くなり、届いた札とずれる。
+   文字は `color: transparent` で見えなくする（読み上げは `aria-hidden` で別に止める）。 */
+.context-skeleton-block {
+  display: inline-block;
+  border-radius: 0.25rem;
+  background-color: var(--usage-well);
+  color: transparent;
+  animation: context-skeleton-pulse 1.6s ease-in-out infinite;
+}
+@keyframes context-skeleton-pulse {
+  0%,
+  100% {
+    background-color: var(--usage-well);
+  }
+  50% {
+    background-color: var(--usage-chosen);
+  }
+}
+/* 塊ごとの幅。 */
+.context-skeleton-until {
+  width: 3.5rem;
+}
+.context-skeleton-taken {
+  width: 9rem;
+}
+.context-skeleton-total-value {
+  width: 5rem;
+}
+.context-skeleton-total-max {
+  width: 3rem;
+}
+.context-skeleton-total-share {
+  width: 2.5rem;
+}
+.context-skeleton-legend-value {
+  width: 4.5rem;
+}
+/* 横棒だけは幅・高さを親（`.context-bar`）に合わせる（`flex: 1 1 auto` + 高さの指定なしで `align-items: stretch` の既定に乗る）。
+   届いた札の1本ずつの区間と違い、骨組みは分類ごとの割合が分からないので1本の塊にする。
+   中身が無いので `&nbsp;` は要らない（高さは `stretch` が決める）。 */
+.context-skeleton-bar {
+  flex: 1 1 auto;
+  border-radius: 0.375rem;
+}
+
+/* 分類ごとの塗り（`ContextTone` と対。16進は theme.css だけが持つ）。 */
+.context-tone-system-prompt {
+  background: var(--context-system-prompt);
+}
+.context-tone-system-tools {
+  background: var(--context-system-tools);
+}
+.context-tone-mcp-tools {
+  background: var(--context-mcp-tools);
+}
+.context-tone-memory-files {
+  background: var(--context-memory-files);
+}
+.context-tone-skills {
+  background: var(--context-skills);
+}
+.context-tone-messages {
+  background: var(--context-messages);
+}
+.context-tone-other {
+  background: var(--context-other);
+}
+/* 空きは地より一段明るい無地、自動圧縮バッファは斜線（色ではなく柄で分ける。どちらも凡例の四角に同じものが出る）。 */
+.context-tone-free {
+  background: var(--context-free);
+}
+.context-tone-buffer {
+  background: repeating-linear-gradient(
+    135deg,
+    var(--context-buffer-stripe) 0 3px,
+    transparent 3px 7px
+  );
+  background-color: var(--context-buffer);
+}
+@media (max-width: 760px) {
+  .context-legend {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 420px) {
+  .context-legend {
+    grid-template-columns: 1fr;
+  }
+}

@@ -10,9 +10,10 @@ import { Heading } from "../../../../../../ui/heading/heading.tsx"
 import { SwitchIcon } from "../../../../../../ui/icon/icon.tsx"
 import { Text } from "../../../../../../ui/text/text.tsx"
 import { VStack } from "../../../../../../ui/v-stack/v-stack.tsx"
-import styles from "../../../../character.module.css"
+import characterStyles from "../../../../character.module.css"
 import type { CharacterProfileModel } from "../../../hooks/use-character-edit.ts"
 import { CharacterProfileEdit } from "../character-profile-edit/character-profile-edit.tsx"
+import styles from "./character-profile.module.css"
 
 export function CharacterProfile(props: { readonly profile: CharacterProfileModel }): ReactElement {
   const { profile } = props
@@ -66,7 +67,7 @@ export function CharacterProfile(props: { readonly profile: CharacterProfileMode
             size="label"
             tone="ink-quiet"
             weight="inherit"
-            className={styles["character-screen-note"]}
+            className={characterStyles["character-screen-note"]}
           >
             {profile.note.text}
           </Text>
@@ -95,7 +96,7 @@ export function CharacterProfile(props: { readonly profile: CharacterProfileMode
               disclosure={{ kind: "none" }}
               ariaHasPopup={undefined}
               title={profile.switchTo.title}
-              className={styles["character-button-outline"]}
+              className={characterStyles["character-button-outline"]}
               onClick={profile.switchTo.onSwitch}
             >
               <SwitchIcon />

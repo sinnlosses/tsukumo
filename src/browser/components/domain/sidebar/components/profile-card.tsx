@@ -14,8 +14,8 @@ import { useSession } from "../../../../stores/session.ts"
 import { Text } from "../../../ui/text/text.tsx"
 import { VStack } from "../../../ui/v-stack/v-stack.tsx"
 import { CharacterFace } from "../../character-face.tsx"
-import styles from "../sidebar.module.css"
 import { CharacterSwitch } from "./character-switch.tsx"
+import styles from "./profile-card.module.css"
 
 const PROFILE_CHARACTER_SELECT_ID = "tsukumo-profile-character"
 

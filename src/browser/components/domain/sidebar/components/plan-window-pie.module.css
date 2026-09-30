@@ -1,0 +1,16 @@
+.plan-gauge-figure {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+.plan-gauge-pie {
+  flex: none;
+}
+.plan-gauge-pie-track {
+  fill: var(--rule-quiet);
+  stroke: var(--rule);
+  stroke-width: 1;
+}
+.plan-gauge-pie-hub {
+  fill: var(--ground);
+}

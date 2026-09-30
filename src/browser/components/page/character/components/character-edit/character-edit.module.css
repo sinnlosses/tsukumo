@@ -1,0 +1,70 @@
+/* ---- 右: 詳しい設定 ---- */
+/* 札1枚。
+   中の表情のカード・色見本は札より沈めた `ground` の地に置く。
+   container にしてあるのは、詳しい設定の幅で格子の列数を決めるため（一覧の幅を除いた残り）。 */
+.character-detail {
+  container-type: inline-size;
+  display: flex;
+  flex-direction: column;
+  gap: 1.6rem;
+  min-width: 0;
+  padding: 1.5rem 1.75rem;
+  background: var(--surface);
+  border: 1px solid var(--rule-quiet);
+  border-radius: 0.875rem;
+}
+
+/* 節（表情・差し色・背景）。 */
+.character-section {
+  min-width: 0;
+}
+.character-section-bar > :last-child {
+  margin-left: auto;
+}
+/* 字の段・色・太さは `Text` が持つ。margin だけここに置く。 */
+.character-section-note {
+  margin-left: 0.6rem;
+}
+.character-section-bar > .character-section-note {
+  margin-left: auto;
+}
+
+/* 表情の格子。広いときは5列（見本）、詳しい設定が狭いときは入るだけの列で折り返す。 */
+.character-gallery {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+@container (max-width: 52rem) {
+  .character-gallery {
+    grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr));
+  }
+}
+
+/* 差し色。画面の差し色（2つ）と立ち絵の差し色（4つ）を横に並べる（見本の 2 : 4）。 */
+.character-accents {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 4fr);
+  gap: 1rem;
+}
+.character-swatches-outfit {
+  display: grid;
+  gap: 0.5rem;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+@container (max-width: 52rem) {
+  .character-accents {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+/* ごく狭いときは1列（2列だと装備の名前と16進が折れる）。 */
+@container (max-width: 30rem) {
+  .character-swatches-outfit {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 760px) {
+  .character-detail {
+    padding: 1rem;
+  }
+}

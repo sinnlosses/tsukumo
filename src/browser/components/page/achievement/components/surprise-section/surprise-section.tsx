@@ -10,7 +10,7 @@ import { monthDayLabel } from "../../../../../utils/month-day-label.ts"
 import { Heading } from "../../../../ui/heading/heading.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
 import { VStack } from "../../../../ui/v-stack/v-stack.tsx"
-import styles from "../../achievement.module.css"
+import styles from "./surprise-section.module.css"
 
 export type SurpriseSectionProps = {
   readonly graduations: readonly AchievementGraduation[]

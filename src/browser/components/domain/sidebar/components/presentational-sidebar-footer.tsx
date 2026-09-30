@@ -4,12 +4,12 @@
 import type { ReactElement } from "react"
 
 import type { SidebarFooterView } from "../hooks/use-sidebar-footer.ts"
-import styles from "../sidebar.module.css"
 import { ContextUsageGauge } from "./context-usage-gauge.tsx"
 import { ContextUsageRow } from "./context-usage-row.tsx"
 import { PlanUsageGauge } from "./plan-usage-gauge.tsx"
 import { PlanUsageRow } from "./plan-usage-row.tsx"
 import { RunSettingGroup } from "./run-setting-group.tsx"
+import styles from "./sidebar-footer.module.css"
 
 const DETAIL_LABEL = "使用量の詳しい面"
 

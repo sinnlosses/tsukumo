@@ -13,8 +13,9 @@ import type {
   TaskBoardDetail,
   TaskDependencyCard,
 } from "../hooks/use-task-board.ts"
-import styles from "../task-board.module.css"
+import taskBoardStyles from "../task-board.module.css"
 import { TaskBody } from "./task-body.tsx"
+import styles from "./task-detail.module.css"
 import { TaskDifficulty } from "./task-difficulty.tsx"
 import { TaskState } from "./task-state.tsx"
 import { TaskSummaryText } from "./task-summary-text.tsx"
@@ -162,7 +163,7 @@ function TaskDependency(props: {
   const dependency = props.dependency
   if (dependency.kind === "unlisted") {
     return (
-      <li className={styles["task-detail-dependency"]}>
+      <li className={taskBoardStyles["task-detail-dependency"]}>
         <span className={styles["task-detail-dependency-id"]}>{dependency.id}</span>
         <span className={styles["task-detail-dependency-unlisted"]}>一覧に無い</span>
       </li>
@@ -172,7 +173,7 @@ function TaskDependency(props: {
     <li>
       <button
         type="button"
-        className={styles["task-detail-dependency"]}
+        className={taskBoardStyles["task-detail-dependency"]}
         onClick={() => props.onJump(dependency.id)}
       >
         <span className={styles["task-detail-dependency-id"]}>{dependency.id}</span>

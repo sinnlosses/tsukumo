@@ -8,8 +8,9 @@ import { HStack } from "../../../../../../ui/h-stack/h-stack.tsx"
 import { TrashIcon, UploadIcon } from "../../../../../../ui/icon/icon.tsx"
 import { Text } from "../../../../../../ui/text/text.tsx"
 import { VStack } from "../../../../../../ui/v-stack/v-stack.tsx"
-import styles from "../../../../character.module.css"
+import characterStyles from "../../../../character.module.css"
 import type { ImageFieldModel } from "../../../hooks/use-character-edit.ts"
+import styles from "./image-field.module.css"
 
 const THUMBNAIL_CLASS = {
   face: { preview: "character-face-field-preview", blank: "character-face-field-blank" },
@@ -65,12 +66,12 @@ export function ImageField(props: {
           wrap="wrap"
           className=""
         >
-          <label className={styles["character-button"]}>
+          <label className={characterStyles["character-button"]}>
             <UploadIcon />
             差し替える
             <input
               type="file"
-              className={styles["character-card-file"]}
+              className={characterStyles["character-card-file"]}
               aria-label={`${field.subject}を差し替える`}
               accept={field.accept}
               disabled={disabled}
@@ -90,7 +91,7 @@ export function ImageField(props: {
               ariaHasPopup={undefined}
               disclosure={{ kind: "none" }}
               title={undefined}
-              className={styles["character-button-outline"]}
+              className={characterStyles["character-button-outline"]}
               onClick={field.onClear}
             >
               <TrashIcon />

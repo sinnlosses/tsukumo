@@ -1,0 +1,50 @@
+.task-board-head {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--rule-quiet);
+}
+.task-board-title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+}
+.task-board-counts {
+  color: var(--ink-quiet);
+  font-size: 12px;
+  white-space: nowrap;
+}
+.task-board-hints {
+  margin-left: auto;
+  color: var(--ink-quiet);
+  font-size: 11px;
+  white-space: nowrap;
+}
+.task-board-hints kbd {
+  padding: 0 5px;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  font-family: var(--font-mono);
+}
+/* 箱だけ（大きさ・角丸）。顔は `<Button variant="outline">` が持つ。 */
+.task-board-close {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border-radius: 9px;
+}
+/* キーの案内は指で触る画面では読まないので畳む。 */
+@media (max-width: 760px) {
+  .task-board-hints {
+    display: none;
+  }
+  .task-board-close {
+    margin-left: auto;
+  }
+}

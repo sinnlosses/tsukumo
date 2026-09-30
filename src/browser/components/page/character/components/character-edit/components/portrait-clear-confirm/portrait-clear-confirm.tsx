@@ -10,7 +10,8 @@ import { Button } from "../../../../../../ui/button/button.tsx"
 import { Dialog, type DialogPlacement } from "../../../../../../ui/dialog/dialog.tsx"
 import { HStack } from "../../../../../../ui/h-stack/h-stack.tsx"
 import { Text } from "../../../../../../ui/text/text.tsx"
-import styles from "../../../../character.module.css"
+import characterStyles from "../../../../character.module.css"
+import styles from "./portrait-clear-confirm.module.css"
 
 /** 吹き出しの幅（見本の実測）。 */
 const CONFIRM_WIDTH = 300
@@ -92,7 +93,7 @@ export function PortraitClearConfirm(props: PortraitClearConfirmProps): ReactEle
           disclosure={{ kind: "none" }}
           ariaHasPopup={undefined}
           title={undefined}
-          className={styles["character-button-outline"]}
+          className={characterStyles["character-button-outline"]}
           onClick={props.onClose}
         >
           やめる

@@ -1,0 +1,19 @@
+/* このキャラクターを消す／同梱に戻す帯。
+   赤みがかった枠（`state-ng` を混ぜた地と縁）。 */
+.character-delete-band {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.875rem 1rem;
+  background: color-mix(in srgb, var(--ground), var(--state-ng) 8%);
+  border: 1px solid color-mix(in srgb, var(--surface), var(--state-ng) 45%);
+  border-radius: 0.75rem;
+}
+.character-delete-band-text {
+  display: flex;
+  flex: 1 1 16rem;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}

@@ -6,7 +6,8 @@ import type { ReactElement } from "react"
 
 import { Text } from "../../../components/ui/text/text.tsx"
 import type { TaskBoardRow } from "../hooks/use-task-board.ts"
-import styles from "../task-board.module.css"
+import taskBoardStyles from "../task-board.module.css"
+import styles from "./task-board-list.module.css"
 import { TaskDifficulty } from "./task-difficulty.tsx"
 import { TaskState } from "./task-state.tsx"
 import { TaskSummaryText } from "./task-summary-text.tsx"
@@ -34,7 +35,7 @@ export function TaskBoardList(props: {
           size="secondary"
           tone="ink-quiet"
           weight="inherit"
-          className={styles["task-board-message"]}
+          className={taskBoardStyles["task-board-message"]}
         >
           当てはまるタスクが無い
         </Text>
@@ -61,7 +62,7 @@ function TaskBoardOption(props: {
       {row.outOfFilter && (
         <span className={styles["task-board-option-out-of-filter"]}>絞り込みの外</span>
       )}
-      <span className={styles["task-board-option-head"]}>
+      <span className={taskBoardStyles["task-board-option-head"]}>
         <span className={styles["task-board-option-id"]}>{row.id}</span>
         <TaskState state={row.state} />
         {row.loopable && (

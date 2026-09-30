@@ -9,13 +9,18 @@ import type { ReactElement } from "react"
 
 import { useSession } from "../../../../stores/session.ts"
 import { Text } from "../../../ui/text/text.tsx"
-import styles from "../sidebar.module.css"
+import sidebarStyles from "../sidebar.module.css"
+import styles from "./recent-topic-section.module.css"
 import { SidebarSection } from "./section.tsx"
 
 export function RecentTopicSection(): ReactElement {
   const topics = useSession((session) => session.state.chatTopics)
   return (
-    <SidebarSection title="最近の話題" extraClass={styles["sidebar-block-chat"]} action={undefined}>
+    <SidebarSection
+      title="最近の話題"
+      extraClass={sidebarStyles["sidebar-block-chat"]}
+      action={undefined}
+    >
       {topics.length === 0 ? (
         <Text element="p" size="inherit" tone="ink-quiet" weight="inherit" className="">
           まだ話題が無い（話が積もると、ここに並ぶ）

@@ -2,9 +2,10 @@ import clsx from "clsx"
 import type { ReactElement } from "react"
 
 import type { ModelRowView } from "../../hooks/use-token-usage.ts"
-import styles from "../../token-usage.module.css"
+import tokenUsageStyles from "../../token-usage.module.css"
 import { BarredValue } from "../barred-value/barred-value.tsx"
 import { TableCardHead } from "../table-card-head/table-card-head.tsx"
+import styles from "./model-usage-card.module.css"
 
 type ModelUsageCardProps = {
   readonly models: readonly ModelRowView[]
@@ -16,9 +17,9 @@ type ModelUsageCardProps = {
  */
 export function ModelUsageCard(props: ModelUsageCardProps): ReactElement {
   return (
-    <section className={styles["usage-card"]}>
+    <section className={tokenUsageStyles["usage-card"]}>
       <TableCardHead title="モデル別" order="出力の多い順" />
-      <table className={clsx(styles["token-usage-table"], styles["model-usage-table"])}>
+      <table className={clsx(tokenUsageStyles["token-usage-table"], styles["model-usage-table"])}>
         <thead>
           <tr>
             <th scope="col">モデル</th>
@@ -31,7 +32,7 @@ export function ModelUsageCard(props: ModelUsageCardProps): ReactElement {
         <tbody>
           {props.models.map((entry) => (
             <tr key={entry.model}>
-              <th scope="row" className={styles["token-usage-name"]}>
+              <th scope="row" className={tokenUsageStyles["token-usage-name"]}>
                 {entry.model}
               </th>
               <td>{entry.input}</td>

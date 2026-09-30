@@ -1,0 +1,19 @@
+.tool-usage-table th:nth-child(1),
+.tool-usage-table td:nth-child(1) {
+  width: 34%;
+}
+.tool-usage-table th:nth-child(2),
+.tool-usage-table td:nth-child(2) {
+  width: 22%;
+}
+.tool-usage-table th:nth-child(3),
+.tool-usage-table td:nth-child(3) {
+  width: 44%;
+}
+
+/* 「ほか n 件を見る」の開閉。
+   文字だけのボタン（枠を増やさない）。
+   顔は `<Button variant="link">` が持つ。 */
+.usage-table-more {
+  margin: 0.75rem 0 0;
+}

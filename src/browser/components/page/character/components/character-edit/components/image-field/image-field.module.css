@@ -1,0 +1,36 @@
+/* 顔の行。帯・一覧・名乗りの丸と同じ丸い縮図と、字と2つの口。 */
+.character-face-field-preview,
+.character-face-field-blank {
+  box-sizing: border-box;
+  flex-shrink: 0;
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+}
+.character-face-field-preview {
+  border: 1px solid var(--rule-quiet);
+  object-fit: cover;
+}
+/* 顔が無いときは、背景と同じ点線の枠（丸め）。 */
+.character-face-field-blank {
+  border: 1.5px dashed var(--rule);
+}
+
+/* 背景の行。敷いたときと同じ切り取り方（cover・下端合わせ）の縮図と、字と2つの口。 */
+.character-background-preview,
+.character-background-blank {
+  box-sizing: border-box;
+  width: 220px;
+  max-width: 100%;
+  height: 124px;
+  border-radius: 0.625rem;
+}
+.character-background-preview {
+  border: 1px solid var(--rule-quiet);
+  object-fit: cover;
+  object-position: center bottom;
+}
+/* 背景が無いときは、表情の空欄と同じ点線の枠（そこに置けることだけを示す）。 */
+.character-background-blank {
+  border: 1.5px dashed var(--rule);
+}

@@ -14,7 +14,7 @@ import { formatCount } from "../../../../utils/format-count.ts"
 import { HStack } from "../../../ui/h-stack/h-stack.tsx"
 import { Text } from "../../../ui/text/text.tsx"
 import { isContextUsageWarn } from "../domain/context-usage-warn.ts"
-import styles from "../sidebar.module.css"
+import styles from "./context-usage-row.module.css"
 
 const ROW_LABEL = "コンテキスト"
 const PENDING_TEXT = "取得中…"

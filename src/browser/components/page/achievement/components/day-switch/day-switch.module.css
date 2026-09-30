@@ -1,0 +1,26 @@
+/* 日の切り替え。題「成果」と同じ行に置く。 */
+.achievement-day-switch-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+/* 顔は `<Button variant="outline">` が持つ。箱だけここに置く。 */
+.achievement-day-switch-button {
+  height: 2.25rem;
+  min-width: 2.25rem;
+  padding: 0 0.6rem;
+  border-radius: 0.5625rem;
+}
+.achievement-day-switch-label {
+  min-width: 9rem;
+}
+/* 字の段・色は `Text` が持つ。字間だけここに置く。 */
+.achievement-day-switch-relative {
+  letter-spacing: 0.05em;
+}
+/* 顔は `<Button variant="outline">` が持つ。箱だけここに置く。 */
+.achievement-day-switch-today {
+  height: 2.25rem;
+  padding: 0 0.75rem;
+  border-radius: 0.5625rem;
+}

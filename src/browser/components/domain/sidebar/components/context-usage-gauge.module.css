@@ -1,0 +1,21 @@
+.context-gauge-figure {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+/* 目盛り。縦の線（`.context-gauge-compact`）は自動圧縮が始まる位置で、棒の上下へ少しはみ出す。 */
+.context-gauge-track {
+  position: relative;
+  display: block;
+  width: 56px;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--rule-quiet);
+}
+.context-gauge-compact {
+  position: absolute;
+  top: -2px;
+  width: 1.5px;
+  height: 10px;
+  background: var(--ink-quiet);
+}

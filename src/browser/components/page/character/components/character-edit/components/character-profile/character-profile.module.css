@@ -1,0 +1,54 @@
+/* 名乗り */
+.character-profile {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1.1rem;
+}
+.character-profile-face,
+.character-profile-face-blank {
+  flex-shrink: 0;
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+}
+.character-profile-face {
+  object-fit: cover;
+  box-shadow: 0 0 0 2px var(--accent);
+}
+.character-profile-face-blank {
+  box-sizing: border-box;
+  background: var(--ground);
+  border: 1px dashed var(--rule);
+}
+.character-profile-text {
+  flex: 1 1 14rem;
+  min-width: 0;
+}
+.character-profile-headline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.4rem 0.75rem;
+}
+/* 字の段・色・太さは `Heading` が持つ。字間だけここに置く。 */
+.character-profile-name {
+  letter-spacing: 0.06em;
+}
+/* パックの名前はディレクトリ名なので等幅。 */
+/* 字の段・色は `Text` が持つ。書体だけここに置く。 */
+.character-profile-id {
+  font-family: var(--font-mono);
+}
+.character-in-use {
+  padding: 0.1rem 0.55rem;
+  background: var(--accent);
+  color: var(--ground);
+  border-radius: 999px;
+  font-size: var(--font-label);
+  font-weight: bold;
+}
+/* 「名前とプロフィールを変える」と「このキャラクターに切り替える」の並び（右端に寄せる）。 */
+.character-profile-actions {
+  margin-left: auto;
+}

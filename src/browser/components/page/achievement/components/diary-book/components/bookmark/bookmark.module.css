@@ -1,0 +1,56 @@
+/* 左ページ — しおり。 */
+.diary-book-bookmark {
+  position: relative;
+  /* 帯（`right` + `width` = 4.875rem）の下に字を潜らせない。
+     見出しだけでなく要約・理由の行も折り返させるため、区画ごと空ける。 */
+  padding-right: 5.5rem;
+}
+.diary-book-ribbon {
+  position: absolute;
+  top: -0.5rem;
+  right: 3.5rem;
+  width: 1.375rem;
+  height: 7rem;
+  background: var(--diary-gold);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 86%, 0 100%);
+}
+.diary-book-ribbon[data-state="pending"] {
+  background: transparent;
+  border: 1.5px dashed var(--diary-gold-border);
+  border-bottom: none;
+  clip-path: none;
+  height: 5.5rem;
+}
+.diary-book-bookmark-heading {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: var(--font-secondary);
+  letter-spacing: 0.12em;
+  color: var(--diary-gold-ink);
+}
+.diary-book-bookmark-pending {
+  margin: 0.4rem 0 0;
+  font-family: var(--font-serif);
+  font-size: var(--font-secondary);
+  color: var(--diary-gold-ink-quiet);
+}
+.diary-book-bookmark-task {
+  margin: 0.4rem 0 0;
+  font-family: var(--font-serif);
+  font-size: var(--font-subheading);
+  color: var(--diary-gold-strong);
+  line-height: 1.7;
+}
+.diary-book-bookmark-task-id {
+  margin-right: 0.5rem;
+  font-family: var(--font-mono);
+  font-size: var(--font-secondary);
+  color: var(--diary-gold-ink-quiet);
+}
+.diary-book-bookmark-reason {
+  margin: 0.3rem 0 0;
+  font-family: var(--font-serif);
+  font-size: var(--font-secondary);
+  color: var(--diary-gold-ink);
+  line-height: 1.7;
+}

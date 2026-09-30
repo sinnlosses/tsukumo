@@ -19,7 +19,8 @@ import { clockTime, localTimeZoneId, zonedDateTime } from "../../../../../utils/
 import { formatCount } from "../../../../../utils/format-count.ts"
 import { HStack } from "../../../../ui/h-stack/h-stack.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
-import styles from "../../token-usage.module.css"
+import tokenUsageStyles from "../../token-usage.module.css"
+import styles from "./context-usage-card.module.css"
 import { categoryLook, SKELETON_ROW_NAMES } from "./domain/context-usage-category.ts"
 
 /** 札の見出しと、その横に小さく添える一言。 */
@@ -256,8 +257,8 @@ function ItemTable(props: ItemTableProps): ReactElement | null {
 
   return (
     <>
-      <h3 className={styles["token-usage-section-label"]}>{props.label}</h3>
-      <table className={styles["token-usage-table"]}>
+      <h3 className={tokenUsageStyles["token-usage-section-label"]}>{props.label}</h3>
+      <table className={tokenUsageStyles["token-usage-table"]}>
         <thead>
           <tr>
             <th scope="col">{props.head}</th>
@@ -268,10 +269,10 @@ function ItemTable(props: ItemTableProps): ReactElement | null {
         <tbody>
           {props.items.map((item) => (
             <tr key={item.name}>
-              <th scope="row" className={styles["token-usage-name"]}>
+              <th scope="row" className={tokenUsageStyles["token-usage-name"]}>
                 {item.name}
               </th>
-              <td className={styles["token-usage-name"]}>{item.source}</td>
+              <td className={tokenUsageStyles["token-usage-name"]}>{item.source}</td>
               <td>{formatCount(item.tokens)}</td>
             </tr>
           ))}
@@ -293,12 +294,14 @@ function DeferredTable(props: DeferredTableProps): ReactElement | null {
 
   return (
     <>
-      <h3 className={styles["token-usage-section-label"]}>窓の外（要求されたら読むもの）</h3>
-      <table className={styles["token-usage-table"]}>
+      <h3 className={tokenUsageStyles["token-usage-section-label"]}>
+        窓の外（要求されたら読むもの）
+      </h3>
+      <table className={tokenUsageStyles["token-usage-table"]}>
         <tbody>
           {props.rows.map((row) => (
             <tr key={row.name}>
-              <th scope="row" className={styles["token-usage-name"]}>
+              <th scope="row" className={tokenUsageStyles["token-usage-name"]}>
                 {categoryLook(row.name).label}
               </th>
               <td>{formatCount(row.tokens)}</td>
@@ -311,7 +314,7 @@ function DeferredTable(props: DeferredTableProps): ReactElement | null {
 }
 
 /**
- * 横棒の一区間と凡例の四角に付ける色の綴り（`token-usage.module.css`）。
+ * 横棒の一区間と凡例の四角に付ける色の綴り（`context-usage-card.module.css`）。
  * 骨組みは `ContextUsageRow` を持たず名前だけ知っているので、分類の表示名から引く。
  */
 function toneClassName(name: string): string {

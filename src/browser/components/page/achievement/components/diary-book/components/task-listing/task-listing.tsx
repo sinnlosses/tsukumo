@@ -1,9 +1,9 @@
 import type { ReactElement } from "react"
 
 import { Text } from "../../../../../../ui/text/text.tsx"
-import styles from "../../../../achievement.module.css"
 import { UNKNOWN_TASKS_NOTE } from "../../../../domain/review-note.ts"
 import type { DiaryBookTaskList } from "../../../../hooks/use-diary-book.ts"
+import styles from "./task-listing.module.css"
 
 const DONE_HEADING = "この日に終えたこと"
 

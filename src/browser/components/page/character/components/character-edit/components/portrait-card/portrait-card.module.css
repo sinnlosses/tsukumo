@@ -1,0 +1,45 @@
+.character-card-stage {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  height: 10.5rem;
+  padding-top: 0.5rem;
+}
+/* 立ち絵は枠も地も持たない（カードの地の上に直接置く）。
+   大きさはここで決める（`<Portrait>` に className で渡す置き方。キャラビュー側の割合指定は `.character-region` が持つ変数なので、この画面では解決されない）。 */
+.character-card-stage .character-card-portrait {
+  height: 10rem;
+  max-width: 100%;
+  margin: 0;
+}
+.character-card-label {
+  padding: 0.5rem 0.6rem 0.6rem;
+  border-top: 1px solid var(--rule-quiet);
+  font-size: var(--font-secondary);
+  text-align: center;
+}
+.character-card-badge {
+  position: absolute;
+  top: 0.5rem;
+  left: 0.5rem;
+  padding: 0.05rem 0.45rem;
+  background: var(--accent);
+  color: var(--ground);
+  border-radius: 0.5rem;
+  font-size: var(--font-label);
+  font-weight: bold;
+}
+/* `<Button>` で描く消す口の箱だけ（顔は Button が持つ）。寸法は `.character-card-action` と揃える。 */
+.character-card-clear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border-radius: 0.5rem;
+}
+.character-card-clear:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}

@@ -1,7 +1,7 @@
 import type { ReactElement } from "react"
 
 import { Button } from "../../../../../../ui/button/button.tsx"
-import styles from "../../../../achievement.module.css"
+import styles from "../../diary-book.module.css"
 
 export function NavButton(props: {
   readonly label: string | undefined

@@ -29,7 +29,7 @@ import {
   type WindowDisplay,
 } from "../domain/plan-window.ts"
 import type { UsePlanUsageResult } from "../hooks/use-plan-usage.ts"
-import styles from "../sidebar.module.css"
+import styles from "./plan-usage-row.module.css"
 
 const ROW_LABEL = "利用枠"
 const FETCHING_TEXT = "取得中…"
@@ -108,7 +108,7 @@ function PlanUsageNote(props: { readonly state: PlanUsageState }): ReactElement 
 
 /**
  * 1つの枠の行（ラベル・棒・割合・戻る時刻）。
- * 狭いサイドバー（280px 未満）は棒を畳む（`sidebar.module.css` の `@container`）。
+ * 狭いサイドバー（280px 未満）は棒を畳む（`plan-usage-row.module.css` の `@container`）。
  */
 function PlanUsageWindowRow(props: {
   readonly label: string

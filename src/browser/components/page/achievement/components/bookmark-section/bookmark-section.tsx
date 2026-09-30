@@ -4,7 +4,7 @@
 import type { ReactElement } from "react"
 
 import type { DiaryBookmark } from "../../../../../../shared/diary/diary.ts"
-import styles from "../../achievement.module.css"
+import styles from "./bookmark-section.module.css"
 
 export type BookmarkSectionProps = {
   /** 日記が無い日は `undefined`。 */

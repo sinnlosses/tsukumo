@@ -1,0 +1,70 @@
+.task-board-filter {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--rule-quiet);
+}
+.task-board-search {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--rule);
+  border-radius: 9px;
+  background: var(--ground);
+  color: var(--ink-quiet);
+}
+.task-board-search-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+}
+/* 探す欄は開いている間ずっとフォーカスを持つ（↑↓ を受ける口）ので、輪は出さない。 */
+.task-board-search-input:focus-visible {
+  outline: none;
+}
+.task-board-search-input::placeholder {
+  color: var(--ink-quiet);
+}
+.task-board-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.task-board-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 12px;
+  border: 1px solid var(--rule);
+  border-radius: 15px;
+  background: transparent;
+  color: var(--ink-quiet);
+  font: inherit;
+  font-size: 12px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.task-board-chip:hover {
+  color: var(--ink);
+}
+/* 選んでいる札は一段明るい地と字。色だけに頼らないよう枠も一段明るくする。 */
+.task-board-chip[aria-pressed="true"] {
+  border-color: color-mix(in srgb, var(--rule), var(--ink) 20%);
+  background: var(--surface-raised);
+  color: var(--ink);
+}
+.task-board-chip-count {
+  color: var(--ink-quiet);
+  font-family: var(--font-mono);
+  font-size: 11px;
+}

@@ -1,0 +1,27 @@
+/* 「進行中」の札。色だけでなく字でも状態を伝える。
+   高さ・角丸は件数のチップと揃える（角丸 11px = 高さ 22px の半分でカプセル型になる）。 */
+.task-running-badge {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 0.5rem;
+  border-radius: 11px;
+  background: var(--accent);
+  color: var(--ground);
+  font-size: var(--font-label);
+  font-weight: 600;
+}
+/* 着手した作業ツリーの名前。IDの後ろに、IDと同じ段・同じ色で添える。長い名前は末尾を「…」にする。 */
+.task-running-assignee {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--font-label);
+  color: color-mix(in srgb, var(--ink-quiet), var(--accent) 40%);
+}
+/* 2行目（summary）。進行中は他の行と違い折り返して全文出す。字の段は `Text` が持つ。 */
+.task-running-body {
+  white-space: normal;
+  line-height: 1.5;
+}

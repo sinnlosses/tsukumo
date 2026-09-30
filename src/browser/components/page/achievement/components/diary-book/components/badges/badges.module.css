@@ -1,0 +1,27 @@
+/* 左ページ — 卒業・節目の丸い印。 */
+.diary-book-badges {
+  margin-top: auto;
+}
+.diary-book-badge {
+  width: 5.5rem;
+  height: 5.5rem;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 2px solid var(--diary-gold);
+  color: var(--diary-gold);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transform: rotate(-8deg);
+  font-family: var(--font-serif);
+}
+/* 字の段は `Text` が持つ。色は `.diary-book-badge` から継ぐ。 */
+.diary-book-badge-title {
+  letter-spacing: 0.05em;
+}
+/* 字の段は `Text` が持つ。色は `.diary-book-badge` から継ぐ。 */
+.diary-book-badge-sub {
+  margin-top: 0.15rem;
+  font-family: var(--font-mono);
+}

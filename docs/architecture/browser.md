@@ -98,15 +98,23 @@ react-markdown
 
 ### CSS
 
-**CSS Modules（`*.module.css`）を領域・機能と同居させる。** 置き場は**領域・機能ごとに1枚**
-（`<領域>/<領域>.module.css`・`features/<機能>/<機能>.module.css`）と、**自分の見た目を持つ共有部品の隣**
-（`components/domain/portrait.module.css`）。**グローバルなのは `styles/theme.css` だけ**で、
+**CSS Modules（`*.module.css`）を部品と同居させる。** 置き場は **class ごとに、読み手すべてを含む
+いちばん近い箱**（`docs/architecture.md`「ページの形」の表と同じ決め方）。**1つの部品（と中の子部品）だけが
+読む class は部品の隣の `<部品>.module.css`** に置き、**container / presenter か2つ以上の部品が読む class
+だけ**を領域・機能・ページの1枚（`<領域>/<領域>.module.css`・`features/<機能>/<機能>.module.css`・
+`<ページ>.module.css`）に置く。部品が平たく並ぶ `components/`（`features/<機能>/components/` など）でも、
+部品の `.tsx` の隣に同じ名前で置く（container / presenter の対は対の名前）。自分の見た目を持つ共有部品も
+隣に置く（`components/domain/portrait.module.css`）。**グローバルなのは `styles/theme.css` だけ**で、
 トークン（`:root`）・`body`・フォーカスの輪・`prefers-reduced-motion`・リンクを持つ。
 **16進の色を書いてよいのもそこだけ**（`docs/architecture/screen-design.md` 13.2）。同居に移した理由は `docs/history/decision.md`
 「design.md 6.6 CSS（機能と同居させる形に移した理由）」。
 
-**機能の中の部品でも、その部品しか使わない class の塊になっているなら部品の隣に `<部品>.module.css` を
-置いてよい**（機能の1枚が原則で、部品の輪郭がはっきりしているときだけの例外）。
+**選択子で結ばれた class（`.a .b`・`.a > .b`・`.a.b`・`.a:has(.b)`）は1つのファイルに置き、結ばれた class の
+読み手を合わせて置き場を決める**（CSS Modules はファイルごとに名前を変えるので、別のファイルの class を
+選択子で指せない）。1つの要素に付く別のファイルの class どうしが同じ property を書くときも、勝ち負けが
+読み込み順で決まらないよう、親の class から書いて詳細度で勝たせるか、同じファイルに置く。部品が自分の1枚と
+共有の1枚を両方読むときは、自分のものを `styles`、共有の1枚を `<箱の名前>Styles`（`taskBoardStyles` など）で
+import する。
 
 class 名は用語集の語（`balloon` / `portrait` / `turn-header` など）を**そのまま**保ち、部品からは
 `styles["balloon-track"]` と引く（キャメルケースへ変換しない）。実際に DOM へ付く名前は
@@ -152,7 +160,7 @@ CSS に無い名前は `undefined` のままなので、**綴りを間違える�
   呼び出し側は同じ property を書かない。呼び出し側に譲る既定（`margin: 0` など）は `:where()` の中に書く
   （詳細度0なので読み込み順に関係なく呼び出し側が勝つ。`theme.css` が要素の選択子で書く property は
   入れない）。呼び出し側が渡すのは**置き方**と**語彙に無い見た目**だけ。**`className` に渡すのは
-  `styles["…"]` の字面だけ**で、重なりは `test/architecture.test.ts`「components/ui/ の部品の className」が見る
+  `styles["…"]`（2枚読むときは `<箱の名前>Styles["…"]`）の字面だけ**で、重なりは `test/architecture.test.ts`「components/ui/ の部品の className」が見る
 - **画面固有の値を持つもの（`--usage-*`・`--diary-gold-*`）は部品を使わず、機能の CSS のまま残す**
   （部品の語彙と画面の語彙が1つの要素の上で競る）。**段に乗らない値も丸めない**——部品に置き換えても
   画面の見た目は変えないのが既定で、丸めると決めたら変わる画面を目視で確かめる

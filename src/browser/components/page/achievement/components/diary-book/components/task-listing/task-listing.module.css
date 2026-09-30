@@ -1,0 +1,31 @@
+/* 左ページ — この日に終えたこと。 */
+.diary-book-tasks-heading {
+  margin: 0 0 0.25rem;
+  font-family: var(--font-serif);
+  letter-spacing: 0.1em;
+}
+.diary-book-task-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.diary-book-task-row {
+  display: flex;
+  gap: 0.6rem;
+  align-items: baseline;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--ink) 8%, transparent);
+}
+.diary-book-task-id {
+  width: 3rem;
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+}
+.diary-book-task-summary {
+  font-family: var(--font-serif);
+  line-height: 1.6;
+}
+/* 字の段・色は `Text` が持つ。padding だけここに置く。 */
+.diary-book-tasks-footer {
+  padding-top: 0.4rem;
+}

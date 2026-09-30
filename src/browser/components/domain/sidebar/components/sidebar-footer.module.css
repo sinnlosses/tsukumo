@@ -1,0 +1,48 @@
+/* サイドバーの下端に敷く帯。区画ではないので `.sidebar-block` の枠も内側スクロールも借りない。
+   1行に、左の操作子の組（`.run-setting-group`）と、右寄せのコンテキストの目盛り・利用枠の円を並べる。
+   地は帯（`screen-nav.module.css`）と同じ、`--ground` と `--surface` を半々に混ぜた色。
+
+   左右と下の負のマージンは `.layout-region` の内側の余白（`--region-padding`）を消し切るちょうどの値で、帯の縁は領域の枠の内側にぴたりと着く（角の丸めは領域の `overflow` が切る）。
+   伸び縮みしない（`flex: 0 0 auto`）ので、余った高さはすべてタスクの区画へ行く。
+   `position: relative` は、押すと開く詳しい面（`.sidebar-footer-detail`）を帯の真上に重ねる基準。 */
+.sidebar-footer {
+  position: relative;
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem;
+  margin: 0 calc(-1 * var(--region-padding)) calc(-1 * var(--region-padding));
+  padding: 0.625rem 0.75rem;
+  border-top: 1px solid var(--rule);
+  background: color-mix(in srgb, var(--ground), var(--surface) 50%);
+}
+.sidebar-footer-usage {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 0.25rem;
+  margin-left: auto;
+}
+/* 目盛りと円の間の縦の仕切り（飾りなので読み上げない）。 */
+.sidebar-footer-divider {
+  flex: none;
+  width: 1px;
+  height: 26px;
+  background: var(--rule-quiet);
+}
+/* 目盛りか円を押すと、帯の真上に重ねて開く詳しい面。タスクの区画を押し下げない。
+   利用枠の札が280px未満で棒を畳むための基準（`@container`）もここ。 */
+.sidebar-footer-detail {
+  position: absolute;
+  right: 0.75rem;
+  bottom: calc(100% + 0.4rem);
+  left: 0.75rem;
+  z-index: 2;
+  padding: 0.625rem 0.875rem 0.75rem;
+  border: 1px solid var(--rule);
+  border-radius: 0.75rem;
+  background: var(--ground);
+  box-shadow: 0 18px 44px color-mix(in srgb, var(--ground) 80%, transparent);
+  container-type: inline-size;
+}

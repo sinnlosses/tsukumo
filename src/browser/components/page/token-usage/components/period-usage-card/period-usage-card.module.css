@@ -1,0 +1,67 @@
+.usage-card-label {
+  margin: 0;
+  color: var(--usage-ink-label);
+  font-size: var(--font-label);
+  font-weight: normal;
+}
+/* 数が主（タイプスケールの中で最大の段）。桁が動いても揃うよう等幅の数字にする。 */
+.usage-card-value {
+  margin: 0;
+  color: var(--usage-ink);
+  font-family: var(--font-mono);
+  font-size: var(--font-heading);
+  font-variant-numeric: tabular-nums;
+}
+/* いちばん高い棒の値（この札の中の縦軸の代わり）。
+   目盛りも軸も描かないので、これが唯一の高さの手がかりになる。
+   寄せる側は棒の位置で決まる。 */
+.usage-card-peak {
+  margin: 0.4rem 0 0.15rem;
+  color: var(--usage-ink-note);
+  font-family: var(--font-mono);
+  font-size: var(--font-label);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.usage-card-peak-left {
+  align-self: flex-start;
+}
+.usage-card-peak-right {
+  align-self: flex-end;
+}
+
+/* 棒の並び。
+   高さはここで決める（棒1本ずつは親に対する割合で伸びる）。
+   本数は期間の刻みの数そのもの（7 / 24 / 30）で、`1fr` ずつに割って幅を取り合う。 */
+.usage-card-bars {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  align-items: end;
+  gap: 1px;
+  height: 3.5rem;
+  /* 基線。寸法を変えないよう枠ではなく外側の影で引く（棒の足元のすぐ下に1本出る）。 */
+  box-shadow: 0 1px 0 var(--usage-bar-baseline);
+}
+/* 棒1本。塗りはキャラクターの色を使わない（読む面は誰が来ても同じ濃さ）。 */
+.usage-card-bar {
+  align-self: end;
+  height: var(--usage-bar-height);
+  min-height: 2px;
+  border-radius: 2px 2px 0 0;
+  background: var(--usage-bar);
+}
+/* 記録の無い刻み。
+   高さ 0 のままでは消えてしまうので、`min-height` の印だけが残る。
+   塗りを落とすのは、空だったことと「少しだけ使った」ことを取り違えさせないため。 */
+.usage-card-bar-zero {
+  background: var(--usage-bar-zero);
+  border-radius: 1px;
+}
+/* 期間の両端の刻み（最初と最後だけ）。 */
+.usage-card-scale {
+  margin: 0.25rem 0 0;
+  color: var(--usage-ink-faint);
+  font-family: var(--font-mono);
+  font-size: var(--font-label);
+}

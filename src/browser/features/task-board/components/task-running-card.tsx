@@ -8,11 +8,12 @@ import type { ReactElement } from "react"
 import type { TaskSummaryItem } from "../../../../shared/repository/task-summary.ts"
 import { HStack } from "../../../components/ui/h-stack/h-stack.tsx"
 import { Text } from "../../../components/ui/text/text.tsx"
-import styles from "../task-board.module.css"
+import taskBoardStyles from "../task-board.module.css"
+import styles from "./task-running-card.module.css"
 
 export function TaskRunningCard(props: { readonly task: TaskSummaryItem }): ReactElement {
   return (
-    <li className={styles["task-running-card"]}>
+    <li className={taskBoardStyles["task-running-card"]}>
       <HStack
         element="span"
         name={{ kind: "none" }}
@@ -24,7 +25,7 @@ export function TaskRunningCard(props: { readonly task: TaskSummaryItem }): Reac
         className=""
       >
         <span className={styles["task-running-badge"]}>進行中</span>
-        <span className={styles["task-id"]}>{props.task.id}</span>
+        <span className={taskBoardStyles["task-id"]}>{props.task.id}</span>
         {props.task.assignee !== undefined && (
           <span className={styles["task-running-assignee"]} title="着手した作業ツリー">
             {props.task.assignee}

@@ -2,12 +2,12 @@
 // 1つだけ選べ、選んでいるチップをもう一度押すと全件に戻る。ここは選ばれているかどうかを `aria-pressed` に映すだけ。
 //
 // 進行中のチップは元から差し色の地なので、色の変化だけでは選択と区別できない。
-// 枠線と太字を添える（`task-board.module.css` の `.task-count-chip-button[aria-pressed="true"]`）。
+// 枠線と太字を添える（`task-count-chip-list.module.css` の `.task-count-chip-button[aria-pressed="true"]`）。
 
 import type { ReactElement } from "react"
 
 import type { TaskListCountItem, TaskListFilterStatus } from "../domain/task-list-count.ts"
-import styles from "../task-board.module.css"
+import styles from "./task-count-chip-list.module.css"
 
 export function TaskCountChipList(props: {
   readonly counts: readonly TaskListCountItem[]

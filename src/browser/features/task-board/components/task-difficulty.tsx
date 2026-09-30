@@ -4,7 +4,7 @@ import clsx from "clsx"
 import type { ReactElement } from "react"
 
 import type { TaskDifficultyView } from "../hooks/use-task-board.ts"
-import styles from "../task-board.module.css"
+import styles from "./task-difficulty.module.css"
 
 const DOTS = [1, 2, 3] as const
 

@@ -1,0 +1,36 @@
+/* ID＋summary を1行に並べ、summary だけを切り詰める側（`.task-item-summary`）。
+   grid の列は既定で子の内容ぶんの幅を確保しようとする（min-width: auto）ので、ここで 0 に落とさないと summary の text-overflow が働かない。 */
+.task-item-body {
+  display: flex;
+  align-items: baseline;
+  gap: 0.625rem;
+  min-width: 0;
+}
+/* 未着手・完了の行の summary は1行に収め、入りきらない分は「…」にする（全文は「一覧を見る」のモーダルで読む）。
+   字の段は `Text` で明示する。親（`.sidebar-block`）の `--font-secondary` に頼ると、`.task-item` がサイドバー以外の文脈に置かれたときに黙って崩れる。 */
+.task-item-summary {
+  overflow: hidden;
+  min-width: 0;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+/* status の印（区画の一覧の先頭列）。色だけで状態を伝えない。
+   todo は空の丸、done はチェック（.task-done の打ち消し線と対）、想定外の値は注意色の「!」にする。 */
+.task-mark-todo {
+  display: inline-block;
+  /* 固定 px にする（em だと行の summary の font-size を変えるたびに印の大きさも動く）。 */
+  width: 10px;
+  height: 10px;
+  border: 1.5px solid var(--ink-quiet);
+  border-radius: 50%;
+}
+.task-mark-done::before {
+  content: "✓";
+  color: var(--accent);
+  font-weight: 700;
+}
+.task-mark-other::before {
+  content: "!";
+  color: var(--state-warn);
+  font-weight: 700;
+}

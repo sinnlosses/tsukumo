@@ -1,0 +1,157 @@
+/* 日記の区画。地・枠にキャラクターの色をわずかに載せる（--surface-accent と、accent を混ぜた枠）。 */
+.achievement-diary {
+  display: grid;
+  grid-template-columns: minmax(7rem, 9.5rem) minmax(0, 1fr);
+  gap: 1.25rem;
+  align-items: end;
+  padding: 1.25rem 1.5rem;
+  border: 1px solid color-mix(in srgb, var(--rule), var(--accent) 45%);
+  border-radius: 1rem;
+  background: var(--surface-accent);
+}
+.achievement-diary.is-fetching {
+  opacity: 0.5;
+}
+.achievement-diary-portrait {
+  width: 100%;
+  align-self: end;
+}
+.achievement-diary-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  min-width: 0;
+  padding-bottom: 0.25rem;
+}
+.achievement-diary-header {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+/* 字の段・色は `Text` が持つ。字間だけここに置く。 */
+.achievement-diary-name {
+  letter-spacing: 0.05em;
+}
+/* 「日記帳で読む」。頭の行の右端へ押しやる。
+   顔は `<Button variant="link">` が持つ。置き方・下線の余白だけここに置く。 */
+.achievement-diary-open-book {
+  margin-left: auto;
+  text-underline-offset: 0.2em;
+}
+
+/* 吹き出し（明朝体。パックが書体を同梱すれば `--font-diary` がそれに差し替わる）。 */
+.achievement-diary-bubble {
+  position: relative;
+  padding: 0.9rem 1.25rem;
+  border-radius: 1rem;
+  border: 1.5px solid var(--accent);
+  background: var(--surface-accent);
+}
+/* 本文は `Text` が描く `<p>` に、書体（`--font-diary`）・行の高さだけをこの要素選択子で足す。
+   `Text` はクラスを持たずに描かれるので、タグの選択子のまま効き続ける。 */
+.achievement-diary-bubble p {
+  font-family: var(--font-diary);
+  line-height: 2;
+}
+/* 日記がまだ無い・書いている・書けなかった、どれも点線の枠。 */
+.achievement-diary-bubble-empty {
+  padding: 0.9rem 1.25rem;
+  border-radius: 1rem;
+  border: 1.5px dashed var(--rule);
+  min-height: 1.5rem;
+}
+/* 本文は `Text` が描く `<p>`。書体・行の高さだけをタグの選択子で足す。 */
+.achievement-diary-bubble-empty p {
+  font-family: var(--font-diary);
+  line-height: 1.8;
+}
+.achievement-diary-bubble-empty p + p {
+  margin-top: 0.5rem;
+  color: var(--ink);
+}
+
+/* 3段の進み。 */
+.achievement-diary-progress {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.achievement-diary-progress-item {
+  font-size: var(--font-secondary);
+  color: var(--ink-quiet);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.achievement-diary-progress-item::before {
+  content: "";
+  display: inline-block;
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
+  border: 1.5px solid var(--ink-quiet);
+}
+.achievement-diary-progress-item[data-state="done"] {
+  color: var(--ink);
+}
+.achievement-diary-progress-item[data-state="done"]::before {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+.achievement-diary-progress-item[data-state="current"] {
+  color: var(--ink);
+}
+.achievement-diary-progress-item[data-state="current"]::before {
+  border-color: var(--accent);
+  animation: achievement-progress-spin 1s linear infinite;
+  border-top-color: transparent;
+}
+@keyframes achievement-progress-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 数の札2枚（終えたタスク → コミットの順）。 */
+.achievement-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+.achievement-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--rule);
+  border-radius: 0.75rem;
+  background: var(--surface);
+  min-width: 0;
+}
+/* 字の段・色は `Text` が持つ。書体・桁揃えだけここに置く。 */
+.achievement-card-value {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+/* 字の段・色は `Text` が持つ。margin だけここに置く。 */
+.achievement-card-note {
+  margin: 0.2rem 0 0;
+}
+
+/* 振り返りのボタン。 */
+.achievement-review {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.4rem;
+}
+/* 顔は `<Button variant="outline-accent">`、太さは `Text` が持つ。箱だけここに置く。 */
+.achievement-review-button {
+  height: 2.5rem;
+  padding: 0 1.125rem;
+  border-radius: 0.5625rem;
+}

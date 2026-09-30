@@ -1,0 +1,67 @@
+/* 「覚えていること」。1行＝チップ1つで、上に rule の細い線、印は付けない。チップと × は横並び。 */
+.sidebar-persona-memory-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.sidebar-persona-memory-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.375rem;
+  padding: 0.5rem 0;
+  border-top: 1px solid var(--rule);
+}
+/* チップ本体。押すと全文に開くので、枠なしのボタンにしてホバーの下線で押せることだけを示す。
+   読む面の文字なので ink。 */
+.sidebar-persona-memory-chip {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--ink);
+  font-size: inherit;
+  font-family: inherit;
+  text-align: left;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+.sidebar-persona-memory-chip:hover {
+  text-decoration: underline;
+}
+/* 「編集」の状態でだけ出る × ボタン。行の右端に小さく置く。箱だけで、顔は `<Button variant="ghost">` が持つ。 */
+.sidebar-persona-memory-remove {
+  flex: none;
+  padding: 0 0.25rem;
+  line-height: 1.5;
+}
+
+/* 消す前の確認。`showModal()` は top layer に積むので、サイドバーの上に必ず重なる。 */
+.sidebar-persona-memory-confirm {
+  box-sizing: border-box;
+  width: min(24rem, calc(100vw - 2rem));
+  margin: auto;
+  padding: 1rem;
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--rule);
+  border-radius: 0.75rem;
+  font-size: var(--font-secondary);
+}
+.sidebar-persona-memory-confirm-question {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.sidebar-persona-memory-confirm-note {
+  margin: 0.5rem 0 0;
+}
+.sidebar-persona-memory-confirm-actions {
+  margin-top: 0.9rem;
+}
+/* 箱だけ（高さ・余白・角丸）。顔は `<Button>` が持つ。
+   消すほうは戻せない操作なので、差し色ではなく警告色（`variant="outline-warn"`）にして既定の行き先ではないと分かるようにする。 */
+.sidebar-persona-memory-confirm-cancel,
+.sidebar-persona-memory-confirm-ok {
+  padding: 0.2rem 0.8rem;
+  border-radius: 0.4rem;
+}

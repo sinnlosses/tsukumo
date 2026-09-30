@@ -1,0 +1,95 @@
+/* モデル・effort・許可モードの操作子の組。3つの絵の口を1つの枠に並べ、細い仕切りで分ける。 */
+.run-setting-group {
+  display: flex;
+  flex: none;
+  align-items: center;
+  padding: 0 2px;
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  background: var(--ground);
+}
+.run-setting-divider {
+  flex: none;
+  width: 1px;
+  height: 18px;
+  background: var(--rule);
+}
+/* 絵1つぶんの口。上に透明の `<select>` がぴったり重なる（`.run-setting-frame`）。 */
+.run-setting {
+  position: relative;
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 30px;
+  border-radius: 8px;
+  color: var(--ink);
+}
+.run-setting:hover {
+  background: var(--surface-raised);
+}
+.run-setting:has(select:focus-visible) {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+.run-setting.is-disabled {
+  color: var(--ink-quiet);
+}
+.run-setting.is-danger {
+  color: var(--state-ng);
+}
+/* 透明の `<select>` の枠。部品（`select.module.css`）の枠は `position: relative` なので、2つの class で強さを上げて上書きする。
+   矢印は描かない（絵が口の印になる）。 */
+.run-setting > .run-setting-frame {
+  --select-chevron-size: 0;
+  position: absolute;
+  inset: 0;
+}
+.run-setting-select {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: none;
+  opacity: 0;
+  font-size: var(--font-secondary);
+}
+.run-setting-select:disabled {
+  cursor: not-allowed;
+}
+/* 開いた一覧の地はブラウザが描くので、選択肢の地と字は明示する。 */
+.run-setting-select option {
+  background: var(--surface);
+  color: var(--ink);
+}
+/* モデルの頭文字を丸で囲んだ印。 */
+.run-setting-model {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  box-sizing: border-box;
+  border: 1.5px solid currentColor;
+  border-radius: 50%;
+  font-family: var(--font-serif);
+  font-size: var(--font-label);
+  font-weight: 700;
+  line-height: 1;
+}
+/* effort の段の棒。いまの段までを字の色で塗り、その上の段は `--rule` のまま残す。 */
+.run-setting-effort {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 14px;
+}
+.run-setting-effort-bar {
+  width: 3px;
+  border-radius: 1px;
+  background: var(--rule);
+}
+.run-setting-effort-bar.is-lit {
+  background: currentColor;
+}

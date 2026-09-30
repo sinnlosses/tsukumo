@@ -1,0 +1,56 @@
+/* 小さな驚き。margin だけここに置く。 */
+.achievement-surprise-note {
+  margin-left: 0.6rem;
+}
+.achievement-surprise-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+  gap: 0.875rem;
+}
+.achievement-surprise-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 1rem 1.125rem;
+  border: 1px solid var(--diary-gold-border);
+  border-radius: 1rem;
+  background: var(--diary-gold-surface);
+}
+.achievement-surprise-card-title {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: var(--font-subheading);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--diary-gold-strong);
+}
+.achievement-surprise-card-body {
+  margin: 0;
+  font-size: var(--font-secondary);
+  line-height: 1.6;
+  color: var(--diary-gold-ink);
+}
+.achievement-surprise-card-id {
+  margin-right: 0.5rem;
+  font-family: var(--font-mono);
+  font-size: var(--font-secondary);
+  color: var(--diary-gold-ink-quiet);
+}
+.achievement-surprise-card-number {
+  font-family: var(--font-mono);
+  font-size: var(--font-heading);
+  color: var(--diary-gold-strong);
+}
+.achievement-surprise-card-footer {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin: 0;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--diary-gold-border);
+  font-size: var(--font-label);
+  color: var(--diary-gold-ink-quiet);
+}
+.achievement-surprise-card-spacer {
+  flex-grow: 1;
+}

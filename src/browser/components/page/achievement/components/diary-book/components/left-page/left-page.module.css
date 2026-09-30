@@ -1,0 +1,16 @@
+.diary-book-left {
+  flex: 1 1 50%;
+  min-width: 0;
+  min-height: 0;
+  padding: 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  background: var(--diary-gold-surface);
+  overflow-y: auto;
+}
+@media (max-width: 760px) {
+  .diary-book-left {
+    padding: 1.25rem;
+  }
+}

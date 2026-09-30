@@ -1,0 +1,19 @@
+.character-create-grid {
+  display: grid;
+  grid-template-columns: 15rem minmax(0, 1fr);
+  gap: 1.5rem;
+}
+.character-create-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  min-width: 0;
+}
+.character-create-input-mono {
+  font-family: var(--font-mono);
+}
+@media (max-width: 640px) {
+  .character-create-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

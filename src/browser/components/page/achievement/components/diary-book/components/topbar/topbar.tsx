@@ -3,10 +3,11 @@ import type { ReactElement } from "react"
 import { Button } from "../../../../../../ui/button/button.tsx"
 import { HStack } from "../../../../../../ui/h-stack/h-stack.tsx"
 import { Text } from "../../../../../../ui/text/text.tsx"
-import styles from "../../../../achievement.module.css"
 import { DIARY_BOOK_TITLE } from "../../../../domain/diary-book-title.ts"
+import diaryBookStyles from "../../diary-book.module.css"
 import { TOC_LABEL } from "../../domain/toc-label.ts"
 import { NavButton } from "../nav-button/nav-button.tsx"
+import styles from "./topbar.module.css"
 
 const CLOSE_LABEL = "閉じる"
 const PREVIOUS_LABEL = "前の日"
@@ -61,7 +62,7 @@ export function Topbar(props: {
         disclosure={{ kind: "none" }}
         ariaHasPopup={undefined}
         title={undefined}
-        className={styles["diary-book-topbar-button"]}
+        className={diaryBookStyles["diary-book-topbar-button"]}
         onClick={props.onToggleToc}
       >
         {TOC_LABEL}
@@ -76,7 +77,7 @@ export function Topbar(props: {
         disclosure={{ kind: "none" }}
         ariaHasPopup={undefined}
         title={undefined}
-        className={styles["diary-book-topbar-button"]}
+        className={diaryBookStyles["diary-book-topbar-button"]}
         onClick={props.onClose}
       >
         {CLOSE_LABEL}

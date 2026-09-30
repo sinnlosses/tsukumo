@@ -1,0 +1,51 @@
+.character-swatch {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
+  padding: 0.5rem 0.6rem;
+  background: var(--ground);
+  border: 1px solid var(--rule-quiet);
+  border-radius: 0.625rem;
+  cursor: pointer;
+}
+.character-swatch:hover,
+.character-swatch:focus-within {
+  border-color: var(--rule);
+}
+.character-swatch:has(.character-swatch-color:disabled) {
+  cursor: default;
+}
+/* 色見本は `<input type="color">` そのもの。ブラウザの枠を外して角丸の四角にする。 */
+.character-swatch-color {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: 7px;
+  cursor: inherit;
+}
+.character-swatch-color::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+.character-swatch-color::-webkit-color-swatch {
+  border: none;
+  border-radius: 7px;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 15%, transparent);
+}
+.character-swatch-color::-moz-color-swatch {
+  border: none;
+  border-radius: 7px;
+}
+/* 字の段は `Text` が持つ。幅だけここに置く。 */
+.character-swatch-name {
+  min-width: 0;
+}
+/* 字の段・色は `Text` が持つ。margin・1行で切る組み・書体だけここに置く。 */
+.character-swatch-hex {
+  margin-left: auto;
+  white-space: nowrap;
+  font-family: var(--font-mono);
+}

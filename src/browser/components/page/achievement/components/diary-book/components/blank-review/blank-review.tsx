@@ -2,8 +2,8 @@ import type { ReactElement } from "react"
 
 import { Button } from "../../../../../../ui/button/button.tsx"
 import { Text } from "../../../../../../ui/text/text.tsx"
-import styles from "../../../../achievement.module.css"
 import type { AchievementReviewButton } from "../../../../hooks/use-achievement.ts"
+import styles from "./blank-review.module.css"
 
 export function BlankReview(props: {
   readonly review: AchievementReviewButton

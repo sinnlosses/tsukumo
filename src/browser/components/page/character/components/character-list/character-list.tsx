@@ -14,8 +14,8 @@ import { Heading } from "../../../../ui/heading/heading.tsx"
 import { PlusIcon } from "../../../../ui/icon/icon.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
 import { VStack } from "../../../../ui/v-stack/v-stack.tsx"
-import styles from "../../character.module.css"
 import { useSelectedPack } from "../hooks/use-selected-pack.ts"
+import styles from "./character-list.module.css"
 
 export function CharacterList(props: { readonly onCreate: () => void }): ReactElement {
   const packs = useSession((session) => session.state.characterPacks)

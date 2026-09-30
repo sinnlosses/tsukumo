@@ -8,9 +8,10 @@ import { useState, type ReactElement } from "react"
 import { Button } from "../../../../../../ui/button/button.tsx"
 import { TrashIcon } from "../../../../../../ui/icon/icon.tsx"
 import { Text } from "../../../../../../ui/text/text.tsx"
-import styles from "../../../../character.module.css"
+import characterStyles from "../../../../character.module.css"
 import type { CharacterDeleteBandModel } from "../../../hooks/use-character-edit.ts"
 import { CharacterDeleteConfirm } from "../character-delete-confirm/character-delete-confirm.tsx"
+import styles from "./character-delete.module.css"
 
 export function CharacterDelete(props: {
   readonly band: CharacterDeleteBandModel
@@ -46,7 +47,7 @@ export function CharacterDelete(props: {
           ariaHasPopup={undefined}
           disclosure={{ kind: "none" }}
           title={band.title}
-          className={styles["character-button-outline"]}
+          className={characterStyles["character-button-outline"]}
           onClick={() => {
             setOpen(true)
           }}

@@ -5,11 +5,11 @@ import type { ReactElement } from "react"
 
 import { Dialog } from "../../../../ui/dialog/dialog.tsx"
 import { VStack } from "../../../../ui/v-stack/v-stack.tsx"
-import styles from "../../achievement.module.css"
 import type { DiaryBookModel } from "../../hooks/use-diary-book.ts"
 import { Spread } from "./components/spread/spread.tsx"
 import { Toc } from "./components/toc/toc.tsx"
 import { Topbar } from "./components/topbar/topbar.tsx"
+import styles from "./diary-book.module.css"
 
 export function DiaryBook({
   open,

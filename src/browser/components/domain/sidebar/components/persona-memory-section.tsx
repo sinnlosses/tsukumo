@@ -15,7 +15,8 @@ import { Button } from "../../../ui/button/button.tsx"
 import { Dialog } from "../../../ui/dialog/dialog.tsx"
 import { HStack } from "../../../ui/h-stack/h-stack.tsx"
 import { Text } from "../../../ui/text/text.tsx"
-import styles from "../sidebar.module.css"
+import sidebarStyles from "../sidebar.module.css"
+import styles from "./persona-memory-section.module.css"
 import { SidebarSection } from "./section.tsx"
 
 /** チップに出す先頭の長さ（文字数）。超えた分は `…` に畳む。 */
@@ -31,7 +32,7 @@ export function PersonaMemorySection(): ReactElement {
   return (
     <SidebarSection
       title="覚えていること"
-      extraClass={styles["sidebar-block-chat"]}
+      extraClass={sidebarStyles["sidebar-block-chat"]}
       action={
         lines.length === 0
           ? undefined

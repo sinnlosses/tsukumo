@@ -1,10 +1,10 @@
 import type { ReactElement } from "react"
 
-import styles from "../../../../achievement.module.css"
 import type { DiaryBookPage } from "../../../../hooks/use-diary-book.ts"
 import { Badges } from "../badges/badges.tsx"
 import { Bookmark } from "../bookmark/bookmark.tsx"
 import { TaskListing } from "../task-listing/task-listing.tsx"
+import styles from "./left-page.module.css"
 
 export function LeftPage(props: {
   readonly page: Extract<DiaryBookPage, { readonly kind: "ready" }>

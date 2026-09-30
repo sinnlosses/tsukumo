@@ -4,7 +4,7 @@ import clsx from "clsx"
 import type { ReactElement } from "react"
 
 import type { LampLevel } from "../../../../../../shared/achievement/achievement-calendar.ts"
-import styles from "../../achievement.module.css"
+import styles from "./lamp.module.css"
 
 /** 段階ごとの見た目の大きさ（見本の px 値）。段階が上がるほど大きく・強く光らせる。 */
 const LAMP_SIZE_PX = {

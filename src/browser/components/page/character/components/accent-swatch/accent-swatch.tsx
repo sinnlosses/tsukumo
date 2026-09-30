@@ -6,7 +6,7 @@ import type { ReactElement } from "react"
 
 import { Text } from "../../../../ui/text/text.tsx"
 import { VStack } from "../../../../ui/v-stack/v-stack.tsx"
-import styles from "../../character.module.css"
+import styles from "./accent-swatch.module.css"
 
 /** 色見本1つ（画面の差し色・衣装ごとの差し色の両方）。`value` は16進のまま字にも出す。 */
 export type AccentSwatchModel = {

@@ -5,7 +5,8 @@ import clsx from "clsx"
 import type { ReactElement } from "react"
 
 import type { ContextGauge } from "../hooks/use-sidebar-footer.ts"
-import styles from "../sidebar.module.css"
+import sidebarStyles from "../sidebar.module.css"
+import styles from "./context-usage-gauge.module.css"
 
 export function ContextUsageGauge(props: {
   readonly gauge: ContextGauge
@@ -19,9 +20,9 @@ export function ContextUsageGauge(props: {
     <button
       type="button"
       className={clsx(
-        styles["usage-gauge"],
-        styles["context-gauge"],
-        gauge.warn && styles["is-warn"],
+        sidebarStyles["usage-gauge"],
+        sidebarStyles["context-gauge"],
+        gauge.warn && sidebarStyles["is-warn"],
       )}
       aria-label={gauge.label}
       aria-expanded={props.open}
@@ -31,12 +32,12 @@ export function ContextUsageGauge(props: {
       onClick={props.onToggle}
     >
       <span className={styles["context-gauge-figure"]}>
-        <span className={styles["usage-gauge-label"]}>文脈</span>
-        <span className={styles["usage-gauge-value"]}>{gauge.percentageText}</span>
+        <span className={sidebarStyles["usage-gauge-label"]}>文脈</span>
+        <span className={sidebarStyles["usage-gauge-value"]}>{gauge.percentageText}</span>
       </span>
       <span className={styles["context-gauge-track"]} aria-hidden="true">
         <span
-          className={styles["context-gauge-fill"]}
+          className={sidebarStyles["context-gauge-fill"]}
           style={{ width: `${String(gauge.fillWidth)}%` }}
         />
         {gauge.compact.kind === "at" && (

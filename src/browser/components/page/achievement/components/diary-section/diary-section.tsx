@@ -10,7 +10,6 @@ import { Portrait } from "../../../../domain/portrait.tsx"
 import { Button } from "../../../../ui/button/button.tsx"
 import { Heading } from "../../../../ui/heading/heading.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
-import styles from "../../achievement.module.css"
 import type { DiaryWriterPortrait } from "../../domain/diary-writer.ts"
 import type {
   AchievementReviewButton,
@@ -19,6 +18,7 @@ import type {
   DiarySectionCard,
   DiarySectionModel,
 } from "../../hooks/use-achievement.ts"
+import styles from "./diary-section.module.css"
 
 const STAGE_LABEL: Readonly<Record<DiaryStage, string>> = {
   read: "この日のタスクを読む",

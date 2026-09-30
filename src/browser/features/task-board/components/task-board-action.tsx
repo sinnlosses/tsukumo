@@ -7,7 +7,7 @@ import type { ReactElement } from "react"
 
 import { Button } from "../../../components/ui/button/button.tsx"
 import type { TaskBoardOpener, TaskBoardRun } from "../hooks/use-task-board.ts"
-import styles from "../task-board.module.css"
+import styles from "./task-board-action.module.css"
 
 export function TaskBoardAction(props: {
   readonly onCopy: () => void

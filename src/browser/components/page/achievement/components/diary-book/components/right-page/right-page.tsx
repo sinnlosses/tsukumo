@@ -3,11 +3,11 @@ import { useRef, type ReactElement } from "react"
 import { Portrait } from "../../../../../../domain/portrait.tsx"
 import { HStack } from "../../../../../../ui/h-stack/h-stack.tsx"
 import { Text } from "../../../../../../ui/text/text.tsx"
-import styles from "../../../../achievement.module.css"
 import type { DiaryBookPage } from "../../../../hooks/use-diary-book.ts"
 import { Lamp } from "../../../lamp/lamp.tsx"
 import { useFitDiaryPage } from "../../hooks/use-fit-diary-page.ts"
 import { BlankReview } from "../blank-review/blank-review.tsx"
+import styles from "./right-page.module.css"
 
 const BLANK_BODY = "このページは、まだ白紙。"
 

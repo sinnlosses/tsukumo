@@ -12,7 +12,7 @@ import { Button } from "../../../components/ui/button/button.tsx"
 import { Dialog } from "../../../components/ui/dialog/dialog.tsx"
 import { Text } from "../../../components/ui/text/text.tsx"
 import { useSession, useTurnRunning } from "../../../stores/session.ts"
-import styles from "../task-board.module.css"
+import styles from "./task-run-confirm.module.css"
 
 /** 確認がどう閉じたか。`sent` は `/next-task <ID>` を送ったあと、`dismissed` は送らずに閉じたあと（キャンセル・Esc・外側のクリック）。 */
 export type TaskRunConfirmOutcome = "sent" | "dismissed"

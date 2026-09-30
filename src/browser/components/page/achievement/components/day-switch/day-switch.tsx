@@ -11,8 +11,8 @@ import { HStack } from "../../../../ui/h-stack/h-stack.tsx"
 import { Heading } from "../../../../ui/heading/heading.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
 import { VStack } from "../../../../ui/v-stack/v-stack.tsx"
-import styles from "../../achievement.module.css"
 import type { AchievementDaySwitch } from "../../hooks/use-achievement.ts"
+import styles from "./day-switch.module.css"
 
 const LOADING_VALUE = "…"
 

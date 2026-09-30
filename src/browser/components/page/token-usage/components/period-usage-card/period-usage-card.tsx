@@ -17,7 +17,8 @@ import type {
 import { formatCount } from "../../../../../utils/format-count.ts"
 import { HStack } from "../../../../ui/h-stack/h-stack.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
-import styles from "../../token-usage.module.css"
+import tokenUsageStyles from "../../token-usage.module.css"
+import styles from "./period-usage-card.module.css"
 
 export type PeriodUsageCardProps = {
   /** 何の数か（入力・出力・キャッシュ読み・キャッシュ作成）。 */
@@ -36,7 +37,7 @@ export function PeriodUsageCard(props: PeriodUsageCardProps): ReactElement {
   const peak = Math.max(0, ...values)
 
   return (
-    <section className={styles["usage-card"]}>
+    <section className={tokenUsageStyles["usage-card"]}>
       <h3 className={styles["usage-card-label"]}>{props.label}</h3>
       <p className={styles["usage-card-value"]}>{props.value}</p>
       <p className={peakClassName(values, peak)}>{`最大 ${formatCount(peak)}`}</p>

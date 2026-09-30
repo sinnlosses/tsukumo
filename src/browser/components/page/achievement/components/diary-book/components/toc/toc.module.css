@@ -1,0 +1,45 @@
+/* 目次。見開きの上に重ねる。 */
+.diary-book-toc {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: min(90vw, 26rem);
+  max-height: 80%;
+  padding: 1.25rem;
+  border: 1px solid var(--rule);
+  border-radius: 0.875rem;
+  background: var(--surface);
+  box-shadow: 0 20px 50px color-mix(in srgb, var(--ground) 80%, transparent);
+  overflow-y: auto;
+  z-index: 1;
+}
+.diary-book-toc-month {
+  margin-bottom: 1rem;
+}
+/* 字の段・色は `Heading` が持つ。margin だけここに置く。 */
+.diary-book-toc-heading {
+  margin: 0 0 0.4rem;
+}
+.diary-book-toc-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+.diary-book-toc-day {
+  width: 100%;
+  text-align: left;
+  padding: 0.4rem 0.5rem;
+  border: none;
+  border-radius: 0.5rem;
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: var(--font-secondary);
+  cursor: pointer;
+}
+.diary-book-toc-day:hover {
+  background: var(--rule-quiet);
+}

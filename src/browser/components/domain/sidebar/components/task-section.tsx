@@ -19,8 +19,8 @@ import {
 import { TaskList } from "../../../../features/task-board/task-list.tsx"
 import { useSession } from "../../../../stores/session.ts"
 import { useTaskBoardRequest } from "../../../../stores/task-board-request.ts"
-import styles from "../sidebar.module.css"
 import { SidebarSection } from "./section.tsx"
+import styles from "./task-section.module.css"
 
 export function TaskSection(): ReactElement {
   const tasks = useSession((session) => session.state.tasks)

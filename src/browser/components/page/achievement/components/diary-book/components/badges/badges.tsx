@@ -2,8 +2,8 @@ import type { ReactElement } from "react"
 
 import { HStack } from "../../../../../../ui/h-stack/h-stack.tsx"
 import { Text } from "../../../../../../ui/text/text.tsx"
-import styles from "../../../../achievement.module.css"
 import type { DiaryBookBadge } from "../../../../hooks/use-diary-book.ts"
+import styles from "./badges.module.css"
 
 const GRADUATION_LABEL = "卒業"
 

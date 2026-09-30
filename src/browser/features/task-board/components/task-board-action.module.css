@@ -1,0 +1,58 @@
+/* 下の操作の帯。 */
+.task-board-action {
+  box-sizing: border-box;
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  min-height: 64px;
+  padding: 12px 28px;
+  border-top: 1px solid var(--rule-quiet);
+  background: color-mix(in srgb, var(--surface), var(--ground) 40%);
+}
+/* 箱だけ（高さ・余白・角丸と、印と字の並べ方）。顔は `<Button variant="outline">` が持つ。 */
+.task-board-action-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 9px;
+}
+/* 「Issue を開く」はページを移る口なのでリンクのまま、ボタンと同じ箱と顔にする。 */
+.task-board-action-link {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--rule);
+  border-radius: 9px;
+  color: inherit;
+  font-size: var(--font-secondary);
+  text-decoration: none;
+}
+.task-board-action-link:hover {
+  border-color: var(--accent);
+}
+/* 箱だけ。顔は `<Button variant="solid-accent">` が持つ。 */
+.task-board-run {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  margin-left: auto;
+  padding: 0 18px;
+  border-radius: 10px;
+}
+.task-board-run-reason {
+  color: var(--ink-quiet);
+  font-size: 11px;
+}
+@media (max-width: 760px) {
+  .task-board-action {
+    padding: 10px 16px;
+  }
+}

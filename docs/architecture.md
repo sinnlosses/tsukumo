@@ -371,7 +371,8 @@ components/page/<ページ>/
   | 2つ以上のページ・枠                                  | ページの外（部品なら `components/domain/`、フックは `browser/hooks/`、それ以外は `browser/domain/`） |
 
   **入れ子はページの `components/` から2段まで**（子部品だけが使う孫は、親の部品の `components/` に
-  子部品と並べる）。CSS はファイル単位で読み手を数え、クラスごとには割らない
+  子部品と並べる）。CSS は class ごとに読み手を数える（選択子で結ばれた class は束ねて数える。
+  `docs/architecture/browser.md`「CSS」）
 
 - **部品のディレクトリの外から引いてよいのは `<部品>.tsx` だけ**（例外は `main.tsx` / `app.tsx` /
   `components/app/` とテスト）。ページの部品を画面の外に置くとき（書き終わりの知らせ `DiaryNotice`）は、

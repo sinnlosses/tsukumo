@@ -12,8 +12,9 @@ import { Dialog } from "../../../../../../ui/dialog/dialog.tsx"
 import { Heading } from "../../../../../../ui/heading/heading.tsx"
 import { Text } from "../../../../../../ui/text/text.tsx"
 import { VStack } from "../../../../../../ui/v-stack/v-stack.tsx"
-import styles from "../../../../character.module.css"
+import characterStyles from "../../../../character.module.css"
 import type { CharacterDeleteBandModel } from "../../../hooks/use-character-edit.ts"
+import styles from "./character-delete-confirm.module.css"
 
 export type CharacterDeleteConfirmProps = {
   readonly band: Extract<CharacterDeleteBandModel, { readonly kind: "shown" }>
@@ -92,7 +93,7 @@ export function CharacterDeleteConfirm(props: CharacterDeleteConfirmProps): Reac
             disclosure={{ kind: "none" }}
             ariaHasPopup={undefined}
             title={undefined}
-            className={styles["character-button-outline"]}
+            className={characterStyles["character-button-outline"]}
             onClick={props.onClose}
           >
             やめる

@@ -1,0 +1,18 @@
+.diary-book-gutter {
+  width: 1.125rem;
+  flex-shrink: 0;
+  /* 影だけだと後ろの画面が透ける。ページと同じ地の上に、両端から影を落とす。 */
+  background:
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--ground) 45%, transparent),
+      transparent 40% 60%,
+      color-mix(in srgb, var(--ground) 45%, transparent)
+    ),
+    var(--diary-gold-surface);
+}
+@media (max-width: 760px) {
+  .diary-book-gutter {
+    display: none;
+  }
+}

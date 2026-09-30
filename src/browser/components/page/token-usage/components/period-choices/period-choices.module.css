@@ -1,0 +1,29 @@
+/* 期間の切り替え。
+   3つで1つの入れ物（枠は群の外側だけで、中のボタンは枠を持たない）。
+   地は札より沈める（「自動圧縮まで」の箱と同じ `--usage-well`）。 */
+.token-usage-period {
+  display: flex;
+  margin-left: auto;
+  gap: 2px;
+  padding: 3px;
+  background: var(--usage-well);
+  border: 1px solid var(--usage-rule);
+  border-radius: 0.625rem;
+}
+/* 選ばれている側は地を1段上げる（`aria-pressed`。色だけに頼らない）。 */
+.token-usage-choice {
+  padding: 0.25rem 0.7rem;
+  background: none;
+  color: var(--usage-ink-label);
+  border: none;
+  border-radius: 0.4375rem;
+  font-size: var(--font-label);
+  cursor: pointer;
+}
+.token-usage-choice:hover {
+  color: var(--usage-ink);
+}
+.token-usage-choice[aria-pressed="true"] {
+  background: var(--usage-chosen);
+  color: var(--usage-ink);
+}

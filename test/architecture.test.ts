@@ -2,6 +2,7 @@ import { existsSync, readdirSync, readFileSync, statSync } from "node:fs"
 import path from "node:path"
 import { fileURLToPath } from "node:url"
 
+import { uniqueBy } from "remeda"
 import { describe, expect, it } from "vitest"
 
 import { commentLineIndexes } from "./comment-line.ts"
@@ -1021,8 +1022,9 @@ function componentBoundaryViolations(): readonly string[] {
 // `components/ui/` の variant 部品（`Select` 以外）に渡す `className` の作法を検査で守る
 // （`docs/architecture/browser.md`「`components/ui/` の部品（variant の作法と一覧）」の「呼び出し側からの
 // 上書き（className）」節「検査で守る」）。(1) 呼び出し側が渡す `className` の式が
-// `styles["…"]` の字面（と `??`・テンプレート文字列での組み合わせ）だけでできていること、
-// (2) その class の CSS 規則（呼び出し側の `*.module.css` で、選択子の最後の複合にその class を
+// CSS Modules の字面（`.module.css` を import した名前での `styles["…"]` / `<箱の名前>Styles["…"]`）と、
+// `??`・テンプレート文字列での組み合わせだけでできていること、
+// (2) その class の CSS 規則（その名前で import した `*.module.css` で、選択子の最後の複合にその class を
 // 含むもの。`::` の疑似要素は別の持ち物として数え、対象にしない）の property が、部品の CSS で
 // `:where()` の外に書いた property と重ならないことを見る。
 //
@@ -1034,36 +1036,56 @@ function componentBoundaryViolations(): readonly string[] {
 const CLASSNAME_PROP_PATTERN = /readonly className: string/
 const UI_COMPONENT_FILE_PATTERN = /^browser\/components\/ui\/([^/]+)\/\1\.tsx$/
 
-/** `styles["…"]` / `styles['…']` の字面だけを拾う。 */
-const STYLES_LITERAL_PATTERN = /styles\[(?:"([\w-]+)"|'([\w-]+)')\]/g
+/** `.module.css` を import した名前と、その CSS の `src/` 相対パスの対応。 */
+type CssModuleImports = ReadonlyMap<string, string>
+
+/** この `.tsx` が `.module.css` を import した名前（`styles` / `taskBoardStyles` など）ごとに、CSS のパスを解く。 */
+function cssModuleImports(content: string, fromRelPath: string): CssModuleImports {
+  return new Map(
+    [...content.matchAll(/import\s+(\w+)\s+from\s+["'](\.[^"']+\.module\.css)["']/g)].flatMap(
+      ([, name, specifier]): [string, string][] =>
+        name === undefined || specifier === undefined
+          ? []
+          : [[name, resolveRelativeImport(fromRelPath, specifier)]],
+    ),
+  )
+}
+
+/** `<import した名前>["…"]` / `<import した名前>['…']` の字面だけを拾う。1つ目の捕獲が名前、2つ目か3つ目が class 名。 */
+function cssModuleLiteralPattern(imports: CssModuleImports): RegExp | undefined {
+  const names = [...imports.keys()]
+  return names.length === 0
+    ? undefined
+    : new RegExp(`\\b(${names.join("|")})\\[(?:"([\\w-]+)"|'([\\w-]+)')\\]`, "g")
+}
 
 /**
- * `className` の式が「`styles["…"]` の字面と、`??`・テンプレート文字列での組み合わせ」だけで
+ * `className` の式が「CSS Modules の字面と、`??`・テンプレート文字列での組み合わせ」だけで
  * できているか。値を足すのは使う箇所が出たときだけにし、ここもいまの用途（字面1つ・`??` での
  * 既定値・テンプレート文字列での連結）だけを許す。三項演算子の条件のように任意の式が混じる形は、
  * 使う箇所が出たら合わせて広げる。
  */
-function isAllowedClassNameExpression(expr: string): boolean {
-  const withoutLiterals = expr.replace(STYLES_LITERAL_PATTERN, "")
+function isAllowedClassNameExpression(expr: string, imports: CssModuleImports): boolean {
+  const pattern = cssModuleLiteralPattern(imports)
+  const withoutLiterals = pattern === undefined ? expr : expr.replace(pattern, "")
   return /^[\s`$(){}?:."']*$/.test(withoutLiterals.replace(/\?\?/g, ""))
 }
 
-/** 式の中の `styles["…"]` が引く class 名をすべて拾う（重複を畳む）。 */
-function classNamesInExpression(expr: string): readonly string[] {
-  return [
-    ...new Set(
-      [...expr.matchAll(STYLES_LITERAL_PATTERN)].flatMap(
-        ([, a, b]): string | string[] => a ?? b ?? [],
-      ),
-    ),
-  ]
-}
-
-/** `import styles from "…"` の specifier を、この `.tsx` からの `src/` 相対パスに解く。
- * `styles` という名前で import していない（別名や無い）ファイルは `undefined`。 */
-function stylesImportPath(content: string, fromRelPath: string): string | undefined {
-  const match = /import\s+styles\s+from\s+["'](\.[^"']+)["']/.exec(content)
-  return match?.[1] === undefined ? undefined : resolveRelativeImport(fromRelPath, match[1])
+/** 式の中の CSS Modules の字面が引く class を、その CSS のパスと組にしてすべて拾う（重複を畳む）。 */
+function classNamesInExpression(
+  expr: string,
+  imports: CssModuleImports,
+): readonly { readonly cssRelPath: string; readonly className: string }[] {
+  const pattern = cssModuleLiteralPattern(imports)
+  if (pattern === undefined) {
+    return []
+  }
+  const pairs = [...expr.matchAll(pattern)].flatMap(([, name, a, b]) => {
+    const cssRelPath = name === undefined ? undefined : imports.get(name)
+    const className = a ?? b
+    return cssRelPath === undefined || className === undefined ? [] : [{ cssRelPath, className }]
+  })
+  return uniqueBy(pairs, ({ cssRelPath, className }) => `${cssRelPath}\0${className}`)
 }
 
 /** ディレクトリ名（kebab-case）から、そこに置く部品の PascalCase の名前を作る。 */
@@ -1334,27 +1356,25 @@ describe("components/ui/ の部品の className", () => {
       const content = readFileSync(`${SRC_ROOT}/${relPath}`, "utf8")
       return targets.flatMap(({ dirName, name }) => {
         const ownProperties = targetOwnProperties.get(dirName) ?? new Set<string>()
+        const imports = cssModuleImports(content, relPath)
         return jsxUsagesWithClassName(content, name).flatMap(({ classNameExpr }) => {
-          if (!isAllowedClassNameExpression(classNameExpr)) {
+          if (!isAllowedClassNameExpression(classNameExpr, imports)) {
             return [
-              `src/${relPath}: <${name}> の className が styles["…"] の組み合わせだけでできていない（${classNameExpr}）`,
+              `src/${relPath}: <${name}> の className が CSS Modules の字面の組み合わせだけでできていない（${classNameExpr}）`,
             ]
           }
-          const cssRelPath = stylesImportPath(content, relPath)
-          if (cssRelPath === undefined) {
-            return [`src/${relPath}: <${name}> に渡す className の "styles" が import されていない`]
-          }
-          const cssContent = cssContentOf(cssRelPath)
-          return classNamesInExpression(classNameExpr).flatMap((className) => {
-            const overlap = propertiesOfClass(cssContent, className).filter((property) =>
-              ownProperties.has(property),
-            )
-            return overlap.length > 0
-              ? [
-                  `src/${relPath}: <${name}> に渡す ${className} が部品の property と重なる（${overlap.join(", ")}）`,
-                ]
-              : []
-          })
+          return classNamesInExpression(classNameExpr, imports).flatMap(
+            ({ cssRelPath, className }) => {
+              const overlap = propertiesOfClass(cssContentOf(cssRelPath), className).filter(
+                (property) => ownProperties.has(property),
+              )
+              return overlap.length > 0
+                ? [
+                    `src/${relPath}: <${name}> に渡す ${className} が部品の property と重なる（${overlap.join(", ")}）`,
+                  ]
+                : []
+            },
+          )
         })
       })
     })

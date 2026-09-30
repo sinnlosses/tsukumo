@@ -19,7 +19,7 @@ import type {
   UsageReviewStageView,
   UseUsageReviewResult,
 } from "../../hooks/use-usage-review.ts"
-import styles from "../../token-usage.module.css"
+import styles from "./usage-review-card.module.css"
 
 const SECTION_LABEL = "減らし方を見てもらう"
 const IDLE_HEADING = "tsukumo に減らし方を見てもらう"

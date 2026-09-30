@@ -10,7 +10,8 @@ import type { ReactElement } from "react"
 
 import type { TaskSummaryItem } from "../../../../shared/repository/task-summary.ts"
 import { Text } from "../../../components/ui/text/text.tsx"
-import styles from "../task-board.module.css"
+import taskBoardStyles from "../task-board.module.css"
+import styles from "./task-item.module.css"
 import { TaskRunButton } from "./task-run-button.tsx"
 
 export function TaskItem(props: {
@@ -18,7 +19,12 @@ export function TaskItem(props: {
   readonly runnable: boolean
 }): ReactElement {
   return (
-    <li className={clsx(styles["task-item"], props.task.status === "done" && styles["task-done"])}>
+    <li
+      className={clsx(
+        taskBoardStyles["task-item"],
+        props.task.status === "done" && taskBoardStyles["task-done"],
+      )}
+    >
       <span>
         <TaskMark status={props.task.status} />
       </span>
@@ -26,7 +32,7 @@ export function TaskItem(props: {
         {props.runnable ? (
           <TaskRunButton taskId={props.task.id} />
         ) : (
-          <span className={styles["task-id"]}>{props.task.id}</span>
+          <span className={taskBoardStyles["task-id"]}>{props.task.id}</span>
         )}
         <Text
           element="span"

@@ -3,17 +3,17 @@
 //
 // 分類の判定には使わない。何が中身で何が空きかは `ContextUsageCategory` の `kind` が持ち、ここが持つのは見せ方だけ。
 //
-// 色は `token-usage.module.css` の `.context-tone-<tone>` に対応する。
+// 色は `context-usage-card.module.css` の `.context-tone-<tone>` に対応する。
 
 /** 分類1つの見せ方。 */
 export type CategoryLook = {
   /** 画面に出す名前。 */
   readonly label: string
-  /** 色の綴り（`token-usage.module.css` の `.context-tone-<tone>`）。 */
+  /** 色の綴り（`context-usage-card.module.css` の `.context-tone-<tone>`）。 */
   readonly tone: ContextTone
 }
 
-/** 色の綴り。`token-usage.module.css` にある `.context-tone-<tone>` の数だけ並ぶ。 */
+/** 色の綴り。`context-usage-card.module.css` にある `.context-tone-<tone>` の数だけ並ぶ。 */
 export type ContextTone =
   | "system-prompt"
   | "system-tools"

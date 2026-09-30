@@ -1,7 +1,7 @@
 import type { ReactElement } from "react"
 
 import { Text } from "../../../../ui/text/text.tsx"
-import styles from "../../token-usage.module.css"
+import styles from "./barred-value.module.css"
 
 type BarredValueProps = {
   /** 書き終えた数（表示する文字列そのもの）。 */

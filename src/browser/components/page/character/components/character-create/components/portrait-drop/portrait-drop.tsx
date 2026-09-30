@@ -9,8 +9,9 @@ import type { DragEvent, ReactElement } from "react"
 
 import { UploadIcon } from "../../../../../../ui/icon/icon.tsx"
 import { Text } from "../../../../../../ui/text/text.tsx"
-import styles from "../../../../character.module.css"
+import characterStyles from "../../../../character.module.css"
 import type { PortraitDropModel } from "../../hooks/use-character-create.ts"
+import styles from "./portrait-drop.module.css"
 
 const PORTRAIT_FILE_ACCEPT = ".svg,.png,.gif"
 
@@ -31,7 +32,7 @@ export function PortraitDrop(props: { readonly drop: PortraitDropModel }): React
   const fileInput = (
     <input
       type="file"
-      className={styles["character-card-file"]}
+      className={characterStyles["character-card-file"]}
       aria-label={drop.pickAriaLabel}
       accept={PORTRAIT_FILE_ACCEPT}
       onChange={(event) => {
@@ -43,7 +44,10 @@ export function PortraitDrop(props: { readonly drop: PortraitDropModel }): React
   if (drop.image.kind === "picked") {
     return (
       <label
-        className={clsx(styles["character-card"], styles["character-create-portrait"])}
+        className={clsx(
+          characterStyles["character-card"],
+          characterStyles["character-create-portrait"],
+        )}
         onDragOver={onDragOver}
         onDrop={onDrop}
       >
@@ -59,14 +63,14 @@ export function PortraitDrop(props: { readonly drop: PortraitDropModel }): React
   return (
     <label
       className={clsx(
-        styles["character-card"],
-        styles["character-card-blank"],
-        styles["character-create-portrait"],
+        characterStyles["character-card"],
+        characterStyles["character-card-blank"],
+        characterStyles["character-create-portrait"],
       )}
       onDragOver={onDragOver}
       onDrop={onDrop}
     >
-      <span className={styles["character-card-plus"]}>
+      <span className={characterStyles["character-card-plus"]}>
         <UploadIcon />
       </span>
       <Text element="span" size="secondary" tone="ink" weight="inherit" className="">

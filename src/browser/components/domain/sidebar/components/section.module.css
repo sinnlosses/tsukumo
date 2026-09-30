@@ -1,0 +1,45 @@
+/* サイドバーの区画1つ。見出し（h2、伸縮しない）と .sidebar-block-scroll（残りを埋めて内側でスクロールする）の縦積みにする。
+   区画自身は伸縮できないと内側の overflow-y: auto が効かないので min-height: 0 が要る。 */
+.sidebar-block {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  /* 区画の間の余白は3区画ぶん効くので、ここを詰めた分がそのまま一覧に見える件数になる。
+     左右 1.125rem（18px）は見本の区画の内側 padding。
+     見出し（h2）と中身（.sidebar-block-scroll）の両方が同じ横位置で揃うようにここに置く（中身側だけに付けると見出しだけ左に飛び出す）。 */
+  margin: 0 0 0.5rem;
+  padding: 0 1.125rem;
+  font-size: var(--font-secondary);
+}
+/* 区画の見出し。字は `Heading` が持ち、ここに残すのは置き方だけ（横並び・間隔・margin）。 */
+.sidebar-block-heading {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  flex: 0 0 auto;
+  margin: 0 0 0.75rem;
+}
+.sidebar-block p {
+  margin: 0.2rem 0;
+}
+/* 区画の中身。親（.sidebar-block）に定まった高さが無い文脈（狭い画面での1列の畳み）では flex-grow は働かず、中身なりの高さに広がるだけになる。
+   flex-basis は 0 ではなく auto にすること。
+   親の高さが auto のときに flex-basis: 0 だと、内容サイズの見積もりの基準そのものが 0 になり、overflow-y: auto と min-height: 0 の効果で中身が高さ 0 に潰れる。 */
+/* 上下の padding は `theme.css` の `:focus-visible`（outline 2px + outline-offset 2px = 要素の外側 4px）とちょうど合わせている。
+   overflow の scrollport は padding box の内側までを含むので、この 4px の中に収まる outline は上端・下端とも切られない。
+   左右は付けない。横位置は親（.sidebar-block）の 1.125rem が揃えるので、ここに付けると見出しより中身が内側へ二重に寄る。 */
+.sidebar-block-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 4px 0;
+}
+/* 見出しの右端に並ぶ押せる口（タスク一覧の「一覧を見る」）。枠なしのリンク風にする。 */
+.sidebar-block-title {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+/* 箱だけ（置き方）。顔は `<Button variant="link">` が持つ。 */
+.sidebar-block-action {
+  flex: 0 0 auto;
+}

@@ -1,0 +1,44 @@
+/* つくもの日記帳の見開き。
+   `<dialog>` は既定の中央寄せに任せ、アンカー位置決めは使わない（日記帳は成果の画面のどこからでも開くため）。 */
+.diary-book {
+  border: none;
+  padding: 0;
+  background: transparent;
+  color: var(--ink);
+  max-width: none;
+  max-height: none;
+}
+.diary-book-stage {
+  position: relative;
+  width: min(92vw, 72rem);
+}
+/* 顔は `<Button variant="outline">` が持つ。箱だけここに置く。 */
+.diary-book-topbar-button {
+  height: 2.25rem;
+  padding: 0 0.75rem;
+  border-radius: 0.5625rem;
+  white-space: nowrap;
+}
+
+/* 高さを固定する。
+   `max-height` だけだと中の縦書き本文（`flex: 1`）が配る先の高さを持てず、つぶれて見えなくなる。 */
+.diary-book-spread {
+  display: flex;
+  min-width: 0;
+  height: min(78vh, 42rem);
+  border: 1px solid var(--diary-gold-border);
+  border-radius: 0.875rem;
+  overflow: hidden;
+  box-shadow: 0 20px 50px color-mix(in srgb, var(--ground) 80%, transparent);
+}
+
+/* 狭い画面では左右のページを縦に積む（右ページが上）。 */
+@media (max-width: 760px) {
+  .diary-book-stage {
+    width: min(96vw, 40rem);
+  }
+  .diary-book-spread {
+    flex-direction: column;
+    height: min(80vh, 54rem);
+  }
+}

@@ -3,9 +3,10 @@ import type { ReactElement } from "react"
 
 import { Button } from "../../../../ui/button/button.tsx"
 import type { ToolTableView } from "../../hooks/use-token-usage.ts"
-import styles from "../../token-usage.module.css"
+import tokenUsageStyles from "../../token-usage.module.css"
 import { BarredValue } from "../barred-value/barred-value.tsx"
 import { TableCardHead } from "../table-card-head/table-card-head.tsx"
+import styles from "./tool-usage-card.module.css"
 
 type ToolUsageCardProps = {
   readonly tools: ToolTableView
@@ -19,9 +20,9 @@ export function ToolUsageCard(props: ToolUsageCardProps): ReactElement {
   const { more } = props.tools
 
   return (
-    <section className={styles["usage-card"]}>
+    <section className={tokenUsageStyles["usage-card"]}>
       <TableCardHead title="ツール別" order="結果の大きい順" />
-      <table className={clsx(styles["token-usage-table"], styles["tool-usage-table"])}>
+      <table className={clsx(tokenUsageStyles["token-usage-table"], styles["tool-usage-table"])}>
         <thead>
           <tr>
             <th scope="col">ツール</th>
@@ -32,7 +33,7 @@ export function ToolUsageCard(props: ToolUsageCardProps): ReactElement {
         <tbody>
           {props.tools.rows.map((tool) => (
             <tr key={tool.name}>
-              <th scope="row" className={styles["token-usage-name"]}>
+              <th scope="row" className={tokenUsageStyles["token-usage-name"]}>
                 {tool.name}
               </th>
               <td>{tool.calls}</td>

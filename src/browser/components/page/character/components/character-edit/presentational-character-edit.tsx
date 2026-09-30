@@ -8,9 +8,10 @@ import { HStack } from "../../../../ui/h-stack/h-stack.tsx"
 import { Heading } from "../../../../ui/heading/heading.tsx"
 import { Text } from "../../../../ui/text/text.tsx"
 import { VStack } from "../../../../ui/v-stack/v-stack.tsx"
-import styles from "../../character.module.css"
+import characterStyles from "../../character.module.css"
 import { AccentSwatch } from "../accent-swatch/accent-swatch.tsx"
 import type { CharacterEditModel } from "../hooks/use-character-edit.ts"
+import styles from "./character-edit.module.css"
 import { CharacterDelete } from "./components/character-delete/character-delete.tsx"
 import { CharacterProfile } from "./components/character-profile/character-profile.tsx"
 import { ImageField } from "./components/image-field/image-field.tsx"
@@ -114,7 +115,7 @@ export function PresentationalCharacterEdit(
               </Text>
             )}
           </HStack>
-          <div className={styles["character-swatches-screen"]}>
+          <div className={characterStyles["character-swatches-screen"]}>
             <AccentSwatch swatch={props.workAccent} disabled={props.disabled} />
             <AccentSwatch swatch={props.chatAccent} disabled={props.disabled} />
           </div>

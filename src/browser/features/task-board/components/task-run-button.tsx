@@ -6,7 +6,8 @@
 import clsx from "clsx"
 import { useState, type ReactElement } from "react"
 
-import styles from "../task-board.module.css"
+import taskBoardStyles from "../task-board.module.css"
+import styles from "./task-run-button.module.css"
 import { TaskRunConfirm } from "./task-run-confirm.tsx"
 
 export function TaskRunButton(props: { readonly taskId: string }): ReactElement {
@@ -16,7 +17,7 @@ export function TaskRunButton(props: { readonly taskId: string }): ReactElement 
     <>
       <button
         type="button"
-        className={clsx(styles["task-id"], styles["task-id-button"])}
+        className={clsx(taskBoardStyles["task-id"], styles["task-id-button"])}
         onClick={() => {
           setConfirming(true)
         }}

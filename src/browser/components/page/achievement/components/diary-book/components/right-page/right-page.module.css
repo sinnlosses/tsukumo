@@ -1,0 +1,138 @@
+.diary-book-right {
+  flex: 1 1 50%;
+  min-width: 0;
+  min-height: 0;
+  padding: 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  background: var(--diary-gold-surface);
+  overflow-y: auto;
+}
+.diary-book-right {
+  /* 罫の間隔。本文の `line-height` と同じ値にして、1列が罫と罫のあいだに収まるようにする。
+     `--diary-scale` は本文がページに収まるまで縮める倍率で、`useFitDiaryPage` が測って書く。
+     字の大きさも罫もこの倍率を掛けるので、縮めても列は罫に揃ったまま。 */
+  --diary-line: calc(2.625rem * var(--diary-scale, 1));
+  --diary-text: calc(1.1875rem * var(--diary-scale, 1));
+  position: relative;
+  /* 日付の列と本文を右から左へ横に並べる。
+     罫は右端から数えるので（`270deg`）、右の余白・日付の列・あいだを罫の間隔の倍数にしておけば、本文の列が罫に揃う。
+     本文が溢れて横に送ったときは揃わない（罫はページに引いてあり、本文と一緒には動かない）。 */
+  flex-direction: row-reverse;
+  gap: var(--diary-line);
+  padding: 2.75rem var(--diary-line) 2.5rem 2.25rem;
+  overflow: hidden;
+  background-image: repeating-linear-gradient(
+    270deg,
+    transparent 0 calc(var(--diary-line) - 1px),
+    color-mix(in srgb, var(--ink) 8%, transparent) calc(var(--diary-line) - 1px) var(--diary-line)
+  );
+}
+
+/* 右ページ — 縦書き。 */
+/* 日付・曜日・灯りを右端の1列に上から縦に積む。
+   縦書き（`writing-mode: vertical-rl`）では flex の既定の `row` が書字方向（縦）に付くので、並べ替えは要らない。
+   幅を罫の1列ぶんに固定して、本文の列が罫に揃うようにする。 */
+.diary-book-date-head {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  width: var(--diary-line);
+  flex-shrink: 0;
+}
+.diary-book-kanji-date {
+  font-family: var(--font-serif);
+  font-size: calc(1.375rem * var(--diary-scale, 1));
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: 0.15em;
+}
+.diary-book-weekday {
+  font-family: var(--font-serif);
+  letter-spacing: 0.2em;
+}
+/* 字の色は狐火（`--accent`）に寄せた淡い色（見本の値）。 */
+.diary-book-lamp {
+  writing-mode: vertical-rl;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: var(--font-action);
+  color: color-mix(in srgb, var(--accent) 45%, var(--ink-quiet));
+}
+/* 本文。ふだんは `useFitDiaryPage` が収まるまで縮めるので、`overflow: auto` が効くのは縮めきっても収まらないときだけ（縦書きなので左へ送る）。
+   下は署名（`.diary-book-signature`）のぶん空ける。段落のあいだは1列ぶん（罫に揃えるため）。 */
+.diary-book-body {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  flex: 1;
+  min-width: 0;
+  margin: 0 0 6.5rem;
+  overflow: auto;
+}
+.diary-book-paragraph {
+  margin: 0;
+  margin-block-end: var(--diary-line);
+  font-family: var(--font-diary);
+  font-size: var(--diary-text);
+  line-height: var(--diary-line);
+  letter-spacing: 0.08em;
+  color: var(--ink);
+}
+.diary-book-paragraph-time {
+  display: block;
+}
+.diary-book-blank-body {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  flex: 1;
+  min-width: 0;
+  margin: 0 0 6.5rem;
+  font-family: var(--font-diary);
+  font-size: var(--diary-text);
+  line-height: var(--diary-line);
+  letter-spacing: 0.08em;
+  color: var(--ink-quiet);
+}
+
+/* 右ページ — 署名と、白紙の日の「この日を振り返る」。左下に置く（本文の列は右から伸びる）。 */
+.diary-book-signature {
+  position: absolute;
+  left: 1.875rem;
+  bottom: 1.875rem;
+}
+.diary-book-signature-portrait {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.6rem;
+}
+.diary-book-signature-image {
+  width: 6rem;
+}
+.diary-book-signature-name {
+  padding-bottom: 0.5rem;
+  font-family: var(--font-serif);
+}
+@media (max-width: 760px) {
+  .diary-book-right {
+    order: -1;
+  }
+  /* 右の余白は罫の間隔のまま（本文の列を罫に揃えるため）。 */
+  .diary-book-right {
+    padding: 1.25rem var(--diary-line) 1.25rem 1.25rem;
+  }
+  /* ページが低く、左下に重ねると本文の列にかぶる。
+     署名は本文の左の列として並べ、本文は下まで使う。 */
+  .diary-book-signature {
+    position: static;
+    align-self: flex-end;
+    flex-shrink: 0;
+  }
+  .diary-book-body,
+  .diary-book-blank-body {
+    margin-bottom: 0;
+  }
+}

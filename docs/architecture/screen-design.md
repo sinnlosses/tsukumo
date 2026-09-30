@@ -315,7 +315,7 @@ IBM Plex Mono）と字の大きさ、「ほか n 件を見る」の色（見本�
   ならず「ターンが動いている」だけでは利用者が理由を誤解する
 - **直近のセリフの出どころ**: 吹き出しと同じ `SessionState.speeches` の最後の1件
   （まだ無ければ何も出さない）
-- **狭い幅での段の並び**: 760px 以下で2列→1列（他の区画と同じ境目。`token-usage.module.css`
+- **狭い幅での段の並び**: 760px 以下で2列→1列（他の区画と同じ境目。`usage-review-card.module.css`
   末尾の `@media`）
 - **段の右の数**: モデル・キャッシュ・ツールの3段だけ、手続き `tokenUsage.summary` に
   `usageReview.days` を渡して引く。**`usageReview.days` が選べる日数（1/7/30）でなければ数を出さない**
@@ -727,7 +727,7 @@ IBM Plex Mono）と字の大きさ、「ほか n 件を見る」の色（見本�
 - **760px 以下では一覧を詳しい設定の上に積む**（格子と差し色の列数は詳しい設定の幅を見る
   `@container` が決めるので、狭い画面用に別の規則は足していない）
 - **`<Portrait>` は `components/domain/portrait.tsx`**（2つ目の読み手。`docs/architecture.md`「全体構成」）。並びでの大きさは
-  `character.module.css` が決め、`className` で渡す（キャラビュー側の割合指定は
+  `portrait-card.module.css` が決め、`className` で渡す（キャラビュー側の割合指定は
   `.character-region` の変数が無いので効かない。`docs/architecture/browser.md`「CSS」）
 - **「このキャラクターを消す」帯は、詳しい設定の最下部・背景の節の下**（見本
   `character-screen-2026-09-23.png` の最下部）。`removal`（`docs/architecture/character-pack.md`「消すときの細部」の

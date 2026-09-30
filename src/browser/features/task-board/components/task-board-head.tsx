@@ -4,7 +4,7 @@ import { X } from "lucide-react"
 import type { ReactElement } from "react"
 
 import { Button } from "../../../components/ui/button/button.tsx"
-import styles from "../task-board.module.css"
+import styles from "./task-board-head.module.css"
 
 export function TaskBoardHead(props: {
   /** 空文字列なら件数を出さない（一覧が読めないとき）。 */

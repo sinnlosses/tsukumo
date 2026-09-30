@@ -16,9 +16,10 @@ import { Button } from "../../../../../../ui/button/button.tsx"
 import { HStack } from "../../../../../../ui/h-stack/h-stack.tsx"
 import { PlusIcon, TrashIcon, UploadIcon } from "../../../../../../ui/icon/icon.tsx"
 import { Text } from "../../../../../../ui/text/text.tsx"
-import styles from "../../../../character.module.css"
+import characterStyles from "../../../../character.module.css"
 import type { PortraitCardModel } from "../../../hooks/use-character-edit.ts"
 import { PortraitClearConfirm } from "../portrait-clear-confirm/portrait-clear-confirm.tsx"
+import styles from "./portrait-card.module.css"
 
 /** `<input type="file">` に出す受け付ける種類。中身の検証はサーバ側で、ここは選ぶときの絞り込みだけ。 */
 const PORTRAIT_FILE_ACCEPT = ".svg,.png,.gif"
@@ -54,7 +55,7 @@ export function PortraitCard(props: {
   const fileInput = (
     <input
       type="file"
-      className={styles["character-card-file"]}
+      className={characterStyles["character-card-file"]}
       aria-label={card.pickAriaLabel}
       accept={PORTRAIT_FILE_ACCEPT}
       disabled={disabled}
@@ -67,12 +68,12 @@ export function PortraitCard(props: {
   if (card.image.kind === "blank") {
     return (
       <label
-        className={clsx(styles["character-card"], styles["character-card-blank"])}
+        className={clsx(characterStyles["character-card"], characterStyles["character-card-blank"])}
         data-expression={card.expression}
         onDragOver={onDragOver}
         onDrop={onDrop}
       >
-        <span className={styles["character-card-plus"]}>
+        <span className={characterStyles["character-card-plus"]}>
           <PlusIcon />
         </span>
         <Text element="span" size="secondary" tone="ink" weight="inherit" className="">
@@ -92,7 +93,7 @@ export function PortraitCard(props: {
     <>
       <figure
         ref={cardRef}
-        className={styles["character-card"]}
+        className={characterStyles["character-card"]}
         data-expression={card.expression}
         onDragOver={onDragOver}
         onDrop={onDrop}
@@ -120,11 +121,11 @@ export function PortraitCard(props: {
           align="stretch"
           justify="start"
           wrap="nowrap"
-          className={styles["character-card-actions"]}
+          className={characterStyles["character-card-actions"]}
         >
           {/* 見える字は無い（アイコンだけ）。どの表情のことかは読み上げに残すので、
               `<input>` 側に aria-label を置き、`title` で乗せたときの名前を出す。 */}
-          <label className={styles["character-card-action"]} title="差し替える">
+          <label className={characterStyles["character-card-action"]} title="差し替える">
             <UploadIcon />
             {fileInput}
           </label>

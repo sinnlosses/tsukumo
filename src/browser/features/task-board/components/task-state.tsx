@@ -6,11 +6,12 @@ import { Check, Minus, Pause } from "lucide-react"
 import type { ReactElement } from "react"
 
 import type { TaskStateKind, TaskStateView } from "../hooks/use-task-board.ts"
-import styles from "../task-board.module.css"
+import taskBoardStyles from "../task-board.module.css"
+import styles from "./task-state.module.css"
 
 export function TaskState(props: { readonly state: TaskStateView }): ReactElement {
   return (
-    <span className={clsx(styles["task-state"], TASK_STATE_CLASS[props.state.kind])}>
+    <span className={clsx(taskBoardStyles["task-state"], TASK_STATE_CLASS[props.state.kind])}>
       <TaskStateMark kind={props.state.kind} />
       <span className={styles["task-state-text"]}>{props.state.text}</span>
     </span>

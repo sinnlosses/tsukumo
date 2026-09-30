@@ -1,0 +1,15 @@
+.diary-book-review {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+/* 顔は `<Button variant="solid-accent">` が持つ。箱だけここに置く。 */
+.diary-book-review-button {
+  height: 2.75rem;
+  padding: 0 1.25rem;
+  border-radius: 0.875rem;
+}
+/* 字の段・色は `Text` が持つ。幅だけここに置く。 */
+.diary-book-review-note {
+  max-width: 14rem;
+}

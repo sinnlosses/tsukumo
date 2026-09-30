@@ -1,0 +1,16 @@
+/* 表を持つ札の見出し行。
+   期間の合計の札（`.usage-card-label` 以下）よりひとまわり大きくする。
+   「いまのコンテキスト」と同格の区画の見出しなので、`.context-title` / `.context-note` と同じ大きさ・色の組にする。 */
+.usage-table-head {
+  margin-bottom: 0.4rem;
+}
+.usage-table-title {
+  margin: 0;
+  color: var(--usage-ink);
+  font-size: var(--font-subheading);
+  font-weight: normal;
+}
+.usage-table-order {
+  color: var(--usage-ink-note);
+  font-size: var(--font-label);
+}
