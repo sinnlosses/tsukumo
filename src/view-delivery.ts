@@ -15,10 +15,8 @@ import { todayLocalDateKey } from "./server/adapter/local-time.ts"
 import { listDiaryDates, readDiaryDay } from "./server/diary/adapter/diary.ts"
 import { listRepositoryFiles } from "./server/repository/adapter/repository-file.ts"
 import type { PromptImageShelf } from "./server/session-driver/core/prompt-image-shelf.ts"
-import {
-  summarizeRecentTokenUsage,
-  type TokenUsageLog,
-} from "./server/token-usage/core/token-usage.ts"
+import { summarizeRecentTokenUsage } from "./server/token-usage/core/token-usage-summary.ts"
+import type { TokenUsageLog } from "./server/token-usage/core/token-usage.ts"
 import type { UiBundle } from "./server/view-server/adapter/bundle.ts"
 import {
   createStartupToken,
