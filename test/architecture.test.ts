@@ -502,21 +502,23 @@ describe("経路名のリテラル", () => {
 // `src` `test` `scripts` `story` `.storybook` を見る（`package.json` の `lint`。`docs/` `develop/` は対象外——
 // ドキュメントは日付つきの記録を持つのが正しい）。
 //
-// 行頭が `//` `*` `/*` のコメント行だけを対象にする。行の途中にある `//` は文字列リテラルの
-// 中の `//` と区別できないので拾わない——`test/` のフィクスチャに出てくる `date` フィールドの
-// ようなテストデータの日付は、行頭がコメントでないのでこれで自然に除外される。
+// コメント行は `commentLineIndexes` で拾う（`.css` の `/* */` も含む）。行の途中で開くブロック
+// コメントと、行の途中にある `//` は拾わない。`test/` のフィクスチャに出てくる `date` フィールドの
+// ようなテストデータの日付は、コメント行でないのでこれで自然に除外される。
+// 見本のパス（`docs/history/mockup/…`）はディレクトリ名に日付を持つので、パスだけを除いて見る。
 const LINTED_DIRS: readonly string[] = ["src", "test", "scripts", "story", ".storybook"]
-const COMMENT_LINE_START = /^\s*(\/\/|\*|\/\*)/
+const COMMENTED_EXTENSIONS = [".ts", ".tsx", ".css"] as const satisfies readonly string[]
+const MOCKUP_PATH = /docs\/history\/mockup\/[\w./-]*/g
 const SPECIFIC_DATE = /\d{4}-\d{2}-\d{2}/
 
 describe("コメント中の日付", () => {
-  it("src / test / scripts / story / .storybook の *.ts / *.tsx で、コメント行が特定の日付（YYYY-MM-DD）を含まない", () => {
+  it("src / test / scripts / story / .storybook の *.ts / *.tsx / *.css で、コメント行が見本のパスの外に特定の日付（YYYY-MM-DD）を含まない", () => {
     const offenders = LINTED_DIRS.flatMap((dirName) => {
       const root = fileURLToPath(new URL(`../${dirName}`, import.meta.url)).replace(/\/$/, "")
-      return listSourceFiles(root).flatMap((relPath) => {
+      return listSourceFiles(root, root, COMMENTED_EXTENSIONS).flatMap((relPath) => {
         const lines = readFileSync(`${root}/${relPath}`, "utf8").split("\n")
-        return lines.flatMap((line, index) =>
-          COMMENT_LINE_START.test(line) && SPECIFIC_DATE.test(line)
+        return commentLineIndexes(lines).flatMap((index) =>
+          SPECIFIC_DATE.test((lines[index] ?? "").replace(MOCKUP_PATH, ""))
             ? [`${dirName}/${relPath}:${index + 1}`]
             : [],
         )
@@ -1646,13 +1648,19 @@ function nonCommentContent(content: string): string {
 }
 
 /** `src/` 配下の `.ts` / `.tsx` を再帰的に集める。相対パス（`shared/character-pack/character.ts`）で返す。 */
-function listSourceFiles(root: string, dir = root): readonly string[] {
+function listSourceFiles(
+  root: string,
+  dir = root,
+  extensions: readonly string[] = [".ts", ".tsx"],
+): readonly string[] {
   return readdirSync(dir).flatMap((name) => {
     const fullPath = `${dir}/${name}`
     if (statSync(fullPath).isDirectory()) {
-      return listSourceFiles(root, fullPath)
+      return listSourceFiles(root, fullPath, extensions)
     }
-    return name.endsWith(".ts") || name.endsWith(".tsx") ? [fullPath.slice(root.length + 1)] : []
+    return extensions.some((extension) => name.endsWith(extension))
+      ? [fullPath.slice(root.length + 1)]
+      : []
   })
 }
 
