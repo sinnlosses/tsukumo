@@ -8,6 +8,8 @@ import { describe, expect, test } from "vitest"
 import { runSubprocess } from "../fixture/subprocess.ts"
 
 const HOOK_PATH = "scripts/deny-sed-in-place.ts"
+const WORK_ROOT = "/work/tree"
+const NO_PROJECT_DIR = Symbol("no CLAUDE_PROJECT_DIR")
 
 describe("ファイルを書き換えるコマンドを拒否する hook", () => {
   test.each([
@@ -30,10 +32,45 @@ describe("ファイルを書き換えるコマンドを拒否する hook", () =>
       "python3 -c の write_text",
       "python3 -c \"import pathlib; pathlib.Path('f.txt').write_text('x')\"",
     ],
+    [
+      "作業ツリーの中の絶対パスへの open",
+      "python3 -c \"open('/work/tree/f.txt', 'w').write('x')\"",
+    ],
+    [
+      "変数を書き込み先にした open",
+      "python3 - <<'EOF'\nwith open(path, 'w') as fh:\n    fh.write('x')\nEOF",
+    ],
+    [
+      "Path を組み立てた write_text",
+      "python3 - <<'EOF'\nfrom pathlib import Path\nPath('/tmp/x').write_text('x')\nEOF",
+    ],
+    ["ホーム展開を含む open", "python3 -c \"open('~/x', 'w').write('x')\""],
+    ["外へ出て戻る .. を含む open", "python3 -c \"open('/tmp/../work/tree/x', 'w').write('x')\""],
+    ["連結した書き込み先の open", "python3 -c \"open('/tmp/' + name, 'w').write('x')\""],
+    [
+      "外への書き込みと中への書き込みが混在",
+      "python3 - <<'EOF'\nopen('/tmp/a', 'w').write('x')\nopen('/work/tree/b', 'w').write('x')\nEOF",
+    ],
+    [
+      "mode 引数で書き込みにした作業ツリーの中の open",
+      "python3 -c \"open('/work/tree/x', encoding='utf-8', mode='w').write('x')\"",
+    ],
   ])("%s は止めて Edit を促す", async (_name, command) => {
     const result = await runHook(command)
     expect(result.exitCode).toBe(2)
     expect(result.stderr).toContain("Edit")
+    expect(result.stderr).toContain("Write")
+  })
+
+  test("作業ツリーの根が分からないときは外への open も止める", async () => {
+    const result = await runRaw(
+      JSON.stringify({
+        tool_name: "Bash",
+        tool_input: { command: "python3 -c \"open('/tmp/x', 'w').write('x')\"" },
+      }),
+      NO_PROJECT_DIR,
+    )
+    expect(result.exitCode).toBe(2)
   })
 
   test.each([
@@ -53,6 +90,15 @@ describe("ファイルを書き換えるコマンドを拒否する hook", () =>
       "heredoc の本文に sed -i の文字列を含むだけの git commit",
       "git commit -m \"$(cat <<'EOF'\nsed -i change\nEOF\n)\"",
     ],
+    [
+      "作業ツリーの外の絶対パスへの heredoc の open",
+      "python3 - <<'EOF'\nwith open('/private/tmp/x/draft.md', 'w') as fh:\n    fh.write('x')\nEOF",
+    ],
+    ["作業ツリーの外の絶対パスへの python3 -c", "python3 -c \"open('/tmp/x.md', 'w').write('x')\""],
+    [
+      "作業ツリーの外への mode 引数の open",
+      "python3 -c \"open('/tmp/x.md', encoding='utf-8', mode='w').write('x')\"",
+    ],
   ])("%s は通す", async (_name, command) => {
     expect((await runHook(command)).exitCode).toBe(0)
   })
@@ -61,15 +107,39 @@ describe("ファイルを書き換えるコマンドを拒否する hook", () =>
     expect((await runHook("sed -i 's/a/b/' f", "Read")).exitCode).toBe(0)
   })
 
+  test("作業ツリーの根は入力の cwd でも読む", async () => {
+    const command = "python3 -c \"open('/tmp/x', 'w').write('x')\""
+    const outside = await runRaw(
+      JSON.stringify({ tool_name: "Bash", tool_input: { command }, cwd: WORK_ROOT }),
+      NO_PROJECT_DIR,
+    )
+    const inside = await runRaw(
+      JSON.stringify({
+        tool_name: "Bash",
+        tool_input: { command: "python3 -c \"open('/tmp/x/y', 'w').write('x')\"" },
+        cwd: "/tmp/x",
+      }),
+      NO_PROJECT_DIR,
+    )
+    expect(outside.exitCode).toBe(0)
+    expect(inside.exitCode).toBe(2)
+  })
+
   test("形が違う入力では実行を止めない", async () => {
     expect((await runRaw("これは JSON ではない")).exitCode).toBe(0)
   })
 })
 
 function runHook(command: string, toolName = "Bash") {
-  return runRaw(JSON.stringify({ tool_name: toolName, tool_input: { command } }))
+  return runRaw(JSON.stringify({ tool_name: toolName, tool_input: { command } }), WORK_ROOT)
 }
 
-function runRaw(input: string) {
-  return runSubprocess(process.execPath, [HOOK_PATH], { input })
+function runRaw(input: string, projectDir: string | typeof NO_PROJECT_DIR = WORK_ROOT) {
+  return runSubprocess(process.execPath, [HOOK_PATH], {
+    input,
+    env: {
+      ...process.env,
+      CLAUDE_PROJECT_DIR: projectDir === NO_PROJECT_DIR ? undefined : projectDir,
+    },
+  })
 }

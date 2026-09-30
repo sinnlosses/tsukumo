@@ -5,6 +5,7 @@
 // 終了コード 2 で Bash の実行を止め、stderr の中身がモデルへ返る。
 // それ以外の終了コードでは実行を止めない（判定に失敗したときは通す）。
 
+import { isAbsolute, relative } from "node:path"
 import process from "node:process"
 
 import { findQuotedSpans, withSpansBlanked, type QuotedSpan } from "./lib/quoted-span.ts"
@@ -17,9 +18,18 @@ const SED_IN_PLACE =
 const PERL_IN_PLACE =
   /(?:^|[;&|(]\s*|\n)\s*(?:(?:sudo|xargs)\s+(?:-\S+\s+)*)?perl\b[^;&|\n]*\s-[a-zA-Z]*i[a-zA-Z]*\b/
 
-/** Python のコードの中にある、ファイルへ書き戻す呼び出し。 */
-const PYTHON_WRITE_CALL =
-  /open\([^)]*,\s*["'][waxWAX]|open\([^)]*mode\s*=\s*["'][waxWAX]|\.write_text\(|\.write_bytes\(|shutil\.move\(|os\.rename\(|os\.replace\(/
+/** Python のコードの中にある、書き込みモードの `open(...)`。第1引数を書き込み先として捕獲する。 */
+const PYTHON_OPEN_WRITES = [
+  /open\(([^,)]*),\s*["'][waxWAX]/g,
+  /open\(([^,)]*)[^)]*mode\s*=\s*["'][waxWAX]/g,
+] as const
+
+/** Python のコードの中にある、書き込み先をコマンド文字列から読めない書き戻しの呼び出し。 */
+const PYTHON_OTHER_WRITE =
+  /\.write_text\(|\.write_bytes\(|shutil\.move\(|os\.rename\(|os\.replace\(/
+
+/** 展開も連結も含まない、引用符1組だけの文字列リテラル。 */
+const PLAIN_STRING_LITERAL = /^(["'])([^"'\\$~{}]*)\1$/
 
 /** heredoc の直前のコマンド語が、素の `python3`（引数無しまたは `-` のみ）である形。この heredoc の本文はコードとして実行される。 */
 const PYTHON_HEREDOC_SCRIPT = /(?:^|[\s;&|(])(?:\S+=\S+\s+)*python3?(\s+-)?\s*$/
@@ -30,27 +40,35 @@ const PYTHON_DASH_C_SCRIPT = /(?:^|[\s;&|(])(?:\S+=\S+\s+)*python3?\s+(?:-\S+\s+
 const REFUSAL = `Bash の \`sed -i\`・\`perl -pi\` / \`perl -i\`・Python の書き込みでファイルを書き換えない。
 BSD と GNU で引数が違い、置換の当たりも確かめられない。
 ファイルの書き換えは Edit ツール（複数箇所なら replace_all）か Write ツールで行うこと。
+作業ツリーの外の下書き（\`tw edit --body-file\` に渡す本文など）は Write ツールでスクラッチに書くか、heredoc を標準入力へ直接渡す。
+Python で書くなら、書き込み先を \`open("/絶対パス", "w")\` のリテラルにして作業ツリーの外に置けば通る。
 読むだけなら \`sed -n '1,5p' <file>\` は使える。`
 
 /** Bash ツールの入力のうち、この hook が見るところ。 */
 type BashHookInput = {
   readonly tool_name?: unknown
   readonly tool_input?: { readonly command?: unknown }
+  readonly cwd?: unknown
+}
+
+type BashInput = {
+  readonly command: string
+  readonly cwd: string | undefined
 }
 
 const raw = await readStdin()
-const bashCommand = readBashCommand(raw)
-if (bashCommand !== undefined && isDeniedCommand(bashCommand)) {
+const bashInput = readBashInput(raw)
+if (bashInput !== undefined && isDeniedCommand(bashInput.command, readWorkRoot(bashInput.cwd))) {
   process.stderr.write(`${REFUSAL}\n`)
   process.exit(2)
 }
 
 /** コマンドが `sed -i`・`perl -pi` 等の構造に当たるか、引用符・heredoc の中で Python がファイルへ書き戻すコードを持つかを見る。 */
-function isDeniedCommand(command: string): boolean {
+function isDeniedCommand(command: string, workRoot: string | undefined): boolean {
   const spans = findQuotedSpans(command)
   if (
     spans.some(
-      (span) => isExecutedPythonCode(command, span) && PYTHON_WRITE_CALL.test(span.content),
+      (span) => isExecutedPythonCode(command, span) && isDeniedPythonCode(span.content, workRoot),
     )
   ) {
     return true
@@ -58,6 +76,39 @@ function isDeniedCommand(command: string): boolean {
 
   const skeleton = withSpansBlanked(command, spans)
   return SED_IN_PLACE.test(skeleton) || PERL_IN_PLACE.test(skeleton)
+}
+
+/** Python のコードが、書き込み先を作業ツリーの外のリテラルと読めない書き込みを持つか。 */
+function isDeniedPythonCode(code: string, workRoot: string | undefined): boolean {
+  if (PYTHON_OTHER_WRITE.test(code)) {
+    return true
+  }
+
+  return PYTHON_OPEN_WRITES.some((pattern) =>
+    [...code.matchAll(pattern)].some(
+      (match) => !isLiteralOutsideWorkTree(match[1] ?? "", workRoot),
+    ),
+  )
+}
+
+/** `open` の第1引数が、作業ツリーの外を指す絶対パスの文字列リテラルか。 */
+function isLiteralOutsideWorkTree(target: string, workRoot: string | undefined): boolean {
+  const path = PLAIN_STRING_LITERAL.exec(target.trim())?.[2]
+  if (path === undefined || workRoot === undefined) {
+    return false
+  }
+  if (!isAbsolute(path) || path.split("/").includes("..")) {
+    return false
+  }
+
+  const fromRoot = relative(workRoot, path)
+  return fromRoot === ".." || fromRoot.startsWith("../") || isAbsolute(fromRoot)
+}
+
+/** 作業ツリーの根。`CLAUDE_PROJECT_DIR`、無ければ hook の入力の `cwd`。絶対パスでなければ `undefined`。 */
+function readWorkRoot(cwd: string | undefined): string | undefined {
+  const candidate = process.env["CLAUDE_PROJECT_DIR"] || cwd
+  return candidate !== undefined && isAbsolute(candidate) ? candidate : undefined
 }
 
 /** 引用符・heredoc の範囲のうち、データではなくコードとして実行されるもの（`python3` の heredoc・`python3 -c` の引用符）。 */
@@ -81,8 +132,8 @@ function isCommandBoundary(character: string | undefined): boolean {
   return character !== undefined && ";&|(\n".includes(character)
 }
 
-/** hook が stdin へ流す JSON から Bash のコマンド文字列を取り出す。形が違えば `undefined`。 */
-function readBashCommand(rawInput: string): string | undefined {
+/** hook が stdin へ流す JSON から Bash のコマンド文字列と cwd を取り出す。形が違えば `undefined`。 */
+function readBashInput(rawInput: string): BashInput | undefined {
   const parsed: unknown = safeParse(rawInput)
   if (typeof parsed !== "object" || parsed === null) {
     return undefined
@@ -94,7 +145,11 @@ function readBashCommand(rawInput: string): string | undefined {
   }
 
   const rawCommand = input.tool_input?.command
-  return typeof rawCommand === "string" ? rawCommand : undefined
+  if (typeof rawCommand !== "string") {
+    return undefined
+  }
+
+  return { command: rawCommand, cwd: typeof input.cwd === "string" ? input.cwd : undefined }
 }
 
 function safeParse(rawInput: string): unknown {
