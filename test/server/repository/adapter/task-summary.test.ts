@@ -30,6 +30,7 @@ const WAIT_LIMIT_MS = 3000
 const QUIET_PERIOD_MS = 300
 
 const root = useTempDir("task-summary")
+const home = useBeadsHome(() => join(root(), "home"))
 let watcher: TaskSummaryWatcher | undefined
 
 afterEach(async () => {
@@ -354,8 +355,6 @@ const BEADS_EMPTY_BODY = [
 // Beads 方式（`main` の先端の CLAUDE.md の `- タスクの置き場: beads`）。本物の `bd` を、`HOME` を
 // 一時ディレクトリへ向けて起こす（`useBeadsHome`）。
 describe("watchTaskSummary（Beads 方式）", () => {
-  const home = useBeadsHome(() => join(root(), "home"))
-
   /** `bd` の見回りは1回が約0.2秒なので、通知を待つ上限を長くとる。 */
   const BEADS_WAIT_LIMIT_MS = 15_000
 
@@ -396,8 +395,9 @@ describe("watchTaskSummary（Beads 方式）", () => {
         "保留",
         "-l",
         "difficulty:haiku,loopable:N",
+        "-s",
+        "pending",
       )
-      await bd(repository, home(), "update", "t-002", "--status", "pending")
       await bd(repository, home(), "create", "--id", "t-003", "着手中", "--deps", "t-010")
       await bd(repository, home(), "update", "t-003", "--claim")
       await bd(repository, home(), "create", "--id", "t-001", "済み")
@@ -770,8 +770,6 @@ const FICTIONAL_BEADS_ISSUE: BeadsIssue = {
 }
 
 describe("createBeadsStampReader", () => {
-  const home = useBeadsHome(() => join(root(), "home"))
-
   it("課題を書き換えると変わり、書き換えなければ変わらない", { timeout: 60_000 }, async () => {
     const repository = await initRepository("main")
     initBeads(repository)
