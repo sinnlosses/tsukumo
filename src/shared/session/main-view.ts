@@ -18,9 +18,16 @@ import {
   type ToolRunStatus,
   type TurnBodies,
 } from "./session-state.ts"
-import { bashCommandDuration } from "./turn-step.ts"
+import {
+  advanceTurnContext,
+  bashCommandDuration,
+  EMPTY_TURN_CONTEXT,
+  lastBashOf,
+  latestWorkPlanOf,
+  type TurnContext,
+} from "./turn-context.ts"
 import { splitIntoTurns, type TurnRest, turnIdOf } from "./turn.ts"
-import { latestWorkPlan, type LatestWorkPlan, type PhaseShift, phaseShiftOf } from "./work-plan.ts"
+import { type LatestWorkPlan, type PhaseShift, phaseShiftOf } from "./work-plan.ts"
 
 /**
  * 出すやり取りの数。
@@ -191,9 +198,12 @@ export type MainViewTurn = {
  * `tool` の記録も渡す（ステップの `actions` に入る）が、描く側はそこから描かない。
  */
 export function mainViewEntries(state: SessionState): readonly MainViewEntry[] {
-  const settled = state.records.flatMap((record, index) =>
-    toMainViewEntries(record, () => turnRecordsBefore(state.records, index)),
-  )
+  const settled: MainViewEntry[] = []
+  let context: TurnContext = EMPTY_TURN_CONTEXT
+  for (const record of state.records) {
+    settled.push(...entriesOf(record, context))
+    context = advanceTurnContext(context, record)
+  }
   return isBlankText(state.partialUtterance)
     ? settled
     : [...settled, { kind: "detail", markdown: state.partialUtterance }]
@@ -232,6 +242,42 @@ export function mainViewTurns(
     .map((turn) => limitTurnEntries(turn))
 }
 
+/** 記録1件の変換が頼る、前の記録から持ち回した値（記録の参照。無ければ `none`）。 */
+type EntryDependency = SessionRecord | "none"
+
+type RememberedEntries = {
+  readonly dependencies: readonly EntryDependency[]
+  readonly entries: readonly MainViewEntry[]
+}
+
+const ENTRIES_BY_RECORD = new WeakMap<SessionRecord, RememberedEntries>()
+
+/** 記録1件の変換。記録も頼る値も変わっていなければ、前と同じ配列（同じ参照の要素）を返す。 */
+function entriesOf(record: SessionRecord, context: TurnContext): readonly MainViewEntry[] {
+  const dependencies = dependenciesOf(record, context)
+  const remembered = ENTRIES_BY_RECORD.get(record)
+  if (
+    remembered !== undefined &&
+    remembered.dependencies.length === dependencies.length &&
+    remembered.dependencies.every((dependency, index) => dependency === dependencies[index])
+  ) {
+    return remembered.entries
+  }
+  const entries = toMainViewEntries(record, context)
+  ENTRIES_BY_RECORD.set(record, { dependencies, entries })
+  return entries
+}
+
+function dependenciesOf(record: SessionRecord, context: TurnContext): readonly EntryDependency[] {
+  if (record.kind === "work-plan") {
+    return [context.plan]
+  }
+  if (record.kind === "report") {
+    return [context.plan, ...record.checks.map((check) => lastBashOf(context, check.command))]
+  }
+  return []
+}
+
 /**
  * `SessionRecord` 1件をメインビューに出す形へ変える（出さないものは空で返す）。
  *
@@ -244,15 +290,12 @@ export function mainViewTurns(
  *
  * `tool` は `toolUseId` / `nested`（突き合わせにしか使わない内部の付随情報）を落とす（メインビューの部品が見てよいのは名前・入力・結果だけ）。
  */
-function toMainViewEntries(
-  record: SessionRecord,
-  earlierInTurn: () => readonly SessionRecord[],
-): readonly MainViewEntry[] {
+function toMainViewEntries(record: SessionRecord, context: TurnContext): readonly MainViewEntry[] {
   if (record.kind === "speech" || record.kind === "compact-boundary") {
     return []
   }
   if (record.kind === "work-plan") {
-    const shift = phaseShiftOf(latestWorkPlan(earlierInTurn()), record)
+    const shift = phaseShiftOf(latestWorkPlanOf(context), record)
     return shift.finished.kind === "none" && shift.entered.kind === "none"
       ? []
       : [{ kind: "phase-shift", shift }]
@@ -265,7 +308,7 @@ function toMainViewEntries(
     return [
       {
         kind: "report",
-        markdown: reportMarkdown(record, earlierInTurn()),
+        markdown: reportMarkdown(record, context),
         conclusion: record.conclusion,
         task: record.task,
       },
@@ -290,15 +333,15 @@ function toMainViewEntries(
  */
 function reportMarkdown(
   report: Extract<SessionRecord, { readonly kind: "report" }>,
-  earlierInTurn: readonly SessionRecord[],
+  context: TurnContext,
 ): string {
   return [
     report.task.kind === "task" && !isBlankText(report.conclusion)
       ? `<div class="conclusion">\n\n${report.conclusion}\n\n</div>`
       : report.conclusion,
     statusMarkdown(
-      workPlanMarkdown(latestWorkPlan(earlierInTurn)),
-      reportChecksMarkdown(report.checks, (command) => bashCommandDuration(earlierInTurn, command)),
+      workPlanMarkdown(latestWorkPlanOf(context)),
+      reportChecksMarkdown(report.checks, (command) => bashCommandDuration(context, command)),
     ),
     reportSectionsMarkdown(tidyReportSections(report)),
     isBlankText(report.favor) ? "" : `<div class="note note-favor">\n\n${report.favor}\n\n</div>`,
@@ -325,15 +368,6 @@ function workPlanMarkdown(plan: LatestWorkPlan): string {
           blocks: [{ kind: "progress", steps: plan.phases, current: plan.current, fold: "" }],
         },
       ])
-}
-
-/** `index` の記録より前で、同じやり取り（最後の `request` より後）に入る記録。 */
-function turnRecordsBefore(
-  records: readonly SessionRecord[],
-  index: number,
-): readonly SessionRecord[] {
-  const earlier = records.slice(0, index)
-  return earlier.slice(earlier.findLastIndex((record) => record.kind === "request") + 1)
 }
 
 /**

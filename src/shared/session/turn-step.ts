@@ -52,20 +52,11 @@ export function toolDuration(step: TurnStep): ToolDuration {
     : { kind: "unknown" }
 }
 
-/**
- * `tool` の記録の中で、`command` をそのまま打った最後の Bash の所要時間（{@link toolDuration}）。
- * 突き合わせは文字列の完全一致だけで、無ければ `unknown`。
- */
-export function bashCommandDuration(
-  records: readonly SessionRecord[],
-  command: string,
+/** `tool` の記録1件の所要時間（{@link toolDuration}）。 */
+export function toolRecordDuration(
+  record: Extract<SessionRecord, { readonly kind: "tool" }>,
 ): ToolDuration {
-  const matched = records
-    .filter(isToolRecord)
-    .findLast((record) => record.name === "Bash" && bashCommandOf(record.input) === command)
-  return matched === undefined
-    ? { kind: "unknown" }
-    : toolDuration(toTurnStep(matched, { kind: "none" }))
+  return toolDuration(toTurnStep(record, { kind: "none" }))
 }
 
 /**
@@ -111,11 +102,11 @@ export function currentTurnSteps(
 }
 
 /** Bash の入力（外来の値）から、打ったコマンドの文字列を取り出す。読めなければ空文字。 */
-function bashCommandOf(input: unknown): string {
+export function bashCommandOf(input: unknown): string {
   return isPlainObject(input) && typeof input["command"] === "string" ? input["command"] : ""
 }
 
-function isToolRecord(
+export function isToolRecord(
   record: SessionRecord,
 ): record is Extract<SessionRecord, { readonly kind: "tool" }> {
   return record.kind === "tool"

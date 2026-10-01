@@ -14,6 +14,7 @@ import type { SessionEvent } from "../../../src/shared/session/session-event.ts"
 import {
   applySessionEvent,
   INITIAL_SESSION_STATE,
+  type SessionState,
   type TurnBodies,
 } from "../../../src/shared/session/session-state.ts"
 
@@ -975,5 +976,115 @@ describe("mainViewTurns（段が移ったときの中間レポートと段の知
 
     // 29 の段の移り × （まとめ + 知らせ）= 58 件のうち、上限の 40 件を残す。
     expect(turn?.droppedCount).toBe(18)
+  })
+})
+
+describe("mainViewEntries（記録ごとの結果の持ち回し）", () => {
+  type Timed = readonly [SessionEvent, number]
+  const foldTimed = (events: readonly Timed[], from: SessionState = INITIAL_SESSION_STATE) =>
+    events.reduce((current, [event, at]) => applySessionEvent(current, event, at), from)
+  const ask: SessionEvent = { kind: "request", text: "架空の依頼", images: [] }
+  const plan = (current: number): SessionEvent => ({
+    kind: "work-plan",
+    phases: ["架空の段A", "架空の段B"],
+    current,
+    phaseSummary: "",
+  })
+  const bashStarted = (id: string, command: string): SessionEvent => ({
+    kind: "tool-started",
+    toolUseId: id,
+    name: "Bash",
+    input: { command },
+    parentToolUseId: undefined,
+  })
+  const bashFinished = (id: string): SessionEvent => ({
+    kind: "tool-finished",
+    toolUseId: id,
+    content: "ok",
+    isError: false,
+  })
+  const report = (id: string, command = ""): SessionEvent => ({
+    kind: "report",
+    toolUseId: id,
+    conclusion: `架空の結論 ${id}`,
+    sections: [],
+    favor: "",
+    checks:
+      command === ""
+        ? []
+        : [{ status: "ok", label: "架空の検査", figure: "", command, detail: "" }],
+    closing: { kind: "none" },
+    unknownBlockCount: 0,
+    sessionSummary: undefined,
+    task: { kind: "none" },
+  })
+  const reportMarkdowns = (entries: readonly MainViewEntry[]) =>
+    entries.flatMap((entry) => (entry.kind === "report" ? [entry.markdown] : []))
+
+  it("記録を足しても、前からある記録の結果は同じ参照のまま返る", () => {
+    const before: readonly Timed[] = [
+      [ask, 0],
+      [bashStarted("toolu_b1", "架空の検査"), 1_000],
+      [bashFinished("toolu_b1"), 2_000],
+      [plan(0), 3_000],
+      [plan(1), 4_000],
+      [report("toolu_r1", "架空の検査"), 5_000],
+    ]
+    const stateBefore = foldTimed(before)
+    const entriesBefore = mainViewEntries(stateBefore)
+    const entriesAfter = mainViewEntries(
+      foldTimed(
+        [
+          [plan(1), 6_000],
+          [report("toolu_r2"), 7_000],
+        ],
+        stateBefore,
+      ),
+    )
+
+    expect(entriesBefore.length).toBeGreaterThan(3)
+    expect(entriesAfter.length).toBeGreaterThan(entriesBefore.length)
+    entriesBefore.forEach((entry, index) => {
+      expect(entriesAfter[index]).toBe(entry)
+    })
+  })
+
+  it("report が引く Bash の記録が変わった report だけが作り直され、所要時間が新しくなる", () => {
+    const before: readonly Timed[] = [
+      [ask, 0],
+      [bashStarted("toolu_b1", "架空の検査A"), 1_000],
+      [bashFinished("toolu_b1"), 2_000],
+      [bashStarted("toolu_b2", "架空の検査B"), 3_000],
+      [report("toolu_r1", "架空の検査A"), 4_000],
+      [report("toolu_r2", "架空の検査B"), 5_000],
+    ]
+    const stateBefore = foldTimed(before)
+    const entriesBefore = mainViewEntries(stateBefore)
+    const entriesAfter = mainViewEntries(
+      foldTimed([[bashFinished("toolu_b2"), 8_000]], stateBefore),
+    )
+    const reportsBefore = entriesBefore.filter((entry) => entry.kind === "report")
+    const reportsAfter = entriesAfter.filter((entry) => entry.kind === "report")
+
+    expect(reportsAfter[0]).toBe(reportsBefore[0])
+    expect(reportsAfter[1]).not.toBe(reportsBefore[1])
+    expect(reportMarkdowns(entriesBefore)[1]).not.toContain("5秒")
+    expect(reportMarkdowns(entriesAfter)[1]).toContain('<span class="check-time">5秒</span>')
+  })
+
+  it("次の依頼の report は、前の依頼の段取りを引かない", () => {
+    const entries = mainViewEntries(
+      foldTimed([
+        [ask, 0],
+        [plan(0), 1_000],
+        [report("toolu_r1"), 2_000],
+        [ask, 3_000],
+        [report("toolu_r2"), 4_000],
+      ]),
+    )
+    const [first, second] = reportMarkdowns(entries)
+
+    expect(first).toContain("進み具合")
+    expect(second).not.toContain("進み具合")
   })
 })
