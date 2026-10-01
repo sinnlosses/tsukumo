@@ -3,12 +3,17 @@ import { join } from "node:path"
 
 import { afterEach, describe, expect, it } from "vitest"
 
+import { createBeadsStampReader } from "../../../../src/server/repository/adapter/beads.ts"
 import {
+  REAL_TASK_SUMMARY_PORTS,
   watchTaskSummary,
+  type TaskSummaryPorts,
   type TaskSummaryWatcher,
 } from "../../../../src/server/repository/adapter/task-summary.ts"
+import type { BeadsIssue } from "../../../../src/shared/repository/beads-issue.ts"
 import { bd, initBeads, useBeadsHome } from "../../../fixture/beads-repository.ts"
 import { claimTask, git, initGitRepository, releaseTask } from "../../../fixture/git-repository.ts"
+import { createManualClock } from "../../../fixture/manual-clock.ts"
 import { useTempDir } from "../../../fixture/temp-dir.ts"
 
 // 本物の `git` を起こす（`main` の先端を見て読み直すことそのものが検査の対象）。リポジトリは
@@ -85,9 +90,10 @@ async function addWorktree(repository: string): Promise<string> {
 
 function watch(cwd: string, changes: unknown[]): void {
   watcher = watchTaskSummary(cwd, (tasks) => changes.push(tasks), {
-    git: TEST_POLL_INTERVAL_MS,
-    beads: TEST_POLL_INTERVAL_MS,
+    intervals: { git: TEST_POLL_INTERVAL_MS, beads: TEST_POLL_INTERVAL_MS },
+    ports: REAL_TASK_SUMMARY_PORTS,
   })
+  watcher.setWatching(true)
 }
 
 /** 通知が `count` 件に達するまで待つ（超えたら、そこまでの通知のまま期待値との比較で落ちる）。 */
@@ -503,5 +509,302 @@ describe("watchTaskSummary（Beads 方式）", () => {
     await waitForChanges(changes, 1, BEADS_WAIT_LIMIT_MS)
 
     expect(changes).toEqual([UNKNOWN])
+  })
+})
+
+// 偽の口と手で進める時計で、見回りが子プロセスを起こした回数を数える。
+
+const FAKE_INTERVALS = { git: 1500, beads: 5000 }
+
+/** 起こした順の呼び出しの記録。 */
+type FakeCalls = string[]
+
+type FakePortsOptions = {
+  readonly store: "files" | "beads"
+  /** 取り直すたびに読む変化の印（`undefined` は取れない）。 */
+  readonly stamp: () => string | undefined
+  readonly commonDirFailsFirst: boolean
+}
+
+function fakePorts(
+  calls: FakeCalls,
+  clock: TaskSummaryPorts["clock"],
+  options: FakePortsOptions,
+): TaskSummaryPorts {
+  let commonDirAsked = 0
+  return {
+    runGit: (_cwd, args) => {
+      if (args.includes("--git-common-dir")) {
+        calls.push("git common-dir")
+        commonDirAsked += 1
+        return Promise.resolve(
+          options.commonDirFailsFirst && commonDirAsked === 1
+            ? { kind: "failed" }
+            : { kind: "output", stdout: "/common\n" },
+        )
+      }
+      if (args.includes("ls-tree")) {
+        calls.push("git ls-tree")
+        return Promise.resolve({ kind: "output", stdout: "develop/task/T-001.md\n" })
+      }
+      calls.push("git rev-parse main")
+      return Promise.resolve({ kind: "output", stdout: "head-1\n" })
+    },
+    runGitCatFileBatch: () => {
+      calls.push("git cat-file")
+      return Promise.resolve({
+        kind: "output",
+        contents: [
+          "---\nid: T-001\nsummary: 架空\nstatus: todo\ndifficulty: sonnet\nloopable: Y\ndependencies: []\n---\n",
+        ],
+      })
+    },
+    readTaskStoreAt: () => Promise.resolve({ kind: "read", store: { kind: options.store } }),
+    readBeadsIssues: () => {
+      calls.push("bd list")
+      return Promise.resolve({ kind: "issues", issues: [] })
+    },
+    createBeadsStampReader: () => () => Promise.resolve(options.stamp()),
+    readClaimDir: () => {
+      calls.push("readdir")
+      return Promise.resolve(new Set<string>())
+    },
+    clock,
+  }
+}
+
+/** 見回りの途中の `await` が片付くまで待つ（時間ではなく、待っている処理の数に依る）。 */
+function settle(): Promise<void> {
+  return new Promise((resolve) => setImmediate(resolve))
+}
+
+describe("watchTaskSummary（偽の口と時計）", () => {
+  function startFake(options: Partial<FakePortsOptions> = {}) {
+    const calls: FakeCalls = []
+    const manual = createManualClock()
+    const changes: unknown[] = []
+    let stamp: string | undefined = "stamp-1"
+    const fake = watchTaskSummary("/cwd", (tasks) => changes.push(tasks), {
+      intervals: FAKE_INTERVALS,
+      ports: fakePorts(calls, manual.clock, {
+        store: "files",
+        stamp: () => stamp,
+        commonDirFailsFirst: false,
+        ...options,
+      }),
+    })
+    watcher = fake
+    return {
+      fake,
+      calls,
+      manual,
+      changes,
+      setStamp: (next: string | undefined) => {
+        stamp = next
+      },
+      count: (name: string) => calls.filter((call) => call === name).length,
+    }
+  }
+
+  it("--git-common-dir は起動中に1回しか起こさない", async () => {
+    const { fake, manual, count } = startFake()
+    fake.setWatching(true)
+    await settle()
+    for (let round = 0; round < 5; round += 1) {
+      manual.advance(FAKE_INTERVALS.git)
+      await settle()
+    }
+
+    expect(count("git rev-parse main")).toBeGreaterThan(5)
+    expect(count("git common-dir")).toBe(1)
+  })
+
+  it("--git-common-dir が取れなかった回は覚えず、次の回に取り直す", async () => {
+    const { fake, manual, count } = startFake({ commonDirFailsFirst: true })
+    fake.setWatching(true)
+    await settle()
+    manual.advance(FAKE_INTERVALS.git)
+    await settle()
+    manual.advance(FAKE_INTERVALS.git)
+    await settle()
+
+    expect(count("git common-dir")).toBe(2)
+  })
+
+  it("見張りを動かさないあいだは、時計を何周進めても起こした時点の1回しか読まない", async () => {
+    const { manual, calls } = startFake()
+    await settle()
+    const afterStart = calls.length
+    for (let round = 0; round < 10; round += 1) {
+      manual.advance(FAKE_INTERVALS.beads)
+      await settle()
+    }
+
+    expect(afterStart).toBeGreaterThan(0)
+    expect(calls).toHaveLength(afterStart)
+    expect(manual.pending()).toBe(0)
+  })
+
+  it("動かすとすぐ1回読み、間隔ごとに予約する。止めると予約を消す", async () => {
+    const { fake, manual, calls } = startFake()
+    await settle()
+    const afterStart = calls.length
+
+    fake.setWatching(true)
+    await settle()
+    const afterResume = calls.length
+    expect(afterResume).toBeGreaterThan(afterStart)
+    expect(manual.pending()).toBe(1)
+
+    manual.advance(FAKE_INTERVALS.git)
+    await settle()
+    expect(calls.length).toBeGreaterThan(afterResume)
+
+    fake.setWatching(false)
+    expect(manual.pending()).toBe(0)
+  })
+
+  it("close のあとの setWatching は何もしない", async () => {
+    const { fake, manual, calls } = startFake()
+    await fake.close()
+    const afterClose = calls.length
+    fake.setWatching(true)
+    await settle()
+
+    expect(calls).toHaveLength(afterClose)
+    expect(manual.pending()).toBe(0)
+  })
+
+  describe("Beads 方式", () => {
+    it("変化の印が同じなら、何周進めても bd list を起こさない", async () => {
+      const { fake, manual, count } = startFake({ store: "beads" })
+      fake.setWatching(true)
+      await settle()
+      for (let round = 0; round < 5; round += 1) {
+        manual.advance(FAKE_INTERVALS.beads)
+        await settle()
+      }
+
+      expect(count("bd list")).toBe(1)
+    })
+
+    it("変化の印が変わると1回読み、要約が同じなら知らせず、次の周は読まない", async () => {
+      const { fake, manual, count, changes, setStamp } = startFake({ store: "beads" })
+      fake.setWatching(true)
+      await settle()
+
+      setStamp("stamp-2")
+      manual.advance(FAKE_INTERVALS.beads)
+      await settle()
+      manual.advance(FAKE_INTERVALS.beads)
+      await settle()
+
+      expect(count("bd list")).toBe(2)
+      expect(changes).toHaveLength(1)
+    })
+
+    it("変化の印が取れないときは、毎回 bd list を読む", async () => {
+      const { fake, manual, count } = startFake({ store: "beads", stamp: () => undefined })
+      fake.setWatching(true)
+      await settle()
+      for (let round = 0; round < 3; round += 1) {
+        manual.advance(FAKE_INTERVALS.beads)
+        await settle()
+      }
+
+      expect(count("bd list")).toBe(4)
+    })
+
+    it("変化の印が変わってから反映されるまでの遅れは、見回りの間隔以内", async () => {
+      const calls: FakeCalls = []
+      const manual = createManualClock()
+      const changes: unknown[] = []
+      let stamp: string | undefined = "stamp-1"
+      let issueCount = 0
+      const ports = fakePorts(calls, manual.clock, {
+        store: "beads",
+        stamp: () => stamp,
+        commonDirFailsFirst: false,
+      })
+      watcher = watchTaskSummary("/cwd", (tasks) => changes.push(tasks), {
+        intervals: FAKE_INTERVALS,
+        ports: {
+          ...ports,
+          readBeadsIssues: () => {
+            issueCount += 1
+            return Promise.resolve({
+              kind: "issues",
+              issues: issueCount === 1 ? [] : [FICTIONAL_BEADS_ISSUE],
+            })
+          },
+        },
+      })
+      watcher.setWatching(true)
+      await settle()
+      expect(changes).toHaveLength(1)
+
+      stamp = "stamp-2"
+      manual.advance(FAKE_INTERVALS.beads - 1)
+      await settle()
+      expect(changes).toHaveLength(1)
+      manual.advance(1)
+      await settle()
+      expect(changes).toHaveLength(2)
+    })
+  })
+})
+
+const FICTIONAL_BEADS_ISSUE: BeadsIssue = {
+  id: "t-001",
+  title: "架空",
+  status: "open",
+  labels: [],
+  blockedBy: [],
+  assignee: undefined,
+  createdAtEpochMilliseconds: 0,
+  closedAtEpochMilliseconds: undefined,
+  description: "",
+  acceptanceCriteria: "",
+  notes: "",
+  externalRef: undefined,
+}
+
+describe("createBeadsStampReader", () => {
+  const home = useBeadsHome(() => join(root(), "home"))
+
+  it("課題を書き換えると変わり、書き換えなければ変わらない", { timeout: 60_000 }, async () => {
+    const repository = await initRepository("main")
+    initBeads(repository)
+    await bd(repository, home(), "create", "--id", "t-001", "架空")
+    const readStamp = createBeadsStampReader(repository)
+
+    const before = await readStamp()
+    const unchanged = await readStamp()
+    await bd(repository, home(), "update", "t-001", "--claim")
+    const after = await readStamp()
+
+    expect(before).toBeDefined()
+    expect(unchanged).toBe(before)
+    expect(after).not.toBe(before)
+  })
+
+  it("別の作業ツリーからの書き換えでも変わる", { timeout: 60_000 }, async () => {
+    const repository = await initRepository("main")
+    initBeads(repository)
+    await bd(repository, home(), "create", "--id", "t-001", "架空")
+    const worktree = await addWorktree(repository)
+    const readStamp = createBeadsStampReader(worktree)
+
+    const before = await readStamp()
+    await bd(worktree, home(), "update", "t-001", "--claim")
+
+    expect(before).toBeDefined()
+    expect(await readStamp()).not.toBe(before)
+  })
+
+  it(".beads が無ければ取れない（undefined）", async () => {
+    const repository = await initRepository("main")
+
+    expect(await createBeadsStampReader(repository)()).toBeUndefined()
   })
 })

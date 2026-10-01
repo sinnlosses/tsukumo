@@ -131,8 +131,12 @@ export type SessionManagerOptions = {
   readonly watchTasks: (onEvent: (event: SessionEvent) => void) => SessionWatcher
 }
 
-/** 閉じるまで動く見張り。 */
-export type SessionWatcher = { readonly close: () => void }
+/** 閉じるまで生きている見張り。 */
+export type SessionWatcher = {
+  readonly close: () => void
+  /** 画面が1つでも購読しているあいだだけ真にする（動かすのは見張りが要るあいだだけ）。 */
+  readonly setWatching: (watching: boolean) => void
+}
 
 /**
  * セッション1つぶんの持ち物。起こした時点で駆動も起こし始める。
@@ -552,8 +556,10 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
     subscribe: (send) => {
       send(helloFrame())
       subscribers.add(send)
+      taskWatcher.setWatching(true)
       return () => {
         subscribers.delete(send)
+        taskWatcher.setWatching(subscribers.size > 0)
       }
     },
     close: () => {

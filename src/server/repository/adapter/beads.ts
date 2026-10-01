@@ -7,6 +7,8 @@
 // 例外を投げない。`.beads` が無い・`bd` が無いときも `failed`。
 
 import { execFile } from "node:child_process"
+import { readdir, stat } from "node:fs/promises"
+import { join } from "node:path"
 
 import { z } from "zod"
 
@@ -38,6 +40,53 @@ export function readBeadsIssues(cwd: string): Promise<BeadsOutcome> {
       },
     )
   })
+}
+
+/**
+ * 課題の変化の印（Dolt の `noms/manifest` の更新時刻）を読む関数を作る。`.beads` の場所は取れた1回だけ `bd where` で調べて覚える。
+ * `bd` の内部の置き場に頼るので、取れないとき・形が違うときは必ず `undefined` を返し、呼ぶ側は毎回 `bd list` で読む。
+ */
+export function createBeadsStampReader(cwd: string): () => Promise<string | undefined> {
+  let beadsDir: string | undefined = undefined
+
+  return async () => {
+    beadsDir ??= await readBeadsDir(cwd)
+    return beadsDir === undefined ? undefined : readManifestStamp(beadsDir)
+  }
+}
+
+function readBeadsDir(cwd: string): Promise<string | undefined> {
+  return new Promise((resolve) => {
+    execFile(
+      "bd",
+      ["where"],
+      { cwd, timeout: GIT_TIMEOUT_MS, maxBuffer: MAX_OUTPUT_BYTES, encoding: "utf8" },
+      (error, stdout) => {
+        const firstLine = stdout.split("\n")[0]?.trim()
+        resolve(
+          error === null && firstLine !== undefined && firstLine !== "" ? firstLine : undefined,
+        )
+      },
+    )
+  })
+}
+
+async function readManifestStamp(beadsDir: string): Promise<string | undefined> {
+  const databasesDir = join(beadsDir, "embeddeddolt")
+  try {
+    const entries = await readdir(databasesDir, { withFileTypes: true })
+    const times = await Promise.all(
+      entries
+        .filter((entry) => entry.isDirectory())
+        .map(async (entry) => {
+          const manifest = await stat(join(databasesDir, entry.name, ".dolt", "noms", "manifest"))
+          return manifest.mtimeMs
+        }),
+    )
+    return times.length === 0 ? undefined : times.join(",")
+  } catch {
+    return undefined
+  }
 }
 
 /** 1件ぶんの形。読めない1件はその1件だけ読み飛ばす（ほかの課題まで「読めない」にしない）。 */

@@ -121,7 +121,7 @@ const NO_VISIT_PORTS: VisitPorts = {
 }
 
 /** タスク一覧を気にしないテストに渡す見張り（何も流さない）。 */
-const NO_TASK_WATCH = (): SessionWatcher => ({ close: () => {} })
+const NO_TASK_WATCH = (): SessionWatcher => ({ close: () => {}, setWatching: () => {} })
 
 /** 定着を気にしないテストに渡す出どころ（起こさない）。 */
 const NO_CHAT_CONSOLIDATION: ChatConsolidationSource = { kind: "dont-consolidate" }
@@ -3083,7 +3083,13 @@ describe("タスク一覧の見張り", () => {
 
   /** 見張りの起こす・閉じるを数え、流す口を手で握る session-manager。 */
   function startManagerWithTaskWatch() {
-    const watch = { started: 0, closed: 0, emit: (_event: SessionEvent): void => {} }
+    const watchingCalls: boolean[] = []
+    const watch = {
+      started: 0,
+      closed: 0,
+      watching: watchingCalls,
+      emit: (_event: SessionEvent): void => {},
+    }
     const manager = createSessionManager({
       now: () => 1_000,
       openFile: () => Promise.resolve(true),
@@ -3096,6 +3102,9 @@ describe("タスク一覧の見張り", () => {
         return {
           close: () => {
             watch.closed += 1
+          },
+          setWatching: (watching) => {
+            watch.watching.push(watching)
           },
         }
       },
@@ -3139,6 +3148,19 @@ describe("タスク一覧の見張り", () => {
 
     manager.close()
     expect(watch).toMatchObject({ started: 1, closed: 1 })
+  })
+
+  it("画面の購読が0から1になったときに見張りを動かし、最後の1人が抜けたときに止める", () => {
+    const { manager, watch } = startManagerWithTaskWatch()
+    expect(watch.watching.at(-1)).toBeUndefined()
+
+    const first = manager.subscribe(() => {})
+    const second = manager.subscribe(() => {})
+    expect(watch.watching.at(-1)).toBe(true)
+    first()
+    expect(watch.watching.at(-1)).toBe(true)
+    second()
+    expect(watch.watching.at(-1)).toBe(false)
   })
 
   it("起こし直しの hello にそれまでのタスク一覧が残り、そのあと届いた一覧も新しい代に入る", async () => {
