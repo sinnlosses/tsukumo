@@ -12,6 +12,8 @@
 無いために cmk が起動直後にクラッシュし、回避策も無かった。詳細は下の「実機で確かめた結果」節。
 happy-css-modules（以下 hcm）は作者自身が css-modules-kit（以下 cmk）を後継と明言しており、
 tsukumo 側の typescript の版が変わるなどで前提が崩れたら再検討の余地はある。
+2026-10-02 に pnpm で cmk にだけ TypeScript 6 を持たせると動くことを確かめたが、利点が型の生成だけに
+留まるので移さないと決めた（「pnpm で cmk にだけ TypeScript 6 を持たせた結果」節）。
 
 ## 今のコードの前提（実測）
 
@@ -136,6 +138,25 @@ tsukumo 側の typescript の版が変わるなどで前提が崩れたら再検
 - **結論**: tsukumo が `typescript@7.0.2`（Corsa）を使い続ける限り、cmk への移行は成立しない。
   再検討するなら、tsukumo 側が classic な `typescript`（4.x/5.x 系）に戻すか、cmk が Corsa 対応の
   `ts.sys` 代替を出すか、どちらかの前提が変わったとき
+
+## pnpm で cmk にだけ TypeScript 6 を持たせた結果（2026-10-02）
+
+**動くが、移さないと決めた。** パッケージ管理が pnpm に移ったので、上の「結論」の回避策を
+試し直した（実験の変更はすべて戻した）。
+
+- cmk 1.4.0 の `codegen`・`core`・`ts-plugin` は `typescript` を `^5.7.3 || ^6.0.0` の peer 依存で引く。
+  `pnpm-workspace.yaml` の `overrides`（`@css-modules-kit/core>typescript`）と `packageExtensions` は
+  peer 依存の解決に効かず、ルートの 7.0.2 を掴んだままだった
+- `.pnpmfile.cjs` の `readPackage` で `@css-modules-kit/*` の peer 依存の `typescript` を消し、
+  `dependencies` に `typescript: npm:typescript@^6.0.0` を足すと、cmk だけ 6.0.3・本体は 7.0.2 に分かれ、
+  `cmk` が落ちずに起動した
+- `tsconfig.json` に `"cmkOptions": { "enabled": true, "dtsOutDir": "dist/css-module-type" }` を置き、
+  `include` に `src/**/*.module.css` を足す（無いと CSS を拾えず `The file specified in tsconfig.json not found.`
+  で止まる）と、120 ファイルの型を約 0.3 秒で生成し、その型だけで `tsc --noEmit`（本体・Storybook）が通った。
+  存在しないクラス名は TS2551 で落ちた
+- **移さない理由**: 移行で増える利点の本体は ts-plugin の Rename・参照検索・定義へのジャンプで、
+  TypeScript 7 の言語サーバは Language Service Plugin を読まないため、型の生成だけなら hcm と差が無い。
+  そのぶん TypeScript 6 の依存と pnpmfile のフックが増える。ts-plugin が TypeScript 7 で動くようになったら再検討する
 
 ## 確かめていないこと
 
