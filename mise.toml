@@ -14,5 +14,6 @@ if [ -z "${PNPM_HOME:-}" ]; then
   echo "pnpm setup を初めて実行した。新しいシェルを開いて mise run setup を打ち直してください。"
   exit 0
 fi
-pnpm link --global
+# pnpm 12 の pnpm link は --global を受け付けないので、リンク形式のグローバル導入で入れる
+pnpm add --global "link:$PWD"
 '''

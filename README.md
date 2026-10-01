@@ -99,12 +99,12 @@ mise run setup  # 依存を入れ、ブラウザ側を組み立て、tsukumo コ
 ```
 
 `mise run setup` は `pnpm install`・`pnpm run build`（成果物は `dist/browser/`）・
-`pnpm link --global`（このリポジトリの `bin/tsukumo` を `tsukumo` コマンドとして入れる）の順に進みます。
+`pnpm add --global "link:<このリポジトリ>"`（`bin/tsukumo` を `tsukumo` コマンドとして入れる）の順に進みます。
 `PNPM_HOME` がまだ無いときだけ、代わりに `pnpm setup` を打って止まり、新しいシェルを開くよう知らせます。
 そのときは新しいシェルで `mise run setup` を打ち直してください。
 
-`which tsukumo` で `PNPM_HOME` の下の `tsukumo` が出れば通っています。消すときは、**このリポジトリの
-直下で** `pnpm unlink --global` を実行します。
+`which tsukumo` で `PNPM_HOME` の下の `tsukumo` が出れば通っています。消すときは
+`pnpm remove --global tsukumo` を実行します。
 
 ### 2. 起動する
 
@@ -368,7 +368,7 @@ node scripts/stop.ts           # 動いている tsukumo を一覧する（--por
 ├── assets/                 # ロゴ
 ├── docs/                   # 要件定義・設計・アーキテクチャ・規約・用語集（正典）
 ├── develop/                # 進捗管理（task/・direction.md・draft/）。機能には関係しない
-├── bin/tsukumo             # エントリポイント（pnpm link --global でグローバルに入る）
+├── bin/tsukumo             # エントリポイント（mise run setup でグローバルに入る）
 └── package.json
 ```
 

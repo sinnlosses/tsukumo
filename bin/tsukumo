@@ -1,6 +1,6 @@
 #!/bin/sh
 # PATH の node は mise.toml の版とは限らないので、リポジトリの根の mise.toml が指す node で起こす。
-# pnpm link --global のシムはこのシバン行を読んで処理系を決めるので、node のシバンに戻さない。
+# pnpm のグローバル導入が作るシムはこのシバン行を読んで処理系を決めるので、node のシバンに戻さない。
 set -eu
 
 resolve_target() {

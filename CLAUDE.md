@@ -26,10 +26,10 @@ tsukumo は Agent SDK（`@anthropic-ai/claude-agent-sdk`）で Claude Code を�
 ## セットアップ / 環境構築
 
 - mise で Node 26・pnpm 12 を入れる（`mise.toml` がバージョンを固定。TS は node でそのまま
-  実行し、pnpm はパッケージ管理と `pnpm link --global` に使う）。**新しく入れる `pnpm install` は
+  実行し、pnpm はパッケージ管理とグローバルへの導入に使う）。**新しく入れる `pnpm install` は
   `prepare` で `pnpm run build` まで済ませる**が、依存が変わらないと飛ばすので、`src/browser/` を直したあとは
   `pnpm run build` を打つ（`dist/browser/` は `.gitignore`。無いと起動が前提不足で止まる）
-- `tsukumo` コマンドは `pnpm link --global` で入っている（`docs/requirements.md` 4.6）
+- `tsukumo` コマンドは `mise run setup`（`pnpm add --global "link:<リポジトリ>"`）で入っている（`docs/requirements.md` 4.6）
 - ホストに依存する操作は1つの抽象の裏に置く（`docs/architecture/adr/0015-single-host-port.md`）。
   **`orca`・`bd`・`dolt`・`gh` 以外の外部コマンド依存を増やすときはユーザーの承認を得る**
 - 環境の実測値は `docs/requirements.md`「5. 実行環境・非機能要件」。時間が経つと変わるので、

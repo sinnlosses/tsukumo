@@ -23,19 +23,20 @@
 - **`dist/` は `.gitignore` する。** `package.json` の `prepare` が `pnpm run build` を呼ぶので、
   リポジトリを取り直して `pnpm install` を打てば組み立てまで済む。**依存が変わらない `pnpm install` は
   `prepare` を飛ばす**ので、`git pull` のあとの組み立ては `mise run setup`（`mise.toml` の `setup` タスク。
-  `pnpm run build` を明示して打つ）に任せる（`tsukumo` は `pnpm link --global` でこのリポジトリを
+  `pnpm run build` を明示して打つ）に任せる（`tsukumo` はグローバルへのリンクでこのリポジトリを
   指しているので、**「配布」の実体はこのリポジトリそのもの**）
 - **cwd に依存してよいのは起動先プロジェクトのものだけ。** 作業ディレクトリ・
   `develop/task/`・相対指定で渡した素材（`TSUKUMO_CHARACTER` に相対パスを渡した場合）
   はそこに当たる。**自分で持ち歩くもの（既定の立ち絵・`node_modules` の外部ライブラリ）は
   tsukumo 自身の場所から読む**（`src/server/adapter/bundled-path.ts`）。`tsukumo` コマンドをどの
   プロジェクトのディレクトリで起こしても見つかるようにするための区別
-- **リポジトリの外に置いたのは `pnpm link --global` の2つだけ**（2026-09-12。2026-09-27 に
-  `bun link` から移した）。`~/Library/pnpm/tsukumo`（`bin/tsukumo` の `bin` フィールドから
-  `pnpm` が作るラッパー。実体への**シンボリックリンクではなく**、`bin/tsukumo` のシバン行を読んで
-  `exec <そのシバンの処理系> <bin/tsukumo の実パス>` を生成するシム）と `~/Library/pnpm/global/`
-  配下（pnpm が管理する登録簿）。**シェルの設定ファイルは書き換えていない。** 消すときはリポジトリの
-  直下で `pnpm unlink --global`
+- **リポジトリの外に置いたのは `pnpm add --global "link:<リポジトリ>"` の2つだけ**（2026-09-12。
+  2026-09-27 に `bun link` から移し、2026-10-02 に pnpm 12 の `pnpm link` が `--global` を受け付けない
+  ので `pnpm add --global` のリンク形式へ移した。打つのは `mise run setup`）。`~/Library/pnpm/tsukumo`
+  （実体への**シンボリックリンクではなく**、`bin/tsukumo` のシバン行を読んで
+  `exec <そのシバンの処理系> <bin/tsukumo のパス>` を生成するシム）と `~/Library/pnpm/global/`
+  配下（pnpm が管理する登録簿。リポジトリへのリンクなので、変更はそのまま次の起動に反映される）。
+  **シェルの設定ファイルは書き換えていない。** 消すときは `pnpm remove --global tsukumo`
 - **`bin/tsukumo` は POSIX sh**（`#!/bin/sh`）。自分の実体（シムが渡すパスも、直接の symlink も）を
   辿って根を求め、`mise -C <根> which node` で得た node（mise が無い・失敗したときは `PATH` の
   `node`）で `<根>/src/cli.ts` を起こす。PATH の先頭の node が `mise.toml` の版と一致する保証が無い
