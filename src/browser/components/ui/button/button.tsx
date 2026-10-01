@@ -9,7 +9,7 @@ import type { ReactElement, ReactNode, Ref } from "react"
 import { TEXT_SIZE_CLASS, type TextSize } from "../text/text.tsx"
 import styles from "./button.module.css"
 
-export type ButtonType = "button" | "submit"
+export type ButtonType = "button"
 export type ButtonVariant =
   | "outline"
   | "outline-dashed"
@@ -72,7 +72,7 @@ export type ButtonProps = {
   readonly children: ReactNode
 }
 
-export const BUTTON_VARIANT_CLASS = {
+const BUTTON_VARIANT_CLASS = {
   outline: styles["button-variant-outline"],
   "outline-dashed": styles["button-variant-outline-dashed"],
   "outline-hover-warn": styles["button-variant-outline-hover-warn"],

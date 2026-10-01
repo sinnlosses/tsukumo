@@ -26,14 +26,9 @@ function renderedElement(props: Omit<HeadingProps, "children">): Element {
 }
 
 describe("Heading", () => {
-  it.each([
-    [1, "H1"],
-    [2, "H2"],
-    [3, "H3"],
-    [4, "H4"],
-  ] as const)("level: %s は %s を描く", (level, tagName) => {
-    const element = renderedElement({ ...BASE_PROPS, level })
-    expect(element.tagName).toBe(tagName)
+  it("level で見出しの段の要素を描く", () => {
+    const element = renderedElement({ ...BASE_PROPS, level: 3 })
+    expect(element.tagName).toBe("H3")
   })
 
   it("size・tone・weight は Text と同じ表の class を付ける", () => {

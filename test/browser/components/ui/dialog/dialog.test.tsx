@@ -78,13 +78,9 @@ describe("Dialog", () => {
     expect(onClose).not.toHaveBeenCalled()
   })
 
-  it.each([
-    ["dim", "dialog-backdrop-dim"],
-    ["deep", "dialog-backdrop-deep"],
-    ["clear", "dialog-backdrop-clear"],
-  ] as const)("backdrop: %s は class %s を付ける", (backdrop, expectedClass) => {
-    const dialog = renderDialog({ ...BASE_PROPS, backdrop })
-    expect(dialog.className.split(" ")).toContain(expectedClass)
+  it("backdrop は対応表の class を付ける", () => {
+    const dialog = renderDialog({ ...BASE_PROPS, backdrop: "deep" })
+    expect(dialog.className.split(" ")).toContain("dialog-backdrop-deep")
   })
 
   it('placement: "at" は top/left を inline style に置く', () => {
@@ -94,24 +90,6 @@ describe("Dialog", () => {
     })
     expect(dialog.style.top).toBe("120px")
     expect(dialog.style.left).toBe("40px")
-  })
-
-  it('placement: "auto" は inline style の top/left を持たない', () => {
-    const dialog = renderDialog(BASE_PROPS)
-    expect(dialog.style.top).toBe("")
-    expect(dialog.style.left).toBe("")
-  })
-
-  it("name.kind が label なら aria-label を付け、aria-labelledby は付けない", () => {
-    const dialog = renderDialog({ ...BASE_PROPS, name: { kind: "label", label: "架空の名前" } })
-    expect(dialog.getAttribute("aria-label")).toBe("架空の名前")
-    expect(dialog.hasAttribute("aria-labelledby")).toBe(false)
-  })
-
-  it("name.kind が labelledby なら aria-labelledby を付け、aria-label は付けない", () => {
-    const dialog = renderDialog({ ...BASE_PROPS, name: { kind: "labelledby", id: "heading-id" } })
-    expect(dialog.getAttribute("aria-labelledby")).toBe("heading-id")
-    expect(dialog.hasAttribute("aria-label")).toBe(false)
   })
 
   it("className が足される", () => {

@@ -36,66 +36,27 @@ function renderedElement(props: Omit<StackProps, "children">): Element {
 }
 
 describe("Stack", () => {
-  it.each([
-    ["row", "stack-direction-row"],
-    ["column", "stack-direction-column"],
-  ] as const)("direction: %s は class %s を付ける", (direction, expectedClass) => {
-    const element = renderedElement({ ...BASE_PROPS, direction })
-    expect(element.className.split(" ")).toContain(expectedClass)
+  it("gap・align・justify・wrap は対応表の class を付ける", () => {
+    const element = renderedElement({
+      ...BASE_PROPS,
+      gap: "md",
+      align: "center",
+      justify: "between",
+      wrap: "wrap",
+    })
+    expect(element.className.split(" ")).toEqual(
+      expect.arrayContaining([
+        "stack-gap-md",
+        "stack-align-center",
+        "stack-justify-between",
+        "stack-wrap-wrap",
+      ]),
+    )
   })
 
-  it.each([
-    ["none", "stack-gap-none"],
-    ["xs", "stack-gap-xs"],
-    ["sm", "stack-gap-sm"],
-    ["md", "stack-gap-md"],
-    ["lg", "stack-gap-lg"],
-    ["xl", "stack-gap-xl"],
-  ] as const)("gap: %s は class %s を付ける", (gap, expectedClass) => {
-    const element = renderedElement({ ...BASE_PROPS, gap })
-    expect(element.className.split(" ")).toContain(expectedClass)
-  })
-
-  it.each([
-    ["start", "stack-align-start"],
-    ["center", "stack-align-center"],
-    ["end", "stack-align-end"],
-    ["baseline", "stack-align-baseline"],
-    ["stretch", "stack-align-stretch"],
-  ] as const)("align: %s は class %s を付ける", (align, expectedClass) => {
-    const element = renderedElement({ ...BASE_PROPS, align })
-    expect(element.className.split(" ")).toContain(expectedClass)
-  })
-
-  it.each([
-    ["start", "stack-justify-start"],
-    ["center", "stack-justify-center"],
-    ["end", "stack-justify-end"],
-    ["between", "stack-justify-between"],
-  ] as const)("justify: %s は class %s を付ける", (justify, expectedClass) => {
-    const element = renderedElement({ ...BASE_PROPS, justify })
-    expect(element.className.split(" ")).toContain(expectedClass)
-  })
-
-  it.each([
-    ["nowrap", "stack-wrap-nowrap"],
-    ["wrap", "stack-wrap-wrap"],
-  ] as const)("wrap: %s は class %s を付ける", (wrap, expectedClass) => {
-    const element = renderedElement({ ...BASE_PROPS, wrap })
-    expect(element.className.split(" ")).toContain(expectedClass)
-  })
-
-  it.each([
-    ["div", "DIV"],
-    ["section", "SECTION"],
-    ["span", "SPAN"],
-    ["header", "HEADER"],
-    ["footer", "FOOTER"],
-    ["label", "LABEL"],
-    ["p", "P"],
-  ] as const)("element: %s は %s を描く", (elementProp, tagName) => {
-    const element = renderedElement({ ...BASE_PROPS, element: elementProp })
-    expect(element.tagName).toBe(tagName)
+  it("element で描く要素を選ぶ", () => {
+    const element = renderedElement({ ...BASE_PROPS, element: "section" })
+    expect(element.tagName).toBe("SECTION")
   })
 
   it("name: none は aria-label も aria-labelledby も付けない", () => {

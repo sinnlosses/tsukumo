@@ -8,10 +8,7 @@ import type { CSSProperties, MouseEvent, ReactElement, ReactNode } from "react"
 import { useModalDialog } from "../../../hooks/use-modal-dialog.ts"
 import styles from "./dialog.module.css"
 
-/** アクセシブルネームの付け方。見える文字列をそのまま渡すか、見出しなど別の要素の id を指すか。 */
-export type DialogName =
-  | { readonly kind: "label"; readonly label: string }
-  | { readonly kind: "labelledby"; readonly id: string }
+export type DialogName = { readonly kind: "label"; readonly label: string }
 
 export type DialogBackdrop = "dim" | "deep" | "clear"
 
@@ -61,8 +58,7 @@ export function Dialog(props: DialogProps): ReactElement {
       ref={dialogRef}
       className={className}
       style={style}
-      aria-label={props.name.kind === "label" ? props.name.label : undefined}
-      aria-labelledby={props.name.kind === "labelledby" ? props.name.id : undefined}
+      aria-label={props.name.label}
       onClose={props.onClose}
       onClick={handleClick}
     >
