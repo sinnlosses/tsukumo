@@ -672,6 +672,37 @@ describe("createChatArchive の unconsolidated", () => {
     expect(previousEpisodeTitle).toBe("架空の見出し")
   })
 
+  it("to と同じ日のファイルは、to より後の行だけを返す", () => {
+    const chatArchive = createChatArchive(root())
+    appendRequest(chatArchive, 19, "19日の依頼")
+    const hour = 3_600_000
+    for (const [offset, text] of [
+      [0, "20日の前の依頼"],
+      [hour, "20日の後の依頼"],
+    ] as const) {
+      chatArchive.append("fictional-pack", {
+        mode: "chat",
+        kind: "request",
+        at: noonOn(2026, 9, 20) + offset,
+        text,
+        images: undefined,
+      })
+    }
+    appendRequest(chatArchive, 21, "21日の依頼")
+    // 20日の1行目（前の依頼）の時刻を to にする。
+    const to = writtenAt(20)
+    chatArchive.appendEpisodes("fictional-pack", [
+      { from: writtenAt(19), to, title: "架空の見出し", gist: "架空の要旨。", cues: [], weight: 1 },
+    ])
+
+    const { entries } = chatArchive.unconsolidated("fictional-pack", {
+      recentBytes: 0,
+      maxBytes: 1024,
+    })
+
+    expect(entries.map((entry) => entry.text)).toEqual(["20日の後の依頼", "21日の依頼"])
+  })
+
   it("maxBytes で古いほうから区切り、溢れる1件は載せない（usedBytes で溜まった量が分かる）", () => {
     const chatArchive = createChatArchive(root())
     appendRequest(chatArchive, 19, TWELVE_BYTES)

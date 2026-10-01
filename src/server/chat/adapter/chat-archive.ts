@@ -316,7 +316,7 @@ function recentEntryOf(timed: TimedEntry): ChatArchiveRecentEntry {
 
 /**
  * まだどのエピソードにも入っていない行を読む（{@link ChatArchive.unconsolidated} の実装）。
- * 最後のエピソードの `to` より後（エピソードが無ければアーカイブの最初から）で、直近の窓（{@link readRecentEntries} が拾う範囲）の外にある行だけを、古いほうから `maxBytes` まで集める。
+ * 最後のエピソードの `to` より後（エピソードが無ければアーカイブの最初から。`to` の日付より前のファイルは開かない）で、直近の窓（{@link readRecentEntries} が拾う範囲）の外にある行だけを、古いほうから `maxBytes` まで集める。
  */
 function readUnconsolidated(
   root: string,
@@ -332,13 +332,12 @@ function readUnconsolidated(
   const afterAt = previousEpisode?.to
   const windowStartAt = readRecentEntries(dir, limits.recentBytes).at(0)?.at
 
-  const all = dateFileNames(dir).flatMap((fileName) => {
-    const timed = readJsonLines(join(dir, fileName)).flatMap((raw) => {
+  const all = dateFileNamesBetween(dir, afterAt?.slice(0, 10), undefined).flatMap((fileName) =>
+    readJsonLines(join(dir, fileName)).flatMap((raw) => {
       const entry = toTimedEntry(raw)
       return entry === undefined ? [] : [entry]
-    })
-    return timed
-  })
+    }),
+  )
 
   function* untilWindow(): Generator<TimedEntry> {
     for (const timed of all) {
@@ -508,12 +507,7 @@ function readEpisodeEntries(
   to: string,
   limitBytes: number,
 ): { readonly entries: readonly ChatArchiveRecentEntry[]; readonly overflowed: boolean } {
-  const fromDate = from.slice(0, 10)
-  const toDate = to.slice(0, 10)
-  const fileNames = dateFileNames(dir).filter((name) => {
-    const date = name.slice(0, 10)
-    return date >= fromDate && date <= toDate
-  })
+  const fileNames = dateFileNamesBetween(dir, from.slice(0, 10), to.slice(0, 10))
 
   function* inRange(): Generator<TimedEntry> {
     for (const fileName of fileNames) {
@@ -532,4 +526,16 @@ function readEpisodeEntries(
     whenFirstExceeds: "stop",
   })
   return { entries: taken.map(recentEntryOf), overflowed }
+}
+
+/** 日付のファイル名のうち、日付が `fromDate` 以上 `toDate` 以下のものを古い順に返す（`undefined` の側は絞らない）。 */
+function dateFileNamesBetween(
+  dir: string,
+  fromDate: string | undefined,
+  toDate: string | undefined,
+): readonly string[] {
+  return dateFileNames(dir).filter((name) => {
+    const date = name.slice(0, 10)
+    return (fromDate === undefined || date >= fromDate) && (toDate === undefined || date <= toDate)
+  })
 }
