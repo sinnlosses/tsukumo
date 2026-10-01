@@ -198,6 +198,12 @@ export type CharacterAssetFile = {
 }
 
 /**
+ * 配る1件。`versioned` は、要求の `?v=` がそのパックの今の版（{@link CharacterPack.revision}）と一致したこと。
+ * 一致しない URL を長期にキャッシュさせると、差し替えたあとも古い中身が残る。
+ */
+export type ServedCharacterAssetFile = CharacterAssetFile & { readonly versioned: boolean }
+
+/**
  * `/character/<pack>/<file>` が配ってよい1件を読む。
  * パック名は一覧（`current` で置き換えたもの。{@link withCurrentPack}）と突き合わせるだけで、パスには使わない（無い名前・`..` は見つからずに undefined）。
  * ファイル名の判断は {@link readCharacterPackFile} に任せる。
@@ -206,9 +212,13 @@ export function readCharacterAsset(
   current: CharacterPack,
   packs: readonly CharacterPack[],
   location: CharacterAssetLocation,
-): CharacterAssetFile | undefined {
+  version: string | undefined,
+): ServedCharacterAssetFile | undefined {
   const pack = findCharacterPack(current, packs, location.pack)
-  return pack === undefined ? undefined : readCharacterPackFile(pack, location.fileName)
+  const file = pack === undefined ? undefined : readCharacterPackFile(pack, location.fileName)
+  return pack === undefined || file === undefined
+    ? undefined
+    : { ...file, versioned: version !== undefined && version === pack.revision }
 }
 
 /**
@@ -231,7 +241,7 @@ export function readCharacterPackFile(
   pack: CharacterPack,
   fileName: string,
 ): CharacterAssetFile | undefined {
-  if (!characterPackFileNames(pack).includes(fileName)) {
+  if (!characterPackFileNames(pack.definition).includes(fileName)) {
     return undefined
   }
 
@@ -248,17 +258,17 @@ export function readCharacterPackFile(
  * `character.json` の `portraits` `mini` `face` `background` `diaryFont` に載っているファイル名の一覧（重複なし）。
  * 顔もミニ立ち絵も背景も日記の書体も同じ経路（`/character/<pack>/<file>`）で配るので、ここに入れないと 404 になる。
  */
-function characterPackFileNames(pack: CharacterPack): readonly string[] {
-  if (pack.definition === undefined) {
+function characterPackFileNames(definition: CharacterDefinition | undefined): readonly string[] {
+  if (definition === undefined) {
     return []
   }
 
   const fileNames = [
-    ...Object.values(pack.definition.portraits),
-    pack.definition.mini,
-    pack.definition.face,
-    pack.definition.background?.image,
-    pack.definition.diaryFont,
+    ...Object.values(definition.portraits),
+    definition.mini,
+    definition.face,
+    definition.background?.image,
+    definition.diaryFont,
   ].filter(isDefined)
   return [...new Set(fileNames)]
 }
@@ -336,19 +346,15 @@ function localPackDir(cwd: string): string {
 }
 
 /**
- * 素材の版。定義ファイルと、定義が指している素材（立ち絵・背景）の更新時刻のうち、いちばん新しいものをそのまま文字列にする。
+ * 素材の版。定義ファイルと、配る素材すべて（{@link characterPackFileNames}）の更新時刻のうち、いちばん新しいものをそのまま文字列にする。
+ * 配る素材の一部が入っていないと、そのファイルだけ差し替えても版が変わらず、長期にキャッシュされた古い中身が出続ける。
  * 1つも読めなければ undefined。
  */
 function readPackRevision(
   dir: string,
   definition: CharacterDefinition | undefined,
 ): string | undefined {
-  const fileNames = [
-    CHARACTER_DEFINITION_FILE_NAME,
-    ...[...Object.values(definition?.portraits ?? {}), definition?.background?.image].filter(
-      isDefined,
-    ),
-  ]
+  const fileNames = [CHARACTER_DEFINITION_FILE_NAME, ...characterPackFileNames(definition)]
   const times = fileNames.map((name) => modifiedAtMs(join(dir, name))).filter(isDefined)
   return times.length === 0 ? undefined : String(Math.max(...times))
 }

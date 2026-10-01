@@ -11,13 +11,13 @@ import {
   editCharacterPack,
 } from "./server/character-pack/adapter/character-edit.ts"
 import {
-  type CharacterAssetFile,
   type CharacterPack,
   characterChangedEvent,
   DEFAULT_CHARACTER_DIR_RELATIVE_PATH,
   listCharacterPacks,
   readCharacterAsset,
   readCharacterPack,
+  type ServedCharacterAssetFile,
 } from "./server/character-pack/adapter/character-pack.ts"
 import {
   type CharacterSelection,
@@ -83,7 +83,10 @@ export type CurrentCharacter = {
    * 使用中以外のパックの素材も配る。
    * 突き合わせる一覧は、最後に {@link event} で配ったときに読んだもの。
    */
-  readonly serveAsset: (location: CharacterAssetLocation) => CharacterAssetFile | undefined
+  readonly serveAsset: (
+    location: CharacterAssetLocation,
+    version: string | undefined,
+  ) => ServedCharacterAssetFile | undefined
 }
 
 /**
@@ -174,6 +177,6 @@ export function createCurrentCharacter(config: Config): CurrentCharacter {
       const lines = forgetRememberedLineFromScreen(current, process.cwd(), line)
       return lines === undefined ? undefined : { kind: "remembered-lines-changed", lines }
     },
-    serveAsset: (location) => readCharacterAsset(current, packs, location),
+    serveAsset: (location, version) => readCharacterAsset(current, packs, location, version),
   }
 }

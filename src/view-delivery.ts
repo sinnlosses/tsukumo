@@ -135,7 +135,7 @@ export async function startViewDelivery(options: ViewDeliveryOptions): Promise<V
   const started = await startOnResolvedPort(options.portResolution, (port) =>
     startViewServer(port, {
       ui: () => ui,
-      serveCharacterAsset: (location) => options.character.serveAsset(location),
+      serveCharacterAsset: (location, version) => options.character.serveAsset(location, version),
       findPromptImage: (id) => options.promptImageShelf.find(id),
       rpcRouter,
       token,

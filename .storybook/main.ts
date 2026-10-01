@@ -5,7 +5,7 @@
 //
 // 部品が実行時に取りに行く2つの経路は、tsukumo のサーバと同じ中身をここで配る:
 // `/character/<pack>/<file>` は同梱のパック（`characters/`）をそのまま、
-// `/vendor/<name>` は `readVendorAsset` の対応表をそのまま使う（名前の対応を二重に持たない）。
+// `/vendor/<name>` は `createVendorAssetReader` の対応表をそのまま使う（名前の対応を二重に持たない）。
 // ホームのパック（`~/.tsukumo/characters/`）は配らない。
 //
 // story の置き場は `story/` の下で、`src/` と同じ相対パスに `<部品>.story.tsx` を置く。
@@ -13,8 +13,10 @@
 import type { StorybookConfig } from "@storybook/react-vite"
 import type { Plugin } from "vite"
 
-import { readVendorAsset } from "../src/server/view-server/adapter/vendor-asset.ts"
+import { createVendorAssetReader } from "../src/server/view-server/adapter/vendor-asset.ts"
 import { VENDOR_PATH_PREFIX } from "../src/shared/view-server/vendor-asset.ts"
+
+const readVendorAsset = createVendorAssetReader()
 
 const config = {
   framework: {

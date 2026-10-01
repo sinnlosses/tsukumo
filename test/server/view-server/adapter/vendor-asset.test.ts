@@ -1,7 +1,61 @@
 import { describe, expect, it } from "vitest"
 
-import { readVendorAsset } from "../../../../src/server/view-server/adapter/vendor-asset.ts"
+import { createVendorAssetReader } from "../../../../src/server/view-server/adapter/vendor-asset.ts"
 import { VENDOR_ASSET_CONTENT_TYPES } from "../../../../src/shared/view-server/vendor-asset.ts"
+
+const readVendorAsset = createVendorAssetReader()
+
+describe("createVendorAssetReader の覚え方", () => {
+  it("同じ名前は2回目以降ディスクを読み直さず、同じ中身を返す", () => {
+    const reads: string[] = []
+    const read = createVendorAssetReader((path) => {
+      reads.push(path)
+      return Buffer.from("x")
+    })
+
+    const first = read("mermaid.min.js")
+    const second = read("mermaid.min.js")
+
+    expect(reads).toHaveLength(1)
+    expect(second).toBe(first)
+  })
+
+  it("別の名前は別に読む", () => {
+    const reads: string[] = []
+    const read = createVendorAssetReader((path) => {
+      reads.push(path)
+      return Buffer.from("x")
+    })
+
+    read("mermaid.min.js")
+    read("chart.umd.min.js")
+
+    expect(reads).toHaveLength(2)
+  })
+
+  it("読めなかった名前は覚えず、次の呼びで読み直す", () => {
+    let attempts = 0
+    const read = createVendorAssetReader(() => {
+      attempts += 1
+      return attempts === 1 ? undefined : Buffer.from("x")
+    })
+
+    expect(read("mermaid.min.js")).toBeUndefined()
+    expect(read("mermaid.min.js")?.content.toString("utf8")).toBe("x")
+    expect(attempts).toBe(2)
+  })
+
+  it("allowlist に無い名前は読み取りを呼ばずに undefined", () => {
+    let attempts = 0
+    const read = createVendorAssetReader(() => {
+      attempts += 1
+      return Buffer.from("x")
+    })
+
+    expect(read("other.js")).toBeUndefined()
+    expect(attempts).toBe(0)
+  })
+})
 
 // 配る名前（shared）と `node_modules` の中のファイル（adapter）は別のファイルに分かれている
 // ので、allowlist の側から全件を辿って片方だけ足した・パッケージが版を上げてファイルの

@@ -236,6 +236,7 @@ describe("startViewServer", () => {
     const theme = await fetch(`${origin}/vendor/highlight-theme.min.css`)
     expect(theme.status).toBe(200)
     expect(theme.headers.get("content-type")).toContain("text/css")
+    expect(theme.headers.get("cache-control")).toBe("max-age=3600")
 
     const chart = await fetch(`${origin}/vendor/chart.umd.min.js`)
     expect(chart.status).toBe(200)
@@ -275,7 +276,11 @@ describe("startViewServer", () => {
     const server = await startView((location) => {
       asked.push(location)
       return location.fileName === "default.svg"
-        ? { contentType: "image/svg+xml; charset=utf-8", content: Buffer.from("<svg></svg>") }
+        ? {
+            contentType: "image/svg+xml; charset=utf-8",
+            content: Buffer.from("<svg></svg>"),
+            versioned: false,
+          }
         : undefined
     })
     const origin = viewOrigin(server)
@@ -286,6 +291,35 @@ describe("startViewServer", () => {
     expect(response.headers.get("content-type")).toContain("image/svg+xml")
     expect(await response.text()).toBe("<svg></svg>")
     expect(asked).toEqual([{ pack: "my pack", fileName: "default.svg" }])
+  })
+
+  it("/character/<pack>/<file> の `?v=` は、そのまま素材を引く側へ渡る（無ければ undefined）", async () => {
+    const versions: (string | undefined)[] = []
+    const server = await startView((_location, version) => {
+      versions.push(version)
+      return { contentType: "image/png", content: Buffer.from("x"), versioned: false }
+    })
+    const origin = viewOrigin(server)
+
+    await fetch(`${origin}/character/p/a.png?v=1700000000000`)
+    await fetch(`${origin}/character/p/a.png`)
+
+    expect(versions).toEqual(["1700000000000", undefined])
+  })
+
+  it("/character/<pack>/<file> は、版が合った（versioned）ときだけ長期のキャッシュを指定し、そうでなければ no-store", async () => {
+    const server = await startView((location) => ({
+      contentType: "image/png",
+      content: Buffer.from("x"),
+      versioned: location.pack === "versioned",
+    }))
+    const origin = viewOrigin(server)
+
+    const cached = await fetch(`${origin}/character/versioned/a.png?v=1`)
+    const uncached = await fetch(`${origin}/character/other/a.png?v=1`)
+
+    expect(cached.headers.get("cache-control")).toBe("max-age=31536000, immutable")
+    expect(uncached.headers.get("cache-control")).toBe("no-store")
   })
 
   it("/character/<pack>/<file> は、定義に無いファイル名（serveCharacterAsset が undefined を返す）なら404", async () => {
@@ -600,7 +634,11 @@ describe("startViewServer", () => {
   it("/character/<pack>/<file> は、`..` を含む要求も404（パスから組み立てないので、そのまま allowlist に無い名前として扱われる）", async () => {
     const server = await startView((location) =>
       location.pack === "fictional" && location.fileName === "default.svg"
-        ? { contentType: "image/svg+xml; charset=utf-8", content: Buffer.from("<svg></svg>") }
+        ? {
+            contentType: "image/svg+xml; charset=utf-8",
+            content: Buffer.from("<svg></svg>"),
+            versioned: false,
+          }
         : undefined,
     )
     const origin = viewOrigin(server)
@@ -690,7 +728,9 @@ describe("キャラクターの素材（使用中以外のパックも配る）"
       throw new Error("テストの前提: other の立ち絵と背景が一覧に無い")
     }
 
-    const server = await startView((location) => readCharacterAsset(current, packs, location))
+    const server = await startView((location, version) =>
+      readCharacterAsset(current, packs, location, version),
+    )
     return { server, other: { portrait, background } }
   }
 

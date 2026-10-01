@@ -41,18 +41,37 @@ export type VendorAssetFile = {
 }
 
 /**
- * 配ってよい名前1つを読む。allowlist に無い名前・`node_modules` に無いファイルのときは undefined（呼び出し側が404にする）。
+ * 配ってよい名前1つを読む読み手を作る。allowlist に無い名前・`node_modules` に無いファイルのときは undefined（呼び出し側が404にする）。
  * 名前は対応表を引くだけで、要求されたパスからファイル名を組み立てないので `..` で外へ出る経路が無い。
+ *
+ * 読めた中身は読み手の中に覚え、2回目以降はディスクを読まない（数MBあり、要求のたびに読むと同期の読み取りで止まる）。
+ * 読めなかった名前は覚えない（あとから `pnpm install` で入ったときに、起こし直さず拾える）。
  */
-export function readVendorAsset(name: string): VendorAssetFile | undefined {
-  const contentType = VENDOR_ASSET_CONTENT_TYPES[name]
-  const segments = VENDOR_ASSET_FILES[name]
-  if (contentType === undefined || segments === undefined) {
-    return undefined
-  }
+export function createVendorAssetReader(
+  readFile: (path: string) => Buffer | undefined = readOptionalBinaryFile,
+): (name: string) => VendorAssetFile | undefined {
+  const remembered = new Map<string, VendorAssetFile>()
 
-  const content = readOptionalBinaryFile(bundledFilePath(NODE_MODULES, ...segments))
-  return content === undefined ? undefined : { contentType, content }
+  return (name) => {
+    const contentType = VENDOR_ASSET_CONTENT_TYPES[name]
+    const segments = VENDOR_ASSET_FILES[name]
+    if (contentType === undefined || segments === undefined) {
+      return undefined
+    }
+
+    const known = remembered.get(name)
+    if (known !== undefined) {
+      return known
+    }
+
+    const content = readFile(bundledFilePath(NODE_MODULES, ...segments))
+    if (content === undefined) {
+      return undefined
+    }
+    const asset = { contentType, content }
+    remembered.set(name, asset)
+    return asset
+  }
 }
 
 function readOptionalBinaryFile(path: string): Buffer | undefined {

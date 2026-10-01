@@ -35,7 +35,7 @@ import { VENDOR_PATH_PREFIX, vendorAssetPath } from "../../../shared/view-server
 import type { UiBundle } from "./bundle.ts"
 import { type RpcContext, rpcContextOf } from "./rpc-guard.ts"
 import type { UiDevServer } from "./ui-dev-server.ts"
-import { readVendorAsset } from "./vendor-asset.ts"
+import { createVendorAssetReader, type VendorAssetFile } from "./vendor-asset.ts"
 
 /**
  * 起動トークンを1つ作る。起動ごとに変わり、メモリにしか置かない（ディスクに書かない）。
@@ -76,14 +76,18 @@ export type ViewUi =
 export type CharacterAssetFile = {
   readonly contentType: string
   readonly content: Buffer
+  /** 要求の `?v=` が素材の今の版と一致した（ブラウザに長期に持たせてよい）。 */
+  readonly versioned: boolean
 }
 
 /**
  * `/character/<pack>/<file>` の1件を配ってよい形にする（`readCharacterAsset` を束ねる）。
+ * `version` は要求の `?v=`（無ければ undefined）。
  * 無いパック・allowlist に無い・ディスクに無いときは undefined（呼び出し側が404にする）。
  */
 export type ServeCharacterAsset = (
   location: CharacterAssetLocation,
+  version: string | undefined,
 ) => CharacterAssetFile | undefined
 
 /**
@@ -134,11 +138,12 @@ export function startViewServer(port: number, options: ViewServerOptions): Promi
   const rpcHandler = new RPCHandler(options.rpcRouter, {
     plugins: [new BodyLimitPlugin({ maxBodySize: RPC_MAX_BODY_BYTES })],
   })
+  const readVendorAsset = createVendorAssetReader()
   const server = createServer((request, response) => {
     const path = (request.url ?? "/").split("?")[0] ?? "/"
     // 要求が届くのは listen のあとなので、割り当てられたポートはもう決まっている。
     const serverOrigin = originOf(boundPort(server.address(), port))
-    respond(request, path, response, { options, rpcHandler, serverOrigin })
+    respond(request, path, response, { options, rpcHandler, serverOrigin, readVendorAsset })
   })
 
   return new Promise((resolve, reject) => {
@@ -181,6 +186,8 @@ type ViewServerRuntime = {
   readonly rpcHandler: RPCHandler<RpcContext>
   /** 自分のオリジン（`http://127.0.0.1:<port>`）。`/rpc` の `Origin` の照合に使う。 */
   readonly serverOrigin: string
+  /** 同じプロセスのあいだ、読んだ vendor の素材を覚えている読み手。 */
+  readonly readVendorAsset: (name: string) => VendorAssetFile | undefined
 }
 
 /** 1経路ぶんの受け手。接頭辞を剥がす・クエリを読むといった経路固有の下ごしらえもここで行う。 */
@@ -227,15 +234,16 @@ const ROUTES = [
     match: { kind: "prefix", prefix: VENDOR_PATH_PREFIX },
     method: "GET",
     requiresToken: false,
-    handle: (_request, response, path) =>
-      writeVendorAsset(response, path.slice(VENDOR_PATH_PREFIX.length)),
+    handle: (_request, response, path, { readVendorAsset }) =>
+      writeVendorAsset(response, path.slice(VENDOR_PATH_PREFIX.length), readVendorAsset),
   },
   {
     match: { kind: "prefix", prefix: CHARACTER_ASSET_PATH_PREFIX },
     method: "GET",
     requiresToken: false,
-    handle: (_request, response, path, { options }) =>
+    handle: (request, response, path, { options }) =>
       writeCharacterAsset(
+        request,
         response,
         path.slice(CHARACTER_ASSET_PATH_PREFIX.length),
         options.serveCharacterAsset,
@@ -367,11 +375,15 @@ ${styleSheetLinks}
 }
 
 /**
- * 外部ライブラリ（`readVendorAsset` が `node_modules` から読む）を配る。
+ * 外部ライブラリ（`createVendorAssetReader` の読み手が `node_modules` から読む）を配る。
  * 名前が指す中身の判断はそちらに任せ、ここは結果をそのまま配るか404にするだけ。
  * 依存が入っていなくても配信は続ける（表示物が1つ欠けても起動失敗にしない）。
  */
-function writeVendorAsset(response: ServerResponse, name: string): void {
+function writeVendorAsset(
+  response: ServerResponse,
+  name: string,
+  readVendorAsset: ViewServerRuntime["readVendorAsset"],
+): void {
   const asset = readVendorAsset(name)
   if (asset === undefined) {
     response.writeHead(404, { "content-type": "text/plain; charset=utf-8" })
@@ -389,19 +401,24 @@ function writeVendorAsset(response: ServerResponse, name: string): void {
  * ここは結果をそのまま配るか404にするだけ。
  */
 function writeCharacterAsset(
+  request: IncomingMessage,
   response: ServerResponse,
   rest: string,
   serveCharacterAsset: ServeCharacterAsset,
 ): void {
   const location = readCharacterAssetPath(rest)
-  const asset = location === undefined ? undefined : serveCharacterAsset(location)
+  const asset =
+    location === undefined ? undefined : serveCharacterAsset(location, queryValue(request, "v"))
   if (asset === undefined) {
     response.writeHead(404, { "content-type": "text/plain; charset=utf-8" })
     response.end("not found\n")
     return
   }
 
-  response.writeHead(200, { "content-type": asset.contentType, "cache-control": "no-store" })
+  response.writeHead(200, {
+    "content-type": asset.contentType,
+    "cache-control": asset.versioned ? "max-age=31536000, immutable" : "no-store",
+  })
   response.end(asset.content)
 }
 
