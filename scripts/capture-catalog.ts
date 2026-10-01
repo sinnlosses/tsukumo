@@ -87,8 +87,18 @@ type HomeSetup =
   | { readonly kind: "diary"; readonly date: string; readonly body: string }
   | { readonly kind: "character"; readonly pack: string }
 
-/** 場面が撮れる状態まで落ち着くのを待つやり方。`tail` は固定の余裕、`selector` は要素が現れるまで。 */
-type Settle = { readonly kind: "tail" } | { readonly kind: "selector"; readonly selector: string }
+/**
+ * 場面が撮れる状態まで落ち着くのを待つやり方。`tail` は固定の余裕、`selector` は要素が現れるまで。
+ * `selector` は上限まで現れなければ撮らずに落とす。`phase` は `prepare` の前に待つか後に待つか
+ * （操作で初めて出る要素は `after-prepare`）。
+ */
+type Settle =
+  | { readonly kind: "tail" }
+  | {
+      readonly kind: "selector"
+      readonly selector: string
+      readonly phase: "before-prepare" | "after-prepare"
+    }
 
 const TAIL_SETTLE = { kind: "tail" } satisfies Settle
 
@@ -151,6 +161,9 @@ const CHECKS_SELECTOR = `${MAIN_REGION_SELECTOR} [role="table"][aria-label="検�
 
 /** レポートの結論の下に組む段取りの図。 */
 const WORK_PLAN_REPORT_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="report-progress_"]`
+
+/** 日記帳の見開きの右ページの本文。白紙のページは別の class なので、日記が書けていないと現れない。 */
+const DIARY_BODY_SELECTOR = '[class*="diary-book-body_"]'
 
 /** 入力欄。ページに `<textarea>` は1つしか無い。 */
 const COMPOSER_SELECTOR = "textarea"
@@ -272,7 +285,7 @@ const CATALOG: readonly CatalogEntry[] = [
     homeSetup: { kind: "default" },
     prepare: [{ kind: "scroll", selector: CHECKS_SELECTOR }],
     skipReveal: true,
-    settle: { kind: "selector", selector: CHECKS_SELECTOR },
+    settle: { kind: "selector", selector: CHECKS_SELECTOR, phase: "before-prepare" },
   },
   {
     name: "turn-history",
@@ -466,7 +479,11 @@ const CATALOG: readonly CatalogEntry[] = [
     homeSetup: { kind: "default" },
     prepare: [],
     skipReveal: true,
-    settle: { kind: "selector", selector: WORK_PLAN_REPORT_SELECTOR },
+    settle: {
+      kind: "selector",
+      selector: WORK_PLAN_REPORT_SELECTOR,
+      phase: "before-prepare",
+    },
   },
   {
     name: "diary-book",
@@ -480,7 +497,7 @@ const CATALOG: readonly CatalogEntry[] = [
       { kind: "click", selector: DIARY_NOTICE_OPEN_SELECTOR },
     ],
     skipReveal: false,
-    settle: TAIL_SETTLE,
+    settle: { kind: "selector", selector: DIARY_BODY_SELECTOR, phase: "after-prepare" },
   },
   {
     name: "portrait-clear-confirm",
@@ -595,6 +612,11 @@ async function main(argv: readonly string[]): Promise<number> {
     for (const entry of entries) {
       shots.push(...(await captureEntry(browser, entry, options.outDir)))
     }
+  } catch (error) {
+    process.stderr.write(
+      `撮れなかった: ${error instanceof Error ? error.message : String(error)}\n`,
+    )
+    return 1
   } finally {
     await browser.close()
   }
@@ -661,7 +683,7 @@ async function captureShot(
       .catch(() => undefined)
     // 疑似セッションが流れ終わってから操作を当てる。 流れている途中で押すと、狙った状態の手前で
     // 画面が組み直されて操作が空振りする。
-    await settleScene(page, entry.settle)
+    await settleScene(page, entry.settle, "before-prepare")
     if (entry.skipReveal) {
       // `prepare` の前に演出を終わらせる（理由は `CatalogEntry` の `skipReveal` のコメント）。
       await page.keyboard.press(SKIP_REVEAL_KEY)
@@ -672,21 +694,30 @@ async function captureShot(
     if (entry.prepare.length > 0) {
       await page.waitForTimeout(PREPARE_SETTLE_MS)
     }
+    await settleScene(page, entry.settle, "after-prepare")
     await page.screenshot({ path: file, fullPage: size.fullPage })
   } finally {
     await page.close()
   }
 }
 
-/** `selector` の要素が現れなくても、現れなかったことだけ出して撮り続ける。 */
-async function settleScene(page: Page, settle: Settle): Promise<void> {
-  if (settle.kind === "tail") {
-    await page.waitForTimeout(SCENE_TAIL_MS)
+/** `selector` の要素が上限まで現れなければ throw する（撮らずに落とす）。 */
+async function settleScene(
+  page: Page,
+  settle: Settle,
+  phase: "before-prepare" | "after-prepare",
+): Promise<void> {
+  if (settle.kind === "selector" && settle.phase === phase) {
+    await page
+      .waitForSelector(settle.selector, { timeout: SETTLE_SELECTOR_TIMEOUT_MS })
+      .catch(() => {
+        throw new Error(`現れなかった: ${settle.selector}`)
+      })
     return
   }
-  await page
-    .waitForSelector(settle.selector, { timeout: SETTLE_SELECTOR_TIMEOUT_MS })
-    .catch(() => process.stdout.write(`現れなかった: ${settle.selector}\n`))
+  if (phase === "before-prepare") {
+    await page.waitForTimeout(SCENE_TAIL_MS)
+  }
 }
 
 /**
