@@ -222,6 +222,29 @@ describe("currentTurnSteps（段取り）", () => {
     })
   })
 
+  it("段が戻る・段の並びが組み替わる段取りでも、手順は始まったときの段取りの段を持つ", () => {
+    const list = currentTurnSteps(
+      [
+        requestRecord(),
+        workPlanRecord({ phases: ["架空の段A", "架空の段B"], current: 1, phaseSummary: "まとめ" }),
+        toolRecord({ toolUseId: "toolu_1", status: finishedToolStatus() }),
+        workPlanRecord({ phases: ["架空の段A", "架空の段B"], current: 0 }),
+        toolRecord({ toolUseId: "toolu_2", status: finishedToolStatus() }),
+        workPlanRecord({ phases: ["架空の段X", "架空の段Y", "架空の段Z"], current: 2 }),
+        toolRecord({ toolUseId: "toolu_running" }),
+        toolRecord({ toolUseId: "toolu_3", status: finishedToolStatus() }),
+      ],
+      true,
+    )
+
+    expect(turnSteps(list).map((step) => [step.toolUseId, step.phase])).toEqual([
+      ["toolu_1", { kind: "phase", index: 1, count: 2, name: "架空の段B" }],
+      ["toolu_2", { kind: "phase", index: 0, count: 2, name: "架空の段A" }],
+      ["toolu_3", { kind: "phase", index: 2, count: 3, name: "架空の段Z" }],
+    ])
+    expect(list).toMatchObject({ plan: { phases: ["架空の段X", "架空の段Y", "架空の段Z"] } })
+  })
+
   it("前の依頼の段取りは持ち越さない", () => {
     const list = currentTurnSteps(
       [

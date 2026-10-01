@@ -512,6 +512,43 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
       ).toEqual(["1/3 架空の段A", "✓ Read: /tmp/a.txt（0秒）", "2/3 架空の段B", "… Bash: echo b"])
     })
 
+    it("同じ段の手順は隣どうしで1まとまりになり、段が戻れば別のまとまりになる", () => {
+      const bash = (id: string) =>
+        toolRecord({ toolUseId: id, name: "Bash", input: { command: `echo ${id}` } })
+      const phases = ["架空の段A", "架空の段B"]
+      renderScreenNav({
+        turn: { kind: "running", startedAt: 0 },
+        records: [
+          requestRecord(),
+          bash("t0"),
+          workPlanRecord({ phases, current: 0 }),
+          bash("t1"),
+          bash("t2"),
+          workPlanRecord({ phases, current: 1, phaseSummary: "まとめ" }),
+          bash("t3"),
+          workPlanRecord({ phases, current: 0 }),
+          bash("t4"),
+        ],
+      })
+
+      fireEvent.click(workToggle())
+
+      expect(
+        [...workList().querySelectorAll(".current-work-phase-heading, .current-work-steps li")].map(
+          (node) => node.textContent,
+        ),
+      ).toEqual([
+        "… Bash: echo t0",
+        "1/2 架空の段A",
+        "… Bash: echo t1",
+        "… Bash: echo t2",
+        "2/2 架空の段B",
+        "… Bash: echo t3",
+        "1/2 架空の段A",
+        "… Bash: echo t4",
+      ])
+    })
+
     it("ターンが終わると札から段は消え、一覧には前の依頼の段取りが残る", () => {
       renderScreenNav({
         turn: { kind: "finished", startedAt: 0, finishedAt: 1, ending: { kind: "ended" } },

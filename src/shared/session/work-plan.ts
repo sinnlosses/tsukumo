@@ -89,14 +89,25 @@ export function parseWorkPlan(value: unknown): WorkPlan | undefined {
 /** 記録の範囲で最後の `work-plan` の記録（{@link LatestWorkPlan}）。範囲を依頼1つに絞るのは呼ぶ側。 */
 export function latestWorkPlan(records: readonly SessionRecord[]): LatestWorkPlan {
   const found = records.findLast(isWorkPlanRecord)
-  return found === undefined
-    ? { kind: "none" }
-    : {
-        kind: "planned",
-        phases: found.phases,
-        current: found.current,
-        phaseSummary: found.phaseSummary,
-      }
+  return found === undefined ? { kind: "none" } : workPlanOf(found)
+}
+
+/** `work-plan` の記録1件が運ぶ段取り。 */
+export function workPlanOf(
+  record: Extract<SessionRecord, { readonly kind: "work-plan" }>,
+): LatestWorkPlan {
+  return {
+    kind: "planned",
+    phases: record.phases,
+    current: record.current,
+    phaseSummary: record.phaseSummary,
+  }
+}
+
+export function isWorkPlanRecord(
+  record: SessionRecord,
+): record is Extract<SessionRecord, { readonly kind: "work-plan" }> {
+  return record.kind === "work-plan"
 }
 
 /** 段取りの今の段（{@link WorkPhase}）。 */
@@ -171,10 +182,4 @@ function parsePhaseSummary(value: unknown): string | undefined {
     return undefined
   }
   return isBlankText(value) ? "" : value
-}
-
-function isWorkPlanRecord(
-  record: SessionRecord,
-): record is Extract<SessionRecord, { readonly kind: "work-plan" }> {
-  return record.kind === "work-plan"
 }

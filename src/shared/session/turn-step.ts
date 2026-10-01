@@ -4,8 +4,13 @@ import { isPlainObject } from "remeda"
 
 import type { MeasuredTime } from "../utils/elapsed-time.ts"
 import type { RecordTime, SessionRecord } from "./session-state.ts"
-import { splitIntoTurns } from "./turn.ts"
-import { currentPhaseOf, latestWorkPlan, type LatestWorkPlan, type WorkPhase } from "./work-plan.ts"
+import {
+  currentPhaseOf,
+  isWorkPlanRecord,
+  workPlanOf,
+  type LatestWorkPlan,
+  type WorkPhase,
+} from "./work-plan.ts"
 
 /**
  * 依頼の手順1件の進み具合。`failed` の `output` は失敗の中身（`<details>` で開いて読む）。
@@ -88,20 +93,21 @@ export function currentTurnSteps(
   records: readonly SessionRecord[],
   sessionEnded: boolean,
 ): TurnStepList {
-  // 依頼より前のまとまりは先頭にしか来ないので、最後のまとまりがそれなら依頼は一度も無い。
-  const currentTurn = splitIntoTurns(records).at(-1)
-  if (currentTurn === undefined || currentTurn.kind === "pre-request") {
+  const requestIndex = records.findLastIndex((record) => record.kind === "request")
+  if (requestIndex < 0) {
     return { kind: "no-request" }
   }
 
-  const steps = currentTurn.records
-    .flatMap((record, index) =>
-      isToolRecord(record)
-        ? [toTurnStep(record, currentPhaseOf(latestWorkPlan(currentTurn.records.slice(0, index))))]
-        : [],
-    )
-    .filter((step) => !(sessionEnded && step.status.kind === "running"))
-  return { kind: "turn", steps, plan: latestWorkPlan(currentTurn.records) }
+  const steps: TurnStep[] = []
+  let plan: LatestWorkPlan = { kind: "none" }
+  for (const record of records.slice(requestIndex + 1)) {
+    if (isWorkPlanRecord(record)) {
+      plan = workPlanOf(record)
+    } else if (isToolRecord(record) && !(sessionEnded && record.status.kind === "running")) {
+      steps.push(toTurnStep(record, currentPhaseOf(plan)))
+    }
+  }
+  return { kind: "turn", steps, plan }
 }
 
 /** Bash の入力（外来の値）から、打ったコマンドの文字列を取り出す。読めなければ空文字。 */

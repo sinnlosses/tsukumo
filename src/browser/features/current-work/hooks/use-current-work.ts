@@ -1,7 +1,7 @@
 // 札「いまの作業」のロジック。
 // tsukumo がいま何をしているかの語と、押すと開く依頼の手順の一覧を、見た目が受け取れる形まで畳んで返す。
 //
-// 範囲は依頼1つ（`currentTurnSteps` が、最後の依頼より後のツールの記録から導く）。
+// 範囲は依頼1つ（`useCurrentTurnSteps` が、最後の依頼より後のツールの記録から導く）。
 // 要約は `summarizeToolInput` / `toolInputText` を使い、どの欄を読むかを2箇所で別に決めない。
 //
 // 開閉の状態はこの hook が1つだけ持つので、札が2箇所に描かれても押した先の DOM によらず同じ一覧が開く。
@@ -17,7 +17,6 @@ import type {
 import type { PendingAsk } from "../../../../shared/session-driver/pending-ask.ts"
 import type { ReportDrafting } from "../../../../shared/session/session-state.ts"
 import {
-  currentTurnSteps,
   toolDuration,
   type TurnStep,
   type TurnStepList,
@@ -28,6 +27,7 @@ import { formatElapsed } from "../../../../shared/utils/elapsed-time.ts"
 import { DEFAULT_CHARACTER_NAME } from "../../../domain/portrait-appearance.ts"
 import { summarizeToolInput, toolInputText } from "../../../domain/tool-summary.ts"
 import { usePopover } from "../../../hooks/use-popover.ts"
+import { useCurrentTurnSteps } from "../../../stores/current-turn-steps.ts"
 import { useQuestionScroll } from "../../../stores/question-scroll.ts"
 import { navigateTo, useScreen } from "../../../stores/screen.tsx"
 import { useSession, useTurnRunning } from "../../../stores/session.ts"
@@ -227,7 +227,7 @@ export function useCurrentWork(boundaryRef: RefObject<HTMLElement | null>): Curr
   const endedReason = useSession((session) => session.state.endedReason)
   const pending = useSession((session) => session.state.pending)
   const turnInProgress = useTurnRunning()
-  const records = useSession((session) => session.state.records)
+  const turnStepList = useCurrentTurnSteps()
   const backgroundTasks = useSession((session) => session.state.backgroundTasks)
   const diaryWriting = useSession((session) => session.state.diaryWriting)
   const reportDrafting = useSession((session) => session.state.reportDrafting)
@@ -260,7 +260,6 @@ export function useCurrentWork(boundaryRef: RefObject<HTMLElement | null>): Curr
   }
 
   const sessionEnded = endedReason !== undefined
-  const turnStepList = currentTurnSteps(records, sessionEnded)
   const firstPending = pending[0]
 
   const state: CurrentWorkState = sessionEnded
@@ -496,13 +495,23 @@ function toStepListView(
 
 /** 並びの隣どうしで段が同じ手順を1まとまりにする（段を戻る段取りの変更があっても、並びの順は崩さない）。 */
 function groupByPhase(steps: readonly TurnStep[]): readonly CurrentWorkStepGroup[] {
-  return steps.reduce<readonly CurrentWorkStepGroup[]>((groups, step) => {
-    const heading = stepGroupHeading(step.phase)
-    const last = groups.at(-1)
-    return last !== undefined && sameHeading(last.heading, heading)
-      ? [...groups.slice(0, -1), { ...last, steps: [...last.steps, toStepView(step)] }]
-      : [...groups, { key: step.toolUseId, heading, steps: [toStepView(step)] }]
-  }, [])
+  const headings = steps.map((step) => stepGroupHeading(step.phase))
+  const starts = headings.flatMap((heading, index) =>
+    index === 0 || !sameHeading(headings[index - 1] ?? heading, heading) ? [index] : [],
+  )
+  return starts.flatMap((start, position) => {
+    const first = steps[start]
+    const heading = headings[start]
+    return first === undefined || heading === undefined
+      ? []
+      : [
+          {
+            key: first.toolUseId,
+            heading,
+            steps: steps.slice(start, starts[position + 1] ?? steps.length).map(toStepView),
+          },
+        ]
+  })
 }
 
 function stepGroupHeading(phase: WorkPhase): CurrentWorkStepGroup["heading"] {
