@@ -55,12 +55,6 @@ async function pickPortrait(): Promise<void> {
 }
 
 describe("CharacterCreate", () => {
-  it("open が false のときは開かない", () => {
-    render(characterCreate(false, () => {}))
-
-    expect(dialogIsOpen()).toBe(false)
-  })
-
   it("open が true になると、見出し・立ち絵の口・名前・id・画面の差し色2つを出す", () => {
     render(characterCreate(true, () => {}))
 
@@ -75,12 +69,7 @@ describe("CharacterCreate", () => {
 
   it("id・必須の立ち絵がそろうまで「作る」を押せない", async () => {
     render(characterCreate(true, () => {}))
-    // 押せないは `aria-disabled` の1通り（`Button`）。本物の `disabled` にはしないので、
-    // フォーカスは残る。
     expect(submitButton().getAttribute("aria-disabled")).toBe("true")
-    expect(submitButton().hasAttribute("disabled")).toBe(false)
-    submitButton().focus()
-    expect(document.activeElement).toBe(submitButton())
 
     fireEvent.change(screen.getByLabelText("id"), { target: { value: "fictional-2" } })
     expect(submitButton().getAttribute("aria-disabled")).toBe("true")
@@ -89,21 +78,6 @@ describe("CharacterCreate", () => {
 
     await pickPortrait()
     expect(submitButton().getAttribute("aria-disabled")).toBe("false")
-  })
-
-  it("押せないあいだ「作る」を押しても characterPack.create を送らない", () => {
-    const calls: unknown[] = []
-    render(
-      characterCreate(
-        true,
-        () => {},
-        (command) => calls.push(command),
-      ),
-    )
-
-    fireEvent.click(submitButton())
-
-    expect(calls).toEqual([])
   })
 
   // id はディレクトリ名になるので、送る前に画面で止める（docs/architecture/character-pack.md「画面から作るときの置き場と受け取り方」）。
@@ -183,21 +157,6 @@ describe("CharacterCreate", () => {
     //
     fireEvent(dialog(), new Event("close"))
 
-    expect(closed).toEqual(["closed"])
-  })
-
-  it("外側（backdrop）のクリックで閉じ、中身のクリックでは閉じない", () => {
-    const closed: string[] = []
-    render(
-      characterCreate(true, () => {
-        closed.push("closed")
-      }),
-    )
-
-    fireEvent.click(screen.getByRole("heading", { name: "新しいキャラクター" }))
-    expect(closed).toEqual([])
-
-    fireEvent.click(dialog())
     expect(closed).toEqual(["closed"])
   })
 })

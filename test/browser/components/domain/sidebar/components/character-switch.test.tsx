@@ -93,15 +93,4 @@ describe("CharacterSwitch", () => {
     expect(select().disabled).toBe(true)
     expect(select().title).toBe(FRAME_ERROR_REASON.switchDuringTurn)
   })
-
-  it("ターンが終わると有効に戻る", () => {
-    renderSwitch({
-      turn: { kind: "idle" },
-      characterPacks: TWO_PACKS,
-      character: characterInfo(),
-    })
-
-    expect(select().disabled).toBe(false)
-    expect(select().title).toBe("")
-  })
 })

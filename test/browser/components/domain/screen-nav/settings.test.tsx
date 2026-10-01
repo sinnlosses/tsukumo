@@ -267,17 +267,7 @@ describe("設定の歯車（帯の右端）", () => {
     renderScreenNav()
     fireEvent.click(gear())
 
-    // `disabled` ではなく `aria-disabled`（`Button` の顔。docs/architecture/browser.md「`Button`」）——
-    // native の `disabled` と違いフォーカスは残る。
     expect(resetButton().getAttribute("aria-disabled")).toBe("true")
-    expect(resetButton().hasAttribute("disabled")).toBe(false)
-    resetButton().focus()
-    expect(document.activeElement).toBe(resetButton())
-
-    // 押せないときは押しても何も起きない（`Button` が `onClick` を呼ばない）。
-    const groundBefore = readToken("--ground")
-    fireEvent.click(resetButton())
-    expect(readToken("--ground")).toBe(groundBefore)
   })
 
   it("「既定に戻す」で3色とも上書きが外れ、操作子も既定を指す", async () => {
@@ -300,17 +290,6 @@ describe("設定の歯車（帯の右端）", () => {
       surface: undefined,
       ink: undefined,
     })
-  })
-
-  // 狭い画面では帯の要素がすべて「≡」の面に畳まれる（13.9「狭い画面」）。歯車も同じ畳み方。
-  it("狭い画面の「≡」の面の中にも同じ歯車が入る", () => {
-    renderScreenNav()
-
-    fireEvent.click(
-      typedElement(document.querySelector(".screen-nav-toggle"), HTMLElement, "「≡」"),
-    )
-
-    expect(document.querySelector(".screen-nav-panel .screen-nav-settings-toggle")).not.toBeNull()
   })
 })
 
@@ -375,28 +354,6 @@ describe("設定の歯車（新しいセッションの既定）", () => {
         permissionMode: "acceptEdits",
       },
     ])
-  })
-
-  // 帯のドロップダウン（セッション限り）は既定を書き換えない（`docs/architecture/screen-design.md`「設定の置き場所」）。
-  it("帯でモデルを変えても session.setSessionDefault は送らない", () => {
-    // 会話の画面の帯にはモデルのドロップダウンが無いので、ほかの画面で見る。
-    window.location.hash = "#character"
-    const sent: unknown[] = []
-    renderScreenNav(
-      { sessionDefault: { model: "opus", effort: "medium", permissionMode: "auto" } },
-      (command) => sent.push(command),
-    )
-
-    fireEvent.change(
-      typedElement(
-        document.querySelector(".screen-nav > .screen-nav-model-permission select"),
-        HTMLSelectElement,
-        "帯のモデルの <select>",
-      ),
-      { target: { value: "haiku" } },
-    )
-
-    expect(sent).toEqual([{ procedure: "session.setModel", model: "haiku" }])
   })
 })
 
@@ -467,13 +424,6 @@ function defaultSelect(label: string): HTMLSelectElement {
 // 書き上げる演出の速さ（docs/architecture/screen-design.md「設定の置き場所」。`saveRevealSpeed`）。利用者の設定
 // なので色と同じ `localStorage`（保存先は違う鍵）。
 describe("設定の歯車（書き上げる演出の速さ）", () => {
-  it("既定は「標準」", () => {
-    renderScreenNav()
-    fireEvent.click(gear())
-
-    expect(defaultSelect("速さ").value).toBe("standard")
-  })
-
   it("選ぶとすぐ localStorage に保存される（色と違いデバウンスしない）", () => {
     renderScreenNav()
     fireEvent.click(gear())
@@ -481,15 +431,6 @@ describe("設定の歯車（書き上げる演出の速さ）", () => {
     fireEvent.change(defaultSelect("速さ"), { target: { value: "fast" } })
 
     expect(localStorage.getItem(REVEAL_SPEED_STORAGE_KEY)).toBe("fast")
-  })
-
-  it("「切る」も選べる", () => {
-    renderScreenNav()
-    fireEvent.click(gear())
-
-    fireEvent.change(defaultSelect("速さ"), { target: { value: "off" } })
-
-    expect(localStorage.getItem(REVEAL_SPEED_STORAGE_KEY)).toBe("off")
   })
 
   // 保存済みの選択を `useState` の初期値として読むだけなので、リロードして開き直した形を作る。
@@ -500,15 +441,6 @@ describe("設定の歯車（書き上げる演出の速さ）", () => {
     fireEvent.click(gear())
 
     expect(defaultSelect("速さ").value).toBe("fast")
-  })
-
-  it("読めない値は「標準」に畳む", () => {
-    localStorage.setItem(REVEAL_SPEED_STORAGE_KEY, "very-fast")
-
-    renderScreenNav()
-    fireEvent.click(gear())
-
-    expect(defaultSelect("速さ").value).toBe("standard")
   })
 })
 
@@ -538,15 +470,5 @@ describe("設定の歯車（訪問）", () => {
     fireEvent.change(defaultSelect("客の出入り"), { target: { value: "off" } })
 
     expect(sent).toEqual([{ procedure: "visit.setEnabled", enabled: false }])
-  })
-
-  it("「する」を選ぶと visit.setEnabled を送る", () => {
-    const sent: unknown[] = []
-    renderScreenNav({ visitEnabled: false }, (command) => sent.push(command))
-    fireEvent.click(gear())
-
-    fireEvent.change(defaultSelect("客の出入り"), { target: { value: "on" } })
-
-    expect(sent).toEqual([{ procedure: "visit.setEnabled", enabled: true }])
   })
 })

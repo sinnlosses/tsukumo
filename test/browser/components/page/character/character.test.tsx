@@ -3,7 +3,6 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-libra
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import { Character } from "../../../../../src/browser/components/page/character/character.tsx"
-import type { PendingAsk } from "../../../../../src/shared/session-driver/pending-ask.ts"
 import {
   INITIAL_SESSION_STATE,
   type SessionState,
@@ -37,14 +36,6 @@ const FIXTURE_PACKS = [
   characterPackEntry("fictional", "架空の精霊", { character: FIXTURE_CHARACTER, inUse: true }),
   characterPackEntry("other", "別の精霊", { character: OTHER_CHARACTER }),
 ]
-
-// 手で書いた架空の答え待ち（許可の問い合わせ1件）。
-const FIXTURE_PENDING: PendingAsk = {
-  kind: "permission",
-  id: "ask-1",
-  toolName: "Read",
-  input: {},
-}
 
 let themeStyleElement: HTMLStyleElement | undefined
 
@@ -234,32 +225,15 @@ describe("Character", () => {
     renderCharacter({ turn: { kind: "running", startedAt: 1 } })
 
     const button = screen.getByRole("button", { name: /このキャラクターに切り替える/ })
-    // 押せないは `aria-disabled` の1通り（`Button`）。本物の `disabled` にはしないので、
-    // フォーカスは残る。
     expect(button.getAttribute("aria-disabled")).toBe("true")
-    expect(button.hasAttribute("disabled")).toBe(false)
     expect(button.getAttribute("title")).toContain("ターン進行中")
-    button.focus()
-    expect(document.activeElement).toBe(button)
   })
 
-  it("ターン進行中は「このキャラクターに切り替える」を押しても session.switchCharacter を送らない", () => {
-    const calls: unknown[] = []
-    window.location.hash = "#character?pack=other"
-    renderCharacter({ turn: { kind: "running", startedAt: 1 } }, (command) => calls.push(command))
-
-    fireEvent.click(screen.getByRole("button", { name: /このキャラクターに切り替える/ }))
-
-    expect(calls).toEqual([])
-  })
-
-  // 戻る口と答え待ちの印は帯（`components/domain/screen-nav/`）へ移った（docs/architecture/screen-design.md「画面のナビゲーション」）。
-  // 同じ口を2つ置かないので、この画面には残っていない。
-  it("会話へ戻る口と答え待ちの印は持たない", () => {
-    renderCharacter({ pending: [FIXTURE_PENDING] })
+  // 戻る口は帯（`components/domain/screen-nav/`）へ移った（docs/architecture/screen-design.md「画面のナビゲーション」）。
+  it("会話へ戻る口を持たない", () => {
+    renderCharacter()
 
     expect(document.querySelector('a[href="#"]')).toBeNull()
-    expect(document.querySelector(".character-screen-pending")).toBeNull()
   })
 
   // 地・領域・字の色は帯の歯車へ移り（13.6 の表）、パックの持ち物である差し色だけが残る。

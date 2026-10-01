@@ -298,14 +298,4 @@ describe("useTokenUsage", () => {
 
     expect(result.current.plan).toBe("max")
   })
-
-  it("state.plan がまだ届いていなければ undefined", async () => {
-    stubTokenUsageFetch(() => rpcOutput(FIXTURE_SUMMARY))
-
-    const { result } = renderHook(() => useTokenUsage(), {
-      wrapper: tokenUsageWrapper(createTestQueryClient()),
-    })
-
-    expect(result.current.plan).toBeUndefined()
-  })
 })

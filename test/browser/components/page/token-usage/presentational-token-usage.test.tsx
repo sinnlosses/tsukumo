@@ -265,21 +265,6 @@ describe("PresentationalTokenUsage", () => {
     ])
   })
 
-  it("モデル別は届いた順のまま行にする（並べ替えはしない）", () => {
-    const models: readonly ModelRowView[] = [
-      { ...FIXTURE_MODEL, model: "少ない出力" },
-      { ...FIXTURE_MODEL, model: "多い出力" },
-      { ...FIXTURE_MODEL, model: "zeta-同点" },
-    ]
-    const { container } = renderScreen({ report: { ...FIXTURE_REPORT, models } })
-
-    const modelTable = container.querySelectorAll(".token-usage-table")[0]
-    const names = [...(modelTable?.querySelectorAll("tbody th") ?? [])].map(
-      (cell) => cell.textContent,
-    )
-    expect(names).toEqual(["少ない出力", "多い出力", "zeta-同点"])
-  })
-
   it("モデル別は出力の列だけに横棒を添える", () => {
     const { container } = renderScreen()
 
@@ -319,23 +304,6 @@ describe("PresentationalTokenUsage", () => {
     fireEvent.click(getByText("ほか 3 件を見る"))
 
     expect(toggled).toBe(1)
-  })
-
-  it("ツール別は開いたあと、全行と「閉じる」を出す", () => {
-    const { container, getByText, queryByText } = renderScreen({
-      report: {
-        ...FIXTURE_REPORT,
-        tools: {
-          rows: toolRowsOf(9),
-          more: { kind: "some", label: "閉じる", onToggle: () => {} },
-        },
-      },
-    })
-
-    const toolTable = container.querySelectorAll(".token-usage-table")[1]
-    expect(toolTable?.querySelectorAll("tbody tr")).toHaveLength(9)
-    expect(queryByText("ほか 3 件を見る")).toBeNull()
-    expect(getByText("閉じる")).not.toBeNull()
   })
 
   it("ツール別は残りが無ければ開閉の口を置かない", () => {

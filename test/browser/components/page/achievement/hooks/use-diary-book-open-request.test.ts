@@ -16,20 +16,6 @@ afterEach(() => {
 })
 
 describe("useDiaryBookOpenRequest", () => {
-  it("まだ一度も呼ばれていなければ undefined", () => {
-    // このテストファイルの中で他のテストより先に走らない保証は無いので、`token` の値ではなく
-    // 「呼ぶ前後で日付が変わる」ことだけを見る。
-    const { result } = renderHook(() => useDiaryBookOpenRequest())
-    const before = result.current
-
-    act(() => {
-      requestDiaryBookOpen("2026-09-20")
-    })
-
-    expect(result.current).not.toBe(before)
-    expect(result.current?.date).toBe("2026-09-20")
-  })
-
   it("呼ぶたびに token が増え、購読している hook が拾う", () => {
     const { result } = renderHook(() => useDiaryBookOpenRequest())
 

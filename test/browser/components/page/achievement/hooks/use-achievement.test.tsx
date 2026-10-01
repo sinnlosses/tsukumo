@@ -134,7 +134,7 @@ describe("useAchievement", () => {
     })
   })
 
-  it("応答が落ち、一度も届いていなければ failed", async () => {
+  it("応答が落ち、一度も届いていなければ view も日記の区画も failed", async () => {
     stubAchievementFetch(() => rpcError(503, "UNAVAILABLE"))
 
     const { result } = renderHook(() => useAchievement(), {
@@ -144,6 +144,7 @@ describe("useAchievement", () => {
     await waitFor(() => {
       expect(result.current.view.kind).toBe("failed")
     })
+    expect(result.current.diarySection).toEqual({ kind: "failed" })
   })
 
   it("前の日へ切り替えると hash の date が1日前になる", async () => {
@@ -413,7 +414,7 @@ describe("useAchievement（日記の区画）", () => {
     })
   })
 
-  it("日記が無い日は「まだこの日の日記は無い。」、空の日は成果が無い旨", async () => {
+  it("日記が無い日は「まだこの日の日記は無い。」、空の日は成果が無い旨、コミットだけの日は空の日にしない", async () => {
     stubAchievementFetch(() => rpcOutput(KNOWN_TODAY))
     const { result } = renderHook(() => useAchievement(), {
       wrapper: achievementWrapper(createTestQueryClient()),
@@ -439,6 +440,20 @@ describe("useAchievement（日記の区画）", () => {
     })
     expect(empty.result.current.diarySection).toMatchObject({
       bubble: { kind: "notes", notes: ["この日に main へ入った成果は無い。"] },
+    })
+
+    fetchStub?.restore()
+    stubAchievementFetch(() =>
+      rpcOutput({ ...KNOWN_TODAY, commitCount: 3, doneTasks: { kind: "known", items: [] } }),
+    )
+    const commitOnly = renderHook(() => useAchievement(), {
+      wrapper: achievementWrapper(createTestQueryClient()),
+    })
+    await waitFor(() => {
+      expect(commitOnly.result.current.view.kind).toBe("ready")
+    })
+    expect(commitOnly.result.current.diarySection).toMatchObject({
+      bubble: { kind: "notes", notes: ["まだこの日の日記は無い。"] },
     })
   })
 
@@ -503,16 +518,6 @@ describe("useAchievement（日記の区画）", () => {
         kind: "notes",
         notes: ["日記を書けなかった。もう一度押すと書き直す。", "架空の日記の本文。"],
       },
-    })
-  })
-
-  it("取れなかったときは failed", async () => {
-    stubAchievementFetch(() => rpcError(503, "UNAVAILABLE"))
-    const { result } = renderHook(() => useAchievement(), {
-      wrapper: achievementWrapper(createTestQueryClient()),
-    })
-    await waitFor(() => {
-      expect(result.current.diarySection).toEqual({ kind: "failed" })
     })
   })
 })

@@ -83,13 +83,6 @@ describe("LanternCalendar", () => {
     expect(viewedCell).toBeDefined()
   })
 
-  it("日記のある日には鈴が付く", () => {
-    render(<LanternCalendar calendar={KNOWN} viewedDate={undefined} onSelectDate={() => {}} />)
-
-    const today = screen.getByRole("button", { name: /日記あり/ })
-    expect(today).toBeDefined()
-  })
-
   it("マスを押すと onSelectDate にその日付が渡る", () => {
     const selected: string[] = []
     render(

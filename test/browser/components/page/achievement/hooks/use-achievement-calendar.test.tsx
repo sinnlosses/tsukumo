@@ -41,7 +41,7 @@ describe("useAchievementCalendar", () => {
     expect(result.current.kind).toBe("loading")
   })
 
-  it("届けばそのまま渡す", async () => {
+  it("届けばそのまま渡し、月曜はじまりの35日のマスと範囲の字を畳む", async () => {
     stubFetch(() => rpcOutput(KNOWN))
     const { result } = renderHook(() => useAchievementCalendar(), {
       wrapper: queryClientWrapper(createTestQueryClient()),
@@ -51,17 +51,6 @@ describe("useAchievementCalendar", () => {
       expect(result.current.kind).toBe("known")
     })
     expect(result.current).toMatchObject(KNOWN)
-  })
-
-  it("届けば月曜はじまりの35日のマスと範囲の字を畳む", async () => {
-    stubFetch(() => rpcOutput(KNOWN))
-    const { result } = renderHook(() => useAchievementCalendar(), {
-      wrapper: queryClientWrapper(createTestQueryClient()),
-    })
-
-    await waitFor(() => {
-      expect(result.current.kind).toBe("known")
-    })
     if (result.current.kind !== "known") {
       return
     }

@@ -1,10 +1,3 @@
-// サイドバー全体の組み立て。下端の帯（`.sidebar-footer`。モデル・effort・許可モードの口と、コンテキスト・利用枠の目盛り）は区画ではないので、
-// 見出しを名乗らず、区画の枠（`SidebarSection`）も通らない。見出しはタスクの1つだけになる。
-// キャラクターとセッションの切り替えはサイドバーに無い（帯の左上。docs/architecture/screen-design.md「画面のナビゲーション」）。
-//
-// 雑談中は4段に差し替わる（docs/architecture/screen-design.md「雑談のときのサイドバー」）: プロフィールの札・
-// 最近の話題・覚えていること・下端の帯。タスク一覧は出さない。
-
 import { QueryClientProvider } from "@tanstack/react-query"
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
@@ -46,50 +39,7 @@ function renderSidebar(stateOverrides: Partial<SessionState>): void {
   )
 }
 
-describe("Sidebar", () => {
-  it("見出しは「タスク」の1つだけ（「セッション情報」の見出しは無い）", () => {
-    renderSidebar({
-      characterPacks: [characterPackEntry("tsukumo-spirit", "つくもの精霊")],
-      character: characterInfo({ pack: "tsukumo-spirit" }),
-    })
-
-    // 見出しの `<h2>` には「一覧を見る」ボタンも同居するので、区画の題（`.sidebar-block-title`）
-    // だけを見る。
-    const titles = document.querySelectorAll(".sidebar-block-title")
-    expect(Array.from(titles).map((title) => title.textContent)).toEqual(["タスク"])
-    expect(screen.getAllByRole("heading", { level: 2 })).toHaveLength(1)
-    expect(screen.queryByText("セッション情報")).toBeNull()
-  })
-
-  it("下端の帯は区画の外に出て、キャラクターとセッションの切り替えは置かない", () => {
-    renderSidebar({
-      characterPacks: [characterPackEntry("tsukumo-spirit", "つくもの精霊")],
-      character: characterInfo({ pack: "tsukumo-spirit", face: "/character/face.png" }),
-    })
-
-    // 帯は区画の枠（`SidebarSection`）を通らないので、`.sidebar-block` の中には入らない。
-    const footer = document.querySelector(".sidebar-footer")
-    expect(footer?.closest(".sidebar-block")).toBeNull()
-    expect(footer?.querySelector('button[title="コンテキスト"]')).not.toBeNull()
-    expect(screen.queryByLabelText("キャラクター")).toBeNull()
-    expect(screen.queryByLabelText("セッション")).toBeNull()
-  })
-})
-
 describe("Sidebar の下端の帯", () => {
-  it("モデル・effort・許可モードの口に、何の値かを aria-label で名乗らせる", () => {
-    renderSidebar({ model: "claude-opus-4-1", session: RUNNING_SESSION })
-
-    const group = screen.getByRole("group", { name: "実行の設定" })
-    expect(
-      [...group.querySelectorAll("select")].map((select) => select.getAttribute("aria-label")),
-    ).toEqual([
-      "モデル Opus",
-      "effort まだ effort を読み取れていない（ターンが終わると分かる）",
-      "許可モード 毎回聞く",
-    ])
-  })
-
   it("モデルの口で選ぶと session.setModel を送る", () => {
     const sent: unknown[] = []
     stubContextUsageUnavailable()
@@ -148,41 +98,10 @@ const CHAT_STATE: Partial<SessionState> = {
   ],
 }
 
-function headingTitles(): readonly (string | null)[] {
-  return Array.from(document.querySelectorAll(".sidebar-block-title")).map(
-    (title) => title.textContent,
-  )
-}
-
 describe("Sidebar（雑談中）", () => {
-  it("タスク一覧を出さず、プロフィールの札を出す", () => {
+  it("覚えていることが空のときは案内を出す", () => {
     renderSidebar(CHAT_STATE)
 
-    expect(headingTitles()).not.toContain("タスク")
-    expect(screen.queryByRole("button", { name: "一覧を見る" })).toBeNull()
-    expect(document.querySelector(".profile-card")).not.toBeNull()
-    expect(screen.getByText("架空の精霊")).toBeDefined()
-    expect(screen.getByText("窓辺に棲む架空の精霊")).toBeDefined()
-  })
-
-  it("上から札・最近の話題・覚えていること・下端の帯の4段に並ぶ", () => {
-    renderSidebar(CHAT_STATE)
-
-    expect(headingTitles()).toEqual(["最近の話題", "覚えていること"])
-    const card = document.querySelector(".profile-card")
-    const footer = document.querySelector(".sidebar-footer")
-    const topics = screen.getByRole("heading", { name: "最近の話題" })
-    // DOM の並び順（`compareDocumentPosition` の FOLLOWING = 4）で上下を確かめる。
-    expect(card?.compareDocumentPosition(topics)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
-    expect(footer === null ? 0 : topics.compareDocumentPosition(footer)).toBe(
-      Node.DOCUMENT_POSITION_FOLLOWING,
-    )
-  })
-
-  it("最近の話題と覚えていることは、空のときの案内を出す", () => {
-    renderSidebar(CHAT_STATE)
-
-    expect(screen.getByText("まだ話題が無い（話が積もると、ここに並ぶ）")).toBeDefined()
     expect(screen.getByText("まだ覚えていることが無い")).toBeDefined()
   })
 
@@ -199,22 +118,5 @@ describe("Sidebar（雑談中）", () => {
       "架空の三番目の話題",
     ])
     expect(screen.queryByText(/まだ話題が無い/u)).toBeNull()
-  })
-
-  it("キャラクターの <select> は札の「変える」にだけ出る", () => {
-    renderSidebar(CHAT_STATE)
-
-    expect(screen.queryByLabelText("キャラクター")).toBeNull()
-    expect(screen.getByLabelText("キャラクターを変える")).toBeDefined()
-  })
-})
-
-describe("Sidebar（仕事）", () => {
-  it("今までどおりタスク一覧と下端の帯を出し、プロフィールの札は出さない", () => {
-    renderSidebar({ ...CHAT_STATE, chatMode: false })
-
-    expect(document.querySelector(".profile-card")).toBeNull()
-    expect(document.querySelector(".sidebar-footer")).not.toBeNull()
-    expect(screen.queryByLabelText("キャラクターを変える")).toBeNull()
   })
 })

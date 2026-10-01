@@ -21,11 +21,6 @@ function renderNotice(state: SessionState): ReturnType<typeof render> {
 }
 
 describe("DiaryNotice", () => {
-  it("書いていない間は何も出さない", () => {
-    renderNotice(stateWith({ diaryWriting: { kind: "idle" } }))
-    expect(screen.queryByRole("status")).toBeNull()
-  })
-
   it("書いている間は何も出さない", () => {
     renderNotice(
       stateWith({

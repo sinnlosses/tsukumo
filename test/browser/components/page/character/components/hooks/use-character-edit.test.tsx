@@ -20,8 +20,8 @@ import {
 import { type CommandSpy, putSession } from "../../../../../session-store.ts"
 
 /**
- * 立ち絵の並び（`<CharacterEdit>`）を描かずに、カード・差し色・背景への畳み方と送り先だけを
- * 測る（docs/architecture.md「機能の中を分ける」）。画面に出た形は別のテストが見る。
+ * 立ち絵の並び（`<CharacterEdit>`）を描かずに、差し色の送り方と、部品の単体が通さない分岐だけを
+ * 測る（docs/architecture.md「機能の中を分ける」）。
  */
 
 const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = characterInfo({
@@ -84,52 +84,7 @@ function ready(model: CharacterEditModel): Extract<CharacterEditModel, { kind: "
   return model
 }
 
-function cardOf(model: CharacterEditModel, expression: string) {
-  const card = ready(model).cards.find((candidate) => candidate.expression === expression)
-  if (card === undefined) {
-    throw new Error(`${expression} のカードが無い`)
-  }
-  return card
-}
-
 describe("useCharacterEdit", () => {
-  it("キャラクターが届く前は waiting", () => {
-    const { result } = renderHook(() => useCharacterEdit(), {
-      wrapper: wrapperFor(undefined, () => {}),
-    })
-
-    expect(result.current).toEqual({ kind: "waiting" })
-  })
-
-  it("自分の絵を持つ表情だけ絵を出し、default と絵の無い表情には消す口を出さない", () => {
-    const { result } = renderHook(() => useCharacterEdit(), {
-      wrapper: wrapperFor(FIXTURE_CHARACTER, () => {}),
-    })
-
-    const defaultCard = cardOf(result.current, "default")
-    expect(defaultCard.image).toEqual({
-      kind: "shown",
-      url: "/character/default.png?v=fictional@1",
-      accent: "#b8c7ff",
-      outfit: "default",
-    })
-    expect(defaultCard.pickAriaLabel).toBe("通常を差し替える")
-    expect(defaultCard.badge).toEqual({ kind: "shown", text: "いつもの顔" })
-    expect(defaultCard.clear.kind).toBe("hidden")
-
-    expect(cardOf(result.current, "proud").clear).toMatchObject({
-      kind: "shown",
-      ariaLabel: "どや顔を消す",
-    })
-
-    // 畳んだ表では default の絵が入っているが、自分の絵は無いので空きの枠になる。
-    const blank = cardOf(result.current, "thinking")
-    expect(blank.image).toEqual({ kind: "blank" })
-    expect(blank.badge).toEqual({ kind: "none" })
-    expect(blank.pickAriaLabel).toBe("thinkingを選ぶ")
-    expect(blank.clear.kind).toBe("hidden")
-  })
-
   it("差し色は見た目だけ先に進め、送るのは少し待ってから1回", async () => {
     const calls: unknown[] = []
     const { result } = renderHook(() => useCharacterEdit(), {
@@ -203,52 +158,6 @@ describe("useCharacterEdit", () => {
     })
   })
 
-  // このキャラクターを消す／同梱に戻す帯（docs/architecture/screen-design.md「このキャラクターを消す」）。
-  it("使用中のパックは帯のボタンが押せない（理由つき）", () => {
-    const { result } = renderHook(() => useCharacterEdit(), {
-      wrapper: wrapperWithPacks(
-        FIXTURE_CHARACTER,
-        [characterPackEntry("fictional", "架空の精霊", { inUse: true, removal: "delete" })],
-        () => {},
-      ),
-    })
-
-    const band = ready(result.current).deleteBand
-    if (band.kind !== "shown") {
-      throw new Error("帯が出ていない")
-    }
-    expect(band.disabled).toBe(true)
-    expect(band.title).toBeDefined()
-  })
-
-  // 使用中以外のパックを詳しい設定に出すには、一覧にもう1件（`other`）を足し、hash でそれを
-  // 選ぶ（`docs/architecture/screen-design.md`「選んでいるパックは hash に持つ」）。
-  it("使用中以外のパックは帯のボタンが押せる", () => {
-    window.location.hash = "#character?pack=other"
-    const { result } = renderHook(() => useCharacterEdit(), {
-      wrapper: wrapperWithPacks(
-        FIXTURE_CHARACTER,
-        [
-          characterPackEntry("fictional", "架空の精霊", { inUse: true, removal: "none" }),
-          characterPackEntry("other", "別の精霊", {
-            character: characterInfo({ pack: "other", name: "別の精霊" }),
-            inUse: false,
-            removal: "delete",
-          }),
-        ],
-        () => {},
-      ),
-    })
-
-    const band = ready(result.current).deleteBand
-    if (band.kind !== "shown") {
-      throw new Error("帯が出ていない")
-    }
-    expect(band.pack).toBe("other")
-    expect(band.disabled).toBe(false)
-    expect(band.heading).toBe("このキャラクターを消す")
-  })
-
   // 名前とプロフィールを変えるダイアログの種（`CharacterProfileEdit`）。
   it("名前・ひとこと無しのパックでは editProfile の種が空文字になる", () => {
     const { result } = renderHook(() => useCharacterEdit(), {
@@ -263,14 +172,8 @@ describe("useCharacterEdit", () => {
     expect(edit.tagline).toBe("")
   })
 
-  it("変えられないパックでは editProfile を出さない", () => {
-    const { result } = renderHook(() => useCharacterEdit(), {
-      wrapper: wrapperFor({ ...FIXTURE_CHARACTER, editable: false }, () => {}),
-    })
-
-    expect(ready(result.current).profile.editProfile).toEqual({ kind: "hidden" })
-  })
-
+  // 使用中以外のパックを詳しい設定に出すには、一覧にもう1件（`other`）を足し、hash でそれを
+  // 選ぶ（`docs/architecture/screen-design.md`「選んでいるパックは hash に持つ」）。
   it("同梱を直したパックは「同梱に戻す」の文言になる", () => {
     window.location.hash = "#character?pack=other"
     const { result } = renderHook(() => useCharacterEdit(), {

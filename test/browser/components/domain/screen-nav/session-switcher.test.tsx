@@ -4,7 +4,7 @@
 //
 
 import { QueryClientProvider } from "@tanstack/react-query"
-import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
 import { ScreenNav } from "../../../../../src/browser/components/domain/screen-nav/screen-nav.tsx"
@@ -92,17 +92,6 @@ function searchBox(): HTMLElement {
 }
 
 describe("セッションの札と切り替え画面", () => {
-  it("札に部屋の名前と短縮IDが出て、押すと切り替え画面が開く", () => {
-    renderNav({})
-
-    expect(document.querySelector(".screen-nav-identity")?.textContent).toContain("空色の間-FA")
-    expect(switcherOpen()).toBe(false)
-
-    openByTag()
-
-    expect(switcherOpen()).toBe(true)
-  })
-
   it("押せるのは短縮IDだけで、部屋の名前はボタンの外に出る", () => {
     renderNav({})
     const [tag] = screen.getAllByRole("button", { name: /セッション FA。/u })
@@ -127,29 +116,12 @@ describe("セッションの札と切り替え画面", () => {
     expect(current.textContent).toContain("いま")
   })
 
-  it("開いた直後はいま以外のいちばん新しい行を選び、右に要約と最後のひとことを出す", async () => {
-    renderNav({})
-    openByTag()
-
-    const selected = within(sessionList()).getByRole("option", { selected: true })
-    expect(selected.textContent).toContain("架空の昨日の作業")
-    await waitFor(() => {
-      expect(screen.getByText("架空の要約の一段落目。")).toBeDefined()
-    })
-    expect(screen.getByText("残り：架空の残り。").getAttribute("data-remaining")).toBe("true")
-    expect(screen.getByText(/架空の締めのセリフ/u)).toBeDefined()
-    expect(screen.getByText(/依頼 4/u)).toBeDefined()
-  })
-
-  it.each([
-    ["↓", { key: "ArrowDown" }],
-    ["Ctrl+N", { key: "n", ctrlKey: true }],
-  ])("%s で下の行を選び Enter で switchSession を送り、閉じる", (_name, key) => {
+  it("Ctrl+N で下の行を選び Enter で switchSession を送り、閉じる", () => {
     const sent: SentCommand[] = []
     renderNav({}, (command) => sent.push(command))
     openByTag()
 
-    fireEvent.keyDown(searchBox(), key)
+    fireEvent.keyDown(searchBox(), { key: "n", ctrlKey: true })
     fireEvent.keyDown(searchBox(), { key: "Enter" })
 
     expect(sent).toEqual([{ procedure: "session.switchSession", sessionId: "c3000000-0000" }])

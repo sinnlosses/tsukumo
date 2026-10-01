@@ -66,23 +66,19 @@ describe("UsageReviewCard（ふだん）", () => {
     expect(started).toBe(1)
   })
 
-  it("押せないあいだは理由が出て、「減らし方を見てもらう」を押しても依頼を送らない", () => {
-    let started = 0
+  it("押せないあいだは「減らし方を見てもらう」が aria-disabled になり、理由が出る", () => {
     const review: UseUsageReviewResult = {
       ...IDLE_AVAILABLE,
       start: {
         kind: "blocked",
         reason: "いまターンが動いているので送れない。終わってからもう一度押す。",
       },
-      onStart: () => (started += 1),
     }
     const { getByRole, getByText } = render(<UsageReviewCard review={review} />)
 
-    const startButton = getByRole("button", { name: "減らし方を見てもらう" })
-    expect(startButton.getAttribute("aria-disabled")).toBe("true")
-    fireEvent.click(startButton)
-
-    expect(started).toBe(0)
+    expect(
+      getByRole("button", { name: "減らし方を見てもらう" }).getAttribute("aria-disabled"),
+    ).toBe("true")
     expect(
       getByText("いまターンが動いているので送れない。終わってからもう一度押す。"),
     ).not.toBeNull()

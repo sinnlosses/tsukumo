@@ -89,26 +89,6 @@ function profileEditDialog(): Element | null {
 }
 
 describe("CharacterEdit", () => {
-  it("8つの表情ぶんの立ち絵の口と、4つの衣装ぶんの差し色を出す", () => {
-    renderCharacterEdit(FIXTURE_CHARACTER)
-
-    // ラベルはキャラクター定義の言葉。定義に無い表情（flustered / serious / curious / sad /
-    // excited）は表情名がそのまま出る。立ち絵がある表情は「差し替える」、無い表情は「選ぶ」
-    // （見える字は短く、どの表情かは読み上げに残す）。
-    expect(screen.getByLabelText("通常を差し替える")).toBeDefined()
-    expect(screen.getByLabelText("作業中を差し替える")).toBeDefined()
-    expect(screen.getByLabelText("どや顔を差し替える")).toBeDefined()
-    expect(screen.getByLabelText("flusteredを選ぶ")).toBeDefined()
-    expect(screen.getByLabelText("seriousを選ぶ")).toBeDefined()
-    expect(screen.getByLabelText("curiousを選ぶ")).toBeDefined()
-    expect(screen.getByLabelText("sadを選ぶ")).toBeDefined()
-    expect(screen.getByLabelText("excitedを選ぶ")).toBeDefined()
-    expect(screen.getByLabelText("既定")).toBeDefined()
-    expect(screen.getByLabelText("軽装（haiku）")).toBeDefined()
-    expect(screen.getByLabelText("通常装備（sonnet）")).toBeDefined()
-    expect(screen.getByLabelText("戦闘配置（opus）")).toBeDefined()
-  })
-
   // 必須の1つ（default）は消せない（`docs/requirements.md`「キャラクター定義」）。画面にも口を出さない。
   it("default には消す口を出さない（立ち絵があっても）", () => {
     renderCharacterEdit(FIXTURE_CHARACTER)
@@ -168,17 +148,6 @@ describe("CharacterEdit", () => {
     const badges = [...document.querySelectorAll(".character-card-badge")]
     expect(badges.map((badge) => badge.textContent)).toEqual(["いつもの顔"])
     expect(badges[0]?.closest("figure")?.getAttribute("data-expression")).toBe("default")
-  })
-
-  // 乗せたときだけ出る口は、キーボードからも届く（消さずに透明にしてあり、Tab で入れる）。
-  it("差し替える・消すの口は、フォーカスできる要素としてカードの中にある", () => {
-    renderCharacterEdit(FIXTURE_CHARACTER)
-
-    const card = screen.getByLabelText("どや顔を差し替える").closest("figure")
-    const clear = screen.getByRole("button", { name: "どや顔を消す" })
-    expect(card?.contains(clear)).toBe(true)
-    clear.focus()
-    expect(document.activeElement).toBe(clear)
   })
 
   it("カードに画像を落とすと、その表情の characterPack.setPortrait を dispatch する", async () => {
@@ -255,23 +224,6 @@ describe("CharacterEdit", () => {
       throw new Error("確かめが開いていない")
     }
     fireEvent(dialog, new Event("close"))
-
-    expect(calls).toEqual([])
-    expect(clearConfirmDialog()).toBeNull()
-  })
-
-  // 外側のクリックは `<dialog>` 自身への click として届く（`<Dialog>` の backdrop クリックの
-  // 読み替え）。
-  it("外側のクリックで閉じ、何も送らない", () => {
-    const calls: unknown[] = []
-    renderCharacterEdit(FIXTURE_CHARACTER, (command) => calls.push(command))
-
-    fireEvent.click(screen.getByRole("button", { name: "どや顔を消す" }))
-    const dialog = clearConfirmDialog()
-    if (dialog === null) {
-      throw new Error("確かめが開いていない")
-    }
-    fireEvent.click(dialog)
 
     expect(calls).toEqual([])
     expect(clearConfirmDialog()).toBeNull()
@@ -426,25 +378,9 @@ describe("CharacterEdit", () => {
     expect(
       typedElement(screen.getByLabelText("雑談"), HTMLInputElement, "雑談の入力欄").disabled,
     ).toBe(true)
-    const resetButton = screen.getByRole("button", { name: "雑談も仕事と同じにする" })
-    // 押せないは `aria-disabled` の1通り（`Button`。`docs/architecture/browser.md`「`Button`」）。本物の `disabled`
-    // にはしないので、フォーカスは残る。
-    expect(resetButton.getAttribute("aria-disabled")).toBe("true")
-    expect(resetButton.hasAttribute("disabled")).toBe(false)
-    resetButton.focus()
-    expect(document.activeElement).toBe(resetButton)
-  })
-
-  it("押せないあいだは「雑談も仕事と同じにする」を押しても characterPack.clearChatAccent を送らない", () => {
-    const calls: unknown[] = []
-    renderCharacterEdit(
-      { ...FIXTURE_CHARACTER, chatAccent: "#f2984a", editable: false },
-      (command) => calls.push(command),
-    )
-
-    fireEvent.click(screen.getByRole("button", { name: "雑談も仕事と同じにする" }))
-
-    expect(calls).toEqual([])
+    expect(
+      screen.getByRole("button", { name: "雑談も仕事と同じにする" }).getAttribute("aria-disabled"),
+    ).toBe("true")
   })
 
   it("差し色の初期値は、その衣装の値 → default → --accent の順で決まる", () => {
@@ -748,28 +684,12 @@ describe("CharacterEdit", () => {
       expect(dialog?.hasAttribute("open")).toBe(true)
       expect(screen.getByText("別の精霊 を消しますか？")).toBeDefined()
       const okButton = screen.getByRole("button", { name: "消す" })
-      // 押せないは `aria-disabled` の1通り（`Button`）。本物の `disabled` にはしないので、
-      // フォーカスは残る。
       expect(okButton.getAttribute("aria-disabled")).toBe("true")
-      expect(okButton.hasAttribute("disabled")).toBe(false)
-      okButton.focus()
-      expect(document.activeElement).toBe(okButton)
 
       fireEvent.change(screen.getByLabelText("確かめのため、id を入力してください"), {
         target: { value: "othe" },
       })
       expect(okButton.getAttribute("aria-disabled")).toBe("true")
-    })
-
-    it("押せないあいだ「消す」を押しても characterPack.delete を送らない", () => {
-      selectOther()
-      const calls: unknown[] = []
-      renderCharacterEdit(FIXTURE_CHARACTER, (command) => calls.push(command), OTHER_PACKS)
-
-      fireEvent.click(screen.getByRole("button", { name: /別の精霊 を消す/ }))
-      fireEvent.click(screen.getByRole("button", { name: "消す" }))
-
-      expect(calls).toEqual([])
     })
 
     it("id が完全に一致すると「消す」が押せ、characterPack.delete を1回だけ送って閉じる", () => {

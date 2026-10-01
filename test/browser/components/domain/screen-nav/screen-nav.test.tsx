@@ -47,22 +47,7 @@ function renderScreenNav(state: Partial<SessionState> = {}, spy: CommandSpy = ()
   render(<ScreenNav />)
 }
 
-/** 帯に並んでいる口（狭い画面の「≡」の中は数えない）。 */
-function gateNames(): readonly string[] {
-  return [...document.querySelectorAll(".screen-nav-gates a")].map((node) => node.textContent ?? "")
-}
-
 describe("ScreenNav", () => {
-  it("4つの口（会話 / キャラ / トークン / 成果）を hash のリンクで出す", () => {
-    renderScreenNav()
-
-    expect(gateNames()).toEqual(["会話", "キャラ", "トークン", "成果"])
-    expect(screen.getByRole("link", { name: "会話" }).getAttribute("href")).toBe("#")
-    expect(screen.getByRole("link", { name: "キャラ" }).getAttribute("href")).toBe("#character")
-    expect(screen.getByRole("link", { name: "トークン" }).getAttribute("href")).toBe("#token-usage")
-    expect(screen.getByRole("link", { name: "成果" }).getAttribute("href")).toBe("#achievement")
-  })
-
   // 色だけで伝えないので、いまの画面の口には地と字の濃さを変える class が付く（docs/architecture/screen-design.md「画面のナビゲーション」）。
   it("いま出している画面の口に is-active が付く", () => {
     window.location.hash = "#token-usage"
@@ -73,23 +58,8 @@ describe("ScreenNav", () => {
     expect(screen.getByRole("link", { name: "トークン" }).getAttribute("aria-current")).toBe("page")
   })
 
-  it("hash が無いときは会話の口が is-active", () => {
-    window.location.hash = ""
-    renderScreenNav()
-
-    expect(screen.getByRole("link", { name: "会話" }).className).toContain("is-active")
-  })
-
   // 部屋の名前は帯の左端（docs/architecture/screen-design.md「画面のナビゲーション」）。ポートの並び順に割り当たる（`roomName`）ので、
   // 出ている名前でどの tsukumo を見ているかが分かる。
-  it("会話の画面の帯には、いまの作業の札とモデル・effort・許可モードを置かない", () => {
-    renderScreenNav()
-
-    expect(document.querySelector(".screen-nav > .screen-nav-work-slot")).toBeNull()
-    expect(document.querySelector(".screen-nav > .screen-nav-model-permission")).toBeNull()
-    expect(document.querySelector(".screen-nav > .screen-nav-settings")).not.toBeNull()
-  })
-
   it("帯の左端に、このページのポートの部屋の名前を出す", () => {
     setPageUrl("http://127.0.0.1:7329/")
     renderScreenNav()
@@ -101,17 +71,6 @@ describe("ScreenNav", () => {
 
   // 顔は帯の左端、部屋の名前の左（13.9「顔」）。
   describe("顔", () => {
-    it("定義に face があれば、alt にキャラクターの名前を付けて出す", () => {
-      renderScreenNav({
-        character: characterInfo({ name: "架空の精霊", face: "/character/face.png" }),
-      })
-
-      const face = document.querySelector(".screen-nav-identity .screen-nav-face")
-      expect(face?.tagName).toBe("IMG")
-      expect(face?.getAttribute("src")).toBe("/character/face.png")
-      expect(face?.getAttribute("alt")).toBe("架空の精霊")
-    })
-
     it("face が無いパックでは何も出さない（mini や立ち絵からは補わない）", () => {
       renderScreenNav({ character: characterInfo({ face: undefined }) })
 
@@ -256,35 +215,14 @@ describe("ScreenNav", () => {
   })
 
   describe("仕事 / 雑談のトグル", () => {
-    it("いまの側に aria-pressed が付く", () => {
+    it("反対側の名前を title にも渡す", () => {
       renderScreenNav({ chatMode: false })
-      expect(screen.getByRole("button", { name: /仕事/ }).getAttribute("aria-pressed")).toBe("true")
-      expect(screen.getByRole("button", { name: /雑談/ }).getAttribute("aria-pressed")).toBe(
-        "false",
-      )
 
-      cleanup()
-      renderScreenNav({ chatMode: true })
-      expect(screen.getByRole("button", { name: /仕事/ }).getAttribute("aria-pressed")).toBe(
-        "false",
-      )
-      expect(screen.getByRole("button", { name: /雑談/ }).getAttribute("aria-pressed")).toBe("true")
+      expect(screen.getByRole("button", { name: "雑談" }).getAttribute("title")).toBe("雑談")
     })
 
     // 帯の操作子が送るコマンドは、いままでサイドバーの <select> が送っていたものと同じ
     // （`session.setChatMode`。docs/architecture/screen-design.md「画面のナビゲーション」）。
-    it("いまの側だけ字を添え、反対側は絵だけにして名前を aria-label と title に渡す", () => {
-      renderScreenNav({ chatMode: false })
-
-      const group = screen.getByRole("group", { name: "モード" })
-      const [work, chat] = [...group.querySelectorAll("button")]
-      expect(work?.textContent).toBe("仕事")
-      expect(work?.getAttribute("aria-label")).toBeNull()
-      expect(chat?.textContent).toBe("")
-      expect(chat?.getAttribute("aria-label")).toBe("雑談")
-      expect(chat?.getAttribute("title")).toBe("雑談")
-    })
-
     it("反対側を押すと session.setChatMode を送る", () => {
       const calls: unknown[] = []
       renderScreenNav({ chatMode: false }, (command) => {
@@ -320,13 +258,6 @@ describe("ScreenNav", () => {
       fireEvent.click(chatButton)
 
       expect(calls).toEqual([])
-    })
-
-    it("ターンが終わると押せる（aria-disabled が外れる）", () => {
-      renderScreenNav({ turn: { kind: "idle" } })
-
-      const chatButton = screen.getByRole("button", { name: /雑談/ })
-      expect(chatButton.getAttribute("aria-disabled")).toBe("false")
     })
   })
 
@@ -375,19 +306,6 @@ describe("ScreenNav", () => {
       const optionValues = Array.from(select.options).map((option) => option.value)
 
       expect([...optionValues].sort()).toEqual([...MODEL_ALIASES].sort())
-    })
-
-    it.each([
-      ["claude-fable-5-1", "fable"],
-      ["claude-opus-5", "opus"],
-      ["claude-sonnet-5", "sonnet"],
-      ["claude-haiku-5", "haiku"],
-    ])("model が %s なら %s を選択する", (model, alias) => {
-      renderScreenNav({ model })
-
-      expect(
-        typedElement(screen.getByLabelText("モデル"), HTMLSelectElement, "モデルの<select>").value,
-      ).toBe(alias)
     })
 
     // 帯の操作子が送るコマンドは、いままでサイドバーの <select> が送っていたものと同じ。

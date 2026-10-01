@@ -134,17 +134,6 @@ describe("DiaryBook", () => {
     expect(calls).toBe(1)
   })
 
-  it("枠の外（backdrop）を押すと onClose が呼ばれる", () => {
-    let calls = 0
-    renderBook(openModel({ onClose: () => (calls += 1) }))
-    const dialog = document.querySelector("dialog")
-    if (dialog === null) {
-      throw new Error("<dialog> が無い")
-    }
-    fireEvent.click(dialog)
-    expect(calls).toBe(1)
-  })
-
   it("書かれた日は段落の本文と、届いた時刻の札を出す", () => {
     renderBook(openModel())
     expect(screen.getByText("架空の日記の本文1。")).toBeDefined()

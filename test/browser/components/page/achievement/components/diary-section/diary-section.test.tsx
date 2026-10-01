@@ -83,19 +83,9 @@ const READY_EMPTY_DAY = {
   cards: cardsOf("0", "0"),
 } satisfies DiarySectionModel
 
-const READY_COMMIT_ONLY = {
-  ...READY_NO_DIARY,
-  cards: cardsOf("0", "3"),
-} satisfies DiarySectionModel
-
 const READY_UNKNOWN_TASKS = {
   ...READY_NO_DIARY,
   cards: cardsOf("—", "2", "タスクの記録が無い"),
-} satisfies DiarySectionModel
-
-const WRITING_OVER_DIARY = {
-  ...READY_WITH_DIARY,
-  bubble: { kind: "notes", notes: ["架空の日記の本文。"] },
 } satisfies DiarySectionModel
 
 const WRITE_FAILED = {
@@ -163,13 +153,6 @@ describe("DiarySection", () => {
     expect(screen.getByText("振り返る成果が無い")).toBeDefined()
   })
 
-  it("コミットはあり終えたタスクが0の日は、空の日の枠ではなく日記が無い日の枠", () => {
-    renderSection({ diary: READY_COMMIT_ONLY })
-
-    expect(screen.getByText("まだこの日の日記は無い。")).toBeDefined()
-    expect(screen.queryByText("この日に main へ入った成果は無い。")).toBeNull()
-  })
-
   it("タスクの記録が無いリポジトリでは、札が「—」で添え書きが出る", () => {
     renderSection({ diary: READY_UNKNOWN_TASKS })
 
@@ -188,15 +171,6 @@ describe("DiarySection", () => {
     expect(document.querySelector(".achievement-diary-bubble")).not.toBeNull()
   })
 
-  it("数の札は「終えたタスク」→「コミット」の順で並ぶ", () => {
-    renderSection({ diary: READY_WITH_DIARY })
-
-    const labels = [...document.querySelectorAll(".achievement-card h3")].map(
-      (node) => node.textContent,
-    )
-    expect(labels).toEqual(["終えたタスク", "コミット"])
-  })
-
   it("書いている間は進みと「いま書いています…」を出し、ボタンは「振り返り中…」になる", () => {
     renderSection({
       diary: { ...READY_NO_DIARY, bubble: { kind: "notes", notes: [] } },
@@ -209,17 +183,6 @@ describe("DiarySection", () => {
     expect(screen.getByText("いちばんを選ぶ")).toBeDefined()
     const button = screen.getByRole("button", { name: "振り返り中…" })
     expect(button.getAttribute("aria-disabled")).toBe("true")
-  })
-
-  it("書いている間、既に日記があれば前の段落を点線の枠に残す", () => {
-    renderSection({
-      diary: WRITING_OVER_DIARY,
-      writing: { kind: "writing", stage: "read" },
-    })
-
-    expect(screen.getByText("架空の日記の本文。")).toBeDefined()
-    expect(document.querySelector(".achievement-diary-bubble")).toBeNull()
-    expect(document.querySelector(".achievement-diary-bubble-empty")).not.toBeNull()
   })
 
   it("書けなかったときは、書き直しの文言が出てボタンは通常どおり", () => {
