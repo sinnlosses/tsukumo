@@ -1,0 +1,45 @@
+// 入力欄へフォーカスを入れる時機。
+// やり取りが閉じているときにマウントされたとき・閉じたとき（会話の画面へ戻ったときも同じ）と、スキップリンクが押されたとき。
+
+import { useEffect, type RefObject } from "react"
+
+import { isExchangeClosed } from "../../../../../../../../../shared/session/conversation-moment.ts"
+import { isOverlayOpen } from "../../../../../../../../hooks/open-overlay.ts"
+import { useComposerFocus } from "../../../../../../../../stores/composer-focus.ts"
+import { useMainViewContent } from "../../../../../../../../stores/main-view-content.ts"
+import { useSession } from "../../../../../../../../stores/session.ts"
+import type { ComposerSurface } from "../../../domain/composer-surface.ts"
+
+export function useComposerFocusTiming(surfaceRef: RefObject<ComposerSurface | null>): void {
+  const closed = useSession((session) => isExchangeClosed(session.state))
+  const signal = useComposerFocus((state) => state.signal)
+
+  useEffect(() => {
+    if (closed && !holdsFocusElsewhere()) {
+      surfaceRef.current?.focus()
+    }
+  }, [closed, surfaceRef])
+
+  useEffect(() => {
+    if (signal > 0) {
+      surfaceRef.current?.focus()
+    }
+  }, [signal, surfaceRef])
+}
+
+/** メインビューを読んでいる・重なる面が開いている・別の入力欄に打っているあいだは、フォーカスを奪わない。 */
+function holdsFocusElsewhere(): boolean {
+  return (
+    useMainViewContent.getState().hold.focus ||
+    isOverlayOpen() ||
+    isTypingElement(document.activeElement)
+  )
+}
+
+function isTypingElement(element: Element | null): boolean {
+  return (
+    element instanceof HTMLInputElement ||
+    element instanceof HTMLTextAreaElement ||
+    (element instanceof HTMLElement && element.isContentEditable)
+  )
+}

@@ -3,7 +3,8 @@
     {
       "tag": "section",
       "attributes": {
-        "data-region": "character"
+        "data-region": "character",
+        "aria-label": "キャラクター"
       },
       "children": [
         {

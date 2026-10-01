@@ -1,6 +1,15 @@
 {
   "page": [
     {
+      "tag": "button",
+      "attributes": {
+        "type": "button"
+      },
+      "children": [
+        "入力欄へ移る"
+      ]
+    },
+    {
       "tag": "nav",
       "attributes": {
         "aria-label": "画面",
@@ -278,9 +287,10 @@
           },
           "children": [
             {
-              "tag": "section",
+              "tag": "main",
               "attributes": {
-                "data-region": "main"
+                "data-region": "main",
+                "aria-label": "メインビュー"
               },
               "children": [
                 {
@@ -349,7 +359,8 @@
             {
               "tag": "section",
               "attributes": {
-                "data-region": "character"
+                "data-region": "character",
+                "aria-label": "キャラクター"
               },
               "children": [
                 {
@@ -400,7 +411,8 @@
             {
               "tag": "section",
               "attributes": {
-                "data-region": "dispatch"
+                "data-region": "dispatch",
+                "aria-label": "入力欄"
               },
               "children": [
                 {
@@ -409,6 +421,7 @@
                     {
                       "tag": "textarea",
                       "attributes": {
+                        "aria-label": "依頼を書く",
                         "value": ""
                       }
                     },
@@ -481,6 +494,23 @@
                 }
               ]
             }
+          ]
+        }
+      ]
+    },
+    {
+      "tag": "div",
+      "attributes": {
+        "role": "status",
+        "aria-live": "polite",
+        "aria-atomic": "false",
+        "data-live-announcer": ""
+      },
+      "children": [
+        {
+          "tag": "p",
+          "children": [
+            "疑似セッションの駆動で立ち上がったよ。ここはぜんぶ作り物の会話。"
           ]
         }
       ]

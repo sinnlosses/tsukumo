@@ -10,12 +10,14 @@ export type TextAreaSurfaceProps = ComposerSurfaceHandlers & {
   readonly ref: Ref<ComposerSurface | null>
   readonly draft: Draft
   readonly placeholder: string
+  readonly label: string
 }
 
 export function TextAreaSurface({
   ref,
   draft,
   placeholder,
+  label,
   onChange,
   onKeyDown,
   onPaste,
@@ -43,6 +45,7 @@ export function TextAreaSurface({
       ref={textAreaRef}
       className={styles["dispatch-text"]}
       placeholder={placeholder}
+      aria-label={label}
       value={draft.text}
       onChange={(event) => {
         onChange({ text: event.target.value, caret: event.target.selectionStart })

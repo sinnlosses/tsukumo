@@ -8,6 +8,8 @@
 
 import { useEffect, type RefObject } from "react"
 
+import { acquireOverlay } from "./open-overlay.ts"
+
 /** 閉じる合図の出どころ。Esc とそれ以外を呼び出し側が区別できるようにする。 */
 export type DismissCause = "outside" | "escape"
 
@@ -39,9 +41,11 @@ export function useDismissSignal(options: DismissSignalOptions): void {
       }
     }
 
+    const releaseOverlay = acquireOverlay()
     document.addEventListener("pointerdown", closeOnOutside)
     document.addEventListener("keydown", closeOnEscape)
     return () => {
+      releaseOverlay()
       document.removeEventListener("pointerdown", closeOnOutside)
       document.removeEventListener("keydown", closeOnEscape)
     }

@@ -147,6 +147,8 @@ export type ScenarioRoom = {
    * 続きのターンのたびに来るなど）に、狙った回目まで進める口。
    */
   readonly waitForEvent: (kind: string, occurrence?: number) => Promise<void>
+  /** 読み上げの領域（`[data-live-announcer]`）に、ページを開いてからいままでに挿入された文。 */
+  readonly announced: () => Promise<readonly string[]>
   /**
    * ブラウザの時計を「凍らせた瞬間 + `elapsedMs`」で止め、DOM が落ち着くのを待ってから
    * 成果物を書き、期待値と比べる（期待値が無ければ落とす。`E2E_UPDATE=1` なら書き直す）。
@@ -248,6 +250,7 @@ async function openRoom(
   addCleanup(() => context.close())
   const page = await context.newPage()
   await installFixedClock(page)
+  await page.addInitScript(RECORD_ANNOUNCEMENTS_SCRIPT)
 
   const messages = recordMessages(page)
   await page.goto(viewUrl, { waitUntil: "domcontentloaded" })
@@ -277,6 +280,11 @@ async function openRoom(
       await messages.waitForEvent(kind, occurrence)
       lastAwaited = { kind, occurrence }
     },
+    announced: () =>
+      page.evaluate((logName) => {
+        const log: unknown = Reflect.get(window, logName)
+        return Array.isArray(log) ? log.map(String) : []
+      }, ANNOUNCED_LOG),
     settleAndMatch: async (elapsedMs) => {
       if (lastAwaited !== undefined) {
         assertNextStepGap(options.scenario, options.scene, lastAwaited)
@@ -439,6 +447,24 @@ async function installFixedClock(page: Page): Promise<void> {
     "Temporal.Now.instant = () => Temporal.Instant.fromEpochMilliseconds(Date.now())",
   )
 }
+
+const ANNOUNCED_LOG = "__announced"
+
+/** 読み上げの領域へ挿入された文を、ページを開いた時点から控えへ積む台本。 */
+const RECORD_ANNOUNCEMENTS_SCRIPT = `(() => {
+  const log = [];
+  window.${ANNOUNCED_LOG} = log;
+  const selector = "[data-live-announcer] p";
+  new MutationObserver((records) => {
+    for (const record of records) {
+      for (const node of record.addedNodes) {
+        if (!(node instanceof Element)) continue;
+        const found = node.matches(selector) ? [node] : Array.from(node.querySelectorAll(selector));
+        for (const paragraph of found) log.push(paragraph.textContent);
+      }
+    }
+  }).observe(document, { childList: true, subtree: true });
+})()`
 
 /** 購読の手続きの経路（oRPC の要求の `u`）。 */
 const FRAME_SUBSCRIBE_URL = "/frame/subscribe"

@@ -22,6 +22,7 @@ import { useQuestionAnswer } from "../../../../../../../../stores/question-answe
 import { useSession, useTurnRunning } from "../../../../../../../../stores/session.ts"
 import type { ComposerKey, ComposerSurface } from "../../../domain/composer-surface.ts"
 import { loadComposerMode, saveComposerMode, type ComposerMode } from "../domain/composer-mode.ts"
+import { useComposerFocusTiming } from "./use-composer-focus.ts"
 import { usePromptImage, type PromptImageModel } from "./use-prompt-image.ts"
 import {
   insertedTrigger,
@@ -49,6 +50,8 @@ export type ComposerModel = Omit<PromptImageModel, "reset"> & {
   /** 面を `<textarea>` とマークダウンエディタの間で切り替える。下書きはそのまま引き継ぐ。 */
   readonly onToggleMode: () => void
   readonly placeholder: string
+  /** 入力欄の名前（読み上げに伝わる。プレースホルダは名前の代わりにならない）。 */
+  readonly label: string
   /** `<textarea>` の上の帯（質問に答えている間だけ出る）。 */
   readonly band: ComposerBand
   /** 質問に答えている間か（枠を `--state-warn` にし、送るボタンの字を変える）。 */
@@ -79,6 +82,7 @@ export function useComposer(): ComposerModel {
   const setDraft = useComposerDraft((state) => state.setDraft)
   const surfaceRef = useRef<ComposerSurface | null>(null)
   const [mode, setMode] = useState<ComposerMode>(loadComposerMode)
+  useComposerFocusTiming(surfaceRef)
 
   const suggestion = useSuggestion({
     draft,
@@ -143,6 +147,7 @@ export function useComposer(): ComposerModel {
     },
     placeholder:
       question.kind === "asking" ? ANSWER_PLACEHOLDER : composerPlaceholder(characterName),
+    label: question.kind === "asking" ? ANSWER_LABEL : REQUEST_LABEL,
     band:
       question.kind === "asking"
         ? { kind: "question", text: questionBandText(characterName) }
@@ -186,6 +191,9 @@ export function useComposer(): ComposerModel {
 
 /** 質問に答えている間のプレースホルダ（選択肢の札はメインビューに出ている）。 */
 const ANSWER_PLACEHOLDER = "選択肢以外の答えを書く…"
+
+const REQUEST_LABEL = "依頼を書く"
+const ANSWER_LABEL = "質問への答えを書く"
 
 /** `<textarea>` の上の帯の文言。誰が聞いているかを名前で言い、名前が無いパックでは名前を使わずに書く。 */
 function questionBandText(characterName: string | undefined): string {

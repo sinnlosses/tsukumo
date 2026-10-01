@@ -47,6 +47,8 @@ export type SessionStoreState = {
   readonly state: SessionState
   readonly connection: ConnectionStatus
   readonly protocol: ProtocolAgreement
+  /** `hello`（姿の丸ごとの入れ替え）を受けた回数。姿の差が新しく起きたことかを見分けるのに使う。 */
+  readonly generation: number
   readonly dispatch: SessionDispatch
   /** 届いたフレームを畳む。`refresh` は姿を動かさないので呼び出し側が手前で捌く。 */
   readonly receive: (frame: ServerFrame) => void
@@ -62,6 +64,7 @@ export const useSession = create<SessionStoreState>()((set, get) => {
     state: INITIAL_SESSION_STATE,
     connection: "connecting",
     protocol: "compatible",
+    generation: 0,
     // 送った手続きが断られた・接続が切れたときは黙って捨てる（`SessionDispatch`）。
     dispatch: createORPCClient({
       call: (path, input, options) =>
@@ -72,18 +75,23 @@ export const useSession = create<SessionStoreState>()((set, get) => {
     receive: (frame) => {
       const current = get()
       if (frame.type === "hello" && frame.protocolVersion !== PROTOCOL_VERSION) {
-        set({ state: INITIAL_SESSION_STATE, protocol: "mismatched" })
+        set({
+          state: INITIAL_SESSION_STATE,
+          protocol: "mismatched",
+          generation: current.generation + 1,
+        })
         return
       }
       if (frame.type === "hello" && current.protocol === "mismatched") {
-        set({ state: frame.state, protocol: "compatible" })
+        set({ state: frame.state, protocol: "compatible", generation: current.generation + 1 })
         return
       }
       if (current.protocol === "mismatched") {
         return
       }
       const state = applyFrame(current.state, frame)
-      if (state === current.state) {
+      const generation = frame.type === "hello" ? current.generation + 1 : current.generation
+      if (state === current.state && generation === current.generation) {
         return
       }
       // 答え待ち（許可要求・質問）が動いたフレームだけ緊急にする。人が待っている箱なので遅らせない。
@@ -91,11 +99,11 @@ export const useSession = create<SessionStoreState>()((set, get) => {
       // React は外部の store（zustand も `useSyncExternalStore`）の描き直しを同期レーンで走らせる（`forceStoreRerender`）ので、入力欄との競合にいま効いているのは購読の絞り込み（セレクタ）のほう。
       // 緊急かどうかの境目はここ1箇所に置く。
       if (state.pending !== current.state.pending) {
-        set({ state })
+        set({ state, generation })
         return
       }
       startTransition(() => {
-        set({ state })
+        set({ state, generation })
       })
     },
     setConnection: (status) => {

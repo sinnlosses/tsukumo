@@ -1,0 +1,16 @@
+/* 画面の外に置き、フォーカスが来たときだけ左上へ出す。 */
+.skip-link {
+  position: fixed;
+  top: 0.5rem;
+  left: 0.5rem;
+  z-index: 100;
+  padding: 0.4rem 0.8rem;
+  background: var(--ground);
+  color: var(--ink);
+  border: 1px solid var(--rule);
+  border-radius: 0.5rem;
+  transform: translateY(-300%);
+}
+.skip-link:focus-visible {
+  transform: none;
+}

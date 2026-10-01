@@ -1,9 +1,10 @@
 {
   "main": [
     {
-      "tag": "section",
+      "tag": "main",
       "attributes": {
-        "data-region": "main"
+        "data-region": "main",
+        "aria-label": "メインビュー"
       },
       "children": [
         {

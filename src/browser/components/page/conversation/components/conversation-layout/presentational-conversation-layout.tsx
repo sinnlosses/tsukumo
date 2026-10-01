@@ -96,16 +96,17 @@ export function PresentationalConversationLayout({
         data-narrow-pane={narrowPane}
         style={rowTopStyle}
       >
-        <section
+        <main
           className={clsx(
             styles["layout-region"],
             styles["layout-main"],
             mainAsGround && styles["layout-ground"],
           )}
           data-region="main"
+          aria-label="メインビュー"
         >
           {main}
-        </section>
+        </main>
         <LayoutResizer
           orientation="vertical"
           containerRef={rowTopRef}
@@ -114,12 +115,13 @@ export function PresentationalConversationLayout({
           onChange={onTopLeftChange}
           onCommit={onTopLeftCommit}
         />
-        <section
+        <aside
           className={clsx(styles["layout-region"], styles["layout-sidebar"])}
           data-region="sidebar"
+          aria-label="サイドバー"
         >
           {sidebar}
-        </section>
+        </aside>
       </div>
       {/* 畳んでいる間もこの仕切りは出す（雑談中でも入力欄の高さを変えられる）。
             覚える先は `useConversationLayout` の中で切り替わるだけで、仕切りそのものは1本。 */}
@@ -165,6 +167,7 @@ export function PresentationalConversationLayout({
             <section
               className={clsx(styles["layout-region"], styles["layout-ground"])}
               data-region="character"
+              aria-label="キャラクター"
             >
               {character}
             </section>
@@ -181,6 +184,7 @@ export function PresentationalConversationLayout({
         <section
           className={clsx(styles["layout-region"], styles["layout-dispatch"])}
           data-region="dispatch"
+          aria-label="入力欄"
         >
           {dispatch}
         </section>

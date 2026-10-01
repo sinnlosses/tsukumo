@@ -116,6 +116,31 @@ describe("姿の store の購読", () => {
   })
 })
 
+describe("`hello` を受けた回数", () => {
+  it("`hello` で増え、`events` では増えない", () => {
+    putSession(INITIAL_SESSION_STATE)
+    const afterHello = useSession.getState().generation
+    expect(afterHello).toBeGreaterThan(0)
+
+    act(() => {
+      useSession.getState().receive({
+        type: "events",
+        events: [{ at: 0, event: { kind: "request", text: "架空の依頼", images: [] } }],
+      })
+    })
+    expect(useSession.getState().generation).toBe(afterHello)
+
+    act(() => {
+      useSession.getState().receive({
+        type: "hello",
+        protocolVersion: PROTOCOL_VERSION,
+        state: INITIAL_SESSION_STATE,
+      })
+    })
+    expect(useSession.getState().generation).toBe(afterHello + 1)
+  })
+})
+
 describe("サーバと版が合わないとき（docs/architecture.md「ServerFrame」）", () => {
   const REQUEST_EVENTS = {
     type: "events",

@@ -8,6 +8,7 @@ import { Activity, type ReactElement } from "react"
 import type { Screen } from "../../stores/location-hash.ts"
 import { useScreen } from "../../stores/screen.tsx"
 import { ScreenNav } from "../domain/screen-nav/screen-nav.tsx"
+import { SkipLink } from "../domain/skip-link.tsx"
 import { Achievement } from "../page/achievement/achievement.tsx"
 import { DiaryNotice } from "../page/achievement/components/diary-notice/diary-notice.tsx"
 import { Character } from "../page/character/character.tsx"
@@ -25,6 +26,7 @@ export function Layout(): ReactElement {
   const screen = useScreen()
   return (
     <>
+      {screen === "conversation" && <SkipLink />}
       {/* 画面のナビの帯。どの画面でも最上部に出るので、画面を選ぶ分岐の外に置く。
           会話の画面の `<ConversationLayout>` は、帯が奪う高さを CSS の変数（theme.css）から読んで縮む。 */}
       <ScreenNav />

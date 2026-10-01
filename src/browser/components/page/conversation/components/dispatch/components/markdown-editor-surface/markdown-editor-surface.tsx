@@ -52,12 +52,14 @@ export type MarkdownEditorSurfaceProps = ComposerSurfaceHandlers & {
   readonly ref: Ref<ComposerSurface | null>
   readonly draft: Draft
   readonly placeholder: string
+  readonly label: string
 }
 
 export function MarkdownEditorSurface({
   ref,
   draft,
   placeholder,
+  label,
   onChange,
   onKeyDown,
   onPaste,
@@ -67,7 +69,7 @@ export function MarkdownEditorSurface({
   const hostRef = useRef<HTMLDivElement | null>(null)
   const viewRef = useRef<EditorView | null>(null)
 
-  const initialDraft = useEffectEvent(() => ({ draft, placeholder }))
+  const initialDraft = useEffectEvent(() => ({ draft, placeholder, label }))
   const changed = useEffectEvent((next: Draft) => {
     onChange(next)
   })
@@ -168,6 +170,7 @@ export function MarkdownEditorSurface({
           EditorView.lineWrapping,
           EditorView.editorAttributes.of({ class: styles["markdown-editor-view"] }),
           PLACEHOLDER.of(placeholderExtension(initial.placeholder)),
+          LABEL.of(EditorView.contentAttributes.of({ "aria-label": initial.label })),
           EditorView.updateListener.of((update) => {
             if (
               update.docChanged &&
@@ -209,6 +212,12 @@ export function MarkdownEditorSurface({
     })
   }, [placeholder])
 
+  useEffect(() => {
+    viewRef.current?.dispatch({
+      effects: LABEL.reconfigure(EditorView.contentAttributes.of({ "aria-label": label })),
+    })
+  }, [label])
+
   return (
     <div className={styles["markdown-editor-surface"]}>
       <FormatBar onFormat={format} />
@@ -241,6 +250,9 @@ const FROM_DRAFT = Annotation.define<boolean>()
 
 /** 質問の間だけ差し替わるプレースホルダ。 */
 const PLACEHOLDER = new Compartment()
+
+/** 質問の間だけ差し替わる入力欄の名前。 */
+const LABEL = new Compartment()
 
 /**
  * 既定の keymap から `Mod-Enter`（空行を挟む）を外したもの。

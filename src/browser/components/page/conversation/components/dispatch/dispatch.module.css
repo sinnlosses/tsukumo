@@ -126,7 +126,6 @@
   color: var(--ink-quiet);
 }
 .dispatch-text:focus-visible {
-  outline: none;
   border-color: color-mix(in srgb, var(--accent) 60%, var(--rule));
 }
 /* 答え待ちのあいだは、フォーカスの枠も答え待ちの色（--state-warn）の系統にする。

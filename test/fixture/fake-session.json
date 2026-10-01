@@ -246,6 +246,35 @@
       ]
     },
     {
+      "name": "permission-asking",
+      "steps": [
+        {
+          "afterMs": 0,
+          "event": {
+            "kind": "request",
+            "text": "答え待ちが来たときの読み上げを確かめたい（架空の依頼）",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 100,
+          "event": {
+            "kind": "pending-changed",
+            "pending": [
+              {
+                "kind": "permission",
+                "id": "fake-ask-asking",
+                "toolName": "Bash",
+                "input": {
+                  "command": "echo 架空の確認"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
       "name": "question-multi",
       "steps": [
         {

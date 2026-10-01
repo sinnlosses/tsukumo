@@ -1,9 +1,10 @@
 {
   "main": [
     {
-      "tag": "section",
+      "tag": "main",
       "attributes": {
-        "data-region": "main"
+        "data-region": "main",
+        "aria-label": "メインビュー"
       },
       "children": [
         {
@@ -134,7 +135,8 @@
     {
       "tag": "section",
       "attributes": {
-        "data-region": "dispatch"
+        "data-region": "dispatch",
+        "aria-label": "入力欄"
       },
       "children": [
         {
@@ -143,6 +145,7 @@
             {
               "tag": "textarea",
               "attributes": {
+                "aria-label": "依頼を書く",
                 "value": ""
               }
             },

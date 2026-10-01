@@ -3,7 +3,8 @@
     {
       "tag": "section",
       "attributes": {
-        "data-region": "dispatch"
+        "data-region": "dispatch",
+        "aria-label": "入力欄"
       },
       "children": [
         {
@@ -12,6 +13,7 @@
             {
               "tag": "textarea",
               "attributes": {
+                "aria-label": "依頼を書く",
                 "value": ""
               }
             },

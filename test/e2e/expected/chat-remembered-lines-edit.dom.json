@@ -1,9 +1,10 @@
 {
   "sidebar": [
     {
-      "tag": "section",
+      "tag": "aside",
       "attributes": {
-        "data-region": "sidebar"
+        "data-region": "sidebar",
+        "aria-label": "サイドバー"
       },
       "children": [
         {

@@ -1,9 +1,10 @@
 {
   "main": [
     {
-      "tag": "section",
+      "tag": "main",
       "attributes": {
-        "data-region": "main"
+        "data-region": "main",
+        "aria-label": "メインビュー"
       },
       "children": [
         {
@@ -166,7 +167,8 @@
     {
       "tag": "section",
       "attributes": {
-        "data-region": "character"
+        "data-region": "character",
+        "aria-label": "キャラクター"
       },
       "children": [
         {

@@ -31,6 +31,7 @@ export function PresentationalComposer({
   onToggleMode,
   imageInputRef,
   placeholder,
+  label,
   band,
   answering,
   draft,
@@ -82,6 +83,7 @@ export function PresentationalComposer({
             ref={surfaceRef}
             draft={draft}
             placeholder={placeholder}
+            label={label}
             onChange={onChange}
             onKeyDown={onKeyDown}
             onPaste={onPaste}
@@ -94,6 +96,7 @@ export function PresentationalComposer({
             ref={surfaceRef}
             draft={draft}
             placeholder={placeholder}
+            label={label}
             onChange={onChange}
             onKeyDown={onKeyDown}
             onPaste={onPaste}

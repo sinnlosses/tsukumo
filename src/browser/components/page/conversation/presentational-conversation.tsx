@@ -11,6 +11,7 @@ import { CharacterView } from "./components/character-view/character-view.tsx"
 import { ChatView } from "./components/chat-view/chat-view.tsx"
 import { ConversationLayout } from "./components/conversation-layout/conversation-layout.tsx"
 import { Dispatch } from "./components/dispatch/dispatch.tsx"
+import { LiveAnnouncer } from "./components/live-announcer/live-announcer.tsx"
 import { MainView } from "./components/main-view/main-view.tsx"
 import { RequestedTaskBoard } from "./components/requested-task-board/requested-task-board.tsx"
 
@@ -29,6 +30,7 @@ export function PresentationalConversation(props: PresentationalConversationProp
         collapseCharacter={props.chatMode}
         mainAsGround={props.chatMode}
       />
+      <LiveAnnouncer />
       {!props.chatMode && <RequestedTaskBoard />}
     </>
   )
