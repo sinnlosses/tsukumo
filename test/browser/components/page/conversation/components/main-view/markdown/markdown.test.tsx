@@ -62,6 +62,33 @@ describe("Markdown（unified への置き換えが求める記法）", () => {
     expect(container.querySelector("details > summary")).not.toBeNull()
   })
 
+  it("見比べ（compare）は2つの側が見出しと箇条のまま残る", () => {
+    const text = reportSectionsMarkdown([
+      {
+        heading: "",
+        blocks: [
+          {
+            kind: "compare",
+            title: "",
+            sides: [
+              { heading: "変更前", points: ["架空の一", "架空の二"] },
+              { heading: "変更後", points: ["架空の三"] },
+            ],
+            fold: "",
+          },
+        ],
+      },
+    ])
+    const { container } = render(<Markdown text={text} />)
+
+    const sides = [...container.querySelectorAll("div.report-compare > div.report-compare-side")]
+    expect(sides).toHaveLength(2)
+    expect(sides.map((side) => side.querySelector(".report-compare-heading")?.textContent)).toEqual(
+      ["変更前", "変更後"],
+    )
+    expect(sides.map((side) => side.querySelectorAll("ul > li").length)).toEqual([2, 1])
+  })
+
   it("数の要約（stats / stat）が塊のまま通る", () => {
     const { container } = render(
       <Markdown

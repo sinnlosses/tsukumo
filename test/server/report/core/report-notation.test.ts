@@ -14,7 +14,6 @@ import {
   REPORT_DRAWN_MARK_NAMES,
   REPORT_NOTATION_NAMES,
   REPORT_NOTE_KINDS,
-  REPORT_WRITTEN_MARK_NAMES,
 } from "../../../../src/shared/report/report-notation.ts"
 
 afterEach(() => {
@@ -78,26 +77,13 @@ describe("REPORT_NOTATION_PROMPT", () => {
     }
   })
 
-  it("名乗った class が部品に解決され、その先に見た目が付いている", () => {
-    // 規約 → 部品（`NotationBlock` / `NotationInline`）→ CSS の鎖をひと続きで見る。CSS が受けるのはモデルが
-    // 書いた名前ではなく部品が付け直した名前なので、実際に描いてからその class を CSS に
-    // 突き合わせる（片方だけ足したときにここで落ちる）。
-    expect(namedClasses.length).toBeGreaterThan(0)
-
-    for (const className of new Set(namedClasses)) {
-      const { container } = render(createElement(NotationBlock, { className }, "中身"))
-      const element = container.firstElementChild
-
-      expect(element?.className).not.toBe(className)
-      for (const resolved of element?.className.split(" ") ?? []) {
-        expect(STYLE_SHEET_SOURCE).toContain(`.${resolved}`)
-      }
-    }
+  it("逃げ道に残る記法は class を名乗らない（class を持つ記法は塊から組む）", () => {
+    expect(namedClasses).toEqual([])
   })
 
   it("語彙（src/shared/report/report-notation.ts）の印はどれも部品で解決され、CSS まで届く", () => {
     // 塊から組む印も、塊にする前の記録ではモデルが書いていたので、描く側は同じに解決する。
-    expect(REPORT_NOTATION_NAMES.length).toBe(62)
+    expect(REPORT_NOTATION_NAMES.length).toBe(65)
 
     for (const name of REPORT_NOTATION_NAMES) {
       const { container } = render(createElement(NotationBlock, { className: name }, "中身"))
@@ -110,11 +96,10 @@ describe("REPORT_NOTATION_PROMPT", () => {
     }
   })
 
-  it("逃げ道に書く印は文面に現れ、塊から組む印は文面に class として載せない", () => {
+  it("塊から組む印は文面に class として載せず、塊の列に compare がある", () => {
     // 塊の種類がある記法を逃げ道に書くと差し戻すので、文面が勧めると往復が増える。
-    for (const name of REPORT_WRITTEN_MARK_NAMES) {
-      expect(REPORT_NOTATION_PROMPT).toContain(name)
-    }
+    expect(REPORT_NOTATION_PROMPT).toContain("`compare`")
+    expect(REPORT_NOTATION_PROMPT).not.toContain('class="cols"')
     for (const name of [...REPORT_NOTE_KINDS.map(([kind]) => kind), ...REPORT_BLOCK_MARK_NAMES]) {
       expect(namedClasses).not.toContain(name)
     }

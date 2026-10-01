@@ -39,7 +39,7 @@ const NOTE_LABELS = REPORT_NOTE_KINDS
 type NotationBlockProps = JSX.IntrinsicElements["div"] & ExtraProps
 
 /**
- * レポートの `div`。5系統のうち塊の側（`note` / `cols` / `card` / `stats` / `stat`）を受け持つ。
+ * レポートの `div`。5系統のうち塊の側（`note` / `stats` / `stat` と、過去の記録に残る `cols` / `card`）を受け持つ。
  *
  * `note` の種別のラベルは部品が文字として描く（CSS の `::before` ではない）。
  * モデルは見出しの語を書かない記法なので、何の塊なのかが分かる文字を保証できるのは tsukumo 側だけ。

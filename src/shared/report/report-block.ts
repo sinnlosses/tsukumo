@@ -84,6 +84,25 @@ const matrixBlockSchema = z
   })
   .describe("行×列の交点が状態だけの対応表（機能×条件）。交点に文や数が要るなら table")
 
+const compareBlockSchema = z
+  .object({
+    kind: z.literal("compare"),
+    title: inlineText,
+    sides: z
+      .array(
+        z.object({
+          heading: inlineText,
+          points: z.array(inlineText).min(1),
+        }),
+      )
+      .min(2)
+      .max(2),
+    fold,
+  })
+  .describe(
+    "2つを同時に見比べる（案A と案B・変更前と後）。側ごとに見出しと短い箇条。採否は options、値を揃えるなら table（3つ以上も table）",
+  )
+
 const REPORT_NOTE_TONES = ["info", "warn", "ng", "ask", "memo"] as const
 
 const noteBlockSchema = z.object({
@@ -251,7 +270,7 @@ const progressBlockSchema = z
 
 const markdownBlockSchema = z.object({
   kind: z.literal("markdown"),
-  markdown: z.string().describe("どの塊にも当てはまらない記法（cols・svg・引用・区切り線）だけ"),
+  markdown: z.string().describe("どの塊にも当てはまらない記法（svg・引用・区切り線）だけ"),
   fold,
 })
 
@@ -260,6 +279,7 @@ export const reportBlockSchema = z.discriminatedUnion("kind", [
   listBlockSchema,
   tableBlockSchema,
   matrixBlockSchema,
+  compareBlockSchema,
   noteBlockSchema,
   statsBlockSchema,
   codeBlockSchema,

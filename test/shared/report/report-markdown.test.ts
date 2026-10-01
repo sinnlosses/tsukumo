@@ -429,6 +429,24 @@ describe("reportSectionsMarkdown", () => {
     )
   })
 
+  it("compare は2つの側を見出しと箇条の札にし、title が空なら見出し行を置かない", () => {
+    const compare: ReportBlock = {
+      kind: "compare",
+      title: "架空の見比べ",
+      sides: [
+        { heading: "変更前", points: ["`a` を呼ぶ", "架空の<行>"] },
+        { heading: "変更後", points: ["架空の1行"] },
+      ],
+      fold: "",
+    }
+    const sides =
+      '<div class="compare-side"><div class="compare-heading">変更前</div><ul><li><code>a</code> を呼ぶ</li><li>架空の&lt;行&gt;</li></ul></div>' +
+      '<div class="compare-side"><div class="compare-heading">変更後</div><ul><li>架空の1行</li></ul></div>'
+
+    expect(markdownOf(compare)).toBe(`**架空の見比べ**\n\n<div class="compare">${sides}</div>`)
+    expect(markdownOf({ ...compare, title: "" })).toBe(`<div class="compare">${sides}</div>`)
+  })
+
   it("matrix は名前だけの見出しの格子に状態の印を置き、凡例は格子に出た状態だけを並べる", () => {
     const matrix: ReportBlock = {
       kind: "matrix",

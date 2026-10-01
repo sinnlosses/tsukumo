@@ -127,6 +127,8 @@ function blockMarkdown(block: ReportBlock): string {
       return tableMarkdown(block)
     case "matrix":
       return matrixMarkdown(block)
+    case "compare":
+      return compareMarkdown(block)
     case "note":
       return block.text.trim() === ""
         ? ""
@@ -229,6 +231,18 @@ function optionsMarkdown(block: Extract<ReportBlock, { readonly kind: "options" 
   return joinParts([
     block.title.trim() === "" ? "" : `**${markdownInline(block.title)}**`,
     `<div class="options">${cards.join("")}</div>`,
+  ])
+}
+
+/** 2つの側を、見出しと箇条の札にして横に並べる。 */
+function compareMarkdown(block: Extract<ReportBlock, { readonly kind: "compare" }>): string {
+  const sides = block.sides.map(({ heading, points }) => {
+    const items = points.map((point) => `<li>${htmlInlineWithCode(point)}</li>`).join("")
+    return `<div class="compare-side"><div class="compare-heading">${htmlInlineWithCode(heading)}</div><ul>${items}</ul></div>`
+  })
+  return joinParts([
+    block.title.trim() === "" ? "" : `**${markdownInline(block.title)}**`,
+    `<div class="compare">${sides.join("")}</div>`,
   ])
 }
 

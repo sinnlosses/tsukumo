@@ -1,0 +1,319 @@
+{
+  "main": [
+    {
+      "tag": "section",
+      "attributes": {
+        "data-region": "main"
+      },
+      "children": [
+        {
+          "tag": "div",
+          "attributes": {
+            "data-brush-origin": ""
+          },
+          "children": [
+            {
+              "tag": "article",
+              "children": [
+                {
+                  "tag": "header",
+                  "children": [
+                    {
+                      "tag": "button",
+                      "attributes": {
+                        "aria-disabled": "true",
+                        "aria-label": "1つ古いターンへ",
+                        "type": "button"
+                      },
+                      "children": [
+                        {
+                          "tag": "span",
+                          "attributes": {
+                            "aria-hidden": "true"
+                          },
+                          "children": [
+                            "‹"
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "tag": "button",
+                      "attributes": {
+                        "aria-disabled": "true",
+                        "aria-label": "1つ新しいターンへ",
+                        "type": "button"
+                      },
+                      "children": [
+                        {
+                          "tag": "span",
+                          "attributes": {
+                            "aria-hidden": "true"
+                          },
+                          "children": [
+                            "›"
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "tag": "h2",
+                      "children": [
+                        {
+                          "tag": "button",
+                          "attributes": {
+                            "aria-disabled": "false",
+                            "aria-expanded": "false",
+                            "type": "button"
+                          },
+                          "children": [
+                            "見比べの塊の見え方を確かめたい（架空の依頼）",
+                            {
+                              "tag": "span",
+                              "attributes": {
+                                "aria-hidden": "true"
+                              }
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    "1 / 1",
+                    "最新"
+                  ]
+                },
+                {
+                  "tag": "div",
+                  "attributes": {
+                    "data-outline": "shown"
+                  },
+                  "children": [
+                    {
+                      "tag": "div",
+                      "attributes": {
+                        "data-open": "false"
+                      },
+                      "children": [
+                        {
+                          "tag": "nav",
+                          "attributes": {
+                            "aria-label": "目次"
+                          },
+                          "children": [
+                            {
+                              "tag": "button",
+                              "attributes": {
+                                "aria-label": "目次",
+                                "aria-expanded": "false",
+                                "type": "button"
+                              },
+                              "children": [
+                                {
+                                  "tag": "svg"
+                                }
+                              ]
+                            },
+                            {
+                              "tag": "button",
+                              "attributes": {
+                                "aria-hidden": "true",
+                                "data-level": "section",
+                                "data-active": "true",
+                                "data-in-section": "true",
+                                "type": "button"
+                              }
+                            },
+                            {
+                              "tag": "button",
+                              "attributes": {
+                                "aria-hidden": "true",
+                                "data-level": "section",
+                                "data-active": "false",
+                                "data-in-section": "false",
+                                "type": "button"
+                              }
+                            },
+                            {
+                              "tag": "button",
+                              "attributes": {
+                                "aria-hidden": "true",
+                                "data-level": "section",
+                                "data-active": "false",
+                                "data-in-section": "false",
+                                "type": "button"
+                              }
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "tag": "section",
+                      "children": [
+                        {
+                          "tag": "p",
+                          "children": [
+                            "架空の結論: 見比べの見え方を確かめた。"
+                          ]
+                        },
+                        {
+                          "tag": "h4",
+                          "children": [
+                            "架空の変更の前と後"
+                          ]
+                        },
+                        {
+                          "tag": "p",
+                          "children": [
+                            {
+                              "tag": "strong",
+                              "children": [
+                                "架空の読み込みの前後"
+                              ]
+                            }
+                          ]
+                        },
+                        "変更前",
+                        {
+                          "tag": "ul",
+                          "children": [
+                            {
+                              "tag": "li",
+                              "children": [
+                                "要求のたびに素材を読み直していた"
+                              ]
+                            },
+                            {
+                              "tag": "li",
+                              "children": [
+                                "ブラウザのキャッシュが効かない"
+                              ]
+                            },
+                            {
+                              "tag": "li",
+                              "children": [
+                                "架空の長めの行: 同じ素材を何度も読むので、画面を開き直すたびに待ちが出て、狭い幅では折り返しが続く"
+                              ]
+                            }
+                          ]
+                        },
+                        "変更後",
+                        {
+                          "tag": "ul",
+                          "children": [
+                            {
+                              "tag": "li",
+                              "children": [
+                                "素材を1回だけ読む"
+                              ]
+                            },
+                            {
+                              "tag": "li",
+                              "children": [
+                                "版の付いた URL をキャッシュさせる"
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "tag": "h4",
+                          "children": [
+                            "架空の案Aと案B"
+                          ]
+                        },
+                        "案A",
+                        {
+                          "tag": "ul",
+                          "children": [
+                            {
+                              "tag": "li",
+                              "children": [
+                                {
+                                  "tag": "code",
+                                  "children": [
+                                    "alpha"
+                                  ]
+                                },
+                                "を使う"
+                              ]
+                            }
+                          ]
+                        },
+                        "案B",
+                        {
+                          "tag": "ul",
+                          "children": [
+                            {
+                              "tag": "li",
+                              "children": [
+                                {
+                                  "tag": "code",
+                                  "children": [
+                                    "beta"
+                                  ]
+                                },
+                                "を使う"
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "tag": "h4",
+                          "children": [
+                            "架空の箇条の数が違う見比べ"
+                          ]
+                        },
+                        "左",
+                        {
+                          "tag": "ul",
+                          "children": [
+                            {
+                              "tag": "li",
+                              "children": [
+                                "一"
+                              ]
+                            },
+                            {
+                              "tag": "li",
+                              "children": [
+                                "二"
+                              ]
+                            },
+                            {
+                              "tag": "li",
+                              "children": [
+                                "三"
+                              ]
+                            },
+                            {
+                              "tag": "li",
+                              "children": [
+                                "四"
+                              ]
+                            }
+                          ]
+                        },
+                        "右",
+                        {
+                          "tag": "ul",
+                          "children": [
+                            {
+                              "tag": "li",
+                              "children": [
+                                "一"
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

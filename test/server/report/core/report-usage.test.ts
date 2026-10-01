@@ -43,6 +43,18 @@ describe("reportUsageEntryOf", () => {
     expect(entry.blockKinds).toEqual(["text", "table"])
   })
 
+  it("compare の塊も塊の種類として数える", () => {
+    const side = { heading: "架空の側", points: ["架空の1行"] }
+    const event = reportEvent([
+      {
+        heading: "",
+        blocks: [{ kind: "compare", title: "", sides: [side, side], fold: "" }],
+      },
+    ])
+
+    expect(reportUsageEntryOf(event, "claude-session-1", 1_000).blockKinds).toEqual(["compare"])
+  })
+
   it("matrix の塊も塊の種類として数える", () => {
     const event = reportEvent([
       {

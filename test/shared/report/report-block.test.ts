@@ -39,6 +39,25 @@ describe("parseReportSections", () => {
     expect(parse({ total: "5" })).toMatchObject({ items: [{ total: "5" }, { total: "" }] })
   })
 
+  it("compare の塊は側がちょうど2つで箇条があるときだけ受ける", () => {
+    const side = { heading: "案A", points: ["架空の1行"] }
+    const compare = { kind: "compare", title: "", sides: [side, side], fold: "" }
+    const parse = (block: object): unknown =>
+      parseReportSections([{ heading: "", blocks: [block] }])
+
+    expect(parse(compare)).toEqual({
+      sections: [{ heading: "", blocks: [compare] }],
+      unknownBlockCount: 0,
+    })
+    for (const broken of [
+      { ...compare, sides: [side] },
+      { ...compare, sides: [side, side, side] },
+      { ...compare, sides: [side, { heading: "案B", points: [] }] },
+    ]) {
+      expect(parse(broken)).toEqual({ sections: [], unknownBlockCount: 0 })
+    }
+  })
+
   it("matrix の塊を受け、状態の外の値の行を持つ塊は落とす", () => {
     const matrix = {
       kind: "matrix",

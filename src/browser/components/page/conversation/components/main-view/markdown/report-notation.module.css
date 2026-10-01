@@ -4,7 +4,7 @@
    文脈ごとの打ち消し（`.main-step > .detail-block:last-child` / `.question-ask-option .detail-block`）は、CSS Modules が class 名をファイルごとにハッシュ化するため、この class 名だけをこのファイルの外から選択子で指すことができない。
    打ち消す側（main-view.module.css / question-ask.module.css）が同じ綴りの class をもう1つ持ち、呼び出し側がその class をこの `.detail-block` と一緒に付ける。 */
 
-/* レポートの記法（`REPORT_NOTATION_PROMPT` がモデルに指示する `note` / `badge` / `cols` / `card` / `stats` / `stat`）に当てる見た目の語彙。
+/* レポートの記法（`note` / `badge` / `stats` / `stat` と、過去の記録に残る `cols` / `card`）に当てる見た目の語彙。
    ここが受けるのはモデルが書いた class 名そのものではなく、`NotationBlock` / `NotationInline` が付け直した `report-` の class（モデルの文字列と CSS のセレクタを直接つながないため）。
    クラス名は意味で付ける。
    色だけに頼らず、文字でも区別が付くようにして使う。 */
@@ -264,6 +264,29 @@
 }
 .detail-block .report-option-reject {
   color: var(--ink-quiet);
+}
+/* 見比べ（`report` の `compare` の塊から tsukumo が組む）。
+   2つの側を同じ幅の札にして横に並べ、狭い画面では縦に積む（末尾の @media）。見分けは見出しの文字だけで、判定の色は持たない。 */
+.detail-block .report-compare {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin: 0.5rem 0;
+}
+.detail-block .report-compare-side {
+  min-width: 0;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--rule);
+  border-radius: 0.5rem;
+  background: var(--surface-raised);
+}
+.detail-block .report-compare-heading {
+  margin-bottom: 0.3rem;
+  font-weight: 700;
+}
+.detail-block .report-compare-side ul {
+  margin: 0;
+  padding-left: 1.1rem;
 }
 /* 触ったファイルの一覧（`report` の `files` の塊から tsukumo が組む）。
    1行に1ファイルで、種別・パス・注記を列に揃える（行を subgrid にする）。狭い画面では注記をパスの下へ回す（末尾の @media）。 */
@@ -871,6 +894,9 @@
   .detail-block .report-list-text {
     display: block;
     margin-top: 2px;
+  }
+  .detail-block .report-compare {
+    grid-template-columns: minmax(0, 1fr);
   }
   .detail-block .report-files {
     grid-template-columns: max-content minmax(0, 1fr);

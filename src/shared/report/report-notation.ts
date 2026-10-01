@@ -1,11 +1,10 @@
 // レポートの記法（モデルが書く class 名）の語彙。印の名前の集合の出どころはここだけ。
 //
-// 印は2通りの出どころを持つ。
-// モデルが逃げ道（`markdown` の塊）に書く印（`REPORT_WRITTEN_MARK_NAMES`）と、tsukumo が塊から組む印（`note` の6種と `REPORT_BLOCK_MARK_NAMES`）。
-// 塊から組む印も、塊にする前の記録ではモデルが書いていたので、描く側は両方を同じに解決する。
+// 印は tsukumo が塊から組むもの（`note` の6種と `REPORT_BLOCK_MARK_NAMES`）。
+// 塊にする前の記録ではモデルが書いていたものも含むので、描く側は同じに解決する。
 //
 // claude に教える文面（`REPORT_NOTATION_PROMPT`）はここから組み立てず、手で書く。
-// 逃げ道に書く印を足すときは文面にも、見た目（`report-notation.module.css` の `report-<名前>`）にも書き足す（書き忘れはテストが落とす）。
+// 印を足すときは見た目（`report-notation.module.css` の `report-<名前>`）にも書き足す（書き忘れはテストが落とす）。
 
 /**
  * `note` の種別。記法の class 名 → tsukumo が文字として描くラベル。
@@ -20,14 +19,14 @@ export const REPORT_NOTE_KINDS = [
   ["note", "情報"],
 ] as const satisfies readonly (readonly [name: string, label: string])[]
 
-/** `note` 以外の印のうち、モデルが逃げ道に書くもの。ラベルは付かず、見た目（CSS の `report-<name>`）だけを持つ。 */
-export const REPORT_WRITTEN_MARK_NAMES = ["cols", "card"] as const satisfies readonly string[]
-
 /**
- * `note` 以外の印のうち、tsukumo が塊から組むもの（表のセルの状態の印と変化・数の棒・`matrix` の塊・`stats` の塊・
- * 名前付きの `list`・`list` の `flow`・`progress` / `options` / `files` の塊）。モデルには教えない。ラベルは付かず、見た目だけを持つ。
+ * `note` 以外の印のうち、tsukumo が塊から組むもの（表のセルの状態の印と変化・数の棒・`matrix` / `compare` の塊・`stats` の塊・
+ * 名前付きの `list`・`list` の `flow`・`progress` / `options` / `files` の塊）と、
+ * 塊にする前にモデルが逃げ道に書いていた `cols` / `card`。モデルには教えない。ラベルは付かず、見た目だけを持つ。
  */
 export const REPORT_BLOCK_MARK_NAMES = [
+  "cols",
+  "card",
   "badge",
   "badge-ok",
   "badge-warn",
@@ -74,6 +73,9 @@ export const REPORT_BLOCK_MARK_NAMES = [
   "progress-line-done",
   "status",
   "status-caption",
+  "compare",
+  "compare-side",
+  "compare-heading",
   "options",
   "option",
   "option-adopt",
@@ -87,7 +89,6 @@ export const REPORT_BLOCK_MARK_NAMES = [
 /** 語彙が挙げる印の名前の全体（`note` の6種 + それ以外）。 */
 export const REPORT_NOTATION_NAMES = [
   ...REPORT_NOTE_KINDS.map(([name]) => name),
-  ...REPORT_WRITTEN_MARK_NAMES,
   ...REPORT_BLOCK_MARK_NAMES,
 ] satisfies readonly string[]
 
