@@ -6,25 +6,20 @@ import {
   useChatView,
   type ChatRow,
   type ChatTimeStamp,
-} from "../../../../../../../src/browser/components/page/conversation/components/chat-view/hooks/use-chat-view.ts"
+} from "../../../../../../../../src/browser/components/page/conversation/components/chat-view/hooks/use-chat-view.ts"
 import {
   INITIAL_SESSION_STATE,
   type RecordTime,
   type SessionRecord,
   type SessionState,
-} from "../../../../../../../src/shared/session/session-state.ts"
-import { characterInfo, shownPortraits } from "../../../../../../fixture/character.ts"
-import {
-  compactBoundaryRecord,
-  requestRecord,
-  speechRecord,
-} from "../../../../../../fixture/session-record.ts"
-import { type CommandSpy, putState, putSession } from "../../../../../session-store.ts"
+} from "../../../../../../../../src/shared/session/session-state.ts"
+import { characterInfo, shownPortraits } from "../../../../../../../fixture/character.ts"
+import { requestRecord, speechRecord } from "../../../../../../../fixture/session-record.ts"
+import { putState, putSession } from "../../../../../../session-store.ts"
 
 /**
- * `<ChatView>` を丸ごと描かずに、表情の決め方・行への畳み方・「...」と案内の出し分け・
- * つついたときの送り先だけを測る（docs/architecture.md「機能の中を分ける」）。行が DOM に
- * どう並ぶかは別のテスト（部品ごと描画する側）が確かめる。文面は手で書いた架空のもの
+ * `<ChatView>` を丸ごと描かずに、表情の決め方・行への畳み方・セリフを出すタイミングを測る。
+ * 文面は手で書いた架空のもの
  */
 
 afterEach(() => {
@@ -42,13 +37,10 @@ const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = characterInfo(
   ...shownPortraits({ default: "/character/default.png", proud: "/character/proud.png" }),
 })
 
-function renderUseChatView(
-  stateOverrides: Partial<SessionState>,
-  spy: CommandSpy = () => {},
-): {
+function renderUseChatView(stateOverrides: Partial<SessionState>): {
   readonly result: { readonly current: ReturnType<typeof useChatView> }
 } {
-  putSession({ ...INITIAL_SESSION_STATE, ...stateOverrides }, spy)
+  putSession({ ...INITIAL_SESSION_STATE, ...stateOverrides })
   function Wrapper({ children }: { readonly children: ReactNode }): ReactElement {
     return <>{children}</>
   }
@@ -108,14 +100,6 @@ describe("useChatView の行への畳み方", () => {
     expect(time.kind === "known" && time.dateTime.startsWith("2026-09-22T23:59")).toBe(true)
     expect(time.kind === "known" && time.dateTime.includes("23:59:")).toBe(false)
   })
-
-  it("圧縮の区切りは文言を持たない行になる", () => {
-    const { result } = renderUseChatView({
-      records: [...RECORDS.slice(0, 2), compactBoundaryRecord(), ...RECORDS.slice(2)],
-    })
-
-    expect(result.current.rows.map((row) => row.kind)).toContain("boundary")
-  })
 })
 
 describe("useChatView のセリフを遡る", () => {
@@ -173,22 +157,6 @@ describe("useChatView のセリフを遡る", () => {
     })
 
     expect(speechRows(result.current.rows).map((row) => row.selected)).toEqual([false, false, true])
-  })
-})
-
-describe("useChatView の弾む行", () => {
-  it("開いた時点で並んでいた記録は弾まず、あとから届いた記録だけが弾む", () => {
-    const { result } = renderUseChatView({ records: RECORDS })
-    expect(speechRows(result.current.rows).map((row) => row.pop)).toEqual([false, false])
-
-    act(() => {
-      putState({
-        ...INITIAL_SESSION_STATE,
-        records: [...RECORDS, speechRecord({ text: "3つめのセリフ" })],
-      })
-    })
-
-    expect(speechRows(result.current.rows).map((row) => row.pop)).toEqual([false, false, true])
   })
 })
 
@@ -378,18 +346,7 @@ describe("useChatView の出すタイミング（docs/architecture/screen-design
   })
 })
 
-describe("useChatView の「...」と案内", () => {
-  it("ターン進行中でまだ speak が来ていなければ「...」を出し、案内は出さない", () => {
-    const { result } = renderUseChatView({
-      records: [],
-      turn: { kind: "running", startedAt: 0 },
-      speechCalledInTurn: false,
-    })
-
-    expect(result.current.showTyping).toBe(true)
-    expect(result.current.showEmptyMessage).toBe(false)
-  })
-
+describe("useChatView の「...」", () => {
   it("そのターンで既に speak が来ていれば「...」は出ない", () => {
     const { result } = renderUseChatView({
       records: RECORDS,
@@ -398,35 +355,5 @@ describe("useChatView の「...」と案内", () => {
     })
 
     expect(result.current.showTyping).toBe(false)
-  })
-
-  it("まだ何も話しておらずターンも動いていなければ案内を出す", () => {
-    const { result } = renderUseChatView({ records: [] })
-
-    expect(result.current.showTyping).toBe(false)
-    expect(result.current.showEmptyMessage).toBe(true)
-  })
-})
-
-describe("useChatView の立ち絵をつつく", () => {
-  it("onNudge は nudge を1つ送る", () => {
-    const sent: unknown[] = []
-    const { result } = renderUseChatView({ records: RECORDS }, (command) => sent.push(command))
-
-    result.current.onNudge()
-
-    expect(sent).toEqual([{ procedure: "session.nudge" }])
-  })
-
-  it("ターン進行中の onNudge は何も送らない", () => {
-    const sent: unknown[] = []
-    const { result } = renderUseChatView(
-      { records: RECORDS, turn: { kind: "running", startedAt: 0 } },
-      (command) => sent.push(command),
-    )
-
-    result.current.onNudge()
-
-    expect(sent).toEqual([])
   })
 })

@@ -3,7 +3,6 @@ import { afterEach, describe, expect, it } from "vitest"
 
 import {
   CommandSuggestions,
-  MAX_COMMAND_SUGGESTIONS,
   matchingCommands,
   shouldShowCommandSuggestions,
 } from "../../../../../../../../../src/browser/components/page/conversation/components/dispatch/components/command-suggestions/command-suggestions.tsx"
@@ -33,10 +32,10 @@ describe("matchingCommands", () => {
     expect(matchingCommands(commands, "/cl").map((c) => c.name)).toEqual(["clear", "bclear"])
   })
 
-  it(`合計最大 ${String(MAX_COMMAND_SUGGESTIONS)} 件に絞る`, () => {
+  it("合計最大 10 件に絞る", () => {
     const commands = Array.from({ length: 15 }, (_, i) => command(`cmd${String(i)}`))
 
-    expect(matchingCommands(commands, "/cmd")).toHaveLength(MAX_COMMAND_SUGGESTIONS)
+    expect(matchingCommands(commands, "/cmd")).toHaveLength(10)
   })
 
   it("前方一致・部分一致のどちらにも当たらない候補は出ない", () => {

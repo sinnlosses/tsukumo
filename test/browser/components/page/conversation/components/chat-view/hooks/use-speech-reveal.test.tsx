@@ -1,9 +1,12 @@
 import { act, cleanup, renderHook } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
-import { useRevealedChatLog } from "../../../../../../../src/browser/components/page/conversation/components/chat-view/hooks/use-speech-reveal.ts"
-import { chatLogEntries, type ChatLogEntry } from "../../../../../../../src/shared/chat/chat-log.ts"
-import { speechRecord } from "../../../../../../fixture/session-record.ts"
+import { useRevealedChatLog } from "../../../../../../../../src/browser/components/page/conversation/components/chat-view/hooks/use-speech-reveal.ts"
+import {
+  chatLogEntries,
+  type ChatLogEntry,
+} from "../../../../../../../../src/shared/chat/chat-log.ts"
+import { speechRecord } from "../../../../../../../fixture/session-record.ts"
 
 /**
  * 足止めが空く時刻に1回だけタイマーが鳴ることと、2秒の間合いを測る。

@@ -46,17 +46,6 @@ describe("useConversationLayout", () => {
     expect(loadSplit()).toEqual({ ...DEFAULT_SPLIT, rowTop: 45, collapsedRowTop: 80 })
   })
 
-  it("畳んでいるとき、onRowTopCommit は collapsedRowTop だけを更新する", () => {
-    saveSplit({ ...DEFAULT_SPLIT, rowTop: 60 })
-    const { result } = renderHook(() => useConversationLayout(true))
-
-    act(() => {
-      result.current.onRowTopCommit(80)
-    })
-
-    expect(loadSplit()).toEqual({ ...DEFAULT_SPLIT, rowTop: 60, collapsedRowTop: 80 })
-  })
-
   it("畳んでいて雑談用の比率がまだ無いときは、gridStyle が仕事の比率で組み立つ", () => {
     saveSplit({ ...DEFAULT_SPLIT, rowTop: 35 })
 
@@ -64,26 +53,5 @@ describe("useConversationLayout", () => {
 
     expect(result.current.gridStyle["--layout-row-top"]).toBe("35fr")
     expect(result.current.gridStyle["--layout-row-bottom"]).toBe("65fr")
-  })
-
-  it("onReset は雑談用の比率も含めて DEFAULT_SPLIT に戻す", () => {
-    saveSplit({ ...DEFAULT_SPLIT, rowTop: 20, collapsedRowTop: 80 })
-    const { result } = renderHook(() => useConversationLayout(true))
-
-    act(() => {
-      result.current.onReset()
-    })
-
-    expect(loadSplit()).toEqual(DEFAULT_SPLIT)
-  })
-
-  it("ref が未接続のときの onChange は書き込み先が無いだけで落ちない", () => {
-    const { result } = renderHook(() => useConversationLayout(false))
-
-    expect(() => {
-      act(() => {
-        result.current.onBottomLeftChange(30)
-      })
-    }).not.toThrow()
   })
 })

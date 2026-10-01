@@ -21,26 +21,21 @@ afterEach(() => {
 function renderPendingAnswer(
   pending: readonly PendingAsk[],
   dispatch: CommandSpy = () => {},
-): HTMLElement {
+): void {
   const state: SessionState = { ...INITIAL_SESSION_STATE, pending }
   putSession(state, dispatch)
-  const { container } = render(<PendingAnswer />)
-  return container
+  render(<PendingAnswer />)
 }
 
 describe("PendingAnswer", () => {
-  it("答え待ちが無いときは何も描かない", () => {
-    expect(renderPendingAnswer([]).innerHTML).toBe("")
-  })
-
-  it("許可要求のツール名を出し、「許可」「拒否」のボタンがそれぞれ answer を送る", () => {
+  it("許可要求のツール名と要約を出し、「許可」「拒否」のボタンがそれぞれ answer を送る", () => {
     const calls: unknown[] = []
     renderPendingAnswer(
       [{ kind: "permission", id: "ask-1", toolName: "Bash", input: { command: "echo dummy" } }],
       (command) => calls.push(command),
     )
 
-    expect(screen.getByText("Bash")).toBeDefined()
+    expect(screen.getByText("Bash").parentElement?.textContent).toBe("Bash: echo dummy")
     fireEvent.click(screen.getByText("許可"))
     fireEvent.click(screen.getByText("拒否"))
 

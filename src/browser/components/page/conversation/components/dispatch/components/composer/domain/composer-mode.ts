@@ -4,7 +4,7 @@
 
 export type ComposerMode = "plain" | "markdown"
 
-export const DEFAULT_COMPOSER_MODE: ComposerMode = "plain"
+const DEFAULT_COMPOSER_MODE: ComposerMode = "plain"
 
 const STORAGE_KEY = "tsukumo-composer-mode:v1"
 

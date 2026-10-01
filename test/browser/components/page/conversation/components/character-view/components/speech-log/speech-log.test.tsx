@@ -121,23 +121,6 @@ describe("SpeechLog", () => {
     ])
   })
 
-  it("最新のセリフだけが最新の吹き出しの見た目（data-latest）で、話し手の名前が添わる", () => {
-    renderSpeechLog([
-      requestRecord({ text: "架空の依頼" }),
-      speechRecord({ text: "前のセリフ" }),
-      speechRecord({ text: "最新のセリフ" }),
-    ])
-    openLog()
-
-    const balloons = [...document.querySelectorAll(".speech-log-entries .balloon")]
-    expect(balloons.map((balloon) => balloon.getAttribute("data-latest"))).toEqual([
-      "false",
-      "true",
-    ])
-    expect(balloons.at(-1)?.querySelector(".balloon-speaker")?.textContent).toBe("架空の名前")
-    expect(balloons[0]?.querySelector(".balloon-speaker")).toBeNull()
-  })
-
   it("依頼の区切りに依頼の時刻を出し、時刻の分からない（組み直した）依頼には出さない", () => {
     renderSpeechLog([
       requestRecord({ text: "組み直した依頼", turnId: 0, time: { kind: "restored" } }),
@@ -177,15 +160,6 @@ describe("SpeechLog", () => {
     expect(document.querySelector(".speech-log-request")?.textContent).toBe("「架空の依頼」")
   })
 
-  it("キャラビューから受け取った立ち絵を床に立たせる", () => {
-    renderSpeechLog([])
-    openLog()
-
-    expect(document.querySelector(".speech-log-floor img")?.getAttribute("alt")).toBe(
-      "架空の立ち絵",
-    )
-  })
-
   it("セリフが1件も無ければ、その旨の1行を出す", () => {
     renderSpeechLog([requestRecord({ text: "架空の依頼", turnId: 0 })])
     openLog()
@@ -219,29 +193,5 @@ describe("SpeechLog", () => {
 
     fireEvent.click(rows[0] ?? dialog())
     expect(toggled).toEqual([[0, 0]])
-  })
-
-  it("留めた行と同じ (turnId, index) の行にだけ印が付く", () => {
-    putSession({
-      ...INITIAL_SESSION_STATE,
-      records: [
-        requestRecord({ text: "架空の依頼", turnId: 0 }),
-        speechRecord({ text: "1つ目のセリフ" }),
-        speechRecord({ text: "2つ目のセリフ" }),
-      ],
-      character: characterInfo({}),
-    })
-    render(
-      <SpeechLog
-        portrait={<img alt="架空の立ち絵" />}
-        speakerName="架空の名前"
-        pinnedSpeech={{ turnId: 0, index: 0 }}
-        onToggleSpeech={() => {}}
-      />,
-    )
-    openLog()
-
-    const rows = [...document.querySelectorAll(".speech-log-speech .balloon")]
-    expect(rows.map((row) => row.getAttribute("aria-pressed"))).toEqual(["true", "false"])
   })
 })

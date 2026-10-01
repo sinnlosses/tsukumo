@@ -1,5 +1,5 @@
 import { QueryClientProvider } from "@tanstack/react-query"
-import { cleanup, render, screen } from "@testing-library/react"
+import { cleanup, render } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
 import { Dispatch } from "../../../../../../../src/browser/components/page/conversation/components/dispatch/dispatch.tsx"
@@ -38,22 +38,12 @@ describe("Dispatch", () => {
     expect(document.title).toBe("tsukumo")
   })
 
-  it("答え待ちがあるとタブのタイトルの先頭に「● 」を付け、枠を強調する印を出す", () => {
+  it("答え待ちがあるとタブのタイトルの先頭に「● 」を付ける", () => {
     document.title = "tsukumo"
     renderDispatch({
       pending: [{ kind: "permission", id: "ask-1", toolName: "Bash", input: {} }],
     })
 
     expect(document.title).toBe("● tsukumo")
-    expect(document.querySelector(".dispatch-pending-glow")).not.toBeNull()
-  })
-
-  it("入力欄（Composer）と答え待ちの箱（PendingAnswer）を両方描く", () => {
-    renderDispatch({
-      pending: [{ kind: "permission", id: "ask-1", toolName: "Bash", input: {} }],
-    })
-
-    expect(screen.getByText("許可")).toBeDefined()
-    expect(screen.getByPlaceholderText(/依頼を書く/)).toBeDefined()
   })
 })

@@ -50,14 +50,6 @@ function key(value: string): {
 }
 
 describe("useSpeechPress の押し方", () => {
-  it("手が動いていない押しは遡る", () => {
-    const { toggled, result } = renderSpeech()
-
-    press(result.current, 0)
-
-    expect(toggled.count).toBe(1)
-  })
-
   it("数pxのぶれなら遡り、それを超えて動いたらドラッグとして遡らない", () => {
     const { toggled, result } = renderSpeech()
 

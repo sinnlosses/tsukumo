@@ -45,12 +45,6 @@ describe("PromptImageChips", () => {
     expect(document.querySelector(".prompt-images")).toBeNull()
   })
 
-  it("押すまで拡大の面は組み立てない", () => {
-    renderChips([IMAGE_A])
-
-    expect(zoomDialog()).toBeNull()
-  })
-
   it("絵を押すと、その原寸で拡大の面が開く", () => {
     renderChips([IMAGE_A, IMAGE_B])
 

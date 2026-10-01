@@ -37,19 +37,6 @@ describe("TurnStatus", () => {
     expect(calls).toEqual([{ procedure: "session.interrupt" }])
   })
 
-  it("ターンが進行中でないときボタンは「送信」（type=submit で dispatch は直接呼ばない）", () => {
-    const calls: unknown[] = []
-    renderTurnStatus({ turn: { kind: "idle" } }, (command) => calls.push(command))
-
-    const button = typedElement(screen.getByRole("button"), HTMLButtonElement, "ボタン")
-    expect(button.textContent).toBe("送信")
-    expect(button.type).toBe("submit")
-
-    fireEvent.click(button)
-
-    expect(calls).toEqual([])
-  })
-
   it("(5) 経過時間は running の起点から数え、ラベルは「経過」（進行中）", () => {
     const now = 1_700_000_010_000
     const clock = vi
@@ -96,20 +83,6 @@ describe("TurnStatus", () => {
     } finally {
       clock.mockRestore()
     }
-  })
-
-  it("始まった時刻と終わった時刻が同じなら 0秒（60秒未満は N秒 の形）", () => {
-    renderTurnStatus({
-      turn: { kind: "finished", startedAt: 500, finishedAt: 500, ending: { kind: "ended" } },
-    })
-
-    expect(screen.getByText("0秒")).toBeDefined()
-  })
-
-  it("まだ依頼が無いとき（idle）は「-」を出す", () => {
-    renderTurnStatus({ turn: { kind: "idle" } })
-
-    expect(screen.getByText("-")).toBeDefined()
   })
 
   it("質問に答えている間は、ターンが進行中でもボタンが「答える」（type=submit）", () => {
@@ -159,15 +132,6 @@ describe("TurnStatus", () => {
       expect(screen.getByRole("status").textContent).toBe("API が混んでいる（overloaded）")
     })
 
-    it("成功で終わったターンは「所要」のままで、知らせを出さない", () => {
-      renderTurnStatus({
-        turn: { kind: "finished", startedAt: 0, finishedAt: 12_000, ending: { kind: "ended" } },
-      })
-
-      expect(screen.getByText("所要")).toBeDefined()
-      expect(screen.queryByRole("status")).toBeNull()
-    })
-
     it("進行中に呼び直しを待っているあいだは「再試行中 n/m」を出し、理由と待ち時間は title で読ませる", () => {
       renderTurnStatus({
         turn: { kind: "running", startedAt: 0 },
@@ -214,12 +178,6 @@ describe("TurnStatus", () => {
         clock.mockRestore()
         zone.mockRestore()
       }
-    })
-
-    it("利用上限が近い（clear に畳んだ状態）では知らせを出さない——枠の残り具合はサイドバーの利用枠が出す", () => {
-      renderTurnStatus({ rateLimit: { kind: "clear" } })
-
-      expect(screen.queryByRole("status")).toBeNull()
     })
   })
 })

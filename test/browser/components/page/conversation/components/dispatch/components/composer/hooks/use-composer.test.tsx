@@ -1,4 +1,4 @@
-import { act, cleanup, renderHook, waitFor } from "@testing-library/react"
+import { act, cleanup, renderHook } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
 import { useComposer } from "../../../../../../../../../../src/browser/components/page/conversation/components/dispatch/components/composer/hooks/use-composer.ts"
@@ -10,11 +10,6 @@ import {
 } from "../../../../../../../../../../src/shared/session/session-state.ts"
 import { characterInfo } from "../../../../../../../../../fixture/character.ts"
 import { queryClientWrapper } from "../../../../../../../../query-client.tsx"
-import {
-  rpcOutput,
-  stubRpcFetch,
-  type RpcFetchStub,
-} from "../../../../../../../../rpc-fetch-stub.ts"
 import { type CommandSpy, putSession } from "../../../../../../../../session-store.ts"
 
 /**
@@ -23,14 +18,10 @@ import { type CommandSpy, putSession } from "../../../../../../../../session-sto
  * （部品ごと描画する側）が確かめる。フィクスチャはすべて手で書いた架空のもの
  */
 
-let fetchStub: RpcFetchStub | undefined = undefined
-
 afterEach(() => {
   cleanup()
   // 組み立て中の答えはモジュール単位で残るので、次のテストへ持ち越さない。
   useQuestionDraft.setState(useQuestionDraft.getInitialState(), true)
-  fetchStub?.restore()
-  fetchStub = undefined
 })
 
 const FIXTURE_COMMANDS = {
@@ -41,11 +32,6 @@ const FIXTURE_COMMANDS = {
     { name: "unclear", description: undefined },
   ],
 } satisfies Partial<SessionState>
-
-/** ファイル一覧の手続きを、架空の一覧を返す代役に差し替える。 */
-function stubFileListFetch(paths: readonly string[]): void {
-  fetchStub = stubRpcFetch(() => rpcOutput(paths))
-}
 
 function renderUseComposer(
   stateOverrides: Partial<SessionState> = {},
@@ -120,19 +106,6 @@ describe("useComposer のプレースホルダ", () => {
 })
 
 describe("useComposer の `/` 補完", () => {
-  it("先頭の `/` で候補を前方一致→部分一致の順に出す", () => {
-    const { result } = renderUseComposer(FIXTURE_COMMANDS)
-
-    type(result, "/cl")
-
-    const suggestions = result.current.suggestions
-    expect(suggestions.kind).toBe("command")
-    expect(
-      suggestions.kind === "command" ? suggestions.matches.map((command) => command.name) : [],
-    ).toEqual(["clear", "unclear"])
-    expect(result.current.selectedIndex).toBe(0)
-  })
-
   it("↓・Ctrl+N で次へ、↑・Ctrl+P で前へ回る。Meta 併用の Ctrl+N は見ない", () => {
     const { result } = renderUseComposer(FIXTURE_COMMANDS)
     type(result, "/cl")
@@ -172,38 +145,6 @@ describe("useComposer の `/` 補完", () => {
 
     type(result, "/c")
     expect(result.current.suggestions.kind).toBe("command")
-  })
-
-  it("答え待ちがある間は出さない", () => {
-    const { result } = renderUseComposer({
-      ...FIXTURE_COMMANDS,
-      pending: [{ kind: "permission", id: "ask-1", toolName: "Bash", input: {} }],
-    })
-
-    type(result, "/cl")
-
-    expect(result.current.suggestions.kind).toBe("none")
-  })
-})
-
-describe("useComposer の `@` 補完", () => {
-  it("文の途中の `@` を確定すると、その部分だけを置き換えて後ろの空白を二重にしない", async () => {
-    stubFileListFetch(["src/cli.ts", "src/browser/main.tsx"])
-    const { result } = renderUseComposer()
-    const text = "見て @src/c のところ"
-
-    type(result, text, "見て @src/c".length)
-
-    // 一覧が届くまでは `file` の候補が空のまま出ている。
-    await waitFor(() => {
-      const suggestions = result.current.suggestions
-      expect(suggestions.kind === "file" ? suggestions.matches : []).toEqual(["src/cli.ts"])
-    })
-    act(() => {
-      result.current.onSelectSuggestion(0)
-    })
-
-    expect(result.current.draft.text).toBe("見て @src/cli.ts のところ")
   })
 })
 

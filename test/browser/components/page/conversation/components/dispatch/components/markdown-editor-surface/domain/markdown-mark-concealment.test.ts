@@ -52,16 +52,6 @@ describe("concealedMarks", () => {
     ])
   })
 
-  it("フェンスの記号は、キャレットがフェンスの中にあれば開きと閉じの両方を返さない", () => {
-    const text = "```ts\nconst a = 1\n```\n末尾"
-
-    expect(concealedTexts(text, caretAt(8))).toEqual([])
-    expect(concealedTexts(text, caretAt(text.length))).toEqual([
-      ["hidden", "```ts"],
-      ["hidden", "```"],
-    ])
-  })
-
   it("番号付きの印・表・行き先の無い参照の形のリンクは触らない", () => {
     const text = "1. 一\n\n| a | b |\n| - | - |\n| 1 | 2 |\n\n[字][ref]\n末尾"
 

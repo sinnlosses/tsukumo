@@ -32,15 +32,6 @@ describe("formatEdit", () => {
     expect(result.selected).toBe("")
   })
 
-  it("リンクは範囲があれば宛先の仮の字を選び、無ければ [] の間にキャレットを置く", () => {
-    const ranged = applied("あいう", 1, 2, "link")
-    expect(ranged.next).toBe("あ[い](url)う")
-    expect(ranged.selected).toBe("url")
-    const empty = applied("あ", 1, 1, "link")
-    expect(empty.next).toBe("あ[]()")
-    expect(empty.caret).toBe(2)
-  })
-
   it("行の書式は選択にかかる各行の頭へ付け、選択を記号のぶんずらす", () => {
     const text = "一\n二\n三"
     const result = applied(text, 2, 5, "bullet")

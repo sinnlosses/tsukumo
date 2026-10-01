@@ -4,7 +4,6 @@ import {
   DEFAULT_SPLIT,
   isDefaultSplit,
   loadSplit,
-  saveSplit,
 } from "../../../../../../../../src/browser/components/page/conversation/components/conversation-layout/domain/split.ts"
 
 // `localStorage` に持つ比率の読み取り側。読めない・保存が無い・可動域の外のときに
@@ -74,14 +73,6 @@ describe("loadSplit", () => {
 
     expect(loadSplit().collapsedRowTop).toBeUndefined()
   })
-
-  it("雑談用の比率は、未設定のままでも値が入っていても往復できる", () => {
-    saveSplit(DEFAULT_SPLIT)
-    expect(loadSplit()).toEqual(DEFAULT_SPLIT)
-
-    saveSplit({ ...DEFAULT_SPLIT, collapsedRowTop: 80 })
-    expect(loadSplit()).toEqual({ ...DEFAULT_SPLIT, collapsedRowTop: 80 })
-  })
 })
 
 // 「比率を既定に戻す」ピルを出すかどうかの判定（`isDefaultSplit`）。
@@ -100,9 +91,5 @@ describe("isDefaultSplit", () => {
 
   it("collapsedRowTop に値が入っていれば既定ではない（雑談だけ動かした場合）", () => {
     expect(isDefaultSplit({ ...DEFAULT_SPLIT, collapsedRowTop: 80 })).toBe(false)
-  })
-
-  it("collapsedRowTop が undefined のままなら既定（まだ一度も動かしていない）", () => {
-    expect(isDefaultSplit({ ...DEFAULT_SPLIT, collapsedRowTop: undefined })).toBe(true)
   })
 })

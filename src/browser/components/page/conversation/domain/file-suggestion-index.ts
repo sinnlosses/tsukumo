@@ -6,7 +6,7 @@
 
 import { identity, sortBy } from "remeda"
 
-export const MAX_FILE_SUGGESTIONS = 10
+const MAX_FILE_SUGGESTIONS = 10
 
 export type FilePathEntry = {
   readonly path: string

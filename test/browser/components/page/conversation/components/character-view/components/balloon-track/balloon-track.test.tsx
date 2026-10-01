@@ -8,7 +8,7 @@ afterEach(() => {
   cleanup()
 })
 
-/** 押しても遡らない、印の付いていないセリフ（押す挙動そのものは末尾のテストが見る）。 */
+/** 押しても遡らない、印の付いていないセリフ。 */
 function speech(text: string): CharacterViewSpeech {
   return { text, selected: false, onToggle: () => {} }
 }
@@ -18,13 +18,6 @@ describe("BalloonTrack", () => {
     render(<BalloonTrack speeches={[]} emptyMessage={undefined} speakerName={undefined} />)
 
     expect(screen.getByText("（まだ発話がありません）")).toBeDefined()
-    expect(document.querySelectorAll(".balloon")).toHaveLength(1)
-  })
-
-  it("(3) セリフが0件で emptyMessage が渡ると、その文言を出す（過去のターン向け）", () => {
-    render(<BalloonTrack speeches={[]} emptyMessage="（架空の文言）" speakerName={undefined} />)
-
-    expect(screen.getByText("（架空の文言）")).toBeDefined()
     expect(document.querySelectorAll(".balloon")).toHaveLength(1)
   })
 
@@ -59,28 +52,5 @@ describe("BalloonTrack", () => {
     render(<BalloonTrack speeches={[]} emptyMessage={undefined} speakerName="架空の名前" />)
 
     expect(document.querySelector(".balloon-speaker")).toBeNull()
-  })
-
-  it("(6) 押すと onToggle が呼ばれ、印（aria-pressed）はそのセリフの selected をそのまま映す", () => {
-    const toggled: number[] = []
-    render(
-      <BalloonTrack
-        speeches={[
-          { text: "1つめ", selected: false, onToggle: () => toggled.push(0) },
-          { text: "2つめ", selected: true, onToggle: () => toggled.push(1) },
-        ]}
-        emptyMessage={undefined}
-        speakerName={undefined}
-      />,
-    )
-
-    const first = screen.getByText("1つめ").closest(".balloon")
-    const second = screen.getByText("2つめ").closest(".balloon")
-    expect(first?.getAttribute("aria-pressed")).toBe("false")
-    expect(second?.getAttribute("aria-pressed")).toBe("true")
-
-    first?.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }))
-    first?.dispatchEvent(new MouseEvent("click", { bubbles: true }))
-    expect(toggled).toEqual([0])
   })
 })

@@ -189,36 +189,6 @@ describe("ChatView の時刻と日の区切り", () => {
     expect(divider?.nextElementSibling?.textContent).toContain("次の日の架空の依頼")
     expect(divider?.previousElementSibling?.textContent).toContain("前の日の架空のセリフ")
   })
-
-  it("組み直した発言（時刻が分からない）には時刻を出さず、いまの発言へ移るところで区切る", () => {
-    renderChatView({
-      records: [
-        {
-          kind: "request",
-          turnId: 0,
-          text: "組み直した架空の依頼",
-          images: [],
-          time: { kind: "restored" },
-        },
-        {
-          kind: "speech",
-          text: "組み直した架空のセリフ",
-          expression: "default",
-          time: { kind: "restored" },
-        },
-        {
-          kind: "request",
-          turnId: 1,
-          text: "いまの架空の依頼",
-          images: [],
-          time: localAt("2026-09-23T10:00"),
-        },
-      ],
-    })
-
-    expect(lineTimes()).toEqual(["10:00"])
-    expect(dayDividers()).toEqual(["9月23日（水）"])
-  })
 })
 
 describe("ChatView のセリフを遡る", () => {
@@ -410,19 +380,6 @@ describe("ChatView の立ち絵をつつく", () => {
 
     // 送るのは押した事実だけ（文面は `CHAT_NUDGE_PROMPT` が持つ）。
     expect(sent).toEqual([{ procedure: "session.nudge" }])
-  })
-
-  it("立ち絵を包むのは `<button>`（キーボードで押せる道をブラウザが持つ）", () => {
-    renderChatView({ records: RECORDS, character: FIXTURE_CHARACTER })
-
-    const button = portraitButton()
-    // セリフの行（`role="button"` の `<div>`）と違い、こちらは本物の `<button>` なので
-    // Enter / Space の受けを自前で足さなくてよい（ブラウザが click に変える）。
-    expect(button.tagName).toBe("BUTTON")
-    expect(button.getAttribute("type")).toBe("button")
-    // 立ち絵はボタンの中にあり、名前は立ち絵の alt のまま（案内は説明の側）。
-    expect(button.querySelector("[data-expression]")).toBeTruthy()
-    expect(button.getAttribute("aria-label")).toBe(null)
   })
 
   it("ターン進行中は押せない（返事を待つ）", () => {

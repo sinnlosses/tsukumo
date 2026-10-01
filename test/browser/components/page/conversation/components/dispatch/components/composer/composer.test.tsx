@@ -88,25 +88,16 @@ function textArea(): HTMLTextAreaElement {
 }
 
 describe("Composer", () => {
-  it("(3) IME の変換確定中の Command+Enter は送らない（isComposing）", () => {
+  it("(3) IME の変換確定中の Command+Enter は送らない（isComposing・古いブラウザ向けの keyCode 229）", () => {
     const calls: unknown[] = []
     renderComposer({}, (command) => calls.push(command))
 
     fireEvent.change(textArea(), { target: { value: "架空の依頼" } })
     fireEvent.keyDown(textArea(), { key: "Enter", metaKey: true, isComposing: true })
-
-    expect(calls).toEqual([])
-    expect(textArea().value).toBe("架空の依頼")
-  })
-
-  it("(3) 古いブラウザ向けの keyCode 229（IME 変換確定）でも送らない", () => {
-    const calls: unknown[] = []
-    renderComposer({}, (command) => calls.push(command))
-
-    fireEvent.change(textArea(), { target: { value: "架空の依頼" } })
     fireEvent.keyDown(textArea(), { key: "Enter", metaKey: true, keyCode: 229 })
 
     expect(calls).toEqual([])
+    expect(textArea().value).toBe("架空の依頼")
   })
 
   it("(6) 候補が出ている間は Ctrl+N / Ctrl+P で選択が上下に動く", () => {
@@ -195,7 +186,7 @@ describe("Composer", () => {
     expect(calls).toEqual([])
   })
 
-  it("一覧は起動トークンを付けて1回だけ取りに行く（打鍵ごとに取り直さない）", async () => {
+  it("一覧は1回だけ取りに行く（打鍵ごとに取り直さない）", async () => {
     stubFileListFetch()
     renderComposer()
 

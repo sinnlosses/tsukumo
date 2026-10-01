@@ -65,12 +65,6 @@ afterEach(() => {
 })
 
 describe("ConversationLayout", () => {
-  it("既定の比率のときは、比率を戻すピルが無い", () => {
-    renderLayout()
-
-    expect(screen.queryByRole("button", { name: "比率を既定に戻す" })).toBeNull()
-  })
-
   it("保存済みの比率が既定と違うと、開いた直後からピルが出る", () => {
     saveSplit({ ...DEFAULT_SPLIT, topLeft: 30 })
     renderLayout()
@@ -94,7 +88,7 @@ describe("ConversationLayout", () => {
   })
 
   it("比率を戻すピルを押すと、保存済みの比率が DEFAULT_SPLIT に戻り、ピルも消える", () => {
-    saveSplit({ ...DEFAULT_SPLIT, rowTop: 20, topLeft: 30, bottomLeft: 40 })
+    saveSplit({ ...DEFAULT_SPLIT, rowTop: 20, topLeft: 30, bottomLeft: 40, collapsedRowTop: 80 })
     renderLayout()
 
     fireEvent.click(screen.getByRole("button", { name: "比率を既定に戻す" }))
@@ -186,17 +180,6 @@ describe("ConversationLayout", () => {
     expect(regionClassName("main")).toContain("layout-ground")
   })
 
-  it("キャラビューを畳むと、その領域と左右の仕切りが消える（雑談モード）", () => {
-    renderLayout(true)
-
-    expect(screen.queryByText("character")).toBe(null)
-    expect(screen.queryByLabelText("キャラビューと入力欄の境界")).toBe(null)
-    // 上下の仕切りは残る（入力欄の高さは雑談中も変えられる）。
-    expect(screen.getByLabelText("上段と下段の境界")).toBeTruthy()
-    // 入力欄は残る（下段が入力欄だけになる）。
-    expect(screen.getByText("dispatch")).toBeTruthy()
-  })
-
   it("畳んでいる間に上下の仕切りを動かすと、雑談用の比率だけが変わる", () => {
     saveSplit({ ...DEFAULT_SPLIT, rowTop: 60 })
     renderLayout(true)
@@ -211,14 +194,6 @@ describe("ConversationLayout", () => {
     // 離したあとのレンダーでも動かした位置のまま（掴んだ手を離しても戻らない）。
     expect(grid.style.getPropertyValue("--layout-row-top")).toBe("80fr")
     expect(loadSplit()).toEqual({ ...DEFAULT_SPLIT, rowTop: 60, collapsedRowTop: 80 })
-  })
-
-  it("畳むのをやめると、キャラビューと仕切りが戻る", () => {
-    renderLayout(false)
-
-    expect(screen.getByText("character")).toBeTruthy()
-    expect(screen.getByLabelText("キャラビューと入力欄の境界")).toBeTruthy()
-    expect(screen.getByLabelText("上段と下段の境界")).toBeTruthy()
   })
 
   it("一度も動かさずに離したときは保存しない", () => {

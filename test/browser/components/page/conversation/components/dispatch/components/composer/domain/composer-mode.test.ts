@@ -1,7 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest"
 
 import {
-  DEFAULT_COMPOSER_MODE,
   loadComposerMode,
   saveComposerMode,
 } from "../../../../../../../../../../src/browser/components/page/conversation/components/dispatch/components/composer/domain/composer-mode.ts"
@@ -14,8 +13,7 @@ afterEach(() => {
 
 describe("loadComposerMode", () => {
   it("何も保存していなければ素の <textarea> を返す", () => {
-    expect(loadComposerMode()).toBe(DEFAULT_COMPOSER_MODE)
-    expect(DEFAULT_COMPOSER_MODE).toBe("plain")
+    expect(loadComposerMode()).toBe("plain")
   })
 
   it("保存したモードを読み戻す", () => {
@@ -27,6 +25,6 @@ describe("loadComposerMode", () => {
 
   it("知らない値は素の <textarea> へ畳む", () => {
     localStorage.setItem(STORAGE_KEY, "wysiwyg")
-    expect(loadComposerMode()).toBe(DEFAULT_COMPOSER_MODE)
+    expect(loadComposerMode()).toBe("plain")
   })
 })

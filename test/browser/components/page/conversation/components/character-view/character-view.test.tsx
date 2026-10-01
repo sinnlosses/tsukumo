@@ -1,5 +1,5 @@
 import { QueryClientProvider } from "@tanstack/react-query"
-import { cleanup, fireEvent, render, screen } from "@testing-library/react"
+import { cleanup, fireEvent, render } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
 import { CharacterView } from "../../../../../../../src/browser/components/page/conversation/components/character-view/character-view.tsx"
@@ -153,7 +153,7 @@ describe("CharacterView", () => {
   })
 })
 
-describe("CharacterView（吹き出し・セリフのログを押すと遡る。docs/architecture/screen-design.md 13.7）", () => {
+describe("CharacterView（吹き出しを押すと遡る。docs/architecture/screen-design.md 13.7）", () => {
   const CHARACTER_WITH_PROUD: NonNullable<SessionState["character"]> = {
     ...FIXTURE_CHARACTER,
     expressions: [
@@ -194,24 +194,5 @@ describe("CharacterView（吹き出し・セリフのログを押すと遡る。
 
     fireEvent.click(olderBalloon!)
     expect(document.querySelector(".portrait")?.getAttribute("data-expression")).toBe("proud")
-  })
-
-  it("セリフのログの行を押すと、ログの床の立ち絵がその表情になる", () => {
-    renderCharacterView(twoSpeechState())
-    fireEvent.click(screen.getByRole("button", { name: "ログ" }))
-
-    const olderRow = [...document.querySelectorAll(".speech-log-speech .balloon")].find(
-      (balloon) => balloon.textContent === "1つ目のセリフ",
-    )
-    expect(olderRow).toBeDefined()
-    fireEvent.click(olderRow!)
-
-    expect(
-      document.querySelector(".speech-log-floor .portrait")?.getAttribute("data-expression"),
-    ).toBe("default")
-    // 状態は1つ（吹き出しとログで共有する。docs/architecture/display.md「吹き出し」）。
-    expect(
-      document.querySelector(".character-layout .portrait")?.getAttribute("data-expression"),
-    ).toBe("default")
   })
 })

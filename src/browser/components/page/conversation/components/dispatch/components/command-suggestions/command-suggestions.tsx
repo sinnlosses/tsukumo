@@ -14,7 +14,7 @@ import { Text } from "../../../../../../ui/text/text.tsx"
 import dispatchStyles from "../../dispatch.module.css"
 import styles from "./command-suggestions.module.css"
 
-export const MAX_COMMAND_SUGGESTIONS = 10
+const MAX_COMMAND_SUGGESTIONS = 10
 
 /** 空白1文字。入力に空白が混じっていないかの判定に使う。 */
 const WHITESPACE_PATTERN = /\s/
