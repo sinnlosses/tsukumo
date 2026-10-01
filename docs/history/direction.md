@@ -3,6 +3,82 @@
 `develop/direction.md` に書かれたユーザーからの指示を、タスク化した時点で**当時の記述のまま**
 ここへ移す（`docs/workflow.md`「指示メモ」参照）。新しいものを上に足す。**後から書き換えない。**
 
+## 2026-10-01 振り返りのドラフト12件
+
+（出典: `develop/draft/` から。/plan-tasks で12件とも承認され（「全部タスクにして」）、GH-203〜GH-214 になった）
+
+### E2E を直に流したとき、組み立てが src より古ければ最初に止めて `pnpm run build` を促す（振り返り: GH-146）（GH-203）
+
+- 札: 赤 道具（8回目）
+- 根拠: GH-146 の委譲先は `src/shared/report/report-block.ts` に塊を足したあと、組み立てずに `vitest --config vitest.e2e.config.ts` を直に流し、`dist/browser/` が古いまま「白い画面で turn-finished が届かない」30秒のタイムアウトを2回踏んでから原因に気づいた。`pnpm run check` の `test:e2e` は先に `pnpm run build` を打つので落ちないが、委譲先は1件の E2E だけを直に流すことが多い（トランスクリプトの `npx vitest` 17回）
+- 出し先: E2E の setup（`vitest.e2e.config.ts` の globalSetup）で、`dist/browser/` の組み立て時刻が `src/browser/`・`src/shared/` の最新の変更より古ければ、テストを走らせる前に「組み立てが古い。`pnpm run build` を打つ」で落とす。検査はテストで守る
+
+### `capture-catalog.ts --only diary-book` が見開きの中身を撮れるようにし、読み込み中のまま撮ったら落とす（振り返り: GH-164）（GH-204）
+
+- 札: 黄 道具（9回目）
+- 根拠: GH-164 の撮り比べで `node scripts/capture-catalog.ts --only diary-book` を3回撮ったが、変更前（`serve-revision.ts` の取り出し先で走らせた分を含む）も変更後も、見開きの中が「…」のまま写った。本文・灯りの字・時刻の字・立ち絵が写らず、完了条件の目視が単体テストの裏付けだけで閉じた。件の `settle` は `TAIL_SETTLE` で、中身が出たかを待たずに撮る
+- 出し先: `scripts/capture-catalog.ts` の `diary-book` の件。見開きの中身が出る原因を直し、`settle` を本文の要素のセレクタ待ちにして、上限まで出なければ撮らずに落とす（黙って読み込み中の画を撮らない）。後段の GH-167・GH-173 も日記帳の見開きの目視を使う
+
+### 疑似セッションで「続きから開く」を流せるようにする（振り返り: GH-187）（GH-205）
+
+- 札: 黄 道具（1回目）
+- 根拠: GH-187 で続きから開くときの組み直しと受け取りを1回にまとめた（約46,000イベントで受け取り 2,973ms → 248ms）。fake driver は `canResume` が false で続きを探さないため、この経路を実物の画面で一度も通せず、単体テスト（manager の `hello` の姿の一致）だけで閉じた。利用者の transcript を使わずに続きの場面を再現する手段が無い
+- 出し先: タスク1件（`test/fixture/fake-session.json` に架空の過去の transcript を持つ場面を足し、fake driver がその場面では続きとして読み込めるようにする。E2E で「続きから開くと前のやり取りが出る」を守る）
+
+### 疑似セッションの `report` イベントも本物と同じ検証と既定値の補いを通す（振り返り: GH-147）（GH-206）
+
+- 札: 黄 道具（1回目）
+- 根拠: レポートの塊を足すタスクが2件続けて、疑似セッションのフィクスチャで同じ形のつまずきに当たった。GH-150 では `stats` の項目に `total` を書かないとブラウザが `trim` で落ち、GH-147 では `report` イベントに `favor`・`checks` が無いと `main-view.ts` が `undefined.map` で落ちて E2E が `turn-finished` を待って30秒で時間切れになった。本物の経路は `parseReportSections` が既定値を補うが、fake driver はフィクスチャをそのまま流すので、欄を1つ足すたびに全場面へ書き足す手間と落ちる危険が出る
+- 出し先: タスク1件（fake driver が `report` の入力を本物と同じ検証（`parseReportSections` など）に通してから流す。フィクスチャから既定値の欄を省いても描けることを E2E で守る）
+
+### `mainViewTurns` 以降もターン単位で参照を保ち、変わっていないレポートが描き直されないことを測って確かめる（振り返り: GH-195）（GH-207）
+
+- 札: 黄 正典の不備（1回目）
+- 根拠: GH-195 で `mainViewEntries` は記録を鍵に覚え、末尾に記録を足したフレームでも前のエントリの参照が 100% 保たれるようになった（同じ state の呼び出しの中央値 3.49ms → 0.54ms）。ただし `groupIntoTurns` 以降の `mainViewTurns` が毎フレーム `Turn` / `Step` を作り直すので、完了条件の「変わっていないレポートの描き直しが起きない」は確かめられていない（描き直しの回数を測っていない）
+- 出し先: タスク1件（React の Profiler か描画回数の数えで、記録を1件足したときに変わっていないレポートが描き直されるかを先に測る。描き直されているなら `groupIntoTurns` 以降のターン単位の再利用で止め、止まったことを同じ測り方で示す）
+
+### 「手でメモ化しない」に、lint が手のメモ化を拒む場合と、打鍵ごとに作り直される部品の確かめ方を足す（振り返り: GH-165）（GH-208）
+
+- 札: 黄 正典の不備（1回目）
+- 根拠: GH-165 で手のメモ化を5つ消したところ、React Compiler が `boardContent(...)` に渡す値を検索の文字と同じ単位で覚え、本文中のリンクの `<a>` が打鍵ごとに作り直された（組み立て版の probe で `connected: true → false`）。外れたときの戻し方として計画した `useCallback` は oxlint の `react(preserve-manual-memoization)` に拒まれた。`docs/coding-standards.md`「手でメモ化しない」には、この lint で手のメモ化が書けない場合のことも、作り直されても見た目と操作が変わらないことの確かめ方（組み立て版で要素に印を付けて残るかを見る）も書いていない
+- 出し先: `docs/coding-standards.md`「React」節「手でメモ化しない」に2行足す（lint が拒むときは形を曲げず、作り直されても見た目と操作が変わらないかを組み立て版の probe で確かめて受け入れる・確かめ方）
+
+### 描画中に時計を読む呼び出しを検査で落とす（振り返り: GH-198）（GH-209）
+
+- 札: 黄 正典の不備（1回目）
+- 根拠: GH-198 で `useRevealedChatLog` が描画中に `nowEpochMilliseconds()` を読んでいたが、React Compiler がその呼び出しを `[entries, lastRevealAt, shown]` だけを鍵に覚えたため、タイマーで描き直しても時刻が読み直されなかった。単体テスト（Vitest）には Compiler が掛からない（`vitest.config.ts` の冒頭で決めている）ので見えず、E2E の `chat-restored-history`・`chat-compact-boundary` が落ちて初めて分かった。直し方は、タイマーが鳴った時刻を state に持たせて描画中の値に混ぜる形
+- 出し先: `test/architecture.test.ts`（か lint）に、`src/browser/` の部品とフックの本体（effect とイベントの手の外）で `nowEpochMilliseconds`・`Temporal.Now` を呼ぶことを落とす検査を足す。あわせて `docs/coding-standards.md`「React」節に「描画中に時計を読まない（時刻は state か props で受ける）」を1行足す
+
+### 新しい部品の置き場を計画の段で `test/architecture.test.ts` の置き場の規則に照らす（振り返り: GH-183）（GH-210）
+
+- 札: 黄 診断違い（1回目）
+- 根拠: GH-182 と GH-183 の2件続けて、計画が新しい部品を子部品の `components/` の下（孫部品）に置き、実装の途中で `test/architecture.test.ts` の「components/page/ の形」（入れ子は2段まで・部品のディレクトリの外から引いてよいのは `<部品>.tsx` だけ）に落とされて置き場を作り直した。規則自体は `docs/architecture.md`「ページの形」にあるが、計画を書く段で読まれていない
+- 出し先: `docs/workflow.md` の委譲の注意に1行足す（新しい部品・フック・`domain/` を足すタスクの計画では、置き場を `docs/architecture.md`「ページの形」の表と入れ子の段数で確かめてから `## やること` に書く）
+
+### 残る7枚の CSS を「class ごとに、読み手すべてを含むいちばん近い箱」に割る（振り返り: GH-172）（GH-211）
+
+- 札: 黄 正典の不備（1回目）
+- 根拠: GH-172 で `docs/architecture/browser.md`「CSS」の置き場の原則を「領域・機能ごとに1枚」から「class ごとに、読み手すべてを含むいちばん近い箱」に改め、5枚（achievement・token-usage・task-board・sidebar・character）を割った。同じ形で部品ごとの class を1枚に持つ CSS が `screen-nav.module.css`・`character-view`・`chat-view`・`conversation-layout`・`dispatch`・`main-view`・`report-notation` の7枚に残り、改めた正典と食い違っている（子部品が親の1枚を読む分には規約に合うものも含むので、数え直しが要る）
+- 出し先: タスク1件（7枚それぞれで class ごとの読み手を数え直し、1部品だけが読む class を部品の隣へ移す。見た目は変更前後の `getComputedStyle` と矩形の比べ合いで確かめる。GH-172 と同じ手順）
+
+### claude-skills の `selftest_task.py` の verify の取り込みの検査が時々落ちる原因を調べて直す（振り返り: GH-139）（GH-212）
+
+- 札: 黄 揺れ（8回目）
+- 根拠: GH-139 の委譲先の friction log。`./check.sh` で「作業は未コミットのまま残る」「同じファイルの別の行の変更は両方残る」の2件が2回落ち、打ち直すと通った。単独実行では変更前の本体の作業ツリーでも1回落ちたので、GH-139 の変更とは無関係。claude-skills の検証コマンドが運で通る状態だと、スキルを直すタスクの受け入れが毎回打ち直しに頼る
+- 出し先: タスク1件（claude-skills の `skills/task-workflow/scripts/selftest_task.py` の verify の取り込みの検査が落ちる条件を突き止め、決まって通るようにする）
+
+### `tw edit` が、登録時の `## 目的・背景`・`## 完了条件` を別のタスクの本文で置き換える書き込みを拒む（振り返り: GH-161）（GH-213）
+
+- 札: 赤 操作の誤り（2回目）
+- 根拠: GH-161 の1回目の委譲で、委譲先が前のタスク（GH-156）の古い下書き（同じセッションのスクラッチに残った `body.md`）を `tw edit GH-161 --body-file -` に渡した。GH-161 の本文が GH-156 の本文で丸ごと上書きされ、トラッカー（GitHub の Issue）にも送られた。委譲先が気づいて書き戻したが、誤った版は履歴に1回残った。同じセッションの委譲先はスクラッチを共有するので、依頼文の念押しだけでは次も起こりうる
+- 出し先: claude-skills の `task-workflow` の `task.py` の `edit`。渡された本文の `## 目的・背景` と `## 完了条件` がいまの本文と違えば、既定では書き込まずに拒む（変えてよいときだけ明示のフラグで通す）。自己テスト（`selftest_beads.py` など）に、別のタスクの本文を渡すと拒まれる例を足す
+
+### `tw verify` が判定行を末尾にも出す（振り返り: GH-189）（GH-214）
+
+- 札: 黄 道具（9回目）
+- 根拠: 2026-10-01 の `/loop` で、委譲先が `tw verify` の出力を `tail` で切って先頭の判定行（`VERIFIED`・`VERIFY_NOT_PASSED`・`FOLDED`）を見落とし、検査全体を打ち直した報告が4件続いた（GH-187・GH-189・GH-195・GH-199 の friction log）。打ち直し1回で2〜3分。依頼文で「先頭の判定行も見る」と念押ししても止まらなかった
+- 出し先: claude-skills の `task-workflow` の `task.py` の `verify`。判定行（と取り込んだときの `FOLDED`）を出力の末尾にもう一度出す。自己テストに、末尾の行だけを読んで判定が取れることを足す
+
 ## 2026-10-01 パフォーマンスの重い箇所を洗い出してタスクにする（会話から）
 
 （会話の指示。サーバ側とブラウザ側を分けて調べ、22件の候補を GH-187〜GH-202 の16件にまとめた。起こし直しのたびの `listSessions` の読み直し（確かめきれず）、トークンの内訳の O(k²)（数百件でも軽い）、開発サーバの保存ごとの指紋取り（開発時だけ）、目次とリストの高さのスクロールごとの測り直し（小）はタスクにしなかった）
