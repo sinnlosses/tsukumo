@@ -109,9 +109,18 @@ const FAKE_PLAN_USAGE = {
 const fakeSessionStepSchema = z.object({ afterMs: z.number().min(0), event: sessionEventSchema })
 
 /** 依頼1回ぶんの場面。名前で名指しできる（{@link FakeDriverOptions.scene}）。 */
-const fakeSessionSceneSchema = z.object({
-  name: z.string().min(1),
-  steps: z.array(fakeSessionStepSchema),
+const fakeSessionSceneSchema = z
+  .object({
+    name: z.string().min(1),
+    resume: z.string().min(1).optional(),
+    steps: z.array(fakeSessionStepSchema),
+  })
+  .transform((scene) => ({ ...scene, resume: scene.resume }))
+
+/** 続きとして読み込める過去の transcript。`messages` は SDK が transcript に残す形の架空のメッセージ列。 */
+const fakePastSessionSchema = z.object({
+  sessionId: z.string().min(1),
+  messages: z.array(z.unknown()),
 })
 
 /**
@@ -121,6 +130,7 @@ const fakeSessionSceneSchema = z.object({
 const fakeSessionSchema = z.object({
   opening: z.array(fakeSessionStepSchema),
   turns: z.array(fakeSessionSceneSchema),
+  pastSessions: z.array(fakePastSessionSchema).default([]),
   sessionDigests: z.record(z.string(), sessionDigestSchema).default({}),
 })
 
@@ -134,12 +144,20 @@ export type FakeSessionStep = { readonly afterMs: number; readonly event: Sessio
  */
 export type FakeSessionScene = {
   readonly name: string
+  /** この場面を名指しして起こしたとき、続きとして読み込む過去の transcript の `sessionId`。 */
+  readonly resume: string | undefined
   readonly steps: readonly FakeSessionStep[]
+}
+
+export type FakePastSession = {
+  readonly sessionId: string
+  readonly messages: readonly unknown[]
 }
 
 export type FakeSession = {
   readonly opening: readonly FakeSessionStep[]
   readonly turns: readonly FakeSessionScene[]
+  readonly pastSessions: readonly FakePastSession[]
   /**
    * 切り替え画面で選んだセッションの中身（`readSessionDigest` が返す）。
    * キーはセッションのID で、一覧に載せるのは場面が流す `sessions-changed`。無いIDは「読めない」になる。

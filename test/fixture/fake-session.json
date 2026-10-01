@@ -5580,6 +5580,69 @@
           }
         }
       ]
+    },
+    {
+      "name": "session-resume",
+      "resume": "fake-past-session",
+      "steps": []
+    }
+  ],
+  "pastSessions": [
+    {
+      "sessionId": "fake-past-session",
+      "messages": [
+        {
+          "type": "user",
+          "uuid": "past-u-1",
+          "session_id": "fake-past-session",
+          "message": { "role": "user", "content": "前のセッションの架空の依頼その1" },
+          "parent_tool_use_id": null
+        },
+        {
+          "type": "assistant",
+          "uuid": "past-a-1",
+          "session_id": "fake-past-session",
+          "message": {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "tool_use",
+                "id": "past-speak-1",
+                "name": "mcp__tsukumo__speak",
+                "input": { "text": "前のセッションの架空のセリフだよ。", "expression": "default" }
+              }
+            ]
+          },
+          "parent_tool_use_id": null
+        },
+        {
+          "type": "user",
+          "uuid": "past-u-2",
+          "session_id": "fake-past-session",
+          "message": { "role": "user", "content": "前のセッションの架空の依頼その2" },
+          "parent_tool_use_id": null
+        },
+        {
+          "type": "assistant",
+          "uuid": "past-a-2",
+          "session_id": "fake-past-session",
+          "message": {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "tool_use",
+                "id": "past-report-1",
+                "name": "mcp__tsukumo__report",
+                "input": {
+                  "conclusion": "前のセッションの架空の結論",
+                  "body": "前のセッションの架空の本文。"
+                }
+              }
+            ]
+          },
+          "parent_tool_use_id": null
+        }
+      ]
     }
   ],
   "sessionDigests": {

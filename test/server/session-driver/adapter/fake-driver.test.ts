@@ -18,6 +18,7 @@ const FAKE_SESSION = {
   turns: [
     {
       name: "架空の場面1",
+      resume: undefined,
       steps: [
         { afterMs: 0, event: { kind: "utterance", text: "架空の本文" } },
         { afterMs: 0, event: { kind: "turn-finished", outcome: { kind: "completed" } } },
@@ -25,9 +26,11 @@ const FAKE_SESSION = {
     },
     {
       name: "架空の場面2",
+      resume: undefined,
       steps: [{ afterMs: 0, event: { kind: "utterance", text: "架空の本文2" } }],
     },
   ],
+  pastSessions: [],
   sessionDigests: {
     "fake-other": {
       kind: "known",
@@ -246,6 +249,7 @@ describe("startFakeSession", () => {
     const driver = startFakeSession({
       session: {
         sessionDigests: {},
+        pastSessions: [],
         opening: [
           {
             afterMs: 0,
@@ -277,6 +281,7 @@ describe("startFakeSession", () => {
     const driver = startFakeSession({
       session: {
         sessionDigests: {},
+        pastSessions: [],
         opening: [{ afterMs: 50, event: { kind: "utterance", text: "遅れて来る本文" } }],
         turns: [],
       },
@@ -317,10 +322,12 @@ describe("startFakeSession", () => {
     const driver = startFakeSession({
       session: {
         sessionDigests: {},
+        pastSessions: [],
         opening: [],
         turns: [
           {
             name: "架空の差し戻し",
+            resume: undefined,
             steps: [
               { afterMs: 0, event: report("fake-r1") },
               { afterMs: 1, event: finished("fake-r1", true) },
@@ -359,10 +366,12 @@ describe("startFakeSession", () => {
     const driver = startFakeSession({
       session: {
         sessionDigests: {},
+        pastSessions: [],
         opening: [],
         turns: [
           {
             name: "架空の省略",
+            resume: undefined,
             steps: [
               {
                 afterMs: 0,
@@ -427,6 +436,15 @@ describe("readFakeSession", () => {
     expect(session?.turns.length).toBeGreaterThan(0)
     // 場面の名前は、状態のカタログを撮る道具が名指しする鍵。
     expect(session?.turns.map((scene) => scene.name)).toContain("question-multi")
+  })
+
+  it("過去の transcript（pastSessions）と、それを指す場面の resume を読める", () => {
+    const session = readFakeSession()
+
+    expect(session?.pastSessions.map((past) => past.sessionId)).toContain("fake-past-session")
+    expect(session?.turns.find((scene) => scene.name === "session-resume")?.resume).toBe(
+      "fake-past-session",
+    )
   })
 
   it("無いファイル・形の違う JSON は undefined", () => {

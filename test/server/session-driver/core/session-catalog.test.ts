@@ -203,26 +203,16 @@ describe("createSessionCatalog", () => {
 })
 
 describe("canResume", () => {
-  function config(
-    overrides: Partial<Pick<Config, "newSession" | "driver">>,
-  ): Pick<Config, "newSession" | "driver"> {
-    return { newSession: false, driver: "sdk", ...overrides }
+  function config(overrides: Partial<Pick<Config, "newSession">>): Pick<Config, "newSession"> {
+    return { newSession: false, ...overrides }
   }
 
-  it("既定（新規指定なし・sdk 駆動）では続きを探す", () => {
+  it("既定（新規指定なし）では続きを探す", () => {
     expect(canResume(config({}))).toBe(true)
   })
 
   it("TSUKUMO_NEW_SESSION=1（newSession）のときは探さない", () => {
     expect(canResume(config({ newSession: true }))).toBe(false)
-  })
-
-  it("fake driver のときは探さない（claude を起こさないので探す先が無い）", () => {
-    expect(canResume(config({ driver: "fake" }))).toBe(false)
-  })
-
-  it("両方当たっても探さない", () => {
-    expect(canResume(config({ newSession: true, driver: "fake" }))).toBe(false)
   })
 })
 

@@ -10,6 +10,10 @@ import { readChatTopics } from "../server/chat/core/chat-consolidation.ts"
 import { createChatRecall } from "../server/chat/core/chat-recall.ts"
 import type { Config } from "../server/core/config.ts"
 import { startFakeSession } from "../server/session-driver/adapter/fake-driver.ts"
+import {
+  createFakeSessionCatalog,
+  readFakeRestoredEvents,
+} from "../server/session-driver/adapter/fake-session-resume.ts"
 import { startSdkDriver } from "../server/session-driver/adapter/sdk-driver.ts"
 import {
   listRepositorySessions,
@@ -69,9 +73,7 @@ export function wireSessionLaunch(options: {
   const { context, config, character, viewPort } = options
   // 印の付いたセッションの一覧。ここで1回読み始め、起こし直しはメモリの一覧から続きを選ぶ。
   // 続きを探さない起こし方なら何も読まない。
-  const sessionCatalog = canResume(config)
-    ? createSessionCatalog({ read: () => listRepositorySessions(context.cwd), now: context.now })
-    : EMPTY_SESSION_CATALOG
+  const sessionCatalog = chooseSessionCatalog(context, config)
   return {
     manager: {
       launchSession: createSessionLaunch<CharacterPack>({
@@ -103,7 +105,15 @@ export function wireSessionLaunch(options: {
           })
         },
         restoreEvents: (resumed, pack) =>
-          readRestoredEvents(resumed, expressionChoices(pack.definition)),
+          context.fakeSession === undefined
+            ? readRestoredEvents(resumed, expressionChoices(pack.definition))
+            : Promise.resolve(
+                readFakeRestoredEvents(
+                  context.fakeSession,
+                  resumed,
+                  expressionNames(expressionChoices(pack.definition)),
+                ),
+              ),
       }),
     },
     sessionCommands: {
@@ -111,6 +121,16 @@ export function wireSessionLaunch(options: {
       rememberSessionDefault: (sessionDefault) => rememberSessionDefault(sessionDefault),
     },
   }
+}
+
+/** 続きを探さない起こし方なら空、fake driver なら疑似セッションの一覧、それ以外は SDK の一覧。 */
+function chooseSessionCatalog(context: WiringContext, config: Config): SessionCatalog {
+  if (!canResume(config)) {
+    return EMPTY_SESSION_CATALOG
+  }
+  return context.fakeSession === undefined
+    ? createSessionCatalog({ read: () => listRepositorySessions(context.cwd), now: context.now })
+    : createFakeSessionCatalog(context.fakeSession, config.fakeScene)
 }
 
 /**
@@ -209,7 +229,7 @@ function sessionMode(
 
 /**
  * これから起こすキャラクターパックの、そのモードの続きから始めるセッションを探す。
- * 見つからないときと、探さない起こし方（`canResume` が偽で、一覧が空）のときは `{ kind: "new" }`（新規に起こす）。
+ * 見つからないときと、探さない起こし方（`canResume` が偽、または fake driver で続きを持たない場面）のときは `{ kind: "new" }`（新規に起こす）。
  *
  * 雑談と仕事で引く印が違う（`sessionTag` の `chat`）。
  * 雑談へ入っても仕事の会話は続きにならず、そのパックで一度も雑談のターンを終えていなければ新規から始まる。

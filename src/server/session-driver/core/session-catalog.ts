@@ -33,11 +33,11 @@ export type SessionCatalogRefresh = "refreshed" | "kept"
 
 /**
  * 続きを探す起こし方かどうか。探さないときは、切り替え先の一覧も空、続きも `{ kind: "new" }` にする。
- * `TSUKUMO_NEW_SESSION=1` と fake driver は探さない。
- * 新規に起こすと決めているときに続きを探しても無駄で、fake driver は claude を起こさないのでそもそも探す先が無い。
+ * `TSUKUMO_NEW_SESSION=1` は探さない。新規に起こすと決めているときに続きを探しても無駄。
+ * fake driver は疑似セッションの名指しの場面が続きを持つときだけ探す（探す先は fake の一覧が決める）。
  */
-export function canResume(config: Pick<Config, "newSession" | "driver">): boolean {
-  return !config.newSession && config.driver !== "fake"
+export function canResume(config: Pick<Config, "newSession">): boolean {
+  return !config.newSession
 }
 
 /** 何も読まず、続きも切り替え先も無い一覧（続きを探さない起こし方のとき）。 */
