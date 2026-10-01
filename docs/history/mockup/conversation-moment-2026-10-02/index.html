@@ -1,0 +1,926 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>会話の画面の局面（見本）</title>
+    <!--
+      会話の画面を、ターンの局面ごとにメインビューの中身が入れ替わる形にした見本（2026-10-02）。
+      正典は docs/architecture/screen-design.md 13.13。中身はすべて架空。外部の資源は読まない。
+      局面は URL の hash で選ぶ: #greet / #work / #ask / #deliver / #stumble（末尾に -open で中くらいの段のサイドバーを開く）。
+      色は src/browser/styles/theme.css の既定値を写したもの。
+    -->
+    <style>
+      :root {
+        --ground: #191720;
+        --surface: #221f2b;
+        --ink: #e8e3ea;
+        --accent: #f2b0a0;
+        --ink-quiet: color-mix(in srgb, var(--ink) 60%, transparent);
+        --rule: color-mix(in srgb, var(--surface), var(--ink) 32%);
+        --rule-quiet: color-mix(in srgb, var(--surface), var(--ink) 6%);
+        --surface-accent: color-mix(in srgb, var(--surface), var(--accent) 12%);
+        --surface-raised: color-mix(in srgb, var(--ink) 10%, transparent);
+        --state-ok: #7ee081;
+        --state-warn: #e3c766;
+        --state-ng: #e88b8b;
+        --font-label: 0.6875rem;
+        --font-action: 0.75rem;
+        --font-secondary: 0.8125rem;
+        --font-subheading: 0.875rem;
+        --font-body: 0.9375rem;
+        --font-heading-2: 1.1875rem;
+        --font-sans: system-ui, sans-serif;
+        --font-mono: ui-monospace, SFMono-Regular, monospace;
+        --page-padding: 1rem;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        height: 100%;
+      }
+      body {
+        margin: 0;
+        padding: 0 var(--page-padding) var(--page-padding);
+        background: var(--ground);
+        color: var(--ink);
+        font-family: var(--font-sans);
+        font-size: var(--font-body);
+        line-height: 1.75;
+        overflow: hidden;
+      }
+      .mono {
+        font-family: var(--font-mono);
+      }
+      .quiet {
+        color: var(--ink-quiet);
+      }
+
+      /* 帯 */
+      .nav {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        height: 52px;
+        margin: 0 calc(-1 * var(--page-padding)) var(--page-padding);
+        padding: 0 24px;
+        border-bottom: 1px solid var(--rule);
+        background: color-mix(in srgb, var(--ground), var(--surface));
+        font-size: var(--font-subheading);
+      }
+      .face {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: var(--surface-accent);
+        box-shadow: 0 0 0 1px var(--accent);
+        display: grid;
+        place-items: center;
+      }
+      .room {
+        font-weight: 600;
+      }
+      .toggle {
+        display: flex;
+        gap: 4px;
+        padding: 4px;
+        border: 1px solid var(--rule);
+        border-radius: 11px;
+        background: var(--ground);
+      }
+      .toggle span {
+        padding: 2px 12px;
+        border-radius: 8px;
+        font-size: var(--font-secondary);
+      }
+      .toggle .on {
+        background: var(--accent);
+        color: var(--ground);
+        font-weight: 600;
+      }
+      .gates {
+        display: flex;
+        gap: 2px;
+        height: 100%;
+      }
+      .gates span {
+        display: flex;
+        align-items: center;
+        padding: 0 12px;
+        color: var(--ink-quiet);
+        border-bottom: 2px solid transparent;
+      }
+      .gates .on {
+        color: var(--ink);
+        font-weight: 500;
+        border-bottom-color: var(--accent);
+      }
+      .nav-right {
+        margin-left: auto;
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        color: var(--ink-quiet);
+        font-size: var(--font-secondary);
+      }
+      .nav-ops {
+        display: none;
+      }
+
+      /* 4領域 */
+      .grid {
+        display: grid;
+        grid-template-rows: 70fr 0.6rem 30fr;
+        gap: 0.5rem;
+        height: calc(100vh - 52px - 1px - 2 * var(--page-padding));
+      }
+      .row {
+        display: grid;
+        gap: 0.5rem;
+        min-height: 0;
+      }
+      .row-top {
+        grid-template-columns: 75fr 25fr;
+      }
+      .row-bottom {
+        grid-template-columns: 50fr 50fr;
+      }
+      .divider {
+        position: relative;
+      }
+      .divider::after {
+        content: "";
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 40px;
+        height: 3px;
+        border-radius: 2px;
+        background: var(--rule);
+        transform: translate(-50%, -50%);
+      }
+      .region {
+        position: relative;
+        min-width: 0;
+        min-height: 0;
+        border: 1px solid var(--rule);
+        border-radius: 0.75rem;
+        background: var(--surface);
+        overflow: hidden;
+      }
+      .ground {
+        border: none;
+        background: transparent;
+      }
+
+      /* メインビューの札の頭 */
+      .head {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        height: 44px;
+        padding: 0 16px;
+        border-bottom: 1px solid var(--rule-quiet);
+        font-size: var(--font-subheading);
+      }
+      .head .arrows {
+        display: flex;
+        gap: 4px;
+        color: var(--ink-quiet);
+      }
+      .head .arrows span {
+        display: grid;
+        place-items: center;
+        width: 24px;
+        height: 24px;
+        border: 1px solid var(--rule);
+        border-radius: 6px;
+        font-size: var(--font-action);
+      }
+      .head .title {
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .head .right {
+        margin-left: auto;
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        white-space: nowrap;
+        font-size: var(--font-secondary);
+      }
+      .badge {
+        padding: 0 10px;
+        border-radius: 999px;
+        background: var(--accent);
+        color: var(--ground);
+        font-size: var(--font-action);
+        font-weight: 600;
+      }
+      .notice {
+        padding: 2px 12px;
+        border: 1px solid color-mix(in srgb, var(--rule), var(--accent) 35%);
+        border-radius: 999px;
+        background: var(--surface-accent);
+        font-size: var(--font-action);
+      }
+      .notice b {
+        color: var(--accent);
+      }
+      .body {
+        height: calc(100% - 44px);
+        overflow: hidden;
+        padding: 20px 28px;
+        animation: fade-in 160ms ease-out;
+      }
+      @keyframes fade-in {
+        from {
+          opacity: 0;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .body {
+          animation: none;
+        }
+      }
+
+      /* 迎える口 */
+      .welcome h2 {
+        margin: 8px 0 4px;
+        font-size: var(--font-heading-2);
+      }
+      .welcome .lead {
+        margin: 0 0 20px;
+        color: var(--ink-quiet);
+        font-size: var(--font-subheading);
+      }
+      .doors {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+      }
+      .doors h3 {
+        margin: 0 0 8px;
+        font-size: var(--font-secondary);
+        color: var(--ink-quiet);
+        font-weight: 500;
+      }
+      .door {
+        display: block;
+        margin-bottom: 8px;
+        padding: 10px 14px;
+        border: 1px solid var(--rule);
+        border-radius: 10px;
+        background: var(--ground);
+        font-size: var(--font-subheading);
+        line-height: 1.6;
+      }
+      .door .id {
+        margin-right: 8px;
+        font-family: var(--font-mono);
+        font-size: var(--font-secondary);
+        color: var(--accent);
+      }
+      .door small {
+        display: block;
+        color: var(--ink-quiet);
+        font-size: var(--font-secondary);
+      }
+
+      /* 作業の地図 */
+      .map {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+      }
+      .map-label {
+        margin-bottom: 10px;
+        color: var(--ink-quiet);
+        font-size: var(--font-secondary);
+      }
+      .phases {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+      .phase {
+        display: grid;
+        grid-template-columns: 28px 1fr;
+        gap: 4px 12px;
+        padding: 8px 0;
+        border-bottom: 1px solid var(--rule-quiet);
+      }
+      .phase .mark {
+        display: grid;
+        place-items: center;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        border: 1px solid var(--rule);
+        font-size: var(--font-label);
+        color: var(--ink-quiet);
+      }
+      .phase.done .mark {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+      .phase.now .mark {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: var(--ground);
+        font-weight: 700;
+      }
+      .phase .name {
+        font-size: var(--font-subheading);
+        font-weight: 600;
+      }
+      .phase.later .name {
+        color: var(--ink-quiet);
+        font-weight: 400;
+      }
+      .phase .summary {
+        grid-column: 2;
+        color: var(--ink-quiet);
+        font-size: var(--font-subheading);
+        line-height: 1.6;
+      }
+      .running {
+        grid-column: 2;
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        padding: 6px 10px;
+        border-radius: 8px;
+        background: var(--surface-accent);
+        font-family: var(--font-mono);
+        font-size: var(--font-secondary);
+      }
+      .spin {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        border: 2px solid var(--accent);
+        border-right-color: transparent;
+      }
+      .running .sec {
+        margin-left: auto;
+        color: var(--ink-quiet);
+      }
+      .map-more {
+        margin-top: 10px;
+        color: var(--ink-quiet);
+        font-size: var(--font-secondary);
+      }
+      .map-more u {
+        color: var(--ink);
+      }
+      .map-foot {
+        margin-top: auto;
+        padding-top: 10px;
+        border-top: 1px solid var(--rule-quiet);
+        font-family: var(--font-mono);
+        font-size: var(--font-secondary);
+        color: var(--ink-quiet);
+      }
+      .map-foot .warn {
+        color: var(--state-warn);
+      }
+
+      /* お伺い */
+      .inquiry {
+        grid-column: 2;
+        display: flex;
+        flex-direction: column;
+        margin-top: 6px;
+        border: 1px solid var(--state-warn);
+        border-radius: 12px;
+        background: color-mix(in srgb, var(--surface), var(--state-warn) 8%);
+        max-height: 260px;
+      }
+      .inquiry-head {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        padding: 8px 14px;
+        font-size: var(--font-secondary);
+      }
+      .chip {
+        padding: 0 8px;
+        border-radius: 6px;
+        background: var(--state-warn);
+        color: var(--ground);
+        font-weight: 700;
+        font-size: var(--font-action);
+      }
+      .inquiry-head .right {
+        margin-left: auto;
+        font-family: var(--font-mono);
+        color: var(--ink-quiet);
+      }
+      .inquiry-q {
+        padding: 0 14px 6px;
+        font-size: var(--font-subheading);
+        font-weight: 600;
+      }
+      .options {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 8px;
+        padding: 0 14px 8px;
+        overflow: auto;
+        min-height: 0;
+      }
+      .option {
+        padding: 8px 10px;
+        border: 1px solid var(--rule);
+        border-radius: 10px;
+        background: var(--ground);
+        font-size: var(--font-secondary);
+        line-height: 1.5;
+      }
+      .option.on {
+        border-color: var(--state-warn);
+      }
+      .option .n {
+        font-family: var(--font-mono);
+        color: var(--state-warn);
+        margin-right: 6px;
+      }
+      .option small {
+        display: block;
+        color: var(--ink-quiet);
+      }
+      .inquiry-ops {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+        padding: 8px 14px;
+        border-top: 1px solid var(--rule-quiet);
+      }
+      .btn {
+        padding: 4px 14px;
+        border: 1px solid var(--rule);
+        border-radius: 8px;
+        font-size: var(--font-secondary);
+      }
+      .btn.go {
+        background: var(--state-warn);
+        border-color: var(--state-warn);
+        color: var(--ground);
+        font-weight: 700;
+      }
+
+      /* レポート */
+      .report {
+        display: grid;
+        grid-template-columns: 2.5rem 1fr;
+        gap: 20px;
+        height: 100%;
+      }
+      .toc {
+        border-right: 1px solid var(--rule-quiet);
+        color: var(--ink-quiet);
+        font-size: var(--font-action);
+        writing-mode: vertical-rl;
+        padding-top: 4px;
+      }
+      .toc-open {
+        display: none;
+      }
+      /* 札の幅が 48rem 以上なら目次は既定で開く（13.4）。見本では窓幅で代える。 */
+      @media (min-width: 1101px) {
+        .report {
+          grid-template-columns: 12rem 1fr;
+        }
+        .toc {
+          writing-mode: horizontal-tb;
+          font-size: var(--font-secondary);
+          line-height: 2.2;
+        }
+        .toc b {
+          color: var(--ink);
+          font-weight: 500;
+        }
+        .toc-folded {
+          display: none;
+        }
+        .toc-open {
+          display: inline;
+        }
+      }
+      .report-main {
+        overflow: hidden;
+      }
+      .catalog {
+        color: var(--ink-quiet);
+        font-size: var(--font-action);
+      }
+      .report h2 {
+        margin: 4px 0 6px;
+        font-size: var(--font-heading-2);
+      }
+      .report p {
+        margin: 0 0 14px;
+      }
+      .checks {
+        margin: 0 0 18px;
+        font-size: var(--font-secondary);
+        color: var(--ink-quiet);
+      }
+      .checks b {
+        color: var(--state-ok);
+      }
+      .report h3 {
+        margin: 0 0 6px;
+        padding-bottom: 4px;
+        border-bottom: 1px solid color-mix(in srgb, var(--rule), var(--accent) 35%);
+        font-size: var(--font-subheading);
+        display: inline-block;
+      }
+      .folded {
+        margin-top: 10px;
+        padding: 8px 12px;
+        border: 1px dashed var(--rule);
+        border-radius: 10px;
+        color: var(--ink-quiet);
+        font-size: var(--font-secondary);
+      }
+      .failure {
+        margin-bottom: 16px;
+        padding: 12px 16px;
+        border: 1px solid var(--state-ng);
+        border-radius: 12px;
+        background: color-mix(in srgb, var(--surface), var(--state-ng) 8%);
+      }
+      .failure strong {
+        color: var(--state-ng);
+      }
+      .failure .ops {
+        display: flex;
+        gap: 8px;
+        margin-top: 8px;
+      }
+
+      /* サイドバー */
+      .sidebar {
+        display: flex;
+        flex-direction: column;
+        padding: 16px 18px;
+        font-size: var(--font-secondary);
+      }
+      .sidebar h4 {
+        margin: 0 0 8px;
+        font-size: var(--font-subheading);
+      }
+      .chips {
+        display: flex;
+        gap: 6px;
+        margin-bottom: 10px;
+        white-space: nowrap;
+      }
+      .chips span {
+        padding: 0 8px;
+        border-radius: 999px;
+        background: var(--surface-raised);
+        font-size: var(--font-action);
+      }
+      .task {
+        padding: 6px 0;
+        border-bottom: 1px solid var(--rule-quiet);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .task .id {
+        font-family: var(--font-mono);
+        color: var(--ink-quiet);
+        margin-right: 8px;
+      }
+      .sidebar-foot {
+        margin-top: auto;
+        padding-top: 10px;
+        border-top: 1px solid var(--rule-quiet);
+        font-family: var(--font-mono);
+        color: var(--ink-quiet);
+      }
+      .rail {
+        display: none;
+      }
+
+      /* キャラビュー */
+      .character {
+        display: flex;
+        align-items: flex-end;
+        gap: 14px;
+        padding: 12px 20px;
+      }
+      .balloon {
+        margin-bottom: 30px;
+        padding: 10px 14px;
+        border: 1px solid var(--accent);
+        border-radius: 12px;
+        background: var(--surface);
+        font-size: var(--font-subheading);
+        max-width: 60%;
+      }
+      .balloon small {
+        display: block;
+        color: var(--accent);
+        font-size: var(--font-label);
+        font-weight: 700;
+      }
+
+      /* 入力欄 */
+      .dispatch {
+        display: flex;
+        flex-direction: column;
+        padding: 12px;
+      }
+      .ask-band {
+        margin-bottom: 8px;
+        padding: 4px 10px;
+        border-radius: 8px;
+        background: color-mix(in srgb, var(--surface), var(--state-warn) 12%);
+        color: var(--state-warn);
+        font-size: var(--font-secondary);
+      }
+      .ask-band u {
+        color: var(--ink);
+      }
+      .textarea {
+        flex: 1;
+        padding: 10px 14px;
+        border: 1px solid var(--rule);
+        border-radius: 10px;
+        background: var(--ground);
+        color: var(--ink-quiet);
+        font-size: var(--font-subheading);
+      }
+      .tools {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding-top: 8px;
+        color: var(--ink-quiet);
+        font-size: var(--font-secondary);
+      }
+      .tools .hint {
+        margin-left: auto;
+      }
+      .send {
+        padding: 6px 16px;
+        border-radius: 10px;
+        background: var(--accent);
+        color: var(--ground);
+        font-weight: 700;
+      }
+      .send.quiet-send {
+        background: transparent;
+        border: 1px solid var(--rule);
+        color: var(--ink-quiet);
+        font-weight: 500;
+      }
+
+      /* 中くらいの窓幅（761〜1100px）: サイドバーを柱に畳み、押すと重なって開く。 */
+      @media (max-width: 1100px) {
+        .row-top {
+          grid-template-columns: 1fr 3rem;
+        }
+        .row-top > .sidebar {
+          display: none;
+        }
+        .rail {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 10px;
+          padding: 12px 0;
+          border: 1px solid var(--rule);
+          border-radius: 0.75rem;
+          background: var(--surface);
+          font-size: var(--font-action);
+        }
+        .rail .count {
+          padding: 0 6px;
+          border-radius: 999px;
+          background: var(--surface-accent);
+          color: var(--accent);
+          font-family: var(--font-mono);
+        }
+        .rail .open {
+          writing-mode: vertical-rl;
+          color: var(--ink-quiet);
+        }
+        .nav-ops {
+          display: inline;
+        }
+        .sidebar-foot .ops {
+          display: none;
+        }
+        body.drawer .row-top {
+          position: relative;
+        }
+        body.drawer .row-top > .sidebar {
+          display: flex;
+          position: absolute;
+          top: 0;
+          right: calc(3rem + 0.5rem);
+          bottom: 0;
+          width: 20rem;
+          z-index: 2;
+          box-shadow: 0 12px 32px rgb(0 0 0 / 0.45);
+        }
+        body.drawer .rail {
+          border-color: var(--accent);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="nav">
+      <span class="face">
+        <svg width="26" height="26" viewBox="0 0 40 40" aria-hidden="true">
+          <path d="M8 34 V18 a12 12 0 0 1 24 0 V34 l-4 -3 -4 3 -4 -3 -4 3 -4 -3 z" fill="#efe9f3" />
+          <circle cx="15" cy="19" r="2.2" fill="#2b2433" />
+          <circle cx="25" cy="19" r="2.2" fill="#2b2433" />
+        </svg>
+      </span>
+      <span class="room">見本の部屋</span>
+      <span class="toggle"><span class="on">仕事</span><span>雑談</span></span>
+      <span class="gates"><span class="on">会話</span><span>キャラ</span><span>トークン</span><span>成果</span></span>
+      <span class="nav-right"><span class="nav-ops mono">Opus · Medium · 自動判定</span><span>⚙</span></span>
+    </header>
+    <main class="grid">
+      <div class="row row-top">
+        <section class="region" id="main"></section>
+        <aside class="region sidebar">
+          <h4>タスク</h4>
+          <div class="chips"><span>進行中 1</span><span>未着手 4</span><span>完了 8</span></div>
+          <div class="task"><span class="id">EX-12</span>見本の帳面の並べ替えを直す</div>
+          <div class="task"><span class="id">EX-14</span>架空の ID を両方の形で受け取る</div>
+          <div class="task"><span class="id">EX-15</span>見本の設定の画面を整える</div>
+          <div class="task"><span class="id">EX-16</span>架空の一覧に検索を足す</div>
+          <div class="sidebar-foot"><span class="ops">Ⓞ ▂▄▆ ⛉　</span>文脈 32% · 5h 18% · 7d 40%</div>
+        </aside>
+        <div class="rail" aria-label="サイドバー">
+          <span class="count">1</span>
+          <span class="open">タスク ›</span>
+        </div>
+      </div>
+      <div class="divider"></div>
+      <div class="row row-bottom">
+        <section class="region ground character">
+          <svg width="96" height="110" viewBox="0 0 40 46" aria-hidden="true">
+            <path d="M4 44 V20 a16 16 0 0 1 32 0 V44 l-5 -4 -5 4 -5 -4 -5 4 -5 -4 z" fill="#efe9f3" stroke="#3a3346" />
+            <circle cx="14" cy="21" r="2.4" fill="#2b2433" />
+            <circle cx="26" cy="21" r="2.4" fill="#2b2433" />
+            <ellipse cx="10" cy="26" rx="3" ry="1.6" fill="#f2b0a0" />
+            <ellipse cx="30" cy="26" rx="3" ry="1.6" fill="#f2b0a0" />
+          </svg>
+          <div class="balloon" id="balloon"></div>
+        </section>
+        <section class="region dispatch" id="dispatch"></section>
+      </div>
+    </main>
+    <script>
+      const views = {
+        greet: {
+          head: `<span class="title">何から始める？</span>`,
+          body: `
+            <div class="welcome">
+              <h2>何から始める？</h2>
+              <p class="lead">口を押すと、下の入力欄に依頼の文が入る（送るのは自分で）。</p>
+              <div class="doors">
+                <div>
+                  <h3>前回の続き</h3>
+                  <span class="door">見本の帳面の並べ替え<small>残り：並べ替えの検証が1件落ちたまま。原因は架空の比較関数。</small></span>
+                </div>
+                <div>
+                  <h3>次に着手できるタスク</h3>
+                  <span class="door"><span class="id">EX-14</span>架空の ID を両方の形で受け取る</span>
+                  <span class="door"><span class="id">EX-15</span>見本の設定の画面を整える</span>
+                  <span class="door"><span class="id">EX-16</span>架空の一覧に検索を足す</span>
+                </div>
+              </div>
+            </div>`,
+          balloon: `<small>見本の精霊</small>おかえり。今日は何からやろうか。`,
+          dispatch: "idle",
+        },
+        work: {
+          head: `<span class="arrows"><span>‹</span><span>›</span></span><span class="title">架空の ID を両方の形で受け取る</span><span class="right"><span class="mono quiet">1 / 1</span><span class="badge">最新</span></span>`,
+          body: mapHtml(false),
+          balloon: `<small>見本の精霊</small>形が分かったから、変換に入るよ。`,
+          dispatch: "working",
+        },
+        ask: {
+          head: `<span class="arrows"><span>‹</span><span>›</span></span><span class="title">架空の ID を両方の形で受け取る</span><span class="right"><span class="mono quiet">1 / 1</span><span class="badge">最新</span></span>`,
+          body: mapHtml(true),
+          balloon: `<small>見本の精霊</small>ここで1つ決めてほしいな。上に出したよ。`,
+          dispatch: "asking",
+        },
+        deliver: {
+          head: `<span class="arrows"><span>‹</span><span>›</span></span><span class="title">架空の ID を両方の形で受け取る</span><span class="right"><span class="mono quiet">1 / 1</span><span class="badge">最新</span></span>`,
+          body: reportHtml(false),
+          balloon: `<small>見本の精霊</small>3つの段を終えたよ。結論は上に置いた。`,
+          dispatch: "idle",
+        },
+        stumble: {
+          head: `<span class="arrows"><span>‹</span><span>›</span></span><span class="title">見本の帳面の並べ替えを直す</span><span class="right"><span class="mono quiet">2 / 2</span><span class="badge">最新</span></span>`,
+          body: reportHtml(true),
+          balloon: `<small>見本の精霊</small>うまくいかなかった……。上にわけを書いたよ。`,
+          dispatch: "idle",
+        },
+        held: {
+          head: `<span class="arrows"><span>‹</span><span>›</span></span><span class="title">架空の ID を両方の形で受け取る</span><span class="right"><span class="notice"><b>●</b> レポートが届いた ›</span></span>`,
+          body: mapHtml(false, true),
+          balloon: `<small>見本の精霊</small>終わったよ。読み終わったら、上の口から開いてね。`,
+          dispatch: "idle",
+        },
+      }
+
+      function mapHtml(asking, finished) {
+        const now = asking
+          ? `<div class="inquiry">
+              <div class="inquiry-head"><span class="chip">お伺い</span>質問 · <b>変換の形</b><span class="right">1 / 2 · 待って 0:42</span></div>
+              <div class="inquiry-q">どちらの形に揃える？</div>
+              <div class="options">
+                <div class="option on"><span class="n">1</span><b>新しい形</b><small>架空の ID を数字だけで持つ</small></div>
+                <div class="option"><span class="n">2</span><b>古い形</b><small>頭に記号を付けたまま持つ</small></div>
+                <div class="option"><span class="n">3</span><b>両方</b><small>読み込むときにどちらも受ける</small></div>
+              </div>
+              <div class="inquiry-ops"><span class="btn">戻る</span><span class="btn go">次へ ⏎</span></div>
+            </div>`
+          : finished
+            ? `<div class="summary">変換の入口を1つにして、呼ぶ側の2か所を差し替えた。</div>`
+            : `<div class="running"><span class="spin"></span>Bash: pnpm run test<span class="sec">12秒</span></div>`
+        return `
+          <div class="map">
+            <div class="map-label">作業の地図 · この依頼の段取り</div>
+            <ol class="phases">
+              <li class="phase done"><span class="mark">済</span><span class="name">今の形を調べる</span><span class="summary">架空の ID は変換の関数1か所で扱っていて、呼ぶ側は2か所だった。</span></li>
+              <li class="phase ${finished ? "done" : "now"}"><span class="mark">${finished ? "済" : "今"}</span><span class="name">ID の変換を両方の形に対応させる</span>${now}</li>
+              <li class="phase ${finished ? "done" : "later"}"><span class="mark">${finished ? "済" : "3"}</span><span class="name">文書と検証を揃える</span>${finished ? '<span class="summary">文書の例を新しい形に揃え、検証を1回通した。</span>' : ""}</li>
+            </ol>
+            <div class="map-more">手順 ${finished ? "9" : "7"}・失敗 0　<u>手順をすべて見る</u></div>
+            <div class="map-foot">${finished ? "所要 1分40秒" : asking ? "経過 1分12秒" : '経過 1分12秒 <span class="warn">· 再試行中 2/10</span>'}</div>
+          </div>`
+      }
+
+      function reportHtml(failed) {
+        const failure = failed
+          ? `<div class="failure"><strong>失敗で終わった</strong> — API のサーバが応えなかった（しばらくして直ることが多い）
+               <div class="ops"><span class="btn">同じ依頼を入力欄に戻す</span><span class="btn">畳んだ地図で失敗の行を見る</span></div></div>`
+          : ""
+        return `
+          <div class="report">
+            <div class="toc"><span class="toc-folded">目次 ›</span><span class="toc-open">目次 ‹<br /><b>${failed ? "ここまでにしたこと" : "変えたところ"}</b><br />作業の地図</span></div>
+            <div class="report-main">
+              ${failure}
+              <div class="catalog">${failed ? "中間レポート · " : "最終レポート · "}<span class="mono">${failed ? "EX-12" : "EX-14"}</span></div>
+              <h2>${failed ? "並べ替えは途中まで直した" : "架空の ID を両方の形で受け取れるようにした"}</h2>
+              <p>${failed ? "比較関数を差し替えたところで止まった。検証はまだ回していない。" : "変換の入口を1つにまとめ、古い形は読み込むときにだけ新しい形へ直す。呼ぶ側の2か所は新しい形だけを見る。"}</p>
+              ${failed ? "" : '<div class="checks">検証 1　<b>✓ すべて通った</b></div>'}
+              <h3>${failed ? "ここまでにしたこと" : "変えたところ"}</h3>
+              <p>${failed ? "架空の比較関数を新しいものへ差し替えた。呼ぶ側はまだ古い関数を見ている。" : "架空の変換の関数に古い形の読み口を足し、書き出すときは新しい形だけにした。文書の例も新しい形に揃えた。"}</p>
+              <div class="folded">▸ 作業の地図 · 3段 · 手順 ${failed ? "4・失敗 1" : "9"} · 所要 ${failed ? "48秒" : "1分40秒"}</div>
+            </div>
+          </div>`
+      }
+
+      function dispatchHtml(kind) {
+        const band =
+          kind === "asking"
+            ? `<div class="ask-band">↑ 見本の精霊 が聞いています。選ぶか、ここに書いて答える　<u>お伺いへ</u></div>`
+            : ""
+        const placeholder =
+          kind === "asking" ? "選択肢以外の答えを書く…" : "見本の精霊 への依頼を書く"
+        const send =
+          kind === "idle"
+            ? `<span class="send">送信 ⌘⏎</span>`
+            : kind === "asking"
+              ? `<span class="send quiet-send">答える ⌘⏎</span>`
+              : `<span class="send quiet-send">中断</span>`
+        return `${band}<div class="textarea">${placeholder}</div>
+          <div class="tools"><span>▣</span><span>/</span><span>@</span><span>H</span><span class="hint">⌘⏎ で送る</span>${send}</div>`
+      }
+
+      function render() {
+        const raw = location.hash.replace("#", "") || "greet"
+        const open = raw.endsWith("-open")
+        const name = raw.replace(/-open$/, "")
+        const view = views[name] ?? views.greet
+        document.body.classList.toggle("drawer", open)
+        document.getElementById("main").innerHTML =
+          `<div class="head">${view.head}</div><div class="body">${view.body}</div>`
+        document.getElementById("balloon").innerHTML = view.balloon
+        document.getElementById("dispatch").innerHTML = dispatchHtml(view.dispatch)
+      }
+      window.addEventListener("hashchange", render)
+      render()
+    </script>
+  </body>
+</html>
