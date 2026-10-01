@@ -7,6 +7,7 @@ import { fromKeys } from "remeda"
 import { characterAssetPath } from "./character-asset.ts"
 import type { CharacterBackground } from "./character-background.ts"
 import type { CharacterDefinition } from "./character-definition.ts"
+import { type CharacterReactions, NO_REACTIONS } from "./character-reaction.ts"
 import { type ExpressionChoice, expressionChoices } from "./expression-choice.ts"
 import { type Expression, EXPRESSIONS, type Outfit, OUTFITS } from "./expression.ts"
 
@@ -69,6 +70,8 @@ export type CharacterInfo = {
    * 定義に `diaryFont` が無いパックでは undefined（`--font-serif` のまま）。
    */
   readonly diaryFont: string | undefined
+  /** {@link CharacterDefinition.reactions} をそのまま持つ。定義が無いパックでは全部空。 */
+  readonly reactions: CharacterReactions
   /**
    * 立ち絵と差し色を画面から変えられるか。
    * 変えた結果の書き込み先は `~/.tsukumo/characters/<name>/` の1箇所だけで、そこに書いた版が探索の順で起動先の `characters/local` に負けるパックだけが false になる（書いても次の起動で読まれないので、画面から口を出さない）。
@@ -171,6 +174,7 @@ export function toCharacterInfo(source: CharacterInfoSource): CharacterInfo {
     outfitAccents: foldedOutfitAccents(definition),
     background: backgroundWithUrl(definition?.background, assetUrl),
     diaryFont: definition?.diaryFont === undefined ? undefined : assetUrl(definition.diaryFont),
+    reactions: definition?.reactions ?? NO_REACTIONS,
     editable: source.editable,
   }
 }

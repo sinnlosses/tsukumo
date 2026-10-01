@@ -1,8 +1,8 @@
 // `<CharacterView>` のロジック。
 // 表情・衣装・立ち絵の URL・動き・吹き出しに出すセリフを、直近の `speak` とセッションの記録から組み立てて返す。
 //
-// 表情は `state.speechExpression`（直近の `speak` の引数）、衣装は `resolveOutfit(state.model)` で決める。
-// 表情の源は `speak` だけなので、時間経過で顔が変わることはない。
+// 表情は `state.speechExpression`（直近の `speak` の引数）か、反応を出しているあいだはその行の表情。衣装は `resolveOutfit(state.model)` で決める。
+// 時間経過で顔が変わることはない。
 //
 // 過去のターンのタブを選んでいる間は、そのターンの吹き出しと表情に戻す（`useTurnSelection`）。
 // 立ち絵の「動き」は時間相対のアニメーションなので遡らない。
@@ -12,6 +12,7 @@
 
 import { useEffect, useState } from "react"
 
+import type { ReactionKind } from "../../../../../../../shared/character-pack/character-reaction.ts"
 import {
   resolveOutfit,
   type Expression,
@@ -24,6 +25,10 @@ import {
   type PortraitMotionInput,
 } from "../../../../../../../shared/session/portrait-motion.ts"
 import type { SessionRecord, Speech } from "../../../../../../../shared/session/session-state.ts"
+import {
+  shownReaction,
+  type ShownReaction,
+} from "../../../../../../../shared/session/shown-reaction.ts"
 import { turnSpeeches, type TurnSpeech } from "../../../../../../../shared/session/turn-speech.ts"
 import { portraitAppearance } from "../../../../../../domain/portrait-appearance.ts"
 import { useSession } from "../../../../../../stores/session.ts"
@@ -39,12 +44,6 @@ import {
   type ViewedSpeech,
 } from "../domain/pinned-speech.ts"
 
-/**
- * セリフが1件も無い過去のターンを見ているときの文言。
- * 今のターンの「（まだ発話がありません）」は、もう終わったターンには合わない（「まだ」＝これから来る、の言い方）。
- */
-const PAST_TURN_EMPTY_MESSAGE = "（このターンでは発話がありませんでした）"
-
 /** そのターンにセリフが1件も無かったときに当てる表情（`INITIAL_SESSION_STATE` と同じ既定）。 */
 const DEFAULT_PAST_TURN_EXPRESSION = "default"
 
@@ -55,6 +54,11 @@ export type CharacterViewSpeech = {
   readonly selected: boolean
   readonly onToggle: () => void
 }
+
+/** 吹き出しの最新に出す反応。 */
+export type BalloonReaction =
+  | { readonly kind: "none" }
+  | { readonly kind: "shown"; readonly reaction: ReactionKind; readonly text: string }
 
 /** `<CharacterView>` が画面に出す形。presenter はこれをそのまま部品へ渡すだけ。 */
 export type CharacterViewModel = {
@@ -67,8 +71,8 @@ export type CharacterViewModel = {
   readonly motion: PortraitMotion
   /** 吹き出しに出すセリフ（古い→新しい）。過去のターンを見ていればそのターンぶんに差し替わる。 */
   readonly speeches: readonly CharacterViewSpeech[]
-  /** セリフが1件も無いときに出す文言。今回のターンを見ていれば `undefined`（既定文に任せる）。 */
-  readonly emptyMessage: string | undefined
+  /** 吹き出しの最新に出す反応。過去のターンを見ているあいだは出さない。 */
+  readonly reaction: BalloonReaction
   /** 最新の吹き出しに添える話し手の名前。キャラクターが届いていない・名前が無ければ `undefined`。 */
   readonly speakerName: string | undefined
   /** セリフのログへ渡す、いま留めている行（`<SpeechLog>` と印・表情の状態を共有する）。 */
@@ -87,6 +91,7 @@ export function useCharacterView(): CharacterViewModel {
   const turn = useSession((session) => session.state.turn)
   const lastToolFailureAt = useSession((session) => session.state.lastToolFailureAt)
   const draftingReport = useSession((session) => session.state.reportDrafting.kind === "drafting")
+  const state = useSession((session) => session.state)
 
   // いまも伸びているターン（今回）のセリフだけ `state.speeches` から引く。過去のターンは `turnSpeeches(records)` から引く。
   const speechesOfTurn = (turnId: number): readonly Speech[] | undefined =>
@@ -98,14 +103,17 @@ export function useCharacterView(): CharacterViewModel {
 
   const pastTurn = pastTurnSpeech(records, activeTurnId, newestTurnId)
   const activeSpeeches = pastTurn === undefined ? speeches : pastTurn.speeches
+  const reaction: ShownReaction = pastTurn === undefined ? shownReaction(state) : { kind: "none" }
   // 何も留めていないとき、印が付くのは「いま表示しているターン」の最後の行。
+  // 反応を出しているあいだは立ち絵が反応に従うので、どの行にも付けない。
   const defaultTurnId = activeTurnId
-  const defaultIndex = activeSpeeches.length > 0 ? activeSpeeches.length - 1 : undefined
-
+  const defaultIndex =
+    activeSpeeches.length > 0 && reaction.kind === "none" ? activeSpeeches.length - 1 : undefined
   // 過去のターンでは、記録に残った表情（そのターンの最後のセリフのもの）をそのまま当てる。
+  const currentExpression = reaction.kind === "shown" ? reaction.line.expression : speechExpression
   const fallbackExpression =
     pastTurn === undefined
-      ? speechExpression
+      ? currentExpression
       : (pastTurn.expression ?? DEFAULT_PAST_TURN_EXPRESSION)
   const pinnedSpeech = resolvePinnedSpeech(viewed, speechesOfTurn)
   // 失効した印を古い行に残すと、表情（最新に戻る）と印の位置が食い違う。
@@ -128,7 +136,10 @@ export function useCharacterView(): CharacterViewModel {
     outfit,
     motion,
     speeches: balloonSpeeches(activeSpeeches, defaultTurnId, pinned, defaultIndex, toggleSpeech),
-    emptyMessage: pastTurn === undefined ? undefined : PAST_TURN_EMPTY_MESSAGE,
+    reaction:
+      reaction.kind === "shown"
+        ? { kind: "shown", reaction: reaction.reaction, text: reaction.line.text }
+        : { kind: "none" },
     speakerName: character?.name,
     pinnedSpeech: pinned,
     onToggleSpeech: toggleSpeech,

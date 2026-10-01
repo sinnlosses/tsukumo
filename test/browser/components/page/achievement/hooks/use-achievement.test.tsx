@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { useAchievement } from "../../../../../../src/browser/components/page/achievement/hooks/use-achievement.ts"
 import type { DailyAchievement } from "../../../../../../src/shared/achievement/achievement.ts"
+import { NO_REACTIONS } from "../../../../../../src/shared/character-pack/character-reaction.ts"
 import type {
   CharacterInfo,
   CharacterPackEntry,
@@ -97,6 +98,7 @@ const FIXTURE_CHARACTER: CharacterInfo = {
   outfitAccents: { default: undefined, light: undefined, normal: undefined, heavy: undefined },
   background: undefined,
   diaryFont: undefined,
+  reactions: NO_REACTIONS,
   editable: false,
 }
 

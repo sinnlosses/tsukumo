@@ -22,6 +22,7 @@
 // 一覧の1件（`CharacterPackEntry`）は `characterPackEntry` で組む。
 
 import type { CharacterDefinition } from "../../src/shared/character-pack/character-definition.ts"
+import { NO_REACTIONS } from "../../src/shared/character-pack/character-reaction.ts"
 import type {
   CharacterInfo,
   CharacterPackEntry,
@@ -51,6 +52,7 @@ export function characterInfo(overrides: Partial<CharacterInfo> = {}): Character
     outfitAccents: shownOutfitAccents(),
     background: undefined,
     diaryFont: undefined,
+    reactions: NO_REACTIONS,
     editable: true,
     ...overrides,
   }
@@ -108,6 +110,7 @@ export function characterDefinition(
     background: undefined,
     visit: undefined,
     diaryFont: undefined,
+    reactions: NO_REACTIONS,
     ...overrides,
   }
 }

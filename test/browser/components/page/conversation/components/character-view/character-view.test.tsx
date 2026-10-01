@@ -8,6 +8,7 @@ import {
   parseHash,
   type ViewedTurn,
 } from "../../../../../../../src/browser/stores/location-hash.ts"
+import { NO_REACTIONS } from "../../../../../../../src/shared/character-pack/character-reaction.ts"
 import type { Expression } from "../../../../../../../src/shared/character-pack/expression.ts"
 import {
   INITIAL_SESSION_STATE,
@@ -30,6 +31,15 @@ function speech(
 const FIXTURE_CHARACTER: NonNullable<SessionState["character"]> = characterInfo({
   ...shownPortraits({ default: "/character/default.png" }),
 })
+
+const CHARACTER_WITH_REACTIONS: NonNullable<SessionState["character"]> = {
+  ...FIXTURE_CHARACTER,
+  ...shownPortraits({ default: "/character/default.png", thinking: "/character/thinking.png" }),
+  reactions: {
+    ...NO_REACTIONS,
+    accepted: [{ text: "架空の受けた反応", expression: "thinking" }],
+  },
+}
 
 afterEach(() => {
   cleanup()
@@ -104,7 +114,7 @@ describe("CharacterView", () => {
     ).toEqual(["2つ目のセリフ"])
   })
 
-  it("(3) セリフが1件も無い過去のターンでも壊れず、そのターン向けの文言が出る", () => {
+  it("(3) セリフが1件も無い過去のターンでも壊れず、吹き出しも反応も出さない", () => {
     const records: readonly SessionRecord[] = [
       requestRecord({ text: "1つ目の依頼" }),
       requestRecord({ turnId: 1, text: "2つ目の依頼" }),
@@ -113,16 +123,33 @@ describe("CharacterView", () => {
 
     expect(() =>
       renderCharacterView(
-        { records, speeches: [speech("2つ目のセリフ")], character: FIXTURE_CHARACTER },
+        {
+          records,
+          speeches: [],
+          turn: { kind: "running", startedAt: 0 },
+          character: CHARACTER_WITH_REACTIONS,
+        },
         0,
       ),
     ).not.toThrow()
 
-    expect(document.querySelectorAll(".balloon")).toHaveLength(1)
-    expect(document.querySelector(".balloon-text")?.textContent).toBe(
-      "（このターンでは発話がありませんでした）",
-    )
+    expect(document.querySelectorAll(".balloon")).toHaveLength(0)
     expect(document.querySelector(".portrait")?.getAttribute("data-expression")).toBe("default")
+  })
+
+  it("今のターンで反応を出しているあいだは、反応の行の表情になる", () => {
+    renderCharacterView({
+      records: [requestRecord({ text: "架空の依頼" })],
+      speeches: [],
+      turn: { kind: "running", startedAt: 0 },
+      nextTurnId: 1,
+      character: CHARACTER_WITH_REACTIONS,
+    })
+
+    const balloon = document.querySelector(".balloon")
+    expect(balloon?.getAttribute("data-reaction")).toBe("accepted")
+    expect(balloon?.textContent).toContain("架空の受けた反応")
+    expect(document.querySelector(".portrait")?.getAttribute("data-expression")).toBe("thinking")
   })
 
   it("過去のターンでは、そのターンの最後のセリフの表情になる", () => {
@@ -194,5 +221,30 @@ describe("CharacterView（吹き出しを押すと遡る。docs/architecture/scr
 
     fireEvent.click(olderBalloon!)
     expect(document.querySelector(".portrait")?.getAttribute("data-expression")).toBe("proud")
+  })
+
+  it("反応を出しているときも、セリフを押して留めればそのセリフの表情が勝つ", () => {
+    renderCharacterView({
+      ...twoSpeechState(),
+      turn: {
+        kind: "finished",
+        startedAt: 0,
+        finishedAt: 1,
+        ending: { kind: "failed", failure: { kind: "execution-error" } },
+      },
+      character: {
+        ...CHARACTER_WITH_PROUD,
+        reactions: { ...NO_REACTIONS, failed: [{ text: "架空の失敗の反応", expression: "sad" }] },
+      },
+    })
+    expect(document.querySelector("[data-reaction='failed']")).not.toBeNull()
+    expect(document.querySelector(".portrait")?.getAttribute("data-expression")).toBe("sad")
+
+    const olderBalloon = [...document.querySelectorAll("[data-interactive='true']")].find(
+      (balloon) => balloon.textContent === "1つ目のセリフ",
+    )
+    fireEvent.click(olderBalloon!)
+
+    expect(document.querySelector(".portrait")?.getAttribute("data-expression")).toBe("default")
   })
 })

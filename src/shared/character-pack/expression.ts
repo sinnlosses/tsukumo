@@ -1,7 +1,7 @@
 // 表情・衣装の名前と、モデルから衣装を決める規則。
 //
 // 表情は `speak(text, expression)` の引数だけから決まる（キャラ自身が選ぶ）。
-// 表情の源が1つしか無いので、ここには「いま出す表情」を決める関数が無い（`SessionState.speechExpression` がそのまま答えになる）。
+// ここには「いま出す表情」を決める関数が無い（`SessionState.speechExpression` か、反応の行の表情がそのまま答えになる）。
 // ツールの実行中に自動で「作業中」へ上書きする経路は持たない（吹き出しと表情が食い違う。理由は docs/requirements.md「状態連動」）。
 //
 // 表情の日本語ラベルはここに持たない（定義ファイルの `expressions` にあり、解くのは `expressionChoices`）。

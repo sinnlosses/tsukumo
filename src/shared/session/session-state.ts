@@ -232,11 +232,11 @@ export type Speech = {
 export type SessionState = {
   /**
    * 吹き出しに並べて出す、今のターンのセリフ（古い→新しいの順。件数の上限は無く、ターンの境目だけで区切る）。
-   * `request` の時点で空にする（プレースホルダーに切り替わり、次のターンに移ったことが画面から分かる）。
+   * `request` の時点で空にする（前のターンの一言を消し、次のターンに移ったことが画面から分かるようにする）。
    * そのターンでまだ `speak` が呼ばれていなければ空配列。
    */
   readonly speeches: readonly Speech[]
-  /** 直近のセリフ（`speak`）に添えられた表情。表情の源はこれだけ（自動の上書きは無い）。 */
+  /** 直近のセリフ（`speak`）に添えられた表情。反応（`shownReaction`）の表情はここに書かない。 */
   readonly speechExpression: Expression
   /**
    * 今のターンで `speak` が呼ばれたか（前のターンのセリフを捨てて今のターンだけの並びにするか、今のターンに積み重ねるかの判定に使う）。
@@ -774,10 +774,10 @@ function withRestoredTime(record: SessionRecord): SessionRecord {
 function beginTurn(state: SessionState, at: number): SessionState {
   return {
     ...state,
-    // 送信した時点で吹き出しを空にする（プレースホルダー「（まだ発話がありません）」に切り替わる）。
+    // 送信した時点で吹き出しを空にする。
     // 前のターンの一言が残ったままだと、次のターンに移ったことが画面から分からない。
     speeches: [],
-    // 表情も既定へ戻す。次の `speak` が来るまではこのままで、ツールの実行状況では動かない（表情の源は `speak` の1つだけ）。
+    // 表情も既定へ戻す。次の `speak` が来るまではこのままで、ツールの実行状況では動かない。
     speechExpression: INITIAL_SESSION_STATE.speechExpression,
     partialUtterance: "",
     reportDrafting: { kind: "idle" },

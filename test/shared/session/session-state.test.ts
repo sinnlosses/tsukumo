@@ -125,8 +125,6 @@ describe("applySessionEvent", () => {
       0,
     )
 
-    // 空にするとプレースホルダー「（まだ発話がありません）」に切り替わる
-    // （`BalloonTrack`）。
     expect(nextTurn.speeches).toEqual([])
     expect(nextTurn.speechExpression).toBe("default")
   })

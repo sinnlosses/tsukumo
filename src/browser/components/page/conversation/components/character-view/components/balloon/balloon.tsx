@@ -11,14 +11,18 @@
 
 import type { ReactElement } from "react"
 
+import type { ReactionKind } from "../../../../../../../../shared/character-pack/character-reaction.ts"
 import { Text } from "../../../../../../ui/text/text.tsx"
 import { useSpeechPress } from "../../../hooks/use-speech-press.ts"
 import characterViewStyles from "../../character-view.module.css"
 import styles from "./balloon.module.css"
 
-/** 押せるか（押せるなら、印の状態と押されたときの呼び先を持つ）。 */
+/**
+ * 押せるか（押せるなら、印の状態と押されたときの呼び先を持つ）。
+ * `reaction` は反応の吹き出しで、記録に無いので押せない（`data-reaction` に出来事を出す）。
+ */
 export type BalloonInteraction =
-  | { readonly kind: "static" }
+  | { readonly kind: "reaction"; readonly reaction: ReactionKind }
   | { readonly kind: "toggleable"; readonly selected: boolean; readonly onToggle: () => void }
 
 export type BalloonProps = {
@@ -31,7 +35,7 @@ export type BalloonProps = {
 }
 
 const NOOP = (): void => {
-  // static のときは使わない（フックは条件分岐せず常に呼ぶ）。
+  // reaction のときは使わない（フックは条件分岐せず常に呼ぶ）。
 }
 
 export function Balloon(props: BalloonProps): ReactElement {
@@ -62,9 +66,13 @@ export function Balloon(props: BalloonProps): ReactElement {
     </>
   )
 
-  if (interaction.kind === "static") {
+  if (interaction.kind === "reaction") {
     return (
-      <div className={characterViewStyles["balloon"]} data-latest={props.latest}>
+      <div
+        className={characterViewStyles["balloon"]}
+        data-latest={props.latest}
+        data-reaction={interaction.reaction}
+      >
         {body}
       </div>
     )

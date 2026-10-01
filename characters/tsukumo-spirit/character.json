@@ -28,5 +28,26 @@
     "light": "#a8e6c0",
     "normal": "#b8c7ff",
     "heavy": "#ffb3a7"
+  },
+  "reactions": {
+    "welcome": [
+      { "text": "あるじ、おかえり。今日は何から手をつけようか。", "expression": "default" }
+    ],
+    "accepted": [
+      { "text": "うん、受け取ったよ。ちょっと見てみるね。", "expression": "thinking" },
+      { "text": "わかった。まずは中を覗いてみるね。", "expression": "thinking" }
+    ],
+    "retrying": [
+      {
+        "text": "向こうが混んでるみたい。少し待って、もう一度叩いてみるね。",
+        "expression": "flustered"
+      }
+    ],
+    "failed": [
+      { "text": "……途中で止まっちゃった。まあ、そういう日もあるよ。", "expression": "sad" }
+    ],
+    "limited": [
+      { "text": "今日はここまでみたい。上限が戻るまで、ひと休みしよう。", "expression": "sad" }
+    ]
   }
 }

@@ -49,5 +49,24 @@
         { "speaker": "host", "expression": "flustered", "text": "わ、分かってるって！" }
       ]
     ]
+  },
+  "reactions": {
+    "welcome": [
+      { "text": "せんぱい、お待ちしてました。今日の頁を開きますね。", "expression": "default" }
+    ],
+    "accepted": [{ "text": "承りました。まずは中を見てきますね。", "expression": "curious" }],
+    "retrying": [
+      {
+        "text": "わ、向こうが混んでいるみたいです。もう一度試しますね。",
+        "expression": "flustered"
+      }
+    ],
+    "failed": [{ "text": "途中で止まってしまいました。すみません。", "expression": "sad" }],
+    "limited": [
+      {
+        "text": "今日の分の頁は使い切ってしまいました。戻るまで休みましょう。",
+        "expression": "sad"
+      }
+    ]
   }
 }

@@ -24,7 +24,7 @@ export function PresentationalCharacterView({
   outfit,
   motion,
   speeches,
-  emptyMessage,
+  reaction,
   speakerName,
   pinnedSpeech,
   onToggleSpeech,
@@ -68,7 +68,7 @@ export function PresentationalCharacterView({
         className={styles["character-layout"]}
       >
         {portrait}
-        <BalloonTrack speeches={speeches} emptyMessage={emptyMessage} speakerName={speakerName} />
+        <BalloonTrack speeches={speeches} reaction={reaction} speakerName={speakerName} />
       </HStack>
     </VStack>
   )

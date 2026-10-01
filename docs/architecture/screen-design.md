@@ -1326,7 +1326,7 @@ scrollable overflow は end 方向にしか伸びない**ので、上へ出た�
    **雑談中のメインビューでも同じ論法がそのまま成り立つ**（地と字の色は領域で変わらないので、
    下限も 1つで足りる。2026-09-21 に確かめた）
 2. **文字が乗る要素の地は不透明を保つ。** キャラビューで文字が乗るのは吹き出しの中だけなので
-   （空のときの案内も吹き出し1件。`src/browser/components/page/conversation/components/character-view/components/balloon-track/balloon-track.tsx`）、
+   （セリフも反応も無いときは吹き出しを出さず、空欄の案内も出さない。`docs/architecture/display.md` 4.2）、
    地が不透明であれば画像は文字の背後に回り込まない。**雑談のログでも吹き出しは同じ**
    （`.chat-entry` の地は `surface` / `surface-accent` / それに `ink` を混ぜた色で、どれも不透明）
    だが、**吹き出しの外に出る字が2つある** — 立ち絵に載せたときの案内（13.7）と空のときの案内。
@@ -2861,8 +2861,9 @@ Markdown の詳細**で、見本は `docs/history/mockup/task-board-2026-09-28/`
   下書きに字があれば上書きせず、改行を挟んで末尾に足す
 - どちらも無いときは口の群ごと出さず、見出しと「下の入力欄から頼める」の1行だけにする
 - **選ばないと進めない画面にはしない**（`docs/requirements.md` 2.2）。入力欄はいつもどおり使える
-- キャラクターの迎えの一言は、メインビューではなく吹き出しに、パックの反応のセリフで出す
-  （中身はコードに書かない。原則4・`docs/architecture/character-pack.md`）
+- キャラクターの迎えの一言は、メインビューではなく吹き出しに、パックの反応のセリフ（`welcome`）で出す
+  （中身はコードに書かない。原則4・形は `docs/architecture/character-pack.md`「反応のセリフ」、出る条件は
+  `docs/architecture/display.md` 4.2）
 
 #### 知らせの行
 

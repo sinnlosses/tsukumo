@@ -24,7 +24,7 @@ const meta = {
     outfit: "default",
     motion: "reading",
     speeches: [speech("読み終わったよ。"), speech("次はテストを走らせてみるね（架空）。")],
-    emptyMessage: undefined,
+    reaction: { kind: "none" },
     speakerName: "つくもの精霊",
     pinnedSpeech: undefined,
     onToggleSpeech: () => {},
@@ -37,8 +37,27 @@ type Story = StoryObj<typeof meta>
 
 export const Speaking = {} satisfies Story
 
-/** セリフが1件も無いときはプレースホルダを吹き出し1件として出す。 */
+/** セリフも反応も無いときは吹き出しを出さない。 */
 export const NoSpeech = { args: { speeches: [] } } satisfies Story
+
+/** 依頼を受けた直後の反応（パックに書いた1行）。 */
+export const Reacting = {
+  args: {
+    expression: "thinking",
+    portraitUrl: characterAssetPath("tsukumo-spirit", "thinking.svg", undefined),
+    speeches: [],
+    reaction: { kind: "shown", reaction: "accepted", text: "うん、受け取ったよ（架空）。" },
+  },
+} satisfies Story
+
+/** 失敗で閉じたとき、そのターンのセリフの下に反応が最新として出る。 */
+export const ReactingAfterSpeech = {
+  args: {
+    expression: "sad",
+    speeches: [speech("手早くいくね（架空）。")],
+    reaction: { kind: "shown", reaction: "failed", text: "途中で止まっちゃった（架空）。" },
+  },
+} satisfies Story
 
 /** 長いセリフの折り返しと、過去の吹き出しの押し上げ。 */
 export const LongSpeech = {

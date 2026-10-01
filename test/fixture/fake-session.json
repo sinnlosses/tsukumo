@@ -3648,6 +3648,38 @@
       ]
     },
     {
+      "name": "reaction-accepted",
+      "steps": [
+        {
+          "afterMs": 0,
+          "event": {
+            "kind": "request",
+            "text": "反応を見るために頼む（架空の依頼）",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 3000,
+          "event": {
+            "kind": "speech",
+            "text": "見てきたよ。架空のセリフ。",
+            "expression": "proud"
+          }
+        },
+        {
+          "afterMs": 3300,
+          "event": {
+            "kind": "utterance",
+            "text": "架空の本文で、実物の会話ではない。"
+          }
+        },
+        {
+          "afterMs": 3600,
+          "event": { "kind": "turn-finished", "outcome": { "kind": "completed" } }
+        }
+      ]
+    },
+    {
       "name": "api-retry",
       "steps": [
         {

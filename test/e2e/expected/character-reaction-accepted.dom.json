@@ -1,0 +1,52 @@
+{
+  "character": [
+    {
+      "tag": "section",
+      "attributes": {
+        "data-region": "character"
+      },
+      "children": [
+        {
+          "tag": "button",
+          "attributes": {
+            "aria-disabled": "false",
+            "aria-expanded": "false",
+            "type": "button"
+          },
+          "children": [
+            {
+              "tag": "svg"
+            },
+            "ログ"
+          ]
+        },
+        {
+          "tag": "div",
+          "attributes": {
+            "role": "img",
+            "aria-label": "つくもの精霊（思案）",
+            "data-expression": "thinking",
+            "data-outfit": "heavy",
+            "data-motion": "waiting"
+          },
+          "children": [
+            {
+              "tag": "svg"
+            }
+          ]
+        },
+        {
+          "tag": "div",
+          "attributes": {
+            "data-latest": "true",
+            "data-reaction": "accepted"
+          },
+          "children": [
+            "つくもの精霊",
+            "わかった。まずは中を覗いてみるね。"
+          ]
+        }
+      ]
+    }
+  ]
+}

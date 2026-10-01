@@ -10,6 +10,7 @@ import { fromKeys, isPlainObject } from "remeda"
 import { optionalString } from "../utils/optional-string.ts"
 import { type CharacterBackground, toCharacterBackground } from "./character-background.ts"
 import { isDiaryFontFileName } from "./character-diary-font.ts"
+import { type CharacterReactions, toCharacterReactions } from "./character-reaction.ts"
 import { type CharacterVisit, toCharacterVisit } from "./character-visit.ts"
 import {
   EXPRESSIONS,
@@ -85,6 +86,8 @@ export type CharacterDefinition = {
    * 効くのは成果の画面の日記の吹き出しと日記帳の見開きの本文だけ（レポートやセリフの吹き出しの書体は変えない）。
    */
   readonly diaryFont: string | undefined
+  /** 機械の出来事に応えるセリフと表情。型と検証は {@link toCharacterReactions} が持つ。 */
+  readonly reactions: CharacterReactions
 }
 
 /**
@@ -237,6 +240,7 @@ function toCharacterDefinition(value: unknown): CharacterDefinition | undefined 
     background: toCharacterBackground(value.background),
     visit: toCharacterVisit(value.visit),
     diaryFont: toDiaryFont(value.diaryFont),
+    reactions: toCharacterReactions(value.reactions),
   }
 }
 

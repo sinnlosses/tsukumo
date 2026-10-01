@@ -1,0 +1,52 @@
+{
+  "character": [
+    {
+      "tag": "section",
+      "attributes": {
+        "data-region": "character"
+      },
+      "children": [
+        {
+          "tag": "button",
+          "attributes": {
+            "aria-disabled": "false",
+            "aria-expanded": "false",
+            "type": "button"
+          },
+          "children": [
+            {
+              "tag": "svg"
+            },
+            "ログ"
+          ]
+        },
+        {
+          "tag": "div",
+          "attributes": {
+            "role": "img",
+            "aria-label": "つくもの精霊（しょげ）",
+            "data-expression": "sad",
+            "data-outfit": "heavy",
+            "data-motion": "reading"
+          },
+          "children": [
+            {
+              "tag": "svg"
+            }
+          ]
+        },
+        {
+          "tag": "div",
+          "attributes": {
+            "data-latest": "true",
+            "data-reaction": "failed"
+          },
+          "children": [
+            "つくもの精霊",
+            "……途中で止まっちゃった。まあ、そういう日もあるよ。"
+          ]
+        }
+      ]
+    }
+  ]
+}

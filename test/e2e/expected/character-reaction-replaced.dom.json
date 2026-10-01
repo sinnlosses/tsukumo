@@ -1,0 +1,55 @@
+{
+  "character": [
+    {
+      "tag": "section",
+      "attributes": {
+        "data-region": "character"
+      },
+      "children": [
+        {
+          "tag": "button",
+          "attributes": {
+            "aria-disabled": "false",
+            "aria-expanded": "false",
+            "type": "button"
+          },
+          "children": [
+            {
+              "tag": "svg"
+            },
+            "ログ"
+          ]
+        },
+        {
+          "tag": "div",
+          "attributes": {
+            "role": "img",
+            "aria-label": "つくもの精霊（どや顔）",
+            "data-expression": "proud",
+            "data-outfit": "heavy",
+            "data-motion": "reading"
+          },
+          "children": [
+            {
+              "tag": "svg"
+            }
+          ]
+        },
+        {
+          "tag": "div",
+          "attributes": {
+            "data-latest": "true",
+            "data-interactive": "true",
+            "data-selected": "true",
+            "role": "button",
+            "aria-pressed": "true"
+          },
+          "children": [
+            "つくもの精霊",
+            "見てきたよ。架空のセリフ。"
+          ]
+        }
+      ]
+    }
+  ]
+}
