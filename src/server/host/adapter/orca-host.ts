@@ -17,23 +17,22 @@
 
 import { execFile } from "node:child_process"
 
-import { isObjectType, isPlainObject } from "remeda"
+import { isObjectType } from "remeda"
 
 import type { Host, HostResult } from "../core/host.ts"
+import { type OrcaTab, parseOrcaCreatedPageId, parseOrcaTabList } from "./orca-tab.ts"
 
 const ORCA_COMMAND = "orca"
+
+/** `orca` コマンド1回に許す時間。応答しない `orca` を待ち続けないための上限。 */
+const ORCA_COMMAND_TIMEOUT_MS = 5_000
 
 /** Orca のアダプタを作る。`orca` が入っていない環境でも、失敗を返すだけで例外は投げない。 */
 export function createOrcaHost(): Host {
   return { showView: (url) => showView(url), openFile: (path) => openFile(path) }
 }
 
-/** `orca tab list` に出てくるタブ1つ分。`Host` の外の輸出。 */
-export type OrcaTab = {
-  readonly pageId: string
-  readonly url: string
-  readonly title: string
-}
+export type { OrcaTab } from "./orca-tab.ts"
 
 /**
  * タブを一覧する。
@@ -65,27 +64,7 @@ export async function listTabs(
     return { ok: false, reason: "タブ一覧の JSON を読めない" }
   }
 
-  return { ok: true, tabs: parseTabList(parsed) }
-}
-
-/** `orca tab list --json` の要素から、必要な3つのフィールドが揃ったタブだけを採る。 */
-function parseTabList(value: unknown): readonly OrcaTab[] {
-  if (!isPlainObject(value) || !isPlainObject(value.result) || !Array.isArray(value.result.tabs)) {
-    return []
-  }
-
-  const tabs: readonly unknown[] = value.result.tabs
-  return tabs.flatMap((tab) => {
-    if (
-      isPlainObject(tab) &&
-      typeof tab.browserPageId === "string" &&
-      typeof tab.url === "string" &&
-      typeof tab.title === "string"
-    ) {
-      return [{ pageId: tab.browserPageId, url: tab.url, title: tab.title }]
-    }
-    return []
-  })
+  return { ok: true, tabs: parseOrcaTabList(parsed) }
 }
 
 /** 新しいタブを開き、そのページIDを返す。 */
@@ -99,24 +78,10 @@ export async function openTab(
     return { ok: false, reason: created.reason }
   }
 
-  const pageId = parseCreatedPageId(created.stdout)
+  const pageId = parseOrcaCreatedPageId(parseJson(created.stdout))
   return pageId === undefined
     ? { ok: false, reason: "作ったタブのページIDを読めない" }
     : { ok: true, pageId }
-}
-
-function parseCreatedPageId(stdout: string): string | undefined {
-  let parsed: unknown
-  try {
-    parsed = JSON.parse(stdout)
-  } catch {
-    return undefined
-  }
-  if (!isPlainObject(parsed) || !isPlainObject(parsed.result)) {
-    return undefined
-  }
-  const pageId = parsed.result.browserPageId
-  return typeof pageId === "string" ? pageId : undefined
 }
 
 /** ページIDを名指ししてタブを閉じる。 */
@@ -125,7 +90,14 @@ export async function closeTab(pageId: string): Promise<HostResult> {
   return result.ok ? { ok: true } : { ok: false, reason: result.reason }
 }
 
-async function showView(url: string): Promise<HostResult> {
+/**
+ * URL のビューを見せ、使い回した・新しく開いたタブのページIDを返す。
+ */
+export async function openOrReuseView(
+  url: string,
+): Promise<
+  { readonly ok: true; readonly pageId: string } | { readonly ok: false; readonly reason: string }
+> {
   const pageId = await findViewPageId(url)
   if (pageId !== undefined) {
     // 一覧にあったタブはそのまま使い、URL を貼り直す（トークンが変わっていても同じタブに載る）。
@@ -133,11 +105,15 @@ async function showView(url: string): Promise<HostResult> {
       ["goto", "--url", url, "--page", pageId, "--json"],
       "ビューを開き直す",
     )
-    return moved.ok ? { ok: true } : { ok: false, reason: moved.reason }
+    return moved.ok ? { ok: true, pageId } : { ok: false, reason: moved.reason }
   }
 
-  const created = await runOrca(["tab", "create", "--url", url, "--json"], "ビューを開く")
-  return created.ok ? { ok: true } : { ok: false, reason: created.reason }
+  return openTab(url)
+}
+
+async function showView(url: string): Promise<HostResult> {
+  const result = await openOrReuseView(url)
+  return result.ok ? { ok: true } : { ok: false, reason: result.reason }
 }
 
 /**
@@ -159,37 +135,18 @@ async function findViewPageId(url: string): Promise<string | undefined> {
     return undefined
   }
 
-  let parsed: unknown
+  const wanted = viewLocation(url)
+  return parseOrcaTabList(parseJson(listed.stdout)).find((tab) => viewLocation(tab.url) === wanted)
+    ?.pageId
+}
+
+/** JSON として読めなければ undefined にする。 */
+function parseJson(text: string): unknown {
   try {
-    parsed = JSON.parse(listed.stdout)
+    return JSON.parse(text) as unknown
   } catch {
     return undefined
   }
-
-  return findPageIdInTabList(parsed, url)
-}
-
-// `orca tab list --json` は { result: { tabs: [{ url, browserPageId }] } } を返す。
-// 外部コマンドの出力なので構造を信用せず、必要な2つのフィールドが揃った要素だけを採る。
-function findPageIdInTabList(value: unknown, url: string): string | undefined {
-  if (!isPlainObject(value) || !isPlainObject(value.result) || !Array.isArray(value.result.tabs)) {
-    return undefined
-  }
-
-  const wanted = viewLocation(url)
-  const tabs: readonly unknown[] = value.result.tabs
-  for (const tab of tabs) {
-    if (
-      isPlainObject(tab) &&
-      typeof tab.url === "string" &&
-      viewLocation(tab.url) === wanted &&
-      typeof tab.browserPageId === "string"
-    ) {
-      return tab.browserPageId
-    }
-  }
-
-  return undefined
 }
 
 /**
@@ -215,14 +172,19 @@ type CommandOutput =
  */
 function runOrca(args: readonly string[], label: string): Promise<CommandOutput> {
   return new Promise((resolve) => {
-    execFile(ORCA_COMMAND, [...args], { encoding: "utf8" }, (error, stdout, stderr) => {
-      if (error === null) {
-        resolve({ ok: true, stdout })
-        return
-      }
+    execFile(
+      ORCA_COMMAND,
+      [...args],
+      { encoding: "utf8", timeout: ORCA_COMMAND_TIMEOUT_MS },
+      (error, stdout, stderr) => {
+        if (error === null) {
+          resolve({ ok: true, stdout })
+          return
+        }
 
-      resolve({ ok: false, reason: describeFailure(label, error, `${stdout}\n${stderr}`) })
-    })
+        resolve({ ok: false, reason: describeFailure(label, error, `${stdout}\n${stderr}`) })
+      },
+    )
   })
 }
 

@@ -7,7 +7,7 @@ import process from "node:process"
 
 import { createCurrentCharacter } from "./current-character.ts"
 import { type Config, VIEW_PORT_ENV_NAME } from "./server/core/config.ts"
-import { createOrcaHost } from "./server/host/adapter/orca-host.ts"
+import { closeTab, createOrcaHost, openOrReuseView } from "./server/host/adapter/orca-host.ts"
 import type { Host } from "./server/host/core/host.ts"
 import { readFakeSession } from "./server/session-driver/adapter/fake-driver.ts"
 import { createPromptImageShelf } from "./server/session-driver/core/prompt-image-shelf.ts"
@@ -101,27 +101,41 @@ export async function run(config: Config, launch: LaunchOptions): Promise<number
   })
   view.connect(session)
 
-  stopSessionOnExit(session.manager.close)
   announce(view.url)
 
-  if (config.openView) {
-    await openLayoutView(createOrcaHost(), view.url)
-  }
+  const openedTab = config.openView
+    ? await openLayoutView(createOrcaHost(), config.driver, view.url)
+    : { tracked: false as const }
+
+  stopSessionOnExit(session.manager.close, openedTab)
 
   return 0
 }
 
+/** 起動時に開いた疑似セッションのタブ。これが無ければ終了時にタブを閉じない。 */
+type OpenedFakeTab =
+  | { readonly tracked: false }
+  | { readonly tracked: true; readonly pageId: string }
+
 /**
  * プロセスが終わるときにセッションを閉じる。閉じないと claude の子プロセスが残るので、
  * 割り込み（Ctrl-C）と終了要求の両方で入力を閉じてから抜ける。
+ * `openedTab` を追跡しているとき（疑似セッションでタブを開いたとき）だけ、そのタブも閉じる。
  */
-function stopSessionOnExit(closeSessions: () => void): void {
+function stopSessionOnExit(closeSessions: () => void, openedTab: OpenedFakeTab): void {
   for (const signal of ["SIGINT", "SIGTERM"] as const) {
     process.on(signal, () => {
-      closeSessions()
-      process.exit(0)
+      void shutdown(closeSessions, openedTab)
     })
   }
+}
+
+async function shutdown(closeSessions: () => void, openedTab: OpenedFakeTab): Promise<void> {
+  closeSessions()
+  if (openedTab.tracked) {
+    await closeTab(openedTab.pageId)
+  }
+  process.exit(0)
 }
 
 // 起動したことと URL は、ペインに残る唯一の出力。
@@ -131,12 +145,26 @@ function announce(url: string): void {
 }
 
 /**
- * レイアウトページのタブを開く。
- * 失敗しても起動は続ける（`orca` が無い環境では `host.showView` が失敗を返すだけで例外は投げない）。
+ * レイアウトページのタブを開く。失敗しても起動は続ける。
+ * 疑似セッション（`driver === "fake"`）のときだけページIDを追跡して返す（終了時に閉じる対象はこれだけ）。
  */
-async function openLayoutView(host: Host, url: string): Promise<void> {
-  const result = await host.showView(url)
+async function openLayoutView(
+  host: Host,
+  driver: Config["driver"],
+  url: string,
+): Promise<OpenedFakeTab> {
+  if (driver !== "fake") {
+    const result = await host.showView(url)
+    if (!result.ok) {
+      process.stderr.write(`tsukumo: ビューのタブを開けなかった: ${result.reason}\n`)
+    }
+    return { tracked: false }
+  }
+
+  const result = await openOrReuseView(url)
   if (!result.ok) {
     process.stderr.write(`tsukumo: ビューのタブを開けなかった: ${result.reason}\n`)
+    return { tracked: false }
   }
+  return { tracked: true, pageId: result.pageId }
 }
