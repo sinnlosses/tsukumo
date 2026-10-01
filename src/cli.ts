@@ -4,6 +4,12 @@
 import process from "node:process"
 
 import { run } from "./main.ts"
+import {
+  delegateToCheckout,
+  readCwdCheckout,
+  readOwnCheckoutRoot,
+} from "./server/checkout/adapter/checkout-launch.ts"
+import { decideCheckoutDelegation } from "./server/checkout/core/checkout-delegation.ts"
 import { readConfig } from "./server/core/config.ts"
 import {
   DEFAULT_VIEW_PORT,
@@ -68,7 +74,30 @@ async function main(args: readonly string[]): Promise<number> {
   return run(readConfig({ ...process.env }), { devServer: args.includes("--dev") })
 }
 
-const exitCode = await main(process.argv.slice(2))
+/**
+ * 打った場所が別のチェックアウトの中なら、そこの bin/tsukumo へ委ねた結果の終了コードを返す。
+ * 自分を起こしてよいときは `undefined`。
+ */
+async function delegatedExitCode(args: readonly string[]): Promise<number | undefined> {
+  const delegation = decideCheckoutDelegation(readOwnCheckoutRoot(), readCwdCheckout(process.cwd()))
+  if (delegation.kind === "delegate") {
+    return delegateToCheckout(delegation.entry, args)
+  }
+  if (delegation.kind === "mismatch") {
+    process.stderr.write(`${delegation.message}\n`)
+    return 1
+  }
+
+  return undefined
+}
+
+const args = process.argv.slice(2)
+const delegated = await delegatedExitCode(args)
+if (delegated !== undefined) {
+  process.exit(delegated)
+}
+
+const exitCode = await main(args)
 if (exitCode !== 0) {
   process.exit(exitCode)
 }
