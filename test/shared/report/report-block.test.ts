@@ -58,6 +58,39 @@ describe("parseReportSections", () => {
     }
   })
 
+  it("dimension の塊は領域と余白の混じった並びを受け、省いた size と before を空文字で補う", () => {
+    const parse = (parts: readonly object[]): unknown =>
+      parseReportSections([
+        { heading: "", blocks: [{ kind: "dimension", title: "", parts, fold: "" }] },
+      ])
+
+    expect(parse([{ name: "架空の見出し" }, { gap: "26px", before: "28px" }])).toEqual({
+      sections: [
+        {
+          heading: "",
+          blocks: [
+            {
+              kind: "dimension",
+              title: "",
+              parts: [
+                { name: "架空の見出し", size: "", before: "" },
+                { gap: "26px", before: "28px" },
+              ],
+              fold: "",
+            },
+          ],
+        },
+      ],
+      unknownBlockCount: 0,
+    })
+    for (const broken of [
+      [{ name: "架空の見出し" }],
+      [{ name: "架空の見出し" }, { size: "8px" }],
+    ]) {
+      expect(parse(broken)).toEqual({ sections: [], unknownBlockCount: 0 })
+    }
+  })
+
   it("matrix の塊を受け、状態の外の値の行を持つ塊は落とす", () => {
     const matrix = {
       kind: "matrix",

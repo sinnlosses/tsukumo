@@ -29,7 +29,7 @@ export type ReportUsageEntry = {
 
 /**
  * 数える塊の欄。外す基準（直近4週間で0回）を塊の種類と同じく当てるため、既定の値でない欄が出たかを持つ。
- * 表のセルの `from` / `to`・`stats` の `before` / `total`・`list` の `label`・`list` の `flow`。
+ * 表のセルの `from` / `to`・`stats` の `before` / `total`・`list` の `label`・`list` の `flow`・`dimension` の `before`。
  */
 export const REPORT_BLOCK_FIELDS = [
   "tableChange",
@@ -37,6 +37,7 @@ export const REPORT_BLOCK_FIELDS = [
   "statsTotal",
   "listLabel",
   "listFlow",
+  "dimensionBefore",
 ] as const satisfies readonly string[]
 
 export type ReportBlockField = (typeof REPORT_BLOCK_FIELDS)[number]
@@ -88,5 +89,7 @@ function hasField(block: ReportBlock, field: ReportBlockField): boolean {
       return block.kind === "list" && block.items.some((item) => item.label.trim() !== "")
     case "listFlow":
       return block.kind === "list" && block.style === "flow"
+    case "dimensionBefore":
+      return block.kind === "dimension" && block.parts.some((part) => part.before.trim() !== "")
   }
 }

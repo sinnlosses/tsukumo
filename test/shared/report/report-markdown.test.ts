@@ -447,6 +447,28 @@ describe("reportSectionsMarkdown", () => {
     expect(markdownOf({ ...compare, title: "" })).toBe(`<div class="compare">${sides}</div>`)
   })
 
+  it("dimension は領域を箱に・余白を帯と値にして上から積み、前の値を矢印で添え、size が空の領域は値を置かない", () => {
+    const dimension: ReportBlock = {
+      kind: "dimension",
+      title: "架空の寸法",
+      parts: [
+        { gap: "24px", before: "" },
+        { name: "架空の`見出し`", size: "字 21px", before: "字 18px" },
+        { gap: "26px", before: "28px" },
+        { name: "架空の<本文>", size: "", before: "字 14px" },
+      ],
+      fold: "",
+    }
+    const rows =
+      '<div class="dimension-gap"><span class="dimension-band" aria-hidden="true"></span><span class="dimension-value">24px</span></div>' +
+      '<div class="dimension-part"><span class="dimension-name">架空の<code>見出し</code></span><span class="dimension-value"><span class="dimension-before">字 18px →</span> 字 21px</span></div>' +
+      '<div class="dimension-gap"><span class="dimension-band" aria-hidden="true"></span><span class="dimension-value"><span class="dimension-before">28px →</span> 26px</span></div>' +
+      '<div class="dimension-part"><span class="dimension-name">架空の&lt;本文&gt;</span></div>'
+
+    expect(markdownOf(dimension)).toBe(`**架空の寸法**\n\n<div class="dimension">${rows}</div>`)
+    expect(markdownOf({ ...dimension, title: "" })).toBe(`<div class="dimension">${rows}</div>`)
+  })
+
   it("matrix は名前だけの見出しの格子に状態の印を置き、凡例は格子に出た状態だけを並べる", () => {
     const matrix: ReportBlock = {
       kind: "matrix",

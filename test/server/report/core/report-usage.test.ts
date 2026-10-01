@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import { reportUsageEntryOf } from "../../../../src/server/report/core/report-usage.ts"
-import type { ReportSection } from "../../../../src/shared/report/report-block.ts"
+import type { ReportBlock, ReportSection } from "../../../../src/shared/report/report-block.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 
 function reportEvent(
@@ -53,6 +53,33 @@ describe("reportUsageEntryOf", () => {
     ])
 
     expect(reportUsageEntryOf(event, "claude-session-1", 1_000).blockKinds).toEqual(["compare"])
+  })
+
+  it("dimension の塊を塊の種類として数え、前の値があれば dimensionBefore の欄を立てる", () => {
+    const dimension = (before: string): ReportBlock => ({
+      kind: "dimension",
+      title: "",
+      parts: [
+        { name: "架空の領域", size: "", before: "" },
+        { gap: "8px", before },
+      ],
+      fold: "",
+    })
+
+    const plain = reportUsageEntryOf(
+      reportEvent([{ heading: "", blocks: [dimension("")] }]),
+      "claude-session-1",
+      1_000,
+    )
+    const changed = reportUsageEntryOf(
+      reportEvent([{ heading: "", blocks: [dimension("12px")] }]),
+      "claude-session-1",
+      1_000,
+    )
+
+    expect(plain.blockKinds).toEqual(["dimension"])
+    expect(plain.blockFields).toEqual([])
+    expect(changed.blockFields).toEqual(["dimensionBefore"])
   })
 
   it("matrix の塊も塊の種類として数える", () => {

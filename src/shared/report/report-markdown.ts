@@ -129,6 +129,8 @@ function blockMarkdown(block: ReportBlock): string {
       return matrixMarkdown(block)
     case "compare":
       return compareMarkdown(block)
+    case "dimension":
+      return dimensionMarkdown(block)
     case "note":
       return block.text.trim() === ""
         ? ""
@@ -244,6 +246,32 @@ function compareMarkdown(block: Extract<ReportBlock, { readonly kind: "compare" 
     block.title.trim() === "" ? "" : `**${markdownInline(block.title)}**`,
     `<div class="compare">${sides.join("")}</div>`,
   ])
+}
+
+/**
+ * 領域を箱に、余白を帯と寸法線にして上から積み、値を右に添える。図は模式で、箱と帯の大きさは値に比例させない。
+ * 領域の `size` が空なら値を置かない（`before` も出さない）。
+ */
+function dimensionMarkdown(block: Extract<ReportBlock, { readonly kind: "dimension" }>): string {
+  const rows = block.parts.map((part) =>
+    "gap" in part
+      ? `<div class="dimension-gap"><span class="dimension-band" aria-hidden="true"></span>${dimensionValueMarkdown(part.gap, part.before)}</div>`
+      : `<div class="dimension-part"><span class="dimension-name">${htmlInlineWithCode(part.name)}</span>${
+          part.size.trim() === "" ? "" : dimensionValueMarkdown(part.size, part.before)
+        }</div>`,
+  )
+  return joinParts([
+    block.title.trim() === "" ? "" : `**${markdownInline(block.title)}**`,
+    `<div class="dimension">${rows.join("")}</div>`,
+  ])
+}
+
+function dimensionValueMarkdown(value: string, before: string): string {
+  const beforeHtml =
+    before.trim() === ""
+      ? ""
+      : `<span class="dimension-before">${htmlInlineWithCode(before)} →</span> `
+  return `<span class="dimension-value">${beforeHtml}${htmlInlineWithCode(value)}</span>`
 }
 
 /**

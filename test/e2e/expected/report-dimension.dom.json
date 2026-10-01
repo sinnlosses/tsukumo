@@ -1,0 +1,472 @@
+{
+  "main": [
+    {
+      "tag": "section",
+      "attributes": {
+        "data-region": "main"
+      },
+      "children": [
+        {
+          "tag": "div",
+          "attributes": {
+            "data-brush-origin": ""
+          },
+          "children": [
+            {
+              "tag": "article",
+              "children": [
+                {
+                  "tag": "header",
+                  "children": [
+                    {
+                      "tag": "button",
+                      "attributes": {
+                        "aria-disabled": "true",
+                        "aria-label": "1つ古いターンへ",
+                        "type": "button"
+                      },
+                      "children": [
+                        {
+                          "tag": "span",
+                          "attributes": {
+                            "aria-hidden": "true"
+                          },
+                          "children": [
+                            "‹"
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "tag": "button",
+                      "attributes": {
+                        "aria-disabled": "true",
+                        "aria-label": "1つ新しいターンへ",
+                        "type": "button"
+                      },
+                      "children": [
+                        {
+                          "tag": "span",
+                          "attributes": {
+                            "aria-hidden": "true"
+                          },
+                          "children": [
+                            "›"
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "tag": "h2",
+                      "children": [
+                        {
+                          "tag": "button",
+                          "attributes": {
+                            "aria-disabled": "false",
+                            "aria-expanded": "false",
+                            "type": "button"
+                          },
+                          "children": [
+                            "寸法図の塊の見え方を確かめたい（架空の依頼）",
+                            {
+                              "tag": "span",
+                              "attributes": {
+                                "aria-hidden": "true"
+                              }
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    "1 / 1",
+                    "最新"
+                  ]
+                },
+                {
+                  "tag": "div",
+                  "attributes": {
+                    "data-outline": "shown"
+                  },
+                  "children": [
+                    {
+                      "tag": "div",
+                      "attributes": {
+                        "data-open": "false"
+                      },
+                      "children": [
+                        {
+                          "tag": "nav",
+                          "attributes": {
+                            "aria-label": "目次"
+                          },
+                          "children": [
+                            {
+                              "tag": "button",
+                              "attributes": {
+                                "aria-label": "目次",
+                                "aria-expanded": "false",
+                                "type": "button"
+                              },
+                              "children": [
+                                {
+                                  "tag": "svg"
+                                }
+                              ]
+                            },
+                            {
+                              "tag": "button",
+                              "attributes": {
+                                "aria-hidden": "true",
+                                "data-level": "section",
+                                "data-active": "true",
+                                "data-in-section": "true",
+                                "type": "button"
+                              }
+                            },
+                            {
+                              "tag": "button",
+                              "attributes": {
+                                "aria-hidden": "true",
+                                "data-level": "section",
+                                "data-active": "false",
+                                "data-in-section": "false",
+                                "type": "button"
+                              }
+                            },
+                            {
+                              "tag": "button",
+                              "attributes": {
+                                "aria-hidden": "true",
+                                "data-level": "section",
+                                "data-active": "false",
+                                "data-in-section": "false",
+                                "type": "button"
+                              }
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "tag": "section",
+                      "children": [
+                        {
+                          "tag": "p",
+                          "children": [
+                            "架空の結論: 見出しまわりの余白を詰め、見出しの字を一段大きくした。"
+                          ]
+                        },
+                        {
+                          "tag": "h4",
+                          "children": [
+                            "架空の札の余白と字の大きさ"
+                          ]
+                        },
+                        {
+                          "tag": "p",
+                          "children": [
+                            {
+                              "tag": "strong",
+                              "children": [
+                                "架空の札（広い窓）"
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "tag": "span",
+                          "attributes": {
+                            "aria-hidden": "true"
+                          }
+                        },
+                        "24px →",
+                        "20px",
+                        "依頼の1行",
+                        "字 13px",
+                        {
+                          "tag": "span",
+                          "attributes": {
+                            "aria-hidden": "true"
+                          }
+                        },
+                        "12px",
+                        "見出し",
+                        "字 18px →",
+                        "字 21px",
+                        {
+                          "tag": "span",
+                          "attributes": {
+                            "aria-hidden": "true"
+                          }
+                        },
+                        "28px →",
+                        "26px",
+                        "本文",
+                        "字 15px",
+                        {
+                          "tag": "span",
+                          "attributes": {
+                            "aria-hidden": "true"
+                          }
+                        },
+                        "44px",
+                        "検証結果の表",
+                        {
+                          "tag": "h4",
+                          "children": [
+                            "架空の崩れやすい並び"
+                          ]
+                        },
+                        "架空の長めの領域名: 狭い窓では箱の中で折り返して、右の値の列を押し出さない",
+                        "高さ 4rem →",
+                        "高さ 3.5rem",
+                        {
+                          "tag": "span",
+                          "attributes": {
+                            "aria-hidden": "true"
+                          }
+                        },
+                        "1rem →",
+                        "0.75rem",
+                        {
+                          "tag": "code",
+                          "children": [
+                            "report-note"
+                          ]
+                        },
+                        "の札",
+                        {
+                          "tag": "span",
+                          "attributes": {
+                            "aria-hidden": "true"
+                          }
+                        },
+                        "8px",
+                        {
+                          "tag": "h4",
+                          "children": [
+                            "架空の同じ内容を表で"
+                          ]
+                        },
+                        {
+                          "tag": "p",
+                          "children": [
+                            {
+                              "tag": "strong",
+                              "children": [
+                                "架空の札の寸法（広い窓）"
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "tag": "table",
+                          "children": [
+                            {
+                              "tag": "thead",
+                              "children": [
+                                {
+                                  "tag": "tr",
+                                  "children": [
+                                    {
+                                      "tag": "th",
+                                      "children": [
+                                        "場所"
+                                      ]
+                                    },
+                                    {
+                                      "tag": "th",
+                                      "children": [
+                                        "前"
+                                      ]
+                                    },
+                                    {
+                                      "tag": "th",
+                                      "children": [
+                                        "後"
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "tag": "tbody",
+                              "children": [
+                                {
+                                  "tag": "tr",
+                                  "children": [
+                                    {
+                                      "tag": "td",
+                                      "children": [
+                                        "札の上の余白"
+                                      ]
+                                    },
+                                    {
+                                      "tag": "td",
+                                      "children": [
+                                        "24px"
+                                      ]
+                                    },
+                                    {
+                                      "tag": "td",
+                                      "children": [
+                                        "20px"
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "tag": "tr",
+                                  "children": [
+                                    {
+                                      "tag": "td",
+                                      "children": [
+                                        "依頼の1行の字"
+                                      ]
+                                    },
+                                    {
+                                      "tag": "td",
+                                      "children": [
+                                        "13px"
+                                      ]
+                                    },
+                                    {
+                                      "tag": "td",
+                                      "children": [
+                                        "13px"
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "tag": "tr",
+                                  "children": [
+                                    {
+                                      "tag": "td",
+                                      "children": [
+                                        "依頼の1行と見出しの間"
+                                      ]
+                                    },
+                                    {
+                                      "tag": "td",
+                                      "children": [
+                                        "12px"
+                                      ]
+                                    },
+                                    {
+                                      "tag": "td",
+                                      "children": [
+                                        "12px"
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "tag": "tr",
+                                  "children": [
+                                    {
+                                      "tag": "td",
+                                      "children": [
+                                        "見出しの字"
+                                      ]
+                                    },
+                                    {
+                                      "tag": "td",
+                                      "children": [
+                                        "18px"
+                                      ]
+                                    },
+                                    {
+                                      "tag": "td",
+                                      "children": [
+                                        "21px"
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "tag": "tr",
+                                  "children": [
+                                    {
+                                      "tag": "td",
+                                      "children": [
+                                        "見出しと本文の間"
+                                      ]
+                                    },
+                                    {
+                                      "tag": "td",
+                                      "children": [
+                                        "28px"
+                                      ]
+                                    },
+                                    {
+                                      "tag": "td",
+                                      "children": [
+                                        "26px"
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "tag": "tr",
+                                  "children": [
+                                    {
+                                      "tag": "td",
+                                      "children": [
+                                        "本文の字"
+                                      ]
+                                    },
+                                    {
+                                      "tag": "td",
+                                      "children": [
+                                        "15px"
+                                      ]
+                                    },
+                                    {
+                                      "tag": "td",
+                                      "children": [
+                                        "15px"
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "tag": "tr",
+                                  "children": [
+                                    {
+                                      "tag": "td",
+                                      "children": [
+                                        "本文と検証結果の表の間"
+                                      ]
+                                    },
+                                    {
+                                      "tag": "td",
+                                      "children": [
+                                        "44px"
+                                      ]
+                                    },
+                                    {
+                                      "tag": "td",
+                                      "children": [
+                                        "44px"
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

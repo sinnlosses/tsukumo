@@ -113,8 +113,8 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/architecture/display.md
 **本文は `report` の `sections`（節と塊の並び）で受け取る**（2026-09-27。形の案は
 `docs/research/report-block.md`、用語は `docs/glossary.md`「節」「塊」）。
 
-- 塊は `text` / `list` / `table` / `matrix` / `compare` / `note` / `stats` / `code` / `mermaid` / `chart` / `progress` / `options` / `files` と、逃げ道の
-  `markdown` の14種。**種類ごとの使いどころは各塊の `describe`（`src/shared/report/report-block.ts`）が持ち**、
+- 塊は `text` / `list` / `table` / `matrix` / `compare` / `dimension` / `note` / `stats` / `code` / `mermaid` / `chart` / `progress` / `options` / `files` と、逃げ道の
+  `markdown` の15種。**種類ごとの使いどころは各塊の `describe`（`src/shared/report/report-block.ts`）が持ち**、
   `REPORT_NOTATION_PROMPT` の表には逃げ道に残る記法（`svg`・引用・
   区切り線・複数の塊をまとめて畳む `<details>`）だけを置く。同じことを両方に書くと毎ターンの文脈に2回載る。
   **種類の数に上限は置かない**（2026-09-30 改訂。足すかは下の「読む時間を減らす物差しと線引き」、
@@ -186,6 +186,14 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/architecture/display.md
   両側の値を揃えるなら `table`（セルの `from` / `to` は1つの値の前後）、3つ以上は `table`。逃げ道の
   `cols` / `card` はモデルに教えなくなった（描く側と、書かれ続けるかを見る `colsCard` の数は残す）。
   取り違えは差し戻さず、使われ方の記録の「塊の種類 × レポート数」で見る
+- **縦に積む領域の寸法は `dimension`（寸法図）の塊で見せる**（2026-10-01。`title`・`parts`〔上から順に、領域
+  `{ name, size, before }` と余白 `{ gap, before }` を混ぜた並び。先頭・末尾の `gap` は外側の余白〕を受ける）。
+  左の列に領域の箱と余白の斜線の帯を積み、右の列に値を置き、余白の値には両端に目盛りのある縦の寸法線を引く。
+  **1列だけ**で、横並び・入れ子・重なりは逃げ道の `svg` に残す（記法の表の「座標のある図」の行は残し、使う目安を
+  位置・重なりに絞った）。**前後は1枚に重ねる**（値ごとの `before` を前の値と矢印にして `ink-quiet` で添える。
+  `compare` で2枚並べない）。**図は模式**で、箱と帯の高さは値に比例させず、数が寸法を言う。描き方は `div` / `span`
+  と CSS で、許可リストに足す物は無く、書き上げる演出では文字の塊として出る。取り違えは差し戻さず、使われ方の
+  記録の「塊の種類 × レポート数」と逃げ道の `svg` の数で見る
 - **節を書き上げる演出の塊（トピック）の単位にする**（2026-09-27。`docs/research/report-block-richness.md`
   2章）。見出しのタグや水平線を DOM から探して境目を当てるのはやめ（見出しのレベルは節の中の
   副見出しにも、水平線は節の中の軽い区切り〔`---`〕にも使われるので、タグの一致だけでは節の境目と
@@ -218,6 +226,8 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/architecture/display.md
 同じ日に `stats` の `total` を足したときは 7673 → 7769 字（+96）、`REPORT_NOTATION_PROMPT` は変わらない。
 同じ日に `compare` を足したときは 7764 → 8315 字（+551。同じ測り方で `compare` の枝を除いた値と比べた）、
 `REPORT_NOTATION_PROMPT` は表の1行を消して 4035 → 3953 字（−82）。
+同じ日に `dimension` を足したときは 8315 → 9200 字（+885。`z.toJSONSchema(z.array(reportSectionSchema))` を
+JSON にした字数）、`REPORT_NOTATION_PROMPT` は塊の列と表の使う目安で 3953 → 3989 字（+36）。
 
 **切り替えの前の差し戻しと逃げ道**（tsukumo の作業ツリーの transcript にある 2026-09-23〜26 のメインの
 `report` の呼び出しを数えた集計値。本文は写していない。1つの呼び出しが違反の2つ以上に当たることがある）
@@ -531,7 +541,7 @@ CSS の3つを揃える**（レンダラを直したのに規約が古いまま�
 決める。外すかは使われ方の数で決める**（docs/research/report-block.md 6章、記録の語彙は
 `docs/research/report-architecture.md` 6章）。`report` を描く（差し戻されなかった）
 たびに、その回に出た塊の種類・既定の値でない塊の欄（表のセルの `from` / `to`・`stats` の `before` / `total`・
-`list` の `label`・`list` の `flow`）と、逃げ道（`markdown` の塊）に出た記法の種類（重複無し。同じ種類が
+`list` の `label`・`list` の `flow`・`dimension` の `before`）と、逃げ道（`markdown` の塊）に出た記法の種類（重複無し。同じ種類が
 同じレポートに何回出ても1回と数える）を `~/.tsukumo/report-usage/<YYYY-MM-DD>.jsonl` に1行記録する。
 逃げ道に出た記法は3つに分けて持つ: **塊のある記法**（表・箇条書き・`note` など、逃げ道の外側
 〔HTML の容れ物の中でないところ〕に出たもの）・**同じ塊のある記法が HTML の容れ物

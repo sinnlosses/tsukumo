@@ -2231,6 +2231,117 @@
       ]
     },
     {
+      "name": "report-dimension",
+      "steps": [
+        {
+          "afterMs": 0,
+          "event": {
+            "kind": "request",
+            "text": "寸法図の塊の見え方を確かめたい（架空の依頼）",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 300,
+          "event": {
+            "kind": "speech",
+            "text": "余白を図にして書くね。",
+            "expression": "default"
+          }
+        },
+        {
+          "afterMs": 1000,
+          "event": {
+            "kind": "report",
+            "task": { "kind": "none" },
+            "closing": { "kind": "speech", "text": "書けたよ！", "expression": "proud" },
+            "toolUseId": "fake-report-dimension-1",
+            "conclusion": "架空の結論: 見出しまわりの余白を詰め、見出しの字を一段大きくした。",
+            "sections": [
+              {
+                "heading": "架空の札の余白と字の大きさ",
+                "blocks": [
+                  {
+                    "kind": "dimension",
+                    "title": "架空の札（広い窓）",
+                    "parts": [
+                      { "gap": "20px", "before": "24px" },
+                      { "name": "依頼の1行", "size": "字 13px", "before": "" },
+                      { "gap": "12px", "before": "" },
+                      { "name": "見出し", "size": "字 21px", "before": "字 18px" },
+                      { "gap": "26px", "before": "28px" },
+                      { "name": "本文", "size": "字 15px", "before": "" },
+                      { "gap": "44px", "before": "" },
+                      { "name": "検証結果の表", "size": "", "before": "" }
+                    ],
+                    "fold": ""
+                  }
+                ]
+              },
+              {
+                "heading": "架空の崩れやすい並び",
+                "blocks": [
+                  {
+                    "kind": "dimension",
+                    "title": "",
+                    "parts": [
+                      {
+                        "name": "架空の長めの領域名: 狭い窓では箱の中で折り返して、右の値の列を押し出さない",
+                        "size": "高さ 3.5rem",
+                        "before": "高さ 4rem"
+                      },
+                      { "gap": "0.75rem", "before": "1rem" },
+                      { "name": "`report-note` の札", "size": "", "before": "" },
+                      { "gap": "8px", "before": "" }
+                    ],
+                    "fold": ""
+                  }
+                ]
+              },
+              {
+                "heading": "架空の同じ内容を表で",
+                "blocks": [
+                  {
+                    "kind": "table",
+                    "title": "架空の札の寸法（広い窓）",
+                    "columns": ["場所", "前", "後"],
+                    "rows": [
+                      ["札の上の余白", "24px", "20px"],
+                      ["依頼の1行の字", "13px", "13px"],
+                      ["依頼の1行と見出しの間", "12px", "12px"],
+                      ["見出しの字", "18px", "21px"],
+                      ["見出しと本文の間", "28px", "26px"],
+                      ["本文の字", "15px", "15px"],
+                      ["本文と検証結果の表の間", "44px", "44px"]
+                    ],
+                    "fold": ""
+                  }
+                ]
+              }
+            ],
+            "favor": "",
+            "checks": []
+          }
+        },
+        {
+          "afterMs": 1050,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-report-dimension-1",
+            "content": "ok",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 2300,
+          "event": {
+            "kind": "turn-finished",
+            "outcome": { "kind": "completed" }
+          }
+        }
+      ]
+    },
+    {
       "name": "report-stats",
       "steps": [
         {

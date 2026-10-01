@@ -4,7 +4,7 @@ import { useScenarioRun } from "./scenario-run.ts"
 
 // report → メインビュー（記法・差し戻し・整え。docs/architecture/testing.md「E2E のシナリオの一覧」）。
 // `report` ツールの呼び出しがメインビューの Markdown へどう出るかを、疑似セッションの5つの場面で
-// 確かめる（`report-compare` は見比べの塊、`report-matrix` は対応表の塊、`report-stats` は数の要約の全体の数）: `notation`（記法の一覧）、`report-rejected`（差し戻されたレポートは描かれず、
+// 確かめる（`report-compare` は見比べの塊、`report-dimension` は寸法図の塊、`report-matrix` は対応表の塊、`report-stats` は数の要約の全体の数）: `notation`（記法の一覧）、`report-rejected`（差し戻されたレポートは描かれず、
 // 直したレポートだけが残る）、`report-tidied`（整形で落ちる行は描かれず、残りはそのまま出る）、
 // `report-blocks`（候補の比較と触ったファイルの一覧の塊）、`report-chart`（棒・折れ線・円の
 // グラフの塊）。
@@ -91,6 +91,18 @@ describe("report → メインビュー", () => {
     const room = await run.open({
       scenario: "report-compare",
       scene: "report-compare",
+      viewport: "wide",
+      domRoots: ["main"],
+    })
+
+    await room.waitForEvent("turn-finished")
+    await room.settleAndMatch(ELAPSED_MS)
+  })
+
+  it("dimension の塊が領域の箱と余白の帯・寸法の値として描かれる", async () => {
+    const room = await run.open({
+      scenario: "report-dimension",
+      scene: "report-dimension",
       viewport: "wide",
       domRoots: ["main"],
     })

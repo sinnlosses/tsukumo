@@ -89,6 +89,40 @@ describe("Markdown（unified への置き換えが求める記法）", () => {
     expect(sides.map((side) => side.querySelectorAll("ul > li").length)).toEqual([2, 1])
   })
 
+  it("寸法図（dimension）は領域の箱と余白の帯が並びの順のまま残る", () => {
+    const text = reportSectionsMarkdown([
+      {
+        heading: "",
+        blocks: [
+          {
+            kind: "dimension",
+            title: "",
+            parts: [
+              { name: "架空の見出し", size: "字 21px", before: "字 18px" },
+              { gap: "26px", before: "28px" },
+              { name: "架空の本文", size: "", before: "" },
+            ],
+            fold: "",
+          },
+        ],
+      },
+    ])
+    const { container } = render(<Markdown text={text} />)
+
+    const rows = [...(container.querySelector("div.report-dimension")?.children ?? [])]
+    expect(rows.map((row) => row.className)).toEqual([
+      "report-dimension-part",
+      "report-dimension-gap",
+      "report-dimension-part",
+    ])
+    expect(container.querySelector(".report-dimension-band")?.getAttribute("aria-hidden")).toBe(
+      "true",
+    )
+    expect(
+      container.querySelector(".report-dimension-gap .report-dimension-value")?.textContent,
+    ).toBe("28px → 26px")
+  })
+
   it("数の要約（stats / stat）が塊のまま通る", () => {
     const { container } = render(
       <Markdown

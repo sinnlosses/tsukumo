@@ -103,6 +103,31 @@ const compareBlockSchema = z
     "2つを同時に見比べる（案A と案B・変更前と後）。側ごとに見出しと短い箇条。採否は options、値を揃えるなら table（3つ以上も table）",
   )
 
+const dimensionBefore = z.string().default("").describe("変わる前の値（前後を見せるときだけ）")
+
+const dimensionBlockSchema = z
+  .object({
+    kind: z.literal("dimension"),
+    title: inlineText,
+    parts: z
+      .array(
+        z.union([
+          z.object({
+            name: inlineText,
+            size: z.string().default("").describe("領域の寸法（字 21px・高さ 56px）。無ければ空"),
+            before: dimensionBefore,
+          }),
+          z.object({ gap: z.string().describe("前後の領域の間の余白"), before: dimensionBefore }),
+        ]),
+      )
+      .min(2)
+      .describe("上から順の並び。先頭・末尾の gap は外側の余白"),
+    fold,
+  })
+  .describe(
+    "上から積む領域と、その間の余白・字の大きさの寸法（余白を直した前後）。横並び・重なりは markdown の svg",
+  )
+
 const REPORT_NOTE_TONES = ["info", "warn", "ng", "ask", "memo"] as const
 
 const noteBlockSchema = z.object({
@@ -280,6 +305,7 @@ export const reportBlockSchema = z.discriminatedUnion("kind", [
   tableBlockSchema,
   matrixBlockSchema,
   compareBlockSchema,
+  dimensionBlockSchema,
   noteBlockSchema,
   statsBlockSchema,
   codeBlockSchema,
