@@ -67,7 +67,7 @@
                             "type": "button"
                           },
                           "children": [
-                            "寸法図の塊の見え方を確かめたい（架空の依頼）",
+                            "長いレポートが出るターンを見たい（架空の依頼）",
                             {
                               "tag": "span",
                               "attributes": {
@@ -89,174 +89,41 @@
                   },
                   "children": [
                     {
-                      "tag": "nav",
-                      "attributes": {
-                        "aria-label": "目次"
-                      },
-                      "children": [
-                        "目次",
-                        "1 / 1",
-                        {
-                          "tag": "button",
-                          "attributes": {
-                            "data-level": "section",
-                            "aria-current": "location",
-                            "type": "button"
-                          },
-                          "children": [
-                            {
-                              "tag": "span",
-                              "attributes": {
-                                "aria-hidden": "true"
-                              }
-                            },
-                            "架空の札の余白と字の大きさ"
-                          ]
-                        },
-                        {
-                          "tag": "button",
-                          "attributes": {
-                            "data-level": "section",
-                            "type": "button"
-                          },
-                          "children": [
-                            {
-                              "tag": "span",
-                              "attributes": {
-                                "aria-hidden": "true"
-                              }
-                            },
-                            "架空の崩れやすい並び"
-                          ]
-                        },
-                        {
-                          "tag": "button",
-                          "attributes": {
-                            "data-level": "section",
-                            "type": "button"
-                          },
-                          "children": [
-                            {
-                              "tag": "span",
-                              "attributes": {
-                                "aria-hidden": "true"
-                              }
-                            },
-                            "架空の同じ内容を表で"
-                          ]
-                        }
-                      ]
-                    },
-                    {
                       "tag": "section",
                       "children": [
                         {
-                          "tag": "p",
-                          "children": [
-                            "架空の結論: 見出しまわりの余白を詰め、見出しの字を一段大きくした。"
-                          ]
-                        },
-                        {
                           "tag": "h4",
                           "children": [
-                            "架空の札の余白と字の大きさ"
+                            "長いレポートの疑似セッション（架空）"
                           ]
                         },
                         {
-                          "tag": "p",
+                          "tag": "ul",
                           "children": [
                             {
-                              "tag": "strong",
+                              "tag": "li",
                               "children": [
-                                "架空の札（広い窓）"
+                                "これは架空の本文で、実物の会話ではない"
+                              ]
+                            },
+                            {
+                              "tag": "li",
+                              "children": [
+                                "書き上げる演出が本文の全体に掛かるかどうかを測る"
                               ]
                             }
                           ]
                         },
                         {
-                          "tag": "span",
-                          "attributes": {
-                            "aria-hidden": "true"
-                          }
-                        },
-                        "24px →",
-                        "20px",
-                        "依頼の1行",
-                        "字 13px",
-                        {
-                          "tag": "span",
-                          "attributes": {
-                            "aria-hidden": "true"
-                          }
-                        },
-                        "12px",
-                        "見出し",
-                        "字 18px →",
-                        "字 21px",
-                        {
-                          "tag": "span",
-                          "attributes": {
-                            "aria-hidden": "true"
-                          }
-                        },
-                        "28px →",
-                        "26px",
-                        "本文",
-                        "字 15px",
-                        {
-                          "tag": "span",
-                          "attributes": {
-                            "aria-hidden": "true"
-                          }
-                        },
-                        "44px",
-                        "検証結果の表",
-                        {
-                          "tag": "h4",
+                          "tag": "h5",
                           "children": [
-                            "架空の崩れやすい並び"
-                          ]
-                        },
-                        "架空の長めの領域名: 狭い窓では箱の中で折り返して、右の値の列を押し出さない",
-                        "高さ 4rem →",
-                        "高さ 3.5rem",
-                        {
-                          "tag": "span",
-                          "attributes": {
-                            "aria-hidden": "true"
-                          }
-                        },
-                        "1rem →",
-                        "0.75rem",
-                        {
-                          "tag": "code",
-                          "children": [
-                            "report-note"
-                          ]
-                        },
-                        "の札",
-                        {
-                          "tag": "span",
-                          "attributes": {
-                            "aria-hidden": "true"
-                          }
-                        },
-                        "8px",
-                        {
-                          "tag": "h4",
-                          "children": [
-                            "架空の同じ内容を表で"
+                            "1. 何を置いてあるか"
                           ]
                         },
                         {
                           "tag": "p",
                           "children": [
-                            {
-                              "tag": "strong",
-                              "children": [
-                                "架空の札の寸法（広い窓）"
-                              ]
-                            }
+                            "見出しを4つ持たせて、塊が1つにならないようにしてある。表と箇条書きと段落を混ぜてあるので、 行の高さも幅も揃わない。文字の塊だけで組むと筆が同じ速さで最後まで滑ってしまい、途中で 止まったのかどうかが目で分からなくなる。"
                           ]
                         },
                         {
@@ -271,19 +138,19 @@
                                     {
                                       "tag": "th",
                                       "children": [
-                                        "場所"
+                                        "塊"
                                       ]
                                     },
                                     {
                                       "tag": "th",
                                       "children": [
-                                        "前"
+                                        "中身"
                                       ]
                                     },
                                     {
                                       "tag": "th",
                                       "children": [
-                                        "後"
+                                        "ねらい"
                                       ]
                                     }
                                   ]
@@ -299,19 +166,19 @@
                                     {
                                       "tag": "td",
                                       "children": [
-                                        "札の上の余白"
+                                        "1"
                                       ]
                                     },
                                     {
                                       "tag": "td",
                                       "children": [
-                                        "24px"
+                                        "見出しと箇条書き"
                                       ]
                                     },
                                     {
                                       "tag": "td",
                                       "children": [
-                                        "20px"
+                                        "最初に出る塊"
                                       ]
                                     }
                                   ]
@@ -322,19 +189,19 @@
                                     {
                                       "tag": "td",
                                       "children": [
-                                        "依頼の1行の字"
+                                        "2"
                                       ]
                                     },
                                     {
                                       "tag": "td",
                                       "children": [
-                                        "13px"
+                                        "段落と表"
                                       ]
                                     },
                                     {
                                       "tag": "td",
                                       "children": [
-                                        "13px"
+                                        "行の高さが変わる"
                                       ]
                                     }
                                   ]
@@ -345,19 +212,19 @@
                                     {
                                       "tag": "td",
                                       "children": [
-                                        "依頼の1行と見出しの間"
+                                        "3"
                                       ]
                                     },
                                     {
                                       "tag": "td",
                                       "children": [
-                                        "12px"
+                                        "箇条書き"
                                       ]
                                     },
                                     {
                                       "tag": "td",
                                       "children": [
-                                        "12px"
+                                        "右に余白が残る"
                                       ]
                                     }
                                   ]
@@ -368,94 +235,246 @@
                                     {
                                       "tag": "td",
                                       "children": [
-                                        "見出しの字"
+                                        "4"
                                       ]
                                     },
                                     {
                                       "tag": "td",
                                       "children": [
-                                        "18px"
+                                        "締めの段落"
                                       ]
                                     },
                                     {
                                       "tag": "td",
                                       "children": [
-                                        "21px"
-                                      ]
-                                    }
-                                  ]
-                                },
-                                {
-                                  "tag": "tr",
-                                  "children": [
-                                    {
-                                      "tag": "td",
-                                      "children": [
-                                        "見出しと本文の間"
-                                      ]
-                                    },
-                                    {
-                                      "tag": "td",
-                                      "children": [
-                                        "28px"
-                                      ]
-                                    },
-                                    {
-                                      "tag": "td",
-                                      "children": [
-                                        "26px"
-                                      ]
-                                    }
-                                  ]
-                                },
-                                {
-                                  "tag": "tr",
-                                  "children": [
-                                    {
-                                      "tag": "td",
-                                      "children": [
-                                        "本文の字"
-                                      ]
-                                    },
-                                    {
-                                      "tag": "td",
-                                      "children": [
-                                        "15px"
-                                      ]
-                                    },
-                                    {
-                                      "tag": "td",
-                                      "children": [
-                                        "15px"
-                                      ]
-                                    }
-                                  ]
-                                },
-                                {
-                                  "tag": "tr",
-                                  "children": [
-                                    {
-                                      "tag": "td",
-                                      "children": [
-                                        "本文と検証結果の表の間"
-                                      ]
-                                    },
-                                    {
-                                      "tag": "td",
-                                      "children": [
-                                        "44px"
-                                      ]
-                                    },
-                                    {
-                                      "tag": "td",
-                                      "children": [
-                                        "44px"
+                                        "最後まで筆が届くか"
                                       ]
                                     }
                                   ]
                                 }
                               ]
                             }
+                          ]
+                        },
+                        {
+                          "tag": "h5",
+                          "children": [
+                            "2. どう測るか"
+                          ]
+                        },
+                        {
+                          "tag": "p",
+                          "children": [
+                            "演出が始まった瞬間の本文の文字数と、ターンが終わったあとの文字数を並べる。書きかけのまま 出していたころは、始まった時点の本文が最終の一部しかなく、残りには筆が一度も通らなかった。 確定してから出すようにすると、2つの数は同じになるはずである。"
+                          ]
+                        },
+                        {
+                          "tag": "ul",
+                          "children": [
+                            {
+                              "tag": "li",
+                              "children": [
+                                "測るのは本文の文字数だけで、撮った画像はどこにも残さない"
+                              ]
+                            },
+                            {
+                              "tag": "li",
+                              "children": [
+                                "疑似セッションは架空なので、何度流しても同じ本文・同じ数になる"
+                              ]
+                            },
+                            {
+                              "tag": "li",
+                              "children": [
+                                "窓の大きさを変えても文字数は変わらない（変わるのは折り返しだけ）"
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "tag": "h5",
+                          "children": [
+                            "3. 途中で足される分"
+                          ]
+                        },
+                        {
+                          "tag": "p",
+                          "children": [
+                            "この段落は、演出が始まったあとに届く分として書いてある。書きかけを先に出していたころは、 ここから下は画面に出てはいても筆が通っていなかった。つまり「書いているように見える」のは 本文の頭のほうだけで、残りは音も無く現れていたことになる。長いレポートほどその割合は増える。"
+                          ]
+                        },
+                        {
+                          "tag": "ol",
+                          "children": [
+                            {
+                              "tag": "li",
+                              "children": [
+                                "最初の塊が出る"
+                              ]
+                            },
+                            {
+                              "tag": "li",
+                              "children": [
+                                "筆がその塊をZ字でなぞる"
+                              ]
+                            },
+                            {
+                              "tag": "li",
+                              "children": [
+                                "なぞり終わったころには、本文はもっと伸びている"
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "tag": "h5",
+                          "children": [
+                            "4. 読み手から見て何が変わるか"
+                          ]
+                        },
+                        {
+                          "tag": "p",
+                          "children": [
+                            "出るまでの間は、サイドバーの進行と吹き出しのセリフが「いま何をしているか」を受け持つ。 本文が一度に出るようになっても、待っているあいだ画面が黙るわけではない。出たあとは頭から 順に筆が通るので、",
+                            {
+                              "tag": "strong",
+                              "children": [
+                                "どこまで書けたか"
+                              ]
+                            },
+                            "は本文そのものが示す。"
+                          ]
+                        },
+                        {
+                          "tag": "table",
+                          "children": [
+                            {
+                              "tag": "thead",
+                              "children": [
+                                {
+                                  "tag": "tr",
+                                  "children": [
+                                    {
+                                      "tag": "th",
+                                      "children": [
+                                        "見るところ"
+                                      ]
+                                    },
+                                    {
+                                      "tag": "th",
+                                      "children": [
+                                        "出る前"
+                                      ]
+                                    },
+                                    {
+                                      "tag": "th",
+                                      "children": [
+                                        "出たあと"
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "tag": "tbody",
+                              "children": [
+                                {
+                                  "tag": "tr",
+                                  "children": [
+                                    {
+                                      "tag": "td",
+                                      "children": [
+                                        "吹き出し"
+                                      ]
+                                    },
+                                    {
+                                      "tag": "td",
+                                      "children": [
+                                        "セリフが出る"
+                                      ]
+                                    },
+                                    {
+                                      "tag": "td",
+                                      "children": [
+                                        "そのまま残る"
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "tag": "tr",
+                                  "children": [
+                                    {
+                                      "tag": "td",
+                                      "children": [
+                                        "サイドバー"
+                                      ]
+                                    },
+                                    {
+                                      "tag": "td",
+                                      "children": [
+                                        "ツールの進行"
+                                      ]
+                                    },
+                                    {
+                                      "tag": "td",
+                                      "children": [
+                                        "終わった印"
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "tag": "tr",
+                                  "children": [
+                                    {
+                                      "tag": "td",
+                                      "children": [
+                                        "本文"
+                                      ]
+                                    },
+                                    {
+                                      "tag": "td",
+                                      "children": [
+                                        "まだ出ない"
+                                      ]
+                                    },
+                                    {
+                                      "tag": "td",
+                                      "children": [
+                                        "頭から筆が通る"
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "tag": "h5",
+                          "children": [
+                            "5. 何が変わらないか"
+                          ]
+                        },
+                        {
+                          "tag": "p",
+                          "children": [
+                            "吹き出しのセリフは演出の対象ではないし、中間レポートの囲いは破線のままである。過去のタブを 開き直したときに演出が掛からないのも、これまでと同じ。",
+                            {
+                              "tag": "strong",
+                              "children": [
+                                "変わるのは本文が画面に出る時刻だけ"
+                              ]
+                            },
+                            "で、出たあとの見え方はどちらも「書き上げていくように見せる」1本の仕組みに乗っている。"
+                          ]
+                        },
+                        {
+                          "tag": "p",
+                          "children": [
+                            "これで疑似セッションはおしまい。実物の会話は1文字も含んでいない。"
                           ]
                         }
                       ]

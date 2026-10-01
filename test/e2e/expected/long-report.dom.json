@@ -89,90 +89,108 @@
                   },
                   "children": [
                     {
-                      "tag": "div",
+                      "tag": "nav",
                       "attributes": {
-                        "data-open": "false"
+                        "aria-label": "目次"
                       },
                       "children": [
+                        "目次",
+                        "1 / 1",
                         {
-                          "tag": "nav",
+                          "tag": "button",
                           "attributes": {
-                            "aria-label": "目次"
+                            "data-level": "section",
+                            "aria-current": "location",
+                            "type": "button"
                           },
                           "children": [
                             {
-                              "tag": "button",
+                              "tag": "span",
                               "attributes": {
-                                "aria-label": "目次",
-                                "aria-expanded": "false",
-                                "type": "button"
-                              },
-                              "children": [
-                                {
-                                  "tag": "svg"
-                                }
-                              ]
-                            },
-                            {
-                              "tag": "button",
-                              "attributes": {
-                                "aria-hidden": "true",
-                                "data-level": "section",
-                                "data-active": "true",
-                                "data-in-section": "true",
-                                "type": "button"
+                                "aria-hidden": "true"
                               }
                             },
+                            "長いレポートの疑似セッション（架空）"
+                          ]
+                        },
+                        {
+                          "tag": "button",
+                          "attributes": {
+                            "data-level": "sub",
+                            "type": "button"
+                          },
+                          "children": [
                             {
-                              "tag": "button",
+                              "tag": "span",
                               "attributes": {
-                                "aria-hidden": "true",
-                                "data-level": "sub",
-                                "data-active": "false",
-                                "data-in-section": "true",
-                                "type": "button"
+                                "aria-hidden": "true"
                               }
                             },
+                            "1. 何を置いてあるか"
+                          ]
+                        },
+                        {
+                          "tag": "button",
+                          "attributes": {
+                            "data-level": "sub",
+                            "type": "button"
+                          },
+                          "children": [
                             {
-                              "tag": "button",
+                              "tag": "span",
                               "attributes": {
-                                "aria-hidden": "true",
-                                "data-level": "sub",
-                                "data-active": "false",
-                                "data-in-section": "true",
-                                "type": "button"
+                                "aria-hidden": "true"
                               }
                             },
+                            "2. どう測るか"
+                          ]
+                        },
+                        {
+                          "tag": "button",
+                          "attributes": {
+                            "data-level": "sub",
+                            "type": "button"
+                          },
+                          "children": [
                             {
-                              "tag": "button",
+                              "tag": "span",
                               "attributes": {
-                                "aria-hidden": "true",
-                                "data-level": "sub",
-                                "data-active": "false",
-                                "data-in-section": "true",
-                                "type": "button"
+                                "aria-hidden": "true"
                               }
                             },
+                            "3. 途中で足される分"
+                          ]
+                        },
+                        {
+                          "tag": "button",
+                          "attributes": {
+                            "data-level": "sub",
+                            "type": "button"
+                          },
+                          "children": [
                             {
-                              "tag": "button",
+                              "tag": "span",
                               "attributes": {
-                                "aria-hidden": "true",
-                                "data-level": "sub",
-                                "data-active": "false",
-                                "data-in-section": "true",
-                                "type": "button"
+                                "aria-hidden": "true"
                               }
                             },
+                            "4. 読み手から見て何が変わるか"
+                          ]
+                        },
+                        {
+                          "tag": "button",
+                          "attributes": {
+                            "data-level": "sub",
+                            "type": "button"
+                          },
+                          "children": [
                             {
-                              "tag": "button",
+                              "tag": "span",
                               "attributes": {
-                                "aria-hidden": "true",
-                                "data-level": "sub",
-                                "data-active": "false",
-                                "data-in-section": "true",
-                                "type": "button"
+                                "aria-hidden": "true"
                               }
-                            }
+                            },
+                            "5. 何が変わらないか"
                           ]
                         }
                       ]

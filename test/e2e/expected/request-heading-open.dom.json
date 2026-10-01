@@ -111,60 +111,60 @@
                   },
                   "children": [
                     {
-                      "tag": "div",
+                      "tag": "nav",
                       "attributes": {
-                        "data-open": "false"
+                        "aria-label": "目次"
                       },
                       "children": [
+                        "目次",
+                        "3 / 3",
                         {
-                          "tag": "nav",
+                          "tag": "button",
                           "attributes": {
-                            "aria-label": "目次"
+                            "data-level": "section",
+                            "aria-current": "location",
+                            "type": "button"
                           },
                           "children": [
                             {
-                              "tag": "button",
+                              "tag": "span",
                               "attributes": {
-                                "aria-label": "目次",
-                                "aria-expanded": "false",
-                                "type": "button"
-                              },
-                              "children": [
-                                {
-                                  "tag": "svg"
-                                }
-                              ]
-                            },
-                            {
-                              "tag": "button",
-                              "attributes": {
-                                "aria-hidden": "true",
-                                "data-level": "section",
-                                "data-active": "true",
-                                "data-in-section": "true",
-                                "type": "button"
+                                "aria-hidden": "true"
                               }
                             },
+                            "日記の見開き（架空）"
+                          ]
+                        },
+                        {
+                          "tag": "button",
+                          "attributes": {
+                            "data-level": "sub",
+                            "type": "button"
+                          },
+                          "children": [
                             {
-                              "tag": "button",
+                              "tag": "span",
                               "attributes": {
-                                "aria-hidden": "true",
-                                "data-level": "sub",
-                                "data-active": "false",
-                                "data-in-section": "true",
-                                "type": "button"
+                                "aria-hidden": "true"
                               }
                             },
+                            "右ページ（架空）"
+                          ]
+                        },
+                        {
+                          "tag": "button",
+                          "attributes": {
+                            "data-level": "sub",
+                            "type": "button"
+                          },
+                          "children": [
                             {
-                              "tag": "button",
+                              "tag": "span",
                               "attributes": {
-                                "aria-hidden": "true",
-                                "data-level": "sub",
-                                "data-active": "false",
-                                "data-in-section": "true",
-                                "type": "button"
+                                "aria-hidden": "true"
                               }
-                            }
+                            },
+                            "左ページ（架空）"
                           ]
                         }
                       ]

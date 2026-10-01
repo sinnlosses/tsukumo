@@ -89,60 +89,60 @@
                   },
                   "children": [
                     {
-                      "tag": "div",
+                      "tag": "nav",
                       "attributes": {
-                        "data-open": "false"
+                        "aria-label": "目次"
                       },
                       "children": [
+                        "目次",
+                        "1 / 1",
                         {
-                          "tag": "nav",
+                          "tag": "button",
                           "attributes": {
-                            "aria-label": "目次"
+                            "data-level": "section",
+                            "aria-current": "location",
+                            "type": "button"
                           },
                           "children": [
                             {
-                              "tag": "button",
+                              "tag": "span",
                               "attributes": {
-                                "aria-label": "目次",
-                                "aria-expanded": "false",
-                                "type": "button"
-                              },
-                              "children": [
-                                {
-                                  "tag": "svg"
-                                }
-                              ]
-                            },
-                            {
-                              "tag": "button",
-                              "attributes": {
-                                "aria-hidden": "true",
-                                "data-level": "section",
-                                "data-active": "true",
-                                "data-in-section": "true",
-                                "type": "button"
+                                "aria-hidden": "true"
                               }
                             },
+                            "架空の変更の前と後"
+                          ]
+                        },
+                        {
+                          "tag": "button",
+                          "attributes": {
+                            "data-level": "section",
+                            "type": "button"
+                          },
+                          "children": [
                             {
-                              "tag": "button",
+                              "tag": "span",
                               "attributes": {
-                                "aria-hidden": "true",
-                                "data-level": "section",
-                                "data-active": "false",
-                                "data-in-section": "false",
-                                "type": "button"
+                                "aria-hidden": "true"
                               }
                             },
+                            "架空の案Aと案B"
+                          ]
+                        },
+                        {
+                          "tag": "button",
+                          "attributes": {
+                            "data-level": "section",
+                            "type": "button"
+                          },
+                          "children": [
                             {
-                              "tag": "button",
+                              "tag": "span",
                               "attributes": {
-                                "aria-hidden": "true",
-                                "data-level": "section",
-                                "data-active": "false",
-                                "data-in-section": "false",
-                                "type": "button"
+                                "aria-hidden": "true"
                               }
-                            }
+                            },
+                            "架空の箇条の数が違う見比べ"
                           ]
                         }
                       ]

@@ -1,106 +1,39 @@
-/* レポートの目次。本文の左の縁の枝と、縁に重ねて開く見出しの一覧を持つ。 */
+/* レポートの目次。本文の左に、見出しの名前の一覧を常に開いた列として持つ。 */
 
-/* 縁と本文を横に並べる器。
-   見出しが2つ未満のときは縁を描かず、本文が左いっぱいを使う。 */
+/* 列と本文を横に並べる器。
+   見出しが2つ未満のときは列を描かず、本文が左いっぱいを使う。
+   幅の足りない領域では列ごと隠すので、その判定の基準（`@container`）をこの器に持たせる。 */
+.outline-frame {
+  container-type: inline-size;
+}
 .outline-frame[data-outline="shown"] {
   display: grid;
-  grid-template-columns: 2rem minmax(0, 1fr);
+  grid-template-columns: auto minmax(0, 1fr);
 }
-/* 本文の余白。
-   縁があってもなくても同じ値にして、縁が出入りしても本文の字の位置が縁の幅ぶんしか動かないようにする。 */
+/* 本文の余白。列があってもなくても同じ値にする。 */
 .outline-content {
   min-width: 0;
   padding: 0.9rem 1.25rem 0.75rem;
 }
-/* 縁。
-   本文の高さいっぱいに伸びて右の線を引き、中の枝（`.outline-nav`）だけが札の頭の下に貼り付く。
-   縁のどこにポインタが乗っても一覧が開くよう、ポインタを受けるのは伸びたこの器。 */
+/* 列。本文の高さいっぱいに伸びて右の線を引き、中の一覧（`.outline-nav`）だけが札の頭の下に貼り付く。 */
 .outline-rail {
+  width: clamp(10rem, 22cqw, 15rem);
   border-right: 1px solid var(--rule-quiet);
-}
-.outline-rail[data-open="true"] {
-  background: color-mix(in srgb, var(--surface), var(--ink) 3%);
 }
 /* 貼り付く位置は札の頭の真下（`--turn-header-height`。`main-view.module.css`）。
    札の頭と同じく、転がる器の余白ぶん上へずらした位置が基準（`.turn-header`）。
-   重なり順は筆先のミニ立ち絵（`.mini-portrait`）より上にする。開いた一覧の上を立ち絵が横切ると見出しの名前が読めない。 */
+   見出しが多いときは一覧の中で転がす。 */
 .outline-nav {
   position: sticky;
   top: calc(var(--turn-header-height, 0px) - var(--region-padding, 0px));
-  z-index: 3;
-  display: flex;
-  flex-direction: column;
-  padding: 0.875rem 0;
+  max-height: calc(100dvh - var(--turn-header-height, 0px) - 2rem);
+  overflow-y: auto;
+  padding: 0.75rem 0.375rem;
 }
-/* 縁の一番上の「目次」の印。ここが見出しの並びだと形で分かるようにする。
-   キーボードで縁に入る口もこれで、フォーカスが来ると一覧が開く。 */
-.outline-trigger {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 2rem;
-  height: 1.375rem;
-  margin-bottom: 0.375rem;
-  padding: 0;
-  border: none;
-  background: transparent;
-  color: var(--ink-quiet);
-  cursor: pointer;
-}
-.outline-rail[data-open="true"] .outline-trigger {
-  color: var(--accent);
-}
-/* 見出し1つぶんの枝。
-   `###` は字下げして短く、いまの節は差し色、いま読んでいる見出しはさらに長くする（長さと字下げで段を運び、色だけに頼らない）。 */
-.outline-branch {
-  display: flex;
-  align-items: center;
-  width: 2rem;
-  height: 1rem;
-  padding: 0 0 0 0.625rem;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-}
-.outline-branch[data-level="sub"] {
-  padding-left: 0.9375rem;
-}
-.outline-branch-line {
-  width: 12px;
-  height: 2px;
-  border-radius: 1px;
-  background: var(--rule);
-}
-.outline-branch[data-level="sub"] .outline-branch-line {
-  width: 7px;
-}
-.outline-branch[data-in-section="true"] .outline-branch-line {
-  background: var(--accent);
-}
-.outline-branch[data-active="true"] .outline-branch-line {
-  width: 18px;
-}
-.outline-branch[data-level="sub"][data-active="true"] .outline-branch-line {
-  width: 13px;
-}
-/* 見出しの名前の一覧。
-   縁の右に本文の上へ重ねるだけで、本文を押しのけない。上端は「目次」の印にそろえる。 */
 .outline-list {
-  position: absolute;
-  top: 0.25rem;
-  left: calc(100% + 6px);
-  z-index: 2;
   display: flex;
   flex-direction: column;
   gap: 1px;
-  width: 340px;
-  max-height: 60dvh;
-  overflow-y: auto;
-  padding: 0.625rem 0.375rem;
-  border: 1px solid var(--rule);
-  border-radius: 0.75rem;
-  background: var(--surface);
-  box-shadow: 0 18px 44px color-mix(in srgb, var(--ground) 80%, transparent);
 }
 .outline-list-head {
   display: flex;
@@ -166,8 +99,15 @@
   text-overflow: ellipsis;
 }
 
+/* 本文の幅が足りない領域（仕切りを寄せた場合を含む）では列ごと隠す。 */
+@container (max-width: 36rem) {
+  .outline-rail {
+    display: none;
+  }
+}
+
 /* 狭い画面（1列に畳む幅。`main-view.module.css` と同じ境目）。
-   札の頭が2行に折り返して縁の貼り付く位置が定まらず、ポインタで開く一覧も使いにくいので、縁ごと隠す。 */
+   札の頭が2行に折り返して列の貼り付く位置が定まらないので、列ごと隠す。 */
 @media (max-width: 760px) {
   .outline-frame[data-outline="shown"] {
     display: block;

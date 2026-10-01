@@ -23,18 +23,6 @@ function Probe(): ReactElement {
         {rows.map((entry, index) => (
           <button
             key={index}
-            data-testid={`branch-${index}`}
-            data-active={entry.isActive}
-            onClick={() => {
-              onSelect(index)
-            }}
-          />
-        ))}
-      </nav>
-      <div>
-        {rows.map((entry, index) => (
-          <button
-            key={index}
             data-testid={`row-${index}`}
             aria-current={entry.isActive ? "location" : undefined}
             onClick={() => {
@@ -42,7 +30,7 @@ function Probe(): ReactElement {
             }}
           />
         ))}
-      </div>
+      </nav>
       <div className={notationStyles["detail-block"]} ref={contentRef}>
         <h4>見出し0</h4>
         <p>本文0</p>
@@ -59,14 +47,6 @@ function headings(): readonly HTMLElement[] {
   return [...document.querySelectorAll<HTMLElement>("h4")]
 }
 
-function branch(index: number): HTMLElement {
-  const node = document.querySelector(`[data-testid='branch-${index}']`)
-  if (!(node instanceof HTMLElement)) {
-    throw new Error("枝が見つからない")
-  }
-  return node
-}
-
 function row(index: number): HTMLElement {
   const node = document.querySelector(`[data-testid='row-${index}']`)
   if (!(node instanceof HTMLElement)) {
@@ -80,7 +60,7 @@ afterEach(() => {
 })
 
 describe("useReportOutline（押した見出しの固定）", () => {
-  it("最後まで転がりきらなくても、押した見出しの枝と一覧が即座に印を持つ", () => {
+  it("最後まで転がりきらなくても、押した見出しの行が即座に印を持つ", () => {
     render(<Probe />)
     const [heading0, heading1, heading2] = headings()
     if (heading0 === undefined || heading1 === undefined || heading2 === undefined) {
@@ -91,9 +71,8 @@ describe("useReportOutline（押した見出しの固定）", () => {
     // 最後の見出しは、縁の上端（基準線）まで転がりきらない状況を固定値で模す。
     stubRect(heading2, 999)
 
-    fireEvent.click(branch(2))
+    fireEvent.click(row(2))
 
-    expect(branch(2).dataset["active"]).toBe("true")
     expect(row(2).getAttribute("aria-current")).toBe("location")
   })
 
@@ -106,11 +85,10 @@ describe("useReportOutline（押した見出しの固定）", () => {
     stubRect(heading0, 0)
     stubRect(heading1, 0)
     stubRect(heading2, 999)
-    fireEvent.click(branch(2))
+    fireEvent.click(row(2))
 
     fireEvent.scroll(document)
 
-    expect(branch(2).dataset["active"]).toBe("true")
     expect(row(2).getAttribute("aria-current")).toBe("location")
   })
 
@@ -123,14 +101,13 @@ describe("useReportOutline（押した見出しの固定）", () => {
     stubRect(heading0, 0)
     stubRect(heading1, 0)
     stubRect(heading2, 999)
-    fireEvent.click(branch(2))
+    fireEvent.click(row(2))
 
     // 利用者が自分で転がして、固定していた見出しの位置が動いた場面を模す。
     stubRect(heading2, 500)
     fireEvent.scroll(document)
 
-    expect(branch(2).dataset["active"]).toBe("false")
-    expect(branch(1).dataset["active"]).toBe("true")
+    expect(row(2).getAttribute("aria-current")).toBeNull()
     expect(row(1).getAttribute("aria-current")).toBe("location")
   })
 })

@@ -134,4 +134,33 @@ describe("report → メインビュー", () => {
     await room.waitForEvent("turn-finished")
     await room.settleAndMatch(ELAPSED_MS)
   })
+
+  it("目次は見出しの一覧が最初から列に出ていて、一番下の行を押すとその行が現在の印を持つ", async () => {
+    const room = await run.open({
+      scenario: "report-outline",
+      scene: "long-report-quick",
+      viewport: "wide",
+      domRoots: ["main"],
+    })
+
+    await room.waitForEvent("turn-finished")
+    const rows = room.page.getByRole("navigation", { name: "目次" }).getByRole("button")
+    await rows.last().click()
+    await room.page
+      .locator('nav[aria-label="目次"] button:last-child[aria-current="location"]')
+      .waitFor()
+    await room.settleAndMatch(ELAPSED_MS)
+  })
+
+  it("狭い画面では目次の列が描かれない", async () => {
+    const room = await run.open({
+      scenario: "report-outline-narrow",
+      scene: "long-report-quick",
+      viewport: "narrow",
+      domRoots: ["main"],
+    })
+
+    await room.waitForEvent("turn-finished")
+    await room.settleAndMatch(ELAPSED_MS)
+  })
 })
