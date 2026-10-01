@@ -4,7 +4,7 @@ import { useScenarioRun } from "./scenario-run.ts"
 
 // report → メインビュー（記法・差し戻し・整え。docs/architecture/testing.md「E2E のシナリオの一覧」）。
 // `report` ツールの呼び出しがメインビューの Markdown へどう出るかを、疑似セッションの5つの場面で
-// 確かめる（`report-matrix` は対応表の塊）: `notation`（記法の一覧）、`report-rejected`（差し戻されたレポートは描かれず、
+// 確かめる（`report-matrix` は対応表の塊、`report-stats` は数の要約の全体の数）: `notation`（記法の一覧）、`report-rejected`（差し戻されたレポートは描かれず、
 // 直したレポートだけが残る）、`report-tidied`（整形で落ちる行は描かれず、残りはそのまま出る）、
 // `report-blocks`（候補の比較と触ったファイルの一覧の塊）、`report-chart`（棒・折れ線・円の
 // グラフの塊）。
@@ -67,6 +67,18 @@ describe("report → メインビュー", () => {
     const room = await run.open({
       scenario: "report-chart",
       scene: "report-chart",
+      viewport: "wide",
+      domRoots: ["main"],
+    })
+
+    await room.waitForEvent("turn-finished")
+    await room.settleAndMatch(ELAPSED_MS)
+  })
+
+  it("stats の全体の数が文字と割合の帯で描かれ、読めない場合は文字だけになる", async () => {
+    const room = await run.open({
+      scenario: "report-stats",
+      scene: "report-stats",
       viewport: "wide",
       domRoots: ["main"],
     })

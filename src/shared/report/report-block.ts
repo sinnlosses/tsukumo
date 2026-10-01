@@ -105,6 +105,10 @@ const statsBlockSchema = z
         z.object({
           before: z.string().default("").describe("変わる前の数（前後を見せるときだけ）"),
           value: z.string(),
+          total: z
+            .string()
+            .default("")
+            .describe("全体の数（割合を帯で添える。value が全体のうちの数のとき）"),
           label: inlineText,
         }),
       )

@@ -25,6 +25,20 @@ describe("reportSectionsOfBody", () => {
 })
 
 describe("parseReportSections", () => {
+  it("stats の total は省くと空文字になり、渡せば残る", () => {
+    const item = { before: "", value: "1", label: "架空" }
+    const parse = (extra: object): unknown =>
+      parseReportSections([
+        {
+          heading: "",
+          blocks: [{ kind: "stats", items: [{ ...item, ...extra }, item], fold: "" }],
+        },
+      ]).sections[0]?.blocks[0]
+
+    expect(parse({})).toMatchObject({ items: [{ total: "" }, { total: "" }] })
+    expect(parse({ total: "5" })).toMatchObject({ items: [{ total: "5" }, { total: "" }] })
+  })
+
   it("matrix の塊を受け、状態の外の値の行を持つ塊は落とす", () => {
     const matrix = {
       kind: "matrix",

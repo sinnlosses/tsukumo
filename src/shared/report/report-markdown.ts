@@ -132,12 +132,7 @@ function blockMarkdown(block: ReportBlock): string {
         ? ""
         : `<div class="${NOTE_CLASSES[block.tone]}">\n\n${markdownInline(block.text)}\n\n</div>`
     case "stats":
-      return `<div class="stats">${block.items
-        .map(
-          ({ before, value, label }) =>
-            `<div class="stat">${before.trim() === "" ? "" : `<span class="stat-before">${htmlInlineWithCode(before)} →</span>`}<b>${htmlInlineWithCode(value)}</b>${htmlInlineWithCode(label)}</div>`,
-        )
-        .join("")}</div>`
+      return `<div class="stats">${block.items.map(statMarkdown).join("")}</div>`
     case "code":
       return fencedMarkdown([block.language, block.path].join(" ").trim(), block.source)
     case "mermaid":
@@ -309,6 +304,30 @@ function tableMarkdown(table: Extract<ReportBlock, { readonly kind: "table" }>):
       ),
     ].join("\n"),
   ])
+}
+
+type StatItem = Extract<ReportBlock, { readonly kind: "stats" }>["items"][number]
+
+function statMarkdown({ before, value, total, label }: StatItem): string {
+  const beforeHtml =
+    before.trim() === "" ? "" : `<span class="stat-before">${htmlInlineWithCode(before)} →</span>`
+  const totalHtml =
+    total.trim() === "" ? "" : `<span class="stat-total"> / ${htmlInlineWithCode(total)}</span>`
+  return `<div class="stat">${beforeHtml}<b>${htmlInlineWithCode(value)}${totalHtml}</b>${statMeterMarkdown(value, total)}${htmlInlineWithCode(label)}</div>`
+}
+
+/** 数と全体の数がどちらも数字で、数が全体に収まるときだけ、割合の帯を返す。 */
+function statMeterMarkdown(value: string, total: string): string {
+  if (!NUMERIC_CELL_PATTERN.test(value) || !NUMERIC_CELL_PATTERN.test(total)) {
+    return ""
+  }
+  const part = numericCellMagnitude(value)
+  const whole = numericCellMagnitude(total)
+  if (whole <= 0 || part < 0 || part > whole) {
+    return ""
+  }
+  const width = Math.round((part / whole) * 100)
+  return `<span class="stat-meter" aria-hidden="true"><span class="stat-meter-fill" style="width: ${String(width)}%"></span></span>`
 }
 
 type MatrixBlock = Extract<ReportBlock, { readonly kind: "matrix" }>

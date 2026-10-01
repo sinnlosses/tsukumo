@@ -131,6 +131,11 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/architecture/display.md
   - 表のセルの `{ from, to }`: 前の値と矢印の文字を `ink-quiet`、後の値を `ink` で描く。状態（`status`）と
     同じセルには持たせない（変化の良し悪しは隣の列の `status` で言う）。前と後がどちらも数なら数の列として右に揃える
   - `stats` の項目の `before`: 前の値を矢印の文字と一緒に数の上へ添える
+  - `stats` の項目の `total`（全体の数）: 数の後ろに「／ 全体」と小さく添え、`value` と `total` がどちらも
+    数字で `0 <= value <= total` のときだけ、割合の帯を数とラベルの間に引く（2026-10-01。輪にしなかったのは、
+    狭いタイルの縦積みを崩さず、表の数の列の棒と同じく `span` の幅だけで描けて許可リストに足す物が無いため。
+    帯は `aria-hidden` で、割合は数と全体の文字が言う）。単位付き・範囲・全体を超える値は帯を出さず文字だけにし、
+    割合へ読み替える推測はしない
   - `list` の項目の `label`: 印なしのラベルと本文の2列に組み、項目の間を細い横線で区切る
     （見本は `docs/history/mockup/report-labeled-list-2026-09-30.html`）。
     `bullet` は印を持たないが、`ordered`（番号）と `check`（済み・未了）は順番・済み未了の意味を
@@ -203,6 +208,7 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/architecture/display.md
 
 2026-10-01 に `matrix` を足したときの `sections` の JSON Schema は 6990 → 7673 字（+683）、
 `REPORT_NOTATION_PROMPT` は塊の列に1語で +11 字（`inputSchema` の `sections` 部分を `z.toJSONSchema` で測った値）。
+同じ日に `stats` の `total` を足したときは 7673 → 7769 字（+96）、`REPORT_NOTATION_PROMPT` は変わらない。
 
 **切り替えの前の差し戻しと逃げ道**（tsukumo の作業ツリーの transcript にある 2026-09-23〜26 のメインの
 `report` の呼び出しを数えた集計値。本文は写していない。1つの呼び出しが違反の2つ以上に当たることがある）
@@ -515,7 +521,7 @@ CSS の3つを揃える**（レンダラを直したのに規約が古いまま�
 **塊の種類・欄・逃げ道の中の記法を足すかは、上の物差し（読んで分かるまでの時間が短くなるか）で
 決める。外すかは使われ方の数で決める**（docs/research/report-block.md 6章、記録の語彙は
 `docs/research/report-architecture.md` 6章）。`report` を描く（差し戻されなかった）
-たびに、その回に出た塊の種類・既定の値でない塊の欄（表のセルの `from` / `to`・`stats` の `before`・
+たびに、その回に出た塊の種類・既定の値でない塊の欄（表のセルの `from` / `to`・`stats` の `before` / `total`・
 `list` の `label`・`list` の `flow`）と、逃げ道（`markdown` の塊）に出た記法の種類（重複無し。同じ種類が
 同じレポートに何回出ても1回と数える）を `~/.tsukumo/report-usage/<YYYY-MM-DD>.jsonl` に1行記録する。
 逃げ道に出た記法は3つに分けて持つ: **塊のある記法**（表・箇条書き・`note` など、逃げ道の外側

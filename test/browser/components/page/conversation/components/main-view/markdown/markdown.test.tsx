@@ -79,6 +79,25 @@ describe("Markdown（unified への置き換えが求める記法）", () => {
     expect(container.querySelector("div.report-stat > strong")?.textContent).toBe("0")
   })
 
+  it("stats の割合の帯は許可リストを通り、幅と aria-hidden が DOM に残る", () => {
+    const { container } = render(
+      <Markdown
+        text={
+          '<div class="stats"><div class="stat"><b>25<span class="stat-total"> / 28</span></b>' +
+          '<span class="stat-meter" aria-hidden="true"><span class="stat-meter-fill" style="width: 89%"></span></span>通った</div>' +
+          '<div class="stat"><b>0</b>失敗</div></div>'
+        }
+      />,
+    )
+
+    const meter = container.querySelector("div.report-stat > span.report-stat-meter")
+    expect(meter?.getAttribute("aria-hidden")).toBe("true")
+    expect(meter?.querySelector("span.report-stat-meter-fill")?.getAttribute("style")).toBe(
+      "width: 89%;",
+    )
+    expect(container.querySelector("b > span.report-stat-total")?.textContent).toBe(" / 28")
+  })
+
   it("名前のある list は、項目ごとに印・名前・説明が li の直下に並び、説明の inline の記法が効く", () => {
     const text = reportSectionsMarkdown([
       {

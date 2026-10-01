@@ -239,8 +239,8 @@ describe("reportSectionsMarkdown", () => {
     const stats: ReportBlock = {
       kind: "stats",
       items: [
-        { before: "12", value: "8", label: "架空の件数" },
-        { before: "", value: "0", label: "架空の失敗" },
+        { before: "12", value: "8", total: "", label: "架空の件数" },
+        { before: "", value: "0", total: "", label: "架空の失敗" },
       ],
       fold: "",
     }
@@ -302,8 +302,8 @@ describe("reportSectionsMarkdown", () => {
     const stats: ReportBlock = {
       kind: "stats",
       items: [
-        { before: "", value: "312", label: "架空の<件数>" },
-        { before: "", value: "0", label: "架空の失敗" },
+        { before: "", value: "312", total: "", label: "架空の<件数>" },
+        { before: "", value: "0", total: "", label: "架空の失敗" },
       ],
       fold: "",
     }
@@ -318,8 +318,8 @@ describe("reportSectionsMarkdown", () => {
     const stats: ReportBlock = {
       kind: "stats",
       items: [
-        { before: "", value: "`3`", label: "架空の `a<b` 件" },
-        { before: "", value: "0", label: "架空の `` `x` `` 件" },
+        { before: "", value: "`3`", total: "", label: "架空の `a<b` 件" },
+        { before: "", value: "0", total: "", label: "架空の `` `x` `` 件" },
       ],
       fold: "",
     }
@@ -328,6 +328,31 @@ describe("reportSectionsMarkdown", () => {
       '<div class="stats"><div class="stat"><b><code>3</code></b>架空の <code>a&lt;b</code> 件</div>' +
         '<div class="stat"><b>0</b>架空の <code>`x`</code> 件</div></div>',
     )
+  })
+
+  it("stats の total は数の後ろに文字で添え、数が全体に収まる数字なら割合の帯も出す", () => {
+    const stat = (value: string, total: string): string =>
+      markdownOf({ kind: "stats", items: [{ before: "", value, total, label: "架空" }], fold: "" })
+    const meter = (width: number): string =>
+      `<span class="stat-meter" aria-hidden="true"><span class="stat-meter-fill" style="width: ${String(width)}%"></span></span>`
+
+    expect(stat("25", "28")).toBe(
+      `<div class="stats"><div class="stat"><b>25<span class="stat-total"> / 28</span></b>${meter(89)}架空</div></div>`,
+    )
+    expect(stat("0", "56")).toContain(meter(0))
+    expect(stat("1,000", "1,000")).toContain(meter(100))
+  })
+
+  it("stats の total が数として読めない・数が全体を超えるときは、帯を出さず total の文字だけを出す", () => {
+    const stat = (value: string, total: string): string =>
+      markdownOf({ kind: "stats", items: [{ before: "", value, total, label: "架空" }], fold: "" })
+
+    expect(stat("25件", "28件")).toBe(
+      '<div class="stats"><div class="stat"><b>25件<span class="stat-total"> / 28件</span></b>架空</div></div>',
+    )
+    expect(stat("30", "28")).not.toContain("stat-meter")
+    expect(stat("1", "0")).not.toContain("stat-meter")
+    expect(stat("3", "<5>")).toContain(" / &lt;5&gt;")
   })
 
   it("progress は節（丸）と線でつないだ1本の道で、済んだ段・いまの段・まだの段を class と aria-current・aria-label で見分ける", () => {

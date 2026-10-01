@@ -58,6 +58,26 @@
 .detail-block .report-stat-before {
   display: block;
 }
+/* `stats` の全体の数。数の後ろに小さく並べ、割合は下の帯で添える。 */
+.detail-block .report-stat-total {
+  font-size: var(--font-label);
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  color: var(--ink-quiet);
+}
+.detail-block .report-stat-meter {
+  display: block;
+  height: 0.3rem;
+  margin: 0.35rem 0;
+  border-radius: 999px;
+  background: var(--rule);
+  overflow: hidden;
+}
+.detail-block .report-stat-meter-fill {
+  display: block;
+  height: 100%;
+  background: var(--ink-quiet);
+}
 /* 表の変化したセルの前の値と矢印の文字。後の値は地の ink のまま。 */
 .detail-block .report-change-from {
   color: var(--ink-quiet);

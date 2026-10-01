@@ -77,8 +77,8 @@ describe("reportUsageEntryOf", () => {
           {
             kind: "stats",
             items: [
-              { before: "", value: "1", label: "架空の一" },
-              { before: "", value: "2", label: "架空の二" },
+              { before: "", value: "1", total: "", label: "架空の一" },
+              { before: "", value: "2", total: "", label: "架空の二" },
             ],
             fold: "",
           },
@@ -107,6 +107,26 @@ describe("reportUsageEntryOf", () => {
     const entry = reportUsageEntryOf(event, "claude-session-1", 1_000)
 
     expect(entry.blockFields).toEqual(["tableChange", "listLabel", "listFlow"])
+  })
+
+  it("stats の total を渡した回は statsTotal を数える", () => {
+    const event = reportEvent([
+      {
+        heading: "",
+        blocks: [
+          {
+            kind: "stats",
+            items: [
+              { before: "", value: "1", total: "5", label: "架空の一" },
+              { before: "", value: "2", total: "", label: "架空の二" },
+            ],
+            fold: "",
+          },
+        ],
+      },
+    ])
+
+    expect(reportUsageEntryOf(event, "claude-session-1", 1_000).blockFields).toEqual(["statsTotal"])
   })
 
   it("逃げ道（markdown の塊）の外側に出た記法の種類を数える", () => {
