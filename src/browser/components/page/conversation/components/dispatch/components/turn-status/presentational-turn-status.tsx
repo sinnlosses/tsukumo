@@ -8,8 +8,9 @@ import type { ReactElement } from "react"
 import { Button } from "../../../../../../ui/button/button.tsx"
 import { HStack } from "../../../../../../ui/h-stack/h-stack.tsx"
 import { Text } from "../../../../../../ui/text/text.tsx"
-import styles from "../../dispatch.module.css"
+import dispatchStyles from "../../dispatch.module.css"
 import type { TurnStatusModel } from "./hooks/use-turn-status.ts"
+import styles from "./turn-status.module.css"
 
 /** Command+Enter で送信できることを示す記号（`dispatch.module.css` が `::after` で描く）。 */
 const SEND_SHORTCUT_HINT = "⌘⏎"
@@ -74,7 +75,7 @@ export function PresentationalTurnStatus(props: PresentationalTurnStatusProps): 
           disclosure={{ kind: "none" }}
           ariaHasPopup={undefined}
           title={undefined}
-          className={styles["dispatch-interrupt"]}
+          className={dispatchStyles["dispatch-interrupt"]}
           onClick={props.action.onInterrupt}
         >
           <Text element="span" size="inherit" tone="inherit" weight="bold" className="">
@@ -84,7 +85,7 @@ export function PresentationalTurnStatus(props: PresentationalTurnStatusProps): 
       ) : (
         <button
           type="submit"
-          className={styles["dispatch-send"]}
+          className={dispatchStyles["dispatch-send"]}
           data-shortcut={SEND_SHORTCUT_HINT}
         >
           {props.action.label}

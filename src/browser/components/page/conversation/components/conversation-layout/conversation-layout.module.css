@@ -92,58 +92,6 @@
 .layout-dispatch {
   position: relative;
 }
-/* 3本の仕切り。
-   auto トラックは仕切り自身の width/height ぶんだけに縮む。
-   掴める幅（0.6rem）と見える線（1px）を分ける。線は領域の枠より薄くして画面を割らず、掴む場所は細くしない。 */
-.layout-resizer {
-  position: relative;
-  touch-action: none;
-}
-.layout-resizer-vertical {
-  width: 0.6rem;
-  cursor: col-resize;
-}
-.layout-resizer-horizontal {
-  height: 0.6rem;
-  cursor: row-resize;
-}
-.layout-resizer::after {
-  content: "";
-  position: absolute;
-  background: color-mix(in srgb, var(--rule) 45%, transparent);
-}
-.layout-resizer-vertical::after {
-  top: 0;
-  bottom: 0;
-  left: 50%;
-  width: 1px;
-  transform: translateX(-50%);
-}
-.layout-resizer-horizontal::after {
-  left: 0;
-  right: 0;
-  top: 50%;
-  height: 1px;
-  transform: translateY(-50%);
-}
-/* 上下の仕切りだけは中央に掴み手を置く。
-   線を薄くしたぶん、動かせる境目だと分かる印がここに要る（左右の2本は領域の縦の縁に沿っていて、カーソルの形で足りる）。 */
-.layout-resizer-horizontal::before {
-  content: "";
-  position: absolute;
-  z-index: 1;
-  top: 50%;
-  left: 50%;
-  width: 2.5rem;
-  height: 4px;
-  border-radius: 999px;
-  background: var(--rule);
-  transform: translate(-50%, -50%);
-}
-.layout-resizer:hover::after,
-.layout-resizer:hover::before {
-  background: var(--accent);
-}
 /* 上下の仕切りと、比率を戻す口を同じ行に置く入れ物。
    口は仕切りの右端に重ねる（口の中に仕切りを入れると、押したつもりがドラッグの始まりになる）。 */
 .layout-divider {
@@ -239,7 +187,6 @@
   }
   /* 仕切りは1列表示では意味を持たないので隠す。
      比率を戻すボタンも同じ理由で隠す（動かせる比率が無い1列表示では戻す先が無い）。 */
-  .layout-resizer,
   .layout-divider {
     display: none;
   }

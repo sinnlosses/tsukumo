@@ -23,7 +23,7 @@ import type {
 } from "../../../../../../../../shared/character-pack/expression.ts"
 import { Portrait } from "../../../../../../domain/portrait.tsx"
 import { Text } from "../../../../../../ui/text/text.tsx"
-import styles from "../../chat-view.module.css"
+import styles from "./nudge-portrait.module.css"
 
 /**
  * 立ち絵に載せたときに出る案内。

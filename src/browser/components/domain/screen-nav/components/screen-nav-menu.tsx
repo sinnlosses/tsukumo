@@ -75,7 +75,7 @@ export function ScreenNavMenu(props: ScreenNavMenuProps): ReactElement {
         // `shellStyles` の class は見た目を持たず、`screen-nav.module.css` の `@media` の選択子を当てるためだけに重ねる。
         // 実物の見た目（位置・枠・地）は `styles["screen-nav-panel"]` が持つ。
         <div className={clsx(styles["screen-nav-panel"], shellStyles["screen-nav-panel"])}>
-          <div className={shellStyles["screen-nav-panel-identity"]}>
+          <div className={styles["screen-nav-panel-identity"]}>
             <ScreenNavCharacterPicker picker={parts.character} />
             <ScreenNavSessionTag tag={parts.sessionTag} onOpened={parts.onSelect} />
           </div>

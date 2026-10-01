@@ -18,11 +18,12 @@ import { Text } from "../../../../../../ui/text/text.tsx"
 import { VStack } from "../../../../../../ui/v-stack/v-stack.tsx"
 import { turnFailureLabel } from "../../../../domain/api-error-label.ts"
 import { PromptImageThumbnails } from "../../../prompt-image/prompt-image.tsx"
-import styles from "../../main-view.module.css"
+import mainViewStyles from "../../main-view.module.css"
 import { PhaseNotice } from "../phase-notice/phase-notice.tsx"
 import { QuestionRecord } from "../question-record/question-record.tsx"
 import { ReportHead, type ReportLabel } from "../report-head/report-head.tsx"
 import { Report } from "../report/report.tsx"
+import styles from "./turn.module.css"
 
 export type TurnProps = {
   readonly turn: MainViewTurn
@@ -88,7 +89,7 @@ export function Turn(props: TurnProps): ReactElement {
  */
 function TurnFailureNotice(props: { readonly failure: TurnFailure }): ReactElement {
   return (
-    <section className={clsx(styles["main-step"], styles["is-failed"])} role="note">
+    <section className={clsx(mainViewStyles["main-step"], mainViewStyles["is-failed"])} role="note">
       <Text
         element="p"
         size="label"
@@ -177,7 +178,7 @@ function StepCard(props: StepProps): ReactElement {
 
   if (folded) {
     return (
-      <details className={clsx(styles["main-step"], styles["is-interim"])}>
+      <details className={clsx(mainViewStyles["main-step"], mainViewStyles["is-interim"])}>
         <Text
           element="summary"
           size="label"
@@ -215,9 +216,9 @@ function reportLabel(
 /** ステップの器に付ける class。地の段（`is-interim` / `is-final`）は互いに立たない。 */
 function stepClassName(step: MainViewStep): string {
   return clsx(
-    styles["main-step"],
-    step.interim && styles["is-interim"],
-    !step.interim && step.final && styles["is-final"],
+    mainViewStyles["main-step"],
+    step.interim && mainViewStyles["is-interim"],
+    !step.interim && step.final && mainViewStyles["is-final"],
   )
 }
 

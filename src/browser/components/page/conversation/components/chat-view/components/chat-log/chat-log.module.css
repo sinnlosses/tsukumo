@@ -1,0 +1,73 @@
+/* 会話のログ。
+   古い→新しいが縦に積むので、DOM の順そのままに並べ、下端へスクロールする（`useStickToBottom` が最新へ寄せる）。 */
+.chat-log {
+  display: flex;
+  flex: 1 1 18rem;
+  flex-direction: column;
+  gap: 0.6rem;
+  min-width: 0;
+  height: 100%;
+  padding: 0.5rem 0.25rem;
+  overflow-y: auto;
+}
+/* 下端から積む。
+   件数が少ないうちに上へ貼り付くと、立ち絵の顔の高さと話が合わない（LINE / Discord も新しい発言が下に来る）。
+   `justify-content: flex-end` は使わない。column flex で使うと、溢れた分が block-start（上）側へ出るのに scrollable overflow は end 方向にしか伸びないため、上へ出た分がクリップされて掴めなくなる。
+   代わりに先頭の子へ `margin-top: auto` を当てる。
+   中身が容器より低いうちはその子が余白を全部吸って下へ押し下げ、溢れたら margin は 0 に落ちて通常の overflow のまま上へスクロールできる。 */
+.chat-log > *:first-child {
+  margin-top: auto;
+}
+/* 子要素が縮んで文字が読みにくくなるのを防ぐ（overflow の向きとは無関係。既定の `flex-shrink: 1` のままだと、容器より背が高くなったときに各発言が押し潰される）。 */
+.chat-log > * {
+  flex-shrink: 0;
+}
+/* 発言1件ぶんの行（吹き出しと、その脇の時刻）。
+   話者で左右に寄せるのはこの行で、吹き出しと時刻は下端で揃える（LINE と同じ読み方）。
+   行はログの幅いっぱいに取り、吹き出しの `max-width` はログの幅から測る。 */
+.chat-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.4rem;
+}
+/* キャラクターの行は立ち絵の側（左）に寄せ、時刻は吹き出しの右脇。 */
+.chat-row-character {
+  justify-content: flex-start;
+}
+/* 利用者の行は右に寄せ、時刻は吹き出しの左脇（DOM の順は吹き出し → 時刻のまま、並べる向きだけを返す。読み上げの順は話者によらず「発言 → 時刻」）。 */
+.chat-row-user {
+  flex-direction: row-reverse;
+  justify-content: flex-start;
+}
+/* 圧縮の区切り。
+   文言を添えない線1本だけ。
+   他の発言と違って左右に寄せず、中央へ幅を縮めて置く。
+   押せない・畳めないので、hover やクリックの見た目は付けない。
+   色は `rule` のまま（差し色を薄めた仕切り線はレポートの見出しと表の3本に絞ってあり、ここを4本目にすると仕切りの合図が薄まる）。
+   破線・幅・余白の3つで吹き出しの縁（実線・全幅の箱）と見分ける。 */
+.chat-boundary {
+  align-self: center;
+  width: 50%;
+  max-width: 14rem;
+  height: 0;
+  margin: 1rem 0;
+  border: none;
+  border-top: 1px dashed var(--rule);
+}
+/* まだ一度も話していないときの案内。
+   最初の一言を促すのもこの1件（促す操作子はログの末尾から立ち絵へ移った）。
+   地は `ground` 一色を1枚（背景の絵を字の背後に回り込ませない）。
+   余白と角丸はその1枚のためのもので、背景の無いパックでは地と同じ色なので見えない。 */
+/* 字の段・色は `Text` が持つ。箱（置き方・余白・角丸・地）だけここに置く。 */
+.chat-empty {
+  align-self: center;
+  margin: auto 0;
+  padding: 0.2rem 0.7rem;
+  border-radius: 0.8rem;
+  background: var(--ground);
+}
+@media (max-width: 760px) {
+  .chat-log {
+    flex-basis: 10rem;
+  }
+}

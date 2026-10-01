@@ -89,15 +89,6 @@
     height: 26px;
     box-shadow: none;
   }
-  /* 面の先頭の名乗りは横に並べて真ん中に寄せる。札の字は帯の上より小さく、押せる形（枠と地）は帯の上と同じまま。 */
-  .screen-nav-panel-identity {
-    position: relative;
-    display: flex;
-    align-self: stretch;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-  }
   .screen-nav-panel .screen-nav-session-tag {
     font-size: var(--font-secondary);
   }

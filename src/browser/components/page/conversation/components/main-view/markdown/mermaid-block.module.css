@@ -1,0 +1,9 @@
+/* mermaid の構文エラー（MermaidBlock）。
+   元のコードは通常のコードブロックと同じ見た目（`.detail-block pre` に乗る）のまま残し、その下にエラー文を添える。
+   新しい色は作らない（state-ng は表の report-badge-ng / report-note-ng と同じ「問題」の色）。 */
+.mermaid-error {
+  margin: 0.4rem 0 0;
+  padding-left: 0.6rem;
+  border-left: 3px solid var(--state-ng);
+  white-space: pre-wrap;
+}

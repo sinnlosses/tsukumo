@@ -1,0 +1,13 @@
+/* コマンドの名前は機械が付けた名前なので等幅。 */
+.dispatch-suggestion-name {
+  flex: 0 0 auto;
+  font-family: var(--font-mono);
+}
+/* 字の段・色は `Text` が持つ。伸び縮み・ 1行で切る組みだけここに置く。 */
+.dispatch-suggestion-description {
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

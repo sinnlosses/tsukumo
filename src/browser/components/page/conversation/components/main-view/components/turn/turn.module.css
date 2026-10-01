@@ -1,0 +1,12 @@
+/* 字の段・色は `Text` が持つ。margin だけここに置く。 */
+.turn-dropped {
+  margin: 0 0 0.75rem;
+}
+.turn-failure-reason {
+  margin: 0;
+}
+/* 字の段・色は `Text` が持つ。margin・字間だけここに置く。 */
+.step-heading {
+  margin: 0 0 0.5rem;
+  letter-spacing: 0.08em;
+}

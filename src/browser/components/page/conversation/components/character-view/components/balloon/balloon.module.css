@@ -1,0 +1,11 @@
+.balloon-text {
+  white-space: pre-wrap;
+}
+/* 話し手の名前（最新の1件にだけ付く）。
+   吹き出しの主が誰かを示す札なので、accent を出してよい場所に数える。
+   本文とは gap ではなく margin-bottom で離す（吹き出し内の唯一の要素間隔なので、`.balloon` 側に汎用の gap を持たせない）。 */
+/* 字の段・色・太さは `Text` が持つ。margin・字間だけここに置く。 */
+.balloon-speaker {
+  margin-bottom: 4px;
+  letter-spacing: 0.08em;
+}

@@ -7,7 +7,8 @@ import clsx from "clsx"
 import type { ReactElement } from "react"
 
 import { Text } from "../../../../../../ui/text/text.tsx"
-import styles from "../../dispatch.module.css"
+import dispatchStyles from "../../dispatch.module.css"
+import styles from "./file-suggestions.module.css"
 
 /**
  * いま打っている `@<パス>`。`start` から `end` までを確定後の文字列で置き換える
@@ -59,13 +60,13 @@ export function FileSuggestions(props: FileSuggestionsProps): ReactElement | nul
   }
 
   return (
-    <ul className={styles["dispatch-suggestions"]}>
+    <ul className={dispatchStyles["dispatch-suggestions"]}>
       {props.matches.map((path, index) => (
         <li
           key={path}
           className={clsx(
-            styles["dispatch-suggestion-item"],
-            index === props.selectedIndex && styles["is-selected"],
+            dispatchStyles["dispatch-suggestion-item"],
+            index === props.selectedIndex && dispatchStyles["is-selected"],
           )}
           onMouseDown={(event) => {
             // mousedown の既定動作（フォーカス移動）を止め、textarea にフォーカスを残す。

@@ -5,8 +5,8 @@
 
 import type { ReactElement } from "react"
 
-import styles from "../../chat-view.module.css"
 import type { ChatTimeStamp } from "../../hooks/use-chat-view.ts"
+import styles from "./chat-time.module.css"
 
 export function ChatTime(props: { readonly time: ChatTimeStamp }): ReactElement | null {
   if (props.time.kind === "unknown") {

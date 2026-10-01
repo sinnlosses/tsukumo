@@ -1,0 +1,11 @@
+/* @ 補完のパス1件。
+   機械が付けた名前なので等幅。
+   説明が無いぶん横幅を全部使えるので、深いパスは折り返さず末尾を省略記号で切る（候補一覧そのものを横に広げない）。 */
+.dispatch-suggestion-path {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-family: var(--font-mono);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

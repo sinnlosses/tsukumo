@@ -2,7 +2,7 @@
 
 import type { ReactElement } from "react"
 
-import styles from "../../chat-view.module.css"
+import styles from "./chat-day.module.css"
 
 export function ChatDay(props: {
   readonly dateTime: string

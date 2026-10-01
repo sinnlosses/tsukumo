@@ -5,12 +5,13 @@ import type { ReactElement, RefObject } from "react"
 
 import { Text } from "../../../../../../ui/text/text.tsx"
 import { PromptImageThumbnails } from "../../../prompt-image/prompt-image.tsx"
-import styles from "../../chat-view.module.css"
+import chatViewStyles from "../../chat-view.module.css"
 import type { ChatRow } from "../../hooks/use-chat-view.ts"
 import { ChatDay } from "../chat-day/chat-day.tsx"
 import { ChatSpeech } from "../chat-speech/chat-speech.tsx"
 import { ChatTime } from "../chat-time/chat-time.tsx"
 import { ChatTyping } from "../chat-typing/chat-typing.tsx"
+import styles from "./chat-log.module.css"
 
 /**
  * まだ一度も話していないときの案内。
@@ -77,7 +78,10 @@ export function ChatLog({
                     {/* 利用者の発言は押せない（遡る先の表情を持たないので、押しても何も起きない）。
                      添えた画像の控えは吹き出しの中に並ぶ（控えだけは押すと拡大する）。 */}
                     <div
-                      className={clsx(styles["chat-entry"], styles["chat-entry-user"])}
+                      className={clsx(
+                        chatViewStyles["chat-entry"],
+                        chatViewStyles["chat-entry-user"],
+                      )}
                       data-speaker="user"
                     >
                       {row.text}

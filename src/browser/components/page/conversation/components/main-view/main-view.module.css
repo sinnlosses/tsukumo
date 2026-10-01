@@ -32,10 +32,6 @@
 .turn-card :is(h4, h5) {
   scroll-margin-top: calc(var(--turn-header-height) + 0.5rem);
 }
-/* 字の段・色は `Text` が持つ。margin だけここに置く。 */
-.turn-dropped {
-  margin: 0 0 0.75rem;
-}
 /* ステップは縦に1本で積む（Z字に読ませない）。カードの枠は「ひとかたまり」の区切りを見せるためだけに使い、番号は振らない。 */
 .main-step {
   margin: 0;
@@ -83,17 +79,8 @@
 
 /* 失敗で終わったやり取りの末尾の札（`TurnFailureNotice`）。
    枠だけを --state-ng にし、見出し「失敗で終わった」の字も同じ色にする。
-   字の色は呼び出し側が `Text` の `tone="state-ng"` を渡す（`.step-heading` へ色の規則を書くと `<Text>` の property と重なり、構造の検査「渡す className は styles["…"] の組み合わせだけで、その class は部品の property と重ならない」が落ちる）。
+   字の色は呼び出し側が `Text` の `tone="state-ng"` を渡す（`turn.module.css` の `.step-heading` へ色の規則を書くと `<Text>` の property と重なり、構造の検査「渡す className は styles["…"] の組み合わせだけで、その class は部品の property と重ならない」が落ちる）。
    地は本文と同じ。 */
 .main-step.is-failed {
   border-color: var(--state-ng);
-}
-.turn-failure-reason {
-  margin: 0;
-}
-
-/* 字の段・色は `Text` が持つ。margin・字間だけここに置く。 */
-.step-heading {
-  margin: 0 0 0.5rem;
-  letter-spacing: 0.08em;
 }

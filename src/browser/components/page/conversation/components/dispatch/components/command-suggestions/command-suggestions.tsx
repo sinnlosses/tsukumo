@@ -11,7 +11,8 @@ import { prop, sortBy } from "remeda"
 
 import type { CommandDescription } from "../../../../../../../../shared/session/session-event.ts"
 import { Text } from "../../../../../../ui/text/text.tsx"
-import styles from "../../dispatch.module.css"
+import dispatchStyles from "../../dispatch.module.css"
+import styles from "./command-suggestions.module.css"
 
 export const MAX_COMMAND_SUGGESTIONS = 10
 
@@ -60,13 +61,13 @@ export function CommandSuggestions(props: CommandSuggestionsProps): ReactElement
   }
 
   return (
-    <ul className={styles["dispatch-suggestions"]}>
+    <ul className={dispatchStyles["dispatch-suggestions"]}>
       {props.matches.map((command, index) => (
         <li
           key={command.name}
           className={clsx(
-            styles["dispatch-suggestion-item"],
-            index === props.selectedIndex && styles["is-selected"],
+            dispatchStyles["dispatch-suggestion-item"],
+            index === props.selectedIndex && dispatchStyles["is-selected"],
           )}
           onMouseDown={(event) => {
             // mousedown の既定動作（フォーカス移動）を止め、textarea にフォーカスを残す。

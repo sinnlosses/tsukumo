@@ -10,12 +10,13 @@ import { Button } from "../../../../../../ui/button/button.tsx"
 import { Text } from "../../../../../../ui/text/text.tsx"
 import { VStack } from "../../../../../../ui/v-stack/v-stack.tsx"
 import { PromptImageChips } from "../../../prompt-image/prompt-image.tsx"
-import styles from "../../dispatch.module.css"
+import dispatchStyles from "../../dispatch.module.css"
 import { CommandSuggestions } from "../command-suggestions/command-suggestions.tsx"
 import { FileSuggestions } from "../file-suggestions/file-suggestions.tsx"
 import { MarkdownEditorSurface } from "../markdown-editor-surface/markdown-editor-surface.tsx"
 import { TextAreaSurface } from "../text-area-surface/text-area-surface.tsx"
 import { TurnStatus } from "../turn-status/turn-status.tsx"
+import styles from "./composer.module.css"
 import type { ComposerModel } from "./hooks/use-composer.ts"
 
 export type PresentationalComposerProps = ComposerModel
@@ -50,7 +51,7 @@ export function PresentationalComposer({
 }: PresentationalComposerProps): ReactElement {
   return (
     <form
-      className={clsx(styles["dispatch-form"], answering && styles["is-answering"])}
+      className={clsx(dispatchStyles["dispatch-form"], answering && dispatchStyles["is-answering"])}
       onSubmit={onSubmit}
     >
       {/* 質問に答えている間だけ出る帯（誰が聞いているか）。 */}

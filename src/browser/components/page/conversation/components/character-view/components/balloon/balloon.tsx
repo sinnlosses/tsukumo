@@ -13,7 +13,8 @@ import type { ReactElement } from "react"
 
 import { Text } from "../../../../../../ui/text/text.tsx"
 import { useSpeechPress } from "../../../hooks/use-speech-press.ts"
-import styles from "../../character-view.module.css"
+import characterViewStyles from "../../character-view.module.css"
+import styles from "./balloon.module.css"
 
 /** 押せるか（押せるなら、印の状態と押されたときの呼び先を持つ）。 */
 export type BalloonInteraction =
@@ -63,7 +64,7 @@ export function Balloon(props: BalloonProps): ReactElement {
 
   if (interaction.kind === "static") {
     return (
-      <div className={styles["balloon"]} data-latest={props.latest}>
+      <div className={characterViewStyles["balloon"]} data-latest={props.latest}>
         {body}
       </div>
     )
@@ -71,7 +72,7 @@ export function Balloon(props: BalloonProps): ReactElement {
 
   return (
     <div
-      className={styles["balloon"]}
+      className={characterViewStyles["balloon"]}
       data-latest={props.latest}
       data-interactive="true"
       data-selected={interaction.selected}

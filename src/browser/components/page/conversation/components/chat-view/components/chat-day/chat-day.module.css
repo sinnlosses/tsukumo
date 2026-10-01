@@ -1,0 +1,13 @@
+/* 日の区切り。
+   日付の字を中央に置くだけで、線は引かない。圧縮の区切り（破線1本・文言なし）と、字の有無で見分ける。
+   地・色は時刻と同じ（`ground` の地に `ink-quiet`）。 */
+.chat-day {
+  align-self: center;
+  margin: 0.6rem 0 0.2rem;
+  padding: 0.1rem 0.8rem;
+  border-radius: 0.8rem;
+  background: var(--ground);
+  color: var(--ink-quiet);
+  font-size: var(--font-secondary);
+  line-height: var(--line-height-body);
+}

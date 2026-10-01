@@ -10,12 +10,13 @@
 import clsx from "clsx"
 import type { ReactElement } from "react"
 
-import styles from "../../chat-view.module.css"
+import chatViewStyles from "../../chat-view.module.css"
+import styles from "./chat-typing.module.css"
 
 export function ChatTyping(): ReactElement {
   return (
     <div
-      className={clsx(styles["chat-entry"], styles["chat-entry-typing"])}
+      className={clsx(chatViewStyles["chat-entry"], chatViewStyles["chat-entry-typing"])}
       data-speaker="typing"
       aria-hidden="true"
     >

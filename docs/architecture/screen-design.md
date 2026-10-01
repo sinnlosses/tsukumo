@@ -1062,7 +1062,7 @@ IBM Plex Mono）と字の大きさ、「ほか n 件を見る」の色（見本�
 - **サーバの契約は変えない**（`SessionEvent` も `SessionState` もそのまま）。セリフは `speech`
   で1件まるごと届く（`speak` の戻りが `"ok"` になる時点で全文がある）ので、**出すタイミングを
   ブラウザ側で持たせるだけ**で足りる（`components/page/conversation/components/chat-view/hooks/use-speech-reveal.ts`）
-- **現れる瞬間、0.2秒ほど小さく拡大して落ち着く**（`chat-view.module.css` の
+- **現れる瞬間、0.2秒ほど小さく拡大して落ち着く**（`chat-speech.module.css` の
   `.chat-entry-pop`。CSS のアニメーションなので、`prefers-reduced-motion` は
   `styles/theme.css` の全体規則がそのまま止める——`.chat-typing-dot` と同じ扱いで、ここに
   個別の対応は要らない）

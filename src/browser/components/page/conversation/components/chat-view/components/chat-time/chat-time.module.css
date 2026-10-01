@@ -1,0 +1,14 @@
+/* 行ごとの時刻（`HH:MM`）。
+   機械が付けた値なので等幅、文字は `ink-quiet` （読む面の原則）。
+   地は `ground` 一色を1枚（背景の絵の上に字が直に乗らないように）。
+   吹き出しに押されて縮まない。 */
+.chat-time {
+  flex-shrink: 0;
+  padding: 0 0.35rem;
+  border-radius: 0.6rem;
+  background: var(--ground);
+  color: var(--ink-quiet);
+  font-family: var(--font-mono);
+  font-size: var(--font-secondary);
+  line-height: var(--line-height-body);
+}

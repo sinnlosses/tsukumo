@@ -1,0 +1,34 @@
+/* 経過時間と送信⇄中断（<TurnStatus>）。
+   道具の口との間に伸び縮みする要素が無いので、ここで右端へ寄せる。
+   縮めてよいのは API の知らせだけなので、行ごと縮められるようにしておき（`min-width: 0`）、縮む役は .dispatch-notice に持たせる。 */
+.dispatch-row {
+  flex: 0 1 auto;
+  min-width: 0;
+  margin-left: auto;
+}
+/* API の知らせ（再試行中・利用上限・失敗の理由）。
+   色は枠と字だけで地は塗らない（入力欄で塗ってよいのは送るボタンだけ）。
+   色は意味を固定した state の 2色で、字が意味を言う。
+   狭い画面で行に収まらなければ末尾を省略し、全文は `title` で読ませる。 */
+/* 字の段は `Text` が持つ。
+   色は `Text` の `tone`（"warn" → state-warn、"ng" → state-ng）が呼び出し側の分岐で持つ。
+   箱（枠・角丸・余白）・1行で切る組みだけここに置く（語彙に無い見た目）。 */
+.dispatch-notice {
+  flex: 0 1 auto;
+  min-width: 0;
+  padding: 0.125rem 0.5rem;
+  border: 1px solid currentcolor;
+  border-radius: 999px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* 経過時間（送信ボタンと同じ行）。他の2つ（ボタン・候補）と同じく伸び縮みしない固定幅にしておく。 */
+/* 字の段・色は `Text` が持つ。伸び縮みだけここに置く。 */
+.dispatch-elapsed-row {
+  flex: 0 0 auto;
+}
+/* 経過時間は機械が数えた値なので等幅。字の色は `Text` が持つ。書体だけここに置く。 */
+.dispatch-elapsed {
+  font-family: var(--font-mono);
+}

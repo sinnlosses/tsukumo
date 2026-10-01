@@ -6,8 +6,8 @@ import type { ReactElement } from "react"
 import { Button } from "../../../../../../ui/button/button.tsx"
 import { HStack } from "../../../../../../ui/h-stack/h-stack.tsx"
 import { Text } from "../../../../../../ui/text/text.tsx"
-import styles from "../../dispatch.module.css"
 import type { PendingAnswerModel } from "./hooks/use-pending-answer.ts"
+import styles from "./pending-answer.module.css"
 
 export type PresentationalPendingAnswerProps = PendingAnswerModel
 
