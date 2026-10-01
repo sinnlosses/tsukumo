@@ -55,7 +55,6 @@ export function PlanUsageRow(props: { readonly planUsage: UsePlanUsageResult }):
         </span>
         {state.kind !== "not-applicable" && (
           <Button
-            type="button"
             variant="ghost"
             size="action"
             pressed="none"

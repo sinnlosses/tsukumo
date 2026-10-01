@@ -79,7 +79,6 @@ export function CharacterList(props: { readonly onCreate: () => void }): ReactEl
         )
       })}
       <Button
-        type="button"
         variant="outline-dashed"
         size="subheading"
         pressed="none"

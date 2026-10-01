@@ -51,7 +51,6 @@ function ChatModeButton(props: {
   const { disabled, title, onChange } = props.chatMode
   return (
     <Button
-      type="button"
       variant="ghost"
       size="secondary"
       pressed={props.pressed ? "on" : "off"}

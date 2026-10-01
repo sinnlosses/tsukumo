@@ -21,7 +21,6 @@ export function TaskBoardAction(props: {
       aria-busy={opener.kind === "file" && opener.availability === "checking"}
     >
       <Button
-        type="button"
         variant="outline"
         size="secondary"
         pressed="none"
@@ -38,7 +37,6 @@ export function TaskBoardAction(props: {
       </Button>
       {opener.kind === "file" && (
         <Button
-          type="button"
           variant="outline"
           size="secondary"
           pressed="none"
@@ -70,7 +68,6 @@ export function TaskBoardAction(props: {
         </a>
       )}
       <Button
-        type="button"
         variant="solid-accent"
         size="subheading"
         pressed="none"

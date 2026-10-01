@@ -291,7 +291,6 @@ export function ScreenNavSettingsGear(props: ScreenNavSettingsProps): ReactEleme
             className={styles["screen-nav-settings-row"]}
           >
             <Button
-              type="button"
               variant="link"
               size="label"
               pressed="none"

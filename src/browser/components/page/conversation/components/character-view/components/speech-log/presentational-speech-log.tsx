@@ -45,7 +45,6 @@ export function PresentationalSpeechLog({
   return (
     <>
       <Button
-        type="button"
         variant="outline-faint-ground"
         size="secondary"
         pressed="none"
@@ -62,7 +61,7 @@ export function PresentationalSpeechLog({
       </Button>
       <Dialog
         open={open}
-        name={{ kind: "label", label: DIALOG_LABEL }}
+        ariaLabel={DIALOG_LABEL}
         backdrop="clear"
         placement={{ kind: "auto" }}
         onClose={onClose}
@@ -74,7 +73,6 @@ export function PresentationalSpeechLog({
           {/* 閉じる口を列より先に置く。
               `showModal()` は中の最初のフォーカスできる要素へフォーカスを移すので、後ろに置くと転がる列（溢れると Tab で届く）が先に選ばれる。 */}
           <Button
-            type="button"
             variant="outline-accent-tinted"
             size="action"
             pressed="none"

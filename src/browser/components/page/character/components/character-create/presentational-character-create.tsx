@@ -29,7 +29,7 @@ export function PresentationalCharacterCreate({
   return (
     <Dialog
       open={open}
-      name={{ kind: "label", label: "新しいキャラクターを作る" }}
+      ariaLabel="新しいキャラクターを作る"
       backdrop="dim"
       placement={{ kind: "auto" }}
       onClose={onClose}
@@ -123,7 +123,6 @@ export function PresentationalCharacterCreate({
           </Text>
           <div className={characterStyles["character-create-footer-spacer"]} />
           <Button
-            type="button"
             variant="outline"
             size="secondary"
             pressed="none"
@@ -138,7 +137,6 @@ export function PresentationalCharacterCreate({
             やめる
           </Button>
           <Button
-            type="button"
             variant="solid-accent"
             size="secondary"
             pressed="none"

@@ -50,7 +50,6 @@ export function PresentationalTurnHeader({
     <header className={styles["turn-header"]} ref={headerRef}>
       <div className={styles["turn-nav"]}>
         <Button
-          type="button"
           variant="outline"
           size="subheading"
           pressed="none"
@@ -65,7 +64,6 @@ export function PresentationalTurnHeader({
           <span aria-hidden="true">‹</span>
         </Button>
         <Button
-          type="button"
           variant="outline"
           size="subheading"
           pressed="none"
@@ -94,7 +92,6 @@ export function PresentationalTurnHeader({
           className={styles["turn-title"]}
         >
           <Button
-            type="button"
             variant="ghost-hover-outline"
             size="subheading"
             pressed="none"
@@ -141,7 +138,6 @@ export function PresentationalTurnHeader({
           <span className={styles["turn-newest-badge"]}>{NEWEST_BADGE}</span>
         ) : (
           <Button
-            type="button"
             variant="outline"
             size="secondary"
             pressed="none"

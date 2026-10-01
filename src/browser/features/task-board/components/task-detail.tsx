@@ -105,7 +105,6 @@ function TaskDetailBreadcrumb(props: {
   return (
     <nav aria-label="タスクのつながり" className={styles["task-detail-breadcrumb"]}>
       <Button
-        type="button"
         variant="text-accent"
         size="action"
         pressed="none"

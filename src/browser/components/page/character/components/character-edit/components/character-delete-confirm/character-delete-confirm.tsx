@@ -32,7 +32,7 @@ export function CharacterDeleteConfirm(props: CharacterDeleteConfirmProps): Reac
   return (
     <Dialog
       open={true}
-      name={{ kind: "label", label: band.heading }}
+      ariaLabel={band.heading}
       backdrop="dim"
       placement={{ kind: "auto" }}
       onClose={props.onClose}
@@ -84,7 +84,6 @@ export function CharacterDeleteConfirm(props: CharacterDeleteConfirmProps): Reac
         </div>
         <div className={styles["character-delete-actions"]}>
           <Button
-            type="button"
             variant="outline"
             size="secondary"
             pressed="none"
@@ -99,7 +98,6 @@ export function CharacterDeleteConfirm(props: CharacterDeleteConfirmProps): Reac
             やめる
           </Button>
           <Button
-            type="button"
             variant="solid-danger"
             size="secondary"
             pressed="none"

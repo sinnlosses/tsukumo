@@ -131,7 +131,6 @@ export function PortraitCard(props: {
           </label>
           {clear.kind === "shown" && (
             <Button
-              type="button"
               variant="outline-soft-danger-veil"
               size="body"
               pressed="none"

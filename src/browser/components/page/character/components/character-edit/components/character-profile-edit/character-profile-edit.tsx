@@ -23,7 +23,6 @@ export function CharacterProfileEdit(props: {
   return (
     <>
       <Button
-        type="button"
         variant="outline"
         size="secondary"
         pressed="none"

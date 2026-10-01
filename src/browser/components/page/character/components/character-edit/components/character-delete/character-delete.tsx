@@ -38,7 +38,6 @@ export function CharacterDelete(props: {
           </Text>
         </div>
         <Button
-          type="button"
           variant="outline-soft-danger"
           size="secondary"
           pressed="none"

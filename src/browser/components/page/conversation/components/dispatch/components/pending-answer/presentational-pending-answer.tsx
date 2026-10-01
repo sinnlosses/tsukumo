@@ -49,7 +49,6 @@ export function PresentationalPendingAnswer(
             className={styles["pending-actions"]}
           >
             <Button
-              type="button"
               variant="outline-ok-surface"
               size="body"
               pressed="none"
@@ -64,7 +63,6 @@ export function PresentationalPendingAnswer(
               許可
             </Button>
             <Button
-              type="button"
               variant="outline-danger-surface"
               size="body"
               pressed="none"

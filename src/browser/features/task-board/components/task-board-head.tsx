@@ -21,7 +21,6 @@ export function TaskBoardHead(props: {
         <kbd>↑↓</kbd> 選ぶ <kbd>Esc</kbd> 閉じる
       </span>
       <Button
-        type="button"
         variant="outline"
         size="subheading"
         pressed="none"

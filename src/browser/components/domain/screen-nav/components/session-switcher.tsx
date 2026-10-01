@@ -54,7 +54,7 @@ export function SessionSwitcher(props: SessionSwitcherProps): ReactElement {
   return (
     <Dialog
       open={switcher.open}
-      name={{ kind: "label", label: DIALOG_LABEL }}
+      ariaLabel={DIALOG_LABEL}
       backdrop="dim"
       placement={{ kind: "auto" }}
       onClose={switcher.onClose}
@@ -92,7 +92,6 @@ function SessionSwitcherBody(props: SessionSwitcherProps): ReactElement {
           onKeyDown={selection.onKeyDown}
         />
         <Button
-          type="button"
           variant="outline-dashed-accent-ink"
           size="secondary"
           pressed="none"
@@ -266,7 +265,6 @@ function SessionSwitcherDetail(props: SessionSwitcherDetailProps): ReactElement 
       </div>
       <div className={styles["session-switcher-detail-foot"]}>
         <Button
-          type="button"
           variant="solid-accent-static"
           size="subheading"
           pressed="none"

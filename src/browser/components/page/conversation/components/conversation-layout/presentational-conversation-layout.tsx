@@ -133,7 +133,6 @@ export function PresentationalConversationLayout({
               仕切り `role="separator"` はキー操作を持たないので、そこへ移すと押せないものにフォーカスが残る。 */}
         {isSplitChanged && (
           <Button
-            type="button"
             variant="tinted-accent"
             size="action"
             pressed="none"

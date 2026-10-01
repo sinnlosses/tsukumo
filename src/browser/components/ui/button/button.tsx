@@ -9,7 +9,6 @@ import type { ReactElement, ReactNode, Ref } from "react"
 import { TEXT_SIZE_CLASS, type TextSize } from "../text/text.tsx"
 import styles from "./button.module.css"
 
-export type ButtonType = "button"
 export type ButtonVariant =
   | "outline"
   | "outline-dashed"
@@ -54,7 +53,6 @@ export type ButtonDisclosure =
     }
 
 export type ButtonProps = {
-  readonly type: ButtonType
   readonly variant: ButtonVariant
   readonly size: ButtonSize
   readonly pressed: ButtonPressed
@@ -126,7 +124,7 @@ export function Button(props: ButtonProps): ReactElement {
 
   return (
     <button
-      type={props.type}
+      type="button"
       ref={disclosure.kind === "popover" ? disclosure.ref : undefined}
       className={className}
       aria-pressed={BUTTON_PRESSED_ARIA[props.pressed]}

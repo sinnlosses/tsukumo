@@ -8,8 +8,6 @@ import type { CSSProperties, MouseEvent, ReactElement, ReactNode } from "react"
 import { useModalDialog } from "../../../hooks/use-modal-dialog.ts"
 import styles from "./dialog.module.css"
 
-export type DialogName = { readonly kind: "label"; readonly label: string }
-
 export type DialogBackdrop = "dim" | "deep" | "clear"
 
 /**
@@ -22,7 +20,7 @@ export type DialogPlacement =
 
 export type DialogProps = {
   readonly open: boolean
-  readonly name: DialogName
+  readonly ariaLabel: string
   readonly backdrop: DialogBackdrop
   readonly placement: DialogPlacement
   readonly onClose: () => void
@@ -58,7 +56,7 @@ export function Dialog(props: DialogProps): ReactElement {
       ref={dialogRef}
       className={className}
       style={style}
-      aria-label={props.name.label}
+      aria-label={props.ariaLabel}
       onClose={props.onClose}
       onClick={handleClick}
     >

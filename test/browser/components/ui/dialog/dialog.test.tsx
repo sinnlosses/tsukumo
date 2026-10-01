@@ -12,7 +12,7 @@ afterEach(() => {
 
 const BASE_PROPS = {
   open: true,
-  name: { kind: "label", label: "架空のダイアログ" },
+  ariaLabel: "架空のダイアログ",
   backdrop: "dim",
   placement: { kind: "auto" },
   onClose: () => {},

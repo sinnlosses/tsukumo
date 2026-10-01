@@ -48,7 +48,7 @@ export function TaskRunConfirm(props: TaskRunConfirmProps): ReactElement {
   return (
     <Dialog
       open={true}
-      name={{ kind: "label", label: "タスクの実行" }}
+      ariaLabel="タスクの実行"
       backdrop="dim"
       placement={{ kind: "auto" }}
       onClose={dismiss}
@@ -80,7 +80,6 @@ export function TaskRunConfirm(props: TaskRunConfirmProps): ReactElement {
       )}
       <div className={styles["task-run-actions"]}>
         <Button
-          type="button"
           variant="outline"
           size="secondary"
           pressed="none"
@@ -96,7 +95,6 @@ export function TaskRunConfirm(props: TaskRunConfirmProps): ReactElement {
         </Button>
         {!turnInProgress && (
           <Button
-            type="button"
             variant="outline-accent"
             size="secondary"
             pressed="none"

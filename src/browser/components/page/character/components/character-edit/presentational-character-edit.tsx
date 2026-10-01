@@ -89,7 +89,6 @@ export function PresentationalCharacterEdit(
             </Heading>
             {props.resetChatAccent.kind === "shown" ? (
               <Button
-                type="button"
                 variant="link"
                 size="action"
                 pressed="none"

@@ -87,7 +87,6 @@ export function CharacterProfile(props: { readonly profile: CharacterProfileMode
           <CharacterProfileEdit edit={profile.editProfile} />
           {profile.switchTo.kind === "shown" && (
             <Button
-              type="button"
               variant="outline"
               size="secondary"
               pressed="none"

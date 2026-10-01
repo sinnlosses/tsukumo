@@ -39,7 +39,7 @@ export function PortraitClearConfirm(props: PortraitClearConfirmProps): ReactEle
   return (
     <Dialog
       open={true}
-      name={{ kind: "label", label: "表情を消す" }}
+      ariaLabel="表情を消す"
       backdrop="clear"
       placement={anchoredPlacement(props.anchor)}
       onClose={props.onClose}
@@ -84,7 +84,6 @@ export function PortraitClearConfirm(props: PortraitClearConfirmProps): ReactEle
         className=""
       >
         <Button
-          type="button"
           variant="outline"
           size="secondary"
           pressed="none"
@@ -99,7 +98,6 @@ export function PortraitClearConfirm(props: PortraitClearConfirmProps): ReactEle
           やめる
         </Button>
         <Button
-          type="button"
           variant="solid-danger"
           size="secondary"
           pressed="none"

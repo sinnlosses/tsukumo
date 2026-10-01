@@ -42,7 +42,7 @@ export function CharacterProfileEditDialog(props: CharacterProfileEditDialogProp
   return (
     <Dialog
       open={true}
-      name={{ kind: "label", label: "名前とプロフィールを変える" }}
+      ariaLabel="名前とプロフィールを変える"
       backdrop="dim"
       placement={{ kind: "auto" }}
       onClose={props.onClose}
@@ -100,7 +100,6 @@ export function CharacterProfileEditDialog(props: CharacterProfileEditDialogProp
         <div className={styles["character-create-footer"]}>
           <div className={styles["character-create-footer-spacer"]} />
           <Button
-            type="button"
             variant="outline"
             size="secondary"
             pressed="none"
@@ -115,7 +114,6 @@ export function CharacterProfileEditDialog(props: CharacterProfileEditDialogProp
             やめる
           </Button>
           <Button
-            type="button"
             variant="solid-accent"
             size="secondary"
             pressed="none"

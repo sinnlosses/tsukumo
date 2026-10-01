@@ -58,7 +58,6 @@ export function PromptImageChips(props: PromptImageChipsProps): ReactElement | n
           <li className={styles["prompt-image-chip"]} key={index}>
             {/* ボタンの中にボタンを入れないので、絵を押すボタンと外す `×` は兄弟にして、`×` を絵の右上に重ねる（CSS 側）。 */}
             <Button
-              type="button"
               variant="ghost"
               size="label"
               pressed="none"
@@ -74,7 +73,6 @@ export function PromptImageChips(props: PromptImageChipsProps): ReactElement | n
               <Search className={styles["prompt-image-zoom-icon"]} size={16} />
             </Button>
             <Button
-              type="button"
               variant="outline-ground"
               size="secondary"
               pressed="none"
@@ -131,7 +129,6 @@ export function PromptImageThumbnails(props: PromptImageThumbnailsProps): ReactE
         {props.images.map((image, index) => (
           <li className={styles["prompt-image-thumbnail"]} key={image.id}>
             <Button
-              type="button"
               variant="ghost"
               size="label"
               pressed="none"

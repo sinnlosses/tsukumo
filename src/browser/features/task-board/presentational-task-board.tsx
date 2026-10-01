@@ -41,7 +41,7 @@ export function PresentationalTaskBoard(props: TaskBoardView): ReactElement {
   return (
     <Dialog
       open={props.open}
-      name={{ kind: "label", label: "タスク" }}
+      ariaLabel="タスク"
       backdrop="dim"
       placement={{ kind: "auto" }}
       onClose={props.onClose}

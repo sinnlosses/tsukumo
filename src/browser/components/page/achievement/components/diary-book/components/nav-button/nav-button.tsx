@@ -13,7 +13,6 @@ export function NavButton(props: {
   const text = props.label ?? props.fallback
   return (
     <Button
-      type="button"
       variant="outline"
       size="secondary"
       pressed="none"

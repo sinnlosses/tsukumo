@@ -34,7 +34,6 @@ export function ScreenNavCharacterPicker(props: ScreenNavCharacterPickerProps): 
       )}
     >
       <Button
-        type="button"
         variant="ghost"
         size="body"
         pressed="none"

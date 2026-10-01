@@ -23,7 +23,6 @@ export function FormatBar({ onFormat }: FormatBarProps): ReactElement {
       {FORMAT_BUTTONS.map(({ format, label, Icon }) => (
         <Button
           key={format}
-          type="button"
           variant="ghost"
           size="action"
           pressed="none"

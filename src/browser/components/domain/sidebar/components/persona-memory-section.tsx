@@ -66,7 +66,6 @@ export function PersonaMemorySection(): ReactElement {
               </button>
               {editing && (
                 <Button
-                  type="button"
                   variant="ghost"
                   size="action"
                   pressed="none"
@@ -130,7 +129,7 @@ function PersonaMemoryForgetConfirm(props: PersonaMemoryForgetConfirmProps): Rea
   return (
     <Dialog
       open={true}
-      name={{ kind: "label", label: "覚えたことを消す" }}
+      ariaLabel="覚えたことを消す"
       backdrop="dim"
       placement={{ kind: "auto" }}
       onClose={props.onClose}
@@ -165,7 +164,6 @@ function PersonaMemoryForgetConfirm(props: PersonaMemoryForgetConfirmProps): Rea
         className={styles["sidebar-persona-memory-confirm-actions"]}
       >
         <Button
-          type="button"
           variant="outline"
           size="secondary"
           pressed="none"
@@ -180,7 +178,6 @@ function PersonaMemoryForgetConfirm(props: PersonaMemoryForgetConfirmProps): Rea
           キャンセル
         </Button>
         <Button
-          type="button"
           variant="outline-warn"
           size="secondary"
           pressed="none"

@@ -12,7 +12,6 @@ afterEach(() => {
 })
 
 const BASE_PROPS = {
-  type: "button",
   variant: "outline",
   size: "secondary",
   pressed: "none",

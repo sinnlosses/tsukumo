@@ -75,7 +75,6 @@ export function QuestionAsk(): ReactElement | null {
         </Text>
         {showToNewest && (
           <Button
-            type="button"
             variant="outline-hover-warn"
             size="label"
             pressed="none"
@@ -92,7 +91,6 @@ export function QuestionAsk(): ReactElement | null {
         )}
         {question.showBack && (
           <Button
-            type="button"
             variant="outline-hover-warn"
             size="label"
             pressed="none"
@@ -168,7 +166,6 @@ export function QuestionAsk(): ReactElement | null {
           {FREE_TEXT_HINT}
         </Text>
         <Button
-          type="button"
           variant="solid-warn"
           size="secondary"
           pressed="none"

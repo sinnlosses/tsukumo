@@ -46,7 +46,6 @@ export function ScreenNavMenu(props: ScreenNavMenuProps): ReactElement {
   return (
     <div className={styles["screen-nav-menu"]}>
       <Button
-        type="button"
         variant="outline-surface"
         size="secondary"
         pressed="none"

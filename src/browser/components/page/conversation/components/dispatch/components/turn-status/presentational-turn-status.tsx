@@ -66,7 +66,6 @@ export function PresentationalTurnStatus(props: PresentationalTurnStatusProps): 
       </Text>
       {props.action.kind === "interrupt" ? (
         <Button
-          type="button"
           variant="outline-hover-danger"
           size="secondary"
           pressed="none"

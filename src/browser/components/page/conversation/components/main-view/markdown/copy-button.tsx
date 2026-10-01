@@ -15,7 +15,6 @@ export function CopyButton(props: { readonly text: string }): ReactElement {
 
   return (
     <Button
-      type="button"
       variant="ghost-hover-accent"
       size="label"
       pressed="none"

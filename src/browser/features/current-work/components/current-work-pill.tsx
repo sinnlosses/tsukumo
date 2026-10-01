@@ -146,7 +146,6 @@ function CurrentWorkList(props: {
       </Text>
       {work.pendingHint.kind === "question" && (
         <Button
-          type="button"
           variant="link"
           size="label"
           pressed="none"
@@ -229,7 +228,6 @@ function CurrentWorkList(props: {
           ))}
           {work.stepList.toggleAll.kind === "expandable" && (
             <Button
-              type="button"
               variant="link"
               size="label"
               pressed="none"

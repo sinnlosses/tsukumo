@@ -44,7 +44,6 @@ export function DaySwitch(props: DaySwitchProps): ReactElement {
       </Heading>
       <div className={styles["achievement-day-switch-nav"]}>
         <Button
-          type="button"
           variant="outline"
           size="secondary"
           pressed="none"
@@ -88,7 +87,6 @@ export function DaySwitch(props: DaySwitchProps): ReactElement {
           )}
         </VStack>
         <Button
-          type="button"
           variant="outline"
           size="secondary"
           pressed="none"
@@ -104,7 +102,6 @@ export function DaySwitch(props: DaySwitchProps): ReactElement {
         </Button>
         {known && !isToday && (
           <Button
-            type="button"
             variant="outline"
             size="secondary"
             pressed="none"

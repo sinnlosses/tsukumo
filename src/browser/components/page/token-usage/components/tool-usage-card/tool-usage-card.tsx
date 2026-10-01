@@ -46,7 +46,6 @@ export function ToolUsageCard(props: ToolUsageCardProps): ReactElement {
       </table>
       {more.kind === "some" && (
         <Button
-          type="button"
           variant="link"
           size="action"
           pressed="none"

@@ -111,7 +111,6 @@ function Header(props: {
       )}
       {diary.canOpenBook && (
         <Button
-          type="button"
           variant="link"
           size="label"
           pressed="none"
@@ -253,7 +252,6 @@ function Controls(props: {
     return (
       <div className={styles["achievement-review"]}>
         <Button
-          type="button"
           variant="outline-accent"
           size="secondary"
           pressed="none"
@@ -278,7 +276,6 @@ function Controls(props: {
   return (
     <div className={styles["achievement-review"]}>
       <Button
-        type="button"
         variant="outline-accent"
         size="secondary"
         pressed="none"

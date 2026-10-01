@@ -42,7 +42,7 @@ export function ImageZoom(props: ImageZoomProps): ReactElement {
   return (
     <Dialog
       open={true}
-      name={{ kind: "label", label: HEADING }}
+      ariaLabel={HEADING}
       backdrop="dim"
       placement={{ kind: "auto" }}
       onClose={props.onClose}
@@ -56,7 +56,6 @@ export function ImageZoom(props: ImageZoomProps): ReactElement {
       />
       {substitute !== undefined && <p className={styles["image-zoom-note"]}>{substitute.note}</p>}
       <Button
-        type="button"
         variant="outline"
         size="secondary"
         pressed="none"

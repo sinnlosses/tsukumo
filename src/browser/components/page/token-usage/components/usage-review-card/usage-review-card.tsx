@@ -97,7 +97,6 @@ function IdleReviewCard(props: {
       </VStack>
       <div className={styles["usage-review-actions"]}>
         <Button
-          type="button"
           variant="solid-accent"
           size="action"
           pressed="none"
@@ -118,7 +117,6 @@ function IdleReviewCard(props: {
         )}
         {review.previousReview.kind === "found" && (
           <Button
-            type="button"
             variant="link"
             size="label"
             pressed="none"
@@ -267,7 +265,6 @@ function ResultReviewCard(props: {
           >{`${review.reviewedAtLabel} · ${review.periodLabel}`}</span>
           {review.close.kind === "shown" && (
             <Button
-              type="button"
               variant="link"
               size="label"
               pressed="none"

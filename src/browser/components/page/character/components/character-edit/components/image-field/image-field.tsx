@@ -82,7 +82,6 @@ export function ImageField(props: {
           </label>
           {field.image.kind !== "absent" && (
             <Button
-              type="button"
               variant="outline-soft-danger"
               size="secondary"
               pressed="none"

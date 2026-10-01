@@ -46,7 +46,6 @@ export function SidebarSection(props: SidebarSectionProps): ReactElement {
         </Text>
         {props.action !== undefined && (
           <Button
-            type="button"
             variant="link"
             size="action"
             pressed="none"

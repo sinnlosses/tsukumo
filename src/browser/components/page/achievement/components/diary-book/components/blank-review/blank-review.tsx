@@ -13,7 +13,6 @@ export function BlankReview(props: {
   return (
     <div className={styles["diary-book-review"]}>
       <Button
-        type="button"
         variant="solid-accent"
         size="body"
         pressed="none"

@@ -118,7 +118,6 @@ export function PresentationalComposer({
       </VStack>
       <div className={styles["dispatch-toolbar"]}>
         <Button
-          type="button"
           variant="ghost"
           size="action"
           pressed="none"
@@ -133,7 +132,6 @@ export function PresentationalComposer({
           <ImageIcon size={TOOL_ICON_SIZE} strokeWidth={1.8} />
         </Button>
         <Button
-          type="button"
           variant="ghost"
           size="action"
           pressed="none"
@@ -148,7 +146,6 @@ export function PresentationalComposer({
           <Slash size={TOOL_ICON_SIZE} strokeWidth={1.8} />
         </Button>
         <Button
-          type="button"
           variant="ghost"
           size="action"
           pressed="none"
@@ -163,7 +160,6 @@ export function PresentationalComposer({
           <AtSign size={TOOL_ICON_SIZE} strokeWidth={1.8} />
         </Button>
         <Button
-          type="button"
           variant="ghost"
           size="action"
           pressed={mode === "markdown" ? "on" : "off"}

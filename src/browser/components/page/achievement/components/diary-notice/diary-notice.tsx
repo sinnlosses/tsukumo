@@ -38,7 +38,6 @@ export function DiaryNotice(): ReactElement | null {
         {`${view.dateLabel}のページができました`}
       </Text>
       <Button
-        type="button"
         variant="solid-accent"
         size="secondary"
         pressed="none"
@@ -55,7 +54,6 @@ export function DiaryNotice(): ReactElement | null {
         </Text>
       </Button>
       <Button
-        type="button"
         variant="ghost"
         size="body"
         pressed="none"

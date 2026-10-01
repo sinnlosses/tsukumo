@@ -28,7 +28,7 @@ export function DiaryBook({
   return (
     <Dialog
       open={open}
-      name={{ kind: "label", label: dialogLabel }}
+      ariaLabel={dialogLabel}
       backdrop="deep"
       placement={{ kind: "auto" }}
       onClose={onClose}

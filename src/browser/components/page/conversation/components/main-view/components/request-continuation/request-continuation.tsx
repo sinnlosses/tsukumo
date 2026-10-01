@@ -30,7 +30,6 @@ export function RequestContinuation(props: { readonly lines: readonly string[] }
       ))}
       {hiddenCount > 0 && (
         <Button
-          type="button"
           variant="text-accent"
           size="action"
           pressed="none"
