@@ -9,18 +9,16 @@
 //
 // 出せるところまでは effect ではなくレンダー中に進める。
 // `entries` が増えたときも、時計が2秒の間隔に追いついたときも、判定は純粋関数 `advanceReveal` のやり直しで済む。
-// effect が持つのはタイマー1つだけで、役目は「空いたかもしれない頃合いに描き直させる」合図を出すことだけ。
+// effect が持つのは、足止めが空く時刻に1回だけ鳴るタイマーで、役目は描き直させる合図を出すことだけ。
 
 import { useEffect, useState } from "react"
+import { isDeepEqual } from "remeda"
 
 import type { ChatLogEntry } from "../../../../../../../shared/chat/chat-log.ts"
 import { nowEpochMilliseconds } from "../../../../../../utils/clock.ts"
 
 /** キャラクターの吹き出しどうしを最低これだけ空ける（ms）。 */
 const MIN_GAP_MS = 2000
-
-/** 空くのを待っている間、描き直す頻度（ms）。実際に空いたかは描き直すたびに見直す。 */
-const POLL_INTERVAL_MS = 50
 
 export type RevealedChatLog = {
   /** いま出してよい記録（`entries` の先頭からの一部）。 */
@@ -37,45 +35,66 @@ export type RevealedChatLog = {
  * 利用者の発言・区切りは待たせない。
  */
 export function useRevealedChatLog(entries: readonly ChatLogEntry[]): RevealedChatLog {
-  const [revealedCount, setRevealedCount] = useState(entries.length)
+  // 出してよい前置き。中身が変わらないあいだは同じ配列を持ち続け、受け取る側の導出を無駄に走らせない。
+  const [shown, setShown] = useState(entries)
   // 直前に吹き出しを出した時刻。マウント時点で並んでいた記録ぶんはここに残さない（undefined のまま）。
   // そのときは根拠なく足止めせず、最初の1件は届き次第そのまま出す。
   const [lastRevealAt, setLastRevealAt] = useState<number | undefined>(undefined)
-  // 空くのを待っている間だけ描き直すための、使い捨ての合図（値そのものに意味は無い）。
-  const [, forcePoll] = useState(0)
+  // 足止めが空いて描き直させたときの時刻。
+  // 時刻の読み取りは引数の無い呼び出しで、React Compiler は依存に数えない。
+  // この値を渡して、描き直しのたびに時刻を読み直させる。
+  const [wokeAt, setWokeAt] = useState(0)
 
   // 出せるところまでをレンダー中に進める（いまの時刻を読むのはここだけ）。
   // React はレンダー中の `setState` を、コミットする前にもう一度その場でレンダーし直すので、この回のうちに反映される。
-  const advanced = advanceReveal(entries, revealedCount, lastRevealAt, nowEpochMilliseconds())
-  if (advanced.count !== revealedCount) {
-    setRevealedCount(advanced.count)
+  const advanced = advanceReveal(
+    entries,
+    shown.length,
+    lastRevealAt,
+    Math.max(wokeAt, nowEpochMilliseconds()),
+  )
+  const prefix = entries.slice(0, advanced.count)
+  if (!isDeepEqual(shown, prefix)) {
+    setShown(prefix)
   }
   if (advanced.lastRevealAt !== lastRevealAt) {
     setLastRevealAt(advanced.lastRevealAt)
   }
 
-  // 足止めしている間だけ、空いたかもしれない頃合いに描き直させる。
-  // 空いたかどうかの判定自体は上のレンダー中の計算がやり直すので、ここで呼ぶ `setState` は「もう一度描き直して」という合図でしかなく、`entries` や `revealedCount` を直接進めない。
+  // 足止めしている間だけ、空く時刻に1回だけ描き直させる。
+  // 空いたかどうかの判定自体は上のレンダー中の計算がやり直すので、ここで呼ぶ `setState` は「もう一度描き直して」という合図でしかなく、`entries` や出す件数を直接進めない。
   useEffect(() => {
-    if (advanced.count >= entries.length) {
+    if (advanced.kind === "open") {
       return undefined
     }
-    const timer = setInterval(() => {
-      forcePoll((count) => count + 1)
-    }, POLL_INTERVAL_MS)
-    return () => {
-      clearInterval(timer)
+    const { openAt } = advanced
+    let timer = setTimeout(wake, openAt - nowEpochMilliseconds())
+    // タイマーが時計より早く鳴ったときは、残りでもう一度張る。
+    function wake(): void {
+      const remaining = openAt - nowEpochMilliseconds()
+      if (remaining > 0) {
+        timer = setTimeout(wake, remaining)
+        return
+      }
+      setWokeAt(openAt)
     }
-  }, [advanced.count, entries])
+    return () => {
+      clearTimeout(timer)
+    }
+  }, [advanced])
 
-  return { entries: entries.slice(0, advanced.count), pending: advanced.count < entries.length }
+  return { entries: shown, pending: advanced.count < entries.length }
 }
 
-/** {@link advanceReveal} の結果。 */
-type Advanced = {
-  readonly count: number
-  readonly lastRevealAt: number | undefined
-}
+/** {@link advanceReveal} の結果。`gated` は次のセリフが `openAt`（エポックミリ秒）まで足止めされている。 */
+type Advanced =
+  | { readonly kind: "open"; readonly count: number; readonly lastRevealAt: number | undefined }
+  | {
+      readonly kind: "gated"
+      readonly count: number
+      readonly lastRevealAt: number
+      readonly openAt: number
+    }
 
 /**
  * `revealedCount` から先へ、いま出せるところまで進める。
@@ -97,11 +116,11 @@ function advanceReveal(
     }
     if (next.speaker === "character") {
       if (revealAt !== undefined && now - revealAt < MIN_GAP_MS) {
-        break
+        return { kind: "gated", count, lastRevealAt: revealAt, openAt: revealAt + MIN_GAP_MS }
       }
       revealAt = now
     }
     count += 1
   }
-  return { count, lastRevealAt: revealAt }
+  return { kind: "open", count, lastRevealAt: revealAt }
 }

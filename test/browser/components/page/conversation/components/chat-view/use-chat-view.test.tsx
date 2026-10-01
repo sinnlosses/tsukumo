@@ -200,6 +200,16 @@ describe("useChatView の出すタイミング（docs/architecture/screen-design
     return clock
   }
 
+  /** 偽のタイマー（`performance.now()` も偽）を入れ、`Temporal.Now.instant` を偽の `performance.now()` に写す。 */
+  function mockTickingNow(): ReturnType<typeof vi.spyOn> {
+    vi.useFakeTimers()
+    return vi
+      .spyOn(Temporal.Now, "instant")
+      .mockImplementation(() =>
+        Temporal.Instant.fromEpochMilliseconds(Math.floor(performance.now())),
+      )
+  }
+
   it("開いた時点で並んでいたセリフは、待たずに全部出る", () => {
     const clock = mockNow(0)
     try {
@@ -212,8 +222,8 @@ describe("useChatView の出すタイミング（docs/architecture/screen-design
     }
   })
 
-  it("2件のセリフが続けて届いたとき、2件目は2秒経つまでログに出ず、そのあいだ「...」が出る", async () => {
-    const clock = mockNow(0)
+  it("2件のセリフが続けて届いたとき、2件目は2秒経つまでログに出ず、そのあいだ「...」が出る", () => {
+    const clock = mockTickingNow()
     try {
       const { result } = renderUseChatView({ records: [] })
 
@@ -244,13 +254,14 @@ describe("useChatView の出すタイミング（docs/architecture/screen-design
       expect(result.current.showTyping).toBe(true)
 
       // 偽の時計を2秒より先へ進める。
-      clock.mockReturnValue(Temporal.Instant.fromEpochMilliseconds(2001))
-
-      await vi.waitFor(() => {
-        expect(speechRows(result.current.rows)).toHaveLength(2)
+      act(() => {
+        vi.advanceTimersByTime(2001)
       })
+
+      expect(speechRows(result.current.rows)).toHaveLength(2)
       expect(result.current.showTyping).toBe(false)
     } finally {
+      vi.useRealTimers()
       clock.mockRestore()
     }
   })
@@ -282,15 +293,15 @@ describe("useChatView の出すタイミング（docs/architecture/screen-design
         })
       })
 
-      // ポーリングを待たずに、すぐ2件とも出る。
+      // タイマーを待たずに、すぐ2件とも出る。
       expect(speechRows(result.current.rows)).toHaveLength(2)
     } finally {
       clock.mockRestore()
     }
   })
 
-  it("待たせているあいだ、立ち絵の表情は出した吹き出しのもの", async () => {
-    const clock = mockNow(0)
+  it("待たせているあいだ、立ち絵の表情は出した吹き出しのもの", () => {
+    const clock = mockTickingNow()
     try {
       const { result } = renderUseChatView({ records: [], character: FIXTURE_CHARACTER })
 
@@ -321,12 +332,13 @@ describe("useChatView の出すタイミング（docs/architecture/screen-design
 
       expect(result.current.expression).toBe("proud")
 
-      clock.mockReturnValue(Temporal.Instant.fromEpochMilliseconds(2001))
-
-      await vi.waitFor(() => {
-        expect(result.current.expression).toBe("curious")
+      act(() => {
+        vi.advanceTimersByTime(2001)
       })
+
+      expect(result.current.expression).toBe("curious")
     } finally {
+      vi.useRealTimers()
       clock.mockRestore()
     }
   })
