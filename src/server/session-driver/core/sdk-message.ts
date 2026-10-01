@@ -459,7 +459,7 @@ function speechEvents(
  * `sessionSummary` の「無い」（空白だけも）は undefined。
  * `conclusion` が文字列でなければ捨てる（引数の検査に落ちた呼び出しで、モデルには本体がエラーを返す）。
  */
-function reportEvents(
+export function reportEvents(
   toolUseId: string,
   input: unknown,
   expressions: readonly Expression[],

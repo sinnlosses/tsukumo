@@ -52,7 +52,7 @@
     "at": 1768438800000,
     "event": {
       "kind": "request",
-      "text": "差し戻しの見え方を確かめたい（架空の依頼）",
+      "text": "既定値のある欄を省いたレポートの見え方を確かめたい（架空の依頼）",
       "images": []
     }
   },
@@ -61,26 +61,7 @@
     "at": 1768438800000,
     "event": {
       "kind": "speech",
-      "text": "まとめてみるね。",
-      "expression": "default"
-    }
-  },
-  {
-    "received": "event",
-    "at": 1768438800000,
-    "event": {
-      "kind": "tool-finished",
-      "toolUseId": "fake-report-rejected-1",
-      "content": "レポートの記法の規約に次の違反がある。直して `report` を呼び直すこと:\n- `conclusion` が3文ある。2文以内にし、残りは `sections` へ移す\n- `markdown` の塊に塊で書ける記法（`#` / `##` の見出し・表）がある。代わりに節の `heading`・`table` の塊を使う",
-      "isError": true
-    }
-  },
-  {
-    "received": "event",
-    "at": 1768438800000,
-    "event": {
-      "kind": "speech",
-      "text": "差し戻されたから直すね。",
+      "text": "省いた欄は補われるはずだよ。",
       "expression": "default"
     }
   },
@@ -89,15 +70,28 @@
     "at": 1768438800000,
     "event": {
       "kind": "report",
-      "toolUseId": "fake-report-rejected-2",
-      "conclusion": "架空の結論: 差し戻しのあとに直したレポートだけが出る。",
+      "toolUseId": "fake-report-defaults-1",
+      "conclusion": "架空の結論: 欄を省いても描けた。",
       "sections": [
         {
-          "heading": "",
+          "heading": "架空の省いた数",
           "blocks": [
             {
-              "kind": "markdown",
-              "markdown": "## 直した見出し（架空）\n\n**直した表（作り物の値）**\n\n| 列 | 値 |\n| --- | --- |\n| a | 1 |",
+              "kind": "stats",
+              "items": [
+                {
+                  "before": "",
+                  "value": "25",
+                  "total": "",
+                  "label": "架空の通ったもの"
+                },
+                {
+                  "before": "",
+                  "value": "1",
+                  "total": "",
+                  "label": "架空の失敗"
+                }
+              ],
               "fold": ""
             }
           ]
@@ -109,9 +103,7 @@
         "kind": "none"
       },
       "closing": {
-        "kind": "speech",
-        "text": "書けたよ！",
-        "expression": "proud"
+        "kind": "none"
       },
       "unknownBlockCount": 0
     }
@@ -121,18 +113,9 @@
     "at": 1768438800000,
     "event": {
       "kind": "tool-finished",
-      "toolUseId": "fake-report-rejected-2",
+      "toolUseId": "fake-report-defaults-1",
       "content": "ok",
       "isError": false
-    }
-  },
-  {
-    "received": "event",
-    "at": 1768438800000,
-    "event": {
-      "kind": "speech",
-      "text": "書けたよ！",
-      "expression": "proud"
     }
   },
   {

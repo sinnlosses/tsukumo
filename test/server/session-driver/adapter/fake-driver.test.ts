@@ -7,7 +7,10 @@ import {
   startFakeSession,
 } from "../../../../src/server/session-driver/adapter/fake-driver.ts"
 import { BUILTIN_SESSION_DEFAULT } from "../../../../src/shared/session/session-default.ts"
-import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
+import {
+  type SessionEvent,
+  sessionEventSchema,
+} from "../../../../src/shared/session/session-event.ts"
 
 // 疑似セッションは手で書いた架空の会話（test/fixture/fake-session.json）。実物の transcript は
 const FAKE_SESSION = {
@@ -55,6 +58,7 @@ describe("startFakeSession", () => {
       scene: undefined,
       sessionDefault: BUILTIN_SESSION_DEFAULT,
       firstViewer: Promise.resolve(),
+      expressions: [],
       onEvent: sink.onEvent,
     })
     await tick()
@@ -73,6 +77,7 @@ describe("startFakeSession", () => {
       scene: undefined,
       sessionDefault: BUILTIN_SESSION_DEFAULT,
       firstViewer: Promise.resolve(),
+      expressions: [],
       onEvent: () => {},
     })
 
@@ -90,6 +95,7 @@ describe("startFakeSession", () => {
       scene: undefined,
       sessionDefault: BUILTIN_SESSION_DEFAULT,
       firstViewer: Promise.resolve(),
+      expressions: [],
       onEvent: sink.onEvent,
     })
     await tick()
@@ -114,6 +120,7 @@ describe("startFakeSession", () => {
       scene: undefined,
       sessionDefault: BUILTIN_SESSION_DEFAULT,
       firstViewer: Promise.resolve(),
+      expressions: [],
       onEvent: sink.onEvent,
     })
     await tick()
@@ -138,6 +145,7 @@ describe("startFakeSession", () => {
       scene: undefined,
       sessionDefault: BUILTIN_SESSION_DEFAULT,
       firstViewer: Promise.resolve(),
+      expressions: [],
       onEvent: sink.onEvent,
     })
     await tick()
@@ -162,6 +170,7 @@ describe("startFakeSession", () => {
       scene: "架空の場面2",
       sessionDefault: BUILTIN_SESSION_DEFAULT,
       firstViewer: viewer.promise,
+      expressions: [],
       onEvent: sink.onEvent,
     })
     await tick()
@@ -184,6 +193,7 @@ describe("startFakeSession", () => {
       scene: "架空の場面2",
       sessionDefault: BUILTIN_SESSION_DEFAULT,
       firstViewer: Promise.resolve(),
+      expressions: [],
       onEvent: sink.onEvent,
     })
     await tick()
@@ -200,6 +210,7 @@ describe("startFakeSession", () => {
       scene: "架空の場面1",
       sessionDefault: BUILTIN_SESSION_DEFAULT,
       firstViewer: Promise.resolve(),
+      expressions: [],
       onEvent: sink.onEvent,
     })
     await tick()
@@ -217,6 +228,7 @@ describe("startFakeSession", () => {
       scene: "無い場面",
       sessionDefault: BUILTIN_SESSION_DEFAULT,
       firstViewer: Promise.resolve(),
+      expressions: [],
       onEvent: sink.onEvent,
     })
     await tick()
@@ -248,6 +260,7 @@ describe("startFakeSession", () => {
       scene: undefined,
       sessionDefault: BUILTIN_SESSION_DEFAULT,
       firstViewer: Promise.resolve(),
+      expressions: [],
       onEvent: sink.onEvent,
     })
     await tick()
@@ -270,6 +283,7 @@ describe("startFakeSession", () => {
       scene: undefined,
       sessionDefault: BUILTIN_SESSION_DEFAULT,
       firstViewer: Promise.resolve(),
+      expressions: [],
       onEvent: sink.onEvent,
     })
     driver.close()
@@ -319,6 +333,7 @@ describe("startFakeSession", () => {
       scene: "架空の差し戻し",
       sessionDefault: BUILTIN_SESSION_DEFAULT,
       firstViewer: Promise.resolve(),
+      expressions: [],
       onEvent: sink.onEvent,
     })
     // この場面だけ手が afterMs: 0, 1, 2, 3 の4段で、実時間の setTimeout を3回跨ぐ。決め打ちの
@@ -334,6 +349,72 @@ describe("startFakeSession", () => {
       finished("fake-r1", true),
       report("fake-r2"),
       finished("fake-r2", false),
+    ])
+  })
+
+  it("report は本物と同じ検証と既定値の補いを通してから流れ、conclusion の無いものは流れない", async () => {
+    // 疑似セッションの JSON は実行時に検証されないので、欄を省いた形を型の外から渡す。
+    const partial = (event: object): SessionEvent => sessionEventSchema.parse(event)
+    const sink = collect()
+    const driver = startFakeSession({
+      session: {
+        sessionDigests: {},
+        opening: [],
+        turns: [
+          {
+            name: "架空の省略",
+            steps: [
+              {
+                afterMs: 0,
+                event: partial({
+                  kind: "report",
+                  toolUseId: "fake-r1",
+                  conclusion: "架空の結論",
+                  sections: [
+                    { heading: "", blocks: [{ kind: "markdown", markdown: "本文", fold: "" }] },
+                    { heading: "", blocks: [{ kind: "no-such-block" }] },
+                  ],
+                  closing: { kind: "speech", text: "書けたよ", expression: "知らない表情" },
+                }),
+              },
+              { afterMs: 1, event: partial({ kind: "report", toolUseId: "fake-r2" }) },
+              {
+                afterMs: 2,
+                event: {
+                  kind: "tool-finished",
+                  toolUseId: "fake-r1",
+                  content: "ok",
+                  isError: false,
+                },
+              },
+            ],
+          },
+        ],
+      },
+      scene: "架空の省略",
+      sessionDefault: BUILTIN_SESSION_DEFAULT,
+      firstViewer: Promise.resolve(),
+      expressions: ["default"],
+      onEvent: sink.onEvent,
+    })
+    await vi.waitFor(() => {
+      expect(sink.events.map((event) => event.kind)).toContain("tool-finished")
+    })
+    driver.close()
+
+    expect(sink.events.filter((event) => event.kind === "report")).toEqual([
+      {
+        kind: "report",
+        toolUseId: "fake-r1",
+        conclusion: "架空の結論",
+        sections: [{ heading: "", blocks: [{ kind: "markdown", markdown: "本文", fold: "" }] }],
+        favor: "",
+        checks: [],
+        task: { kind: "none" },
+        closing: { kind: "speech", text: "書けたよ", expression: "default" },
+        unknownBlockCount: 1,
+        sessionSummary: undefined,
+      },
     ])
   })
 })

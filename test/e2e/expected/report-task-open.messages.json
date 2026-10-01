@@ -61,17 +61,6 @@
     "at": 1768438800000,
     "event": {
       "kind": "report",
-      "task": {
-        "kind": "task",
-        "id": "T-002",
-        "name": "架空の札に段が1つでも `1/1` のように位置を出す",
-        "outcome": "shipped"
-      },
-      "closing": {
-        "kind": "speech",
-        "text": "送ったよ！",
-        "expression": "proud"
-      },
       "toolUseId": "fake-report-task-shipped",
       "conclusion": "次に起こす架空の画面から、段が1つでも札に `1/1` と位置が出ます。",
       "sections": [
@@ -87,7 +76,19 @@
         }
       ],
       "favor": "",
-      "checks": []
+      "checks": [],
+      "task": {
+        "kind": "task",
+        "id": "T-002",
+        "name": "架空の札に段が1つでも `1/1` のように位置を出す",
+        "outcome": "shipped"
+      },
+      "closing": {
+        "kind": "speech",
+        "text": "送ったよ！",
+        "expression": "proud"
+      },
+      "unknownBlockCount": 0
     }
   },
   {

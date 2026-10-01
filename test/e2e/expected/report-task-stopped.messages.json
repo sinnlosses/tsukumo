@@ -61,17 +61,6 @@
     "at": 1768438800000,
     "event": {
       "kind": "report",
-      "task": {
-        "kind": "task",
-        "id": "T-002",
-        "name": "架空の札に段が1つでも `1/1` のように位置を出す",
-        "outcome": "stopped"
-      },
-      "closing": {
-        "kind": "speech",
-        "text": "止めたよ。",
-        "expression": "default"
-      },
       "toolUseId": "fake-report-task-stopped",
       "conclusion": "架空の E2E が1件落ちています。直し方を決めてから続けます。",
       "sections": [],
@@ -84,7 +73,19 @@
           "command": "",
           "detail": "架空の札の位置がずれた"
         }
-      ]
+      ],
+      "task": {
+        "kind": "task",
+        "id": "T-002",
+        "name": "架空の札に段が1つでも `1/1` のように位置を出す",
+        "outcome": "stopped"
+      },
+      "closing": {
+        "kind": "speech",
+        "text": "止めたよ。",
+        "expression": "default"
+      },
+      "unknownBlockCount": 0
     }
   },
   {

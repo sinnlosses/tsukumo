@@ -102,14 +102,6 @@
     "at": 1768438800000,
     "event": {
       "kind": "report",
-      "task": {
-        "kind": "none"
-      },
-      "closing": {
-        "kind": "speech",
-        "text": "いったんまとめたよ。",
-        "expression": "default"
-      },
       "toolUseId": "fake-report-call-resume-1",
       "conclusion": "中間の結論（架空）：ここまでで分かったことをいったんまとめた。",
       "sections": [
@@ -125,7 +117,16 @@
         }
       ],
       "favor": "",
-      "checks": []
+      "checks": [],
+      "task": {
+        "kind": "none"
+      },
+      "closing": {
+        "kind": "speech",
+        "text": "いったんまとめたよ。",
+        "expression": "default"
+      },
+      "unknownBlockCount": 0
     }
   },
   {
@@ -262,14 +263,6 @@
     "at": 1768438800000,
     "event": {
       "kind": "report",
-      "task": {
-        "kind": "none"
-      },
-      "closing": {
-        "kind": "speech",
-        "text": "まとめたよ。",
-        "expression": "default"
-      },
       "toolUseId": "fake-report-call-resume-2",
       "conclusion": "最終の結論（架空）：合図をまたいでも報告は消えなかった。",
       "sections": [
@@ -285,7 +278,16 @@
         }
       ],
       "favor": "",
-      "checks": []
+      "checks": [],
+      "task": {
+        "kind": "none"
+      },
+      "closing": {
+        "kind": "speech",
+        "text": "まとめたよ。",
+        "expression": "default"
+      },
+      "unknownBlockCount": 0
     }
   },
   {

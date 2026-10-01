@@ -2342,6 +2342,63 @@
       ]
     },
     {
+      "name": "report-defaults",
+      "steps": [
+        {
+          "afterMs": 0,
+          "event": {
+            "kind": "request",
+            "text": "既定値のある欄を省いたレポートの見え方を確かめたい（架空の依頼）",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 300,
+          "event": {
+            "kind": "speech",
+            "text": "省いた欄は補われるはずだよ。",
+            "expression": "default"
+          }
+        },
+        {
+          "afterMs": 1000,
+          "event": {
+            "kind": "report",
+            "toolUseId": "fake-report-defaults-1",
+            "conclusion": "架空の結論: 欄を省いても描けた。",
+            "sections": [
+              {
+                "heading": "架空の省いた数",
+                "blocks": [
+                  {
+                    "kind": "stats",
+                    "items": [
+                      { "value": "25", "label": "架空の通ったもの" },
+                      { "value": "1", "label": "架空の失敗" }
+                    ],
+                    "fold": ""
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "afterMs": 1050,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-report-defaults-1",
+            "content": "ok",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 2300,
+          "event": { "kind": "turn-finished", "outcome": { "kind": "completed" } }
+        }
+      ]
+    },
+    {
       "name": "report-stats",
       "steps": [
         {

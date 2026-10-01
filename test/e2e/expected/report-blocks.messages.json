@@ -70,14 +70,6 @@
     "at": 1768438800000,
     "event": {
       "kind": "report",
-      "task": {
-        "kind": "none"
-      },
-      "closing": {
-        "kind": "speech",
-        "text": "書けたよ！",
-        "expression": "proud"
-      },
       "toolUseId": "fake-report-blocks-1",
       "conclusion": "架空の結論: 目盛りは設定ファイルへ移す案を採る。",
       "sections": [
@@ -147,7 +139,16 @@
         }
       ],
       "favor": "",
-      "checks": []
+      "checks": [],
+      "task": {
+        "kind": "none"
+      },
+      "closing": {
+        "kind": "speech",
+        "text": "書けたよ！",
+        "expression": "proud"
+      },
+      "unknownBlockCount": 0
     }
   },
   {

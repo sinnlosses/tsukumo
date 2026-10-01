@@ -102,6 +102,11 @@
     "at": 1768438800000,
     "event": {
       "kind": "report",
+      "toolUseId": "fake-report-bg-interim-hold-1",
+      "conclusion": "中間の結論（架空）：ここまでで分かったことをいったんまとめた。",
+      "sections": [],
+      "favor": "",
+      "checks": [],
       "task": {
         "kind": "none"
       },
@@ -110,11 +115,7 @@
         "text": "いったんまとめたよ。",
         "expression": "default"
       },
-      "toolUseId": "fake-report-bg-interim-hold-1",
-      "conclusion": "中間の結論（架空）：ここまでで分かったことをいったんまとめた。",
-      "sections": [],
-      "favor": "",
-      "checks": []
+      "unknownBlockCount": 0
     }
   },
   {
@@ -196,6 +197,11 @@
     "at": 1768438800000,
     "event": {
       "kind": "report",
+      "toolUseId": "fake-report-bg-interim-hold-2",
+      "conclusion": "いまの結論（架空）：ここまでで分かったことをまとめた。",
+      "sections": [],
+      "favor": "",
+      "checks": [],
       "task": {
         "kind": "none"
       },
@@ -204,11 +210,7 @@
         "text": "ここまでまとめたよ。",
         "expression": "default"
       },
-      "toolUseId": "fake-report-bg-interim-hold-2",
-      "conclusion": "いまの結論（架空）：ここまでで分かったことをまとめた。",
-      "sections": [],
-      "favor": "",
-      "checks": []
+      "unknownBlockCount": 0
     }
   },
   {

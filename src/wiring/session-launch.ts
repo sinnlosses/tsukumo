@@ -43,7 +43,7 @@ import {
   toSystemPromptMode,
 } from "../server/system-prompt/core/system-prompt.ts"
 import { readDismissedUsageProposalKeys } from "../server/usage-review/adapter/usage-proposal-dismissal.ts"
-import { expressionChoices } from "../shared/character-pack/expression-choice.ts"
+import { expressionChoices, expressionNames } from "../shared/character-pack/expression-choice.ts"
 import type { SessionDefault } from "../shared/session/session-default.ts"
 import type { SessionEvent } from "../shared/session/session-event.ts"
 import type { WiringContext } from "./wiring-context.ts"
@@ -136,6 +136,7 @@ function startDriver(options: {
       scene: options.scene,
       sessionDefault: seed.sessionDefault,
       firstViewer: options.firstViewer,
+      expressions: expressionNames(expressionChoices(seed.pack.definition)),
       onEvent,
     })
   }

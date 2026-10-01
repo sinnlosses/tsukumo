@@ -61,6 +61,11 @@
     "at": 1768438800000,
     "event": {
       "kind": "report",
+      "toolUseId": "fake-report-task-awaiting-answer",
+      "conclusion": "段が1つだけのときも `1/1` を出すかどうか、答えを待っています。答えが来たら受け入れに戻ります。",
+      "sections": [],
+      "favor": "段が1つだけのときも `1/1` を出すかどうかを決めてください（架空）。",
+      "checks": [],
       "task": {
         "kind": "task",
         "id": "T-002",
@@ -72,11 +77,7 @@
         "text": "答えを待ってるね。",
         "expression": "default"
       },
-      "toolUseId": "fake-report-task-awaiting-answer",
-      "conclusion": "段が1つだけのときも `1/1` を出すかどうか、答えを待っています。答えが来たら受け入れに戻ります。",
-      "sections": [],
-      "favor": "段が1つだけのときも `1/1` を出すかどうかを決めてください（架空）。",
-      "checks": []
+      "unknownBlockCount": 0
     }
   },
   {

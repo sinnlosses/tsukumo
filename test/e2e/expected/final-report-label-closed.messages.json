@@ -102,6 +102,11 @@
     "at": 1768438800000,
     "event": {
       "kind": "report",
+      "toolUseId": "fake-report-bg-interim-1",
+      "conclusion": "中間の結論（架空）：ここまでで分かったことをいったんまとめた。",
+      "sections": [],
+      "favor": "",
+      "checks": [],
       "task": {
         "kind": "none"
       },
@@ -110,11 +115,7 @@
         "text": "いったんまとめたよ。",
         "expression": "default"
       },
-      "toolUseId": "fake-report-bg-interim-1",
-      "conclusion": "中間の結論（架空）：ここまでで分かったことをいったんまとめた。",
-      "sections": [],
-      "favor": "",
-      "checks": []
+      "unknownBlockCount": 0
     }
   },
   {
@@ -196,6 +197,11 @@
     "at": 1768438800000,
     "event": {
       "kind": "report",
+      "toolUseId": "fake-report-bg-interim-2",
+      "conclusion": "いまの結論（架空）：ここまでで分かったことをまとめた。",
+      "sections": [],
+      "favor": "",
+      "checks": [],
       "task": {
         "kind": "none"
       },
@@ -204,11 +210,7 @@
         "text": "ここまでまとめたよ。",
         "expression": "default"
       },
-      "toolUseId": "fake-report-bg-interim-2",
-      "conclusion": "いまの結論（架空）：ここまでで分かったことをまとめた。",
-      "sections": [],
-      "favor": "",
-      "checks": []
+      "unknownBlockCount": 0
     }
   },
   {
@@ -285,6 +287,11 @@
     "at": 1768438800000,
     "event": {
       "kind": "report",
+      "toolUseId": "fake-report-bg-interim-3",
+      "conclusion": "最終の結論（架空）：合図をまたいでも最終レポートの札は早まらなかった。",
+      "sections": [],
+      "favor": "",
+      "checks": [],
       "task": {
         "kind": "none"
       },
@@ -293,11 +300,7 @@
         "text": "まとめたよ。",
         "expression": "default"
       },
-      "toolUseId": "fake-report-bg-interim-3",
-      "conclusion": "最終の結論（架空）：合図をまたいでも最終レポートの札は早まらなかった。",
-      "sections": [],
-      "favor": "",
-      "checks": []
+      "unknownBlockCount": 0
     }
   },
   {

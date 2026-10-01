@@ -10,6 +10,7 @@ import { fileURLToPath } from "node:url"
 import { sortBy } from "remeda"
 import { z } from "zod"
 
+import type { Expression } from "../../../shared/character-pack/expression.ts"
 import type { EffortLevel } from "../../../shared/command.ts"
 import type { ContextUsage } from "../../../shared/context-usage/context-usage.ts"
 import type { PlanUsage } from "../../../shared/plan-usage/plan-usage.ts"
@@ -27,6 +28,7 @@ import {
 } from "../../../shared/session/session-event.ts"
 import { createReportReview } from "../../report/core/report-review.ts"
 import { recordedPromptImages } from "../core/prompt-image-shelf.ts"
+import { reportEvents } from "../core/sdk-message.ts"
 import type { SessionDriver } from "../core/session-driver.ts"
 
 /** 既定の疑似セッション。tsukumo 自身の場所から解く（cwd に依存させない）。 */
@@ -164,6 +166,8 @@ export type FakeDriverOptions = {
    * 起こし直した代はもう繋がっているので、解けた約束を渡す。
    */
   readonly firstViewer: Promise<void>
+  /** キャラクター定義にある表情名。`report` の `closing` の表情を本物と同じに畳む。 */
+  readonly expressions: readonly Expression[]
   /** 内部イベントの受け取り口（本物の駆動と同じ契約）。 */
   readonly onEvent: (event: SessionEvent) => void
 }
@@ -218,7 +222,9 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
     if (event.kind === "pending-changed") {
       pending = event.pending
     }
-    for (const passed of reportReview.pass(event)) {
+    const events =
+      event.kind === "report" ? reportEvents(event.toolUseId, event, options.expressions) : [event]
+    for (const passed of events.flatMap((normalized) => reportReview.pass(normalized))) {
       // 疑似セッションが書いた `session-info` のモデル・許可モードはいまの値で置き換える（疑似セッションの持ち物ではなく、起こし方で決まる値なので）。
       options.onEvent(
         passed.kind === "session-info" ? { ...passed, model, permissionMode } : passed,

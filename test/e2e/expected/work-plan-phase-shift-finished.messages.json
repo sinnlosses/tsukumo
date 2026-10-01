@@ -253,14 +253,6 @@
     "at": 1768438800000,
     "event": {
       "kind": "report",
-      "task": {
-        "kind": "none"
-      },
-      "closing": {
-        "kind": "speech",
-        "text": "3つの段を終えたよ。",
-        "expression": "proud"
-      },
       "toolUseId": "fake-work-plan-report",
       "conclusion": "架空の結論: ID の変換が新旧どちらの形も受け付けるようになった。",
       "sections": [
@@ -296,7 +288,16 @@
           "command": "pnpm run test",
           "detail": ""
         }
-      ]
+      ],
+      "task": {
+        "kind": "none"
+      },
+      "closing": {
+        "kind": "speech",
+        "text": "3つの段を終えたよ。",
+        "expression": "proud"
+      },
+      "unknownBlockCount": 0
     }
   },
   {
