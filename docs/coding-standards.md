@@ -713,6 +713,12 @@ Compiler が最適化を諦める部品（描画中に ref を読み書きする
   この lint は静的解析で Compiler の自動メモ化を知らないので、`useCallback` を外すと
   lint が落ちる（`chat-view/hooks/use-stick-to-bottom.ts` の `stickToBottom`）
 
+oxlint の `react(preserve-manual-memoization)` が手のメモ化を拒むときは、形を曲げない
+（lint を外さず、そのまま消す）。手のメモ化を残す理由が上の2つに当たらず、作り直されても
+見た目と操作が変わらなければ Compiler に頼った形で足りる。確かめ方は、組み立てた画面
+（`pnpm run build`。Compiler が掛かっている）で、変わる要素に `dataset` で印を付け、
+操作のあとも `isConnected` で残るかを見る。印が残れば見た目と操作は変わっていない。
+
 ### 部品の中で部品を定義しない
 
 部品（`ReactElement` を返す関数）の内側で別の部品を定義しない。定義は必ず親の外
