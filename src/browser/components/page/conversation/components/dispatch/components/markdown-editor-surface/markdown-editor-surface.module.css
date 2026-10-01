@@ -1,6 +1,12 @@
 /* マークダウンエディタの面。
    箱（枠・地・余白・フォーカスの枠）は素の textarea（.dispatch-text）と揃える。
    CodeMirror が自分で差す既定の見た目（等幅・点線のフォーカス枠など）は、エディタの要素に付く class より詳しい選択子で上書きする。 */
+.markdown-editor-surface {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
 .markdown-editor {
   display: flex;
   flex: 1 1 auto;

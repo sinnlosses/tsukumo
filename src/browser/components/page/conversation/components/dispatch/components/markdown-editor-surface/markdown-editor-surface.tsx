@@ -3,13 +3,15 @@
 // 記号を隠す置き換え（`Decoration.replace`）は使わない。
 // 変換中のキャレットの前後で DOM の形が変わり、IME の確定を壊しうるため。
 //
+// 面の上に書式のボタンの行を持ち、範囲を選んで URL を貼ると選んだ字をリンクにする。
+//
 // 下書きの持ち主はこの外にある。
 // 打った結果は `onChange` で外へ返し、外で変わった下書き（補完の確定・送信後の空）は文面が違うときだけ書き写す。
 
 import { defaultKeymap, history, historyKeymap } from "@codemirror/commands"
 import { markdownLanguage } from "@codemirror/lang-markdown"
 import { HighlightStyle, syntaxHighlighting } from "@codemirror/language"
-import { Annotation, Compartment, EditorState, Prec } from "@codemirror/state"
+import { Annotation, Compartment, EditorSelection, EditorState, Prec } from "@codemirror/state"
 import { EditorView, keymap, placeholder as placeholderExtension } from "@codemirror/view"
 import { tags } from "@lezer/highlight"
 import {
@@ -27,6 +29,8 @@ import type {
   ComposerSurfaceHandlers,
   Draft,
 } from "../../domain/composer-surface.ts"
+import { FormatBar, type FormatBarProps } from "../format-bar/format-bar.tsx"
+import { linkedPaste } from "./domain/markdown-link-paste.ts"
 import styles from "./markdown-editor-surface.module.css"
 
 export type MarkdownEditorSurfaceProps = ComposerSurfaceHandlers & {
@@ -55,6 +59,20 @@ export function MarkdownEditorSurface({
   const keyDown = useEffectEvent((key: ComposerKey) => onKeyDown(key))
   const paste = useEffectEvent((event: ClipboardEvent) => {
     onPaste(event)
+  })
+  const format: FormatBarProps["onFormat"] = useEffectEvent((makeEdit) => {
+    const view = viewRef.current
+    if (view === null) {
+      return
+    }
+    const { from, to } = view.state.selection.main
+    const edit = makeEdit({ text: view.state.doc.toString(), from, to })
+    view.dispatch({
+      changes: { from: edit.from, to: edit.to, insert: edit.insert },
+      selection: EditorSelection.single(edit.anchor, edit.head),
+      userEvent: "input",
+    })
+    view.focus()
   })
   const dragOver = useEffectEvent((event: DragEvent) => {
     onDragOver(event)
@@ -110,9 +128,12 @@ export function MarkdownEditorSurface({
                   },
                 }),
               // 画像を取ったときだけ `preventDefault` されるので、そのときだけ字の挿入へ流さない。
-              paste: (event) => {
+              paste: (event, pastedView) => {
                 paste(event)
-                return event.defaultPrevented
+                if (event.defaultPrevented) {
+                  return true
+                }
+                return pasteAsLink(event, pastedView)
               },
               dragover: (event) => {
                 dragOver(event)
@@ -172,7 +193,31 @@ export function MarkdownEditorSurface({
     })
   }, [placeholder])
 
-  return <div ref={hostRef} className={styles["markdown-editor"]} />
+  return (
+    <div className={styles["markdown-editor-surface"]}>
+      <FormatBar onFormat={format} />
+      <div ref={hostRef} className={styles["markdown-editor"]} />
+    </div>
+  )
+}
+
+/** 範囲を選んで URL を貼ったときだけ、選んだ字をリンクにして貼り付けを済ませる。 */
+function pasteAsLink(event: ClipboardEvent, view: EditorView): boolean {
+  const { from, to } = view.state.selection.main
+  const pasted = linkedPaste(
+    view.state.sliceDoc(from, to),
+    event.clipboardData?.getData("text/plain") ?? "",
+  )
+  if (pasted.kind === "plain") {
+    return false
+  }
+  event.preventDefault()
+  view.dispatch({
+    changes: { from, to, insert: pasted.text },
+    selection: { anchor: from + pasted.text.length },
+    userEvent: "input.paste",
+  })
+  return true
 }
 
 /** 外の下書きを書き写した変更。`onChange` へ返すと往復になるので、印を付けて見分ける。 */

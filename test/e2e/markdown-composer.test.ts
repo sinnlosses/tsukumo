@@ -77,4 +77,83 @@ describe("入力欄のマークダウンエディタ", () => {
     expect(await room.page.locator(".cm-content").innerText()).toBe("/compact ")
     await room.settleAndMatch(ELAPSED_MS)
   })
+
+  it("書式のボタンは選んだ範囲を記号で囲み、行の書式は行頭に付ける", async () => {
+    const room = await run.open({
+      scenario: "markdown-composer-format",
+      scene: "none",
+      viewport: "wide",
+      domRoots: ["dispatch"],
+    })
+    const { page } = room
+    const editor = page.locator(".cm-content")
+    await page.getByRole("button", { name: TOGGLE_NAME }).click()
+    await editor.click()
+
+    const wraps = [
+      ["太字", "**架空**"],
+      ["斜体", "*架空*"],
+      ["取り消し線", "~~架空~~"],
+      ["コード", "`架空`"],
+    ] as const
+    for (const [name, expected] of wraps) {
+      await page.keyboard.type("架空")
+      await page.keyboard.press("Shift+Home")
+      await page.getByRole("button", { name }).click()
+      expect(await editor.innerText()).toBe(expected)
+      await page.keyboard.press("ControlOrMeta+a")
+      await page.keyboard.press("Backspace")
+    }
+
+    await page.keyboard.type("架空")
+    await page.keyboard.press("Shift+Home")
+    await page.getByRole("button", { name: "リンク" }).click()
+    expect(await editor.innerText()).toBe("[架空](url)")
+    await page.keyboard.type("https://example.test")
+    expect(await editor.innerText()).toBe("[架空](https://example.test)")
+    await page.keyboard.press("ControlOrMeta+a")
+    await page.keyboard.press("Backspace")
+
+    await page.getByRole("button", { name: "リンク" }).click()
+    await page.keyboard.type("架空")
+    expect(await editor.innerText()).toBe("[架空]()")
+    await page.keyboard.press("ControlOrMeta+a")
+    await page.keyboard.press("Backspace")
+
+    await page.keyboard.type("一")
+    await page.keyboard.press("Enter")
+    await page.keyboard.type("二")
+    await page.keyboard.press("ControlOrMeta+a")
+    await page.getByRole("button", { name: "箇条書き" }).click()
+    expect(await editor.innerText()).toBe("- 一\n- 二")
+    await page.getByRole("button", { name: "引用" }).click()
+    expect(await editor.innerText()).toBe("> - 一\n> - 二")
+    await room.settleAndMatch(ELAPSED_MS)
+  })
+
+  it("範囲を選んで URL を貼るとリンクになる", async () => {
+    const room = await run.open({
+      scenario: "markdown-composer-link-paste",
+      scene: "none",
+      viewport: "wide",
+      domRoots: ["dispatch"],
+    })
+    const { page } = room
+    const editor = page.locator(".cm-content")
+    const paste = (text: string): Promise<void> =>
+      editor.evaluate((element, pasted) => {
+        const data = new DataTransfer()
+        data.setData("text/plain", pasted)
+        element.dispatchEvent(
+          new ClipboardEvent("paste", { clipboardData: data, bubbles: true, cancelable: true }),
+        )
+      }, text)
+    await page.getByRole("button", { name: TOGGLE_NAME }).click()
+    await editor.click()
+
+    await page.keyboard.type("架空")
+    await page.keyboard.press("Shift+Home")
+    await paste("https://example.test/a")
+    expect(await editor.innerText()).toBe("[架空](https://example.test/a)")
+  })
 })
