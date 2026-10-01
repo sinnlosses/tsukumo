@@ -53,7 +53,7 @@ const BORROWED_DOM_GLOBAL_NAMES = [
   "MutationObserver",
   // `useFitDiaryPage`（日記帳の右ページの本文を測って縮める）が、ページの大きさの変化を購読するのに要る。
   "ResizeObserver",
-  // `frameOf`（筆先の居場所を行から測る）のテストが
+  // `lineBoxesOf`（筆先の居場所を行から測る）のテストが
   // 2つセットで要る。`DOMRect` はhappy-dom がレイアウトを持たないので測った値を
   // 名乗らせるのに、`NodeFilter` は文字の節点をたどる `createTreeWalker` に渡すのに使う
   // （借りないと、測る側が例外で落ちたことに気づけないまま「筆先が出ない」だけに見える）。

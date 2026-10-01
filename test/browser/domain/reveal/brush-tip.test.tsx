@@ -4,17 +4,29 @@ import { afterEach, describe, expect, it } from "vitest"
 import {
   publishBrushTip,
   restBrushTip,
-  useBrushTip,
+  subscribeBrushTip,
+  useBrushStance,
 } from "../../../../src/browser/domain/reveal/brush-tip.ts"
 
-function Probe(): string {
-  const tip = useBrushTip()
-  if (tip === undefined) {
-    return "筆先なし"
-  }
-  // やり取りの番号も読む（筆先はそれを出したやり取りのものでしかない。`BrushTip`）。
-  const place = `${String(tip.turnId)}:${String(tip.x)},${String(tip.top)},${String(tip.bottom)}`
-  return tip.phase === "writing" ? `${place},${tip.stroke}` : `${place},残っている`
+/** いまの筆先を文字にする。受け取りは呼んだその場で1回届くので、すぐ外す。 */
+function readTip(): string {
+  let text = "筆先なし"
+  const stop = subscribeBrushTip((tip) => {
+    if (tip === undefined) {
+      return
+    }
+    // やり取りの番号も読む（筆先はそれを出したやり取りのものでしかない。`BrushTip`）。
+    const place = `${String(tip.turnId)}:${String(tip.x)},${String(tip.top)},${String(tip.bottom)}`
+    text = tip.phase === "writing" ? `${place},${tip.stroke}` : `${place},残っている`
+  })
+  stop()
+  return text
+}
+
+/** 位置を除いた筆先（どのやり取りのどの画か）を描く。 */
+function StanceProbe(): string {
+  const stance = useBrushStance()
+  return stance === undefined ? "筆先なし" : `${String(stance.turnId)}:${stance.motion}`
 }
 
 afterEach(() => {
@@ -24,23 +36,53 @@ afterEach(() => {
 
 describe("筆先（BrushTip）", () => {
   it("まだ一度も書かれていなければ undefined", () => {
-    render(<Probe />)
-
-    expect(screen.getByText("筆先なし")).toBeDefined()
+    expect(readTip()).toBe("筆先なし")
   })
 
   it("配られた筆先が読める", () => {
-    render(<Probe />)
+    publishBrushTip({ turnId: 3, phase: "writing", x: 120, top: 40, bottom: 60, stroke: "sweep" })
 
-    act(() => {
-      publishBrushTip({ turnId: 3, phase: "writing", x: 120, top: 40, bottom: 60, stroke: "sweep" })
-    })
-
-    expect(screen.getByText("3:120,40,60,sweep")).toBeDefined()
+    expect(readTip()).toBe("3:120,40,60,sweep")
   })
 
   it("書き終わると、最後に書いた位置に残る（消えない）", () => {
-    render(<Probe />)
+    publishBrushTip({ turnId: 3, phase: "writing", x: 120, top: 40, bottom: 60, stroke: "return" })
+
+    restBrushTip()
+
+    expect(readTip()).toBe("3:120,40,60,残っている")
+  })
+
+  it("残っている筆先をもう一度残しても、そのまま", () => {
+    publishBrushTip({ turnId: 3, phase: "writing", x: 120, top: 40, bottom: 60, stroke: "sweep" })
+
+    restBrushTip()
+    restBrushTip()
+
+    expect(readTip()).toBe("3:120,40,60,残っている")
+  })
+
+  it("一度も書けなかった演出は、前に残した筆先を消さない", () => {
+    publishBrushTip({ turnId: 3, phase: "resting", x: 120, top: 40, bottom: 60 })
+
+    restBrushTip()
+
+    expect(readTip()).toBe("3:120,40,60,残っている")
+  })
+
+  it("次に書き始めると、そちらへ移る", () => {
+    publishBrushTip({ turnId: 3, phase: "resting", x: 120, top: 40, bottom: 60 })
+
+    publishBrushTip({ turnId: 3, phase: "writing", x: 8, top: 300, bottom: 320, stroke: "sweep" })
+
+    expect(readTip()).toBe("3:8,300,320,sweep")
+  })
+})
+
+describe("useBrushStance（位置を除いた筆先）", () => {
+  it("どのやり取りのどの画かが読め、書き終わると resting になる", () => {
+    render(<StanceProbe />)
+
     act(() => {
       publishBrushTip({
         turnId: 3,
@@ -51,53 +93,11 @@ describe("筆先（BrushTip）", () => {
         stroke: "return",
       })
     })
+    expect(screen.getByText("3:return")).toBeDefined()
 
     act(() => {
       restBrushTip()
     })
-
-    expect(screen.getByText("3:120,40,60,残っている")).toBeDefined()
-  })
-
-  it("残っている筆先をもう一度残しても、そのまま", () => {
-    render(<Probe />)
-    act(() => {
-      publishBrushTip({ turnId: 3, phase: "writing", x: 120, top: 40, bottom: 60, stroke: "sweep" })
-    })
-
-    act(() => {
-      restBrushTip()
-    })
-    act(() => {
-      restBrushTip()
-    })
-
-    expect(screen.getByText("3:120,40,60,残っている")).toBeDefined()
-  })
-
-  it("一度も書けなかった演出は、前に残した筆先を消さない", () => {
-    render(<Probe />)
-    act(() => {
-      publishBrushTip({ turnId: 3, phase: "resting", x: 120, top: 40, bottom: 60 })
-    })
-
-    act(() => {
-      restBrushTip()
-    })
-
-    expect(screen.getByText("3:120,40,60,残っている")).toBeDefined()
-  })
-
-  it("次に書き始めると、そちらへ移る", () => {
-    render(<Probe />)
-    act(() => {
-      publishBrushTip({ turnId: 3, phase: "resting", x: 120, top: 40, bottom: 60 })
-    })
-
-    act(() => {
-      publishBrushTip({ turnId: 3, phase: "writing", x: 8, top: 300, bottom: 320, stroke: "sweep" })
-    })
-
-    expect(screen.getByText("3:8,300,320,sweep")).toBeDefined()
+    expect(screen.getByText("3:resting")).toBeDefined()
   })
 })

@@ -57,7 +57,7 @@
 .mini-portrait-returning {
   transition-duration: var(--mini-portrait-return-duration);
 }
-/* 書き終わって本文の右下の隅へ寄るときの置き方と間合い（`followStyle` が、残っているあいだは `translateY(-100%)` を外し、横の座標も渡さなくなる）。
+/* 書き終わって本文の右下の隅へ寄るときの置き方と間合い（`followTransform` が、残っているあいだは `translateY(-100%)` を外し、横の座標も渡さなくなる）。
 
    横は筆先ではなく本文の右端に付ける（`left` をやめて `right`）。筆が止まるのは最後の行が終わったところなので、そこに立たせると最後の行が短いときに本文の途中の行へ重なる。
    縦は最後の行の下端で、そこには床（`.mini-portrait-floor`）が敷いてあるので、右端と組にすると止まったあとはどの行にも重ならない。

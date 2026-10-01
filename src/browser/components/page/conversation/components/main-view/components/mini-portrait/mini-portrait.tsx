@@ -12,17 +12,23 @@
 //
 // 残るのは、その筆先を出したやり取りが出ているあいだだけ:
 //
-// - 次の依頼を出すと本文が入れ替わるのに座標はそのままなので、`tip.turnId` と出ているやり取りが違えば引っ込む（キャラビューの立ち絵は残る）
-// - 行の上へ立ったままだとその上の行の文字を隠すので、残っているあいだは最後の行の下へ降りる（`followStyle`）。
+// - 次の依頼を出すと本文が入れ替わるのに座標はそのままなので、筆先の `turnId` と出ているやり取りが違えば引っ込む（キャラビューの立ち絵は残る）
+// - 行の上へ立ったままだとその上の行の文字を隠すので、残っているあいだは最後の行の下へ降りる（`followTransform`）。
 //   降りた先の床は `MiniPortrait` が本文の末尾に敷く
 //
 // 素材は `CharacterInfo.mini`（`character.json` の任意の `mini`。無いパックは `portraits.default` に落ちたものが届く）。
 
 import clsx from "clsx"
-import type { CSSProperties, ReactElement } from "react"
+import type { ReactElement } from "react"
 
 import { resolveOutfit } from "../../../../../../../../shared/character-pack/expression.ts"
-import { useBrushTip, type BrushTip } from "../../../../../../../domain/reveal/brush-tip.ts"
+import {
+  subscribeBrushTip,
+  useBrushStance,
+  type BrushMotion,
+  type BrushStance,
+  type BrushTip,
+} from "../../../../../../../domain/reveal/brush-tip.ts"
 import { useSession } from "../../../../../../../stores/session.ts"
 import { Portrait } from "../../../../../../domain/portrait.tsx"
 import styles from "./mini-portrait.module.css"
@@ -42,14 +48,14 @@ export type MiniPortraitProps = {
 }
 
 export function MiniPortrait(props: MiniPortraitProps): ReactElement | null {
-  const tip = useBrushTip()
+  const stance = useBrushStance()
   const character = useSession((session) => session.state.character)
   const model = useSession((session) => session.state.model)
   const url = character?.mini
 
   if (
-    tip === undefined ||
-    tip.turnId !== props.shownTurnId ||
+    stance === undefined ||
+    stance.turnId !== props.shownTurnId ||
     character === undefined ||
     url === undefined
   ) {
@@ -63,7 +69,8 @@ export function MiniPortrait(props: MiniPortraitProps): ReactElement | null {
     // これが無いと足元が器の下端をはみ出して、転がさないと見えない（立ち絵は `position: absolute` なので、場所を空けられるのは流れの中にいるこちらだけ）。
     // 中の立ち絵の置き先はこの床ではなく本文の入れ物のまま（床は position を持たない）。
     <div className={styles["mini-portrait-floor"]}>
-      <div className={followClassName(tip)} style={followStyle(tip)}>
+      {/* 位置は描画を通さず、筆先を購読して直に書く（描き直すのは出入りと間合いの class が変わるときだけ）。 */}
+      <div className={followClassName(stance)} ref={followBrushTip}>
         <Portrait
           url={url}
           accent={character.outfitAccents[outfit]}
@@ -86,16 +93,28 @@ export function MiniPortrait(props: MiniPortraitProps): ReactElement | null {
  * 書き終わりに行の下へ降りる動き（`resting`）にも、そのための間合いを1つ持たせる。
  * 降りるのは立ち絵の高さぶんの縦移動なので、横画の間合い（0.05s）では落ちたように見える。
  */
-function followClassName(tip: BrushTip): string {
-  return clsx(styles["mini-portrait"], motionClassName(tip))
+function followClassName(stance: BrushStance): string {
+  return clsx(styles["mini-portrait"], motionClassName(stance.motion))
 }
 
 /** 追従の間合いを差し替える印。横画のあいだは素のままなので、そのときだけ undefined。 */
-function motionClassName(tip: BrushTip): string | undefined {
-  if (tip.phase === "resting") {
+function motionClassName(motion: BrushMotion): string | undefined {
+  if (motion === "resting") {
     return styles["mini-portrait-resting"]
   }
-  return tip.stroke === "return" ? styles["mini-portrait-returning"] : undefined
+  return motion === "return" ? styles["mini-portrait-returning"] : undefined
+}
+
+/**
+ * 立ち絵の入れ物に付ける ref。筆先が変わるたびに置き方（{@link followTransform}）を書き、外れたら受け取りをやめる。
+ * 間合いの class の切り替えは描き直しで、位置はここで入るが、どちらも同じ筆先の配りから同じフレームのうちに入る。
+ */
+function followBrushTip(element: HTMLDivElement): () => void {
+  return subscribeBrushTip((tip) => {
+    if (tip !== undefined) {
+      element.style.transform = followTransform(tip)
+    }
+  })
 }
 
 /**
@@ -109,13 +128,13 @@ function motionClassName(tip: BrushTip): string | undefined {
  * CSS の遷移（`transition`）が毎フレーム引き直されるので、横画では少し遅れてばねで寄り、戻りでは（間合いが 0 なので）そのフレームの筆先にそのまま乗る。
  * 行が変わるときも縦横が同時に動くので、飛ばずに滑る。
  */
-function followStyle(tip: BrushTip): CSSProperties {
+function followTransform(tip: BrushTip): string {
   // 止まっているあいだは横の座標を使わない（右端に付けるのは CSS の側）。
   // 縦だけを最後の行の下端へ置き、そこに敷いた床の上に立たせる。
   if (tip.phase === "resting") {
-    return { transform: `translate3d(0, ${px(tip.bottom)}, 0)` }
+    return `translate3d(0, ${px(tip.bottom)}, 0)`
   }
-  return { transform: `translate3d(${px(tip.x)}, ${px(tip.bottom)}, 0) translateY(-100%)` }
+  return `translate3d(${px(tip.x)}, ${px(tip.bottom)}, 0) translateY(-100%)`
 }
 
 /** 読み上げ上もキャラビューの立ち絵と見分けが付くようにする（同じ姿がもう1体居るため）。 */

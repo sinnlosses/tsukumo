@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, type RenderResult } from "@testing-library/react"
+import { cleanup, fireEvent, render, type RenderResult } from "@testing-library/react"
 import type { ReactElement } from "react"
 import { afterEach, describe, expect, it } from "vitest"
 
@@ -6,7 +6,7 @@ import { saveRevealSpeed } from "../../../../src/browser/domain/reveal-speed.ts"
 import {
   BRUSH_ORIGIN_ATTRIBUTE,
   publishBrushTip,
-  useBrushTip,
+  subscribeBrushTip,
 } from "../../../../src/browser/domain/reveal/brush-tip.ts"
 import { useReportReveal } from "../../../../src/browser/domain/reveal/use-report-reveal.ts"
 
@@ -60,15 +60,20 @@ function figure(): HTMLElement {
   return node
 }
 
-/** 残った筆先の居場所。読めるようにするためだけの表示で、書いている最中は区別だけ見る。 */
-function BrushTipReadout(): string {
-  const tip = useBrushTip()
-  if (tip === undefined) {
-    return "筆先なし"
-  }
-  return tip.phase === "resting"
-    ? `残っている:${String(tip.turnId)}:${String(tip.x)},${String(tip.top)},${String(tip.bottom)}`
-    : "書いている"
+/** 残った筆先の居場所。書いている最中は区別だけ見る（受け取りは呼んだその場で1回届くので、すぐ外す）。 */
+function brushTipText(): string {
+  let text = "筆先なし"
+  const stop = subscribeBrushTip((tip) => {
+    if (tip === undefined) {
+      return
+    }
+    text =
+      tip.phase === "resting"
+        ? `残っている:${String(tip.turnId)}:${String(tip.x)},${String(tip.top)},${String(tip.bottom)}`
+        : "書いている"
+  })
+  stop()
+  return text
 }
 
 /**
@@ -173,7 +178,6 @@ describe("useReportReveal（見せる範囲を進める配線）", () => {
       render(
         <div data-brush-origin="">
           <LinesProbe />
-          <BrushTipReadout />
         </div>,
       )
 
@@ -182,7 +186,7 @@ describe("useReportReveal（見せる範囲を進める配線）", () => {
       // 最後の行は 220〜260 の右 150。原点が 50 から始まるので、入れ物基準で 150,170,210。
       // 打ち切った時点では筆は1フレームも進んでいないので、止まった場所に残すなら何も出ない。
       // 帯の右端に残すなら、最後の行より長い行に引かれて x が 400 になる。
-      expect(screen.getByText("残っている:4:150,170,210")).toBeDefined()
+      expect(brushTipText()).toBe("残っている:4:150,170,210")
     } finally {
       restore()
     }
@@ -225,10 +229,9 @@ describe("useReportReveal（書き上げる演出の速さが「切る」のと�
     render(
       <div data-brush-origin="">
         <Probe reveal={true} />
-        <BrushTipReadout />
       </div>,
     )
 
-    expect(screen.getByText("筆先なし")).toBeDefined()
+    expect(brushTipText()).toBe("筆先なし")
   })
 })

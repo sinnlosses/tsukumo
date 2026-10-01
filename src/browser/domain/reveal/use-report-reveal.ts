@@ -8,8 +8,9 @@
 //
 // ここはフレームを回すだけ。
 //
-// 器を送るのはビューポート座標のままだが、配る筆先は本文の入れ物（`data-brush-origin`）の座標へ写す。
+// 座標はすべて本文の入れ物（`data-brush-origin`。無ければ根）の左上を原点にする。
 // 書き上げたあとも筆先はその場に残るので、ビューポート基準のままだと転がすたびに関係ない場所へずれる。
+// 器を送っても動かない原点なので、塊の box は書き始めるときに1回測って持ち回り、測り直すのは box が変わる出来事（`watchLayoutChange`）のあとだけにする。
 //
 // 打ち切る口は2つ（クリック・キー入力）。ホイールと指では打ち切らない。
 // 先を読もうとして転がすのは「もう要らない」ではなく「見ていたい」の側なので、打ち切ると筆を追うたびに筆が消える。
@@ -21,10 +22,11 @@
 import { useLayoutEffect, useRef, useState, type RefObject } from "react"
 
 import { loadRevealSpeed, revealTimingOf, type RevealTiming } from "../reveal-speed.ts"
-import { brushStep, toBands, type BrushStep } from "./band.ts"
+import { brushStep } from "./band.ts"
 import { brushScroller } from "./brush-scroll.ts"
 import { BRUSH_ORIGIN_ATTRIBUTE, publishBrushTip, restBrushTip } from "./brush-tip.ts"
-import { endLineOf, frameOf, lineBoxesOf, placeIn, shapesOf } from "./measure.ts"
+import { watchLayoutChange } from "./layout-change.ts"
+import { endLineOf, layoutOf, type BlockLayout } from "./measure.ts"
 import { applyStep, hideBlock, showBlock } from "./paint.ts"
 import { blockProgress, planReveal, type RevealBlock } from "./plan.ts"
 import { prefersReducedMotion } from "./reduced-motion.ts"
@@ -94,15 +96,26 @@ function startReveal(root: HTMLElement, turnId: number, timing: RevealTiming): (
   }
   root.setAttribute(REVEALING_ATTRIBUTE, "yes")
 
-  const scroller = brushScroller(root)
   // 筆先の座標の原点。印が見つからなければ筆先を配らない（ミニ立ち絵は出ないが、本文を書き上げる演出そのものは進む）。
   const origin = root.closest(`[${BRUSH_ORIGIN_ATTRIBUTE}]`)
+  const base = origin ?? root
+  const scroller = brushScroller(root, base)
   // 書き終わりに筆先を残す先（`finish()`）。塊は時間の順に並んでいるので、末尾が最後に書く塊。
   const lastBlock = blocks.at(-1)
   const startedAt = performance.now()
   let frame = 0
   let shown = 0
   let finished = false
+  // 測れなかった塊（まだレイアウトされていない）もそのまま持ち回る。寸法が付けば見張りが知らせる。
+  let measured: { readonly index: number; readonly layout: BlockLayout | undefined } | undefined =
+    undefined
+  let stale = false
+  const layoutWatch = watchLayoutChange(
+    layoutWatchTargets(blocks, root, base, scroller.element),
+    () => {
+      stale = true
+    },
+  )
 
   const finish = (): void => {
     if (finished) {
@@ -112,7 +125,7 @@ function startReveal(root: HTMLElement, turnId: number, timing: RevealTiming): (
     cancelAnimationFrame(frame)
     // 残すのは「本文の末尾」で、打ち切られたときに筆が止まっていた場所ではない。
     // `finish()` は残りを全部出すので、途中で止まった場所に残すと「まだ書いている途中」に見える。
-    const end = lastBlock === undefined ? undefined : endLineOf(lastBlock)
+    const end = lastBlock === undefined ? undefined : endLineOf(lastBlock, base)
     for (const block of blocks) {
       showBlock(block)
     }
@@ -120,11 +133,11 @@ function startReveal(root: HTMLElement, turnId: number, timing: RevealTiming): (
     // 書き終わっても筆先は消さない（飛ばされたときも同じ）。次に書き始めたときだけ移る。
     // 末尾が測れなかったときは、最後に配った位置のまま残す。
     if (origin !== null && end !== undefined) {
-      const place = { x: end.right, top: end.top, bottom: end.bottom }
-      publishBrushTip({ ...placeIn(origin, place), turnId, phase: "resting" })
+      publishBrushTip({ x: end.right, top: end.top, bottom: end.bottom, turnId, phase: "resting" })
     } else {
       restBrushTip()
     }
+    layoutWatch.stop()
     scroller.stop()
     for (const name of SKIP_EVENT_NAMES) {
       window.removeEventListener(name, finish, SKIP_LISTENER_OPTIONS)
@@ -149,18 +162,35 @@ function startReveal(root: HTMLElement, turnId: number, timing: RevealTiming): (
       finish()
       return
     }
-    const step = advanceBlock(current, blockProgress(current, elapsed))
+    if (measured === undefined || measured.index !== shown || stale) {
+      measured = { index: shown, layout: layoutOf(current, base) }
+      scroller.remeasure()
+      stale = false
+      layoutWatch.watch(measured.layout?.drawn ?? [])
+    }
+    const layout = measured.layout
+    // まだレイアウトされていない塊は隠したまま、寸法が付いたところで追いつく。
+    const step =
+      layout === undefined ? undefined : brushStep(layout.bands, blockProgress(current, elapsed))
+    // 読む（`scrollTop`）のを書く（`clip-path`・`opacity`）より先にする。逆だと書いたばかりの style をその場で計算させる。
     scroller.follow(
       step === undefined
         ? undefined
         : { tipBottom: step.tipBottom, tipHeight: MINI_PORTRAIT_HEIGHT_ESTIMATE_PX },
     )
+    if (layout !== undefined && step !== undefined) {
+      for (const shape of layout.shapes) {
+        applyStep(shape, step)
+      }
+    }
     if (origin !== null) {
       publishBrushTip(
         step === undefined
           ? undefined
           : {
-              ...placeIn(origin, { x: step.tipX, top: step.tipTop, bottom: step.tipBottom }),
+              x: step.tipX,
+              top: step.tipTop,
+              bottom: step.tipBottom,
               turnId,
               phase: "writing",
               stroke: step.stroke,
@@ -178,19 +208,31 @@ function startReveal(root: HTMLElement, turnId: number, timing: RevealTiming): (
   return finish
 }
 
-/** 塊1つを `progress`（0〜1）まで出し、そのときの筆の居場所を返す（ビューポート座標。配るときに {@link placeIn} で原点を移す）。 */
-function advanceBlock(block: RevealBlock, progress: number): BrushStep | undefined {
-  const shapes = shapesOf(block)
-  const frame = frameOf(shapes)
-  if (frame === undefined) {
-    // まだレイアウトされていない。隠したまま次のフレームで追いつく。
-    return undefined
-  }
+/**
+ * 測った box が古くなったと知るために見張る要素。
+ *
+ * - 塊の要素: 画像や図が読み込まれて寸法が変わる・外されて寸法が 0 になる
+ * - 根から原点までの祖先: 本文より上にあるものが伸びると、本文は寸法を変えずに位置だけずれるが、そのとき祖先のどれかの寸法が変わる
+ * - 器: 領域の高さだけが変わったとき、本文の寸法にも原点の寸法にも出ない
+ */
+function layoutWatchTargets(
+  blocks: readonly RevealBlock[],
+  root: Element,
+  base: Element,
+  scroller: Element,
+): readonly Element[] {
+  return [
+    ...blocks.flatMap((block) => block.members.map((member) => member.element)),
+    ...ancestorsUpTo(root, base),
+    scroller,
+  ]
+}
 
-  const step = brushStep(toBands(shapes.flatMap(lineBoxesOf), frame), progress)
-  for (const shape of shapes) {
-    applyStep(shape, step)
+/** `element` から `base` までの祖先（両端を含む）。`base` が祖先に無ければ `element` から根まで。 */
+function ancestorsUpTo(element: Element, base: Element): readonly Element[] {
+  const parent = element.parentElement
+  if (element === base || parent === null) {
+    return [element]
   }
-
-  return step
+  return [element, ...ancestorsUpTo(parent, base)]
 }

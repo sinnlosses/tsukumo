@@ -13,6 +13,7 @@
 // 演出は同時に1つしか走らないので、1つだけ持つ。
 
 import { create } from "zustand"
+import { useShallow } from "zustand/react/shallow"
 
 /**
  * 筆先の座標の原点になる入れ物の印（メインビューが `.main-turns` に付ける）。
@@ -81,9 +82,32 @@ export function restBrushTip(): void {
   })
 }
 
-/** いまの筆先（まだ一度も書かれていなければ undefined）。 */
-export function useBrushTip(): BrushTip | undefined {
-  return useBrushTipStore((state) => state.tip)
+/** 追従の間合いを決める画の種別。書き終わって残っているあいだは `resting`。 */
+export type BrushMotion = BrushStroke | "resting"
+
+/** 筆先のうち、位置を除いたもの。値が変わるのは画が切り替わるときと書き終わりだけ。 */
+export type BrushStance = {
+  readonly turnId: number
+  readonly motion: BrushMotion
+}
+
+/**
+ * いまの筆先の、どのやり取りのどの画か（まだ一度も書かれていなければ undefined）。
+ * 位置は読まない。位置まで購読すると、筆が進むフレームごとに描き直しになる（位置は {@link subscribeBrushTip}）。
+ */
+export function useBrushStance(): BrushStance | undefined {
+  return useBrushTipStore(useShallow((state) => stanceOf(state.tip)))
+}
+
+/**
+ * 筆先を、React の描画を通さずに受け取る。呼んだその場でいまの筆先を1回渡し、以後は変わるたびに渡す。
+ * 戻り値を呼ぶと受け取りをやめる。
+ */
+export function subscribeBrushTip(listener: (tip: BrushTip | undefined) => void): () => void {
+  listener(useBrushTipStore.getState().tip)
+  return useBrushTipStore.subscribe((state) => {
+    listener(state.tip)
+  })
 }
 
 type BrushTipState = {
@@ -91,3 +115,10 @@ type BrushTipState = {
 }
 
 const useBrushTipStore = create<BrushTipState>()(() => ({ tip: undefined }))
+
+function stanceOf(tip: BrushTip | undefined): BrushStance | undefined {
+  if (tip === undefined) {
+    return undefined
+  }
+  return { turnId: tip.turnId, motion: tip.phase === "resting" ? "resting" : tip.stroke }
+}
