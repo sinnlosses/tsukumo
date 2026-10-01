@@ -31,7 +31,7 @@ import { readPlanUsage } from "./sdk-plan-usage.ts"
 import { buildQuerySeedOptions, stopHooks } from "./sdk-query-seed.ts"
 import {
   createSessionTitleWriter,
-  readSessionDigest,
+  createSessionDigestReader,
   scheduleMarkSession,
   type SessionTitleWriter,
 } from "./sdk-session.ts"
@@ -66,6 +66,7 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
 
   const reportGate = createReportGate()
   const reportReview = createReportReview()
+  const readSessionDigest = createSessionDigestReader(options.expressions)
   const usageReview = createUsageReviewIntake(options.dismissedUsageProposalKeys, options.onEvent)
   const titleIntake = createSessionTitleIntake()
   const titleWriter = createSessionTitleWriter()
@@ -123,7 +124,7 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
     pending: () => queue.list(),
     readContextUsage: () => readContextUsage(session),
     readPlanUsage: () => readPlanUsage(session),
-    readSessionDigest: (sessionId) => readSessionDigest(sessionId, options.expressions),
+    readSessionDigest,
     setModel: async (model) => {
       await session.setModel(model)
       // サイドバーの `<select>` は `state.model` をそのまま出すので、ここで確認の合図を出さないと次のターンの `init` まで古い値に居座る。

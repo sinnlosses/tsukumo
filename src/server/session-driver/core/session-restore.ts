@@ -74,7 +74,7 @@ function appendWithTurnBoundary(turns: RestoredTurns, event: SessionEvent): Rest
   }
 }
 
-function restoredMessageEvents(
+export function restoredMessageEvents(
   message: unknown,
   expressions: readonly Expression[],
 ): readonly SessionEvent[] {

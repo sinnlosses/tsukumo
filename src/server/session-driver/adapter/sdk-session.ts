@@ -21,6 +21,7 @@ import {
   UNAVAILABLE_SESSION_DIGEST,
 } from "../../../shared/session/session-digest.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
+import { createSessionDigestCache, type TranscriptStamp } from "../core/session-digest-cache.ts"
 import { toSessionDigest } from "../core/session-digest.ts"
 import type { SessionDriverOptions } from "../core/session-driver.ts"
 import { toRestoredEvents } from "../core/session-restore.ts"
@@ -78,21 +79,49 @@ export async function readRestoredEvents(
 }
 
 /**
- * セッション1件の中身（依頼の数・要約・最後のセリフ）を transcript から読む。
+ * セッション1件の中身（依頼の数・要約・最後のセリフ）を transcript から読む口を1つ作る。駆動1つに1つ。
  * `dir` を渡さない理由と `includeSystemMessages` を入れる理由は {@link readRestoredEvents}。
  * 読めなければ「読めない」（切り替え画面の右が空になるだけ）。
+ *
+ * transcript の更新時刻と大きさが前に読んだときと同じなら、読み直さずに前の中身を返す。
+ * 印は読む前に取るので、読んでいる間に伸びた分は次の呼び出しで読み直される。
  */
-export async function readSessionDigest(
-  sessionId: string,
+export function createSessionDigestReader(
   expressions: readonly ExpressionChoice[],
-): Promise<SessionDigest> {
+): (sessionId: string) => Promise<SessionDigest> {
+  const cache = createSessionDigestCache()
+
+  return async (sessionId) => {
+    try {
+      const stamp = await readTranscriptStamp(sessionId)
+      const cached = stamp === undefined ? undefined : cache.get(sessionId, stamp)
+      if (cached !== undefined) {
+        return cached
+      }
+
+      const digest = toSessionDigest(
+        await getSessionMessages(sessionId, { includeSystemMessages: true }),
+        toExpressionNames(expressions),
+      )
+      if (stamp !== undefined) {
+        cache.set(sessionId, stamp, digest)
+      }
+      return digest
+    } catch {
+      return UNAVAILABLE_SESSION_DIGEST
+    }
+  }
+}
+
+/** transcript の印。大きさの分からない保存先・印が読めなかったときは undefined（毎回読む）。 */
+async function readTranscriptStamp(sessionId: string): Promise<TranscriptStamp | undefined> {
   try {
-    return toSessionDigest(
-      await getSessionMessages(sessionId, { includeSystemMessages: true }),
-      toExpressionNames(expressions),
-    )
+    const info = await getSessionInfo(sessionId)
+    return info?.fileSize === undefined
+      ? undefined
+      : { lastModified: info.lastModified, fileSize: info.fileSize }
   } catch {
-    return UNAVAILABLE_SESSION_DIGEST
+    return undefined
   }
 }
 

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import { toSessionDigest } from "../../../../src/server/session-driver/core/session-digest.ts"
+import { toRestoredEvents } from "../../../../src/server/session-driver/core/session-restore.ts"
 import type { Expression } from "../../../../src/shared/character-pack/expression.ts"
 import { MAX_SESSION_SUMMARY_LENGTH } from "../../../../src/shared/session/session-digest.ts"
 import {
@@ -101,5 +102,94 @@ describe("toSessionDigest", () => {
 
   it("列でなければ読めなかったものとして扱う", () => {
     expect(toSessionDigest(undefined, EXPRESSIONS)).toEqual({ kind: "unavailable" })
+  })
+})
+
+// 復元（`toRestoredEvents`）の結果を数える従来の組み方。1パスの畳み方と食い違わないことを守る。
+function digestViaRestoredEvents(messages: readonly unknown[]): unknown {
+  const events = toRestoredEvents(messages, EXPRESSIONS)
+  const summary = events
+    .flatMap((event) =>
+      event.kind === "report" && event.sessionSummary !== undefined ? [event.sessionSummary] : [],
+    )
+    .at(-1)
+  return {
+    kind: "known",
+    requestCount: events.filter((event) => event.kind === "request").length,
+    summary:
+      summary === undefined
+        ? undefined
+        : summary.trim().slice(0, MAX_SESSION_SUMMARY_LENGTH) +
+          (summary.trim().length > MAX_SESSION_SUMMARY_LENGTH ? "…" : ""),
+    lastLine: events.flatMap((event) => (event.kind === "speech" ? [event.text] : [])).at(-1),
+  }
+}
+
+function speakCall(id: string, text: string): unknown {
+  return assistantMessage([
+    {
+      type: "tool_use",
+      id,
+      name: SPEAK_TOOL_FULL_NAME,
+      input: { text, expression: "default" },
+    },
+  ])
+}
+
+const withClosing = (n: string): Readonly<Record<string, unknown>> => ({
+  conclusion: `架空の結論${n}`,
+  sessionSummary: `架空の要約${n}`,
+  closing: { text: `架空の締め${n}`, expression: "proud" },
+})
+
+describe("toSessionDigest と toRestoredEvents の一致", () => {
+  const cases: Readonly<Record<string, readonly unknown[]>> = {
+    "通った report と差し戻された report が混ざる": [
+      userMessage("架空の依頼1"),
+      reportCall("r-1", withClosing("1")),
+      toolResult("r-1", false),
+      userMessage("架空の依頼2"),
+      reportCall("r-2", withClosing("2")),
+      toolResult("r-2", true),
+    ],
+    "結果の無い report で終わる": [userMessage("架空の依頼"), reportCall("r-1", withClosing("1"))],
+    "結果待ちの report のまま次の依頼が来る": [
+      userMessage("架空の依頼1"),
+      reportCall("r-1", withClosing("1")),
+      userMessage("架空の依頼2"),
+      speakCall("s-1", "架空のセリフ"),
+    ],
+    "要約の無い report と要約の古い report": [
+      userMessage("架空の依頼"),
+      reportCall("r-1", withClosing("1")),
+      toolResult("r-1", false),
+      reportCall("r-2", { conclusion: "架空の結論2" }),
+      toolResult("r-2", false),
+    ],
+    "speak だけ": [userMessage("架空の依頼"), speakCall("s-1", "架空のセリフ")],
+    "依頼より前に report が来る": [
+      reportCall("r-1", withClosing("1")),
+      toolResult("r-1", false),
+      userMessage("架空の依頼"),
+    ],
+    空: [],
+    壊れた要素を含む: [
+      null,
+      { type: "unknown-type" },
+      userMessage("架空の依頼"),
+      "壊れた要素",
+      speakCall("s-1", "架空のセリフ"),
+    ],
+    "同じ toolUseId が2つある": [
+      userMessage("架空の依頼"),
+      reportCall("r-1", withClosing("1")),
+      reportCall("r-1", withClosing("2")),
+      toolResult("r-1", false),
+      toolResult("r-1", true),
+    ],
+  }
+
+  it.each(Object.entries(cases))("%s", (_name, messages) => {
+    expect(toSessionDigest(messages, EXPRESSIONS)).toEqual(digestViaRestoredEvents(messages))
   })
 })
