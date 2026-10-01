@@ -7,7 +7,9 @@ import { useQuestionScroll } from "../../../../src/browser/stores/question-scrol
 import type { BackgroundTask } from "../../../../src/shared/session-driver/background-task.ts"
 import type { PendingAsk } from "../../../../src/shared/session-driver/pending-ask.ts"
 import type { Question } from "../../../../src/shared/session-driver/question.ts"
+import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import {
+  applySessionEvent,
   INITIAL_SESSION_STATE,
   type SessionState,
 } from "../../../../src/shared/session/session-state.ts"
@@ -443,7 +445,7 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
           input: { file_path: "/tmp/old.txt" },
           startedAt: { kind: "stamped", at: 0 },
           status: finishedToolStatus({
-            result: { content: "ok", isError: false },
+            result: { kind: "succeeded" },
             finishedAt: { kind: "stamped", at: 12_000 },
           }),
         }),
@@ -595,7 +597,7 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
           input: { file_path: "/tmp/restored.txt" },
           startedAt: { kind: "restored" },
           status: finishedToolStatus({
-            result: { content: "ok", isError: false },
+            result: { kind: "succeeded" },
             finishedAt: { kind: "restored" },
           }),
         }),
@@ -617,7 +619,7 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
           toolUseId: `toolu_${String(index)}`,
           name: "Read",
           input: { file_path: `/tmp/${String(index)}.txt` },
-          status: finishedToolStatus({ result: { content: "ok", isError: false } }),
+          status: finishedToolStatus({ result: { kind: "succeeded" } }),
         }),
       ),
     ]
@@ -641,14 +643,16 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
         toolUseId: "toolu_failed",
         name: "Bash",
         input: { command: "架空のコマンド" },
-        status: finishedToolStatus({ result: { content: "架空のエラー出力", isError: true } }),
+        status: finishedToolStatus({
+          result: { kind: "failed", output: { head: "架空のエラー出力", omittedLength: 0 } },
+        }),
       }),
       ...Array.from({ length: 5 }, (_unused, index) =>
         toolRecord({
           toolUseId: `toolu_${String(index)}`,
           name: "Read",
           input: { file_path: `/tmp/${String(index)}.txt` },
-          status: finishedToolStatus({ result: { content: "ok", isError: false } }),
+          status: finishedToolStatus({ result: { kind: "succeeded" } }),
         }),
       ),
     ]
@@ -669,7 +673,9 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
           toolUseId: "toolu_1",
           name: "Bash",
           input: { command: "架空のコマンド" },
-          status: finishedToolStatus({ result: { content: "架空のエラー出力", isError: true } }),
+          status: finishedToolStatus({
+            result: { kind: "failed", output: { head: "架空のエラー出力", omittedLength: 0 } },
+          }),
         }),
       ],
     })
@@ -682,6 +688,36 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
     )
     expect(document.querySelector(".current-work-failure-input")?.textContent).toContain(
       "架空のコマンド",
+    )
+  })
+
+  it("上限を超える失敗の出力は、先頭 8000 字と落とした字数で出る", () => {
+    const events: readonly SessionEvent[] = [
+      { kind: "request", text: "架空の依頼", images: [] },
+      {
+        kind: "tool-started",
+        toolUseId: "toolu_1",
+        name: "Bash",
+        input: { command: "架空のコマンド" },
+        parentToolUseId: undefined,
+      },
+      {
+        kind: "tool-finished",
+        toolUseId: "toolu_1",
+        content: "架".repeat(8005),
+        isError: true,
+      },
+    ]
+    const state = events.reduce(
+      (current, event) => applySessionEvent(current, event, 0),
+      INITIAL_SESSION_STATE,
+    )
+    renderScreenNav({ records: state.records })
+
+    fireEvent.click(workToggle())
+
+    expect(document.querySelector(".current-work-failure-output")?.textContent).toBe(
+      `${"架".repeat(8000)}\n…（以下 5 文字を省略）`,
     )
   })
 

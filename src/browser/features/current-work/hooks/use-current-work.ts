@@ -15,7 +15,10 @@ import type {
   BackgroundTaskKind,
 } from "../../../../shared/session-driver/background-task.ts"
 import type { PendingAsk } from "../../../../shared/session-driver/pending-ask.ts"
-import type { ReportDrafting } from "../../../../shared/session/session-state.ts"
+import {
+  MAX_TOOL_TEXT_LENGTH,
+  type ReportDrafting,
+} from "../../../../shared/session/session-state.ts"
 import {
   toolDuration,
   type TurnStep,
@@ -23,6 +26,7 @@ import {
   type TurnStepStatus,
 } from "../../../../shared/session/turn-step.ts"
 import { currentPhaseOf, phaseLabel, type WorkPhase } from "../../../../shared/session/work-plan.ts"
+import { clipText, type ClippedText } from "../../../../shared/utils/clip-text.ts"
 import { formatElapsed } from "../../../../shared/utils/elapsed-time.ts"
 import { DEFAULT_CHARACTER_NAME } from "../../../domain/portrait-appearance.ts"
 import { summarizeToolInput, toolInputText } from "../../../domain/tool-summary.ts"
@@ -36,8 +40,6 @@ import { monthDayLabel } from "../../../utils/month-day-label.ts"
 
 /** 閉じている間に出す手順の件数（これより多いと「すべて見る」の口が出る）。 */
 const MAX_COLLAPSED_STEPS = 5
-
-const MAX_TOOL_TEXT_LENGTH = 8000
 
 /**
  * 状態の語（上ほど強い）。
@@ -565,7 +567,7 @@ function toStepView(step: TurnStep): CurrentWorkStep {
       step.status.kind === "failed"
         ? {
             kind: "failed",
-            outputText: truncateForDisplay(step.status.output),
+            outputText: clippedTextLabel(step.status.output),
             inputText: truncateForDisplay(stringifyToolInput(step.input)),
           }
         : { kind: "none" },
@@ -581,12 +583,15 @@ function stringifyToolInput(input: unknown): string {
   return json ?? String(input)
 }
 
-/** 上限を超えた分は捨てて、落とした文字数だけを添える。 */
 function truncateForDisplay(text: string): string {
-  if (text.length <= MAX_TOOL_TEXT_LENGTH) {
-    return text
+  return clippedTextLabel(clipText(text, MAX_TOOL_TEXT_LENGTH))
+}
+
+/** 切った先頭に、落とした文字数だけを添える。 */
+function clippedTextLabel(clipped: ClippedText): string {
+  if (clipped.omittedLength === 0) {
+    return clipped.head
   }
 
-  const omitted = text.length - MAX_TOOL_TEXT_LENGTH
-  return `${text.slice(0, MAX_TOOL_TEXT_LENGTH)}\n…（以下 ${String(omitted)} 文字を省略）`
+  return `${clipped.head}\n…（以下 ${String(clipped.omittedLength)} 文字を省略）`
 }

@@ -32,6 +32,7 @@ import {
   type UsageReview,
 } from "../usage-review/usage-review.ts"
 import { isBlankText } from "../utils/blank-text.ts"
+import { clipText, type ClippedText } from "../utils/clip-text.ts"
 import {
   applyVisitEvent,
   DEFAULT_VISIT_ENABLED,
@@ -54,9 +55,13 @@ export const MAX_SESSION_STATE_TURNS = {
   chat: 100,
 } satisfies Record<"work" | "chat", number>
 
+/** 依頼の手順で読めるツールの文面の上限（字数）。記録に入れる失敗の出力も、画面の切り詰めもこれで切る。 */
+export const MAX_TOOL_TEXT_LENGTH = 8000
+
 /**
  * ツールの実行がどこまで進んだか。結果が届くまでは `running` で、届いたら `finished` に
  * 結果を持つ（結果の無い `finished` も、結果のある `running` も起きない）。
+ * 成功した結果の本文は持たない。失敗した出力は先頭 {@link MAX_TOOL_TEXT_LENGTH} 字と落とした字数だけ持つ。
  */
 export type ToolRunStatus =
   | { readonly kind: "running" }
@@ -64,7 +69,9 @@ export type ToolRunStatus =
       readonly kind: "finished"
       /** 終わった時刻（{@link RecordTime}）。復元で読み戻したときの扱いはそちらを参照。 */
       readonly finishedAt: RecordTime
-      readonly result: { readonly content: string; readonly isError: boolean }
+      readonly result:
+        | { readonly kind: "succeeded" }
+        | { readonly kind: "failed"; readonly output: ClippedText }
     }
 
 /**
@@ -862,7 +869,8 @@ function settleReportDrafting(state: SessionState, toolUseId: string): SessionSt
 
 /**
  * ツール1件の結果を記録に合わせる。対応する `tool_use` が見つからないときは何もしない（対応が取れない結果を作らない）。
- * `isError` が true のときは `lastToolFailureAt` に `at` を打つ。失敗した出力は記録の `status` にそのまま残る。
+ * `isError` が true のときは `lastToolFailureAt` に `at` を打つ。
+ * 記録の `status` に入れるのは、失敗した出力を {@link MAX_TOOL_TEXT_LENGTH} 字で切ったものだけ（成功した本文は捨てる）。
  */
 function finishTool(
   state: SessionState,
@@ -888,7 +896,9 @@ function finishTool(
         status: {
           kind: "finished",
           finishedAt: { kind: "stamped", at },
-          result: { content, isError },
+          result: isError
+            ? { kind: "failed", output: clipText(content, MAX_TOOL_TEXT_LENGTH) }
+            : { kind: "succeeded" },
         },
       },
       ...state.records.slice(index + 1),

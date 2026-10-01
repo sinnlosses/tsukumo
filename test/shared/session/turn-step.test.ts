@@ -61,7 +61,9 @@ describe("currentTurnSteps（依頼の手順を最後の依頼から導く）", 
         toolRecord({ toolUseId: "toolu_done", status: finishedToolStatus() }),
         toolRecord({
           toolUseId: "toolu_failed",
-          status: finishedToolStatus({ result: { content: "架空のエラー出力", isError: true } }),
+          status: finishedToolStatus({
+            result: { kind: "failed", output: { head: "架空のエラー出力", omittedLength: 0 } },
+          }),
         }),
         toolRecord({ toolUseId: "toolu_running", status: { kind: "running" } }),
       ],
@@ -86,7 +88,11 @@ describe("currentTurnSteps（依頼の手順を最後の依頼から導く）", 
         input: { command: "架空のコマンド" },
         nested: false,
         startedAt: stamped,
-        status: { kind: "failed", output: "架空のエラー出力", finishedAt: stamped },
+        status: {
+          kind: "failed",
+          output: { head: "架空のエラー出力", omittedLength: 0 },
+          finishedAt: stamped,
+        },
         phase: { kind: "none" },
       },
       {

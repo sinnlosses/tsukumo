@@ -40,7 +40,7 @@ function tool(
     status: {
       kind: "finished",
       finishedAt: { kind: "stamped", at: 0 },
-      result: { content: "ok", isError: false },
+      result: { kind: "succeeded" },
     },
     ...overrides,
   }

@@ -11,6 +11,7 @@ import type { SessionEvent, StampedEvent } from "../../../src/shared/session/ses
 import {
   applySessionEvent,
   INITIAL_SESSION_STATE,
+  MAX_TOOL_TEXT_LENGTH,
   type SessionState,
 } from "../../../src/shared/session/session-state.ts"
 import {
@@ -312,7 +313,7 @@ describe("applySessionEvent", () => {
         status: {
           kind: "finished",
           finishedAt: { kind: "stamped", at: 0 },
-          result: { content: "ダミーの結果", isError: true },
+          result: { kind: "failed", output: { head: "ダミーの結果", omittedLength: 0 } },
         },
       },
     ])
@@ -326,10 +327,57 @@ describe("applySessionEvent", () => {
         status: {
           kind: "finished",
           finishedAt: { kind: "stamped", at: 0 },
-          result: { content: "ダミーの結果", isError: true },
+          result: { kind: "failed", output: { head: "ダミーの結果", omittedLength: 0 } },
         },
       },
     ])
+  })
+
+  it("上限を超える失敗の結果は、先頭の上限ぶんと落とした字数だけを記録に入れる", () => {
+    const view = apply(
+      {
+        kind: "tool-started",
+        toolUseId: "toolu_1",
+        name: "Bash",
+        input: {},
+        parentToolUseId: undefined,
+      },
+      {
+        kind: "tool-finished",
+        toolUseId: "toolu_1",
+        content: "架".repeat(MAX_TOOL_TEXT_LENGTH + 5),
+        isError: true,
+      },
+    )
+
+    expect(view.records[0]).toMatchObject({
+      status: {
+        result: {
+          kind: "failed",
+          output: { head: "架".repeat(MAX_TOOL_TEXT_LENGTH), omittedLength: 5 },
+        },
+      },
+    })
+  })
+
+  it("成功した結果は本文を記録に入れない", () => {
+    const view = apply(
+      {
+        kind: "tool-started",
+        toolUseId: "toolu_1",
+        name: "Read",
+        input: {},
+        parentToolUseId: undefined,
+      },
+      {
+        kind: "tool-finished",
+        toolUseId: "toolu_1",
+        content: "架".repeat(MAX_TOOL_TEXT_LENGTH + 5),
+        isError: false,
+      },
+    )
+
+    expect(view.records[0]).toMatchObject({ status: { result: { kind: "succeeded" } } })
   })
 
   it("対応する tool_use が無い結果は記録に足さない", () => {

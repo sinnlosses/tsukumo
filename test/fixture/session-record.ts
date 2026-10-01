@@ -96,7 +96,7 @@ export function finishedToolStatus(
   return {
     kind: "finished",
     finishedAt: STAMPED,
-    result: { content: "ok", isError: false },
+    result: { kind: "succeeded" },
     ...overrides,
   }
 }

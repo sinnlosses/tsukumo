@@ -43,7 +43,7 @@ const edit = (path: string): MainViewEntry => ({
   status: {
     kind: "finished",
     finishedAt: { kind: "stamped", at: 0 },
-    result: { content: "ok", isError: false },
+    result: { kind: "succeeded" },
   },
 })
 /** `report` ツールで受け取ったレポート（引数を組んだあとの形）。中間レポートはここからしか生まれない。 */

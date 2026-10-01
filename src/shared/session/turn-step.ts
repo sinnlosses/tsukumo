@@ -2,6 +2,7 @@
 
 import { isPlainObject } from "remeda"
 
+import type { ClippedText } from "../utils/clip-text.ts"
 import type { MeasuredTime } from "../utils/elapsed-time.ts"
 import type { RecordTime, SessionRecord } from "./session-state.ts"
 import {
@@ -19,7 +20,7 @@ import {
 export type TurnStepStatus =
   | { readonly kind: "running" }
   | { readonly kind: "done"; readonly finishedAt: RecordTime }
-  | { readonly kind: "failed"; readonly output: string; readonly finishedAt: RecordTime }
+  | { readonly kind: "failed"; readonly output: ClippedText; readonly finishedAt: RecordTime }
 
 /**
  * いちばん新しい依頼（ターン）の中で claude が呼んだツール1回ぶん。
@@ -126,10 +127,10 @@ function toTurnStep(
     status:
       record.status.kind === "running"
         ? { kind: "running" }
-        : record.status.result.isError
+        : record.status.result.kind === "failed"
           ? {
               kind: "failed",
-              output: record.status.result.content,
+              output: record.status.result.output,
               finishedAt: record.status.finishedAt,
             }
           : { kind: "done", finishedAt: record.status.finishedAt },
