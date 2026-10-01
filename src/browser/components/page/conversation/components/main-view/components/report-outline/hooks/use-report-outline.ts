@@ -69,6 +69,9 @@ const CLOSE_DELAY_MS = 200
 /** 見出しの上端がこの距離まで縁の上端に近づいたら、その見出しを読んでいることにする（px）。 */
 const ACTIVE_SLACK_PX = 24
 
+/** 固定した見出しの上端が、固定したときの位置からこの距離までは動いていないとみなす（px）。 */
+const PIN_TOLERANCE_PX = 1
+
 const HEADING_SELECTOR = `.${notationStyles["detail-block"]} :is(h4, h5)`
 
 export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel {
@@ -78,6 +81,7 @@ export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel 
   const triggerRef = useRef<HTMLButtonElement>(null)
   const headingsRef = useRef<readonly HTMLElement[]>([])
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  const pinnedRef = useRef<{ readonly index: number; readonly top: number } | undefined>(undefined)
   const listId = useId()
 
   const [entries, setEntries] = useState<readonly ReportOutlineEntry[]>([])
@@ -95,6 +99,18 @@ export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel 
 
     function updateActive(): void {
       const headings = headingsRef.current
+      const pinned = pinnedRef.current
+      if (pinned !== undefined) {
+        const heading = headings[pinned.index]
+        if (
+          heading !== undefined &&
+          Math.abs(heading.getBoundingClientRect().top - pinned.top) <= PIN_TOLERANCE_PX
+        ) {
+          setActiveIndex(pinned.index)
+          return
+        }
+        pinnedRef.current = undefined
+      }
       const base = (navRef.current ?? content).getBoundingClientRect().top
       const passed = headings.findLastIndex(
         (heading) => heading.getBoundingClientRect().top <= base + ACTIVE_SLACK_PX,
@@ -196,7 +212,12 @@ export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel 
       }
     },
     onSelect: (index) => {
-      headingsRef.current[index]?.scrollIntoView({ block: "start" })
+      const heading = headingsRef.current[index]
+      heading?.scrollIntoView({ block: "start" })
+      if (heading !== undefined) {
+        pinnedRef.current = { index, top: heading.getBoundingClientRect().top }
+      }
+      setActiveIndex(index)
       // 押した行は一覧ごと消えるので、フォーカスが `body` へ落ちないよう口へ戻す（口から開き直さないのは `onTriggerFocus` の側）。
       triggerRef.current?.focus()
       close()
