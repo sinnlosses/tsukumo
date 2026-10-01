@@ -73,6 +73,7 @@ import {
 } from "../../../../src/shared/session/session-digest.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import {
+  applySessionEvent,
   INITIAL_SESSION_STATE,
   MAX_SESSION_STATE_TURNS,
   type SessionState,
@@ -135,11 +136,11 @@ type StubDriver = {
   readonly emit: (event: SessionEvent) => void
   readonly attach: (onEvent: (event: SessionEvent) => void) => void
   /**
-   * 復元の再生（`onRestoredEvent`）を流す。駆動由来（`emit`）とは別の口
+   * 復元の再生（`onRestoredEvents`）をまとめて1回で流す。駆動由来（`emit`）とは別の口
    * （`docs/architecture/character-pack.md`「復元の再生は駆動と別の口」）。
    */
-  readonly emitRestored: (event: SessionEvent) => void
-  readonly attachRestored: (onRestoredEvent: (event: SessionEvent) => void) => void
+  readonly emitRestored: (events: readonly SessionEvent[]) => void
+  readonly attachRestored: (onRestoredEvents: (events: readonly SessionEvent[]) => void) => void
   readonly calls: string[]
   answerable: boolean
 }
@@ -147,7 +148,7 @@ type StubDriver = {
 function createStubDriver(): StubDriver {
   const calls: string[] = []
   let onEvent: (event: SessionEvent) => void = () => {}
-  let onRestoredEvent: (event: SessionEvent) => void = () => {}
+  let onRestoredEvents: (events: readonly SessionEvent[]) => void = () => {}
   const stub = {
     driver: {
       prompt: (text: string) => calls.push(`prompt:${text}`),
@@ -191,9 +192,9 @@ function createStubDriver(): StubDriver {
     attach: (next: (event: SessionEvent) => void) => {
       onEvent = next
     },
-    emitRestored: (event: SessionEvent) => onRestoredEvent(event),
-    attachRestored: (next: (event: SessionEvent) => void) => {
-      onRestoredEvent = next
+    emitRestored: (events: readonly SessionEvent[]) => onRestoredEvents(events),
+    attachRestored: (next: (events: readonly SessionEvent[]) => void) => {
+      onRestoredEvents = next
     },
     calls,
     answerable: true,
@@ -345,8 +346,9 @@ function startManagerWithStub(
       rememberedVisitEnabled.push(visitEnabled)
       return { kind: "visit-enabled-changed", visitEnabled }
     },
-    launchSession: (onEvent) => {
+    launchSession: (onEvent, onRestoredEvents) => {
       stub.attach(onEvent)
+      stub.attachRestored(onRestoredEvents)
       return Promise.resolve(stub.driver)
     },
     editCharacter: (edit) => {
@@ -392,6 +394,22 @@ function startManagerWithStub(
 function waitForBatch(): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, BATCH_MS * 4))
 }
+
+/** 前のセッションを組み直した再生（架空の1ターン）。 */
+const RESTORED_REPLAY: readonly SessionEvent[] = [
+  { kind: "request", text: "前のセッションの架空の依頼", images: [] },
+  {
+    kind: "tool-started",
+    toolUseId: "t-restored",
+    name: "Read",
+    input: { file_path: "/tmp/dummy.txt" },
+    parentToolUseId: undefined,
+  },
+  { kind: "tool-finished", toolUseId: "t-restored", content: "架空の結果", isError: false },
+  { kind: "speech", text: "前のセッションの架空のセリフ", expression: "proud" },
+  { kind: "turn-finished", outcome: { kind: "completed" } },
+  { kind: "history-restored" },
+]
 
 /** 駆動が返すセッションの中身。 */
 const FAKE_SESSION_DIGEST: SessionDigest = {
@@ -467,6 +485,100 @@ describe("createSessionManager", () => {
       expect(hello.state.speeches).toEqual([{ text: "先に流れたセリフ", expression: "proud" }])
       expect(hello.state.speechExpression).toBe("proud")
     }
+  })
+
+  it("組み直した再生は events で配らず、1件ずつ畳んだのと同じ姿の hello で配る", async () => {
+    const { manager, stub } = startManagerWithStub()
+    const frames: ServerFrame[] = []
+    manager.subscribe((frame) => frames.push(frame))
+    await waitForBatch()
+    const before = frames.length
+
+    // 束に残っているうちに再生が届く（hello の姿に入るので、events でもう一度配らない）。
+    stub.emit({ kind: "chat-mode-changed", chat: true })
+    const stateBeforeReplay = manager.commandSession.state()
+    stub.emitRestored(RESTORED_REPLAY)
+    await waitForBatch()
+
+    expect(frames.slice(before)).toEqual([
+      {
+        type: "hello",
+        protocolVersion: PROTOCOL_VERSION,
+        state: RESTORED_REPLAY.reduce(
+          (state, event) => applySessionEvent(state, event, 1_000),
+          stateBeforeReplay,
+        ),
+      },
+    ])
+  })
+
+  it("起こし直しの間に届いた再生は、起き上がったあとの hello 1枚に入る", async () => {
+    const releases: (() => void)[] = []
+    const manager = createSessionManager({
+      now: () => 1_000,
+      openFile: () => Promise.resolve(true),
+      readAchievementDay: () => Promise.resolve(undefined),
+      batchIntervalMs: BATCH_MS,
+      chatConsolidation: NO_CHAT_CONSOLIDATION,
+      watchTasks: NO_TASK_WATCH,
+      visit: NO_VISIT_PORTS,
+      diary: NO_DIARY_WRITER,
+      chatArchive: NOOP_CHAT_ARCHIVE,
+      project: FICTIONAL_PROJECT,
+      tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
+      contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
+      reportUsageLog: NOOP_REPORT_USAGE_LOG,
+      promptImageShelf: createPromptImageShelf(),
+      rememberSessionDefault: (sessionDefault) => ({
+        kind: "session-default-changed",
+        sessionDefault,
+      }),
+      rememberVisitEnabled: (visitEnabled) => ({
+        kind: "visit-enabled-changed",
+        visitEnabled,
+      }),
+      launchSession: (onEvent, onRestoredEvents, request) => {
+        const stub = createStubDriver()
+        stub.attach(onEvent)
+        if (request.chat === true) {
+          onRestoredEvents(RESTORED_REPLAY)
+        }
+        return new Promise((resolve) => {
+          releases.push(() => resolve(stub.driver))
+        })
+      },
+      editCharacter: () => Promise.resolve(undefined),
+      createCharacter: () => Promise.resolve(undefined),
+      deleteCharacter: () => Promise.resolve(undefined),
+      forgetRememberedLine: () => Promise.resolve(undefined),
+      readPreviousUsageReview: (): PreviousUsageReview => ({ kind: "none" }),
+      writePreviousUsageReview: () => {},
+      dismissUsageProposal: (dismiss) => ({
+        kind: "usage-proposal-dismissed",
+        key: usageProposalKey(dismiss),
+      }),
+    })
+    releases[0]?.()
+    const frames: ServerFrame[] = []
+    manager.subscribe((frame) => frames.push(frame))
+    await waitForBatch()
+    const before = frames.length
+
+    const switched = manager.commands.session.setChatMode({ chat: true })
+    await waitForBatch()
+    expect(frames.slice(before)).toEqual([])
+
+    releases[1]?.()
+    expect(await switched).toEqual({ ok: true })
+    await waitForBatch()
+    expect(frames.slice(before).map((frame) => frame.type)).toEqual(["hello"])
+    const hello = frames[before]
+    expect(hello?.type === "hello" && hello.state.records).toEqual(
+      RESTORED_REPLAY.reduce(
+        (state, event) => applySessionEvent(state, event, 1_000),
+        INITIAL_SESSION_STATE,
+      ).records,
+    )
   })
 
   it("書きかけの本文は1バッチの中で1件に連結される", async () => {
@@ -547,7 +659,7 @@ describe("createSessionManager", () => {
         kind: "visit-enabled-changed",
         visitEnabled,
       }),
-      launchSession: (onEvent, _onRestoredEvent, request) => {
+      launchSession: (onEvent, _onRestoredEvents, request) => {
         const stub = createStubDriver()
         stub.attach(onEvent)
         started.push({ selection: request.selection, stub })
@@ -664,7 +776,7 @@ describe("createSessionManager", () => {
         kind: "visit-enabled-changed",
         visitEnabled,
       }),
-      launchSession: (onEvent, _onRestoredEvent, request) => {
+      launchSession: (onEvent, _onRestoredEvents, request) => {
         const stub = createStubDriver()
         stub.attach(onEvent)
         started.push(request)
@@ -744,7 +856,7 @@ describe("createSessionManager", () => {
         kind: "visit-enabled-changed",
         visitEnabled,
       }),
-      launchSession: (onEvent, _onRestoredEvent, request) => {
+      launchSession: (onEvent, _onRestoredEvents, request) => {
         const stub = createStubDriver()
         stub.attach(onEvent)
         started.push(request)
@@ -803,7 +915,7 @@ describe("createSessionManager", () => {
         kind: "visit-enabled-changed",
         visitEnabled,
       }),
-      launchSession: (onEvent, _onRestoredEvent, request) => {
+      launchSession: (onEvent, _onRestoredEvents, request) => {
         const stub = createStubDriver()
         stub.attach(onEvent)
         onEvent({ kind: "chat-mode-changed", chat: request.chat ?? false })
@@ -865,7 +977,7 @@ describe("createSessionManager", () => {
         kind: "visit-enabled-changed",
         visitEnabled,
       }),
-      launchSession: (onEvent, _onRestoredEvent, request) => {
+      launchSession: (onEvent, _onRestoredEvents, request) => {
         const stub = createStubDriver()
         stub.attach(onEvent)
         started.push(request)
@@ -1598,7 +1710,7 @@ describe("createSessionManager", () => {
         kind: "visit-enabled-changed",
         visitEnabled,
       }),
-      launchSession: (onEvent, _onRestoredEvent, request) => {
+      launchSession: (onEvent, _onRestoredEvents, request) => {
         if (request.selection.by === "initial") {
           const stub = createStubDriver()
           stub.attach(onEvent)
@@ -1810,9 +1922,9 @@ describe("createSessionManager", () => {
           kind: "visit-enabled-changed",
           visitEnabled,
         }),
-        launchSession: (onEvent, onRestoredEvent) => {
+        launchSession: (onEvent, onRestoredEvents) => {
           stub.attach(onEvent)
-          stub.attachRestored(onRestoredEvent)
+          stub.attachRestored(onRestoredEvents)
           return Promise.resolve(stub.driver)
         },
         editCharacter: () => Promise.resolve(undefined),
@@ -2024,11 +2136,13 @@ describe("createSessionManager", () => {
       const { stub, archiveCalls } = startArchiveManagerWithStub()
       await waitForBatch()
 
-      // 前のセッションの記録を組み直した再生（`onRestoredEvent`）。
-      stub.emitRestored(CHARACTER_EVENT)
-      stub.emitRestored({ kind: "chat-mode-changed", chat: true })
-      stub.emitRestored({ kind: "request", text: "前のセッションの依頼", images: [] })
-      stub.emitRestored({ kind: "speech", text: "前のセッションのセリフ", expression: "default" })
+      // 前のセッションの記録を組み直した再生（`onRestoredEvents`）。
+      stub.emitRestored([
+        CHARACTER_EVENT,
+        { kind: "chat-mode-changed", chat: true },
+        { kind: "request", text: "前のセッションの依頼", images: [] },
+        { kind: "speech", text: "前のセッションのセリフ", expression: "default" },
+      ])
       await waitForBatch()
 
       expect(archiveCalls).toEqual([])
@@ -2055,9 +2169,11 @@ describe("createSessionManager", () => {
       const { stub, archiveCalls } = startArchiveManagerWithStub()
       await waitForBatch()
 
-      stub.emitRestored(CHARACTER_EVENT)
-      stub.emitRestored(reportEvent("前のセッションの結論"))
-      stub.emitRestored({ kind: "turn-finished", outcome: { kind: "completed" } })
+      stub.emitRestored([
+        CHARACTER_EVENT,
+        reportEvent("前のセッションの結論"),
+        { kind: "turn-finished", outcome: { kind: "completed" } },
+      ])
       await waitForBatch()
 
       expect(archiveCalls).toEqual([])
@@ -2164,9 +2280,9 @@ describe("createSessionManager", () => {
           kind: "visit-enabled-changed",
           visitEnabled,
         }),
-        launchSession: (onEvent, onRestoredEvent) => {
+        launchSession: (onEvent, onRestoredEvents) => {
           stub.attach(onEvent)
-          stub.attachRestored(onRestoredEvent)
+          stub.attachRestored(onRestoredEvents)
           return Promise.resolve(stub.driver)
         },
         editCharacter: () => Promise.resolve(undefined),
@@ -2258,7 +2374,7 @@ describe("createSessionManager", () => {
       await waitForBatch()
 
       stub.emit(SESSION_INFO)
-      stub.emitRestored({ kind: "token-usage", cumulative: cumulative(100, 20, 0.5) })
+      stub.emitRestored([{ kind: "token-usage", cumulative: cumulative(100, 20, 0.5) }])
       await waitForBatch()
 
       expect(entries).toEqual([])
@@ -2464,9 +2580,9 @@ describe("createSessionManager", () => {
           kind: "visit-enabled-changed",
           visitEnabled,
         }),
-        launchSession: (onEvent, onRestoredEvent) => {
+        launchSession: (onEvent, onRestoredEvents) => {
           stub.attach(onEvent)
-          stub.attachRestored(onRestoredEvent)
+          stub.attachRestored(onRestoredEvents)
           return Promise.resolve(driver)
         },
         editCharacter: () => Promise.resolve(undefined),
@@ -2565,7 +2681,7 @@ describe("createSessionManager", () => {
       await waitForBatch()
 
       stub.emit(sessionInfo("claude-session-1"))
-      stub.emitRestored({ kind: "turn-finished", outcome: { kind: "completed" } })
+      stub.emitRestored([{ kind: "turn-finished", outcome: { kind: "completed" } }])
       await waitForBatch()
 
       expect(entries).toEqual([])
@@ -2632,9 +2748,9 @@ describe("createSessionManager", () => {
           kind: "visit-enabled-changed",
           visitEnabled,
         }),
-        launchSession: (onEvent, onRestoredEvent) => {
+        launchSession: (onEvent, onRestoredEvents) => {
           stub.attach(onEvent)
-          stub.attachRestored(onRestoredEvent)
+          stub.attachRestored(onRestoredEvents)
           return Promise.resolve(stub.driver)
         },
         editCharacter: () => Promise.resolve(undefined),
@@ -2691,7 +2807,7 @@ describe("createSessionManager", () => {
       await waitForBatch()
 
       stub.emit(sessionInfo("claude-session-1"))
-      stub.emitRestored(reportEvent([]))
+      stub.emitRestored([reportEvent([])])
       await waitForBatch()
 
       expect(entries).toEqual([])

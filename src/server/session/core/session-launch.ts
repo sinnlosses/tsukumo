@@ -124,17 +124,17 @@ export type SessionLaunchPorts<Pack extends NamedCharacterPack> = {
  * 続きから始まったなら履歴を組み直して流し終える → 一覧の読み直しを始める → 駆動を返す。
  * 読み直した一覧を採ったときだけ、切り替え先の一覧をもう一度流す。
  *
- * 受け口は2つ。`onEvent` は駆動から新しく届くイベント、`onRestoredEvent` は前のセッションの記録を組み直した再生だけを流す。
+ * 受け口は2つ。`onEvent` は駆動から新しく届くイベント、`onRestoredEvents` は前のセッションの記録を組み直した再生だけを、まとめて1回で渡す。
  * 分けるのは「どちらの口から来たか」を呼び出し側が知れるようにするためだけ。
  */
 export function createSessionLaunch<Pack extends NamedCharacterPack>(
   ports: SessionLaunchPorts<Pack>,
 ): (
   onEvent: (event: SessionEvent) => void,
-  onRestoredEvent: (event: SessionEvent) => void,
+  onRestoredEvents: (events: readonly SessionEvent[]) => void,
   request: SessionLaunchRequest,
 ) => Promise<SessionDriver> {
-  return async (onEvent, onRestoredEvent, request) => {
+  return async (onEvent, onRestoredEvents, request) => {
     const { selection } = request
     const chat = request.chat ?? false
     const pack = ports.choosePack(selection)
@@ -181,7 +181,7 @@ export function createSessionLaunch<Pack extends NamedCharacterPack>(
     // 流し終えてから駆動を返す。
     // 起こし直しの `hello` は駆動が返るのを待って配るので、ここで待たないと履歴の無い `hello` が先に出て、立ち絵の表情が既定から続きの表情へもう一度飛ぶ。
     if (start.kind === "resume") {
-      await replayRestoredSession(ports, start.sessionId, pack, onRestoredEvent)
+      await replayRestoredSession(ports, start.sessionId, pack, onRestoredEvents)
     }
     void announceRefreshedSessions(ports, pack, chat, announceSessions)
 
@@ -227,12 +227,10 @@ async function replayRestoredSession<Pack extends NamedCharacterPack>(
   ports: SessionLaunchPorts<Pack>,
   sessionId: string,
   pack: Pack,
-  onRestoredEvent: (event: SessionEvent) => void,
+  onRestoredEvents: (events: readonly SessionEvent[]) => void,
 ): Promise<void> {
   try {
-    for (const event of await ports.restoreEvents(sessionId, pack)) {
-      onRestoredEvent(event)
-    }
+    onRestoredEvents(await ports.restoreEvents(sessionId, pack))
   } catch {
     // 履歴が出ないだけで、セッションそのものは続く。
   }

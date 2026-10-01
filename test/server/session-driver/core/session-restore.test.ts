@@ -191,6 +191,25 @@ describe("toRestoredEvents", () => {
     expect(events).toEqual([{ kind: "utterance", text: "架空の本文" }, HISTORY_RESTORED])
   })
 
+  it("依頼より前の本文のあとの最初の依頼の手前には境目を足さず、2件目の依頼の手前と末尾にだけ足す", () => {
+    const messages = [
+      assistantMessage([{ type: "text", text: "架空の前置き" }]),
+      userMessage("架空の依頼その1"),
+      assistantMessage([{ type: "text", text: "架空の本文その1" }]),
+      userMessage("架空の依頼その2"),
+    ]
+
+    expect(toRestoredEvents(messages, EXPRESSIONS)).toEqual([
+      { kind: "utterance", text: "架空の前置き" },
+      { kind: "request", text: "架空の依頼その1", images: [] },
+      { kind: "utterance", text: "架空の本文その1" },
+      { kind: "turn-finished", outcome: { kind: "completed" } },
+      { kind: "request", text: "架空の依頼その2", images: [] },
+      { kind: "turn-finished", outcome: { kind: "completed" } },
+      HISTORY_RESTORED,
+    ])
+  })
+
   it("空の列・壊れた要素が混じった列でも落ちず、読めたものだけを返す", () => {
     expect(toRestoredEvents([], EXPRESSIONS)).toEqual([])
     expect(toRestoredEvents(undefined, EXPRESSIONS)).toEqual([])

@@ -43,35 +43,17 @@ export function toRestoredEvents(
     return []
   }
 
-  const restored = messages
-    .flatMap((message) => restoredMessageEvents(message, expressions))
-    .reduce<RestoredTurns>(appendWithTurnBoundary, { events: [], turnOpen: false })
-
-  const closed = restored.turnOpen ? [...restored.events, RESTORED_TURN_FINISHED] : restored.events
+  const converted = messages.flatMap((message) => restoredMessageEvents(message, expressions))
+  // 最初の依頼より前には閉じるターンが無い。
+  const firstRequest = converted.findIndex((event) => event.kind === "request")
+  const bounded = converted.flatMap((event, index) =>
+    event.kind === "request" && index > firstRequest ? [RESTORED_TURN_FINISHED, event] : [event],
+  )
+  const closed = firstRequest === -1 ? bounded : [...bounded, RESTORED_TURN_FINISHED]
   const review = createReportReview()
   const events = closed.flatMap((event) => review.pass(event))
   // 組み直せたものが無ければ、書き換える記録も無いので `history-restored` を足さない。
   return events.length === 0 ? events : [...events, HISTORY_RESTORED]
-}
-
-/** 組み直しの途中の姿（今のターンが開いたままかどうかを持ち回る）。 */
-type RestoredTurns = {
-  readonly events: readonly SessionEvent[]
-  readonly turnOpen: boolean
-}
-
-/** イベントを1件積む。依頼の手前で、開いたままのターンを閉じる。 */
-function appendWithTurnBoundary(turns: RestoredTurns, event: SessionEvent): RestoredTurns {
-  if (event.kind !== "request") {
-    return { events: [...turns.events, event], turnOpen: turns.turnOpen }
-  }
-
-  return {
-    events: turns.turnOpen
-      ? [...turns.events, RESTORED_TURN_FINISHED, event]
-      : [...turns.events, event],
-    turnOpen: true,
-  }
 }
 
 export function restoredMessageEvents(

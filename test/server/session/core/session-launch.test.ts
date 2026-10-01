@@ -79,18 +79,21 @@ type Harness = {
   readonly events: SessionEvent[]
   /** `onEvent` を通ったイベントだけ（復元の再生は入らない）。 */
   readonly driverEvents: SessionEvent[]
-  /** `onRestoredEvent` を通ったイベントだけ（駆動から新しく届いたものは入らない）。 */
+  /** `onRestoredEvents` を通ったイベントだけ（駆動から新しく届いたものは入らない）。 */
   readonly restoredEvents: SessionEvent[]
+  /** `onRestoredEvents` が呼ばれるたびに受け取った並び。 */
+  readonly restoredDeliveries: (readonly SessionEvent[])[]
   readonly calls: string[]
   readonly stub: ReturnType<typeof createStubDriver>
   readonly receive: (event: SessionEvent) => void
-  readonly receiveRestored: (event: SessionEvent) => void
+  readonly receiveRestored: (events: readonly SessionEvent[]) => void
 }
 
 function createHarness(overrides: Partial<SessionLaunchPorts<Pack>> = {}): Harness {
   const events: SessionEvent[] = []
   const driverEvents: SessionEvent[] = []
   const restoredEvents: SessionEvent[] = []
+  const restoredDeliveries: (readonly SessionEvent[])[] = []
   const calls: string[] = []
   const stub = createStubDriver()
 
@@ -157,15 +160,17 @@ function createHarness(overrides: Partial<SessionLaunchPorts<Pack>> = {}): Harne
     events,
     driverEvents,
     restoredEvents,
+    restoredDeliveries,
     calls,
     stub,
     receive: (event) => {
       events.push(event)
       driverEvents.push(event)
     },
-    receiveRestored: (event) => {
-      events.push(event)
-      restoredEvents.push(event)
+    receiveRestored: (delivered) => {
+      events.push(...delivered)
+      restoredEvents.push(...delivered)
+      restoredDeliveries.push(delivered)
     },
   }
 }
@@ -564,8 +569,14 @@ describe("createSessionLaunch", () => {
     )
   })
 
-  it("復元は別の口（onRestoredEvent）へ流れ、駆動のイベントと区別できる", async () => {
-    const harness = createHarness()
+  it("復元は別の口（onRestoredEvents）へまとめて1回で流れ、駆動のイベントと区別できる", async () => {
+    const harness = createHarness({
+      restoreEvents: () =>
+        Promise.resolve([
+          { kind: "utterance", text: "架空のターンの本文その1" },
+          { kind: "utterance", text: "架空のターンの本文その2" },
+        ]),
+    })
 
     await createSessionLaunch(harness.ports)(harness.receive, harness.receiveRestored, {
       selection: { by: "initial" },
@@ -582,8 +593,10 @@ describe("createSessionLaunch", () => {
       "visit-enabled-changed",
       "sessions-changed",
     ])
-    // restoreEvents が組み直した履歴は onRestoredEvent 側だけに乗る。
-    expect(harness.restoredEvents.map((event) => event.kind)).toEqual(["utterance"])
+    // restoreEvents が組み直した履歴は onRestoredEvents 側だけに、1回で乗る。
+    expect(harness.restoredDeliveries.map((events) => events.map((event) => event.kind))).toEqual([
+      ["utterance", "utterance"],
+    ])
     // 両方を混ぜた時系列は今までどおり（画面の見え方・順序は変わらない）。
     expect(harness.events.map((event) => event.kind)).toEqual([
       "character-changed",
@@ -591,6 +604,7 @@ describe("createSessionLaunch", () => {
       "session-default-changed",
       "visit-enabled-changed",
       "sessions-changed",
+      "utterance",
       "utterance",
     ])
   })

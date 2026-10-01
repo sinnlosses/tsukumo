@@ -100,13 +100,13 @@ export type SessionManagerOptions = {
    * 駆動を起こすだけでなく、パックを決めて続きを探し、復元した履歴を流すところまでを1つでやる（`createSessionLaunch` が実体）。
    * ここは駆動の種類（SDK か fake driver か）を知らない。
    *
-   * 受け口は2つ。`onEvent` は駆動（と見張り）から新しく届くイベント、`onRestoredEvent` は前のセッションの記録を組み直した再生だけが通る。
+   * 受け口は2つ。`onEvent` は駆動（と見張り）から新しく届くイベント、`onRestoredEvents` は前のセッションの記録を組み直した再生だけを、まとめて1回で受ける。
    *
    * 知らない名前のときに何を起こすかも、名前を覚えるかどうかも呼び出し側が決める。
    */
   readonly launchSession: (
     onEvent: (event: SessionEvent) => void,
-    onRestoredEvent: (event: SessionEvent) => void,
+    onRestoredEvents: (events: readonly SessionEvent[]) => void,
     request: SessionLaunchRequest,
   ) => Promise<SessionDriver>
   /**
@@ -167,9 +167,6 @@ export type SessionManager = {
   /** 駆動を閉じる（プロセスを終えるとき。claude の子プロセスを残さないため必ず呼ぶ）。 */
   readonly close: () => void
 }
-
-/** `receive` に渡るイベントが「駆動から新しく届いたか（`"driver"`）、復元の再生か（`"restored"`）」の印。 */
-type EventOrigin = "driver" | "restored"
 
 /**
  * 駆動1代ぶんの勘定。
@@ -278,56 +275,46 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
   }
 
   /**
-   * イベント1件を畳んで、それを生んだ代の勘定に積む。
-   * 駆動から届いたものと、見た目の編集で起こした `character-changed` の両方がここを通る（サーバ側の状態とブラウザへ配る内容を1本にする）。
-   *
-   * 畳み方と配り方は `origin` によらず同じ。
-   * 分かれているのは、会話のアーカイブへ書くのを駆動由来の依頼・セリフ・結論だけに絞るため（復元で流し直されたぶんまで書くと、起こし直すたびに同じ行が二重に積まれる）。
+   * 駆動から届いたイベント1件を畳んで、それを生んだ代の勘定に積む。
+   * 見た目の編集で起こした `character-changed` もここを通る（サーバ側の状態とブラウザへ配る内容を1本にする）。
    */
-  const receive = (tally: GenerationTally, event: SessionEvent, origin: EventOrigin): void => {
+  const receive = (tally: GenerationTally, event: SessionEvent): void => {
     if (closed) {
       return
     }
     const at = options.now()
     replaceState(applySessionEvent(state, event, at))
     tally.batch.add({ at, event })
-    // 会話のアーカイブへ1行足す。駆動由来（`"driver"`）・パックが分かっているときだけ。
-    if (origin === "driver") {
-      appendChatArchiveEntry(
-        options.chatArchive,
-        state.character?.pack,
-        state.chatMode ? "chat" : "work",
-        options.project,
-        at,
-        event,
-      )
-    }
+    // 会話のアーカイブへ1行足す（パックが分かっているときだけ）。
+    appendChatArchiveEntry(
+      options.chatArchive,
+      state.character?.pack,
+      state.chatMode ? "chat" : "work",
+      options.project,
+      at,
+      event,
+    )
     // 仕事のターンの結論を、代の勘定に預けて上書きする（`turn-finished` で読み出す）。
-    if (origin === "driver" && event.kind === "report") {
+    if (event.kind === "report") {
       tally.pendingConclusion.hold(conclusionWithTaskName(event.conclusion, event.task))
     }
-    // ターンの中の内訳（ツール別・持ち場別）を積む。駆動由来（`"driver"`）だけ。
-    // 復元の再生は前のセッションで使ったぶんなので、いまのターンに数えない。
-    if (origin === "driver") {
-      tally.tokenUsage.tally(event)
-    }
-    // そのターンのトークン消費を1行書く。駆動由来（`"driver"`）だけ。
-    // 復元の再生には使用量が乗らないし、乗せても同じターンを二度数えることになる。
-    if (origin === "driver" && event.kind === "token-usage") {
+    // ターンの中の内訳（ツール別・持ち場別）を積む。
+    tally.tokenUsage.tally(event)
+    // そのターンのトークン消費を1行書く。
+    if (event.kind === "token-usage") {
       tally.tokenUsage.append(event.cumulative, at, state)
     }
     // トークン消費の内訳を、1ターンぶんだけ持つところから捨てる（次のターンでまた0から数える）。
     // `token-usage` は `turn-finished` より先に届く（変換する側が `result` 1つをこの順に変換する）ので、書き終えたあとに捨てることになる。
-    // 見直しの結果を、次の起動でも「前回の提案」として配れるようにホームへ書く。駆動由来（`"driver"`）だけ。
-    if (origin === "driver" && event.kind === "usage-review-result") {
+    // 見直しの結果を、次の起動でも「前回の提案」として配れるようにホームへ書く。
+    if (event.kind === "usage-review-result") {
       options.writePreviousUsageReview(at, event.findings)
     }
-    // 復元の再生は前のセッションで描いたぶんなので数えない。
     // セッションIDが決まる前の行は、どのセッションのものか分からなくなるので書かない。
-    if (origin === "driver" && event.kind === "report" && state.session.kind !== "starting") {
+    if (event.kind === "report" && state.session.kind !== "starting") {
       options.reportUsageLog.append(reportUsageEntryOf(event, state.session.sessionId, at))
     }
-    if (origin === "driver" && event.kind === "turn-finished") {
+    if (event.kind === "turn-finished") {
       tally.tokenUsage.finishTurn()
       // コンテキストの内訳はセッションに1行なので、まだ書いていなければ問い合わせる。
       // 待たずに次へ進む（ターンの終わりを遅らせない）。駆動がまだ無い回は次のターンで揃う。
@@ -347,15 +334,13 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
         )
       }
     }
-    // 定着を起こす。駆動由来のターンの終わり（雑談・仕事）だけで、走っていれば契機を捨てる。待たずに次へ進む。
-    if (origin === "driver" && event.kind === "turn-finished") {
+    // 定着を起こす。ターンの終わり（雑談・仕事）で、走っていれば契機を捨てる。待たずに次へ進む。
+    if (event.kind === "turn-finished") {
       startConsolidation(state.character?.pack)
     }
-    // 訪問の出入りを決める。駆動由来だけ（復元の再生は前のセッションの待ち）。
+    // 訪問の出入りを決める。
     // 見張りが出した訪問のイベントもこの受け口へ戻ってくる（`createVisitWatch`）。
-    if (origin === "driver") {
-      tally.visit.observe(event, at)
-    }
+    tally.visit.observe(event, at)
   }
 
   /**
@@ -412,25 +397,44 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
         now: options.now,
         readState: () => state,
         emit: (event) => {
-          receiveIfCurrent(event, "driver")
+          receiveIfCurrent(event)
         },
       }),
       diarySignal: diaryAbort.signal,
       pendingConclusion: createPendingConclusion(),
     }
-    const receiveIfCurrent = (event: SessionEvent, origin: EventOrigin): void => {
+    const receiveIfCurrent = (event: SessionEvent): void => {
       if (born !== bornCount) {
         return
       }
-      receive(tally, event, origin)
+      receive(tally, event)
+    }
+    /**
+     * 前のセッションの記録を組み直した再生を、まとめて1回で畳む。
+     * 再生は畳むだけで、アーカイブ・トークン・コンテキスト・report の記録・訪問・定着には数えない。
+     * 時刻は1つだけ読む（記録の側は末尾の `history-restored` が「時刻が分からない」に書き換える）。
+     *
+     * 束には積まず、配るのは畳んだあとの姿の `hello`。束に残っていたぶんはその姿に入っているので捨てる。
+     * 起こし直しの代は `announceGeneration` が `hello` を配るので、ここでは配らない。
+     */
+    const receiveRestoredIfCurrent = (events: readonly SessionEvent[]): void => {
+      if (closed || born !== bornCount || events.length === 0) {
+        return
+      }
+      const at = options.now()
+      replaceState(events.reduce((next, event) => applySessionEvent(next, event, at), state))
+      if (!held) {
+        tally.batch.discard()
+        publish(helloFrame(), subscribers)
+      }
     }
 
     const driver = options.launchSession(
       (event) => {
-        receiveIfCurrent(event, "driver")
+        receiveIfCurrent(event)
       },
-      (event) => {
-        receiveIfCurrent(event, "restored")
+      (events) => {
+        receiveRestoredIfCurrent(events)
       },
       request,
     )
@@ -461,7 +465,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
         held = false
       },
       emit: (event) => {
-        receiveIfCurrent(event, "driver")
+        receiveIfCurrent(event)
       },
     }
   }
