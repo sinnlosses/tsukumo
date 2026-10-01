@@ -2,12 +2,9 @@
 
 import { useImperativeHandle, useRef, type ReactElement, type Ref } from "react"
 
+import type { Draft } from "../../../../../../../stores/composer-draft.ts"
 import styles from "../../dispatch.module.css"
-import type {
-  ComposerSurface,
-  ComposerSurfaceHandlers,
-  Draft,
-} from "../../domain/composer-surface.ts"
+import type { ComposerSurface, ComposerSurfaceHandlers } from "../../domain/composer-surface.ts"
 
 export type TextAreaSurfaceProps = ComposerSurfaceHandlers & {
   readonly ref: Ref<ComposerSurface | null>

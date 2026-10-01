@@ -1,10 +1,5 @@
 /* メインビュー。ターンの札と頭・依頼の続き・ステップのカードを持つ。 */
 
-/* 字の色は `Text` が持つ。
-   margin は UA 既定の `<p>` の 1em 0 に頼っていたので、`Text` の既定 margin: 0 に上書きされないようここへ明示する。 */
-.placeholder {
-  margin: 1em 0;
-}
 .main-turns {
   display: flex;
   flex-direction: column;

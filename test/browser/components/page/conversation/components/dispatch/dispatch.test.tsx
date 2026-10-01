@@ -3,6 +3,7 @@ import { cleanup, render } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
 import { Dispatch } from "../../../../../../../src/browser/components/page/conversation/components/dispatch/dispatch.tsx"
+import { useComposerDraft } from "../../../../../../../src/browser/stores/composer-draft.ts"
 import { useQuestionDraft } from "../../../../../../../src/browser/stores/question-answer.ts"
 import {
   INITIAL_SESSION_STATE,
@@ -15,6 +16,7 @@ afterEach(() => {
   cleanup()
   // 組み立て中の答えはモジュール単位で残るので、次のテストへ持ち越さない。
   useQuestionDraft.setState(useQuestionDraft.getInitialState(), true)
+  useComposerDraft.setState(useComposerDraft.getInitialState(), true)
   document.title = "tsukumo"
 })
 

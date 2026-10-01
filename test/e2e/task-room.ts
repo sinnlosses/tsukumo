@@ -51,7 +51,7 @@ function writeTaskFile(cwd: string, task: TaskFixture): void {
 }
 
 /** 難易度 sonnet・ループ Y・既定の本文の1件を書く。 */
-function writeTask(
+export function writeTask(
   cwd: string,
   id: string,
   summary: string,
@@ -295,3 +295,17 @@ const JUMP_BODY_T001 = [
 
 /** 保留のタスクの本文。地の文で起点のタスクへ言及するだけ。 */
 const JUMP_BODY_T004 = ["## 参照", "", "先に T-001 を見る。", ""].join("\n")
+
+/** 迎える口の足場のタスクの ID。着手できるものと、前者に依存して止まるもの。 */
+export const READY_TASK_ID = "T-001"
+export const BLOCKED_TASK_ID = "T-002"
+
+/** 依頼前の迎える口の足場。着手できるタスクと依存で止まるタスクを書いて、一覧が届くのを待つ。 */
+export async function writeWelcomeTasks(room: ScenarioRoom): Promise<void> {
+  await initGitRepository(room.cwd)
+  writeTask(room.cwd, READY_TASK_ID, "架空のタスク（着手できる）", "todo")
+  writeTask(room.cwd, BLOCKED_TASK_ID, "架空のタスク（依存で止まる）", "todo", [READY_TASK_ID])
+  await git(room.cwd, "add", "develop/task")
+  await git(room.cwd, "commit", "--quiet", "-m", "架空のタスク一覧")
+  await room.waitForEvent("tasks-changed")
+}

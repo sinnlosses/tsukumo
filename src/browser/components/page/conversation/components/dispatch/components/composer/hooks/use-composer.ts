@@ -13,9 +13,14 @@
 
 import { useEffect, useRef, useState, type RefObject } from "react"
 
+import {
+  EMPTY_DRAFT,
+  useComposerDraft,
+  type Draft,
+} from "../../../../../../../../stores/composer-draft.ts"
 import { useQuestionAnswer } from "../../../../../../../../stores/question-answer.ts"
 import { useSession, useTurnRunning } from "../../../../../../../../stores/session.ts"
-import type { ComposerKey, ComposerSurface, Draft } from "../../../domain/composer-surface.ts"
+import type { ComposerKey, ComposerSurface } from "../../../domain/composer-surface.ts"
 import { loadComposerMode, saveComposerMode, type ComposerMode } from "../domain/composer-mode.ts"
 import { usePromptImage, type PromptImageModel } from "./use-prompt-image.ts"
 import {
@@ -24,8 +29,6 @@ import {
   type ActiveSuggestions,
   type CompletionTrigger,
 } from "./use-suggestion.ts"
-
-const EMPTY_DRAFT: Draft = { text: "", caret: 0 }
 
 /**
  * `<textarea>` の上の帯。答え待ちの質問のときだけ出す。
@@ -72,7 +75,8 @@ export function useComposer(): ComposerModel {
   const question = useQuestionAnswer()
   const slashCommands = useSession((session) => session.state.slashCommands)
   const commandDescriptions = useSession((session) => session.state.commandDescriptions)
-  const [draft, setDraft] = useState<Draft>(EMPTY_DRAFT)
+  const draft = useComposerDraft((state) => state.draft)
+  const setDraft = useComposerDraft((state) => state.setDraft)
   const surfaceRef = useRef<ComposerSurface | null>(null)
   const [mode, setMode] = useState<ComposerMode>(loadComposerMode)
 

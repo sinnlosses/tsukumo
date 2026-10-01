@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it } from "vitest"
 
 import { useComposer } from "../../../../../../../../../../src/browser/components/page/conversation/components/dispatch/components/composer/hooks/use-composer.ts"
 import type { ComposerKey } from "../../../../../../../../../../src/browser/components/page/conversation/components/dispatch/domain/composer-surface.ts"
+import { useComposerDraft } from "../../../../../../../../../../src/browser/stores/composer-draft.ts"
 import { useQuestionDraft } from "../../../../../../../../../../src/browser/stores/question-answer.ts"
 import {
   INITIAL_SESSION_STATE,
@@ -22,6 +23,7 @@ afterEach(() => {
   cleanup()
   // 組み立て中の答えはモジュール単位で残るので、次のテストへ持ち越さない。
   useQuestionDraft.setState(useQuestionDraft.getInitialState(), true)
+  useComposerDraft.setState(useComposerDraft.getInitialState(), true)
 })
 
 const FIXTURE_COMMANDS = {

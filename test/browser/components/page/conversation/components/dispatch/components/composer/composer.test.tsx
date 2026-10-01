@@ -3,6 +3,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import { afterEach, describe, expect, it } from "vitest"
 
 import { Composer } from "../../../../../../../../../src/browser/components/page/conversation/components/dispatch/components/composer/composer.tsx"
+import { useComposerDraft } from "../../../../../../../../../src/browser/stores/composer-draft.ts"
 import { useQuestionDraft } from "../../../../../../../../../src/browser/stores/question-answer.ts"
 import type { CharacterInfo } from "../../../../../../../../../src/shared/character-pack/character.ts"
 import type { PendingAsk } from "../../../../../../../../../src/shared/session-driver/pending-ask.ts"
@@ -50,6 +51,7 @@ afterEach(() => {
   cleanup()
   // 組み立て中の答えはモジュール単位で残るので、次のテストへ持ち越さない。
   useQuestionDraft.setState(useQuestionDraft.getInitialState(), true)
+  useComposerDraft.setState(useComposerDraft.getInitialState(), true)
   fetchStub?.restore()
   fetchStub = undefined
 })

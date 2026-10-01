@@ -10,9 +10,10 @@ import { useState } from "react"
 
 import { commandSuggestions } from "../../../../../../../../../shared/session/command-suggestion.ts"
 import type { CommandDescription } from "../../../../../../../../../shared/session/session-event.ts"
+import type { Draft } from "../../../../../../../../stores/composer-draft.ts"
 import { matchingFilePaths } from "../../../../../domain/file-suggestion-index.ts"
 import { useRepositoryFileIndex } from "../../../../hooks/use-repository-file-paths.ts"
-import type { ComposerKey, Draft } from "../../../domain/composer-surface.ts"
+import type { ComposerKey } from "../../../domain/composer-surface.ts"
 import {
   matchingCommands,
   shouldShowCommandSuggestions,

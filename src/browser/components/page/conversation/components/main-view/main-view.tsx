@@ -23,21 +23,19 @@ import { useMainViewTurns } from "../../../../../stores/main-view-turn.ts"
 import { useQuestionScroll } from "../../../../../stores/question-scroll.ts"
 import { useSession } from "../../../../../stores/session.ts"
 import { useTurnSelection } from "../../../../../stores/turn-selection.ts"
-import { Text } from "../../../../ui/text/text.tsx"
 import { CurrentWorkCapsule } from "./components/current-work-capsule/current-work-capsule.tsx"
 import { MiniPortrait } from "./components/mini-portrait/mini-portrait.tsx"
 import { QuestionAsk } from "./components/question-ask/question-ask.tsx"
 import { ReportOutline } from "./components/report-outline/report-outline.tsx"
 import { TurnHeader } from "./components/turn-header/turn-header.tsx"
 import { Turn } from "./components/turn/turn.tsx"
+import { Welcome } from "./components/welcome/welcome.tsx"
 import { headNoticeOf, type HeadNoticeAction } from "./domain/head-notice.ts"
 import { turnHistoryText, turnRequestRest, turnTitle } from "./domain/turn-title.ts"
 import { NO_SHOWN_KEY, useActiveTurnScroll } from "./hooks/use-active-turn-scroll.ts"
 import { useMainViewHold } from "./hooks/use-main-view-hold.ts"
 import styles from "./main-view.module.css"
 import { RepositoryFileLinkProvider } from "./markdown/repository-link.tsx"
-
-const EMPTY_MESSAGE = "（まだ作業がありません）"
 
 /** 画面に出す中身。`card` は札に載せるターンで、`fresh` は地図から入れ替えたばかりのレポートか。 */
 type ShownView =
@@ -96,17 +94,7 @@ export function MainView(): ReactElement {
           className={styles["main-view-content"]}
           data-main-view-content={view.kind}
         >
-          {view.kind === "welcome" && (
-            <Text
-              element="p"
-              size="inherit"
-              tone="ink-quiet"
-              weight="inherit"
-              className={styles["placeholder"]}
-            >
-              {EMPTY_MESSAGE}
-            </Text>
-          )}
+          {view.kind === "welcome" && <Welcome />}
           {cardTurn !== undefined && (
             <article className={styles["turn-card"]}>
               <TurnHeader

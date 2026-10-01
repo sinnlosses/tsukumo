@@ -8,6 +8,7 @@ import { Search } from "lucide-react"
 import { useId, type ReactElement } from "react"
 
 import type { CharacterFaceInfo } from "../../../../domain/character-face.ts"
+import { REMAINING_PREFIX, summaryParagraphs } from "../../../../domain/session-summary.ts"
 import { Button } from "../../../ui/button/button.tsx"
 import { Dialog } from "../../../ui/dialog/dialog.tsx"
 import { Heading } from "../../../ui/heading/heading.tsx"
@@ -342,15 +343,4 @@ function DigestBody(props: DigestBodyProps): ReactElement {
       )}
     </>
   )
-}
-
-/** 残っていることの段落の書き出し（`REPORT_SESSION_SUMMARY_DESCRIPTION` がこう書かせる）。 */
-const REMAINING_PREFIX = "残り"
-
-/** 要約を段落に割る（空行でも改行1つでも段落の切れ目にする）。 */
-function summaryParagraphs(summary: string): readonly string[] {
-  return summary
-    .split(/\n+/)
-    .map((line) => line.trim())
-    .filter((line) => line !== "")
 }

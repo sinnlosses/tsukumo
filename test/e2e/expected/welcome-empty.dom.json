@@ -1,0 +1,40 @@
+{
+  "main": [
+    {
+      "tag": "section",
+      "attributes": {
+        "data-region": "main"
+      },
+      "children": [
+        {
+          "tag": "div",
+          "attributes": {
+            "data-brush-origin": ""
+          },
+          "children": [
+            {
+              "tag": "div",
+              "attributes": {
+                "data-main-view-content": "welcome"
+              },
+              "children": [
+                {
+                  "tag": "h2",
+                  "children": [
+                    "何から始める？"
+                  ]
+                },
+                {
+                  "tag": "p",
+                  "children": [
+                    "下の入力欄から頼める。"
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

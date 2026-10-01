@@ -1,11 +1,7 @@
 // 入力欄の面（`<textarea>` とマークダウンエディタ）と、面が映す下書き・面から届くキーの形。
 // どちらの面も DOM の型をここへ持ち込まない。
 
-/** 打ちかけの文面と、その中のキャレットの位置。2つで1つの状態なので一緒に持つ。 */
-export type Draft = {
-  readonly text: string
-  readonly caret: number
-}
+import type { Draft } from "../../../../../../stores/composer-draft.ts"
 
 /** 下書きのほかに、入力欄のロジックが面に触るのはこの3つだけ。 */
 export type ComposerSurface = {

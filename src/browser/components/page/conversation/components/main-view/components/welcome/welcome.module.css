@@ -1,0 +1,51 @@
+.welcome {
+  padding: 0.5rem 0;
+}
+.title {
+  margin: 0.5rem 0 0.25rem;
+}
+.lead {
+  margin: 0 0 1.25rem;
+}
+.groups {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: 1.25rem;
+  align-items: start;
+}
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0;
+}
+.door {
+  display: block;
+  padding: 0.625rem 0.875rem;
+  border-radius: 0.625rem;
+  text-align: left;
+  line-height: 1.6;
+}
+.door-id {
+  margin-right: 0.5rem;
+  font-family: var(--font-mono);
+  font-size: var(--font-secondary);
+  color: var(--accent);
+}
+.door-label {
+  display: block;
+  font-weight: 600;
+}
+.door-detail {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  color: var(--ink-quiet);
+  font-size: var(--font-secondary);
+}
+.door-id + .door-detail {
+  display: inline;
+  color: inherit;
+  font-size: inherit;
+}

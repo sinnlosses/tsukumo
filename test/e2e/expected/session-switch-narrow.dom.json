@@ -296,9 +296,40 @@
                       },
                       "children": [
                         {
+                          "tag": "h2",
+                          "children": [
+                            "何から始める？"
+                          ]
+                        },
+                        {
                           "tag": "p",
                           "children": [
-                            "（まだ作業がありません）"
+                            "口を押すと、下の入力欄に依頼の文が入る（送るのは自分で）。"
+                          ]
+                        },
+                        {
+                          "tag": "section",
+                          "attributes": {
+                            "aria-label": "前回の続き"
+                          },
+                          "children": [
+                            {
+                              "tag": "h3",
+                              "children": [
+                                "前回の続き"
+                              ]
+                            },
+                            {
+                              "tag": "button",
+                              "attributes": {
+                                "aria-disabled": "false",
+                                "type": "button"
+                              },
+                              "children": [
+                                "架空の成果の画面に振り返りの口を置きたい",
+                                "残り：数が0の日の見せ方は、次のセッションで決める。"
+                              ]
+                            }
                           ]
                         }
                       ]

@@ -37,11 +37,11 @@ import {
   type Ref,
 } from "react"
 
+import type { Draft } from "../../../../../../../stores/composer-draft.ts"
 import type {
   ComposerKey,
   ComposerSurface,
   ComposerSurfaceHandlers,
-  Draft,
 } from "../../domain/composer-surface.ts"
 import { FormatBar, type FormatBarProps } from "../format-bar/format-bar.tsx"
 import { linkedPaste } from "./domain/markdown-link-paste.ts"
