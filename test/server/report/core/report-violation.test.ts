@@ -206,6 +206,12 @@ describe("reportViolations", () => {
         violation.kind === "markdown-notation" ? violation.notations : [],
       )
 
+    it("画像（![]() と <img>）は image の塊へ差し戻す", () => {
+      expect(notationsOf("![架空の画面](https://example.invalid/a.png)")).toEqual(["image"])
+      expect(notationsOf('<img src="/tmp/a.png" alt="架空">')).toEqual(["image"])
+      expect(notationsOf("```markdown\n![架空](a.png)\n```")).toEqual(["code"])
+    })
+
     it("見出し・表・箇条書き・note・stats・フェンス・mermaid・chart はそれぞれ違反", () => {
       expect(notationsOf("# 架空")).toEqual(["heading"])
       expect(notationsOf("## 架空")).toEqual(["heading"])

@@ -110,6 +110,20 @@ describe("parseReportSections", () => {
     })
   })
 
+  it("image の塊を受けて省いた fold を空文字で補い、path か caption の無い塊は落とす", () => {
+    const image = { kind: "image", path: "架空/after.png", caption: "架空の画面" }
+
+    expect(parseReportSections([{ heading: "", blocks: [image] }]).sections).toEqual([
+      { heading: "", blocks: [{ ...image, fold: "" }] },
+    ])
+    expect(
+      parseReportSections([
+        { heading: "", blocks: [{ kind: "image", caption: "架空" }] },
+        { heading: "", blocks: [{ kind: "image", path: "架空.png" }] },
+      ]),
+    ).toEqual({ sections: [], unknownBlockCount: 0 })
+  })
+
   it("progress の塊は知らない種類として落とさない（unknownBlockCount が0になる）", () => {
     const progress = {
       kind: "progress",

@@ -238,6 +238,7 @@ const MARKDOWN_NOTATION_NAMES = {
   code: { written: "フェンス", replacement: "`code` の塊" },
   mermaid: { written: "mermaid のフェンス", replacement: "`mermaid` の塊" },
   chart: { written: "`chart` のフェンス", replacement: "`chart` の塊" },
+  image: { written: "画像（`![]()` / `<img>`）", replacement: "`image` の塊" },
 } as const satisfies Record<string, { readonly written: string; readonly replacement: string }>
 
 export const MARKDOWN_NOTATIONS = Object.keys(MARKDOWN_NOTATION_NAMES).filter(
@@ -245,6 +246,9 @@ export const MARKDOWN_NOTATIONS = Object.keys(MARKDOWN_NOTATION_NAMES).filter(
 )
 
 const MERMAID_KINDS: ReadonlySet<string> = new Set(REPORT_MERMAID_KINDS)
+
+/** Markdown の画像（`![…](`）か `<img>` のタグ。 */
+const IMAGE_NOTATION = /!\[[^\]]*\]\(|<img\b/i
 
 /** `#` / `##` の見出し（CommonMark の ATX 見出し。行頭の空白は3つまで）。`###` は節の下の段で、塊の種類が無い。 */
 const SECTION_HEADING = /^ {0,3}#{1,2}(?:[ \t]|$)/
@@ -378,6 +382,8 @@ function hasNotation(
       return levelFences.some((fence) => fence.info === "mermaid")
     case "chart":
       return levelFences.some((fence) => fence.info === "chart")
+    case "image":
+      return lines.some((line) => IMAGE_NOTATION.test(line))
   }
 }
 

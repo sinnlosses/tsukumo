@@ -9,6 +9,7 @@ import { createCurrentCharacter } from "./current-character.ts"
 import { type Config, VIEW_PORT_ENV_NAME } from "./server/core/config.ts"
 import { closeTab, createOrcaHost, openOrReuseView } from "./server/host/adapter/orca-host.ts"
 import type { Host } from "./server/host/core/host.ts"
+import { createReportImageShelf } from "./server/report/core/report-image-shelf.ts"
 import { readFakeSession } from "./server/session-driver/adapter/fake-driver.ts"
 import { createPromptImageShelf } from "./server/session-driver/core/prompt-image-shelf.ts"
 import { createTokenUsageLog } from "./server/token-usage/adapter/token-usage-log.ts"
@@ -71,9 +72,10 @@ export async function run(config: Config, launch: LaunchOptions): Promise<number
   // トークン消費の記録の口は1つをここで作ってセッションとビューの両側へ渡す。
   // 置き場（`~/.tsukumo/token-usage/`）を知っているところを増やさない。
   const tokenUsageLog = createTokenUsageLog()
-  // 依頼に添えた画像の原寸の棚も1つをここで作って両側へ渡す。
+  // 依頼に添えた画像の原寸の棚と、レポートの画像の棚も1つずつをここで作って両側へ渡す。
   // 両側が同じ棚を見ないと、置いた原寸をビューが引けない。
   const promptImageShelf = createPromptImageShelf()
+  const reportImageShelf = createReportImageShelf()
 
   const view = await startViewDelivery({
     portResolution,
@@ -81,6 +83,7 @@ export async function run(config: Config, launch: LaunchOptions): Promise<number
     character,
     tokenUsageLog,
     promptImageShelf,
+    reportImageShelf,
     devServer: launch.devServer,
   })
   if (!view.ok) {
@@ -97,6 +100,7 @@ export async function run(config: Config, launch: LaunchOptions): Promise<number
     fakeSession,
     tokenUsageLog,
     promptImageShelf,
+    reportImageShelf,
     viewPort: view.port,
   })
   view.connect(session)

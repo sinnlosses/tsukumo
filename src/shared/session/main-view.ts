@@ -343,7 +343,10 @@ function reportMarkdown(
       workPlanMarkdown(latestWorkPlanOf(context)),
       reportChecksMarkdown(report.checks, (command) => bashCommandDuration(context, command)),
     ),
-    reportSectionsMarkdown(tidyReportSections(report)),
+    reportSectionsMarkdown(tidyReportSections(report), {
+      kind: "shelved",
+      toolUseId: report.toolUseId,
+    }),
     isBlankText(report.favor) ? "" : `<div class="note note-favor">\n\n${report.favor}\n\n</div>`,
   ]
     .filter((part) => !isBlankText(part))
@@ -362,12 +365,15 @@ function statusMarkdown(workPlan: string, checks: string): string {
 function workPlanMarkdown(plan: LatestWorkPlan): string {
   return plan.kind === "none"
     ? ""
-    : reportSectionsMarkdown([
-        {
-          heading: "",
-          blocks: [{ kind: "progress", steps: plan.phases, current: plan.current, fold: "" }],
-        },
-      ])
+    : reportSectionsMarkdown(
+        [
+          {
+            heading: "",
+            blocks: [{ kind: "progress", steps: plan.phases, current: plan.current, fold: "" }],
+          },
+        ],
+        { kind: "none" },
+      )
 }
 
 /**

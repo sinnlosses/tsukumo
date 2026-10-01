@@ -15,6 +15,7 @@ import {
 } from "../../../../src/server/character-pack/adapter/character-pack.ts"
 import {
   createStartupToken,
+  type FindReportImage,
   type ServeCharacterAsset,
   startViewServer,
   type ViewServer,
@@ -27,6 +28,7 @@ import type {
 import type { CharacterAssetLocation } from "../../../../src/shared/character-pack/character-asset.ts"
 import { UNAVAILABLE_CONTEXT_USAGE } from "../../../../src/shared/context-usage/context-usage.ts"
 import { UNAVAILABLE_PLAN_USAGE } from "../../../../src/shared/plan-usage/plan-usage.ts"
+import { reportImagePath } from "../../../../src/shared/report/report-image.ts"
 import { RPC_PATH, type RpcClient } from "../../../../src/shared/rpc.ts"
 import { promptImagePath } from "../../../../src/shared/session-driver/prompt-image.ts"
 import { UNAVAILABLE_SESSION_DIGEST } from "../../../../src/shared/session/session-digest.ts"
@@ -61,6 +63,10 @@ function noPromptImage(): undefined {
   return undefined
 }
 
+function noReportImage(): undefined {
+  return undefined
+}
+
 /**
  * 手続きの口の代役。既定では、ファイル一覧は空（git リポジトリでないとき）、集計は記録が1件も
  * 無い期間、内訳は取れない（セッションがまだ繋がっていない）、成果と暦は「main が読めない」。
@@ -80,6 +86,7 @@ async function startView(
   serveCharacterAsset: ServeCharacterAsset = noCharacterAsset,
   findPromptImage: (id: string) => string | undefined = noPromptImage,
   rpcPorts: Partial<RpcRouterPorts> = {},
+  findReportImage: FindReportImage = noReportImage,
 ): Promise<ViewServer> {
   const server = await startViewServer(0, {
     ui: () => ({
@@ -88,6 +95,7 @@ async function startView(
     }),
     serveCharacterAsset,
     findPromptImage,
+    findReportImage,
     rpcRouter: createRpcRouter({ ...EMPTY_RPC_PORTS, ...rpcPorts }),
     token: TOKEN,
   })
@@ -213,6 +221,7 @@ describe("startViewServer", () => {
       }),
       serveCharacterAsset: noCharacterAsset,
       findPromptImage: noPromptImage,
+      findReportImage: noReportImage,
       rpcRouter: createRpcRouter(EMPTY_RPC_PORTS),
       token: TOKEN,
     })
@@ -628,6 +637,68 @@ describe("startViewServer", () => {
       expect(traversal.status).toBe(404)
       expect(empty.status).toBe(404)
       expect(requested).toEqual([])
+    })
+  })
+
+  describe("/report-image/<toolUseId>/<path>", () => {
+    // 棚に置いた画像の代役。中身は手で書いた数バイト（実物の画像は使わない）。
+    const SHELVED_TOOL_USE_ID = "toolu_fictional"
+    const SHELVED_PATH = "架空/after.png"
+    const SHELVED_BYTES = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x01, 0x02, 0x03])
+
+    function reportImageUrl(server: ViewServer, path: string, token: string | undefined): string {
+      const url = `${viewOrigin(server)}${reportImagePath(SHELVED_TOOL_USE_ID, path)}`
+      return token === undefined ? url : `${url}?t=${token}`
+    }
+
+    function startWithShelf(requested: string[] = []): Promise<ViewServer> {
+      return startView(noCharacterAsset, noPromptImage, {}, (toolUseId, path) => {
+        requested.push(path)
+        return toolUseId === SHELVED_TOOL_USE_ID && path === SHELVED_PATH
+          ? { mediaType: "image/png", content: SHELVED_BYTES }
+          : undefined
+      })
+    }
+
+    it("正しいトークンなら、鍵の組が指す棚の画像をそのメディアタイプで配る", async () => {
+      const server = await startWithShelf()
+
+      const response = await fetch(reportImageUrl(server, SHELVED_PATH, TOKEN))
+
+      expect(response.status).toBe(200)
+      expect(response.headers.get("content-type")).toBe("image/png")
+      expect(response.headers.get("cache-control")).toBe("no-store")
+      expect(new Uint8Array(await response.arrayBuffer())).toEqual(SHELVED_BYTES)
+    })
+
+    it("トークンが無い・違うときは 403（棚を引きにも行かない）", async () => {
+      const requested: string[] = []
+      const server = await startWithShelf(requested)
+
+      const missing = await fetch(reportImageUrl(server, SHELVED_PATH, undefined))
+      const wrong = await fetch(reportImageUrl(server, SHELVED_PATH, createStartupToken()))
+
+      expect(missing.status).toBe(403)
+      expect(wrong.status).toBe(403)
+      expect(requested).toEqual([])
+    })
+
+    it("棚に無いパスは 404、鍵の形が崩れているときは棚を引きにも行かず 404", async () => {
+      const requested: string[] = []
+      const server = await startWithShelf(requested)
+
+      const absent = await fetch(reportImageUrl(server, "架空/before.png", TOKEN))
+      const noPath = await fetch(`${viewOrigin(server)}/report-image/toolu_fictional?t=${TOKEN}`)
+      const badId = await fetch(`${viewOrigin(server)}/report-image/a.b/x.png?t=${TOKEN}`)
+      const badEscape = await fetch(
+        `${viewOrigin(server)}/report-image/toolu_fictional/%E3?t=${TOKEN}`,
+      )
+
+      expect(absent.status).toBe(404)
+      expect(noPath.status).toBe(404)
+      expect(badId.status).toBe(404)
+      expect(badEscape.status).toBe(404)
+      expect(requested).toEqual(["架空/before.png"])
     })
   })
 

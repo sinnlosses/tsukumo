@@ -49,7 +49,15 @@ export function detailRecord(markdown = "架空のレポート"): SessionRecord 
  * 整形が掛かるので、渡した文字列がそのまま出るほうを既定にする）。
  */
 export function reportRecord(conclusion = "架空の結論"): SessionRecord {
-  return { kind: "report", conclusion, sections: [], favor: "", checks: [], task: { kind: "none" } }
+  return {
+    kind: "report",
+    toolUseId: "fictional-report",
+    conclusion,
+    sections: [],
+    favor: "",
+    checks: [],
+    task: { kind: "none" },
+  }
 }
 
 /** `work_plan` で受け取った段取り1件。 */

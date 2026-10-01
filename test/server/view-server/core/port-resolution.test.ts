@@ -29,6 +29,7 @@ const emptyViewServerOptions: ViewServerOptions = {
   ui: () => emptyViewUi,
   serveCharacterAsset: () => undefined,
   findPromptImage: () => undefined,
+  findReportImage: () => undefined,
   rpcRouter: createRpcRouter({
     listRepositoryFiles: () => Promise.resolve([]),
     readTokenUsageSummary: () => EMPTY_TOKEN_USAGE_SUMMARY,

@@ -5,17 +5,29 @@
 // 逃げ道の `markdown` の塊だけは逃がさず、今の本文と同じ経路（許可リスト・mermaid・`chart`）で描く。
 
 import { REPORT_MATRIX_STATUSES, type ReportBlock, type ReportSection } from "./report-block.ts"
+import { reportImagePath } from "./report-image.ts"
 
 /** 節と節の境目に置く、見た目を持たない印。書き上げる演出（`planReveal`）がこれで節を1トピックに割る。 */
 const SECTION_BREAK_MARKDOWN = '<div class="report-section-break"></div>'
 
+/**
+ * `image` の塊の画像をどこから読むか。
+ * `shelved` は描いた `report` の呼び出しの id で棚を引く。`none` は棚に置いていない本文で、画像は「出せない」の札になる。
+ */
+export type ReportImageSource =
+  | { readonly kind: "shelved"; readonly toolUseId: string }
+  | { readonly kind: "none" }
+
 /** 節の並びを1つの Markdown に組む。空の塊・空の節は置かず、節の間に {@link SECTION_BREAK_MARKDOWN} を挟む。 */
-export function reportSectionsMarkdown(sections: readonly ReportSection[]): string {
+export function reportSectionsMarkdown(
+  sections: readonly ReportSection[],
+  imageSource: ReportImageSource,
+): string {
   const parts = sections
     .map((section) =>
       joinParts([
         section.heading.trim() === "" ? "" : `## ${markdownInline(section.heading)}`,
-        ...section.blocks.map((block) => foldedBlockMarkdown(block)),
+        ...section.blocks.map((block) => foldedBlockMarkdown(block, imageSource)),
       ]),
     )
     .filter((part) => part.trim() !== "")
@@ -110,14 +122,14 @@ function joinParts(parts: readonly string[]): string {
   return parts.filter((part) => part.trim() !== "").join("\n\n")
 }
 
-function foldedBlockMarkdown(block: ReportBlock): string {
-  const markdown = blockMarkdown(block)
+function foldedBlockMarkdown(block: ReportBlock, imageSource: ReportImageSource): string {
+  const markdown = blockMarkdown(block, imageSource)
   return block.fold.trim() === "" || markdown.trim() === ""
     ? markdown
     : `<details><summary>${htmlInline(block.fold)}</summary>\n\n${markdown}\n\n</details>`
 }
 
-function blockMarkdown(block: ReportBlock): string {
+function blockMarkdown(block: ReportBlock, imageSource: ReportImageSource): string {
   switch (block.kind) {
     case "text":
       return markdownInline(block.text)
@@ -147,6 +159,8 @@ function blockMarkdown(block: ReportBlock): string {
       return progressMarkdown(block)
     case "options":
       return optionsMarkdown(block)
+    case "image":
+      return imageMarkdown(block, imageSource)
     case "files":
       return filesMarkdown(block)
     case "markdown":
@@ -264,6 +278,24 @@ function dimensionMarkdown(block: Extract<ReportBlock, { readonly kind: "dimensi
     block.title.trim() === "" ? "" : `**${markdownInline(block.title)}**`,
     `<div class="dimension">${rows.join("")}</div>`,
   ])
+}
+
+/**
+ * 画像1枚と、その下の1行。`src` は棚を引く経路で、棚に置いていない本文では付けない（描く側が「出せない」の札にする）。
+ */
+function imageMarkdown(
+  block: Extract<ReportBlock, { readonly kind: "image" }>,
+  imageSource: ReportImageSource,
+): string {
+  const caption = block.caption.trim()
+  const src =
+    imageSource.kind === "shelved"
+      ? ` src="${htmlAttribute(reportImagePath(imageSource.toolUseId, block.path))}"`
+      : ""
+  const alt = htmlAttribute(caption === "" ? "画面の画像" : caption)
+  const captionHtml =
+    caption === "" ? "" : `<span class="image-caption">${htmlInlineWithCode(caption)}</span>`
+  return `<div class="image"><img${src} alt="${alt}">${captionHtml}</div>`
 }
 
 function dimensionValueMarkdown(value: string, before: string): string {

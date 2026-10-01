@@ -5,16 +5,19 @@
 // 許可リスト方式（載っているものだけを通す）にしてあるので、知らない要素・属性は自動的に落ちる。
 //
 // hast-util-sanitize は `schema` を defaultSchema とトップレベルのキーごとに浅くマージする（`{...defaultSchema, ...schema}`）。
-// ここに書いていないキー（`ancestors` 以外）は defaultSchema の値に落ちるので、通すつもりの物は必ずここに書く（img を許可しないのも、tagNames に書かないことで表す）。
+// ここに書いていないキー（`ancestors` 以外）は defaultSchema の値に落ちるので、通すつもりの物は必ずここに書く。
 
 // 型は `rehype-sanitize` の `Options` から取る。
 // 実体は hast-util-sanitize の `Schema` だが、あちらは推移的な依存なので直接 import しない（docs/architecture/build.md「ビルドと依存」）。
 import type { Options as Schema } from "rehype-sanitize"
 
+import { REPORT_IMAGE_SRC_PATTERN } from "../../../../../../../shared/report/report-image.ts"
 import { CODE_FILE_NAME_PROPERTY } from "./code-file-name.ts"
 
 /**
- * 通してよい要素（59個）。ここに無い要素は、中身のテキストだけを残してタグが落ちる（`img` もここに無いので、裸のテキストにすら残らず消える）。
+ * 通してよい要素（60個）。ここに無い要素は、中身のテキストだけを残してタグが落ちる。
+ *
+ * `img` は通すが、`src` は tsukumo のサーバが棚から配る `/report-image/` だけを通す（外部の URL・`data:`・ほかのパスは属性ごと落ちる）。
  *
  * 操作できる要素は1つも無い（`input` / `button` / `meter` / `progress`）。
  * レポートは読む面で、押せるように見えて何も起きないものを混ぜない。
@@ -81,6 +84,7 @@ const ALLOWED_TAG_NAMES: readonly string[] = [
   "details",
   "summary",
   "a",
+  "img",
   // 図を手で組むための SVG。座標や描画の属性は下の SVG_PRESENTATION_ATTRIBUTES で通す。
   "svg",
   "g",
@@ -188,11 +192,11 @@ const ALLOWED_STYLE_PATTERN = /^(?:(?!url\(|@import|expression\(|javascript:|<).
 const ALLOWED_MARKER_REFERENCE_PATTERN = /^url\(#[A-Za-z0-9_-]+\)$/
 
 /**
- * レポートの HTML を削ぎ落とす rehype-sanitize の schema（59要素・43属性）。
+ * レポートの HTML を削ぎ落とす rehype-sanitize の schema（60要素・43属性）。
  *
  * - `clobber: []`。defaultSchema の既定は `id` 等に `user-content-` を前置して DOM クロバー対策をするが、それをやると SVG の `marker-end="url(#foo)"` が指す `id="foo"` と値がズレて参照が壊れる
  * - `strip` に script 等7要素を指定し、中身ごと捨てる（既定の `strip` は `script` だけなので明示する必要がある）
- * - `img` は `tagNames` に無いので、中身（無い）だけが残って消える
+ * - `protocols` は `href` だけ。`src` のスキームは見ず、`img` の `src` の値の検査（{@link REPORT_IMAGE_SRC_PATTERN}）だけで絞る
  */
 export const REPORT_SANITIZE_SCHEMA: Schema = {
   // hast-util-sanitize の型は可変配列を要求するので、キャストではなく一度きりの複製で型を合わせる（呼び出し先が書き換えることはない）。
@@ -218,6 +222,7 @@ export const REPORT_SANITIZE_SCHEMA: Schema = {
     // `code` だけに許す（`*` に足すと、どの要素にも書ける属性が1つ増える。上の43個の数もこの属性を含まない）。
     // 読むのは `Pre` で、hast の段階でラベルに変える（属性そのものは `data-filename` として DOM にも残るが、CSS も JS も引いていない）。
     code: [CODE_FILE_NAME_PROPERTY],
+    img: [["src", REPORT_IMAGE_SRC_PATTERN], "alt"],
     "*": [
       ...GLOBAL_ATTRIBUTES,
       ["style", ALLOWED_STYLE_PATTERN],

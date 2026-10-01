@@ -82,6 +82,23 @@ describe("reportUsageEntryOf", () => {
     expect(changed.blockFields).toEqual(["dimensionBefore"])
   })
 
+  it("image の塊を塊の種類として数え、逃げ道に書いた画像は塊のある記法として数える", () => {
+    const event = reportEvent([
+      {
+        heading: "",
+        blocks: [
+          { kind: "image", path: "架空/after.png", caption: "架空の画面", fold: "" },
+          { kind: "markdown", markdown: "![架空](架空/before.png)", fold: "" },
+        ],
+      },
+    ])
+
+    const entry = reportUsageEntryOf(event, "claude-session-1", 1_000)
+
+    expect(entry.blockKinds).toEqual(["image", "markdown"])
+    expect(entry.notations).toEqual(["image"])
+  })
+
   it("matrix の塊も塊の種類として数える", () => {
     const event = reportEvent([
       {

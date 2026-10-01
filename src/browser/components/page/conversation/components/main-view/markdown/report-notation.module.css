@@ -348,6 +348,35 @@
 .detail-block .report-dimension-before {
   color: var(--ink-quiet);
 }
+/* 画面の画像（`report` の `image` の塊から tsukumo が組む）。
+   入れ物を絵の幅に沿わせる（書き上げる演出が筆の幅を入れ物の箱で測る）。 */
+.detail-block .report-image {
+  width: fit-content;
+  max-width: 100%;
+  margin: 0.5rem 0;
+}
+.detail-block .report-image img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border: 1px solid var(--rule);
+  border-radius: 0.375rem;
+}
+.detail-block .report-image-caption {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: var(--font-label);
+  color: var(--ink-quiet);
+}
+/* 読めなかった画像の代わりの札（`ReportImage`）。 */
+.detail-block .report-image-missing {
+  display: block;
+  padding: 0.4rem 0.75rem;
+  border: 1px solid var(--rule);
+  border-radius: 0.375rem;
+  background: var(--surface-raised);
+  color: var(--ink-quiet);
+}
 /* 触ったファイルの一覧（`report` の `files` の塊から tsukumo が組む）。
    1行に1ファイルで、種別・パス・注記を列に揃える（行を subgrid にする）。狭い画面では注記をパスの下へ回す（末尾の @media）。 */
 .detail-block .report-files {

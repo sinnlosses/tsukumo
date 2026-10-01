@@ -83,7 +83,7 @@ describe("REPORT_NOTATION_PROMPT", () => {
 
   it("語彙（src/shared/report/report-notation.ts）の印はどれも部品で解決され、CSS まで届く", () => {
     // 塊から組む印も、塊にする前の記録ではモデルが書いていたので、描く側は同じに解決する。
-    expect(REPORT_NOTATION_NAMES.length).toBe(72)
+    expect(REPORT_NOTATION_NAMES.length).toBe(74)
 
     for (const name of REPORT_NOTATION_NAMES) {
       const { container } = render(createElement(NotationBlock, { className: name }, "中身"))
@@ -96,10 +96,11 @@ describe("REPORT_NOTATION_PROMPT", () => {
     }
   })
 
-  it("塊から組む印は文面に class として載せず、塊の列に compare と dimension がある", () => {
+  it("塊から組む印は文面に class として載せず、塊の列に compare・dimension・image がある", () => {
     // 塊の種類がある記法を逃げ道に書くと差し戻すので、文面が勧めると往復が増える。
     expect(REPORT_NOTATION_PROMPT).toContain("`compare`")
     expect(REPORT_NOTATION_PROMPT).toContain("`dimension`")
+    expect(REPORT_NOTATION_PROMPT).toContain("`image`")
     expect(REPORT_NOTATION_PROMPT).not.toContain('class="cols"')
     for (const name of [...REPORT_NOTE_KINDS.map(([kind]) => kind), ...REPORT_BLOCK_MARK_NAMES]) {
       expect(namedClasses).not.toContain(name)

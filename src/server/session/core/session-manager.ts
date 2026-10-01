@@ -44,6 +44,11 @@ import {
   createContextUsageRecorder,
 } from "../../context-usage/core/context-usage.ts"
 import type { DispatchResult } from "../../core/command-receiver.ts"
+import {
+  type ReadReportImage,
+  releasedReportToolUseIds,
+  type ReportImageShelf,
+} from "../../report/core/report-image-shelf.ts"
 import { type ReportUsageLog, reportUsageEntryOf } from "../../report/core/report-usage.ts"
 import {
   type PromptImageShelf,
@@ -95,6 +100,13 @@ export type SessionManagerOptions = {
    * 置くのと捨てるのはここで、`prompt` を受けたときに置き、記録から依頼が消えたときに捨てる。
    */
   readonly promptImageShelf: PromptImageShelf
+  /**
+   * `image` の塊の画像の棚。`/report-image/` で配る側と同じ棚を渡すこと。
+   * 駆動から届いた `report` を受けたときに置き（続きから復元した再生では置かない）、記録からレポートが消えたときに捨てる。
+   */
+  readonly reportImageShelf: ReportImageShelf
+  /** `image` の塊のパスを読む口（cwd から解く）。 */
+  readonly readReportImage: ReadReportImage
   /**
    * セッションを1つ起こす（起こし直しも含む）一続き。
    * 駆動を起こすだけでなく、パックを決めて続きを探し、復元した履歴を流すところまでを1つでやる（`createSessionLaunch` が実体）。
@@ -264,12 +276,13 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
 
   /**
    * 状態を差し替える。
-   * 記録から消えた依頼の原寸は、ここで棚から捨てる（窓から落ちた・起こし直して空に戻った。`releasedPromptImageIds`）。
+   * 記録から消えた依頼の原寸とレポートの画像は、ここで棚から捨てる（窓から落ちた・起こし直して空に戻った）。
    * 状態を書き換えるのはここだけにして、棚の寿命が記録の窓から外れないようにする。
    */
   const replaceState = (next: SessionState): void => {
     if (next.records !== state.records) {
       options.promptImageShelf.release(releasedPromptImageIds(state.records, next.records))
+      options.reportImageShelf.release(releasedReportToolUseIds(state.records, next.records))
     }
     state = next
   }
@@ -283,6 +296,10 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
       return
     }
     const at = options.now()
+    // 画像はブラウザがこのレポートを描く前に棚に無いといけないので、束に積む前に置く。
+    if (event.kind === "report") {
+      options.reportImageShelf.shelve(event.toolUseId, event.sections, options.readReportImage)
+    }
     replaceState(applySessionEvent(state, event, at))
     tally.batch.add({ at, event })
     // 会話のアーカイブへ1行足す（パックが分かっているときだけ）。

@@ -13,6 +13,7 @@ import {
 } from "./server/achievement/adapter/main-history.ts"
 import { todayLocalDateKey } from "./server/adapter/local-time.ts"
 import { listDiaryDates, readDiaryDay } from "./server/diary/adapter/diary.ts"
+import type { ReportImageShelf } from "./server/report/core/report-image-shelf.ts"
 import { listRepositoryFiles } from "./server/repository/adapter/repository-file.ts"
 import type { PromptImageShelf } from "./server/session-driver/core/prompt-image-shelf.ts"
 import { summarizeRecentTokenUsage } from "./server/token-usage/core/token-usage-summary.ts"
@@ -59,6 +60,8 @@ export type ViewDeliveryOptions = {
    * ここは引くだけで、置くのと捨てるのはセッションの側。
    */
   readonly promptImageShelf: PromptImageShelf
+  /** `image` の塊の画像の棚（`/report-image/` に配る画像の出どころ）。ここは引くだけ。 */
+  readonly reportImageShelf: ReportImageShelf
   /** Vite の開発サーバを差し込み、`src/browser/` の保存を HMR で当てるか（`--dev`）。 */
   readonly devServer: boolean
 }
@@ -137,6 +140,7 @@ export async function startViewDelivery(options: ViewDeliveryOptions): Promise<V
       ui: () => ui,
       serveCharacterAsset: (location, version) => options.character.serveAsset(location, version),
       findPromptImage: (id) => options.promptImageShelf.find(id),
+      findReportImage: (toolUseId, path) => options.reportImageShelf.find(toolUseId, path),
       rpcRouter,
       token,
     }),

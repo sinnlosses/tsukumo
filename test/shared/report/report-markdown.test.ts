@@ -5,21 +5,28 @@ import {
   type ReportSection,
   reportSectionsOfBody,
 } from "../../../src/shared/report/report-block.ts"
-import { reportSectionsMarkdown } from "../../../src/shared/report/report-markdown.ts"
+import { reportImagePath } from "../../../src/shared/report/report-image.ts"
+import {
+  type ReportImageSource,
+  reportSectionsMarkdown,
+} from "../../../src/shared/report/report-markdown.ts"
+
+const NO_IMAGES = { kind: "none" } as const satisfies ReportImageSource
 
 const section = (blocks: readonly ReportBlock[], heading = ""): ReportSection => ({
   heading,
   blocks,
 })
-const markdownOf = (block: ReportBlock): string => reportSectionsMarkdown([section([block])])
+const markdownOf = (block: ReportBlock): string =>
+  reportSectionsMarkdown([section([block])], NO_IMAGES)
 const text = (value: string): ReportBlock => ({ kind: "text", text: value, fold: "" })
 
 describe("reportSectionsMarkdown", () => {
   it("逃げ道の塊は中身をそのまま出し、本文から畳んだ節は元の本文と同じ Markdown になる", () => {
     const body = '## 架空の見出し\n\n<div class="note">架空の注記</div>\n\n- 架空の項目'
 
-    expect(reportSectionsMarkdown(reportSectionsOfBody(body))).toBe(body)
-    expect(reportSectionsMarkdown([])).toBe("")
+    expect(reportSectionsMarkdown(reportSectionsOfBody(body), NO_IMAGES)).toBe(body)
+    expect(reportSectionsMarkdown([], NO_IMAGES)).toBe("")
   })
 
   it("節の見出しは ## で出し、塊と節は空行で区切る。空の見出し・空の塊は置かない", () => {
@@ -29,7 +36,7 @@ describe("reportSectionsMarkdown", () => {
       section([text("架空の二。")], "架空の次の節"),
     ]
 
-    expect(reportSectionsMarkdown(sections)).toBe(
+    expect(reportSectionsMarkdown(sections, NO_IMAGES)).toBe(
       '## 架空の節\n\n架空の一。\n\n<div class="report-section-break"></div>\n\n' +
         "## 架空の次の節\n\n架空の二。",
     )
@@ -38,7 +45,7 @@ describe("reportSectionsMarkdown", () => {
   it("節と節の境目には見た目を持たない印を挟む。見出しの無い節どうしでも挟む", () => {
     const sections = [section([text("架空の一。")]), section([text("架空の二。")])]
 
-    expect(reportSectionsMarkdown(sections)).toBe(
+    expect(reportSectionsMarkdown(sections, NO_IMAGES)).toBe(
       '架空の一。\n\n<div class="report-section-break"></div>\n\n架空の二。',
     )
   })
@@ -625,6 +632,28 @@ describe("reportSectionsMarkdown", () => {
           options: {},
         }) +
         "\n```",
+    )
+  })
+
+  it("image は棚を引く src の img と1行の説明を組み、説明の < は逃がす", () => {
+    const image: ReportBlock = {
+      kind: "image",
+      path: "架空/after.png",
+      caption: "架空の<画面>",
+      fold: "",
+    }
+
+    expect(
+      reportSectionsMarkdown([section([image])], { kind: "shelved", toolUseId: "toolu_fictional" }),
+    ).toBe(
+      `<div class="image"><img src="${reportImagePath("toolu_fictional", "架空/after.png")}" alt="架空の&lt;画面&gt;">` +
+        '<span class="image-caption">架空の&lt;画面&gt;</span></div>',
+    )
+  })
+
+  it("image の説明が空なら alt は既定の語で説明の行を置かず、棚に置いていない本文では src を付けない", () => {
+    expect(markdownOf({ kind: "image", path: "架空.png", caption: " ", fold: "" })).toBe(
+      '<div class="image"><img alt="画面の画像"></div>',
     )
   })
 

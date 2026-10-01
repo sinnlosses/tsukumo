@@ -11,7 +11,9 @@ import { createServerClock } from "./server/adapter/local-time.ts"
 import { createChatArchive } from "./server/chat/adapter/chat-archive.ts"
 import { createContextUsageLog } from "./server/context-usage/adapter/context-usage-log.ts"
 import type { Config } from "./server/core/config.ts"
+import { readReportImageFile } from "./server/report/adapter/report-image-file.ts"
 import { createReportUsageLog } from "./server/report/adapter/report-usage-log.ts"
+import type { ReportImageShelf } from "./server/report/core/report-image-shelf.ts"
 import { runGit } from "./server/repository/adapter/git.ts"
 import type { FakeSession } from "./server/session-driver/adapter/fake-driver.ts"
 import type { PromptImageShelf } from "./server/session-driver/core/prompt-image-shelf.ts"
@@ -39,6 +41,8 @@ export type SessionStartOptions = {
   readonly tokenUsageLog: TokenUsageLog
   /** 依頼に添えた画像の原寸の棚。ビューの配信が引く棚と同じ1つを渡す。 */
   readonly promptImageShelf: PromptImageShelf
+  /** `image` の塊の画像の棚。ビューの配信が引く棚と同じ1つを渡す。 */
+  readonly reportImageShelf: ReportImageShelf
   /** ビューが実際に待ち受けているポート。セッションの印の目印がここから決まる（`sessionTag`）。 */
   readonly viewPort: number
 }
@@ -96,6 +100,8 @@ export async function startSession(options: SessionStartOptions): Promise<Starte
     contextUsageLog: createContextUsageLog(),
     reportUsageLog: createReportUsageLog(),
     promptImageShelf,
+    reportImageShelf: options.reportImageShelf,
+    readReportImage: (path) => readReportImageFile(cwd, path),
     ...launch.manager,
     ...chat.manager,
     ...visit.manager,

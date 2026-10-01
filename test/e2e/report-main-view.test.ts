@@ -1,10 +1,14 @@
+import { mkdirSync, writeFileSync } from "node:fs"
+import { join } from "node:path"
+import { crc32, deflateSync } from "node:zlib"
+
 import { describe, expect, it } from "vitest"
 
 import { useScenarioRun } from "./scenario-run.ts"
 
 // report → メインビュー（記法・差し戻し・整え。docs/architecture/testing.md「E2E のシナリオの一覧」）。
 // `report` ツールの呼び出しがメインビューの Markdown へどう出るかを、疑似セッションの5つの場面で
-// 確かめる（`report-defaults` は既定値のある欄を省いたレポート、`report-compare` は見比べの塊、`report-dimension` は寸法図の塊、`report-matrix` は対応表の塊、`report-stats` は数の要約の全体の数）: `notation`（記法の一覧）、`report-rejected`（差し戻されたレポートは描かれず、
+// 確かめる（`report-defaults` は既定値のある欄を省いたレポート、`report-compare` は見比べの塊、`report-dimension` は寸法図の塊、`report-image` は画像の塊、`report-matrix` は対応表の塊、`report-stats` は数の要約の全体の数）: `notation`（記法の一覧）、`report-rejected`（差し戻されたレポートは描かれず、
 // 直したレポートだけが残る）、`report-tidied`（整形で落ちる行は描かれず、残りはそのまま出る）、
 // `report-blocks`（候補の比較と触ったファイルの一覧の塊）、`report-chart`（棒・折れ線・円の
 // グラフの塊）。
@@ -123,6 +127,21 @@ describe("report → メインビュー", () => {
     await room.settleAndMatch(ELAPSED_MS)
   })
 
+  it("image の塊が画像として描かれ、無い画像は札になり、外部の URL は描かれない", async () => {
+    const room = await run.open({
+      scenario: "report-image",
+      scene: "report-image",
+      viewport: "wide",
+      domRoots: ["main"],
+    })
+    // 場面の report より先に、塊が指す画像を cwd に置く（無いほうの画像は置かない）。
+    mkdirSync(join(room.cwd, "report-image-fixture"))
+    writeFileSync(join(room.cwd, "report-image-fixture", "after.png"), fictionalPng(8, 4))
+
+    await room.waitForEvent("turn-finished")
+    await room.settleAndMatch(ELAPSED_MS)
+  })
+
   it("matrix の塊が印と aria-label と凡例つきの格子として描かれる", async () => {
     const room = await run.open({
       scenario: "report-matrix",
@@ -232,3 +251,29 @@ describe("report → メインビュー", () => {
     await room.settleAndMatch(ELAPSED_MS)
   })
 })
+
+/** 一色で塗った架空の PNG（実物の画面は使わない）。ブラウザが描ける正しい形で組む。 */
+function fictionalPng(width: number, height: number): Buffer {
+  const header = Buffer.alloc(13)
+  header.writeUInt32BE(width, 0)
+  header.writeUInt32BE(height, 4)
+  // ビット深度 8・色の型 2（RGB）・圧縮 0・フィルタ 0・インターレース無し。
+  header.set([8, 2, 0, 0, 0], 8)
+  const row = Buffer.from([0, ...Array.from({ length: width }, () => [0x5b, 0x8d, 0xa6]).flat()])
+  const pixels = Buffer.concat(Array.from({ length: height }, () => row))
+  return Buffer.concat([
+    Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+    pngChunk("IHDR", header),
+    pngChunk("IDAT", deflateSync(pixels)),
+    pngChunk("IEND", Buffer.alloc(0)),
+  ])
+}
+
+function pngChunk(type: string, data: Buffer): Buffer {
+  const length = Buffer.alloc(4)
+  length.writeUInt32BE(data.length, 0)
+  const typed = Buffer.concat([Buffer.from(type, "ascii"), data])
+  const checksum = Buffer.alloc(4)
+  checksum.writeUInt32BE(crc32(typed), 0)
+  return Buffer.concat([length, typed, checksum])
+}

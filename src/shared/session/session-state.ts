@@ -110,9 +110,11 @@ export type SessionRecord =
   /**
    * `report` ツールで受け取ったレポート。引数をそのまま持ち、1つの本文に組むのはメインビューの導出。
    * 本文（`detail`）とは別の種類にしてあるのは、このレポートがあるターンでは本文を出さないという判定に、どちらから来たかが要るため。
+   * `toolUseId` は `image` の塊の画像を棚から引く鍵（`reportImagePath`）。
    */
   | {
       readonly kind: "report"
+      readonly toolUseId: string
       readonly conclusion: string
       readonly sections: readonly ReportSection[]
       readonly favor: string
@@ -570,6 +572,7 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
           ...state.records,
           {
             kind: "report",
+            toolUseId: event.toolUseId,
             conclusion: event.conclusion,
             sections: event.sections,
             favor: event.favor,

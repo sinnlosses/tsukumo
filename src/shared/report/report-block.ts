@@ -181,6 +181,15 @@ const optionsBlockSchema = z
   })
   .describe("候補を比べて採る・検討・採らないを言うとき。書いた順に描く")
 
+const imageBlockSchema = z
+  .object({
+    kind: z.literal("image"),
+    path: z.string().describe("撮った画像のファイル（絶対か cwd から。png・jpeg・gif・webp）"),
+    caption: inlineText.describe("何が見えるかの1行"),
+    fold,
+  })
+  .describe("手で確かめた画面の画像1枚（何が見えたかを文で言い直さない）。前後は2つ並べる")
+
 const REPORT_FILE_CHANGES = ["added", "modified", "deleted", "read"] as const
 
 const filesBlockSchema = z
@@ -313,6 +322,7 @@ export const reportBlockSchema = z.discriminatedUnion("kind", [
   chartBlockSchema,
   progressBlockSchema,
   optionsBlockSchema,
+  imageBlockSchema,
   filesBlockSchema,
   markdownBlockSchema,
 ])

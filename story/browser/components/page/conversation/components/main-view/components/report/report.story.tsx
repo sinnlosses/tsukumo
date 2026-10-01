@@ -5,7 +5,13 @@ import type { Meta, StoryObj } from "@storybook/react-vite"
 
 import { Report } from "../../../../../../../../../src/browser/components/page/conversation/components/main-view/components/report/report.tsx"
 import type { ReportSection } from "../../../../../../../../../src/shared/report/report-block.ts"
-import { reportSectionsMarkdown } from "../../../../../../../../../src/shared/report/report-markdown.ts"
+import {
+  type ReportImageSource,
+  reportSectionsMarkdown,
+} from "../../../../../../../../../src/shared/report/report-markdown.ts"
+
+/** 見本の本文は棚に画像を置いていない。 */
+const NO_IMAGES = { kind: "none" } as const satisfies ReportImageSource
 
 const meta = {
   component: Report,
@@ -53,56 +59,63 @@ export const Table = {
 /** 型から揃えた表の見本。数だけの列は右揃え、状態の列は中央揃えのバッジになる。 */
 export const AutoAlignedTable = {
   args: {
-    markdown: reportSectionsMarkdown([
-      {
-        heading: "",
-        blocks: [
-          {
-            kind: "table",
-            title: "",
-            columns: ["項目", "件数", "状態"],
-            rows: [
-              ["架空の一", "312", { status: "ok", text: "通過" }],
-              ["架空の二", "8", { status: "warn", text: "要注意" }],
-              ["架空の三で長い項目名（折り返しの見本）", "1,024", { status: "ng", text: "NG" }],
-            ],
-            fold: "",
-          },
-        ],
-      },
-    ] satisfies readonly ReportSection[]),
+    markdown: reportSectionsMarkdown(
+      [
+        {
+          heading: "",
+          blocks: [
+            {
+              kind: "table",
+              title: "",
+              columns: ["項目", "件数", "状態"],
+              rows: [
+                ["架空の一", "312", { status: "ok", text: "通過" }],
+                ["架空の二", "8", { status: "warn", text: "要注意" }],
+                ["架空の三で長い項目名（折り返しの見本）", "1,024", { status: "ng", text: "NG" }],
+              ],
+              fold: "",
+            },
+          ],
+        },
+      ] satisfies readonly ReportSection[],
+      NO_IMAGES,
+    ),
   },
 } satisfies Story
 
 /** 節の境目の見本。境目の印は画面に何も出さない。 */
 export const Sections = {
   args: {
-    markdown: reportSectionsMarkdown([
-      {
-        heading: "架空の一の節",
-        blocks: [{ kind: "text", text: "この節には見出しがある（架空）。", fold: "" }],
-      },
-      {
-        heading: "",
-        blocks: [
-          {
-            kind: "text",
-            text: "この節には見出しが無い。それでも境目の印は前後に入り、1つのトピックになる（架空）。",
-            fold: "",
-          },
-        ],
-      },
-      {
-        heading: "架空の三の節",
-        blocks: [
-          {
-            kind: "markdown",
-            markdown: "### 節の中の副見出し\n\n---\n\n副見出しと水平線は節の境目にしない（架空）。",
-            fold: "",
-          },
-        ],
-      },
-    ] satisfies readonly ReportSection[]),
+    markdown: reportSectionsMarkdown(
+      [
+        {
+          heading: "架空の一の節",
+          blocks: [{ kind: "text", text: "この節には見出しがある（架空）。", fold: "" }],
+        },
+        {
+          heading: "",
+          blocks: [
+            {
+              kind: "text",
+              text: "この節には見出しが無い。それでも境目の印は前後に入り、1つのトピックになる（架空）。",
+              fold: "",
+            },
+          ],
+        },
+        {
+          heading: "架空の三の節",
+          blocks: [
+            {
+              kind: "markdown",
+              markdown:
+                "### 節の中の副見出し\n\n---\n\n副見出しと水平線は節の境目にしない（架空）。",
+              fold: "",
+            },
+          ],
+        },
+      ] satisfies readonly ReportSection[],
+      NO_IMAGES,
+    ),
   },
 } satisfies Story
 

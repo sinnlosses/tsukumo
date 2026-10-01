@@ -15,6 +15,8 @@
 // レポートの記法の class 名は `div` / `span` / `ol` / `li` の上書きで部品に解決する
 // （`NotationBlock` / `NotationInline` / `NotationOrderedList` / `NotationListItem`）。
 //
+// `img` は `ReportImage` で、棚の画像を起動トークンを付けて読む（読めなければ「出せない」の札）。
+//
 // 表は横スクロールの器で包む（`Table`）。
 // 器をここで作るのは、`rehype-raw` が生の HTML も同じ hast の木に入れるので、`table` の上書き1つで Markdown の表とレポートが直接書いた `<table>` の両方に効くため。
 //
@@ -42,6 +44,7 @@ import {
   NotationListItem,
   NotationOrderedList,
 } from "./notation.tsx"
+import { ReportImage } from "./report-image.tsx"
 import styles from "./report-notation.module.css"
 import { repositoryFilePath, useRepositoryFileLink } from "./repository-link.tsx"
 import { REPORT_SANITIZE_SCHEMA } from "./sanitize-schema.ts"
@@ -59,6 +62,7 @@ const REPORT_COMPONENTS = {
   span: NotationInline,
   ol: NotationOrderedList,
   li: NotationListItem,
+  img: ReportImage,
 } satisfies Components
 
 /**

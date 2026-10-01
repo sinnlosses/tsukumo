@@ -1,14 +1,15 @@
 // ビューサーバ。
-// ページ・アセット（`/assets` `/vendor` `/character`）の静的配信と、控えを押したときに引く依頼の画像の原寸（`GET /prompt-image/<id>?t=<起動トークン>`。`<img src>` で読むので HTTP のまま）を持つ。
+// ページ・アセット（`/assets` `/vendor` `/character`）の静的配信と、控えを押したときに引く依頼の画像の原寸（`GET /prompt-image/<id>?t=<起動トークン>`）と、
+// レポートの `image` の塊の画像（`GET /report-image/<toolUseId>/<path>?t=<起動トークン>`）を持つ。画像はどちらも `<img src>` で読むので HTTP のまま。
 // 読み取りの手続きは `/rpc` に載せるだけで、照合は `rpcGuard` のミドルウェアが見る。
 // フレームとコマンドが通る WebSocket は別の境界で、listen 済みのこのサーバに受け口を足す。
 // Vite の開発サーバを差し込んだ起動では、経路の表に無い要求をそちらへ回す（`ViewUi` の `dev`）。
 //
 // 安全のための決まり:
 //   - バインド先は `127.0.0.1` だけ（listen するのはここ）
-//   - 起動トークン（起動ごとの乱数。ディスクに書かない）は `/prompt-image` と `/rpc` を守る。
+//   - 起動トークン（起動ごとの乱数。ディスクに書かない）は `/prompt-image`・`/report-image` と `/rpc` を守る。
 //     ページ・同梱物・素材そのものは会話を含まないので、トークンは求めない。
-//     `/prompt-image` はここの経路の表（`requiresToken`）が、`/rpc` は `rpcGuard` が見る。
+//     `/prompt-image`・`/report-image` はここの経路の表（`requiresToken`）が、`/rpc` は `rpcGuard` が見る。
 //     同じ1つを WebSocket の upgrade も見る
 
 import { randomBytes } from "node:crypto"
@@ -24,6 +25,10 @@ import {
   type CharacterAssetLocation,
   readCharacterAssetPath,
 } from "../../../shared/character-pack/character-asset.ts"
+import {
+  readReportImageRoute,
+  REPORT_IMAGE_PATH_PREFIX,
+} from "../../../shared/report/report-image.ts"
 import { RPC_PATH, type rpcContract } from "../../../shared/rpc.ts"
 import {
   parsePromptImage,
@@ -96,6 +101,15 @@ export type ServeCharacterAsset = (
  */
 export type FindPromptImage = (id: string) => string | undefined
 
+/**
+ * 棚から、レポートの呼び出しの id と塊のパスの組が指す画像を引く。
+ * 棚に無い（捨てた・読めなかった・知らない）ときは undefined（配る側が 404 にする）。
+ */
+export type FindReportImage = (
+  toolUseId: string,
+  path: string,
+) => { readonly mediaType: string; readonly content: Uint8Array } | undefined
+
 /** `/rpc` に載せるルータ（全機能の手続きを束ね、照合のミドルウェアを掛けたもの）。ここはどの手続きがあるかを知らない。 */
 export type RpcRouter = Router<typeof rpcContract, RpcContext>
 
@@ -116,9 +130,11 @@ export type ViewServerOptions = {
   readonly serveCharacterAsset: ServeCharacterAsset
   /** `/prompt-image/<id>` に配る原寸の引き口（棚の `find`）。 */
   readonly findPromptImage: FindPromptImage
+  /** `/report-image/<toolUseId>/<path>` に配る画像の引き口（棚の `find`）。 */
+  readonly findReportImage: FindReportImage
   /** `/rpc` に載せるルータ（{@link RpcRouter}）。 */
   readonly rpcRouter: RpcRouter
-  /** 起動トークン（{@link createStartupToken}）。`/prompt-image` と `/rpc` はこれが合わないと配らない（`/ws` と同じ守り方）。 */
+  /** 起動トークン（{@link createStartupToken}）。`/prompt-image`・`/report-image` と `/rpc` はこれが合わないと配らない（`/ws` と同じ守り方）。 */
   readonly token: string
 }
 
@@ -255,6 +271,13 @@ const ROUTES = [
     requiresToken: true,
     handle: (_request, response, path, { options }) =>
       writePromptImage(response, path.slice(PROMPT_IMAGE_PATH_PREFIX.length), options),
+  },
+  {
+    match: { kind: "prefix", prefix: REPORT_IMAGE_PATH_PREFIX },
+    method: "GET",
+    requiresToken: true,
+    handle: (_request, response, path, { options }) =>
+      writeReportImage(response, path.slice(REPORT_IMAGE_PATH_PREFIX.length), options),
   },
   {
     match: { kind: "prefix", prefix: `${RPC_PATH}/` },
@@ -446,6 +469,28 @@ function writePromptImage(
 
   response.writeHead(200, { "content-type": image.mediaType, "cache-control": "no-store" })
   response.end(Buffer.from(image.base64, "base64"))
+}
+
+/**
+ * レポートの `image` の塊の画像を1枚配る。起動トークンの照合は `respond` が済ませている（画面に会話の中身が写る）。
+ * 経路は棚を引く鍵で、ここではファイルに触らない。形が崩れている・棚に無いときは 404。
+ */
+function writeReportImage(
+  response: ServerResponse,
+  rest: string,
+  options: ViewServerOptions,
+): void {
+  const route = readReportImageRoute(rest)
+  const image =
+    route === undefined ? undefined : options.findReportImage(route.toolUseId, route.path)
+  if (image === undefined) {
+    response.writeHead(404, { "content-type": "text/plain; charset=utf-8" })
+    response.end("not found\n")
+    return
+  }
+
+  response.writeHead(200, { "content-type": image.mediaType, "cache-control": "no-store" })
+  response.end(image.content)
 }
 
 /**

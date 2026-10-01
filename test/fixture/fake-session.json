@@ -2342,6 +2342,106 @@
       ]
     },
     {
+      "name": "report-image",
+      "steps": [
+        {
+          "afterMs": 0,
+          "event": {
+            "kind": "request",
+            "text": "画像の塊の見え方を確かめたい（架空の依頼）",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 300,
+          "event": {
+            "kind": "speech",
+            "text": "撮った画面を載せるね。",
+            "expression": "default"
+          }
+        },
+        {
+          "afterMs": 1500,
+          "event": {
+            "kind": "report",
+            "task": { "kind": "none" },
+            "closing": { "kind": "speech", "text": "載せたよ！", "expression": "proud" },
+            "toolUseId": "fake-report-image-1",
+            "conclusion": "架空の結論: 見出しの字を一段大きくした画面を撮った。",
+            "sections": [
+              {
+                "heading": "架空の撮った画面",
+                "blocks": [
+                  {
+                    "kind": "image",
+                    "path": "report-image-fixture/after.png",
+                    "caption": "架空の札の見出しが 21px になった画面",
+                    "fold": ""
+                  },
+                  {
+                    "kind": "image",
+                    "path": "report-image-fixture/missing.png",
+                    "caption": "架空の置いていない画像",
+                    "fold": ""
+                  }
+                ]
+              },
+              {
+                "heading": "架空の外を指す画像",
+                "blocks": [
+                  {
+                    "kind": "markdown",
+                    "markdown": "![外の画像](https://example.invalid/a.png)\n\n<img src=\"https://example.invalid/b.png\" alt=\"外\">",
+                    "fold": ""
+                  }
+                ]
+              },
+              {
+                "heading": "架空の同じ内容を文で",
+                "blocks": [
+                  {
+                    "kind": "list",
+                    "style": "bullet",
+                    "items": [
+                      {
+                        "label": "見出し",
+                        "text": "札の見出しの字が 18px から 21px になり、本文との差がはっきりした",
+                        "done": false
+                      },
+                      {
+                        "label": "余白",
+                        "text": "見出しと本文の間は 28px から 26px に詰まった",
+                        "done": false
+                      }
+                    ],
+                    "fold": ""
+                  }
+                ]
+              }
+            ],
+            "favor": "",
+            "checks": []
+          }
+        },
+        {
+          "afterMs": 1550,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-report-image-1",
+            "content": "ok",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 2300,
+          "event": {
+            "kind": "turn-finished",
+            "outcome": { "kind": "completed" }
+          }
+        }
+      ]
+    },
+    {
       "name": "report-defaults",
       "steps": [
         {

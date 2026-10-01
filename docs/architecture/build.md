@@ -52,7 +52,7 @@
 
 - **配り方は `server.ts` の `ViewUi` の合併型**（`bundle` / `dev`）。`dev` のとき、ページは
   `<script type="module" src="/main.tsx">` を開発サーバの `transformIndexHtml` に通したもので、
-  **経路の表に無い要求だけ**を開発サーバへ回す（`/rpc`・`/vendor/`・`/character/`・`/prompt-image/` の
+  **経路の表に無い要求だけ**を開発サーバへ回す（`/rpc`・`/vendor/`・`/character/`・`/prompt-image/`・`/report-image/` の
   経路と守り方は変わらない。`/assets/` の対は `dev` のあいだ 404）
 - **HMR の WebSocket は `/vite-hmr`**。`/ws` の受け口は合わない upgrade を閉じるので、Vite が受ける
   upgrade は触らずに譲る（`ownsUpgrade` / `yieldsUpgrade`）

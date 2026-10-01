@@ -4,8 +4,14 @@ import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { Markdown } from "../../../../../../../../src/browser/components/page/conversation/components/main-view/markdown/markdown.tsx"
 import { RepositoryFileLinkContext } from "../../../../../../../../src/browser/components/page/conversation/components/main-view/markdown/repository-link.tsx"
-import { reportSectionsMarkdown } from "../../../../../../../../src/shared/report/report-markdown.ts"
+import type { ReportSection } from "../../../../../../../../src/shared/report/report-block.ts"
+import { reportSectionsMarkdown as reportSectionsMarkdownFrom } from "../../../../../../../../src/shared/report/report-markdown.ts"
 import { typedElement } from "../../../../../../../typed-element.ts"
+
+/** 描いた `report` の本文と同じく、画像を棚から引く本文に組む。 */
+function reportSectionsMarkdown(sections: readonly ReportSection[]): string {
+  return reportSectionsMarkdownFrom(sections, { kind: "shelved", toolUseId: "fictional-report" })
+}
 
 afterEach(() => {
   cleanup()
@@ -741,5 +747,72 @@ describe("Markdown（色を指す inline code をその色の地で見せる）"
 
     const styles = [...container.querySelectorAll("code")].map((code) => code.getAttribute("style"))
     expect(styles).toEqual([null, null])
+  })
+})
+
+describe("Markdown（image の塊の画像）", () => {
+  const MISSING_SELECTOR = 'span[role="img"].report-image-missing'
+
+  function withPageToken(run: () => void): void {
+    const before = window.location.href
+    window.history.replaceState(null, "", "/?t=fictional-token")
+    try {
+      run()
+    } finally {
+      window.history.replaceState(null, "", before)
+    }
+  }
+
+  it("棚の画像は起動トークンを付けて読み、説明の1行が添う", () => {
+    withPageToken(() => {
+      const text = reportSectionsMarkdown([
+        {
+          heading: "",
+          blocks: [{ kind: "image", path: "架空/after.png", caption: "架空の画面", fold: "" }],
+        },
+      ])
+      const { container } = render(<Markdown text={text} />)
+
+      const image = typedElement(
+        container.querySelector("div.report-image > img"),
+        HTMLImageElement,
+        "画像",
+      )
+      expect(image.getAttribute("src")).toBe(
+        "/report-image/fictional-report/%E6%9E%B6%E7%A9%BA%2Fafter.png?t=fictional-token",
+      )
+      expect(image.alt).toBe("架空の画面")
+      expect(container.querySelector("span.report-image-caption")?.textContent).toBe("架空の画面")
+    })
+  })
+
+  it("外部の URL・data:・ほかのパスの画像は img にならず「出せない」の札になる", () => {
+    const { container } = render(
+      <Markdown
+        text={[
+          '<img src="https://example.invalid/a.png" alt="外">',
+          "![外](https://example.invalid/b.png)",
+          "![手元](/tmp/a.png)",
+          '<img src="data:image/png;base64,AAAA" alt="埋め込み">',
+        ].join("\n\n")}
+      />,
+    )
+
+    expect(container.querySelector("img")).toBeNull()
+    expect(container.querySelectorAll(MISSING_SELECTOR)).toHaveLength(4)
+    expect(container.innerHTML).not.toContain("example.invalid")
+    expect(container.innerHTML).not.toContain("data:image")
+  })
+
+  it("読めなかった画像は「出せない」の札に替わる", () => {
+    const text = reportSectionsMarkdown([
+      { heading: "", blocks: [{ kind: "image", path: "架空.png", caption: "架空", fold: "" }] },
+    ])
+    const { container } = render(<Markdown text={text} />)
+
+    fireEvent.error(typedElement(container.querySelector("img"), HTMLImageElement, "画像"))
+
+    expect(container.querySelector("img")).toBeNull()
+    expect(container.querySelector(MISSING_SELECTOR)?.getAttribute("aria-label")).toBe("架空")
   })
 })

@@ -14,6 +14,10 @@ import type {
   ContextUsageLog,
 } from "../../../../src/server/context-usage/core/context-usage.ts"
 import type { DiaryWriterSource } from "../../../../src/server/diary/core/diary-writer.ts"
+import {
+  createReportImageShelf,
+  type ReportImage,
+} from "../../../../src/server/report/core/report-image-shelf.ts"
 import type {
   ReportUsageEntry,
   ReportUsageLog,
@@ -198,6 +202,8 @@ function startManagerWithStub() {
     contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
     reportUsageLog: NOOP_REPORT_USAGE_LOG,
     promptImageShelf: createPromptImageShelf(),
+    reportImageShelf: createReportImageShelf(),
+    readReportImage: () => undefined,
     rememberSessionDefault: (sessionDefault) => ({
       kind: "session-default-changed",
       sessionDefault,
@@ -357,6 +363,8 @@ describe("createSessionManager", () => {
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
       reportUsageLog: NOOP_REPORT_USAGE_LOG,
       promptImageShelf: createPromptImageShelf(),
+      reportImageShelf: createReportImageShelf(),
+      readReportImage: () => undefined,
       rememberSessionDefault: (sessionDefault) => ({
         kind: "session-default-changed",
         sessionDefault,
@@ -448,6 +456,8 @@ describe("createSessionManager", () => {
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
       reportUsageLog: NOOP_REPORT_USAGE_LOG,
       promptImageShelf: createPromptImageShelf(),
+      reportImageShelf: createReportImageShelf(),
+      readReportImage: () => undefined,
       rememberSessionDefault: (sessionDefault) => ({
         kind: "session-default-changed",
         sessionDefault,
@@ -534,6 +544,8 @@ describe("createSessionManager", () => {
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
       reportUsageLog: NOOP_REPORT_USAGE_LOG,
       promptImageShelf: createPromptImageShelf(),
+      reportImageShelf: createReportImageShelf(),
+      readReportImage: () => undefined,
       rememberSessionDefault: (sessionDefault) => ({
         kind: "session-default-changed",
         sessionDefault,
@@ -597,6 +609,8 @@ describe("createSessionManager", () => {
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
       reportUsageLog: NOOP_REPORT_USAGE_LOG,
       promptImageShelf: createPromptImageShelf(),
+      reportImageShelf: createReportImageShelf(),
+      readReportImage: () => undefined,
       rememberSessionDefault: (sessionDefault) => ({
         kind: "session-default-changed",
         sessionDefault,
@@ -674,6 +688,8 @@ describe("createSessionManager", () => {
         contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
         reportUsageLog: NOOP_REPORT_USAGE_LOG,
         promptImageShelf: createPromptImageShelf(),
+        reportImageShelf: createReportImageShelf(),
+        readReportImage: () => undefined,
         rememberSessionDefault: (sessionDefault) => ({
           kind: "session-default-changed",
           sessionDefault,
@@ -852,6 +868,8 @@ describe("createSessionManager", () => {
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
       reportUsageLog: NOOP_REPORT_USAGE_LOG,
       promptImageShelf: createPromptImageShelf(),
+      reportImageShelf: createReportImageShelf(),
+      readReportImage: () => undefined,
       rememberSessionDefault: (sessionDefault) => ({
         kind: "session-default-changed",
         sessionDefault,
@@ -953,6 +971,8 @@ describe("createSessionManager", () => {
         contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
         reportUsageLog: NOOP_REPORT_USAGE_LOG,
         promptImageShelf: createPromptImageShelf(),
+        reportImageShelf: createReportImageShelf(),
+        readReportImage: () => undefined,
         rememberSessionDefault: (sessionDefault) => ({
           kind: "session-default-changed",
           sessionDefault,
@@ -1311,6 +1331,8 @@ describe("createSessionManager", () => {
         contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
         reportUsageLog: NOOP_REPORT_USAGE_LOG,
         promptImageShelf: createPromptImageShelf(),
+        reportImageShelf: createReportImageShelf(),
+        readReportImage: () => undefined,
         rememberSessionDefault: (sessionDefault) => ({
           kind: "session-default-changed",
           sessionDefault,
@@ -1611,6 +1633,8 @@ describe("createSessionManager", () => {
         },
         reportUsageLog: NOOP_REPORT_USAGE_LOG,
         promptImageShelf: createPromptImageShelf(),
+        reportImageShelf: createReportImageShelf(),
+        readReportImage: () => undefined,
         rememberSessionDefault: (sessionDefault) => ({
           kind: "session-default-changed",
           sessionDefault,
@@ -1779,6 +1803,8 @@ describe("createSessionManager", () => {
           },
         },
         promptImageShelf: createPromptImageShelf(),
+        reportImageShelf: createReportImageShelf(),
+        readReportImage: () => undefined,
         rememberSessionDefault: (sessionDefault) => ({
           kind: "session-default-changed",
           sessionDefault,
@@ -1886,6 +1912,8 @@ describe("依頼に添えた画像の棚", () => {
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
       reportUsageLog: NOOP_REPORT_USAGE_LOG,
       promptImageShelf: shelf,
+      reportImageShelf: createReportImageShelf(),
+      readReportImage: () => undefined,
       rememberSessionDefault: (sessionDefault) => ({
         kind: "session-default-changed",
         sessionDefault,
@@ -1976,6 +2004,106 @@ describe("依頼に添えた画像の棚", () => {
   })
 })
 
+describe("レポートの画像の棚", () => {
+  // 画像は架空のバイト列（実物の画像は使わない）。
+  const FICTIONAL_IMAGE: ReportImage = {
+    mediaType: "image/png",
+    content: new Uint8Array([1, 2, 3]),
+  }
+
+  function imageReportEvent(toolUseId: string): SessionEvent {
+    return {
+      kind: "report",
+      toolUseId,
+      conclusion: "架空の結論。",
+      sections: [
+        {
+          heading: "",
+          blocks: [{ kind: "image", path: "fictional/after.png", caption: "", fold: "" }],
+        },
+      ],
+      favor: "",
+      checks: [],
+      closing: { kind: "none" },
+      unknownBlockCount: 0,
+      sessionSummary: undefined,
+      task: { kind: "none" },
+    }
+  }
+
+  function startManagerWithReportImageShelf() {
+    const stub = createStubDriver()
+    const shelf = createReportImageShelf()
+    const readPaths: string[] = []
+    const manager = createSessionManager({
+      now: () => 1_000,
+      openFile: () => Promise.resolve(true),
+      readAchievementDay: () => Promise.resolve(undefined),
+      batchIntervalMs: BATCH_MS,
+      chatConsolidation: NO_CHAT_CONSOLIDATION,
+      watchTasks: NO_TASK_WATCH,
+      visit: NO_VISIT_PORTS,
+      diary: NO_DIARY_WRITER,
+      chatArchive: NOOP_CHAT_ARCHIVE,
+      project: FICTIONAL_PROJECT,
+      tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
+      contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
+      reportUsageLog: NOOP_REPORT_USAGE_LOG,
+      promptImageShelf: createPromptImageShelf(),
+      reportImageShelf: shelf,
+      readReportImage: (path) => {
+        readPaths.push(path)
+        return FICTIONAL_IMAGE
+      },
+      rememberSessionDefault: (sessionDefault) => ({
+        kind: "session-default-changed",
+        sessionDefault,
+      }),
+      rememberVisitEnabled: (visitEnabled) => ({ kind: "visit-enabled-changed", visitEnabled }),
+      launchSession: (onEvent, onRestoredEvents) => {
+        stub.attach(onEvent)
+        stub.attachRestored(onRestoredEvents)
+        return Promise.resolve(stub.driver)
+      },
+      editCharacter: () => Promise.resolve(undefined),
+      createCharacter: () => Promise.resolve(undefined),
+      deleteCharacter: () => Promise.resolve(undefined),
+      forgetRememberedLine: () => Promise.resolve(undefined),
+      readPreviousUsageReview: (): PreviousUsageReview => ({ kind: "none" }),
+      writePreviousUsageReview: () => {},
+      dismissUsageProposal: (dismiss) => ({
+        kind: "usage-proposal-dismissed",
+        key: usageProposalKey(dismiss),
+      }),
+    })
+    return { manager, stub, shelf, readPaths }
+  }
+
+  it("駆動から届いた report の画像を棚に置き、復元の再生では読まない", async () => {
+    const { stub, shelf, readPaths } = startManagerWithReportImageShelf()
+    await waitForBatch()
+
+    stub.emitRestored([imageReportEvent("toolu_restored")])
+    stub.emit(imageReportEvent("toolu_live"))
+    await waitForBatch()
+
+    expect(readPaths).toEqual(["fictional/after.png"])
+    expect(shelf.find("toolu_live", "fictional/after.png")).toEqual(FICTIONAL_IMAGE)
+    expect(shelf.find("toolu_restored", "fictional/after.png")).toBeUndefined()
+  })
+
+  it("起こし直して記録からレポートが消えたら、その画像を棚から捨てる", async () => {
+    const { manager, stub, shelf } = startManagerWithReportImageShelf()
+    await waitForBatch()
+    stub.emit(imageReportEvent("toolu_live"))
+    await waitForBatch()
+
+    await manager.commands.session.switchCharacter({ name: "fictional" })
+
+    expect(shelf.find("toolu_live", "fictional/after.png")).toBeUndefined()
+  })
+})
+
 describe("createSessionManager（見直し）", () => {
   it("受け付けた見直しの結果は events で画面へ届き、次の hello の姿も結果になる", async () => {
     const { manager, stub } = startManagerWithStub()
@@ -2056,6 +2184,8 @@ describe("createSessionManager（見直し）", () => {
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
       reportUsageLog: NOOP_REPORT_USAGE_LOG,
       promptImageShelf: createPromptImageShelf(),
+      reportImageShelf: createReportImageShelf(),
+      readReportImage: () => undefined,
       rememberSessionDefault: (sessionDefault) => ({
         kind: "session-default-changed",
         sessionDefault,
@@ -2192,6 +2322,8 @@ describe("タスク一覧の見張り", () => {
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
       reportUsageLog: NOOP_REPORT_USAGE_LOG,
       promptImageShelf: createPromptImageShelf(),
+      reportImageShelf: createReportImageShelf(),
+      readReportImage: () => undefined,
       rememberSessionDefault: (sessionDefault) => ({
         kind: "session-default-changed",
         sessionDefault,
@@ -2298,6 +2430,8 @@ describe("訪問", () => {
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
       reportUsageLog: NOOP_REPORT_USAGE_LOG,
       promptImageShelf: createPromptImageShelf(),
+      reportImageShelf: createReportImageShelf(),
+      readReportImage: () => undefined,
       rememberSessionDefault: (sessionDefault) => ({
         kind: "session-default-changed",
         sessionDefault,
