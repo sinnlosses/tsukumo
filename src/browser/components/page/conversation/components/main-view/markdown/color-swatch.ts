@@ -45,7 +45,7 @@ export function colorSwatch(text: string, readToken: ColorTokenReader): ColorSwa
  * `getComputedStyle` でカスタムプロパティを直接読むと式のまま返るので、いったん要素の `color` に載せてから読み戻す。
  * 色でないトークン（`font-body` など）は `color` に載せると無効になって親の色を継ぐので、親に置いた見張りの色がそのまま返ってきたら色ではないと見なす。
  */
-export function readColorToken(name: string): ResolvedColor | undefined {
+function readColorTokenFromPage(name: string): ResolvedColor | undefined {
   const root = document.documentElement
   if (getComputedStyle(root).getPropertyValue(`--${name}`).trim() === "") {
     return undefined
@@ -60,6 +60,39 @@ export function readColorToken(name: string): ResolvedColor | undefined {
   const probeColor = getComputedStyle(probe).color
   sentinel.remove()
   return probeColor === sentinelColor ? undefined : parseComputedColor(probeColor)
+}
+
+/**
+ * 読み口を包み、同じ名前は stamp が変わるまで覚えた色を返す（`undefined` も覚える）。
+ * 色を動かす書き込みはすべてルート要素の style 属性に入る（上書きの3色・差し色）ので、stamp にはその属性の文字列を渡す。
+ */
+export function cachedColorTokenReader(
+  read: ColorTokenReader,
+  stamp: () => string,
+): ColorTokenReader {
+  let remembered:
+    | { readonly stamp: string; readonly colors: Map<string, ResolvedColor | undefined> }
+    | undefined
+  return (name) => {
+    const current = stamp()
+    if (remembered?.stamp !== current) {
+      remembered = { stamp: current, colors: new Map() }
+    }
+    if (!remembered.colors.has(name)) {
+      remembered.colors.set(name, read(name))
+    }
+    return remembered.colors.get(name)
+  }
+}
+
+/** ページのトークンを実効の色に解決して覚える口（{@link colorSwatch} に渡す）。 */
+export const readColorToken: ColorTokenReader = cachedColorTokenReader(
+  readColorTokenFromPage,
+  rootStyleStamp,
+)
+
+function rootStyleStamp(): string {
+  return document.documentElement.getAttribute("style") ?? ""
 }
 
 /** `#rgb` / `#rgba` / `#rrggbb` / `#rrggbbaa`。 */
