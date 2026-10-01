@@ -8,13 +8,9 @@
 //
 // 見出しは段を下げる（`#`・`##` → `h4`、`###` 以下 → `h5`）。
 // モーダルの見出しが `h2`、タスクのタイトルが `h3` なので、本文の `##` をそのまま `h2` にすると段が逆になる。
-//
-// `knownIds` は一覧が変わったときだけ変わるので、`components` は `useMemo` で保つ
-// （同じ参照でないと react-markdown が木を作り直す）。
 
 import type { Nodes } from "mdast"
 import type { JSX, ReactElement } from "react"
-import { useMemo } from "react"
 import ReactMarkdown, {
   defaultUrlTransform,
   type Components,
@@ -31,20 +27,11 @@ export function TaskBody(props: {
   readonly knownIds: ReadonlySet<string>
   readonly onJump: (id: string) => void
 }): ReactElement {
-  const remarkPlugins = useMemo(
-    () => [remarkGfm, remarkCjkFriendly, remarkTaskLink(props.knownIds)],
-    [props.knownIds],
-  )
-  const components = useMemo(
-    () => ({ ...TASK_BODY_COMPONENTS, a: anchorOf(props.onJump) }),
-    [props.onJump],
-  )
-
   return (
     <div className={styles["task-body"]}>
       <ReactMarkdown
-        remarkPlugins={remarkPlugins}
-        components={components}
+        remarkPlugins={[remarkGfm, remarkCjkFriendly, remarkTaskLink(props.knownIds)]}
+        components={{ ...TASK_BODY_COMPONENTS, a: anchorOf(props.onJump) }}
         urlTransform={taskLinkUrlTransform}
       >
         {props.text}
@@ -66,7 +53,7 @@ function remarkTaskLink(knownIds: ReadonlySet<string>): () => (tree: Nodes) => v
   return () => (tree) => linkTaskBodyIds(tree, knownIds)
 }
 
-/** `knownIds`・`onJump` に依らない部分（同じ参照でないと react-markdown が木を作り直すので、モジュールの定数に置く）。 */
+/** `onJump` に依らない部分（`components` の部品の参照が変わると、React がその部品の DOM を作り直すので、モジュールの定数に置く）。 */
 const TASK_BODY_COMPONENTS = {
   h1: SectionHeading,
   h2: SectionHeading,

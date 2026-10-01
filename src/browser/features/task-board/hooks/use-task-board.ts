@@ -4,7 +4,7 @@
 // - 一覧を、行・絞り込みの札・選んだタスクの詳細・操作の帯へ畳む
 // CSS の class 名はここでは決めない。
 
-import { useCallback, useMemo, useState, type KeyboardEvent } from "react"
+import { useReducer, useState, type KeyboardEvent } from "react"
 import { isIncludedIn } from "remeda"
 
 import {
@@ -160,30 +160,42 @@ export type TaskBoardView = {
   readonly focusSignal: number
 }
 
+/** 検索の文字・絞り込みの札・選んでいる行と、詳細を押して切り替えた回数。閉じると `focusSignal` 以外を初めに戻す。 */
+type BoardState = {
+  readonly query: string
+  readonly filter: TaskBoardFilter
+  readonly chosen: ChosenRow
+  /**
+   * つながりの札・本文中の ID・パンくずの「戻る」で切り替えるたびに増える。押した要素は
+   * 詳細が丸ごと作り直る（`key={detail.id}`）ときに消えてフォーカスが落ちるので、
+   * `PresentationalTaskBoard` 側でフォーカスを器へ戻す合図にする
+   * （一覧の行を選ぶ・↑↓ だけのときはフォーカスは落ちないので増やさない）。
+   */
+  readonly focusSignal: number
+}
+
 /**
- * 表示上の選択の状態。`selectedId` が選んでいる行、`previousId` はパンくずの「戻る」先
- * （直前の1つだけ）、`pinnedId` は絞り込み・検索の外でも一覧に一時的に出す ID。
- * 一覧で別の行を選ぶ（`select`）とどちらも消え、つながりの札・本文の ID を押す（`jumpTo`）と
- * 両方立つ。戻る（`goBack`）は `pinnedId` だけ `previousId` に付け替える。
+ * 選んでいる行。
+ * - `first`: まだ行を決めていない。一覧の先頭を出す
+ * - `row`: 一覧で選んだ・タスクを指して開いた・パンくずで戻った行。`pinned` なら絞り込み・検索の外でも一覧に一時的に出す
+ * - `jumped`: つながりの札・本文の ID で飛んだ先。一覧に一時的に出し、`previousId` がパンくずの「戻る」先（直前の1つだけ）
  */
-type Navigation = {
-  readonly selectedId: string | undefined
-  readonly previousId: string | undefined
-  readonly pinnedId: string | undefined
-}
+type ChosenRow =
+  | { readonly kind: "first" }
+  | { readonly kind: "row"; readonly id: string; readonly pinned: boolean }
+  | { readonly kind: "jumped"; readonly id: string; readonly previousId: string }
 
-const INITIAL_NAVIGATION: Navigation = {
-  selectedId: undefined,
-  previousId: undefined,
-  pinnedId: undefined,
-}
+/** 選択の移り方に渡す、いま一覧で選ばれて出ている行（行が0件なら `none`）。 */
+type ShownRow = { readonly kind: "none" } | { readonly kind: "row"; readonly id: string }
 
-/** 開くよう頼まれたときの選択。タスクを選んで開くなら、絞り込み・検索の外でも一覧にその行を出す。 */
-function navigationOf(request: TaskBoardRequest): Navigation {
-  return request.kind === "open" && request.focus.kind === "task"
-    ? { selectedId: request.focus.id, previousId: undefined, pinnedId: request.focus.id }
-    : INITIAL_NAVIGATION
-}
+type BoardAction =
+  | { readonly kind: "open"; readonly request: TaskBoardRequest }
+  | { readonly kind: "close" }
+  | { readonly kind: "query"; readonly query: string; readonly shown: ShownRow }
+  | { readonly kind: "filter"; readonly filter: TaskBoardFilter; readonly shown: ShownRow }
+  | { readonly kind: "select"; readonly id: string }
+  | { readonly kind: "jump"; readonly id: string; readonly shownId: string }
+  | { readonly kind: "back" }
 
 export function useTaskBoard(
   tasks: TaskSummaryResult,
@@ -191,76 +203,50 @@ export function useTaskBoard(
   onClose: () => void,
 ): TaskBoardView {
   const open = request.kind === "open"
-  const [query, setQuery] = useState("")
-  const [filter, setFilter] = useState<TaskBoardFilter>("all")
-  const [navigation, setNavigation] = useState<Navigation>(() => navigationOf(request))
+  const [state, send] = useReducer(boardReducer, request, initialBoardState)
   const [requestShown, setRequestShown] = useState(request)
   if (request !== requestShown) {
     setRequestShown(request)
-    setNavigation(navigationOf(request))
+    send({ kind: "open", request })
   }
   const [confirmingId, setConfirmingId] = useState<string | undefined>(undefined)
-  // つながりの札・本文中の ID・パンくずの「戻る」はリンクやボタンを押して切り替わるので、
-  // 選んだタスクの詳細が丸ごと作り直る（`key={detail.id}`）ときに押した要素ごと消え、
-  // フォーカスが落ちる。変わるたびに増やし、`PresentationalTaskBoard` 側でフォーカスを
-  // 器へ戻す合図にする（一覧の行を選ぶ・↑↓ だけのときはフォーカスは落ちないので増やさない）。
-  const [focusSignal, setFocusSignal] = useState(0)
   const dispatch = useSession((session) => session.dispatch)
   const tracked = useTrackedFileList(open)
 
-  // `tasks` が変わらない限り参照を保つ。本文の Markdown（`TaskBody`）の `useMemo` のキーに
-  // `knownIds`・`jumpTo` を使うので、検索・絞り込みの入力のたびに参照を変えて本文を作り直させない。
-  const items = useMemo(() => (tasks.kind === "known" ? tasks.items : []), [tasks])
+  const { query, filter, chosen } = state
+  const items = tasks.kind === "known" ? tasks.items : []
   const entries = boardEntries(items)
   const byId = new Map(entries.map((entry) => [entry.task.id, entry]))
   const isVisible = (entry: BoardEntry): boolean =>
     matchesFilter(entry.state, filter) && matchesQuery(entry.task, query)
-  const rows = entries.filter((entry) => isVisible(entry) || entry.task.id === navigation.pinnedId)
-  const selected = rows.find((entry) => entry.task.id === navigation.selectedId) ?? rows[0]
+  const rows = entries.filter((entry) => isVisible(entry) || isPinned(chosen, entry.task.id))
+  // 選んでいた行が絞り込み・検索で消えたときも、一覧の先頭へ落ちる。
+  const selected = rows.find((entry) => isChosen(chosen, entry.task.id)) ?? rows[0]
+  const shown: ShownRow =
+    selected === undefined ? { kind: "none" } : { kind: "row", id: selected.task.id }
 
-  // 開いた直後・絞り込みで選んでいた行が消えたときは、一覧の先頭へ落ちる（`selected` の `?? rows[0]`）。
-  // `navigation.selectedId` にも書き戻しておく。書き戻さないと、次に飛んだときのパンくずの
-  // 「戻る」先（`jumpTo` が読む `prev.selectedId`）が実際に出ている行と食い違う。
-  if (selected !== undefined && selected.task.id !== navigation.selectedId) {
-    setNavigation((prev) => ({ ...prev, selectedId: selected.task.id }))
+  const knownIds = new Set(items.map((item) => item.id))
+  const jumpTo = (id: string): void => {
+    if (selected === undefined || !knownIds.has(id)) {
+      return
+    }
+    send({ kind: "jump", id, shownId: selected.task.id })
   }
 
-  const knownIds = useMemo(() => new Set(items.map((item) => item.id)), [items])
-  const jumpTo = useCallback(
-    (id: string): void => {
-      if (!items.some((item) => item.id === id)) {
-        return
-      }
-      setNavigation((prev) => ({ selectedId: id, previousId: prev.selectedId, pinnedId: id }))
-      setFocusSignal((count) => count + 1)
-    },
-    [items],
-  )
-
   const close = (): void => {
-    setQuery("")
-    setFilter("all")
-    setNavigation(INITIAL_NAVIGATION)
+    send({ kind: "close" })
     setConfirmingId(undefined)
     onClose()
   }
 
   /** 一覧で行を直に選ぶ（クリック・↑↓）。パンくずと一時的な行は引っ込む。 */
   const select = (id: string): void => {
-    setNavigation({ selectedId: id, previousId: undefined, pinnedId: undefined })
+    send({ kind: "select", id })
   }
 
   /** パンくずの「戻る」・Alt+←。戻る先が無ければ何もしない。 */
   const goBack = (): void => {
-    if (navigation.previousId === undefined) {
-      return
-    }
-    setNavigation((prev) => ({
-      selectedId: prev.previousId ?? prev.selectedId,
-      previousId: undefined,
-      pinnedId: prev.previousId,
-    }))
-    setFocusSignal((count) => count + 1)
+    send({ kind: "back" })
   }
 
   const move = (step: number): void => {
@@ -281,9 +267,9 @@ export function useTaskBoard(
     run: setConfirmingId,
     onJump: jumpTo,
     breadcrumb:
-      navigation.previousId === undefined
-        ? { kind: "none" }
-        : { kind: "some", previousId: navigation.previousId, onBack: goBack },
+      chosen.kind === "jumped"
+        ? { kind: "some", previousId: chosen.previousId, onBack: goBack }
+        : { kind: "none" },
   })
 
   return {
@@ -293,8 +279,12 @@ export function useTaskBoard(
     confirm:
       confirmingId === undefined ? { kind: "closed" } : { kind: "open", taskId: confirmingId },
     onClose: close,
-    onQueryChange: setQuery,
-    onFilter: setFilter,
+    onQueryChange: (nextQuery) => {
+      send({ kind: "query", query: nextQuery, shown })
+    },
+    onFilter: (nextFilter) => {
+      send({ kind: "filter", filter: nextFilter, shown })
+    },
     onSelect: select,
     onKeyDown: (event) => {
       if (event.nativeEvent.isComposing || event.metaKey || event.ctrlKey) {
@@ -318,8 +308,72 @@ export function useTaskBoard(
         close()
       }
     },
-    focusSignal,
+    focusSignal: state.focusSignal,
   }
+}
+
+function initialBoardState(request: TaskBoardRequest): BoardState {
+  return { query: "", filter: "all", chosen: chosenOnOpen(request), focusSignal: 0 }
+}
+
+/** 選択の移り方。描画中に出ている行（`ShownRow`）は、検索・絞り込み・飛ぶときに動作が運ぶ。 */
+function boardReducer(state: BoardState, action: BoardAction): BoardState {
+  switch (action.kind) {
+    case "open":
+      return { ...state, chosen: chosenOnOpen(action.request) }
+    case "close":
+      return { query: "", filter: "all", chosen: { kind: "first" }, focusSignal: state.focusSignal }
+    case "query":
+      return { ...state, query: action.query, chosen: settledOn(state.chosen, action.shown) }
+    case "filter":
+      return { ...state, filter: action.filter, chosen: settledOn(state.chosen, action.shown) }
+    case "select":
+      return { ...state, chosen: { kind: "row", id: action.id, pinned: false } }
+    case "jump":
+      return {
+        ...state,
+        chosen: { kind: "jumped", id: action.id, previousId: action.shownId },
+        focusSignal: state.focusSignal + 1,
+      }
+    case "back":
+      if (state.chosen.kind !== "jumped") {
+        return state
+      }
+      return {
+        ...state,
+        chosen: { kind: "row", id: state.chosen.previousId, pinned: true },
+        focusSignal: state.focusSignal + 1,
+      }
+  }
+}
+
+/** 開くよう頼まれたときの選択。タスクを選んで開くなら、絞り込み・検索の外でも一覧にその行を出す。 */
+function chosenOnOpen(request: TaskBoardRequest): ChosenRow {
+  return request.kind === "open" && request.focus.kind === "task"
+    ? { kind: "row", id: request.focus.id, pinned: true }
+    : { kind: "first" }
+}
+
+/**
+ * 一覧を絞り直す前に、選択を出ている行へ寄せる。選んでいた行が消えて先頭へ落ちていたなら、
+ * 絞り込みを緩めても元の行へは戻らず先頭の行のまま。行が0件のあいだは元の選択を持ち続ける。
+ */
+function settledOn(chosen: ChosenRow, shown: ShownRow): ChosenRow {
+  if (shown.kind === "none" || isChosen(chosen, shown.id)) {
+    return chosen
+  }
+  return { kind: "row", id: shown.id, pinned: false }
+}
+
+function isChosen(chosen: ChosenRow, id: string): boolean {
+  return chosen.kind !== "first" && chosen.id === id
+}
+
+/** 絞り込み・検索に当たらなくても一覧に一時的に出す行か。 */
+function isPinned(chosen: ChosenRow, id: string): boolean {
+  return (
+    isChosen(chosen, id) && (chosen.kind === "jumped" || (chosen.kind === "row" && chosen.pinned))
+  )
 }
 
 /** 一覧の1件と、その状態の言い方（行・札・件数で何度も使うので1回だけ作る）。 */

@@ -1,16 +1,19 @@
 import { QueryClientProvider } from "@tanstack/react-query"
-import { cleanup, render, screen } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen } from "@testing-library/react"
+import type { ReactElement } from "react"
 import { afterEach, describe, expect, it } from "vitest"
 
 import { TaskBoard } from "../../../../src/browser/features/task-board/task-board.tsx"
+import type { TaskBoardRequest } from "../../../../src/browser/stores/task-board-request.ts"
 import type { TaskSummaryItem } from "../../../../src/shared/repository/task-summary.ts"
 import { INITIAL_SESSION_STATE } from "../../../../src/shared/session/session-state.ts"
 import { createTestQueryClient } from "../../query-client.tsx"
 import { rpcOutput, stubRpcFetch, type RpcFetchStub } from "../../rpc-fetch-stub.ts"
 import { putSession } from "../../session-store.ts"
 
-// タスクのモーダルのうち、Beads 方式の置き場所（Issue）と置き場所の無い課題。
-// E2E の足場は一時の cwd に develop/task/ を手書きするファイル方式しか作れない（`bd` を起こさない）ので、ここで持つ。
+// タスクのモーダルのうち、次の2つ。
+// - Beads 方式の置き場所（Issue）と置き場所の無い課題。E2E の足場は一時の cwd に develop/task/ を手書きするファイル方式しか作れない（`bd` を起こさない）ので、ここで持つ
+// - 選んでいる行の移り方のうち、E2E の場面が持っていないもの（絞り込みで先頭へ落ちたあと・閉じて開き直したあと・一覧が届き直したあと）
 // フィクスチャはすべて手で書いた架空の課題。
 
 let fetchStub: RpcFetchStub | undefined = undefined
@@ -73,3 +76,150 @@ describe("タスクのモーダルの置き場所（Beads 方式）", () => {
     expect(screen.queryByRole("button", { name: "エディタで開く" })).toBeNull()
   })
 })
+
+describe("タスクのモーダルの選択", () => {
+  it("選んでいた行が絞り込みで消えると先頭へ落ち、そこから飛んで「戻る」と出ていた先頭の行へ戻る", () => {
+    renderSelectionBoard(SELECTION_TASKS, OPEN_FIRST)
+    fireEvent.click(screen.getByRole("option", { name: /X-002/ }))
+    fireEvent.click(screen.getByRole("button", { name: /^着手できる/ }))
+    expectShown("X-001")
+
+    fireEvent.click(screen.getByRole("link", { name: "X-002" }))
+    expectShown("X-002")
+    fireEvent.click(screen.getByRole("button", { name: "X-001 に戻る" }))
+
+    expectShown("X-001")
+  })
+
+  it("先頭へ落ちたあと絞り込みを外しても先頭のまま。検索で0件にしてから消すと、その前に選んでいた行へ戻る", () => {
+    renderSelectionBoard(SELECTION_TASKS, OPEN_FIRST)
+    fireEvent.click(screen.getByRole("option", { name: /X-002/ }))
+    fireEvent.click(screen.getByRole("button", { name: /^着手できる/ }))
+    fireEvent.click(screen.getByRole("button", { name: /^すべて/ }))
+    expectShown("X-001")
+
+    fireEvent.click(screen.getByRole("option", { name: /X-003/ }))
+    fireEvent.change(searchBox(), { target: { value: "どこにも無い語" } })
+    expect(screen.queryByRole("option")).toBeNull()
+    fireEvent.change(searchBox(), { target: { value: "" } })
+
+    expectShown("X-003")
+  })
+
+  it("閉じて開き直すと検索・絞り込み・パンくずが初めに戻り、タスクを指して開くと絞り込みの外でもその行を出す", () => {
+    const board = renderSelectionBoard(SELECTION_TASKS, OPEN_FIRST)
+    fireEvent.click(screen.getByRole("link", { name: "X-002" }))
+    fireEvent.change(searchBox(), { target: { value: "架空" } })
+    fireEvent.click(screen.getByRole("button", { name: /^着手できる/ }))
+    fireEvent.click(screen.getByRole("button", { name: "閉じる" }))
+    board.rerenderWith(SELECTION_TASKS, { kind: "closed" })
+    board.rerenderWith(SELECTION_TASKS, OPEN_FIRST)
+
+    expectShown("X-001")
+    expect(searchBox().value).toBe("")
+    expect(screen.getByRole("button", { name: /^すべて/ }).getAttribute("aria-pressed")).toBe(
+      "true",
+    )
+    expect(screen.queryByRole("navigation", { name: "タスクのつながり" })).toBeNull()
+
+    fireEvent.click(screen.getByRole("button", { name: /^着手できる/ }))
+    board.rerenderWith(SELECTION_TASKS, { kind: "open", focus: { kind: "task", id: "X-002" } })
+
+    expectShown("X-002")
+    expect(screen.getByRole("option", { selected: true }).textContent).toContain("絞り込みの外")
+  })
+})
+
+describe("タスクのモーダルの検索欄と本文のリンク", () => {
+  // 単体テストには Compiler が掛からないので、本文のリンクは描くたびに作り直される（組み立てた画面でも打鍵ごとに作り直される）。
+  it("検索欄に打っているあいだも打ったあともフォーカスは検索欄に留まり、そのあと本文中の ID を押すと飛べる", () => {
+    renderSelectionBoard(SELECTION_TASKS, OPEN_FIRST)
+    searchBox().focus()
+
+    for (const value of ["X", "X-", "X-0", "X-00"]) {
+      fireEvent.change(searchBox(), { target: { value } })
+      expect(document.activeElement).toBe(searchBox())
+    }
+    expectShown("X-001")
+
+    fireEvent.click(screen.getByRole("link", { name: "X-002" }))
+
+    expectShown("X-002")
+    expect(screen.getByRole("button", { name: "X-001 に戻る" })).toBeDefined()
+  })
+})
+
+describe("タスクのモーダルの選択（一覧が届き直したとき）", () => {
+  it("開いてから何も操作しないまま、先頭に別の行が来る一覧が届くと、新しい先頭の行を出す", () => {
+    const board = renderSelectionBoard(SELECTION_TASKS, OPEN_FIRST)
+    expectShown("X-001")
+
+    board.rerenderWith(
+      [selectionTask("X-000", "todo", "架空の本文。\n"), ...SELECTION_TASKS],
+      OPEN_FIRST,
+    )
+
+    expectShown("X-000")
+  })
+})
+
+const OPEN_FIRST: TaskBoardRequest = { kind: "open", focus: { kind: "first" } }
+
+function selectionTask(id: string, status: string, body: string): TaskSummaryItem {
+  return {
+    id,
+    summary: `架空の課題（${id}）`,
+    status,
+    difficulty: "sonnet",
+    loopable: "Y",
+    dependencies: [],
+    assignee: undefined,
+    body,
+    location: { kind: "none" },
+  }
+}
+
+const SELECTION_TASKS: readonly TaskSummaryItem[] = [
+  selectionTask("X-001", "todo", "X-002 の保留が解けたら進める。\n"),
+  selectionTask("X-002", "hold", "架空の保留。\n"),
+  selectionTask("X-003", "todo", "架空の本文。\n"),
+]
+
+function renderSelectionBoard(
+  items: readonly TaskSummaryItem[],
+  request: TaskBoardRequest,
+): {
+  readonly rerenderWith: (items: readonly TaskSummaryItem[], request: TaskBoardRequest) => void
+} {
+  putSession(INITIAL_SESSION_STATE)
+  fetchStub = stubRpcFetch(() => rpcOutput([]))
+  const client = createTestQueryClient()
+  const boardOf = (
+    nextItems: readonly TaskSummaryItem[],
+    nextRequest: TaskBoardRequest,
+  ): ReactElement => (
+    <QueryClientProvider client={client}>
+      <TaskBoard
+        tasks={{ kind: "known", items: nextItems }}
+        request={nextRequest}
+        onClose={() => {}}
+      />
+    </QueryClientProvider>
+  )
+  const { rerender } = render(boardOf(items, request))
+  return {
+    rerenderWith: (nextItems, nextRequest) => {
+      rerender(boardOf(nextItems, nextRequest))
+    },
+  }
+}
+
+function searchBox(): HTMLInputElement {
+  return screen.getByRole<HTMLInputElement>("combobox", { name: "タスクを探す" })
+}
+
+/** 一覧で選んでいる行と、右に出している詳細が、どちらも `id` のタスクであること。 */
+function expectShown(id: string): void {
+  expect(screen.getByRole("option", { selected: true }).id).toBe(`task-board-option-${id}`)
+  expect(screen.getByRole("region", { name: `${id} の詳細` })).toBeDefined()
+}
