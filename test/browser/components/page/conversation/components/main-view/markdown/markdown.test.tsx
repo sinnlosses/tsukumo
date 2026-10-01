@@ -138,6 +138,34 @@ describe("Markdown（unified への置き換えが求める記法）", () => {
     expect(current?.[0]?.textContent).toContain("架空の二")
   })
 
+  it("対応表（matrix）は格子の中に role=img と aria-label を持つ印が残り、凡例の印は読み上げから外れる", () => {
+    const text = reportSectionsMarkdown([
+      {
+        heading: "",
+        blocks: [
+          {
+            kind: "matrix",
+            title: "",
+            columns: ["列A", "列B"],
+            rows: [{ name: "行1", cells: ["ok", "ng"] }],
+            fold: "",
+          },
+        ],
+      },
+    ])
+    const { container } = render(<Markdown text={text} />)
+
+    const marks = [...container.querySelectorAll("div.report-matrix td [role='img']")]
+    expect(marks.map((mark) => mark.getAttribute("aria-label"))).toEqual(["OK", "NG"])
+    expect(marks.map((mark) => mark.className.split(" ")[0])).toEqual([
+      "report-matrix-mark",
+      "report-matrix-mark",
+    ])
+    expect(
+      container.querySelectorAll("div.report-matrix-legend [aria-hidden='true']"),
+    ).toHaveLength(2)
+  })
+
   it("数のバー（meter / progress）は許可リストに無いので落ちる", () => {
     // 数の見せ方を stats/stat の1通りに保つための線引き（`REPORT_NOTATION_PROMPT`）。
     // タグは落ちるが中身の文字は残るので、書いても数そのものは読める。

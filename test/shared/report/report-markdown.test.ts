@@ -404,6 +404,34 @@ describe("reportSectionsMarkdown", () => {
     )
   })
 
+  it("matrix は名前だけの見出しの格子に状態の印を置き、凡例は格子に出た状態だけを並べる", () => {
+    const matrix: ReportBlock = {
+      kind: "matrix",
+      title: "架空の対応",
+      columns: ["列|A", "列B"],
+      rows: [
+        { name: "行1", cells: ["ok", "ng"] },
+        { name: "行2", cells: ["na", "ok"] },
+      ],
+      fold: "",
+    }
+
+    const mark = (className: string, label: string, symbol: string): string =>
+      `<span class="matrix-mark ${className}" role="img" aria-label="${label}">${symbol}</span>`
+    expect(markdownOf(matrix)).toBe(
+      "**架空の対応**\n\n" +
+        '<div class="matrix">\n\n' +
+        "|  | 列\\|A | 列B |\n| --- | :---: | :---: |\n" +
+        `| 行1 | ${mark("matrix-mark-ok", "OK", "✓")} | ${mark("matrix-mark-ng", "NG", "✕")} |\n` +
+        `| 行2 | ${mark("matrix-mark-na", "該当なし", "－")} | ${mark("matrix-mark-ok", "OK", "✓")} |\n\n` +
+        '<div class="matrix-legend">' +
+        '<span class="matrix-legend-item"><span class="matrix-mark matrix-mark-ok" aria-hidden="true">✓</span> OK</span>' +
+        '<span class="matrix-legend-item"><span class="matrix-mark matrix-mark-ng" aria-hidden="true">✕</span> NG</span>' +
+        '<span class="matrix-legend-item"><span class="matrix-mark matrix-mark-na" aria-hidden="true">－</span> 該当なし</span>' +
+        "</div>\n\n</div>",
+    )
+  })
+
   it("files は1行に1ファイルで、種別の語・code 要素のパス・注記を並べ、注記が空なら置かない", () => {
     const files: ReportBlock = {
       kind: "files",

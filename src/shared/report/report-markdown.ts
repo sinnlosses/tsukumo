@@ -4,7 +4,7 @@
 // Markdown に埋める文字は行頭の塊の記法と `<` を逃がして改行を畳み、許すのはインラインの記法（inline code・太字・リンク）だけにする。
 // 逃げ道の `markdown` の塊だけは逃がさず、今の本文と同じ経路（許可リスト・mermaid・`chart`）で描く。
 
-import type { ReportBlock, ReportSection } from "./report-block.ts"
+import { REPORT_MATRIX_STATUSES, type ReportBlock, type ReportSection } from "./report-block.ts"
 
 /** 節と節の境目に置く、見た目を持たない印。書き上げる演出（`planReveal`）がこれで節を1トピックに割る。 */
 const SECTION_BREAK_MARKDOWN = '<div class="report-section-break"></div>'
@@ -52,6 +52,17 @@ const CELL_STATUS_MARKS = {
   ng: { className: "cell-status-ng", symbol: "✕", label: "NG" },
 } as const satisfies Record<
   Extract<ReportCell, { readonly status: string }>["status"],
+  { readonly className: string; readonly symbol: string; readonly label: string }
+>
+
+/** 対応表の状態 → 印の class・記号・読み上げと凡例の語。 */
+const MATRIX_MARKS = {
+  ok: { className: "matrix-mark-ok", symbol: "✓", label: "OK" },
+  warn: { className: "matrix-mark-warn", symbol: "！", label: "要注意" },
+  ng: { className: "matrix-mark-ng", symbol: "✕", label: "NG" },
+  na: { className: "matrix-mark-na", symbol: "－", label: "該当なし" },
+} as const satisfies Record<
+  Extract<ReportBlock, { readonly kind: "matrix" }>["rows"][number]["cells"][number],
   { readonly className: string; readonly symbol: string; readonly label: string }
 >
 
@@ -114,6 +125,8 @@ function blockMarkdown(block: ReportBlock): string {
       return listMarkdown(block)
     case "table":
       return tableMarkdown(block)
+    case "matrix":
+      return matrixMarkdown(block)
     case "note":
       return block.text.trim() === ""
         ? ""
@@ -296,6 +309,43 @@ function tableMarkdown(table: Extract<ReportBlock, { readonly kind: "table" }>):
       ),
     ].join("\n"),
   ])
+}
+
+type MatrixBlock = Extract<ReportBlock, { readonly kind: "matrix" }>
+type MatrixStatus = MatrixBlock["rows"][number]["cells"][number]
+
+/**
+ * 行の名前と列の名前だけを見出しにした格子。交点は状態の印だけで、凡例は格子に出た状態だけを添える。
+ * 印の名前は表の見出しの読み上げが担うので、`aria-label` は状態の語だけにする。
+ */
+function matrixMarkdown(block: MatrixBlock): string {
+  const row = (cells: readonly string[]): string => `| ${cells.join(" | ")} |`
+  const grid = [
+    row(["", ...block.columns.map(cellTextMarkdown)]),
+    row(["---", ...block.columns.map(() => ":---:")]),
+    ...block.rows.map(({ name, cells }) =>
+      row([cellTextMarkdown(name), ...cells.map((status) => matrixMarkMarkdown(status, false))]),
+    ),
+  ].join("\n")
+  const present = REPORT_MATRIX_STATUSES.filter((status) =>
+    block.rows.some(({ cells }) => cells.includes(status)),
+  )
+  const legend = present
+    .map(
+      (status) =>
+        `<span class="matrix-legend-item">${matrixMarkMarkdown(status, true)} ${MATRIX_MARKS[status].label}</span>`,
+    )
+    .join("")
+  return joinParts([
+    block.title.trim() === "" ? "" : `**${markdownInline(block.title)}**`,
+    `<div class="matrix">\n\n${grid}\n\n<div class="matrix-legend">${legend}</div>\n\n</div>`,
+  ])
+}
+
+function matrixMarkMarkdown(status: MatrixStatus, legend: boolean): string {
+  const { className, symbol, label } = MATRIX_MARKS[status]
+  const attributes = legend ? 'aria-hidden="true"' : `role="img" aria-label="${label}"`
+  return `<span class="matrix-mark ${className}" ${attributes}>${symbol}</span>`
 }
 
 type ColumnAlign = "left" | "right"

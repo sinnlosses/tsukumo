@@ -25,6 +25,25 @@ describe("reportSectionsOfBody", () => {
 })
 
 describe("parseReportSections", () => {
+  it("matrix の塊を受け、状態の外の値の行を持つ塊は落とす", () => {
+    const matrix = {
+      kind: "matrix",
+      title: "架空の対応",
+      columns: ["列A", "列B"],
+      rows: [{ name: "行1", cells: ["ok", "na"] }],
+      fold: "",
+    }
+    const broken = { ...matrix, rows: [{ name: "行1", cells: ["ok", "good"] }] }
+
+    expect(parseReportSections([{ heading: "", blocks: [matrix] }]).sections).toEqual([
+      { heading: "", blocks: [matrix] },
+    ])
+    expect(parseReportSections([{ heading: "", blocks: [broken] }])).toEqual({
+      sections: [],
+      unknownBlockCount: 0,
+    })
+  })
+
   it("progress の塊は知らない種類として落とさない（unknownBlockCount が0になる）", () => {
     const progress = {
       kind: "progress",

@@ -59,7 +59,30 @@ const tableBlockSchema = z
     rows: z.array(z.array(cellSchema)).min(1).describe("行ごとのセル。数は columns と揃える"),
     fold,
   })
-  .describe("比較・対応・件数。同じ形の項目が2つ以上並んだら表（候補の採否は options）")
+  .describe(
+    "比較・対応・件数。同じ形の項目が2つ以上並んだら表（候補の採否は options、交点が状態だけなら matrix）",
+  )
+
+export const REPORT_MATRIX_STATUSES = ["ok", "warn", "ng", "na"] as const
+
+const matrixBlockSchema = z
+  .object({
+    kind: z.literal("matrix"),
+    title: inlineText.describe("何と何を掛けた対応か・状態の基準"),
+    columns: z.array(inlineText).min(1),
+    rows: z
+      .array(
+        z.object({
+          name: inlineText,
+          cells: z
+            .array(z.enum(REPORT_MATRIX_STATUSES))
+            .describe("列ごとの状態。na は該当なし。数は columns と揃える"),
+        }),
+      )
+      .min(1),
+    fold,
+  })
+  .describe("行×列の交点が状態だけの対応表（機能×条件）。交点に文や数が要るなら table")
 
 const REPORT_NOTE_TONES = ["info", "warn", "ng", "ask", "memo"] as const
 
@@ -232,6 +255,7 @@ export const reportBlockSchema = z.discriminatedUnion("kind", [
   textBlockSchema,
   listBlockSchema,
   tableBlockSchema,
+  matrixBlockSchema,
   noteBlockSchema,
   statsBlockSchema,
   codeBlockSchema,

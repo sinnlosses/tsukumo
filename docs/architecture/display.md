@@ -113,8 +113,8 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/architecture/display.md
 **本文は `report` の `sections`（節と塊の並び）で受け取る**（2026-09-27。形の案は
 `docs/research/report-block.md`、用語は `docs/glossary.md`「節」「塊」）。
 
-- 塊は `text` / `list` / `table` / `note` / `stats` / `code` / `mermaid` / `chart` / `progress` / `options` / `files` と、逃げ道の
-  `markdown` の12種。**種類ごとの使いどころは各塊の `describe`（`src/shared/report/report-block.ts`）が持ち**、
+- 塊は `text` / `list` / `table` / `matrix` / `note` / `stats` / `code` / `mermaid` / `chart` / `progress` / `options` / `files` と、逃げ道の
+  `markdown` の13種。**種類ごとの使いどころは各塊の `describe`（`src/shared/report/report-block.ts`）が持ち**、
   `REPORT_NOTATION_PROMPT` の表には逃げ道に残る記法（`cols` / `card`・`svg`・引用・
   区切り線・複数の塊をまとめて畳む `<details>`）だけを置く。同じことを両方に書くと毎ターンの文脈に2回載る。
   **種類の数に上限は置かない**（2026-09-30 改訂。足すかは下の「読む時間を減らす物差しと線引き」、
@@ -168,6 +168,12 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/architecture/display.md
   2章）。列の全セルが数なら右揃えで `tabular-nums`（桁が縦に揃う）、列の全セルが `status` なら列の
   中央にバッジで揃え、バッジの語（OK / 要注意 / NG）は tsukumo が付ける（書き手の文字が同じ語なら重ねない。行は塗らない。`docs/architecture/screen-design.md` 13.2）。列に `align` は持たせず、
   `reportSectionsMarkdown`（`src/shared/report/report-markdown.ts`）が組み立てるときに1箇所で判定する
+- **行と列の交点が状態だけの対応表は `matrix` の塊で見せる**（2026-10-01。`columns`・`rows`〔`name` と
+  `cells`＝`ok` / `warn` / `ng` / `na`〕を受ける）。交点は印（✓ ！ ✕ －）だけで描き、状態は記号・色・
+  `aria-label`（状態の語だけ。行と列の名前は表の見出しが読み上げる）で言う。**交点に補足は持たせない**
+  （文や数を添えたい・列の型が混じるなら `table` の状態のセル）。凡例は格子に出た状態だけを1つ添える。
+  取り違えは差し戻さず、使われ方の記録の「塊の種類 × レポート数」で `table` と `matrix` の比を見る。
+  行のセルの数が `columns` と揃わなければ `table` と同じ違反で差し戻す。列が多い格子は表と同じ横スクロールの器に収まる
 - **節を書き上げる演出の塊（トピック）の単位にする**（2026-09-27。`docs/research/report-block-richness.md`
   2章）。見出しのタグや水平線を DOM から探して境目を当てるのはやめ（見出しのレベルは節の中の
   副見出しにも、水平線は節の中の軽い区切り〔`---`〕にも使われるので、タグの一致だけでは節の境目と
@@ -194,6 +200,9 @@ sed -n '/^#### 各表示物/,/^#\{2,4\} /p' docs/architecture/display.md
 | `report` の `inputSchema` |         1198 |             6798 | +5600 |
 | `REPORT_NOTATION_PROMPT`  |         5334 |             3991 | −1343 |
 | 合計                      |         6532 |            10789 | +4257 |
+
+2026-10-01 に `matrix` を足したときの `sections` の JSON Schema は 6990 → 7673 字（+683）、
+`REPORT_NOTATION_PROMPT` は塊の列に1語で +11 字（`inputSchema` の `sections` 部分を `z.toJSONSchema` で測った値）。
 
 **切り替えの前の差し戻しと逃げ道**（tsukumo の作業ツリーの transcript にある 2026-09-23〜26 のメインの
 `report` の呼び出しを数えた集計値。本文は写していない。1つの呼び出しが違反の2つ以上に当たることがある）

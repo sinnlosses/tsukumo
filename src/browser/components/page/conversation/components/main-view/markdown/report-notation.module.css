@@ -688,6 +688,54 @@
 .detail-block .report-cell-status-text {
   color: var(--ink);
 }
+/* 対応表（`report` の `matrix` の塊から tsukumo が組む）。交点は印だけで、状態は記号と色の両方で言う。 */
+.detail-block .report-matrix {
+  margin: 0.5rem 0;
+}
+.detail-block .report-matrix .table-scroll td,
+.detail-block .report-matrix .table-scroll th {
+  min-width: 0;
+}
+.detail-block .report-matrix .table-scroll td:first-child {
+  min-width: 4em;
+}
+.detail-block .report-matrix-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 0.3rem;
+  font-weight: 700;
+  line-height: 1;
+}
+.detail-block .report-matrix-mark-ok {
+  color: var(--state-ok);
+  background: color-mix(in srgb, var(--state-ok) 14%, transparent);
+}
+.detail-block .report-matrix-mark-warn {
+  color: var(--state-warn);
+  background: color-mix(in srgb, var(--state-warn) 14%, transparent);
+}
+.detail-block .report-matrix-mark-ng {
+  color: var(--state-ng);
+  background: color-mix(in srgb, var(--state-ng) 14%, transparent);
+}
+.detail-block .report-matrix-mark-na {
+  color: var(--ink-quiet);
+}
+.detail-block .report-matrix-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1rem;
+  font-size: var(--font-secondary);
+  color: var(--ink-quiet);
+}
+.detail-block .report-matrix-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
 /* 数だけの列のセル。棒を下地に敷き、数字を前面に重ねる。
    `inline-block` にすると数字の桁数で幅が変わり、行どうしの棒の長さを比べられなくなる。 */
 .detail-block .report-cell-numeric {

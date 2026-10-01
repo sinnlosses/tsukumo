@@ -109,7 +109,7 @@ export const REPORT_NOTATION_PROMPT = `## レポートの記法（tsukumo）
 **地の文の段落は3文まで。** 4文目が要るなら、表・箇条書きへ移すか \`fold\` で畳む
 （全体の量には上限を置かない。段落が続くのを止める上限だけ数で縛る）。
 
-本文（\`sections\`）は節の並びで、節ごとに塊（\`text\` / \`list\` / \`table\` / \`note\` / \`stats\` /
+本文（\`sections\`）は節の並びで、節ごとに塊（\`text\` / \`list\` / \`table\` / \`matrix\` / \`note\` / \`stats\` /
 \`code\` / \`mermaid\` / \`chart\` / \`progress\` / \`options\` / \`files\`）を並べる。どの塊をいつ使うかは各塊の説明に従う。
 
 **どの塊にも当てはまらない記法だけを \`markdown\` の塊に書く。** そこに見出し・表・箇条書き・

@@ -114,6 +114,17 @@ describe("reportViolations", () => {
       }
       expect(reportViolations(draft([table]))).toEqual([{ kind: "ragged-table", count: 1 }])
     })
+
+    it("セルの数が揃わない行のある matrix も違反", () => {
+      const matrix: ReportBlock = {
+        kind: "matrix",
+        title: "架空の対応",
+        columns: ["列A", "列B"],
+        rows: [{ name: "行1", cells: ["ok"] }],
+        fold: "",
+      }
+      expect(reportViolations(draft([matrix]))).toEqual([{ kind: "ragged-table", count: 1 }])
+    })
   })
 
   describe("chart の series の値の数は labels と揃える", () => {

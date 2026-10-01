@@ -210,7 +210,7 @@ function violationLine(violation: ReportViolation): string {
     case "too-many-notes":
       return `\`note\` の塊が${violation.count}個ある。1〜2個まで減らす`
     case "ragged-table":
-      return `行のセルの数が \`columns\` と揃わない表が${violation.count}個ある。セルの数を揃える`
+      return `行のセルの数が \`columns\` と揃わない表（\`matrix\` を含む）が${violation.count}個ある。セルの数を揃える`
     case "ragged-chart":
       return `\`series\` の \`values\` の数が \`labels\` と揃わない \`chart\` の塊が${violation.count}個ある。数を揃える`
     case "untitled-section":
@@ -445,7 +445,14 @@ function paragraphs(lines: readonly string[]): readonly string[] {
 
 /** 行のセルの数が列の数と揃わない表か。 */
 function isRaggedTable(block: ReportBlock): boolean {
-  return block.kind === "table" && block.rows.some((row) => row.length !== block.columns.length)
+  switch (block.kind) {
+    case "table":
+      return block.rows.some((row) => row.length !== block.columns.length)
+    case "matrix":
+      return block.rows.some(({ cells }) => cells.length !== block.columns.length)
+    default:
+      return false
+  }
 }
 
 /** 系列の値の数が labels の数と揃わない chart の塊か。 */

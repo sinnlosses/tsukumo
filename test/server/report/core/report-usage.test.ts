@@ -43,6 +43,25 @@ describe("reportUsageEntryOf", () => {
     expect(entry.blockKinds).toEqual(["text", "table"])
   })
 
+  it("matrix の塊も塊の種類として数える", () => {
+    const event = reportEvent([
+      {
+        heading: "",
+        blocks: [
+          {
+            kind: "matrix",
+            title: "",
+            columns: ["a"],
+            rows: [{ name: "架空の行", cells: ["ok"] }],
+            fold: "",
+          },
+        ],
+      },
+    ])
+
+    expect(reportUsageEntryOf(event, "claude-session-1", 1_000).blockKinds).toEqual(["matrix"])
+  })
+
   it("既定の値でない塊の欄を、節をまたいで重複を畳んだ集合にする", () => {
     const event = reportEvent([
       {
