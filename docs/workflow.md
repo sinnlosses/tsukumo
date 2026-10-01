@@ -67,6 +67,10 @@
 - **ランタイム・束ね・タイマーを変えるタスクは、`task status` の件名に「ときどき落ちる」とある
   未完了のタスクを `dependencies` に入れて登録する。** 実行環境やタイミングが変わると、ときどきだった
   揺れが毎回落ちるようになり、移行の差分ごと戻すことになる
+- **新しい部品・フック・`domain/` を足すタスクの計画では、置き場を `docs/architecture.md`「ページの形」の
+  表と入れ子の段数で確かめてから `## やること` に書く。** 子部品の `components/` の下（孫部品）に置く
+  計画は、実装の途中で `test/architecture.test.ts`「components/page/ の形」の検査（入れ子は2段まで・
+  部品のディレクトリの外から引いてよいのは `<部品>.tsx` だけ）に落ち、置き場を作り直すことになる
 - **`components/page/` へ移すタスクは、移し先をページの形で書く。** 「6ファイルを
   `conversation-layout/` へ」のように置き場所だけ書くと、直下に置くか `components/` や
   `hooks/`・`domain/` の下に置くかが不明で、`test/architecture.test.ts`「components/page/ の形」の検査に
