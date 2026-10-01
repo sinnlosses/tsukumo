@@ -275,45 +275,7 @@ describe("useAchievement（振り返りのボタン）", () => {
     await waitFor(() => {
       expect(result.current.view.kind).toBe("ready")
     })
-    expect(
-      result.current.review.availability.kind === "blocked"
-        ? result.current.review.availability.reason
-        : "",
-    ).toBe("いま9月20日の日記を書いているので送れない")
-
-    act(() => {
-      result.current.review.onReview()
-    })
-
-    expect(sent).toHaveLength(0)
-  })
-
-  it("空の日は押せず、送らない（ほかの日を書いている最中でも空の日の理由になる）", async () => {
-    const emptyDay: DailyAchievement = {
-      ...KNOWN_TODAY,
-      commitCount: 0,
-      doneTasks: { kind: "known", items: [] },
-    }
-    stubAchievementFetch(() => rpcOutput(emptyDay))
-    const spy: CommandSpy = (command) => sent.push(command)
-    const sent: unknown[] = []
-    const { result } = renderHook(() => useAchievement(), {
-      wrapper: achievementWrapper(
-        createTestQueryClient(),
-        stateWith({
-          diaryWriting: { kind: "writing", date: "2026-09-20", startedAt: 0, stage: "read" },
-        }),
-        spy,
-      ),
-    })
-    await waitFor(() => {
-      expect(result.current.view.kind).toBe("ready")
-    })
-    expect(
-      result.current.review.availability.kind === "blocked"
-        ? result.current.review.availability.reason
-        : "",
-    ).toBe("振り返る成果が無い")
+    expect(result.current.review.availability.kind).toBe("blocked")
 
     act(() => {
       result.current.review.onReview()

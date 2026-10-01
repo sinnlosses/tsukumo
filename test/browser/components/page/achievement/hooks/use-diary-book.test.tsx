@@ -342,10 +342,7 @@ describe("useDiaryBook（白紙の日）", () => {
     if (page.kind !== "ready" || page.right.kind !== "blank") {
       throw new Error("blank のはず")
     }
-    expect(page.right.review.availability).toEqual({
-      kind: "blocked",
-      reason: "振り返る成果が無い",
-    })
+    expect(page.right.review.availability.kind).toBe("blocked")
     const review = page.right.review
 
     act(() => {

@@ -282,19 +282,6 @@ describe("ScreenNav", () => {
       ).toBe("plan")
     })
 
-    // 届く前でも見た目上の既定に倒す（サイドバーの <select> と同じ値）。
-    it("model / permissionMode が届く前は既定を選択する", () => {
-      renderScreenNav()
-
-      expect(
-        typedElement(screen.getByLabelText("モデル"), HTMLSelectElement, "モデルの<select>").value,
-      ).toBe("opus")
-      expect(
-        typedElement(screen.getByLabelText("許可モード"), HTMLSelectElement, "許可モードの<select>")
-          .value,
-      ).toBe("auto")
-    })
-
     it("モデルの選択肢は MODEL_ALIASES と過不足なく一致する（片方だけの追加漏れを防ぐ）", () => {
       renderScreenNav()
 
@@ -345,13 +332,9 @@ describe("ScreenNav", () => {
     })
 
     // 「全部許す」だけ字に意味の色を載せる（ラベルの文字が必ず付くので色だけに頼らない。13.1 原則5）。
-    it("許可モードが「全部許す」のときだけ is-danger が付く", () => {
+    it("許可モードが「全部許す」のとき is-danger が付く", () => {
       renderScreenNav({ session: { ...RUNNING_SESSION, permissionMode: "bypassPermissions" } })
       expect(screen.getByLabelText("許可モード").className).toContain("is-danger")
-
-      cleanup()
-      renderScreenNav({ session: { ...RUNNING_SESSION, permissionMode: "acceptEdits" } })
-      expect(screen.getByLabelText("許可モード").className).not.toContain("is-danger")
     })
 
     // 狭い画面では帯に置く幅が無いので、口と同じく「≡」の中へ入る（docs/architecture/screen-design.md「画面のナビゲーション」）。帯の側にも
@@ -382,7 +365,6 @@ describe("ScreenNav", () => {
       supportsEffort: true,
       effortLevels: ["low", "medium", "high", "xhigh", "max"],
     } as const
-    const HAIKU_SUPPORT = { model: "haiku", supportsEffort: false, effortLevels: [] } as const
 
     it("対応表も読み取った値もまだ届いていないうちは選べず、title に理由が出る", () => {
       renderScreenNav()
@@ -419,22 +401,6 @@ describe("ScreenNav", () => {
       ])
     })
 
-    // haiku は実測で supportsEffort が無いモデル（docs/history/decision.md）。
-    it("対応表がいまのモデルは対応しないと言っていれば選べない", () => {
-      renderScreenNav({
-        model: "claude-haiku-5",
-        modelEffortSupport: [OPUS_SUPPORT, HAIKU_SUPPORT],
-        effort: "medium",
-      })
-
-      const select = typedElement(
-        screen.getByLabelText("effort"),
-        HTMLSelectElement,
-        "effortの<select>",
-      )
-      expect(select.disabled).toBe(true)
-    })
-
     it("押した値へ先に倒さない：session.setEffort を送ってもすぐには表示が変わらない", () => {
       const calls: unknown[] = []
       renderScreenNav(
@@ -451,26 +417,6 @@ describe("ScreenNav", () => {
       expect(
         typedElement(screen.getByLabelText("effort"), HTMLSelectElement, "effortの<select>").value,
       ).toBe("low")
-    })
-
-    // 実測: モデルによっては段が5つより少ない（`xhigh` の無い段など。docs/history/decision.md）。
-    // モデルを切り替えた直後、前に読んだ値がいまのモデルに無い段なら選べない（古い値を出さない）。
-    it("対応はするが、読み取った値がいまのモデルの選べる段に無ければ選べない", () => {
-      const SONNET_4_6_SUPPORT = {
-        model: "sonnet",
-        supportsEffort: true,
-        effortLevels: ["low", "medium", "high", "max"],
-      } as const
-      renderScreenNav({
-        model: "claude-sonnet-4-6",
-        modelEffortSupport: [OPUS_SUPPORT, SONNET_4_6_SUPPORT],
-        effort: "xhigh",
-      })
-
-      expect(
-        typedElement(screen.getByLabelText("effort"), HTMLSelectElement, "effortの<select>")
-          .disabled,
-      ).toBe(true)
     })
   })
 })

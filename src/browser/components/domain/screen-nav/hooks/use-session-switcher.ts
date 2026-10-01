@@ -74,7 +74,7 @@ export type SessionSwitcherView = {
 }
 
 /** 見出しが無い（SDK の `summary` が空・読めない）行に代わりに出す字。 */
-export const NO_HEADING_LABEL = "（題なし）"
+const NO_HEADING_LABEL = "（題なし）"
 
 export function useSessionSwitcher(room: string): SessionSwitcherView {
   const dispatch = useSession((session) => session.dispatch)

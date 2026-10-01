@@ -26,29 +26,6 @@ export type DiaryWriterPortrait = {
 }
 
 /**
- * 段落を書いたパックの立ち絵と名前を導く。
- * `packs` は `SessionState.characterPacks`（見つからなければ立ち絵は出ない）。
- * 表情は日記が文字列で持つ（{@link DiaryParagraph.expression}）ので、そのパックの表情でなくなっていても `default` へ落として読む。
- */
-export function diaryWriterPortraitOf(
-  paragraph: DiaryParagraph,
-  packs: readonly CharacterPackEntry[],
-): DiaryWriterPortrait {
-  const pack = packs.find((entry) => entry.name === paragraph.writer.pack)
-  const expression = isExpression(paragraph.expression) ? paragraph.expression : "default"
-  return {
-    name: paragraph.writer.name,
-    portrait:
-      pack === undefined
-        ? { portraitUrl: undefined, accent: undefined, altText: paragraph.writer.name }
-        : {
-            ...portraitAppearance(pack.character, expression, "default"),
-            altText: `${paragraph.writer.name}（${resolveExpressionLabel(pack.character.expressions, expression)}）`,
-          },
-  }
-}
-
-/**
  * 日記の区画と日記帳に出す立ち絵と名前。
  * 書き上がった日記があれば最後の段落を書いたパック、そうでなければいまのパックを `default` の表情で。
  */
@@ -66,5 +43,28 @@ export function currentWriterPortraitOf(
   return {
     name: character?.name ?? DEFAULT_CHARACTER_NAME,
     portrait: portraitAppearance(character, "default", "default"),
+  }
+}
+
+/**
+ * 段落を書いたパックの立ち絵と名前を導く。
+ * `packs` は `SessionState.characterPacks`（見つからなければ立ち絵は出ない）。
+ * 表情は日記が文字列で持つ（{@link DiaryParagraph.expression}）ので、そのパックの表情でなくなっていても `default` へ落として読む。
+ */
+function diaryWriterPortraitOf(
+  paragraph: DiaryParagraph,
+  packs: readonly CharacterPackEntry[],
+): DiaryWriterPortrait {
+  const pack = packs.find((entry) => entry.name === paragraph.writer.pack)
+  const expression = isExpression(paragraph.expression) ? paragraph.expression : "default"
+  return {
+    name: paragraph.writer.name,
+    portrait:
+      pack === undefined
+        ? { portraitUrl: undefined, accent: undefined, altText: paragraph.writer.name }
+        : {
+            ...portraitAppearance(pack.character, expression, "default"),
+            altText: `${paragraph.writer.name}（${resolveExpressionLabel(pack.character.expressions, expression)}）`,
+          },
   }
 }
