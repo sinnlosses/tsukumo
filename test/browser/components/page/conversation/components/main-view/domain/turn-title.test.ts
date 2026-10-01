@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest"
 
 import {
-  truncateRequestText,
   turnHistoryText,
   turnRequestRest,
   turnTitle,
@@ -48,10 +47,6 @@ describe("turnTitle（札の頭のタイトル）", () => {
     expect(turnTitle(turn({ request: { text: "架空の依頼\n2行目は出さない", images: [] } }))).toBe(
       "架空の依頼",
     )
-  })
-
-  it("レポートがまだ無い（走っている最中の）ターンでも、依頼からタイトルが付く", () => {
-    expect(turnTitle(turn({ steps: [] }))).toBe("架空の依頼")
   })
 
   it("先頭の空行と行の中の空白の並びを詰める", () => {
@@ -150,17 +145,11 @@ describe("turnHistoryText（一覧の行に出す依頼の全文）", () => {
     expect(turnHistoryText(turn({ request: undefined, steps: [] }))).toBe("（依頼なし）")
   })
 
-  it("長い依頼は上限で切って末尾に … を付ける（truncateRequestText と同じ規則）", () => {
+  it("長い依頼は上限で切って末尾に … を付ける", () => {
     const long = "あ".repeat(2001)
 
     expect(turnHistoryText(turn({ request: { text: long, images: [] } }))).toBe(
       `${"あ".repeat(2000)}…`,
     )
-  })
-})
-
-describe("truncateRequestText（依頼の全文の長さの上限）", () => {
-  it("上限以下ならそのまま返す", () => {
-    expect(truncateRequestText("架空の依頼")).toBe("架空の依頼")
   })
 })

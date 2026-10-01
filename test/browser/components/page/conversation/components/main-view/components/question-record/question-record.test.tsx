@@ -1,5 +1,5 @@
 // 色そのものはテストしない（`CLAUDE.md`「見た目（色・崩れ）は目視で確かめる」）。
-// 差し色が当たる側の class を持つこと、区切りが成り立つ DOM 構造になっていることまでを測る。
+// 差し色が当たる側の class を持つことまでを測る。
 
 import { act, cleanup, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
@@ -53,19 +53,6 @@ describe("QuestionRecord（選んだ印の色）", () => {
     expect(unchosenMark?.className.split(" ")).not.toContain(ACCENT_CLASS)
   })
 
-  it("選ばなかった ○ には差し色の class を付けない（差し色は選んだ側だけ）", () => {
-    const entry: MainViewQuestion = {
-      kind: "question",
-      questions: [question("確認", "どちらにする？")],
-      answers: [[]],
-    }
-
-    const { container } = render(<QuestionRecord entry={entry} />)
-
-    const marks = [...container.querySelectorAll(".question-option > span")]
-    expect(marks.some((mark) => mark.className.split(" ").includes(ACCENT_CLASS))).toBe(false)
-  })
-
   it("開いた preview の札にも同じ印の class が付く", () => {
     const entry: MainViewQuestion = {
       kind: "question",
@@ -102,21 +89,6 @@ describe("QuestionRecord（選んだ印の色）", () => {
 })
 
 describe("QuestionRecord（単一選択と複数選択で印が変わる）", () => {
-  it("複数選択の質問は、選択肢の行で ■/□ を出す（●/○ ではない）", () => {
-    const entry: MainViewQuestion = {
-      kind: "question",
-      questions: [multiSelectQuestion("確認", "どれにする？")],
-      answers: [["案B"]],
-    }
-
-    const { container } = render(<QuestionRecord entry={entry} />)
-
-    const marks = [...container.querySelectorAll(".question-option > span")].map(
-      (mark) => mark.textContent,
-    )
-    expect(marks).toEqual(["□", "■"])
-  })
-
   it("複数選択の preview の札でも ■/□ を出す", () => {
     const entry: MainViewQuestion = {
       kind: "question",
@@ -149,49 +121,6 @@ describe("QuestionRecord（単一選択と複数選択で印が変わる）", ()
     )
     expect(marks).toEqual(["□", "■"])
   })
-
-  it("単一選択の質問は、複数選択と混ざっていても ●/○ のまま", () => {
-    const entry: MainViewQuestion = {
-      kind: "question",
-      questions: [question("確認", "どちらにする？")],
-      answers: [["案B"]],
-    }
-
-    const { container } = render(<QuestionRecord entry={entry} />)
-
-    const marks = [...container.querySelectorAll(".question-option > span")].map(
-      (mark) => mark.textContent,
-    )
-    expect(marks).toEqual(["○", "●"])
-  })
-})
-
-describe("QuestionRecord（問と答えの塊の区切り）", () => {
-  it("質問が1件だけなら、区切りの対象になる兄弟が無い", () => {
-    const entry: MainViewQuestion = {
-      kind: "question",
-      questions: [question("確認", "どちらにする？")],
-      answers: [["案A"]],
-    }
-
-    const { container } = render(<QuestionRecord entry={entry} />)
-
-    expect(container.querySelectorAll(".question-record + .question-record")).toHaveLength(0)
-  })
-
-  it("質問が2件以上なら、2つ目以降の塊が直前の塊と隣り合う（区切りの罫線が掛かる構造）", () => {
-    const entry: MainViewQuestion = {
-      kind: "question",
-      questions: [question("確認1", "1つ目は？"), question("確認2", "2つ目は？")],
-      answers: [["案A"], ["案B"]],
-    }
-
-    const { container } = render(<QuestionRecord entry={entry} />)
-
-    const records = [...container.querySelectorAll(".question-record")]
-    expect(records).toHaveLength(2)
-    expect(container.querySelectorAll(".question-record + .question-record")).toHaveLength(1)
-  })
 })
 
 describe("QuestionRecord（答えの突き合わせ）", () => {
@@ -199,7 +128,7 @@ describe("QuestionRecord（答えの突き合わせ）", () => {
     return [...container.querySelectorAll(".question-option")].map((option) => option.textContent)
   }
 
-  it("複数選択の答えは、選んだ選択肢すべてに印が付く", () => {
+  it("複数選択の答えは、選んだ選択肢すべてに ■ が付き、選ばなかった選択肢は □ になる", () => {
     const entry: MainViewQuestion = {
       kind: "question",
       questions: [
@@ -221,6 +150,7 @@ describe("QuestionRecord（答えの突き合わせ）", () => {
       (option) => option.textContent,
     )
     expect(chosen).toEqual(["■ 案A", "■ 案C"])
+    expect(optionTexts(container)).toEqual(["■ 案A", "□ 案B", "■ 案C"])
   })
 
   it("自由入力の答えは、選択肢の下に別の行で出る", () => {

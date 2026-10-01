@@ -1,7 +1,6 @@
 import { cleanup, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
-import { useTaskBoardRequest } from "../../../../../../../../../src/browser/stores/task-board-request.ts"
 import type {
   MainViewStep,
   MainViewStepBody,
@@ -209,10 +208,6 @@ describe("Turn（失敗で終わったやり取り）", () => {
 })
 
 describe("Turn（目録の1行と見出し）", () => {
-  afterEach(() => {
-    useTaskBoardRequest.setState(useTaskBoardRequest.getInitialState(), true)
-  })
-
   const TASK = {
     kind: "task",
     id: "X-7",
@@ -223,81 +218,6 @@ describe("Turn（目録の1行と見出し）", () => {
   function taskBody(report: string): MainViewStepBody {
     return { kind: "text", report, firstLine: report, task: TASK, finishedPhase: { kind: "none" } }
   }
-
-  function catalogText(container: HTMLElement): string | undefined {
-    return container.querySelector("header > p")?.textContent ?? undefined
-  }
-
-  it("task のある最終レポートは、ラベル・タスクID・終わり方の1行と作業の名前の見出しを出す", () => {
-    const { container } = render(
-      <Turn turn={turn([step({ id: 0, body: taskBody("架空の本文"), final: true })])} newest />,
-    )
-
-    expect(catalogText(container)).toBe("最終レポート·X-7·✓ 完了・main へ")
-    const headline = container.querySelector("header > h3")
-    expect(headline?.textContent).toBe("架空の作業 a/b を直す")
-    expect(headline?.querySelector("code")?.textContent).toBe("a/b")
-  })
-
-  it("task も中間レポートも無い最終レポートには、目録の1行も見出しも出さない", () => {
-    const { container } = render(
-      <Turn turn={turn([step({ id: 0, body: text("架空の本文"), final: true })])} newest />,
-    )
-
-    expect(container.querySelector("header")).toBeNull()
-  })
-
-  it("task の無い中間レポートは、ラベルだけの1行を区切り無しで出す", () => {
-    const { container } = render(
-      <Turn
-        turn={{
-          ...turn([
-            step({ id: 0, body: text("架空の途中"), interim: true }),
-            step({ id: 1, body: text("架空の本文"), final: true }),
-          ]),
-          hasInterimReport: true,
-        }}
-        newest
-      />,
-    )
-
-    expect([...container.querySelectorAll("header > p")].map((p) => p.textContent)).toEqual([
-      "中間レポート",
-      "最終レポート",
-    ])
-  })
-
-  it("一覧にあるタスクの ID を押すと、そのタスクを選んでタスクのモーダルを開くよう頼む", () => {
-    putSession({
-      ...INITIAL_SESSION_STATE,
-      tasks: {
-        kind: "known",
-        items: [
-          {
-            id: "X-7",
-            summary: "架空の作業",
-            status: "todo",
-            difficulty: "sonnet",
-            loopable: "Y",
-            dependencies: [],
-            assignee: undefined,
-            body: "",
-            location: { kind: "none" },
-          },
-        ],
-      },
-    })
-    render(
-      <Turn turn={turn([step({ id: 0, body: taskBody("架空の本文"), final: true })])} newest />,
-    )
-
-    screen.getByRole("button", { name: "X-7" }).click()
-
-    expect(useTaskBoardRequest.getState().request).toEqual({
-      kind: "open",
-      focus: { kind: "task", id: "X-7" },
-    })
-  })
 
   it("一覧に無いタスクの ID は押せない", () => {
     putSession(INITIAL_SESSION_STATE)

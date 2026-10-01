@@ -54,7 +54,7 @@ export function MainView(): ReactElement {
   return (
     <RepositoryFileLinkProvider>
       {/* `data-brush-origin`: ミニ立ち絵を置く座標の原点。
-          印の名前は `BRUSH_ORIGIN_ATTRIBUTE` と揃える（JSX の属性名に定数を書けないので直に置き、ずれていないことはテストが見る）。 */}
+          印の名前は `BRUSH_ORIGIN_ATTRIBUTE` と揃える（JSX の属性名に定数を書けないので直に置く）。 */}
       <div className={styles["main-turns"]} ref={scrollerRef} data-brush-origin="">
         {/* `key` にターンの番号を渡す。
             前後へ移っても同じ位置の `<Turn>` を使い回すと、「このターンを出し始めた時点で既にあった本文」（演出の対象を決める材料）が最初のターンのものに留まってしまう。 */}

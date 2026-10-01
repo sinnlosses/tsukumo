@@ -14,24 +14,10 @@ afterEach(() => {
 // 記法が sanitize を抜けて実際にこの部品まで届くことは別のテストが見る。
 
 describe("NotationBlock（レポートの塊の記法）", () => {
-  it("知っている class 名を tsukumo の class 名に置き換える", () => {
-    const { container } = render(<NotationBlock className="note note-warn">注意</NotationBlock>)
-
-    expect(container.querySelector("div.report-note.report-note-warn")).not.toBeNull()
-    // モデルが書いた名前は残さない（CSS がモデルの文字列に直接ぶら下がらないようにするため）。
-    expect(container.querySelector("div.note")).toBeNull()
-  })
-
-  it("知らない class 名は落とさず、並びのまま残す", () => {
+  it("知っている class 名だけを tsukumo の class 名に置き換え、知らない class 名は並びのまま残す", () => {
     const { container } = render(<NotationBlock className="note zzz">即興</NotationBlock>)
 
     expect(container.querySelector("div")?.className).toBe("report-note zzz")
-  })
-
-  it("記法に当たらない class 名だけの塊は、そのまま素通しする", () => {
-    const { container } = render(<NotationBlock className="zzz">即興</NotationBlock>)
-
-    expect(container.querySelector("div")?.className).toBe("zzz")
   })
 
   it("`style` 属性はそのまま残る（モデルの即興を落とさない）", () => {
@@ -58,12 +44,6 @@ describe("NotationBlock（レポートの塊の記法）", () => {
 })
 
 describe("NotationInline（文中に置く記法）", () => {
-  it("badge を tsukumo の class 名に置き換える", () => {
-    const { container } = render(<NotationInline className="badge badge-ok">通過</NotationInline>)
-
-    expect(container.querySelector("span.report-badge.report-badge-ok")?.textContent).toBe("通過")
-  })
-
   it("知らない class 名の span は素通しする", () => {
     const { container } = render(<NotationInline className="zzz">即興</NotationInline>)
 

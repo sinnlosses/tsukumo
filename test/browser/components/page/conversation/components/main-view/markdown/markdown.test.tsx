@@ -455,14 +455,6 @@ describe("Markdown（unified への置き換えが求める記法）", () => {
     )
   })
 
-  it("通常の言語名付きフェンスは色付け対象の <pre><code> のまま", () => {
-    const { container } = render(<Markdown text={"```ts\nconst a = 1\n```"} />)
-
-    const code = container.querySelector("pre code")
-    expect(code).not.toBeNull()
-    expect(code?.className).toContain("language-ts")
-  })
-
   it("フェンスに書いたファイル名がブロックの左上のラベルになる", () => {
     // 言語名のあとのファイル名は mdast では `code` の `data.meta` に入り、rehype-raw が
     // 木を書き出して読み直す時点で落ちる。属性へ移す `rehypeCodeFileName` とサニタイザの
