@@ -77,7 +77,15 @@
 .markdown-quote {
   color: var(--ink-quiet);
 }
-/* 記号（#・**・`・> など）は隠さず、字の色だけを落とす。 */
+/* キャレットの行で見える記号（#・**・`・> など）。ほかの行では隠れる。 */
 .markdown-mark {
   color: var(--ink-quiet);
+}
+.markdown-bullet {
+  color: var(--ink-quiet);
+}
+/* 行の余白を消す .cm-line の指定と同じ詳細度で、後に書いて勝たせる。 */
+.markdown-editor .markdown-editor-view .markdown-quote-line {
+  padding-left: 0.6rem;
+  border-left: 2px solid var(--rule);
 }

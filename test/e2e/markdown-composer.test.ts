@@ -156,4 +156,130 @@ describe("入力欄のマークダウンエディタ", () => {
     await paste("https://example.test/a")
     expect(await editor.innerText()).toBe("[架空](https://example.test/a)")
   })
+
+  it("キャレットの無い行は記号が隠れ、キャレットを入れた行では出る", async () => {
+    const room = await run.open({
+      scenario: "markdown-composer-conceal",
+      scene: "none",
+      viewport: "wide",
+      domRoots: ["dispatch"],
+    })
+    const { page } = room
+    const lines = page.locator(".cm-line")
+    await page.locator("textarea").fill(CONCEALED_DRAFT.join("\n"))
+    await page.getByRole("button", { name: TOGGLE_NAME }).click()
+
+    expect(await lines.allTextContents()).toEqual(CONCEALED_LINES)
+    expect(await lines.nth(1).locator('[title="https://example.test"]').textContent()).toBe(
+      "リンク",
+    )
+
+    await page.locator(".cm-content").click()
+    await page.keyboard.press("ControlOrMeta+Home")
+    expect(await lines.allTextContents()).toEqual(revealedAt(0))
+    await page.keyboard.press("ArrowDown")
+    expect(await lines.allTextContents()).toEqual(revealedAt(1))
+    for (const _ of [2, 3, 4, 5]) {
+      await page.keyboard.press("ArrowDown")
+    }
+    expect(await lines.allTextContents()).toEqual(
+      CONCEALED_LINES.map((line, index) =>
+        index >= 4 && index <= 6 ? (CONCEALED_DRAFT[index] ?? "") : line,
+      ),
+    )
+    await room.settleAndMatch(ELAPSED_MS)
+  })
+
+  it("隠れた記号を含む行とその隣で、日本語の変換を確定しても文面が壊れない", async () => {
+    const room = await run.open({
+      scenario: "markdown-composer-ime",
+      scene: "none",
+      viewport: "wide",
+      domRoots: ["dispatch"],
+    })
+    const { page } = room
+    const lines = page.locator(".cm-line")
+    const toggle = page.getByRole("button", { name: TOGGLE_NAME })
+    const cdp = await page.context().newCDPSession(page)
+    const compose = async (): Promise<void> => {
+      for (const reading of ["に", "にほ", "にほん"]) {
+        await cdp.send("Input.imeSetComposition", {
+          text: reading,
+          selectionStart: reading.length,
+          selectionEnd: reading.length,
+        })
+      }
+      expect(await lines.count()).toBe(CONCEALED_DRAFT.length)
+      await cdp.send("Input.insertText", { text: "日本" })
+    }
+    await page.locator("textarea").fill(CONCEALED_DRAFT.join("\n"))
+    await toggle.click()
+    await page.locator(".cm-content").click()
+
+    await page.keyboard.press("ControlOrMeta+Home")
+    await page.keyboard.press("End")
+    await compose()
+    expect(await lines.nth(0).textContent()).toBe("# 架空の見出し日本")
+
+    await page.keyboard.press("ControlOrMeta+Home")
+    for (const _ of [1, 2, 3]) {
+      await page.keyboard.press("ArrowDown")
+    }
+    await page.keyboard.press("End")
+    await compose()
+    expect(await lines.allTextContents()).toEqual([
+      "架空の見出し日本",
+      ...CONCEALED_LINES.slice(1, 3),
+      "- 架空の箇条日本",
+      ...CONCEALED_LINES.slice(4),
+    ])
+
+    await page.keyboard.press("ControlOrMeta+Home")
+    await page.keyboard.press("ArrowDown")
+    await page.keyboard.press("Home")
+    for (const _ of [1, 2, 3, 4]) {
+      await page.keyboard.press("ArrowRight")
+    }
+    await compose()
+    await toggle.click()
+
+    expect(await page.locator("textarea").inputValue()).toBe(
+      [
+        "# 架空の見出し日本",
+        CONCEALED_DRAFT[1]?.replace("**太字**", "**太字日本**"),
+        CONCEALED_DRAFT[2],
+        "- 架空の箇条日本",
+        ...CONCEALED_DRAFT.slice(4),
+      ].join("\n"),
+    )
+  })
 })
+
+/** 隠す記号をひととおり含む下書き。キャレットは末尾の行に置いたまま切り替える。 */
+const CONCEALED_DRAFT = [
+  "# 架空の見出し",
+  "**太字** *斜体* ~~取り消し~~ `コード` [リンク](https://example.test)",
+  "> 架空の引用",
+  "- 架空の箇条",
+  "```ts",
+  "架空のコード",
+  "```",
+  "末尾",
+] as const
+
+/** `CONCEALED_DRAFT` の、キャレットが末尾の行にあるときに見える字。 */
+const CONCEALED_LINES = [
+  "架空の見出し",
+  "太字 斜体 取り消し コード リンク",
+  "架空の引用",
+  "• 架空の箇条",
+  "",
+  "架空のコード",
+  "",
+  "末尾",
+] as const
+
+/** `index` の行にキャレットを入れたときに見える字。 */
+function revealedAt(index: number): readonly string[] {
+  return CONCEALED_LINES.map((line, at) => (at === index ? (CONCEALED_DRAFT[at] ?? "") : line))
+}

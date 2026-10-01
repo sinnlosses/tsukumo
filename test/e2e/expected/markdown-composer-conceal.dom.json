@@ -1,0 +1,189 @@
+{
+  "dispatch": [
+    {
+      "tag": "section",
+      "attributes": {
+        "data-region": "dispatch"
+      },
+      "children": [
+        {
+          "tag": "form",
+          "children": [
+            {
+              "tag": "div",
+              "attributes": {
+                "role": "toolbar",
+                "aria-label": "書式"
+              },
+              "children": [
+                {
+                  "tag": "button",
+                  "attributes": {
+                    "aria-disabled": "false",
+                    "aria-label": "太字",
+                    "type": "button"
+                  },
+                  "children": [
+                    {
+                      "tag": "svg"
+                    }
+                  ]
+                },
+                {
+                  "tag": "button",
+                  "attributes": {
+                    "aria-disabled": "false",
+                    "aria-label": "斜体",
+                    "type": "button"
+                  },
+                  "children": [
+                    {
+                      "tag": "svg"
+                    }
+                  ]
+                },
+                {
+                  "tag": "button",
+                  "attributes": {
+                    "aria-disabled": "false",
+                    "aria-label": "取り消し線",
+                    "type": "button"
+                  },
+                  "children": [
+                    {
+                      "tag": "svg"
+                    }
+                  ]
+                },
+                {
+                  "tag": "button",
+                  "attributes": {
+                    "aria-disabled": "false",
+                    "aria-label": "コード",
+                    "type": "button"
+                  },
+                  "children": [
+                    {
+                      "tag": "svg"
+                    }
+                  ]
+                },
+                {
+                  "tag": "button",
+                  "attributes": {
+                    "aria-disabled": "false",
+                    "aria-label": "リンク",
+                    "type": "button"
+                  },
+                  "children": [
+                    {
+                      "tag": "svg"
+                    }
+                  ]
+                },
+                {
+                  "tag": "button",
+                  "attributes": {
+                    "aria-disabled": "false",
+                    "aria-label": "箇条書き",
+                    "type": "button"
+                  },
+                  "children": [
+                    {
+                      "tag": "svg"
+                    }
+                  ]
+                },
+                {
+                  "tag": "button",
+                  "attributes": {
+                    "aria-disabled": "false",
+                    "aria-label": "引用",
+                    "type": "button"
+                  },
+                  "children": [
+                    {
+                      "tag": "svg"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "tag": "div",
+              "attributes": {
+                "editor": "codemirror",
+                "value": "架空の見出し\n太字 斜体 取り消し コード リンク\n架空の引用\n• 架空の箇条\n```ts\n架空のコード\n```\n末尾"
+              }
+            },
+            {
+              "tag": "button",
+              "attributes": {
+                "aria-disabled": "false",
+                "aria-label": "画像を添える",
+                "type": "button"
+              },
+              "children": [
+                {
+                  "tag": "svg"
+                }
+              ]
+            },
+            {
+              "tag": "button",
+              "attributes": {
+                "aria-disabled": "false",
+                "aria-label": "コマンドを補完する",
+                "type": "button"
+              },
+              "children": [
+                {
+                  "tag": "svg"
+                }
+              ]
+            },
+            {
+              "tag": "button",
+              "attributes": {
+                "aria-disabled": "false",
+                "aria-label": "ファイルを補完する",
+                "type": "button"
+              },
+              "children": [
+                {
+                  "tag": "svg"
+                }
+              ]
+            },
+            {
+              "tag": "button",
+              "attributes": {
+                "aria-pressed": "true",
+                "aria-disabled": "false",
+                "aria-label": "マークダウンエディタで書く",
+                "type": "button"
+              },
+              "children": [
+                {
+                  "tag": "svg"
+                }
+              ]
+            },
+            "経過",
+            "-",
+            {
+              "tag": "button",
+              "attributes": {
+                "data-shortcut": "⌘⏎",
+                "type": "submit"
+              },
+              "children": [
+                "送信"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

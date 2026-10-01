@@ -1,7 +1,7 @@
 // 入力欄のマークダウンエディタの面（CodeMirror）。
-// 記号を残したまま、Markdown の構文木に沿って字の大きさ・太さ・色・等幅だけを付ける。
-// 記号を隠す置き換え（`Decoration.replace`）は使わない。
-// 変換中のキャレットの前後で DOM の形が変わり、IME の確定を壊しうるため。
+// Markdown の構文木に沿って字の大きさ・太さ・色・等幅を付け、キャレットの無い行の記号は隠す。
+// キャレット（選択範囲）の行は記号を残したまま置き換えない。
+// 変換中の IME はその行にしか居ず、その行の DOM の形を変えると確定を壊しうる。
 //
 // 面の上に書式のボタンの行を持ち、範囲を選んで URL を貼ると選んだ字をリンクにする。
 //
@@ -10,9 +10,23 @@
 
 import { defaultKeymap, history, historyKeymap } from "@codemirror/commands"
 import { markdownLanguage } from "@codemirror/lang-markdown"
-import { HighlightStyle, syntaxHighlighting } from "@codemirror/language"
-import { Annotation, Compartment, EditorSelection, EditorState, Prec } from "@codemirror/state"
-import { EditorView, keymap, placeholder as placeholderExtension } from "@codemirror/view"
+import { HighlightStyle, syntaxHighlighting, syntaxTree } from "@codemirror/language"
+import {
+  Annotation,
+  Compartment,
+  EditorSelection,
+  EditorState,
+  Prec,
+  StateField,
+} from "@codemirror/state"
+import {
+  Decoration,
+  EditorView,
+  keymap,
+  placeholder as placeholderExtension,
+  WidgetType,
+  type DecorationSet,
+} from "@codemirror/view"
 import { tags } from "@lezer/highlight"
 import {
   useEffect,
@@ -31,6 +45,7 @@ import type {
 } from "../../domain/composer-surface.ts"
 import { FormatBar, type FormatBarProps } from "../format-bar/format-bar.tsx"
 import { linkedPaste } from "./domain/markdown-link-paste.ts"
+import { concealedMarks, type ConcealedMark } from "./domain/markdown-mark-concealment.ts"
 import styles from "./markdown-editor-surface.module.css"
 
 export type MarkdownEditorSurfaceProps = ComposerSurfaceHandlers & {
@@ -149,6 +164,7 @@ export function MarkdownEditorSurface({
           keymap.of([...EDITOR_KEYMAP, ...historyKeymap]),
           markdownLanguage,
           syntaxHighlighting(MARKDOWN_HIGHLIGHT),
+          MARK_CONCEALMENT,
           EditorView.lineWrapping,
           EditorView.editorAttributes.of({ class: styles["markdown-editor-view"] }),
           PLACEHOLDER.of(placeholderExtension(initial.placeholder)),
@@ -246,3 +262,48 @@ const MARKDOWN_HIGHLIGHT = HighlightStyle.define([
   { tag: tags.quote, class: styles["markdown-quote"] },
   { tag: tags.processingInstruction, class: styles["markdown-mark"] },
 ])
+
+/** キャレットの無い行の記号を隠す。文面・選択・構文木のどれかが変わったときだけ付け直す。 */
+const MARK_CONCEALMENT = StateField.define<DecorationSet>({
+  create: (state) => concealmentDecorations(state),
+  update: (decorations, transaction) =>
+    transaction.docChanged ||
+    transaction.selection !== undefined ||
+    syntaxTree(transaction.startState) !== syntaxTree(transaction.state)
+      ? concealmentDecorations(transaction.state)
+      : decorations,
+  provide: (field) => EditorView.decorations.from(field),
+})
+
+function concealmentDecorations(state: EditorState): DecorationSet {
+  return Decoration.set(concealedMarks(state).map(decorationOf), true)
+}
+
+function decorationOf(mark: ConcealedMark): ReturnType<Decoration["range"]> {
+  switch (mark.kind) {
+    case "hidden":
+      return Decoration.replace({}).range(mark.from, mark.to)
+    case "bullet":
+      return Decoration.replace({ widget: BULLET }).range(mark.from, mark.to)
+    case "link-label":
+      return Decoration.mark({ attributes: { title: mark.url } }).range(mark.from, mark.to)
+    case "quote-line":
+      return Decoration.line({ class: styles["markdown-quote-line"] }).range(mark.from)
+  }
+}
+
+/** 箇条書きの印（`-`・`*`・`+`）の代わりに出す `•`。 */
+class BulletWidget extends WidgetType {
+  override eq(): boolean {
+    return true
+  }
+
+  toDOM(): HTMLElement {
+    const bullet = document.createElement("span")
+    bullet.className = styles["markdown-bullet"]
+    bullet.textContent = "•"
+    return bullet
+  }
+}
+
+const BULLET = new BulletWidget()
