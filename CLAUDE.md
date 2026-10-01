@@ -26,9 +26,9 @@ tsukumo は Agent SDK（`@anthropic-ai/claude-agent-sdk`）で Claude Code を�
 ## セットアップ / 環境構築
 
 - mise で Node 26・pnpm 12 を入れる（`mise.toml` がバージョンを固定。TS は node でそのまま
-  実行し、pnpm はパッケージ管理と `pnpm link --global` に使う）。`pnpm install` のあと
-  **`pnpm run build` でブラウザ側を1回組み立てる**（`dist/browser/` は `.gitignore`。無いと起動が
-  前提不足で止まる）
+  実行し、pnpm はパッケージ管理と `pnpm link --global` に使う）。**新しく入れる `pnpm install` は
+  `prepare` で `pnpm run build` まで済ませる**が、依存が変わらないと飛ばすので、`src/browser/` を直したあとは
+  `pnpm run build` を打つ（`dist/browser/` は `.gitignore`。無いと起動が前提不足で止まる）
 - `tsukumo` コマンドは `pnpm link --global` で入っている（`docs/requirements.md` 4.6）
 - ホストに依存する操作は1つの抽象の裏に置く（`docs/architecture/adr/0015-single-host-port.md`）。
   **`orca`・`bd`・`dolt`・`gh` 以外の外部コマンド依存を増やすときはユーザーの承認を得る**
@@ -139,7 +139,7 @@ node scripts/stop.ts           # 動いている tsukumo の一覧（--port <n> 
 `~/.claude/skills/task-workflow/WORKFLOW.md` が正典で、このリポジトリの上乗せは
 `docs/workflow.md`。**タスクは `difficulty` と同じモデルのサブエージェントに委譲し**、判断が
 想定より要ると分かったら押し切らず `difficulty` を上げて再開する。完了は検証できる証拠で判定する。
-新しい作業ツリーの立ち上げ（`pnpm install` と `pnpm run build`）は人がやる。
+新しい作業ツリーの立ち上げ（`pnpm install`。組み立てまで `prepare` が済ませる）は人がやる。
 
 **IMPORTANT**: 次は必ず人間の承認を得てから行う — 外部への公開・送信（`task` が行う GitHub の
 `sinnlosses/tsukumo` の Issue・label と Project 1 への書き込みは除く）、破壊的な git 操作、

@@ -34,7 +34,7 @@ export function readCwdCheckout(cwd: string): CwdCheckout {
  */
 export function delegateToCheckout(entry: string, args: readonly string[]): Promise<number> {
   return new Promise((resolve) => {
-    const child = spawn(process.execPath, [entry, ...args], { stdio: "inherit" })
+    const child = spawn(entry, args, { stdio: "inherit" })
     const forwarders = FORWARDED_SIGNALS.map((signal) => {
       const forward = () => child.kill(signal)
       process.on(signal, forward)

@@ -1,3 +1,18 @@
 [tools]
 pnpm = "12.6.0"
 node = "26.10.0"
+
+[tasks.setup]
+run = '''
+#!/usr/bin/env bash
+set -euo pipefail
+pnpm install
+# 依存が変わらない pnpm install は prepare を飛ばすので、更新のときのために組み立てを明示する
+pnpm run build
+if [ -z "${PNPM_HOME:-}" ]; then
+  pnpm setup
+  echo "pnpm setup を初めて実行した。新しいシェルを開いて mise run setup を打ち直してください。"
+  exit 0
+fi
+pnpm link --global
+'''

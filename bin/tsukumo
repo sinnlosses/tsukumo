@@ -1,2 +1,35 @@
-#!/usr/bin/env node
-import "../src/cli.ts"
+#!/bin/sh
+# PATH の node は mise.toml の版とは限らないので、リポジトリの根の mise.toml が指す node で起こす。
+# pnpm link --global のシムはこのシバン行を読んで処理系を決めるので、node のシバンに戻さない。
+set -eu
+
+resolve_target() {
+  target=$1
+  while [ -L "$target" ]; do
+    dir=$(CDPATH= cd -P -- "$(dirname "$target")" && pwd)
+    link=$(readlink "$target")
+    case "$link" in
+      /*) target=$link ;;
+      *) target="$dir/$link" ;;
+    esac
+  done
+  dir=$(CDPATH= cd -P -- "$(dirname "$target")" && pwd)
+  printf '%s/%s\n' "$dir" "$(basename "$target")"
+}
+
+self=$(resolve_target "$0")
+root=$(CDPATH= cd -P -- "$(dirname "$self")/.." && pwd)
+
+node=""
+if command -v mise >/dev/null 2>&1; then
+  node=$(mise -C "$root" which node 2>/dev/null) || node=""
+fi
+if [ -z "$node" ]; then
+  node=$(command -v node 2>/dev/null) || node=""
+fi
+if [ -z "$node" ]; then
+  echo "tsukumo: node が見つからない（mise install を済ませたか確かめてください）" >&2
+  exit 1
+fi
+
+exec "$node" "$root/src/cli.ts" "$@"

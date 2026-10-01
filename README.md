@@ -78,51 +78,35 @@ macOS の zsh を前提に書いています（bash なら `~/.zshrc` を `~/.ba
 
 ### 0. 前もって用意するもの
 
-| 用意するもの                                        | 何に使うか                                                                                                       | 確かめ方                                           |
-| --------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
-| [mise](https://mise.jdx.dev/getting-started.html)   | Node 26 と pnpm 12 を、リポジトリの `mise.toml` が固定した版で入れる                                             | `mise --version`                                   |
-| mise のシェル連携                                   | リポジトリに `cd` したとき、mise が入れた Node と pnpm に切り替わるようにする                                    | `~/.zshrc` に `eval "$(mise activate zsh)"` がある |
-| Claude Code へのログイン                            | tsukumo は Claude Code を子プロセスとして起こす。実行ファイルは `pnpm install` で入る Agent SDK に同梱されている | 普段どおり `claude` が使える                       |
-| [Orca](https://www.onorca.dev/)（無くても起動する） | 画面を出す箱。`orca` コマンドがあれば、起動時にタブが自動で開く                                                  | `which orca`                                       |
+| 用意するもの                                        | 何に使うか                                                                                                       | 確かめ方                     |
+| --------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- | ---------------------------- |
+| [mise](https://mise.jdx.dev/getting-started.html)   | Node 26 と pnpm 12 を、リポジトリの `mise.toml` が固定した版で入れる                                             | `mise --version`             |
+| Claude Code へのログイン                            | tsukumo は Claude Code を子プロセスとして起こす。実行ファイルは `pnpm install` で入る Agent SDK に同梱されている | 普段どおり `claude` が使える |
+| [Orca](https://www.onorca.dev/)（無くても起動する） | 画面を出す箱。`orca` コマンドがあれば、起動時にタブが自動で開く                                                  | `which orca`                 |
 
 Orca が無いときはタブが自動で開かないだけで、配信は続きます。起動時に表示される URL を手で
-ブラウザに開いてください。
+ブラウザに開いてください。`tsukumo` コマンド自身は mise の `node`（手順1で入れた版）を自分で
+見つけて起こすので、`mise activate` などのシェル連携は要りません。
 
-### 1. 取ってきて依存を入れる
+### 1. 取ってきて導入する
 
 ```bash
 git clone https://github.com/sinnlosses/tsukumo.git
 cd tsukumo
 mise trust      # このリポジトリの mise.toml を信頼する（初回だけ）
 mise install    # mise.toml が指す node@26 と pnpm@12 を入れる
-pnpm install
+mise run setup  # 依存を入れ、ブラウザ側を組み立て、tsukumo コマンドを入れる
 ```
 
-`node --version` が `v26`、`pnpm --version` が `12` で始まれば合っています。違う版が出るときは、
-mise のシェル連携（手順0）が効いていません。
+`mise run setup` は `pnpm install`・`pnpm run build`（成果物は `dist/browser/`）・
+`pnpm link --global`（このリポジトリの `bin/tsukumo` を `tsukumo` コマンドとして入れる）の順に進みます。
+`PNPM_HOME` がまだ無いときだけ、代わりに `pnpm setup` を打って止まり、新しいシェルを開くよう知らせます。
+そのときは新しいシェルで `mise run setup` を打ち直してください。
 
-### 2. ブラウザ側を組み立てる
+`which tsukumo` で `PNPM_HOME` の下の `tsukumo` が出れば通っています。消すときは、**このリポジトリの
+直下で** `pnpm unlink --global` を実行します。
 
-```bash
-pnpm run build
-```
-
-成果物は `dist/browser/` に出ます（`.gitignore` 済み）。**tsukumo は起動時に組み立てないので、
-これを飛ばすと起動が「ブラウザ側の成果物を読めない」で止まります。**
-
-### 3. `tsukumo` コマンドを入れる
-
-```bash
-pnpm setup          # PNPM_HOME を作って PATH に通す行を ~/.zshrc に足す（初回だけ）
-exec zsh            # 足した行を今のシェルに読み込む
-pnpm link --global  # このリポジトリの bin/tsukumo を PNPM_HOME にリンクする
-which tsukumo       # PNPM_HOME の下の tsukumo が出れば通っている
-```
-
-`pnpm setup` を済ませずに `pnpm link --global` を打つと、グローバルの置き場が無いと言われて失敗します。
-リンクを消すときは、**このリポジトリの直下で** `pnpm unlink --global` を実行します。
-
-### 4. 起動する
+### 2. 起動する
 
 作業したいプロジェクトのディレクトリへ移って打ちます（`claude` を打つのと同じ感覚で、
 `characters/` も `develop/` も無いディレクトリでかまいません）。
@@ -142,24 +126,23 @@ tsukumo: ビューを配信中
 止めるときは、起動したターミナルで Ctrl-C を押します。複数動かしているときは、リポジトリの直下で
 `node scripts/stop.ts` を打つと一覧が出て、`--port <n>` で1つだけ止められます。
 
-### 5. 更新する
+### 3. 更新する
 
 ```bash
 cd ~/path/to/tsukumo
 git pull
-pnpm install
-pnpm run build   # 忘れると古い画面のまま動く（起動時に1行知らせる）
+mise run setup
 ```
 
-`pnpm link --global` はリポジトリへのリンクなので、打ち直す必要はありません。
+導入と同じ `mise run setup` で済みます（`tsukumo` コマンドも入れ直すので、`bin/tsukumo` が変わったときも追随します）。
 
 ### つまずいたとき
 
 | 出たもの                                                              | 原因                                    | 対処                                                              |
 | --------------------------------------------------------------------- | --------------------------------------- | ----------------------------------------------------------------- |
-| `zsh: command not found: tsukumo`                                     | `PNPM_HOME` が `PATH` に通っていない    | `pnpm setup` → 新しいシェルを開く → `pnpm link --global`（手順3） |
-| `tsukumo: ブラウザ側の成果物を読めない`                               | `dist/browser/` が無い                  | リポジトリの直下で `pnpm run build`（手順2）                      |
-| `tsukumo: ソース（src/browser/ src/shared/）のほうが成果物より新しい` | 更新したあと組み立て直していない        | `pnpm run build`。止まりはせず、古い画面のまま動く                |
+| `zsh: command not found: tsukumo`                                     | `PNPM_HOME` が `PATH` に通っていない    | 新しいシェルを開いて `mise run setup` を打ち直す（手順1）         |
+| `tsukumo: ブラウザ側の成果物を読めない`                               | `dist/browser/` が無い                  | リポジトリの直下で `mise run setup`（手順1）                      |
+| `tsukumo: ソース（src/browser/ src/shared/）のほうが成果物より新しい` | 更新したあと組み立て直していない        | `mise run setup`（手順3）。止まりはせず、古い画面のまま動く       |
 | `tsukumo: TSUKUMO_VIEW_PORT がポート番号として読めない`               | 環境変数に数でない値が入っている        | `TSUKUMO_VIEW_PORT` を外すか数にする                              |
 | タブが開かない                                                        | `orca` が無い、か `TSUKUMO_OPEN_VIEW=0` | 表示された URL を手でブラウザに開く                               |
 | タブだけ閉じてしまった                                                | プロセスは動いたまま                    | `node scripts/open-views.ts http://127.0.0.1:<ポート>` で開き直す |

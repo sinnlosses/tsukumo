@@ -20,18 +20,26 @@
 - `pnpm run build` が起こすのは `node node_modules/vite/bin/vite.js build src/browser --config vite.config.ts --outDir dist/browser`
   の1本で、`main.js` と `main.css` の対が置かれる（名前をハッシュ付きにせず固定する理由と、JS API ではなく
   CLI を起こす理由は `docs/architecture/adr/0007-vite-build-cli.md`）
-- **`dist/` は `.gitignore` する。** リポジトリを取り直したら `pnpm install` のあとに `pnpm run build` を
-  1回打つ（`tsukumo` は `pnpm link --global` でこのリポジトリを指しているので、**「配布」の実体はこのリポジトリ
-  そのもの**）
+- **`dist/` は `.gitignore` する。** `package.json` の `prepare` が `pnpm run build` を呼ぶので、
+  リポジトリを取り直して `pnpm install` を打てば組み立てまで済む。**依存が変わらない `pnpm install` は
+  `prepare` を飛ばす**ので、`git pull` のあとの組み立ては `mise run setup`（`mise.toml` の `setup` タスク。
+  `pnpm run build` を明示して打つ）に任せる（`tsukumo` は `pnpm link --global` でこのリポジトリを
+  指しているので、**「配布」の実体はこのリポジトリそのもの**）
 - **cwd に依存してよいのは起動先プロジェクトのものだけ。** 作業ディレクトリ・
   `develop/task/`・相対指定で渡した素材（`TSUKUMO_CHARACTER` に相対パスを渡した場合）
   はそこに当たる。**自分で持ち歩くもの（既定の立ち絵・`node_modules` の外部ライブラリ）は
   tsukumo 自身の場所から読む**（`src/server/adapter/bundled-path.ts`）。`tsukumo` コマンドをどの
   プロジェクトのディレクトリで起こしても見つかるようにするための区別
 - **リポジトリの外に置いたのは `pnpm link --global` の2つだけ**（2026-09-12。2026-09-27 に
-  `bun link` から移した）。`~/Library/pnpm/tsukumo`（`bin/tsukumo` へのシンボリックリンク）と
-  `~/Library/pnpm/global/` 配下（pnpm が管理する登録簿）。**シェルの設定ファイルは書き換えていない。**
-  消すときはリポジトリの直下で `pnpm unlink --global`
+  `bun link` から移した）。`~/Library/pnpm/tsukumo`（`bin/tsukumo` の `bin` フィールドから
+  `pnpm` が作るラッパー。実体への**シンボリックリンクではなく**、`bin/tsukumo` のシバン行を読んで
+  `exec <そのシバンの処理系> <bin/tsukumo の実パス>` を生成するシム）と `~/Library/pnpm/global/`
+  配下（pnpm が管理する登録簿）。**シェルの設定ファイルは書き換えていない。** 消すときはリポジトリの
+  直下で `pnpm unlink --global`
+- **`bin/tsukumo` は POSIX sh**（`#!/bin/sh`）。自分の実体（シムが渡すパスも、直接の symlink も）を
+  辿って根を求め、`mise -C <根> which node` で得た node（mise が無い・失敗したときは `PATH` の
+  `node`）で `<根>/src/cli.ts` を起こす。PATH の先頭の node が `mise.toml` の版と一致する保証が無い
+  リポジトリの外からでも、`mise.toml` が固定した版で動く
 - **成果物が無ければ起動しない**（起動時の前提不足。理由に `pnpm run build` を添える）。**ソース
   （`src/browser/` と `src/shared/`）のほうが新しければ、1行知らせてそのまま配る**（古くても画面は
   動くので止めず、黙って配らないことで事故を防ぐ）。HMR と違い、ここは `src/shared/` も見る

@@ -1,4 +1,4 @@
-import { mkdirSync, realpathSync, writeFileSync } from "node:fs"
+import { chmodSync, mkdirSync, realpathSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 
 import { describe, expect, it } from "vitest"
@@ -18,7 +18,9 @@ function writeCheckout(root: string, name: string, entryBody: string | undefined
   mkdirSync(join(root, "bin"), { recursive: true })
   writeFileSync(join(root, "package.json"), JSON.stringify({ name }))
   if (entryBody !== undefined) {
-    writeFileSync(join(root, "bin", "tsukumo"), entryBody)
+    const entry = join(root, "bin", "tsukumo")
+    writeFileSync(entry, `#!/usr/bin/env node\n${entryBody}`)
+    chmodSync(entry, 0o755)
   }
 }
 
