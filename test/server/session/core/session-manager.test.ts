@@ -1,9 +1,6 @@
-import { createRouterClient, ORPCError } from "@orpc/server"
-import { isPlainObject } from "remeda"
 import { describe, expect, it } from "vitest"
 
-import { type CommandRouterPorts, createCommandRouter } from "../../../../src/router.ts"
-import type { CharacterSelection } from "../../../../src/server/character-pack/core/character-selection.ts"
+import type { CommandRouterPorts } from "../../../../src/router.ts"
 import type {
   ChatArchive,
   ChatArchiveEntry,
@@ -12,15 +9,11 @@ import type {
   ChatConsolidationOutcome,
   ChatConsolidationSource,
 } from "../../../../src/server/chat/core/chat-consolidation-writer.ts"
-import { CHAT_NUDGE_PROMPT } from "../../../../src/server/chat/core/chat-nudge.ts"
 import type {
   ContextUsageEntry,
   ContextUsageLog,
 } from "../../../../src/server/context-usage/core/context-usage.ts"
-import type {
-  DiaryWriteRequest,
-  DiaryWriterSource,
-} from "../../../../src/server/diary/core/diary-writer.ts"
+import type { DiaryWriterSource } from "../../../../src/server/diary/core/diary-writer.ts"
 import type {
   ReportUsageEntry,
   ReportUsageLog,
@@ -45,32 +38,22 @@ import type {
 import type { VisitGuest } from "../../../../src/server/visit/core/visit-guest.ts"
 import { VISIT_TIMING } from "../../../../src/server/visit/core/visit-timing.ts"
 import type { VisitPorts } from "../../../../src/server/visit/core/visit-watch.ts"
-import type { DailyAchievement } from "../../../../src/shared/achievement/achievement.ts"
 import type { VisitScript } from "../../../../src/shared/character-pack/character-visit.ts"
 import { CHAT_MEMORY_BUDGET } from "../../../../src/shared/chat/chat-memory-budget.ts"
 import {
   type ContextUsageReport,
   UNAVAILABLE_CONTEXT_USAGE,
 } from "../../../../src/shared/context-usage/context-usage.ts"
-import type {
-  CharacterCreate,
-  CharacterDelete,
-  CharacterEdit,
-} from "../../../../src/shared/contract/character-pack.ts"
+import type { CharacterEdit } from "../../../../src/shared/contract/character-pack.ts"
 import type { UsageProposalDismissal } from "../../../../src/shared/contract/usage-review.ts"
 import {
   FRAME_ERROR_REASON,
   PROTOCOL_VERSION,
   type ServerFrame,
 } from "../../../../src/shared/frame.ts"
-import { UNAVAILABLE_PLAN_USAGE } from "../../../../src/shared/plan-usage/plan-usage.ts"
 import type { ReportSection } from "../../../../src/shared/report/report-block.ts"
 import type { PromptImage } from "../../../../src/shared/session-driver/prompt-image.ts"
-import type { SessionDefault } from "../../../../src/shared/session/session-default.ts"
-import {
-  type SessionDigest,
-  UNAVAILABLE_SESSION_DIGEST,
-} from "../../../../src/shared/session/session-digest.ts"
+import { UNAVAILABLE_SESSION_DIGEST } from "../../../../src/shared/session/session-digest.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import {
   applySessionEvent,
@@ -94,9 +77,14 @@ import {
   shownPortraits,
 } from "../../../fixture/character.ts"
 import { NOOP_CHAT_ARCHIVE } from "../../../fixture/chat.ts"
+import { createCommandClient } from "../../../fixture/command-client.ts"
 import { contextUsage, readyContextUsage } from "../../../fixture/context-usage.ts"
 import { createManualClock } from "../../../fixture/manual-clock.ts"
-import { readyPlanUsage } from "../../../fixture/plan-usage.ts"
+import {
+  createStubDriver,
+  FAKE_SESSION_DIGEST,
+  type StubDriver,
+} from "../../../fixture/session-driver.ts"
 
 const BATCH_MS = 5
 
@@ -130,78 +118,6 @@ const NO_CHAT_CONSOLIDATION: ChatConsolidationSource = { kind: "dont-consolidate
 /** 振り返りの書き手を気にしないテストに渡す出どころ（起こさない）。 */
 const NO_DIARY_WRITER: DiaryWriterSource = { kind: "dont-write" }
 
-/** 呼ばれた回数と引数だけを覚える、テスト用の駆動。本物の claude は起こさない。 */
-type StubDriver = {
-  readonly driver: SessionDriver
-  readonly emit: (event: SessionEvent) => void
-  readonly attach: (onEvent: (event: SessionEvent) => void) => void
-  /**
-   * 復元の再生（`onRestoredEvents`）をまとめて1回で流す。駆動由来（`emit`）とは別の口
-   * （`docs/architecture/character-pack.md`「復元の再生は駆動と別の口」）。
-   */
-  readonly emitRestored: (events: readonly SessionEvent[]) => void
-  readonly attachRestored: (onRestoredEvents: (events: readonly SessionEvent[]) => void) => void
-  readonly calls: string[]
-  answerable: boolean
-}
-
-function createStubDriver(): StubDriver {
-  const calls: string[] = []
-  let onEvent: (event: SessionEvent) => void = () => {}
-  let onRestoredEvents: (events: readonly SessionEvent[]) => void = () => {}
-  const stub = {
-    driver: {
-      prompt: (text: string) => calls.push(`prompt:${text}`),
-      promptWithoutRecord: (text: string) => calls.push(`promptWithoutRecord:${text}`),
-      interrupt: () => {
-        calls.push("interrupt")
-        return Promise.resolve()
-      },
-      answer: (id: string) => {
-        calls.push(`answer:${id}`)
-        return stub.answerable
-      },
-      pending: () => [],
-      readContextUsage: () => {
-        calls.push("readContextUsage")
-        return Promise.resolve(readyContextUsage())
-      },
-      readPlanUsage: () => {
-        calls.push("readPlanUsage")
-        return Promise.resolve(readyPlanUsage())
-      },
-      readSessionDigest: (sessionId: string) => {
-        calls.push(`readSessionDigest:${sessionId}`)
-        return Promise.resolve(FAKE_SESSION_DIGEST)
-      },
-      setModel: (model: string | undefined) => {
-        calls.push(`setModel:${model ?? ""}`)
-        return Promise.resolve()
-      },
-      setEffort: (effort: string) => {
-        calls.push(`setEffort:${effort}`)
-        return Promise.resolve()
-      },
-      setPermissionMode: (mode: string) => {
-        calls.push(`setPermissionMode:${mode}`)
-        return Promise.resolve()
-      },
-      close: () => calls.push("close"),
-    },
-    emit: (event: SessionEvent) => onEvent(event),
-    attach: (next: (event: SessionEvent) => void) => {
-      onEvent = next
-    },
-    emitRestored: (events: readonly SessionEvent[]) => onRestoredEvents(events),
-    attachRestored: (next: (events: readonly SessionEvent[]) => void) => {
-      onRestoredEvents = next
-    },
-    calls,
-    answerable: true,
-  }
-  return stub
-}
-
 /**
  * 見た目の編集で流し直す `character-changed`（手で書いた架空のパック）。書き込みそのものは
  * 配線層の仕事なので、ここでは「書けた/書けなかった」だけを差し替える。
@@ -210,12 +126,6 @@ const CHARACTER_EVENT: SessionEvent = characterChangedEvent({
   ...shownPortraits({ default: "/character/default.png?v=fictional@2" }),
   outfitAccents: shownOutfitAccents({ default: "#b8c7ff" }),
 })
-
-/** 覚えたことを1行消したあとに流し直す `remembered-lines-changed`（作り物の1行）。 */
-const REMEMBERED_LINES_EVENT: SessionEvent = {
-  kind: "remembered-lines-changed",
-  lines: ["架空の残った1行"],
-}
 
 /** コマンドの受け手の口（機能ごとの `ports` を平らに並べたもの。棚は `SessionManagerOptions` と共有する）。 */
 type FlatCommandPorts = Omit<
@@ -228,14 +138,9 @@ type FlatCommandPorts = Omit<
   "promptImageShelf"
 >
 
-/** 手続きの照合に使う架空の起動トークンとオリジン（照合そのものは `connection-grant` のテストが見る）。 */
-const TEST_TOKEN = "架空のトークン"
-const TEST_ORIGIN = "http://127.0.0.1:0"
-
 /**
- * 平らに並べた口からセッションとコマンドのルータを組む。ルータの束ね方と門は配線と同じ
- * （`createCommandRouter`）なので、`commands` で見るのは断る条件と受け手の
- * 振る舞いまで含めた手続きの結果。結果は `{ ok: true }` か、断った理由の `{ ok: false, reason }`。
+ * 平らに並べた口からセッションとコマンドのルータを組む。
+ * 受け手そのものの振る舞いは `createCommandRouter` のテストが持ち、ここでコマンドを使うのは代の寿命と反応の順を起こす引き金としてだけ。
  */
 function createSessionManager(options: SessionManagerOptions & FlatCommandPorts) {
   const {
@@ -252,100 +157,52 @@ function createSessionManager(options: SessionManagerOptions & FlatCommandPorts)
     ...rest
   } = options
   const manager = createSessionManagerWithoutCommands(rest)
-  const router = createCommandRouter({
-    session: {
-      promptImageShelf: rest.promptImageShelf,
-      rememberSessionDefault,
-      readAchievementDay,
-      diary,
+  const commands = createCommandClient(
+    {
+      session: {
+        promptImageShelf: rest.promptImageShelf,
+        rememberSessionDefault,
+        readAchievementDay,
+        diary,
+      },
+      characterPack: { editCharacter, createCharacter, deleteCharacter },
+      chat: { forgetRememberedLine },
+      visit: { rememberVisitEnabled },
+      usageReview: { dismissUsageProposal },
+      host: { openFile },
     },
-    characterPack: { editCharacter, createCharacter, deleteCharacter },
-    chat: { forgetRememberedLine },
-    visit: { rememberVisitEnabled },
-    usageReview: { dismissUsageProposal },
-    host: { openFile },
-  })
-  const commands = createRouterClient(router, {
-    context: {
-      presentedToken: TEST_TOKEN,
-      requestOrigin: undefined,
-      startupToken: TEST_TOKEN,
-      serverOrigin: TEST_ORIGIN,
-      session: manager.commandSession,
-    },
-    interceptors: [({ next }) => next().then(() => ({ ok: true }), refusalOf)],
-  })
+    manager.commandSession,
+  )
   return { ...manager, commands }
 }
 
-/**
- * 断られた手続き（契約に書いた `REFUSED`）を `{ ok: false, reason }` に畳む（それ以外の失敗は
- * テストの誤りなので投げ直す）。
- */
-function refusalOf(error: unknown): { readonly ok: false; readonly reason: unknown } {
-  if (
-    error instanceof ORPCError &&
-    error.code === "REFUSED" &&
-    error.defined &&
-    isPlainObject(error.data)
-  ) {
-    return { ok: false, reason: error.data["reason"] }
-  }
-  throw error
-}
-
-function startManagerWithStub(
-  writeResult: "written" | "rejected" = "written",
-  readAchievementDay: (date: string) => Promise<DailyAchievement | undefined> = () =>
-    Promise.resolve(undefined),
-  diary: DiaryWriterSource = NO_DIARY_WRITER,
-) {
+function startManagerWithStub() {
   const stub = createStubDriver()
   const edits: CharacterEdit[] = []
-  const creates: CharacterCreate[] = []
-  const deletes: CharacterDelete[] = []
-  /** 覚えた「新しいセッションの既定」（覚え先は配線層なので、ここでは積むだけ）。 */
-  const remembered: SessionDefault[] = []
-  /** 覚えた「訪問」のオン・オフ（覚え先は配線層なので、ここでは積むだけ）。 */
-  const rememberedVisitEnabled: boolean[] = []
-  /** 画面の「編集」から消そうとした行（書き先は配線層なので、ここでは積むだけ）。 */
-  const forgottenLines: string[] = []
   /** ホームへ書いた「前回の見直しの結果」（書き先は配線層なので、ここでは積むだけ）。 */
   const writtenPreviousUsageReviews: [number, unknown][] = []
   /** 見送った提案の識別子（書き先は配線層なので、ここでは積むだけ）。 */
   const dismissedUsageProposals: UsageProposalDismissal[] = []
-  /** `orca file open` を呼ぼうとしたパス（呼び先は配線層なので、ここでは積むだけ）。 */
-  const openedFiles: string[] = []
-  const written = (): SessionEvent | undefined =>
-    writeResult === "written" ? CHARACTER_EVENT : undefined
-  const writtenRemembered = (): SessionEvent | undefined =>
-    writeResult === "written" ? REMEMBERED_LINES_EVENT : undefined
   const manager = createSessionManager({
     now: () => 1_000,
-    openFile: (path) => {
-      openedFiles.push(path)
-      return Promise.resolve(writeResult === "written")
-    },
-    readAchievementDay,
+    openFile: () => Promise.resolve(true),
+    readAchievementDay: () => Promise.resolve(undefined),
     batchIntervalMs: BATCH_MS,
     chatConsolidation: NO_CHAT_CONSOLIDATION,
     watchTasks: NO_TASK_WATCH,
     visit: NO_VISIT_PORTS,
-    diary,
+    diary: NO_DIARY_WRITER,
     chatArchive: NOOP_CHAT_ARCHIVE,
     project: FICTIONAL_PROJECT,
     tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
     contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
     reportUsageLog: NOOP_REPORT_USAGE_LOG,
     promptImageShelf: createPromptImageShelf(),
-    rememberSessionDefault: (sessionDefault) => {
-      remembered.push(sessionDefault)
-      return { kind: "session-default-changed", sessionDefault }
-    },
-    rememberVisitEnabled: (visitEnabled) => {
-      rememberedVisitEnabled.push(visitEnabled)
-      return { kind: "visit-enabled-changed", visitEnabled }
-    },
+    rememberSessionDefault: (sessionDefault) => ({
+      kind: "session-default-changed",
+      sessionDefault,
+    }),
+    rememberVisitEnabled: (visitEnabled) => ({ kind: "visit-enabled-changed", visitEnabled }),
     launchSession: (onEvent, onRestoredEvents) => {
       stub.attach(onEvent)
       stub.attachRestored(onRestoredEvents)
@@ -353,20 +210,11 @@ function startManagerWithStub(
     },
     editCharacter: (edit) => {
       edits.push(edit)
-      return Promise.resolve(written())
+      return Promise.resolve(CHARACTER_EVENT)
     },
-    createCharacter: (create) => {
-      creates.push(create)
-      return Promise.resolve(written())
-    },
-    deleteCharacter: (remove) => {
-      deletes.push(remove)
-      return Promise.resolve(written())
-    },
-    forgetRememberedLine: (line) => {
-      forgottenLines.push(line)
-      return Promise.resolve(writtenRemembered())
-    },
+    createCharacter: () => Promise.resolve(undefined),
+    deleteCharacter: () => Promise.resolve(undefined),
+    forgetRememberedLine: () => Promise.resolve(undefined),
     readPreviousUsageReview: (): PreviousUsageReview => ({ kind: "none" }),
     writePreviousUsageReview: (reviewedAt, findings) => {
       writtenPreviousUsageReviews.push([reviewedAt, findings])
@@ -376,19 +224,7 @@ function startManagerWithStub(
       return { kind: "usage-proposal-dismissed", key: usageProposalKey(dismiss) }
     },
   })
-  return {
-    manager,
-    stub,
-    edits,
-    creates,
-    deletes,
-    remembered,
-    rememberedVisitEnabled,
-    forgottenLines,
-    writtenPreviousUsageReviews,
-    dismissedUsageProposals,
-    openedFiles,
-  }
+  return { manager, stub, edits, writtenPreviousUsageReviews, dismissedUsageProposals }
 }
 
 function waitForBatch(): Promise<void> {
@@ -410,14 +246,6 @@ const RESTORED_REPLAY: readonly SessionEvent[] = [
   { kind: "turn-finished", outcome: { kind: "completed" } },
   { kind: "history-restored" },
 ]
-
-/** 駆動が返すセッションの中身。 */
-const FAKE_SESSION_DIGEST: SessionDigest = {
-  kind: "known",
-  requestCount: 3,
-  summary: "架空の要約",
-  lastLine: "架空のセリフ",
-}
 
 describe("createSessionManager", () => {
   it("subscribe した直後に hello（snapshot）が届き、以降は events が続く", async () => {
@@ -602,40 +430,9 @@ describe("createSessionManager", () => {
     }
   })
 
-  it("dispatch がコマンドを駆動へ渡す（分岐はここだけ）", async () => {
-    const { manager, stub } = startManagerWithStub()
-
-    expect(await manager.commands.session.prompt({ text: "架空の依頼", images: [] })).toEqual({
-      ok: true,
-    })
-    expect(await manager.commands.session.interrupt()).toEqual({
-      ok: true,
-    })
-    expect(await manager.commands.session.setModel({ model: "sonnet" })).toEqual({ ok: true })
-    expect(await manager.commands.session.setEffort({ effort: "high" })).toEqual({ ok: true })
-    expect(await manager.commands.session.setPermissionMode({ mode: "plan" })).toEqual({ ok: true })
-
-    expect(stub.calls).toEqual([
-      "prompt:架空の依頼",
-      "interrupt",
-      "setModel:sonnet",
-      "setEffort:high",
-      "setPermissionMode:plan",
-    ])
-  })
-
-  it("解決済みの答え待ちは、定型文の理由で受け付けない", async () => {
-    const { manager, stub } = startManagerWithStub()
-    stub.answerable = false
-
-    expect(
-      await manager.commands.session.answer({ id: "toolu_gone", answer: { kind: "allow" } }),
-    ).toEqual({ ok: false, reason: FRAME_ERROR_REASON.unresolvedAnswer })
-  })
-
   it("session.switchCharacter で駆動を閉じ、別のパックで起こし直して新しい hello を配る", async () => {
-    // 起こされた駆動を順に覚える（`launchSession` に渡るパックの決め方もここで見る）。
-    const started: { readonly selection: CharacterSelection; readonly stub: StubDriver }[] = []
+    // 起こされた駆動を、渡された要求と一緒に順に覚える。
+    const started: { readonly request: SessionLaunchRequest; readonly stub: StubDriver }[] = []
     const manager = createSessionManager({
       now: () => 1_000,
       openFile: () => Promise.resolve(true),
@@ -662,7 +459,7 @@ describe("createSessionManager", () => {
       launchSession: (onEvent, _onRestoredEvents, request) => {
         const stub = createStubDriver()
         stub.attach(onEvent)
-        started.push({ selection: request.selection, stub })
+        started.push({ request, stub })
         return Promise.resolve(stub.driver)
       },
       editCharacter: () => Promise.resolve(undefined),
@@ -686,11 +483,15 @@ describe("createSessionManager", () => {
       ok: true,
     })
 
-    // 前の駆動は閉じ、新しい駆動が画面から選ばれた名前で起きている（＝覚える側。
-    // docs/architecture/screen-design.md「設定の置き場所」）。
+    // 起動の1代目は初期パック・続きは印から探す（どちらも覚えない側）。
+    expect(started[0]?.request).toEqual({
+      selection: { by: "initial" },
+      chat: undefined,
+      resume: { by: "latest" },
+    })
+    // 前の駆動は閉じ、新しい駆動が起きている。
     expect(started[0]?.stub.calls).toContain("close")
     expect(started).toHaveLength(2)
-    expect(started[1]?.selection).toEqual({ by: "name", name: "fictional" })
 
     // 購読者には、初期状態に戻した新しい hello が届く（吹き出し・立ち絵・メインビューが消える）。
     const hello = frames.filter((frame) => frame.type === "hello")
@@ -711,180 +512,6 @@ describe("createSessionManager", () => {
         { kind: "speech", text: "切り替えたあとのセリフ", expression: "default" },
       ])
     }
-  })
-
-  it("ターン進行中の session.switchCharacter は定型文の理由で受け付けず、駆動を閉じない", async () => {
-    const { manager, stub } = startManagerWithStub()
-
-    expect(await manager.commands.session.prompt({ text: "架空の依頼", images: [] })).toEqual({
-      ok: true,
-    })
-    stub.emit({ kind: "request", text: "架空の依頼", images: [] })
-    await waitForBatch()
-
-    expect(await manager.commands.session.switchCharacter({ name: "fictional" })).toEqual({
-      ok: false,
-      reason: FRAME_ERROR_REASON.switchDuringTurn,
-    })
-    expect(stub.calls).not.toContain("close")
-
-    stub.emit({ kind: "turn-finished", outcome: { kind: "completed" } })
-    await waitForBatch()
-
-    expect(await manager.commands.session.switchCharacter({ name: "fictional" })).toEqual({
-      ok: true,
-    })
-    expect(stub.calls).toContain("close")
-  })
-
-  it("ターン進行中の session.setEffort は session.setModel と同じく起こし直さず、駆動へそのまま渡す", async () => {
-    const { manager, stub } = startManagerWithStub()
-
-    expect(await manager.commands.session.prompt({ text: "架空の依頼", images: [] })).toEqual({
-      ok: true,
-    })
-    stub.emit({ kind: "request", text: "架空の依頼", images: [] })
-    await waitForBatch()
-
-    expect(await manager.commands.session.setEffort({ effort: "xhigh" })).toEqual({ ok: true })
-    expect(stub.calls).not.toContain("close")
-    expect(stub.calls).toContain("setEffort:xhigh")
-  })
-
-  it("session.switchSession で、選ばれたIDの続きから起こし直す（パックもモードも変えない）", async () => {
-    const started: SessionLaunchRequest[] = []
-    const manager = createSessionManager({
-      now: () => 1_000,
-      openFile: () => Promise.resolve(true),
-      readAchievementDay: () => Promise.resolve(undefined),
-      batchIntervalMs: BATCH_MS,
-      chatConsolidation: NO_CHAT_CONSOLIDATION,
-      watchTasks: NO_TASK_WATCH,
-      visit: NO_VISIT_PORTS,
-      diary: NO_DIARY_WRITER,
-      chatArchive: NOOP_CHAT_ARCHIVE,
-      project: FICTIONAL_PROJECT,
-      tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
-      contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
-      reportUsageLog: NOOP_REPORT_USAGE_LOG,
-      promptImageShelf: createPromptImageShelf(),
-      rememberSessionDefault: (sessionDefault) => ({
-        kind: "session-default-changed",
-        sessionDefault,
-      }),
-      rememberVisitEnabled: (visitEnabled) => ({
-        kind: "visit-enabled-changed",
-        visitEnabled,
-      }),
-      launchSession: (onEvent, _onRestoredEvents, request) => {
-        const stub = createStubDriver()
-        stub.attach(onEvent)
-        started.push(request)
-        return Promise.resolve(stub.driver)
-      },
-      editCharacter: () => Promise.resolve(undefined),
-      createCharacter: () => Promise.resolve(undefined),
-      deleteCharacter: () => Promise.resolve(undefined),
-      forgetRememberedLine: () => Promise.resolve(undefined),
-      readPreviousUsageReview: (): PreviousUsageReview => ({ kind: "none" }),
-      writePreviousUsageReview: () => {},
-      dismissUsageProposal: (dismiss) => ({
-        kind: "usage-proposal-dismissed",
-        key: usageProposalKey(dismiss),
-      }),
-    })
-    manager.subscribe(() => {})
-
-    expect(
-      await manager.commands.session.switchSession({ sessionId: "架空の別セッション" }),
-    ).toEqual({ ok: true })
-
-    expect(started).toHaveLength(2)
-    // 変わるのは「どの transcript の続きから始めるか」だけ。
-    expect(started[1]?.resume).toEqual({ by: "id", sessionId: "架空の別セッション" })
-    // パックは「いま出しているまま」（名前で渡すと覚えた値が書き換わる。docs/architecture/screen-design.md「設定の置き場所」）。
-    expect(started[1]?.selection).toEqual({ by: "current" })
-    expect(started[1]?.chat).toBe(false)
-    // 起動の1回目は今までどおり印から探す。
-    expect(started[0]?.resume).toEqual({ by: "latest" })
-  })
-
-  it("ターン進行中の session.switchSession は定型文の理由で受け付けず、駆動を閉じない", async () => {
-    const { manager, stub } = startManagerWithStub()
-
-    stub.emit({ kind: "request", text: "架空の依頼", images: [] })
-    await waitForBatch()
-
-    expect(
-      await manager.commands.session.switchSession({ sessionId: "架空の別セッション" }),
-    ).toEqual({ ok: false, reason: FRAME_ERROR_REASON.sessionSwitchDuringTurn })
-    expect(stub.calls).not.toContain("close")
-
-    stub.emit({ kind: "turn-finished", outcome: { kind: "completed" } })
-    await waitForBatch()
-
-    expect(
-      await manager.commands.session.switchSession({ sessionId: "架空の別セッション" }),
-    ).toEqual({ ok: true })
-    expect(stub.calls).toContain("close")
-  })
-
-  it("session.setChatMode で雑談を指定して起こし直し、いま出しているパックは保つ", async () => {
-    // 雑談の切り替えは `systemPrompt` の差し替えなので、`session.switchCharacter` と同じ起こし直しに
-    // なる（docs/architecture/chat-mode.md「雑談モード」）。パックは変えないことをここで見る。
-    const started: SessionLaunchRequest[] = []
-    const manager = createSessionManager({
-      now: () => 1_000,
-      openFile: () => Promise.resolve(true),
-      readAchievementDay: () => Promise.resolve(undefined),
-      batchIntervalMs: BATCH_MS,
-      chatConsolidation: NO_CHAT_CONSOLIDATION,
-      watchTasks: NO_TASK_WATCH,
-      visit: NO_VISIT_PORTS,
-      diary: NO_DIARY_WRITER,
-      chatArchive: NOOP_CHAT_ARCHIVE,
-      project: FICTIONAL_PROJECT,
-      tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
-      contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
-      reportUsageLog: NOOP_REPORT_USAGE_LOG,
-      promptImageShelf: createPromptImageShelf(),
-      rememberSessionDefault: (sessionDefault) => ({
-        kind: "session-default-changed",
-        sessionDefault,
-      }),
-      rememberVisitEnabled: (visitEnabled) => ({
-        kind: "visit-enabled-changed",
-        visitEnabled,
-      }),
-      launchSession: (onEvent, _onRestoredEvents, request) => {
-        const stub = createStubDriver()
-        stub.attach(onEvent)
-        started.push(request)
-        return Promise.resolve(stub.driver)
-      },
-      editCharacter: () => Promise.resolve(undefined),
-      createCharacter: () => Promise.resolve(undefined),
-      deleteCharacter: () => Promise.resolve(undefined),
-      forgetRememberedLine: () => Promise.resolve(undefined),
-      readPreviousUsageReview: (): PreviousUsageReview => ({ kind: "none" }),
-      writePreviousUsageReview: () => {},
-      dismissUsageProposal: (dismiss) => ({
-        kind: "usage-proposal-dismissed",
-        key: usageProposalKey(dismiss),
-      }),
-    })
-    manager.subscribe(() => {})
-
-    expect(await manager.commands.session.setChatMode({ chat: true })).toEqual({ ok: true })
-
-    expect(started).toHaveLength(2)
-    expect(started[1]?.chat).toBe(true)
-    // パックは「いま出しているまま」として渡す（名前では渡さない）。名前で渡すと画面から
-    // 選ばれたのと区別がつかず、モードを切り替えただけで覚えた値が書き換わる
-    // （docs/architecture/screen-design.md「設定の置き場所」）。
-    expect(started[1]?.selection).toEqual({ by: "current" })
-    // 起動の1回目は初期パック（こちらも覚えない側）。
-    expect(started[0]?.selection).toEqual({ by: "initial" })
   })
 
   it("起こし直しの間に新しい駆動が流したイベントは、新しい hello より先に配らない", async () => {
@@ -952,72 +579,6 @@ describe("createSessionManager", () => {
     expect(hello?.type === "hello" && hello.state.chatMode).toBe(true)
   })
 
-  it("雑談から仕事へ戻すときも起こし直す", async () => {
-    const started: SessionLaunchRequest[] = []
-    const manager = createSessionManager({
-      now: () => 1_000,
-      openFile: () => Promise.resolve(true),
-      readAchievementDay: () => Promise.resolve(undefined),
-      batchIntervalMs: BATCH_MS,
-      chatConsolidation: NO_CHAT_CONSOLIDATION,
-      watchTasks: NO_TASK_WATCH,
-      visit: NO_VISIT_PORTS,
-      diary: NO_DIARY_WRITER,
-      chatArchive: NOOP_CHAT_ARCHIVE,
-      project: FICTIONAL_PROJECT,
-      tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
-      contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
-      reportUsageLog: NOOP_REPORT_USAGE_LOG,
-      promptImageShelf: createPromptImageShelf(),
-      rememberSessionDefault: (sessionDefault) => ({
-        kind: "session-default-changed",
-        sessionDefault,
-      }),
-      rememberVisitEnabled: (visitEnabled) => ({
-        kind: "visit-enabled-changed",
-        visitEnabled,
-      }),
-      launchSession: (onEvent, _onRestoredEvents, request) => {
-        const stub = createStubDriver()
-        stub.attach(onEvent)
-        started.push(request)
-        return Promise.resolve(stub.driver)
-      },
-      editCharacter: () => Promise.resolve(undefined),
-      createCharacter: () => Promise.resolve(undefined),
-      deleteCharacter: () => Promise.resolve(undefined),
-      forgetRememberedLine: () => Promise.resolve(undefined),
-      readPreviousUsageReview: (): PreviousUsageReview => ({ kind: "none" }),
-      writePreviousUsageReview: () => {},
-      dismissUsageProposal: (dismiss) => ({
-        kind: "usage-proposal-dismissed",
-        key: usageProposalKey(dismiss),
-      }),
-    })
-    manager.subscribe(() => {})
-
-    await manager.commands.session.setChatMode({ chat: true })
-    await manager.commands.session.setChatMode({ chat: false })
-
-    expect(started.map((request) => request.chat)).toEqual([undefined, true, false])
-  })
-
-  it("ターン進行中の session.setChatMode は定型文の理由で受け付けず、駆動を閉じない", async () => {
-    const { manager, stub } = startManagerWithStub()
-
-    expect(await manager.commands.session.prompt({ text: "架空の依頼", images: [] })).toEqual({
-      ok: true,
-    })
-    stub.emit({ kind: "request", text: "架空の依頼", images: [] })
-    await waitForBatch()
-
-    expect(await manager.commands.session.setChatMode({ chat: true })).toEqual({
-      ok: false,
-      reason: FRAME_ERROR_REASON.chatModeSwitchDuringTurn,
-    })
-    expect(stub.calls).not.toContain("close")
-  })
-
   it("駆動が起き上がるのを待ってから、新しい hello を配る（続きから始めるセッションを探す間）", async () => {
     // 駆動を起こすのに外の世界（transcript の一覧）を読むので、`launchSession` は待てる形で返る。
     const started: StubDriver[] = []
@@ -1082,213 +643,14 @@ describe("createSessionManager", () => {
     expect(frames.filter((frame) => frame.type === "hello")).toHaveLength(2)
   })
 
-  describe("キャラクターから話しかけてもらう（nudge）", () => {
-    it("雑談モードなら、記録に残さない口へ core が持つ文面を渡す（依頼としては送らない）", async () => {
-      const { manager, stub } = startManagerWithStub()
-      await waitForBatch()
-      stub.emit({ kind: "chat-mode-changed", chat: true })
+  it("代を閉じると、渡した信号が中断される", async () => {
+    const { manager } = startManagerWithStub()
 
-      expect(await manager.commands.session.nudge()).toEqual({
-        ok: true,
-      })
+    const signal = manager.commandSession.generation().diarySignal
+    expect(signal.aborted).toBe(false)
 
-      // 渡るのは `promptWithoutRecord`（記録に残さない口）だけで、`prompt` は呼ばれない
-      // ——ログにも記録にも雑談の会話のアーカイブにも残らない（docs/architecture/screen-design.md「雑談モードの画面」）。
-      expect(stub.calls).toEqual([`promptWithoutRecord:${CHAT_NUDGE_PROMPT}`])
-    })
-
-    it("仕事のモードでは受け付けない（メインビューにキャラクター発のターンを混ぜない）", async () => {
-      const { manager, stub } = startManagerWithStub()
-      await waitForBatch()
-
-      expect(await manager.commands.session.nudge()).toEqual({
-        ok: false,
-        reason: FRAME_ERROR_REASON.nudgeOutsideChat,
-      })
-      expect(stub.calls).toEqual([])
-    })
-
-    it("ターン進行中は受け付けない（画面のボタンと同じ条件をサーバでも見る）", async () => {
-      const { manager, stub } = startManagerWithStub()
-      await waitForBatch()
-      stub.emit({ kind: "chat-mode-changed", chat: true })
-      stub.emit({ kind: "request", text: "架空の依頼", images: [] })
-
-      expect(await manager.commands.session.nudge()).toEqual({
-        ok: false,
-        reason: FRAME_ERROR_REASON.nudgeDuringTurn,
-      })
-      expect(stub.calls).toEqual([])
-    })
-  })
-
-  describe("成果の振り返り（session.reflectAchievement。`docs/requirements.md`「日記」）", () => {
-    const KNOWN_DAY: DailyAchievement = {
-      kind: "known",
-      date: "2026-09-23",
-      today: "2026-09-24",
-      commitCount: 5,
-      doneTasks: { kind: "known", items: [{ id: "T-1", summary: "架空のタスク" }] },
-      graduations: [],
-      milestones: [],
-      diary: { kind: "none" },
-    }
-
-    const EMPTY_DAY: DailyAchievement = {
-      ...KNOWN_DAY,
-      commitCount: 0,
-      doneTasks: { kind: "known", items: [] },
-    }
-
-    /**
-     * 手で進める書き手のスタブ。待たない（`write` は呼ばれたことだけ記録し、解決しない
-     * Promise を返す）——中断や「書いている最中」を確かめるテストが、書き終わるのを待たずに
-     * 状態を見られるようにする。`emit` で手動にイベントを流せる。
-     */
-    function createStubDiaryWriter() {
-      const calls: DiaryWriteRequest[] = []
-      const signals: AbortSignal[] = []
-      let currentEmit: (event: SessionEvent) => void = () => {}
-      const source: DiaryWriterSource = {
-        kind: "write",
-        write: (request, onEvent, signal) => {
-          calls.push(request)
-          signals.push(signal)
-          currentEmit = onEvent
-          return new Promise(() => {})
-        },
-      }
-      return { source, calls, signals, emit: (event: SessionEvent) => currentEmit(event) }
-    }
-
-    it("その日の成果を数え直して diary-requested を流し、代の持ち物の書き手へ渡す", async () => {
-      const seenDates: string[] = []
-      const writer = createStubDiaryWriter()
-      const { manager } = startManagerWithStub(
-        "written",
-        async (date) => {
-          seenDates.push(date)
-          return KNOWN_DAY
-        },
-        writer.source,
-      )
-      const frames: ServerFrame[] = []
-      manager.subscribe((frame) => frames.push(frame))
-
-      expect(await manager.commands.session.reflectAchievement({ date: "2026-09-23" })).toEqual({
-        ok: true,
-      })
-      await waitForBatch()
-
-      expect(seenDates).toEqual(["2026-09-23"])
-      expect(writer.calls).toHaveLength(1)
-      expect(writer.calls[0]?.date).toBe("2026-09-23")
-      expect(writer.calls[0]?.requestText).toContain("この日の日記を書いてほしい")
-
-      const eventKinds = frames
-        .filter(
-          (frame): frame is Extract<ServerFrame, { readonly type: "events" }> =>
-            frame.type === "events",
-        )
-        .flatMap((frame) => frame.events.map((stamped) => stamped.event.kind))
-      expect(eventKinds).toContain("diary-requested")
-    })
-
-    it("会話のターン中・答え待ちでも受け付ける（会話とは別の使い捨ての問い合わせなので）", async () => {
-      const writer = createStubDiaryWriter()
-      const { manager, stub } = startManagerWithStub(
-        "written",
-        () => Promise.resolve(KNOWN_DAY),
-        writer.source,
-      )
-      stub.emit({ kind: "request", text: "架空の依頼", images: [] })
-
-      expect(await manager.commands.session.reflectAchievement({ date: "2026-09-23" })).toEqual({
-        ok: true,
-      })
-      expect(writer.calls).toHaveLength(1)
-    })
-
-    it("日記を書いている最中は断る（同じ日でもほかの日でも）", async () => {
-      const writer = createStubDiaryWriter()
-      const { manager } = startManagerWithStub(
-        "written",
-        () => Promise.resolve(KNOWN_DAY),
-        writer.source,
-      )
-
-      expect(await manager.commands.session.reflectAchievement({ date: "2026-09-23" })).toEqual({
-        ok: true,
-      })
-
-      const second = await manager.commands.session.reflectAchievement({ date: "2026-09-20" })
-      expect(second).toEqual({ ok: false, reason: FRAME_ERROR_REASON.achievementReflectionWriting })
-      expect(writer.calls).toHaveLength(1)
-    })
-
-    it("代を閉じると、渡した信号が中断される", async () => {
-      const writer = createStubDiaryWriter()
-      const { manager } = startManagerWithStub(
-        "written",
-        () => Promise.resolve(KNOWN_DAY),
-        writer.source,
-      )
-
-      await manager.commands.session.reflectAchievement({ date: "2026-09-23" })
-      expect(writer.signals).toHaveLength(1)
-      expect(writer.signals[0]?.aborted).toBe(false)
-
-      await manager.commands.session.switchCharacter({ name: "fictional" })
-      expect(writer.signals[0]?.aborted).toBe(true)
-    })
-
-    it("疑似セッション（dont-write）では diary-requested のすぐ後に diary-failed を流す", async () => {
-      const { manager } = startManagerWithStub("written", () => Promise.resolve(KNOWN_DAY))
-      const frames: ServerFrame[] = []
-      manager.subscribe((frame) => frames.push(frame))
-
-      expect(await manager.commands.session.reflectAchievement({ date: "2026-09-23" })).toEqual({
-        ok: true,
-      })
-      await waitForBatch()
-
-      const eventKinds = frames
-        .filter(
-          (frame): frame is Extract<ServerFrame, { readonly type: "events" }> =>
-            frame.type === "events",
-        )
-        .flatMap((frame) => frame.events.map((stamped) => stamped.event.kind))
-      expect(eventKinds).toEqual(["diary-requested", "diary-failed"])
-    })
-
-    it("空の日は断る", async () => {
-      const { manager } = startManagerWithStub("written", () => Promise.resolve(EMPTY_DAY))
-
-      expect(await manager.commands.session.reflectAchievement({ date: "2026-09-23" })).toEqual({
-        ok: false,
-        reason: FRAME_ERROR_REASON.achievementReflectionUnavailable,
-      })
-    })
-
-    it("main が読めない日は断る", async () => {
-      const { manager } = startManagerWithStub("written", () =>
-        Promise.resolve({ kind: "unknown" }),
-      )
-
-      expect(await manager.commands.session.reflectAchievement({ date: "2026-09-23" })).toEqual({
-        ok: false,
-        reason: FRAME_ERROR_REASON.achievementReflectionUnavailable,
-      })
-    })
-
-    it("成果が読めなかった（undefined）ときも断る", async () => {
-      const { manager } = startManagerWithStub("written", () => Promise.resolve(undefined))
-
-      expect(await manager.commands.session.reflectAchievement({ date: "2026-09-23" })).toEqual({
-        ok: false,
-        reason: FRAME_ERROR_REASON.achievementReflectionUnavailable,
-      })
-    })
+    await manager.commands.session.switchCharacter({ name: "fictional" })
+    expect(signal.aborted).toBe(true)
   })
 
   describe("定着", () => {
@@ -1474,218 +836,6 @@ describe("createSessionManager", () => {
     expect(frames.filter((frame) => frame.type === "hello")).toHaveLength(1)
   })
 
-  it("使用中でないパックを変えるコマンドも起こし直さず、書き込み先へ pack をそのまま渡す", async () => {
-    const { manager, stub, edits } = startManagerWithStub()
-    const frames: ServerFrame[] = []
-    manager.subscribe((frame) => frames.push(frame))
-
-    expect(
-      await manager.commands.characterPack.setBackground({
-        pack: "fictional-other",
-        image: "data:image/png;base64,AAAA",
-      }),
-    ).toEqual({ ok: true })
-    await waitForBatch()
-
-    expect(stub.calls).toEqual([])
-    expect(edits.map((edit) => edit.pack)).toEqual(["fictional-other"])
-    expect(frames.filter((frame) => frame.type === "hello")).toHaveLength(1)
-  })
-
-  // どの種類が見た目の編集の行に当たるかは `CharacterEdit` の表と型が持ち主。
-  // ここで見るのは、その手続きが editCharacter 経由の書き込みへ実際に届くこと（setPortrait・
-  // setBackground は前の2つのテストで、駆動へ渡らないことや hello の配り直しまで含めて確かめ済み）。
-  it("setOutfitAccent も同じ経路を通る", async () => {
-    const { manager, edits } = startManagerWithStub()
-
-    expect(
-      await manager.commands.characterPack.setOutfitAccent({
-        pack: "fictional",
-        outfit: "heavy",
-        color: "#ffb3a7",
-      }),
-    ).toEqual({ ok: true })
-
-    expect(edits.map((edit) => edit.kind)).toEqual(["setOutfitAccent"])
-  })
-
-  it("setProfile も同じ経路を通る", async () => {
-    const { manager, edits } = startManagerWithStub()
-
-    expect(
-      await manager.commands.characterPack.setProfile({
-        pack: "fictional",
-        name: "新しい表示名",
-        tagline: "ひとこと",
-      }),
-    ).toEqual({ ok: true })
-
-    expect(edits.map((edit) => edit.kind)).toEqual(["setProfile"])
-  })
-
-  it("新しいパックを作るコマンドも駆動へ渡さず、選択肢の増えた character-changed を配る", async () => {
-    const { manager, stub, edits, creates } = startManagerWithStub()
-    const frames: ServerFrame[] = []
-    manager.subscribe((frame) => frames.push(frame))
-
-    expect(
-      await manager.commands.characterPack.create({
-        id: "fictional-2",
-        name: "",
-        portraits: {
-          default: "data:image/png;base64,AAAA",
-        },
-        accent: "#b8c7ff",
-        chatAccent: "#eaa77a",
-      }),
-    ).toEqual({ ok: true })
-    await waitForBatch()
-
-    // 駆動には何も渡らない（作っただけでは切り替えないので、起こし直しも起きない）。
-    expect(stub.calls).toEqual([])
-    expect(edits).toEqual([])
-    expect(creates.map((create) => create.id)).toEqual(["fictional-2"])
-    const events = frames.filter((frame) => frame.type === "events").at(-1)
-    if (events?.type === "events") {
-      expect(events.events.map((stamped) => stamped.event)).toEqual([CHARACTER_EVENT])
-    }
-    expect(frames.filter((frame) => frame.type === "hello")).toHaveLength(1)
-  })
-
-  it("パックを作れなかったら、作る側の定型文の理由を返す", async () => {
-    const { manager } = startManagerWithStub("rejected")
-
-    expect(
-      await manager.commands.characterPack.create({
-        id: "fictional",
-        name: "",
-        portraits: {
-          default: "data:image/png;base64,AAAA",
-        },
-        accent: "#b8c7ff",
-        chatAccent: "#eaa77a",
-      }),
-    ).toEqual({ ok: false, reason: FRAME_ERROR_REASON.characterCreateFailed })
-  })
-
-  it("パックを消すコマンドも駆動へ渡さず、ターン中でも選択肢の減った character-changed を配る", async () => {
-    const { manager, stub, deletes } = startManagerWithStub()
-    stub.emit({ kind: "request", text: "架空の依頼", images: [] })
-    await waitForBatch()
-    const frames: ServerFrame[] = []
-    manager.subscribe((frame) => frames.push(frame))
-
-    expect(await manager.commands.characterPack.delete({ pack: "fictional-2" })).toEqual({
-      ok: true,
-    })
-    await waitForBatch()
-
-    // 使用中のパックは消せないので、起こし直しも駆動への受け渡しも起きない。
-    expect(stub.calls).toEqual([])
-    expect(deletes.map((remove) => remove.pack)).toEqual(["fictional-2"])
-    const events = frames.filter((frame) => frame.type === "events").at(-1)
-    if (events?.type === "events") {
-      expect(events.events.map((stamped) => stamped.event)).toEqual([CHARACTER_EVENT])
-    }
-  })
-
-  it("パックを消せなかったら、消す側の定型文の理由を返す", async () => {
-    const { manager } = startManagerWithStub("rejected")
-
-    expect(await manager.commands.characterPack.delete({ pack: "fictional" })).toEqual({
-      ok: false,
-      reason: FRAME_ERROR_REASON.characterDeleteFailed,
-    })
-  })
-
-  describe("画面の「編集」から覚えたことを1行消す", () => {
-    it("雑談モードなら、消したい行を渡して流し直しを配る（駆動には渡らない）", async () => {
-      const { manager, stub, forgottenLines } = startManagerWithStub()
-      stub.emit({ kind: "chat-mode-changed", chat: true })
-      await waitForBatch()
-      const frames: ServerFrame[] = []
-      manager.subscribe((frame) => frames.push(frame))
-
-      expect(
-        await manager.commands.chat.forgetRememberedLine({ line: "架空の消したい1行" }),
-      ).toEqual({ ok: true })
-      await waitForBatch()
-
-      expect(forgottenLines).toEqual(["架空の消したい1行"])
-      expect(stub.calls).toEqual([])
-      const events = frames.filter((frame) => frame.type === "events").at(-1)
-      if (events?.type === "events") {
-        expect(events.events.map((stamped) => stamped.event)).toEqual([
-          { kind: "remembered-lines-changed", lines: ["架空の残った1行"] },
-        ])
-      }
-    })
-
-    it("仕事のモードでは受け付けない（サイドバーの「覚えていること」自体が雑談中にしか出ない）", async () => {
-      const { manager, forgottenLines } = startManagerWithStub()
-
-      expect(
-        await manager.commands.chat.forgetRememberedLine({ line: "架空の消したい1行" }),
-      ).toEqual({ ok: false, reason: FRAME_ERROR_REASON.forgetRememberedLineOutsideChat })
-      expect(forgottenLines).toEqual([])
-    })
-
-    it("消せなかったら、消す側の定型文の理由を返す", async () => {
-      const { manager, stub } = startManagerWithStub("rejected")
-      stub.emit({ kind: "chat-mode-changed", chat: true })
-
-      expect(
-        await manager.commands.chat.forgetRememberedLine({ line: "架空の消したい1行" }),
-      ).toEqual({ ok: false, reason: FRAME_ERROR_REASON.forgetRememberedLineFailed })
-    })
-  })
-
-  describe("レポートに書かれたパスを開く", () => {
-    it("開けたら ok を返し、渡したパスが options.openFile に届く", async () => {
-      const { manager, stub, openedFiles } = startManagerWithStub()
-
-      expect(await manager.commands.host.openFile({ path: "src/foo.ts" })).toEqual({ ok: true })
-      // 駆動へは渡らない・起こし直しも起きない。
-      expect(stub.calls).toEqual([])
-      expect(openedFiles).toEqual(["src/foo.ts"])
-    })
-
-    it("開けなかったら（一覧に無い・orca が無い・失敗）定型文の理由を返す", async () => {
-      const { manager, openedFiles } = startManagerWithStub("rejected")
-
-      expect(await manager.commands.host.openFile({ path: "src/nope.ts" })).toEqual({
-        ok: false,
-        reason: FRAME_ERROR_REASON.openFileFailed,
-      })
-      expect(openedFiles).toEqual(["src/nope.ts"])
-    })
-
-    it("ターン進行中でも受け付ける（読むだけの操作なので断らない）", async () => {
-      const { manager, stub, openedFiles } = startManagerWithStub()
-      stub.emit({ kind: "request", text: "架空の依頼", images: [] })
-      await waitForBatch()
-
-      expect(await manager.commands.host.openFile({ path: "src/foo.ts" })).toEqual({ ok: true })
-      expect(openedFiles).toEqual(["src/foo.ts"])
-    })
-  })
-
-  it("書き込みが受け付けられなかったら定型文の理由を返し、状態は動かさない", async () => {
-    const { manager } = startManagerWithStub("rejected")
-    const frames: ServerFrame[] = []
-    manager.subscribe((frame) => frames.push(frame))
-
-    expect(
-      await manager.commands.characterPack.clearPortrait({
-        pack: "fictional",
-        expression: "proud",
-      }),
-    ).toEqual({ ok: false, reason: FRAME_ERROR_REASON.characterEditFailed })
-    await waitForBatch()
-
-    expect(frames.filter((frame) => frame.type === "events")).toEqual([])
-  })
-
   it("起こし直しに失敗したら定型文の理由を返し、常駐プロセスは落ちない", async () => {
     const manager = createSessionManager({
       now: () => 1_000,
@@ -1739,117 +889,6 @@ describe("createSessionManager", () => {
     const frames: ServerFrame[] = []
     manager.subscribe((frame) => frames.push(frame))
     expect(frames).toHaveLength(1)
-  })
-
-  it("キャラクターへの書き込みが例外を投げても定型文の理由を返す", async () => {
-    const stub = createStubDriver()
-    const manager = createSessionManager({
-      now: () => 1_000,
-      openFile: () => Promise.resolve(true),
-      readAchievementDay: () => Promise.resolve(undefined),
-      batchIntervalMs: BATCH_MS,
-      chatConsolidation: NO_CHAT_CONSOLIDATION,
-      watchTasks: NO_TASK_WATCH,
-      visit: NO_VISIT_PORTS,
-      diary: NO_DIARY_WRITER,
-      chatArchive: NOOP_CHAT_ARCHIVE,
-      project: FICTIONAL_PROJECT,
-      tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
-      contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
-      reportUsageLog: NOOP_REPORT_USAGE_LOG,
-      promptImageShelf: createPromptImageShelf(),
-      rememberSessionDefault: (sessionDefault) => ({
-        kind: "session-default-changed",
-        sessionDefault,
-      }),
-      rememberVisitEnabled: (visitEnabled) => ({
-        kind: "visit-enabled-changed",
-        visitEnabled,
-      }),
-      launchSession: (onEvent) => {
-        stub.attach(onEvent)
-        return Promise.resolve(stub.driver)
-      },
-      editCharacter: () => Promise.reject(new Error("架空の書き込み失敗")),
-      createCharacter: () => Promise.resolve(undefined),
-      deleteCharacter: () => Promise.resolve(undefined),
-      forgetRememberedLine: () => Promise.resolve(undefined),
-      readPreviousUsageReview: (): PreviousUsageReview => ({ kind: "none" }),
-      writePreviousUsageReview: () => {},
-      dismissUsageProposal: (dismiss) => ({
-        kind: "usage-proposal-dismissed",
-        key: usageProposalKey(dismiss),
-      }),
-    })
-
-    expect(
-      await manager.commands.characterPack.clearPortrait({
-        pack: "fictional",
-        expression: "proud",
-      }),
-    ).toEqual({ ok: false, reason: FRAME_ERROR_REASON.characterEditFailed })
-  })
-
-  it("駆動が例外を投げても定型文の理由を返し、常駐プロセスは落ちない", async () => {
-    const manager = createSessionManager({
-      now: () => 1_000,
-      openFile: () => Promise.resolve(true),
-      readAchievementDay: () => Promise.resolve(undefined),
-      batchIntervalMs: BATCH_MS,
-      chatConsolidation: NO_CHAT_CONSOLIDATION,
-      watchTasks: NO_TASK_WATCH,
-      visit: NO_VISIT_PORTS,
-      diary: NO_DIARY_WRITER,
-      chatArchive: NOOP_CHAT_ARCHIVE,
-      project: FICTIONAL_PROJECT,
-      tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
-      contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
-      reportUsageLog: NOOP_REPORT_USAGE_LOG,
-      promptImageShelf: createPromptImageShelf(),
-      rememberSessionDefault: (sessionDefault) => ({
-        kind: "session-default-changed",
-        sessionDefault,
-      }),
-      rememberVisitEnabled: (visitEnabled) => ({
-        kind: "visit-enabled-changed",
-        visitEnabled,
-      }),
-      launchSession: () =>
-        Promise.resolve({
-          prompt: () => {},
-          promptWithoutRecord: () => {},
-          interrupt: () => Promise.reject(new Error("架空の駆動エラー")),
-          answer: () => true,
-          pending: () => [],
-          readContextUsage: () => Promise.resolve(UNAVAILABLE_CONTEXT_USAGE),
-          readPlanUsage: () => Promise.resolve(UNAVAILABLE_PLAN_USAGE),
-          readSessionDigest: () => Promise.resolve(UNAVAILABLE_SESSION_DIGEST),
-          setModel: () => Promise.resolve(),
-          setEffort: () => Promise.resolve(),
-          setPermissionMode: () => Promise.resolve(),
-          close: () => {},
-        }),
-      editCharacter: () => Promise.resolve(undefined),
-      createCharacter: () => Promise.resolve(undefined),
-      deleteCharacter: () => Promise.resolve(undefined),
-      forgetRememberedLine: () => Promise.resolve(undefined),
-      readPreviousUsageReview: (): PreviousUsageReview => ({ kind: "none" }),
-      writePreviousUsageReview: () => {},
-      dismissUsageProposal: (dismiss) => ({
-        kind: "usage-proposal-dismissed",
-        key: usageProposalKey(dismiss),
-      }),
-    })
-
-    expect(await manager.commands.session.interrupt()).toEqual({
-      ok: false,
-      reason: FRAME_ERROR_REASON.driverFailed,
-    })
-
-    // 落ちていないので、次のコマンドも受け付ける。
-    expect(await manager.commands.session.prompt({ text: "架空の依頼", images: [] })).toEqual({
-      ok: true,
-    })
   })
 
   it("close で駆動を閉じ、購読も外れる", async () => {
@@ -2815,75 +1854,6 @@ describe("createSessionManager", () => {
   })
 })
 
-// 新しいセッションの既定（docs/architecture/screen-design.md「設定の置き場所」）。覚えるのは配線層で、
-// ここが持つのは「受け取ったら覚えさせて、姿へ流し直す」「いまのセッションは起こし直さない」の2つ。
-describe("createSessionManager（新しいセッションの既定）", () => {
-  it("session.setSessionDefault を覚えさせ、姿に載せて配る", async () => {
-    const { manager, remembered } = startManagerWithStub()
-    const frames: ServerFrame[] = []
-    manager.subscribe((frame) => frames.push(frame))
-
-    const result = await manager.commands.session.setSessionDefault({
-      model: "sonnet",
-      effort: "high",
-      permissionMode: "plan",
-    })
-    await waitForBatch()
-
-    expect(result).toEqual({ ok: true })
-    expect(remembered).toEqual([{ model: "sonnet", effort: "high", permissionMode: "plan" }])
-    expect(frames.at(-1)).toEqual({
-      type: "events",
-      events: [
-        {
-          at: 1_000,
-          event: {
-            kind: "session-default-changed",
-            sessionDefault: { model: "sonnet", effort: "high", permissionMode: "plan" },
-          },
-        },
-      ],
-    })
-  })
-
-  // 帯のドロップダウンはセッション限り（`docs/architecture/screen-design.md`「設定の置き場所」）。既定は書き換わらない。
-  it("帯の session.setModel / session.setPermissionMode では既定を覚えない", async () => {
-    const { manager, stub, remembered } = startManagerWithStub()
-
-    await manager.commands.session.setModel({ model: "haiku" })
-    await manager.commands.session.setPermissionMode({ mode: "bypassPermissions" })
-
-    expect(remembered).toEqual([])
-    expect(stub.calls).toEqual(["setModel:haiku", "setPermissionMode:bypassPermissions"])
-  })
-})
-
-// 歯車の「訪問」のオン・オフ（`docs/architecture/screen-design.md`「設定の置き場所」）。覚え方は「新しいセッションの既定」と
-// 同じ（`~/.tsukumo/state.json`）だが、訪問の見張りが即座に読む値でもある（実地での
-// 「訪問中にオフにすると帰る」「オフのままだと来ない」は下の `describe("訪問")` で確かめる）。
-describe("createSessionManager（訪問のオン・オフ）", () => {
-  it("visit.setEnabled を覚えさせ、姿に載せて配る", async () => {
-    const { manager, rememberedVisitEnabled } = startManagerWithStub()
-    const frames: ServerFrame[] = []
-    manager.subscribe((frame) => frames.push(frame))
-
-    const result = await manager.commands.visit.setEnabled({ enabled: false })
-    await waitForBatch()
-
-    expect(result).toEqual({ ok: true })
-    expect(rememberedVisitEnabled).toEqual([false])
-    expect(frames.at(-1)).toEqual({
-      type: "events",
-      events: [
-        {
-          at: 1_000,
-          event: { kind: "visit-enabled-changed", visitEnabled: false },
-        },
-      ],
-    })
-  })
-})
-
 describe("依頼に添えた画像の棚", () => {
   // 原寸は手で組んだ大きめの架空の data URL（実物の画像は使わない）。hello に載っていれば
   // 長さで分かるように、控えより桁違いに長くしてある。
@@ -2956,16 +1926,6 @@ describe("依頼に添えた画像の棚", () => {
     const hello = frames.find((frame) => frame.type === "hello")
     return JSON.stringify(hello)
   }
-
-  it("prompt の原寸を棚に置き、振った id を駆動へ渡す（棚から同じ原寸が引ける）", async () => {
-    const { shelf, prompted, prompt } = startManagerWithShelf()
-
-    await prompt([fullImage("A")])
-
-    const [shelved] = prompted[0] ?? []
-    expect(shelved?.full).toBe(fullImage("A").full)
-    expect(shelf.find(shelved?.id ?? "")).toBe(fullImage("A").full)
-  })
 
   it("hello には控えと id だけが載り、原寸の枚数に比例して大きくならない", async () => {
     const one = startManagerWithShelf()

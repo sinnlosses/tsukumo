@@ -1,6 +1,6 @@
 # テスト
 
-最終更新: 2026-09-29。ステータス: **正典**。
+最終更新: 2026-10-01。ステータス: **正典**。
 
 責務: 対象ごとのテストの方法、E2E（走らせ方・成果物・シナリオ）、手で確かめる手順を持つ。
 読む時: テストを足す・E2E を直す・目視で確かめるとき。
@@ -15,18 +15,19 @@
 
 ## テスト
 
-| 対象                           | 方法                                                                                                                                            | 置き場所                                                 |
-| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
-| reducer（`applySessionEvent`） | 純粋関数として単体で                                                                                                                            | `test/shared/session/session-state.test.ts`              |
-| zod スキーマ                   | 受け付ける形・落とす形を1件ずつ                                                                                                                 | `test/shared/contract/command-input.test.ts` など        |
-| SDK の型との一致               | `PERMISSION_MODES` / `MODEL_ALIASES` が SDK の型と同じ値であること（型レベルの検査）                                                            | `test/server/session-driver/adapter/sdk-driver.test.ts`  |
-| `session-manager`              | fake driver を差し込み、`hello` → `events` の順序・バッチ・`dispatch` の分岐                                                                    | `test/server/session/core/session-manager.test.ts`       |
-| `server`（ws）                 | 購読 → `hello` が先に届き、押した順に取りこぼさず流れる、切断で購読が外れる、トークン無しは 403、Origin 違いは 403、コマンド → 受け手が呼ばれる | `test/server/view-server/adapter/session-socket.test.ts` |
-| browser の部品                 | Vitest + `happy-dom` + `@testing-library/react`。**役割と文言で当てる**（HTML の文字列一致はしない）                                            | `test/browser/**`                                        |
-| 層の検査                       | 層の辺・機能どうしの辺・browser の箱と領域の辺（`docs/architecture.md`「全体構成」）。外部ツールは増やさない                                    | `test/architecture.test.ts`                              |
-| 画面の見た目                   | **fake driver で起こした tsukumo に Playwright**（`webapp-testing` スキル）。数値で読めるものは CDP で読む。色・間合いは人の目                  | `scripts/`（本体から呼ばれない）                         |
-| 状態のカタログ                 | 疑似セッションの場面を名指しして起こし直し、広い窓と狭い窓で撮って索引 HTML に並べる（`TSUKUMO_FAKE_SCENE`）                                    | `scripts/capture-catalog.ts`                             |
-| E2E                            | **fake driver で起こした tsukumo を手元の Chrome で開き、DOM の構造と WebSocket の流れを期待値と比べる**（下の「E2E」）                         | `test/e2e/`                                              |
+| 対象                                      | 方法                                                                                                                                                              | 置き場所                                                 |
+| ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| reducer（`applySessionEvent`）            | 純粋関数として単体で                                                                                                                                              | `test/shared/session/session-state.test.ts`              |
+| zod スキーマ                              | 受け付ける形・落とす形を1件ずつ                                                                                                                                   | `test/shared/contract/command-input.test.ts` など        |
+| SDK の型との一致                          | `PERMISSION_MODES` / `MODEL_ALIASES` が SDK の型と同じ値であること（型レベルの検査）                                                                              | `test/server/session-driver/adapter/sdk-driver.test.ts`  |
+| `session-manager`                         | fake driver を差し込み、`hello` → `events` の順序・バッチ・代の寿命（起こし直し・`hello` の配り直し・古い代のイベントを捨てる）と反応の順                         | `test/server/session/core/session-manager.test.ts`       |
+| コマンドの受け手（`createCommandRouter`） | 偽の `CommandSession`（姿は本物の reducer で畳む）を渡し、断る条件（契約の `meta`）・受け手が口へ渡す入力・失敗の定型文の理由・流すイベント・頼む起こし直しの中身 | `test/router.test.ts`                                    |
+| `server`（ws）                            | 購読 → `hello` が先に届き、押した順に取りこぼさず流れる、切断で購読が外れる、トークン無しは 403、Origin 違いは 403、コマンド → 受け手が呼ばれる                   | `test/server/view-server/adapter/session-socket.test.ts` |
+| browser の部品                            | Vitest + `happy-dom` + `@testing-library/react`。**役割と文言で当てる**（HTML の文字列一致はしない）                                                              | `test/browser/**`                                        |
+| 層の検査                                  | 層の辺・機能どうしの辺・browser の箱と領域の辺（`docs/architecture.md`「全体構成」）。外部ツールは増やさない                                                      | `test/architecture.test.ts`                              |
+| 画面の見た目                              | **fake driver で起こした tsukumo に Playwright**（`webapp-testing` スキル）。数値で読めるものは CDP で読む。色・間合いは人の目                                    | `scripts/`（本体から呼ばれない）                         |
+| 状態のカタログ                            | 疑似セッションの場面を名指しして起こし直し、広い窓と狭い窓で撮って索引 HTML に並べる（`TSUKUMO_FAKE_SCENE`）                                                      | `scripts/capture-catalog.ts`                             |
+| E2E                                       | **fake driver で起こした tsukumo を手元の Chrome で開き、DOM の構造と WebSocket の流れを期待値と比べる**（下の「E2E」）                                           | `test/e2e/`                                              |
 
 - **`server.ts` / `session-socket.ts` はテストする。** 「描く」側の入り口だが、配った結果は HTTP と WebSocket の
   両方で外から観測できるので、バインド先・経路・フレームの往復は自動で守れる。目視でしか
