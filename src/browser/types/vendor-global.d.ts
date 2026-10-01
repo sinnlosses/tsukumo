@@ -15,11 +15,18 @@ declare global {
       readonly securityLevel: string
       /**
        * 失敗したときに mermaid 自身がエラーの絵を `<pre class="mermaid">` の中へ描くのを止める。
-       * `true` だと `run()` は絵を描くかわりに Promise を reject する。
+       * `true` だと `render()` は絵を描くかわりに Promise を reject する。
        */
       readonly suppressErrorRendering: boolean
     }) => void
-    readonly run: (options: { readonly nodes: readonly Element[] }) => Promise<void>
+    /** `id` は SVG の `id` と中の `<style>` の接頭辞になる。 */
+    readonly render: (
+      id: string,
+      code: string,
+    ) => Promise<{
+      readonly svg: string
+      readonly bindFunctions: ((element: Element) => void) | undefined
+    }>
   }
 
   /**

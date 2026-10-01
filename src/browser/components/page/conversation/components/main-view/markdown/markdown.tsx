@@ -119,7 +119,8 @@ function Pre(props: PreProps): ReactElement {
   if (codeNode !== undefined) {
     const language = codeLanguage(codeNode)
     if (language === "mermaid") {
-      return <MermaidBlock code={hastText(codeNode)} />
+      const code = hastText(codeNode)
+      return <MermaidBlock key={code} code={code} />
     }
     if (language === "chart") {
       return <ChartBlock spec={hastText(codeNode)} />
