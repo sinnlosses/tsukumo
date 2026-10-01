@@ -73,13 +73,13 @@ export function createSessionCatalog(options: {
   let loaded: Promise<readonly TaggedSession[]> = readOnce().then((reading) =>
     reading.kind === "read" ? reading.sessions : [],
   )
-  // 読み直した一覧にも写し直すので、付けた印は捨てない（このプロセスが印を付けたセッションの数だけ）。
-  let marks: readonly Marked[] = []
+  // セッションごとに最新の印だけを持つ。読み直した一覧に載った印は捨てる。
+  let marks: ReadonlyMap<string, Marked> = new Map()
   let refreshCount = 0
 
   const current = async (): Promise<readonly TaggedSession[]> => {
     const sessions = await loaded
-    return marks.reduce(withSessionMark, sessions)
+    return [...marks.values()].reduce(withSessionMark, sessions)
   }
 
   return {
@@ -94,12 +94,34 @@ export function createSessionCatalog(options: {
         return "kept"
       }
       loaded = Promise.resolve(reading.sessions)
+      marks = unreflectedMarks(marks, reading.sessions)
       return "refreshed"
     },
     noteMarked: (sessionId, tag) => {
-      marks = [...marks, { sessionId, tag, at: options.now() }]
+      if (readSessionMark(tag) === undefined) {
+        return
+      }
+      marks = new Map(marks).set(sessionId, { sessionId, tag, at: options.now() })
     },
   }
+}
+
+/** 一覧にまだ載っていない印だけを残す。載っているとは、同じ ID で同じ印・最終更新が印を付けた時刻以降のこと。 */
+function unreflectedMarks<Marked extends { readonly tag: string; readonly at: number }>(
+  marks: ReadonlyMap<string, Marked>,
+  sessions: readonly TaggedSession[],
+): ReadonlyMap<string, Marked> {
+  const listed = new Map(sessions.map((session) => [session.sessionId, session]))
+  return new Map(
+    [...marks].filter(([sessionId, marked]) => {
+      const session = listed.get(sessionId)
+      return (
+        session === undefined ||
+        session.tag !== readSessionMark(marked.tag)?.tag ||
+        session.lastModified < marked.at
+      )
+    }),
+  )
 }
 
 /**

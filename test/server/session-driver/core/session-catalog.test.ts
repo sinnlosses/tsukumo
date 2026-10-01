@@ -108,6 +108,63 @@ describe("createSessionCatalog", () => {
     ])
   })
 
+  it("同じセッションに何度も印を付け直しても、最新の印（時刻と印）が一覧に出る", async () => {
+    const reads = scriptedRead([
+      () => Promise.resolve([sessionInfo("s-a", 100, TAG), sessionInfo("s-b", 200, TAG)]),
+    ])
+    let now = 1_000
+    const catalog = createSessionCatalog({ read: reads.read, now: () => now })
+
+    catalog.noteMarked("s-a", TAG)
+    now = 2_000
+    catalog.noteMarked("s-a", SECOND_TAG)
+    now = 3_000
+    catalog.noteMarked("s-b", TAG)
+    now = 4_000
+    catalog.noteMarked("s-a", TAG)
+
+    expect(await catalog.listChoices(SECOND_TAG)).toEqual([])
+    expect(await catalog.listChoices(TAG)).toEqual([
+      expect.objectContaining({ sessionId: "s-a", lastModified: 4_000 }),
+      expect.objectContaining({ sessionId: "s-b", lastModified: 3_000 }),
+    ])
+  })
+
+  it("読めない印を付けても、先に付けた印も一覧も変わらない", async () => {
+    const reads = scriptedRead([() => Promise.resolve([sessionInfo("s-a", 100, TAG)])])
+    let now = 1_000
+    const catalog = createSessionCatalog({ read: reads.read, now: () => now })
+
+    catalog.noteMarked("s-a", TAG)
+    now = 2_000
+    catalog.noteMarked("s-a", "架空の読めない印")
+    catalog.noteMarked("s-new", "架空の読めない印")
+
+    expect(await catalog.listChoices(TAG)).toEqual([
+      expect.objectContaining({ sessionId: "s-a", lastModified: 1_000 }),
+    ])
+  })
+
+  it("読み直した一覧に載った印は捨て、載っていない印は読み直したあとも残る", async () => {
+    const reads = scriptedRead([
+      () => Promise.resolve([]),
+      () => Promise.resolve([sessionInfo("s-listed", 1_500, TAG), sessionInfo("s-late", 500, TAG)]),
+      () => Promise.resolve([sessionInfo("s-listed", 100, TAG), sessionInfo("s-late", 500, TAG)]),
+    ])
+    const catalog = createSessionCatalog({ read: reads.read, now: () => 1_000 })
+
+    catalog.noteMarked("s-listed", TAG)
+    catalog.noteMarked("s-late", TAG)
+    await catalog.refresh()
+    // 載った印は捨てたので、次に一覧が古い値を返しても付け直されない。
+    await catalog.refresh()
+
+    expect(await catalog.listChoices(TAG)).toEqual([
+      expect.objectContaining({ sessionId: "s-late", lastModified: 1_000 }),
+      expect.objectContaining({ sessionId: "s-listed", lastModified: 100 }),
+    ])
+  })
+
   it("読み直せなかったときは、持っている一覧のまま", async () => {
     const reads = scriptedRead([
       () => Promise.resolve([sessionInfo("s-work", 200, TAG)]),
