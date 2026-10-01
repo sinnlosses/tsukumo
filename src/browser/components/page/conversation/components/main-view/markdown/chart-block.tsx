@@ -16,6 +16,7 @@ export function ChartBlock(props: ChartBlockProps): ReactElement {
 
   useEffect(() => {
     let cancelled = false
+    let chart: { readonly destroy: () => void } | undefined
     const canvas = canvasRef.current
 
     if (canvas !== null) {
@@ -25,8 +26,7 @@ export function ChartBlock(props: ChartBlockProps): ReactElement {
             return
           }
 
-          // JSON.parse の失敗もまとめて拾いたいので、あえて戻り値は使わない。
-          void new Chart(canvas, JSON.parse(props.spec))
+          chart = new Chart(canvas, JSON.parse(props.spec))
         })
         .catch(() => {
           if (!cancelled) {
@@ -37,6 +37,7 @@ export function ChartBlock(props: ChartBlockProps): ReactElement {
 
     return () => {
       cancelled = true
+      chart?.destroy()
     }
   }, [props.spec])
 
