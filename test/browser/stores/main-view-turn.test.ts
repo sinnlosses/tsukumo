@@ -296,3 +296,58 @@ describe("mainViewTurnsOf（続きのターンを2回以上含む並びを1件�
     ])
   })
 })
+
+describe("mainViewTurnsOf（変わらないターンとステップの参照）", () => {
+  const fold = (events: readonly SessionEvent[]) =>
+    events.reduce((current, event) => applySessionEvent(current, event, 0), INITIAL_SESSION_STATE)
+  const ask: SessionEvent = { kind: "request", text: "架空の依頼", images: [] }
+  const report: SessionEvent = {
+    kind: "report",
+    toolUseId: "toolu_r1",
+    conclusion: "架空の結論。",
+    sections: [],
+    favor: "",
+    checks: [],
+    closing: { kind: "none" },
+    unknownBlockCount: 0,
+    sessionSummary: undefined,
+    task: { kind: "none" },
+  }
+  const finished: SessionEvent = { kind: "turn-finished", outcome: { kind: "completed" } }
+  const reported = fold([ask, report, finished])
+
+  it("出ているレポートに関わらない記録を1件足しても、前と同じものを返す", () => {
+    const before = mainViewTurnsOf(reported)
+    const after = mainViewTurnsOf(
+      applySessionEvent(
+        reported,
+        { kind: "speech", text: "架空のセリフ", expression: "default" },
+        0,
+      ),
+    )
+
+    expect(after).toBe(before)
+  })
+
+  it("記録を1件足したターンだけを作り直し、前のターンは同じものを返す", () => {
+    const asked = applySessionEvent(reported, ask, 0)
+    const before = mainViewTurnsOf(asked)
+    const after = mainViewTurnsOf(
+      applySessionEvent(
+        asked,
+        {
+          kind: "tool-started",
+          toolUseId: "toolu_t1",
+          name: "Read",
+          input: { file_path: "/tmp/dummy.ts" },
+          parentToolUseId: undefined,
+        },
+        0,
+      ),
+    )
+
+    expect(after[0]).toBe(before[0])
+    expect(after[0]?.steps[0]).toBe(before[0]?.steps[0])
+    expect(after[1]).not.toBe(before[1])
+  })
+})

@@ -5,6 +5,8 @@
 //
 // `useSession` のセレクタは同じ姿なら同じものを返す必要があるので、姿そのものをキーにして結果を覚える（`WeakMap` なので、古い姿と一緒に落ちる）。
 
+import { replaceEqualDeep } from "@tanstack/react-query"
+
 import {
   mainViewEntries,
   mainViewTurns,
@@ -15,19 +17,28 @@ import { useSession } from "./session.ts"
 
 const TURNS_BY_STATE = new WeakMap<SessionState, readonly MainViewTurn[]>()
 
+let latestTurns: readonly MainViewTurn[] = []
+
 /** メインビューに出すターン（昇順。末尾が今回）。 */
 export function useMainViewTurns(): readonly MainViewTurn[] {
   return useSession((session) => mainViewTurnsOf(session.state))
 }
 
-/** 姿1つから畳んだターン。2回目からは覚えたものを返すので、セレクタの中から呼んでよい。 */
+/**
+ * 姿1つから畳んだターン。2回目からは覚えたものを返すので、セレクタの中から呼んでよい。
+ * 直前に畳んだ結果と中身の等しいターン・ステップは、直前の結果のものをそのまま返す。
+ */
 export function mainViewTurnsOf(state: SessionState): readonly MainViewTurn[] {
   const remembered = TURNS_BY_STATE.get(state)
   if (remembered !== undefined) {
     return remembered
   }
-  const turns = mainViewTurns(mainViewEntries(state), unsettledBodies(state), isClosed(state))
+  const turns = replaceEqualDeep(
+    latestTurns,
+    mainViewTurns(mainViewEntries(state), unsettledBodies(state), isClosed(state)),
+  )
   TURNS_BY_STATE.set(state, turns)
+  latestTurns = turns
   return turns
 }
 
