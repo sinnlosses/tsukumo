@@ -7,7 +7,7 @@
   position: relative;
   display: grid;
   grid-template-columns: 1fr;
-  grid-template-rows: var(--layout-row-top, 65fr) auto var(--layout-row-bottom, 35fr);
+  grid-template-rows: var(--layout-row-top, 70fr) auto var(--layout-row-bottom, 30fr);
   gap: 0.5rem;
   /* 最上部の帯（画面のナビ）の外寸（帯の地＋下の罫線）とその下の隙間、body の下の padding を差し引いて、grid 自体は残りの高さぴったりにする。
      上の padding は引かない（帯がその中へはみ出して画面の上端に付くため）。

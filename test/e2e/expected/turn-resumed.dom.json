@@ -13,132 +13,140 @@
           },
           "children": [
             {
-              "tag": "article",
+              "tag": "div",
+              "attributes": {
+                "data-main-view-content": "report"
+              },
               "children": [
                 {
-                  "tag": "header",
+                  "tag": "article",
                   "children": [
                     {
-                      "tag": "button",
-                      "attributes": {
-                        "aria-disabled": "true",
-                        "aria-label": "1つ古いターンへ",
-                        "type": "button"
-                      },
-                      "children": [
-                        {
-                          "tag": "span",
-                          "attributes": {
-                            "aria-hidden": "true"
-                          },
-                          "children": [
-                            "‹"
-                          ]
-                        }
-                      ]
-                    },
-                    {
-                      "tag": "button",
-                      "attributes": {
-                        "aria-disabled": "true",
-                        "aria-label": "1つ新しいターンへ",
-                        "type": "button"
-                      },
-                      "children": [
-                        {
-                          "tag": "span",
-                          "attributes": {
-                            "aria-hidden": "true"
-                          },
-                          "children": [
-                            "›"
-                          ]
-                        }
-                      ]
-                    },
-                    {
-                      "tag": "h2",
+                      "tag": "header",
                       "children": [
                         {
                           "tag": "button",
                           "attributes": {
-                            "aria-disabled": "false",
-                            "aria-expanded": "false",
+                            "aria-disabled": "true",
+                            "aria-label": "1つ古いターンへ",
                             "type": "button"
                           },
                           "children": [
-                            "合図をまたいでも報告が消えないか確かめたい（架空の依頼）",
                             {
                               "tag": "span",
                               "attributes": {
                                 "aria-hidden": "true"
-                              }
+                              },
+                              "children": [
+                                "‹"
+                              ]
                             }
                           ]
-                        }
-                      ]
-                    },
-                    "1 / 1",
-                    "最新"
-                  ]
-                },
-                {
-                  "tag": "div",
-                  "attributes": {
-                    "data-outline": "hidden",
-                    "data-outline-collapsed": "false"
-                  },
-                  "children": [
-                    {
-                      "tag": "details",
-                      "children": [
+                        },
                         {
-                          "tag": "summary",
+                          "tag": "button",
+                          "attributes": {
+                            "aria-disabled": "true",
+                            "aria-label": "1つ新しいターンへ",
+                            "type": "button"
+                          },
                           "children": [
-                            "中間レポート: 中間の結論（架空）：ここまでで分かったことをいったんまとめた。"
+                            {
+                              "tag": "span",
+                              "attributes": {
+                                "aria-hidden": "true"
+                              },
+                              "children": [
+                                "›"
+                              ]
+                            }
                           ]
-                        }
+                        },
+                        {
+                          "tag": "h2",
+                          "children": [
+                            {
+                              "tag": "button",
+                              "attributes": {
+                                "aria-disabled": "false",
+                                "aria-expanded": "false",
+                                "type": "button"
+                              },
+                              "children": [
+                                "合図をまたいでも報告が消えないか確かめたい（架空の依頼）",
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  }
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        "1 / 1",
+                        "最新"
                       ]
                     },
                     {
-                      "tag": "section",
+                      "tag": "div",
+                      "attributes": {
+                        "data-outline": "hidden",
+                        "data-outline-collapsed": "false"
+                      },
                       "children": [
                         {
-                          "tag": "header",
+                          "tag": "details",
                           "children": [
+                            {
+                              "tag": "summary",
+                              "children": [
+                                "中間レポート: 中間の結論（架空）：ここまでで分かったことをいったんまとめた。"
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "tag": "section",
+                          "children": [
+                            {
+                              "tag": "header",
+                              "children": [
+                                {
+                                  "tag": "p",
+                                  "children": [
+                                    "最終レポート"
+                                  ]
+                                }
+                              ]
+                            },
                             {
                               "tag": "p",
                               "children": [
-                                "最終レポート"
-                              ]
-                            }
-                          ]
-                        },
-                        {
-                          "tag": "p",
-                          "children": [
-                            "最終の結論（架空）：合図をまたいでも報告は消えなかった。"
-                          ]
-                        },
-                        {
-                          "tag": "ul",
-                          "children": [
-                            {
-                              "tag": "li",
-                              "children": [
-                                "中間の報告は合図のあいだも出したまま"
+                                "最終の結論（架空）：合図をまたいでも報告は消えなかった。"
                               ]
                             },
                             {
-                              "tag": "li",
+                              "tag": "ul",
                               "children": [
-                                "吹き出しも前のセリフを保った"
-                              ]
-                            },
-                            {
-                              "tag": "li",
-                              "children": [
-                                "最後にこの最終報告へ差し替わる"
+                                {
+                                  "tag": "li",
+                                  "children": [
+                                    "中間の報告は合図のあいだも出したまま"
+                                  ]
+                                },
+                                {
+                                  "tag": "li",
+                                  "children": [
+                                    "吹き出しも前のセリフを保った"
+                                  ]
+                                },
+                                {
+                                  "tag": "li",
+                                  "children": [
+                                    "最後にこの最終報告へ差し替わる"
+                                  ]
+                                }
                               ]
                             }
                           ]

@@ -80,25 +80,50 @@ function revealTargets(): readonly string[] {
 
 describe("Turn（書き上げる演出を掛ける相手）", () => {
   it("出し始めた時点で既にあった本文には掛けない（過去のターン・読み込み直し）", () => {
-    render(<Turn turn={turn([step({ id: 0, body: text("確定した本文"), final: true })])} newest />)
+    render(
+      <Turn
+        turn={turn([step({ id: 0, body: text("確定した本文"), final: true })])}
+        newest
+        freshReport={false}
+      />,
+    )
 
     expect(revealTargets()).toEqual([])
   })
 
+  it("地図から入れ替えたばかりのレポートは、出し始めた時点にあった最終レポートにも掛ける", () => {
+    render(
+      <Turn
+        turn={turn([step({ id: 0, body: text("届いた本文"), final: true })])}
+        newest
+        freshReport
+      />,
+    )
+
+    expect(revealTargets()).toEqual(["届いた本文"])
+  })
+
   it("本文にはやり取りの番号を渡す（残った筆先が別のやり取りの上へ出ないため）", () => {
-    render(<Turn turn={turn([step({ id: 0, body: text("確定した本文"), final: true })])} newest />)
+    render(
+      <Turn
+        turn={turn([step({ id: 0, body: text("確定した本文"), final: true })])}
+        newest
+        freshReport={false}
+      />,
+    )
 
     expect(revealed.map((call) => call.turnId)).toEqual([TURN_ID])
   })
 
   it("あとから現れた確定レポートにだけ掛ける", () => {
-    const { rerender } = render(<Turn turn={turn([step({ id: 0 })])} newest />)
+    const { rerender } = render(<Turn turn={turn([step({ id: 0 })])} newest freshReport={false} />)
     revealed = []
 
     rerender(
       <Turn
         turn={turn([step({ id: 0 }), step({ id: 1, body: text("確定した本文"), final: true })])}
         newest
+        freshReport={false}
       />,
     )
 
@@ -107,7 +132,11 @@ describe("Turn（書き上げる演出を掛ける相手）", () => {
 
   it("確定レポートが並んだら、最後の1件だけに掛ける", () => {
     const { rerender } = render(
-      <Turn turn={turn([step({ id: 0, body: text("1件目"), final: true })])} newest />,
+      <Turn
+        turn={turn([step({ id: 0, body: text("1件目"), final: true })])}
+        newest
+        freshReport={false}
+      />,
     )
     revealed = []
 
@@ -118,6 +147,7 @@ describe("Turn（書き上げる演出を掛ける相手）", () => {
           step({ id: 1, body: text("2件目"), final: true }),
         ])}
         newest
+        freshReport={false}
       />,
     )
 
@@ -125,13 +155,14 @@ describe("Turn（書き上げる演出を掛ける相手）", () => {
   })
 
   it("中間レポートには掛けない（流れている最中に少しずつ出る本文なので）", () => {
-    const { rerender } = render(<Turn turn={turn([step({ id: 0 })])} newest />)
+    const { rerender } = render(<Turn turn={turn([step({ id: 0 })])} newest freshReport={false} />)
     revealed = []
 
     rerender(
       <Turn
         turn={turn([step({ id: 0 }), step({ id: 1, body: text("途中の資料"), interim: true })])}
         newest
+        freshReport={false}
       />,
     )
 
@@ -139,13 +170,16 @@ describe("Turn（書き上げる演出を掛ける相手）", () => {
   })
 
   it("今回のやり取りでなければ掛けない", () => {
-    const { rerender } = render(<Turn turn={turn([step({ id: 0 })])} newest={false} />)
+    const { rerender } = render(
+      <Turn turn={turn([step({ id: 0 })])} newest={false} freshReport={false} />,
+    )
     revealed = []
 
     rerender(
       <Turn
         turn={turn([step({ id: 0 }), step({ id: 1, body: text("確定した本文"), final: true })])}
         newest={false}
+        freshReport={false}
       />,
     )
 
@@ -153,12 +187,12 @@ describe("Turn（書き上げる演出を掛ける相手）", () => {
   })
 
   it("同じ本文が描き直されても、掛ける相手は変わらない（一度きりの判定ではない）", () => {
-    const { rerender } = render(<Turn turn={turn([step({ id: 0 })])} newest />)
+    const { rerender } = render(<Turn turn={turn([step({ id: 0 })])} newest freshReport={false} />)
     const grown = turn([step({ id: 0 }), step({ id: 1, body: text("確定した本文"), final: true })])
-    rerender(<Turn turn={grown} newest />)
+    rerender(<Turn turn={grown} newest freshReport={false} />)
     revealed = []
 
-    rerender(<Turn turn={grown} newest />)
+    rerender(<Turn turn={grown} newest freshReport={false} />)
 
     // `Report` は `memo` で包まれていないので描き直されるが、`reveal` の値は同じまま
     // （演出を始めるかどうかは `useReportReveal` がマウント時に1度だけ決める）。
@@ -175,6 +209,7 @@ describe("Turn（失敗で終わったやり取り）", () => {
           failure: { kind: "failed", failure: { kind: "api-error", error: "rate_limit" } },
         }}
         newest={false}
+        freshReport={false}
       />,
     )
 
@@ -189,6 +224,7 @@ describe("Turn（失敗で終わったやり取り）", () => {
       <Turn
         turn={{ ...turn([]), failure: { kind: "failed", failure: { kind: "max-turns" } } }}
         newest={false}
+        freshReport={false}
       />,
     )
 
@@ -199,7 +235,11 @@ describe("Turn（失敗で終わったやり取り）", () => {
 
   it("成功したやり取りには失敗の札を出さない", () => {
     const { container } = render(
-      <Turn turn={turn([step({ id: 0, body: text("架空の本文"), final: true })])} newest={false} />,
+      <Turn
+        turn={turn([step({ id: 0, body: text("架空の本文"), final: true })])}
+        newest={false}
+        freshReport={false}
+      />,
     )
 
     expect(container.querySelector('[role="note"]')).toBeNull()
@@ -222,7 +262,11 @@ describe("Turn（目録の1行と見出し）", () => {
   it("一覧に無いタスクの ID は押せない", () => {
     putSession(INITIAL_SESSION_STATE)
     render(
-      <Turn turn={turn([step({ id: 0, body: taskBody("架空の本文"), final: true })])} newest />,
+      <Turn
+        turn={turn([step({ id: 0, body: taskBody("架空の本文"), final: true })])}
+        newest
+        freshReport={false}
+      />,
     )
 
     expect(screen.queryByRole("button", { name: "X-7" })).toBeNull()

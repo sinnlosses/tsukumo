@@ -14,6 +14,7 @@ import {
   useDismissSignal,
   type DismissCause,
 } from "../../../../../../../../hooks/use-dismiss-signal.ts"
+import type { HeadNotice, HeadNoticeAction } from "../../../domain/head-notice.ts"
 import { useTurnHeaderHeight } from "./use-turn-header-height.ts"
 
 /**
@@ -33,6 +34,9 @@ export type TurnHeaderProps = {
   readonly turns: readonly TurnHeaderEntry[]
   readonly activeTurnId: number
   readonly onSelect: (turnId: number) => void
+  /** 知らせの行。出すものがあれば、「最新」の印と「最新へ」の口の席を代わりに使う。 */
+  readonly notice: HeadNotice
+  readonly onNotice: (action: HeadNoticeAction) => void
 }
 
 /**
@@ -68,6 +72,8 @@ export type TurnHeaderModel = {
   readonly onToggleHistory: () => void
   readonly historyRows: readonly TurnHeaderHistoryRow[]
   readonly onSelectHistoryRow: (turnId: number) => void
+  readonly notice: HeadNotice
+  readonly onNotice: () => void
 }
 
 const NEWEST_ROW_BADGE = "最新"
@@ -133,6 +139,12 @@ export function useTurnHeader(props: TurnHeaderProps): TurnHeaderModel {
     onSelectHistoryRow: (turnId) => {
       setHistoryOpen(false)
       props.onSelect(turnId)
+    },
+    notice: props.notice,
+    onNotice: () => {
+      if (props.notice.kind === "notice") {
+        props.onNotice(props.notice.action)
+      }
     },
   }
 }

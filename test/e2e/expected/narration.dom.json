@@ -13,109 +13,117 @@
           },
           "children": [
             {
-              "tag": "article",
+              "tag": "div",
+              "attributes": {
+                "data-main-view-content": "report"
+              },
               "children": [
                 {
-                  "tag": "header",
+                  "tag": "article",
                   "children": [
                     {
-                      "tag": "button",
-                      "attributes": {
-                        "aria-disabled": "true",
-                        "aria-label": "1つ古いターンへ",
-                        "type": "button"
-                      },
-                      "children": [
-                        {
-                          "tag": "span",
-                          "attributes": {
-                            "aria-hidden": "true"
-                          },
-                          "children": [
-                            "‹"
-                          ]
-                        }
-                      ]
-                    },
-                    {
-                      "tag": "button",
-                      "attributes": {
-                        "aria-disabled": "true",
-                        "aria-label": "1つ新しいターンへ",
-                        "type": "button"
-                      },
-                      "children": [
-                        {
-                          "tag": "span",
-                          "attributes": {
-                            "aria-hidden": "true"
-                          },
-                          "children": [
-                            "›"
-                          ]
-                        }
-                      ]
-                    },
-                    {
-                      "tag": "h2",
+                      "tag": "header",
                       "children": [
                         {
                           "tag": "button",
                           "attributes": {
-                            "aria-disabled": "false",
-                            "aria-expanded": "false",
+                            "aria-disabled": "true",
+                            "aria-label": "1つ古いターンへ",
                             "type": "button"
                           },
                           "children": [
-                            "実況が落ちたあとに残る本文",
                             {
                               "tag": "span",
                               "attributes": {
                                 "aria-hidden": "true"
-                              }
+                              },
+                              "children": [
+                                "‹"
+                              ]
                             }
-                          ]
-                        }
-                      ]
-                    },
-                    "1 / 1",
-                    "最新"
-                  ]
-                },
-                {
-                  "tag": "div",
-                  "attributes": {
-                    "data-outline": "hidden",
-                    "data-outline-collapsed": "false"
-                  },
-                  "children": [
-                    {
-                      "tag": "section",
-                      "children": [
-                        {
-                          "tag": "h4",
-                          "children": [
-                            "実況が落ちたあとに残る本文"
                           ]
                         },
                         {
-                          "tag": "p",
+                          "tag": "button",
+                          "attributes": {
+                            "aria-disabled": "true",
+                            "aria-label": "1つ新しいターンへ",
+                            "type": "button"
+                          },
                           "children": [
-                            "これは架空の本文で、実物の会話ではない。",
                             {
-                              "tag": "strong",
+                              "tag": "span",
+                              "attributes": {
+                                "aria-hidden": "true"
+                              },
                               "children": [
-                                "上の「まず疑似セッションのファイルを読むね。」と「次は直すね。」は、あとにツールが続いたので落ちる"
+                                "›"
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "tag": "h2",
+                          "children": [
+                            {
+                              "tag": "button",
+                              "attributes": {
+                                "aria-disabled": "false",
+                                "aria-expanded": "false",
+                                "type": "button"
+                              },
+                              "children": [
+                                "実況が落ちたあとに残る本文",
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  }
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        "1 / 1",
+                        "最新"
+                      ]
+                    },
+                    {
+                      "tag": "div",
+                      "attributes": {
+                        "data-outline": "hidden",
+                        "data-outline-collapsed": "false"
+                      },
+                      "children": [
+                        {
+                          "tag": "section",
+                          "children": [
+                            {
+                              "tag": "h4",
+                              "children": [
+                                "実況が落ちたあとに残る本文"
                               ]
                             },
-                            "（",
                             {
-                              "tag": "code",
+                              "tag": "p",
                               "children": [
-                                "docs/architecture/display.md"
+                                "これは架空の本文で、実物の会話ではない。",
+                                {
+                                  "tag": "strong",
+                                  "children": [
+                                    "上の「まず疑似セッションのファイルを読むね。」と「次は直すね。」は、あとにツールが続いたので落ちる"
+                                  ]
+                                },
+                                "（",
+                                {
+                                  "tag": "code",
+                                  "children": [
+                                    "docs/architecture/display.md"
+                                  ]
+                                },
+                                "4.2）。"
                               ]
-                            },
-                            "4.2）。"
+                            }
                           ]
                         }
                       ]

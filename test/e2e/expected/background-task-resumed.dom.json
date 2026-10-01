@@ -13,102 +13,110 @@
           },
           "children": [
             {
-              "tag": "article",
+              "tag": "div",
+              "attributes": {
+                "data-main-view-content": "report"
+              },
               "children": [
                 {
-                  "tag": "header",
+                  "tag": "article",
                   "children": [
                     {
-                      "tag": "button",
-                      "attributes": {
-                        "aria-disabled": "true",
-                        "aria-label": "1つ古いターンへ",
-                        "type": "button"
-                      },
-                      "children": [
-                        {
-                          "tag": "span",
-                          "attributes": {
-                            "aria-hidden": "true"
-                          },
-                          "children": [
-                            "‹"
-                          ]
-                        }
-                      ]
-                    },
-                    {
-                      "tag": "button",
-                      "attributes": {
-                        "aria-disabled": "true",
-                        "aria-label": "1つ新しいターンへ",
-                        "type": "button"
-                      },
-                      "children": [
-                        {
-                          "tag": "span",
-                          "attributes": {
-                            "aria-hidden": "true"
-                          },
-                          "children": [
-                            "›"
-                          ]
-                        }
-                      ]
-                    },
-                    {
-                      "tag": "h2",
+                      "tag": "header",
                       "children": [
                         {
                           "tag": "button",
                           "attributes": {
-                            "aria-disabled": "false",
-                            "aria-expanded": "false",
+                            "aria-disabled": "true",
+                            "aria-label": "1つ古いターンへ",
                             "type": "button"
                           },
                           "children": [
-                            "背景で待つあいだの帯を、再開まで数秒の短い版で見たい（架空の依頼）",
                             {
                               "tag": "span",
                               "attributes": {
                                 "aria-hidden": "true"
-                              }
+                              },
+                              "children": [
+                                "‹"
+                              ]
                             }
-                          ]
-                        }
-                      ]
-                    },
-                    "1 / 1",
-                    "最新"
-                  ]
-                },
-                {
-                  "tag": "div",
-                  "attributes": {
-                    "data-outline": "hidden",
-                    "data-outline-collapsed": "false"
-                  },
-                  "children": [
-                    {
-                      "tag": "section",
-                      "children": [
-                        {
-                          "tag": "h4",
-                          "children": [
-                            "短い背景の待ちが終わった"
                           ]
                         },
                         {
-                          "tag": "p",
+                          "tag": "button",
+                          "attributes": {
+                            "aria-disabled": "true",
+                            "aria-label": "1つ新しいターンへ",
+                            "type": "button"
+                          },
                           "children": [
-                            "これは架空の本文で、実物の会話ではない。",
                             {
-                              "tag": "strong",
+                              "tag": "span",
+                              "attributes": {
+                                "aria-hidden": "true"
+                              },
                               "children": [
-                                "依頼なしで始めた続きのターン"
+                                "›"
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "tag": "h2",
+                          "children": [
+                            {
+                              "tag": "button",
+                              "attributes": {
+                                "aria-disabled": "false",
+                                "aria-expanded": "false",
+                                "type": "button"
+                              },
+                              "children": [
+                                "背景で待つあいだの帯を、再開まで数秒の短い版で見たい（架空の依頼）",
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  }
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        "1 / 1",
+                        "最新"
+                      ]
+                    },
+                    {
+                      "tag": "div",
+                      "attributes": {
+                        "data-outline": "hidden",
+                        "data-outline-collapsed": "false"
+                      },
+                      "children": [
+                        {
+                          "tag": "section",
+                          "children": [
+                            {
+                              "tag": "h4",
+                              "children": [
+                                "短い背景の待ちが終わった"
                               ]
                             },
-                            "の報告で、前の本文は中間レポートに回る。"
+                            {
+                              "tag": "p",
+                              "children": [
+                                "これは架空の本文で、実物の会話ではない。",
+                                {
+                                  "tag": "strong",
+                                  "children": [
+                                    "依頼なしで始めた続きのターン"
+                                  ]
+                                },
+                                "の報告で、前の本文は中間レポートに回る。"
+                              ]
+                            }
                           ]
                         }
                       ]

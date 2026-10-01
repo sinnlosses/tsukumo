@@ -7,6 +7,7 @@
 
 import { replaceEqualDeep } from "@tanstack/react-query"
 
+import { isExchangeClosed } from "../../shared/session/conversation-moment.ts"
 import {
   mainViewEntries,
   mainViewTurns,
@@ -35,7 +36,7 @@ export function mainViewTurnsOf(state: SessionState): readonly MainViewTurn[] {
   }
   const turns = replaceEqualDeep(
     latestTurns,
-    mainViewTurns(mainViewEntries(state), unsettledBodies(state), isClosed(state)),
+    mainViewTurns(mainViewEntries(state), unsettledBodies(state), isExchangeClosed(state)),
   )
   TURNS_BY_STATE.set(state, turns)
   latestTurns = turns
@@ -66,17 +67,4 @@ function unsettledBodies(state: SessionState): TurnBodies {
     report: running && state.bodiesInTurn.report,
     utterance: running || state.backgroundTasks.length > 0 || state.partialUtterance !== "",
   }
-}
-
-/**
- * セッション全体が閉じているか（`mainViewTurns` の `closed` 引数）。
- * ターンが `running` でなく、背景のタスクも残っていないときだけ true。
- * どちらかが残っているあいだは、次の合図で続きのターンが始まり、いま最後の `report` が中間レポートへ回るかもしれない。
- *
- * `unsettledBodies` と役目が違う。
- * 背景のタスクを待って `turn-finished` が届くと、`unsettledBodies` の `report` は確定扱いに変わり本文は出る。
- * それでも背景のタスクが残っているあいだはこの関数は false のままで、最終レポートの札（ラベル・地の段上げ）だけを `markFinalReport` に立てさせない。
- */
-function isClosed(state: SessionState): boolean {
-  return state.turn.kind !== "running" && state.backgroundTasks.length === 0
 }

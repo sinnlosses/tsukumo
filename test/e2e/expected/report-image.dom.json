@@ -13,249 +13,257 @@
           },
           "children": [
             {
-              "tag": "article",
+              "tag": "div",
+              "attributes": {
+                "data-main-view-content": "report"
+              },
               "children": [
                 {
-                  "tag": "header",
+                  "tag": "article",
                   "children": [
                     {
-                      "tag": "button",
-                      "attributes": {
-                        "aria-disabled": "true",
-                        "aria-label": "1つ古いターンへ",
-                        "type": "button"
-                      },
-                      "children": [
-                        {
-                          "tag": "span",
-                          "attributes": {
-                            "aria-hidden": "true"
-                          },
-                          "children": [
-                            "‹"
-                          ]
-                        }
-                      ]
-                    },
-                    {
-                      "tag": "button",
-                      "attributes": {
-                        "aria-disabled": "true",
-                        "aria-label": "1つ新しいターンへ",
-                        "type": "button"
-                      },
-                      "children": [
-                        {
-                          "tag": "span",
-                          "attributes": {
-                            "aria-hidden": "true"
-                          },
-                          "children": [
-                            "›"
-                          ]
-                        }
-                      ]
-                    },
-                    {
-                      "tag": "h2",
+                      "tag": "header",
                       "children": [
                         {
                           "tag": "button",
                           "attributes": {
-                            "aria-disabled": "false",
-                            "aria-expanded": "false",
+                            "aria-disabled": "true",
+                            "aria-label": "1つ古いターンへ",
                             "type": "button"
                           },
                           "children": [
-                            "画像の塊の見え方を確かめたい（架空の依頼）",
                             {
                               "tag": "span",
                               "attributes": {
                                 "aria-hidden": "true"
-                              }
+                              },
+                              "children": [
+                                "‹"
+                              ]
                             }
                           ]
-                        }
-                      ]
-                    },
-                    "1 / 1",
-                    "最新"
-                  ]
-                },
-                {
-                  "tag": "div",
-                  "attributes": {
-                    "data-outline": "shown",
-                    "data-outline-collapsed": "false"
-                  },
-                  "children": [
-                    {
-                      "tag": "nav",
-                      "attributes": {
-                        "aria-label": "目次"
-                      },
-                      "children": [
-                        "目次",
+                        },
+                        {
+                          "tag": "button",
+                          "attributes": {
+                            "aria-disabled": "true",
+                            "aria-label": "1つ新しいターンへ",
+                            "type": "button"
+                          },
+                          "children": [
+                            {
+                              "tag": "span",
+                              "attributes": {
+                                "aria-hidden": "true"
+                              },
+                              "children": [
+                                "›"
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "tag": "h2",
+                          "children": [
+                            {
+                              "tag": "button",
+                              "attributes": {
+                                "aria-disabled": "false",
+                                "aria-expanded": "false",
+                                "type": "button"
+                              },
+                              "children": [
+                                "画像の塊の見え方を確かめたい（架空の依頼）",
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  }
+                                }
+                              ]
+                            }
+                          ]
+                        },
                         "1 / 1",
-                        {
-                          "tag": "button",
-                          "attributes": {
-                            "aria-disabled": "false",
-                            "aria-label": "目次を畳む",
-                            "aria-expanded": "true",
-                            "type": "button"
-                          },
-                          "children": [
-                            {
-                              "tag": "svg"
-                            }
-                          ]
-                        },
-                        {
-                          "tag": "button",
-                          "attributes": {
-                            "data-level": "section",
-                            "aria-current": "location",
-                            "type": "button"
-                          },
-                          "children": [
-                            {
-                              "tag": "span",
-                              "attributes": {
-                                "aria-hidden": "true"
-                              }
-                            },
-                            "架空の撮った画面"
-                          ]
-                        },
-                        {
-                          "tag": "button",
-                          "attributes": {
-                            "data-level": "section",
-                            "type": "button"
-                          },
-                          "children": [
-                            {
-                              "tag": "span",
-                              "attributes": {
-                                "aria-hidden": "true"
-                              }
-                            },
-                            "架空の外を指す画像"
-                          ]
-                        },
-                        {
-                          "tag": "button",
-                          "attributes": {
-                            "data-level": "section",
-                            "type": "button"
-                          },
-                          "children": [
-                            {
-                              "tag": "span",
-                              "attributes": {
-                                "aria-hidden": "true"
-                              }
-                            },
-                            "架空の同じ内容を文で"
-                          ]
-                        }
+                        "最新"
                       ]
                     },
                     {
                       "tag": "div",
                       "attributes": {
-                        "role": "separator",
-                        "aria-orientation": "vertical",
-                        "aria-label": "目次と本文の境界"
-                      }
-                    },
-                    {
-                      "tag": "section",
+                        "data-outline": "shown",
+                        "data-outline-collapsed": "false"
+                      },
                       "children": [
                         {
-                          "tag": "p",
-                          "children": [
-                            "架空の結論: 見出しの字を一段大きくした画面を撮った。"
-                          ]
-                        },
-                        {
-                          "tag": "h4",
-                          "children": [
-                            "架空の撮った画面"
-                          ]
-                        },
-                        {
-                          "tag": "img",
+                          "tag": "nav",
                           "attributes": {
-                            "alt": "架空の札の見出しが 21px になった画面",
-                            "src": "/report-image/fake-report-image-1/report-image-fixture%2Fafter.png"
-                          }
-                        },
-                        "架空の札の見出しが 21px になった画面",
-                        {
-                          "tag": "span",
-                          "attributes": {
-                            "role": "img",
-                            "aria-label": "架空の置いていない画像"
+                            "aria-label": "目次"
                           },
                           "children": [
-                            "画像を出せない（読めなかったか、tsukumo を起こし直して手放した）"
-                          ]
-                        },
-                        "架空の置いていない画像",
-                        {
-                          "tag": "h4",
-                          "children": [
-                            "架空の外を指す画像"
-                          ]
-                        },
-                        {
-                          "tag": "p",
-                          "children": [
+                            "目次",
+                            "1 / 1",
                             {
-                              "tag": "span",
+                              "tag": "button",
                               "attributes": {
-                                "role": "img",
-                                "aria-label": "外の画像"
+                                "aria-disabled": "false",
+                                "aria-label": "目次を畳む",
+                                "aria-expanded": "true",
+                                "type": "button"
                               },
                               "children": [
-                                "画像を出せない（読めなかったか、tsukumo を起こし直して手放した）"
+                                {
+                                  "tag": "svg"
+                                }
+                              ]
+                            },
+                            {
+                              "tag": "button",
+                              "attributes": {
+                                "data-level": "section",
+                                "aria-current": "location",
+                                "type": "button"
+                              },
+                              "children": [
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  }
+                                },
+                                "架空の撮った画面"
+                              ]
+                            },
+                            {
+                              "tag": "button",
+                              "attributes": {
+                                "data-level": "section",
+                                "type": "button"
+                              },
+                              "children": [
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  }
+                                },
+                                "架空の外を指す画像"
+                              ]
+                            },
+                            {
+                              "tag": "button",
+                              "attributes": {
+                                "data-level": "section",
+                                "type": "button"
+                              },
+                              "children": [
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  }
+                                },
+                                "架空の同じ内容を文で"
                               ]
                             }
                           ]
                         },
                         {
-                          "tag": "span",
+                          "tag": "div",
                           "attributes": {
-                            "role": "img",
-                            "aria-label": "外"
-                          },
-                          "children": [
-                            "画像を出せない（読めなかったか、tsukumo を起こし直して手放した）"
-                          ]
+                            "role": "separator",
+                            "aria-orientation": "vertical",
+                            "aria-label": "目次と本文の境界"
+                          }
                         },
                         {
-                          "tag": "h4",
-                          "children": [
-                            "架空の同じ内容を文で"
-                          ]
-                        },
-                        {
-                          "tag": "ul",
+                          "tag": "section",
                           "children": [
                             {
-                              "tag": "li",
+                              "tag": "p",
                               "children": [
-                                "見出し",
-                                "札の見出しの字が 18px から 21px になり、本文との差がはっきりした"
+                                "架空の結論: 見出しの字を一段大きくした画面を撮った。"
                               ]
                             },
                             {
-                              "tag": "li",
+                              "tag": "h4",
                               "children": [
-                                "余白",
-                                "見出しと本文の間は 28px から 26px に詰まった"
+                                "架空の撮った画面"
+                              ]
+                            },
+                            {
+                              "tag": "img",
+                              "attributes": {
+                                "alt": "架空の札の見出しが 21px になった画面",
+                                "src": "/report-image/fake-report-image-1/report-image-fixture%2Fafter.png"
+                              }
+                            },
+                            "架空の札の見出しが 21px になった画面",
+                            {
+                              "tag": "span",
+                              "attributes": {
+                                "role": "img",
+                                "aria-label": "架空の置いていない画像"
+                              },
+                              "children": [
+                                "画像を出せない（読めなかったか、tsukumo を起こし直して手放した）"
+                              ]
+                            },
+                            "架空の置いていない画像",
+                            {
+                              "tag": "h4",
+                              "children": [
+                                "架空の外を指す画像"
+                              ]
+                            },
+                            {
+                              "tag": "p",
+                              "children": [
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "role": "img",
+                                    "aria-label": "外の画像"
+                                  },
+                                  "children": [
+                                    "画像を出せない（読めなかったか、tsukumo を起こし直して手放した）"
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "tag": "span",
+                              "attributes": {
+                                "role": "img",
+                                "aria-label": "外"
+                              },
+                              "children": [
+                                "画像を出せない（読めなかったか、tsukumo を起こし直して手放した）"
+                              ]
+                            },
+                            {
+                              "tag": "h4",
+                              "children": [
+                                "架空の同じ内容を文で"
+                              ]
+                            },
+                            {
+                              "tag": "ul",
+                              "children": [
+                                {
+                                  "tag": "li",
+                                  "children": [
+                                    "見出し",
+                                    "札の見出しの字が 18px から 21px になり、本文との差がはっきりした"
+                                  ]
+                                },
+                                {
+                                  "tag": "li",
+                                  "children": [
+                                    "余白",
+                                    "見出しと本文の間は 28px から 26px に詰まった"
+                                  ]
+                                }
                               ]
                             }
                           ]

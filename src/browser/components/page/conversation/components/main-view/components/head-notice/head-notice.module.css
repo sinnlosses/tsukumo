@@ -1,0 +1,13 @@
+/* 知らせの行。「最新」の印と同じ丸い札の形で、札の頭の行の高さに収める。 */
+.head-notice {
+  max-width: 14rem;
+  padding: 0.15rem 0.65rem;
+  border-radius: 999px;
+  line-height: 1;
+}
+.head-notice-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

@@ -13,89 +13,97 @@
           },
           "children": [
             {
-              "tag": "article",
+              "tag": "div",
+              "attributes": {
+                "data-main-view-content": "report"
+              },
               "children": [
                 {
-                  "tag": "header",
+                  "tag": "article",
                   "children": [
                     {
-                      "tag": "button",
-                      "attributes": {
-                        "aria-disabled": "true",
-                        "aria-label": "1つ古いターンへ",
-                        "type": "button"
-                      },
-                      "children": [
-                        {
-                          "tag": "span",
-                          "attributes": {
-                            "aria-hidden": "true"
-                          },
-                          "children": [
-                            "‹"
-                          ]
-                        }
-                      ]
-                    },
-                    {
-                      "tag": "button",
-                      "attributes": {
-                        "aria-disabled": "true",
-                        "aria-label": "1つ新しいターンへ",
-                        "type": "button"
-                      },
-                      "children": [
-                        {
-                          "tag": "span",
-                          "attributes": {
-                            "aria-hidden": "true"
-                          },
-                          "children": [
-                            "›"
-                          ]
-                        }
-                      ]
-                    },
-                    {
-                      "tag": "h2",
+                      "tag": "header",
                       "children": [
                         {
                           "tag": "button",
                           "attributes": {
-                            "aria-disabled": "false",
-                            "aria-expanded": "false",
+                            "aria-disabled": "true",
+                            "aria-label": "1つ古いターンへ",
                             "type": "button"
                           },
                           "children": [
-                            "multiSelect の質問に答える場面（架空）。答えると箱が消える。",
                             {
                               "tag": "span",
                               "attributes": {
                                 "aria-hidden": "true"
-                              }
+                              },
+                              "children": [
+                                "‹"
+                              ]
                             }
                           ]
-                        }
+                        },
+                        {
+                          "tag": "button",
+                          "attributes": {
+                            "aria-disabled": "true",
+                            "aria-label": "1つ新しいターンへ",
+                            "type": "button"
+                          },
+                          "children": [
+                            {
+                              "tag": "span",
+                              "attributes": {
+                                "aria-hidden": "true"
+                              },
+                              "children": [
+                                "›"
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "tag": "h2",
+                          "children": [
+                            {
+                              "tag": "button",
+                              "attributes": {
+                                "aria-disabled": "false",
+                                "aria-expanded": "false",
+                                "type": "button"
+                              },
+                              "children": [
+                                "multiSelect の質問に答える場面（架空）。答えると箱が消える。",
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  }
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        "1 / 1",
+                        "最新"
                       ]
                     },
-                    "1 / 1",
-                    "最新"
-                  ]
-                },
-                {
-                  "tag": "div",
-                  "attributes": {
-                    "data-outline": "hidden",
-                    "data-outline-collapsed": "false"
-                  },
-                  "children": [
                     {
-                      "tag": "section",
+                      "tag": "div",
+                      "attributes": {
+                        "data-outline": "hidden",
+                        "data-outline-collapsed": "false"
+                      },
                       "children": [
                         {
-                          "tag": "p",
+                          "tag": "section",
                           "children": [
-                            "multiSelect の質問に答える場面（架空）。答えると箱が消える。"
+                            {
+                              "tag": "p",
+                              "children": [
+                                "multiSelect の質問に答える場面（架空）。答えると箱が消える。"
+                              ]
+                            }
                           ]
                         }
                       ]

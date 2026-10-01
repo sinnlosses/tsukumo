@@ -178,449 +178,457 @@
                   },
                   "children": [
                     {
-                      "tag": "article",
+                      "tag": "div",
+                      "attributes": {
+                        "data-main-view-content": "report"
+                      },
                       "children": [
                         {
-                          "tag": "header",
+                          "tag": "article",
                           "children": [
                             {
-                              "tag": "button",
-                              "attributes": {
-                                "aria-disabled": "true",
-                                "aria-label": "1つ古いターンへ",
-                                "type": "button"
-                              },
-                              "children": [
-                                {
-                                  "tag": "span",
-                                  "attributes": {
-                                    "aria-hidden": "true"
-                                  },
-                                  "children": [
-                                    "‹"
-                                  ]
-                                }
-                              ]
-                            },
-                            {
-                              "tag": "button",
-                              "attributes": {
-                                "aria-disabled": "true",
-                                "aria-label": "1つ新しいターンへ",
-                                "type": "button"
-                              },
-                              "children": [
-                                {
-                                  "tag": "span",
-                                  "attributes": {
-                                    "aria-hidden": "true"
-                                  },
-                                  "children": [
-                                    "›"
-                                  ]
-                                }
-                              ]
-                            },
-                            {
-                              "tag": "h2",
+                              "tag": "header",
                               "children": [
                                 {
                                   "tag": "button",
                                   "attributes": {
-                                    "aria-disabled": "false",
-                                    "aria-expanded": "false",
+                                    "aria-disabled": "true",
+                                    "aria-label": "1つ古いターンへ",
                                     "type": "button"
                                   },
                                   "children": [
-                                    "report ツールの描き方を確かめたい（架空の依頼）",
                                     {
                                       "tag": "span",
                                       "attributes": {
                                         "aria-hidden": "true"
-                                      }
-                                    }
-                                  ]
-                                }
-                              ]
-                            },
-                            "1 / 1",
-                            "最新"
-                          ]
-                        },
-                        {
-                          "tag": "div",
-                          "attributes": {
-                            "data-outline": "hidden",
-                            "data-outline-collapsed": "false"
-                          },
-                          "children": [
-                            {
-                              "tag": "details",
-                              "children": [
-                                {
-                                  "tag": "summary",
-                                  "children": [
-                                    "中間レポート: 途中の結論: 目盛りを決めているのは `a.ts` だけだった。"
-                                  ]
-                                }
-                              ]
-                            },
-                            {
-                              "tag": "section",
-                              "children": [
-                                {
-                                  "tag": "header",
-                                  "children": [
-                                    {
-                                      "tag": "p",
-                                      "children": [
-                                        "最終レポート"
-                                      ]
-                                    }
-                                  ]
-                                },
-                                {
-                                  "tag": "p",
-                                  "children": [
-                                    "架空の結論: 目盛りを 24 に直し、",
-                                    {
-                                      "tag": "code",
-                                      "children": [
-                                        "a.ts"
-                                      ]
-                                    },
-                                    "だけで済んだ。"
-                                  ]
-                                },
-                                {
-                                  "tag": "div",
-                                  "attributes": {
-                                    "role": "table",
-                                    "aria-label": "検証結果"
-                                  },
-                                  "children": [
-                                    "検証",
-                                    "3",
-                                    "✕ 1 件が落ちた",
-                                    {
-                                      "tag": "div",
-                                      "attributes": {
-                                        "role": "row"
                                       },
                                       "children": [
-                                        "✓ OK",
-                                        "pnpm run check",
-                                        "1234 件",
-                                        "0秒"
-                                      ]
-                                    },
-                                    {
-                                      "tag": "div",
-                                      "attributes": {
-                                        "role": "row"
-                                      },
-                                      "children": [
-                                        "✕ NG",
-                                        "目盛りの E2E",
-                                        "1 / 56",
-                                        "架空の 1 件が落ちた"
-                                      ]
-                                    },
-                                    {
-                                      "tag": "div",
-                                      "attributes": {
-                                        "role": "row"
-                                      },
-                                      "children": [
-                                        "？ 未確認",
-                                        "狭い窓での見た目",
-                                        "手で確かめていない"
+                                        "‹"
                                       ]
                                     }
                                   ]
                                 },
-                                {
-                                  "tag": "p",
-                                  "children": [
-                                    {
-                                      "tag": "strong",
-                                      "children": [
-                                        "直したファイルと結果（架空の数）"
-                                      ]
-                                    }
-                                  ]
-                                },
-                                {
-                                  "tag": "table",
-                                  "children": [
-                                    {
-                                      "tag": "thead",
-                                      "children": [
-                                        {
-                                          "tag": "tr",
-                                          "children": [
-                                            {
-                                              "tag": "th",
-                                              "children": [
-                                                "ファイル"
-                                              ]
-                                            },
-                                            {
-                                              "tag": "th",
-                                              "children": [
-                                                "変えたこと"
-                                              ]
-                                            },
-                                            {
-                                              "tag": "th",
-                                              "children": [
-                                                "状態"
-                                              ]
-                                            }
-                                          ]
-                                        }
-                                      ]
-                                    },
-                                    {
-                                      "tag": "tbody",
-                                      "children": [
-                                        {
-                                          "tag": "tr",
-                                          "children": [
-                                            {
-                                              "tag": "td",
-                                              "children": [
-                                                {
-                                                  "tag": "code",
-                                                  "children": [
-                                                    "a.ts"
-                                                  ]
-                                                }
-                                              ]
-                                            },
-                                            {
-                                              "tag": "td",
-                                              "children": [
-                                                "目盛りを 12 から 24 へ"
-                                              ]
-                                            },
-                                            {
-                                              "tag": "td",
-                                              "children": [
-                                                "✓ OK"
-                                              ]
-                                            }
-                                          ]
-                                        },
-                                        {
-                                          "tag": "tr",
-                                          "children": [
-                                            {
-                                              "tag": "td",
-                                              "children": [
-                                                {
-                                                  "tag": "code",
-                                                  "children": [
-                                                    "b.ts"
-                                                  ]
-                                                }
-                                              ]
-                                            },
-                                            {
-                                              "tag": "td",
-                                              "children": [
-                                                "読むだけなので変えない"
-                                              ]
-                                            },
-                                            {
-                                              "tag": "td",
-                                              "children": [
-                                                "！ 要注意",
-                                                "キャッシュが古いまま"
-                                              ]
-                                            }
-                                          ]
-                                        },
-                                        {
-                                          "tag": "tr",
-                                          "children": [
-                                            {
-                                              "tag": "td",
-                                              "children": [
-                                                {
-                                                  "tag": "code",
-                                                  "children": [
-                                                    "c.ts"
-                                                  ]
-                                                }
-                                              ]
-                                            },
-                                            {
-                                              "tag": "td",
-                                              "children": [
-                                                "型の食い違いが残る"
-                                              ]
-                                            },
-                                            {
-                                              "tag": "td",
-                                              "children": [
-                                                "✕ NG"
-                                              ]
-                                            }
-                                          ]
-                                        }
-                                      ]
-                                    }
-                                  ]
-                                },
-                                {
-                                  "tag": "p",
-                                  "children": [
-                                    {
-                                      "tag": "strong",
-                                      "children": [
-                                        "目盛りの数（架空の数）"
-                                      ]
-                                    }
-                                  ]
-                                },
-                                {
-                                  "tag": "table",
-                                  "children": [
-                                    {
-                                      "tag": "thead",
-                                      "children": [
-                                        {
-                                          "tag": "tr",
-                                          "children": [
-                                            {
-                                              "tag": "th",
-                                              "children": [
-                                                "場所"
-                                              ]
-                                            },
-                                            {
-                                              "tag": "th",
-                                              "children": [
-                                                "前"
-                                              ]
-                                            },
-                                            {
-                                              "tag": "th",
-                                              "children": [
-                                                "後"
-                                              ]
-                                            }
-                                          ]
-                                        }
-                                      ]
-                                    },
-                                    {
-                                      "tag": "tbody",
-                                      "children": [
-                                        {
-                                          "tag": "tr",
-                                          "children": [
-                                            {
-                                              "tag": "td",
-                                              "children": [
-                                                "帯"
-                                              ]
-                                            },
-                                            {
-                                              "tag": "td",
-                                              "children": [
-                                                "12"
-                                              ]
-                                            },
-                                            {
-                                              "tag": "td",
-                                              "children": [
-                                                "24"
-                                              ]
-                                            }
-                                          ]
-                                        },
-                                        {
-                                          "tag": "tr",
-                                          "children": [
-                                            {
-                                              "tag": "td",
-                                              "children": [
-                                                "札"
-                                              ]
-                                            },
-                                            {
-                                              "tag": "td",
-                                              "children": [
-                                                "6"
-                                              ]
-                                            },
-                                            {
-                                              "tag": "td",
-                                              "children": [
-                                                "12"
-                                              ]
-                                            }
-                                          ]
-                                        }
-                                      ]
-                                    }
-                                  ]
-                                },
-                                "src/a.ts",
                                 {
                                   "tag": "button",
                                   "attributes": {
-                                    "aria-disabled": "false",
+                                    "aria-disabled": "true",
+                                    "aria-label": "1つ新しいターンへ",
                                     "type": "button"
                                   },
                                   "children": [
                                     {
-                                      "tag": "svg"
-                                    },
-                                    "コピー"
-                                  ]
-                                },
-                                {
-                                  "tag": "pre",
-                                  "children": [
-                                    {
-                                      "tag": "code",
+                                      "tag": "span",
                                       "attributes": {
-                                        "data-filename": "src/a.ts"
+                                        "aria-hidden": "true"
                                       },
                                       "children": [
-                                        "-const TICKS = 12",
-                                        "+const TICKS = 24"
+                                        "›"
                                       ]
                                     }
                                   ]
                                 },
-                                "注意",
                                 {
-                                  "tag": "p",
+                                  "tag": "h2",
                                   "children": [
                                     {
-                                      "tag": "code",
+                                      "tag": "button",
+                                      "attributes": {
+                                        "aria-disabled": "false",
+                                        "aria-expanded": "false",
+                                        "type": "button"
+                                      },
                                       "children": [
-                                        "b.ts"
+                                        "report ツールの描き方を確かめたい（架空の依頼）",
+                                        {
+                                          "tag": "span",
+                                          "attributes": {
+                                            "aria-hidden": "true"
+                                          }
+                                        }
                                       ]
-                                    },
-                                    "のキャッシュは古い目盛りを持ったまま残る。"
+                                    }
                                   ]
                                 },
-                                "お願い",
+                                "1 / 1",
+                                "最新"
+                              ]
+                            },
+                            {
+                              "tag": "div",
+                              "attributes": {
+                                "data-outline": "hidden",
+                                "data-outline-collapsed": "false"
+                              },
+                              "children": [
                                 {
-                                  "tag": "p",
+                                  "tag": "details",
                                   "children": [
                                     {
-                                      "tag": "code",
+                                      "tag": "summary",
                                       "children": [
-                                        "b.ts"
+                                        "中間レポート: 途中の結論: 目盛りを決めているのは `a.ts` だけだった。"
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "tag": "section",
+                                  "children": [
+                                    {
+                                      "tag": "header",
+                                      "children": [
+                                        {
+                                          "tag": "p",
+                                          "children": [
+                                            "最終レポート"
+                                          ]
+                                        }
                                       ]
                                     },
-                                    "のキャッシュを消してよいか決めてほしい（架空のお願い）。"
+                                    {
+                                      "tag": "p",
+                                      "children": [
+                                        "架空の結論: 目盛りを 24 に直し、",
+                                        {
+                                          "tag": "code",
+                                          "children": [
+                                            "a.ts"
+                                          ]
+                                        },
+                                        "だけで済んだ。"
+                                      ]
+                                    },
+                                    {
+                                      "tag": "div",
+                                      "attributes": {
+                                        "role": "table",
+                                        "aria-label": "検証結果"
+                                      },
+                                      "children": [
+                                        "検証",
+                                        "3",
+                                        "✕ 1 件が落ちた",
+                                        {
+                                          "tag": "div",
+                                          "attributes": {
+                                            "role": "row"
+                                          },
+                                          "children": [
+                                            "✓ OK",
+                                            "pnpm run check",
+                                            "1234 件",
+                                            "0秒"
+                                          ]
+                                        },
+                                        {
+                                          "tag": "div",
+                                          "attributes": {
+                                            "role": "row"
+                                          },
+                                          "children": [
+                                            "✕ NG",
+                                            "目盛りの E2E",
+                                            "1 / 56",
+                                            "架空の 1 件が落ちた"
+                                          ]
+                                        },
+                                        {
+                                          "tag": "div",
+                                          "attributes": {
+                                            "role": "row"
+                                          },
+                                          "children": [
+                                            "？ 未確認",
+                                            "狭い窓での見た目",
+                                            "手で確かめていない"
+                                          ]
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "tag": "p",
+                                      "children": [
+                                        {
+                                          "tag": "strong",
+                                          "children": [
+                                            "直したファイルと結果（架空の数）"
+                                          ]
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "tag": "table",
+                                      "children": [
+                                        {
+                                          "tag": "thead",
+                                          "children": [
+                                            {
+                                              "tag": "tr",
+                                              "children": [
+                                                {
+                                                  "tag": "th",
+                                                  "children": [
+                                                    "ファイル"
+                                                  ]
+                                                },
+                                                {
+                                                  "tag": "th",
+                                                  "children": [
+                                                    "変えたこと"
+                                                  ]
+                                                },
+                                                {
+                                                  "tag": "th",
+                                                  "children": [
+                                                    "状態"
+                                                  ]
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "tag": "tbody",
+                                          "children": [
+                                            {
+                                              "tag": "tr",
+                                              "children": [
+                                                {
+                                                  "tag": "td",
+                                                  "children": [
+                                                    {
+                                                      "tag": "code",
+                                                      "children": [
+                                                        "a.ts"
+                                                      ]
+                                                    }
+                                                  ]
+                                                },
+                                                {
+                                                  "tag": "td",
+                                                  "children": [
+                                                    "目盛りを 12 から 24 へ"
+                                                  ]
+                                                },
+                                                {
+                                                  "tag": "td",
+                                                  "children": [
+                                                    "✓ OK"
+                                                  ]
+                                                }
+                                              ]
+                                            },
+                                            {
+                                              "tag": "tr",
+                                              "children": [
+                                                {
+                                                  "tag": "td",
+                                                  "children": [
+                                                    {
+                                                      "tag": "code",
+                                                      "children": [
+                                                        "b.ts"
+                                                      ]
+                                                    }
+                                                  ]
+                                                },
+                                                {
+                                                  "tag": "td",
+                                                  "children": [
+                                                    "読むだけなので変えない"
+                                                  ]
+                                                },
+                                                {
+                                                  "tag": "td",
+                                                  "children": [
+                                                    "！ 要注意",
+                                                    "キャッシュが古いまま"
+                                                  ]
+                                                }
+                                              ]
+                                            },
+                                            {
+                                              "tag": "tr",
+                                              "children": [
+                                                {
+                                                  "tag": "td",
+                                                  "children": [
+                                                    {
+                                                      "tag": "code",
+                                                      "children": [
+                                                        "c.ts"
+                                                      ]
+                                                    }
+                                                  ]
+                                                },
+                                                {
+                                                  "tag": "td",
+                                                  "children": [
+                                                    "型の食い違いが残る"
+                                                  ]
+                                                },
+                                                {
+                                                  "tag": "td",
+                                                  "children": [
+                                                    "✕ NG"
+                                                  ]
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "tag": "p",
+                                      "children": [
+                                        {
+                                          "tag": "strong",
+                                          "children": [
+                                            "目盛りの数（架空の数）"
+                                          ]
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "tag": "table",
+                                      "children": [
+                                        {
+                                          "tag": "thead",
+                                          "children": [
+                                            {
+                                              "tag": "tr",
+                                              "children": [
+                                                {
+                                                  "tag": "th",
+                                                  "children": [
+                                                    "場所"
+                                                  ]
+                                                },
+                                                {
+                                                  "tag": "th",
+                                                  "children": [
+                                                    "前"
+                                                  ]
+                                                },
+                                                {
+                                                  "tag": "th",
+                                                  "children": [
+                                                    "後"
+                                                  ]
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "tag": "tbody",
+                                          "children": [
+                                            {
+                                              "tag": "tr",
+                                              "children": [
+                                                {
+                                                  "tag": "td",
+                                                  "children": [
+                                                    "帯"
+                                                  ]
+                                                },
+                                                {
+                                                  "tag": "td",
+                                                  "children": [
+                                                    "12"
+                                                  ]
+                                                },
+                                                {
+                                                  "tag": "td",
+                                                  "children": [
+                                                    "24"
+                                                  ]
+                                                }
+                                              ]
+                                            },
+                                            {
+                                              "tag": "tr",
+                                              "children": [
+                                                {
+                                                  "tag": "td",
+                                                  "children": [
+                                                    "札"
+                                                  ]
+                                                },
+                                                {
+                                                  "tag": "td",
+                                                  "children": [
+                                                    "6"
+                                                  ]
+                                                },
+                                                {
+                                                  "tag": "td",
+                                                  "children": [
+                                                    "12"
+                                                  ]
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    },
+                                    "src/a.ts",
+                                    {
+                                      "tag": "button",
+                                      "attributes": {
+                                        "aria-disabled": "false",
+                                        "type": "button"
+                                      },
+                                      "children": [
+                                        {
+                                          "tag": "svg"
+                                        },
+                                        "コピー"
+                                      ]
+                                    },
+                                    {
+                                      "tag": "pre",
+                                      "children": [
+                                        {
+                                          "tag": "code",
+                                          "attributes": {
+                                            "data-filename": "src/a.ts"
+                                          },
+                                          "children": [
+                                            "-const TICKS = 12",
+                                            "+const TICKS = 24"
+                                          ]
+                                        }
+                                      ]
+                                    },
+                                    "注意",
+                                    {
+                                      "tag": "p",
+                                      "children": [
+                                        {
+                                          "tag": "code",
+                                          "children": [
+                                            "b.ts"
+                                          ]
+                                        },
+                                        "のキャッシュは古い目盛りを持ったまま残る。"
+                                      ]
+                                    },
+                                    "お願い",
+                                    {
+                                      "tag": "p",
+                                      "children": [
+                                        {
+                                          "tag": "code",
+                                          "children": [
+                                            "b.ts"
+                                          ]
+                                        },
+                                        "のキャッシュを消してよいか決めてほしい（架空のお願い）。"
+                                      ]
+                                    }
                                   ]
                                 }
                               ]

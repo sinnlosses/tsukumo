@@ -1,5 +1,5 @@
 // ターンの札の頭の器。
-// 左に `‹` `›`（`‹` が1つ古いターン、`›` が1つ新しいターン。端ではその側を押せなくする）、続けて見ているターンのタイトル（押すと窓の中のやり取りへ一度で飛べる一覧が開く）、右端に「n / N」と、最新を見ているときは「最新」の印・過去を見ているときは「最新へ」の口。
+// 左に `‹` `›`（`‹` が1つ古いターン、`›` が1つ新しいターン。端ではその側を押せなくする）、続けて見ているターンのタイトル（押すと窓の中のやり取りへ一度で飛べる一覧が開く）、右端に「n / N」と、最新を見ているときは「最新」の印・過去を見ているときは「最新へ」の口（知らせの行があればそれが同じ席を使う）。
 //
 // ターンが1件しか無くても出す。
 // 依頼はここにしか出ない（タイトルが1行目、続きが2行目以降）ので、省くと依頼が画面から消える。
@@ -13,6 +13,7 @@ import type { ReactElement } from "react"
 import { Button } from "../../../../../../ui/button/button.tsx"
 import { Heading } from "../../../../../../ui/heading/heading.tsx"
 import { Text } from "../../../../../../ui/text/text.tsx"
+import { HeadNotice } from "../head-notice/head-notice.tsx"
 import { RequestContinuation } from "../request-continuation/request-continuation.tsx"
 import type { TurnHeaderHistoryRow, TurnHeaderModel } from "./hooks/use-turn-header.ts"
 import styles from "./turn-header.module.css"
@@ -45,6 +46,8 @@ export function PresentationalTurnHeader({
   onToggleHistory,
   historyRows,
   onSelectHistoryRow,
+  notice,
+  onNotice,
 }: PresentationalTurnHeaderProps): ReactElement {
   return (
     <header className={styles["turn-header"]} ref={headerRef}>
@@ -134,7 +137,9 @@ export function PresentationalTurnHeader({
         >
           {positionLabel}
         </Text>
-        {isNewest ? (
+        {notice.kind === "notice" ? (
+          <HeadNotice text={notice.text} onPress={onNotice} />
+        ) : isNewest ? (
           <span className={styles["turn-newest-badge"]}>{NEWEST_BADGE}</span>
         ) : (
           <Button

@@ -284,9 +284,25 @@
               },
               "children": [
                 {
-                  "tag": "p",
+                  "tag": "div",
+                  "attributes": {
+                    "data-brush-origin": ""
+                  },
                   "children": [
-                    "（まだ作業がありません）"
+                    {
+                      "tag": "div",
+                      "attributes": {
+                        "data-main-view-content": "welcome"
+                      },
+                      "children": [
+                        {
+                          "tag": "p",
+                          "children": [
+                            "（まだ作業がありません）"
+                          ]
+                        }
+                      ]
+                    }
                   ]
                 }
               ]

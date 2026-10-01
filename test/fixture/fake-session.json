@@ -2442,6 +2442,86 @@
       ]
     },
     {
+      "name": "moment-held",
+      "steps": [
+        {
+          "afterMs": 0,
+          "event": {
+            "kind": "request",
+            "text": "読んでいるあいだに届いたレポートの見え方を確かめたい（架空の依頼）",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 100,
+          "event": {
+            "kind": "speech",
+            "text": "少し走らせてから報告するね。",
+            "expression": "default"
+          }
+        },
+        {
+          "afterMs": 200,
+          "event": {
+            "kind": "tool-started",
+            "toolUseId": "fake-tool-moment-held-1",
+            "name": "Bash",
+            "input": {
+              "command": "dummy-wait --seconds 4",
+              "description": "架空の待ち"
+            }
+          }
+        },
+        {
+          "afterMs": 4200,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-tool-moment-held-1",
+            "content": "ダミーの実行結果（架空）",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 4400,
+          "event": {
+            "kind": "report",
+            "toolUseId": "fake-report-moment-held",
+            "conclusion": "架空の結論: 読んでいるあいだは入れ替わらなかった。",
+            "sections": [
+              {
+                "heading": "架空の確かめたこと",
+                "blocks": [
+                  {
+                    "kind": "text",
+                    "text": "架空の本文。読んでいるあいだに届いたレポート。",
+                    "fold": ""
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "afterMs": 4450,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-report-moment-held",
+            "content": "ok",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 4750,
+          "event": {
+            "kind": "turn-finished",
+            "outcome": {
+              "kind": "completed"
+            }
+          }
+        }
+      ]
+    },
+    {
       "name": "report-defaults",
       "steps": [
         {

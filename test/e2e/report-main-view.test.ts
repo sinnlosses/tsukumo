@@ -239,6 +239,24 @@ describe("report → メインビュー", () => {
     await room.settleAndMatch(ELAPSED_MS)
   })
 
+  it("札の幅が 48rem 未満では目次が既定で畳まれ、開くを選ぶと読み込み直しても開いたまま", async () => {
+    const room = await run.open({
+      scenario: "report-outline-medium",
+      scene: "long-report-quick",
+      viewport: "medium",
+      domRoots: ["main"],
+    })
+
+    await room.waitForEvent("turn-finished")
+    await room.page.getByRole("button", { name: "目次を開く" }).waitFor()
+    await room.settleAndMatch(ELAPSED_MS)
+
+    await room.page.getByRole("button", { name: "目次を開く" }).click()
+    await room.page.getByRole("button", { name: "目次を畳む" }).waitFor()
+    await room.page.reload({ waitUntil: "domcontentloaded" })
+    await room.page.getByRole("button", { name: "目次を畳む" }).waitFor()
+  })
+
   it("狭い画面では目次の列が描かれない", async () => {
     const room = await run.open({
       scenario: "report-outline-narrow",

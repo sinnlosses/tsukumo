@@ -7,243 +7,259 @@
       },
       "children": [
         {
-          "tag": "p",
-          "children": [
-            "（まだ作業がありません）"
-          ]
-        },
-        {
-          "tag": "section",
+          "tag": "div",
+          "attributes": {
+            "data-brush-origin": ""
+          },
           "children": [
             {
-              "tag": "header",
+              "tag": "div",
+              "attributes": {
+                "data-main-view-content": "welcome"
+              },
               "children": [
-                "質問",
-                "架空の選択",
-                "1 / 1"
+                {
+                  "tag": "p",
+                  "children": [
+                    "（まだ作業がありません）"
+                  ]
+                }
               ]
             },
             {
-              "tag": "p",
-              "children": [
-                "架空の質問：どの案で進める？"
-              ]
-            },
-            {
-              "tag": "ul",
+              "tag": "section",
               "children": [
                 {
-                  "tag": "li",
+                  "tag": "header",
                   "children": [
-                    {
-                      "tag": "label",
-                      "children": [
-                        {
-                          "tag": "input",
-                          "attributes": {
-                            "type": "radio",
-                            "checked": false,
-                            "value": "on"
-                          }
-                        },
-                        "preview が無い案"
-                      ]
-                    },
-                    {
-                      "tag": "p",
-                      "children": [
-                        "架空の説明D"
-                      ]
-                    }
+                    "質問",
+                    "架空の選択",
+                    "1 / 1"
                   ]
                 },
                 {
-                  "tag": "li",
+                  "tag": "p",
                   "children": [
-                    {
-                      "tag": "label",
-                      "children": [
-                        {
-                          "tag": "input",
-                          "attributes": {
-                            "type": "radio",
-                            "checked": false,
-                            "value": "on"
-                          }
-                        },
-                        "図の案"
-                      ]
-                    },
-                    {
-                      "tag": "p",
-                      "children": [
-                        "架空の説明B"
-                      ]
-                    },
-                    {
-                      "tag": "pre",
-                      "attributes": {
-                        "data-processed": "true"
-                      },
-                      "children": [
-                        {
-                          "tag": "svg"
-                        }
-                      ]
-                    }
+                    "架空の質問：どの案で進める？"
                   ]
                 },
                 {
-                  "tag": "li",
+                  "tag": "ul",
                   "children": [
                     {
-                      "tag": "label",
+                      "tag": "li",
                       "children": [
                         {
-                          "tag": "input",
-                          "attributes": {
-                            "type": "radio",
-                            "checked": false,
-                            "value": "on"
-                          }
-                        },
-                        "注意つきの案"
-                      ]
-                    },
-                    {
-                      "tag": "p",
-                      "children": [
-                        "架空の説明C"
-                      ]
-                    },
-                    "注意",
-                    "戻せない操作が1つ混ざる案（架空）。",
-                    {
-                      "tag": "ul",
-                      "children": [
-                        {
-                          "tag": "li",
-                          "children": [
-                            "架空の利点: 速い"
-                          ]
-                        },
-                        {
-                          "tag": "li",
-                          "children": [
-                            "架空の欠点: 後から直せない"
-                          ]
-                        }
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "tag": "li",
-                  "children": [
-                    {
-                      "tag": "label",
-                      "children": [
-                        {
-                          "tag": "input",
-                          "attributes": {
-                            "type": "radio",
-                            "checked": false,
-                            "value": "on"
-                          }
-                        },
-                        "表の案"
-                      ]
-                    },
-                    {
-                      "tag": "p",
-                      "children": [
-                        "架空の説明A"
-                      ]
-                    },
-                    {
-                      "tag": "table",
-                      "children": [
-                        {
-                          "tag": "thead",
+                          "tag": "label",
                           "children": [
                             {
-                              "tag": "tr",
+                              "tag": "input",
+                              "attributes": {
+                                "type": "radio",
+                                "checked": false,
+                                "value": "on"
+                              }
+                            },
+                            "preview が無い案"
+                          ]
+                        },
+                        {
+                          "tag": "p",
+                          "children": [
+                            "架空の説明D"
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "tag": "li",
+                      "children": [
+                        {
+                          "tag": "label",
+                          "children": [
+                            {
+                              "tag": "input",
+                              "attributes": {
+                                "type": "radio",
+                                "checked": false,
+                                "value": "on"
+                              }
+                            },
+                            "図の案"
+                          ]
+                        },
+                        {
+                          "tag": "p",
+                          "children": [
+                            "架空の説明B"
+                          ]
+                        },
+                        {
+                          "tag": "pre",
+                          "attributes": {
+                            "data-processed": "true"
+                          },
+                          "children": [
+                            {
+                              "tag": "svg"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "tag": "li",
+                      "children": [
+                        {
+                          "tag": "label",
+                          "children": [
+                            {
+                              "tag": "input",
+                              "attributes": {
+                                "type": "radio",
+                                "checked": false,
+                                "value": "on"
+                              }
+                            },
+                            "注意つきの案"
+                          ]
+                        },
+                        {
+                          "tag": "p",
+                          "children": [
+                            "架空の説明C"
+                          ]
+                        },
+                        "注意",
+                        "戻せない操作が1つ混ざる案（架空）。",
+                        {
+                          "tag": "ul",
+                          "children": [
+                            {
+                              "tag": "li",
                               "children": [
-                                {
-                                  "tag": "th",
-                                  "children": [
-                                    "段"
-                                  ]
-                                },
-                                {
-                                  "tag": "th",
-                                  "children": [
-                                    "触る場所"
-                                  ]
-                                },
-                                {
-                                  "tag": "th",
-                                  "children": [
-                                    "目で見える差"
-                                  ]
-                                }
+                                "架空の利点: 速い"
+                              ]
+                            },
+                            {
+                              "tag": "li",
+                              "children": [
+                                "架空の欠点: 後から直せない"
                               ]
                             }
                           ]
-                        },
+                        }
+                      ]
+                    },
+                    {
+                      "tag": "li",
+                      "children": [
                         {
-                          "tag": "tbody",
+                          "tag": "label",
                           "children": [
                             {
-                              "tag": "tr",
+                              "tag": "input",
+                              "attributes": {
+                                "type": "radio",
+                                "checked": false,
+                                "value": "on"
+                              }
+                            },
+                            "表の案"
+                          ]
+                        },
+                        {
+                          "tag": "p",
+                          "children": [
+                            "架空の説明A"
+                          ]
+                        },
+                        {
+                          "tag": "table",
+                          "children": [
+                            {
+                              "tag": "thead",
                               "children": [
                                 {
-                                  "tag": "td",
-                                  "children": [
-                                    "1"
-                                  ]
-                                },
-                                {
-                                  "tag": "td",
+                                  "tag": "tr",
                                   "children": [
                                     {
-                                      "tag": "code",
+                                      "tag": "th",
                                       "children": [
-                                        "shared/question.ts"
+                                        "段"
+                                      ]
+                                    },
+                                    {
+                                      "tag": "th",
+                                      "children": [
+                                        "触る場所"
+                                      ]
+                                    },
+                                    {
+                                      "tag": "th",
+                                      "children": [
+                                        "目で見える差"
                                       ]
                                     }
-                                  ]
-                                },
-                                {
-                                  "tag": "td",
-                                  "children": [
-                                    "無し"
                                   ]
                                 }
                               ]
                             },
                             {
-                              "tag": "tr",
+                              "tag": "tbody",
                               "children": [
                                 {
-                                  "tag": "td",
-                                  "children": [
-                                    "2"
-                                  ]
-                                },
-                                {
-                                  "tag": "td",
-                                  "children": [
-                                    "メインビュー"
-                                  ]
-                                },
-                                {
-                                  "tag": "td",
+                                  "tag": "tr",
                                   "children": [
                                     {
-                                      "tag": "strong",
+                                      "tag": "td",
                                       "children": [
-                                        "比較の札が出る"
+                                        "1"
+                                      ]
+                                    },
+                                    {
+                                      "tag": "td",
+                                      "children": [
+                                        {
+                                          "tag": "code",
+                                          "children": [
+                                            "shared/question.ts"
+                                          ]
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "tag": "td",
+                                      "children": [
+                                        "無し"
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "tag": "tr",
+                                  "children": [
+                                    {
+                                      "tag": "td",
+                                      "children": [
+                                        "2"
+                                      ]
+                                    },
+                                    {
+                                      "tag": "td",
+                                      "children": [
+                                        "メインビュー"
+                                      ]
+                                    },
+                                    {
+                                      "tag": "td",
+                                      "children": [
+                                        {
+                                          "tag": "strong",
+                                          "children": [
+                                            "比較の札が出る"
+                                          ]
+                                        }
                                       ]
                                     }
                                   ]
@@ -255,59 +271,59 @@
                       ]
                     }
                   ]
+                },
+                {
+                  "tag": "footer",
+                  "children": [
+                    "選択肢にない答えは、下の入力欄に書いて送れます",
+                    {
+                      "tag": "button",
+                      "attributes": {
+                        "aria-disabled": "true",
+                        "type": "button"
+                      },
+                      "children": [
+                        "これで答える"
+                      ]
+                    }
+                  ]
                 }
               ]
             },
             {
-              "tag": "footer",
-              "children": [
-                "選択肢にない答えは、下の入力欄に書いて送れます",
-                {
-                  "tag": "button",
-                  "attributes": {
-                    "aria-disabled": "true",
-                    "type": "button"
-                  },
-                  "children": [
-                    "これで答える"
-                  ]
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "tag": "div",
-          "attributes": {
-            "data-work-state": "pending",
-            "data-chat-idle": "false",
-            "data-variant": "capsule"
-          },
-          "children": [
-            {
-              "tag": "button",
+              "tag": "div",
               "attributes": {
-                "aria-expanded": "false",
-                "type": "button"
+                "data-work-state": "pending",
+                "data-chat-idle": "false",
+                "data-variant": "capsule"
               },
               "children": [
                 {
-                  "tag": "span",
+                  "tag": "button",
                   "attributes": {
-                    "aria-hidden": "true"
+                    "aria-expanded": "false",
+                    "type": "button"
                   },
                   "children": [
-                    "●"
+                    {
+                      "tag": "span",
+                      "attributes": {
+                        "aria-hidden": "true"
+                      },
+                      "children": [
+                        "●"
+                      ]
+                    },
+                    "答え待ち",
+                    {
+                      "tag": "span",
+                      "attributes": {
+                        "aria-hidden": "true"
+                      }
+                    },
+                    "架空の選択"
                   ]
-                },
-                "答え待ち",
-                {
-                  "tag": "span",
-                  "attributes": {
-                    "aria-hidden": "true"
-                  }
-                },
-                "架空の選択"
+                }
               ]
             }
           ]

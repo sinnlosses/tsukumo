@@ -29,6 +29,8 @@ export type TurnProps = {
   readonly turn: MainViewTurn
   /** 今回（いちばん新しい）のやり取りか。演出を掛けてよいのは今回だけで、過去のターンでは本文が最初から全部出ている。 */
   readonly newest: boolean
+  /** 出し始めた時点で既にある最終レポートも、まだ読まれていないものとして演出するか（地図から入れ替えたばかりのレポート）。 */
+  readonly freshReport: boolean
 }
 
 export function Turn(props: TurnProps): ReactElement {
@@ -37,7 +39,7 @@ export function Turn(props: TurnProps): ReactElement {
   // このやり取りを出し始めた時点で既にあった本文は演出しない。
   // 過去のターンを開いたとき・ページを読み込み直したときは「確定済みの本文が一度も書かれない」ので、あとから現れた本文だけが対象になる。
   // この初期値がやり取りごとに取り直されるのは、`<MainView>` がやり取りの番号を `key` に渡すため。
-  const [stepIdAtMount] = useState(writingStepId)
+  const [stepIdAtMount] = useState(props.freshReport ? undefined : writingStepId)
   const revealStepId = props.newest && writingStepId !== stepIdAtMount ? writingStepId : undefined
 
   return (

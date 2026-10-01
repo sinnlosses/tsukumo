@@ -13,361 +13,369 @@
           },
           "children": [
             {
-              "tag": "article",
+              "tag": "div",
+              "attributes": {
+                "data-main-view-content": "report"
+              },
               "children": [
                 {
-                  "tag": "header",
+                  "tag": "article",
                   "children": [
                     {
-                      "tag": "button",
-                      "attributes": {
-                        "aria-disabled": "true",
-                        "aria-label": "1つ古いターンへ",
-                        "type": "button"
-                      },
-                      "children": [
-                        {
-                          "tag": "span",
-                          "attributes": {
-                            "aria-hidden": "true"
-                          },
-                          "children": [
-                            "‹"
-                          ]
-                        }
-                      ]
-                    },
-                    {
-                      "tag": "button",
-                      "attributes": {
-                        "aria-disabled": "true",
-                        "aria-label": "1つ新しいターンへ",
-                        "type": "button"
-                      },
-                      "children": [
-                        {
-                          "tag": "span",
-                          "attributes": {
-                            "aria-hidden": "true"
-                          },
-                          "children": [
-                            "›"
-                          ]
-                        }
-                      ]
-                    },
-                    {
-                      "tag": "h2",
+                      "tag": "header",
                       "children": [
                         {
                           "tag": "button",
                           "attributes": {
-                            "aria-disabled": "false",
-                            "aria-expanded": "false",
+                            "aria-disabled": "true",
+                            "aria-label": "1つ古いターンへ",
                             "type": "button"
                           },
                           "children": [
-                            "表現の一覧（架空）",
                             {
                               "tag": "span",
                               "attributes": {
                                 "aria-hidden": "true"
-                              }
+                              },
+                              "children": [
+                                "‹"
+                              ]
                             }
                           ]
-                        }
+                        },
+                        {
+                          "tag": "button",
+                          "attributes": {
+                            "aria-disabled": "true",
+                            "aria-label": "1つ新しいターンへ",
+                            "type": "button"
+                          },
+                          "children": [
+                            {
+                              "tag": "span",
+                              "attributes": {
+                                "aria-hidden": "true"
+                              },
+                              "children": [
+                                "›"
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "tag": "h2",
+                          "children": [
+                            {
+                              "tag": "button",
+                              "attributes": {
+                                "aria-disabled": "false",
+                                "aria-expanded": "false",
+                                "type": "button"
+                              },
+                              "children": [
+                                "表現の一覧（架空）",
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  }
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        "1 / 1",
+                        "最新"
                       ]
                     },
-                    "1 / 1",
-                    "最新"
-                  ]
-                },
-                {
-                  "tag": "div",
-                  "attributes": {
-                    "data-outline": "hidden",
-                    "data-outline-collapsed": "false"
-                  },
-                  "children": [
                     {
-                      "tag": "section",
+                      "tag": "div",
+                      "attributes": {
+                        "data-outline": "hidden",
+                        "data-outline-collapsed": "false"
+                      },
                       "children": [
                         {
-                          "tag": "h4",
-                          "children": [
-                            "表現の一覧（架空）"
-                          ]
-                        },
-                        {
-                          "tag": "blockquote",
+                          "tag": "section",
                           "children": [
                             {
-                              "tag": "p",
+                              "tag": "h4",
                               "children": [
-                                "これは引用のテスト。実物の会話ではない。"
+                                "表現の一覧（架空）"
                               ]
-                            }
-                          ]
-                        },
-                        {
-                          "tag": "ul",
-                          "children": [
+                            },
                             {
-                              "tag": "li",
+                              "tag": "blockquote",
                               "children": [
-                                "項目1",
                                 {
-                                  "tag": "ul",
+                                  "tag": "p",
                                   "children": [
-                                    {
-                                      "tag": "li",
-                                      "children": [
-                                        "子項目1"
-                                      ]
-                                    },
-                                    {
-                                      "tag": "li",
-                                      "children": [
-                                        "子項目2"
-                                      ]
-                                    }
+                                    "これは引用のテスト。実物の会話ではない。"
                                   ]
                                 }
                               ]
                             },
                             {
-                              "tag": "li",
-                              "children": [
-                                "項目2"
-                              ]
-                            }
-                          ]
-                        },
-                        {
-                          "tag": "ul",
-                          "children": [
-                            {
-                              "tag": "li",
-                              "children": [
-                                "✓",
-                                "済みの項目（架空）"
-                              ]
-                            },
-                            {
-                              "tag": "li",
-                              "children": [
-                                "未了の項目（架空）"
-                              ]
-                            }
-                          ]
-                        },
-                        {
-                          "tag": "hr"
-                        },
-                        {
-                          "tag": "table",
-                          "children": [
-                            {
-                              "tag": "thead",
+                              "tag": "ul",
                               "children": [
                                 {
-                                  "tag": "tr",
+                                  "tag": "li",
                                   "children": [
+                                    "項目1",
                                     {
-                                      "tag": "th",
+                                      "tag": "ul",
                                       "children": [
-                                        "項目"
-                                      ]
-                                    },
-                                    {
-                                      "tag": "th",
-                                      "children": [
-                                        "状態"
-                                      ]
-                                    },
-                                    {
-                                      "tag": "th",
-                                      "children": [
-                                        "値"
-                                      ]
-                                    }
-                                  ]
-                                }
-                              ]
-                            },
-                            {
-                              "tag": "tbody",
-                              "children": [
-                                {
-                                  "tag": "tr",
-                                  "children": [
-                                    {
-                                      "tag": "td",
-                                      "children": [
-                                        "A"
-                                      ]
-                                    },
-                                    {
-                                      "tag": "td",
-                                      "children": [
-                                        "ok"
-                                      ]
-                                    },
-                                    {
-                                      "tag": "td",
-                                      "children": [
-                                        "12"
+                                        {
+                                          "tag": "li",
+                                          "children": [
+                                            "子項目1"
+                                          ]
+                                        },
+                                        {
+                                          "tag": "li",
+                                          "children": [
+                                            "子項目2"
+                                          ]
+                                        }
                                       ]
                                     }
                                   ]
                                 },
                                 {
-                                  "tag": "tr",
+                                  "tag": "li",
+                                  "children": [
+                                    "項目2"
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "tag": "ul",
+                              "children": [
+                                {
+                                  "tag": "li",
+                                  "children": [
+                                    "✓",
+                                    "済みの項目（架空）"
+                                  ]
+                                },
+                                {
+                                  "tag": "li",
+                                  "children": [
+                                    "未了の項目（架空）"
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "tag": "hr"
+                            },
+                            {
+                              "tag": "table",
+                              "children": [
+                                {
+                                  "tag": "thead",
                                   "children": [
                                     {
-                                      "tag": "td",
+                                      "tag": "tr",
                                       "children": [
-                                        "B"
+                                        {
+                                          "tag": "th",
+                                          "children": [
+                                            "項目"
+                                          ]
+                                        },
+                                        {
+                                          "tag": "th",
+                                          "children": [
+                                            "状態"
+                                          ]
+                                        },
+                                        {
+                                          "tag": "th",
+                                          "children": [
+                                            "値"
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "tag": "tbody",
+                                  "children": [
+                                    {
+                                      "tag": "tr",
+                                      "children": [
+                                        {
+                                          "tag": "td",
+                                          "children": [
+                                            "A"
+                                          ]
+                                        },
+                                        {
+                                          "tag": "td",
+                                          "children": [
+                                            "ok"
+                                          ]
+                                        },
+                                        {
+                                          "tag": "td",
+                                          "children": [
+                                            "12"
+                                          ]
+                                        }
                                       ]
                                     },
                                     {
-                                      "tag": "td",
+                                      "tag": "tr",
                                       "children": [
-                                        "ng"
-                                      ]
-                                    },
-                                    {
-                                      "tag": "td",
-                                      "children": [
-                                        "3"
+                                        {
+                                          "tag": "td",
+                                          "children": [
+                                            "B"
+                                          ]
+                                        },
+                                        {
+                                          "tag": "td",
+                                          "children": [
+                                            "ng"
+                                          ]
+                                        },
+                                        {
+                                          "tag": "td",
+                                          "children": [
+                                            "3"
+                                          ]
+                                        }
                                       ]
                                     }
                                   ]
                                 }
                               ]
-                            }
-                          ]
-                        },
-                        "情報",
-                        "結論：ここに並べた記法はすべて架空の例。",
-                        "異常",
-                        "架空の数値なので実際の判断には使えない。",
-                        "注意",
-                        "この画面は疑似セッションで、実際の作業は1つもしていない。",
-                        "疑問",
-                        "この一覧に抜けている記法があるかは確かめていない。",
-                        "メモ",
-                        "この見本は capture-catalog.ts の題材として置いている。",
-                        {
-                          "tag": "p",
-                          "children": [
-                            "色の見本:",
+                            },
+                            "情報",
+                            "結論：ここに並べた記法はすべて架空の例。",
+                            "異常",
+                            "架空の数値なので実際の判断には使えない。",
+                            "注意",
+                            "この画面は疑似セッションで、実際の作業は1つもしていない。",
+                            "疑問",
+                            "この一覧に抜けている記法があるかは確かめていない。",
+                            "メモ",
+                            "この見本は capture-catalog.ts の題材として置いている。",
                             {
-                              "tag": "code",
+                              "tag": "p",
                               "children": [
-                                "#bca0ec"
+                                "色の見本:",
+                                {
+                                  "tag": "code",
+                                  "children": [
+                                    "#bca0ec"
+                                  ]
+                                },
+                                "/",
+                                {
+                                  "tag": "code",
+                                  "children": [
+                                    "#191720"
+                                  ]
+                                },
+                                "/",
+                                {
+                                  "tag": "code",
+                                  "children": [
+                                    "state-memo"
+                                  ]
+                                },
+                                "/",
+                                {
+                                  "tag": "code",
+                                  "children": [
+                                    "--ink-quiet"
+                                  ]
+                                },
+                                "/",
+                                {
+                                  "tag": "code",
+                                  "children": [
+                                    "accent"
+                                  ]
+                                }
                               ]
                             },
-                            "/",
                             {
-                              "tag": "code",
+                              "tag": "p",
                               "children": [
-                                "#191720"
+                                "OK",
+                                "要注意",
+                                "NG"
                               ]
                             },
-                            "/",
+                            "案A（架空）",
+                            "案B（架空）",
                             {
-                              "tag": "code",
+                              "tag": "b",
                               "children": [
-                                "state-memo"
+                                "4"
                               ]
                             },
-                            "/",
+                            "色",
                             {
-                              "tag": "code",
+                              "tag": "b",
                               "children": [
-                                "--ink-quiet"
+                                "9"
                               ]
                             },
-                            "/",
+                            "種類",
                             {
-                              "tag": "code",
+                              "tag": "b",
                               "children": [
-                                "accent"
+                                "2"
                               ]
-                            }
-                          ]
-                        },
-                        {
-                          "tag": "p",
-                          "children": [
-                            "OK",
-                            "要注意",
-                            "NG"
-                          ]
-                        },
-                        "案A（架空）",
-                        "案B（架空）",
-                        {
-                          "tag": "b",
-                          "children": [
-                            "4"
-                          ]
-                        },
-                        "色",
-                        {
-                          "tag": "b",
-                          "children": [
-                            "9"
-                          ]
-                        },
-                        "種類",
-                        {
-                          "tag": "b",
-                          "children": [
-                            "2"
-                          ]
-                        },
-                        "段階",
-                        {
-                          "tag": "b",
-                          "children": [
-                            "読む"
-                          ]
-                        },
-                        "対象のファイルを確かめる（架空）",
-                        "↓",
-                        {
-                          "tag": "b",
-                          "children": [
-                            "直す"
-                          ]
-                        },
-                        "目盛りを直す（架空）",
-                        "↓",
-                        {
-                          "tag": "b",
-                          "children": [
-                            "確かめる"
-                          ]
-                        },
-                        "check を回す（架空）",
-                        {
-                          "tag": "pre",
-                          "attributes": {
-                            "data-processed": "true"
-                          },
-                          "children": [
+                            },
+                            "段階",
                             {
-                              "tag": "svg"
-                            }
+                              "tag": "b",
+                              "children": [
+                                "読む"
+                              ]
+                            },
+                            "対象のファイルを確かめる（架空）",
+                            "↓",
+                            {
+                              "tag": "b",
+                              "children": [
+                                "直す"
+                              ]
+                            },
+                            "目盛りを直す（架空）",
+                            "↓",
+                            {
+                              "tag": "b",
+                              "children": [
+                                "確かめる"
+                              ]
+                            },
+                            "check を回す（架空）",
+                            {
+                              "tag": "pre",
+                              "attributes": {
+                                "data-processed": "true"
+                              },
+                              "children": [
+                                {
+                                  "tag": "svg"
+                                }
+                              ]
+                            },
+                            {
+                              "tag": "canvas"
+                            },
+                            "お願い",
+                            "この一覧の見え方に気づいた点があれば教えてください（架空の例）。"
                           ]
-                        },
-                        {
-                          "tag": "canvas"
-                        },
-                        "お願い",
-                        "この一覧の見え方に気づいた点があれば教えてください（架空の例）。"
+                        }
                       ]
                     }
                   ]

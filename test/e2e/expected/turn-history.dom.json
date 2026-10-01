@@ -13,95 +13,103 @@
           },
           "children": [
             {
-              "tag": "article",
+              "tag": "div",
+              "attributes": {
+                "data-main-view-content": "report"
+              },
               "children": [
                 {
-                  "tag": "header",
+                  "tag": "article",
                   "children": [
                     {
-                      "tag": "button",
-                      "attributes": {
-                        "aria-disabled": "false",
-                        "aria-label": "1つ古いターンへ",
-                        "type": "button"
-                      },
-                      "children": [
-                        {
-                          "tag": "span",
-                          "attributes": {
-                            "aria-hidden": "true"
-                          },
-                          "children": [
-                            "‹"
-                          ]
-                        }
-                      ]
-                    },
-                    {
-                      "tag": "button",
-                      "attributes": {
-                        "aria-disabled": "true",
-                        "aria-label": "1つ新しいターンへ",
-                        "type": "button"
-                      },
-                      "children": [
-                        {
-                          "tag": "span",
-                          "attributes": {
-                            "aria-hidden": "true"
-                          },
-                          "children": [
-                            "›"
-                          ]
-                        }
-                      ]
-                    },
-                    {
-                      "tag": "h2",
+                      "tag": "header",
                       "children": [
                         {
                           "tag": "button",
                           "attributes": {
                             "aria-disabled": "false",
-                            "aria-expanded": "false",
+                            "aria-label": "1つ古いターンへ",
                             "type": "button"
                           },
                           "children": [
-                            "札の頭のタイトルが、1行に収まらない長さの依頼の1行目でどう省略されるかを確かめたい。広い画面でも狭い画面でも横に転がらないこと（架空の依頼）",
                             {
                               "tag": "span",
                               "attributes": {
                                 "aria-hidden": "true"
-                              }
+                              },
+                              "children": [
+                                "‹"
+                              ]
                             }
-                          ]
-                        }
-                      ]
-                    },
-                    "4 / 4",
-                    "最新"
-                  ]
-                },
-                {
-                  "tag": "div",
-                  "attributes": {
-                    "data-outline": "hidden",
-                    "data-outline-collapsed": "false"
-                  },
-                  "children": [
-                    {
-                      "tag": "section",
-                      "children": [
-                        {
-                          "tag": "h4",
-                          "children": [
-                            "札の頭のタイトル（架空）"
                           ]
                         },
                         {
-                          "tag": "p",
+                          "tag": "button",
+                          "attributes": {
+                            "aria-disabled": "true",
+                            "aria-label": "1つ新しいターンへ",
+                            "type": "button"
+                          },
                           "children": [
-                            "架空の本文。札の頭には依頼の1行目が出て、収まらないぶんは省略される。"
+                            {
+                              "tag": "span",
+                              "attributes": {
+                                "aria-hidden": "true"
+                              },
+                              "children": [
+                                "›"
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "tag": "h2",
+                          "children": [
+                            {
+                              "tag": "button",
+                              "attributes": {
+                                "aria-disabled": "false",
+                                "aria-expanded": "false",
+                                "type": "button"
+                              },
+                              "children": [
+                                "札の頭のタイトルが、1行に収まらない長さの依頼の1行目でどう省略されるかを確かめたい。広い画面でも狭い画面でも横に転がらないこと（架空の依頼）",
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  }
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        "4 / 4",
+                        "最新"
+                      ]
+                    },
+                    {
+                      "tag": "div",
+                      "attributes": {
+                        "data-outline": "hidden",
+                        "data-outline-collapsed": "false"
+                      },
+                      "children": [
+                        {
+                          "tag": "section",
+                          "children": [
+                            {
+                              "tag": "h4",
+                              "children": [
+                                "札の頭のタイトル（架空）"
+                              ]
+                            },
+                            {
+                              "tag": "p",
+                              "children": [
+                                "架空の本文。札の頭には依頼の1行目が出て、収まらないぶんは省略される。"
+                              ]
+                            }
                           ]
                         }
                       ]

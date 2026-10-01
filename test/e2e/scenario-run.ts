@@ -91,11 +91,13 @@ const UPDATE_EXPECTED = process.env["E2E_UPDATE"] === "1"
 
 /**
  * 窓の大きさ。広いほうはカタログを撮る道具の広い窓と同じ。狭い窓の積み替えを見る
- * シナリオだけ `narrow` を使う。
+ * シナリオだけ `narrow` を使う。`large` と `medium` は、領域の寸法を窓の大きさごとに測るシナリオが使う。
  */
 const VIEWPORTS = {
   wide: { width: 1400, height: 900 },
   narrow: { width: 720, height: 900 },
+  large: { width: 1440, height: 900 },
+  medium: { width: 1024, height: 768 },
 } as const satisfies Record<string, { readonly width: number; readonly height: number }>
 
 export type ScenarioOptions = {

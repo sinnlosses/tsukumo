@@ -451,3 +451,59 @@ describe("MainView（中間レポート）", () => {
     expect(findBySummary(untouchedText).open).toBe(false)
   })
 })
+
+describe("MainView（読んでいるあいだの保留と知らせの行）", () => {
+  const RUNNING = { kind: "running", startedAt: 0 } as const satisfies SessionState["turn"]
+  const ENDED = {
+    kind: "finished",
+    startedAt: 0,
+    finishedAt: 100,
+    ending: { kind: "ended" },
+  } as const satisfies SessionState["turn"]
+
+  /** 依頼を送って動いている姿から描き、同じやり取りを `report` つきで閉じる。 */
+  function renderAndClose(): void {
+    renderMainView([requestRecord({ text: "架空の依頼", turnId: 0 })], RUNNING)
+    act(() => {
+      putState({
+        ...INITIAL_SESSION_STATE,
+        records: [requestRecord({ text: "架空の依頼", turnId: 0 }), reportRecord("届いた結論")],
+        turn: ENDED,
+      })
+    })
+  }
+
+  function shownContent(): string | null | undefined {
+    return document
+      .querySelector("[data-main-view-content]")
+      ?.getAttribute("data-main-view-content")
+  }
+
+  it("中にフォーカスがあるあいだに閉じると、地図のまま本文を出さず、知らせを押すとレポートへ入れ替わる", () => {
+    renderMainView([requestRecord({ text: "架空の依頼", turnId: 0 })], RUNNING)
+    act(() => {
+      historyToggle().focus()
+    })
+    act(() => {
+      putState({
+        ...INITIAL_SESSION_STATE,
+        records: [requestRecord({ text: "架空の依頼", turnId: 0 }), reportRecord("届いた結論")],
+        turn: ENDED,
+      })
+    })
+
+    expect(shownContent()).toBe("work-map")
+    expect(screen.queryByText("届いた結論")).toBeNull()
+
+    press("レポートが届いた")
+    expect(shownContent()).toBe("report")
+    expect(screen.getByText("届いた結論")).toBeDefined()
+  })
+
+  it("保留していなければ、閉じた瞬間にレポートへ入れ替わり知らせは出ない", () => {
+    renderAndClose()
+
+    expect(shownContent()).toBe("report")
+    expect(screen.queryByRole("button", { name: "レポートが届いた" })).toBeNull()
+  })
+})

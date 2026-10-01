@@ -18,6 +18,24 @@
      0 だと札の上端が領域の枠に貼り付き、枠が2本重なって見える。 */
   scroll-margin-top: var(--region-padding, 0px);
 }
+/* いま出している中身（迎える口・作業の地図・レポート）の入れ物。
+   入れ替わったときに作り直され、不透明度だけで1回現れる。古い中身は消すだけで動きを付けない。 */
+.main-view-content {
+  animation: main-view-content-enter 160ms ease-out;
+}
+@keyframes main-view-content-enter {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .main-view-content {
+    animation: none;
+  }
+}
 /* ターン1件ぶんの札。
    頭（`.turn-header`）と区切り線の下に、目次の縁とレポートを置く（`ReportOutline`）。
    札は枠を持たず、領域の余白を打ち消して領域の縁まで広がる（領域の枠と札の枠が二重に見えないように）。

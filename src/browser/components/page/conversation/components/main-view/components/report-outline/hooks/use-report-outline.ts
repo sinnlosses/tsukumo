@@ -17,7 +17,12 @@ import {
 import { isDeepEqual } from "remeda"
 
 import notationStyles from "../../../markdown/report-notation.module.css"
-import { loadOutlinePanel, saveOutlinePanel, type OutlinePanel } from "../domain/outline-panel.ts"
+import {
+  isOutlineCollapsed,
+  loadOutlinePanel,
+  saveOutlinePanel,
+  type OutlinePanel,
+} from "../domain/outline-panel.ts"
 
 /** 見出し1つ。`section` は `##`、`sub` は `###`。 */
 export type ReportOutlineEntry = {
@@ -75,6 +80,9 @@ const HEADING_SELECTOR = `.${notationStyles["detail-block"]} :is(h4, h5)`
 
 const OUTLINE_WIDTH_VARIABLE = "--outline-rail-width"
 
+/** 札の幅がこれ（rem）を下回るあいだは、利用者が選んでいなければ目次を畳んでおく。 */
+const NARROW_CARD_REM = 48
+
 export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel {
   const frameRef = useRef<HTMLDivElement>(null)
   const contentRef = useRef<HTMLDivElement>(null)
@@ -86,6 +94,8 @@ export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel 
   const [entries, setEntries] = useState<readonly ReportOutlineEntry[]>([])
   const [activeIndex, setActiveIndex] = useState(0)
   const [panel, setPanel] = useState<OutlinePanel>(loadOutlinePanel)
+  const [narrow, setNarrow] = useState(false)
+  const collapsed = isOutlineCollapsed(panel.collapse, narrow)
 
   // 幅と畳みの唯一の更新点。離したとき・畳む/開くを押したときだけ通る。
   function commitPanel(update: (current: OutlinePanel) => OutlinePanel): void {
@@ -159,6 +169,22 @@ export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel 
     }
   }, [])
 
+  // 札の幅（DOM の寸法）を購読する。
+  useEffect(() => {
+    const frame = frameRef.current
+    if (frame === null) {
+      return
+    }
+    const observer = new ResizeObserver(() => {
+      const rootFontPx = Number.parseFloat(getComputedStyle(document.documentElement).fontSize)
+      setNarrow(frame.getBoundingClientRect().width < NARROW_CARD_REM * rootFontPx)
+    })
+    observer.observe(frame)
+    return () => {
+      observer.disconnect()
+    }
+  }, [])
+
   function focusRow(step: 1 | -1): void {
     const rows = [...(listRef.current?.querySelectorAll<HTMLButtonElement>("button") ?? [])]
     const current = rows.findIndex((row) => row === document.activeElement)
@@ -188,9 +214,9 @@ export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel 
       }
       setActiveIndex(index)
     },
-    collapsed: panel.collapsed,
+    collapsed,
     onToggleCollapse: () => {
-      commitPanel((current) => ({ ...current, collapsed: !current.collapsed }))
+      commitPanel((current) => ({ ...current, collapse: collapsed ? "open" : "collapsed" }))
     },
     widthStyle:
       panel.widthPx === undefined ? {} : { [OUTLINE_WIDTH_VARIABLE]: `${String(panel.widthPx)}px` },

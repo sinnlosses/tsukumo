@@ -13,149 +13,157 @@
           },
           "children": [
             {
-              "tag": "article",
+              "tag": "div",
+              "attributes": {
+                "data-main-view-content": "report"
+              },
               "children": [
                 {
-                  "tag": "header",
+                  "tag": "article",
                   "children": [
                     {
-                      "tag": "button",
-                      "attributes": {
-                        "aria-disabled": "true",
-                        "aria-label": "1つ古いターンへ",
-                        "type": "button"
-                      },
-                      "children": [
-                        {
-                          "tag": "span",
-                          "attributes": {
-                            "aria-hidden": "true"
-                          },
-                          "children": [
-                            "‹"
-                          ]
-                        }
-                      ]
-                    },
-                    {
-                      "tag": "button",
-                      "attributes": {
-                        "aria-disabled": "true",
-                        "aria-label": "1つ新しいターンへ",
-                        "type": "button"
-                      },
-                      "children": [
-                        {
-                          "tag": "span",
-                          "attributes": {
-                            "aria-hidden": "true"
-                          },
-                          "children": [
-                            "›"
-                          ]
-                        }
-                      ]
-                    },
-                    {
-                      "tag": "h2",
+                      "tag": "header",
                       "children": [
                         {
                           "tag": "button",
                           "attributes": {
-                            "aria-disabled": "false",
-                            "aria-expanded": "false",
+                            "aria-disabled": "true",
+                            "aria-label": "1つ古いターンへ",
                             "type": "button"
                           },
                           "children": [
-                            "差し戻しの見え方を確かめたい（架空の依頼）",
                             {
                               "tag": "span",
                               "attributes": {
                                 "aria-hidden": "true"
-                              }
-                            }
-                          ]
-                        }
-                      ]
-                    },
-                    "1 / 1",
-                    "最新"
-                  ]
-                },
-                {
-                  "tag": "div",
-                  "attributes": {
-                    "data-outline": "hidden",
-                    "data-outline-collapsed": "false"
-                  },
-                  "children": [
-                    {
-                      "tag": "section",
-                      "children": [
-                        {
-                          "tag": "p",
-                          "children": [
-                            "架空の結論: 差し戻しのあとに直したレポートだけが出る。"
-                          ]
-                        },
-                        {
-                          "tag": "h4",
-                          "children": [
-                            "直した見出し（架空）"
-                          ]
-                        },
-                        {
-                          "tag": "p",
-                          "children": [
-                            {
-                              "tag": "strong",
+                              },
                               "children": [
-                                "直した表（作り物の値）"
+                                "‹"
                               ]
                             }
                           ]
                         },
                         {
-                          "tag": "table",
+                          "tag": "button",
+                          "attributes": {
+                            "aria-disabled": "true",
+                            "aria-label": "1つ新しいターンへ",
+                            "type": "button"
+                          },
                           "children": [
                             {
-                              "tag": "thead",
+                              "tag": "span",
+                              "attributes": {
+                                "aria-hidden": "true"
+                              },
+                              "children": [
+                                "›"
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "tag": "h2",
+                          "children": [
+                            {
+                              "tag": "button",
+                              "attributes": {
+                                "aria-disabled": "false",
+                                "aria-expanded": "false",
+                                "type": "button"
+                              },
+                              "children": [
+                                "差し戻しの見え方を確かめたい（架空の依頼）",
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  }
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        "1 / 1",
+                        "最新"
+                      ]
+                    },
+                    {
+                      "tag": "div",
+                      "attributes": {
+                        "data-outline": "hidden",
+                        "data-outline-collapsed": "false"
+                      },
+                      "children": [
+                        {
+                          "tag": "section",
+                          "children": [
+                            {
+                              "tag": "p",
+                              "children": [
+                                "架空の結論: 差し戻しのあとに直したレポートだけが出る。"
+                              ]
+                            },
+                            {
+                              "tag": "h4",
+                              "children": [
+                                "直した見出し（架空）"
+                              ]
+                            },
+                            {
+                              "tag": "p",
                               "children": [
                                 {
-                                  "tag": "tr",
+                                  "tag": "strong",
                                   "children": [
-                                    {
-                                      "tag": "th",
-                                      "children": [
-                                        "列"
-                                      ]
-                                    },
-                                    {
-                                      "tag": "th",
-                                      "children": [
-                                        "値"
-                                      ]
-                                    }
+                                    "直した表（作り物の値）"
                                   ]
                                 }
                               ]
                             },
                             {
-                              "tag": "tbody",
+                              "tag": "table",
                               "children": [
                                 {
-                                  "tag": "tr",
+                                  "tag": "thead",
                                   "children": [
                                     {
-                                      "tag": "td",
+                                      "tag": "tr",
                                       "children": [
-                                        "a"
+                                        {
+                                          "tag": "th",
+                                          "children": [
+                                            "列"
+                                          ]
+                                        },
+                                        {
+                                          "tag": "th",
+                                          "children": [
+                                            "値"
+                                          ]
+                                        }
                                       ]
-                                    },
+                                    }
+                                  ]
+                                },
+                                {
+                                  "tag": "tbody",
+                                  "children": [
                                     {
-                                      "tag": "td",
+                                      "tag": "tr",
                                       "children": [
-                                        "1"
+                                        {
+                                          "tag": "td",
+                                          "children": [
+                                            "a"
+                                          ]
+                                        },
+                                        {
+                                          "tag": "td",
+                                          "children": [
+                                            "1"
+                                          ]
+                                        }
                                       ]
                                     }
                                   ]
