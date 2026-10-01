@@ -32,11 +32,12 @@
   プロジェクトのディレクトリで起こしても見つかるようにするための区別
 - **リポジトリの外に置いたのは `pnpm add --global "link:<リポジトリ>"` の2つだけ**（2026-09-12。
   2026-09-27 に `bun link` から移し、2026-10-02 に pnpm 12 の `pnpm link` が `--global` を受け付けない
-  ので `pnpm add --global` のリンク形式へ移した。打つのは `mise run setup`）。`~/Library/pnpm/tsukumo`
+  ので `pnpm add --global` のリンク形式へ移した。打つのは `mise run setup`）。`~/Library/pnpm/bin/tsukumo`
   （実体への**シンボリックリンクではなく**、`bin/tsukumo` のシバン行を読んで
   `exec <そのシバンの処理系> <bin/tsukumo のパス>` を生成するシム）と `~/Library/pnpm/global/`
   配下（pnpm が管理する登録簿。リポジトリへのリンクなので、変更はそのまま次の起動に反映される）。
-  **シェルの設定ファイルは書き換えていない。** 消すときは `pnpm remove --global tsukumo`
+  シェルの設定ファイルは、`$PNPM_HOME/bin` が `PATH` に無いときだけ `mise run setup` が
+  `pnpm setup --force` で pnpm の区画（`# pnpm` 〜 `# pnpm end`）を書き直す。消すときは `pnpm remove --global tsukumo`
 - **`bin/tsukumo` は POSIX sh**（`#!/bin/sh`）。自分の実体（シムが渡すパスも、直接の symlink も）を
   辿って根を求め、`mise -C <根> which node` で得た node（mise が無い・失敗したときは `PATH` の
   `node`）で `<根>/src/cli.ts` を起こす。PATH の先頭の node が `mise.toml` の版と一致する保証が無い

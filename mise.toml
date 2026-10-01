@@ -9,9 +9,11 @@ set -euo pipefail
 pnpm install
 # 依存が変わらない pnpm install は prepare を飛ばすので、更新のときのために組み立てを明示する
 pnpm run build
-if [ -z "${PNPM_HOME:-}" ]; then
-  pnpm setup
-  echo "pnpm setup を初めて実行した。新しいシェルを開いて mise run setup を打ち直してください。"
+# pnpm 12 はグローバルの置き場を $PNPM_HOME/bin に移したので、古い pnpm setup の行が残っていても PATH に無い。
+# --force はシェルの設定ファイルの pnpm の区画（# pnpm 〜 # pnpm end）だけを今の形に書き直す
+if ! pnpm bin --global >/dev/null 2>&1; then
+  pnpm setup --force
+  echo "pnpm のグローバルの置き場を PATH に通した。新しいシェルを開いて mise run setup を打ち直してください。"
   exit 0
 fi
 # pnpm 12 の pnpm link は --global を受け付けないので、リンク形式のグローバル導入で入れる

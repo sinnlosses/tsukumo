@@ -574,13 +574,13 @@ Orca は「ページを表示する箱」として第一級であり、VS Code �
   作らないため）。実際に待っているポートは起動時に stdout へ出る URL（`layoutUrl`）で分かる
 - **グローバルへの導入は `pnpm add --global "link:<リポジトリ>"`**（2026-09-12 決定・実施。2026-09-27 に `bun link`
   から移し、2026-10-02 に pnpm 12 の `pnpm link` が `--global` を受け付けないので移した）。リポジトリの直下で
-  `mise run setup` を打つと `~/Library/pnpm/tsukumo` ができ、どのディレクトリからでも打てる。
+  `mise run setup` を打つと `~/Library/pnpm/bin/tsukumo` ができ、どのディレクトリからでも打てる。
   **リポジトリの `bin/tsukumo` へのリンク**なので、開発中の変更がそのまま次の起動に反映される。
   **tsukumo のリポジトリの作業ツリーの中で打ったときは、その作業ツリーの `bin/tsukumo` が起きる**
   （link 元でなく打った場所の版になる）。**消すときは `pnpm remove --global tsukumo`**。
-  リポジトリの外に置かれるのは `~/Library/pnpm/tsukumo` と `~/Library/pnpm/global/` 配下（pnpm の
-  登録簿）の2つだけで、**シェルの設定ファイルは書き換えない**（`~/Library/pnpm` が `PATH` に
-  入っていることが前提）。**打つのは本体の作業ツリーの直下で、`tsukumo-N` の作業ツリーでは
+  リポジトリの外に置かれるのは `~/Library/pnpm/bin/tsukumo` と `~/Library/pnpm/global/` 配下（pnpm の
+  登録簿）の2つだけ。シェルの設定ファイルは、`~/Library/pnpm/bin` が `PATH` に無いときだけ
+  `pnpm setup --force` が pnpm の区画を書き直す。**打つのは本体の作業ツリーの直下で、`tsukumo-N` の作業ツリーでは
   打たない**（打つとグローバルの `tsukumo` がその作業ツリーのコードに付け替わる）
 - **cwd に依存してよいのは起動先プロジェクトのもの**（作業ディレクトリ・`develop/task/`・
   相対指定の素材）**だけ**で、**自分で持ち歩くもの（既定の立ち絵・`node_modules` の外部

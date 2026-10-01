@@ -100,10 +100,12 @@ mise run setup  # 依存を入れ、ブラウザ側を組み立て、tsukumo コ
 
 `mise run setup` は `pnpm install`・`pnpm run build`（成果物は `dist/browser/`）・
 `pnpm add --global "link:<このリポジトリ>"`（`bin/tsukumo` を `tsukumo` コマンドとして入れる）の順に進みます。
-`PNPM_HOME` がまだ無いときだけ、代わりに `pnpm setup` を打って止まり、新しいシェルを開くよう知らせます。
-そのときは新しいシェルで `mise run setup` を打ち直してください。
+pnpm のグローバルの置き場（`$PNPM_HOME/bin`）が `PATH` に無いときだけ、代わりに `pnpm setup --force` を
+打って止まり、新しいシェルを開くよう知らせます（シェルの設定ファイルの `# pnpm` 〜 `# pnpm end` の区画を
+足すか、古い pnpm が書いた区画を今の形に書き直します）。そのときは新しいシェルで `mise run setup` を
+打ち直してください。
 
-`which tsukumo` で `PNPM_HOME` の下の `tsukumo` が出れば通っています。消すときは
+`which tsukumo` で `$PNPM_HOME/bin` の下の `tsukumo` が出れば通っています。消すときは
 `pnpm remove --global tsukumo` を実行します。
 
 ### 2. 起動する
@@ -138,14 +140,14 @@ mise run setup
 
 ### つまずいたとき
 
-| 出たもの                                                              | 原因                                    | 対処                                                              |
-| --------------------------------------------------------------------- | --------------------------------------- | ----------------------------------------------------------------- |
-| `zsh: command not found: tsukumo`                                     | `PNPM_HOME` が `PATH` に通っていない    | 新しいシェルを開いて `mise run setup` を打ち直す（手順1）         |
-| `tsukumo: ブラウザ側の成果物を読めない`                               | `dist/browser/` が無い                  | リポジトリの直下で `mise run setup`（手順1）                      |
-| `tsukumo: ソース（src/browser/ src/shared/）のほうが成果物より新しい` | 更新したあと組み立て直していない        | `mise run setup`（手順3）。止まりはせず、古い画面のまま動く       |
-| `tsukumo: TSUKUMO_VIEW_PORT がポート番号として読めない`               | 環境変数に数でない値が入っている        | `TSUKUMO_VIEW_PORT` を外すか数にする                              |
-| タブが開かない                                                        | `orca` が無い、か `TSUKUMO_OPEN_VIEW=0` | 表示された URL を手でブラウザに開く                               |
-| タブだけ閉じてしまった                                                | プロセスは動いたまま                    | `node scripts/open-views.ts http://127.0.0.1:<ポート>` で開き直す |
+| 出たもの                                                              | 原因                                      | 対処                                                              |
+| --------------------------------------------------------------------- | ----------------------------------------- | ----------------------------------------------------------------- |
+| `zsh: command not found: tsukumo`                                     | `$PNPM_HOME/bin` が `PATH` に通っていない | 新しいシェルを開いて `mise run setup` を打ち直す（手順1）         |
+| `tsukumo: ブラウザ側の成果物を読めない`                               | `dist/browser/` が無い                    | リポジトリの直下で `mise run setup`（手順1）                      |
+| `tsukumo: ソース（src/browser/ src/shared/）のほうが成果物より新しい` | 更新したあと組み立て直していない          | `mise run setup`（手順3）。止まりはせず、古い画面のまま動く       |
+| `tsukumo: TSUKUMO_VIEW_PORT がポート番号として読めない`               | 環境変数に数でない値が入っている          | `TSUKUMO_VIEW_PORT` を外すか数にする                              |
+| タブが開かない                                                        | `orca` が無い、か `TSUKUMO_OPEN_VIEW=0`   | 表示された URL を手でブラウザに開く                               |
+| タブだけ閉じてしまった                                                | プロセスは動いたまま                      | `node scripts/open-views.ts http://127.0.0.1:<ポート>` で開き直す |
 
 ### 開発しながら動かす
 
