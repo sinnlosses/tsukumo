@@ -2,7 +2,8 @@
 // （`test/e2e/<シナリオ>.test.ts`）はここを呼ぶだけにする。形の正典は
 // `docs/architecture/testing.md`「E2E の走らせ方」「E2E の成果物と再現」。
 //
-// - ブラウザは1ファイルに1つ（`beforeAll`）、tsukumo とブラウザのコンテキストは1件ごとに1つ
+// - ブラウザは1ファイルに1つ（`beforeAll`）で、`afterAll` で kill して止める。
+//   tsukumo とブラウザのコンテキストは1件ごとに1つ
 // - 起こした tsukumo は `afterEach` で自分の pid だけに `SIGTERM` を送り、終わるのを待ってから
 //   一時のディレクトリを消す
 // - 判定は DOM の構造とメッセージの列の2つの JSON だけ。スクリーンショットは目視の添え物
@@ -28,7 +29,7 @@ import path from "node:path"
 import process from "node:process"
 import { fileURLToPath } from "node:url"
 
-import { type Browser, chromium, type Page } from "playwright-core"
+import { type Browser, type BrowserServer, chromium, type Page } from "playwright-core"
 import { countBy, sortBy } from "remeda"
 import { afterAll, afterEach, beforeAll, expect } from "vitest"
 
@@ -159,11 +160,11 @@ export type ScenarioRun = {
  * シナリオのファイルの先頭で1回呼ぶ。ブラウザを起こす・閉じる、1件ごとの後始末を登録する。
  */
 export function useScenarioRun(): ScenarioRun {
-  let browser: Browser | undefined = undefined
+  let chrome: LaunchedChrome | undefined = undefined
   const cleanups: (() => Promise<void>)[] = []
 
   beforeAll(async () => {
-    browser = await launchChrome()
+    chrome = await launchChrome()
   })
 
   afterEach(async () => {
@@ -174,22 +175,40 @@ export function useScenarioRun(): ScenarioRun {
   })
 
   afterAll(async () => {
-    await browser?.close()
+    // Chrome は普通に閉じると、最後のコンテキストを閉じてから約 10 秒たつまで終わらない。
+    await chrome?.browser.close()
+    await chrome?.server.kill()
   })
 
   return {
     open: async (options) => {
-      if (browser === undefined) {
+      if (chrome === undefined) {
         throw new Error("ブラウザが起きていない（beforeAll が走っていない）")
       }
-      return openRoom(browser, options, (cleanup) => cleanups.push(cleanup))
+      return openRoom(chrome.browser, options, (cleanup) => cleanups.push(cleanup))
     },
   }
 }
 
-async function launchChrome(): Promise<Browser> {
+type LaunchedChrome = {
+  readonly server: BrowserServer
+  /** `server` に繋いだ側。`close` は切断だけで、Chrome は止めない。 */
+  readonly browser: Browser
+}
+
+async function launchChrome(): Promise<LaunchedChrome> {
+  const server = await launchChromeServer()
   try {
-    return await chromium.launch({ channel: "chrome", headless: true })
+    return { server, browser: await chromium.connect(server.wsEndpoint()) }
+  } catch (error) {
+    await server.kill()
+    throw error
+  }
+}
+
+async function launchChromeServer(): Promise<BrowserServer> {
+  try {
+    return await chromium.launchServer({ channel: "chrome", headless: true })
   } catch (error) {
     const reason = error instanceof Error ? error.message.split("\n")[0] : String(error)
     throw new Error(
