@@ -85,7 +85,8 @@
                 {
                   "tag": "div",
                   "attributes": {
-                    "data-outline": "hidden"
+                    "data-outline": "hidden",
+                    "data-outline-collapsed": "false"
                   }
                 }
               ]

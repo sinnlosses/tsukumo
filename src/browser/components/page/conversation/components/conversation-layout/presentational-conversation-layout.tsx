@@ -13,8 +13,9 @@ import { RotateCw } from "lucide-react"
 import type { ReactElement, ReactNode } from "react"
 
 import { Button } from "../../../../ui/button/button.tsx"
-import { LayoutResizer } from "./components/layout-resizer/layout-resizer.tsx"
+import { LayoutResizer } from "../layout-resizer/layout-resizer.tsx"
 import styles from "./conversation-layout.module.css"
+import { percentFromRatio } from "./domain/split.ts"
 import type { NarrowPane, UseConversationLayoutResult } from "./hooks/use-conversation-layout.ts"
 
 export type PresentationalConversationLayoutProps = UseConversationLayoutResult & {
@@ -109,6 +110,7 @@ export function PresentationalConversationLayout({
           orientation="vertical"
           containerRef={rowTopRef}
           ariaLabel="メインビューとサイドバーの境界"
+          toValue={percentFromRatio}
           onChange={onTopLeftChange}
           onCommit={onTopLeftCommit}
         />
@@ -126,6 +128,7 @@ export function PresentationalConversationLayout({
           orientation="horizontal"
           containerRef={gridRef}
           ariaLabel="上段と下段の境界"
+          toValue={percentFromRatio}
           onChange={onRowTopChange}
           onCommit={onRowTopCommit}
         />
@@ -169,6 +172,7 @@ export function PresentationalConversationLayout({
               orientation="vertical"
               containerRef={rowBottomRef}
               ariaLabel="キャラビューと入力欄の境界"
+              toValue={percentFromRatio}
               onChange={onBottomLeftChange}
               onCommit={onBottomLeftCommit}
             />

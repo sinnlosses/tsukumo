@@ -114,7 +114,8 @@
                 {
                   "tag": "div",
                   "attributes": {
-                    "data-outline": "shown"
+                    "data-outline": "shown",
+                    "data-outline-collapsed": "false"
                   },
                   "children": [
                     {
@@ -125,6 +126,20 @@
                       "children": [
                         "目次",
                         "3 / 3",
+                        {
+                          "tag": "button",
+                          "attributes": {
+                            "aria-disabled": "false",
+                            "aria-label": "目次を畳む",
+                            "aria-expanded": "true",
+                            "type": "button"
+                          },
+                          "children": [
+                            {
+                              "tag": "svg"
+                            }
+                          ]
+                        },
                         {
                           "tag": "button",
                           "attributes": {
@@ -175,6 +190,14 @@
                           ]
                         }
                       ]
+                    },
+                    {
+                      "tag": "div",
+                      "attributes": {
+                        "role": "separator",
+                        "aria-orientation": "vertical",
+                        "aria-label": "目次と本文の境界"
+                      }
                     },
                     {
                       "tag": "section",

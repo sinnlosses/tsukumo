@@ -1,4 +1,4 @@
-import { describe, it } from "vitest"
+import { describe, expect, it } from "vitest"
 
 import { useScenarioRun } from "./scenario-run.ts"
 
@@ -149,6 +149,74 @@ describe("report → メインビュー", () => {
     await room.page
       .locator('nav[aria-label="目次"] button:last-child[aria-current="location"]')
       .waitFor()
+    await room.settleAndMatch(ELAPSED_MS)
+  })
+
+  it("目次と本文の境界をドラッグすると目次の幅が変わる", async () => {
+    const room = await run.open({
+      scenario: "report-outline-resize",
+      scene: "long-report-quick",
+      viewport: "wide",
+      domRoots: ["main"],
+    })
+
+    await room.waitForEvent("turn-finished")
+    const resizer = room.page.getByRole("separator", { name: "目次と本文の境界" })
+    const box = await resizer.boundingBox()
+    if (box === null) {
+      throw new Error("仕切りの位置が取れない")
+    }
+    const rail = room.page.locator('nav[aria-label="目次"] >> xpath=..')
+    const widthBefore = await rail.evaluate((element) => element.getBoundingClientRect().width)
+
+    // 列は本文と同じ高さいっぱいに伸びる（本文が長いほど縦に長い）ので、仕切りの縦の中点ではなく
+    // 上端寄りの、カードの見えている範囲に収まる点を掴む。
+    const startX = box.x + box.width / 2
+    const startY = box.y + 20
+    await room.page.mouse.move(startX, startY)
+    await room.page.mouse.down()
+    await room.page.mouse.move(startX + 80, startY)
+    await room.page.mouse.up()
+
+    // `container-type` を持つ器の中の grid の列幅は、ドラッグの直後にそのまま測ると
+    // まだ古い幅のまま（次の描画で追いつく）。`waitForFunction` で追いつくのを待つ。
+    await room.page.waitForFunction(
+      (minWidth) => {
+        const nav = document.querySelector('nav[aria-label="目次"]')
+        const railElement = nav?.parentElement
+        return (
+          railElement !== null &&
+          railElement !== undefined &&
+          railElement.getBoundingClientRect().width > minWidth
+        )
+      },
+      widthBefore + 60,
+      { polling: 50 },
+    )
+    const widthAfter = await rail.evaluate((element) => element.getBoundingClientRect().width)
+    expect(widthAfter).toBeGreaterThan(widthBefore + 60)
+
+    await room.settleAndMatch(ELAPSED_MS)
+  })
+
+  it("目次を畳む／開くボタンで一覧の出し入れができる", async () => {
+    const room = await run.open({
+      scenario: "report-outline-collapsed",
+      scene: "long-report-quick",
+      viewport: "wide",
+      domRoots: ["main"],
+    })
+
+    await room.waitForEvent("turn-finished")
+    const content = room.page.locator('nav[aria-label="目次"] >> xpath=../../*[last()]')
+    const xBefore = await content.evaluate((element) => element.getBoundingClientRect().x)
+
+    await room.page.getByRole("button", { name: "目次を畳む" }).click()
+    await room.page.getByRole("button", { name: "目次を開く" }).waitFor()
+
+    const xAfter = await content.evaluate((element) => element.getBoundingClientRect().x)
+    expect(xAfter).toBeLessThan(xBefore)
+
     await room.settleAndMatch(ELAPSED_MS)
   })
 

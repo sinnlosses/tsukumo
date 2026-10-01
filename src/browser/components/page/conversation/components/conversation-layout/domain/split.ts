@@ -33,6 +33,11 @@ export function clampPercent(value: number): number {
   return Math.min(MAX_PERCENT, Math.max(MIN_PERCENT, value))
 }
 
+/** `LayoutResizer` の `toValue` にそのまま渡す。比率（0〜1）を可動域つきの % にする。 */
+export function percentFromRatio(ratio: number): number {
+  return clampPercent(ratio * 100)
+}
+
 function isValidPercent(value: unknown): value is number {
   return (
     typeof value === "number" &&

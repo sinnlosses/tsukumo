@@ -1,9 +1,11 @@
-import { cleanup, fireEvent, render } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import type { ReactElement } from "react"
-import { afterEach, describe, expect, it } from "vitest"
+import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import { useReportOutline } from "../../../../../../../../../../src/browser/components/page/conversation/components/main-view/components/report-outline/hooks/use-report-outline.ts"
 import notationStyles from "../../../../../../../../../../src/browser/components/page/conversation/components/main-view/markdown/report-notation.module.css"
+
+const OUTLINE_PANEL_STORAGE_KEY = "tsukumo-outline-panel:v1"
 
 // 最後の見出しの下が短く、転がりが縁の上端まで届かない場面を模す。
 
@@ -55,8 +57,13 @@ function row(index: number): HTMLElement {
   return node
 }
 
+beforeEach(() => {
+  localStorage.removeItem(OUTLINE_PANEL_STORAGE_KEY)
+})
+
 afterEach(() => {
   cleanup()
+  localStorage.removeItem(OUTLINE_PANEL_STORAGE_KEY)
 })
 
 describe("useReportOutline（押した見出しの固定）", () => {
@@ -109,5 +116,56 @@ describe("useReportOutline（押した見出しの固定）", () => {
 
     expect(row(2).getAttribute("aria-current")).toBeNull()
     expect(row(1).getAttribute("aria-current")).toBe("location")
+  })
+})
+
+function PanelProbe(): ReactElement {
+  const { collapsed, onToggleCollapse, widthStyle, onWidthCommit } = useReportOutline({
+    positionLabel: "1 / 3",
+  })
+  return (
+    <div>
+      <button data-testid="toggle" onClick={onToggleCollapse}>
+        {collapsed ? "開く" : "畳む"}
+      </button>
+      <button
+        data-testid="commit-width"
+        onClick={() => {
+          onWidthCommit(200)
+        }}
+      />
+      <span data-testid="width">{String(widthStyle["--outline-rail-width"] ?? "既定")}</span>
+    </div>
+  )
+}
+
+describe("useReportOutline（畳みと幅の保存）", () => {
+  it("最初は開いていて、幅はまだ決まっていない", () => {
+    render(<PanelProbe />)
+
+    expect(screen.getByTestId("toggle").textContent).toBe("畳む")
+    expect(screen.getByTestId("width").textContent).toBe("既定")
+  })
+
+  it("畳む/開くを押すたびに反転し、保存した値を次の読み込みで読み戻す", () => {
+    const { unmount } = render(<PanelProbe />)
+
+    fireEvent.click(screen.getByTestId("toggle"))
+    expect(screen.getByTestId("toggle").textContent).toBe("開く")
+    unmount()
+
+    render(<PanelProbe />)
+    expect(screen.getByTestId("toggle").textContent).toBe("開く")
+  })
+
+  it("幅を確定すると widthStyle に反映され、次の読み込みでも保たれる", () => {
+    const { unmount } = render(<PanelProbe />)
+
+    fireEvent.click(screen.getByTestId("commit-width"))
+    expect(screen.getByTestId("width").textContent).toBe("200px")
+    unmount()
+
+    render(<PanelProbe />)
+    expect(screen.getByTestId("width").textContent).toBe("200px")
   })
 })

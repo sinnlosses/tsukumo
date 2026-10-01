@@ -86,9 +86,31 @@
                   "tag": "div",
                   "attributes": {
                     "data-outline": "shown",
-                    "data-outline-collapsed": "false"
+                    "data-outline-collapsed": "true"
                   },
                   "children": [
+                    {
+                      "tag": "nav",
+                      "attributes": {
+                        "aria-label": "目次"
+                      },
+                      "children": [
+                        {
+                          "tag": "button",
+                          "attributes": {
+                            "aria-disabled": "false",
+                            "aria-label": "目次を開く",
+                            "aria-expanded": "false",
+                            "type": "button"
+                          },
+                          "children": [
+                            {
+                              "tag": "svg"
+                            }
+                          ]
+                        }
+                      ]
+                    },
                     {
                       "tag": "section",
                       "children": [

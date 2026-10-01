@@ -3,31 +3,35 @@
 import clsx from "clsx"
 import { useEffectEvent, type PointerEvent, type ReactElement, type RefObject } from "react"
 
-import { clampPercent } from "../../domain/split.ts"
 import styles from "./layout-resizer.module.css"
 
 export type LayoutResizerProps = {
   readonly orientation: "horizontal" | "vertical"
-  /** percent の基準にする要素（仕切りの両側を含む、動かす対象そのもの）。 */
+  /** 動かす対象そのもの（仕切りの両側を含む要素）。`toValue` の比率の基準にする。 */
   readonly containerRef: RefObject<HTMLElement | null>
   readonly ariaLabel: string
-  /** ドラッグ中、位置（%）が変わるたびに呼ばれる。 */
-  readonly onChange: (percent: number) => void
+  /** pointer の位置を `containerRef` の中の比率（0〜1）に換えたものから、呼び出し側の単位の値を作る。 */
+  readonly toValue: (ratio: number, rect: DOMRect) => number
+  /** ドラッグ中、値が変わるたびに呼ばれる。 */
+  readonly onChange: (value: number) => void
   /**
-   * ドラッグが終わったら、最後に渡した位置（%）で1回だけ呼ばれる（保存のタイミング）。
+   * ドラッグが終わったら、最後に渡した値で1回だけ呼ばれる（保存のタイミング）。
    * 一度も動かさずに離したときは呼ばない（仕切りを掴んだだけで位置が動いて見えるのを防ぐ）。
    */
-  readonly onCommit: (percent: number) => void
+  readonly onCommit: (value: number) => void
 }
 
 export function LayoutResizer(props: LayoutResizerProps): ReactElement {
   // `pointerdown` で登録するリスナはドラッグが終わるまで生き続けるので、素のクロージャだと `pointerdown` の時点の props を握ったままになる。
   // `useEffectEvent` で包むと、呼ぶのはいつも最新のハンドラになる。
-  const change = useEffectEvent((percent: number): void => {
-    props.onChange(percent)
+  const change = useEffectEvent((value: number): void => {
+    props.onChange(value)
   })
-  const commit = useEffectEvent((percent: number): void => {
-    props.onCommit(percent)
+  const commit = useEffectEvent((value: number): void => {
+    props.onCommit(value)
+  })
+  const toValue = useEffectEvent((ratio: number, rect: DOMRect): number => {
+    return props.toValue(ratio, rect)
   })
 
   function onPointerDown(event: PointerEvent<HTMLDivElement>): void {
@@ -40,21 +44,21 @@ export function LayoutResizer(props: LayoutResizerProps): ReactElement {
       return
     }
 
-    // ドラッグ中に最後に渡した位置。一度も動かさずに離したかどうかは、これが未定義かで分かる。
-    let lastPercent: number | undefined
+    // ドラッグ中に最後に渡した値。一度も動かさずに離したかどうかは、これが未定義かで分かる。
+    let lastValue: number | undefined
     const onMove = (moveEvent: globalThis.PointerEvent): void => {
-      const raw =
+      const ratio =
         props.orientation === "horizontal"
-          ? ((moveEvent.clientY - rect.top) / rect.height) * 100
-          : ((moveEvent.clientX - rect.left) / rect.width) * 100
-      lastPercent = clampPercent(raw)
-      change(lastPercent)
+          ? (moveEvent.clientY - rect.top) / rect.height
+          : (moveEvent.clientX - rect.left) / rect.width
+      lastValue = toValue(ratio, rect)
+      change(lastValue)
     }
     const onUp = (): void => {
       target.removeEventListener("pointermove", onMove)
       target.removeEventListener("pointerup", onUp)
-      if (lastPercent !== undefined) {
-        commit(lastPercent)
+      if (lastValue !== undefined) {
+        commit(lastValue)
       }
     }
     target.addEventListener("pointermove", onMove)

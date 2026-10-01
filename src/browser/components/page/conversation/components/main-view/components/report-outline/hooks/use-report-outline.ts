@@ -4,12 +4,20 @@
 // 見出しの出どころを Markdown の文字ではなく描いた DOM にするのは、押したときに転がす先と、いま読んでいる見出しを決める位置が、どちらも DOM の要素そのものだから。
 // 畳んだ `<details>` の中の見出しは転がしても見えないので拾わない。
 //
-// 一覧は常に開いている。キーボードでは ↑↓ で行を移って Enter で飛ぶ。
+// 列の幅と畳んだ状態は利用者が変えられ、`localStorage` に保つ。キーボードでは ↑↓ で行を移って Enter で飛ぶ。
 
-import { useEffect, useRef, useState, type KeyboardEvent, type RefObject } from "react"
+import {
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type KeyboardEvent,
+  type RefObject,
+} from "react"
 import { isDeepEqual } from "remeda"
 
 import notationStyles from "../../../markdown/report-notation.module.css"
+import { loadOutlinePanel, saveOutlinePanel, type OutlinePanel } from "../domain/outline-panel.ts"
 
 /** 見出し1つ。`section` は `##`、`sub` は `###`。 */
 export type ReportOutlineEntry = {
@@ -36,6 +44,11 @@ export type ReportOutlineModel = {
   readonly visible: boolean
   readonly rows: readonly ReportOutlineRow[]
   readonly positionLabel: string
+  /**
+   * 列と本文を横に並べる器。目次と本文の境界のドラッグが比率の基準にし、
+   * ドラッグ中はここへ直接 `--outline-rail-width` を書いて列の幅を変える。
+   */
+  readonly frameRef: RefObject<HTMLDivElement | null>
   /** 見出しを探す本文の器。 */
   readonly contentRef: RefObject<HTMLDivElement | null>
   /** 一覧の器。いま読んでいる見出しを決める基準の高さになる。 */
@@ -43,6 +56,13 @@ export type ReportOutlineModel = {
   readonly listRef: RefObject<HTMLDivElement | null>
   readonly onNavKeyDown: (event: KeyboardEvent<HTMLElement>) => void
   readonly onSelect: (index: number) => void
+  /** 畳んでいるか。畳んでいる間は一覧を隠し、開き直すボタンだけ残す。 */
+  readonly collapsed: boolean
+  readonly onToggleCollapse: () => void
+  /** ユーザーが決めた幅を `.outline-frame` の `style` に渡す。まだ決めていなければ空（CSS の既定に任せる）。 */
+  readonly widthStyle: CSSProperties
+  readonly onWidthChange: (px: number) => void
+  readonly onWidthCommit: (px: number) => void
 }
 
 /** 見出しの上端がこの距離まで一覧の上端に近づいたら、その見出しを読んでいることにする（px）。 */
@@ -53,7 +73,10 @@ const PIN_TOLERANCE_PX = 1
 
 const HEADING_SELECTOR = `.${notationStyles["detail-block"]} :is(h4, h5)`
 
+const OUTLINE_WIDTH_VARIABLE = "--outline-rail-width"
+
 export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel {
+  const frameRef = useRef<HTMLDivElement>(null)
   const contentRef = useRef<HTMLDivElement>(null)
   const navRef = useRef<HTMLElement>(null)
   const listRef = useRef<HTMLDivElement>(null)
@@ -62,6 +85,14 @@ export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel 
 
   const [entries, setEntries] = useState<readonly ReportOutlineEntry[]>([])
   const [activeIndex, setActiveIndex] = useState(0)
+  const [panel, setPanel] = useState<OutlinePanel>(loadOutlinePanel)
+
+  // 幅と畳みの唯一の更新点。離したとき・畳む/開くを押したときだけ通る。
+  function commitPanel(update: (current: OutlinePanel) => OutlinePanel): void {
+    const next = update(panel)
+    setPanel(next)
+    saveOutlinePanel(next)
+  }
 
   // 本文の DOM（React の外）を購読する。
   // 本文は書き上げる演出や畳みの開閉で React を通らずに変わるので、描き直しの合図では拾えない。
@@ -139,6 +170,7 @@ export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel 
     visible: entries.length >= 2,
     rows: outlineRows(entries, activeIndex),
     positionLabel: props.positionLabel,
+    frameRef,
     contentRef,
     navRef,
     listRef,
@@ -155,6 +187,18 @@ export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel 
         pinnedRef.current = { index, top: heading.getBoundingClientRect().top }
       }
       setActiveIndex(index)
+    },
+    collapsed: panel.collapsed,
+    onToggleCollapse: () => {
+      commitPanel((current) => ({ ...current, collapsed: !current.collapsed }))
+    },
+    widthStyle:
+      panel.widthPx === undefined ? {} : { [OUTLINE_WIDTH_VARIABLE]: `${String(panel.widthPx)}px` },
+    onWidthChange: (px) => {
+      frameRef.current?.style.setProperty(OUTLINE_WIDTH_VARIABLE, `${String(px)}px`)
+    },
+    onWidthCommit: (px) => {
+      commitPanel((current) => ({ ...current, widthPx: px }))
     },
   }
 }
