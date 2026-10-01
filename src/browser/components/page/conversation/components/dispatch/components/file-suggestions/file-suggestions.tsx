@@ -1,19 +1,13 @@
-// 入力欄の `@` ファイル補完の絞り込みの純粋関数と、一覧を描くだけの部品。
-// 候補の元（git 管理下のパス）は `useRepositoryFilePaths` が取る。
-//
-// 前方一致を先に、続けて部分一致を出す。各グループの中は辞書順で、合計最大 `MAX_FILE_SUGGESTIONS` 件。
-// 大文字小文字は区別せず、打った綴りのまま `README.md` のようなパスに当てられるようにしてある。
+// 入力欄の `@` ファイル補完の、合図の判定と一覧を描くだけの部品。
+// 候補の絞り込みは `matchingFilePaths`。
 //
 // キー操作（上下・Tab・Enter・Esc）と確定は呼び出し側が持つ。
 
 import clsx from "clsx"
 import type { ReactElement } from "react"
-import { identity, sortBy } from "remeda"
 
 import { Text } from "../../../../../../ui/text/text.tsx"
 import styles from "../../dispatch.module.css"
-
-export const MAX_FILE_SUGGESTIONS = 10
 
 /**
  * いま打っている `@<パス>`。`start` から `end` までを確定後の文字列で置き換える
@@ -49,20 +43,6 @@ export function filePathQuery(text: string, caret: number): FilePathQuery | unde
 
   const term = before.slice(start + 1)
   return /\s/.test(term) ? undefined : { start, end: caret, term }
-}
-
-/**
- * 打った文字列に前方一致→部分一致で絞り込んだパス。合計最大 {@link MAX_FILE_SUGGESTIONS} 件。
- * 大文字小文字は区別しない。
- */
-export function matchingFilePaths(paths: readonly string[], term: string): readonly string[] {
-  const needle = term.toLowerCase()
-  const sorted = sortBy(paths, identity())
-  const prefixMatches = sorted.filter((path) => path.toLowerCase().startsWith(needle))
-  const partialMatches = sorted.filter(
-    (path) => !path.toLowerCase().startsWith(needle) && path.toLowerCase().includes(needle),
-  )
-  return [...prefixMatches, ...partialMatches].slice(0, MAX_FILE_SUGGESTIONS)
 }
 
 export type FileSuggestionsProps = {

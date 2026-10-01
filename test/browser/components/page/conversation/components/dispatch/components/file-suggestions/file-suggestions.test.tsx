@@ -4,17 +4,8 @@ import { afterEach, describe, expect, it } from "vitest"
 import {
   FileSuggestions,
   filePathQuery,
-  matchingFilePaths,
-  MAX_FILE_SUGGESTIONS,
 } from "../../../../../../../../../src/browser/components/page/conversation/components/dispatch/components/file-suggestions/file-suggestions.tsx"
 import { typedElement } from "../../../../../../../../typed-element.ts"
-
-const PATHS = [
-  "src/browser/features/festival/composer.tsx",
-  "src/browser/features/festival/file-suggestions.tsx",
-  "src/cli.ts",
-  "README.md",
-] as const
 
 afterEach(() => {
   cleanup()
@@ -47,36 +38,6 @@ describe("filePathQuery", () => {
 
   it("キャレットより後ろの @ は見ない", () => {
     expect(filePathQuery("架空の依頼 @src", 5)).toBeUndefined()
-  })
-})
-
-describe("matchingFilePaths", () => {
-  it("パスの途中に含むだけでも候補になる（部分一致）", () => {
-    expect(matchingFilePaths(PATHS, "composer")).toEqual([
-      "src/browser/features/festival/composer.tsx",
-    ])
-  })
-
-  it("前方一致と部分一致が両方あるときは、前方一致が先に並ぶ", () => {
-    expect(matchingFilePaths(["cli.ts", "src/cli.ts"], "cli")).toEqual(["cli.ts", "src/cli.ts"])
-  })
-
-  it("大文字小文字は区別しない", () => {
-    expect(matchingFilePaths(PATHS, "readme")).toEqual(["README.md"])
-  })
-
-  it("打った文字列が空（@ だけ）のときは辞書順に出す", () => {
-    expect(matchingFilePaths(PATHS, "")[0]).toBe("README.md")
-  })
-
-  it(`候補は最大 ${String(MAX_FILE_SUGGESTIONS)} 件に絞る`, () => {
-    const many = Array.from({ length: 25 }, (_, index) => `src/file-${String(index)}.ts`)
-
-    expect(matchingFilePaths(many, "src/")).toHaveLength(MAX_FILE_SUGGESTIONS)
-  })
-
-  it("当たるパスが無ければ空", () => {
-    expect(matchingFilePaths(PATHS, "見つからない綴り")).toEqual([])
   })
 })
 

@@ -10,17 +10,14 @@ import { useState } from "react"
 
 import { commandSuggestions } from "../../../../../../../../../shared/session/command-suggestion.ts"
 import type { CommandDescription } from "../../../../../../../../../shared/session/session-event.ts"
-import { useRepositoryFilePaths } from "../../../../hooks/use-repository-file-paths.ts"
+import { matchingFilePaths } from "../../../../../domain/file-suggestion-index.ts"
+import { useRepositoryFileIndex } from "../../../../hooks/use-repository-file-paths.ts"
 import type { ComposerKey, Draft } from "../../../domain/composer-surface.ts"
 import {
   matchingCommands,
   shouldShowCommandSuggestions,
 } from "../../command-suggestions/command-suggestions.tsx"
-import {
-  type FilePathQuery,
-  filePathQuery,
-  matchingFilePaths,
-} from "../../file-suggestions/file-suggestions.tsx"
+import { type FilePathQuery, filePathQuery } from "../../file-suggestions/file-suggestions.tsx"
 
 /** 入力欄の下のボタンが打つ、補完の合図の文字。 */
 export type CompletionTrigger = "/" | "@"
@@ -71,7 +68,7 @@ export function useSuggestion(args: UseSuggestionArgs): SuggestionModel {
     dismissed || args.pendingActive || commandActive
       ? undefined
       : filePathQuery(args.draft.text, args.draft.caret)
-  const filePaths = useRepositoryFilePaths(fileQuery !== undefined)
+  const fileIndex = useRepositoryFileIndex(fileQuery !== undefined)
 
   const suggestions: ActiveSuggestions = commandActive
     ? {
@@ -83,7 +80,7 @@ export function useSuggestion(args: UseSuggestionArgs): SuggestionModel {
       }
     : fileQuery === undefined
       ? { kind: "none" }
-      : { kind: "file", matches: matchingFilePaths(filePaths, fileQuery.term), query: fileQuery }
+      : { kind: "file", matches: matchingFilePaths(fileIndex, fileQuery.term), query: fileQuery }
   const matchCount = suggestionCount(suggestions)
   const clampedSelectedIndex = matchCount === 0 ? 0 : Math.min(selectedIndex, matchCount - 1)
 

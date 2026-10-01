@@ -6,6 +6,7 @@
 import { useQuery } from "@tanstack/react-query"
 
 import { rpc } from "../../../../../domain/rpc.ts"
+import { type FileSuggestionIndex, indexFilePaths } from "../../domain/file-suggestion-index.ts"
 
 /**
  * 一覧を取り直す間隔。
@@ -29,6 +30,24 @@ export function useRepositoryFilePaths(enabled: boolean): readonly string[] {
       retry: false,
       staleTime: FILE_LIST_STALE_TIME_MS,
       gcTime: FILE_LIST_GC_TIME_MS,
+    }),
+  )
+
+  return data ?? []
+}
+
+/**
+ * {@link useRepositoryFilePaths} と同じ一覧を、`@` 補完の索引にして返す。
+ * 索引は一覧を取ったとき（`select`）に1回だけ作る。
+ */
+export function useRepositoryFileIndex(enabled: boolean): FileSuggestionIndex {
+  const { data } = useQuery(
+    rpc.repository.listFiles.queryOptions({
+      enabled,
+      retry: false,
+      staleTime: FILE_LIST_STALE_TIME_MS,
+      gcTime: FILE_LIST_GC_TIME_MS,
+      select: indexFilePaths,
     }),
   )
 
