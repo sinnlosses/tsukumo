@@ -55,6 +55,7 @@ describe("SPEECH_CADENCE_PROMPT", () => {
 
     expect(SPEECH_CADENCE_PROMPT).toContain("run_in_background")
     expect(SPEECH_CADENCE_PROMPT).toContain("状況 | n/N")
+    expect(SPEECH_CADENCE_PROMPT).toContain("work_plan")
     expect(append).toContain("run_in_background")
   })
 
