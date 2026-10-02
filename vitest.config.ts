@@ -18,5 +18,12 @@ export default defineConfig({
     maxWorkers: "30%",
     // E2E の段と並べて走らせるので、bd init と bundle の組み立てを済ませる beforeAll が10秒の既定に収まらないことがある。
     hookTimeout: 15_000,
+    // `pnpm run test:coverage` のときだけ効く。報告はリポジトリの外に書く。
+    coverage: {
+      provider: "v8",
+      include: ["src/**/*.{ts,tsx}"],
+      reporter: ["text-summary", "html", "json-summary"],
+      reportsDirectory: "/tmp/tsukumo-coverage",
+    },
   },
 })

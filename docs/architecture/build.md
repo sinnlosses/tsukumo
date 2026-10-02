@@ -92,6 +92,7 @@
 | dev     | `vitest` `vite`                                                                    | テストランナーとブラウザ側の組み立て・開発サーバ                                               |
 | dev     | `@vitejs/plugin-react` `oxc-transform-react`                                       | JSX の変換と React Compiler（`docs/coding-standards.md`「手でメモ化しない」）。2026-09-29 承認 |
 | dev     | `storybook` `@storybook/react-vite`                                                | 部品を props ごとに並べて見る（`pnpm run storybook`）                                          |
+| dev     | `@vitest/coverage-v8`                                                              | 単体テストのカバレッジ（`pnpm run test:coverage`。`check` には入れない）。2026-10-02 承認      |
 
 **Storybook は本体と同じ `vite.config.ts` を読む**（`.storybook/main.ts` の `viteConfigPath`。
 `build` の節だけは Storybook が捨てる）。CSS Modules の class 名は Vite が CSS の中身と行から焼く
