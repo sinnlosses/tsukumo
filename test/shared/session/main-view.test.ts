@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 
 import { reportSectionsOfBody } from "../../../src/shared/report/report-block.ts"
 import type { ReportCheck } from "../../../src/shared/report/report-check.ts"
+import { SECTIONS_START_MARKDOWN as SECTIONS_START } from "../../../src/shared/report/report-markdown.ts"
 import type { ReportTask } from "../../../src/shared/report/report-task.ts"
 import {
   MAX_MAIN_VIEW_TURNS,
@@ -575,7 +576,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     )
 
     expect(shownReports(turn)).toEqual([
-      '架空の結論。\n\n| 列 |\n| --- |\n| 値 |\n\n<div class="note note-favor">\n\n架空のお願い\n\n</div>',
+      `架空の結論。\n\n${SECTIONS_START}\n\n| 列 |\n| --- |\n| 値 |\n\n<div class="note note-favor">\n\n架空のお願い\n\n</div>`,
     ])
     expect(turn?.steps.map((step) => step.final)).toEqual([true])
     expect(firstLineOf(turn?.steps[0])).toBe("架空の結論。")
@@ -597,7 +598,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     )
 
     expect(shownReports(turn)).toEqual([
-      '架空の結論。\n\n架空の根拠。\n\n<div class="note note-favor">\n\n架空のお願い\n\n</div>',
+      `架空の結論。\n\n${SECTIONS_START}\n\n架空の根拠。\n\n<div class="note note-favor">\n\n架空のお願い\n\n</div>`,
     ])
   })
 
@@ -634,7 +635,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
         '<div class="checks-summary">検証 <span class="checks-summary-count">2</span> <span class="checks-summary-warn">？ 1 件を確かめていない</span></div>' +
         '<div class="check check-ok" role="row"><span class="check-mark">✓ OK</span><span class="check-label">架空の検査</span><span class="check-figure">12 / 3</span><span class="check-time"></span></div>' +
         '<div class="check check-unverified" role="row"><span class="check-mark">？ 未確認</span><span class="check-label">架空の目視</span><span class="check-figure"></span><span class="check-time"></span></div>' +
-        "</div>\n\n</div>\n\n" +
+        `</div>\n\n</div>\n\n${SECTIONS_START}\n\n` +
         '架空の根拠。\n\n<div class="note note-favor">\n\n架空のお願い\n\n</div>',
     ])
     expect(firstLineOf(turn?.steps[0])).toBe("架空の結論。")
@@ -716,7 +717,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
         '<li class="progress-step progress-step-current" aria-current="step" aria-label="架空の段B：進行中">' +
         '<span class="progress-dot" aria-hidden="true"><span class="progress-dot-mark"></span></span>' +
         '<span class="progress-name">架空の段B</span><span class="progress-status">進行中</span></li>' +
-        "</ol>\n\n</div>\n\n" +
+        `</ol>\n\n</div>\n\n${SECTIONS_START}\n\n` +
         "架空の根拠。",
     ])
   })
@@ -731,7 +732,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
 
     expect(turn?.steps.find((step) => step.final)?.body).toEqual({
       kind: "text",
-      report: '<div class="conclusion">\n\n架空の結論。\n\n</div>\n\n架空の根拠。',
+      report: `<div class="conclusion">\n\n架空の結論。\n\n</div>\n\n${SECTIONS_START}\n\n架空の根拠。`,
       firstLine: "架空の結論。",
       task,
       finishedPhase: { kind: "none" },
@@ -765,9 +766,17 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
         '<li class="progress-step progress-step-done" aria-label="架空の段A：済">' +
         '<span class="progress-dot" aria-hidden="true">✓</span>' +
         '<span class="progress-name">架空の段A</span></li>' +
-        "</ol>\n\n</div>\n\n" +
+        `</ol>\n\n</div>\n\n${SECTIONS_START}\n\n` +
         "架空の根拠。",
     ])
+  })
+
+  it("節の始まりの印は、結論か検証結果があり節もあるときだけ置く", () => {
+    const sectionsOnly = turnOf([ask, report("", "架空の根拠。"), finished], SETTLED, true)
+    const conclusionOnly = turnOf([ask, report("架空の結論だけ。"), finished], SETTLED, true)
+
+    expect(shownReports(sectionsOnly)).toEqual(["架空の根拠。"])
+    expect(shownReports(conclusionOnly)).toEqual(["架空の結論だけ。"])
   })
 
   it("checks・body・favor が空ならその塊を置かない（帯も出ない）", () => {

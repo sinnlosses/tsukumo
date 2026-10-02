@@ -7,6 +7,32 @@
 節は `## <出典のファイル> <節番号> <節の見出し>` の形で並べ、各節の先頭に**移した日付と
 出典の節**を1行で書く。探すときは出典の節名で `grep` する。
 
+## requirements.md 4.3 レポートの書き上げの演出（筆の対象・短いレポート・自動送りの上限。2026-10-02 に覆した記録）
+
+2026-10-02 に `docs/requirements.md` 4.3 と `docs/architecture/display.md` 4.2 から移す（UX を UX Design Awards の水準へ上げる挑戦の一環。利用者が「うまくいかなかったら戻す可能性はある」と言って任せた）。
+
+**覆した理由**: 演出が本文の全体（結論・検証結果・節）に掛かっていたため、次が起きていた。
+- 自動送りで書き終えた時点の位置が本文の末尾になり、冒頭の結論が画面の上へ流れて見えなくなる
+- 2行のレポートでも1塊 2.4 秒以上かかり、「注意」や「お願い」の枠が横から切り出されるように見える
+- 結論と検証結果が最初の節と1つのトピックに束ねられ、結論が筆で書かれて、節の白紙のあいだ読めない。目次には節が並び、ミニ立ち絵が列の上に残る（列が出るのが演出の測るあとで、本文が横へずれる）
+
+**戻し方**: 次の5か所を外す。
+- `src/shared/report/report-markdown.ts` の `SECTIONS_START_MARKDOWN` と、`src/shared/session/main-view.ts` の `reportMarkdown` がそれを挟む行
+- `src/browser/domain/reveal/plan.ts` の `writtenElementsOf`（対象を印より後ろに限る）と `isShortReport`・`SHORT_REPORT_WEIGHT`、`use-report-reveal.ts` の `isShortReport` の呼び出し
+- `src/browser/domain/reveal/brush-scroll.ts` の `headScrollTop`（自動送りの上限）
+- `src/browser/domain/reveal/paint.ts` の `data-reveal` の付け外しと、`use-report-outline.ts` の届いていない節を並べない絞り込み
+- `use-report-outline.ts` の2つの `useLayoutEffect` を `useEffect` に戻す（列を描く前に測る変更。戻すと列が演出の測るあとに出る）
+
+当時の記述（`docs/requirements.md` 4.3）:
+
+> - **書き上げる様子は演出で作る。** ……演出は**出そろった本文を「書き上げていくように見せる」**ものとし、ミニ立ち絵はその筆先に添う
+> - **塊の大きさ（中の文字数の合計）で按分し、1つあたり 2.4〜8秒**——文字1つあたり 40ms で、下限 2400ms・上限 8000ms に収める
+> - **書いているあいだは画面が筆先に付いていく**（2026-09-20 決定）。**追うのはミニ立ち絵の立つ位置**（……）。そこが器の上下の縁から 96px 以内に入ったら、その差だけ器を送る
+
+当時の記述（`docs/architecture/display.md` 4.2）:
+
+> 流れて見える感じは**書き上げる演出**（4.3）が受け持ち、演出は確定した本文の全体に掛かる。
+
 ## screen-design.md 13.4 中くらいの窓幅の操作子を帯へ戻す（2026-10-02 に覆した記録）
 
 2026-10-02 に `docs/architecture/screen-design.md` 13.4 と 13.9「会話の画面の帯とサイドバーの下端の帯」から移す

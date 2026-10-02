@@ -7,7 +7,7 @@
 // 列の幅と畳んだ状態は利用者が変えられ、`localStorage` に保つ。キーボードでは ↑↓ で行を移って Enter で飛ぶ。
 
 import {
-  useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   type CSSProperties,
@@ -16,6 +16,7 @@ import {
 } from "react"
 import { isDeepEqual } from "remeda"
 
+import { REVEAL_PENDING_ATTRIBUTE } from "../../../../../../../../domain/reveal/paint.ts"
 import notationStyles from "../../../markdown/report-notation.module.css"
 import {
   isOutlineCollapsed,
@@ -92,6 +93,7 @@ export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel 
   const pinnedRef = useRef<{ readonly index: number; readonly top: number } | undefined>(undefined)
 
   const [entries, setEntries] = useState<readonly ReportOutlineEntry[]>([])
+  const [headingTotal, setHeadingTotal] = useState(0)
   const [activeIndex, setActiveIndex] = useState(0)
   const [panel, setPanel] = useState<OutlinePanel>(loadOutlinePanel)
   const [narrow, setNarrow] = useState(false)
@@ -106,7 +108,8 @@ export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel 
 
   // 本文の DOM（React の外）を購読する。
   // 本文は書き上げる演出や畳みの開閉で React を通らずに変わるので、描き直しの合図では拾えない。
-  useEffect(() => {
+  // 最初の読み取りは描く前に済ませる（`useLayoutEffect`）。
+  useLayoutEffect(() => {
     const found = contentRef.current
     if (found === null) {
       return
@@ -135,9 +138,14 @@ export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel 
     }
 
     function readHeadings(): void {
-      const headings = [...content.querySelectorAll<HTMLElement>(HEADING_SELECTOR)].filter(
+      const unfolded = [...content.querySelectorAll<HTMLElement>(HEADING_SELECTOR)].filter(
         (heading) => heading.closest("details:not([open])") === null,
       )
+      // 筆がまだ届いていない節は並べないが、列を出すかの数には入れる。
+      const headings = unfolded.filter(
+        (heading) => heading.closest(`[${REVEAL_PENDING_ATTRIBUTE}="pending"]`) === null,
+      )
+      setHeadingTotal(unfolded.length)
       headingsRef.current = headings
       const next = headings.map((heading): ReportOutlineEntry => ({
         level: heading.tagName === "H4" ? "section" : "sub",
@@ -154,7 +162,7 @@ export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel 
       subtree: true,
       characterData: true,
       attributes: true,
-      attributeFilter: ["open"],
+      attributeFilter: ["open", REVEAL_PENDING_ATTRIBUTE],
     })
     // 転がる祖先は画面の幅で入れ替わる（`useActiveTurnScroll`）ので、どれが転がっても拾えるよう `document` で捕まえる。
     document.addEventListener("scroll", updateActive, {
@@ -170,15 +178,18 @@ export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel 
   }, [])
 
   // 札の幅（DOM の寸法）を購読する。
-  useEffect(() => {
+  // 最初の1回は描く前に測る（`useLayoutEffect`）。
+  useLayoutEffect(() => {
     const frame = frameRef.current
     if (frame === null) {
       return
     }
-    const observer = new ResizeObserver(() => {
+    const measure = (): void => {
       const rootFontPx = Number.parseFloat(getComputedStyle(document.documentElement).fontSize)
       setNarrow(frame.getBoundingClientRect().width < NARROW_CARD_REM * rootFontPx)
-    })
+    }
+    measure()
+    const observer = new ResizeObserver(measure)
     observer.observe(frame)
     return () => {
       observer.disconnect()
@@ -193,7 +204,7 @@ export function useReportOutline(props: ReportOutlineProps): ReportOutlineModel 
   }
 
   return {
-    visible: entries.length >= 2,
+    visible: headingTotal >= 2,
     rows: outlineRows(entries, activeIndex),
     positionLabel: props.positionLabel,
     frameRef,

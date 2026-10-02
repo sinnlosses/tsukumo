@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import type { ReactElement } from "react"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
@@ -167,5 +167,40 @@ describe("useReportOutline（畳みと幅の保存）", () => {
 
     render(<PanelProbe />)
     expect(screen.getByTestId("width").textContent).toBe("200px")
+  })
+})
+
+function PendingProbe(): ReactElement {
+  const { rows, visible, contentRef } = useReportOutline({ positionLabel: "1 / 1" })
+  return (
+    <div>
+      <span data-testid="visible">{String(visible)}</span>
+      <span data-testid="row-count">{rows.length}</span>
+      <div className={notationStyles["detail-block"]} ref={contentRef}>
+        <h4>見出し0</h4>
+        <div data-testid="later" data-reveal="pending">
+          <h4>見出し1</h4>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+describe("useReportOutline（筆が届いた節から並べる）", () => {
+  it("届いていない節は行に出さず、列は全体の数で出す", () => {
+    render(<PendingProbe />)
+
+    expect(screen.getByTestId("visible").textContent).toBe("true")
+    expect(screen.getByTestId("row-count").textContent).toBe("1")
+  })
+
+  it("届いた印が外れたら、その節の行が増える", async () => {
+    render(<PendingProbe />)
+
+    screen.getByTestId("later").removeAttribute("data-reveal")
+
+    await waitFor(() => {
+      expect(screen.getByTestId("row-count").textContent).toBe("2")
+    })
   })
 })

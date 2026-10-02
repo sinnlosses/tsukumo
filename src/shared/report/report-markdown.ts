@@ -10,6 +10,9 @@ import { reportImagePath } from "./report-image.ts"
 /** 節と節の境目に置く、見た目を持たない印。書き上げる演出（`planReveal`）がこれで節を1トピックに割る。 */
 const SECTION_BREAK_MARKDOWN = '<div class="report-section-break"></div>'
 
+/** 結論と検証結果のあと、最初の節の前に置く印。書き上げる演出は、この印より後ろだけを筆の対象にする。 */
+export const SECTIONS_START_MARKDOWN = '<div class="report-sections-start"></div>'
+
 /**
  * `image` の塊の画像をどこから読むか。
  * `shelved` は描いた `report` の呼び出しの id で棚を引く。`none` は棚に置いていない本文で、画像は「出せない」の札になる。

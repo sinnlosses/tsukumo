@@ -17,6 +17,8 @@
 // 代わりに、手で転がしたら筆先を追う自動送りだけを降ろす。
 // `scroll` そのものは聞かない（スクロールアンカリングや `scrollIntoView` でも飛んでくるので、利用者の操作そのものだけを合図にする）。
 //
+// 筆で書くのは節（`.report-sections-start` より後ろ）だけで、結論と検証結果は最初から出す。節が短いレポートは演出しない。
+//
 // `prefers-reduced-motion: reduce` では演出ごと無効（`theme.css` の規則は CSS のアニメーションにしか効かないので、ここでも見る）。
 
 import { useLayoutEffect, useRef, useState, type RefObject } from "react"
@@ -27,8 +29,8 @@ import { brushScroller } from "./brush-scroll.ts"
 import { BRUSH_ORIGIN_ATTRIBUTE, publishBrushTip, restBrushTip } from "./brush-tip.ts"
 import { watchLayoutChange } from "./layout-change.ts"
 import { endLineOf, layoutOf, type BlockLayout } from "./measure.ts"
-import { applyStep, hideBlock, showBlock } from "./paint.ts"
-import { blockProgress, planReveal, type RevealBlock } from "./plan.ts"
+import { applyStep, hideBlock, reachBlock, showBlock } from "./paint.ts"
+import { blockProgress, isShortReport, planReveal, type RevealBlock } from "./plan.ts"
 import { prefersReducedMotion } from "./reduced-motion.ts"
 
 /** 見せる範囲を進めているあいだだけ根に立てる印（目視確認と、外から終わりを知るための口）。 */
@@ -86,7 +88,7 @@ export function useReportReveal(reveal: boolean, turnId: number): RefObject<HTML
  * 戻り値を呼ぶとその場で全部出す（スキップと、部品が外れたときの後始末を兼ねる）。
  */
 function startReveal(root: HTMLElement, turnId: number, timing: RevealTiming): () => void {
-  const blocks = planReveal(root, timing)
+  const blocks = isShortReport(root) ? [] : planReveal(root, timing)
   if (blocks.length === 0) {
     return () => undefined
   }
@@ -163,6 +165,7 @@ function startReveal(root: HTMLElement, turnId: number, timing: RevealTiming): (
       return
     }
     if (measured === undefined || measured.index !== shown || stale) {
+      reachBlock(current)
       measured = { index: shown, layout: layoutOf(current, base) }
       scroller.remeasure()
       stale = false

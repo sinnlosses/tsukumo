@@ -16,8 +16,12 @@ import type { RevealBlock } from "./plan.ts"
 /** 何も見せていない状態の `clip-path`（高さ 0 に畳む。場所は取ったまま）。 */
 const HIDDEN_CLIP = "inset(0 0 100% 0)"
 
+/** まだ筆が届いていない塊に付ける印（目次が、届いた節だけを並べるために読む）。 */
+export const REVEAL_PENDING_ATTRIBUTE = "data-reveal"
+
 export function hideBlock(block: RevealBlock): void {
   for (const member of block.members) {
+    member.element.setAttribute(REVEAL_PENDING_ATTRIBUTE, "pending")
     if (member.kind === "figure") {
       member.element.style.opacity = "0"
     } else {
@@ -26,8 +30,16 @@ export function hideBlock(block: RevealBlock): void {
   }
 }
 
+/** 筆がこの塊に届いた。塊はまだ隠れたまま、届いた印だけ外す。 */
+export function reachBlock(block: RevealBlock): void {
+  for (const member of block.members) {
+    member.element.removeAttribute(REVEAL_PENDING_ATTRIBUTE)
+  }
+}
+
 export function showBlock(block: RevealBlock): void {
   for (const member of block.members) {
+    member.element.removeAttribute(REVEAL_PENDING_ATTRIBUTE)
     member.element.style.removeProperty(member.kind === "figure" ? "opacity" : "clip-path")
   }
 }

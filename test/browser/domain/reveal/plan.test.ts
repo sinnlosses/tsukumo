@@ -3,7 +3,9 @@ import { describe, expect, it } from "vitest"
 import { revealTimingOf, type RevealTiming } from "../../../../src/browser/domain/reveal-speed.ts"
 import {
   blockProgress,
+  isShortReport,
   planReveal,
+  SHORT_REPORT_WEIGHT,
   type RevealBlock,
 } from "../../../../src/browser/domain/reveal/plan.ts"
 
@@ -289,5 +291,40 @@ describe("blockProgress（留めている間は足踏みする）", () => {
     expect(blockProgress(block, 400)).toBeCloseTo(blockProgress(withoutPause, 400), 10)
     // 留めのあと（900ms経過）は、留めた塊のほうが書く時間の軸で見るとまだ500msぶんしか進んでいない。
     expect(blockProgress(block, 900)).toBeCloseTo(blockProgress(withoutPause, 500), 10)
+  })
+})
+
+const SECTIONS_START = '<div class="report-sections-start"></div>'
+
+describe("planReveal（結論と検証結果は筆の対象に入れない）", () => {
+  it("節の始まりの印より前の要素は塊に入らず、印も塊に入れない", () => {
+    const root = rootWith(`<p>結論</p>${SECTIONS_START}<h4>節</h4><p>本文</p>`)
+
+    expect(tagsOf(root)).toEqual([["H4", "P"]])
+  })
+
+  it("印が無い本文は、全体が対象", () => {
+    const root = rootWith("<p>前置き</p><p>続き</p>")
+
+    expect(tagsOf(root)).toEqual([["P", "P"]])
+  })
+})
+
+describe("isShortReport（短いレポートは演出しない）", () => {
+  it("筆の対象の文字数が線に満たなければ短い", () => {
+    expect(isShortReport(rootWith(`<p>${"あ".repeat(SHORT_REPORT_WEIGHT - 1)}</p>`))).toBe(true)
+    expect(isShortReport(rootWith(`<p>${"あ".repeat(SHORT_REPORT_WEIGHT)}</p>`))).toBe(false)
+  })
+
+  it("結論は数えない", () => {
+    const root = rootWith(`<p>${"あ".repeat(SHORT_REPORT_WEIGHT)}</p>${SECTIONS_START}<p>短い</p>`)
+
+    expect(isShortReport(root)).toBe(true)
+  })
+
+  it("節の境目の印は数えず、図は100字ぶんで数える", () => {
+    const root = rootWith(`<p>短い</p>${BREAK}<div class="mermaid"></div>`)
+
+    expect(isShortReport(root)).toBe(true)
   })
 })

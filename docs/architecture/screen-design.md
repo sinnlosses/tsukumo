@@ -2789,7 +2789,8 @@ Markdown の詳細**で、見本は `docs/history/mockup/task-board-2026-09-28/`
 - 送ったときは保留しない（入れ替えを起こしたのは利用者自身の操作）
 - **動き**: 新しい中身の入れ物に、不透明度 0 → 1 を 160ms で1回（`@keyframes`）。古い中身は消すだけで
   フェードアウトは付けない。`prefers-reduced-motion: reduce` では付けない。筆の演出（`docs/requirements.md`
-  4.3）はこの入れ物の中の本文に掛かるもので、フェードとは別に動く
+  4.3）はこの入れ物の中の節（`sections`）にだけ掛かるもので、フェードとは別に動く。結論と検証結果は
+  フェードと同時に出る
 - 入れ替えたら、新しい中身の先頭から読ませる（`useActiveTurnScroll` と同じく `scrollIntoView`）
 
 #### 作業の地図

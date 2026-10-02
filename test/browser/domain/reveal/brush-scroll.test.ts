@@ -23,18 +23,21 @@ function scrollerWith(bounds: { readonly top: number; readonly bottom: number })
  * 器の中身の先頭に置いた根。筆先の座標の原点もこれにする。
  * 器を送るとビューポート上の位置がそのぶん上がるのも名乗らせるので、筆先の座標は器の中身の座標と同じになる。
  */
-function rootIn(scroller: HTMLElement): HTMLElement {
+function rootIn(scroller: HTMLElement, contentTop = 0): HTMLElement {
   const root = document.createElement("div")
   root.getBoundingClientRect = () =>
-    new DOMRect(0, scroller.getBoundingClientRect().top - scroller.scrollTop, 0, 0)
+    new DOMRect(0, scroller.getBoundingClientRect().top - scroller.scrollTop + contentTop, 0, 0)
   scroller.append(root)
   return root
 }
 
-/** 根を原点にして器を決め、測っておく（演出が塊を書き始めるときと同じ）。 */
-function measuredScroller(scroller: HTMLElement): BrushScroller {
-  const root = rootIn(scroller)
-  const brush = brushScroller(root, root)
+/**
+ * 器を決め、測っておく（演出が塊を書き始めるときと同じ）。筆先の座標の原点は器の中身の先頭。
+ * `headTop` は本文の根（結論）の器の中身での上端で、既定は自動送りの上限に当たらないほど下。
+ */
+function measuredScroller(scroller: HTMLElement, headTop = 100_000): BrushScroller {
+  const base = rootIn(scroller)
+  const brush = brushScroller(rootIn(scroller, headTop), base)
   brush.remeasure()
   return brush
 }
@@ -72,6 +75,31 @@ describe("brushScroller（ミニ立ち絵の立つ位置を画面の中に保つ
     measuredScroller(scroller).follow({ tipBottom: 320, tipHeight: 20 })
 
     expect(scroller.scrollTop).toBe(100)
+  })
+
+  it("下へ送るのは、結論の上端が上の余白に入るところまで", () => {
+    const scroller = scrollerWith({ top: 0, bottom: 500 })
+    scroller.scrollTop = 100
+
+    // 根の上端は 150。余白 96px を引いた 54 より先へは送れない（すでに 100 より下には行かない）。
+    // 上限は現在位置より上にあるので動かさない。
+    measuredScroller(scroller, 150).follow({ tipBottom: 900, tipHeight: 20 })
+
+    expect(scroller.scrollTop).toBe(100)
+  })
+
+  it("上限に届かない範囲では、筆先を追って下へ送る", () => {
+    const scroller = scrollerWith({ top: 0, bottom: 500 })
+    scroller.scrollTop = 0
+
+    // 根の上端は 400（上限 304）。下の縁の内側は 404 で、tipBottom 500 なら 96 だけ送る。
+    const brush = measuredScroller(scroller, 400)
+    brush.follow({ tipBottom: 500, tipHeight: 20 })
+    expect(scroller.scrollTop).toBe(96)
+
+    // 筆先がもっと下へ進んでも、送るのは 304 まで。
+    brush.follow({ tipBottom: 900, tipHeight: 20 })
+    expect(scroller.scrollTop).toBe(304)
   })
 
   it("筆先が無い（出し切った）ときは動かさない", () => {

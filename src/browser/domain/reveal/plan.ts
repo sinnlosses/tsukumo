@@ -56,6 +56,15 @@ const FIGURE_WEIGHT = 100
 
 const FIGURE_SELECTOR = ".mermaid, .mermaid-broken, .chart-block, canvas, svg, img"
 
+/** 結論と検証結果の終わり、節の始まりの印（`SECTIONS_START_MARKDOWN` と同じ class 名）。 */
+const SECTIONS_START_SELECTOR = ".report-sections-start"
+
+/**
+ * 筆で書く対象の重み（文字数。図は {@link FIGURE_WEIGHT}）の合計がこれに満たないレポートは、演出せずに出す。
+ * 速さの設定には左右されない。
+ */
+export const SHORT_REPORT_WEIGHT = 200
+
 /** 節と節の境目の印（`SECTION_BREAK_MARKDOWN` と同じ class 名）。 */
 const SECTION_BREAK_SELECTOR = ".report-section-break"
 
@@ -72,6 +81,15 @@ const PAUSE_POINT_SELECTOR = ".report-pause-point"
  */
 const PAUSE_MS = 400
 
+/** 筆で書く対象が短く、演出せずに出すレポートか。 */
+export function isShortReport(root: Element): boolean {
+  const weight = sumBy(
+    writtenElementsOf(root).filter((element) => !isSectionBreak(element)),
+    (element) => memberWeight({ element, kind: blockKind(element) }),
+  )
+  return weight < SHORT_REPORT_WEIGHT
+}
+
 /**
  * 根の直下の要素をトピックへまとめ、書く順（文書の順）に時間を割り当てる。
  * 1つぶんの時間はそのトピックの大きさで決まる（レポート全体の長さに左右されない）。
@@ -79,7 +97,7 @@ const PAUSE_MS = 400
  * 塊の間に隙間は空けない（前の塊が終わった時刻が次の塊の始まり）。
  */
 export function planReveal(root: Element, timing: RevealTiming): readonly RevealBlock[] {
-  return toTopics([...root.children].filter(isRevealElement)).reduce<{
+  return toTopics(writtenElementsOf(root)).reduce<{
     blocks: readonly RevealBlock[]
     at: number
   }>(
@@ -114,6 +132,13 @@ export function blockProgress(block: RevealBlock, elapsedMs: number): number {
   const sinceStart = clamp(elapsedMs - block.startMs, 0, block.endMs - block.startMs)
   const linear = clamp(writeElapsedOf(block.pauses, sinceStart) / contentSpan, 0, 1)
   return linear < 0.5 ? 4 * linear ** 3 : 1 - (2 - 2 * linear) ** 3 / 2
+}
+
+/** 筆で書く要素。節の始まりの印があれば、その後ろだけ（結論と検証結果は最初から出す）。 */
+function writtenElementsOf(root: Element): readonly RevealElement[] {
+  const elements = [...root.children].filter(isRevealElement)
+  const start = elements.findIndex((element) => element.matches(SECTIONS_START_SELECTOR))
+  return start === -1 ? elements : elements.slice(start + 1)
 }
 
 /** 節の境目の印で切って、続く要素をひとまとめにする。印そのものはトピックに入れない。 */

@@ -19,12 +19,17 @@ const REVEAL_SPEED_STORAGE_KEY = "tsukumo-reveal-speed:v1"
 /** 演出を掛ける相手のやり取り（配る筆先に添う番号。`BrushTip`）。 */
 const TURN_ID = 4
 
-function Probe(props: { readonly reveal: boolean }): ReactElement {
+/** 筆で書く節の長さの目安を超える本文（`SHORT_REPORT_WEIGHT` は 200）。 */
+const LONG_TEXT = "架空の本文。".repeat(40)
+
+function Probe(props: { readonly reveal: boolean; readonly bodyText: string }): ReactElement {
   const rootRef = useReportReveal(props.reveal, TURN_ID)
 
   return (
     <div data-testid="root" ref={rootRef}>
-      <p>架空の本文</p>
+      <p className="conclusion">架空の結論</p>
+      <div className="report-sections-start" />
+      <p className="body">{props.bodyText}</p>
       <div className="chart-block">
         <canvas />
       </div>
@@ -32,8 +37,8 @@ function Probe(props: { readonly reveal: boolean }): ReactElement {
   )
 }
 
-function renderProbe(reveal: boolean): RenderResult {
-  return render(<Probe reveal={reveal} />)
+function renderProbe(reveal: boolean, bodyText = LONG_TEXT): RenderResult {
+  return render(<Probe reveal={reveal} bodyText={bodyText} />)
 }
 
 function root(): HTMLElement {
@@ -45,9 +50,17 @@ function root(): HTMLElement {
 }
 
 function paragraph(): HTMLElement {
-  const node = root().querySelector("p")
+  const node = root().querySelector("p.body")
   if (!(node instanceof HTMLElement)) {
     throw new Error("段落が見つからない")
+  }
+  return node
+}
+
+function conclusion(): HTMLElement {
+  const node = root().querySelector("p.conclusion")
+  if (!(node instanceof HTMLElement)) {
+    throw new Error("結論が見つからない")
   }
   return node
 }
@@ -153,6 +166,30 @@ describe("useReportReveal（見せる範囲を進める配線）", () => {
     expect(figure().style.opacity).toBe("0")
   })
 
+  it("結論は隠さない（筆で書くのは節だけ）", () => {
+    renderProbe(true)
+
+    expect(conclusion().style.clipPath).toBe("")
+    expect(conclusion().hasAttribute("data-reveal")).toBe(false)
+    expect(paragraph().getAttribute("data-reveal")).toBe("pending")
+  })
+
+  it("節が短いレポートは演出せず、何も隠さない", () => {
+    renderProbe(true, "架空の短い本文。")
+
+    expect(root().hasAttribute("data-revealing")).toBe(false)
+    expect(paragraph().style.clipPath).toBe("")
+  })
+
+  it("打ち切ると、届いていない印も全部外れる", () => {
+    renderProbe(true)
+
+    fireEvent.keyDown(window)
+
+    expect(paragraph().hasAttribute("data-reveal")).toBe(false)
+    expect(figure().hasAttribute("data-reveal")).toBe(false)
+  })
+
   it("キー入力で即座に全部出す", () => {
     renderProbe(true)
 
@@ -228,7 +265,7 @@ describe("useReportReveal（書き上げる演出の速さが「切る」のと�
 
     render(
       <div data-brush-origin="">
-        <Probe reveal={true} />
+        <Probe reveal={true} bodyText={LONG_TEXT} />
       </div>,
     )
 

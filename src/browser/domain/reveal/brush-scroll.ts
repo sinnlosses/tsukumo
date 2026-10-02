@@ -11,6 +11,9 @@
 // 筆先は基準の要素の座標で届くので、基準が器の中身のどこにあるかと器の見える高さを `remeasure` で測って覚え、毎フレーム読むのは `scrollTop` だけにする。
 // どちらも器を送っても変わらないので、測り直すのは box が変わる出来事のときだけでよい。
 //
+// 自動送りは、根（結論から始まる本文）の上端が器の上の余白に入るところまでしか送らない。
+// 筆先が器の下へ出たまま書き進むのは受け入れる。
+//
 // 利用者が手で転がしたら、そこで自動送りを降りる。
 // ホイールと指は演出を打ち切らないので、送り続けると読もうとした位置から引き戻してしまう。
 // 降りたらその演出のあいだは戻らない（読む位置を選んだのは利用者のほうなので、筆のほうが譲る）。
@@ -73,6 +76,8 @@ export function brushScroller(root: Element, base: Element): BrushScroller {
     const view = viewportOf(scroller)
     place = {
       baseTop: base.getBoundingClientRect().top - view.top + scroller.scrollTop,
+      headScrollTop:
+        root.getBoundingClientRect().top - view.top + scroller.scrollTop - KEEP_MARGIN_PX,
       viewHeight: view.bottom - view.top,
     }
   }
@@ -86,7 +91,7 @@ export function brushScroller(root: Element, base: Element): BrushScroller {
     const tipBottom = place.baseTop + tip.tipBottom
     const below = tipBottom - (visibleTop + place.viewHeight - KEEP_MARGIN_PX)
     if (below > 0) {
-      scroller.scrollTop += below
+      scroller.scrollTop = Math.min(visibleTop + below, Math.max(visibleTop, place.headScrollTop))
       return
     }
 
@@ -109,6 +114,8 @@ export function brushScroller(root: Element, base: Element): BrushScroller {
 /** 器の中身の座標での基準の上端と、器の見える高さ。 */
 type ScrollerPlace = {
   readonly baseTop: number
+  /** 自動送りで転がしてよい上限。根の上端（結論）から余白ぶん手前で、これを超えて送ると結論が画面の上へ出る。 */
+  readonly headScrollTop: number
   readonly viewHeight: number
 }
 

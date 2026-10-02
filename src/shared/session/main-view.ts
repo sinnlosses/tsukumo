@@ -4,7 +4,7 @@
 import { sum } from "remeda"
 
 import { reportChecksMarkdown } from "../report/report-check.ts"
-import { reportSectionsMarkdown } from "../report/report-markdown.ts"
+import { reportSectionsMarkdown, SECTIONS_START_MARKDOWN } from "../report/report-markdown.ts"
 import { NO_REPORT_TASK, type ReportTask } from "../report/report-task.ts"
 import { tidyReportSections } from "../report/report-tidy.ts"
 import type { RecordedPromptImage } from "../session-driver/prompt-image.ts"
@@ -322,7 +322,8 @@ function toMainViewEntries(record: SessionRecord, context: TurnContext): readonl
 }
 
 /**
- * `report` の引数を、`conclusion` →（段取り）→ `checks` → `sections` → `favor` の順に1つの本文へ組む。
+ * `report` の引数を、`conclusion` →（段取り）→ `checks` → 節の始まりの印 → `sections` → `favor` の順に1つの本文へ組む。
+ * 印は結論か検証結果があり、節も1つ以上あるときだけ置く。
  * 段取りは同じやり取りの中でその `report` より前に届いた最後のもの。
  * `checks` は検証結果の表（{@link reportChecksMarkdown}。所要時間は同じやり取りの中の `tool` の記録から引く）、`favor` はレポートの記法の「お願い」の塊で包むので、サニタイズも記法の解釈もテキストの本文と同じ経路を通る。
  * `favor` は HTML の中に Markdown を入れるので、塊の内側の前後に空行を空ける。
@@ -335,7 +336,7 @@ function reportMarkdown(
   report: Extract<SessionRecord, { readonly kind: "report" }>,
   context: TurnContext,
 ): string {
-  return [
+  const head = [
     report.task.kind === "task" && !isBlankText(report.conclusion)
       ? `<div class="conclusion">\n\n${report.conclusion}\n\n</div>`
       : report.conclusion,
@@ -343,10 +344,15 @@ function reportMarkdown(
       workPlanMarkdown(latestWorkPlanOf(context)),
       reportChecksMarkdown(report.checks, (command) => bashCommandDuration(context, command)),
     ),
-    reportSectionsMarkdown(tidyReportSections(report), {
-      kind: "shelved",
-      toolUseId: report.toolUseId,
-    }),
+  ].filter((part) => !isBlankText(part))
+  const sections = reportSectionsMarkdown(tidyReportSections(report), {
+    kind: "shelved",
+    toolUseId: report.toolUseId,
+  })
+  return [
+    ...head,
+    head.length > 0 && !isBlankText(sections) ? SECTIONS_START_MARKDOWN : "",
+    sections,
     isBlankText(report.favor) ? "" : `<div class="note note-favor">\n\n${report.favor}\n\n</div>`,
   ]
     .filter((part) => !isBlankText(part))
