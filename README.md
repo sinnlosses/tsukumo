@@ -11,7 +11,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/Node-26-339933?logo=node.js" alt="Node">
-  <img src="https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript" alt="TypeScript">
+  <img src="https://img.shields.io/badge/TypeScript-7.0-3178C6?logo=typescript" alt="TypeScript">
   <img src="https://img.shields.io/badge/Claude_Agent_SDK-0.3-D97757?logo=anthropic" alt="Claude Agent SDK">
   <img src="https://img.shields.io/badge/Lint-oxlint-cc9c00" alt="oxlint">
   <img src="https://img.shields.io/badge/Tested_with-Vitest-6E9F18?logo=vitest" alt="Vitest">
