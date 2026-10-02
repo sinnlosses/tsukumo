@@ -782,7 +782,9 @@ describe("Markdown（image の塊の画像）", () => {
         "/report-image/fictional-report/%E6%9E%B6%E7%A9%BA%2Fafter.png?t=fictional-token",
       )
       expect(image.alt).toBe("架空の画面")
-      expect(container.querySelector("span.report-image-caption")?.textContent).toBe("架空の画面")
+      expect(container.querySelector("span.report-image-caption")?.textContent).toBe(
+        "図 1架空の画面",
+      )
     })
   })
 
@@ -813,6 +815,9 @@ describe("Markdown（image の塊の画像）", () => {
     fireEvent.error(typedElement(container.querySelector("img"), HTMLImageElement, "画像"))
 
     expect(container.querySelector("img")).toBeNull()
-    expect(container.querySelector(MISSING_SELECTOR)?.getAttribute("aria-label")).toBe("架空")
+    const missing = container.querySelector(MISSING_SELECTOR)
+    expect(missing?.getAttribute("aria-label")).toBe("架空")
+    expect(missing?.textContent).toContain("画像を出せない")
+    expect(missing?.textContent).toContain("読めなかったか、tsukumo を起こし直して手放した")
   })
 })

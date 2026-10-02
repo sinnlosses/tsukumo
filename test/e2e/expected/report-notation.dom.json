@@ -338,28 +338,95 @@
                             },
                             "段階",
                             {
-                              "tag": "b",
+                              "tag": "ol",
+                              "attributes": {
+                                "aria-label": "流れ"
+                              },
                               "children": [
-                                "読む"
+                                {
+                                  "tag": "li",
+                                  "children": [
+                                    {
+                                      "tag": "span",
+                                      "attributes": {
+                                        "aria-hidden": "true"
+                                      },
+                                      "children": [
+                                        "1"
+                                      ]
+                                    },
+                                    {
+                                      "tag": "span",
+                                      "attributes": {
+                                        "aria-hidden": "true"
+                                      }
+                                    },
+                                    {
+                                      "tag": "b",
+                                      "children": [
+                                        "読む"
+                                      ]
+                                    },
+                                    "対象のファイル（架空）",
+                                    {
+                                      "tag": "code",
+                                      "children": [
+                                        "useLayoutEffectCleanupOnUnmountBeforeTabIndexRestoration"
+                                      ]
+                                    },
+                                    "を確かめる"
+                                  ]
+                                },
+                                {
+                                  "tag": "li",
+                                  "children": [
+                                    {
+                                      "tag": "span",
+                                      "attributes": {
+                                        "aria-hidden": "true"
+                                      },
+                                      "children": [
+                                        "2"
+                                      ]
+                                    },
+                                    {
+                                      "tag": "span",
+                                      "attributes": {
+                                        "aria-hidden": "true"
+                                      }
+                                    },
+                                    {
+                                      "tag": "b",
+                                      "children": [
+                                        "直す"
+                                      ]
+                                    },
+                                    "目盛りを直す（架空）"
+                                  ]
+                                },
+                                {
+                                  "tag": "li",
+                                  "children": [
+                                    {
+                                      "tag": "span",
+                                      "attributes": {
+                                        "aria-hidden": "true"
+                                      },
+                                      "children": [
+                                        "3"
+                                      ]
+                                    },
+                                    {
+                                      "tag": "b",
+                                      "children": [
+                                        "確かめる"
+                                      ]
+                                    },
+                                    "check を回す（架空）"
+                                  ]
+                                }
                               ]
                             },
-                            "対象のファイルを確かめる（架空）",
-                            "↓",
-                            {
-                              "tag": "b",
-                              "children": [
-                                "直す"
-                              ]
-                            },
-                            "目盛りを直す（架空）",
-                            "↓",
-                            {
-                              "tag": "b",
-                              "children": [
-                                "確かめる"
-                              ]
-                            },
-                            "check を回す（架空）",
                             {
                               "tag": "pre",
                               "attributes": {

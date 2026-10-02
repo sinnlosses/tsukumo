@@ -223,6 +223,25 @@ sed -n '/^### 13\.7 /,/^### /p' docs/architecture/screen-design.md
 **見本と揃えなかったもの**は書体（見本の丸ゴシック・IBM Plex Mono。`--font-sans` / `--font-mono` のまま）と、
 タスクID の要素（見本の `<a href="#">` ではなくモーダルを開く `<button>`）。
 
+**流れ（`flow`）の丸・線と、画像の塊の「図 n」の番号は専用の固定色を使う**（2026-10-02 デザイン
+「流れの塊 案A」。見本は `docs/history/mockup/report-flow-rail-2026-10-02.html`）。値は結論部の
+`report-outcome-shipped` と同じ16進だが、「完了・main へ」とは意味が別なので流用せず、読む順を示す印
+という意味を名に持つ `report-sequence-ink`（`#66d1be`）を別に立てる。暗い側は固定値を持たず
+`color-mix(in srgb, var(--report-sequence-ink), var(--ground) 65%)` で導く。
+
+| 塗るもの                                     | トークン              | 値        |
+| -------------------------------------------- | --------------------- | --------- |
+| 流れの丸の枠・番号の字 / 線の上端 / 図の番号 | `report-sequence-ink` | `#66d1be` |
+
+**寸法**（見本の実測値をそのまま使う。9段のタイプスケールに無い値も固定で書く）: 丸は直径 28px・枠 1.5px・
+番号は等幅 12px。最初の段だけ丸の中を `color-mix(in srgb, var(--surface-raised), var(--report-sequence-ink) 14%)`
+で淡く塗る。本文は 14.5px・行間 1.95、段の間は 28px、線は丸の下端から次の丸の上端まで。左の列は 28px・
+本文との間は 18px（狭い幅でもこの形のまま、本文だけが折り返す）。画像を出せない札は高さ 168px・角丸 14px。
+
+**`progress` の丸・線（`.report-progress`）とは別の部品**（上の「段の知らせ」）で、`progress` はパックの
+`--accent` を使うのに対し、`flow` は固定の `report-sequence-ink` を使う。色と太さが並んでも区別が付くかは
+目視で確かめる。
+
 **レポートの見出しと表に、キャラクターの色の線を1本ずつ通す。** 色が付くのは**罫線の側だけ**で、
 文字は `ink`・地は `surface` / `surface-raised` のまま（13.1 原則1 は変えない）:
 

@@ -146,28 +146,58 @@
 .detail-block .report-labeled-list code {
   font-size: 0.86em;
 }
-/* 一本道の流れ（`list` の `flow`）。札を上から下へ積み、下向きの矢印でつなぐ。 */
+/* 一本道の流れ（`list` の `flow`）。番号の丸を1本の線でつなぐ。
+   段の数に上限を置かないので、縦積みの高さを縛る値は書かない。 */
 .detail-block .report-flow {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.3rem;
+  list-style: none;
   margin: 0.5rem 0;
+  padding: 0;
 }
 .detail-block .report-flow-step {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 0.3rem;
-  padding: 0.2rem 0.6rem;
-  border: 1px solid var(--rule);
-  border-radius: 0.4rem;
-  background: var(--surface-raised);
-  font-size: var(--font-secondary);
+  position: relative;
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  column-gap: 18px;
+  padding-bottom: 28px;
+  font-size: 14.5px;
+  line-height: 1.95;
   color: var(--ink);
 }
-.detail-block .report-flow-arrow {
-  margin-left: 0.3rem;
-  color: var(--ink-quiet);
+.detail-block .report-flow-step:last-child {
+  padding-bottom: 0;
+}
+.detail-block .report-flow-number {
+  box-sizing: border-box;
+  width: 28px;
+  height: 28px;
+  border: 1.5px solid var(--report-sequence-ink);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--report-sequence-ink);
+}
+.detail-block .report-flow-step:first-child .report-flow-number {
+  background: color-mix(in srgb, var(--surface-raised), var(--report-sequence-ink) 14%);
+}
+/* 段の名前（`<b>`）と本文のあいだの区切り。名前の無い段には `<b>` 自体が無いので掛からない。 */
+.detail-block .report-flow-step > span > b {
+  margin-inline-end: 0.3rem;
+}
+.detail-block .report-flow-rail {
+  position: absolute;
+  left: 13px;
+  top: 32px;
+  bottom: -6px;
+  width: 2px;
+  border-radius: 1px;
+  background: linear-gradient(
+    var(--report-sequence-ink),
+    color-mix(in srgb, var(--report-sequence-ink), var(--ground) 65%)
+  );
 }
 /* 段の図（`report` の `progress` の塊と `work_plan` の段取りから tsukumo が組む）。
    節（丸）と線でつないだ1本の道。済んだ・いま・まだの見分けは丸の中身（✓／輪と点／空の輪）が持ち、
@@ -363,19 +393,64 @@
   border-radius: 0.375rem;
 }
 .detail-block .report-image-caption {
-  display: block;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
   margin-top: 0.25rem;
   font-size: var(--font-label);
   color: var(--ink-quiet);
 }
-/* 読めなかった画像の代わりの札（`ReportImage`）。 */
-.detail-block .report-image-missing {
-  display: block;
-  padding: 0.4rem 0.75rem;
-  border: 1px solid var(--rule);
-  border-radius: 0.375rem;
-  background: var(--surface-raised);
+.detail-block .report-image-caption-number {
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: var(--font-label);
+  letter-spacing: 0.08em;
+  color: var(--report-sequence-ink);
+}
+.detail-block .report-image-caption-text {
   color: var(--ink-quiet);
+}
+/* 読めなかった画像の代わりの札（`ReportImage`）。枠ごと斜めの縞にし、中央に印と理由の2行を置く。
+   丸・縞・印・2行の文字は飾りで、意味は外側の role="img" / aria-label が言う（`.report-image-missing-body`）。 */
+.detail-block .report-image-missing {
+  box-sizing: border-box;
+  display: block;
+  width: 100%;
+  height: 168px;
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+  background: repeating-linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--ground), var(--ink) 4%) 0 10px,
+    color-mix(in srgb, var(--ground), var(--ink) 8%) 10px 20px
+  );
+}
+.detail-block .report-image-missing-body {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+.detail-block .report-image-missing-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--ground);
+  border: 1px solid var(--rule);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink-quiet);
+}
+.detail-block .report-image-missing-label {
+  font-size: var(--font-secondary);
+  color: var(--ink-quiet);
+}
+.detail-block .report-image-missing-reason {
+  font-size: var(--font-label);
+  color: color-mix(in srgb, var(--ink-quiet), transparent 20%);
 }
 /* 触ったファイルの一覧（`report` の `files` の塊から tsukumo が組む）。
    1行に1ファイルで、種別・パス・注記を列に揃える（行を subgrid にする）。狭い画面では注記をパスの下へ回す（末尾の @media）。 */
@@ -931,6 +1006,8 @@
   font-family: var(--font-mono);
   padding: 0 0.25rem;
   border-radius: 0.25rem;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
 }
 /* 色を指す inline code（カラーコード・色のトークン名）。
    地はその色そのもの（`Code` が style で差す）で、字は地の明るさで ink と ground を持ち替える。

@@ -21,19 +21,49 @@ export type ReportImageSource =
   | { readonly kind: "shelved"; readonly toolUseId: string }
   | { readonly kind: "none" }
 
-/** 節の並びを1つの Markdown に組む。空の塊・空の節は置かず、節の間に {@link SECTION_BREAK_MARKDOWN} を挟む。 */
+type SectionsFold = {
+  readonly parts: readonly string[]
+  readonly imageCount: number
+}
+
+/**
+ * 節の並びを1つの Markdown に組む。空の塊・空の節は置かず、節の間に {@link SECTION_BREAK_MARKDOWN} を挟む。
+ * `image` の塊は、節をまたいで並びの順に数えた「図 n」の番号を1回だけ受け取る（{@link foldedBlockMarkdown}）。
+ */
 export function reportSectionsMarkdown(
   sections: readonly ReportSection[],
   imageSource: ReportImageSource,
 ): string {
-  const parts = sections
-    .map((section) =>
-      joinParts([
+  const { parts } = sections.reduce<SectionsFold>(
+    (acc, section) => {
+      const blocks = section.blocks.reduce<{
+        readonly markdowns: readonly string[]
+        readonly imageCount: number
+      }>(
+        (blockAcc, block) => {
+          const imageOrdinal =
+            block.kind === "image" ? blockAcc.imageCount + 1 : blockAcc.imageCount
+          return {
+            markdowns: [
+              ...blockAcc.markdowns,
+              foldedBlockMarkdown(block, imageSource, imageOrdinal),
+            ],
+            imageCount: imageOrdinal,
+          }
+        },
+        { markdowns: [], imageCount: acc.imageCount },
+      )
+      const part = joinParts([
         section.heading.trim() === "" ? "" : `## ${markdownInline(section.heading)}`,
-        ...section.blocks.map((block) => foldedBlockMarkdown(block, imageSource)),
-      ]),
-    )
-    .filter((part) => part.trim() !== "")
+        ...blocks.markdowns,
+      ])
+      return {
+        parts: part.trim() === "" ? acc.parts : [...acc.parts, part],
+        imageCount: blocks.imageCount,
+      }
+    },
+    { parts: [], imageCount: 0 },
+  )
   return parts.join(`\n\n${SECTION_BREAK_MARKDOWN}\n\n`)
 }
 
@@ -125,14 +155,22 @@ function joinParts(parts: readonly string[]): string {
   return parts.filter((part) => part.trim() !== "").join("\n\n")
 }
 
-function foldedBlockMarkdown(block: ReportBlock, imageSource: ReportImageSource): string {
-  const markdown = blockMarkdown(block, imageSource)
+function foldedBlockMarkdown(
+  block: ReportBlock,
+  imageSource: ReportImageSource,
+  imageOrdinal: number,
+): string {
+  const markdown = blockMarkdown(block, imageSource, imageOrdinal)
   return block.fold.trim() === "" || markdown.trim() === ""
     ? markdown
     : `<details><summary>${htmlInline(block.fold)}</summary>\n\n${markdown}\n\n</details>`
 }
 
-function blockMarkdown(block: ReportBlock, imageSource: ReportImageSource): string {
+function blockMarkdown(
+  block: ReportBlock,
+  imageSource: ReportImageSource,
+  imageOrdinal: number,
+): string {
   switch (block.kind) {
     case "text":
       return markdownInline(block.text)
@@ -163,7 +201,7 @@ function blockMarkdown(block: ReportBlock, imageSource: ReportImageSource): stri
     case "options":
       return optionsMarkdown(block)
     case "image":
-      return imageMarkdown(block, imageSource)
+      return imageMarkdown(block, imageSource, imageOrdinal)
     case "files":
       return filesMarkdown(block)
     case "markdown":
@@ -289,6 +327,7 @@ function dimensionMarkdown(block: Extract<ReportBlock, { readonly kind: "dimensi
 function imageMarkdown(
   block: Extract<ReportBlock, { readonly kind: "image" }>,
   imageSource: ReportImageSource,
+  ordinal: number,
 ): string {
   const caption = block.caption.trim()
   const src =
@@ -296,8 +335,10 @@ function imageMarkdown(
       ? ` src="${htmlAttribute(reportImagePath(imageSource.toolUseId, block.path))}"`
       : ""
   const alt = htmlAttribute(caption === "" ? "画面の画像" : caption)
-  const captionHtml =
-    caption === "" ? "" : `<span class="image-caption">${htmlInlineWithCode(caption)}</span>`
+  const numberHtml = `<span class="image-caption-number">図 ${String(ordinal)}</span>`
+  const textHtml =
+    caption === "" ? "" : `<span class="image-caption-text">${htmlInlineWithCode(caption)}</span>`
+  const captionHtml = `<span class="image-caption">${numberHtml}${textHtml}</span>`
   return `<div class="image"><img${src} alt="${alt}">${captionHtml}</div>`
 }
 
@@ -343,13 +384,16 @@ function listMarkdown(block: ListBlock): string {
   return labeled ? `<div class="labeled-list">\n\n${lines.join("\n")}\n\n</div>` : lines.join("\n")
 }
 
-/** 項目を札にして上から下へ積み、札の間に下向きの矢印の文字を置く。名前があれば札の頭に太字で添える。 */
+/** 項目を番号の丸と1本の線でつないだ `<ol>` にする。名前があれば段の頭に太字で添える。 */
 function flowMarkdown(block: ListBlock): string {
-  const steps = block.items.map(({ label, text }) => {
+  const lastIndex = block.items.length - 1
+  const steps = block.items.map(({ label, text }, index) => {
     const name = label.trim() === "" ? "" : `<b>${htmlInlineWithCode(label)}</b>`
-    return `<span class="flow-step">${name}${htmlInlineWithCode(text)}</span>`
+    const number = `<span class="flow-number" aria-hidden="true">${String(index + 1)}</span>`
+    const rail = index === lastIndex ? "" : '<span class="flow-rail" aria-hidden="true"></span>'
+    return `<li class="flow-step">${number}${rail}<span>${name}${htmlInlineWithCode(text)}</span></li>`
   })
-  return `<div class="flow">${steps.join('<span class="flow-arrow">↓</span>')}</div>`
+  return `<ol class="flow" aria-label="流れ">${steps.join("")}</ol>`
 }
 
 function listMarker(

@@ -276,7 +276,7 @@ describe("reportSectionsMarkdown", () => {
     )
   })
 
-  it("flow は項目を札にして札の間に下向きの矢印を置き、名前があれば札の頭に太字で添える", () => {
+  it("flow は番号の丸と線でつないだ ol/li で組み、名前があれば本文の頭に太字で添える", () => {
     const items = [
       { label: "", text: "架空の `入口`", done: false },
       { label: "架空の段", text: "架空の<中>", done: true },
@@ -284,9 +284,13 @@ describe("reportSectionsMarkdown", () => {
     ]
 
     expect(markdownOf({ kind: "list", style: "flow", items, fold: "" })).toBe(
-      '<div class="flow"><span class="flow-step">架空の <code>入口</code></span>' +
-        '<span class="flow-arrow">↓</span><span class="flow-step"><b>架空の段</b>架空の&lt;中&gt;</span>' +
-        '<span class="flow-arrow">↓</span><span class="flow-step">架空の出口</span></div>',
+      '<ol class="flow" aria-label="流れ">' +
+        '<li class="flow-step"><span class="flow-number" aria-hidden="true">1</span>' +
+        '<span class="flow-rail" aria-hidden="true"></span><span>架空の <code>入口</code></span></li>' +
+        '<li class="flow-step"><span class="flow-number" aria-hidden="true">2</span>' +
+        '<span class="flow-rail" aria-hidden="true"></span><span><b>架空の段</b>架空の&lt;中&gt;</span></li>' +
+        '<li class="flow-step"><span class="flow-number" aria-hidden="true">3</span>' +
+        "<span>架空の出口</span></li></ol>",
     )
   })
 
@@ -635,7 +639,7 @@ describe("reportSectionsMarkdown", () => {
     )
   })
 
-  it("image は棚を引く src の img と1行の説明を組み、説明の < は逃がす", () => {
+  it("image は棚を引く src の img と1行の説明を組み、説明の < は逃がす。頭に図の通し番号が付く", () => {
     const image: ReportBlock = {
       kind: "image",
       path: "架空/after.png",
@@ -647,14 +651,36 @@ describe("reportSectionsMarkdown", () => {
       reportSectionsMarkdown([section([image])], { kind: "shelved", toolUseId: "toolu_fictional" }),
     ).toBe(
       `<div class="image"><img src="${reportImagePath("toolu_fictional", "架空/after.png")}" alt="架空の&lt;画面&gt;">` +
-        '<span class="image-caption">架空の&lt;画面&gt;</span></div>',
+        '<span class="image-caption"><span class="image-caption-number">図 1</span>' +
+        '<span class="image-caption-text">架空の&lt;画面&gt;</span></span></div>',
     )
   })
 
-  it("image の説明が空なら alt は既定の語で説明の行を置かず、棚に置いていない本文では src を付けない", () => {
+  it("image の説明が空なら alt は既定の語で説明の文字は置かず、図の番号だけ付く。棚に置いていない本文では src を付けない", () => {
     expect(markdownOf({ kind: "image", path: "架空.png", caption: " ", fold: "" })).toBe(
-      '<div class="image"><img alt="画面の画像"></div>',
+      '<div class="image"><img alt="画面の画像">' +
+        '<span class="image-caption"><span class="image-caption-number">図 1</span></span></div>',
     )
+  })
+
+  it("image の塊が2つ並ぶと図の番号は1から通して数える", () => {
+    const first: ReportBlock = {
+      kind: "image",
+      path: "架空1.png",
+      caption: "架空の1枚目",
+      fold: "",
+    }
+    const second: ReportBlock = {
+      kind: "image",
+      path: "架空2.png",
+      caption: "架空の2枚目",
+      fold: "",
+    }
+
+    const markdown = reportSectionsMarkdown([section([first]), section([second])], NO_IMAGES)
+
+    expect(markdown).toContain('<span class="image-caption-number">図 1</span>')
+    expect(markdown).toContain('<span class="image-caption-number">図 2</span>')
   })
 
   it("fold のある塊は details に畳む", () => {

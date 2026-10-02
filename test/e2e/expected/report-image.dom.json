@@ -200,6 +200,7 @@
                                 "src": "/report-image/fake-report-image-1/report-image-fixture%2Fafter.png"
                               }
                             },
+                            "図 1",
                             "架空の札の見出しが 21px になった画面",
                             {
                               "tag": "span",
@@ -208,9 +209,22 @@
                                 "aria-label": "架空の置いていない画像"
                               },
                               "children": [
-                                "画像を出せない（読めなかったか、tsukumo を起こし直して手放した）"
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  },
+                                  "children": [
+                                    {
+                                      "tag": "svg"
+                                    },
+                                    "画像を出せない",
+                                    "読めなかったか、tsukumo を起こし直して手放した"
+                                  ]
+                                }
                               ]
                             },
+                            "図 2",
                             "架空の置いていない画像",
                             {
                               "tag": "h4",
@@ -228,7 +242,19 @@
                                     "aria-label": "外の画像"
                                   },
                                   "children": [
-                                    "画像を出せない（読めなかったか、tsukumo を起こし直して手放した）"
+                                    {
+                                      "tag": "span",
+                                      "attributes": {
+                                        "aria-hidden": "true"
+                                      },
+                                      "children": [
+                                        {
+                                          "tag": "svg"
+                                        },
+                                        "画像を出せない",
+                                        "読めなかったか、tsukumo を起こし直して手放した"
+                                      ]
+                                    }
                                   ]
                                 }
                               ]
@@ -240,7 +266,19 @@
                                 "aria-label": "外"
                               },
                               "children": [
-                                "画像を出せない（読めなかったか、tsukumo を起こし直して手放した）"
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  },
+                                  "children": [
+                                    {
+                                      "tag": "svg"
+                                    },
+                                    "画像を出せない",
+                                    "読めなかったか、tsukumo を起こし直して手放した"
+                                  ]
+                                }
                               ]
                             },
                             {
