@@ -163,9 +163,8 @@
             {
               "tag": "select",
               "attributes": {
-                "aria-label": "effort まだ effort を読み取れていない（ターンが終わると分かる）",
-                "disabled": true,
-                "value": ""
+                "aria-label": "effort Medium",
+                "value": "medium"
               }
             },
             {

@@ -70,6 +70,7 @@ describe("startFakeSession", () => {
     expect(sink.events).toEqual([
       { kind: "plan", plan: "Claude Max" },
       { kind: "model-effort-support", models: FAKE_MODEL_EFFORT_SUPPORT },
+      { kind: "effort-changed", effort: FAKE_DEFAULT_EFFORT },
       { kind: "speech", text: "架空の挨拶", expression: "default" },
     ])
   })
@@ -106,8 +107,8 @@ describe("startFakeSession", () => {
     await tick()
     driver.close()
 
-    // 先頭3件は起こした直後の分（プラン・effort の対応・opening の場面）。
-    expect(sink.events.slice(3)).toEqual([
+    // 先頭4件は起こした直後の分（プラン・effort の対応・既定の effort・opening の場面）。
+    expect(sink.events.slice(4)).toEqual([
       { kind: "request", text: "架空の依頼", images: [] },
       { kind: "utterance", text: "架空の本文" },
       { kind: "turn-finished", outcome: { kind: "completed" } },
@@ -131,9 +132,9 @@ describe("startFakeSession", () => {
     await tick()
     driver.close()
 
-    // 送った文面はどのイベントにも乗らない（docs/architecture/screen-design.md「雑談モードの画面」）。先頭3件は起こした直後の分
-    // （プラン・effort の対応・opening の場面）。
-    expect(sink.events.slice(3)).toEqual([
+    // 送った文面はどのイベントにも乗らない（docs/architecture/screen-design.md「雑談モードの画面」）。先頭4件は起こした直後の分
+    // （プラン・effort の対応・既定の effort・opening の場面）。
+    expect(sink.events.slice(4)).toEqual([
       { kind: "turn-started" },
       { kind: "utterance", text: "架空の本文" },
       { kind: "turn-finished", outcome: { kind: "completed" } },
@@ -141,7 +142,7 @@ describe("startFakeSession", () => {
     ])
   })
 
-  it("setEffort は確認の合図を流さず、次のターンが終わったときの effort-changed に新しい値で出る", async () => {
+  it("起こした直後に既定の effort を、setEffort のたびに受け付けた値を effort-changed で流す", async () => {
     const sink = collect()
     const driver = startFakeSession({
       session: FAKE_SESSION,
@@ -152,17 +153,11 @@ describe("startFakeSession", () => {
       onEvent: sink.onEvent,
     })
     await tick()
+    expect(sink.events).toContainEqual({ kind: "effort-changed", effort: FAKE_DEFAULT_EFFORT })
 
     await driver.setEffort("xhigh")
-    // setEffort 自体は何も流さない（押した値へ先に倒さない。13.9「動き方の操作子」）。
-    expect(sink.events.some((event) => event.kind === "effort-changed")).toBe(false)
-
-    driver.prompt("架空の依頼", [])
-    await tick()
-    driver.close()
-
-    // 「架空の場面1」の turn-finished のあとに、切り替えた値で届く。
     expect(sink.events.at(-1)).toEqual({ kind: "effort-changed", effort: "xhigh" })
+    driver.close()
   })
 
   it("opening と名指しの場面は、最初のビューが繋がるまで流さない（プランと effort の対応は先に流す）", async () => {
@@ -182,8 +177,8 @@ describe("startFakeSession", () => {
     await tick()
     driver.close()
 
-    expect(beforeViewer).toBe(2)
-    expect(sink.events.slice(2)).toEqual([
+    expect(beforeViewer).toBe(3)
+    expect(sink.events.slice(3)).toEqual([
       { kind: "speech", text: "架空の挨拶", expression: "default" },
       { kind: "utterance", text: "架空の本文2" },
     ])
@@ -202,8 +197,8 @@ describe("startFakeSession", () => {
     await tick()
     driver.close()
 
-    // 先頭3件は起こした直後の分（プラン・effort の対応・opening の場面）。
-    expect(sink.events.slice(3)).toEqual([{ kind: "utterance", text: "架空の本文2" }])
+    // 先頭4件は起こした直後の分（プラン・effort の対応・既定の effort・opening の場面）。
+    expect(sink.events.slice(4)).toEqual([{ kind: "utterance", text: "架空の本文2" }])
   })
 
   it("scene で名指しした次の依頼は、その次の場面から続く（名指しした場面を繰り返さない）", async () => {
@@ -240,6 +235,7 @@ describe("startFakeSession", () => {
     expect(sink.events).toEqual([
       { kind: "plan", plan: "Claude Max" },
       { kind: "model-effort-support", models: FAKE_MODEL_EFFORT_SUPPORT },
+      { kind: "effort-changed", effort: FAKE_DEFAULT_EFFORT },
       { kind: "speech", text: "架空の挨拶", expression: "default" },
     ])
   })
@@ -299,6 +295,7 @@ describe("startFakeSession", () => {
     expect(sink.events).toEqual([
       { kind: "plan", plan: "Claude Max" },
       { kind: "model-effort-support", models: FAKE_MODEL_EFFORT_SUPPORT },
+      { kind: "effort-changed", effort: FAKE_DEFAULT_EFFORT },
     ])
   })
 
@@ -351,8 +348,8 @@ describe("startFakeSession", () => {
     })
     driver.close()
 
-    // 先頭2件は起こした直後の分（プランと effort の対応。この疑似セッションは opening が空）。
-    expect(sink.events.slice(2)).toEqual([
+    // 先頭3件は起こした直後の分（プラン・effort の対応・既定の effort。この疑似セッションは opening が空）。
+    expect(sink.events.slice(3)).toEqual([
       finished("fake-r1", true),
       report("fake-r2"),
       finished("fake-r2", false),

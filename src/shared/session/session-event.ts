@@ -267,9 +267,8 @@ export type SessionEvent =
    */
   | { readonly kind: "model-effort-support"; readonly models: readonly ModelEffortSupport[] }
   /**
-   * いま効いている effort が分かった（`Stop` フック入力の `effort.level`）。
-   * 読める口はこれだけで、帯から送った値をそのまま出さない（実測は `docs/history/decision.md`「effort の途中変更と読み取りが成り立った実測」）。
-   * ターンが終わるたびに、そのとき効いていた値で届く（変わっていなくても届く）。
+   * いま効いている effort が分かった。
+   * 起こした直後（起こした値）・切り替えを受け付けたとき・ターンが終わるたび（`Stop` フック入力の `effort.level`）に届く。
    */
   | { readonly kind: "effort-changed"; readonly effort: EffortLevel }
   /**

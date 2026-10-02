@@ -2,7 +2,7 @@
 // 選択肢と表示名は帯と歯車の「新しいセッションの既定」が同じものを使う。
 //
 // effort だけ「まだ届いていない値」を見た目上の既定へ倒さない。
-// 読める口が `Stop` フック入力だけで、起こした直後はまだ1件も読めていないため、「対応するモデルだが、まだ読めていない」を独立した状態として持つ（`EffortSelect` の `unknown`）。
+// 値が届くまでを「対応するモデルだが、まだ分からない」という独立した状態として持つ（`EffortSelect` の `unknown`）。
 
 import type { EffortLevel, ModelAlias } from "../../shared/command.ts"
 import type { ModelEffortSupport } from "../../shared/session/session-event.ts"
@@ -25,7 +25,7 @@ export function effortLabel(value: EffortLevel): string {
 const EFFORT_UNSUPPORTED_REASON = "このモデルは effort に対応していない"
 
 /** モデルは対応するが、まだ読めていないときの `title`。 */
-const EFFORT_UNKNOWN_REASON = "まだ effort を読み取れていない（ターンが終わると分かる）"
+const EFFORT_UNKNOWN_REASON = "まだ effort が分からない"
 
 /** effort が選べないとき（`EffortSelect` の `unsupported` / `unknown`）に `<select>` へ置く唯一の選択肢の値。 */
 export const EFFORT_PLACEHOLDER_VALUE = ""
@@ -34,7 +34,7 @@ export const EFFORT_PLACEHOLDER_VALUE = ""
  * effort のドロップダウンが受け取れる形（{@link resolveEffortSelect}）。
  *
  * - `unsupported`: 対応表にいまのモデルの行があり、対応しないと分かっている（`haiku` など）。選べない
- * - `unknown`: 対応表がまだ届いていない・対応表に行が無い・モデルは対応するがまだ1件も読めていない（起こした直後、または直前の `session.setEffort` から次のターンが終わるまで）。選べない
+ * - `unknown`: 対応表がまだ届いていない・対応表に行が無い・モデルは対応するがまだ値が届いていない、またはモデルを切り替えて前の値が選べる段に無い。選べない
  * - `known`: 読み取った値がある。選べる段は `options`（いまのモデルが選べる段だけ）
  */
 export type EffortSelect =

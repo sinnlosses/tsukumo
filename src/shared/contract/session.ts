@@ -54,9 +54,7 @@ export const sessionContract = {
   answer: commandBase.input(z.object({ id: z.string().min(1), answer: answerSchema })),
   setModel: commandBase.input(z.object({ model: z.enum(MODEL_ALIASES) })),
   /**
-   * effort を切り替える。セッション限りで、サーバは `applyFlagSettings({ effortLevel })` で SDK へ渡すだけ。
-   * 帯に表示する値はこのコマンドで送った値ではなく、hook 入力から読み取った値（`effort-changed`）。
-   * 押した値へ先に倒さない（理由は `docs/architecture/screen-design.md`「動き方の操作子」）。
+   * effort を切り替える。セッション限りで、サーバは `applyFlagSettings({ effortLevel })` で SDK へ渡し、受け付けられたら `effort-changed` を流す。
    */
   setEffort: commandBase.input(z.object({ effort: z.enum(EFFORT_LEVELS) })),
   setPermissionMode: commandBase.input(z.object({ mode: z.enum(PERMISSION_MODES) })),

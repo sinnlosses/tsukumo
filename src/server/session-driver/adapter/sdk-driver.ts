@@ -103,6 +103,8 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
   void relayCommandDescriptions(session, options)
   void relayPlan(session, options)
   void relaySupportedModels(session, options)
+  // 起こした effort は `query()` に渡した値なので、最初のターンが終わるのを待たずに出す。
+  options.onEvent({ kind: "effort-changed", effort: options.effort })
 
   return {
     prompt: (text, images) => {
@@ -133,9 +135,12 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
         options.onEvent({ kind: "model-changed", model })
       }
     },
-    // 確認の合図をここで流さない。
-    // 帯に表示する値は次のターンの `Stop` フック入力から読み取ったものだけで、送った値を先回りで流すと「押した値へ先に倒さない」に反する（`docs/architecture/screen-design.md`「動き方の操作子」）。
-    setEffort: (effort) => session.applyFlagSettings({ effortLevel: effort }),
+    // SDK が受け付けたら、その値を確認の合図として流す（`setModel` と同じ）。
+    // 次のターンの `Stop` フック入力から読んだ値が届けば、そちらで上書きされる。
+    setEffort: async (effort) => {
+      await session.applyFlagSettings({ effortLevel: effort })
+      options.onEvent({ kind: "effort-changed", effort })
+    },
     setPermissionMode: (mode) => session.setPermissionMode(mode),
     close: () => {
       input.end()

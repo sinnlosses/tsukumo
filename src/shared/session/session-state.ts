@@ -268,10 +268,9 @@ export type SessionState = {
    */
   readonly modelEffortSupport: readonly ModelEffortSupport[]
   /**
-   * いま効いている effort。送った値ではなく、`Stop` フック入力から読み取った値（`effort-changed`）。
+   * いま効いている effort（最後に届いた `effort-changed`）。
    *
-   * まだ一度もターンが終わっていない・読めていなければ undefined（見た目上の既定へは畳まない）。
-   * ターンの境目で戻さない（次に読めるまで前の値を保つのが、効き目と表示が食い違わないための挙動）。
+   * まだ届いていなければ undefined（見た目上の既定へは畳まない）。
    */
   readonly effort: EffortLevel | undefined
   /**

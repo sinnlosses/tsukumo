@@ -229,8 +229,7 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
   // いま動いているモデルと許可モード。起こした既定から始まり、`setModel` / `setPermissionMode` で変わる（本物は SDK が持つ値で、ここはその代わり）。
   let model: string = options.sessionDefault.model
   let permissionMode: string = options.sessionDefault.permissionMode
-  // いま効いている effort。`setEffort` で変わるが、画面に届くのはターンが終わったとき。
-  // 本物の `Stop` フック入力と同じ遅れを、疑似セッションでも再現する。
+  // いま効いている effort。起こした直後・`setEffort` のたび・ターンが終わるたびに画面へ流す。
   let effort: EffortLevel = FAKE_DEFAULT_EFFORT
   // `report` の差し戻しの預かり（本物の駆動と同じ `ReportReview`）。
   // handler が無いので判定はしない。疑似セッションが書いた `tool-finished` の `isError` に従って、描くか捨てるかだけが決まる。
@@ -300,6 +299,8 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
   emit({ kind: "plan", plan: FAKE_PLAN })
   // 同じく `supportedModels()` の代わり（`relaySupportedModels`）。
   emit({ kind: "model-effort-support", models: FAKE_MODEL_EFFORT_SUPPORT })
+  // 本物の駆動と同じく、起こした effort を最初のターンを待たずに流す。
+  options.onEvent({ kind: "effort-changed", effort })
 
   void options.firstViewer.then(() => {
     if (closed) {
@@ -354,10 +355,10 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
       emit({ kind: "session-info", ...sessionInfo() })
       return Promise.resolve()
     },
-    // 確認の合図をここで流さない（本物の `setEffort` と揃える）。
-    // 画面に届くのは、次にターンが終わって `emit` が `effort-changed` を流したとき。
+    // 本物の `setEffort` と同じく、受け付けた値をすぐ流す。
     setEffort: (next) => {
       effort = next
+      options.onEvent({ kind: "effort-changed", effort })
       return Promise.resolve()
     },
     setPermissionMode: (mode) => {
