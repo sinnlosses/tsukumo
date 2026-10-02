@@ -613,17 +613,16 @@
   border-radius: 4px;
 }
 /* 情報の塊（素の `note`。結論を言う役）。
-   いちばん読ませたい印なので、縦罫を ink まで上げ、地を「浮く」段にする（引用と同じ灰色の3px の縦罫で地の差も無いと、いちばん弱く見える）。
    6種（情報・注意・異常・疑問・メモ・お願い）に共通の余白と縦罫もここが持つ。
-   引用（blockquote）は目立たせないための印なので弱いまま。 */
+   情報・注意・異常・疑問・メモの5種は、意味を固定した色で縦罫を引き、地をその色で1割だけ染める。
+   1割なので地との比は 1.2 前後、上に乗る ink は 10:1 以上を保つ。
+   引用（blockquote）は目立たせないための印なので、灰の縦罫だけで地を染めない。 */
 .detail-block .report-note {
   margin: 0.5rem 0;
   padding: 0.5rem 0.75rem;
-  border-left: 3px solid var(--ink);
-  background: var(--surface-raised);
+  border-left: 3px solid var(--state-info);
+  background: color-mix(in srgb, var(--surface), var(--state-info) 10%);
 }
-/* 注意・異常の塊は、意味を固定した色で地を1割だけ染める（縦罫は実色）。
-   1割なので地との比は 1.2 前後、上に乗る ink は 10:1 以上を保つ。 */
 .detail-block .report-note-warn {
   border-left-color: var(--state-warn);
   background: color-mix(in srgb, var(--surface), var(--state-warn) 10%);
@@ -632,17 +631,13 @@
   border-left-color: var(--state-ng);
   background: color-mix(in srgb, var(--surface), var(--state-ng) 10%);
 }
-/* 疑問（まだ確かめていないこと・決めきれていないこと）。
-   色を1つ足した（--state-ask）。6種すべてに文字のラベルが出るので、色だけで種別を伝えることにはならない。
-   青は state-ok / state-warn / state-ng と accent のどれとも色相が離れていて、注意（黄）・異常（赤）と並べても取り違えない。
-   染め方は注意・異常と同じ（縦罫は実色・地は1割）。 */
+/* 疑問（まだ確かめていないこと・決めきれていないこと）。 */
 .detail-block .report-note-ask {
   border-left-color: var(--state-ask);
   background: color-mix(in srgb, var(--surface), var(--state-ask) 10%);
 }
 /* メモ（本筋から外れる覚え書き）。
-   染め方は注意・異常・疑問と同じ（縦罫は実色・地は1割）。
-   地の染めが無いと引用（blockquote）や素の note と灰どうしで見分けにくい。 */
+   色は ink なので、地を染めないと引用（blockquote）と灰どうしで見分けにくい。 */
 .detail-block .report-note-memo {
   border-left-color: var(--state-memo);
   background: color-mix(in srgb, var(--surface), var(--state-memo) 10%);

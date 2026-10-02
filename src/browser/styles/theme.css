@@ -31,13 +31,13 @@
   --surface-raised: color-mix(in srgb, var(--ink) 10%, transparent);
 
   /* 意味を固定した色。誰が来ても変わらない。文字のラベルと対で使うものだけがここに入る（色だけで意味を伝えない）。
-     state-ask はレポートの「疑問」の印で、明るさは他の3つに揃えてある（surface の上で 8.2:1）。 */
+     state-info・state-ask・state-memo はレポートの「情報」「疑問」「メモ」の印で、ラベルが必ず添う。 */
   --state-ok: #7ee081;
   --state-warn: #e3c766;
   --state-ng: #e88b8b;
-  --state-ask: #8ab4e8;
-  /* レポートの「メモ」の印。ラベルが必ず添う。紫は ok / warn / ng / ask と accent のどれとも色相が離れている。 */
-  --state-memo: #bca0ec;
+  --state-info: #8ab4e8;
+  --state-ask: #bca0ec;
+  --state-memo: var(--ink);
 
   /* コンテキストの内訳の分類の色。誰が来ても変わらない固定の色で、横棒の区間と凡例の四角が同じ1つを読む。
      凡例に分類名が必ず並ぶので、色だけで意味を伝えることにはならない。知らない分類は `context-other` に落ちる。
