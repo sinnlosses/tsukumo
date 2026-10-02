@@ -69,10 +69,8 @@
   margin-bottom: 0;
 }
 /* 中間レポート（`report` ツールの最後でない呼び出し）。
-   新しい色は作らない（theme.css のトークンだけ）。
-   本文は読む面なので `ink` のまま置き、地を ground に落とす・枠を破線にする・小さなラベルを載せるの3つで本体のレポートと見分ける（色だけに頼らない）。 */
+   地は最終レポートと同じ surface のまま（`.main-step` の既定）で、枠を破線にする・小さなラベルを載せるの2つで本体のレポートと見分ける（色だけに頼らない）。 */
 .main-step.is-interim {
-  background: var(--ground);
   border-style: dashed;
 }
 /* 最終レポート（そのやり取りの最後の、中間でない本文。`MainViewStep.final`）。
