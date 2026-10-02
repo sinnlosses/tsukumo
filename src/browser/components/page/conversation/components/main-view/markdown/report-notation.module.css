@@ -887,37 +887,86 @@
   font-weight: 500;
   color: var(--ink-soft);
 }
-/* GFM の表の tr は class を持てないので、行の印はセルの中の状態から :has で拾う。 */
-.detail-block tr:has(.report-cell-status-ng) td:first-child {
-  box-shadow: inset 2px 0 0 var(--state-ng);
+/* 状態のセルを持つ表はタイル組みにする（GFM の表は tr/table に class を持てないので :has で拾う）。 */
+.detail-block table:has(.report-cell-status) {
+  border-collapse: separate;
+  border-spacing: 4px;
+  margin: 0.5rem -4px;
 }
-.detail-block tr:has(.report-cell-status-warn) td:first-child {
-  box-shadow: inset 2px 0 0 var(--state-warn);
+.detail-block table:has(.report-cell-status) th,
+.detail-block table:has(.report-cell-status) td {
+  border-bottom: none;
+  padding: 0.5rem 0.75rem;
 }
-/* 表の状態のセル。記号と文を1行に並べる。状態語は記号の aria-label が読み上げる。 */
+.detail-block table:has(.report-cell-status) th {
+  padding-top: 0;
+}
+.detail-block table:has(.report-cell-status) :is(th, td):first-child {
+  padding-left: 0;
+}
+.detail-block table:has(.report-cell-status) td:has(.report-cell-status) {
+  padding: 0;
+}
+/* 状態の列にある、状態を持たないセル。地を塗らず読ませる補助の字にし、文の頭をタイルの文の頭（記号とすき間のぶん右）に揃える。 */
+.detail-block .report-cell-status-none {
+  display: block;
+  padding-left: 1.25rem;
+  color: var(--ink-soft);
+}
+/* 表の状態のセル。記号と文を1行に並べ、角丸のタイルの地で状態を示す。状態語は記号の aria-label が読み上げる。 */
 .detail-block .report-cell-status {
   display: flex;
   flex-direction: row;
   align-items: baseline;
   gap: 0.35em;
+  height: 100%;
+  box-sizing: border-box;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  background: var(--cell-status-bg, transparent);
 }
 .detail-block .report-cell-status-mark {
   font-family: var(--font-mono);
-  font-size: var(--font-label);
-  font-weight: 600;
+  font-size: 0.75rem;
+  font-weight: 700;
   letter-spacing: 0.04em;
 }
-.detail-block .report-cell-status-ok .report-cell-status-mark {
+/* 地は NG・要注意が13%、OK が6%。 */
+.detail-block .report-cell-status-ok {
   color: var(--state-ok);
+  --cell-status-bg: color-mix(in srgb, var(--state-ok) 6%, transparent);
 }
-.detail-block .report-cell-status-warn .report-cell-status-mark {
+.detail-block .report-cell-status-warn {
   color: var(--state-warn);
+  --cell-status-bg: color-mix(in srgb, var(--state-warn) 13%, transparent);
 }
-.detail-block .report-cell-status-ng .report-cell-status-mark {
+.detail-block .report-cell-status-ng {
   color: var(--state-ng);
+  --cell-status-bg: color-mix(in srgb, var(--state-ng) 13%, transparent);
 }
 .detail-block .report-cell-status-text {
   color: var(--ink);
+}
+/* 表の下の凡例。表の左端に揃えて、すぐ下に置く。 */
+.detail-block .report-table-status-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+  margin-top: 0.25rem;
+  font-size: var(--font-label);
+  color: var(--ink-quiet);
+}
+.detail-block .report-table-status-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+.detail-block .report-table-status-legend-swatch {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 3px;
+  background: var(--cell-status-bg, transparent);
+  border: 1px solid color-mix(in srgb, currentcolor 35%, transparent);
 }
 /* 対応表（`report` の `matrix` の塊から tsukumo が組む）。交点は印だけで、状態は記号と色の両方で言う。 */
 .detail-block .report-matrix {

@@ -39,7 +39,7 @@ const listBlockSchema = z.object({
   fold,
 })
 
-const REPORT_CELL_STATUSES = ["ok", "warn", "ng"] as const
+export const REPORT_CELL_STATUSES = ["ok", "warn", "ng"] as const
 
 const cellSchema = z.union([
   inlineText,

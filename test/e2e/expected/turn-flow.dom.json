@@ -511,6 +511,54 @@
                                         }
                                       ]
                                     },
+                                    {
+                                      "tag": "span",
+                                      "attributes": {
+                                        "aria-hidden": "true"
+                                      }
+                                    },
+                                    {
+                                      "tag": "span",
+                                      "attributes": {
+                                        "aria-hidden": "true"
+                                      },
+                                      "children": [
+                                        "✓"
+                                      ]
+                                    },
+                                    "OK",
+                                    {
+                                      "tag": "span",
+                                      "attributes": {
+                                        "aria-hidden": "true"
+                                      }
+                                    },
+                                    {
+                                      "tag": "span",
+                                      "attributes": {
+                                        "aria-hidden": "true"
+                                      },
+                                      "children": [
+                                        "！"
+                                      ]
+                                    },
+                                    "要注意",
+                                    {
+                                      "tag": "span",
+                                      "attributes": {
+                                        "aria-hidden": "true"
+                                      }
+                                    },
+                                    {
+                                      "tag": "span",
+                                      "attributes": {
+                                        "aria-hidden": "true"
+                                      },
+                                      "children": [
+                                        "✕"
+                                      ]
+                                    },
+                                    "NG",
                                     "目盛りの数（架空の数）",
                                     {
                                       "tag": "table",

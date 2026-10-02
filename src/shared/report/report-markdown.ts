@@ -4,7 +4,12 @@
 // Markdown に埋める文字は行頭の塊の記法と `<` を逃がして改行を畳み、許すのはインラインの記法（inline code・太字・リンク）だけにする。
 // 逃げ道の `markdown` の塊だけは逃がさず、今の本文と同じ経路（許可リスト・mermaid・`chart`）で描く。
 
-import { REPORT_MATRIX_STATUSES, type ReportBlock, type ReportSection } from "./report-block.ts"
+import {
+  REPORT_CELL_STATUSES,
+  REPORT_MATRIX_STATUSES,
+  type ReportBlock,
+  type ReportSection,
+} from "./report-block.ts"
 import { reportImagePath } from "./report-image.ts"
 
 /** 節と節の境目に置く、見た目を持たない印。書き上げる演出（`planReveal`）がこれで節を1トピックに割る。 */
@@ -415,6 +420,13 @@ function tableMarkdown(table: Extract<ReportBlock, { readonly kind: "table" }>):
   const row = (cells: readonly string[]): string => `| ${cells.join(" | ")} |`
   const aligns = table.columns.map((_, index) => columnAlign(table.rows, index))
   const bars = table.columns.map((_, index) => columnBar(table.rows, index))
+  const statusColumns = table.columns.map((_, index) =>
+    table.rows.some((cells) => isStatusCell(cells[index])),
+  )
+  const bodyCellMarkdown = (cell: ReportCell, index: number): string =>
+    statusColumns[index] === true && typeof cell === "string"
+      ? `<span class="cell-status-none">${cellTextMarkdown(cell)}</span>`
+      : cellMarkdown(cell, bars[index] ?? NO_BAR)
   return joinParts([
     table.title.trim() === ""
       ? ""
@@ -422,11 +434,39 @@ function tableMarkdown(table: Extract<ReportBlock, { readonly kind: "table" }>):
     [
       row(table.columns.map((column) => cellMarkdown(column, NO_BAR))),
       row(aligns.map(alignMarker)),
-      ...table.rows.map((cells) =>
-        row(cells.map((cell, index) => cellMarkdown(cell, bars[index] ?? NO_BAR))),
-      ),
+      ...table.rows.map((cells) => row(cells.map(bodyCellMarkdown))),
     ].join("\n"),
+    tableStatusLegendMarkdown(table),
   ])
+}
+
+/** 表に出た状態のセルの状態だけを、表の下の凡例に並べる（`matrix` の凡例と同じ考え方）。 */
+function tableStatusLegendMarkdown(
+  table: Extract<ReportBlock, { readonly kind: "table" }>,
+): string {
+  const present = REPORT_CELL_STATUSES.filter((status) =>
+    table.rows.some((row) => row.some((cell) => isStatusCell(cell) && cell.status === status)),
+  )
+  if (present.length === 0) {
+    return ""
+  }
+  const items = present
+    .map((status) => {
+      const { className, symbol, label } = CELL_STATUS_MARKS[status]
+      return (
+        `<span class="table-status-legend-item">` +
+        `<span class="table-status-legend-swatch ${className}" aria-hidden="true"></span>` +
+        `<span class="cell-status-mark ${className}" aria-hidden="true">${symbol}</span> ${label}</span>`
+      )
+    })
+    .join("")
+  return `<div class="table-status-legend">${items}</div>`
+}
+
+function isStatusCell(
+  cell: ReportCell | undefined,
+): cell is Extract<ReportCell, { readonly status: string }> {
+  return cell !== undefined && typeof cell !== "string" && "status" in cell
 }
 
 type StatItem = Extract<ReportBlock, { readonly kind: "stats" }>["items"][number]
@@ -569,7 +609,7 @@ function cellMarkdown(cell: ReportCell, bar: ColumnBar): string {
   }
   const status = CELL_STATUS_MARKS[cell.status]
   const text = cell.text.trim()
-  const mark = `<span class="cell-status-mark" role="img" aria-label="${status.label}">${status.symbol}</span>`
+  const mark = `<span class="cell-status-mark ${status.className}" role="img" aria-label="${status.label}">${status.symbol}</span>`
   const body = `${mark}<span class="cell-status-text">${markdownInline(text === "" ? status.label : text)}</span>`
   return `<span class="cell-status ${status.className}">${body}</span>`.replaceAll("|", "\\|")
 }

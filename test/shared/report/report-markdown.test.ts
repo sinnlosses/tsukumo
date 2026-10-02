@@ -67,14 +67,15 @@ describe("reportSectionsMarkdown", () => {
     )
   })
 
-  it("表は添え書きの見出しのあとに GFM の表で組み、状態のセルは記号と文を1行に並べる（記号は role=img の aria-label で状態語を読み上げる）", () => {
+  it("表は添え書きの見出しのあとに GFM の表で組み、状態のセルは記号と文を1行に並べたタイルにし、下に出た状態だけの凡例を添える（記号は role=img の aria-label で状態語を読み上げる）", () => {
     const table: ReportBlock = {
       kind: "table",
       title: "架空の表",
-      columns: ["項目", "結果"],
+      columns: ["項目", "結果", "備考"],
       rows: [
-        ["架空の a|b", { status: "ok", text: "通過" }],
-        ["架空の c", { status: "ng", text: "NG" }],
+        ["架空の a|b", { status: "ok", text: "通過" }, "架空の備考"],
+        ["架空の c", { status: "ng", text: "NG" }, "架空の備考"],
+        ["架空の d", "架空の同じ", "架空の備考"],
       ],
       fold: "",
     }
@@ -83,10 +84,13 @@ describe("reportSectionsMarkdown", () => {
       [
         '<div class="table-title">架空の表</div>',
         "",
-        "| 項目 | 結果 |",
-        "| --- | --- |",
-        '| 架空の a\\|b | <span class="cell-status cell-status-ok"><span class="cell-status-mark" role="img" aria-label="OK">✓</span><span class="cell-status-text">通過</span></span> |',
-        '| 架空の c | <span class="cell-status cell-status-ng"><span class="cell-status-mark" role="img" aria-label="NG">✕</span><span class="cell-status-text">NG</span></span> |',
+        "| 項目 | 結果 | 備考 |",
+        "| --- | --- | --- |",
+        '| 架空の a\\|b | <span class="cell-status cell-status-ok"><span class="cell-status-mark cell-status-ok" role="img" aria-label="OK">✓</span><span class="cell-status-text">通過</span></span> | 架空の備考 |',
+        '| 架空の c | <span class="cell-status cell-status-ng"><span class="cell-status-mark cell-status-ng" role="img" aria-label="NG">✕</span><span class="cell-status-text">NG</span></span> | 架空の備考 |',
+        '| 架空の d | <span class="cell-status-none">架空の同じ</span> | 架空の備考 |',
+        "",
+        '<div class="table-status-legend"><span class="table-status-legend-item"><span class="table-status-legend-swatch cell-status-ok" aria-hidden="true"></span><span class="cell-status-mark cell-status-ok" aria-hidden="true">✓</span> OK</span><span class="table-status-legend-item"><span class="table-status-legend-swatch cell-status-ng" aria-hidden="true"></span><span class="cell-status-mark cell-status-ng" aria-hidden="true">✕</span> NG</span></div>',
       ].join("\n"),
     )
   })
