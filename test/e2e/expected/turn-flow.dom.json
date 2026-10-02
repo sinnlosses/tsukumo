@@ -186,7 +186,8 @@
                 {
                   "tag": "div",
                   "attributes": {
-                    "data-brush-origin": ""
+                    "data-brush-origin": "",
+                    "data-main-view": ""
                   },
                   "children": [
                     {

@@ -5,22 +5,6 @@ import {
   headNoticeOf,
   type HeadNoticeInput,
 } from "../../../../../../../../src/browser/components/page/conversation/components/main-view/domain/head-notice.ts"
-import type { MainViewTurn } from "../../../../../../../../src/shared/session/main-view.ts"
-
-const FROZEN: MainViewTurn = {
-  id: 0,
-  request: { text: "架空の依頼", images: [] },
-  steps: [],
-  hasInterimReport: false,
-  droppedCount: 0,
-  failure: { kind: "none" },
-}
-
-const HELD = {
-  kind: "work-map",
-  exchange: 1,
-  hold: { kind: "held", frozen: FROZEN },
-} as const satisfies HeadNoticeInput["content"]
 
 const REPORT = {
   kind: "report",
@@ -32,16 +16,6 @@ const NO_PHASE = { kind: "none" } as const
 
 describe("headNoticeOf", () => {
   it.each<[string, HeadNoticeInput, HeadNotice]>([
-    [
-      "保留して地図に残した",
-      { content: HELD, moment: "deliver", viewingPast: false, phase: NO_PHASE },
-      { kind: "notice", text: "レポートが届いた", action: "accept-report" },
-    ],
-    [
-      "保留して地図に残したやり取りが失敗で終わった",
-      { content: HELD, moment: "stumble", viewingPast: false, phase: NO_PHASE },
-      { kind: "notice", text: "失敗で終わった", action: "accept-report" },
-    ],
     [
       "レポートを出したあと続きのターンが始まった",
       { content: REPORT, moment: "work", viewingPast: false, phase: NO_PHASE },

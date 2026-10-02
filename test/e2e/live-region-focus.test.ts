@@ -125,7 +125,7 @@ describe("会話の画面の読み上げとフォーカス", () => {
     await waitForFocus(page, COMPOSER)
   })
 
-  it("閉じたとき、フォーカスがメインビューの中にあれば動かさない", async () => {
+  it("閉じたとき、フォーカスがメインビューの中にあれば入力欄へ移さず、メインビューに留める", async () => {
     const room = await run.open({
       scenario: "live-region-focus-main",
       scene: "moment-held",
@@ -136,9 +136,10 @@ describe("会話の画面の読み上げとフォーカス", () => {
     await page.locator('[data-region="main"] h2 button').focus()
 
     await room.waitForEvent("turn-finished")
-    await page.getByRole("button", { name: "レポートが届いた" }).waitFor()
+    await page.waitForSelector('[data-main-view-content="report"]')
 
-    expect(await isFocused(page, '[data-region="main"] h2 button')).toBe(true)
+    expect(await isFocused(page, COMPOSER)).toBe(false)
+    expect(await isFocused(page, "[data-main-view]")).toBe(true)
   })
 
   it("閉じたとき、重なる面（セリフのログ）が開いていれば動かさない", async () => {

@@ -6,8 +6,8 @@ import { useEffect, type RefObject } from "react"
 import { isExchangeClosed } from "../../../../../../../../../shared/session/conversation-moment.ts"
 import { isOverlayOpen } from "../../../../../../../../hooks/open-overlay.ts"
 import { useComposerFocus } from "../../../../../../../../stores/composer-focus.ts"
-import { useMainViewContent } from "../../../../../../../../stores/main-view-content.ts"
 import { useSession } from "../../../../../../../../stores/session.ts"
+import { isFocusWithinMainView } from "../../../../../domain/main-view-focus.ts"
 import type { ComposerSurface } from "../../../domain/composer-surface.ts"
 
 export function useComposerFocusTiming(surfaceRef: RefObject<ComposerSurface | null>): void {
@@ -29,11 +29,7 @@ export function useComposerFocusTiming(surfaceRef: RefObject<ComposerSurface | n
 
 /** メインビューを読んでいる・重なる面が開いている・別の入力欄に打っているあいだは、フォーカスを奪わない。 */
 function holdsFocusElsewhere(): boolean {
-  return (
-    useMainViewContent.getState().hold.focus ||
-    isOverlayOpen() ||
-    isTypingElement(document.activeElement)
-  )
+  return isFocusWithinMainView() || isOverlayOpen() || isTypingElement(document.activeElement)
 }
 
 function isTypingElement(element: Element | null): boolean {

@@ -4,11 +4,8 @@ import type { ConversationMoment } from "../../../../../../../shared/session/con
 import type { WorkPhase } from "../../../../../../../shared/session/work-plan.ts"
 import type { MainViewContent } from "../../../../../../stores/main-view-content.ts"
 
-/**
- * `accept-report` は保留して地図に残したやり取りをレポートへ入れ替える。
- * `to-newest` は最新のやり取りへ移り、`to-question` は移ったあと答え待ちの札まで転がす。
- */
-export type HeadNoticeAction = "accept-report" | "to-newest" | "to-question"
+/** `to-newest` は最新のやり取りへ移り、`to-question` は移ったあと答え待ちの札まで転がす。 */
+export type HeadNoticeAction = "to-newest" | "to-question"
 
 export type HeadNotice =
   | { readonly kind: "none" }
@@ -31,13 +28,6 @@ export function headNoticeOf(input: HeadNoticeInput): HeadNotice {
     return pastNotice(input.moment, input.phase)
   }
   const { content, moment } = input
-  if (content.kind === "work-map" && content.hold.kind === "held") {
-    return {
-      kind: "notice",
-      text: moment === "stumble" ? "失敗で終わった" : "レポートが届いた",
-      action: "accept-report",
-    }
-  }
   if (content.kind === "report" && (moment === "work" || moment === "ask")) {
     return moment === "ask"
       ? { kind: "notice", text: "お伺いが届いた", action: "to-question" }

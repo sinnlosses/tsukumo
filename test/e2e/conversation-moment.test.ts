@@ -5,7 +5,6 @@ import { useScenarioRun } from "./scenario-run.ts"
 
 // 会話の画面の局面（docs/architecture/testing.md「E2E のシナリオの一覧」）。
 // 名指し無しの場面で、依頼の前・送ったあと・閉じたあとのメインビューの中身（`data-main-view-content`）の移り変わりと、4領域の寸法を測る。
-// `moment-held` は、手順のあと4秒空けてからレポートを渡して閉じる。その間にメインビューへフォーカスを置いておく。
 
 const run = useScenarioRun()
 
@@ -52,28 +51,6 @@ describe("会話の画面の局面", () => {
       await room.settleAndMatch(ELAPSED_MS)
     },
   )
-
-  it("メインビューにフォーカスがあるあいだに閉じると中身と位置が動かず、札の頭に「レポートが届いた」が出て、押すとレポートへ入れ替わる", async () => {
-    const room = await run.open({
-      scenario: "conversation-moment-held",
-      scene: "moment-held",
-      viewport: "wide",
-      domRoots: ["main"],
-    })
-    const { page } = room
-    await waitForContent(page, "work-map")
-    await page.locator('[data-region="main"] h2 button').focus()
-    const scrollTop = await mainScrollTop(page)
-
-    await room.waitForEvent("turn-finished")
-    await room.settleAndMatch(ELAPSED_MS)
-
-    expect(await shownContent(page)).toBe("work-map")
-    expect(await mainScrollTop(page)).toBe(scrollTop)
-    const notice = page.getByRole("button", { name: "レポートが届いた" })
-    await notice.click()
-    await waitForContent(page, "report")
-  })
 })
 
 /** メインビューの中身の値が変わるたびに、ページの中の控えに積む。 */
@@ -105,14 +82,6 @@ async function contentLog(page: Page): Promise<unknown> {
 
 async function waitForContent(page: Page, kind: string): Promise<void> {
   await page.waitForSelector(`[data-main-view-content="${kind}"]`)
-}
-
-async function shownContent(page: Page): Promise<string | null> {
-  return page.locator("[data-main-view-content]").getAttribute("data-main-view-content")
-}
-
-async function mainScrollTop(page: Page): Promise<number> {
-  return page.locator('[data-region="main"]').evaluate((element) => element.scrollTop)
 }
 
 /** 4領域の位置と大きさ。 */

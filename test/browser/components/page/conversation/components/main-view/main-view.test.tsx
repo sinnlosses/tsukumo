@@ -452,7 +452,7 @@ describe("MainView（中間レポート）", () => {
   })
 })
 
-describe("MainView（読んでいるあいだの保留と知らせの行）", () => {
+describe("MainView（閉じたときの入れ替えとフォーカス）", () => {
   const RUNNING = { kind: "running", startedAt: 0 } as const satisfies SessionState["turn"]
   const ENDED = {
     kind: "finished",
@@ -461,9 +461,13 @@ describe("MainView（読んでいるあいだの保留と知らせの行）", ()
     ending: { kind: "ended" },
   } as const satisfies SessionState["turn"]
 
-  /** 依頼を送って動いている姿から描き、同じやり取りを `report` つきで閉じる。 */
-  function renderAndClose(): void {
+  /** 依頼を送って動いている姿から描く。 */
+  function renderRunning(): void {
     renderMainView([requestRecord({ text: "架空の依頼", turnId: 0 })], RUNNING)
+  }
+
+  /** 同じやり取りを `report` つきで閉じる。 */
+  function close(): void {
     act(() => {
       putState({
         ...INITIAL_SESSION_STATE,
@@ -479,31 +483,24 @@ describe("MainView（読んでいるあいだの保留と知らせの行）", ()
       ?.getAttribute("data-main-view-content")
   }
 
-  it("中にフォーカスがあるあいだに閉じると、地図のまま本文を出さず、知らせを押すとレポートへ入れ替わる", () => {
-    renderMainView([requestRecord({ text: "架空の依頼", turnId: 0 })], RUNNING)
+  it("中にフォーカスがあっても、閉じた瞬間にレポートへ入れ替わり、フォーカスはメインビューの根に残る", () => {
+    renderRunning()
     act(() => {
       historyToggle().focus()
     })
-    act(() => {
-      putState({
-        ...INITIAL_SESSION_STATE,
-        records: [requestRecord({ text: "架空の依頼", turnId: 0 }), reportRecord("届いた結論")],
-        turn: ENDED,
-      })
-    })
+    close()
 
-    expect(shownContent()).toBe("work-map")
-    expect(screen.queryByText("届いた結論")).toBeNull()
-
-    press("レポートが届いた")
     expect(shownContent()).toBe("report")
     expect(screen.getByText("届いた結論")).toBeDefined()
+    expect(screen.queryByRole("button", { name: "レポートが届いた" })).toBeNull()
+    expect(document.activeElement?.hasAttribute("data-main-view")).toBe(true)
   })
 
-  it("保留していなければ、閉じた瞬間にレポートへ入れ替わり知らせは出ない", () => {
-    renderAndClose()
+  it("中にフォーカスが無ければ、閉じてもメインビューへフォーカスを持ち込まない", () => {
+    renderRunning()
+    close()
 
     expect(shownContent()).toBe("report")
-    expect(screen.queryByRole("button", { name: "レポートが届いた" })).toBeNull()
+    expect(document.activeElement).toBe(document.body)
   })
 })

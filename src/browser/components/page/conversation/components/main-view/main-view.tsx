@@ -7,7 +7,7 @@
 // レポートに書かれたパスを押せる部品にする一覧・依頼は `<RepositoryFileLinkProvider>` が配る。
 // メインビューの中でしか描かないので、ここで1回だけ mount する。
 
-import { useRef, type ReactElement } from "react"
+import { useLayoutEffect, useRef, type ReactElement, type ReactNode, type RefObject } from "react"
 import { useShallow } from "zustand/react/shallow"
 
 import { conversationMoment } from "../../../../../../shared/session/conversation-moment.ts"
@@ -33,7 +33,6 @@ import { Welcome } from "./components/welcome/welcome.tsx"
 import { headNoticeOf, type HeadNoticeAction } from "./domain/head-notice.ts"
 import { turnHistoryText, turnRequestRest, turnTitle } from "./domain/turn-title.ts"
 import { NO_SHOWN_KEY, useActiveTurnScroll } from "./hooks/use-active-turn-scroll.ts"
-import { useMainViewHold } from "./hooks/use-main-view-hold.ts"
 import styles from "./main-view.module.css"
 import { RepositoryFileLinkProvider } from "./markdown/repository-link.tsx"
 
@@ -51,12 +50,11 @@ export function MainView(): ReactElement {
   // 畳んだ結果は姿ごとに1回だけ作られる（昇順。追従を決める `useTurnSelection` と同じものを読む）。
   const turns = useMainViewTurns()
   const content = useMainViewContent((state) => state.content)
-  const acceptHeldReport = useMainViewContent((state) => state.acceptHeldReport)
   const requestQuestionScroll = useQuestionScroll((state) => state.requestScroll)
   const moment = useSession((session) => conversationMoment(session.state))
   const phase = useSession(useShallow((session) => newestPhaseOf(session.state)))
   const rootRef = useRef<HTMLDivElement>(null)
-  useMainViewHold(rootRef)
+  const carriedFocusRef = useRef(false)
 
   const viewing: Viewing =
     activeTurnId !== undefined && activeTurnId !== newestTurnId
@@ -69,10 +67,6 @@ export function MainView(): ReactElement {
   const notice = headNoticeOf({ content, moment, viewingPast, phase })
 
   function onNotice(action: HeadNoticeAction): void {
-    if (action === "accept-report") {
-      acceptHeldReport()
-      return
-    }
     if (newestTurnId !== undefined) {
       selectTurn(newestTurnId)
     }
@@ -85,14 +79,21 @@ export function MainView(): ReactElement {
 
   return (
     <RepositoryFileLinkProvider>
-      {/* `data-brush-origin`: ミニ立ち絵を置く座標の原点。
-          印の名前は `BRUSH_ORIGIN_ATTRIBUTE` と揃える（JSX の属性名に定数を書けないので直に置く）。 */}
-      <div className={styles["main-turns"]} ref={rootRef} data-brush-origin="">
+      {/* `data-brush-origin`: ミニ立ち絵を置く座標の原点。`data-main-view`: フォーカスがメインビューの中にあるかを他の部品から探す印。
+          印の名前はそれぞれ `BRUSH_ORIGIN_ATTRIBUTE`・`MAIN_VIEW_ATTRIBUTE` と揃える（JSX の属性名に定数を書けないので直に置く）。 */}
+      <div
+        className={styles["main-turns"]}
+        ref={rootRef}
+        tabIndex={-1}
+        data-brush-origin=""
+        data-main-view=""
+      >
         {/* 中身の種類が替わったときだけ作り直し、そのときだけ現れる動きが1回掛かる。 */}
-        <div
+        <ContentFrame
           key={view.kind}
-          className={styles["main-view-content"]}
-          data-main-view-content={view.kind}
+          kind={view.kind}
+          rootRef={rootRef}
+          carriedFocusRef={carriedFocusRef}
         >
           {view.kind === "welcome" && <Welcome />}
           {cardTurn !== undefined && (
@@ -121,7 +122,7 @@ export function MainView(): ReactElement {
               </ReportOutline>
             </article>
           )}
-        </div>
+        </ContentFrame>
         {/* 筆先に添うミニ立ち絵。この入れ物の原点を基準に置く（`position: absolute`）ので、書き上げたあと残っているあいだも本文と一緒に転がる。
             出ているやり取りを渡すのは、残った筆先が別のやり取りのものなら引っ込ませるため。 */}
         {cardTurn !== undefined && <MiniPortrait shownTurnId={cardTurn.turn.id} />}
@@ -135,10 +136,43 @@ export function MainView(): ReactElement {
   )
 }
 
+/**
+ * 中身の器。
+ * 作り直しで外れる器の中にフォーカスがあったら、新しい器を付けた直後にメインビューの根へ移す。
+ * 外れた要素のフォーカスは `body` に落ち、そのままだと入力欄がフォーカスを寄せてしまう。
+ */
+function ContentFrame({
+  kind,
+  rootRef,
+  carriedFocusRef,
+  children,
+}: {
+  readonly kind: ShownView["kind"]
+  readonly rootRef: RefObject<HTMLElement | null>
+  readonly carriedFocusRef: RefObject<boolean>
+  readonly children: ReactNode
+}): ReactElement {
+  const frameRef = useRef<HTMLDivElement>(null)
+  useLayoutEffect(() => {
+    const frame = frameRef.current
+    if (carriedFocusRef.current) {
+      carriedFocusRef.current = false
+      rootRef.current?.focus({ preventScroll: true })
+    }
+    return () => {
+      carriedFocusRef.current = frame !== null && frame.contains(document.activeElement)
+    }
+  }, [rootRef, carriedFocusRef])
+  return (
+    <div ref={frameRef} className={styles["main-view-content"]} data-main-view-content={kind}>
+      {children}
+    </div>
+  )
+}
+
 /** 見ているターン。過去のターンを見ているあいだは、そのターンのレポートを出す。 */
 type Viewing = { readonly kind: "newest" } | { readonly kind: "past"; readonly turnId: number }
 
-/** 出す中身を決める。保留して地図に残したあいだは、生きたターンではなく閉じる前に写したターンを出す。 */
 function shownView(
   content: MainViewContent,
   turns: readonly MainViewTurn[],
@@ -156,9 +190,6 @@ function shownView(
     case "welcome":
       return content
     case "work-map":
-      if (content.hold.kind === "held") {
-        return { kind: "work-map", card: { kind: "turn", turn: content.hold.frozen, fresh: false } }
-      }
       return {
         kind: "work-map",
         card: newest === undefined ? NO_CARD : { kind: "turn", turn: newest, fresh: false },
