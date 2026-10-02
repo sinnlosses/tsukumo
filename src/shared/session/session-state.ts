@@ -560,6 +560,9 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
         speechExpression: event.expression,
         speechCalledInTurn: true,
       }
+    // サーバの中で `speech` に変わってから届く（`SpeechReview`）。
+    case "speak-called":
+      return state
     case "report-drafting":
       return { ...state, reportDrafting: { kind: "drafting", toolUseId: event.toolUseId } }
     case "report":

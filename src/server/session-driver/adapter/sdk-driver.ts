@@ -12,7 +12,7 @@ import { type PermissionResult, query, type SDKUserMessage } from "@anthropic-ai
 import { expressionNames as toExpressionNames } from "../../../shared/character-pack/expression-choice.ts"
 import { parsePromptImage, type PromptImage } from "../../../shared/session-driver/prompt-image.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
-import { createReportReview, type ReportReview } from "../../report/core/report-review.ts"
+import { createReportReview } from "../../report/core/report-review.ts"
 import { createReportGate, type ReportGate } from "../../report/core/report-tool.ts"
 import { createUsageReviewIntake } from "../../usage-review/core/usage-review-tool.ts"
 import { createPendingAnswerQueue, type PendingAnswerQueue } from "../core/pending-answer.ts"
@@ -23,6 +23,7 @@ import { toCommandDescriptions, toModelEffortSupport, toPlan } from "../core/sdk
 import { withSelfStartedTurns } from "../core/self-started-turn.ts"
 import type { SessionDriver, SessionDriverOptions } from "../core/session-driver.ts"
 import { createSessionTitleIntake, type SessionTitleIntake } from "../core/session-title.ts"
+import { createSpeechReview } from "../core/speech-review.ts"
 import { TSUKUMO_MCP_SERVER_NAME } from "../core/tsukumo-tool-name.ts"
 import { isVisibleOutputNudge } from "../core/visible-output-nudge.ts"
 import { readClaudeAccountTier } from "./claude-account.ts"
@@ -66,6 +67,10 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
 
   const reportGate = createReportGate()
   const reportReview = createReportReview()
+  const speechReview = createSpeechReview()
+  // `speak` の差し戻しを `report` の差し戻しより先に通す（ターンの終わりに預かりを出す並びがセリフ → レポートになる）。
+  const review = (event: SessionEvent): readonly SessionEvent[] =>
+    speechReview.pass(event).flatMap((passed) => reportReview.pass(passed))
   const readSessionDigest = createSessionDigestReader(options.expressions)
   const usageReview = createUsageReviewIntake(options.dismissedUsageProposalKeys, options.onEvent)
   const titleIntake = createSessionTitleIntake()
@@ -81,6 +86,7 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
           options.expressions,
           options.mode,
           reportReview,
+          speechReview,
           usageReview,
           titleIntake.note,
           options.cwd,
@@ -91,15 +97,15 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
     },
   })
 
-  // 依頼も `report` の差し戻しに見せる（新しい事実の届いた印。`ReportReview`）。
+  // 依頼も差し戻しに見せる（新しい事実の届いた印。`SpeechReview` / `ReportReview`）。
   const emitTurnOpening = (event: SessionEvent): void => {
-    for (const passed of reportReview.pass(event)) {
+    for (const passed of review(event)) {
       options.onEvent(passed)
     }
   }
 
   void applyNeutralOutputStyle(session)
-  void relayMessages(session, options, reportGate, reportReview, titleIntake, titleWriter)
+  void relayMessages(session, options, reportGate, review, titleIntake, titleWriter)
   void relayCommandDescriptions(session, options)
   void relayPlan(session, options)
   void relaySupportedModels(session, options)
@@ -155,8 +161,8 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
  * `report` の関所（`reportGate`）にはメインのメッセージから出たイベントだけを見せる。
  * サブエージェントの本文を数えない。関所を登録していないときも見せるが、判定されないだけ。
  *
- * メインのイベントは先に `report` の差し戻し（`reportReview`）を通す。
- * `report` を同じ呼び出しの結果まで預かり、差し戻した呼び出しを描かない。
+ * メインのイベントは先に `speak` と `report` の差し戻し（`review`）を通す。
+ * どちらも同じ呼び出しの結果まで預かり、差し戻した呼び出しを描かない。
  *
  * `titleIntake` が覚えている題（`report` の `title` 引数）もターンの終わりに取り出し、`titleWriter` に書く予約をする。
  */
@@ -164,7 +170,7 @@ async function relayMessages(
   session: AsyncIterable<unknown>,
   options: SessionDriverOptions,
   reportGate: ReportGate,
-  reportReview: ReportReview,
+  review: (event: SessionEvent) => readonly SessionEvent[],
   titleIntake: SessionTitleIntake,
   titleWriter: SessionTitleWriter,
 ): Promise<void> {
@@ -178,7 +184,7 @@ async function relayMessages(
         process.stderr.write(VISIBLE_OUTPUT_NUDGE_NOTICE)
       }
       const converted = toSessionEvents(message, toExpressionNames(options.expressions))
-      const events = fromMain ? converted.flatMap((event) => reportReview.pass(event)) : converted
+      const events = fromMain ? converted.flatMap((event) => review(event)) : converted
       for (const event of events) {
         if (fromMain) {
           reportGate.observe(event)

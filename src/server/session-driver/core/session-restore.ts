@@ -9,6 +9,7 @@ import type { Expression } from "../../../shared/character-pack/expression.ts"
 import type { SessionEvent } from "../../../shared/session/session-event.ts"
 import { createReportReview } from "../../report/core/report-review.ts"
 import { toSessionEvents } from "./sdk-message.ts"
+import { createSpeechReview } from "./speech-review.ts"
 
 /**
  * 組み直した履歴のターンの終わり。transcript には `result`（ターンの終わり）が残らないので、終わり方は分からない。
@@ -31,7 +32,7 @@ const HISTORY_RESTORED: SessionEvent = { kind: "history-restored" }
  * - 再生の終わり（`history-restored`）: 末尾に1つ。
  *   transcript に残る時刻は読む口（`getSessionMessages`）が落とすので、ここまでの記録は時刻が分からないと畳み込みに伝える
  *
- * 差し戻された `report` の呼び出しも transcript には残るので、動いているときと同じく `report` の差し戻し（`ReportReview.pass`）に通して落とす。
+ * 差し戻された `speak` / `report` の呼び出しも transcript には残るので、動いているときと同じく差し戻し（`SpeechReview.pass` → `ReportReview.pass`）に通して落とす。
  *
  * 壊れた要素は {@link toSessionEvents} が空の並びに倒すので、読めたものだけが残る。
  */
@@ -50,8 +51,11 @@ export function toRestoredEvents(
     event.kind === "request" && index > firstRequest ? [RESTORED_TURN_FINISHED, event] : [event],
   )
   const closed = firstRequest === -1 ? bounded : [...bounded, RESTORED_TURN_FINISHED]
-  const review = createReportReview()
-  const events = closed.flatMap((event) => review.pass(event))
+  const speechReview = createSpeechReview()
+  const reportReview = createReportReview()
+  const events = closed
+    .flatMap((event) => speechReview.pass(event))
+    .flatMap((event) => reportReview.pass(event))
   // 組み直せたものが無ければ、書き換える記録も無いので `history-restored` を足さない。
   return events.length === 0 ? events : [...events, HISTORY_RESTORED]
 }

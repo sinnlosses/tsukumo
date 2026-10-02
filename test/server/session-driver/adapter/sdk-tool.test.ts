@@ -8,6 +8,11 @@ import type {
   ChatRecall,
   SessionMode,
 } from "../../../../src/server/session-driver/core/session-driver.ts"
+import {
+  createSpeechReview,
+  SPEECH_NOTHING_NEW_REJECTION_TEXT,
+  type SpeechReview,
+} from "../../../../src/server/session-driver/core/speech-review.ts"
 import { createUsageReviewIntake } from "../../../../src/server/usage-review/core/usage-review-tool.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import {
@@ -54,7 +59,15 @@ describe("tsukumoServer", () => {
 
   it("雑談のときは report も見直しの2つも載らない。diary も載らない（会話とは別の使い捨ての問い合わせ）", async () => {
     const names = await listedToolNames(
-      tsukumoServer(EXPRESSIONS, CHAT_MODE, createReportReview(), noopIntake(), () => {}, FAKE_CWD),
+      tsukumoServer(
+        EXPRESSIONS,
+        CHAT_MODE,
+        createReportReview(),
+        createSpeechReview(),
+        noopIntake(),
+        () => {},
+        FAKE_CWD,
+      ),
     )
 
     expect(names).not.toContain("report")
@@ -67,7 +80,15 @@ describe("tsukumoServer", () => {
 
   it("雑談のときは recall と recall_episode の2段階が載り、keep と index はもう載らない", async () => {
     const names = await listedToolNames(
-      tsukumoServer(EXPRESSIONS, CHAT_MODE, createReportReview(), noopIntake(), () => {}, FAKE_CWD),
+      tsukumoServer(
+        EXPRESSIONS,
+        CHAT_MODE,
+        createReportReview(),
+        createSpeechReview(),
+        noopIntake(),
+        () => {},
+        FAKE_CWD,
+      ),
     )
 
     expect(names).toEqual(["speak", "recall", "recall_episode", "remember", "forget"])
@@ -101,7 +122,15 @@ describe("recall / recall_episode ツール", () => {
     // `McpSdkServerConfigWithInstance` は同時に1本の transport しか繋げないので、
     // 呼び出しごとにサーバを作り直す（`callTool` が繋いで閉じる。他のテストと同じ手）。
     const server = (): McpSdkServerConfigWithInstance =>
-      tsukumoServer(EXPRESSIONS, chatMode, createReportReview(), noopIntake(), () => {}, FAKE_CWD)
+      tsukumoServer(
+        EXPRESSIONS,
+        chatMode,
+        createReportReview(),
+        createSpeechReview(),
+        noopIntake(),
+        () => {},
+        FAKE_CWD,
+      )
 
     const listReply = await callTool(server(), "recall", { keyword: "散歩" })
     const episodeReply = await callTool(server(), "recall_episode", { id: "2026-09-25-1" })
@@ -133,7 +162,15 @@ describe("recall / recall_episode ツール", () => {
     }
 
     const reply = await callTool(
-      tsukumoServer(EXPRESSIONS, workMode, createReportReview(), noopIntake(), () => {}, FAKE_CWD),
+      tsukumoServer(
+        EXPRESSIONS,
+        workMode,
+        createReportReview(),
+        createSpeechReview(),
+        noopIntake(),
+        () => {},
+        FAKE_CWD,
+      ),
       "recall_episode",
       { id: "2026-09-25-1" },
     )
@@ -151,7 +188,15 @@ describe("recall / recall_episode ツール", () => {
       },
     }
     const server = (): McpSdkServerConfigWithInstance =>
-      tsukumoServer(EXPRESSIONS, chatMode, createReportReview(), noopIntake(), () => {}, FAKE_CWD)
+      tsukumoServer(
+        EXPRESSIONS,
+        chatMode,
+        createReportReview(),
+        createSpeechReview(),
+        noopIntake(),
+        () => {},
+        FAKE_CWD,
+      )
 
     const listReply = await callTool(server(), "recall", { keyword: "架空" })
     const episodeReply = await callTool(server(), "recall_episode", { id: "no-such-id" })
@@ -198,6 +243,48 @@ describe("report でターンを閉じる", () => {
     expect(reply).toEqual({ text: "ok", isError: false, endsTurn: false })
   })
 })
+
+describe("speak の差し戻し", () => {
+  it("仕事のときは、描いたセリフのあとに新しい事実の無い speak を差し戻しの一文で返す", async () => {
+    const reply = await callTool(workServer([], [], [], spokenReview()), "speak", CLOSING)
+
+    expect(reply).toEqual({
+      text: SPEECH_NOTHING_NEW_REJECTION_TEXT,
+      isError: true,
+      endsTurn: false,
+    })
+  })
+
+  it("雑談のときは差し戻さない", async () => {
+    const reply = await callTool(
+      tsukumoServer(
+        EXPRESSIONS,
+        CHAT_MODE,
+        createReportReview(),
+        spokenReview(),
+        noopIntake(),
+        () => {},
+        FAKE_CWD,
+      ),
+      "speak",
+      CLOSING,
+    )
+
+    expect(reply).toEqual({ text: "ok", isError: false, endsTurn: false })
+  })
+})
+
+/** セリフを1つ描いたあと、新しい事実の届いていない `SpeechReview`。 */
+function spokenReview(): SpeechReview {
+  const review = createSpeechReview()
+  review.pass({
+    kind: "speak-called",
+    toolUseId: "toolu_speak_1",
+    speech: { kind: "speech", text: "架空のセリフ", expression: "default" },
+  })
+  review.pass({ kind: "tool-finished", toolUseId: "toolu_speak_1", content: "ok", isError: false })
+  return review
+}
 
 describe("work_plan（段取り）", () => {
   it("段の並びと位置を渡すと ok が返り、ターンは閉じない", async () => {
@@ -435,11 +522,13 @@ function workServer(
   events: SessionEvent[] = [],
   dismissed: readonly string[] = [],
   titles: string[] = [],
+  speechReview: SpeechReview = createSpeechReview(),
 ): McpSdkServerConfigWithInstance {
   return tsukumoServer(
     EXPRESSIONS,
     WORK_MODE,
     createReportReview(),
+    speechReview,
     createUsageReviewIntake(
       () => dismissed,
       (event) => {

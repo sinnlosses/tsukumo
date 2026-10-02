@@ -36,8 +36,7 @@ export type QuerySeedOptions = {
   readonly settings: { readonly language: "japanese" }
   /**
    * 子プロセスの環境変数。
-   * 渡すと tsukumo 自身の環境と混ざらず丸ごと置き換わるので、引き継いだ環境に `CLAUDE_CODE_TERMINAL_MCP_TOOLS` を足したもの（`childProcessEnv`）を渡す。
-   * `speak` で終えたターンに本体が催促を差し込むのを止めるため。
+   * 渡すと tsukumo 自身の環境と混ざらず丸ごと置き換わるので、引き継いだ環境に本体の催促を止める変数を足したもの（`childProcessEnv`）を渡す。
    */
   readonly env: Readonly<Record<string, string | undefined>>
 }

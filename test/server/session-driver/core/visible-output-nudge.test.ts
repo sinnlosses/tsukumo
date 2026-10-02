@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest"
 import {
   childProcessEnv,
   isVisibleOutputNudge,
+  SILENT_TURN_REMINDER_ENV_NAME,
   TERMINAL_MCP_TOOLS_ENV_NAME,
 } from "../../../../src/server/session-driver/core/visible-output-nudge.ts"
 
@@ -16,8 +17,16 @@ describe("childProcessEnv", () => {
     expect(childProcessEnv({ PATH: "/usr/bin" })).toEqual({
       PATH: "/usr/bin",
       CLAUDE_CODE_TERMINAL_MCP_TOOLS: "mcp__tsukumo__speak",
+      CLAUDE_CODE_SILENT_TURN_REMINDER: "0",
     })
     expect(TERMINAL_MCP_TOOLS_ENV_NAME).toBe("CLAUDE_CODE_TERMINAL_MCP_TOOLS")
+  })
+
+  it("引き継いだ環境に CLAUDE_CODE_SILENT_TURN_REMINDER=0 を足す（本体の silent_turn_reminder を切る）", () => {
+    expect(childProcessEnv({ PATH: "/usr/bin" })).toMatchObject({
+      CLAUDE_CODE_SILENT_TURN_REMINDER: "0",
+    })
+    expect(SILENT_TURN_REMINDER_ENV_NAME).toBe("CLAUDE_CODE_SILENT_TURN_REMINDER")
   })
 
   it("引き継いだ環境を書き換えない", () => {

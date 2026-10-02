@@ -119,6 +119,36 @@ describe("toRestoredEvents", () => {
     ])
   })
 
+  it("差し戻された speak の呼び出しは落とし、通ったセリフだけを結果の直前に残す", () => {
+    const speakCall = (id: string, text: string): unknown =>
+      assistantMessage([
+        {
+          type: "tool_use",
+          id,
+          name: SPEAK_TOOL_FULL_NAME,
+          input: { text, expression: "default" },
+        },
+      ])
+    const messages = [
+      userMessage("架空の依頼"),
+      speakCall("s-1", "架空の通ったセリフ"),
+      userMessage([{ type: "tool_result", tool_use_id: "s-1", content: "ok" }]),
+      speakCall("s-2", "架空の差し戻されたセリフ"),
+      userMessage([
+        { type: "tool_result", tool_use_id: "s-2", content: "架空の差し戻し", is_error: true },
+      ]),
+    ]
+
+    expect(toRestoredEvents(messages, EXPRESSIONS)).toEqual([
+      { kind: "request", text: "架空の依頼", images: [] },
+      { kind: "speech", text: "架空の通ったセリフ", expression: "default" },
+      { kind: "tool-finished", toolUseId: "s-1", content: "ok", isError: false },
+      { kind: "tool-finished", toolUseId: "s-2", content: "架空の差し戻し", isError: true },
+      { kind: "turn-finished", outcome: { kind: "completed" } },
+      HISTORY_RESTORED,
+    ])
+  })
+
   it("通った report の closing だけを、report の後ろのセリフとして組み直す", () => {
     const messages = [
       userMessage("架空の依頼"),

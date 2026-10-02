@@ -30,6 +30,7 @@ import { createReportReview } from "../../report/core/report-review.ts"
 import { recordedPromptImages } from "../core/prompt-image-shelf.ts"
 import { reportEvents } from "../core/sdk-message.ts"
 import type { SessionDriver } from "../core/session-driver.ts"
+import { createSpeechReview } from "../core/speech-review.ts"
 
 /** 既定の疑似セッション。tsukumo 自身の場所から解く（cwd に依存させない）。 */
 const DEFAULT_SESSION_URL = new URL("../../../../test/fixture/fake-session.json", import.meta.url)
@@ -234,6 +235,8 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
   // `report` の差し戻しの預かり（本物の駆動と同じ `ReportReview`）。
   // handler が無いので判定はしない。疑似セッションが書いた `tool-finished` の `isError` に従って、描くか捨てるかだけが決まる。
   const reportReview = createReportReview()
+  // `speak` の差し戻しの預かりも同じ。判定はせず、場面の `tool-finished` の `isError` に従う。
+  const speechReview = createSpeechReview()
 
   const emit = (event: SessionEvent): void => {
     if (event.kind === "pending-changed") {
@@ -241,7 +244,10 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
     }
     const events =
       event.kind === "report" ? reportEvents(event.toolUseId, event, options.expressions) : [event]
-    for (const passed of events.flatMap((normalized) => reportReview.pass(normalized))) {
+    const passedEvents = events
+      .flatMap((normalized) => speechReview.pass(normalized))
+      .flatMap((spoken) => reportReview.pass(spoken))
+    for (const passed of passedEvents) {
       // 疑似セッションが書いた `session-info` のモデル・許可モードはいまの値で置き換える（疑似セッションの持ち物ではなく、起こし方で決まる値なので）。
       options.onEvent(
         passed.kind === "session-info" ? { ...passed, model, permissionMode } : passed,

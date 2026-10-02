@@ -250,7 +250,7 @@ describe("toSessionEvents", () => {
     ])
   })
 
-  it("speak の呼び出しはセリフにする（ツールの開始にはしない）", () => {
+  it("メインの speak の呼び出しは、呼び出しの id 付きのセリフにする（ツールの開始にはしない）", () => {
     const message = assistantMessage([
       {
         type: "tool_use",
@@ -261,7 +261,29 @@ describe("toSessionEvents", () => {
     ])
 
     expect(toSessionEvents(message, EXPRESSIONS)).toEqual([
-      { kind: "speech", text: "いくよ！", expression: "proud" },
+      {
+        kind: "speak-called",
+        toolUseId: "toolu_2",
+        speech: { kind: "speech", text: "いくよ！", expression: "proud" },
+      },
+    ])
+  })
+
+  it("サブエージェントの speak の呼び出しは、id を付けずにセリフにする", () => {
+    const message = assistantMessage(
+      [
+        {
+          type: "tool_use",
+          id: "toolu_2",
+          name: SPEAK_TOOL_FULL_NAME,
+          input: { text: "架空のセリフ", expression: "proud" },
+        },
+      ],
+      "toolu_sub_1",
+    )
+
+    expect(toSessionEvents(message, EXPRESSIONS)).toEqual([
+      { kind: "speech", text: "架空のセリフ", expression: "proud" },
     ])
   })
 
@@ -276,7 +298,11 @@ describe("toSessionEvents", () => {
     ])
 
     expect(toSessionEvents(message, EXPRESSIONS)).toEqual([
-      { kind: "speech", text: "いくよ！", expression: "default" },
+      {
+        kind: "speak-called",
+        toolUseId: "toolu_2",
+        speech: { kind: "speech", text: "いくよ！", expression: "default" },
+      },
     ])
   })
 

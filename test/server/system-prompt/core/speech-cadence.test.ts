@@ -59,11 +59,11 @@ describe("SPEECH_CADENCE_PROMPT", () => {
     expect(append).toContain("run_in_background")
   })
 
-  it("合図の届いていないターンでは speak も report も呼ばず、何も書かずに終える", () => {
+  it("合図の届いていないターンでは speak も report も呼ばず、何も書かずに終え、新しい事実の無い speak は差し戻されると伝える", () => {
     expect(SPEECH_CADENCE_PROMPT).toContain(
       "合図（進み具合の1行か、委譲の完了の知らせ）の届いていないターン",
     )
-    expect(SPEECH_CADENCE_PROMPT).toContain("The user hasn't heard from you in a while")
     expect(SPEECH_CADENCE_PROMPT).toContain("何も書かずに終える")
+    expect(SPEECH_CADENCE_PROMPT).toContain("tsukumo が\n  差し戻し、吹き出しに出ない")
   })
 })

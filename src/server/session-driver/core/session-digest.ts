@@ -1,7 +1,7 @@
 // セッション1件の中身（依頼の数・要約・最後のセリフ）を transcript のメッセージ列から組む。SDK を呼ばない純粋な部分。
 //
 // 復元（`toRestoredEvents`）が組む履歴を数えた結果と同じになるよう、メッセージ列を1回なめて畳む。
-// 差し戻された `report` の要約・締めのセリフは拾わない。
+// 差し戻された `speak` のセリフと、差し戻された `report` の要約・締めのセリフは拾わない。
 // 読んだものはどこにも書き出さない。
 
 import type { Expression } from "../../../shared/character-pack/expression.ts"
@@ -35,14 +35,14 @@ export function toSessionDigest(
   }
 }
 
-type ReportEvent = Extract<SessionEvent, { readonly kind: "report" }>
+type HeldCall = Extract<SessionEvent, { readonly kind: "report" | "speak-called" }>
 
-/** 畳んでいる途中の姿。`held` は結果（`tool-finished`）をまだ受け取っていない `report`。 */
+/** 畳んでいる途中の姿。`held` は結果（`tool-finished`）をまだ受け取っていない `report` と `speak` の呼び出し。 */
 type DigestFold = {
   readonly requestCount: number
   readonly summary: string | undefined
   readonly lastLine: string | undefined
-  readonly held: readonly ReportEvent[]
+  readonly held: readonly HeldCall[]
   readonly turnOpen: boolean
 }
 
@@ -63,14 +63,15 @@ function foldEvent(fold: DigestFold, event: SessionEvent): DigestFold {
         turnOpen: true,
       }
     case "report":
+    case "speak-called":
       return { ...fold, held: [...fold.held, event] }
     case "tool-finished": {
-      const report = fold.held.find((candidate) => candidate.toolUseId === event.toolUseId)
-      if (report === undefined) {
+      const call = fold.held.find((candidate) => candidate.toolUseId === event.toolUseId)
+      if (call === undefined) {
         return fold
       }
-      const rest = { ...fold, held: fold.held.filter((candidate) => candidate !== report) }
-      return event.isError ? rest : adoptReport(rest, report)
+      const rest = { ...fold, held: fold.held.filter((candidate) => candidate !== call) }
+      return event.isError ? rest : adoptCall(rest, call)
     }
     case "turn-finished":
       return adoptHeld(fold)
@@ -81,16 +82,19 @@ function foldEvent(fold: DigestFold, event: SessionEvent): DigestFold {
   }
 }
 
-/** 預かっていた `report` を、並びの順に取り込む。 */
+/** 預かっていた呼び出しを、並びの順に取り込む。 */
 function adoptHeld(fold: DigestFold): DigestFold {
-  return fold.held.reduce(adoptReport, { ...fold, held: [] })
+  return fold.held.reduce(adoptCall, { ...fold, held: [] })
 }
 
-function adoptReport(fold: DigestFold, report: ReportEvent): DigestFold {
+function adoptCall(fold: DigestFold, call: HeldCall): DigestFold {
+  if (call.kind === "speak-called") {
+    return { ...fold, lastLine: call.speech.text }
+  }
   return {
     ...fold,
-    summary: report.sessionSummary ?? fold.summary,
-    lastLine: report.closing.kind === "speech" ? report.closing.text : fold.lastLine,
+    summary: call.sessionSummary ?? fold.summary,
+    lastLine: call.closing.kind === "speech" ? call.closing.text : fold.lastLine,
   }
 }
 

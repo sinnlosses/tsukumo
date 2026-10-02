@@ -127,6 +127,15 @@ export type SessionEvent =
   /** `speak` ツールの呼び出し。セリフと表情。 */
   | { readonly kind: "speech"; readonly text: string; readonly expression: Expression }
   /**
+   * メインが呼んだ `speak` の呼び出し。サーバの中だけで流れる。
+   * `SpeechReview.pass` が同じ `toolUseId` の `tool-finished` まで預かり、差し戻されていなければ `speech` に変えて流す（畳み込み・ブラウザには届かない）。
+   */
+  | {
+      readonly kind: "speak-called"
+      readonly toolUseId: string
+      readonly speech: Extract<SessionEvent, { readonly kind: "speech" }>
+    }
+  /**
    * メインが `report` ツールの引数を書き始めた（`includePartialMessages` の断片で、呼び出しの塊が開いた合図）。
    * 立ち絵の「書いている」の材料で、同じ `toolUseId` の `report` か `tool-finished` が届くまで続く。中身（引数の断片）は運ばない。
    */

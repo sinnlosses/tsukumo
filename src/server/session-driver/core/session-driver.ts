@@ -180,7 +180,7 @@ export type SessionDriverOptions = {
   readonly mode: SessionMode
   /**
    * 子プロセス（claude）へ引き継ぐ環境変数（`Config.inheritedEnv`）。駆動はこれに
-   * `CLAUDE_CODE_TERMINAL_MCP_TOOLS` を足して渡す（`childProcessEnv`）。
+   * 本体の催促を止める変数を足して渡す（`childProcessEnv`）。
    */
   readonly inheritedEnv: Readonly<Record<string, string | undefined>>
   /**

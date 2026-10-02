@@ -38,7 +38,8 @@ import {
  *
  * - `thinking` は変換しない。モデルの内部の思考なので内部の型にも入れない
  * - サブエージェントの中の本文（`text` と `text_delta`）は変換しない。メインビューの本文はメインのものだけ
- * - `speak` の呼び出しは `tool-started` にしない。`speech` として別に出す（吹き出し行き）
+ * - `speak` の呼び出しは `tool-started` にしない。`speech` として別に出す（吹き出し行き）。
+ *   メインの呼び出しは呼び出しの id を付けた `speak-called` に包む（差し戻しを `SpeechReview` が決める）
  * - `report` の呼び出しも `tool-started` にしない。`report` として別に出す（メインビュー行き）。
  *   `parent_tool_use_id` のある呼び出し（サブエージェントの中）は捨てる。
  *   ターンのレポートはメインが書くもので、委譲先の報告はメインの手元に届くだけにする
@@ -405,7 +406,11 @@ function assistantBlockEvents(
   }
 
   if (block.name === speakToolFullName()) {
-    return speechEvents(block.input, expressions)
+    const speeches = speechEvents(block.input, expressions)
+    const toolUseId = block.id
+    return parentToolUseId === undefined && typeof toolUseId === "string"
+      ? speeches.map((speech): SessionEvent => ({ kind: "speak-called", toolUseId, speech }))
+      : speeches
   }
 
   if (block.name === tsukumoToolFullName(REPORT_TOOL_NAME)) {

@@ -6174,6 +6174,65 @@
       "name": "session-resume",
       "resume": "fake-past-session",
       "steps": []
+    },
+    {
+      "name": "speech-rejected",
+      "steps": [
+        {
+          "afterMs": 0,
+          "event": {
+            "kind": "request",
+            "text": "セリフの差し戻しの見え方を確かめたい（架空の依頼）",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 300,
+          "event": {
+            "kind": "speak-called",
+            "toolUseId": "fake-speech-rejected-1",
+            "speech": {
+              "kind": "speech",
+              "text": "委譲したよ、合図を待つね。",
+              "expression": "default"
+            }
+          }
+        },
+        {
+          "afterMs": 350,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-speech-rejected-1",
+            "content": "ok",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 1000,
+          "event": {
+            "kind": "speak-called",
+            "toolUseId": "fake-speech-rejected-2",
+            "speech": {
+              "kind": "speech",
+              "text": "まだ待ってるよ（出ないはずの架空のセリフ）。",
+              "expression": "default"
+            }
+          }
+        },
+        {
+          "afterMs": 1050,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-speech-rejected-2",
+            "content": "架空の差し戻しの一文",
+            "isError": true
+          }
+        },
+        {
+          "afterMs": 1500,
+          "event": { "kind": "turn-finished", "outcome": { "kind": "completed" } }
+        }
+      ]
     }
   ],
   "pastSessions": [

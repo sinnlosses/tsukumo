@@ -91,13 +91,14 @@ describe("buildQuerySeedOptions", () => {
     expect(buildQuerySeedOptions(BASE_OPTIONS).settings).toEqual({ language: "japanese" })
   })
 
-  it("引き継いだ環境変数に CLAUDE_CODE_TERMINAL_MCP_TOOLS=mcp__tsukumo__speak を足して子プロセスへ渡す", () => {
+  it("引き継いだ環境変数に本体の催促を止める2つの変数を足して子プロセスへ渡す", () => {
     // SDK の `env` は `process.env` と混ぜずに丸ごと置き換えるので、引き継ぎが落ちていないことも見る
     // （`childProcessEnv`）。
     expect(buildQuerySeedOptions(BASE_OPTIONS).env).toEqual({
       PATH: "/usr/bin",
       HOME: "/tmp/tsukumo-home",
       CLAUDE_CODE_TERMINAL_MCP_TOOLS: "mcp__tsukumo__speak",
+      CLAUDE_CODE_SILENT_TURN_REMINDER: "0",
     })
   })
 })

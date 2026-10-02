@@ -47,6 +47,7 @@ describe("toSessionDigest", () => {
           input: { text: "架空の途中のセリフ", expression: "default" },
         },
       ]),
+      toolResult("t-1", false),
       reportCall("r-2", {
         conclusion: "架空の二",
         sessionSummary: "架空の新しい要約。\n\n残り：架空の残り。",
@@ -78,6 +79,20 @@ describe("toSessionDigest", () => {
     expect(toSessionDigest(messages, EXPRESSIONS)).toMatchObject({
       kind: "known",
       summary: "架空の通った要約",
+    })
+  })
+
+  it("差し戻された speak のセリフは最後のセリフに拾わない", () => {
+    const messages = [
+      userMessage("架空の依頼"),
+      speakCall("s-1", "架空の通ったセリフ"),
+      toolResult("s-1", false),
+      speakCall("s-2", "架空の差し戻されたセリフ"),
+      toolResult("s-2", true),
+    ]
+
+    expect(toSessionDigest(messages, EXPRESSIONS)).toMatchObject({
+      lastLine: "架空の通ったセリフ",
     })
   })
 
@@ -167,6 +182,13 @@ describe("toSessionDigest と toRestoredEvents の一致", () => {
       toolResult("r-2", false),
     ],
     "speak だけ": [userMessage("架空の依頼"), speakCall("s-1", "架空のセリフ")],
+    "通った speak と差し戻された speak が混ざる": [
+      userMessage("架空の依頼"),
+      speakCall("s-1", "架空の通ったセリフ"),
+      toolResult("s-1", false),
+      speakCall("s-2", "架空の差し戻されたセリフ"),
+      toolResult("s-2", true),
+    ],
     "依頼より前に report が来る": [
       reportCall("r-1", withClosing("1")),
       toolResult("r-1", false),

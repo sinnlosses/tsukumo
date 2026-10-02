@@ -253,7 +253,8 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 - **英語識別子（予定）**: `speak`（ツール名そのもの）
 - **定義**: tsukumo がプロセス内の MCP サーバとして提供するツール。引数は `text`（セリフ）と
-  `expression`（表情）で、**戻り値は `"ok"` だけ**
+  `expression`（表情）で、**戻り値は `"ok"` か、仕事のときに新しい事実の無い呼び出しを差し戻す
+  固定の一文**（差し戻した呼び出しは吹き出しに出さない。`src/server/session-driver/core/speech-review.ts`）
 - **注記**: **セリフの唯一の主経路**（`docs/architecture/adr/0009-speech-via-tool.md`）。
   **セリフが届く経路はこれだけ**（行頭マーカーの補助は
   2026-09-21 に撤去した）

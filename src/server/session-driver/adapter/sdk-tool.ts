@@ -44,6 +44,7 @@ import {
   usageReviewStageGuide,
 } from "../../usage-review/core/usage-review-tool.ts"
 import type { ChatRecall, PersonaMemory, SessionMode } from "../core/session-driver.ts"
+import type { SpeechReview, SpeechVerdict } from "../core/speech-review.ts"
 import {
   FORGET_TOOL_NAME,
   RECALL_EPISODE_TOOL_NAME,
@@ -103,7 +104,8 @@ const RECALL_EPISODE_TOOL_DESCRIPTION =
 /**
  * プロセス内の MCP サーバ。
  * 戻り値は既定が "ok" だけで、tsukumo の内部の状態や画面の事情がモデルへ戻る経路を作らない（`docs/architecture/adr/0009-speech-via-tool.md`）。
- * 例外は `recall` / `recall_episode` と `report` と `work_plan` と見直しの2つ。
+ * 例外は `speak`（仕事のときだけ）と `recall` / `recall_episode` と `report` と `work_plan` と見直しの2つ。
+ * `speak` が返すのは、新しい事実の無い呼び出しを差し戻す固定の文面だけ。
  * `recall` / `recall_episode` が返すのは、そのセッションが自分で読める外の事実（自分の過去の会話の目次と1件の逐語）だけ。
  * `report` が返すのは差し戻すときの規約違反だけ、`work_plan` が返すのは `parseWorkPlan` が受け付けなかったときの直し方だけ。
  * 見直しの2つが返すのは、利用者が見送った提案の識別子と差し戻しの理由だけ。
@@ -124,6 +126,7 @@ export function tsukumoServer(
   expressions: readonly ExpressionChoice[],
   mode: SessionMode,
   reportReview: ReportReview,
+  speechReview: SpeechReview,
   usageReview: UsageReviewIntake,
   onReportTitle: (title: string) => void,
   cwd: string,
@@ -132,9 +135,7 @@ export function tsukumoServer(
     name: TSUKUMO_MCP_SERVER_NAME,
     version: "0.0.0",
     tools: [
-      tool(SPEAK_TOOL_NAME, SPEAK_TOOL_DESCRIPTION, speechShape(expressions), async () => ({
-        content: [{ type: "text" as const, text: "ok" }],
-      })),
+      speakTool(expressions, mode, speechReview),
       recallTool(mode.chatRecall),
       recallEpisodeTool(mode.chatRecall),
       ...(mode.kind === "work"
@@ -150,6 +151,22 @@ export function tsukumoServer(
     ],
   })
 }
+
+/** セリフを受け取るツール。差し戻すかは仕事のときだけ `SpeechReview` が決める。 */
+function speakTool(
+  expressions: readonly ExpressionChoice[],
+  mode: SessionMode,
+  review: SpeechReview,
+) {
+  return tool(SPEAK_TOOL_NAME, SPEAK_TOOL_DESCRIPTION, speechShape(expressions), async () => {
+    const verdict = mode.kind === "work" ? review.judge() : ACCEPTED_SPEECH
+    return verdict.kind === "rejected"
+      ? { content: [{ type: "text" as const, text: verdict.text }], isError: true }
+      : { content: [{ type: "text" as const, text: "ok" }] }
+  })
+}
+
+const ACCEPTED_SPEECH = { kind: "accepted" } as const satisfies SpeechVerdict
 
 /**
  * レポートを受け取るツール。差し戻しの判定の窓口はここだけ（`ReportReview`）。
