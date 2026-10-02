@@ -52,7 +52,7 @@
     "at": 1768438800000,
     "event": {
       "kind": "request",
-      "text": "長いレポートの書き方を確かめたい（架空の依頼）",
+      "text": "一時のディレクトリを片付けたい（架空の依頼）",
       "images": []
     }
   },
@@ -60,17 +60,42 @@
     "received": "event",
     "at": 1768438800000,
     "event": {
-      "kind": "speech",
-      "text": "書いてみるね。",
-      "expression": "default"
+      "kind": "work-plan",
+      "phases": [
+        "片付ける場所を調べる",
+        "片付ける"
+      ],
+      "current": 1,
+      "phaseSummary": "架空の一時のディレクトリが1つ残っていた。"
     }
   },
   {
     "received": "event",
     "at": 1768438800000,
     "event": {
-      "kind": "report-drafting",
-      "toolUseId": "fake-report-call-long"
+      "kind": "tool-started",
+      "toolUseId": "fake-strip-ask-1",
+      "name": "Bash",
+      "input": {
+        "command": "rm -rf /tmp/dummy/fake-home"
+      }
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "pending-changed",
+      "pending": [
+        {
+          "kind": "permission",
+          "id": "fake-strip-ask-1",
+          "toolName": "Bash",
+          "input": {
+            "command": "rm -rf /tmp/dummy/fake-home"
+          }
+        }
+      ]
     }
   }
 ]

@@ -1,0 +1,8 @@
+/* 札の頭。長いレポートを読みながら前後へ移れ、進み具合も見えるよう、転がっても上に残す。
+   貼り付く位置は領域の余白ぶん上（`--region-padding`。`layout.module.css`）。
+   sticky は転がる器の余白の内側を基準にするので、0 のままだと頭の上の余白の帯を本文が流れて見える（実測）。 */
+.turn-card-head {
+  position: sticky;
+  top: calc(-1 * var(--region-padding, 0px));
+  z-index: 1;
+}

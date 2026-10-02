@@ -1,0 +1,167 @@
+[
+  {
+    "received": "hello",
+    "protocolVersion": "<protocol-version>"
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "session-info",
+      "sessionId": "fake-session",
+      "model": "opus",
+      "permissionMode": "auto",
+      "slashCommands": [
+        "clear",
+        "compact",
+        "doctor"
+      ],
+      "terminalSlashCommands": [
+        "doctor"
+      ]
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "command-descriptions",
+      "descriptions": [
+        {
+          "name": "clear",
+          "description": "会話を消して始め直す（架空の説明）"
+        },
+        {
+          "name": "compact",
+          "description": "会話を要約してまとめる（架空の説明）"
+        }
+      ]
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "speech",
+      "text": "疑似セッションの駆動で立ち上がったよ。ここはぜんぶ作り物の会話。",
+      "expression": "default"
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "request",
+      "text": "集計の関数とスクリプトを足したい（架空の依頼）",
+      "images": []
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "work-plan",
+      "phases": [
+        "今の形を調べる",
+        "集計の関数とスクリプト",
+        "画面につなぐ",
+        "文書と検証を揃える"
+      ],
+      "current": 0,
+      "phaseSummary": ""
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "tool-started",
+      "toolUseId": "fake-strip-1",
+      "name": "Read",
+      "input": {
+        "file_path": "/tmp/dummy/metric.ts"
+      }
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "tool-finished",
+      "toolUseId": "fake-strip-1",
+      "content": "ダミーの読み取り結果",
+      "isError": false
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "work-plan",
+      "phases": [
+        "今の形を調べる",
+        "集計の関数とスクリプト",
+        "画面につなぐ",
+        "文書と検証を揃える"
+      ],
+      "current": 1,
+      "phaseSummary": "架空の数は1か所で数えていた。"
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "tool-started",
+      "toolUseId": "fake-strip-2",
+      "name": "Write",
+      "input": {
+        "file_path": "/tmp/dummy/metric-summary.ts"
+      }
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "tool-finished",
+      "toolUseId": "fake-strip-2",
+      "content": "ダミーの書き込み結果",
+      "isError": false
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "tool-started",
+      "toolUseId": "fake-strip-3",
+      "name": "Bash",
+      "input": {
+        "command": "pnpm exec prettier --write /tmp/dummy"
+      }
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "tool-finished",
+      "toolUseId": "fake-strip-3",
+      "content": "ダミーの失敗の出力",
+      "isError": true
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "tool-started",
+      "toolUseId": "fake-strip-4",
+      "name": "Bash",
+      "input": {
+        "command": "pnpm exec vitest run /tmp/dummy/metric"
+      }
+    }
+  }
+]

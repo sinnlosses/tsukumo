@@ -1,0 +1,119 @@
+/* 進み具合の帯。札の頭の真下に、頭と一緒に貼り付く。 */
+
+.work-strip {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  padding: 0.625rem 1.125rem;
+  border-bottom: 1px solid var(--rule-quiet);
+  background: var(--ground);
+}
+/* 1行目。丸の並びは縮めず、今の段の名前だけが縮んで末尾を「…」にする（7段でも狭い窓でも1行）。 */
+.work-strip-line {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+.work-strip-track {
+  display: flex;
+  flex: none;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+/* 丸と丸のあいだの線は、2つ目以降の丸の左に描く。済んだ段までの線だけ差し色にする。 */
+.work-strip-phase {
+  display: flex;
+  align-items: center;
+}
+.work-strip-phase + .work-strip-phase::before {
+  content: "";
+  width: 0.75rem;
+  height: 2px;
+  background: var(--rule);
+}
+.work-strip-phase[data-phase-state="done"] + .work-strip-phase::before {
+  background: var(--accent);
+}
+.work-strip-phase > span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 1.25rem;
+  height: 1.25rem;
+  border: 1.5px solid var(--rule);
+  border-radius: 50%;
+  color: var(--ink-quiet);
+  font-family: var(--font-mono);
+  font-size: var(--font-label);
+  line-height: 1;
+}
+.work-strip-phase[data-phase-state="done"] > span {
+  border-color: transparent;
+  background: color-mix(in srgb, var(--surface), var(--accent) 30%);
+  color: var(--accent);
+}
+.work-strip-phase[data-phase-state="current"] > span {
+  width: 1.375rem;
+  height: 1.375rem;
+  border: 2px solid var(--accent);
+  color: var(--accent);
+}
+.work-strip-phase[data-phase-state="asking"] > span {
+  width: 1.375rem;
+  height: 1.375rem;
+  border: 2px solid var(--state-warn);
+  background: color-mix(in srgb, var(--surface), var(--state-warn) 15%);
+  color: var(--state-warn);
+}
+.work-strip-head {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.work-strip-side {
+  flex: none;
+  font-family: var(--font-mono);
+  white-space: nowrap;
+}
+.work-strip-toggle {
+  flex: none;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+/* 2行目。高さは字1行ぶんで保ち、長い要約は末尾を「…」にする。 */
+.work-strip-activity {
+  display: flex;
+  gap: 0.5rem;
+  min-width: 0;
+  margin: 0;
+}
+.work-strip-activity-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.work-strip-activity.is-mono .work-strip-activity-text {
+  font-family: var(--font-mono);
+  white-space: pre;
+}
+.work-strip-retry {
+  flex: none;
+  font-family: var(--font-mono);
+  white-space: nowrap;
+}
+/* 開いた依頼の手順の一覧。帯の真下に本文を押し下げて開き、高さを超えたら内側で転がす。 */
+.work-strip-steps {
+  max-height: 40dvh;
+  overflow-y: auto;
+  padding-top: 0.375rem;
+  border-top: 1px solid var(--rule-quiet);
+  font-size: var(--font-secondary);
+}

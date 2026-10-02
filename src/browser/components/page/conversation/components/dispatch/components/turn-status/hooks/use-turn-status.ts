@@ -1,17 +1,13 @@
 // `<TurnStatus>` のロジック。経過時間の刻みと、送信⇄中断のどちらを出すかを畳んだ値にして返す。
 //
-// 経過時間は `state.turn` が持つ始まった時刻から数える。
-// ターンが終わっていても `backgroundTasks` が残っている間は「経過」のまま数え続け、残っていないターンの終わりで初めてその時刻に止まる。
-// 1秒の刻みはここのローカルなタイマーで、`SessionState` に秒数は持たない。
+// 経過時間と再試行中の知らせを出すのは雑談モードのときだけ。
+// 1秒の刻みはローカルなタイマーで、`SessionState` に秒数は持たない。
 //
 // 押す先を決めるのもここ。
 // 進行中でなければ `type="submit"` で、押すと `<Composer>` の `onSubmit` がそのまま依頼を送る（この部品は `<form>` の中に置かれることを前提にする）。
 // 進行中は `interrupt` を dispatch する `type="button"` にして、送信と中断が同時に押せる状態を作らない。
 //
 // API の知らせ（再試行中・利用上限・失敗の理由）もこの行に出す。出すのは1つだけで、強いほうを選ぶ（`turnStatusNotice`）。
-// 失敗で終わったターンは経過時間の字も「所要」から「失敗」に変える（色だけで伝えない）。
-
-import { useEffect, useState } from "react"
 
 import type { ApiTrouble } from "../../../../../../../../../shared/session-driver/api-trouble.ts"
 import type {
@@ -19,22 +15,22 @@ import type {
   RateLimitBucket,
 } from "../../../../../../../../../shared/session-driver/rate-limit.ts"
 import type { TurnProgress } from "../../../../../../../../../shared/session/session-state.ts"
-import { formatElapsed } from "../../../../../../../../../shared/utils/elapsed-time.ts"
 import { useQuestionAnswer } from "../../../../../../../../stores/question-answer.ts"
 import { useSession } from "../../../../../../../../stores/session.ts"
-import { dayAwareClockTime, nowEpochMilliseconds } from "../../../../../../../../utils/clock.ts"
-import { apiErrorLabel, turnFailureLabel } from "../../../../../domain/api-error-label.ts"
+import { dayAwareClockTime } from "../../../../../../../../utils/clock.ts"
+import { apiRetryNotice, turnFailureLabel } from "../../../../../domain/api-error-label.ts"
+import {
+  isTurnCounting,
+  turnElapsedLabel,
+  turnElapsedText,
+} from "../../../../../domain/turn-elapsed.ts"
+import { useNowWhile } from "../../../../hooks/use-now-while.ts"
 
 const SEND_LABEL = "送信"
 /** 答え待ちの質問があるあいだの送るボタンの字（最後の1問なら「答える」、手前なら「次へ」）。 */
 const ANSWER_LABEL = "答える"
 const NEXT_LABEL = "次へ"
 const INTERRUPT_LABEL = "中断"
-const ELAPSED_LABEL = "経過"
-const FINISHED_LABEL = "所要"
-/** 失敗で終わったターンの経過時間に添える字（「所要」の代わり）。 */
-const FAILED_LABEL = "失敗"
-const TICK_INTERVAL_MS = 1000
 
 /** 押せる口。送信と中断は同時に出さないので、どちらか1つに畳んでから presenter へ渡す。 */
 export type TurnStatusAction =
@@ -55,12 +51,18 @@ export type TurnStatusNotice =
       readonly detail: string
     }
 
+/**
+ * 経過時間の表示。仕事のときは出さない（`none`）。
+ * `label` は進行中は「経過」、終わったあとは「所要」、失敗で終わったら「失敗」。
+ * `text` は経過・所要で、まだ一度も依頼が無ければ `-`。
+ */
+export type TurnStatusElapsed =
+  | { readonly kind: "none" }
+  | { readonly kind: "shown"; readonly label: string; readonly text: string }
+
 /** `<TurnStatus>` が画面に出す形。 */
 export type TurnStatusModel = {
-  /** 経過時間に添える字（進行中は「経過」、終わったあとは「所要」、失敗で終わったら「失敗」）。 */
-  readonly elapsedLabel: string
-  /** 経過（進行中）・所要（終わったあと）。まだ一度も依頼が無ければ `-`。 */
-  readonly elapsedText: string
+  readonly elapsed: TurnStatusElapsed
   readonly action: TurnStatusAction
   readonly notice: TurnStatusNotice
 }
@@ -83,22 +85,18 @@ export function useTurnStatus(): TurnStatusModel {
   const turn = useSession((session) => session.state.turn)
   const apiTrouble = useSession((session) => session.state.apiTrouble)
   const rateLimit = useSession((session) => session.state.rateLimit)
+  const chatMode = useSession((session) => session.state.chatMode)
   const backgroundTaskCount = useSession((session) => session.state.backgroundTasks.length)
-  const [now, setNow] = useState(() => nowEpochMilliseconds())
-  const counting = isCounting(turn, backgroundTaskCount)
-
-  // 数えている間だけ1秒ごとに刻む。終わったら止める（終わった時刻で経過時間が固定されるので、タイマーは要らない）。
-  useEffect(() => {
-    if (!counting) {
-      return undefined
-    }
-    const timer = setInterval(() => setNow(nowEpochMilliseconds()), TICK_INTERVAL_MS)
-    return () => clearInterval(timer)
-  }, [counting])
+  const now = useNowWhile(chatMode && isTurnCounting(turn, backgroundTaskCount))
 
   return {
-    elapsedLabel: elapsedLabel(turn, backgroundTaskCount),
-    elapsedText: elapsedText(turn, backgroundTaskCount, now),
+    elapsed: chatMode
+      ? {
+          kind: "shown",
+          label: turnElapsedLabel(turn, backgroundTaskCount),
+          text: turnElapsedText(turn, backgroundTaskCount, now),
+        }
+      : { kind: "none" },
     action:
       turn.kind === "running" && question.kind !== "asking"
         ? {
@@ -110,9 +108,11 @@ export function useTurnStatus(): TurnStatusModel {
             kind: "send",
             label: sendLabel(question.kind === "asking" ? question.last : undefined),
           },
-    notice: turnStatusNotice(turn, apiTrouble, rateLimit, now),
+    notice: turnStatusNotice(turn, chatMode ? apiTrouble : NO_API_TROUBLE, rateLimit, now),
   }
 }
+
+const NO_API_TROUBLE = { kind: "none" } as const satisfies ApiTrouble
 
 /**
  * 行に出す API の知らせ。強い順に1つだけ: 進行中の再試行 → 利用上限に達した → 失敗で終わったターンの理由。
@@ -126,15 +126,7 @@ function turnStatusNotice(
   now: number,
 ): TurnStatusNotice {
   if (turn.kind === "running" && apiTrouble.kind === "retrying") {
-    const status =
-      apiTrouble.errorStatus === undefined ? "応答なし" : String(apiTrouble.errorStatus)
-    const seconds = Math.max(1, Math.round(apiTrouble.retryDelayMs / 1000))
-    return {
-      kind: "shown",
-      tone: "warn",
-      label: `再試行中 ${String(apiTrouble.attempt)}/${String(apiTrouble.maxRetries)}`,
-      detail: `${apiErrorLabel(apiTrouble.error)}（${status}）。${String(seconds)}秒おいて呼び直す`,
-    }
+    return { kind: "shown", tone: "warn", ...apiRetryNotice(apiTrouble) }
   }
   if (rateLimit.kind === "rejected") {
     return rateLimitNotice(rateLimit, now)
@@ -169,31 +161,4 @@ function sendLabel(lastQuestion: boolean | undefined): string {
     return SEND_LABEL
   }
   return lastQuestion ? ANSWER_LABEL : NEXT_LABEL
-}
-
-/** 依頼を送ってから、まだ数え続けているか。ターンが終わっていても背景のタスクが残っている間は数える。 */
-function isCounting(turn: TurnProgress, backgroundTaskCount: number): boolean {
-  return turn.kind === "running" || (turn.kind === "finished" && backgroundTaskCount > 0)
-}
-
-/** 経過時間に添える字。{@link isCounting} の間は「経過」、そうでなければ「所要」・「失敗」。 */
-function elapsedLabel(turn: TurnProgress, backgroundTaskCount: number): string {
-  if (turn.kind !== "finished" || backgroundTaskCount > 0) {
-    return ELAPSED_LABEL
-  }
-  return turn.ending.kind === "failed" ? FAILED_LABEL : FINISHED_LABEL
-}
-
-/**
- * 経過（進行中）・所要（終わったあと）として出す文字列。まだ一度も依頼が無ければ `-`。
- * `now` を使うのは {@link isCounting} の間だけで、数え終わったターンは終わった時刻で固定される。
- */
-function elapsedText(turn: TurnProgress, backgroundTaskCount: number, now: number): string {
-  if (turn.kind === "idle") {
-    return "-"
-  }
-  if (turn.kind === "finished" && backgroundTaskCount === 0) {
-    return formatElapsed(Math.max(0, Math.floor((turn.finishedAt - turn.startedAt) / 1000)))
-  }
-  return formatElapsed(Math.max(0, Math.floor((now - turn.startedAt) / 1000)))
 }

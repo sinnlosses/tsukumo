@@ -1,10 +1,11 @@
 /* メインビュー。ターンの札と頭・依頼の続き・ステップのカードを持つ。 */
 
+/* `--turn-card-head-height` は札の頭（題の行と進み具合の帯）の外寸で、貼り付いた頭の真下を指す位置に使う。
+   ここの値は測る前の1行ぶんで、`useTurnCardHeadHeight` が実測した高さを同じ名前で書き込む。 */
 .main-turns {
+  --turn-card-head-height: calc(2.5rem + 1px);
   display: flex;
   flex-direction: column;
-  /* 領域の高さいっぱいに伸ばす。末尾のいまの作業の札（`CurrentWorkCapsule`）を、本文が短くても領域の下端に置くため。 */
-  min-height: 100%;
   /* 筆先に添うミニ立ち絵を置く基準（`mini-portrait.module.css`）。
      本文と一緒に転がってほしいので、ビューポートではなくここを原点にする。
      座標を測る側は `data-brush-origin` の印でこの要素を探す。 */
@@ -17,7 +18,7 @@
 .main-turns:focus {
   outline: none;
 }
-/* いま出している中身（迎える口・作業の地図・レポート）の入れ物。
+/* いま出している中身（迎える口・働くあいだの札・レポート）の入れ物。
    入れ替わったときに作り直され、不透明度だけで1回現れる。古い中身は消すだけで動きを付けない。 */
 .main-view-content {
   animation: main-view-content-enter 160ms ease-out;
@@ -36,18 +37,15 @@
   }
 }
 /* ターン1件ぶんの札。
-   頭（`.turn-header`）と区切り線の下に、目次の縁とレポートを置く（`ReportOutline`）。
+   頭（題の行と進み具合の帯）の下に、目次の縁とレポートを置く（`ReportOutline`）。
    札は枠を持たず、領域の余白を打ち消して領域の縁まで広がる（領域の枠と札の枠が二重に見えないように）。
-   `overflow` を付けない（付けると頭の `position: sticky` が札の中で効かなくなる）。
-   `--turn-header-height` は頭の外寸で、目次の縁が頭の真下に貼り付く位置に使う。
-   ここの値は測る前の1行ぶんで、頭が実測した高さを同じ名前で書き込む（`useTurnHeaderHeight`）。 */
+   `overflow` を付けない（付けると頭の `position: sticky` が札の中で効かなくなる）。 */
 .turn-card {
-  --turn-header-height: calc(2.5rem + 1px);
   margin: calc(-1 * var(--region-padding, 0px)) calc(-1 * var(--region-padding, 0px)) 0;
 }
 /* 目次から飛んだ見出しが、貼り付いた頭の下に隠れないようにする。 */
 .turn-card :is(h4, h5) {
-  scroll-margin-top: calc(var(--turn-header-height) + 0.5rem);
+  scroll-margin-top: calc(var(--turn-card-head-height) + 0.5rem);
 }
 /* ステップは縦に1本で積む（Z字に読ませない）。カードの枠は「ひとかたまり」の区切りを見せるためだけに使い、番号は振らない。 */
 .main-step {

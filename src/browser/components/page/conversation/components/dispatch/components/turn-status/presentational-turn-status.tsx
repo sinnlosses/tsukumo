@@ -44,26 +44,28 @@ export function PresentationalTurnStatus(props: PresentationalTurnStatusProps): 
           </span>
         </Text>
       )}
-      <Text
-        element="span"
-        size="secondary"
-        tone="ink-quiet"
-        weight="inherit"
-        className={styles["dispatch-elapsed-row"]}
-      >
-        <Text element="span" size="inherit" tone="inherit" weight="inherit" className="">
-          {props.elapsedLabel}
-        </Text>{" "}
+      {props.elapsed.kind === "shown" && (
         <Text
           element="span"
-          size="inherit"
-          tone="ink"
+          size="secondary"
+          tone="ink-quiet"
           weight="inherit"
-          className={styles["dispatch-elapsed"]}
+          className={styles["dispatch-elapsed-row"]}
         >
-          {props.elapsedText}
+          <Text element="span" size="inherit" tone="inherit" weight="inherit" className="">
+            {props.elapsed.label}
+          </Text>{" "}
+          <Text
+            element="span"
+            size="inherit"
+            tone="ink"
+            weight="inherit"
+            className={styles["dispatch-elapsed"]}
+          >
+            {props.elapsed.text}
+          </Text>
         </Text>
-      </Text>
+      )}
       {props.action.kind === "interrupt" ? (
         <Button
           variant="outline-hover-danger"

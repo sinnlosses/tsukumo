@@ -480,8 +480,6 @@
                         }
                       ]
                     },
-                    "経過",
-                    "-",
                     {
                       "tag": "button",
                       "attributes": {

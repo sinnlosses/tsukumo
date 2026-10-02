@@ -2,7 +2,7 @@
 //
 // 語は「何が起きたか」を言い、直し方までは言わない（直し方は種類ごとに違い、tsukumo からは確かめられない）。
 
-import type { ApiErrorKind } from "../../../../../shared/session-driver/api-trouble.ts"
+import type { ApiErrorKind, ApiTrouble } from "../../../../../shared/session-driver/api-trouble.ts"
 import type { TurnFailure } from "../../../../../shared/session-driver/turn-failure.ts"
 
 const API_ERROR_LABEL = {
@@ -24,6 +24,21 @@ const API_ERROR_LABEL = {
 /** API のエラーの種類の語（「API が混んでいる」など）。 */
 export function apiErrorLabel(error: ApiErrorKind): string {
   return API_ERROR_LABEL[error]
+}
+
+/** 呼び直しを待っているあいだの知らせ。`label` は行に出す短い字、`detail` は `title` で読ませる全文。 */
+export type ApiRetryNotice = { readonly label: string; readonly detail: string }
+
+/** 呼び直しの知らせ（「再試行中 2/10」と、理由と待ち時間）。 */
+export function apiRetryNotice(
+  retry: Extract<ApiTrouble, { readonly kind: "retrying" }>,
+): ApiRetryNotice {
+  const status = retry.errorStatus === undefined ? "応答なし" : String(retry.errorStatus)
+  const seconds = Math.max(1, Math.round(retry.retryDelayMs / 1000))
+  return {
+    label: `再試行中 ${String(retry.attempt)}/${String(retry.maxRetries)}`,
+    detail: `${apiErrorLabel(retry.error)}（${status}）。${String(seconds)}秒おいて呼び直す`,
+  }
 }
 
 /**

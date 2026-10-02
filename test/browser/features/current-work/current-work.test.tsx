@@ -49,7 +49,7 @@ function questionPending(headers: readonly string[]): PendingAsk {
 }
 
 /**
- * 帯の札を描く。会話の画面の帯には札が無い（メインビューに浮かぶ札が代わる）ので、hash が空ならキャラクター画面で見る。
+ * 帯の札を描く。会話の画面の帯には札が無い（メインビューの進み具合の帯が代わる）ので、hash が空ならキャラクター画面で見る。
  * 画面を自分で決めたいテストは、呼ぶ前に hash を書く。
  */
 function renderScreenNav(state: Partial<SessionState> = {}): void {
@@ -169,7 +169,7 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
       expect(document.querySelector(".current-work-background-heading")?.textContent).toBe(
         "背景で動いているもの（2 件）",
       )
-      const rows = [...document.querySelectorAll(".current-work-background-task")]
+      const rows = [...document.querySelectorAll(".current-work-background li")]
       expect(rows.map((row) => row.textContent)).toEqual([
         "… シェル 架空の待ち",
         "… サブエージェント",

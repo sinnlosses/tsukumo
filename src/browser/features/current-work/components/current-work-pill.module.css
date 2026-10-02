@@ -185,8 +185,7 @@
 .current-work-full-heading {
   margin: 0 0 0.2rem;
 }
-.current-work-full-text,
-.current-work-failure pre {
+.current-work-full-text {
   margin: 0;
   padding: 0.4rem;
   max-height: 12rem;
@@ -213,43 +212,13 @@
   font-family: var(--font-mono);
 }
 /* 回る印は実行中の手順と同じ（`prefers-reduced-motion: reduce` では `theme.css` の全体の規則が止める）。 */
-.current-work-background-task .current-work-step-mark {
+.current-work-background-mark {
+  display: inline-block;
   animation: current-work-spin 1s linear infinite;
 }
 /* 色は `Text` が持つ。margin だけ残す。 */
 .current-work-steps-heading {
   margin: 0.4rem 0 0.2rem;
-}
-/* 手順を段で区切る小見出し。字の太さは `Text` が持つ。 */
-.current-work-phase-heading {
-  margin: 0.4rem 0 0.15rem;
-}
-.current-work-steps {
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  font-family: var(--font-mono);
-}
-/* サブエージェントの中は1段下げる。 */
-.current-work-step-nested {
-  margin-left: 1rem;
-}
-/* 済みは薄く、実行中は普通の濃さ。 */
-.current-work-step-done {
-  color: var(--ink-quiet);
-}
-.current-work-step-failed {
-  color: var(--ink);
-}
-.current-work-step-mark {
-  display: inline-block;
-}
-/* 実行中の印だけ回す（`prefers-reduced-motion: reduce` では `theme.css` の全体の規則が止める）。 */
-.current-work-step-running .current-work-step-mark {
-  animation: current-work-spin 1s linear infinite;
 }
 @keyframes current-work-spin {
   from {
@@ -263,17 +232,6 @@
 .current-work-toggle-all {
   margin-top: 0.4rem;
 }
-/* 失敗した手順の中身。印は文字（「失敗」）で、色はその補助。 */
-.current-work-failure > summary {
-  cursor: pointer;
-}
-.current-work-failure-output {
-  border: 1px solid var(--state-ng);
-}
-.current-work-failure-input {
-  border: none;
-}
-
 /* 面いっぱいの幅で、押すと重ねずにその場で下に広がる札（`data-variant="inline"`）。
    `.current-work` は既定で横並びの flex なので、一覧を `position: static` にするここでは `flex-direction: column` にしないと札の右に並んでしまう。 */
 .current-work[data-variant="inline"] {
@@ -289,51 +247,4 @@
   width: 100%;
   max-width: none;
   margin-top: 0.3rem;
-}
-
-/* 本文の上に浮かぶ札（`data-variant="capsule"`）。
-   帯の札より背を詰めて影を落とし、本文の上に重ねても縁が読めるようにする。
-   地は差し色を混ぜた `--surface-accent` を少しだけ透かす（下の本文が完全には消えない）。 */
-/* 幅は置き場が決めた幅いっぱい。要約は残りの幅で末尾を「…」にする。 */
-.current-work[data-variant="capsule"] {
-  flex: none;
-  width: 100%;
-}
-.current-work[data-variant="capsule"] .current-work-toggle {
-  max-width: none;
-  height: 36px;
-  padding: 0 16px 0 12px;
-  border-radius: 18px;
-  background: color-mix(in srgb, var(--surface-accent) 94%, transparent);
-  box-shadow: 0 10px 30px color-mix(in srgb, var(--ground) 60%, transparent);
-}
-/* 帯では状態が変わっても区切りの位置がずれないよう語の幅を揃えるが、浮かぶ札は中身の幅なので揃えない。 */
-.current-work[data-variant="capsule"] .current-work-word {
-  min-width: 0;
-}
-/* 一覧は札の上へ開き、札の真ん中にそろえる（札はメインビューの下端に居るので、下へ開く余地が無い）。
-   `--current-work-list-max-height` は `useCurrentWorkListMaxHeight` が枠の外寸で測って書くので、
-   `box-sizing: border-box` を外すと上端がメインビューの頭に食い込む。 */
-.current-work[data-variant="capsule"] .current-work-list {
-  top: auto;
-  bottom: calc(100% + 0.4rem);
-  left: 50%;
-  box-sizing: border-box;
-  max-height: var(--current-work-list-max-height, 60dvh);
-  transform: translateX(-50%);
-}
-.current-work-spinner {
-  flex: none;
-  animation: current-work-spin 1s linear infinite;
-}
-.current-work-spinner-track {
-  fill: none;
-  stroke: color-mix(in srgb, var(--rule), var(--accent) 25%);
-  stroke-width: 3;
-}
-.current-work-spinner-arc {
-  fill: none;
-  stroke: var(--accent);
-  stroke-width: 3;
-  stroke-linecap: round;
 }

@@ -17,7 +17,7 @@
             {
               "tag": "div",
               "attributes": {
-                "data-main-view-content": "work-map"
+                "data-main-view-content": "work"
               },
               "children": [
                 {
@@ -91,6 +91,93 @@
                       ]
                     },
                     {
+                      "tag": "section",
+                      "attributes": {
+                        "aria-label": "進み具合",
+                        "data-work-strip": "working"
+                      },
+                      "children": [
+                        {
+                          "tag": "ol",
+                          "children": [
+                            {
+                              "tag": "li",
+                              "attributes": {
+                                "data-phase-state": "done",
+                                "aria-label": "1. 今の形を調べる（済）"
+                              },
+                              "children": [
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  },
+                                  "children": [
+                                    "✓"
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "tag": "li",
+                              "attributes": {
+                                "data-phase-state": "current",
+                                "aria-label": "2. ID の変換を両方の形に対応させる（今の段）"
+                              },
+                              "children": [
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  },
+                                  "children": [
+                                    "2"
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "tag": "li",
+                              "attributes": {
+                                "data-phase-state": "upcoming",
+                                "aria-label": "3. 文書と検証を揃える"
+                              },
+                              "children": [
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  },
+                                  "children": [
+                                    "3"
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        "ID の変換を両方の形に対応させる",
+                        "2/3 · 経過 1分00秒",
+                        {
+                          "tag": "button",
+                          "attributes": {
+                            "aria-disabled": "false",
+                            "aria-expanded": "false",
+                            "type": "button"
+                          },
+                          "children": [
+                            "手順 4 ▾"
+                          ]
+                        },
+                        {
+                          "tag": "p",
+                          "children": [
+                            "Bash pnpm run test · 1分00秒"
+                          ]
+                        }
+                      ]
+                    },
+                    {
                       "tag": "div",
                       "attributes": {
                         "data-outline": "hidden",
@@ -145,43 +232,6 @@
                         }
                       ]
                     }
-                  ]
-                }
-              ]
-            },
-            {
-              "tag": "div",
-              "attributes": {
-                "data-work-state": "running",
-                "data-chat-idle": "false",
-                "data-variant": "capsule"
-              },
-              "children": [
-                {
-                  "tag": "button",
-                  "attributes": {
-                    "aria-expanded": "false",
-                    "type": "button"
-                  },
-                  "children": [
-                    {
-                      "tag": "svg"
-                    },
-                    "作業中",
-                    {
-                      "tag": "span",
-                      "attributes": {
-                        "aria-hidden": "true"
-                      }
-                    },
-                    "2/3 ID の変換を両方の形に対応させる",
-                    {
-                      "tag": "span",
-                      "attributes": {
-                        "aria-hidden": "true"
-                      }
-                    },
-                    "Bash: pnpm run test"
                   ]
                 }
               ]

@@ -4663,6 +4663,354 @@
       ]
     },
     {
+      "name": "work-strip-running",
+      "steps": [
+        {
+          "afterMs": 0,
+          "event": {
+            "kind": "request",
+            "text": "集計の関数とスクリプトを足したい（架空の依頼）",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 100,
+          "event": {
+            "kind": "work-plan",
+            "phases": [
+              "今の形を調べる",
+              "集計の関数とスクリプト",
+              "画面につなぐ",
+              "文書と検証を揃える"
+            ],
+            "current": 0,
+            "phaseSummary": ""
+          }
+        },
+        {
+          "afterMs": 200,
+          "event": {
+            "kind": "tool-started",
+            "toolUseId": "fake-strip-1",
+            "name": "Read",
+            "input": { "file_path": "/tmp/dummy/metric.ts" }
+          }
+        },
+        {
+          "afterMs": 2500,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-strip-1",
+            "content": "ダミーの読み取り結果",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 2600,
+          "event": {
+            "kind": "work-plan",
+            "phases": [
+              "今の形を調べる",
+              "集計の関数とスクリプト",
+              "画面につなぐ",
+              "文書と検証を揃える"
+            ],
+            "current": 1,
+            "phaseSummary": "架空の数は1か所で数えていた。"
+          }
+        },
+        {
+          "afterMs": 2700,
+          "event": {
+            "kind": "tool-started",
+            "toolUseId": "fake-strip-2",
+            "name": "Write",
+            "input": { "file_path": "/tmp/dummy/metric-summary.ts" }
+          }
+        },
+        {
+          "afterMs": 2900,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-strip-2",
+            "content": "ダミーの書き込み結果",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 3000,
+          "event": {
+            "kind": "tool-started",
+            "toolUseId": "fake-strip-3",
+            "name": "Bash",
+            "input": { "command": "pnpm exec prettier --write /tmp/dummy" }
+          }
+        },
+        {
+          "afterMs": 3200,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-strip-3",
+            "content": "ダミーの失敗の出力",
+            "isError": true
+          }
+        },
+        {
+          "afterMs": 3300,
+          "event": {
+            "kind": "tool-started",
+            "toolUseId": "fake-strip-4",
+            "name": "Bash",
+            "input": { "command": "pnpm exec vitest run /tmp/dummy/metric" }
+          }
+        },
+        {
+          "afterMs": 23000,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-strip-4",
+            "content": "ダミーのテスト結果",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 23100,
+          "event": {
+            "kind": "turn-finished",
+            "outcome": { "kind": "completed" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "work-strip-ask",
+      "steps": [
+        {
+          "afterMs": 0,
+          "event": {
+            "kind": "request",
+            "text": "一時のディレクトリを片付けたい（架空の依頼）",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 100,
+          "event": {
+            "kind": "work-plan",
+            "phases": ["片付ける場所を調べる", "片付ける"],
+            "current": 1,
+            "phaseSummary": "架空の一時のディレクトリが1つ残っていた。"
+          }
+        },
+        {
+          "afterMs": 200,
+          "event": {
+            "kind": "tool-started",
+            "toolUseId": "fake-strip-ask-1",
+            "name": "Bash",
+            "input": { "command": "rm -rf /tmp/dummy/fake-home" }
+          }
+        },
+        {
+          "afterMs": 300,
+          "event": {
+            "kind": "pending-changed",
+            "pending": [
+              {
+                "kind": "permission",
+                "id": "fake-strip-ask-1",
+                "toolName": "Bash",
+                "input": { "command": "rm -rf /tmp/dummy/fake-home" }
+              }
+            ]
+          }
+        },
+        {
+          "afterMs": 20000,
+          "event": {
+            "kind": "turn-finished",
+            "outcome": { "kind": "completed" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "work-strip-question",
+      "steps": [
+        {
+          "afterMs": 0,
+          "event": {
+            "kind": "request",
+            "text": "形をどちらに揃えるか決めたい（架空の依頼）",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 100,
+          "event": {
+            "kind": "work-plan",
+            "phases": ["今の形を調べる", "形を揃える", "文書と検証を揃える"],
+            "current": 1,
+            "phaseSummary": "架空の形が2つ並んでいた。"
+          }
+        },
+        {
+          "afterMs": 200,
+          "event": {
+            "kind": "tool-started",
+            "toolUseId": "fake-strip-question-1",
+            "name": "AskUserQuestion",
+            "input": {}
+          }
+        },
+        {
+          "afterMs": 300,
+          "event": {
+            "kind": "pending-changed",
+            "pending": [
+              {
+                "kind": "question",
+                "id": "fake-strip-question-1",
+                "questions": [
+                  {
+                    "header": "揃える形",
+                    "text": "架空の質問：どちらの形に揃える？",
+                    "multiSelect": false,
+                    "options": [
+                      {
+                        "label": "新しい形",
+                        "description": "架空の説明。新しい形に寄せ、古い形を読む口だけ残す。"
+                      },
+                      {
+                        "label": "古い形",
+                        "description": "架空の説明。古い形に寄せ、新しい形の呼び出しを書き直す。"
+                      },
+                      {
+                        "label": "両方",
+                        "description": "架空の説明。両方を受け付け、書き出しだけ新しい形にする。"
+                      }
+                    ]
+                  },
+                  {
+                    "header": "文書",
+                    "text": "架空の質問：文書も直す？",
+                    "multiSelect": false,
+                    "options": [
+                      { "label": "直す", "description": "架空の説明A" },
+                      { "label": "あとで", "description": "架空の説明B" }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "afterMs": 20000,
+          "event": {
+            "kind": "turn-finished",
+            "outcome": { "kind": "completed" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "work-strip-retry",
+      "steps": [
+        {
+          "afterMs": 0,
+          "event": {
+            "kind": "request",
+            "text": "API が混んでいる日に段取りのある作業を頼む（架空の依頼）",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 100,
+          "event": {
+            "kind": "work-plan",
+            "phases": ["今の形を調べる", "直す"],
+            "current": 0,
+            "phaseSummary": ""
+          }
+        },
+        {
+          "afterMs": 300,
+          "event": {
+            "kind": "api-retry",
+            "retry": {
+              "attempt": 2,
+              "maxRetries": 10,
+              "retryDelayMs": 6000,
+              "errorStatus": 529,
+              "error": "overloaded"
+            }
+          }
+        },
+        {
+          "afterMs": 20000,
+          "event": {
+            "kind": "turn-finished",
+            "outcome": { "kind": "completed" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "work-strip-long-report-quick",
+      "steps": [
+        {
+          "afterMs": 0,
+          "event": {
+            "kind": "request",
+            "text": "段取りのある作業の長いレポートを見たい（架空の依頼）",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 50,
+          "event": {
+            "kind": "work-plan",
+            "phases": ["調べる", "書く"],
+            "current": 0,
+            "phaseSummary": ""
+          }
+        },
+        {
+          "afterMs": 100,
+          "event": {
+            "kind": "work-plan",
+            "phases": ["調べる", "書く"],
+            "current": 1,
+            "phaseSummary": "架空の材料がそろった。"
+          }
+        },
+        {
+          "afterMs": 150,
+          "event": {
+            "kind": "work-plan",
+            "phases": ["調べる", "書く"],
+            "current": 2,
+            "phaseSummary": ""
+          }
+        },
+        {
+          "afterMs": 200,
+          "event": {
+            "kind": "utterance",
+            "text": "## 長いレポートの疑似セッション（架空）\n\n- これは架空の本文で、実物の会話ではない\n- 帯が本文の末尾を覆わないかを測る\n\n### 1. 一つ目の塊\n\n架空の段落。架空の段落。架空の段落。架空の段落。架空の段落。架空の段落。架空の段落。\n架空の段落。架空の段落。架空の段落。架空の段落。架空の段落。架空の段落。架空の段落。\n\n### 2. 二つ目の塊\n\n架空の段落。架空の段落。架空の段落。架空の段落。架空の段落。架空の段落。架空の段落。\n架空の段落。架空の段落。架空の段落。架空の段落。架空の段落。架空の段落。架空の段落。\n\n### 3. 三つ目の塊\n\n架空の段落。架空の段落。架空の段落。架空の段落。架空の段落。架空の段落。架空の段落。\n架空の段落。架空の段落。架空の段落。架空の段落。架空の段落。架空の段落。架空の段落。\n\n### 4. 四つ目の塊\n\n架空の段落。架空の段落。架空の段落。架空の段落。架空の段落。架空の段落。架空の段落。\n架空の段落。架空の段落。架空の段落。架空の段落。架空の段落。架空の段落。架空の段落。\n\nこれが本文の最後の段落（架空）。\n"
+          }
+        },
+        {
+          "afterMs": 300,
+          "event": {
+            "kind": "turn-finished",
+            "outcome": { "kind": "completed" }
+          }
+        }
+      ]
+    },
+    {
       "name": "resumed-report-quick",
       "steps": [
         {

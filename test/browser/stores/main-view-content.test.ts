@@ -36,12 +36,12 @@ function content(): ReturnType<typeof useMainViewContent.getState>["content"] {
 }
 
 describe("useMainViewContent", () => {
-  it("依頼の前は迎える口、送ると地図、閉じるとレポートへ進む", () => {
+  it("依頼の前は迎える口、送ると働くあいだの中身、閉じるとレポートへ進む", () => {
     putSession(INITIAL_SESSION_STATE)
     expect(content().kind).toBe("welcome")
 
     send()
-    expect(content()).toMatchObject({ kind: "work-map" })
+    expect(content()).toMatchObject({ kind: "work" })
 
     receive({ kind: "utterance", text: "架空のレポート" })
     finish()

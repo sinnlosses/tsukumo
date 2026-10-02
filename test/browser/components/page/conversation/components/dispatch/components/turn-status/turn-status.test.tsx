@@ -39,13 +39,31 @@ describe("TurnStatus", () => {
     expect(calls).toEqual([{ procedure: "session.interrupt" }])
   })
 
+  it("仕事のときは、経過時間も再試行中の知らせも行に出さない", () => {
+    renderTurnStatus({
+      turn: { kind: "running", startedAt: 0 },
+      apiTrouble: {
+        kind: "retrying",
+        at: 0,
+        attempt: 2,
+        maxRetries: 10,
+        retryDelayMs: 4000,
+        errorStatus: 529,
+        error: "overloaded",
+      },
+    })
+
+    expect(screen.queryByText("経過")).toBeNull()
+    expect(screen.queryByRole("status")).toBeNull()
+  })
+
   it("(5) 経過時間は running の起点から数え、ラベルは「経過」（進行中）", () => {
     const now = 1_700_000_010_000
     const clock = vi
       .spyOn(Temporal.Now, "instant")
       .mockReturnValue(Temporal.Instant.fromEpochMilliseconds(now))
     try {
-      renderTurnStatus({ turn: { kind: "running", startedAt: now - 5_000 } })
+      renderTurnStatus({ chatMode: true, turn: { kind: "running", startedAt: now - 5_000 } })
 
       expect(screen.getByText("経過")).toBeDefined()
       expect(screen.getByText("5秒")).toBeDefined()
@@ -56,6 +74,7 @@ describe("TurnStatus", () => {
 
   it("(5) finished になると経過時間が止まり、ラベルが「所要」に変わる", () => {
     renderTurnStatus({
+      chatMode: true,
       turn: { kind: "finished", startedAt: 0, finishedAt: 125_000, ending: { kind: "ended" } },
     })
 
@@ -70,6 +89,7 @@ describe("TurnStatus", () => {
       .mockReturnValue(Temporal.Instant.fromEpochMilliseconds(now))
     try {
       renderTurnStatus({
+        chatMode: true,
         turn: {
           kind: "finished",
           startedAt: now - 5_000,
@@ -121,6 +141,7 @@ describe("TurnStatus", () => {
   describe("API の知らせ（docs/architecture/display.md 4.2「入力欄」）", () => {
     it("失敗で終わったターンは「所要」ではなく「失敗」と理由の字を出す（色だけに頼らない）", () => {
       renderTurnStatus({
+        chatMode: true,
         turn: {
           kind: "finished",
           startedAt: 0,
@@ -134,8 +155,9 @@ describe("TurnStatus", () => {
       expect(screen.getByRole("status").textContent).toBe("API が混んでいる（overloaded）")
     })
 
-    it("進行中に呼び直しを待っているあいだは「再試行中 n/m」を出し、理由と待ち時間は title で読ませる", () => {
+    it("雑談のとき、進行中に呼び直しを待っているあいだは「再試行中 n/m」を出し、理由と待ち時間は title で読ませる", () => {
       renderTurnStatus({
+        chatMode: true,
         turn: { kind: "running", startedAt: 0 },
         apiTrouble: {
           kind: "retrying",
@@ -159,6 +181,7 @@ describe("TurnStatus", () => {
       const zone = vi.spyOn(Temporal.Now, "timeZoneId").mockReturnValue("UTC")
       try {
         renderTurnStatus({
+          chatMode: true,
           turn: {
             kind: "finished",
             startedAt: 0,

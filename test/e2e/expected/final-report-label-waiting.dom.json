@@ -17,7 +17,7 @@
             {
               "tag": "div",
               "attributes": {
-                "data-main-view-content": "work-map"
+                "data-main-view-content": "work"
               },
               "children": [
                 {
@@ -121,36 +121,6 @@
                         }
                       ]
                     }
-                  ]
-                }
-              ]
-            },
-            {
-              "tag": "div",
-              "attributes": {
-                "data-work-state": "background",
-                "data-chat-idle": "false",
-                "data-variant": "capsule"
-              },
-              "children": [
-                {
-                  "tag": "button",
-                  "attributes": {
-                    "aria-expanded": "false",
-                    "type": "button"
-                  },
-                  "children": [
-                    {
-                      "tag": "svg"
-                    },
-                    "背景で作業中",
-                    {
-                      "tag": "span",
-                      "attributes": {
-                        "aria-hidden": "true"
-                      }
-                    },
-                    "架空の短い待ち（2秒）"
                   ]
                 }
               ]
