@@ -24,6 +24,7 @@ import {
 import { useScreen, useScreenHref } from "../../../../stores/screen.tsx"
 import { useSession, useTurnRunning } from "../../../../stores/session.ts"
 import { useCharacterPicker, type ScreenNavCharacterPicker } from "./use-character-picker.ts"
+import { useProjectName } from "./use-project-name.ts"
 import {
   useSessionSwitcher,
   type ScreenNavSessionSwitcher,
@@ -104,7 +105,7 @@ export function useScreenNav(): ScreenNavView {
   const modelPermission = useModelPermission()
   const settings = useSettings(ref)
   const character = useCharacterPicker(ref)
-  const { tag: sessionTag, switcher } = useSessionSwitcher(currentRoomName())
+  const { tag: sessionTag, switcher } = useSessionSwitcher(currentRoomName(), useProjectName())
 
   function onSelect(): void {
     setMenuOpen(false)

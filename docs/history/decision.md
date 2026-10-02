@@ -7,6 +7,16 @@
 節は `## <出典のファイル> <節番号> <節の見出し>` の形で並べ、各節の先頭に**移した日付と
 出典の節**を1行で書く。探すときは出典の節名で `grep` する。
 
+## screen-design.md 13.9 部屋の名前（帯の主の字を部屋の名前からプロジェクト名へ変えた記録。2026-10-02 に覆した記録）
+
+2026-10-02 に `docs/architecture/screen-design.md` 13.9「部屋の名前」「セッションの札」から移す（UX を UX Design Awards の水準へ上げる挑戦の一環。利用者が「うまくいかなかったら戻す可能性はある」と言って任せた）。
+
+**旧い決定**（2026-09-22/23）: 部屋の名前（ビューのポートに割り当てた和の色名＋「の間」。語彙の外はポート番号）が、帯の左端の札の主の字（明朝の太字 18px）。短縮IDを添えて「浅葱の間 - FA」と並べる。
+
+**覆した理由**: 語彙の外のポートでは「39101 - FA」とポート番号と短縮IDだけが並び、何の仕事の窓か読めない。1024 幅ではさらに小さくなる。色名の語彙の中でも、名前から作業対象は分からない。
+
+**戻し方**: `src/browser/components/domain/screen-nav/hooks/use-session-switcher.ts` の `ScreenNavSessionTitle` を `room-only` に固定する（`project` の分岐と `use-project-name.ts` の呼び出しを外す）と元の形になる。手続き `repository.projectName` と `projectNameOf` は残してよい。E2E は `test/e2e/scenario-run.ts` の `<project>` の置き換えと、`session-switch-project` の期待値を外す。
+
 ## requirements.md 4.3 レポートの書き上げの演出（筆の対象・短いレポート・自動送りの上限。2026-10-02 に覆した記録）
 
 2026-10-02 に `docs/requirements.md` 4.3 と `docs/architecture/display.md` 4.2 から移す（UX を UX Design Awards の水準へ上げる挑戦の一環。利用者が「うまくいかなかったら戻す可能性はある」と言って任せた）。

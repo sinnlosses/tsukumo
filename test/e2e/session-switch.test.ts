@@ -1,3 +1,5 @@
+import path from "node:path"
+
 import type { Page } from "playwright-core"
 import { describe, it } from "vitest"
 
@@ -81,6 +83,22 @@ describe("セッションの切り替え", () => {
     await room.page.getByRole("button", { name: "メニュー" }).click()
     await room.page.getByRole("button", { name: SESSION_TAG }).filter({ visible: true }).click()
     await revealDigest(room.page)
+    await room.settleAndMatch(ELAPSED_MS)
+  })
+
+  it("帯の左端に作業ディレクトリの名前が主の字で出て、押すと切り替え画面が開く", async () => {
+    const room = await run.open({
+      scenario: "session-switch-project",
+      scene: "session-list",
+      viewport: "wide",
+      domRoots: ["screen-nav"],
+    })
+
+    await room.waitForEvent("sessions-changed")
+    const project = path.basename(room.cwd)
+    await room.page.getByRole("navigation").getByText(project, { exact: true }).waitFor()
+    await room.page.getByRole("button", { name: SESSION_TAG }).click()
+    await room.page.getByRole("dialog", { name: "セッションを切り替える" }).waitFor()
     await room.settleAndMatch(ELAPSED_MS)
   })
 })

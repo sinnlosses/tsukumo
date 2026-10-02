@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import { ScreenNav } from "../../../../../src/browser/components/domain/screen-nav/screen-nav.tsx"
@@ -12,6 +12,8 @@ import {
 import { setPageUrl } from "../../../../dom-environment.ts"
 import { characterInfo, characterPackEntry } from "../../../../fixture/character.ts"
 import { typedElement } from "../../../../typed-element.ts"
+import { queryClientWrapper } from "../../../query-client.tsx"
+import { rpcOutput, stubRpcFetch, type RpcFetchStub } from "../../../rpc-fetch-stub.ts"
 import { type CommandSpy, putSession, type SentCommand } from "../../../session-store.ts"
 
 const FIXTURE_PENDING: PendingAsk = {
@@ -44,7 +46,7 @@ const RUNNING_SESSION: Extract<SessionInfo, { kind: "running" }> = {
 
 function renderScreenNav(state: Partial<SessionState> = {}, spy: CommandSpy = () => {}): void {
   putSession({ ...INITIAL_SESSION_STATE, ...state }, spy)
-  render(<ScreenNav />)
+  render(<ScreenNav />, { wrapper: queryClientWrapper() })
 }
 
 describe("ScreenNav", () => {
@@ -67,6 +69,36 @@ describe("ScreenNav", () => {
     expect(document.querySelector(".screen-nav-identity .screen-nav-room")?.textContent).toBe(
       "菜の花の間",
     )
+  })
+
+  describe("プロジェクト名", () => {
+    let stub: RpcFetchStub | undefined = undefined
+    afterEach(() => {
+      stub?.restore()
+      stub = undefined
+    })
+
+    it("届くと主の字に出て、部屋の名前は補足に下がり、title で両方読める", async () => {
+      setPageUrl("http://127.0.0.1:7329/")
+      stub = stubRpcFetch(() => rpcOutput("fictional-project"))
+      renderScreenNav()
+
+      const title = await screen.findByTitle("fictional-project · 菜の花の間")
+      expect(title.querySelector(".screen-nav-project")?.textContent).toBe("fictional-project")
+      expect(title.querySelector(".screen-nav-room-note")?.textContent).toBe("菜の花の間")
+    })
+
+    it("届く前と、空で届いたときは、部屋の名前が主の字のまま", async () => {
+      setPageUrl("http://127.0.0.1:7329/")
+      stub = stubRpcFetch(() => rpcOutput(""))
+      renderScreenNav()
+
+      await waitFor(() => expect(stub?.calls()).toHaveLength(1))
+      expect(document.querySelector(".screen-nav-identity .screen-nav-room")?.textContent).toBe(
+        "菜の花の間",
+      )
+      expect(document.querySelector(".screen-nav-project")).toBeNull()
+    })
   })
 
   // 顔は帯の左端、部屋の名前の左（13.9「顔」）。

@@ -21,6 +21,7 @@ import {
   workPlanRecord,
 } from "../../../fixture/session-record.ts"
 import { typedElement } from "../../../typed-element.ts"
+import { queryClientWrapper } from "../../query-client.tsx"
 import { putState, putSession } from "../../session-store.ts"
 
 afterEach(() => {
@@ -56,7 +57,7 @@ function renderScreenNav(state: Partial<SessionState> = {}): void {
     window.location.hash = "#character"
   }
   putSession({ ...INITIAL_SESSION_STATE, ...state })
-  render(<ScreenNav />)
+  render(<ScreenNav />, { wrapper: queryClientWrapper() })
 }
 
 /** 帯（広い画面）にある「いまの作業」の札。 */

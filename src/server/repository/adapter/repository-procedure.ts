@@ -9,6 +9,8 @@ import { repositoryContract } from "../../../shared/contract/repository.ts"
 export type RepositoryProcedurePorts = {
   /** git 管理下のファイルのパス（作業ディレクトリからの相対）。git 管理下でない・`git` が無いときは空を返す。 */
   readonly listRepositoryFiles: () => Promise<readonly string[]>
+  /** 作業ディレクトリの名前。 */
+  readonly projectName: () => string
 }
 
 export function repositoryProcedure(ports: RepositoryProcedurePorts) {
@@ -16,5 +18,6 @@ export function repositoryProcedure(ports: RepositoryProcedurePorts) {
   return procedure.router({
     // 一覧を作れなかった回は空の並びを配る（候補が出ない・パスが押せないだけで、画面は続く）。
     listFiles: procedure.listFiles.handler(() => ports.listRepositoryFiles().catch(() => [])),
+    projectName: procedure.projectName.handler(() => ports.projectName()),
   })
 }

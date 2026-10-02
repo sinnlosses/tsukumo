@@ -7,4 +7,6 @@ import { z } from "zod"
 export const repositoryContract = {
   /** git 管理下のファイルのパス。git 管理下でない・`git` が無いときは空（候補が出ないだけ）。 */
   listFiles: oc.output(z.array(z.string()).readonly()),
+  /** 作業ディレクトリの名前（末尾のディレクトリ名）。 */
+  projectName: oc.output(z.string()),
 }

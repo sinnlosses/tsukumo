@@ -274,6 +274,8 @@ async function openRoom(
     // （数字だけで当てると本文の数に当たりうる）。
     [url.host, `${url.hostname}:<port>`],
     [`"${url.port}"`, '"<port>"'],
+    // 帯の主の字に出る作業ディレクトリの名前（一時ディレクトリの乱数が入る）。
+    [path.basename(cwd.real), "<project>"],
     [`"protocolVersion": ${PROTOCOL_VERSION}`, '"protocolVersion": "<protocol-version>"'],
   ]
 

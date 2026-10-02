@@ -49,8 +49,13 @@ export type ScreenNavSessionIdentity =
     }
   | { readonly kind: "unknown" }
 
+/** 札の主の字。プロジェクト名が分かるまで（取れなかったときも）は部屋の名前が主になる。 */
+export type ScreenNavSessionTitle =
+  | { readonly kind: "project"; readonly project: string; readonly room: string }
+  | { readonly kind: "room-only"; readonly room: string }
+
 export type ScreenNavSessionTag = {
-  readonly room: string
+  readonly title: ScreenNavSessionTitle
   readonly identity: ScreenNavSessionIdentity
   readonly open: boolean
   readonly onOpen: () => void
@@ -76,7 +81,7 @@ export type SessionSwitcherView = {
 /** 見出しが無い（SDK の `summary` が空・読めない）行に代わりに出す字。 */
 const NO_HEADING_LABEL = "（題なし）"
 
-export function useSessionSwitcher(room: string): SessionSwitcherView {
+export function useSessionSwitcher(room: string, project: string): SessionSwitcherView {
   const dispatch = useSession((session) => session.dispatch)
   const sessions = useSession((session) => session.state.sessions)
   const currentSessionId = useSession((session) =>
@@ -105,7 +110,7 @@ export function useSessionSwitcher(room: string): SessionSwitcherView {
 
   return {
     tag: {
-      room,
+      title: project === "" ? { kind: "room-only", room } : { kind: "project", project, room },
       identity:
         currentSessionId === undefined
           ? { kind: "unknown" }

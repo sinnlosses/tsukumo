@@ -43,13 +43,15 @@ const SESSIONS: readonly SessionChoice[] = [
 
 function renderNav(state: Partial<SessionState>, spy: CommandSpy = () => {}): void {
   setPageUrl("http://127.0.0.1:7327/")
-  fetchStub = stubRpcFetch(() =>
-    rpcOutput({
-      kind: "known",
-      requestCount: 4,
-      summary: "架空の要約の一段落目。\n\n残り：架空の残り。",
-      lastLine: "架空の締めのセリフ",
-    }),
+  fetchStub = stubRpcFetch((call) =>
+    call.procedure === "repository/projectName"
+      ? rpcOutput("fictional-project")
+      : rpcOutput({
+          kind: "known",
+          requestCount: 4,
+          summary: "架空の要約の一段落目。\n\n残り：架空の残り。",
+          lastLine: "架空の締めのセリフ",
+        }),
   )
   putSession(
     {

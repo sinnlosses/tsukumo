@@ -33,6 +33,25 @@
   letter-spacing: 0.08em;
   white-space: nowrap;
 }
+/* プロジェクト名が主、部屋の名前はその右に一段下げた補足。長い名前は帯を押し広げず末尾を切る（全文は title）。 */
+.screen-nav-title {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  min-width: 0;
+}
+.screen-nav-project {
+  max-width: 14rem;
+  overflow: hidden;
+  font-family: var(--font-serif);
+  letter-spacing: 0.04em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.screen-nav-room-note {
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
 .screen-nav-session-tag-dash {
   color: var(--ink-quiet);
 }

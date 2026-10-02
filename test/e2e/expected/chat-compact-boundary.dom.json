@@ -45,6 +45,7 @@
             }
           ]
         },
+        "<project>",
         "<port>",
         {
           "tag": "span",

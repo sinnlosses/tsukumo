@@ -7,6 +7,7 @@ import {
   type SessionState,
 } from "../../../../../src/shared/session/session-state.ts"
 import { typedElement } from "../../../../typed-element.ts"
+import { queryClientWrapper } from "../../../query-client.tsx"
 import { putSession, type CommandSpy } from "../../../session-store.ts"
 
 // 帯の右端の歯車で開く設定（docs/architecture/screen-design.md「設定の置き場所」「画面のナビゲーション」）。
@@ -50,7 +51,7 @@ afterEach(() => {
 
 function renderScreenNav(state: Partial<SessionState> = {}, spy: CommandSpy = () => {}): void {
   putSession({ ...INITIAL_SESSION_STATE, ...state }, spy)
-  render(<ScreenNav />)
+  render(<ScreenNav />, { wrapper: queryClientWrapper() })
 }
 
 /** 帯（広い画面）にある歯車。狭い画面の「≡」の面の中のものは数えない。 */

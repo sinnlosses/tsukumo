@@ -12,6 +12,7 @@ import { useSessionDigest } from "../hooks/use-session-digest.ts"
 import type {
   ScreenNavSessionIdentity,
   ScreenNavSessionTag,
+  ScreenNavSessionTitle,
 } from "../hooks/use-session-switcher.ts"
 import shellStyles from "../screen-nav.module.css"
 import styles from "./screen-nav-session-tag.module.css"
@@ -38,15 +39,7 @@ export function ScreenNavSessionTag(props: ScreenNavSessionTagProps): ReactEleme
       onFocus={() => setPeeking(true)}
       onBlur={() => setPeeking(false)}
     >
-      <Text
-        element="span"
-        size="heading"
-        tone="ink"
-        weight="bold"
-        className={styles["screen-nav-room"]}
-      >
-        {tag.room}
-      </Text>
+      <SessionTagTitle title={tag.title} />
       <span className={styles["screen-nav-session-tag-dash"]} aria-hidden="true">
         -
       </span>
@@ -68,6 +61,49 @@ export function ScreenNavSessionTag(props: ScreenNavSessionTagProps): ReactEleme
         </span>
       </button>
       {peeking && !tag.open && <SessionTagTooltip identity={tag.identity} />}
+    </span>
+  )
+}
+
+type SessionTagTitleProps = {
+  readonly title: ScreenNavSessionTitle
+}
+
+function SessionTagTitle(props: SessionTagTitleProps): ReactElement {
+  const { title } = props
+  if (title.kind === "room-only") {
+    return (
+      <Text
+        element="span"
+        size="heading"
+        tone="ink"
+        weight="bold"
+        className={styles["screen-nav-room"]}
+      >
+        {title.room}
+      </Text>
+    )
+  }
+  return (
+    <span className={styles["screen-nav-title"]} title={`${title.project} · ${title.room}`}>
+      <Text
+        element="span"
+        size="heading"
+        tone="ink"
+        weight="bold"
+        className={styles["screen-nav-project"]}
+      >
+        {title.project}
+      </Text>
+      <Text
+        element="span"
+        size="secondary"
+        tone="ink-quiet"
+        weight="normal"
+        className={styles["screen-nav-room-note"]}
+      >
+        {title.room}
+      </Text>
     </span>
   )
 }

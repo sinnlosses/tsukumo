@@ -74,6 +74,7 @@ function noReportImage(): undefined {
  */
 const EMPTY_RPC_PORTS = {
   listRepositoryFiles: () => Promise.resolve([]),
+  projectName: () => "架空のプロジェクト",
   readTokenUsageSummary: () => EMPTY_TOKEN_USAGE_SUMMARY,
   readContextUsage: () => Promise.resolve(UNAVAILABLE_CONTEXT_USAGE),
   readPlanUsage: () => Promise.resolve(UNAVAILABLE_PLAN_USAGE),
@@ -369,6 +370,11 @@ describe("startViewServer", () => {
       expect(await rpcClientOf(failed, TOKEN).repository.listFiles()).toEqual([])
     })
 
+    it("repository.projectName は、渡された名前を返す", async () => {
+      const found = await startViewWithRpc({ projectName: () => "fictional-project" })
+      expect(await rpcClientOf(found, TOKEN).repository.projectName()).toBe("fictional-project")
+    })
+
     it("tokenUsage.summary は、日数をそのまま畳む側へ渡し、集計を返す", async () => {
       const summary = {
         trend: {
@@ -519,6 +525,7 @@ describe("startViewServer", () => {
         const client = rpcClientOf(server, token)
         const forbidden = { code: "FORBIDDEN", status: 403 }
         expect(await rpcErrorOf(client.repository.listFiles())).toEqual(forbidden)
+        expect(await rpcErrorOf(client.repository.projectName())).toEqual(forbidden)
         expect(await rpcErrorOf(client.tokenUsage.summary({ days: 7 }))).toEqual(forbidden)
         expect(await rpcErrorOf(client.contextUsage.report())).toEqual(forbidden)
         expect(await rpcErrorOf(client.achievement.day({ kind: "today" }))).toEqual(forbidden)
