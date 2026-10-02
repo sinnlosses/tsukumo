@@ -100,7 +100,7 @@ export type TaskBoardOpener =
   | { readonly kind: "issue"; readonly url: string }
   | { readonly kind: "none" }
 
-/** 「tsukumo に頼む」。押せるのは着手できるタスクだけで、それ以外は理由を添えて押せなくする。 */
+/** 「tsukumo に頼む」。押せるのは着手できるタスクと、依存が済んだ保留のタスクだけで、それ以外は理由を添えて押せなくする。 */
 export type TaskBoardRun =
   | { readonly kind: "available"; readonly onRun: () => void }
   | { readonly kind: "unavailable"; readonly reason: string }
@@ -138,7 +138,7 @@ export type TaskBoardContent =
 
 export type TaskBoardConfirm =
   | { readonly kind: "closed" }
-  | { readonly kind: "open"; readonly taskId: string }
+  | { readonly kind: "open"; readonly taskId: string; readonly held: boolean }
 
 export type TaskBoardView = {
   readonly open: boolean
@@ -277,7 +277,13 @@ export function useTaskBoard(
     countsText: tasks.kind === "known" ? countsTextOf(taskListCounts(tasks.items)) : "",
     content,
     confirm:
-      confirmingId === undefined ? { kind: "closed" } : { kind: "open", taskId: confirmingId },
+      confirmingId === undefined
+        ? { kind: "closed" }
+        : {
+            kind: "open",
+            taskId: confirmingId,
+            held: byId.get(confirmingId)?.state.kind === "hold",
+          },
     onClose: close,
     onQueryChange: (nextQuery) => {
       send({ kind: "query", query: nextQuery, shown })
@@ -380,6 +386,8 @@ function isPinned(chosen: ChosenRow, id: string): boolean {
 type BoardEntry = {
   readonly task: TaskSummaryItem
   readonly state: TaskStateView
+  /** 依存のうち、まだ済んでいない（一覧にあって完了・取り下げでない）ものの ID。 */
+  readonly waiting: readonly string[]
 }
 
 type BoardContentInput = {
@@ -401,10 +409,10 @@ const FILTER_CHIPS = [
   { filter: "done", label: "完了" },
 ] satisfies readonly { readonly filter: TaskBoardFilter; readonly label: string }[]
 
-/** 着手できないときに「tsukumo に頼む」の横に添える理由。 */
+/** 「tsukumo に頼む」を押せないときに横に添える理由。保留は待ちが残っているときだけ押せない。 */
 const RUN_UNAVAILABLE_REASON = {
   blocked: "待ちが終わると頼めます",
-  hold: "保留の間は頼めません",
+  hold: "待ちが終わると頼めます",
   doing: "着手済みです",
   done: "終わったタスクです",
   dropped: "終わったタスクです",
@@ -426,7 +434,10 @@ const MISSING = "—"
 
 function boardEntries(items: readonly TaskSummaryItem[]): readonly BoardEntry[] {
   const unfinished = unfinishedTaskIds(items)
-  return items.map((task) => ({ task, state: taskStateOf(task, unfinished) }))
+  return items.map((task) => {
+    const waiting = task.dependencies.filter((id) => unfinished.has(id))
+    return { task, state: taskStateOf(task, unfinished, waiting), waiting }
+  })
 }
 
 function boardContent(
@@ -500,11 +511,17 @@ function selectionOf(
     },
     onJump: input.onJump,
     opener: openerOf(task.location, input),
-    run:
-      entry.state.kind === "ready"
-        ? { kind: "available", onRun: () => input.run(task.id) }
-        : { kind: "unavailable", reason: RUN_UNAVAILABLE_REASON[entry.state.kind] },
+    run: runOf(entry, input),
   }
+}
+
+/** 保留のタスクは、送った先の `/next-task` が着手の前に判断を利用者に尋ねるので頼める。 */
+function runOf(entry: BoardEntry, input: BoardContentInput): TaskBoardRun {
+  const kind = entry.state.kind
+  if (kind === "ready" || (kind === "hold" && entry.waiting.length === 0)) {
+    return { kind: "available", onRun: () => input.run(entry.task.id) }
+  }
+  return { kind: "unavailable", reason: RUN_UNAVAILABLE_REASON[kind] }
 }
 
 function openerOf(location: TaskLocation, input: BoardContentInput): TaskBoardOpener {
@@ -556,7 +573,11 @@ function dependentsOf(
  * 状態の言い方。`todo` の着手できるかは `taskReadiness` の規則（一覧に無い依存は止めない）に従う。
  * 待ちと保留は、まだ済んでいない依存の ID を字で添える（色だけで伝えない）。
  */
-function taskStateOf(task: TaskSummaryItem, unfinished: ReadonlySet<string>): TaskStateView {
+function taskStateOf(
+  task: TaskSummaryItem,
+  unfinished: ReadonlySet<string>,
+  waiting: readonly string[],
+): TaskStateView {
   const readiness = taskReadiness(task, unfinished)
   if (readiness !== undefined) {
     return readiness.kind === "ready"
@@ -565,10 +586,8 @@ function taskStateOf(task: TaskSummaryItem, unfinished: ReadonlySet<string>): Ta
   }
 
   switch (task.status) {
-    case "hold": {
-      const waiting = task.dependencies.filter((id) => unfinished.has(id))
+    case "hold":
       return { kind: "hold", text: waiting.length === 0 ? "保留" : `保留 · ${waiting.join(", ")}` }
-    }
     case "doing":
       return {
         kind: "doing",

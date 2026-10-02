@@ -67,12 +67,16 @@ function renderList(spy: CommandSpy = () => {}, overrides: Partial<SessionState>
  * 見出しの「一覧を見る」で開くタスクのモーダル（開いた状態で描く）。閉じる要求は `closed` に溜まる。
  * 「エディタで開く」が引くファイル一覧の手続きは空の一覧を返す代役にする。
  */
-function renderBoard(spy: CommandSpy = () => {}, closed: string[] = []): void {
+function renderBoard(
+  spy: CommandSpy = () => {},
+  closed: string[] = [],
+  tasks: readonly TaskSummaryItem[] = TASKS,
+): void {
   fetchStub = stubRpcFetch(() => rpcOutput([]))
   renderWithStore(
     <QueryClientProvider client={createTestQueryClient()}>
       <TaskBoard
-        tasks={known(TASKS)}
+        tasks={known(tasks)}
         request={{ kind: "open", focus: { kind: "first" } }}
         onClose={() => {
           closed.push("モーダル")
@@ -176,7 +180,42 @@ describe("タスクIDから実行を頼む", () => {
 
     expect(screen.getAllByRole("button").map((button) => button.textContent)).toEqual(["Y-003"])
   })
+
+  it("モーダルからは依存の済んだ保留も頼め、判断を聞かれることを確認に添える", () => {
+    const sent: unknown[] = []
+    renderBoard(collectInto(sent), [], [...TASKS, holdTask("X-003", ["X-001"])])
+
+    openRunConfirm("X-003")
+    expect(confirmDialog()?.textContent).toContain("着手の前に判断を聞かれる")
+    fireEvent.click(screen.getByRole("button", { name: "実行する" }))
+
+    expect(sent).toEqual([{ procedure: "session.prompt", text: "/next-task X-003", images: [] }])
+  })
+
+  it("モーダルでも待ちの残る保留は頼めない", () => {
+    renderBoard(() => {}, [], [...TASKS, holdTask("X-003", ["X-002"])])
+
+    fireEvent.click(screen.getByRole("option", { name: /X-003/ }))
+
+    const run = screen.getByRole("button", { name: "tsukumo に頼む" })
+    expect(run.getAttribute("aria-disabled")).toBe("true")
+    expect(run.getAttribute("title")).toBe("待ちが終わると頼めます")
+  })
 })
+
+function holdTask(id: string, dependencies: readonly string[]): TaskSummaryItem {
+  return {
+    id,
+    summary: `架空の保留 ${id}`,
+    status: "hold",
+    difficulty: "sonnet",
+    loopable: "N",
+    dependencies,
+    assignee: undefined,
+    body: "",
+    location: { kind: "none" },
+  }
+}
 
 /** モーダルの一覧で `taskId` の行を選び、操作の帯の「tsukumo に頼む」を押す。 */
 function openRunConfirm(taskId: string): void {

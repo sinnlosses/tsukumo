@@ -19,6 +19,8 @@ export type TaskRunConfirmOutcome = "sent" | "dismissed"
 
 export type TaskRunConfirmProps = {
   readonly taskId: string
+  /** 保留のタスクなら真。送った先の `/next-task` が着手の前に判断を尋ねることを添える。 */
+  readonly held: boolean
   /**
    * 送ったあと・送らずに閉じたあとのどちらでも呼ばれる（開いているかは呼び出し側が持つ）。
    * タスクのモーダルから開いたときは、`sent` でモーダルも閉じる。
@@ -76,6 +78,7 @@ export function TaskRunConfirm(props: TaskRunConfirmProps): ReactElement {
           className={styles["task-run-note"]}
         >
           入力欄に <code className={styles["task-run-prompt"]}>{prompt}</code> と打つのと同じ。
+          {props.held && "保留のタスクなので、着手の前に判断を聞かれる。"}
         </Text>
       )}
       <div className={styles["task-run-actions"]}>

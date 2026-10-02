@@ -27,6 +27,7 @@ export function TaskRunButton(props: { readonly taskId: string }): ReactElement 
       {confirming && (
         <TaskRunConfirm
           taskId={props.taskId}
+          held={false}
           onClose={() => {
             setConfirming(false)
           }}
