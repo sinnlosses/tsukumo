@@ -343,6 +343,14 @@ E2E が通るのは**疑似セッションに書いた並びだけ**で、fake d
 合わせて待つ。生きたタブの演出は打ち切らず受け身に待つだけなので、どちらかが上限を超えたら
 screenshot を撮らずに失敗で終わる（黙って空の画面を撮らない）。
 
+**URL を手で拾わずに1件だけ撮るときは `capture-view.ts --scene <場面>`。** fake driver の
+tsukumo を空きポートで自分で起こし、配信 URL を待って撮り、終わったら（失敗しても）自分で
+止める（`node scripts/stop.ts` を別に打たなくてよい）。URL を直に渡す使い方とは併用できない。
+知らない場面名のとき・URL も `--scene` も無いときは、何も起こさずに理由を出して非0で終わる。
+**どの場面にどの塊が出るかを引くときは `capture-view.ts --list-scenes`。** 場面ごとに `report`
+に出る塊の `kind` を一覧し、`table` は状態のセル（`{ status, text }` の行）を持つものを
+`table(status)` と区別する。検証結果の表（`report` の `checks`）を持つ場面には `checks` も出る。
+
 **部品1つの状態違いを並べて見るときは Storybook（`pnpm run storybook`、`http://localhost:6006/`）。**
 `capture-catalog.ts` とは見るものを分ける。**Storybook は部品を props で切り替えて見る道**
 （`note` の6種・`badge` の3種・表・図・グラフ・立ち絵の SVG とラスタ・吹き出しの長い文と空のとき）で、

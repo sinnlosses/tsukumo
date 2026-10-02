@@ -28,9 +28,15 @@
 // 画像もその扱いに従う（`docs/coding-standards.md`「会話内容の扱い」— 別の場所に複製しない。
 // fake driver の疑似セッションは架空の会話なので、その画像は共有してよい）。
 
+import path from "node:path"
 import process from "node:process"
+import { fileURLToPath } from "node:url"
 
 import { chromium, type Page } from "playwright-core"
+
+import { readFakeSession } from "../src/server/session-driver/adapter/fake-driver.ts"
+import { spawnFakeTsukumo, waitForViewUrl } from "./lib/fake-tsukumo-process.ts"
+import { sceneBlockKinds } from "./lib/scene-catalog.ts"
 
 /** 既定の窓の大きさ。実機の目視で使ってきた値に揃えてある。 */
 const DEFAULT_WIDTH = 1400
@@ -45,6 +51,9 @@ const SETTLE_TIMEOUT_MS = 10_000
 /** `--wait-for` が要素の出現と、演出の終わりをそれぞれ待つ上限（ミリ秒）。 */
 const WAIT_FOR_TIMEOUT_MS = 15_000
 
+/** `--scene` で起こした tsukumo が配信 URL を出すまで待つ上限（ミリ秒）。 */
+const LAUNCH_TIMEOUT_MS = 30_000
+
 /**
  * 本文が入る領域（メインビュー）。class 名は組み立てのたびにハッシュ化される（CSS Modules）
  * ので、領域を指すときは `<Layout>` が付ける `data-region` を使う。
@@ -54,8 +63,14 @@ const MAIN_REGION_SELECTOR = '[data-region="main"]'
 /** 書き上げていくように見せる演出が進行中の印（`useReportReveal` の `data-revealing`）。 */
 const REVEALING_SELECTOR = "[data-revealing]"
 
-const USAGE = `使い方: node scripts/capture-view.ts <URL> [オプション]
+const USAGE = `使い方:
+  node scripts/capture-view.ts <URL> [オプション]
+  node scripts/capture-view.ts --scene <場面> [オプション]
+  node scripts/capture-view.ts --list-scenes
 
+  --scene <場面>        fake driver の tsukumo を自分で起こして撮り、終わったら自分で止める
+                        （場面は test/fixture/fake-session.json の turns[].name。URL とは併用しない）
+  --list-scenes         場面ごとに report に出る塊の kind を一覧して終わる（撮らない）
   --out <path>          画像の出力先（既定 ${DEFAULT_OUT}）
   --size <幅>x<高さ>    窓の大きさ（既定 ${String(DEFAULT_WIDTH)}x${String(DEFAULT_HEIGHT)}）
   --measure <selector>  位置と大きさを数値で出す要素（何度でも指定できる）
@@ -63,15 +78,23 @@ const USAGE = `使い方: node scripts/capture-view.ts <URL> [オプション]
   --full                ページ全体を撮る（既定は窓に収まる範囲だけ）
 `
 
-type Options = {
-  readonly url: string
-  readonly out: string
-  readonly width: number
-  readonly height: number
-  readonly measures: readonly string[]
-  readonly waitFor: string | undefined
-  readonly fullPage: boolean
-}
+/** 開く先。URL を直に渡すか、場面の名前で fake driver の tsukumo を自分で起こすか。 */
+type Source =
+  | { readonly kind: "url"; readonly url: string }
+  | { readonly kind: "scene"; readonly scene: string }
+
+type Options =
+  | { readonly kind: "list-scenes" }
+  | {
+      readonly kind: "capture"
+      readonly source: Source
+      readonly out: string
+      readonly width: number
+      readonly height: number
+      readonly measures: readonly string[]
+      readonly waitFor: string | undefined
+      readonly fullPage: boolean
+    }
 
 async function main(argv: readonly string[]): Promise<number> {
   const options = parseOptions(argv)
@@ -80,12 +103,83 @@ async function main(argv: readonly string[]): Promise<number> {
     return 2
   }
 
+  if (options.kind === "list-scenes") {
+    return printSceneCatalog()
+  }
+
+  const opened = await openSource(options.source)
+  if (opened === undefined) {
+    return 1
+  }
+
+  try {
+    return await capture(opened.url, options)
+  } finally {
+    opened.close()
+  }
+}
+
+/** 場面ごとの塊の一覧を出す。何も起こさない。戻り値は終了コード。 */
+function printSceneCatalog(): number {
+  const session = readFakeSession()
+  if (session === undefined) {
+    process.stderr.write("test/fixture/fake-session.json が読めない\n")
+    return 1
+  }
+  for (const [scene, kinds] of sceneBlockKinds(session)) {
+    process.stdout.write(`${scene}: ${kinds.join(", ")}\n`)
+  }
+  return 0
+}
+
+/** 開いた URL と、閉じる手段。`--scene` のときだけ閉じる手段が中身を持つ。 */
+type OpenedSource = { readonly url: string; readonly close: () => void }
+
+/**
+ * `source` を開いて URL を得る。`--scene` は知らない場面名なら起こさずに理由を出す。
+ * 起こすのに失敗したときも理由を出す。どちらも undefined（呼び出し側は撮らずに終わる）。
+ */
+async function openSource(source: Source): Promise<OpenedSource | undefined> {
+  if (source.kind === "url") {
+    return { url: source.url, close: () => undefined }
+  }
+
+  const session = readFakeSession()
+  if (session === undefined || !session.turns.some((scene) => scene.name === source.scene)) {
+    process.stderr.write(`知らない場面: ${source.scene}\n`)
+    return undefined
+  }
+
+  const child = spawnFakeTsukumo({
+    entry: path.join(repositoryRoot(), "src", "cli.ts"),
+    cwd: repositoryRoot(),
+    scene: source.scene,
+    port: 0,
+    home: undefined,
+    extraEnv: {},
+    dropInheritedTsukumoEnv: false,
+    stderr: "inherit",
+  })
+  try {
+    const url = await waitForViewUrl(child, LAUNCH_TIMEOUT_MS)
+    return { url, close: () => child.kill("SIGTERM") }
+  } catch (error) {
+    child.kill("SIGTERM")
+    process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`)
+    return undefined
+  }
+}
+
+async function capture(
+  url: string,
+  options: Extract<Options, { readonly kind: "capture" }>,
+): Promise<number> {
   const browser = await chromium.launch({ channel: "chrome", headless: true })
   try {
     const page = await browser.newPage({
       viewport: { width: options.width, height: options.height },
     })
-    await page.goto(options.url, { waitUntil: "domcontentloaded" })
+    await page.goto(url, { waitUntil: "domcontentloaded" })
     // SSE / WebSocket を繋ぎっぱなしにするページなので `networkidle` は永遠に来ない。
     // 最初の描画が落ち着くのを、本文が入る領域が現れるまでで待つ。
     await page
@@ -115,6 +209,11 @@ async function main(argv: readonly string[]): Promise<number> {
   } finally {
     await browser.close()
   }
+}
+
+/** いま居る作業ツリーの直下（この道具が置いてある `scripts/` の親）。 */
+function repositoryRoot(): string {
+  return fileURLToPath(new URL("..", import.meta.url))
 }
 
 async function waitForRevealSettled(page: Page, selector: string): Promise<boolean> {
@@ -170,13 +269,14 @@ function round(value: number): number {
   return Math.round(value * 100) / 100
 }
 
-/** 引数を読む。URL が無い・`--size` が読めないときは undefined（呼び出し側が使い方を出す）。 */
+/**
+ * 引数を読む。URL と `--scene` のどちらも無い・両方ある・`--size` が読めないときは undefined
+ * （呼び出し側が使い方を出す）。先頭が `-` で始まらないトークンは1つだけ URL として読む。
+ */
 function parseOptions(argv: readonly string[]): Options | undefined {
-  const url = argv[0]
-  if (url === undefined || url.startsWith("-")) {
-    return undefined
-  }
-
+  let url: string | undefined
+  let scene: string | undefined
+  let listScenes = false
   const measures: string[] = []
   let out = DEFAULT_OUT
   let width = DEFAULT_WIDTH
@@ -184,13 +284,27 @@ function parseOptions(argv: readonly string[]): Options | undefined {
   let waitFor: string | undefined
   let fullPage = false
 
-  for (let index = 1; index < argv.length; index += 1) {
+  for (let index = 0; index < argv.length; index += 1) {
     const flag = argv[index]
-    const value = argv[index + 1]
+    if (flag === undefined) {
+      return undefined
+    }
+    if (!flag.startsWith("-")) {
+      if (url !== undefined) {
+        return undefined
+      }
+      url = flag
+      continue
+    }
     if (flag === "--full") {
       fullPage = true
       continue
     }
+    if (flag === "--list-scenes") {
+      listScenes = true
+      continue
+    }
+    const value = argv[index + 1]
     if (value === undefined) {
       return undefined
     }
@@ -200,6 +314,8 @@ function parseOptions(argv: readonly string[]): Options | undefined {
       measures.push(value)
     } else if (flag === "--wait-for") {
       waitFor = value
+    } else if (flag === "--scene") {
+      scene = value
     } else if (flag === "--size") {
       const size = parseSize(value)
       if (size === undefined) {
@@ -213,7 +329,24 @@ function parseOptions(argv: readonly string[]): Options | undefined {
     index += 1
   }
 
-  return { url, out, width, height, measures, waitFor, fullPage }
+  if (listScenes) {
+    return { kind: "list-scenes" }
+  }
+  const source = sourceOf(url, scene)
+  return source === undefined
+    ? undefined
+    : { kind: "capture", source, out, width, height, measures, waitFor, fullPage }
+}
+
+/** URL と場面名のどちらか片方だけが要る。両方・どちらも無いときは undefined。 */
+function sourceOf(url: string | undefined, scene: string | undefined): Source | undefined {
+  if (url !== undefined && scene === undefined) {
+    return { kind: "url", url }
+  }
+  if (scene !== undefined && url === undefined) {
+    return { kind: "scene", scene }
+  }
+  return undefined
 }
 
 function parseSize(value: string): { readonly width: number; readonly height: number } | undefined {
