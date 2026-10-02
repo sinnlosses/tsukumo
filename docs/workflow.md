@@ -134,6 +134,10 @@ enum・キャラクターパックの読み込み）は起こし直さないと�
 同じ形で、Bash の `sed -i`（`-i.bak`・`--in-place` を含む）も PreToolUse hook
 （`scripts/deny-sed-in-place.ts`）が拒否する。ファイルの書き換えは Edit で行う。
 
+委譲先（サブエージェント）が `tw verify`（検査の全段。3〜4分）を `run_in_background: true` で
+打つと PreToolUse hook（`scripts/deny-background-verify.ts`）が拒否し、前景で `timeout` 引数
+（最大 600000）を付けて打つよう案内する。メインの呼び出し（`agent_id` が無い）は対象にしない。
+
 **コミットメッセージの Claude の署名は git の `commit-msg` フックが止める**
 （`.githooks/commit-msg` → `scripts/deny-claude-signature.ts`。`Co-Authored-By: Claude …` と
 `Generated with [Claude Code]` の行が入っていると、該当行を出してコミットを拒否する。
