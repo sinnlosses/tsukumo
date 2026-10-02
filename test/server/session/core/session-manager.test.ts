@@ -14,6 +14,7 @@ import type {
   ContextUsageLog,
 } from "../../../../src/server/context-usage/core/context-usage.ts"
 import type { DiaryWriterSource } from "../../../../src/server/diary/core/diary-writer.ts"
+import type { ExperienceMetricLog } from "../../../../src/server/experience-metric/core/experience-metric.ts"
 import {
   createReportImageShelf,
   type ReportImage,
@@ -97,6 +98,9 @@ const FICTIONAL_PROJECT = "架空プロジェクト"
 
 /** トークン消費の記録を気にしないテストに渡す、何もしない書き込み口。 */
 const NOOP_TOKEN_USAGE_LOG: TokenUsageLog = { append: () => {}, readRange: () => [] }
+
+/** 体験の数の記録を気にしないテストに渡す、何もしない書き込み口。 */
+const NOOP_EXPERIENCE_METRIC_LOG: ExperienceMetricLog = { append: () => {}, readRange: () => [] }
 
 /** コンテキストの内訳の記録を気にしないテストに渡す、何もしない書き込み口。 */
 const NOOP_CONTEXT_USAGE_LOG: ContextUsageLog = { append: () => {} }
@@ -199,6 +203,7 @@ function startManagerWithStub() {
     chatArchive: NOOP_CHAT_ARCHIVE,
     project: FICTIONAL_PROJECT,
     tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
+    experienceMetricLog: NOOP_EXPERIENCE_METRIC_LOG,
     contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
     reportUsageLog: NOOP_REPORT_USAGE_LOG,
     promptImageShelf: createPromptImageShelf(),
@@ -360,6 +365,7 @@ describe("createSessionManager", () => {
       chatArchive: NOOP_CHAT_ARCHIVE,
       project: FICTIONAL_PROJECT,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
+      experienceMetricLog: NOOP_EXPERIENCE_METRIC_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
       reportUsageLog: NOOP_REPORT_USAGE_LOG,
       promptImageShelf: createPromptImageShelf(),
@@ -453,6 +459,7 @@ describe("createSessionManager", () => {
       chatArchive: NOOP_CHAT_ARCHIVE,
       project: FICTIONAL_PROJECT,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
+      experienceMetricLog: NOOP_EXPERIENCE_METRIC_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
       reportUsageLog: NOOP_REPORT_USAGE_LOG,
       promptImageShelf: createPromptImageShelf(),
@@ -541,6 +548,7 @@ describe("createSessionManager", () => {
       chatArchive: NOOP_CHAT_ARCHIVE,
       project: FICTIONAL_PROJECT,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
+      experienceMetricLog: NOOP_EXPERIENCE_METRIC_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
       reportUsageLog: NOOP_REPORT_USAGE_LOG,
       promptImageShelf: createPromptImageShelf(),
@@ -606,6 +614,7 @@ describe("createSessionManager", () => {
       chatArchive: NOOP_CHAT_ARCHIVE,
       project: FICTIONAL_PROJECT,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
+      experienceMetricLog: NOOP_EXPERIENCE_METRIC_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
       reportUsageLog: NOOP_REPORT_USAGE_LOG,
       promptImageShelf: createPromptImageShelf(),
@@ -685,6 +694,7 @@ describe("createSessionManager", () => {
         chatArchive: archive,
         project: FICTIONAL_PROJECT,
         tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
+        experienceMetricLog: NOOP_EXPERIENCE_METRIC_LOG,
         contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
         reportUsageLog: NOOP_REPORT_USAGE_LOG,
         promptImageShelf: createPromptImageShelf(),
@@ -865,6 +875,7 @@ describe("createSessionManager", () => {
       chatArchive: NOOP_CHAT_ARCHIVE,
       project: FICTIONAL_PROJECT,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
+      experienceMetricLog: NOOP_EXPERIENCE_METRIC_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
       reportUsageLog: NOOP_REPORT_USAGE_LOG,
       promptImageShelf: createPromptImageShelf(),
@@ -968,6 +979,7 @@ describe("createSessionManager", () => {
         chatArchive,
         project: FICTIONAL_PROJECT,
         tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
+        experienceMetricLog: NOOP_EXPERIENCE_METRIC_LOG,
         contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
         reportUsageLog: NOOP_REPORT_USAGE_LOG,
         promptImageShelf: createPromptImageShelf(),
@@ -1328,6 +1340,7 @@ describe("createSessionManager", () => {
           },
           readRange: () => [],
         },
+        experienceMetricLog: NOOP_EXPERIENCE_METRIC_LOG,
         contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
         reportUsageLog: NOOP_REPORT_USAGE_LOG,
         promptImageShelf: createPromptImageShelf(),
@@ -1626,6 +1639,7 @@ describe("createSessionManager", () => {
         chatArchive: NOOP_CHAT_ARCHIVE,
         project: FICTIONAL_PROJECT,
         tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
+        experienceMetricLog: NOOP_EXPERIENCE_METRIC_LOG,
         contextUsageLog: {
           append: (entry) => {
             entries.push(entry)
@@ -1796,6 +1810,7 @@ describe("createSessionManager", () => {
         chatArchive: NOOP_CHAT_ARCHIVE,
         project: FICTIONAL_PROJECT,
         tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
+        experienceMetricLog: NOOP_EXPERIENCE_METRIC_LOG,
         contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
         reportUsageLog: {
           append: (entry) => {
@@ -1909,6 +1924,7 @@ describe("依頼に添えた画像の棚", () => {
       chatArchive: NOOP_CHAT_ARCHIVE,
       project: FICTIONAL_PROJECT,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
+      experienceMetricLog: NOOP_EXPERIENCE_METRIC_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
       reportUsageLog: NOOP_REPORT_USAGE_LOG,
       promptImageShelf: shelf,
@@ -2047,6 +2063,7 @@ describe("レポートの画像の棚", () => {
       chatArchive: NOOP_CHAT_ARCHIVE,
       project: FICTIONAL_PROJECT,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
+      experienceMetricLog: NOOP_EXPERIENCE_METRIC_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
       reportUsageLog: NOOP_REPORT_USAGE_LOG,
       promptImageShelf: createPromptImageShelf(),
@@ -2181,6 +2198,7 @@ describe("createSessionManager（見直し）", () => {
       chatArchive: NOOP_CHAT_ARCHIVE,
       project: FICTIONAL_PROJECT,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
+      experienceMetricLog: NOOP_EXPERIENCE_METRIC_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
       reportUsageLog: NOOP_REPORT_USAGE_LOG,
       promptImageShelf: createPromptImageShelf(),
@@ -2319,6 +2337,7 @@ describe("タスク一覧の見張り", () => {
       chatArchive: NOOP_CHAT_ARCHIVE,
       project: FICTIONAL_PROJECT,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
+      experienceMetricLog: NOOP_EXPERIENCE_METRIC_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
       reportUsageLog: NOOP_REPORT_USAGE_LOG,
       promptImageShelf: createPromptImageShelf(),
@@ -2427,6 +2446,7 @@ describe("訪問", () => {
       chatArchive: NOOP_CHAT_ARCHIVE,
       project: FICTIONAL_PROJECT,
       tokenUsageLog: NOOP_TOKEN_USAGE_LOG,
+      experienceMetricLog: NOOP_EXPERIENCE_METRIC_LOG,
       contextUsageLog: NOOP_CONTEXT_USAGE_LOG,
       reportUsageLog: NOOP_REPORT_USAGE_LOG,
       promptImageShelf: createPromptImageShelf(),

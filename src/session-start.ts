@@ -11,6 +11,7 @@ import { createServerClock } from "./server/adapter/local-time.ts"
 import { createChatArchive } from "./server/chat/adapter/chat-archive.ts"
 import { createContextUsageLog } from "./server/context-usage/adapter/context-usage-log.ts"
 import type { Config } from "./server/core/config.ts"
+import { createExperienceMetricLog } from "./server/experience-metric/adapter/experience-metric-log.ts"
 import { readReportImageFile } from "./server/report/adapter/report-image-file.ts"
 import { createReportUsageLog } from "./server/report/adapter/report-usage-log.ts"
 import type { ReportImageShelf } from "./server/report/core/report-image-shelf.ts"
@@ -98,6 +99,7 @@ export async function startSession(options: SessionStartOptions): Promise<Starte
     project: await resolveArchiveProjectName(cwd),
     tokenUsageLog: options.tokenUsageLog,
     contextUsageLog: createContextUsageLog(),
+    experienceMetricLog: createExperienceMetricLog(),
     reportUsageLog: createReportUsageLog(),
     promptImageShelf,
     reportImageShelf: options.reportImageShelf,

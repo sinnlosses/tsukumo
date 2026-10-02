@@ -45,6 +45,10 @@ import {
 } from "../../context-usage/core/context-usage.ts"
 import type { DispatchResult } from "../../core/command-receiver.ts"
 import {
+  createExperienceMetricRecorder,
+  type ExperienceMetricLog,
+} from "../../experience-metric/core/experience-metric.ts"
+import {
   type ReadReportImage,
   releasedReportToolUseIds,
   type ReportImageShelf,
@@ -93,6 +97,8 @@ export type SessionManagerOptions = {
    * 渡した先は「どこに・どんな形で書くか」しか持たない。
    */
   readonly contextUsageLog: ContextUsageLog
+  /** 体験の数の書き込み口。何を1行にするかは `createExperienceMetricRecorder` が返す係が決める。 */
+  readonly experienceMetricLog: ExperienceMetricLog
   /** 描いた `report` 1回につき1行、塊の使われ方を書く口。 */
   readonly reportUsageLog: ReportUsageLog
   /**
@@ -261,6 +267,8 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
   // コンテキストの内訳の記録。代をまたいで持つ（世代の持ち物には入れない）。
   // 続きから起こして同じIDになったときは同じセッションなので、2行目を書かない。
   const contextUsage = createContextUsageRecorder(options.contextUsageLog)
+  // 体験の数の記録。代をまたいで持つ（立ち直りまでの手数は起こし直しをまたいで数える）。
+  const experienceMetric = createExperienceMetricRecorder(options.experienceMetricLog)
   // 定着が走っているか。代ではなくここに持つ。
   // 起こし直しをまたいでも同時に1本のまま（同じパックへ起こし直した直後に、同じ未定着の行を2本で畳まない）。
   // 走っているあいだの契機は捨てる。
@@ -302,6 +310,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
     }
     replaceState(applySessionEvent(state, event, at))
     tally.batch.add({ at, event })
+    experienceMetric.observe(event, state, at)
     // 会話のアーカイブへ1行足す（パックが分かっているときだけ）。
     appendChatArchiveEntry(
       options.chatArchive,
@@ -509,6 +518,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
   const restart = async (request: SessionLaunchRequest): Promise<DispatchResult> => {
     try {
       generation.close()
+      experienceMetric.noteRestart()
       // `previousUsageReview` とタスク一覧は起こし直しをまたいで残す。
       // どちらも駆動1代の持ち物ではない（`usageReview` は起こし直すとふだんへ戻る）。
       replaceState({
