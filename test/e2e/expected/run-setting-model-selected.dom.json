@@ -10,76 +10,13 @@
         {
           "tag": "section",
           "attributes": {
-            "aria-label": "プロフィール"
-          },
-          "children": [
-            {
-              "tag": "img",
-              "attributes": {
-                "alt": "つくもの精霊",
-                "src": "/character/tsukumo-spirit/face.svg"
-              }
-            },
-            {
-              "tag": "p",
-              "children": [
-                "つくもの精霊"
-              ]
-            },
-            {
-              "tag": "p",
-              "children": [
-                "ターミナルという道具に宿った小さな精霊"
-              ]
-            },
-            {
-              "tag": "span",
-              "attributes": {
-                "aria-hidden": "true"
-              },
-              "children": [
-                "変える"
-              ]
-            },
-            {
-              "tag": "select",
-              "attributes": {
-                "aria-label": "キャラクターを変える",
-                "value": "tsukumo-spirit"
-              }
-            }
-          ]
-        },
-        {
-          "tag": "section",
-          "attributes": {
-            "aria-label": "最近の話題"
+            "aria-label": "タスク"
           },
           "children": [
             {
               "tag": "h2",
               "children": [
-                "最近の話題"
-              ]
-            },
-            {
-              "tag": "p",
-              "children": [
-                "まだ話題が無い（話が積もると、ここに並ぶ）"
-              ]
-            }
-          ]
-        },
-        {
-          "tag": "section",
-          "attributes": {
-            "aria-label": "覚えていること"
-          },
-          "children": [
-            {
-              "tag": "h2",
-              "children": [
-                "覚えていること",
+                "タスク",
                 {
                   "tag": "button",
                   "attributes": {
@@ -88,47 +25,15 @@
                     "type": "button"
                   },
                   "children": [
-                    "編集"
+                    "一覧を見る"
                   ]
                 }
               ]
             },
             {
-              "tag": "ul",
-              "attributes": {
-                "aria-label": "覚えていること"
-              },
+              "tag": "p",
               "children": [
-                {
-                  "tag": "li",
-                  "children": [
-                    {
-                      "tag": "button",
-                      "attributes": {
-                        "aria-expanded": "false",
-                        "type": "button"
-                      },
-                      "children": [
-                        "架空の1行"
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "tag": "li",
-                  "children": [
-                    {
-                      "tag": "button",
-                      "attributes": {
-                        "aria-expanded": "false",
-                        "type": "button"
-                      },
-                      "children": [
-                        "架空の長い1行架空の長い1行架空の長い1…"
-                      ]
-                    }
-                  ]
-                }
+                "不明"
               ]
             }
           ]
@@ -143,8 +48,8 @@
             {
               "tag": "select",
               "attributes": {
-                "aria-label": "モデル Opus",
-                "value": "opus"
+                "aria-label": "モデル Sonnet",
+                "value": "sonnet"
               },
               "children": [
                 {
@@ -162,7 +67,7 @@
                             "aria-hidden": "true"
                           },
                           "children": [
-                            "O"
+                            "S"
                           ]
                         }
                       ]

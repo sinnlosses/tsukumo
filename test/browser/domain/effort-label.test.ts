@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { resolveEffortSelect } from "../../../src/browser/domain/effort-label.ts"
+import { modelEffortNote, resolveEffortSelect } from "../../../src/browser/domain/effort-label.ts"
 
 const OPUS = {
   model: "opus",
@@ -60,5 +60,19 @@ describe("resolveEffortSelect", () => {
       kind: "known",
       options: OPUS.effortLevels,
     })
+  })
+})
+
+describe("modelEffortNote", () => {
+  it("対応しないモデルの行には注意を返す", () => {
+    expect(modelEffortNote("haiku", [OPUS, HAIKU])).toBe("effort なし")
+  })
+
+  it("対応するモデルの行には何も返さない", () => {
+    expect(modelEffortNote("opus", [OPUS, HAIKU])).toBeUndefined()
+  })
+
+  it("対応表がまだ届いていないときは分かってもいないことを言わない", () => {
+    expect(modelEffortNote("opus", [])).toBeUndefined()
   })
 })

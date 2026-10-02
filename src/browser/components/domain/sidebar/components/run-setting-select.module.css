@@ -1,0 +1,186 @@
+/* 絵1つぶんの口。`appearance: base-select` で `<select>` 自身がそのまま押せる的になる。 */
+.run-setting-select {
+  appearance: base-select;
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 30px;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  color: var(--ink);
+  font-size: var(--font-secondary);
+  cursor: pointer;
+}
+.run-setting-select::picker-icon {
+  display: none;
+}
+.run-setting-select:hover {
+  background: var(--surface-raised);
+}
+.run-setting-select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+.run-setting-select:disabled {
+  color: var(--ink-quiet);
+  cursor: not-allowed;
+}
+.run-setting-select.is-danger {
+  color: var(--state-ng);
+}
+.run-setting-select-button {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+}
+/* 閉じた口は、選ばれている `<option>` の `.run-setting-select-icon` だけが写って見える
+   （`.run-setting-select-row` を下で消すため）。 */
+.run-setting-select-closed {
+  display: contents;
+}
+/* 吊り札の頭の見出し。閉じているあいだは `<select>` の直下の子として非表示、開いたときだけ出る。 */
+.run-setting-select-heading {
+  padding: 6px 10px 2px;
+  color: var(--ink-quiet);
+  font-size: var(--font-label);
+  font-weight: 600;
+}
+
+/* 吊り札そのもの。`appearance: base-select` を当てた picker に地・枠・角を描く。
+   `display` は `:popover-open` のときだけ書く — 閉じているあいだも書くと、ブラウザが
+   閉じたときに隠す既定（`display: none`）を上書きしてしまい、閉じた口の上に一覧が乗って見える・
+   他の口を塞いでしまう。 */
+.run-setting-select::picker(select) {
+  appearance: base-select;
+  min-width: 11rem;
+  padding: 4px;
+  border: 1px solid var(--rule);
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 20%);
+  /* 既定の anchor は口の右端に合わせて右へ伸びるので、広い窓で右端の口（許可モード）が
+     窓の外へ出る。左へ伸ばし、窓の縁からの余白を margin で持つ。 */
+  position-area: bottom span-left;
+  margin: 6px 8px;
+}
+.run-setting-select::picker(select):popover-open {
+  display: flex;
+  flex-direction: column;
+}
+.run-setting-select-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  color: var(--ink);
+  cursor: pointer;
+}
+.run-setting-select-option:hover,
+.run-setting-select-option:focus-visible {
+  background: var(--surface-raised);
+}
+/* `aria-selected` は author から書かない（`<option>` に手で付けると、ブラウザの選択の追跡と
+   キーボードでの移動が効かなくなる実測）。選ばれている行は `:checked`（ブラウザが選択を追って
+   つける、ライブに更新される）で当てる。 */
+.run-setting-select-option:checked {
+  background: var(--surface-accent);
+  box-shadow: inset 2px 0 0 var(--accent);
+}
+.run-setting-select-option[disabled] {
+  color: var(--ink-quiet);
+  cursor: not-allowed;
+}
+/* ブラウザ既定の ✓（左）は消し、右に置く `.run-setting-select-check` の1つだけにする。 */
+.run-setting-select-option::checkmark {
+  display: none;
+}
+.run-setting-select-icon {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+}
+.run-setting-select-row {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  font-size: var(--font-secondary);
+}
+.run-setting-select-check {
+  flex: none;
+  margin-left: auto;
+  color: var(--accent);
+}
+/* 閉じた口は絵だけ残し、開いたときだけの中身（名前・用途・注意・✓）は消す。 */
+.run-setting-select-closed .run-setting-select-row {
+  display: none;
+}
+
+/* 中くらいの窓幅の柱では、横へ吊る。柱は窓の右端にあるので左へ吊り、縦は口の高さに合わせて中央へ揃える
+   （`span-bottom` だと口の下端から下へ伸び、縦の位置が口からずれる実測）。 */
+.run-setting-select.is-rail::picker(select) {
+  position-area: left;
+  margin-right: 6px;
+}
+
+/* effort の5本の棒。見出しは1行占めて改行させ、選択肢はその下に横並びにする。 */
+.run-setting-select.is-row::picker(select):popover-open {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+.run-setting-select.is-row .run-setting-select-heading {
+  flex: 1 0 100%;
+}
+.run-setting-select.is-row .run-setting-select-option {
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+}
+/* 閉じた口の絵（5本すべてを描く `EffortBars`）は、開いた列の中では出さない。列の中は1行1本の棒。 */
+.run-setting-select.is-row .run-setting-select-option .run-setting-select-icon {
+  display: none;
+}
+.run-setting-select.is-row .run-setting-select-row {
+  flex-direction: column;
+  align-items: center;
+}
+/* いまの段は縁取りと名前の太字だけで示す（地の面は変えない。足すと列の中で1段だけ背が高くなってずれる）。 */
+.run-setting-select.is-row .run-setting-select-option:checked {
+  background: none;
+  box-shadow: none;
+}
+.run-setting-select.is-row .run-setting-select-name {
+  color: var(--ink-quiet);
+  font-weight: 500;
+}
+.run-setting-select.is-row .run-setting-select-option:checked .run-setting-select-name {
+  color: var(--ink);
+  font-weight: 700;
+}
+/* 1段ぶんの棒（`EffortBar`）。いまの段までを `--accent` で塗り、いまの段だけ縁取りを足す。 */
+.run-setting-effort-bar-row {
+  width: 18px;
+  border-radius: 3px;
+  background: var(--rule);
+}
+.run-setting-effort-bar-row.is-lit {
+  background: var(--accent);
+}
+.run-setting-select-option:checked .run-setting-effort-bar-row {
+  outline: 1.5px solid var(--ink);
+  outline-offset: 1px;
+}

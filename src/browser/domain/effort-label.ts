@@ -30,6 +30,22 @@ const EFFORT_UNKNOWN_REASON = "まだ effort が分からない"
 /** effort が選べないとき（`EffortSelect` の `unsupported` / `unknown`）に `<select>` へ置く唯一の選択肢の値。 */
 export const EFFORT_PLACEHOLDER_VALUE = ""
 
+/** モデルの吊り札の行に添える、effort に対応しない旨。 */
+export const EFFORT_UNSUPPORTED_NOTE = "effort なし"
+
+/**
+ * モデルの吊り札の行に「effort なし」を添えるかどうか。
+ * 対応表にそのモデルの行があり、対応しないと分かっているときだけ `EFFORT_UNSUPPORTED_NOTE` を返す。
+ * 対応表がまだ届いていない・行が無いときは、分かってもいないことを言わず `undefined` を返す。
+ */
+export function modelEffortNote(
+  model: ModelAlias,
+  support: readonly ModelEffortSupport[],
+): string | undefined {
+  const entry = findModelEffortSupport(support, model)
+  return entry !== undefined && !entry.supportsEffort ? EFFORT_UNSUPPORTED_NOTE : undefined
+}
+
 /**
  * effort のドロップダウンが受け取れる形（{@link resolveEffortSelect}）。
  *

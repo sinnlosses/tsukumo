@@ -1,5 +1,5 @@
 // モデル・effort・許可モードの3つの操作子。サイドバーの下端の帯の左端と、中くらいの窓幅の柱に置く。
-// どれも絵だけの小さな口で、押すとブラウザの `<select>` の選択肢が開く（絵の上に透明の `<select>` を重ねる）。
+// どれも絵だけの小さな口で、押すと `RunSettingSelect` が吊り札を開く。
 // キーボードの操作・読み上げ・選択肢の開き方はブラウザに任せ、何の値かは `aria-label` と `title` に「モデル Opus」の形で渡す。
 //
 // 絵は道具の線画なのでコードに置く（キャラクターの中身ではない）。
@@ -14,19 +14,25 @@ import {
   ShieldQuestionMark,
   type LucideIcon,
 } from "lucide-react"
-import { useId, type ReactElement, type ReactNode } from "react"
+import { useId, type ReactElement } from "react"
 
-import type { PermissionMode } from "../../../../../shared/command.ts"
+import type { EffortLevel, PermissionMode } from "../../../../../shared/command.ts"
 import {
   EFFORT_LABELS,
   EFFORT_PLACEHOLDER_VALUE,
   effortLabel,
+  modelEffortNote,
 } from "../../../../domain/effort-label.ts"
-import { MODEL_LABELS } from "../../../../domain/model-label.ts"
-import { PERMISSION_MODE_LABELS } from "../../../../domain/permission-mode-label.ts"
+import { MODEL_LABELS, modelDescription } from "../../../../domain/model-label.ts"
+import {
+  BYPASS_PERMISSIONS_NOTICE,
+  PERMISSION_MODE_LABELS,
+  permissionModeShieldFill,
+} from "../../../../domain/permission-mode-label.ts"
 import { useModelPermission } from "../../../../stores/model-permission.ts"
-import { Select } from "../../../ui/select/select.tsx"
 import styles from "./run-setting-group.module.css"
+import selectStyles from "./run-setting-select.module.css"
+import { RunSettingSelect, type RunSettingSelectOption } from "./run-setting-select.tsx"
 
 const PERMISSION_MODE_ICON = {
   default: ShieldQuestionMark,
@@ -48,11 +54,90 @@ export function RunSettingGroup(props: { readonly placement: RunSettingPlacement
   const modelSelectId = useId()
   const effortSelectId = useId()
   const permissionModeSelectId = useId()
+  const rail = props.placement === "rail"
 
   const modelLabel = labelOf(MODEL_LABELS, control.model)
   const permissionModeLabel = labelOf(PERMISSION_MODE_LABELS, control.permissionMode)
-  const PermissionIcon = PERMISSION_MODE_ICON[control.permissionMode]
   const { effort } = control
+  const effortName = effort.kind === "known" ? effortLabel(effort.value) : effort.reason
+  const effortValue = effort.kind === "known" ? effort.value : EFFORT_PLACEHOLDER_VALUE
+
+  const modelOptions: readonly RunSettingSelectOption[] = MODEL_LABELS.map(([value, label]) => {
+    const description = modelDescription(value)
+    const note = modelEffortNote(value, control.modelEffortSupport)
+    return {
+      value,
+      disabled: false,
+      icon: <ModelIcon letter={label.slice(0, 1)} />,
+      row: (
+        <>
+          <span className={styles["run-setting-select-name"]}>{label}</span>
+          <span className={styles["run-setting-select-detail"]}>
+            {description.summary}
+            {note !== undefined && ` ・ ${note}`}
+          </span>
+          <ModelWeight weight={description.weight} />
+        </>
+      ),
+    }
+  })
+
+  const currentLitCount = effort.kind === "known" ? effortLitCount(effort.value) : 0
+  const effortOptions: readonly RunSettingSelectOption[] =
+    effort.kind === "known"
+      ? effort.options.map((value) => ({
+          value,
+          disabled: false,
+          // 閉じた口は選ばれている行の絵だけが写る。選ばれていない行の絵は出ない（`.is-row` が消す）。
+          icon: <EffortBars litCount={effortLitCount(value)} />,
+          row: (
+            <>
+              <EffortBar litCount={currentLitCount} atIndex={effortLitCount(value) - 1} />
+              <span className={styles["run-setting-select-name"]}>{effortLabel(value)}</span>
+            </>
+          ),
+        }))
+      : [
+          {
+            value: EFFORT_PLACEHOLDER_VALUE,
+            disabled: true,
+            icon: <EffortBars litCount={0} />,
+            row: <span className={styles["run-setting-select-name"]}>{effort.reason}</span>,
+          },
+        ]
+
+  const permissionModeOptions: readonly RunSettingSelectOption[] = PERMISSION_MODE_LABELS.map(
+    ([value, label]) => {
+      const PermissionIcon = PERMISSION_MODE_ICON[value]
+      const dangerous = value === "bypassPermissions"
+      return {
+        value,
+        disabled: false,
+        icon: (
+          <span
+            className={styles["run-setting-shield"]}
+            data-fill={permissionModeShieldFill(value)}
+          >
+            <PermissionIcon size={16} strokeWidth={1.9} aria-hidden="true" />
+          </span>
+        ),
+        row: (
+          <>
+            <span
+              className={clsx(styles["run-setting-select-name"], dangerous && styles["is-danger"])}
+            >
+              {label}
+            </span>
+            {dangerous && (
+              <span className={clsx(styles["run-setting-select-detail"], styles["is-danger"])}>
+                {BYPASS_PERMISSIONS_NOTICE}
+              </span>
+            )}
+          </>
+        ),
+      }
+    },
+  )
 
   return (
     <div
@@ -60,101 +145,67 @@ export function RunSettingGroup(props: { readonly placement: RunSettingPlacement
       role="group"
       aria-label="実行の設定"
     >
-      <RunSetting
+      <RunSettingSelect
         id={modelSelectId}
-        name={`モデル ${modelLabel}`}
+        ariaLabel={`モデル ${modelLabel}`}
+        heading="モデル"
         value={control.model}
-        options={MODEL_LABELS.map(([value, label]) => ({ value, label }))}
+        options={modelOptions}
         disabled={false}
         danger={false}
+        rail={rail}
+        layout="list"
+        title={`モデル ${modelLabel}`}
         onChange={control.onSetModel}
-      >
-        <span className={styles["run-setting-model"]}>{modelLabel.slice(0, 1)}</span>
-      </RunSetting>
+      />
       <span className={styles["run-setting-divider"]} aria-hidden="true" />
-      {effort.kind === "known" ? (
-        <RunSetting
-          id={effortSelectId}
-          name={`effort ${effortLabel(effort.value)}`}
-          value={effort.value}
-          options={effort.options.map((value) => ({ value, label: effortLabel(value) }))}
-          disabled={false}
-          danger={false}
-          onChange={control.onSetEffort}
-        >
-          <EffortBars litCount={EFFORT_LABELS.findIndex(([value]) => value === effort.value) + 1} />
-        </RunSetting>
-      ) : (
-        <RunSetting
-          id={effortSelectId}
-          name={`effort ${effort.reason}`}
-          value={EFFORT_PLACEHOLDER_VALUE}
-          options={[{ value: EFFORT_PLACEHOLDER_VALUE, label: "—" }]}
-          disabled={true}
-          danger={false}
-          onChange={() => {}}
-        >
-          <EffortBars litCount={0} />
-        </RunSetting>
-      )}
+      <RunSettingSelect
+        id={effortSelectId}
+        ariaLabel={`effort ${effortName}`}
+        heading="effort"
+        value={effortValue}
+        options={effortOptions}
+        disabled={effort.kind !== "known"}
+        danger={false}
+        rail={rail}
+        layout="row"
+        title={`effort ${effortName}`}
+        onChange={control.onSetEffort}
+      />
       <span className={styles["run-setting-divider"]} aria-hidden="true" />
-      <RunSetting
+      <RunSettingSelect
         id={permissionModeSelectId}
-        name={`許可モード ${permissionModeLabel}`}
+        ariaLabel={`許可モード ${permissionModeLabel}`}
+        heading="許可モード"
         value={control.permissionMode}
-        options={PERMISSION_MODE_LABELS.map(([value, label]) => ({ value, label }))}
+        options={permissionModeOptions}
         disabled={false}
         danger={control.permissionModeDangerous}
+        rail={rail}
+        layout="list"
+        title={`許可モード ${permissionModeLabel}`}
         onChange={control.onSetPermissionMode}
-      >
-        <PermissionIcon size={16} strokeWidth={1.9} aria-hidden="true" />
-      </RunSetting>
+      />
     </div>
   )
 }
 
-/**
- * 絵1つぶんの口。絵の上に同じ大きさの透明の `<select>` を重ね、押したところがそのまま `<select>` になる。
- * フォーカスの輪と hover の地は口の側に描く（`<select>` 自身は見えないので）。
- */
-function RunSetting(props: {
-  readonly id: string
-  /** 何の値か（「モデル Opus」）。`aria-label` と `title` に同じものを渡す。 */
-  readonly name: string
-  readonly value: string
-  readonly options: readonly { readonly value: string; readonly label: string }[]
-  readonly disabled: boolean
-  /** 「全部許す」のときだけ絵に意味の色を載せる（名前に「全部許す」が必ず入るので、色だけで伝えない）。 */
-  readonly danger: boolean
-  readonly onChange: (value: string) => void
-  readonly children: ReactNode
-}): ReactElement {
+/** モデルの頭文字を丸で囲んだ印。 */
+function ModelIcon(props: { readonly letter: string }): ReactElement {
+  return <span className={styles["run-setting-model"]}>{props.letter}</span>
+}
+
+/** モデルの重さ。狐火の●を `weight` の数だけ灯す。 */
+function ModelWeight(props: { readonly weight: number }): ReactElement {
   return (
-    <span
-      className={clsx(
-        styles["run-setting"],
-        props.disabled && styles["is-disabled"],
-        props.danger && styles["is-danger"],
-      )}
-      title={props.name}
-    >
-      {props.children}
-      <Select
-        id={props.id}
-        ariaLabel={props.name}
-        frameClassName={styles["run-setting-frame"]}
-        className={styles["run-setting-select"]}
-        value={props.value}
-        disabled={props.disabled}
-        title={props.name}
-        options={props.options}
-        onChange={props.onChange}
-      />
+    <span className={styles["run-setting-weight"]} aria-hidden="true">
+      {"●".repeat(props.weight)}
     </span>
   )
 }
 
-/** effort の段の棒。段の数だけ並べ、いまの段まで字の色で塗る（`litCount` が 0 なら全部を弱い色）。 */
+/** effort の段の棒。段の数だけ並べ、いまの段まで字の色で塗る（`litCount` が 0 なら全部を弱い色）。
+ * 閉じた口の絵（選ばれている行だけが写る）。 */
 function EffortBars(props: { readonly litCount: number }): ReactElement {
   return (
     <span className={styles["run-setting-effort"]} aria-hidden="true">
@@ -170,6 +221,25 @@ function EffortBars(props: { readonly litCount: number }): ReactElement {
       ))}
     </span>
   )
+}
+
+/** 開いた列の、1つの段ぶんの棒。いまの段（`litCount`）までを塗る。 */
+function EffortBar(props: { readonly litCount: number; readonly atIndex: number }): ReactElement {
+  return (
+    <span
+      className={clsx(
+        selectStyles["run-setting-effort-bar-row"],
+        props.atIndex < props.litCount && selectStyles["is-lit"],
+      )}
+      style={{ height: `${String(12 + props.atIndex * 8)}px` }}
+      aria-hidden="true"
+    />
+  )
+}
+
+/** effort の段の位置（1始まり）。段の名前が一致する棒まで灯す。 */
+function effortLitCount(value: EffortLevel): number {
+  return EFFORT_LABELS.findIndex(([level]) => level === value) + 1
 }
 
 /** ラベルの表から値の字を引く。無ければ値をそのまま返す。 */

@@ -10,6 +10,7 @@ import {
   type ModelAlias,
   type PermissionMode,
 } from "../../shared/command.ts"
+import type { ModelEffortSupport } from "../../shared/session/session-event.ts"
 import { resolveEffortSelect, type EffortSelect } from "../domain/effort-label.ts"
 import { resolveModelAlias } from "../domain/model-label.ts"
 import {
@@ -23,6 +24,8 @@ export type ModelPermissionControl = {
   readonly onSetModel: (value: string) => void
   /** 押した値へ先に倒さない。選べる段・いまの値はサーバから届いた値（`model-effort-support` / `effort-changed`）だけに従う。 */
   readonly effort: EffortSelect
+  /** モデルごとの effort 対応表。いまのモデル以外の行（吊り札の一覧）が「effort なし」を書けるかの判定に使う。 */
+  readonly modelEffortSupport: readonly ModelEffortSupport[]
   readonly onSetEffort: (value: string) => void
   readonly permissionMode: PermissionMode
   /** 「全部許す」のときだけ字に意味の色を載せる。 */
@@ -57,6 +60,7 @@ export function useModelPermission(): ModelPermissionControl {
       }
     },
     effort: resolveEffortSelect(shownModel, modelEffortSupport, effort),
+    modelEffortSupport,
     onSetEffort: (value) => {
       if (isEffortLevel(value)) {
         dispatch.session.setEffort({ effort: value })

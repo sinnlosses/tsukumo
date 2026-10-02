@@ -417,19 +417,36 @@
                     "aria-label": "実行の設定"
                   },
                   "children": [
-                    "O",
                     {
                       "tag": "select",
                       "attributes": {
                         "aria-label": "モデル Opus",
                         "value": "opus"
-                      }
-                    },
-                    {
-                      "tag": "span",
-                      "attributes": {
-                        "aria-hidden": "true"
-                      }
+                      },
+                      "children": [
+                        {
+                          "tag": "button",
+                          "attributes": {
+                            "type": "button"
+                          },
+                          "children": [
+                            {
+                              "tag": "selectedcontent",
+                              "children": [
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  },
+                                  "children": [
+                                    "O"
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
                     },
                     {
                       "tag": "span",
@@ -442,7 +459,36 @@
                       "attributes": {
                         "aria-label": "effort Medium",
                         "value": "medium"
-                      }
+                      },
+                      "children": [
+                        {
+                          "tag": "button",
+                          "attributes": {
+                            "type": "button"
+                          },
+                          "children": [
+                            {
+                              "tag": "selectedcontent",
+                              "children": [
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  },
+                                  "children": [
+                                    {
+                                      "tag": "span",
+                                      "attributes": {
+                                        "aria-hidden": "true"
+                                      }
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
                     },
                     {
                       "tag": "span",
@@ -451,14 +497,45 @@
                       }
                     },
                     {
-                      "tag": "svg"
-                    },
-                    {
                       "tag": "select",
                       "attributes": {
                         "aria-label": "許可モード 自動判定",
                         "value": "auto"
-                      }
+                      },
+                      "children": [
+                        {
+                          "tag": "button",
+                          "attributes": {
+                            "type": "button"
+                          },
+                          "children": [
+                            {
+                              "tag": "selectedcontent",
+                              "children": [
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  },
+                                  "children": [
+                                    {
+                                      "tag": "span",
+                                      "attributes": {
+                                        "data-fill": "dashed"
+                                      },
+                                      "children": [
+                                        {
+                                          "tag": "svg"
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
                     }
                   ]
                 },

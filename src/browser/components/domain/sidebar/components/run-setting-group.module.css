@@ -29,55 +29,6 @@
     display: none;
   }
 }
-/* 絵1つぶんの口。上に透明の `<select>` がぴったり重なる（`.run-setting-frame`）。 */
-.run-setting {
-  position: relative;
-  display: flex;
-  flex: none;
-  align-items: center;
-  justify-content: center;
-  width: 34px;
-  height: 30px;
-  border-radius: 8px;
-  color: var(--ink);
-}
-.run-setting:hover {
-  background: var(--surface-raised);
-}
-.run-setting:has(select:focus-visible) {
-  outline: 2px solid var(--accent);
-  outline-offset: -2px;
-}
-.run-setting.is-disabled {
-  color: var(--ink-quiet);
-}
-.run-setting.is-danger {
-  color: var(--state-ng);
-}
-/* 透明の `<select>` の枠。部品（`select.module.css`）の枠は `position: relative` なので、2つの class で強さを上げて上書きする。
-   矢印は描かない（絵が口の印になる）。 */
-.run-setting > .run-setting-frame {
-  --select-chevron-size: 0;
-  position: absolute;
-  inset: 0;
-}
-.run-setting-select {
-  width: 100%;
-  height: 100%;
-  margin: 0;
-  padding: 0;
-  border: none;
-  opacity: 0;
-  font-size: var(--font-secondary);
-}
-.run-setting-select:disabled {
-  cursor: not-allowed;
-}
-/* 開いた一覧の地はブラウザが描くので、選択肢の地と字は明示する。 */
-.run-setting-select option {
-  background: var(--surface);
-  color: var(--ink);
-}
 /* モデルの頭文字を丸で囲んだ印。 */
 .run-setting-model {
   display: flex;
@@ -107,4 +58,44 @@
 }
 .run-setting-effort-bar.is-lit {
   background: currentColor;
+}
+/* 許可モードの盾。`data-fill` は吊り札の行の塗り区分（空・点線・塗り）を添え、絵そのもの（`lucide-react` の
+   `Shield*`）は変えない。 */
+.run-setting-shield {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.run-setting-shield[data-fill="dashed"] {
+  border-radius: 50%;
+  outline: 1px dashed var(--ink-quiet);
+  outline-offset: 2px;
+}
+.run-setting-shield[data-fill="filled"] {
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--state-ng) 20%, transparent);
+}
+/* 吊り札の1行の名前・用途・重さ・注意。 */
+.run-setting-select-name {
+  flex: none;
+  font-weight: 600;
+}
+.run-setting-select-detail {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--ink-quiet);
+  font-size: var(--font-label);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.run-setting-select-detail.is-danger,
+.run-setting-select-name.is-danger {
+  color: var(--state-ng);
+}
+.run-setting-weight {
+  flex: none;
+  margin-left: auto;
+  color: var(--accent);
+  font-size: var(--font-label);
 }
