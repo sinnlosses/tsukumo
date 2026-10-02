@@ -228,42 +228,6 @@
                   ]
                 }
               ]
-            },
-            {
-              "tag": "div",
-              "attributes": {
-                "data-work-state": "pending",
-                "data-chat-idle": "false",
-                "data-variant": "capsule"
-              },
-              "children": [
-                {
-                  "tag": "button",
-                  "attributes": {
-                    "aria-expanded": "false",
-                    "type": "button"
-                  },
-                  "children": [
-                    {
-                      "tag": "span",
-                      "attributes": {
-                        "aria-hidden": "true"
-                      },
-                      "children": [
-                        "●"
-                      ]
-                    },
-                    "答え待ち",
-                    {
-                      "tag": "span",
-                      "attributes": {
-                        "aria-hidden": "true"
-                      }
-                    },
-                    "架空の選択1 ほか1問"
-                  ]
-                }
-              ]
             }
           ]
         }
@@ -353,8 +317,6 @@
                 }
               ]
             },
-            "経過",
-            "-",
             {
               "tag": "button",
               "attributes": {

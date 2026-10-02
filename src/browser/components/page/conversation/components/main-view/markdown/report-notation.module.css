@@ -478,7 +478,7 @@
 .detail-block .report-file-note {
   grid-column: 3;
 }
-/* 結論と本文のあいだの、段取りと検証結果のまとまり（`report` から tsukumo が組む）。
+/* 結論と本文のあいだの、検証結果のまとまり（`report` から tsukumo が組む）。
    上下の margin は隣の段落や見出しの margin と相殺されるので、ここに書いた値がそのままあきになる。 */
 .detail-block .report-status {
   margin: 28px 0 44px;
@@ -486,21 +486,9 @@
 .detail-block .report-status:last-child {
   margin-bottom: 0;
 }
-.detail-block .report-status-caption {
-  margin-bottom: 10px;
-  font-size: 11px;
-  letter-spacing: 0.12em;
-  color: var(--ink-quiet);
-}
-.detail-block .report-status .report-progress {
-  margin: 0;
-}
-/* 検証の行の地と罫は左右に 0.75rem はみ出させ、「✓ OK」の左端を段取りの丸の左端にそろえる。 */
+/* 検証の行の地と罫は左右に 0.75rem はみ出させ、「✓ OK」の左端を本文の左端にそろえる。 */
 .detail-block .report-status .report-checks {
   margin: 0 -0.75rem;
-}
-.detail-block .report-status .report-progress + .report-checks {
-  margin-top: 26px;
 }
 /* 検証結果の表（`report` の `checks` から tsukumo が組む）。1項目＝1行の grid で読ませる。
    通った行は「✓ OK」の文字だけに色を付け、行の地や枠は染めない。

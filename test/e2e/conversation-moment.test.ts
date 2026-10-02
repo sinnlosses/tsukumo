@@ -22,7 +22,7 @@ type RegionRect = {
 
 describe("会話の画面の局面", () => {
   it.each(["large", "medium"] as const)(
-    "送ると地図、閉じるとレポートへこの順に入れ替わり、4領域の位置と大きさは動かない（%s）",
+    "送ると働くあいだの中身、閉じるとレポートへこの順に入れ替わり、4領域の位置と大きさは動かない（%s）",
     async (viewport) => {
       const room = await run.open({
         scenario: `conversation-moment-${viewport}`,
@@ -38,14 +38,14 @@ describe("会話の画面の局面", () => {
       await textArea.fill("局面の入れ替えを見たい（架空の依頼）")
       await textArea.press("Meta+Enter")
       await room.waitForEvent("request")
-      await waitForContent(room.page, "work-map")
+      await waitForContent(room.page, "work")
       const working = await regionRects(room.page)
 
       await room.waitForEvent("turn-finished")
       await waitForContent(room.page, "report")
       const delivered = await regionRects(room.page)
 
-      expect(await contentLog(room.page)).toEqual(["welcome", "work-map", "report"])
+      expect(await contentLog(room.page)).toEqual(["welcome", "work", "report"])
       expect(working).toEqual(before)
       expect(delivered).toEqual(before)
       await room.settleAndMatch(ELAPSED_MS)

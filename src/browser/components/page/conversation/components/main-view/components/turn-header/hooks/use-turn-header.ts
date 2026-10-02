@@ -15,7 +15,6 @@ import {
   type DismissCause,
 } from "../../../../../../../../hooks/use-dismiss-signal.ts"
 import type { HeadNotice, HeadNoticeAction } from "../../../domain/head-notice.ts"
-import { useTurnHeaderHeight } from "./use-turn-header-height.ts"
 
 /**
  * 一覧の1行ぶんの見出しと全文。
@@ -53,8 +52,6 @@ export type TurnHeaderHistoryRow = {
 
 /** `<TurnHeader>` が画面に出す形。 */
 export type TurnHeaderModel = {
-  /** 頭の高さを測る対象（`useTurnHeaderHeight`）。 */
-  readonly headerRef: RefObject<HTMLElement | null>
   readonly olderDisabled: boolean
   readonly onOlder: () => void
   readonly isNewest: boolean
@@ -88,9 +85,6 @@ export function useTurnHeader(props: TurnHeaderProps): TurnHeaderModel {
   const activeTitle = props.turns[index]?.title
   const activeRequestRest = props.turns[index]?.requestRest ?? []
 
-  const headerRef = useRef<HTMLElement>(null)
-  useTurnHeaderHeight(headerRef)
-
   const [historyOpen, setHistoryOpen] = useState(false)
   const historyListId = useId()
   const titleGroupRef = useRef<HTMLDivElement>(null)
@@ -106,7 +100,6 @@ export function useTurnHeader(props: TurnHeaderProps): TurnHeaderModel {
   useDismissSignal({ open: historyOpen, rootRef: titleGroupRef, onDismiss: onDismissHistory })
 
   return {
-    headerRef,
     olderDisabled: older === undefined,
     onOlder: () => {
       if (older !== undefined) {

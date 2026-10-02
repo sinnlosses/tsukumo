@@ -12,11 +12,11 @@ import { useSession } from "./session.ts"
 /**
  * 出している中身。
  * `exchange` はそのやり取りを始めたときの `SessionState.nextTurnId`（依頼で進み、続きのターンでは進まない）。
- * `report` の `arrived` は、このページで地図から入れ替えたか（読み込んだ時点で閉じていたなら false）。
+ * `report` の `arrived` は、このページで働くあいだの中身から入れ替えたか（読み込んだ時点で閉じていたなら false）。
  */
 export type MainViewContent =
   | { readonly kind: "welcome" }
-  | { readonly kind: "work-map"; readonly exchange: number }
+  | { readonly kind: "work"; readonly exchange: number }
   | { readonly kind: "report"; readonly exchange: number; readonly arrived: boolean }
 
 export type MainViewContentState = {
@@ -46,7 +46,7 @@ function advanceContent(content: MainViewContent, next: SessionState): MainViewC
   if (content.kind === "welcome" || content.exchange !== next.nextTurnId) {
     return freshContent(next)
   }
-  if (content.kind === "work-map" && isExchangeClosed(next)) {
+  if (content.kind === "work" && isExchangeClosed(next)) {
     return { kind: "report", exchange: content.exchange, arrived: true }
   }
   return content
@@ -59,5 +59,5 @@ function freshContent(state: SessionState): MainViewContent {
   }
   return isExchangeClosed(state)
     ? { kind: "report", exchange: state.nextTurnId, arrived: false }
-    : { kind: "work-map", exchange: state.nextTurnId }
+    : { kind: "work", exchange: state.nextTurnId }
 }

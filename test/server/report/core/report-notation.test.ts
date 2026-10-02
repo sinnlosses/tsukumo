@@ -83,7 +83,7 @@ describe("REPORT_NOTATION_PROMPT", () => {
 
   it("語彙（src/shared/report/report-notation.ts）の印はどれも部品で解決され、CSS まで届く", () => {
     // 塊から組む印も、塊にする前の記録ではモデルが書いていたので、描く側は同じに解決する。
-    expect(REPORT_NOTATION_NAMES.length).toBe(77)
+    expect(REPORT_NOTATION_NAMES.length).toBe(76)
 
     for (const name of REPORT_NOTATION_NAMES) {
       const { container } = render(createElement(NotationBlock, { className: name }, "中身"))

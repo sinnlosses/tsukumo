@@ -27,7 +27,7 @@ import {
   type TurnContext,
 } from "./turn-context.ts"
 import { splitIntoTurns, type TurnRest, turnIdOf } from "./turn.ts"
-import { type LatestWorkPlan, type PhaseShift, phaseShiftOf } from "./work-plan.ts"
+import { type PhaseShift, phaseShiftOf } from "./work-plan.ts"
 
 /**
  * 出すやり取りの数。
@@ -273,7 +273,7 @@ function dependenciesOf(record: SessionRecord, context: TurnContext): readonly E
     return [context.plan]
   }
   if (record.kind === "report") {
-    return [context.plan, ...record.checks.map((check) => lastBashOf(context, check.command))]
+    return record.checks.map((check) => lastBashOf(context, check.command))
   }
   return []
 }
@@ -286,7 +286,7 @@ function dependenciesOf(record: SessionRecord, context: TurnContext): readonly E
  *
  * `compact-boundary` も落とす（圧縮の区切りは雑談のログだけに出す）。
  *
- * `work-plan` は、段が移ったときだけ `phase-shift` にする（段取りそのものはレポートの本文の中に組む。{@link reportMarkdown}）。
+ * `work-plan` は、段が移ったときだけ `phase-shift` にする。
  *
  * `tool` は `toolUseId` / `nested`（突き合わせにしか使わない内部の付随情報）を落とす（メインビューの部品が見てよいのは名前・入力・結果だけ）。
  */
@@ -322,9 +322,8 @@ function toMainViewEntries(record: SessionRecord, context: TurnContext): readonl
 }
 
 /**
- * `report` の引数を、`conclusion` →（段取り）→ `checks` → 節の始まりの印 → `sections` → `favor` の順に1つの本文へ組む。
+ * `report` の引数を、`conclusion` → `checks` → 節の始まりの印 → `sections` → `favor` の順に1つの本文へ組む。
  * 印は結論か検証結果があり、節も1つ以上あるときだけ置く。
- * 段取りは同じやり取りの中でその `report` より前に届いた最後のもの。
  * `checks` は検証結果の表（{@link reportChecksMarkdown}。所要時間は同じやり取りの中の `tool` の記録から引く）、`favor` はレポートの記法の「お願い」の塊で包むので、サニタイズも記法の解釈もテキストの本文と同じ経路を通る。
  * `favor` は HTML の中に Markdown を入れるので、塊の内側の前後に空行を空ける。
  * 空の `checks` / `sections` / `favor` は塊ごと置かない。
@@ -341,7 +340,6 @@ function reportMarkdown(
       ? `<div class="conclusion">\n\n${report.conclusion}\n\n</div>`
       : report.conclusion,
     statusMarkdown(
-      workPlanMarkdown(latestWorkPlanOf(context)),
       reportChecksMarkdown(report.checks, (command) => bashCommandDuration(context, command)),
     ),
   ].filter((part) => !isBlankText(part))
@@ -359,27 +357,9 @@ function reportMarkdown(
     .join("\n\n")
 }
 
-/** 段取りと検証結果を、結論と本文のあいだの1つのまとまりに包む。どちらも無ければ包みごと置かない。 */
-function statusMarkdown(workPlan: string, checks: string): string {
-  const parts = [
-    isBlankText(workPlan) ? "" : `<div class="status-caption">進み具合</div>\n\n${workPlan}`,
-    checks,
-  ].filter((part) => !isBlankText(part))
-  return parts.length === 0 ? "" : `<div class="status">\n\n${parts.join("\n\n")}\n\n</div>`
-}
-
-function workPlanMarkdown(plan: LatestWorkPlan): string {
-  return plan.kind === "none"
-    ? ""
-    : reportSectionsMarkdown(
-        [
-          {
-            heading: "",
-            blocks: [{ kind: "progress", steps: plan.phases, current: plan.current, fold: "" }],
-          },
-        ],
-        { kind: "none" },
-      )
+/** 検証結果を、結論と本文のあいだの1つのまとまりに包む。無ければ包みごと置かない。 */
+function statusMarkdown(checks: string): string {
+  return isBlankText(checks) ? "" : `<div class="status">\n\n${checks}\n\n</div>`
 }
 
 /**

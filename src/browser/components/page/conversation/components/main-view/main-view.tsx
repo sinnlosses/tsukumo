@@ -1,4 +1,4 @@
-// メインビュー本体。いま出している中身（迎える口・作業の地図・レポート）を出し分ける。
+// メインビュー本体。いま出している中身（迎える口・働くあいだの札・レポート）を出し分ける。
 //
 // 1ターン＝1枚の札。直近 `MAX_MAIN_VIEW_TURNS` 件を札の頭の `‹` `›` で行き来する。
 // 選んでいるターン（`turnId`）は `useTurnSelection` から読む（キャラビューの吹き出しも同じ選択に従うため、領域のローカル状態にしない）。
@@ -23,23 +23,24 @@ import { useMainViewTurns } from "../../../../../stores/main-view-turn.ts"
 import { useQuestionScroll } from "../../../../../stores/question-scroll.ts"
 import { useSession } from "../../../../../stores/session.ts"
 import { useTurnSelection } from "../../../../../stores/turn-selection.ts"
-import { CurrentWorkCapsule } from "./components/current-work-capsule/current-work-capsule.tsx"
 import { MiniPortrait } from "./components/mini-portrait/mini-portrait.tsx"
 import { QuestionAsk } from "./components/question-ask/question-ask.tsx"
 import { ReportOutline } from "./components/report-outline/report-outline.tsx"
+import { TurnCardHead } from "./components/turn-card-head/turn-card-head.tsx"
 import { TurnHeader } from "./components/turn-header/turn-header.tsx"
 import { Turn } from "./components/turn/turn.tsx"
 import { Welcome } from "./components/welcome/welcome.tsx"
+import { WorkStrip } from "./components/work-strip/work-strip.tsx"
 import { headNoticeOf, type HeadNoticeAction } from "./domain/head-notice.ts"
 import { turnHistoryText, turnRequestRest, turnTitle } from "./domain/turn-title.ts"
 import { NO_SHOWN_KEY, useActiveTurnScroll } from "./hooks/use-active-turn-scroll.ts"
 import styles from "./main-view.module.css"
 import { RepositoryFileLinkProvider } from "./markdown/repository-link.tsx"
 
-/** 画面に出す中身。`card` は札に載せるターンで、`fresh` は地図から入れ替えたばかりのレポートか。 */
+/** 画面に出す中身。`card` は札に載せるターンで、`fresh` は働くあいだの中身から入れ替えたばかりのレポートか。 */
 type ShownView =
   | { readonly kind: "welcome" }
-  | { readonly kind: "work-map" | "report"; readonly card: ShownCard }
+  | { readonly kind: "work" | "report"; readonly card: ShownCard }
 
 type ShownCard =
   | { readonly kind: "none" }
@@ -98,18 +99,22 @@ export function MainView(): ReactElement {
           {view.kind === "welcome" && <Welcome />}
           {cardTurn !== undefined && (
             <article className={styles["turn-card"]}>
-              <TurnHeader
-                turns={turns.map((turn) => ({
-                  id: turn.id,
-                  title: turnTitle(turn),
-                  requestRest: turnRequestRest(turn),
-                  historyText: turnHistoryText(turn),
-                }))}
-                activeTurnId={cardTurn.turn.id}
-                onSelect={selectTurn}
-                notice={notice}
-                onNotice={onNotice}
-              />
+              <TurnCardHead rootRef={rootRef}>
+                <TurnHeader
+                  turns={turns.map((turn) => ({
+                    id: turn.id,
+                    title: turnTitle(turn),
+                    requestRest: turnRequestRest(turn),
+                    historyText: turnHistoryText(turn),
+                  }))}
+                  activeTurnId={cardTurn.turn.id}
+                  onSelect={selectTurn}
+                  notice={notice}
+                  onNotice={onNotice}
+                />
+                {/* `key` にやり取りの番号を渡し、やり取りが替わったら手順の一覧を閉じる。 */}
+                {!viewingPast && <WorkStrip key={exchangeKey(content)} />}
+              </TurnCardHead>
               <ReportOutline positionLabel={positionLabel(turns, cardTurn.turn.id)}>
                 {/* `key` にターンの番号を渡す。
                     前後へ移っても同じ位置の `<Turn>` を使い回すと、「このターンを出し始めた時点で既にあった本文」（演出の対象を決める材料）が最初のターンのものに留まってしまう。 */}
@@ -129,8 +134,6 @@ export function MainView(): ReactElement {
         {/* 答え待ちの質問の札。いまのやり取りのレポートの下に出す（読み終わった先に質問が来る並び）。
             答え待ちが無ければ何も描かない。 */}
         <QuestionAsk />
-        {/* 動いている間だけ、領域の下端に浮かぶいまの作業の札。末尾に置いて、本文が短くても下端に来るようにする。 */}
-        <CurrentWorkCapsule />
       </div>
     </RepositoryFileLinkProvider>
   )
@@ -189,9 +192,9 @@ function shownView(
   switch (content.kind) {
     case "welcome":
       return content
-    case "work-map":
+    case "work":
       return {
-        kind: "work-map",
+        kind: "work",
         card: newest === undefined ? NO_CARD : { kind: "turn", turn: newest, fresh: false },
       }
     case "report":
@@ -210,6 +213,10 @@ function shownKeyOf(view: ShownView): string {
     return NO_SHOWN_KEY
   }
   return `${view.kind}:${String(view.card.turn.id)}`
+}
+
+function exchangeKey(content: MainViewContent): string {
+  return content.kind === "welcome" ? "welcome" : String(content.exchange)
 }
 
 function positionLabel(turns: readonly MainViewTurn[], turnId: number): string {

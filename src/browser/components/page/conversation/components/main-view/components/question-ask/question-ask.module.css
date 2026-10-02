@@ -10,6 +10,8 @@
   border-radius: 0.75rem;
   /* 地は塗りつぶさず、面の色に警告色をごく薄く混ぜる。 */
   background: color-mix(in srgb, var(--surface), var(--state-warn) 6%);
+  /* 質問へ転がしたとき、貼り付いた札の頭の下に潜らせない。 */
+  scroll-margin-top: calc(var(--turn-card-head-height, 0px) + 0.5rem);
 }
 /* 頭の行：「質問」のチップ・header・（過去のターンを見ているときの戻る口と）「戻る」・「n / N」。
    狭い画面では折り返す（横スクロールを出さない）。 */

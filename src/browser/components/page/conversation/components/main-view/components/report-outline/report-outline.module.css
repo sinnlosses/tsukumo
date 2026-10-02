@@ -26,13 +26,13 @@
 .outline-rail {
   border-right: 1px solid var(--rule-quiet);
 }
-/* 貼り付く位置は札の頭の真下（`--turn-header-height`。`main-view.module.css`）。
-   札の頭と同じく、転がる器の余白ぶん上へずらした位置が基準（`.turn-header`）。
+/* 貼り付く位置は札の頭の真下（`--turn-card-head-height`。`main-view.module.css`）。
+   札の頭と同じく、転がる器の余白ぶん上へずらした位置が基準（`.turn-card-head`）。
    見出しが多いときは一覧の中で転がす。 */
 .outline-nav {
   position: sticky;
-  top: calc(var(--turn-header-height, 0px) - var(--region-padding, 0px));
-  max-height: calc(100dvh - var(--turn-header-height, 0px) - 2rem);
+  top: calc(var(--turn-card-head-height, 0px) - var(--region-padding, 0px));
+  max-height: calc(100dvh - var(--turn-card-head-height, 0px) - 2rem);
   overflow-y: auto;
   padding: 0.75rem 0.375rem;
 }

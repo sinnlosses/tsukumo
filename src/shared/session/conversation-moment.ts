@@ -4,7 +4,7 @@ import { mainViewEntries } from "./main-view.ts"
 import type { SessionState } from "./session-state.ts"
 
 /**
- * 局面。中身は迎える口（`greet`）・作業の地図（`work` / `ask`）・レポート（`deliver` / `stumble`）の3つ。
+ * 局面。中身は迎える口（`greet`）・働くあいだの札（`work` / `ask`）・レポート（`deliver` / `stumble`）の3つ。
  * `ask` は `work` のうち答え待ちがあるもの、`stumble` は `deliver` のうち失敗かセッションの終わりで閉じたもの。
  */
 export type ConversationMoment = "greet" | "work" | "ask" | "deliver" | "stumble"

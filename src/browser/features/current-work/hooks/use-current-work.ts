@@ -10,26 +10,13 @@
 import { useState, type RefCallback, type RefObject } from "react"
 
 import type { DiaryWriting } from "../../../../shared/diary/diary.ts"
-import type {
-  BackgroundTask,
-  BackgroundTaskKind,
-} from "../../../../shared/session-driver/background-task.ts"
+import type { BackgroundTask } from "../../../../shared/session-driver/background-task.ts"
 import type { PendingAsk } from "../../../../shared/session-driver/pending-ask.ts"
-import {
-  MAX_TOOL_TEXT_LENGTH,
-  type ReportDrafting,
-} from "../../../../shared/session/session-state.ts"
-import {
-  toolDuration,
-  type TurnStep,
-  type TurnStepList,
-  type TurnStepStatus,
-} from "../../../../shared/session/turn-step.ts"
-import { currentPhaseOf, phaseLabel, type WorkPhase } from "../../../../shared/session/work-plan.ts"
-import { clipText, type ClippedText } from "../../../../shared/utils/clip-text.ts"
-import { formatElapsed } from "../../../../shared/utils/elapsed-time.ts"
+import type { ReportDrafting } from "../../../../shared/session/session-state.ts"
+import type { TurnStep, TurnStepList } from "../../../../shared/session/turn-step.ts"
+import { currentPhaseOf, phaseLabel } from "../../../../shared/session/work-plan.ts"
 import { DEFAULT_CHARACTER_NAME } from "../../../domain/portrait-appearance.ts"
-import { summarizeToolInput, toolInputText } from "../../../domain/tool-summary.ts"
+import { toolInputText } from "../../../domain/tool-summary.ts"
 import { usePopover } from "../../../hooks/use-popover.ts"
 import { useCurrentTurnSteps } from "../../../stores/current-turn-steps.ts"
 import { useQuestionScroll } from "../../../stores/question-scroll.ts"
@@ -37,6 +24,14 @@ import { navigateTo, useScreen } from "../../../stores/screen.tsx"
 import { useSession, useTurnRunning } from "../../../stores/session.ts"
 import { useTurnSelection } from "../../../stores/turn-selection.ts"
 import { monthDayLabel } from "../../../utils/month-day-label.ts"
+import {
+  BACKGROUND_TASK_KIND_LABEL,
+  backgroundSummaryLabel,
+  currentWorkStepGroups,
+  currentWorkStepLabel,
+  truncateForDisplay,
+  type CurrentWorkStepGroup,
+} from "../domain/current-work-step.ts"
 
 /** 閉じている間に出す手順の件数（これより多いと「すべて見る」の口が出る）。 */
 const MAX_COLLAPSED_STEPS = 5
@@ -57,34 +52,6 @@ const WORK_WORD_LABEL = {
   background: "背景で作業中",
   idle: "依頼待ち",
 } satisfies Record<CurrentWorkState, string>
-
-const BACKGROUND_TASK_KIND_LABEL = {
-  shell: "シェル",
-  agent: "サブエージェント",
-  other: "その他",
-} satisfies Record<BackgroundTaskKind, string>
-
-export type CurrentWorkStep = {
-  readonly key: string
-  readonly label: string
-  readonly nested: boolean
-  readonly status: TurnStepStatus
-  readonly failure: CurrentWorkStepFailure
-}
-
-export type CurrentWorkStepFailure =
-  | { readonly kind: "none" }
-  | { readonly kind: "failed"; readonly outputText: string; readonly inputText: string }
-
-/**
- * 手順を始まったときの段で区切った1まとまり。
- * 小見出しは「2/4 段の名前」で、段取りより前・全部の段を終えたあとの手順は小見出しを持たない。
- */
-export type CurrentWorkStepGroup = {
-  readonly key: string
-  readonly heading: { readonly kind: "none" } | { readonly kind: "phase"; readonly label: string }
-  readonly steps: readonly CurrentWorkStep[]
-}
 
 /**
  * 札に出す今の段（`.current-work-phase`）。作業中・答え待ちで、その依頼に段取りがあるときだけ `shown`。
@@ -324,7 +291,7 @@ function toRunningStepView(
   const fullText = truncateForDisplay(toolInputText(latestRunning.name, latestRunning.input))
 
   return state === "pending" || state === "running"
-    ? { kind: "shown", toolName, fullText, summaryLabel: stepLabel(latestRunning) }
+    ? { kind: "shown", toolName, fullText, summaryLabel: currentWorkStepLabel(latestRunning) }
     : { kind: "silent", toolName, fullText }
 }
 
@@ -423,23 +390,6 @@ function questionSummaryLabel(
   return rest.length > 0 ? `${first.header} ほか${String(rest.length)}問` : first.header
 }
 
-/**
- * 背景のタスクの要約。いちばん新しく始まったもの（並びの末尾）の説明を出し、2件以上あれば「ほか n件」を添える。
- * 説明が無ければ種類の語で代える。
- */
-function backgroundSummaryLabel(tasks: readonly BackgroundTask[]): string | undefined {
-  const newest = tasks.at(-1)
-  if (newest === undefined) {
-    return undefined
-  }
-  const label = backgroundTaskLabel(newest)
-  return tasks.length > 1 ? `${label} ほか${String(tasks.length - 1)}件` : label
-}
-
-function backgroundTaskLabel(task: BackgroundTask): string {
-  return task.description === "" ? BACKGROUND_TASK_KIND_LABEL[task.kind] : task.description
-}
-
 function toBackgroundListView(tasks: readonly BackgroundTask[]): CurrentWorkBackgroundList {
   if (tasks.length === 0) {
     return { kind: "none" }
@@ -488,43 +438,11 @@ function toStepListView(
   return {
     kind: "steps",
     headingLabel: turnInProgress ? "この依頼での手順" : "前の依頼での手順",
-    groups: groupByPhase(visibleSteps),
+    groups: currentWorkStepGroups(visibleSteps),
     expanded,
     onToggleExpanded,
     toggleAll: toToggleAllView(steps, expanded),
   }
-}
-
-/** 並びの隣どうしで段が同じ手順を1まとまりにする（段を戻る段取りの変更があっても、並びの順は崩さない）。 */
-function groupByPhase(steps: readonly TurnStep[]): readonly CurrentWorkStepGroup[] {
-  const headings = steps.map((step) => stepGroupHeading(step.phase))
-  const starts = headings.flatMap((heading, index) =>
-    index === 0 || !sameHeading(headings[index - 1] ?? heading, heading) ? [index] : [],
-  )
-  return starts.flatMap((start, position) => {
-    const first = steps[start]
-    const heading = headings[start]
-    return first === undefined || heading === undefined
-      ? []
-      : [
-          {
-            key: first.toolUseId,
-            heading,
-            steps: steps.slice(start, starts[position + 1] ?? steps.length).map(toStepView),
-          },
-        ]
-  })
-}
-
-function stepGroupHeading(phase: WorkPhase): CurrentWorkStepGroup["heading"] {
-  return phase.kind === "phase" ? { kind: "phase", label: phaseLabel(phase) } : { kind: "none" }
-}
-
-function sameHeading(
-  a: CurrentWorkStepGroup["heading"],
-  b: CurrentWorkStepGroup["heading"],
-): boolean {
-  return a.kind === "phase" && b.kind === "phase" ? a.label === b.label : a.kind === b.kind
 }
 
 function toToggleAllView(steps: readonly TurnStep[], expanded: boolean): CurrentWorkToggleAll {
@@ -542,56 +460,4 @@ function toToggleAllView(steps: readonly TurnStep[], expanded: boolean): Current
       ? `手順をすべて見る（全 ${String(steps.length)} 件・失敗 ${String(hiddenFailureCount)}）`
       : `手順をすべて見る（全 ${String(steps.length)} 件）`
   return { kind: "expandable", label }
-}
-
-/**
- * 手順1件の見出し。終わっていて所要時間が測れれば（{@link toolDuration}）末尾に添える。
- * 復元した手順は測れないので添えない。
- */
-function stepLabel(step: TurnStep): string {
-  const summary = summarizeToolInput(step.name, step.input)
-  const base = summary === "" ? step.name : `${step.name}: ${summary}`
-  const duration = toolDuration(step)
-  return duration.kind === "known"
-    ? `${base}（${formatElapsed(Math.round(duration.milliseconds / 1000))}）`
-    : base
-}
-
-function toStepView(step: TurnStep): CurrentWorkStep {
-  return {
-    key: step.toolUseId,
-    label: stepLabel(step),
-    nested: step.nested,
-    status: step.status,
-    failure:
-      step.status.kind === "failed"
-        ? {
-            kind: "failed",
-            outputText: clippedTextLabel(step.status.output),
-            inputText: truncateForDisplay(stringifyToolInput(step.input)),
-          }
-        : { kind: "none" },
-  }
-}
-
-function stringifyToolInput(input: unknown): string {
-  if (input === undefined) {
-    return ""
-  }
-
-  const json = JSON.stringify(input, null, 2)
-  return json ?? String(input)
-}
-
-function truncateForDisplay(text: string): string {
-  return clippedTextLabel(clipText(text, MAX_TOOL_TEXT_LENGTH))
-}
-
-/** 切った先頭に、落とした文字数だけを添える。 */
-function clippedTextLabel(clipped: ClippedText): string {
-  if (clipped.omittedLength === 0) {
-    return clipped.head
-  }
-
-  return `${clipped.head}\n…（以下 ${String(clipped.omittedLength)} 文字を省略）`
 }

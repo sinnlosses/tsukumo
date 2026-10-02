@@ -29,7 +29,6 @@ const HISTORY_OTHER_MARK = "○"
 export type PresentationalTurnHeaderProps = TurnHeaderModel
 
 export function PresentationalTurnHeader({
-  headerRef,
   olderDisabled,
   onOlder,
   isNewest,
@@ -50,7 +49,7 @@ export function PresentationalTurnHeader({
   onNotice,
 }: PresentationalTurnHeaderProps): ReactElement {
   return (
-    <header className={styles["turn-header"]} ref={headerRef}>
+    <header className={styles["turn-header"]}>
       <div className={styles["turn-nav"]}>
         <Button
           variant="outline"

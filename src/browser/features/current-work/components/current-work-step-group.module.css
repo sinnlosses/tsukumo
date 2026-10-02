@@ -1,0 +1,62 @@
+/* 段で区切った依頼の手順のまとまり。 */
+
+/* 手順を段で区切る小見出し。字の太さは `Text` が持つ。 */
+.current-work-phase-heading {
+  margin: 0.4rem 0 0.15rem;
+}
+.current-work-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-family: var(--font-mono);
+}
+/* サブエージェントの中は1段下げる。 */
+.current-work-step-nested {
+  margin-left: 1rem;
+}
+/* 済みは薄く、実行中は普通の濃さ。 */
+.current-work-step-done {
+  color: var(--ink-quiet);
+}
+.current-work-step-failed {
+  color: var(--ink);
+}
+.current-work-step-mark {
+  display: inline-block;
+}
+/* 実行中の印だけ回す（`prefers-reduced-motion: reduce` では `theme.css` の全体の規則が止める）。 */
+.current-work-step-running .current-work-step-mark {
+  animation: current-work-step-spin 1s linear infinite;
+}
+@keyframes current-work-step-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+/* 失敗した手順の中身。印は文字（「失敗」）で、色はその補助。 */
+.current-work-failure > summary {
+  cursor: pointer;
+}
+.current-work-failure pre {
+  margin: 0;
+  padding: 0.4rem;
+  max-height: 12rem;
+  overflow: auto;
+  border-radius: 0.4rem;
+  background: var(--ground);
+  font-family: var(--font-mono);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.current-work-failure-output {
+  border: 1px solid var(--state-ng);
+}
+.current-work-failure-input {
+  border: none;
+}

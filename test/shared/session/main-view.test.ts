@@ -686,7 +686,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     )
   })
 
-  it("同じやり取りで report より前に届いた最後の段取りを、結論の下に段の図として組む", () => {
+  it("段取りを渡したやり取りでも、最終レポートと中間レポートの本文に段取りを組まない", () => {
     const plan = (current: number, phaseSummary: string): SessionEvent => ({
       kind: "work-plan",
       phases: ["架空の段A", "架空の段B"],
@@ -707,18 +707,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
 
     expect(shownReports(turn)).toEqual([
       "架空のまとめ。",
-      "架空の結論。\n\n" +
-        '<div class="status">\n\n<div class="status-caption">進み具合</div>\n\n' +
-        '<ol class="progress" aria-label="進み具合">' +
-        '<li class="progress-step progress-step-done" aria-label="架空の段A：済">' +
-        '<span class="progress-dot" aria-hidden="true">✓</span>' +
-        '<span class="progress-name">架空の段A</span></li>' +
-        '<li class="progress-line progress-line-done" aria-hidden="true"></li>' +
-        '<li class="progress-step progress-step-current" aria-current="step" aria-label="架空の段B：進行中">' +
-        '<span class="progress-dot" aria-hidden="true"><span class="progress-dot-mark"></span></span>' +
-        '<span class="progress-name">架空の段B</span><span class="progress-status">進行中</span></li>' +
-        `</ol>\n\n</div>\n\n${SECTIONS_START}\n\n` +
-        "架空の根拠。",
+      `架空の結論。\n\n${SECTIONS_START}\n\n架空の根拠。`,
     ])
   })
 
@@ -744,31 +733,6 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     const turn = turnOf([ask, report("", "架空の根拠。", "", [], task), finished], SETTLED, true)
 
     expect(firstLineOf(turn?.steps.find((step) => step.final))).toBe("架空の作業")
-  })
-
-  it("段が1つの段取りでも図が崩れず、済んだ段1つだけで組む", () => {
-    const plan: SessionEvent = {
-      kind: "work-plan",
-      phases: ["架空の段A"],
-      current: 1,
-      phaseSummary: "",
-    }
-    const turn = turnOf(
-      [ask, plan, report("架空の結論。", "架空の根拠。"), finished],
-      SETTLED,
-      true,
-    )
-
-    expect(shownReports(turn)).toEqual([
-      "架空の結論。\n\n" +
-        '<div class="status">\n\n<div class="status-caption">進み具合</div>\n\n' +
-        '<ol class="progress" aria-label="進み具合">' +
-        '<li class="progress-step progress-step-done" aria-label="架空の段A：済">' +
-        '<span class="progress-dot" aria-hidden="true">✓</span>' +
-        '<span class="progress-name">架空の段A</span></li>' +
-        `</ol>\n\n</div>\n\n${SECTIONS_START}\n\n` +
-        "架空の根拠。",
-    ])
   })
 
   it("節の始まりの印は、結論か検証結果があり節もあるときだけ置く", () => {
@@ -1079,21 +1043,5 @@ describe("mainViewEntries（記録ごとの結果の持ち回し）", () => {
     expect(reportsAfter[1]).not.toBe(reportsBefore[1])
     expect(reportMarkdowns(entriesBefore)[1]).not.toContain("5秒")
     expect(reportMarkdowns(entriesAfter)[1]).toContain('<span class="check-time">5秒</span>')
-  })
-
-  it("次の依頼の report は、前の依頼の段取りを引かない", () => {
-    const entries = mainViewEntries(
-      foldTimed([
-        [ask, 0],
-        [plan(0), 1_000],
-        [report("toolu_r1"), 2_000],
-        [ask, 3_000],
-        [report("toolu_r2"), 4_000],
-      ]),
-    )
-    const [first, second] = reportMarkdowns(entries)
-
-    expect(first).toContain("進み具合")
-    expect(second).not.toContain("進み具合")
   })
 })

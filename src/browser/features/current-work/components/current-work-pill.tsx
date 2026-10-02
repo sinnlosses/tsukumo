@@ -3,42 +3,30 @@
 // 同じ部品を2箇所に置いてよい。開閉の状態は1つの hook が持つので、どちらから押しても同じ一覧が開く。
 // id は `useId()` でこの器ごとに振る（`aria-controls` が指す一覧の id が重ならないようにする）。
 // Esc の戻り先として札の DOM を預ける口（`work.toggleRef`）も、2箇所ぶんを集めるコールバック ref。
-//
-// 失敗した手順の引数と出力を読める場所はここだけ。
 
 import clsx from "clsx"
-import { useId, useRef, type ReactElement } from "react"
+import { useId, type ReactElement } from "react"
 
 import { Button } from "../../../components/ui/button/button.tsx"
 import { Text } from "../../../components/ui/text/text.tsx"
-import { useCurrentWorkListMaxHeight } from "../hooks/use-current-work-list-max-height.ts"
 import type {
   CurrentWork,
   CurrentWorkBackgroundTask,
   CurrentWorkPlanPhase,
-  CurrentWorkStep,
-  CurrentWorkStepGroup,
 } from "../hooks/use-current-work.ts"
 import styles from "./current-work-pill.module.css"
+import { CurrentWorkStepGroup } from "./current-work-step-group.tsx"
 
 /**
  * 札の形。
  * `dropdown` は一覧が札の真下に重なって開く。`inline` は札が幅いっぱいで、一覧がその場で下に広がる。
- * `capsule` は一覧を札の上へ開き、動いている間は印を回る輪にする。
  */
-export type CurrentWorkVariant = "dropdown" | "inline" | "capsule"
+export type CurrentWorkVariant = "dropdown" | "inline"
 
 export type CurrentWorkPillProps = {
   readonly work: CurrentWork
   readonly variant: CurrentWorkVariant
 }
-
-/** 回る輪を印にする状態（何かが動いている間）。 */
-const SPINNING_STATES: ReadonlySet<CurrentWork["state"]> = new Set([
-  "running",
-  "diary",
-  "background",
-])
 
 /** 答え待ちが質問のときに一覧へ出す口。 */
 const GO_TO_QUESTION_LABEL = "質問へ"
@@ -65,13 +53,9 @@ export function CurrentWorkPill(props: CurrentWorkPillProps): ReactElement {
         aria-controls={listId}
         onClick={work.onToggle}
       >
-        {props.variant === "capsule" && SPINNING_STATES.has(work.state) ? (
-          <SpinnerMark />
-        ) : (
-          <span className={styles["current-work-mark"]} aria-hidden="true">
-            {work.mark}
-          </span>
-        )}
+        <span className={styles["current-work-mark"]} aria-hidden="true">
+          {work.mark}
+        </span>
         <span className={styles["current-work-word"]}>{work.wordLabel}</span>
         {work.phase.kind === "shown" && (
           <>
@@ -102,38 +86,16 @@ export function CurrentWorkPill(props: CurrentWorkPillProps): ReactElement {
           </>
         )}
       </button>
-      {work.open && <CurrentWorkList id={listId} work={work} variant={props.variant} />}
+      {work.open && <CurrentWorkList id={listId} work={work} />}
     </div>
   )
 }
 
-/** 動いている間の印。輪の一部だけを差し色にして回す（`prefers-reduced-motion: reduce` では `theme.css` の全体の規則が止める）。 */
-function SpinnerMark(): ReactElement {
-  return (
-    <svg
-      className={styles["current-work-spinner"]}
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-    >
-      <circle className={styles["current-work-spinner-track"]} cx="12" cy="12" r="9" />
-      <path className={styles["current-work-spinner-arc"]} d="M12 3a9 9 0 0 1 9 9" />
-    </svg>
-  )
-}
-
-function CurrentWorkList(props: {
-  readonly id: string
-  readonly work: CurrentWork
-  readonly variant: CurrentWorkVariant
-}): ReactElement {
+function CurrentWorkList(props: { readonly id: string; readonly work: CurrentWork }): ReactElement {
   const { work } = props
-  const listRef = useRef<HTMLDivElement>(null)
-  useCurrentWorkListMaxHeight(listRef, props.variant === "capsule")
 
   return (
-    <div id={props.id} ref={listRef} className={styles["current-work-list"]} role="region">
+    <div id={props.id} className={styles["current-work-list"]} role="region">
       <Text
         element="p"
         size="inherit"
@@ -271,31 +233,6 @@ function CurrentWorkPlanPhase(props: { readonly phase: CurrentWorkPlanPhase }): 
   )
 }
 
-/** 段で区切った手順のまとまり。段の小見出しがあれば手順の上に置く。 */
-function CurrentWorkStepGroup(props: { readonly group: CurrentWorkStepGroup }): ReactElement {
-  const { group } = props
-  return (
-    <>
-      {group.heading.kind === "phase" && (
-        <Text
-          element="p"
-          size="inherit"
-          tone="inherit"
-          weight="semibold"
-          className={styles["current-work-phase-heading"]}
-        >
-          {group.heading.label}
-        </Text>
-      )}
-      <ul className={styles["current-work-steps"]}>
-        {group.steps.map((step) => (
-          <CurrentWorkStepRow key={step.key} step={step} />
-        ))}
-      </ul>
-    </>
-  )
-}
-
 /**
  * 背景のタスク1件。印は実行中の手順と同じ回る「…」（動いているものの印を2種類にしない）。
  * 種類の語は手順のツール名と同じ等幅の列に置く。
@@ -305,8 +242,8 @@ function CurrentWorkBackgroundRow(props: {
 }): ReactElement {
   const { task } = props
   return (
-    <li className={styles["current-work-background-task"]}>
-      <span className={styles["current-work-step-mark"]} aria-hidden="true">
+    <li>
+      <span className={styles["current-work-background-mark"]} aria-hidden="true">
         …
       </span>{" "}
       <Text
@@ -320,60 +257,5 @@ function CurrentWorkBackgroundRow(props: {
       </Text>
       {task.description !== "" && ` ${task.description}`}
     </li>
-  )
-}
-
-/** 手順1件。サブエージェントの中（nested）は1段下げる。失敗は `<details>` で開いて読める。 */
-function CurrentWorkStepRow(props: { readonly step: CurrentWorkStep }): ReactElement {
-  const { step } = props
-  const classes = clsx(
-    step.nested && styles["current-work-step-nested"],
-    step.status.kind === "done" && styles["current-work-step-done"],
-    step.status.kind === "running" && styles["current-work-step-running"],
-    step.status.kind === "failed" && styles["current-work-step-failed"],
-  )
-
-  return (
-    <li className={classes}>
-      {step.failure.kind === "failed" ? (
-        <FailureDetail
-          label={step.label}
-          inputText={step.failure.inputText}
-          outputText={step.failure.outputText}
-        />
-      ) : (
-        <>
-          <span className={styles["current-work-step-mark"]} aria-hidden="true">
-            {step.status.kind === "running" ? "…" : "✓"}
-          </span>{" "}
-          {step.label}
-        </>
-      )}
-    </li>
-  )
-}
-
-/** 失敗した手順の中身（引数と出力）。「失敗」の文字を印にする（色だけで意味を伝えない）。 */
-function FailureDetail(props: {
-  readonly label: string
-  readonly inputText: string
-  readonly outputText: string
-}): ReactElement {
-  return (
-    <details className={styles["current-work-failure"]}>
-      <summary>
-        <Text element="span" size="inherit" tone="state-ng" weight="semibold" className="">
-          失敗
-        </Text>{" "}
-        {props.label}
-      </summary>
-      {/* 出力が先。開いてまず読みたいのは「何が起きたか」で、引数はその裏取りに使う。 */}
-      <pre className={styles["current-work-failure-output"]}>
-        <code>{props.outputText}</code>
-      </pre>
-      <pre className={styles["current-work-failure-input"]}>
-        <code>{props.inputText}</code>
-      </pre>
-    </details>
   )
 }
