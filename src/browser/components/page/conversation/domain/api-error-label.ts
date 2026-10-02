@@ -41,14 +41,28 @@ export function apiRetryNotice(
   }
 }
 
-/**
- * ターンの失敗の理由の語。API のエラーなら種類の語に綴りを添える（`API が混んでいる（overloaded）`。
- * 語だけでは同じ種類を調べるときの手がかりにならないため）。
- */
+/** 失敗で終わったターンの、API のエラーの種類ごとの「何が起きたか」の文。 */
+const TURN_FAILURE_REASON = {
+  authentication_failed: "認証が切れていて API を呼べなかった",
+  oauth_org_not_allowed: "この組織では API を呼べなかった",
+  account_on_hold: "アカウントが保留されていて API を呼べなかった",
+  verification_required: "本人確認が要るので API を呼べなかった",
+  billing_error: "支払いの問題で API を呼べなかった",
+  rate_limit: "利用上限に達した",
+  overloaded: "API が混んでいて受け付けなかった",
+  invalid_request: "API が依頼を受け付けなかった",
+  model_not_found: "モデルが見つからなかった",
+  server_error: "API のサーバが応えなかった",
+  unknown: "API がエラーを返した",
+  max_output_tokens: "出力の上限に当たった",
+  cloud_credential_error: "クラウドの認証情報の問題で API を呼べなかった",
+} satisfies Record<ApiErrorKind, string>
+
+/** ターンの失敗の理由の語。内部の綴りは含めない（綴りは `turnFailureCode`）。 */
 export function turnFailureLabel(failure: TurnFailure): string {
   switch (failure.kind) {
     case "api-error":
-      return `${apiErrorLabel(failure.error)}（${failure.error}）`
+      return TURN_FAILURE_REASON[failure.error]
     case "max-turns":
       return "往復の上限に当たった"
     case "max-budget":
@@ -56,4 +70,14 @@ export function turnFailureLabel(failure: TurnFailure): string {
     case "execution-error":
       return "実行中のエラーで止まった"
   }
+}
+
+/** ターンの失敗の内部の綴り（`server_error`・`max-turns` など）。`title` にだけ出す。 */
+export function turnFailureCode(failure: TurnFailure): string {
+  return failure.kind === "api-error" ? failure.error : failure.kind
+}
+
+/** 失敗で終わったことの全文（`title` に出す。「失敗で終わった: <語>（<綴り>）」）。 */
+export function turnFailureDetail(failure: TurnFailure): string {
+  return `失敗で終わった: ${turnFailureLabel(failure)}（${turnFailureCode(failure)}）`
 }

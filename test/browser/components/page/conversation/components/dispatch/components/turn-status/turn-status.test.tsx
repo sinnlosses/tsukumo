@@ -152,7 +152,22 @@ describe("TurnStatus", () => {
 
       expect(screen.getByText("失敗")).toBeDefined()
       expect(screen.queryByText("所要")).toBeNull()
-      expect(screen.getByRole("status").textContent).toBe("API が混んでいる（overloaded）")
+      const notice = screen.getByRole("status")
+      expect(notice.textContent).toBe("API が混んでいて受け付けなかった")
+      expect(notice.title).toBe("失敗で終わった: API が混んでいて受け付けなかった（overloaded）")
+    })
+
+    it("仕事のときは、失敗で終わったターンの理由を行に出さない", () => {
+      renderTurnStatus({
+        turn: {
+          kind: "finished",
+          startedAt: 0,
+          finishedAt: 12_000,
+          ending: { kind: "failed", failure: { kind: "api-error", error: "server_error" } },
+        },
+      })
+
+      expect(screen.queryByRole("status")).toBeNull()
     })
 
     it("雑談のとき、進行中に呼び直しを待っているあいだは「再試行中 n/m」を出し、理由と待ち時間は title で読ませる", () => {

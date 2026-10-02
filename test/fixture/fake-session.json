@@ -3892,6 +3892,87 @@
       ]
     },
     {
+      "name": "stumble-failed-step",
+      "steps": [
+        {
+          "afterMs": 0,
+          "event": {
+            "kind": "request",
+            "text": "見本の帳面の並べ替えを直したい（架空の依頼）",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 100,
+          "event": {
+            "kind": "work-plan",
+            "phases": ["今の形を調べる", "並べ替えを直す"],
+            "current": 0,
+            "phaseSummary": ""
+          }
+        },
+        {
+          "afterMs": 200,
+          "event": {
+            "kind": "tool-started",
+            "toolUseId": "fake-stumble-1",
+            "name": "Read",
+            "input": {
+              "file_path": "/tmp/dummy/sort.ts"
+            }
+          }
+        },
+        {
+          "afterMs": 300,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-stumble-1",
+            "content": "ダミーの読み取り結果（3行）",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 400,
+          "event": {
+            "kind": "tool-started",
+            "toolUseId": "fake-stumble-2",
+            "name": "Bash",
+            "input": {
+              "command": "dummy-command --check /tmp/dummy/nowhere"
+            }
+          }
+        },
+        {
+          "afterMs": 500,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-stumble-2",
+            "content": "dummy-command: /tmp/dummy/nowhere が無い（疑似セッションの作り物のエラー出力）\n終了コード 1",
+            "isError": true
+          }
+        },
+        {
+          "afterMs": 600,
+          "event": {
+            "kind": "api-error",
+            "error": "server_error"
+          }
+        },
+        {
+          "afterMs": 700,
+          "event": {
+            "kind": "turn-finished",
+            "outcome": {
+              "kind": "failed",
+              "cause": {
+                "kind": "api-error"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
       "name": "diary-written",
       "steps": [
         {

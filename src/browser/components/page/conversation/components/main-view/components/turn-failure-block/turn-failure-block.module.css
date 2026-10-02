@@ -1,0 +1,19 @@
+/* 字の段・色は `Text` が持つ。margin・字間だけここに置く。 */
+.heading {
+  margin: 0 0 0.5rem;
+  letter-spacing: 0.08em;
+}
+.reason {
+  margin: 0;
+}
+/* 次の手の口の行。狭い札では折り返す。 */
+.doors {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+.door {
+  padding: 0.375rem 0.75rem;
+  border-radius: 0.5rem;
+}

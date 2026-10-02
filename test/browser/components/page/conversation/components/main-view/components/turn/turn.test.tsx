@@ -201,26 +201,29 @@ describe("Turn（書き上げる演出を掛ける相手）", () => {
 })
 
 describe("Turn（失敗で終わったやり取り）", () => {
-  it("失敗で終わったやり取りは、末尾に「失敗で終わった」と理由を字で出す", () => {
+  it("失敗で終わったやり取りは、頭に「失敗で終わった」と理由を字で出し、内部の綴りは title にだけ出す", () => {
+    putSession(INITIAL_SESSION_STATE)
     const { container } = render(
       <Turn
         turn={{
           ...turn([step({ id: 0, body: text("架空の本文"), final: true })]),
-          failure: { kind: "failed", failure: { kind: "api-error", error: "rate_limit" } },
+          failure: { kind: "failed", failure: { kind: "api-error", error: "server_error" } },
         }}
         newest={false}
         freshReport={false}
       />,
     )
 
-    const notice = container.querySelector('[role="note"]')
-    expect(notice?.textContent).toBe("失敗で終わった利用上限に当たった（rate_limit）")
-    // 本文より後ろ（やり取りの末尾）に置く。
-    expect(container.textContent?.endsWith(notice?.textContent ?? "")).toBe(true)
+    const notice = screen.getByRole("note", { name: "失敗で終わった" })
+    expect(notice.textContent).not.toContain("server_error")
+    expect(notice.querySelector('[title*="server_error"]')).not.toBeNull()
+    // 本文より前（やり取りの頭）に置く。
+    expect(container.textContent?.startsWith("失敗で終わった")).toBe(true)
   })
 
-  it("本文が1つも無いまま失敗したやり取りでも、失敗の札は出す", () => {
-    const { container } = render(
+  it("本文が1つも無いまま失敗したやり取りでも、失敗の塊は出す", () => {
+    putSession(INITIAL_SESSION_STATE)
+    render(
       <Turn
         turn={{ ...turn([]), failure: { kind: "failed", failure: { kind: "max-turns" } } }}
         newest={false}
@@ -228,8 +231,8 @@ describe("Turn（失敗で終わったやり取り）", () => {
       />,
     )
 
-    expect(container.querySelector('[role="note"]')?.textContent).toBe(
-      "失敗で終わった往復の上限に当たった",
+    expect(screen.getByRole("note", { name: "失敗で終わった" }).textContent).toContain(
+      "往復の上限に当たった",
     )
   })
 

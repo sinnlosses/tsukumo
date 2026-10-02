@@ -88,9 +88,9 @@
   margin-bottom: 0.5rem;
 }
 
-/* 失敗で終わったやり取りの末尾の札（`TurnFailureNotice`）。
+/* 失敗で終わったやり取りの頭の失敗の塊（`TurnFailureBlock`）。
    枠だけを --state-ng にし、見出し「失敗で終わった」の字も同じ色にする。
-   字の色は呼び出し側が `Text` の `tone="state-ng"` を渡す（`turn.module.css` の `.step-heading` へ色の規則を書くと `<Text>` の property と重なり、構造の検査「渡す className は styles["…"] の組み合わせだけで、その class は部品の property と重ならない」が落ちる）。
+   字の色は呼び出し側が `Text` の `tone="state-ng"` を渡す（見出しの class へ色の規則を書くと `<Text>` の property と重なり、構造の検査「渡す className は styles["…"] の組み合わせだけで、その class は部品の property と重ならない」が落ちる）。
    地は本文と同じ。 */
 .main-step.is-failed {
   border-color: var(--state-ng);

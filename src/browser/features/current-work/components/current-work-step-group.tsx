@@ -50,7 +50,7 @@ function CurrentWorkStepRow(props: { readonly step: CurrentWorkStep }): ReactEle
   )
 
   return (
-    <li className={classes}>
+    <li className={classes} data-step-failed={step.failure.kind === "failed" ? "" : undefined}>
       {step.failure.kind === "failed" ? (
         <FailureDetail
           label={step.label}

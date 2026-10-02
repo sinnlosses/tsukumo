@@ -1,7 +1,5 @@
 // `<WorkStrip>` のロジック。いちばん新しい依頼の段取り・走っている手順・答え待ち・再試行を、帯に出す形へ畳む。
 
-import { useState } from "react"
-
 import type { ApiTrouble } from "../../../../../../../../../shared/session-driver/api-trouble.ts"
 import type { BackgroundTask } from "../../../../../../../../../shared/session-driver/background-task.ts"
 import type { PendingAsk } from "../../../../../../../../../shared/session-driver/pending-ask.ts"
@@ -21,6 +19,7 @@ import {
 import { useCurrentTurnSteps } from "../../../../../../../../stores/current-turn-steps.ts"
 import { useMainViewContent } from "../../../../../../../../stores/main-view-content.ts"
 import { useSession } from "../../../../../../../../stores/session.ts"
+import { useWorkStripSteps } from "../../../../../../../../stores/work-strip-steps.ts"
 import { apiRetryNotice } from "../../../../../domain/api-error-label.ts"
 import {
   isTurnCounting,
@@ -60,7 +59,10 @@ export type WorkStripActivity = {
 export type WorkStripSteps = {
   /** 「手順 12 ▾」（開いていれば ▴）。 */
   readonly toggleLabel: string
-  readonly open: boolean
+  /** 一覧が開いているか。`failureSignal` は失敗した手順を指して開いた合図（0 は「手順 n」の口で開いたとき）。 */
+  readonly list:
+    | { readonly kind: "closed" }
+    | { readonly kind: "open"; readonly failureSignal: number }
   readonly onToggle: () => void
   readonly groups: readonly CurrentWorkStepGroup[]
 }
@@ -101,29 +103,35 @@ const PHASE_STATE_SUFFIX = {
 
 export function useWorkStrip(): WorkStripModel {
   const turnStepList = useCurrentTurnSteps()
-  const contentKind = useMainViewContent((state) => state.content.kind)
+  const content = useMainViewContent((state) => state.content)
   const turn = useSession((session) => session.state.turn)
   const pending = useSession((session) => session.state.pending)
   const apiTrouble = useSession((session) => session.state.apiTrouble)
   const reportDrafting = useSession((session) => session.state.reportDrafting)
   const backgroundTasks = useSession((session) => session.state.backgroundTasks)
-  const [open, setOpen] = useState(false)
+  const opened = useWorkStripSteps((state) => state.opened)
+  const toggle = useWorkStripSteps((state) => state.toggle)
   const plan = turnStepList.kind === "turn" ? turnStepList.plan : NO_PLAN
-  const shown = contentKind !== "welcome" && plan.kind === "planned"
+  const shown = content.kind !== "welcome" && plan.kind === "planned"
   const now = useNowWhile(shown && isTurnCounting(turn, backgroundTasks.length))
 
-  if (!shown || turnStepList.kind !== "turn" || plan.kind !== "planned") {
+  if (content.kind === "welcome" || turnStepList.kind !== "turn" || plan.kind !== "planned") {
     return { kind: "none" }
   }
 
   const { phases, current } = plan
+  const { exchange } = content
   const firstPending = pending[0]
-  const working = contentKind === "work"
+  const working = content.kind === "work"
+  const list: WorkStripSteps["list"] =
+    opened.kind === "open" && opened.exchange === exchange
+      ? { kind: "open", failureSignal: opened.failureSignal }
+      : { kind: "closed" }
   const elapsedLabel = `${turnElapsedLabel(turn, backgroundTasks.length)} ${turnElapsedText(turn, backgroundTasks.length, now)}`
   const steps: WorkStripSteps = {
-    toggleLabel: `手順 ${String(turnStepList.steps.length)} ${open ? "▴" : "▾"}`,
-    open,
-    onToggle: () => setOpen((wasOpen) => !wasOpen),
+    toggleLabel: `手順 ${String(turnStepList.steps.length)} ${list.kind === "open" ? "▴" : "▾"}`,
+    list,
+    onToggle: () => toggle(exchange),
     groups: currentWorkStepGroups(turnStepList.steps),
   }
   const stripPhases = phases.map((name, index) =>

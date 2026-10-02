@@ -7,18 +7,20 @@
 // 進行中でなければ `type="submit"` で、押すと `<Composer>` の `onSubmit` がそのまま依頼を送る（この部品は `<form>` の中に置かれることを前提にする）。
 // 進行中は `interrupt` を dispatch する `type="button"` にして、送信と中断が同時に押せる状態を作らない。
 //
-// API の知らせ（再試行中・利用上限・失敗の理由）もこの行に出す。出すのは1つだけで、強いほうを選ぶ（`turnStatusNotice`）。
+// API の知らせもこの行に出す。出すのは1つだけで、強いほうを選ぶ（`turnStatusNotice`）。
+// 仕事のときは利用上限だけで、再試行中と失敗の理由も出すのは雑談モードのときだけ。
 
 import type { ApiTrouble } from "../../../../../../../../../shared/session-driver/api-trouble.ts"
-import type {
-  RateLimit,
-  RateLimitBucket,
-} from "../../../../../../../../../shared/session-driver/rate-limit.ts"
+import type { RateLimit } from "../../../../../../../../../shared/session-driver/rate-limit.ts"
 import type { TurnProgress } from "../../../../../../../../../shared/session/session-state.ts"
 import { useQuestionAnswer } from "../../../../../../../../stores/question-answer.ts"
 import { useSession } from "../../../../../../../../stores/session.ts"
-import { dayAwareClockTime } from "../../../../../../../../utils/clock.ts"
-import { apiRetryNotice, turnFailureLabel } from "../../../../../domain/api-error-label.ts"
+import {
+  apiRetryNotice,
+  turnFailureDetail,
+  turnFailureLabel,
+} from "../../../../../domain/api-error-label.ts"
+import { rateLimitResetText, rateLimitSubject } from "../../../../../domain/rate-limit-label.ts"
 import {
   isTurnCounting,
   turnElapsedLabel,
@@ -67,16 +69,6 @@ export type TurnStatusModel = {
   readonly notice: TurnStatusNotice
 }
 
-/** 利用上限の枠の語。`other` は枠の名前を出さない（空）。 */
-const RATE_LIMIT_BUCKET_LABEL = {
-  "five-hour": "5時間枠",
-  "seven-day": "7日間枠",
-  "seven-day-opus": "7日間枠（Opus）",
-  "seven-day-sonnet": "7日間枠（Sonnet）",
-  overage: "超過利用枠",
-  other: "",
-} satisfies Record<RateLimitBucket, string>
-
 export function useTurnStatus(): TurnStatusModel {
   const dispatch = useSession((session) => session.dispatch)
   // 質問に答えている間は、ターンが進行中でも「中断」ではなく答えるボタンを出す（SDK は答えを待って止まっているので、押す先は中断ではなく送信）。
@@ -108,32 +100,37 @@ export function useTurnStatus(): TurnStatusModel {
             kind: "send",
             label: sendLabel(question.kind === "asking" ? question.last : undefined),
           },
-    notice: turnStatusNotice(turn, chatMode ? apiTrouble : NO_API_TROUBLE, rateLimit, now),
+    notice: turnStatusNotice({ turn, apiTrouble, rateLimit, chatMode, now }),
   }
 }
 
-const NO_API_TROUBLE = { kind: "none" } as const satisfies ApiTrouble
-
 /**
  * 行に出す API の知らせ。強い順に1つだけ: 進行中の再試行 → 利用上限に達した → 失敗で終わったターンの理由。
+ * 仕事のときは利用上限だけ（再試行中は進み具合の帯、失敗の理由はレポートの頭の失敗の塊が出す）。
  * 「利用上限が近い」は出さない（枠の残り具合はサイドバーの利用枠が出す）。
  * 利用上限に達した知らせは戻る時刻を過ぎても次の知らせが来るまで出し続ける（戻ったかどうかは tsukumo からは分からず、次に API を呼んだときの知らせで消える）。
  */
-function turnStatusNotice(
-  turn: TurnProgress,
-  apiTrouble: ApiTrouble,
-  rateLimit: RateLimit,
-  now: number,
-): TurnStatusNotice {
-  if (turn.kind === "running" && apiTrouble.kind === "retrying") {
+function turnStatusNotice(source: {
+  readonly turn: TurnProgress
+  readonly apiTrouble: ApiTrouble
+  readonly rateLimit: RateLimit
+  readonly chatMode: boolean
+  readonly now: number
+}): TurnStatusNotice {
+  const { turn, apiTrouble, rateLimit, chatMode } = source
+  if (chatMode && turn.kind === "running" && apiTrouble.kind === "retrying") {
     return { kind: "shown", tone: "warn", ...apiRetryNotice(apiTrouble) }
   }
   if (rateLimit.kind === "rejected") {
-    return rateLimitNotice(rateLimit, now)
+    return rateLimitNotice(rateLimit, source.now)
   }
-  if (turn.kind === "finished" && turn.ending.kind === "failed") {
-    const reason = turnFailureLabel(turn.ending.failure)
-    return { kind: "shown", tone: "ng", label: reason, detail: `失敗で終わった: ${reason}` }
+  if (chatMode && turn.kind === "finished" && turn.ending.kind === "failed") {
+    return {
+      kind: "shown",
+      tone: "ng",
+      label: turnFailureLabel(turn.ending.failure),
+      detail: turnFailureDetail(turn.ending.failure),
+    }
   }
   return { kind: "none" }
 }
@@ -142,16 +139,13 @@ function rateLimitNotice(
   rateLimit: Extract<RateLimit, { readonly kind: "rejected" }>,
   now: number,
 ): TurnStatusNotice {
-  const bucketLabel = RATE_LIMIT_BUCKET_LABEL[rateLimit.bucket]
-  const subject = bucketLabel === "" ? "利用上限" : `${bucketLabel}の利用上限`
-  const resetText =
-    rateLimit.resetsAt === undefined ? undefined : dayAwareClockTime(rateLimit.resetsAt, now)
-  const state = `${subject}に達した`
+  const resetText = rateLimitResetText(rateLimit, now)
+  const state = `${rateLimitSubject(rateLimit.bucket)}に達した`
   return {
     kind: "shown",
     tone: "ng",
-    label: resetText === undefined ? "利用上限" : `利用上限 ${resetText}まで`,
-    detail: resetText === undefined ? state : `${state}。${resetText}に戻る`,
+    label: resetText.kind === "known" ? `利用上限 ${resetText.text}まで` : "利用上限",
+    detail: resetText.kind === "known" ? `${state}。${resetText.text}に戻る` : state,
   }
 }
 

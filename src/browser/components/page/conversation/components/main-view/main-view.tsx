@@ -112,8 +112,7 @@ export function MainView(): ReactElement {
                   notice={notice}
                   onNotice={onNotice}
                 />
-                {/* `key` にやり取りの番号を渡し、やり取りが替わったら手順の一覧を閉じる。 */}
-                {!viewingPast && <WorkStrip key={exchangeKey(content)} />}
+                {!viewingPast && <WorkStrip />}
               </TurnCardHead>
               <ReportOutline positionLabel={positionLabel(turns, cardTurn.turn.id)}>
                 {/* `key` にターンの番号を渡す。
@@ -213,10 +212,6 @@ function shownKeyOf(view: ShownView): string {
     return NO_SHOWN_KEY
   }
   return `${view.kind}:${String(view.card.turn.id)}`
-}
-
-function exchangeKey(content: MainViewContent): string {
-  return content.kind === "welcome" ? "welcome" : String(content.exchange)
 }
 
 function positionLabel(turns: readonly MainViewTurn[], turnId: number): string {

@@ -1,12 +1,11 @@
 // 1つのやり取り。`<RequestImages>` + ステップの並び（レポート・質問の記録・段の知らせ）を縦に1本で積む（番号は振らない）。
 // ツールの実行は描かない（進行は帯の「いまの作業」が持つ）。
-// 失敗で終わったやり取りは、末尾に「失敗で終わった」と理由を出す（色だけでなく字で成功と見分ける）。
+// 失敗で終わったやり取りは、頭に失敗の塊を出す（色だけでなく字で成功と見分ける）。
 
 import clsx from "clsx"
 import { useState, type ReactElement } from "react"
 
 import type { ReportTask } from "../../../../../../../../shared/report/report-task.ts"
-import type { TurnFailure } from "../../../../../../../../shared/session-driver/turn-failure.ts"
 import type {
   MainViewAction,
   MainViewRequest,
@@ -16,13 +15,13 @@ import type {
 } from "../../../../../../../../shared/session/main-view.ts"
 import { Text } from "../../../../../../ui/text/text.tsx"
 import { VStack } from "../../../../../../ui/v-stack/v-stack.tsx"
-import { turnFailureLabel } from "../../../../domain/api-error-label.ts"
 import { PromptImageThumbnails } from "../../../prompt-image/prompt-image.tsx"
 import mainViewStyles from "../../main-view.module.css"
 import { PhaseNotice } from "../phase-notice/phase-notice.tsx"
 import { QuestionRecord } from "../question-record/question-record.tsx"
 import { ReportHead, type ReportLabel } from "../report-head/report-head.tsx"
 import { Report } from "../report/report.tsx"
+import { TurnFailureBlock } from "../turn-failure-block/turn-failure-block.tsx"
 import styles from "./turn.module.css"
 
 export type TurnProps = {
@@ -67,6 +66,13 @@ export function Turn(props: TurnProps): ReactElement {
           wrap="nowrap"
           className=""
         >
+          {turn.failure.kind === "failed" && (
+            <TurnFailureBlock
+              failure={turn.failure.failure}
+              requestText={turn.request?.text ?? ""}
+              newest={props.newest}
+            />
+          )}
           {/* `key` は配列の添字ではなく `step.id`（`MainViewStep.id`。古いステップを落とす前に振った通し番号）を使う。
               添字だと、古いステップが落ちて残りの添字が1つずつ前へずれた瞬間に React が別のステップの DOM を使い回してしまい、`<details>` の `open` のような制御されていない DOM の状態が別のステップへ乗り移って見える。 */}
           {turn.steps.map((step) => (
@@ -78,39 +84,9 @@ export function Turn(props: TurnProps): ReactElement {
               key={step.id}
             />
           ))}
-          {turn.failure.kind === "failed" && <TurnFailureNotice failure={turn.failure.failure} />}
         </VStack>
       )}
     </div>
-  )
-}
-
-/**
- * やり取りの末尾に出す「失敗で終わった」の札。
- * 見出しの字が失敗を言い、理由は型の決まった語だけ（`turnFailureLabel`。SDK の自由文は出さない）。
- */
-function TurnFailureNotice(props: { readonly failure: TurnFailure }): ReactElement {
-  return (
-    <section className={clsx(mainViewStyles["main-step"], mainViewStyles["is-failed"])} role="note">
-      <Text
-        element="p"
-        size="label"
-        tone="state-ng"
-        weight="inherit"
-        className={styles["step-heading"]}
-      >
-        失敗で終わった
-      </Text>
-      <Text
-        element="p"
-        size="inherit"
-        tone="inherit"
-        weight="inherit"
-        className={styles["turn-failure-reason"]}
-      >
-        {turnFailureLabel(props.failure)}
-      </Text>
-    </section>
   )
 }
 

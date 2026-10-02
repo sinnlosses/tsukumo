@@ -8,6 +8,7 @@ import type { ReactElement } from "react"
 import { CurrentWorkStepGroup } from "../../../../../../../features/current-work/components/current-work-step-group.tsx"
 import { Button } from "../../../../../../ui/button/button.tsx"
 import { Text } from "../../../../../../ui/text/text.tsx"
+import { useFailedStepFocus } from "./hooks/use-failed-step-focus.ts"
 import type {
   WorkStripActivity,
   WorkStripModel,
@@ -50,14 +51,25 @@ export function PresentationalWorkStrip(props: {
         <StepsToggle steps={strip.steps} />
       </div>
       {strip.kind === "working" && <ActivityLine activity={strip.activity} />}
-      {strip.steps.open && (
-        <div role="region" aria-label="依頼の手順" className={styles["work-strip-steps"]}>
-          {strip.steps.groups.map((group) => (
-            <CurrentWorkStepGroup key={group.key} group={group} />
-          ))}
-        </div>
+      {strip.steps.list.kind === "open" && (
+        <StepsList groups={strip.steps.groups} failureSignal={strip.steps.list.failureSignal} />
       )}
     </section>
+  )
+}
+
+/** 押すと開く依頼の手順の一覧。失敗した手順を指して開いたときは、最初の失敗の行へ連れてくる。 */
+function StepsList(props: {
+  readonly groups: WorkStripSteps["groups"]
+  readonly failureSignal: number
+}): ReactElement {
+  const listRef = useFailedStepFocus(props.failureSignal)
+  return (
+    <div ref={listRef} role="region" aria-label="依頼の手順" className={styles["work-strip-steps"]}>
+      {props.groups.map((group) => (
+        <CurrentWorkStepGroup key={group.key} group={group} />
+      ))}
+    </div>
   )
 }
 
@@ -88,7 +100,7 @@ function StepsToggle(props: { readonly steps: WorkStripSteps }): ReactElement {
       pressed="none"
       disabled={false}
       ariaLabel={undefined}
-      disclosure={{ kind: "expander", expanded: props.steps.open }}
+      disclosure={{ kind: "expander", expanded: props.steps.list.kind === "open" }}
       ariaHasPopup={undefined}
       title={undefined}
       className={styles["work-strip-toggle"]}
