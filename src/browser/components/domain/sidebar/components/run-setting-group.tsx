@@ -1,4 +1,4 @@
-// サイドバーの下端の帯の左端、モデル・effort・許可モードの3つの操作子。
+// モデル・effort・許可モードの3つの操作子。サイドバーの下端の帯の左端と、中くらいの窓幅の柱に置く。
 // どれも絵だけの小さな口で、押すとブラウザの `<select>` の選択肢が開く（絵の上に透明の `<select>` を重ねる）。
 // キーボードの操作・読み上げ・選択肢の開き方はブラウザに任せ、何の値かは `aria-label` と `title` に「モデル Opus」の形で渡す。
 //
@@ -36,7 +36,14 @@ const PERMISSION_MODE_ICON = {
   bypassPermissions: ShieldOff,
 } satisfies Record<PermissionMode, LucideIcon>
 
-export function RunSettingGroup(): ReactElement {
+export type RunSettingPlacement = "sidebar-footer" | "rail"
+
+const PLACEMENT_CLASS = {
+  "sidebar-footer": styles["run-setting-group-footer"],
+  rail: styles["run-setting-group-rail"],
+} satisfies Record<RunSettingPlacement, string>
+
+export function RunSettingGroup(props: { readonly placement: RunSettingPlacement }): ReactElement {
   const control = useModelPermission()
   const modelSelectId = useId()
   const effortSelectId = useId()
@@ -48,7 +55,11 @@ export function RunSettingGroup(): ReactElement {
   const { effort } = control
 
   return (
-    <div className={styles["run-setting-group"]} role="group" aria-label="実行の設定">
+    <div
+      className={clsx(styles["run-setting-group"], PLACEMENT_CLASS[props.placement])}
+      role="group"
+      aria-label="実行の設定"
+    >
       <RunSetting
         id={modelSelectId}
         name={`モデル ${modelLabel}`}

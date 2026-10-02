@@ -4,7 +4,7 @@ import { join } from "node:path"
 import type { Locator } from "playwright-core"
 
 import { claimTask, git, initGitRepository } from "../fixture/git-repository.ts"
-import type { DomRootName, ScenarioRoom, ScenarioRun } from "./scenario-run.ts"
+import type { DomRootName, ScenarioOptions, ScenarioRoom, ScenarioRun } from "./scenario-run.ts"
 
 // タスクの一覧とタスクのモーダルの E2E の足場（docs/architecture/testing.md「E2E のシナリオの一覧」）。
 // この一覧だけは疑似セッションの
@@ -94,8 +94,9 @@ export async function openTaskListRoomWithRunningTask(
   run: ScenarioRun,
   scenario: string,
   domRoots: readonly DomRootName[],
+  viewport: ScenarioOptions["viewport"],
 ): Promise<ScenarioRoom> {
-  const room = await run.open({ scenario, scene: "none", viewport: "wide", domRoots })
+  const room = await run.open({ scenario, scene: "none", viewport, domRoots })
 
   await initGitRepository(room.cwd)
   writeTask(room.cwd, "T-001", "架空のタスク（未着手）", "todo")

@@ -129,6 +129,7 @@ export function PresentationalReportOutline({
           toValue={outlineWidthFromRatio}
           onChange={onWidthChange}
           onCommit={onWidthCommit}
+          className=""
         />
       )}
       <div className={styles["outline-content"]} ref={contentRef}>

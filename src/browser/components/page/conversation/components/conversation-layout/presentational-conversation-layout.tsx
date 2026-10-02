@@ -7,9 +7,10 @@
 //
 // 狭い画面では上段の2領域をタブで切り替える。
 // どちらを隠すかは CSS（`.layout-row-top[data-narrow-pane]` の `@media`）が決めるので、ここは幅を測らない。
+// 中くらいの窓幅ではサイドバーを柱に畳む。柱を出すか・サイドバーを重ねるかも CSS が決め、ここは開閉の印（`data-sidebar-open`）を立てるだけ。
 
 import clsx from "clsx"
-import { RotateCw } from "lucide-react"
+import { PanelRightClose, PanelRightOpen, RotateCw } from "lucide-react"
 import type { ReactElement, ReactNode } from "react"
 
 import { Button } from "../../../../ui/button/button.tsx"
@@ -23,6 +24,10 @@ export type PresentationalConversationLayoutProps = UseConversationLayoutResult 
   readonly sidebar: ReactNode
   readonly character: ReactNode
   readonly dispatch: ReactNode
+  /** 中くらいの窓幅の柱の、開く口の中に置くもの。 */
+  readonly railBadge: ReactNode
+  /** 中くらいの窓幅の柱の、開く口の下に並べるもの。 */
+  readonly railTools: ReactNode
   /** キャラビューの領域を畳み、下段を入力欄だけにするか。立ち絵が上段へ移ったとき（雑談モード）に使う。 */
   readonly collapseCharacter: boolean
   /** メインの領域を、枠を持つウィジェットではなく地そのものとして描くか（枠と角丸を外し、背景があればそこへ敷く）。 */
@@ -60,10 +65,17 @@ export function PresentationalConversationLayout({
   onBottomLeftCommit,
   onReset,
   isSplitChanged,
+  sideRef,
+  sidebarId,
+  sidebarOpen,
+  onToggleSidebar,
+  sidebarToggleRef,
   main,
   sidebar,
   character,
   dispatch,
+  railBadge,
+  railTools,
   collapseCharacter,
   mainAsGround,
 }: PresentationalConversationLayoutProps): ReactElement {
@@ -94,6 +106,7 @@ export function PresentationalConversationLayout({
         className={clsx(styles["layout-row"], styles["layout-row-top"])}
         ref={rowTopRef}
         data-narrow-pane={narrowPane}
+        data-sidebar-open={sidebarOpen}
         style={rowTopStyle}
       >
         <main
@@ -114,14 +127,41 @@ export function PresentationalConversationLayout({
           toValue={percentFromRatio}
           onChange={onTopLeftChange}
           onCommit={onTopLeftCommit}
+          className={styles["layout-resizer-top"]}
         />
-        <aside
-          className={clsx(styles["layout-region"], styles["layout-sidebar"])}
-          data-region="sidebar"
-          aria-label="サイドバー"
-        >
-          {sidebar}
-        </aside>
+        <div className={styles["layout-side"]} ref={sideRef}>
+          <aside
+            id={sidebarId}
+            className={clsx(styles["layout-region"], styles["layout-sidebar"])}
+            data-region="sidebar"
+            aria-label="サイドバー"
+          >
+            {sidebar}
+          </aside>
+          <div className={styles["layout-rail"]}>
+            <Button
+              variant="ghost"
+              size="label"
+              pressed="none"
+              disabled={false}
+              ariaLabel="サイドバー"
+              disclosure={{
+                kind: "popover",
+                ref: sidebarToggleRef,
+                expanded: sidebarOpen,
+                controls: sidebarId,
+              }}
+              ariaHasPopup={undefined}
+              title={sidebarOpen ? "サイドバーを閉じる" : "サイドバーを開く"}
+              className={styles["layout-rail-toggle"]}
+              onClick={onToggleSidebar}
+            >
+              {railBadge}
+              {sidebarOpen ? <PanelRightClose size={18} /> : <PanelRightOpen size={18} />}
+            </Button>
+            {railTools}
+          </div>
+        </div>
       </div>
       {/* 畳んでいる間もこの仕切りは出す（雑談中でも入力欄の高さを変えられる）。
             覚える先は `useConversationLayout` の中で切り替わるだけで、仕切りそのものは1本。 */}
@@ -133,6 +173,7 @@ export function PresentationalConversationLayout({
           toValue={percentFromRatio}
           onChange={onRowTopChange}
           onCommit={onRowTopCommit}
+          className=""
         />
         {/* 押して消えたあとのフォーカスは動かさず、body へ落ちるのに任せる。
               仕切り `role="separator"` はキー操作を持たないので、そこへ移すと押せないものにフォーカスが残る。 */}
@@ -178,6 +219,7 @@ export function PresentationalConversationLayout({
               toValue={percentFromRatio}
               onChange={onBottomLeftChange}
               onCommit={onBottomLeftCommit}
+              className=""
             />
           </>
         )}

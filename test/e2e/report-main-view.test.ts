@@ -241,9 +241,9 @@ describe("report → メインビュー", () => {
 
   it("札の幅が 48rem 未満では目次が既定で畳まれ、開くを選ぶと読み込み直しても開いたまま", async () => {
     const room = await run.open({
-      scenario: "report-outline-medium",
+      scenario: "report-outline-compact",
       scene: "long-report-quick",
-      viewport: "medium",
+      viewport: "compact",
       domRoots: ["main"],
     })
 

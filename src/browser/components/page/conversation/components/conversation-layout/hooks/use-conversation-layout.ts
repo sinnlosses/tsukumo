@@ -5,9 +5,21 @@
 // 動かしている間の位置は過渡的な値で、効くのは CSS カスタムプロパティだけなので、pointermove の間は DOM へ直接書く（`on*Change`）。
 // 離した瞬間に呼ばれる `on*Commit` だけが state を更新し、`saveSplit` で保存する。
 
-import { useRef, useState, type CSSProperties, type RefObject } from "react"
+import {
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type CSSProperties,
+  type RefCallback,
+  type RefObject,
+} from "react"
 
+import { usePopover } from "../../../../../../hooks/use-popover.ts"
 import { DEFAULT_SPLIT, isDefaultSplit, loadSplit, saveSplit, type Split } from "../domain/split.ts"
+
+// 柱を出す中くらいの窓幅の `@media` と同じ字にする。
+const RAIL_TIER_QUERY = "(min-width: 761px) and (max-width: 1100px)"
 
 /** 狭い画面のとき、上段に出している領域。 */
 export type NarrowPane = "main" | "sidebar"
@@ -33,6 +45,13 @@ export type UseConversationLayoutResult = {
   readonly onReset: () => void
   /** 3本の比率と雑談の上下比が既定と1つでも違うか。「比率を既定に戻す」ピルを出すかの判定に使う。 */
   readonly isSplitChanged: boolean
+  /** 柱とサイドバーを包む要素。この外を押すと、柱から開いたサイドバーが閉じる。 */
+  readonly sideRef: RefObject<HTMLDivElement | null>
+  readonly sidebarId: string
+  /** 中くらいの窓幅で、柱からサイドバーを重ねて開いているか。 */
+  readonly sidebarOpen: boolean
+  readonly onToggleSidebar: () => void
+  readonly sidebarToggleRef: RefCallback<HTMLButtonElement>
 }
 
 /**
@@ -45,6 +64,26 @@ export function useConversationLayout(collapseCharacter: boolean): UseConversati
   const gridRef = useRef<HTMLDivElement>(null)
   const rowTopRef = useRef<HTMLDivElement>(null)
   const rowBottomRef = useRef<HTMLDivElement>(null)
+  const sideRef = useRef<HTMLDivElement>(null)
+  const sidebarId = useId()
+  const sidebar = usePopover({ rootRef: sideRef, onReset: () => {} })
+  const { open: sidebarOpen, close: closeSidebar } = sidebar
+
+  useEffect(() => {
+    if (!sidebarOpen) {
+      return
+    }
+    const tier = window.matchMedia(RAIL_TIER_QUERY)
+    function closeOutsideTier(): void {
+      if (!tier.matches) {
+        closeSidebar()
+      }
+    }
+    tier.addEventListener("change", closeOutsideTier)
+    return () => {
+      tier.removeEventListener("change", closeOutsideTier)
+    }
+  }, [sidebarOpen, closeSidebar])
 
   // 仕切りを離したとき・既定に戻すときだけ通る、比率の唯一の更新点。
   // ドラッグ中は state を触らないので、ここの `split` は最後に確定した比率そのもの。
@@ -93,6 +132,11 @@ export function useConversationLayout(collapseCharacter: boolean): UseConversati
       commitSplit(() => DEFAULT_SPLIT)
     },
     isSplitChanged: !isDefaultSplit(split),
+    sideRef,
+    sidebarId,
+    sidebarOpen,
+    onToggleSidebar: sidebar.onToggle,
+    sidebarToggleRef: sidebar.toggleRef,
   }
 }
 

@@ -19,6 +19,8 @@ function renderLayout(collapseCharacter = false, mainAsGround = collapseCharacte
       sidebar="sidebar"
       character="character"
       dispatch="dispatch"
+      railBadge="railBadge"
+      railTools="railTools"
       collapseCharacter={collapseCharacter}
       mainAsGround={mainAsGround}
     />,

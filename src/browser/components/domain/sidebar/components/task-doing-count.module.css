@@ -1,0 +1,13 @@
+/* 柱の進行中の件数。サイドバーの進行中のチップと同じ地と字。 */
+.task-doing-count {
+  min-width: 1.25rem;
+  padding: 0.1rem 0.375rem;
+  border-radius: 999px;
+  background: var(--surface-accent);
+  color: color-mix(in srgb, var(--accent) 85%, var(--ink));
+  font-family: var(--font-mono);
+  font-size: var(--font-label);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.4;
+  text-align: center;
+}

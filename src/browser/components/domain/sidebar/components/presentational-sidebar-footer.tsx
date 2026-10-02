@@ -26,7 +26,7 @@ export function PresentationalSidebarFooter({
 }: SidebarFooterView): ReactElement {
   return (
     <div className={styles["sidebar-footer"]} ref={ref}>
-      <RunSettingGroup />
+      <RunSettingGroup placement="sidebar-footer" />
       {/* 目盛りと円はひとまとまりで右へ寄せる（サイドバーが狭くて折り返すときも、2つが離れずに次の行の右端へ移る）。 */}
       <div className={styles["sidebar-footer-usage"]}>
         <ContextUsageGauge

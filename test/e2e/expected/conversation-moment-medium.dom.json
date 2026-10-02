@@ -93,7 +93,7 @@
                       "tag": "div",
                       "attributes": {
                         "data-outline": "hidden",
-                        "data-outline-collapsed": "true"
+                        "data-outline-collapsed": "false"
                       },
                       "children": [
                         {

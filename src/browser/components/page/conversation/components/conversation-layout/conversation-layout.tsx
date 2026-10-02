@@ -13,6 +13,8 @@ export type ConversationLayoutProps = {
   readonly sidebar: ReactNode
   readonly character: ReactNode
   readonly dispatch: ReactNode
+  readonly railBadge: ReactNode
+  readonly railTools: ReactNode
   readonly collapseCharacter: boolean
   readonly mainAsGround: boolean
 }

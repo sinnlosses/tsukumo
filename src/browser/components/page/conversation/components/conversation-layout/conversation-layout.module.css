@@ -2,7 +2,8 @@
    上段（メイン・サイドバー）と下段（キャラビュー・入力欄）で仕切りの位置を独立に動かせるようにするため、上下の行をそれぞれ別の grid（.layout-row-top / .layout-row-bottom）にし、行の高さ・各行の列幅は CSS カスタムプロパティで持つ（<ConversationLayout> がドラッグに応じて style で書き換える）。
    ここに書いた var() の第2引数（フォールバック値）は `DEFAULT_SPLIT` と一致させること。
 
-   狭い画面での畳み方（画面の高さに固定し、上段はタブで1つずつ出す）は、このファイルの末尾の@media にある（他の領域のぶんはそれぞれの *.module.css の末尾）。 */
+   狭い画面での畳み方（画面の高さに固定し、上段はタブで1つずつ出す）は、このファイルの末尾の@media にある（他の領域のぶんはそれぞれの *.module.css の末尾）。
+   中くらいの窓幅（761〜1100px）でサイドバーを柱に畳む形は、その手前の @media にある。 */
 .layout-grid {
   position: relative;
   display: grid;
@@ -144,6 +145,63 @@
   line-height: 1;
   white-space: nowrap;
   transform: translateY(-50%);
+}
+
+/* 柱とサイドバーを包む要素。外側を押したかの判定にだけ使い、grid の並びには加わらない。 */
+.layout-side {
+  display: contents;
+}
+/* 中くらいの窓幅でだけ出る柱。 */
+.layout-rail {
+  display: none;
+}
+.layout-rail-toggle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem;
+  border-radius: 0.5rem;
+}
+
+/* 中くらいの窓幅。サイドバーを右端の柱に畳み、柱の口で上段に重ねて開く。
+   問い合わせの字は `RAIL_TIER_QUERY` と同じにする。 */
+@media (min-width: 761px) and (max-width: 1100px) {
+  .layout-row-top {
+    position: relative;
+    grid-template-columns: minmax(0, 1fr) 3rem;
+  }
+  .layout-row-top .layout-resizer-top {
+    display: none;
+  }
+  .layout-row-top .layout-sidebar {
+    display: none;
+  }
+  .layout-row-top[data-sidebar-open="true"] .layout-sidebar {
+    display: flex;
+    position: absolute;
+    top: 0;
+    right: calc(3rem + 0.5rem);
+    bottom: 0;
+    z-index: 3;
+    box-sizing: border-box;
+    width: 20rem;
+    box-shadow: 0 18px 44px color-mix(in srgb, var(--ground) 80%, transparent);
+  }
+  .layout-rail {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.6rem;
+    min-height: 0;
+    padding: 0.75rem 0;
+    border: 1px solid var(--rule);
+    border-radius: 0.75rem;
+    background: var(--surface);
+  }
+  .layout-row-top[data-sidebar-open="true"] .layout-rail {
+    border-color: var(--accent);
+  }
 }
 
 /* 狭い画面（スマホの幅で会話を回せるようにする形）。

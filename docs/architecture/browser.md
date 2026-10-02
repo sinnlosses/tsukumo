@@ -29,6 +29,7 @@
 | メインビューに出している中身（`MainViewContent`）と読んでいるあいだの保留 | `browser/stores/main-view-content.ts` の zustand の store（姿の移り変わりを `useSession` の購読で畳む。保留の印は `useMainViewHold` が書く。画面を離れてアンマウントされても失わないよう、部品の state にしない） |
 | 経過時間の秒数                                                            | `<TurnStatus>` の1秒タイマー（`turn` の `startedAt` から計算）                                                                                                                                                    |
 | 領域の比率                                                                | `<Layout>`。`localStorage` に**比率だけ**保存（会話は保存しない）                                                                                                                                                 |
+| 柱から重ねて開いたサイドバーの開閉                                        | `useConversationLayout` の中の `usePopover`（保存しない。中くらいの窓幅の段を出たら閉じる）                                                                                                                       |
 | 出している画面（会話 / キャラクター / 作る）                              | `location.hash` の `?` より前（`stores/screen.tsx` の `useScreen()` が `hashchange` を読む）。保存しない（URL が持つ。`docs/architecture/screen-design.md` 13.6）。hash の書き方は `stores/location-hash.ts` だけ |
 
 画面全体で共有する状態は **zustand の `create()`** で書き、`Context` の `Provider` で配らない

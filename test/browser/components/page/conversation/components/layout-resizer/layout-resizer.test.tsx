@@ -28,6 +28,7 @@ function Host(props: HostProps): ReactElement {
         onCommit={(value) => {
           props.onCommit(moves, value)
         }}
+        className=""
       />
     </div>
   )
@@ -80,6 +81,7 @@ describe("LayoutResizer", () => {
             onCommit={(value) => {
               committed.push(value)
             }}
+            className=""
           />
         </div>
       )

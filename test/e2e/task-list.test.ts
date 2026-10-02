@@ -36,7 +36,12 @@ describe("タスクの一覧", () => {
   })
 
   it("claim した todo は進行中のカードで先頭に出て、残りはファイルの順のまま並ぶ", async () => {
-    const room = await openTaskListRoomWithRunningTask(run, "task-list-running", ["task-section"])
+    const room = await openTaskListRoomWithRunningTask(
+      run,
+      "task-list-running",
+      ["task-section"],
+      "wide",
+    )
     await room.settleAndMatch(ELAPSED_MS)
   })
 

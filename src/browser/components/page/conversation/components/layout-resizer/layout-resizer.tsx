@@ -19,6 +19,8 @@ export type LayoutResizerProps = {
    * 一度も動かさずに離したときは呼ばない（仕切りを掴んだだけで位置が動いて見えるのを防ぐ）。
    */
   readonly onCommit: (value: number) => void
+  /** 置き方だけを渡す。 */
+  readonly className: string
 }
 
 export function LayoutResizer(props: LayoutResizerProps): ReactElement {
@@ -67,7 +69,11 @@ export function LayoutResizer(props: LayoutResizerProps): ReactElement {
 
   return (
     <div
-      className={clsx(styles["layout-resizer"], styles[`layout-resizer-${props.orientation}`])}
+      className={clsx(
+        styles["layout-resizer"],
+        styles[`layout-resizer-${props.orientation}`],
+        props.className,
+      )}
       role="separator"
       aria-orientation={props.orientation}
       aria-label={props.ariaLabel}
