@@ -44,6 +44,7 @@ import type { SessionChoice } from "./session-choice.ts"
 import { BUILTIN_SESSION_DEFAULT, type SessionDefault } from "./session-default.ts"
 import type { CommandDescription, ModelEffortSupport, SessionEvent } from "./session-event.ts"
 import { splitIntoTurns } from "./turn.ts"
+import { delegatedWorkPlan, isWorkPlanRecord, latestWorkPlan } from "./work-plan.ts"
 
 /**
  * メインビューに残す記録の窓（直近何ターンぶんを持ち続けるか）。常駐プロセスが動き続ける以上、記録自体も無限に増やさない。
@@ -129,6 +130,8 @@ export type SessionRecord =
       readonly phases: readonly string[]
       readonly current: number
       readonly phaseSummary: string
+      /** メインの `work_plan` の呼び出しか、委譲の合図から引いたものか。 */
+      readonly source: "main" | "delegate-signal"
     }
   /**
    * 答え終わった質問（`question-answered`）。積むのは答えが確定した1回だけで、あとから書き換えない。
@@ -584,18 +587,14 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
         ],
       }
     case "work-plan":
+      return { ...state, records: [...state.records, ...mainWorkPlanRecords(state.records, event)] }
+    case "delegate-signal": {
+      const plan = delegatedWorkPlan(latestWorkPlan(recordsOfLastRequest(state.records)), event)
       return {
         ...state,
-        records: [
-          ...state.records,
-          {
-            kind: "work-plan",
-            phases: event.phases,
-            current: event.current,
-            phaseSummary: event.phaseSummary,
-          },
-        ],
+        records: [...state.records, { kind: "work-plan", ...plan, source: "delegate-signal" }],
       }
+    }
     case "tool-started": {
       const nested = event.parentToolUseId !== undefined
       return {
@@ -745,6 +744,38 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
       // 起こし直すと記録は空から始まるので、ここまでの記録はすべて再生のぶんになる。
       return { ...state, records: state.records.map(withRestoredTime) }
   }
+}
+
+/**
+ * メインの `work_plan` の呼び出しを積む記録。
+ * 同じ依頼に委譲の合図から引いた段取りがあれば、全部の段を終えた呼び出しだけをその段取りの全部済みとして積み、ほかは積まない。
+ */
+function mainWorkPlanRecords(
+  records: readonly SessionRecord[],
+  event: Extract<SessionEvent, { readonly kind: "work-plan" }>,
+): readonly SessionRecord[] {
+  const delegated = recordsOfLastRequest(records)
+    .filter(isWorkPlanRecord)
+    .findLast((record) => record.source === "delegate-signal")
+  if (delegated === undefined) {
+    return [
+      {
+        kind: "work-plan",
+        phases: event.phases,
+        current: event.current,
+        phaseSummary: event.phaseSummary,
+        source: "main",
+      },
+    ]
+  }
+  return event.current === event.phases.length
+    ? [{ ...delegated, current: delegated.phases.length, phaseSummary: "" }]
+    : []
+}
+
+/** 最後の依頼より後ろの記録（依頼が無ければ全部）。 */
+function recordsOfLastRequest(records: readonly SessionRecord[]): readonly SessionRecord[] {
+  return records.slice(records.findLastIndex((record) => record.kind === "request") + 1)
 }
 
 /**

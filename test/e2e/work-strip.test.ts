@@ -7,6 +7,7 @@ import { useScenarioRun } from "./scenario-run.ts"
 // 場面 `work-strip-running` は1つ目の手順のあと間を空け、4つ目の手順（長い Bash）が 20 秒走るので、そこで撮る。
 // `work-strip-ask`・`work-strip-question`・`work-strip-retry` は答え待ち・再試行が届いたまま 20 秒止まる。
 // `work-plan-quick`・`work-strip-long-report-quick` は `turn-finished` まで流す。
+// `work-strip-delegate-signal` は2つ目の合図のあとの長い Bash が 20 秒走るので、そこで撮る。
 
 const run = useScenarioRun()
 
@@ -15,6 +16,12 @@ const ELAPSED_MS = 60_000
 
 /** 長い Bash が、場面の中で何番目の `tool-started` か。 */
 const LONG_TOOL_OCCURRENCE = 4
+
+/** 場面 `work-strip-delegate-signal` で、合図の形でない `SendMessage` が何番目の `tool-started` か。 */
+const NON_SIGNAL_MESSAGE_OCCURRENCE = 3
+
+/** 場面 `work-strip-delegate-signal` で、2つ目の合図のあとに委譲先が走らせる長い Bash が何番目の `tool-started` か。 */
+const DELEGATE_LONG_TOOL_OCCURRENCE = 5
 
 describe("進み具合の帯", () => {
   it("段が進む・ツールが走るたびに書き換わり、本文を転がしても動かない", async () => {
@@ -159,6 +166,30 @@ describe("進み具合の帯", () => {
     await expectUncovered(
       room.page.locator('[data-region="main"] p', { hasText: "これが本文の最後の段落" }),
     )
+  })
+
+  it("委譲の合図が届くと、メインが呼ばなくても帯が計画・N 段・受け入れに引き直されて進む", async () => {
+    const room = await run.open({
+      scenario: "work-strip-delegate-signal",
+      scene: "work-strip-delegate-signal",
+      viewport: "large",
+      domRoots: ["main"],
+    })
+    const strip = stripOf(room.page)
+
+    await room.waitForEvent("tool-started", NON_SIGNAL_MESSAGE_OCCURRENCE)
+    await expect
+      .poll(() => phaseStates(strip))
+      .toEqual(["done", "done", "current", "upcoming", "upcoming", "upcoming"])
+    expect(await strip.textContent()).toContain("やること 2")
+
+    await room.waitForEvent("tool-started", DELEGATE_LONG_TOOL_OCCURRENCE)
+    await expect
+      .poll(() => phaseStates(strip))
+      .toEqual(["done", "done", "done", "current", "upcoming", "upcoming"])
+    expect(await strip.textContent()).toContain("やること 3")
+
+    await room.settleAndMatch(ELAPSED_MS)
   })
 })
 

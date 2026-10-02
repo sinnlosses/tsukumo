@@ -171,6 +171,16 @@ export type SessionEvent =
       readonly current: number
       readonly phaseSummary: string
     }
+  /**
+   * 委譲の合図（委譲先の `SendMessage` の1行目 `状況 | n/N | …`）から読んだ段の位置。
+   * `step` は済んだ段の番号（1始まり）、`stepCount` は段の数で、`1 <= step <= stepCount`。
+   * 合図の文は運ばない。
+   */
+  | {
+      readonly kind: "delegate-signal"
+      readonly step: number
+      readonly stepCount: number
+    }
   | {
       readonly kind: "tool-started"
       readonly toolUseId: string

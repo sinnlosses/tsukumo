@@ -86,6 +86,43 @@ export function parseWorkPlan(value: unknown): WorkPlan | undefined {
   return { phases, current, phaseSummary }
 }
 
+/** 委譲の合図から読んだ段の位置。`step` は済んだ段の番号（1始まり）、`stepCount` は段の数。 */
+export type DelegateSignal = {
+  readonly step: number
+  readonly stepCount: number
+}
+
+/**
+ * 委譲の合図から引き直した段取り。段は「計画・合図の N 段・受け入れ」で、今の段は合図の n 段目の次。
+ * 段の名前は、`previous` が同じ数（N + 2 段）の段取りならその名前を借り、違えば {@link DELEGATED_PHASE_NAMES} から組む。
+ * 合図の文は段のまとめに入れないので、段が進んでも中間レポートは出ず段の知らせだけが出る。
+ */
+export function delegatedWorkPlan(previous: LatestWorkPlan, signal: DelegateSignal): WorkPlan {
+  const phaseCount = signal.stepCount + 2
+  const phases =
+    previous.kind === "planned" && previous.phases.length === phaseCount
+      ? previous.phases
+      : [
+          DELEGATED_PHASE_NAMES.plan,
+          ...Array.from({ length: signal.stepCount }, (_, index) =>
+            DELEGATED_PHASE_NAMES.step(index + 1),
+          ),
+          DELEGATED_PHASE_NAMES.acceptance,
+        ]
+  return { phases, current: signal.step + 1, phaseSummary: "" }
+}
+
+/** 委譲の合図から段取りを組むときの段の名前。 */
+const DELEGATED_PHASE_NAMES = {
+  plan: "計画",
+  step: (index: number) => `やること ${String(index)}`,
+  acceptance: "受け入れ",
+} as const satisfies {
+  readonly plan: string
+  readonly step: (index: number) => string
+  readonly acceptance: string
+}
+
 /** 記録の範囲で最後の `work-plan` の記録（{@link LatestWorkPlan}）。範囲を依頼1つに絞るのは呼ぶ側。 */
 export function latestWorkPlan(records: readonly SessionRecord[]): LatestWorkPlan {
   const found = records.findLast(isWorkPlanRecord)

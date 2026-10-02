@@ -4783,6 +4783,134 @@
       ]
     },
     {
+      "name": "work-strip-delegate-signal",
+      "steps": [
+        {
+          "afterMs": 0,
+          "event": {
+            "kind": "request",
+            "text": "架空のタスクを委譲で進めたい（架空の依頼）",
+            "images": []
+          }
+        },
+        {
+          "afterMs": 100,
+          "event": {
+            "kind": "work-plan",
+            "phases": ["計画", "実装", "受け入れ"],
+            "current": 0,
+            "phaseSummary": ""
+          }
+        },
+        {
+          "afterMs": 200,
+          "event": {
+            "kind": "tool-started",
+            "toolUseId": "fake-delegate-agent",
+            "name": "Agent",
+            "input": { "description": "架空のタスクの実装", "run_in_background": true }
+          }
+        },
+        {
+          "afterMs": 300,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-delegate-agent",
+            "content": "ダミーの背景起動の結果",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 1500,
+          "event": {
+            "kind": "tool-started",
+            "toolUseId": "fake-delegate-send-1",
+            "name": "SendMessage",
+            "input": { "to": "main", "message": "状況 | 1/4 | 架空の1段目を終えた" },
+            "parentToolUseId": "fake-delegate-agent"
+          }
+        },
+        {
+          "afterMs": 1510,
+          "event": { "kind": "delegate-signal", "step": 1, "stepCount": 4 }
+        },
+        {
+          "afterMs": 1600,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-delegate-send-1",
+            "content": "ダミーの送信結果",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 2500,
+          "event": {
+            "kind": "tool-started",
+            "toolUseId": "fake-delegate-send-2",
+            "name": "SendMessage",
+            "input": { "to": "main", "message": "架空の伝言（合図の形でない）" },
+            "parentToolUseId": "fake-delegate-agent"
+          }
+        },
+        {
+          "afterMs": 2600,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-delegate-send-2",
+            "content": "ダミーの送信結果",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 6000,
+          "event": {
+            "kind": "tool-started",
+            "toolUseId": "fake-delegate-send-3",
+            "name": "SendMessage",
+            "input": { "to": "main", "message": "状況 | 2/4 | 架空の2段目を終えた" },
+            "parentToolUseId": "fake-delegate-agent"
+          }
+        },
+        {
+          "afterMs": 6010,
+          "event": { "kind": "delegate-signal", "step": 2, "stepCount": 4 }
+        },
+        {
+          "afterMs": 6100,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-delegate-send-3",
+            "content": "ダミーの送信結果",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 6200,
+          "event": {
+            "kind": "tool-started",
+            "toolUseId": "fake-delegate-bash",
+            "name": "Bash",
+            "input": { "command": "pnpm exec vitest run /tmp/dummy/delegate" },
+            "parentToolUseId": "fake-delegate-agent"
+          }
+        },
+        {
+          "afterMs": 26200,
+          "event": {
+            "kind": "tool-finished",
+            "toolUseId": "fake-delegate-bash",
+            "content": "ダミーのテスト結果",
+            "isError": false
+          }
+        },
+        {
+          "afterMs": 26300,
+          "event": { "kind": "turn-finished", "outcome": { "kind": "completed" } }
+        }
+      ]
+    },
+    {
       "name": "work-strip-ask",
       "steps": [
         {

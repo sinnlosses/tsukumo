@@ -1217,3 +1217,44 @@ describe("isSubagentMessage", () => {
     expect(isSubagentMessage("壊れた形")).toBe(false)
   })
 })
+
+describe("toSessionEvents（委譲の合図）", () => {
+  function sendMessage(input: unknown, parentToolUseId?: string): Record<string, unknown> {
+    return assistantMessage(
+      [{ type: "tool_use", id: "toolu_send", name: "SendMessage", input }],
+      parentToolUseId,
+    )
+  }
+
+  function signalsOf(message: unknown): readonly SessionEvent[] {
+    return toSessionEvents(message, EXPRESSIONS).filter((event) => event.kind === "delegate-signal")
+  }
+
+  it("サブエージェントがメインへ送った合図は、tool-started の後ろに段の位置だけの delegate-signal を出す", () => {
+    const events = toSessionEvents(
+      sendMessage({ to: "main", message: "状況 | 2/5 | 架空の進み\n架空の続き" }, "toolu_sub_1"),
+      EXPRESSIONS,
+    )
+
+    expect(events.map((event) => event.kind)).toEqual(["tool-started", "delegate-signal"])
+    expect(events[1]).toEqual({ kind: "delegate-signal", step: 2, stepCount: 5 })
+  })
+
+  it("合図の形でない・宛先が main でない・段の位置が範囲の外の SendMessage では出さない", () => {
+    const parent = "toolu_sub_1"
+
+    expect(signalsOf(sendMessage({ to: "main", message: "架空の伝言" }, parent))).toEqual([])
+    expect(
+      signalsOf(sendMessage({ to: "main", message: "架空\n状況 | 1/2 | 架空" }, parent)),
+    ).toEqual([])
+    expect(
+      signalsOf(sendMessage({ to: "架空の相手", message: "状況 | 1/2 | 架空" }, parent)),
+    ).toEqual([])
+    expect(signalsOf(sendMessage({ to: "main", message: "状況 | 3/2 | 架空" }, parent))).toEqual([])
+    expect(signalsOf(sendMessage({ to: "main", message: "状況 | 0/2 | 架空" }, parent))).toEqual([])
+  })
+
+  it("メイン（parent_tool_use_id が null）の SendMessage では出さない", () => {
+    expect(signalsOf(sendMessage({ to: "main", message: "状況 | 1/2 | 架空" }))).toEqual([])
+  })
+})

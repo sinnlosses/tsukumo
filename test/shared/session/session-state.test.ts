@@ -14,6 +14,7 @@ import {
   MAX_TOOL_TEXT_LENGTH,
   type SessionState,
 } from "../../../src/shared/session/session-state.ts"
+import { latestWorkPlan } from "../../../src/shared/session/work-plan.ts"
 import {
   characterChangedEvent,
   characterInfo,
@@ -1454,5 +1455,55 @@ describe("applySessionEvent（API の不調と失敗）", () => {
       failure: { kind: "api-error", error: "overloaded" },
     })
     expect(turn?.steps).toHaveLength(1)
+  })
+})
+
+describe("applySessionEvent（委譲の合図と段取り）", () => {
+  const request: SessionEvent = { kind: "request", text: "架空の依頼", images: [] }
+  const mainPlan = (current: number, phaseSummary = ""): SessionEvent => ({
+    kind: "work-plan",
+    phases: ["架空の計画", "架空の実装", "架空の受け入れ"],
+    current,
+    phaseSummary,
+  })
+  const signal = (step: number): SessionEvent => ({ kind: "delegate-signal", step, stepCount: 6 })
+  const currentPlan = (state: SessionState) => latestWorkPlan(state.records)
+
+  it("合図が届くと、メインが呼ばなくても計画・N 段・受け入れの並びで n 段目まで済む", () => {
+    const plan = currentPlan(apply(request, mainPlan(0), signal(2)))
+
+    expect(plan).toMatchObject({ kind: "planned", current: 3 })
+    expect(plan.kind === "planned" && plan.phases).toEqual([
+      "計画",
+      "やること 1",
+      "やること 2",
+      "やること 3",
+      "やること 4",
+      "やること 5",
+      "やること 6",
+      "受け入れ",
+    ])
+  })
+
+  it("合図のあとのメインの途中の段取りは帯を変えず、全部の段を終えた段取りは合図の段取りを済ませる", () => {
+    const afterSignal = apply(request, mainPlan(0), signal(6))
+
+    expect(currentPlan(applySessionEvent(afterSignal, mainPlan(1, "架空のまとめ。"), 0))).toEqual(
+      currentPlan(afterSignal),
+    )
+    expect(currentPlan(applySessionEvent(afterSignal, mainPlan(3), 0))).toMatchObject({
+      kind: "planned",
+      current: 8,
+    })
+  })
+
+  it("次の依頼のあとは、メインの段取りが今どおり効く", () => {
+    const plan = currentPlan(apply(request, signal(2), request, mainPlan(1, "架空のまとめ。")))
+
+    expect(plan).toMatchObject({
+      kind: "planned",
+      current: 1,
+      phases: ["架空の計画", "架空の実装", "架空の受け入れ"],
+    })
   })
 })

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import {
+  delegatedWorkPlan,
   type LatestWorkPlan,
   parseWorkPlan,
   phaseShiftOf,
@@ -102,5 +103,34 @@ describe("phaseShiftOf", () => {
     expect(phaseShiftOf({ kind: "none" }, next(PHASES, 1, "架空のまとめ。"))).toEqual(nothing)
     expect(phaseShiftOf(planned(PHASES, 2), next(PHASES, 3, "架空のまとめ。"))).toEqual(nothing)
     expect(phaseShiftOf(planned(["架空の段A"], 0), next(["架空の段A"], 1))).toEqual(nothing)
+  })
+})
+
+describe("delegatedWorkPlan", () => {
+  it("段の数が合わない前の段取りからは、計画・番号の段・受け入れで引き、合図の段の次を今にする", () => {
+    const expected = {
+      phases: ["計画", "やること 1", "やること 2", "やること 3", "受け入れ"],
+      current: 2,
+      phaseSummary: "",
+    }
+
+    expect(delegatedWorkPlan({ kind: "none" }, { step: 1, stepCount: 3 })).toEqual(expected)
+    expect(delegatedWorkPlan(planned(PHASES, 1), { step: 1, stepCount: 3 })).toEqual(expected)
+  })
+
+  it("前の段取りが合図の段の数に計画と受け入れを足した数なら、その名前を借りる", () => {
+    const named = ["架空の計画", "架空の段A", "架空の段B", "架空の受け入れ"]
+
+    expect(delegatedWorkPlan(planned(named, 0), { step: 1, stepCount: 2 })).toEqual({
+      phases: named,
+      current: 2,
+      phaseSummary: "",
+    })
+  })
+
+  it("最後の段の合図では受け入れが今の段になる", () => {
+    const plan = delegatedWorkPlan({ kind: "none" }, { step: 2, stepCount: 2 })
+
+    expect(plan.phases[plan.current]).toBe("受け入れ")
   })
 })

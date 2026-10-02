@@ -1,0 +1,199 @@
+[
+  {
+    "received": "hello",
+    "protocolVersion": "<protocol-version>"
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "session-info",
+      "sessionId": "fake-session",
+      "model": "opus",
+      "permissionMode": "auto",
+      "slashCommands": [
+        "clear",
+        "compact",
+        "doctor"
+      ],
+      "terminalSlashCommands": [
+        "doctor"
+      ]
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "command-descriptions",
+      "descriptions": [
+        {
+          "name": "clear",
+          "description": "会話を消して始め直す（架空の説明）"
+        },
+        {
+          "name": "compact",
+          "description": "会話を要約してまとめる（架空の説明）"
+        }
+      ]
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "speech",
+      "text": "疑似セッションの駆動で立ち上がったよ。ここはぜんぶ作り物の会話。",
+      "expression": "default"
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "request",
+      "text": "架空のタスクを委譲で進めたい（架空の依頼）",
+      "images": []
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "work-plan",
+      "phases": [
+        "計画",
+        "実装",
+        "受け入れ"
+      ],
+      "current": 0,
+      "phaseSummary": ""
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "tool-started",
+      "toolUseId": "fake-delegate-agent",
+      "name": "Agent",
+      "input": {
+        "description": "架空のタスクの実装",
+        "run_in_background": true
+      }
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "tool-finished",
+      "toolUseId": "fake-delegate-agent",
+      "content": "ダミーの背景起動の結果",
+      "isError": false
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "tool-started",
+      "toolUseId": "fake-delegate-send-1",
+      "name": "SendMessage",
+      "input": {
+        "to": "main",
+        "message": "状況 | 1/4 | 架空の1段目を終えた"
+      },
+      "parentToolUseId": "fake-delegate-agent"
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "delegate-signal",
+      "step": 1,
+      "stepCount": 4
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "tool-finished",
+      "toolUseId": "fake-delegate-send-1",
+      "content": "ダミーの送信結果",
+      "isError": false
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "tool-started",
+      "toolUseId": "fake-delegate-send-2",
+      "name": "SendMessage",
+      "input": {
+        "to": "main",
+        "message": "架空の伝言（合図の形でない）"
+      },
+      "parentToolUseId": "fake-delegate-agent"
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "tool-finished",
+      "toolUseId": "fake-delegate-send-2",
+      "content": "ダミーの送信結果",
+      "isError": false
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "tool-started",
+      "toolUseId": "fake-delegate-send-3",
+      "name": "SendMessage",
+      "input": {
+        "to": "main",
+        "message": "状況 | 2/4 | 架空の2段目を終えた"
+      },
+      "parentToolUseId": "fake-delegate-agent"
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "delegate-signal",
+      "step": 2,
+      "stepCount": 4
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "tool-finished",
+      "toolUseId": "fake-delegate-send-3",
+      "content": "ダミーの送信結果",
+      "isError": false
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "tool-started",
+      "toolUseId": "fake-delegate-bash",
+      "name": "Bash",
+      "input": {
+        "command": "pnpm exec vitest run /tmp/dummy/delegate"
+      },
+      "parentToolUseId": "fake-delegate-agent"
+    }
+  }
+]
