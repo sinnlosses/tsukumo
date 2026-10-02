@@ -85,7 +85,7 @@ export function ChatLog({
                       data-speaker="user"
                     >
                       {row.text}
-                      <PromptImageThumbnails images={row.images} />
+                      <PromptImageThumbnails images={row.images} size="compact" />
                     </div>
                     <ChatTime time={row.time} />
                   </div>

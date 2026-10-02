@@ -10,6 +10,7 @@
 //
 // 1枚も無いときは何も描かないので、常設の枠にならない。
 
+import { clsx } from "clsx"
 import { Search } from "lucide-react"
 import { useState, type ReactElement } from "react"
 
@@ -106,6 +107,12 @@ export function PromptImageChips(props: PromptImageChipsProps): ReactElement | n
 export type PromptImageThumbnailsProps = {
   /** 控えと、棚の原寸を指す id の組の並び（記録に残っているのはこれだけ）。 */
   readonly images: readonly RecordedPromptImage[]
+  /**
+   * 控えの大きさ。
+   * compact は札と同じ高さで揃える（雑談の吹き出しの中）。
+   * full は控えの元の大きさを上限に、比率のまま描く（メインビューの依頼の見出しの下）。
+   */
+  readonly size: "compact" | "full"
 }
 
 /**
@@ -140,7 +147,14 @@ export function PromptImageThumbnails(props: PromptImageThumbnailsProps): ReactE
               className={styles["prompt-image-zoom"]}
               onClick={() => setZoomedIndex(index)}
             >
-              <img className={styles["prompt-image"]} src={image.thumbnail} alt={IMAGE_ALT} />
+              <img
+                className={clsx(
+                  styles["prompt-image"],
+                  props.size === "full" && styles["prompt-image-full"],
+                )}
+                src={image.thumbnail}
+                alt={IMAGE_ALT}
+              />
               <Search className={styles["prompt-image-zoom-icon"]} size={16} />
             </Button>
           </li>

@@ -41,6 +41,14 @@
   border-radius: 0.4rem;
   background: var(--surface);
 }
+/* メインビューの控え。
+   高さで揃えず、控えの元の大きさ（長辺 320px）を上限に比率のまま描く。
+   上限を超えて広げると、控えの画素を引き伸ばしてぼやける。 */
+.prompt-image-full {
+  height: auto;
+  max-width: min(100%, 20rem);
+  max-height: 20rem;
+}
 /* 札・控えの絵を押すボタン（押すと原寸を拡大の面で開く）。
    枠・地は `<Button variant="ghost">` が持つ（透明）。
    `position: relative` は虫眼鏡を重ねる基準で、`×` はこのボタンの兄弟なので `.prompt-image-chip` のほうを基準に重なる。 */

@@ -248,5 +248,5 @@ function isQuestion(
 
 /** 添えた画像の控え（添えていなければ何も出ない）。依頼の文面は札の頭が出す。 */
 function RequestImages(props: { readonly request: MainViewRequest }): ReactElement {
-  return <PromptImageThumbnails images={props.request.images} />
+  return <PromptImageThumbnails images={props.request.images} size="full" />
 }
