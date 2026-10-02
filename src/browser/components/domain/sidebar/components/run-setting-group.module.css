@@ -93,9 +93,12 @@
 .run-setting-select-name.is-danger {
   color: var(--state-ng);
 }
+/* 4つぶんの幅で左詰めにし、どの行でも1つ目の●の位置を揃える。 */
 .run-setting-weight {
   flex: none;
+  width: 4.5em;
   margin-left: auto;
+  padding-left: 8px;
   color: var(--accent);
   font-size: var(--font-label);
 }

@@ -179,6 +179,12 @@
                       "tag": "span",
                       "attributes": {
                         "aria-hidden": "true"
+                      }
+                    },
+                    {
+                      "tag": "span",
+                      "attributes": {
+                        "aria-hidden": "true"
                       },
                       "children": [
                         {
@@ -200,6 +206,12 @@
                 {
                   "tag": "option",
                   "children": [
+                    {
+                      "tag": "span",
+                      "attributes": {
+                        "aria-hidden": "true"
+                      }
+                    },
                     {
                       "tag": "span",
                       "attributes": {
@@ -232,6 +244,17 @@
                       },
                       "children": [
                         {
+                          "tag": "svg"
+                        }
+                      ]
+                    },
+                    {
+                      "tag": "span",
+                      "attributes": {
+                        "aria-hidden": "true"
+                      },
+                      "children": [
+                        {
                           "tag": "span",
                           "attributes": {
                             "data-fill": "dashed"
@@ -244,15 +267,18 @@
                         }
                       ]
                     },
-                    "自動判定",
-                    {
-                      "tag": "svg"
-                    }
+                    "自動判定"
                   ]
                 },
                 {
                   "tag": "option",
                   "children": [
+                    {
+                      "tag": "span",
+                      "attributes": {
+                        "aria-hidden": "true"
+                      }
+                    },
                     {
                       "tag": "span",
                       "attributes": {
@@ -278,6 +304,12 @@
                 {
                   "tag": "option",
                   "children": [
+                    {
+                      "tag": "span",
+                      "attributes": {
+                        "aria-hidden": "true"
+                      }
+                    },
                     {
                       "tag": "span",
                       "attributes": {

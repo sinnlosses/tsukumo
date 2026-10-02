@@ -100,7 +100,7 @@
   color: var(--ink-quiet);
   cursor: not-allowed;
 }
-/* ブラウザ既定の ✓（左）は消し、右に置く `.run-setting-select-check` の1つだけにする。 */
+/* ブラウザ既定の ✓ は消し、`.run-setting-select-check` の1つだけにする。 */
 .run-setting-select-option::checkmark {
   display: none;
 }
@@ -119,11 +119,14 @@
   font-size: var(--font-secondary);
 }
 .run-setting-select-check {
+  display: flex;
   flex: none;
-  margin-left: auto;
+  align-items: center;
+  width: 14px;
   color: var(--accent);
 }
-/* 閉じた口は絵だけ残し、開いたときだけの中身（名前・用途・注意・✓）は消す。 */
+/* 閉じた口は絵だけ残し、開いたときだけの中身（✓・名前・用途・注意）は消す。 */
+.run-setting-select-closed .run-setting-select-check,
 .run-setting-select-closed .run-setting-select-row {
   display: none;
 }

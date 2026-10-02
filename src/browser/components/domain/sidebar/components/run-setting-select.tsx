@@ -69,21 +69,17 @@ export function RunSettingSelect(props: RunSettingSelectProps): ReactElement {
           disabled={option.disabled}
           className={styles["run-setting-select-option"]}
         >
+          {/* `row` レイアウト（effort）は縁取りと名前の太字で選ばれている段を示すので、✓ の枠を置かない。
+              選ばれていない行にも同じ幅の枠を置き、絵の列を揃える。 */}
+          {props.layout === "list" && (
+            <span className={styles["run-setting-select-check"]} aria-hidden="true">
+              {option.value === props.value && <Check size={14} strokeWidth={2.4} />}
+            </span>
+          )}
           <span className={styles["run-setting-select-icon"]} aria-hidden="true">
             {option.icon}
           </span>
-          <span className={styles["run-setting-select-row"]}>
-            {option.row}
-            {/* `row` レイアウト（effort）は縁取りと名前の太字で選ばれている段を示すので、✓ は重ねない。 */}
-            {props.layout === "list" && option.value === props.value && (
-              <Check
-                size={14}
-                strokeWidth={2.4}
-                aria-hidden="true"
-                className={styles["run-setting-select-check"]}
-              />
-            )}
-          </span>
+          <span className={styles["run-setting-select-row"]}>{option.row}</span>
         </option>
       ))}
     </select>

@@ -90,6 +90,12 @@
                       "tag": "span",
                       "attributes": {
                         "aria-hidden": "true"
+                      }
+                    },
+                    {
+                      "tag": "span",
+                      "attributes": {
+                        "aria-hidden": "true"
                       },
                       "children": [
                         "F"
@@ -117,6 +123,17 @@
                         "aria-hidden": "true"
                       },
                       "children": [
+                        {
+                          "tag": "svg"
+                        }
+                      ]
+                    },
+                    {
+                      "tag": "span",
+                      "attributes": {
+                        "aria-hidden": "true"
+                      },
+                      "children": [
                         "O"
                       ]
                     },
@@ -130,15 +147,18 @@
                       "children": [
                         "●●●"
                       ]
-                    },
-                    {
-                      "tag": "svg"
                     }
                   ]
                 },
                 {
                   "tag": "option",
                   "children": [
+                    {
+                      "tag": "span",
+                      "attributes": {
+                        "aria-hidden": "true"
+                      }
+                    },
                     {
                       "tag": "span",
                       "attributes": {
@@ -164,6 +184,12 @@
                 {
                   "tag": "option",
                   "children": [
+                    {
+                      "tag": "span",
+                      "attributes": {
+                        "aria-hidden": "true"
+                      }
+                    },
                     {
                       "tag": "span",
                       "attributes": {
