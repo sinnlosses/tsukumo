@@ -121,8 +121,8 @@ node scripts/stop.ts           # 動いている tsukumo の一覧（--port <n> 
   `git restore <file>` で戻してよい
 - **`git add -A` を使わず、触ったファイルを個別に足す**（`node_modules` などの symlink が入る）
 - **検証が済んだら、聞かずにコミットして `main` まで送る**（未コミットのまま待つと別のセッションに
-  消される）。タスクは `task ship`、タスクに紐付かない作業の送り方は `docs/workflow.md`
-  「タスクに紐付かない作業を main へ送る」
+  消される）。タスクは `task ship`、タスクに紐付かない作業は `node scripts/ship.ts`
+  （`pnpm run ship`。手順は `docs/workflow.md`「タスクに紐付かない作業を main へ送る」）
 - `main` へ送る以外で他の作業ツリーへ `reset` / `branch -d` を走らせない。push は頼まれたときだけ
 
 ## タスク運用

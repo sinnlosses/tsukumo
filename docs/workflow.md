@@ -176,10 +176,16 @@ enum・キャラクターパックの読み込み）は起こし直さないと�
 止まらない**——未コミットのまま待つと、作業ツリーを後から使うセッションが `git restore` で
 捨てうる（2026-09-23 に実際に9ファイルぶんが痕跡なく消えた）。
 
-1. `main` を出している作業ツリー（`git worktree list` の `[main]`）が clean なことを確かめる
-2. `git -C <本体> merge --ff-only <いまの枝>` を走らせる（`main` はそこで checkout 済みなので、
-   自分の作業ツリーでは切り替えられない）
-3. `--ff-only` が落ちたら `git rebase main` で取り込み、`pnpm run check` を通し直してから送り直す
+`node scripts/ship.ts`（`pnpm run ship`）を打つ。作業ツリーが clean か → `main` を出している
+作業ツリーが clean か → `git rebase main` → `pnpm run check` → `git -C <本体> merge --ff-only`
+の順に動き、`--ff-only` が `main` の先回りで落ちたら取り込み（`rebase`）と検証をやり直す
+（上限2回。超えたら止まる）。落ちた段によって次を行う。
+
+- 自分の作業ツリーが clean でない: コミットしてから打ち直す
+- `main` を出している作業ツリーが clean でない: そちらを片付けてから打ち直す
+- `git rebase main` が衝突した（`rebase --abort` 済み）: 衝突を手で解消し、コミットしてから打ち直す
+- `pnpm run check` が落ちた: 直してから打ち直す
+- やり直しの上限を超えた: `main` が速く進みすぎている。少し待つか、送る相手に相談する
 
 ## 関連
 

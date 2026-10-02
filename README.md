@@ -312,6 +312,9 @@ TSUKUMO_CHARACTER=characters/local tsukumo
 ```bash
 pnpm run check                 # typecheck + lint + format:check + test + test:e2e（変更後は必ずこれを通す。
                               #   文書だけの変更は typecheck・lint・test:e2e を省く。--full で強制）
+pnpm run ship                  # タスクに紐付かない作業を main へ送る（取り込み・検証・送り出しを
+                              #   1つに。落ちた段を出して止まる。docs/workflow.md「タスクに紐付
+                              #   かない作業を main へ送る」）
 pnpm run test                  # 単体テスト全体（Vitest。`test/e2e/` は外す）
 npx vitest run test/cli.test.ts  # 単体テストファイルのみ実行
 pnpm run test:coverage         # 単体テストのカバレッジ（src/ が対象。HTML は /tmp/tsukumo-coverage/。check には入れない）

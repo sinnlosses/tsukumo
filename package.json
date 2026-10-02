@@ -24,6 +24,7 @@
     "test:e2e": "pnpm run build && vitest run --config vitest.e2e.config.ts",
     "test:e2e:update": "E2E_UPDATE=1 pnpm run test:e2e",
     "check": "nice node scripts/check.ts",
+    "ship": "node scripts/ship.ts",
     "storybook": "storybook dev --port 6006 --no-open"
   },
   "dependencies": {
