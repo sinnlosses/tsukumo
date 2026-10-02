@@ -44,7 +44,7 @@ export function TaskItem(props: {
             setExpanded((value) => !value)
           }}
         >
-          <Text element="span" size="secondary" tone="inherit" weight="inherit" className="">
+          <Text element="span" size="label" tone="inherit" weight="inherit" className="">
             {props.task.summary}
           </Text>
         </button>
