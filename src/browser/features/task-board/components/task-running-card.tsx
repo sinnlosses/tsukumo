@@ -34,7 +34,7 @@ export function TaskRunningCard(props: { readonly task: TaskSummaryItem }): Reac
       </HStack>
       <Text
         element="span"
-        size="secondary"
+        size="label"
         tone="inherit"
         weight="inherit"
         className={styles["task-running-body"]}
