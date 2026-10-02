@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>レポートの組み直し 案A — 判決を先に、字で階層を運ぶ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+JP:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* 見本の中でだけ使うトークン。値は theme.css の既定（地・字）と、つくものパックの青緑（accent）。 */
+:root{
+  --ground:#191720; --surface:#221f2b; --ink:#e8e3ea; --accent:#66d1be;
+  --ink-body: color-mix(in srgb, var(--ink) 90%, var(--ground));   /* 地の文（長く読む字。ハレーションを抑える） */
+  --ink-soft: color-mix(in srgb, var(--ink) 74%, var(--ground));   /* 読ませる補助の字（表の見出し・添え書き・数） */
+  --ink-quiet: color-mix(in srgb, var(--ink) 60%, transparent);    /* 読ませない印（目次の非選択・区切り・畳んだ札） */
+  --rule: color-mix(in srgb, var(--surface), var(--ink) 32%);
+  --rule-quiet: color-mix(in srgb, var(--surface), var(--ink) 6%);
+  --rule-accent: color-mix(in srgb, var(--rule), var(--accent) 60%);
+  --surface-raised: color-mix(in srgb, var(--ink) 10%, transparent);
+  --surface-accent: color-mix(in srgb, var(--surface), var(--accent) 12%);
+  --state-ok:#7ee081; --state-warn:#e3c766; --state-ng:#e88b8b; --state-ask:#8ab4e8; --state-memo:#bca0ec;
+  --font-sans:"IBM Plex Sans JP", system-ui, sans-serif;
+  --font-mono:"IBM Plex Mono", ui-monospace, SFMono-Regular, monospace;
+  /* レポートの字の段 */
+  --fs-headline:19px; --fs-section:17px; --fs-body:15px; --fs-dense:14px; --fs-caption:13px; --fs-code:13px;
+  --measure:42em; /* 地の文の行長の上限（本文の字で。JLReq・デジタル庁の「40 字」に inline code のぶんを足した値） */
+}
+body[data-font="zen"]{ --font-sans:"Zen Kaku Gothic New", system-ui, sans-serif; }
+/* 既定（推し）: 端末の system-ui（macOS では SF Pro + Hiragino Sans）。欧文の小文字が和文より 7% 低いので、x-height を Hiragino の 0.545 に揃える。 */
+body[data-font="system"]{ --font-sans: system-ui, sans-serif; --font-mono: ui-monospace, SFMono-Regular, monospace; font-size-adjust: ex-height 0.545; }
+body[data-font="system-mono"]{ --font-sans: system-ui, sans-serif; font-size-adjust: ex-height 0.545; }
+
+body{margin:0;padding:40px;background:#17161e;color:var(--ink);font-family:var(--font-sans);font-size:15px;line-height:1.8;}
+h1.mock-title{margin:0 0 6px;font-family:'Shippori Mincho', 'Hiragino Mincho ProN', serif;font-size:22px;font-weight:600;}
+.mock-caption{font-size:12.5px;color:var(--ink-quiet);margin:0 0 10px;}
+.mock-row{display:flex;flex-direction:column;gap:36px;align-items:flex-start;}
+.mock-pair{display:flex;gap:28px;align-items:flex-start;flex-wrap:wrap}
+
+/* ===== 画面の器（メインビューの領域だけを実寸で切り出す） ===== */
+.pane{box-sizing:border-box;background:var(--surface);border:1px solid var(--rule);border-radius:10px;overflow:hidden;display:flex;flex-direction:column;}
+.turn-header{flex:none;display:flex;align-items:center;gap:10px;height:42px;padding:0 14px 0 12px;border-bottom:1px solid var(--rule-quiet);font-size:14px;}
+.turn-header .nav{display:inline-flex;gap:4px}
+.turn-header .nav span{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border:1px solid var(--rule);border-radius:6px;color:var(--ink-quiet);font-size:12px}
+.turn-header .title{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.turn-header .now{font-size:12px;color:var(--ink-soft);margin-left:14px;padding-left:14px;border-left:1px solid var(--rule);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.turn-header .pos{margin-left:auto;font-family:var(--font-mono);font-size:12px;color:var(--ink-quiet)}
+.turn-header .latest{font-size:12px;padding:1px 10px;border-radius:999px;background:var(--accent);color:var(--ground);font-weight:700}
+.turn-body{flex:1;min-height:0;display:grid;grid-template-columns:232px minmax(0,1fr);overflow:hidden;}
+.pane.norail .turn-body{grid-template-columns:minmax(0,1fr)}
+/* 目次の列（いまの形のまま。幅だけ実測の 240px 弱） */
+.rail{border-right:1px solid var(--rule-quiet);padding:14px 8px;font-size:13px;color:var(--ink-quiet)}
+.rail .head{display:flex;justify-content:space-between;padding:0 10px 8px;font-size:11px;letter-spacing:.1em}
+.rail .head b{font-family:var(--font-mono);font-weight:400}
+.rail .row{display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rail .row.cur{background:var(--surface-accent);color:var(--ink)}
+.rail .row.cur::before{content:"";width:3px;height:14px;border-radius:2px;background:var(--accent)}
+.rail .row.in{color:var(--ink)}
+.content{min-width:0;overflow:hidden;padding:18px 28px 0 28px;}
+.content.tail{padding-top:10px}
+
+/* ===== レポート本体 ===== */
+.report{color:var(--ink-body);font-size:var(--fs-body);line-height:1.8;
+  text-autospace:normal; text-spacing-trim:trim-start; line-break:strict; font-kerning:normal; font-synthesis:weight;
+  overflow-wrap:anywhere;}
+.report p{margin:0 0 1em;max-width:var(--measure);text-wrap:pretty}
+.report code{font-family:var(--font-mono);font-size:.88em;background:var(--surface-raised);padding:1px 5px;border-radius:4px;color:var(--ink);box-decoration-break:clone;-webkit-box-decoration-break:clone}
+
+/* 判決の頭: 目録 → 見出し → 一文 → 合図の行 */
+.catalog{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px;font-size:12px;color:#9a98a6;margin:0 0 8px}
+.catalog .sep{color:#4a4955}
+.catalog .id{font-family:var(--font-mono);color:#bfeee4;border-bottom:1px dashed #4a6a65}
+.catalog .shipped{color:#66d1be;font-weight:700}
+.catalog .stopped{color:var(--state-ng);font-weight:700}
+.headline{margin:0 0 8px;font-size:var(--fs-headline);line-height:1.5;font-weight:700;color:var(--ink);word-break:auto-phrase;text-wrap:balance;max-width:40em}
+.conclusion{margin:0 0 14px;font-size:var(--fs-body);line-height:1.85;color:var(--ink);max-width:var(--measure)}
+.signals{display:flex;flex-wrap:wrap;align-items:center;gap:6px 18px;margin:0 0 6px;padding:10px 0;border-top:1px solid var(--rule-quiet);border-bottom:1px solid var(--rule-quiet);font-size:13px;color:var(--ink-soft)}
+.signals .sig{display:inline-flex;align-items:baseline;gap:8px;cursor:pointer}
+.signals .sig b{font-weight:500;color:var(--ink)}
+.signals .ok{color:var(--state-ok);font-family:var(--font-mono);font-size:12px;font-weight:600}
+.signals .bad{color:var(--state-ng);font-family:var(--font-mono);font-size:12px;font-weight:700}
+.signals .n{font-family:var(--font-mono);font-size:12px;color:var(--ink-soft)}
+.signals .fav{margin-left:auto;color:var(--ink);display:inline-flex;gap:6px;align-items:baseline}
+.signals .fav::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--accent);align-self:center}
+.signals .chev{font-size:11px;color:var(--ink-quiet)}
+/* 検証の行（開いたとき）。通った行は印だけ色、落ちた行だけ左に縦罫 */
+.checks{margin:0 0 4px;font-size:13px}
+.check{display:grid;grid-template-columns:5.2em minmax(0,1fr) auto 4.5em;column-gap:14px;align-items:baseline;padding:5px 0;border-bottom:1px solid var(--rule-quiet)}
+.check:last-child{border-bottom:none}
+.check .mk{font-family:var(--font-mono);font-size:12px;white-space:nowrap;color:var(--state-ok)}
+.check.ng .mk{color:var(--state-ng);font-weight:700}
+.check.ng{box-shadow:inset 2px 0 0 var(--state-ng);padding-left:10px}
+.check .lb{color:var(--ink)}
+.check.ng .lb{font-weight:700}
+.check .fg,.check .tm{font-family:var(--font-mono);font-size:12px;font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap;color:var(--ink-soft)}
+.check .dt{grid-column:2 / -1;color:var(--state-ng);font-size:12.5px}
+.check.folded{color:var(--ink-quiet);cursor:pointer}
+.check.folded .lb{color:var(--ink-soft)}
+
+/* 節の見出し: 字の大きさと余白で段を作り、罫は今までどおり差し色を6割混ぜた1本 */
+.report h2{margin:26px 0 10px;padding-bottom:5px;font-size:var(--fs-section);line-height:1.5;font-weight:700;color:var(--ink);border-bottom:1px solid var(--rule-accent);word-break:auto-phrase;text-wrap:balance}
+.report h2:first-of-type{margin-top:20px}
+.report h3{margin:18px 0 6px;width:fit-content;padding-bottom:2px;font-size:var(--fs-body);font-weight:700;color:var(--ink);border-bottom:1px solid var(--rule-accent)}
+
+/* 表: 中身なりの幅、詰めた行、見出し行は小さく静かに */
+.tbl-title{font-size:var(--fs-caption);color:var(--ink-soft);margin:0 0 2px;letter-spacing:.02em}
+.report table{border-collapse:collapse;width:auto;max-width:100%;margin:2px 0 12px;font-size:var(--fs-dense);line-height:1.5}
+.report th{text-align:left;font-weight:500;font-size:var(--fs-caption);color:var(--ink-soft);padding:4px 18px 6px 0;border-bottom:1px solid var(--rule-accent);white-space:nowrap}
+.report td{padding:7px 18px 7px 0;border-bottom:1px solid var(--rule-quiet);vertical-align:top}
+.report td.num,.report th.num{text-align:right;font-variant-numeric:tabular-nums;padding-right:0}
+.report td.num+td,.report th.num+th{padding-left:18px}
+.from{color:var(--ink-quiet)}
+.st{font-family:var(--font-mono);font-size:11.5px;font-weight:600;letter-spacing:.03em;margin-right:6px}
+.st.ok{color:var(--state-ok)} .st.warn{color:var(--state-warn)} .st.ng{color:var(--state-ng)}
+
+/* 流れ（GH-250 の形: 番号の丸を1本の線でつなぐ） */
+.flow{list-style:none;margin:6px 0 10px;padding:0;max-width:var(--measure)}
+.flow li{position:relative;display:grid;grid-template-columns:26px minmax(0,1fr);column-gap:14px;padding-bottom:16px;font-size:var(--fs-dense);line-height:1.75}
+.flow li:last-child{padding-bottom:0}
+.flow li::before{content:attr(data-n);width:26px;height:26px;box-sizing:border-box;border-radius:50%;border:1.5px solid var(--accent);color:var(--accent);background:var(--surface);font-family:var(--font-mono);font-size:11.5px;font-weight:600;display:flex;align-items:center;justify-content:center}
+.flow li:not(:last-child)::after{content:"";position:absolute;left:12px;top:30px;bottom:-2px;width:2px;border-radius:1px;background:linear-gradient(var(--accent), #2c4744)}
+.flow li span{padding-top:2px}
+
+/* 候補の採否 */
+.options{display:grid;grid-template-columns:repeat(auto-fit,minmax(15rem,1fr));gap:10px;margin:6px 0 12px}
+.option{padding:8px 12px;border:1px solid var(--rule);border-radius:7px;background:var(--surface-raised);font-size:var(--fs-dense);line-height:1.6}
+.option.adopt{border-left:3px solid var(--state-ok)}
+.option.reject{color:var(--ink-quiet)}
+.option .badge{display:inline-block;padding:0 7px;border:1px solid currentColor;border-radius:999px;font-size:11.5px;margin-right:6px;line-height:1.6;vertical-align:1px}
+.option.adopt .badge{color:var(--state-ok)}
+.option b{font-weight:700;color:var(--ink)}
+.option.reject b{color:var(--ink-quiet)}
+
+/* 触ったファイル */
+.files{display:grid;grid-template-columns:max-content minmax(0,max-content) minmax(8rem,1fr);column-gap:14px;row-gap:4px;margin:6px 0 12px;font-size:var(--fs-dense);line-height:1.6}
+.files .ch{font-size:12px;color:var(--ink-soft)}
+.files code{font-size:12.5px}
+.files .nt{color:var(--ink-soft)}
+
+/* お願い */
+.favor{margin:20px 0 10px;padding:10px 14px;border:1px solid var(--rule);border-left:3px solid var(--accent);border-radius:7px;background:color-mix(in srgb, var(--surface), var(--accent) 10%);max-width:var(--measure);font-size:var(--fs-dense);line-height:1.75}
+.favor .lbl{display:block;font-size:11px;letter-spacing:.08em;color:var(--ink-soft);margin-bottom:2px}
+.favor p{margin:0;max-width:none;color:var(--ink)}
+
+/* 途中のレポート（畳んで末尾へ） */
+.interim{margin:14px 0 18px;padding:8px 12px;border:1px dashed var(--rule);border-radius:7px;background:var(--ground);font-size:13px;color:var(--ink-soft)}
+.interim summary{cursor:pointer;list-style:none;display:flex;gap:10px;align-items:baseline}
+.interim summary::before{content:"▸";font-size:11px;color:var(--ink-quiet)}
+.interim .steps{font-family:var(--font-mono);font-size:11.5px;color:var(--ink-quiet)}
+
+/* 見本の説明欄 */
+.notes{display:grid;grid-template-columns:repeat(3,1fr);gap:28px;margin-top:40px;padding:22px 26px;border:1px solid #34333f;border-radius:12px;background:#1d1c26;font-size:13px;line-height:1.75;color:#c9c7d1;max-width:1300px}
+.notes h4{margin:0 0 6px;font-size:13px;color:#eceaf1}
+.notes ul{margin:0;padding-left:1.1em}
+</style>
+</head>
+<body data-font="system">
+<script>
+  const font = new URLSearchParams(location.search).get("font");
+  if (font === "zen" || font === "plex" || font === "system-mono") document.body.dataset.font = font;
+</script>
+<h1 class="mock-title">レポートの組み直し 案A — 判決を先に、字で階層を運ぶ</h1>
+<p class="mock-caption">メインビューの領域を実寸で切り出した（1400×900 の窓 → 1007×513、1920×1080 の窓 → 1397×630）。中の文言は架空。書体は既定が端末の system-ui（x-height を揃えた Hiragino + SF）で、<code>?font=system-mono</code>（コードだけ IBM Plex Mono）/ <code>plex</code>（IBM Plex Sans JP + Plex Mono）/ <code>zen</code>（Zen Kaku Gothic New + Plex Mono）で切り替え。</p>
+
+<div class="mock-row">
+
+<!-- ========== 1400×900 の窓（領域 1007×513） ========== -->
+<p class="mock-caption" style="margin:0 0 -26px">1400×900 の窓、届いた直後。検証は畳んだまま（すべて通ったので1行で足りる）</p>
+<section class="pane" style="width:1007px;height:513px" data-region="main">
+  <div class="turn-header"><span class="nav"><span>‹</span><span>›</span></span><span class="title">/next-task GH-249</span><span class="pos">1 / 1</span><span class="latest">最新</span></div>
+  <div class="turn-body">
+    <nav class="rail"><div class="head"><span>目次</span><b>3</b></div>
+      <div class="row cur">保留の印は3か所から消えた</div>
+      <div class="row">フォーカスは根に留まる</div>
+      <div class="row">控えをどこで持つか</div>
+    </nav>
+    <div class="content"><article class="report">
+      <div class="catalog"><span>最終レポート</span><span class="sep">·</span><span class="id">GH-249</span><span class="sep">·</span><span class="shipped">✓ 完了・main へ</span></div>
+      <h1 class="headline">読んでいるあいだの保留と「レポートが届いた」の口を外す</h1>
+      <p class="conclusion">次に起動する tsukumo からは、メインビューを読んでいてもターンが閉じた時点で押さずにレポートへ入れ替わり、先頭から読める。</p>
+      <div class="signals">
+        <span class="sig"><span class="ok">✓ 検証 4</span><b>すべて通った</b><span class="n">単体 3152 · E2E 111 · 目視 2</span><span class="chev">▸</span></span>
+        <span class="sig"><span class="n">所要 14分</span></span>
+        <span class="fav">お願い 1 <span class="chev">↓</span></span>
+      </div>
+      <h2>保留の印は3か所から消えた</h2>
+      <div class="tbl-title">保留を読んでいた場所と、代わりに読むもの</div>
+      <table>
+        <thead><tr><th>場所</th><th>前</th><th>後</th><th>状態</th></tr></thead>
+        <tbody>
+          <tr><td><code>main-view.tsx</code></td><td class="from">保留中は差し替えを止める</td><td>閉じたら即座に入れ替える</td><td><span class="st ok">✓ OK</span>E2E 2本</td></tr>
+          <tr><td><code>use-dispatch-focus.ts</code></td><td class="from">保留の印を覗く</td><td><code>data-main-view</code> の祖先を見る</td><td><span class="st ok">✓ OK</span>単体 3本</td></tr>
+          <tr><td><code>head-notice.ts</code></td><td class="from">「レポートが届いた」を出す</td><td>削除</td><td><span class="st ok">✓ OK</span>参照 0 件</td></tr>
+        </tbody>
+      </table>
+      <h2>フォーカスは根に留まる</h2>
+      <ol class="flow">
+        <li data-n="1"><span>外れる器の <code>useLayoutEffect</code> の後始末で、フォーカスが器の中にあったかを控える</span></li>
+        <li data-n="2"><span>新しい器が付いたら、控えが立っていればメインビューの根へ <code>focus({ preventScroll: true })</code></span></li>
+        <li data-n="3"><span>入力欄の処理は祖先に <code>data-main-view</code> があると読み、移さない</span></li>
+      </ol>
+    </article></div>
+  </div>
+</section>
+
+<!-- ========== 1920×1080 の窓（領域 1397×630） ========== -->
+<p class="mock-caption" style="margin:0 0 -26px">1920×1080 の窓。検証の行を開いた状態。地の文は 42 字で折り返し、表・候補・ファイルは幅いっぱいまで使う</p>
+<section class="pane" style="width:1397px;height:630px">
+  <div class="turn-header"><span class="nav"><span>‹</span><span>›</span></span><span class="title">/next-task GH-249</span><span class="now">いま: フォーカスは根に留まる</span><span class="pos">1 / 1</span><span class="latest">最新</span></div>
+  <div class="turn-body">
+    <nav class="rail"><div class="head"><span>目次</span><b>3</b></div>
+      <div class="row in">保留の印は3か所から消えた</div>
+      <div class="row cur">フォーカスは根に留まる</div>
+      <div class="row">控えをどこで持つか</div>
+    </nav>
+    <div class="content"><article class="report">
+      <div class="catalog"><span>最終レポート</span><span class="sep">·</span><span class="id">GH-249</span><span class="sep">·</span><span class="shipped">✓ 完了・main へ</span></div>
+      <h1 class="headline">読んでいるあいだの保留と「レポートが届いた」の口を外す</h1>
+      <p class="conclusion">次に起動する tsukumo からは、メインビューを読んでいてもターンが閉じた時点で押さずにレポートへ入れ替わり、先頭から読める。メインビューにあったフォーカスはメインビューに残り、入力欄へは移らない。</p>
+      <div class="signals" style="border-bottom:none;padding-bottom:4px">
+        <span class="sig"><span class="ok">✓ 検証 4</span><b>すべて通った</b><span class="n">所要 14分</span><span class="chev">▾</span></span>
+        <span class="fav">お願い 1 <span class="chev">↓</span></span>
+      </div>
+      <div class="checks">
+        <div class="check"><span class="mk">✓ OK</span><span class="lb">pnpm run check</span><span class="fg">単体 3152 · E2E 111</span><span class="tm">6分12秒</span></div>
+        <div class="check"><span class="mk">✓ OK</span><span class="lb">1024×768 で読んでいる最中に閉じる</span><span class="fg">先頭から表示</span><span class="tm"></span></div>
+        <div class="check"><span class="mk">✓ OK</span><span class="lb">1400×900 で同じ操作</span><span class="fg">フォーカス 根に残る</span><span class="tm"></span></div>
+        <div class="check"><span class="mk">✓ OK</span><span class="lb">node scripts/find-stray-reference.ts</span><span class="fg">迷子 0 件</span><span class="tm">3秒</span></div>
+      </div>
+      <h2>保留の印は3か所から消えた</h2>
+      <div class="tbl-title">保留を読んでいた場所と、代わりに読むもの</div>
+      <table>
+        <thead><tr><th>場所</th><th>前</th><th>後</th><th>状態</th></tr></thead>
+        <tbody>
+          <tr><td><code>main-view.tsx</code></td><td class="from">保留中は差し替えを止める</td><td>閉じたら即座に入れ替える</td><td><span class="st ok">✓ OK</span>E2E 2本</td></tr>
+          <tr><td><code>use-dispatch-focus.ts</code></td><td class="from">保留の印を覗く</td><td><code>data-main-view</code> の祖先を見る</td><td><span class="st ok">✓ OK</span>単体 3本</td></tr>
+          <tr><td><code>head-notice.ts</code></td><td class="from">「レポートが届いた」を出す</td><td>削除</td><td><span class="st ok">✓ OK</span>参照 0 件</td></tr>
+        </tbody>
+      </table>
+      <h2>フォーカスは根に留まる</h2>
+      <p>入れ替えた瞬間に中身が作り直されるので、何もしないとメインビューにあったフォーカスは消えて入力欄に吸われる。控えを1つ持ち、新しい中身が付いた直後に根へ戻す。</p>
+      <ol class="flow">
+        <li data-n="1"><span>外れる器の <code>useLayoutEffect</code> の後始末で、フォーカスが器の中にあったかを控える</span></li>
+        <li data-n="2"><span>新しい器が付いたら、控えが立っていればメインビューの根へ <code>focus({ preventScroll: true })</code></span></li>
+        <li data-n="3"><span>入力欄の処理は祖先に <code>data-main-view</code> があると読み、移さない</span></li>
+      </ol>
+    </article></div>
+  </div>
+</section>
+
+<div class="mock-pair">
+<!-- ========== 1400×900 の窓、末尾まで転がしたところ ========== -->
+<div>
+<p class="mock-caption">1400×900 の窓、末尾。候補・ファイル・お願いのあとに、途中のレポートを畳んで置く</p>
+<section class="pane" style="width:1007px;height:470px">
+  <div class="turn-header"><span class="nav"><span>‹</span><span>›</span></span><span class="title">/next-task GH-249</span><span class="now">いま: 控えをどこで持つか</span><span class="pos">1 / 1</span><span class="latest">最新</span></div>
+  <div class="turn-body">
+    <nav class="rail"><div class="head"><span>目次</span><b>3</b></div>
+      <div class="row in">保留の印は3か所から消えた</div>
+      <div class="row in">フォーカスは根に留まる</div>
+      <div class="row cur">控えをどこで持つか</div>
+    </nav>
+    <div class="content tail"><article class="report">
+      <h2 style="margin-top:4px">控えをどこで持つか</h2>
+      <div class="options">
+        <div class="option adopt"><span class="badge">採る</span><b>器の外の <code>useRef</code></b><br>入れ替えで器が消えても値が残る。読む側は1か所</div>
+        <div class="option reject"><span class="badge">採らない</span><b>ストアに「保留」の印を残す</b><br>外したい印そのものを別名で残すことになる</div>
+      </div>
+      <h3>触ったファイル</h3>
+      <div class="files">
+        <span class="ch">変更</span><code>src/browser/components/page/conversation/components/main-view/main-view.tsx</code><span class="nt">保留の分岐を外した</span>
+        <span class="ch">変更</span><code>src/browser/components/page/conversation/components/dispatch/hooks/use-dispatch-focus.ts</code><span class="nt">祖先の印で判定</span>
+        <span class="ch">削除</span><code>src/browser/components/page/conversation/components/main-view/domain/head-notice.ts</code><span class="nt"></span>
+      </div>
+      <aside class="favor"><span class="lbl">お願い</span><p>合わなければ <code>docs/history/decision.md</code> の記録から戻せる。保留を残したい場面があれば教えてほしい。</p></aside>
+      <details class="interim"><summary>途中のレポート 3 件 <span class="steps">1/3 今の形を調べる · 2/3 印を外す · 3/3 文書と検証を揃える</span></summary></details>
+    </article></div>
+  </div>
+</section>
+</div>
+</div>
+
+<!-- ========== 落ちたとき ========== -->
+<p class="mock-caption" style="margin:0 0 -26px">検証が落ちたとき。落ちた行だけ開き、通った行は1行に畳む。目録の終わり方も「止めた」になる</p>
+<section class="pane" style="width:1007px;height:300px">
+  <div class="turn-header"><span class="nav"><span>‹</span><span>›</span></span><span class="title">/next-task GH-249</span><span class="pos">1 / 1</span><span class="latest">最新</span></div>
+  <div class="turn-body">
+    <nav class="rail"><div class="head"><span>目次</span><b>2</b></div>
+      <div class="row cur">落ちた E2E は幅の判定</div>
+      <div class="row">直し方の候補</div>
+    </nav>
+    <div class="content"><article class="report">
+      <div class="catalog"><span>最終レポート</span><span class="sep">·</span><span class="id">GH-249</span><span class="sep">·</span><span class="stopped">✕ 止めた・main へは送っていない</span></div>
+      <h1 class="headline">読んでいるあいだの保留と「レポートが届いた」の口を外す</h1>
+      <p class="conclusion">コードは外し終えたが、1024×768 の E2E が1本落ちていて main へは送っていない。</p>
+      <div class="signals" style="border-bottom:none;padding-bottom:4px">
+        <span class="sig"><span class="bad">✕ 検証 4</span><b>1 件が落ちた</b><span class="n">所要 11分</span></span>
+        <span class="fav">お願い 1 <span class="chev">↓</span></span>
+      </div>
+      <div class="checks">
+        <div class="check ng"><span class="mk">✕ NG</span><span class="lb">目次の列を畳む幅の E2E</span><span class="fg">1 / 111</span><span class="tm">6分02秒</span><span class="dt">1024×768 で列が畳まれず、本文が 382px に詰まった</span></div>
+        <div class="check folded"><span class="mk">✓ OK</span><span class="lb">ほか 3 件はすべて通った</span><span class="fg"></span><span class="tm chev">▸</span></div>
+      </div>
+    </article></div>
+  </div>
+</section>
+
+</div>
+
+<div class="notes">
+  <div><h4>ねらい</h4><ul>
+    <li>最初の1画面に「何が変わるか・通ったか・自分がすることがあるか」の3つを収める（判決の頭＝目録・見出し・一文・合図の行）</li>
+    <li>検証は「すべて通った」なら1行に畳み、落ちた・確かめていない行だけ開いて出す（GitHub の merge box と Actions の既定と同じ）</li>
+    <li>中間レポートは最終レポートの<b>下</b>に畳む（いまは上に積まれて結論が押し出される）</li>
+    <li>レポートを箱の中の箱にしない。札の枠を外し、領域そのものを紙にする。札の頭に「いま読んでいる節」を出す</li>
+  </ul></div>
+  <div><h4>寸法</h4><ul>
+    <li>見出し 19/1.5・節 17/1.5・本文 15/1.8・表と箇条 14/1.5・添え書き 13・コード 13（13px 未満の読ませる字は置かない）</li>
+    <li>地の文と箇条の行長は本文の字で 42 字まで（JLReq とデジタル庁の 40 字に inline code のぶんを足した）。表・候補・ファイル・コード・図は幅いっぱい</li>
+    <li>節の前 26px・後 10px。表のセルは 7px 18px。検証の行 5px</li>
+    <li>字は3段: 地の文は <code>ink</code> を1割だけ地に寄せた <code>ink-body</code>、読ませる補助（表の見出し・添え書き・数）は <code>ink-soft</code>（74%）、読ませない印だけ <code>ink-quiet</code>（60%）。見出し・結論・コードは <code>ink</code> のまま</li>
+  </ul></div>
+  <div><h4>変えないこと</h4><ul>
+    <li>色のつまみは4つのまま。読む面に差し色が出るのは罫線・目次の印・流れの丸・お願いの縦罫だけ</li>
+    <li>状態は記号と文字が必ず添う（✓ OK / ！要注意 / ✕ NG）</li>
+    <li>目次の列・札の頭・書き上げる演出・ミニ立ち絵の仕組みはそのまま</li>
+    <li>書体は端末の system-ui のまま、欧文の x-height だけ和文に揃える（<code>font-size-adjust: ex-height 0.545</code>）。足すなら等幅の IBM Plex Mono だけ（1.5MB・OFL）を 127.0.0.1 から配る（ADR 0012 と同じ経路）。Plex Sans JP / Zen Kaku は見比べ用</li>
+  </ul></div>
+</div>
+</body>
+</html>
