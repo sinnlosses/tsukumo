@@ -3,6 +3,50 @@
 `develop/direction.md` に書かれたユーザーからの指示を、タスク化した時点で**当時の記述のまま**
 ここへ移す（`docs/workflow.md`「指示メモ」参照）。新しいものを上に足す。**後から書き換えない。**
 
+## 2026-10-02 振り返りのドラフト5件
+
+（出典: /plan-tasks で。ドラフト5件を見せて選んでもらい、5件ともタスクにすると承認され、GH-259〜GH-263 にした）
+
+（出典: `develop/draft/2026-10-02-accept-reads-visual-evidence.md`。GH-259 にした）
+
+**描画のタスクの受け入れで、委譲先が撮った画像をメインが必ず開いて見る（振り返り: GH-250）**
+
+- 札: 赤 自己申告の不正確さ（4回目）
+- 根拠: GH-250 で、委譲先が「3幅ともモックと一致・はみ出し 0px」と報告した。しかしメインが受け入れで `/tmp/gh250-visual/flow-1024.png` を開くと、段の長いインラインコードが本文から外れて中央寄せの別行に出ており、名前と本文の間のすき間も消えていた。差し戻すと、後者は本物の CSS の退行だった（`inline-flex` の `gap` が `grid` 化で失われていた）。報告の文字だけで受け入れていたら、そのまま main に入っていた
+- 出し先: claude-skills の `next-task` の手順6（受け入れる）に足す。完了条件に目視があるタスクでは、委譲先に撮った画像のパスを報告させ、メインが最低1枚（いちばん狭い幅）を Read で開いて完了条件と見比べるまで `tw done` に進まない。4回目なので、`tw done` が目視の完了条件を持つタスクで「メインが見た画像のパス」を `--result-file` に要求するなど、機械の関門にできないかも検討する
+
+（出典: `develop/draft/2026-10-02-fake-session-afterms-origin.md`。GH-260 にした）
+
+**疑似セッションの場面の `afterMs` が場面の始まりからの値だと、場面の型と testing.md に書く（振り返り: GH-237）**
+
+- 札: 黄 正典の不備（10回目）
+- 根拠: GH-237 の委譲先が `afterMs` を前の手からの差と読んで場面 `moment-held` を書き、全部の手が 300ms 以内に流れて保留の E2E が落ちた（`test/fixture/fake-session.json`）。`docs/architecture/testing.md` は `afterMs` を2か所で使うが、何からの時間かを書いていない
+- 出し先: 疑似セッションの場面を読む型（`afterMs` を検証する境界）のコメントに「場面の始まりからの値で、手の並びの順に単調に増える」を書き、単調に増えない場面を読み込みで拒む検査を足す。testing.md の疑似セッションの節にも同じ1文を置く
+
+（出典: `develop/draft/2026-10-02-file-link-button-inline.md`。GH-261 にした）
+
+**レポートの本文で、押せるパスのボタンが長いと文から外れて中央寄せの別行になる（振り返り: GH-250）**
+
+- 札: 黄 実装の誤り（1回目）
+- 根拠: GH-250 の目視で、流れの段の中のリポジトリのパス（`src/browser/components/page/conversation/components/main-view/markdown/report-notation.module.css`）が、本文の行から外れて中央寄せの2行になった。`.report-file-link` は `display: inline` を当てているが、`<button>` は Chrome では `inline-block` に強制される（委譲先が最小再現で確かめた）。そのうえ UA 既定の `text-align: center` が効く。流れに限らず、長いパスを文中に書いたレポートならどこでも起きる
+- 出し先: tsukumo のタスクにする。押せるパスを `<button>` ではなく、文の中で折り返せる要素（例: `role="button"` と `tabIndex` を付けた `<span>`、または `<a>`）にして、キーボードでの押し方と読み上げを保つ。`box-decoration-break: clone` で折り返しても札の地を保つ
+
+（出典: `develop/draft/2026-10-02-process-cwd-single-reader.md`。GH-262 にした）
+
+**`process.cwd()` を読む場所を1つに集め、それ以外の読み取りを検査で落とす（振り返り: GH-244）**
+
+- 札: 黄 制約違反（10回目）
+- 根拠: CLAUDE.md は「環境変数・パスの読み取りは1モジュールに集約」とするが、`src/view-delivery.ts` は `process.cwd()` を6か所で直に読み、GH-244 の委譲先はそれに倣って7か所目を足した（`WiringContext.cwd` が届かないため）。規約が機械で守られていないので、前例に倣うと増える
+- 出し先: `src/view-delivery.ts` に cwd を引数で渡す配線へ直し、`test/architecture.test.ts`（か lint）に「`process.cwd()` は集約先のモジュールでだけ読む」の検査を足すタスク
+
+（出典: `develop/draft/2026-10-02-tw-edit-deps.md`。GH-263 にした）
+
+**`tw edit` に依存を足す・外す口を足す（振り返り: GH-232）**
+
+- 札: 黄 道具（15回目）
+- 根拠: GH-232 の完了条件「後段のタスクの本文を設計に合わせて直す」で、申し送りの依存の追加8件（GH-234←237・238 など）を台帳に入れる口が `tw edit` に無く、本文の `## 注意` に1行書くだけになった。台帳の依存が増えないので、`tw status` の BLOCKED に出ず、別のセッションの `/next-task` は依存を無視して着手できる
+- 出し先: claude-skills の `task-workflow`（`tw edit`）に `--add-deps` / `--remove-deps` を足し（Beads 方式は `bd dep add`、ファイル方式は front matter の `dependencies`）、循環と存在しない ID を拒む自己テストを付ける
+
 ## 2026-10-02 レポートの表の状態のセルを、状態の色で塗ったタイルにする
 
 （出典: `develop/direction.md` の「ユーザーから」。会話で、状態の多い表がごちゃごちゃしている画面を貼り、作ったデザイン〔`~/Downloads/状態の多い表 案A — セルを状態の色で塗る（おすすめ）-html`〕をタスク化してほしいという依頼。表を詰めて状態のセルを1行にする GH-253 のあとに GH-258 として置いた。モックを `docs/history/mockup/table-status-tile-2026-10-02.html`（と撮った `.png`）、今の画面を `docs/history/mockup/table-status-current-2026-10-02.png` に保存）
