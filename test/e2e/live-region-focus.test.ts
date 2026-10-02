@@ -40,7 +40,7 @@ describe("会話の画面の読み上げとフォーカス", () => {
         const style = getComputedStyle(element)
         return { style: style.outlineStyle, width: style.outlineWidth }
       }),
-    ).toEqual({ style: "solid", width: "2px" })
+    ).toEqual({ style: "solid", width: "1px" })
     expect(await page.getByRole("main", { name: "メインビュー" }).count()).toBe(1)
     expect(await page.getByRole("main").count()).toBe(1)
 

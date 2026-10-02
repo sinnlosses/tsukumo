@@ -125,7 +125,9 @@
 .dispatch-text::placeholder {
   color: var(--ink-quiet);
 }
+/* 入力欄は面が大きく常にフォーカスがあるので、全体の 2px の輪では重すぎる。幅だけ 1px に細める。 */
 .dispatch-text:focus-visible {
+  outline-width: 1px;
   border-color: color-mix(in srgb, var(--accent) 60%, var(--rule));
 }
 /* 答え待ちのあいだは、フォーカスの枠も答え待ちの色（--state-warn）の系統にする。

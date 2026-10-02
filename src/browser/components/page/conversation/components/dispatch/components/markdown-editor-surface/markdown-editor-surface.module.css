@@ -21,7 +21,8 @@
   border-radius: 0.5rem;
 }
 .markdown-editor .markdown-editor-view:global(.cm-focused) {
-  outline: 2px solid var(--accent);
+  /* 輪の幅は素の面（.dispatch-text:focus-visible）と揃える。 */
+  outline: 1px solid var(--accent);
   outline-offset: 2px;
   border-color: color-mix(in srgb, var(--accent) 60%, var(--rule));
 }
