@@ -94,7 +94,7 @@
                 {
                   "tag": "button",
                   "attributes": {
-                    "aria-expanded": "false",
+                    "aria-expanded": "true",
                     "type": "button"
                   },
                   "children": [

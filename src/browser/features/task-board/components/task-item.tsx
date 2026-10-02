@@ -3,10 +3,10 @@
 // IDを押せる部品にするのは着手できるタスク（`runnable`）だけで、それ以外は字のまま出す。
 //
 // 色だけで状態を伝えない: todo は空の丸、done はチェックの印（字も打ち消し線にする）、想定外の値は注意色の「!」にする。
-// summary は1行に収め、入りきらない分は末尾を「…」にする（全文を読みたいときは「一覧を見る」のモーダルを開く）。
+// summary は既定で1行に収め、押すと全文に折り返す（もう一度押すと戻る）。
 
 import clsx from "clsx"
-import type { ReactElement } from "react"
+import { useState, type ReactElement } from "react"
 
 import type { TaskSummaryItem } from "../../../../shared/repository/task-summary.ts"
 import { Text } from "../../../components/ui/text/text.tsx"
@@ -18,6 +18,8 @@ export function TaskItem(props: {
   readonly task: TaskSummaryItem
   readonly runnable: boolean
 }): ReactElement {
+  const [expanded, setExpanded] = useState(false)
+
   return (
     <li
       className={clsx(
@@ -34,15 +36,18 @@ export function TaskItem(props: {
         ) : (
           <span className={taskBoardStyles["task-id"]}>{props.task.id}</span>
         )}
-        <Text
-          element="span"
-          size="secondary"
-          tone="inherit"
-          weight="inherit"
-          className={styles["task-item-summary"]}
+        <button
+          type="button"
+          aria-expanded={expanded}
+          className={styles["task-item-summary-toggle"]}
+          onClick={() => {
+            setExpanded((value) => !value)
+          }}
         >
-          {props.task.summary}
-        </Text>
+          <Text element="span" size="secondary" tone="inherit" weight="inherit" className="">
+            {props.task.summary}
+          </Text>
+        </button>
       </span>
     </li>
   )

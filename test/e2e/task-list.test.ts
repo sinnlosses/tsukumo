@@ -91,4 +91,26 @@ describe("タスクの一覧", () => {
     await room.page.keyboard.press("Escape")
     await room.settleAndMatch(ELAPSED_MS)
   })
+
+  it("summary を Enter で押すと全文に折り返す", async () => {
+    const room = await openTaskListRoom(run, "task-list-summary-expand", ["task-section"])
+    const summaryToggle = room.page.getByRole("button", {
+      name: "架空のタスク（未着手）",
+      exact: true,
+    })
+    await summaryToggle.focus()
+    await room.page.keyboard.press("Enter")
+    await room.settleAndMatch(ELAPSED_MS)
+  })
+
+  it("もう一度押すと1行の「…」に戻る", async () => {
+    const room = await openTaskListRoom(run, "task-list-summary-collapse", ["task-section"])
+    const summaryToggle = room.page.getByRole("button", {
+      name: "架空のタスク（未着手）",
+      exact: true,
+    })
+    await summaryToggle.click()
+    await summaryToggle.click()
+    await room.settleAndMatch(ELAPSED_MS)
+  })
 })

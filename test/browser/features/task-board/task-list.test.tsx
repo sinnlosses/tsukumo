@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
 import { TaskList } from "../../../../src/browser/features/task-board/task-list.tsx"
@@ -161,5 +161,28 @@ describe("taskList", () => {
     render(<TaskList tasks={known(doneOnly)} selectedStatus="todo" />)
 
     expect(screen.getByText("未着手のタスクが無い")).toBeDefined()
+  })
+
+  it("summary を押すと aria-expanded が true になり、もう一度押すと false に戻る", () => {
+    render(<TaskList tasks={known(TASKS)} selectedStatus={undefined} />)
+
+    const summaryToggle = screen.getByRole("button", { name: "架空のタスク1" })
+    expect(summaryToggle.getAttribute("aria-expanded")).toBe("false")
+
+    fireEvent.click(summaryToggle)
+    expect(summaryToggle.getAttribute("aria-expanded")).toBe("true")
+
+    fireEvent.click(summaryToggle)
+    expect(summaryToggle.getAttribute("aria-expanded")).toBe("false")
+  })
+
+  it("ID を押しても summary の開閉は変わらない", () => {
+    render(<TaskList tasks={known(TASKS)} selectedStatus={undefined} />)
+
+    fireEvent.click(screen.getByRole("button", { name: "X-001" }))
+
+    expect(
+      screen.getByRole("button", { name: "架空のタスク1" }).getAttribute("aria-expanded"),
+    ).toBe("false")
   })
 })

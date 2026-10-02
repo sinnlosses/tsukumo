@@ -178,7 +178,9 @@ describe("タスクIDから実行を頼む", () => {
       />,
     )
 
-    expect(screen.getAllByRole("button").map((button) => button.textContent)).toEqual(["Y-003"])
+    expect(
+      screen.getAllByRole("button", { name: /^Y-/ }).map((button) => button.textContent),
+    ).toEqual(["Y-003"])
   })
 
   it("モーダルからは依存の済んだ保留も頼め、判断を聞かれることを確認に添える", () => {

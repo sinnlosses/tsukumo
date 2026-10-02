@@ -1,4 +1,4 @@
-/* ID＋summary を1行に並べ、summary だけを切り詰める側（`.task-item-summary`）。
+/* ID＋summary を1行に並べ、summary だけを切り詰める側（`.task-item-summary-toggle`）。
    grid の列は既定で子の内容ぶんの幅を確保しようとする（min-width: auto）ので、ここで 0 に落とさないと summary の text-overflow が働かない。 */
 .task-item-body {
   display: flex;
@@ -6,13 +6,29 @@
   gap: 0.625rem;
   min-width: 0;
 }
-/* 未着手・完了の行の summary は1行に収め、入りきらない分は「…」にする（全文は「一覧を見る」のモーダルで読む）。
-   字の段は `Text` で明示する。親（`.sidebar-block`）の `--font-secondary` に頼ると、`.task-item` がサイドバー以外の文脈に置かれたときに黙って崩れる。 */
-.task-item-summary {
+/* 未着手・完了の行の summary。既定（`aria-expanded="false"`）は1行に収め、入りきらない分は「…」にする。
+   押すと `aria-expanded="true"` になり、折り返して全文を出す。 */
+.task-item-summary-toggle {
+  padding: 0;
+  margin: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  text-align: left;
+  color: inherit;
+  cursor: pointer;
   overflow: hidden;
   min-width: 0;
   white-space: nowrap;
   text-overflow: ellipsis;
+}
+.task-item-summary-toggle:hover {
+  color: var(--accent);
+}
+.task-item-summary-toggle[aria-expanded="true"] {
+  overflow: visible;
+  white-space: normal;
+  line-height: 1.5;
 }
 /* status の印（区画の一覧の先頭列）。色だけで状態を伝えない。
    todo は空の丸、done はチェック（.task-done の打ち消し線と対）、想定外の値は注意色の「!」にする。 */
