@@ -416,7 +416,9 @@ function tableMarkdown(table: Extract<ReportBlock, { readonly kind: "table" }>):
   const aligns = table.columns.map((_, index) => columnAlign(table.rows, index))
   const bars = table.columns.map((_, index) => columnBar(table.rows, index))
   return joinParts([
-    table.title.trim() === "" ? "" : `**${markdownInline(table.title)}**`,
+    table.title.trim() === ""
+      ? ""
+      : `<div class="table-title">${markdownInline(table.title)}</div>`,
     [
       row(table.columns.map((column) => cellMarkdown(column, NO_BAR))),
       row(aligns.map(alignMarker)),
@@ -566,12 +568,9 @@ function cellMarkdown(cell: ReportCell, bar: ColumnBar): string {
     )
   }
   const status = CELL_STATUS_MARKS[cell.status]
-  const mark = `<span class="cell-status-mark">${status.symbol} ${status.label}</span>`
   const text = cell.text.trim()
-  const body =
-    text === "" || text === status.label
-      ? mark
-      : `${mark}<span class="cell-status-text">${markdownInline(text)}</span>`
+  const mark = `<span class="cell-status-mark" role="img" aria-label="${status.label}">${status.symbol}</span>`
+  const body = `${mark}<span class="cell-status-text">${markdownInline(text === "" ? status.label : text)}</span>`
   return `<span class="cell-status ${status.className}">${body}</span>`.replaceAll("|", "\\|")
 }
 

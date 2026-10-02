@@ -358,17 +358,7 @@
                                         }
                                       ]
                                     },
-                                    {
-                                      "tag": "p",
-                                      "children": [
-                                        {
-                                          "tag": "strong",
-                                          "children": [
-                                            "直したファイルと結果（架空の数）"
-                                          ]
-                                        }
-                                      ]
-                                    },
+                                    "直したファイルと結果（架空の数）",
                                     {
                                       "tag": "table",
                                       "children": [
@@ -426,7 +416,17 @@
                                                 {
                                                   "tag": "td",
                                                   "children": [
-                                                    "✓ OK"
+                                                    {
+                                                      "tag": "span",
+                                                      "attributes": {
+                                                        "role": "img",
+                                                        "aria-label": "OK"
+                                                      },
+                                                      "children": [
+                                                        "✓"
+                                                      ]
+                                                    },
+                                                    "OK"
                                                   ]
                                                 }
                                               ]
@@ -454,7 +454,16 @@
                                                 {
                                                   "tag": "td",
                                                   "children": [
-                                                    "！ 要注意",
+                                                    {
+                                                      "tag": "span",
+                                                      "attributes": {
+                                                        "role": "img",
+                                                        "aria-label": "要注意"
+                                                      },
+                                                      "children": [
+                                                        "！"
+                                                      ]
+                                                    },
                                                     "キャッシュが古いまま"
                                                   ]
                                                 }
@@ -483,7 +492,17 @@
                                                 {
                                                   "tag": "td",
                                                   "children": [
-                                                    "✕ NG"
+                                                    {
+                                                      "tag": "span",
+                                                      "attributes": {
+                                                        "role": "img",
+                                                        "aria-label": "NG"
+                                                      },
+                                                      "children": [
+                                                        "✕"
+                                                      ]
+                                                    },
+                                                    "NG"
                                                   ]
                                                 }
                                               ]
@@ -492,17 +511,7 @@
                                         }
                                       ]
                                     },
-                                    {
-                                      "tag": "p",
-                                      "children": [
-                                        {
-                                          "tag": "strong",
-                                          "children": [
-                                            "目盛りの数（架空の数）"
-                                          ]
-                                        }
-                                      ]
-                                    },
+                                    "目盛りの数（架空の数）",
                                     {
                                       "tag": "table",
                                       "children": [

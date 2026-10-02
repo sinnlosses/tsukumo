@@ -2021,17 +2021,7 @@
                               ]
                             },
                             "NG",
-                            {
-                              "tag": "p",
-                              "children": [
-                                {
-                                  "tag": "strong",
-                                  "children": [
-                                    "架空の場面と確かめたこと（文字の版）"
-                                  ]
-                                }
-                              ]
-                            },
+                            "架空の場面と確かめたこと（文字の版）",
                             {
                               "tag": "table",
                               "children": [
@@ -2081,19 +2071,49 @@
                                         {
                                           "tag": "td",
                                           "children": [
-                                            "✓ OK"
+                                            {
+                                              "tag": "span",
+                                              "attributes": {
+                                                "role": "img",
+                                                "aria-label": "OK"
+                                              },
+                                              "children": [
+                                                "✓"
+                                              ]
+                                            },
+                                            "OK"
                                           ]
                                         },
                                         {
                                           "tag": "td",
                                           "children": [
-                                            "✓ OK"
+                                            {
+                                              "tag": "span",
+                                              "attributes": {
+                                                "role": "img",
+                                                "aria-label": "OK"
+                                              },
+                                              "children": [
+                                                "✓"
+                                              ]
+                                            },
+                                            "OK"
                                           ]
                                         },
                                         {
                                           "tag": "td",
                                           "children": [
-                                            "✕ NG"
+                                            {
+                                              "tag": "span",
+                                              "attributes": {
+                                                "role": "img",
+                                                "aria-label": "NG"
+                                              },
+                                              "children": [
+                                                "✕"
+                                              ]
+                                            },
+                                            "NG"
                                           ]
                                         }
                                       ]
@@ -2110,19 +2130,49 @@
                                         {
                                           "tag": "td",
                                           "children": [
-                                            "✓ OK"
+                                            {
+                                              "tag": "span",
+                                              "attributes": {
+                                                "role": "img",
+                                                "aria-label": "OK"
+                                              },
+                                              "children": [
+                                                "✓"
+                                              ]
+                                            },
+                                            "OK"
                                           ]
                                         },
                                         {
                                           "tag": "td",
                                           "children": [
-                                            "！ 要注意"
+                                            {
+                                              "tag": "span",
+                                              "attributes": {
+                                                "role": "img",
+                                                "aria-label": "要注意"
+                                              },
+                                              "children": [
+                                                "！"
+                                              ]
+                                            },
+                                            "要注意"
                                           ]
                                         },
                                         {
                                           "tag": "td",
                                           "children": [
-                                            "✓ OK"
+                                            {
+                                              "tag": "span",
+                                              "attributes": {
+                                                "role": "img",
+                                                "aria-label": "OK"
+                                              },
+                                              "children": [
+                                                "✓"
+                                              ]
+                                            },
+                                            "OK"
                                           ]
                                         }
                                       ]
@@ -2139,19 +2189,49 @@
                                         {
                                           "tag": "td",
                                           "children": [
-                                            "✓ OK"
+                                            {
+                                              "tag": "span",
+                                              "attributes": {
+                                                "role": "img",
+                                                "aria-label": "OK"
+                                              },
+                                              "children": [
+                                                "✓"
+                                              ]
+                                            },
+                                            "OK"
                                           ]
                                         },
                                         {
                                           "tag": "td",
                                           "children": [
-                                            "✓ OK"
+                                            {
+                                              "tag": "span",
+                                              "attributes": {
+                                                "role": "img",
+                                                "aria-label": "OK"
+                                              },
+                                              "children": [
+                                                "✓"
+                                              ]
+                                            },
+                                            "OK"
                                           ]
                                         },
                                         {
                                           "tag": "td",
                                           "children": [
-                                            "✓ OK"
+                                            {
+                                              "tag": "span",
+                                              "attributes": {
+                                                "role": "img",
+                                                "aria-label": "OK"
+                                              },
+                                              "children": [
+                                                "✓"
+                                              ]
+                                            },
+                                            "OK"
                                           ]
                                         }
                                       ]

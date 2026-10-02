@@ -687,7 +687,7 @@
   margin: 1rem 0 0.5rem;
   padding-bottom: 0.25rem;
   border-bottom: 1px solid color-mix(in srgb, var(--rule), var(--accent) 60%);
-  font-size: var(--font-body);
+  font-size: var(--report-heading-3);
   font-weight: 700;
 }
 .detail-block h5 {
@@ -783,6 +783,8 @@
   border-radius: 0.4rem;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
+  /* 等幅の桁を和欧間アキで崩さない。 */
+  text-autospace: no-autospace;
 }
 /* フェンスの頭に添える帯。ファイル名（```diff src/foo.ts）があれば左のラベルに出し
    （差分だけを見てどのファイルか分からない、を防ぐ）、右には常にコピーのボタンを置く。
@@ -839,30 +841,63 @@
 }
 .detail-block {
   margin: 0 0 1rem;
+  text-autospace: normal;
+  line-break: strict;
+  font-kerning: normal;
+  font-synthesis: weight;
+}
+/* 地の文（段落・箇条書き・note・お願い）だけ全角42字で折り返す。表・コード・候補・ファイル・図は領域の内幅のまま。 */
+.detail-block :is(p, li, blockquote, .report-note, .report-note-favor) {
+  max-inline-size: 42em;
+  text-wrap: pretty;
+}
+.detail-block :is(h4, h5),
+.detail-block .report-conclusion {
+  word-break: auto-phrase;
+  text-wrap: balance;
+}
+/* 箇条書きを本文より詰める。`label` 付き・`flow` は別セレクタが優先するのでそのまま。 */
+.detail-block :is(ul, ol) {
+  line-height: 1.7;
+}
+.detail-block li + li {
+  margin-top: 4px;
 }
 /* 領域の内幅に入りきらない表は、その表だけ横に転がす（ページ全体は横スクロールさせない）。
    器は Markdown のレンダラ側（`Table`）が作るので、レポートの記法・許可リストは増えていない。 */
 .detail-block .table-scroll {
   overflow-x: auto;
 }
+/* 表の題。太字段落ではなく小さな添え書きにする（表そのものの見出しは th が担う）。 */
+.detail-block .report-table-title {
+  margin: 0 0 0.3rem;
+  font-size: var(--font-secondary);
+  font-weight: 500;
+  color: var(--ink-soft);
+}
 .detail-block table {
   border-collapse: collapse;
-  width: 100%;
+  max-width: 100%;
   margin: 0.5rem 0;
+  font-size: var(--font-subheading);
+  line-height: 1.5;
 }
 /* 横の線だけの表（縦の罫線・見出し行の地は持たない）。
    列の揃えは `columnAlign` の GFM の記法から style 属性で届き、ここの left に勝つ。
    数だけの列で桁が縦に揃うよう、数字は等幅にする。 */
 .detail-block th,
 .detail-block td {
-  padding: 0.3rem 0.5rem;
+  padding: 7px 18px;
   border-bottom: 1px solid var(--rule);
   text-align: left;
   font-variant-numeric: tabular-nums;
 }
-/* 見出し行の下だけ、見出し（上の h4 / h5）と同じ割合でキャラクターの色を混ぜる。 */
+/* 見出し行の下だけ、見出し（上の h4 / h5）と同じ割合でキャラクターの色を混ぜる。文字は本文より小さく、読ませる補助の色にする。 */
 .detail-block th {
   border-bottom: 1px solid color-mix(in srgb, var(--rule), var(--accent) 60%);
+  font-size: var(--font-secondary);
+  font-weight: 500;
+  color: var(--ink-soft);
 }
 /* GFM の表の tr は class を持てないので、行の印はセルの中の状態から :has で拾う。 */
 .detail-block tr:has(.report-cell-status-ng) td:first-child {
@@ -871,11 +906,12 @@
 .detail-block tr:has(.report-cell-status-warn) td:first-child {
   box-shadow: inset 2px 0 0 var(--state-warn);
 }
-/* 表の状態のセル。上の段に記号付きの印、下の段に状態の文。 */
+/* 表の状態のセル。記号と文を1行に並べる。状態語は記号の aria-label が読み上げる。 */
 .detail-block .report-cell-status {
   display: flex;
-  flex-direction: column;
-  gap: 0.1rem;
+  flex-direction: row;
+  align-items: baseline;
+  gap: 0.35em;
 }
 .detail-block .report-cell-status-mark {
   font-family: var(--font-mono);

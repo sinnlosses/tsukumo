@@ -27,6 +27,7 @@ export const REPORT_NOTE_KINDS = [
 export const REPORT_BLOCK_MARK_NAMES = [
   "cols",
   "card",
+  "table-title",
   "badge",
   "badge-ok",
   "badge-warn",
