@@ -22,10 +22,9 @@ import {
   taskSummaryItemsOfNewTaskFiles,
   TASK_DIR_PATH,
   type NewTaskFile,
-  type TaskSummaryResult,
 } from "../../../shared/repository/task-summary.ts"
 import type { runGit, runGitCatFileBatch } from "./git.ts"
-import type { TaskSource } from "./task-source.ts"
+import type { TaskSource, TaskSourceResult } from "./task-source.ts"
 
 /**
  * 台帳の置き場（`$(git rev-parse --path-format=absolute --git-common-dir)` の下）の中の、着手の印。
@@ -127,7 +126,7 @@ type FileSourceMemo =
 /** 1回の見回りの結果に、次に覚えるものを添えたもの。 */
 type FileSourceStep =
   | { readonly kind: "unchanged" }
-  | { readonly kind: "read"; readonly memo: FileSourceMemo; readonly result: TaskSummaryResult }
+  | { readonly kind: "read"; readonly memo: FileSourceMemo; readonly result: TaskSourceResult }
 
 const UNCHANGED = { kind: "unchanged" } as const satisfies FileSourceStep
 

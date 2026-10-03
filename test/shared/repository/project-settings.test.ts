@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest"
 
-import { projectSettingsOf } from "../../../src/shared/repository/project-settings.ts"
+import { projectSettingsOf, runPromptOf } from "../../../src/shared/repository/project-settings.ts"
+
+describe("runPromptOf", () => {
+  it("{id} をタスクIDに置き換える（何か所あってもすべて）", () => {
+    expect(runPromptOf("/next-task {id}", "X-1")).toBe("/next-task X-1")
+    expect(runPromptOf("/a {id} {id}", "X-1")).toBe("/a X-1 X-1")
+  })
+})
 
 describe("projectSettingsOf", () => {
   it("tasks を読み、runPrompt を省けば既定の文面にする", () => {

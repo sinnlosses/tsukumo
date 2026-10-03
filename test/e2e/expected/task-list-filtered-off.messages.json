@@ -14,7 +14,8 @@
       "slashCommands": [
         "clear",
         "compact",
-        "doctor"
+        "doctor",
+        "next-task"
       ],
       "terminalSlashCommands": [
         "doctor"
@@ -81,7 +82,8 @@
               "path": "develop/task/T-002.md"
             }
           }
-        ]
+        ],
+        "runPrompt": "/next-task {id}"
       }
     }
   }

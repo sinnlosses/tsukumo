@@ -13,6 +13,7 @@
 
 import type { ReactElement } from "react"
 
+import { DEFAULT_RUN_PROMPT } from "../../../shared/repository/project-settings.ts"
 import {
   taskReadiness,
   unfinishedTaskIds,
@@ -24,6 +25,7 @@ import { TaskRunningCard } from "./components/task-running-card.tsx"
 import { taskListFilterLabel, type TaskListFilterStatus } from "./domain/task-list-count.ts"
 import { filterTasksForSidebar } from "./domain/task-sidebar-filter.ts"
 import { orderTasksForSidebar } from "./domain/task-sidebar-order.ts"
+import { useRunDestination } from "./hooks/use-run-destination.ts"
 import styles from "./task-board.module.css"
 
 export type TaskListProps = {
@@ -32,6 +34,9 @@ export type TaskListProps = {
 }
 
 export function TaskList(props: TaskListProps): ReactElement {
+  const destination = useRunDestination(
+    props.tasks.kind === "known" ? props.tasks.runPrompt : DEFAULT_RUN_PROMPT,
+  )
   if (props.tasks.kind !== "known") {
     return (
       <Text
@@ -76,6 +81,7 @@ export function TaskList(props: TaskListProps): ReactElement {
 
   const { running, rest } = orderTasksForSidebar(filtered)
   const unfinished = unfinishedTaskIds(props.tasks.items)
+  const { runPrompt } = props.tasks
 
   return (
     <>
@@ -91,7 +97,10 @@ export function TaskList(props: TaskListProps): ReactElement {
           <TaskItem
             key={task.id}
             task={task}
-            runnable={taskReadiness(task, unfinished)?.kind === "ready"}
+            runnable={
+              taskReadiness(task, unfinished)?.kind === "ready" && destination.kind !== "missing"
+            }
+            runPrompt={runPrompt}
           />
         ))}
       </ul>

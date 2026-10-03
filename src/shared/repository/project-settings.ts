@@ -16,6 +16,11 @@ export type TaskStore = (typeof TASK_STORES)[number]
 /** 「tsukumo に頼む」で送る文面の既定。`{id}` をタスクIDに置き換えて送る。 */
 export const DEFAULT_RUN_PROMPT = "/next-task {id}"
 
+/** 文面のひな形の `{id}` をタスクIDに置き換える。 */
+export function runPromptOf(template: string, taskId: string): string {
+  return template.replaceAll("{id}", taskId)
+}
+
 export type TaskSettings = {
   readonly store: TaskStore
   readonly mainBranch: string

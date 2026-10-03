@@ -14,7 +14,8 @@
       "slashCommands": [
         "clear",
         "compact",
-        "doctor"
+        "doctor",
+        "next-task"
       ],
       "terminalSlashCommands": [
         "doctor"

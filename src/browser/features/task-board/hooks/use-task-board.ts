@@ -7,6 +7,7 @@
 import { useReducer, useState, type KeyboardEvent } from "react"
 import { isIncludedIn } from "remeda"
 
+import { DEFAULT_RUN_PROMPT } from "../../../../shared/repository/project-settings.ts"
 import {
   taskReadiness,
   unfinishedTaskIds,
@@ -18,7 +19,9 @@ import { type CodeSpanPart, codeSpanParts } from "../../../domain/code-span.ts"
 import { useSession } from "../../../stores/session.ts"
 import type { TaskBoardRequest } from "../../../stores/task-board-request.ts"
 import type { TaskRunConfirmOutcome } from "../components/task-run-confirm.tsx"
+import type { RunDestination } from "../domain/run-destination.ts"
 import { taskListCounts, type TaskListCountItem } from "../domain/task-list-count.ts"
+import { useRunDestination } from "./use-run-destination.ts"
 import { useTrackedFileList, type TrackedFileList } from "./use-tracked-file-list.ts"
 
 export type TaskStateKind = "ready" | "blocked" | "hold" | "doing" | "done" | "dropped" | "other"
@@ -138,7 +141,12 @@ export type TaskBoardContent =
 
 export type TaskBoardConfirm =
   | { readonly kind: "closed" }
-  | { readonly kind: "open"; readonly taskId: string; readonly held: boolean }
+  | {
+      readonly kind: "open"
+      readonly taskId: string
+      readonly held: boolean
+      readonly runPrompt: string
+    }
 
 export type TaskBoardView = {
   readonly open: boolean
@@ -212,6 +220,8 @@ export function useTaskBoard(
   const [confirmingId, setConfirmingId] = useState<string | undefined>(undefined)
   const dispatch = useSession((session) => session.dispatch)
   const tracked = useTrackedFileList(open)
+  const runPrompt = tasks.kind === "known" ? tasks.runPrompt : DEFAULT_RUN_PROMPT
+  const destination = useRunDestination(runPrompt)
 
   const { query, filter, chosen } = state
   const items = tasks.kind === "known" ? tasks.items : []
@@ -261,6 +271,7 @@ export function useTaskBoard(
     query,
     filter,
     tracked,
+    destination,
     openFile: (path) => {
       dispatch.host.openFile({ path })
     },
@@ -283,6 +294,7 @@ export function useTaskBoard(
             kind: "open",
             taskId: confirmingId,
             held: byId.get(confirmingId)?.state.kind === "hold",
+            runPrompt,
           },
     onClose: close,
     onQueryChange: (nextQuery) => {
@@ -394,6 +406,7 @@ type BoardContentInput = {
   readonly query: string
   readonly filter: TaskBoardFilter
   readonly tracked: TrackedFileList
+  readonly destination: RunDestination
   readonly openFile: (path: string) => void
   readonly run: (taskId: string) => void
   readonly onJump: (id: string) => void
@@ -519,7 +532,9 @@ function selectionOf(
 function runOf(entry: BoardEntry, input: BoardContentInput): TaskBoardRun {
   const kind = entry.state.kind
   if (kind === "ready" || (kind === "hold" && entry.waiting.length === 0)) {
-    return { kind: "available", onRun: () => input.run(entry.task.id) }
+    return input.destination.kind === "missing"
+      ? { kind: "unavailable", reason: `/${input.destination.command} が無いので頼めません` }
+      : { kind: "available", onRun: () => input.run(entry.task.id) }
   }
   return { kind: "unavailable", reason: RUN_UNAVAILABLE_REASON[kind] }
 }

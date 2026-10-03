@@ -7,7 +7,7 @@
         "sessionId": "fake-session",
         "model": "opus",
         "permissionMode": "auto",
-        "slashCommands": ["clear", "compact", "doctor"],
+        "slashCommands": ["clear", "compact", "doctor", "next-task"],
         "terminalSlashCommands": ["doctor"]
       }
     },

@@ -10,7 +10,10 @@ import taskBoardStyles from "../task-board.module.css"
 import styles from "./task-run-button.module.css"
 import { TaskRunConfirm } from "./task-run-confirm.tsx"
 
-export function TaskRunButton(props: { readonly taskId: string }): ReactElement {
+export function TaskRunButton(props: {
+  readonly taskId: string
+  readonly runPrompt: string
+}): ReactElement {
   const [confirming, setConfirming] = useState(false)
 
   return (
@@ -28,6 +31,7 @@ export function TaskRunButton(props: { readonly taskId: string }): ReactElement 
         <TaskRunConfirm
           taskId={props.taskId}
           held={false}
+          runPrompt={props.runPrompt}
           onClose={() => {
             setConfirming(false)
           }}

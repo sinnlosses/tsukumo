@@ -17,6 +17,7 @@ import { TaskRunButton } from "./task-run-button.tsx"
 export function TaskItem(props: {
   readonly task: TaskSummaryItem
   readonly runnable: boolean
+  readonly runPrompt: string
 }): ReactElement {
   const [expanded, setExpanded] = useState(false)
 
@@ -32,7 +33,7 @@ export function TaskItem(props: {
       </span>
       <span className={styles["task-item-body"]}>
         {props.runnable ? (
-          <TaskRunButton taskId={props.task.id} />
+          <TaskRunButton taskId={props.task.id} runPrompt={props.runPrompt} />
         ) : (
           <span className={taskBoardStyles["task-id"]}>{props.task.id}</span>
         )}

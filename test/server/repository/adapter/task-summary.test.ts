@@ -122,7 +122,7 @@ function sleep(ms: number): Promise<void> {
 
 /** `TaskSummaryResult` の `known` 側を組み立てる。 */
 function known(...items: readonly Record<string, unknown>[]): Record<string, unknown> {
-  return { kind: "known", items }
+  return { kind: "known", items, runPrompt: "/next-task {id}" }
 }
 
 /** `writeNewFormatTask` が書く本文（front matter より後ろ）。 */
@@ -594,6 +594,7 @@ type FakePortsOptions = {
   /** 取り直すたびに読む変化の印（`undefined` は取れない）。 */
   readonly stamp: () => string | undefined
   readonly commonDirFailsFirst: boolean
+  readonly runPrompt: string
 }
 
 function fakePorts(
@@ -632,7 +633,7 @@ function fakePorts(
     readProjectSettings: () =>
       Promise.resolve({
         kind: "read",
-        tasks: { store: options.store, mainBranch: "main", runPrompt: "/next-task {id}" },
+        tasks: { store: options.store, mainBranch: "main", runPrompt: options.runPrompt },
       }),
     readBeadsIssues: () => {
       calls.push("bd list")
@@ -664,6 +665,7 @@ describe("watchTaskSummary（偽の口と時計）", () => {
         store: "files",
         stamp: () => stamp,
         commonDirFailsFirst: false,
+        runPrompt: "/next-task {id}",
         ...options,
       }),
     })
@@ -679,6 +681,17 @@ describe("watchTaskSummary（偽の口と時計）", () => {
       count: (name: string) => calls.filter((call) => call === name).length,
     }
   }
+
+  it.each(["files", "beads"] as const)(
+    "設定の runPrompt が一覧に付いて届く（%s 方式）",
+    async (store) => {
+      const { fake, changes } = startFake({ store, runPrompt: "/work {id}" })
+      fake.setWatching(true)
+      await settle()
+
+      expect(changes).toMatchObject([{ kind: "known", runPrompt: "/work {id}" }])
+    },
+  )
 
   it("--git-common-dir は起動中に1回しか起こさない", async () => {
     const { fake, manual, count } = startFake()
@@ -799,6 +812,7 @@ describe("watchTaskSummary（偽の口と時計）", () => {
         store: "beads",
         stamp: () => stamp,
         commonDirFailsFirst: false,
+        runPrompt: "/next-task {id}",
       })
       watcher = watchTaskSummary("/cwd", (tasks) => changes.push(tasks), {
         intervals: FAKE_INTERVALS,

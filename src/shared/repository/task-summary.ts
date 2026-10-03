@@ -47,7 +47,12 @@ export type TaskLocation =
 export type TaskSummaryResult =
   | { readonly kind: "none" }
   | { readonly kind: "unknown" }
-  | { readonly kind: "known"; readonly items: readonly TaskSummaryItem[] }
+  | {
+      readonly kind: "known"
+      readonly items: readonly TaskSummaryItem[]
+      /** 「tsukumo に頼む」で送る文面のひな形（プロジェクトの設定の `tasks.runPrompt`。`{id}` はタスクIDに置き換える）。 */
+      readonly runPrompt: string
+    }
 
 /**
  * 着手可否。`todo` のタスクだけが対象で、それ以外は判定しない（`taskReadiness` が undefined）。

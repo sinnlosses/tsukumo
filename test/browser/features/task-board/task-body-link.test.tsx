@@ -56,6 +56,7 @@ function renderBoard(): void {
       <TaskBoard
         tasks={{
           kind: "known",
+          runPrompt: "/next-task {id}",
           items: [task("X-201", BODY), task("X-202", "## 目的\n\n架空。\n")],
         }}
         request={{ kind: "open", focus: { kind: "first" } }}

@@ -46,7 +46,7 @@ function renderBoard(task: TaskSummaryItem): void {
   render(
     <QueryClientProvider client={createTestQueryClient()}>
       <TaskBoard
-        tasks={{ kind: "known", items: [task] }}
+        tasks={{ kind: "known", items: [task], runPrompt: "/next-task {id}" }}
         request={{ kind: "open", focus: { kind: "first" } }}
         onClose={() => {}}
       />
@@ -200,7 +200,7 @@ function renderSelectionBoard(
   ): ReactElement => (
     <QueryClientProvider client={client}>
       <TaskBoard
-        tasks={{ kind: "known", items: nextItems }}
+        tasks={{ kind: "known", items: nextItems, runPrompt: "/next-task {id}" }}
         request={nextRequest}
         onClose={() => {}}
       />

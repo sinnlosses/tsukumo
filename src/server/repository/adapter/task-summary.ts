@@ -13,6 +13,7 @@
 import { isDeepEqual } from "remeda"
 
 import {
+  DEFAULT_RUN_PROMPT,
   mainBranchRefOf,
   type ProjectSettingsRead,
 } from "../../../shared/repository/project-settings.ts"
@@ -26,7 +27,7 @@ import {
   createTaskFileSource,
   readClaimDirEntries,
 } from "./task-file-source.ts"
-import { fixedTaskSource, type TaskSource } from "./task-source.ts"
+import { fixedTaskSource, type TaskSource, type TaskSourceResult } from "./task-source.ts"
 
 /**
  * 見回りの間隔。`git` は `git rev-parse` 1回が手元で約10msなので、毎回起こしても負荷は無視できる。
@@ -125,11 +126,15 @@ export function watchTaskSummary(
       chosen = { settings, source: choose(settings) }
     }
     const read = await chosen.source.read()
-    if (closed || read.kind === "unchanged" || isDeepEqual(read.result, notified)) {
+    if (closed || read.kind === "unchanged") {
       return
     }
-    notified = read.result
-    onChange(read.result)
+    const result = withRunPrompt(read.result, chosen.settings)
+    if (isDeepEqual(result, notified)) {
+      return
+    }
+    notified = result
+    onChange(result)
   }
 
   const loop = (): void => {
@@ -172,6 +177,15 @@ export function watchTaskSummary(
       }
     },
   }
+}
+
+/** 読み元の `known` に、設定の「tsukumo に頼む」の文面を付ける。 */
+function withRunPrompt(result: TaskSourceResult, settings: ProjectSettingsRead): TaskSummaryResult {
+  if (result.kind !== "known") {
+    return result
+  }
+  const runPrompt = settings.kind === "read" ? settings.tasks.runPrompt : DEFAULT_RUN_PROMPT
+  return { ...result, runPrompt }
 }
 
 /** いま使っている読み元と、それを選んだときの設定。 */

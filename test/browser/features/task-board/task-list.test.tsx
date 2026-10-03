@@ -15,7 +15,7 @@ afterEach(() => {
 })
 
 function known(items: readonly TaskSummaryItem[]): TaskSummaryResult {
-  return { kind: "known", items }
+  return { kind: "known", items, runPrompt: "/next-task {id}" }
 }
 
 const TASKS: readonly TaskSummaryItem[] = [

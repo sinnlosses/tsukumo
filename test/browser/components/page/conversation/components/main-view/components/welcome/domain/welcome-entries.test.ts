@@ -25,7 +25,7 @@ function task(id: string, status: string, dependencies: readonly string[]): Task
   }
 }
 
-const NO_TASKS = { kind: "known", items: [] } as const
+const NO_TASKS = { kind: "known", items: [], runPrompt: "/next-task {id}" } as const
 
 describe("前回のセッション", () => {
   it("いまのセッションを除いた先頭を選ぶ", () => {
@@ -69,6 +69,7 @@ describe("迎える口に並べる口", () => {
   it("着手できる未着手だけを上から3件並べ、依存で止まるもの・済んだものは除く", () => {
     const entries = welcomeEntriesOf(undefined, undefined, {
       kind: "known",
+      runPrompt: "/next-task {id}",
       items: [
         task("X-1", "done", []),
         task("X-2", "todo", ["X-3"]),

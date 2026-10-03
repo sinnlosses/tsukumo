@@ -1,5 +1,5 @@
 // 「このタスクを実行しますか」の確認。
-// OK まで行くと `/next-task <ID>` を入力欄を経由せずに dispatch する（`<Composer>` の下書きには触らない）。
+// OK まで行くと、設定の文面（`tasks.runPrompt`）の `{id}` を ID にしたものを入力欄を経由せずに dispatch する（`<Composer>` の下書きには触らない）。
 // 送ったあとは、サーバから返る `request` イベントがメインビューに依頼として並ぶので、打ったのと同じ見え方になる。
 //
 // ターンが動いている間は断る（押せなくするのではなく、押したら理由を出す）。
@@ -8,19 +8,22 @@
 
 import type { ReactElement } from "react"
 
+import { DEFAULT_RUN_PROMPT, runPromptOf } from "../../../../shared/repository/project-settings.ts"
 import { Button } from "../../../components/ui/button/button.tsx"
 import { Dialog } from "../../../components/ui/dialog/dialog.tsx"
 import { Text } from "../../../components/ui/text/text.tsx"
 import { useSession, useTurnRunning } from "../../../stores/session.ts"
 import styles from "./task-run-confirm.module.css"
 
-/** 確認がどう閉じたか。`sent` は `/next-task <ID>` を送ったあと、`dismissed` は送らずに閉じたあと（キャンセル・Esc・外側のクリック）。 */
+/** 確認がどう閉じたか。`sent` は文面を送ったあと、`dismissed` は送らずに閉じたあと（キャンセル・Esc・外側のクリック）。 */
 export type TaskRunConfirmOutcome = "sent" | "dismissed"
 
 export type TaskRunConfirmProps = {
   readonly taskId: string
-  /** 保留のタスクなら真。送った先の `/next-task` が着手の前に判断を尋ねることを添える。 */
+  /** 保留のタスクなら真。文面が既定（`/next-task`）のときだけ、着手の前に判断を尋ねることを添える。 */
   readonly held: boolean
+  /** 文面のひな形。`{id}` を `taskId` に置き換えて送る。 */
+  readonly runPrompt: string
   /**
    * 送ったあと・送らずに閉じたあとのどちらでも呼ばれる（開いているかは呼び出し側が持つ）。
    * タスクのモーダルから開いたときは、`sent` でモーダルも閉じる。
@@ -37,7 +40,7 @@ export type TaskRunConfirmProps = {
 export function TaskRunConfirm(props: TaskRunConfirmProps): ReactElement {
   const dispatch = useSession((session) => session.dispatch)
   const turnInProgress = useTurnRunning()
-  const prompt = `/next-task ${props.taskId}`
+  const prompt = runPromptOf(props.runPrompt, props.taskId)
 
   const run = (): void => {
     dispatch.session.prompt({ text: prompt, images: [] })
@@ -78,7 +81,9 @@ export function TaskRunConfirm(props: TaskRunConfirmProps): ReactElement {
           className={styles["task-run-note"]}
         >
           入力欄に <code className={styles["task-run-prompt"]}>{prompt}</code> と打つのと同じ。
-          {props.held && "保留のタスクなので、着手の前に判断を聞かれる。"}
+          {props.held &&
+            props.runPrompt === DEFAULT_RUN_PROMPT &&
+            "保留のタスクなので、着手の前に判断を聞かれる。"}
         </Text>
       )}
       <div className={styles["task-run-actions"]}>
