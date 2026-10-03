@@ -375,6 +375,9 @@ node scripts/experience-metric.ts  # 体験の数（依頼から結論まで・�
                               #   （--days <n> で期間、--split <YYYY-MM-DD> でその日の前後に分ける）
 ```
 
+`main` への push では GitHub Actions（`.github/workflows/ci.yml`）が typecheck・lint・format:check・
+単体テストを走らせます。Node と pnpm の版は `mise.toml` から入れます。E2E と目視は手元にだけ残します。
+
 **ブラウザに出た絵は自動テストで守りません。** 配信（バインド先・経路・push）まではテストし、
 実際に見えているかは目視で確認します（手順は `docs/architecture/testing.md`「手で確かめること」）。
 
