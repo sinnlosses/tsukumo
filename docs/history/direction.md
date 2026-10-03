@@ -3,6 +3,62 @@
 `develop/direction.md` に書かれたユーザーからの指示を、タスク化した時点で**当時の記述のまま**
 ここへ移す（`docs/workflow.md`「指示メモ」参照）。新しいものを上に足す。**後から書き換えない。**
 
+## 2026-10-03 `capture-view.ts --wait-for` の演出待ちの上限を、長いレポートでも書き上げ終わるまで待てる形にする（振り返り: GH-252）
+
+（出典: develop/draft/2026-10-03-capture-view-reveal-wait-limit.md。/plan-tasks でドラフト7件を示し、全件の選択で承認。GH-292 にした）
+
+- 札: 黄 道具（17回目）
+- 根拠: GH-252 の委譲先が、節3つの場面 `report-task-verdict` を `capture-view.ts --wait-for` で測ろうとしたところ、書き上げる演出が `WAIT_FOR_TIMEOUT_MS`（15 秒）のうちに終わらず失敗した。scratchpad に自前の計測スクリプトを書いて代えた（`scripts/capture-view.ts` の `waitForRevealSettled`）
+- 出し先: `scripts/capture-view.ts` で、演出を待つあいだはブラウザの時計を進めて演出を終わらせる（E2E の `settledDom` と同じ形）か、`--wait-for` の上限を引数で渡せるようにする。どちらかを `docs/architecture/testing.md` の撮影の手順にも書く
+
+## 2026-10-03 sed -i を拒む hook を、作業ツリーの外で書き換えて cp で戻す回り道にも掛ける（振り返り: GH-239）
+
+（出典: develop/draft/2026-10-03-deny-copy-back-into-worktree.md。/plan-tasks でドラフト7件を示し、全件の選択で承認。次の件と束ねて GH-293 にした）
+
+- 札: 黄 制約違反（11回目）
+- 根拠: GH-239 の委譲先が作業ツリーのファイルを `sed -i` で2回・python で1回書き換えようとして `scripts/deny-sed-in-place.ts` に拒まれ、うち1回は scratchpad に書いてから `cp` で作業ツリーへ戻していた（委譲先の friction log の自己申告。`inquiry.tsx`）。hook の文言は「作業ツリーの外に置けば通る」と書いており、戻す手は塞いでいない
+- 出し先: `scripts/deny-sed-in-place.ts` に、作業ツリーの外（scratchpad・/tmp）から作業ツリーへの `cp`・`mv`・`cat >` を拒む判定と、そのテストを足す。拒む文言は Edit / Write ツールへ寄せる
+
+## 2026-10-03 sed -i を拒む hook を、node のスクリプトで作業ツリーのファイルを書き換える手にも掛ける（振り返り: GH-254）
+
+（出典: develop/draft/2026-10-03-deny-node-script-edits-in-worktree.md。/plan-tasks でドラフト7件を示し、全件の選択で承認。前の件と束ねて GH-293 にした）
+
+- 札: 黄 制約違反（12回目）
+- 根拠: GH-254 の委譲先が、`chart.ts` の変数名の置換と `mermaid-block.tsx`・テストへの差し込みを、Edit ではなく scratchpad に置いた node スクリプトで作業ツリーのファイルへ直に書いた（委譲先の friction log の自己申告）。委譲の指示で「sed -i・python・作業ツリーの外で書き換えて cp で戻す回り道をしない」と名指していたが、node は名指していなかった。GH-239 の cp の回り道（`2026-10-03-deny-copy-back-into-worktree.md`）と同じ型で、手を名指して塞ぐやり方では追いつかない
+- 出し先: `scripts/deny-sed-in-place.ts` の判定を、手（sed・perl・python）ではなく「作業ツリーの中のパスへ書き込む Bash のコマンド」で拒む形に寄せる（node・cp・mv・tee・リダイレクトを含める）。cp の回り道のドラフトと1つのタスクにまとめてよい
+
+## 2026-10-03 委譲先の hand-back を、`tw plan-check` と `tw verify-check` が通っていなければ返せないようにする（振り返り: GH-267）
+
+（出典: develop/draft/2026-10-03-handback-gate-on-plan-and-verify.md。/plan-tasks でドラフト7件を示し、全件の選択で承認。GH-295 にした）
+
+- 札: 黄 自己申告の不正確さ（5回目）
+- 根拠: GH-267（haiku・1回にまとめた委譲）の委譲先は「完了条件確認 ✅ `pnpm run check` が通る」と報告したが、受け入れで `tw plan-check` は `PLAN_NOT_FIRST missing`（`## やること` を書いていない）、`tw verify-check` は `NOT_VERIFIED none` だった。本文には行番号での参照（「62–78 行」）も残っており、メインが直して `--after-work` で計画を書き起こし、`tw verify` を打ち直した。完了の通知は「背景の作業が残ったまま止まった」だった
+- 出し先: 仕組みで塞ぐ。claude-skills の `no-delegate` の定義に、hand-back の前に着手の印のある作業ツリーで `tw plan-check` と `tw verify-check` を打ち、`PLAN_FIRST`（か `PLAN_REGISTERED`）と `VERIFIED_SAME` でなければ返却を拒む hook を足す（`tw commit-guard` と同じ置き方）。「前提が誤り」「dropped」「目視待ち」の報告は通す口を残す
+
+## 2026-10-03 委譲先が書く新しいコメントの「理由・経緯」を受け入れの前に機械で拾う（振り返り: GH-270）
+
+（出典: develop/draft/2026-10-03-subagent-reason-comments.md。/plan-tasks でドラフト7件を示し、全件の選択で承認。GH-294 にした）
+
+- 札: 黄 制約違反（11回目）
+- 根拠: GH-270 で委譲先が新しい hook のファイル頭に「背景で打つと〜止まる（正典の句）」という理由と正典の要約のコメントを書き、受け入れでメインが削った。依頼文の「方針・理由の説明も足さない」を渡していたうえで、前日の GH-258 でも CSS の理由のコメント2つを受け入れで削っている
+- 出し先: `next-task` の手順6（受け入れ）か `tw verify` の前に、差分で足されたコメント行だけを `comment-audit` の判定にかけて委譲先へ差し戻す段を足すタスク
+
+## 2026-10-03 `tw edit` で `## やること` 以外の節を作業のあとに直しても、計画の記録を after-work に変えない（振り返り: GH-252）
+
+（出典: develop/draft/2026-10-03-tw-edit-note-flips-plan-record.md。/plan-tasks でドラフト7件を示し、全件の選択で承認。GH-296 にした）
+
+- 札: 黄 道具（16回目）
+- 根拠: GH-252 の受け入れで、委譲先が申し送った1行を `tw edit GH-252 --section '注意'` で足そうとしたら `WORK_BEFORE_PLAN` で拒まれ、`--after-work` を付けて打ち直すと `tw plan-check` が `PLAN_FIRST` から `PLAN_NOT_FIRST after-work` に変わった。計画は作業より先に書かれていたのに、記録が上書きされた
+- 出し先: claude-skills の `tw edit`（`task-workflow`）で、`WORK_BEFORE_PLAN` の関門と計画の記録を `--section 'やること'` のときだけに掛ける。`next-task` の手順6に「受け入れで `## 注意` へ申し送りを足す」手を書くならその形も合わせる
+
+## 2026-10-03 `tw verify` が検証コマンドの前に整形コマンドを打ち、整形の崩れだけで check の全段を流し直さないようにする（振り返り: GH-269）
+
+（出典: develop/draft/2026-10-03-verify-runs-format-first.md。/plan-tasks でドラフト7件を示し、全件の選択で承認。GH-297 にした）
+
+- 札: 黄 揺れ（9回目）
+- 根拠: GH-269 の委譲先は `tw verify` を3回打った。1回目は `oxfmt --check` の崩れだけで落ち、`pnpm run format` を打って流し直している。整形コマンドは「## タスク運用」節に書いてあり `tw` が読めるのに、打つかどうかが委譲先の手順の記憶に任されている
+- 出し先: claude-skills の `tw verify` に、取り込みのあと・検証コマンドの前に整形コマンド（節の値。`なし` なら打たない）を打つ段を足すタスク。整形で中身が変わったら控えの鍵はそのあとの中身で取る
+
 ## 2026-10-03 E2E の全段の打ち直しを hook で止め、速さのタスクは測ってから書く
 
 （出典: 会話。/insights の利用状況レポートからの提案を、いまの仕組みと突き合わせて採否を示した報告に続けて「採るやつをタスク化しよう」。GH-290・GH-291 にした）
