@@ -91,6 +91,164 @@
                       ]
                     },
                     {
+                      "tag": "section",
+                      "attributes": {
+                        "aria-label": "お伺い"
+                      },
+                      "children": [
+                        {
+                          "tag": "header",
+                          "children": [
+                            "お伺い",
+                            "質問",
+                            "架空の選択",
+                            "1 / 1",
+                            "·",
+                            "待って",
+                            "1:00"
+                          ]
+                        },
+                        {
+                          "tag": "p",
+                          "children": [
+                            "架空の質問：どの案を試す？"
+                          ]
+                        },
+                        {
+                          "tag": "ul",
+                          "children": [
+                            {
+                              "tag": "li",
+                              "children": [
+                                {
+                                  "tag": "label",
+                                  "children": [
+                                    {
+                                      "tag": "span",
+                                      "attributes": {
+                                        "aria-hidden": "true"
+                                      },
+                                      "children": [
+                                        "1"
+                                      ]
+                                    },
+                                    {
+                                      "tag": "input",
+                                      "attributes": {
+                                        "type": "checkbox",
+                                        "checked": false,
+                                        "value": "on"
+                                      }
+                                    },
+                                    "A案"
+                                  ]
+                                },
+                                {
+                                  "tag": "p",
+                                  "children": [
+                                    "架空の説明A"
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "tag": "li",
+                              "children": [
+                                {
+                                  "tag": "label",
+                                  "children": [
+                                    {
+                                      "tag": "span",
+                                      "attributes": {
+                                        "aria-hidden": "true"
+                                      },
+                                      "children": [
+                                        "2"
+                                      ]
+                                    },
+                                    {
+                                      "tag": "input",
+                                      "attributes": {
+                                        "type": "checkbox",
+                                        "checked": true,
+                                        "value": "on"
+                                      }
+                                    },
+                                    "B案"
+                                  ]
+                                },
+                                {
+                                  "tag": "p",
+                                  "children": [
+                                    "架空の説明B"
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "tag": "li",
+                              "children": [
+                                {
+                                  "tag": "label",
+                                  "children": [
+                                    {
+                                      "tag": "span",
+                                      "attributes": {
+                                        "aria-hidden": "true"
+                                      },
+                                      "children": [
+                                        "3"
+                                      ]
+                                    },
+                                    {
+                                      "tag": "input",
+                                      "attributes": {
+                                        "type": "checkbox",
+                                        "checked": false,
+                                        "value": "on"
+                                      }
+                                    },
+                                    "C案"
+                                  ]
+                                },
+                                {
+                                  "tag": "p",
+                                  "children": [
+                                    "架空の説明C"
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "tag": "footer",
+                          "children": [
+                            "選択肢にない答えは、下の入力欄に書いて送れます",
+                            {
+                              "tag": "button",
+                              "attributes": {
+                                "aria-disabled": "false",
+                                "type": "button"
+                              },
+                              "children": [
+                                "これで答える",
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  },
+                                  "children": [
+                                    "⏎"
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
                       "tag": "div",
                       "attributes": {
                         "data-outline": "hidden",
@@ -108,121 +266,6 @@
                             }
                           ]
                         }
-                      ]
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "tag": "section",
-              "children": [
-                {
-                  "tag": "header",
-                  "children": [
-                    "質問",
-                    "架空の選択",
-                    "1 / 1"
-                  ]
-                },
-                {
-                  "tag": "p",
-                  "children": [
-                    "架空の質問：どの案を試す？"
-                  ]
-                },
-                {
-                  "tag": "ul",
-                  "children": [
-                    {
-                      "tag": "li",
-                      "children": [
-                        {
-                          "tag": "label",
-                          "children": [
-                            {
-                              "tag": "input",
-                              "attributes": {
-                                "type": "checkbox",
-                                "checked": false,
-                                "value": "on"
-                              }
-                            },
-                            "A案"
-                          ]
-                        },
-                        {
-                          "tag": "p",
-                          "children": [
-                            "架空の説明A"
-                          ]
-                        }
-                      ]
-                    },
-                    {
-                      "tag": "li",
-                      "children": [
-                        {
-                          "tag": "label",
-                          "children": [
-                            {
-                              "tag": "input",
-                              "attributes": {
-                                "type": "checkbox",
-                                "checked": false,
-                                "value": "on"
-                              }
-                            },
-                            "B案"
-                          ]
-                        },
-                        {
-                          "tag": "p",
-                          "children": [
-                            "架空の説明B"
-                          ]
-                        }
-                      ]
-                    },
-                    {
-                      "tag": "li",
-                      "children": [
-                        {
-                          "tag": "label",
-                          "children": [
-                            {
-                              "tag": "input",
-                              "attributes": {
-                                "type": "checkbox",
-                                "checked": false,
-                                "value": "on"
-                              }
-                            },
-                            "C案"
-                          ]
-                        },
-                        {
-                          "tag": "p",
-                          "children": [
-                            "架空の説明C"
-                          ]
-                        }
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "tag": "footer",
-                  "children": [
-                    "選択肢にない答えは、下の入力欄に書いて送れます",
-                    {
-                      "tag": "button",
-                      "attributes": {
-                        "aria-disabled": "true",
-                        "type": "button"
-                      },
-                      "children": [
-                        "これで答える"
                       ]
                     }
                   ]
@@ -255,6 +298,16 @@
               "tag": "p",
               "children": [
                 "↑ つくもの精霊 が質問しています。上の選択肢から選ぶか、ここに書いて答えてください"
+              ]
+            },
+            {
+              "tag": "button",
+              "attributes": {
+                "aria-disabled": "false",
+                "type": "button"
+              },
+              "children": [
+                "お伺いへ"
               ]
             },
             {
@@ -321,6 +374,7 @@
               "tag": "button",
               "attributes": {
                 "data-shortcut": "⌘⏎",
+                "data-emphasis": "quiet",
                 "type": "submit"
               },
               "children": [

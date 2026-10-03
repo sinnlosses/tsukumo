@@ -75,7 +75,7 @@
                                 "type": "button"
                               },
                               "children": [
-                                "長いラベルと長い説明の場面（架空）。選択肢の折り返しを見るために置いてある。",
+                                "答え待ちの箱を出す場面（架空）。答えると箱が消える。",
                                 {
                                   "tag": "span",
                                   "attributes": {
@@ -103,126 +103,11 @@
                             {
                               "tag": "p",
                               "children": [
-                                "長いラベルと長い説明の場面（架空）。選択肢の折り返しを見るために置いてある。"
+                                "答え待ちの箱を出す場面（架空）。答えると箱が消える。"
                               ]
                             }
                           ]
                         }
-                      ]
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "tag": "section",
-              "children": [
-                {
-                  "tag": "header",
-                  "children": [
-                    "質問",
-                    "架空の選択（長いラベルと長い説明）",
-                    "1 / 2"
-                  ]
-                },
-                {
-                  "tag": "p",
-                  "children": [
-                    "架空の質問：どの見出しの付け方にする？"
-                  ]
-                },
-                {
-                  "tag": "ul",
-                  "children": [
-                    {
-                      "tag": "li",
-                      "children": [
-                        {
-                          "tag": "label",
-                          "children": [
-                            {
-                              "tag": "input",
-                              "attributes": {
-                                "type": "checkbox",
-                                "checked": false,
-                                "value": "on"
-                              }
-                            },
-                            "とても長いラベルの選択肢（架空・折り返しの確認用）"
-                          ]
-                        },
-                        {
-                          "tag": "p",
-                          "children": [
-                            "架空の説明：ラベル自体が長いときに、説明の置き場が潰れないかを見る。ここも折り返す長さにしてある。"
-                          ]
-                        }
-                      ]
-                    },
-                    {
-                      "tag": "li",
-                      "children": [
-                        {
-                          "tag": "label",
-                          "children": [
-                            {
-                              "tag": "input",
-                              "attributes": {
-                                "type": "checkbox",
-                                "checked": false,
-                                "value": "on"
-                              }
-                            },
-                            "見出しと質問文（架空）"
-                          ]
-                        },
-                        {
-                          "tag": "p",
-                          "children": [
-                            "架空の説明：短い見出しを先に置き、そのあとに本文を続ける。ラベルの右に並ぶ説明が1行に収まらない長さのとき、ラベルと重ならずに折り返せるかを見るための文面。"
-                          ]
-                        }
-                      ]
-                    },
-                    {
-                      "tag": "li",
-                      "children": [
-                        {
-                          "tag": "label",
-                          "children": [
-                            {
-                              "tag": "input",
-                              "attributes": {
-                                "type": "checkbox",
-                                "checked": false,
-                                "value": "on"
-                              }
-                            },
-                            "本文だけ（架空）"
-                          ]
-                        },
-                        {
-                          "tag": "p",
-                          "children": [
-                            "架空の説明：見出しを置かずに本文だけを出す。こちらも1行には収まらない長さにしてある。"
-                          ]
-                        }
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "tag": "footer",
-                  "children": [
-                    "選択肢にない答えは、下の入力欄に書いて送れます",
-                    {
-                      "tag": "button",
-                      "attributes": {
-                        "aria-disabled": "true",
-                        "type": "button"
-                      },
-                      "children": [
-                        "次へ"
                       ]
                     }
                   ]
@@ -243,24 +128,12 @@
       },
       "children": [
         {
-          "tag": "div",
-          "attributes": {
-            "aria-hidden": "true"
-          }
-        },
-        {
           "tag": "form",
           "children": [
             {
-              "tag": "p",
-              "children": [
-                "↑ つくもの精霊 が質問しています。上の選択肢から選ぶか、ここに書いて答えてください"
-              ]
-            },
-            {
               "tag": "textarea",
               "attributes": {
-                "aria-label": "質問への答えを書く",
+                "aria-label": "依頼を書く",
                 "value": ""
               }
             },
@@ -321,10 +194,11 @@
               "tag": "button",
               "attributes": {
                 "data-shortcut": "⌘⏎",
+                "data-emphasis": "solid",
                 "type": "submit"
               },
               "children": [
-                "次へ"
+                "送信"
               ]
             }
           ]

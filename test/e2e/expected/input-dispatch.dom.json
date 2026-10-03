@@ -219,6 +219,7 @@
               "tag": "button",
               "attributes": {
                 "data-shortcut": "⌘⏎",
+                "data-emphasis": "solid",
                 "type": "submit"
               },
               "children": [

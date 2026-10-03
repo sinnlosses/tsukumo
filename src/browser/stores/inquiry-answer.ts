@@ -1,8 +1,9 @@
-// 答え待ちの質問に対する答えの組み立て。
-// 質問の札はメインビューに出て、自由入力は入力欄が担うので、1つの状態を2つの領域が読み書きする。
+// お伺い（答え待ちの許可要求と質問）に対する答えの組み立て。
+// お伺いの札はメインビューに出て、質問の自由入力は入力欄が担うので、1つの状態を2つの領域が読み書きする。
 //
-// store が持つのは組み立て中の答えだけ（何問目を見ているか・質問ごとに選んだラベル・入力欄に書いて記録した答え）。
-// 質問そのものは `SessionState` から来るので、それを読んで画面に出す形へ畳むのは `useQuestionAnswer`。
+// store が持つのは組み立て中の答えだけ（何問目を見ているか・問ごとに選んだラベル・入力欄に書いて記録した答え）。
+// 許可要求は選択肢「許可」「拒否」の1問として同じ形で持つ。
+// 答え待ちそのものは `SessionState` から来るので、それを読んで画面に出す形へ畳むのは `useInquiryAnswer`。
 //
 // `answer.labels[i]` は `questions[i]` に対して選んだ答えの並び（`PendingAsk` の契約）。
 // 複数選択で2つ以上選んだときはそのまま複数の要素として送り、入力欄に書いた文字列は同じ並びの末尾に足す。
@@ -10,19 +11,22 @@
 
 import { create } from "zustand"
 
-import type { PendingAsk } from "../../shared/session-driver/pending-ask.ts"
+import type { StampedPendingAsk } from "../../shared/session-driver/pending-ask.ts"
 import {
   FREE_TEXT_OPTION_LABEL,
   sortQuestionOptions,
   type Question,
 } from "../../shared/session-driver/question.ts"
+import { toolInputText } from "../domain/tool-summary.ts"
 import { useSession, type SessionDispatch } from "./session.ts"
 
 /**
- * 選択肢1つぶんの札。`label` は SDK へ返す元のラベルで、`text` は画面に出す字。
- * `text` は末尾の `(Recommended)` を外したもので、外した印は {@link QuestionOptionRow.recommended}。
+ * 選択肢1つぶんの札。`label` は SDK へ返す元のラベル（許可要求では「許可」「拒否」）で、`text` は画面に出す字。
+ * `text` は末尾の `(Recommended)` を外したもので、外した印は {@link InquiryOptionRow.recommended}。
+ * `number` は 1 から振った番号（数字キーで選ぶときの番号）。
  */
-export type QuestionOptionRow = {
+export type InquiryOptionRow = {
+  readonly number: number
   readonly label: string
   readonly text: string
   readonly recommended: boolean
@@ -31,60 +35,79 @@ export type QuestionOptionRow = {
   readonly selected: boolean
 }
 
-/** 答え待ちの質問が無ければ `none`（札も入力欄の帯も出ない）。 */
-export type QuestionAnswerModel =
-  | { readonly kind: "none" }
-  | {
-      readonly kind: "asking"
-      /** 答え待ちの id（`PendingAsk.id`）。別の質問に入れ替わった合図として読む。 */
-      readonly id: string
-      readonly header: string
-      readonly text: string
-      readonly multiSelect: boolean
-      /** 「1 / 2」。質問が1件でも出す（モックの右端）。 */
-      readonly progressLabel: string
-      /** 「戻る」を出すか（2問目以降）。 */
-      readonly showBack: boolean
-      /** いま見ているのが最後の1問か（答えると全問ぶんを送る）。 */
-      readonly last: boolean
-      /** 並びはラベルの辞書順（`sortQuestionOptions`）。 */
-      readonly options: readonly QuestionOptionRow[]
-      /** この問に対して入力欄に書いて記録した答え（まだ送っていない。無ければ空文字）。 */
-      readonly writtenAnswer: string
-      /** 「これで答える」を押せるか（何も選ばず何も書いていなければ押せない）。 */
-      readonly canAnswer: boolean
-      readonly onToggle: (label: string) => void
-      readonly onAnswer: () => void
-      readonly onBack: () => void
-      /** 入力欄に書いた字でこの問に答える（最後の1問なら全問ぶんを送る）。 */
-      readonly onAnswerWithText: (text: string) => void
-    }
-
-export function useQuestionAnswer(): QuestionAnswerModel {
-  const pending = useSession((session) => session.state.pending[0])
-  const dispatch = useSession((session) => session.dispatch)
-  const draft = useQuestionDraft((state) => state.draft)
-
-  if (pending === undefined || pending.kind !== "question") {
-    return { kind: "none" }
-  }
-  // 別の答え待ちに対して組み立てていた答えは読まない（別の質問が来た・答え終わった）。
-  const answer = draft?.pendingId === pending.id ? draft.answer : EMPTY_DRAFT_ANSWER
-  const setAnswer = (next: DraftAnswer): void => {
-    useQuestionDraft.setState({ draft: { pendingId: pending.id, answer: next } })
-  }
-  return askingModel(pending, { answer, setAnswer }, dispatch)
+/** 許可要求と質問のどちらにもある欄。 */
+type InquiryCommon = {
+  /** 答え待ちの id（`PendingAsk.id`）。別の答え待ちに入れ替わった合図として読む。 */
+  readonly id: string
+  /** 答え待ちが届いた時刻（エポックミリ秒）。 */
+  readonly askedAt: number
+  readonly multiSelect: boolean
+  /** 「1 / 2」。1問でも出す。 */
+  readonly progressLabel: string
+  /** 「戻る」を出すか（2問目以降）。 */
+  readonly showBack: boolean
+  /** いま見ているのが最後の1問か（答えると全問ぶんを送る）。 */
+  readonly last: boolean
+  readonly options: readonly InquiryOptionRow[]
+  /** 「これで答える」を押せるか（何も選ばず何も書いていなければ押せない）。 */
+  readonly canAnswer: boolean
+  readonly onToggle: (label: string) => void
+  readonly onAnswer: () => void
+  readonly onBack: () => void
 }
 
-export type QuestionDraftState = {
+/**
+ * 答え待ちが無ければ `none`（札も入力欄の帯も出ない）。
+ * `permission` の `targetText` は対象の全文（切り詰めない）。
+ */
+export type InquiryModel =
+  | { readonly kind: "none" }
+  | (InquiryCommon & {
+      readonly kind: "permission"
+      readonly toolName: string
+      readonly targetText: string
+    })
+  | (InquiryCommon & {
+      readonly kind: "question"
+      readonly header: string
+      readonly text: string
+      /** この問に対して入力欄に書いて記録した答え（まだ送っていない。無ければ空文字）。 */
+      readonly writtenAnswer: string
+      /** 入力欄に書いた字でこの問に答える（最後の1問なら全問ぶんを送る）。 */
+      readonly onAnswerWithText: (text: string) => void
+    })
+
+export function useInquiryAnswer(): InquiryModel {
+  const pending = useSession((session) => session.state.pending[0])
+  const dispatch = useSession((session) => session.dispatch)
+  const draft = useInquiryDraft((state) => state.draft)
+
+  if (pending === undefined) {
+    return { kind: "none" }
+  }
+  // 別の答え待ちに対して組み立てていた答えは読まない（別の答え待ちが来た・答え終わった）。
+  const answer = draft?.pendingId === pending.id ? draft.answer : EMPTY_DRAFT_ANSWER
+  const setAnswer = (next: DraftAnswer): void => {
+    useInquiryDraft.setState({ draft: { pendingId: pending.id, answer: next } })
+  }
+  return pending.kind === "permission"
+    ? permissionModel(pending, { answer, setAnswer }, dispatch)
+    : questionModel(pending, { answer, setAnswer }, dispatch)
+}
+
+export type InquiryDraftState = {
   /** どの答え待ち（`PendingAsk.id`）に対して組み立てている答えか。まだ何も触っていなければ undefined。 */
   readonly draft: { readonly pendingId: string; readonly answer: DraftAnswer } | undefined
 }
 
-export const useQuestionDraft = create<QuestionDraftState>()(() => ({ draft: undefined }))
+export const useInquiryDraft = create<InquiryDraftState>()(() => ({ draft: undefined }))
+
+/** 許可要求の選択肢のラベル。並びがそのまま番号になる。 */
+const ALLOW_LABEL = "許可"
+const DENY_LABEL = "拒否"
 
 /**
- * 組み立て中の答え。質問ごとに持ち続ける（「戻る」で前の質問に戻ったとき、選んだものが残っているように）。
+ * 組み立て中の答え。問ごとに持ち続ける（「戻る」で前の問に戻ったとき、選んだものが残っているように）。
  * `selections[i]` / `writtenAnswers[i]` は `questions[i]` に対応し、まだ触っていない問の位置は空のまま（読む側が `?? []` / `?? ""` で受ける）。
  */
 type DraftAnswer = {
@@ -95,17 +118,60 @@ type DraftAnswer = {
 
 const EMPTY_DRAFT_ANSWER: DraftAnswer = { index: 0, selections: [], writtenAnswers: [] }
 
-type QuestionDraft = {
+type InquiryDraft = {
   readonly answer: DraftAnswer
   readonly setAnswer: (next: DraftAnswer) => void
 }
 
-/** 答え待ちの質問1件ぶんを、札と入力欄がそのまま置ける形へ畳む。 */
-function askingModel(
-  pending: Extract<PendingAsk, { readonly kind: "question" }>,
-  draft: QuestionDraft,
+/** 許可要求1件を、選択肢「許可」「拒否」の1問として畳む。 */
+function permissionModel(
+  pending: Extract<StampedPendingAsk, { readonly kind: "permission" }>,
+  draft: InquiryDraft,
   dispatch: SessionDispatch,
-): QuestionAnswerModel {
+): InquiryModel {
+  const chosen = draft.answer.selections[0]?.[0]
+  return {
+    kind: "permission",
+    id: pending.id,
+    askedAt: pending.askedAt,
+    toolName: pending.toolName,
+    targetText: toolInputText(pending.toolName, pending.input),
+    multiSelect: false,
+    progressLabel: "1 / 1",
+    showBack: false,
+    last: true,
+    options: [ALLOW_LABEL, DENY_LABEL].map((label, index) => ({
+      number: index + 1,
+      label,
+      text: label,
+      recommended: false,
+      description: "",
+      preview: undefined,
+      selected: chosen === label,
+    })),
+    canAnswer: chosen !== undefined,
+    onToggle: (label) => {
+      draft.setAnswer({ ...draft.answer, selections: [[label]] })
+    },
+    onAnswer: () => {
+      if (chosen === undefined) {
+        return
+      }
+      dispatch.session.answer({
+        id: pending.id,
+        answer: { kind: chosen === ALLOW_LABEL ? "allow" : "deny" },
+      })
+    },
+    onBack: () => {},
+  }
+}
+
+/** 答え待ちの質問1件ぶんを、札と入力欄がそのまま置ける形へ畳む。 */
+function questionModel(
+  pending: Extract<StampedPendingAsk, { readonly kind: "question" }>,
+  draft: InquiryDraft,
+  dispatch: SessionDispatch,
+): InquiryModel {
   const questions = pending.questions
   const index = Math.min(draft.answer.index, questions.length - 1)
   const question = questions[index]
@@ -143,9 +209,12 @@ function askingModel(
     })
   }
 
+  const canAnswer = selected.length > 0 || writtenAnswer !== ""
+
   return {
-    kind: "asking",
+    kind: "question",
     id: pending.id,
+    askedAt: pending.askedAt,
     header: question.header,
     text: question.text,
     multiSelect: question.multiSelect,
@@ -154,7 +223,7 @@ function askingModel(
     last,
     options: optionRows(question, selected),
     writtenAnswer,
-    canAnswer: selected.length > 0 || writtenAnswer !== "",
+    canAnswer,
     onToggle: (label) => {
       // 単一選択は選び直しで置き換え、複数選択は押すたびに入り切りする。
       // どちらも選んだ時点で送らない（送るのは「これで答える」と入力欄の「答える」だけ）。
@@ -173,10 +242,13 @@ function askingModel(
       })
     },
     onAnswer: () => {
+      if (!canAnswer) {
+        return
+      }
       advance(selected, writtenAnswer)
     },
     onBack: () => {
-      draft.setAnswer({ ...draft.answer, index: index - 1 })
+      draft.setAnswer({ ...draft.answer, index: Math.max(0, index - 1) })
     },
     onAnswerWithText: (written) => {
       const trimmed = written.trim()
@@ -198,7 +270,7 @@ function answerFor(answer: DraftAnswer, target: number): readonly string[] {
 
 /**
  * 並びの `target` 番目だけ差し替える。まだ届いていない位置は `filler` で埋める。
- * 質問ごとの答えは触った問だけ入るので、後ろの問から先に触られることがある。
+ * 問ごとの答えは触った問だけ入るので、後ろの問から先に触られることがある。
  */
 function replaced<T>(values: readonly T[], target: number, value: T, filler: T): readonly T[] {
   const length = Math.max(values.length, target + 1)
@@ -206,15 +278,16 @@ function replaced<T>(values: readonly T[], target: number, value: T, filler: T):
 }
 
 /**
- * 選択肢を札の行へ畳む。並びはラベルの辞書順（`sortQuestionOptions`）。
+ * 選択肢を札の行へ畳む。並びはラベルの辞書順（`sortQuestionOptions`）で、番号はその並びで振る。
  *
  * 自由入力（「その他」）の選択肢は札に出さない（自由入力は入力欄が担うので、押しても意味のない札になる）。
  * `sortQuestionOptions` はそれでも通すので、モデルが「その他」を含めてきたかどうかで残りの並びは変わらない。
  */
-function optionRows(question: Question, selected: readonly string[]): readonly QuestionOptionRow[] {
+function optionRows(question: Question, selected: readonly string[]): readonly InquiryOptionRow[] {
   return sortQuestionOptions(question.options)
     .filter((option) => option.label !== FREE_TEXT_OPTION_LABEL)
-    .map((option) => ({
+    .map((option, index) => ({
+      number: index + 1,
       label: option.label,
       text: option.label.replace(RECOMMENDED_SUFFIX, ""),
       recommended: RECOMMENDED_SUFFIX.test(option.label),
@@ -226,6 +299,6 @@ function optionRows(question: Question, selected: readonly string[]): readonly Q
 
 /**
  * ラベル末尾の「おすすめ」の印（`AskUserQuestion` のモデルが自分で書く）。
- * 字からは外してバッジにするが、SDK へ返す答えは元のラベルのまま（`QuestionOptionRow.label`）。
+ * 字からは外してバッジにするが、SDK へ返す答えは元のラベルのまま（`InquiryOptionRow.label`）。
  */
 const RECOMMENDED_SUFFIX = /\s*\(Recommended\)\s*$/i

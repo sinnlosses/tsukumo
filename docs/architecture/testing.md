@@ -188,7 +188,7 @@ test/e2e/expected/` で意図した変化だけであることを確かめる �
 1. **操作（送る・押す）は、場面のタイマーで届く手が途切れた区切りで行う。** `open` が最初の区切り
    まで待ってから部屋を渡すので、開いてすぐの操作は書き足さずに競わない。操作を最初の区切りより先の
    時点で行うなら、疑似セッションの場面の手を前後 500ms 以上空けて区切りを作り、その区切りの手まで
-   `waitForEvent` で待つ。場面の手の途中に操作を挟まない（`permission-answer`: 押して流れる
+   `waitForEvent` で待つ。場面の手の途中に操作を挟まない（許可の答え（いまの `inquiry`）: 押して流れる
    `pending-changed` と場面の `speech`（`afterMs` 200）が競って揺れた。`input-dispatch`: `opening` の
    `speech` と依頼後の `partial-utterance` が同じ時刻に届いて競った）
 2. **非同期の取得（TanStack Query など）が済むまで表示が続く要素は `aria-busy="true"` を出し、
@@ -215,7 +215,7 @@ test/e2e/expected/` で意図した変化だけであることを確かめる �
    追えなかった）
 5. **シナリオを足した・待ち方を直したときは、足した・直した `it` だけを `-t` で絞って5回続けて回し、
    落ちないことを確かめ、回数を `## 結果` に書く。** 揺れは1回流しただけでは出ないことが多い
-   （`permission-answer` の待ちを直したときは、単独で12回続けて回して確かめた）。ファイル丸ごとを
+   （許可の答え（いまの `inquiry`）の待ちを直したときは、単独で12回続けて回して確かめた）。ファイル丸ごとを
    回すと、足していない `it` の分だけ時間が延びる。回すのはシェルの繰り返しで
    `npx vitest run --config vitest.e2e.config.ts test/e2e/<シナリオ>.test.ts -t '<it の名前>'` を
    5回呼び、落ちたら止める。背景で回してよく、そのあいだに目視を進める。Vitest の `it` の `repeats` は
@@ -251,8 +251,7 @@ test/e2e/expected/` で意図した変化だけであることを確かめる �
 | 会話を遡る（仕事モードの吹き出し・セリフのログ）                                                                                                | `question-multi`（セリフ3つが表情違いで並ぶ。使い回し）                                                                                                                                                                                                                                                                                                                                                                                            | `speech-rewind`                                                       |
 | report → メインビュー（記法・差し戻し・整え・候補とファイルの塊・グラフの塊・対応表の塊・見比べの塊・寸法図の塊・画像の塊・数の要約の全体の数） | `notation`・`report-rejected-quick`・`report-tidied`・`report-blocks`・`report-chart`・`report-matrix`・`report-compare`・`report-dimension`・`report-image`・`report-stats`・`report-defaults`（既定値のある欄を省いた `report`）・`report-outline`（目次の列の行を押す。`long-report-quick`）・`report-outline-compact`（800x768 では列が既定で畳まれ、開くの選択が読み込み直しても残る）・`report-outline-narrow`（狭い画面では列が描かれない） | `report-main-view`                                                    |
 | 途中の発話と流れる本文                                                                                                                          | `narration`・`long-report-quick`                                                                                                                                                                                                                                                                                                                                                                                                                   | `narration-flow`                                                      |
-| 許可のモーダル（押すと `answer` が流れ、箱が消える）                                                                                            | `permission`                                                                                                                                                                                                                                                                                                                                                                                                                                       | `permission-answer`                                                   |
-| 質問（単数・複数・プレビュー）                                                                                                                  | `question-pair`・`question-multi`・`question-long`・`question-preview`                                                                                                                                                                                                                                                                                                                                                                             | `question-ask`                                                        |
+| お伺い（許可・質問をマウスとキーで答える・答え待ちの送るボタン・1440 と 1024 で「次へ」を転がさずに押せる）                                     | `permission`・`question-pair`・`question-multi`・`question-long`・`question-preview`                                                                                                                                                                                                                                                                                                                                                               | `inquiry`                                                             |
 | 続きのターン（`turn-resumed`）                                                                                                                  | `resumed-report-quick`                                                                                                                                                                                                                                                                                                                                                                                                                             | `turn-resumed`                                                        |
 | 進み具合の帯（作業中の書き換わり・転がしても動かない・手順の一覧の開閉・お伺い・再試行・レポートを読むあいだ・本文を覆わない）                  | `work-strip-running`（1つ目の手順のあとと、4つ目の長い Bash が走り出した直後）・`work-strip-ask`（1440x900 と 1024x768）・`work-strip-question`（1024x768 で選択肢と「次へ」）・`work-strip-retry`・`work-plan-quick`・`work-strip-long-report-quick`（末尾まで転がす）・`work-strip-delegate-signal`（委譲の合図で段が引き直されて進み、合図の形でない `SendMessage` では変わらない）。覆わないことは `document.elementFromPoint` で確かめる      | `work-strip`                                                          |
 | 背景のタスク                                                                                                                                    | `background-task-short`（再開の前で撮る）・`background-task-short-quick`（再開まで撮る。長い版 `background-task` は再開まで 12 秒超）                                                                                                                                                                                                                                                                                                              | `background-task`                                                     |
@@ -325,7 +324,7 @@ E2E が通るのは**疑似セッションに書いた並びだけ**で、fake d
 入力欄に打つ・`location.hash` を書く、の4種だけ） — 疑似セッションを流しただけでは出ない
 状態（記法の見本の下側・タスク一覧のモーダル・`/`と`@`の補完・キャラクター画面）をこれで出している。
 `/tmp/tsukumo-catalog/index.html` に並べる（`--out` で置き場を変えられる）。**依頼を手で送らなくても狙った状態が出る**ので、
-答え待ちの箱・レポートの記法を直したら前後で撮り比べる。1枚だけ撮って要素の位置と大きさを
+お伺いの札・レポートの記法を直したら前後で撮り比べる。1枚だけ撮って要素の位置と大きさを
 数値で読むのは `capture-view.ts`（class セレクタで測るときは `[class*="…"]` — CSS Modules が
 `名前_ハッシュ` に焼くため）。**撮った画像はリポジトリに置かない。** 疑似セッションの会話は架空でも、
 **タスク一覧のモーダルを撮る件には実データのタスク一覧（Beads の課題）が写る**ので、
@@ -406,8 +405,8 @@ Network タブで `/ws` の upgrade が101を返し、`hello` フレーム（購
 3. **画面の入力欄から依頼を打つ**。送信できること、実行中に中断できること
 4. **再読み込みなしに**吹き出しにセリフが出て、メインビューにレポートが流れること
 5. ツールを使う依頼で、**帯の「いまの作業」の札に進行が出て、押すと依頼の手順の一覧が開く**こと
-6. 許可の要る操作を頼み、**右下の入力欄の上にボタンが出て、枠の色とタブのタイトルが変わり、押すと
-   作業が続く**こと
+6. 許可の要る操作を頼み、**メインビューの帯の下にお伺いの札が出て、タブのタイトルが変わり、
+   カードを選んで「これで答える」を押すか、入力欄の帯の「お伺いへ」から 1 と Enter で答えると作業が続く**こと
 7. ウィンドウの幅を変えて、**折り返しがブラウザ側で追従する**こと
 8. `orca` が使えない状況を作っても、プロセスが落ちずに配信を続けること
 9. レポートに出た git 管理下のパス（inline code・フェンスのファイル名・相対リンク）を押すと、

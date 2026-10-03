@@ -19,7 +19,7 @@ import { DEFAULT_CHARACTER_NAME } from "../../../domain/portrait-appearance.ts"
 import { toolInputText } from "../../../domain/tool-summary.ts"
 import { usePopover } from "../../../hooks/use-popover.ts"
 import { useCurrentTurnSteps } from "../../../stores/current-turn-steps.ts"
-import { useQuestionScroll } from "../../../stores/question-scroll.ts"
+import { useInquiryJump } from "../../../stores/inquiry-jump.ts"
 import { navigateTo, useScreen } from "../../../stores/screen.tsx"
 import { useSession, useTurnRunning } from "../../../stores/session.ts"
 import { useTurnSelection } from "../../../stores/turn-selection.ts"
@@ -149,17 +149,12 @@ export type CurrentWorkStepList =
     }
 
 /**
- * 一覧の見出しに添える、答えの場所の案内。
- * 答え待ちのときだけ意味を持ち、答え待ちの中身で行き先が変わる。
- *
- * - `none`: 答え待ちでない
- * - `input`: 許可要求。「。入力欄の上で答えられる」を添える
- * - `question`: 質問（メインビューの札で答える）。見出しの文面は変えず、一覧に「質問へ」の口を出す
+ * 一覧の見出しの下に出す、答えの場所への口。
+ * 答え待ち（許可要求・質問）のときだけ「お伺いへ」を出し、押すとメインビューのお伺いの札へ連れていく。
  */
 export type CurrentWorkPendingHint =
   | { readonly kind: "none" }
-  | { readonly kind: "input" }
-  | { readonly kind: "question"; readonly onGoToQuestion: () => void }
+  | { readonly kind: "inquiry"; readonly onGoToInquiry: () => void }
 
 export type CurrentWork = {
   readonly state: CurrentWorkState
@@ -204,7 +199,7 @@ export function useCurrentWork(boundaryRef: RefObject<HTMLElement | null>): Curr
   const characterName = useSession((session) => session.state.character?.name)
   const screen = useScreen()
   const { activeTurnId, newestTurnId, selectTurn } = useTurnSelection()
-  const requestScroll = useQuestionScroll((state) => state.requestScroll)
+  const requestInquiryJump = useInquiryJump((state) => state.requestJump)
 
   const [expanded, setExpanded] = useState(false)
   const { open, onToggle, close, toggleRef } = usePopover({
@@ -216,8 +211,8 @@ export function useCurrentWork(boundaryRef: RefObject<HTMLElement | null>): Curr
     setExpanded((wasExpanded) => !wasExpanded)
   }
 
-  // 質問へ。一覧を閉じ、ほかの画面を見ていれば会話の画面へ戻し、過去のやり取りを見ていれば最新へ戻してから、メインビューの質問の札までスクロールさせる。
-  function onGoToQuestion(): void {
+  // お伺いへ。一覧を閉じ、ほかの画面を見ていれば会話の画面へ戻し、過去のやり取りを見ていれば最新へ戻してから、メインビューのお伺いの札までスクロールさせる。
+  function onGoToInquiry(): void {
     close()
     if (screen !== "conversation") {
       navigateTo("conversation")
@@ -225,7 +220,7 @@ export function useCurrentWork(boundaryRef: RefObject<HTMLElement | null>): Curr
     if (newestTurnId !== undefined && activeTurnId !== newestTurnId) {
       selectTurn(newestTurnId)
     }
-    requestScroll()
+    requestInquiryJump({ focus: false })
   }
 
   const sessionEnded = endedReason !== undefined
@@ -256,7 +251,7 @@ export function useCurrentWork(boundaryRef: RefObject<HTMLElement | null>): Curr
       : WORK_WORD_LABEL[state],
     mark: state === "idle" && !chatIdle ? "○" : "●",
     chatIdle,
-    pendingHint: toPendingHintView(state, firstPending, onGoToQuestion),
+    pendingHint: toPendingHintView(state, firstPending, onGoToInquiry),
     phase: toPhaseView(turnStepList, state),
     summary: toSummaryView(
       state,
@@ -408,12 +403,11 @@ function toBackgroundListView(tasks: readonly BackgroundTask[]): CurrentWorkBack
 function toPendingHintView(
   state: CurrentWorkState,
   firstPending: PendingAsk | undefined,
-  onGoToQuestion: () => void,
+  onGoToInquiry: () => void,
 ): CurrentWorkPendingHint {
-  if (state !== "pending" || firstPending === undefined) {
-    return { kind: "none" }
-  }
-  return firstPending.kind === "question" ? { kind: "question", onGoToQuestion } : { kind: "input" }
+  return state !== "pending" || firstPending === undefined
+    ? { kind: "none" }
+    : { kind: "inquiry", onGoToInquiry }
 }
 
 function toStepListView(

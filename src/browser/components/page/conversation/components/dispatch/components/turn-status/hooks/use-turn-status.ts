@@ -13,7 +13,8 @@
 import type { ApiTrouble } from "../../../../../../../../../shared/session-driver/api-trouble.ts"
 import type { RateLimit } from "../../../../../../../../../shared/session-driver/rate-limit.ts"
 import type { TurnProgress } from "../../../../../../../../../shared/session/session-state.ts"
-import { useQuestionAnswer } from "../../../../../../../../stores/question-answer.ts"
+import { useComposerDraft } from "../../../../../../../../stores/composer-draft.ts"
+import { useInquiryAnswer } from "../../../../../../../../stores/inquiry-answer.ts"
 import { useSession } from "../../../../../../../../stores/session.ts"
 import {
   apiRetryNotice,
@@ -34,9 +35,16 @@ const ANSWER_LABEL = "答える"
 const NEXT_LABEL = "次へ"
 const INTERRUPT_LABEL = "中断"
 
-/** 押せる口。送信と中断は同時に出さないので、どちらか1つに畳んでから presenter へ渡す。 */
+/**
+ * 押せる口。送信と中断は同時に出さないので、どちらか1つに畳んでから presenter へ渡す。
+ * `send` の `emphasis` は塗るか（`solid`）枠だけか（`quiet`）。答え待ちの質問のあいだは、自由入力の字があるときだけ塗る。
+ */
 export type TurnStatusAction =
-  | { readonly kind: "send"; readonly label: string }
+  | {
+      readonly kind: "send"
+      readonly label: string
+      readonly emphasis: "solid" | "quiet"
+    }
   | { readonly kind: "interrupt"; readonly label: string; readonly onInterrupt: () => void }
 
 /**
@@ -72,7 +80,8 @@ export type TurnStatusModel = {
 export function useTurnStatus(): TurnStatusModel {
   const dispatch = useSession((session) => session.dispatch)
   // 質問に答えている間は、ターンが進行中でも「中断」ではなく答えるボタンを出す（SDK は答えを待って止まっているので、押す先は中断ではなく送信）。
-  const question = useQuestionAnswer()
+  const inquiry = useInquiryAnswer()
+  const drafted = useComposerDraft((state) => state.draft.text.trim() !== "")
   // 姿の `turn` は進み具合が変わったときだけ入れ替わるので、そのまま依存にしてよい。
   const turn = useSession((session) => session.state.turn)
   const apiTrouble = useSession((session) => session.state.apiTrouble)
@@ -90,7 +99,7 @@ export function useTurnStatus(): TurnStatusModel {
         }
       : { kind: "none" },
     action:
-      turn.kind === "running" && question.kind !== "asking"
+      turn.kind === "running" && inquiry.kind !== "question"
         ? {
             kind: "interrupt",
             label: INTERRUPT_LABEL,
@@ -98,7 +107,8 @@ export function useTurnStatus(): TurnStatusModel {
           }
         : {
             kind: "send",
-            label: sendLabel(question.kind === "asking" ? question.last : undefined),
+            label: sendLabel(inquiry.kind === "question" ? inquiry.last : undefined),
+            emphasis: inquiry.kind === "question" && !drafted ? "quiet" : "solid",
           },
     notice: turnStatusNotice({ turn, apiTrouble, rateLimit, chatMode, now }),
   }

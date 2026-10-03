@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it } from "vitest"
 
 import { Dispatch } from "../../../../../../../src/browser/components/page/conversation/components/dispatch/dispatch.tsx"
 import { useComposerDraft } from "../../../../../../../src/browser/stores/composer-draft.ts"
-import { useQuestionDraft } from "../../../../../../../src/browser/stores/question-answer.ts"
+import { useInquiryDraft } from "../../../../../../../src/browser/stores/inquiry-answer.ts"
 import {
   INITIAL_SESSION_STATE,
   type SessionState,
@@ -15,7 +15,7 @@ import { putSession } from "../../../../../session-store.ts"
 afterEach(() => {
   cleanup()
   // 組み立て中の答えはモジュール単位で残るので、次のテストへ持ち越さない。
-  useQuestionDraft.setState(useQuestionDraft.getInitialState(), true)
+  useInquiryDraft.setState(useInquiryDraft.getInitialState(), true)
   useComposerDraft.setState(useComposerDraft.getInitialState(), true)
   document.title = "tsukumo"
 })
@@ -43,7 +43,7 @@ describe("Dispatch", () => {
   it("答え待ちがあるとタブのタイトルの先頭に「● 」を付ける", () => {
     document.title = "tsukumo"
     renderDispatch({
-      pending: [{ kind: "permission", id: "ask-1", toolName: "Bash", input: {} }],
+      pending: [{ kind: "permission", id: "ask-1", toolName: "Bash", input: {}, askedAt: 0 }],
     })
 
     expect(document.title).toBe("● tsukumo")

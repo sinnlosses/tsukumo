@@ -24,7 +24,7 @@ describe("headNoticeOf", () => {
     [
       "レポートを出しているあいだに答え待ちが来た",
       { content: REPORT, moment: "ask", viewingPast: false, phase: NO_PHASE },
-      { kind: "notice", text: "お伺いが届いた", action: "to-question" },
+      { kind: "notice", text: "お伺いが届いた", action: "to-inquiry" },
     ],
     [
       "最新のレポートを出していて閉じている",

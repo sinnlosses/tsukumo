@@ -93,6 +93,15 @@
 .dispatch-form.is-answering .dispatch-send:hover {
   background: color-mix(in srgb, var(--state-warn) 85%, var(--ink));
 }
+/* 答え待ちの質問のあいだ、自由入力の字が無ければ塗らない。 */
+.dispatch-form.is-answering .dispatch-send.is-quiet {
+  background: transparent;
+  color: var(--state-warn);
+  font-weight: 400;
+}
+.dispatch-form.is-answering .dispatch-send.is-quiet:hover {
+  background: color-mix(in srgb, var(--state-warn) 12%, transparent);
+}
 /* 「中断」は塗らない。
    送信と同じ位置に出るので、塗りの有無で「いまは送れない」を示す。
    顔は `<Button variant="outline-hover-danger">`、太さは中の `Text` が持つ。 */

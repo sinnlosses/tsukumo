@@ -16,6 +16,9 @@ export type PendingAsk =
     }
   | { readonly kind: "question"; readonly id: string; readonly questions: readonly Question[] }
 
+/** 状態に積んだ答え待ち1件。`askedAt` は届いた時刻（エポックミリ秒。サーバがイベントに打った時刻）。 */
+export type StampedPendingAsk = PendingAsk & { readonly askedAt: number }
+
 /** 画面から返ってくる答え。 */
 export type Answer =
   /** 許可する（許可要求にだけ意味がある）。 */

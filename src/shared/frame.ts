@@ -18,7 +18,7 @@ import type { SessionState } from "./session/session-state.ts"
  * コマンドの形を変えたときも上げる。
  * 同じ `/ws` に乗るので、形の違うタブとプロセスの組はコマンドが1件も通らなくなる（知らせで読み込み直してもらう）。
  */
-export const PROTOCOL_VERSION = 31
+export const PROTOCOL_VERSION = 32
 
 /**
  * 配っているものを取り直す先。

@@ -43,6 +43,10 @@
 .turn-card {
   margin: calc(-1 * var(--region-padding, 0px)) calc(-1 * var(--region-padding, 0px)) 0;
 }
+/* お伺いの札の入れ物。札は領域の縁まで広がらず、領域の余白のぶん内側に置く。 */
+.turn-card-inquiry {
+  padding: 0 var(--region-padding, 0px);
+}
 /* 目次から飛んだ見出しが、貼り付いた頭の下に隠れないようにする。 */
 .turn-card :is(h4, h5) {
   scroll-margin-top: calc(var(--turn-card-head-height) + 0.5rem);

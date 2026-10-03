@@ -2,25 +2,33 @@ import { act, cleanup, renderHook } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
 
 import {
-  useQuestionAnswer,
-  useQuestionDraft,
-  type QuestionAnswerModel,
-} from "../../../src/browser/stores/question-answer.ts"
-import type { PendingAsk } from "../../../src/shared/session-driver/pending-ask.ts"
+  useInquiryAnswer,
+  useInquiryDraft,
+  type InquiryModel,
+} from "../../../src/browser/stores/inquiry-answer.ts"
+import type { StampedPendingAsk } from "../../../src/shared/session-driver/pending-ask.ts"
 import type { Question, QuestionOption } from "../../../src/shared/session-driver/question.ts"
 import { INITIAL_SESSION_STATE } from "../../../src/shared/session/session-state.ts"
 import { type CommandSpy, putSession } from "../session-store.ts"
 
 /**
- * 答え待ちの質問に対して組み立てる答え（メインビューの札と入力欄の両方が読み書きする1つの
+ * お伺い（答え待ちの許可要求と質問）に対して組み立てる答え（メインビューの札と入力欄の両方が読み書きする1つの
  * 状態。docs/architecture/browser.md「状態の持ち方」）を、部品を描かずに測る。
  */
 
 afterEach(() => {
   cleanup()
   // 組み立て中の答えはモジュール単位で残るので、次のテストへ持ち越さない。
-  useQuestionDraft.setState(useQuestionDraft.getInitialState(), true)
+  useInquiryDraft.setState(useInquiryDraft.getInitialState(), true)
 })
+
+const PERMISSION_PENDING = {
+  kind: "permission",
+  id: "ask-perm",
+  toolName: "Bash",
+  input: { command: "rm -rf /tmp/架空" },
+  askedAt: 0,
+} satisfies StampedPendingAsk
 
 function option(label: string, extra: Partial<QuestionOption> = {}): QuestionOption {
   return { label, description: `架空の説明（${label}）`, preview: undefined, ...extra }
@@ -36,33 +44,91 @@ function question(overrides: Partial<Question> = {}): Question {
   }
 }
 
-function questionPending(questions: readonly Question[]): PendingAsk {
-  return { kind: "question", id: "ask-1", questions }
+function questionPending(questions: readonly Question[]): StampedPendingAsk {
+  return { kind: "question", id: "ask-1", questions, askedAt: 0 }
 }
 
 function renderModel(
-  pending: readonly PendingAsk[],
+  pending: readonly StampedPendingAsk[],
   spy: CommandSpy = () => {},
-): { readonly current: QuestionAnswerModel } {
+): { readonly current: InquiryModel } {
   putSession({ ...INITIAL_SESSION_STATE, pending }, spy)
-  const { result } = renderHook(() => useQuestionAnswer())
+  const { result } = renderHook(() => useInquiryAnswer())
   return result
 }
 
-function asking(model: QuestionAnswerModel): Extract<QuestionAnswerModel, { kind: "asking" }> {
-  if (model.kind !== "asking") {
+function asking(model: InquiryModel): Extract<InquiryModel, { kind: "question" }> {
+  if (model.kind !== "question") {
     throw new Error("質問が出ている前提の検査")
   }
   return model
 }
 
-describe("useQuestionAnswer の選択肢", () => {
-  it("答え待ちが無いとき・許可要求のときは none", () => {
+function permission(model: InquiryModel): Extract<InquiryModel, { kind: "permission" }> {
+  if (model.kind !== "permission") {
+    throw new Error("許可要求が出ている前提の検査")
+  }
+  return model
+}
+
+describe("useInquiryAnswer の許可要求", () => {
+  it("答え待ちが無いときは none", () => {
     expect(renderModel([]).current.kind).toBe("none")
-    expect(
-      renderModel([{ kind: "permission", id: "ask-perm", toolName: "Bash", input: {} }]).current
-        .kind,
-    ).toBe("none")
+  })
+
+  it("選択肢は「1 許可」「2 拒否」で、対象の全文と届いた時刻を持つ", () => {
+    const result = renderModel([{ ...PERMISSION_PENDING, askedAt: 42 }])
+
+    const model = permission(result.current)
+    expect(model.options.map((row) => `${String(row.number)} ${row.text}`)).toEqual([
+      "1 許可",
+      "2 拒否",
+    ])
+    expect(model.targetText).toBe("rm -rf /tmp/架空")
+    expect(model.askedAt).toBe(42)
+    expect(model.canAnswer).toBe(false)
+  })
+
+  it("選ばずには送らず、選んでから「これで答える」で allow / deny を送る", () => {
+    const calls: unknown[] = []
+    const result = renderModel([PERMISSION_PENDING], (command) => calls.push(command))
+
+    act(() => permission(result.current).onAnswer())
+    expect(calls).toEqual([])
+
+    act(() => permission(result.current).onToggle("拒否"))
+    expect(permission(result.current).options.find((row) => row.selected)?.label).toBe("拒否")
+    act(() => permission(result.current).onToggle("許可"))
+    act(() => permission(result.current).onAnswer())
+
+    expect(calls).toEqual([
+      { procedure: "session.answer", id: "ask-perm", answer: { kind: "allow" } },
+    ])
+  })
+
+  it("「拒否」を選んで答えると deny を送る", () => {
+    const calls: unknown[] = []
+    const result = renderModel([PERMISSION_PENDING], (command) => calls.push(command))
+
+    act(() => permission(result.current).onToggle("拒否"))
+    act(() => permission(result.current).onAnswer())
+
+    expect(calls).toEqual([
+      { procedure: "session.answer", id: "ask-perm", answer: { kind: "deny" } },
+    ])
+  })
+})
+
+describe("useInquiryAnswer の選択肢", () => {
+  it("番号は並べ替えたあとの並びで 1 から振る", () => {
+    const result = renderModel([
+      questionPending([question({ options: [option("B案"), option("A案")] })]),
+    ])
+
+    expect(asking(result.current).options.map((row) => [row.number, row.label])).toEqual([
+      [1, "A案"],
+      [2, "B案"],
+    ])
   })
 
   it("選択肢はラベルの辞書順に並べる（送られた順ではない）", () => {
@@ -94,7 +160,7 @@ describe("useQuestionAnswer の選択肢", () => {
   })
 })
 
-describe("useQuestionAnswer の答え方", () => {
+describe("useInquiryAnswer の質問の答え方", () => {
   it("1問・単一選択は、選んでから「これで答える」で送る（選んだ瞬間には送らない）", () => {
     const calls: unknown[] = []
     const result = renderModel([questionPending([question()])], (command) => calls.push(command))

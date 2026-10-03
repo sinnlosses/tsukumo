@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 import { ScreenNav } from "../../../../../src/browser/components/domain/screen-nav/screen-nav.tsx"
 import { MODEL_ALIASES } from "../../../../../src/shared/command.ts"
-import type { PendingAsk } from "../../../../../src/shared/session-driver/pending-ask.ts"
+import type { StampedPendingAsk } from "../../../../../src/shared/session-driver/pending-ask.ts"
 import {
   INITIAL_SESSION_STATE,
   type SessionInfo,
@@ -16,11 +16,12 @@ import { queryClientWrapper } from "../../../query-client.tsx"
 import { rpcOutput, stubRpcFetch, type RpcFetchStub } from "../../../rpc-fetch-stub.ts"
 import { type CommandSpy, putSession, type SentCommand } from "../../../session-store.ts"
 
-const FIXTURE_PENDING: PendingAsk = {
+const FIXTURE_PENDING: StampedPendingAsk = {
   kind: "permission",
   id: "ask-1",
   toolName: "Read",
   input: {},
+  askedAt: 0,
 }
 
 // 部屋の名前はこのページを配っているポートから決まる（`roomName`）ので、

@@ -1507,3 +1507,46 @@ describe("applySessionEvent（委譲の合図と段取り）", () => {
     })
   })
 })
+
+describe("applySessionEvent（答え待ちの届いた時刻）", () => {
+  const permission = (
+    id: string,
+  ): Extract<SessionEvent, { kind: "pending-changed" }>["pending"][number] => ({
+    kind: "permission",
+    id,
+    toolName: "Bash",
+    input: {},
+  })
+
+  it("届いた答え待ちにイベントの時刻を打ち、2件目が来ても1件目の時刻は変えない", () => {
+    const first = applySessionEvent(
+      INITIAL_SESSION_STATE,
+      { kind: "pending-changed", pending: [permission("toolu_1")] },
+      1_000,
+    )
+    const second = applySessionEvent(
+      first,
+      { kind: "pending-changed", pending: [permission("toolu_1"), permission("toolu_2")] },
+      5_000,
+    )
+
+    expect(second.pending.map((ask) => [ask.id, ask.askedAt])).toEqual([
+      ["toolu_1", 1_000],
+      ["toolu_2", 5_000],
+    ])
+  })
+
+  it("答えて消えた id の時刻は残さず、同じ id が来直したら新しく打つ", () => {
+    const events: readonly (readonly [SessionEvent, number])[] = [
+      [{ kind: "pending-changed", pending: [permission("toolu_1")] }, 1_000],
+      [{ kind: "pending-changed", pending: [] }, 2_000],
+      [{ kind: "pending-changed", pending: [permission("toolu_1")] }, 3_000],
+    ]
+    const state = events.reduce(
+      (view, [event, at]) => applySessionEvent(view, event, at),
+      INITIAL_SESSION_STATE,
+    )
+
+    expect(state.pending.map((ask) => ask.askedAt)).toEqual([3_000])
+  })
+})

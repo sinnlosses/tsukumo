@@ -4,8 +4,8 @@ import type { ConversationMoment } from "../../../../../../../shared/session/con
 import type { WorkPhase } from "../../../../../../../shared/session/work-plan.ts"
 import type { MainViewContent } from "../../../../../../stores/main-view-content.ts"
 
-/** `to-newest` は最新のやり取りへ移り、`to-question` は移ったあと答え待ちの札まで転がす。 */
-export type HeadNoticeAction = "to-newest" | "to-question"
+/** `to-newest` は最新のやり取りへ移り、`to-inquiry` は移ったあとお伺いの札まで転がす。 */
+export type HeadNoticeAction = "to-newest" | "to-inquiry"
 
 export type HeadNotice =
   | { readonly kind: "none" }
@@ -30,7 +30,7 @@ export function headNoticeOf(input: HeadNoticeInput): HeadNotice {
   const { content, moment } = input
   if (content.kind === "report" && (moment === "work" || moment === "ask")) {
     return moment === "ask"
-      ? { kind: "notice", text: "お伺いが届いた", action: "to-question" }
+      ? { kind: "notice", text: "お伺いが届いた", action: "to-inquiry" }
       : { kind: "notice", text: "続きを作業中", action: "to-newest" }
   }
   return NO_NOTICE
@@ -41,7 +41,7 @@ function pastNotice(moment: ConversationMoment, phase: WorkPhase): HeadNotice {
     case "work":
       return { kind: "notice", text: workingText(phase), action: "to-newest" }
     case "ask":
-      return { kind: "notice", text: "お伺いが届いた", action: "to-question" }
+      return { kind: "notice", text: "お伺いが届いた", action: "to-inquiry" }
     case "stumble":
       return { kind: "notice", text: "失敗で終わった", action: "to-newest" }
     case "greet":

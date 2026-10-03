@@ -66,7 +66,7 @@ describe("useWorkStrip（時刻に依るもの）", () => {
     expect(strip.kind === "working" && strip.sideLabel).toBe("1/2 · 経過 1分12秒")
   })
 
-  it("答え待ちの秒は、同じ id の手順が始まった時刻から数える", () => {
+  it("答え待ちの秒は、答え待ちが届いた時刻から数える", () => {
     const state = foldTimed([
       [request, START],
       [plan, START + 1_000],
@@ -90,7 +90,7 @@ describe("useWorkStrip（時刻に依るもの）", () => {
     const strip = stripAt(state, START + 18_000)
 
     expect(strip.kind === "working" && strip.activity.text).toBe(
-      "お伺いが届いた · 許可: Bash  架空のコマンド · 答え待ち 8秒",
+      "お伺いが届いた · 許可: Bash  架空のコマンド · 答え待ち 7秒",
     )
     expect(strip.kind === "working" && strip.phases.map((phase) => phase.state)).toEqual([
       "asking",
@@ -98,7 +98,7 @@ describe("useWorkStrip（時刻に依るもの）", () => {
     ])
   })
 
-  it("答え待ちと同じ id の手順が無ければ、秒を添えない", () => {
+  it("答え待ちと同じ id の手順が無くても、届いた時刻から秒を添える", () => {
     const state = foldTimed([
       [request, START],
       [plan, START + 1_000],
@@ -121,7 +121,7 @@ describe("useWorkStrip（時刻に依るもの）", () => {
     const strip = stripAt(state, START + 18_000)
 
     expect(strip.kind === "working" && strip.activity.text).toBe(
-      "お伺いが届いた · 許可: Bash  架空のコマンド",
+      "お伺いが届いた · 許可: Bash  架空のコマンド · 答え待ち 7秒",
     )
   })
 

@@ -15,16 +15,16 @@ import type { MainViewTurn } from "../../../../../../shared/session/main-view.ts
 import type { SessionState } from "../../../../../../shared/session/session-state.ts"
 import { currentPhaseOf, type WorkPhase } from "../../../../../../shared/session/work-plan.ts"
 import { currentTurnStepsOf } from "../../../../../stores/current-turn-steps.ts"
+import { useInquiryJump } from "../../../../../stores/inquiry-jump.ts"
 import {
   type MainViewContent,
   useMainViewContent,
 } from "../../../../../stores/main-view-content.ts"
 import { useMainViewTurns } from "../../../../../stores/main-view-turn.ts"
-import { useQuestionScroll } from "../../../../../stores/question-scroll.ts"
 import { useSession } from "../../../../../stores/session.ts"
 import { useTurnSelection } from "../../../../../stores/turn-selection.ts"
+import { Inquiry } from "./components/inquiry/inquiry.tsx"
 import { MiniPortrait } from "./components/mini-portrait/mini-portrait.tsx"
-import { QuestionAsk } from "./components/question-ask/question-ask.tsx"
 import { ReportOutline } from "./components/report-outline/report-outline.tsx"
 import { TurnCardHead } from "./components/turn-card-head/turn-card-head.tsx"
 import { TurnHeader } from "./components/turn-header/turn-header.tsx"
@@ -51,7 +51,7 @@ export function MainView(): ReactElement {
   // 畳んだ結果は姿ごとに1回だけ作られる（昇順。追従を決める `useTurnSelection` と同じものを読む）。
   const turns = useMainViewTurns()
   const content = useMainViewContent((state) => state.content)
-  const requestQuestionScroll = useQuestionScroll((state) => state.requestScroll)
+  const requestInquiryJump = useInquiryJump((state) => state.requestJump)
   const moment = useSession((session) => conversationMoment(session.state))
   const phase = useSession(useShallow((session) => newestPhaseOf(session.state)))
   const rootRef = useRef<HTMLDivElement>(null)
@@ -71,8 +71,8 @@ export function MainView(): ReactElement {
     if (newestTurnId !== undefined) {
       selectTurn(newestTurnId)
     }
-    if (action === "to-question") {
-      requestQuestionScroll()
+    if (action === "to-inquiry") {
+      requestInquiryJump({ focus: false })
     }
   }
 
@@ -96,7 +96,12 @@ export function MainView(): ReactElement {
           rootRef={rootRef}
           carriedFocusRef={carriedFocusRef}
         >
-          {view.kind === "welcome" && <Welcome />}
+          {view.kind === "welcome" && (
+            <>
+              <Welcome />
+              <Inquiry />
+            </>
+          )}
           {cardTurn !== undefined && (
             <article className={styles["turn-card"]}>
               <TurnCardHead rootRef={rootRef}>
@@ -114,6 +119,11 @@ export function MainView(): ReactElement {
                 />
                 {!viewingPast && <WorkStrip />}
               </TurnCardHead>
+              {!viewingPast && (
+                <div className={styles["turn-card-inquiry"]}>
+                  <Inquiry />
+                </div>
+              )}
               <ReportOutline positionLabel={positionLabel(turns, cardTurn.turn.id)}>
                 {/* `key` にターンの番号を渡す。
                     前後へ移っても同じ位置の `<Turn>` を使い回すと、「このターンを出し始めた時点で既にあった本文」（演出の対象を決める材料）が最初のターンのものに留まってしまう。 */}
@@ -130,9 +140,6 @@ export function MainView(): ReactElement {
         {/* 筆先に添うミニ立ち絵。この入れ物の原点を基準に置く（`position: absolute`）ので、書き上げたあと残っているあいだも本文と一緒に転がる。
             出ているやり取りを渡すのは、残った筆先が別のやり取りのものなら引っ込ませるため。 */}
         {cardTurn !== undefined && <MiniPortrait shownTurnId={cardTurn.turn.id} />}
-        {/* 答え待ちの質問の札。いまのやり取りのレポートの下に出す（読み終わった先に質問が来る並び）。
-            答え待ちが無ければ何も描かない。 */}
-        <QuestionAsk />
       </div>
     </RepositoryFileLinkProvider>
   )

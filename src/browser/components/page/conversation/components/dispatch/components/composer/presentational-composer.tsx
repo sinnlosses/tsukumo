@@ -7,6 +7,7 @@ import type { ReactElement } from "react"
 
 import { PROMPT_IMAGE_MEDIA_TYPES } from "../../../../../../../../shared/session-driver/prompt-image.ts"
 import { Button } from "../../../../../../ui/button/button.tsx"
+import { HStack } from "../../../../../../ui/h-stack/h-stack.tsx"
 import { Text } from "../../../../../../ui/text/text.tsx"
 import { VStack } from "../../../../../../ui/v-stack/v-stack.tsx"
 import { PromptImageChips } from "../../../prompt-image/prompt-image.tsx"
@@ -55,17 +56,42 @@ export function PresentationalComposer({
       className={clsx(dispatchStyles["dispatch-form"], answering && dispatchStyles["is-answering"])}
       onSubmit={onSubmit}
     >
-      {/* 質問に答えている間だけ出る帯（誰が聞いているか）。 */}
-      {band.kind === "question" && (
-        <Text
-          element="p"
-          size="secondary"
-          tone="state-warn"
-          weight="inherit"
+      {/* 答え待ちのあいだだけ出る帯（誰が何を待っているか）と、お伺いの札へフォーカスを移す口。 */}
+      {band.kind === "inquiry" && (
+        <HStack
+          element="div"
+          name={{ kind: "none" }}
+          ref={undefined}
+          gap="sm"
+          align="center"
+          justify="between"
+          wrap="wrap"
           className={styles["dispatch-band"]}
         >
-          {band.text}
-        </Text>
+          <Text
+            element="p"
+            size="secondary"
+            tone="state-warn"
+            weight="inherit"
+            className={styles["dispatch-band-text"]}
+          >
+            {band.text}
+          </Text>
+          <Button
+            variant="outline-hover-warn"
+            size="label"
+            pressed="none"
+            disabled={false}
+            ariaLabel={undefined}
+            disclosure={{ kind: "none" }}
+            ariaHasPopup={undefined}
+            title={undefined}
+            className={styles["dispatch-band-jump"]}
+            onClick={band.onJump}
+          >
+            {INQUIRY_JUMP_LABEL}
+          </Button>
+        </HStack>
       )}
       <VStack
         element="div"
@@ -189,6 +215,8 @@ export function PresentationalComposer({
     </form>
   )
 }
+
+const INQUIRY_JUMP_LABEL = "お伺いへ"
 
 /** 道具の口の絵の一辺（px）。口どうしで揃える。 */
 const TOOL_ICON_SIZE = 18

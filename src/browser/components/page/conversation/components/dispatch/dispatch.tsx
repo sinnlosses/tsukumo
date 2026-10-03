@@ -1,4 +1,4 @@
-// 入力欄一式（<PendingAnswer> + <Composer>）。
+// 入力欄一式（<Composer>）。
 // 答え待ちの印（タブのタイトルの先頭の「● 」・枠の色）は `state.pending` からここが出す。
 
 import { useEffect, useRef, type ReactElement } from "react"
@@ -6,7 +6,6 @@ import { useEffect, useRef, type ReactElement } from "react"
 import { useSession } from "../../../../../stores/session.ts"
 import { VStack } from "../../../../ui/v-stack/v-stack.tsx"
 import { Composer } from "./components/composer/composer.tsx"
-import { PendingAnswer } from "./components/pending-answer/pending-answer.tsx"
 import styles from "./dispatch.module.css"
 
 export function Dispatch(): ReactElement {
@@ -34,7 +33,6 @@ export function Dispatch(): ReactElement {
       className={styles["dispatch"]}
     >
       {pendingActive && <div className={styles["dispatch-pending-glow"]} aria-hidden="true" />}
-      <PendingAnswer />
       <Composer />
     </VStack>
   )

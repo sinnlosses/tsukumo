@@ -17,7 +17,7 @@
             {
               "tag": "div",
               "attributes": {
-                "data-main-view-content": "work"
+                "data-main-view-content": "report"
               },
               "children": [
                 {
@@ -75,7 +75,7 @@
                                 "type": "button"
                               },
                               "children": [
-                                "一時のディレクトリを片付けたい（架空の依頼）",
+                                "1問1答の場面（架空）。最後の1問に答えるとまとめて届く。",
                                 {
                                   "tag": "span",
                                   "attributes": {
@@ -93,75 +93,6 @@
                     {
                       "tag": "section",
                       "attributes": {
-                        "aria-label": "進み具合",
-                        "data-work-strip": "working"
-                      },
-                      "children": [
-                        {
-                          "tag": "ol",
-                          "children": [
-                            {
-                              "tag": "li",
-                              "attributes": {
-                                "data-phase-state": "done",
-                                "aria-label": "1. 片付ける場所を調べる（済）"
-                              },
-                              "children": [
-                                {
-                                  "tag": "span",
-                                  "attributes": {
-                                    "aria-hidden": "true"
-                                  },
-                                  "children": [
-                                    "✓"
-                                  ]
-                                }
-                              ]
-                            },
-                            {
-                              "tag": "li",
-                              "attributes": {
-                                "data-phase-state": "asking",
-                                "aria-label": "2. 片付ける（答え待ち）"
-                              },
-                              "children": [
-                                {
-                                  "tag": "span",
-                                  "attributes": {
-                                    "aria-hidden": "true"
-                                  },
-                                  "children": [
-                                    "?"
-                                  ]
-                                }
-                              ]
-                            }
-                          ]
-                        },
-                        "片付ける",
-                        "2/2 · 経過 1分00秒",
-                        {
-                          "tag": "button",
-                          "attributes": {
-                            "aria-disabled": "false",
-                            "aria-expanded": "false",
-                            "type": "button"
-                          },
-                          "children": [
-                            "手順 1 ▾"
-                          ]
-                        },
-                        {
-                          "tag": "p",
-                          "children": [
-                            "お伺いが届いた · 許可: Bash rm -rf /tmp/dummy/fake-home · 答え待ち 1分00秒"
-                          ]
-                        }
-                      ]
-                    },
-                    {
-                      "tag": "section",
-                      "attributes": {
                         "aria-label": "お伺い"
                       },
                       "children": [
@@ -169,18 +100,18 @@
                           "tag": "header",
                           "children": [
                             "お伺い",
-                            "許可",
-                            "Bash",
-                            "1 / 1",
+                            "質問",
+                            "架空の選択1",
+                            "1 / 2",
                             "·",
                             "待って",
                             "1:00"
                           ]
                         },
                         {
-                          "tag": "pre",
+                          "tag": "p",
                           "children": [
-                            "rm -rf /tmp/dummy/fake-home"
+                            "架空の質問1：どの道具で進める？"
                           ]
                         },
                         {
@@ -209,7 +140,13 @@
                                         "value": "on"
                                       }
                                     },
-                                    "許可"
+                                    "道具A（架空）"
+                                  ]
+                                },
+                                {
+                                  "tag": "p",
+                                  "children": [
+                                    "架空の説明：一番手早く終わるが、後から直しにくい。"
                                   ]
                                 }
                               ]
@@ -237,7 +174,47 @@
                                         "value": "on"
                                       }
                                     },
-                                    "拒否"
+                                    "道具B（架空）"
+                                  ]
+                                },
+                                {
+                                  "tag": "p",
+                                  "children": [
+                                    "架空の説明：手間はかかるが、途中で向きを変えやすい。"
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "tag": "li",
+                              "children": [
+                                {
+                                  "tag": "label",
+                                  "children": [
+                                    {
+                                      "tag": "span",
+                                      "attributes": {
+                                        "aria-hidden": "true"
+                                      },
+                                      "children": [
+                                        "3"
+                                      ]
+                                    },
+                                    {
+                                      "tag": "input",
+                                      "attributes": {
+                                        "type": "radio",
+                                        "checked": false,
+                                        "value": "on"
+                                      }
+                                    },
+                                    "道具C（架空）"
+                                  ]
+                                },
+                                {
+                                  "tag": "p",
+                                  "children": [
+                                    "架空の説明：長い説明が折り返して最後まで見えることを確かめるための、わざと長めの架空の文面。ここから先は2行目以降に折り返し、省略記号で切られずに末尾まで読めるはず。"
                                   ]
                                 }
                               ]
@@ -247,6 +224,7 @@
                         {
                           "tag": "footer",
                           "children": [
+                            "選択肢にない答えは、下の入力欄に書いて送れます",
                             {
                               "tag": "button",
                               "attributes": {
@@ -254,7 +232,7 @@
                                 "type": "button"
                               },
                               "children": [
-                                "これで答える",
+                                "次へ",
                                 {
                                   "tag": "span",
                                   "attributes": {
@@ -275,7 +253,20 @@
                       "attributes": {
                         "data-outline": "hidden",
                         "data-outline-collapsed": "false"
-                      }
+                      },
+                      "children": [
+                        {
+                          "tag": "section",
+                          "children": [
+                            {
+                              "tag": "p",
+                              "children": [
+                                "1問1答の場面（架空）。最後の1問に答えるとまとめて届く。"
+                              ]
+                            }
+                          ]
+                        }
+                      ]
                     }
                   ]
                 }
@@ -306,7 +297,7 @@
             {
               "tag": "p",
               "children": [
-                "↑ つくもの精霊 が実行の許可を待っています"
+                "↑ つくもの精霊 が質問しています。上の選択肢から選ぶか、ここに書いて答えてください"
               ]
             },
             {
@@ -322,7 +313,7 @@
             {
               "tag": "textarea",
               "attributes": {
-                "aria-label": "依頼を書く",
+                "aria-label": "質問への答えを書く",
                 "value": ""
               }
             },
@@ -382,11 +373,12 @@
             {
               "tag": "button",
               "attributes": {
-                "aria-disabled": "false",
-                "type": "button"
+                "data-shortcut": "⌘⏎",
+                "data-emphasis": "quiet",
+                "type": "submit"
               },
               "children": [
-                "中断"
+                "次へ"
               ]
             }
           ]

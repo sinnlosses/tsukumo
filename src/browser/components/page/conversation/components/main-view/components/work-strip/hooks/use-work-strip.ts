@@ -2,7 +2,10 @@
 
 import type { ApiTrouble } from "../../../../../../../../../shared/session-driver/api-trouble.ts"
 import type { BackgroundTask } from "../../../../../../../../../shared/session-driver/background-task.ts"
-import type { PendingAsk } from "../../../../../../../../../shared/session-driver/pending-ask.ts"
+import type {
+  PendingAsk,
+  StampedPendingAsk,
+} from "../../../../../../../../../shared/session-driver/pending-ask.ts"
 import type {
   ReportDrafting,
   TurnProgress,
@@ -195,11 +198,11 @@ function retryOf(turn: TurnProgress, apiTrouble: ApiTrouble): WorkStripRetry {
 
 /**
  * 2行目。強い順に1つ: 答え待ち → report を書いている途中 → 走っている手順 → 背景のタスク → 考えている。
- * 答え待ちの秒は、答え待ちと同じ id の手順が始まった時刻から数える。
+ * 答え待ちの秒は、答え待ちが届いた時刻から数える。
  */
 function activityOf(source: {
   readonly turnStepList: Extract<TurnStepList, { readonly kind: "turn" }>
-  readonly firstPending: PendingAsk | undefined
+  readonly firstPending: StampedPendingAsk | undefined
   readonly reportDrafting: ReportDrafting
   readonly backgroundTasks: readonly BackgroundTask[]
   readonly retry: WorkStripRetry
@@ -207,16 +210,9 @@ function activityOf(source: {
 }): WorkStripActivity {
   const { turnStepList, firstPending, retry, now } = source
   if (firstPending !== undefined) {
-    const askedStep = turnStepList.steps.find((step) => step.toolUseId === firstPending.id)
-    const waited = askedStep === undefined ? "" : secondsSince(askedStep, now)
+    const waited = formatElapsed(Math.max(0, Math.floor((now - firstPending.askedAt) / 1000)))
     return {
-      text: [
-        `お伺いが届いた`,
-        pendingLabel(firstPending),
-        waited === "" ? "" : `答え待ち ${waited}`,
-      ]
-        .filter((part) => part !== "")
-        .join(" · "),
+      text: [`お伺いが届いた`, pendingLabel(firstPending), `答え待ち ${waited}`].join(" · "),
       tone: "asking",
       mono: false,
       retry,

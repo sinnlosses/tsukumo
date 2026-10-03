@@ -4,9 +4,10 @@ import { afterEach, describe, expect, it } from "vitest"
 
 import { Composer } from "../../../../../../../../../src/browser/components/page/conversation/components/dispatch/components/composer/composer.tsx"
 import { useComposerDraft } from "../../../../../../../../../src/browser/stores/composer-draft.ts"
-import { useQuestionDraft } from "../../../../../../../../../src/browser/stores/question-answer.ts"
+import { useInquiryDraft } from "../../../../../../../../../src/browser/stores/inquiry-answer.ts"
+import { useInquiryJump } from "../../../../../../../../../src/browser/stores/inquiry-jump.ts"
 import type { CharacterInfo } from "../../../../../../../../../src/shared/character-pack/character.ts"
-import type { PendingAsk } from "../../../../../../../../../src/shared/session-driver/pending-ask.ts"
+import type { StampedPendingAsk } from "../../../../../../../../../src/shared/session-driver/pending-ask.ts"
 import {
   INITIAL_SESSION_STATE,
   type SessionState,
@@ -36,7 +37,17 @@ const QUESTION_PENDING = {
       options: [{ label: "A案", description: "架空の説明A", preview: undefined }],
     },
   ],
-} satisfies PendingAsk
+  askedAt: 0,
+} satisfies StampedPendingAsk
+
+// 架空の許可要求（答え待ち。入力欄はふつうの下書きのまま）。
+const PERMISSION_PENDING = {
+  kind: "permission",
+  id: "ask-1",
+  toolName: "Bash",
+  input: {},
+  askedAt: 0,
+} satisfies StampedPendingAsk
 
 // 架空のファイル一覧（`@` 補完が引く手続き `repository.listFiles` の代役）。
 const FIXTURE_FILE_PATHS = [
@@ -50,7 +61,8 @@ let fetchStub: RpcFetchStub | undefined = undefined
 afterEach(() => {
   cleanup()
   // 組み立て中の答えはモジュール単位で残るので、次のテストへ持ち越さない。
-  useQuestionDraft.setState(useQuestionDraft.getInitialState(), true)
+  useInquiryDraft.setState(useInquiryDraft.getInitialState(), true)
+  useInquiryJump.setState(useInquiryJump.getInitialState(), true)
   useComposerDraft.setState(useComposerDraft.getInitialState(), true)
   fetchStub?.restore()
   fetchStub = undefined
@@ -236,9 +248,7 @@ describe("Composer", () => {
 
   it("答え待ちがある間は @ の候補も出さない", () => {
     stubFileListFetch()
-    renderComposer({
-      pending: [{ kind: "permission", id: "ask-1", toolName: "Bash", input: {} }],
-    })
+    renderComposer({ pending: [PERMISSION_PENDING] })
 
     fireEvent.change(textArea(), { target: { value: "@src" } })
 
@@ -252,6 +262,21 @@ describe("Composer", () => {
     expect(screen.getByText(/架空の名前 が質問しています/)).toBeDefined()
     expect(screen.getByPlaceholderText("選択肢以外の答えを書く…")).toBeDefined()
     expect(screen.queryByPlaceholderText(/依頼を書く/)).toBeNull()
+  })
+
+  it("許可を待っている間は、帯だけ出て入力欄はふつうの下書きのまま", () => {
+    renderComposer({ character: FIXTURE_CHARACTER, pending: [PERMISSION_PENDING] })
+
+    expect(screen.getByText(/架空の名前 が実行の許可を待っています/)).toBeDefined()
+    expect(screen.getByPlaceholderText(/依頼を書く/)).toBeDefined()
+  })
+
+  it("帯の「お伺いへ」は、お伺いの札へフォーカスを移す合図を出す", () => {
+    renderComposer({ pending: [PERMISSION_PENDING] })
+
+    fireEvent.click(screen.getByRole("button", { name: "お伺いへ" }))
+
+    expect(useInquiryJump.getState().jump).toEqual({ signal: 1, focus: true })
   })
 
   it("質問に答えている間の Command+Enter は、依頼ではなく自由入力の答えとして届く", () => {

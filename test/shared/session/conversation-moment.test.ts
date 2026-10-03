@@ -37,7 +37,7 @@ describe("conversationMoment", () => {
       {
         ...REQUESTED,
         turn: RUNNING,
-        pending: [{ kind: "permission", id: "p1", toolName: "Bash", input: {} }],
+        pending: [{ kind: "permission", id: "p1", toolName: "Bash", input: {}, askedAt: 0 }],
       },
       "ask",
     ],

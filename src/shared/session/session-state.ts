@@ -15,7 +15,7 @@ import type { ReportTask } from "../report/report-task.ts"
 import type { TaskSummaryResult } from "../repository/task-summary.ts"
 import type { ApiTrouble } from "../session-driver/api-trouble.ts"
 import type { BackgroundTask } from "../session-driver/background-task.ts"
-import type { PendingAsk } from "../session-driver/pending-ask.ts"
+import type { PendingAsk, StampedPendingAsk } from "../session-driver/pending-ask.ts"
 import type { RecordedPromptImage } from "../session-driver/prompt-image.ts"
 import type { Question, QuestionAnswer } from "../session-driver/question.ts"
 import type { RateLimit } from "../session-driver/rate-limit.ts"
@@ -256,8 +256,8 @@ export type SessionState = {
   readonly records: readonly SessionRecord[]
   /** 書きかけの本文。完成した本文が来たら空に戻る。 */
   readonly partialUtterance: string
-  /** 答え待ちの列（許可プロンプトと質問）。 */
-  readonly pending: readonly PendingAsk[]
+  /** 答え待ちの列（許可プロンプトと質問）。届いた時刻つき。 */
+  readonly pending: readonly StampedPendingAsk[]
   /** `init` がまだ届いていないか、届いてセッションID・許可モードが分かっているか。 */
   readonly session: SessionInfo
   /**
@@ -622,7 +622,7 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
         at,
       )
     case "pending-changed":
-      return { ...state, pending: event.pending }
+      return { ...state, pending: stampPending(state.pending, event.pending, at) }
     case "question-answered":
       // 答えが確定した1回だけ積む（未回答の質問は記録に残さない）。
       // 窓の切り詰めは要らない（質問はやり取りの境目にならないので、次の `request` が来たときに一緒に古いぶんが落ちる）。
@@ -901,6 +901,18 @@ function settleReportDrafting(state: SessionState, toolUseId: string): SessionSt
   return state.reportDrafting.kind === "drafting" && state.reportDrafting.toolUseId === toolUseId
     ? { ...state, reportDrafting: { kind: "idle" } }
     : state
+}
+
+/** 新しい答え待ちの列に届いた時刻を打つ。前から待っている id は前の時刻のまま。 */
+function stampPending(
+  previous: readonly StampedPendingAsk[],
+  next: readonly PendingAsk[],
+  at: number,
+): readonly StampedPendingAsk[] {
+  return next.map((ask) => ({
+    ...ask,
+    askedAt: previous.find((waiting) => waiting.id === ask.id)?.askedAt ?? at,
+  }))
 }
 
 /**

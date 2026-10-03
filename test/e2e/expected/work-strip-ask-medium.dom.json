@@ -160,6 +160,117 @@
                       ]
                     },
                     {
+                      "tag": "section",
+                      "attributes": {
+                        "aria-label": "お伺い"
+                      },
+                      "children": [
+                        {
+                          "tag": "header",
+                          "children": [
+                            "お伺い",
+                            "許可",
+                            "Bash",
+                            "1 / 1",
+                            "·",
+                            "待って",
+                            "1:00"
+                          ]
+                        },
+                        {
+                          "tag": "pre",
+                          "children": [
+                            "rm -rf /tmp/dummy/fake-home"
+                          ]
+                        },
+                        {
+                          "tag": "ul",
+                          "children": [
+                            {
+                              "tag": "li",
+                              "children": [
+                                {
+                                  "tag": "label",
+                                  "children": [
+                                    {
+                                      "tag": "span",
+                                      "attributes": {
+                                        "aria-hidden": "true"
+                                      },
+                                      "children": [
+                                        "1"
+                                      ]
+                                    },
+                                    {
+                                      "tag": "input",
+                                      "attributes": {
+                                        "type": "radio",
+                                        "checked": false,
+                                        "value": "on"
+                                      }
+                                    },
+                                    "許可"
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "tag": "li",
+                              "children": [
+                                {
+                                  "tag": "label",
+                                  "children": [
+                                    {
+                                      "tag": "span",
+                                      "attributes": {
+                                        "aria-hidden": "true"
+                                      },
+                                      "children": [
+                                        "2"
+                                      ]
+                                    },
+                                    {
+                                      "tag": "input",
+                                      "attributes": {
+                                        "type": "radio",
+                                        "checked": false,
+                                        "value": "on"
+                                      }
+                                    },
+                                    "拒否"
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "tag": "footer",
+                          "children": [
+                            {
+                              "tag": "button",
+                              "attributes": {
+                                "aria-disabled": "true",
+                                "type": "button"
+                              },
+                              "children": [
+                                "これで答える",
+                                {
+                                  "tag": "span",
+                                  "attributes": {
+                                    "aria-hidden": "true"
+                                  },
+                                  "children": [
+                                    "⏎"
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
                       "tag": "div",
                       "attributes": {
                         "data-outline": "hidden",
@@ -190,35 +301,24 @@
           }
         },
         {
-          "tag": "p",
-          "children": [
-            "Bash",
-            ": rm -rf /tmp/dummy/fake-home"
-          ]
-        },
-        {
-          "tag": "button",
-          "attributes": {
-            "aria-disabled": "false",
-            "type": "button"
-          },
-          "children": [
-            "許可"
-          ]
-        },
-        {
-          "tag": "button",
-          "attributes": {
-            "aria-disabled": "false",
-            "type": "button"
-          },
-          "children": [
-            "拒否"
-          ]
-        },
-        {
           "tag": "form",
           "children": [
+            {
+              "tag": "p",
+              "children": [
+                "↑ つくもの精霊 が実行の許可を待っています"
+              ]
+            },
+            {
+              "tag": "button",
+              "attributes": {
+                "aria-disabled": "false",
+                "type": "button"
+              },
+              "children": [
+                "お伺いへ"
+              ]
+            },
             {
               "tag": "textarea",
               "attributes": {

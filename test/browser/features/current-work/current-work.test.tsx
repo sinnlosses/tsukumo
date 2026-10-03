@@ -2,10 +2,10 @@ import { act, cleanup, fireEvent, render, screen, within } from "@testing-librar
 import { afterEach, describe, expect, it } from "vitest"
 
 import { ScreenNav } from "../../../../src/browser/components/domain/screen-nav/screen-nav.tsx"
+import { useInquiryJump } from "../../../../src/browser/stores/inquiry-jump.ts"
 import { parseHash } from "../../../../src/browser/stores/location-hash.ts"
-import { useQuestionScroll } from "../../../../src/browser/stores/question-scroll.ts"
 import type { BackgroundTask } from "../../../../src/shared/session-driver/background-task.ts"
-import type { PendingAsk } from "../../../../src/shared/session-driver/pending-ask.ts"
+import type { StampedPendingAsk } from "../../../../src/shared/session-driver/pending-ask.ts"
 import type { Question } from "../../../../src/shared/session-driver/question.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import {
@@ -26,26 +26,27 @@ import { putState, putSession } from "../../session-store.ts"
 
 afterEach(() => {
   cleanup()
-  // 「質問へ」は会話の画面（`#`）へ hash を書き換える（`navigateTo`）ので、次のテストへ
+  // 「お伺いへ」は会話の画面（`#`）へ hash を書き換える（`navigateTo`）ので、次のテストへ
   // 持ち越さない。
   window.location.hash = ""
   // 押した回数はモジュール単位で残るので、次のテストへ持ち越さない。
-  useQuestionScroll.setState({ signal: 0 })
+  useInquiryJump.setState(useInquiryJump.getInitialState(), true)
 })
 
-const FIXTURE_PENDING: PendingAsk = {
+const FIXTURE_PENDING: StampedPendingAsk = {
   kind: "permission",
   id: "ask-1",
   toolName: "Read",
   input: {},
+  askedAt: 0,
 }
 
 function fixtureQuestion(header: string): Question {
   return { header, text: "架空の質問", multiSelect: false, options: [] }
 }
 
-function questionPending(headers: readonly string[]): PendingAsk {
-  return { kind: "question", id: "ask-1", questions: headers.map(fixtureQuestion) }
+function questionPending(headers: readonly string[]): StampedPendingAsk {
+  return { kind: "question", id: "ask-1", questions: headers.map(fixtureQuestion), askedAt: 0 }
 }
 
 /**
@@ -356,44 +357,36 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
     )
   })
 
-  it("答え待ちが質問だと、一覧の見出しに「入力欄の上で答えられる」は添えず、「質問へ」を出す", () => {
+  it("答え待ちが質問でも許可要求でも、一覧の見出しは「答え待ち」だけで、「お伺いへ」を出す", () => {
     renderScreenNav({ pending: [questionPending(["最初の見出し"])] })
-
     fireEvent.click(workToggle())
-
     expect(document.querySelector(".current-work-heading")?.textContent).toBe("答え待ち")
-    expect(screen.getByRole("button", { name: "質問へ" })).toBeDefined()
-  })
+    expect(screen.getByRole("button", { name: "お伺いへ" })).toBeDefined()
 
-  it("答え待ちが許可要求なら、今までどおり「入力欄の上で答えられる」を添え、「質問へ」は出さない", () => {
+    cleanup()
     renderScreenNav({ pending: [FIXTURE_PENDING] })
-
     fireEvent.click(workToggle())
-
-    expect(document.querySelector(".current-work-heading")?.textContent).toBe(
-      "答え待ち。入力欄の上で答えられる",
-    )
-    expect(screen.queryByRole("button", { name: "質問へ" })).toBeNull()
+    expect(document.querySelector(".current-work-heading")?.textContent).toBe("答え待ち")
+    expect(screen.getByRole("button", { name: "お伺いへ" })).toBeDefined()
   })
 
-  it("「質問へ」を押すと、一覧を閉じて会話の画面・最新のやり取りへ戻し、質問の札へのスクロールを合図する", () => {
+  it("「お伺いへ」を押すと、一覧を閉じて会話の画面・最新のやり取りへ戻し、お伺いの札へのスクロールを合図する", () => {
     window.location.hash = "#character?turn=1"
-    const signalBefore = useQuestionScroll.getState().signal
     renderScreenNav({
-      pending: [questionPending(["最初の見出し"])],
+      pending: [FIXTURE_PENDING],
       records: [1, 2, 3].map((turnId) => requestRecord({ turnId })),
     })
 
     fireEvent.click(workToggle())
-    fireEvent.click(screen.getByRole("button", { name: "質問へ" }))
+    fireEvent.click(screen.getByRole("button", { name: "お伺いへ" }))
 
     expect(document.querySelector(".current-work-list")).toBeNull()
     expect(parseHash(window.location.hash).screen).toBe("conversation")
     expect(parseHash(window.location.hash).turn).toBe("newest")
-    expect(useQuestionScroll.getState().signal).toBe(signalBefore + 1)
+    expect(useInquiryJump.getState().jump).toEqual({ signal: 1, focus: false })
   })
 
-  it("答え終わると、質問の要約と「質問へ」が消えて元に戻る", () => {
+  it("答え終わると、質問の要約と「お伺いへ」が消えて元に戻る", () => {
     renderScreenNav({
       turn: { kind: "running", startedAt: 0 },
       pending: [questionPending(["最初の見出し"])],
@@ -416,7 +409,7 @@ describe("いまの作業（帯の札と、押すと開く依頼の手順の一�
     expect(document.querySelector(".current-work-summary")).toBeNull()
 
     fireEvent.click(workToggle())
-    expect(screen.queryByRole("button", { name: "質問へ" })).toBeNull()
+    expect(screen.queryByRole("button", { name: "お伺いへ" })).toBeNull()
   })
 
   it("押すと一覧が開き、実行中の手順の全文（切り詰めない）が出る", () => {

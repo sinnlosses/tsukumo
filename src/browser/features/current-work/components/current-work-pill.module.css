@@ -135,8 +135,8 @@
 .current-work-heading {
   margin: 0 0 0.4rem;
 }
-/* 答え待ちが質問のときだけ出す「質問へ」。顔は `<Button variant="link">` が持ち、ここは箱だけ（置き方・margin）。 */
-.current-work-go-to-question {
+/* 答え待ちのときだけ出す「お伺いへ」。顔は `<Button variant="link">` が持ち、ここは箱だけ（置き方・margin）。 */
+.current-work-go-to-inquiry {
   display: block;
   margin: 0 0 0.5rem;
 }

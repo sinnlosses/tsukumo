@@ -3,6 +3,7 @@
 // `<Composer>` の `<form>` の中に置くことを前提にする。
 // 送るほう（`action.kind === "send"`）は `type="submit"` で、押すと Composer の `onSubmit` がそのまま依頼を送る。
 
+import clsx from "clsx"
 import type { ReactElement } from "react"
 
 import { Button } from "../../../../../../ui/button/button.tsx"
@@ -86,8 +87,12 @@ export function PresentationalTurnStatus(props: PresentationalTurnStatusProps): 
       ) : (
         <button
           type="submit"
-          className={dispatchStyles["dispatch-send"]}
+          className={clsx(
+            dispatchStyles["dispatch-send"],
+            props.action.emphasis === "quiet" && dispatchStyles["is-quiet"],
+          )}
           data-shortcut={SEND_SHORTCUT_HINT}
+          data-emphasis={props.action.emphasis}
         >
           {props.action.label}
         </button>

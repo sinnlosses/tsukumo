@@ -3,7 +3,7 @@ import { act, cleanup, fireEvent, render, screen, type RenderResult } from "@tes
 import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { MainView } from "../../../../../../../src/browser/components/page/conversation/components/main-view/main-view.tsx"
-import { useQuestionDraft } from "../../../../../../../src/browser/stores/question-answer.ts"
+import { useInquiryDraft } from "../../../../../../../src/browser/stores/inquiry-answer.ts"
 import {
   INITIAL_SESSION_STATE,
   type SessionRecord,
@@ -21,7 +21,7 @@ import { putState, putSession } from "../../../../../session-store.ts"
 afterEach(() => {
   cleanup()
   // 組み立て中の答えはモジュール単位で残るので、次のテストへ持ち越さない。
-  useQuestionDraft.setState(useQuestionDraft.getInitialState(), true)
+  useInquiryDraft.setState(useInquiryDraft.getInitialState(), true)
   // 過去のターンを選ぶと hash に乗る（`useTurnSelection`）ので、次のテストへ持ち越さない。
   window.location.hash = ""
 })

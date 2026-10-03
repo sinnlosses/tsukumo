@@ -747,7 +747,7 @@ JSX の中で「条件が立ったときだけ描く」は `{条件 && <部品 /
 ### zustand の store
 
 `browser/stores/` に置く「画面全体で共有する状態」は zustand の `create()` で書く
-（`stores/question-scroll.ts`）。`Context` の `Provider` は作らない——store は `create()` が返す
+（`stores/inquiry-jump.ts`）。`Context` の `Provider` は作らない——store は `create()` が返す
 hook そのものが持ち、部品はどこからでもその hook を呼べる。
 
 ```ts

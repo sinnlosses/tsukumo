@@ -1,0 +1,175 @@
+/* お伺いの札。
+   `.inquiry-option .detail-block` の打ち消しは、`.detail-block` 自体の見た目（report-notation.module.css）とは別ファイルなので、`InquiryOption` がその両方の class を同じ要素に重ねて付ける。
+
+   答えると消える一時的な塊なので、地も枠も答え待ちの色（--state-warn）の系統にして、いま答えるものだと分かるようにする。
+   高さの上限はメインビューの内寸（`100cqh`。`.layout-main` が `container-type: size`）から貼り付いた札の頭を引いた値で、操作の行を下端に残して本文の側を内側で転がす。 */
+.inquiry {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100cqh - var(--turn-card-head-height, 0px) - 1.5rem);
+  margin: 0.75rem 0 0;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--state-warn);
+  border-radius: 0.75rem;
+  /* 地は塗りつぶさず、面の色に警告色をごく薄く混ぜる。 */
+  background: color-mix(in srgb, var(--surface), var(--state-warn) 6%);
+  /* 札へ転がしたとき、貼り付いた札の頭の下に潜らせない。 */
+  scroll-margin-top: calc(var(--turn-card-head-height, 0px) + 0.5rem);
+  scroll-margin-bottom: 0.5rem;
+}
+/* 札そのものにフォーカスがあるときは輪を出さない。 */
+.inquiry:focus {
+  outline: none;
+}
+/* 頭の行：「お伺い」のチップ・種類・header かツール名・「n / N · 待って 0:42」。
+   狭い画面では折り返す（横スクロールを出さない）。 */
+.inquiry-head {
+  flex: 0 0 auto;
+  margin-bottom: 0.5rem;
+}
+.inquiry-chip {
+  flex: 0 0 auto;
+  padding: 0.1rem 0.5rem;
+  border-radius: 0.3rem;
+  background: var(--state-warn);
+  color: var(--ground);
+  font-size: var(--font-label);
+  font-weight: 700;
+}
+.inquiry-kind {
+  flex: 0 0 auto;
+}
+/* 字の段・色は `Text` が持つ。伸び縮みだけここに置く。 */
+.inquiry-subject,
+.inquiry-tool {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+/* 許可要求のツール名は機械の側の名前なので等幅。 */
+.inquiry-tool {
+  font-family: var(--font-mono);
+}
+/* 「n / N · 待って 0:42」は行の右端へ寄せ、数字の幅を揃える。 */
+.inquiry-progress {
+  flex: 0 0 auto;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+/* 本文と選択肢。札の高さに入り切らなければここだけが転がる。 */
+.inquiry-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+/* 太さは `Text` が持つ。margin だけここに置く。 */
+.inquiry-text {
+  margin: 0 0 0.75rem;
+}
+/* 許可要求の対象の全文。等幅で折り返す。 */
+.inquiry-target {
+  margin: 0 0 0.75rem;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--rule);
+  border-radius: 0.5rem;
+  background: var(--surface);
+  font-family: var(--font-mono);
+  font-size: var(--font-secondary);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+/* 選択肢は横に並べ、入り切らなければ折り返す（狭い画面・選択肢が4つのときは1〜2列に落ちる。列の幅を先に決めるので、ラベルは自分の列の中で折り返すだけになり横へ溢れない）。 */
+.inquiry-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: 0.6rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.inquiry-option {
+  min-width: 0;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--rule);
+  border-radius: 0.5rem;
+  background: var(--surface);
+}
+/* 選んだカード。枠の色と太さで示す（色だけに頼らない）。 */
+.inquiry-option.is-selected {
+  border-color: var(--state-warn);
+  box-shadow: 0 0 0 1px var(--state-warn) inset;
+}
+/* 押す口（番号・印・ラベル・バッジ）。ラベルが折り返すので、印は行の中央ではなく1行目の文字に揃える（baseline）。 */
+.inquiry-option-choose {
+  min-width: 0;
+  cursor: pointer;
+}
+/* 数字キーで選ぶときの番号。 */
+.inquiry-option-number {
+  flex: 0 0 auto;
+  color: var(--ink-quiet);
+  font-family: var(--font-mono);
+  font-size: var(--font-label);
+}
+.inquiry-option-mark {
+  flex: 0 0 auto;
+  accent-color: var(--state-warn);
+}
+/* 太さは `Text` が持つ。伸び縮みだけここに置く。 */
+.inquiry-option-label {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+/* ラベル末尾の `(Recommended)` を字から外して載せるバッジ。 */
+/* 字の段・色は `Text` が持つ。箱（枠・角丸・余白）だけここに置く。 */
+.inquiry-option-badge {
+  flex: 0 0 auto;
+  padding: 0.05rem 0.4rem;
+  border: 1px solid var(--state-warn);
+  border-radius: 0.3rem;
+}
+/* 字の段・色は `Text` が持つ。margin だけここに置く。 */
+.inquiry-option-description {
+  margin: 0.35rem 0 0 2.2rem;
+}
+/* 選択肢ごとの preview（Markdown）は説明の下。レポートと同じ語彙（`.detail-block`）に乗せる。 */
+.inquiry-option .detail-block {
+  margin-top: 0.5rem;
+}
+/* 入力欄に書いて記録した答え（まだ送っていない問のぶん）。 */
+/* 字の段・色は `Text` が持つ。margin だけここに置く。 */
+.inquiry-written {
+  margin: 0.6rem 0 0;
+}
+/* 操作の行：左に案内、右に「戻る」と「次へ」/「これで答える」。札の下端に残る。狭い画面では折り返す。 */
+.inquiry-foot {
+  flex: 0 0 auto;
+  margin-top: 0.75rem;
+}
+/* 字の段・色は `Text` が持つ。伸び縮みだけここに置く。 */
+.inquiry-hint {
+  flex: 1 1 12rem;
+  min-width: 0;
+}
+/* 顔は `<Button variant="outline-hover-warn">` が持つ。箱だけここに置く。 */
+.inquiry-back {
+  flex: 0 0 auto;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5625rem;
+}
+/* 札の主目的の口なので、答え待ちの色で塗りつぶす。
+   顔は `<Button variant="solid-warn">` が持つ。
+   箱だけここに置く。 */
+.inquiry-answer {
+  flex: 0 0 auto;
+  padding: 0.5rem 1.125rem;
+  border-radius: 0.5625rem;
+}
+/* 押せる口に添える Enter の字。 */
+.inquiry-key {
+  margin-left: 0.4rem;
+  font-family: var(--font-mono);
+  font-size: var(--font-label);
+  opacity: 0.75;
+}

@@ -6,18 +6,19 @@ import { act, cleanup, render, screen } from "@testing-library/react"
 import { Profiler, type ReactElement } from "react"
 import { afterEach, describe, expect, it } from "vitest"
 
-import { PendingAnswer } from "../../../src/browser/components/page/conversation/components/dispatch/components/pending-answer/pending-answer.tsx"
+import { Inquiry } from "../../../src/browser/components/page/conversation/components/main-view/components/inquiry/inquiry.tsx"
 import { useSession } from "../../../src/browser/stores/session.ts"
 import { PROTOCOL_VERSION } from "../../../src/shared/frame.ts"
-import type { PendingAsk } from "../../../src/shared/session-driver/pending-ask.ts"
+import type { StampedPendingAsk } from "../../../src/shared/session-driver/pending-ask.ts"
 import { INITIAL_SESSION_STATE } from "../../../src/shared/session/session-state.ts"
 import { putSession } from "../session-store.ts"
 
-const FIXTURE_PERMISSION: PendingAsk = {
+const FIXTURE_PERMISSION: StampedPendingAsk = {
   kind: "permission",
   id: "ask-1",
   toolName: "Read",
   input: {},
+  askedAt: 0,
 }
 
 afterEach(() => {
@@ -30,12 +31,12 @@ function RecordCount(): ReactElement {
   return <p>{`記録${String(count)}件`}</p>
 }
 
-/** 許可要求1件を出したうえで、`<PendingAnswer>` が描き直された回数を数える。 */
-function renderPendingAnswer(countCommit: () => void): void {
+/** 許可要求1件を出したうえで、`<Inquiry>` が描き直された回数を数える。 */
+function renderInquiry(countCommit: () => void): void {
   render(
     <>
-      <Profiler id="pending-answer" onRender={countCommit}>
-        <PendingAnswer />
+      <Profiler id="inquiry" onRender={countCommit}>
+        <Inquiry />
       </Profiler>
       <RecordCount />
     </>,
@@ -43,15 +44,15 @@ function renderPendingAnswer(countCommit: () => void): void {
 }
 
 describe("姿の store の購読", () => {
-  it("答え待ちが動かないフレームでは、`dispatch` しか使わない答えの箱を描き直さない", () => {
+  it("答え待ちが動かないフレームでは、答え待ちしか読まないお伺いの札を描き直さない", () => {
     let commits = 0
     putSession({ ...INITIAL_SESSION_STATE, pending: [FIXTURE_PERMISSION] })
-    renderPendingAnswer(() => {
+    renderInquiry(() => {
       commits += 1
     })
 
     // 数えられていること自体を先に確かめる（0 のままだと、この検査は何も試さなくなる）。
-    expect(screen.getByText("許可")).toBeDefined()
+    expect(screen.getByRole("region", { name: "お伺い" })).toBeDefined()
     expect(commits).toBeGreaterThan(0)
     const afterFirstRender = commits
 
@@ -62,7 +63,7 @@ describe("姿の store の購読", () => {
       })
     })
 
-    // 姿は確かに動いた（記録が1件増えた）が、答えの箱は描き直していない。
+    // 姿は確かに動いた（記録が1件増えた）が、お伺いの札は描き直していない。
     expect(screen.getByText("記録1件")).toBeDefined()
     expect(commits).toBe(afterFirstRender)
   })
@@ -70,7 +71,7 @@ describe("姿の store の購読", () => {
   it("答え待ちが動いたフレームでは描き直す", () => {
     let commits = 0
     putSession({ ...INITIAL_SESSION_STATE, pending: [FIXTURE_PERMISSION] })
-    renderPendingAnswer(() => {
+    renderInquiry(() => {
       commits += 1
     })
     const afterFirstRender = commits
@@ -82,7 +83,7 @@ describe("姿の store の購読", () => {
       })
     })
 
-    expect(screen.queryByText("許可")).toBeNull()
+    expect(screen.queryByRole("region", { name: "お伺い" })).toBeNull()
     expect(commits).toBeGreaterThan(afterFirstRender)
   })
 
@@ -103,7 +104,7 @@ describe("姿の store の購読", () => {
   it("姿が変わらないフレーム（空の `events`）では、購読している部品に知らせない", () => {
     let commits = 0
     putSession({ ...INITIAL_SESSION_STATE, pending: [FIXTURE_PERMISSION] })
-    renderPendingAnswer(() => {
+    renderInquiry(() => {
       commits += 1
     })
     const afterFirstRender = commits

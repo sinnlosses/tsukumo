@@ -28,8 +28,8 @@ export type CurrentWorkPillProps = {
   readonly variant: CurrentWorkVariant
 }
 
-/** 答え待ちが質問のときに一覧へ出す口。 */
-const GO_TO_QUESTION_LABEL = "質問へ"
+/** 答え待ちのときに一覧へ出す口。 */
+const GO_TO_INQUIRY_LABEL = "お伺いへ"
 
 export function CurrentWorkPill(props: CurrentWorkPillProps): ReactElement {
   const { work } = props
@@ -104,9 +104,8 @@ function CurrentWorkList(props: { readonly id: string; readonly work: CurrentWor
         className={styles["current-work-heading"]}
       >
         {work.wordLabel}
-        {work.pendingHint.kind === "input" ? "。入力欄の上で答えられる" : ""}
       </Text>
-      {work.pendingHint.kind === "question" && (
+      {work.pendingHint.kind === "inquiry" && (
         <Button
           variant="link"
           size="label"
@@ -116,10 +115,10 @@ function CurrentWorkList(props: { readonly id: string; readonly work: CurrentWor
           disclosure={{ kind: "none" }}
           ariaHasPopup={undefined}
           title={undefined}
-          className={styles["current-work-go-to-question"]}
-          onClick={work.pendingHint.onGoToQuestion}
+          className={styles["current-work-go-to-inquiry"]}
+          onClick={work.pendingHint.onGoToInquiry}
         >
-          {GO_TO_QUESTION_LABEL}
+          {GO_TO_INQUIRY_LABEL}
         </Button>
       )}
       {work.plan.kind === "planned" && (

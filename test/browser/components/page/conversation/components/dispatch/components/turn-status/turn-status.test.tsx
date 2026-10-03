@@ -1,9 +1,10 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react"
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { TurnStatus } from "../../../../../../../../../src/browser/components/page/conversation/components/dispatch/components/turn-status/turn-status.tsx"
 import { useComposerDraft } from "../../../../../../../../../src/browser/stores/composer-draft.ts"
-import { useQuestionDraft } from "../../../../../../../../../src/browser/stores/question-answer.ts"
+import { useInquiryDraft } from "../../../../../../../../../src/browser/stores/inquiry-answer.ts"
+import type { StampedPendingAsk } from "../../../../../../../../../src/shared/session-driver/pending-ask.ts"
 import {
   INITIAL_SESSION_STATE,
   type SessionState,
@@ -14,9 +15,24 @@ import { type CommandSpy, putSession } from "../../../../../../../session-store.
 afterEach(() => {
   cleanup()
   // 組み立て中の答えはモジュール単位で残るので、次のテストへ持ち越さない。
-  useQuestionDraft.setState(useQuestionDraft.getInitialState(), true)
+  useInquiryDraft.setState(useInquiryDraft.getInitialState(), true)
   useComposerDraft.setState(useComposerDraft.getInitialState(), true)
 })
+
+/** 架空の質問（答え待ち）。 */
+const QUESTION_PENDING = {
+  kind: "question",
+  id: "ask-question",
+  questions: [
+    {
+      header: "架空の選択",
+      text: "架空の質問",
+      multiSelect: false,
+      options: [{ label: "A案", description: "架空の説明A", preview: undefined }],
+    },
+  ],
+  askedAt: 0,
+} satisfies StampedPendingAsk
 
 function renderTurnStatus(
   stateOverrides: Partial<SessionState>,
@@ -110,23 +126,7 @@ describe("TurnStatus", () => {
   it("質問に答えている間は、ターンが進行中でもボタンが「答える」（type=submit）", () => {
     const calls: unknown[] = []
     renderTurnStatus(
-      {
-        turn: { kind: "running", startedAt: 0 },
-        pending: [
-          {
-            kind: "question",
-            id: "ask-question",
-            questions: [
-              {
-                header: "架空の選択",
-                text: "架空の質問",
-                multiSelect: false,
-                options: [{ label: "A案", description: "架空の説明A", preview: undefined }],
-              },
-            ],
-          },
-        ],
-      },
+      { turn: { kind: "running", startedAt: 0 }, pending: [QUESTION_PENDING] },
       (command) => calls.push(command),
     )
 
@@ -137,6 +137,24 @@ describe("TurnStatus", () => {
     fireEvent.click(button)
 
     expect(calls).toEqual([])
+  })
+
+  it("質問に答えている間、自由入力の字が無ければ「答える」を塗らず、字を打つと塗る", () => {
+    renderTurnStatus({ turn: { kind: "running", startedAt: 0 }, pending: [QUESTION_PENDING] })
+
+    expect(screen.getByRole("button").dataset["emphasis"]).toBe("quiet")
+
+    act(() => {
+      useComposerDraft.getState().setDraft({ text: "架空の自由な答え", caret: 8 })
+    })
+
+    expect(screen.getByRole("button").dataset["emphasis"]).toBe("solid")
+  })
+
+  it("答え待ちが無ければ「送信」は塗る", () => {
+    renderTurnStatus({})
+
+    expect(screen.getByRole("button").dataset["emphasis"]).toBe("solid")
   })
   describe("API の知らせ（docs/architecture/display.md 4.2「入力欄」）", () => {
     it("失敗で終わったターンは「所要」ではなく「失敗」と理由の字を出す（色だけに頼らない）", () => {

@@ -1,10 +1,22 @@
-/* 「↑ <キャラクター名> が質問しています…」の帯。
+/* 「↑ <キャラクター名> が質問しています…」の帯と「お伺いへ」の口。
    上の札を指す矢印から始まるので、テキスト入力欄の上に置く。
    字は答え待ちの色で、地は持たない（枠の色と二重にしない）。 */
-/* 字の段・色は `Text` が持つ。伸び縮み・margin だけここに置く（語彙に無い見た目・既定の 0 と違うため）。 */
 .dispatch-band {
   flex: 0 0 auto;
   margin: 0 0 0.5rem;
+}
+/* 字の段・色は `Text` が持つ。伸び縮み・margin だけここに置く。 */
+.dispatch-band-text {
+  flex: 1 1 12rem;
+  min-width: 0;
+  margin: 0;
+}
+/* 顔は `<Button variant="outline-hover-warn">` が持つ。箱だけここに置く。 */
+.dispatch-band-jump {
+  flex: 0 0 auto;
+  min-height: 1.5rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 0.4rem;
 }
 /* textarea と / 補完の候補一覧の包み。候補一覧（position: absolute）の基準になる。 */
 .dispatch-text-wrap {

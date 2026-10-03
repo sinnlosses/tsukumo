@@ -75,9 +75,9 @@ tsukumo の画面だけになる。
    引数はキャラビューの**セリフと表情**、`tool_use` / `tool_result` はサイドバーの**進行**に
    なる。`applySessionEvent` で畳んだ `SessionState` を、サーバとブラウザが同じ形で持つ
    （「shared」）
-3. **`canUseTool` → 答え待ち → ボタン → 回答**: 許可プロンプトと `AskUserQuestion` はどちらも
-   `canUseTool` に届く。tsukumo は答え待ちの状態にして**入力欄の上**にボタンを出し（キャラは
-   吹き出しで聞くだけ）、押された結果を `canUseTool` の戻り値として SDK へ返す
+3. **`canUseTool` → 答え待ち → お伺い → 回答**: 許可プロンプトと `AskUserQuestion` はどちらも
+   `canUseTool` に届く。tsukumo は答え待ちの状態にして**メインビューのお伺いの札**に選択肢を出し（キャラは
+   吹き出しで聞くだけ）、選ばれた答えを `canUseTool` の戻り値として SDK へ返す
 
 **外へ出る経路は作らない。** SDK は claude を子プロセスとして起こすだけ、`speak` は tsukumo の
 プロセス内の MCP サーバ（戻り値は `"ok"` だけ）、ビューは `127.0.0.1` にだけバインドする。
@@ -457,7 +457,7 @@ components/page/<ページ>/
 **この節の「機能」は、枠・画面・置かれる機能のすべてを指す。** ページでは、この節の割り方をページの
 中の部品に1つずつ掛け（ページの入口だけはいつも対）、置き場は「機能の直下」を「読み手すべてを含む、
 いちばん近い箱」に読み替える。1つの機能に container が複数あってよい（`dispatch` の `composer` /
-`pending-answer` / `turn-status`）。
+`turn-status`）。
 
 **割るかどうかは、部品が抱えている「振る舞いの種類」の数で決める。行数もフックの本数も数えない。**
 
@@ -673,8 +673,9 @@ transcript の一覧を読み直すのは駆動を返したあとなので、起
 ### 答え待ち
 
 1. `canUseTool` → `pending-answer.ts` の列 → `pending-changed` イベント → 状態の `pending`
-2. PendingAnswer 部品が `pending[0]` を描く。押されたら `session.answer({ id, answer })`
-3. 列が解決 → `pending-changed` → 箱が消える。解決済みの id への回答は `REFUSED`
+   （畳むときに届いた時刻 `askedAt` を打つ）
+2. お伺いの札（`Inquiry`）が `pending[0]` を `useInquiryAnswer` で描く。答えたら `session.answer({ id, answer })`
+3. 列が解決 → `pending-changed` → 札が消える。解決済みの id への回答は `REFUSED`
 
 ### 再接続
 

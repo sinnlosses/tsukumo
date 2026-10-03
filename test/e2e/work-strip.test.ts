@@ -90,9 +90,11 @@ describe("進み具合の帯", () => {
       expect(await activityText(strip)).toContain(
         "お伺いが届いた · 許可: Bash  rm -rf /tmp/dummy/fake-home",
       )
+      const inquiry = room.page.getByRole("region", { name: "お伺い" })
       for (const name of ["許可", "拒否"]) {
-        await expectUncovered(room.page.getByRole("button", { name, exact: true }))
+        await expectUncovered(inquiry.getByRole("radio", { name }))
       }
+      await expectUncovered(inquiry.getByRole("button", { name: /これで答える/ }))
 
       await room.settleAndMatch(ELAPSED_MS)
     },

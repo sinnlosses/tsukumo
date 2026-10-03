@@ -18,7 +18,8 @@ import {
   useComposerDraft,
   type Draft,
 } from "../../../../../../../../stores/composer-draft.ts"
-import { useQuestionAnswer } from "../../../../../../../../stores/question-answer.ts"
+import { useInquiryAnswer } from "../../../../../../../../stores/inquiry-answer.ts"
+import { useInquiryJump } from "../../../../../../../../stores/inquiry-jump.ts"
 import { useSession, useTurnRunning } from "../../../../../../../../stores/session.ts"
 import type { ComposerKey, ComposerSurface } from "../../../domain/composer-surface.ts"
 import { loadComposerMode, saveComposerMode, type ComposerMode } from "../domain/composer-mode.ts"
@@ -32,12 +33,13 @@ import {
 } from "./use-suggestion.ts"
 
 /**
- * `<textarea>` の上の帯。答え待ちの質問のときだけ出す。
- * 答えはメインビューの選択肢の札から選ぶか、ここに書いて送る。
+ * `<textarea>` の上の帯。答え待ち（お伺い）があるあいだだけ出す。
+ * 答えはメインビューのお伺いの札で選ぶ（質問ならここに書いて送ってもよい）。
+ * `onJump` は「お伺いへ」の口で、お伺いの札の最初の選択肢へフォーカスを移す。
  */
 export type ComposerBand =
   | { readonly kind: "none" }
-  | { readonly kind: "question"; readonly text: string }
+  | { readonly kind: "inquiry"; readonly text: string; readonly onJump: () => void }
 
 /**
  * `<Composer>` が画面に出す形。
@@ -75,7 +77,8 @@ export function useComposer(): ComposerModel {
   const pendingActive = useSession((session) => session.state.pending.length > 0)
   const turnInProgress = useTurnRunning()
   // 答え待ちの質問があるあいだ、入力欄は「依頼を書く場所」ではなく選択肢以外の答えを書く場所になる（札はメインビューに出ている）。
-  const question = useQuestionAnswer()
+  const inquiry = useInquiryAnswer()
+  const requestInquiryJump = useInquiryJump((state) => state.requestJump)
   const slashCommands = useSession((session) => session.state.slashCommands)
   const commandDescriptions = useSession((session) => session.state.commandDescriptions)
   const draft = useComposerDraft((state) => state.draft)
@@ -114,9 +117,9 @@ export function useComposer(): ComposerModel {
     if (trimmed === "") {
       return
     }
-    if (question.kind === "asking") {
+    if (inquiry.kind === "question") {
       // 質問に答えている間は依頼として送らない（打った字はいま見ている1問の答えになる）。
-      question.onAnswerWithText(trimmed)
+      inquiry.onAnswerWithText(trimmed)
     } else {
       dispatch.session.prompt({ text: trimmed, images: promptImage.images })
     }
@@ -146,13 +149,17 @@ export function useComposer(): ComposerModel {
       saveComposerMode(next)
     },
     placeholder:
-      question.kind === "asking" ? ANSWER_PLACEHOLDER : composerPlaceholder(characterName),
-    label: question.kind === "asking" ? ANSWER_LABEL : REQUEST_LABEL,
+      inquiry.kind === "question" ? ANSWER_PLACEHOLDER : composerPlaceholder(characterName),
+    label: inquiry.kind === "question" ? ANSWER_LABEL : REQUEST_LABEL,
     band:
-      question.kind === "asking"
-        ? { kind: "question", text: questionBandText(characterName) }
-        : { kind: "none" },
-    answering: question.kind === "asking",
+      inquiry.kind === "none"
+        ? { kind: "none" }
+        : {
+            kind: "inquiry",
+            text: inquiryBandText(inquiry.kind, characterName),
+            onJump: () => requestInquiryJump({ focus: true }),
+          },
+    answering: inquiry.kind === "question",
     draft,
     suggestions: suggestion.suggestions,
     selectedIndex: suggestion.selectedIndex,
@@ -173,14 +180,14 @@ export function useComposer(): ComposerModel {
       }
       event.preventDefault()
       // 質問に答えている間はターンが進行中でも送れる（答えを待っているのは SDK のほう）。
-      if (!turnInProgress || question.kind === "asking") {
+      if (!turnInProgress || inquiry.kind === "question") {
         submit()
       }
       return true
     },
     onSubmit: (event) => {
       event.preventDefault()
-      if (turnInProgress && question.kind !== "asking") {
+      if (turnInProgress && inquiry.kind !== "question") {
         return
       }
       submit()
@@ -196,9 +203,14 @@ const REQUEST_LABEL = "依頼を書く"
 const ANSWER_LABEL = "質問への答えを書く"
 
 /** `<textarea>` の上の帯の文言。誰が聞いているかを名前で言い、名前が無いパックでは名前を使わずに書く。 */
-function questionBandText(characterName: string | undefined): string {
+function inquiryBandText(
+  kind: "permission" | "question",
+  characterName: string | undefined,
+): string {
   const subject = characterName === undefined ? "" : `${characterName} が`
-  return `↑ ${subject}質問しています。上の選択肢から選ぶか、ここに書いて答えてください`
+  return kind === "question"
+    ? `↑ ${subject}質問しています。上の選択肢から選ぶか、ここに書いて答えてください`
+    : `↑ ${subject}実行の許可を待っています`
 }
 
 /**
