@@ -318,7 +318,17 @@ src/                          配線（composition root）。cli.ts（入口）�
 test/                         src/<相対パス>.ts → test/<相対パス>.test.ts
 story/                        src/<相対パス>.tsx → story/<相対パス>.story.tsx（Storybook。設定は .storybook/）
 characters/<name>/            character.json・persona.md・素材
+.tsukumo/project.json         このリポジトリのプロジェクトの設定（下の段）
 ```
+
+**プロジェクトの設定**（`docs/architecture/adr/0022-three-setting-homes.md`）は、起動先の作業ツリーの
+`.tsukumo/project.json` の1つだけから読む。形は
+`{ "tasks": { "store": "files" | "beads", "mainBranch": "<ブランチ名>", "runPrompt": "<文面。既定 /next-task {id}>" } }`
+で、検証は `shared/repository/project-settings.ts` の `projectSettingsOf`、読み出しは
+`server/repository/adapter/project-settings.ts` の `readProjectSettings` の1か所。結果は
+「タスク運用なし（ファイルが無い・`tasks` が無い）・読めない（形が違う）・読めた」の3つで、
+起動時に覚えず、タスク一覧の見回りと成果の読み出しのたびに読み直す（画面から書いた値が次に読んだときに効く）。
+欄の説明は `README.md`「プロジェクトの設定」。
 
 **ファイル名は概念で、単数形**（原則5）。`helpers/` と `common/` は作らない。**ディレクトリ名に単数形の
 縛りは無く**、`src/browser/` の置き場所のディレクトリ（`components/`（とその下の `page/` `domain/` `ui/`）

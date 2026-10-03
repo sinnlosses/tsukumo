@@ -1,4 +1,4 @@
-import { mkdirSync, writeFileSync } from "node:fs"
+import { mkdirSync, rmSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 
 import { beforeEach, describe, expect, it } from "vitest"
@@ -9,10 +9,12 @@ import {
   readCommitCalendar,
   type ReadAchievementResult,
 } from "../../../../src/server/achievement/adapter/main-history.ts"
+import { PROJECT_SETTINGS_PATH } from "../../../../src/server/repository/adapter/project-settings.ts"
 import type { AchievementCalendar } from "../../../../src/shared/achievement/achievement-calendar.ts"
 import type { DailyAchievement } from "../../../../src/shared/achievement/achievement.ts"
 import { bd, initBeads, useBeadsHome } from "../../../fixture/beads-repository.ts"
 import { git, initGitRepository } from "../../../fixture/git-repository.ts"
+import { writeProjectSettings } from "../../../fixture/project-settings.ts"
 import { runSubprocessOrThrow } from "../../../fixture/subprocess.ts"
 import { useTempDir } from "../../../fixture/temp-dir.ts"
 
@@ -26,6 +28,7 @@ let repository: string
 beforeEach(async () => {
   repository = join(root(), "repository")
   await initGitRepository(repository)
+  writeProjectSettings(repository, "files")
 })
 
 /** `date`（`YYYY-MM-DD`）の `hhmm` を、`readAchievement` が読む `Temporal.Now.timeZoneId()` と
@@ -248,6 +251,17 @@ describe("readAchievement", () => {
       milestones: [],
       diary: { kind: "none" },
     })
+  })
+
+  it("プロジェクトの設定が無いリポジトリでは、develop/task/ があっても doneTasks が「数えられない」", async () => {
+    rmSync(join(repository, PROJECT_SETTINGS_PATH))
+    await commitNewFormatTask(repository, "2026-09-23", "10:00", "T-001", "架空", "done")
+
+    const achievement = known(
+      await readAchievement(repository, "2026-09-23", "2026-09-24", createAchievementCommitCache()),
+    )
+
+    expect(achievement.doneTasks).toEqual({ kind: "unknown" })
   })
 
   it("新形式: その日の終わりまでに done になったタスクを、前の日には無かった分だけ返す", async () => {
@@ -615,16 +629,17 @@ describe("readAchievement", () => {
   })
 })
 
-// Beads 方式（`main` の先端の CLAUDE.md の `- タスクの置き場: beads`）。本物の `bd` を、`HOME` を
+// Beads 方式（プロジェクトの設定の `tasks.store` が `beads`）。本物の `bd` を、`HOME` を
 // 一時ディレクトリへ向けて起こす（`useBeadsHome`）。`bd close` の時刻は
 // 変えられないので、Beads の側は今日、git の側は過去の日に置く。
 describe("readAchievement（Beads 方式）", () => {
   const home = useBeadsHome(() => join(root(), "home"))
   const today = Temporal.Now.plainDateISO().toString()
+  const BEADS_SETTINGS = JSON.stringify({ tasks: { store: "beads", mainBranch: "main" } })
 
   /**
    * 移す前の git に、done のタスクと未完了のタスクのファイルを置き、過去の日に Beads へ移す
-   * （未完了の方だけを Beads に作り、`develop/task/` を消して方式の行を beads にする）。
+   * （未完了の方だけを Beads に作り、`develop/task/` を消してプロジェクトの設定の方式を beads にする）。
    */
   async function migrateToBeads(): Promise<void> {
     await commitNewFormatTask(repository, "2026-09-10", "10:00", "T-001", "git で済んだ", "todo")
@@ -639,13 +654,7 @@ describe("readAchievement（Beads 方式）", () => {
     initBeads(repository)
     await bd(repository, home(), "create", "--id", "t-002", "移した")
     await git(repository, "rm", "--quiet", "-r", "develop/task")
-    await commitAt(
-      repository,
-      "2026-09-20",
-      "10:00",
-      "CLAUDE.md",
-      "## タスク運用\n\n- タスクの置き場: beads\n",
-    )
+    await commitAt(repository, "2026-09-20", "10:00", PROJECT_SETTINGS_PATH, BEADS_SETTINGS)
   }
 
   it(
@@ -684,14 +693,8 @@ describe("readAchievement（Beads 方式）", () => {
     },
   )
 
-  it("方式の行が beads なのに .beads が無ければ「取れなかった」（部分的な数を出さない）", async () => {
-    await commitAt(
-      repository,
-      "2026-09-20",
-      "10:00",
-      "CLAUDE.md",
-      "## タスク運用\n\n- タスクの置き場: beads\n",
-    )
+  it("設定の方式が beads なのに .beads が無ければ「取れなかった」（部分的な数を出さない）", async () => {
+    await commitAt(repository, "2026-09-20", "10:00", PROJECT_SETTINGS_PATH, BEADS_SETTINGS)
 
     expect(
       await readAchievement(repository, "2026-09-20", today, createAchievementCommitCache()),

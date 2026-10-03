@@ -2,8 +2,9 @@
 //
 // 読むのは作業ツリーのファイルではなく `main` の上のもの。
 // 作業ツリーのものは `git merge main` するまで別の作業ツリーの分を知らない。
+// 例外はタスクの方式で、プロジェクトの設定（`readProjectSettings`）から読む。設定が無い・読めないときは、終えたタスクを「数えられない」にする。
 //
-// Beads 方式（`main` の先端の設定ファイルの `- タスクの置き場: beads`）では、終えたタスクを git の切り口と Beads の閉じた課題（`closed_at`）の両方から読み、ID で和をとる。
+// Beads 方式（プロジェクトの設定の `tasks.store` が `beads`）では、終えたタスクを git の切り口と Beads の閉じた課題（`closed_at`）の両方から読み、ID で和をとる。
 // 移す前は Beads に閉じた課題が無く、移したあとは `main` に `develop/task/` が無いので、境を数で持たなくても欠けず、同じ ID が両方にあっても1件にしかならない。
 //
 // `main` が読めない（git リポジトリでない・`main` ブランチが無い・`git` が無い）ときは `DailyAchievement` の `{ kind: "unknown" }`（200 のまま配ってよい）。
@@ -20,7 +21,7 @@ import { taskIdOfBeadsId, type BeadsIssue } from "../../../shared/repository/bea
 import { localDateEpochRange, localDateKey, localTimeHHMM } from "../../adapter/local-time.ts"
 import { readBeadsIssues } from "../../repository/adapter/beads.ts"
 import { runGit, runGitCatFileBatch } from "../../repository/adapter/git.ts"
-import { readTaskStoreAt } from "../../repository/adapter/task-store.ts"
+import { readProjectSettings } from "../../repository/adapter/project-settings.ts"
 import {
   achievementCommitCountsByDate,
   countAchievementCommits,
@@ -128,7 +129,7 @@ export async function readAchievement(
     ),
     totalAchievementCommitsBeforeDay(cwd, head, dateKey, today, range, cache),
     readTaskSnapshotSource(cwd, head),
-    readBeadsIssuesOfStore(cwd, head),
+    readBeadsIssuesOfStore(cwd),
   ])
   if (commits === undefined) {
     return { kind: "unavailable" }
@@ -143,7 +144,7 @@ export async function readAchievement(
   if (beads === "unavailable") {
     return { kind: "unavailable" }
   }
-  if (beads === "invalid" || (beads === "files" && !hasTaskTracking(headSource))) {
+  if (beads === "untracked" || (beads === "files" && !hasTaskTracking(headSource))) {
     return {
       kind: "ok",
       achievement: dailyAchievementOf({
@@ -207,20 +208,19 @@ export async function readAchievement(
 }
 
 /**
- * `main` の先端の設定ファイルで方式を決め、Beads 方式なら `bd` の全件を読む。
- * ファイル方式なら `"files"`、方式の行が読めなければ `"invalid"`（終えたタスクを「数えられない」にする）。
- * `git`・`bd` が失敗・タイムアウトしたら `"unavailable"`。
+ * プロジェクトの設定で方式を決め、Beads 方式なら `bd` の全件を読む。
+ * ファイル方式なら `"files"`、設定が無い・読めなければ `"untracked"`（終えたタスクを「数えられない」にする）。
+ * `bd` が失敗・タイムアウトしたら `"unavailable"`。
  */
 async function readBeadsIssuesOfStore(
   cwd: string,
-  head: string,
-): Promise<readonly BeadsIssue[] | "files" | "invalid" | "unavailable"> {
-  const config = await readTaskStoreAt(cwd, head)
-  if (config.kind !== "read") {
-    return "unavailable"
+): Promise<readonly BeadsIssue[] | "files" | "untracked" | "unavailable"> {
+  const settings = await readProjectSettings(cwd)
+  if (settings.kind !== "read") {
+    return "untracked"
   }
-  if (config.store.kind !== "beads") {
-    return config.store.kind
+  if (settings.tasks.store === "files") {
+    return "files"
   }
   const beads = await readBeadsIssues(cwd)
   return beads.kind === "issues" ? beads.issues : "unavailable"

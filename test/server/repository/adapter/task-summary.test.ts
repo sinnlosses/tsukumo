@@ -1,9 +1,10 @@
-import { mkdirSync, writeFileSync } from "node:fs"
+import { mkdirSync, rmSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 
 import { afterEach, describe, expect, it } from "vitest"
 
 import { createBeadsStampReader } from "../../../../src/server/repository/adapter/beads.ts"
+import { PROJECT_SETTINGS_PATH } from "../../../../src/server/repository/adapter/project-settings.ts"
 import {
   REAL_TASK_SUMMARY_PORTS,
   watchTaskSummary,
@@ -14,6 +15,7 @@ import type { BeadsIssue } from "../../../../src/shared/repository/beads-issue.t
 import { bd, initBeads, useBeadsHome } from "../../../fixture/beads-repository.ts"
 import { claimTask, git, initGitRepository, releaseTask } from "../../../fixture/git-repository.ts"
 import { createManualClock } from "../../../fixture/manual-clock.ts"
+import { writeProjectSettings } from "../../../fixture/project-settings.ts"
 import { useTempDir } from "../../../fixture/temp-dir.ts"
 
 // 本物の `git` を起こす（`main` の先端を見て読み直すことそのものが検査の対象）。リポジトリは
@@ -38,10 +40,11 @@ afterEach(async () => {
   watcher = undefined
 })
 
-/** `branch` を初期ブランチにしたリポジトリを作る。署名やフックは利用者の設定に左右されないよう切る。 */
+/** `branch` を初期ブランチにし、ファイル方式のプロジェクトの設定を置いたリポジトリを作る。 */
 async function initRepository(branch: string): Promise<string> {
   const repository = join(root(), "repository")
   await initGitRepository(repository, branch)
+  writeProjectSettings(repository, "files")
   return repository
 }
 
@@ -86,6 +89,7 @@ async function commitNewFormatTasks(
 async function addWorktree(repository: string): Promise<string> {
   const worktree = join(root(), "worktree")
   await git(repository, "worktree", "add", "-b", "feature", worktree)
+  writeProjectSettings(worktree, "files")
   return worktree
 }
 
@@ -332,6 +336,31 @@ describe("watchTaskSummary", () => {
 
     expect(changes).toEqual([UNKNOWN])
   })
+
+  it("プロジェクトの設定が無いときは、develop/task/ があっても「不明」", async () => {
+    const repository = await initRepository("main")
+    rmSync(join(repository, PROJECT_SETTINGS_PATH))
+    await commitNewFormatTasks(repository, [{ id: "T-001", summary: "1つめ", status: "todo" }])
+    const changes: unknown[] = []
+    watch(repository, changes)
+    await waitForChanges(changes, 1)
+
+    expect(changes).toEqual([UNKNOWN])
+  })
+
+  it("見回りの途中で設定を書くと、main を動かさずに次の見回りで一覧が出る", async () => {
+    const repository = await initRepository("main")
+    rmSync(join(repository, PROJECT_SETTINGS_PATH))
+    await commitNewFormatTasks(repository, [{ id: "T-001", summary: "1つめ", status: "todo" }])
+    const changes: unknown[] = []
+    watch(repository, changes)
+    await waitForChanges(changes, 1)
+
+    writeProjectSettings(repository, "files")
+    await waitForChanges(changes, 2)
+
+    expect(changes).toEqual([UNKNOWN, known(notified("T-001", "1つめ", "todo"))])
+  })
 })
 
 /** 本文・完了条件・やることを付けずに作った課題の本文（`composeBeadsBody` が組む枠だけの骨組み）。 */
@@ -352,21 +381,19 @@ const BEADS_EMPTY_BODY = [
   "",
 ].join("\n")
 
-// Beads 方式（`main` の先端の CLAUDE.md の `- タスクの置き場: beads`）。本物の `bd` を、`HOME` を
+// Beads 方式（プロジェクトの設定の `tasks.store` が `beads`）。本物の `bd` を、`HOME` を
 // 一時ディレクトリへ向けて起こす（`useBeadsHome`）。
 describe("watchTaskSummary（Beads 方式）", () => {
   /** `bd` の見回りは1回が約0.2秒なので、通知を待つ上限を長くとる。 */
   const BEADS_WAIT_LIMIT_MS = 15_000
 
-  /** Beads 方式の設定を `main` に入れ、`.beads` を作ったリポジトリ。 */
+  /** Beads 方式の設定を置き、`main` に1件コミットして `.beads` を作ったリポジトリ。 */
   async function initBeadsRepository(): Promise<string> {
     const repository = await initRepository("main")
-    writeFileSync(
-      join(repository, "CLAUDE.md"),
-      "# 架空\n\n## タスク運用\n\n- ブランチ: 切らない\n- タスクの置き場: beads\n",
-    )
-    await git(repository, "add", "CLAUDE.md")
-    await git(repository, "commit", "-m", "config")
+    writeProjectSettings(repository, "beads")
+    writeFileSync(join(repository, "README.md"), "架空のリポジトリ")
+    await git(repository, "add", "README.md")
+    await git(repository, "commit", "-m", "init")
     initBeads(repository)
     return repository
   }
@@ -497,10 +524,9 @@ describe("watchTaskSummary（Beads 方式）", () => {
     },
   )
 
-  it("方式の行が beads なのに .beads が無ければ「不明」", async () => {
+  it("設定の方式が beads なのに .beads が無ければ「不明」", async () => {
     const repository = await initRepository("main")
-    writeFileSync(join(repository, "CLAUDE.md"), "## タスク運用\n\n- タスクの置き場: beads\n")
-    await git(repository, "add", "CLAUDE.md")
+    writeProjectSettings(repository, "beads")
     await commitNewFormatTasks(repository, [
       { id: "T-001", summary: "ファイルは見ない", status: "todo" },
     ])
@@ -559,7 +585,11 @@ function fakePorts(
         ],
       })
     },
-    readTaskStoreAt: () => Promise.resolve({ kind: "read", store: { kind: options.store } }),
+    readProjectSettings: () =>
+      Promise.resolve({
+        kind: "read",
+        tasks: { store: options.store, mainBranch: "main", runPrompt: "/next-task {id}" },
+      }),
     readBeadsIssues: () => {
       calls.push("bd list")
       return Promise.resolve({ kind: "issues", issues: [] })

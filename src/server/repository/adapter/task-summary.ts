@@ -1,8 +1,8 @@
 // `main` のタスク一覧を見張る。
-// `main` の先端のコミットが変わったとき、台帳の着手の印が変わったとき、または Beads の課題が変わったときに読み直し、`onChange` を呼ぶ。
+// `main` の先端のコミットが変わったとき、プロジェクトの設定が変わったとき、台帳の着手の印が変わったとき、または Beads の課題が変わったときに読み直し、`onChange` を呼ぶ。
 //
-// どこから読むかは `main` の先端の設定ファイル（AGENTS.md → CLAUDE.md）の `- タスクの置き場:` 行で決める。
-// 作業ツリーの設定ファイルは見ない（`main` へ送るまで方式が変わらない）。
+// どこから読むかはプロジェクトの設定（`readProjectSettings`）の `tasks.store` で決める。
+// 設定は見回りのたびに読み直す（画面から書いた値が `main` を動かさずに次の見回りで効く）。
 //
 // ファイル方式: 読むのは作業ツリーのファイルではなく `main` の上の `develop/task/*.md` の front matter。
 // 作業ツリーのものは `git merge main` するまで別の作業ツリーで足したタスクを知らない。
@@ -19,7 +19,7 @@
 // 見回りは `setWatching(true)` のあいだだけ回る。起こした時点の1回は、画面が無くても読む。
 // 止めているあいだも覚えた状態は残し、再開の1回で変わっていれば `onChange` する。
 //
-// `main` が読めないとき（git リポジトリでない・`main` ブランチが無い・`git` が無い）、ファイル方式で `develop/task/` が無いとき、Beads 方式で `bd` が読めないとき、方式の行が読めないときは「不明」にする。
+// `main` が読めないとき（git リポジトリでない・`main` ブランチが無い・`git` が無い）、ファイル方式で `develop/task/` が無いとき、Beads 方式で `bd` が読めないとき、プロジェクトの設定が無い・読めないときは「不明」にする。
 // 作業ツリーのファイルへは落とさない。落とすと読み元が2つになり、`main` の名前が違うリポジトリで一覧が黙って古いほうへ戻る（「不明」なら画面で気付ける）。
 // `git`・`bd` がタイムアウトしたときだけはその回を諦め、覚えている状態も変えない（「不明」にすると一覧が一瞬消えて戻る）。
 //
@@ -32,6 +32,7 @@ import { basename, join } from "node:path"
 import { isDeepEqual } from "remeda"
 
 import { taskSummaryItemsOfBeadsIssues } from "../../../shared/repository/beads-issue.ts"
+import type { ProjectSettingsRead } from "../../../shared/repository/project-settings.ts"
 import {
   parseNewTaskFile,
   taskSummaryItemsOfNewTaskFiles,
@@ -41,7 +42,7 @@ import {
 } from "../../../shared/repository/task-summary.ts"
 import { createBeadsStampReader, readBeadsIssues } from "./beads.ts"
 import { runGit, runGitCatFileBatch } from "./git.ts"
-import { readTaskStoreAt } from "./task-store.ts"
+import { readProjectSettings } from "./project-settings.ts"
 
 /**
  * 見回りの間隔。`git` は `git rev-parse` 1回が手元で約10msなので、毎回起こしても負荷は無視できる。
@@ -88,7 +89,7 @@ export type TaskSummaryClock = {
 export type TaskSummaryPorts = {
   readonly runGit: typeof runGit
   readonly runGitCatFileBatch: typeof runGitCatFileBatch
-  readonly readTaskStoreAt: typeof readTaskStoreAt
+  readonly readProjectSettings: typeof readProjectSettings
   readonly readBeadsIssues: typeof readBeadsIssues
   readonly createBeadsStampReader: typeof createBeadsStampReader
   /** 台帳の着手の印の置き場の中の、ディレクトリ名の集合。読めないときは空。 */
@@ -104,7 +105,7 @@ export type TaskSummaryOptions = {
 export const REAL_TASK_SUMMARY_PORTS = {
   runGit,
   runGitCatFileBatch,
-  readTaskStoreAt,
+  readProjectSettings,
   readBeadsIssues,
   createBeadsStampReader,
   readClaimDir: readClaimDirEntries,
@@ -148,7 +149,7 @@ export function watchTaskSummary(
     readClaimedIds: createClaimedIdsReader(cwd, ports),
     readBeadsStamp: ports.createBeadsStampReader(cwd),
   }
-  let cache: WatcherCache = { kind: "other", head: undefined }
+  let cache: WatcherCache = { kind: "other", head: undefined, settings: { kind: "none" } }
   let cancelTimer: (() => void) | undefined = undefined
   let watching = false
   let polling = false
@@ -208,26 +209,34 @@ export function watchTaskSummary(
   }
 }
 
+/** 一覧を読んだ元。前回見た `main` の先端と、そのとき読んだプロジェクトの設定。 */
+type ReadPoint = {
+  readonly head: string
+  readonly settings: ProjectSettingsRead
+}
+
 /**
- * 見回りのあいだ覚えておく状態。`head` は前回見た `main` の先端。
+ * 見回りのあいだ覚えておく状態。
  * - `task-dir`: ファイル方式で `develop/task/` がある。読んだ front matter とそのときの台帳の印を持つ（先端が動かないあいだ、印だけの変化をファイルを読み直さずに拾うため）
  * - `beads`: Beads 方式。前回知らせた要約と、そのとき読んだ変化の印（取れなければ `undefined`）を持つ（`bd` の読み直しが要るか、変わったかを比べるため）
- * - `other`: それ以外（`develop/task/` が無い・方式の行が読めない・不明）。先端だけ（`main` が読めなければ `undefined`）
+ * - `other`: それ以外（`develop/task/` が無い・設定が無い・読めない・不明）。先端は `main` が読めなければ `undefined`
  */
 type WatcherCache =
-  | {
+  | (ReadPoint & {
       readonly kind: "task-dir"
-      readonly head: string
       readonly files: readonly NewTaskFile[]
       readonly claimedIds: ReadonlySet<string>
-    }
-  | {
+    })
+  | (ReadPoint & {
       readonly kind: "beads"
-      readonly head: string
       readonly result: TaskSummaryResult
       readonly stamp: string | undefined
+    })
+  | {
+      readonly kind: "other"
+      readonly head: string | undefined
+      readonly settings: ProjectSettingsRead
     }
-  | { readonly kind: "other"; readonly head: string | undefined }
 
 /**
  * 1回の見回りの結果。`refreshed` は知らせるものは無いが、覚える状態だけ差し替える。
@@ -242,10 +251,11 @@ type MainTasksRead =
     }
 
 /**
- * `main` の先端を取る。先端が変わっていれば {@link readAtHead} で中身から読み直す。
- * 先端が前回と同じでも、ファイル方式なら台帳の着手の印だけ、Beads 方式なら `bd` の一覧を読み直す（着手・解除・完了は `main` を動かさないため）。
+ * プロジェクトの設定と `main` の先端を取る。先端か設定が変わっていれば {@link readAtHead} で中身から読み直す。
+ * どちらも前回と同じなら、ファイル方式は台帳の着手の印だけ、Beads 方式は `bd` の一覧を読み直す（着手・解除・完了は `main` を動かさないため）。
  */
 async function pollOnce(reader: Reader, cache: WatcherCache): Promise<MainTasksRead> {
+  const settings = await reader.ports.readProjectSettings(reader.cwd)
   const revParse = await reader.ports.runGit(reader.cwd, [
     "rev-parse",
     "--verify",
@@ -257,8 +267,11 @@ async function pollOnce(reader: Reader, cache: WatcherCache): Promise<MainTasksR
   }
 
   const head = revParse.kind === "output" ? revParse.stdout.trim() : undefined
-  if (head !== cache.head) {
-    return readAtHead(reader, head)
+  if (head === undefined) {
+    return head === cache.head ? { kind: "unchanged" } : unknownAt(head, settings)
+  }
+  if (head !== cache.head || !isDeepEqual(settings, cache.settings)) {
+    return readAtHead(reader, { head, settings })
   }
 
   switch (cache.kind) {
@@ -301,7 +314,7 @@ async function rereadBeads(
     return { kind: "unchanged" }
   }
 
-  const read = await readBeadsAtHead(reader, cache.head, stamp)
+  const read = await readBeadsAtHead(reader, cache, stamp)
   if (read.kind === "unchanged") {
     return read
   }
@@ -312,30 +325,20 @@ async function rereadBeads(
 }
 
 /**
- * 先端（`head`）が変わったときの読み直し。
+ * 先端か設定が変わったときの読み直し。
  * 中身は先端を取ったコミットから読む（`main` という名前で読むと、2回の `git` の間に `main` が進んだとき、覚える先端と読んだ中身がずれる）。
- * 先に設定ファイルから方式を決め、その方式の読み元だけを読む。
+ * 設定の方式の読み元だけを読む。
  */
-async function readAtHead(reader: Reader, head: string | undefined): Promise<MainTasksRead> {
-  if (head === undefined) {
-    return unknownAt(head)
+async function readAtHead(reader: Reader, at: ReadPoint): Promise<MainTasksRead> {
+  if (at.settings.kind !== "read") {
+    return unknownAt(at.head, at.settings)
   }
 
-  const config = await reader.ports.readTaskStoreAt(reader.cwd, head)
-  if (config.kind === "timed-out") {
-    return { kind: "unchanged" }
-  }
-  if (config.kind === "failed") {
-    return unknownAt(head)
-  }
-
-  switch (config.store.kind) {
-    case "invalid":
-      return unknownAt(head)
+  switch (at.settings.tasks.store) {
     case "beads":
-      return readBeadsAtHead(reader, head, await reader.readBeadsStamp())
+      return readBeadsAtHead(reader, at, await reader.readBeadsStamp())
     case "files":
-      return readTaskDirAtHead(reader, head)
+      return readTaskDirAtHead(reader, at)
   }
 }
 
@@ -345,7 +348,7 @@ async function readAtHead(reader: Reader, head: string | undefined): Promise<Mai
  */
 async function readBeadsAtHead(
   reader: Reader,
-  head: string,
+  at: ReadPoint,
   stamp: string | undefined,
 ): Promise<MainTasksRead> {
   const beads = await reader.ports.readBeadsIssues(reader.cwd)
@@ -357,15 +360,19 @@ async function readBeadsAtHead(
     beads.kind === "issues"
       ? { kind: "known", items: taskSummaryItemsOfBeadsIssues(beads.issues) }
       : { kind: "unknown" }
-  return { kind: "changed", cache: { kind: "beads", head, result, stamp }, result }
+  return {
+    kind: "changed",
+    cache: { kind: "beads", head: at.head, settings: at.settings, result, stamp },
+    result,
+  }
 }
 
 /** ファイル方式の一覧を読む。`develop/task/` が無ければ「不明」にする。 */
-async function readTaskDirAtHead(reader: Reader, head: string): Promise<MainTasksRead> {
+async function readTaskDirAtHead(reader: Reader, at: ReadPoint): Promise<MainTasksRead> {
   const taskDirListing = await reader.ports.runGit(reader.cwd, [
     "ls-tree",
     "--name-only",
-    head,
+    at.head,
     TASK_DIR_PATH,
   ])
   if (taskDirListing.kind === "timed-out") {
@@ -375,17 +382,17 @@ async function readTaskDirAtHead(reader: Reader, head: string): Promise<MainTask
   const taskFilePaths =
     taskDirListing.kind === "output" ? taskFilePathsOf(taskDirListing.stdout) : []
   if (taskFilePaths.length === 0) {
-    return unknownAt(head)
+    return unknownAt(at.head, at.settings)
   }
 
-  return readTasksAtHead(reader, head, taskFilePaths)
+  return readTasksAtHead(reader, at, taskFilePaths)
 }
 
-/** 「不明」にして、先端だけを覚える。 */
-function unknownAt(head: string | undefined): MainTasksRead {
+/** 「不明」にして、先端と設定だけを覚える。 */
+function unknownAt(head: string | undefined, settings: ProjectSettingsRead): MainTasksRead {
   return {
     kind: "changed",
-    cache: { kind: "other", head },
+    cache: { kind: "other", head, settings },
     result: { kind: "unknown" },
   }
 }
@@ -393,18 +400,18 @@ function unknownAt(head: string | undefined): MainTasksRead {
 /** `develop/task/` の中身を、1回の `git cat-file --batch` と台帳の着手の印から組み立てる。 */
 async function readTasksAtHead(
   reader: Reader,
-  head: string,
+  at: ReadPoint,
   taskFilePaths: readonly string[],
 ): Promise<MainTasksRead> {
   const batch = await reader.ports.runGitCatFileBatch(
     reader.cwd,
-    taskFilePaths.map((path) => `${head}:${path}`),
+    taskFilePaths.map((path) => `${at.head}:${path}`),
   )
   if (batch.kind === "timed-out") {
     return { kind: "unchanged" }
   }
   if (batch.kind === "failed") {
-    return unknownAt(head)
+    return unknownAt(at.head, at.settings)
   }
 
   const files = taskFilePaths.flatMap((path, index) => {
@@ -419,7 +426,13 @@ async function readTasksAtHead(
   const claimedIds = await reader.readClaimedIds()
   return {
     kind: "changed",
-    cache: { kind: "task-dir", head, files: parsedFiles, claimedIds },
+    cache: {
+      kind: "task-dir",
+      head: at.head,
+      settings: at.settings,
+      files: parsedFiles,
+      claimedIds,
+    },
     result: { kind: "known", items: taskSummaryItemsOfNewTaskFiles(parsedFiles, claimedIds) },
   }
 }

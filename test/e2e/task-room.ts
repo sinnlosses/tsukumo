@@ -4,13 +4,14 @@ import { join } from "node:path"
 import type { Locator } from "playwright-core"
 
 import { claimTask, git, initGitRepository } from "../fixture/git-repository.ts"
+import { writeProjectSettings } from "../fixture/project-settings.ts"
 import type { DomRootName, ScenarioOptions, ScenarioRoom, ScenarioRun } from "./scenario-run.ts"
 
 // タスクの一覧とタスクのモーダルの E2E の足場（docs/architecture/testing.md「E2E のシナリオの一覧」）。
 // この一覧だけは疑似セッションの
 // 場面ではなく、cwd の `main` にある `develop/task/*.md` が元になる
-// （読み方は `watchTaskSummary` のコメント）。足場として、一時の cwd に `git init` して `develop/task/` を
-// 手書きし、`main` へコミットする。
+// （読み方は `watchTaskSummary` のコメント）。足場として、一時の cwd に `git init` してファイル方式の
+// プロジェクトの設定を置き、`develop/task/` を手書きして `main` へコミットする。
 //
 // リポジトリを作るのは、`open` が部屋を渡した（ブラウザが繋がった）あとにする。
 // 起こす前や繋がる前に用意すると、tsukumo の最初の見回り（起こした時点で1回走る）が
@@ -76,7 +77,7 @@ export async function openTaskListRoom(
 ): Promise<ScenarioRoom> {
   const room = await run.open({ scenario, scene: "none", viewport: "wide", domRoots })
 
-  await initGitRepository(room.cwd)
+  await initTaskRepository(room.cwd)
   writeTask(room.cwd, "T-001", "架空のタスク（未着手）", "todo")
   writeTask(room.cwd, "T-002", "架空のタスク（完了）", "done")
   await git(room.cwd, "add", "develop/task")
@@ -98,7 +99,7 @@ export async function openTaskListRoomWithRunningTask(
 ): Promise<ScenarioRoom> {
   const room = await run.open({ scenario, scene: "none", viewport, domRoots })
 
-  await initGitRepository(room.cwd)
+  await initTaskRepository(room.cwd)
   writeTask(room.cwd, "T-001", "架空のタスク（未着手）", "todo")
   writeTask(room.cwd, "T-002", "架空のタスク（完了）", "done")
   writeTask(room.cwd, "T-003", "架空のタスク（進行中）", "todo")
@@ -123,7 +124,7 @@ export async function openReportTaskRoom(
   const room = await run.open({ scenario, scene, viewport: "wide", domRoots })
   await room.waitForEvent("turn-finished")
 
-  await initGitRepository(room.cwd)
+  await initTaskRepository(room.cwd)
   writeTask(room.cwd, "T-001", "架空のタスク（一覧の先頭）", "todo")
   writeTask(room.cwd, "T-002", "架空のタスク（レポートが指すもの）", "todo")
   await git(room.cwd, "add", "develop/task")
@@ -145,7 +146,7 @@ export async function openTaskBoardRoom(
 ): Promise<ScenarioRoom> {
   const room = await run.open({ scenario, scene: "none", viewport, domRoots })
 
-  await initGitRepository(room.cwd)
+  await initTaskRepository(room.cwd)
   writeTaskFile(room.cwd, {
     id: "T-001",
     summary: "架空のタスク（`code` を含む要約）",
@@ -212,7 +213,7 @@ export async function openTaskBoardJumpRoom(
 ): Promise<ScenarioRoom> {
   const room = await run.open({ scenario, scene: "none", viewport, domRoots: ["task-board"] })
 
-  await initGitRepository(room.cwd)
+  await initTaskRepository(room.cwd)
   writeTaskFile(room.cwd, {
     id: "T-001",
     summary: "架空のタスク（つながりの起点）",
@@ -303,10 +304,16 @@ export const BLOCKED_TASK_ID = "T-002"
 
 /** 依頼前の迎える口の足場。着手できるタスクと依存で止まるタスクを書いて、一覧が届くのを待つ。 */
 export async function writeWelcomeTasks(room: ScenarioRoom): Promise<void> {
-  await initGitRepository(room.cwd)
+  await initTaskRepository(room.cwd)
   writeTask(room.cwd, READY_TASK_ID, "架空のタスク（着手できる）", "todo")
   writeTask(room.cwd, BLOCKED_TASK_ID, "架空のタスク（依存で止まる）", "todo", [READY_TASK_ID])
   await git(room.cwd, "add", "develop/task")
   await git(room.cwd, "commit", "--quiet", "-m", "架空のタスク一覧")
   await room.waitForEvent("tasks-changed")
+}
+
+/** `git init` して、ファイル方式のプロジェクトの設定を置く。 */
+async function initTaskRepository(cwd: string): Promise<void> {
+  await initGitRepository(cwd)
+  writeProjectSettings(cwd, "files")
 }

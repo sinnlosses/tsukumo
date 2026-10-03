@@ -1,0 +1,60 @@
+// プロジェクトの設定（起動先の `.tsukumo/project.json`）の形と検証。
+// tsukumo が動くときに読むのはこのファイルだけで、CLAUDE.md や git の状態から値を推し量らない。
+//
+// ファイルI/Oは持たない。ファイルを読むのは `readProjectSettings`。
+
+import { z } from "zod"
+
+export const TASK_STORES = ["files", "beads"] as const
+
+/** タスクの置き場。`files` は `main` の `develop/task/`、`beads` は `bd`。 */
+export type TaskStore = (typeof TASK_STORES)[number]
+
+/** 「tsukumo に頼む」で送る文面の既定。`{id}` をタスクIDに置き換えて送る。 */
+export const DEFAULT_RUN_PROMPT = "/next-task {id}"
+
+export type TaskSettings = {
+  readonly store: TaskStore
+  readonly mainBranch: string
+  readonly runPrompt: string
+}
+
+/**
+ * プロジェクトの設定を読んだ結果。
+ * - `none`: タスク運用なし（ファイルが無い・`tasks` が無い）
+ * - `invalid`: 読めない（JSON が壊れている・形が違う）。既定へ倒さない
+ * - `read`: 読めた
+ */
+export type ProjectSettingsRead =
+  | { readonly kind: "none" }
+  | { readonly kind: "invalid" }
+  | { readonly kind: "read"; readonly tasks: TaskSettings }
+
+const projectSettingsSchema = z.strictObject({
+  tasks: z
+    .strictObject({
+      store: z.enum(TASK_STORES),
+      mainBranch: z.string().min(1),
+      runPrompt: z.string().min(1).default(DEFAULT_RUN_PROMPT),
+    })
+    .optional(),
+})
+
+/** 在るファイルの中身を検証する（無いファイルは呼ぶ側が `none` にする）。 */
+export function projectSettingsOf(content: string): ProjectSettingsRead {
+  const parsed = projectSettingsSchema.safeParse(parseJson(content))
+  if (!parsed.success) {
+    return { kind: "invalid" }
+  }
+  const { tasks } = parsed.data
+  return tasks === undefined ? { kind: "none" } : { kind: "read", tasks }
+}
+
+/** 構文が壊れていれば `undefined`（スキーマが `invalid` にする）。 */
+function parseJson(content: string): unknown {
+  try {
+    return JSON.parse(content)
+  } catch {
+    return undefined
+  }
+}
