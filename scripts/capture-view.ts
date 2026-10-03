@@ -22,7 +22,8 @@
 // 最中の要素に付ける `data-revealing` がページから消えるのも待つ。 演出中の要素は `clip-path` で
 // 隠すだけで DOM には残り、大きさも変わらないので、要素が現れたことだけでは筆の途中を撮って
 // しまう。どちらも上限を超えたら screenshot を撮らずに終わる（黙って空の画面を撮らない）。
-// 演出そのものは打ち切らない（生きたタブを操作で進めると、そのタブを見ている人の体験を変えてしまう）。
+// 演出は打ち切らず、この道具が開いたページの時計を進めて終わらせる（長いレポートでも上限に
+// 当たらない。生きたタブには触れず、操作もしない）。
 //
 // 撮った画像はリポジトリに置かない（既定の出力先は /tmp）。ビューには会話の内容が写るので、
 // 画像もその扱いに従う（`docs/coding-standards.md`「会話内容の扱い」— 別の場所に複製しない。
@@ -50,6 +51,12 @@ const SETTLE_TIMEOUT_MS = 10_000
 
 /** `--wait-for` が要素の出現と、演出の終わりをそれぞれ待つ上限（ミリ秒）。 */
 const WAIT_FOR_TIMEOUT_MS = 15_000
+
+/** 演出の終わりを待つあいだ、ブラウザの時計を1回に進める量（ミリ秒）。 */
+const REVEAL_ADVANCE_MS = 1_000
+
+/** 時計を進めるたびに実時間で空ける間隔（ミリ秒）。待った実時間の数え上げにも使う。 */
+const REVEAL_POLL_MS = 50
 
 /** `--scene` で起こした tsukumo が配信 URL を出すまで待つ上限（ミリ秒）。 */
 const LAUNCH_TIMEOUT_MS = 30_000
@@ -183,6 +190,9 @@ async function capture(
     const page = await browser.newPage({
       viewport: { width: options.width, height: options.height },
     })
+    if (options.waitFor !== undefined) {
+      await page.clock.install()
+    }
     await page.goto(url, { waitUntil: "domcontentloaded" })
     // SSE / WebSocket を繋ぎっぱなしにするページなので `networkidle` は永遠に来ない。
     // 最初の描画が落ち着くのを、本文が入る領域が現れるまでで待つ。
@@ -223,11 +233,14 @@ function repositoryRoot(): string {
 async function waitForRevealSettled(page: Page, selector: string): Promise<boolean> {
   try {
     await page.waitForSelector(selector, { timeout: WAIT_FOR_TIMEOUT_MS })
-    await page.waitForSelector(REVEALING_SELECTOR, {
-      state: "detached",
-      timeout: WAIT_FOR_TIMEOUT_MS,
-    })
-    return true
+    for (let waited = 0; waited < WAIT_FOR_TIMEOUT_MS; waited += REVEAL_POLL_MS) {
+      if ((await page.$(REVEALING_SELECTOR)) === null) {
+        return true
+      }
+      await page.clock.runFor(REVEAL_ADVANCE_MS)
+      await page.waitForTimeout(REVEAL_POLL_MS)
+    }
+    return false
   } catch {
     return false
   }
