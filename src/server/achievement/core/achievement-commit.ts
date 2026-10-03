@@ -3,6 +3,8 @@
 //
 // 会話の文面は扱わない。運ぶのはコミットの数だけ。
 
+import { isTaskLedgerPath } from "../../../shared/repository/task-file-ledger.ts"
+
 /** `git log` から読んだコミット1件（呼び出し側が `--name-only` の出力を割ったもの）。 */
 export type AchievementCommit = {
   readonly hash: string
@@ -34,7 +36,7 @@ export function achievementCommitsInRange(
     (commit) =>
       commit.committedAtEpochSeconds >= startEpochSeconds &&
       commit.committedAtEpochSeconds < endEpochSeconds &&
-      !commit.changedFiles.every(isLedgerPath),
+      !commit.changedFiles.every(isTaskLedgerPath),
   )
 }
 
@@ -74,21 +76,10 @@ export function achievementCommitCountsByDate(
 ): ReadonlyMap<string, number> {
   const counts = new Map<string, number>()
   for (const commit of commits) {
-    if (commit.changedFiles.every(isLedgerPath)) {
+    if (commit.changedFiles.every(isTaskLedgerPath)) {
       continue
     }
     counts.set(commit.localDateKey, (counts.get(commit.localDateKey) ?? 0) + 1)
   }
   return counts
-}
-
-/** コミットの数から外すファイル（運用の帳面）。 */
-function isLedgerPath(path: string): boolean {
-  return (
-    path === "develop/tasks.json" ||
-    path === "develop/progress.md" ||
-    path.startsWith("develop/task/") ||
-    path === "docs/history/tasks.md" ||
-    path === "docs/history/progress.md"
-  )
 }

@@ -5,7 +5,7 @@
 // 例外はプロジェクトの設定（`readProjectSettings`）で、主ブランチの名前（`tasks.mainBranch`）とタスクの方式をここから読む。設定が無い・読めないときは主ブランチを読まず、`unknown` にする。
 //
 // Beads 方式（プロジェクトの設定の `tasks.store` が `beads`）では、終えたタスクを git の切り口と Beads の閉じた課題（`closed_at`）の両方から読み、ID で和をとる。
-// 移す前は Beads に閉じた課題が無く、移したあとは `main` に `develop/task/` が無いので、境を数で持たなくても欠けず、同じ ID が両方にあっても1件にしかならない。
+// 移す前は Beads に閉じた課題が無く、移したあとは `main` にタスクファイルが無いので、境を数で持たなくても欠けず、同じ ID が両方にあっても1件にしかならない。
 //
 // 主ブランチが読めない（git リポジトリでない・設定の名前のブランチが無い・`git` が無い）ときは `DailyAchievement` の `{ kind: "unknown" }`（200 のまま配ってよい）。
 // それ以外の `git` の呼び出しがタイムアウト・失敗したときは `{ kind: "unavailable" }` で、呼び出し側が 503 にする（部分的な数を出さない）。
@@ -19,6 +19,13 @@ import {
 import type { DailyAchievement } from "../../../shared/achievement/achievement.ts"
 import { taskIdOfBeadsId, type BeadsIssue } from "../../../shared/repository/beads-issue.ts"
 import { mainBranchRefOf, type TaskSettings } from "../../../shared/repository/project-settings.ts"
+import {
+  LEGACY_ARCHIVE_PATH,
+  LEGACY_TASKS_PATH,
+  TASK_LEDGER_HISTORY_PATHS,
+  taskFileIdOfPath,
+} from "../../../shared/repository/task-file-ledger.ts"
+import { TASK_DIR_PATH } from "../../../shared/repository/task-summary.ts"
 import { localDateEpochRange, localDateKey, localTimeHHMM } from "../../adapter/local-time.ts"
 import { readBeadsIssues } from "../../repository/adapter/beads.ts"
 import { runGit, runGitCatFileBatch } from "../../repository/adapter/git.ts"
@@ -31,11 +38,10 @@ import {
 } from "../core/achievement-commit.ts"
 import { dailyAchievementOf, epochSecondsOf } from "../core/daily-achievement.ts"
 import { hasTaskTracking, type TaskSnapshotSource } from "../core/done-task-source.ts"
-import {
-  taskFileIdOfPath,
-  type DeletedTaskFile,
-  type TaskFileChange,
-  type TaskFileHistoryCommit,
+import type {
+  DeletedTaskFile,
+  TaskFileChange,
+  TaskFileHistoryCommit,
 } from "../core/task-file-history.ts"
 
 /**
@@ -69,12 +75,6 @@ export function createAchievementCommitCache(): AchievementCommitCache {
     },
   }
 }
-
-const TASKS_FILE_PATH = "develop/tasks.json"
-const ARCHIVE_FILE_PATH = "docs/history/tasks.md"
-
-/** 末尾の `/` を付けて `git ls-tree` に渡すと、そのディレクトリ自身の1行ではなく直下の一覧になる。 */
-const TASK_DIR_PATH = "develop/task/"
 
 /**
  * `git log --since` に持たせる余裕。
@@ -482,8 +482,8 @@ async function readTaskSnapshotSource(
 
   const batch = await runGitCatFileBatch(cwd, [
     ...taskFilePaths.map((path) => `${cutoff}:${path}`),
-    `${cutoff}:${TASKS_FILE_PATH}`,
-    `${cutoff}:${ARCHIVE_FILE_PATH}`,
+    `${cutoff}:${LEGACY_TASKS_PATH}`,
+    `${cutoff}:${LEGACY_ARCHIVE_PATH}`,
   ])
   if (batch.kind !== "output") {
     return "unavailable"
@@ -538,7 +538,7 @@ type RawTaskFileHistoryCommit = {
 }
 
 /**
- * `develop/task/` と `develop/tasks.json` の出入りを、`git log --name-status` 1回で読む。
+ * タスクファイルと旧形式の一覧の出入りを、`git log --name-status` 1回で読む。
  * `git` が失敗・タイムアウトしたら `undefined`。
  */
 async function readTaskFileHistory(
@@ -552,8 +552,7 @@ async function readTaskFileHistory(
     `--format=${COMMIT_RECORD_SEPARATOR}%H %ct`,
     "--name-status",
     "--",
-    TASK_DIR_PATH,
-    TASKS_FILE_PATH,
+    ...TASK_LEDGER_HISTORY_PATHS,
   ])
   if (result.kind !== "output") {
     return undefined

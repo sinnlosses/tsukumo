@@ -3,7 +3,6 @@ import { describe, expect, it } from "vitest"
 import {
   deletedDoneTaskSummariesBefore,
   graduationsOf,
-  taskFileIdOfPath,
   taskRegistrationDates,
   type DeletedTaskFile,
   type TaskFileHistoryCommit,
@@ -29,17 +28,6 @@ function newTaskFile(
     ].join("\n"),
   }
 }
-
-describe("taskFileIdOfPath", () => {
-  it("develop/task/T-xxx.md から ID を取る", () => {
-    expect(taskFileIdOfPath("develop/task/T-561.md")).toBe("T-561")
-  })
-
-  it("当てはまらないパスは undefined", () => {
-    expect(taskFileIdOfPath("develop/tasks.json")).toBeUndefined()
-    expect(taskFileIdOfPath("docs/history/tasks.md")).toBeUndefined()
-  })
-})
 
 function historyCommit(
   localDateKey: string,

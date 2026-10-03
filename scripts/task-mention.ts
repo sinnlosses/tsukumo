@@ -58,6 +58,7 @@ const ALLOWED_DATA_FILES = [
   "test/server/achievement/core/daily-achievement.test.ts",
   "test/server/repository/adapter/task-summary.test.ts",
   "test/server/achievement/adapter/main-history.test.ts",
+  "test/shared/repository/task-file-ledger.test.ts",
   "test/shared/repository/task-summary.test.ts",
   "test/shared/repository/beads-issue.test.ts",
   "test/shared/achievement/achievement.test.ts",

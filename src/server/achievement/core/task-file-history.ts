@@ -7,25 +7,21 @@
 import { prop, sortBy } from "remeda"
 
 import type { AchievementGraduation } from "../../../shared/achievement/achievement.ts"
+import {
+  isTaskFormatSwitchChange,
+  taskFileIdOfPath,
+} from "../../../shared/repository/task-file-ledger.ts"
 import { parseNewTaskFile } from "../../../shared/repository/task-summary.ts"
 import type { TaskSummaryDiffItem } from "./done-task-source.ts"
 
-/** `develop/task/T-xxx.md` のパスから ID を取る。当てはまらなければ `undefined`。 */
-const TASK_FILE_PATH_PATTERN = /^develop\/task\/(T-\d{3,})\.md$/
-
-/** `develop/task/T-xxx.md` のパスから ID を取る（{@link TASK_FILE_PATH_PATTERN}）。 */
-export function taskFileIdOfPath(path: string): string | undefined {
-  return TASK_FILE_PATH_PATTERN.exec(path)?.[1]
-}
-
 /**
- * `git log --name-status` の1行（`A\tdevelop/task/T-xxx.md` の形）。
+ * `git log --name-status` の1行（`A\t<パス>` の形）。
  * R（リネーム）は扱わない（タスクファイルはリネームしない運用のため）。
  */
 export type TaskFileChange = { readonly status: string; readonly path: string }
 
 /**
- * `git log H --first-parent --name-status -- develop/task/ develop/tasks.json` の1コミット分。
+ * `git log H --first-parent --name-status -- <帳面のパス>` の1コミット分。
  * `localDateKey` は committer date をローカルの日付に直したもの。
  */
 export type TaskFileHistoryCommit = {
@@ -36,7 +32,7 @@ export type TaskFileHistoryCommit = {
 
 /**
  * タスクごとの登録日の表。git のタスクファイルは最古の `A` のコミットの日付。
- * `develop/tasks.json` の `D` を含むコミット（形式の切り替え）で入ったファイルは表に入れない（旧形式で登録したタスクとみなす）。
+ * 旧形式の一覧の `D` を含むコミット（形式の切り替え）で入ったファイルは表に入れない（旧形式で登録したタスクとみなす）。
  *
  * `beadsCreatedOn`（Beads の課題の作った日。ファイル方式なら空）は、git のタスクファイルとして一度も現れなかった ID にだけ使う。
  * Beads へ移した課題の作った日は移した日で、登録日ではないため。
@@ -61,10 +57,7 @@ export function taskRegistrationDates(
   }
 
   for (const commit of commits) {
-    const isFormatSwitch = commit.changes.some(
-      (change) => change.status === "D" && change.path === "develop/tasks.json",
-    )
-    if (isFormatSwitch) {
+    if (commit.changes.some(isTaskFormatSwitchChange)) {
       continue
     }
     for (const change of commit.changes) {
@@ -86,7 +79,7 @@ export function taskRegistrationDates(
 }
 
 /**
- * `develop/task/` から消えた（剪定された）ファイル1件。
+ * タスクファイルの置き場から消えた（剪定された）ファイル1件。
  * `content` は消したコミットの親の版（`<コミット>^:<パス>`）で、読めなかったときは `undefined`。
  */
 export type DeletedTaskFile = {

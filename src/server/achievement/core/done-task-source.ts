@@ -4,18 +4,17 @@
 //
 // 会話の文面は扱わない。運ぶのはタスクの ID・summary だけ。
 
-import { isPlainObject } from "remeda"
-
 import type { AchievementMilestone } from "../../../shared/achievement/achievement.ts"
+import { legacyDoneTaskSummaries } from "../../../shared/repository/task-file-ledger.ts"
 import { parseNewTaskFile } from "../../../shared/repository/task-summary.ts"
 
 /** タスクの記録を読むための3つの読み元（呼び出し側が1つの切り口ぶん集めたもの）。 */
 export type TaskSnapshotSource = {
-  /** 新形式（`develop/task/*.md`）。ファイル名と中身の組。 */
+  /** 新形式のタスクファイル。ファイル名と中身の組。 */
   readonly newFormatFiles: readonly { readonly name: string; readonly content: string }[]
-  /** 旧形式（`develop/tasks.json`）。無ければ `undefined`（その切り口に無い）。 */
+  /** 旧形式の一覧。無ければ `undefined`（その切り口に無い）。 */
   readonly oldTasksJson: string | undefined
-  /** アーカイブ（`docs/history/tasks.md`）。無ければ `undefined`。 */
+  /** 旧形式のアーカイブ。無ければ `undefined`。 */
   readonly archiveMarkdown: string | undefined
 }
 
@@ -46,23 +45,10 @@ export function doneTaskSummaries(source: TaskSnapshotSource): ReadonlyMap<strin
     }
   }
 
-  if (source.oldTasksJson !== undefined) {
-    for (const task of oldFormatDoneTasksOf(source.oldTasksJson)) {
-      if (!doneTasks.has(task.id)) {
-        doneTasks.set(task.id, task.summary)
-      }
-    }
-  }
-
-  if (source.archiveMarkdown !== undefined) {
-    for (const task of archivedDoneTasksOf(source.archiveMarkdown)) {
-      if (!doneTasks.has(task.id)) {
-        doneTasks.set(task.id, task.summary)
-      }
-    }
-  }
-
-  return doneTasks
+  return unionDoneTaskSummaries(
+    doneTasks,
+    legacyDoneTaskSummaries(source.oldTasksJson, source.archiveMarkdown),
+  )
 }
 
 /** {@link doneTasksSince} が返す1件。 */
@@ -123,86 +109,4 @@ export function taskMilestoneOf(
   return crossed === undefined
     ? undefined
     : { kind: "task", count: crossed.count, taskId: crossed.taskId }
-}
-
-// --- 旧形式（develop/tasks.json）。過去の切り口にだけ現れる。passes まで読む。 ---
-
-type OldFormatDoneTask = { readonly id: string; readonly summary: string }
-
-function oldFormatDoneTasksOf(content: string): readonly OldFormatDoneTask[] {
-  let parsed: unknown
-  try {
-    parsed = JSON.parse(content)
-  } catch {
-    return []
-  }
-  if (!Array.isArray(parsed)) {
-    return []
-  }
-  return parsed.flatMap((task) => oldFormatDoneTaskOf(task))
-}
-
-function oldFormatDoneTaskOf(task: unknown): readonly OldFormatDoneTask[] {
-  if (!isPlainObject(task) || typeof task.id !== "string") {
-    return []
-  }
-  if (task.status !== "done" || task.passes !== true) {
-    return []
-  }
-  const summary =
-    typeof task.summary === "string" && task.summary !== "" ? task.summary : firstLineOf(task.task)
-  return summary === undefined ? [] : [{ id: task.id, summary }]
-}
-
-function firstLineOf(value: unknown): string | undefined {
-  if (typeof value !== "string" || value === "") {
-    return undefined
-  }
-  return value.split("\n")[0]
-}
-
-// --- アーカイブ（docs/history/tasks.md）。 ---
-
-/** 節の見出し（`## T-XXX <名前>` または名前無しの `## T-XXX`）。 */
-const ARCHIVE_HEADING_PATTERN = /^## (T-\d{3,})[ \t]*(.*)$/
-/** `passes:` の値。バックティック付き／無し、大文字小文字、`yes` の揺れをすべて拾う（`docs/history/tasks.md` に実際に出てくる形）。 */
-const ARCHIVE_PASSES_PATTERN = /\*\*passes\*\*:\s*`?([A-Za-z]+)`?/
-/** 見出しに名前が無い古い節が使う「タスク: <summary>」行。 */
-const ARCHIVE_TASK_LINE_PATTERN = /^\*\*タスク\*\*:\s*(.+)$/m
-const ARCHIVE_PASSING_VALUES = new Set(["true", "yes"])
-
-/**
- * `docs/history/tasks.md` から `done`（`passes` が真）の節だけを拾う。
- * 節の境界は次の見出し（`## T-XXX`）なので、本文の中に別の `passes:` らしき文字列があっても後の節の値を誤って拾わない。
- * 壊れた・読めない節はその1件だけ読み飛ばす。
- */
-function archivedDoneTasksOf(content: string): readonly OldFormatDoneTask[] {
-  const sections = content.split(/\n(?=## T-\d{3,})/)
-  return sections.flatMap((section) => archivedDoneTaskOfSection(section))
-}
-
-function archivedDoneTaskOfSection(section: string): readonly OldFormatDoneTask[] {
-  const headingLine = section.split("\n", 1)[0] ?? ""
-  const heading = ARCHIVE_HEADING_PATTERN.exec(headingLine)
-  if (heading === null) {
-    return []
-  }
-  const id = heading[1]
-  if (id === undefined) {
-    return []
-  }
-
-  const passesMatch = ARCHIVE_PASSES_PATTERN.exec(section)
-  const passesValue = passesMatch?.[1]?.toLowerCase()
-  if (passesValue === undefined || !ARCHIVE_PASSING_VALUES.has(passesValue)) {
-    return []
-  }
-
-  const titleFromHeading = heading[2]?.trim()
-  const summary =
-    titleFromHeading !== undefined && titleFromHeading !== ""
-      ? titleFromHeading
-      : ARCHIVE_TASK_LINE_PATTERN.exec(section)?.[1]?.trim()
-
-  return summary === undefined || summary === "" ? [] : [{ id, summary }]
 }
