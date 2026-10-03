@@ -386,9 +386,20 @@
   max-width: 100%;
   margin: var(--report-block-gap) 0;
 }
+/* 縮めた包みは、題ごとレポートの幅の中央に置く。 */
 .detail-block .report-captioned-fit {
   width: fit-content;
   min-width: min(100%, 20rem);
+  margin-inline: auto;
+}
+/* mermaid の図は包みを縮めない（`MermaidBlock` の地が親の幅を取る）ので、図そのものと題を中央に置く。
+   `mermaid` の class は `MermaidBlock` が素の名前で付ける。 */
+.detail-block .report-captioned pre:global(.mermaid) svg {
+  display: block;
+  margin-inline: auto;
+}
+.detail-block .report-captioned:has(> pre:global(.mermaid)) > .report-caption {
+  justify-content: center;
 }
 .detail-block .report-captioned > :not(.report-caption) {
   margin-top: 0;
