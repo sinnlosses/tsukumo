@@ -2,8 +2,6 @@
 // 切り替えと画面からの編集で入れ替わるので、可変なのはこのファイルの中だけにする。
 // 呼ぶ側は「いま出しているもの」を関数越しに引くだけで、いつ入れ替わったかを知らなくてよい。
 
-import process from "node:process"
-
 import { resolveBundledDir } from "./server/adapter/bundled-path.ts"
 import {
   createCharacterPack,
@@ -94,12 +92,12 @@ export type CurrentCharacter = {
  * 一覧は読み直せる形で持つ。
  * 画面から立ち絵を変えるとホーム（`~/.tsukumo/characters/`）にパックが現れるので、`character-changed` を組むたびに引き直す。
  */
-export function createCurrentCharacter(config: Config): CurrentCharacter {
+export function createCurrentCharacter(config: Config, cwd: string): CurrentCharacter {
   const defaultPack = readCharacterPack(
-    resolveBundledDir(config.character, process.cwd(), DEFAULT_CHARACTER_DIR_RELATIVE_PATH),
+    resolveBundledDir(config.character, cwd, DEFAULT_CHARACTER_DIR_RELATIVE_PATH),
   )
   const findPacks = (): readonly CharacterPack[] => {
-    const found = listCharacterPacks(process.cwd())
+    const found = listCharacterPacks(cwd)
     // 既定のパックが一覧に無いとき（`TSUKUMO_CHARACTER` で別の場所を指したとき）も選択肢に足す
     // （いま出しているものが `<select>` に無いと、選択の表示がずれる）。
     return found.some((pack) => pack.name === defaultPack.name) ? found : [...found, defaultPack]
@@ -119,7 +117,7 @@ export function createCurrentCharacter(config: Config): CurrentCharacter {
   // 同じものにするため（配った URL が 404 にならない）。
   const event = (): SessionEvent => {
     packs = findPacks()
-    return characterChangedEvent(current, packs, process.cwd())
+    return characterChangedEvent(current, packs, cwd)
   }
 
   // 「画面から選ばれた名前」と「いま出しているパックのまま」を分けて受ける。
@@ -143,7 +141,7 @@ export function createCurrentCharacter(config: Config): CurrentCharacter {
     },
     remember: (pack) => writeRememberedCharacter(pack.name),
     applyEdit: (edit) => {
-      const edited = editCharacterPack(current, packs, edit, process.cwd())
+      const edited = editCharacterPack(current, packs, edit, cwd)
       if (edited === undefined) {
         return undefined
       }
@@ -174,7 +172,7 @@ export function createCurrentCharacter(config: Config): CurrentCharacter {
       return event()
     },
     forgetRememberedLine: (line) => {
-      const lines = forgetRememberedLineFromScreen(current, process.cwd(), line)
+      const lines = forgetRememberedLineFromScreen(current, cwd, line)
       return lines === undefined ? undefined : { kind: "remembered-lines-changed", lines }
     },
     serveAsset: (location, version) => readCharacterAsset(current, packs, location, version),

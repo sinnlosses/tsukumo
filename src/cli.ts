@@ -62,24 +62,27 @@ const USAGE = `tsukumo — キャラクターと一緒に仕事をするため�
  * 終了コードを返す。0 のときはビューサーバとセッションを残したままプロセスを生かし続けるので、
  * 呼び出し側は 0 以外のときだけ `process.exit` する。
  */
-async function main(args: readonly string[]): Promise<number> {
+async function main(args: readonly string[], cwd: string): Promise<number> {
   if (args.includes("--help")) {
     process.stdout.write(USAGE)
     return 0
   }
 
-  // 環境変数を読むのはここだけで、解釈は `readConfig` が持つ。
+  // 環境変数と起こしたディレクトリを読むのはここだけで、環境変数の解釈は `readConfig` が持つ。
   // 写しを渡すのは、Vite の開発サーバ（`startUiDevServer`）があとで `process.env.NODE_ENV` を
   // 書き換えても、claude の子プロセスへ渡す環境に混ざらないようにするため。
-  return run(readConfig({ ...process.env }), { devServer: args.includes("--dev") })
+  return run(readConfig({ ...process.env }), { devServer: args.includes("--dev"), cwd })
 }
 
 /**
  * 打った場所が別のチェックアウトの中なら、そこの bin/tsukumo へ委ねた結果の終了コードを返す。
  * 自分を起こしてよいときは `undefined`。
  */
-async function delegatedExitCode(args: readonly string[]): Promise<number | undefined> {
-  const delegation = decideCheckoutDelegation(readOwnCheckoutRoot(), readCwdCheckout(process.cwd()))
+async function delegatedExitCode(
+  args: readonly string[],
+  cwd: string,
+): Promise<number | undefined> {
+  const delegation = decideCheckoutDelegation(readOwnCheckoutRoot(), readCwdCheckout(cwd))
   if (delegation.kind === "delegate") {
     return delegateToCheckout(delegation.entry, args)
   }
@@ -92,12 +95,13 @@ async function delegatedExitCode(args: readonly string[]): Promise<number | unde
 }
 
 const args = process.argv.slice(2)
-const delegated = await delegatedExitCode(args)
+const cwd = process.cwd()
+const delegated = await delegatedExitCode(args, cwd)
 if (delegated !== undefined) {
   process.exit(delegated)
 }
 
-const exitCode = await main(args)
+const exitCode = await main(args, cwd)
 if (exitCode !== 0) {
   process.exit(exitCode)
 }

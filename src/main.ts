@@ -25,6 +25,8 @@ import { startViewDelivery } from "./view-delivery.ts"
 export type LaunchOptions = {
   /** Vite の開発サーバを差し込むか（`--dev`）。 */
   readonly devServer: boolean
+  /** tsukumo を起こしたディレクトリ。 */
+  readonly cwd: string
 }
 
 /**
@@ -68,7 +70,7 @@ export async function run(config: Config, launch: LaunchOptions): Promise<number
   }
   const fakeSession = fakeReading?.session
 
-  const character = createCurrentCharacter(config)
+  const character = createCurrentCharacter(config, launch.cwd)
 
   // トークン消費の記録の口は1つをここで作ってセッションとビューの両側へ渡す。
   // 置き場（`~/.tsukumo/token-usage/`）を知っているところを増やさない。
@@ -86,6 +88,7 @@ export async function run(config: Config, launch: LaunchOptions): Promise<number
     promptImageShelf,
     reportImageShelf,
     devServer: launch.devServer,
+    cwd: launch.cwd,
   })
   if (!view.ok) {
     process.stderr.write(`tsukumo: ビューを配れない: ${view.reason}\n`)
@@ -103,6 +106,7 @@ export async function run(config: Config, launch: LaunchOptions): Promise<number
     promptImageShelf,
     reportImageShelf,
     viewPort: view.port,
+    cwd: launch.cwd,
   })
   view.connect(session)
 

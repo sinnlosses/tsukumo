@@ -63,6 +63,8 @@ export type ViewDeliveryOptions = {
   readonly promptImageShelf: PromptImageShelf
   /** `image` の塊の画像の棚（`/report-image/` に配る画像の出どころ）。ここは引くだけ。 */
   readonly reportImageShelf: ReportImageShelf
+  /** tsukumo を起こしたディレクトリ。 */
+  readonly cwd: string
   /** Vite の開発サーバを差し込み、`src/browser/` の保存を HMR で当てるか（`--dev`）。 */
   readonly devServer: boolean
 }
@@ -104,8 +106,8 @@ export async function startViewDelivery(options: ViewDeliveryOptions): Promise<V
   const achievementCommitCache = createAchievementCommitCache()
 
   const rpcRouter = createRpcRouter({
-    listRepositoryFiles: () => listRepositoryFiles(process.cwd()),
-    projectName: () => projectNameOf(process.cwd()),
+    listRepositoryFiles: () => listRepositoryFiles(options.cwd),
+    projectName: () => projectNameOf(options.cwd),
     // 「今日」はここで決めて渡す（OS のタイムゾーンに依るので、core は今日が何日かを知らない）。
     readTokenUsageSummary: (days) =>
       summarizeRecentTokenUsage(options.tokenUsageLog, todayLocalDateKey(), days),
@@ -118,8 +120,8 @@ export async function startViewDelivery(options: ViewDeliveryOptions): Promise<V
       const today = todayLocalDateKey()
       const dateKey = resolveAchievementDateKey(selection, today)
       const [result, diary] = await Promise.all([
-        readAchievement(process.cwd(), dateKey, today, achievementCommitCache),
-        readDiaryDay(process.cwd(), dateKey),
+        readAchievement(options.cwd, dateKey, today, achievementCommitCache),
+        readDiaryDay(options.cwd, dateKey),
       ])
       return result.kind === "ok" && result.achievement.kind === "known"
         ? { kind: "ok", achievement: { ...result.achievement, diary } }
@@ -128,8 +130,8 @@ export async function startViewDelivery(options: ViewDeliveryOptions): Promise<V
     // 灯りの暦（直近5週ぶん）。日記のある日の一覧もここで合わせる。
     readAchievementCalendar: async () => {
       const [result, diaryDates] = await Promise.all([
-        readCommitCalendar(process.cwd(), todayLocalDateKey(), achievementCommitCache),
-        listDiaryDates(process.cwd()),
+        readCommitCalendar(options.cwd, todayLocalDateKey(), achievementCommitCache),
+        listDiaryDates(options.cwd),
       ])
       return result.kind === "ok" && result.calendar.kind === "known"
         ? { kind: "ok", calendar: { ...result.calendar, diaryDates } }

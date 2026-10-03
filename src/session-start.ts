@@ -2,7 +2,6 @@
 // 機能ごとの組み立て（`src/wiring/`）を並べ、`createSessionManager` と `createSocketRouter` へ結ぶ。
 
 import { basename, dirname } from "node:path"
-import process from "node:process"
 
 import type { CurrentCharacter } from "./current-character.ts"
 import { createSocketRouter } from "./router.ts"
@@ -46,6 +45,8 @@ export type SessionStartOptions = {
   readonly reportImageShelf: ReportImageShelf
   /** ビューが実際に待ち受けているポート。セッションの印の目印がここから決まる（`sessionTag`）。 */
   readonly viewPort: number
+  /** claude の作業先（tsukumo を起こしたディレクトリ）。 */
+  readonly cwd: string
 }
 
 /** 起こしたセッションと、開いたタブがそれを触るコマンドの手続き。 */
@@ -58,10 +59,8 @@ export type StartedSession = {
 /** セッションを1つ起こし、開いたタブから触れる窓口を返す。 */
 export async function startSession(options: SessionStartOptions): Promise<StartedSession> {
   const { config, character, promptImageShelf } = options
-  // claude の作業先は tsukumo を起こしたディレクトリ（作業ツリーを分けるのは orca の側）。
-  const cwd = process.cwd()
   const context: WiringContext = {
-    cwd,
+    cwd: options.cwd,
     // サーバの時計は1つ（`TSUKUMO_FIXED_CLOCK` なら止まった時計）。
     now: createServerClock(config.fixedClock),
     inheritedEnv: config.inheritedEnv,
@@ -96,14 +95,14 @@ export async function startSession(options: SessionStartOptions): Promise<Starte
     batchIntervalMs: EVENT_BATCH_INTERVAL_MS,
     chatArchive: context.chatArchive,
     // 会話のアーカイブに仕事の行として書く `project`。起動時に1回だけ取る。
-    project: await resolveArchiveProjectName(cwd),
+    project: await resolveArchiveProjectName(context.cwd),
     tokenUsageLog: options.tokenUsageLog,
     contextUsageLog: createContextUsageLog(),
     experienceMetricLog: createExperienceMetricLog(),
     reportUsageLog: createReportUsageLog(),
     promptImageShelf,
     reportImageShelf: options.reportImageShelf,
-    readReportImage: (path) => readReportImageFile(cwd, path),
+    readReportImage: (path) => readReportImageFile(context.cwd, path),
     ...launch.manager,
     ...chat.manager,
     ...visit.manager,

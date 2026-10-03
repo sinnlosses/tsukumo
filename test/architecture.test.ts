@@ -471,6 +471,19 @@ describe("process.env を読む箇所", () => {
   })
 })
 
+// 起こしたディレクトリ（`process.cwd()`）を読むのは入口の cli.ts だけで、以降は引数で配る。
+describe("process.cwd() を読む箇所", () => {
+  it("`process.cwd` を読むのは src/cli.ts だけ", () => {
+    const offenders = listSourceFiles(SRC_ROOT)
+      .filter((relPath) => relPath !== "cli.ts")
+      .filter((relPath) =>
+        /\bprocess\.cwd\b/.test(nonCommentContent(readFileSync(`${SRC_ROOT}/${relPath}`, "utf8"))),
+      )
+
+    expect(offenders).toEqual([])
+  })
+})
+
 // 「いま」を読む場所を2つに保つ。E2E は時計をこの2箇所で凍らせる（サーバは
 // `TSUKUMO_FIXED_CLOCK`、ブラウザは E2E の側で `clock.ts` が呼ぶ関数を差し替える）ので、ほかで
 // 読まれると固定が黙って効かなくなる（docs/architecture/testing.md「E2E の成果物と再現」）。
