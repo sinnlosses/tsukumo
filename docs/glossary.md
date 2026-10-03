@@ -7,7 +7,8 @@ tsukumo で使う固有の用語を、**日本語表記・コード上で使う�
 
 - ここに載せるのは**このプロジェクト固有の概念だけ**。タイムアウト・リトライ・エラー型のような
   一般的なプログラミング概念は載せない
-- **英語識別子はまだコードが無いため「予定」**。実装時にこの表を正典として命名し、
+- **コードに実在する英語識別子は確定**で、`英語識別子` と書く。`src/` に当たらないものだけ
+  `英語識別子（予定）` と書く（まだ名前が決まっていない、または使わなくなった語）。
   変えたくなったら**先にここを直してからコードを直す**
 - 同じものを指す言い方が複数あるときは1つに決め、他は「避ける言い方」に書く
 
@@ -17,8 +18,8 @@ tsukumo で使う固有の用語を、**日本語表記・コード上で使う�
 
 ## このファイルの読み方
 
-現時点では小さいので通読してよい。**25KBを超えたら**、下の索引で用語を1つ特定して
-その見出しだけを読む運用に切り替える:
+約104KBあるので通読しない。下の索引で用語を1つ特定して
+その見出しだけを読む:
 
 ```bash
 sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
@@ -38,7 +39,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### 箱
 
-- **英語識別子（予定）**: 使わない（コード上はホストのポートとして現れる。下記）
+- **英語識別子**: 使わない（コード上はホストのポートとして現れる。下記）
 - **定義**: tsukumo のページを表示する入れ物。いまは Orca のブラウザタブ。ページ自体は
   「どの箱でも動く Web アプリ」として作る
 - **注記**: 箱に頼む仕事は**ページを開くこと（`showView`）1つだけ**
@@ -47,7 +48,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### サイドカー
 
-- **英語識別子（予定）**: 使わない
+- **英語識別子**: 使わない
 - **定義**: **2026-09-11 の方針転換で役目を終えた語。** 本体とは別のペインで常駐し、
   transcript と状態ファイルを読んでビューを配るプロセスを指していた
 - **注記**: いまの tsukumo は Claude Code を**動かす側**であって、横で覗くプロセスではない。
@@ -56,7 +57,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### ペイン
 
-- **英語識別子（予定）**: `pane`
+- **英語識別子**: `pane`
 - **定義**: ターミナルの分割された1区画
 - **注記**: **tsukumo はもうペインを分割しない**（2026-09-11）。画面は1枚のページに収まり、
   ターミナルのペインは tsukumo を起動する1つで足りる。tmux は未導入で、前提にもしない
@@ -64,7 +65,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### サイドバー
 
-- **英語識別子（予定）**: `sidebar`
+- **英語識別子**: `sidebar`
 - **定義**: 画面レイアウトの右上に置く、幅の狭いビュー。会話ではなく「その他情報」を出す
   （`docs/requirements.md` 4.7）
 - **注記**: 中身は上から **(1) タスク一覧 (2) セッション情報** の2区画
@@ -80,7 +81,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### ホスト
 
-- **英語識別子（予定）**: `host`
+- **英語識別子**: `host`
 - **定義**: tsukumo のページを出す相手。実測環境では Orca。**頼む仕事はビューを見せること
   （`showView`）だけ**で、それ以外の依存は持たない
 - **注記**: ホストに依存する操作は1つのポート（`src/server/host/core/host.ts`）の裏に置き、実装は
@@ -91,14 +92,14 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### 本体
 
-- **英語識別子（予定）**: 使わない（コード上に本体を指す識別子は現れない）
+- **英語識別子**: 使わない（コード上に本体を指す識別子は現れない）
 - **定義**: Claude Code の CLI そのもの。**tsukumo から見て、SDK が子プロセスとして起こす側**
   （2026-09-11 まではこちらが親で、transcript を書き出す側だった）
 - **避ける言い方**: 親、ホスト、メイン
 
 ### 部屋
 
-- **英語識別子（予定）**: `room`（名前は `roomName(viewPort)`。`src/shared/view-server/room.ts`）
+- **英語識別子**: `room`（名前は `roomName(viewPort)`。`src/shared/view-server/room.ts`）
 - **定義**: 起こした tsukumo 1つの居場所。**ビューのポート1つが部屋1つ**で、同じディレクトリで
   2つめを起こすとポートがずれて別の部屋になる
 - **注記**: 名前は和の色名12個をポートの並び順に割り当てたもの（7327 が「空色の間」。
@@ -113,7 +114,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### チェックアウト
 
-- **英語識別子（予定）**: `checkout`（`src/server/checkout/`）
+- **英語識別子**: `checkout`（`src/server/checkout/`）
 - **定義**: tsukumo のリポジトリの作業ツリー1つ。本体の checkout と `tsukumo-N` の作業ツリーが
   どれもチェックアウトで、**ディレクトリの根の `package.json` の `name` が `tsukumo` のもの**
 - **注記**: グローバルの `tsukumo` は本体のチェックアウトの `bin/tsukumo` を指すが、
@@ -124,7 +125,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### セッション
 
-- **英語識別子（予定）**: `session`
+- **英語識別子**: `session`
 - **定義**: SDK の `query` 1つ。**tsukumo 1プロセスにつき1つ**
 - **注記**: **起こし直したときは前の続きから始まる**（`docs/requirements.md` 4.8。鍵は起動した
   作業ディレクトリと、tsukumo が `tagSession` で付けた印。**印はキャラクターパックごと・
@@ -137,7 +138,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### 短縮ID
 
-- **英語識別子（予定）**: `shortId`（組み立ては `shortSessionIds`）
+- **英語識別子**: `shortId`（組み立ては `shortSessionIds`）
 - **定義**: セッションのID（UUID）の先頭2字を大文字にしたもの（`FA`）。帯の部屋の名前の札と、
   切り替え画面の一覧・探す欄に出す
 - **注記**: **並べる中で2字が重なったものだけ3字に伸ばす**（2026-09-27 ユーザー決定）。3字でも
@@ -146,7 +147,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### セッションの要約
 
-- **英語識別子（予定）**: `sessionSummary`（`report` の引数）/ `SessionDigest`（切り替え画面に配る1件の中身）
+- **英語識別子**: `sessionSummary`（`report` の引数）/ `SessionDigest`（切り替え画面に配る1件の中身）
 - **定義**: そのセッションでここまでにしたことを claude が書いた数段落。`report` の任意の引数
   `sessionSummary` で毎ターン書き直させ、切り替え画面が transcript の最後に通った `report` から
   読み戻す
@@ -158,7 +159,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### セッション駆動
 
-- **英語識別子（予定）**: `sessionDriver`
+- **英語識別子**: `sessionDriver`
 - **定義**: SDK を起動し、届いたイベントを tsukumo 内部の型に変換するモジュール。
   原則2の「受け取る」層にあたる
 - **注記**: ここに表示の都合を持ち込まない。何をどう出すかは「決める」層の仕事
@@ -166,7 +167,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### プラン
 
-- **英語識別子（予定）**: `plan`
+- **英語識別子**: `plan`
 - **定義**: 契約の段と枠（`Max 20x` / `Pro` など）。出どころは2つあり、**Claude Code 自身の控え
   （`~/.claude.json` の `oauthAccount`）を先に見る**
 - **注記**: **SDK の `accountInfo()` が返す `subscriptionType` は契約の段と合わないことがある**
@@ -180,7 +181,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### 利用上限
 
-- **英語識別子（予定）**: `rateLimit`（型は `src/shared/session-driver/rate-limit.ts` の `RateLimit`、状態は
+- **英語識別子**: `rateLimit`（型は `src/shared/session-driver/rate-limit.ts` の `RateLimit`、状態は
   `SessionState.rateLimit`、イベントは `rate-limit-changed`）
 - **定義**: claude.ai の契約で使える量の枠（5時間枠・7日間枠など）に達した、という状態と、
   いつ戻るか。SDK の `rate_limit_event` が運ぶ
@@ -192,7 +193,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### 利用枠
 
-- **英語識別子（予定）**: `planUsage`
+- **英語識別子**: `planUsage`
 - **定義**: 5時間枠と7日間枠それぞれの、いまの使用率（0〜100 の百分率）と戻る時刻。Agent SDK の
   `usage_EXPERIMENTAL_MAY_CHANGE_DO_NOT_RELY_ON_THIS_API_YET()` が返すもので、中身は Claude Code の
   `/usage` と同じ（`docs/research/plan-usage.md`）
@@ -203,7 +204,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### コンテキストの内訳
 
-- **英語識別子（予定）**: `contextUsage`
+- **英語識別子**: `contextUsage`
 - **定義**: いまのセッションが**文脈の窓**をどう使っているかを分類ごとに割った数。Agent SDK の
   `getContextUsage()` が返すもので、中身は Claude Code の `/context` と同じ
 - **注記**: **ここでの「コンテキスト」は文脈の窓のこと**で、セッションの言い換えではない
@@ -215,7 +216,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### ターン
 
-- **英語識別子（予定）**: `turn`
+- **英語識別子**: `turn`
 - **定義**: **利用者の依頼1つに対する応答**のまとまり。メインビューは1ターン＝1枚のレポートで
   区切る（`docs/architecture/display.md` 4.2）
 - **注記**: 1つのターンの中に、複数の `speak` の呼び出しと、複数のツール実行が入りうる。
@@ -226,7 +227,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### ターンの失敗
 
-- **英語識別子（予定）**: `turnFailure`（型は `src/shared/session-driver/turn-failure.ts` の `TurnFailure`、
+- **英語識別子**: `turnFailure`（型は `src/shared/session-driver/turn-failure.ts` の `TurnFailure`、
   記録は `SessionRecord` の `turn-failure`、終わり方は `turn-finished` の `outcome`）
 - **定義**: ターンが**失敗で終わった**ことと、その理由（API のエラーの種類・往復の上限・予算の
   上限・実行中のエラー）。**中断は失敗に含めない**
@@ -239,7 +240,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### 背景のタスク
 
-- **英語識別子（予定）**: `backgroundTask`（型は `src/shared/session-driver/background-task.ts` の
+- **英語識別子**: `backgroundTask`（型は `src/shared/session-driver/background-task.ts` の
   `BackgroundTask`、状態は `SessionState.backgroundTasks`、イベントは `background-tasks-changed`）
 - **定義**: ターンが終わったあとも claude が動かし続けているもの（`run_in_background` の Bash・
   背景のサブエージェントなど）。SDK の `system` / `background_tasks_changed` が顔ぶれ全体を
@@ -252,7 +253,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### speak ツール
 
-- **英語識別子（予定）**: `speak`（ツール名そのもの）
+- **英語識別子**: `speak`（ツール名そのもの）
 - **定義**: tsukumo がプロセス内の MCP サーバとして提供するツール。引数は `text`（セリフ）と
   `expression`（表情）で、**戻り値は `"ok"` か、仕事のときに新しい事実の無い呼び出しを差し戻す
   固定の一文**（差し戻した呼び出しは吹き出しに出さない。`src/server/session-driver/core/speech-review.ts`）
@@ -263,7 +264,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### report ツール
 
-- **英語識別子（予定）**: `report`（ツール名そのもの）
+- **英語識別子**: `report`（ツール名そのもの）
 - **定義**: tsukumo が `speak` と同じプロセス内の MCP サーバで提供するツール。引数は
   `task`（タスクの作業のレポートの、タスクID・作業の名前・終わり方。任意。「目録の1行」）・
   `conclusion`（結論。必須）・`checks`（検証結果。任意）・`sections`（本文。節と塊の並び。任意）・`favor`（お願い。
@@ -287,7 +288,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### work_plan ツール
 
-- **英語識別子（予定）**: `work_plan`（ツール名そのもの）
+- **英語識別子**: `work_plan`（ツール名そのもの）
 - **定義**: `speak` と同じプロセス内の MCP サーバで提供するツール。作業中のターンで**段取り**を渡す。
   引数は `phases`（段の名前の並び。1つ以上）と `current`（今の段の位置。0始まりで、全部済んだら段の数）と
   `phaseSummary`（**段のまとめ**。`current` が途中の位置なら必須）。
@@ -300,7 +301,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### 段取り
 
-- **英語識別子（予定）**: `workPlan`（型は `WorkPlan`。段の並びは `phases`、今の位置は `current`。
+- **英語識別子**: `workPlan`（型は `WorkPlan`。段の並びは `phases`、今の位置は `current`。
   イベントと記録は `work-plan`）
 - **定義**: 作業中のターンで claude が `work_plan` ツールで渡す、**段**（作業のまとまり・フェーズ）の
   並びと今の位置。いまの作業の札・依頼の手順の一覧の頭・会話の画面の**進み具合の帯**に出て、段が移ると
@@ -315,7 +316,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### 段のまとめ
 
-- **英語識別子（予定）**: `phaseSummary`（`work_plan` の引数と `work-plan` の記録の欄）
+- **英語識別子**: `phaseSummary`（`work_plan` の引数と `work-plan` の記録の欄）
 - **定義**: 段を進める `work_plan` の呼び出しで渡す、**終えた段でしたこと・分かったことの1〜2文**。
   メインビューに中間レポートとして出る。記法は `report` の `conclusion` と同じ
 - **注記**: `current` が途中の位置（0 より大きく段の数より小さい）の呼び出しでは必須で、無い・3文以上
@@ -326,7 +327,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### 委譲の合図
 
-- **英語識別子（予定）**: `delegateSignal`（イベントは `delegate-signal`。欄は `step`（済んだ段の番号。1始まり）と
+- **英語識別子**: `delegateSignal`（イベントは `delegate-signal`。欄は `step`（済んだ段の番号。1始まり）と
   `stepCount`（段の数）。委譲先が終わったときに積み直す段取りの記録の出どころは `delegate-ended`）
 - **定義**: 背景で委譲したサブエージェントが `SendMessage({ to: "main" })` で送る `状況 | n/N | …` の1行。
   tsukumo は1行目の `n/N` だけを読み、段取りを「計画・N 段・受け入れ」に引き直して n 段目まで済んだ位置にする
@@ -338,7 +339,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### remember ツール
 
-- **英語識別子（予定）**: `remember`（ツール名そのもの）
+- **英語識別子**: `remember`（ツール名そのもの）
 - **定義**: tsukumo が `speak` と同じプロセス内の MCP サーバで提供するツール。引数は
   **1行の文字列1つ**で、**戻り値は `"ok"` だけ**。受け取った1行を「覚えたこと」へ書き足す
 - **注記**: **雑談モードのときだけ載る**（`docs/architecture/chat-mode.md` 4.9）。何を書いてよいかの判断は
@@ -347,7 +348,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### forget ツール
 
-- **英語識別子（予定）**: `forget`（ツール名そのもの）
+- **英語識別子**: `forget`（ツール名そのもの）
 - **定義**: `remember` と同じプロセス内の MCP サーバで提供するツール。引数は**消したい1行の
   文字列1つ**で、**戻り値は `"ok"` だけ**。「覚えたこと」の中の**完全一致する1行**を消す
 - **注記**: **雑談モードのときだけ載る**（`remember` と同じ）。**消せるのは「覚えたこと」の節の
@@ -357,7 +358,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### recall ツール
 
-- **英語識別子（予定）**: `recall`（ツール名そのもの）
+- **英語識別子**: `recall`（ツール名そのもの）
 - **定義**: `remember` と同じプロセス内の MCP サーバで提供するツール。引数は**引く言葉**で、
   **戻り値は候補の一覧**（下の「エピソード索引」を採点した上位の `id`・見出し・要旨。当たらなければ
   短い一言だけ）。**逐語は返さない** — 1件を開くのは下の「recall_episode ツール」
@@ -370,7 +371,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### recall_episode ツール
 
-- **英語識別子（予定）**: `recall_episode`（ツール名そのもの）
+- **英語識別子**: `recall_episode`（ツール名そのもの）
 - **定義**: `recall` と同じ MCP サーバで提供するツール。引数は**一覧で見たエピソードの `id`**で、
   **戻り値はその1件の範囲の会話そのもの**（アーカイブの逐語を古いほうから 8 KiB まで。知らない
   `id` なら短い一言だけ）
@@ -381,7 +382,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### 覚えたこと
 
-- **英語識別子（予定）**: `personaMemory`（節の見出しは `## 覚えたこと`）
+- **英語識別子**: `personaMemory`（節の見出しは `## 覚えたこと`）
 - **定義**: `remember` ツールで書き足した、**キャラクター自身についての1行**を並べた
   `persona.md` 末尾の節。書き先は `~/.tsukumo/characters/<パック名>/persona.md` の1箇所だけ
 - **注記**: **利用者について知ったことは入らない**（`docs/architecture/chat-mode.md` 4.9 が正典）。
@@ -391,7 +392,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### あらすじ
 
-- **英語識別子（予定）**: `chatSummary`（置き場は `~/.tsukumo/chat-summary/<パック名>.md`。
+- **英語識別子**: `chatSummary`（置き場は `~/.tsukumo/chat-summary/<パック名>.md`。
   2026-09-25 まで「雑談の要約」と呼んでいたものの名前と置き場を引き継ぐ）
 - **定義**: 定着が畳んだ会話（雑談と仕事の両方）の**話の筋**を1つにまとめた文章。**書くのは下の「定着」**で、
   定着のたびに前のあらすじと畳んだエピソードから書き直される（上書き、8 KiB まで）
@@ -405,7 +406,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### 最近の話題
 
-- **英語識別子（予定）**: `chatTopics`（状態の欄。イベントは `chat-topics-changed`、部品は
+- **英語識別子**: `chatTopics`（状態の欄。イベントは `chat-topics-changed`、部品は
   `RecentTopicSection`）
 - **定義**: 雑談中のサイドバーの2段目に並べる、話題の見出し（新しい順に3件まで）。**あらすじの
   最後に tsukumo が置いた見出しの節**（`<topics>` の組。見出しを書くのは定着の `query()`）から取り出す
@@ -415,7 +416,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### 雑談のアーカイブ
 
-- **英語識別子（予定）**: `chatArchive`
+- **英語識別子**: `chatArchive`
 - **定義**: キャラクターと利用者の会話を、届いたその場で1行ずつ書き足していくファイル
   （`~/.tsukumo/chat-archive/<パック名>/<日付>.jsonl`）。雑談では依頼とセリフ（表情つき）、仕事では
   **依頼の冒頭・セリフ（表情つき）・そのターンの最終レポートの結論（`conclusion`）**を書き、
@@ -437,7 +438,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### 作業記憶
 
-- **英語識別子（予定）**: `recent`（容量の表の `recentBytes`、読む口の `readRecent`）
+- **英語識別子**: `recent`（容量の表の `recentBytes`、読む口の `readRecent`）
 - **定義**: 雑談のアーカイブの**新しいほうから一定量**の会話（雑談と仕事の行を区別せずに数える）。
   セッションを起こすとき、逐語のまま `systemPrompt` に載せる。量は**雑談 64 KiB（`recentBytes`）・
   仕事 16 KiB（`workRecentBytes`）**（`docs/architecture/chat-mode.md` 4.9「直近の会話は逐語のまま読み戻す」）
@@ -447,7 +448,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### 定着
 
-- **英語識別子（予定）**: `consolidation`（関数・型は `chatConsolidation…`）
+- **英語識別子**: `consolidation`（関数・型は `chatConsolidation…`）
 - **定義**: 仕事の作業記憶（16 KiB）から溢れた未定着の会話を、背景の**使い捨ての `query()`** に渡して、
   下の「エピソード索引」の行と、書き直した「あらすじ」と、最近の話題の見出しを返させ、書くこと
   （`docs/architecture/chat-mode.md` 4.9「窓から溢れた会話は定着で畳む」）
@@ -457,7 +458,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### エピソード索引
 
-- **英語識別子（予定）**: `chatEpisode`（ファイルは `episode.jsonl`。思い出した記録は `recalled.jsonl`）
+- **英語識別子**: `chatEpisode`（ファイルは `episode.jsonl`。思い出した記録は `recalled.jsonl`）
 - **定義**: 定着が区切った**エピソード**（話題のまとまり）ごとに、見出し・要旨・手がかり語・大事さと、
   アーカイブの行の範囲を1行ずつ並べたファイル（`~/.tsukumo/chat-archive/<パック名>/episode.jsonl`）。
   引くのは `recall`（候補の一覧）と `recall_episode`（1件の逐語）
@@ -471,7 +472,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### 圧縮の区切り
 
-- **英語識別子（予定）**: `compactBoundary`
+- **英語識別子**: `compactBoundary`
 - **定義**: claude 自身の圧縮が起きた位置に、雑談のログへ出す**細い線1本**
   （SDK では `system` / `compact_boundary` のメッセージにあたる）。2026-09-25 から tsukumo は
   `/compact` を投げないので、起きるのは claude の自動の圧縮と、利用者が手で打った `/compact` だけ
@@ -496,7 +497,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### transcript
 
-- **英語識別子（予定）**: `transcript`
+- **英語識別子**: `transcript`
 - **定義**: Claude Code がセッションごとに書き出す JSONL ファイル。1行1イベントで、
   `~/.claude/projects/<セッションスラッグ>/<session-id>.jsonl` にある
 - **注記**: **ユーザーの生の会話ログである**。扱いの制約は
@@ -516,7 +517,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### 発話
 
-- **英語識別子（予定）**: `utterance`
+- **英語識別子**: `utterance`
 - **定義**: **ターンの本文**。SDK の `assistant` イベントのテキストにあたる
 - **注記**: **セリフは含まない**（セリフは `speak` ツールで別に届く）。本文はすべて詳細
   （レポート）として扱う（`docs/architecture/display.md` 4.2）。2026-09-11 までは「セリフと詳細を
@@ -526,7 +527,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### 見直し
 
-- **英語識別子（予定）**: `usageReview`（状態は `UsageReview`、ツールが渡す結果は `UsageReviewFindings`）
+- **英語識別子**: `usageReview`（状態は `UsageReview`、ツールが渡す結果は `UsageReviewFindings`）
 - **定義**: トークン消費の記録から**消費の減らし方を挙げてもらう1回**。いまの会話の1ターンとして
   スキル `token-usage-diet` が流れ、結果を下の2つのツールで tsukumo へ渡す。tsukumo は分析せず、
   受け取って整えて描くだけ
@@ -538,7 +539,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### 見直しの段
 
-- **英語識別子（予定）**: `UsageReviewStage`（`model` / `cache` / `tool` / `context` / `proposal`）
+- **英語識別子**: `UsageReviewStage`（`model` / `cache` / `tool` / `context` / `proposal`）
 - **定義**: 見直しの進みを区切る5つの段。モデルの使い分け → キャッシュの効き方 → ツールの呼び方と
   結果の大きさ → コンテキストの中身 → 見直し案をまとめる、の順
 - **注記**: 段の並びと見出しは `src/shared/usage-review/usage-review.ts` が持つ。**いまの段より前は済、後は
@@ -548,7 +549,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### 提案
 
-- **英語識別子（予定）**: `UsageProposal`
+- **英語識別子**: `UsageProposal`
 - **定義**: 見直しの結果の1件。**種類（`kind`）・対象（`target`）・効きめ（`impact`。`large` /
   `medium` / `small`）・見出し（`title`）・根拠（`basis`）・やること（`action`）・押す口
   （`followUp`。`delegate` =「tsukumo に頼む」/ `task` =「タスクにする」）**を持つ
@@ -559,7 +560,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### usage_review_stage ツール
 
-- **英語識別子（予定）**: `usage_review_stage`（ツール名そのもの）
+- **英語識別子**: `usage_review_stage`（ツール名そのもの）
 - **定義**: `speak` と同じプロセス内の MCP サーバで提供するツール。見直しが次の段に入ったときに、
   段（`stage`）と期間の日数（`days`）を渡す
 - **注記**: **仕事のときだけ載る**。戻り値は `"ok"` に**利用者が見送った提案の識別子**を添えた
@@ -568,7 +569,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### usage_review_result ツール
 
-- **英語識別子（予定）**: `usage_review_result`（ツール名そのもの）
+- **英語識別子**: `usage_review_result`（ツール名そのもの）
 - **定義**: 見直しの結果を1回で渡すツール。引数は期間の日数（`days`）・冒頭の一言（`headline`。
   キャラクターの口調）・提案の並び（`proposals`）
 - **注記**: **仕事のときだけ載る**。境界で検査し、形の崩れた引数や見送った提案の混じった結果は
@@ -577,7 +578,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### 見送り
 
-- **英語識別子（予定）**: `dismiss`（画面のコマンドは `usageReview.dismissProposal`、届いたイベントは
+- **英語識別子**: `dismiss`（画面のコマンドは `usageReview.dismissProposal`、届いたイベントは
   `usage-proposal-dismissed`、記録の読み書きは `usage-proposal-dismissal.ts`）
 - **定義**: 結果の札の「見送る」を押し、その提案を次の見直しでも出さないようにすること。
   識別子（`usageProposalKey`）で指し、ホームのファイルに一覧として残る
@@ -588,7 +589,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### 前回の見直し
 
-- **英語識別子（予定）**: `PreviousUsageReview`（`src/shared/usage-review/usage-review.ts`）
+- **英語識別子**: `PreviousUsageReview`（`src/shared/usage-review/usage-review.ts`）
 - **定義**: 直前の1回の見直しの結果。ホームのファイル（`previous-usage-review.ts` が読み書き）に
   残り、トークン消費の画面の「前回の提案」のリンクが読む
 - **注記**: **「見直し」の状態（`idle` / `running` / `result`）とは別**——見直しは起こし直すと
@@ -598,7 +599,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### diary ツール
 
-- **英語識別子（予定）**: `diary`（ツール名そのもの。受け取る窓口は `createDiaryIntake`）
+- **英語識別子**: `diary`（ツール名そのもの。受け取る窓口は `createDiaryIntake`）
 - **定義**: tsukumo がプロセス内の MCP サーバで提供するツール。成果の振り返りの問い合わせで、
   日記の本文（`body`）・表情（`expression`）・しおり（`bookmark`。`taskId` と `reason`）を1回で渡す
 - **注記**: **載るのは振り返りの使い捨ての問い合わせだけ**で、会話のセッションには載らない
@@ -621,7 +622,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### 画面
 
-- **英語識別子（予定）**: `screen`（`stores/screen.tsx` の `useScreen()` が返す値は
+- **英語識別子**: `screen`（`stores/screen.tsx` の `useScreen()` が返す値は
   `conversation` / `character` / `character-create`）
 - **定義**: ページを丸ごと使う表示の単位。**会話の画面**（4つのビューと入力欄）、
   **キャラクター画面**、**作る画面**の3つで、同時に出るのは1つ。切り替えは URL の hash
@@ -632,7 +633,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### キャラクター画面
 
-- **英語識別子（予定）**: `character-screen`（`src/browser/components/page/character/`。hash は
+- **英語識別子**: `character-screen`（`src/browser/components/page/character/`。hash は
   `#character`、一覧で選んだパックは `#character?pack=<名前>`。作る画面は同じ機能の中の
   `character-create`、hash は `#character/new`）
 - **定義**: 左にパックの一覧、右に選んでいるパックの立ち絵・差し色・背景を並べ、画面から直す画面。
@@ -644,7 +645,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### メインビュー
 
-- **英語識別子（予定）**: `main`
+- **英語識別子**: `main`
 - **定義**: レイアウトの左上に置く、いちばん広いビュー。**レポートだけ**を出す
 - **注記**: **作業の進行はサイドバーへ移した**（2026-09-11 決定）。1ターン＝1枚で、書きかけの
   本文がリアルタイムに流れる（`docs/architecture/display.md` 4.2）
@@ -653,7 +654,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### キャラビュー
 
-- **英語識別子（予定）**: `character`
+- **英語識別子**: `character`
 - **定義**: レイアウトの左下に置くビュー。**立ち絵と吹き出しが同じ領域に同居する**
 - **注記**: 許可プロンプトと質問のボタンは**ここには出さない**。メインビューの**お伺い**に出る
   （2026-10-02。2026-09-11 からは入力欄の上の箱だった。吹き出しの下に出したときは気づきにくかった）
@@ -663,7 +664,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### ビューサーバ
 
-- **英語識別子（予定）**: `viewServer`
+- **英語識別子**: `viewServer`
 - **定義**: ビューをブラウザに配るローカルの HTTP サーバ。`127.0.0.1` にだけバインドし、
   本文をメモリに持ち、更新を Server-Sent Events で push する。**依頼・回答・中断は同じサーバへの
   POST で受ける**（2026-09-11）
@@ -675,7 +676,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### 立ち絵
 
-- **英語識別子（予定）**: `portrait`
+- **英語識別子**: `portrait`
 - **定義**: キャラビューに表示するキャラクターの画像。HTML の `<img>` で出す
 - **注記**: 素材はリポジトリに同梱せず、キャラクター定義からパスで参照する
 - **避ける言い方**: スプライト、アバター、アイコン、マスコット（「マスコット」は
@@ -683,7 +684,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### 顔
 
-- **英語識別子（予定）**: `face`（`character.json` の欄の名前も `face`）
+- **英語識別子**: `face`（`character.json` の欄の名前も `face`）
 - **定義**: 画面の最上部の帯の左端に、部屋の名前と並べて丸く切り抜いて出す、キャラクターの
   顔だけの小さい絵。いまのパックの持ち物で、キャラクターを替えると変わる（`docs/architecture/screen-design.md` 13.9）
 - **注記**: **表情では変わらない1枚**（ミニ立ち絵の `mini` と同じ扱い）。**定義に無いパックでは
@@ -692,7 +693,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### プロフィールの札
 
-- **英語識別子（予定）**: `profileCard`（部品は `ProfileCard`）
+- **英語識別子**: `profileCard`（部品は `ProfileCard`）
 - **定義**: 雑談中のサイドバーの最上段に出す、いまのパックのキャラクターの名乗り。**顔・名前・
   ひとことプロフィール**と、右端の「変える」（キャラクターの切り替え）を並べる
   （`docs/architecture/screen-design.md` 13.7「雑談のときのサイドバー」）
@@ -701,7 +702,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### ひとことプロフィール
 
-- **英語識別子（予定）**: `tagline`（`character.json` の欄の名前も `tagline`）
+- **英語識別子**: `tagline`（`character.json` の欄の名前も `tagline`）
 - **定義**: プロフィールの札で名前の下に添える、キャラクターを一言で言い表す1行。パックの持ち物で、
   書くのはパックの作者（`characters/README.md`）
 - **注記**: **任意**で、無いパックの札は名前だけになる。雑談の中で書き換わる `persona.md` の
@@ -711,7 +712,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### 利用者の呼び名
 
-- **英語識別子（予定）**: `userCall`（`character.json` の欄の名前も `userCall`）
+- **英語識別子**: `userCall`（`character.json` の欄の名前も `userCall`）
 - **定義**: キャラクターが利用者を呼ぶ言葉（「きみ」「あるじ」など）。パックの持ち物で、
   書くのはパックの作者（`characters/README.md`）。セリフのログの依頼の区切りの頭に付く
 - **注記**: **任意**で、無いパックの区切りは呼び名を付けず「」だけになる。**キャラクターの言葉
@@ -721,7 +722,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### ミニ立ち絵の呼び名
 
-- **英語識別子（予定）**: `miniCall`（`character.json` の欄の名前も `miniCall`）
+- **英語識別子**: `miniCall`（`character.json` の欄の名前も `miniCall`）
 - **定義**: ミニ立ち絵（筆先に添う小さい1体）をキャラクターの世界で何と呼ぶか（「式神」など）。
   ミニ立ち絵の alt に `<名前>の<呼び名>` の形で出る
 - **注記**: **任意**で、無いパックは画面の用語の「ミニ立ち絵」に落ちる
@@ -729,7 +730,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### 吹き出し
 
-- **英語識別子（予定）**: `balloon`（並びは `balloon-track`）
+- **英語識別子**: `balloon`（並びは `balloon-track`）
 - **定義**: **セリフ**1件を囲って見せる表示。キャラビューの中で立ち絵と同居する。
   1件につき1つ出し、今のターンの分を並び（`balloon-track`）に縦へ積んで**最新を一番上**に見せる
   （並びは自前でスクロールする）。**立ち絵は領域の左下、並びは右上**に置き、領域の高さは全部使う。
@@ -741,7 +742,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### 反応
 
-- **英語識別子（予定）**: `CharacterReactions`（パックの持ち物。出来事は `ReactionKind` で、値は
+- **英語識別子**: `CharacterReactions`（パックの持ち物。出来事は `ReactionKind` で、値は
   迎える `welcome` / 受けた `accepted` / 再試行 `retrying` / 失敗 `failed` / 利用上限 `limited`。1行は
   `ReactionLine`）・`ShownReaction`（いま出す反応。導く関数は `src/shared/session/shown-reaction.ts` の
   `shownReaction`）
@@ -754,7 +755,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### セリフのログ
 
-- **英語識別子（予定）**: `speech-log`
+- **英語識別子**: `speech-log`
 - **定義**: キャラビューの右上の「ログ」から開くモーダル。**キャラビューの舞台（立ち絵と吹き出し）を
   そのまま上へ伸ばし**、このセッションのセリフを吹き出しのまま遡って読む。並びは古い→新しいを
   上→下で、ターンの境目に依頼の区切り（`<利用者の呼び名>「<依頼の1行目>」 <時刻>`）を挟み、開いた直後は
@@ -765,7 +766,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### セリフ
 
-- **英語識別子（予定）**: `speech`
+- **英語識別子**: `speech`
 - **定義**: **`speak` ツールの `text` 引数**。吹き出しに出す、会話のための言葉
 - **注記**: 分離は**ツール呼び出しで届く**（2026-09-11）。行頭マーカー（`アスナ: `）で本文から
   切り出す補助の経路は**2026-09-21 に撤去した**（どの `persona.md` もマーカーを使えと書いて
@@ -777,7 +778,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### 詳細
 
-- **英語識別子（予定）**: `detail`
+- **英語識別子**: `detail`
 - **定義**: **ターンの本文**そのもの（手順・コード・表・判断とその理由）。メインビューに
   レポートとして出す
 - **注記**: **中身は変えない。** 読みづらさの主因は見た目なので、整形は見た目の範囲に留める
@@ -788,7 +789,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### 最終レポート
 
-- **英語識別子（予定）**: `final`（`MainViewStep.final`）
+- **英語識別子**: `final`（`MainViewStep.final`）
 - **定義**: **そのやり取りで最後の、中間でない本文**。`report` ツールが呼ばれたターンでは
   最後の呼び出し、呼ばれなかったターンでは最後の本文（`main-view.ts` の `markFinalReport` /
   `selectLastText`）。ラベル「最終レポート」（目録の1行の頭）が出るのは、同じやり取りに中間レポートがあるときか、
@@ -803,7 +804,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### 目録の1行
 
-- **英語識別子（予定）**: `catalog`（`report-head.tsx` の `report-catalog`）。載せるタスクは `ReportTask`
+- **英語識別子**: `catalog`（`report-head.tsx` の `report-catalog`）。載せるタスクは `ReportTask`
   （`report` の `task`。終わり方は `outcome`）
 - **定義**: **レポートの結論部のいちばん上の1行**。ラベル（「中間レポート」「最終レポート」）・タスクID・
   終わり方（✓ 完了・main へ / ✕ 止めた・main へは送っていない / ？ 答え待ち）のうち、あるものだけを `·` で
@@ -813,7 +814,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### 中間レポート
 
-- **英語識別子（予定）**: `interim`（`MainViewStep.interim`）
+- **英語識別子**: `interim`（`MainViewStep.interim`）
 - **定義**: **ターンの途中で出たレポート**。出どころは2つ: 1つのターンで `report` ツールが何度か
   呼ばれたときの最後でない呼び出し（`src/shared/session/main-view.ts` の `selectToolReports`）と、
   段を進めた `work_plan` の**段のまとめ**。メインビューには印を付けた枠で残る。通った `report` は
@@ -829,7 +830,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### 段の知らせ
 
-- **英語識別子（予定）**: `phaseNotice`（`MainViewStep.phaseNotice`。メインビューの記録は `phase-shift`、
+- **英語識別子**: `phaseNotice`（`MainViewStep.phaseNotice`。メインビューの記録は `phase-shift`、
   部品は `PhaseNotice`）
 - **定義**: **段取りの今の段が移ったところに、メインビューへ出す字だけの1行**（「ここから 2/3 段の名前」）。
   段を進めたときは終えた段の中間レポートの後ろに、段が戻ったときは単独で出る。その依頼で最初の段取りと、
@@ -839,7 +840,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### お願い
 
-- **英語識別子（予定）**: `favor`（`report` ツールの引数の名前。描くときは `note-favor` の塊）
+- **英語識別子**: `favor`（`report` ツールの引数の名前。描くときは `note-favor` の塊）
 - **定義**: **キャラクターから利用者への1件**。利用者にしか決められない・できないこと
   （判断・作業・情報）を、`report` の `favor` に1つだけ入れる。レポートの最後に印を付けた塊で描かれ、
   「お願い」のラベルは tsukumo 側（`src/browser/components/page/conversation/components/main-view/markdown/notation.tsx`）が
@@ -854,7 +855,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### 検証結果
 
-- **英語識別子（予定）**: `checks`（`report` ツールの引数の名前）/ `ReportCheck`（1項目。
+- **英語識別子**: `checks`（`report` ツールの引数の名前）/ `ReportCheck`（1項目。
   `src/shared/report/report-check.ts`）/ `ReportCheckStatus`（`ok` / `ng` / `unverified`）
 - **定義**: **そのターンで何をどう確かめたか**（テスト・型検査・手で見たこと）。1項目は
   状態（`status`）・何で確かめたか（`label`）・件数や差分（`detail`）で、`report` の `checks` に
@@ -867,7 +868,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### 合図の行
 
-- **英語識別子（予定）**: `verdict`（描く印の名前。`src/shared/report/report-notation.ts` の `REPORT_DRAWN_MARK_NAMES`）
+- **英語識別子**: `verdict`（描く印の名前。`src/shared/report/report-notation.ts` の `REPORT_DRAWN_MARK_NAMES`）
 - **定義**: レポートの結論のすぐ下の1行。検証結果の総括と、お願いがあれば「お願い 1 ↓」の口を並べる。
   口を押すと末尾のお願いの塊まで転がる
 - **注記**: 検証もお願いも無いレポートでは出ない。規則は `docs/architecture/display.md` 4.2「検証の総括とお願いの合図を、
@@ -876,7 +877,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### 節
 
-- **英語識別子（予定）**: `ReportSection`（`src/shared/report/report-block.ts`）/ `sections`（記録と
+- **英語識別子**: `ReportSection`（`src/shared/report/report-block.ts`）/ `sections`（記録と
   `SessionEvent` の `report` の欄）/ `heading`（節の見出し）
 - **定義**: **レポートの本文を区切る1段**。見出し（`heading`）と、その下に平らに並ぶ塊の並びを持つ。
   本文は節の並びで、入れ子は節の1段だけ。見出しが空の節は見出しを描かない
@@ -888,7 +889,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### 塊
 
-- **英語識別子（予定）**: `ReportBlock`（`src/shared/report/report-block.ts`）/ `kind`（`text` / `list` /
+- **英語識別子**: `ReportBlock`（`src/shared/report/report-block.ts`）/ `kind`（`text` / `list` /
   `table` / `matrix` / `compare` / `dimension`（寸法図）/ `note` / `stats` / `code` / `mermaid` / `chart` / `progress` / `options` / `image`（画面の画像）/ `files` / `markdown`）/ `fold`（畳むときの見出し）/
   欄の `from` / `to`（表のセルの前後）・`before`（`stats` の前の値）・`total`（`stats` の全体の数）・`label`（`list` の項目の名前）・
   `flow`（`list` の `style` の一本道の流れ）・`sides`（`compare` の2つの側。`heading` と `points`）・
@@ -915,7 +916,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### 目次
 
-- **英語識別子（予定）**: `ReportOutline`（部品。`main-view/components/report-outline/`）/
+- **英語識別子**: `ReportOutline`（部品。`main-view/components/report-outline/`）/
   `ReportOutlineEntry`（見出し1つ。`level` は `section`〔`##`〕/ `sub`〔`###`〕）
 - **定義**: **メインビューで見ているターンのレポートの見出しの並び**。本文の左に、見出しの名前の
   一覧を本文を押しのける列として常に開いておく。押すとその見出しへ転がす
@@ -937,7 +938,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### 表情
 
-- **英語識別子（予定）**: `expression`
+- **英語識別子**: `expression`
 - **定義**: 立ち絵の差分（思案 / どや顔 / あわあわ など）。**切り替わるのは `speak` の
   `expression` 引数だけ**（源はこの1つ。ツールの実行中に自動で「作業中」へ上書きする経路は
   2026-09-17 に撤去した。`docs/requirements.md` 4.3）
@@ -947,7 +948,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### 衣装
 
-- **英語識別子（予定）**: `outfit`
+- **英語識別子**: `outfit`
 - **定義**: 実行中のモデルに対応する立ち絵の見た目。`haiku` = 軽装 / `sonnet` = 通常装備 /
   `opus` = 戦闘配置。モデルは SDK に渡した値から分かる
 - **注記**: 「装備の重さ＝モデルの重さ」というメタファーで、Asuna output style の
@@ -956,7 +957,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### 書いている
 
-- **英語識別子（予定）**: `writing`（`PortraitMotion` の値の1つ）
+- **英語識別子**: `writing`（`PortraitMotion` の値の1つ）
 - **定義**: メインが `report` ツールの引数を書いている間（`includePartialMessages` の断片で
   `report` の呼び出しが開いてから、その呼び出しが届くか結果が返るまで）、立ち絵に出す動き。
   レポートが画面に出るまで何も起きなく見える間を埋める（2026-09-23 決定。材料は 2026-09-24 に
@@ -968,7 +969,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### 覆い
 
-- **英語識別子（予定）**: `veil`（`character.json` の `background.veil`）
+- **英語識別子**: `veil`（`character.json` の `background.veil`）
 - **定義**: キャラビュー（と雑談中のメインビュー）に敷いた**背景画像の上に1枚かぶせる、
   `ground` 一色の膜**。値はその膜の不透明度で、`0.75` なら画像が見えるのは 25%。DOM の要素では
   なく、`.layout-ground` の `background` に積む2枚目のレイヤ（`linear-gradient()` に `ground` を
@@ -980,7 +981,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### いまの作業
 
-- **英語識別子（予定）**: `current-work`（置かれる機能。`src/browser/features/current-work/`）
+- **英語識別子**: `current-work`（置かれる機能。`src/browser/features/current-work/`）
 - **定義**: 帯のまん中に出す、tsukumo がいま何をしているかの札。状態の語（作業中 / 答え待ち /
   背景で作業中 / 依頼待ち / 止まっている）と、実行中の手順の1行の要約（メインが `report` の
   引数を書いている途中は「レポートを書いています」）を並べる。押すと**依頼の手順**の一覧が
@@ -993,7 +994,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### 依頼の手順
 
-- **英語識別子（予定）**: `turnStep`（一覧を導く関数は `src/shared/session/turn-step.ts` の
+- **英語識別子**: `turnStep`（一覧を導く関数は `src/shared/session/turn-step.ts` の
   `currentTurnSteps`）
 - **定義**: いちばん新しい依頼（ターン）の中で claude が呼んだツール1回ぶん。済み / 実行中 /
   失敗 のどれかで、ツール名と対象（`summarizeToolInput` の要約）を持つ
@@ -1004,7 +1005,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### 局面
 
-- **英語識別子（予定）**: `ConversationMoment`（値は 迎える `greet` / 働く `work` / 尋ねる `ask` /
+- **英語識別子**: `ConversationMoment`（値は 迎える `greet` / 働く `work` / 尋ねる `ask` /
   渡す `deliver` / つまずく `stumble`。導く関数は `src/shared/session/conversation-moment.ts`）
 - **定義**: 仕事のセッションの会話の画面が、いまどの場面にあるか。セッションの姿から導き、
   メインビューに出す中身（迎える口 / 働くあいだの札 / レポート）と、知らせの行の語を決める
@@ -1017,7 +1018,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### 失敗の塊
 
-- **英語識別子（予定）**: `TurnFailureBlock`（`src/browser/components/page/conversation/components/main-view/components/turn-failure-block/`）
+- **英語識別子**: `TurnFailureBlock`（`src/browser/components/page/conversation/components/main-view/components/turn-failure-block/`）
 - **定義**: 失敗で終わったやり取りのレポートの頭に出す塊。何が起きたかを人の言葉で言い、次の手
   （同じ依頼を入力欄に戻す・利用上限の戻る時刻を示して入力欄に戻す・失敗した手順を見る）を押せる
 - **注記**: 次の手はどれも入力欄に戻すか一覧を開くだけで、送らず、自動では再開しない
@@ -1026,7 +1027,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### 進み具合の帯
 
-- **英語識別子（予定）**: `WorkStrip`（`src/browser/components/page/conversation/components/main-view/components/work-strip/`）
+- **英語識別子**: `WorkStrip`（`src/browser/components/page/conversation/components/main-view/components/work-strip/`）
 - **定義**: 会話の画面のメインビューの札の頭の真下に固定する、段の丸の並び・今の段の名前・位置と経過・
   いま走っている手順（再試行中・答え待ちも）と、押すと開く依頼の手順の一覧の口を持つ横の帯。
   レポートに入れ替わったあとは「7段すべて済み · 所要 …」の1行で残る
@@ -1037,20 +1038,20 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### お伺い
 
-- **英語識別子（予定）**: `Inquiry`（中身は `PendingAsk` の許可要求と質問）
+- **英語識別子**: `Inquiry`（中身は `PendingAsk` の許可要求と質問）
 - **定義**: 許可要求と質問を同じ形で出す札。進み具合の帯の下の本文に出し、番号つきの選択肢で答える
 - **避ける言い方**: 答え待ちの箱（入力欄の上にあった許可の箱の名前）、ダイアログ、プロンプト
 
 ### 迎える口
 
-- **英語識別子（予定）**: `Welcome`
+- **英語識別子**: `Welcome`
 - **定義**: 迎える局面（そのセッションにやり取りが1件も無いとき）のメインビューに出す、前回の続きと
   次に着手できるタスクの口。押すと入力欄の下書きに依頼の文が入り、送りはしない
 - **避ける言い方**: スタート画面、ホーム（選ばないと進めない画面ではない）
 
 ### 知らせの行
 
-- **英語識別子（予定）**: `HeadNotice`
+- **英語識別子**: `HeadNotice`
 - **定義**: メインビューの札の頭の右端に出す、いま見ている中身の外で起きたことの1つの口
   （レポートが届いた・最新のやり取りが作業中・お伺いが届いた）。押すとそこへ移る
 - **注記**: 札の頭の高さは変えない（「最新」の印・「最新へ」の口と同じ席）
@@ -1058,7 +1059,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### 体験の数
 
-- **英語識別子（予定）**: `experienceMetric`（機能は `experience-metric`、記録の1行は `ExperienceMetricRecord`）
+- **英語識別子**: `experienceMetric`（機能は `experience-metric`、記録の1行は `ExperienceMetricRecord`）
 - **定義**: 会話の画面の使い心地を、改善の前後で比べるために手元に残す数。依頼を送ってから結論が見えるまでの時間・
   答え待ちで止まっていた時間・つまずいてから立ち直るまでの手数の3つ（`docs/architecture/screen-design.md` 13.13）
 - **注記**: 入るのは数・時刻・セッションID・局面の名前（`ConversationMoment` の値）だけで、会話の中身は入らない。
@@ -1067,7 +1068,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### 成果
 
-- **英語識別子（予定）**: `achievement`（1日ぶんの応答は `DailyAchievement`。画面は `#achievement`）
+- **英語識別子**: `achievement`（1日ぶんの応答は `DailyAchievement`。画面は `#achievement`）
 - **定義**: `main` に入った仕事を1日ぶん数えたもの。**コミットの数**（merge commit と運用の帳面
   だけを触ったものを除く）と、**その日に `done` になったタスク**（ID と `summary`）の2つ
 - **注記**: 日はローカル時刻の0時で切り、コミットの日付（committer date）で決める。規則は
@@ -1076,7 +1077,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### 成果の振り返り
 
-- **英語識別子（予定）**: `achievementReflection`（依頼文は `achievementReflectionRequestText`、
+- **英語識別子**: `achievementReflection`（依頼文は `achievementReflectionRequestText`、
   画面から送るコマンドは `session.reflectAchievement`）
 - **定義**: 成果の画面のボタン（と見開きの「この日を振り返る」）から頼む、その日の日記書き。
   tsukumo がその日の数・終えたタスク・卒業と節目を数えて依頼文を組み、**会話とは別の使い捨ての
@@ -1090,7 +1091,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### 日記
 
-- **英語識別子（予定）**: `diary`（1日ぶんは `Diary`、1回ぶんの書き込みは `DiaryParagraph`、
+- **英語識別子**: `diary`（1日ぶんは `Diary`、1回ぶんの書き込みは `DiaryParagraph`、
   書いている状態は `DiaryWriting`）
 - **定義**: 成果の振り返りでキャラクターが `diary` ツールで書く、ある1日の1ページ。本文・しおり・
   表情に、tsukumo が書いた時刻と書いたパックの名前を添えて、ホームの下に**リポジトリごと・
@@ -1103,7 +1104,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### 日記帳
 
-- **英語識別子（予定）**: `diaryBook`（見開きのモーダルの部品は `DiarySpread`）
+- **英語識別子**: `diaryBook`（見開きのモーダルの部品は `DiarySpread`）
 - **定義**: 日記を1日1見開きで読み返すモーダル。画面の題は「つくもの日記帳」。左ページに
   しおり・その日に終えたこと・卒業と節目の印、右ページに縦書きの本文・漢数字の日付・曜日・
   灯り・署名（書いたパックの顔と名前）。日記の無い日は白紙のページと「この日を振り返る」
@@ -1114,7 +1115,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### しおり
 
-- **英語識別子（予定）**: `bookmark`（`DiaryBookmark`。`diary` ツールの欄も `bookmark`）
+- **英語識別子**: `bookmark`（`DiaryBookmark`。`diary` ツールの欄も `bookmark`）
 - **定義**: 日記に挟む「この日のいちばん」。キャラクターがその日に終えたタスクから1件を選び、
   選んだ理由を添える。成果の画面では日記の区画の下、日記帳では左ページの頭に出る
 - **注記**: 選ぶのはキャラクター（tsukumo は ID がその日の終えたタスクにあるかだけを確かめる）。
@@ -1123,7 +1124,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### 灯りの暦
 
-- **英語識別子（予定）**: `achievementCalendar`（応答は `AchievementCalendar`、段階は `LampLevel`・
+- **英語識別子**: `achievementCalendar`（応答は `AchievementCalendar`、段階は `LampLevel`・
   判定は `lampLevel`）
 - **定義**: 成果の画面の下に置く、直近5週の日ごとの成果を狐火の灯りで並べた暦。1マスに日付・
   灯り・日記ありの鈴。押すとその日の日記帳の見開きが開く
@@ -1134,7 +1135,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### 卒業
 
-- **英語識別子（予定）**: `graduation`（`DailyAchievement.graduations`）
+- **英語識別子**: `graduation`（`DailyAchievement.graduations`）
 - **定義**: **先輩タスクの卒業**。その日に終えたタスクのうち、登録から一定の日数（仮に7日）以上
   経っていたもの。登録日はタスクファイルが初めて `main` に入ったコミットの日付で、新形式
   （`develop/task/`）で登録したタスクだけが対象（`docs/requirements.md` 4.11「卒業と節目」）
@@ -1144,7 +1145,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### 節目
 
-- **英語識別子（予定）**: `milestone`（`DailyAchievement.milestones`。種類は `task` と `commit`）
+- **英語識別子**: `milestone`（`DailyAchievement.milestones`。種類は `task` と `commit`）
 - **定義**: 通算の数が刻みの倍数をその日にまたいだこと。**通算 N 件目のタスク**（終えたタスクの
   通算）と**通算 N コミット目**の2種類（刻みは仮にタスク 250 件・コミット 1,000 件。
   `docs/requirements.md` 4.11「卒業と節目」）
@@ -1154,7 +1155,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### キャラクター定義
 
-- **英語識別子（予定）**: `characterPack`
+- **英語識別子**: `characterPack`
 - **定義**: 立ち絵の素材パスと、表情・衣装の対応を宣言的に書いた差し替え可能な定義ファイル
 - **注記**: **移行後（2026-09-13 決定）は「キャラクターパック」**: `character.json`（表情の
   ラベルを含む）と `persona.md`（tsukumo 向けの人格）と素材を1つのディレクトリで束ねたもの
@@ -1165,7 +1166,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### フォールバック
 
-- **英語識別子（予定）**: 使わない（動作の呼び名であって、対応する識別子は置かない）
+- **英語識別子**: 使わない（動作の呼び名であって、対応する識別子は置かない）
 - **定義**: 表示物が1つ欠けても、残りを表示して動作を続けること。立ち絵の素材が無ければ
   セリフだけを出し、`orca` が無ければタブを開かずに配信だけ続ける
 - **注記**: **表示物が1つ欠けたことを起動失敗にしない**（`docs/architecture/display.md` 4.2）
@@ -1201,7 +1202,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 ### output style
 
-- **英語識別子（予定）**: 使わない
+- **英語識別子**: 使わない
 - **定義**: Claude Code の応答の人格・口調を定義する設定。実測環境では `Asuna` が有効
 - **注記**: 衣装のモデル分岐は、この output style の「出撃時の掛け声」と対応させる。
   **`speak` を呼ぶタイミングの規約もここに書く**（`docs/architecture/display.md` 4.2）
