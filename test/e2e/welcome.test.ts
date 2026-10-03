@@ -5,40 +5,48 @@ import { useScenarioRun } from "./scenario-run.ts"
 import { BLOCKED_TASK_ID, READY_TASK_ID, writeWelcomeTasks } from "./task-room.ts"
 
 // 依頼前のメインビューの迎える口（docs/architecture/testing.md「E2E のシナリオの一覧」）。
-// 続きは疑似セッションの場面 `session-list`（前回のセッションの要約は `sessionDigests`）、タスクは cwd の develop/task/ を手書きして用意する。
+// 札の並びと理由は疑似セッションの場面 `welcome-recommendation`、続きの要約は `sessionDigests`、タスクは cwd の develop/task/ を手書きして用意する。
 // 要約は手続き（`/rpc`）の応答で届くので、描かれるまで凍らせた時計を少しずつ進める。
 
 const run = useScenarioRun()
 
 const ELAPSED_MS = 60_000
 const CLOCK_STEP_MS = 50
-const CLOCK_STEPS = 20
+const CLOCK_STEPS = 40
 
-const RESUME_DOOR = "架空の成果の画面に振り返りの口を置きたい"
-const RESUME_REQUEST = "前回の続き: 数が0の日の見せ方は、次のセッションで決める。"
-const TASK_REQUEST = `${READY_TASK_ID} に着手して`
+const RESUME_CARD = "架空の成果の画面に振り返りの口を置きたい"
+const READY_CARD = new RegExp(`${READY_TASK_ID} を始める`)
 
-async function revealDoors(page: Page): Promise<void> {
-  const door = mainView(page).getByRole("button", { name: new RegExp(RESUME_DOOR) })
+async function advanceUntil(page: Page, done: () => Promise<boolean>): Promise<void> {
   for (let step = 0; step < CLOCK_STEPS; step += 1) {
-    if (await door.isVisible()) {
+    if (await done()) {
       return
     }
     await page.clock.runFor(CLOCK_STEP_MS)
   }
-  await door.waitFor()
+  expect(await done()).toBe(true)
 }
 
 async function openWelcomeRoom(scenario: string, viewport: "wide" | "medium") {
-  const room = await run.open({ scenario, scene: "session-list", viewport, domRoots: ["main"] })
+  const room = await run.open({
+    scenario,
+    scene: "welcome-recommendation",
+    viewport,
+    domRoots: ["main"],
+  })
   await writeWelcomeTasks(room)
   await room.waitForEvent("sessions-changed")
-  await revealDoors(room.page)
+  const resume = mainView(room.page).getByRole("button", { name: new RegExp(RESUME_CARD) })
+  await advanceUntil(room.page, () => resume.isVisible())
   return room
 }
 
 function mainView(page: Page): Locator {
   return page.locator('[data-region="main"]')
+}
+
+function welcome(page: Page): Locator {
+  return page.locator('[data-main-view-content="welcome"]')
 }
 
 function draft(page: Page): Promise<string> {
@@ -47,53 +55,57 @@ function draft(page: Page): Promise<string> {
 
 describe("迎える口", () => {
   it.each(["wide", "medium"] as const)(
-    "前回の続きと着手できるタスクだけが口になって並ぶ（%s）",
+    "理由つきのおすすめの札と「ほかの始め方」が並ぶ（%s）",
     async (viewport) => {
       const room = await openWelcomeRoom(`welcome-doors-${viewport}`, viewport)
-      await mainView(room.page)
-        .getByRole("button", { name: new RegExp(READY_TASK_ID) })
-        .waitFor()
+      const page = room.page
+      await mainView(page).getByRole("button", { name: READY_CARD }).waitFor()
       expect(
-        await mainView(room.page)
+        await mainView(page)
           .getByRole("button", { name: new RegExp(BLOCKED_TASK_ID) })
           .count(),
       ).toBe(0)
-      const overflow = await mainView(room.page).evaluate((el) => el.scrollWidth - el.clientWidth)
+      expect(await welcome(page).locator("ul > li").count()).toBe(2)
+      expect(await welcome(page).getByText("いちばんのおすすめ").count()).toBe(1)
+      for (const name of ["自分で書く", "タスクの一覧から選ぶ", "前のやり取りを見る"]) {
+        expect(await mainView(page).getByRole("button", { name }).count()).toBe(1)
+      }
+      const overflow = await mainView(page).evaluate((el) => el.scrollWidth - el.clientWidth)
       expect(overflow).toBeLessThanOrEqual(0)
       await room.settleAndMatch(ELAPSED_MS)
     },
   )
 
-  it("タスクの口を押すと入力欄に依頼が入り、送られない", async () => {
-    const room = await openWelcomeRoom("welcome-task-door", "wide")
-    await mainView(room.page)
-      .getByRole("button", { name: new RegExp(READY_TASK_ID) })
-      .click()
-    expect(await draft(room.page)).toBe(TASK_REQUEST)
-    expect(await room.page.locator('[data-main-view-content="welcome"]').count()).toBe(1)
-  })
-
-  it("続けて続きの口を押すと、改行を挟んで末尾に足される", async () => {
-    const room = await openWelcomeRoom("welcome-door-append", "wide")
-    await mainView(room.page)
-      .getByRole("button", { name: new RegExp(READY_TASK_ID) })
-      .click()
-    await mainView(room.page)
-      .getByRole("button", { name: new RegExp(RESUME_DOOR) })
-      .click()
-    expect(await draft(room.page)).toBe(`${TASK_REQUEST}\n${RESUME_REQUEST}`)
-  })
-
-  it("打ちかけの字があっても上書きされない", async () => {
-    const room = await openWelcomeRoom("welcome-door-keeps-draft", "wide")
+  it("「始める」を押すと、入力欄を経由せず依頼が送られ、下書きは残る", async () => {
+    const room = await openWelcomeRoom("welcome-start-button", "wide")
     await room.page.locator("textarea").fill("打ちかけの架空の依頼")
-    await mainView(room.page)
-      .getByRole("button", { name: new RegExp(READY_TASK_ID) })
-      .click()
-    expect(await draft(room.page)).toBe(`打ちかけの架空の依頼\n${TASK_REQUEST}`)
+    await mainView(room.page).getByRole("button", { name: READY_CARD }).click()
+    await room.waitForEvent("request")
+    expect(await draft(room.page)).toBe("打ちかけの架空の依頼")
   })
 
-  it("空の帳面（タスク0件・続き無し）でも、見出しと1行だけが出て口は出ない", async () => {
+  it("フォーカスが入力欄の外にあるとき、キー 1 で同じ札が始まる", async () => {
+    const room = await openWelcomeRoom("welcome-start-key", "wide")
+    await room.page.getByRole("heading", { name: "何から始める？" }).click()
+    await room.page.keyboard.press("1")
+    await room.waitForEvent("request")
+  })
+
+  it("入力欄に打っている最中は、キーは字になるだけで札は始まらない", async () => {
+    const room = await openWelcomeRoom("welcome-key-in-input", "wide")
+    await room.page.locator("textarea").click()
+    await room.page.keyboard.press("1")
+    expect(await draft(room.page)).toBe("1")
+    expect(await welcome(room.page).count()).toBe(1)
+  })
+
+  it("「前のやり取りを見る」で切り替え画面が開く", async () => {
+    const room = await openWelcomeRoom("welcome-see-previous", "wide")
+    await mainView(room.page).getByRole("button", { name: "前のやり取りを見る" }).click()
+    await room.page.getByRole("dialog").waitFor()
+  })
+
+  it("空の帳面（タスク0件・続き無し）では札が出ず、「自分で書く」だけが大きく出る", async () => {
     const room = await run.open({
       scenario: "welcome-empty",
       scene: "none",
@@ -101,9 +113,8 @@ describe("迎える口", () => {
       domRoots: ["main"],
     })
     await room.page.getByRole("heading", { name: "何から始める？" }).waitFor()
-    expect(
-      await mainView(room.page).locator('[data-main-view-content="welcome"] button').count(),
-    ).toBe(0)
+    expect(await welcome(room.page).locator("ul").count()).toBe(0)
+    await mainView(room.page).getByRole("button", { name: "自分で書く" }).waitFor()
     await room.settleAndMatch(ELAPSED_MS)
   })
 })

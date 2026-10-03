@@ -52,6 +52,29 @@
     "received": "event",
     "at": 1768438800000,
     "event": {
+      "kind": "recommendation-changed",
+      "cards": [
+        {
+          "kind": "task",
+          "taskId": "T-003",
+          "reason": "架空の効き目が大きい。ほかの直しより先に効いてくる"
+        },
+        {
+          "kind": "resume",
+          "reason": "架空のつながり。前の作業の続きでそのまま入れる"
+        },
+        {
+          "kind": "task",
+          "taskId": "T-001",
+          "reason": "小さく片づく。肩ならしにちょうどいい"
+        }
+      ]
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
       "kind": "sessions-changed",
       "sessions": [
         {
@@ -67,19 +90,6 @@
           "lastModified": 1768399500000,
           "startedAt": 1768389000000,
           "heading": "架空の成果の画面に振り返りの口を置きたい"
-        },
-        {
-          "viewPort": 7327,
-          "sessionId": "c3a10000-0000-4000-8000-000000000002",
-          "lastModified": 1768366920000,
-          "startedAt": 1768365000000,
-          "heading": "/retrospect"
-        },
-        {
-          "viewPort": 7327,
-          "sessionId": "2d000000-0000-4000-8000-000000000003",
-          "lastModified": 1768224600000,
-          "startedAt": 1768219200000
         }
       ],
       "current": "fake-session"

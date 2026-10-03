@@ -31,6 +31,38 @@
                   "children": [
                     "下の入力欄から頼める。"
                   ]
+                },
+                {
+                  "tag": "button",
+                  "attributes": {
+                    "aria-disabled": "false",
+                    "type": "button"
+                  },
+                  "children": [
+                    {
+                      "tag": "svg"
+                    },
+                    "自分で書く",
+                    {
+                      "tag": "kbd",
+                      "children": [
+                        "/"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "tag": "button",
+                  "attributes": {
+                    "aria-disabled": "false",
+                    "type": "button"
+                  },
+                  "children": [
+                    {
+                      "tag": "svg"
+                    },
+                    "タスクの一覧から選ぶ"
+                  ]
                 }
               ]
             }

@@ -4388,6 +4388,53 @@
       ]
     },
     {
+      "name": "welcome-recommendation",
+      "steps": [
+        {
+          "afterMs": 0,
+          "event": {
+            "kind": "recommendation-changed",
+            "cards": [
+              {
+                "kind": "task",
+                "taskId": "T-003",
+                "reason": "架空の効き目が大きい。ほかの直しより先に効いてくる"
+              },
+              { "kind": "resume", "reason": "架空のつながり。前の作業の続きでそのまま入れる" },
+              {
+                "kind": "task",
+                "taskId": "T-001",
+                "reason": "小さく片づく。肩ならしにちょうどいい"
+              }
+            ]
+          }
+        },
+        {
+          "afterMs": 0,
+          "event": {
+            "kind": "sessions-changed",
+            "sessions": [
+              {
+                "viewPort": 7327,
+                "sessionId": "fake-session",
+                "lastModified": 1768438500000,
+                "startedAt": 1768435920000,
+                "heading": "入力欄の送信ボタンの位置を架空に直す"
+              },
+              {
+                "viewPort": 7327,
+                "sessionId": "7b3f0000-0000-4000-8000-000000000001",
+                "lastModified": 1768399500000,
+                "startedAt": 1768389000000,
+                "heading": "架空の成果の画面に振り返りの口を置きたい"
+              }
+            ],
+            "current": "fake-session"
+          }
+        }
+      ]
+    },
+    {
       "name": "chat-remembered-lines",
       "steps": [
         {

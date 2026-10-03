@@ -316,30 +316,93 @@
                         {
                           "tag": "p",
                           "children": [
-                            "口を押すと、下の入力欄に依頼の文が入る（送るのは自分で）。"
+                            "tsukumo のおすすめ。「始める」を押すと、すぐに頼んで作業が始まる。"
                           ]
                         },
                         {
-                          "tag": "section",
+                          "tag": "ul",
                           "attributes": {
-                            "aria-label": "前回の続き"
+                            "data-count": "1"
                           },
                           "children": [
                             {
-                              "tag": "h3",
-                              "children": [
-                                "前回の続き"
-                              ]
-                            },
-                            {
-                              "tag": "button",
-                              "attributes": {
-                                "aria-disabled": "false",
-                                "type": "button"
-                              },
+                              "tag": "li",
                               "children": [
                                 "架空の成果の画面に振り返りの口を置きたい",
-                                "残り：数が0の日の見せ方は、次のセッションで決める。"
+                                "いちばんのおすすめ",
+                                "数が0の日の見せ方は、次のセッションで決める。",
+                                {
+                                  "tag": "kbd",
+                                  "children": [
+                                    "1"
+                                  ]
+                                },
+                                {
+                                  "tag": "button",
+                                  "attributes": {
+                                    "aria-disabled": "false",
+                                    "aria-label": "架空の成果の画面に振り返りの口を置きたい を始める（すぐ送る）",
+                                    "type": "button"
+                                  },
+                                  "children": [
+                                    "始める",
+                                    {
+                                      "tag": "svg"
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        "ほかの始め方",
+                        {
+                          "tag": "button",
+                          "attributes": {
+                            "aria-disabled": "false",
+                            "type": "button"
+                          },
+                          "children": [
+                            {
+                              "tag": "svg"
+                            },
+                            "自分で書く",
+                            {
+                              "tag": "kbd",
+                              "children": [
+                                "/"
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "tag": "button",
+                          "attributes": {
+                            "aria-disabled": "false",
+                            "type": "button"
+                          },
+                          "children": [
+                            {
+                              "tag": "svg"
+                            },
+                            "タスクの一覧から選ぶ"
+                          ]
+                        },
+                        {
+                          "tag": "button",
+                          "attributes": {
+                            "aria-disabled": "false",
+                            "type": "button"
+                          },
+                          "children": [
+                            {
+                              "tag": "svg"
+                            },
+                            "前のやり取りを見る",
+                            {
+                              "tag": "kbd",
+                              "children": [
+                                "←"
                               ]
                             }
                           ]

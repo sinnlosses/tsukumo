@@ -1,4 +1,5 @@
 .welcome {
+  container-type: inline-size;
   padding: 0.5rem 0;
 }
 .title {
@@ -7,45 +8,166 @@
 .lead {
   margin: 0 0 1.25rem;
 }
-.groups {
+
+.cards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
-  gap: 1.25rem;
-  align-items: start;
+  grid-template-columns: 1.3fr 1fr 1fr;
+  gap: 12px;
+  margin: 0 0 1.25rem;
+  padding: 0;
+  list-style: none;
 }
-.group {
+.cards[data-count="1"] {
+  grid-template-columns: 1fr;
+}
+.cards[data-count="2"] {
+  grid-template-columns: 1.3fr 1fr;
+}
+@container (max-width: 40rem) {
+  .cards,
+  .cards[data-count="2"] {
+    grid-template-columns: 1fr;
+  }
+}
+
+.card-item {
   display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
   min-width: 0;
 }
-.door {
-  display: block;
-  padding: 0.625rem 0.875rem;
-  border-radius: 0.625rem;
-  text-align: left;
-  line-height: 1.6;
+.card {
+  box-sizing: border-box;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  min-height: 196px;
+  padding: 16px 18px 14px;
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+  background: var(--surface-raised);
 }
-.door-id {
-  margin-right: 0.5rem;
+.card-top {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--surface));
+  background: var(--surface-accent);
+}
+
+.card-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.card-id {
+  min-width: 0;
+  overflow: hidden;
   font-family: var(--font-mono);
-  font-size: var(--font-secondary);
+  font-size: var(--font-label);
   color: var(--accent);
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-.door-label {
-  display: block;
-  font-weight: 600;
+.card-badge {
+  flex-shrink: 0;
+  padding: 1px 8px;
+  border-radius: 9px;
+  background: var(--accent);
+  color: var(--ground);
+  font-size: var(--font-label);
+  font-weight: 700;
 }
-.door-detail {
+
+.card-title {
   display: -webkit-box;
   overflow: hidden;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 3;
+  color: var(--ink);
+  font-size: var(--font-subheading);
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+.card-top .card-title {
+  font-size: var(--font-body);
+}
+
+.card-reason {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
   color: var(--ink-quiet);
   font-size: var(--font-secondary);
+  line-height: 1.6;
 }
-.door-id + .door-detail {
-  display: inline;
-  color: inherit;
-  font-size: inherit;
+.card-top .card-reason {
+  color: color-mix(in srgb, var(--accent) 45%, var(--ink));
+}
+.card-face {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.card-foot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 10px;
+  border-top: 1px solid var(--rule-quiet);
+}
+.card-key {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-width: 18px;
+  height: 20px;
+  padding: 0 5px;
+  border: 1px solid var(--rule);
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  background: var(--ground);
+  color: var(--ink-quiet);
+  font-family: var(--font-mono);
+  font-size: var(--font-label);
+}
+.card-start {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  margin-left: auto;
+  padding: 0 14px;
+  border-radius: 9px;
+}
+.card:not(.card-top) .card-foot button:hover {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--ground);
+}
+
+.others {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.others-label {
+  margin-right: 4px;
+}
+.other {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 34px;
+  padding: 0 12px;
+  border-radius: 10px;
+}
+.others-large .other:first-of-type {
+  height: 44px;
+  padding: 0 18px;
+  font-size: var(--font-body);
 }

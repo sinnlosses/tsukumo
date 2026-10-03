@@ -1,12 +1,11 @@
 // 帯の左上の部屋の名前の札と、押すと開く切り替え画面のロジック。
-// 札と切り替え画面が同じ開閉の状態を読むので、状態はここに1つだけ持つ。
+// 札と切り替え画面が同じ開閉の状態（`useSessionSwitcherRequest`）を読む。
 //
 // 一覧（`SessionState.sessions`）は軽いもの（ID・見出し・時刻）だけで、依頼の数・要約・最後のセリフは選んだ1件ぶんだけ取りに行く（`useSessionDigest`）。
 
-import { useState } from "react"
-
 import { FRAME_ERROR_REASON } from "../../../../../shared/frame.ts"
 import type { SessionChoice } from "../../../../../shared/session/session-choice.ts"
+import { useSessionSwitcherRequest } from "../../../../stores/session-switcher-request.ts"
 import { useSession, useTurnRunning } from "../../../../stores/session.ts"
 import {
   clockTime,
@@ -88,14 +87,9 @@ export function useSessionSwitcher(room: string, project: string): SessionSwitch
     session.state.session.kind === "starting" ? undefined : session.state.session.sessionId,
   )
   const turnInProgress = useTurnRunning()
-  const [open, setOpen] = useState(false)
-
-  function onOpen(): void {
-    setOpen(true)
-  }
-  function onClose(): void {
-    setOpen(false)
-  }
+  const open = useSessionSwitcherRequest((state) => state.open)
+  const onOpen = useSessionSwitcherRequest((state) => state.openSwitcher)
+  const onClose = useSessionSwitcherRequest((state) => state.closeSwitcher)
 
   const shortIds = shortSessionIds([
     ...(currentSessionId === undefined ? [] : [currentSessionId]),
@@ -136,7 +130,7 @@ export function useSessionSwitcher(room: string, project: string): SessionSwitch
         if (turnInProgress) {
           return
         }
-        setOpen(false)
+        onClose()
         // いま出しているものを選び直しても起こし直さない（会話が消えるだけで何も変わらない）。
         if (sessionId !== currentSessionId) {
           dispatch.session.switchSession({ sessionId })
@@ -146,7 +140,7 @@ export function useSessionSwitcher(room: string, project: string): SessionSwitch
         if (turnInProgress) {
           return
         }
-        setOpen(false)
+        onClose()
         dispatch.session.startNewSession()
       },
     },
