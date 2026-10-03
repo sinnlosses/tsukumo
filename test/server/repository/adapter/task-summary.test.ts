@@ -40,11 +40,11 @@ afterEach(async () => {
   watcher = undefined
 })
 
-/** `branch` を初期ブランチにし、ファイル方式のプロジェクトの設定を置いたリポジトリを作る。 */
-async function initRepository(branch: string): Promise<string> {
+/** `branch` を初期ブランチにし、`mainBranch` を主ブランチにしたファイル方式のプロジェクトの設定を置いたリポジトリを作る。 */
+async function initRepository(branch: string, mainBranch = "main"): Promise<string> {
   const repository = join(root(), "repository")
   await initGitRepository(repository, branch)
-  writeProjectSettings(repository, "files")
+  writeProjectSettings(repository, "files", mainBranch)
   return repository
 }
 
@@ -209,6 +209,16 @@ describe("watchTaskSummary", () => {
     expect(changes).toEqual([])
   })
 
+  it("設定の主ブランチが master なら、master の develop/task/ から読む", async () => {
+    const repository = await initRepository("master", "master")
+    await commitNewFormatTasks(repository, [{ id: "T-001", summary: "1つめ", status: "todo" }])
+    const changes: unknown[] = []
+    watch(repository, changes)
+    await waitForChanges(changes, 1)
+
+    expect(changes).toEqual([known(notified("T-001", "1つめ", "todo"))])
+  })
+
   it("git リポジトリでないディレクトリでは、ファイルがあっても呼ばれない（既定の「不明」のまま）", async () => {
     writeNewFormatTask(root(), "T-001", "1つめ", "todo")
     const changes: unknown[] = []
@@ -337,15 +347,28 @@ describe("watchTaskSummary", () => {
     expect(changes).toEqual([UNKNOWN])
   })
 
-  it("プロジェクトの設定が無いときは、develop/task/ があっても「不明」", async () => {
+  it("プロジェクトの設定が無いときは、develop/task/ があっても呼ばれない（既定の「不明」のまま）", async () => {
     const repository = await initRepository("main")
     rmSync(join(repository, PROJECT_SETTINGS_PATH))
     await commitNewFormatTasks(repository, [{ id: "T-001", summary: "1つめ", status: "todo" }])
     const changes: unknown[] = []
     watch(repository, changes)
+    await sleep(QUIET_PERIOD_MS)
+
+    expect(changes).toEqual([])
+  })
+
+  it("設定が読めていたものが消えたら「不明」を通知する", async () => {
+    const repository = await initRepository("main")
+    await commitNewFormatTasks(repository, [{ id: "T-001", summary: "1つめ", status: "todo" }])
+    const changes: unknown[] = []
+    watch(repository, changes)
     await waitForChanges(changes, 1)
 
-    expect(changes).toEqual([UNKNOWN])
+    rmSync(join(repository, PROJECT_SETTINGS_PATH))
+    await waitForChanges(changes, 2)
+
+    expect(changes).toEqual([known(notified("T-001", "1つめ", "todo")), UNKNOWN])
   })
 
   it("見回りの途中で設定を書くと、main を動かさずに次の見回りで一覧が出る", async () => {
@@ -354,12 +377,12 @@ describe("watchTaskSummary", () => {
     await commitNewFormatTasks(repository, [{ id: "T-001", summary: "1つめ", status: "todo" }])
     const changes: unknown[] = []
     watch(repository, changes)
-    await waitForChanges(changes, 1)
+    await sleep(QUIET_PERIOD_MS)
 
     writeProjectSettings(repository, "files")
-    await waitForChanges(changes, 2)
+    await waitForChanges(changes, 1)
 
-    expect(changes).toEqual([UNKNOWN, known(notified("T-001", "1つめ", "todo"))])
+    expect(changes).toEqual([known(notified("T-001", "1つめ", "todo"))])
   })
 })
 

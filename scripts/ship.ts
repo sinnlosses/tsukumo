@@ -15,7 +15,7 @@ import { runShipPlan, type ShipPlanResult } from "./lib/ship-plan.ts"
 
 const ROOT = path.resolve(fileURLToPath(new URL("..", import.meta.url)))
 
-const primaryBranch = resolvePrimaryBranch(ROOT)
+const primaryBranch = await resolvePrimaryBranch(ROOT)
 const branch = execFileSync("git", ["rev-parse", "--abbrev-ref", "HEAD"], {
   cwd: ROOT,
   encoding: "utf8",

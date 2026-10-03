@@ -172,6 +172,24 @@ describe("readAchievement", () => {
     expect(result).toEqual({ kind: "ok", achievement: { kind: "unknown" } })
   })
 
+  it("設定の主ブランチが master なら、master の履歴から数える", async () => {
+    const masterRepository = join(root(), "master-repository")
+    await initGitRepository(masterRepository, "master")
+    writeProjectSettings(masterRepository, "files", "master")
+    await commitAt(masterRepository, "2026-09-23", "12:00", "a.txt")
+
+    const achievement = known(
+      await readAchievement(
+        masterRepository,
+        "2026-09-23",
+        "2026-09-24",
+        createAchievementCommitCache(),
+      ),
+    )
+
+    expect(achievement).toMatchObject({ kind: "known", commitCount: 1 })
+  })
+
   it("git リポジトリでないディレクトリでは「不明」", async () => {
     const result = await readAchievement(
       root(),
@@ -253,15 +271,18 @@ describe("readAchievement", () => {
     })
   })
 
-  it("プロジェクトの設定が無いリポジトリでは、develop/task/ があっても doneTasks が「数えられない」", async () => {
+  it("プロジェクトの設定が無いリポジトリでは、main があっても「不明」（主ブランチを読まない）", async () => {
     rmSync(join(repository, PROJECT_SETTINGS_PATH))
     await commitNewFormatTask(repository, "2026-09-23", "10:00", "T-001", "架空", "done")
 
-    const achievement = known(
-      await readAchievement(repository, "2026-09-23", "2026-09-24", createAchievementCommitCache()),
+    const result = await readAchievement(
+      repository,
+      "2026-09-23",
+      "2026-09-24",
+      createAchievementCommitCache(),
     )
 
-    expect(achievement.doneTasks).toEqual({ kind: "unknown" })
+    expect(result).toEqual({ kind: "ok", achievement: { kind: "unknown" } })
   })
 
   it("新形式: その日の終わりまでに done になったタスクを、前の日には無かった分だけ返す", async () => {

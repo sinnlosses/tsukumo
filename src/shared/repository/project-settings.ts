@@ -40,6 +40,11 @@ const projectSettingsSchema = z.strictObject({
     .optional(),
 })
 
+/** 完全な参照名で指す（ブランチ名だけだと同名のタグやファイルと曖昧になりうる）。 */
+export function mainBranchRefOf(tasks: TaskSettings): string {
+  return `refs/heads/${tasks.mainBranch}`
+}
+
 /** 在るファイルの中身を検証する（無いファイルは呼ぶ側が `none` にする）。 */
 export function projectSettingsOf(content: string): ProjectSettingsRead {
   const parsed = projectSettingsSchema.safeParse(parseJson(content))

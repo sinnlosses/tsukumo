@@ -37,7 +37,7 @@ const ROOT = fileURLToPath(new URL("..", import.meta.url))
 const forceFull = process.argv.includes("--full")
 
 const skipHeavyStages =
-  !forceFull && isDocumentOnlyChange(collectChangedPaths(ROOT, resolvePrimaryBranch(ROOT)))
+  !forceFull && isDocumentOnlyChange(collectChangedPaths(ROOT, await resolvePrimaryBranch(ROOT)))
 if (skipHeavyStages) {
   const skipped = STAGES.filter((stage) => stage.skippable)
     .map((stage) => stage.name)

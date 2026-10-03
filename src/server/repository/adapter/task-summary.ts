@@ -19,8 +19,9 @@
 // 見回りは `setWatching(true)` のあいだだけ回る。起こした時点の1回は、画面が無くても読む。
 // 止めているあいだも覚えた状態は残し、再開の1回で変わっていれば `onChange` する。
 //
-// `main` が読めないとき（git リポジトリでない・`main` ブランチが無い・`git` が無い）、ファイル方式で `develop/task/` が無いとき、Beads 方式で `bd` が読めないとき、プロジェクトの設定が無い・読めないときは「不明」にする。
-// 作業ツリーのファイルへは落とさない。落とすと読み元が2つになり、`main` の名前が違うリポジトリで一覧が黙って古いほうへ戻る（「不明」なら画面で気付ける）。
+// 主ブランチの名前はプロジェクトの設定の `tasks.mainBranch` から読む。設定が無い・読めないときは主ブランチを読みに行かない。
+// 主ブランチが読めないとき（git リポジトリでない・設定の名前のブランチが無い・`git` が無い）、ファイル方式で `develop/task/` が無いとき、Beads 方式で `bd` が読めないとき、プロジェクトの設定が無い・読めないときは「不明」にする。
+// 作業ツリーのファイルへは落とさない。落とすと読み元が2つになり、一覧が黙って古いほうへ戻る（「不明」なら画面で気付ける）。
 // `git`・`bd` がタイムアウトしたときだけはその回を諦め、覚えている状態も変えない（「不明」にすると一覧が一瞬消えて戻る）。
 //
 // 中身の解釈（front matter の文法・台帳の印から `doing` を作る・Beads の状態の読み替え）は契約側の仕事。
@@ -32,7 +33,10 @@ import { basename, join } from "node:path"
 import { isDeepEqual } from "remeda"
 
 import { taskSummaryItemsOfBeadsIssues } from "../../../shared/repository/beads-issue.ts"
-import type { ProjectSettingsRead } from "../../../shared/repository/project-settings.ts"
+import {
+  mainBranchRefOf,
+  type ProjectSettingsRead,
+} from "../../../shared/repository/project-settings.ts"
 import {
   parseNewTaskFile,
   taskSummaryItemsOfNewTaskFiles,
@@ -60,9 +64,6 @@ export type TaskSummaryPollIntervals = {
   /** Beads 方式の間隔。 */
   readonly beads: number
 }
-
-/** 完全な参照名で指す（`main` だけだと同名のタグやファイルと曖昧になりうる）。 */
-const MAIN_BRANCH_REF = "refs/heads/main"
 
 /**
  * 台帳の置き場（`$(git rev-parse --path-format=absolute --git-common-dir)` の下）の中の、着手の印。
@@ -256,17 +257,16 @@ type MainTasksRead =
  */
 async function pollOnce(reader: Reader, cache: WatcherCache): Promise<MainTasksRead> {
   const settings = await reader.ports.readProjectSettings(reader.cwd)
-  const revParse = await reader.ports.runGit(reader.cwd, [
-    "rev-parse",
-    "--verify",
-    "--quiet",
-    `${MAIN_BRANCH_REF}^{commit}`,
-  ])
-  if (revParse.kind === "timed-out") {
-    return { kind: "unchanged" }
+  if (settings.kind !== "read") {
+    return cache.kind === "other" && isDeepEqual(settings, cache.settings)
+      ? { kind: "unchanged" }
+      : unknownAt(undefined, settings)
   }
 
-  const head = revParse.kind === "output" ? revParse.stdout.trim() : undefined
+  const head = await readHead(reader, mainBranchRefOf(settings.tasks))
+  if (head === "timed-out") {
+    return { kind: "unchanged" }
+  }
   if (head === undefined) {
     return head === cache.head ? { kind: "unchanged" } : unknownAt(head, settings)
   }
@@ -282,6 +282,20 @@ async function pollOnce(reader: Reader, cache: WatcherCache): Promise<MainTasksR
     case "task-dir":
       return rereadClaims(reader, cache)
   }
+}
+
+/** 主ブランチの先端。取れなければ `undefined`。 */
+async function readHead(reader: Reader, ref: string): Promise<string | undefined | "timed-out"> {
+  const revParse = await reader.ports.runGit(reader.cwd, [
+    "rev-parse",
+    "--verify",
+    "--quiet",
+    `${ref}^{commit}`,
+  ])
+  if (revParse.kind === "timed-out") {
+    return "timed-out"
+  }
+  return revParse.kind === "output" ? revParse.stdout.trim() : undefined
 }
 
 /** ファイル方式で先端が動いていないときの見回り。台帳の印だけを読み直す。 */

@@ -6,9 +6,9 @@ import { dirname, join } from "node:path"
 import { PROJECT_SETTINGS_PATH } from "../../src/server/repository/adapter/project-settings.ts"
 import type { TaskStore } from "../../src/shared/repository/project-settings.ts"
 
-/** `store` の方式で、主ブランチを `main` にした設定を書く。 */
-export function writeProjectSettings(cwd: string, store: TaskStore): void {
-  writeProjectSettingsContent(cwd, JSON.stringify({ tasks: { store, mainBranch: "main" } }))
+/** `store` の方式で、主ブランチを `mainBranch`（既定 `main`）にした設定を書く。 */
+export function writeProjectSettings(cwd: string, store: TaskStore, mainBranch = "main"): void {
+  writeProjectSettingsContent(cwd, JSON.stringify({ tasks: { store, mainBranch } }))
 }
 
 /** 中身をそのまま書く（壊れた JSON を書くときに使う）。 */

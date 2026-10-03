@@ -2,12 +2,12 @@
 //
 // 読むのは作業ツリーのファイルではなく `main` の上のもの。
 // 作業ツリーのものは `git merge main` するまで別の作業ツリーの分を知らない。
-// 例外はタスクの方式で、プロジェクトの設定（`readProjectSettings`）から読む。設定が無い・読めないときは、終えたタスクを「数えられない」にする。
+// 例外はプロジェクトの設定（`readProjectSettings`）で、主ブランチの名前（`tasks.mainBranch`）とタスクの方式をここから読む。設定が無い・読めないときは主ブランチを読まず、`unknown` にする。
 //
 // Beads 方式（プロジェクトの設定の `tasks.store` が `beads`）では、終えたタスクを git の切り口と Beads の閉じた課題（`closed_at`）の両方から読み、ID で和をとる。
 // 移す前は Beads に閉じた課題が無く、移したあとは `main` に `develop/task/` が無いので、境を数で持たなくても欠けず、同じ ID が両方にあっても1件にしかならない。
 //
-// `main` が読めない（git リポジトリでない・`main` ブランチが無い・`git` が無い）ときは `DailyAchievement` の `{ kind: "unknown" }`（200 のまま配ってよい）。
+// 主ブランチが読めない（git リポジトリでない・設定の名前のブランチが無い・`git` が無い）ときは `DailyAchievement` の `{ kind: "unknown" }`（200 のまま配ってよい）。
 // それ以外の `git` の呼び出しがタイムアウト・失敗したときは `{ kind: "unavailable" }` で、呼び出し側が 503 にする（部分的な数を出さない）。
 
 import { basename } from "node:path"
@@ -18,6 +18,7 @@ import {
 } from "../../../shared/achievement/achievement-calendar.ts"
 import type { DailyAchievement } from "../../../shared/achievement/achievement.ts"
 import { taskIdOfBeadsId, type BeadsIssue } from "../../../shared/repository/beads-issue.ts"
+import { mainBranchRefOf, type TaskSettings } from "../../../shared/repository/project-settings.ts"
 import { localDateEpochRange, localDateKey, localTimeHHMM } from "../../adapter/local-time.ts"
 import { readBeadsIssues } from "../../repository/adapter/beads.ts"
 import { runGit, runGitCatFileBatch } from "../../repository/adapter/git.ts"
@@ -69,9 +70,6 @@ export function createAchievementCommitCache(): AchievementCommitCache {
   }
 }
 
-/** 完全な参照名で指す（`main` だけだと同名のタグやファイルと曖昧になりうる）。 */
-const MAIN_BRANCH_REF = "refs/heads/main"
-
 const TASKS_FILE_PATH = "develop/tasks.json"
 const ARCHIVE_FILE_PATH = "docs/history/tasks.md"
 
@@ -114,8 +112,9 @@ export async function readAchievement(
   today: string,
   cache: AchievementCommitCache,
 ): Promise<ReadAchievementResult> {
-  const head = await mainHeadCommit(cwd)
-  if (head === undefined) {
+  const settings = await readProjectSettings(cwd)
+  const head = settings.kind === "read" ? await mainHeadCommit(cwd, settings.tasks) : undefined
+  if (settings.kind !== "read" || head === undefined) {
     return { kind: "ok", achievement: { kind: "unknown" } }
   }
 
@@ -129,7 +128,7 @@ export async function readAchievement(
     ),
     totalAchievementCommitsBeforeDay(cwd, head, dateKey, today, range, cache),
     readTaskSnapshotSource(cwd, head),
-    readBeadsIssuesOfStore(cwd),
+    readBeadsIssuesOfStore(cwd, settings.tasks),
   ])
   if (commits === undefined) {
     return { kind: "unavailable" }
@@ -144,7 +143,7 @@ export async function readAchievement(
   if (beads === "unavailable") {
     return { kind: "unavailable" }
   }
-  if (beads === "untracked" || (beads === "files" && !hasTaskTracking(headSource))) {
+  if (beads === "files" && !hasTaskTracking(headSource)) {
     return {
       kind: "ok",
       achievement: dailyAchievementOf({
@@ -208,18 +207,14 @@ export async function readAchievement(
 }
 
 /**
- * プロジェクトの設定で方式を決め、Beads 方式なら `bd` の全件を読む。
- * ファイル方式なら `"files"`、設定が無い・読めなければ `"untracked"`（終えたタスクを「数えられない」にする）。
+ * Beads 方式なら `bd` の全件を読む。ファイル方式なら `"files"`。
  * `bd` が失敗・タイムアウトしたら `"unavailable"`。
  */
 async function readBeadsIssuesOfStore(
   cwd: string,
-): Promise<readonly BeadsIssue[] | "files" | "untracked" | "unavailable"> {
-  const settings = await readProjectSettings(cwd)
-  if (settings.kind !== "read") {
-    return "untracked"
-  }
-  if (settings.tasks.store === "files") {
+  tasks: TaskSettings,
+): Promise<readonly BeadsIssue[] | "files" | "unavailable"> {
+  if (tasks.store === "files") {
     return "files"
   }
   const beads = await readBeadsIssues(cwd)
@@ -300,7 +295,8 @@ export async function readCommitCalendar(
   today: string,
   cache: AchievementCommitCache,
 ): Promise<ReadCommitCalendarResult> {
-  const head = await mainHeadCommit(cwd)
+  const settings = await readProjectSettings(cwd)
+  const head = settings.kind === "read" ? await mainHeadCommit(cwd, settings.tasks) : undefined
   if (head === undefined) {
     return { kind: "ok", calendar: { kind: "unknown" } }
   }
@@ -370,13 +366,13 @@ function calendarOf(
   }
 }
 
-/** `main` の先端。取れなければ `undefined`（「`main` が読めない」）。 */
-async function mainHeadCommit(cwd: string): Promise<string | undefined> {
+/** 主ブランチの先端。取れなければ `undefined`（「主ブランチが読めない」）。 */
+async function mainHeadCommit(cwd: string, tasks: TaskSettings): Promise<string | undefined> {
   const result = await runGit(cwd, [
     "rev-parse",
     "--verify",
     "--quiet",
-    `${MAIN_BRANCH_REF}^{commit}`,
+    `${mainBranchRefOf(tasks)}^{commit}`,
   ])
   return result.kind === "output" ? result.stdout.trim() : undefined
 }
