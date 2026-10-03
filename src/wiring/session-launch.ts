@@ -98,6 +98,7 @@ export function wireSessionLaunch(options: {
             seed,
             context,
             scene: config.fakeScene,
+            claudeConfigDir: config.claudeConfigDir,
             firstViewer: options.firstViewer,
             viewPort,
             onSessionMarked: (sessionId, tag) => sessionCatalog.noteMarked(sessionId, tag),
@@ -142,6 +143,7 @@ function startDriver(options: {
   readonly seed: SessionLaunchSeed<CharacterPack>
   readonly context: WiringContext
   readonly scene: string | undefined
+  readonly claudeConfigDir: string | undefined
   readonly firstViewer: Promise<void>
   readonly viewPort: number
   /** 印が付いたセッションのIDと、付けた印を受け取る口。 */
@@ -186,6 +188,7 @@ function startDriver(options: {
     onSessionMarked: (sessionId) => options.onSessionMarked(sessionId, tag),
     mode,
     inheritedEnv,
+    claudeConfigDir: options.claudeConfigDir,
     // 段に入るたびに読み直す（見直しの途中で見送りが増えても効く）。
     dismissedUsageProposalKeys: () => readDismissedUsageProposalKeys(),
     onEvent,

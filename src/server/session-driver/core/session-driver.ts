@@ -183,6 +183,8 @@ export type SessionDriverOptions = {
    * 本体の催促を止める変数を足して渡す（`childProcessEnv`）。
    */
   readonly inheritedEnv: Readonly<Record<string, string | undefined>>
+  /** Claude Code の設定ディレクトリ（`Config.claudeConfigDir`）。契約の控えを読む場所で、無ければ `~`。 */
+  readonly claudeConfigDir: string | undefined
   /**
    * 利用者が見送った提案の識別子（`usageProposalKey`）を読む口。
    * 見直しのツールが呼ばれるたびに読み直す（`createUsageReviewIntake`）。

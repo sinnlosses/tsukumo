@@ -32,4 +32,18 @@ if [ -z "$node" ]; then
   exit 1
 fi
 
+# package.json の engines.node（>=<数>）を下限にする。.ts を直に実行するので、古い node では
+# src/ の中に案内を書けず、構文に依らないここで止める。読めないときは比べずに通す。
+have=$("$node" -p "process.versions.node" 2>/dev/null) || have=""
+need=$("$node" -p "require('$root/package.json').engines.node" 2>/dev/null) || need=""
+have_major=${have%%.*}
+need_major=${need#>=}
+need_major=${need_major%%.*}
+case "$have_major" in '' | *[!0-9]*) have_major="" ;; esac
+case "$need_major" in '' | *[!0-9]*) need_major="" ;; esac
+if [ -n "$have_major" ] && [ -n "$need_major" ] && [ "$have_major" -lt "$need_major" ]; then
+  echo "tsukumo: node $have が古い（$need が要る。mise install を済ませたか確かめてください）" >&2
+  exit 1
+fi
+
 exec "$node" "$root/src/cli.ts" "$@"

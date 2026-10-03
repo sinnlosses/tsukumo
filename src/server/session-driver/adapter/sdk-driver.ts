@@ -275,7 +275,7 @@ async function relayCommandDescriptions(
 async function relayPlan(
   session: { readonly accountInfo: () => Promise<unknown> },
   options: SessionDriverOptions,
-  readTier: () => ClaudeAccountTier = readClaudeAccountTier,
+  readTier: () => ClaudeAccountTier = () => readClaudeAccountTier(options.claudeConfigDir),
 ): Promise<void> {
   try {
     const plan = planName(readTier(), toPlan(await session.accountInfo()))

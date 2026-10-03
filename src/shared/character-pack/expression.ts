@@ -61,7 +61,6 @@ export function isOutfit(value: string): value is Outfit {
 
 /**
  * モデル名から衣装を決める。`haiku` = 軽装 / `sonnet` = 通常装備 / `opus` / `fable` = 戦闘配置。
- * `~/.claude/output-styles/asuna.md` のモデル分岐と対応する。
  * `fable` は `opus` と同じ戦闘配置に割り当てる（衣装は「装備の重さ」の3段のままとし、`OUTFITS` を増やさない）。
  *
  * 渡ってくる `model` が短い別名（"opus" など）か解決済みの完全なモデルIDかは場合による（SDK の `init` は完全なモデルIDを返す）ため、部分一致で両方を拾う。

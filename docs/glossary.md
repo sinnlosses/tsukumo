@@ -169,7 +169,7 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 - **英語識別子**: `plan`
 - **定義**: 契約の段と枠（`Max 20x` / `Pro` など）。出どころは2つあり、**Claude Code 自身の控え
-  （`~/.claude.json` の `oauthAccount`）を先に見る**
+  （`CLAUDE_CONFIG_DIR`、無ければ `~` の `.claude.json` の `oauthAccount`）を先に見る**
 - **注記**: **SDK の `accountInfo()` が返す `subscriptionType` は契約の段と合わないことがある**
   （Max の契約でも `"Claude Pro"` を返す実測がある）。控えは段（`claude_max`）と枠
   （`default_claude_max_20x`）を別々に持つので、そちらから組み立てられるならそれを使い、

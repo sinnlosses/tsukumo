@@ -42,6 +42,7 @@ const BASE_OPTIONS: SessionDriverOptions = {
   onSessionMarked: () => {},
   mode: WORK_MODE,
   inheritedEnv: { PATH: "/usr/bin", HOME: "/tmp/tsukumo-home" },
+  claudeConfigDir: undefined,
   dismissedUsageProposalKeys: () => [],
   onEvent: () => {},
 }

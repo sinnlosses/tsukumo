@@ -46,6 +46,11 @@ export const FIXED_CLOCK_ENV_NAME = "TSUKUMO_FIXED_CLOCK"
  * 読むのは {@link readConfig} ではなく `tsukumoHomeDir`（配線層から配る道が無い）。
  */
 export const HOME_ENV_NAME = "TSUKUMO_HOME"
+/**
+ * Claude Code の設定ディレクトリ（Claude Code の変数で、tsukumo 用ではない）。
+ * 未設定・空は `~`。相対は cwd 相対、`~` は展開しない（`TSUKUMO_HOME` と同じ）。
+ */
+export const CLAUDE_CONFIG_DIR_ENV_NAME = "CLAUDE_CONFIG_DIR"
 
 /**
  * セッションの駆動の種類。
@@ -69,6 +74,8 @@ export type Config = {
   readonly fakeScene: string | undefined
   readonly newSession: boolean
   readonly quickVisit: boolean
+  /** `CLAUDE_CONFIG_DIR` の値（未設定・空なら undefined ＝ `~`）。 */
+  readonly claudeConfigDir: string | undefined
   /** 凍らせる瞬間。未設定・読めない値なら undefined ＝ 本物の時計。 */
   readonly fixedClock: Temporal.Instant | undefined
   /**
@@ -92,6 +99,7 @@ export function readConfig(env: Readonly<Record<string, string | undefined>>): C
     fakeScene: nonEmpty(env[FAKE_SCENE_ENV_NAME]),
     newSession: env[NEW_SESSION_ENV_NAME]?.trim() === "1",
     quickVisit: env[VISIT_QUICK_ENV_NAME]?.trim() === "1",
+    claudeConfigDir: nonEmpty(env[CLAUDE_CONFIG_DIR_ENV_NAME]),
     fixedClock: parseInstant(env[FIXED_CLOCK_ENV_NAME]),
     inheritedEnv: env,
   }

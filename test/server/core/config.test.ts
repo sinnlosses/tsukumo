@@ -13,6 +13,7 @@ describe("readConfig", () => {
       fakeScene: undefined,
       newSession: false,
       quickVisit: false,
+      claudeConfigDir: undefined,
       fixedClock: undefined,
       inheritedEnv: {},
     })
@@ -28,6 +29,7 @@ describe("readConfig", () => {
       TSUKUMO_FAKE_SCENE: " question-multi ",
       TSUKUMO_NEW_SESSION: "1",
       TSUKUMO_VISIT_QUICK: "1",
+      CLAUDE_CONFIG_DIR: " /somewhere/claude ",
     }
 
     expect(readConfig(env)).toEqual({
@@ -39,10 +41,15 @@ describe("readConfig", () => {
       fakeScene: "question-multi",
       newSession: true,
       quickVisit: true,
+      claudeConfigDir: "/somewhere/claude",
       fixedClock: undefined,
       // 子プロセスへ引き継ぐ分は、読んだ環境をそのまま持つ
       inheritedEnv: env,
     })
+  })
+
+  it("CLAUDE_CONFIG_DIR が空文字なら未設定と同じに倒す", () => {
+    expect(readConfig({ CLAUDE_CONFIG_DIR: "  " }).claudeConfigDir).toBeUndefined()
   })
 
   it("凍らせる瞬間は ISO 8601 の瞬間として読み、読めない値は本物の時計に倒す", () => {

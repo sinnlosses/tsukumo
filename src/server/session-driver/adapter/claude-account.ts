@@ -1,4 +1,4 @@
-// Claude Code 自身が持つアカウントの控え（`~/.claude.json` の `oauthAccount`）から、契約の段を読む口。
+// Claude Code 自身が持つアカウントの控え（`CLAUDE_CONFIG_DIR`、無ければ `~` の `.claude.json` の `oauthAccount`）から、契約の段を読む口。
 // プランの名前をどう決めるかは `planName` で、ここは読むだけ。
 //
 // 読んで返すのは契約の段を表す2つの鍵だけ（`organizationType` / `organizationRateLimitTier`）。
@@ -24,9 +24,9 @@ const UNKNOWN_TIER = {
   rateLimitTier: undefined,
 } satisfies ClaudeAccountTier
 
-/** 控えから契約の段を読む。呼んだときだけ `homedir()` を読む。 */
-export function readClaudeAccountTier(): ClaudeAccountTier {
-  const parsed = readJsonFile(join(homedir(), ACCOUNT_FILE_NAME))
+/** 設定ディレクトリの控えから契約の段を読む。無いときは `~` の控えで、そのときだけ `homedir()` を読む。 */
+export function readClaudeAccountTier(configDir: string | undefined): ClaudeAccountTier {
+  const parsed = readJsonFile(join(configDir ?? homedir(), ACCOUNT_FILE_NAME))
   if (!isPlainObject(parsed) || !isPlainObject(parsed.oauthAccount)) {
     return UNKNOWN_TIER
   }

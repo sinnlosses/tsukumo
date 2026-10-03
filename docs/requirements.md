@@ -1283,6 +1283,11 @@ tsukumo 本体は分析しない。
 2026-09-09 時点で**未導入**だったのは `tmux`, `chafa`, `viu`, `timg`, `img2sixel`, `cowsay`,
 `deno`, `cargo`。これらに依存する案は、入れてよいかの承認から始まる。
 
+Node の下限は `package.json` の `engines.node`（`>=26`）。`engines` は宣言で、`pnpm install`・
+`pnpm run` は止めない。止めるのは `bin/tsukumo` で、古い node ならメッセージを出して 1 で終える
+（起動時の前提不足に当たる）。`node src/cli.ts` や `pnpm run start` を直に打つ開発用の入口は覆わない。
+`.ts` を直に実行するので、古い node ではファイルの中に案内を書く場所が無い。
+
 非機能要件:
 
 - **常駐プロセスは、描画1回の失敗で落ちない。** 未知のイベントが来ても、画像が読めなくても、
