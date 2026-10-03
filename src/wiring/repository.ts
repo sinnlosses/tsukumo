@@ -4,7 +4,7 @@ import {
   readRecommendationCache,
   writeRecommendationCache,
 } from "../server/recommendation/adapter/recommendation-cache.ts"
-import { queryRecommendation } from "../server/recommendation/adapter/sdk-recommendation.ts"
+import { queryStructured } from "../server/recommendation/adapter/sdk-structured-query.ts"
 import { createRecommender, type Recommender } from "../server/recommendation/core/recommender.ts"
 import { watchTaskSummary } from "../server/repository/adapter/task-summary.ts"
 import type { SessionManagerOptions } from "../server/session/core/session-manager.ts"
@@ -54,7 +54,7 @@ function startRecommender(
     writeCache: (entries) => {
       writeRecommendationCache(entries)
     },
-    query: (request, signal) => queryRecommendation(request, { cwd, env: inheritedEnv }, signal),
+    query: (request, signal) => queryStructured(request, { cwd, env: inheritedEnv }, signal),
     emit: (cards) => {
       onEvent({ kind: "recommendation-changed", cards })
     },

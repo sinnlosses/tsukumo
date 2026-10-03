@@ -15,7 +15,7 @@ import {
   PencilIcon,
 } from "../../../../../../ui/icon/icon.tsx"
 import { Text } from "../../../../../../ui/text/text.tsx"
-import type { WelcomeCard } from "./domain/welcome-entries.ts"
+import type { WelcomeCard } from "../../../../domain/welcome-entries.ts"
 import { useWelcome, type WelcomeModel } from "./hooks/use-welcome.ts"
 import styles from "./welcome.module.css"
 

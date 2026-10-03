@@ -3,17 +3,24 @@
 import {
   MAX_RECOMMENDATION_CARDS,
   type RecommendationCard,
-} from "../../../../../../../../../shared/recommendation/recommendation-card.ts"
+} from "../../../../../shared/recommendation/recommendation-card.ts"
+import {
+  NO_WELCOME_HEAD,
+  type WelcomeHead,
+} from "../../../../../shared/recommendation/welcome-greeting.ts"
 import {
   taskReadiness,
   unfinishedTaskIds,
   type TaskSummaryResult,
-} from "../../../../../../../../../shared/repository/task-summary.ts"
-import type { SessionChoice } from "../../../../../../../../../shared/session/session-choice.ts"
-import { remainingOf } from "../../../../../../../../domain/session-summary.ts"
+} from "../../../../../shared/repository/task-summary.ts"
+import type { SessionChoice } from "../../../../../shared/session/session-choice.ts"
+import { remainingOf } from "../../../../domain/session-summary.ts"
 
 /** 見出しが無いセッションの代わりに出す字。 */
 const NO_HEADING_LABEL = "（題なし）"
+
+/** 前回の続きの札を迎えの挨拶で名指すときの名前。 */
+const RESUME_GREETING_NAME = "前回の続き"
 
 const RESUME_KEY = "resume"
 
@@ -53,6 +60,15 @@ export function welcomeCardsOf(
   ).slice(0, MAX_RECOMMENDATION_CARDS)
   const filler = available.filter((entry) => !recommended.some((card) => card.key === entry.key))
   return [...recommended, ...filler].slice(0, MAX_RECOMMENDATION_CARDS)
+}
+
+/** 先頭の札を迎えの挨拶に差し込む名前にする（タスクは ID）。 */
+export function welcomeHeadOf(cards: readonly WelcomeCard[]): WelcomeHead {
+  const head = cards[0]
+  if (head === undefined) {
+    return NO_WELCOME_HEAD
+  }
+  return { kind: "card", name: head.key === RESUME_KEY ? RESUME_GREETING_NAME : head.id }
 }
 
 function keyOf(card: RecommendationCard): string {

@@ -11,9 +11,9 @@ import {
 import {
   parseRecommendationResult,
   RECOMMENDATION_TIMEOUT_MS,
-  type RecommendationQuery,
   recommendationQuery,
 } from "./recommendation.ts"
+import type { StructuredQuery } from "./structured-query.ts"
 
 /** キャッシュに持つ組の上限（新しい順）。 */
 export const RECOMMENDATION_CACHE_LIMIT = 8
@@ -30,7 +30,7 @@ export type RecommenderPorts = {
   /** キャッシュを丸ごと書く。失敗しても例外を投げない。 */
   readonly writeCache: (entries: readonly RecommendationCacheEntry[]) => void
   /** 問い合わせを1回走らせ、`structured_output` をそのまま返す。失敗・中断では reject する。 */
-  readonly query: (request: RecommendationQuery, signal: AbortSignal) => Promise<unknown>
+  readonly query: (request: StructuredQuery, signal: AbortSignal) => Promise<unknown>
   /** 札の並びを配る（空は「まだ無い」）。 */
   readonly emit: (cards: readonly RecommendationCard[]) => void
 }

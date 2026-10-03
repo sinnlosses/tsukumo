@@ -3,12 +3,14 @@
 // 反応は `speechExpression`・`speeches`・`records` に書かない（姿が変われば消えるので、戻す処理が要らない）。
 // 本物の `speak` が届けば、どの出来事の条件も外れて消える。
 // いちばん新しいやり取りについての反応で、過去のターンを見ているかどうかは見ない。
+// 迎えるときは、迎えの挨拶が届いていればパックの行の代わりにそれを出す。
 
 import type {
   CharacterReactions,
   ReactionKind,
   ReactionLine,
 } from "../character-pack/character-reaction.ts"
+import { type WelcomeHead, welcomeGreetingLine } from "../recommendation/welcome-greeting.ts"
 import { conversationMoment } from "./conversation-moment.ts"
 import type { SessionState } from "./session-state.ts"
 
@@ -18,11 +20,19 @@ export type ShownReaction =
 
 const NO_SHOWN_REACTION = { kind: "none" } as const satisfies ShownReaction
 
-export function shownReaction(state: SessionState): ShownReaction {
+/** `head` は迎える口の先頭の札で、迎えの挨拶の名指しに使う。 */
+export function shownReaction(state: SessionState, head: WelcomeHead): ShownReaction {
   if (state.chatMode || state.character === undefined) {
     return NO_SHOWN_REACTION
   }
   const reaction = reactionKindOf(state)
+  if (reaction === "welcome" && state.welcomeGreeting.kind === "written") {
+    return {
+      kind: "shown",
+      reaction,
+      line: welcomeGreetingLine(state.welcomeGreeting.greeting, head),
+    }
+  }
   return reaction === "none"
     ? NO_SHOWN_REACTION
     : pickLine(state.character.reactions, reaction, state.nextTurnId)

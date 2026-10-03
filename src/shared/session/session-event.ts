@@ -10,6 +10,7 @@ import type { Expression } from "../character-pack/expression.ts"
 import type { EffortLevel } from "../command.ts"
 import type { DiaryEvent } from "../diary/diary.ts"
 import type { RecommendationCard } from "../recommendation/recommendation-card.ts"
+import type { WelcomeGreeting } from "../recommendation/welcome-greeting.ts"
 import type { ReportSection } from "../report/report-block.ts"
 import type { ReportCheck } from "../report/report-check.ts"
 import type { ReportTask } from "../report/report-task.ts"
@@ -302,6 +303,8 @@ export type SessionEvent =
    * 候補が前と同じなら流れない。空の並びは「まだ無い」で、候補が変わってキャッシュに無いときに一度流れ、問い合わせが通ればその結果がもう一度流れる。
    */
   | { readonly kind: "recommendation-changed"; readonly cards: readonly RecommendationCard[] }
+  /** 迎えの挨拶が届いた（新しく起こしたセッションごとに多くて1回。出し手はサーバの `greetWelcome`）。 */
+  | { readonly kind: "welcome-greeting-changed"; readonly greeting: WelcomeGreeting }
   /**
    * キャラクターパックが決まった・一覧が変わった（起こしたとき・起こし直したときの1回ずつと、画面からパックを変えた・作ったとき）。
    * キャラビューが立ち絵を取りに行く先で、中身は URL だけ（素材そのものは乗らない）。

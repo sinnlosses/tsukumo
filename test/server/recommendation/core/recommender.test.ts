@@ -4,11 +4,11 @@ import {
   recommendationCandidates,
   recommendationKey,
 } from "../../../../src/server/recommendation/core/recommendation-candidate.ts"
-import type { RecommendationQuery } from "../../../../src/server/recommendation/core/recommendation.ts"
 import {
   createRecommender,
   type RecommendationCacheEntry,
 } from "../../../../src/server/recommendation/core/recommender.ts"
+import type { StructuredQuery } from "../../../../src/server/recommendation/core/structured-query.ts"
 import type { RecommendationCard } from "../../../../src/shared/recommendation/recommendation-card.ts"
 import type {
   TaskSummaryItem,
@@ -47,7 +47,7 @@ function createHarness(initialCache: readonly RecommendationCacheEntry[] = []) {
   let cache = initialCache
   const emitted: (readonly RecommendationCard[])[] = []
   const queries: {
-    readonly request: RecommendationQuery
+    readonly request: StructuredQuery
     readonly signal: AbortSignal
     readonly settle: (value: unknown) => void
     readonly fail: () => void

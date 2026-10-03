@@ -12,8 +12,8 @@ import { useComposerFocus } from "../../../../../../../../stores/composer-focus.
 import { useSessionSwitcherRequest } from "../../../../../../../../stores/session-switcher-request.ts"
 import { useSession } from "../../../../../../../../stores/session.ts"
 import { useTaskBoardRequest } from "../../../../../../../../stores/task-board-request.ts"
-import { useSessionDigest } from "../../../../../../../domain/screen-nav/hooks/use-session-digest.ts"
-import { previousSessionOf, welcomeCardsOf, type WelcomeCard } from "../domain/welcome-entries.ts"
+import type { WelcomeCard } from "../../../../../domain/welcome-entries.ts"
+import { useWelcomeCards } from "../../../../hooks/use-welcome-cards.ts"
 import { welcomeKeyOf } from "../domain/welcome-key.ts"
 
 export type WelcomeModel = {
@@ -30,23 +30,12 @@ export type WelcomeModel = {
 
 export function useWelcome(): WelcomeModel {
   const dispatch = useSession((session) => session.dispatch)
-  const sessions = useSession((session) => session.state.sessions)
-  const currentSessionId = useSession((session) =>
-    session.state.session.kind === "starting" ? undefined : session.state.session.sessionId,
-  )
-  const tasks = useSession((session) => session.state.tasks)
-  const recommendation = useSession((session) => session.state.recommendation)
+  const { cards, hasPrevious } = useWelcomeCards()
   const character = useSession((session) => session.state.character)
   const asking = useSession((session) => session.state.pending.length > 0)
   const requestFocus = useComposerFocus((state) => state.requestFocus)
   const openList = useTaskBoardRequest((state) => state.openList)
   const openSwitcher = useSessionSwitcherRequest((state) => state.openSwitcher)
-
-  const previous = previousSessionOf(sessions, currentSessionId)
-  const digest = useSessionDigest(previous?.sessionId)
-  const summary = digest.kind === "known" ? digest.summary : undefined
-  const cards = welcomeCardsOf(recommendation, previous, summary, tasks)
-  const hasPrevious = previous !== undefined
 
   function onStart(request: string): void {
     dispatch.session.prompt({ text: request, images: [] })

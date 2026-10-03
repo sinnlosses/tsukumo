@@ -34,6 +34,8 @@ import { portraitAppearance } from "../../../../../../domain/portrait-appearance
 import { useSession } from "../../../../../../stores/session.ts"
 import { useTurnSelection } from "../../../../../../stores/turn-selection.ts"
 import { nowEpochMilliseconds } from "../../../../../../utils/clock.ts"
+import { welcomeHeadOf } from "../../../domain/welcome-entries.ts"
+import { useWelcomeCards } from "../../hooks/use-welcome-cards.ts"
 import {
   isSpeechSelected,
   LATEST_VIEWED_SPEECH,
@@ -92,6 +94,7 @@ export function useCharacterView(): CharacterViewModel {
   const lastToolFailureAt = useSession((session) => session.state.lastToolFailureAt)
   const draftingReport = useSession((session) => session.state.reportDrafting.kind === "drafting")
   const state = useSession((session) => session.state)
+  const { cards: welcomeCards } = useWelcomeCards()
 
   // いまも伸びているターン（今回）のセリフだけ `state.speeches` から引く。過去のターンは `turnSpeeches(records)` から引く。
   const speechesOfTurn = (turnId: number): readonly Speech[] | undefined =>
@@ -103,7 +106,8 @@ export function useCharacterView(): CharacterViewModel {
 
   const pastTurn = pastTurnSpeech(records, activeTurnId, newestTurnId)
   const activeSpeeches = pastTurn === undefined ? speeches : pastTurn.speeches
-  const reaction: ShownReaction = pastTurn === undefined ? shownReaction(state) : { kind: "none" }
+  const reaction: ShownReaction =
+    pastTurn === undefined ? shownReaction(state, welcomeHeadOf(welcomeCards)) : { kind: "none" }
   // 何も留めていないとき、印が付くのは「いま表示しているターン」の最後の行。
   // 反応を出しているあいだは立ち絵が反応に従うので、どの行にも付けない。
   const defaultTurnId = activeTurnId

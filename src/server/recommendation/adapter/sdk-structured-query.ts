@@ -1,4 +1,4 @@
-// おすすめの札を1回作る使い捨ての `query()`。
+// 出力の形つきの使い捨ての `query()` を1回起こす（おすすめの札と迎えの挨拶）。
 // 何を渡し、受け取ったものをどう検査するかは core が持ち、ここは起こして `structured_output` を返すだけ。
 //
 // 会話のセッションとは別の子プロセスで、1回ぶんを返したら終わる。考える段は切る。
@@ -8,21 +8,21 @@
 
 import { query } from "@anthropic-ai/claude-agent-sdk"
 
-import type { RecommendationQuery } from "../core/recommendation.ts"
+import type { StructuredQuery } from "../core/structured-query.ts"
 
 /** 子プロセスを起こす場所と環境変数（会話のセッションと同じものを引き継ぐ）。 */
-export type RecommendationProcess = {
+export type StructuredQueryProcess = {
   readonly cwd: string
   readonly env: Readonly<Record<string, string | undefined>>
 }
 
 /**
- * 問い合わせを1回走らせ、`structured_output` をそのまま返す（検査は `parseRecommendationResult`）。
+ * 問い合わせを1回走らせ、`structured_output` をそのまま返す（検査は core）。
  * 起こせない・形の出力に失敗した・中断されたときは reject する。
  */
-export async function queryRecommendation(
-  request: RecommendationQuery,
-  child: RecommendationProcess,
+export async function queryStructured(
+  request: StructuredQuery,
+  child: StructuredQueryProcess,
   signal: AbortSignal,
 ): Promise<unknown> {
   const abortController = new AbortController()
@@ -60,8 +60,8 @@ export async function queryRecommendation(
       if (message.subtype === "success") {
         return message.structured_output
       }
-      throw new Error(`おすすめの札を作れなかった（${message.subtype}）`)
+      throw new Error(`形つきの問い合わせが通らなかった（${message.subtype}）`)
     }
   }
-  throw new Error("おすすめの札の result が届かなかった")
+  throw new Error("形つきの問い合わせの result が届かなかった")
 }

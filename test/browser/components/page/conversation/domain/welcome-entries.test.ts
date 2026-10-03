@@ -3,13 +3,14 @@ import { describe, expect, it } from "vitest"
 import {
   previousSessionOf,
   welcomeCardsOf,
-} from "../../../../../../../../../../src/browser/components/page/conversation/components/main-view/components/welcome/domain/welcome-entries.ts"
-import type { RecommendationCard } from "../../../../../../../../../../src/shared/recommendation/recommendation-card.ts"
+  welcomeHeadOf,
+} from "../../../../../../src/browser/components/page/conversation/domain/welcome-entries.ts"
+import type { RecommendationCard } from "../../../../../../src/shared/recommendation/recommendation-card.ts"
 import type {
   TaskSummaryItem,
   TaskSummaryResult,
-} from "../../../../../../../../../../src/shared/repository/task-summary.ts"
-import type { SessionChoice } from "../../../../../../../../../../src/shared/session/session-choice.ts"
+} from "../../../../../../src/shared/repository/task-summary.ts"
+import type { SessionChoice } from "../../../../../../src/shared/session/session-choice.ts"
 
 function choice(sessionId: string, heading: string | undefined): SessionChoice {
   return { viewPort: 1, sessionId, lastModified: 0, startedAt: 0, heading }
@@ -157,5 +158,28 @@ describe("おすすめの札", () => {
   it("タスクが読めないときも空の帳面のときも、札は無い", () => {
     expect(welcomeCardsOf([], undefined, undefined, { kind: "unknown" })).toEqual([])
     expect(welcomeCardsOf([taskCard("X-1", "理由")], undefined, undefined, NO_TASKS)).toEqual([])
+  })
+})
+
+describe("迎えの挨拶が名指す先頭の札", () => {
+  it("先頭がタスクならその ID", () => {
+    const cards = welcomeCardsOf([taskCard("X-2", "理由")], undefined, undefined, READY_TASKS)
+
+    expect(welcomeHeadOf(cards)).toEqual({ kind: "card", name: "X-2" })
+  })
+
+  it("先頭が前回の続きなら見出しではなく「前回の続き」", () => {
+    const cards = welcomeCardsOf(
+      [{ kind: "resume", reason: "つながり" }],
+      choice("prev", "架空の題"),
+      "架空の作業。\n残り：架空の検証",
+      READY_TASKS,
+    )
+
+    expect(welcomeHeadOf(cards)).toEqual({ kind: "card", name: "前回の続き" })
+  })
+
+  it("札が無ければ名指さない", () => {
+    expect(welcomeHeadOf([])).toEqual({ kind: "none" })
   })
 })

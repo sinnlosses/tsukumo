@@ -31,6 +31,7 @@ import { wireRepository } from "./wiring/repository.ts"
 import { wireSessionLaunch } from "./wiring/session-launch.ts"
 import { wireUsageReview } from "./wiring/usage-review.ts"
 import { wireVisit } from "./wiring/visit.ts"
+import { wireWelcomeGreeting } from "./wiring/welcome-greeting.ts"
 import type { WiringContext } from "./wiring/wiring-context.ts"
 
 export type SessionStartOptions = {
@@ -75,13 +76,17 @@ export async function startSession(options: SessionStartOptions): Promise<Starte
   const firstViewer = Promise.withResolvers<void>()
 
   const diary = wireDiary(context)
+  const welcomeGreeting = wireWelcomeGreeting(context)
   const launch = wireSessionLaunch({
     context,
     config,
     character,
     viewPort: options.viewPort,
     firstViewer: firstViewer.promise,
-    onLaunch: diary.noteLaunched,
+    onLaunch: (seed, onEvent) => {
+      diary.noteLaunched(seed)
+      welcomeGreeting.noteLaunched(seed, onEvent)
+    },
   })
   const chat = wireChat(context, character)
   const visit = wireVisit(context, config.quickVisit)

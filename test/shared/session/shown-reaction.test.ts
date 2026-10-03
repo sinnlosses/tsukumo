@@ -4,6 +4,10 @@ import {
   type CharacterReactions,
   NO_REACTIONS,
 } from "../../../src/shared/character-pack/character-reaction.ts"
+import {
+  NO_WELCOME_HEAD,
+  type WelcomeHead,
+} from "../../../src/shared/recommendation/welcome-greeting.ts"
 import type { SessionEvent } from "../../../src/shared/session/session-event.ts"
 import {
   applySessionEvent,
@@ -56,8 +60,8 @@ function stateAfter(
 }
 
 /** 出している反応の出来事と文（出していなければ `none`）。 */
-function shown(state: SessionState): string {
-  const reaction = shownReaction(state)
+function shown(state: SessionState, head: WelcomeHead = NO_WELCOME_HEAD): string {
+  const reaction = shownReaction(state, head)
   return reaction.kind === "shown" ? `${reaction.reaction}:${reaction.line.text}` : "none"
 }
 
@@ -117,8 +121,57 @@ describe("shownReaction", () => {
   })
 
   it("反応の行の表情を返す", () => {
-    const reaction = shownReaction(stateAfter([REQUEST]))
+    const reaction = shownReaction(stateAfter([REQUEST]), NO_WELCOME_HEAD)
 
     expect(reaction.kind === "shown" && reaction.line.expression).toBe("thinking")
+  })
+
+  describe("迎えの挨拶", () => {
+    const GREETED = {
+      kind: "welcome-greeting-changed",
+      greeting: {
+        withCard: "架空の挨拶、{札} からどう？",
+        withoutCard: "架空の挨拶だけ",
+        expression: "curious",
+      },
+    } as const satisfies SessionEvent
+    const HEAD: WelcomeHead = { kind: "card", name: "T-1" }
+
+    it("届いていて札があれば、先頭の札の名前を差し込んだ文と挨拶の表情を出す", () => {
+      const reaction = shownReaction(stateAfter([GREETED]), HEAD)
+
+      expect(reaction).toEqual({
+        kind: "shown",
+        reaction: "welcome",
+        line: { text: "架空の挨拶、T-1 からどう？", expression: "curious" },
+      })
+    })
+
+    it("届いていて札が無ければ、札なしの文を出す", () => {
+      expect(shown(stateAfter([GREETED]))).toBe("welcome:架空の挨拶だけ")
+    })
+
+    it("届く前は、パックの迎えの行を出す", () => {
+      expect(shown(stateAfter([]), HEAD)).toBe("welcome:架空の迎え")
+    })
+
+    it("パックに迎えの行が無くても、届けば出す", () => {
+      expect(shown(stateAfter([GREETED], NO_REACTIONS), HEAD)).toBe(
+        "welcome:架空の挨拶、T-1 からどう？",
+      )
+    })
+
+    it("迎える局面を過ぎたら出さない", () => {
+      expect(shown(stateAfter([GREETED, REQUEST, SPEECH]), HEAD)).toBe("none")
+    })
+
+    it("/clear のあとの迎える局面でも出す", () => {
+      expect(
+        shown(
+          stateAfter([GREETED, REQUEST, SPEECH, COMPLETED, { kind: "conversation-cleared" }]),
+          HEAD,
+        ),
+      ).toBe("welcome:架空の挨拶、T-1 からどう？")
+    })
   })
 })

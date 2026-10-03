@@ -8,6 +8,7 @@ import {
   type RecommendationCard,
 } from "../../../shared/recommendation/recommendation-card.ts"
 import type { RecommendationCandidate } from "./recommendation-candidate.ts"
+import type { StructuredQuery } from "./structured-query.ts"
 
 /** 問い合わせを起こすモデル（軽いもの）。 */
 export const RECOMMENDATION_MODEL = "haiku"
@@ -48,18 +49,10 @@ export const RECOMMENDATION_INSTRUCTION = `あなたは、これから作業を�
 - \`cards\` に、おすすめの順で \`key\`（候補の key をそのまま）と \`reason\` を並べる
 - 同じ key を2回書かない`
 
-/** `query()` に渡すもの（モデル・指示文・依頼の文面・出力の形）。 */
-export type RecommendationQuery = {
-  readonly model: string
-  readonly systemPrompt: string
-  readonly prompt: string
-  readonly schema: Readonly<Record<string, unknown>>
-}
-
 /** 候補の並びから `query()` に渡すものを組む。 */
 export function recommendationQuery(
   candidates: readonly RecommendationCandidate[],
-): RecommendationQuery {
+): StructuredQuery {
   return {
     model: RECOMMENDATION_MODEL,
     systemPrompt: RECOMMENDATION_INSTRUCTION,

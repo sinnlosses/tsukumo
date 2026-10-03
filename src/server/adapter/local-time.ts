@@ -49,6 +49,16 @@ export function localTimeHHMM(epochMilliseconds: number): string {
   return localTimeAt(epochMilliseconds).toPlainTime().toString({ smallestUnit: "minute" })
 }
 
+/** ローカル時刻の月・曜日（1 が月曜、7 が日曜）・時。 */
+export function localCalendarAt(epochMilliseconds: number): {
+  readonly month: number
+  readonly dayOfWeek: number
+  readonly hour: number
+} {
+  const local = localTimeAt(epochMilliseconds)
+  return { month: local.month, dayOfWeek: local.dayOfWeek, hour: local.hour }
+}
+
 /** ISO 8601（オフセット付き）。行だけで時刻が決まる。 */
 export function isoWithOffset(epochMilliseconds: number): string {
   // 秒より下は書かない（既に積んだ行と同じ書式を保つ）。

@@ -10,6 +10,7 @@ import type { Expression } from "../character-pack/expression.ts"
 import { type EffortLevel, isModelAlias } from "../command.ts"
 import { applyDiaryEvent, type DiaryWriting } from "../diary/diary.ts"
 import type { RecommendationCard } from "../recommendation/recommendation-card.ts"
+import type { WelcomeGreetingState } from "../recommendation/welcome-greeting.ts"
 import type { ReportSection } from "../report/report-block.ts"
 import type { ReportCheck } from "../report/report-check.ts"
 import type { ReportTask } from "../report/report-task.ts"
@@ -321,6 +322,11 @@ export type SessionState = {
    */
   readonly recommendation: readonly RecommendationCard[]
   /**
+   * 迎えの挨拶。源は `welcome-greeting-changed` だけ。
+   * `/clear` では残し、起こし直しでは初期の `none` へ戻す（新しい代の挨拶が書き直される）。
+   */
+  readonly welcomeGreeting: WelcomeGreetingState
+  /**
    * キャラビューが立ち絵を取りに行く先（`character-changed` が届くまでは undefined）。
    * 素材そのものは持たない（`portraits` の値は `/character/<pack>/<file>` の URL）。
    */
@@ -444,6 +450,7 @@ export const INITIAL_SESSION_STATE: SessionState = {
   nextTurnId: 0,
   tasks: { kind: "unknown" },
   recommendation: [],
+  welcomeGreeting: { kind: "none" },
   character: undefined,
   characterPacks: [],
   sessions: [],
@@ -691,6 +698,8 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
       return { ...state, tasks: event.tasks }
     case "recommendation-changed":
       return { ...state, recommendation: event.cards }
+    case "welcome-greeting-changed":
+      return { ...state, welcomeGreeting: { kind: "written", greeting: event.greeting } }
     case "sessions-changed":
       // `sessionId` もここで決まる（`session-info` は最初の依頼まで届かないので、それまで「いまどのセッションに居るか」を言えるのはこの経路だけ）。
       // 新規に起こしたときは `current` が undefined で、そのときは今の `session` を動かさない。
