@@ -41,7 +41,8 @@ tsukumo は Agent SDK（`@anthropic-ai/claude-agent-sdk`）で Claude Code を�
 
 ```bash
 pnpm run check                 # typecheck + lint + format:check + test + test:e2e（変更後は必ずこれを通す。
-                              #   文書だけの変更は typecheck・lint・test:e2e を省く。--full で強制）
+                              #   E2E は変えたファイルから選んだものだけ。文書だけの変更は typecheck・lint も
+                              #   省く。--full で5段とも E2E 全件。全件は main へ送る直前に打つ）
 pnpm run test                  # 単体テスト（Vitest）
 pnpm run build                 # src/browser/ を直したら打つ（起動時には組み立てない）
 node scripts/stop.ts           # 動いている tsukumo の一覧（--port <n> でそれ1つだけ止める）
@@ -128,6 +129,7 @@ node scripts/stop.ts           # 動いている tsukumo の一覧（--port <n> 
 ## タスク運用
 
 - 検証コマンド: `pnpm run check`（変更後は必ずこれを通す。受け入れ判定に使う）
+- 送る前の検証コマンド: `pnpm run check --full`
 - 整形コマンド: `pnpm run format`
 - ブランチ: 切らない（自分でブランチを切らない）。**枝の寿命は作業ツリーの寿命と同じ**で、
   1本の枝がいくつでもタスクを持つ

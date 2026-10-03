@@ -34,6 +34,7 @@ describe("委譲先の E2E 全段の呼び出しを上限で拒否する hook", 
     ["pnpm run check", "pnpm run check"],
     ["pnpm run test:e2e", "pnpm run test:e2e"],
     ["nice を前置きした check", "nice pnpm run check"],
+    ["ファイルを渡さない期待値の撮り直し", "node scripts/e2e-update.ts --full"],
     ["E2E の設定でファイルを指さない vitest", "vitest run --config vitest.e2e.config.ts"],
   ])("%s は上限まで通し、その次を止める", async (_name, command) => {
     claim(repoDir, "TASK-A")

@@ -197,14 +197,14 @@ hook が拒むたびに、共有の git dir（`git rev-parse --git-common-dir`�
 捨てうる（2026-09-23 に実際に9ファイルぶんが痕跡なく消えた）。
 
 `node scripts/ship.ts`（`pnpm run ship`）を打つ。作業ツリーが clean か → `main` を出している
-作業ツリーが clean か → `git rebase main` → `pnpm run check` → `git -C <本体> merge --ff-only`
+作業ツリーが clean か → `git rebase main` → `pnpm run check --full` → `git -C <本体> merge --ff-only`
 の順に動き、`--ff-only` が `main` の先回りで落ちたら取り込み（`rebase`）と検証をやり直す
 （上限2回。超えたら止まる）。落ちた段によって次を行う。
 
 - 自分の作業ツリーが clean でない: コミットしてから打ち直す
 - `main` を出している作業ツリーが clean でない: そちらを片付けてから打ち直す
 - `git rebase main` が衝突した（`rebase --abort` 済み）: 衝突を手で解消し、コミットしてから打ち直す
-- `pnpm run check` が落ちた: 直してから打ち直す
+- `pnpm run check --full` が落ちた: 直してから打ち直す
 - やり直しの上限を超えた: `main` が速く進みすぎている。少し待つか、送る相手に相談する
 
 ## 関連

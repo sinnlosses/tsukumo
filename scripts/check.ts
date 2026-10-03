@@ -1,12 +1,13 @@
-// `pnpm run check` の入口。`docs/`・`develop/` の Markdown しか変えていないときは、build を含む
-// `test:e2e` と `typecheck`・`lint` を省いて待ち時間を減らす。`format:check` と単体テスト
+// `pnpm run check` の入口。`test:e2e` は変えたファイルから選んだ E2E のファイルだけを流し
+// （選び方は `selectE2eFiles`）、何を選んだかを1行で出す。`docs/`・`develop/` の Markdown しか
+// 変えていないときは `typecheck`・`lint` も省く。`format:check` と単体テスト
 // （タスク番号や節の参照の検査が文書を見ている）は省かない。
 // 重い段（`test`・`test:e2e`）は作業ツリーをまたぐ錠を取って、単体と E2E を並べて走らせる。
 // 並べた2段の出力は段ごとに溜め、両方が終わってから段の順に出し、落ちた段は最後の行で名指しする。
 //
 // 使い方:
-//   node scripts/check.ts         # 変えたファイルを見て、文書だけなら重い段を省く
-//   node scripts/check.ts --full  # 変えたファイルに関わらず5段すべて走らせる
+//   node scripts/check.ts         # 変えたファイルを見て、E2E を選び、文書だけなら typecheck・lint も省く
+//   node scripts/check.ts --full  # 変えたファイルに関わらず5段すべてを、E2E は全件で走らせる
 
 import { spawn, spawnSync } from "node:child_process"
 import process from "node:process"
@@ -16,75 +17,92 @@ import { collectChangedPaths, resolvePrimaryBranch } from "./lib/changed-path-re
 import { describeFailedStages, type StageOutcome } from "./lib/check-failure.ts"
 import { acquireCheckLock, withCheckLockOwner } from "./lib/check-lock-repository.ts"
 import { isDocumentOnlyChange } from "./lib/document-change.ts"
+import { readE2eSelection } from "./lib/e2e-selection-repository.ts"
+import { describeE2eSelection } from "./lib/e2e-selection.ts"
 
 type Stage = {
   readonly name: string
-  /** 文書だけの変更のとき省いてよいか。 */
-  readonly skippable: boolean
+  /** `pnpm run <name>` のあとに渡す引数。 */
+  readonly args: readonly string[]
   /** 錠の中で並べて走らせる重い段か。 */
   readonly heavy: boolean
 }
 
-const STAGES = [
-  { name: "typecheck", skippable: true, heavy: false },
-  { name: "lint", skippable: true, heavy: false },
-  { name: "format:check", skippable: false, heavy: false },
-  { name: "test", skippable: false, heavy: true },
-  { name: "test:e2e", skippable: true, heavy: true },
-] as const satisfies readonly Stage[]
-
 const ROOT = fileURLToPath(new URL("..", import.meta.url))
 const forceFull = process.argv.includes("--full")
 
-const skipHeavyStages =
-  !forceFull && isDocumentOnlyChange(collectChangedPaths(ROOT, await resolvePrimaryBranch(ROOT)))
-if (skipHeavyStages) {
-  const skipped = STAGES.filter((stage) => stage.skippable)
-    .map((stage) => stage.name)
-    .join("・")
-  process.stdout.write(`文書だけの変更のため ${skipped} を省く\n`)
+const changedPaths = forceFull ? [] : collectChangedPaths(ROOT, await resolvePrimaryBranch(ROOT))
+const documentOnly = !forceFull && isDocumentOnlyChange(changedPaths)
+if (documentOnly) {
+  process.stdout.write("文書だけの変更のため typecheck・lint を省く\n")
 }
-
-const activeStages = STAGES.filter((stage) => !(skipHeavyStages && stage.skippable))
+const activeStages = [
+  ...(documentOnly
+    ? []
+    : [
+        { name: "typecheck", args: [], heavy: false },
+        { name: "lint", args: [], heavy: false },
+      ]),
+  { name: "format:check", args: [], heavy: false },
+  { name: "test", args: [], heavy: true },
+  ...chooseE2eStages(),
+] satisfies readonly Stage[]
 
 for (const stage of activeStages.filter((candidate) => !candidate.heavy)) {
-  const result = spawnSync("pnpm", ["run", stage.name], { cwd: ROOT, stdio: "inherit" })
+  const result = spawnSync("pnpm", ["run", stage.name, ...stage.args], {
+    cwd: ROOT,
+    stdio: "inherit",
+  })
   if (result.status !== 0) {
     process.exit(result.status ?? 1)
   }
 }
 
 const heavyStages = activeStages.filter((stage) => stage.heavy)
-if (heavyStages.length > 0) {
-  const release = await acquireCheckLock(ROOT)
-  const onSignal = (signal: NodeJS.Signals): void => {
-    release()
-    process.kill(process.pid, signal)
+const release = await acquireCheckLock(ROOT)
+const onSignal = (signal: NodeJS.Signals): void => {
+  release()
+  process.kill(process.pid, signal)
+}
+process.once("SIGINT", onSignal)
+process.once("SIGTERM", onSignal)
+try {
+  const results = await Promise.all(heavyStages.map((stage) => runBuffered(stage)))
+  for (const result of results) {
+    process.stdout.write(result.output)
   }
-  process.once("SIGINT", onSignal)
-  process.once("SIGTERM", onSignal)
-  try {
-    const results = await Promise.all(heavyStages.map((stage) => runBuffered(stage.name)))
-    for (const result of results) {
-      process.stdout.write(result.output)
-    }
-    for (const line of describeFailedStages(results)) {
-      process.stdout.write(`${line}\n`)
-    }
-    const failed = results.find((result) => result.status !== 0)
-    if (failed !== undefined) {
-      process.exitCode = failed.status
-    }
-  } finally {
-    release()
+  for (const line of describeFailedStages(results)) {
+    process.stdout.write(`${line}\n`)
   }
+  const failed = results.find((result) => result.status !== 0)
+  if (failed !== undefined) {
+    process.exitCode = failed.status
+  }
+} finally {
+  release()
+}
+
+/** `test:e2e` の段（流すものが無ければ空の列）。選んだ結果の1行を出す。 */
+function chooseE2eStages(): readonly Stage[] {
+  if (forceFull) {
+    process.stdout.write("E2E: --full なので全件を流す\n")
+    return [{ name: "test:e2e", args: [], heavy: true }]
+  }
+  const { selection, total } = readE2eSelection(ROOT, changedPaths)
+  process.stdout.write(`${describeE2eSelection(selection, total)}\n`)
+  if (selection.kind === "all") {
+    return [{ name: "test:e2e", args: [], heavy: true }]
+  }
+  return selection.files.length === 0
+    ? []
+    : [{ name: "test:e2e", args: selection.files, heavy: true }]
 }
 
 type BufferedResult = StageOutcome & { readonly output: string }
 
-function runBuffered(name: string): Promise<BufferedResult> {
+function runBuffered(stage: Stage): Promise<BufferedResult> {
   return new Promise((resolve) => {
-    const child = spawn("pnpm", ["run", name], {
+    const child = spawn("pnpm", ["run", stage.name, ...stage.args], {
       cwd: ROOT,
       env: withCheckLockOwner(process.env),
       stdio: ["ignore", "pipe", "pipe"],
@@ -93,7 +111,11 @@ function runBuffered(name: string): Promise<BufferedResult> {
     child.stdout.on("data", (chunk: Buffer) => chunks.push(chunk))
     child.stderr.on("data", (chunk: Buffer) => chunks.push(chunk))
     child.on("close", (code) => {
-      resolve({ name, status: code ?? 1, output: Buffer.concat(chunks).toString("utf8") })
+      resolve({
+        name: stage.name,
+        status: code ?? 1,
+        output: Buffer.concat(chunks).toString("utf8"),
+      })
     })
   })
 }

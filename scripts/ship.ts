@@ -1,5 +1,5 @@
 // タスクに紐付かない作業を main へ送る入口。作業ツリーが clean か → main を出している作業ツリーが
-// clean か → `git rebase main` → `pnpm run check` → `git merge --ff-only` の順に動く。
+// clean か → `git rebase main` → `pnpm run check --full` → `git merge --ff-only` の順に動く。
 //
 // 使い方:
 //   node scripts/ship.ts
@@ -39,7 +39,8 @@ const result = runShipPlan({
       return "conflict"
     }
   },
-  verify: () => spawnSync("pnpm", ["run", "check"], { cwd: ROOT, stdio: "inherit" }).status ?? 1,
+  verify: () =>
+    spawnSync("pnpm", ["run", "check", "--full"], { cwd: ROOT, stdio: "inherit" }).status ?? 1,
   mergeFfOnly: () => {
     try {
       execFileSync("git", ["merge", "--ff-only", branch], {
@@ -67,7 +68,7 @@ function describeFailure(failure: Exclude<ShipPlanResult, { outcome: "ok" }>): s
     case "rebase-conflict":
       return `git rebase ${primaryBranch} が衝突した（rebase --abort 済み）`
     case "verify-failed":
-      return `pnpm run check が終了コード ${String(failure.status)} で落ちた`
+      return `pnpm run check --full が終了コード ${String(failure.status)} で落ちた`
     case "merge-ff-only-exhausted":
       return `git merge --ff-only がやり直し${String(failure.attempts)}回でも通らなかった`
   }

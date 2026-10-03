@@ -61,6 +61,21 @@
   Chrome と `node src/cli.ts` を起こすので、実際に走るプロセスは `maxWorkers` の本数を大きく超える。
   E2E の設定は `maxWorkers: "30%"`、単体テスト（`vitest.config.ts`）も `"30%"` で、2つ合わせて
   コア数の 60% までに収める。単体の `setupFiles` の DOM のグローバルは渡さない
+- **引数なしの `pnpm run check` は、変えたファイルから選んだ E2E のファイルだけを流し**、選んだもの
+  （または全件に倒した理由のパス）を1行で出す。**全件は `pnpm run check --full` で、main へ送る直前
+  （`tw ship` の送る前の検証コマンドと `scripts/ship.ts`）に1回だけ流す**。選び方（`scripts/lib/e2e-selection.ts`）は
+  変えたファイル1件ごとに次の順で決め、1件でも全件なら全件にする（取りこぼすより遅いほうを選ぶ）
+  - 文書・単体テスト・E2E から届かない `scripts/` などは選ばない。E2E ファイルはそれ自身、期待値は場面の
+    名前を持つ E2E を選ぶ
+  - E2E の足場の根（`package.json`・`vitest.e2e.config.ts`・`scripts/build-ui.ts` など）から import で
+    届くファイルは全件。E2E ファイルから import で届くファイル（`test/e2e/scenario-run.ts`・
+    `test/e2e/task-room.ts`・`test/fixture/` など）は、届く元の E2E を選ぶ
+  - `src/` は、サーバの入口 `src/cli.ts` から届けば全件（どの E2E もサーバ全体を起こす）。ブラウザだけが
+    読むファイルは、見張りの表（`scripts/lib/e2e-watch.ts`）の領域の根から届くかで領域を決め、その領域を
+    見ている E2E を選ぶ。どの根からも届かない（アプリや会話の画面の枠）なら全件
+  - どれにも当たらないパスは全件。見張りの表に載せる E2E の領域が足りないと取りこぼすが、送る直前の全件で拾う。
+    **E2E のファイルを足したら表に足す**（載っていないと単体テストが落ちる）
+  - 期待値を撮り直す `pnpm run test:e2e:update` も既定は同じ選び方で、`--full` で全件、ファイルを渡せばそのファイルだけ
 - **`dist/browser/` は E2E の段が自分で組み立てる**（起動は古い成果物でも止まらずに配る〔`docs/architecture/build.md`〕ので、
   組み立てを前提にすると古い画面を確かめて通ってしまう）。`vitest` を直に流したときは E2E の設定の
   `globalSetup`（`test/built-ui-setup.ts`）が、組み立てが `src/browser/`・`src/shared/` より古い

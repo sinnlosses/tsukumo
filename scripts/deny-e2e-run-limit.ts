@@ -79,7 +79,11 @@ function isFullE2eRun(simple: SimpleCommand): boolean {
     return rest[0] === "verify"
   }
   if (head === "node") {
-    return rest[0] === "scripts/check.ts"
+    const [script = "", ...scriptArgs] = rest
+    return (
+      script === "scripts/check.ts" ||
+      (script === "scripts/e2e-update.ts" && scriptArgs.every((arg) => arg.startsWith("-")))
+    )
   }
   if (head === "pnpm") {
     return isFullPnpmScript(rest)

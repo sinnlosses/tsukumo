@@ -344,7 +344,8 @@ TSUKUMO_CHARACTER=characters/local tsukumo
 
 ```bash
 pnpm run check                 # typecheck + lint + format:check + test + test:e2e（変更後は必ずこれを通す。
-                              #   文書だけの変更は typecheck・lint・test:e2e を省く。--full で強制）
+                              #   E2E は変えたファイルから選んだものだけ。文書だけの変更は typecheck・lint も
+                              #   省く。--full で5段とも E2E 全件。全件は main へ送る直前に打つ）
 pnpm run ship                  # タスクに紐付かない作業を main へ送る（取り込み・検証・送り出しを
                               #   1つに。落ちた段を出して止まる。docs/workflow.md「タスクに紐付
                               #   かない作業を main へ送る」）
@@ -353,7 +354,8 @@ npx vitest run test/cli.test.ts  # 単体テストファイルのみ実行
 pnpm run test:coverage         # 単体テストのカバレッジ（src/ が対象。HTML は /tmp/tsukumo-coverage/。check には入れない）
 pnpm run test:e2e              # E2E（組み立ててから test/e2e/ を走らせる。手元の Chrome が要る。成果物と
                               #   スクリーンショットは /tmp/tsukumo-e2e/）
-pnpm run test:e2e:update       # E2E の期待値（test/e2e/expected/）を書き直す。git diff で読んでから入れる
+pnpm run test:e2e:update       # E2E の期待値（test/e2e/expected/）を書き直す。git diff で読んでから入れる。
+                              #   既定は check と同じ選び方の E2E だけ。--full で全件、ファイルを渡せばそれだけ
 pnpm run typecheck             # css-types のあと tsc --noEmit
 pnpm run lint                  # oxlint（--fix は lint:fix）
 pnpm run format                # ADR の一覧表と用語集の索引を見出しから書き直し、oxfmt で自動整形（--check は format:check）
