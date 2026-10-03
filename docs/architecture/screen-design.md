@@ -71,10 +71,9 @@ sed -n '/^### 13\.7 /,/^### /p' docs/architecture/screen-design.md
    名前だ」という情報を運ぶ
 4. **読む面の幅は領域に任せるが、地の文だけは例外。** 表・コード・候補・ファイル・図は領域の内幅を
    そのまま使い、上限を置かない。**段落・箇条書き・`note`・お願いの地の文にだけ 42em（全角 42 字）の
-   上限を置く**（2026-10-02。JLReq 2.4.2・WCAG 1.4.8 の上限に合わせた）。一度は上限を全体から
-   撤回したことがあるが（`docs/history/decision.md`「design.md 13.1 Principles（原則4。行長の上限を
-   撤回した経緯）」）、それは「表まで含めて幅いっぱいに広がる」撤回で、**今回は地の文だけに絞った
-   別の決定**
+   上限を置く**（2026-10-02。JLReq 2.4.2・WCAG 1.4.8 の上限に合わせた）。経緯は
+   `docs/history/decision.md`「design.md 13.1 Principles（原則4。行長の上限を撤回した経緯）」と
+   「screen-design.md 13.1 原則4（地の文だけに上限を戻した決定）」
 5. **意味を固定した色は誰が来ても変わらず、文字と対でだけ増やす。** ok / warn / ng / ask / memo の
    意味がキャラクターごとに動くと、色が情報を運べなくなる。**色を1つ足してよいのは、その色が
    指すものに tsukumo が文字のラベルを必ず添えるときだけ** — モデルの書き忘れで消えない文字が
@@ -523,8 +522,7 @@ IBM Plex Mono）と字の大きさ、「ほか n 件を見る」の色（見本�
   最小の的。的は押す箱で測り、ラベルが的の入力・`<select>` の中のボタン・文中リンクは除く。無効のものと
   飾りの記号はコントラストの対象にしない）。13.2 の「コントラストの下限」は色を受け取る側の検算で、
   こちらは画面が守る側の約束。守っているのは E2E の `readability-scan.ts`（`scanReadability`）
-- **既定の比率は上下 65:35・上段の左右 75:25・下段の左右 50:50**（2026-10-02 に上下を一度 70:30 にしたが、
-  キャラビューが狭くなりキャラクターが目立たなくなったので同日に戻した。経緯は `docs/history/decision.md`「screen-design.md 13.4
+- **既定の比率は上下 65:35・上段の左右 75:25・下段の左右 50:50**（経緯は `docs/history/decision.md`「screen-design.md 13.4
   既定の比率と目次の既定（2026-10-02 に覆した記録）」）。「比率を既定に戻す」の戻り先もこの値
 - **依頼のあいだ、4領域の位置と比率は動かさない。** 局面で変わるのはメインビューの中身だけ（13.13）
 - **メインビューのレポートの左に、目次の列を置く**（2026-10-01 決定。仕様は `docs/architecture/display.md` 4.2）。
@@ -861,18 +859,14 @@ IBM Plex Mono）と字の大きさ、「ほか n 件を見る」の色（見本�
 
 - **コマンドは `characterPack.setAccent`（`target: "work" | "chat"` で1つの色を差す）と、雑談の差し色を消す
   `characterPack.clearChatAccent` の2つ**。`target` を引数で分けたのは、`characterPack.setOutfitAccent` が衣装を
-  引数（型を4つに割らない）で受けているのに揃えたため（採らなかった案: `set-work-accent` /
-  `set-chat-accent` の2コマンドに分ける——見た目の編集の一覧（`characterEditInput`）が1つ増えるだけの違いで、
-  書き込み側の分岐は結局2つに割れ、コマンドの形だけ増える）
+  引数（型を4つに割らない）で受けているのに揃えたため（採らなかった案は `docs/history/decision.md`「screen-design.md 13.6 設定の置き場所（差し色を編集する口の形で採らなかった案）」）
 - **`accent`（仕事）を消す口は無い。** `outfitAccents` は無ければ既定値（`--accent`）に
   落ちるので消しても壊れないが、`accent` は画面全体の色の元なので、消すと戻り先が無い。
   戻す口を持つのは「決まっていること」どおり `chatAccent` だけ
 - **`character-definition.ts` に最上位の欄を書く関数を足した**（`definitionWithAccent` /
   `definitionWithoutChatAccent`）。既存の `editedDefinitionJson` は `portraits` /
   `outfitAccents` / `background` という**入れ子**の1件を差し替える形なので、そのまま `group` を
-  省略可能にはせず、入れ子を重ねない `editedTopLevelDefinitionJson` を別に置いた（採らなかった案:
-  `editedDefinitionJson` の `group` を `undefined` も取れるように広げる——「無いかもしれない」
-  引数が1つ増えるだけで、呼び出し側からは動きの違いが読み取れなくなる）
+  省略可能にはせず、入れ子を重ねない `editedTopLevelDefinitionJson` を別に置いた（採らなかった案は同じ節）
 - **雑談の差し色が無いときの色見本は、いまの仕事の差し色（引きずり中の値も含む）をそのまま出す。**
   仕事の色をドラッグしている最中も雑談側が一緒に動く。**「仕事と同じ」であることは色だけで
   伝えず**、戻す口の場所に同じ字を添える（13.1 原則1）
