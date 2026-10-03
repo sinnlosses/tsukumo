@@ -44,7 +44,7 @@ import type { SessionChoice } from "./session-choice.ts"
 import { BUILTIN_SESSION_DEFAULT, type SessionDefault } from "./session-default.ts"
 import type { CommandDescription, ModelEffortSupport, SessionEvent } from "./session-event.ts"
 import { splitIntoTurns } from "./turn.ts"
-import { delegatedWorkPlan, isWorkPlanRecord, latestWorkPlan } from "./work-plan.ts"
+import { delegatedWorkPlan, isWorkPlanRecord, workPlanOf } from "./work-plan.ts"
 
 /**
  * メインビューに残す記録の窓（直近何ターンぶんを持ち続けるか）。常駐プロセスが動き続ける以上、記録自体も無限に増やさない。
@@ -592,13 +592,11 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
       }
     case "work-plan":
       return { ...state, records: [...state.records, ...mainWorkPlanRecords(state.records, event)] }
-    case "delegate-signal": {
-      const plan = delegatedWorkPlan(latestWorkPlan(recordsOfLastRequest(state.records)), event)
+    case "delegate-signal":
       return {
         ...state,
-        records: [...state.records, { kind: "work-plan", ...plan, source: "delegate-signal" }],
+        records: [...state.records, ...delegateSignalRecords(state.records, event)],
       }
-    }
     case "tool-started": {
       const nested = event.parentToolUseId !== undefined
       return {
@@ -779,6 +777,25 @@ function mainWorkPlanRecords(
   return event.current === event.phases.length
     ? [{ ...delegated, current: delegated.phases.length, phaseSummary: "" }]
     : []
+}
+
+/**
+ * 委譲の合図を積む記録（合図から引き直した段取り）。
+ * 同じ依頼にメインの段取りがまだ無いときと、同じ依頼の最後の段取りが合図から引いたもので、引き直すと段の数が変わるか位置が後ろへ戻るときは積まない。
+ */
+function delegateSignalRecords(
+  records: readonly SessionRecord[],
+  signal: Extract<SessionEvent, { readonly kind: "delegate-signal" }>,
+): readonly SessionRecord[] {
+  const latest = recordsOfLastRequest(records).findLast(isWorkPlanRecord)
+  if (latest === undefined) {
+    return []
+  }
+  const plan = delegatedWorkPlan(workPlanOf(latest), signal)
+  const backward =
+    latest.source === "delegate-signal" &&
+    (plan.phases.length !== latest.phases.length || plan.current < latest.current)
+  return backward ? [] : [{ kind: "work-plan", ...plan, source: "delegate-signal" }]
 }
 
 /**

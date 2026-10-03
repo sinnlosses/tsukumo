@@ -1513,6 +1513,43 @@ describe("applySessionEvent（委譲の合図と段取り）", () => {
     })
   })
 
+  it("2つの委譲の合図が交互に届いても、帯は後ろへ戻らない", () => {
+    const signalOfThree = (step: number): SessionEvent => ({
+      kind: "delegate-signal",
+      step,
+      stepCount: 3,
+      summary: "",
+    })
+    const alternating = [2, 1, 3, 2, 3]
+    const currents = alternating.map((_, index) => {
+      const plan = currentPlan(
+        apply(request, mainPlan(0), ...alternating.slice(0, index + 1).map(signalOfThree)),
+      )
+      return plan.kind === "planned" ? plan.current : undefined
+    })
+
+    expect(currents).toEqual([3, 3, 4, 4, 4])
+  })
+
+  it("合図から引いた段取りのあいだは、段の数の違う合図は帯を動かさない", () => {
+    const afterSignal = apply(request, mainPlan(0), signal(2))
+    const otherCount = applySessionEvent(
+      afterSignal,
+      { kind: "delegate-signal", step: 3, stepCount: 4, summary: "架空の別の委譲。" },
+      0,
+    )
+
+    expect(otherCount.records).toEqual(afterSignal.records)
+  })
+
+  it("メインの段取りの無い依頼では、合図は記録を足さない", () => {
+    const before = apply(request)
+
+    expect(applySessionEvent(before, signal(2, "架空の調べもの。"), 0).records).toEqual(
+      before.records,
+    )
+  })
+
   describe("委譲先が背景から居なくなったとき", () => {
     const backgroundTasks = (...kinds: readonly BackgroundTask["kind"][]): SessionEvent => ({
       kind: "background-tasks-changed",
@@ -1560,9 +1597,10 @@ describe("applySessionEvent（委譲の合図と段取り）", () => {
     })
 
     it("サブエージェントが背景に残るあいだは、シェルが出入りしてもメインの途中の段取りは帯を変えない", () => {
-      const afterSignal = apply(request, backgroundTasks("agent"), signal(2))
+      const afterSignal = apply(request, mainPlan(0), backgroundTasks("agent"), signal(2))
       const shellCameAndWent = apply(
         request,
+        mainPlan(0),
         backgroundTasks("agent"),
         signal(2),
         backgroundTasks("agent", "shell"),
@@ -1582,7 +1620,9 @@ describe("applySessionEvent（委譲の合図と段取り）", () => {
   })
 
   it("次の依頼のあとは、メインの段取りが今どおり効く", () => {
-    const plan = currentPlan(apply(request, signal(2), request, mainPlan(1, "架空のまとめ。")))
+    const plan = currentPlan(
+      apply(request, mainPlan(0), signal(2), request, mainPlan(1, "架空のまとめ。")),
+    )
 
     expect(plan).toMatchObject({
       kind: "planned",
