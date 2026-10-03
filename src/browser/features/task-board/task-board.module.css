@@ -26,7 +26,7 @@
 .task-running-card:last-child {
   margin-bottom: 0;
 }
-/* カードの中のIDは、一覧の行の等幅ID（`.task-item .task-id`）と同じ 11px にしつつ、字を差し色寄りにする。
+/* カードの中のIDは、一覧の行の等幅ID（`.task-item .task-id`）と同じ段（`--font-label`）にしつつ、字を差し色寄りにする。
    一覧の行の「薄く」は opacity だが、地が差し色なので同じ opacity のままだと沈んで読めない。 */
 .task-running-card .task-id {
   font-size: var(--font-label);
@@ -56,7 +56,11 @@
   color: var(--ink-quiet);
   text-decoration: line-through;
 }
-/* タスクのIDは機械が付けた名前なので等幅。summary（13px）より一段小さい 11px にして、印・チップ・札と同じ段に揃える。
+/* 色が既に薄いので、IDの透けを重ねるとコントラストが 4.5:1 を割る。 */
+.task-item.task-done .task-id {
+  opacity: 1;
+}
+/* タスクのIDは機械が付けた名前なので等幅。summary（13px）より一段小さい `--font-label` にして、印・チップ・札と同じ段に揃える。
    `flex: none` と `white-space: nowrap` が要る。
    body の `overflow-wrap: anywhere`（`theme.css`）でIDの min-content が1文字になり、幅の狭いサイドバーだとIDが2行に割れるため。 */
 .task-item .task-id {
@@ -130,7 +134,7 @@
   align-items: center;
   gap: 5px;
   min-width: 0;
-  font-size: 11px;
+  font-size: var(--font-label);
   white-space: nowrap;
 }
 

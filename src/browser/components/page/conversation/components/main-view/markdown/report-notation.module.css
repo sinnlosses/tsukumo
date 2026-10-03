@@ -226,14 +226,14 @@
 .detail-block .report-progress-dot {
   box-sizing: border-box;
   flex-shrink: 0;
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   border: 1.5px solid var(--rule);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 10px;
+  font-size: var(--font-label);
   font-weight: 700;
 }
 .detail-block .report-progress-step-done .report-progress-dot {
@@ -256,7 +256,7 @@
   font-weight: 700;
 }
 .detail-block .report-progress-status {
-  font-size: 11px;
+  font-size: var(--font-label);
   color: var(--accent);
   white-space: nowrap;
 }

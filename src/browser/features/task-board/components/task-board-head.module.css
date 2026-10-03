@@ -19,7 +19,7 @@
 .task-board-hints {
   margin-left: auto;
   color: var(--ink-quiet);
-  font-size: 11px;
+  font-size: var(--font-label);
   white-space: nowrap;
 }
 .task-board-hints kbd {

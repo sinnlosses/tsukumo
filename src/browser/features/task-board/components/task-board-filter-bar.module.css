@@ -66,5 +66,5 @@
 .task-board-chip-count {
   color: var(--ink-quiet);
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--font-label);
 }

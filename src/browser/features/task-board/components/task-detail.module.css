@@ -47,7 +47,7 @@
   border-radius: 6px;
   color: color-mix(in srgb, var(--ink) 85%, transparent);
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--font-label);
 }
 .task-detail-title {
   margin: 0;
@@ -133,7 +133,7 @@
 }
 .task-detail-dependency-unlisted {
   color: var(--ink-quiet);
-  font-size: 11px;
+  font-size: var(--font-label);
 }
 @media (max-width: 760px) {
   .task-detail {

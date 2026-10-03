@@ -9,6 +9,7 @@
 /* 未着手・完了の行の summary。既定（`aria-expanded="false"`）は1行に収め、入りきらない分は「…」にする。
    押すと `aria-expanded="true"` になり、折り返して全文を出す。 */
 .task-item-summary-toggle {
+  min-height: 1.5rem;
   padding: 0;
   margin: 0;
   border: none;

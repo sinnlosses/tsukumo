@@ -205,7 +205,10 @@
    「最新へ」の顔は `<Button variant="outline">` が持つ。 */
 .turn-newest-badge,
 .turn-to-newest {
-  padding: 0.15rem 0.65rem;
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.5rem;
+  padding: 0 0.65rem;
   border-radius: 999px;
   font-size: var(--font-secondary);
   line-height: 1;

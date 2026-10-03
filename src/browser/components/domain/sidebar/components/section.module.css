@@ -42,4 +42,7 @@
 /* 箱だけ（置き方）。顔は `<Button variant="link">` が持つ。 */
 .sidebar-block-action {
   flex: 0 0 auto;
+  min-height: 1.5rem;
+  padding-inline: 0.5rem;
+  margin-inline-end: -0.5rem;
 }

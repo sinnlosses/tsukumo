@@ -102,9 +102,9 @@
   --report-code-surface: #26252f; /* 見出しと一文の中のコードの地 */
   --report-sequence-ink: #66d1be; /* 流れ（flow）の丸・線、画像の塊の「図 n」の番号 */
 
-  /* タイプスケール。段はこの9つだけ。 */
-  --font-label: 0.6875rem;
-  --font-action: 0.75rem;
+  /* タイプスケール。字の下限は 12px。 */
+  --font-label: 0.75rem;
+  --font-action: var(--font-label);
   --font-secondary: 0.8125rem;
   --font-subheading: 0.875rem;
   --font-body: 0.9375rem;

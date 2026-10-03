@@ -56,5 +56,5 @@
 /* つながりの札から飛んだ先が絞り込み・検索の外にあるときだけ、一覧に一時的に出す行へ添える。 */
 .task-board-option-out-of-filter {
   color: var(--ink-quiet);
-  font-size: 11px;
+  font-size: var(--font-label);
 }
