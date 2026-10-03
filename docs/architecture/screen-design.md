@@ -223,15 +223,15 @@ sed -n '/^### 13\.7 /,/^### /p' docs/architecture/screen-design.md
 見せるので、色だけで意味を伝えることにはならない（13.1 原則5）。
 
 **結論部の色は見本の16進を固定の値として置く**（トークン消費の画面と同じ扱い。パックからは差せない。
-値は `theme.css` で、止めたの `report-outcome-stopped` だけは固定の値を持たず `state-ng` を読む）:
+値は `theme.css`）:
 
-| 塗るもの                                      | トークン                                                                               |
-| --------------------------------------------- | -------------------------------------------------------------------------------------- |
-| 目録の字 / 区切りの `·`                       | `report-catalog-ink` / `report-catalog-separator`                                      |
-| タスクID / その点線の下線                     | `report-task-id` / `report-task-id-rule`                                               |
-| 終わり方（完了・main へ / 止めた / 答え待ち） | `report-outcome-shipped` / `report-outcome-stopped` / `report-outcome-awaiting-answer` |
-| 見出し / 一文とインラインコードの字           | `report-headline-ink` / `report-conclusion-ink`                                        |
-| 見出しと一文の中のインラインコードの地        | `report-code-surface`                                                                  |
+| 塗るもの                               | トークン                                                    |
+| -------------------------------------- | ----------------------------------------------------------- |
+| 目録の字 / 区切りの `·`                | `report-catalog-ink` / `report-catalog-separator`           |
+| タスクID / その点線の下線              | `report-task-id` / `report-task-id-rule`                    |
+| 終わり方（完了・main へ / 答え待ち）   | `report-outcome-shipped` / `report-outcome-awaiting-answer` |
+| 見出し / 一文とインラインコードの字    | `report-headline-ink` / `report-conclusion-ink`             |
+| 見出しと一文の中のインラインコードの地 | `report-code-surface`                                       |
 
 **見本と揃えなかったもの**は書体（見本の丸ゴシック・IBM Plex Mono。`--font-sans` / `--font-mono` のまま）と、
 タスクID の要素（見本の `<a href="#">` ではなくモーダルを開く `<button>`）。

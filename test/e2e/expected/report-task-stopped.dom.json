@@ -125,18 +125,7 @@
                                       "children": [
                                         "T-002"
                                       ]
-                                    },
-                                    {
-                                      "tag": "span",
-                                      "attributes": {
-                                        "aria-hidden": "true"
-                                      },
-                                      "children": [
-                                        "·"
-                                      ]
-                                    },
-                                    "✕",
-                                    "止めた・main へは送っていない"
+                                    }
                                   ]
                                 },
                                 {

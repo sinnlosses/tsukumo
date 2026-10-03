@@ -1,5 +1,6 @@
 // レポートの結論部の頭（目録の1行と見出し）。結論の一文はこの下のレポート本文の先頭にある。
 // 目録の1行はラベル・終えた段・タスクID・終わり方のうちあるものだけを `·` でつなぎ、1つも無ければ何も描かない。
+// 終わり方の `stopped` は描かない。
 
 import clsx from "clsx"
 import { Fragment, type ReactElement } from "react"
@@ -35,7 +36,10 @@ export function ReportHead(props: ReportHeadProps): ReactElement | null {
     ...(phase.kind === "none" ? [] : [<span key="phase">{phase.label}</span>]),
     ...(task.kind === "none"
       ? []
-      : [<TaskId id={task.id} key="id" />, <Outcome outcome={task.outcome} key="outcome" />]),
+      : [
+          <TaskId id={task.id} key="id" />,
+          ...(task.outcome === "stopped" ? [] : [<Outcome outcome={task.outcome} key="outcome" />]),
+        ]),
   ]
 
   return (
@@ -76,18 +80,15 @@ const LABEL_TEXT = {
 
 const OUTCOME_VIEW = {
   shipped: { mark: "✓", text: "完了・main へ", className: "report-outcome-shipped" },
-  stopped: {
-    mark: "✕",
-    text: "止めた・main へは送っていない",
-    className: "report-outcome-stopped",
-  },
   "awaiting-answer": { mark: "？", text: "答え待ち", className: "report-outcome-awaiting-answer" },
 } as const satisfies Record<
-  ReportTaskOutcome,
+  DrawnOutcome,
   { readonly mark: string; readonly text: string; readonly className: string }
 >
 
-function Outcome(props: { readonly outcome: ReportTaskOutcome }): ReactElement {
+type DrawnOutcome = Exclude<ReportTaskOutcome, "stopped">
+
+function Outcome(props: { readonly outcome: DrawnOutcome }): ReactElement {
   const view = OUTCOME_VIEW[props.outcome]
   return (
     <span className={clsx(styles["report-outcome"], styles[view.className])}>

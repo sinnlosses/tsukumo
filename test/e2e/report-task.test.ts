@@ -16,7 +16,7 @@ const ELAPSED_MS = 60_000
 describe("タスクの作業のレポートの結論部", () => {
   it.each([
     ["report-task-shipped", "完了して main へ送った"],
-    ["report-task-stopped", "止めた"],
+    ["report-task-stopped", "止めたは描かない"],
     ["report-task-awaiting-answer", "答え待ち"],
     ["report-task-verdict", "完了して main へ送った"],
   ])("%s: 目録の1行（ラベル・タスクID・%s）と作業の名前の見出しが結論の上に出る", async (scene) => {
