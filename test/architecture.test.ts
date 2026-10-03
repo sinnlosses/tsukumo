@@ -516,6 +516,24 @@ describe("経路名のリテラル", () => {
   })
 })
 
+const HEX_COLOR = /#[0-9a-fA-F]{3,8}\b/
+
+describe("16進の色", () => {
+  it("src/browser/ の *.css で、theme.css 以外のコメント行でない行に16進の色が無い", () => {
+    const offenders = listSourceFiles(SRC_ROOT, SRC_ROOT, [".css"])
+      .filter((relPath) => relPath.startsWith("browser/") && relPath !== "browser/styles/theme.css")
+      .flatMap((relPath) => {
+        const lines = readFileSync(`${SRC_ROOT}/${relPath}`, "utf8").split("\n")
+        const commentLines = new Set(commentLineIndexes(lines))
+        return lines.flatMap((line, index) =>
+          !commentLines.has(index) && HEX_COLOR.test(line) ? [`src/${relPath}:${index + 1}`] : [],
+        )
+      })
+
+    expect(offenders.join("\n")).toBe("")
+  })
+})
+
 // コメントに特定の日付を書かない（`docs/coding-standards.md`「コメント」の表。「いつ決まったか・
 // 誰が言ったか（特定の日付・「〜の指摘」「ユーザーの決定」）」は禁止で、理由（Why / Why not）は
 // 残す。日付つきの記録は `docs/architecture.md` と `docs/history/` が持つ）。`oxlint` と同じ
