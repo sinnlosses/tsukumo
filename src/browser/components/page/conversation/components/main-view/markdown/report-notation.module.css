@@ -478,10 +478,44 @@
 .detail-block .report-file-note {
   grid-column: 3;
 }
-/* 結論と本文のあいだの、検証結果のまとまり（`report` から tsukumo が組む）。
+/* 結論と本文のあいだの、合図の行のまとまり（`report` から tsukumo が組む）。
    上下の margin は隣の段落や見出しの margin と相殺されるので、ここに書いた値がそのままあきになる。 */
 .detail-block .report-status {
-  margin: 28px 0 44px;
+  margin: 14px 0 26px;
+}
+/* 合図の行。検証結果は幅いっぱいに置き（開くと行が下に伸びる）、お願いへ飛ぶ口は総括の1行目の右端に重ねる。 */
+.detail-block .report-verdict {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  padding: 4px 0;
+  border-top: 1px solid var(--rule-quiet);
+  border-bottom: 1px solid var(--rule-quiet);
+  font-size: var(--font-secondary);
+  color: var(--ink-soft);
+}
+.detail-block .report-verdict > .report-checks {
+  grid-column: 1 / -1;
+  grid-row: 1;
+}
+.detail-block .report-verdict-favor {
+  grid-column: 2;
+  grid-row: 1;
+  padding-left: 18px;
+}
+/* 総括の1行がお願いの口の下に潜らないよう、右にその幅を空ける。 */
+.detail-block .report-verdict:has(> .report-verdict-favor) .report-checks > details > summary,
+.detail-block .report-verdict:has(> .report-verdict-favor) .report-checks > .report-checks-summary {
+  padding-right: 8em;
+}
+.detail-block .report-verdict-favor a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  white-space: nowrap;
 }
 .detail-block .report-status:last-child {
   margin-bottom: 0;
@@ -496,16 +530,64 @@
 .detail-block .report-checks {
   display: flex;
   flex-direction: column;
-  margin: 0.5rem 0;
-  border-bottom: 1px solid var(--rule-quiet);
+  min-width: 0;
+}
+/* 畳んだ検証は素の行のまま見せる（記法の <details> の地と枠を持たせない）。 */
+.detail-block .report-checks details {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+}
+.detail-block .report-checks summary {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 24px;
+  padding: 0 0.75rem;
+  list-style: none;
+}
+.detail-block .report-checks summary::-webkit-details-marker {
+  display: none;
+}
+/* `display: flex` の summary は既定の開閉の三角を描かないので、字で描く。 */
+.detail-block .report-checks summary::before {
+  content: "▸";
+  font-size: var(--font-action);
+  color: var(--ink-quiet);
+}
+.detail-block .report-checks details[open] > summary::before {
+  content: "▾";
+}
+.detail-block .report-checks details[open] > summary {
+  margin-bottom: 0;
 }
 .detail-block .report-checks-summary {
   display: flex;
   align-items: baseline;
   gap: 0.4rem;
-  padding: 0 0.75rem 0.3rem;
+  min-width: 0;
   font-size: var(--font-action);
   color: var(--ink-quiet);
+}
+.detail-block .report-checks > .report-checks-summary {
+  align-items: center;
+  min-height: 24px;
+  padding: 0 0.75rem;
+}
+.detail-block .report-checks-summary-figures {
+  overflow: hidden;
+  min-width: 0;
+  font-family: var(--font-mono);
+  color: var(--ink-soft);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.detail-block .report-checks-rest summary {
+  font-size: var(--font-action);
+  color: var(--ink-quiet);
+  border-top: 1px solid var(--rule-quiet);
 }
 .detail-block .report-checks-summary-count {
   font-family: var(--font-mono);
@@ -602,10 +684,17 @@
   line-height: 1.85;
   color: var(--report-conclusion-ink);
 }
-.detail-block .report-conclusion p {
+/* `task` の無いレポートの結論。見出しの代わりに頭に置く。 */
+.detail-block .report-conclusion-lead {
+  font-size: var(--report-heading-3);
+  font-weight: 500;
+  line-height: 1.6;
+  color: var(--report-conclusion-ink);
+}
+.detail-block :is(.report-conclusion, .report-conclusion-lead) p {
   margin: 0;
 }
-.detail-block .report-conclusion :not(pre) > code {
+.detail-block :is(.report-conclusion, .report-conclusion-lead) :not(pre) > code {
   font-size: 0.86em;
   color: var(--report-conclusion-ink);
   background: var(--report-code-surface);
@@ -835,7 +924,8 @@
   text-wrap: pretty;
 }
 .detail-block :is(h4, h5),
-.detail-block .report-conclusion {
+.detail-block .report-conclusion,
+.detail-block .report-conclusion-lead {
   word-break: auto-phrase;
   text-wrap: balance;
 }

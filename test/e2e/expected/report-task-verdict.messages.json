@@ -1,0 +1,328 @@
+[
+  {
+    "received": "hello",
+    "protocolVersion": "<protocol-version>"
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "session-info",
+      "sessionId": "fake-session",
+      "model": "opus",
+      "permissionMode": "auto",
+      "slashCommands": [
+        "clear",
+        "compact",
+        "doctor"
+      ],
+      "terminalSlashCommands": [
+        "doctor"
+      ]
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "command-descriptions",
+      "descriptions": [
+        {
+          "name": "clear",
+          "description": "会話を消して始め直す（架空の説明）"
+        },
+        {
+          "name": "compact",
+          "description": "会話を要約してまとめる（架空の説明）"
+        }
+      ]
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "speech",
+      "text": "疑似セッションの駆動で立ち上がったよ。ここはぜんぶ作り物の会話。",
+      "expression": "default"
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "request",
+      "text": "/next-task T-002（架空の依頼）",
+      "images": []
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "tool-started",
+      "toolUseId": "fake-verdict-check",
+      "name": "Bash",
+      "input": {
+        "command": "pnpm run check"
+      }
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "tool-finished",
+      "toolUseId": "fake-verdict-check",
+      "content": "ok",
+      "isError": false
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "tool-started",
+      "toolUseId": "fake-verdict-stray",
+      "name": "Bash",
+      "input": {
+        "command": "node scripts/find-stray-reference.ts"
+      }
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "tool-finished",
+      "toolUseId": "fake-verdict-stray",
+      "content": "ok",
+      "isError": false
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "report",
+      "toolUseId": "fake-report-task-verdict",
+      "conclusion": "次に起こす架空の画面から、段が1つでも札に `1/1` と位置が出ます。",
+      "sections": [
+        {
+          "heading": "札の組み立てを1箇所にまとめた（架空）",
+          "blocks": [
+            {
+              "kind": "table",
+              "title": "直した場所（架空）",
+              "columns": [
+                "場所",
+                "前",
+                "後",
+                "状態"
+              ],
+              "rows": [
+                [
+                  "`a.ts`",
+                  "段が2つ以上のときだけ位置を出す",
+                  "段の数を問わず出す",
+                  {
+                    "status": "ok",
+                    "text": "単体 3本"
+                  }
+                ],
+                [
+                  "`b.ts`",
+                  "位置の字を札ごとに組む",
+                  "1つの関数で組む",
+                  {
+                    "status": "ok",
+                    "text": "単体 2本"
+                  }
+                ],
+                [
+                  "`c.ts`",
+                  "読み上げに位置が無い",
+                  "位置を読み上げに添える",
+                  {
+                    "status": "ok",
+                    "text": "E2E 1本"
+                  }
+                ],
+                [
+                  "`d.ts`",
+                  "狭い窓で位置が折り返す",
+                  "位置を省略記号にしない",
+                  {
+                    "status": "ok",
+                    "text": "目視"
+                  }
+                ]
+              ],
+              "fold": ""
+            }
+          ]
+        },
+        {
+          "heading": "位置の字の決まり（架空）",
+          "blocks": [
+            {
+              "kind": "text",
+              "text": "位置は「いまの段 / 段の数」の形で、段が1つでも同じ形にした。段が無いターンでは札ごと出さないので、位置の字も出ない。",
+              "fold": ""
+            },
+            {
+              "kind": "list",
+              "style": "bullet",
+              "items": [
+                {
+                  "label": "",
+                  "text": "数字は等幅で、札の右端にそろえる（架空）",
+                  "done": false
+                },
+                {
+                  "label": "",
+                  "text": "読み上げは「1段目、全1段」の形にする（架空）",
+                  "done": false
+                },
+                {
+                  "label": "",
+                  "text": "狭い窓でも位置の字は省略しない（架空）",
+                  "done": false
+                }
+              ],
+              "fold": ""
+            }
+          ]
+        },
+        {
+          "heading": "残したこと（架空）",
+          "blocks": [
+            {
+              "kind": "text",
+              "text": "過去の記録にある段の無い札は、作り直さずにそのまま出す。記録の形は変えていないので、読み込み直しても同じに出る。",
+              "fold": ""
+            }
+          ]
+        }
+      ],
+      "favor": "段が1つだけの札で位置を出す形が合うか、次に作業を頼むときに見てほしい（架空のお願い）。",
+      "checks": [
+        {
+          "status": "ok",
+          "label": "pnpm run check",
+          "figure": "単体 3152 · E2E 111",
+          "command": "pnpm run check",
+          "detail": ""
+        },
+        {
+          "status": "ok",
+          "label": "1400×900 で段が1つの札を見る",
+          "figure": "ずれ 0px",
+          "command": "",
+          "detail": ""
+        },
+        {
+          "status": "ok",
+          "label": "720×900 で同じ札を見る",
+          "figure": "",
+          "command": "",
+          "detail": ""
+        },
+        {
+          "status": "ok",
+          "label": "node scripts/find-stray-reference.ts",
+          "figure": "迷子 0 件",
+          "command": "node scripts/find-stray-reference.ts",
+          "detail": ""
+        }
+      ],
+      "task": {
+        "kind": "task",
+        "id": "T-002",
+        "name": "架空の札に段が1つでも `1/1` のように位置を出す",
+        "outcome": "shipped"
+      },
+      "closing": {
+        "kind": "speech",
+        "text": "送ったよ！",
+        "expression": "proud"
+      },
+      "unknownBlockCount": 0
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "tool-finished",
+      "toolUseId": "fake-report-task-verdict",
+      "content": "ok",
+      "isError": false
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "speech",
+      "text": "送ったよ！",
+      "expression": "proud"
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "turn-finished",
+      "outcome": {
+        "kind": "completed"
+      }
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "effort-changed",
+      "effort": "medium"
+    }
+  },
+  {
+    "received": "event",
+    "at": 1768438800000,
+    "event": {
+      "kind": "tasks-changed",
+      "tasks": {
+        "kind": "known",
+        "items": [
+          {
+            "id": "T-001",
+            "summary": "架空のタスク（一覧の先頭）",
+            "status": "todo",
+            "difficulty": "sonnet",
+            "loopable": "Y",
+            "dependencies": [],
+            "body": "\n## 目的\n\n架空の本文で、実物のタスクではない。\n",
+            "location": {
+              "kind": "file",
+              "path": "develop/task/T-001.md"
+            }
+          },
+          {
+            "id": "T-002",
+            "summary": "架空のタスク（レポートが指すもの）",
+            "status": "todo",
+            "difficulty": "sonnet",
+            "loopable": "Y",
+            "dependencies": [],
+            "body": "\n## 目的\n\n架空の本文で、実物のタスクではない。\n",
+            "location": {
+              "kind": "file",
+              "path": "develop/task/T-002.md"
+            }
+          }
+        ]
+      }
+    }
+  }
+]

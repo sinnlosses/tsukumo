@@ -717,6 +717,21 @@ describe("Markdown（レポートのパスを押して Orca のエディタで�
     expect(container.querySelector("sup > a")?.getAttribute("href")).toBe("#user-content-fn-1")
   })
 
+  it("ページ内のリンクを押すと、location.hash を書かずに飛び先の要素へ転がす", () => {
+    const { container } = render(
+      <Markdown text={'<a href="#架空の先">飛ぶ</a>\n\n<div id="架空の先">先</div>'} />,
+    )
+    const target = typedElement(container.querySelector("div[id]"), HTMLDivElement, "飛び先")
+    const scrolled = vi.fn()
+    target.scrollIntoView = scrolled
+    const hashBefore = window.location.hash
+
+    fireEvent.click(typedElement(container.querySelector("a"), HTMLAnchorElement, "リンク"))
+
+    expect(scrolled).toHaveBeenCalledWith({ block: "start" })
+    expect(window.location.hash).toBe(hashBefore)
+  })
+
   it("Provider が無い場（既存のレポートの多く）では、一致するパスが無いのでファイルを開くボタンは出ない（コピーのボタンは別に出る）", () => {
     const { container } = render(
       <Markdown text={"`src/foo.ts:1` と [x](src/foo.ts) と ```diff src/foo.ts\n-a\n+b\n```"} />,

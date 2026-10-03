@@ -126,7 +126,7 @@ function Step(props: StepProps): ReactElement | null {
  *
  * 中間レポート（`step.interim`）は話が途中の本文なので、目録の1行にラベルを載せて地と枠を変える（`.main-step.is-interim`）。
  *
- * 最終レポート（`step.final`）は地を本文の surface のまま内側を広げ（`.main-step.is-final`）、目録の1行にラベルを載せる。
+ * 最終レポート（`step.final`）は箱を外し（`.main-step.is-final`）、目録の1行にラベルを載せる。
  * ラベルを出すのは `finalLabel` が立っているとき（中間レポートのあるやり取りか、本文に `task` があるときだけ。どちらも無ければ「最終」が何も区別しない）。
  *
  * 後ろに別のレポートが現れた中間レポート（`step.superseded`）は、何件も開いたまま積まれると見通しが悪いので畳む。
@@ -191,7 +191,7 @@ function reportLabel(
   return step.final && (hasInterimReport || task.kind === "task") ? "final" : "none"
 }
 
-/** ステップの器に付ける class。地の段（`is-interim` / `is-final`）は互いに立たない。 */
+/** ステップの器に付ける class。器の形（`is-interim` の破線の箱 / `is-final` の箱なし）は互いに立たない。 */
 function stepClassName(step: MainViewStep): string {
   return clsx(
     mainViewStyles["main-step"],

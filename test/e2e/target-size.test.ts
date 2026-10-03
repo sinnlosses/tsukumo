@@ -96,6 +96,7 @@ describe("会話の画面の押す的と字", () => {
   it.each([
     ["notation", "notation"],
     ["work-plan", "work-plan-quick"],
+    ["verdict", "report-task-verdict"],
   ] as const)("レポートの記法と段取りの字が下限を割らない（%s）", async (name, scene) => {
     const room = await run.open({
       scenario: `target-size-report-${name}`,

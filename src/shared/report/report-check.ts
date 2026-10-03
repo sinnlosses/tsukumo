@@ -50,10 +50,11 @@ export function parseReportChecks(value: unknown): readonly ReportCheck[] {
 }
 
 /**
- * 検証結果の表（1つの HTML の塊）。空なら空文字。
- * 上に「検証 N」＋全体の状態（すべて通った・k 件が落ちた・k 件を確かめていない）の1行、
- * 下に1項目1行の並びを描く。行は「状態・label・figure・所要時間」の4列で、
- * detail は ng / unverified の行だけ2段目に描く。
+ * 検証結果（1つの HTML の塊）。空なら空文字。
+ * 頭は「検証 N」＋全体の状態（すべて通った・k 件が落ちた・k 件を確かめていない）の総括。
+ * すべて ok なら、総括を `<summary>` にした `<details>` に全行を畳む（figure を総括の後ろに添える）。
+ * ng / unverified があれば、その行だけを ng → unverified の順に開いて並べ、ok の行は「ほか n 件はすべて通った」の `<details>` に畳む。
+ * 行は「状態・label・figure・所要時間」の4列で、detail は ng / unverified の行だけ2段目に描く。
  * `commandDuration` は `command` から tsukumo が測った所要時間を引く口で、`command` が空の項目には呼ばない。
  * モデルの文字列は HTML として逃がし、改行は空白に畳む（HTML の塊が空行で切れないように）。
  */
@@ -64,11 +65,40 @@ export function reportChecksMarkdown(
   if (checks.length === 0) {
     return ""
   }
-  const rows = checks.map((check) => checkRowMarkdown(check, commandDuration)).join("")
-  return `<div class="checks" role="table" aria-label="検証結果">${summaryMarkdown(checks)}${rows}</div>`
+  const rowsOf = (status: ReportCheckStatus): string =>
+    checks
+      .filter((check) => check.status === status)
+      .map((check) => checkRowMarkdown(check, commandDuration))
+      .join("")
+  const okCount = checks.filter((check) => check.status === "ok").length
+
+  if (okCount === checks.length) {
+    const figures = checks
+      .map((check) => htmlInline(check.figure))
+      .filter((figure) => figure !== "")
+    const figureSummary =
+      figures.length === 0
+        ? ""
+        : ` <span class="checks-summary-figures">${figures.join(" · ")}</span>`
+    return (
+      `<div class="checks"><details><summary>` +
+      `<span class="checks-summary">${summaryMarkdown(checks)}${figureSummary}</span>` +
+      `</summary><div role="table" aria-label="検証結果">${rowsOf("ok")}</div></details></div>`
+    )
+  }
+
+  const rest =
+    okCount === 0
+      ? ""
+      : `<div class="checks-rest"><details><summary><span class="checks-summary-ok">✓</span> ほか ${String(okCount)} 件はすべて通った</summary>` +
+        `<div role="table" aria-label="通った検証">${rowsOf("ok")}</div></details></div>`
+  return (
+    `<div class="checks"><div class="checks-summary">${summaryMarkdown(checks)}</div>` +
+    `<div role="table" aria-label="検証結果">${rowsOf("ng")}${rowsOf("unverified")}</div>${rest}</div>`
+  )
 }
 
-/** 検証の総数と、全体の状態を伝える1行。ng があれば赤、無く unverified があれば黄、どちらも無ければ緑。 */
+/** 検証の総数と、全体の状態を伝える文。ng があれば赤、無く unverified があれば黄、どちらも無ければ緑。 */
 function summaryMarkdown(checks: readonly ReportCheck[]): string {
   const ngCount = checks.filter((check) => check.status === "ng").length
   const unverifiedCount = checks.filter((check) => check.status === "unverified").length
@@ -78,7 +108,7 @@ function summaryMarkdown(checks: readonly ReportCheck[]): string {
       : unverifiedCount > 0
         ? `<span class="checks-summary-warn">？ ${String(unverifiedCount)} 件を確かめていない</span>`
         : `<span class="checks-summary-ok">✓ すべて通った</span>`
-  return `<div class="checks-summary">検証 <span class="checks-summary-count">${String(checks.length)}</span> ${verdict}</div>`
+  return `検証 <span class="checks-summary-count">${String(checks.length)}</span> ${verdict}`
 }
 
 /** 検証1項目の行。状態・label・figure・所要時間を1行の4列に並べ、detail は ng / unverified だけ2段目に足す。 */

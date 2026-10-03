@@ -47,8 +47,8 @@
 .turn-card-inquiry {
   padding: 0 var(--region-padding, 0px);
 }
-/* 目次から飛んだ見出しが、貼り付いた頭の下に隠れないようにする。 */
-.turn-card :is(h4, h5) {
+/* 目次から飛んだ見出しと、ページ内のリンクから飛んだ先（お願いの塊など）が、貼り付いた頭の下に隠れないようにする。 */
+.turn-card :is(h4, h5, [id]) {
   scroll-margin-top: calc(var(--turn-card-head-height) + 0.5rem);
 }
 /* ステップは縦に1本で積む（Z字に読ませない）。カードの枠は「ひとかたまり」の区切りを見せるためだけに使い、番号は振らない。 */
@@ -78,9 +78,16 @@
   border-style: dashed;
 }
 /* 最終レポート（そのやり取りの最後の、中間でない本文。`MainViewStep.final`）。
-   地は本文の surface のまま（`.main-step` の既定）で、ground に落とさない。 */
+   箱を持たず、領域の surface を紙にする。中間レポートの破線の箱・段の知らせの字だけの1行とは形で見分ける。
+   前に何かあるときの上のあきは、直前の段の知らせと目録の1行（どちらも小さな字だけの1行）が続いて読めないようにするもの。 */
 .main-step.is-final {
-  padding: 1.75rem 2rem 1.875rem;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+}
+.main-step.is-final:not(:first-child) {
+  margin-top: 0.75rem;
 }
 /* 追い越された中間レポートは `<details>` で畳む。
    地・枠は `.main-step.is-interim` のままで、開閉できることだけ `summary` のカーソルで示す（新しい色は作らない）。 */

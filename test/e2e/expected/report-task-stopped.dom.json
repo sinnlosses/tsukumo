@@ -181,8 +181,8 @@
                             {
                               "tag": "div",
                               "attributes": {
-                                "role": "table",
-                                "aria-label": "検証結果"
+                                "role": "group",
+                                "aria-label": "検証とお願いの合図"
                               },
                               "children": [
                                 "検証",
@@ -191,13 +191,22 @@
                                 {
                                   "tag": "div",
                                   "attributes": {
-                                    "role": "row"
+                                    "role": "table",
+                                    "aria-label": "検証結果"
                                   },
                                   "children": [
-                                    "✕ NG",
-                                    "架空の E2E",
-                                    "12 件中 1 件",
-                                    "架空の札の位置がずれた"
+                                    {
+                                      "tag": "div",
+                                      "attributes": {
+                                        "role": "row"
+                                      },
+                                      "children": [
+                                        "✕ NG",
+                                        "架空の E2E",
+                                        "12 件中 1 件",
+                                        "架空の札の位置がずれた"
+                                      ]
+                                    }
                                   ]
                                 }
                               ]

@@ -95,9 +95,10 @@ describe("mainViewTurnsOf（claude が自分で始めた続きのターン）", 
   })
   const finished: SessionEvent = { kind: "turn-finished", outcome: { kind: "completed" } }
   const resumed: SessionEvent = { kind: "turn-resumed" }
+  /** 出ている本文を、畳んだときの先頭行で並べる（`report` の本文は結論を包んだ HTML なので）。 */
   const shownBodies = (state: SessionState) =>
     (mainViewTurnsOf(state).at(-1)?.steps ?? []).flatMap((step) =>
-      step.body.kind === "text" ? [step.body.report] : [],
+      step.body.kind === "text" ? [step.body.firstLine] : [],
     )
 
   it("前の SDK ターンで出た report は、続きのターンが動いていても出したまま", () => {
@@ -260,9 +261,10 @@ describe("mainViewTurnsOf（続きのターンを2回以上含む並びを1件�
     finished,
   ]
 
+  /** 出ている本文を、畳んだときの先頭行で並べる（`report` の本文は結論を包んだ HTML なので）。 */
   const shownBodies = (state: SessionState) =>
     (mainViewTurnsOf(state).at(-1)?.steps ?? []).flatMap((step) =>
-      step.body.kind === "text" ? [step.body.report] : [],
+      step.body.kind === "text" ? [step.body.firstLine] : [],
     )
 
   it("1件畳むごとに、出ていた report の本文が消えず、吹き出しも空に戻らない", () => {

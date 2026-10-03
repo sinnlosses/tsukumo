@@ -84,7 +84,7 @@ function escapeHtml(text: string): string {
 }
 
 /** 二重引用符で囲む HTML 属性の値に埋める1行の文字。`htmlInline` に加えて `"` も逃がす。 */
-function htmlAttribute(text: string): string {
+export function htmlAttribute(text: string): string {
   return htmlInline(text).replaceAll('"', "&quot;")
 }
 

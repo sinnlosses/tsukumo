@@ -4,7 +4,11 @@
 import { sum } from "remeda"
 
 import { reportChecksMarkdown } from "../report/report-check.ts"
-import { reportSectionsMarkdown, SECTIONS_START_MARKDOWN } from "../report/report-markdown.ts"
+import {
+  htmlAttribute,
+  reportSectionsMarkdown,
+  SECTIONS_START_MARKDOWN,
+} from "../report/report-markdown.ts"
 import { NO_REPORT_TASK, type ReportTask } from "../report/report-task.ts"
 import { tidyReportSections } from "../report/report-tidy.ts"
 import type { RecordedPromptImage } from "../session-driver/prompt-image.ts"
@@ -120,7 +124,7 @@ export type MainViewTurnFailure =
  * `interim && superseded` のときだけ描く側が畳む。本文を持たないステップでも立つ。
  *
  * `final` は、その本文が最終レポート（そのやり取りで最後の、中間でない本文）かどうか（{@link markFinalReport}）。
- * ラベルを載せる印（`.main-step.is-final`）で、書き上げる演出を掛ける相手を選ぶのにも使う。
+ * 箱を外してラベルを載せる印（`.main-step.is-final`）で、書き上げる演出を掛ける相手を選ぶのにも使う。
  * ラベルを出すかどうかはこれだけでは決まらない（`MainViewTurn.hasInterimReport` と本文の `task` と組み合わせる）。
  * いちばん新しいやり取りでは、やり取りが閉じているときだけ立つ（{@link mainViewTurns} の `closed` 引数）。
  *
@@ -150,7 +154,7 @@ const NO_PHASE_LABEL = { kind: "none" } as const satisfies MainViewPhaseLabel
 
 /**
  * ステップの本文。本文が無い（レポートより前に起きたことをまとめたステップか、出さないと決めた本文）なら `none`。
- * `firstLine` は畳んだときの `<summary>` に出す1行で、段のまとめなら終えた段の見出し、`task` があれば結論（空なら作業の名前）、どちらも無ければ本文の先頭行（{@link extractFirstLine}）。
+ * `firstLine` は畳んだときの `<summary>` に出す1行で、段のまとめなら終えた段の見出し、`report` なら結論（空なら作業の名前）、どちらも無ければ本文の先頭行（{@link extractFirstLine}）。
  * `task` は目録の1行と見出しに出すタスクで、`report` ツールの外の本文では常に `none`。
  * `finishedPhase` は目録の1行に添える終えた段の見出しで、段のまとめだけが持つ。
  */
@@ -322,12 +326,12 @@ function toMainViewEntries(record: SessionRecord, context: TurnContext): readonl
 }
 
 /**
- * `report` の引数を、`conclusion` → `checks` → 節の始まりの印 → `sections` → `favor` の順に1つの本文へ組む。
- * 印は結論か検証結果があり、節も1つ以上あるときだけ置く。
- * `checks` は検証結果の表（{@link reportChecksMarkdown}。所要時間は同じやり取りの中の `tool` の記録から引く）、`favor` はレポートの記法の「お願い」の塊で包むので、サニタイズも記法の解釈もテキストの本文と同じ経路を通る。
+ * `report` の引数を、`conclusion` → 合図の行 → 節の始まりの印 → `sections` → `favor` の順に1つの本文へ組む。
+ * 印は結論か合図の行があり、節も1つ以上あるときだけ置く。
+ * 合図の行は {@link verdictMarkdown}。`favor` はレポートの記法の「お願い」の塊で包むので、サニタイズも記法の解釈もテキストの本文と同じ経路を通る。
  * `favor` は HTML の中に Markdown を入れるので、塊の内側の前後に空行を空ける。
- * 空の `checks` / `sections` / `favor` は塊ごと置かない。
- * `task` のあるレポートの `conclusion` は見出しの下の一文として描くので、`conclusion` の印で包む（`task` そのものは本文に組まない）。
+ * 空の `sections` / `favor` は塊ごと置かない。
+ * `conclusion` は、`task` のあるレポートでは見出しの下の一文として `conclusion` の印で、無いレポートでは見出しの代わりとして `conclusion-lead` の印で包む（`task` そのものは本文に組まない）。
  *
  * 節の並びはここで整形する（{@link tidyReportSections}。記録は引数のまま持ち、描くたびに導く）。
  */
@@ -335,12 +339,14 @@ function reportMarkdown(
   report: Extract<SessionRecord, { readonly kind: "report" }>,
   context: TurnContext,
 ): string {
+  const favorId = `favor-${report.toolUseId}`
   const head = [
-    report.task.kind === "task" && !isBlankText(report.conclusion)
-      ? `<div class="conclusion">\n\n${report.conclusion}\n\n</div>`
-      : report.conclusion,
-    statusMarkdown(
+    isBlankText(report.conclusion)
+      ? ""
+      : `<div class="${report.task.kind === "task" ? "conclusion" : "conclusion-lead"}">\n\n${report.conclusion}\n\n</div>`,
+    verdictMarkdown(
       reportChecksMarkdown(report.checks, (command) => bashCommandDuration(context, command)),
+      isBlankText(report.favor) ? { kind: "none" } : { kind: "favor", targetId: favorId },
     ),
   ].filter((part) => !isBlankText(part))
   const sections = reportSectionsMarkdown(tidyReportSections(report), {
@@ -351,15 +357,29 @@ function reportMarkdown(
     ...head,
     head.length > 0 && !isBlankText(sections) ? SECTIONS_START_MARKDOWN : "",
     sections,
-    isBlankText(report.favor) ? "" : `<div class="note note-favor">\n\n${report.favor}\n\n</div>`,
+    isBlankText(report.favor)
+      ? ""
+      : `<div class="note note-favor" id="${htmlAttribute(favorId)}">\n\n${report.favor}\n\n</div>`,
   ]
     .filter((part) => !isBlankText(part))
     .join("\n\n")
 }
 
-/** 検証結果を、結論と本文のあいだの1つのまとまりに包む。無ければ包みごと置かない。 */
-function statusMarkdown(checks: string): string {
-  return isBlankText(checks) ? "" : `<div class="status">\n\n${checks}\n\n</div>`
+/** 合図の行に載せるお願いの口。`targetId` はお願いの塊の `id`。 */
+type FavorSignal = { readonly kind: "none" } | { readonly kind: "favor"; readonly targetId: string }
+
+/**
+ * 結論のすぐ下の合図の行（検証結果の総括と、お願いへ飛ぶ口）を、結論と本文のあいだの1つのまとまりに包む。
+ * どちらも無ければ包みごと置かない。お願いの本文は末尾のまま動かさない。
+ */
+function verdictMarkdown(checks: string, favor: FavorSignal): string {
+  const favorLink =
+    favor.kind === "none"
+      ? ""
+      : `<span class="verdict-favor"><a href="#${htmlAttribute(favor.targetId)}">お願い 1 ↓</a></span>`
+  return isBlankText(checks) && favorLink === ""
+    ? ""
+    : `<div class="status">\n\n<div class="verdict" role="group" aria-label="検証とお願いの合図">${checks}${favorLink}</div>\n\n</div>`
 }
 
 /**
@@ -585,16 +605,19 @@ const MAX_STEP_SUMMARY_LENGTH = 40
 
 /**
  * 畳んだときの先頭行を取り出す元の文。
- * `task` のあるレポートは本文の頭が結論を包む HTML なので、組む前の結論から取る。
+ * `report` の本文の頭は結論を包む HTML なので、組む前の結論から取る。
  * 作業の名前は同じ作業の中間レポートで全部同じになり見分けが付かないので、結論が空のときだけ使う。
  */
 function firstLineSource(
   entry: Extract<StepEntry, { readonly kind: "detail" | "report" }>,
 ): string {
-  if (entry.kind === "detail" || entry.task.kind !== "task") {
+  if (entry.kind === "detail") {
     return entry.markdown
   }
-  return isBlankText(entry.conclusion) ? entry.task.name : entry.conclusion
+  if (!isBlankText(entry.conclusion)) {
+    return entry.conclusion
+  }
+  return entry.task.kind === "task" ? entry.task.name : entry.markdown
 }
 
 /**
@@ -622,11 +645,11 @@ function extractFirstLine(markdown: string): string {
  * 最終レポート（そのやり取りで最後の、中間でない本文）に印を立て、同じやり取りに中間レポートがあるかどうかを畳む。
  * 引くのは1箇所だけにして、描く側が「最後の、中間でない本文」の条件を持たずに済むようにする。
  *
- * 2つに分かれているのは、地の段とラベルで条件が違うため。
- * 地は最終レポートなら常に1段上げ、ラベル（「最終レポート」）は中間レポートのあるやり取りか、本文に `task` があるときだけ出す。
+ * 2つに分かれているのは、箱とラベルで条件が違うため。
+ * 最終レポートなら常に箱を外し、ラベル（「最終レポート」）は中間レポートのあるやり取りか、本文に `task` があるときだけ出す。
  *
  * `closed` が false のとき（{@link mainViewTurns} の同名の引数）は `final` を1つも立てない。
- * やり取りがまだ閉じていないあいだは、次の `report` が来てこの本文が中間レポートへ回るかもしれないので、確定していないものに最終レポートの札（ラベルも地の段上げも）を立てない。
+ * やり取りがまだ閉じていないあいだは、次の `report` が来てこの本文が中間レポートへ回るかもしれないので、確定していないものに最終レポートの札（ラベルも箱を外すことも）を立てない。
  * `hasInterimReport` は `closed` に関係なく `interim` の集計のまま。
  *
  * `interim` の判定（{@link selectToolReports}）も `superseded`（{@link markSupersededSteps}）も変えない。

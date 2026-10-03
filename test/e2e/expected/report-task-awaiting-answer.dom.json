@@ -185,6 +185,24 @@
                                 "を出すかどうか、答えを待っています。答えが来たら受け入れに戻ります。"
                               ]
                             },
+                            {
+                              "tag": "div",
+                              "attributes": {
+                                "role": "group",
+                                "aria-label": "検証とお願いの合図"
+                              },
+                              "children": [
+                                {
+                                  "tag": "a",
+                                  "attributes": {
+                                    "href": "/?t=<token>#favor-fake-report-task-awaiting-answer"
+                                  },
+                                  "children": [
+                                    "お願い 1 ↓"
+                                  ]
+                                }
+                              ]
+                            },
                             "お願い",
                             {
                               "tag": "p",

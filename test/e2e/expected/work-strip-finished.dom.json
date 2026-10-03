@@ -255,23 +255,22 @@
                             {
                               "tag": "div",
                               "attributes": {
-                                "role": "table",
-                                "aria-label": "検証結果"
+                                "role": "group",
+                                "aria-label": "検証とお願いの合図"
                               },
                               "children": [
-                                "検証",
-                                "1",
-                                "✓ すべて通った",
                                 {
-                                  "tag": "div",
-                                  "attributes": {
-                                    "role": "row"
-                                  },
+                                  "tag": "details",
                                   "children": [
-                                    "✓ OK",
-                                    "pnpm run test",
-                                    "12 / 12",
-                                    "0秒"
+                                    {
+                                      "tag": "summary",
+                                      "children": [
+                                        "検証",
+                                        "1",
+                                        "✓ すべて通った",
+                                        "12 / 12"
+                                      ]
+                                    }
                                   ]
                                 }
                               ]

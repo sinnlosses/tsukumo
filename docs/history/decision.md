@@ -7,6 +7,26 @@
 節は `## <出典のファイル> <節番号> <節の見出し>` の形で並べ、各節の先頭に**移した日付と
 出典の節**を1行で書く。探すときは出典の節名で `grep` する。
 
+## display.md 4.2 / screen-design.md 13.2 最終レポートの箱と、常に開いた検証の表（2026-10-03 に覆した記録）
+
+2026-10-03 に `docs/architecture/display.md` 4.2「検証結果は1つのまとまり（`status`）に包み…」・「検証結果はカードでなく、
+1項目1行の表で描く」と、`docs/architecture/screen-design.md` 13.2「最終レポートに印を付ける」から移す
+（新しい形は display.md 4.2「検証の総括とお願いの合図を、結論のすぐ下の1行（合図の行）に置き、通った検証は畳む」）。
+
+**旧い形**: 検証結果は上に「検証 N」＋全体の状態の1行、下に全項目を1行ずつ常に開いて並べた（書いた順のまま）。
+まとまりのあきは結論→まとまり 28px・まとまり→本文 44px。最終レポートは本文と同じ `surface` の地に、1px の枠と
+内側の余白（上下 28px・左右 32px。`.main-step.is-final` の `padding: 1.75rem 2rem 1.875rem`）を持つ箱だった。
+`task` の無いレポートの結論は素の段落のまま描いた。
+
+**覆した理由**: 1400×900 の窓ではメインビューが 513px しか無く、検証の表（3項目で 177px）と箱の余白が結論のあとの
+本文を押し出して、末尾のお願いが最初の1画面に入らなかった（`docs/research/report-redesign.md` 1.2 の実測。
+閲覧時間の 57% は最初の1画面に落ちる）。
+
+**戻すとき**: `report-check.ts` の `reportChecksMarkdown` を全行を開いた表へ、`main-view.ts` の `reportMarkdown` の
+合図の行（`verdictMarkdown`）とお願いの塊の `id` を外し、`conclusion-lead` の包みを外す。`main-view.module.css` の
+`.main-step.is-final` に `padding: 1.75rem 2rem 1.875rem` を戻して枠を残し、`report-notation.module.css` の
+`.report-status` のあきを `28px 0 44px` へ戻す。
+
 ## screen-design.md 13.13 ターンの前後のキー（キー操作を付けないとした記録。2026-10-03 に覆した記録）
 
 2026-10-03 に、札の頭の部品のコメントにあった「ターンの前後へ移る口にキー操作は付けない」を覆した

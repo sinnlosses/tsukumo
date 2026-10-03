@@ -332,8 +332,8 @@
                                     {
                                       "tag": "div",
                                       "attributes": {
-                                        "role": "table",
-                                        "aria-label": "検証結果"
+                                        "role": "group",
+                                        "aria-label": "検証とお願いの合図"
                                       },
                                       "children": [
                                         "検証",
@@ -342,36 +342,54 @@
                                         {
                                           "tag": "div",
                                           "attributes": {
-                                            "role": "row"
+                                            "role": "table",
+                                            "aria-label": "検証結果"
                                           },
                                           "children": [
-                                            "✓ OK",
-                                            "pnpm run check",
-                                            "1234 件",
-                                            "0秒"
+                                            {
+                                              "tag": "div",
+                                              "attributes": {
+                                                "role": "row"
+                                              },
+                                              "children": [
+                                                "✕ NG",
+                                                "目盛りの E2E",
+                                                "1 / 56",
+                                                "架空の 1 件が落ちた"
+                                              ]
+                                            },
+                                            {
+                                              "tag": "div",
+                                              "attributes": {
+                                                "role": "row"
+                                              },
+                                              "children": [
+                                                "？ 未確認",
+                                                "狭い窓での見た目",
+                                                "手で確かめていない"
+                                              ]
+                                            }
                                           ]
                                         },
                                         {
-                                          "tag": "div",
-                                          "attributes": {
-                                            "role": "row"
-                                          },
+                                          "tag": "details",
                                           "children": [
-                                            "✕ NG",
-                                            "目盛りの E2E",
-                                            "1 / 56",
-                                            "架空の 1 件が落ちた"
+                                            {
+                                              "tag": "summary",
+                                              "children": [
+                                                "✓",
+                                                "ほか 1 件はすべて通った"
+                                              ]
+                                            }
                                           ]
                                         },
                                         {
-                                          "tag": "div",
+                                          "tag": "a",
                                           "attributes": {
-                                            "role": "row"
+                                            "href": "/?t=<token>#favor-fake-report-call-2"
                                           },
                                           "children": [
-                                            "？ 未確認",
-                                            "狭い窓での見た目",
-                                            "手で確かめていない"
+                                            "お願い 1 ↓"
                                           ]
                                         }
                                       ]

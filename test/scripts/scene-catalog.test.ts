@@ -24,5 +24,6 @@ describe("sceneBlockKinds", () => {
 
   test("検証結果を持つ場面には checks が出る", () => {
     expect(kinds.get("report-tool")).toContain("checks")
+    expect(kinds.get("report-task-verdict")).toContain("checks")
   })
 })

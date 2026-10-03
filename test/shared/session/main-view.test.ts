@@ -29,6 +29,8 @@ const reportOf = (step: MainViewStep | undefined) =>
   step?.body.kind === "text" ? step.body.report : undefined
 const firstLineOf = (step: MainViewStep | undefined) =>
   step?.body.kind === "text" ? step.body.firstLine : undefined
+/** `task` の無い `report` の結論を包んだ形。 */
+const lead = (conclusion: string) => `<div class="conclusion-lead">\n\n${conclusion}\n\n</div>`
 
 const request = (text: string, turnId = 0): MainViewEntry => ({
   kind: "request",
@@ -576,7 +578,10 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     )
 
     expect(shownReports(turn)).toEqual([
-      `架空の結論。\n\n${SECTIONS_START}\n\n| 列 |\n| --- |\n| 値 |\n\n<div class="note note-favor">\n\n架空のお願い\n\n</div>`,
+      `${lead("架空の結論。")}\n\n` +
+        '<div class="status">\n\n<div class="verdict" role="group" aria-label="検証とお願いの合図">' +
+        '<span class="verdict-favor"><a href="#favor-toolu_r1">お願い 1 ↓</a></span></div>\n\n</div>\n\n' +
+        `${SECTIONS_START}\n\n| 列 |\n| --- |\n| 値 |\n\n<div class="note note-favor" id="favor-toolu_r1">\n\n架空のお願い\n\n</div>`,
     ])
     expect(turn?.steps.map((step) => step.final)).toEqual([true])
     expect(firstLineOf(turn?.steps[0])).toBe("架空の結論。")
@@ -597,9 +602,13 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
       true,
     )
 
-    expect(shownReports(turn)).toEqual([
-      `架空の結論。\n\n${SECTIONS_START}\n\n架空の根拠。\n\n<div class="note note-favor">\n\n架空のお願い\n\n</div>`,
-    ])
+    const [shown] = shownReports(turn)
+    expect(shown?.startsWith(lead("架空の結論。"))).toBe(true)
+    expect(
+      shown?.endsWith(
+        `${SECTIONS_START}\n\n架空の根拠。\n\n<div class="note note-favor" id="favor-toolu_r1">\n\n架空のお願い\n\n</div>`,
+      ),
+    ).toBe(true)
   })
 
   it("report が呼ばれなかったターンの本文には整形を掛けない", () => {
@@ -608,7 +617,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     expect(shownReports(turn)).toEqual(["架空の答え。\n\n以上です。"])
   })
 
-  it("checks は結論のすぐ下に検証結果の表として組む（body・favor より前）", () => {
+  it("checks とお願いの口は結論のすぐ下の合図の行に組み、お願いの本文は末尾のまま（body より前）", () => {
     const turn = turnOf(
       [
         ask,
@@ -629,14 +638,21 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     )
 
     expect(shownReports(turn)).toEqual([
-      "架空の結論。\n\n" +
+      `${lead("架空の結論。")}\n\n` +
         '<div class="status">\n\n' +
-        '<div class="checks" role="table" aria-label="検証結果">' +
+        '<div class="verdict" role="group" aria-label="検証とお願いの合図">' +
+        '<div class="checks">' +
         '<div class="checks-summary">検証 <span class="checks-summary-count">2</span> <span class="checks-summary-warn">？ 1 件を確かめていない</span></div>' +
-        '<div class="check check-ok" role="row"><span class="check-mark">✓ OK</span><span class="check-label">架空の検査</span><span class="check-figure">12 / 3</span><span class="check-time"></span></div>' +
+        '<div role="table" aria-label="検証結果">' +
         '<div class="check check-unverified" role="row"><span class="check-mark">？ 未確認</span><span class="check-label">架空の目視</span><span class="check-figure"></span><span class="check-time"></span></div>' +
+        "</div>" +
+        '<div class="checks-rest"><details><summary><span class="checks-summary-ok">✓</span> ほか 1 件はすべて通った</summary><div role="table" aria-label="通った検証">' +
+        '<div class="check check-ok" role="row"><span class="check-mark">✓ OK</span><span class="check-label">架空の検査</span><span class="check-figure">12 / 3</span><span class="check-time"></span></div>' +
+        "</div></details></div>" +
+        "</div>" +
+        '<span class="verdict-favor"><a href="#favor-toolu_r1">お願い 1 ↓</a></span>' +
         `</div>\n\n</div>\n\n${SECTIONS_START}\n\n` +
-        '架空の根拠。\n\n<div class="note note-favor">\n\n架空のお願い\n\n</div>',
+        '架空の根拠。\n\n<div class="note note-favor" id="favor-toolu_r1">\n\n架空のお願い\n\n</div>',
     ])
     expect(firstLineOf(turn?.steps[0])).toBe("架空の結論。")
   })
@@ -707,7 +723,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
 
     expect(shownReports(turn)).toEqual([
       "架空のまとめ。",
-      `架空の結論。\n\n${SECTIONS_START}\n\n架空の根拠。`,
+      `${lead("架空の結論。")}\n\n${SECTIONS_START}\n\n架空の根拠。`,
     ])
   })
 
@@ -740,13 +756,24 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     const conclusionOnly = turnOf([ask, report("架空の結論だけ。"), finished], SETTLED, true)
 
     expect(shownReports(sectionsOnly)).toEqual(["架空の根拠。"])
-    expect(shownReports(conclusionOnly)).toEqual(["架空の結論だけ。"])
+    expect(shownReports(conclusionOnly)).toEqual([lead("架空の結論だけ。")])
   })
 
-  it("checks・body・favor が空ならその塊を置かない（帯も出ない）", () => {
+  it("checks・body・favor が空ならその塊を置かない（合図の行も出ない）", () => {
     const turn = turnOf([ask, report("架空の結論だけ。"), finished], SETTLED, true)
 
-    expect(shownReports(turn)).toEqual(["架空の結論だけ。"])
+    expect(shownReports(turn)).toEqual([lead("架空の結論だけ。")])
+  })
+
+  it("checks が無くお願いだけでも、合図の行にお願いの口を出す", () => {
+    const turn = turnOf([ask, report("架空の結論。", "", "架空のお願い"), finished], SETTLED, true)
+
+    expect(shownReports(turn)).toEqual([
+      `${lead("架空の結論。")}\n\n` +
+        '<div class="status">\n\n<div class="verdict" role="group" aria-label="検証とお願いの合図">' +
+        '<span class="verdict-favor"><a href="#favor-toolu_r1">お願い 1 ↓</a></span></div>\n\n</div>\n\n' +
+        '<div class="note note-favor" id="favor-toolu_r1">\n\n架空のお願い\n\n</div>',
+    ])
   })
 
   it("report が呼ばれたターンではツールの外に書いた本文を出さない（資料も締めのテキストも）", () => {
@@ -764,10 +791,10 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
       true,
     )
 
-    expect(shownReports(turn)).toEqual(["架空の結論。"])
+    expect(shownReports(turn)).toEqual([lead("架空の結論。")])
     expect(turn?.steps.find((step) => step.final)?.body).toEqual({
       kind: "text",
-      report: "架空の結論。",
+      report: lead("架空の結論。"),
       firstLine: "架空の結論。",
       task: { kind: "none" },
       finishedPhase: { kind: "none" },
@@ -781,7 +808,11 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
       true,
     )
 
-    expect(shownReports(turn)).toEqual(["途中の結論。", "最後の結論。"])
+    expect(shownReports(turn)).toEqual([lead("途中の結論。"), lead("最後の結論。")])
+    expect(turn?.steps.flatMap((step) => firstLineOf(step) ?? [])).toEqual([
+      "途中の結論。",
+      "最後の結論。",
+    ])
     const shown = (turn?.steps ?? []).filter((step) => step.body.kind === "text")
     expect(shown.map((step) => step.interim)).toEqual([true, false])
     expect(shown.map((step) => step.final)).toEqual([false, true])
@@ -797,7 +828,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
 
     expect(turn?.steps.find((step) => step.final)?.body).toEqual({
       kind: "text",
-      report: "唯一の結論。",
+      report: lead("唯一の結論。"),
       firstLine: "唯一の結論。",
       task: { kind: "none" },
       finishedPhase: { kind: "none" },
@@ -811,7 +842,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
       false,
     )
 
-    expect(shownReports(running)).toEqual(["途中の結論。"])
+    expect(shownReports(running)).toEqual([lead("途中の結論。")])
     expect(running?.steps.find((step) => step.body.kind === "text")?.interim).toBe(true)
   })
 
@@ -832,7 +863,7 @@ describe("mainViewTurns（report ツールで受け取ったレポート）", ()
     )
 
     expect(turns.map((turn) => shownReports(turn))).toEqual([
-      ["前のターンの結論。"],
+      [lead("前のターンの結論。")],
       ["テキストで書いた答え"],
     ])
   })
@@ -891,7 +922,7 @@ describe("mainViewTurns（段が移ったときの中間レポートと段の知
 
     expect(summary?.interim && summary.superseded).toBe(true)
     expect(final?.final).toBe(true)
-    expect(reportOf(final)?.startsWith("架空の結論。")).toBe(true)
+    expect(reportOf(final)?.startsWith(lead("架空の結論。"))).toBe(true)
     expect(turn?.hasInterimReport).toBe(true)
   })
 

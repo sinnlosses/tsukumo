@@ -283,7 +283,10 @@ type AnchorProps = JSX.IntrinsicElements["a"] & ExtraProps
 
 /**
  * リンク。
- * スキームの許可は {@link REPORT_SANITIZE_SCHEMA} の `protocols` が済ませている（通らない `href` はここに来る前に落ちている）ので、`http:` / `https:` / `mailto:` と、ページ内の合図（`#fnref` のような脚注の往復）はそのまま `<a>` にする（`rel="noopener noreferrer"` を添えるだけ）。
+ * スキームの許可は {@link REPORT_SANITIZE_SCHEMA} の `protocols` が済ませている（通らない `href` はここに来る前に落ちている）ので、`http:` / `https:` / `mailto:` はそのまま `<a>` にする（`rel="noopener noreferrer"` を添えるだけ）。
+ *
+ * ページ内のリンク（`#` で始まるもの。脚注の往復・合図の行のお願いの口）は、押すと `location.hash` を書かずに飛び先の `id` の要素へ転がす。
+ * `location.hash` は画面と見ているターンの経路なので、書くと見ているターンが外れる。
  *
  * スキームの無い相対リンク（`[x](src/foo.ts)`）は `<a>` にしない。
  * `protocols` は相対リンクを素通しするので、`<a>` にすると押したときにページ自身が `/src/foo.ts` へ遷移してしまう。
@@ -294,7 +297,26 @@ function Anchor(props: AnchorProps): ReactElement {
   const { node: _node, children, href, title, className } = props
   const link = useRepositoryFileLink()
 
-  if (href === undefined || href.startsWith("#") || hasUrlScheme(href)) {
+  if (href?.startsWith("#") === true) {
+    const targetId = href.slice(1)
+    return (
+      <a
+        href={href}
+        title={title}
+        className={className}
+        onClick={(event) => {
+          event.preventDefault()
+          event.currentTarget.ownerDocument
+            .getElementById(targetId)
+            ?.scrollIntoView({ block: "start" })
+        }}
+      >
+        {children}
+      </a>
+    )
+  }
+
+  if (href === undefined || hasUrlScheme(href)) {
     return (
       <a href={href} title={title} className={className} rel="noopener noreferrer">
         {children}

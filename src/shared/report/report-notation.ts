@@ -110,17 +110,22 @@ export const REPORT_NOTATION_NAMES = [
 
 /**
  * tsukumo が `report` の欄から組む印（モデルには教えないので、文面に書き足す決まりの外）。
- * `checks` は検証結果の表、`check` はその1行で、ほかの `check-` は行の中の部位と状態の色。
- * `conclusion` は `task` のあるレポートの結論の一文。
+ * `verdict` は結論のすぐ下の合図の行で、`verdict-favor` はその中のお願いへ飛ぶ口。
+ * `checks` は検証結果、`checks-rest` は畳んだ通った行、`check` はその1行で、ほかの `check-` は行の中の部位と状態の色。
+ * `conclusion` は `task` のあるレポートの結論の一文、`conclusion-lead` は `task` の無いレポートの結論。
  * 見た目は語彙と同じく `report-notation.module.css` の `report-<名前>`。
  */
 export const REPORT_DRAWN_MARK_NAMES = [
+  "verdict",
+  "verdict-favor",
   "checks",
   "checks-summary",
   "checks-summary-count",
   "checks-summary-ok",
   "checks-summary-ng",
   "checks-summary-warn",
+  "checks-summary-figures",
+  "checks-rest",
   "check",
   "check-ok",
   "check-ng",
@@ -131,4 +136,5 @@ export const REPORT_DRAWN_MARK_NAMES = [
   "check-time",
   "check-body",
   "conclusion",
+  "conclusion-lead",
 ] as const satisfies readonly string[]

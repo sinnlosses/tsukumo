@@ -154,10 +154,12 @@ const NOTE_FAVOR_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="report-note-favor_
 const FLOW_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="report-flow_"]`
 /**
  * 検証結果の表（`report` の `checks`）。class 名でなく role・aria-label で指す
- * （`reportChecksMarkdown` が組む `<div class="checks" role="table" aria-label="検証結果">`
- * の属性はハッシュ化されない）。
+ * （`reportChecksMarkdown` が組む `<div role="table" aria-label="検証結果">`
+ * の属性はハッシュ化されない）。すべて通ったときは畳まれて見えない。
  */
 const CHECKS_SELECTOR = `${MAIN_REGION_SELECTOR} [role="table"][aria-label="検証結果"]`
+/** 結論のすぐ下の合図の行（検証結果の総括とお願いの口）。 */
+const VERDICT_SELECTOR = `${MAIN_REGION_SELECTOR} [role="group"][aria-label="検証とお願いの合図"]`
 
 /** レポートの結論の下に組む段取りの図。 */
 const WORK_PLAN_REPORT_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="report-progress_"]`
@@ -286,6 +288,25 @@ const CATALOG: readonly CatalogEntry[] = [
     prepare: [{ kind: "scroll", selector: CHECKS_SELECTOR }],
     skipReveal: true,
     settle: { kind: "selector", selector: CHECKS_SELECTOR, phase: "before-prepare" },
+  },
+  {
+    name: "report-verdict",
+    // 転がさずに撮り、最初の1画面に結論と合図の行が入っているかを見る。
+    scene: "report-task-verdict",
+    label: "合図の行（検証がすべて通り、お願いがある）",
+    homeSetup: { kind: "default" },
+    prepare: [],
+    skipReveal: true,
+    settle: { kind: "selector", selector: VERDICT_SELECTOR, phase: "before-prepare" },
+  },
+  {
+    name: "report-verdict-open",
+    scene: "report-task-verdict",
+    label: "合図の行（畳んだ検証を開いた）",
+    homeSetup: { kind: "default" },
+    prepare: [{ kind: "click", selector: `${VERDICT_SELECTOR} summary` }],
+    skipReveal: true,
+    settle: { kind: "selector", selector: VERDICT_SELECTOR, phase: "before-prepare" },
   },
   {
     name: "turn-history",
