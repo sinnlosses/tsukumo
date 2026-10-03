@@ -121,12 +121,12 @@ async function main(argv: readonly string[]): Promise<number> {
 
 /** 場面ごとの塊の一覧を出す。何も起こさない。戻り値は終了コード。 */
 function printSceneCatalog(): number {
-  const session = readFakeSession()
-  if (session === undefined) {
-    process.stderr.write("test/fixture/fake-session.json が読めない\n")
+  const reading = readFakeSession()
+  if (reading.kind === "unreadable") {
+    process.stderr.write(`test/fixture/fake-session.json が読めない: ${reading.reason}\n`)
     return 1
   }
-  for (const [scene, kinds] of sceneBlockKinds(session)) {
+  for (const [scene, kinds] of sceneBlockKinds(reading.session)) {
     process.stdout.write(`${scene}: ${kinds.join(", ")}\n`)
   }
   return 0
@@ -144,8 +144,12 @@ async function openSource(source: Source): Promise<OpenedSource | undefined> {
     return { url: source.url, close: () => undefined }
   }
 
-  const session = readFakeSession()
-  if (session === undefined || !session.turns.some((scene) => scene.name === source.scene)) {
+  const reading = readFakeSession()
+  if (reading.kind === "unreadable") {
+    process.stderr.write(`test/fixture/fake-session.json が読めない: ${reading.reason}\n`)
+    return undefined
+  }
+  if (!reading.session.turns.some((scene) => scene.name === source.scene)) {
     process.stderr.write(`知らない場面: ${source.scene}\n`)
     return undefined
   }

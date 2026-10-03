@@ -30,16 +30,16 @@ import process from "node:process"
 import { fileURLToPath } from "node:url"
 
 import { type Browser, type BrowserServer, chromium, type Page } from "playwright-core"
-import { countBy, sortBy } from "remeda"
+import { countBy } from "remeda"
 import { afterAll, afterEach, beforeAll, expect } from "vitest"
 
 import { spawnFakeTsukumo, waitForViewUrl } from "../../scripts/lib/fake-tsukumo-process.ts"
 import {
   type FakeSessionStep,
-  readFakeSession,
   startupSteps,
 } from "../../src/server/session-driver/adapter/fake-driver.ts"
 import { PROTOCOL_VERSION } from "../../src/shared/frame.ts"
+import { bundledFakeSession } from "../fixture/bundled-fake-session.ts"
 
 /** サーバとブラウザの時計を凍らせる瞬間（走らせる日に依らない固定の値）。 */
 const FIXED_INSTANT = "2026-01-15T01:00:00Z"
@@ -326,10 +326,7 @@ async function openRoom(
  * 種別ごとの回数ですべて届くまで待つ。区切りは予定の時刻だけから決まり、走らせる速さに依らない。
  */
 async function waitForQuietPoint(messages: MessageRecord, scene: string): Promise<void> {
-  const session = readFakeSession()
-  if (session === undefined) {
-    throw new Error("疑似セッション（test/fixture/fake-session.json）が読めない")
-  }
+  const session = bundledFakeSession()
   const counts = countBy(
     stepsThroughQuietPoint(startupSteps(session, scene)),
     (step) => step.event.kind,
@@ -353,11 +350,7 @@ function assertNextStepGap(
   if (scene === "none") {
     return
   }
-  const session = readFakeSession()
-  if (session === undefined) {
-    throw new Error("疑似セッション（test/fixture/fake-session.json）が読めない")
-  }
-  const ordered = sortBy(startupSteps(session, scene), (step) => step.afterMs)
+  const ordered = startupSteps(bundledFakeSession(), scene)
   let seen = 0
   for (const [index, step] of ordered.entries()) {
     if (step.event.kind !== waited.kind) {
@@ -381,13 +374,12 @@ function assertNextStepGap(
   }
 }
 
-/** 時刻の順に並べた予定を、次の手まで `QUIET_GAP_MS` 以上空く最初の手まで切り出す。 */
+/** 時刻の順の予定を、次の手まで `QUIET_GAP_MS` 以上空く最初の手まで切り出す。 */
 function stepsThroughQuietPoint(steps: readonly FakeSessionStep[]): readonly FakeSessionStep[] {
-  const ordered = sortBy(steps, (step) => step.afterMs)
-  const quietIndex = ordered.findIndex(
-    (step, index) => (ordered[index + 1]?.afterMs ?? Infinity) - step.afterMs >= QUIET_GAP_MS,
+  const quietIndex = steps.findIndex(
+    (step, index) => (steps[index + 1]?.afterMs ?? Infinity) - step.afterMs >= QUIET_GAP_MS,
   )
-  return ordered.slice(0, quietIndex + 1)
+  return steps.slice(0, quietIndex + 1)
 }
 
 type TempDirectory = {

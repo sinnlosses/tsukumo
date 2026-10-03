@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest"
 
-import { readFakeSession } from "../../../../src/server/session-driver/adapter/fake-driver.ts"
 import type { VisitGuest } from "../../../../src/server/visit/core/visit-guest.ts"
 import type {
   VisitScriptDraft,
@@ -24,6 +23,7 @@ import {
   VISIT_LINE_MIN_INTERVAL_MS,
   VISIT_LINE_MS_PER_CHARACTER,
 } from "../../../../src/shared/visit/visit-line-timing.ts"
+import { bundledFakeSession } from "../../../fixture/bundled-fake-session.ts"
 import { characterChangedEvent } from "../../../fixture/character.ts"
 import { createManualClock } from "../../../fixture/manual-clock.ts"
 
@@ -358,7 +358,7 @@ describe("疑似セッションの訪問の場面", () => {
    * （`TSUKUMO_VISIT_QUICK=1` と同じ表）で見張りに流し、見張りが出したイベントを返す。
    */
   function playScene(name: string): readonly SessionEvent[] {
-    const scene = readFakeSession()?.turns.find((candidate) => candidate.name === name)
+    const scene = bundledFakeSession().turns.find((candidate) => candidate.name === name)
     if (scene === undefined) {
       throw new Error(`疑似セッションに場面 ${name} が無い`)
     }

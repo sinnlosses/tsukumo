@@ -1,4 +1,8 @@
-import { describe, expect, it, vi } from "vitest"
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs"
+import { tmpdir } from "node:os"
+import path from "node:path"
+
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import {
   FAKE_DEFAULT_EFFORT,
@@ -11,6 +15,7 @@ import {
   type SessionEvent,
   sessionEventSchema,
 } from "../../../../src/shared/session/session-event.ts"
+import { bundledFakeSession } from "../../../fixture/bundled-fake-session.ts"
 
 // 疑似セッションは手で書いた架空の会話（test/fixture/fake-session.json）。実物の transcript は
 const FAKE_SESSION = {
@@ -427,24 +432,76 @@ describe("startFakeSession", () => {
 
 describe("readFakeSession", () => {
   it("同梱の疑似セッション（test/fixture/fake-session.json）を読める", () => {
-    const session = readFakeSession()
+    const session = bundledFakeSession()
 
-    expect(session?.opening.length).toBeGreaterThan(0)
-    expect(session?.turns.length).toBeGreaterThan(0)
+    expect(session.opening.length).toBeGreaterThan(0)
+    expect(session.turns.length).toBeGreaterThan(0)
     // 場面の名前は、状態のカタログを撮る道具が名指しする鍵。
-    expect(session?.turns.map((scene) => scene.name)).toContain("question-multi")
+    expect(session.turns.map((scene) => scene.name)).toContain("question-multi")
   })
 
   it("過去の transcript（pastSessions）と、それを指す場面の resume を読める", () => {
-    const session = readFakeSession()
+    const session = bundledFakeSession()
 
-    expect(session?.pastSessions.map((past) => past.sessionId)).toContain("fake-past-session")
-    expect(session?.turns.find((scene) => scene.name === "session-resume")?.resume).toBe(
+    expect(session.pastSessions.map((past) => past.sessionId)).toContain("fake-past-session")
+    expect(session.turns.find((scene) => scene.name === "session-resume")?.resume).toBe(
       "fake-past-session",
     )
   })
 
-  it("無いファイル・形の違う JSON は undefined", () => {
-    expect(readFakeSession("/tmp/tsukumo-no-such-session.json")).toBeUndefined()
+  describe("読めないとき", () => {
+    let directory: string
+
+    beforeEach(() => {
+      directory = mkdtempSync(path.join(tmpdir(), "tsukumo-fake-session-"))
+    })
+
+    afterEach(() => {
+      rmSync(directory, { recursive: true, force: true })
+    })
+
+    function readWritten(content: string): ReturnType<typeof readFakeSession> {
+      const file = path.join(directory, "session.json")
+      writeFileSync(file, content)
+      return readFakeSession(file)
+    }
+
+    function step(afterMs: number): unknown {
+      return { afterMs, event: { kind: "utterance", text: "架空の本文" } }
+    }
+
+    function sessionJson(opening: readonly unknown[], steps: readonly unknown[]): string {
+      return JSON.stringify({ opening, turns: [{ name: "架空の場面", steps }] })
+    }
+
+    it("無いファイルは unreadable", () => {
+      expect(readFakeSession(path.join(directory, "none.json")).kind).toBe("unreadable")
+    })
+
+    it("JSON でないものと形の違う JSON は unreadable", () => {
+      expect(readWritten("{").kind).toBe("unreadable")
+      expect(readWritten("{}").kind).toBe("unreadable")
+    })
+
+    it("場面の中で afterMs が手の並びの順に減ると、場面名と手の位置つきで拒む", () => {
+      const reading = readWritten(sessionJson([], [step(0), step(300), step(100)]))
+
+      expect(reading.kind).toBe("unreadable")
+      expect(reading.kind === "unreadable" ? reading.reason : "").toMatch(/場面 架空の場面 の手 2/)
+    })
+
+    it("opening の中で afterMs が減ると、opening と手の位置つきで拒む", () => {
+      const reading = readWritten(sessionJson([step(200), step(100)], []))
+
+      expect(reading.kind).toBe("unreadable")
+      expect(reading.kind === "unreadable" ? reading.reason : "").toMatch(/opening の手 1/)
+    })
+
+    it("afterMs が同じ値で続く場面と、手が0本・1本の場面は読める", () => {
+      expect(readWritten(sessionJson([], [step(0), step(0), step(200), step(200)])).kind).toBe(
+        "read",
+      )
+      expect(readWritten(sessionJson([step(5)], [])).kind).toBe("read")
+    })
   })
 })

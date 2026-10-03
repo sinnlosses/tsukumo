@@ -61,11 +61,12 @@ export async function run(config: Config, launch: LaunchOptions): Promise<number
 
   // fake driver を選んだときは疑似セッションが要る。無ければ起こす意味が無いので、起動時の
   // 前提不足として扱う。
-  const fakeSession = config.driver === "fake" ? readFakeSession() : undefined
-  if (config.driver === "fake" && fakeSession === undefined) {
-    process.stderr.write("tsukumo: fake driver の疑似セッションを読めない\n")
+  const fakeReading = config.driver === "fake" ? readFakeSession() : undefined
+  if (fakeReading?.kind === "unreadable") {
+    process.stderr.write(`tsukumo: fake driver の疑似セッションを読めない: ${fakeReading.reason}\n`)
     return 1
   }
+  const fakeSession = fakeReading?.session
 
   const character = createCurrentCharacter(config)
 

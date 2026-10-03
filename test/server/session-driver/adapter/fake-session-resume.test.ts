@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest"
 
 import type { FakeSession } from "../../../../src/server/session-driver/adapter/fake-driver.ts"
-import { readFakeSession } from "../../../../src/server/session-driver/adapter/fake-driver.ts"
 import {
   createFakeSessionCatalog,
   readFakeRestoredEvents,
 } from "../../../../src/server/session-driver/adapter/fake-session-resume.ts"
+import { bundledFakeSession } from "../../../fixture/bundled-fake-session.ts"
 import {
   assistantMessage,
   SPEAK_TOOL_FULL_NAME,
@@ -79,11 +79,11 @@ describe("readFakeRestoredEvents", () => {
 
 describe("同梱の疑似セッション", () => {
   it("どの場面の resume も pastSessions の ID を指している", () => {
-    const bundled = readFakeSession()
-    const ids = bundled?.pastSessions.map((past) => past.sessionId) ?? []
+    const bundled = bundledFakeSession()
+    const ids = bundled.pastSessions.map((past) => past.sessionId)
 
     expect(ids.length).toBeGreaterThan(0)
-    for (const scene of bundled?.turns ?? []) {
+    for (const scene of bundled.turns) {
       if (scene.resume !== undefined) {
         expect(ids).toContain(scene.resume)
       }

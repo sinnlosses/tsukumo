@@ -7,7 +7,6 @@
 import { readFileSync } from "node:fs"
 import { fileURLToPath } from "node:url"
 
-import { sortBy } from "remeda"
 import { z } from "zod"
 
 import type { Expression } from "../../../shared/character-pack/expression.ts"
@@ -109,6 +108,22 @@ const FAKE_PLAN_USAGE = {
 /** 疑似セッションの1手。`afterMs` はその場面の始まりからの経過（前の手からの差分ではない）。 */
 const fakeSessionStepSchema = z.object({ afterMs: z.number().min(0), event: sessionEventSchema })
 
+/** 手の並びの順に `afterMs` が減る最初の手を、`where`（場面名か opening）と位置つきで拒む。同じ値は通す。 */
+function rejectDescendingSteps(
+  steps: readonly { readonly afterMs: number }[],
+  where: string,
+  ctx: z.RefinementCtx,
+): void {
+  const index = steps.findIndex((step, i) => i > 0 && step.afterMs < (steps[i - 1]?.afterMs ?? 0))
+  if (index < 0) {
+    return
+  }
+  ctx.addIssue({
+    code: "custom",
+    message: `${where} の手 ${String(index)}（0始まり）の afterMs ${String(steps[index]?.afterMs)} が前の手の ${String(steps[index - 1]?.afterMs)} より小さい（afterMs は場面の始まりからの経過で、手の並びの順に増える）`,
+  })
+}
+
 /** 依頼1回ぶんの場面。名前で名指しできる（{@link FakeDriverOptions.scene}）。 */
 const fakeSessionSceneSchema = z
   .object({
@@ -116,6 +131,7 @@ const fakeSessionSceneSchema = z
     resume: z.string().min(1).optional(),
     steps: z.array(fakeSessionStepSchema),
   })
+  .superRefine((scene, ctx) => rejectDescendingSteps(scene.steps, `場面 ${scene.name}`, ctx))
   .transform((scene) => ({ ...scene, resume: scene.resume }))
 
 /** 続きとして読み込める過去の transcript。`messages` は SDK が transcript に残す形の架空のメッセージ列。 */
@@ -129,7 +145,9 @@ const fakePastSessionSchema = z.object({
  * 依頼が場面の数を超えたら先頭に戻って繰り返す（起こしっぱなしで何度でも試せるように）。
  */
 const fakeSessionSchema = z.object({
-  opening: z.array(fakeSessionStepSchema),
+  opening: z
+    .array(fakeSessionStepSchema)
+    .superRefine((steps, ctx) => rejectDescendingSteps(steps, "opening", ctx)),
   turns: z.array(fakeSessionSceneSchema),
   pastSessions: z.array(fakePastSessionSchema).default([]),
   sessionDigests: z.record(z.string(), sessionDigestSchema).default({}),
@@ -191,29 +209,40 @@ export type FakeDriverOptions = {
   readonly onEvent: (event: SessionEvent) => void
 }
 
+/** `readFakeSession` の結果。`reason` は読めなかった理由で、形が違うときは場面名と手の位置を含む。 */
+export type FakeSessionReading =
+  | { readonly kind: "read"; readonly session: FakeSession }
+  | { readonly kind: "unreadable"; readonly reason: string }
+
 /**
- * 疑似セッションを読む。読めない・形が違うときは undefined。
+ * 疑似セッションを読む。読めない・JSON でない・形が違うときは `unreadable`。
  * 呼び出し側は起動を止めてよい（疑似セッションが無ければ fake driver には意味が無いので、起動時の前提不足として扱う）。
  */
 export function readFakeSession(
   path: string = fileURLToPath(DEFAULT_SESSION_URL),
-): FakeSession | undefined {
+): FakeSessionReading {
   let content: string
   try {
     content = readFileSync(path, "utf8")
   } catch {
-    return undefined
+    return { kind: "unreadable", reason: `ファイルを読めない（${path}）` }
   }
 
   let parsed: unknown
   try {
     parsed = JSON.parse(content)
   } catch {
-    return undefined
+    return { kind: "unreadable", reason: `JSON として読めない（${path}）` }
   }
 
   const session = fakeSessionSchema.safeParse(parsed)
-  return session.success ? session.data : undefined
+  if (!session.success) {
+    return {
+      kind: "unreadable",
+      reason: session.error.issues.map((issue) => issue.message).join(" / "),
+    }
+  }
+  return { kind: "read", session: session.data }
 }
 
 /**
@@ -264,9 +293,8 @@ export function startFakeSession(options: FakeDriverOptions): SessionDriver {
   // 絶対時刻でまとめて登録すると、CPU を奪われて止まったあとに期限切れの手がまとめて発火し、手のあいだの間隔が消える。
   // 同じ afterMs の手は setTimeout を挟まずに続けて流す（挟むと hello と最初の events の境目が揺れる）。
   const play = (steps: readonly FakeSessionStep[], startMs: number): void => {
-    const ordered = sortBy(steps, (step) => step.afterMs)
     const playFrom = (index: number, firedAtMs: number): void => {
-      const step = ordered[index]
+      const step = steps[index]
       if (step === undefined) {
         return
       }

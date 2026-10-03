@@ -3,13 +3,9 @@
 import { describe, expect, test } from "vitest"
 
 import { sceneBlockKinds } from "../../scripts/lib/scene-catalog.ts"
-import { readFakeSession } from "../../src/server/session-driver/adapter/fake-driver.ts"
+import { bundledFakeSession } from "../fixture/bundled-fake-session.ts"
 
-const session = readFakeSession()
-if (session === undefined) {
-  throw new Error("test/fixture/fake-session.json が読めない")
-}
-const kinds = sceneBlockKinds(session)
+const kinds = sceneBlockKinds(bundledFakeSession())
 
 describe("sceneBlockKinds", () => {
   test("状態のセルを持つ table は report-tool・report-matrix に出る", () => {
