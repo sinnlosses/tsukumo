@@ -115,7 +115,7 @@ export function delegatedWorkPlan(previous: LatestWorkPlan, signal: DelegateSign
 /** 委譲の合図から段取りを組むときの段の名前。 */
 const DELEGATED_PHASE_NAMES = {
   plan: "計画",
-  step: (index: number) => `やること ${String(index)}`,
+  step: (index: number) => `段 ${String(index)}`,
   acceptance: "受け入れ",
 } as const satisfies {
   readonly plan: string

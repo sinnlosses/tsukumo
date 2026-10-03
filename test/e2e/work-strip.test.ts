@@ -183,13 +183,13 @@ describe("進み具合の帯", () => {
     await expect
       .poll(() => phaseStates(strip))
       .toEqual(["done", "done", "current", "upcoming", "upcoming", "upcoming"])
-    expect(await strip.textContent()).toContain("やること 2")
+    expect(await strip.textContent()).toContain("段 2")
 
     await room.waitForEvent("tool-started", DELEGATE_LONG_TOOL_OCCURRENCE)
     await expect
       .poll(() => phaseStates(strip))
       .toEqual(["done", "done", "done", "current", "upcoming", "upcoming"])
-    expect(await strip.textContent()).toContain("やること 3")
+    expect(await strip.textContent()).toContain("段 3")
 
     await room.settleAndMatch(ELAPSED_MS)
   })

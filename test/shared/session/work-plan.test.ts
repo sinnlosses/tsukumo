@@ -109,7 +109,7 @@ describe("phaseShiftOf", () => {
 describe("delegatedWorkPlan", () => {
   it("段の数が合わない前の段取りからは、計画・番号の段・受け入れで引き、合図の段の次を今にする", () => {
     const expected = {
-      phases: ["計画", "やること 1", "やること 2", "やること 3", "受け入れ"],
+      phases: ["計画", "段 1", "段 2", "段 3", "受け入れ"],
       current: 2,
       phaseSummary: "",
     }
