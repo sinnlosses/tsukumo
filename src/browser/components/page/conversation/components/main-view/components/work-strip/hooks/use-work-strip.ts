@@ -247,11 +247,33 @@ function activityOf(source: {
       retry,
     }
   }
+  const lastDelegated = lastDelegatedStep(source.backgroundTasks, turnStepList.steps)
+  if (lastDelegated !== undefined) {
+    return {
+      text: `背景で · 直前 ${toolLine(lastDelegated.name, lastDelegated.input)}`,
+      tone: "quiet",
+      mono: true,
+      retry,
+    }
+  }
   const background = backgroundSummaryLabel(source.backgroundTasks)
   if (background !== undefined) {
     return { text: `背景で ${background}`, tone: "quiet", mono: false, retry }
   }
   return { text: "考えている", tone: "quiet", mono: false, retry }
+}
+
+/**
+ * いちばん新しい背景のタスクがサブエージェントなら、その依頼でサブエージェントの中で最後に動いた手順。
+ * サブエージェントの説明は起こしたときのまま変わらず、同じサブエージェントに続きを頼むと段と食い違うので、説明より先に使う。
+ */
+function lastDelegatedStep(
+  backgroundTasks: readonly BackgroundTask[],
+  steps: readonly TurnStep[],
+): TurnStep | undefined {
+  return backgroundTasks.at(-1)?.kind === "agent"
+    ? steps.findLast((step) => step.nested)
+    : undefined
 }
 
 function pendingLabel(pending: PendingAsk): string {
