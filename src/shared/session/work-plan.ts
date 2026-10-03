@@ -40,14 +40,13 @@ export type WorkPhase =
     }
 
 /**
- * `work_plan` の呼び出し1つで段が移ったか。メインビューに出す2つを持つ。
- * `finished` は終えた段（見出しの字）とそのまとめで、中間レポートになる。`entered` は入った段の字で、段の知らせになる。
+ * `work_plan` の呼び出し1つで段が移ったか。
+ * `finished` は終えた段（見出しの字）とそのまとめで、中間レポートになる。
  */
 export type PhaseShift = {
   readonly finished:
     | { readonly kind: "none" }
     | { readonly kind: "finished"; readonly label: string; readonly summary: string }
-  readonly entered: { readonly kind: "none" } | { readonly kind: "entered"; readonly label: string }
 }
 
 /**
@@ -95,7 +94,7 @@ export type DelegateSignal = {
 /**
  * 委譲の合図から引き直した段取り。段は「計画・合図の N 段・受け入れ」で、今の段は合図の n 段目の次。
  * 段の名前は、`previous` が同じ数（N + 2 段）の段取りならその名前を借り、違えば {@link DELEGATED_PHASE_NAMES} から組む。
- * 合図の文は段のまとめに入れないので、段が進んでも中間レポートは出ず段の知らせだけが出る。
+ * 合図の文は段のまとめに入れないので、段が進んでもメインビューの本文には何も出ない。
  */
 export function delegatedWorkPlan(previous: LatestWorkPlan, signal: DelegateSignal): WorkPlan {
   const phaseCount = signal.stepCount + 2
@@ -162,7 +161,6 @@ export function currentPhaseOf(plan: LatestWorkPlan): WorkPhase {
  * 同じ依頼の中の前の段取り `previous` から `next` へ移ったときに、メインビューに出すもの（{@link PhaseShift}）。
  *
  * - 依頼で最初の段取りと、全部の段を終えた段取りでは何も出さない（最後の段のまとめは最終レポートが担う）
- * - 段の知らせは、今の段の名前か位置が前と変わったときに出す（段が戻ったときも出す）
  * - 中間レポートは、前の今の段が新しい並びで今の段より前にあるときだけ出す。
  *   段の名前で探すので、段を進めながら後ろの段を組み替えても終えた段を見失わない。
  *   戻った・組み替えただけで前の今の段が済んでいない（今の段以降にある・並びから消えた）ときは出さない
@@ -197,7 +195,7 @@ export function phaseShiftOf(previous: LatestWorkPlan, next: WorkPlan): PhaseShi
           summary: next.phaseSummary,
         } as const)
       : ({ kind: "none" } as const)
-  return { finished, entered: { kind: "entered", label: phaseLabel(nextPhase) } }
+  return { finished }
 }
 
 /** 段の見出し「2/4 段の名前」（いまの作業の札・依頼の手順の一覧・メインビューで同じ字）。 */
@@ -207,7 +205,6 @@ export function phaseLabel(phase: Extract<WorkPhase, { readonly kind: "phase" }>
 
 const NO_PHASE_SHIFT = {
   finished: { kind: "none" },
-  entered: { kind: "none" },
 } as const satisfies PhaseShift
 
 /** 段のまとめを読む。無い・空白だけなら空の文字列、文字列でなければ undefined。 */

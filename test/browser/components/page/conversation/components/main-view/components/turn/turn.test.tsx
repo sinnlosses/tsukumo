@@ -53,7 +53,6 @@ function step(overrides: Partial<MainViewStep> & { readonly id: number }): MainV
     interim: false,
     superseded: false,
     final: false,
-    phaseNotice: { kind: "none" },
     actions: [],
     ...overrides,
   }

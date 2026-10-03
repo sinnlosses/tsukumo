@@ -58,10 +58,9 @@ describe("parseWorkPlan の段のまとめ", () => {
 })
 
 describe("phaseShiftOf", () => {
-  it("段を進めると、終えた段のまとめと入った段を出す", () => {
+  it("段を進めると、終えた段のまとめを出す", () => {
     expect(phaseShiftOf(planned(PHASES, 0), next(PHASES, 1, "架空のまとめ。"))).toEqual({
       finished: { kind: "finished", label: "1/3 架空の段A", summary: "架空のまとめ。" },
-      entered: { kind: "entered", label: "2/3 架空の段B" },
     })
   })
 
@@ -70,14 +69,12 @@ describe("phaseShiftOf", () => {
 
     expect(phaseShiftOf(planned(PHASES, 0), next(reordered, 1, "架空のまとめ。"))).toEqual({
       finished: { kind: "finished", label: "1/3 架空の段A", summary: "架空のまとめ。" },
-      entered: { kind: "entered", label: "2/3 架空の段D" },
     })
   })
 
-  it("段が戻ったときは、中間レポートを出さず知らせだけを出す", () => {
+  it("段が戻ったときは、何も出さない", () => {
     expect(phaseShiftOf(planned(PHASES, 2), next(PHASES, 1, "架空のまとめ。"))).toEqual({
       finished: { kind: "none" },
-      entered: { kind: "entered", label: "2/3 架空の段B" },
     })
   })
 
@@ -91,14 +88,14 @@ describe("phaseShiftOf", () => {
 
   it("今の段が変わらない組み替え・送り直しでは何も出さない", () => {
     const appended = [...PHASES, "架空の段D"]
-    const nothing = { finished: { kind: "none" }, entered: { kind: "none" } }
+    const nothing = { finished: { kind: "none" } }
 
     expect(phaseShiftOf(planned(PHASES, 1), next(PHASES, 1, "架空のまとめ。"))).toEqual(nothing)
     expect(phaseShiftOf(planned(PHASES, 1), next(appended, 1, "架空のまとめ。"))).toEqual(nothing)
   })
 
   it("依頼で最初の段取りと、全部の段を終えた段取りでは何も出さない", () => {
-    const nothing = { finished: { kind: "none" }, entered: { kind: "none" } }
+    const nothing = { finished: { kind: "none" } }
 
     expect(phaseShiftOf({ kind: "none" }, next(PHASES, 1, "架空のまとめ。"))).toEqual(nothing)
     expect(phaseShiftOf(planned(PHASES, 2), next(PHASES, 3, "架空のまとめ。"))).toEqual(nothing)

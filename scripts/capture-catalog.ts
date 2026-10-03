@@ -525,7 +525,7 @@ const CATALOG: readonly CatalogEntry[] = [
   },
   {
     name: "work-plan-main-view",
-    // 最終 `report` は約10秒後に届き、中間レポートと段の知らせの並びの最後に最終レポートが出る。
+    // 最終 `report` は約10秒後に届き、中間レポートの並びの最後に最終レポートが出る。
     scene: "work-plan",
     label: "段取りが移ったメインビュー（中間レポートと最終レポート）",
     homeSetup: { kind: "default" },

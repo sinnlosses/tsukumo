@@ -25,7 +25,6 @@ function reportStep(id: number, firstLine: string): MainViewStep {
     interim: false,
     superseded: false,
     final: false,
-    phaseNotice: { kind: "none" },
     actions: [],
   }
 }

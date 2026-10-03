@@ -42,7 +42,7 @@ export const MAX_MAIN_VIEW_TURNS = MAX_SESSION_STATE_TURNS.work
 /**
  * 1つのやり取りの中で画面に出す記録の上限。超えた分は古いほうから落とし、件数だけを残す（やり取りの境界を優先する）。
  *
- * 数えるのは実際に画面へ出るもの（レポート・段の知らせ・質問の記録）だけ（{@link shownEntryCount}）。
+ * 数えるのは実際に画面へ出るもの（レポート・質問の記録）だけ（{@link shownEntryCount}）。
  * 画面に出るものだけを数えると1つのやり取りの最大は6件（中位数1・p99で4件。実測）で、この値には当たらない。
  * 落とすための値ではなく、1つのやり取りが際限なく伸びたときの止め。
  */
@@ -90,7 +90,7 @@ export type MainViewEntry =
     }
   /**
    * `work_plan` の呼び出しで段が移ったこと（{@link phaseShiftOf}）。出すものが1つも無い呼び出しからは作らない。
-   * 終えた段のまとめは中間レポートに、入った段は段の知らせになる（{@link groupIntoSteps}）。
+   * 終えた段のまとめは中間レポートになる（{@link groupIntoSteps}）。
    */
   | { readonly kind: "phase-shift"; readonly shift: PhaseShift }
   /**
@@ -132,8 +132,6 @@ export type MainViewTurnFailure =
  * {@link limitTurnEntries} が上限を超えた分を古いほうから落としても、残ったステップの `id` は変わらない（{@link groupIntoSteps} で、落とす前に振る）。
  * 描く側はこれをステップの `key` に使う。
  * 配列の添字を `key` にすると、古いステップが落ちて添字が前へずれた瞬間に、React が別のステップの DOM を使い回す（`<details>` の `open` のような制御されていない DOM の状態が別のステップへ乗り移って見える）。
- *
- * `phaseNotice` は、本文の後ろに出す段の知らせ（入った段の見出しの字）。段が移った `work_plan` から作ったステップだけが持つ。
  */
 export type MainViewStep = {
   readonly id: number
@@ -141,7 +139,6 @@ export type MainViewStep = {
   readonly interim: boolean
   readonly superseded: boolean
   readonly final: boolean
-  readonly phaseNotice: MainViewPhaseLabel
   readonly actions: readonly MainViewAction[]
 }
 
@@ -300,9 +297,7 @@ function toMainViewEntries(record: SessionRecord, context: TurnContext): readonl
   }
   if (record.kind === "work-plan") {
     const shift = phaseShiftOf(latestWorkPlanOf(context), record)
-    return shift.finished.kind === "none" && shift.entered.kind === "none"
-      ? []
-      : [{ kind: "phase-shift", shift }]
+    return shift.finished.kind === "none" ? [] : [{ kind: "phase-shift", shift }]
   }
   // `request` は時刻（雑談のログだけが読む）を落として通す。仕事のメインビューには時刻を出さない。
   if (record.kind === "request") {
@@ -488,7 +483,6 @@ function newStep(
     interim: false,
     superseded: false,
     final: false,
-    phaseNotice: NO_PHASE_LABEL,
     actions,
   }
 }
@@ -514,10 +508,6 @@ function phaseShiftStep(id: number, shift: PhaseShift): MainViewStep {
   return {
     ...step,
     interim: shift.finished.kind === "finished",
-    phaseNotice:
-      shift.entered.kind === "none"
-        ? NO_PHASE_LABEL
-        : { kind: "phase", label: shift.entered.label },
   }
 }
 
@@ -692,13 +682,12 @@ function limitTurnEntries(turn: MainViewTurn): MainViewTurn {
 
 /**
  * そのステップが画面に出す記録の件数。
- * 描く側が描くもの（レポート・段の知らせ・質問の記録）だけを数え、ツールの実行は数えない（メインビューに出ないため）。
+ * 描く側が描くもの（レポート・質問の記録）だけを数え、ツールの実行は数えない（メインビューに出ないため）。
  * 描く側が出すものを変えたら、ここも揃える。
  */
 function shownEntryCount(step: MainViewStep): number {
   return (
     (step.body.kind === "none" ? 0 : 1) +
-    (step.phaseNotice.kind === "none" ? 0 : 1) +
     step.actions.filter((action) => action.kind === "question").length
   )
 }

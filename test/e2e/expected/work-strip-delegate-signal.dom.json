@@ -242,23 +242,7 @@
                       "attributes": {
                         "data-outline": "hidden",
                         "data-outline-collapsed": "false"
-                      },
-                      "children": [
-                        {
-                          "tag": "p",
-                          "children": [
-                            "ここから",
-                            "3/6 段 2"
-                          ]
-                        },
-                        {
-                          "tag": "p",
-                          "children": [
-                            "ここから",
-                            "4/6 段 3"
-                          ]
-                        }
-                      ]
+                      }
                     }
                   ]
                 }

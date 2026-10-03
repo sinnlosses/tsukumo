@@ -1,4 +1,4 @@
-// 1つのやり取り。`<RequestImages>` + ステップの並び（レポート・質問の記録・段の知らせ）を縦に1本で積む（番号は振らない）。
+// 1つのやり取り。`<RequestImages>` + ステップの並び（レポート・質問の記録）を縦に1本で積む（番号は振らない）。
 // ツールの実行は描かない（進行は帯の「いまの作業」が持つ）。
 // 失敗で終わったやり取りは、頭に失敗の塊を出す（色だけでなく字で成功と見分ける）。
 
@@ -17,7 +17,6 @@ import { Text } from "../../../../../../ui/text/text.tsx"
 import { VStack } from "../../../../../../ui/v-stack/v-stack.tsx"
 import { PromptImageThumbnails } from "../../../prompt-image/prompt-image.tsx"
 import mainViewStyles from "../../main-view.module.css"
-import { PhaseNotice } from "../phase-notice/phase-notice.tsx"
 import { QuestionRecord } from "../question-record/question-record.tsx"
 import { ReportHead, type ReportLabel } from "../report-head/report-head.tsx"
 import { Report } from "../report/report.tsx"
@@ -100,7 +99,7 @@ type StepProps = {
 }
 
 /**
- * 1ステップ分。札（レポートと質問の記録）と、その後ろの段の知らせ（`step.phaseNotice`）。どちらも無いステップは何も描かない（`null`）。
+ * 1ステップ分。札（レポートと質問の記録）。無ければ何も描かない（`null`）。
  *
  * ツールの実行（`action.kind === "tool"`）は描かない。
  * `actions` にはツールの記録も残っているが、メインビューに出すのは質問の記録だけ。
@@ -109,16 +108,11 @@ function Step(props: StepProps): ReactElement | null {
   const { step } = props
   const hasCard = step.body.kind === "text" || step.actions.some(isQuestion)
 
-  if (!hasCard && step.phaseNotice.kind === "none") {
+  if (!hasCard) {
     return null
   }
 
-  return (
-    <>
-      {hasCard && <StepCard {...props} />}
-      {step.phaseNotice.kind === "phase" && <PhaseNotice label={step.phaseNotice.label} />}
-    </>
-  )
+  return <StepCard {...props} />
 }
 
 /**
