@@ -3,6 +3,25 @@
 `develop/direction.md` に書かれたユーザーからの指示を、タスク化した時点で**当時の記述のまま**
 ここへ移す（`docs/workflow.md`「指示メモ」参照）。新しいものを上に足す。**後から書き換えない。**
 
+## 2026-10-03 受け入れの前に、新しい文脈のサブエージェントによるレビューを `/next-task` の1サイクルに入れる
+
+（GH-298 にした）
+
+- 出典: `docs/research/agentic-dev-workflow.md`「見直す価値のある点」の高 1。利用者が「2つタスク化しよう」で承認
+- 今は委譲したメインが差分を読み、検証コマンドで受け入れを決める。`code-review` スキル（Standards と Spec の2軸）はあるが、`/next-task` のサイクルには入っていない
+- 案: `difficulty: opus` のタスクとコードに触れたタスクに限り、`tw done` の前に、差分と完了条件だけを渡した新しいサブエージェントでレビューする。指摘は正しさと完了条件に関わるものだけに絞る
+- 根拠: <https://code.claude.com/docs/en/best-practices>（"Add an adversarial review step"）、<https://code.claude.com/docs/en/code-review>
+
+## 2026-10-03 手元の外にも検証と控えを1つ置く（ship のあとの push か、最小の GitHub Actions）
+
+（/plan-tasks で利用者に確かめ、「Actions だけ」「push は毎回確かめる」の答えで GH-299 にした）
+
+- 出典: `docs/research/agentic-dev-workflow.md`「見直す価値のある点」の高 2。利用者が「2つタスク化しよう」で承認
+- 今は CI が無く（`.github/` が無い）、`origin/main` は頼まれたときにしか進まない（調べた時点で7コミット遅れ）。検証は手元の `pnpm run check` だけ
+- 案（小さい順）: (a) `ship` が通ったら `origin/main` へ push する、(b) `main` への push で `pnpm run check` の軽い段（typecheck・lint・単体）だけを走らせる最小の GitHub Actions を置く。E2E と目視は手元に残す
+- 注: push も Actions の追加も外部への送信にあたるので、どちらを採るかと実際に送るかは、着手の時点で利用者の承認を得る（`CLAUDE.md` の IMPORTANT）
+- 根拠: <https://dora.dev/capabilities/trunk-based-development/>、<https://trunkbaseddevelopment.com/committing-straight-to-the-trunk/>
+
 ## 2026-10-03 `capture-view.ts --wait-for` の演出待ちの上限を、長いレポートでも書き上げ終わるまで待てる形にする（振り返り: GH-252）
 
 （出典: develop/draft/2026-10-03-capture-view-reveal-wait-limit.md。/plan-tasks でドラフト7件を示し、全件の選択で承認。GH-292 にした）
