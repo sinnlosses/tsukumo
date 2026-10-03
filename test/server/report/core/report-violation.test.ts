@@ -200,6 +200,84 @@ describe("reportViolations", () => {
     })
   })
 
+  describe("note は隣接させず、見出しの直後に置かない", () => {
+    const info = (): ReportBlock => ({ kind: "note", tone: "info", text: "架空の一文。", fold: "" })
+
+    it("info が隣り合えば違反", () => {
+      expect(reportViolations(draft([info(), info()]))).toEqual([
+        { kind: "crowded-notes", count: 1 },
+      ])
+    })
+
+    it("間に別の塊があれば通る", () => {
+      expect(kinds(draft([info(), text("架空の段落。"), info()]))).toEqual([])
+    })
+
+    it("見出しのある節の先頭の note は違反、見出しの無い節の先頭は通る", () => {
+      const titled: readonly ReportSection[] = [{ heading: "架空の見出し", blocks: [info()] }]
+      expect(kinds(draft([], "架空の結論。", titled))).toEqual(["crowded-notes"])
+      expect(kinds(draft([info()]))).toEqual([])
+    })
+
+    it("warn / ng は隣接も見出しの直後も例外", () => {
+      const ng = (): ReportBlock => ({ kind: "note", tone: "ng", text: "架空の一文。", fold: "" })
+      const titled: readonly ReportSection[] = [{ heading: "架空の見出し", blocks: [ng(), note()] }]
+      expect(kinds(draft([], "架空の結論。", titled))).toEqual([])
+    })
+  })
+
+  describe("fold と details を入れ子にしない", () => {
+    it("fold を持つ markdown の塊が details を含めば違反", () => {
+      const block: ReportBlock = {
+        kind: "markdown",
+        markdown: "<details><summary>架空</summary>\n\n架空の本文\n\n</details>",
+        fold: "架空の畳み",
+      }
+      expect(reportViolations(draft([block]))).toEqual([{ kind: "nested-fold", count: 1 }])
+    })
+
+    it("details の中の details は違反", () => {
+      const nested = "<details>\n<details>\n\n架空\n\n</details>\n</details>"
+      expect(kinds(draft([markdown(nested)]))).toEqual(["nested-fold"])
+    })
+
+    it("fold の無い単独の details は通る", () => {
+      expect(kinds(draft([markdown("<details>\n\n架空\n\n</details>")]))).toEqual([])
+    })
+  })
+
+  describe("候補は5つまで", () => {
+    const options = (count: number): ReportBlock => ({
+      kind: "options",
+      title: "架空の比較",
+      items: Array.from({ length: count }, () => ({
+        name: "架空",
+        verdict: "consider" as const,
+        reason: "架空の理由。",
+      })),
+      fold: "",
+    })
+    const compare = (count: number): ReportBlock => ({
+      kind: "compare",
+      title: "架空の比較",
+      sides: [
+        { heading: "案A", points: Array.from({ length: count }, () => "架空") },
+        { heading: "案B", points: ["架空"] },
+      ],
+      fold: "",
+    })
+
+    it("6つ目から違反", () => {
+      expect(reportViolations(draft([options(6), compare(6)]))).toEqual([
+        { kind: "too-many-candidates", count: 2 },
+      ])
+    })
+
+    it("5つなら通る", () => {
+      expect(kinds(draft([options(5), compare(5)]))).toEqual([])
+    })
+  })
+
   describe("逃げ道に塊の種類がある記法を書かない", () => {
     const notationsOf = (body: string) =>
       reportViolations(draft([markdown(body)])).flatMap((violation) =>

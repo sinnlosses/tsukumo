@@ -55,8 +55,11 @@ const tableBlockSchema = z
   .object({
     kind: z.literal("table"),
     title: inlineText.describe("セルに無いことだけ: 何を並べた表か・並べた基準・数の出どころ"),
-    columns: z.array(inlineText).min(2),
-    rows: z.array(z.array(cellSchema)).min(1).describe("行ごとのセル。数は columns と揃える"),
+    columns: z.array(inlineText).min(2).describe("列は5つまで"),
+    rows: z
+      .array(z.array(cellSchema))
+      .min(1)
+      .describe("行ごとのセル。数は columns と揃える。セルは1行、空にせず「なし」と書く"),
     fold,
   })
   .describe(
@@ -92,7 +95,7 @@ const compareBlockSchema = z
       .array(
         z.object({
           heading: inlineText,
-          points: z.array(inlineText).min(1),
+          points: z.array(inlineText).min(1).describe("5つまで"),
         }),
       )
       .min(2)
@@ -136,7 +139,7 @@ const noteBlockSchema = z.object({
     .enum(REPORT_NOTE_TONES)
     .describe("info は結論 / warn は注意 / ng は異常 / ask は確かめていないこと / memo は覚え書き"),
   text: inlineText.describe(
-    "読み飛ばされると困る一文。種別を言う語（「注意:」など）は書かない。1つのレポートに1〜2個まで",
+    "読み飛ばされると困る一文。種別を言う語（「注意:」など）は書かない。1つのレポートに2個まで・隣接させない・見出しの直後に置かない（戻せない操作の warn / ng は隣接と見出しの直後が例外）",
   ),
   fold,
 })
@@ -176,7 +179,8 @@ const optionsBlockSchema = z
           reason: inlineText.describe("判定の理由。1文"),
         }),
       )
-      .min(2),
+      .min(2)
+      .describe("候補は5つまで"),
     fold,
   })
   .describe("候補を比べて採る・検討・採らないを言うとき。書いた順に描く")

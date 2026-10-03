@@ -90,6 +90,12 @@ describe("readVendorAsset", () => {
     expect(asset?.content.toString("utf8", 0, 200)).not.toContain("import")
   })
 
+  it("コードの書体は woff2 の実体を配る", () => {
+    for (const name of ["ibm-plex-mono-latin-400.woff2", "ibm-plex-mono-latin-600.woff2"]) {
+      expect(readVendorAsset(name)?.content.toString("latin1", 0, 4)).toBe("wOF2")
+    }
+  })
+
   it("allowlist に無い名前・パスを含む名前は読まない", () => {
     expect(readVendorAsset("other.js")).toBeUndefined()
     expect(readVendorAsset("../package.json")).toBeUndefined()

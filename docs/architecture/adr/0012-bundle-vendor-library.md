@@ -25,3 +25,9 @@ JavaScript をそのままブラウザへ配っていて描けるかどうかは
 コードブロックを書いたときにだけ `<script>` を足す（Chart.js も同じ）。**だから `vite build` の
 束ねには入れない**——入れると図が1つも無いレポートでも最初の読み込みで運ぶことになる。
 highlight.js は `rehype-highlight` として束ねに入り、ブラウザへ配るのはテーマの CSS だけ。
+
+**書体も同じ経路で配る**（2026-10-03。利用者「試す価値がある」）。レポートのコードの書体として
+`@fontsource/ibm-plex-mono`（OFL-1.1）を `package.json` で版を固定して入れ、latin の woff2 を
+400 と 600 の2本だけ `/vendor/` から配る（`ibm-plex-mono-latin-400.woff2`・`-600.woff2`。実ファイルは
+`node_modules` から読み、CDN からは読まない）。`@font-face` は `theme.css` が持ち、絶対 URL の
+`/vendor/…` は束ねの中でそのまま残る。表示時の外部通信がゼロである理由は変わらない。

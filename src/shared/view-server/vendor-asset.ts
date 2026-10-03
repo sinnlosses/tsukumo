@@ -9,6 +9,8 @@ export const VENDOR_ASSET_CONTENT_TYPES: Readonly<Record<string, string>> = {
   "highlight-theme.min.css": "text/css; charset=utf-8",
   "chart.umd.min.js": "text/javascript; charset=utf-8",
   "mermaid.min.js": "text/javascript; charset=utf-8",
+  "ibm-plex-mono-latin-400.woff2": "font/woff2",
+  "ibm-plex-mono-latin-600.woff2": "font/woff2",
 }
 
 export function vendorAssetPath(name: string): string {

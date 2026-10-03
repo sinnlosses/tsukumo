@@ -33,6 +33,18 @@ const VENDOR_ASSET_FILES: Readonly<Record<string, readonly string[]>> = {
   "highlight-theme.min.css": ["highlight.js", "styles", "github-dark.min.css"],
   "chart.umd.min.js": ["chart.js", "dist", "chart.umd.js"],
   "mermaid.min.js": ["mermaid", "dist", "mermaid.min.js"],
+  "ibm-plex-mono-latin-400.woff2": [
+    "@fontsource",
+    "ibm-plex-mono",
+    "files",
+    "ibm-plex-mono-latin-400-normal.woff2",
+  ],
+  "ibm-plex-mono-latin-600.woff2": [
+    "@fontsource",
+    "ibm-plex-mono",
+    "files",
+    "ibm-plex-mono-latin-600-normal.woff2",
+  ],
 }
 
 export type VendorAssetFile = {

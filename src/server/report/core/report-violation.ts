@@ -44,6 +44,15 @@ export type ReportViolation =
   | { readonly kind: "unknown-mermaid"; readonly count: number }
   /** `note` の塊が3つ以上ある（「1つのレポートに1〜2個まで」）。 */
   | { readonly kind: "too-many-notes"; readonly count: number }
+  /**
+   * `note` が隣り合う、または見出しのある節の先頭にある。`count` は該当の `note` の数。
+   * `tone` が `warn` / `ng` のものは数えない。
+   */
+  | { readonly kind: "crowded-notes"; readonly count: number }
+  /** `fold` を持つ `markdown` の塊が `<details>` を含む、または `<details>` が入れ子になっている。`count` は塊の数。 */
+  | { readonly kind: "nested-fold"; readonly count: number }
+  /** `options` の候補、または `compare` の側の箇条が6つ以上ある塊がある。`count` は塊の数。 */
+  | { readonly kind: "too-many-candidates"; readonly count: number }
   /** 行のセルの数が `columns` と揃わない表がある。`count` は表の数。 */
   | { readonly kind: "ragged-table"; readonly count: number }
   /** `series` の `values` の数が `labels` と揃わない `chart` の塊がある。`count` は塊の数。 */
@@ -156,6 +165,18 @@ export function reportViolations(report: ReportDraft): readonly ReportViolation[
       ).length,
     },
     { kind: "too-many-notes", count: blocks.filter((block) => block.kind === "note").length },
+    { kind: "crowded-notes", count: crowdedNoteCount(report.sections) },
+    {
+      kind: "nested-fold",
+      count: blocks.filter(
+        (block) =>
+          block.kind === "markdown" && hasNestedFold(block.fold, splitFences(block.markdown)),
+      ).length,
+    },
+    {
+      kind: "too-many-candidates",
+      count: blocks.filter((block) => hasTooManyCandidates(block)).length,
+    },
     { kind: "ragged-table", count: blocks.filter((block) => isRaggedTable(block)).length },
     { kind: "ragged-chart", count: blocks.filter((block) => isRaggedChart(block)).length },
     {
@@ -193,6 +214,9 @@ const VIOLATION_THRESHOLDS = {
   "long-paragraph": 0,
   "unknown-mermaid": 0,
   "too-many-notes": 2,
+  "crowded-notes": 0,
+  "nested-fold": 0,
+  "too-many-candidates": 0,
   "ragged-table": 0,
   "ragged-chart": 0,
   "untitled-section": 0,
@@ -209,7 +233,13 @@ function violationLine(violation: ReportViolation): string {
     case "unknown-mermaid":
       return `mermaid の図に規約の10種の外の種類が${violation.count}個ある。10種から選ぶ（迷ったら flowchart）`
     case "too-many-notes":
-      return `\`note\` の塊が${violation.count}個ある。1〜2個まで減らす`
+      return `\`note\` の塊が${violation.count}個ある。2個まで減らす`
+    case "crowded-notes":
+      return `隣り合う、または見出しの直後にある \`note\` が${violation.count}個ある。間に別の塊を挟むか、\`text\` に直す（\`warn\` / \`ng\` は例外）`
+    case "nested-fold":
+      return `\`fold\` と \`<details>\` が入れ子になっている塊が${violation.count}個ある。畳むのは1段だけにする`
+    case "too-many-candidates":
+      return `候補・箇条が6つ以上の \`options\` / \`compare\` が${violation.count}個ある。5つまでに絞る`
     case "ragged-table":
       return `行のセルの数が \`columns\` と揃わない表（\`matrix\` を含む）が${violation.count}個ある。セルの数を揃える`
     case "ragged-chart":
@@ -224,6 +254,49 @@ function violationLine(violation: ReportViolation): string {
         .join("・")}を使う`
     case "code-mismatch":
       return `\`path\` 付きの \`code\` の塊が${violation.count}個、ファイルの中身と一致しない（${violation.paths.join("・")}）。実物を読み直して直すか \`path\` を外す`
+  }
+}
+
+const MAX_CANDIDATES = 5
+
+function crowdedNoteCount(sections: readonly ReportSection[]): number {
+  return sections.reduce(
+    (total, section) =>
+      total +
+      section.blocks.filter(
+        (block, index) =>
+          block.kind === "note" &&
+          block.tone !== "warn" &&
+          block.tone !== "ng" &&
+          (section.blocks[index - 1]?.kind === "note" ||
+            (index === 0 && section.heading.trim() !== "")),
+      ).length,
+    0,
+  )
+}
+
+function hasNestedFold(fold: string, { outside }: SplitMarkdown): boolean {
+  const opens = outside.reduce(
+    (state, line) => {
+      const opened = countMatches(line, /<details\b/g)
+      return {
+        depth: Math.max(state.depth + opened - countMatches(line, /<\/details>/g), 0),
+        nested: state.nested || state.depth + opened >= 2,
+      }
+    },
+    { depth: 0, nested: false },
+  )
+  return opens.nested || (fold.trim() !== "" && outside.some((line) => DETAILS_TAG.test(line)))
+}
+
+function hasTooManyCandidates(block: ReportBlock): boolean {
+  switch (block.kind) {
+    case "options":
+      return block.items.length > MAX_CANDIDATES
+    case "compare":
+      return block.sides.some((side) => side.points.length > MAX_CANDIDATES)
+    default:
+      return false
   }
 }
 

@@ -126,9 +126,10 @@
   --report-heading-3: 1.0625rem;
   --line-height-body: 1.75;
 
-  /* 書体は system-ui と等幅の2本のまま。 */
+  /* 書体は system-ui と等幅の2本。レポートのコードだけ同梱の IBM Plex Mono（`--font-code`）。 */
   --font-sans: system-ui, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, monospace;
+  --font-code: "IBM Plex Mono", var(--font-mono);
   /* 唯一の例外: 成果の画面の日記の本文だけ、端末に入っている明朝体の名前を並べ、最後を `serif` に落とす。外部フォントは足さない。 */
   --font-serif: "Hiragino Mincho ProN", "Yu Mincho", "YuMincho", "Noto Serif JP", serif;
   /* 日記の本文が実際に使う書体。既定は `--font-serif` そのもの。
@@ -199,4 +200,20 @@ a {
 }
 a:hover {
   text-decoration-color: var(--accent);
+}
+
+/* レポートのコードの書体。実ファイルは tsukumo が 127.0.0.1 の `/vendor/` から配る（読めなければ `--font-code` の次の等幅に落ちる）。 */
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/vendor/ibm-plex-mono-latin-400.woff2") format("woff2");
+}
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("/vendor/ibm-plex-mono-latin-600.woff2") format("woff2");
 }
