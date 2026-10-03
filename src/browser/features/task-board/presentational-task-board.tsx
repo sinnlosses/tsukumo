@@ -20,6 +20,7 @@ import { useEffect, useRef } from "react"
 import { Dialog } from "../../components/ui/dialog/dialog.tsx"
 import { Text } from "../../components/ui/text/text.tsx"
 import { TaskBoardAction } from "./components/task-board-action.tsx"
+import { TaskBoardColumns } from "./components/task-board-columns.tsx"
 import { TaskBoardFilterBar } from "./components/task-board-filter-bar.tsx"
 import { TaskBoardHead } from "./components/task-board-head.tsx"
 import { TaskBoardList } from "./components/task-board-list.tsx"
@@ -78,24 +79,26 @@ export function PresentationalTaskBoard(props: TaskBoardView): ReactElement {
             </Text>
           )}
           {content.kind === "known" && (
-            <div className={styles["task-board-columns"]}>
-              <div className={styles["task-board-list-column"]}>
-                <TaskBoardFilterBar
-                  query={content.query}
-                  chips={content.chips}
-                  listId={content.listId}
-                  activeOptionId={content.activeOptionId}
-                  onQueryChange={props.onQueryChange}
-                  onFilter={props.onFilter}
-                />
-                <TaskBoardList
-                  listId={content.listId}
-                  rows={content.rows}
-                  onSelect={props.onSelect}
-                />
-              </div>
-              <div className={styles["task-board-detail-column"]}>
-                {content.selection.kind === "some" && (
+            <TaskBoardColumns
+              list={
+                <>
+                  <TaskBoardFilterBar
+                    query={content.query}
+                    chips={content.chips}
+                    listId={content.listId}
+                    activeOptionId={content.activeOptionId}
+                    onQueryChange={props.onQueryChange}
+                    onFilter={props.onFilter}
+                  />
+                  <TaskBoardList
+                    listId={content.listId}
+                    rows={content.rows}
+                    onSelect={props.onSelect}
+                  />
+                </>
+              }
+              detail={
+                content.selection.kind === "some" && (
                   <>
                     <TaskDetail
                       key={content.selection.detail.id}
@@ -110,9 +113,9 @@ export function PresentationalTaskBoard(props: TaskBoardView): ReactElement {
                       run={content.selection.run}
                     />
                   </>
-                )}
-              </div>
-            </div>
+                )
+              }
+            />
           )}
         </div>
       )}

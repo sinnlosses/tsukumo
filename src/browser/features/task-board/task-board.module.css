@@ -108,14 +108,15 @@
   min-height: 0;
 }
 
-/* 左の一覧。幅は固定で、詳細が残りの幅を取る。 */
+/* 左の一覧。既定は 470px で、仕切りのドラッグで決めた幅は `--task-board-list-width` へ入る。詳細が残りの幅を取る。
+   箱が狭まっても詳細に 360px を残す（`taskBoardListWidthFromRatio` の可動域と揃える）。
+   詳細との境の線は仕切り（`LayoutResizer`）が引く。 */
 .task-board-list-column {
   display: flex;
   flex: none;
   flex-direction: column;
-  width: 470px;
+  width: clamp(300px, var(--task-board-list-width, 470px), calc(100% - 360px));
   min-height: 0;
-  border-right: 1px solid var(--rule-quiet);
 }
 .task-board-option-head {
   display: flex;
@@ -186,7 +187,6 @@ button.task-detail-dependency:hover {
   .task-board-list-column {
     width: auto;
     max-height: 40%;
-    border-right: none;
     border-bottom: 1px solid var(--rule-quiet);
   }
 }

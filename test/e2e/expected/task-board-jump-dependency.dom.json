@@ -288,6 +288,14 @@
           ]
         },
         {
+          "tag": "div",
+          "attributes": {
+            "role": "separator",
+            "aria-orientation": "vertical",
+            "aria-label": "一覧と詳細の仕切り"
+          }
+        },
+        {
           "tag": "section",
           "attributes": {
             "aria-label": "T-002 の詳細"

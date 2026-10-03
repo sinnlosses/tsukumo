@@ -1,4 +1,4 @@
-/* 3本の仕切り。
+/* 領域の間の仕切り。
    auto トラックは仕切り自身の width/height ぶんだけに縮む。
    掴める幅（0.6rem）と見える線（1px）を分ける。線は領域の枠より薄くして画面を割らず、掴む場所は細くしない。 */
 .layout-resizer {
@@ -51,7 +51,7 @@
   background: var(--accent);
 }
 @media (max-width: 760px) {
-  .layout-resizer {
+  :where(.layout-resizer) {
     display: none;
   }
 }

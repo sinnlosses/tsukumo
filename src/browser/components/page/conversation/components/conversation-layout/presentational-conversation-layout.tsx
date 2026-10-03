@@ -14,7 +14,7 @@ import { PanelRightClose, PanelRightOpen, RotateCw } from "lucide-react"
 import type { ReactElement, ReactNode } from "react"
 
 import { Button } from "../../../../ui/button/button.tsx"
-import { LayoutResizer } from "../layout-resizer/layout-resizer.tsx"
+import { LayoutResizer } from "../../../../ui/layout-resizer/layout-resizer.tsx"
 import styles from "./conversation-layout.module.css"
 import { percentFromRatio } from "./domain/split.ts"
 import type { NarrowPane, UseConversationLayoutResult } from "./hooks/use-conversation-layout.ts"

@@ -7,7 +7,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react"
 import type { ReactElement, ReactNode } from "react"
 
 import { Button } from "../../../../../../ui/button/button.tsx"
-import { LayoutResizer } from "../../../layout-resizer/layout-resizer.tsx"
+import { LayoutResizer } from "../../../../../../ui/layout-resizer/layout-resizer.tsx"
 import { outlineWidthFromRatio } from "./domain/outline-panel.ts"
 import type { ReportOutlineModel } from "./hooks/use-report-outline.ts"
 import styles from "./report-outline.module.css"
