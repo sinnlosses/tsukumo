@@ -384,7 +384,7 @@
    題の行は `contain: inline-size` で入れ物の幅の計算から外れ、入れ物の幅で折り返す。 */
 .detail-block .report-captioned {
   max-width: 100%;
-  margin: var(--report-block-gap) 0;
+  margin: var(--report-figure-gap) 0;
 }
 /* 縮めた包みは、題ごとレポートの幅の中央に置く。 */
 .detail-block .report-captioned-fit {
@@ -787,14 +787,14 @@
    混ぜる割合は `rule` に6割で、依頼・お願いの縦罫（素の accent）より一段弱い。
    レポートの中で何度も出る線なので、素のまま出すと差し色が地の色になって何も指さなくなる。 */
 .detail-block h4 {
-  margin: 2rem 0 var(--report-heading-gap);
+  margin: 2.75rem 0 var(--report-heading-gap);
   padding-bottom: 0.25rem;
   border-bottom: 1px solid color-mix(in srgb, var(--rule), var(--accent) 60%);
   font-size: var(--report-heading-3);
   font-weight: 700;
 }
 .detail-block h5 {
-  margin: 1.5rem 0 var(--report-heading-gap);
+  margin: 2.25rem 0 var(--report-heading-gap);
   /* 下罫を文字の幅で止めるためだけの `fit-content`（入りきらない見出しは今までどおり折り返し、そのときは領域の幅いっぱいになる）。 */
   width: fit-content;
   padding-bottom: 0.2rem;
@@ -941,11 +941,12 @@
 .detail-block .report-file-link:hover {
   text-decoration-color: var(--accent);
 }
-/* 塊どうしのあきと、見出しから塊までのあき（値は docs/architecture/screen-design.md「レポートの塊のあき」）。
-   塊ごとの上下の margin をこの2つの値だけで書く。縦の margin は相殺されるので、隣り合う塊のあきは大きいほうの値になる。 */
+/* 塊どうしのあき・題つきの表と図のまわりのあき・見出しから塊までのあき（値は docs/architecture/screen-design.md「レポートの塊のあき」）。
+   塊ごとの上下の margin をこの3つの値だけで書く。縦の margin は相殺されるので、隣り合う塊のあきは大きいほうの値になる。 */
 .detail-block {
   --report-block-gap: 1rem;
-  --report-heading-gap: 0.75rem;
+  --report-figure-gap: 2rem;
+  --report-heading-gap: 1.25rem;
   margin: 0 0 1rem;
   text-autospace: normal;
   line-break: strict;
@@ -973,6 +974,7 @@
    変数で差し替えるのは、塊ごとの規則のほうが詳細度が高く、margin を直に書いても負けるから。 */
 .detail-block > :is(h4, h5) + * {
   --report-block-gap: var(--report-heading-gap);
+  --report-figure-gap: var(--report-heading-gap);
 }
 /* 箇条書きを本文より詰める。`label` 付き・`flow` は別セレクタが優先するのでそのまま。 */
 .detail-block :is(ul, ol) {
