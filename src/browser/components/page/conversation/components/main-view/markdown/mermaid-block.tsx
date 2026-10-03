@@ -14,6 +14,7 @@ import { isObjectType } from "remeda"
 import { vendorAssetPath } from "../../../../../../../shared/view-server/vendor-asset.ts"
 import { Text } from "../../../../../ui/text/text.tsx"
 import styles from "./mermaid-block.module.css"
+import { resolveHex } from "./theme-color.ts"
 import { loadVendorScript } from "./vendor-script.ts"
 
 const MERMAID_SRC = vendorAssetPath("mermaid.min.js")
@@ -27,7 +28,7 @@ let drawing: Promise<unknown> = Promise.resolve()
 
 /**
  * 描き終えた図。鍵は図のソース、値は SVG と、`render` に渡した id（SVG の中の id はすべてこれを頭に持つ）。
- * 色は mermaid が SVG に焼き込む固定の `theme: "dark"` で、鍵にテーマは入れていない。テーマを切り替える作りにしたら、鍵と `initialized` を直す。
+ * 色は mermaid が SVG に焼き込む。使う人が地や字の色を差し替えたら（`themeVariables` が変わったら）`syncTheme` が空にする。
  */
 const drawn = new Map<string, DrawnDiagram>()
 
@@ -36,7 +37,8 @@ type DrawnDiagram = {
   readonly id: string
 }
 
-let initialized = false
+let drawnTheme: string | undefined
+let initializedTheme: string | undefined
 let nextId = 0
 
 export type MermaidBlockProps = {
@@ -52,6 +54,12 @@ export function MermaidBlock(props: MermaidBlockProps): ReactElement {
   useEffect(() => {
     let cancelled = false
 
+    const themeNode = nodeRef.current
+    if (themeNode === null) {
+      return
+    }
+    const themeVariables = resolveThemeVariables(themeNode)
+    syncTheme(themeVariables)
     const hit = drawn.get(code)
     if (hit === undefined) {
       drawInTurn(async () => {
@@ -64,7 +72,7 @@ export function MermaidBlock(props: MermaidBlockProps): ReactElement {
           insertDiagram(nodeRef.current, again)
           return
         }
-        initializeOnce()
+        initializeFor(themeVariables)
         const id = newDiagramId()
         const { svg, bindFunctions } = await mermaid.render(id, code)
         const diagram = { svg, id } satisfies DrawnDiagram
@@ -120,17 +128,49 @@ function newDiagramId(): string {
   return `mermaid-block-${nextId++}`
 }
 
-function initializeOnce(): void {
-  if (initialized) {
+/**
+ * mermaid の `themeVariables` をページの色のトークンから作る。`base` だけが差せて、値は hex しか受け取らない。
+ */
+function resolveThemeVariables(node: HTMLElement): Readonly<Record<string, string | boolean>> {
+  const hex = (property: string, backdrop?: string): string => resolveHex(node, property, backdrop)
+  return {
+    darkMode: true,
+    background: hex("--surface"),
+    primaryColor: hex("--surface-raised", "--surface"),
+    primaryTextColor: hex("--ink"),
+    textColor: hex("--ink"),
+    primaryBorderColor: hex("--rule"),
+    lineColor: hex("--ink-soft", "--surface"),
+    arrowheadColor: hex("--ink-soft", "--surface"),
+    clusterBkg: hex("--ground"),
+    edgeLabelBackground: hex("--surface"),
+    noteBkgColor: hex("--surface-accent"),
+    noteTextColor: hex("--ink"),
+    fontFamily: getComputedStyle(node).fontFamily,
+  }
+}
+
+function syncTheme(themeVariables: Readonly<Record<string, string | boolean>>): void {
+  const key = JSON.stringify(themeVariables)
+  if (key !== drawnTheme) {
+    drawn.clear()
+    drawnTheme = key
+  }
+}
+
+function initializeFor(themeVariables: Readonly<Record<string, string | boolean>>): void {
+  const key = JSON.stringify(themeVariables)
+  if (key === initializedTheme) {
     return
   }
   mermaid.initialize({
     startOnLoad: false,
-    theme: "dark",
+    theme: "base",
+    themeVariables,
     securityLevel: "strict",
     suppressErrorRendering: true,
   })
-  initialized = true
+  initializedTheme = key
 }
 
 /**

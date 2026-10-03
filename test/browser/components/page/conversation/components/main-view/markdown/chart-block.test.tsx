@@ -3,6 +3,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { ChartBlock } from "../../../../../../../../src/browser/components/page/conversation/components/main-view/markdown/chart-block.tsx"
 
+// jsdom には canvas が無く、色のトークンも解けない。
+vi.mock(
+  "../../../../../../../../src/browser/components/page/conversation/components/main-view/markdown/theme-color.ts",
+  () => ({
+    resolveColor: () => "rgb(0, 0, 0)",
+    resolveHex: () => "#000000",
+  }),
+)
+
 const SPEC_A = '{"type":"bar","data":{}}'
 const SPEC_B = '{"type":"line","data":{}}'
 
@@ -16,7 +25,9 @@ class FakeChart implements Instance {
     color: "",
     maintainAspectRatio: true,
     scale: { grid: { color: "" }, border: { color: "" } },
+    plugins: { colors: { enabled: true } },
   }
+  static readonly register = vi.fn()
   readonly destroy = vi.fn()
 
   constructor() {

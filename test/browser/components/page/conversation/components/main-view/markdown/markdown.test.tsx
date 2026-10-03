@@ -8,6 +8,15 @@ import type { ReportSection } from "../../../../../../../../src/shared/report/re
 import { reportSectionsMarkdown as reportSectionsMarkdownFrom } from "../../../../../../../../src/shared/report/report-markdown.ts"
 import { typedElement } from "../../../../../../../typed-element.ts"
 
+// jsdom には canvas が無く、色のトークンも解けない。
+vi.mock(
+  "../../../../../../../../src/browser/components/page/conversation/components/main-view/markdown/theme-color.ts",
+  () => ({
+    resolveColor: () => "rgb(0, 0, 0)",
+    resolveHex: () => "#000000",
+  }),
+)
+
 /** 描いた `report` の本文と同じく、画像を棚から引く本文に組む。 */
 function reportSectionsMarkdown(sections: readonly ReportSection[]): string {
   return reportSectionsMarkdownFrom(sections, { kind: "shelved", toolUseId: "fictional-report" })

@@ -12,6 +12,8 @@ declare global {
     readonly initialize: (options: {
       readonly startOnLoad: boolean
       readonly theme: string
+      /** `theme: "base"` のときだけ効く。値は hex のみ（CSS 変数・色名は受け取らない）。 */
+      readonly themeVariables: Readonly<Record<string, string | boolean>>
       readonly securityLevel: string
       /**
        * 失敗したときに mermaid 自身がエラーの絵を `<pre class="mermaid">` の中へ描くのを止める。
@@ -52,7 +54,25 @@ declare global {
         readonly grid: { color: string }
         readonly border: { color: string }
       }
+      readonly plugins: { readonly colors: { enabled: boolean } }
     }
+    /** `beforeUpdate` の `chart.config` は、`new Chart` に渡した config そのもの。 */
+    readonly register: (plugin: {
+      readonly id: string
+      readonly beforeUpdate: (chart: {
+        readonly config: {
+          readonly type?: string
+          readonly data?: {
+            readonly datasets?: {
+              type?: string
+              data?: readonly unknown[]
+              backgroundColor?: unknown
+              borderColor?: unknown
+            }[]
+          }
+        }
+      }) => void
+    }) => void
   }
 }
 

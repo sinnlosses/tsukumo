@@ -3,6 +3,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { MermaidBlock } from "../../../../../../../../src/browser/components/page/conversation/components/main-view/markdown/mermaid-block.tsx"
 
+// jsdom には canvas が無く、色のトークンも解けない。
+vi.mock(
+  "../../../../../../../../src/browser/components/page/conversation/components/main-view/markdown/theme-color.ts",
+  () => ({
+    resolveColor: () => "rgb(0, 0, 0)",
+    resolveHex: () => "#000000",
+  }),
+)
+
 const scripts: Node[] = []
 
 const initialize = vi.fn()
