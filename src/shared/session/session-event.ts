@@ -293,7 +293,7 @@ export type SessionEvent =
   | { readonly kind: "effort-changed"; readonly effort: EffortLevel }
   /**
    * `main` のタスクの一覧が変わった（`main` の先端を見て起こす）。
-   * 読めない・消えたときは `tasks: { kind: "unknown" }`（{@link TaskSummaryResult}。サイドバーの「不明」表示に対応する）。
+   * タスク運用が無いときは `tasks: { kind: "none" }`、読めない・消えたときは `tasks: { kind: "unknown" }`（{@link TaskSummaryResult}。サイドバーの「設定が無い」表示と「不明」表示に対応する）。
    */
   | { readonly kind: "tasks-changed"; readonly tasks: TaskSummaryResult }
   /**

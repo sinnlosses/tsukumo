@@ -21,7 +21,7 @@ const CHIP_ORDER = [
 /**
  * サイドバーの「タスク一覧」のチップ。進行中 → 未着手 → 完了の順で、0件でも出す。
  *
- * tasks が読めていない（`kind: "unknown"`）ときはチップを出さない。
+ * tasks が読めていない（`kind` が `known` でない）ときはチップを出さない。
  * その判定は呼ぶ側が持ち、ここは件数を数えられる並びだけを受ける。
  */
 export function taskListCounts(items: readonly TaskSummaryItem[]): readonly TaskListCountItem[] {

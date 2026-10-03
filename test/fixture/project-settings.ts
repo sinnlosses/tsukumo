@@ -3,8 +3,10 @@
 import { mkdirSync, writeFileSync } from "node:fs"
 import { dirname, join } from "node:path"
 
-import { PROJECT_SETTINGS_PATH } from "../../src/server/repository/adapter/project-settings.ts"
-import type { TaskStore } from "../../src/shared/repository/project-settings.ts"
+import {
+  PROJECT_SETTINGS_PATH,
+  type TaskStore,
+} from "../../src/shared/repository/project-settings.ts"
 
 /** `store` の方式で、主ブランチを `mainBranch`（既定 `main`）にした設定を書く。 */
 export function writeProjectSettings(cwd: string, store: TaskStore, mainBranch = "main"): void {

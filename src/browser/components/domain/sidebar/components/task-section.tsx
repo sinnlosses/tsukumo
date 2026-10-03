@@ -33,7 +33,7 @@ export function TaskSection(): ReactElement {
       extraClass={styles["sidebar-block-tasks"]}
       action={{ label: "一覧を見る", onAction: openList }}
     >
-      {tasks.kind !== "unknown" && (
+      {tasks.kind === "known" && (
         <TaskCountChipList
           counts={taskListCounts(tasks.items)}
           selected={selectedStatus}

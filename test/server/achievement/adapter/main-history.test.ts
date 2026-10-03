@@ -9,9 +9,9 @@ import {
   readCommitCalendar,
   type ReadAchievementResult,
 } from "../../../../src/server/achievement/adapter/main-history.ts"
-import { PROJECT_SETTINGS_PATH } from "../../../../src/server/repository/adapter/project-settings.ts"
 import type { AchievementCalendar } from "../../../../src/shared/achievement/achievement-calendar.ts"
 import type { DailyAchievement } from "../../../../src/shared/achievement/achievement.ts"
+import { PROJECT_SETTINGS_PATH } from "../../../../src/shared/repository/project-settings.ts"
 import { bd, initBeads, useBeadsHome } from "../../../fixture/beads-repository.ts"
 import { git, initGitRepository } from "../../../fixture/git-repository.ts"
 import { writeProjectSettings } from "../../../fixture/project-settings.ts"

@@ -1,0 +1,14 @@
+/* タスクの節（.sidebar-block-tasks）と同じく残りの高さを取り、下端の帯をサイドバーの下に留める。
+   左右は区画（.sidebar-block）の内側 padding と揃える。 */
+.project-settings-missing {
+  flex: 1 1 0;
+  min-height: 0;
+  padding: 0 1.125rem;
+}
+.project-settings-missing-text {
+  margin: 0 0 0.25rem;
+}
+.project-settings-missing-path {
+  margin: 0;
+  font-family: var(--font-mono);
+}

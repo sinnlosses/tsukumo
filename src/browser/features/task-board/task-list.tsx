@@ -32,7 +32,7 @@ export type TaskListProps = {
 }
 
 export function TaskList(props: TaskListProps): ReactElement {
-  if (props.tasks.kind === "unknown") {
+  if (props.tasks.kind !== "known") {
     return (
       <Text
         element="p"

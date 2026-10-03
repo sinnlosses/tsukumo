@@ -92,6 +92,36 @@ describe("タスクの一覧", () => {
     await room.settleAndMatch(ELAPSED_MS)
   })
 
+  it("プロジェクトの設定が無いと、タスクの節と「一覧を見る」を出さず、設定が無い表示を出す", async () => {
+    const room = await run.open({
+      scenario: "task-list-no-project-settings",
+      scene: "none",
+      viewport: "wide",
+      domRoots: ["sidebar"],
+    })
+    const { page } = room
+    await page.getByText("プロジェクトの設定が無い", { exact: true }).waitFor()
+
+    expect(await page.locator('section[aria-label="タスク"]').count()).toBe(0)
+    expect(await page.getByRole("button", { name: "一覧を見る" }).count()).toBe(0)
+    await room.settleAndMatch(ELAPSED_MS)
+  })
+
+  it("プロジェクトの設定が無いと、柱の口に進行中の件数を出さない", async () => {
+    const room = await run.open({
+      scenario: "task-list-no-project-settings-rail",
+      scene: "none",
+      viewport: "medium",
+      domRoots: [],
+    })
+    const toggle = room.page.getByRole("button", { name: "サイドバー", exact: true })
+    await toggle.click()
+    await room.page.getByText("プロジェクトの設定が無い", { exact: true }).waitFor()
+
+    expect(await toggle.textContent()).not.toMatch(/\d/)
+    expect(await room.page.getByRole("button", { name: "一覧を見る" }).count()).toBe(0)
+  })
+
   it("summary を Enter で押すと全文に折り返す", async () => {
     const room = await openTaskListRoom(run, "task-list-summary-expand", ["task-section"])
     const summaryToggle = room.page.getByRole("button", {

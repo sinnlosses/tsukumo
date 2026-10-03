@@ -310,6 +310,7 @@ export type SessionState = {
   /**
    * タスク一覧。`tasks-changed` が届くまでは `{ kind: "unknown" }`
    * （読めない・まだ読んでいないのどちらも同じ「不明」にする理由は {@link TaskSummaryResult} を参照）。
+   * タスク運用が無いと分かれば `{ kind: "none" }`。
    */
   readonly tasks: TaskSummaryResult
   /**

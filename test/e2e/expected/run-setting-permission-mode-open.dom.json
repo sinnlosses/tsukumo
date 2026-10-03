@@ -8,34 +8,15 @@
       },
       "children": [
         {
-          "tag": "section",
-          "attributes": {
-            "aria-label": "タスク"
-          },
+          "tag": "p",
           "children": [
-            {
-              "tag": "h2",
-              "children": [
-                "タスク",
-                {
-                  "tag": "button",
-                  "attributes": {
-                    "aria-disabled": "false",
-                    "aria-haspopup": "dialog",
-                    "type": "button"
-                  },
-                  "children": [
-                    "一覧を見る"
-                  ]
-                }
-              ]
-            },
-            {
-              "tag": "p",
-              "children": [
-                "不明"
-              ]
-            }
+            "プロジェクトの設定が無い"
+          ]
+        },
+        {
+          "tag": "p",
+          "children": [
+            ".tsukumo/project.json"
           ]
         },
         {

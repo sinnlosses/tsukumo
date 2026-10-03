@@ -1,52 +1,32 @@
-// `main` のタスク一覧を見張る。
-// `main` の先端のコミットが変わったとき、プロジェクトの設定が変わったとき、台帳の着手の印が変わったとき、または Beads の課題が変わったときに読み直し、`onChange` を呼ぶ。
+// タスク一覧を見張る。見回りのたびにプロジェクトの設定（`readProjectSettings`）を読み、`tasks.store` の方式の読み元（`TaskSource`）から一覧を読み、前回知らせたものと変わっていれば `onChange` を呼ぶ。
+// 設定は見回りのたびに読み直す（画面から書いた値が主ブランチを動かさずに次の見回りで効く）。
+// 読み元は設定が前回と変わった見回りでだけ選び直す（読み元が覚えている前回の読みを捨てないため）。
 //
-// どこから読むかはプロジェクトの設定（`readProjectSettings`）の `tasks.store` で決める。
-// 設定は見回りのたびに読み直す（画面から書いた値が `main` を動かさずに次の見回りで効く）。
-//
-// ファイル方式: 読むのは作業ツリーのファイルではなく `main` の上の `develop/task/*.md` の front matter。
-// 作業ツリーのものは `git merge main` するまで別の作業ツリーで足したタスクを知らない。
-// `git ls-tree` で列挙し、`git cat-file --batch` で1回の子プロセスでまとめて読む。
-// 着手中はファイルに書かれない。台帳の着手の印（`task claim` / `task release`）は共有の `.git` の下だけで完結し、`main` を動かさない。
-// そのため `main` の先端が同じ見回りでも `task-workflow/claim/` の一覧だけは毎回読み直し、前回と変わっていれば `onChange` する。
-// このときファイルは読み直さず、前回読んだ front matter に新しい印の集合を当て直すだけにする。
-//
-// Beads 方式: 要約が前回と変わっていれば `onChange` する。
-// 着手・完了は `main` を動かさないので、先端が同じでも読み直す。
-// `bd list` は1回が `git rev-parse` より2桁重いので、見回りの間隔を長くし（`TASK_SUMMARY_POLL_INTERVALS`）、
-// 課題の変化の印（`createBeadsStampReader`）が前回と同じなら `bd list` を打たない。印が取れないときは毎回打つ。
+// - 設定が無い・`tasks` が無い: タスク運用なし（`{ kind: "none" }`）
+// - 設定が読めない: 「不明」。既定の方式へ倒さない
+// - `files`: `createTaskFileSource`（主ブランチの `develop/task/` と台帳の着手の印）
+// - `beads`: `createTaskBeadsSource`（`bd` の課題）
 //
 // 見回りは `setWatching(true)` のあいだだけ回る。起こした時点の1回は、画面が無くても読む。
 // 止めているあいだも覚えた状態は残し、再開の1回で変わっていれば `onChange` する。
-//
-// 主ブランチの名前はプロジェクトの設定の `tasks.mainBranch` から読む。設定が無い・読めないときは主ブランチを読みに行かない。
-// 主ブランチが読めないとき（git リポジトリでない・設定の名前のブランチが無い・`git` が無い）、ファイル方式で `develop/task/` が無いとき、Beads 方式で `bd` が読めないとき、プロジェクトの設定が無い・読めないときは「不明」にする。
-// 作業ツリーのファイルへは落とさない。落とすと読み元が2つになり、一覧が黙って古いほうへ戻る（「不明」なら画面で気付ける）。
-// `git`・`bd` がタイムアウトしたときだけはその回を諦め、覚えている状態も変えない（「不明」にすると一覧が一瞬消えて戻る）。
-//
-// 中身の解釈（front matter の文法・台帳の印から `doing` を作る・Beads の状態の読み替え）は契約側の仕事。
-// ここは読み直すかどうかの判断と `git`・`bd`・台帳の読み出しだけを持つ。
-
-import { readdir } from "node:fs/promises"
-import { basename, join } from "node:path"
 
 import { isDeepEqual } from "remeda"
 
-import { taskSummaryItemsOfBeadsIssues } from "../../../shared/repository/beads-issue.ts"
 import {
   mainBranchRefOf,
   type ProjectSettingsRead,
 } from "../../../shared/repository/project-settings.ts"
-import {
-  parseNewTaskFile,
-  taskSummaryItemsOfNewTaskFiles,
-  TASK_DIR_PATH,
-  type NewTaskFile,
-  type TaskSummaryResult,
-} from "../../../shared/repository/task-summary.ts"
+import type { TaskSummaryResult } from "../../../shared/repository/task-summary.ts"
 import { createBeadsStampReader, readBeadsIssues } from "./beads.ts"
 import { runGit, runGitCatFileBatch } from "./git.ts"
 import { readProjectSettings } from "./project-settings.ts"
+import { createTaskBeadsSource } from "./task-beads-source.ts"
+import {
+  createClaimedIdsReader,
+  createTaskFileSource,
+  readClaimDirEntries,
+} from "./task-file-source.ts"
+import { fixedTaskSource, type TaskSource } from "./task-source.ts"
 
 /**
  * 見回りの間隔。`git` は `git rev-parse` 1回が手元で約10msなので、毎回起こしても負荷は無視できる。
@@ -59,17 +39,11 @@ export const TASK_SUMMARY_POLL_INTERVALS = {
 } satisfies TaskSummaryPollIntervals
 
 export type TaskSummaryPollIntervals = {
-  /** ファイル方式（と、方式がまだ決まっていないとき）の間隔。 */
+  /** Beads 方式以外（ファイル方式・運用なし・設定が読めない）の間隔。 */
   readonly git: number
   /** Beads 方式の間隔。 */
   readonly beads: number
 }
-
-/**
- * 台帳の置き場（`$(git rev-parse --path-format=absolute --git-common-dir)` の下）の中の、着手の印。
- * 形の正典は task-workflow スキルの `WORKFLOW.md`。
- */
-const LEDGER_CLAIM_DIR_SEGMENTS = ["task-workflow", "claim"]
 
 export type TaskSummaryWatcher = {
   /** ポーリングを止める。実行中の見回り（`git`・`bd` の子プロセス）の終わりまで待つ。 */
@@ -121,19 +95,11 @@ export const REAL_TASK_SUMMARY_PORTS = {
   },
 } satisfies TaskSummaryPorts
 
-/** 見回りが毎回使う口と、起動中に変わらない値の覚え。 */
-type Reader = {
-  readonly cwd: string
-  readonly ports: TaskSummaryPorts
-  readonly readClaimedIds: () => Promise<ReadonlySet<string>>
-  readonly readBeadsStamp: () => Promise<string | undefined>
-}
-
 /**
- * `main` のタスク一覧を見張り始める。
- * 呼んだ時点で1回見に行き、以後は `setWatching(true)` のあいだ、ポーリングで `main` の先端と台帳の着手の印（Beads 方式なら `bd` の一覧）を見る。
+ * タスク一覧を見張り始める。
+ * 呼んだ時点で1回見に行き、以後は `setWatching(true)` のあいだ、ポーリングで設定と読み元を見る。
  * 1回の見回りが終わってから次の見回りを予約するので、`git`・`bd` が遅くても見回りは重ならない。
- * `main` が最初から読めない（先端が取れない）ときは `onChange` を呼ばない（初期の姿の `{ kind: "unknown" }` のままでよい）。
+ * 知らせるのは前回知らせたもの（初めは画面の初期の姿と同じ `{ kind: "unknown" }`）と違う結果だけ。
  */
 export function watchTaskSummary(
   cwd: string,
@@ -144,13 +110,9 @@ export function watchTaskSummary(
   },
 ): TaskSummaryWatcher {
   const { intervals, ports } = options
-  const reader: Reader = {
-    cwd,
-    ports,
-    readClaimedIds: createClaimedIdsReader(cwd, ports),
-    readBeadsStamp: ports.createBeadsStampReader(cwd),
-  }
-  let cache: WatcherCache = { kind: "other", head: undefined, settings: { kind: "none" } }
+  const choose = createTaskSourceChooser(cwd, ports)
+  let chosen: ChosenSource | undefined = undefined
+  let notified: TaskSummaryResult = { kind: "unknown" }
   let cancelTimer: (() => void) | undefined = undefined
   let watching = false
   let polling = false
@@ -158,14 +120,16 @@ export function watchTaskSummary(
   let runningPoll: Promise<void> = Promise.resolve()
 
   const poll = async (): Promise<void> => {
-    const read = await pollOnce(reader, cache)
-    if (closed || read.kind === "unchanged") {
+    const settings = await ports.readProjectSettings(cwd)
+    if (chosen === undefined || !isDeepEqual(settings, chosen.settings)) {
+      chosen = { settings, source: choose(settings) }
+    }
+    const read = await chosen.source.read()
+    if (closed || read.kind === "unchanged" || isDeepEqual(read.result, notified)) {
       return
     }
-    cache = read.cache
-    if (read.kind === "changed") {
-      onChange(read.result)
-    }
+    notified = read.result
+    onChange(read.result)
   }
 
   const loop = (): void => {
@@ -178,7 +142,7 @@ export function watchTaskSummary(
         return
       }
       cancelTimer = ports.clock.after(
-        cache.kind === "beads" ? intervals.beads : intervals.git,
+        chosen !== undefined && isBeadsStore(chosen.settings) ? intervals.beads : intervals.git,
         loop,
       )
     })
@@ -210,298 +174,47 @@ export function watchTaskSummary(
   }
 }
 
-/** 一覧を読んだ元。前回見た `main` の先端と、そのとき読んだプロジェクトの設定。 */
-type ReadPoint = {
-  readonly head: string
+/** いま使っている読み元と、それを選んだときの設定。 */
+type ChosenSource = {
   readonly settings: ProjectSettingsRead
+  readonly source: TaskSource
 }
 
 /**
- * 見回りのあいだ覚えておく状態。
- * - `task-dir`: ファイル方式で `develop/task/` がある。読んだ front matter とそのときの台帳の印を持つ（先端が動かないあいだ、印だけの変化をファイルを読み直さずに拾うため）
- * - `beads`: Beads 方式。前回知らせた要約と、そのとき読んだ変化の印（取れなければ `undefined`）を持つ（`bd` の読み直しが要るか、変わったかを比べるため）
- * - `other`: それ以外（`develop/task/` が無い・設定が無い・読めない・不明）。先端は `main` が読めなければ `undefined`
+ * 設定から読み元を作る関数を作る。
+ * 台帳の置き場と Beads の変化の印の読み手は起動中に変わらないので、見張り1つにつき1つだけ作り、読み元を選び直しても使い回す。
  */
-type WatcherCache =
-  | (ReadPoint & {
-      readonly kind: "task-dir"
-      readonly files: readonly NewTaskFile[]
-      readonly claimedIds: ReadonlySet<string>
-    })
-  | (ReadPoint & {
-      readonly kind: "beads"
-      readonly result: TaskSummaryResult
-      readonly stamp: string | undefined
-    })
-  | {
-      readonly kind: "other"
-      readonly head: string | undefined
-      readonly settings: ProjectSettingsRead
-    }
-
-/**
- * 1回の見回りの結果。`refreshed` は知らせるものは無いが、覚える状態だけ差し替える。
- */
-type MainTasksRead =
-  | { readonly kind: "unchanged" }
-  | { readonly kind: "refreshed"; readonly cache: WatcherCache }
-  | {
-      readonly kind: "changed"
-      readonly cache: WatcherCache
-      readonly result: TaskSummaryResult
-    }
-
-/**
- * プロジェクトの設定と `main` の先端を取る。先端か設定が変わっていれば {@link readAtHead} で中身から読み直す。
- * どちらも前回と同じなら、ファイル方式は台帳の着手の印だけ、Beads 方式は `bd` の一覧を読み直す（着手・解除・完了は `main` を動かさないため）。
- */
-async function pollOnce(reader: Reader, cache: WatcherCache): Promise<MainTasksRead> {
-  const settings = await reader.ports.readProjectSettings(reader.cwd)
-  if (settings.kind !== "read") {
-    return cache.kind === "other" && isDeepEqual(settings, cache.settings)
-      ? { kind: "unchanged" }
-      : unknownAt(undefined, settings)
-  }
-
-  const head = await readHead(reader, mainBranchRefOf(settings.tasks))
-  if (head === "timed-out") {
-    return { kind: "unchanged" }
-  }
-  if (head === undefined) {
-    return head === cache.head ? { kind: "unchanged" } : unknownAt(head, settings)
-  }
-  if (head !== cache.head || !isDeepEqual(settings, cache.settings)) {
-    return readAtHead(reader, { head, settings })
-  }
-
-  switch (cache.kind) {
-    case "other":
-      return { kind: "unchanged" }
-    case "beads":
-      return rereadBeads(reader, cache)
-    case "task-dir":
-      return rereadClaims(reader, cache)
-  }
-}
-
-/** 主ブランチの先端。取れなければ `undefined`。 */
-async function readHead(reader: Reader, ref: string): Promise<string | undefined | "timed-out"> {
-  const revParse = await reader.ports.runGit(reader.cwd, [
-    "rev-parse",
-    "--verify",
-    "--quiet",
-    `${ref}^{commit}`,
-  ])
-  if (revParse.kind === "timed-out") {
-    return "timed-out"
-  }
-  return revParse.kind === "output" ? revParse.stdout.trim() : undefined
-}
-
-/** ファイル方式で先端が動いていないときの見回り。台帳の印だけを読み直す。 */
-async function rereadClaims(
-  reader: Reader,
-  cache: Extract<WatcherCache, { readonly kind: "task-dir" }>,
-): Promise<MainTasksRead> {
-  const claimedIds = await reader.readClaimedIds()
-  if (setsEqual(claimedIds, cache.claimedIds)) {
-    return { kind: "unchanged" }
-  }
-
-  return {
-    kind: "changed",
-    cache: { ...cache, claimedIds },
-    result: {
-      kind: "known",
-      items: taskSummaryItemsOfNewTaskFiles(cache.files, claimedIds),
-    },
-  }
-}
-
-/** Beads 方式で先端が動いていないときの見回り。変化の印が前回と同じなら `bd` を打たず、要約が前回と同じなら知らせない。 */
-async function rereadBeads(
-  reader: Reader,
-  cache: Extract<WatcherCache, { readonly kind: "beads" }>,
-): Promise<MainTasksRead> {
-  const stamp = await reader.readBeadsStamp()
-  if (stamp !== undefined && stamp === cache.stamp) {
-    return { kind: "unchanged" }
-  }
-
-  const read = await readBeadsAtHead(reader, cache, stamp)
-  if (read.kind === "unchanged") {
-    return read
-  }
-  if (read.kind === "changed" && isDeepEqual(read.result, cache.result)) {
-    return { kind: "refreshed", cache: read.cache }
-  }
-  return read
-}
-
-/**
- * 先端か設定が変わったときの読み直し。
- * 中身は先端を取ったコミットから読む（`main` という名前で読むと、2回の `git` の間に `main` が進んだとき、覚える先端と読んだ中身がずれる）。
- * 設定の方式の読み元だけを読む。
- */
-async function readAtHead(reader: Reader, at: ReadPoint): Promise<MainTasksRead> {
-  if (at.settings.kind !== "read") {
-    return unknownAt(at.head, at.settings)
-  }
-
-  switch (at.settings.tasks.store) {
-    case "beads":
-      return readBeadsAtHead(reader, at, await reader.readBeadsStamp())
-    case "files":
-      return readTaskDirAtHead(reader, at)
-  }
-}
-
-/**
- * Beads 方式の一覧を `bd` から読む。
- * `stamp` は `bd list` の前に読んだもの（読んでいるあいだの更新を次の見回りで拾うため）。
- */
-async function readBeadsAtHead(
-  reader: Reader,
-  at: ReadPoint,
-  stamp: string | undefined,
-): Promise<MainTasksRead> {
-  const beads = await reader.ports.readBeadsIssues(reader.cwd)
-  if (beads.kind === "timed-out") {
-    return { kind: "unchanged" }
-  }
-
-  const result: TaskSummaryResult =
-    beads.kind === "issues"
-      ? { kind: "known", items: taskSummaryItemsOfBeadsIssues(beads.issues) }
-      : { kind: "unknown" }
-  return {
-    kind: "changed",
-    cache: { kind: "beads", head: at.head, settings: at.settings, result, stamp },
-    result,
-  }
-}
-
-/** ファイル方式の一覧を読む。`develop/task/` が無ければ「不明」にする。 */
-async function readTaskDirAtHead(reader: Reader, at: ReadPoint): Promise<MainTasksRead> {
-  const taskDirListing = await reader.ports.runGit(reader.cwd, [
-    "ls-tree",
-    "--name-only",
-    at.head,
-    TASK_DIR_PATH,
-  ])
-  if (taskDirListing.kind === "timed-out") {
-    return { kind: "unchanged" }
-  }
-
-  const taskFilePaths =
-    taskDirListing.kind === "output" ? taskFilePathsOf(taskDirListing.stdout) : []
-  if (taskFilePaths.length === 0) {
-    return unknownAt(at.head, at.settings)
-  }
-
-  return readTasksAtHead(reader, at, taskFilePaths)
-}
-
-/** 「不明」にして、先端と設定だけを覚える。 */
-function unknownAt(head: string | undefined, settings: ProjectSettingsRead): MainTasksRead {
-  return {
-    kind: "changed",
-    cache: { kind: "other", head, settings },
-    result: { kind: "unknown" },
-  }
-}
-
-/** `develop/task/` の中身を、1回の `git cat-file --batch` と台帳の着手の印から組み立てる。 */
-async function readTasksAtHead(
-  reader: Reader,
-  at: ReadPoint,
-  taskFilePaths: readonly string[],
-): Promise<MainTasksRead> {
-  const batch = await reader.ports.runGitCatFileBatch(
-    reader.cwd,
-    taskFilePaths.map((path) => `${at.head}:${path}`),
-  )
-  if (batch.kind === "timed-out") {
-    return { kind: "unchanged" }
-  }
-  if (batch.kind === "failed") {
-    return unknownAt(at.head, at.settings)
-  }
-
-  const files = taskFilePaths.flatMap((path, index) => {
-    const content = batch.contents[index]
-    return content === undefined ? [] : [{ name: basename(path), content }]
-  })
-  const parsedFiles = files.flatMap((file) => {
-    const task = parseNewTaskFile(file.name, file.content)
-    return task === undefined ? [] : [task]
-  })
-
-  const claimedIds = await reader.readClaimedIds()
-  return {
-    kind: "changed",
-    cache: {
-      kind: "task-dir",
-      head: at.head,
-      settings: at.settings,
-      files: parsedFiles,
-      claimedIds,
-    },
-    result: { kind: "known", items: taskSummaryItemsOfNewTaskFiles(parsedFiles, claimedIds) },
-  }
-}
-
-/**
- * 共有の `.git` の下の台帳から、着手の印がある ID の集合を作る関数を作る。
- * 台帳の置き場（`--git-common-dir` の下）は起動中に変わらないので、取れた1回だけ覚える。取れなかった回は覚えず、次の回にまた試す。
- * 台帳が無い・読めないときは「印なし」に倒す（この一覧は表示だけで、取り合いの判定には使わない）。
- * 台帳が一時的に読めないだけで一覧全体を「不明」にはしない。
- */
-function createClaimedIdsReader(
+function createTaskSourceChooser(
   cwd: string,
   ports: TaskSummaryPorts,
-): () => Promise<ReadonlySet<string>> {
-  let claimDir: string | undefined = undefined
+): (settings: ProjectSettingsRead) => TaskSource {
+  const readClaimedIds = createClaimedIdsReader(cwd, ports)
+  const readBeadsStamp = ports.createBeadsStampReader(cwd)
 
-  return async () => {
-    if (claimDir === undefined) {
-      const commonDir = await ports.runGit(cwd, [
-        "rev-parse",
-        "--path-format=absolute",
-        "--git-common-dir",
-      ])
-      if (commonDir.kind !== "output") {
-        return new Set()
-      }
-      claimDir = join(commonDir.stdout.trim(), ...LEDGER_CLAIM_DIR_SEGMENTS)
-    }
-    return ports.readClaimDir(claimDir)
-  }
-}
-
-async function readClaimDirEntries(claimDir: string): Promise<ReadonlySet<string>> {
-  try {
-    const entries = await readdir(claimDir, { withFileTypes: true })
-    return new Set(entries.filter((entry) => entry.isDirectory()).map((entry) => entry.name))
-  } catch {
-    return new Set()
-  }
-}
-
-/** 2つの集合が同じ中身かどうか（順序は見ない）。 */
-function setsEqual(a: ReadonlySet<string>, b: ReadonlySet<string>): boolean {
-  if (a.size !== b.size) {
-    return false
-  }
-  for (const value of a) {
-    if (!b.has(value)) {
-      return false
+  return (settings) => {
+    switch (settings.kind) {
+      case "none":
+        return fixedTaskSource({ kind: "none" })
+      case "invalid":
+        return fixedTaskSource({ kind: "unknown" })
+      case "read":
+        switch (settings.tasks.store) {
+          case "files":
+            return createTaskFileSource(cwd, mainBranchRefOf(settings.tasks), {
+              runGit: ports.runGit,
+              runGitCatFileBatch: ports.runGitCatFileBatch,
+              readClaimedIds,
+            })
+          case "beads":
+            return createTaskBeadsSource(cwd, {
+              readBeadsIssues: ports.readBeadsIssues,
+              readBeadsStamp,
+            })
+        }
     }
   }
-  return true
 }
 
-/** `git ls-tree --name-only` の出力を、`.md` のパス（`develop/task/T-xxx.md` の形）だけに絞る。 */
-function taskFilePathsOf(output: string): readonly string[] {
-  return output.split("\n").filter((line) => line.endsWith(".md"))
+function isBeadsStore(settings: ProjectSettingsRead): boolean {
+  return settings.kind === "read" && settings.tasks.store === "beads"
 }

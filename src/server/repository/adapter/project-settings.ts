@@ -7,12 +7,10 @@ import { join } from "node:path"
 import { isObjectType } from "remeda"
 
 import {
+  PROJECT_SETTINGS_PATH,
   projectSettingsOf,
   type ProjectSettingsRead,
 } from "../../../shared/repository/project-settings.ts"
-
-/** 起動先からの相対パス。 */
-export const PROJECT_SETTINGS_PATH = ".tsukumo/project.json"
 
 /** ファイルが無ければ `none`、読めなければ `invalid`。例外を投げない。 */
 export async function readProjectSettings(cwd: string): Promise<ProjectSettingsRead> {

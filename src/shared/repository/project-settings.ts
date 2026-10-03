@@ -5,6 +5,9 @@
 
 import { z } from "zod"
 
+/** 起動先からの相対パス。 */
+export const PROJECT_SETTINGS_PATH = ".tsukumo/project.json"
+
 export const TASK_STORES = ["files", "beads"] as const
 
 /** タスクの置き場。`files` は `main` の `develop/task/`、`beads` は `bd`。 */

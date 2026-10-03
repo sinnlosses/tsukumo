@@ -450,7 +450,7 @@ function boardContent(
   knownIds: ReadonlySet<string>,
   input: BoardContentInput,
 ): TaskBoardContent {
-  if (tasks.kind === "unknown") {
+  if (tasks.kind !== "known") {
     return { kind: "unknown" }
   }
   if (entries.length === 0) {

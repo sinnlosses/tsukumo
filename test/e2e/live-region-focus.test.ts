@@ -117,7 +117,10 @@ describe("会話の画面の読み上げとフォーカス", () => {
       domRoots: [],
     })
     const { page } = room
-    await page.locator('[data-region="sidebar"] button').first().focus()
+    await page
+      .locator('[data-region="sidebar"]')
+      .getByRole("button", { name: /^コンテキスト/ })
+      .focus()
     expect(await isFocused(page, "textarea")).toBe(false)
 
     await room.waitForEvent("turn-finished")

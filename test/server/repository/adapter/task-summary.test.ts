@@ -4,7 +4,6 @@ import { join } from "node:path"
 import { afterEach, describe, expect, it } from "vitest"
 
 import { createBeadsStampReader } from "../../../../src/server/repository/adapter/beads.ts"
-import { PROJECT_SETTINGS_PATH } from "../../../../src/server/repository/adapter/project-settings.ts"
 import {
   REAL_TASK_SUMMARY_PORTS,
   watchTaskSummary,
@@ -12,10 +11,14 @@ import {
   type TaskSummaryWatcher,
 } from "../../../../src/server/repository/adapter/task-summary.ts"
 import type { BeadsIssue } from "../../../../src/shared/repository/beads-issue.ts"
+import { PROJECT_SETTINGS_PATH } from "../../../../src/shared/repository/project-settings.ts"
 import { bd, initBeads, useBeadsHome } from "../../../fixture/beads-repository.ts"
 import { claimTask, git, initGitRepository, releaseTask } from "../../../fixture/git-repository.ts"
 import { createManualClock } from "../../../fixture/manual-clock.ts"
-import { writeProjectSettings } from "../../../fixture/project-settings.ts"
+import {
+  writeProjectSettings,
+  writeProjectSettingsContent,
+} from "../../../fixture/project-settings.ts"
 import { useTempDir } from "../../../fixture/temp-dir.ts"
 
 // 本物の `git` を起こす（`main` の先端を見て読み直すことそのものが検査の対象）。リポジトリは
@@ -140,6 +143,7 @@ function notified(id: string, summary: string, status: string): Record<string, u
 }
 
 const UNKNOWN: Record<string, unknown> = { kind: "unknown" }
+const NONE: Record<string, unknown> = { kind: "none" }
 
 describe("watchTaskSummary", () => {
   it("起こした時点で main の develop/task/ を読んで通知する", async () => {
@@ -220,6 +224,7 @@ describe("watchTaskSummary", () => {
   })
 
   it("git リポジトリでないディレクトリでは、ファイルがあっても呼ばれない（既定の「不明」のまま）", async () => {
+    writeProjectSettings(root(), "files")
     writeNewFormatTask(root(), "T-001", "1つめ", "todo")
     const changes: unknown[] = []
     watch(root(), changes)
@@ -335,22 +340,11 @@ describe("watchTaskSummary", () => {
     ])
   })
 
-  it("develop/task/ が無いときは「不明」", async () => {
+  it("develop/task/ が無いときは呼ばれない（既定の「不明」のまま）", async () => {
     const repository = await initRepository("main")
     writeFileSync(join(repository, "README.md"), "架空のリポジトリ")
     await git(repository, "add", "README.md")
     await git(repository, "commit", "-m", "init")
-    const changes: unknown[] = []
-    watch(repository, changes)
-    await waitForChanges(changes, 1)
-
-    expect(changes).toEqual([UNKNOWN])
-  })
-
-  it("プロジェクトの設定が無いときは、develop/task/ があっても呼ばれない（既定の「不明」のまま）", async () => {
-    const repository = await initRepository("main")
-    rmSync(join(repository, PROJECT_SETTINGS_PATH))
-    await commitNewFormatTasks(repository, [{ id: "T-001", summary: "1つめ", status: "todo" }])
     const changes: unknown[] = []
     watch(repository, changes)
     await sleep(QUIET_PERIOD_MS)
@@ -358,7 +352,19 @@ describe("watchTaskSummary", () => {
     expect(changes).toEqual([])
   })
 
-  it("設定が読めていたものが消えたら「不明」を通知する", async () => {
+  it("プロジェクトの設定が無いときは、develop/task/ があっても「タスク運用なし」を通知する", async () => {
+    const repository = await initRepository("main")
+    rmSync(join(repository, PROJECT_SETTINGS_PATH))
+    await commitNewFormatTasks(repository, [{ id: "T-001", summary: "1つめ", status: "todo" }])
+    const changes: unknown[] = []
+    watch(repository, changes)
+    await waitForChanges(changes, 1)
+    await sleep(QUIET_PERIOD_MS)
+
+    expect(changes).toEqual([NONE])
+  })
+
+  it("設定が読めていたものが消えたら「タスク運用なし」を通知する", async () => {
     const repository = await initRepository("main")
     await commitNewFormatTasks(repository, [{ id: "T-001", summary: "1つめ", status: "todo" }])
     const changes: unknown[] = []
@@ -366,6 +372,19 @@ describe("watchTaskSummary", () => {
     await waitForChanges(changes, 1)
 
     rmSync(join(repository, PROJECT_SETTINGS_PATH))
+    await waitForChanges(changes, 2)
+
+    expect(changes).toEqual([known(notified("T-001", "1つめ", "todo")), NONE])
+  })
+
+  it("設定の形が壊れたら、develop/task/ があっても「不明」を通知する", async () => {
+    const repository = await initRepository("main")
+    await commitNewFormatTasks(repository, [{ id: "T-001", summary: "1つめ", status: "todo" }])
+    const changes: unknown[] = []
+    watch(repository, changes)
+    await waitForChanges(changes, 1)
+
+    writeProjectSettingsContent(repository, '{ "tasks": { "store": "files" ')
     await waitForChanges(changes, 2)
 
     expect(changes).toEqual([known(notified("T-001", "1つめ", "todo")), UNKNOWN])
@@ -377,12 +396,12 @@ describe("watchTaskSummary", () => {
     await commitNewFormatTasks(repository, [{ id: "T-001", summary: "1つめ", status: "todo" }])
     const changes: unknown[] = []
     watch(repository, changes)
-    await sleep(QUIET_PERIOD_MS)
-
-    writeProjectSettings(repository, "files")
     await waitForChanges(changes, 1)
 
-    expect(changes).toEqual([known(notified("T-001", "1つめ", "todo"))])
+    writeProjectSettings(repository, "files")
+    await waitForChanges(changes, 2)
+
+    expect(changes).toEqual([NONE, known(notified("T-001", "1つめ", "todo"))])
   })
 })
 
@@ -547,17 +566,19 @@ describe("watchTaskSummary（Beads 方式）", () => {
     },
   )
 
-  it("設定の方式が beads なのに .beads が無ければ「不明」", async () => {
+  it("設定の方式を beads に書き換えて .beads が無ければ、develop/task/ を見ずに「不明」", async () => {
     const repository = await initRepository("main")
-    writeProjectSettings(repository, "beads")
     await commitNewFormatTasks(repository, [
       { id: "T-001", summary: "ファイルは見ない", status: "todo" },
     ])
     const changes: unknown[] = []
     watch(repository, changes)
-    await waitForChanges(changes, 1, BEADS_WAIT_LIMIT_MS)
+    await waitForChanges(changes, 1)
 
-    expect(changes).toEqual([UNKNOWN])
+    writeProjectSettings(repository, "beads")
+    await waitForChanges(changes, 2, BEADS_WAIT_LIMIT_MS)
+
+    expect(changes).toEqual([known(notified("T-001", "ファイルは見ない", "todo")), UNKNOWN])
   })
 })
 

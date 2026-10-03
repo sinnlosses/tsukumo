@@ -330,6 +330,14 @@ characters/<name>/            character.json・persona.md・素材
 起動時に覚えず、タスク一覧の見回りと成果の読み出しのたびに読み直す（画面から書いた値が次に読んだときに効く）。
 欄の説明は `README.md`「プロジェクトの設定」。
 
+**タスク一覧の読み元は方式ごとに1つずつ**（`server/repository/adapter/task-source.ts` の `TaskSource`）で、
+ファイル方式は `task-file-source.ts`（`main` の `develop/task/` と台帳の着手の印）、Beads 方式は
+`task-beads-source.ts`（`bd` の課題）。見張りの `watchTaskSummary` は、設定が前回と変わった見回りでだけ
+`tasks.store` から読み元を選び直し、タスク運用なし・読めないときは決まった結果（`none` / `unknown`）を返す
+読み元を置く。前回知らせたものと同じ結果は知らせない。**方式を足すときは読み元を1つ足して選ぶ分岐に
+並べるだけ**で、見張りの輪と画面は変えない。画面は `none` ならサイドバーのタスクの節とタスクのモーダルの
+入口を出さず「プロジェクトの設定が無い」の表示を置き、`unknown` なら節の中に「不明」を出す。
+
 **ファイル名は概念で、単数形**（原則5）。`helpers/` と `common/` は作らない。**ディレクトリ名に単数形の
 縛りは無く**、`src/browser/` の置き場所のディレクトリ（`components/`（とその下の `page/` `domain/` `ui/`）
 `features/` `hooks/` `domain/` `lib/` `utils/` `stores/` `styles/` `types/`）は bullet-proof-react の名前を

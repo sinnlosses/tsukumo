@@ -59,7 +59,7 @@ export function welcomeEntriesOf(
 }
 
 function readyTaskDoors(tasks: TaskSummaryResult): readonly WelcomeDoor[] {
-  if (tasks.kind === "unknown") {
+  if (tasks.kind !== "known") {
     return []
   }
   const unfinished = unfinishedTaskIds(tasks.items)

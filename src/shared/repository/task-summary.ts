@@ -37,10 +37,15 @@ export type TaskLocation =
 
 /**
  * タスクの一覧が読めているかどうか。
- * 「まだ届いていない」（状態の初期値）と「読めない」（`develop/task/` が無い・`bd` が読めない・方式の行が読めない）をここでは区別しない。
- * `watchTaskSummary` は `main` が最初から読めないときは初回の通知そのものを送らないので、その口だけでは2つを型で分けられず、画面の対処も変わらない。
+ * - `none`: タスク運用なし（プロジェクトの設定が無い・`tasks` が無い）。画面はタスクの節を出さない
+ * - `unknown`: 読めない（設定の形が違う・主ブランチが無い・`develop/task/` が無い・`bd` が読めない）か、まだ届いていない
+ * - `known`: 読めた
+ *
+ * 「まだ届いていない」（状態の初期値）と「読めない」は区別しない。
+ * `watchTaskSummary` は前回知らせた結果と同じものを知らせないので、最初から読めないときは初回の通知そのものが来ず、画面の対処も変わらない。
  */
 export type TaskSummaryResult =
+  | { readonly kind: "none" }
   | { readonly kind: "unknown" }
   | { readonly kind: "known"; readonly items: readonly TaskSummaryItem[] }
 

@@ -9,7 +9,7 @@ import styles from "./task-doing-count.module.css"
 
 export function TaskDoingCount(): ReactElement | undefined {
   const tasks = useSession((session) => session.state.tasks)
-  if (tasks.kind === "unknown") {
+  if (tasks.kind !== "known") {
     return undefined
   }
   const doing = taskListCounts(tasks.items).find((item) => item.status === "doing")?.count ?? 0
