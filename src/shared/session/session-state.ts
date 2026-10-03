@@ -9,6 +9,7 @@ import type { CharacterInfo, CharacterPackEntry } from "../character-pack/charac
 import type { Expression } from "../character-pack/expression.ts"
 import { type EffortLevel, isModelAlias } from "../command.ts"
 import { applyDiaryEvent, type DiaryWriting } from "../diary/diary.ts"
+import type { RecommendationCard } from "../recommendation/recommendation-card.ts"
 import type { ReportSection } from "../report/report-block.ts"
 import type { ReportCheck } from "../report/report-check.ts"
 import type { ReportTask } from "../report/report-task.ts"
@@ -314,6 +315,12 @@ export type SessionState = {
    */
   readonly tasks: TaskSummaryResult
   /**
+   * 迎える口のおすすめの札（おすすめの順、`MAX_RECOMMENDATION_CARDS` 枚まで）。
+   * 源は `recommendation-changed` だけで、届くたびに丸ごと置き換える。空は「まだ無い」で、画面は既定の並びを出す。
+   * `tasks` と同じく起こし直しをまたいで残す。
+   */
+  readonly recommendation: readonly RecommendationCard[]
+  /**
    * キャラビューが立ち絵を取りに行く先（`character-changed` が届くまでは undefined）。
    * 素材そのものは持たない（`portraits` の値は `/character/<pack>/<file>` の URL）。
    */
@@ -436,6 +443,7 @@ export const INITIAL_SESSION_STATE: SessionState = {
   lastTurnFinishedAt: undefined,
   nextTurnId: 0,
   tasks: { kind: "unknown" },
+  recommendation: [],
   character: undefined,
   characterPacks: [],
   sessions: [],
@@ -681,6 +689,8 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
       }
     case "tasks-changed":
       return { ...state, tasks: event.tasks }
+    case "recommendation-changed":
+      return { ...state, recommendation: event.cards }
     case "sessions-changed":
       // `sessionId` もここで決まる（`session-info` は最初の依頼まで届かないので、それまで「いまどのセッションに居るか」を言えるのはこの経路だけ）。
       // 新規に起こしたときは `current` が undefined で、そのときは今の `session` を動かさない。

@@ -9,6 +9,7 @@ import type { CharacterInfo, CharacterPackEntry } from "../character-pack/charac
 import type { Expression } from "../character-pack/expression.ts"
 import type { EffortLevel } from "../command.ts"
 import type { DiaryEvent } from "../diary/diary.ts"
+import type { RecommendationCard } from "../recommendation/recommendation-card.ts"
 import type { ReportSection } from "../report/report-block.ts"
 import type { ReportCheck } from "../report/report-check.ts"
 import type { ReportTask } from "../report/report-task.ts"
@@ -296,6 +297,11 @@ export type SessionEvent =
    * タスク運用が無いときは `tasks: { kind: "none" }`、読めない・消えたときは `tasks: { kind: "unknown" }`（{@link TaskSummaryResult}。サイドバーの「設定が無い」表示と「不明」表示に対応する）。
    */
   | { readonly kind: "tasks-changed"; readonly tasks: TaskSummaryResult }
+  /**
+   * おすすめの札が変わった（タスク一覧が届いて候補が変わったとき。出し手はサーバの推薦役）。
+   * 候補が前と同じなら流れない。空の並びは「まだ無い」で、候補が変わってキャッシュに無いときに一度流れ、問い合わせが通ればその結果がもう一度流れる。
+   */
+  | { readonly kind: "recommendation-changed"; readonly cards: readonly RecommendationCard[] }
   /**
    * キャラクターパックが決まった・一覧が変わった（起こしたとき・起こし直したときの1回ずつと、画面からパックを変えた・作ったとき）。
    * キャラビューが立ち絵を取りに行く先で、中身は URL だけ（素材そのものは乗らない）。

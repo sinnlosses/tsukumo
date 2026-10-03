@@ -519,12 +519,13 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
     try {
       generation.close()
       experienceMetric.noteRestart()
-      // `previousUsageReview` とタスク一覧は起こし直しをまたいで残す。
-      // どちらも駆動1代の持ち物ではない（`usageReview` は起こし直すとふだんへ戻る）。
+      // `previousUsageReview`・タスク一覧・おすすめの札は起こし直しをまたいで残す。
+      // どれも駆動1代の持ち物ではない（`usageReview` は起こし直すとふだんへ戻る）。
       replaceState({
         ...INITIAL_SESSION_STATE,
         previousUsageReview: state.previousUsageReview,
         tasks: state.tasks,
+        recommendation: state.recommendation,
       })
       generation = startGeneration(request, "after-hello")
       await generation.driver

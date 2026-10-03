@@ -2390,15 +2390,18 @@ describe("タスク一覧の見張り", () => {
     expect(watch.watching.at(-1)).toBe(false)
   })
 
-  it("起こし直しの hello にそれまでのタスク一覧が残り、そのあと届いた一覧も新しい代に入る", async () => {
+  it("起こし直しの hello にそれまでのタスク一覧とおすすめの札が残り、そのあと届いた一覧も新しい代に入る", async () => {
     const { manager, watch } = startManagerWithTaskWatch()
+    const cards = [{ kind: "resume", reason: "架空の理由" }] as const
     watch.emit({ kind: "tasks-changed", tasks: KNOWN_TASKS })
+    watch.emit({ kind: "recommendation-changed", cards })
 
     await manager.commands.session.setChatMode({ chat: true })
     const afterRestart: ServerFrame[] = []
     manager.subscribe((frame) => afterRestart.push(frame))
     const [hello] = afterRestart
     expect(hello?.type === "hello" ? hello.state.tasks : undefined).toEqual(KNOWN_TASKS)
+    expect(hello?.type === "hello" ? hello.state.recommendation : undefined).toEqual(cards)
 
     watch.emit({ kind: "tasks-changed", tasks: { kind: "unknown" } })
     await waitForBatch()
