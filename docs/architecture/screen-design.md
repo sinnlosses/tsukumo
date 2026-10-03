@@ -1151,7 +1151,7 @@ LINE / Discord と同じ形で、日の区切りだけの案・ホバーした�
 （2026-09-23 決定。Discord と同じ、「まだ喋ってくれる」合図）。**セリフの吹き出しの
 初期状態ではなく、別の行**——控えている吹き出しの文字は `hooks/use-speech-reveal.ts` が持って
 いて、ここには渡さない。控えていた吹き出しが出ると「...」の行は消え、入れ替わりにその行が
-現れる（`components/page/conversation/components/chat-view/` の `components/chat-typing.tsx` と `components/chat-speech.tsx`）。
+現れる（`components/page/conversation/components/chat-view/` の `components/chat-typing/chat-typing.tsx` と `components/chat-speech/chat-speech.tsx`）。
 
 - **出す条件は2つ**: 今のターンでまだ `speak` が呼ばれていない（`turnInProgress &&
 !speechCalledInTurn`。`SessionState.speechCalledInTurn` に既にある値で判定できる）、
