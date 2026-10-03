@@ -130,6 +130,7 @@ node scripts/stop.ts           # 動いている tsukumo の一覧（--port <n> 
 
 - 検証コマンド: `pnpm run check`（変更後は必ずこれを通す。受け入れ判定に使う）
 - 送る前の検証コマンド: `pnpm run check --full`
+- 規則の発火の集計: `node scripts/hook-denial-tally.ts --days 30`
 - 整形コマンド: `pnpm run format`
 - ブランチ: 切らない（自分でブランチを切らない）。**枝の寿命は作業ツリーの寿命と同じ**で、
   1本の枝がいくつでもタスクを持つ
