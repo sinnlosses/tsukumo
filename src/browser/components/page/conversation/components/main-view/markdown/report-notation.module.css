@@ -31,7 +31,7 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
   gap: 0.75rem;
-  margin: 0.5rem 0;
+  margin: var(--report-block-gap) 0;
 }
 .detail-block .report-stat {
   padding: 0.5rem 0.75rem;
@@ -107,7 +107,7 @@
   display: grid;
   grid-template-columns: auto 7.5em minmax(0, 1fr);
   column-gap: 20px;
-  margin: 0.5rem 0;
+  margin: var(--report-block-gap) 0;
   padding-left: 0;
   list-style: none;
   counter-reset: report-labeled-item;
@@ -150,7 +150,7 @@
    段の数に上限を置かないので、縦積みの高さを縛る値は書かない。 */
 .detail-block .report-flow {
   list-style: none;
-  margin: 0.5rem 0;
+  margin: var(--report-block-gap) 0;
   padding: 0;
 }
 .detail-block .report-flow-step {
@@ -207,7 +207,7 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  margin: 0.5rem 0;
+  margin: var(--report-block-gap) 0;
   padding: 0;
   row-gap: 8px;
   column-gap: 10px;
@@ -277,7 +277,7 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
   gap: 0.75rem;
-  margin: 0.5rem 0;
+  margin: var(--report-block-gap) 0;
 }
 .detail-block .report-option {
   padding: 0.5rem 0.75rem;
@@ -301,7 +301,7 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.75rem;
-  margin: 0.5rem 0;
+  margin: var(--report-block-gap) 0;
 }
 .detail-block .report-compare-side {
   min-width: 0;
@@ -325,7 +325,7 @@
   display: grid;
   grid-template-columns: minmax(0, 18rem) max-content;
   column-gap: 0.75rem;
-  margin: 0.5rem 0;
+  margin: var(--report-block-gap) 0;
 }
 .detail-block .report-dimension-part,
 .detail-block .report-dimension-gap {
@@ -384,7 +384,7 @@
    題の行は `contain: inline-size` で入れ物の幅の計算から外れ、入れ物の幅で折り返す。 */
 .detail-block .report-captioned {
   max-width: 100%;
-  margin: 0.5rem 0;
+  margin: var(--report-block-gap) 0;
 }
 .detail-block .report-captioned-fit {
   width: fit-content;
@@ -479,7 +479,7 @@
   grid-template-columns: max-content minmax(0, max-content) minmax(10rem, 1fr);
   column-gap: 0.75rem;
   row-gap: 0.3rem;
-  margin: 0.5rem 0;
+  margin: var(--report-block-gap) 0;
 }
 .detail-block .report-file {
   display: grid;
@@ -727,7 +727,7 @@
    1割なので地との比は 1.2 前後、上に乗る ink は 10:1 以上を保つ。
    引用（blockquote）は目立たせないための印なので、灰の縦罫だけで地を染めない。 */
 .detail-block .report-note {
-  margin: 0.5rem 0;
+  margin: var(--report-block-gap) 0;
   padding: 0.5rem 0.75rem;
   border-left: 3px solid var(--state-info);
   background: color-mix(in srgb, var(--surface), var(--state-info) 10%);
@@ -776,14 +776,14 @@
    混ぜる割合は `rule` に6割で、依頼・お願いの縦罫（素の accent）より一段弱い。
    レポートの中で何度も出る線なので、素のまま出すと差し色が地の色になって何も指さなくなる。 */
 .detail-block h4 {
-  margin: 1rem 0 0.5rem;
+  margin: 2rem 0 var(--report-heading-gap);
   padding-bottom: 0.25rem;
   border-bottom: 1px solid color-mix(in srgb, var(--rule), var(--accent) 60%);
   font-size: var(--report-heading-3);
   font-weight: 700;
 }
 .detail-block h5 {
-  margin: 0.75rem 0 0.4rem;
+  margin: 1.5rem 0 var(--report-heading-gap);
   /* 下罫を文字の幅で止めるためだけの `fit-content`（入りきらない見出しは今までどおり折り返し、そのときは領域の幅いっぱいになる）。 */
   width: fit-content;
   padding-bottom: 0.2rem;
@@ -792,7 +792,7 @@
   font-weight: 600;
 }
 .detail-block blockquote {
-  margin: 0.5rem 0;
+  margin: var(--report-block-gap) 0;
   padding-left: 0.75rem;
   border-left: 3px solid var(--rule);
   color: var(--ink-quiet);
@@ -801,7 +801,7 @@
    畳まれた塊だと分かることが要るので、地と枠で塊にし、開閉できることは summary のカーソルで示す（新しい色は作らない）。
    地を ground に落とすのは、親の地が surface でも塊として立つため。 */
 .detail-block details {
-  margin: 0.5rem 0;
+  margin: var(--report-block-gap) 0;
   padding: 0.5rem 0.75rem;
   border: 1px solid var(--rule);
   border-radius: 0.5rem;
@@ -814,11 +814,15 @@
 .detail-block details[open] > summary {
   margin-bottom: 0.5rem;
 }
+/* 枠の内側では、最後の塊の margin が padding に足されて下だけ広く空く。 */
+.detail-block details > :last-child:not(summary) {
+  margin-bottom: 0;
+}
 /* 話題の区切り（`---`）。
    ブラウザ既定の hr は立体的な溝で、この配色から浮く。
    表・カードと同じ罫線の色の1本にして、地の文との切れ目だけを出す。 */
 .detail-block hr {
-  margin: 1rem 0;
+  margin: var(--report-block-gap) 0;
   border: 0;
   border-top: 1px solid var(--rule);
 }
@@ -849,7 +853,7 @@
 /* 記法の表に無いが許可リスト（`REPORT_SANITIZE_SCHEMA`）が通す要素のうち、ブラウザ既定のままだとこの配色・このタイプスケールから外れるもの。
    figure は既定で左右に 40px の字下げが付き（img を通さないこの面では svg や表に説明を添える器にしかならないので、字下げは邪魔にしかならない）、small は4段のどれでもない大きさになる。 */
 .detail-block figure {
-  margin: 0.5rem 0;
+  margin: var(--report-block-gap) 0;
 }
 .detail-block figcaption {
   color: var(--ink-quiet);
@@ -868,7 +872,7 @@
    ブラウザ既定でも等幅にはなるが、それは汎用の monospace で、インラインのコード（下の `:not(pre) > code`）だけが --font-mono になる不揃いが出る。
    書体そのものの定義は theme.css のトークン。 */
 .detail-block pre {
-  margin: 0.4rem 0 0;
+  margin: var(--report-block-gap) 0;
   font-family: var(--font-code);
   font-size-adjust: none;
   padding: 0.5rem;
@@ -885,7 +889,7 @@
    ラベルの文字はパスなので等幅で、寸法は「ID・ツール名・キー」の段。
    器は Markdown のレンダラ側（`Pre`）が作るので、レポートの記法・許可リストは増えていない。 */
 .detail-block .code-file {
-  margin: 0.4rem 0 0;
+  margin: var(--report-block-gap) 0;
 }
 .detail-block .code-file-name {
   display: flex;
@@ -926,7 +930,11 @@
 .detail-block .report-file-link:hover {
   text-decoration-color: var(--accent);
 }
+/* 塊どうしのあきと、見出しから塊までのあき（値は docs/architecture/screen-design.md「レポートの塊のあき」）。
+   塊ごとの上下の margin をこの2つの値だけで書く。縦の margin は相殺されるので、隣り合う塊のあきは大きいほうの値になる。 */
 .detail-block {
+  --report-block-gap: 1rem;
+  --report-heading-gap: 0.75rem;
   margin: 0 0 1rem;
   text-autospace: normal;
   line-break: strict;
@@ -946,6 +954,15 @@
   word-break: auto-phrase;
   text-wrap: balance;
 }
+/* 段落と箇条書きは器を持たないので、ブラウザ既定の 1em をここで塊のあきに揃える。 */
+.detail-block > :is(p, ul, ol) {
+  margin: var(--report-block-gap) 0;
+}
+/* 見出しの直後の塊は、上の margin を見出しのあきに差し替える（塊のあきのほうが大きく、相殺で見出しのあきが消えるため）。
+   変数で差し替えるのは、塊ごとの規則のほうが詳細度が高く、margin を直に書いても負けるから。 */
+.detail-block > :is(h4, h5) + * {
+  --report-block-gap: var(--report-heading-gap);
+}
 /* 箇条書きを本文より詰める。`label` 付き・`flow` は別セレクタが優先するのでそのまま。 */
 .detail-block :is(ul, ol) {
   line-height: 1.7;
@@ -957,11 +974,16 @@
    器は Markdown のレンダラ側（`Table`）が作るので、レポートの記法・許可リストは増えていない。 */
 .detail-block .table-scroll {
   overflow-x: auto;
+  margin: var(--report-block-gap) 0;
+}
+/* 転がす器は margin を相殺しないので、塊のあきは器の側に持たせる。 */
+.detail-block .table-scroll > table {
+  margin-block: 0;
 }
 .detail-block table {
   border-collapse: collapse;
   max-width: 100%;
-  margin: 0.5rem 0;
+  margin: var(--report-block-gap) 0;
   font-size: var(--font-subheading);
   line-height: 1.5;
 }
@@ -986,7 +1008,7 @@
 .detail-block table:has(.report-cell-status) {
   border-collapse: separate;
   border-spacing: 4px;
-  margin: 0.5rem -4px;
+  margin: var(--report-block-gap) -4px;
 }
 .detail-block table:has(.report-cell-status) th,
 .detail-block table:has(.report-cell-status) td {
@@ -1065,7 +1087,7 @@
 }
 /* 対応表（`report` の `matrix` の塊から tsukumo が組む）。交点は印だけで、状態は記号と色の両方で言う。 */
 .detail-block .report-matrix {
-  margin: 0.5rem 0;
+  margin: var(--report-block-gap) 0;
 }
 .detail-block .report-matrix .table-scroll td,
 .detail-block .report-matrix .table-scroll th {
@@ -1152,7 +1174,7 @@
   grid-template-columns: max-content minmax(0, 1fr);
   column-gap: 1rem;
   row-gap: 0.4rem;
-  margin: 0.5rem 0;
+  margin: var(--report-block-gap) 0;
 }
 .detail-block dt {
   grid-column: 1;
@@ -1195,7 +1217,7 @@
   position: relative;
   width: 100%;
   height: 320px;
-  margin: 0.5rem 0;
+  margin: var(--report-block-gap) 0;
 }
 
 /* 狭い画面（1列に畳む幅）。
