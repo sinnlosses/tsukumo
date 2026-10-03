@@ -1,6 +1,10 @@
+import { mkdirSync, writeFileSync } from "node:fs"
+import { dirname, join } from "node:path"
+
 import type { Page } from "playwright-core"
 import { describe, expect, it } from "vitest"
 
+import { git, initGitRepository } from "../fixture/git-repository.ts"
 import { scanReadability } from "./readability-scan.ts"
 import { useScenarioRun } from "./scenario-run.ts"
 import { openTaskListRoomWithRunningTask } from "./task-room.ts"
@@ -105,6 +109,41 @@ describe("会話の画面の押す的と字", () => {
       domRoots: [],
     })
     await room.waitForEvent("turn-finished")
+    await expectReadable(room.page)
+  })
+})
+
+describe("レポートの押せるパスの押す的と字", () => {
+  const LONG_PATH =
+    "src/browser/components/page/conversation/components/main-view/markdown/report-notation.module.css"
+
+  it("git 管理下の長いパスが文の中で押せる部品になり、下限を割らない", async () => {
+    const room = await run.open({
+      scenario: "target-size-report-file-link",
+      scene: "notation",
+      viewport: "large",
+      domRoots: [],
+    })
+    await room.waitForEvent("turn-finished")
+
+    await initGitRepository(room.cwd)
+    mkdirSync(join(room.cwd, dirname(LONG_PATH)), { recursive: true })
+    writeFileSync(join(room.cwd, LONG_PATH), "")
+    await git(room.cwd, "add", LONG_PATH)
+    await git(room.cwd, "commit", "--quiet", "-m", "架空のファイル")
+    await room.page.reload({ waitUntil: "domcontentloaded" })
+
+    const links = room.page.locator('[data-region="main"] span[role="button"]')
+    // 時計が止まっているので、一覧の応答を React Query が配るのに要るタイマーを自分で進める。
+    await expect
+      .poll(
+        async () => {
+          await room.page.clock.runFor(100)
+          return links.count()
+        },
+        { timeout: 10_000 },
+      )
+      .toBe(3)
     await expectReadable(room.page)
   })
 })

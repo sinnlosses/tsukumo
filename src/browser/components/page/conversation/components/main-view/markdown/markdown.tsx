@@ -46,7 +46,11 @@ import {
 } from "./notation.tsx"
 import { ReportImage } from "./report-image.tsx"
 import styles from "./report-notation.module.css"
-import { repositoryFilePath, useRepositoryFileLink } from "./repository-link.tsx"
+import {
+  repositoryFilePath,
+  RepositoryFileLinkTarget,
+  useRepositoryFileLink,
+} from "./repository-link.tsx"
 import { REPORT_SANITIZE_SCHEMA } from "./sanitize-schema.ts"
 import { rehypeTaskCheck } from "./task-check.ts"
 
@@ -163,15 +167,9 @@ function FileNameLabel(props: { readonly fileName: string }): ReactElement {
     return <>{props.fileName}</>
   }
   return (
-    <button
-      type="button"
-      className={styles["report-file-link"]}
-      onClick={() => {
-        link.open(path)
-      }}
-    >
+    <RepositoryFileLinkTarget path={path} className={styles["report-file-link"]}>
       {props.fileName}
-    </button>
+    </RepositoryFileLinkTarget>
   )
 }
 
@@ -267,15 +265,9 @@ function Code(props: CodeProps): ReactElement {
     </code>
   )
   return (
-    <button
-      type="button"
-      className={styles["report-file-link"]}
-      onClick={() => {
-        link.open(path)
-      }}
-    >
+    <RepositoryFileLinkTarget path={path} className={styles["report-file-link"]}>
       {code}
-    </button>
+    </RepositoryFileLinkTarget>
   )
 }
 
@@ -333,16 +325,13 @@ function Anchor(props: AnchorProps): ReactElement {
     )
   }
   return (
-    <button
-      type="button"
+    <RepositoryFileLinkTarget
+      path={path}
       title={title}
       className={clsx(styles["report-file-link"], className)}
-      onClick={() => {
-        link.open(path)
-      }}
     >
       {children}
-    </button>
+    </RepositoryFileLinkTarget>
   )
 }
 

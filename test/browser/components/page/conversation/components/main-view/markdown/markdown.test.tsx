@@ -617,10 +617,50 @@ describe("Markdown（レポートのパスを押して Orca のエディタで�
     const wrap = withFiles(["src/foo.ts"], (path) => opened.push(path))
     const { container } = render(wrap(<Markdown text="見て `src/foo.ts:12` を直した" />))
 
-    const button = container.querySelector("button")
+    const button = container.querySelector('[role="button"]')
     expect(button?.textContent).toBe("src/foo.ts:12")
     // 表示の `:12` は残る（行番号へは飛べないので運ばない）。
-    fireEvent.click(typedElement(button, HTMLButtonElement, "ボタン"))
+    fireEvent.click(typedElement(button, HTMLElement, "押せるパス"))
+    expect(opened).toEqual(["src/foo.ts"])
+  })
+
+  it("押せるパスは tabindex を持つ role=button の span で、Enter と Space で開き、ほかのキーでは開かない", () => {
+    const opened: string[] = []
+    const wrap = withFiles(["src/foo.ts"], (path) => opened.push(path))
+    const { container } = render(wrap(<Markdown text="見て `src/foo.ts:12` を直した" />))
+
+    const target = typedElement(
+      container.querySelector('[role="button"]'),
+      HTMLElement,
+      "押せるパス",
+    )
+    expect(target.tagName).toBe("SPAN")
+    expect(target.getAttribute("tabindex")).toBe("0")
+    fireEvent.keyDown(target, { key: "a" })
+    expect(opened).toEqual([])
+    fireEvent.keyDown(target, { key: "Enter" })
+    fireEvent.keyDown(target, { key: " " })
+    expect(opened).toEqual(["src/foo.ts", "src/foo.ts"])
+  })
+
+  it("文字を選んだままの click ではパスを開かない", () => {
+    const opened: string[] = []
+    const wrap = withFiles(["src/foo.ts"], (path) => opened.push(path))
+    const { container } = render(wrap(<Markdown text="見て `src/foo.ts` を直した" />))
+    const target = typedElement(
+      container.querySelector('[role="button"]'),
+      HTMLElement,
+      "押せるパス",
+    )
+
+    const range = document.createRange()
+    range.selectNodeContents(target)
+    document.getSelection()?.addRange(range)
+    fireEvent.click(target)
+    expect(opened).toEqual([])
+
+    document.getSelection()?.removeAllRanges()
+    fireEvent.click(target)
     expect(opened).toEqual(["src/foo.ts"])
   })
 
@@ -649,13 +689,15 @@ describe("Markdown（レポートのパスを押して Orca のエディタで�
     expect(rows).toHaveLength(2)
     expect([...(rows[0]?.children ?? [])].map((child) => child.tagName)).toEqual([
       "SPAN",
-      "BUTTON",
+      "SPAN",
       "SPAN",
     ])
-    fireEvent.click(typedElement(rows[0]?.querySelector("button"), HTMLButtonElement, "ボタン"))
+    fireEvent.click(
+      typedElement(rows[0]?.querySelector('[role="button"]'), HTMLElement, "押せるパス"),
+    )
     expect(opened).toEqual(["src/foo.ts"])
     // 一覧に無いパス（消したファイル）は素の code のまま。
-    expect(rows[1]?.querySelector("button")).toBeNull()
+    expect(rows[1]?.querySelector('[role="button"]')).toBeNull()
     expect(rows[1]?.querySelector("code")?.textContent).toBe("src/gone.ts")
   })
 
@@ -663,7 +705,7 @@ describe("Markdown（レポートのパスを押して Orca のエディタで�
     const wrap = withFiles(["src/foo.ts"], () => {})
     const { container } = render(wrap(<Markdown text="`src/bar.ts:3` は無い" />))
 
-    expect(container.querySelector("button")).toBeNull()
+    expect(container.querySelector('[role="button"]')).toBeNull()
     expect(container.querySelector("code")?.textContent).toBe("src/bar.ts:3")
   })
 
@@ -675,9 +717,9 @@ describe("Markdown（レポートのパスを押して Orca のエディタで�
     )
 
     const label = container.querySelector(".code-file-name")
-    const button = label?.querySelector("button")
+    const button = label?.querySelector('[role="button"]')
     expect(button?.textContent).toBe("develop/tasks.json")
-    fireEvent.click(typedElement(button, HTMLButtonElement, "ボタン"))
+    fireEvent.click(typedElement(button, HTMLElement, "押せるパス"))
     expect(opened).toEqual(["develop/tasks.json"])
   })
 
@@ -698,9 +740,9 @@ describe("Markdown（レポートのパスを押して Orca のエディタで�
     const { container } = render(wrap(<Markdown text="[直した](src/foo.ts)" />))
 
     expect(container.querySelector("a")).toBeNull()
-    const button = container.querySelector("button")
+    const button = container.querySelector('[role="button"]')
     expect(button?.textContent).toBe("直した")
-    fireEvent.click(typedElement(button, HTMLButtonElement, "ボタン"))
+    fireEvent.click(typedElement(button, HTMLElement, "押せるパス"))
     expect(opened).toEqual(["src/foo.ts"])
   })
 
@@ -709,7 +751,7 @@ describe("Markdown（レポートのパスを押して Orca のエディタで�
     const { container } = render(wrap(<Markdown text="[無い](src/nope.ts)" />))
 
     expect(container.querySelector("a")).toBeNull()
-    expect(container.querySelector("button")).toBeNull()
+    expect(container.querySelector('[role="button"]')).toBeNull()
     expect(container.textContent).toContain("無い")
   })
 

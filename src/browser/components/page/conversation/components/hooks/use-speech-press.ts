@@ -3,6 +3,8 @@
 
 import { useRef, type KeyboardEvent, type MouseEvent } from "react"
 
+import { isActivationKey } from "./activation-key.ts"
+
 /**
  * 「押した」ではなく「ドラッグで文字を選んだ」とみなす、押し始めからの距離（px）。
  * 文字を1つ選ぶだけでも1文字ぶん（本文の大きさなら十数px）は動くので、手のぶれ（数px）と混ざらない。
@@ -67,12 +69,4 @@ function isSelectionDrag(origin: PressOrigin | undefined, event: PointerAt): boo
     return false
   }
   return Math.hypot(event.clientX - origin.x, event.clientY - origin.y) > DRAG_THRESHOLD_PX
-}
-
-/**
- * 押したことにするキー（WAI-ARIA の button パターンと同じ Enter と Space）。
- * `<button>` と違って `role="button"` の要素にはブラウザが click を送らないので、キーボードで遡る道はここで自分で開ける。
- */
-function isActivationKey(key: string): boolean {
-  return key === "Enter" || key === " "
 }

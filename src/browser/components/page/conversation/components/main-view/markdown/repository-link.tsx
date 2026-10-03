@@ -10,6 +10,7 @@
 import { createContext, useContext, type ReactElement, type ReactNode } from "react"
 
 import { useSession } from "../../../../../../stores/session.ts"
+import { isActivationKey } from "../../hooks/activation-key.ts"
 import { useRepositoryFilePaths } from "../../hooks/use-repository-file-paths.ts"
 
 /** 末尾の `:行` または `:行:桁`（数字だけ）。 */
@@ -52,6 +53,48 @@ export const RepositoryFileLinkContext = createContext<RepositoryFileLink>(
 /** Provider の外では既定値（一致しない）になる。 */
 export function useRepositoryFileLink(): RepositoryFileLink {
   return useContext(RepositoryFileLinkContext)
+}
+
+export type RepositoryFileLinkTargetProps = {
+  /** 開く裸のパス（{@link repositoryFilePath} の戻り値）。 */
+  readonly path: string
+  readonly title?: string | undefined
+  readonly className: string
+  readonly children: ReactNode
+}
+
+/**
+ * 押せるパス。
+ * `<button>` は Chrome が inline-block に強制して文の中で折り返せないので、`role="button"` の `<span>` にする。
+ * 文字が選べるので、選び終えた click では開かない。
+ */
+export function RepositoryFileLinkTarget(props: RepositoryFileLinkTargetProps): ReactElement {
+  const link = useRepositoryFileLink()
+
+  return (
+    <span
+      role="button"
+      tabIndex={0}
+      title={props.title}
+      className={props.className}
+      onClick={(event) => {
+        if (event.currentTarget.ownerDocument.getSelection()?.isCollapsed === false) {
+          return
+        }
+        link.open(props.path)
+      }}
+      onKeyDown={(event) => {
+        if (!isActivationKey(event.key)) {
+          return
+        }
+        // Space はページを送る既定の動作を持つ。
+        event.preventDefault()
+        link.open(props.path)
+      }}
+    >
+      {props.children}
+    </span>
+  )
 }
 
 export type RepositoryFileLinkProviderProps = {

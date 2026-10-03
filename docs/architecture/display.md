@@ -915,8 +915,9 @@ CSS の3つを揃える**（レンダラを直したのに規約が古いまま�
   表示の `:12` はそのまま残るが、開くのは裸のパスだけ）、フェンスの info 文字列に書いたファイル名
   （` ```diff src/foo.ts ` のブロック左上のラベル）、Markdown の相対リンク
   （`[x](src/foo.ts)`。スキームの無い相対リンクはこれまで押すとページ自身が遷移してしまう不具合
-  だったので、**ファイルを指すときだけ `<a>` を離れてボタンにし、指さないときは押しても何も
-  起きない素のテキストにする**）。押す部品・依頼・サーバ側の検証は
+  だったので、**ファイルを指すときだけ `<a>` を離れて押せる部品にし、指さないときは押しても何も
+  起きない素のテキストにする**。押せる部品は文の中で折り返せるよう `role="button"` と `tabIndex` を付けた
+  `<span>` で、Enter・Space でも開く）。押す部品・依頼・サーバ側の検証は
   `src/browser/components/page/conversation/components/main-view/markdown/repository-link.tsx` と
   `src/shared/contract/host.ts` の `hostContract.openFile`
 - **フェンス付きコードブロックの頭の帯に、クリックで全文をクリップボードへ写すボタンを常に置く**

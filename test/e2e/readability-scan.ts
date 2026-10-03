@@ -90,7 +90,10 @@ export async function scanReadability(page: Page): Promise<ReadabilityReport> {
       if (element.closest("select") !== null && element.tagName !== "SELECT") {
         continue
       }
-      if (element.tagName === "A" && getComputedStyle(element).display === "inline") {
+      const inlineInSentence =
+        (element.tagName === "A" || element.getAttribute("role") === "button") &&
+        getComputedStyle(element).display === "inline"
+      if (inlineInSentence) {
         continue
       }
       const labels = element instanceof HTMLInputElement ? [...(element.labels ?? [])] : []

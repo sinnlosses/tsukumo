@@ -269,6 +269,34 @@
                                           ]
                                         }
                                       ]
+                                    },
+                                    {
+                                      "tag": "tr",
+                                      "children": [
+                                        {
+                                          "tag": "td",
+                                          "children": [
+                                            {
+                                              "tag": "code",
+                                              "children": [
+                                                "src/browser/components/page/conversation/components/main-view/markdown/report-notation.module.css"
+                                              ]
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "tag": "td",
+                                          "children": [
+                                            "ok"
+                                          ]
+                                        },
+                                        {
+                                          "tag": "td",
+                                          "children": [
+                                            "1"
+                                          ]
+                                        }
+                                      ]
                                     }
                                   ]
                                 }
@@ -284,6 +312,19 @@
                             "この一覧に抜けている記法があるかは確かめていない。",
                             "メモ",
                             "この見本は capture-catalog.ts の題材として置いている。",
+                            {
+                              "tag": "p",
+                              "children": [
+                                "長いパスを文の中に書く例（架空）: 直すのは",
+                                {
+                                  "tag": "code",
+                                  "children": [
+                                    "src/browser/components/page/conversation/components/main-view/markdown/report-notation.module.css"
+                                  ]
+                                },
+                                "の1か所だけで、前後の文は途切れずにこのパスのあとへ続く。"
+                              ]
+                            },
                             {
                               "tag": "p",
                               "children": [
@@ -419,7 +460,14 @@
                                         "直す"
                                       ]
                                     },
-                                    "目盛りを直す（架空）"
+                                    "目盛りを直す（架空）",
+                                    {
+                                      "tag": "code",
+                                      "children": [
+                                        "src/browser/components/page/conversation/components/main-view/markdown/report-notation.module.css"
+                                      ]
+                                    },
+                                    "の1か所"
                                   ]
                                 },
                                 {
