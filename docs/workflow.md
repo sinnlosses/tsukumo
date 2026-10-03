@@ -140,6 +140,14 @@ PreToolUse hook（`scripts/deny-sed-in-place.ts`）が拒否する。ファイ�
 打つと PreToolUse hook（`scripts/deny-background-verify.ts`）が拒否し、前景で `timeout` 引数
 （最大 600000）を付けて打つよう案内する。メインの呼び出し（`agent_id` が無い）は対象にしない。
 
+委譲先が E2E を全部流す呼び出し（`tw verify`・`pnpm run check`・`pnpm run test:e2e`、ファイルを
+指さない `vitest run --config vitest.e2e.config.ts`）は、着手中の1件につき **6回まで**で、7回目を
+PreToolUse hook（`scripts/deny-e2e-run-limit.ts`）が拒否する（検証は通常1〜3回で、残りは揺らぎの
+確認と hook 登録後の自分の検証の余裕）。数はその作業ツリー固有の git dir の `e2e-full-runs` に置き、
+着手の印（`task-open-claims/<id>`）が無ければ数えない（作業ツリーをまたいで混ざらない）。
+**着手し直す（印が消えて作り直される）と0に戻る。** E2E のファイル単位の実行
+（`pnpm run test:e2e test/e2e/<ファイル>.test.ts`）は数えず、メインの呼び出しも対象にしない。
+
 **コミットメッセージの Claude の署名は git の `commit-msg` フックが止める**
 （`.githooks/commit-msg` → `scripts/deny-claude-signature.ts`。`Co-Authored-By: Claude …` と
 `Generated with [Claude Code]` の行が入っていると、該当行を出してコミットを拒否する。

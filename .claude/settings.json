@@ -15,6 +15,10 @@
           {
             "type": "command",
             "command": "node \"$CLAUDE_PROJECT_DIR/scripts/deny-background-verify.ts\""
+          },
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/scripts/deny-e2e-run-limit.ts\""
           }
         ]
       }
