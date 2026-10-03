@@ -17,7 +17,7 @@
     "typecheck": "pnpm run css-types && tsc --noEmit && tsc --noEmit -p tsconfig.storybook.json",
     "lint": "oxlint src test scripts story .storybook vite.config.ts",
     "lint:fix": "oxlint src test scripts story .storybook vite.config.ts --fix",
-    "format": "oxfmt .",
+    "format": "node scripts/write-document-index.ts && oxfmt .",
     "format:check": "oxfmt . --check",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",

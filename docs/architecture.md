@@ -984,27 +984,29 @@ doc コメントが正典で、機能の数え方・契機・上限は `docs/req
 
 ## 設計判断（なぜ今の形なのか）
 
-| ファイル                                                      | 判断                                                                         |
-| ------------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| `docs/architecture/adr/0001-render-in-browser.md`             | 描く層をブラウザ側へ移す（2026-09-13）                                       |
-| `docs/architecture/adr/0002-render-migration-tech-choice.md`  | 描く層の移行で決めた技術選択（2026-09-13〜17）                               |
-| `docs/architecture/adr/0003-orca-owns-worktree.md`            | worktree を用意するのは orca で、tsukumo はやらない（2026-09-23）            |
-| `docs/architecture/adr/0004-turn-number-from-record.md`       | ターンの通し番号は記録が持ち、位置では決めない（2026-09-22）                 |
-| `docs/architecture/adr/0005-css-module-output-in-temp.md`     | CSS Modules の成果物は一時ディレクトリへ出して読み、すぐ消す（2026-09-20）   |
-| `docs/architecture/adr/0006-prebuild-browser.md`              | ブラウザ側は事前に組み立てて置く（2026-09-21）                               |
-| `docs/architecture/adr/0007-vite-build-cli.md`                | 組み立ては `vite build` の CLI を子プロセスで起こす（2026-09-27）            |
-| `docs/architecture/adr/0008-sdk-instead-of-tui.md`            | Claude Code の TUI を捨て、SDK で動かす                                      |
-| `docs/architecture/adr/0009-speech-via-tool.md`               | セリフはテキストの規約ではなく、ツール呼び出しで受け取る                     |
-| `docs/architecture/adr/0010-report-via-tool.md`               | レポートはテキストではなく `report` ツールで受け取る                         |
-| `docs/architecture/adr/0011-separate-shell-and-app.md`        | 箱（Orca のタブ）と中身（Web アプリ）を分ける                                |
-| `docs/architecture/adr/0012-bundle-vendor-library.md`         | 外部ライブラリは CDN から読まず、同梱して自分で配る                          |
-| `docs/architecture/adr/0013-tolerate-missing-display.md`      | 表示物が1つ欠けても起動失敗にしない                                          |
-| `docs/architecture/adr/0014-no-bundled-character-asset.md`    | キャラクター素材はリポジトリに同梱しない                                     |
-| `docs/architecture/adr/0015-single-host-port.md`              | ホスト依存の操作は1つのポートにまとめる                                      |
-| `docs/architecture/adr/0016-html-instead-of-terminal.md`      | 表示はターミナル描画をやめて、すべて HTML にした                             |
-| `docs/architecture/adr/0017-serve-from-local-http.md`         | HTML はローカルの HTTP サーバから配る（ファイルに書き出さない）              |
-| `docs/architecture/adr/0018-single-page-view.md`              | ビューは1枚のページにまとめる                                                |
-| `docs/architecture/adr/0019-layer-as-directory.md`            | 層をディレクトリで表し、依存の向きをテストで縛る                             |
-| `docs/architecture/adr/0020-mixed-purity-in-adapter-file.md`  | 境界のファイルの中に、外の世界に触らない関数が混じっていてよい（2026-09-16） |
-| `docs/architecture/adr/0021-feature-state-fold-in-feature.md` | 機能だけが動かす状態の畳み方は、その機能の shared に置く（2026-09-30）       |
-| `docs/architecture/adr/0022-three-setting-homes.md`           | 設定は誰の・何に属する値かで3つの置き場に割る（2026-10-03）                  |
+この表は `pnpm run format` が ADR の1行目の題から書き直すので、手で直さない。
+
+| ファイル                                                      | 判断                                                                       |
+| ------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| `docs/architecture/adr/0001-render-in-browser.md`             | 描く層をブラウザ側へ移す（2026-09-13）                                     |
+| `docs/architecture/adr/0002-render-migration-tech-choice.md`  | 描く層の移行で決めた技術選択（2026-09-13〜17）                             |
+| `docs/architecture/adr/0003-orca-owns-worktree.md`            | worktree を用意するのは orca で、tsukumo はやらない（2026-09-23）          |
+| `docs/architecture/adr/0004-turn-number-from-record.md`       | ターンの通し番号は記録が持ち、位置では決めない（2026-09-22）               |
+| `docs/architecture/adr/0005-css-module-output-in-temp.md`     | CSS Modules の成果物は一時ディレクトリへ出して読み、すぐ消す（2026-09-20） |
+| `docs/architecture/adr/0006-prebuild-browser.md`              | ブラウザ側は事前に組み立てて置く（2026-09-21）                             |
+| `docs/architecture/adr/0007-vite-build-cli.md`                | 組み立ては `vite build` の CLI を子プロセスで起こす（2026-09-27）          |
+| `docs/architecture/adr/0008-sdk-instead-of-tui.md`            | Claude Code の TUI を捨て、SDK で動かす                                    |
+| `docs/architecture/adr/0009-speech-via-tool.md`               | セリフはテキストの規約ではなく、ツール呼び出しで受け取る                   |
+| `docs/architecture/adr/0010-report-via-tool.md`               | レポートはテキストではなく `report` ツールで受け取る                       |
+| `docs/architecture/adr/0011-separate-shell-and-app.md`        | 箱（Orca のタブ）と中身（Web アプリ）を分ける                              |
+| `docs/architecture/adr/0012-bundle-vendor-library.md`         | 外部ライブラリは CDN から読まず、同梱して自分で配る                        |
+| `docs/architecture/adr/0013-tolerate-missing-display.md`      | 表示物が1つ欠けても起動失敗にしない                                        |
+| `docs/architecture/adr/0014-no-bundled-character-asset.md`    | キャラクター素材はリポジトリに同梱しない                                   |
+| `docs/architecture/adr/0015-single-host-port.md`              | ホスト依存の操作は1つのポートにまとめる                                    |
+| `docs/architecture/adr/0016-html-instead-of-terminal.md`      | 表示はターミナル描画をやめて、すべて HTML にした                           |
+| `docs/architecture/adr/0017-serve-from-local-http.md`         | HTML はローカルの HTTP サーバから配る（ファイルに書き出さない）            |
+| `docs/architecture/adr/0018-single-page-view.md`              | ビューは1枚のページにまとめる                                              |
+| `docs/architecture/adr/0019-layer-as-directory.md`            | 層をディレクトリで表し、依存の向きをテストで縛る                           |
+| `docs/architecture/adr/0020-mixed-purity-in-adapter-file.md`  | 境界のファイルの中に、外の世界に触らない関数が混じっていてよい             |
+| `docs/architecture/adr/0021-feature-state-fold-in-feature.md` | 機能だけが動かす状態の畳み方は、その機能の shared に置く（2026-09-30）     |
+| `docs/architecture/adr/0022-three-setting-homes.md`           | 設定は誰の・何に属する値かで3つの置き場に割る（2026-10-03）                |

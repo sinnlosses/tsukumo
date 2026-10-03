@@ -356,7 +356,7 @@ pnpm run test:e2e              # E2E（組み立ててから test/e2e/ を走ら
 pnpm run test:e2e:update       # E2E の期待値（test/e2e/expected/）を書き直す。git diff で読んでから入れる
 pnpm run typecheck             # css-types のあと tsc --noEmit
 pnpm run lint                  # oxlint（--fix は lint:fix）
-pnpm run format                # oxfmt で自動整形（--check は format:check）
+pnpm run format                # ADR の一覧表と用語集の索引を見出しから書き直し、oxfmt で自動整形（--check は format:check）
 pnpm run build                 # ブラウザ側（src/browser/）を dist/browser/ に組み立てる。起動時には組み立てない
                               #   ので、pnpm install のあとと src/browser/ を直したあとに打つ
 pnpm run start                 # セッションを起こし、ページのタブを Orca 内に開く（`tsukumo` コマンドと同じ。
