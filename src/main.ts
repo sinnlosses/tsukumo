@@ -7,8 +7,7 @@ import process from "node:process"
 
 import { createCurrentCharacter } from "./current-character.ts"
 import { type Config, VIEW_PORT_ENV_NAME } from "./server/core/config.ts"
-import { closeTab, createOrcaHost, openOrReuseView } from "./server/host/adapter/orca-host.ts"
-import type { Host } from "./server/host/core/host.ts"
+import type { Host, HostResult } from "./server/host/core/host.ts"
 import { createReportImageShelf } from "./server/report/core/report-image-shelf.ts"
 import { readFakeSession } from "./server/session-driver/adapter/fake-driver.ts"
 import { createPromptImageShelf } from "./server/session-driver/core/prompt-image-shelf.ts"
@@ -20,6 +19,7 @@ import {
 } from "./server/view-server/core/port-resolution.ts"
 import { startSession } from "./session-start.ts"
 import { startViewDelivery } from "./view-delivery.ts"
+import { createHost } from "./wiring/host.ts"
 
 /** 環境変数ではなく起動の引数で選ぶもの。 */
 export type LaunchOptions = {
@@ -79,6 +79,7 @@ export async function run(config: Config, launch: LaunchOptions): Promise<number
   // 両側が同じ棚を見ないと、置いた原寸をビューが引けない。
   const promptImageShelf = createPromptImageShelf()
   const reportImageShelf = createReportImageShelf()
+  const host = createHost(config.host)
 
   const view = await startViewDelivery({
     portResolution,
@@ -107,42 +108,43 @@ export async function run(config: Config, launch: LaunchOptions): Promise<number
     reportImageShelf,
     viewPort: view.port,
     cwd: launch.cwd,
+    host,
   })
   view.connect(session)
 
   announce(view.url)
 
-  const openedTab = config.openView
-    ? await openLayoutView(createOrcaHost(), config.driver, view.url)
+  const openedView = config.openView
+    ? await openLayoutView(host, config.driver, view.url)
     : { tracked: false as const }
 
-  stopSessionOnExit(session.manager.close, openedTab)
+  stopSessionOnExit(session.manager.close, openedView)
 
   return 0
 }
 
-/** 起動時に開いた疑似セッションのタブ。これが無ければ終了時にタブを閉じない。 */
-type OpenedFakeTab =
+/** 起動時に開いた疑似セッションのビュー。これが無ければ終了時にビューを閉じない。 */
+type OpenedFakeView =
   | { readonly tracked: false }
-  | { readonly tracked: true; readonly pageId: string }
+  | { readonly tracked: true; readonly close: () => Promise<HostResult> }
 
 /**
  * プロセスが終わるときにセッションを閉じる。閉じないと claude の子プロセスが残るので、
  * 割り込み（Ctrl-C）と終了要求の両方で入力を閉じてから抜ける。
- * `openedTab` を追跡しているとき（疑似セッションでタブを開いたとき）だけ、そのタブも閉じる。
+ * `openedView` を追跡しているとき（疑似セッションでビューを開いたとき）だけ、そのビューも閉じる。
  */
-function stopSessionOnExit(closeSessions: () => void, openedTab: OpenedFakeTab): void {
+function stopSessionOnExit(closeSessions: () => void, openedView: OpenedFakeView): void {
   for (const signal of ["SIGINT", "SIGTERM"] as const) {
     process.on(signal, () => {
-      void shutdown(closeSessions, openedTab)
+      void shutdown(closeSessions, openedView)
     })
   }
 }
 
-async function shutdown(closeSessions: () => void, openedTab: OpenedFakeTab): Promise<void> {
+async function shutdown(closeSessions: () => void, openedView: OpenedFakeView): Promise<void> {
   closeSessions()
-  if (openedTab.tracked) {
-    await closeTab(openedTab.pageId)
+  if (openedView.tracked) {
+    await openedView.close()
   }
   process.exit(0)
 }
@@ -154,26 +156,18 @@ function announce(url: string): void {
 }
 
 /**
- * レイアウトページのタブを開く。失敗しても起動は続ける。
- * 疑似セッション（`driver === "fake"`）のときだけページIDを追跡して返す（終了時に閉じる対象はこれだけ）。
+ * レイアウトページのビューを開く。失敗しても起動は続ける。
+ * 疑似セッション（`driver === "fake"`）のときだけ閉じる手段を追跡して返す（終了時に閉じる対象はこれだけ）。
  */
 async function openLayoutView(
   host: Host,
   driver: Config["driver"],
   url: string,
-): Promise<OpenedFakeTab> {
-  if (driver !== "fake") {
-    const result = await host.showView(url)
-    if (!result.ok) {
-      process.stderr.write(`tsukumo: ビューのタブを開けなかった: ${result.reason}\n`)
-    }
-    return { tracked: false }
-  }
-
-  const result = await openOrReuseView(url)
+): Promise<OpenedFakeView> {
+  const result = await host.showView(url)
   if (!result.ok) {
     process.stderr.write(`tsukumo: ビューのタブを開けなかった: ${result.reason}\n`)
     return { tracked: false }
   }
-  return { tracked: true, pageId: result.pageId }
+  return driver === "fake" ? { tracked: true, close: result.close } : { tracked: false }
 }

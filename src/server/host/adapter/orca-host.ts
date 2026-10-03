@@ -19,7 +19,7 @@ import { execFile } from "node:child_process"
 
 import { isObjectType } from "remeda"
 
-import type { Host, HostResult } from "../core/host.ts"
+import type { Host, HostResult, ShowViewResult } from "../core/host.ts"
 import { type OrcaTab, parseOrcaCreatedPageId, parseOrcaTabList } from "./orca-tab.ts"
 
 const ORCA_COMMAND = "orca"
@@ -90,10 +90,17 @@ export async function closeTab(pageId: string): Promise<HostResult> {
   return result.ok ? { ok: true } : { ok: false, reason: result.reason }
 }
 
+async function showView(url: string): Promise<ShowViewResult> {
+  const result = await openOrReuseView(url)
+  return result.ok
+    ? { ok: true, close: () => closeTab(result.pageId) }
+    : { ok: false, reason: result.reason }
+}
+
 /**
  * URL のビューを見せ、使い回した・新しく開いたタブのページIDを返す。
  */
-export async function openOrReuseView(
+async function openOrReuseView(
   url: string,
 ): Promise<
   { readonly ok: true; readonly pageId: string } | { readonly ok: false; readonly reason: string }
@@ -109,11 +116,6 @@ export async function openOrReuseView(
   }
 
   return openTab(url)
-}
-
-async function showView(url: string): Promise<HostResult> {
-  const result = await openOrReuseView(url)
-  return result.ok ? { ok: true } : { ok: false, reason: result.reason }
 }
 
 /**

@@ -83,9 +83,10 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 
 - **英語識別子**: `host`
 - **定義**: tsukumo のページを出す相手。実測環境では Orca。**頼む仕事はビューを見せること
-  （`showView`）だけ**で、それ以外の依存は持たない
+  （`showView`）とファイルを開くこと（`openFile`）だけ**で、それ以外の依存は持たない
 - **注記**: ホストに依存する操作は1つのポート（`src/server/host/core/host.ts`）の裏に置き、実装は
-  アダプタ（`src/server/host/adapter/orca-host.ts`）に閉じ込める
+  アダプタ（`src/server/host/adapter/orca-host.ts` と、何も開かない `none-host.ts`）に閉じ込める。
+  どれを使うかは `TSUKUMO_HOST` で選ぶ
   （`docs/architecture/adr/0015-single-host-port.md`。「アダプタ」の項は「通信（移行後）」にある）
 - **注記**: **「本体」とは別のもの**。本体は Claude Code の CLI を指す
 - **避ける言い方**: 端末環境、プラットフォーム、シェル

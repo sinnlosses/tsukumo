@@ -267,13 +267,17 @@ describe("server/ の共有の箱", () => {
 
 // `orca` コマンドを起こすのはアダプタ1つに閉じ込める（docs/architecture.md「1ファイル = 1つの境界」）。
 // `execFile("orca", …)` のような呼び出しは必ずコマンド名の文字列リテラル "orca" を伴うので、
-// それをそこ以外のファイルから探す。ファイル名やバッククォートで囲んだ日本語の説明文は
-// クォートされた文字列リテラルではないので拾わない。
+// `node:child_process` を import するファイルのうちそこ以外から探す。
+// ホストの種類の値（`TSUKUMO_HOST=orca`）としての "orca" はコマンドを起こさないので拾わない。
+// ファイル名やバッククォートで囲んだ日本語の説明文はクォートされた文字列リテラルではないので拾わない。
 describe("orca コマンドを起こす箇所", () => {
   it("`orca` コマンドを呼ぶのは src/server/host/adapter/orca-host.ts だけ", () => {
     const offenders = listSourceFiles(SRC_ROOT)
       .filter((relPath) => relPath !== "server/host/adapter/orca-host.ts")
-      .filter((relPath) => /["']orca["']/.test(readFileSync(`${SRC_ROOT}/${relPath}`, "utf8")))
+      .filter((relPath) => {
+        const content = readFileSync(`${SRC_ROOT}/${relPath}`, "utf8")
+        return /from\s+["']node:child_process["']/.test(content) && /["']orca["']/.test(content)
+      })
 
     expect(offenders).toEqual([])
   })

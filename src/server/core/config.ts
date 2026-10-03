@@ -26,6 +26,8 @@ export const CHARACTER_ENV_NAME = "TSUKUMO_CHARACTER"
 export const OPEN_VIEW_ENV_NAME = "TSUKUMO_OPEN_VIEW"
 /** セッションの駆動（`sdk` / `fake`。既定は `sdk`）。 */
 export const DRIVER_ENV_NAME = "TSUKUMO_DRIVER"
+/** ビューとファイルを開くホスト（`orca` / `none`。既定は `orca`）。 */
+export const HOST_ENV_NAME = "TSUKUMO_HOST"
 /** fake driver で、起こした直後に流す場面の名前（疑似セッションの `turns[].name`）。 */
 export const FAKE_SCENE_ENV_NAME = "TSUKUMO_FAKE_SCENE"
 /** `1` で復元せず新規に起こす（`docs/requirements.md`「逃げ道」）。 */
@@ -58,6 +60,12 @@ export const CLAUDE_CONFIG_DIR_ENV_NAME = "CLAUDE_CONFIG_DIR"
  */
 export type DriverKind = "sdk" | "fake"
 
+/**
+ * ビューとファイルを開くホストの種類。
+ * `none` は何も開かない（URL は起動時に出るので手で開く）。
+ */
+export type HostKind = "orca" | "none"
+
 export type Config = {
   /** `TSUKUMO_VIEW_PORT` の生の値。既定か明示かの区別とずらす判断は `resolveViewPort` が持つ。 */
   readonly rawViewPort: string | undefined
@@ -67,6 +75,7 @@ export type Config = {
   readonly character: string | undefined
   readonly openView: boolean
   readonly driver: DriverKind
+  readonly host: HostKind
   /**
    * fake driver で名指しする場面（未設定なら undefined ＝ 依頼を受けるまで `opening` だけ）。
    * `driver` が `sdk` のときは効かない。
@@ -96,6 +105,7 @@ export function readConfig(env: Readonly<Record<string, string | undefined>>): C
     character: nonEmpty(env[CHARACTER_ENV_NAME]),
     openView: env[OPEN_VIEW_ENV_NAME]?.trim() !== "0",
     driver: env[DRIVER_ENV_NAME]?.trim() === "fake" ? "fake" : "sdk",
+    host: env[HOST_ENV_NAME]?.trim() === "none" ? "none" : "orca",
     fakeScene: nonEmpty(env[FAKE_SCENE_ENV_NAME]),
     newSession: env[NEW_SESSION_ENV_NAME]?.trim() === "1",
     quickVisit: env[VISIT_QUICK_ENV_NAME]?.trim() === "1",

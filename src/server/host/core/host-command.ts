@@ -6,7 +6,7 @@ import type { FeatureCommandTable } from "../../core/command-receiver.ts"
 
 export type HostCommandPorts = {
   /**
-   * レポートに書かれたパスを Orca のエディタで開き、開けたかどうかを返す。
+   * レポートに書かれたパスをホストのエディタで開き、開けたかどうかを返す。
    * git 管理下の一覧にあるかの確かめ（`openTrackedFile`）を通したものを渡す。
    */
   readonly openFile: (path: string) => Promise<boolean>

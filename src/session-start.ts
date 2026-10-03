@@ -11,6 +11,7 @@ import { createChatArchive } from "./server/chat/adapter/chat-archive.ts"
 import { createContextUsageLog } from "./server/context-usage/adapter/context-usage-log.ts"
 import type { Config } from "./server/core/config.ts"
 import { createExperienceMetricLog } from "./server/experience-metric/adapter/experience-metric-log.ts"
+import type { Host } from "./server/host/core/host.ts"
 import { readReportImageFile } from "./server/report/adapter/report-image-file.ts"
 import { createReportUsageLog } from "./server/report/adapter/report-usage-log.ts"
 import type { ReportImageShelf } from "./server/report/core/report-image-shelf.ts"
@@ -47,6 +48,8 @@ export type SessionStartOptions = {
   readonly viewPort: number
   /** claude の作業先（tsukumo を起こしたディレクトリ）。 */
   readonly cwd: string
+  /** レポートのパスを開くホスト。 */
+  readonly host: Host
 }
 
 /** 起こしたセッションと、開いたタブがそれを触るコマンドの手続き。 */
@@ -85,7 +88,7 @@ export async function startSession(options: SessionStartOptions): Promise<Starte
   const usageReview = wireUsageReview()
   const repository = wireRepository(context)
   const achievement = wireAchievement(context)
-  const host = wireHost(context)
+  const host = wireHost(context, options.host)
   const characterPack = wireCharacterPack(character)
 
   const manager = createSessionManager({

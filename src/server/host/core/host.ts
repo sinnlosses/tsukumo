@@ -4,18 +4,23 @@
 //
 // 失敗を例外にしない。ホストのコマンドが無い環境ではその操作を諦めて動作を続けるので、成否を戻り値で返す。
 //
-// 操作は「ビューを見せる」と「ファイルを開く」の2つだけ。
+// 操作は「ビューを見せる」と「ファイルを開く」の2つだけ（見せたビューを閉じる手段は「見せる」の結果に付く）。
 // 画面も入力もブラウザのページ側で完結するので、ホストに頼るのは「そのページをどこかに出す」と「レポートに書かれたファイルをホストのエディタで開く」に絞ってある。
 
 /** ホストへの依頼の結果。失敗しても呼び出し側は続行できる。 */
 export type HostResult = { readonly ok: true } | { readonly ok: false; readonly reason: string }
+
+/** ビューを見せた結果。見せられたときは、そのビューを閉じる手段が付く。 */
+export type ShowViewResult =
+  | { readonly ok: true; readonly close: () => Promise<HostResult> }
+  | { readonly ok: false; readonly reason: string }
 
 export type Host = {
   /**
    * URL のビューを見えている状態にする。まだ無ければ開き、既にあればその内容を最新にする。
    * 同じ URL で何度呼んでもビューは1つ。
    */
-  readonly showView: (url: string) => Promise<HostResult>
+  readonly showView: (url: string) => Promise<ShowViewResult>
   /**
    * ファイルを1つ、ホストのエディタで開く。`path` は cwd 相対。
    * 任意の文字列を通してよいかどうかは判断しないので、呼び出し側が git 管理下にあるかを確かめてから渡す（`openTrackedFile`）。
