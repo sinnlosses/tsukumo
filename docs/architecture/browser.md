@@ -143,6 +143,16 @@ class 名は用語集の語（`balloon` / `portrait` / `turn-header` など）�
 実際の名前と同じハッシュ付きの名前を生成するので、これが無いと部品テストが綴りで引けない。
 CSS に無い名前は `undefined` のままなので、**綴りを間違えるとテストで落ちる**。
 
+**customizable select（`appearance: base-select`）の落とし穴**（先例は `run-setting-select.module.css`）：
+
+- `::picker(select)` に `display` を無条件に書くと、閉じたときのブラウザ既定の `display: none` が
+  上書きされ、閉じた口の上に一覧が残って隣の口のクリックを塞ぐ。**`display` は `:popover-open` の中だけに書く**
+- `<option>` に手で `aria-selected` を付けると、↑↓ で動いても Enter で値が確定しない。
+  **選ばれた行の見た目は `:checked` で当てる**
+- `position-area` を指定しないと、窓の右端に近い口の一覧が窓の外へはみ出る。
+  **`position-area: bottom span-left` で左へ吊り、`margin` で窓の縁から離す**。柱の中など吊る向きが
+  違う口は、修飾子の class で上書きする
+
 ### `components/ui/` の部品（variant の作法と一覧）
 
 **語彙を持たない部品は、見た目の違いを variant（props の文字列リテラルの合併型）で表し**、呼び出しを
