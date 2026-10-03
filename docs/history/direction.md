@@ -3,6 +3,24 @@
 `develop/direction.md` に書かれたユーザーからの指示を、タスク化した時点で**当時の記述のまま**
 ここへ移す（`docs/workflow.md`「指示メモ」参照）。新しいものを上に足す。**後から書き換えない。**
 
+## 2026-10-04 16進の色を `theme.css` の外に書くと落ちる検査を足す
+
+（GH-307 にした。値として効いている16進は `character-view.module.css` のマスクの `#000` だけで、`task-board.module.css` と `session-switcher.module.css` の2本はコメントの中だったので、検査はコメント行を除く）
+
+- 出典: ドラフト `develop/draft/2026-10-03-hex-color-only-in-theme-check.md`「16進の色を `theme.css` の外に書くと落ちる検査を足し、いま外に書かれている3本をトークンに寄せる（振り返り: GH-277）」。利用者が `/plan-tasks` の問いでタスクにすると選んだ
+- 札: 黄 制約違反（11回目）
+- 根拠: GH-277 で色の値の正典を `theme.css` の1か所にした。`browser.md`「CSS」は「16進の色を書いてよいのは `theme.css` だけ」と定めているが、機械の検査は無く、受け入れで `grep -rlE '#[0-9a-fA-F]{3,8}\b' src/browser --include='*.css'` を打つと `task-board.module.css`・`session-switcher.module.css`・`character-view.module.css` の3本に16進が直に書かれていた
+- 出し先: 仕組みで塞ぐ。`test/architecture.test.ts`（か lint）に、`src/browser/` の `*.css` のうち `styles/theme.css` 以外で16進の色を書くと落ちる検査を足し、3本の16進をトークン（`var(--…)` か `color-mix`）に置き換えるタスクにする。描画が変わりうるので目視の段を入れる
+
+## 2026-10-04 ADR の一覧表と用語集の索引を見出しから機械で書き直す
+
+（GH-308 にした）
+
+- 出典: ドラフト `develop/draft/2026-10-03-generate-adr-table-and-glossary-index.md`「ADR の一覧表と用語集の索引の収録語を、見出しから機械で書き直す（振り返り: GH-279）」。利用者が `/plan-tasks` の問いでタスクにすると選んだ
+- 札: 黄 文書の重さ（1回目）
+- 根拠: GH-279 は設計の決定1件で文書5ファイルを直し、そのうち2か所は中身ではなく一覧の写し（`docs/architecture.md`「設計判断」の ADR 表に ADR の題を1行、`docs/glossary.md`「用語の索引」の収録語の列に見出し名を1語）だった。どちらも元の見出し（ADR の `# ` 行・用語集の `### ` 行）をそのまま写したもので、写し忘れても検査は落ちない
+- 出し先: タスク。`pnpm run format`（か `scripts/` の整形）が ADR の題と用語集の `### ` 見出しから2つの一覧を書き直し、`pnpm run check` が食い違いで落ちるようにする。次に ADR か用語を足すときに手で直す行が1つずつ減る
+
 ## 2026-10-03 委譲中も合図ごとに中間レポートを出す
 
 （GH-306 にした）
