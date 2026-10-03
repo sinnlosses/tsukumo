@@ -1244,6 +1244,9 @@ describe("toSessionEvents（委譲の合図）", () => {
     const parent = "toolu_sub_1"
 
     expect(signalsOf(sendMessage({ to: "main", message: "架空の伝言" }, parent))).toEqual([])
+    expect(signalsOf(sendMessage({ to: "main", message: "状況 | 計画 | 架空" }, parent))).toEqual(
+      [],
+    )
     expect(
       signalsOf(sendMessage({ to: "main", message: "架空\n状況 | 1/2 | 架空" }, parent)),
     ).toEqual([])

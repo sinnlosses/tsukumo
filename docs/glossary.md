@@ -308,8 +308,8 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
   （`docs/architecture/screen-design.md`「いまの作業」「進み具合の帯」、`docs/architecture/display.md`「段取り」）
 - **注記**: **段はファイル単位・操作単位で切らない**（「今の形を調べる」「文書と検証を揃える」くらいの
   まとまり）。範囲は依頼1つで、その依頼の最後の `work-plan` の記録が今の段取り。記録から導くだけで
-  状態に別の入れ物を持たない（`src/shared/session/work-plan.ts`）。記録は出どころ（`source`: `main` か
-  `delegate-signal`）を持ち、委譲中は**委譲の合図**からも引かれる
+  状態に別の入れ物を持たない（`src/shared/session/work-plan.ts`）。記録は出どころ（`source`: `main`・
+  `delegate-signal`・`delegate-ended`）を持ち、委譲中は**委譲の合図**からも引かれる
 - **避ける言い方**: 計画・プラン（契約の「プラン」と紛れる）、ステップ（依頼の手順と紛れる）、
   フェーズ（段と言う）
 
@@ -327,11 +327,13 @@ sed -n '/^### 立ち絵/,/^#\{2,4\} /p' docs/glossary.md
 ### 委譲の合図
 
 - **英語識別子（予定）**: `delegateSignal`（イベントは `delegate-signal`。欄は `step`（済んだ段の番号。1始まり）と
-  `stepCount`（段の数））
+  `stepCount`（段の数）。委譲先が終わったときに積み直す段取りの記録の出どころは `delegate-ended`）
 - **定義**: 背景で委譲したサブエージェントが `SendMessage({ to: "main" })` で送る `状況 | n/N | …` の1行。
   tsukumo は1行目の `n/N` だけを読み、段取りを「計画・N 段・受け入れ」に引き直して n 段目まで済んだ位置にする
-- **注記**: 読む元は委譲先の `SendMessage` の呼び出しで、中身の文は運ばない。合図から引いた段取りが同じ依頼に
-  できたあとは、メインの `work_plan` は全部の段を終えた呼び出しだけが効く（`docs/architecture/display.md`「段取り」）
+- **注記**: 読む元は委譲先の `SendMessage` の呼び出しで、中身の文は運ばない。同じ依頼の最後の段取りが合図から
+  引いたものなら、委譲先が背景で動いているあいだ、メインの `work_plan` は全部の段を終えた呼び出しだけが効く
+  （`docs/architecture/display.md`「段取り」）。`## やること` を書く前の計画だけの回は、`n/N` を入れない
+  `状況 | 計画 | …` で送らせる
 - **避ける言い方**: 進捗報告、状況報告（`report` と紛れる）
 
 ### remember ツール

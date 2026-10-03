@@ -1497,6 +1497,73 @@ describe("applySessionEvent（委譲の合図と段取り）", () => {
     })
   })
 
+  describe("委譲先が背景から居なくなったとき", () => {
+    const backgroundTasks = (...kinds: readonly BackgroundTask["kind"][]): SessionEvent => ({
+      kind: "background-tasks-changed",
+      tasks: kinds.map((kind, index) => ({
+        taskId: `架空のタスク${String(index)}`,
+        kind,
+        description: "架空の説明",
+      })),
+    })
+    const delegateSignal = (step: number, stepCount: number): SessionEvent => ({
+      kind: "delegate-signal",
+      step,
+      stepCount,
+    })
+    const headingPhases = [
+      "計画",
+      "架空の見出し1",
+      "架空の見出し2",
+      "架空の見出し3",
+      "架空の見出し4",
+      "受け入れ",
+    ]
+    const headingPlan: SessionEvent = {
+      kind: "work-plan",
+      phases: headingPhases,
+      current: 1,
+      phaseSummary: "架空のまとめ。",
+    }
+
+    it("計画の回の合図のあとにメインが渡した見出しの段取りが効き、実装の回の合図はその名前のまま進む", () => {
+      const plan = currentPlan(
+        apply(
+          request,
+          backgroundTasks("agent"),
+          delegateSignal(1, 3),
+          backgroundTasks(),
+          headingPlan,
+          backgroundTasks("agent"),
+          delegateSignal(2, 4),
+        ),
+      )
+
+      expect(plan).toEqual({ kind: "planned", phases: headingPhases, current: 3, phaseSummary: "" })
+    })
+
+    it("サブエージェントが背景に残るあいだは、シェルが出入りしてもメインの途中の段取りは帯を変えない", () => {
+      const afterSignal = apply(request, backgroundTasks("agent"), signal(2))
+      const shellCameAndWent = apply(
+        request,
+        backgroundTasks("agent"),
+        signal(2),
+        backgroundTasks("agent", "shell"),
+        backgroundTasks("agent"),
+        mainPlan(1, "架空のまとめ。"),
+      )
+
+      expect(currentPlan(shellCameAndWent)).toEqual(currentPlan(afterSignal))
+    })
+
+    it("合図から引いた段取りが無ければ、顔ぶれの知らせは記録を足さない", () => {
+      const before = apply(request, mainPlan(0))
+
+      expect(applySessionEvent(before, backgroundTasks("shell"), 0).records).toEqual(before.records)
+      expect(applySessionEvent(before, backgroundTasks(), 0).records).toEqual(before.records)
+    })
+  })
+
   it("次の依頼のあとは、メインの段取りが今どおり効く", () => {
     const plan = currentPlan(apply(request, signal(2), request, mainPlan(1, "架空のまとめ。")))
 

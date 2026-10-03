@@ -130,8 +130,11 @@ export type SessionRecord =
       readonly phases: readonly string[]
       readonly current: number
       readonly phaseSummary: string
-      /** メインの `work_plan` の呼び出しか、委譲の合図から引いたものか。 */
-      readonly source: "main" | "delegate-signal"
+      /**
+       * 誰の段取りか。`main` はメインの `work_plan` の呼び出し、`delegate-signal` は委譲の合図から引いたもの。
+       * `delegate-ended` は、委譲先が背景から居なくなったときに、合図から引いた段取りをそのまま積み直したもの。
+       */
+      readonly source: "main" | "delegate-signal" | "delegate-ended"
     }
   /**
    * 答え終わった質問（`question-answered`）。積むのは答えが確定した1回だけで、あとから書き換えない。
@@ -715,8 +718,14 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
       return { ...state, visitEnabled: event.visitEnabled }
     case "compact-boundary":
       return { ...state, records: [...state.records, { kind: "compact-boundary" }] }
-    case "background-tasks-changed":
-      return { ...state, backgroundTasks: event.tasks }
+    case "background-tasks-changed": {
+      const ended = delegateEndedRecords(state.records, event.tasks)
+      return {
+        ...state,
+        backgroundTasks: event.tasks,
+        records: ended.length === 0 ? state.records : [...state.records, ...ended],
+      }
+    }
     case "usage-review-stage":
     case "usage-review-result":
     case "usage-proposal-dismissed":
@@ -748,15 +757,13 @@ function foldSessionEvent(state: SessionState, event: SessionEvent, at: number):
 
 /**
  * メインの `work_plan` の呼び出しを積む記録。
- * 同じ依頼に委譲の合図から引いた段取りがあれば、全部の段を終えた呼び出しだけをその段取りの全部済みとして積み、ほかは積まない。
+ * 同じ依頼の最後の段取りが委譲の合図から引いたものなら、全部の段を終えた呼び出しだけをその段取りの全部済みとして積み、ほかは積まない。
  */
 function mainWorkPlanRecords(
   records: readonly SessionRecord[],
   event: Extract<SessionEvent, { readonly kind: "work-plan" }>,
 ): readonly SessionRecord[] {
-  const delegated = recordsOfLastRequest(records)
-    .filter(isWorkPlanRecord)
-    .findLast((record) => record.source === "delegate-signal")
+  const delegated = delegatedWorkPlanRecord(records)
   if (delegated === undefined) {
     return [
       {
@@ -771,6 +778,26 @@ function mainWorkPlanRecords(
   return event.current === event.phases.length
     ? [{ ...delegated, current: delegated.phases.length, phaseSummary: "" }]
     : []
+}
+
+/**
+ * 背景のタスクの顔ぶれが変わったときに積む記録。
+ * 顔ぶれにサブエージェントが1つも無く、同じ依頼の最後の段取りが委譲の合図から引いたものなら、それを `delegate-ended` で積み直す。
+ */
+function delegateEndedRecords(
+  records: readonly SessionRecord[],
+  tasks: readonly BackgroundTask[],
+): readonly SessionRecord[] {
+  const delegated = delegatedWorkPlanRecord(records)
+  return delegated === undefined || tasks.some((task) => task.kind === "agent")
+    ? []
+    : [{ ...delegated, source: "delegate-ended" }]
+}
+
+/** 同じ依頼の最後の段取りの記録が委譲の合図から引いたものなら、その記録。 */
+function delegatedWorkPlanRecord(records: readonly SessionRecord[]) {
+  const latest = recordsOfLastRequest(records).findLast(isWorkPlanRecord)
+  return latest?.source === "delegate-signal" ? latest : undefined
 }
 
 /** 最後の依頼より後ろの記録（依頼が無ければ全部）。 */
