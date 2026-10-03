@@ -4,7 +4,7 @@
 // ターンが1件しか無くても出す。
 // 依頼はここにしか出ない（タイトルが1行目、続きが2行目以降）ので、省くと依頼が画面から消える。
 //
-// `[` `]` で前後へ移る口はメインビューの根が受けるので、ここにはキーの字を出すだけ。
+// `[` `]` で前後へ移る口はメインビューの根が受けるので、ここではキーを `title` に添えるだけ。
 // 見ていたターンは `location.hash` に乗るので、1つ前に見ていたターンへはブラウザの戻るで帰れる。
 
 import type { ReactElement } from "react"
@@ -65,7 +65,6 @@ export function PresentationalTurnHeader({
           onClick={onOlder}
         >
           <span aria-hidden="true">‹</span>
-          <NavKey keyName={OLDER_KEY} />
         </Button>
         <Button
           variant="outline"
@@ -80,7 +79,6 @@ export function PresentationalTurnHeader({
           onClick={onNewer}
         >
           <span aria-hidden="true">›</span>
-          <NavKey keyName={NEWER_KEY} />
         </Button>
       </div>
       {/* ページの中の本物の `h2` はこれ1つ（レポートの `##` は `h4` に落とす）。
@@ -166,20 +164,6 @@ export function PresentationalTurnHeader({
         </div>
       )}
     </header>
-  )
-}
-
-function NavKey(props: { readonly keyName: string }): ReactElement {
-  return (
-    <Text
-      element="span"
-      size="label"
-      tone="inherit"
-      weight="inherit"
-      className={styles["turn-nav-key"]}
-    >
-      <span aria-hidden="true">{props.keyName}</span>
-    </Text>
   )
 }
 

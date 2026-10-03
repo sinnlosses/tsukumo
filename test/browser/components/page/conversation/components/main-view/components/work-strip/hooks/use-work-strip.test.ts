@@ -142,3 +142,28 @@ describe("useWorkStrip（時刻に依るもの）", () => {
     })
   })
 })
+
+describe("useWorkStrip（段取りが届く前）", () => {
+  it("送った直後から、段の丸の無い「作業中」の帯を回る印つきで出す", () => {
+    const state = foldTimed([[request, START]])
+
+    const strip = stripAt(state, START + 12_000)
+
+    expect(strip).toMatchObject({
+      kind: "working",
+      phases: [],
+      spinning: true,
+      headLabel: "作業中",
+      sideLabel: "経過 12秒",
+    })
+  })
+
+  it("段取りの無いまま閉じたら、帯ごと消す", () => {
+    const state = foldTimed([
+      [request, START],
+      [{ kind: "turn-finished", outcome: { kind: "completed" } }, START + 5_000],
+    ])
+
+    expect(stripAt(state, START + 6_000)).toEqual({ kind: "none" })
+  })
+})

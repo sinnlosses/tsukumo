@@ -73,8 +73,9 @@ export type WorkStripSteps = {
 /**
  * 帯に出す形。`headLabel` は丸の右の字、`sideLabel` は右端の等幅の字。
  *
- * - `none`: 段取りの無い依頼（帯ごと出さない）
- * - `working`: 中身が働くあいだ。今の段の名前・「4/7 · 経過 6分12秒」・2行目
+ * - `none`: 帯ごと出さない（段取りの無いまま閉じた依頼）
+ * - `working`: 中身が働くあいだ。送った直後から出す。今の段の名前・「4/7 · 経過 6分12秒」・2行目（段取りが届く前は段の丸が無く「作業中」）。
+ *   `spinning` は回る印を出すか（答え待ちのあいだは止める）
  * - `finished`: 中身がレポートに入れ替わったあと。済んだ姿の字・「所要 21分49秒」の1行
  */
 export type WorkStripModel =
@@ -82,6 +83,7 @@ export type WorkStripModel =
   | {
       readonly kind: "working"
       readonly phases: readonly WorkStripPhase[]
+      readonly spinning: boolean
       readonly headLabel: string
       readonly sideLabel: string
       readonly activity: WorkStripActivity
@@ -96,6 +98,8 @@ export type WorkStripModel =
     }
 
 const NO_PLAN = { kind: "none" } as const satisfies LatestWorkPlan
+
+const UNPLANNED_HEAD = "作業中"
 
 const PHASE_STATE_SUFFIX = {
   done: "（済）",
@@ -115,17 +119,20 @@ export function useWorkStrip(): WorkStripModel {
   const opened = useWorkStripSteps((state) => state.opened)
   const toggle = useWorkStripSteps((state) => state.toggle)
   const plan = turnStepList.kind === "turn" ? turnStepList.plan : NO_PLAN
-  const shown = content.kind !== "welcome" && plan.kind === "planned"
+  const working = content.kind === "work"
+  const shown = content.kind !== "welcome" && (working || plan.kind === "planned")
   const now = useNowWhile(shown && isTurnCounting(turn, backgroundTasks.length))
 
-  if (content.kind === "welcome" || turnStepList.kind !== "turn" || plan.kind !== "planned") {
+  if (content.kind === "welcome" || turnStepList.kind !== "turn") {
+    return { kind: "none" }
+  }
+  if (plan.kind !== "planned" && !working) {
     return { kind: "none" }
   }
 
-  const { phases, current } = plan
+  const { phases, current } = plan.kind === "planned" ? plan : { phases: [], current: 0 }
   const { exchange } = content
   const firstPending = pending[0]
-  const working = content.kind === "work"
   const list: WorkStripSteps["list"] =
     opened.kind === "open" && opened.exchange === exchange
       ? { kind: "open", failureSignal: opened.failureSignal }
@@ -157,8 +164,15 @@ export function useWorkStrip(): WorkStripModel {
   return {
     kind: "working",
     phases: stripPhases,
-    headLabel: phases[current] ?? `${String(phases.length)}段すべて済み`,
-    sideLabel: `${String(Math.min(current + 1, phases.length))}/${String(phases.length)} · ${elapsedLabel}`,
+    spinning: firstPending === undefined,
+    headLabel:
+      phases.length === 0
+        ? UNPLANNED_HEAD
+        : (phases[current] ?? `${String(phases.length)}段すべて済み`),
+    sideLabel:
+      phases.length === 0
+        ? elapsedLabel
+        : `${String(Math.min(current + 1, phases.length))}/${String(phases.length)} · ${elapsedLabel}`,
     activity: activityOf({
       turnStepList,
       firstPending,

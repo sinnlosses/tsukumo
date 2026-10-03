@@ -15,6 +15,23 @@
   gap: 0.75rem;
   min-width: 0;
 }
+/* 働くあいだ回る印。差し色の弧が1つだけ欠けた輪
+   （`prefers-reduced-motion: reduce` では `theme.css` の全体の規則が止める）。 */
+.work-strip-spinner {
+  flex: none;
+  box-sizing: border-box;
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid var(--rule);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: work-strip-spin 0.9s linear infinite;
+}
+@keyframes work-strip-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
 .work-strip-track {
   display: flex;
   flex: none;

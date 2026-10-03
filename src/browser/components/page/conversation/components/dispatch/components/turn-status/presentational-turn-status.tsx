@@ -13,6 +13,9 @@ import dispatchStyles from "../../dispatch.module.css"
 import type { TurnStatusModel } from "./hooks/use-turn-status.ts"
 import styles from "./turn-status.module.css"
 
+/** Command+Enter で送信できることを示す記号（`dispatch.module.css` が `::after` で描く）。 */
+const SEND_SHORTCUT_HINT = "⌘⏎"
+
 export type PresentationalTurnStatusProps = TurnStatusModel
 
 export function PresentationalTurnStatus(props: PresentationalTurnStatusProps): ReactElement {
@@ -88,6 +91,7 @@ export function PresentationalTurnStatus(props: PresentationalTurnStatusProps): 
             dispatchStyles["dispatch-send"],
             props.action.emphasis === "quiet" && dispatchStyles["is-quiet"],
           )}
+          data-shortcut={SEND_SHORTCUT_HINT}
           data-emphasis={props.action.emphasis}
         >
           {props.action.label}

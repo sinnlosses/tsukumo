@@ -671,30 +671,12 @@
                         }
                       ]
                     },
-                    {
-                      "tag": "p",
-                      "children": [
-                        {
-                          "tag": "kbd",
-                          "children": [
-                            "⏎"
-                          ]
-                        },
-                        "改行 ·",
-                        {
-                          "tag": "kbd",
-                          "children": [
-                            "⌘⏎"
-                          ]
-                        },
-                        "送る"
-                      ]
-                    },
                     "所要",
                     "0秒",
                     {
                       "tag": "button",
                       "attributes": {
+                        "data-shortcut": "⌘⏎",
                         "data-emphasis": "solid",
                         "type": "submit"
                       },

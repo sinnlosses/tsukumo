@@ -1,4 +1,4 @@
-// 進み具合の帯の器。段の丸の並び・今の段・位置と経過・手順の口の1行目と、走っている手順の2行目、押すと開く依頼の手順の一覧。
+// 進み具合の帯の器。回る印・段の丸の並び・今の段・位置と経過・手順の口の1行目と、走っている手順の2行目、押すと開く依頼の手順の一覧。
 //
 // `aria-live` は付けない。
 
@@ -29,7 +29,10 @@ export function PresentationalWorkStrip(props: {
   return (
     <section aria-label="進み具合" className={styles["work-strip"]} data-work-strip={strip.kind}>
       <div className={styles["work-strip-line"]}>
-        <PhaseTrack phases={strip.phases} />
+        {strip.kind === "working" && strip.spinning && (
+          <span className={styles["work-strip-spinner"]} aria-hidden="true" />
+        )}
+        {strip.phases.length > 0 && <PhaseTrack phases={strip.phases} />}
         <Text
           element="span"
           size="body"

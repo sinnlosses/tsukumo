@@ -42,15 +42,6 @@
                               "children": [
                                 "‹"
                               ]
-                            },
-                            {
-                              "tag": "span",
-                              "attributes": {
-                                "aria-hidden": "true"
-                              },
-                              "children": [
-                                "["
-                              ]
                             }
                           ]
                         },
@@ -69,15 +60,6 @@
                               },
                               "children": [
                                 "›"
-                              ]
-                            },
-                            {
-                              "tag": "span",
-                              "attributes": {
-                                "aria-hidden": "true"
-                              },
-                              "children": [
-                                "]"
                               ]
                             }
                           ]
@@ -115,6 +97,12 @@
                         "data-work-strip": "working"
                       },
                       "children": [
+                        {
+                          "tag": "span",
+                          "attributes": {
+                            "aria-hidden": "true"
+                          }
+                        },
                         {
                           "tag": "ol",
                           "children": [
@@ -263,25 +251,6 @@
                 {
                   "tag": "svg"
                 }
-              ]
-            },
-            {
-              "tag": "p",
-              "children": [
-                {
-                  "tag": "kbd",
-                  "children": [
-                    "⏎"
-                  ]
-                },
-                "改行 ·",
-                {
-                  "tag": "kbd",
-                  "children": [
-                    "⌘⏎"
-                  ]
-                },
-                "送る"
               ]
             },
             {

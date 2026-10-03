@@ -42,15 +42,6 @@
                               "children": [
                                 "‹"
                               ]
-                            },
-                            {
-                              "tag": "span",
-                              "attributes": {
-                                "aria-hidden": "true"
-                              },
-                              "children": [
-                                "["
-                              ]
                             }
                           ]
                         },
@@ -69,15 +60,6 @@
                               },
                               "children": [
                                 "›"
-                              ]
-                            },
-                            {
-                              "tag": "span",
-                              "attributes": {
-                                "aria-hidden": "true"
-                              },
-                              "children": [
-                                "]"
                               ]
                             }
                           ]
@@ -106,6 +88,40 @@
                         },
                         "1 / 1",
                         "最新"
+                      ]
+                    },
+                    {
+                      "tag": "section",
+                      "attributes": {
+                        "aria-label": "進み具合",
+                        "data-work-strip": "working"
+                      },
+                      "children": [
+                        {
+                          "tag": "span",
+                          "attributes": {
+                            "aria-hidden": "true"
+                          }
+                        },
+                        "作業中",
+                        "経過 1分00秒",
+                        {
+                          "tag": "button",
+                          "attributes": {
+                            "aria-disabled": "false",
+                            "aria-expanded": "false",
+                            "type": "button"
+                          },
+                          "children": [
+                            "手順 1 ▾"
+                          ]
+                        },
+                        {
+                          "tag": "p",
+                          "children": [
+                            "背景で 架空の短い待ち（2秒）"
+                          ]
+                        }
                       ]
                     },
                     {
@@ -196,27 +212,9 @@
               ]
             },
             {
-              "tag": "p",
-              "children": [
-                {
-                  "tag": "kbd",
-                  "children": [
-                    "⏎"
-                  ]
-                },
-                "改行 ·",
-                {
-                  "tag": "kbd",
-                  "children": [
-                    "⌘⏎"
-                  ]
-                },
-                "送る"
-              ]
-            },
-            {
               "tag": "button",
               "attributes": {
+                "data-shortcut": "⌘⏎",
                 "data-emphasis": "solid",
                 "type": "submit"
               },
