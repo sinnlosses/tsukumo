@@ -4,6 +4,8 @@
 // Markdown に埋める文字は行頭の塊の記法と `<` を逃がして改行を畳み、許すのはインラインの記法（inline code・太字・リンク）だけにする。
 // 逃げ道の `markdown` の塊だけは逃がさず、今の本文と同じ経路（許可リスト・mermaid・`chart`）で描く。
 
+import { countBy } from "remeda"
+
 import {
   REPORT_CELL_STATUSES,
   REPORT_MATRIX_STATUSES,
@@ -142,16 +144,24 @@ const OPTION_VERDICTS = {
   { readonly cardClass: string; readonly badgeClass: string; readonly label: string }
 >
 
-/** ファイルの変更の種別 → 行の頭に出す語。 */
-const FILE_CHANGE_LABELS = {
-  added: "追加",
-  modified: "変更",
-  deleted: "削除",
-  read: "読んだ",
+/** ファイルの変更の種別 → 札の記号・語・見た目の class（色は `report-notation.module.css` 側が持つ）。 */
+const FILE_CHANGE_BADGES = {
+  added: { symbol: "+", label: "追加", className: "file-change-added" },
+  modified: { symbol: "~", label: "変更", className: "file-change-modified" },
+  deleted: { symbol: "-", label: "削除", className: "file-change-deleted" },
+  read: { symbol: "·", label: "読んだ", className: "file-change-read" },
 } as const satisfies Record<
   Extract<ReportBlock, { readonly kind: "files" }>["items"][number]["change"],
-  string
+  { readonly symbol: string; readonly label: string; readonly className: string }
 >
+
+/** 塊の頭の合計の札と、行ごとの札を並べる順。 */
+const FILE_CHANGE_ORDER = [
+  "added",
+  "modified",
+  "deleted",
+  "read",
+] as const satisfies readonly (keyof typeof FILE_CHANGE_BADGES)[]
 
 /** `note` の種別 → 記法の class。ラベルは描く側が class から引く（`REPORT_NOTE_KINDS`）。注意・異常は筆を留める対象。 */
 const NOTE_CLASSES = {
@@ -439,16 +449,58 @@ function dimensionValueMarkdown(value: string, before: string): string {
 }
 
 /**
- * 1行に1ファイル。パスは `code` 要素にし、git 管理下のパスなら描く側の `Code` が押せるボタンにする
+ * 塊の頭に、種別ごとの合計の札を右寄せで並べ、1行に1ファイルの並びを続ける。
+ * パスは `code` 要素にし、git 管理下のパスなら描く側の `Code` が押せるボタンにする
  * （パスの中の inline code の記法は解かない）。
  */
 function filesMarkdown(block: Extract<ReportBlock, { readonly kind: "files" }>): string {
+  const summaryHtml = filesSummaryHtml(block.items)
   const rows = block.items.map(({ path, change, note }) => {
-    const noteHtml =
-      note.trim() === "" ? "" : `<span class="file-note">${htmlInlineWithCode(note)}</span>`
-    return `<div class="file"><span class="file-change">${FILE_CHANGE_LABELS[change]}</span><code>${htmlInline(path)}</code>${noteHtml}</div>`
+    const noteHtml = fileNoteHtml(change, note)
+    return `<div class="file">${fileChangeBadgeHtml(change, "")}<code>${filePathHtml(path)}</code>${noteHtml}</div>`
   })
-  return `<div class="files">${rows.join("")}</div>`
+  return `<div class="files">${summaryHtml}${rows.join("")}</div>`
+}
+
+/** 種別ごとの件数が1つでもある札だけを、`FILE_CHANGE_ORDER` の順で並べる。 */
+function filesSummaryHtml(
+  items: Extract<ReportBlock, { readonly kind: "files" }>["items"],
+): string {
+  const counts = countBy(items, (item) => item.change)
+  const badges = FILE_CHANGE_ORDER.filter((change) => (counts[change] ?? 0) > 0).map((change) =>
+    fileChangeBadgeHtml(change, ` ${counts[change]}`),
+  )
+  return `<div class="files-summary">${badges.join("")}</div>`
+}
+
+function fileChangeBadgeHtml(change: keyof typeof FILE_CHANGE_BADGES, countSuffix: string): string {
+  const badge = FILE_CHANGE_BADGES[change]
+  return (
+    `<span class="file-change ${badge.className}">` +
+    `<span class="file-change-symbol">${badge.symbol}</span>${badge.label}${countSuffix}</span>`
+  )
+}
+
+/** 追加で説明が無い行は「新しく作った」を補足色で入れ、ほかの種別で説明が無い行は列を空にする。 */
+function fileNoteHtml(change: keyof typeof FILE_CHANGE_BADGES, note: string): string {
+  if (note.trim() !== "") {
+    return `<span class="file-note">${htmlInlineWithCode(note)}</span>`
+  }
+  return change === "added" ? '<span class="file-note file-note-empty">新しく作った</span>' : ""
+}
+
+/**
+ * パスをフォルダ（暗い字）とファイル名（明るい字）の2つの `span` に分け、フォルダの「/」の後にだけ
+ * `<wbr>` を置く（ファイル名は途中で割らない）。
+ */
+function filePathHtml(path: string): string {
+  const lastSlash = path.lastIndexOf("/")
+  if (lastSlash === -1) {
+    return `<span class="file-path-name">${htmlInline(path)}</span>`
+  }
+  const folderHtml = htmlInline(path.slice(0, lastSlash + 1)).replaceAll("/", "/<wbr>")
+  const nameHtml = htmlInline(path.slice(lastSlash + 1))
+  return `<span class="file-path-folder">${folderHtml}</span><span class="file-path-name">${nameHtml}</span>`
 }
 
 type ListBlock = Extract<ReportBlock, { readonly kind: "list" }>

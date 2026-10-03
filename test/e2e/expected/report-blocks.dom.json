@@ -232,19 +232,45 @@
                                 "触ったファイルは4つ（架空）"
                               ]
                             },
+                            "+",
+                            "追加 1",
+                            "~",
+                            "変更 1",
+                            "-",
+                            "削除 1",
+                            "·",
+                            "読んだ 1",
+                            "+",
                             "追加",
                             {
                               "tag": "code",
                               "children": [
-                                "src/dummy/ticks.ts"
+                                "src/",
+                                {
+                                  "tag": "wbr"
+                                },
+                                "dummy/",
+                                {
+                                  "tag": "wbr"
+                                },
+                                "ticks.ts"
                               ]
                             },
                             "目盛りを読む口（架空）",
+                            "~",
                             "変更",
                             {
                               "tag": "code",
                               "children": [
-                                "src/dummy/a.ts"
+                                "src/",
+                                {
+                                  "tag": "wbr"
+                                },
+                                "dummy/",
+                                {
+                                  "tag": "wbr"
+                                },
+                                "a.ts"
                               ]
                             },
                             "定数を",
@@ -255,18 +281,36 @@
                               ]
                             },
                             "の読みに替えた（架空）",
+                            "-",
                             "削除",
                             {
                               "tag": "code",
                               "children": [
-                                "src/dummy/old-ticks.ts"
+                                "src/",
+                                {
+                                  "tag": "wbr"
+                                },
+                                "dummy/",
+                                {
+                                  "tag": "wbr"
+                                },
+                                "old-ticks.ts"
                               ]
                             },
+                            "·",
                             "読んだ",
                             {
                               "tag": "code",
                               "children": [
-                                "notes/dummy/ticks.md"
+                                "notes/",
+                                {
+                                  "tag": "wbr"
+                                },
+                                "dummy/",
+                                {
+                                  "tag": "wbr"
+                                },
+                                "ticks.md"
                               ]
                             },
                             "目盛りの決め方（架空）"

@@ -548,7 +548,7 @@ describe("reportSectionsMarkdown", () => {
     )
   })
 
-  it("files は1行に1ファイルで、種別の語・code 要素のパス・注記を並べ、注記が空なら置かない", () => {
+  it("files は頭に種別ごとの合計の札を並べ、1行に1ファイルで種別の札・パス（フォルダ・ファイル名）・注記を並べる", () => {
     const files: ReportBlock = {
       kind: "files",
       items: [
@@ -559,15 +559,45 @@ describe("reportSectionsMarkdown", () => {
       ],
       fold: "",
     }
+    const badge = (symbol: string, className: string, label: string): string =>
+      `<span class="file-change ${className}"><span class="file-change-symbol">${symbol}</span>${label}</span>`
+    const path = (folder: string, name: string): string =>
+      `<code><span class="file-path-folder">${folder}/<wbr></span>` +
+      `<span class="file-path-name">${name}</span></code>`
 
-    // パスは inline code の記法として解かず、そのまま code 要素の文字にする（バッククォートを含むパスも崩さない）。
+    // パスは inline code の記法として解かず、そのまま文字にする（バッククォートを含むパスも崩さない）。
+    // 追加で説明が無い行だけ「新しく作った」を補足で入れ、ほかの種別で説明が無い行は列を空にする。
     expect(markdownOf(files)).toBe(
       '<div class="files">' +
-        '<div class="file"><span class="file-change">変更</span><code>src/架空&lt;a&gt;.ts</code><span class="file-note">架空の <code>注記</code></span></div>' +
-        '<div class="file"><span class="file-change">追加</span><code>src/架空`b`.ts</code></div>' +
-        '<div class="file"><span class="file-change">削除</span><code>src/架空c.ts</code></div>' +
-        '<div class="file"><span class="file-change">読んだ</span><code>docs/架空d.md</code></div>' +
+        '<div class="files-summary">' +
+        `${badge("+", "file-change-added", "追加 1")}` +
+        `${badge("~", "file-change-modified", "変更 1")}` +
+        `${badge("-", "file-change-deleted", "削除 1")}` +
+        `${badge("·", "file-change-read", "読んだ 1")}` +
+        "</div>" +
+        `<div class="file">${badge("~", "file-change-modified", "変更")}` +
+        `${path("src", "架空&lt;a&gt;.ts")}` +
+        '<span class="file-note">架空の <code>注記</code></span></div>' +
+        `<div class="file">${badge("+", "file-change-added", "追加")}` +
+        `${path("src", "架空`b`.ts")}` +
+        '<span class="file-note file-note-empty">新しく作った</span></div>' +
+        `<div class="file">${badge("-", "file-change-deleted", "削除")}` +
+        `${path("src", "架空c.ts")}</div>` +
+        `<div class="file">${badge("·", "file-change-read", "読んだ")}` +
+        `${path("docs", "架空d.md")}</div>` +
         "</div>",
+    )
+  })
+
+  it("files のパスは頭の「/」も含めてフォルダに残し、どの「/」の後でも折り返せる", () => {
+    const files: ReportBlock = {
+      kind: "files",
+      items: [{ path: "/架空/a.md", change: "read", note: "" }],
+      fold: "",
+    }
+
+    expect(markdownOf(files)).toContain(
+      '<code><span class="file-path-folder">/<wbr>架空/<wbr></span><span class="file-path-name">a.md</span></code>',
     )
   })
 

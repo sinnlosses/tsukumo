@@ -15,7 +15,7 @@ import { REPORT_IMAGE_SRC_PATTERN } from "../../../../../../../shared/report/rep
 import { CODE_FILE_NAME_PROPERTY } from "./code-file-name.ts"
 
 /**
- * 通してよい要素（60個）。ここに無い要素は、中身のテキストだけを残してタグが落ちる。
+ * 通してよい要素（61個）。ここに無い要素は、中身のテキストだけを残してタグが落ちる。
  *
  * `img` は通すが、`src` は tsukumo のサーバが棚から配る `/report-image/` だけを通す（外部の URL・`data:`・ほかのパスは属性ごと落ちる）。
  *
@@ -41,6 +41,7 @@ const ALLOWED_TAG_NAMES: readonly string[] = [
   "span",
   "p",
   "br",
+  "wbr",
   "hr",
   "h2",
   "h3",
@@ -192,7 +193,7 @@ const ALLOWED_STYLE_PATTERN = /^(?:(?!url\(|@import|expression\(|javascript:|<).
 const ALLOWED_MARKER_REFERENCE_PATTERN = /^url\(#[A-Za-z0-9_-]+\)$/
 
 /**
- * レポートの HTML を削ぎ落とす rehype-sanitize の schema（60要素・43属性）。
+ * レポートの HTML を削ぎ落とす rehype-sanitize の schema（61要素・43属性）。
  *
  * - `clobber: []`。defaultSchema の既定は `id` 等に `user-content-` を前置して DOM クロバー対策をするが、それをやると SVG の `marker-end="url(#foo)"` が指す `id="foo"` と値がズレて参照が壊れる
  * - `strip` に script 等7要素を指定し、中身ごと捨てる（既定の `strip` は `script` だけなので明示する必要がある）

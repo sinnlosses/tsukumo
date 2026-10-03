@@ -97,9 +97,18 @@ export const REPORT_BLOCK_MARK_NAMES = [
   "option-adopt",
   "option-reject",
   "files",
+  "files-summary",
   "file",
   "file-change",
+  "file-change-added",
+  "file-change-modified",
+  "file-change-deleted",
+  "file-change-read",
+  "file-change-symbol",
+  "file-path-folder",
+  "file-path-name",
   "file-note",
+  "file-note-empty",
 ] as const satisfies readonly string[]
 
 /** 語彙が挙げる印の名前の全体（`note` の6種 + それ以外）。 */
