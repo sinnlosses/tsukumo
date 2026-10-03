@@ -17,6 +17,13 @@ import type { Plugin } from "vite"
 const VIRTUAL_PREFIX = "\0css-module-identity:"
 const VIRTUAL_SUFFIX = ".mjs"
 
+/** CSS の選択子に書かれた class 名（コメントの中は除く）。 */
+export function cssClassNames(source: string): readonly string[] {
+  return [...source.replace(COMMENT_PATTERN, "").matchAll(CLASS_NAME_PATTERN)].flatMap(
+    ([, name]) => name ?? [],
+  )
+}
+
 /** 選択子に出てくる class 名。数字で始まる長さの単位（`.5rem`）とは重ならない。 */
 const CLASS_NAME_PATTERN = /\.(-?[A-Za-z_][A-Za-z0-9_-]*)/g
 
@@ -43,10 +50,7 @@ export function cssModuleIdentityPlugin(): Plugin {
       }
       const path = id.slice(VIRTUAL_PREFIX.length, -VIRTUAL_SUFFIX.length)
       const source = await readFile(path, "utf8")
-      const names = [...source.replace(COMMENT_PATTERN, "").matchAll(CLASS_NAME_PATTERN)].flatMap(
-        ([, name]) => name ?? [],
-      )
-      const classNames = Object.fromEntries(names.map((name) => [name, name]))
+      const classNames = Object.fromEntries(cssClassNames(source).map((name) => [name, name]))
       return `export default ${JSON.stringify(classNames)}`
     },
   }

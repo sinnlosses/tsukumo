@@ -165,8 +165,8 @@ const CHECKS_SELECTOR = `${MAIN_REGION_SELECTOR} [role="table"][aria-label="検�
 /** 結論のすぐ下の合図の行（検証結果の総括とお願いの口）。 */
 const VERDICT_SELECTOR = `${MAIN_REGION_SELECTOR} [role="group"][aria-label="検証とお願いの合図"]`
 
-/** レポートの結論の下に組む段取りの図。 */
-const WORK_PLAN_REPORT_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="report-progress_"]`
+/** 最終レポートの器。最終 `report` が届くまで現れず、中間レポートの器（`is-interim`）とは別。 */
+const WORK_PLAN_FINAL_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="is-final_"]`
 
 /** 日記帳の見開きの右ページの本文。白紙のページは別の class なので、日記が書けていないと現れない。 */
 const DIARY_BODY_SELECTOR = '[class*="diary-book-body_"]'
@@ -524,16 +524,16 @@ const CATALOG: readonly CatalogEntry[] = [
     settle: TAIL_SETTLE,
   },
   {
-    name: "work-plan-report",
-    // 最終 `report` は約10秒後に届き、結論の下に段取りの図が出る。
+    name: "work-plan-main-view",
+    // 最終 `report` は約10秒後に届き、中間レポートと段の知らせの並びの最後に最終レポートが出る。
     scene: "work-plan",
-    label: "レポートの段取り（全部の段を終えた）",
+    label: "段取りが移ったメインビュー（中間レポートと最終レポート）",
     homeSetup: { kind: "default" },
     prepare: [],
     skipReveal: true,
     settle: {
       kind: "selector",
-      selector: WORK_PLAN_REPORT_SELECTOR,
+      selector: WORK_PLAN_FINAL_SELECTOR,
       phase: "before-prepare",
     },
   },
@@ -608,9 +608,9 @@ const SCENE_TAIL_MS = 2000
 
 /**
  * `settle.kind === "selector"` の件が、その要素が現れるまで待つ上限（ミリ秒）。
- * `report-checks` の2件目の `report` が届く約7秒より余裕を持たせる。
+ * `report-checks` の2件目の `report` が届く約7秒、`work-plan-main-view` の最終 `report` が届く約10秒より余裕を持たせる。
  */
-const SETTLE_SELECTOR_TIMEOUT_MS = 12_000
+const SETTLE_SELECTOR_TIMEOUT_MS = 20_000
 
 /**
  * 操作を1つ当てるのに待つ上限（ミリ秒）と、当てたあとに描き直しを待つ余裕（ミリ秒）。
