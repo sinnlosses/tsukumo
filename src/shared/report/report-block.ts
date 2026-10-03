@@ -251,6 +251,7 @@ export const REPORT_MERMAID_KINDS = [
 const mermaidBlockSchema = z
   .object({
     kind: z.literal("mermaid"),
+    title: inlineText.default(""),
     source: z
       .string()
       .describe(
@@ -273,6 +274,7 @@ const chartSeriesSchema = z.object({
 const chartBlockSchema = z
   .object({
     kind: z.literal("chart"),
+    title: inlineText.default(""),
     chartKind: z
       .enum(REPORT_CHART_KINDS)
       .describe("bar は棒・line は折れ線・pie は円。pie は series の先頭だけを描く"),

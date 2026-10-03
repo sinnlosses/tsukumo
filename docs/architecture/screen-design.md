@@ -239,7 +239,7 @@ sed -n '/^### 13\.7 /,/^### /p' docs/architecture/screen-design.md
 **見本と揃えなかったもの**は書体（見本の丸ゴシック・IBM Plex Mono。`--font-sans` / `--font-mono` のまま）と、
 タスクID の要素（見本の `<a href="#">` ではなくモーダルを開く `<button>`）。
 
-**流れ（`flow`）の丸・線と、画像の塊の「図 n」の番号は専用の固定色を使う**（2026-10-02 デザイン
+**流れ（`flow`）の丸・線と、図と表の題の「図 n」「表 n」の番号は専用の固定色を使う**（2026-10-02 デザイン
 「流れの塊 案A」。見本は `docs/history/mockup/report-flow-rail-2026-10-02.html`）。値は結論部の
 `report-outcome-shipped` と同じ16進だが、「完了・main へ」とは意味が別なので流用せず、読む順を示す印
 という意味を名に持つ `report-sequence-ink`（`#66d1be`）を別に立てる。暗い側は固定値を持たず

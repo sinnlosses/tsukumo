@@ -8,7 +8,7 @@ import { useScenarioRun } from "./scenario-run.ts"
 
 // report → メインビュー（記法・差し戻し・整え。docs/architecture/testing.md「E2E のシナリオの一覧」）。
 // `report` ツールの呼び出しがメインビューの Markdown へどう出るかを、疑似セッションの5つの場面で
-// 確かめる（`report-defaults` は既定値のある欄を省いたレポート、`report-compare` は見比べの塊、`report-dimension` は寸法図の塊、`report-image` は画像の塊、`report-matrix` は対応表の塊、`report-stats` は数の要約の全体の数）: `notation`（記法の一覧）、`report-rejected`（差し戻されたレポートは描かれず、
+// 確かめる（`report-defaults` は既定値のある欄を省いたレポート、`report-compare` は見比べの塊、`report-dimension` は寸法図の塊、`report-image` は画像の塊、`report-caption` は図と表の題と番号、`report-matrix` は対応表の塊、`report-stats` は数の要約の全体の数）: `notation`（記法の一覧）、`report-rejected`（差し戻されたレポートは描かれず、
 // 直したレポートだけが残る）、`report-tidied`（整形で落ちる行は描かれず、残りはそのまま出る）、
 // `report-blocks`（候補の比較と触ったファイルの一覧の塊）、`report-chart`（棒・折れ線・円の
 // グラフの塊）。
@@ -135,6 +135,20 @@ describe("report → メインビュー", () => {
       domRoots: ["main"],
     })
     // 場面の report より先に、塊が指す画像を cwd に置く（無いほうの画像は置かない）。
+    mkdirSync(join(room.cwd, "report-image-fixture"))
+    writeFileSync(join(room.cwd, "report-image-fixture", "after.png"), fictionalPng(8, 4))
+
+    await room.waitForEvent("turn-finished")
+    await room.settleAndMatch(ELAPSED_MS)
+  })
+
+  it("図は題が本体の下に「図 n」つきで、表は題が本体の上に「表 n」つきで出て、番号は別々に数える", async () => {
+    const room = await run.open({
+      scenario: "report-caption",
+      scene: "report-caption",
+      viewport: "wide",
+      domRoots: ["main"],
+    })
     mkdirSync(join(room.cwd, "report-image-fixture"))
     writeFileSync(join(room.cwd, "report-image-fixture", "after.png"), fictionalPng(8, 4))
 

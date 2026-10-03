@@ -20,6 +20,23 @@ const section = (blocks: readonly ReportBlock[], heading = ""): ReportSection =>
 const markdownOf = (block: ReportBlock): string =>
   reportSectionsMarkdown([section([block])], NO_IMAGES)
 const text = (value: string): ReportBlock => ({ kind: "text", text: value, fold: "" })
+const captionRow = (label: "図" | "表", ordinal: number, title = ""): string =>
+  `<div class="caption"><span class="caption-number">${label} ${String(ordinal)}</span>` +
+  `${title === "" ? "" : `<span class="caption-text">${title}</span>`}</div>`
+/** 図の包み。本体が HTML だけなら空行を挟まず、題の行は本体のあと。 */
+const figureCaptioned = (body: string, title = "", ordinal = 1, fit = true): string =>
+  `<div class="captioned${fit ? " captioned-fit" : ""}">${body}${captionRow("図", ordinal, title)}</div>`
+/** 図の包み（本体が Markdown のフェンスで、空行で区切る）。 */
+const fencedFigureCaptioned = (body: string, title = "", ordinal = 1): string =>
+  `<div class="captioned">\n\n${body}\n\n${captionRow("図", ordinal, title)}\n\n</div>`
+/** 図の包みから、本体のフェンスだけを取り出す。 */
+const chartFenceOf = (block: ReportBlock): string =>
+  markdownOf(block)
+    .replace(/^<div class="captioned">\n\n/, "")
+    .replace(/\n\n<div class="caption">.*<\/div>\n\n<\/div>$/, "")
+/** 表の包み。題の行は本体の前、本体のあとに空行で閉じる。 */
+const tableCaptioned = (body: string, title = "", ordinal = 1): string =>
+  `<div class="captioned captioned-fit">\n\n${captionRow("表", ordinal, title)}\n\n${body}\n\n</div>`
 
 describe("reportSectionsMarkdown", () => {
   it("逃げ道の塊は中身をそのまま出し、本文から畳んだ節は元の本文と同じ Markdown になる", () => {
@@ -67,7 +84,7 @@ describe("reportSectionsMarkdown", () => {
     )
   })
 
-  it("表は添え書きの見出しのあとに GFM の表で組み、状態のセルは記号と文を1行に並べたタイルにし、下に出た状態だけの凡例を添える（記号は role=img の aria-label で状態語を読み上げる）", () => {
+  it("表は番号つきの題の行のあとに GFM の表で組み、状態のセルは記号と文を1行に並べたタイルにし、下に出た状態だけの凡例を添える（記号は role=img の aria-label で状態語を読み上げる）", () => {
     const table: ReportBlock = {
       kind: "table",
       title: "架空の表",
@@ -81,17 +98,18 @@ describe("reportSectionsMarkdown", () => {
     }
 
     expect(markdownOf(table)).toBe(
-      [
-        '<div class="table-title">架空の表</div>',
-        "",
-        "| 項目 | 結果 | 備考 |",
-        "| --- | --- | --- |",
-        '| 架空の a\\|b | <span class="cell-status cell-status-ok"><span class="cell-status-mark cell-status-ok" role="img" aria-label="OK">✓</span><span class="cell-status-text">通過</span></span> | 架空の備考 |',
-        '| 架空の c | <span class="cell-status cell-status-ng"><span class="cell-status-mark cell-status-ng" role="img" aria-label="NG">✕</span><span class="cell-status-text">NG</span></span> | 架空の備考 |',
-        '| 架空の d | <span class="cell-status-none">架空の同じ</span> | 架空の備考 |',
-        "",
-        '<div class="table-status-legend"><span class="table-status-legend-item"><span class="table-status-legend-swatch cell-status-ok" aria-hidden="true"></span><span class="cell-status-mark cell-status-ok" aria-hidden="true">✓</span> OK</span><span class="table-status-legend-item"><span class="table-status-legend-swatch cell-status-ng" aria-hidden="true"></span><span class="cell-status-mark cell-status-ng" aria-hidden="true">✕</span> NG</span></div>',
-      ].join("\n"),
+      tableCaptioned(
+        [
+          "| 項目 | 結果 | 備考 |",
+          "| --- | --- | --- |",
+          '| 架空の a\\|b | <span class="cell-status cell-status-ok"><span class="cell-status-mark cell-status-ok" role="img" aria-label="OK">✓</span><span class="cell-status-text">通過</span></span> | 架空の備考 |',
+          '| 架空の c | <span class="cell-status cell-status-ng"><span class="cell-status-mark cell-status-ng" role="img" aria-label="NG">✕</span><span class="cell-status-text">NG</span></span> | 架空の備考 |',
+          '| 架空の d | <span class="cell-status-none">架空の同じ</span> | 架空の備考 |',
+          "",
+          '<div class="table-status-legend"><span class="table-status-legend-item"><span class="table-status-legend-swatch cell-status-ok" aria-hidden="true"></span><span class="cell-status-mark cell-status-ok" aria-hidden="true">✓</span> OK</span><span class="table-status-legend-item"><span class="table-status-legend-swatch cell-status-ng" aria-hidden="true"></span><span class="cell-status-mark cell-status-ng" aria-hidden="true">✕</span> NG</span></div>',
+        ].join("\n"),
+        "架空の表",
+      ),
     )
   })
 
@@ -108,12 +126,14 @@ describe("reportSectionsMarkdown", () => {
     }
 
     expect(markdownOf(table)).toBe(
-      [
-        "| 項目 | 件数 | 割合 |",
-        "| --- | ---: | --- |",
-        "| 架空の a | 312 | 12.5% |",
-        "| 架空の b | -8 | 架空の8件 |",
-      ].join("\n"),
+      tableCaptioned(
+        [
+          "| 項目 | 件数 | 割合 |",
+          "| --- | ---: | --- |",
+          "| 架空の a | 312 | 12.5% |",
+          "| 架空の b | -8 | 架空の8件 |",
+        ].join("\n"),
+      ),
     )
   })
 
@@ -130,12 +150,14 @@ describe("reportSectionsMarkdown", () => {
     }
 
     expect(markdownOf(table)).toBe(
-      [
-        "| 項目 | 件数 | 名前 |",
-        "| --- | ---: | --- |",
-        '| 架空の a | <span class="change-from">12 →</span> 8 | <span class="change-from">`old\\|x` →</span> 架空の新 |',
-        "| 架空の b | 3 | 架空の据え置き |",
-      ].join("\n"),
+      tableCaptioned(
+        [
+          "| 項目 | 件数 | 名前 |",
+          "| --- | ---: | --- |",
+          '| 架空の a | <span class="change-from">12 →</span> 8 | <span class="change-from">`old\\|x` →</span> 架空の新 |',
+          "| 架空の b | 3 | 架空の据え置き |",
+        ].join("\n"),
+      ),
     )
   })
 
@@ -167,12 +189,14 @@ describe("reportSectionsMarkdown", () => {
     }
 
     expect(markdownOf(table)).toBe(
-      [
-        "| 項目 | 件数 |",
-        "| --- | ---: |",
-        '| 架空の a | <span class="cell-numeric"><span class="cell-bar" style="width: 100%"></span><span class="cell-numeric-value">40</span></span> |',
-        '| 架空の b | <span class="cell-numeric"><span class="cell-bar" style="width: 25%"></span><span class="cell-numeric-value">10</span></span> |',
-      ].join("\n"),
+      tableCaptioned(
+        [
+          "| 項目 | 件数 |",
+          "| --- | ---: |",
+          '| 架空の a | <span class="cell-numeric"><span class="cell-bar" style="width: 100%"></span><span class="cell-numeric-value">40</span></span> |',
+          '| 架空の b | <span class="cell-numeric"><span class="cell-bar" style="width: 25%"></span><span class="cell-numeric-value">10</span></span> |',
+        ].join("\n"),
+      ),
     )
   })
 
@@ -186,7 +210,7 @@ describe("reportSectionsMarkdown", () => {
     }
 
     expect(markdownOf(table)).toBe(
-      ["| 項目 | 件数 |", "| --- | ---: |", "| 架空の a | 40 |"].join("\n"),
+      tableCaptioned(["| 項目 | 件数 |", "| --- | ---: |", "| 架空の a | 40 |"].join("\n")),
     )
   })
 
@@ -203,7 +227,9 @@ describe("reportSectionsMarkdown", () => {
     }
 
     expect(markdownOf(table)).toBe(
-      ["| 項目 | 件数 |", "| --- | ---: |", "| 架空の a | 312 |", "| 架空の b | -8 |"].join("\n"),
+      tableCaptioned(
+        ["| 項目 | 件数 |", "| --- | ---: |", "| 架空の a | 312 |", "| 架空の b | -8 |"].join("\n"),
+      ),
     )
   })
 
@@ -220,7 +246,9 @@ describe("reportSectionsMarkdown", () => {
     }
 
     expect(markdownOf(table)).toBe(
-      ["| 項目 | 件数 |", "| --- | ---: |", "| 架空の a | 0 |", "| 架空の b | 0 |"].join("\n"),
+      tableCaptioned(
+        ["| 項目 | 件数 |", "| --- | ---: |", "| 架空の a | 0 |", "| 架空の b | 0 |"].join("\n"),
+      ),
     )
   })
 
@@ -237,12 +265,14 @@ describe("reportSectionsMarkdown", () => {
     }
 
     expect(markdownOf(table)).toBe(
-      [
-        "| 項目 | 件数 |",
-        "| --- | ---: |",
-        '| 架空の a | <span class="change-from">12 →</span> 8 |',
-        "| 架空の b | 3 |",
-      ].join("\n"),
+      tableCaptioned(
+        [
+          "| 項目 | 件数 |",
+          "| --- | ---: |",
+          '| 架空の a | <span class="change-from">12 →</span> 8 |',
+          "| 架空の b | 3 |",
+        ].join("\n"),
+      ),
     )
   })
 
@@ -444,7 +474,7 @@ describe("reportSectionsMarkdown", () => {
     )
   })
 
-  it("compare は2つの側を見出しと箇条の札にし、title が空なら見出し行を置かない", () => {
+  it("compare は2つの側を見出しと箇条の札にし、題の行を本体の下に置く（title が空なら番号だけ）", () => {
     const compare: ReportBlock = {
       kind: "compare",
       title: "架空の見比べ",
@@ -458,8 +488,10 @@ describe("reportSectionsMarkdown", () => {
       '<div class="compare-side"><div class="compare-heading">変更前</div><ul><li><code>a</code> を呼ぶ</li><li>架空の&lt;行&gt;</li></ul></div>' +
       '<div class="compare-side"><div class="compare-heading">変更後</div><ul><li>架空の1行</li></ul></div>'
 
-    expect(markdownOf(compare)).toBe(`**架空の見比べ**\n\n<div class="compare">${sides}</div>`)
-    expect(markdownOf({ ...compare, title: "" })).toBe(`<div class="compare">${sides}</div>`)
+    const body = `<div class="compare">${sides}</div>`
+
+    expect(markdownOf(compare)).toBe(figureCaptioned(body, "架空の見比べ", 1, false))
+    expect(markdownOf({ ...compare, title: "" })).toBe(figureCaptioned(body, "", 1, false))
   })
 
   it("dimension は領域を箱に・余白を帯と値にして上から積み、前の値を矢印で添え、size が空の領域は値を置かない", () => {
@@ -480,8 +512,10 @@ describe("reportSectionsMarkdown", () => {
       '<div class="dimension-gap"><span class="dimension-band" aria-hidden="true"></span><span class="dimension-value"><span class="dimension-before">28px →</span> 26px</span></div>' +
       '<div class="dimension-part"><span class="dimension-name">架空の&lt;本文&gt;</span></div>'
 
-    expect(markdownOf(dimension)).toBe(`**架空の寸法**\n\n<div class="dimension">${rows}</div>`)
-    expect(markdownOf({ ...dimension, title: "" })).toBe(`<div class="dimension">${rows}</div>`)
+    const body = `<div class="dimension">${rows}</div>`
+
+    expect(markdownOf(dimension)).toBe(figureCaptioned(body, "架空の寸法"))
+    expect(markdownOf({ ...dimension, title: "" })).toBe(figureCaptioned(body))
   })
 
   it("matrix は名前だけの見出しの格子に状態の印を置き、凡例は格子に出た状態だけを並べる", () => {
@@ -499,16 +533,18 @@ describe("reportSectionsMarkdown", () => {
     const mark = (className: string, label: string, symbol: string): string =>
       `<span class="matrix-mark ${className}" role="img" aria-label="${label}">${symbol}</span>`
     expect(markdownOf(matrix)).toBe(
-      "**架空の対応**\n\n" +
+      tableCaptioned(
         '<div class="matrix">\n\n' +
-        "|  | 列\\|A | 列B |\n| --- | :---: | :---: |\n" +
-        `| 行1 | ${mark("matrix-mark-ok", "OK", "✓")} | ${mark("matrix-mark-ng", "NG", "✕")} |\n` +
-        `| 行2 | ${mark("matrix-mark-na", "該当なし", "－")} | ${mark("matrix-mark-ok", "OK", "✓")} |\n\n` +
-        '<div class="matrix-legend">' +
-        '<span class="matrix-legend-item"><span class="matrix-mark matrix-mark-ok" aria-hidden="true">✓</span> OK</span>' +
-        '<span class="matrix-legend-item"><span class="matrix-mark matrix-mark-ng" aria-hidden="true">✕</span> NG</span>' +
-        '<span class="matrix-legend-item"><span class="matrix-mark matrix-mark-na" aria-hidden="true">－</span> 該当なし</span>' +
-        "</div>\n\n</div>",
+          "|  | 列\\|A | 列B |\n| --- | :---: | :---: |\n" +
+          `| 行1 | ${mark("matrix-mark-ok", "OK", "✓")} | ${mark("matrix-mark-ng", "NG", "✕")} |\n` +
+          `| 行2 | ${mark("matrix-mark-na", "該当なし", "－")} | ${mark("matrix-mark-ok", "OK", "✓")} |\n\n` +
+          '<div class="matrix-legend">' +
+          '<span class="matrix-legend-item"><span class="matrix-mark matrix-mark-ok" aria-hidden="true">✓</span> OK</span>' +
+          '<span class="matrix-legend-item"><span class="matrix-mark matrix-mark-ng" aria-hidden="true">✕</span> NG</span>' +
+          '<span class="matrix-legend-item"><span class="matrix-mark matrix-mark-na" aria-hidden="true">－</span> 該当なし</span>' +
+          "</div>\n\n</div>",
+        "架空の対応",
+      ),
     )
   })
 
@@ -548,15 +584,21 @@ describe("reportSectionsMarkdown", () => {
     expect(
       markdownOf({ kind: "code", language: "md", path: "", source: "```ts\nx\n```", fold: "" }),
     ).toBe("````md\n```ts\nx\n```\n````")
-    expect(markdownOf({ kind: "mermaid", source: "flowchart LR\n  A --> B", fold: "" })).toBe(
-      "```mermaid\nflowchart LR\n  A --> B\n```",
-    )
+    expect(
+      markdownOf({
+        kind: "mermaid",
+        title: "架空の図",
+        source: "flowchart LR\n  A --> B",
+        fold: "",
+      }),
+    ).toBe(fencedFigureCaptioned("```mermaid\nflowchart LR\n  A --> B\n```", "架空の図"))
   })
 
   it("chart は Chart.js の設定を組んで chart フェンスに JSON で書く。pie は先頭の系列だけを使う", () => {
     expect(
-      markdownOf({
+      chartFenceOf({
         kind: "chart",
+        title: "",
         chartKind: "bar",
         labels: ["架空A", "架空B"],
         series: [{ name: "架空系列", values: [1, 2] }],
@@ -573,8 +615,9 @@ describe("reportSectionsMarkdown", () => {
         "\n```",
     )
     expect(
-      markdownOf({
+      chartFenceOf({
         kind: "chart",
+        title: "",
         chartKind: "bar",
         labels: ["架空A", "架空B"],
         series: [{ name: "架空系列", values: [1, 2] }],
@@ -591,8 +634,9 @@ describe("reportSectionsMarkdown", () => {
         "\n```",
     )
     expect(
-      markdownOf({
+      chartFenceOf({
         kind: "chart",
+        title: "",
         chartKind: "line",
         labels: ["架空A", "架空B"],
         series: [
@@ -618,8 +662,9 @@ describe("reportSectionsMarkdown", () => {
         "\n```",
     )
     expect(
-      markdownOf({
+      chartFenceOf({
         kind: "chart",
+        title: "",
         chartKind: "pie",
         labels: ["架空A", "架空B"],
         series: [
@@ -654,16 +699,16 @@ describe("reportSectionsMarkdown", () => {
     expect(
       reportSectionsMarkdown([section([image])], { kind: "shelved", toolUseId: "toolu_fictional" }),
     ).toBe(
-      `<div class="image"><img src="${reportImagePath("toolu_fictional", "架空/after.png")}" alt="架空の&lt;画面&gt;">` +
-        '<span class="image-caption"><span class="image-caption-number">図 1</span>' +
-        '<span class="image-caption-text">架空の&lt;画面&gt;</span></span></div>',
+      figureCaptioned(
+        `<img src="${reportImagePath("toolu_fictional", "架空/after.png")}" alt="架空の&lt;画面&gt;">`,
+        "架空の&lt;画面&gt;",
+      ),
     )
   })
 
   it("image の説明が空なら alt は既定の語で説明の文字は置かず、図の番号だけ付く。棚に置いていない本文では src を付けない", () => {
     expect(markdownOf({ kind: "image", path: "架空.png", caption: " ", fold: "" })).toBe(
-      '<div class="image"><img alt="画面の画像">' +
-        '<span class="image-caption"><span class="image-caption-number">図 1</span></span></div>',
+      figureCaptioned('<img alt="画面の画像">'),
     )
   })
 
@@ -683,8 +728,50 @@ describe("reportSectionsMarkdown", () => {
 
     const markdown = reportSectionsMarkdown([section([first]), section([second])], NO_IMAGES)
 
-    expect(markdown).toContain('<span class="image-caption-number">図 1</span>')
-    expect(markdown).toContain('<span class="image-caption-number">図 2</span>')
+    expect(markdown).toContain('<span class="caption-number">図 1</span>')
+    expect(markdown).toContain('<span class="caption-number">図 2</span>')
+  })
+
+  it("図の5種と表の2種は別々に1から数え、題が空でも fold の中でも数え、options は数えない", () => {
+    const image = (fold: string): ReportBlock => ({
+      kind: "image",
+      path: "架空.png",
+      caption: "",
+      fold,
+    })
+    const table: ReportBlock = {
+      kind: "table",
+      title: "",
+      columns: ["項目", "件数"],
+      rows: [["架空の a", "1"]],
+      fold: "",
+    }
+    const options: ReportBlock = {
+      kind: "options",
+      title: "",
+      items: [
+        { name: "架空の案A", verdict: "adopt", reason: "架空の理由" },
+        { name: "架空の案B", verdict: "reject", reason: "架空の理由" },
+      ],
+      fold: "",
+    }
+    const mermaid: ReportBlock = { kind: "mermaid", title: "", source: "flowchart LR", fold: "" }
+    const matrix: ReportBlock = {
+      kind: "matrix",
+      title: "",
+      columns: ["列A"],
+      rows: [{ name: "行1", cells: ["ok"] }],
+      fold: "",
+    }
+
+    const markdown = reportSectionsMarkdown(
+      [section([image(""), table, options]), section([image("架空の畳み"), mermaid, matrix])],
+      NO_IMAGES,
+    )
+
+    expect(
+      [...markdown.matchAll(/class="caption-number">([^<]+)</g)].map(([, label]) => label),
+    ).toEqual(["図 1", "表 1", "図 2", "図 3", "表 2"])
   })
 
   it("fold のある塊は details に畳む", () => {

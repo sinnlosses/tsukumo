@@ -26,7 +26,7 @@ const draft = (
 
 const text = (value: string, fold = ""): ReportBlock => ({ kind: "text", text: value, fold })
 const markdown = (value: string): ReportBlock => ({ kind: "markdown", markdown: value, fold: "" })
-const mermaid = (source: string): ReportBlock => ({ kind: "mermaid", source, fold: "" })
+const mermaid = (source: string): ReportBlock => ({ kind: "mermaid", title: "", source, fold: "" })
 const note = (): ReportBlock => ({ kind: "note", tone: "warn", text: "架空の一文。", fold: "" })
 const code = (path: string, source: string, language = "text"): ReportBlock => ({
   kind: "code",
@@ -131,6 +131,7 @@ describe("reportViolations", () => {
     it("values の数が labels と揃わない系列があれば違反", () => {
       const chart: ReportBlock = {
         kind: "chart",
+        title: "",
         chartKind: "bar",
         labels: ["架空A", "架空B"],
         series: [{ name: "架空系列", values: [1] }],
@@ -143,6 +144,7 @@ describe("reportViolations", () => {
     it("揃っていれば違反にしない", () => {
       const chart: ReportBlock = {
         kind: "chart",
+        title: "",
         chartKind: "bar",
         labels: ["架空A", "架空B"],
         series: [{ name: "架空系列", values: [1, 2] }],

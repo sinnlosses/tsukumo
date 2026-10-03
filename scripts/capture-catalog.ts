@@ -150,6 +150,10 @@ const NOTE_KINDS_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="report-note_"]`
 /** メモの塊。狭い窓では種別の並びの1枚（`notation-note`）に入りきらない。 */
 const NOTE_MEMO_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="report-note-memo_"]`
 const NOTE_FAVOR_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="report-note-favor_"]`
+/** 番号つきの題を持つ図と表の包み・寸法図。 */
+const CAPTIONED_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="report-captioned_"]`
+const CAPTIONED_FIGURE_SELECTOR = `${CAPTIONED_SELECTOR} pre.mermaid svg`
+const DIMENSION_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="report-dimension_"]`
 /** `list` の `flow`（一本道の手順）。 */
 const FLOW_SELECTOR = `${MAIN_REGION_SELECTOR} [class*="report-flow_"]`
 /**
@@ -375,6 +379,33 @@ const CATALOG: readonly CatalogEntry[] = [
     prepare: [{ kind: "scroll", selector: CHART_SELECTOR }],
     skipReveal: true,
     settle: TAIL_SETTLE,
+  },
+  {
+    name: "report-caption-table",
+    scene: "report-caption",
+    label: "図と表の題（表の題は本体の上。長い題は本体の幅で折り返す）",
+    homeSetup: { kind: "default" },
+    prepare: [{ kind: "scroll", selector: CAPTIONED_SELECTOR }],
+    skipReveal: true,
+    settle: { kind: "selector", selector: CAPTIONED_SELECTOR, phase: "before-prepare" },
+  },
+  {
+    name: "report-caption-figure",
+    scene: "report-caption",
+    label: "図と表の題（図の題は本体の下。mermaid・グラフ）",
+    homeSetup: { kind: "default" },
+    prepare: [{ kind: "scroll", selector: CAPTIONED_FIGURE_SELECTOR }],
+    skipReveal: true,
+    settle: { kind: "selector", selector: CAPTIONED_FIGURE_SELECTOR, phase: "before-prepare" },
+  },
+  {
+    name: "report-caption-dimension",
+    scene: "report-caption",
+    label: "図と表の題（見比べ・寸法図・画像）",
+    homeSetup: { kind: "default" },
+    prepare: [{ kind: "scroll", selector: DIMENSION_SELECTOR }],
+    skipReveal: true,
+    settle: { kind: "selector", selector: CAPTIONED_SELECTOR, phase: "before-prepare" },
   },
   {
     name: "notation-flow",

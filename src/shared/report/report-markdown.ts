@@ -26,14 +26,25 @@ export type ReportImageSource =
   | { readonly kind: "shelved"; readonly toolUseId: string }
   | { readonly kind: "none" }
 
+/** 題に番号を振る塊の分類。図は題が本体の下、表は題が本体の上。 */
+type CaptionKind = "figure" | "table"
+
+type CaptionCounts = Readonly<Record<CaptionKind, number>>
+
+const CAPTION_LABELS = {
+  figure: "図",
+  table: "表",
+} satisfies Record<CaptionKind, string>
+
 type SectionsFold = {
   readonly parts: readonly string[]
-  readonly imageCount: number
+  readonly counts: CaptionCounts
 }
 
 /**
  * 節の並びを1つの Markdown に組む。空の塊・空の節は置かず、節の間に {@link SECTION_BREAK_MARKDOWN} を挟む。
- * `image` の塊は、節をまたいで並びの順に数えた「図 n」の番号を1回だけ受け取る（{@link foldedBlockMarkdown}）。
+ * 題を持つ塊（図 5種・表 2種）は、節をまたいで並びの順に数えた「図 n」「表 n」の番号を1回だけ受け取る（{@link foldedBlockMarkdown}）。
+ * 番号は題が空でも、`fold` の中でも数える。
  */
 export function reportSectionsMarkdown(
   sections: readonly ReportSection[],
@@ -43,20 +54,21 @@ export function reportSectionsMarkdown(
     (acc, section) => {
       const blocks = section.blocks.reduce<{
         readonly markdowns: readonly string[]
-        readonly imageCount: number
+        readonly counts: CaptionCounts
       }>(
         (blockAcc, block) => {
-          const imageOrdinal =
-            block.kind === "image" ? blockAcc.imageCount + 1 : blockAcc.imageCount
+          const kind = captionKindOf(block)
+          const counts =
+            kind === undefined
+              ? blockAcc.counts
+              : { ...blockAcc.counts, [kind]: blockAcc.counts[kind] + 1 }
+          const ordinal = kind === undefined ? 0 : counts[kind]
           return {
-            markdowns: [
-              ...blockAcc.markdowns,
-              foldedBlockMarkdown(block, imageSource, imageOrdinal),
-            ],
-            imageCount: imageOrdinal,
+            markdowns: [...blockAcc.markdowns, foldedBlockMarkdown(block, imageSource, ordinal)],
+            counts,
           }
         },
-        { markdowns: [], imageCount: acc.imageCount },
+        { markdowns: [], counts: acc.counts },
       )
       const part = joinParts([
         section.heading.trim() === "" ? "" : `## ${markdownInline(section.heading)}`,
@@ -64,10 +76,10 @@ export function reportSectionsMarkdown(
       ])
       return {
         parts: part.trim() === "" ? acc.parts : [...acc.parts, part],
-        imageCount: blocks.imageCount,
+        counts: blocks.counts,
       }
     },
-    { parts: [], imageCount: 0 },
+    { parts: [], counts: { figure: 0, table: 0 } },
   )
   return parts.join(`\n\n${SECTION_BREAK_MARKDOWN}\n\n`)
 }
@@ -163,9 +175,9 @@ function joinParts(parts: readonly string[]): string {
 function foldedBlockMarkdown(
   block: ReportBlock,
   imageSource: ReportImageSource,
-  imageOrdinal: number,
+  ordinal: number,
 ): string {
-  const markdown = blockMarkdown(block, imageSource, imageOrdinal)
+  const markdown = blockMarkdown(block, imageSource, ordinal)
   return block.fold.trim() === "" || markdown.trim() === ""
     ? markdown
     : `<details><summary>${htmlInline(block.fold)}</summary>\n\n${markdown}\n\n</details>`
@@ -174,7 +186,7 @@ function foldedBlockMarkdown(
 function blockMarkdown(
   block: ReportBlock,
   imageSource: ReportImageSource,
-  imageOrdinal: number,
+  ordinal: number,
 ): string {
   switch (block.kind) {
     case "text":
@@ -182,13 +194,13 @@ function blockMarkdown(
     case "list":
       return listMarkdown(block)
     case "table":
-      return tableMarkdown(block)
+      return tableMarkdown(block, ordinal)
     case "matrix":
-      return matrixMarkdown(block)
+      return matrixMarkdown(block, ordinal)
     case "compare":
-      return compareMarkdown(block)
+      return compareMarkdown(block, ordinal)
     case "dimension":
-      return dimensionMarkdown(block)
+      return dimensionMarkdown(block, ordinal)
     case "note":
       return block.text.trim() === ""
         ? ""
@@ -198,20 +210,74 @@ function blockMarkdown(
     case "code":
       return fencedMarkdown([block.language, block.path].join(" ").trim(), block.source)
     case "mermaid":
-      return fencedMarkdown("mermaid", block.source)
+      return captionedMarkdown({
+        kind: "figure",
+        ordinal,
+        title: block.title,
+        body: fencedMarkdown("mermaid", block.source),
+        bodyFormat: "markdown",
+        fit: false,
+      })
     case "chart":
-      return fencedMarkdown("chart", JSON.stringify(chartConfigOf(block)))
+      return captionedMarkdown({
+        kind: "figure",
+        ordinal,
+        title: block.title,
+        body: fencedMarkdown("chart", JSON.stringify(chartConfigOf(block))),
+        bodyFormat: "markdown",
+        fit: false,
+      })
     case "progress":
       return progressMarkdown(block)
     case "options":
       return optionsMarkdown(block)
     case "image":
-      return imageMarkdown(block, imageSource, imageOrdinal)
+      return imageMarkdown(block, imageSource, ordinal)
     case "files":
       return filesMarkdown(block)
     case "markdown":
       return block.markdown
   }
+}
+
+function captionKindOf(block: ReportBlock): CaptionKind | undefined {
+  switch (block.kind) {
+    case "image":
+    case "dimension":
+    case "compare":
+    case "mermaid":
+    case "chart":
+      return "figure"
+    case "table":
+    case "matrix":
+      return "table"
+    default:
+      return undefined
+  }
+}
+
+type Captioned = {
+  readonly kind: CaptionKind
+  readonly ordinal: number
+  readonly title: string
+  readonly body: string
+  /** `html` の本体は空行を挟まずに包み、`markdown` の本体（表・フェンス）は空行で区切って包む。 */
+  readonly bodyFormat: "html" | "markdown"
+  /** 本体の幅に包みを縮める。本体が親の幅を取る塊（グラフ・見比べ）は縮めない。 */
+  readonly fit: boolean
+}
+
+/** 本体と、番号つきの題の行を包む。表は題が本体の上、図は本体の下。 */
+function captionedMarkdown({ kind, ordinal, title, body, bodyFormat, fit }: Captioned): string {
+  const text = htmlInlineWithCode(title)
+  const caption =
+    `<div class="caption"><span class="caption-number">${CAPTION_LABELS[kind]} ${String(ordinal)}</span>` +
+    `${text === "" ? "" : `<span class="caption-text">${text}</span>`}</div>`
+  const parts = kind === "table" ? [caption, body] : [body, caption]
+  const className = fit ? "captioned captioned-fit" : "captioned"
+  return bodyFormat === "html"
+    ? `<div class="${className}">${parts.join("")}</div>`
+    : `<div class="${className}">\n\n${parts.join("\n\n")}\n\n</div>`
 }
 
 type ChartConfig = {
@@ -297,22 +363,32 @@ function optionsMarkdown(block: Extract<ReportBlock, { readonly kind: "options" 
 }
 
 /** 2つの側を、見出しと箇条の札にして横に並べる。 */
-function compareMarkdown(block: Extract<ReportBlock, { readonly kind: "compare" }>): string {
+function compareMarkdown(
+  block: Extract<ReportBlock, { readonly kind: "compare" }>,
+  ordinal: number,
+): string {
   const sides = block.sides.map(({ heading, points }) => {
     const items = points.map((point) => `<li>${htmlInlineWithCode(point)}</li>`).join("")
     return `<div class="compare-side"><div class="compare-heading">${htmlInlineWithCode(heading)}</div><ul>${items}</ul></div>`
   })
-  return joinParts([
-    block.title.trim() === "" ? "" : `**${markdownInline(block.title)}**`,
-    `<div class="compare">${sides.join("")}</div>`,
-  ])
+  return captionedMarkdown({
+    kind: "figure",
+    ordinal,
+    title: block.title,
+    body: `<div class="compare">${sides.join("")}</div>`,
+    bodyFormat: "html",
+    fit: false,
+  })
 }
 
 /**
  * 領域を箱に、余白を帯と寸法線にして上から積み、値を右に添える。図は模式で、箱と帯の大きさは値に比例させない。
  * 領域の `size` が空なら値を置かない（`before` も出さない）。
  */
-function dimensionMarkdown(block: Extract<ReportBlock, { readonly kind: "dimension" }>): string {
+function dimensionMarkdown(
+  block: Extract<ReportBlock, { readonly kind: "dimension" }>,
+  ordinal: number,
+): string {
   const rows = block.parts.map((part) =>
     "gap" in part
       ? `<div class="dimension-gap"><span class="dimension-band" aria-hidden="true"></span>${dimensionValueMarkdown(part.gap, part.before)}</div>`
@@ -320,14 +396,18 @@ function dimensionMarkdown(block: Extract<ReportBlock, { readonly kind: "dimensi
           part.size.trim() === "" ? "" : dimensionValueMarkdown(part.size, part.before)
         }</div>`,
   )
-  return joinParts([
-    block.title.trim() === "" ? "" : `**${markdownInline(block.title)}**`,
-    `<div class="dimension">${rows.join("")}</div>`,
-  ])
+  return captionedMarkdown({
+    kind: "figure",
+    ordinal,
+    title: block.title,
+    body: `<div class="dimension">${rows.join("")}</div>`,
+    bodyFormat: "html",
+    fit: true,
+  })
 }
 
 /**
- * 画像1枚と、その下の1行。`src` は棚を引く経路で、棚に置いていない本文では付けない（描く側が「出せない」の札にする）。
+ * 画像1枚と、その下の題の行。`src` は棚を引く経路で、棚に置いていない本文では付けない（描く側が「出せない」の札にする）。
  */
 function imageMarkdown(
   block: Extract<ReportBlock, { readonly kind: "image" }>,
@@ -340,11 +420,14 @@ function imageMarkdown(
       ? ` src="${htmlAttribute(reportImagePath(imageSource.toolUseId, block.path))}"`
       : ""
   const alt = htmlAttribute(caption === "" ? "画面の画像" : caption)
-  const numberHtml = `<span class="image-caption-number">図 ${String(ordinal)}</span>`
-  const textHtml =
-    caption === "" ? "" : `<span class="image-caption-text">${htmlInlineWithCode(caption)}</span>`
-  const captionHtml = `<span class="image-caption">${numberHtml}${textHtml}</span>`
-  return `<div class="image"><img${src} alt="${alt}">${captionHtml}</div>`
+  return captionedMarkdown({
+    kind: "figure",
+    ordinal,
+    title: caption,
+    body: `<img${src} alt="${alt}">`,
+    bodyFormat: "html",
+    fit: true,
+  })
 }
 
 function dimensionValueMarkdown(value: string, before: string): string {
@@ -416,7 +499,10 @@ function listMarker(
   }
 }
 
-function tableMarkdown(table: Extract<ReportBlock, { readonly kind: "table" }>): string {
+function tableMarkdown(
+  table: Extract<ReportBlock, { readonly kind: "table" }>,
+  ordinal: number,
+): string {
   const row = (cells: readonly string[]): string => `| ${cells.join(" | ")} |`
   const aligns = table.columns.map((_, index) => columnAlign(table.rows, index))
   const bars = table.columns.map((_, index) => columnBar(table.rows, index))
@@ -427,17 +513,21 @@ function tableMarkdown(table: Extract<ReportBlock, { readonly kind: "table" }>):
     statusColumns[index] === true && typeof cell === "string"
       ? `<span class="cell-status-none">${cellTextMarkdown(cell)}</span>`
       : cellMarkdown(cell, bars[index] ?? NO_BAR)
-  return joinParts([
-    table.title.trim() === ""
-      ? ""
-      : `<div class="table-title">${markdownInline(table.title)}</div>`,
-    [
-      row(table.columns.map((column) => cellMarkdown(column, NO_BAR))),
-      row(aligns.map(alignMarker)),
-      ...table.rows.map((cells) => row(cells.map(bodyCellMarkdown))),
-    ].join("\n"),
-    tableStatusLegendMarkdown(table),
-  ])
+  return captionedMarkdown({
+    kind: "table",
+    ordinal,
+    title: table.title,
+    body: joinParts([
+      [
+        row(table.columns.map((column) => cellMarkdown(column, NO_BAR))),
+        row(aligns.map(alignMarker)),
+        ...table.rows.map((cells) => row(cells.map(bodyCellMarkdown))),
+      ].join("\n"),
+      tableStatusLegendMarkdown(table),
+    ]),
+    bodyFormat: "markdown",
+    fit: true,
+  })
 }
 
 /** 表に出た状態のセルの状態だけを、表の下の凡例に並べる（`matrix` の凡例と同じ考え方）。 */
@@ -500,7 +590,7 @@ type MatrixStatus = MatrixBlock["rows"][number]["cells"][number]
  * 行の名前と列の名前だけを見出しにした格子。交点は状態の印だけで、凡例は格子に出た状態だけを添える。
  * 印の名前は表の見出しの読み上げが担うので、`aria-label` は状態の語だけにする。
  */
-function matrixMarkdown(block: MatrixBlock): string {
+function matrixMarkdown(block: MatrixBlock, ordinal: number): string {
   const row = (cells: readonly string[]): string => `| ${cells.join(" | ")} |`
   const grid = [
     row(["", ...block.columns.map(cellTextMarkdown)]),
@@ -518,10 +608,14 @@ function matrixMarkdown(block: MatrixBlock): string {
         `<span class="matrix-legend-item">${matrixMarkMarkdown(status, true)} ${MATRIX_MARKS[status].label}</span>`,
     )
     .join("")
-  return joinParts([
-    block.title.trim() === "" ? "" : `**${markdownInline(block.title)}**`,
-    `<div class="matrix">\n\n${grid}\n\n<div class="matrix-legend">${legend}</div>\n\n</div>`,
-  ])
+  return captionedMarkdown({
+    kind: "table",
+    ordinal,
+    title: block.title,
+    body: `<div class="matrix">\n\n${grid}\n\n<div class="matrix-legend">${legend}</div>\n\n</div>`,
+    bodyFormat: "markdown",
+    fit: true,
+  })
 }
 
 function matrixMarkMarkdown(status: MatrixStatus, legend: boolean): string {

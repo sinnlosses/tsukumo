@@ -124,6 +124,26 @@ describe("parseReportSections", () => {
     ).toEqual({ sections: [], unknownBlockCount: 0 })
   })
 
+  it("mermaid と chart の塊は省いた title を空文字で補う", () => {
+    const mermaid = { kind: "mermaid", source: "flowchart LR\n  A --> B" }
+    const chart = {
+      kind: "chart",
+      chartKind: "bar",
+      labels: ["架空の一"],
+      series: [{ name: "架空の系列", values: [1] }],
+    }
+
+    expect(parseReportSections([{ heading: "", blocks: [mermaid, chart] }]).sections).toEqual([
+      {
+        heading: "",
+        blocks: [
+          { ...mermaid, title: "", fold: "" },
+          { ...chart, title: "", horizontal: false, fold: "" },
+        ],
+      },
+    ])
+  })
+
   it("progress の塊は知らない種類として落とさない（unknownBlockCount が0になる）", () => {
     const progress = {
       kind: "progress",

@@ -798,7 +798,7 @@ describe("Markdown（image の塊の画像）", () => {
       const { container } = render(<Markdown text={text} />)
 
       const image = typedElement(
-        container.querySelector("div.report-image > img"),
+        container.querySelector("div.report-captioned > img"),
         HTMLImageElement,
         "画像",
       )
@@ -806,9 +806,7 @@ describe("Markdown（image の塊の画像）", () => {
         "/report-image/fictional-report/%E6%9E%B6%E7%A9%BA%2Fafter.png?t=fictional-token",
       )
       expect(image.alt).toBe("架空の画面")
-      expect(container.querySelector("span.report-image-caption")?.textContent).toBe(
-        "図 1架空の画面",
-      )
+      expect(container.querySelector("div.report-caption")?.textContent).toBe("図 1架空の画面")
     })
   })
 

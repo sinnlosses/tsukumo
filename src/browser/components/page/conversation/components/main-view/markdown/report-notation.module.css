@@ -378,36 +378,56 @@
 .detail-block .report-dimension-before {
   color: var(--ink-quiet);
 }
-/* 画面の画像（`report` の `image` の塊から tsukumo が組む）。
-   入れ物を絵の幅に沿わせる（書き上げる演出が筆の幅を入れ物の箱で測る）。 */
-.detail-block .report-image {
-  width: fit-content;
+/* 番号つきの題を持つ図と表の包み（`report` の `image` / `mermaid` / `chart` / `compare` / `dimension` / `table` / `matrix` の塊から tsukumo が組む）。
+   図は題が本体の下、表は題が本体の上。
+   `captioned-fit` は入れ物を本体の幅に縮め（書き上げる演出が筆の幅を入れ物の箱で測る）、
+   題の行は `contain: inline-size` で入れ物の幅の計算から外れ、入れ物の幅で折り返す。 */
+.detail-block .report-captioned {
   max-width: 100%;
   margin: 0.5rem 0;
 }
-.detail-block .report-image img {
+.detail-block .report-captioned-fit {
+  width: fit-content;
+  min-width: min(100%, 20rem);
+}
+.detail-block .report-captioned > :not(.report-caption) {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+.detail-block .report-captioned table {
+  margin: 0;
+}
+.detail-block .report-captioned img {
   display: block;
   max-width: 100%;
   height: auto;
   border: 1px solid var(--rule);
   border-radius: 0.375rem;
 }
-.detail-block .report-image-caption {
+.detail-block .report-caption {
+  contain: inline-size;
   display: flex;
   align-items: baseline;
   gap: 10px;
-  margin-top: 0.25rem;
   font-size: var(--font-label);
   color: var(--ink-quiet);
 }
-.detail-block .report-image-caption-number {
+.detail-block .report-caption:first-child {
+  margin-bottom: 0.3rem;
+}
+.detail-block .report-caption:last-child {
+  margin-top: 0.25rem;
+}
+.detail-block .report-caption-number {
   flex-shrink: 0;
   font-family: var(--font-mono);
   font-size: var(--font-label);
   letter-spacing: 0.08em;
   color: var(--report-sequence-ink);
 }
-.detail-block .report-image-caption-text {
+.detail-block .report-caption-text {
+  min-width: 0;
+  overflow-wrap: anywhere;
   color: var(--ink-quiet);
 }
 /* 読めなかった画像の代わりの札（`ReportImage`）。枠ごと斜めの縞にし、中央に印と理由の2行を置く。
@@ -943,13 +963,6 @@
    器は Markdown のレンダラ側（`Table`）が作るので、レポートの記法・許可リストは増えていない。 */
 .detail-block .table-scroll {
   overflow-x: auto;
-}
-/* 表の題。太字段落ではなく小さな添え書きにする（表そのものの見出しは th が担う）。 */
-.detail-block .report-table-title {
-  margin: 0 0 0.3rem;
-  font-size: var(--font-secondary);
-  font-weight: 500;
-  color: var(--ink-soft);
 }
 .detail-block table {
   border-collapse: collapse;
