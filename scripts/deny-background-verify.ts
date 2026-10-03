@@ -8,6 +8,7 @@
 
 import process from "node:process"
 
+import { recordHookDenial } from "./lib/hook-denial-record.ts"
 import { findQuotedSpans, withSpansBlanked } from "./lib/quoted-span.ts"
 
 /** `tw verify` をコマンドの位置に持つ形。`verify-check`・`verify-plan` 等の別サブコマンドは拾わない。 */
@@ -36,6 +37,7 @@ type BashCall = {
 const raw = await readStdin()
 const call = readBashCall(raw)
 if (call !== undefined && isDeniedBackgroundVerify(call)) {
+  recordHookDenial({ hook: "deny-background-verify", rule: "background-verify", actor: "subagent" })
   process.stderr.write(`${REFUSAL}\n`)
   process.exit(2)
 }

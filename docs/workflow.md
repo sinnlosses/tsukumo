@@ -148,6 +148,12 @@ PreToolUse hook（`scripts/deny-e2e-run-limit.ts`）が拒否する（検証は�
 **着手し直す（印が消えて作り直される）と0に戻る。** E2E のファイル単位の実行
 （`pnpm run test:e2e test/e2e/<ファイル>.test.ts`）は数えず、メインの呼び出しも対象にしない。
 
+hook が拒むたびに、共有の git dir（`git rev-parse --git-common-dir`）の `hook-denials/<年-月>.jsonl` へ
+時刻・hook の名前・規則のキー・呼び出し元（`main` / `subagent`。git のフックは `git`）の1行を足す。
+コマンドの全文・パスは入れない。書き込みに失敗しても hook の判定は変わらない。
+`node scripts/hook-denial-tally.ts [--days N]`（既定30）が、`.claude/settings.json` と `.githooks/` に
+登録された hook を全部（0件も）規則のキーごとの回数で出す。
+
 **コミットメッセージの Claude の署名は git の `commit-msg` フックが止める**
 （`.githooks/commit-msg` → `scripts/deny-claude-signature.ts`。`Co-Authored-By: Claude …` と
 `Generated with [Claude Code]` の行が入っていると、該当行を出してコミットを拒否する。

@@ -7,6 +7,8 @@
 import { readFileSync } from "node:fs"
 import process from "node:process"
 
+import { recordHookDenial } from "./lib/hook-denial-record.ts"
+
 /** 行頭の `Co-Authored-By:` で、Claude または Anthropic を名指すトレーラー。 */
 const CO_AUTHOR_TRAILER = /^\s*co-authored-by:.*(?:claude|anthropic)/i
 
@@ -15,11 +17,22 @@ const GENERATED_MARK = /^\s*(?:🤖\s*)?generated with \[?claude code/i
 
 const message = readMessage(process.argv[2])
 const offending = message === undefined ? [] : findSignatureLines(message)
-if (offending.length > 0) {
+if (message !== undefined && offending.length > 0) {
+  recordHookDenial({
+    hook: "deny-claude-signature",
+    rule: findSignatureRule(message),
+    actor: "git",
+  })
   process.stderr.write(
     `コミットメッセージに Claude の署名が入っている。\n${offending.map((line) => `  ${line}`).join("\n")}\nこの行を消して、署名なしのメッセージで打ち直すこと。\n`,
   )
   process.exit(1)
+}
+
+/** 署名の行のうち先に見つかった種類の規則のキー。 */
+function findSignatureRule(text: string): string {
+  const lines = text.split("\n").filter((line) => !line.startsWith("#"))
+  return lines.some((line) => CO_AUTHOR_TRAILER.test(line)) ? "co-author-trailer" : "generated-mark"
 }
 
 /** `#` で始まるコメント行を除いた行のうち、署名に当たるもの。 */

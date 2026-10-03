@@ -14,6 +14,7 @@ import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from "
 import { join } from "node:path"
 import process from "node:process"
 
+import { recordHookDenial } from "./lib/hook-denial-record.ts"
 import { parseShellCommand, type SimpleCommand } from "./lib/shell-command.ts"
 
 /** 着手中の1件につき、E2E を全部流してよい回数。 */
@@ -36,6 +37,7 @@ const command = readSubagentBashCommand(raw)
 if (command !== undefined) {
   const runs = countFullE2eRuns(command)
   if (runs > 0 && isOverLimitAfterRecording(runs)) {
+    recordHookDenial({ hook: "deny-e2e-run-limit", rule: "run-limit", actor: "subagent" })
     process.stderr.write(refusal())
     process.exit(2)
   }

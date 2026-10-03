@@ -11,6 +11,7 @@ import { readFileSync, statSync } from "node:fs"
 import { isAbsolute, relative, resolve } from "node:path"
 import process from "node:process"
 
+import { recordHookDenial } from "./lib/hook-denial-record.ts"
 import { findQuotedSpans, withSpansBlanked, type QuotedSpan } from "./lib/quoted-span.ts"
 import { parseShellCommand, type ShellWord, type SimpleCommand } from "./lib/shell-command.ts"
 
@@ -88,11 +89,13 @@ type BashHookInput = {
   readonly tool_name?: unknown
   readonly tool_input?: { readonly command?: unknown }
   readonly cwd?: unknown
+  readonly agent_id?: unknown
 }
 
 type BashInput = {
   readonly command: string
   readonly cwd: string | undefined
+  readonly fromSubagent: boolean
 }
 
 /** パスが作業ツリーのどちら側にあるか。`unknown` は展開や読めない `cd` で決まらないもの。 */
@@ -102,26 +105,33 @@ const raw = await readStdin()
 const bashInput = readBashInput(raw)
 if (bashInput !== undefined) {
   const workRoot = readWorkRoot(bashInput.cwd)
-  if (
-    isDeniedCommand(
+  const rule =
+    findDeniedCommandRule(
       bashInput.command,
       workRoot,
       readPythonScripts(bashInput.command, bashInput.cwd),
-    ) ||
+    ) ??
     (workRoot !== undefined &&
-      writesIntoWorkTree(bashInput.command, startDirectory(bashInput.cwd, workRoot), workRoot))
-  ) {
+    writesIntoWorkTree(bashInput.command, startDirectory(bashInput.cwd, workRoot), workRoot)
+      ? "worktree-write"
+      : undefined)
+  if (rule !== undefined) {
+    recordHookDenial({
+      hook: "deny-sed-in-place",
+      rule,
+      actor: bashInput.fromSubagent ? "subagent" : "main",
+    })
     process.stderr.write(`${REFUSAL}\n`)
     process.exit(2)
   }
 }
 
-/** コマンドが `sed -i`・`perl -pi` 等の構造に当たるか、引用符・heredoc・スクリプトのファイルの中で Python がファイルへ書き戻すコードを持つかを見る。 */
-function isDeniedCommand(
+/** コマンドが `sed -i`・`perl -pi` 等の構造に当たるか、引用符・heredoc・スクリプトのファイルの中で Python がファイルへ書き戻すコードを持つかを見て、当たった規則のキーを返す。 */
+function findDeniedCommandRule(
   command: string,
   workRoot: string | undefined,
   scriptTexts: readonly string[],
-): boolean {
+): string | undefined {
   const spans = findQuotedSpans(command)
   if (
     spans.some(
@@ -129,11 +139,14 @@ function isDeniedCommand(
     ) ||
     scriptTexts.some((text) => isDeniedPythonCode(text, workRoot))
   ) {
-    return true
+    return "python-write"
   }
 
   const skeleton = withSpansBlanked(command, spans)
-  return SED_IN_PLACE.test(skeleton) || PERL_IN_PLACE.test(skeleton)
+  if (SED_IN_PLACE.test(skeleton)) {
+    return "sed-in-place"
+  }
+  return PERL_IN_PLACE.test(skeleton) ? "perl-in-place" : undefined
 }
 
 /**
@@ -417,7 +430,11 @@ function readBashInput(rawInput: string): BashInput | undefined {
     return undefined
   }
 
-  return { command: rawCommand, cwd: typeof input.cwd === "string" ? input.cwd : undefined }
+  return {
+    command: rawCommand,
+    cwd: typeof input.cwd === "string" ? input.cwd : undefined,
+    fromSubagent: typeof input.agent_id === "string",
+  }
 }
 
 function safeParse(rawInput: string): unknown {

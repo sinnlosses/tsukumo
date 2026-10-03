@@ -14,7 +14,8 @@ export default defineConfig({
     environment: "node",
     setupFiles: ["./test/dom-environment.ts"],
     exclude: ["**/node_modules/**", "test/e2e/**"],
-    env: { TZ: "UTC" },
+    // hook を起こすテストが、実物の拒否の記録に足さないようにする。
+    env: { TZ: "UTC", TSUKUMO_HOOK_DENIAL_RECORD: "off" },
     maxWorkers: "30%",
     // E2E の段と並べて走らせるので、bd init と bundle の組み立てを済ませる beforeAll が10秒の既定に収まらないことがある。
     hookTimeout: 15_000,

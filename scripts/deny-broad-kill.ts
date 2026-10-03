@@ -16,6 +16,7 @@
 
 import process from "node:process"
 
+import { recordHookDenial } from "./lib/hook-denial-record.ts"
 import { findQuotedSpans, withSpansBlanked } from "./lib/quoted-span.ts"
 
 /** 名前やパターンでまとめて薙ぎ払うコマンド。コマンドの位置に現れたときだけ拾う。 */
@@ -45,30 +46,45 @@ pid が分かっているなら kill <pid> はそのまま使える。`
 type BashHookInput = {
   readonly tool_name?: unknown
   readonly tool_input?: { readonly command?: unknown }
+  readonly agent_id?: unknown
 }
 
 const raw = await readStdin()
-const command = readBashCommand(raw)
-if (command !== undefined && isBroadKill(command)) {
+const call = readBashCall(raw)
+const rule = call === undefined ? undefined : findBroadKillRule(call.command)
+if (call !== undefined && rule !== undefined) {
+  recordHookDenial({
+    hook: "deny-broad-kill",
+    rule,
+    actor: call.fromSubagent ? "subagent" : "main",
+  })
   process.stderr.write(`${REFUSAL}\n`)
   process.exit(2)
 }
 
 /**
- * 他のセッションを巻き込む形の `kill` か。コマンドの位置に `pkill` / `killall` が
- * 現れ、かつ取り合う対象を狙っているときだけ真になる。
+ * 他のセッションを巻き込む形の `kill` の規則のキー。コマンドの位置に `pkill` / `killall` が
+ * 現れ、かつ取り合う対象を狙っているときだけ返す。
  * コマンドの位置は引用符・heredoc を除いて探し、狙う対象は引用符の中（`-f "vitest run"`）も含めて探す。
  */
-function isBroadKill(bashCommand: string): boolean {
+function findBroadKillRule(bashCommand: string): string | undefined {
   if (!SHARED_PROCESS.test(bashCommand)) {
-    return false
+    return undefined
   }
   const skeleton = withSpansBlanked(bashCommand, findQuotedSpans(bashCommand))
-  return BROAD_KILL_COMMAND.test(skeleton) || PGREP_PIPED_TO_KILL.test(skeleton)
+  if (BROAD_KILL_COMMAND.test(skeleton)) {
+    return "pkill-killall"
+  }
+  return PGREP_PIPED_TO_KILL.test(skeleton) ? "pgrep-piped-kill" : undefined
 }
 
-/** hook が stdin へ流す JSON から Bash のコマンド文字列を取り出す。形が違えば `undefined`。 */
-function readBashCommand(rawInput: string): string | undefined {
+type BashCall = {
+  readonly command: string
+  readonly fromSubagent: boolean
+}
+
+/** hook が stdin へ流す JSON から Bash の呼び出しを取り出す。形が違えば `undefined`。 */
+function readBashCall(rawInput: string): BashCall | undefined {
   const parsed: unknown = safeParse(rawInput)
   if (typeof parsed !== "object" || parsed === null) {
     return undefined
@@ -80,7 +96,9 @@ function readBashCommand(rawInput: string): string | undefined {
   }
 
   const bashCommand = input.tool_input?.command
-  return typeof bashCommand === "string" ? bashCommand : undefined
+  return typeof bashCommand === "string"
+    ? { command: bashCommand, fromSubagent: typeof input.agent_id === "string" }
+    : undefined
 }
 
 function safeParse(rawInput: string): unknown {
