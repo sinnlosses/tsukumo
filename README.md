@@ -385,7 +385,8 @@ node scripts/experience-metric.ts  # 体験の数（依頼から結論まで・�
 ```
 
 **層はディレクトリで表し、許した依存の辺以外は `test/architecture.test.ts` が落とします。**
-各ファイルの責務は [`docs/architecture.md`](./docs/architecture.md)「サーバの機能と、機能どうしの辺」「ディレクトリ」が正典です。
+各ファイルの責務はそのファイルの冒頭のコメントが正典です。機能の一覧と置き場所の基準は
+[`docs/architecture.md`](./docs/architecture.md)「サーバの機能と、機能どうしの辺」「ディレクトリ」にあります。
 
 ### ドキュメント
 
