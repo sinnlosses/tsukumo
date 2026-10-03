@@ -1,4 +1,4 @@
-// 文の数え方。「1〜2文で書く」の類いの条を機械で確かめるときの物差し。
+// 文の数え方と、文の数での切り詰め。「1〜2文で書く」の類いの条を機械で確かめるときの物差し。
 
 /**
  * 文の数。句点（`。` `！` `？`）で数え、句点で終わらない末尾も1文と数える。
@@ -14,4 +14,19 @@ export function sentenceCount(text: string): number {
   }
   const terminated = [...plain.matchAll(/[。！？]+/g)].length
   return /[。！？]$/.test(plain) ? terminated : terminated + 1
+}
+
+/**
+ * 先頭から `max` 文まで（文の区切りは {@link sentenceCount} と同じ）。
+ * `max` 文を超えなければそのまま返す。
+ */
+export function leadingSentences(text: string, max: number): string {
+  if (sentenceCount(text) <= max) {
+    return text
+  }
+  const masked = text
+    .replace(/`[^`\n]*`/g, (span) => "x".repeat(span.length))
+    .replace(/（[^（）]*）/g, (span) => "x".repeat(span.length))
+  const last = [...masked.matchAll(/[。！？]+/g)].at(max - 1)
+  return last === undefined ? "" : text.slice(0, last.index + last[0].length)
 }

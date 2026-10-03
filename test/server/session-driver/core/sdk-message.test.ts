@@ -1230,14 +1230,28 @@ describe("toSessionEvents（委譲の合図）", () => {
     return toSessionEvents(message, EXPRESSIONS).filter((event) => event.kind === "delegate-signal")
   }
 
-  it("サブエージェントがメインへ送った合図は、tool-started の後ろに段の位置だけの delegate-signal を出す", () => {
+  it("サブエージェントがメインへ送った合図は、tool-started の後ろに段の位置と1行目の3列目を持つ delegate-signal を出す", () => {
     const events = toSessionEvents(
-      sendMessage({ to: "main", message: "状況 | 2/5 | 架空の進み\n架空の続き" }, "toolu_sub_1"),
+      sendMessage(
+        { to: "main", message: "状況 | 2/5 |  架空の進み。 \n架空の続き" },
+        "toolu_sub_1",
+      ),
       EXPRESSIONS,
     )
 
     expect(events.map((event) => event.kind)).toEqual(["tool-started", "delegate-signal"])
-    expect(events[1]).toEqual({ kind: "delegate-signal", step: 2, stepCount: 5 })
+    expect(events[1]).toEqual({
+      kind: "delegate-signal",
+      step: 2,
+      stepCount: 5,
+      summary: "架空の進み。",
+    })
+  })
+
+  it("3列目が空の合図は、文の空な delegate-signal を出す", () => {
+    expect(signalsOf(sendMessage({ to: "main", message: "状況 | 1/2 | " }, "toolu_sub_1"))).toEqual(
+      [{ kind: "delegate-signal", step: 1, stepCount: 2, summary: "" }],
+    )
   })
 
   it("合図の形でない・宛先が main でない・段の位置が範囲の外の SendMessage では出さない", () => {

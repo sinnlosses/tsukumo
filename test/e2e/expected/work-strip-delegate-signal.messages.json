@@ -102,7 +102,7 @@
       "name": "SendMessage",
       "input": {
         "to": "main",
-        "message": "状況 | 1/4 | 架空の1段目を終えた"
+        "message": "状況 | 1/4 | 架空の設定が画面から読めるようになった。"
       },
       "parentToolUseId": "fake-delegate-agent"
     }
@@ -113,7 +113,8 @@
     "event": {
       "kind": "delegate-signal",
       "step": 1,
-      "stepCount": 4
+      "stepCount": 4,
+      "summary": "架空の設定が画面から読めるようになった。"
     }
   },
   {
@@ -159,7 +160,7 @@
       "name": "SendMessage",
       "input": {
         "to": "main",
-        "message": "状況 | 2/4 | 架空の2段目を終えた"
+        "message": "状況 | 2/4 | 架空の保存先が1つにまとまった。古い置き場は読むだけになる。"
       },
       "parentToolUseId": "fake-delegate-agent"
     }
@@ -170,7 +171,8 @@
     "event": {
       "kind": "delegate-signal",
       "step": 2,
-      "stepCount": 4
+      "stepCount": 4,
+      "summary": "架空の保存先が1つにまとまった。古い置き場は読むだけになる。"
     }
   },
   {

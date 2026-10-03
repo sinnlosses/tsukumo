@@ -242,7 +242,52 @@
                       "attributes": {
                         "data-outline": "hidden",
                         "data-outline-collapsed": "false"
-                      }
+                      },
+                      "children": [
+                        {
+                          "tag": "details",
+                          "children": [
+                            {
+                              "tag": "summary",
+                              "children": [
+                                "中間レポート: 2/6 段 1"
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "tag": "section",
+                          "children": [
+                            {
+                              "tag": "header",
+                              "children": [
+                                {
+                                  "tag": "p",
+                                  "children": [
+                                    "中間レポート",
+                                    {
+                                      "tag": "span",
+                                      "attributes": {
+                                        "aria-hidden": "true"
+                                      },
+                                      "children": [
+                                        "·"
+                                      ]
+                                    },
+                                    "3/6 段 2"
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "tag": "p",
+                              "children": [
+                                "架空の保存先が1つにまとまった。古い置き場は読むだけになる。"
+                              ]
+                            }
+                          ]
+                        }
+                      ]
                     }
                   ]
                 }

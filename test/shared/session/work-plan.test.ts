@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest"
 
 import {
+  type DelegateSignal,
+  delegatedPhaseShiftOf,
   delegatedWorkPlan,
   type LatestWorkPlan,
   parseWorkPlan,
@@ -111,14 +113,14 @@ describe("delegatedWorkPlan", () => {
       phaseSummary: "",
     }
 
-    expect(delegatedWorkPlan({ kind: "none" }, { step: 1, stepCount: 3 })).toEqual(expected)
-    expect(delegatedWorkPlan(planned(PHASES, 1), { step: 1, stepCount: 3 })).toEqual(expected)
+    expect(delegatedWorkPlan({ kind: "none" }, signal(1, 3))).toEqual(expected)
+    expect(delegatedWorkPlan(planned(PHASES, 1), signal(1, 3))).toEqual(expected)
   })
 
   it("前の段取りが合図の段の数に計画と受け入れを足した数なら、その名前を借りる", () => {
     const named = ["架空の計画", "架空の段A", "架空の段B", "架空の受け入れ"]
 
-    expect(delegatedWorkPlan(planned(named, 0), { step: 1, stepCount: 2 })).toEqual({
+    expect(delegatedWorkPlan(planned(named, 0), signal(1, 2))).toEqual({
       phases: named,
       current: 2,
       phaseSummary: "",
@@ -126,8 +128,40 @@ describe("delegatedWorkPlan", () => {
   })
 
   it("最後の段の合図では受け入れが今の段になる", () => {
-    const plan = delegatedWorkPlan({ kind: "none" }, { step: 2, stepCount: 2 })
+    const plan = delegatedWorkPlan({ kind: "none" }, signal(2, 2))
 
     expect(plan.phases[plan.current]).toBe("受け入れ")
   })
+
+  it("合図の文を段のまとめにし、2文を超えた分は切り詰める（括弧と inline code の中の句点では割らない）", () => {
+    expect(
+      delegatedWorkPlan({ kind: "none" }, signal(1, 2, "架空の形が分かった。")).phaseSummary,
+    ).toBe("架空の形が分かった。")
+    expect(
+      delegatedWorkPlan(
+        { kind: "none" },
+        signal(1, 2, "架空の1文目（中は。を含む）。`a。b` の2文目！架空の3文目。架空の4文目"),
+      ).phaseSummary,
+    ).toBe("架空の1文目（中は。を含む）。`a。b` の2文目！")
+  })
 })
+
+describe("delegatedPhaseShiftOf", () => {
+  it("今の段の1つ前（合図の n 段目）を終えた段として、段のまとめを出す", () => {
+    const plan = delegatedWorkPlan({ kind: "none" }, signal(2, 3, "架空のまとめ。"))
+
+    expect(delegatedPhaseShiftOf(plan)).toEqual({
+      finished: { kind: "finished", label: "3/5 段 2", summary: "架空のまとめ。" },
+    })
+  })
+
+  it("段のまとめが空なら何も出さない", () => {
+    expect(delegatedPhaseShiftOf(delegatedWorkPlan({ kind: "none" }, signal(2, 3)))).toEqual({
+      finished: { kind: "none" },
+    })
+  })
+})
+
+function signal(step: number, stepCount: number, summary = ""): DelegateSignal {
+  return { step, stepCount, summary }
+}

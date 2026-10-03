@@ -170,7 +170,7 @@ describe("進み具合の帯", () => {
     )
   })
 
-  it("委譲の合図が届くと、メインが呼ばなくても帯が計画・N 段・受け入れに引き直されて進む", async () => {
+  it("委譲の合図が届くと、メインが呼ばなくても帯が計画・N 段・受け入れに引き直されて進み、合図ごとに n 段目の中間レポートが積まれる", async () => {
     const room = await run.open({
       scenario: "work-strip-delegate-signal",
       scene: "work-strip-delegate-signal",

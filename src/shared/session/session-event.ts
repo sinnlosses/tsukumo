@@ -172,14 +172,15 @@ export type SessionEvent =
       readonly phaseSummary: string
     }
   /**
-   * 委譲の合図（委譲先の `SendMessage` の1行目 `状況 | n/N | …`）から読んだ段の位置。
+   * 委譲の合図（委譲先の `SendMessage` の1行目 `状況 | n/N | 文`）から読んだ段の位置と文。
    * `step` は済んだ段の番号（1始まり）、`stepCount` は段の数で、`1 <= step <= stepCount`。
-   * 合図の文は運ばない。
+   * `summary` は3列目の文（前後の空白を除く）で、空なら空の文字列。切り詰める前のまま運ぶ。
    */
   | {
       readonly kind: "delegate-signal"
       readonly step: number
       readonly stepCount: number
+      readonly summary: string
     }
   | {
       readonly kind: "tool-started"

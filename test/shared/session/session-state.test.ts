@@ -1466,7 +1466,12 @@ describe("applySessionEvent（委譲の合図と段取り）", () => {
     current,
     phaseSummary,
   })
-  const signal = (step: number): SessionEvent => ({ kind: "delegate-signal", step, stepCount: 6 })
+  const signal = (step: number, summary = ""): SessionEvent => ({
+    kind: "delegate-signal",
+    step,
+    stepCount: 6,
+    summary,
+  })
   const currentPlan = (state: SessionState) => latestWorkPlan(state.records)
 
   it("合図が届くと、メインが呼ばなくても計画・N 段・受け入れの並びで n 段目まで済む", () => {
@@ -1483,6 +1488,16 @@ describe("applySessionEvent（委譲の合図と段取り）", () => {
       "段 6",
       "受け入れ",
     ])
+  })
+
+  it("合図の文は段のまとめになり、同じ段の合図が続いても段の位置は動かない", () => {
+    const once = currentPlan(apply(request, mainPlan(0), signal(2, "架空の1通目。")))
+    const twice = currentPlan(
+      apply(request, mainPlan(0), signal(2, "架空の1通目。"), signal(2, "架空の2通目。")),
+    )
+
+    expect(once).toMatchObject({ current: 3, phaseSummary: "架空の1通目。" })
+    expect(twice).toMatchObject({ current: 3, phaseSummary: "架空の2通目。" })
   })
 
   it("合図のあとのメインの途中の段取りは帯を変えず、全部の段を終えた段取りは合図の段取りを済ませる", () => {
@@ -1510,6 +1525,7 @@ describe("applySessionEvent（委譲の合図と段取り）", () => {
       kind: "delegate-signal",
       step,
       stepCount,
+      summary: "",
     })
     const headingPhases = [
       "計画",

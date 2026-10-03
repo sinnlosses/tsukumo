@@ -46,7 +46,7 @@ import {
  *   ターンのレポートはメインが書くもので、委譲先の報告はメインの手元に届くだけにする
  * - `work_plan` の呼び出しも `tool-started` にしない。メインのものだけを `work-plan` にし、`parseWorkPlan` を通らない引数は捨てる（handler が差し戻した呼び出しと同じ判定）
  * - サブエージェントの `SendMessage` が委譲の合図なら、`tool-started` の後ろに `delegate-signal` を足す（{@link parseDelegateSignal}）。
- *   合図の文は運ばない
+ *   段の位置と3列目の文を運ぶ
  * - `includePartialMessages` の断片で `report` の呼び出しの塊が開いたら `report-drafting` を出す（立ち絵の「書いている」の材料。メインのものだけ）。
  *   引数の断片（`input_json_delta`）は運ばない。
  *   描くのは確定した `report` だけで、書きかけの引数は JSON としても読めない

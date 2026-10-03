@@ -3,7 +3,7 @@
 
 import { isPlainObject } from "remeda"
 
-import { sentenceCount } from "../report/sentence-count.ts"
+import { leadingSentences, sentenceCount } from "../report/sentence-count.ts"
 import { isBlankText } from "../utils/blank-text.ts"
 import type { SessionRecord } from "./session-state.ts"
 
@@ -85,16 +85,20 @@ export function parseWorkPlan(value: unknown): WorkPlan | undefined {
   return { phases, current, phaseSummary }
 }
 
-/** 委譲の合図から読んだ段の位置。`step` は済んだ段の番号（1始まり）、`stepCount` は段の数。 */
+/**
+ * 委譲の合図から読んだ段の位置と文。`step` は済んだ段の番号（1始まり）、`stepCount` は段の数。
+ * `summary` は合図の3列目で、空なら空の文字列。
+ */
 export type DelegateSignal = {
   readonly step: number
   readonly stepCount: number
+  readonly summary: string
 }
 
 /**
  * 委譲の合図から引き直した段取り。段は「計画・合図の N 段・受け入れ」で、今の段は合図の n 段目の次。
  * 段の名前は、`previous` が同じ数（N + 2 段）の段取りならその名前を借り、違えば {@link DELEGATED_PHASE_NAMES} から組む。
- * 合図の文は段のまとめに入れないので、段が進んでもメインビューの本文には何も出ない。
+ * 段のまとめは合図の文を {@link MAX_PHASE_SUMMARY_SENTENCES} 文で切り詰めたもので、n 段目のまとめになる（{@link delegatedPhaseShiftOf}）。
  */
 export function delegatedWorkPlan(previous: LatestWorkPlan, signal: DelegateSignal): WorkPlan {
   const phaseCount = signal.stepCount + 2
@@ -108,7 +112,11 @@ export function delegatedWorkPlan(previous: LatestWorkPlan, signal: DelegateSign
           ),
           DELEGATED_PHASE_NAMES.acceptance,
         ]
-  return { phases, current: signal.step + 1, phaseSummary: "" }
+  return {
+    phases,
+    current: signal.step + 1,
+    phaseSummary: leadingSentences(signal.summary, MAX_PHASE_SUMMARY_SENTENCES),
+  }
 }
 
 /** 委譲の合図から段取りを組むときの段の名前。 */
@@ -196,6 +204,25 @@ export function phaseShiftOf(previous: LatestWorkPlan, next: WorkPlan): PhaseShi
         } as const)
       : ({ kind: "none" } as const)
   return { finished }
+}
+
+/**
+ * 委譲の合図から引いた段取り `plan`（{@link delegatedWorkPlan}）1つで、メインビューに出すもの（{@link PhaseShift}）。
+ * 前の段取りは見ず、合図1通ごとに、今の段の1つ前（合図の n 段目）を終えた段として出す。
+ * 同じ段の合図が続けば、その数だけ出す。段のまとめが空なら何も出さない。
+ */
+export function delegatedPhaseShiftOf(plan: WorkPlan): PhaseShift {
+  const index = plan.current - 1
+  const name = plan.phases[index]
+  return name === undefined || isBlankText(plan.phaseSummary)
+    ? NO_PHASE_SHIFT
+    : {
+        finished: {
+          kind: "finished",
+          label: phaseLabel({ kind: "phase", index, count: plan.phases.length, name }),
+          summary: plan.phaseSummary,
+        },
+      }
 }
 
 /** 段の見出し「2/4 段の名前」（いまの作業の札・依頼の手順の一覧・メインビューで同じ字）。 */

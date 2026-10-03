@@ -5049,13 +5049,21 @@
             "kind": "tool-started",
             "toolUseId": "fake-delegate-send-1",
             "name": "SendMessage",
-            "input": { "to": "main", "message": "状況 | 1/4 | 架空の1段目を終えた" },
+            "input": {
+              "to": "main",
+              "message": "状況 | 1/4 | 架空の設定が画面から読めるようになった。"
+            },
             "parentToolUseId": "fake-delegate-agent"
           }
         },
         {
           "afterMs": 1510,
-          "event": { "kind": "delegate-signal", "step": 1, "stepCount": 4 }
+          "event": {
+            "kind": "delegate-signal",
+            "step": 1,
+            "stepCount": 4,
+            "summary": "架空の設定が画面から読めるようになった。"
+          }
         },
         {
           "afterMs": 1600,
@@ -5091,13 +5099,21 @@
             "kind": "tool-started",
             "toolUseId": "fake-delegate-send-3",
             "name": "SendMessage",
-            "input": { "to": "main", "message": "状況 | 2/4 | 架空の2段目を終えた" },
+            "input": {
+              "to": "main",
+              "message": "状況 | 2/4 | 架空の保存先が1つにまとまった。古い置き場は読むだけになる。"
+            },
             "parentToolUseId": "fake-delegate-agent"
           }
         },
         {
           "afterMs": 6010,
-          "event": { "kind": "delegate-signal", "step": 2, "stepCount": 4 }
+          "event": {
+            "kind": "delegate-signal",
+            "step": 2,
+            "stepCount": 4,
+            "summary": "架空の保存先が1つにまとまった。古い置き場は読むだけになる。"
+          }
         },
         {
           "afterMs": 6100,
