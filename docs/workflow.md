@@ -131,8 +131,10 @@ SIGTERM が行く）。`pkill` / `killall` で名前やパターンから止め�
 enum・キャラクターパックの読み込み）は起こし直さないと変わらない。** 既定のまま起こすと
 同じ作業ツリーの直近セッションを resume するので、確かめ直すには `TSUKUMO_NEW_SESSION=1` を足す。
 
-同じ形で、Bash の `sed -i`（`-i.bak`・`--in-place` を含む）も PreToolUse hook
-（`scripts/deny-sed-in-place.ts`）が拒否する。ファイルの書き換えは Edit で行う。
+同じ形で、作業ツリーの中のファイルへ書き込む Bash のコマンド（`sed -i`・`perl -i`、
+リダイレクトと `tee`、作業ツリーの外からの `cp` / `mv`、Python・node のコードでの書き込み）も
+PreToolUse hook（`scripts/deny-sed-in-place.ts`）が拒否する。ファイルの書き換えは Edit / Write で行う。
+`pnpm`・`git`・作業ツリーの中のスクリプトのように、ツールの中で書くものは止めない。
 
 委譲先（サブエージェント）が `tw verify`（検査の全段。3〜4分）を `run_in_background: true` で
 打つと PreToolUse hook（`scripts/deny-background-verify.ts`）が拒否し、前景で `timeout` 引数
