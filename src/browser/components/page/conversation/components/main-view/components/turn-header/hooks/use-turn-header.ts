@@ -15,6 +15,7 @@ import {
   type DismissCause,
 } from "../../../../../../../../hooks/use-dismiss-signal.ts"
 import type { HeadNotice, HeadNoticeAction } from "../../../domain/head-notice.ts"
+import { neighborTurnId } from "../../../domain/turn-step-key.ts"
 
 /**
  * 一覧の1行ぶんの見出しと全文。
@@ -77,8 +78,9 @@ const NEWEST_ROW_BADGE = "最新"
 
 export function useTurnHeader(props: TurnHeaderProps): TurnHeaderModel {
   const index = props.turns.findIndex((turn) => turn.id === props.activeTurnId)
-  const older = props.turns[index - 1]?.id
-  const newer = props.turns[index + 1]?.id
+  const turnIds = props.turns.map((turn) => turn.id)
+  const older = neighborTurnId(turnIds, props.activeTurnId, "older")
+  const newer = neighborTurnId(turnIds, props.activeTurnId, "newer")
   const newest = props.turns.at(-1)?.id
   // `noUncheckedIndexedAccess` が生む `| undefined`（docs/coding-standards.md「「無いかもしれない」値」）。
   // 呼び出し側は必ず `turns` に含まれる id を渡す契約だが、畳まずそのまま使う。

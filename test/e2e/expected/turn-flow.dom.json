@@ -218,6 +218,15 @@
                                       "children": [
                                         "‹"
                                       ]
+                                    },
+                                    {
+                                      "tag": "span",
+                                      "attributes": {
+                                        "aria-hidden": "true"
+                                      },
+                                      "children": [
+                                        "["
+                                      ]
                                     }
                                   ]
                                 },
@@ -236,6 +245,15 @@
                                       },
                                       "children": [
                                         "›"
+                                      ]
+                                    },
+                                    {
+                                      "tag": "span",
+                                      "attributes": {
+                                        "aria-hidden": "true"
+                                      },
+                                      "children": [
+                                        "]"
                                       ]
                                     }
                                   ]
@@ -1105,9 +1123,27 @@
                       ]
                     },
                     {
+                      "tag": "p",
+                      "children": [
+                        {
+                          "tag": "kbd",
+                          "children": [
+                            "⏎"
+                          ]
+                        },
+                        "改行 ·",
+                        {
+                          "tag": "kbd",
+                          "children": [
+                            "⌘⏎"
+                          ]
+                        },
+                        "送る"
+                      ]
+                    },
+                    {
                       "tag": "button",
                       "attributes": {
-                        "data-shortcut": "⌘⏎",
                         "data-emphasis": "solid",
                         "type": "submit"
                       },

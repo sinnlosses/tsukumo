@@ -7,7 +7,14 @@
 // レポートに書かれたパスを押せる部品にする一覧・依頼は `<RepositoryFileLinkProvider>` が配る。
 // メインビューの中でしか描かないので、ここで1回だけ mount する。
 
-import { useLayoutEffect, useRef, type ReactElement, type ReactNode, type RefObject } from "react"
+import {
+  useLayoutEffect,
+  useRef,
+  type KeyboardEvent,
+  type ReactElement,
+  type ReactNode,
+  type RefObject,
+} from "react"
 import { useShallow } from "zustand/react/shallow"
 
 import { conversationMoment } from "../../../../../../shared/session/conversation-moment.ts"
@@ -32,6 +39,7 @@ import { Turn } from "./components/turn/turn.tsx"
 import { Welcome } from "./components/welcome/welcome.tsx"
 import { WorkStrip } from "./components/work-strip/work-strip.tsx"
 import { headNoticeOf, type HeadNoticeAction } from "./domain/head-notice.ts"
+import { neighborTurnId, turnStepOf } from "./domain/turn-step-key.ts"
 import { turnHistoryText, turnRequestRest, turnTitle } from "./domain/turn-title.ts"
 import { NO_SHOWN_KEY, useActiveTurnScroll } from "./hooks/use-active-turn-scroll.ts"
 import styles from "./main-view.module.css"
@@ -78,6 +86,29 @@ export function MainView(): ReactElement {
 
   const cardTurn = view.kind !== "welcome" && view.card.kind === "turn" ? view.card : undefined
 
+  function onKeyDown(event: KeyboardEvent<HTMLElement>): void {
+    const step = turnStepOf({
+      key: event.key,
+      metaKey: event.metaKey,
+      ctrlKey: event.ctrlKey,
+      altKey: event.altKey,
+      isComposing: event.nativeEvent.isComposing,
+      target: event.target,
+    })
+    if (step === undefined || cardTurn === undefined) {
+      return
+    }
+    event.preventDefault()
+    const target = neighborTurnId(
+      turns.map((turn) => turn.id),
+      cardTurn.turn.id,
+      step,
+    )
+    if (target !== undefined) {
+      selectTurn(target)
+    }
+  }
+
   return (
     <RepositoryFileLinkProvider>
       {/* `data-brush-origin`: ミニ立ち絵を置く座標の原点。`data-main-view`: フォーカスがメインビューの中にあるかを他の部品から探す印。
@@ -86,6 +117,7 @@ export function MainView(): ReactElement {
         className={styles["main-turns"]}
         ref={rootRef}
         tabIndex={-1}
+        onKeyDown={onKeyDown}
         data-brush-origin=""
         data-main-view=""
       >

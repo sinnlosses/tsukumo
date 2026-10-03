@@ -4,8 +4,7 @@
 // ターンが1件しか無くても出す。
 // 依頼はここにしか出ない（タイトルが1行目、続きが2行目以降）ので、省くと依頼が画面から消える。
 //
-// キー操作は付けない。
-// ページでは入力欄にほぼ常にフォーカスがあるので素のキーは使えず、修飾キー付きはブラウザの戻る / 進む（Cmd+[ / Alt+←）とぶつかる。
+// `[` `]` で前後へ移る口はメインビューの根が受けるので、ここにはキーの字を出すだけ。
 // 見ていたターンは `location.hash` に乗るので、1つ前に見ていたターンへはブラウザの戻るで帰れる。
 
 import type { ReactElement } from "react"
@@ -20,6 +19,8 @@ import styles from "./turn-header.module.css"
 
 const OLDER_LABEL = "1つ古いターンへ"
 const NEWER_LABEL = "1つ新しいターンへ"
+const OLDER_KEY = "["
+const NEWER_KEY = "]"
 const NEWEST_BADGE = "最新"
 const TO_NEWEST_LABEL = "最新へ"
 const HISTORY_HEADING = "窓の中のやり取り"
@@ -59,11 +60,12 @@ export function PresentationalTurnHeader({
           ariaLabel={OLDER_LABEL}
           disclosure={{ kind: "none" }}
           ariaHasPopup={undefined}
-          title={OLDER_LABEL}
+          title={`${OLDER_LABEL}（${OLDER_KEY} キー）`}
           className={styles["turn-nav-button"]}
           onClick={onOlder}
         >
           <span aria-hidden="true">‹</span>
+          <NavKey keyName={OLDER_KEY} />
         </Button>
         <Button
           variant="outline"
@@ -73,11 +75,12 @@ export function PresentationalTurnHeader({
           ariaLabel={NEWER_LABEL}
           disclosure={{ kind: "none" }}
           ariaHasPopup={undefined}
-          title={NEWER_LABEL}
+          title={`${NEWER_LABEL}（${NEWER_KEY} キー）`}
           className={styles["turn-nav-button"]}
           onClick={onNewer}
         >
           <span aria-hidden="true">›</span>
+          <NavKey keyName={NEWER_KEY} />
         </Button>
       </div>
       {/* ページの中の本物の `h2` はこれ1つ（レポートの `##` は `h4` に落とす）。
@@ -163,6 +166,20 @@ export function PresentationalTurnHeader({
         </div>
       )}
     </header>
+  )
+}
+
+function NavKey(props: { readonly keyName: string }): ReactElement {
+  return (
+    <Text
+      element="span"
+      size="label"
+      tone="inherit"
+      weight="inherit"
+      className={styles["turn-nav-key"]}
+    >
+      <span aria-hidden="true">{props.keyName}</span>
+    </Text>
   )
 }
 

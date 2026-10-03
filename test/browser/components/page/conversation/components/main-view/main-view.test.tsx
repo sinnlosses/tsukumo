@@ -155,6 +155,45 @@ describe("MainView（札の頭）", () => {
     expect(position()).toBe("2 / 3")
   })
 
+  it("メインビューの中で [ は1つ古いターンへ、] は1つ新しいターンへ移り、端では動かない", () => {
+    renderMainView(threeTurns())
+    const root = document.querySelector("[data-main-view]")
+    if (root === null) {
+      throw new Error("メインビューの根が見つからない")
+    }
+    const key = (init: KeyboardEventInit): void => {
+      act(() => {
+        fireEvent.keyDown(root, init)
+        window.dispatchEvent(new Event("hashchange"))
+      })
+    }
+
+    key({ key: "]" })
+    expect(position()).toBe("3 / 3")
+    key({ key: "[" })
+    expect(position()).toBe("2 / 3")
+    key({ key: "[", metaKey: true })
+    expect(position()).toBe("2 / 3")
+    key({ key: "[" })
+    key({ key: "[" })
+    expect(position()).toBe("1 / 3")
+  })
+
+  it("入力欄の中の [ ] はターンを移さない", () => {
+    renderMainView(threeTurns())
+    const root = document.querySelector("[data-main-view]")
+    if (root === null) {
+      throw new Error("メインビューの根が見つからない")
+    }
+    const field = document.createElement("textarea")
+    root.append(field)
+    act(() => {
+      fireEvent.keyDown(field, { key: "[" })
+      window.dispatchEvent(new Event("hashchange"))
+    })
+    expect(position()).toBe("3 / 3")
+  })
+
   it("端ではその側を押せない（最新では ›、いちばん古いターンでは ‹）", () => {
     renderMainView(threeTurns())
 

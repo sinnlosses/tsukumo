@@ -210,6 +210,15 @@ export function PresentationalComposer({
           hidden
           onChange={onImagesChosen}
         />
+        <Text
+          element="p"
+          size="label"
+          tone="ink-quiet"
+          weight="inherit"
+          className={styles["dispatch-key-hint"]}
+        >
+          <kbd>⏎</kbd> 改行 · <kbd>⌘⏎</kbd> 送る
+        </Text>
         <TurnStatus />
       </div>
     </form>

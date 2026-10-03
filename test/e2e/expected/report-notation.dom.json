@@ -42,6 +42,15 @@
                               "children": [
                                 "‹"
                               ]
+                            },
+                            {
+                              "tag": "span",
+                              "attributes": {
+                                "aria-hidden": "true"
+                              },
+                              "children": [
+                                "["
+                              ]
                             }
                           ]
                         },
@@ -60,6 +69,15 @@
                               },
                               "children": [
                                 "›"
+                              ]
+                            },
+                            {
+                              "tag": "span",
+                              "attributes": {
+                                "aria-hidden": "true"
+                              },
+                              "children": [
+                                "]"
                               ]
                             }
                           ]

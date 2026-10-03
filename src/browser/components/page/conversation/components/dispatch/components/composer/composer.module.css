@@ -40,6 +40,20 @@
      揃えることを優先し、上だけをここで持つ。 */
   padding-top: 0.625rem;
 }
+/* 改行と送信のキーの案内。
+   基準の幅を 0 にして余った幅だけ使い、経過時間や API の知らせを次の段へ押し出さない（収まらなければ省略記号）。 */
+.dispatch-key-hint {
+  flex: 1 1 0;
+  min-width: 0;
+  margin: 0 0 0 0.5rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dispatch-key-hint kbd {
+  font-family: var(--font-mono);
+  font-size: inherit;
+}
 /* 画像・`/`・`@` の口。
    絵だけの四角いボタン。
    顔は `<Button variant="ghost">` が持つ。

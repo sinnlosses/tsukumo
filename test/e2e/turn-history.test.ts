@@ -1,4 +1,4 @@
-import { describe, it } from "vitest"
+import { describe, expect, it } from "vitest"
 
 import { useScenarioRun } from "./scenario-run.ts"
 
@@ -25,5 +25,28 @@ describe("ターンの履歴", () => {
 
     await room.waitForEvent("turn-finished", LAST_TURN_FINISHED_OCCURRENCE)
     await room.settleAndMatch(ELAPSED_MS)
+  })
+
+  it("メインビューにフォーカスがあるとき [ ] で前後のターンへ移り、入力欄の中では移らない", async () => {
+    const room = await run.open({
+      scenario: "turn-history-keys",
+      scene: "turn-history",
+      viewport: "wide",
+      domRoots: [],
+    })
+    await room.waitForEvent("turn-finished", LAST_TURN_FINISHED_OCCURRENCE)
+    const position = room.page.locator('[class*="turn-position"]')
+
+    await room.page.locator("[data-main-view]").focus()
+    await room.page.keyboard.press("[")
+    await expect.poll(() => position.textContent()).toBe("3 / 4")
+    await room.page.keyboard.press("]")
+    await expect.poll(() => position.textContent()).toBe("4 / 4")
+
+    const field = room.page.getByRole("textbox", { name: "依頼を書く" })
+    await field.focus()
+    await room.page.keyboard.press("[")
+    await expect.poll(() => field.inputValue()).toBe("[")
+    expect(await position.textContent()).toBe("4 / 4")
   })
 })

@@ -33,13 +33,19 @@
    顔は `<Button variant="outline">` が持つ。
    箱だけここに置く。 */
 .turn-nav-button {
-  display: inline-grid;
-  place-items: center;
-  width: 1.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  min-width: 1.5rem;
   height: 1.5rem;
-  padding: 0;
+  padding: 0 0.375rem;
   border-radius: 0.4rem;
   line-height: 1;
+}
+/* 押すキーの字。矢印の隣に等幅で添える。 */
+.turn-nav-key {
+  font-family: var(--font-mono);
 }
 /* タイトル（下向きの矢印を含むボタン）と一覧そのものをまとめる枠。
    `position` は付けない。一覧（.turn-history）はこの枠のさらに外、`.turn-header`（position: relative）を基準にヘッダーいっぱいの幅で重ねる（下の `.turn-history` 参照）。
