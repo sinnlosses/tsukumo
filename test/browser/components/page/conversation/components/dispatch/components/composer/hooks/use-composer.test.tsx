@@ -5,6 +5,7 @@ import { useComposer } from "../../../../../../../../../../src/browser/component
 import type { ComposerKey } from "../../../../../../../../../../src/browser/components/page/conversation/components/dispatch/domain/composer-surface.ts"
 import { useComposerDraft } from "../../../../../../../../../../src/browser/stores/composer-draft.ts"
 import { useInquiryDraft } from "../../../../../../../../../../src/browser/stores/inquiry-answer.ts"
+import { useSession } from "../../../../../../../../../../src/browser/stores/session.ts"
 import {
   INITIAL_SESSION_STATE,
   type SessionState,
@@ -205,5 +206,44 @@ describe("useComposer の送信", () => {
     expect(submitPrevented).toBe(true)
     expect(calls).toEqual([])
     expect(result.current.draft.text).toBe("架空の依頼")
+  })
+
+  it("接続が切れている間は Command+Enter もフォームの送信も送らず、下書きと添付画像を残す", () => {
+    const calls: unknown[] = []
+    const { result } = renderUseComposer({}, (command) => calls.push(command))
+    type(result, "架空の依頼")
+    act(() => {
+      useSession.getState().setConnection("closed")
+    })
+
+    press(result, key("Enter", { meta: true }))
+    act(() => {
+      result.current.onSubmit({ preventDefault: () => {} })
+    })
+
+    expect(calls).toEqual([])
+    expect(result.current.draft.text).toBe("架空の依頼")
+    expect(result.current.band.kind).toBe("disconnected")
+  })
+
+  it("初回の接続中は帯を出さず、切れたあと繋ぎ直している間は出し続け、開いたら消す", () => {
+    const { result } = renderUseComposer()
+    act(() => {
+      useSession.getState().setConnection("connecting")
+    })
+    expect(result.current.band.kind).toBe("none")
+
+    act(() => {
+      useSession.getState().setConnection("closed")
+    })
+    act(() => {
+      useSession.getState().setConnection("connecting")
+    })
+    expect(result.current.band.kind).toBe("disconnected")
+
+    act(() => {
+      useSession.getState().setConnection("open")
+    })
+    expect(result.current.band.kind).toBe("none")
   })
 })

@@ -87,6 +87,7 @@ export function PresentationalTurnStatus(props: PresentationalTurnStatusProps): 
       ) : (
         <button
           type="submit"
+          disabled={props.action.disabled}
           className={clsx(
             dispatchStyles["dispatch-send"],
             props.action.emphasis === "quiet" && dispatchStyles["is-quiet"],

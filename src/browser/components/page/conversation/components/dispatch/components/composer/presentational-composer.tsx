@@ -56,6 +56,17 @@ export function PresentationalComposer({
       className={clsx(dispatchStyles["dispatch-form"], answering && dispatchStyles["is-answering"])}
       onSubmit={onSubmit}
     >
+      {band.kind === "disconnected" && (
+        <Text
+          element="p"
+          size="secondary"
+          tone="state-ng"
+          weight="inherit"
+          className={styles["dispatch-band-text"]}
+        >
+          <span role="status">{band.text}</span>
+        </Text>
+      )}
       {/* 答え待ちのあいだだけ出る帯（誰が何を待っているか）と、お伺いの札へフォーカスを移す口。 */}
       {band.kind === "inquiry" && (
         <HStack

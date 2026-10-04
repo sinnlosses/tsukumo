@@ -41,11 +41,12 @@ export type ProtocolAgreement = "compatible" | "mismatched"
 
 /**
  * store の中身。接続の状態（`connection`）と版の一致（`protocol`）はブラウザだけが持つので、`SessionState` には入れず同じ store に相乗りさせる。
- * `connection` はまだ画面には出していない。
  */
 export type SessionStoreState = {
   readonly state: SessionState
   readonly connection: ConnectionStatus
+  /** 接続が一度切れてから、まだ `open` に戻っていないか。初回の接続中は false。 */
+  readonly linkLost: boolean
   readonly protocol: ProtocolAgreement
   /** `hello`（姿の丸ごとの入れ替え）を受けた回数。姿の差が新しく起きたことかを見分けるのに使う。 */
   readonly generation: number
@@ -63,6 +64,7 @@ export const useSession = create<SessionStoreState>()((set, get) => {
   return {
     state: INITIAL_SESSION_STATE,
     connection: "connecting",
+    linkLost: false,
     protocol: "compatible",
     generation: 0,
     // 送った手続きが断られた・接続が切れたときは黙って捨てる（`SessionDispatch`）。
@@ -107,8 +109,10 @@ export const useSession = create<SessionStoreState>()((set, get) => {
       })
     },
     setConnection: (status) => {
-      if (status !== get().connection) {
-        set({ connection: status })
+      const current = get()
+      const linkLost = status === "open" ? false : status === "closed" || current.linkLost
+      if (status !== current.connection || linkLost !== current.linkLost) {
+        set({ connection: status, linkLost })
       }
     },
     attachSocket: (next) => {

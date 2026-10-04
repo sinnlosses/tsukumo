@@ -35,6 +35,7 @@ export function putSession(state: SessionState, spy: CommandSpy = () => {}): voi
         },
       },
     })
+    useSession.getState().setConnection("open")
     putState(state)
   })
 }

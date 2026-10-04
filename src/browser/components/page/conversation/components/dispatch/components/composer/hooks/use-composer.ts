@@ -33,13 +33,14 @@ import {
 } from "./use-suggestion.ts"
 
 /**
- * `<textarea>` の上の帯。答え待ち（お伺い）があるあいだだけ出す。
+ * `<textarea>` の上の帯。接続が切れているあいだと、答え待ち（お伺い）があるあいだだけ出す（切断が先）。
  * 答えはメインビューのお伺いの札で選ぶ（質問ならここに書いて送ってもよい）。
  * `onJump` は「お伺いへ」の口で、お伺いの札の最初の選択肢へフォーカスを移す。
  */
 export type ComposerBand =
   | { readonly kind: "none" }
   | { readonly kind: "inquiry"; readonly text: string; readonly onJump: () => void }
+  | { readonly kind: "disconnected"; readonly text: string }
 
 /**
  * `<Composer>` が画面に出す形。
@@ -76,6 +77,8 @@ export function useComposer(): ComposerModel {
   const characterName = useSession((session) => session.state.character?.name)
   const pendingActive = useSession((session) => session.state.pending.length > 0)
   const turnInProgress = useTurnRunning()
+  const connected = useSession((session) => session.connection === "open")
+  const linkLost = useSession((session) => session.linkLost)
   // 答え待ちの質問があるあいだ、入力欄は「依頼を書く場所」ではなく選択肢以外の答えを書く場所になる（札はメインビューに出ている）。
   const inquiry = useInquiryAnswer()
   const requestInquiryJump = useInquiryJump((state) => state.requestJump)
@@ -113,6 +116,9 @@ export function useComposer(): ComposerModel {
   }, [draft])
 
   const submit = (): void => {
+    if (!connected) {
+      return
+    }
     const trimmed = draft.text.trim()
     if (trimmed === "") {
       return
@@ -137,6 +143,20 @@ export function useComposer(): ComposerModel {
     surfaceRef.current?.focus()
   }
 
+  const composerBand = (): ComposerBand => {
+    if (linkLost) {
+      return { kind: "disconnected", text: DISCONNECTED_BAND_TEXT }
+    }
+    if (inquiry.kind === "none") {
+      return { kind: "none" }
+    }
+    return {
+      kind: "inquiry",
+      text: inquiryBandText(inquiry.kind, characterName),
+      onJump: () => requestInquiryJump({ focus: true }),
+    }
+  }
+
   return {
     ...promptImage,
     surfaceRef,
@@ -151,14 +171,7 @@ export function useComposer(): ComposerModel {
     placeholder:
       inquiry.kind === "question" ? ANSWER_PLACEHOLDER : composerPlaceholder(characterName),
     label: inquiry.kind === "question" ? ANSWER_LABEL : REQUEST_LABEL,
-    band:
-      inquiry.kind === "none"
-        ? { kind: "none" }
-        : {
-            kind: "inquiry",
-            text: inquiryBandText(inquiry.kind, characterName),
-            onJump: () => requestInquiryJump({ focus: true }),
-          },
+    band: composerBand(),
     answering: inquiry.kind === "question",
     draft,
     suggestions: suggestion.suggestions,
@@ -198,6 +211,9 @@ export function useComposer(): ComposerModel {
 
 /** 質問に答えている間のプレースホルダ（選択肢の札はメインビューに出ている）。 */
 const ANSWER_PLACEHOLDER = "選択肢以外の答えを書く…"
+
+const DISCONNECTED_BAND_TEXT =
+  "サーバとつながっていません。送れず、下書きは残してあります。サーバを起こし直したなら、ページを開き直してください"
 
 const REQUEST_LABEL = "依頼を書く"
 const ANSWER_LABEL = "質問への答えを書く"

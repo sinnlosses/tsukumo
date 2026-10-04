@@ -86,6 +86,13 @@
 .dispatch-send:hover {
   background: color-mix(in srgb, var(--accent) 85%, var(--ink));
 }
+.dispatch-form .dispatch-send:disabled {
+  background: transparent;
+  border-color: var(--rule);
+  color: var(--ink-quiet);
+  font-weight: 400;
+  cursor: not-allowed;
+}
 .dispatch-form.is-answering .dispatch-send {
   background: var(--state-warn);
   border-color: var(--state-warn);
