@@ -22,4 +22,7 @@ Vite 前提の道具（Storybook・React Compiler）を本物と同じ設定で�
   型だけの import を読み込みごと消す（`onlyRemoveTypeImports: false`。`bun build` と同じ振る舞い）
 - **React は本番版で束ねられる**（`vite build` が `process.env.NODE_ENV` を `"production"` に置き換える）。
   `bun build` は開発版を束ねていたので、開発版だけが出す警告はブラウザのコンソールに出なくなった
-- 縮めない（`minify: false`）。ローカルから配るだけなので、読める成果物のほうが調べやすい
+- **JS は縮める**（既定の oxc minify）。配信は localhost なので転送量は効かないが、起動時に
+  ブラウザがパースする量は減る。**CSS は縮めない**（`cssMinify: false`）。lightningcss の minify が
+  `::picker(select):popover-open`（customizable select）を解せず落ちる。読める成果物で調べたいときは
+  `pnpm run dev`（`dist/browser/` を使わずソースのまま配る開発サーバ）を使う

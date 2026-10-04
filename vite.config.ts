@@ -26,8 +26,9 @@ export default defineConfig({
   },
   build: {
     emptyOutDir: true,
-    minify: false,
     modulePreload: false,
+    // lightningcss の minify は `::picker(select):popover-open`（customizable select）を解せず落ちる。
+    cssMinify: false,
     cssCodeSplit: false,
     reportCompressedSize: false,
     rolldownOptions: {

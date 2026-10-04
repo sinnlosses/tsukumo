@@ -46,7 +46,8 @@ describe("buildUiBundle", () => {
     // の class。組み立てるとハッシュ付きの名前になる。
     const selector = /\.(_?layout-grid_[\w-]+)/.exec(result.ok ? result.bundle.styleSheet : "")
     const hashedName = selector?.[1] ?? "（CSS に layout-grid の選択子が無い）"
-    expect(result.ok ? result.bundle.uiScript : "").toContain(`"${hashedName}"`)
+    // minify した JS は文字列をバッククォートで書くことがある（`"` 固定では見つからない）。
+    expect(result.ok ? result.bundle.uiScript : "").toMatch(new RegExp(`["'\`]${hashedName}["'\`]`))
   })
 })
 
