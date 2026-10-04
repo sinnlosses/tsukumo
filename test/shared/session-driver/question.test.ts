@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest"
 
 import {
+  isRecommendedLabel,
   parseQuestions,
   sortQuestionOptions,
   type QuestionOption,
+  withoutRecommendedMark,
 } from "../../../src/shared/session-driver/question.ts"
 
 describe("parseQuestions", () => {
@@ -119,6 +121,29 @@ describe("sortQuestionOptions", () => {
       "見出しと質問文（架空）",
       "本文だけ（架空）",
     ])
+  })
+
+  it("おすすめの印が付いた選択肢を先に、残りをそれぞれ辞書順で並べる（自由入力は末尾のまま）", () => {
+    const sorted = sortQuestionOptions([
+      option("その他"),
+      option("スクリプトを同梱する（架空）"),
+      option("集計を移す（架空） (Recommended)"),
+      option("見直しを出さない（架空）"),
+    ])
+
+    expect(sorted.map((o) => o.label)).toEqual([
+      "集計を移す（架空） (Recommended)",
+      "スクリプトを同梱する（架空）",
+      "見直しを出さない（架空）",
+      "その他",
+    ])
+  })
+
+  it("日本語の（推奨）も、半角・全角の括弧のどちらでもおすすめの印として読む", () => {
+    expect(isRecommendedLabel("A案 (推奨)")).toBe(true)
+    expect(isRecommendedLabel("A案（推奨）")).toBe(true)
+    expect(withoutRecommendedMark("A案（推奨）")).toBe("A案")
+    expect(isRecommendedLabel("推奨の扱いを決める")).toBe(false)
   })
 
   it("元の配列を書き換えない", () => {

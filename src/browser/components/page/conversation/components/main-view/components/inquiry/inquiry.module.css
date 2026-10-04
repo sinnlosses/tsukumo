@@ -121,7 +121,7 @@
   flex: 0 1 auto;
   min-width: 0;
 }
-/* ラベル末尾の `(Recommended)` を字から外して載せるバッジ。 */
+/* ラベル末尾のおすすめの印（`withoutRecommendedMark`）を字から外して載せるバッジ。 */
 /* 字の段・色は `Text` が持つ。箱（枠・角丸・余白）だけここに置く。 */
 .inquiry-option-badge {
   flex: 0 0 auto;

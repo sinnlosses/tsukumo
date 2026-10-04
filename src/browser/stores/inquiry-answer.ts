@@ -14,15 +14,17 @@ import { create } from "zustand"
 import type { StampedPendingAsk } from "../../shared/session-driver/pending-ask.ts"
 import {
   FREE_TEXT_OPTION_LABEL,
+  isRecommendedLabel,
   sortQuestionOptions,
   type Question,
+  withoutRecommendedMark,
 } from "../../shared/session-driver/question.ts"
 import { toolInputText } from "../domain/tool-summary.ts"
 import { useSession, type SessionDispatch } from "./session.ts"
 
 /**
  * 選択肢1つぶんの札。`label` は SDK へ返す元のラベル（許可要求では「許可」「拒否」）で、`text` は画面に出す字。
- * `text` は末尾の `(Recommended)` を外したもので、外した印は {@link InquiryOptionRow.recommended}。
+ * `text` は末尾のおすすめの印（`withoutRecommendedMark`）を外したもので、外した印は {@link InquiryOptionRow.recommended}。
  * `number` は 1 から振った番号（数字キーで選ぶときの番号）。
  */
 export type InquiryOptionRow = {
@@ -278,7 +280,7 @@ function replaced<T>(values: readonly T[], target: number, value: T, filler: T):
 }
 
 /**
- * 選択肢を札の行へ畳む。並びはラベルの辞書順（`sortQuestionOptions`）で、番号はその並びで振る。
+ * 選択肢を札の行へ畳む。並びはおすすめ → それ以外の辞書順（`sortQuestionOptions`）で、番号はその並びで振る。
  *
  * 自由入力（「その他」）の選択肢は札に出さない（自由入力は入力欄が担うので、押しても意味のない札になる）。
  * `sortQuestionOptions` はそれでも通すので、モデルが「その他」を含めてきたかどうかで残りの並びは変わらない。
@@ -289,16 +291,10 @@ function optionRows(question: Question, selected: readonly string[]): readonly I
     .map((option, index) => ({
       number: index + 1,
       label: option.label,
-      text: option.label.replace(RECOMMENDED_SUFFIX, ""),
-      recommended: RECOMMENDED_SUFFIX.test(option.label),
+      text: withoutRecommendedMark(option.label),
+      recommended: isRecommendedLabel(option.label),
       description: option.description,
       preview: option.preview,
       selected: selected.includes(option.label),
     }))
 }
-
-/**
- * ラベル末尾の「おすすめ」の印（`AskUserQuestion` のモデルが自分で書く）。
- * 字からは外してバッジにするが、SDK へ返す答えは元のラベルのまま（`InquiryOptionRow.label`）。
- */
-const RECOMMENDED_SUFFIX = /\s*\(Recommended\)\s*$/i

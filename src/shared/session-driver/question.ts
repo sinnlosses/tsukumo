@@ -35,7 +35,8 @@ export type QuestionAnswer = readonly string[]
 export const FREE_TEXT_OPTION_LABEL = "その他"
 
 /**
- * 選択肢をラベルの辞書順に並べ替える。並べ替えるのはブラウザ側で、サーバは SDK の並びをそのまま渡す。
+ * 選択肢を、おすすめ（{@link isRecommendedLabel}）→ それ以外の順に分け、それぞれをラベルの辞書順に並べ替える。
+ * 並べ替えるのはブラウザ側で、サーバは SDK の並びをそのまま渡す。
  *
  * - ラベルは日本語が普通なので `localeCompare` で比べる。
  *   ロケールは `"ja"` に固定する（省くと実行環境の既定ロケールに解決され、ブラウザ（`ja`）とテストを走らせる環境で漢字の並びが食い違う）
@@ -43,12 +44,28 @@ export const FREE_TEXT_OPTION_LABEL = "その他"
  *   （札には出さない選択肢だが、並べ替えの結果が含めてきたかどうかで変わらないようにする）
  */
 export function sortQuestionOptions(options: readonly QuestionOption[]): readonly QuestionOption[] {
-  const freeText = options.filter((option) => option.label === FREE_TEXT_OPTION_LABEL)
-  const rest = options
-    .filter((option) => option.label !== FREE_TEXT_OPTION_LABEL)
-    .toSorted((a, b) => a.label.localeCompare(b.label, "ja"))
-  return [...rest, ...freeText]
+  const byLabel = (a: QuestionOption, b: QuestionOption): number =>
+    a.label.localeCompare(b.label, "ja")
+  const rest = options.filter((option) => option.label !== FREE_TEXT_OPTION_LABEL)
+  return [
+    ...rest.filter((option) => isRecommendedLabel(option.label)).toSorted(byLabel),
+    ...rest.filter((option) => !isRecommendedLabel(option.label)).toSorted(byLabel),
+    ...options.filter((option) => option.label === FREE_TEXT_OPTION_LABEL),
+  ]
 }
+
+/** ラベル末尾に「おすすめ」の印（`AskUserQuestion` のモデルが自分で書く）があるか。 */
+export function isRecommendedLabel(label: string): boolean {
+  return RECOMMENDED_SUFFIX.test(label)
+}
+
+/** ラベルから末尾の「おすすめ」の印を外した、画面に出す字。SDK へ返す答えは元のラベルのまま。 */
+export function withoutRecommendedMark(label: string): string {
+  return label.replace(RECOMMENDED_SUFFIX, "")
+}
+
+/** 英語の `(Recommended)` と日本語の `(推奨)` を、半角・全角の括弧のどちらでも受ける。 */
+const RECOMMENDED_SUFFIX = /\s*[(（]\s*(?:Recommended|推奨)\s*[)）]\s*$/i
 
 /**
  * `AskUserQuestion` の入力（外部由来の `unknown`）を検証して質問の並びにする。
