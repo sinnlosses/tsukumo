@@ -18,6 +18,10 @@ import {
   type ContextUsageProcedurePorts,
   contextUsageProcedure,
 } from "./server/context-usage/adapter/context-usage-procedure.ts"
+import {
+  type DiagnosticProcedurePorts,
+  diagnosticProcedure,
+} from "./server/diagnostic/adapter/diagnostic-procedure.ts"
 import { hostProcedure } from "./server/host/adapter/host-procedure.ts"
 import type { HostCommandPorts } from "./server/host/core/host-command.ts"
 import {
@@ -60,7 +64,8 @@ export type RpcRouterPorts = RepositoryProcedurePorts &
   ContextUsageProcedurePorts &
   PlanUsageProcedurePorts &
   AchievementProcedurePorts &
-  SessionDigestProcedurePorts
+  SessionDigestProcedurePorts &
+  DiagnosticProcedurePorts
 
 /** 読み取りの手続きを束ね、照合のミドルウェアを全部の前に掛ける（`/rpc` に載る）。 */
 export function createRpcRouter(ports: RpcRouterPorts) {
@@ -74,6 +79,7 @@ export function createRpcRouter(ports: RpcRouterPorts) {
       planUsage: planUsageProcedure(ports),
       achievement: achievementProcedure(ports),
       sessionDigest: sessionDigestProcedure(ports),
+      diagnostic: diagnosticProcedure(ports),
     })
 }
 

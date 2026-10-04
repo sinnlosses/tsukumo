@@ -6,7 +6,7 @@
 import process from "node:process"
 
 import { createCurrentCharacter } from "./current-character.ts"
-import { todayLocalDateKey } from "./server/adapter/local-time.ts"
+import { createServerClock, todayLocalDateKey } from "./server/adapter/local-time.ts"
 import { type Config, VIEW_PORT_ENV_NAME } from "./server/core/config.ts"
 import {
   createDiagnosticLog,
@@ -96,6 +96,8 @@ export async function run(config: Config, launch: LaunchOptions): Promise<number
     tokenUsageLog,
     promptImageShelf,
     reportImageShelf,
+    diagnosticLog,
+    now: createServerClock(config.fixedClock),
     devServer: launch.devServer,
     cwd: launch.cwd,
   })

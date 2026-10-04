@@ -10,6 +10,7 @@ import {
   applyAppearanceColorOverride,
   loadAppearanceColorOverride,
 } from "./domain/appearance-color.ts"
+import { reportBrowserError } from "./domain/browser-error-report.ts"
 // ページ全体の下地（トークン・body・リンク）。グローバルな CSS はこれだけ。
 import "./styles/theme.css"
 
@@ -18,7 +19,18 @@ import "./styles/theme.css"
 // 任せると、保存した色が一瞬だけ既定で描かれてから入れ替わる。
 applyAppearanceColorOverride(loadAppearanceColorOverride())
 
+window.addEventListener("error", (event) => {
+  reportBrowserError("onerror", event.error)
+})
+window.addEventListener("unhandledrejection", (event) => {
+  reportBrowserError("unhandledrejection", event.reason)
+})
+
 const appRoot = document.querySelector("#app")
 if (appRoot !== null) {
-  createRoot(appRoot).render(<App />)
+  createRoot(appRoot, {
+    onUncaughtError: (error) => {
+      reportBrowserError("render-failure", error)
+    },
+  }).render(<App />)
 }

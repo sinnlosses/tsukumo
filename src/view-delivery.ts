@@ -12,6 +12,7 @@ import {
   readCommitCalendar,
 } from "./server/achievement/adapter/main-history.ts"
 import { todayLocalDateKey } from "./server/adapter/local-time.ts"
+import type { DiagnosticLog } from "./server/diagnostic/core/diagnostic.ts"
 import { listDiaryDates, readDiaryDay } from "./server/diary/adapter/diary.ts"
 import type { ReportImageShelf } from "./server/report/core/report-image-shelf.ts"
 import { projectNameOf } from "./server/repository/adapter/project-name.ts"
@@ -64,6 +65,10 @@ export type ViewDeliveryOptions = {
   readonly promptImageShelf: PromptImageShelf
   /** `image` の塊の画像の棚（`/report-image/` に配る画像の出どころ）。ここは引くだけ。 */
   readonly reportImageShelf: ReportImageShelf
+  /** 診断ログの口。 */
+  readonly diagnosticLog: DiagnosticLog
+  /** 診断ログに書く「いま」を読む時計。 */
+  readonly now: () => number
   /** tsukumo を起こしたディレクトリ。 */
   readonly cwd: string
   /** Vite の開発サーバを差し込み、`src/browser/` の保存を HMR で当てるか（`--dev`）。 */
@@ -138,6 +143,9 @@ export async function startViewDelivery(options: ViewDeliveryOptions): Promise<V
       return result.kind === "ok" && result.calendar.kind === "known"
         ? { kind: "ok", calendar: { ...result.calendar, diaryDates } }
         : result
+    },
+    reportBrowserError: (report) => {
+      options.diagnosticLog.append([{ flow: "browser-error", at: options.now(), ...report }])
     },
   })
 

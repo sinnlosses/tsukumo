@@ -14,6 +14,7 @@ import { achievementContract } from "./contract/achievement.ts"
 import { characterPackContract } from "./contract/character-pack.ts"
 import { chatContract } from "./contract/chat.ts"
 import { contextUsageContract } from "./contract/context-usage.ts"
+import { diagnosticContract } from "./contract/diagnostic.ts"
 import { frameContract } from "./contract/frame.ts"
 import { hostContract } from "./contract/host.ts"
 import { planUsageContract } from "./contract/plan-usage.ts"
@@ -35,6 +36,7 @@ export const rpcContract = {
   planUsage: planUsageContract,
   achievement: achievementContract,
   sessionDigest: sessionDigestContract,
+  diagnostic: diagnosticContract,
 }
 
 /** ブラウザが手続きを呼ぶ client の型（契約から導く）。 */

@@ -42,7 +42,11 @@ if (startAt === "invalid" || endAt === "invalid" || generation === "invalid" || 
 
 const entries = createDiagnosticLog()
   .readRange({ startAt, endAt })
-  .filter((entry) => generation.kind === "all" || entry.generation === generation.generation)
+  .filter(
+    (entry) =>
+      generation.kind === "all" ||
+      (entry.flow === "session-event" && entry.generation === generation.generation),
+  )
 if (entries.length === 0) {
   process.stdout.write(`${range(startAt, endAt)} の記録が無い（${diagnosticDir()} を見た）\n`)
   process.exit(0)
@@ -80,7 +84,11 @@ function range(from: number, to: number): string {
   return `${isoWithOffset(from)}〜${isoWithOffset(to)}`
 }
 
-/** 1件を1行に（時刻・流れ・代・種類）。 */
+/** 1件を1行に。`session-event` は代・種類、`browser-error` は経路・`error.name`。 */
 function line(entry: DiagnosticEntry): string {
-  return `${isoWithOffset(entry.at)}  ${entry.flow}  代${String(entry.generation)}  ${entry.kind}`
+  const when = isoWithOffset(entry.at)
+  if (entry.flow === "session-event") {
+    return `${when}  ${entry.flow}  代${String(entry.generation)}  ${entry.kind}`
+  }
+  return `${when}  ${entry.flow}  ${entry.route}  ${entry.errorName}`
 }

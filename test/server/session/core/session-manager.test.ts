@@ -2057,6 +2057,16 @@ describe("createSessionManager", () => {
   })
 
   describe("診断ログの足跡", () => {
+    /** 畳んだイベントの足跡だけに絞る（このセッションは `browser-error` の流れを書かない）。 */
+    function sessionEventEntries(
+      entries: readonly DiagnosticEntry[],
+    ): readonly (DiagnosticEntry & { readonly flow: "session-event" })[] {
+      return entries.filter(
+        (entry): entry is DiagnosticEntry & { readonly flow: "session-event" } =>
+          entry.flow === "session-event",
+      )
+    }
+
     function startDiagnosticManagerWithStub() {
       const stub = createStubDriver()
       const entries: DiagnosticEntry[] = []
@@ -2140,7 +2150,7 @@ describe("createSessionManager", () => {
       stub.emit({ kind: "plan", plan: "架空のプラン" })
       await waitForBatch()
 
-      expect(entries.map((entry) => entry.generation)).toEqual([1, 2])
+      expect(sessionEventEntries(entries).map((entry) => entry.generation)).toEqual([1, 2])
     })
 
     it("復元で流し直されたイベントは書かない", async () => {
@@ -2159,7 +2169,7 @@ describe("createSessionManager", () => {
       stub.emit({ kind: "turn-started" })
       manager.close()
 
-      expect(entries.map((entry) => entry.kind)).toEqual(["turn-started"])
+      expect(sessionEventEntries(entries).map((entry) => entry.kind)).toEqual(["turn-started"])
     })
   })
 })

@@ -41,6 +41,7 @@ const emptyViewServerOptions: ViewServerOptions = {
     readSessionDigest: () => Promise.resolve(UNAVAILABLE_SESSION_DIGEST),
     readAchievementDay: () => Promise.resolve({ kind: "ok", achievement: { kind: "unknown" } }),
     readAchievementCalendar: () => Promise.resolve({ kind: "ok", calendar: { kind: "unknown" } }),
+    reportBrowserError: () => {},
   }),
   token: "架空の起動トークン",
 }

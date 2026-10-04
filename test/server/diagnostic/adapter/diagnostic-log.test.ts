@@ -38,6 +38,17 @@ function footprint(when: number, generation = 1): DiagnosticEntry {
   return { flow: "session-event", at: when, generation, kind: "turn-finished" }
 }
 
+/** ブラウザの例外の足跡（手で組んだ架空の1件）。 */
+function browserErrorFootprint(when: number): DiagnosticEntry {
+  return {
+    flow: "browser-error",
+    at: when,
+    route: "render-failure",
+    errorName: "TypeError",
+    frames: [{ origin: "bundle", line: 12, column: 3 }],
+  }
+}
+
 describe("createDiagnosticLog", () => {
   it("日付ごとのファイルに、版を付けて1件1行で追記する", () => {
     const log = createDiagnosticLog(root())
@@ -60,6 +71,16 @@ describe("createDiagnosticLog", () => {
       footprint(at(9, 0)),
       footprint(at(23, 30)),
       footprint(at(1, 15, 23), 2),
+    ])
+  })
+
+  it("`browser-error` の流れも1件1行で往復する", () => {
+    const log = createDiagnosticLog(root())
+
+    log.append([browserErrorFootprint(at(9, 0))])
+
+    expect(log.readRange({ startAt: at(0, 0), endAt: at(0, 0, 23) })).toEqual([
+      browserErrorFootprint(at(9, 0)),
     ])
   })
 

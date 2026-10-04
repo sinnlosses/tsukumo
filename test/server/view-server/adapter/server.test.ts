@@ -83,6 +83,7 @@ const EMPTY_RPC_PORTS = {
   readSessionDigest: () => Promise.resolve(UNAVAILABLE_SESSION_DIGEST),
   readAchievementDay: () => Promise.resolve({ kind: "ok", achievement: { kind: "unknown" } }),
   readAchievementCalendar: () => Promise.resolve({ kind: "ok", calendar: { kind: "unknown" } }),
+  reportBrowserError: () => {},
 } satisfies RpcRouterPorts
 
 async function startView(

@@ -11,9 +11,11 @@ import { groupBy, sortBy } from "remeda"
 import { z } from "zod"
 
 import {
+  browserErrorReportSchema,
   DIAGNOSTIC_FORMAT_VERSION,
   type DiagnosticEntry,
   type DiagnosticRecord,
+  type SessionEventFootprint,
 } from "../../../shared/diagnostic/diagnostic-record.ts"
 import { isSessionEventKind } from "../../../shared/session/session-event-kind.ts"
 import { appendJsonLines, dateFileNames, readJsonLines } from "../../adapter/lib/jsonl.ts"
@@ -34,7 +36,12 @@ const diagnosticRecordSchema = z.discriminatedUnion("flow", [
     flow: z.literal("session-event"),
     at: z.number(),
     generation: z.number(),
-    kind: z.custom<DiagnosticRecord["kind"]>(isSessionEventKind),
+    kind: z.custom<SessionEventFootprint["kind"]>(isSessionEventKind),
+  }),
+  browserErrorReportSchema.extend({
+    v: z.literal(DIAGNOSTIC_FORMAT_VERSION),
+    flow: z.literal("browser-error"),
+    at: z.number(),
   }),
 ])
 
