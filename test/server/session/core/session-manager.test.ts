@@ -178,6 +178,7 @@ function createSessionManager(options: SessionManagerOptions & FlatCommandPorts)
       visit: { rememberVisitEnabled },
       usageReview: { dismissUsageProposal },
       host: { openFile },
+      projectSettings: { save: () => Promise.resolve(true) },
     },
     manager.commandSession,
   )

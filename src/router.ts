@@ -24,10 +24,12 @@ import {
   type PlanUsageProcedurePorts,
   planUsageProcedure,
 } from "./server/plan-usage/adapter/plan-usage-procedure.ts"
+import { projectSettingsProcedure } from "./server/repository/adapter/project-settings-procedure.ts"
 import {
   type RepositoryProcedurePorts,
   repositoryProcedure,
 } from "./server/repository/adapter/repository-procedure.ts"
+import type { ProjectSettingsCommandPorts } from "./server/repository/core/project-settings-command.ts"
 import {
   type SessionDigestProcedurePorts,
   sessionDigestProcedure,
@@ -82,6 +84,7 @@ export type CommandRouterPorts = {
   readonly visit: VisitCommandPorts
   readonly usageReview: UsageReviewCommandPorts
   readonly host: HostCommandPorts
+  readonly projectSettings: ProjectSettingsCommandPorts
 }
 
 /** コマンドの手続きを束ね、照合と断る条件のミドルウェアを全部の前に掛ける（`/ws` に載る）。 */
@@ -97,6 +100,7 @@ export function createCommandRouter(ports: CommandRouterPorts) {
       visit: visitProcedure(ports.visit),
       usageReview: usageReviewProcedure(ports.usageReview),
       host: hostProcedure(ports.host),
+      projectSettings: projectSettingsProcedure(ports.projectSettings),
     })
 }
 

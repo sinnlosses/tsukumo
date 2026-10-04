@@ -38,13 +38,22 @@ export type ProjectSettingsRead =
   | { readonly kind: "invalid" }
   | { readonly kind: "read"; readonly tasks: TaskSettings }
 
+/** 主ブランチ名の長さの上限。形の検査ではなく素朴な上限（枝があるかは読む側が `git` で確かめる）。 */
+export const MAX_MAIN_BRANCH_LENGTH = 200
+
+/** 頼む文面の長さの上限。 */
+export const MAX_RUN_PROMPT_LENGTH = 1_000
+
+/** 画面から保存するときの `tasks` の形。ファイルの検証も同じ欄を使う。 */
+export const taskSettingsSchema = z.strictObject({
+  store: z.enum(TASK_STORES),
+  mainBranch: z.string().min(1).max(MAX_MAIN_BRANCH_LENGTH),
+  runPrompt: z.string().min(1).max(MAX_RUN_PROMPT_LENGTH),
+})
+
 const projectSettingsSchema = z.strictObject({
-  tasks: z
-    .strictObject({
-      store: z.enum(TASK_STORES),
-      mainBranch: z.string().min(1),
-      runPrompt: z.string().min(1).default(DEFAULT_RUN_PROMPT),
-    })
+  tasks: taskSettingsSchema
+    .extend({ runPrompt: taskSettingsSchema.shape.runPrompt.default(DEFAULT_RUN_PROMPT) })
     .optional(),
 })
 
@@ -62,6 +71,35 @@ export function projectSettingsOf(content: string): ProjectSettingsRead {
   const { tasks } = parsed.data
   return tasks === undefined ? { kind: "none" } : { kind: "read", tasks }
 }
+
+/** 画面から保存する `.tsukumo/project.json` の中身。 */
+export function projectSettingsContentOf(tasks: TaskSettings): string {
+  return `${JSON.stringify({ tasks }, undefined, 2)}\n`
+}
+
+/** 下書きの欄1つ。`inferred` は「## タスク運用」節や `origin/HEAD` から推し量った値か（画面は点線で描く）。 */
+export type ProjectSettingsDraftField<T> = {
+  readonly value: T
+  readonly inferred: boolean
+}
+
+/**
+ * 書く画面に出す下書き。`file` はいまのファイルの状態（`ProjectSettingsRead` の `kind`）。
+ * 推し量った値は画面に出すだけで、tsukumo の動作には使わない（動作はファイルだけで決まる）。
+ */
+export type ProjectSettingsDraft = {
+  readonly file: ProjectSettingsRead["kind"]
+  readonly store: ProjectSettingsDraftField<TaskStore>
+  readonly mainBranch: ProjectSettingsDraftField<string>
+  readonly runPrompt: ProjectSettingsDraftField<string>
+}
+
+export const projectSettingsDraftSchema = z.object({
+  file: z.enum(["none", "invalid", "read"]),
+  store: z.object({ value: z.enum(TASK_STORES), inferred: z.boolean() }),
+  mainBranch: z.object({ value: z.string(), inferred: z.boolean() }),
+  runPrompt: z.object({ value: z.string(), inferred: z.boolean() }),
+}) satisfies z.ZodType<ProjectSettingsDraft>
 
 /** 構文が壊れていれば `undefined`（スキーマが `invalid` にする）。 */
 function parseJson(content: string): unknown {

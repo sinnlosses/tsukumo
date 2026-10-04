@@ -210,7 +210,7 @@ function createTaskSourceChooser(
       case "none":
         return fixedTaskSource({ kind: "none" })
       case "invalid":
-        return fixedTaskSource({ kind: "unknown" })
+        return fixedTaskSource({ kind: "settings-invalid" })
       case "read":
         switch (settings.tasks.store) {
           case "files":

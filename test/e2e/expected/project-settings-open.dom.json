@@ -151,176 +151,6 @@
                       ]
                     }
                   ]
-                },
-                {
-                  "tag": "div",
-                  "attributes": {
-                    "aria-hidden": "true"
-                  },
-                  "children": [
-                    "許可モード"
-                  ]
-                },
-                {
-                  "tag": "option",
-                  "children": [
-                    {
-                      "tag": "span",
-                      "attributes": {
-                        "aria-hidden": "true"
-                      }
-                    },
-                    {
-                      "tag": "span",
-                      "attributes": {
-                        "aria-hidden": "true"
-                      },
-                      "children": [
-                        {
-                          "tag": "span",
-                          "attributes": {
-                            "data-fill": "empty"
-                          },
-                          "children": [
-                            {
-                              "tag": "svg"
-                            }
-                          ]
-                        }
-                      ]
-                    },
-                    "毎回聞く"
-                  ]
-                },
-                {
-                  "tag": "option",
-                  "children": [
-                    {
-                      "tag": "span",
-                      "attributes": {
-                        "aria-hidden": "true"
-                      }
-                    },
-                    {
-                      "tag": "span",
-                      "attributes": {
-                        "aria-hidden": "true"
-                      },
-                      "children": [
-                        {
-                          "tag": "span",
-                          "attributes": {
-                            "data-fill": "dashed"
-                          },
-                          "children": [
-                            {
-                              "tag": "svg"
-                            }
-                          ]
-                        }
-                      ]
-                    },
-                    "編集は自動"
-                  ]
-                },
-                {
-                  "tag": "option",
-                  "children": [
-                    {
-                      "tag": "span",
-                      "attributes": {
-                        "aria-hidden": "true"
-                      },
-                      "children": [
-                        {
-                          "tag": "svg"
-                        }
-                      ]
-                    },
-                    {
-                      "tag": "span",
-                      "attributes": {
-                        "aria-hidden": "true"
-                      },
-                      "children": [
-                        {
-                          "tag": "span",
-                          "attributes": {
-                            "data-fill": "dashed"
-                          },
-                          "children": [
-                            {
-                              "tag": "svg"
-                            }
-                          ]
-                        }
-                      ]
-                    },
-                    "自動判定"
-                  ]
-                },
-                {
-                  "tag": "option",
-                  "children": [
-                    {
-                      "tag": "span",
-                      "attributes": {
-                        "aria-hidden": "true"
-                      }
-                    },
-                    {
-                      "tag": "span",
-                      "attributes": {
-                        "aria-hidden": "true"
-                      },
-                      "children": [
-                        {
-                          "tag": "span",
-                          "attributes": {
-                            "data-fill": "dashed"
-                          },
-                          "children": [
-                            {
-                              "tag": "svg"
-                            }
-                          ]
-                        }
-                      ]
-                    },
-                    "プラン"
-                  ]
-                },
-                {
-                  "tag": "option",
-                  "children": [
-                    {
-                      "tag": "span",
-                      "attributes": {
-                        "aria-hidden": "true"
-                      }
-                    },
-                    {
-                      "tag": "span",
-                      "attributes": {
-                        "aria-hidden": "true"
-                      },
-                      "children": [
-                        {
-                          "tag": "span",
-                          "attributes": {
-                            "data-fill": "filled"
-                          },
-                          "children": [
-                            {
-                              "tag": "svg"
-                            }
-                          ]
-                        }
-                      ]
-                    },
-                    "全部許す",
-                    "確認なしで全部のコマンドを実行する"
-                  ]
                 }
               ]
             }
@@ -368,6 +198,107 @@
             },
             "7d",
             "61%"
+          ]
+        },
+        {
+          "tag": "dialog",
+          "attributes": {
+            "aria-label": "プロジェクトの設定",
+            "open": true
+          },
+          "children": [
+            {
+              "tag": "h2",
+              "children": [
+                "プロジェクト"
+              ]
+            },
+            ".tsukumo/project.json",
+            "タスク",
+            {
+              "tag": "div",
+              "attributes": {
+                "role": "group"
+              },
+              "children": [
+                {
+                  "tag": "button",
+                  "attributes": {
+                    "aria-pressed": "true",
+                    "type": "button"
+                  },
+                  "children": [
+                    "files"
+                  ]
+                },
+                {
+                  "tag": "button",
+                  "attributes": {
+                    "aria-pressed": "false",
+                    "type": "button"
+                  },
+                  "children": [
+                    "beads"
+                  ]
+                }
+              ]
+            },
+            {
+              "tag": "label",
+              "children": [
+                "主ブランチ"
+              ]
+            },
+            {
+              "tag": "input",
+              "attributes": {
+                "type": "text",
+                "value": "main"
+              }
+            },
+            {
+              "tag": "label",
+              "children": [
+                "頼む文面"
+              ]
+            },
+            {
+              "tag": "div",
+              "attributes": {
+                "aria-hidden": "true"
+              },
+              "children": [
+                "/next-task",
+                "{id}"
+              ]
+            },
+            {
+              "tag": "input",
+              "attributes": {
+                "type": "text",
+                "value": "/next-task {id}"
+              }
+            },
+            {
+              "tag": "button",
+              "attributes": {
+                "aria-disabled": "false",
+                "type": "button"
+              },
+              "children": [
+                "やめる"
+              ]
+            },
+            {
+              "tag": "button",
+              "attributes": {
+                "aria-disabled": "false",
+                "type": "button"
+              },
+              "children": [
+                "保存"
+              ]
+            }
           ]
         }
       ]

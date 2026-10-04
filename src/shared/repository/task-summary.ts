@@ -38,7 +38,8 @@ export type TaskLocation =
 /**
  * タスクの一覧が読めているかどうか。
  * - `none`: タスク運用なし（プロジェクトの設定が無い・`tasks` が無い）。画面はタスクの節を出さない
- * - `unknown`: 読めない（設定の形が違う・主ブランチが無い・`develop/task/` が無い・`bd` が読めない）か、まだ届いていない
+ * - `settings-invalid`: プロジェクトの設定が読めない（JSON が壊れている・形が違う）
+ * - `unknown`: 読めない（主ブランチが無い・`develop/task/` が無い・`bd` が読めない）か、まだ届いていない
  * - `known`: 読めた
  *
  * 「まだ届いていない」（状態の初期値）と「読めない」は区別しない。
@@ -46,6 +47,7 @@ export type TaskLocation =
  */
 export type TaskSummaryResult =
   | { readonly kind: "none" }
+  | { readonly kind: "settings-invalid" }
   | { readonly kind: "unknown" }
   | {
       readonly kind: "known"

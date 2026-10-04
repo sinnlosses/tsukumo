@@ -377,7 +377,7 @@ describe("watchTaskSummary", () => {
     expect(changes).toEqual([known(notified("T-001", "1つめ", "todo")), NONE])
   })
 
-  it("設定の形が壊れたら、develop/task/ があっても「不明」を通知する", async () => {
+  it("設定の形が壊れたら、develop/task/ があっても「設定が読めない」を通知する", async () => {
     const repository = await initRepository("main")
     await commitNewFormatTasks(repository, [{ id: "T-001", summary: "1つめ", status: "todo" }])
     const changes: unknown[] = []
@@ -387,7 +387,10 @@ describe("watchTaskSummary", () => {
     writeProjectSettingsContent(repository, '{ "tasks": { "store": "files" ')
     await waitForChanges(changes, 2)
 
-    expect(changes).toEqual([known(notified("T-001", "1つめ", "todo")), UNKNOWN])
+    expect(changes).toEqual([
+      known(notified("T-001", "1つめ", "todo")),
+      { kind: "settings-invalid" },
+    ])
   })
 
   it("見回りの途中で設定を書くと、main を動かさずに次の見回りで一覧が出る", async () => {

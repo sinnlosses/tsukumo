@@ -12,6 +12,7 @@ import { useState, type ReactElement, type ReactNode } from "react"
 
 import { Button } from "../../../ui/button/button.tsx"
 import { Heading } from "../../../ui/heading/heading.tsx"
+import { SettingsIcon } from "../../../ui/icon/icon.tsx"
 import { Text } from "../../../ui/text/text.tsx"
 import styles from "./section.module.css"
 
@@ -25,6 +26,8 @@ export type SidebarSectionProps = {
   /** 区画ごとの高さの取り方を足す class 名。 */
   readonly extraClass: string
   readonly action: SidebarSectionAction | undefined
+  /** 見出しの右端の歯車（`label` は読み上げの名前）。無ければ何も足さない。 */
+  readonly settings: SidebarSectionAction | undefined
   /** 見出しの下に続けて止める行（タスク一覧の絞り込みのチップ）。無ければ何も足さない。 */
   readonly filters: ReactNode | undefined
   readonly children: ReactNode
@@ -66,6 +69,22 @@ export function SidebarSection(props: SidebarSectionProps): ReactElement {
               onClick={props.action.onAction}
             >
               {props.action.label}
+            </Button>
+          )}
+          {props.settings !== undefined && (
+            <Button
+              variant="ghost"
+              size="action"
+              pressed="none"
+              disabled={false}
+              ariaLabel={props.settings.label}
+              ariaHasPopup="dialog"
+              disclosure={{ kind: "none" }}
+              title={props.settings.label}
+              className={styles["sidebar-block-settings"]}
+              onClick={props.settings.onAction}
+            >
+              <SettingsIcon />
             </Button>
           )}
         </Heading>

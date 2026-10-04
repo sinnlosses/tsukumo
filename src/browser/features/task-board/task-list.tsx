@@ -52,6 +52,19 @@ export function TaskList(props: TaskListProps): ReactElement {
       : EMPTY_ORDER
   const { rootRef, control: peek } = useTaskPeek([...running, ...rest].map((task) => task.id))
 
+  if (props.tasks.kind === "settings-invalid") {
+    return (
+      <Text
+        element="p"
+        size="inherit"
+        tone="state-ng"
+        weight="inherit"
+        className={styles["task-empty"]}
+      >
+        ⚠ 読めない
+      </Text>
+    )
+  }
   if (props.tasks.kind !== "known") {
     return (
       <Text

@@ -4,7 +4,7 @@ import { join } from "node:path"
 import type { Locator } from "playwright-core"
 
 import { claimTask, git, initGitRepository } from "../fixture/git-repository.ts"
-import { writeProjectSettings } from "../fixture/project-settings.ts"
+import { writeProjectSettings, writeProjectSettingsContent } from "../fixture/project-settings.ts"
 import type { DomRootName, ScenarioOptions, ScenarioRoom, ScenarioRun } from "./scenario-run.ts"
 
 // タスクの一覧とタスクのモーダルの E2E の足場（docs/architecture/testing.md「E2E のシナリオの一覧」）。
@@ -304,6 +304,28 @@ export async function writeWelcomeTasks(room: ScenarioRoom): Promise<void> {
   writeTask(room.cwd, BLOCKED_TASK_ID, "架空のタスク（依存で止まる）", "todo", [READY_TASK_ID])
   await commitTasks(room.cwd, "架空のタスク一覧")
   await room.waitForTasksContaining([READY_TASK_ID, BLOCKED_TASK_ID])
+}
+
+/**
+ * プロジェクトの設定を画面から書く足場。未着手の1件を `main` へコミットし、設定は置かない（`missing`）か、
+ * 壊れた中身で置く（`invalid`）。
+ */
+export async function openProjectSettingsRoom(
+  run: ScenarioRun,
+  scenario: string,
+  domRoots: readonly DomRootName[],
+  settings: "missing" | "invalid",
+): Promise<ScenarioRoom> {
+  const room = await run.open({ scenario, scene: "none", viewport: "wide", domRoots })
+
+  await initGitRepository(room.cwd)
+  writeTask(room.cwd, "T-001", "架空のタスク（未着手）", "todo")
+  await git(room.cwd, "add", "develop/task")
+  await git(room.cwd, "commit", "--quiet", "-m", "架空のタスク一覧")
+  if (settings === "invalid") {
+    writeProjectSettingsContent(room.cwd, "{")
+  }
+  return room
 }
 
 /**

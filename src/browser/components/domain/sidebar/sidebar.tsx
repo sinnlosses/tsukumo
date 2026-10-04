@@ -1,6 +1,7 @@
 // サイドバー本体。独立した2つの塊（タスク一覧・下端の帯）を並べる。
 // どちらかの中身が空・不明でも、残りは表示を続ける（それぞれ自分の分だけ見る）。
 // タスク運用が無いときは、タスク一覧の代わりに `ProjectSettingsMissing` を置く。
+// プロジェクトの設定のダイアログはここが1枚だけ置き、どちらの入口からも同じものを開く。
 //
 // 下端の帯はモデル・effort・許可モードの操作子と、コンテキストの使用量・利用枠の目盛り（`SidebarFooter`）。
 // 区画ではないので見出しを名乗らず、`SidebarSection` の枠も借りない。
@@ -9,11 +10,12 @@
 // 雑談中は4段に差し替える: 上からプロフィールの札・最近の話題・覚えていること・下端の帯。
 // 差し替えを決めるのは `<Layout>` ではなくここで、どちらの形もサイドバーの中に閉じる。
 
-import type { ReactElement } from "react"
+import { type ReactElement, useState } from "react"
 
 import { useSession } from "../../../stores/session.ts"
 import { PersonaMemorySection } from "./components/persona-memory-section.tsx"
 import { ProfileCard } from "./components/profile-card.tsx"
+import { ProjectSettingsDialog } from "./components/project-settings-dialog.tsx"
 import { ProjectSettingsMissing } from "./components/project-settings-missing.tsx"
 import { RecentTopicSection } from "./components/recent-topic-section.tsx"
 import { SidebarFooter } from "./components/sidebar-footer.tsx"
@@ -23,6 +25,7 @@ import styles from "./sidebar.module.css"
 export function Sidebar(): ReactElement {
   const chatMode = useSession((session) => session.state.chatMode)
   const noTaskStore = useSession((session) => session.state.tasks.kind === "none")
+  const [settingsOpen, setSettingsOpen] = useState(false)
   return (
     <>
       {chatMode && (
@@ -35,9 +38,12 @@ export function Sidebar(): ReactElement {
           </div>
         </>
       )}
-      {!chatMode && noTaskStore && <ProjectSettingsMissing />}
-      {!chatMode && !noTaskStore && <TaskSection />}
+      {!chatMode && noTaskStore && (
+        <ProjectSettingsMissing onOpenSettings={() => setSettingsOpen(true)} />
+      )}
+      {!chatMode && !noTaskStore && <TaskSection onOpenSettings={() => setSettingsOpen(true)} />}
       <SidebarFooter />
+      <ProjectSettingsDialog open={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </>
   )
 }

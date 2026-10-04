@@ -20,6 +20,7 @@ export function RecentTopicSection(): ReactElement {
       title="最近の話題"
       extraClass={sidebarStyles["sidebar-block-chat"]}
       action={undefined}
+      settings={undefined}
       filters={undefined}
     >
       {topics.length === 0 ? (

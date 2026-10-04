@@ -16,6 +16,7 @@ import type {
   CharacterEdit,
 } from "../src/shared/contract/character-pack.ts"
 import { FRAME_ERROR_REASON } from "../src/shared/frame.ts"
+import type { TaskSettings } from "../src/shared/repository/project-settings.ts"
 import type { PromptImage } from "../src/shared/session-driver/prompt-image.ts"
 import type { SessionDefault } from "../src/shared/session/session-default.ts"
 import type { SessionEvent } from "../src/shared/session/session-event.ts"
@@ -115,6 +116,7 @@ function createRecordingPorts(
   const rememberedVisitEnabled: boolean[] = []
   const forgottenLines: string[] = []
   const openedFiles: string[] = []
+  const savedSettings: TaskSettings[] = []
   const written = (): SessionEvent | undefined =>
     writeResult === "written" ? CHARACTER_EVENT : undefined
   const ports: CommandRouterPorts = {
@@ -165,6 +167,12 @@ function createRecordingPorts(
         return Promise.resolve(writeResult === "written")
       },
     },
+    projectSettings: {
+      save: (tasks) => {
+        savedSettings.push(tasks)
+        return Promise.resolve(writeResult === "written")
+      },
+    },
   }
   return {
     ports,
@@ -175,6 +183,7 @@ function createRecordingPorts(
     rememberedVisitEnabled,
     forgottenLines,
     openedFiles,
+    savedSettings,
   }
 }
 
@@ -807,6 +816,35 @@ describe("createCommandRouter（host。レポートに書かれたパスを開�
 
     expect(await commands.host.openFile({ path: "src/foo.ts" })).toEqual({ ok: true })
     expect(openedFiles).toEqual(["src/foo.ts"])
+  })
+})
+
+describe("createCommandRouter（projectSettings。プロジェクトの設定を書く）", () => {
+  const TASKS = { store: "beads", mainBranch: "trunk", runPrompt: "/work {id}" } as const
+
+  it("書けたら ok を返し、渡した値が書く口に届く（駆動へは渡らない）", async () => {
+    const { commands, stub, restarts, savedSettings } = startRouter()
+
+    expect(await commands.projectSettings.save(TASKS)).toEqual({ ok: true })
+    expect(stub.calls).toEqual([])
+    expect(restarts).toEqual([])
+    expect(savedSettings).toEqual([TASKS])
+  })
+
+  it("書けなかったら定型文の理由を返す", async () => {
+    const { commands } = startRouter("rejected")
+
+    expect(await commands.projectSettings.save(TASKS)).toEqual({
+      ok: false,
+      reason: FRAME_ERROR_REASON.projectSettingsSaveFailed,
+    })
+  })
+
+  it("形の違う値は書く口へ届けずに断る", async () => {
+    const { commands, savedSettings } = startRouter()
+
+    await expect(commands.projectSettings.save({ ...TASKS, mainBranch: "" })).rejects.toThrow()
+    expect(savedSettings).toEqual([])
   })
 })
 

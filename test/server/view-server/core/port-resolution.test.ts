@@ -20,6 +20,7 @@ import { UNAVAILABLE_PLAN_USAGE } from "../../../../src/shared/plan-usage/plan-u
 import { UNAVAILABLE_SESSION_DIGEST } from "../../../../src/shared/session/session-digest.ts"
 import { EMPTY_TOKEN_USAGE_SUMMARY } from "../../../../src/shared/token-usage/token-usage-summary.ts"
 import { closeNetServer, listenOnEphemeralPort, portOf } from "../../../fixture/net-server.ts"
+import { PLAIN_PROJECT_SETTINGS_DRAFT } from "../../../fixture/project-settings.ts"
 
 /** 配るものの中身はここでは見ない（確かめるのはどのポートで listen したかだけ）。 */
 const emptyViewUi: ViewUi = { kind: "bundle", bundle: { uiScript: "", styleSheet: "" } }
@@ -33,6 +34,7 @@ const emptyViewServerOptions: ViewServerOptions = {
   rpcRouter: createRpcRouter({
     listRepositoryFiles: () => Promise.resolve([]),
     projectName: () => "架空のプロジェクト",
+    projectSettingsDraft: () => Promise.resolve(PLAIN_PROJECT_SETTINGS_DRAFT),
     readTokenUsageSummary: () => EMPTY_TOKEN_USAGE_SUMMARY,
     readContextUsage: () => Promise.resolve(UNAVAILABLE_CONTEXT_USAGE),
     readPlanUsage: () => Promise.resolve(UNAVAILABLE_PLAN_USAGE),

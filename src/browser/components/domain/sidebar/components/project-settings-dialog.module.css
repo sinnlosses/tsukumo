@@ -1,0 +1,166 @@
+/* プロジェクトの設定のダイアログ。寸法は見本 `docs/history/mockup/project-settings-2026-10-04.html` に合わせる。
+   上書きの確かめは箱の右下からはみ出して出すので、箱の overflow を切らない。 */
+.project-settings-dialog {
+  box-sizing: border-box;
+  width: min(27.5rem, calc(100vw - 2rem));
+  margin: auto;
+  padding: 1.25rem 1.5rem;
+  overflow: visible;
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--rule);
+  border-radius: 1.125rem;
+}
+.project-settings-head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.625rem;
+  margin-bottom: 0.375rem;
+}
+.project-settings-path {
+  font-family: var(--font-mono);
+}
+.project-settings-badge {
+  padding: 0 0.5rem;
+  border: 1px solid var(--state-ng);
+  border-radius: 0.625rem;
+}
+.project-settings-grid {
+  display: grid;
+  grid-template-columns: 6rem minmax(0, 1fr);
+  gap: 0.75rem 0.875rem;
+  align-items: center;
+  margin-top: 0.875rem;
+}
+.project-settings-label {
+  font-size: var(--font-secondary);
+  color: var(--ink-quiet);
+}
+/* 主ブランチと頼む文面の欄の箱。頼む文面は写しと入力欄を重ねる入れ物にもこれを使う。 */
+.project-settings-input {
+  box-sizing: border-box;
+  height: 2.25rem;
+  padding: 0 0.625rem;
+  background: var(--ground);
+  color: var(--ink);
+  border: 1px solid var(--rule);
+  border-radius: 0.5rem;
+  font-family: var(--font-mono);
+  font-size: var(--font-secondary);
+}
+.project-settings-branch {
+  width: 11.25rem;
+}
+.project-settings-switch {
+  display: inline-flex;
+  width: max-content;
+  overflow: hidden;
+  border: 1px solid var(--rule);
+  border-radius: 0.5rem;
+}
+/* 選んだ側は差し色の地と下線。`<Button>` の顔には無い形なので素の `<button>` に描く。 */
+.project-settings-switch-option {
+  height: 1.875rem;
+  padding: 0 1rem;
+  background: none;
+  color: var(--ink);
+  border: 0;
+  border-radius: 0;
+  font-family: var(--font-mono);
+  font-size: var(--font-secondary);
+  cursor: pointer;
+}
+.project-settings-switch-option[aria-pressed="true"] {
+  background: var(--surface-accent);
+  font-weight: bold;
+  box-shadow: inset 0 -2px var(--accent);
+}
+/* 推し量った値を触らずに出している欄。触るか保存すると外れる。
+   欄の箱（.project-settings-input・.project-settings-switch）の線を上書きするので、それより後に置く。 */
+.project-settings-inferred {
+  border-style: dashed;
+  color: var(--ink-quiet);
+}
+.project-settings-switch.project-settings-inferred
+  .project-settings-switch-option[aria-pressed="true"] {
+  background: none;
+  color: var(--ink-quiet);
+  box-shadow: inset 0 -2px var(--ink-quiet);
+}
+.project-settings-switch.project-settings-inferred .project-settings-switch-option {
+  color: var(--ink-quiet);
+}
+/* 頼む文面: 写し（下）と入力欄（上）を同じ升目に重ねる。
+   どちらも入れ物の余白の内側いっぱいで、等幅の同じ書体なので字の位置が揃う。 */
+.project-settings-prompt {
+  position: relative;
+  display: grid;
+  padding: 0;
+}
+.project-settings-prompt-mirror,
+.project-settings-prompt-input {
+  grid-area: 1 / 1;
+  box-sizing: border-box;
+  min-width: 0;
+  height: 100%;
+  margin: 0;
+  padding: 0 0.625rem;
+  border: 0;
+  font: inherit;
+  letter-spacing: normal;
+  line-height: 2.125rem;
+  white-space: pre;
+}
+.project-settings-prompt-mirror {
+  overflow: hidden;
+  pointer-events: none;
+}
+.project-settings-prompt-input {
+  background: transparent;
+  color: transparent;
+  caret-color: var(--ink);
+}
+.project-settings-prompt-input:focus-visible {
+  outline-offset: 0;
+}
+/* 札の余白は字送りを変えない影で付ける（padding を足すと入力欄の字とずれる）。 */
+.project-settings-token {
+  background: var(--surface-accent);
+  color: var(--accent);
+  border-radius: 0.25rem;
+  box-shadow: 0 0 0 0.2rem var(--surface-accent);
+}
+.project-settings-foot {
+  position: relative;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1.25rem;
+}
+.project-settings-button {
+  height: 2.125rem;
+  padding: 0 1rem;
+  border-radius: 0.5rem;
+}
+/* 上書きの確かめ。保存の下に重ねて出す。 */
+.project-settings-confirm {
+  position: absolute;
+  top: calc(100% - 0.75rem);
+  right: -1.25rem;
+  z-index: 1;
+  width: 13.75rem;
+  padding: 0.75rem 0.875rem;
+  background: var(--surface);
+  border: 1px solid var(--state-ng);
+  border-radius: 0.75rem;
+  box-shadow: 0 6px 24px rgb(0 0 0 / 0.5);
+}
+.project-settings-confirm > p {
+  margin: 0;
+}
+.project-settings-confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.625rem;
+}

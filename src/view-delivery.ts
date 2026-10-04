@@ -15,6 +15,7 @@ import { todayLocalDateKey } from "./server/adapter/local-time.ts"
 import { listDiaryDates, readDiaryDay } from "./server/diary/adapter/diary.ts"
 import type { ReportImageShelf } from "./server/report/core/report-image-shelf.ts"
 import { projectNameOf } from "./server/repository/adapter/project-name.ts"
+import { readProjectSettingsDraft } from "./server/repository/adapter/project-settings.ts"
 import { listRepositoryFiles } from "./server/repository/adapter/repository-file.ts"
 import type { PromptImageShelf } from "./server/session-driver/core/prompt-image-shelf.ts"
 import { summarizeRecentTokenUsage } from "./server/token-usage/core/token-usage-summary.ts"
@@ -108,6 +109,7 @@ export async function startViewDelivery(options: ViewDeliveryOptions): Promise<V
   const rpcRouter = createRpcRouter({
     listRepositoryFiles: () => listRepositoryFiles(options.cwd),
     projectName: () => projectNameOf(options.cwd),
+    projectSettingsDraft: () => readProjectSettingsDraft(options.cwd),
     // 「今日」はここで決めて渡す（OS のタイムゾーンに依るので、core は今日が何日かを知らない）。
     readTokenUsageSummary: (days) =>
       summarizeRecentTokenUsage(options.tokenUsageLog, todayLocalDateKey(), days),

@@ -1,8 +1,16 @@
+import { readFileSync } from "node:fs"
+import { join } from "node:path"
+
 import type { Locator } from "playwright-core"
 import { describe, expect, it } from "vitest"
 
+import { PROJECT_SETTINGS_PATH } from "../../src/shared/repository/project-settings.ts"
 import { useScenarioRun, type ScenarioRoom } from "./scenario-run.ts"
-import { openTaskListRoom, openTaskListRoomWithRunningTask } from "./task-room.ts"
+import {
+  openProjectSettingsRoom,
+  openTaskListRoom,
+  openTaskListRoomWithRunningTask,
+} from "./task-room.ts"
 
 const run = useScenarioRun()
 
@@ -166,7 +174,7 @@ describe("タスクの一覧", () => {
       domRoots: ["sidebar"],
     })
     const { page } = room
-    await page.getByText("プロジェクトの設定が無い", { exact: true }).waitFor()
+    await page.getByRole("button", { name: "設定する" }).waitFor()
 
     expect(await page.locator('section[aria-label="タスク"]').count()).toBe(0)
     expect(await page.getByRole("button", { name: "一覧を見る" }).count()).toBe(0)
@@ -182,12 +190,80 @@ describe("タスクの一覧", () => {
     })
     const toggle = room.page.getByRole("button", { name: "サイドバー", exact: true })
     await toggle.click()
-    await room.page.getByText("プロジェクトの設定が無い", { exact: true }).waitFor()
+    await room.page.getByRole("button", { name: "設定する" }).waitFor()
 
     expect(await toggle.textContent()).not.toMatch(/\d/)
     expect(await room.page.getByRole("button", { name: "一覧を見る" }).count()).toBe(0)
   })
 })
+
+describe("プロジェクトの設定を画面から書く", () => {
+  it("設定が無いと「設定する」から書くダイアログが開き、下書きの値が並ぶ", async () => {
+    const room = await openProjectSettingsRoom(run, "project-settings-open", ["sidebar"], "missing")
+    await room.page.getByRole("button", { name: "設定する" }).click()
+    const dialog = await projectSettingsDialog(room)
+
+    expect(await dialog.getByLabel("主ブランチ").inputValue()).toBe("main")
+    expect(await dialog.getByLabel("頼む文面").inputValue()).toBe("/next-task {id}")
+    await room.settleAndMatch(ELAPSED_MS)
+  })
+
+  it("保存すると .tsukumo/project.json に書かれ、タスクの節に切り替わる", async () => {
+    const room = await openProjectSettingsRoom(run, "project-settings-save", [], "missing")
+    await room.page.getByRole("button", { name: "設定する" }).click()
+    const dialog = await projectSettingsDialog(room)
+    await dialog.getByRole("button", { name: "files" }).click()
+    await dialog.getByLabel("頼む文面").fill("/work {id}")
+    await dialog.getByRole("button", { name: "保存" }).click()
+
+    await room.waitForTasksContaining(["T-001"])
+    await room.page.locator('section[aria-label="タスク"]').waitFor()
+    expect(readProjectSettingsFile(room)).toEqual({
+      tasks: { store: "files", mainBranch: "main", runPrompt: "/work {id}" },
+    })
+  })
+
+  it("設定が読めないと、見出しの歯車から開いた保存の前に上書きを確かめる", async () => {
+    const room = await openProjectSettingsRoom(run, "project-settings-overwrite", [], "invalid")
+    await room.page.getByText("⚠ 読めない", { exact: true }).waitFor()
+    await room.page.getByRole("button", { name: "プロジェクトの設定" }).click()
+    const dialog = await projectSettingsDialog(room)
+    await dialog.getByText("読めない", { exact: true }).waitFor()
+    await dialog.getByRole("button", { name: "files" }).click()
+    await dialog.getByRole("button", { name: "保存" }).click()
+    const confirm = dialog.getByRole("group", { name: "上書きする？" })
+    await confirm.waitFor()
+
+    expect(readFileSync(join(room.cwd, PROJECT_SETTINGS_PATH), "utf8")).toBe("{")
+    await confirm.getByRole("button", { name: "上書き" }).click()
+    await room.waitForTasksContaining(["T-001"])
+    expect(readProjectSettingsFile(room)).toEqual({
+      tasks: { store: "files", mainBranch: "main", runPrompt: "/next-task {id}" },
+    })
+  })
+})
+
+/** 時計を進める1回ぶんと、進める回数の上限（合わせて 1 秒）。 */
+const CLOCK_STEP_MS = 50
+const CLOCK_STEPS = 20
+
+/**
+ * ダイアログを返す。下書きは手続き（`/rpc`）の応答で届き、React Query はその知らせをタイマーで配るので、
+ * 欄が描かれるまで凍らせた時計を少しずつ進める。
+ */
+async function projectSettingsDialog(room: ScenarioRoom): Promise<Locator> {
+  const dialog = room.page.getByRole("dialog", { name: "プロジェクトの設定" })
+  const field = dialog.getByLabel("主ブランチ")
+  for (let step = 0; step < CLOCK_STEPS && !(await field.isVisible()); step += 1) {
+    await room.page.clock.runFor(CLOCK_STEP_MS)
+  }
+  await field.waitFor()
+  return dialog
+}
+
+function readProjectSettingsFile(room: ScenarioRoom): unknown {
+  return JSON.parse(readFileSync(join(room.cwd, PROJECT_SETTINGS_PATH), "utf8"))
+}
 
 /** 区画の行（進行中のカード）のボタン。名前は ID と題をつないだものになるので、DOM の id で当てる。 */
 function taskRow(room: ScenarioRoom, id: string): Locator {

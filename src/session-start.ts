@@ -129,6 +129,7 @@ export async function startSession(options: SessionStartOptions): Promise<Starte
     visit: visit.commands,
     usageReview: usageReview.commands,
     host: host.commands,
+    projectSettings: repository.commands,
   })
   return {
     manager: {

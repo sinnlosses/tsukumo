@@ -335,10 +335,13 @@ plugin/                       セッションに載せる Claude Code のプラ�
 **タスク一覧の読み元は方式ごとに1つずつ**（`server/repository/adapter/task-source.ts` の `TaskSource`）で、
 ファイル方式は `task-file-source.ts`（`main` の `develop/task/` と台帳の着手の印）、Beads 方式は
 `task-beads-source.ts`（`bd` の課題）。見張りの `watchTaskSummary` は、設定が前回と変わった見回りでだけ
-`tasks.store` から読み元を選び直し、タスク運用なし・読めないときは決まった結果（`none` / `unknown`）を返す
-読み元を置く。前回知らせたものと同じ結果は知らせない。**方式を足すときは読み元を1つ足して選ぶ分岐に
-並べるだけ**で、見張りの輪と画面は変えない。画面は `none` ならサイドバーのタスクの節とタスクのモーダルの
-入口を出さず「プロジェクトの設定が無い」の表示を置き、`unknown` なら節の中に「不明」を出す。
+`tasks.store` から読み元を選び直し、タスク運用なし・設定が読めないときは決まった結果（`none` /
+`settings-invalid`）を返す読み元を置く。前回知らせたものと同じ結果は知らせない。**方式を足すときは読み元を
+1つ足して選ぶ分岐に並べるだけ**で、見張りの輪と画面は変えない。画面は `none` ならサイドバーのタスクの節と
+タスクのモーダルの入口を出さず「⚙ 設定する」の表示を置き、`settings-invalid` なら節の中に「⚠ 読めない」、
+`unknown` なら「不明」を出す。設定を書く画面（`docs/architecture/screen-design.md` 13.6）の下書きは
+`repository.projectSettingsDraft`（`/rpc`）で読み、保存は `projectSettings.save`（`/ws`）で書く。下書きの
+推し量り（「## タスク運用」節と `origin/HEAD`）は画面の初期値にだけ使い、見張りは読まない。
 
 **ファイル名は概念で、単数形**（原則5）。`helpers/` と `common/` は作らない。**ディレクトリ名に単数形の
 縛りは無く**、`src/browser/` の置き場所のディレクトリ（`components/`（とその下の `page/` `domain/` `ui/`）

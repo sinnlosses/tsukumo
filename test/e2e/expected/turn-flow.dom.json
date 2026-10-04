@@ -738,15 +738,23 @@
               },
               "children": [
                 {
-                  "tag": "p",
+                  "tag": "h2",
                   "children": [
-                    "プロジェクトの設定が無い"
+                    "タスク"
                   ]
                 },
                 {
-                  "tag": "p",
+                  "tag": "button",
+                  "attributes": {
+                    "aria-disabled": "false",
+                    "aria-haspopup": "dialog",
+                    "type": "button"
+                  },
                   "children": [
-                    ".tsukumo/project.json"
+                    {
+                      "tag": "svg"
+                    },
+                    "設定する"
                   ]
                 },
                 {
