@@ -13,6 +13,10 @@ import {
   SPEECH_NOTHING_NEW_REJECTION_TEXT,
   type SpeechReview,
 } from "../../../../src/server/session-driver/core/speech-review.ts"
+import {
+  createWorkPlanReview,
+  type WorkPlanReview,
+} from "../../../../src/server/session-driver/core/work-plan-review.ts"
 import { createUsageReviewIntake } from "../../../../src/server/usage-review/core/usage-review-tool.ts"
 import type { SessionEvent } from "../../../../src/shared/session/session-event.ts"
 import {
@@ -64,6 +68,7 @@ describe("tsukumoServer", () => {
         CHAT_MODE,
         createReportReview(),
         createSpeechReview(),
+        createWorkPlanReview(),
         noopIntake(),
         () => {},
         FAKE_CWD,
@@ -85,6 +90,7 @@ describe("tsukumoServer", () => {
         CHAT_MODE,
         createReportReview(),
         createSpeechReview(),
+        createWorkPlanReview(),
         noopIntake(),
         () => {},
         FAKE_CWD,
@@ -127,6 +133,7 @@ describe("recall / recall_episode ツール", () => {
         chatMode,
         createReportReview(),
         createSpeechReview(),
+        createWorkPlanReview(),
         noopIntake(),
         () => {},
         FAKE_CWD,
@@ -167,6 +174,7 @@ describe("recall / recall_episode ツール", () => {
         workMode,
         createReportReview(),
         createSpeechReview(),
+        createWorkPlanReview(),
         noopIntake(),
         () => {},
         FAKE_CWD,
@@ -193,6 +201,7 @@ describe("recall / recall_episode ツール", () => {
         chatMode,
         createReportReview(),
         createSpeechReview(),
+        createWorkPlanReview(),
         noopIntake(),
         () => {},
         FAKE_CWD,
@@ -262,6 +271,7 @@ describe("speak の差し戻し", () => {
         CHAT_MODE,
         createReportReview(),
         spokenReview(),
+        createWorkPlanReview(),
         noopIntake(),
         () => {},
         FAKE_CWD,
@@ -320,6 +330,29 @@ describe("work_plan（段取り）", () => {
     expect(withSummary).toEqual({ text: "ok", isError: false, endsTurn: false })
     expect(withoutSummary.isError).toBe(true)
     expect(withoutSummary.endsTurn).toBe(false)
+  })
+
+  it("同じ段の並びのまま位置を2つ以上進めた呼び出しは差し戻す", async () => {
+    // サーバは1回の要求ごとに作り直す（口は1つにしか繋げない）ので、覚えた位置は共有の review が持つ。
+    const review = createWorkPlanReview()
+    const server = () => workServer([], [], [], createSpeechReview(), review)
+    const phases = ["架空の段A", "架空の段B", "架空の段C"]
+    await callTool(server(), "work_plan", { phases, current: 0 })
+
+    const skipped = await callTool(server(), "work_plan", {
+      phases,
+      current: 2,
+      phaseSummary: "架空のまとめ。",
+    })
+    const stepped = await callTool(server(), "work_plan", {
+      phases,
+      current: 1,
+      phaseSummary: "架空のまとめ。",
+    })
+
+    expect(skipped.isError).toBe(true)
+    expect(skipped.endsTurn).toBe(false)
+    expect(stepped).toEqual({ text: "ok", isError: false, endsTurn: false })
   })
 
   it("段が1つだけの段取りは受け付ける", async () => {
@@ -523,12 +556,14 @@ function workServer(
   dismissed: readonly string[] = [],
   titles: string[] = [],
   speechReview: SpeechReview = createSpeechReview(),
+  workPlanReview: WorkPlanReview = createWorkPlanReview(),
 ): McpSdkServerConfigWithInstance {
   return tsukumoServer(
     EXPRESSIONS,
     WORK_MODE,
     createReportReview(),
     speechReview,
+    workPlanReview,
     createUsageReviewIntake(
       () => dismissed,
       async () => true,

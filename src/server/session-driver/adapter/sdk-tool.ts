@@ -55,11 +55,13 @@ import {
   TSUKUMO_MCP_SERVER_NAME,
   WORK_PLAN_TOOL_NAME,
 } from "../core/tsukumo-tool-name.ts"
+import type { WorkPlanReview } from "../core/work-plan-review.ts"
 import {
   WORK_PLAN_CURRENT_DESCRIPTION,
   WORK_PLAN_PHASE_SUMMARY_DESCRIPTION,
   WORK_PLAN_PHASES_DESCRIPTION,
   WORK_PLAN_REJECTION,
+  WORK_PLAN_SKIPPED_PHASE_REJECTION,
   WORK_PLAN_TOOL_DESCRIPTION,
 } from "../core/work-plan-tool.ts"
 
@@ -107,7 +109,7 @@ const RECALL_EPISODE_TOOL_DESCRIPTION =
  * 例外は `speak`（仕事のときだけ）と `recall` / `recall_episode` と `report` と `work_plan` と見直しの2つ。
  * `speak` が返すのは、新しい事実の無い呼び出しを差し戻す固定の文面だけ。
  * `recall` / `recall_episode` が返すのは、そのセッションが自分で読める外の事実（自分の過去の会話の目次と1件の逐語）だけ。
- * `report` が返すのは差し戻すときの規約違反だけ、`work_plan` が返すのは `parseWorkPlan` が受け付けなかったときの直し方だけ。
+ * `report` が返すのは差し戻すときの規約違反だけ、`work_plan` が返すのは `parseWorkPlan` か `WorkPlanReview` が受け付けなかったときの直し方だけ。
  * 見直しの2つが返すのは、利用者が見送った提案の識別子と差し戻しの理由だけ。
  *
  * 常に載るのは `speak` と `recall` / `recall_episode` で、`remember` / `forget` は雑談モードのときだけ載る。
@@ -127,6 +129,7 @@ export function tsukumoServer(
   mode: SessionMode,
   reportReview: ReportReview,
   speechReview: SpeechReview,
+  workPlanReview: WorkPlanReview,
   usageReview: UsageReviewIntake,
   onReportTitle: (title: string) => void,
   cwd: string,
@@ -141,7 +144,7 @@ export function tsukumoServer(
       ...(mode.kind === "work"
         ? [
             reportTool(expressions, reportReview, onReportTitle, cwd),
-            workPlanTool(),
+            workPlanTool(workPlanReview),
             ...usageReviewTools(usageReview),
           ]
         : []),
@@ -233,8 +236,8 @@ function reportTool(
   )
 }
 
-/** 段取りを受け取るツール。差し戻すかは `parseWorkPlan` で決め、形の検査はここの zod の形。 */
-function workPlanTool() {
+/** 段取りを受け取るツール。差し戻すかは `parseWorkPlan` と `WorkPlanReview` で決め、形の検査はここの zod の形。 */
+function workPlanTool(review: WorkPlanReview) {
   return tool(
     WORK_PLAN_TOOL_NAME,
     WORK_PLAN_TOOL_DESCRIPTION,
@@ -246,10 +249,18 @@ function workPlanTool() {
       current: z.number().int().min(0).describe(WORK_PLAN_CURRENT_DESCRIPTION),
       phaseSummary: z.string().optional().describe(WORK_PLAN_PHASE_SUMMARY_DESCRIPTION),
     },
-    async (plan) =>
-      parseWorkPlan(plan) === undefined
-        ? { content: [{ type: "text" as const, text: WORK_PLAN_REJECTION }], isError: true }
-        : { content: [{ type: "text" as const, text: "ok" }] },
+    async (plan) => {
+      const parsed = parseWorkPlan(plan)
+      if (parsed === undefined) {
+        return { content: [{ type: "text" as const, text: WORK_PLAN_REJECTION }], isError: true }
+      }
+      return review.judge(parsed).kind === "skipped-phase"
+        ? {
+            content: [{ type: "text" as const, text: WORK_PLAN_SKIPPED_PHASE_REJECTION }],
+            isError: true,
+          }
+        : { content: [{ type: "text" as const, text: "ok" }] }
+    },
   )
 }
 

@@ -174,6 +174,15 @@ export type SessionEvent =
       readonly phaseSummary: string
     }
   /**
+   * メインが呼んだ `work_plan` の呼び出し。サーバの中だけで流れる。
+   * `WorkPlanReview.pass` が同じ `toolUseId` の `tool-finished` まで預かり、差し戻されていなければ `work-plan` に変えて流す（畳み込み・ブラウザには届かない）。
+   */
+  | {
+      readonly kind: "work-plan-called"
+      readonly toolUseId: string
+      readonly plan: Extract<SessionEvent, { readonly kind: "work-plan" }>
+    }
+  /**
    * 委譲の合図（委譲先の `SendMessage` の1行目 `状況 | n/N | 文`）から読んだ段の位置と文。
    * `step` は済んだ段の番号（1始まり）、`stepCount` は段の数で、`1 <= step <= stepCount`。
    * `summary` は3列目の文（前後の空白を除く）で、空なら空の文字列。切り詰める前のまま運ぶ。

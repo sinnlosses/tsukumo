@@ -319,7 +319,7 @@ describe("toSessionEvents", () => {
     expect(toSessionEvents(message, EXPRESSIONS)).toEqual([])
   })
 
-  it("メインの work_plan の呼び出しは段取りにする（ツールの開始にはしない）", () => {
+  it("メインの work_plan の呼び出しは、呼び出しの id を付けた段取りにする（ツールの開始にはしない）", () => {
     const message = assistantMessage([
       {
         type: "tool_use",
@@ -331,10 +331,14 @@ describe("toSessionEvents", () => {
 
     expect(toSessionEvents(message, EXPRESSIONS)).toEqual([
       {
-        kind: "work-plan",
-        phases: ["架空の段A", "架空の段B"],
-        current: 1,
-        phaseSummary: "架空のまとめ。",
+        kind: "work-plan-called",
+        toolUseId: "toolu_3",
+        plan: {
+          kind: "work-plan",
+          phases: ["架空の段A", "架空の段B"],
+          current: 1,
+          phaseSummary: "架空のまとめ。",
+        },
       },
     ])
   })

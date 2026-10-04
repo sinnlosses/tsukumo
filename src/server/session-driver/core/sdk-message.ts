@@ -44,7 +44,8 @@ import {
  * - `report` の呼び出しも `tool-started` にしない。`report` として別に出す（メインビュー行き）。
  *   `parent_tool_use_id` のある呼び出し（サブエージェントの中）は捨てる。
  *   ターンのレポートはメインが書くもので、委譲先の報告はメインの手元に届くだけにする
- * - `work_plan` の呼び出しも `tool-started` にしない。メインのものだけを `work-plan` にし、`parseWorkPlan` を通らない引数は捨てる（handler が差し戻した呼び出しと同じ判定）
+ * - `work_plan` の呼び出しも `tool-started` にしない。メインのものだけを呼び出しの id を付けた `work-plan-called` にし、`parseWorkPlan` を通らない引数は捨てる（handler が差し戻した呼び出しと同じ判定）。
+ *   段の一足飛びで差し戻した呼び出しは `WorkPlanReview` が結果を見て捨てる
  * - サブエージェントの `SendMessage` が委譲の合図なら、`tool-started` の後ろに `delegate-signal` を足す（{@link parseDelegateSignal}）。
  *   段の位置と3列目の文を運ぶ
  * - `includePartialMessages` の断片で `report` の呼び出しの塊が開いたら `report-drafting` を出す（立ち絵の「書いている」の材料。メインのものだけ）。
@@ -423,7 +424,9 @@ function assistantBlockEvents(
   }
 
   if (block.name === tsukumoToolFullName(WORK_PLAN_TOOL_NAME)) {
-    return parentToolUseId === undefined ? workPlanEvents(block.input) : []
+    return parentToolUseId === undefined && typeof block.id === "string"
+      ? workPlanEvents(block.id, block.input)
+      : []
   }
 
   return typeof block.id === "string"
@@ -452,9 +455,11 @@ function delegateSignalEvents(
   return signal === undefined ? [] : [{ kind: "delegate-signal", ...signal }]
 }
 
-function workPlanEvents(input: unknown): readonly SessionEvent[] {
+function workPlanEvents(toolUseId: string, input: unknown): readonly SessionEvent[] {
   const plan = parseWorkPlan(input)
-  return plan === undefined ? [] : [{ kind: "work-plan", ...plan }]
+  return plan === undefined
+    ? []
+    : [{ kind: "work-plan-called", toolUseId, plan: { kind: "work-plan", ...plan } }]
 }
 
 function speechEvents(

@@ -26,6 +26,7 @@ import { createSessionTitleIntake, type SessionTitleIntake } from "../core/sessi
 import { createSpeechReview } from "../core/speech-review.ts"
 import { TSUKUMO_MCP_SERVER_NAME } from "../core/tsukumo-tool-name.ts"
 import { isVisibleOutputNudge } from "../core/visible-output-nudge.ts"
+import { createWorkPlanReview, type WorkPlanReview } from "../core/work-plan-review.ts"
 import { readClaudeAccountTier } from "./claude-account.ts"
 import { readContextUsage } from "./sdk-context-usage.ts"
 import { readPlanUsage } from "./sdk-plan-usage.ts"
@@ -71,6 +72,7 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
   // `speak` の差し戻しを `report` の差し戻しより先に通す（ターンの終わりに預かりを出す並びがセリフ → レポートになる）。
   const review = (event: SessionEvent): readonly SessionEvent[] =>
     speechReview.pass(event).flatMap((passed) => reportReview.pass(passed))
+  const workPlanReview = createWorkPlanReview()
   const readSessionDigest = createSessionDigestReader(options.expressions)
   const usageReview = createUsageReviewIntake(
     options.dismissedUsageProposalKeys,
@@ -91,6 +93,7 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
           options.mode,
           reportReview,
           speechReview,
+          workPlanReview,
           usageReview,
           titleIntake.note,
           options.cwd,
@@ -103,13 +106,13 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
 
   // 依頼も差し戻しに見せる（新しい事実の届いた印。`SpeechReview` / `ReportReview`）。
   const emitTurnOpening = (event: SessionEvent): void => {
-    for (const passed of review(event)) {
+    for (const passed of review(event).flatMap(workPlanReview.pass)) {
       options.onEvent(passed)
     }
   }
 
   void applyNeutralOutputStyle(session)
-  void relayMessages(session, options, reportGate, review, titleIntake, titleWriter)
+  void relayMessages(session, options, reportGate, review, workPlanReview, titleIntake, titleWriter)
   void relayCommandDescriptions(session, options)
   void relayPlan(session, options)
   void relaySupportedModels(session, options)
@@ -167,6 +170,7 @@ export function startSdkDriver(given: SessionDriverOptions): SessionDriver {
  *
  * メインのイベントは先に `speak` と `report` の差し戻し（`review`）を通す。
  * どちらも同じ呼び出しの結果まで預かり、差し戻した呼び出しを描かない。
+ * 段の一足飛び（`workPlanReview`）にはメインとサブエージェントの両方のイベントを通す（委譲の合図はサブエージェントから出る）。
  *
  * `titleIntake` が覚えている題（`report` の `title` 引数）もターンの終わりに取り出し、`titleWriter` に書く予約をする。
  */
@@ -175,6 +179,7 @@ async function relayMessages(
   options: SessionDriverOptions,
   reportGate: ReportGate,
   review: (event: SessionEvent) => readonly SessionEvent[],
+  workPlanReview: WorkPlanReview,
   titleIntake: SessionTitleIntake,
   titleWriter: SessionTitleWriter,
 ): Promise<void> {
@@ -188,7 +193,9 @@ async function relayMessages(
         process.stderr.write(VISIBLE_OUTPUT_NUDGE_NOTICE)
       }
       const converted = toSessionEvents(message, toExpressionNames(options.expressions))
-      const events = fromMain ? converted.flatMap((event) => review(event)) : converted
+      const events = (fromMain ? converted.flatMap((event) => review(event)) : converted).flatMap(
+        workPlanReview.pass,
+      )
       for (const event of events) {
         if (fromMain) {
           reportGate.observe(event)
